@@ -1,0 +1,61 @@
+<BodySlideConfig>
+    <!-- Game install path. Normally this is harvested from the windows registry, but if that's not working
+    or you want to work with a different game, uncomment/change the below line. Notice the important trailing slash. -->
+    <!--<GameDataPath>C:\Steam\SteamApps\common\Skyrim\Data\</GameDataPath>-->
+    <SelectedOutfit>CBBE Body</SelectedOutfit>
+    <SelectedPreset>CBBE</SelectedPreset>
+    <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
+	This information is used by BodySlide for choosing what presets to display for outfits.
+	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
+    <DefaultGroups includeInBuild="true">
+        <GroupName>CBAdvanced</GroupName>
+    </DefaultGroups>
+    <!-- Group aliases provide a way for presets saved under older group names to still apply when a group has been renamed -->
+    <GroupAliases>
+        <GroupAlias alias="CB++" group="CBAdvanced"></GroupAlias>
+        <GroupAlias alias="CBAdvanced" group="CB++"></GroupAlias>
+    </GroupAliases>
+    <Input>
+        <!-- Sets the minimum and maximum slider values for the BodySlide UI. There might be clipping outside of the 0-100 range! -->
+        <SliderMinimum>0</SliderMinimum>
+        <SliderMaximum>100</SliderMaximum>
+        <!-- Set the left mouse button to pan the view when dragged on the canvas in Outfit Studio -->
+        <LeftMousePan>false</LeftMousePan>
+    </Input>
+    <Editing>
+        <!-- Center for move/rotate operations. Object = bounding box center, Origin = (0,0,0), Selected = unmasked vertex centroid -->
+        <CenterMode>Object</CenterMode>
+    </Editing>
+    <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
+    <ReferenceTemplates>
+        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body">CBBE Body</Template>
+        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body BBP">CBBE Body BBP</Template>
+        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body TBBP">CBBE Body TBBP</Template>
+        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body HDT">CBBE Body HDT</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert Skyrim2CBBE">Convert: Vanilla to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert UNP2CBBE">Convert: UNP to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert UNPB2CBBE">Convert: UNPB to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert DreamGirl2CBBE">Convert: Dream Girl to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert 7bBombshell2CBBE">Convert: SevenBase to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CHSBHC2CBBE">Convert: CHSBHC to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert ADEC2CBBE">Convert: ADEC to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBPE2CBBE">Convert: CBPE to CBBE</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2Skyrim">Convert: CBBE to Vanilla</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2UNP">Convert: CBBE to UNP</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2UNPB">Convert: CBBE to UNPB</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2DreamGirl">Convert: CBBE to Dream Girl</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE27bBombshell">Convert: CBBE to SevenBase</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2CHSBHC">Convert: CBBE to CHSBHC</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2ADEC">Convert: CBBE to ADEC</Template>
+        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2CBPE">Convert: CBBE to CBPE</Template>
+    </ReferenceTemplates>
+    <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
+    <Anim>
+        <DefaultSkeletonReference>res\skeleton_female_xpmse.nif</DefaultSkeletonReference>
+    </Anim>
+    <!-- Window position/size and filter state parameters -->
+    <BodySlideFrame width="801" height="600" x="701" y="455"></BodySlideFrame>
+    <OutfitStudioFrame width="990" height="757" x="800" y="430"></OutfitStudioFrame>
+    <LastGroupFilter></LastGroupFilter>
+    <LastOutfitFilter></LastOutfitFilter>
+</BodySlideConfig>

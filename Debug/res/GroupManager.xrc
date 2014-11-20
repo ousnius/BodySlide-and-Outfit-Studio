@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwindows.org/wxxrc" version="2.3.0.1">
+	<object class="wxDialog" name="dlgGroup">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>696,434</size>
+		<bg>#f0f0f0</bg>
+		<title>Filter Group and Outfits</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<label>Groups</label>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxEXPAND|wxLEFT|wxRIGHT|wxTOP</flag>
+								<border>5</border>
+								<object class="wxCheckListBox" name="lstGroups">
+									<style>wxLB_NEEDED_SB|wxLB_SORT</style>
+									<content>
+										<item>item 1</item>
+										<item>item 2</item>
+										<item>item 3</item>
+									</content>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_RIGHT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnAddGroup">
+									<style>wxBU_EXACTFIT</style>
+									<tooltip>Add a new group</tooltip>
+									<label>+</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxStaticBoxSizer">
+									<orient>wxVERTICAL</orient>
+									<label>Members</label>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>5</border>
+										<object class="wxListBox" name="lstGroupMembers">
+											<style>wxLB_EXTENDED|wxLB_MULTIPLE|wxLB_NEEDED_SB|wxLB_SORT</style>
+											<content>
+												<item>item 1</item>
+												<item>item 2</item>
+												<item>item 3</item>
+											</content>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<label>Outfits</label>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxBoxSizer">
+									<orient>wxVERTICAL</orient>
+									<object class="spacer">
+										<option>1</option>
+										<flag>wxEXPAND</flag>
+										<border>5</border>
+										<size>0,0</size>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALL</flag>
+										<border>0</border>
+										<object class="wxButton" name="btnAddOutfitToGroup">
+											<style>wxBU_EXACTFIT</style>
+											<tooltip>Add selected outfit to group</tooltip>
+											<label>&lt;--</label>
+											<default>0</default>
+										</object>
+									</object>
+									<object class="spacer">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>5</border>
+										<size>0,20</size>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALL</flag>
+										<border>0</border>
+										<object class="wxButton" name="btnRemoveOutfit">
+											<style>wxBU_EXACTFIT</style>
+											<tooltip>Remove members from group</tooltip>
+											<label>--&gt;</label>
+											<default>0</default>
+										</object>
+									</object>
+									<object class="spacer">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>5</border>
+										<size>0,40</size>
+									</object>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxCheckListBox" name="lstOutfits">
+									<style>wxLB_EXTENDED|wxLB_MULTIPLE|wxLB_NEEDED_SB</style>
+									<content>
+										<item>outfit 1</item>
+										<item>outfit 2</item>
+										<item>outfit 3</item>
+									</content>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<minsize>-1,40</minsize>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+</resource>

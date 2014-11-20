@@ -1,0 +1,368 @@
+//--------------------------------------
+//--- 010 Editor v2.0.2 Binary Template
+//
+// File: Tri file template
+// Author: Scanti
+// Revision: v1.1
+// Purpose: Template for facegen geometry and morphtarget container
+//--------------------------------------
+
+typedef  struct (int size) {
+    byte blockdata[size];
+}UnknownBlock ; 
+
+typedef struct {
+    float w;
+    float x;
+    float y;
+    float z;
+} quaternion;
+
+typedef struct {
+    float x;
+    float y;
+    float z;
+} vector3;
+
+typedef struct {
+    float u;
+    float v;
+} vector2;
+
+typedef struct {
+    ushort p1;
+    ushort p2;
+    ushort p3;
+} triangle;
+
+typedef struct {
+    ushort numVerts;
+    ushort indices[numVerts];
+} matchGroup;
+
+typedef struct {
+    float a;
+    float r;
+    float g;
+    float b;
+} color4;
+
+typedef struct (int version) {
+    int unknown;
+    ushort numverts;
+    byte keepflags;
+    byte compressflags;
+    byte hasVertices;
+    vector3 vertices[numverts];    
+    ushort numUVs;
+    if(version == 12) {
+        uint unkown;
+    }
+    byte hasNormals;
+    if(hasNormals == 1) {   
+        vector3 normals[numverts]; 
+        if(numUVs & 0xF000) {
+            vector3 tangents[numverts]; 
+            vector3 binormals[numverts];
+        }
+    }
+    vector3 Center;
+    float Radius;
+    byte hasVertColors;
+    if(hasVertColors) {
+        color4 vertcolors[numverts];
+    }
+    if(numUVs > 0) {
+        vector2 uvs[numverts];
+    }
+    ushort consistencyflags;
+    int additionaldata;
+    ushort numTriangles;
+    uint numTriPoints;
+    byte hasTriangles;
+    if(hasTriangles) {
+        triangle tris[numTriangles];
+    }
+    ushort numMatchGroups;
+    if(numMatchGroups > 0) {
+        matchGroup groups[numMatchGroups];
+    }   
+
+} NiTriShapeData;
+
+typedef struct (int version){
+    uint stringid;
+    uint numExtra;
+    int extradata[numExtra];
+    int controllerREf;
+    ushort flags;
+    ushort unknown;
+    vector3 translation;
+    vector3 rotation[3];
+    float  scale;
+    if(version == 11) {
+        uint numProperties;
+        uint propRef[numProperties];    
+    }
+    int collisionRef;
+    int dataRef;
+    int skinRef;
+    uint numMat;
+    struct MATNAME {
+        ushort len;
+        char name[len];
+    } materialNames[numMat]<optimize=false>;
+    int materialExtra[numMat];
+    int activeMat;
+    byte dirty;
+    if(version > 11) {
+        uint propertiesRef1;
+        uint propertiesRef2;
+    }
+} NiTriShape;
+ 
+typedef struct {
+    int dataRef;
+    int skinPartition;
+    int skeletonRoot;
+    uint numBones;
+    uint bonePtrs[numBones];
+    int numPartitions;
+    struct Partition {
+        ushort flags;
+        ushort id;
+    } partitions[numPartitions];
+
+} BSDismemberSkin;
+
+
+typedef struct { 
+    vector3 Rotation[3];
+    vector3 Translation;
+    float scale;
+    uint numBones;
+    byte hasVertWeights;
+    struct boneWeights {
+        vector3 rot[3];
+        vector3 trans;
+        float scl;
+        vector3 bsphere;
+        float bsrad;
+        ushort numVerts;
+        struct skinweight {
+            ushort index;
+            float weight;
+        } vertexWeights[numVerts];
+    } bones[numBones]<optimize=false>;
+    
+} NiSkinData;
+
+typedef struct {  
+    uint numPartitions;
+    struct SkinPartition {
+        ushort numVerts;
+        ushort numTris;
+        ushort numBones;
+        ushort numStrips;
+        ushort numWeightPerVert;
+        ushort bones[numBones];
+        byte hasVertexMap;
+        ushort vertMap[numVerts];
+        byte hasVertexWeights;
+        struct VertWeight {
+            float vw[numWeightPerVert];
+        } vertWeights[numVerts];
+        ushort stripLengths[numStrips];
+        byte hasFaces;
+        if(numStrips != 0) {
+            local int i;
+            for(i=0;i<numStrips;i++) {  
+                ushort Strip[stripLengths[i]];
+            }
+        } else {
+            triangle tris[numTris];
+        }
+        byte hasBoneIndices;
+        struct BoneIndex {
+            byte bi[numWeightPerVert];
+        } boneIndices[numVerts];
+        ushort unk;
+    } SkinPartitionBlocks[numPartitions]<optimize=false>;
+} NiSkinPartition;
+
+typedef struct (int version) {
+    uint stringid;
+    uint numExtra;
+    int extradata[numExtra];
+    int controllerREf;
+    ushort flags;
+    ushort unknown;
+    vector3 translation;
+    vector3 rotation[3];
+    float  scale;
+    if(version == 11) {
+        uint numProperties;
+        uint propRef[numProperties];    
+    }
+    int collisionRef;
+    uint numChildren;
+    int Children [numChildren];
+    uint numEffects;
+    int Effects[numEffects];
+
+} NiNode;
+
+typedef struct {
+    uint numTextures;
+    struct TEXPATH {
+        uint pathLen;
+        char path[pathLen];
+    } TexPaths[numTextures]<optimize=false>;
+} BSShaderTextureSet;
+
+typedef struct {
+    int nameID;
+    uint numControlled;
+    uint unk1;
+    struct CONTROLLERLINK {
+        int interpolatorRef;
+        int controllerRef;
+        byte priority;
+        int nodeName;
+        int propType;
+        int contType;
+        int var1;
+        int var2;        
+    } controlledBlocks [numControlled];
+    float weight;
+    int textkeysRef;
+    uint cycleType;
+    float freq;
+    float startTime;
+    float stopTime;
+    int managerPtr;
+    int targetName;
+    short unkshort1;
+    
+} NiControllerSequence;
+
+typedef struct {
+    int nameId;
+    uint numTextKeys;
+    struct TEXTKEY {
+        float Time;
+        int valueId;
+    } TextKeys[numTextKeys]<optimize=false>;
+} NiTextKeyExtraData;
+
+typedef struct {
+    vector3 translation;
+    quaternion rotation;
+    float scale;
+    int interpDataRef;
+} NiTransformInterpolator;
+
+typedef struct {
+    uint numRotKeys;
+    if(numRotKeys > 0) {
+        uint rotType;
+        if(rotType != 4) {
+            struct QUATKEY {
+                float time;
+                quaternion quat;
+            } quatKeys [numRotKeys];
+        } else {
+            float unkfloat;
+            uint numXyzKeys;
+            struct XYZROTKEY {
+                float time;
+                float value;        
+            } xyzRotations [numXyzKeys];
+        }
+    }
+    uint numTransKeys;
+    if(numTransKeys !=0 ) {
+        uint transInterpType;
+    }
+    struct TRANSKEY {
+        float time;
+        vector3 value;
+    } translations [numTransKeys]; 
+    uint numScaleKeys;
+    if(numScaleKeys !=0) {
+        uint scaleInterpType;
+    }
+    struct SCALEKEY{
+        float time;
+        float value;
+    } scales [numScaleKeys];
+
+} NiTransformData;
+
+struct FILE {
+	struct HEADER{
+		char version[0x26];
+		byte unknown;
+		byte version1;
+		byte version2;
+		byte version3;
+		byte version4;
+		byte endian;
+		uint userversion;
+		uint numblocks;
+		uint userversion2;
+		byte creatorlen;
+		char creator[creatorlen];
+		byte exportinfo1len;
+		char exportinfo1[exportinfo1len];
+		byte exportinfo2len;
+		char exportinfo2[exportinfo2len];
+		ushort numblocktypes;
+		struct BLOCKTYPES{
+			uint blocklen;
+			char blocktype[blocklen];
+		} blocktypes[numblocktypes]<optimize=false>;
+		ushort blockindex[numblocks];
+		uint blocksizes[numblocks];
+        uint numstrings;
+        uint maxstringlen;
+        struct STRINGS {
+            uint strlen;
+            char str[strlen];
+        } strings[numstrings]<optimize=false>;
+        uint unkown;
+	}header;
+    local int i;
+    local int bs;
+    local string type;
+    for(i=0;i<header.numblocks; i++){
+        type = header.blocktypes[header.blockindex[i]].blocktype;
+        if(type == "NiTriShapeData")
+            NiTriShapeData trishapedata(header.userversion);
+        else if(type == "NiTriShape")
+            NiTriShape trishape(header.userversion);
+        else if(type == "BSDismemberSkinInstance")
+            BSDismemberSkin skin;
+        else if(type == "NiNode")
+            NiNode node(header.userversion);
+        else if(type == "BSShaderTextureSet")
+            BSShaderTextureSet TexSet;
+        else if(type == "NiControllerSequence")
+            NiControllerSequence ControllerSeq;
+        else if(type == "NiTextKeyExtraData")
+            NiTextKeyExtraData TextKeyExtraData;
+        else if(type == "NiTransformInterpolator")
+            NiTransformInterpolator TransformInterpolator;
+        else if(type == "NiTransformData")
+            NiTransformData TransformData;
+        else if(type == "NiSkinData")
+            NiSkinData skinData;
+        else if(type == "NiSkinPartition")
+            NiSkinPartition skinPart;
+        else {
+            bs = header.blocksizes[i];
+            UnknownBlock ub(bs);
+        }
+    }
+} file;
+
