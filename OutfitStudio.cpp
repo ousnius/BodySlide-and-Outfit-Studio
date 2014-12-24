@@ -302,8 +302,8 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 	
 	d->paneSz->Add(d->sliderName, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
 	
-	d->sliderID = 1100 + id;
-	d->slider = new wxSlider(d->sliderPane, 1100 + id, 0, 0, 100, wxDefaultPosition, wxSize(-1, 10), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
+	d->sliderID = 2000 + id;
+	d->slider = new wxSlider(d->sliderPane, 2000 + id, 0, 0, 100, wxDefaultPosition, wxSize(-1, 10), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
 	d->slider->SetMinSize(wxSize(-1, 20));
 	d->slider->SetMaxSize(wxSize(-1, 20));
 	
@@ -1833,7 +1833,7 @@ void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
 
 		if (d->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_UNCHECKED) {
 			d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-			ShowSliderEffect(d->sliderID - 1100, true);
+			ShowSliderEffect(d->sliderID - 2000, true);
 		}
 		d->sliderNameCheck->Enable(false);
 		d->slider->SetFocus();
