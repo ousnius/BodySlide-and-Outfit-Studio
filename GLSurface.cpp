@@ -1,10 +1,14 @@
 #include "GLSurface.h"
-#pragma comment(lib, "SOIL_d.lib")
 #include "math.h"
-#include "SOIL.h"
 #include <algorithm>
 #include <set>
 #include <limits>
+#ifdef _DEBUG
+#pragma comment (lib, "SOIL_d.lib")
+#else
+#pragma comment (lib, "SOIL.lib")
+#endif
+#include "SOIL.h"
 
 PFNGLGENBUFFERSPROC glGenBuffers = NULL;
 PFNGLBINDBUFFERPROC glBindBuffer = NULL;
