@@ -289,6 +289,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	PopulateOutfitList(outfitName);
 
 	sliderView->Thaw();
+	sliderView->Refresh();
 }
 
 void BodySlideApp::ActivatePreset(const string &presetName) {
@@ -417,7 +418,7 @@ void BodySlideApp::DisplayActiveSet() {
 			bool show = get<2>(cat);
 
 			if (catSliders.size() > iter && catSliders[iter].size() > 0) {
-				sliderView->AddCategorySliderUI(name, show);
+				sliderView->AddCategorySliderUI(name, show, !activeSet.GenWeights());
 				if (show) {
 					for (auto s: catSliders[iter])
 						sliderView->AddSliderGUI(activeSet[s].Name.c_str(), activeSet[s].bZap, !activeSet.GenWeights());
@@ -1344,17 +1345,18 @@ void BodySlideFrame::ShowLowColumn(bool show) {
 	}
 }
 
-void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show) {
+void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool oneSize) {
 	wxScrolledWindow* sw = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	wxSizer* sliderLayout = sw->GetSizer();
 	wxWindow* w;
+	
+	if (!oneSize) {
+		sliderLayout->AddSpacer(0);
 
-	sliderLayout->AddSpacer(0);
-
-	w = new wxPanel(sw, -1, -1, -1, -1);
-	//w= new wxStaticLine (sw, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxNO_BORDER);
-	w->SetBackgroundColour(wxColor(90, 90, 90));
-	sliderLayout->Add(w, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+		w = new wxPanel(sw, -1, -1, -1, -1);
+		w->SetBackgroundColour(wxColor(90, 90, 90));
+		sliderLayout->Add(w, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+	}
 	
 	wxCheckBox* check = new wxCheckBox(sw, wxID_ANY, "");
 	check->SetName(name);
@@ -1365,11 +1367,13 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show) {
 	w = new wxStaticText(sw, wxID_ANY, name);
 	w->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Andalus"));
 	w->SetForegroundColour(wxColor(200, 200, 200));
-	sliderLayout->Add(w, 0, wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
+	sliderLayout->Add(w, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
 	
-	w = new wxPanel(sw, -1, -1, -1, -1);
-	w->SetBackgroundColour(wxColor(90, 90, 90));
-	sliderLayout->Add(w, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+	if (!oneSize) {
+		w = new wxPanel(sw, -1, -1, -1, -1);
+		w->SetBackgroundColour(wxColor(90, 90, 90));
+		sliderLayout->Add(w, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
+	}
 
 	sliderLayout->AddSpacer(0);
 

@@ -219,7 +219,7 @@ public:
 	}
 
 	void ShowLowColumn(bool show);
-	void AddCategorySliderUI(const wxString& name, bool show);
+	void AddCategorySliderUI(const wxString& name, bool show, bool oneSize);
 	void AddSliderGUI(const wxString& name, bool isZap, bool oneSize = false);
 
 	BodySlideFrame::SliderDisplay* GetSliderDisplay(const string& name) {
