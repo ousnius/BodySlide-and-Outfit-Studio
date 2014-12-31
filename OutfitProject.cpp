@@ -819,6 +819,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<int, 
 	DiffDataSets dds;
 	vec3 tmp;
 	unordered_map<int, float> weights;
+	unordered_map<int, float> oldWeights;
 	unordered_map<int, vec3> diffresult;
 	vector<string> lboneList;
 	vector<string>* boneList;
@@ -826,8 +827,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<int, 
 	owner->UpdateProgress(1, "Gathering bones");
 
 	if (inBoneList == NULL) {
-		//for (auto bn: baseAnim.boneList[baseShapeName]) {
-		for (auto bn: baseAnim.shapeBones[baseShapeName]) {			
+		for (auto bn: baseAnim.shapeBones[baseShapeName]) {		
 			lboneList.push_back(bn);
 		}
 		boneList = &lboneList;
@@ -851,15 +851,28 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<int, 
 	string wtset;
 	float step = 50.0f / boneList->size();
 	float prog = 40.0f;
+
 	owner->UpdateProgress(prog, "Copying bone weights");
+
 	for (auto bone: (*boneList)) {
 		wtset = bone + "_WT_";
 		morpher.GenerateResultDiff(destShape, wtset, wtset);
 		morpher.GetRawResultDiff(destShape, wtset, diffresult);
-		weights.clear();
+
+		if (mask) {
+			weights.clear();
+			oldWeights.clear();
+			workAnim.GetWeights(destShape, bone, oldWeights);
+		}
+
 		for (auto dr: diffresult) {
 			if (mask) {
-				weights[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
+				if (1.0f - (*mask)[dr.first] > 0.0f) {
+					weights[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
+				}
+				else {
+					weights[dr.first] = oldWeights[dr.first];
+				}
 			}
 			else {
 				weights[dr.first] = dr.second.y;

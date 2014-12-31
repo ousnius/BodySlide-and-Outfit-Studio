@@ -203,31 +203,30 @@ public:
 		gls.ToggleTextures();
 	}
 	void ToggleMaskVisible() {
-		vec3 vc(0,0,0);
 		mesh* m = gls.GetActiveMesh();
-		if(!m->vcolors) {
+		if (!m->vcolors) {
 			m->vcolors = new vec3[m->nVerts];
-			memset(m->vcolors,0, sizeof(vec3) * m->nVerts);
+			memset(m->vcolors, 0, sizeof(vec3) * m->nVerts);
 		}
-		gls.ToggleMask();	
+		gls.ToggleMask();
 	}
-	void SetWeightVisible(bool bVisible=true) {
+	void SetWeightVisible(bool bVisible = true) {
 		gls.SetWeightColors(bVisible);
 	}
 
 	void ClearMask() {
 		mesh* m = gls.GetActiveMesh();
-		if(m->vcolors) {
-			m->ColorFill(vec3(0,0,0));
+		if (m->vcolors) {
+			m->ColorChannelFill(0, 0);
 		}
 	}
 
 	void GetActiveMask( unordered_map<int, float>& mask) {
 		mesh* m = gls.GetActiveMesh();
-		if(!m->vcolors)
+		if (!m->vcolors)
 			return;
-		for(int i=0;i<m->nVerts;i++) {
-			if(m->vcolors[i].x != 0.0f) {
+		for (int i = 0; i < m->nVerts; i++) {
+			if (m->vcolors[i].x != 0.0f) {
 				mask[i] = m->vcolors[i].x;
 			}
 		}
@@ -235,13 +234,13 @@ public:
 
 	void GetActiveUnmasked( unordered_map<int, float>& mask) {
 		mesh* m = gls.GetActiveMesh();
-		if(!m->vcolors) {
-			for(int i=0;i<m->nVerts;i++) 
-				mask[i]=0.0f;
+		if (!m->vcolors) {
+			for (int i = 0; i < m->nVerts; i++) 
+				mask[i] = 0.0f;
 			return;
 		}
-		for(int i=0;i<m->nVerts;i++) {
-			if(m->vcolors[i].x == 0.0f) {
+		for (int i = 0; i < m->nVerts; i++) {
+			if (m->vcolors[i].x == 0.0f) {
 				mask[i] = m->vcolors[i].x;
 			}
 		}
@@ -249,11 +248,11 @@ public:
 
 	void InvertMask() {
 		mesh* m = gls.GetActiveMesh();
-		if(!m->vcolors) {
-			m->ColorFill(vec3(0,0,0));
+		if (!m->vcolors) {
+			m->ColorFill(vec3(0, 0, 0));
 		} 
-		for(int i=0;i<m->nVerts;i++) {
-			m->vcolors[i].x = 1-m->vcolors[i].x;
+		for (int i = 0; i < m->nVerts; i++) {
+			m->vcolors[i].x = 1 - m->vcolors[i].x;
 		}
 	}
 

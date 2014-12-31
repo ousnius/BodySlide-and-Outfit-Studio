@@ -463,7 +463,7 @@
 					<help>Copies selected bone weights from the reference shape to the current shape.</help>
 				</object>
 				<object class="wxMenuItem" name="maskWeightedVerts">
-					<label>Mask Weigted Vertices</label>
+					<label>Mask Weighted Vertices</label>
 					<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
 				</object>
 				<object class="wxMenuItem" name="buildSkinParitions">
