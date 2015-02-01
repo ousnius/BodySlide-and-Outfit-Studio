@@ -112,19 +112,19 @@ bool AnimInfo::LoadFromNif(NifFile* nif) {
 }
 
 bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
-	vector<string> bonenames;
+	vector<string> boneNames;
 	vector<int> boneIndices;
-	//vector<int> boneids;
-	//vector<AnimBone> tmpbonelist;
-	if (!nif->GetShapeBoneList(shape, bonenames))
+	string invalidBones = "";
+
+	if (!nif->GetShapeBoneList(shape, boneNames))
 		return false;
 
 	int slot = 0;
-	for (auto bn: bonenames) {		
+	for (auto bn : boneNames) {
 		if (!AnimSkeleton::getInstance().RefBone(bn)) {
 			AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
 			if (!cstm.isValidBone) {
-				wxMessageBox("Referenced bone not found in skeleton, skipping: " + bn, "Invalid Bone");
+				invalidBones += bn + "\n";
 				continue;
 			}
 			vector<vec3> r;
@@ -138,19 +138,22 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
 		boneIndices.push_back(slot++);
 	}
 
-	/*
+	shapeSkinning[shape] = AnimSkin(nif, shape, boneIndices);
 
+	/*
 	nif->GetShapeBoneIDList(shape, boneids);
-	for(int i=0;i<bonenames.size();i++)  {				
-		tmpbonelist.emplace_back(bonenames[i], boneids[i], i);
-		nif->GetNodeTransform(bonenames[i], tmpbonelist.back().rot,  tmpbonelist.back().trans,tmpbonelist.back().scale);
+	for (int i = 0;i < boneNames.size(); i++) {				
+		tmpbonelist.emplace_back(boneNames[i], boneids[i], i);
+		nif->GetNodeTransform(boneNames[i], tmpbonelist.back().rot,  tmpbonelist.back().trans,tmpbonelist.back().scale);
 	}
 	boneList[shape] = tmpbonelist;
 	*/
 
 	// ----  FIX :  animskin needs a different input to its constructor!  ----- //
 	//shapeSkinning[shape] = AnimSkin(nif, shape, boneList[shape]);
-	shapeSkinning[shape] = AnimSkin(nif, shape, boneIndices);
+
+	if (!invalidBones.empty())
+		wxMessageBox("Bones not found in reference skeleton, skipping:\n\n" + invalidBones, "Invalid Bones");
 
 	return true;
 }

@@ -7,7 +7,6 @@
 #include "DiffData.h"
 #include "objfile.h"
 
-
 #include <vector>
 #include <map>
 
@@ -19,13 +18,13 @@ class Automorph
 {
 	//NifFile MorphMe;
 	kd_tree* refTree;
-	map<string,mesh*> sourceShapes;
-	map<string,mesh*> foreignShapes;		// meshes linked by LinkSourceShapeMesh loaded and managed outside the
+	map<string, mesh*> sourceShapes;
+	map<string, mesh*> foreignShapes;	// meshes linked by LinkSourceShapeMesh loaded and managed outside the
 										//  class -- to prevent automorph from deleting it.  Golly, smart pointers would be nice
-	map<int,vector<kd_query_result>> prox_cache;
-	DiffDataSets __SrcDiffData;			// internally loaded and stored diff data.diffs loaded from existing reference .bsd files
-	DiffDataSets* SrcDiffData;			// either __srcDiffData or an external linked data set 
-	DiffDataSets ResultDiffData;		// Diffs calculated by automorph
+	map<int, vector<kd_query_result>> prox_cache;
+	DiffDataSets __srcDiffData;			// internally loaded and stored diff data.diffs loaded from existing reference .bsd files
+	DiffDataSets* srcDiffData;			// either __srcDiffData or an external linked data set 
+	DiffDataSets resultDiffData;		// Diffs calculated by automorph
 
 	float proximity_radius;
 	float max_prox_points;
@@ -34,22 +33,22 @@ class Automorph
 
 	// a translation between shapetarget+slidername and the data name for the result diff data set.  this only has values when a sliderset is loaded from disk and a slider's data name  for a target
 	// doesn't match the format targtname+slidername
-	unordered_map<string,string> targetSliderDataNames;  
+	unordered_map<string, string> targetSliderDataNames;
 
 
 public:
-	mesh* MorphRef;
+	mesh* morphRef;
 	int totalCount;
 	float avgCount;
 	int maxCount;
 	int minCount;
 
 	Automorph(void);
-	Automorph(NifFile& Ref, const string& refShape = "BaseShape");
+	Automorph(NifFile& ref, const string& refShape = "BaseShape");
 	~Automorph(void);
 
 	void ClearResultDiff() {
-		ResultDiffData.Clear();
+		resultDiffData.Clear();
 	}
 	void ClearSourceShapes();
 
@@ -76,8 +75,8 @@ public:
 	void UpdateMeshFromNif(NifFile &baseNif, const string& shapeName);
 	void CopyMeshMask(mesh*m, const string& shapeName);
 
-	void MeshFromNifShape(mesh* m, NifFile& Ref, const string& shapeName);
-	void MeshFromObjShape(mesh* m, ObjFile& Ref, const string& shapeName);
+	void MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName);
+	void MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName);
 
 	void BuildProximityCache(const string& shapeName);
 

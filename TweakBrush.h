@@ -112,12 +112,12 @@ public:
 	string Name() { return brushName; }
 
 	virtual float getRadius() { return radius; }
-	virtual float getStrength() { return strength; }
-	virtual float getFocus() { return focus; }
+	virtual float getStrength() { return strength * 10.0f; }
+	virtual float getFocus() { return focus / 5.0f; }
 	virtual float getSpacing() { return spacing; }
 	virtual void setRadius(float newRadius) { radius = newRadius; }
-	virtual void setFocus(float newFocus) { focus = newFocus; }
-	virtual void setStrength(float newStr) { strength = newStr; }
+	virtual void setFocus(float newFocus) { focus = newFocus * 5.0f; }
+	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
 	virtual void setSpacing(float newSpacing) { spacing = newSpacing; }
 	virtual void setLiveNormals(bool newLiveNormals = true) { bLiveNormals = newLiveNormals; }
 
@@ -143,7 +143,7 @@ public:
 	// Standard falloff function, used by most brushes 
 	//   y = (cos((pi/2)*x) * sqrt(cos((pi/2)*x))) ^ focus
 	// focus values between 0 and 1 give a spherical curve, values over 1 give a peaked curve
-	virtual void applyFalloff (vec3& deltaVec, float dist);
+	virtual void applyFalloff(vec3& deltaVec, float dist);
 
 	// Get the list of points, facets, and BVH nodes within the brush sphere of influence. 
 	// Normally, the origin point is used for sphere cetner, and assumed to be an arbitrary point on the surface

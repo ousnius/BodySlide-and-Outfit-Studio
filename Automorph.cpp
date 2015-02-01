@@ -2,37 +2,35 @@
 
 Automorph::Automorph(void)
 {
-	MorphRef = NULL;
+	morphRef = NULL;
 	refTree = NULL;
-	SrcDiffData = NULL;
-	bEnableMask =true;
-	proximity_radius=10.0f;
-	max_prox_points=5.0f;
-
+	srcDiffData = NULL;
+	bEnableMask = true;
+	proximity_radius = 10.0f;
+	max_prox_points = 5.0f;
 }
 
 Automorph::~Automorph(void)
 {
-	if(MorphRef) {
-		delete MorphRef;
-		MorphRef = 0;
+	if (morphRef) {
+		delete morphRef;
+		morphRef = 0;
 	}
-	if(refTree) {
+	if (refTree) {
 		delete refTree;
 		refTree = 0;
 	}
 	ClearSourceShapes();
-
 }
 
-Automorph::Automorph(NifFile &Ref, const string& refShape) {
-	MorphRef = NULL;
+Automorph::Automorph(NifFile &ref, const string& refShape) {
+	morphRef = NULL;
 	refTree = NULL;
-	SrcDiffData = NULL;
+	srcDiffData = NULL;
 	bEnableMask = true;
 	proximity_radius = 10.0f;
 	max_prox_points = 5.0f;
-	SetRef(Ref, refShape);
+	SetRef(ref, refShape);
 }
 
 void Automorph::ClearSourceShapes() {
@@ -51,43 +49,8 @@ void Automorph::RenameResultDiffData(const string& shape, const string& oldName,
 	string setname = ResultDataName(shape, oldName);
 	string newsetname = shape + newName;
 
-	ResultDiffData.RenameSet(setname, newsetname);
+	resultDiffData.RenameSet(setname, newsetname);
 	targetSliderDataNames.erase(setname);
-	
-	/*
-	string newDN;
-	string newKey;
-	vector<string>newvals;
-	vector<string>oldkeys;
-	vector<string>newkeys;
-	bool found;
-	for(auto &tsdn : targetSliderDataNames) {
-		newDN = tsdn.second;
-		newKey = tsdn.first;
-		found = false;
-		size_t p = newDN.find(oldName);
-		if(p > 0) {
-			newDN = newDN.substr(shape.length());
-			newDN = newShapeName + newDN;
-			found = true;
-		}
-		p = newKey.find(shapeName);
-		if(p > 0){
-			newKey = newKey.substr(shapeName.length());
-			newKey = newShapeName + newKey;
-			found = true;
-		}
-		if(found) {
-			oldkeys.push_back(tsdn.first);
-			newkeys.push_back(newKey);
-			newvals.push_back(newDN);
-		}
-	}
-	for (int i=0;i<oldkeys.size();i++ ){
-		targetSliderDataNames.erase(oldkeys[i]);
-		targetSliderDataNames[newkeys[i]]=newvals[i];
-	}
-	*/
 }
 
 void Automorph::RenameShape(const string& shapeName, const string& newShapeName) {
@@ -99,7 +62,7 @@ void Automorph::RenameShape(const string& shapeName, const string& newShapeName)
 		foreignShapes[newShapeName] = foreignShapes[shapeName];
 		foreignShapes.erase(shapeName);
 	}
-	ResultDiffData.DeepRename(shapeName, newShapeName);
+	resultDiffData.DeepRename(shapeName, newShapeName);
 
 	string newDN;
 	string newKey;
@@ -135,53 +98,53 @@ void Automorph::RenameShape(const string& shapeName, const string& newShapeName)
 	}
 }
 
-void Automorph::SetRef(NifFile& Ref, const string& refShape) {
-	if (MorphRef)
-		delete MorphRef;
+void Automorph::SetRef(NifFile& ref, const string& refShape) {
+	if (morphRef)
+		delete morphRef;
 
-	MorphRef = new mesh();
-	MeshFromNifShape(MorphRef, Ref, refShape);
+	morphRef = new mesh();
+	MeshFromNifShape(morphRef, ref, refShape);
 
 	if (refTree) {
 		delete refTree;
 	}
 
-	refTree = new kd_tree(MorphRef->verts, MorphRef->nVerts);
+	refTree = new kd_tree(morphRef->verts, morphRef->nVerts);
 }
 
 int Automorph::InitRefDiffData(const string &srcFileName, const string &dataSetName, const string &baseDataPath) {
-	SliderSetFile SrcSliderSetFile;
-	SliderSet SrcSet;
+	SliderSetFile srcSliderSetFile;
+	SliderSet srcSet;
 	
-	SrcSliderSetFile.Open(srcFileName);
+	srcSliderSetFile.Open(srcFileName);
 	
-	if (SrcSliderSetFile.GetSet(dataSetName, SrcSet)) 
+	if (srcSliderSetFile.GetSet(dataSetName, srcSet))
 		return 1;
 	
-	SrcSet.SetBaseDataPath(baseDataPath);
+	srcSet.SetBaseDataPath(baseDataPath);
 	
-	SrcSet.LoadSetDiffData(__SrcDiffData);
-	SrcDiffData = & __SrcDiffData;
+	srcSet.LoadSetDiffData(__srcDiffData);
+	srcDiffData = &__srcDiffData;
 
 	return 0;
 }
 
-void Automorph::LinkRefDiffData(DiffDataSets* diffData ) {
-	SrcDiffData = diffData;
+void Automorph::LinkRefDiffData(DiffDataSets* diffData) {
+	srcDiffData = diffData;
 }
 
 void Automorph::UnlinkRefDiffData() {
-	SrcDiffData = &__SrcDiffData;
+	srcDiffData = &__srcDiffData;
 }
 
 void Automorph::ApplyDiffToVerts(const string& sliderName, const string& shapeTargetName, vector<vector3>* inOutResult, float strength) {
-	SrcDiffData->ApplyDiff(sliderName, shapeTargetName, strength, inOutResult);
+	srcDiffData->ApplyDiff(sliderName, shapeTargetName, strength, inOutResult);
 }
 
 void Automorph::ApplyResultToVerts(const string& sliderName, const string& shapeTargetName, vector<vector3>* inOutResult, float strength) {
 	string setname = ResultDataName(shapeTargetName, sliderName);
 	
-	ResultDiffData.ApplyDiff(setname, shapeTargetName, strength, inOutResult);
+	resultDiffData.ApplyDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
 void Automorph::SourceShapesFromNif(NifFile &baseNif) {
@@ -225,17 +188,14 @@ void Automorph::UpdateMeshFromNif(NifFile &baseNif, const string& shapeName) {
 
 void Automorph::CopyMeshMask(mesh* m, const string& shapeName) {
 	mesh* dm = sourceShapes[shapeName];
-	if (dm->nVerts != m->nVerts) {
+	if (dm->nVerts != m->nVerts)
 		return;
-	}
 
-	if (!m->vcolors)  {
+	if (!m->vcolors)
 		return;
-	}
 
-	if (!dm->vcolors) {
+	if (!dm->vcolors)
 		dm->vcolors = new vec3[dm->nVerts];
-	}
 
 	for (int i = 0; i < dm->nVerts; i++) {
 		dm->vcolors[i] = m->vcolors[i];
@@ -247,11 +207,11 @@ void Automorph::LinkSourceShapeMesh(mesh* m, const string& shapeName) {
 	foreignShapes[shapeName] = m;
 }
 
-void Automorph::MeshFromObjShape(mesh *m, ObjFile &Ref, const string& shapeName) {
+void Automorph::MeshFromObjShape(mesh *m, ObjFile &ref, const string& shapeName) {
 	m->shapeName = shapeName;
 	vector<vec3> obj_verts;
 	vector<tri> obj_tris; 
-	Ref.CopyDataForGroup(shapeName,&obj_verts,&obj_tris,NULL);
+	ref.CopyDataForGroup(shapeName, &obj_verts, &obj_tris, NULL);
 	int i, j;
 
 	//float c = 0.4f + (meshes.size()*0.3f);
@@ -270,7 +230,7 @@ void Automorph::MeshFromObjShape(mesh *m, ObjFile &Ref, const string& shapeName)
 
 	vec3 norm;
 	// load tris.  Also sum face normals here
-	for(j =0;j<m->nTris; j++) {
+	for (j = 0; j < m->nTris; j++) {
 		m->tris[j].p1 = obj_tris[j].p1;
 		m->tris[j].p2 = obj_tris[j].p2;
 		m->tris[j].p3 = obj_tris[j].p3;
@@ -288,17 +248,17 @@ void Automorph::MeshFromObjShape(mesh *m, ObjFile &Ref, const string& shapeName)
 	}
 	// normalize all vertex normals to smooth them out.
 	vec3* pn;
-	for(i =0 ;i< m->nVerts; i++ ){
+	for (i = 0; i < m->nVerts; i++) {
 		pn = (vec3*)&m->verts[i].nx;
 		pn->Normalize();
 	}
 	
 	kd_matcher matcher(m->verts, m->nVerts);
-	for(i=0; i<matcher.matches.size(); i++ ) {
+	for (i = 0; i < matcher.matches.size(); i++) {
 		vtx* a = matcher.matches[i].first;
 		vtx* b = matcher.matches[i].second;
 		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if(dot < 1.57079633f) {
+		if (dot < 1.57079633f) {
 			a->nx=((a->nx + b->nx) /2.0f);
 			a->ny=((a->ny + b->ny) /2.0f);
 			a->nz=((a->nz + b->nz) /2.0f);
@@ -309,20 +269,20 @@ void Automorph::MeshFromObjShape(mesh *m, ObjFile &Ref, const string& shapeName)
 	}
 }
 
-void Automorph::MeshFromNifShape(mesh *m, NifFile &Ref, const string& shapeName) {
+void Automorph::MeshFromNifShape(mesh *m, NifFile &ref, const string& shapeName) {
 	int i, j;
 	vector<vec3> nif_verts;
-	Ref.GetVertsForShape(shapeName, nif_verts);
-	//const vector<vec3>* nif_verts = Ref.GetVertsForShape(shapeName);
-	const vector<triangle>* nif_tris = Ref.GetTrisForShape(shapeName);
+	ref.GetVertsForShape(shapeName, nif_verts);
+	//const vector<vec3>* nif_verts = ref.GetVertsForShape(shapeName);
+	const vector<triangle>* nif_tris = ref.GetTrisForShape(shapeName);
 	vector<triangle> localtris;
 	if(nif_tris == NULL) {  // perhaps a tristrip
-		bool found = Ref.GetTrisForTriStripShape(shapeName, &localtris);
+		bool found = ref.GetTrisForTriStripShape(shapeName, &localtris);
 		if(found) 
 			nif_tris = &localtris;
 	}
 
-	const vector<vec3>* nif_norms = Ref.GetNormalsForShape(shapeName);
+	const vector<vec3>* nif_norms = ref.GetNormalsForShape(shapeName);
 
 	m->shapeName = shapeName;
 
@@ -345,9 +305,9 @@ void Automorph::MeshFromNifShape(mesh *m, NifFile &Ref, const string& shapeName)
 	}
 
 	vec3 norm;
-	if(!nif_norms) {
+	if (!nif_norms) {
 		// load tris.  Also sum face normals here
-		for(j =0;j<m->nTris; j++) {
+		for (j = 0; j < m->nTris; j++) {
 			m->tris[j].p1 = (*nif_tris)[j].p1;
 			m->tris[j].p2 = (*nif_tris)[j].p2;
 			m->tris[j].p3 = (*nif_tris)[j].p3;
@@ -365,20 +325,20 @@ void Automorph::MeshFromNifShape(mesh *m, NifFile &Ref, const string& shapeName)
 		}
 		// normalize all vertex normals to smooth them out.
 		vec3* pn;
-		for(i =0 ;i< m->nVerts; i++ ){
+		for (i = 0; i < m->nVerts; i++) {
 			pn = (vec3*)&m->verts[i].nx;
 			pn->Normalize();
 		}
 		
 		kd_matcher matcher(m->verts, m->nVerts);
-		for(i=0; i<matcher.matches.size(); i++ ) {
+		for (i = 0; i < matcher.matches.size(); i++) {
 			vtx* a = matcher.matches[i].first;
 			vtx* b = matcher.matches[i].second;
 			float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-			if(dot < 1.57079633f) {
-				a->nx=((a->nx + b->nx) /2.0f);
-				a->ny=((a->ny + b->ny) /2.0f);
-				a->nz=((a->nz + b->nz) /2.0f);
+			if (dot < 1.57079633f) {
+				a->nx = ((a->nx + b->nx) / 2.0f);
+				a->ny = ((a->ny + b->ny) / 2.0f);
+				a->nz = ((a->nz + b->nz) / 2.0f);
 				b->nx = a->nx;
 				b->ny = a->ny;
 				b->nz = a->nz;
@@ -387,11 +347,11 @@ void Automorph::MeshFromNifShape(mesh *m, NifFile &Ref, const string& shapeName)
 
 	} else {
 		// alread have normals, just copy the data over.
-		for(j =0;j<m->nTris; j++) {
-			m->tris[j]  = (*nif_tris)[j];
+		for (j = 0; j < m->nTris; j++) {
+			m->tris[j] = (*nif_tris)[j];
 		}	
 		// copy normals.  No transformation is done on the normals.
-		for(i =0 ;i< m->nVerts; i++ ){
+		for (i = 0; i < m->nVerts; i++) {
 			m->verts[i].nx = (*nif_norms)[i].x;			
 			m->verts[i].nz = (*nif_norms)[i].z;			
 			m->verts[i].ny = (*nif_norms)[i].y;
@@ -437,13 +397,13 @@ void Automorph::BuildProximityCache(const string &shapeName) {
 void Automorph::GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<int,vec3>& outDiff) {
 	string setname = ResultDataName(shapeName, sliderName);
 	vec3 diffscale;
-	if (!ResultDiffData.TargetMatch(setname, shapeName)) {
+	if (!resultDiffData.TargetMatch(setname, shapeName)) {
 		return;
 	}
 	
 	outDiff.clear();
 	
-	unordered_map<int,vec3>* set = ResultDiffData.GetDiffSet(setname);
+	unordered_map<int, vec3>* set = resultDiffData.GetDiffSet(setname);
 	for (auto i: (*set)) {	
 		outDiff[i.first] = i.second;
 	}
@@ -452,19 +412,19 @@ void Automorph::GetRawResultDiff(const string& shapeName, const string& sliderNa
 int  Automorph::GetResultDiffSize(const string& shapeName, const string& sliderName) {
 	string setname = ResultDataName(shapeName, sliderName);
 	vec3 diffscale;
-	if (!ResultDiffData.TargetMatch(setname, shapeName)) {
+	if (!resultDiffData.TargetMatch(setname, shapeName)) {
 		return 0;
 	}
-	return ResultDiffData.GetDiffSet(setname)->size();
+	return resultDiffData.GetDiffSet(setname)->size();
 }
 
 void Automorph::ScaleResultDiff(const string& shapeName,const string& sliderName, float scaleValue) {
 	string setname = ResultDataName(shapeName, sliderName);
-	ResultDiffData.ScaleDiff(setname, shapeName, scaleValue);
+	resultDiffData.ScaleDiff(setname, shapeName, scaleValue);
 }
 
 void Automorph::LoadResultDiffs(SliderSet &fromSet) {
-	fromSet.LoadSetDiffData(ResultDiffData);
+	fromSet.LoadSetDiffData(resultDiffData);
 	targetSliderDataNames.clear();
 	for (int i = 0; i < fromSet.size(); i++) {
 		for (auto df: fromSet[i].dataFiles) {
@@ -476,57 +436,57 @@ void Automorph::LoadResultDiffs(SliderSet &fromSet) {
 }
 
 void Automorph::ClearResultSet(const string& sliderName) {
-	ResultDiffData.ClearSet(sliderName);
+	resultDiffData.ClearSet(sliderName);
 }
 
 void Automorph::SaveResultDiff(const string& shapeName, const string& sliderName, const string& fileName) {
 	string setname = ResultDataName(shapeName, sliderName);
-	ResultDiffData.SaveSet(setname, shapeName, fileName);
+	resultDiffData.SaveSet(setname, shapeName, fileName);
 }
 
 void Automorph::SetResultDiff(const string& shapeName, const string& sliderName, unordered_map<int,vec3>& diff) {
 	string setname = ResultDataName(shapeName, sliderName);
 	vec3 diffscale;
-	if (!ResultDiffData.TargetMatch(setname, shapeName)) {
-		ResultDiffData.AddEmptySet(setname, shapeName);
+	if (!resultDiffData.TargetMatch(setname, shapeName)) {
+		resultDiffData.AddEmptySet(setname, shapeName);
 	}
 	for (auto i: diff) {	
-		ResultDiffData.SumDiff(setname, shapeName, i.first, i.second);
+		resultDiffData.SumDiff(setname, shapeName, i.first, i.second);
 	}
 }
 
 void Automorph::UpdateResultDiff(const string& shapeName, const string& sliderName, unordered_map<int,vec3>& diff) {
 	string setname = ResultDataName(shapeName, sliderName);
 	vec3 diffscale;
-	if (!ResultDiffData.TargetMatch(setname, shapeName)) {
-		ResultDiffData.AddEmptySet(setname, shapeName);
+	if (!resultDiffData.TargetMatch(setname, shapeName)) {
+		resultDiffData.AddEmptySet(setname, shapeName);
 	}
 	for (auto i: diff) {	
 		diffscale = vec3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
-		ResultDiffData.SumDiff(setname, shapeName, i.first, diffscale);
+		resultDiffData.SumDiff(setname, shapeName, i.first, diffscale);
 	}
 }
 
 void Automorph::UpdateRefDiff(const string& shapeName, const string& sliderName, unordered_map<int,vec3>& diff) {
 	string setname = ResultDataName(shapeName, sliderName);
 	vec3 diffscale;
-	if (!SrcDiffData->TargetMatch(setname, shapeName)) {
-		SrcDiffData->AddEmptySet(setname, shapeName);
+	if (!srcDiffData->TargetMatch(setname, shapeName)) {
+		srcDiffData->AddEmptySet(setname, shapeName);
 	}
 	for (auto i: diff) {	
 		diffscale = vec3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
-		SrcDiffData->SumDiff(setname, shapeName, i.first, diffscale);
+		srcDiffData->SumDiff(setname, shapeName, i.first, diffscale);
 	}
 }
 
 void Automorph::EmptyResultDiff(const string& shapeName, const string& sliderName) {
 	string setname = ResultDataName(shapeName, sliderName);
-	ResultDiffData.EmptySet(setname, shapeName);	
+	resultDiffData.EmptySet(setname, shapeName);
 }
 
 void Automorph::ZeroVertDiff(const string& shapeName, const string& sliderName, vector<int>* vertSet, unordered_map<int,float>* mask) {
 	string setname = ResultDataName(shapeName, sliderName);
-	ResultDiffData.ZeroVertDiff(setname, shapeName, vertSet, mask);	
+	resultDiffData.ZeroVertDiff(setname, shapeName, vertSet, mask);
 }
 
 void Automorph::SetResultDataName(const string& shapeName, const string& sliderName, const string& dataName) {
@@ -543,12 +503,12 @@ string Automorph::ResultDataName(const string& shapeName, const string& sliderNa
 }
 
 void Automorph::GenerateResultDiff(const string& shapeName, const string &sliderName, const string& refDataName) {
-	MAPTYPE<int,vector3>* diffData = SrcDiffData->GetDiffSet(refDataName);	
+	MAPTYPE<int, vector3>* diffData = srcDiffData->GetDiffSet(refDataName);
 	if (diffData == NULL) {
 		return;
 	}
 
-	MAPTYPE<int,vector3>::iterator diffItem;
+	MAPTYPE<int, vector3>::iterator diffItem;
 
 	mesh* m = sourceShapes[shapeName];
 	vector<kd_query_result>* vertProx;
@@ -561,15 +521,15 @@ void Automorph::GenerateResultDiff(const string& shapeName, const string &slider
 	int nearmoves;
 	double invDistTotal;
 	
-	if (ResultDiffData.TargetMatch(shapeName + sliderName, shapeName)) {
+	if (resultDiffData.TargetMatch(shapeName + sliderName, shapeName)) {
 		if (m->vcolors) {
-			ResultDiffData.ZeroVertDiff(shapeName + sliderName, shapeName, m->vcolors);
+			resultDiffData.ZeroVertDiff(shapeName + sliderName, shapeName, m->vcolors);
 		} else {
-			ResultDiffData.ClearSet(shapeName + sliderName);
+			resultDiffData.ClearSet(shapeName + sliderName);
 		}
 	}
 	
-	ResultDiffData.AddEmptySet(shapeName + sliderName, shapeName);
+	resultDiffData.AddEmptySet(shapeName + sliderName, shapeName);
 
 	for (int i = 0; i < m->nVerts; i++) {
 		vertProx = &prox_cache[i];
@@ -620,6 +580,6 @@ void Automorph::GenerateResultDiff(const string& shapeName, const string &slider
 		if (totalmove.DistanceTo(vec3(0.0f, 0.0f, 0.0f)) < EPSILON)
 			continue;
 
-		ResultDiffData.UpdateDiff(shapeName + sliderName, shapeName, i, totalmove);
+		resultDiffData.UpdateDiff(shapeName + sliderName, shapeName, i, totalmove);
 	}
 }

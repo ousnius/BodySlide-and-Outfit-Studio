@@ -689,42 +689,40 @@ void  OutfitProject::SetOutfitTextures(const string& textureFile) {
 }
 
 void OutfitProject::SetOutfitTexture(const string& shapeName, const string& textureFile) {
-	string niftexfile;
-	string GameDataPath = appConfig["GameDataPath"];
+	string nifTexFile;
+	string gameDataPath = appConfig["GameDataPath"];
 	string combinedTexFile;
 	if (textureFile == "_AUTO_") {		
-		workNif.GetTextureForShape((string)shapeName, niftexfile);
-		if (niftexfile.empty())
-			niftexfile = "noimg.dds";
+		workNif.GetTextureForShape((string)shapeName, nifTexFile);
+		if (nifTexFile.empty())
+			nifTexFile = "noimg.dds";
 
-		combinedTexFile = GameDataPath + niftexfile;
-		if(GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES ) {
+		combinedTexFile = gameDataPath + nifTexFile;
+		if (GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES) {
 			outfitTextures[shapeName] = defaultTexFile;
 		} else
 			outfitTextures[shapeName] = combinedTexFile;
-
 	} else
 		outfitTextures[shapeName] = textureFile;
 }
 
 void OutfitProject::SetRefTexture(const string& shapeName, const string& textureFile) {
-	string niftexfile;
-	string GameDataPath = appConfig["GameDataPath"];
+	string nifTexFile;
+	string gameDataPath = appConfig["GameDataPath"];
 	string combinedTexFile;
 	if (textureFile == "_AUTO_") {		
-		baseNif.GetTextureForShape((string)shapeName, niftexfile);
-		if (niftexfile.empty())
-			niftexfile = "noimg.dds";
+		baseNif.GetTextureForShape((string)shapeName, nifTexFile);
+		if (nifTexFile.empty())
+			nifTexFile = "noimg.dds";
 
-		combinedTexFile = GameDataPath + niftexfile;
-		if(GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES ) {
+		combinedTexFile = gameDataPath + nifTexFile;
+		if (GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES) {
 			baseTextures[shapeName] = defaultTexFile;
 		} else
 			baseTextures[shapeName] = combinedTexFile;
 	} else
 		baseTextures[shapeName] = textureFile;
 }
-
 
 void OutfitProject::SetOutfitShapeGameTexPaths(const string& shapeName, unordered_map<int, string>& gameTexPaths) {
 	for (auto tp: gameTexPaths) {
@@ -1033,8 +1031,10 @@ int OutfitProject::LoadReferenceTemplate(const string& templateName, bool ClearR
 			srcset = templateSets[i];
 		}
 	}
-	if (srcfile.empty()) 
+	if (srcfile.empty()) {
+		wxMessageBox("Template source file entry is invalid.", "Error");
 		return 1;
+	}
 
 	return LoadReference(srcfile, srcset, ClearRef);
 }
@@ -1089,11 +1089,19 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	}
 
 	string texfn;
+	string d = "data\\";
 	size_t p;
+
 	auto shader = baseNif.GetShaderForShape(baseShapeName);
 	if (shader && shader->IsSkinShader()) {
 		for (int i = 0; i < 9; i++) {
 			baseNif.GetTextureForShape(baseShapeName, texfn, i);
+			auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
+			if (it == texfn.begin()) {
+				texfn.erase(0, 5);
+				baseNif.SetTextureForShape(baseShapeName, texfn, i);
+			}
+
 			p = texfn.find("AstridBody");
 			if (p != string::npos) {
 				texfn.erase(p, 10);
@@ -1118,12 +1126,13 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	SliderSetFile sset(filename);
 	int oldVertCount = -1;
 	int newVertCount;
-	//SliderSetFile sset("SliderSets\\CalienteSets.xml");
-	if (sset.fail())
+
+	if (sset.fail()) {
+		wxMessageBox("Could not load slider set XML file.", "Load Reference", 5L | wxICON_ERROR);
 		return 1;
+	}
 
 	sset.GetSet(setName, activeSet);
-	
 	activeSet.SetBaseDataPath("ShapeData");
 	string inMeshFile = activeSet.GetInputFileName();
 
@@ -1132,13 +1141,15 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 
 	if (baseNif.Load(inMeshFile)) {
 		ClearReference();
-		return 2;   // load failed
+		wxMessageBox("Could not load reference NIF.", "Load Reference", 5L | wxICON_ERROR);
+		return 2;
 	}
 
 	vector<string> shapes;
 	baseNif.GetShapeList(shapes);
-	if (shapes.size() == 0) {  // no shapes in nif file
+	if (shapes.size() == 0) {
 		ClearReference();
+		wxMessageBox("Reference NIF does not contain any shapes.", "Load Reference", 5L | wxICON_ERROR);
 		return 4;
 	}
 
@@ -1172,7 +1183,8 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	newVertCount = baseNif.GetVertCountForShape(shape);
 	if (newVertCount == -1) {
 		ClearReference();
-		return 3; // shape not found
+		wxMessageBox("Shape not found in the reference NIF.", "Load Reference", 5L | wxICON_ERROR);
+		return 3;
 	}
 
 	if (oldVertCount > 0 && oldVertCount == newVertCount) {
@@ -1180,7 +1192,6 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 		if (!oldTarget.empty() && newTarget != oldTarget)
 			activeSet.Retarget(oldTarget, newTarget);
 	}
-	//sset.GetSet("CalienteBodyPlus", activeSet);
 	
 	baseShapeName = shape;
 
@@ -1212,11 +1223,19 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	}
 
 	string texfn;
+	string d = "data\\";
 	size_t p;
+
 	auto shader = baseNif.GetShaderForShape(baseShapeName);
 	if (shader && shader->IsSkinShader()) {
 		for (int i = 0; i < 9; i++)	{
 			baseNif.GetTextureForShape(baseShapeName, texfn, i);
+			auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
+			if (it == texfn.begin()) {
+				texfn.erase(0, 5);
+				workNif.SetTextureForShape(baseShapeName, texfn, i);
+			}
+
 			p = texfn.find("AstridBody");
 			if (p != string::npos) {
 				texfn.erase(p, 10);
@@ -1319,12 +1338,19 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 
 	for (auto s: workShapes) {
 		string texfn;
+		string d = "data\\";
 		size_t p;
 
 		auto shader = workNif.GetShaderForShape(s);
 		if (shader && shader->IsSkinShader()) {
-			for (int i=  0; i < 9; i++)	{
+			for (int i = 0; i < 9; i++)	{
 				workNif.GetTextureForShape(s, texfn, i);
+				auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
+				if (it == texfn.begin()) {
+					texfn.erase(0, 5);
+					workNif.SetTextureForShape(s, texfn, i);
+				}
+
 				p = texfn.find("AstridBody");
 				if (p != string::npos) {
 					texfn.erase(p, 10);
@@ -1419,12 +1445,19 @@ int OutfitProject::AddNif(const string& filename) {
 
 	for (auto s: workShapes) {
 		string texfn;
+		string d = "data\\";
 		size_t p;
 
 		auto shader = nif.GetShaderForShape(s);
 		if (shader && shader->IsSkinShader()) {
 			for (int i=  0; i < 9; i++)	{
 				nif.GetTextureForShape(s, texfn, i);
+				auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
+				if (it == texfn.begin()) {
+					texfn.erase(0, 5);
+					nif.SetTextureForShape(s, texfn, i);
+				}
+
 				p = texfn.find("AstridBody");
 				if (p != string::npos) {
 					texfn.erase(p, 10);

@@ -680,7 +680,7 @@ void OutfitStudio::OnBrushSettingsSlider(wxScrollEvent& event) {
 	if (id == XRCID("slideSize")) {
 		wxWindow* w = ((wxSlider*)event.GetEventObject())->GetParent();
 		wxStaticText* lbl = (wxStaticText*)XRCCTRL((*w), "valSize", wxStaticText);
-		valstr.sprintf("%.3f",(float)event.GetInt() / 100.0f);
+		valstr.sprintf("%.3f",(float)event.GetInt() / 1000.0f);
 		lbl->SetLabel(valstr);
 
 	} else if (id == XRCID("slideStr")) {
@@ -692,13 +692,13 @@ void OutfitStudio::OnBrushSettingsSlider(wxScrollEvent& event) {
 	} else if (id == XRCID("slideFocus")) {
 		wxWindow* w = ((wxSlider*)event.GetEventObject())->GetParent();
 		wxStaticText* lbl = (wxStaticText*)XRCCTRL((*w), "valFocus", wxStaticText);
-		valstr.sprintf("%.3f",(float)event.GetInt() / 100.0f);
+		valstr.sprintf("%.3f",(float)event.GetInt() / 1000.0f);
 		lbl->SetLabel(valstr);
 
 	} else if (id == XRCID("slideSpace")) {
 		wxWindow* w = ((wxSlider*)event.GetEventObject())->GetParent();
 		wxStaticText* lbl = (wxStaticText*)XRCCTRL((*w), "valSpace", wxStaticText);
-		valstr.sprintf("%.3f",(float)event.GetInt() / 100.0f);
+		valstr.sprintf("%.3f",(float)event.GetInt() / 1000.0f);
 		lbl->SetLabel(valstr);
 	}
 }
@@ -712,7 +712,7 @@ void OutfitStudio::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgBrushSettings", "wxDialog")) {
-		XRCCTRL(dlg, "slideSize", wxSlider)->SetValue(glView->GetBrushSize() * 100);
+		XRCCTRL(dlg, "slideSize", wxSlider)->SetValue(glView->GetBrushSize() * 1000);
 		dlg.Connect(wxEVT_SLIDER, wxScrollEventHandler(OutfitStudio::OnBrushSettingsSlider), NULL, this);		
 		lbl = (wxStaticText*)XRCCTRL(dlg, "valSize", wxStaticText);
 		valstr.sprintf("%.3f", glView->GetBrushSize());
@@ -723,22 +723,22 @@ void OutfitStudio::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
 		valstr.sprintf("%.3f", tb->getStrength());
 		lbl->SetLabel(valstr);
 
-		XRCCTRL(dlg, "slideFocus", wxSlider)->SetValue(tb->getFocus() * 100);
+		XRCCTRL(dlg, "slideFocus", wxSlider)->SetValue(tb->getFocus() * 1000);
 		lbl = (wxStaticText*)XRCCTRL(dlg, "valFocus", wxStaticText);
 		valstr.sprintf("%.3f", tb->getFocus());
 		lbl->SetLabel(valstr);
 
-		XRCCTRL(dlg, "slideSpace", wxSlider)->SetValue(tb->getSpacing() * 100);
+		XRCCTRL(dlg, "slideSpace", wxSlider)->SetValue(tb->getSpacing() * 1000);
 		lbl = (wxStaticText*)XRCCTRL(dlg, "valSpace", wxStaticText);
 		valstr.sprintf("%.3f", tb->getSpacing());
 		lbl->SetLabel(valstr);
 
 		int result = dlg.ShowModal();
 		if (result == wxID_OK) {	
-			float slideSize = XRCCTRL(dlg, "slideSize", wxSlider)->GetValue() / 100.0f;
+			float slideSize = XRCCTRL(dlg, "slideSize", wxSlider)->GetValue() / 1000.0f;
 			float slideStr = XRCCTRL(dlg, "slideStr", wxSlider)->GetValue() / 1000.0f;
-			float slideFocus = XRCCTRL(dlg, "slideFocus", wxSlider)->GetValue() / 100.0f;
-			float slideSpace = XRCCTRL(dlg, "slideSpace", wxSlider)->GetValue() / 100.0f;
+			float slideFocus = XRCCTRL(dlg, "slideFocus", wxSlider)->GetValue() / 1000.0f;
+			float slideSpace = XRCCTRL(dlg, "slideSpace", wxSlider)->GetValue() / 1000.0f;
 
 			glView->SetBrushSize(slideSize);
 			tb->setStrength(slideStr);
@@ -1391,10 +1391,12 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	bool genWeights;
 
 	strFileName = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName().GetFullName();
-	if (strFileName.empty()) {
-		wxMessageBox("No slider set file specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+	if (strFileName.empty() || strFileName.length() <= 4) {
+		wxMessageBox("Invalid or no slider set file specified! Please try again.", "Error", wxOK | wxICON_ERROR);
 		return;
 	}
+	if (strFileName.substr(strFileName.length() - 4, strFileName.length()) != ".xml")
+		strFileName.append(".xml");
 
 	strOutfitName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue();
 	if (strOutfitName.empty()) {
@@ -1412,10 +1414,12 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
-	if (strBaseFile.empty()) {
-		wxMessageBox("No base outfit .nif file name specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+	if (strBaseFile.empty() || strBaseFile.length() <= 4) {
+		wxMessageBox("An invalid or no base outfit .nif file name specified! Please try again.", "Error", wxOK | wxICON_ERROR);
 		return;
 	}
+	if (strBaseFile.substr(strBaseFile.length() - 4, strBaseFile.length()) != ".nif")
+		strBaseFile.append(".nif");
 
 	strGamePath = XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->GetValue();
 	if (strGamePath.empty()) {
@@ -2558,10 +2562,10 @@ void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	string newShapeName;
-	do {		
+	do {
 		wxString result = wxGetTextFromUser("Please enter a new unique name for the shape.", "Rename Shape");
-		newShapeName = result;
 		if (result.empty()) return;
+		newShapeName = result;
 	} while ((Proj->IsValidShape(newShapeName)));
 
 	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
@@ -2574,6 +2578,18 @@ void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	activeItem->shapeName = newShapeName;
 	activeShape = newShapeName;
 	outfitShapes->SetItemText(activeItem->GetId(), newShapeName);
+}
+
+void OutfitStudio::OnEnterClose(wxKeyEvent& event) {
+	if (event.GetKeyCode() == WXK_RETURN) {
+		wxDialog* parent = (wxDialog*)((wxWindow*)event.GetEventObject())->GetParent();
+		if (!parent)
+			return;
+
+		parent->Close();
+		parent->SetReturnCode(wxID_OK);
+	}
+	event.Skip();
 }
 
 void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
@@ -2593,6 +2609,7 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 		XRCCTRL(dlg, "msCustX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewMove, this);
 		XRCCTRL(dlg, "msCustY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewMove, this);
 		XRCCTRL(dlg, "msCustZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewMove, this);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
 			wxRadioBox* b = XRCCTRL(dlg, "msOffsetChoice", wxRadioBox);
@@ -2686,6 +2703,7 @@ void OutfitStudio::OnOffsetShape(wxCommandEvent& event) {
 		XRCCTRL(dlg, "osCustX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewOffset, this);
 		XRCCTRL(dlg, "osCustY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewOffset, this);
 		XRCCTRL(dlg, "osCustZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewOffset, this);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
 			offs.x = atof(XRCCTRL(dlg, "osCustX", wxTextCtrl)->GetValue().ToAscii().data());
@@ -2742,6 +2760,8 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& event) {
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgScaleShape")) {
 		XRCCTRL(dlg, "scaleValue", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewScale, this);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
+
 		if (dlg.ShowModal() == wxID_OK) {
 			scale = atof(XRCCTRL(dlg, "scaleValue", wxTextCtrl)->GetValue().ToAscii().data());
 		} else
@@ -2806,6 +2826,8 @@ void OutfitStudio::OnVirtScaleShape(wxCommandEvent& event) {
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgVirtScaleShape")) {
 		XRCCTRL(dlg, "scaleValue", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewVirtScale, this);
 		XRCCTRL(dlg, "scaleValue", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", scale));
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
+
 		if (dlg.ShowModal() == wxID_OK)
 			scale = atof(XRCCTRL(dlg, "scaleValue", wxTextCtrl)->GetValue().ToAscii().data());
 		if (scale == 0.0f)
@@ -2864,6 +2886,8 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& event) {
 	}
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgRotateShape")) {
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
+
 		if (dlg.ShowModal() == wxID_OK) {
 			angleX = atof(XRCCTRL(dlg, "angleX", wxTextCtrl)->GetValue().ToAscii().data());
 			angleY = atof(XRCCTRL(dlg, "angleY", wxTextCtrl)->GetValue().ToAscii().data());
@@ -2887,7 +2911,7 @@ void OutfitStudio::OnSetShapeTexture(wxCommandEvent& event) {
 	string texpath;
 	string oDispPath;
 	string nDispPath;
-	
+
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -2895,57 +2919,60 @@ void OutfitStudio::OnSetShapeTexture(wxCommandEvent& event) {
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgShapeTextures")) {
 		wxGrid* stTexGrid = XRCCTRL(dlg, "stTexGrid", wxGrid);
-			stTexGrid->CreateGrid(9, 1);
-			stTexGrid->EnableEditing(true);
-			stTexGrid->EnableGridLines(true);
-			stTexGrid->EnableDragGridSize(false);
-			stTexGrid->SetMargins(0, 0);
+		stTexGrid->CreateGrid(9, 1);
+		stTexGrid->EnableEditing(true);
+		stTexGrid->EnableGridLines(true);
+		stTexGrid->EnableDragGridSize(false);
+		stTexGrid->SetMargins(0, 0);
 
-			// Columns
-			stTexGrid->SetColSize(0, 350);
-			stTexGrid->EnableDragColMove(false);
-			stTexGrid->EnableDragColSize(false);
-			stTexGrid->SetColLabelSize(30);
-			stTexGrid->SetColLabelValue(0, wxT("Game Texture Paths (not including game data path)"));
-			stTexGrid->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
+		// Columns
+		stTexGrid->SetColSize(0, 350);
+		stTexGrid->EnableDragColMove(false);
+		stTexGrid->EnableDragColSize(false);
+		stTexGrid->SetColLabelSize(30);
+		stTexGrid->SetColLabelValue(0, wxT("Game Texture Paths (not including game data path)"));
+		stTexGrid->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
 
-			// Rows
-			stTexGrid->AutoSizeRows();
-			stTexGrid->EnableDragRowSize(false);
-			stTexGrid->SetRowLabelSize(80);
-			stTexGrid->SetRowLabelValue(0, wxT("Diffuse"));
-			stTexGrid->SetRowLabelValue(1, wxT("Normal"));
-			stTexGrid->SetRowLabelValue(2, wxT("Glow/Skin"));
-			stTexGrid->SetRowLabelValue(3, wxT("Parallax"));
-			stTexGrid->SetRowLabelValue(4, wxT("Environment"));
-			stTexGrid->SetRowLabelValue(5, wxT("Env Mask"));
-			stTexGrid->SetRowLabelValue(6, wxT("6"));
-			stTexGrid->SetRowLabelValue(7, wxT("Specular"));
-			stTexGrid->SetRowLabelValue(8, wxT("8"));
-			stTexGrid->SetRowLabelValue(9, wxT("9"));
-			stTexGrid->SetRowLabelAlignment(wxALIGN_LEFT, wxALIGN_CENTRE);
+		// Rows
+		stTexGrid->AutoSizeRows();
+		stTexGrid->EnableDragRowSize(false);
+		stTexGrid->SetRowLabelSize(80);
+		stTexGrid->SetRowLabelValue(0, wxT("Diffuse"));
+		stTexGrid->SetRowLabelValue(1, wxT("Normal"));
+		stTexGrid->SetRowLabelValue(2, wxT("Glow/Skin"));
+		stTexGrid->SetRowLabelValue(3, wxT("Parallax"));
+		stTexGrid->SetRowLabelValue(4, wxT("Environment"));
+		stTexGrid->SetRowLabelValue(5, wxT("Env Mask"));
+		stTexGrid->SetRowLabelValue(6, wxT("6"));
+		stTexGrid->SetRowLabelValue(7, wxT("Specular"));
+		stTexGrid->SetRowLabelValue(8, wxT("8"));
+		stTexGrid->SetRowLabelValue(9, wxT("9"));
+		stTexGrid->SetRowLabelAlignment(wxALIGN_LEFT, wxALIGN_CENTRE);
 
-			// Cell Defaults
-			stTexGrid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
+		// Cell Defaults
+		stTexGrid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
 
-			for (int i = 0; i < 9; i++) {
-				if (activeItem->bIsOutfitShape) {
-					Proj->workNif.GetTextureForShape(activeShape, texpath, i);
-				} else {					
-					Proj->baseNif.GetTextureForShape(activeShape, texpath, i);
-				}
-				stTexGrid->SetCellValue(texpath, i, 0);
+		for (int i = 0; i < 9; i++) {
+			if (activeItem->bIsOutfitShape) {
+				Proj->workNif.GetTextureForShape(activeShape, texpath, i);
 			}
-			oDispPath = Proj->OutfitTexture(activeShape);
-			XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->SetPath(oDispPath);
+			else {
+				Proj->baseNif.GetTextureForShape(activeShape, texpath, i);
+			}
+			stTexGrid->SetCellValue(texpath, i, 0);
+		}
+		oDispPath = Proj->OutfitTexture(activeShape);
+		XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->SetPath(oDispPath);
+		XRCCTRL(dlg, "btApplyDiffuse", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudio::OnApplyDiffuse, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
-			nDispPath = XRCCTRL(dlg,"stDisplayTexture", wxFilePickerCtrl)->GetPath();
+			nDispPath = XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->GetPath();
 			if (nDispPath != oDispPath) {
 				if (activeItem->bIsOutfitShape) {
 					Proj->SetOutfitTexture(activeShape, nDispPath);
 					glView->SetMeshTexture(activeShape, nDispPath, Proj->OutfitShapeShaderType(activeShape));
-				} else {
+				}
+				else {
 					Proj->SetRefTexture(activeShape, nDispPath);
 					glView->SetMeshTexture(activeShape, nDispPath, Proj->RefShapeShaderType(activeShape));
 				}
@@ -2955,11 +2982,29 @@ void OutfitStudio::OnSetShapeTexture(wxCommandEvent& event) {
 				texpath = stTexGrid->GetCellValue(i, 0);
 				if (activeItem->bIsOutfitShape) {
 					Proj->workNif.SetTextureForShape(activeShape, texpath, i);
-				} else {					
+				}
+				else {
 					Proj->baseNif.SetTextureForShape(activeShape, texpath, i);
 				}
 			}
-		}	
+		}
+	}
+}
+
+void OutfitStudio::OnApplyDiffuse(wxCommandEvent& event) {
+	wxDialog* dlg = (wxDialog*)((wxWindow*)event.GetEventObject())->GetParent();
+	if (!dlg)
+		return;
+
+	wxFilePickerCtrl* dispPath = (wxFilePickerCtrl*)dlg->FindWindow("stDisplayTexture");
+	wxGrid* texGrid = (wxGrid*)dlg->FindWindow("stTexGrid");
+	if (!dispPath || !texGrid)
+		return;
+
+	string tex = texGrid->GetCellValue(0, 0);
+	if (!tex.empty()) {
+		string newTex = appConfig["GameDataPath"] + tex;
+		dispPath->SetPath(newTex);
 	}
 }
 
@@ -2973,9 +3018,10 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& event) {
 		}
 
 		do {		
-			wxString result = wxGetTextFromUser("Please enter a unique name for the duplicated shape.","Duplicate Shape");
+			wxString result = wxGetTextFromUser("Please enter a unique name for the duplicated shape.", "Duplicate Shape");
+			if (result.empty()) return;
 			newname = result;
-		} while ((Proj->IsValidShape(newname)));
+		} while (Proj->IsValidShape(newname));
 		
 		mesh* curshapemesh = glView->GetMesh(activeShape);
 
@@ -3190,10 +3236,11 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size) : wxPanel(parent, -1,
 	lastX = 0;
 	lastY = 0;
 
-	brushSize  = 0.5f;
+	brushSize = 0.45f;
 	activeBrush = NULL;
 	editMode = false;
 	transformMode = 0;
+	bMaskPaint = false;
 	bWeightPaint = false;
 	isPainting = false;
 	isTransforming = false;
@@ -3271,10 +3318,12 @@ void wxGLPanel::SetActiveShape(const string& shapeName) {
 }
 
 void wxGLPanel::SetActiveBrush(int brushID) {
+	bMaskPaint = false;
 	bWeightPaint = false;
 	switch (brushID) {
 	case 0:
 		activeBrush = &maskBrush;
+		bMaskPaint = true;
 		break;
 	case 1:
 		activeBrush = &standardBrush;
@@ -3306,7 +3355,7 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 	bool meshHit;
 
 	TweakPickInfo tpi;
-	meshHit = gls.CollideMesh(screenPos.x, screenPos.y, tpi.origin, tpi.normal,&tpi.facet);
+	meshHit = gls.CollideMesh(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);
 	if (!meshHit)
 		return false;
 
@@ -3317,7 +3366,7 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 		gls.GetPickRay(screenPos.x, screenPos.y, d, s);
 		d.x *= -1;
 		s.x *= -1;
-		if (!gls.CollideMesh(screenPos.x, screenPos.y, o, n, &tpi.facetM, &d, &s) )
+		if (!gls.CollideMesh(screenPos.x, screenPos.y, o, n, &tpi.facetM, &d, &s))
 			tpi.facetM = -1;
 	}
 
@@ -3328,18 +3377,19 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 	int cy = r.GetHeight() / 2;
 	//gls.GetPickRay(cx, cy, v, vo);
 	gls.GetPickRay(screenPos.x, screenPos.y, v, vo);
-	v = v * -1;	
+	v = v * -1;
 	tpi.view = v;
 
 	//activeStroke=strokeManager.CreateStroke(gls.GetActiveMesh(), &tweakBrush);
 	//tweakBrush.setMirror(true);
 	savedBrush = activeBrush;
-	
+
 	if ((GetKeyState(VK_CONTROL) & 0x8000) > 0) {
 		if ((GetKeyState(VK_MENU) & 0x8000) > 0) {
 			UnMaskBrush.setStrength(-maskBrush.getStrength());
 			activeBrush = &UnMaskBrush;
-		} else {
+		}
+		else {
 			activeBrush = &maskBrush;
 		}
 	}
@@ -3348,16 +3398,19 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 			unweightBrush.refBone = ((OutfitStudio*)notifyWindow)->GetActiveBone();
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
-		} else {
+		}
+		else {
 			weightBrush.refBone = ((OutfitStudio*)notifyWindow)->GetActiveBone();
 		}
-	} 
+	}
 	else if ((GetKeyState(VK_MENU) & 0x8000) > 0) {
-		if (activeBrush == &standardBrush) 
+		if (activeBrush == &standardBrush) {
 			activeBrush = &deflateBrush;
+		}
 		else if (activeBrush == &deflateBrush) {
 			activeBrush = &standardBrush;
-		} else if (activeBrush == &maskBrush) {
+		}
+		else if (activeBrush == &maskBrush) {
 			UnMaskBrush.setStrength(-maskBrush.getStrength());
 			activeBrush = &UnMaskBrush;
 		}
@@ -3380,130 +3433,130 @@ void wxGLPanel::UpdateBrushStroke(wxPoint& screenPos) {
 	vec3 n;
 	vec3 v;
 	vec3 vo;
-	
+
 	vec3 d;	// mirror pick ray direction
 	vec3 s;	// mirror pick ray origin
-	
+
 	TweakPickInfo tpi;
 
-	if(activeStroke) {
+	if (activeStroke) {
 		wxRect r = this->GetClientRect();
-		int cx = r.GetWidth()/2;
-		int cy = r.GetHeight()/2;
+		int cx = r.GetWidth() / 2;
+		int cy = r.GetHeight() / 2;
 		gls.GetPickRay(cx, cy, v, vo);
 
-		gls.UpdateCursor(screenPos.x, screenPos.y); 
-		
-		if(activeBrush->Type() == TBT_MOVE) 
+		gls.UpdateCursor(screenPos.x, screenPos.y);
+
+		if (activeBrush->Type() == TBT_MOVE)
 		{
 			vec3 pn;
 			float pd;
-			((TB_Move*)activeBrush)->GetWorkingPlane(pn,pd);
-			gls.CollidePlane(screenPos.x,screenPos.y,tpi.origin,pn,pd);
-		} else {
-			gls.CollideMesh(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);	
-			if(bXMirror) {
+			((TB_Move*)activeBrush)->GetWorkingPlane(pn, pd);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
+		}
+		else {
+			gls.CollideMesh(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);
+			if (bXMirror) {
 				gls.GetPickRay(screenPos.x, screenPos.y, d, s);
 				d.x *= -1;
 				s.x *= -1;
-				if(!gls.CollideMesh(screenPos.x, screenPos.y,o, n, &tpi.facetM, &d, &s) )
+				if (!gls.CollideMesh(screenPos.x, screenPos.y, o, n, &tpi.facetM, &d, &s))
 					tpi.facetM = -1;
 			}
 			tpi.normal.Normalize();
 		}
 
-		v = v*-1;	
+		v = v*-1;
 		tpi.view = v;
 		activeStroke->updateStroke(tpi);
 	}
 }
 
 void wxGLPanel::EndBrushStroke(wxPoint& screenPos) {
-	if(activeStroke) {
+	if (activeStroke) {
 		activeStroke->endStroke();
-		if(activeStroke->BrushType() == TBT_XFORM) {
+		if (activeStroke->BrushType() == TBT_XFORM) {
 			//strokeManager->InvalidateHistoricalBVH();
 		}
 
 		activeStroke = NULL;
-		if(activeBrush != &maskBrush)
+		if (activeBrush != &maskBrush)
 			((OutfitStudio*)notifyWindow)->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
 		activeBrush = savedBrush;
 	}
 }
 
-
 bool wxGLPanel::StartTransform(wxPoint& screenPos) {
-	
-
 	TweakPickInfo tpi;
-	int meshHit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal,&tpi.facet);
-	if(meshHit == -1) {
+	int meshHit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);
+	if (meshHit == -1) {
 		return false;
 	}
 
 	tpi.center = xformCenter;
 
 	string mname = gls.GetOverlay(meshHit)->shapeName;
-	if(mname.find("Move") != string::npos) {
+	if (mname.find("Move") != string::npos) {
 		translateBrush.SetXFormType(0);
-		activeBrush = &translateBrush;	
-		switch(mname[0]) {
+		activeBrush = &translateBrush;
+		switch (mname[0]) {
 		case 'X':
 			tpi.view = vec3(1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f,0.0f,1.0f);	
+			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
 			break;
 		case 'Y':
 			tpi.view = vec3(0.0f, 1.0f, 0.0f);
-			tpi.normal = vec3(0.0f,0.0f,1.0f);	
-			break;	
+			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
+			break;
 		case 'Z':
 			tpi.view = vec3(0.0f, 0.0f, 1.0f);
-			tpi.normal = vec3(1.0f,0.0f,0.0f);
+			tpi.normal = vec3(1.0f, 0.0f, 0.0f);
 			break;
 		}
-	} else if(mname.find("Rotate") != string::npos) {
+	}
+	else if (mname.find("Rotate") != string::npos) {
 		translateBrush.SetXFormType(1);
-		activeBrush = &translateBrush;	
-		switch(mname[0]) {
+		activeBrush = &translateBrush;
+		switch (mname[0]) {
 		case 'X':
-			gls.CollidePlane(screenPos.x,screenPos.y,tpi.origin,vec3(1.0f,0.0f,0.0f),-tpi.center.x);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, vec3(1.0f, 0.0f, 0.0f), -tpi.center.x);
 			//tpi.view = vec3(0.0f, 1.0f, 0.0f);
-			tpi.normal = vec3(1.0f,0.0f,0.0f);	
+			tpi.normal = vec3(1.0f, 0.0f, 0.0f);
 			break;
 		case 'Y':
-			gls.CollidePlane(screenPos.x,screenPos.y,tpi.origin,vec3(0.0f,1.0f,0.0f),-tpi.center.y);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, vec3(0.0f, 1.0f, 0.0f), -tpi.center.y);
 			//tpi.view = vec3(-1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f,1.0f,0.0f);	
-			break;	
+			tpi.normal = vec3(0.0f, 1.0f, 0.0f);
+			break;
 		case 'Z':
-			gls.CollidePlane(screenPos.x,screenPos.y,tpi.origin,vec3(0.0f,0.0f,1.0f),-tpi.center.z);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, vec3(0.0f, 0.0f, 1.0f), -tpi.center.z);
 			//tpi.view = vec3(-1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f,0.0f,1.0f);
+			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
 			break;
 		}
-	} else if (mname.find("Scale") != string::npos) {
+	}
+	else if (mname.find("Scale") != string::npos) {
 		translateBrush.SetXFormType(2);
-		activeBrush = &translateBrush;	
-		switch(mname[0]) {
+		activeBrush = &translateBrush;
+		switch (mname[0]) {
 		case 'X':
 			tpi.view = vec3(1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f,0.0f,1.0f);	
+			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
 			break;
 		case 'Y':
 			tpi.view = vec3(0.0f, 1.0f, 0.0f);
-			tpi.normal = vec3(0.0f,0.0f,1.0f);	
-			break;	
+			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
+			break;
 		case 'Z':
 			tpi.view = vec3(0.0f, 0.0f, 1.0f);
-			tpi.normal = vec3(1.0f,0.0f,0.0f);
+			tpi.normal = vec3(1.0f, 0.0f, 0.0f);
 			break;
 		}
 	}
 
-	activeStroke=strokeManager->CreateStroke(gls.GetActiveMesh(),activeBrush);
-	
-//	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin,tpi.normal,0.0f);
+	activeStroke = strokeManager->CreateStroke(gls.GetActiveMesh(), activeBrush);
+
+	//	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin,tpi.normal,0.0f);
 	activeStroke->beginStroke(tpi);
 	activeStroke->updateStroke(tpi);
 
@@ -3513,14 +3566,14 @@ bool wxGLPanel::StartTransform(wxPoint& screenPos) {
 }
 
 void wxGLPanel::UpdateTransform(wxPoint& screenPos) {
-	
+
 	TweakPickInfo tpi;
-	
+
 	vec3 pn;
-	float pd; 
-	((TB_XForm*)(activeBrush))->GetWorkingPlane(pn,pd);
-	gls.CollidePlane(screenPos.x,screenPos.y,tpi.origin,pn,-pd);
-	if(tpi.origin.x < 0) 
+	float pd;
+	((TB_XForm*)(activeBrush))->GetWorkingPlane(pn, pd);
+	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, -pd);
+	if (tpi.origin.x < 0)
 		tpi.origin.x = tpi.origin.x;
 	activeStroke->updateStroke(tpi);
 }
@@ -3530,24 +3583,22 @@ void wxGLPanel::EndTransform(wxPoint& screenPos) {
 	activeStroke = NULL;
 	ShowTransformTool(true, false);
 	((OutfitStudio*)notifyWindow)->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
-	
 }
-
 
 bool wxGLPanel::UndoStroke() {
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 	mesh* m = strokeManager->GetCurStateMesh();
 	bool skip = (!gls.IsValidMesh(m));
 	bool ret = strokeManager->backStroke(skip);
-	if(!skip) {
-		if(ret && curStroke && curStroke->BrushType() != TBT_MASK) {			
-			((OutfitStudio*)notifyWindow)->ActiveShapeUpdated(curStroke,true);
-			if(curStroke->BrushType() == TBT_XFORM) {
-				ShowTransformTool(true,false);
+	if (!skip) {
+		if (ret && curStroke && curStroke->BrushType() != TBT_MASK) {
+			((OutfitStudio*)notifyWindow)->ActiveShapeUpdated(curStroke, true);
+			if (curStroke->BrushType() == TBT_XFORM) {
+				ShowTransformTool(true, false);
 			}
 
 		}
-	}	
+	}
 	Refresh();
 	return ret;
 }
@@ -3557,15 +3608,14 @@ bool wxGLPanel::RedoStroke() {
 	bool skip = (!gls.IsValidMesh(m));
 	bool ret = strokeManager->forwardStroke(skip);
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	if(!skip) {
-		if(ret && curStroke->BrushType() != TBT_MASK) {			
-			((OutfitStudio*)notifyWindow)->ActiveShapeUpdated(curStroke);			
-			if(curStroke->BrushType() == TBT_XFORM) {
-				ShowTransformTool(true,false);
+	if (!skip) {
+		if (ret && curStroke->BrushType() != TBT_MASK) {
+			((OutfitStudio*)notifyWindow)->ActiveShapeUpdated(curStroke);
+			if (curStroke->BrushType() == TBT_XFORM) {
+				ShowTransformTool(true, false);
 			}
-
 		}
-	}	
+	}
 	Refresh();
 	return ret;
 }
@@ -3576,7 +3626,7 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 	int zform_move = -1;
 
 	static TweakBrush* saveBrush = NULL;
-	if (updateBrush) 
+	if (updateBrush)
 		saveBrush = activeBrush;
 
 	vec3 o;
@@ -3586,21 +3636,22 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 		string mode = Config.GetString("Editing/CenterMode");
 		if (mode == "Object") {
 			o = gls.GetActiveMesh()->bvh->Center();
-		} else if (mode == "Selected") {
+		}
+		else if (mode == "Selected") {
 			o = gls.GetActiveCenter();
 		}
 	}
 
 	xformCenter = o;
-	if (show) { 
+	if (show) {
 		if (updateBrush)
 			saveBrush = activeBrush;
 
-		xform_move = gls.AddVis3dArrow(o,vec3(1.0f, 0.0f, 0.0f), 0.02f, 0.1f, 1.5f, vec3(1.0f, 0.0f, 0.0f), "XMoveMesh");
+		xform_move = gls.AddVis3dArrow(o, vec3(1.0f, 0.0f, 0.0f), 0.02f, 0.1f, 1.5f, vec3(1.0f, 0.0f, 0.0f), "XMoveMesh");
 		gls.GetOverlay("XMoveMesh")->CreateBVH();
-		yform_move = gls.AddVis3dArrow(o,vec3(0.0f, 1.0f, 0.0f), 0.02f, 0.1f, 1.5f, vec3(0.0f, 1.0f, 0.0f), "YMoveMesh");
+		yform_move = gls.AddVis3dArrow(o, vec3(0.0f, 1.0f, 0.0f), 0.02f, 0.1f, 1.5f, vec3(0.0f, 1.0f, 0.0f), "YMoveMesh");
 		gls.GetOverlay("YMoveMesh")->CreateBVH();
-		zform_move = gls.AddVis3dArrow(o,vec3(0.0f, 0.0f, 1.0f), 0.02f, 0.1f, 1.5f, vec3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
+		zform_move = gls.AddVis3dArrow(o, vec3(0.0f, 0.0f, 1.0f), 0.02f, 0.1f, 1.5f, vec3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
 		gls.GetOverlay("ZMoveMesh")->CreateBVH();
 		gls.AddVis3dRing(o, vec3(1.0f, 0.0f, 0.0f), 1.0f, 0.03f, vec3(1.0f, 0.0f, 0.0f), "XRotateMesh");
 		gls.GetOverlay("XRotateMesh")->CreateBVH();
@@ -3613,7 +3664,7 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 	else {
 		if (updateBrush) {
 			activeBrush = saveBrush;
-			if (activeBrush == NULL) 
+			if (activeBrush == NULL)
 				editMode = false;
 		}
 		gls.SetOverlayVisibility("XMoveMesh", false);
@@ -3628,7 +3679,7 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 }
 
 void wxGLPanel::OnIdle(wxIdleEvent& event) {
-	for (auto it: BVHUpdateQueue) {
+	for (auto it : BVHUpdateQueue) {
 		gls.RecalculateMeshBVH(it);
 	}
 	BVHUpdateQueue.clear();
@@ -3649,15 +3700,16 @@ void wxGLPanel::OnSize(wxSizeEvent& event) {
 }
 
 void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
-	if ((GetKeyState('S') & 0x8000 ) > 0 )  {
+	if ((GetKeyState('S') & 0x8000) > 0)  {
 		wxPoint p = event.GetPosition();
 		int delt = event.GetWheelRotation();
-		if (delt < 0) 
+		if (delt < 0)
 			DecBrush();
-		else 
+		else
 			IncBrush();
 		gls.UpdateCursor(p.x, p.y);
-	} else {
+	}
+	else {
 		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
 	}
@@ -3674,6 +3726,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	int y;
 	int t = 0;
 	float w = 0.0f;
+	float m = 0.0f;
 	event.GetPosition(&x, &y);
 
 	if (mbuttonDown) {
@@ -3686,7 +3739,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		isRDragging = true;
 		if ((GetKeyState(VK_SHIFT) & 0x8000) > 0) {
 			gls.PanCamera(x - lastX, y - lastY);
-		} else {
+		}
+		else {
 			gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
 		}
@@ -3696,21 +3750,24 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		isLDragging = true;
 		if (isPainting) {
 			UpdateBrushStroke(event.GetPosition());
-		} else if (isTransforming) {
+		}
+		else if (isTransforming) {
 			UpdateTransform(event.GetPosition());
-		} else  {
+		}
+		else  {
 			if (Config.MatchValue("Input/LeftMousePan", "true")) {
 				//	if((GetKeyState(VK_SHIFT) & 0x8000) > 0) {
 				gls.PanCamera(x - lastX, y - lastY);
 				//	}
 			}
-		} 
+		}
 		Refresh();
 	}
 	if (!rbuttonDown && !lbuttonDown) {
 		if (editMode && transformMode == 0) {
-			cursorExists = gls.UpdateCursor(x, y, &t, &w);
-		} else {
+			cursorExists = gls.UpdateCursor(x, y, &t, &w, &m);
+		}
+		else {
 			cursorExists = false;
 			gls.ShowCursor(false);
 		}
@@ -3718,11 +3775,13 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		if (cursorExists) {
 			if (bWeightPaint)
 				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, w), 1);
+			else if (bMaskPaint)
+				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
 			else
 				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d", t), 1);
 		}
 		else {
-			((OutfitStudio*)notifyWindow)->statusBar->SetStatusText("",  1);		
+			((OutfitStudio*)notifyWindow)->statusBar->SetStatusText("", 1);
 		}
 		Refresh();
 	}
@@ -3731,25 +3790,22 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 }
 
 void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
-		CaptureMouse();
-		lbuttonDown = true;
-		bool meshHit;
-	//if((GetKeyState(VK_SHIFT) & 0x8000) > 0) {
+	CaptureMouse();
+	lbuttonDown = true;
+	bool meshHit;
 
-//	} else {
-
-		if (editMode) {
-			meshHit = StartBrushStroke(event.GetPosition());
-			if (meshHit) {
-				isPainting = true;
-			}
-		} else if (transformMode != 0) {
-			meshHit = StartTransform(event.GetPosition());			
-			if(meshHit) {
-				isTransforming = true;
-			}
+	if (editMode) {
+		meshHit = StartBrushStroke(event.GetPosition());
+		if (meshHit) {
+			isPainting = true;
 		}
-//	}
+	}
+	else if (transformMode != 0) {
+		meshHit = StartTransform(event.GetPosition());
+		if (meshHit) {
+			isTransforming = true;
+		}
+	}
 }
 
 void wxGLPanel::OnMiddleDown(wxMouseEvent& event) {
@@ -3773,30 +3829,31 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		int x, y;
 		event.GetPosition(&x, &y);
 		wxPoint p = event.GetPosition();
-		int meshID = gls.PickMesh(x,y);
+		int meshID = gls.PickMesh(x, y);
 		if (meshID == -1) {
 
-		} else {
+		}
+		else {
 			// if(mBrushMode == BRUSH_SELECT) {
-				//((OutfitStudio*)GetParent())->SelectShape(gls.GetMeshName(meshID));
-				((OutfitStudio*)notifyWindow)->SelectShape(gls.GetMeshName(meshID));
+			//((OutfitStudio*)GetParent())->SelectShape(gls.GetMeshName(meshID));
+			((OutfitStudio*)notifyWindow)->SelectShape(gls.GetMeshName(meshID));
 			// }
 		}
-	} 
+	}
 	if (isPainting){
 		EndBrushStroke(event.GetPosition());
 		isPainting = false;
 	}
 	if (isTransforming) {
 		EndTransform(event.GetPosition());
-		isTransforming =false;
+		isTransforming = false;
 	}
 
 	isLDragging = false;
 	lbuttonDown = false;
 }
 
-void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {	
+void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	if (isPainting) {
 		EndBrushStroke(wxPoint(0, 0));
 		isPainting = false;

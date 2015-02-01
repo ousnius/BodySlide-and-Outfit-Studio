@@ -713,18 +713,20 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, vec3& outOrigin, vec3& in
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri, float* outHoverWeight) {
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
 	vec3 o; 
 	vec3 d;
 	vec3 v;
 	vec3 vo;
 	bool ret = false;
 	int ringID;
-	//return ;
+
 	if (outHoverTri)
 		(*outHoverTri) = -1;
 	if (outHoverWeight)
 		(*outHoverWeight) = 0.0f;
+	if (outHoverMask)
+		(*outHoverMask) = 0.0f;
 
     GetPickRay(ScreenX, ScreenY, d, o);
 	if (meshes.size() > 0 && activeMesh >= 0) {
@@ -780,12 +782,13 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri, float* 
 					pointid = t.p3;
 				}
 
+				int dec = 5;
 				if (outHoverTri) 
 					(*outHoverTri) = pointid;
-				if (outHoverWeight) {
-					int dec = 5;
+				if (outHoverWeight)
 					(*outHoverWeight) = floor(meshes[activeMesh]->vcolors[pointid].y * pow(10, dec) + 0.5f) / pow(10, dec);
-				}
+				if (outHoverMask)
+					(*outHoverMask) = floor(meshes[activeMesh]->vcolors[pointid].x * pow(10, dec) + 0.5f) / pow(10, dec);
 
 				AddVisPoint(hilitepoint, "pointhilite");
 				overlays[AddVisPoint(origin, "cursorcenter")]->color = vec3(1.0f, 0.0f, 0.0f);

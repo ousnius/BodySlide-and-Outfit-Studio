@@ -45,7 +45,7 @@ public:
 	void AddExplicitMesh(vector<vector3>* v, vector<tri>* t, vector<vector2>* uv = NULL, const string& shapename= "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {
-		gls.RenameMesh(shapeName,newShapeName);
+		gls.RenameMesh(shapeName, newShapeName);
 	}
 	
 	void SetMeshTexture(const string& shapeName, const string& texturefile, int shaderType=0);
@@ -159,36 +159,37 @@ public:
 			bAutoNormals = true;
 	}
 	float GetBrushSize() {
-		return brushSize;
+		return brushSize / 3.0f;
 	}
 	void SetBrushSize(float val) {
+		val *= 3.0f;
 		brushSize = val;
 		gls.SetCursorSize(val);
 	}
 
 	float IncBrush() {
-		float sz = brushSize + 0.01f;
-		gls.SetCursorSize(gls.GetCursorSize() + 0.01f);
-		brushSize += 0.01f;
+		float sz = brushSize + 0.001f;
+		gls.SetCursorSize(gls.GetCursorSize() + 0.0005f);
+		brushSize += 0.001f;
 		return sz;
 	}
 	float DecBrush() {		
-		float sz = brushSize - 0.01f;
-		gls.SetCursorSize(gls.GetCursorSize() - 0.01f);
-		brushSize -= 0.01f;
+		float sz = brushSize - 0.001f;
+		gls.SetCursorSize(gls.GetCursorSize() - 0.0005f);
+		brushSize -= 0.001f;
 		return sz;
 	}
 	float IncStr() {
 		if (!activeBrush) return 0.0f;
 		float str = activeBrush->getStrength();
-		str += 0.001f;
+		str += 0.010f;
 		activeBrush->setStrength(str);
 		return str;
 	}
 	float DecStr() {
 		if (!activeBrush) return 0.0f;
 		float str = activeBrush->getStrength();
-		str -= 0.001f;
+		str -= 0.010f;
 		activeBrush->setStrength(str);
 		return str;
 	}
@@ -305,6 +306,7 @@ private:
 	float brushSize;
 	bool editMode;
 	bool transformMode;		// 0 = off, 1 = move, 2 = rotate, 3 = scale
+	bool bMaskPaint;
 	bool bWeightPaint;
 	bool isPainting;
 	bool isTransforming;
@@ -554,6 +556,7 @@ private:
 	void OnImportShape(wxCommandEvent& event);
 	void OnExportShape(wxCommandEvent& event);
 
+	void OnEnterClose(wxKeyEvent& event);
 	void OnMoveShape(wxCommandEvent& event);
 	void OnOffsetShape(wxCommandEvent& event);
 	void OnPreviewMove(wxCommandEvent& event);
@@ -569,6 +572,7 @@ private:
 	
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetShapeTexture(wxCommandEvent& event);
+	void OnApplyDiffuse(wxCommandEvent& event);
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
 	void OnAddBone(wxCommandEvent& event);
@@ -629,14 +633,14 @@ private:
 			return;
 
 		mesh* m = glView->GetMesh(activeItem->shapeName);
-		double a; 
+		double a;
 		a = m->GetSmoothThreshold();
-		wxString resp = wxString::FromDouble(a,4);
+		wxString resp = wxString::FromDouble(a, 4);
 		resp = wxGetTextFromUser("Enter the maximum angle between faces for smoothing to take place", "Set Smooth Angle", resp, this);
 		if (resp.empty())
 			return;
 		resp.ToDouble(&a);
-		m->SetSmoothThreshold((float)a);	
+		m->SetSmoothThreshold((float)a);
 		m->SmoothNormals();
 		glView->Refresh();
 	}
@@ -657,7 +661,7 @@ private:
 	}
 
 	void OnShowMask(wxCommandEvent& WXUNUSED(event)) {
-		if (activeShape.empty()) 
+		if (activeShape.empty())
 			return;
 		glView->ToggleMaskVisible();
 		glView->Refresh();
@@ -666,21 +670,21 @@ private:
 	void OnBrushSettings(wxCommandEvent& event);
 
 	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetActiveBrush() && glView->GetBrushSize() < 4.0f) {
-			float v = glView->IncBrush();
+		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
+			float v = glView->IncBrush() / 3.0f;
 			statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 			CheckBrushBounds();
 		}
 	}
 	void OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() > 0.0f) {
-			float v = glView->DecBrush();
+			float v = glView->DecBrush() / 3.0f;
 			statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 			CheckBrushBounds();
 		}
 	}
 	void OnIncStr(wxCommandEvent& WXUNUSED(event)) {
-		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() < 0.1f) {
+		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() < 1.0f) {
 			float v = glView->IncStr();
 			statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
 			CheckBrushBounds();
@@ -701,7 +705,7 @@ private:
 		//float focus = brush->getFocus();
 		//float spacing = brush->getSpacing();
 
-		if (size >= 4.0f)
+		if (size >= 1.0f)
 			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), false);
 		else
 			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), true);
@@ -711,7 +715,7 @@ private:
 		else
 			GetMenuBar()->Enable(XRCID("btnDecreaseSize"), true);
 
-		if (strength >= 0.1f)
+		if (strength >= 1.0f)
 			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), false);
 		else
 			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), true);
@@ -723,14 +727,14 @@ private:
 	}
 
 	void OnClearMask(wxCommandEvent& WXUNUSED(event)) {
-		if (activeShape.empty()) 
+		if (activeShape.empty())
 			return;
 		glView->ClearMask();
 		glView->Refresh();
 	}
 
-	void OnInvertMask(wxCommandEvent& WXUNUSED(event)) {	
-		if (activeShape.empty()) 
+	void OnInvertMask(wxCommandEvent& WXUNUSED(event)) {
+		if (activeShape.empty())
 			return;
 		glView->InvertMask();
 		glView->Refresh();

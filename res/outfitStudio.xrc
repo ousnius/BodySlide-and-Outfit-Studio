@@ -1640,7 +1640,7 @@
             <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
             <border>5</border>
             <object class="wxStaticText" name="m_staticText13">
-              <label>Outfit Studio Texture:</label>
+              <label>Display Texture:</label>
               <wrap>-1</wrap>
             </object>
           </object>
@@ -1672,6 +1672,15 @@
         <object class="wxGrid" name="stTexGrid">
           <style>wxALWAYS_SHOW_SB</style>
 		  <size>446,236</size>
+        </object>
+      </object>
+      <object class="sizeritem">
+        <option>0</option>
+        <flag>wxALL|wxEXPAND</flag>
+        <border>5</border>
+        <object class="wxButton" name="btApplyDiffuse">
+          <tooltip>Applies the current diffuse texture path to the Outfit Studio display texture path.</tooltip>						
+          <label>Apply Diffuse</label>
         </object>
       </object>
       <object class="sizeritem">
@@ -2477,7 +2486,7 @@
       <growablerows></growablerows>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="m_staticText1">
           <label>Size</label>
@@ -2490,25 +2499,24 @@
         <border>5</border>
         <object class="wxSlider" name="slideSize">
           <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>300,20</size>
-          <value>50</value>
+          <size>450,25</size>
+          <value>0</value>
           <min>0</min>
-          <max>400</max>
+          <max>1000</max>
         </object>
       </object>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="valSize">
-          <size>30,20</size>
-          <label>0</label>
+          <label>1.000</label>
           <wrap>-1</wrap>
         </object>
       </object>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="m_staticText2">
           <label>Strength</label>
@@ -2521,15 +2529,15 @@
         <border>5</border>
         <object class="wxSlider" name="slideStr">
           <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>200,20</size>
-          <value>50</value>
+          <size>450,25</size>
+          <value>0</value>
           <min>0</min>
-          <max>100</max>
+          <max>1000</max>
         </object>
       </object>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="valStr">
           <label>0</label>
@@ -2538,7 +2546,7 @@
       </object>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="lblslideFocus">
           <label>Focus</label>
@@ -2551,15 +2559,15 @@
         <border>5</border>
         <object class="wxSlider" name="slideFocus">
           <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>200,20</size>
-          <value>100</value>
+          <size>450,25</size>
+          <value>0</value>
           <min>0</min>
-          <max>500</max>
+          <max>1000</max>
         </object>
       </object>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="valFocus">
           <label>0</label>
@@ -2568,7 +2576,7 @@
       </object>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="lblslideSpace">
           <label>Spacing</label>
@@ -2581,15 +2589,15 @@
         <border>5</border>
         <object class="wxSlider" name="slideSpace">
           <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>200,20</size>
-          <value>50</value>
+          <size>450,25</size>
+          <value>0</value>
           <min>0</min>
-          <max>100</max>
+          <max>1000</max>
         </object>
       </object>
       <object class="sizeritem">
         <option>0</option>
-        <flag>wxALL</flag>
+        <flag>wxALIGN_CENTER|wxALL</flag>
         <border>5</border>
         <object class="wxStaticText" name="valSpace">
           <label>0</label>

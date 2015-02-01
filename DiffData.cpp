@@ -80,9 +80,9 @@ void DiffDataSets::RenameSet(const string& oldName, const string& newName) {
 void DiffDataSets::DeepRename(const string& oldName, const string& newName) {
 	vector<string> oldtargets;
 	vector<string> newTargets;
-	string newDT;
+	string newDT = "";
 	for (auto& dt: dataTargets) {
-		if (dt.second == oldName) {
+		if (dt.second == oldName && dt.first.length() >= oldName.length()) {
 			oldtargets.push_back(dt.first);
 			newDT = dt.first.substr(oldName.length());
 			newDT = newName + newDT;
