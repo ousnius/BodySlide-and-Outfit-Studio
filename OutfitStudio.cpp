@@ -713,7 +713,6 @@ void OutfitStudio::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgBrushSettings", "wxDialog")) {
 		XRCCTRL(dlg, "slideSize", wxSlider)->SetValue(glView->GetBrushSize() * 1000);
-		dlg.Connect(wxEVT_SLIDER, wxScrollEventHandler(OutfitStudio::OnBrushSettingsSlider), NULL, this);		
 		lbl = (wxStaticText*)XRCCTRL(dlg, "valSize", wxStaticText);
 		valstr.sprintf("%.3f", glView->GetBrushSize());
 		lbl->SetLabel(valstr);
@@ -732,6 +731,9 @@ void OutfitStudio::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
 		lbl = (wxStaticText*)XRCCTRL(dlg, "valSpace", wxStaticText);
 		valstr.sprintf("%.3f", tb->getSpacing());
 		lbl->SetLabel(valstr);
+
+		dlg.Connect(wxEVT_SLIDER, wxScrollEventHandler(OutfitStudio::OnBrushSettingsSlider), NULL, this);
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
 		int result = dlg.ShowModal();
 		if (result == wxID_OK) {	
