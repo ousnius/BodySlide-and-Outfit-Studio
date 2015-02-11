@@ -227,6 +227,7 @@ public:
 	void GetPickRay(int ScreenX, int ScreenY, vec3& dirVect, vec3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
 	bool UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri = NULL, float* outHoverWeight = NULL, float* outHoverMask = NULL);
+	bool GetCursorVertex(int ScreenX, int ScreenY, vtx* outHoverVtx = NULL);
 	void ShowCursor(bool show=true);
 
 	// ray/mesh collision detection.  from a screen point, calculates a ray, and finds the nearest collision point and surface normal on 

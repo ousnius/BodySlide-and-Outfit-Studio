@@ -283,6 +283,7 @@ private:
 	void OnRightDown(wxMouseEvent& event);
 	void OnRightUp(wxMouseEvent& event);
 
+	void OnKeys(wxKeyEvent& event);
 	void OnIdle(wxIdleEvent& event);
 	
 	void OnCaptureLost(wxMouseCaptureLostEvent& event);
@@ -557,6 +558,7 @@ private:
 	void OnExportShape(wxCommandEvent& event);
 
 	void OnEnterClose(wxKeyEvent& event);
+
 	void OnMoveShape(wxCommandEvent& event);
 	void OnOffsetShape(wxCommandEvent& event);
 	void OnPreviewMove(wxCommandEvent& event);

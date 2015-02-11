@@ -134,7 +134,7 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxString& title, const wxPoin
 	wxMenuBar* menu = this->GetMenuBar();
 
 	//menu->GetMenu(
-	int statusWidths[] = { -1, 200, 100 };
+	int statusWidths[] = { -1, 275, 100 };
 	if (statusBar) {
 		statusBar->SetFieldsCount(3);
 		statusBar->SetStatusWidths(3, statusWidths);
@@ -3207,6 +3207,7 @@ BEGIN_EVENT_TABLE(wxGLPanel, wxPanel)
 	EVT_MIDDLE_UP(wxGLPanel::OnMiddleUp)
 	EVT_RIGHT_DOWN(wxGLPanel::OnRightDown)
 	EVT_RIGHT_UP(wxGLPanel::OnRightUp)
+	EVT_CHAR_HOOK(wxGLPanel::OnKeys)
 	EVT_IDLE(wxGLPanel::OnIdle)
 	EVT_MOUSE_CAPTURE_LOST(wxGLPanel::OnCaptureLost)
 END_EVENT_TABLE()
@@ -3345,6 +3346,32 @@ void wxGLPanel::SetActiveBrush(int brushID) {
 		bWeightPaint = true;
 		break;
 	}
+}
+
+void wxGLPanel::OnKeys(wxKeyEvent& event) {
+	if (event.GetUnicodeKey() == 'V') {
+		wxDialog dlg;
+		wxPoint cursorPos(event.GetPosition());
+		mesh* activeMesh = gls.GetActiveMesh();
+		vtx v;
+
+		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &v))
+			return;
+
+		if (wxXmlResource::Get()->LoadDialog(&dlg, notifyWindow, "dlgMoveVertex")) {
+			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", v.x));
+			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", v.y));
+			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", v.z));
+
+			if (dlg.ShowModal() == wxID_OK) {
+				activeMesh->verts[v.indexRef].x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().ToAscii().data());
+				activeMesh->verts[v.indexRef].y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().ToAscii().data());
+				activeMesh->verts[v.indexRef].z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().ToAscii().data());
+				gls.RenderOneFrame();
+			}
+		}
+	}
+	event.Skip();
 }
 
 bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
@@ -3779,8 +3806,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, w), 1);
 			else if (bMaskPaint)
 				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
-			else
-				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d", t), 1);
+			else {
+				vtx& vpos = gls.GetActiveMesh()->verts[t];
+				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, vpos.x, vpos.y, vpos.z), 1);
+			}
 		}
 		else {
 			((OutfitStudio*)notifyWindow)->statusBar->SetStatusText("", 1);

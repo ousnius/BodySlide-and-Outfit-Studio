@@ -821,6 +821,64 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri, float* 
 	return ret;
 }
 
+bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, vtx* outHoverVtx) {
+	vec3 o;
+	vec3 d;
+	vec3 v;
+	vec3 vo;
+
+	if (outHoverVtx)
+		(*outHoverVtx) = vtx();
+
+	GetPickRay(ScreenX, ScreenY, d, o);
+	if (meshes.size() > 0 && activeMesh >= 0) {
+		vector<IntersectResult> results;
+		if (meshes[activeMesh]->bvh->IntersectRay(o, d, &results)) {
+			if (results.size() > 0) {
+				int min_i = 0;
+				float minDist = results[0].HitDistance;
+				for (int i = 1; i < results.size(); i++) {
+					if (results[i].HitDistance < minDist)
+						min_i = i;
+				}
+
+				vec3 origin = results[min_i].HitCoord;
+
+				tri t;
+				t = meshes[activeMesh]->tris[results[min_i].HitFacet];
+				vtx v1 = (meshes[activeMesh]->verts[t.p1]);
+				vtx v2 = (meshes[activeMesh]->verts[t.p2]);
+				vtx v3 = (meshes[activeMesh]->verts[t.p3]);
+
+
+				vec3 p1(v1.x, v1.y, v1.z);
+				vec3 p2(v2.x, v2.y, v2.z);
+				vec3 p3(v3.x, v3.y, v3.z);
+
+				vec3 hilitepoint = p1;
+				float closestdist = fabs(p1.DistanceTo(origin));
+				float nextdist = fabs(p2.DistanceTo(origin));
+				int pointid = t.p1;
+
+				if (nextdist < closestdist) {
+					closestdist = nextdist;
+					hilitepoint = p2;
+					pointid = t.p2;
+				}
+				nextdist = fabs(p3.DistanceTo(origin));
+				if (nextdist < closestdist) {
+					hilitepoint = p3;
+					pointid = t.p3;
+				}
+
+				(*outHoverVtx) = meshes[activeMesh]->verts[pointid];
+				return TRUE;
+			}
+		}
+	}
+	return FALSE;
+}
+
 void GLSurface::ShowCursor(bool show) {
 	SetOverlayVisibility("cursormesh", show);
 	//SetMeshVisibility("adjacency", false);
