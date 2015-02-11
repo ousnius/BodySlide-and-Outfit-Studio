@@ -346,6 +346,14 @@ public:
     OutfitStudio(wxWindow* parent, const wxString& title, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
 	~OutfitStudio();
 	wxGLPanel* glView;
+
+	OutfitProject* Proj;			// Always assumed to exist!  blank one created in constructor, replaced on load/new
+	string activeShape;
+	ShapeItemData* activeItem;
+	string activeSlider;
+	string activeBone;
+	bool bEditSlider;
+
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
 	wxScrolledWindow* sliderScroll;
@@ -472,14 +480,6 @@ private:
 	map<string, bool> shapeDirty;
 
 	*/
-	OutfitProject* Proj;			// Always assumed to exist!  blank one created in constructor, replaced on load/new
-
-	string activeShape;
-	ShapeItemData* activeItem;
-	string activeSlider;
-	string activeBone;
-	bool bEditSlider;
-
 	vec3 previewMove;
 	float previewScale;
 

@@ -772,6 +772,8 @@ public:
 
 	vector3 GetShapeVirtualOffset(const string& shapeName);
 	void GetShapeVirtualScale(const string& shapeName, float& scale, bool& fromCenterFlag);
+
+	void MoveVertex(const string& shapeName, const vector3& pos, const int& id);
 	void OffsetShape(const string& shapeName, const vector3& offset, unordered_map<int, float>* mask = NULL);
 	void ScaleShape(const string& shapeName, const float& scale, unordered_map<int, float>* mask = NULL);
 	void RotateShape(const string& shapeName, const vec3& angle, unordered_map<int, float>* mask = NULL);

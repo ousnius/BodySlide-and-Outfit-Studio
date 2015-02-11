@@ -782,6 +782,15 @@ void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sli
 	}
 }
 
+void OutfitProject::MoveVertex(const string& shapeName, vec3& pos, int& id, bool IsOutfit) {
+	if (IsOutfit) {
+		workNif.MoveVertex(shapeName, pos, id);
+	}
+	else {
+		baseNif.MoveVertex(shapeName, pos, id);
+	}
+}
+
 void OutfitProject::OffsetShape(const string& shapeName, vec3& xlate, bool IsOutfit, unordered_map<int, float>* mask) {
 	if (IsOutfit) {
 		workNif.OffsetShape(shapeName, xlate, mask);

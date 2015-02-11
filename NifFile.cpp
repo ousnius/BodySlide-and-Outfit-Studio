@@ -1802,6 +1802,25 @@ void NifFile::GetShapeVirtualScale(const string& shapeName, float& scale, bool& 
 	return;
 }
 
+void NifFile::MoveVertex(const string& shapeName, const vector3& pos, const int& id) {
+	vector<vec3>* verts;
+	int btype;
+	int dataID = shapeDataIdForName(shapeName, btype);
+
+	if (dataID == -1)
+		return;
+
+	if (btype == NIFBLOCK_TRISHAPEDATA) {
+		NifBlockTriShapeData* shapeData = (NifBlockTriShapeData*)blocks[dataID];
+		verts = &shapeData->vertices;
+	}
+	else {
+		NifBlockTriStripsData* shapeData = (NifBlockTriStripsData*)blocks[dataID];
+		verts = &shapeData->vertices;
+	}
+	(*verts)[id] = pos;
+}
+
 void NifFile::OffsetShape(const string& shapeName, const vector3& offset, unordered_map<int, float>* mask) {
 	vector<vec3>* verts;
 	int btype;

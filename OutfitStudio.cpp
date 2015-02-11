@@ -2627,11 +2627,16 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 		if (mask.size() > 0)
 			mptr = &mask;
 
+		float diffY, diffZ;
 		Proj->GetLiveVerts(activeItem->shapeName, verts, activeItem->bIsOutfitShape);
 		if (bEditSlider) {
 			for (int i = 0; i < verts.size(); i++) {
 				d = (offs - previewMove) * (1.0f - mask[i]);
 				diff[i] = d;
+				diffY = diff[i].y / 10.0f;
+				diffZ = diff[i].z / 10.0f;
+				diff[i].z = diffY;
+				diff[i].y = diffZ;
 				verts[i] += d;
 			}
 			Proj->UpdateMorphResult(activeItem->shapeName, activeSlider, diff, activeItem->bIsOutfitShape);
@@ -2665,11 +2670,16 @@ void OutfitStudio::OnPreviewMove(wxCommandEvent& event) {
 	if (mask.size() > 0)
 		mptr = &mask;
 
+	float diffY, diffZ;
 	Proj->GetLiveVerts(activeItem->shapeName, verts, activeItem->bIsOutfitShape);
 	if (bEditSlider) {
 		for (int i = 0; i < verts.size(); i++) {
 			d = (changed - previewMove) * (1.0f - mask[i]);
 			diff[i] = d;
+			diffY = diff[i].y / 10.0f;
+			diffZ = diff[i].z / 10.0f;
+			diff[i].z = diffY;
+			diff[i].y = diffZ;
 			verts[i] += d;
 		}
 		Proj->UpdateMorphResult(activeItem->shapeName, activeSlider, diff, activeItem->bIsOutfitShape);
@@ -3351,23 +3361,42 @@ void wxGLPanel::SetActiveBrush(int brushID) {
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
 	if (event.GetUnicodeKey() == 'V') {
 		wxDialog dlg;
+		OutfitStudio* main = (OutfitStudio*)notifyWindow;
 		wxPoint cursorPos(event.GetPosition());
-		mesh* activeMesh = gls.GetActiveMesh();
-		vtx v;
 
-		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &v))
+		unordered_map<int, vec3> diff;
+		vector<vec3> verts;
+		vec3 newPos;
+		vtx oldVertex;
+
+		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &oldVertex))
 			return;
 
-		if (wxXmlResource::Get()->LoadDialog(&dlg, notifyWindow, "dlgMoveVertex")) {
-			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", v.x));
-			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", v.y));
-			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", v.z));
+		if (wxXmlResource::Get()->LoadDialog(&dlg, main, "dlgMoveVertex")) {
+			main->Proj->GetLiveVerts(main->activeItem->shapeName, verts, main->activeItem->bIsOutfitShape);
+			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[oldVertex.indexRef].x));
+			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[oldVertex.indexRef].y));
+			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[oldVertex.indexRef].z));
 
 			if (dlg.ShowModal() == wxID_OK) {
-				activeMesh->verts[v.indexRef].x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().ToAscii().data());
-				activeMesh->verts[v.indexRef].y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().ToAscii().data());
-				activeMesh->verts[v.indexRef].z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().ToAscii().data());
-				gls.RenderOneFrame();
+				newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().ToAscii().data());
+				newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().ToAscii().data());
+				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().ToAscii().data());
+
+				if (main->bEditSlider) {
+					diff[oldVertex.indexRef] = newPos - verts[oldVertex.indexRef];
+					float diffY = diff[oldVertex.indexRef].y / 10.0f;
+					float diffZ = diff[oldVertex.indexRef].z / 10.0f;
+					diff[oldVertex.indexRef].z = diffY;
+					diff[oldVertex.indexRef].y = diffZ;
+					verts[oldVertex.indexRef] = newPos;
+					main->Proj->UpdateMorphResult(main->activeItem->shapeName, main->activeSlider, diff, main->activeItem->bIsOutfitShape);
+				}
+				else {
+					main->Proj->MoveVertex(main->activeItem->shapeName, newPos, oldVertex.indexRef, main->activeItem->bIsOutfitShape);
+				}
+				main->Proj->GetLiveVerts(main->activeItem->shapeName, verts, main->activeItem->bIsOutfitShape);
+				UpdateMeshVertices(main->activeItem->shapeName, &verts);
 			}
 		}
 	}
@@ -3807,8 +3836,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			else if (bMaskPaint)
 				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
 			else {
-				vtx& vpos = gls.GetActiveMesh()->verts[t];
-				((OutfitStudio*)notifyWindow)->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, vpos.x, vpos.y, vpos.z), 1);
+				OutfitStudio* main = (OutfitStudio*)notifyWindow;
+				vector<vec3> verts;
+				main->Proj->GetLiveVerts(main->activeItem->shapeName, verts, main->activeItem->bIsOutfitShape);
+				main->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
 			}
 		}
 		else {
