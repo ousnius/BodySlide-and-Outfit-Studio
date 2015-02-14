@@ -125,7 +125,6 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
 			AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
 			if (!cstm.isValidBone) {
 				invalidBones += bn + "\n";
-				continue;
 			}
 			vector<vec3> r;
 			nif->GetNodeTransform(bn, r, cstm.trans, cstm.scale);
@@ -140,20 +139,8 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
 
 	shapeSkinning[shape] = AnimSkin(nif, shape, boneIndices);
 
-	/*
-	nif->GetShapeBoneIDList(shape, boneids);
-	for (int i = 0;i < boneNames.size(); i++) {				
-		tmpbonelist.emplace_back(boneNames[i], boneids[i], i);
-		nif->GetNodeTransform(boneNames[i], tmpbonelist.back().rot,  tmpbonelist.back().trans,tmpbonelist.back().scale);
-	}
-	boneList[shape] = tmpbonelist;
-	*/
-
-	// ----  FIX :  animskin needs a different input to its constructor!  ----- //
-	//shapeSkinning[shape] = AnimSkin(nif, shape, boneList[shape]);
-
 	if (!invalidBones.empty())
-		wxMessageBox("Bones not found in reference skeleton, skipping:\n\n" + invalidBones, "Invalid Bones");
+		wxMessageBox("Bones in shape '" + shape + "' not found in reference skeleton:\n\n" + invalidBones, "Invalid Bones");
 
 	return true;
 }
@@ -309,7 +296,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs) {
 				id = nif->GetNodeID(bone);
 				if (id == -1) {
 					if (!AnimSkeleton::getInstance().GetBone(bone, boneref)) {
-						wxMessageBox("Could not write bone from reference skeleton: " + bone);
+						//wxMessageBox("Could not write bone from reference skeleton: " + bone);
 						continue;
 					}
 					if (boneref.refCount == 0)
@@ -333,7 +320,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs) {
 	for (auto shapeBoneList: shapeBones) {
 		for (auto boneName: shapeBoneList.second) {
 			if (!AnimSkeleton::getInstance().GetBoneTransform(boneName, xform)) {
-	 			wxMessageBox("Error! Attempted to access bone that does not exist in reference skeleton: " + boneName);
+	 			//wxMessageBox("Error! Attempted to access bone that does not exist in reference skeleton: " + boneName);
 				continue;
 			}
 			nif->SetNodeTransform(boneName, xform);
