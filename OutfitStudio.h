@@ -168,17 +168,28 @@ public:
 	}
 
 	float IncBrush() {
-		float sz = brushSize + 0.001f;
-		gls.SetCursorSize(gls.GetCursorSize() + 0.0005f);
-		brushSize += 0.001f;
-		return sz;
+		gls.SetCursorSize(gls.GetCursorSize() + 0.010f);
+		brushSize += 0.010f;
+		LimitBrushSize();
+		return brushSize;
 	}
-	float DecBrush() {		
-		float sz = brushSize - 0.001f;
-		gls.SetCursorSize(gls.GetCursorSize() - 0.0005f);
-		brushSize -= 0.001f;
-		return sz;
+	float DecBrush() {
+		gls.SetCursorSize(gls.GetCursorSize() - 0.010f);
+		brushSize -= 0.010f;
+		LimitBrushSize();
+		return brushSize;
 	}
+	void LimitBrushSize() {
+		if (brushSize < 0.000f) {
+			gls.SetCursorSize(0.000f);
+			brushSize = 0.000f;
+		}
+		else if (brushSize > 3.000f) {
+			gls.SetCursorSize(3.000f);
+			brushSize = 3.000f;
+		}
+	}
+
 	float IncStr() {
 		if (!activeBrush) return 0.0f;
 		float str = activeBrush->getStrength();

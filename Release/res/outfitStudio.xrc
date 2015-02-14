@@ -466,7 +466,7 @@
 					<label>Mask Weighted Vertices</label>
 					<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
 				</object>
-				<object class="wxMenuItem" name="buildSkinParitions">
+				<object class="wxMenuItem" name="buildSkinPartitions">
 					<label>Build Skin Partitions</label>
 					<help>Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken.</help>
 				</object>        
@@ -597,19 +597,19 @@
 					<help>Configure current brush settings.</help>
 				</object>
 				<object class="wxMenuItem" name="btnIncreaseSize">
-					<label>Increase Brush Size\t=</label>
+					<label>Increase Brush Size\tShift++</label>
 					<help>Increase brush diameter</help>
 				</object>
 				<object class="wxMenuItem" name="btnDecreaseSize">
-					<label>Decrease Brush Size\t-</label>
+					<label>Decrease Brush Size\tShift+-</label>
 					<help>Decrease brush diameter</help>
 				</object>
 				<object class="wxMenuItem" name="btnIncreaseStr">
-					<label>Increase Brush Strength\t]</label>
+					<label>Increase Brush Strength\tCtrl++</label>
 					<help>Increase brush strength</help>
 				</object>
 				<object class="wxMenuItem" name="btnDecreaseStr">
-					<label>Decrease Brush Strength\t[</label>
+					<label>Decrease Brush Strength\tCtrl+-</label>
 					<help>Decrease brush strength</help>
 				</object>
 				<object class="separator" />
@@ -623,7 +623,7 @@
 				</object>
 				<object class="wxMenuItem" name="btnShowMask">
 					<label>Show Mask\tM</label>
-					<help>Shade meshes to indcate areas that are currently masked.</help>
+					<help>Shade meshes to indicate areas that are currently masked.</help>
 					<checked>1</checked>
 					<checkable>1</checkable>
 				</object>
@@ -2364,7 +2364,11 @@
       <label>Copy Bone Weights</label>
       <help>Copies all bone weights from the reference shape to this shape.</help>
     </object>
-    <object class="wxMenuItem" name="buildSkinParitions">
+    <object class="wxMenuItem" name="copySelectedWeight">
+      <label>Copy Selected Weights</label>
+      <help>Copies selected bone weights from the reference shape to the current shape.</help>
+    </object>
+    <object class="wxMenuItem" name="buildSkinPartitions">
       <label>Build Skin Partitions</label>
       <help>Creates or rebuilds skin partitions for this shape. </help>
     </object>

@@ -88,7 +88,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("copyBoneWeight"), OutfitStudio::OnCopyBoneWeight)	
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudio::OnCopySelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudio::OnMaskWeighted)
-	EVT_MENU(XRCID("buildSkinParitions"), OutfitStudio::OnBuildSkinPartitions)
+	EVT_MENU(XRCID("buildSkinPartitions"), OutfitStudio::OnBuildSkinPartitions)
 
 	EVT_MENU(XRCID("editUndo"), OutfitStudio::OnUndo)
 	EVT_MENU(XRCID("editRedo"), OutfitStudio::OnRedo)
