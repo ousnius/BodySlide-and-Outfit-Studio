@@ -6,7 +6,6 @@
 #include "Automorph.h"
 #include <map>
 #include <string>
-#include <regex>
 #include <vector>
 #include "Mesh.h"
 #include "shlobj.h"
@@ -137,7 +136,6 @@ public:
 	void SetOutfitTextures(const string& textureFile);
 	void SetOutfitTexture(const string& shapeName, const string& textureFile);
 	void SetRefTexture(const string& shapeName, const string& textureFile);
-	void SetOutfitShapeGameTexPaths (const string& shapeName, unordered_map<int, string>& gameTexPaths);
 
 	int RefShapeShaderType(const string& shapeName) {
 		auto s = baseNif.GetShaderForShape((string)shapeName);
@@ -169,7 +167,6 @@ public:
 	void RotateShape(const string& shapeName, vec3& angle, bool IsOutfit, unordered_map<int, float>* mask = NULL);
 	
 	void AutoOffset(bool IsOutfit);
-	void TrimTexturePaths(string shapeName, NifFile* nif);
 
 	// uses the automorph class to generate proximity values for bone weights.  This is done by
 	//   creating several virtual sliders that contain weight offsets for each vertex per bone.  

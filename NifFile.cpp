@@ -269,6 +269,7 @@ int NifFile::Load(const string& filename) {
 		isValid = false;
 		return 1;
 	}
+	TrimTexturePaths();
 	isValid = true;
 	return 0;
 }
@@ -420,6 +421,27 @@ void NifFile::SetTextureForShape(string& shapeName, string& outTexFile, int texI
 		return;
 	ts->textures[texIndex].str = outTexFile;
 	hdr.blockSizes[shader->texsetRef] = ts->CalcBlockSize();
+}
+
+void NifFile::TrimTexturePaths() {
+	string dPath = "data\\";
+	string tPath = "textures\\";
+	string tFile;
+	vector<string> shapes;
+	GetShapeList(shapes);
+
+	for (auto s : shapes) {
+		auto shader = GetShaderForShape(s);
+		if (shader && shader->IsSkinShader()) {
+			for (int i = 0; i < 9; i++) {
+				GetTextureForShape(s, tFile, i);
+				tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
+				tFile = regex_replace(tFile, regex(".*textures\\\\", regex_constants::icase), ""); // Remove everything before and including the texture path
+				tFile = regex_replace(tFile, regex("AstridBody", regex_constants::icase), "femalebody_1"); // Change astrid body to femalebody_1
+				SetTextureForShape(s, tFile, i);
+			}
+		}
+	}
 }
 
 bool NifFile::HasBlockType(string typeStr) {

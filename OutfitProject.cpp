@@ -690,14 +690,14 @@ void  OutfitProject::SetOutfitTextures(const string& textureFile) {
 
 void OutfitProject::SetOutfitTexture(const string& shapeName, const string& textureFile) {
 	string nifTexFile;
-	string gameDataPath = appConfig["GameDataPath"];
+	string texturesDir = appConfig["GameDataPath"] + "textures\\";
 	string combinedTexFile;
 	if (textureFile == "_AUTO_") {		
 		workNif.GetTextureForShape((string)shapeName, nifTexFile);
 		if (nifTexFile.empty())
 			nifTexFile = "noimg.dds";
 
-		combinedTexFile = gameDataPath + nifTexFile;
+		combinedTexFile = texturesDir + nifTexFile;
 		if (GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES) {
 			outfitTextures[shapeName] = defaultTexFile;
 		} else
@@ -708,26 +708,20 @@ void OutfitProject::SetOutfitTexture(const string& shapeName, const string& text
 
 void OutfitProject::SetRefTexture(const string& shapeName, const string& textureFile) {
 	string nifTexFile;
-	string gameDataPath = appConfig["GameDataPath"];
+	string texturesDir = appConfig["GameDataPath"] + "textures\\";
 	string combinedTexFile;
 	if (textureFile == "_AUTO_") {		
 		baseNif.GetTextureForShape((string)shapeName, nifTexFile);
 		if (nifTexFile.empty())
 			nifTexFile = "noimg.dds";
 
-		combinedTexFile = gameDataPath + nifTexFile;
+		combinedTexFile = texturesDir + nifTexFile;
 		if (GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES) {
 			baseTextures[shapeName] = defaultTexFile;
 		} else
 			baseTextures[shapeName] = combinedTexFile;
 	} else
 		baseTextures[shapeName] = textureFile;
-}
-
-void OutfitProject::SetOutfitShapeGameTexPaths(const string& shapeName, unordered_map<int, string>& gameTexPaths) {
-	for (auto tp: gameTexPaths) {
-		workNif.SetTextureForShape((string) shapeName, tp.second, tp.first);
-	}
 }
 
 bool OutfitProject::IsValidShape(const string& shapeName) {
@@ -1054,15 +1048,15 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 
 	if (baseNif.Load(fileName))
 		return 2;
-	
+
 	baseShapeName = shapeName;
-	
+
 	vector<string> baseShapes;
 	vector<string> workShapes;
 	RefShapes(baseShapes);
 	OutfitShapes(workShapes);
-	for (auto s1: workShapes) {
-		for (auto s2: baseShapes) {
+	for (auto s1 : workShapes) {
+		for (auto s2 : baseShapes) {
 			if (s1 == s2) {
 				RenameShape(s1, s1 + "_ref", false);
 				baseShapeName = s1 + "_ref";
@@ -1080,20 +1074,20 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	trans -= rootTrans; // Get shape translation includes the root translation
 
 	if (!rootTrans.IsZero()) {
-        baseNif.OffsetShape(baseShapeName, rootTrans);
-        baseNif.SetRootTranslation(vec3(0.0f, 0.0f, 0.0f));
+		baseNif.OffsetShape(baseShapeName, rootTrans);
+		baseNif.SetRootTranslation(vec3(0.0f, 0.0f, 0.0f));
 	}
 	if (rootScale != 1.0f) {
-        baseNif.ScaleShape(baseShapeName, rootScale);
-        baseNif.SetRootScale(1.0f);
+		baseNif.ScaleShape(baseShapeName, rootScale);
+		baseNif.SetRootScale(1.0f);
 	}
 
 	if (!trans.IsZero()) {
-        baseNif.OffsetShape(baseShapeName, trans);
-        baseNif.SetShapeTranslation(baseShapeName, vec3(0.0f, 0.0f, 0.0f));
+		baseNif.OffsetShape(baseShapeName, trans);
+		baseNif.SetShapeTranslation(baseShapeName, vec3(0.0f, 0.0f, 0.0f));
 	}
 	if (scale != 1.0f) {
-        baseNif.ScaleShape(baseShapeName, scale);
+		baseNif.ScaleShape(baseShapeName, scale);
 		baseNif.SetShapeScale(baseShapeName, 1.0f);
 	}
 
@@ -1102,6 +1096,11 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	//activeSet.LinkShapeTarget(shapeName, shapeName);
 
 	AutoOffset(false);
+
+	// TriStrips not entirely supported
+	if (baseNif.HasBlockType("NiTriStrips") || baseNif.HasBlockType("NiTriStripsData"))
+		wxMessageBox("Reference .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
+
 	return 0;
 }
 
@@ -1132,12 +1131,16 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 		return 2;
 	}
 
+	// TriStrips not entirely supported
+	if (baseNif.HasBlockType("NiTriStrips") || baseNif.HasBlockType("NiTriStripsData"))
+		wxMessageBox("Reference .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
+
 	vector<string> shapes;
 	baseNif.GetShapeList(shapes);
 	if (shapes.size() == 0) {
 		ClearReference();
 		wxMessageBox("Reference NIF does not contain any shapes.", "Load Reference", 5L | wxICON_ERROR);
-		return 4;
+		return 3;
 	}
 
 	string shape = shapeName;
@@ -1171,7 +1174,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	if (newVertCount == -1) {
 		ClearReference();
 		wxMessageBox("Shape not found in the reference NIF.", "Load Reference", 5L | wxICON_ERROR);
-		return 3;
+		return 4;
 	}
 
 	if (oldVertCount > 0 && oldVertCount == newVertCount) {
@@ -1209,8 +1212,6 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 		baseNif.SetShapeScale(baseShapeName, 1.0f);
 	}
 
-	TrimTexturePaths(baseShapeName, &baseNif);
-
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
 
@@ -1221,7 +1222,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName) {
 	vector<string> refShapes;
 	vector<string> workShapes;
-	
+
 	ClearOutfit();
 
 	outfitName = inOutfitName;
@@ -1229,7 +1230,8 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 
 	if (fnpos == string::npos) {
 		mGameFile = filename;
-	} else {
+	}
+	else {
 		mGameFile = filename.substr(fnpos + 1);
 		size_t pos;
 		pos = mGameFile.rfind("_1.nif");
@@ -1256,15 +1258,15 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 		return 1;
 
 	RefShapes(refShapes);
-	for (auto s: refShapes)
+	for (auto s : refShapes)
 		RenameShape(s, s + "_outfit", true);
-	
+
 	OutfitShapes(workShapes);
-		
+
 	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
 	unordered_set<string> uniqueNames;
 	vector<string> dups;
-	for (auto ws: workShapes) {
+	for (auto ws : workShapes) {
 		string oldWs = ws;
 		for (unsigned int i = 0; i < sizeof(chars); ++i)
 			replace(ws.begin(), ws.end(), chars[i], '_');
@@ -1276,23 +1278,11 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 			dups.push_back(ws);
 	}
 	if (!dups.empty()) {
-		for (auto d: dups){
+		for (auto d : dups){
 			workNif.RenameDuplicateShape(d);
 		}
 	}
 	OutfitShapes(workShapes);
-
-	// TriStrips instead of trishapes?
-	//if(workNif.HasBlockType("NiTriStrips") || workNif.HasBlockType("NiTriStripsData")) {
-		// tristrips not supported
-	//	workNif.Clear();
-	//	return 2;
-	//}
-
-	//if(workshapes.size() == 0) {    // no shapes in nif file
-		//workNif.Clear();
-	//	return 3;
-	//}
 
 	////// Do some cleanup on the incoming Nif File.  ////////
 
@@ -1306,8 +1296,6 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 	vec3 trans;
 	float scale;
 	for (auto s : workShapes) {
-		TrimTexturePaths(s, &workNif);
-
 		workNif.GetShapeTranslation(s, trans);
 		workNif.GetShapeScale(s, scale);
 		trans -= rootTrans; // Get shape translation includes the root translation
@@ -1328,9 +1316,17 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 	}
 	workNif.SetRootTranslation(vec3(0.0f, 0.0f, 0.0f));
 	workNif.SetRootScale(1.0f);
-	
+
 	workAnim.LoadFromNif(&workNif);
 	AutoOffset(true);
+
+	// TriStrips not entirely supported
+	if (workNif.HasBlockType("NiTriStrips") || workNif.HasBlockType("NiTriStripsData"))
+		wxMessageBox("Outfit .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
+
+	// No shapes in nif file
+	if (workShapes.size() == 0)
+		return 2;
 
 	return 0;
 }
@@ -1392,8 +1388,6 @@ int OutfitProject::AddNif(const string& filename) {
 	vec3 trans;
 	float scale;
 	for (auto s : workShapes) {
-		TrimTexturePaths(s, &workNif);
-
 		nif.GetShapeTranslation(s, trans);
 		nif.GetShapeScale(s, scale);
 		trans -= rootTrans; // Get shape translation includes the root translation
@@ -1418,6 +1412,15 @@ int OutfitProject::AddNif(const string& filename) {
 	nif.Clear();
 
 	AutoOffset(true);
+
+	// TriStrips not entirely supported
+	if (workNif.HasBlockType("NiTriStrips") || workNif.HasBlockType("NiTriStripsData"))
+		wxMessageBox("Outfit .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
+
+	// No shapes in nif file
+	if (workShapes.size() == 0)
+		return 3;
+
 	return 0;
 }
 
@@ -1624,23 +1627,6 @@ void OutfitProject::AutoOffset(bool IsOutfit) {
 	if (IsOutfit) workNif.CopyFrom(nif);
 	else baseNif.CopyFrom(nif);
 	nif.Clear();
-}
-
-void OutfitProject::TrimTexturePaths(string shapeName, NifFile* nif) {
-	string dPath = "data\\";
-	string tPath = "textures\\";
-	string tFile;
-
-	auto shader = nif->GetShaderForShape(shapeName);
-	if (shader && shader->IsSkinShader()) {
-		for (int i = 0; i < 9; i++) {
-			nif->GetTextureForShape(shapeName, tFile, i);
-			tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-			tFile = regex_replace(tFile, regex(".*textures\\\\", regex_constants::icase), ""); // Remove everything before and including the texture path
-			tFile = regex_replace(tFile, regex("AstridBody", regex_constants::icase), "femalebody_1"); // Change astrid body to femalebody_1
-			nif->SetTextureForShape(shapeName, tFile, i);
-		}
-	}
 }
 
 void OutfitProject::InitConform() {	

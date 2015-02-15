@@ -35,6 +35,8 @@
         <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP">Unified UNP</Template>
         <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP HDT">Unified UNP HDT</Template>
         <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP HDT+">Unified UNP HDT+</Template>
+        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP Hands">Unified UNP Hands</Template>
+        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP Feet">Unified UNP Feet</Template>
         <Template sourcefile="ConversionSets\UNPConvert.xml" set="CBBE to Unified UNP">Convert: CBBE to UNP/7B/DG/CHSBHC and more</Template>
         <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2Skyrim">Convert: CBBE to Vanilla</Template>
         <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2ADEC">Convert: CBBE to ADEC</Template>

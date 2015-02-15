@@ -143,7 +143,7 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 	else
 		shader = 0;
 
-	SetShapeTexture((string)shapeName, baseDataPath + texFile, shader);
+	SetShapeTexture((string)shapeName, baseDataPath + "textures\\" + texFile, shader);
 }
 
 void PreviewWindow::Create(const string& title) {

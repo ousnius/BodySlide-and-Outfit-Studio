@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <unordered_map>
+#include <regex>
 #include <math.h>
 #include "KDMatcher.h"
 #include "object3d.h"
@@ -699,6 +700,7 @@ public:
 	NifBlockBSLightShadeProp*  GetShaderForShape(string& shapeName);
 	bool GetTextureForShape(string& shapeName, string& outTexFile, int texIndex = 0);
 	void SetTextureForShape(string& shapeName, string& inTexFile, int texIndex = 0);
+	void TrimTexturePaths();
 
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
 	void CopyShader(const string& shapeDest, string& shaderName, NifFile& srcNif, bool addAlpha);
