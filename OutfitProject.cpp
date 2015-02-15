@@ -1097,28 +1097,6 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 		baseNif.SetShapeScale(baseShapeName, 1.0f);
 	}
 
-	string texfn;
-	string d = "data\\";
-	size_t p;
-
-	auto shader = baseNif.GetShaderForShape(baseShapeName);
-	if (shader && shader->IsSkinShader()) {
-		for (int i = 0; i < 9; i++) {
-			baseNif.GetTextureForShape(baseShapeName, texfn, i);
-			auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
-			if (it == texfn.begin()) {
-				texfn.erase(0, 5);
-				baseNif.SetTextureForShape(baseShapeName, texfn, i);
-			}
-
-			p = texfn.find("AstridBody");
-			if (p != string::npos) {
-				texfn.erase(p, 10);
-				texfn.insert(p, "femalebody_1");
-				baseNif.SetTextureForShape(baseShapeName, texfn, i);
-			}	
-		}
-	}
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
 	//activeSet.LinkShapeTarget(shapeName, shapeName);
@@ -1231,28 +1209,8 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 		baseNif.SetShapeScale(baseShapeName, 1.0f);
 	}
 
-	string texfn;
-	string d = "data\\";
-	size_t p;
+	TrimTexturePaths(baseShapeName, &baseNif);
 
-	auto shader = baseNif.GetShaderForShape(baseShapeName);
-	if (shader && shader->IsSkinShader()) {
-		for (int i = 0; i < 9; i++)	{
-			baseNif.GetTextureForShape(baseShapeName, texfn, i);
-			auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
-			if (it == texfn.begin()) {
-				texfn.erase(0, 5);
-				workNif.SetTextureForShape(baseShapeName, texfn, i);
-			}
-
-			p = texfn.find("AstridBody");
-			if (p != string::npos) {
-				texfn.erase(p, 10);
-				texfn.insert(p, "femalebody_1");
-				baseNif.SetTextureForShape(baseShapeName, texfn, i);
-			}
-		}
-	}
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
 
@@ -1345,32 +1303,11 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 	workNif.GetRootTranslation(rootTrans);
 	workNif.GetRootScale(rootScale);
 
-	for (auto s: workShapes) {
-		string texfn;
-		string d = "data\\";
-		size_t p;
+	vec3 trans;
+	float scale;
+	for (auto s : workShapes) {
+		TrimTexturePaths(s, &workNif);
 
-		auto shader = workNif.GetShaderForShape(s);
-		if (shader && shader->IsSkinShader()) {
-			for (int i = 0; i < 9; i++)	{
-				workNif.GetTextureForShape(s, texfn, i);
-				auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
-				if (it == texfn.begin()) {
-					texfn.erase(0, 5);
-					workNif.SetTextureForShape(s, texfn, i);
-				}
-
-				p = texfn.find("AstridBody");
-				if (p != string::npos) {
-					texfn.erase(p, 10);
-					texfn.insert(p, "femalebody_1");
-					workNif.SetTextureForShape(s, texfn, i);
-				}	
-			}
-		}
-
-		vec3 trans;
-		float scale;
 		workNif.GetShapeTranslation(s, trans);
 		workNif.GetShapeScale(s, scale);
 		trans -= rootTrans; // Get shape translation includes the root translation
@@ -1452,32 +1389,11 @@ int OutfitProject::AddNif(const string& filename) {
 	nif.GetRootTranslation(rootTrans);
 	nif.GetRootScale(rootScale);
 
-	for (auto s: workShapes) {
-		string texfn;
-		string d = "data\\";
-		size_t p;
+	vec3 trans;
+	float scale;
+	for (auto s : workShapes) {
+		TrimTexturePaths(s, &workNif);
 
-		auto shader = nif.GetShaderForShape(s);
-		if (shader && shader->IsSkinShader()) {
-			for (int i=  0; i < 9; i++)	{
-				nif.GetTextureForShape(s, texfn, i);
-				auto it = search(texfn.begin(), texfn.end(), d.begin(), d.end(), [](char ch1, char ch2) { return toupper(ch1) == toupper(ch2); });
-				if (it == texfn.begin()) {
-					texfn.erase(0, 5);
-					nif.SetTextureForShape(s, texfn, i);
-				}
-
-				p = texfn.find("AstridBody");
-				if (p != string::npos) {
-					texfn.erase(p, 10);
-					texfn.insert(p, "femalebody_1");
-					nif.SetTextureForShape(s, texfn, i);
-				}	
-			}
-		}
-
-		vec3 trans;
-		float scale;
 		nif.GetShapeTranslation(s, trans);
 		nif.GetShapeScale(s, scale);
 		trans -= rootTrans; // Get shape translation includes the root translation
@@ -1495,7 +1411,7 @@ int OutfitProject::AddNif(const string& filename) {
 			nif.ScaleShape(s, scale);
 			nif.SetShapeScale(s, 1.0f);
 		}
-		
+
 		workNif.CopyShape(s, nif, s);
 		workAnim.LoadFromNif(&nif, s);
 	}
@@ -1708,6 +1624,23 @@ void OutfitProject::AutoOffset(bool IsOutfit) {
 	if (IsOutfit) workNif.CopyFrom(nif);
 	else baseNif.CopyFrom(nif);
 	nif.Clear();
+}
+
+void OutfitProject::TrimTexturePaths(string shapeName, NifFile* nif) {
+	string dPath = "data\\";
+	string tPath = "textures\\";
+	string tFile;
+
+	auto shader = nif->GetShaderForShape(shapeName);
+	if (shader && shader->IsSkinShader()) {
+		for (int i = 0; i < 9; i++) {
+			nif->GetTextureForShape(shapeName, tFile, i);
+			tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
+			tFile = regex_replace(tFile, regex(".*textures\\\\", regex_constants::icase), ""); // Remove everything before and including the texture path
+			tFile = regex_replace(tFile, regex("AstridBody", regex_constants::icase), "femalebody_1"); // Change astrid body to femalebody_1
+			nif->SetTextureForShape(shapeName, tFile, i);
+		}
+	}
 }
 
 void OutfitProject::InitConform() {	

@@ -6,6 +6,7 @@
 #include "Automorph.h"
 #include <map>
 #include <string>
+#include <regex>
 #include <vector>
 #include "Mesh.h"
 #include "shlobj.h"
@@ -168,6 +169,7 @@ public:
 	void RotateShape(const string& shapeName, vec3& angle, bool IsOutfit, unordered_map<int, float>* mask = NULL);
 	
 	void AutoOffset(bool IsOutfit);
+	void TrimTexturePaths(string shapeName, NifFile* nif);
 
 	// uses the automorph class to generate proximity values for bone weights.  This is done by
 	//   creating several virtual sliders that contain weight offsets for each vertex per bone.  
