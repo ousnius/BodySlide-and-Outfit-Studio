@@ -205,7 +205,7 @@ void NifFile::Clear() {
 	isValid = false;
 }
 
-int NifFile::Load(const string& filename) { 
+int NifFile::Load(const string& filename) {
 	int i;
 	NifBlock *block;
 	string thisBlockTypeStr;
@@ -215,9 +215,10 @@ int NifFile::Load(const string& filename) {
 	if (file.is_open()) {
 		if (filename.rfind("\\") != string::npos)
 			fileName = filename.substr(filename.rfind("\\"));
-		else fileName = filename;
+		else
+			fileName = filename;
 		hdr.Get(file, hdr);
-		if (hdr.verStr[0] == 0) {			
+		if (hdr.verStr[0] == 0) {
 			isValid = false;
 			return 1;
 		}
@@ -225,47 +226,59 @@ int NifFile::Load(const string& filename) {
 
 		for (i = 0; i < hdr.numBlocks; i++) {
 			thisBlockTypeId = hdr.blockIndex[i];
-			thisBlockTypeStr= hdr.blockTypes[thisBlockTypeId].str;
+			thisBlockTypeStr = hdr.blockTypes[thisBlockTypeId].str;
 			if (!thisBlockTypeStr.compare("NiTriShapeData")) {
 				block = (NifBlock*) new NifBlockTriShapeData(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("NiTriShape")) {
+			}
+			else if (!thisBlockTypeStr.compare("NiTriShape")) {
 				block = (NifBlock*) new NifBlockTriShape(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("NiTriStrips")) {
+			}
+			else if (!thisBlockTypeStr.compare("NiTriStrips")) {
 				block = (NifBlock*) new NifBlockTriStrips(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("NiTriStripsData")) {
+			}
+			else if (!thisBlockTypeStr.compare("NiTriStripsData")) {
 				block = (NifBlock*) new NifBlockTriStripsData(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("BSDismemberSkinInstance")) {
+			}
+			else if (!thisBlockTypeStr.compare("BSDismemberSkinInstance")) {
 				block = (NifBlock*) new NifBlockBSDismemberment(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("NiNode")) {
+			}
+			else if (!thisBlockTypeStr.compare("NiNode")) {
 				block = (NifBlock*) new NifBlockNiNode(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("NiSkinData")) {
+			}
+			else if (!thisBlockTypeStr.compare("NiSkinData")) {
 				block = (NifBlock*) new NifBlockNiSkinData(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("NiSkinPartition")) {
+			}
+			else if (!thisBlockTypeStr.compare("NiSkinPartition")) {
 				block = (NifBlock*) new NifBlockNiSkinPartition(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("NiSkinInstance")) {
+			}
+			else if (!thisBlockTypeStr.compare("NiSkinInstance")) {
 				block = (NifBlock*) new NifBlockNiSkinInstance(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("BSLightingShaderProperty")) {
+			}
+			else if (!thisBlockTypeStr.compare("BSLightingShaderProperty")) {
 				block = (NifBlock*) new NifBlockBSLightShadeProp(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else if (!thisBlockTypeStr.compare("BSShaderTextureSet")) {
+			}
+			else if (!thisBlockTypeStr.compare("BSShaderTextureSet")) {
 				block = (NifBlock*) new NifBlockBSShaderTextureSet(file, hdr);
 				block->SetBlockSize(hdr.blockSizes[i]);
-			} else {
+			}
+			else {
 				block = (NifBlock*) new NifBlockUnknown(file, hdr.blockSizes[i]);
 			}
 			blocks.push_back(block);
 		}
 		file.close();
-	} else {
+	}
+	else {
 		isValid = false;
 		return 1;
 	}
@@ -424,15 +437,13 @@ void NifFile::SetTextureForShape(string& shapeName, string& outTexFile, int texI
 }
 
 void NifFile::TrimTexturePaths() {
-	string dPath = "data\\";
-	string tPath = "textures\\";
 	string tFile;
 	vector<string> shapes;
 	GetShapeList(shapes);
 
 	for (auto s : shapes) {
 		auto shader = GetShaderForShape(s);
-		if (shader && shader->IsSkinShader()) {
+		if (shader) {
 			for (int i = 0; i < 9; i++) {
 				GetTextureForShape(s, tFile, i);
 				tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
