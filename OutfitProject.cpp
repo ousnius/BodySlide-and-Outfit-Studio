@@ -1451,16 +1451,16 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	activeSet.SetBaseDataPath("ShapeData");
 	string inputNif = tmpSet.GetInputFileName();
 
-	vector<string> refTargets;
-	activeSet.GetReferencedTargets(refTargets);
-	baseShapeName = activeSet.TargetToShape(refTargets[0]);
-
 	owner->UpdateProgress(30, "Loading outfit shapes");
 	if (LoadOutfit(inputNif, sliderSetName)) {
 		owner->EndProgress();
 		return 4;
 	}
- 
+
+	vector<string> refTargets;
+	activeSet.GetReferencedTargets(refTargets);
+	baseShapeName = activeSet.TargetToShape(refTargets[0]);
+
 	for (auto s: refTargets) {
 		DeleteOutfitShape(activeSet.TargetToShape(s));
 	}

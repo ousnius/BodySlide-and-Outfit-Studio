@@ -568,17 +568,18 @@ void OutfitStudio::OnExit(wxCommandEvent& WXUNUSED(event)) {
 	Close(true);
 }
 
-void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {	
+void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	// OSP File filter string: "Outfit Studio Files (*.osp,*.xml)|*.xml;*.osp|Project Files (*.osp)|*.osp|SliderSet Files (*.xml)|*.xml"
 	wxString fn = wxFileSelector("Select a slider set to load.", wxEmptyString, wxEmptyString, wxEmptyString, "Outfit Studio Files (*.xml)|*.xml|SliderSet Files (*.xml)|*.xml", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty()) 
+	if (fn.empty())
 		return;
-	
+
 	string file = fn;
 	if (fn.EndsWith(".osp")) {
 		wxMessageBox("Oops, .osp files are not supported yet, stick with .xml slider sets.", "Project Load Failure", 5L | wxICON_INFORMATION);
 		return;
-	} else {
+	}
+	else {
 		vector<string> setnames;
 		SliderSetFile InFile(file);
 		if (InFile.fail()) {
@@ -588,9 +589,18 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 		InFile.GetSetNames(setnames);
 		wxArrayString choices;
-		for (auto s: setnames) choices.Add(s);
-		string outfit = wxGetSingleChoice("Please choose an outfit to load", "Import a slider set", choices, 0, this);
-		if (outfit.empty())
+		for (auto s : setnames)
+			choices.Add(s);
+
+		string outfit;
+		if (choices.GetCount() > 1) {
+			outfit = wxGetSingleChoice("Please choose an outfit to load", "Import a slider set", choices, 0, this);
+			if (outfit.empty())
+				return;
+		}
+		else if (choices.GetCount() == 1)
+			outfit = choices.front();
+		else
 			return;
 
 		StartProgress("Loading files for project");
@@ -616,7 +626,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 		UpdateProgress(50, "Creating reference shape");
 		string shape = Proj->baseShapeName;
 		if (!shape.empty()) {
-			ret  = Proj->LoadReferenceNif(Proj->activeSet.GetInputFileName(), shape, false);
+			ret = Proj->LoadReferenceNif(Proj->activeSet.GetInputFileName(), shape, false);
 			if (ret) {
 				EndProgress();
 				wxMessageBox("Failed to migrate reference mesh!", "Slider set import failure", 5L | wxICON_ERROR);
@@ -625,13 +635,13 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 			}
 		}
 	}
-	
+
 	UpdateProgress(60, "Loading Textures");
 	vector<string> shapes;
 	Proj->RefShapes(shapes);
-	for (auto s: shapes) {
+	for (auto s : shapes)
 		Proj->SetRefTexture(s, "_AUTO_");
-	}
+
 	Proj->SetOutfitTextures("_AUTO_");
 
 	UpdateProgress(80, "Creating Reference UI");
@@ -640,23 +650,22 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(85, "Creating Working UI");
 	WorkingGUIFromProj();
 	AnimationGUIFromProj();
-	
+
 	wxTreeItemId itemToSelect;
 	wxTreeItemIdValue cookie;
-	if (outfitRoot.IsOk()) {
-		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);	
-	} else if (refRoot.IsOk()) {		
+	if (outfitRoot.IsOk())
+		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
+	else if (refRoot.IsOk())
 		itemToSelect = outfitShapes->GetFirstChild(refRoot, cookie);
-	}
 
 	if (itemToSelect.IsOk()) {
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
 		activeShape = activeItem->shapeName;
 		glView->SetActiveShape(activeShape);
 		outfitShapes->SelectItem(itemToSelect);
-	} else {
-		activeItem = NULL;
 	}
+	else
+		activeItem = NULL;
 
 	outfitShapes->ExpandAll();
 
