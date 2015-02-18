@@ -569,70 +569,63 @@ void OutfitStudio::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
-	// OSP File filter string: "Outfit Studio Files (*.osp,*.xml)|*.xml;*.osp|Project Files (*.osp)|*.osp|SliderSet Files (*.xml)|*.xml"
-	wxString fn = wxFileSelector("Select a slider set to load.", wxEmptyString, wxEmptyString, wxEmptyString, "Outfit Studio Files (*.xml)|*.xml|SliderSet Files (*.xml)|*.xml", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
+	wxFileDialog loadProjectDialog(this, "Select a slider set to load", "SliderSets", wxEmptyString, "Slider Set Files (*.xml)|*.xml", wxFD_FILE_MUST_EXIST);
+	if (loadProjectDialog.ShowModal() == wxID_CANCEL)
 		return;
 
-	string file = fn;
-	if (fn.EndsWith(".osp")) {
-		wxMessageBox("Oops, .osp files are not supported yet, stick with .xml slider sets.", "Project Load Failure", 5L | wxICON_INFORMATION);
+	string file = loadProjectDialog.GetPath();
+	vector<string> setnames;
+	SliderSetFile InFile(file);
+	if (InFile.fail()) {
+		wxMessageBox("Failed to open " + file + " as a slider set file!", "Slider set import failure", 5L | wxICON_ERROR);
 		return;
 	}
-	else {
-		vector<string> setnames;
-		SliderSetFile InFile(file);
-		if (InFile.fail()) {
-			wxMessageBox("Failed to open " + fn + " as a slider set file!", "Slider set import failure", 5L | wxICON_ERROR);
+
+	InFile.GetSetNames(setnames);
+	wxArrayString choices;
+	for (auto s : setnames)
+		choices.Add(s);
+
+	string outfit;
+	if (choices.GetCount() > 1) {
+		outfit = wxGetSingleChoice("Please choose an outfit to load", "Import a slider set", choices, 0, this);
+		if (outfit.empty())
 			return;
-		}
+	}
+	else if (choices.GetCount() == 1)
+		outfit = choices.front();
+	else
+		return;
 
-		InFile.GetSetNames(setnames);
-		wxArrayString choices;
-		for (auto s : setnames)
-			choices.Add(s);
+	StartProgress("Loading files for project");
 
-		string outfit;
-		if (choices.GetCount() > 1) {
-			outfit = wxGetSingleChoice("Please choose an outfit to load", "Import a slider set", choices, 0, this);
-			if (outfit.empty())
-				return;
-		}
-		else if (choices.GetCount() == 1)
-			outfit = choices.front();
-		else
-			return;
+	ClearProject();
+	Proj->ClearReference();
+	Proj->ClearOutfit();
 
-		StartProgress("Loading files for project");
+	delete Proj;
+	Proj = new OutfitProject(appConfig, this);
 
-		ClearProject();
-		Proj->ClearReference();
-		Proj->ClearOutfit();
+	UpdateProgress(10, "Loading Outfit data");
+	StartSubProgress(10, 40);
 
-		delete Proj;
-		Proj = new OutfitProject(appConfig, this);
+	int ret = Proj->OutfitFromSliderSet(file, outfit);
+	if (ret) {
+		EndProgress();
+		wxMessageBox("Failed to create project from slider set file!", "Slider set import failure", 5L | wxICON_ERROR);
+		RefreshGUIFromProj();
+		return;
+	}
 
-		UpdateProgress(10, "Loading Outfit data");
-		StartSubProgress(10, 40);
-
-		int ret = Proj->OutfitFromSliderSet(file, outfit);
+	UpdateProgress(50, "Creating reference shape");
+	string shape = Proj->baseShapeName;
+	if (!shape.empty()) {
+		ret = Proj->LoadReferenceNif(Proj->activeSet.GetInputFileName(), shape, false);
 		if (ret) {
 			EndProgress();
-			wxMessageBox("Failed to create project from slider set file!", "Slider set import failure", 5L | wxICON_ERROR);
+			wxMessageBox("Failed to migrate reference mesh!", "Slider set import failure", 5L | wxICON_ERROR);
 			RefreshGUIFromProj();
 			return;
-		}
-
-		UpdateProgress(50, "Creating reference shape");
-		string shape = Proj->baseShapeName;
-		if (!shape.empty()) {
-			ret = Proj->LoadReferenceNif(Proj->activeSet.GetInputFileName(), shape, false);
-			if (ret) {
-				EndProgress();
-				wxMessageBox("Failed to migrate reference mesh!", "Slider set import failure", 5L | wxICON_ERROR);
-				RefreshGUIFromProj();
-				return;
-			}
 		}
 	}
 
@@ -1277,7 +1270,7 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent &event) {
 	}
 	else {
 		if (Proj->OutfitHasUnweighted()) {
-			int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will probably cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
+			int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
 			if (ret != wxYES)
 				return;
 		}
@@ -1325,7 +1318,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (Proj->OutfitHasUnweighted()) {
-		int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will probably cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
+		int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
 		if (ret != wxYES)
 			return;
 	}
@@ -1342,6 +1335,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 		sssName = Proj->NameAbbreviate(sssName);
 		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
+		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory("SliderSets");
 
 		if (!Proj->mFileName.empty())
 			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(Proj->mFileName);

@@ -4,6 +4,7 @@
 #include <wx/xrc/xmlres.h>
 #include <wx/srchctrl.h>
 #include <string>
+#include <regex>
 #include <set>
 #include <vector>
 

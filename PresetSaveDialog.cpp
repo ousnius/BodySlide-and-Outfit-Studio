@@ -1,5 +1,4 @@
 #include "PresetSaveDialog.h"
-#include <regex>
 
 BEGIN_EVENT_TABLE (PresetSaveDialog, wxDialog) 
 	EVT_TEXT_ENTER(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
@@ -30,31 +29,30 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 PresetSaveDialog::~PresetSaveDialog(void) {
 }
 
-void PresetSaveDialog::FilterGroups(const string& filter) {	
+void PresetSaveDialog::FilterGroups(const string& filter) {
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
 	wxArrayString strings;
 	filteredGroups.clear();
 	chkbox->Clear();
 	if (filter.empty()) {
 		filteredGroups.assign(allGroupNames.begin(), allGroupNames.end());
-	} else {
+	}
+	else {
 		try {
-			regex re(filter, std::regex_constants::icase);
-			for (auto s: allGroupNames) {
-				if (regex_search(s, re)) { 
+			regex re(filter, regex_constants::icase);
+			for (auto s : allGroupNames) {
+				if (regex_search(s, re))
 					filteredGroups.push_back(s);
-				}
 			}
-		} catch (...) {
-
 		}
+		catch (...) {}
 
 	}
 	for (auto g : filteredGroups) {
 		int i = chkbox->Append(g);
 		if (selectedGroups.find(g) != selectedGroups.end()) {
 			chkbox->Check(i);
-		}		
+		}
 	}
 }
 
@@ -69,8 +67,9 @@ void PresetSaveDialog::CheckGroup(wxCommandEvent& event) {
 	int item = event.GetInt();
 	if (chk->IsChecked(item)) {
 		name = event.GetString();
-		selectedGroups.insert(name); 
-	} else {
+		selectedGroups.insert(name);
+	}
+	else {
 		name = event.GetString();
 		selectedGroups.erase(name);
 	}
@@ -78,11 +77,11 @@ void PresetSaveDialog::CheckGroup(wxCommandEvent& event) {
 
 void PresetSaveDialog::OnSave(wxCommandEvent& event) {
 	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue();
+	string presetFile = outPresetName + ".xml";
 
-	string presetfile = outPresetName + ".xml";
-
-	outFileName = wxFileSelector ("Choose a preset file", "SliderPresets", presetfile, "", "Preset Files (*.xml)|*.xml", wxFD_SAVE, this);
-	if (!outFileName.empty()) {
+	wxFileDialog savePresetDialog(this, "Choose a preset file", "SliderPresets", presetFile, "Preset Files (*.xml)|*.xml", wxFD_SAVE);
+	if (savePresetDialog.ShowModal() == wxID_OK) {
+		outFileName = savePresetDialog.GetPath();
 		outGroups.assign(selectedGroups.begin(), selectedGroups.end());
 		wxDialog::Close();
 	}

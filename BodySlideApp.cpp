@@ -1774,23 +1774,25 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
-	wxString fn = wxFileSelector("Select name for the group file.", "SliderGroups", wxEmptyString,wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE, this);
-	if (fn.empty()) 
+void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {	
+	wxFileDialog saveGroupDialog(this, "Choose or create group file", "SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
+	if (saveGroupDialog.ShowModal() == wxID_CANCEL)
 		return;
-	
-	wxString gname;
+
+	string fName = saveGroupDialog.GetPath();
+	string gName;
 	int ret;
+
 	do {
-		gname = wxGetTextFromUser("What would you like the new group to be called?", "New Group Name");
-		if (gname.empty()) 
+		gName = wxGetTextFromUser("What would you like the new group to be called?", "New Group Name");
+		if (gName.empty())
 			return;
-		ret = app->SaveGroupList(string(fn), string(gname));
+		ret = app->SaveGroupList(fName, gName);
 	} while (ret == 2);
 
 	if (ret == 0) {
 		app->LoadAllGroups();
-		search->ChangeValue(gname);
+		search->ChangeValue(gName);
 		outfitsearch->ChangeValue("");
 		app->PopulateOutfitList("");
 	}
