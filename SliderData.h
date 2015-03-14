@@ -149,6 +149,9 @@ public:
 	void SetOutputFile(const string& newOutputFile) { outputfile = newOutputFile; }
 	void SetGenWeights(bool inGenWeights) { genWeights = inGenWeights; }
 
+	int GetTargetShapeCount() {
+		return targetshapenames.size();
+	}
 
 	void Clear() {
 		targetshapenames.clear();

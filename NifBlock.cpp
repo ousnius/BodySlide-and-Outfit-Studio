@@ -2457,5 +2457,40 @@ void NifBlockAlphaProperty::Put(fstream& file, NifBlockHeader& hdr) {
 	file.write((char*)&controllerRef, 4);
 	file.write((char*)&flags, 2);
 	file.write((char*)&threshold, 1);
-	
+}
+
+void NifBlockStringExtraData::Get(fstream& file, NifBlockHeader& hdr) {
+	file.read((char*)&nameID, 4);
+	if (nameID != 0xffffffff)
+		name = hdr.strings[nameID].str;
+	else name = "";
+	//file.read((char*)&nextExtraData, 4);
+	//file.read((char*)&bytesRemaining, 4);
+	file.read((char*)&stringDataId, 4);
+	if (stringDataId != 0xffffffff)
+		stringData = hdr.strings[stringDataId].str;
+	else stringData = "";
+}
+
+void NifBlockStringExtraData::Put(fstream& file, NifBlockHeader& hdr) {
+	file.write((char*)&nameID, 4);
+	//file.write((char*)&nextExtraData, 4);
+	//file.write((char*)&bytesRemaining, 4);
+	file.write((char*)&stringDataId, 4);
+}
+
+NifBlockStringExtraData::NifBlockStringExtraData() {
+	blockType = NIFBLOCK_STRINGEXTRADATA;
+	blockSize = 8;
+	nameID = -1;
+	stringDataId = -1;
+	name = "";
+	//nextExtraData = -1;
+	//bytesRemaining = 4;
+	stringData = "";
+}
+
+NifBlockStringExtraData::NifBlockStringExtraData(fstream& file, NifBlockHeader& hdr) {
+	blockType = NIFBLOCK_STRINGEXTRADATA;
+	Get(file, hdr);
 }

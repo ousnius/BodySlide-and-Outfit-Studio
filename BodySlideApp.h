@@ -136,6 +136,7 @@ public:
 	void LaunchOutfitStudio();
 
 	void ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<vec3>& verts, vector<ushort>& zapidx, vector<vec2>* uvs = NULL);
+	int WriteMorphTRI(const string& triPath, vector<Slider>& sliders, SliderSet& sliderSet, NifFile& nif);
 
 	void ShowPreview(char PreviewType = SMALL_PREVIEW);
 	void ClosePreview(char PreviewType = SMALL_PREVIEW) {
@@ -168,8 +169,8 @@ public:
 
 	int BlenderNifToSkyrim();
 	
-	int BuildBodies(bool localPath = false, bool clean = false);
-	int BuildListBodies(const vector<string>& outfitList, map<string,string>& failedOutfits, bool remove = false, const string& custPath = "");
+	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
+	int BuildListBodies(const vector<string>& outfitList, map<string, string>& failedOutfits, bool remove = false, bool tri = false, const string& custPath = "");
 	
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);

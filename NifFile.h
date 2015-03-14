@@ -20,20 +20,21 @@ using namespace std;
 #endif
 
 
-#define NIFBLOCK_HEADER			0
-#define NIFBLOCK_UNKNOWN		1
-#define NIFBLOCK_TRISHAPE		2
-#define NIFBLOCK_TRISHAPEDATA	3
-#define NIFBLOCK_NINODE			4
-#define NIFBLOCK_BSDISMEMBER	5
-#define NIFBLOCK_NISKINPARTITION 6
-#define NIFBLOCK_BSLGTSHADEPROP 7
-#define NIFBLOCK_ALPHAPROPERTY  8
-#define NIFBLOCK_NISKINDATA		9
-#define NIFBLOCK_BSSHADERTEXSET 10
-#define NIFBLOCK_TRISTRIPS		11
-#define NIFBLOCK_TRISTRIPSDATA	12
-#define NIFBLOCK_NISKININSTANCE	13
+#define NIFBLOCK_HEADER				0
+#define NIFBLOCK_UNKNOWN			1
+#define NIFBLOCK_TRISHAPE			2
+#define NIFBLOCK_TRISHAPEDATA		3
+#define NIFBLOCK_NINODE				4
+#define NIFBLOCK_BSDISMEMBER		5
+#define NIFBLOCK_NISKINPARTITION	6
+#define NIFBLOCK_BSLGTSHADEPROP		7
+#define NIFBLOCK_ALPHAPROPERTY		8
+#define NIFBLOCK_NISKINDATA			9
+#define NIFBLOCK_BSSHADERTEXSET		10
+#define NIFBLOCK_TRISTRIPS			11
+#define NIFBLOCK_TRISTRIPSDATA		12
+#define NIFBLOCK_NISKININSTANCE		13
+#define NIFBLOCK_STRINGEXTRADATA	14
 
 typedef unsigned char BYTE;
 typedef unsigned int uint;
@@ -647,6 +648,22 @@ public:
 
 };
 
+class NifBlockStringExtraData : public NifBlock {
+public:
+	uint nameID;
+	string name;
+	//int nextExtraData;
+	//uint bytesRemaining;
+	uint stringDataId;
+	string stringData;
+
+	NifBlockStringExtraData();
+	NifBlockStringExtraData(fstream& file, NifBlockHeader& hdr);
+
+	void Get(fstream& file, NifBlockHeader& hdr);
+	void Put(fstream& file, NifBlockHeader& hdr);
+};
+
 class NifFile
 {
 	string fileName;
@@ -676,6 +693,8 @@ public:
 	NifBlock* GetBlock(int blockId);	
 	int AddNode(const string& nodeName, vector<vector3>& rot, vector3& trans, float scale);
 	string NodeName(int blockID);
+
+	int AddStringExtraData(const string& shapeName, const string& name, const string& stringData);
 	
 	int Load(const string& filename);
 	int Save(const string& filename);

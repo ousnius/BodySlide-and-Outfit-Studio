@@ -43,17 +43,14 @@ struct vec3 {
 	}
 
 	bool IsZero(bool bUseEpsilon = false) {
-		if(bUseEpsilon) {
-			if(x < EPSILON &&
-				y< EPSILON &&
-				z< EPSILON) {
-					return true;
-			}
-		} else {
-			if(x == 0.0f && y ==0.0f && z==0.0f) 
+		if (bUseEpsilon) {
+			if (x < EPSILON && x > -EPSILON && y < EPSILON && y > -EPSILON && z < EPSILON && z > -EPSILON)
 				return true;
 		}
-
+		else {
+			if (x == 0.0f && y == 0.0f && z == 0.0f)
+				return true;
+		}
 
 		return false;
 	}
@@ -75,6 +72,12 @@ struct vec3 {
 
 	bool operator == (const vec3& other) {
 		if(x == other.x && y == other.y && z == other.z) {
+			return true;
+		}
+		return false;
+	}
+	bool operator != (const vec3& other) {
+		if (x != other.x && y != other.y && z != other.z) {
 			return true;
 		}
 		return false;
