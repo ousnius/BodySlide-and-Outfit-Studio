@@ -102,6 +102,9 @@
     <ClCompile Include="SliderCategories.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="TriFile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Automorph.h">
@@ -192,6 +195,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SliderCategories.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TriFile.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

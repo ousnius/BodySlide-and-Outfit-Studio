@@ -1,8 +1,4 @@
 #include "BodySlideApp.h"
-#include "ConfigurationManager.h"
-#include "PresetSaveDialog.h"
-#include "wx/tokenzr.h"
-#include <regex>
 
 ConfigurationManager Config;
 
@@ -474,20 +470,9 @@ void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& slide
 
 int BodySlideApp::WriteMorphTRI(const string& triPath, vector<Slider>& sliders, SliderSet& sliderSet, NifFile& nif) {
 	string triFilePath = triPath + ".tri";
-	ofstream triFile(triFilePath.c_str(), ios_base::binary);
-	if (!triFile.is_open())
-		return 2;
-
-	uint triHdr = 'TRIP'; // TRI packed
-	ushort shapeCount = sliderSet.GetTargetShapeCount();
-	triFile.write((char*)&triHdr, 4);
-	triFile.write((char*)&shapeCount, 2);
+	TriFile tri;
 
 	for (map<string, string>::iterator shape = sliderSet.TargetShapesBegin(); shape != sliderSet.TargetShapesEnd(); ++shape) {
-		byte shapeLength = shape->second.length();
-		triFile.write((char*)&shapeLength, 1);
-		triFile.write(shape->second.c_str(), shapeLength);
-
 		vector<Slider> validSliders;
 		vector<ushort> zapIndices;
 		for (auto slider : sliders) {
@@ -501,13 +486,9 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, vector<Slider>& sliders, 
 			}
 		}
 
-		ushort sliderCount = validSliders.size();
-		triFile.write((char*)&sliderCount, 2);
-
 		for (auto slider : validSliders) {
-			byte sliderLength = slider.Name.length();
-			triFile.write((char*)&sliderLength, 1);
-			triFile.write(slider.Name.c_str(), sliderLength);
+			MorphDataPtr morph = make_shared<MorphData>();
+			morph->name = slider.Name;
 
 			vector<vec3> verts;
 			ushort shapeVertCount = nif.GetVertCountForShape(shape->second);
@@ -522,39 +503,18 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, vector<Slider>& sliders, 
 				if (find(zapIndices.begin(), zapIndices.end(), i) != zapIndices.end())
 					verts.erase(verts.begin() + i);
 
-			float mult = 0.0f;
-			map<ushort, vec3> vertsMorph;
-			for (ushort i = 0; i < verts.size(); i++) {
-				if (!verts[i].IsZero(true)) {
-					vertsMorph.emplace(i, verts[i]);
-					if (abs(verts[i].x) > mult)
-						mult = abs(verts[i].x);
-					if (abs(verts[i].y) > mult)
-						mult = abs(verts[i].y);
-					if (abs(verts[i].z) > mult)
-						mult = abs(verts[i].z);
-				}
-			}
+			for (ushort i = 0; i < verts.size(); i++)
+				if (!verts[i].IsZero(true))
+					morph->offsets.emplace(i, verts[i]);
 
-			mult /= 0x7FFF;
-			triFile.write((char*)&mult, 4);
-
-			ushort morphVertCount = vertsMorph.size();
-			triFile.write((char*)&morphVertCount, 2);
-
-			for (auto& v : vertsMorph) {
-				ushort id = v.first;
-				short x = v.second.x / mult;
-				short y = v.second.y / mult;
-				short z = v.second.z / mult;
-				triFile.write((char*)&id, 2);
-				triFile.write((char*)&x, 2);
-				triFile.write((char*)&y, 2);
-				triFile.write((char*)&z, 2);
-			}
+			tri.AddMorph(shape->second, morph);
 		}
 	}
-	return 1;
+
+	if (!tri.Write(triFilePath, true))
+		return false;
+
+	return true;
 }
 
 void BodySlideApp::ShowPreview(char PreviewType) {

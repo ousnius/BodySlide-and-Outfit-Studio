@@ -1,18 +1,20 @@
 #pragma once
 
 #include "resource.h"
-#include "slidermanager.h"
 #include <wx/wxprec.h>
 #include <wx/srchctrl.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/imagpng.h>
 #include <wx/dcbuffer.h>
 #include <wx/statline.h>
+#include "wx/tokenzr.h"
+
 
 #include <vector>
 #include <string>
 #include <map>
 #include <tuple>
+#include <regex>
 
 #include "Commctrl.h"
 #include <string.h>
@@ -20,8 +22,12 @@
 #include "DiffData.h"
 #include "SliderData.h"
 #include "OutfitStudio.h"
+#include "SliderManager.h"
 #include "SliderGroup.h"
 #include "SliderCategories.h"
+#include "ConfigurationManager.h"
+#include "PresetSaveDialog.h"
+#include "TriFile.h"
 
 
 class BodySlideFrame;
