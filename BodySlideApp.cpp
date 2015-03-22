@@ -468,46 +468,47 @@ void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& slide
 	}
 }
 
-int BodySlideApp::WriteMorphTRI(const string& triPath, vector<Slider>& sliders, SliderSet& sliderSet, NifFile& nif) {
-	string triFilePath = triPath + ".tri";
+int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>> zapIndices) {
+	DiffDataSets currentDiffs;
+	sliderSet.LoadSetDiffData(currentDiffs);
+
 	TriFile tri;
+	string triFilePath = triPath + ".tri";
+	map<string, string>::iterator shape;
 
-	for (map<string, string>::iterator shape = sliderSet.TargetShapesBegin(); shape != sliderSet.TargetShapesEnd(); ++shape) {
-		vector<Slider> validSliders;
-		vector<ushort> zapIndices;
-		for (auto slider : sliders) {
-			if (!slider.uv && !slider.clamp) {
-				if (!slider.zap)
-					validSliders.push_back(slider);
+	for (shape = sliderSet.TargetShapesBegin(); shape != sliderSet.TargetShapesEnd(); ++shape) {
+		for (int s = 0; s < sliderSet.size(); s++) {
+			string dn = sliderSet[s].TargetDataName(shape->first);
+			string target = shape->first;
+			if (dn.empty())
+				continue;
+
+			if (!sliderSet[s].bUV && !sliderSet[s].bClamp && !sliderSet[s].bZap) {
+				MorphDataPtr morph = make_shared<MorphData>();
+				morph->name = sliderSet[s].Name;
+
+				vector<vec3> verts;
+				ushort shapeVertCount = nif.GetVertCountForShape(shape->second);
+				shapeVertCount += zapIndices[shape->second].size();
+				if (shapeVertCount > 0)
+					verts.resize(shapeVertCount);
 				else
-					//Get zapped vertices
-					for (ushort i = 0; i < slider.linkedDataSets.size(); i++)
-						dataSets.GetDiffIndices(slider.linkedDataSets[i], shape->second, zapIndices);
+					continue;
+
+				currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
+
+				if (zapIndices[shape->second].size() > 0)
+					for (int i = verts.size() - 1; i >= 0; i--)
+						if (find(zapIndices[shape->second].begin(), zapIndices[shape->second].end(), i) != zapIndices[shape->second].end())
+							verts.erase(verts.begin() + i);
+
+				for (ushort i = 0; i < verts.size(); i++)
+					if (!verts[i].IsZero(true))
+						morph->offsets.emplace(i, verts[i]);
+
+				if (morph->offsets.size() > 0)
+					tri.AddMorph(shape->second, morph);
 			}
-		}
-
-		for (auto slider : validSliders) {
-			MorphDataPtr morph = make_shared<MorphData>();
-			morph->name = slider.Name;
-
-			vector<vec3> verts;
-			ushort shapeVertCount = nif.GetVertCountForShape(shape->second);
-			shapeVertCount += zapIndices.size();
-			if (shapeVertCount > 0)
-				verts.resize(shapeVertCount);
-
-			for (ushort i = 0; i < slider.linkedDataSets.size(); i++)
-					dataSets.ApplyDiff(slider.linkedDataSets[i], shape->second, 1.0f, &verts);
-
-			for (int i = verts.size() - 1; i >= 0; i--)
-				if (find(zapIndices.begin(), zapIndices.end(), i) != zapIndices.end())
-					verts.erase(verts.begin() + i);
-
-			for (ushort i = 0; i < verts.size(); i++)
-				if (!verts[i].IsZero(true))
-					morph->offsets.emplace(i, verts[i]);
-
-			tri.AddMorph(shape->second, morph);
 		}
 	}
 
@@ -1009,12 +1010,15 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	vector<vec3> verts0;
 	vector<vec3> verts1;
 	vector<ushort> ZapIdx;
+	unordered_map<string, vector<ushort>> ZapIdxAll;
 
 	for (it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		if (!nifSmall.GetVertsForShape(it->second, verts0))
 			continue;
 		if (!nifBig.GetVertsForShape(it->second, verts1))
 			continue;
+
+		ZapIdxAll.emplace(it->second, vector<ushort>());
 
 		ApplySliders(it->first, sliderManager.SlidersSmall, verts0, ZapIdx);
 		ZapIdx.clear();
@@ -1025,6 +1029,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 		nifBig.SetVertsForShape(it->second, verts1);
 		nifBig.DeleteVertsForShape(it->second, ZapIdx);
+
+		ZapIdxAll[it->second] = ZapIdx;
 	}
 
 	/* Add RaceMenu TRI path for in-game morphs */
@@ -1034,7 +1040,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 		triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-		if (!WriteMorphTRI(outFileNameBig, sliderManager.SlidersBig, activeSet, nifBig)) {
+		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, ZapIdxAll)) {
 			wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath),
 				wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
 		}
@@ -1219,6 +1225,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		vector<vec3> verts0;
 		vector<vec3> verts1;
 		vector<ushort> ZapIdx;
+		unordered_map<string, vector<ushort>> ZapIdxAll;
 
 		for (it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
 			if (!nifSmall.GetVertsForShape(it->second, verts0))
@@ -1230,8 +1237,9 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			float vbig;
 			vector<int> clamps;
 			ZapIdx.clear();
-			for (int s = 0; s < currentSet.size(); s++) {
+			ZapIdxAll.emplace(it->second, vector<ushort>());
 
+			for (int s = 0; s < currentSet.size(); s++) {
 				string dn = currentSet[s].TargetDataName(it->first);
 				string target = it->first;
 				if (dn.empty())
@@ -1250,8 +1258,10 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 				}
 
 				if (currentSet[s].bZap) {
-					if (vbig > 0)
+					if (vbig > 0) {
 						currentDiffs.GetDiffIndices(dn, target, ZapIdx);
+						ZapIdxAll[it->second] = ZapIdx;
+					}
 					continue;
 				}
 				currentDiffs.ApplyDiff(dn, target, vsmall, &verts0);
@@ -1297,7 +1307,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 			triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-			if (!WriteMorphTRI(outFileNameBig, sliderManager.SlidersBig, currentSet, nifBig)) {
+			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, ZapIdxAll)) {
 				wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath),
 					wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
 			}
