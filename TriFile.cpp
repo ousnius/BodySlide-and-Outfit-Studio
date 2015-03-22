@@ -108,7 +108,7 @@ int TriFile::Write(string fileName, bool packed) {
 			byte shapeLength = shape.first.length();
 			string shapeName = shape.first;
 			triFile.write((char*)&shapeLength, 1);
-			triFile.write((char*)&shapeName, shapeLength);
+			triFile.write(shapeName.c_str(), shapeLength);
 
 			uint morphCount = shape.second.size();
 			triFile.write((char*)&morphCount, packedBytes);
@@ -117,7 +117,7 @@ int TriFile::Write(string fileName, bool packed) {
 				byte morphLength = morph->name.length();
 				string morphName = morph->name;
 				triFile.write((char*)&morphLength, 1);
-				triFile.write((char*)&morphName, morphLength);
+				triFile.write(morphName.c_str(), morphLength);
 
 				if (packed) {
 					float mult = 0.0f;
