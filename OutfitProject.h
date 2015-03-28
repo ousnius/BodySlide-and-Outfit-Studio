@@ -168,11 +168,13 @@ public:
 	
 	void AutoOffset(bool IsOutfit);
 
-	// uses the automorph class to generate proximity values for bone weights.  This is done by
-	//   creating several virtual sliders that contain weight offsets for each vertex per bone.  
-	//   these data sets are then temporarily linked to the automorph class, and result 'diffs' are generated.
-	//   the resulting data is then written back to the outfit shape as the Green color channel.
+	// Uses the AutoMorph class to generate proximity values for bone weights.
+	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
+	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
+	// The resulting data is then written back to the outfit shape as the green color channel.
 	void CopyBoneWeights(const string& destShape, unordered_map<int, float>* mask = NULL, vector<string>* inBoneList = NULL);
+	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
+	void TransferSelectedWeights(const string& destShape, unordered_map<int, float>* mask = NULL, vector<string>* inBoneList = NULL);
 	bool OutfitHasUnweighted();
 
 	void AddBoneRef(const string& boneName, bool IsOutfit = true);

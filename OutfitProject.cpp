@@ -809,10 +809,6 @@ void OutfitProject::RotateShape(const string& shapeName, vec3& angle, bool IsOut
 	}
 }
 
-// uses the automorph class to generate proximity values for bone weights.  This is done by
-	//   creating several virtual sliders that contain weight offsets for each vertex in the ref nif per bone.  
-	//   these data sets are then temporarily linked to the automorph class, and result 'diffs' are generated.
-	//   the resulting data is then written back to the outfit shape as the Green color channel.
 void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<int, float>* mask, vector<string>* inBoneList) {
 	if (!baseNif.IsValid())
 		return;
@@ -895,6 +891,61 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<int, 
 	}
 
 	morpher.UnlinkRefDiffData();
+	owner->UpdateProgress(100, "Finished");
+}
+
+void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_map<int, float>* mask, vector<string>* inBoneList) {
+	if (!baseNif.IsValid())
+		return;
+
+	unordered_map<int, float> weights;
+	unordered_map<int, float> oldWeights;
+	vector<string> allBoneList;
+	vector<string>* boneList;
+
+	owner->UpdateProgress(10, "Gathering bones");
+
+	if (inBoneList == NULL) {
+		for (auto boneName : baseAnim.shapeBones[baseShapeName]) {
+			allBoneList.push_back(boneName);
+		}
+		boneList = &allBoneList;
+	}
+	else
+		boneList = inBoneList;
+
+	float step = 50.0f / boneList->size();
+	float prog = 40.0f;
+
+	owner->UpdateProgress(prog, "Transferring bone weights");
+
+	for (auto boneName : (*boneList)) {
+		baseAnim.GetWeights(baseShapeName, boneName, weights);
+		workAnim.GetWeights(destShape, boneName, oldWeights);
+
+		for (auto w : weights) {
+			if (mask) {
+				if (1.0f - (*mask)[w.first] > 0.0f)
+					weights[w.first] = w.second * (1.0f - (*mask)[w.first]);
+				else
+					weights[w.first] = oldWeights[w.first];
+			}
+			else
+				weights[w.first] = w.second;
+		}
+
+		AnimBone boneRef;
+		AnimSkeleton::getInstance().GetBone(boneName, boneRef);
+		if (workAnim.AddShapeBone(destShape, boneRef)) {
+			skin_transform xForm;
+			baseAnim.GetShapeBoneXform(baseShapeName, boneName, xForm);
+			workAnim.SetShapeBoneXform(destShape, boneName, xForm);
+		}
+
+		workAnim.SetWeights(destShape, boneName, weights);
+		owner->UpdateProgress(prog += step, "");
+	}
+
 	owner->UpdateProgress(100, "Finished");
 }
 

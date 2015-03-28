@@ -87,6 +87,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("deleteBone"), OutfitStudio::OnDeleteBone)
 	EVT_MENU(XRCID("copyBoneWeight"), OutfitStudio::OnCopyBoneWeight)	
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudio::OnCopySelectedWeight)
+	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudio::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudio::OnMaskWeighted)
 	EVT_MENU(XRCID("buildSkinPartitions"), OutfitStudio::OnBuildSkinPartitions)
 
@@ -1698,7 +1699,7 @@ void OutfitStudio::OnOutfitShapeContext(wxTreeEvent& event) {
 	wxTreeItemId item = event.GetItem();
 	if (outfitShapes->GetItemParent(item).IsOk()) {
 		outfitShapes->SelectItem(item);
-		//OnOutfitShapeSelect(event);
+
 		wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuMeshContext");
 		if (menu) {
 			PopupMenu(menu);
@@ -2003,18 +2004,12 @@ int OutfitStudio::PromptUpdateBase() {
 }
 
 void OutfitStudio::OnSlider(wxScrollEvent& event) {
-	vector<vector3> v;
-	int response;
 	int type = event.GetEventType();
 	static bool sentinel = false;
 
-	if (type == wxEVT_SCROLL_CHANGED) {
-		if (sentinel) return;
-	}
-	else if (type == wxEVT_SCROLL_THUMBTRACK)
-		response = 1;
-	else
-		return;
+	if (type == wxEVT_SCROLL_CHANGED)
+		if (sentinel)
+			return;
 
 	wxSlider* s = ((wxSlider*)event.GetEventObject());
 	if (!s)
@@ -2024,15 +2019,12 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 
 	if (IsDirty() && !bEditSlider) {
 		sentinel = true;
-		PromptUpdateBase();
+		if (PromptUpdateBase() == wxCANCEL)
+			return;
 		sentinel = false;
 	}
 
 	SetSliderValue(sliderName, event.GetPosition());
-	//SetSliderValue(id, event.GetPosition());
-	//	string name = activeSet[id].Name;
-	//	activeSet[id].curValue = val;	
-	//	((wxTextCtrl*)FindWindowById(1200 + id))->SetValue(wxString::Format("%d%%", event.GetPosition()));
 
 	if (!bEditSlider && event.GetEventType() == wxEVT_SCROLL_CHANGED)
 		ApplySliders(true);
@@ -2048,6 +2040,10 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 
 	string choice;
 	bool hi = true;
+
+	if (IsDirty())
+		if (PromptUpdateBase() == wxCANCEL)
+			return;
 
 	presets.LoadPresets("SliderPresets", Proj->SliderSetName(), names);
 	presets.GetPresetNames(names);
@@ -3101,6 +3097,42 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& event) {
 	}
 	else
 		wxMessageBox("Sorry, you cannot copy weights from the reference shape to itself.", "Cannot copy weights", wxOK | wxICON_INFORMATION, this);
+}
+
+void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& event) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+	if (!Proj->baseNif.IsValid())
+		return;
+
+	if (!activeItem->bIsOutfitShape) {
+		wxMessageBox("Sorry, you cannot copy weights from the reference shape to itself.", "Error");
+		return;
+	}
+
+	int baseVertCount = Proj->baseNif.GetVertCountForShape(Proj->baseShapeName);
+	int workVertCount = Proj->workNif.GetVertCountForShape(activeShape);
+	if (baseVertCount != workVertCount) {
+		wxMessageBox("The vertex count of the reference and chosen shape is not the same!", "Error");
+		return;
+	}
+
+	vector<string> selectedBones;
+	wxArrayTreeItemIds selItems;
+	outfitBones->GetSelections(selItems);
+	if (selItems.size() < 1)
+		return;
+
+	for (int i = 0; i < selItems.size(); i++)
+		selectedBones.push_back(string(outfitBones->GetItemText(selItems[i])));
+
+	StartProgress("Transfer bone weights");
+	unordered_map<int, float> mask;
+	glView->GetActiveMask(mask);
+	Proj->TransferSelectedWeights(activeShape, &mask, &selectedBones);
+	EndProgress();
 }
 
 void OutfitStudio::OnMaskWeighted(wxCommandEvent& event) {

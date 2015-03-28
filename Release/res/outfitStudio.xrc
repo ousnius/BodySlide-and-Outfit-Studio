@@ -356,7 +356,7 @@
 					<label>Redo\tCtrl+Shift+Z</label>
 					<help>Redo the next undone action.</help>
 				</object>
-				<object class="separator" />        
+				<object class="separator" />
 				<object class="wxMenuItem" name="btnXMirror">
 					<label>X Mirror\tX</label>
 					<help>Mirror edits across the X axis.</help>
@@ -378,7 +378,7 @@
 				</object>
 				<object class="wxMenuItem" name="btnRecalcNormals">
 					<label>Recalculate Normals\tR</label>
-					<help>Recalculate normals on active mesh</help>          
+					<help>Recalculate normals on active mesh</help>
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="btnGhostMode">
@@ -416,11 +416,11 @@
 				</object>
 				<object class="wxMenuItem" name="copyShape">
 					<label>Duplicate Shape...</label>
-					<help>Duplicate current shape.</help>
+					<help>Duplicate the current shape.</help>
 				</object>
 				<object class="wxMenuItem" name="renameShape">
 					<label>Rename Shape...</label>
-					<help>Change the name of this shape</help>
+					<help>Change the name of the current shape.</help>
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="moveShape">
@@ -462,6 +462,10 @@
 					<label>Copy Selected Weights</label>
 					<help>Copies selected bone weights from the reference shape to the current shape.</help>
 				</object>
+				<object class="wxMenuItem" name="transferSelectedWeight">
+					<label>Transfer Selected Weights</label>
+					<help>Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.</help>
+				</object>
 				<object class="wxMenuItem" name="maskWeightedVerts">
 					<label>Mask Weighted Vertices</label>
 					<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
@@ -469,7 +473,7 @@
 				<object class="wxMenuItem" name="buildSkinPartitions">
 					<label>Build Skin Partitions</label>
 					<help>Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken.</help>
-				</object>        
+				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="deleteShape">
 					<label>Delete Shape\tCtrl+Del</label>
@@ -494,7 +498,7 @@
 				<object class="separator" />
 				<object class="wxMenuItem" name="sliderLoadPreset">
 					<label>Load Slider Preset...</label>
-					<help>Load and preview a slider preset.  Note: inverted sliders will have inverted values.</help>
+					<help>Load and preview a slider preset. Note: inverted sliders will have inverted values.</help>
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="sliderNew">
@@ -661,101 +665,758 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="spacer">
 						<option>1</option>
-							<flag>wxEXPAND</flag>
-							<border>5</border>
-							<size>0,0</size>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText3">
+							<label>X</label>
+							<wrap>-1</wrap>
 						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-							<border>5</border>
-							<object class="wxStaticText" name="m_staticText3">
-								<label>X</label>
-								<wrap>-1</wrap>
-							</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="msCustX">
+							<value>0.0</value>
 						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxTextCtrl" name="msCustX">
-								<value>0.0</value>
-							</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText4">
+							<label>Y</label>
+							<wrap>-1</wrap>
 						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-							<border>5</border>
-							<object class="wxStaticText" name="m_staticText4">
-								<label>Y</label>
-								<wrap>-1</wrap>
-							</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="msCustY">
+							<value>0.0</value>
 						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxTextCtrl" name="msCustY">
-								<value>0.0</value>
-							</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText5">
+							<label>Z</label>
+							<wrap>-1</wrap>
 						</object>
-						<object class="sizeritem">
-							<option>0</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-							<object class="wxStaticText" name="m_staticText5">
-								<label>Z</label>
-								<wrap>-1</wrap>
-							</object>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxTextCtrl" name="msCustZ">
-								<value>0.0</value>
-							</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="msCustZ">
+							<value>0.0</value>
 						</object>
 					</object>
 				</object>
-				<object class="sizeritem">
-					<option>1</option>
-					<flag>wxEXPAND|wxALL</flag>
-					<border>5</border>
-					<object class="wxStdDialogButtonSizer">
-						<object class="button">
-							<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-							<border>5</border>
-							<object class="wxButton" name="wxID_OK">
-								<label>&amp;OK</label>
-							</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
 						</object>
-						<object class="button">
-							<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-							<border>5</border>
-							<object class="wxButton" name="wxID_CANCEL">
-								<label>&amp;Cancel</label>
-							</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
 						</object>
 					</object>
 				</object>
 			</object>
 		</object>
-		
-		<object class="wxDialog" name="dlgOffsetShape">
-			<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-			<size>423,155</size>
-			<title>Apply a virtual shape offset</title>
-			<centered>1</centered>
+	</object>
+	
+	<object class="wxDialog" name="dlgOffsetShape">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<size>423,155</size>
+		<title>Apply a virtual shape offset</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText32">
+					<label>A virtual shape offset visually lines up meshes in Outfit Studio and Bodyslide, but does not actually move the vertex locations.</label>
+					<wrap>400</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText3">
+							<label>X</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="osCustX">
+							<value>0.0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText4">
+							<label>Y</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="osCustY">
+							<value>0.0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText5">
+							<label>Z</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="osCustZ">
+							<value>0.0</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	
+	<object class="wxDialog" name="dlgScaleShape">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<size>423,155</size>
+		<title>Apply a shape scale</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText32">
+					<label>Scaling will grow/shrink a mesh in order to make it better match up with other meshes. This permanently affects vertices in the exported .nif files.</label>
+					<wrap>400</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText3">
+							<label>Scale:</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="scaleValue">
+							<value>1.00000</value>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+					<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+					<border>5</border>
+					<object class="wxButton" name="wxID_OK">
+						<label>&amp;OK</label>
+					</object>
+				</object>
+				<object class="button">
+					<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+					<border>5</border>
+					<object class="wxButton" name="wxID_CANCEL">
+						<label>&amp;Cancel</label>
+					</object>
+				</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	
+	<object class="wxDialog" name="dlgVirtScaleShape">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<size>423,155</size>
+		<title>Apply a virtual shape scale</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText32">
+					<label>A virtual scale will grow/shrink a mesh in order to make it better match up with other meshes. This value does not get stored with exported .nif files.</label>
+					<wrap>400</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText3">
+							<label>Scale:</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="scaleValue">
+							<value>0.0</value>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	
+	<object class="wxDialog" name="dlgRotateShape">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<size>423,155</size>
+		<title>Apply a shape rotation</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText32">
+					<label>A shape rotation can be used to line up meshes. This permanently affects vertices in the exported .nif files.</label>
+					<wrap>400</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText3">
+							<label>X</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="angleX">
+							<value>0.0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText4">
+							<label>Y</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="angleY">
+							<value>0.0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText5">
+							<label>Z</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="angleZ">
+							<value>0.0</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	
+	<object class="wxDialog" name="dlgMoveVertex">
+		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
+		<size>423,155</size>
+		<title>Apply a vertex position</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText32">
+					<label>This permanently moves a single vertex straight to the given location.</label>
+					<wrap>400</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+					<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText3">
+							<label>X</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="posX">
+							<value>0.0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText4">
+							<label>Y</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="posY">
+							<value>0.0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText5">
+							<label>Z</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="posZ">
+							<value>0.0</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	
+	<object class="wxWizard" name="wizNewProject">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>441,540</size>
+		<title>Create New Project</title>
+		<centered>1</centered>
+		<object class="wxWizardPageSimple" name="wizpgNewProj1">
 			<object class="wxBoxSizer">
 				<orient>wxVERTICAL</orient>
 				<object class="sizeritem">
 					<option>0</option>
 					<flag>wxALL|wxEXPAND</flag>
 					<border>5</border>
-					<object class="wxStaticText" name="m_staticText32">
-						<label>A virtual shape offset visually lines up meshes in Outfit Studio and Bodyslide, but does not actually move the vertex locations.</label>
-						<wrap>400</wrap>
+					<object class="wxStaticText" name="m_staticText6">
+						<label>Welcome to the New Project wizard!\n\nFirst, please choose a reference slider set for your new outfit. Typically, this is a body (Such as CBBE) or a conversion (Such as Vanilla To CBBE).</label>
+						<wrap>380</wrap>
+					</object>
+				</object>
+				<object class="spacer">
+					<option>0</option>
+					<flag>wxEXPAND</flag>
+					<border>5</border>
+					<size>0,10</size>
+				</object>
+				<object class="sizeritem">
+					<option>1</option>
+					<flag>wxEXPAND</flag>
+					<border>5</border>
+					<object class="wxStaticBoxSizer">
+						<orient>wxVERTICAL</orient>
+						<label>Reference Slider Set</label>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npRefIsTemplate">
+								<style>wxRB_GROUP</style>
+								<label>Use a template</label>
+								<value>1</value>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<object class="wxBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<object class="spacer">
+									<option>0</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>30,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxChoice" name="npTemplateChoice">
+										<selection>0</selection>
+										<content>
+											<item>CBBE Advanced</item>
+										</content>
+									</object>
+								</object>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npRefIsSliderset">
+								<label>Use an existing slider set</label>
+								<value>0</value>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>1</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<object class="wxFlexGridSizer">
+								<rows>0</rows>
+								<cols>3</cols>
+								<vgap>0</vgap>
+								<hgap>0</hgap>
+								<growablecols></growablecols>
+								<growablerows></growablerows>
+								<object class="spacer">
+									<option>1</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>30,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="m_staticText7">
+										<label>Slider set XML file:</label>
+										<wrap>-1</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxFilePickerCtrl" name="npSliderSetFile">
+										<value></value>
+										<message>Select a slider set XML file, or a Reference .nif file</message>
+										<wildcard>*.xml;*.nif</wildcard>
+										<style>wxFLP_DEFAULT_STYLE</style>
+									</object>
+								</object>
+								<object class="spacer">
+									<option>1</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>30,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="m_staticText8">
+										<label>Slider set name:</label>
+										<wrap>-1</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxChoice" name="npSliderSetName">
+										<selection>0</selection>
+										<content />
+									</object>
+								</object>
+								<object class="spacer">
+									<option>1</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>0,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="m_staticText9">
+										<label>Reference Shape:</label>
+										<wrap>-1</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxChoice" name="npRefShapeName">
+										<selection>0</selection>
+										<content />
+									</object>
+								</object>
+								<object class="spacer">
+									<option>0</option>
+									<flag></flag>
+									<border>0</border>
+									<size>0,2</size>
+								</object>
+								<object class="spacer">
+									<option>0</option>
+									<flag></flag>
+									<border>0</border>
+									<size>0,2</size>
+								</object>
+								<object class="spacer">
+									<option>0</option>
+									<flag></flag>
+									<border>0</border>
+									<size>300,2</size>
+								</object>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>1</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npRefIsBlank">
+								<label>Do not use a reference (Note, won&apos;t be able to use the conform feature)</label>
+								<value>0</value>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+		<object class="wxWizardPageSimple" name="wizpgNewProj2">
+			<object class="wxBoxSizer">
+				<orient>wxVERTICAL</orient>
+				<object class="sizeritem">
+					<option>0</option>
+					<flag>wxALL</flag>
+					<border>5</border>
+					<object class="wxStaticText" name="m_staticText61">
+						<label>Next, select an outfit to work on, and choose a name for the new outfit.</label>
+						<wrap>380</wrap>
 					</object>
 				</object>
 				<object class="sizeritem">
@@ -764,1639 +1425,986 @@
 					<border>5</border>
 					<object class="wxBoxSizer">
 						<orient>wxHORIZONTAL</orient>
-						<object class="spacer">
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+							<border>5</border>
+							<object class="wxStaticText" name="m_staticText39">
+								<label>Outfit Name</label>
+								<wrap>-1</wrap>
+							</object>
+						</object>
+						<object class="sizeritem">
 							<option>1</option>
-							<flag>wxEXPAND</flag>
+							<flag>wxALL|wxEXPAND</flag>
 							<border>5</border>
-							<size>0,0</size>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-							<border>5</border>
-							<object class="wxStaticText" name="m_staticText3">
-								<label>X</label>
-								<wrap>-1</wrap>
-							</object>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxTextCtrl" name="osCustX">
-								<value>0.0</value>
-							</object>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-							<border>5</border>
-							<object class="wxStaticText" name="m_staticText4">
-								<label>Y</label>
-								<wrap>-1</wrap>
-							</object>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxTextCtrl" name="osCustY">
-								<value>0.0</value>
-							</object>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-							<border>5</border>
-							<object class="wxStaticText" name="m_staticText5">
-								<label>Z</label>
-								<wrap>-1</wrap>
-							</object>
-						</object>
-						<object class="sizeritem">
-							<option>0</option>
-							<flag>wxALL</flag>
-							<border>5</border>
-							<object class="wxTextCtrl" name="osCustZ">
-								<value>0.0</value>
+							<object class="wxTextCtrl" name="npOutfitName">
+								<value>New Outfit</value>
 							</object>
 						</object>
 					</object>
 				</object>
 				<object class="sizeritem">
 					<option>1</option>
-					<flag>wxEXPAND|wxALL</flag>
+					<flag>wxEXPAND</flag>
 					<border>5</border>
-					<object class="wxStdDialogButtonSizer">
-						<object class="button">
-							<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+					<object class="wxStaticBoxSizer">
+						<orient>wxVERTICAL</orient>
+						<label>Working outfit source</label>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
 							<border>5</border>
-							<object class="wxButton" name="wxID_OK">
-								<label>&amp;OK</label>
+							<object class="wxRadioButton" name="npWorkNif">
+								<style>wxRB_GROUP</style>
+								<label>Load from a .nif file</label>
+								<value>0</value>
 							</object>
 						</object>
-						<object class="button">
-							<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxEXPAND</flag>
 							<border>5</border>
-							<object class="wxButton" name="wxID_CANCEL">
-								<label>&amp;Cancel</label>
+							<object class="wxBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<object class="spacer">
+									<option>0</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>30,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="m_staticText24">
+										<label>.Nif file:</label>
+										<wrap>-1</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL</flag>
+									<border>5</border>
+									<object class="wxFilePickerCtrl" name="npNifFilename">
+										<value></value>
+										<message>Select a .Nif file</message>
+										<wildcard>*.nif</wildcard>
+										<style>wxFLP_DEFAULT_STYLE</style>
+									</object>
+								</object>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npWorkObj">
+								<label>Load from .obj file</label>
+								<value>0</value>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<object class="wxBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<object class="spacer">
+									<option>0</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>30,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="m_staticText241">
+										<label>.Obj file:</label>
+										<wrap>-1</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL</flag>
+									<border>5</border>
+									<object class="wxFilePickerCtrl" name="npObjFilename">
+										<value></value>
+										<message>Select an .Obj file</message>
+										<wildcard>*.obj</wildcard>
+										<style>wxFLP_DEFAULT_STYLE</style>
+									</object>
+								</object>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npWorkNone">
+								<label>Clear Outfit</label>
+								<value>1</value>
+							</object>
+						</object>
+					</object>
+				</object>
+				<object class="spacer">
+					<option>0</option>
+					<flag>wxEXPAND</flag>
+					<border>5</border>
+					<size>0,10</size>
+				</object>
+				<object class="sizeritem">
+					<option>1</option>
+					<flag>wxEXPAND</flag>
+					<border>5</border>
+					<object class="wxStaticBoxSizer">
+						<orient>wxVERTICAL</orient>
+						<label>Default textures</label>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npTexAuto">
+								<style>wxRB_GROUP</style>
+								<label>Automatically search for textures</label>
+								<value>1</value>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npTexDefault">
+								<label>Use default texture</label>
+								<value>0</value>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<object class="wxBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<object class="spacer">
+									<option>0</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>30,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxChoice" name="npDefaultTexChoice">
+										<selection>0</selection>
+										<content>
+											<item>Grid, white background</item>
+											<item>Grid, light grey background</item>
+											<item>Grid, dark grey background</item>
+											<item>NoImg texture</item>
+										</content>
+									</object>
+								</object>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxRadioButton" name="npTexFile">
+								<label>Use specific file (.dds, .png, or .jpg)</label>
+								<value>0</value>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<object class="wxBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<object class="spacer">
+									<option>0</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<size>30,0</size>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="m_staticText242">
+										<label>Texture File:</label>
+										<wrap>-1</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL</flag>
+									<border>5</border>
+									<object class="wxFilePickerCtrl" name="npTexFilename">
+										<value></value>
+										<message>Select a texture file</message>
+										<wildcard>*.png; *.dds; *.jpg</wildcard>
+										<style>wxFLP_DEFAULT_STYLE</style>
+									</object>
+								</object>
 							</object>
 						</object>
 					</object>
 				</object>
 			</object>
 		</object>
-		
-  <object class="wxDialog" name="dlgScaleShape">
-    <style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-    <size>423,155</size>
-    <title>Apply a shape scale</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText32">
-          <label>Scaling will grow/shrink a mesh in order to make it better match up with other meshes. This permanently affects vertices in the exported .nif files.</label>
-          <wrap>400</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,0</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText3">
-              <label>Scale:</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="scaleValue">
-              <value>1.00000</value>
-            </object>
-          </object>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,0</size>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-
-  <object class="wxDialog" name="dlgVirtScaleShape">
-    <style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-    <size>423,155</size>
-    <title>Apply a virtual shape scale</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText32">
-          <label>A virtual scale will grow/shrink a mesh in order to make it better match up with other meshes. This value does not get stored with exported .nif files.</label>
-          <wrap>400</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,0</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText3">
-              <label>Scale:</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="scaleValue">
-              <value>0.0</value>
-            </object>
-          </object>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,0</size>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-
-  <object class="wxDialog" name="dlgRotateShape">
-    <style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-    <size>423,155</size>
-    <title>Apply a shape rotation</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText32">
-          <label>A shape rotation can be used to line up meshes. This permanently affects vertices in the exported .nif files.</label>
-          <wrap>400</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,0</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText3">
-              <label>X</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="angleX">
-              <value>0.0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText4">
-              <label>Y</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="angleY">
-              <value>0.0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText5">
-              <label>Z</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="angleZ">
-              <value>0.0</value>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  
-  <object class="wxDialog" name="dlgMoveVertex">
-    <style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-    <size>423,155</size>
-    <title>Apply a vertex position</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText32">
-          <label>This permanently moves a single vertex straight to the given location.</label>
-          <wrap>400</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,0</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText3">
-              <label>X</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="posX">
-              <value>0.0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText4">
-              <label>Y</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="posY">
-              <value>0.0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText5">
-              <label>Z</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="posZ">
-              <value>0.0</value>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  
-  <object class="wxWizard" name="wizNewProject">
-    <style>wxDEFAULT_DIALOG_STYLE</style>
-    <size>441,540</size>
-    <title>Create New Project</title>
-    <centered>1</centered>
-    <object class="wxWizardPageSimple" name="wizpgNewProj1">
-      <object class="wxBoxSizer">
-        <orient>wxVERTICAL</orient>
-        <object class="sizeritem">
-          <option>0</option>
-          <flag>wxALL|wxEXPAND</flag>
-          <border>5</border>
-          <object class="wxStaticText" name="m_staticText6">
-            <label>Welcome to the New Project wizard!\n\nFirst, please choose a reference slider set for your new outfit.  Typically, this is a body (Such as CBBE) or a conversion (Such as Vanilla To CBBE).  </label>
-            <wrap>380</wrap>
-          </object>
-        </object>
-        <object class="spacer">
-          <option>0</option>
-          <flag>wxEXPAND</flag>
-          <border>5</border>
-          <size>0,10</size>
-        </object>
-        <object class="sizeritem">
-          <option>1</option>
-          <flag>wxEXPAND</flag>
-          <border>5</border>
-          <object class="wxStaticBoxSizer">
-            <orient>wxVERTICAL</orient>
-            <label>Reference Slider Set</label>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npRefIsTemplate">
-                <style>wxRB_GROUP</style>
-                <label>Use a template</label>
-                <value>1</value>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxEXPAND</flag>
-              <border>5</border>
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>30,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>1</option>
-                  <flag>wxALL|wxEXPAND</flag>
-                  <border>5</border>
-                  <object class="wxChoice" name="npTemplateChoice">
-                    <selection>0</selection>
-                    <content>
-                      <item>CBBE Advanced</item>
-                    </content>
-                  </object>
-                </object>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npRefIsSliderset">
-                <label>Use an existing slider set</label>
-                <value>0</value>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>1</option>
-              <flag>wxEXPAND</flag>
-              <border>5</border>
-              <object class="wxFlexGridSizer">
-                <rows>0</rows>
-                <cols>3</cols>
-                <vgap>0</vgap>
-                <hgap>0</hgap>
-                <growablecols></growablecols>
-                <growablerows></growablerows>
-                <object class="spacer">
-                  <option>1</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>30,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>0</option>
-                  <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                  <border>5</border>
-                  <object class="wxStaticText" name="m_staticText7">
-                    <label>Slider set XML file:</label>
-                    <wrap>-1</wrap>
-                  </object>
-                </object>
-                <object class="sizeritem">
-                  <option>1</option>
-                  <flag>wxALL|wxEXPAND</flag>
-                  <border>5</border>
-                  <object class="wxFilePickerCtrl" name="npSliderSetFile">
-                    <value></value>
-                    <message>Select a slider set XML file, or a Reference .nif file</message>
-                    <wildcard>*.xml;*.nif</wildcard>
-                    <style>wxFLP_DEFAULT_STYLE</style>
-                  </object>
-                </object>
-                <object class="spacer">
-                  <option>1</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>30,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>0</option>
-                  <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                  <border>5</border>
-                  <object class="wxStaticText" name="m_staticText8">
-                    <label>Slider set name:</label>
-                    <wrap>-1</wrap>
-                  </object>
-                </object>
-                <object class="sizeritem">
-                  <option>1</option>
-                  <flag>wxALL|wxEXPAND</flag>
-                  <border>5</border>
-                  <object class="wxChoice" name="npSliderSetName">
-                    <selection>0</selection>
-                    <content />
-                  </object>
-                </object>
-                <object class="spacer">
-                  <option>1</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>0,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>0</option>
-                  <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                  <border>5</border>
-                  <object class="wxStaticText" name="m_staticText9">
-                    <label>Reference Shape:</label>
-                    <wrap>-1</wrap>
-                  </object>
-                </object>
-                <object class="sizeritem">
-                  <option>0</option>
-                  <flag>wxALL|wxEXPAND</flag>
-                  <border>5</border>
-                  <object class="wxChoice" name="npRefShapeName">
-                    <selection>0</selection>
-                    <content />
-                  </object>
-                </object>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag></flag>
-                  <border>0</border>
-                  <size>0,2</size>
-                </object>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag></flag>
-                  <border>0</border>
-                  <size>0,2</size>
-                </object>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag></flag>
-                  <border>0</border>
-                  <size>300,2</size>
-                </object>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>1</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npRefIsBlank">
-                <label>Do not use a reference  (Note, won&apos;t be able to use the conform feature)</label>
-                <value>0</value>
-              </object>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-    <object class="wxWizardPageSimple" name="wizpgNewProj2">
-      <object class="wxBoxSizer">
-        <orient>wxVERTICAL</orient>
-        <object class="sizeritem">
-          <option>0</option>
-          <flag>wxALL</flag>
-          <border>5</border>
-          <object class="wxStaticText" name="m_staticText61">
-            <label>Next, select an outfit to work on, and choose a name for the new outfit.</label>
-            <wrap>380</wrap>
-          </object>
-        </object>
-        <object class="sizeritem">
-          <option>0</option>
-          <flag>wxEXPAND</flag>
-          <border>5</border>
-          <object class="wxBoxSizer">
-            <orient>wxHORIZONTAL</orient>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-              <border>5</border>
-              <object class="wxStaticText" name="m_staticText39">
-                <label>Outfit Name</label>
-                <wrap>-1</wrap>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>1</option>
-              <flag>wxALL|wxEXPAND</flag>
-              <border>5</border>
-              <object class="wxTextCtrl" name="npOutfitName">
-                <value>New Outfit</value>
-              </object>
-            </object>
-          </object>
-        </object>
-        <object class="sizeritem">
-          <option>1</option>
-          <flag>wxEXPAND</flag>
-          <border>5</border>
-          <object class="wxStaticBoxSizer">
-            <orient>wxVERTICAL</orient>
-            <label>Working outfit source</label>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npWorkNif">
-                <style>wxRB_GROUP</style>
-                <label>Load from a .nif file</label>
-                <value>0</value>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxEXPAND</flag>
-              <border>5</border>
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>30,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>0</option>
-                  <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                  <border>5</border>
-                  <object class="wxStaticText" name="m_staticText24">
-                    <label>.Nif file:</label>
-                    <wrap>-1</wrap>
-                  </object>
-                </object>
-                <object class="sizeritem">
-                  <option>1</option>
-                  <flag>wxALL</flag>
-                  <border>5</border>
-                  <object class="wxFilePickerCtrl" name="npNifFilename">
-                    <value></value>
-                    <message>Select a .Nif file</message>
-                    <wildcard>*.nif</wildcard>
-                    <style>wxFLP_DEFAULT_STYLE</style>
-                  </object>
-                </object>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npWorkObj">
-                <label>Load from .obj file</label>
-                <value>0</value>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxEXPAND</flag>
-              <border>5</border>
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>30,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>0</option>
-                  <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                  <border>5</border>
-                  <object class="wxStaticText" name="m_staticText241">
-                    <label>.Obj file:</label>
-                    <wrap>-1</wrap>
-                  </object>
-                </object>
-                <object class="sizeritem">
-                  <option>1</option>
-                  <flag>wxALL</flag>
-                  <border>5</border>
-                  <object class="wxFilePickerCtrl" name="npObjFilename">
-                    <value></value>
-                    <message>Select an .Obj file</message>
-                    <wildcard>*.obj</wildcard>
-                    <style>wxFLP_DEFAULT_STYLE</style>
-                  </object>
-                </object>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npWorkNone">
-                <label>Clear Outfit</label>
-                <value>1</value>
-              </object>
-            </object>
-          </object>
-        </object>
-        <object class="spacer">
-          <option>0</option>
-          <flag>wxEXPAND</flag>
-          <border>5</border>
-          <size>0,10</size>
-        </object>
-        <object class="sizeritem">
-          <option>1</option>
-          <flag>wxEXPAND</flag>
-          <border>5</border>
-          <object class="wxStaticBoxSizer">
-            <orient>wxVERTICAL</orient>
-            <label>Default textures</label>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npTexAuto">
-                <style>wxRB_GROUP</style>
-                <label>Automatically search for textures</label>
-                <value>1</value>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npTexDefault">
-                <label>Use default texture</label>
-                <value>0</value>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxEXPAND</flag>
-              <border>5</border>
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>30,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>1</option>
-                  <flag>wxALL|wxEXPAND</flag>
-                  <border>5</border>
-                  <object class="wxChoice" name="npDefaultTexChoice">
-                    <selection>0</selection>
-                    <content>
-                      <item>Grid, white background</item>
-                      <item>Grid, light grey background</item>
-                      <item>Grid, dark grey background</item>
-                      <item>NoImg texture</item>
-                    </content>
-                  </object>
-                </object>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxALL</flag>
-              <border>5</border>
-              <object class="wxRadioButton" name="npTexFile">
-                <label>Use specific file (.dds, .png, or .jpg)</label>
-                <value>0</value>
-              </object>
-            </object>
-            <object class="sizeritem">
-              <option>0</option>
-              <flag>wxEXPAND</flag>
-              <border>5</border>
-              <object class="wxBoxSizer">
-                <orient>wxHORIZONTAL</orient>
-                <object class="spacer">
-                  <option>0</option>
-                  <flag>wxEXPAND</flag>
-                  <border>5</border>
-                  <size>30,0</size>
-                </object>
-                <object class="sizeritem">
-                  <option>0</option>
-                  <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                  <border>5</border>
-                  <object class="wxStaticText" name="m_staticText242">
-                    <label>Texture File:</label>
-                    <wrap>-1</wrap>
-                  </object>
-                </object>
-                <object class="sizeritem">
-                  <option>1</option>
-                  <flag>wxALL</flag>
-                  <border>5</border>
-                  <object class="wxFilePickerCtrl" name="npTexFilename">
-                    <value></value>
-                    <message>Select a texture file</message>
-                    <wildcard>*.png; *.dds; *.jpg</wildcard>
-                    <style>wxFLP_DEFAULT_STYLE</style>
-                  </object>
-                </object>
-              </object>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  <object class="wxDialog" name="dlgChoosePreset">
-    <style>wxDEFAULT_DIALOG_STYLE</style>
-    <size>327,132</size>
-    <title>Select a slider preset</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText12">
-          <label>Choose a preset:</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxChoice" name="choicePreset">
-          <selection>0</selection>
-          <content />
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="weightLo">
-              <label>Low weight</label>
-              <value>0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="weightHi">
-              <label>High weight</label>
-              <value>1</value>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  <object class="wxDialog" name="dlgShapeTextures">
-    <style>wxDEFAULT_DIALOG_STYLE</style>
-    <size>457,308</size>
-    <title>Set Shape Textures</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText13">
-              <label>Display Texture:</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxFilePickerCtrl" name="stDisplayTexture">
-              <value></value>
-              <message>Select a texture file</message>
-              <wildcard>*.png; *.dds; *.jpg</wildcard>
-              <style>wxFLP_DEFAULT_STYLE</style>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND | wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticLine" name="m_staticline1">
-          <style>wxLI_HORIZONTAL</style>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxGrid" name="stTexGrid">
-          <style>wxALWAYS_SHOW_SB</style>
-		  <size>446,236</size>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxButton" name="btApplyDiffuse">
-          <tooltip>Applies the current diffuse texture path to the Outfit Studio display texture path.</tooltip>						
-          <label>Apply Diffuse</label>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND | wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticLine" name="m_staticline2">
-          <style>wxLI_HORIZONTAL</style>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  <object class="wxDialog" name="dlgLoadRef">
-    <style>wxDEFAULT_DIALOG_STYLE</style>
-    <size>443,367</size>
-    <title>Load Reference Slider Set</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText6">
-          <label>Choose a slider set to use as a reference.  Any currently loaded reference objects and sliders will be replaced.</label>
-          <wrap>380</wrap>
-        </object>
-      </object>
-      <object class="spacer">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,10</size>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxVERTICAL</orient>
-          <label>Reference Slider Set</label>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npRefIsTemplate">
-              <style>wxRB_GROUP</style>
-              <label>Use a template</label>
-              <value>1</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxBoxSizer">
-              <orient>wxHORIZONTAL</orient>
-              <object class="spacer">
-                <option>0</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>30,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <object class="wxChoice" name="npTemplateChoice">
-                  <selection>0</selection>
-                  <content>
-                      <item>CBBE Standard</item>
-                      <item>Convert: Vanilla to CBBE</item>
-                      <item>Convert: CBBE to Vanilla</item>
-                      <item>Convert: UNP to CBBE</item>
-                      <item>Convert: CBBE to UNP</item>
-                  </content>
-                </object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npRefIsSliderset">
-              <label>Use an existing slider set</label>
-              <value>0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxFlexGridSizer">
-              <rows>0</rows>
-              <cols>3</cols>
-              <vgap>0</vgap>
-              <hgap>0</hgap>
-              <growablecols></growablecols>
-              <growablerows></growablerows>
-              <object class="spacer">
-                <option>1</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>30,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>0</option>
-                <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                <border>5</border>
-                <object class="wxStaticText" name="m_staticText7">
-                  <label>Slider set XML file:</label>
-                  <wrap>-1</wrap>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <object class="wxFilePickerCtrl" name="npSliderSetFile">
-                  <value></value>
-                  <message>Select a slider set XML file, or a Reference .nif file</message>
-                  <wildcard>*.xml;*.nif</wildcard>
-                  <style>wxFLP_DEFAULT_STYLE</style>
-                </object>
-              </object>
-              <object class="spacer">
-                <option>1</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>30,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>0</option>
-                <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                <border>5</border>
-                <object class="wxStaticText" name="m_staticText8">
-                  <label>Slider set name:</label>
-                  <wrap>-1</wrap>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <object class="wxChoice" name="npSliderSetName">
-                  <selection>0</selection>
-                  <content />
-                </object>
-              </object>
-              <object class="spacer">
-                <option>1</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>0,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>0</option>
-                <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                <border>5</border>
-                <object class="wxStaticText" name="m_staticText9">
-                  <label>Reference Shape:</label>
-                  <wrap>-1</wrap>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>0</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <object class="wxChoice" name="npRefShapeName">
-                  <selection>0</selection>
-                  <content />
-                </object>
-              </object>
-              <object class="spacer">
-                <option>0</option>
-                <flag></flag>
-                <border>0</border>
-                <size>0,2</size>
-              </object>
-              <object class="spacer">
-                <option>0</option>
-                <flag></flag>
-                <border>0</border>
-                <size>0,2</size>
-              </object>
-              <object class="spacer">
-                <option>0</option>
-                <flag></flag>
-                <border>0</border>
-                <size>300,2</size>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npRefIsBlank">
-              <label>Do not use a reference  (Note, won&apos;t be able to use the conform feature)</label>
-              <value>0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkClearSliders">
-              <label>Merge new sliders with existing sliders</label>
-              <checked>0</checked>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  <object class="wxDialog" name="dlgLoadOutfit">
-    <style>wxDEFAULT_DIALOG_STYLE</style>
-    <size>410,540</size>
-    <title>Load Working Outfit</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText61">
-          <label>Select a model file to load as a working outfit. This will replace any outfit objects currently loaded.</label>
-          <wrap>410</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText39">
-              <label>Outfit Name</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="npOutfitName">
-              <value>New Outfit</value>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxVERTICAL</orient>
-          <label>Working outfit source</label>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npWorkNif">
-              <style>wxRB_GROUP</style>
-              <label>Load from a .nif file</label>
-              <value>0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxBoxSizer">
-              <orient>wxHORIZONTAL</orient>
-              <object class="spacer">
-                <option>0</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>30,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>0</option>
-                <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                <border>5</border>
-                <object class="wxStaticText" name="m_staticText24">
-                  <label>.Nif file:</label>
-                  <wrap>-1</wrap>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL</flag>
-                <border>5</border>
-                <object class="wxFilePickerCtrl" name="npNifFilename">
-                  <value></value>
-                  <message>Select a .Nif file</message>
-                  <wildcard>*.nif</wildcard>
-                  <style>wxFLP_DEFAULT_STYLE</style>
-                </object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npWorkObj">
-              <label>Load from .obj file</label>
-              <value>0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxBoxSizer">
-              <orient>wxHORIZONTAL</orient>
-              <object class="spacer">
-                <option>0</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>30,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>0</option>
-                <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                <border>5</border>
-                <object class="wxStaticText" name="m_staticText241">
-                  <label>.Obj file:</label>
-                  <wrap>-1</wrap>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL</flag>
-                <border>5</border>
-                <object class="wxFilePickerCtrl" name="npObjFilename">
-                  <value></value>
-                  <message>Select an .Obj file</message>
-                  <wildcard>*.obj</wildcard>
-                  <style>wxFLP_DEFAULT_STYLE</style>
-                </object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npWorkNone">
-              <label>Clear Outfit</label>
-              <value>1</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="npWorkAdd">
-              <label>Keep other shapes</label>
-              <checked>0</checked>
-              <enabled>0</enabled>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="spacer">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,10</size>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxVERTICAL</orient>
-          <label>Default textures</label>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npTexAuto">
-              <style>wxRB_GROUP</style>
-              <label>Automatically search for textures</label>
-              <value>1</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npTexDefault">
-              <label>Use default texture</label>
-              <value>0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxBoxSizer">
-              <orient>wxHORIZONTAL</orient>
-              <object class="spacer">
-                <option>0</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>30,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL|wxEXPAND</flag>
-                <border>5</border>
-                <object class="wxChoice" name="npDefaultTexChoice">
-                  <selection>0</selection>
-                  <content>
-                    <item>Grid, white background</item>
-                    <item>Grid, grey background</item>
-                    <item>NoImg texture</item>
-                  </content>
-                </object>
-              </object>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxRadioButton" name="npTexFile">
-              <label>Use specific file (.dds, .png, or .jpg)</label>
-              <value>0</value>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <object class="wxBoxSizer">
-              <orient>wxHORIZONTAL</orient>
-              <object class="spacer">
-                <option>0</option>
-                <flag>wxEXPAND</flag>
-                <border>5</border>
-                <size>30,0</size>
-              </object>
-              <object class="sizeritem">
-                <option>0</option>
-                <flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-                <border>5</border>
-                <object class="wxStaticText" name="m_staticText242">
-                  <label>Texture File:</label>
-                  <wrap>-1</wrap>
-                </object>
-              </object>
-              <object class="sizeritem">
-                <option>1</option>
-                <flag>wxALL</flag>
-                <border>5</border>
-                <object class="wxFilePickerCtrl" name="npTexFilename">
-                  <value></value>
-                  <message>Select a texture file</message>
-                  <wildcard>*.png; *.dds; *.jpg</wildcard>
-                  <style>wxFLP_DEFAULT_STYLE</style>
-                </object>
-              </object>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="spacer">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,10</size>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  <object class="wxMenu" name="menuMeshContext">
-    <label>Shape</label>
-    <object class="wxMenuItem" name="offsetShape">
-      <label>Offset Shape...</label>
-      <help>Apply an offset adjustment to the shape</help>
-    </object>
-    <object class="wxMenuItem" name="virtscaleShape">
-      <label>Scale Shape...</label>
-      <help>Apply a scale adjustment to the shape.  This is used to line up meshes, but does not modify their vertices.</help>
-    </object>
-    <object class="wxMenuItem" name="setShapeTex">
-      <label>Set Textures...</label>
-      <help>Allows you to choose a display texture, and edit the shape game texture paths</help>
-    </object>
-    <object class="wxMenuItem" name="renameShape">
-      <label>Rename Shape...</label>
-      <help>Change the name of this shape</help>
-    </object>
-    <object class="wxMenuItem" name="copyShape">
-      <label>Duplicate Shape...</label>
-      <help>Duplicate this shape</help>
-    </object>
-    <object class="wxMenuItem" name="exportShape">
-      <label>Export Shape to .obj</label>
-      <help>Export this shape as an .obj file.</help>
-    </object>
-    <object class="separator" />
-    <object class="wxMenuItem" name="copyBoneWeight">
-      <label>Copy Bone Weights</label>
-      <help>Copies all bone weights from the reference shape to this shape.</help>
-    </object>
-    <object class="wxMenuItem" name="copySelectedWeight">
-      <label>Copy Selected Weights</label>
-      <help>Copies selected bone weights from the reference shape to the current shape.</help>
-    </object>
-    <object class="wxMenuItem" name="buildSkinPartitions">
-      <label>Build Skin Partitions</label>
-      <help>Creates or rebuilds skin partitions for this shape. </help>
-    </object>
-    <object class="separator" />
-    <object class="wxMenuItem" name="deleteShape">
-      <label>Delete Shape\tCtrl+Del</label>
-      <help>Removes this shape from the outfit.</help>
-    </object>
-  </object>
-  <object class="wxMenu" name="menuBoneContext">
-    <label>Bones</label>
-    <!--
-    <object class="wxMenuItem" name="clearWeights">
-      <label>Clear Weights</label>
-      <help>Clears all weights associated with this bone</help>
-    </object>
-    -->
-    <object class="wxMenuItem" name="addBone">
-      <label>Add Bone...</label>
-      <help>Add a new bone to the outfit</help>
-    </object>
-    <object class="separator" />
-    <object class="wxMenuItem" name="deleteBone">
-      <label>Delete Bone</label>
-      <help>Delete this bone from the outfit</help>
-    </object>
-  </object>
-  <object class="wxDialog" name="dlgSkeletonBones">
+	</object>
+	<object class="wxDialog" name="dlgChoosePreset">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>327,132</size>
+		<title>Select a slider preset</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText12">
+					<label>Choose a preset:</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxChoice" name="choicePreset">
+					<selection>0</selection>
+					<content />
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="weightLo">
+							<label>Low weight</label>
+							<value>0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="weightHi">
+							<label>High weight</label>
+							<value>1</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgShapeTextures">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>457,308</size>
+		<title>Set Shape Textures</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText13">
+							<label>Display Texture:</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxFilePickerCtrl" name="stDisplayTexture">
+							<value></value>
+							<message>Select a texture file</message>
+							<wildcard>*.png; *.dds; *.jpg</wildcard>
+							<style>wxFLP_DEFAULT_STYLE</style>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND | wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticLine" name="m_staticline1">
+					<style>wxLI_HORIZONTAL</style>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxGrid" name="stTexGrid">
+					<style>wxALWAYS_SHOW_SB</style>
+					<size>446,236</size>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxButton" name="btApplyDiffuse">
+					<tooltip>Applies the current diffuse texture path to the Outfit Studio display texture path.</tooltip>						
+					<label>Apply Diffuse</label>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND | wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticLine" name="m_staticline2">
+					<style>wxLI_HORIZONTAL</style>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgLoadRef">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>443,367</size>
+		<title>Load Reference Slider Set</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText6">
+					<label>Choose a slider set to use as a reference. Any currently loaded reference objects and sliders will be replaced.</label>
+					<wrap>380</wrap>
+				</object>
+			</object>
+			<object class="spacer">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,10</size>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Reference Slider Set</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npRefIsTemplate">
+							<style>wxRB_GROUP</style>
+							<label>Use a template</label>
+							<value>1</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="spacer">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>30,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxChoice" name="npTemplateChoice">
+									<selection>0</selection>
+									<content>
+										<item>CBBE Standard</item>
+										<item>Convert: Vanilla to CBBE</item>
+										<item>Convert: CBBE to Vanilla</item>
+										<item>Convert: UNP to CBBE</item>
+										<item>Convert: CBBE to UNP</item>
+									</content>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npRefIsSliderset">
+							<label>Use an existing slider set</label>
+							<value>0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>3</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols></growablecols>
+							<growablerows></growablerows>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>30,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText7">
+									<label>Slider set XML file:</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxFilePickerCtrl" name="npSliderSetFile">
+									<value></value>
+									<message>Select a slider set XML file, or a Reference .nif file</message>
+									<wildcard>*.xml;*.nif</wildcard>
+									<style>wxFLP_DEFAULT_STYLE</style>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>30,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText8">
+									<label>Slider set name:</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxChoice" name="npSliderSetName">
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText9">
+									<label>Reference Shape:</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxChoice" name="npRefShapeName">
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+							<object class="spacer">
+								<option>0</option>
+								<flag></flag>
+								<border>0</border>
+								<size>0,2</size>
+							</object>
+							<object class="spacer">
+								<option>0</option>
+								<flag></flag>
+								<border>0</border>
+								<size>0,2</size>
+							</object>
+							<object class="spacer">
+								<option>0</option>
+								<flag></flag>
+								<border>0</border>
+								<size>300,2</size>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npRefIsBlank">
+							<label>Do not use a reference (Note, won&apos;t be able to use the conform feature)</label>
+							<value>0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkClearSliders">
+							<label>Merge new sliders with existing sliders</label>
+							<checked>0</checked>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgLoadOutfit">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>410,540</size>
+		<title>Load Working Outfit</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText61">
+					<label>Select a model file to load as a working outfit. This will replace any outfit objects currently loaded.</label>
+					<wrap>410</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText39">
+							<label>Outfit Name</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="npOutfitName">
+							<value>New Outfit</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Working outfit source</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npWorkNif">
+							<style>wxRB_GROUP</style>
+							<label>Load from a .nif file</label>
+							<value>0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="spacer">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>30,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText24">
+									<label>.Nif file:</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxFilePickerCtrl" name="npNifFilename">
+									<value></value>
+									<message>Select a .Nif file</message>
+									<wildcard>*.nif</wildcard>
+									<style>wxFLP_DEFAULT_STYLE</style>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npWorkObj">
+							<label>Load from .obj file</label>
+							<value>0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+						<orient>wxHORIZONTAL</orient>
+						<object class="spacer">
+							<option>0</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<size>30,0</size>
+						</object>
+						<object class="sizeritem">
+							<option>0</option>
+							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+							<border>5</border>
+							<object class="wxStaticText" name="m_staticText241">
+								<label>.Obj file:</label>
+								<wrap>-1</wrap>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>1</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxFilePickerCtrl" name="npObjFilename">
+								<value></value>
+								<message>Select an .Obj file</message>
+								<wildcard>*.obj</wildcard>
+								<style>wxFLP_DEFAULT_STYLE</style>
+							</object>
+						</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npWorkNone">
+							<label>Clear Outfit</label>
+							<value>1</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="npWorkAdd">
+							<label>Keep other shapes</label>
+							<checked>0</checked>
+							<enabled>0</enabled>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="spacer">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,10</size>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Default textures</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npTexAuto">
+							<style>wxRB_GROUP</style>
+							<label>Automatically search for textures</label>
+							<value>1</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npTexDefault">
+							<label>Use default texture</label>
+							<value>0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="spacer">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>30,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxChoice" name="npDefaultTexChoice">
+									<selection>0</selection>
+									<content>
+										<item>Grid, white background</item>
+										<item>Grid, grey background</item>
+										<item>NoImg texture</item>
+									</content>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxRadioButton" name="npTexFile">
+							<label>Use specific file (.dds, .png, or .jpg)</label>
+							<value>0</value>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="spacer">
+								<option>0</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>30,0</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="m_staticText242">
+									<label>Texture File:</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxFilePickerCtrl" name="npTexFilename">
+									<value></value>
+									<message>Select a texture file</message>
+									<wildcard>*.png; *.dds; *.jpg</wildcard>
+									<style>wxFLP_DEFAULT_STYLE</style>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="spacer">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,10</size>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxMenu" name="menuMeshContext">
+		<label>Shape</label>
+		<object class="wxMenuItem" name="offsetShape">
+			<label>Offset Shape...</label>
+			<help>Apply an offset adjustment to the shape</help>
+		</object>
+		<object class="wxMenuItem" name="virtscaleShape">
+			<label>Scale Shape...</label>
+			<help>Apply a scale adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="setShapeTex">
+			<label>Set Textures...</label>
+			<help>Allows you to choose a display texture, and edit the shape game texture paths</help>
+		</object>
+		<object class="wxMenuItem" name="renameShape">
+			<label>Rename Shape...</label>
+			<help>Change the name of this shape</help>
+		</object>
+		<object class="wxMenuItem" name="copyShape">
+			<label>Duplicate Shape...</label>
+			<help>Duplicate this shape</help>
+		</object>
+		<object class="wxMenuItem" name="exportShape">
+			<label>Export Shape to .obj</label>
+			<help>Export this shape as an .obj file.</help>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="copyBoneWeight">
+			<label>Copy Bone Weights</label>
+			<help>Copies all bone weights from the reference shape to this shape.</help>
+		</object>
+		<object class="wxMenuItem" name="copySelectedWeight">
+			<label>Copy Selected Weights</label>
+			<help>Copies selected bone weights from the reference shape to this shape.</help>
+		</object>
+		<object class="wxMenuItem" name="transferSelectedWeight">
+			<label>Transfer Selected Weights</label>
+			<help>Transfers selected weights from the reference shape to this shape. Requires same vertex count and order.</help>
+		</object>
+		<object class="wxMenuItem" name="buildSkinPartitions">
+			<label>Build Skin Partitions</label>
+			<help>Creates or rebuilds skin partitions for this shape. </help>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="deleteShape">
+			<label>Delete Shape\tCtrl+Del</label>
+			<help>Removes this shape from the outfit.</help>
+		</object>
+	</object>
+	<object class="wxMenu" name="menuBoneContext">
+		<label>Bones</label>
+		<!--
+		<object class="wxMenuItem" name="clearWeights">
+			<label>Clear Weights</label>
+			<help>Clears all weights associated with this bone</help>
+		</object>
+		-->
+		<object class="wxMenuItem" name="addBone">
+			<label>Add Bone...</label>
+			<help>Add a new bone to the outfit</help>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="deleteBone">
+			<label>Delete Bone</label>
+			<help>Delete this bone from the outfit</help>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgSkeletonBones">
 		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<size>443,471</size>
 		<title>Select a bone to add</title>
@@ -2443,323 +2451,323 @@
 			</object>
 		</object>
 	</object>
-  <object class="wxDialog" name="dlgSliderProp">
-    <style>wxDEFAULT_DIALOG_STYLE</style>
-    <size>287,210</size>
-    <title>Slider Properties</title>
-    <centered>1</centered>
-    <object class="wxBoxSizer">
-      <orient>wxVERTICAL</orient>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <label>Slider Name</label>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="edSliderName">
-              <value></value>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <label>Default Values</label>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText241">
-              <label>Low</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="edValLo">
-              <value>0</value>
-            </object>
-          </object>
-          <object class="spacer">
-            <option>1</option>
-            <flag>wxEXPAND</flag>
-            <border>5</border>
-            <size>0,0</size>
-          </object>
-          <object class="sizeritem">
-            <option>0</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxStaticText" name="m_staticText27">
-              <label>High</label>
-              <wrap>-1</wrap>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxTextCtrl" name="edValHi">
-              <value>100</value>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxStaticBoxSizer">
-          <orient>wxHORIZONTAL</orient>
-          <label>Options</label>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkInvert">
-              <label>Invert Slider</label>
-              <checked>0</checked>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkHidden">
-              <label>Hidden</label>
-              <checked>0</checked>
-            </object>
-          </object>
-          <object class="sizeritem">
-            <option>1</option>
-            <flag>wxALL</flag>
-            <border>5</border>
-            <object class="wxCheckBox" name="chkZap">
-              <label>Zap</label>
-              <checked>0</checked>
-            </object>
-          </object>
-        </object>
-      </object>
-      <object class="spacer">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,0</size>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
-  <object class="wxDialog" name="dlgBrushSettings">
-    <style>wxDEFAULT_DIALOG_STYLE|wxCLIP_CHILDREN</style>
-    <size>420,160</size>
-    <title>Brush Settings</title>
-    <centered>1</centered>
-    <object class="wxFlexGridSizer">
-      <rows>0</rows>
-      <cols>3</cols>
-      <vgap>0</vgap>
-      <hgap>0</hgap>
-      <growablecols></growablecols>
-      <growablerows></growablerows>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText1">
-          <label>Size</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxSlider" name="slideSize">
-          <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>450,25</size>
-          <value>0</value>
-          <min>0</min>
-          <max>1000</max>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="valSize">
-          <label>1.000</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="m_staticText2">
-          <label>Strength</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxSlider" name="slideStr">
-          <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>450,25</size>
-          <value>0</value>
-          <min>0</min>
-          <max>1000</max>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="valStr">
-          <label>0</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="lblslideFocus">
-          <label>Focus</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxSlider" name="slideFocus">
-          <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>450,25</size>
-          <value>0</value>
-          <min>0</min>
-          <max>1000</max>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="valFocus">
-          <label>0</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="lblslideSpace">
-          <label>Spacing</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxALL|wxEXPAND</flag>
-        <border>5</border>
-        <object class="wxSlider" name="slideSpace">
-          <style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-          <size>450,25</size>
-          <value>0</value>
-          <min>0</min>
-          <max>1000</max>
-        </object>
-      </object>
-      <object class="sizeritem">
-        <option>0</option>
-        <flag>wxALIGN_CENTER|wxALL</flag>
-        <border>5</border>
-        <object class="wxStaticText" name="valSpace">
-          <label>0</label>
-          <wrap>-1</wrap>
-        </object>
-      </object>
-      <object class="spacer">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,0</size>
-      </object>
-      <object class="spacer">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,0</size>
-      </object>
-      <object class="spacer">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,0</size>
-      </object>
-      <object class="spacer">
-        <option>1</option>
-        <flag>wxEXPAND</flag>
-        <border>5</border>
-        <size>0,50</size>
-      </object>
-      <object class="sizeritem">
-        <option>1</option>
-        <flag>wxEXPAND|wxALL</flag>
-        <border>5</border>
-        <object class="wxStdDialogButtonSizer">
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_OK">
-              <label>&amp;OK</label>
-            </object>
-          </object>
-          <object class="button">
-            <flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-            <border>5</border>
-            <object class="wxButton" name="wxID_CANCEL">
-              <label>&amp;Cancel</label>
-            </object>
-          </object>
-        </object>
-      </object>
-    </object>
-  </object>
+	<object class="wxDialog" name="dlgSliderProp">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>287,210</size>
+		<title>Slider Properties</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<label>Slider Name</label>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="edSliderName">
+							<value></value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<label>Default Values</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText241">
+							<label>Low</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="edValLo">
+							<value>0</value>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="m_staticText27">
+							<label>High</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxTextCtrl" name="edValHi">
+							<value>100</value>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<label>Options</label>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkInvert">
+							<label>Invert Slider</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkHidden">
+							<label>Hidden</label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="chkZap">
+							<label>Zap</label>
+							<checked>0</checked>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,0</size>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgBrushSettings">
+		<style>wxDEFAULT_DIALOG_STYLE|wxCLIP_CHILDREN</style>
+		<size>420,160</size>
+		<title>Brush Settings</title>
+		<centered>1</centered>
+		<object class="wxFlexGridSizer">
+			<rows>0</rows>
+			<cols>3</cols>
+			<vgap>0</vgap>
+			<hgap>0</hgap>
+			<growablecols></growablecols>
+			<growablerows></growablerows>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText1">
+					<label>Size</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxSlider" name="slideSize">
+					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+					<size>450,25</size>
+					<value>0</value>
+					<min>0</min>
+					<max>1000</max>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="valSize">
+					<label>1.000</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="m_staticText2">
+					<label>Strength</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxSlider" name="slideStr">
+					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+					<size>450,25</size>
+					<value>0</value>
+					<min>0</min>
+					<max>1000</max>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="valStr">
+					<label>0</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="lblslideFocus">
+					<label>Focus</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxSlider" name="slideFocus">
+					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+					<size>450,25</size>
+					<value>0</value>
+					<min>0</min>
+					<max>1000</max>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="valFocus">
+					<label>0</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="lblslideSpace">
+					<label>Spacing</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxSlider" name="slideSpace">
+					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+					<size>450,25</size>
+					<value>0</value>
+					<min>0</min>
+					<max>1000</max>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALIGN_CENTER|wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="valSpace">
+					<label>0</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,0</size>
+			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,0</size>
+			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,0</size>
+			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,50</size>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
 	<object class="wxDialog" name="dlgSaveProject">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
 		<size>486,345</size>
