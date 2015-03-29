@@ -1302,3 +1302,213 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* point
 		refmesh->vcolors[points[i]] = vf;
 	}
 }
+
+TB_SmoothWeight::TB_SmoothWeight() :TweakBrush() {
+	brushType = TBT_WEIGHT;
+	strength = 0.015f;
+	iterations = 1;
+	method = 1;
+	hcAlpha = 0.2f;
+	hcBeta = 0.5f;
+	bMirror = false;
+	b = NULL;
+	lastMesh = NULL;
+	brushName = "Weight Smooth";
+}
+
+TB_SmoothWeight::~TB_SmoothWeight() {
+	if (b) {
+		free(b);
+		b = NULL;
+	}
+}
+
+void TB_SmoothWeight::lapFilter(mesh* refmesh, int* points, int nPoints, unordered_map <int, vec3>& wv) {
+	unordered_map<int, vec3>::iterator mi;
+	vec3 d;
+	int adjPoints[1000];
+	int c = 0;
+	int a;
+
+	for (int i = 0; i < nPoints; i++) {
+		c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		if (c == 0) continue;
+		d.x = d.y = d.z = 0;
+		// average adjacent points positions.  Since we're storing the changed vertices separately,
+		// there's additional complexity involved with making sure we're grabbing a changed vertex 
+		// instead of the original. This primarily comes into play when more than one iteration is used.
+		for (int n = 0; n < c; n++) {
+			a = adjPoints[n];
+			mi = wv.find(a);
+			if (mi != wv.end()) {
+				d += mi->second;
+			}
+			else {
+				d += refmesh->vcolors[a];
+			}
+		}
+		wv[points[i]] = d / (float)c;
+
+		if (refmesh->weldVerts.find(points[i]) != refmesh->weldVerts.end()) {
+			for (unsigned int v = 0; v < refmesh->weldVerts[points[i]].size(); v++) {
+				wv[refmesh->weldVerts[points[i]][v]] = wv[points[i]];
+			}
+		}
+	}
+}
+
+void TB_SmoothWeight::hclapFilter(mesh* refmesh, int* points, int nPoints, unordered_map <int, vec3>& wv) {
+	unordered_map<int, vec3>::iterator mi;
+
+	if (refmesh != lastMesh) {
+		if (b) free(b);
+		b = (vec3*)calloc(refmesh->nVerts, sizeof(vec3));
+		lastMesh = refmesh;
+	}
+	else {
+		memset(b, 0, refmesh->nVerts * sizeof(vec3));
+	}
+
+	vec3 d;
+	vec3 q;
+	int adjPoints[1000];
+	int a;
+	int c;
+	int i;
+	// First step is to calculate the laplacian
+	for (int p = 0; p < nPoints; p++) {
+		i = points[p];
+		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		if (c == 0) continue;
+		d.x = d.y = d.z = 0;
+		// average adjacent points positions.  Since we're storing the changed vertices separately,
+		// there's additional complexity involved with making sure we're grabbing a changed vertex 
+		// instead of the original. This primarily comes into play when more than one iteration is used.
+		for (int n = 0; n < c; n++) {
+			a = adjPoints[n];
+			mi = wv.find(a);
+			if (mi != wv.end()) {
+				d += mi->second;
+			}
+			else {
+				d += refmesh->vcolors[a];
+			}
+		}
+		// Save the current point's working position (or original if the working value hasn't been calculated
+		// yet.)  This is used as part of the blend between original and changed position
+		mi = wv.find(i);
+		if (mi != wv.end())
+			q = wv[i];
+		else
+			q = refmesh->vcolors[i];
+
+		wv[i] = d / (float)c;
+		// Calculate the difference between the new position and a blend of the original and previous positions
+		b[i] = wv[i] - ((refmesh->vcolors[i] * hcAlpha) + (q * (1.0f - hcAlpha)));
+
+		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end()) {
+			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++) {
+				wv[refmesh->weldVerts[i][v]] = wv[i];
+			}
+		}
+	}
+
+	for (int p = 0; p < nPoints; p++) {
+		int j = points[p];
+		c = refmesh->GetAdjacentPoints(j, adjPoints, 1000);
+		if (c == 0) continue;
+		d.x = d.y = d.z = 0;
+		for (int n = 0; n < c; n++)
+			d += b[adjPoints[n]];
+
+		// blend the new position and the average of the distance moved
+		float avgB = (1 - hcBeta) / (float)c;
+		wv[j] -= ((b[j] * hcBeta) + (d * avgB));
+
+		if (refmesh->weldVerts.find(j) != refmesh->weldVerts.end()) {
+			for (unsigned int v = 0; v < refmesh->weldVerts[j].size(); v++) {
+				wv[refmesh->weldVerts[j][v]] = wv[j];
+			}
+		}
+	}
+}
+
+void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, vec3>& movedpoints) {
+	unordered_map<int, vec3> wv;
+	vec3 vs;
+	vec3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		movedpoints[points[i]] = refmesh->vcolors[points[i]];
+		wv[points[i]] = movedpoints[points[i]];
+	}
+
+	for (int iter = 0; iter < iterations; iter++) {
+		if (method == 0)		// laplacian smooth
+			lapFilter(refmesh, points, nPoints, wv);
+		else					// HC-laplacian smooth
+			hclapFilter(refmesh, points, nPoints, wv);
+	}
+
+	vec3 delta;
+	if (strength != 1.0f) {
+		for (int p = 0; p < nPoints; p++) {
+			int i = points[p];
+			vs = refmesh->verts[i];
+			vc = refmesh->vcolors[i];
+			delta.y = wv[i].y - vc.y;
+			delta.y *= strength;
+
+			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+
+			if (refmesh->vcolors)
+				delta.y *= 1.0f - refmesh->vcolors[i].x;
+
+			vc.y += delta.y;
+
+			if (vc.y < EPSILON) vc.y = 0.0f;
+			if (vc.y > 1.0f) vc.y = 1.0f;
+			refmesh->vcolors[i].y = vc.y;
+		}
+	}
+}
+
+void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, vec3* movedpoints) {
+	unordered_map<int, vec3> wv;
+	vec3 vs;
+	vec3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		movedpoints[i] = refmesh->vcolors[points[i]];
+		wv[points[i]] = movedpoints[i];
+	}
+
+	for (int iter = 0; iter < iterations; iter++) {
+		if (method == 0)		// laplacian smooth
+			lapFilter(refmesh, points, nPoints, wv);
+		else					// HC-laplacian smooth
+			hclapFilter(refmesh, points, nPoints, wv);
+	}
+
+	vec3 delta;
+	if (strength != 1.0f) {
+		for (int p = 0; p < nPoints; p++) {
+			int i = points[p];
+			vs = refmesh->verts[i];
+			vc = refmesh->vcolors[i];
+			delta.y = wv[i].y - vc.y;
+			delta.y *= strength;
+
+			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+
+			if (refmesh->vcolors)
+				delta.y *= 1.0f - refmesh->vcolors[i].x;
+
+			vc.y += delta.y;
+
+			if (vc.y < EPSILON) vc.y = 0.0f;
+			if (vc.y > 1.0f) vc.y = 1.0f;
+			refmesh->vcolors[i].y = vc.y;
+		}
+	}
+}

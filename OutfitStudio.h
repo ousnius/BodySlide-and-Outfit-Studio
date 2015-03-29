@@ -336,6 +336,7 @@ private:
 	TB_Unmask UnMaskBrush;
 	TB_Weight weightBrush;
 	TB_Unweight unweightBrush;
+	TB_SmoothWeight smoothWeightBrush;
 	TB_XForm translateBrush;
 
 	TweakStroke* activeStroke;

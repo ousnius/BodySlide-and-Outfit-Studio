@@ -455,54 +455,60 @@ void OutfitStudio::UpdateShapeSource(const string& shapeName, bool bIsOutfit) {
 
 void OutfitStudio::ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo) {
 	if (bEditSlider) {
-		unordered_map<int,vector3> strokediff;
-		for (auto p: refStroke->pointStartState) {
+		unordered_map<int, vector3> strokediff;
+		for (auto p : refStroke->pointStartState) {
 			if (bIsUndo) {
-				strokediff[p.first] = p.second - refStroke->pointEndState[p.first];		
-			} else {
-				strokediff[p.first] = refStroke->pointEndState[p.first] - p.second;		
+				strokediff[p.first] = p.second - refStroke->pointEndState[p.first];
+			}
+			else {
+				strokediff[p.first] = refStroke->pointEndState[p.first] - p.second;
 			}
 		}
 		Proj->UpdateMorphResult(activeShape, activeSlider, strokediff, activeItem->bIsOutfitShape);
 
-	} else { 
+	}
+	else {
 		if (refStroke->BrushType() == TBT_WEIGHT) {
 			unordered_map<int, float> newWeights;
 			TweakBrush* br = refStroke->GetRefBrush();
 			string refBone;
-		
-			if (br->Name() == "WeightPaint") {
-				refBone = ((TB_Weight*)br)->refBone;
-			} else {
-				
-				refBone = ((TB_Unweight*)br)->refBone;
-			}
-			if (activeItem->bIsOutfitShape) {
-				Proj->workAnim.GetWeights(activeShape, refBone, newWeights);
-			} else {				
-				Proj->baseAnim.GetWeights(activeShape, refBone, newWeights);
-			}
 
-			if(bIsUndo) {
-				for (auto p: refStroke->pointStartState) {
+			if (br->Name() == "Weight Paint")
+				refBone = ((TB_Weight*)br)->refBone;
+			else if (br->Name() == "Weight Erase")
+				refBone = ((TB_Unweight*)br)->refBone;
+			else
+				refBone = ((TB_SmoothWeight*)br)->refBone;
+
+			if (activeItem->bIsOutfitShape)
+				Proj->workAnim.GetWeights(activeShape, refBone, newWeights);
+			else
+				Proj->baseAnim.GetWeights(activeShape, refBone, newWeights);
+
+			if (bIsUndo) {
+				for (auto p : refStroke->pointStartState) {
 					if (p.second.y == 0.0f) {
 						newWeights.erase(p.first);
-					} else {
-						newWeights[p.first] = p.second.y;				
+					}
+					else {
+						newWeights[p.first] = p.second.y;
 					}
 				}
-			} else {
-				for (auto p: refStroke->pointEndState) {
+			}
+			else {
+				for (auto p : refStroke->pointEndState) {
 					if (p.second.y == 0.0f) {
 						newWeights.erase(p.first);
-					} else {
-						newWeights[p.first] = p.second.y;				
+					}
+					else {
+						newWeights[p.first] = p.second.y;
 					}
 				}
-			} 
+			}
 			if (activeItem->bIsOutfitShape) {
 				Proj->workAnim.SetWeights(activeShape, refBone, newWeights);
-			} else {				
+			}
+			else {
 				Proj->baseAnim.SetWeights(activeShape, refBone, newWeights);
 			}
 		}
@@ -3417,6 +3423,11 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 			unweightBrush.refBone = ((OutfitStudio*)notifyWindow)->GetActiveBone();
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
+		}
+		else if ((GetKeyState(VK_SHIFT) & 0x8000) > 0) {
+			smoothWeightBrush.refBone = ((OutfitStudio*)notifyWindow)->GetActiveBone();
+			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
+			activeBrush = &smoothWeightBrush;
 		}
 		else {
 			weightBrush.refBone = ((OutfitStudio*)notifyWindow)->GetActiveBone();
