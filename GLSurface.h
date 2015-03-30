@@ -64,18 +64,18 @@ class GLSurface
 	int activeMesh;
 
 	void initLighting();
-	void initMaterial(vec3& diffusecolor); 
+	void initMaterial(vec3& diffusecolor);
 
 	void DeleteMesh(int meshID) {
-		if(meshID < meshes.size()) {
+		if (meshID < meshes.size()) {
 			delete meshes[meshID];
-			meshes.erase (meshes.begin() + meshID);
-			for(int i=meshID;i<meshes.size();i++) { // renumber meshes after the deleted one
+			meshes.erase(meshes.begin() + meshID);
+			for (int i = meshID; i < meshes.size(); i++) { // renumber meshes after the deleted one
 				namedMeshes[meshes[i]->shapeName] = i;
 			}
 		}
-		if(activeMesh >= meshID) 
-			activeMesh --;
+		if (activeMesh >= meshID)
+			activeMesh--;
 	}
 
 public:
@@ -84,7 +84,7 @@ public:
 	~GLSurface(void);
 
 	void DeleteAllMeshes() {
-		for(auto m:meshes) {
+		for (auto m : meshes) {
 			delete m;
 		}
 		meshes.clear();
@@ -94,14 +94,14 @@ public:
 
 	void DeleteMesh(const string& shapeName) {
 		int id = GetMeshID(shapeName);
-		if(id >=0) {
+		if (id >= 0) {
 			DeleteMesh(id);
 			namedMeshes.erase(shapeName);
 		}
 	}
 
 	void DeleteOverlays() {
-		for(int i=0;i<overlays.size();i++) {
+		for (int i = 0; i < overlays.size(); i++) {
 			delete overlays[i];
 		}
 		overlays.clear();
@@ -111,31 +111,31 @@ public:
 
 	int GetMeshID(const string& shapeName) {
 		unordered_map<string, int>::iterator it = namedMeshes.find(shapeName);
-		if(it != namedMeshes.end()) {
+		if (it != namedMeshes.end()) {
 			return it->second;
 		}
 		/*
 		for(int i=0;i<meshes.size();i++) {
-			if(meshes[i]->shapeName == shapeName) {
-				return i;
-			}
+		if(meshes[i]->shapeName == shapeName) {
+		return i;
+		}
 		}*/
 		return -1;
 	}
-	string GetMeshName(int id) { 
-		for(auto mn : namedMeshes ){
-			if(mn.second == id)
+	string GetMeshName(int id) {
+		for (auto mn : namedMeshes){
+			if (mn.second == id)
 				return mn.first;
 		}
 		/*
 		if(id >=0 && id<meshes.size()) {
-			return meshes[id]->shapeName;
+		return meshes[id]->shapeName;
 		}*/
 		return "";
 	}
 
 	void RenameMesh(const string& shapeName, const string& newShapeName) {
-		if(namedMeshes.find(shapeName) != namedMeshes.end()) {
+		if (namedMeshes.find(shapeName) != namedMeshes.end()) {
 			int mid = namedMeshes[shapeName];
 			namedMeshes[newShapeName] = mid;
 			meshes[mid]->shapeName = newShapeName;
@@ -146,37 +146,37 @@ public:
 
 	int GetOverlayID(const string& shapeName) {
 		unordered_map<string, int>::iterator it = namedOverlays.find(shapeName);
-		if(it != namedOverlays.end()) {
+		if (it != namedOverlays.end()) {
 			return it->second;
 		}
 
 		return -1;
 	}
 	mesh* GetActiveMesh() {
-		if(activeMesh >= 0 && activeMesh  < meshes.size())
+		if (activeMesh >= 0 && activeMesh < meshes.size())
 			return meshes[activeMesh];
 		return NULL;
 	}
 
 	vec3 GetActiveCenter(bool useMask = true) {
 		mesh* m = GetActiveMesh();
-		if(!m) return vec3(0,0,0);
+		if (!m) return vec3(0, 0, 0);
 		int count = 0;
 		vec3 total;
-		for(int i=0;i<m->nVerts;i++) {
-			if(!useMask || m->vcolors[i].x ==0.0f) {
+		for (int i = 0; i < m->nVerts; i++) {
+			if (!useMask || m->vcolors[i].x == 0.0f) {
 				total = total + m->verts[i];
-				count ++;
+				count++;
 			}
 		}
-		total = total/count;
+		total = total / count;
 		return total;
 	}
 
 
 	bool IsValidMesh(mesh* query) {
-		for(int i=0;i<meshes.size();i++) {
-			if(meshes[i]  == query) {
+		for (int i = 0; i < meshes.size(); i++) {
+			if (meshes[i] == query) {
 				return true;
 			}
 		}
@@ -184,18 +184,18 @@ public:
 	}
 	mesh* GetMesh(const string& shapeName) {
 		int id = GetMeshID(shapeName);
-		if(id>=0)
+		if (id >= 0)
 			return meshes[id];
 		return NULL;
 	}
 	mesh* GetOverlay(int overlayID) {
-		if(overlayID>=0)
+		if (overlayID >= 0)
 			return overlays[overlayID];
 		return NULL;
 	}
 	mesh* GetOverlay(const string& overlayName) {
 		int id = GetOverlayID(overlayName);
-		if(id>=0)
+		if (id >= 0)
 			return overlays[id];
 		return NULL;
 	}
@@ -206,7 +206,7 @@ public:
 		cursorSize = newsize;
 	}
 	bool IsWGLExtensionSupported(char* szTargetExtension, HDC refDC);
-	bool IsExtensionSupported( char* szTargetExtension );
+	bool IsExtensionSupported(char* szTargetExtension);
 	bool MultiSampleQueried() {
 		return (multisampleState > 0);
 	}
@@ -228,17 +228,17 @@ public:
 	int PickMesh(int ScreenX, int ScreenY);
 	bool UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri = NULL, float* outHoverWeight = NULL, float* outHoverMask = NULL);
 	bool GetCursorVertex(int ScreenX, int ScreenY, vtx* outHoverVtx = NULL);
-	void ShowCursor(bool show=true);
+	void ShowCursor(bool show = true);
 
 	// ray/mesh collision detection.  from a screen point, calculates a ray, and finds the nearest collision point and surface normal on 
 	// the active mesh.   Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay. Screen x/y
 	// are ignored if the ray is provided.
-	bool CollideMesh(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir =0, vec3* inRayOrigin=0);
-	
+	bool CollideMesh(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir = 0, vec3* inRayOrigin = 0);
+
 	bool CollidePlane(int ScreenX, int ScreenY, vec3& outOrigin, vec3& inPlaneNormal, float inPlaneDist);
 
-	int CollideOverlay(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir =0, vec3* inRayOrigin=0);
-	
+	int CollideOverlay(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir = 0, vec3* inRayOrigin = 0);
+
 
 	int AddVisRay(vec3& start, vec3& direction, float length);
 	int AddVisCircle(vec3& center, vec3& normal, float radius, const string& name = "RingMesh");
@@ -255,7 +255,7 @@ public:
 	void EditRedo();
 	void EndEditMode();
 
-	void AddMeshFromNif(NifFile* nif, string shapeName, vec3* color=NULL, bool smoothNormalSeams = true);
+	void AddMeshFromNif(NifFile* nif, string shapeName, vec3* color = NULL, bool smoothNormalSeams = true);
 	void AddMeshExplicit(vector<vector3>* verts, vector<triangle>* tris, vector<vector2>* uvs = NULL, const string& name = "", float scale = 1.0f);
 	void AddMeshDirect(mesh* m);
 	void Update(const string& shapeName, vector<vector3>* vertices, vector<vector2>* uvs = NULL);
@@ -275,13 +275,13 @@ public:
 	int AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile);
 
 	int TestRender();
-	int RenderOneFrame();	
+	int RenderOneFrame();
 	void RenderMesh(mesh* m);
 
 	void ToggleTextures() {
-		if (bTextured) 
+		if (bTextured)
 			bTextured = false;
-		else 
+		else
 			bTextured = true;
 		for (int i = 0; i < meshes.size(); i++) {
 			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
@@ -291,49 +291,50 @@ public:
 	}
 
 	void ToggleWireframe() {
-		if (bWireframe) 
+		if (bWireframe)
 			bWireframe = false;
-		else 
+		else
 			bWireframe = true;
 	}
 
 	void ToggleLighting() {
-		if (bLighting) 
+		if (bLighting)
 			bLighting = false;
-		else 
+		else
 			bLighting = true;
-		
+
 		for (int i = 0; i < meshes.size(); i++) {
 			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
 				materials[meshes[i]->MatRef]->shader->EnableVertexLighting(bLighting);
 			}
 		}
-	//	if(meshes.size() > 0 && (activeMesh > -1)) 
-	//		materials[meshes[activeMesh]->MatRef]->shader->EnableVertexLighting(bLighting);
 	}
 
 	void ToggleMask() {
 		if (bMaskVisible)
 			bMaskVisible = false;
-		else 
+		else
 			bMaskVisible = true;
-		if (meshes.size() > 0 && (activeMesh > -1)) 
-			materials[meshes[activeMesh]->MatRef]->shader->ShowMask(bMaskVisible);
+
+		for (int i = 0; i < meshes.size(); i++) {
+			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
+				materials[meshes[i]->MatRef]->shader->ShowMask(bMaskVisible);
+			}
+		}
 	}
 
 	void SetWeightColors(bool bVisible = true) {
 		bWeightColors = bVisible;
-		
+
 		for (int i = 0; i < meshes.size(); i++) {
 			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
 				materials[meshes[i]->MatRef]->shader->ShowWeight(bWeightColors);
 			}
 		}
-		//if (meshes.size() > 0 && (activeMesh > -1))
-		//	materials[meshes[activeMesh]->MatRef]->shader->ShowWeight(bWeightColors);
 	}
+
 	void ToggleWeightColors() {
-		if (bWeightColors) 
+		if (bWeightColors)
 			bWeightColors = false;
 		else
 			bWeightColors = true;
