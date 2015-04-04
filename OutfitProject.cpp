@@ -1488,7 +1488,7 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	}
 	owner->UpdateProgress(10, "Retrieving outfit sliders");
 	SliderSet tmpSet;
-	if (InSS.GetSet(sliderSetName, tmpSet, LOADSS_DIRECT)) {
+	if (InSS.GetSet(sliderSetName, tmpSet)) {
 		owner->EndProgress();
 		return 2;
 	}
@@ -1512,9 +1512,8 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	activeSet.GetReferencedTargets(refTargets);
 	baseShapeName = activeSet.TargetToShape(refTargets[0]);
 
-	for (auto s: refTargets) {
-		DeleteOutfitShape(activeSet.TargetToShape(s));
-	}
+	if (!baseShapeName.empty())
+		DeleteOutfitShape(baseShapeName);
 	
 	owner->UpdateProgress(90, "Updating outfit slider data");
 	morpher.LoadResultDiffs(tmpSet);
@@ -1524,9 +1523,8 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	mDataDir = tmpSet.GetDefaultDataFolder();
 	mBaseFile = tmpSet.GetInputFileName();
 	size_t slashpos = mBaseFile.rfind("\\");
-	if (slashpos != string::npos) {
+	if (slashpos != string::npos)
 		mBaseFile = mBaseFile.substr(slashpos + 1);
-	}
 
 	mGamePath = tmpSet.GetOutputPath();
 	mGameFile = tmpSet.GetOutputFile();
@@ -1534,11 +1532,6 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	mGenWeights = tmpSet.GenWeights();
 
 	owner->UpdateProgress(100, "Complete");
-
-/*	for (int i = 0; i < tmpSet.size(); i++) {
-		activeSet.CopySlider(&tmpSet[i]);
-	}
-*/
 	owner->EndProgress();
 	return 0;
 }
