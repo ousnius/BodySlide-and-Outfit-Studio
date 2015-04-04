@@ -952,18 +952,18 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 bool OutfitProject::OutfitHasUnweighted() {
 	vector<string> workShapes;
 	OutfitShapes(workShapes);
-	for (auto s: workShapes) {
+	for (auto s : workShapes) {
 		vector<string> bones;
 		vector<vec3> verts;
 		RefBones(bones);
 		workNif.GetVertsForShape(s, verts);
-		
-		unordered_map<int,int> influences;
+
+		unordered_map<int, int> influences;
 		for (int i = 0; i < verts.size(); i++)
 			influences.emplace(i, 0);
 
-		for (auto b: bones) {
-			unordered_map<int,float> boneWeights;
+		for (auto b : bones) {
+			unordered_map<int, float> boneWeights;
 			workAnim.GetWeights(s, b, boneWeights);
 			for (int i = 0; i < verts.size(); i++) {
 				auto id = boneWeights.find(i);
@@ -971,12 +971,13 @@ bool OutfitProject::OutfitHasUnweighted() {
 					influences.at(i)++;
 			}
 		}
-		
+
 		mesh* m = owner->glView->GetMesh(s);
-		m->ColorFill(vec3(0.0f, 0.0f, 0.0f));
 		bool unweighted = false;
-		for (auto i: influences) {
+		for (auto i : influences) {
 			if (i.second == 0) {
+				if (!unweighted)
+					m->ColorFill(vec3(0.0f, 0.0f, 0.0f));
 				m->vcolors[i.first].x = 1.0f;
 				unweighted = true;
 			}
