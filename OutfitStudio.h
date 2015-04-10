@@ -541,10 +541,10 @@ private:
 
 	void OnSelectSliders(wxCommandEvent& event);
 	void OnOutfitVisToggle(wxTreeEvent& event);
-	void OnOutfitShapeSelect(wxTreeEvent& event) ;
-	void OnOutfitBoneSelect(wxTreeEvent& event) ;
-	void OnOutfitShapeContext(wxTreeEvent& event) ;	
-	void OnBoneContext(wxTreeEvent& event) ;
+	void OnOutfitShapeSelect(wxTreeEvent& event);
+	void OnOutfitBoneSelect(wxTreeEvent& event);
+	void OnOutfitShapeContext(wxTreeEvent& event);	
+	void OnBoneContext(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);
 	void OnKillFocusOutfitShapes(wxCommandEvent& event);
@@ -616,11 +616,9 @@ private:
 
 	void OnUndo(wxCommandEvent& WXUNUSED(event)) {
 		glView->UndoStroke();
-		//ActiveShapeUpdated();
 	}
 	void OnRedo(wxCommandEvent& WXUNUSED(event)) {
 		glView->RedoStroke();
-		//ActiveShapeUpdated();
 	}
 
 	void OnGhostMesh(wxCommandEvent& WXUNUSED(event)) {

@@ -988,6 +988,97 @@ bool OutfitProject::OutfitHasUnweighted() {
 	return false;
 }
 
+void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos) {
+	vector<string> bones;
+	vector<vec3> boneRot;
+	vec3 boneTranslation;
+	float boneScale;
+	unordered_map<int, float> weights;
+
+	vector<vec3> verts;
+	vector<string> shapes;
+	ClearBoneScale();
+
+	OutfitShapes(shapes);
+	for (auto s : shapes) {
+		workNif.GetVertsForShape(s, verts);
+		workNif.GetShapeBoneList(s, bones);
+		boneScaleOffsets.emplace(s, vector<vec3>(verts.size()));
+		for (auto b : bones) {
+			if (b == bone) {
+				workNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
+				workAnim.GetWeights(s, b, weights);
+				for (auto w : weights) {
+					vec3 dir = verts[w.first] - boneTranslation;
+					dir.Normalize();
+					vec3 offset = dir * w.second * sliderPos / 5.0f;
+					verts[w.first] += offset;
+					boneScaleOffsets[s][w.first] += offset;
+				}
+			}
+		}
+		workNif.SetVertsForShape(s, verts);
+		owner->glView->UpdateMeshVertices(s, &verts);
+	}
+
+	shapes.clear();
+	RefShapes(shapes);
+	for (auto s : shapes) {
+		baseNif.GetVertsForShape(s, verts);
+		baseNif.GetShapeBoneList(s, bones);
+		boneScaleOffsets.emplace(s, vector<vec3>(verts.size()));
+		for (auto b : bones) {
+			if (b == bone) {
+				baseNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
+				baseAnim.GetWeights(s, b, weights);
+				for (auto w : weights) {
+					vec3 dir = verts[w.first] - boneTranslation;
+					dir.Normalize();
+					vec3 offset = dir * w.second * sliderPos / 5.0f;
+					verts[w.first] += offset;
+					boneScaleOffsets[s][w.first] += offset;
+				}
+			}
+		}
+		baseNif.SetVertsForShape(s, verts);
+		owner->glView->UpdateMeshVertices(s, &verts);
+	}
+}
+
+void OutfitProject::ClearBoneScale() {
+	vector<vec3> verts;
+	vector<string> shapes;
+
+	OutfitShapes(shapes);
+	for (auto s : shapes) {
+		if (boneScaleOffsets.find(s) != boneScaleOffsets.end()) {
+			workNif.GetVertsForShape(s, verts);
+			if (verts.size() == boneScaleOffsets[s].size()) {
+				for (int i = 0; i < verts.size(); i++)
+					verts[i] -= boneScaleOffsets[s][i];
+				workNif.SetVertsForShape(s, verts);
+				owner->glView->UpdateMeshVertices(s, &verts);
+			}
+		}
+	}
+
+	shapes.clear();
+	RefShapes(shapes);
+	for (auto s : shapes) {
+		if (boneScaleOffsets.find(s) != boneScaleOffsets.end()) {
+			baseNif.GetVertsForShape(s, verts);
+			if (verts.size() == boneScaleOffsets[s].size()) {
+				for (int i = 0; i < verts.size(); i++)
+					verts[i] -= boneScaleOffsets[s][i];
+				baseNif.SetVertsForShape(s, verts);
+				owner->glView->UpdateMeshVertices(s, &verts);
+			}
+		}
+	}
+
+	boneScaleOffsets.clear();
+}
+
 void OutfitProject::AddBoneRef(const string& boneName, bool IsOutfit) {
 	AnimBone boneref;
 	AnimSkeleton::getInstance().GetBone(boneName, boneref);

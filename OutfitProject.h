@@ -42,6 +42,7 @@ public:
 
 	AnimInfo baseAnim;
 	AnimInfo workAnim;
+	unordered_map<string, vector<vec3>> boneScaleOffsets;
 
 	map<string, bool> shapeDirty;
 	unordered_map<string, string> outfitTextures;
@@ -176,6 +177,9 @@ public:
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(const string& destShape, unordered_map<int, float>* mask = NULL, vector<string>* inBoneList = NULL);
 	bool OutfitHasUnweighted();
+
+	void ApplyBoneScale(const string& bone, int sliderPos);
+	void ClearBoneScale();
 
 	void AddBoneRef(const string& boneName, bool IsOutfit = true);
 

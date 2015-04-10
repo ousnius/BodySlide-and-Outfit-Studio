@@ -257,7 +257,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 		refMesh->SmoothNormals();
 	}
 
-	if (refBrush->LiveBVH()) {
+	if (refBrush->LiveBVH() && brushType != TBT_WEIGHT) {
 		unordered_set<AABBTree::AABBTreeNode*>::iterator bvhNode;
 		for (bvhNode = affectedNodes.begin(); bvhNode != affectedNodes.end(); ++bvhNode)
 			(*bvhNode)->UpdateAABB();
@@ -267,35 +267,24 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 void TweakStroke::endStroke() {
 	unordered_set<AABBTree::AABBTreeNode*>::iterator bvhNode;
 	if (refBrush->Type() == TBT_MOVE) {
-		TB_Move* br = dynamic_cast<TB_Move*> (refBrush);
+		TB_Move* br = dynamic_cast<TB_Move*>(refBrush);
 		if (br) {
 			affectedNodes.swap(((TB_Move*)refBrush)->cachedNodes);
-			affectedNodes.insert(((TB_Move*)refBrush)->cachedNodesM.begin(), ((TB_Move*)refBrush)->cachedNodesM.end()); /*
-			for(bvhNode = ((TB_Move*) refBrush)->cachedNodes.begin(); bvhNode!=((TB_Move*) refBrush)->cachedNodes.end(); ++bvhNode )
-			(*bvhNode)->UpdateAABB();
-			for(bvhNode = ((TB_Move*) refBrush)->cachedNodesM.begin(); bvhNode!=((TB_Move*) refBrush)->cachedNodesM.end(); ++bvhNode )
-			(*bvhNode)->UpdateAABB();
-			*/
+			affectedNodes.insert(((TB_Move*)refBrush)->cachedNodesM.begin(), ((TB_Move*)refBrush)->cachedNodesM.end());
 			((TB_Move*)refBrush)->cachedNodes.clear();
 			((TB_Move*)refBrush)->cachedNodesM.clear();
 		}
 	}
-	else if (refBrush->Type() == TBT_XFORM) {
-		// recalc BVH 
+	else if (refBrush->Type() == TBT_XFORM)
 		refMesh->CreateBVH();
-		TB_XForm* br = dynamic_cast<TB_XForm*> (refBrush);
-		if (br) {
-		}
-		//InvalidateBVH();
-	}
 
-	for (auto bvhNode : affectedNodes) {
-		bvhNode->UpdateAABB();
-	}
-	//}
-	if (!refBrush->LiveNormals()) {
+	if (refBrush->Type() != TBT_WEIGHT)
+		for (auto bvhNode : affectedNodes)
+			bvhNode->UpdateAABB();
+
+	if (!refBrush->LiveNormals())
 		refMesh->SmoothNormals();
-	}
+
 	if (pts1) free(pts1);
 	if (pts2) free(pts2);
 
@@ -303,15 +292,13 @@ void TweakStroke::endStroke() {
 }
 
 void TweakStroke::addPoint(int point, vec3& newPos, int strokeType) {
-	if (pointStartState.find(point) == pointStartState.end()) {
+	if (pointStartState.find(point) == pointStartState.end())
 		pointStartState[point] = newPos;
-	}
-	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT) {
+
+	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
 		pointEndState[point] = refMesh->vcolors[point];
-	}
-	else {
+	else
 		pointEndState[point] = refMesh->verts[point];
-	}
 }
 
 TweakBrush::TweakBrush(void) : radius(0.45f), focus(1.00f), inset(0.00f), strength(0.0015f), spacing(0.015f) {
