@@ -1885,31 +1885,49 @@ NifBlockNiSkinInstance::NifBlockNiSkinInstance(fstream& file, NifBlockHeader& hd
 	Get(file, hdr);
 }
 
+int NifBlockNiSkinInstance::CalcBlockSize() {
+	blockSize = 16;
+	blockSize += numBones * 4;
+	return blockSize;
+}
+
 void NifBlockNiSkinInstance::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
-	int i;
-	int boneIndex=-1;
-	if (dataRef == blockID) dataRef = -1;
-	else if (dataRef > blockID) dataRef--;
+	int boneIndex = -1;
+	if (dataRef == blockID)
+		dataRef = -1;
+	else if (dataRef > blockID)
+		dataRef--;
 
-	if (skinRef == blockID) skinRef = -1;
-	else if (skinRef > blockID) skinRef--;
+	if (skinRef == blockID)
+		skinRef = -1;
+	else if (skinRef > blockID)
+		skinRef--;
 
-	if (skeletonRoot == blockID) skeletonRoot = -1;
-	else if (skeletonRoot > blockID) skeletonRoot--;
-	for (i = 0; i < numBones; i++) {
+	if (skeletonRoot == blockID)
+		skeletonRoot = -1;
+	else if (skeletonRoot > blockID)
+		skeletonRoot--;
+
+	for (int i = 0; i < numBones; i++) {
 		if (bonePtrs[i] == blockID) {
-			bonePtrs.erase (bonePtrs.begin() + i);
+			bonePtrs.erase(bonePtrs.begin() + i);
 			i--;
 			boneIndex = i;
 			numBones--;
 			blockSize -= 4;
-		} else if (bonePtrs[i] > blockID) bonePtrs[i]--;
+		}
+		else if (bonePtrs[i] > blockID)
+			bonePtrs[i]--;
 	}
 	if (boneIndex >= 0 && dataRef != -1) { // bone was removed, clear out the skinning data for it.
-		if (hdr.blocks == NULL) return;
-		NifBlockNiSkinData* skinData = dynamic_cast<NifBlockNiSkinData*> ((*hdr.blocks)[dataRef]);
-		if (!skinData) return;
-		skinData->Bones.erase(skinData->Bones.begin() + boneIndex);	
+		if (hdr.blocks == NULL)
+			return;
+
+		NifBlockNiSkinData* skinData = dynamic_cast<NifBlockNiSkinData*>((*hdr.blocks)[dataRef]);
+		if (!skinData)
+			return;
+
+		skinData->Bones.erase(skinData->Bones.begin() + boneIndex);
 		skinData->CalcBlockSize();
 	}
 }
@@ -1971,33 +1989,44 @@ int NifBlockBSDismemberment::CalcBlockSize() {
 }
 
 void NifBlockBSDismemberment::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
-	int i;
-	int boneIndex=-1;
-	if(dataRef == blockID) dataRef=-1;
-	else if(dataRef>blockID) dataRef --;
+	int boneIndex = -1;
+	if (dataRef == blockID)
+		dataRef = -1;
+	else if (dataRef > blockID)
+		dataRef--;
 
-	if(skinRef==blockID) skinRef=-1;
-	else if(skinRef>blockID) skinRef --;
+	if (skinRef == blockID)
+		skinRef = -1;
+	else if (skinRef > blockID)
+		skinRef--;
 
-	if(skeletonRoot == blockID) skeletonRoot = -1;
-	else if(skeletonRoot>blockID) skeletonRoot --;
-	for(i=0;i<numBones;i++) {
-		if(bonePtrs[i] == blockID) {
-			bonePtrs.erase (bonePtrs.begin() + i);
+	if (skeletonRoot == blockID)
+		skeletonRoot = -1;
+	else if (skeletonRoot > blockID)
+		skeletonRoot--;
+
+	for (int i = 0; i < numBones; i++) {
+		if (bonePtrs[i] == blockID) {
+			bonePtrs.erase(bonePtrs.begin() + i);
 			boneIndex = i;
 			i--;
-			numBones --;
+			numBones--;
 			blockSize -= 4;
-		} else if(bonePtrs[i] > blockID) bonePtrs[i] --;
+		}
+		else if (bonePtrs[i] > blockID)
+			bonePtrs[i]--;
 	}
-	if(boneIndex >= 0 && dataRef != -1) { // bone was removed, clear out the skinning data for it.
-		if(hdr.blocks == NULL) return;
-		NifBlockNiSkinData* skinData = dynamic_cast<NifBlockNiSkinData*> ((*hdr.blocks)[dataRef]);
-		if(!skinData) return;
-		skinData->Bones.erase(skinData->Bones.begin() + boneIndex);	
+	if (boneIndex >= 0 && dataRef != -1) { // bone was removed, clear out the skinning data for it.
+		if (hdr.blocks == NULL)
+			return;
+
+		NifBlockNiSkinData* skinData = dynamic_cast<NifBlockNiSkinData*>((*hdr.blocks)[dataRef]);
+		if (!skinData)
+			return;
+
+		skinData->Bones.erase(skinData->Bones.begin() + boneIndex);
 		skinData->CalcBlockSize();
 	}
-
 }
 	
 void NifBlockBSDismemberment::notifyVersionChange(unsigned int ver1, unsigned int ver2) {

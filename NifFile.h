@@ -57,7 +57,7 @@ struct skin_transform {
 	vector3 rotation[3];
 	vector3 translation;
 	float scale;
-	skin_transform () {
+	skin_transform() {
 		rotation[0].x = 1.0f;
 		rotation[1].y = 1.0f;
 		rotation[2].z = 1.0f;
@@ -66,9 +66,18 @@ struct skin_transform {
 
 	Mat4 ToMatrix() {
 		Mat4 m;
-		m[0]=rotation[0].x * scale; m[1]=rotation[0].y;			m[2]=rotation[0].z;			 m[3]=translation.x;	
-		m[4]=rotation[1].x;			m[5]=rotation[1].y * scale; m[6]=rotation[1].z;			 m[7]=translation.y;
-		m[8]=rotation[2].x;			m[9]=rotation[2].y;			 m[10]=rotation[2].z * scale;m[11]=translation.z;
+		m[0] = rotation[0].x * scale;
+		m[1] = rotation[0].y;
+		m[2] = rotation[0].z;
+		m[3] = translation.x;
+		m[4] = rotation[1].x;
+		m[5] = rotation[1].y * scale;
+		m[6] = rotation[1].z;
+		m[7] = translation.y;
+		m[8] = rotation[2].x;
+		m[9] = rotation[2].y;
+		m[10] = rotation[2].z * scale;
+		m[11] = translation.z;
 		return m;
 	}
 
@@ -139,14 +148,13 @@ public:
 
 	virtual int CalcBlockSize();
 	virtual void SetBlockSize(int sz);
-
 };
 
 class NifBlockHeader : public NifBlock {
 public:
-	char verStr [0x26];
+	char verStr[0x26];
 	BYTE unk1;
-	BYTE ver1;	BYTE ver2;	BYTE ver3;	BYTE ver4;	
+	BYTE ver1;	BYTE ver2;	BYTE ver3;	BYTE ver4;
 	BYTE endian;
 	unsigned int userVer;
 	unsigned int numBlocks;
@@ -169,12 +177,12 @@ public:
 	NifBlockHeader();
 	void Clear();
 
-	void Get(fstream& file, NifBlockHeader& hdr) ;
-	void Put(fstream& file, NifBlockHeader& hdr) ;
+	void Get(fstream& file, NifBlockHeader& hdr);
+	void Put(fstream& file, NifBlockHeader& hdr);
 
 	bool VerCheck(int v1, int v2, int v3, int v4);
-
 };
+
 class NifBlockUnknown : public NifBlock {
 public:
 	char* data;
@@ -182,12 +190,11 @@ public:
 	NifBlockUnknown(fstream& file, unsigned int size);
 	NifBlockUnknown(unsigned int size);
 	virtual ~NifBlockUnknown();
-	void Clone(NifBlockUnknown* other) ;
+	void Clone(NifBlockUnknown* other);
 	void Get(fstream& file, NifBlockHeader& hdr);
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 };
-
 
 class NifBlockNiNode : public NifBlock {
 public:
@@ -195,17 +202,17 @@ public:
 	uint nameID;
 	int numExtra;
 	vector<int> extradata;
-    int controllerRef;
-    ushort flags;
-    ushort unk;
-    vector3 translation;
-    vector3 rotation[3];
-    float scale;
-   // if(version == 11) {
-		uint numProps;
-		vector<int> propRef;
-   // }
-    int collisionRef;
+	int controllerRef;
+	ushort flags;
+	ushort unk;
+	vector3 translation;
+	vector3 rotation[3];
+	float scale;
+	// if(version == 11) {
+	uint numProps;
+	vector<int> propRef;
+	// }
+	int collisionRef;
 	uint numChildren;
 	vector<int> children;
 	uint numEffects;
@@ -220,37 +227,35 @@ public:
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
 	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 	virtual int CalcBlockSize();
-
 };
 
 
 class NifBlockTriStrips : public NifBlock {
-public: 
+public:
 	string shapeName;
 	uint nameID;
 	int numExtra;
 	vector<int> extradata;
-    int controllerRef;
-    ushort flags;
-    ushort unk;
-    vector3 translation;
-    vector3 rotation[3];
-    float  scale;
+	int controllerRef;
+	ushort flags;
+	ushort unk;
+	vector3 translation;
+	vector3 rotation[3];
+	float  scale;
 
-    int collisionRef;
-    int dataRef;
-    int skinRef;
-    uint numMat;
+	int collisionRef;
+	int dataRef;
+	int skinRef;
+	uint numMat;
 	vector <NifString> materialNames;
 	vector <int> materialExtra;
-    int activeMat;
-    BYTE dirty;
-   // BSPropertiesRef array
-        int propertiesRef1;
-        int propertiesRef2;
-   // }
-		////////////////
-		
+	int activeMat;
+	BYTE dirty;
+	// BSPropertiesRef array
+	int propertiesRef1;
+	int propertiesRef2;
+	// }
+
 	NifBlockTriStrips();
 	NifBlockTriStrips(fstream& file, NifBlockHeader& hdr);
 
@@ -259,43 +264,41 @@ public:
 
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
 	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
-			///////////////
 };
 
-class NifBlockTriStripsData  : public NifBlock {
+class NifBlockTriStripsData : public NifBlock {
 public:
 	int unknown;
-    ushort numverts;
-    BYTE keepflags;
-    BYTE compressflags;
-    BYTE hasVertices;
-	vector<vector3> vertices;  
-    ushort numUVs;
+	ushort numverts;
+	BYTE keepflags;
+	BYTE compressflags;
+	BYTE hasVertices;
+	vector<vector3> vertices;
+	ushort numUVs;
 	uint unknown2;
-    BYTE hasNormals;
-	vector<vector3> normals;  
-	vector<vector3> tangents;  
-	vector<vector3> binormals;  
-    vector3 Center;
-    float Radius;
-    BYTE hasVertColors;
+	BYTE hasNormals;
+	vector<vector3> normals;
+	vector<vector3> tangents;
+	vector<vector3> binormals;
+	vector3 Center;
+	float Radius;
+	BYTE hasVertColors;
 	vector<color4> vertcolors;
 	vector<vector2> uvs;
-    ushort consistencyflags;
-    uint additionaldata;
-    ushort numTriangles;
+	ushort consistencyflags;
+	uint additionaldata;
+	ushort numTriangles;
 	ushort numStrips;
 	vector<ushort> stripLengths;
 	BYTE hasPoints;
 	vector< vector<ushort> > points;
-	///////////////
-	
+
 	// virtual values not saved with nif, used for vertex position retrieval
 	vector3 virtOffset;
 	float virtScale;
 	bool scaleFromCenter;
 	int myver;
-	
+
 	NifBlockTriStripsData();
 	NifBlockTriStripsData(fstream& file, NifBlockHeader &hdr);
 
@@ -317,35 +320,34 @@ public:
 
 
 class NifBlockTriShape : public NifBlock {
-public: 
+public:
 	string shapeName;
 	uint nameID;
 	int numExtra;
 	vector<int> extradata;
-    int controllerRef;
-    ushort flags;
-    ushort unk;
-    vector3 translation;
-    vector3 rotation[3];
-    float scale;
-   // if(version == 11) {
-		uint numProps;
-		vector<int> propRef;
-   // }
-    int collisionRef;
-    int dataRef;
-    int skinRef;
-    uint numMat;
+	int controllerRef;
+	ushort flags;
+	ushort unk;
+	vector3 translation;
+	vector3 rotation[3];
+	float scale;
+	// if(version == 11) {
+	uint numProps;
+	vector<int> propRef;
+	// }
+	int collisionRef;
+	int dataRef;
+	int skinRef;
+	uint numMat;
 	vector <NifString> materialNames;
 	vector <int> materialExtra;
-    int activeMat;
-    BYTE dirty;
-   // if(version > 11) {
-        int propertiesRef1;
-        int propertiesRef2;
-   // }
-		///////////////
-		
+	int activeMat;
+	BYTE dirty;
+	// if(version > 11) {
+	int propertiesRef1;
+	int propertiesRef2;
+	// }
+
 	NifBlockTriShape();
 	NifBlockTriShape(fstream& file, NifBlockHeader& hdr);
 
@@ -359,39 +361,38 @@ public:
 class NifBlockTriShapeData : public NifBlock {
 public:
 	int unknown;
-    ushort numverts;
-    BYTE keepflags;
-    BYTE compressflags;
-    BYTE hasVertices;
-	vector<vector3> vertices;  
-    ushort numUVs;
+	ushort numverts;
+	BYTE keepflags;
+	BYTE compressflags;
+	BYTE hasVertices;
+	vector<vector3> vertices;
+	ushort numUVs;
 	uint unknown2;
-    BYTE hasNormals;
-	vector<vector3> normals;  
-	vector<vector3> tangents;  
-	vector<vector3> binormals;  
-    vector3 Center;
-    float Radius;
-    BYTE hasVertColors;
+	BYTE hasNormals;
+	vector<vector3> normals;
+	vector<vector3> tangents;
+	vector<vector3> binormals;
+	vector3 Center;
+	float Radius;
+	BYTE hasVertColors;
 	vector<color4> vertcolors;
 	vector<vector2> uvs;
-    ushort consistencyflags;
-    uint additionaldata;
-    ushort numTriangles;
-    uint numTriPoints;
-    BYTE hasTriangles;
+	ushort consistencyflags;
+	uint additionaldata;
+	ushort numTriangles;
+	uint numTriPoints;
+	BYTE hasTriangles;
 	vector<triangle> tris;
-    ushort numMatchGroups;
+	ushort numMatchGroups;
 	vector<matchGroup> matchGroups;
-	
+
 	// virtual values not saved with nif, used for vertex position retrieval
 	vector3 virtOffset;
 	float virtScale;
 
 	bool scaleFromCenter;
-	int myver;	
+	int myver;
 
-	///////////////
 	NifBlockTriShapeData();
 	NifBlockTriShapeData(fstream& file, NifBlockHeader &hdr);
 
@@ -416,19 +417,16 @@ public:
 	int skeletonRoot;
 	uint numBones;
 	vector<int> bonePtrs;
-	
-	////////////////
+
+	int CalcBlockSize();
+
 	void Get(fstream& file, NifBlockHeader& hdr);
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 	NifBlockNiSkinInstance();
-	NifBlockNiSkinInstance(fstream& file,NifBlockHeader& hdr);
+	NifBlockNiSkinInstance(fstream& file, NifBlockHeader& hdr);
 
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
-
-	////////////////
-	
-
 };
 
 class NifBlockBSDismemberment : public NifBlock {
@@ -445,9 +443,8 @@ public:
 	int numPartitions;
 	vector<Partition> partitions;
 
-	////////////
 	NifBlockBSDismemberment();
-	NifBlockBSDismemberment(fstream& file,NifBlockHeader& hdr);
+	NifBlockBSDismemberment(fstream& file, NifBlockHeader& hdr);
 
 	int CalcBlockSize();
 
@@ -455,14 +452,11 @@ public:
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
-	
+
 	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
-
-	////////////	
-
 };
 
-class NifBlockNiSkinData: public NifBlock {
+class NifBlockNiSkinData : public NifBlock {
 public:
 	class BoneData {
 	public:
@@ -485,15 +479,13 @@ public:
 	BYTE hasVertWeights;
 	vector<BoneData> Bones;
 
-	NifBlockNiSkinData() ;
+	NifBlockNiSkinData();
 	NifBlockNiSkinData(fstream& file, NifBlockHeader& hdr);
-	
+
 	void Get(fstream& file, NifBlockHeader& hdr);
 	void Put(fstream& file, NifBlockHeader& hdr);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
-
-
 };
 
 class NifBlockNiSkinPartition : public NifBlock {
@@ -513,13 +505,13 @@ public:
 		vector<ushort> stripLengths;
 		BYTE hasFaces;
 		// if hasFaces && numStrips > 0
-			vector< vector<ushort> >strips;
+		vector< vector<ushort> >strips;
 		// if hasFaces && numStrips == 0
-			vector<triangle> tris;
+		vector<triangle> tris;
 		BYTE hasBoneIndices;
 		vector<boneIndices> boneindex;
 		// if(hdr.userVer == 12)
-			ushort unknown;
+		ushort unknown;
 	};
 	uint numPartitions;
 	vector<PartitionBlock> partitionBlocks;
@@ -551,15 +543,6 @@ public:
 	uint shaderFlags2;
 	vector2 uvOffset;
 	vector2 uvScale;
-	/*		
-	ushort flags;
-	uint shaderType;
-	uint shaderFlags;
-	ushort unkShort1;
-	int unkInt2;
-	float envmapScale;
-	int unkInt3;
-	*/
 	int texsetRef;
 
 	vector3 emissiveClr;
@@ -587,24 +570,9 @@ public:
 	vector3 eyeLeftReflectCenter;
 	vector3 eyeRightReflectCenter;
 
-/*
-	float unkFloat2;  
-	int refractionPeriod;
-	float unkFloat4;
-	float unkFloat5;
-	int unkInt1;
-	float unkFloats[9];
-	vector3 unkArg_5;
-	float unkArg_1;	
-	float unkArg_16[7];
-	vector3 unkArg_6;
-	float unkArg_11[5];
-	color4 unkArg_14;
-	float unkArg_7[2]; */
-
 	NifBlockBSLightShadeProp();
 	NifBlockBSLightShadeProp(fstream& file, NifBlockHeader& hdr);
-	
+
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
 
 	void Get(fstream& file, NifBlockHeader& hdr);
@@ -622,14 +590,13 @@ public:
 	uint numTex;
 	vector<NifString> textures;
 
-	NifBlockBSShaderTextureSet() ;
+	NifBlockBSShaderTextureSet();
 	NifBlockBSShaderTextureSet(fstream& file, NifBlockHeader& hdr);
 
-	void Get(fstream& file, NifBlockHeader& hdr);	
+	void Get(fstream& file, NifBlockHeader& hdr);
 	void Put(fstream& file, NifBlockHeader& hdr);
 
-	int CalcBlockSize() ;
-
+	int CalcBlockSize();
 };
 
 class NifBlockAlphaProperty : public NifBlock {
@@ -643,9 +610,8 @@ public:
 	BYTE threshold;
 
 	NifBlockAlphaProperty();
-	void Get(fstream& file,NifBlockHeader& hdr);
-	void Put(fstream& file,NifBlockHeader& hdr);
-
+	void Get(fstream& file, NifBlockHeader& hdr);
+	void Put(fstream& file, NifBlockHeader& hdr);
 };
 
 class NifBlockStringExtraData : public NifBlock {
@@ -671,8 +637,8 @@ class NifFile
 	vector<NifBlock*> blocks;
 	bool isValid;
 
-	NifBlockTriShape* shapeForName(const string& name, int dupIndex=0);
-	NifBlockTriStrips* stripsForName(const string& name, int dupIndex=0);
+	NifBlockTriShape* shapeForName(const string& name, int dupIndex = 0);
+	NifBlockTriStrips* stripsForName(const string& name, int dupIndex = 0);
 
 	int shapeDataIdForName(const string& name, int& outBlockType);
 	int shapeIdForName(const string& name);
@@ -683,19 +649,19 @@ class NifFile
 	int shapeBoneIndex(const string& shapeName, const string& boneName);
 
 public:
-	NifFile(void);
+	NifFile();
 	NifFile(NifFile& other);
-	~NifFile(void);
+	~NifFile();
 
 	void CopyFrom(NifFile& other);
 
 	int AddBlock(NifBlock* newBlock, const string& blockTypeName);
-	NifBlock* GetBlock(int blockId);	
+	NifBlock* GetBlock(int blockId);
 	int AddNode(const string& nodeName, vector<vector3>& rot, vector3& trans, float scale);
 	string NodeName(int blockID);
 
 	int AddStringExtraData(const string& shapeName, const string& name, const string& stringData);
-	
+
 	int Load(const string& filename);
 	int Save(const string& filename);
 
@@ -703,7 +669,7 @@ public:
 
 	bool IsValid() { return isValid; }
 
-	int ExportShapeObj(string& filename,string& shape , float scale = 1.0f, vector3 offset = vector3(0.0f,0.0f,0.0f));
+	int ExportShapeObj(string& filename, string& shape, float scale = 1.0f, vector3 offset = vector3(0.0f, 0.0f, 0.0f));
 
 	void Clear();
 
@@ -715,7 +681,7 @@ public:
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);
 
-	NifBlockBSLightShadeProp*  GetShader(string& shaderName) ;
+	NifBlockBSLightShadeProp*  GetShader(string& shaderName);
 	NifBlockBSLightShadeProp*  GetShaderForShape(string& shapeName);
 	bool GetTextureForShape(string& shapeName, string& outTexFile, int texIndex = 0);
 	void SetTextureForShape(string& shapeName, string& inTexFile, int texIndex = 0);
@@ -738,7 +704,7 @@ public:
 	void SetNodeName(int blockID, const string& newName);
 
 	int GetShaderList(vector<string>& outList);
-	
+
 	int GetNodeID(const string& nodeName);
 	bool GetNodeTransform(const string& nodeName, vector<vector3>& outRot, vector3& outTrans, float& outScale);
 	bool SetNodeTransform(const string& nodeName, skin_transform& inXform);
@@ -747,14 +713,14 @@ public:
 	int GetShapeBoneIDList(const string& shapeName, vector<int>& outList);
 	void SetShapeBoneIDList(const string& shapeName, vector<int>& inList);
 	int GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<int, float>& outWeights);
-	
+
 	// Empty string for the bone name returns the overall skin transform for the shape 
 	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, skin_transform& outXform, vector3& outSphereOffset, float& outSphereRadius);
 	// -1 for the bone index sets the overall skin transform for the shape
-	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, skin_transform& inXform, vector3& inSphereOffset, float inSphereRadius);	
+	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, skin_transform& inXform, vector3& inSphereOffset, float inSphereRadius);
 	// -1 on the bone index returns the overall skin transform for the shape
 	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, skin_transform& outXform, vector3& outSphereOffset, float& outSphereRadius);
-	void UpdateShapeBoneID(const string& shapeName,int oldID, int newID);
+	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<int, float>& inWeights);
 
 	const vector<vector3>* GetRawVertsForShape(const string& shapeName);
@@ -766,11 +732,11 @@ public:
 	const vector<vector<int>>* GetSeamVertsForShape(const string& shapeName);
 	bool GetVertsForShape(const string& shapeName, vector<vector3>& outVerts);
 	int GetVertCountForShape(const string& shapeName);
-	void SetVertsForShape(const string& shapeName, const vector<vector3>& verts) ;
-	void SetUvsForShape(const string& shapeName, const vector<vector2>& uvs) ;
-	void SetNormalsForShape(const string& shapeName, const vector<vector3>& norms);	
+	void SetVertsForShape(const string& shapeName, const vector<vector3>& verts);
+	void SetUvsForShape(const string& shapeName, const vector<vector2>& uvs);
+	void SetNormalsForShape(const string& shapeName, const vector<vector3>& norms);
 	void CalcTangentsForShape(const string& shapeName);
-	
+
 	void GetRootTranslation(vector3& outVec);
 	void SetRootTranslation(vector3& newTrans);
 	void GetRootScale(float& outScale);
@@ -781,12 +747,12 @@ public:
 	void GetShapeScale(const string& shapeName, float& outScale);
 	void SetShapeScale(const string& shapeName, const float& newScale);
 	void ApplyShapeTranslation(const string& shapeName, const vector3& offset);
-	
-	/* sets a phantom offset value in a nitrishapedata record, which will be added to vertex values when fetched later.  if sum is true, the offset is added to the current 
+
+	/* sets a phantom offset value in a nitrishapedata record, which will be added to vertex values when fetched later.  if sum is true, the offset is added to the current
 	   offset, allowing a series of independant changes
-	*/
+	   */
 	void VirtualOffsetShape(const string& shapeName, const vector3& offset, bool sum = true);
-	
+
 	/* sets a phantom scale value in a nitrishapedata record, which will be added to vertex values when fetched later.
 	*/
 	void VirtualScaleShape(const string& shapeName, float scale, bool fromCenter = true);
@@ -798,15 +764,15 @@ public:
 	void OffsetShape(const string& shapeName, const vector3& offset, unordered_map<int, float>* mask = NULL);
 	void ScaleShape(const string& shapeName, const float& scale, unordered_map<int, float>* mask = NULL);
 	void RotateShape(const string& shapeName, const vec3& angle, unordered_map<int, float>* mask = NULL);
-	
+
 	void GetAlphaForShape(const string& shapeName, unsigned short& outFlags, BYTE& outThreshold);
 	void SetAlphaForShape(const string& shapeName, unsigned short flags, unsigned short threshold);
 
 	void DeleteShape(const string& shapeName);
 	void DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
 
-	int CalcShapeDiff(const string& shapeName,const vector<vector3>* targetData, unordered_map<int,vector3>& outDiffData, float scale = 1.0f);
-	int ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<int, vector3>& outDiffData) ;
+	int CalcShapeDiff(const string& shapeName, const vector<vector3>* targetData, unordered_map<int, vector3>& outDiffData, float scale = 1.0f);
+	int ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<int, vector3>& outDiffData);
 	/* Based on the skin partitioning spell from NifSkope's source.  Uses a diffferent enough algorithm that it generates
 		different automatic partitions, but vert and triangle order is comparable */
 	void BuildSkinPartitions(const string& shapeName, int maxBonesPerPartition = 24);

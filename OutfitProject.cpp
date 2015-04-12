@@ -1240,10 +1240,6 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 
 	AutoOffset(false);
 
-	// TriStrips not entirely supported
-	if (baseNif.HasBlockType("NiTriStrips") || baseNif.HasBlockType("NiTriStripsData"))
-		wxMessageBox("Reference .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
-
 	return 0;
 }
 
@@ -1273,10 +1269,6 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 		wxMessageBox("Could not load reference NIF.", "Load Reference", 5L | wxICON_ERROR);
 		return 2;
 	}
-
-	// TriStrips not entirely supported
-	if (baseNif.HasBlockType("NiTriStrips") || baseNif.HasBlockType("NiTriStripsData"))
-		wxMessageBox("Reference .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
 
 	vector<string> shapes;
 	baseNif.GetShapeList(shapes);
@@ -1463,10 +1455,6 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 	workAnim.LoadFromNif(&workNif);
 	AutoOffset(true);
 
-	// TriStrips not entirely supported
-	if (workNif.HasBlockType("NiTriStrips") || workNif.HasBlockType("NiTriStripsData"))
-		wxMessageBox("Outfit .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
-
 	// No shapes in nif file
 	if (workShapes.size() == 0)
 		return 2;
@@ -1555,10 +1543,6 @@ int OutfitProject::AddNif(const string& filename) {
 	nif.Clear();
 
 	AutoOffset(true);
-
-	// TriStrips not entirely supported
-	if (workNif.HasBlockType("NiTriStrips") || workNif.HasBlockType("NiTriStripsData"))
-		wxMessageBox("Outfit .nif contains NiTriStrips (instead of NiTriShapes), which Outfit Studio does not support. Please use NifSkope to convert NiTriStrips to NiTriShapes with 'Triangulate' and regenerate skin partitions without tri strips.", "Load Failure", 5L | wxICON_ERROR);
 
 	// No shapes in nif file
 	if (workShapes.size() == 0)
