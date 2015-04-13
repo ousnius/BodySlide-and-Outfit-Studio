@@ -106,7 +106,7 @@ bool BodySlideApp::OnInit() {
 	SetTopWindow(sliderView);
 	
 	/*
-	outfitStudio = new OutfitStudio(NULL, "Outfit Studio", wxDefaultPosition, wxDefaultSize);
+	outfitStudio = new OutfitStudio(NULL, wxDefaultPosition, wxDefaultSize);
 	outfitStudio->Show(true);
 	SetTopWindow(outfitStudio);
 	*/
@@ -432,7 +432,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 		int w = Config.GetIntValue("OutfitStudioFrame.width", 990);	
 		int h = Config.GetIntValue("OutfitStudioFrame.height", 757);
 		wxPoint loc (Config.GetIntValue("OutfitStudioFrame.x", 100), Config.GetIntValue("OutfitStudioFrame.y", 100));
-		outfitStudio = new OutfitStudio(sliderView, "Outfit Studio", loc, wxSize(w, h), Config);		
+		outfitStudio = new OutfitStudio(sliderView, loc, wxSize(w, h), Config);		
 		outfitStudio->Show();
 	}
 }

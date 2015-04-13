@@ -139,7 +139,7 @@ public:
 	void SetRefTexture(const string& shapeName, const string& textureFile);
 
 	int RefShapeShaderType(const string& shapeName) {
-		auto s = baseNif.GetShaderForShape((string)shapeName);
+		auto s = baseNif.GetShaderForShape(shapeName);
 		if (s && s->IsSkinShader())
 			return 1;
 		else
@@ -147,7 +147,7 @@ public:
 	}
 
 	int OutfitShapeShaderType(const string& shapeName) {
-		auto s = workNif.GetShaderForShape((string)shapeName);
+		auto s = workNif.GetShaderForShape(shapeName);
 		if (s && s->IsSkinShader())
 			return 1;
 		else

@@ -43,7 +43,7 @@ public:
 class AnimWeight {
 public:
 	//int boneNum;				// numeric index into the AnimSkin bone list.
-	unordered_map<int, float> weights;	
+	unordered_map<ushort, float> weights;	
 	skin_transform xform;
 	vector3 bSphereOffset;		
 	float bSphereRadius;
@@ -64,7 +64,7 @@ public:
 // Bone to weight list association
 class AnimSkin {
 public:
-	unordered_map<int, AnimWeight> boneWeights;	
+	unordered_map<ushort, AnimWeight> boneWeights;	
 	AnimSkin() {}
 	/*
 	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<string>& boneNames) {
@@ -88,7 +88,7 @@ public:
 		}		
 	}
 	void RemoveBone(int boneOrder) {
-		unordered_map<int, AnimWeight> bwtemp;
+		unordered_map<ushort, AnimWeight> bwtemp;
 		for (auto bw: boneWeights) {
 			if (bw.first > boneOrder) {
 				bwtemp[bw.first-1] = move(bw.second);
@@ -135,9 +135,9 @@ public:
 	bool LoadFromNif(NifFile* nif);
 	bool LoadFromNif(NifFile* nif, const string& shape);
 	int GetShapeBoneIndex(const string& shapeName, const string& boneName);
-	void GetWeights(const string& shape, const string& boneName, unordered_map<int, float>& outVertWeights);
+	void GetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& outVertWeights);
 	void GetShapeBoneXform(const string& shape, const string& boneName, skin_transform& stransform);
-	void SetWeights(const string& shape, const string& boneName, unordered_map<int, float>& inVertWeights);
+	void SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights);
 	void SetShapeBoneXform(const string& shape, const string& boneName, skin_transform& stransform);
 	void WriteToNif(NifFile* nif, bool synchBoneIDs = true);
 //	AnimBone* GetShapeBone(const string& shape, const string& boneName);

@@ -815,8 +815,8 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<int, 
 
 	DiffDataSets dds;
 	vec3 tmp;
-	unordered_map<int, float> weights;
-	unordered_map<int, float> oldWeights;
+	unordered_map<ushort, float> weights;
+	unordered_map<ushort, float> oldWeights;
 	unordered_map<int, vec3> diffresult;
 	vector<string> lboneList;
 	vector<string>* boneList;
@@ -898,8 +898,8 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 	if (!baseNif.IsValid())
 		return;
 
-	unordered_map<int, float> weights;
-	unordered_map<int, float> oldWeights;
+	unordered_map<ushort, float> weights;
+	unordered_map<ushort, float> oldWeights;
 	vector<string> allBoneList;
 	vector<string>* boneList;
 
@@ -963,7 +963,7 @@ bool OutfitProject::OutfitHasUnweighted() {
 			influences.emplace(i, 0);
 
 		for (auto b : bones) {
-			unordered_map<int, float> boneWeights;
+			unordered_map<ushort, float> boneWeights;
 			workAnim.GetWeights(s, b, boneWeights);
 			for (int i = 0; i < verts.size(); i++) {
 				auto id = boneWeights.find(i);
@@ -993,7 +993,7 @@ void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos) {
 	vector<vec3> boneRot;
 	vec3 boneTranslation;
 	float boneScale;
-	unordered_map<int, float> weights;
+	unordered_map<ushort, float> weights;
 
 	vector<vec3> verts;
 	vector<string> shapes;
@@ -1893,9 +1893,9 @@ int OutfitProject::SaveModifiedOutfitNif(const string& filename, const vector<me
 
 int OutfitProject::ExportShape(const string& shapeName, const string& fname, bool isOutfit) {
 	if (isOutfit) {
-		return workNif.ExportShapeObj((string)fname, (string)shapeName, 0.1f);
+		return workNif.ExportShapeObj(fname, shapeName, 0.1f);
 	} else {
-		return baseNif.ExportShapeObj((string)fname, (string)shapeName, 0.1f);
+		return baseNif.ExportShapeObj(fname, shapeName, 0.1f);
 	}
 }
 

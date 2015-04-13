@@ -298,7 +298,7 @@ bool GLSurface::QueryMultisample(HWND queryWnd) {
     pfd.iLayerType = PFD_MAIN_PLANE;
 
     int format = ChoosePixelFormat(hDC, &pfd);
-    bool spfYes = SetPixelFormat(hDC, format, &pfd);
+    SetPixelFormat(hDC, format, &pfd);
 	
 	hRC = wglCreateContext(hDC);
 	wglMakeCurrent(hDC, hRC);
@@ -419,7 +419,7 @@ int GLSurface::Initialize(HWND parentWnd, bool bUseDefaultShaders) {
 
 	if (multisampleState != 1) {
 		int format = ChoosePixelFormat(hDC, &pfd);
-		bool aa = SetPixelFormat(hDC, format, &pfd);
+		SetPixelFormat(hDC, format, &pfd);
 		hRC = wglCreateContext(hDC);
 		wglMakeCurrent(hDC, hRC);
 

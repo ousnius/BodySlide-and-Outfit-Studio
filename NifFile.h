@@ -669,7 +669,7 @@ public:
 
 	bool IsValid() { return isValid; }
 
-	int ExportShapeObj(string& filename, string& shape, float scale = 1.0f, vector3 offset = vector3(0.0f, 0.0f, 0.0f));
+	int ExportShapeObj(const string& filename, const string& shape, float scale = 1.0f, vector3 offset = vector3(0.0f, 0.0f, 0.0f));
 
 	void Clear();
 
@@ -677,14 +677,14 @@ public:
 	void DeleteBlockByType(string typeStr);
 
 	bool HasBlockType(string typeStr);
-	int AddOrFindBlockTypeId(const string& blockTypeName);
+	ushort AddOrFindBlockTypeId(const string& blockTypeName);
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);
 
-	NifBlockBSLightShadeProp*  GetShader(string& shaderName);
-	NifBlockBSLightShadeProp*  GetShaderForShape(string& shapeName);
-	bool GetTextureForShape(string& shapeName, string& outTexFile, int texIndex = 0);
-	void SetTextureForShape(string& shapeName, string& inTexFile, int texIndex = 0);
+	NifBlockBSLightShadeProp* GetShader(const string& shaderName);
+	NifBlockBSLightShadeProp* GetShaderForShape(const string& shapeName);
+	bool GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
+	void SetTextureForShape(const string& shapeName, string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();
 
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
@@ -712,7 +712,7 @@ public:
 	int GetShapeBoneList(const string& shapeName, vector<string>& outList);
 	int GetShapeBoneIDList(const string& shapeName, vector<int>& outList);
 	void SetShapeBoneIDList(const string& shapeName, vector<int>& inList);
-	int GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<int, float>& outWeights);
+	int GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& outWeights);
 
 	// Empty string for the bone name returns the overall skin transform for the shape 
 	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, skin_transform& outXform, vector3& outSphereOffset, float& outSphereRadius);
@@ -721,7 +721,7 @@ public:
 	// -1 on the bone index returns the overall skin transform for the shape
 	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, skin_transform& outXform, vector3& outSphereOffset, float& outSphereRadius);
 	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
-	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<int, float>& inWeights);
+	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
 
 	const vector<vector3>* GetRawVertsForShape(const string& shapeName);
 	const vector<triangle>* GetTrisForShape(const string& shapeName);

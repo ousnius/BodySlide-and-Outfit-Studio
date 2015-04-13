@@ -2511,8 +2511,8 @@ void NifBlockStringExtraData::Put(fstream& file, NifBlockHeader& hdr) {
 NifBlockStringExtraData::NifBlockStringExtraData() {
 	blockType = NIFBLOCK_STRINGEXTRADATA;
 	blockSize = 8;
-	nameID = -1;
-	stringDataId = -1;
+	nameID = (uint)-1;
+	stringDataId = (uint)-1;
 	name = "";
 	//nextExtraData = -1;
 	//bytesRemaining = 4;

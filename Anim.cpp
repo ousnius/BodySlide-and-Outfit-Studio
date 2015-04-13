@@ -189,7 +189,7 @@ int AnimInfo::GetShapeBoneIndex(const string& shapeName, const string& boneName)
 	return b;
 }
 
-void AnimInfo::GetWeights(const string& shape, const string& boneName, unordered_map<int, float>& outVertWeights) {
+void AnimInfo::GetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& outVertWeights) {
 	int b = GetShapeBoneIndex(shape, boneName);
 	if (b < 0) return;
 
@@ -203,7 +203,7 @@ void AnimInfo::SetShapeBoneXform(const string& shape, const string& boneName, sk
 	shapeSkinning[shape].boneWeights[b].xform = stransform;
 }
 
-void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered_map<int, float>& inVertWeights) {
+void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights) {
 	int bid = GetShapeBoneIndex(shape, boneName);
 	
 	if (bid == -1) {

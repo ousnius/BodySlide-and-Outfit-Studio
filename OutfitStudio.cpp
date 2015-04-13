@@ -116,7 +116,7 @@ END_EVENT_TABLE()
 // ----------------------------------------------------------------------------
 
 // frame constructor
-OutfitStudio::OutfitStudio(wxWindow* parent, const wxString& title, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
+OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
 	progressVal = 0;
 	wxXmlResource* rsrc = wxXmlResource::Get();
 
@@ -469,7 +469,7 @@ void OutfitStudio::ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo) {
 	}
 	else {
 		if (refStroke->BrushType() == TBT_WEIGHT) {
-			unordered_map<int, float> newWeights;
+			unordered_map<ushort, float> newWeights;
 			TweakBrush* br = refStroke->GetRefBrush();
 			string refBone;
 
@@ -512,7 +512,8 @@ void OutfitStudio::ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo) {
 				Proj->baseAnim.SetWeights(activeShape, refBone, newWeights);
 			}
 		}
-		Proj->SetDirty(activeShape);
+		else
+			Proj->SetDirty(activeShape);
 	}
 }
 
@@ -1660,7 +1661,7 @@ void OutfitStudio::OnOutfitBoneSelect(wxTreeEvent& event) {
 
 		// Selected Shape
 		activeBone = outfitBones->GetItemText(item);
-		unordered_map<int, float> boneWeights;
+		unordered_map<ushort, float> boneWeights;
 		if (activeItem->bIsOutfitShape) {
 			Proj->workAnim.GetWeights(activeShape, activeBone, boneWeights);
 			mesh* workMesh = glView->GetMesh(activeShape);
@@ -1818,6 +1819,8 @@ void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
 				Proj->OutfitShapes(outfitshapes);
 
 				for (auto s : refshapes) {
+					if (s.empty())
+						continue;
 					UpdateShapeSource(s, false);
 					Proj->RefreshMorphOutfitShape(s, false);
 				}
@@ -2000,6 +2003,8 @@ int OutfitStudio::PromptUpdateBase() {
 		Proj->OutfitShapes(outfitshapes);
 
 		for (auto s : refshapes) {
+			if (s.empty())
+				continue;
 			UpdateShapeSource(s, false);
 			Proj->RefreshMorphOutfitShape(s, false);
 		}
@@ -2033,6 +2038,13 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 	if (!s)
 		return;
 
+	if (IsDirty() && !bEditSlider) {
+		sentinel = true;
+		if (PromptUpdateBase() == wxCANCEL)
+			return;
+		sentinel = false;
+	}
+
 	string sliderName = s->GetName();
 	if (sliderName == "boneScale") {
 		wxArrayTreeItemIds selItems;
@@ -2047,12 +2059,6 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 	if (sliderName.empty())
 		return;
 
-	if (IsDirty() && !bEditSlider) {
-		sentinel = true;
-		if (PromptUpdateBase() == wxCANCEL)
-			return;
-		sentinel = false;
-	}
 
 	SetSliderValue(sliderName, event.GetPosition());
 
@@ -3171,7 +3177,7 @@ void OutfitStudio::OnMaskWeighted(wxCommandEvent& event) {
 
 	vector<string> bones;
 	Proj->RefBones(bones);
-	unordered_map<int, float> boneWeights;
+	unordered_map<ushort, float> boneWeights;
 	mesh* m = glView->GetMesh(activeShape);
 	m->ColorFill(vec3(0.0f, 0.0f, 0.0f));
 	for (auto b : bones) {
@@ -3423,8 +3429,6 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 	n.Normalize();
 
 	wxRect r = this->GetClientRect();
-	int cx = r.GetWidth() / 2;
-	int cy = r.GetHeight() / 2;
 	gls.GetPickRay(screenPos.x, screenPos.y, v, vo);
 	v = v * -1;
 	tpi.view = v;
@@ -3472,6 +3476,11 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 	else if (activeBrush != &weightBrush && ((GetKeyState(VK_SHIFT) & 0x8000) > 0)) {
 		activeBrush = &smoothBrush;
 	}
+
+	if (activeBrush->Type() == TBT_WEIGHT && os->IsDirty())
+		if (os->PromptUpdateBase() == wxCANCEL)
+			return false;
+
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMesh(), activeBrush);
 	activeBrush->setConnected(bConnectedEdit);
 	activeBrush->setMirror(bXMirror);
@@ -3538,7 +3547,7 @@ void wxGLPanel::UpdateBrushStroke(wxPoint& screenPos) {
 	}
 }
 
-void wxGLPanel::EndBrushStroke(wxPoint& screenPos) {
+void wxGLPanel::EndBrushStroke() {
 	if (activeStroke) {
 		activeStroke->endStroke();
 
@@ -3653,7 +3662,7 @@ void wxGLPanel::UpdateTransform(wxPoint& screenPos) {
 	activeStroke->updateStroke(tpi);
 }
 
-void wxGLPanel::EndTransform(wxPoint& screenPos) {
+void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = NULL;
 	ShowTransformTool(true, false);
@@ -3934,11 +3943,11 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		}
 	}
 	if (isPainting){
-		EndBrushStroke(event.GetPosition());
+		EndBrushStroke();
 		isPainting = false;
 	}
 	if (isTransforming) {
-		EndTransform(event.GetPosition());
+		EndTransform();
 		isTransforming = false;
 	}
 
@@ -3948,7 +3957,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 
 void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	if (isPainting) {
-		EndBrushStroke(wxPoint(0, 0));
+		EndBrushStroke();
 		isPainting = false;
 	}
 	isLDragging = false;

@@ -77,11 +77,11 @@ public:
 
 	bool StartBrushStroke(wxPoint& screenPos);
 	void UpdateBrushStroke(wxPoint& screenPos);
-	void EndBrushStroke(wxPoint& screenPos);
+	void EndBrushStroke();
 
 	bool StartTransform(wxPoint& screenPos);
 	void UpdateTransform(wxPoint& screenPos);
-	void EndTransform(wxPoint& screenPos);
+	void EndTransform();
 
 	bool UndoStroke();
 	bool RedoStroke();
@@ -229,7 +229,7 @@ public:
 	void ClearMask() {
 		mesh* m = gls.GetActiveMesh();
 		if (m->vcolors) {
-			m->ColorChannelFill(0, 0);
+			m->ColorChannelFill(0, 0.0f);
 		}
 	}
 
@@ -261,8 +261,8 @@ public:
 	void InvertMask() {
 		mesh* m = gls.GetActiveMesh();
 		if (!m->vcolors) {
-			m->ColorFill(vec3(0, 0, 0));
-		} 
+			m->ColorFill(vec3(0.0f, 0.0f, 0.0f));
+		}
 		for (int i = 0; i < m->nVerts; i++) {
 			m->vcolors[i].x = 1 - m->vcolors[i].x;
 		}
@@ -355,7 +355,7 @@ class OutfitStudio : public wxFrame
 {
 public:
     // ctor(s)
-    OutfitStudio(wxWindow* parent, const wxString& title, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
+    OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
 	~OutfitStudio();
 	wxGLPanel* glView;
 
