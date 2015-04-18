@@ -1566,6 +1566,7 @@ NifBlockNiSkinData::NifBlockNiSkinData(fstream& file, NifBlockHeader& hdr) {
 }
 	
 int NifBlockNiSkinData::CalcBlockSize() {
+	numBones = Bones.size();
 	blockSize = 57;
 	for (auto bd: Bones) {
 		blockSize += bd.CalcSize();

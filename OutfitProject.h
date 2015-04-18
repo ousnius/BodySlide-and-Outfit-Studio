@@ -220,20 +220,24 @@ public:
 
 	void DeleteBone(const string& boneName) {
 		vector<string> shapes;
-		OutfitShapes(shapes);
-		for(auto s : shapes) {
-			workAnim.RemoveShapeBone(s,boneName);
-		}
-		RefShapes(shapes);
-		for(auto rs : shapes) {
-			baseAnim.RemoveShapeBone(rs, boneName);
+		if (workNif.IsValid()) {
+			OutfitShapes(shapes);
+			for (auto s : shapes)
+				workAnim.RemoveShapeBone(s, boneName);
+
+			int blockID = workNif.GetNodeID(boneName);
+			if (blockID >= 0)
+				workNif.DeleteBlock(blockID);
 		}
 
+		if (baseNif.IsValid()) {
+			RefShapes(shapes);
+			for (auto rs : shapes)
+				baseAnim.RemoveShapeBone(rs, boneName);
 
-		int blockID = workNif.GetNodeID(boneName);
-		if(blockID >=0) {
-			//refNif->RemoveBoneForShape(shape,blockID);
-			workNif.DeleteBlock(blockID);
+			int blockIDRef = baseNif.GetNodeID(boneName);
+			if (blockIDRef >= 0)
+				baseNif.DeleteBlock(blockIDRef);
 		}
 	}
 
