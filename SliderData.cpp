@@ -1,18 +1,17 @@
 #include "SliderData.h"
 #include <sstream>
 
-SliderData::SliderData(const string& inName)
-{
+SliderData::SliderData(const string& inName) {
 	Name = inName;
-	bClamp	= false;
-	bHidden	= false;
-	bZap	= false;
-	bInvert	= false;
-	bShow	= false;
-	bUV		= false;
+	bClamp = false;
+	bHidden = false;
+	bZap = false;
+	bInvert = false;
+	bShow = false;
+	bUV = false;
 
-	curValue	  = 0;
-	defBigValue   = 100;
+	curValue = 0;
+	defBigValue = 100;
 	defSmallValue = 0;
 }
 
@@ -21,111 +20,118 @@ SliderData::SliderData(TiXmlElement* e) {
 }
 
 int SliderData::LoadSliderData(TiXmlElement* e, set<string>* exclude_targets) {
-		// Outfit studio state values, not saved in xml
-		curValue = 0;
-		bShow = false;
-		int n_datafiles = 0;
+	//Outfit Studio state values, not saved in xml.
+	curValue = 0;
+	bShow = false;
+	int n_datafiles = 0;
 
-		Name = e->Attribute("name");
-		if (e->Attribute("invert")) {
-			bInvert = (_strnicmp(e->Attribute("invert"), "true", 4) == 0);
-		} else 
-			bInvert = false;
-		if (e->Attribute("uv")) {
-			bUV = (_strnicmp(e->Attribute("uv"), "true", 4) == 0);
-		} else 
-			bUV = false;
-		double b, s;
-		e->Attribute("big", &b);
-		e->Attribute("small", &s);
-		defBigValue = (float)b;
-		defSmallValue = (float)s;
+	Name = e->Attribute("name");
+	if (e->Attribute("invert"))
+		bInvert = (_strnicmp(e->Attribute("invert"), "true", 4) == 0);
+	else
+		bInvert = false;
 
-		if (e->Attribute("hidden")) {
-			bHidden = (_strnicmp(e->Attribute("hidden"), "true", 4) == 0);
-		} else
-			bHidden = false;
+	if (e->Attribute("uv"))
+		bUV = (_strnicmp(e->Attribute("uv"), "true", 4) == 0);
+	else
+		bUV = false;
 
-		if (e->Attribute("zap")) {
-			bZap = (_strnicmp(e->Attribute("zap"), "true", 4) == 0);
-		} else 
-			bZap = false;
-		
-		if (e->Attribute("clamp")) {
-			bClamp = (_strnicmp(e->Attribute("clamp"), "true", 4) == 0);
-		} else
-			bClamp = false;
+	double b, s;
+	e->Attribute("big", &b);
+	e->Attribute("small", &s);
+	defBigValue = (float)b;
+	defSmallValue = (float)s;
 
-		DiffDataFile tmpDataFile;
-		TiXmlElement* datafile = e->FirstChildElement("datafile");
-		while (datafile) {
-			tmpDataFile.targetName = datafile->Attribute("target"); 
-			if (exclude_targets) {
-				if (exclude_targets->find(tmpDataFile.targetName) != exclude_targets->end()) {
-					datafile = datafile->NextSiblingElement("datafile");
-					continue;
-				}
+	if (e->Attribute("hidden")) {
+		bHidden = (_strnicmp(e->Attribute("hidden"), "true", 4) == 0);
+	}
+	else
+		bHidden = false;
 
+	if (e->Attribute("zap")) {
+		bZap = (_strnicmp(e->Attribute("zap"), "true", 4) == 0);
+	}
+	else
+		bZap = false;
+
+	if (e->Attribute("clamp")) {
+		bClamp = (_strnicmp(e->Attribute("clamp"), "true", 4) == 0);
+	}
+	else
+		bClamp = false;
+
+	DiffDataFile tmpDataFile;
+	TiXmlElement* datafile = e->FirstChildElement("datafile");
+	while (datafile) {
+		tmpDataFile.targetName = datafile->Attribute("target");
+		if (exclude_targets) {
+			if (exclude_targets->find(tmpDataFile.targetName) != exclude_targets->end()) {
+				datafile = datafile->NextSiblingElement("datafile");
+				continue;
 			}
 
-			if (datafile->Attribute("local")) {
-				tmpDataFile.bLocal = (_strnicmp(datafile->Attribute("local"), "true", 4) == 0);
-			} else 
-				tmpDataFile.bLocal  = false;
-
-			if (datafile->Attribute("name")) {
-				tmpDataFile.dataName = datafile->Attribute("name");
-			} else
-				tmpDataFile.dataName = Name;			
-
-			tmpDataFile.fileName = datafile->GetText();
-
-			dataFiles.push_back(tmpDataFile);
-
-			datafile = datafile->NextSiblingElement("datafile");
-			n_datafiles++;
-		} 
-		if (n_datafiles == 0) {
-			return 1;
 		}
-		double reqval;
-		string reqslider;
-		TiXmlElement* requirement = e->FirstChildElement("require");
-		while (requirement) {
-			requirement->Attribute("value", &reqval);
-			reqslider = requirement->Attribute("slidername");
-			requirements[reqslider] = (float)reqval;
-			requirement = requirement->NextSiblingElement("require");
+
+		if (datafile->Attribute("local")) {
+			tmpDataFile.bLocal = (_strnicmp(datafile->Attribute("local"), "true", 4) == 0);
 		}
+		else
+			tmpDataFile.bLocal = false;
+
+		if (datafile->Attribute("name")) {
+			tmpDataFile.dataName = datafile->Attribute("name");
+		}
+		else
+			tmpDataFile.dataName = Name;
+
+		tmpDataFile.fileName = datafile->GetText();
+
+		dataFiles.push_back(tmpDataFile);
+
+		datafile = datafile->NextSiblingElement("datafile");
+		n_datafiles++;
+	}
+	if (n_datafiles == 0)
+		return 1;
+
+	double reqval;
+	string reqslider;
+	TiXmlElement* requirement = e->FirstChildElement("require");
+	while (requirement) {
+		requirement->Attribute("value", &reqval);
+		reqslider = requirement->Attribute("slidername");
+		requirements[reqslider] = (float)reqval;
+		requirement = requirement->NextSiblingElement("require");
+	}
 	return 0;
 }
 
-SliderData::~SliderData(void)
-{
+SliderData::~SliderData() {
 }
 
 SliderSet::SliderSet() {
 	genWeights = true;
 }
+
 SliderSet::SliderSet(TiXmlElement* e) {
 	LoadSliderSet(e);
 }
-SliderSet::~SliderSet(){ 
+
+SliderSet::~SliderSet(){
 }
 
 void SliderSet::DeleteSlider(const string& setName) {
-	for(int i = 0;i<sliders.size();i++) {
-		if(sliders[i].Name == setName) {
+	for (int i = 0; i < sliders.size(); i++) {
+		if (sliders[i].Name == setName) {
 			sliders.erase(sliders.begin() + i);
 			return;
 		}
 	}
 }
 
-
-int SliderSet::CreateSlider(const string& setName){
+int SliderSet::CreateSlider(const string& setName) {
 	sliders.emplace_back(setName);
-	return sliders.size()-1;
+	return sliders.size() - 1;
 }
 
 int SliderSet::CopySlider(SliderData* other) {
@@ -138,16 +144,13 @@ int SliderSet::CopySlider(SliderData* other) {
 	ms->defBigValue = other->defBigValue;
 	ms->defSmallValue = other->defSmallValue;
 	ms->dataFiles = other->dataFiles;
-	return sliders.size()-1;
+	return sliders.size() - 1;
 }
 
-
-
 int SliderSet::LoadSliderSet(TiXmlElement* e, unsigned int flags) {
-	
 	Name = e->Attribute("name");
 	TiXmlElement* te;
-	te=e->FirstChildElement("SetFolder");
+	te = e->FirstChildElement("SetFolder");
 	if (te)
 		datafolder = te->GetText();
 	te = e->FirstChildElement("SourceFile");
@@ -161,7 +164,7 @@ int SliderSet::LoadSliderSet(TiXmlElement* e, unsigned int flags) {
 	te = e->FirstChildElement("OutputFile");
 	if (te) {
 		outputfile = te->GetText();
-		if(te->Attribute("GenWeights")) {
+		if (te->Attribute("GenWeights")) {
 			string gw = te->Attribute("GenWeights");
 			if (_strnicmp(gw.c_str(), "false", 5) == 0) {
 				genWeights = false;
@@ -172,17 +175,18 @@ int SliderSet::LoadSliderSet(TiXmlElement* e, unsigned int flags) {
 	TiXmlElement* shapename = e->FirstChildElement("BaseShapeName");
 	while (shapename) {
 		if (shapename->Attribute("DataFolder")) {
-			if ((flags & LOADSS_REFERENCE) == 0) {				
+			if ((flags & LOADSS_REFERENCE) == 0) {
 				exclude_targets.insert(shapename->Attribute("target"));
-				shapename=shapename->NextSiblingElement("BaseShapeName");
+				shapename = shapename->NextSiblingElement("BaseShapeName");
 				continue;
 			}
 			targetdatafolders[shapename->Attribute("target")] = shapename->Attribute("DataFolder");
 			targetshapenames[shapename->Attribute("target")] = shapename->GetText();
-		} else {
-			if ((flags & LOADSS_DIRECT) == 0) {				
+		}
+		else {
+			if ((flags & LOADSS_DIRECT) == 0) {
 				exclude_targets.insert(shapename->Attribute("target"));
-				shapename=shapename->NextSiblingElement("BaseShapeName");
+				shapename = shapename->NextSiblingElement("BaseShapeName");
 				continue;
 			}
 			targetdatafolders[shapename->Attribute("target")] = datafolder;
@@ -200,28 +204,29 @@ int SliderSet::LoadSliderSet(TiXmlElement* e, unsigned int flags) {
 				parts.push_back(item);
 			}
 			if (parts.size() == 3) {
-				v.x = atof(parts[0].c_str());
-				v.y = atof(parts[1].c_str());
-				v.z = atof(parts[2].c_str());
+				v.x = (float)atof(parts[0].c_str());
+				v.y = (float)atof(parts[1].c_str());
+				v.z = (float)atof(parts[2].c_str());
 			}
 			targetoffsets[shapename->Attribute("target")] = v;
 		}
 
-		shapename=shapename->NextSiblingElement("BaseShapeName");
+		shapename = shapename->NextSiblingElement("BaseShapeName");
 	}
 
 	TiXmlElement* sliderEntry = e->FirstChildElement("Slider");
 	SliderData tmpSlider;
 	while (sliderEntry) {
 		tmpSlider.Clear();
-		if (tmpSlider.LoadSliderData(sliderEntry,&exclude_targets) == 0) {
+		if (tmpSlider.LoadSliderData(sliderEntry, &exclude_targets) == 0) {
 			sliders.push_back(tmpSlider);
-		} else if ((flags & LOADSS_ADDEXCLUDED) != 0) {
+		}
+		else if ((flags & LOADSS_ADDEXCLUDED) != 0) {
 			tmpSlider.ClearDataFiles();
 			sliders.push_back(tmpSlider);
 		}
 
-		sliderEntry=sliderEntry->NextSiblingElement("Slider");
+		sliderEntry = sliderEntry->NextSiblingElement("Slider");
 	}
 	return 0;
 }
@@ -233,30 +238,13 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
 		for (int j = 0; j < sliders[i].dataFiles.size(); j++) {
 			f = sliders[i].dataFiles[j];
 			fullfilepath = baseDataPath + "\\";
-			if (f.bLocal) 
+			if (f.bLocal)
 				fullfilepath += datafolder + "\\";
-			else 
+			else
 				fullfilepath += targetdatafolders[f.targetName] + "\\";
 
 			fullfilepath += f.fileName;
-
 			inDataStorage.LoadSet(f.dataName, f.targetName, fullfilepath);
-			/* Offset clamp sliders * /
-			if(sliders[i].bClamp) {
-				inDataStorage.OffsetDiff(f.dataName,f.targetName,vec3(0.0000f, -2.54431f, 3.2879f));
-				inDataStorage.SaveSet(f.dataName,f.targetName,"D:\\temp\\" + f.dataName + ".bsd");
-			}
-			// */
-
-			/* Flip slider -- quick code to negate slider data (reverse effect)*/
-			//			
-			/*
-			if(f.dataName.find("CBBEToUNPB") != string::npos) {
-				inDataStorage.ScaleDiff(f.dataName,f.targetName,-1.0f);
-				string outfilename = "c:\\temp\\calconvert\\";
-				outfilename += f.targetName +  "UNPBToCBBE.bsd";
-				inDataStorage.SaveSet(f.dataName,f.targetName,outfilename);
-			}/* */
 		}
 	}
 }
@@ -273,13 +261,13 @@ void SliderSet::WriteSliderSet(TiXmlElement* SliderSetElement) {
 	if (!genWeights)
 		of->SetAttribute("GenWeights", "false");
 	of->InsertEndChild(TiXmlText(outputfile.c_str()));
-	
+
 	TiXmlElement* baseshapeElem;
 	TiXmlElement* sliderElem;
 	TiXmlElement* datafileElem;
 	char buf[256];
 
-	for (auto tsn: targetshapenames) {
+	for (auto tsn : targetshapenames) {
 		baseshapeElem = SliderSetElement->InsertEndChild(TiXmlElement("BaseShapeName"))->ToElement();
 		baseshapeElem->SetAttribute("target", tsn.first.c_str());
 		if (targetdatafolders.find(tsn.first) != targetdatafolders.end()) {
@@ -294,12 +282,13 @@ void SliderSet::WriteSliderSet(TiXmlElement* SliderSetElement) {
 		baseshapeElem->InsertEndChild(TiXmlText(tsn.second.c_str()));
 	}
 
-	for (auto slider: sliders) {
-		if (slider.dataFiles.size() == 0 ) 
+	for (auto slider : sliders) {
+		if (slider.dataFiles.size() == 0)
 			continue;
+
 		sliderElem = SliderSetElement->InsertEndChild(TiXmlElement("Slider"))->ToElement();
 		sliderElem->SetAttribute("name", slider.Name.c_str());
-		sliderElem->SetAttribute("invert", (slider.bInvert)?"true":"false");
+		sliderElem->SetAttribute("invert", (slider.bInvert) ? "true" : "false");
 		sliderElem->SetAttribute("small", (int)slider.defSmallValue);
 		sliderElem->SetAttribute("big", (int)slider.defBigValue);
 		if (slider.bHidden)
@@ -310,19 +299,18 @@ void SliderSet::WriteSliderSet(TiXmlElement* SliderSetElement) {
 			sliderElem->SetAttribute("zap", "true");
 		if (slider.bUV)
 			sliderElem->SetAttribute("uv", "true");
-		for (auto df: slider.dataFiles) {
+		for (auto df : slider.dataFiles) {
 			datafileElem = sliderElem->InsertEndChild(TiXmlElement("datafile"))->ToElement();
 			datafileElem->SetAttribute("name", df.dataName.c_str());
 			datafileElem->SetAttribute("target", df.targetName.c_str());
 			if (df.bLocal) {
 				datafileElem->SetAttribute("local", "true");
 			}
-			
-			/* hack!  force these clamp bsd's to use the new ones that don't include the CBBE offset.  
-			   this is here in order to allow older slider sets to be opened by Outfit Studio and saved without
-			   telling the user about the offset.  (OS clears out the offset naturally when loading the files, so everything lines up 
-			   except for these old seam clamps. )  
-			   */
+
+			// Hack! Force these clamp bsd's to use the new ones that don't include the CBBE offset.
+			// this is here in order to allow older slider sets to be opened by Outfit Studio and saved without
+			// telling the user about the offset. (OS clears out the offset naturally when loading the files, so everything lines up
+			// except for these old seam clamps.)
 			string fn = df.fileName;
 			if (fn == "LockSeamLo.bsd") fn = "LockSeamLo2.bsd";
 			if (fn == "LockSeamHi.bsd") fn = "LockSeamHi2.bsd";
@@ -340,6 +328,7 @@ string SliderSet::GetInputFileName() {
 	o += inputfile;
 	return o;
 }
+
 string SliderSet::GetOutputFilePath() {
 	return outputpath + "\\" + outputfile;
 }
@@ -348,7 +337,7 @@ bool SliderSet::GenWeights() {
 	return genWeights;
 }
 
-SliderSetFile::SliderSetFile(const string& srcFileName):error(0) {
+SliderSetFile::SliderSetFile(const string& srcFileName) :error(0) {
 	Open(srcFileName);
 }
 
@@ -360,7 +349,7 @@ void SliderSetFile::Open(const string& srcFileName) {
 		error = doc.ErrorId();
 		return;
 	}
-	
+
 	root = doc.FirstChildElement("SliderSetInfo");
 	if (!root) {
 		error = 100;
@@ -387,7 +376,7 @@ void SliderSetFile::New(const string& newFileName) {
 }
 
 int SliderSetFile::GetSetNames(vector<string> &outSetNames, bool append) {
-	if(!append) 
+	if (!append)
 		outSetNames.clear();
 	map<string, TiXmlElement*>::iterator xmlit;
 	for (xmlit = SetsInFile.begin(); xmlit != SetsInFile.end(); ++xmlit) {
@@ -401,9 +390,10 @@ int SliderSetFile::GetSetNamesUnsorted(vector<string> &outSetNames, bool append)
 	if (!append) {
 		outSetNames.clear();
 		outSetNames.assign(SetsOrder.begin(), SetsOrder.end());
-	} else {
-		outSetNames.insert(outSetNames.end(), SetsOrder.begin(), SetsOrder.end());
 	}
+	else
+		outSetNames.insert(outSetNames.end(), SetsOrder.begin(), SetsOrder.end());
+
 	return outSetNames.size();
 }
 
@@ -437,9 +427,9 @@ void SliderSetFile::SetTargets(const string& set, vector<string>& outTargetNames
 
 int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet, unsigned int flags) {
 	TiXmlElement* setPtr;
-	if (!HasSet (setName))
+	if (!HasSet(setName))
 		return 1;
-	
+
 	setPtr = SetsInFile[setName];
 
 	int ret;
@@ -454,7 +444,7 @@ int SliderSetFile::GetAllSets(vector<SliderSet> &outAppendSets) {
 	map<string, TiXmlElement*>::iterator xmlit;
 	for (xmlit = SetsInFile.begin(); xmlit != SetsInFile.end(); ++xmlit) {
 		err = tmpSet.LoadSliderSet(xmlit->second);
-		if (err) 
+		if (err)
 			return err;
 		outAppendSets.push_back(tmpSet);
 	}
@@ -466,11 +456,12 @@ int SliderSetFile::UpdateSet(SliderSet &inSliderSet) {
 	string setName;
 	setName = inSliderSet.GetName();
 	if (HasSet(setName)) {
-		setPtr=SetsInFile[setName];
-	} else {
+		setPtr = SetsInFile[setName];
+	}
+	else {
 		TiXmlElement tmpElement("SliderSet");
 		tmpElement.SetAttribute("name", setName.c_str());
-		setPtr = root->InsertEndChild(tmpElement)->ToElement();		
+		setPtr = root->InsertEndChild(tmpElement)->ToElement();
 	}
 	inSliderSet.WriteSliderSet(setPtr);
 
@@ -486,7 +477,7 @@ void PresetCollection::Clear() {
 }
 
 void PresetCollection::GetPresetNames(vector<string>& outNames) {
-	map<string, map<string,SliderPreset>>::iterator it;
+	map<string, map<string, SliderPreset>>::iterator it;
 	for (it = namedSliderPresets.begin(); it != namedSliderPresets.end(); ++it) {
 		outNames.push_back(it->first);
 	}
@@ -504,19 +495,21 @@ void PresetCollection::SetSliderPreset(const string& set, const string& slider, 
 		newPreset[slider] = sp;
 		namedSliderPresets[set] = newPreset;
 
-	} else {
-		if(namedSliderPresets[set].find(slider) == namedSliderPresets[set].end()) {
+	}
+	else {
+		if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end()) {
 			sp.big = sp.small = -10000.0f;
 			if (big > -10000)
 				sp.big = big;
 			if (small > -10000)
 				sp.small = small;
 			namedSliderPresets[set][slider] = sp;
-		} else {
+		}
+		else {
 			if (big > -10000) {
 				namedSliderPresets[set][slider].big = big;
 			}
-			if (small >-10000) {
+			if (small > -10000) {
 				namedSliderPresets[set][slider].small = small;
 			}
 		}
@@ -525,30 +518,30 @@ void PresetCollection::SetSliderPreset(const string& set, const string& slider, 
 
 bool PresetCollection::GetBigPreset(const string& set, const string& slider, float& big) {
 	float b;
-	if (namedSliderPresets.find(set) == namedSliderPresets.end()) 
+	if (namedSliderPresets.find(set) == namedSliderPresets.end())
 		return false;
-	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end()) 
+	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end())
 		return false;
 	b = namedSliderPresets[set][slider].big;
-	if (b>-10000) {
+	if (b > -10000) {
 		big = b;
 		return true;
 	}
-	return false;			
+	return false;
 }
 
 bool PresetCollection::GetSmallPreset(const string& set, const string& slider, float& small) {
 	float b;
-	if (namedSliderPresets.find(set) == namedSliderPresets.end()) 
+	if (namedSliderPresets.find(set) == namedSliderPresets.end())
 		return false;
-	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end()) 
+	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end())
 		return false;
 	b = namedSliderPresets[set][slider].small;
-	if (b>-10000) {
+	if (b > -10000) {
 		small = b;
 		return true;
 	}
-	return false;	
+	return false;
 }
 
 bool PresetCollection::LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter) {
@@ -562,23 +555,24 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 	double o, b, s;
 
 	string filefilter = basePath + "\\*.xml";
-	
+
 	WIN32_FIND_DATAA wfd;
 	HANDLE hfind;
 	hfind = FindFirstFileA(filefilter.c_str(), &wfd);
 	DWORD searchStatus = 0;
 	string filename;
 
-	if (hfind == INVALID_HANDLE_VALUE) {
+	if (hfind == INVALID_HANDLE_VALUE)
 		return false;
-	}
+
 	while (searchStatus != ERROR_NO_MORE_FILES) {
-		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			continue;
+		}
 		else {
 			filename = basePath + "\\"; //"SliderPresets\\";
 			filename += wfd.cFileName;
-			if (doc.LoadFile(filename.c_str())) {		
+			if (doc.LoadFile(filename.c_str())) {
 				root = doc.FirstChildElement("SliderPresets");
 				if (!root) return false;
 				e = root->FirstChildElement("Preset");
@@ -586,22 +580,22 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 					bool skip = true;
 					g = e->FirstChildElement("Group");
 					while (g) {
-						for (int i=0;i<groupFilter.size();i++) {
+						for (int i = 0; i < groupFilter.size(); i++) {
 							if (g->Attribute("name") == groupFilter[i]) {
 								skip = false;
 								break;
 							}
 						}
-						g=g->NextSiblingElement("Group");
+						g = g->NextSiblingElement("Group");
 					}
-					if (e->Attribute("set") == sliderSet) {
+					if (e->Attribute("set") == sliderSet)
 						skip = false;
-					}
 
 					if (skip) {
 						e = e->NextSiblingElement("Preset");
 						continue;
 					}
+
 					presetName = e->Attribute("name");
 					setslider = e->FirstChildElement("SetSlider");
 					while (setslider) {
@@ -610,23 +604,22 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 						setslider->Attribute("value", &o);
 						o = o / 100.0;
 						s = b = -10000.0;
-						if (applyTo == "small") {
+						if (applyTo == "small")
 							s = o;
-						} else if ( applyTo =="big") {
+						else if (applyTo == "big")
 							b = o;
-						} else if (applyTo == "both") {
+						else if (applyTo == "both")
 							s = b = o;
-						}
-						SetSliderPreset(presetName,sliderName, b, s);
+						SetSliderPreset(presetName, sliderName, b, s);
 						setslider = setslider->NextSiblingElement("SetSlider");
 					}
 					e = e->NextSiblingElement("Preset");
 				}
 			}
 		}
-		if (!FindNextFileA(hfind, &wfd)) {
+		if (!FindNextFileA(hfind, &wfd))
 			searchStatus = GetLastError();
-		} else 
+		else
 			searchStatus = 0;
 	}
 	FindClose(hfind);
@@ -634,46 +627,46 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 }
 
 int PresetCollection::SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {
-	TiXmlDocument outdoc;
-    TiXmlNode* slidersNode; 
-    TiXmlElement* presetElem;
-    TiXmlElement* tmpElem;
-    TiXmlElement* sliderElem;
-
 	if (namedSliderPresets.find(presetName) == namedSliderPresets.end())
 		return -1;
 
-    if (outdoc.LoadFile(filePath.c_str())) {
-        // file exists -- merge data
-        slidersNode = outdoc.FirstChild("SliderPresets");
-        presetElem = (TiXmlElement*) slidersNode->FirstChildElement("Preset");
-        while (presetElem) {
-            // replace preset if found in file.
-            if (_stricmp(presetElem->Attribute("name"), presetName.c_str()) == 0) {
-				tmpElem = presetElem;
+	TiXmlDocument outDoc;
+	TiXmlNode* slidersNode;
+	TiXmlElement* presetElem;
+	if (outDoc.LoadFile(filePath.c_str())) {
+		// File exists - merge data.
+		slidersNode = outDoc.FirstChild("SliderPresets");
+		presetElem = (TiXmlElement*)slidersNode->FirstChildElement("Preset");
+		while (presetElem) {
+			// Replace preset if found in file.
+			if (_stricmp(presetElem->Attribute("name"), presetName.c_str()) == 0) {
+				TiXmlElement* tmpElem = presetElem;
 				presetElem = presetElem->NextSiblingElement("Preset");
 				slidersNode->RemoveChild(tmpElem);
-            } else {
+			}
+			else
 				presetElem = presetElem->NextSiblingElement("Preset");
-            }
-        }       
-    } else {
-        slidersNode = outdoc.InsertEndChild(TiXmlElement("SliderPresets"));
-    }       
-    presetElem = slidersNode->InsertEndChild(TiXmlElement("Preset"))->ToElement();
-    presetElem->SetAttribute("name", presetName.c_str());
-    presetElem->SetAttribute("set", sliderSetName.c_str());
-    for (int i = 0; i < assignGroups.size(); i++){
-        sliderElem = presetElem->InsertEndChild(TiXmlElement("Group"))->ToElement();
-        sliderElem->SetAttribute("name", assignGroups[i].c_str());
-    }
-	for (auto p: namedSliderPresets[presetName]) {
+		}
+	}
+	else
+		slidersNode = outDoc.InsertEndChild(TiXmlElement("SliderPresets"));
+
+	presetElem = slidersNode->InsertEndChild(TiXmlElement("Preset"))->ToElement();
+	presetElem->SetAttribute("name", presetName.c_str());
+	presetElem->SetAttribute("set", sliderSetName.c_str());
+
+	TiXmlElement* sliderElem;
+	for (int i = 0; i < assignGroups.size(); i++){
+		sliderElem = presetElem->InsertEndChild(TiXmlElement("Group"))->ToElement();
+		sliderElem->SetAttribute("name", assignGroups[i].c_str());
+	}
+	for (auto p : namedSliderPresets[presetName]) {
 		if (p.second.big > -10000.0f) {
 			sliderElem = presetElem->InsertEndChild(TiXmlElement("SetSlider"))->ToElement();
 			sliderElem->SetAttribute("name", p.first.c_str());
 			sliderElem->SetAttribute("size", "big");
 			sliderElem->SetAttribute("value", p.second.big * 100);
-		} 
+		}
 		if (p.second.small > -10000.0f) {
 			sliderElem = presetElem->InsertEndChild(TiXmlElement("SetSlider"))->ToElement();
 			sliderElem->SetAttribute("name", p.first.c_str());
@@ -681,8 +674,8 @@ int PresetCollection::SavePreset(const string& filePath, const string& presetNam
 			sliderElem->SetAttribute("value", p.second.small * 100);
 		}
 	}
-    if (!outdoc.SaveFile())
-		return outdoc.ErrorId();
+	if (!outDoc.SaveFile())
+		return outDoc.ErrorId();
 
 	return 0;
 }

@@ -64,7 +64,7 @@ class GLSurface
 	int activeMesh;
 
 	void initLighting();
-	void initMaterial(vec3& diffusecolor);
+	void initMaterial(vec3 diffusecolor);
 
 	void DeleteMesh(int meshID) {
 		if (meshID < meshes.size()) {

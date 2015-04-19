@@ -26,7 +26,7 @@ public:
 	bool bIsOutfitShape;
 	NifFile* refFile;
 	string shapeName;
-	ShapeItemData(bool isOutfit = false, NifFile* inRefFile = NULL, const string& inShapeName="" ){
+	ShapeItemData(bool isOutfit = false, NifFile* inRefFile = NULL, const string& inShapeName = "") {
 		bIsOutfitShape = isOutfit;
 		refFile = inRefFile;
 		shapeName = inShapeName;
@@ -34,37 +34,36 @@ public:
 };
 
 
-class wxGLPanel : public wxPanel 
-{
+class wxGLPanel : public wxPanel {
 public:
 	wxGLPanel(wxWindow* parent, const wxSize& size);
 
 	void SetNotifyWindow(wxWindow* win);
 
 	void AddMeshFromNif(NifFile* nif, char* shapename);
-	void AddExplicitMesh(vector<vector3>* v, vector<tri>* t, vector<vector2>* uv = NULL, const string& shapename= "");
+	void AddExplicitMesh(vector<vector3>* v, vector<tri>* t, vector<vector2>* uv = NULL, const string& shapename = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {
 		gls.RenameMesh(shapeName, newShapeName);
 	}
-	
-	void SetMeshTexture(const string& shapeName, const string& texturefile, int shaderType=0);
+
+	void SetMeshTexture(const string& shapeName, const string& texturefile, int shaderType = 0);
 
 	mesh* GetMesh(const string& shapeName) {
 		return gls.GetMesh(shapeName);
 	}
 
-	void UpdateMeshVertices(const string& shapeName, vector<vector3>* verts, bool updateBVH=true);
+	void UpdateMeshVertices(const string& shapeName, vector<vector3>* verts, bool updateBVH = true);
 	void RecalculateMeshBVH(const string& shapeName);
 
-	void ShowShape(const string& shapeName, bool show=true);
+	void ShowShape(const string& shapeName, bool show = true);
 	void SetActiveShape(const string& shapeName);
 
 	TweakUndo* GetStrokeManager() {
 		return strokeManager;
 	}
 	void SetStrokeManager(TweakUndo* manager) {
-		if (manager == NULL) 
+		if (manager == NULL)
 			strokeManager = &baseStrokes;
 		else
 			strokeManager = manager;
@@ -92,70 +91,72 @@ public:
 		editMode = on;
 	}
 	void ToggleEditMode() {
-		if(transformMode != 0) {
+		if (transformMode != 0) {
 			transformMode = 0;
-			editMode=true;
+			editMode = true;
 			ShowTransformTool(false);
-		} else {
-			editMode=false;
+		}
+		else {
+			editMode = false;
 			transformMode = 1;
 			ShowTransformTool();
-		//	if(activeBrush == NULL) {
-		//		activeBrush = &standardBrush;
-		//	}
 		}
 	}
 	void ToggleXMirror() {
-		if(bXMirror)
+		if (bXMirror)
 			bXMirror = false;
-		else 
+		else
 			bXMirror = true;
 	}
 	void ToggleConnectedEdit() {
-		if(bConnectedEdit)
+		if (bConnectedEdit)
 			bConnectedEdit = false;
-		else 
+		else
 			bConnectedEdit = true;
 	}
 
 	void SetShapeGhostMode(const string& shapeName, bool on = true) {
 		mesh* m = gls.GetMesh(shapeName);
-		if(!m) return;
-		if(on) 
+		if (!m) return;
+		if (on)
 			m->rendermode = RenderMode::LitWire;
 		else
 			m->rendermode = RenderMode::Normal;
 	}
 	void ToggleGhostMode() {
 		mesh* m = gls.GetActiveMesh();
-		if(!m) return;
-		if(m->rendermode == RenderMode::Normal) {
+		if (!m)
+			return;
+
+		if (m->rendermode == RenderMode::Normal)
 			m->rendermode = RenderMode::LitWire;
-		} else if(m->rendermode == RenderMode::LitWire) {
+		else if (m->rendermode == RenderMode::LitWire)
 			m->rendermode = RenderMode::Normal;
-		}
 	}
 
 	void ToggleNormalSeamSmoothMode() {
 		mesh* m = gls.GetActiveMesh();
-		if(!m) return;
-		if(m->smoothSeamNormals == true) {
+		if (!m)
+			return;
+
+		if (m->smoothSeamNormals == true)
 			m->smoothSeamNormals = false;
-		} else {
+		else
 			m->smoothSeamNormals = true;
-		}
 		m->SmoothNormals();
 	}
 
 	void RecalcNormals(const string& shape) {
 		mesh* m = gls.GetMesh(shape);
-		if(!m) return;
+		if (!m)
+			return;
+
 		m->SmoothNormals();
 	}
 	void ToggleAutoNormals() {
-		if(bAutoNormals) {
+		if (bAutoNormals)
 			bAutoNormals = false;
-		} else 
+		else
 			bAutoNormals = true;
 	}
 	float GetBrushSize() {
@@ -191,14 +192,18 @@ public:
 	}
 
 	float IncStr() {
-		if (!activeBrush) return 0.0f;
+		if (!activeBrush)
+			return 0.0f;
+
 		float str = activeBrush->getStrength();
 		str += 0.010f;
 		activeBrush->setStrength(str);
 		return str;
 	}
 	float DecStr() {
-		if (!activeBrush) return 0.0f;
+		if (!activeBrush)
+			return 0.0f;
+
 		float str = activeBrush->getStrength();
 		str -= 0.010f;
 		activeBrush->setStrength(str);
@@ -228,50 +233,45 @@ public:
 
 	void ClearMask() {
 		mesh* m = gls.GetActiveMesh();
-		if (m->vcolors) {
+		if (m->vcolors)
 			m->ColorChannelFill(0, 0.0f);
-		}
 	}
 
-	void GetActiveMask( unordered_map<int, float>& mask) {
+	void GetActiveMask(unordered_map<ushort, float>& mask) {
 		mesh* m = gls.GetActiveMesh();
 		if (!m->vcolors)
 			return;
+
 		for (int i = 0; i < m->nVerts; i++) {
-			if (m->vcolors[i].x != 0.0f) {
+			if (m->vcolors[i].x != 0.0f)
 				mask[i] = m->vcolors[i].x;
-			}
 		}
 	}
 
-	void GetActiveUnmasked( unordered_map<int, float>& mask) {
+	void GetActiveUnmasked(unordered_map<ushort, float>& mask) {
 		mesh* m = gls.GetActiveMesh();
 		if (!m->vcolors) {
-			for (int i = 0; i < m->nVerts; i++) 
+			for (int i = 0; i < m->nVerts; i++)
 				mask[i] = 0.0f;
 			return;
 		}
-		for (int i = 0; i < m->nVerts; i++) {
-			if (m->vcolors[i].x == 0.0f) {
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->vcolors[i].x == 0.0f)
 				mask[i] = m->vcolors[i].x;
-			}
-		}
 	}
 
 	void InvertMask() {
 		mesh* m = gls.GetActiveMesh();
-		if (!m->vcolors) {
+		if (!m->vcolors)
 			m->ColorFill(vec3(0.0f, 0.0f, 0.0f));
-		}
-		for (int i = 0; i < m->nVerts; i++) {
+		for (int i = 0; i < m->nVerts; i++)
 			m->vcolors[i].x = 1 - m->vcolors[i].x;
-		}
 	}
 
 	void DeleteMesh(const string& shape) {
 		gls.DeleteMesh(shape);
 		Refresh();
-	}	
+	}
 	void DestroyOverlays() {
 		gls.DeleteOverlays();
 		Refresh();
@@ -284,7 +284,7 @@ private:
 	void OnSize(wxSizeEvent& event);
 
 	void OnMouseWheel(wxMouseEvent& event);
-	void OnMouseMove(wxMouseEvent& event); 
+	void OnMouseMove(wxMouseEvent& event);
 
 	void OnMiddleDown(wxMouseEvent& event);
 	void OnMiddleUp(wxMouseEvent& event);
@@ -296,7 +296,7 @@ private:
 
 	void OnKeys(wxKeyEvent& event);
 	void OnIdle(wxIdleEvent& event);
-	
+
 	void OnCaptureLost(wxMouseCaptureLostEvent& event);
 
 	GLSurface gls;
@@ -344,18 +344,17 @@ private:
 	TweakUndo baseStrokes;
 
 	vec3 xformCenter;		// transform center for transform brushes (rotate, specifically cares about this)
-	
+
 	DECLARE_EVENT_TABLE()
 };
 
 class OutfitProject;
 
 // Define a new frame type: this is going to be our main frame
-class OutfitStudio : public wxFrame
-{
+class OutfitStudio : public wxFrame {
 public:
-    // ctor(s)
-    OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
+	// ctor(s)
+	OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
 	~OutfitStudio();
 	wxGLPanel* glView;
 
@@ -397,7 +396,7 @@ public:
 	void UpdateShapeSource(const string& shapeName, bool bIsOutfit);
 	int PromptUpdateBase();
 
-	void ActiveShapeUpdated (TweakStroke* refStroke, bool bIsUndo = false);
+	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false);
 
 	bool NotifyStrokeStarting();
 
@@ -407,10 +406,10 @@ public:
 	string GetActiveBone();
 
 
-	bool IsDirty() ;
+	bool IsDirty();
 	bool IsDirty(const string& shapeName);
 	void SetClean(const string& shapeName);
-	
+
 	// slider edit states -- enable/disable menu items
 	void EnterSliderEdit();
 	void ExitSliderEdit();
@@ -419,11 +418,11 @@ public:
 	vector<pair<float, float>> progressStack;
 	int progressVal;
 	void StartProgress(const string& title) {
-		if(progressStack.size() == 0) {
-			progWnd = new wxProgressDialog(title,"Starting...",10000,this, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
-			progWnd->SetSize(400,150);	
+		if (progressStack.size() == 0) {
+			progWnd = new wxProgressDialog(title, "Starting...", 10000, this, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
+			progWnd->SetSize(400, 150);
 			progressVal = 0;
-			progressStack.emplace_back(0.0f,10000.0f);
+			progressStack.emplace_back(0.0f, 10000.0f);
 		}
 	}
 	void StartSubProgress(float min, float max) {
@@ -432,29 +431,29 @@ public:
 		float maxdiv = max / 100.0f;
 		float minoff = mindiv * range;
 		float maxoff = maxdiv * range;
-		progressStack.emplace_back(progressStack.front().first+minoff, progressStack.front().first+maxoff);
+		progressStack.emplace_back(progressStack.front().first + minoff, progressStack.front().first + maxoff);
 	}
 	void EndProgress() {
-		if(progressStack.size() == 0)
+		if (progressStack.size() == 0)
 			return;
 		progWnd->Update(progressStack.back().second);
 		progressStack.pop_back();
-		if(progressStack.size() == 0)  {
+		if (progressStack.size() == 0)  {
 			delete progWnd;
 			progWnd = NULL;
 		}
 	}
 	void UpdateProgress(float val, const string& msg) {
-		if(progressStack.size() == 0) return;
+		if (progressStack.size() == 0) return;
 		float range = progressStack.back().second - progressStack.back().first;
 		float div = val / 100.0f;
 		float offset = range * div;
 
 
-		progressVal = progressStack.back().first +  offset;
-		if(progressVal > 10000) 
+		progressVal = progressStack.back().first + offset;
+		if (progressVal > 10000)
 			progressVal = 10000;
-		progWnd->Update(progressVal,msg);		
+		progWnd->Update(progressVal, msg);
 	}
 
 private:
@@ -465,7 +464,7 @@ private:
 		wxPanel* sliderPane;
 		wxBoxSizer* paneSz;
 
-		int btnSliderEditID; 
+		int btnSliderEditID;
 		wxBitmapButton* btnSliderEdit;
 		int sliderNameCheckID;
 		wxCheckBox* sliderNameCheck;
@@ -488,7 +487,7 @@ private:
 	SliderSet activeSet;
 
 	Automorph morpher;
-	
+
 	map<string, bool> shapeDirty;
 
 	*/
@@ -502,12 +501,12 @@ private:
 	void ZeroSliders();
 
 	void ClearProject();
-	
+
 	void RefreshGUIFromProj();
 	void AnimationGUIFromProj();
 	void ReferenceGUIFromProj();
 	void WorkingGUIFromProj();
-	
+
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
 
@@ -543,12 +542,12 @@ private:
 	void OnOutfitVisToggle(wxTreeEvent& event);
 	void OnOutfitShapeSelect(wxTreeEvent& event);
 	void OnOutfitBoneSelect(wxTreeEvent& event);
-	void OnOutfitShapeContext(wxTreeEvent& event);	
+	void OnOutfitShapeContext(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);
 	void OnKillFocusOutfitShapes(wxCommandEvent& event);
-	
+
 	void OnSelectBrush(wxCommandEvent& event);
 
 	void OnLoadPreset(wxCommandEvent& event);
@@ -559,7 +558,7 @@ private:
 	void OnSliderImportOBJ(wxCommandEvent& event);
 
 	void OnNewSlider(wxCommandEvent& event);
-	void OnNewZapSlider(wxCommandEvent& event);	
+	void OnNewZapSlider(wxCommandEvent& event);
 	void OnNewCombinedSlider(wxCommandEvent& event);
 	void OnSliderNegate(wxCommandEvent& event);
 	void OnClearSlider(wxCommandEvent& event);
@@ -583,7 +582,7 @@ private:
 
 	void OnRotateShape(wxCommandEvent& event);
 	void OnVirtRotateShape(wxCommandEvent& event);
-	
+
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetShapeTexture(wxCommandEvent& event);
 	void OnApplyDiffuse(wxCommandEvent& event);
@@ -599,7 +598,7 @@ private:
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);
-	
+
 	void OnBrushSettingsSlider(wxScrollEvent& event);
 
 	void OnEditMode(wxCommandEvent& WXUNUSED(event)) {
@@ -625,12 +624,12 @@ private:
 		glView->ToggleGhostMode();
 		glView->Refresh();
 	}
-	
+
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
 		glView->RecalcNormals(activeShape);
 		glView->Refresh();
 	}
-	
+
 	void OnAutoNormals(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleAutoNormals();
 		glView->Refresh();
@@ -758,8 +757,8 @@ private:
 		a = 1;
 	}
 
-    // any class wishing to process wxWidgets events must use this macro
-    DECLARE_EVENT_TABLE()
+	// any class wishing to process wxWidgets events must use this macro
+	DECLARE_EVENT_TABLE()
 };
 
 class OutfitStudioThreadMonitor : public AsyncMonitor {
@@ -773,13 +772,13 @@ public:
 		this->notifyBar = notifyBar;
 		cleanOK = false;
 	}
-	virtual ~OutfitStudioThreadMonitor() {} 
+	virtual ~OutfitStudioThreadMonitor() {}
 	/* Notify the host process that a thread has begun execution. */
 	virtual void Begin(const string& startStateMessage) {
 		stateMessage = startStateMessage;
 		notifyBar->SetLabel(stateMessage);
 	}
-	
+
 	/* Update the status of the thread's ongoing execution.  */
 	virtual void Update(const string& updateStateMessage) {
 		stateMessage = updateStateMessage;
@@ -794,12 +793,12 @@ public:
 	}
 
 	/* report successful completion of the thread's work, along with an error code */
-	virtual void End (const string& endStateMessage, int code) {
+	virtual void End(const string& endStateMessage, int code) {
 		stateMessage = endStateMessage;
 		errorCode = code;
 		notifyBar->SetLabel(stateMessage);
 		osRef->OnShapeLoadDone(this);
-		if(cleanOK) {
+		if (cleanOK) {
 			delete this;
 		}
 	}

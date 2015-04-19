@@ -479,7 +479,8 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRe
 
 	//  Split lists when all midpoints fall on one side of axis or the other
 	int sz = more.size();
-	if (sz == 0 || sz == facetIndices.size()) {
+	int numFacets = facetIndices.size();
+	if (sz == 0 || sz == numFacets) {
 		if (sz > less.size()) {
 			sz = sz / 2;
 			less.assign(more.begin(), more.begin() + sz);

@@ -761,9 +761,9 @@ public:
 	void GetShapeVirtualScale(const string& shapeName, float& scale, bool& fromCenterFlag);
 
 	void MoveVertex(const string& shapeName, const vector3& pos, const int& id);
-	void OffsetShape(const string& shapeName, const vector3& offset, unordered_map<int, float>* mask = NULL);
-	void ScaleShape(const string& shapeName, const float& scale, unordered_map<int, float>* mask = NULL);
-	void RotateShape(const string& shapeName, const vec3& angle, unordered_map<int, float>* mask = NULL);
+	void OffsetShape(const string& shapeName, const vector3& offset, unordered_map<ushort, float>* mask = NULL);
+	void ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask = NULL);
+	void RotateShape(const string& shapeName, const vec3& angle, unordered_map<ushort, float>* mask = NULL);
 
 	void GetAlphaForShape(const string& shapeName, unsigned short& outFlags, BYTE& outThreshold);
 	void SetAlphaForShape(const string& shapeName, unsigned short flags, unsigned short threshold);
@@ -771,8 +771,8 @@ public:
 	void DeleteShape(const string& shapeName);
 	void DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
 
-	int CalcShapeDiff(const string& shapeName, const vector<vector3>* targetData, unordered_map<int, vector3>& outDiffData, float scale = 1.0f);
-	int ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<int, vector3>& outDiffData);
+	int CalcShapeDiff(const string& shapeName, const vector<vector3>* targetData, unordered_map<ushort, vector3>& outDiffData, float scale = 1.0f);
+	int ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<ushort, vector3>& outDiffData);
 	/* Based on the skin partitioning spell from NifSkope's source.  Uses a diffferent enough algorithm that it generates
 		different automatic partitions, but vert and triangle order is comparable */
 	void BuildSkinPartitions(const string& shapeName, int maxBonesPerPartition = 24);

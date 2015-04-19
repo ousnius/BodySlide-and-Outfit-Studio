@@ -11,16 +11,13 @@
 #include <map>
 
 #pragma warning (disable: 4018)
-
 using namespace std;
 
-class Automorph
-{
-	//NifFile MorphMe;
+class Automorph {
 	kd_tree* refTree;
 	map<string, mesh*> sourceShapes;
 	map<string, mesh*> foreignShapes;	// meshes linked by LinkSourceShapeMesh loaded and managed outside the
-										//  class -- to prevent automorph from deleting it.  Golly, smart pointers would be nice
+	//  class -- to prevent automorph from deleting it.  Golly, smart pointers would be nice
 	map<int, vector<kd_query_result>> prox_cache;
 	DiffDataSets __srcDiffData;			// internally loaded and stored diff data.diffs loaded from existing reference .bsd files
 	DiffDataSets* srcDiffData;			// either __srcDiffData or an external linked data set 
@@ -28,7 +25,7 @@ class Automorph
 
 	float proximity_radius;
 	float max_prox_points;
-	
+
 	bool bEnableMask;					// use red component of mesh vertex color as a mask for morphing. 
 
 	// a translation between shapetarget+slidername and the data name for the result diff data set.  this only has values when a sliderset is loaded from disk and a slider's data name  for a target
@@ -43,9 +40,9 @@ public:
 	int maxCount;
 	int minCount;
 
-	Automorph(void);
+	Automorph();
 	Automorph(NifFile& ref, const string& refShape = "BaseShape");
-	~Automorph(void);
+	~Automorph();
 
 	void ClearResultDiff() {
 		resultDiffData.Clear();
@@ -63,7 +60,7 @@ public:
 	//void SetRefDiffData(DiffDataSets* set);
 
 	int InitRefDiffData(const string& srcFileName, const string& dataSetName, const string& baseDataPath);
-	void LinkRefDiffData(DiffDataSets* diffData);	
+	void LinkRefDiffData(DiffDataSets* diffData);
 	void UnlinkRefDiffData();
 
 	void ApplyDiffToVerts(const string& sliderName, const string& shapeTargetName, vector<vector3>* inOutResult, float strength = 1.0f);
@@ -83,25 +80,25 @@ public:
 	/*
 		shapeName = name of the mesh to morph (eg "IronArmor") also known as targetname
 		sliderName = name of the morph to apply (eg "BreastsSH")
-	*/
+		*/
 	void GenerateResultDiff(const string& shapeName, const string& sliderName, const string& refDataName);
 
 	void SetResultDataName(const string& shapeName, const string& sliderName, const string& dataName);
 	string ResultDataName(const string& shapeName, const string& sliderName);
 
-	void GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<int, vec3>& outDiff);
+	void GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& outDiff);
 	int GetResultDiffSize(const string& shapeName, const string& sliderName);
 
-	void SetResultDiff(const string& shapeName, const string& sliderName, unordered_map<int,vec3>& diff);
-	void UpdateResultDiff(const string& shapeName, const string& sliderName, unordered_map<int,vec3>& diff);
-	void UpdateRefDiff(const string& shapeName, const string& sliderName, unordered_map<int,vec3>& diff);
+	void SetResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& diff);
+	void UpdateResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& diff);
+	void UpdateRefDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& diff);
 	void EmptyResultDiff(const string& shapeName, const string& sliderName);
-	void ZeroVertDiff(const string& shapeName, const string& sliderName, vector<int>* vertSet, unordered_map<int,float>* mask);
-	void ScaleResultDiff(const string& shapeName,const string& sliderName, float scaleValue);
+	void ZeroVertDiff(const string& shapeName, const string& sliderName, vector<ushort>* vertSet, unordered_map<ushort, float>* mask);
+	void ScaleResultDiff(const string& shapeName, const string& sliderName, float scaleValue);
 
 	void LoadResultDiffs(SliderSet &fromSet);
-	
+
 	void ClearResultSet(const string& sliderName);
 
-	void SaveResultDiff(const string& shapeName,const string& sliderName,const string& fileName);
+	void SaveResultDiff(const string& shapeName, const string& sliderName, const string& fileName);
 };

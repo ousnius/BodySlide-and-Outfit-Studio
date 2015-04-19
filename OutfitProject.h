@@ -34,9 +34,9 @@ public:
 	string outfitName;
 
 	DiffDataSets baseDiffData;
-	
+
 	SliderSet activeSet;
-	
+
 	Automorph morpher;
 	bool morpherInitialized;
 
@@ -50,7 +50,7 @@ public:
 
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
 	OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner = NULL);
-	~OutfitProject(void);
+	~OutfitProject();
 
 	string mFileName;
 	string mOutfitName;
@@ -61,22 +61,22 @@ public:
 	bool mCopyRef;
 	bool mGenWeights;
 
-	// returns a string error message or empty string on success.
+	// Returns a string error message or empty string on success.
 	string Save(const string& strFileName,
-			 const string& strOutfitName,
-			 const string& strDataDir,
-			 const string& strBaseFile,
-			 const string& strGamePath,
-			 const string& strGameFile,
-			 bool genWeights,
-			 bool copyRef);
+		const string& strOutfitName,
+		const string& strDataDir,
+		const string& strBaseFile,
+		const string& strGamePath,
+		const string& strGameFile,
+		bool genWeights,
+		bool copyRef);
 
 	string SliderSetName(void);
 	string SliderSetFileName(void);
 	string OutfitName(void);
 
 	bool IsDirty();
-	void Clean() { 
+	void Clean() {
 		shapeDirty.clear();
 	}
 	void Clean(const string& specificShape);
@@ -85,15 +85,15 @@ public:
 
 	bool ValidSlider(int index);
 	bool ValidSlider(const string& sliderName);
-	bool AllSlidersZero();					
+	bool AllSlidersZero();
 	int SliderCount(void);
 	const string& SliderName(int index);
 	void GetSliderList(vector<string>& sliderNames);
 	void AddEmptySlider(const string& newName);
-	void AddZapSlider(const string& newName,  unordered_map<int,float>& verts,const string& shapeName,bool bIsOutfit);
+	void AddZapSlider(const string& newName, unordered_map<ushort, float>& verts, const string& shapeName, bool bIsOutfit);
 	void AddCombinedSlider(const string& newName);
 
-	int AddShapeFromObjFile(const string& fileName,const string& shapeName, const string& mergeShape = "");
+	int AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape = "");
 
 	// Slider data can have a separate name from the shape target. 
 	string SliderShapeDataName(int index, const string& shapeName);
@@ -113,7 +113,7 @@ public:
 	bool SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
 	void SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
 	void NegateSlider(const string& sliderName, const string& shapeName, bool bIsOutfit);
-	
+
 	float& SliderValue(int index);
 	float& SliderValue(const string& name);
 	float SliderDefault(int index, bool hi);
@@ -161,21 +161,21 @@ public:
 
 	void RefreshMorphOutfitShape(const string& shapeName, bool bIsOutfit = true);
 	void UpdateShapeFromMesh(const string& shapeName, const mesh* m, bool IsOutfit);
-	void UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<int, vector3>& vertUpdates, bool IsOutfit);
+	void UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<ushort, vector3>& vertUpdates, bool IsOutfit);
 	void MoveVertex(const string& shapeName, vec3& pos, int& id, bool IsOutfit);
-	void OffsetShape(const string& shapeName, vec3& xlate, bool IsOutfit, unordered_map<int, float>* mask = NULL);
-	void ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<int, float>* mask = NULL);
-	void RotateShape(const string& shapeName, vec3& angle, bool IsOutfit, unordered_map<int, float>* mask = NULL);
-	
+	void OffsetShape(const string& shapeName, vec3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
+	void ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
+	void RotateShape(const string& shapeName, vec3& angle, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
+
 	void AutoOffset(bool IsOutfit);
 
 	// Uses the AutoMorph class to generate proximity values for bone weights.
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(const string& destShape, unordered_map<int, float>* mask = NULL, vector<string>* inBoneList = NULL);
+	void CopyBoneWeights(const string& destShape, unordered_map<ushort, float>* mask = NULL, vector<string>* inBoneList = NULL);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
-	void TransferSelectedWeights(const string& destShape, unordered_map<int, float>* mask = NULL, vector<string>* inBoneList = NULL);
+	void TransferSelectedWeights(const string& destShape, unordered_map<ushort, float>* mask = NULL, vector<string>* inBoneList = NULL);
 	bool OutfitHasUnweighted();
 
 	void ApplyBoneScale(const string& bone, int sliderPos);
@@ -184,17 +184,17 @@ public:
 	void AddBoneRef(const string& boneName, bool IsOutfit = true);
 
 	// Rebuilds skin partitions in the nif.  Games use the skin partition (As opposed to the skindata) for animation,
-	//  so fresh meshes need to have the partitions created.  Note, when updating bone weights, rebuilding the skin partions is not
-	//  typically required, and bone weight assignment is taken care of in the nif save operations.
+	// so fresh meshes need to have the partitions created. Note, when updating bone weights, rebuilding the skin partitions is not
+	// typically required, and bone weight assignment is taken care of in the NIF save operations.
 	void BuildShapeSkinPartions(const string& destShape, bool IsOutfit);
 
 	void ClearWorkSliders();
 	void ClearReference();
 	void ClearOutfit();
 	void ClearSlider(const string& shapeName, const string& sliderName, bool isOutfit);
-	void ClearUnmaskedDiff( const string& shapeName, const string& sliderName, unordered_map<int, float>* mask, bool isOutfit);
+	void ClearUnmaskedDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, float>* mask, bool isOutfit);
 	void DeleteSlider(const string& sliderName);
-	
+
 	int LoadSkeletonReference(const string& skeletonFileName);
 	int LoadReferenceTemplate(const string& templateName, bool ClearRef = true);
 	int LoadReferenceNif(const string& fileName, const string& shapeName, bool ClearRef = true);
@@ -205,14 +205,14 @@ public:
 	int LoadProject(const string& filename);
 	int OutfitFromSliderSet(const string& filename, const string& setName);
 
-	/* shape duplication -- resulting shape ends up in worknif. */
+	/* Shape duplication - resulting shape ends up in workNif. */
 	void DuplicateOutfitShape(const string& sourceShape, const string& destShape, const mesh* curMesh);
 	void DuplicateRefShape(const string& sourceShape, const string& destShape, const mesh* curMesh);
 
 	void DeleteOutfitShape(const string& shapeName) {
 		workAnim.ClearShape(shapeName);
 		workNif.DeleteShape(shapeName);
-	}	
+	}
 	void DeleteRefShape(const string& shapeName) {
 		baseAnim.ClearShape(shapeName);
 		baseNif.DeleteShape(shapeName);
@@ -244,14 +244,12 @@ public:
 
 	void RenameShape(const string& shapeName, const string& newShapeName, bool isOutfit);
 
-
 	int SaveOutfitNif(const string& filename);
 	int SaveModifiedOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals);
-	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes) ;
+	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
 
-	int ExportShape (const string& shapeName, const string& fname, bool isOutfit);
+	int ExportShape(const string& shapeName, const string& fName, bool isOutfit);
 
-	/* creates an abbreviated name for use in data file identifiers. Mostly removes spaces and other special characters. */
+	/* Creates an abbreviated name for use in data file identifiers. Mostly removes spaces and other special characters. */
 	string NameAbbreviate(const string& inputName);
 };
-

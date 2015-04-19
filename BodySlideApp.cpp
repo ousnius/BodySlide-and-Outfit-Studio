@@ -1375,10 +1375,8 @@ int BodySlideApp::SaveSliderPositions(const string& outputFile, const string& pr
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
-BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const wxPoint &pos, const wxSize &size) 
-: delayLoad(this, DELAYLOAD_TIMER)
-//: wxFrame(NULL, wxID_ANY, title, pos, size)
-{
+BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const wxPoint &pos, const wxSize &size)
+	: delayLoad(this, DELAYLOAD_TIMER) {
 	this->app = app;
 	delayLoad.Start(100, true);
 	rowCount = 0;
@@ -1386,7 +1384,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const w
 	bool loaded;
 	rsrc->InitAllHandlers();
 	loaded = rsrc->Load("res\\BodyslideFrame.xrc");
-	if (!loaded) 
+	if (!loaded)
 		return;
 	rsrc->LoadFrame(this, GetParent(), "BodyslideFrame");
 
@@ -1415,7 +1413,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const w
 	rsrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
 
 	wxScrolledWindow* sw = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
-	
+
 	SetSize(size);
 	sw->SetScrollRate(5, 26);
 	sw->SetFocusIgnoringChildren();
@@ -1440,14 +1438,15 @@ void BodySlideFrame::ShowLowColumn(bool show) {
 	wxScrolledWindow* sw = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	wxFlexGridSizer* sliderLayout = (wxFlexGridSizer*)sw->GetSizer();
 	if (show) {
-		XRCCTRL(*this,"lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(true);
-		XRCCTRL(*this,"lblSingleWt", wxStaticText)->Show(false);
-		XRCCTRL(*this,"btnPreviewLo", wxButton)->Show(true);
+		XRCCTRL(*this, "lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(true);
+		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(false);
+		XRCCTRL(*this, "btnPreviewLo", wxButton)->Show(true);
 		sliderLayout->SetCols(6);
-	} else {
-		XRCCTRL(*this,"lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(false);
-		XRCCTRL(*this,"lblSingleWt", wxStaticText)->Show(true);
-		XRCCTRL(*this,"btnPreviewLo", wxButton)->Hide();
+	}
+	else {
+		XRCCTRL(*this, "lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(false);
+		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(true);
+		XRCCTRL(*this, "btnPreviewLo", wxButton)->Hide();
 		sliderLayout->SetCols(3);
 	}
 }
@@ -1456,7 +1455,7 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 	wxScrolledWindow* sw = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	wxSizer* sliderLayout = sw->GetSizer();
 	wxWindow* w;
-	
+
 	if (!oneSize) {
 		sliderLayout->AddSpacer(0);
 
@@ -1464,7 +1463,7 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 		w->SetBackgroundColour(wxColor(90, 90, 90));
 		sliderLayout->Add(w, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
 	}
-	
+
 	wxCheckBox* check = new wxCheckBox(sw, wxID_ANY, "");
 	check->SetName(name);
 	sliderLayout->Add(check, 0, wxRIGHT | wxALIGN_RIGHT | wxALIGN_CENTER_VERTICAL, 5);
@@ -1475,7 +1474,7 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 	w->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Andalus"));
 	w->SetForegroundColour(wxColor(200, 200, 200));
 	sliderLayout->Add(w, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
-	
+
 	if (!oneSize) {
 		w = new wxPanel(sw, -1, -1, -1, -1);
 		w->SetBackgroundColour(wxColor(90, 90, 90));
@@ -1497,7 +1496,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 
 	int minValue = Config.GetIntValue("Input/SliderMinimum", 0);
 	int maxValue = Config.GetIntValue("Input/SliderMaximum", 100);
-	
+
 	if (!oneSize) {
 		sd->lblSliderLo = new wxStaticText(sw, wxID_ANY, name, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);
 		sd->lblSliderLo->SetBackgroundColour(wxColor(0x40, 0x40, 0x40));
@@ -1509,14 +1508,15 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 			sd->zapCheckLo->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
 			sliderLayout->AddStretchSpacer();
 			sliderLayout->Add(sd->zapCheckLo, 0, wxALIGN_LEFT, 0);
-		} else {
+		}
+		else {
 			sd->sliderLo = new wxSlider(sw, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 22), wxSL_AUTOTICKS | wxSL_BOTTOM | wxSL_HORIZONTAL);
 			sd->sliderLo->SetMaxSize(wxSize(-1, 22));
 			sd->sliderLo->SetTickFreq(5, 0);
 			sd->sliderLo->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
 			sd->sliderLo->SetName(name + "|LO");
 			sliderLayout->Add(sd->sliderLo, 1, wxALIGN_LEFT | wxEXPAND, 0);
-			
+
 			sd->sliderReadoutLo = new wxTextCtrl(sw, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, 18), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 			sd->sliderReadoutLo->SetName(name + "|RLO");
 			sd->sliderReadoutLo->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), NULL, this);
@@ -1533,18 +1533,19 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 		sd->zapCheckHi = new wxCheckBox(sw, wxID_ANY, " ", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, name + "|ZHI");
 		sd->zapCheckHi->Bind(wxEVT_CHECKBOX, &BodySlideFrame::OnZapCheckChanged, this);
 		sliderLayout->AddStretchSpacer();
-		sliderLayout->Add(sd->zapCheckHi, 0, wxALIGN_LEFT, 0);	
-	} else {
+		sliderLayout->Add(sd->zapCheckHi, 0, wxALIGN_LEFT, 0);
+	}
+	else {
 		sd->sliderHi = new wxSlider(sw, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 22), wxSL_AUTOTICKS | wxSL_HORIZONTAL);
 		sd->sliderHi->SetMaxSize(wxSize(-1, 22));
 		sd->sliderHi->SetTickFreq(5, 0);
 		sd->sliderHi->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
-		sd->sliderHi->SetName(name + "|HI");	
+		sd->sliderHi->SetName(name + "|HI");
 		sliderLayout->Add(sd->sliderHi, 1, wxALIGN_LEFT | wxEXPAND, 0);
 
 		sd->sliderReadoutHi = new wxTextCtrl(sw, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, 18), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 		sd->sliderReadoutHi->SetName(name + "|RHI");
-		sd->sliderReadoutHi->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), NULL, this);	
+		sd->sliderReadoutHi->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), NULL, this);
 		sliderLayout->Add(sd->sliderReadoutHi, 0, wxRIGHT, 10);
 	}
 
@@ -1569,11 +1570,11 @@ void BodySlideFrame::ClearSliderGUI() {
 	wxScrolledWindow* sw = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	if (sw) {
 		sw->GetSizer()->Clear();
-		sw->DestroyChildren(); 
+		sw->DestroyChildren();
 	}
-	for (auto sd: sliderDisplays) {
+	for (auto sd : sliderDisplays)
 		delete sd.second;
-	}
+
 	sliderDisplays.clear();
 
 	rowCount = 0;
@@ -1587,7 +1588,7 @@ void BodySlideFrame::PopulateOutfitList(const wxArrayString& items, const wxStri
 	c->Append(items);
 	if (!c->SetStringSelection(selectItem)) {
 		//c->SetValue("BWWW");
-		
+
 		int i;
 		if (selectItem.First('['))
 			i = c->Append("[" + selectItem + "]");
@@ -1612,40 +1613,43 @@ void BodySlideFrame::SetSliderPosition(const wxString &name, float newValue, sho
 	int intval = (int)(newValue * 100.0f);
 
 	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(string(name));
-	if (!sd) 
+	if (!sd)
 		return;
 
 	if (HiLo == SLIDER_HI) {
-		if(!sd->isZap) {
+		if (!sd->isZap) {
 			sd->sliderReadoutHi->SetValue(wxString::Format("%d%%", intval));
 			sd->sliderHi->SetValue(intval);
-		} else {
-			sd->zapCheckHi->SetValue((intval>0));
+		}
+		else {
+			sd->zapCheckHi->SetValue((intval > 0));
 		}
 
-	} else if (!sd->oneSize){
+	}
+	else if (!sd->oneSize){
 		if (!sd->isZap) {
 			sd->sliderReadoutLo->SetValue(wxString::Format("%d%%", intval));
 			sd->sliderLo->SetValue(intval);
-		} else {
-			sd->zapCheckLo->SetValue((intval>0));
+		}
+		else {
+			sd->zapCheckLo->SetValue((intval > 0));
 		}
 	}
 
 	/*
 	if(HiLo == SLIDER_HI) {
-		fullname += "|HI";
-	} else 
-		fullname += "|LO";
+	fullname += "|HI";
+	} else
+	fullname += "|LO";
 
 	wxSlider* theSlider = (wxSlider*)FindWindowByName(fullname,this);
-	if(theSlider == NULL) 
-		return;
+	if(theSlider == NULL)
+	return;
 
 	theSlider->SetValue(intval);
 	wxTextCtrl* readout = (wxTextCtrl*)FindWindowById(theSlider->GetId()+1);
 	if(readout) {
-		readout->SetValue(wxString::Format("%d%%",intval));
+	readout->SetValue(wxString::Format("%d%%",intval));
 	}
 	*/
 }
@@ -1686,63 +1690,65 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 	wxString name;
 	bool isLo = fullname.EndsWith("|LO", &name);
 	if (!isLo) {
-		if (!fullname.EndsWith("|HI", &name)) 
+		if (!fullname.EndsWith("|HI", &name))
 			return;
 	}
 	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(string(name));
-	if (!sd) 
-		return;	
+	if (!sd)
+		return;
 
-	app->SetSliderValue(name, isLo, ((float)event.GetPosition() / 100.0f));	
+	app->SetSliderValue(name, isLo, ((float)event.GetPosition() / 100.0f));
 	app->SetSliderChanged(name, isLo);
 	if (isLo) {
 		sd->sliderReadoutLo->SetValue(wxString::Format("%d%%", event.GetPosition()));
 		app->UpdatePreview(SMALL_PREVIEW);
-	} else {
+	}
+	else {
 		sd->sliderReadoutHi->SetValue(wxString::Format("%d%%", event.GetPosition()));
 		app->UpdatePreview(BIG_PREVIEW);
 	}
 
 	/*
 	if (w) {
-		wxWindowID id = w->GetId();
-		((wxTextCtrl*)FindWindowById(id + 1, this))->SetValue(wxString::Format("%d%%", event.GetPosition()));
-		//fullname = slider->GetName();
-		bool isLo = fullname.EndsWith("|LO", &name);
-		if(!isLo) 
-			name = fullname.BeforeLast('|');
-		app->SetSliderValue(name, isLo, ((float)event.GetPosition() / 100.0f));
+	wxWindowID id = w->GetId();
+	((wxTextCtrl*)FindWindowById(id + 1, this))->SetValue(wxString::Format("%d%%", event.GetPosition()));
+	//fullname = slider->GetName();
+	bool isLo = fullname.EndsWith("|LO", &name);
+	if(!isLo)
+	name = fullname.BeforeLast('|');
+	app->SetSliderValue(name, isLo, ((float)event.GetPosition() / 100.0f));
 	}
 	*/
 }
 
 void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
-	wxTextCtrl* w = (wxTextCtrl*)event.GetEventObject() ;
+	wxTextCtrl* w = (wxTextCtrl*)event.GetEventObject();
 	if (!w)
 		return;
-		
+
 	wxString fullname = w->GetName();
 	wxString name;
 	bool isLo = fullname.EndsWith("|RLO", &name);
 	if (!isLo) {
-		if(!fullname.EndsWith("|RHI", &name)) 
+		if (!fullname.EndsWith("|RHI", &name))
 			return;
 	}
 	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(string(name));
-	if (!sd) 
-		return;	
+	if (!sd)
+		return;
 
 	double v;
- 	w->GetValue().ToDouble(&v);
+	w->GetValue().ToDouble(&v);
 	w->ChangeValue(wxString::Format("%0.0f%%", v));
 
 	app->SetSliderValue(name, isLo, (float)v / 100.0f);
-	
+
 	if (isLo) {
 		sd->sliderLo->SetValue(v);
 		app->UpdatePreview(SMALL_PREVIEW);
 
-	} else {
+	}
+	else {
 		sd->sliderHi->SetValue(v);
 		app->UpdatePreview(BIG_PREVIEW);
 	}
@@ -1761,14 +1767,13 @@ void BodySlideFrame::OnOutfitSearchChange(wxCommandEvent& WXUNUSED(event)) {
 void BodySlideFrame::OnCategoryCheckChanged(wxCommandEvent& event) {
 	wxWindow* w = (wxWindow*)event.GetEventObject();
 	if (!w) return;
-	
+
 	wxScrolledWindow* sw = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	wxCheckBox* cb = (wxCheckBox*)event.GetEventObject();
-	if (event.IsChecked()) {
+	if (event.IsChecked())
 		app->cCollection.SetCategoryHidden(string(cb->GetName().mb_str()), false);
-	} else {
+	else
 		app->cCollection.SetCategoryHidden(string(cb->GetName().mb_str()), true);
-	}
 
 	Freeze();
 
@@ -1783,12 +1788,13 @@ void BodySlideFrame::OnCategoryCheckChanged(wxCommandEvent& event) {
 
 void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	wxWindow* w = (wxWindow*)event.GetEventObject();
-	if (!w) return;
+	if (!w)
+		return;
 
 	wxString sn;
 	bool isLo = true;
 	if (!w->GetName().EndsWith("|ZLO", &sn)) {
-		isLo=false;
+		isLo = false;
 		if (!w->GetName().EndsWith("|ZHI", &sn)) {
 			event.Skip();
 			return;
@@ -1799,27 +1805,28 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	if (event.IsChecked()) {
 		if (sliderDisplays[sliderName]->oneSize) {
 			app->SetSliderValue(sliderName, false, 1.0f);
-		} else {
+		}
+		else {
 			app->SetSliderValue(sliderName, true, 1.0f);
 			app->SetSliderValue(sliderName, false, 1.0f);
-			if (isLo) {
+			if (isLo)
 				sliderDisplays[sliderName]->zapCheckHi->SetValue(true);
-			} else {
+			else
 				sliderDisplays[sliderName]->zapCheckLo->SetValue(true);
-			}
 		}
 
-	} else {
+	}
+	else {
 		if (sliderDisplays[sliderName]->oneSize) {
 			app->SetSliderValue(sliderName, false, 0.0f);
-		} else {
+		}
+		else {
 			app->SetSliderValue(sliderName, true, 0.0f);
 			app->SetSliderValue(sliderName, false, 0.0f);
-			if (isLo) {
+			if (isLo)
 				sliderDisplays[sliderName]->zapCheckHi->SetValue(false);
-			} else {
+			else
 				sliderDisplays[sliderName]->zapCheckLo->SetValue(false);
-			}
 		}
 	}
 
@@ -1858,7 +1865,7 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayString grpChoices;
 	wxArrayInt grpSelections;
 	int idx = 0;
-	for (auto g: groupNames) {
+	for (auto g : groupNames) {
 		grpChoices.Add(g);
 		if (curGroupNames.find(g) != curGroupNames.end()) {
 			grpSelections.Add(idx);
@@ -1881,7 +1888,7 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {	
+void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 	wxFileDialog saveGroupDialog(this, "Choose or create group file", "SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
 	if (saveGroupDialog.ShowModal() == wxID_CANCEL)
 		return;
@@ -1924,8 +1931,8 @@ void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
 }
 
 void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
-	vector<string> groups; 
-	
+	vector<string> groups;
+
 	PresetSaveDialog psd(this);
 	app->GetAllGroupNames(psd.allGroupNames);
 	psd.FilterGroups();
@@ -1937,10 +1944,10 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	string presetName = psd.outPresetName;
 	groups.assign(psd.outGroups.begin(), psd.outGroups.end());
 
-	if (app->SaveSliderPositions(fname, presetName, groups) ) {
+	if (app->SaveSliderPositions(fname, presetName, groups)) {
 		wxMessageBox("Failed to save preset!", "Error");
 	}
-	
+
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
 }
@@ -1988,7 +1995,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	app->GetFilteredOutfits(outfitChoices);
 
 	int idx = 0;
-	for (auto o: outfitChoices) {
+	for (auto o : outfitChoices) {
 		oChoices.Add(o);
 		oSelections.Add(idx);
 		idx++;
@@ -2015,27 +2022,30 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		for (int i = 0; i < sel.size(); i++) {
 			toBuild.push_back(outfitChoices[sel[i]]);
 		}
-	} else {
+	}
+	else {
 		return;
 	}
-	
+
 	map<string, string> failedOutfits;
 	int ret;
 	if (custpath) {
 		string path = wxDirSelector("Choose a folder to contain the saved files");
-		if (path.empty()) 
+		if (path.empty())
 			return;
 		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, path + "\\");
-	} else if (clean) {
+	}
+	else if (clean)
 		ret = app->BuildListBodies(toBuild, failedOutfits, true, tri);
-	} else 
+	else
 		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri);
 
 	if (ret == 0) {
 		wxMessageBox("All outfits processed successfully!", "Complete", wxICON_INFORMATION);
-	} else if (ret == 3) {
+	}
+	else if (ret == 3) {
 		wxArrayString errlist;
-		for (auto e: failedOutfits)
+		for (auto e : failedOutfits)
 			errlist.Add(e.first + ":" + e.second);
 
 		wxSingleChoiceDialog errdisplay(this, "The following outfits failed", "Failed", errlist, (void**)NULL, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
@@ -2053,13 +2063,12 @@ void BodySlideFrame::OnBatchBuildContext(wxMouseEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnBatchBuildSelect(wxCommandEvent& event) {
-	if (event.GetId() == XRCID("batchBuildNone")) {
+	if (event.GetId() == XRCID("batchBuildNone"))
 		for (int i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i, false);
-	} else {
+	else
 		for (int i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i);
-	}
 }
 
 void BodySlideFrame::OnOutfitStudio(wxCommandEvent& WXUNUSED(event)) {

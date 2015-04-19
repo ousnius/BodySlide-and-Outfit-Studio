@@ -216,7 +216,7 @@ GLShader::GLShader(void) {
 	errorstate = -1;
 	fragSrc = NULL;
 	vertSrc = NULL;
-	
+
 	if (!initShaders())
 		MessageBoxA(NULL, errorstring.c_str(), "Shader Error", MB_TOPMOST | MB_OK);
 	else
@@ -229,7 +229,7 @@ GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool bu
 	nTextures = 1;
 	errorstate = -1;
 	fragSrc = NULL;
-	vertSrc = NULL; 
+	vertSrc = NULL;
 
 	if (!initShaders())
 		MessageBoxA(NULL, errorstring.c_str(), "Shader Error", MB_TOPMOST | MB_OK);
@@ -240,9 +240,9 @@ GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool bu
 
 bool GLShader::initShaders() {
 	if (!initComplete) {
-		glCreateShader  = (PFNGLCREATESHADERPROC) wglGetProcAddress("glCreateShader");
-		glShaderSource  = (PFNGLSHADERSOURCEPROC) wglGetProcAddress("glShaderSource");
-		glCompileShader = (PFNGLCOMPILESHADERPROC) wglGetProcAddress("glCompileShader");
+		glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
+		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
+		glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
 
 		if (glCreateShader == NULL || glShaderSource == NULL || glCompileShader == NULL) {
 			errorstate = 1;
@@ -250,10 +250,10 @@ bool GLShader::initShaders() {
 			return false;
 		}
 
-		glCreateProgram = (PFNGLCREATEPROGRAMPROC) wglGetProcAddress("glCreateProgram");
-		glAttachShader  = (PFNGLATTACHSHADERPROC ) wglGetProcAddress("glAttachShader");
-		glLinkProgram   = (PFNGLLINKPROGRAMPROC )  wglGetProcAddress("glLinkProgram");
-		glUseProgram    = (PFNGLUSEPROGRAMPROC )   wglGetProcAddress("glUseProgram");
+		glCreateProgram = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
+		glAttachShader = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
+		glLinkProgram = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
+		glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
 
 		if (glCreateProgram == NULL || glAttachShader == NULL || glLinkProgram == NULL || glUseProgram == NULL) {
 			errorstate = 1;
@@ -261,15 +261,15 @@ bool GLShader::initShaders() {
 			return false;
 		}
 
-		glGetShaderiv       = (PFNGLGETSHADERIVPROC) wglGetProcAddress("glGetShaderiv");
-		glGetShaderInfoLog  = (PFNGLGETSHADERINFOLOGPROC) wglGetProcAddress("glGetShaderInfoLog");
-		glGetProgramiv      = (PFNGLGETPROGRAMIVPROC) wglGetProcAddress("glGetProgramiv");
-		glGetProgramInfoLog	= (PFNGLGETPROGRAMINFOLOGPROC) wglGetProcAddress("glGetProgramInfoLog");
+		glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
+		glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
+		glGetProgramiv = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
+		glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
 
-		glGetAttribLocation  = (PFNGLGETATTRIBLOCATIONPROC) wglGetProcAddress("glGetAttribLocation");
-		glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC) wglGetProcAddress("glGetUniformLocation");
-		glUniform1f          = (PFNGLUNIFORM1FPROC) wglGetProcAddress("glUniform1f");
-		glProgramUniform1f   = (PFNGLPROGRAMUNIFORM1FPROC) wglGetProcAddress("glProgramUniform1f");
+		glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)wglGetProcAddress("glGetAttribLocation");
+		glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
+		glUniform1f = (PFNGLUNIFORM1FPROC)wglGetProcAddress("glUniform1f");
+		glProgramUniform1f = (PFNGLPROGRAMUNIFORM1FPROC)wglGetProcAddress("glProgramUniform1f");
 
 		initComplete = true;
 	}
@@ -308,7 +308,7 @@ bool GLShader::loadShaderFile(const char* fname, char** buffer, int* outLength) 
 bool GLShader::LoadShaders(const char *vertexSource, const char *fragmentSource, bool build) {
 	bHasVertShader = true;
 	bHasFragShader = true;
-	
+
 	if (fragSrc){
 		delete[] fragSrc;
 		fragSrc = NULL;
@@ -319,11 +319,14 @@ bool GLShader::LoadShaders(const char *vertexSource, const char *fragmentSource,
 	}
 	if (vertexSource == GLSHADER_PASSTHROUGH) {
 		generatePassThruVert();
-	} else if (vertexSource == GLSHADER_DEFAULT) {
+	}
+	else if (vertexSource == GLSHADER_DEFAULT) {
 		generateDefaultVert();
-	} else if (vertexSource == GLSHADER_NONE) {
+	}
+	else if (vertexSource == GLSHADER_NONE) {
 		bHasVertShader = false;
-	} else {
+	}
+	else {
 		if (!loadShaderFile(vertexSource, &vertSrc, &vertSrcLength)) {
 			bHasVertShader = false;
 			bHasFragShader = false;
@@ -333,37 +336,40 @@ bool GLShader::LoadShaders(const char *vertexSource, const char *fragmentSource,
 			return false;
 		}
 	}
-	
+
 	if (fragmentSource == GLSHADER_PASSTHROUGH) {
 		generatePassThruFrag();
-	} else if (fragmentSource == GLSHADER_DEFAULT) {
+	}
+	else if (fragmentSource == GLSHADER_DEFAULT) {
 		generateDefaultFrag();
-	} else if (fragmentSource == GLSHADER_NONE) {
+	}
+	else if (fragmentSource == GLSHADER_NONE) {
 		bHasFragShader = false;
-	} else {		
+	}
+	else {
 		if (!loadShaderFile(fragmentSource, &fragSrc, &fragSrcLength)) {
 			bHasFragShader = false;
 			errorstate = 3;
 			errorstring = "OpenGL: Failed to load fragment shader from file: ";
 			errorstring += fragmentSource;
-			return false;			
+			return false;
 		}
 	}
 
-	if (build) 
+	if (build)
 		return BuildShaders();
 
 	return true;
 }
 
-// enables lighting calculations in the vertex shader.  This looks for the bLightEnabled uniform in the vertex
-//  shader.  if that value isn't present, nothing happens.
+// Enables lighting calculations in the vertex shader.  This looks for the bLightEnabled uniform in the vertex shader.
+// If that value isn't present, nothing happens.
 void GLShader::EnableVertexLighting(bool bEnable) {
 	GLint loc = glGetUniformLocation(progID, "bLightEnabled");
 
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, (bEnable)?1.0f:0.0f);
+		glUniform1f(loc, (bEnable) ? 1.0f : 0.0f);
 		glUseProgram(0);
 	}
 }
@@ -371,9 +377,9 @@ void GLShader::EnableVertexLighting(bool bEnable) {
 void GLShader::ShowMask(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowMask");
 
-	if (loc >=0) {
+	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, (bShow)?1.0f:0.0f);
+		glUniform1f(loc, (bShow) ? 1.0f : 0.0f);
 		glUseProgram(0);
 	}
 }
@@ -383,7 +389,7 @@ void GLShader::ShowWeight(bool bShow) {
 
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, (bShow)?1.0f:0.0f);
+		glUniform1f(loc, (bShow) ? 1.0f : 0.0f);
 		glUseProgram(0);
 	}
 }
@@ -392,7 +398,7 @@ void  GLShader::ShowTexture(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowTexture");
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, (bShow)?1.0f:0.0f);
+		glUniform1f(loc, (bShow) ? 1.0f : 0.0f);
 		glUseProgram(0);
 	}
 }
@@ -411,9 +417,9 @@ bool GLShader::BuildShaders() {
 	GLchar* logdata;
 	if (bHasVertShader) {
 		vertShadID = glCreateShader(GL_VERTEX_SHADER);
-		glShaderSource (vertShadID,1, (const GLchar**)&vertSrc, &vertSrcLength);
+		glShaderSource(vertShadID, 1, (const GLchar**)&vertSrc, &vertSrcLength);
 		glCompileShader(vertShadID);
-		glGetShaderiv(vertShadID,GL_COMPILE_STATUS, &compiled);
+		glGetShaderiv(vertShadID, GL_COMPILE_STATUS, &compiled);
 		if (!compiled) {
 			glGetShaderiv(vertShadID, GL_INFO_LOG_LENGTH, &loglength);
 			logdata = new char[loglength];
@@ -424,10 +430,10 @@ bool GLShader::BuildShaders() {
 			delete[] logdata;
 			return false;
 		}
-	} 
+	}
 	if (bHasFragShader) {
 		fragShadID = glCreateShader(GL_FRAGMENT_SHADER);
-		glShaderSource (fragShadID, 1, (const GLchar**)&fragSrc, &fragSrcLength);
+		glShaderSource(fragShadID, 1, (const GLchar**)&fragSrc, &fragSrcLength);
 		glCompileShader(fragShadID);
 		glGetShaderiv(fragShadID, GL_COMPILE_STATUS, &compiled);
 		if (!compiled) {
@@ -441,7 +447,7 @@ bool GLShader::BuildShaders() {
 			return false;
 		}
 	}
-	
+
 	progID = glCreateProgram();
 
 	glAttachShader(progID, vertShadID);
@@ -449,7 +455,7 @@ bool GLShader::BuildShaders() {
 
 	glLinkProgram(progID);
 	glGetProgramiv(progID, GL_LINK_STATUS, &compiled);
-	if (!compiled) {		
+	if (!compiled) {
 		glGetProgramiv(progID, GL_INFO_LOG_LENGTH, &loglength);
 		logdata = new char[loglength];
 		glGetProgramInfoLog(progID, loglength, NULL, logdata);
@@ -469,7 +475,7 @@ bool GLShader::BuildShaders() {
 
 void GLShader::Begin() {
 	if (errorstate == 0) {
-		glUseProgram (progID);
+		glUseProgram(progID);
 	}
 }
 

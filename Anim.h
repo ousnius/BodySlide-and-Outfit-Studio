@@ -52,7 +52,7 @@ public:
 		loadFromFile->GetShapeBoneWeights(shape, index, weights);
 		loadFromFile->GetShapeBoneTransform(shape, index, xform, bSphereOffset, bSphereRadius);
 	}
-	bool VertWeight(int queryVert, float& weight) {
+	bool VertWeight(ushort queryVert, float& weight) {
 		if (weights.find(queryVert) != weights.end()) {
 			weight = weights[queryVert];
 			return true;
@@ -64,42 +64,32 @@ public:
 // Bone to weight list association
 class AnimSkin {
 public:
-	unordered_map<ushort, AnimWeight> boneWeights;	
-	AnimSkin() {}
-	/*
-	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<string>& boneNames) {
-		for(int i =0; i< boneNames.size(); i++) {
-			boneWeights[b.order] = AnimWeight(loadFromFile,shape,b.order);
-		}
-	}
-	*/
+	unordered_map<int, AnimWeight> boneWeights;
+	AnimSkin() { }
 	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<int>& boneIndices) {
-		for (auto i: boneIndices) {
+		for (auto i : boneIndices)
 			boneWeights[i] = AnimWeight(loadFromFile, shape, i);
-		}
 	}
-	void VertexBones(int queryvert, vector<int>& outbones, vector<float>& outWeights) {
+	void VertexBones(ushort queryvert, vector<int>& outbones, vector<float>& outWeights) {
 		float wresult;
-		for (auto bw: boneWeights) {
+		for (auto bw : boneWeights) {
 			if (bw.second.VertWeight(queryvert, wresult)) {
 				outbones.push_back(bw.first);
 				outWeights.push_back(wresult);
 			}
-		}		
+		}
 	}
 	void RemoveBone(int boneOrder) {
-		unordered_map<ushort, AnimWeight> bwtemp;
-		for (auto bw: boneWeights) {
-			if (bw.first > boneOrder) {
-				bwtemp[bw.first-1] = move(bw.second);
-			} else if (bw.first < boneOrder) {
+		unordered_map<int, AnimWeight> bwtemp;
+		for (auto bw : boneWeights) {
+			if (bw.first > boneOrder)
+				bwtemp[bw.first - 1] = move(bw.second);
+			else if (bw.first < boneOrder)
 				bwtemp[bw.first] = move(bw.second);
-			}
 		}
 		boneWeights.clear();
-		for (auto bw: bwtemp) {
+		for (auto bw : bwtemp)
 			boneWeights[bw.first] = move(bw.second);
-		}
 	}
 };
 
@@ -136,9 +126,9 @@ public:
 	bool LoadFromNif(NifFile* nif, const string& shape);
 	int GetShapeBoneIndex(const string& shapeName, const string& boneName);
 	void GetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& outVertWeights);
-	void GetShapeBoneXform(const string& shape, const string& boneName, skin_transform& stransform);
+	void GetBoneXForm(const string& boneName, skin_transform& stransform);
 	void SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights);
-	void SetShapeBoneXform(const string& shape, const string& boneName, skin_transform& stransform);
+	void SetShapeBoneXForm(const string& shape, const string& boneName, skin_transform& stransform);
 	void WriteToNif(NifFile* nif, bool synchBoneIDs = true);
 //	AnimBone* GetShapeBone(const string& shape, const string& boneName);
 

@@ -2109,7 +2109,7 @@ void NifFile::MoveVertex(const string& shapeName, const vector3& pos, const int&
 	(*verts)[id] = pos;
 }
 
-void NifFile::OffsetShape(const string& shapeName, const vector3& offset, unordered_map<int, float>* mask) {
+void NifFile::OffsetShape(const string& shapeName, const vector3& offset, unordered_map<ushort, float>* mask) {
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
 	if (dataID == -1)
@@ -2144,7 +2144,7 @@ void NifFile::OffsetShape(const string& shapeName, const vector3& offset, unorde
 	}
 }
 
-void NifFile::ScaleShape(const string& shapeName, const float& scale, unordered_map<int, float>* mask) {
+void NifFile::ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask) {
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
 	if (dataID == -1)
@@ -2181,7 +2181,7 @@ void NifFile::ScaleShape(const string& shapeName, const float& scale, unordered_
 	}
 }
 
-void NifFile::RotateShape(const string& shapeName, const vec3& angle, unordered_map<int, float>* mask) {
+void NifFile::RotateShape(const string& shapeName, const vec3& angle, unordered_map<ushort, float>* mask) {
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
 	if (dataID == -1)
@@ -2415,14 +2415,18 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 	}
 }
 
-int NifFile::CalcShapeDiff(const string& shapeName, const vector<vector3>* targetData, unordered_map<int, vector3>& outDiffData, float scale) {
-	vector3 v;
+int NifFile::CalcShapeDiff(const string& shapeName, const vector<vector3>* targetData, unordered_map<ushort, vector3>& outDiffData, float scale) {
 	outDiffData.clear();
-	const vector<vector3>* myData = GetRawVertsForShape(shapeName);
-	if (!myData) return 1;
-	if (!targetData) return 2;
-	if (myData->size() != targetData->size()) return 3;
+	const vector<vec3>* myData = GetRawVertsForShape(shapeName);
+	if (!myData)
+		return 1;
+	if (!targetData)
+		return 2;
+	if (myData->size() != targetData->size())
+		return 3;
+
 	for (int i = 0; i < myData->size(); i++) {
+		vec3 v;
 		v.x = (targetData->at(i).x * scale) - myData->at(i).x;
 		v.y = (targetData->at(i).y * scale) - myData->at(i).y;
 		v.z = (targetData->at(i).z * scale) - myData->at(i).z;
@@ -2433,10 +2437,12 @@ int NifFile::CalcShapeDiff(const string& shapeName, const vector<vector3>* targe
 	return 0;
 }
 
-int NifFile::ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<int, vector3>& outDiffData) {
-	const vector<vector3>* targetData = GetRawVertsForShape(targetShape);
-	if(!targetData) return 2;
-	return CalcShapeDiff(baseShapeName,targetData,outDiffData);
+int NifFile::ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<ushort, vector3>& outDiffData) {
+	const vector<vec3>* targetData = GetRawVertsForShape(targetShape);
+	if (!targetData)
+		return 2;
+
+	return CalcShapeDiff(baseShapeName, targetData, outDiffData);
 }
 
 void NifFile::UpdateSkinPartitions(const string& shapeName) {
