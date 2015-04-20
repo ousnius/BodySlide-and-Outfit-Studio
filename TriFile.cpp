@@ -7,16 +7,16 @@ int TriFile::Read(string fileName) {
 		bool packed = false;
 		int packedBytes = 4;
 
-		char hdr[4] = { 0, 0, 0, 1 };
-		triFile.read(hdr, 4);
-		if (memcmp(hdr, "TRI", 3) != 0)
+		uint hdr = 0;
+		triFile.read((char*)&hdr, 4);
+		if (hdr != 'TRI\0' && hdr != 'TRIP')
 			return false;
 
-		if (hdr[3] == 'P') {
+		if (hdr == 'TRIP') {
 			packed = true;
 			packedBytes = 2;
 		}
-		else if (hdr[3] != '\0')
+		else if (hdr != 'TRI\0')
 			return false;
 
 		uint shapeCount = 0;
@@ -96,13 +96,13 @@ int TriFile::Write(string fileName, bool packed) {
 
 	if (triFile.is_open()) {
 		int packedBytes = 2;
-		char hdr[4] = { 'T', 'R', 'I', 'P' };
+		uint hdr = 'TRIP';
 
 		if (!packed) {
-			hdr[3] = '\0';
+			hdr = 'TRI\0';
 			packedBytes = 4;
 		}
-		triFile.write(hdr, 4);
+		triFile.write((char*)&hdr, 4);
 
 		uint shapeCount = shapeMorphs.size();
 		triFile.write((char*)&shapeCount, packedBytes);
