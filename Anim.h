@@ -39,13 +39,13 @@ public:
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = NULL);
 };
 
-// vertex to weight value association;  Also keeps track of skin transform and bounding sphere.
+// Vertex to weight value association. Also keeps track of skin transform and bounding sphere.
 class AnimWeight {
 public:
-	//int boneNum;				// numeric index into the AnimSkin bone list.
-	unordered_map<ushort, float> weights;	
+	//int boneNum;				// Numeric index into the AnimSkin bone list.
+	unordered_map<ushort, float> weights;
 	skin_transform xform;
-	vector3 bSphereOffset;		
+	vector3 bSphereOffset;
 	float bSphereRadius;
 	AnimWeight() {}
 	AnimWeight(NifFile* loadFromFile, const string& shape, int index) {
@@ -61,7 +61,7 @@ public:
 	}
 };
 
-// Bone to weight list association
+// Bone to weight list association.
 class AnimSkin {
 public:
 	unordered_map<int, AnimWeight> boneWeights;
@@ -95,24 +95,23 @@ public:
 
 class AnimPartition {
 public:
-	int bodypart;				// bodypart number (from bsdismembermentskininstance/partiitons)
-	vector<tri> tris;			// points are indices to the verts list for this partition. (eg. starting at 0)
-	vector<int> verts;			// all referenced verts in this partition
-	vector<int> bones;			// all referenced bones in this partition
-	vector<vector<float>> vertWeights;	// vert order list of weights per vertex
-	vector<vector<int>> vertBones;		// vert order list of bones per vertex
+	int bodypart;						// Body part number (from BSDismembermentSkinInstance/partiitons).
+	vector<tri> tris;					// Points are indices to the verts list for this partition. (eg. starting at 0).
+	vector<int> verts;					// All referenced verts in this partition.
+	vector<int> bones;					// All referenced bones in this partition.
+	vector<vector<float>> vertWeights;	// Vert order list of weights per vertex.
+	vector<vector<int>> vertBones;		// Vert order list of bones per vertex.
 };
 
-/* represents animation weighting to a common skeleton across multiple shapes, sourced from nif files*/
+/* Represents animation weighting to a common skeleton across multiple shapes, sourced from nif files*/
 class AnimInfo {
 public:
-	//map<string, vector<AnimBone> > boneList;
 	map<string, vector<string>> shapeBones;
-	unordered_map<string, AnimSkin> shapeSkinning;			// shape to skin association
+	unordered_map<string, AnimSkin> shapeSkinning;			// Shape to skin association.
 	NifFile* refNif;
 	AnimInfo() { refNif = NULL; }
 
-	// returns true if a new bone is added, false if the bone already exists.
+	// Returns true if a new bone is added, false if the bone already exists.
 	bool AddShapeBone(const string& shape, AnimBone& boneDataRef);
 
 	bool RemoveShapeBone(const string& shape, const string& boneName);
@@ -120,8 +119,8 @@ public:
 	void Clear();
 	void ClearShape(const string& shape);
 
-	// loads the skinning information contained in the nif for all shapes.  returns false if there is
-	// no skinning information
+	// Loads the skinning information contained in the nif for all shapes.
+	// Returns false if there is no skinning information.
 	bool LoadFromNif(NifFile* nif);
 	bool LoadFromNif(NifFile* nif, const string& shape);
 	int GetShapeBoneIndex(const string& shapeName, const string& boneName);
@@ -130,7 +129,6 @@ public:
 	void SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights);
 	void SetShapeBoneXForm(const string& shape, const string& boneName, skin_transform& stransform);
 	void WriteToNif(NifFile* nif, bool synchBoneIDs = true);
-//	AnimBone* GetShapeBone(const string& shape, const string& boneName);
 
 	void RenameShape(const string& shapeName, const string& newShapeName);	
 };
@@ -143,6 +141,7 @@ class AnimSkeleton {
 	string rootBone;
 	int unknownCount;
 	bool allowCustom;
+
 public:
 	static AnimSkeleton& getInstance() {
 		static AnimSkeleton instance;
@@ -152,8 +151,8 @@ public:
 	int LoadFromNif(const string& filename);
 	AnimBone& AddBone(const string& boneName, bool bCustom = false);
 	string GenerateBoneName();
-	
-	bool RefBone(const string& boneName);	
+
+	bool RefBone(const string& boneName);
 	bool ReleaseBone(const string& boneName);
 
 	AnimBone* GetBonePtr(const string& boneName = "");

@@ -18,11 +18,10 @@ class SliderCategory {
 	bool isHidden;
 
 public:
-	SliderCategory():isValid(false), isHidden(false) { }
+	SliderCategory() :isValid(false), isHidden(false) { }
 	SliderCategory(TiXmlElement* srcCategoryElement) {
-		if (LoadCategory(srcCategoryElement)) {
+		if (LoadCategory(srcCategoryElement))
 			isValid = false;
-		} 
 		isValid = true;
 		isHidden = false;
 	}
@@ -36,13 +35,13 @@ public:
 	int GetSliders(unordered_set<string>& outSliders);
 	int AppendSliders(vector<string>& outSliders);
 	int AppendSliders(unordered_set<string>& outSliders);
-	
+
 	bool GetHidden();
 	void SetHidden(bool hide);
 
 	// Combine the source category's sliders into this one's list. Also merges the source file list.
 	void MergeSliders(const SliderCategory& sourceCategory);
-	
+
 	int LoadCategory(TiXmlElement* srcCategoryElement);
 	void WriteCategory(TiXmlElement* categoryElement, bool append = false);
 	void AddSourceFile(const string& fileName);
@@ -60,11 +59,11 @@ public:
 	int GetSliderCategory(const string& sliderName, string& outCategory);
 
 	bool GetCategoryHidden(const string& categoryName);
-	int SetCategoryHidden(string& categoryName, bool hide);
+	int SetCategoryHidden(const string& categoryName, bool hide);
 
 	int GetCategorySliders(const string& categoryName, vector<string>& outSliders, bool append = true);
 	int GetCategorySliders(const string& categoryName, unordered_set<string>& outSliders, bool append = true);
-}; 
+};
 
 
 class SliderCategoryFile {
@@ -75,13 +74,13 @@ class SliderCategoryFile {
 
 public:
 	string fileName;
-	SliderCategoryFile():error(0), root(NULL) {}
+	SliderCategoryFile() :error(0), root(NULL) { }
 	SliderCategoryFile(const string& srcFileName);
 	~SliderCategoryFile() {};
-	
+
 	bool fail() { return error != 0; }
 	int GetError() { return error; }
-	
+
 	// Loads the XML document and identifies included category names. On a failure, sets the internal error value.
 	void Open(const string& srcFileName);
 
@@ -97,7 +96,7 @@ public:
 
 	// Returns true if the category name exists in the file.
 	bool HasCategory(const string& queryCategoryName);
-	
+
 	// Adds all of the categories in the file to the supplied categories vector. Does not clear the vector before doing so.
 	int GetAllCategories(vector<SliderCategory>& outAppendCategories);
 

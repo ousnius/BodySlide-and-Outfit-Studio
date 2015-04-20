@@ -17,11 +17,10 @@ class SliderSetGroup {
 	bool isValid;
 
 public:
-	SliderSetGroup():isValid(false) {}
+	SliderSetGroup() :isValid(false) {}
 	SliderSetGroup(TiXmlElement* srcGroupElement) {
-		if (LoadGroup(srcGroupElement)) {
+		if (LoadGroup(srcGroupElement))
 			isValid = false;
-		} 
 		isValid = true;
 	}
 
@@ -34,11 +33,11 @@ public:
 	int GetMembers(unordered_set<string>& outMembers);
 	int AppendMembers(unordered_set<string>& outMembers);
 	int AddMembers(const vector<string>& inMembers);
-	
+
 	// Combine the source groups members into this one's list. Also merges the source file list.
 	void MergeMembers(const SliderSetGroup& sourceGroup);
 
-	int LoadGroup (TiXmlElement* srcGroupElement);
+	int LoadGroup(TiXmlElement* srcGroupElement);
 	void WriteGroup(TiXmlElement* groupElement, bool append = false);
 	void AddSourceFile(const string& fileName);
 };
@@ -52,11 +51,11 @@ public:
 	int LoadGroups(const string& basePath);
 
 	int GetAllGroups(set<string>& outGroups);
-	int GetOutfitGroups (const string& outfitName, vector<string>& outGroups);
+	int GetOutfitGroups(const string& outfitName, vector<string>& outGroups);
 
-	int GetGroupMembers (const string& groupName, vector<string>& outMembers, bool append = true);
-	int GetGroupMembers (const string& groupName, unordered_set<string>& outMembers, bool append = true);
-}; 
+	int GetGroupMembers(const string& groupName, vector<string>& outMembers, bool append = true);
+	int GetGroupMembers(const string& groupName, unordered_set<string>& outMembers, bool append = true);
+};
 
 
 class SliderSetGroupFile {
@@ -67,13 +66,13 @@ class SliderSetGroupFile {
 
 public:
 	string fileName;
-	SliderSetGroupFile():error(0), root(NULL) {}
+	SliderSetGroupFile() :error(0), root(NULL) {}
 	SliderSetGroupFile(const string& srcFileName);
 	~SliderSetGroupFile() {};
-	
+
 	bool fail() { return error != 0; }
 	int GetError() { return error; }
-	
+
 	// Loads the XML document and identifies included group names. On a failure, sets the internal error value.
 	void Open(const string& srcFileName);
 
@@ -89,7 +88,7 @@ public:
 
 	// Returns true if the group name exists in the file.
 	bool HasGroup(const string& queryGroupName);
-	
+
 	// Adds all of the groups in the file to the supplied groups vector. Does not clear the vector before doing so.
 	int GetAllGroups(vector<SliderSetGroup>& outAppendGroups);
 

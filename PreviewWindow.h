@@ -1,5 +1,5 @@
 /*
-Caliente's Body Slide
+Caliente's BodySlide
 by Caliente
 
 This software is provided 'as-is', without any express or implied
@@ -23,7 +23,7 @@ distribution.
 */
 
 #pragma once
-#include "Stdafx.h"
+#include "stdafx.h"
 #include "GLSurface.h"
 #include "NifFile.h"
 
@@ -42,12 +42,14 @@ class PreviewWindow
 	void registerClass();
 	unordered_map<string, int> shapeTexIds;
 	string baseDataPath;
+
 public:
 	bool isSmall;
 	HWND hOwner;
-	PreviewWindow(void);
-	PreviewWindow(HWND owner, NifFile* nif,char PreviewType = SMALL_PREVIEW, char* shapeName = NULL);
+	PreviewWindow();
+	PreviewWindow(HWND owner, NifFile* nif, char PreviewType = SMALL_PREVIEW, char* shapeName = NULL);
 	PreviewWindow(HWND owner, vector<vector3>* verts, vector<triangle>* tris, float scale = 1.0f);
+	~PreviewWindow();
 
 	void SetBaseDataPath(const string& path) {
 		baseDataPath = path;
@@ -67,26 +69,28 @@ public:
 	}
 
 	void AddMeshDirect(mesh* m);
-	void AddMeshFromNif(NifFile* nif, char* shapeName=NULL);
-	void RefreshMeshFromNif(NifFile* nif, char* shapeName=NULL);
+	void AddMeshFromNif(NifFile* nif, char* shapeName = NULL);
+	void RefreshMeshFromNif(NifFile* nif, char* shapeName = NULL);
 	void AddNifShapeTexture(NifFile* fromNif, const string& shapeName);
 
 	void Update(string& shapeName, vector<vector3>* verts, vector<vector2>* uvs = NULL) {
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs);
 		mesh* m = gls.GetMesh(shapeName);
-		if(m) { // the mesh could be missing if a zap slider removes it
+		if (m) { // the mesh could be missing if a zap slider removes it
 			gls.GetMesh(shapeName)->SmoothNormals();
 		}
-		InvalidateRect(mGLWindow,NULL,FALSE);
+		InvalidateRect(mGLWindow, NULL, FALSE);
 	}
 
 	void SetShapeTexture(string& shapeName, const string& texturefile, int shaderType = 0) {
 		mesh* m = gls.GetMesh(shapeName);
-		if (!m) return;
+		if (!m)
+			return;
+
 		int mat;
-		if (shaderType == 0 )
+		if (shaderType == 0)
 			mat = gls.AddMaterial(texturefile, "res\\defvshader.vs", "res\\defshader.fs");
-		else 	
+		else
 			mat = gls.AddMaterial(texturefile, "res\\defvshader.vs", "res\\skinshader.fs");
 
 		m->MatRef = mat;
@@ -107,49 +111,47 @@ public:
 		for (auto s : shapeTexIds) {
 			m = gls.GetMesh(s.first);
 			if (m) {
-				if(m->smoothSeamNormals) {
+				if (m->smoothSeamNormals)
 					m->smoothSeamNormals = false;
-				} else {
+				else
 					m->smoothSeamNormals = true;
-				}
 				m->SmoothNormals();
 			}
 		}
-		InvalidateRect(mGLWindow,NULL,FALSE);
+		InvalidateRect(mGLWindow, NULL, FALSE);
 	}
 	void ToggleSmoothSeams(mesh* m) {
 		if (m) {
-			if(m->smoothSeamNormals) {
+			if (m->smoothSeamNormals)
 				m->smoothSeamNormals = false;
-			} else {
+			else
 				m->smoothSeamNormals = true;
-			}
 			m->SmoothNormals();
 		}
-		InvalidateRect(mGLWindow,NULL,FALSE);
+		InvalidateRect(mGLWindow, NULL, FALSE);
 	}
 
 	void ToggleTextures() {
 		gls.ToggleTextures();
-		InvalidateRect(mGLWindow,NULL,FALSE);
+		InvalidateRect(mGLWindow, NULL, FALSE);
 	}
 
 	void ToggleWireframe() {
 		gls.ToggleWireframe();
-		InvalidateRect(mGLWindow,NULL,FALSE);
+		InvalidateRect(mGLWindow, NULL, FALSE);
 	}
 
 	void ToggleLighting(){
 		gls.ToggleLighting();
-		InvalidateRect(mGLWindow,NULL,FALSE);
+		InvalidateRect(mGLWindow, NULL, FALSE);
 	}
 
 	void ToggleEditMode() {
-		if(gls.bEditMode == false )
+		if (gls.bEditMode == false)
 			gls.BeginEditMode();
-		else 
+		else
 			gls.EndEditMode();
-		
+
 	}
 
 	void Close();
@@ -164,5 +166,4 @@ public:
 	void TrackMouse(int X, int Y);
 
 	void Pick(int X, int Y);
-	~PreviewWindow(void);
 };

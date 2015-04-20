@@ -1,9 +1,8 @@
 #pragma once
 
-//#define _HAS_ITERATOR_DEBUGGING 0
-#include <windows.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
+#include <Windows.h>
+#include <gl/GL.h>
+#include <gl/GLU.h>
 #include <gl/glext.h>
 #include <gl/wglext.h>
 #include <string>
@@ -34,7 +33,9 @@ struct vec3 {
 		x = y = z = 0.0f;
 	}
 	vec3(float X, float Y, float Z) {
-		x = X; y = Y; z = Z;
+		x = X;
+		y = Y;
+		z = Z;
 	}
 	vec3(vtx& other);
 
@@ -58,8 +59,11 @@ struct vec3 {
 
 	void Normalize() {
 		float d = sqrt(x*x + y*y + z*z);
-		if (d == 0) d = 1.0f;
-		x /= d; y /= d; z /= d;
+		if (d == 0)
+			d = 1.0f;
+		x /= d;
+		y /= d;
+		z /= d;
 	}
 	unsigned int hash() {
 		unsigned int *h = (unsigned int*) this;
@@ -71,49 +75,59 @@ struct vec3 {
 	inline vec3& operator += (const vtx& other);
 
 	bool operator == (const vec3& other) {
-		if (x == other.x && y == other.y && z == other.z) {
+		if (x == other.x && y == other.y && z == other.z)
 			return true;
-		}
 		return false;
 	}
 	bool operator != (const vec3& other) {
-		if (x != other.x && y != other.y && z != other.z) {
+		if (x != other.x && y != other.y && z != other.z)
 			return true;
-		}
 		return false;
 	}
 
 	vec3& operator -= (const vec3& other) {
-		x -= other.x; y -= other.y; z -= other.z;
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
 		return (*this);
 	}
 	vec3 operator - (const vec3& other) {
 		vec3 tmp = (*this);
-		tmp -= other; return tmp;
+		tmp -= other;
+		return tmp;
 	}
 	vec3& operator += (const vec3& other) {
-		x += other.x; y += other.y; z += other.z;
+		x += other.x;
+		y += other.y;
+		z += other.z;
 		return (*this);
 	}
 	vec3 operator + (const vec3& other) {
 		vec3 tmp = (*this);
-		tmp += other; return tmp;
+		tmp += other;
+		return tmp;
 	}
 	vec3& operator *= (float val) {
-		x *= val; y *= val; z *= val;
+		x *= val;
+		y *= val;
+		z *= val;
 		return(*this);
 	}
 	vec3 operator * (float val) {
 		vec3 tmp = (*this);
-		tmp *= val; return tmp;
+		tmp *= val;
+		return tmp;
 	}
 	vec3& operator /= (float val) {
-		x /= val; y /= val; z /= val;
+		x /= val;
+		y /= val;
+		z /= val;
 		return (*this);
 	}
 	vec3 operator / (float val) {
 		vec3 tmp = (*this);
-		tmp /= val; return tmp;
+		tmp /= val;
+		return tmp;
 	}
 
 	vec3 cross(const vec3& other) const {
@@ -146,16 +160,20 @@ struct vec3 {
 
 typedef struct vec3 vector3;
 
-/* vertex structure.  This contains information about a mesh vertex, including position, normal, and index
+/* Vertex structure. This contains information about a mesh vertex, including position, normal, and index
    numbering.  In order to allow the data to be dropped directly to the graphics card, the values are split
-   into floats and not vec3's.    This means that various vector operations that are already implemented for
-   vec3s are re-implemented here, so various math tasks can be done directly on the vertex position vectors 
+   into floats and not vec3's. This means that various vector operations that are already implemented for
+   vec3s are re-implemented here, so various math tasks can be done directly on the vertex position vectors
    instead of creating temporary vec3 values for the purpose.
-   */
+*/
 struct vtx {
-	float x; float y; float z;
-	float nx; float ny; float nz;
-	int indexRef;		// original index reference storage for use in K-d tree NN searches.
+	float x;
+	float y;
+	float z;
+	float nx;
+	float ny;
+	float nz;
+	int indexRef;		// Original index reference storage for use in K-d tree NN searches.
 
 	vtx() {
 		x = y = z = 0;
@@ -202,62 +220,80 @@ struct vtx {
 	}
 
 	vtx& operator -= (const vtx& other) {
-		x -= other.x; y -= other.y; z -= other.z;
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
 		return (*this);
 	}
 	vtx& operator -= (const vec3& other) {
-		x -= other.x; y -= other.y; z -= other.z;
+		x -= other.x;
+		y -= other.y;
+		z -= other.z;
 		return (*this);
 	}
 	vtx operator - (const vtx& other) {
 		vtx tmp = (*this);
-		tmp -= other; return tmp;
+		tmp -= other;
+		return tmp;
 	}
 	vtx operator - (const vec3& other) {
 		vtx tmp = (*this);
-		tmp -= other; return tmp;
+		tmp -= other;
+		return tmp;
 	}
 	vtx& operator += (const vtx& other) {
-		x += other.x; y += other.y; z += other.z;
+		x += other.x;
+		y += other.y;
+		z += other.z;
 		return (*this);
 	}
 	vtx& operator += (const vec3& other) {
-		x += other.x; y += other.y; z += other.z;
+		x += other.x;
+		y += other.y;
+		z += other.z;
 		return (*this);
 	}
 	vtx operator + (const vtx& other) {
 		vtx tmp = (*this);
-		tmp += other; return tmp;
+		tmp += other;
+		return tmp;
 	}
 	vtx operator + (const vec3& other) {
 		vtx tmp = (*this);
-		tmp += other; return tmp;
+		tmp += other;
+		return tmp;
 	}
 	vtx& operator *= (float val) {
-		x *= val; y *= val; z *= val;
+		x *= val;
+		y *= val;
+		z *= val;
 		return(*this);
 	}
 	vtx operator * (float val) {
 		vtx tmp = (*this);
-		tmp *= val; return tmp;
+		tmp *= val;
+		return tmp;
 	}
 	vtx& operator /= (float val) {
-		x /= val; y /= val; z /= val;
+		x /= val;
+		y /= val;
+		z /= val;
 		return (*this);
 	}
 	vtx operator / (float val) {
 		vtx tmp = (*this);
-		tmp /= val; return tmp;
+		tmp /= val;
+		return tmp;
 	}
 };
 
 
-// 4-d Matrix class for calculating and applying transformations.
+// 4D Matrix class for calculating and applying transformations.
 class Mat4 {
 	float m[16];
 
 public:
-	Mat4(void){
+	Mat4(){
 		Identity();
 	}
 	Mat4(const Mat4& other) {
@@ -281,7 +317,7 @@ public:
 	}
 
 
-	~Mat4(void)	{}
+	~Mat4()	{}
 
 	float& operator[] (int index) {
 		return m[index];
@@ -302,7 +338,8 @@ public:
 	void Get33(float* o, int r = 3, int c = 3) {
 		int p = 0;
 		for (int i = 0; i < 4; i++) {
-			if (i == r) continue;
+			if (i == r)
+				continue;
 			for (int j = 0; j < 4; j++){
 				if (j == c) continue;
 				o[p++] = m[4 * i + j];
@@ -337,19 +374,17 @@ public:
 	//	1111 0101    1 0 1 0
 	//	0000 0101    0 1 0 1
 	//	1111 0101    1 0 1 0
-	// Adjoint is the transpose of the cofactor
+	// Adjoint is the transpose of the cofactor.
 	Mat4 Adjoint() {
 		Mat4 c;
 		float minor[9];
 		for (int i = 0; i < 4; i++) {
 			for (int j = 0; j < 4; j++) {
 				Get33(minor, i, j);
-				if ((i & 1) ^ (j & 1)) {
+				if ((i & 1) ^ (j & 1))
 					c[i + j * 4] = -Det33(minor);
-				}
-				else {
+				else
 					c[i + j * 4] = Det33(minor);
-				}
 			}
 		}
 		return c;
@@ -388,9 +423,9 @@ public:
 		return t;
 	}
 	Mat4& operator+=(const Mat4& other) {
-		for (int i = 0; i < 16; i++){
+		for (int i = 0; i < 16; i++)
 			m[i] += other.m[i];
-		}
+
 		return (*this);
 	}
 	Mat4 operator-(const Mat4& other) const {
@@ -399,9 +434,9 @@ public:
 		return t;
 	}
 	Mat4& operator-=(const Mat4& other) {
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 16; i++)
 			m[i] -= other.m[i];
-		}
+
 		return(*this);
 	}
 	vec3 operator*(const vec3& v) const {
@@ -435,9 +470,9 @@ public:
 	}
 	Mat4 operator * (float val) {
 		Mat4 t(*this);
-		for (int i = 0; i < 16; i++) {
+		for (int i = 0; i < 16; i++)
 			t[i] *= val;
-		}
+
 		return t;
 	}
 
@@ -446,7 +481,6 @@ public:
 		tmp.Translate(byvec);
 		(*this) *= tmp;
 	}
-
 
 	Mat4& Translate(const vec3& byVec) {
 		return Translate(byVec.x, byVec.y, byVec.z);
@@ -591,28 +625,24 @@ struct edge {
 };
 
 namespace std {
-	template<> struct hash < edge >
-	{
-		std::size_t operator() (const edge& t) const
-		{
+	template<> struct hash < edge > {
+		std::size_t operator() (const edge& t) const {
 			return ((t.p2 << 16) | (t.p1 & 0xFFFF));
 		}
-
 	};
-	template <> struct equal_to < edge >
-	{
-		bool operator() (const edge& t1, const edge& t2) const
-		{
+
+	template <> struct equal_to < edge > {
+		bool operator() (const edge& t1, const edge& t2) const {
 			return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2));
 		}
 	};
+
 	template <> struct hash < tri > {
 		std::size_t operator() (const tri& t) const {
 			char* d = (char*)&t;
 			size_t len = sizeof(tri);
 			size_t hash, i;
-			for (hash = i = 0; i < len; ++i)
-			{
+			for (hash = i = 0; i < len; ++i) {
 				hash += d[i];
 				hash += (hash << 10);
 				hash ^= (hash >> 6);
@@ -623,10 +653,9 @@ namespace std {
 			return hash;
 		}
 	};
-	template <> struct equal_to < tri >
-	{
-		bool operator() (const tri& t1, const tri& t2) const
-		{
+
+	template <> struct equal_to < tri > {
+		bool operator() (const tri& t1, const tri& t2) const {
 			return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2) && (t1.p3 == t2.p3));
 		}
 	};
@@ -665,6 +694,7 @@ class AABBTree {
 	int min_facets;
 	vtx* vertexRef;
 	tri* triRef;
+
 public:
 	bool bFlag;
 	int depthCounter;
@@ -677,18 +707,16 @@ public:
 		AABBTree* tree;
 		int* mIFacets;
 		int nFacets;
-		//vector<int> mIFacets;
 		int id;
 	public:
 		AABBTreeNode();
 		~AABBTreeNode();
 
-
 		// Recursively generates AABB Tree nodes using the referenced data.
 		AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parent, int depth);
 
 		// As above, but facetIndices is modified with in-place sorting rather than using vector::push_back to generate sub lists.
-		//  Sorting swaps from front of list to end when pos midpoints are found at the beginning of the list.
+		// Sorting swaps from front of list to end when pos midpoints are found at the beginning of the list.
 		AABBTreeNode(vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parent, int depth);
 
 		vec3 Center();
@@ -702,9 +730,6 @@ public:
 		bool IntersectSphere(vec3& origin, float radius, vector<IntersectResult>* results);
 
 		void UpdateAABB(AABB* childBB = NULL);
-
-
-
 	};
 
 	AABBTreeNode* root;
@@ -722,10 +747,10 @@ public:
 
 	vec3 Center();
 
-	// Calculate bounding box and geometric average
+	// Calculate bounding box and geometric average.
 	void CalcAABBandGeoAvg(vector<int>& forFacets, AABB& outBB, vec3& outAxisAvg);
 
-	// Calculate bounding box and geometric average for sub list
+	// Calculate bounding box and geometric average for sub list.
 	void CalcAABBandGeoAvg(vector<int>& forFacets, int start, int end, AABB& outBB, vec3& outAxisAvg);
 
 	void CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outBB, vec3& outAxisAvg);
@@ -737,7 +762,6 @@ public:
 	bool IntersectRay(vec3& origin, vec3& direction, vector<IntersectResult>* results = NULL);
 
 	bool IntersectSphere(vec3& origin, float radius, vector<IntersectResult>* results = NULL);
-
 };
 
 struct IntersectResult {

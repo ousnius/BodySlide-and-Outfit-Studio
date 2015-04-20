@@ -15,13 +15,19 @@ AABB::AABB(vec3* points, int nPoints) {
 	min = points[0];
 	max = points[0];
 	for (int i = 1; i < nPoints; i++) {
-		if (points[i].x < min.x) min.x = points[i].x;
-		if (points[i].y < min.y) min.y = points[i].y;
-		if (points[i].z < min.z) min.z = points[i].z;
+		if (points[i].x < min.x)
+			min.x = points[i].x;
+		if (points[i].y < min.y)
+			min.y = points[i].y;
+		if (points[i].z < min.z)
+			min.z = points[i].z;
 
-		if (points[i].x > max.x) max.x = points[i].x;
-		if (points[i].y > max.y) max.y = points[i].y;
-		if (points[i].z > max.z) max.z = points[i].z;
+		if (points[i].x > max.x)
+			max.x = points[i].x;
+		if (points[i].y > max.y)
+			max.y = points[i].y;
+		if (points[i].z > max.z)
+			max.z = points[i].z;
 	}
 }	
 
@@ -29,13 +35,19 @@ AABB::AABB(vtx* points, int nPoints) {
 	min = points[0];
 	max = points[0];
 	for (int i = 1; i < nPoints; i++) {
-		if (points[i].x < min.x) min.x = points[i].x;
-		if (points[i].y < min.y) min.y = points[i].y;
-		if (points[i].z < min.z) min.z = points[i].z;
+		if (points[i].x < min.x)
+			min.x = points[i].x;
+		if (points[i].y < min.y)
+			min.y = points[i].y;
+		if (points[i].z < min.z)
+			min.z = points[i].z;
 
-		if (points[i].x > max.x) max.x = points[i].x;
-		if (points[i].y > max.y) max.y = points[i].y;
-		if (points[i].z > max.z) max.z = points[i].z;
+		if (points[i].x > max.x)
+			max.x = points[i].x;
+		if (points[i].y > max.y)
+			max.y = points[i].y;
+		if (points[i].z > max.z)
+			max.z = points[i].z;
 	}
 }
 
@@ -45,13 +57,19 @@ AABB::AABB(vtx* points, unsigned short* indices, int nPoints) {
 	int idx;
 	for (int i = 1; i < nPoints; i++) {
 		idx = indices[i];
-		if (points[idx].x < min.x) min.x = points[idx].x;
-		if (points[idx].y < min.y) min.y = points[idx].y;
-		if (points[idx].z < min.z) min.z = points[idx].z;
+		if (points[idx].x < min.x)
+			min.x = points[idx].x;
+		if (points[idx].y < min.y)
+			min.y = points[idx].y;
+		if (points[idx].z < min.z)
+			min.z = points[idx].z;
 
-		if (points[idx].x > max.x) max.x = points[idx].x;
-		if (points[idx].y > max.y) max.y = points[idx].y;
-		if (points[idx].z > max.z) max.z = points[idx].z;
+		if (points[idx].x > max.x)
+			max.x = points[idx].x;
+		if (points[idx].y > max.y)
+			max.y = points[idx].y;
+		if (points[idx].z > max.z)
+			max.z = points[idx].z;
 	}
 }
 

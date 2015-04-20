@@ -18,28 +18,28 @@ int SliderCategoryCollection::LoadCategories(const string& basePath) {
 		return 1;
 
 	while (searchStatus != ERROR_NO_MORE_FILES) {
-		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			continue;
-		else {		
+		}
+		else {
 			fileName = basePath + "\\";
 			fileName += wfd.cFileName;
 
 			SliderCategoryFile f(fileName);
 			cNames.clear();
 			f.GetCategoryNames(cNames);
-			for (auto c: cNames) {
+			for (auto c : cNames) {
 				SliderCategory sc;
 				f.GetCategory(c, sc);
-				if (categories.find(c) != categories.end()) {
+				if (categories.find(c) != categories.end())
 					categories[c].MergeSliders(sc);
-				} else {
+				else
 					categories[c] = move(sc);
-				}
 			}
 		}
-		if (!FindNextFileA(hfind, &wfd)) {
+		if (!FindNextFileA(hfind, &wfd))
 			searchStatus = GetLastError();
-		} else 
+		else
 			searchStatus = 0;
 	}
 	FindClose(hfind);
@@ -48,14 +48,14 @@ int SliderCategoryCollection::LoadCategories(const string& basePath) {
 
 int SliderCategoryCollection::GetAllCategories(vector<string>& outCategories) {
 	outCategories.clear();
-	for (auto c: categories)
+	for (auto c : categories)
 		outCategories.push_back(c.first);
 
 	return outCategories.size();
 }
 
 int SliderCategoryCollection::GetSliderCategory(const string& sliderName, string& outCategory) {
-	for (auto c: categories)
+	for (auto c : categories)
 		if (c.second.HasSlider(sliderName)) {
 			outCategory = c.first;
 			break;
@@ -66,39 +66,37 @@ int SliderCategoryCollection::GetSliderCategory(const string& sliderName, string
 
 int SliderCategoryCollection::GetCategorySliders(const string& categoryName, vector<string>& outSliders, bool append) {
 	auto git = categories.find(categoryName);
-	if (git == categories.end()) 
+	if (git == categories.end())
 		return 0;
 
-	if (append) {
+	if (append)
 		return git->second.AppendSliders(outSliders);
-	} else {
+	else
 		return git->second.GetSliders(outSliders);
-	}
 }
 
 int SliderCategoryCollection::GetCategorySliders(const string& categoryName, unordered_set<string>& outSliders, bool append) {
 	auto git = categories.find(categoryName);
-	if (git == categories.end()) 
+	if (git == categories.end())
 		return 0;
 
-	if (append) {
+	if (append)
 		return git->second.AppendSliders(outSliders);
-	} else {
+	else
 		return git->second.GetSliders(outSliders);
-	}
 }
 
 bool SliderCategoryCollection::GetCategoryHidden(const string& categoryName) {
 	auto git = categories.find(categoryName);
-	if (git == categories.end()) 
+	if (git == categories.end())
 		return true;
 
 	return git->second.GetHidden();
 }
 
-int SliderCategoryCollection::SetCategoryHidden(string& categoryName, bool hide) {
+int SliderCategoryCollection::SetCategoryHidden(const string& categoryName, bool hide) {
 	auto git = categories.find(categoryName);
-	if (git == categories.end()) 
+	if (git == categories.end())
 		return 1;
 
 	git->second.SetHidden(hide);
@@ -133,9 +131,10 @@ int SliderCategory::LoadCategory(TiXmlElement* srcCategoryElement) {
 }
 
 bool SliderCategory::HasSlider(const string& search) {
-	for (auto m: sliders)
+	for (auto m : sliders)
 		if (m.compare(search) == 0)
 			return true;
+
 	return false;
 }
 
@@ -174,13 +173,11 @@ int SliderCategory::AddSliders(const vector<string>& inSliders) {
 }
 
 void SliderCategory::WriteCategory(TiXmlElement* categoryElement, bool append) {
-	TiXmlElement* e;
-	if (!append) {
+	if (!append)
 		categoryElement->Clear();
-	}
 
-	for (auto s: sliders) {
-		e = categoryElement->InsertEndChild(TiXmlElement("Slider"))->ToElement();
+	for (auto s : sliders) {
+		TiXmlElement* e = categoryElement->InsertEndChild(TiXmlElement("Slider"))->ToElement();
 		e->SetAttribute("name", s.c_str());
 	}
 }
@@ -196,8 +193,7 @@ SliderCategoryFile::SliderCategoryFile(const string& srcFileName) {
 }
 
 void SliderCategoryFile::Open(const string& srcFileName) {
-	TiXmlElement* e;
-	if (doc.LoadFile(srcFileName.c_str())) {	
+	if (doc.LoadFile(srcFileName.c_str())) {
 		fileName = srcFileName;
 		root = doc.FirstChildElement("SliderCategories");
 		if (!root) {
@@ -205,8 +201,8 @@ void SliderCategoryFile::Open(const string& srcFileName) {
 			return;
 		}
 
-		e = root->FirstChildElement("Category");
-		while (e) {		
+		TiXmlElement* e = root->FirstChildElement("Category");
+		while (e) {
 			categoriesInFile[e->Attribute("name")] = e;
 			e = e->NextSiblingElement("Category");
 		}
@@ -215,7 +211,8 @@ void SliderCategoryFile::Open(const string& srcFileName) {
 			return;
 		}
 
-	} else {
+	}
+	else {
 		error = 1;
 		return;
 	}
@@ -229,7 +226,8 @@ void SliderCategoryFile::New(const string& newFileName) {
 	doc.Clear();
 	if (doc.LoadFile(newFileName.c_str())) {
 		error = 1;
-	} else {
+	}
+	else {
 		root = doc.InsertEndChild(TiXmlElement("SliderCategories"))->ToElement();
 		fileName = newFileName;
 	}
@@ -242,41 +240,43 @@ void SliderCategoryFile::Rename(const string& newFileName) {
 
 int SliderCategoryFile::GetCategoryNames(vector<string>& outCategoryNames, bool append, bool unique) {
 	unordered_set<string> existingNames;
-	if (!append) 
+	if (!append)
 		outCategoryNames.clear();
+
 	if (unique)
 		existingNames.insert(outCategoryNames.begin(), outCategoryNames.end());
 
-	for (auto cn: categoriesInFile) {
-		if (unique && existingNames.find(cn.first) != existingNames.end()) {
+	for (auto cn : categoriesInFile) {
+		if (unique && existingNames.find(cn.first) != existingNames.end())
 			continue;
-		} else if (unique) {
+		else if (unique)
 			existingNames.insert(cn.first);
-		}
+
 		outCategoryNames.push_back(cn.first);
 	}
 	return 0;
 }
 
 bool SliderCategoryFile::HasCategory(const string& queryCategoryName) {
-	if (categoriesInFile.find(queryCategoryName) != categoriesInFile.end()) 
-		return true;	
+	if (categoriesInFile.find(queryCategoryName) != categoriesInFile.end())
+		return true;
+
 	return false;
 }
 
 int SliderCategoryFile::GetAllCategories(vector<SliderCategory>& outAppendCategories) {
 	int count = 0;
 	bool add = true;
-	for (auto c: categoriesInFile) {
+	for (auto c : categoriesInFile) {
 		add = true;
-		for (auto& oc: outAppendCategories) {
+		for (auto& oc : outAppendCategories) {
 			if (oc.GetName() == c.first) {
 				oc.LoadCategory(c.second);
 				add = false;
 				break;
 			}
 		}
-		if (!add) 
+		if (!add)
 			continue;
 
 		outAppendCategories.emplace_back(c.second);
@@ -286,20 +286,20 @@ int SliderCategoryFile::GetAllCategories(vector<SliderCategory>& outAppendCatego
 }
 
 int SliderCategoryFile::GetCategory(const string& categoryName, SliderCategory& outCategories) {
-	if (categoriesInFile.find(categoryName) != categoriesInFile.end()) {
+	if (categoriesInFile.find(categoryName) != categoriesInFile.end())
 		outCategories.LoadCategory(categoriesInFile[categoryName]);
-	} else {
+	else
 		return 1;
-	}
+
 	return 0;
 }
 
 int SliderCategoryFile::UpdateCategory(SliderCategory& inCategory) {
-	TiXmlElement* e;
 	if (categoriesInFile.find(inCategory.GetName()) != categoriesInFile.end()) {
 		inCategory.WriteCategory(categoriesInFile[inCategory.GetName()]);
-	} else {
-		e = root->InsertEndChild(TiXmlElement("Category"))->ToElement();
+	}
+	else {
+		TiXmlElement* e = root->InsertEndChild(TiXmlElement("Category"))->ToElement();
 		e->SetAttribute("name", inCategory.GetName().c_str());
 		inCategory.WriteCategory(e);
 	}

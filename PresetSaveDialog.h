@@ -21,10 +21,10 @@ public:
 	string outPresetName;
 	vector<string> outGroups;
 	PresetSaveDialog(wxWindow* parent);
-	~PresetSaveDialog(void);
+	~PresetSaveDialog();
 
 	void FilterGroups(const string& filter = "");
-	
+
 	void OnEraseBackground(wxEraseEvent &event);
 	void FilterChanged(wxCommandEvent& event);
 	void CheckGroup(wxCommandEvent& event);

@@ -40,47 +40,17 @@ BodySlideApp::~BodySlideApp() {
 		delete previewBaseNif;
 		previewBaseNif = NULL;
 	}
-	if (preview0) {
+
+	if (preview0)
 		ClosePreview(SMALL_PREVIEW);
-	}
-	if (preview1) {
+
+	if (preview1)
 		ClosePreview(BIG_PREVIEW);
-	}
 
 	Config.SaveConfig("Config.xml");
 }
 
 bool BodySlideApp::OnInit() {
-	/*
-	1 2 3 0
-	0 4 5 0
-	1 0 6 0
-	0 0 0 1
-
-	Mat4 m;
-	m[0] = 1.0f; 
-	m[1] = 2.0f;
-	m[2] = 3.0f;
-	m[3] = 0.0f;
-	
-	m[4] = 0.0f;
-	m[5] = 4.0f;
-	m[6] = 5.0f;
-	m[7] = 0.0f;
-	
-	m[8] = 1.0f;
-	m[9] = 0.0f;
-	m[10] = 6.0f;
-	m[11] = 0.0f;
-	
-	m[12] = 0.0f;
-	m[13] = 0.0;
-	m[14] = 0.0;
-	m[15] = 1.0f;
-
-	Mat4 inv = m.Inverse();
-	*/
-
 	wxInitAllImageHandlers();
 
 	preview0 = NULL;
@@ -104,12 +74,6 @@ bool BodySlideApp::OnInit() {
 	sliderView->SetPosition(wxPoint(Config.GetIntValue("BodySlideFrame.x", 100), Config.GetIntValue("BodySlideFrame.y", 100)));
 	sliderView->Show(true);
 	SetTopWindow(sliderView);
-	
-	/*
-	outfitStudio = new OutfitStudio(NULL, wxDefaultPosition, wxDefaultSize);
-	outfitStudio->Show(true);
-	SetTopWindow(outfitStudio);
-	*/
 
 	string activeOutfit = Config.GetCString("SelectedOutfit", "CBBE Body");
 	curOutfit = activeOutfit;
@@ -144,17 +108,18 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 
 	if (preview1)
 		preview1->Close();
-	
-	string activeOutfit = Config.GetCString("SelectedOutfit", "CBBE Body");
-	string activePreset = Config.GetCString("SelectedPreset", "CBBE");
+
 	sliderManager.ClearSliders();
-//	outfitNameSource.clear();
 	sliderManager.ClearPresets();
 	SetPresetGroups(outfitName);
+
+	string activeOutfit = Config.GetCString("SelectedOutfit", "CBBE Body");
+	string activePreset = Config.GetCString("SelectedPreset", "CBBE");
 	LoadPresets(activeOutfit);
 	PopulatePresetList(activePreset);
 	createSliders(outfitName);
 }
+
 int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
 	if (outfitNameSource.find(outfit) == outfitNameSource.end())
 		return 1;
@@ -171,9 +136,10 @@ int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
 
 			sliderManager.AddSlidersInSet(activeSet, hideAll);
 			DisplayActiveSet();
-		} else
+		}
+		else
 			return 2;
-	}	
+	}
 	return 0;
 }
 
@@ -207,18 +173,16 @@ int BodySlideApp::LoadSliderSets() {
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
 
-	//activeSet.Clear();
-
 	hfind = FindFirstFileA("SliderSets\\*.xml", &wfd);
 
-	if (hfind == INVALID_HANDLE_VALUE) {
+	if (hfind == INVALID_HANDLE_VALUE)
 		return 3;
-	}
 
 	while (searchStatus != ERROR_NO_MORE_FILES) {
-		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
 			continue;
-		else{
+		}
+		else {
 			filename = "SliderSets\\";
 			filename += wfd.cFileName;
 
@@ -226,33 +190,23 @@ int BodySlideApp::LoadSliderSets() {
 			sliderDoc.Open(filename);
 
 			if (!sliderDoc.fail()) {
-				sliderDoc.GetSetNamesUnsorted(outfitNames,false);
+				sliderDoc.GetSetNamesUnsorted(outfitNames, false);
 				for (int i = 0; i < outfitNames.size(); i++) {
 					outfitNameSource[outfitNames[i]] = filename;
 					outfitNameOrder.push_back(outfitNames[i]);
-				}/*
-				if(!sliderDoc.GetSet(outfit,activeSet)) {
-					curOutfit = outfit;
-					activeSet.SetBaseDataPath(config["ShapeDataPath"]);
-
-					activeSet.LoadSetDiffData(dataSets);
-
-					sliderManager.AddSlidersInSet(activeSet, hideAll);
-					sliderManager.InitializeSliders("CBBE");
-
-				}*/
-				
+				}
 			}
-			if (!FindNextFileA(hfind, &wfd)) {
+
+			if (!FindNextFileA(hfind, &wfd))
 				searchStatus = GetLastError();
-			} else 
+			else
 				searchStatus = 0;
 		}
-	}	
+	}
 	FindClose(hfind);
-		
+
 	ungroupedOutfits.clear();
-	for (auto o: outfitNameSource) {
+	for (auto o : outfitNameSource) {
 		vector<string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
 		if (groups.empty())
@@ -271,6 +225,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 
 	if (preview0)
 		preview0->Close();
+
 	if (preview1)
 		preview1->Close();
 
@@ -291,37 +246,36 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 void BodySlideApp::ActivatePreset(const string &presetName) {
 	Config.SetValue("SelectedPreset", presetName);
 	sliderManager.InitializeSliders(presetName);
-	Slider* slider;
-	for (int i = 0; i < sliderManager.SlidersBig.size(); i++) {		
+	Slider* slider = NULL;
+	for (int i = 0; i < sliderManager.SlidersBig.size(); i++) {
 		slider = &sliderManager.SlidersBig[i];
 		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_HI);
 
 		slider = &sliderManager.SlidersSmall[i];
 		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_LO);
-	}	
-	if (preview0) {
+	}
+
+	if (preview0)
 		UpdatePreview(SMALL_PREVIEW);
-	}
-	if (preview1) {
+
+	if (preview1)
 		UpdatePreview(BIG_PREVIEW);
-	}
 }
 
 void BodySlideApp::RefreshSliders() {
-	Slider* slider;
-	for (int i = 0; i < sliderManager.SlidersBig.size(); i++) {		
+	Slider* slider = NULL;
+	for (int i = 0; i < sliderManager.SlidersBig.size(); i++) {
 		slider = &sliderManager.SlidersBig[i];
 		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_HI);
 
 		slider = &sliderManager.SlidersSmall[i];
 		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_LO);
-	}	
-	if (preview0) {
+	}
+	if (preview0)
 		UpdatePreview(SMALL_PREVIEW);
-	}
-	if (preview1) {
+
+	if (preview1)
 		UpdatePreview(BIG_PREVIEW);
-	}
 }
 
 void BodySlideApp::PopulatePresetList(const string& select) {
@@ -329,58 +283,52 @@ void BodySlideApp::PopulatePresetList(const string& select) {
 	wxArrayString items;
 	sliderManager.GetPresetNames(presets);
 	items.reserve(presets.size());
-	for(int i=0;i<presets.size();i++){ 
+	for (int i = 0; i < presets.size(); i++)
 		items.Add(presets[i].c_str());
-	}
-	sliderView->PopulatePresetList(items,select);
+
+	sliderView->PopulatePresetList(items, select);
 }
 
 void BodySlideApp::PopulateOutfitList(const string& select) {
 	string myselect = curOutfit;
-	if (!select.empty()) {
+	if (!select.empty())
 		myselect = select;
-	}
 
 	wxArrayString items;
 
 	size_t n = outfitNameSource.size();
-	if (n == 0) 
+	if (n == 0)
 		return;
 
 	ApplyOutfitFilter();
 
-	for (auto fo: filteredOutfits)
+	for (auto fo : filteredOutfits)
 		items.Add(fo);
-
-	//map<string,string>::iterator outfitIter;
-	//for (outfitIter = outfitNameSource.begin(); outfitIter != outfitNameSource.end(); ++outfitIter) {
-	//	items.Add(outfitIter->first.c_str());
-	//}
 
 	sliderView->PopulateOutfitList(items, wxString(myselect.c_str()));
 }
 
 void BodySlideApp::DisplayActiveSet() {
-	if (activeSet.GenWeights()) {
+	if (activeSet.GenWeights())
 		sliderView->ShowLowColumn(true);
-	} else {
+	else
 		sliderView->ShowLowColumn(false);
-	}
-	
+
 	// Category name, slider names, hidden flag
-	vector<tuple<string,vector<string>,bool>> sliderCategories;
+	vector<tuple<string, vector<string>, bool>> sliderCategories;
 	vector<string> cats;
 	cCollection.GetAllCategories(cats);
 
 	// Populate category data
-	for (auto cat: cats) {
+	for (auto cat : cats) {
 		vector<string> catSliders;
 		cCollection.GetCategorySliders(cat, catSliders);
 
 		if (catSliders.size() > 0) {
 			bool catHidden = cCollection.GetCategoryHidden(cat);
 			sliderCategories.push_back(make_tuple(cat, catSliders, !catHidden));
-		} else
+		}
+		else
 			continue;
 	}
 
@@ -389,11 +337,11 @@ void BodySlideApp::DisplayActiveSet() {
 	for (int i = 0; i < activeSet.size(); i++) {
 		if (activeSet[i].bHidden)
 			continue;
-			
+
 		// Find the category in the list
 		bool regularSlider = true;
 		int iter = 0;
-		for (auto cat: sliderCategories) {
+		for (auto cat : sliderCategories) {
 			catSliders.push_back(vector<int>());
 			if (find(get<1>(cat).begin(), get<1>(cat).end(), activeSet[i].Name) != get<1>(cat).end()) {
 				catSliders[iter].push_back(i);
@@ -405,20 +353,19 @@ void BodySlideApp::DisplayActiveSet() {
 		if (regularSlider)
 			sliderView->AddSliderGUI(activeSet[i].Name.c_str(), activeSet[i].bZap, !activeSet.GenWeights());
 	}
-		
+
 	// Create category UI
 	int iter = 0;
 	if (catSliders.size() > 0) {
-		for (auto cat: sliderCategories) {
+		for (auto cat : sliderCategories) {
 			string name = get<0>(cat);
 			bool show = get<2>(cat);
 
 			if (catSliders.size() > iter && catSliders[iter].size() > 0) {
 				sliderView->AddCategorySliderUI(name, show, !activeSet.GenWeights());
-				if (show) {
-					for (auto s: catSliders[iter])
+				if (show)
+					for (auto s : catSliders[iter])
 						sliderView->AddSliderGUI(activeSet[s].Name.c_str(), activeSet[s].bZap, !activeSet.GenWeights());
-				}
 			}
 			iter++;
 		}
@@ -426,46 +373,43 @@ void BodySlideApp::DisplayActiveSet() {
 }
 
 void BodySlideApp::LaunchOutfitStudio() {
-	if (outfitStudio != NULL) {
+	if (outfitStudio) {
 		outfitStudio->SetFocus();
-	} else {
-		int w = Config.GetIntValue("OutfitStudioFrame.width", 990);	
+	}
+	else {
+		int w = Config.GetIntValue("OutfitStudioFrame.width", 990);
 		int h = Config.GetIntValue("OutfitStudioFrame.height", 757);
-		wxPoint loc (Config.GetIntValue("OutfitStudioFrame.x", 100), Config.GetIntValue("OutfitStudioFrame.y", 100));
-		outfitStudio = new OutfitStudio(sliderView, loc, wxSize(w, h), Config);		
+		wxPoint loc(Config.GetIntValue("OutfitStudioFrame.x", 100), Config.GetIntValue("OutfitStudioFrame.y", 100));
+		outfitStudio = new OutfitStudio(sliderView, loc, wxSize(w, h), Config);
 		outfitStudio->Show();
 	}
 }
 
-void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<vec3>& verts, vector<ushort>& ZapIdx, vector<vec2>* uvs) {	
-	int j;
-	for (auto slider: sliderSet) {
+void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<vec3>& verts, vector<ushort>& ZapIdx, vector<vec2>* uvs) {
+	for (auto slider : sliderSet) {
 		float val = slider.Value;
 		if (slider.zap) {
-			if (val > 0) {
-				for (j = 0; j < slider.linkedDataSets.size(); j++) {
+			if (val > 0)
+				for (int j = 0; j < slider.linkedDataSets.size(); j++)
 					dataSets.GetDiffIndices(slider.linkedDataSets[j], targetShape, ZapIdx);
-				}
-			}
-		} else {					
-			if (slider.invert) 
-				val = 1.0f - val;
-			for (j = 0; j < slider.linkedDataSets.size(); j++) {
-				if (slider.uv) {
-					dataSets.ApplyUVDiff(slider.linkedDataSets[j], targetShape, val, uvs);
-				} else {
-					dataSets.ApplyDiff(slider.linkedDataSets[j], targetShape, val, &verts);			
-				}
-			}		
 		}
-	}	
-	for (auto slider: sliderSet) {
-		if (slider.clamp && slider.Value > 0) {
-			for (j = 0; j < slider.linkedDataSets.size(); j++) {
-				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
+		else {
+			if (slider.invert)
+				val = 1.0f - val;
+
+			for (int j = 0; j < slider.linkedDataSets.size(); j++) {
+				if (slider.uv)
+					dataSets.ApplyUVDiff(slider.linkedDataSets[j], targetShape, val, uvs);
+				else
+					dataSets.ApplyDiff(slider.linkedDataSets[j], targetShape, val, &verts);
 			}
 		}
 	}
+
+	for (auto slider : sliderSet)
+		if (slider.clamp && slider.Value > 0)
+			for (int j = 0; j < slider.linkedDataSets.size(); j++)
+				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
 
 int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>> zapIndices) {
@@ -474,9 +418,8 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 
 	TriFile tri;
 	string triFilePath = triPath + ".tri";
-	map<string, string>::iterator shape;
 
-	for (shape = sliderSet.TargetShapesBegin(); shape != sliderSet.TargetShapesEnd(); ++shape) {
+	for (auto shape = sliderSet.TargetShapesBegin(); shape != sliderSet.TargetShapesEnd(); ++shape) {
 		for (int s = 0; s < sliderSet.size(); s++) {
 			string dn = sliderSet[s].TargetDataName(shape->first);
 			string target = shape->first;
@@ -519,197 +462,164 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 }
 
 void BodySlideApp::ShowPreview(char PreviewType) {
-	if (PreviewType == SMALL_PREVIEW && preview0 != NULL) 
+	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
+	if (*winPtr != NULL)
 		return;
-	if (PreviewType == BIG_PREVIEW && preview1 != NULL) 
-		return;
-	
+
 	string inputFileName;
-	bool freshload = false;
+	bool freshLoad = false;
 	inputFileName = activeSet.GetInputFileName();
 
-	if (previewBaseNif == NULL) {
+	if (!previewBaseNif) {
 		previewBaseNif = new NifFile;
 		previewBaseNif->Load(inputFileName);
 		previewBaseName = inputFileName;
-		if (PreviewMod.Load(inputFileName) != 0) {
+		if (PreviewMod.Load(inputFileName))
 			return;
-		}
-		freshload = true;
+
+		freshLoad = true;
 		sliderManager.FlagReload(false);
-	} else if ((previewBaseName != inputFileName) || sliderManager.NeedReload()) {
+	}
+	else if ((previewBaseName != inputFileName) || sliderManager.NeedReload()) {
 		delete previewBaseNif;
 		previewBaseNif = new NifFile;
 		previewBaseNif->Load(inputFileName);
 		previewBaseName = inputFileName;
-		if (PreviewMod.Load(inputFileName) != 0) {
+		if (PreviewMod.Load(inputFileName) != 0)
 			return;
-		}
-		freshload = true;
+
+		freshLoad = true;
 		sliderManager.FlagReload(false);
-	} 
+	}
 
-	map<string,string>::iterator it;
-	vector<vector3> verts0;	
-	vector<vector2> uvs0;
-	vector<ushort> ZapIdx;
-	vector3 v;
-	for (it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		v = activeSet.GetTargetVirtualOffset(it->first);
-		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f) {
+	vector<vec3> verts;
+	vector<vec2> uvs;
+	vector<ushort> zapIdx;
+	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+		vec3 v = activeSet.GetTargetVirtualOffset(it->first);
+		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f)
 			previewBaseNif->VirtualOffsetShape(it->second, v, false);
-		}
 
-		ZapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->second, verts0))
-			continue;		
-		previewBaseNif->GetUvsForShape(it->second, uvs0);
+		zapIdx.clear();
+		if (!previewBaseNif->GetVertsForShape(it->second, verts))
+			continue;
 
-		if (PreviewType == SMALL_PREVIEW) {
-			ApplySliders(it->first, sliderManager.SlidersSmall, verts0, ZapIdx, &uvs0);
-		} else {
-			ApplySliders(it->first, sliderManager.SlidersBig, verts0, ZapIdx, &uvs0);
-		}
-		
+		previewBaseNif->GetUvsForShape(it->second, uvs);
+
+		if (PreviewType == SMALL_PREVIEW)
+			ApplySliders(it->first, sliderManager.SlidersSmall, verts, zapIdx, &uvs);
+		else
+			ApplySliders(it->first, sliderManager.SlidersBig, verts, zapIdx, &uvs);
+
 		// Zap deleted verts before preview
-		if (freshload && ZapIdx.size() > 0) {
+		if (freshLoad && zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(it->second, verts0);
-			PreviewMod.SetUvsForShape(it->second, uvs0);
-			//dataSets.GetDiffIndices(sliderManager.ZapDataLinks[0], it->first,ZapIdx);
-			PreviewMod.DeleteVertsForShape(it->second, ZapIdx);
-		} else if (ZapIdx.size() > 0) {
+			PreviewMod.SetVertsForShape(it->second, verts);
+			PreviewMod.SetUvsForShape(it->second, uvs);
+			PreviewMod.DeleteVertsForShape(it->second, zapIdx);
+		}
+		else if (zapIdx.size() > 0) {
 			// Preview Window has been opened for this shape before, zap the diff verts before applying them to the shape
-			//dataSets.GetDiffIndices(sliderManager.ZapDataLinks[0], it->first,ZapIdx);
-			for (int z = ZapIdx.size() - 1; z >= 0; z--) {
-				verts0.erase(verts0.begin() + ZapIdx[z]);
-				uvs0.erase(uvs0.begin() + ZapIdx[z]);
+			for (int z = zapIdx.size() - 1; z >= 0; z--) {
+				verts.erase(verts.begin() + zapIdx[z]);
+				uvs.erase(uvs.begin() + zapIdx[z]);
 			}
-			PreviewMod.SetVertsForShape(it->second, verts0);
-			PreviewMod.SetUvsForShape(it->second, uvs0);
-		} else {
-			// No zapping needed -- just show all the verts.  
-			PreviewMod.SetVertsForShape(it->second, verts0);
-			PreviewMod.SetUvsForShape(it->second, uvs0);
+			PreviewMod.SetVertsForShape(it->second, verts);
+			PreviewMod.SetUvsForShape(it->second, uvs);
+		}
+		else {
+			// No zapping needed - just show all the verts.
+			PreviewMod.SetVertsForShape(it->second, verts);
+			PreviewMod.SetUvsForShape(it->second, uvs);
 		}
 	}
 
-	vector<string> shapeNames;
 	string baseGamePath = Config["GameDataPath"];
-	if (PreviewType == SMALL_PREVIEW) {
-		preview0 = new PreviewWindow((HWND)sliderView->GetHWND(), &PreviewMod, SMALL_PREVIEW);
-		preview0->SetBaseDataPath(baseGamePath);
-		PreviewMod.GetShapeList(shapeNames);
-		for (auto s: shapeNames) {
-			preview0->AddNifShapeTexture(&PreviewMod, s);
-			preview0->Refresh();
-		}
+	*winPtr = new PreviewWindow((HWND)sliderView->GetHWND(), &PreviewMod, PreviewType);
+	(*winPtr)->SetBaseDataPath(baseGamePath);
 
-	} else  {
-		preview1 = new PreviewWindow((HWND)sliderView->GetHWND(), &PreviewMod, BIG_PREVIEW);
-		preview1->SetBaseDataPath(baseGamePath);
-		PreviewMod.GetShapeList(shapeNames);
-		for (auto s: shapeNames) {
-			preview1->AddNifShapeTexture(&PreviewMod, s);
-			preview1->Refresh();
-		}
+	vector<string> shapeNames;
+	PreviewMod.GetShapeList(shapeNames);
+	for (auto s : shapeNames) {
+		(*winPtr)->AddNifShapeTexture(&PreviewMod, s);
+		(*winPtr)->Refresh();
 	}
 }
 
 void BodySlideApp::UpdatePreview(char PreviewType) {
-	if (PreviewType == SMALL_PREVIEW) {
-		if (preview0 == NULL) return;
-	}
-	else {
-		if (preview1 == NULL) return;
-	}
+	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
+	if (*winPtr == NULL)
+		return;
 
 	if (previewBaseNif == NULL)
 		return;
 
-	map<string,string>::iterator it;
-	vector<vector3> verts0;	
-	vector<vector2> uv0;
-	vector<ushort> ZapIdx;
-	for (it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		ZapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->second, verts0))
+	vector<vector3> verts;
+	vector<vector2> uv;
+	vector<ushort> zapIdx;
+	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+		zapIdx.clear();
+		if (!previewBaseNif->GetVertsForShape(it->second, verts))
 			continue;
-		previewBaseNif->GetUvsForShape(it->second, uv0);
-		if (PreviewType == SMALL_PREVIEW) {
-			ApplySliders(it->first, sliderManager.SlidersSmall, verts0, ZapIdx, &uv0);
-			// zap deleted verts before applying to the shape
-			if (ZapIdx.size() > 0) {
-				for (int z = ZapIdx.size() - 1; z >= 0; z--) {
-					verts0.erase(verts0.begin() + ZapIdx[z]);
-					uv0.erase(uv0.begin() + ZapIdx[z]);
-				}
+
+		previewBaseNif->GetUvsForShape(it->second, uv);
+
+		if (PreviewType == SMALL_PREVIEW)
+			ApplySliders(it->first, sliderManager.SlidersSmall, verts, zapIdx, &uv);
+		else
+			ApplySliders(it->first, sliderManager.SlidersBig, verts, zapIdx, &uv);
+
+		// Zap deleted verts before applying to the shape
+		if (zapIdx.size() > 0) {
+			for (int z = zapIdx.size() - 1; z >= 0; z--) {
+				verts.erase(verts.begin() + zapIdx[z]);
+				uv.erase(uv.begin() + zapIdx[z]);
 			}
-			preview0->Update(it->second, &verts0, &uv0);
-		} else {
-			ApplySliders(it->first, sliderManager.SlidersBig, verts0, ZapIdx, &uv0);
-			// zap deleted verts before applying to the shape
-			if (ZapIdx.size() > 0) {
-				//dataSets.GetDiffIndices(sliderManager.ZapDataLinks[0], it->first, ZapIdx);
-				for (int z = ZapIdx.size() - 1; z >= 0; z--) {
-					verts0.erase(verts0.begin() + ZapIdx[z]);
-					uv0.erase(uv0.begin() + ZapIdx[z]);
-				}
-			}
-			preview1->Update(it->second, &verts0, &uv0);
 		}
+		(*winPtr)->Update(it->second, &verts, &uv);
 	}
 }
 
-void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {	
-	if (PreviewType == SMALL_PREVIEW) {
-		if (preview0 == NULL) return;
-	} else {
-		if (preview1 == NULL) return;
-	}
-
-	if (previewBaseNif == NULL) 
+void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
+	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
+	if (*winPtr == NULL)
 		return;
-	
+
+	if (previewBaseNif == NULL)
+		return;
+
 	PreviewMod.CopyFrom((*previewBaseNif));
-	
-	map<string,string>::iterator it;
-	vector<vector3> verts0;	
-	vector<ushort> ZapIdx;
-	vector3 v;
-	for (it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+
+	vector<vec3> verts;
+	vector<ushort> zapIdx;
+	vec3 v;
+	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		v = activeSet.GetTargetVirtualOffset(it->first);
-		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f) {
+		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f)
 			previewBaseNif->VirtualOffsetShape(it->second, v, false);
-		}
 
-		ZapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->second, verts0))
-			continue;		
+		zapIdx.clear();
+		if (!previewBaseNif->GetVertsForShape(it->second, verts))
+			continue;
 
-		if (PreviewType == SMALL_PREVIEW) {
-			ApplySliders(it->first, sliderManager.SlidersSmall, verts0, ZapIdx);
-		} else {
-			ApplySliders(it->first, sliderManager.SlidersBig, verts0, ZapIdx);
-		}
-		
+		if (PreviewType == SMALL_PREVIEW)
+			ApplySliders(it->first, sliderManager.SlidersSmall, verts, zapIdx);
+		else
+			ApplySliders(it->first, sliderManager.SlidersBig, verts, zapIdx);
+
 		// Zap deleted verts before preview
-		if (ZapIdx.size() > 0) {
+		if (zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(it->second, verts0);
-			//dataSets.GetDiffIndices(sliderManager.ZapDataLinks[0], it->first, ZapIdx);
-			PreviewMod.DeleteVertsForShape(it->second, ZapIdx);
-		} else {
-			// No zapping needed -- just show all the verts.  
-			PreviewMod.SetVertsForShape(it->second, verts0);
+			PreviewMod.SetVertsForShape(it->second, verts);
+			PreviewMod.DeleteVertsForShape(it->second, zapIdx);
+		}
+		else {
+			// No zapping needed - just show all the verts.
+			PreviewMod.SetVertsForShape(it->second, verts);
 		}
 	}
 
-	if (PreviewType == SMALL_PREVIEW ) {
-		preview0->RefreshMeshFromNif(&PreviewMod);
-	} else {
-		preview1->RefreshMeshFromNif(&PreviewMod);
-	}
+	(*winPtr)->RefreshMeshFromNif(&PreviewMod);
 }
 
 void BodySlideApp::SetDefaultConfig() {
@@ -725,15 +635,17 @@ void BodySlideApp::SetDefaultConfig() {
 			buildpath = installPath;
 			buildpath += "Data\\";
 			Config.SetDefaultValue("GameDataPath", buildpath);
-		} else
+		}
+		else
 			wxMessageBox("Could not find your Skyrim install path (registry key value). Did you launch it through the official launcher once?", "Warning");
-	} else
+	}
+	else
 		wxMessageBox("Could not find your Skyrim installation (registry key). Did you launch it through the official launcher once?", "Warning");
-	
+
 	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
-	Config.SetDefaultValue("SelectedPreset", "CBBE");	
-	
+	Config.SetDefaultValue("SelectedPreset", "CBBE");
+
 	if (!Config.Exists("SelectedOutfit"))
 		Config.SetValue("SelectedOutfit", "CBBE Body");
 	if (!Config.Exists("Anim/DefaultSkeletonReference"))
@@ -754,21 +666,19 @@ void BodySlideApp::SetPresetGroups(const string& setName) {
 	presetGroups.clear();
 	gCollection.GetOutfitGroups(setName, presetGroups);
 
-	if (presetGroups.empty()) {
+	if (presetGroups.empty())
 		Config.GetValueArray("DefaultGroups", "GroupName", presetGroups);
-	}
 }
 
 void BodySlideApp::LoadAllGroups() {
 	gCollection.LoadGroups("SliderGroups");
-	
+
 	ungroupedOutfits.clear();
-	for (auto o: outfitNameSource) {
+	for (auto o : outfitNameSource) {
 		vector<string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
-		if (groups.empty()) {
+		if (groups.empty())
 			ungroupedOutfits.push_back(o.first);
-		}
 	}
 
 	vector<string> aliases;
@@ -776,11 +686,9 @@ void BodySlideApp::LoadAllGroups() {
 	vector<string> groups;
 	Config.GetValueAttributeArray("GroupAliases", "GroupAlias", "group", groups);
 
-	if (aliases.size() == groups.size()) {
-		for (int i = 0; i < aliases.size(); i++) {
+	if (aliases.size() == groups.size())
+		for (int i = 0; i < aliases.size(); i++)
 			groupAlias[aliases[i]] = groups[i];
-		}
-	}
 }
 
 void BodySlideApp::GetAllGroupNames(vector<string>& outGroups) {
@@ -796,9 +704,9 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 	vector <string> existing;
 	SliderSetGroupFile outfile(fileName);
 	if (outfile.GetError() != 0) {
-		if (outfile.GetError() == 1) {
+		if (outfile.GetError() == 1)
 			outfile.New(fileName);
-		}
+
 		if (outfile.GetError() != 0) {
 			wxMessageBox("Failed to create group file", "Error", wxICON_ERROR);
 			return 5;
@@ -807,7 +715,7 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 
 	outfile.GetGroupNames(existing);
 	bool found = false;
-	for (auto e: existing) {
+	for (auto e : existing) {
 		if (_stricmp(e.c_str(), groupName.c_str()) == 0) {
 			found = true;
 			break;
@@ -815,12 +723,12 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 	}
 	if (found) {
 		int ret = wxMessageBox("That group already exists in the specified file, do you wish to overwrite the group?", "Group exists", wxYES_NO | wxCANCEL);
-		if (ret == wxNO) {
+		if (ret == wxNO)
 			return 2;
-		} else if (ret == wxCANCEL) {
+		else if (ret == wxCANCEL)
 			return 3;
-		}
 	}
+
 	SliderSetGroup ssg;
 	ssg.SetName(groupName);
 	ssg.AddMembers(filteredOutfits);
@@ -831,14 +739,14 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 }
 
 void BodySlideApp::ApplyOutfitFilter() {
-	bool showungrouped = false;
+	bool showUngrouped = false;
 	filteredOutfits.clear();
 	unordered_set<string> grpFiltOutfits;
 	vector<string> workfiltList;
 	static wxString lastGrps = "";
 	static set<string> grouplist;
 
-	
+
 	wxString grpSrch = sliderView->search->GetValue();
 	wxString outfitSrch = sliderView->outfitsearch->GetValue();
 
@@ -846,8 +754,9 @@ void BodySlideApp::ApplyOutfitFilter() {
 		grouplist.clear();
 		if (grpSrch.empty()) {
 			gCollection.GetAllGroups(grouplist);
-			showungrouped = true;
-		} else {
+			showUngrouped = true;
+		}
+		else {
 			wxStringTokenizer tokenizer(grpSrch, ",;");
 			while (tokenizer.HasMoreTokens()) {
 				wxString token = tokenizer.GetNextToken();
@@ -858,46 +767,43 @@ void BodySlideApp::ApplyOutfitFilter() {
 			}
 		}
 		lastGrps = grpSrch;
-	} else if (lastGrps.empty()) {
+	}
+	else if (lastGrps.empty()) {
 		gCollection.GetAllGroups(grouplist);
-		showungrouped = true;
+		showUngrouped = true;
 	}
 
-	for (auto gn: grouplist) {
-		if (gn == "Unassigned") {
-			showungrouped = true;
-		} else {
+	for (auto gn : grouplist) {
+		if (gn == "Unassigned")
+			showUngrouped = true;
+		else
 			gCollection.GetGroupMembers(gn, grpFiltOutfits);
-		}
-	}	
+	}
 
-	if (showungrouped) {
-		for (auto ug: ungroupedOutfits) {
+	if (showUngrouped)
+		for (auto ug : ungroupedOutfits)
 			grpFiltOutfits.insert(ug);
-		}
-	}
 
-	for (auto no: outfitNameOrder) {
-		if (grpFiltOutfits.find(no) != grpFiltOutfits.end()) {
+	for (auto no : outfitNameOrder)
+		if (grpFiltOutfits.find(no) != grpFiltOutfits.end())
 			workfiltList.push_back(no);
-		}
-	}
 
 
 	if (outfitSrch.empty()) {
-		for (auto w: workfiltList)
+		for (auto w : workfiltList)
 			filteredOutfits.push_back(w);
-	} else {
+	}
+	else {
 		regex re;
 		try {
 			re.assign(outfitSrch, regex::icase);
-			for (auto w: workfiltList)
+			for (auto w : workfiltList)
 				if (regex_search(w, re))
 					filteredOutfits.push_back(w);
-		} catch (regex_error) {		
-			for (auto w: workfiltList) {
+		}
+		catch (regex_error) {
+			for (auto w : workfiltList)
 				filteredOutfits.push_back(w);
-			}
 		}
 	}
 
@@ -917,13 +823,11 @@ void BodySlideApp::LoadPresets(const string& sliderSet) {
 
 	vector<string> groups_and_aliases;
 
-	for (auto g: presetGroups) {
+	for (auto g : presetGroups) {
 		groups_and_aliases.push_back(g);
-		for (auto ag : this->groupAlias) {
-			if (ag.second == g) {
+		for (auto ag : this->groupAlias)
+			if (ag.second == g)
 				groups_and_aliases.push_back(ag.first);
-			}
-		}
 	}
 
 	sliderManager.LoadPresets("SliderPresets", outfit, groups_and_aliases);
@@ -944,15 +848,15 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		if (!Config.Exists("GameDataPath")) {
 			if (Config["WarnMissingGamePath"] == "true") {
 				int ret = wxMessageBox("WARNING: Skyrim data path not configured. Would you like to show BodySlide where it is?", "Skyrim not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
-				if (ret != wxYES) {
+				if (ret != wxYES)
 					return 4;
-				}
 			}
 			char buffer[MAX_PATH];
 			GetCurrentDirectoryA(MAX_PATH, buffer);
 			string response = wxDirSelector("Please choose a directory to set as your Skyrim Data directory.", buffer);
 			if (response.empty())
 				return 4;
+
 			response += "\\";
 			Config.SetValue("GameDataPath", response);
 		}
@@ -967,6 +871,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		int ret = wxMessageBox("WARNING: This will delete the output files from the output folder, potentially causing crashes.\n\nDo you want to continue?", "Clean Build", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 		if (ret != wxYES)
 			return 4;
+
 		FILE * file;
 		string removeHigh, removeLow;
 		string msg = "Successfully removed the following files:\n";
@@ -979,7 +884,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		msg += removeHigh + "\n";
 
 		file = fopen(removeHigh.c_str(), "r+");
-		if (file != NULL) {
+		if (file) {
 			fclose(file);
 			remove(removeHigh.c_str());
 		}
@@ -993,7 +898,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		msg += removeHigh;
 
 		file = fopen(removeLow.c_str(), "r+");
-		if (file != NULL) {
+		if (file) {
 			fclose(file);
 			remove(removeLow.c_str());
 		}
@@ -1003,34 +908,35 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 	if (nifSmall.Load(inputFileName) != 0)
 		return 1;
+
 	if (nifBig.Load(inputFileName) != 0)
 		return 1;
 
-	map<string, string>::iterator it;
-	vector<vec3> verts0;
-	vector<vec3> verts1;
-	vector<ushort> ZapIdx;
-	unordered_map<string, vector<ushort>> ZapIdxAll;
+	vector<vec3> vertsLow;
+	vector<vec3> vertsHigh;
+	vector<ushort> zapIdx;
+	unordered_map<string, vector<ushort>> zapIdxAll;
 
-	for (it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		if (!nifSmall.GetVertsForShape(it->second, verts0))
-			continue;
-		if (!nifBig.GetVertsForShape(it->second, verts1))
+	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+		if (!nifSmall.GetVertsForShape(it->second, vertsLow))
 			continue;
 
-		ZapIdxAll.emplace(it->second, vector<ushort>());
+		if (!nifBig.GetVertsForShape(it->second, vertsHigh))
+			continue;
 
-		ApplySliders(it->first, sliderManager.SlidersSmall, verts0, ZapIdx);
-		ZapIdx.clear();
-		ApplySliders(it->first, sliderManager.SlidersBig, verts1, ZapIdx);
+		zapIdxAll.emplace(it->second, vector<ushort>());
 
-		nifSmall.SetVertsForShape(it->second, verts0);
-		nifSmall.DeleteVertsForShape(it->second, ZapIdx);
+		ApplySliders(it->first, sliderManager.SlidersSmall, vertsLow, zapIdx);
+		zapIdx.clear();
+		ApplySliders(it->first, sliderManager.SlidersBig, vertsHigh, zapIdx);
 
-		nifBig.SetVertsForShape(it->second, verts1);
-		nifBig.DeleteVertsForShape(it->second, ZapIdx);
+		nifSmall.SetVertsForShape(it->second, vertsLow);
+		nifSmall.DeleteVertsForShape(it->second, zapIdx);
 
-		ZapIdxAll[it->second] = ZapIdx;
+		nifBig.SetVertsForShape(it->second, vertsHigh);
+		nifBig.DeleteVertsForShape(it->second, zapIdx);
+
+		zapIdxAll[it->second] = zapIdx;
 	}
 
 	/* Add RaceMenu TRI path for in-game morphs */
@@ -1040,13 +946,13 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 		triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, ZapIdxAll)) {
+		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
 			wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath),
 				wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
 		}
 
 		string triShapeLink;
-		for (it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 			triShapeLink = it->second;
 			if (tri && !triShapeLink.empty()) {
 				nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
@@ -1055,52 +961,57 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			}
 		}
 	}
-	
-	string saved1;
-	string saved2;
+
+	string savedLow;
+	string savedHigh;
 	bool useCustName = false;
 	string custName;
 	if (activeSet.GenWeights()) {
 		outFileNameSmall += "_0.nif";
 		outFileNameBig += "_1.nif";
-		custName =  outFileNameSmall;
-		saved1 = custName;
+		custName = outFileNameSmall;
+		savedLow = custName;
 		while (nifSmall.Save(custName)) {
 			wxMessageBox(wxString().Format("Unable to process bodies/outfits in the following location\n\n%s", custName),
-						 wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
+				wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
+
 			custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName.c_str());
-			if(custName.empty()) 
+			if (custName.empty())
 				return 4;
-			useCustName =true;
-			saved1 = custName;
+
+			useCustName = true;
+			savedLow = custName;
 		}
 
-		custName = custName.substr(0,custName.rfind("_0.nif")) + "_1.nif";
-	} else {
+		custName = custName.substr(0, custName.rfind("_0.nif")) + "_1.nif";
+	}
+	else {
 		outFileNameBig += ".nif";
 		custName = outFileNameBig;
 	}
 
-	if (!useCustName) {
+	if (!useCustName)
 		outFileNameBig = custName;
-	}
 
-	saved2 = custName;
+	savedHigh = custName;
 	while (nifBig.Save(custName)) {
 		wxMessageBox(wxString().Format("Unable to process bodies/outfits in the following location\n\n%s", custName),
-					 wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
+			wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
+
 		custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName.c_str());
-		if (custName.empty()) 
+		if (custName.empty())
 			return 4;
+
 		useCustName = true;
-		saved2 = custName;
+		savedHigh = custName;
 	}
 
 	string msg = "Successfully processed the following files:\n";
-	if (!saved1.empty())
-		msg += saved1 += "\n";	
-	if (!saved2.empty())
-		msg += saved2;
+	if (!savedLow.empty())
+		msg += savedLow += "\n";
+
+	if (!savedHigh.empty())
+		msg += savedHigh;
 
 	wxMessageBox(msg, "Process Successful");
 	return 0;
@@ -1149,15 +1060,13 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
-	/* loop */
-	bool triEnd;
 	for (auto outfit : outfitList) {
-		triEnd = tri;
+		bool triEnd = tri;
 		progmsg.str("");
 		progmsg << "Processing '" << outfit << "' ( " << count << " of " << outfitList.size() << " )";
 		progWnd->Update((int)(count*progstep), progmsg.str());
 		count++;
-		/* load set */
+		/* Load set */
 		if (outfitNameSource.find(outfit) == outfitNameSource.end()) {
 			failedOutfits[outfit] = "No recorded outfit name source";
 			continue;
@@ -1171,9 +1080,8 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 				currentSet.SetBaseDataPath(Config["ShapeDataPath"]);
 				currentSet.LoadSetDiffData(currentDiffs);
 			}
-			else {
+			else
 				failedOutfits[outfit] = "Unable to get slider set from file: " + outfitNameSource[outfit];
-			}
 		}
 		else {
 			failedOutfits[outfit] = "Unable to open slider set file: " + outfitNameSource[outfit];
@@ -1220,24 +1128,23 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			continue;
 		}
 
-		/* Shape the nif files */
-		map<string, string>::iterator it;
-		vector<vec3> verts0;
-		vector<vec3> verts1;
-		vector<ushort> ZapIdx;
-		unordered_map<string, vector<ushort>> ZapIdxAll;
+		/* Shape the NIF files */
+		vector<vec3> vertsLow;
+		vector<vec3> vertsHigh;
+		vector<ushort> zapIdx;
+		unordered_map<string, vector<ushort>> zapIdxAll;
 
-		for (it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-			if (!nifSmall.GetVertsForShape(it->second, verts0))
+		for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
+			if (!nifSmall.GetVertsForShape(it->second, vertsLow))
 				continue;
-			if (!nifBig.GetVertsForShape(it->second, verts1))
+			if (!nifBig.GetVertsForShape(it->second, vertsHigh))
 				continue;
 
 			float vsmall;
 			float vbig;
 			vector<int> clamps;
-			ZapIdx.clear();
-			ZapIdxAll.emplace(it->second, vector<ushort>());
+			zapIdx.clear();
+			zapIdxAll.emplace(it->second, vector<ushort>());
 
 			for (int s = 0; s < currentSet.size(); s++) {
 				string dn = currentSet[s].TargetDataName(it->first);
@@ -1259,32 +1166,30 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 				if (currentSet[s].bZap) {
 					if (vbig > 0) {
-						currentDiffs.GetDiffIndices(dn, target, ZapIdx);
-						ZapIdxAll[it->second] = ZapIdx;
+						currentDiffs.GetDiffIndices(dn, target, zapIdx);
+						zapIdxAll[it->second] = zapIdx;
 					}
 					continue;
 				}
-				currentDiffs.ApplyDiff(dn, target, vsmall, &verts0);
-				currentDiffs.ApplyDiff(dn, target, vbig, &verts1);
+				currentDiffs.ApplyDiff(dn, target, vsmall, &vertsLow);
+				currentDiffs.ApplyDiff(dn, target, vbig, &vertsHigh);
 			}
 			if (!clamps.empty()) {
 				for (auto c : clamps) {
 					string dn = currentSet[c].TargetDataName(it->first);
 					string target = it->first;
-					if (currentSet[c].defSmallValue > 0) {
-						currentDiffs.ApplyClamp(dn, target, &verts0);
-					}
-					if (currentSet[c].defBigValue > 0) {
-						currentDiffs.ApplyClamp(dn, target, &verts1);
-					}
+					if (currentSet[c].defSmallValue > 0)
+						currentDiffs.ApplyClamp(dn, target, &vertsLow);
+					if (currentSet[c].defBigValue > 0)
+						currentDiffs.ApplyClamp(dn, target, &vertsHigh);
 				}
 			}
 
-			nifSmall.SetVertsForShape(it->second, verts0);
-			nifSmall.DeleteVertsForShape(it->second, ZapIdx);
+			nifSmall.SetVertsForShape(it->second, vertsLow);
+			nifSmall.DeleteVertsForShape(it->second, zapIdx);
 
-			nifBig.SetVertsForShape(it->second, verts1);
-			nifBig.DeleteVertsForShape(it->second, ZapIdx);
+			nifBig.SetVertsForShape(it->second, vertsHigh);
+			nifBig.DeleteVertsForShape(it->second, zapIdx);
 		}
 
 		/* Create directory for the outfit */
@@ -1307,14 +1212,13 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 			triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, ZapIdxAll)) {
+			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
 				wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath),
 					wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
 			}
 
-			string triShapeLink;
-			for (it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-				triShapeLink = it->second;
+			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
+				string triShapeLink = it->second;
 				if (triEnd && !triShapeLink.empty()) {
 					nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 					nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
@@ -1360,6 +1264,7 @@ float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
 	string sstr = sliderName.ToAscii().data();
 	return sliderManager.GetSlider(sstr, isLo);
 }
+
 void BodySlideApp::SetSliderValue(const wxString& sliderName, bool isLo, float val) {
 	string sstr = sliderName.ToAscii().data();
 	sliderManager.SetSlider(sstr, isLo, val);
@@ -1621,37 +1526,17 @@ void BodySlideFrame::SetSliderPosition(const wxString &name, float newValue, sho
 			sd->sliderReadoutHi->SetValue(wxString::Format("%d%%", intval));
 			sd->sliderHi->SetValue(intval);
 		}
-		else {
+		else
 			sd->zapCheckHi->SetValue((intval > 0));
-		}
-
 	}
 	else if (!sd->oneSize){
 		if (!sd->isZap) {
 			sd->sliderReadoutLo->SetValue(wxString::Format("%d%%", intval));
 			sd->sliderLo->SetValue(intval);
 		}
-		else {
+		else
 			sd->zapCheckLo->SetValue((intval > 0));
-		}
 	}
-
-	/*
-	if(HiLo == SLIDER_HI) {
-	fullname += "|HI";
-	} else
-	fullname += "|LO";
-
-	wxSlider* theSlider = (wxSlider*)FindWindowByName(fullname,this);
-	if(theSlider == NULL)
-	return;
-
-	theSlider->SetValue(intval);
-	wxTextCtrl* readout = (wxTextCtrl*)FindWindowById(theSlider->GetId()+1);
-	if(readout) {
-	readout->SetValue(wxString::Format("%d%%",intval));
-	}
-	*/
 }
 
 void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
@@ -1707,18 +1592,6 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 		sd->sliderReadoutHi->SetValue(wxString::Format("%d%%", event.GetPosition()));
 		app->UpdatePreview(BIG_PREVIEW);
 	}
-
-	/*
-	if (w) {
-	wxWindowID id = w->GetId();
-	((wxTextCtrl*)FindWindowById(id + 1, this))->SetValue(wxString::Format("%d%%", event.GetPosition()));
-	//fullname = slider->GetName();
-	bool isLo = fullname.EndsWith("|LO", &name);
-	if(!isLo)
-	name = fullname.BeforeLast('|');
-	app->SetSliderValue(name, isLo, ((float)event.GetPosition() / 100.0f));
-	}
-	*/
 }
 
 void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
@@ -1766,7 +1639,8 @@ void BodySlideFrame::OnOutfitSearchChange(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnCategoryCheckChanged(wxCommandEvent& event) {
 	wxWindow* w = (wxWindow*)event.GetEventObject();
-	if (!w) return;
+	if (!w)
+		return;
 
 	wxScrolledWindow* sw = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	wxCheckBox* cb = (wxCheckBox*)event.GetEventObject();
@@ -1845,6 +1719,7 @@ void BodySlideFrame::OnEraseBackground(wxEraseEvent &WXUNUSED(event)) {
 void BodySlideFrame::OnDelayLoad(wxTimerEvent& WXUNUSED(event)) {
 	if (app)
 		app->LoadData();
+
 	delayLoad.Stop();
 }
 
@@ -1932,8 +1807,8 @@ void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
 
 void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> groups;
-
 	PresetSaveDialog psd(this);
+
 	app->GetAllGroupNames(psd.allGroupNames);
 	psd.FilterGroups();
 	psd.ShowModal();
@@ -1944,9 +1819,8 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	string presetName = psd.outPresetName;
 	groups.assign(psd.outGroups.begin(), psd.outGroups.end());
 
-	if (app->SaveSliderPositions(fname, presetName, groups)) {
+	if (app->SaveSliderPositions(fname, presetName, groups))
 		wxMessageBox("Failed to save preset!", "Error");
-	}
 
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
@@ -2011,21 +1885,18 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	batchBuildList = XRCCTRL((*batchBuildChooser), "batchBuildList", wxCheckListBox);
 	batchBuildList->Bind(wxEVT_RIGHT_UP, &BodySlideFrame::OnBatchBuildContext, this);
 	batchBuildList->Append(oChoices);
-	for (int i = 0; i < oChoices.size(); i++) {
+	for (int i = 0; i < oChoices.size(); i++)
 		batchBuildList->Check(i);
-	}
 
 	if (batchBuildChooser->ShowModal() == wxID_OK) {
 		wxArrayInt sel;
 		batchBuildList->GetCheckedItems(sel);
 		toBuild.clear();
-		for (int i = 0; i < sel.size(); i++) {
+		for (int i = 0; i < sel.size(); i++)
 			toBuild.push_back(outfitChoices[sel[i]]);
-		}
 	}
-	else {
+	else
 		return;
-	}
 
 	map<string, string> failedOutfits;
 	int ret;
@@ -2033,6 +1904,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		string path = wxDirSelector("Choose a folder to contain the saved files");
 		if (path.empty())
 			return;
+
 		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, path + "\\");
 	}
 	else if (clean)
@@ -2063,12 +1935,14 @@ void BodySlideFrame::OnBatchBuildContext(wxMouseEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnBatchBuildSelect(wxCommandEvent& event) {
-	if (event.GetId() == XRCID("batchBuildNone"))
+	if (event.GetId() == XRCID("batchBuildNone")) {
 		for (int i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i, false);
-	else
+	}
+	else {
 		for (int i = 0; i < batchBuildList->GetCount(); i++)
 			batchBuildList->Check(i);
+	}
 }
 
 void BodySlideFrame::OnOutfitStudio(wxCommandEvent& WXUNUSED(event)) {

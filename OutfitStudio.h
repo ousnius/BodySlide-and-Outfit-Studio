@@ -11,7 +11,6 @@
 #include "wx/progdlg.h"
 #include "wx/spinctrl.h"
 #include "wxStateButton.h"
-//#include "wx/treelistctrl.h"   // from WXCode... 
 #include "wx/dataview.h"
 #include "GLSurface.h"
 #include "SliderData.h"
@@ -475,22 +474,9 @@ private:
 		int sliderReadoutID;
 		wxTextCtrl* sliderReadout;
 
-		TweakUndo sliderStrokes;			// this probably shouldn't be here, but it's a convenient location to store undo info.
+		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
 	};
 
-	/*ObjFile testFile;
-
-	NifFile baseNif;
-	NifFile workNif;
-
-	DiffDataSets baseDiffData;
-	SliderSet activeSet;
-
-	Automorph morpher;
-
-	map<string, bool> shapeDirty;
-
-	*/
 	vec3 previewMove;
 	float previewScale;
 
@@ -757,7 +743,7 @@ private:
 		a = 1;
 	}
 
-	// any class wishing to process wxWidgets events must use this macro
+	// Any class wishing to process wxWidgets events must use this macro.
 	DECLARE_EVENT_TABLE()
 };
 
@@ -766,6 +752,7 @@ protected:
 	wxStatusBar* notifyBar;
 	OutfitStudio* osRef;
 	bool cleanOK;
+
 public:
 	OutfitStudioThreadMonitor(OutfitStudio* outfitStudio, wxStatusBar* notifyBar) {
 		osRef = outfitStudio;
@@ -785,14 +772,14 @@ public:
 		notifyBar->SetLabel(stateMessage);
 	}
 
-	/* report an error state to the host process. */
+	/* Report an error state to the host process. */
 	virtual void Error(const string& errorStateMessage, int error) {
 		errorMessage = errorStateMessage;
 		errorCode = error;
 		notifyBar->SetLabel(errorStateMessage);
 	}
 
-	/* report successful completion of the thread's work, along with an error code */
+	/* Report successful completion of the thread's work, along with an error code */
 	virtual void End(const string& endStateMessage, int code) {
 		stateMessage = endStateMessage;
 		errorCode = code;

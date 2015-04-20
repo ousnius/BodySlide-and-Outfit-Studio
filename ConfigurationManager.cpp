@@ -134,7 +134,7 @@ int ConfigurationItem::EnumerateChildrenProperty(const string& inName, const str
 
 ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recurse) {
 	ConfigurationItem* found = NULL;
-	unsigned int pos = inName.find_first_of("/.");
+	size_t pos = inName.find_first_of("/.");
 
 	if (pos != string::npos) {
 		string tmpName = inName.substr(0, pos);

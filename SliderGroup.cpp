@@ -20,26 +20,25 @@ int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 	while (searchStatus != ERROR_NO_MORE_FILES) {
 		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 			continue;
-		else {		
+		else {
 			fileName = basePath + "\\";
 			fileName += wfd.cFileName;
 
 			SliderSetGroupFile f(fileName);
 			gNames.clear();
 			f.GetGroupNames(gNames);
-			for (auto g: gNames) {
+			for (auto g : gNames) {
 				SliderSetGroup ssg;
 				f.GetGroup(g, ssg);
-				if (groups.find(g) != groups.end()) {
+				if (groups.find(g) != groups.end())
 					groups[g].MergeMembers(ssg);
-				} else {
+				else
 					groups[g] = move(ssg);
-				}
 			}
 		}
-		if (!FindNextFileA(hfind, &wfd)) {
+		if (!FindNextFileA(hfind, &wfd))
 			searchStatus = GetLastError();
-		} else 
+		else
 			searchStatus = 0;
 	}
 	FindClose(hfind);
@@ -48,7 +47,7 @@ int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 
 int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {
 	outGroups.clear();
-	for (auto g: groups)
+	for (auto g : groups)
 		outGroups.insert(g.first);
 
 	return outGroups.size();
@@ -56,7 +55,7 @@ int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {
 
 int SliderSetGroupCollection::GetOutfitGroups(const string& outfitName, vector<string>& outGroups) {
 	outGroups.clear();
-	for (auto g: groups)
+	for (auto g : groups)
 		if (g.second.HasMember(outfitName))
 			outGroups.push_back(g.first);
 
@@ -65,26 +64,24 @@ int SliderSetGroupCollection::GetOutfitGroups(const string& outfitName, vector<s
 
 int SliderSetGroupCollection::GetGroupMembers(const string& groupName, vector<string>& outMembers, bool append) {
 	auto git = groups.find(groupName);
-	if (git == groups.end()) 
+	if (git == groups.end())
 		return 0;
 
-	if (append) {
+	if (append)
 		return git->second.AppendMembers(outMembers);
-	} else {
+	else
 		return git->second.GetMembers(outMembers);
-	}
 }
 
 int SliderSetGroupCollection::GetGroupMembers(const string& groupName, unordered_set<string>& outMembers, bool append) {
 	auto git = groups.find(groupName);
-	if (git == groups.end()) 
+	if (git == groups.end())
 		return 0;
 
-	if (append) {
+	if (append)
 		return git->second.AppendMembers(outMembers);
-	} else {
+	else
 		return git->second.GetMembers(outMembers);
-	}
 }
 
 // Combine the source groups members into this one's list. Also merges the source file list.
@@ -113,11 +110,10 @@ int SliderSetGroup::LoadGroup(TiXmlElement* srcGroupElement) {
 }
 
 bool SliderSetGroup::HasMember(const string& search) {
-	for (auto m: members) {
-		if (m.compare(search) == 0) {
+	for (auto m : members)
+		if (m.compare(search) == 0)
 			return true;
-		}
-	}
+
 	return false;
 }
 
@@ -149,13 +145,11 @@ int SliderSetGroup::AddMembers(const vector<string>& inMembers) {
 }
 
 void SliderSetGroup::WriteGroup(TiXmlElement* groupElement, bool append) {
-	TiXmlElement* e;
-	if (!append) {
+	if (!append)
 		groupElement->Clear();
-	}
 
-	for (auto m: members) {
-		e = groupElement->InsertEndChild(TiXmlElement("Member"))->ToElement();
+	for (auto m : members) {
+		TiXmlElement* e = groupElement->InsertEndChild(TiXmlElement("Member"))->ToElement();
 		e->SetAttribute("name", m.c_str());
 	}
 }
@@ -172,8 +166,7 @@ SliderSetGroupFile::SliderSetGroupFile(const string& srcFileName) {
 
 // Loads the XML document and identifies included group names. On a failure, sets the internal error value.
 void SliderSetGroupFile::Open(const string& srcFileName) {
-	TiXmlElement* e;
-	if (doc.LoadFile(srcFileName.c_str())) {	
+	if (doc.LoadFile(srcFileName.c_str())) {
 		fileName = srcFileName;
 		root = doc.FirstChildElement("SliderGroups");
 		if (!root) {
@@ -181,8 +174,8 @@ void SliderSetGroupFile::Open(const string& srcFileName) {
 			return;
 		}
 
-		e = root->FirstChildElement("Group");
-		while (e) {		
+		TiXmlElement* e = root->FirstChildElement("Group");
+		while (e) {
 			groupsInFile[e->Attribute("name")] = e;
 			e = e->NextSiblingElement("Group");
 		}
@@ -191,7 +184,8 @@ void SliderSetGroupFile::Open(const string& srcFileName) {
 			return;
 		}
 
-	} else {
+	}
+	else {
 		error = 1;
 		return;
 	}
@@ -206,7 +200,8 @@ void SliderSetGroupFile::New(const string& newFileName) {
 	doc.Clear();
 	if (doc.LoadFile(newFileName.c_str())) {
 		error = 1;
-	} else {
+	}
+	else {
 		root = doc.InsertEndChild(TiXmlElement("SliderGroups"))->ToElement();
 		fileName = newFileName;
 	}
@@ -221,18 +216,19 @@ void SliderSetGroupFile::Rename(const string& newFileName) {
 
 // Returns a list of all the groups found in the file.
 int SliderSetGroupFile::GetGroupNames(vector<string>& outGroupNames, bool append, bool unique) {
-	unordered_set<string> existingNames;
-	if (!append) 
+	if (!append)
 		outGroupNames.clear();
+
+	unordered_set<string> existingNames;
 	if (unique)
 		existingNames.insert(outGroupNames.begin(), outGroupNames.end());
 
-	for (auto gn: groupsInFile) {
-		if (unique && existingNames.find(gn.first) != existingNames.end()) {
+	for (auto gn : groupsInFile) {
+		if (unique && existingNames.find(gn.first) != existingNames.end())
 			continue;
-		} else if (unique) {
+		else if (unique)
 			existingNames.insert(gn.first);
-		}
+
 		outGroupNames.push_back(gn.first);
 	}
 	return 0;
@@ -240,8 +236,9 @@ int SliderSetGroupFile::GetGroupNames(vector<string>& outGroupNames, bool append
 
 // Returns true if the group name exists in the file.
 bool SliderSetGroupFile::HasGroup(const string& queryGroupName) {
-	if (groupsInFile.find(queryGroupName) != groupsInFile.end()) 
-		return true;	
+	if (groupsInFile.find(queryGroupName) != groupsInFile.end())
+		return true;
+
 	return false;
 }
 	
@@ -249,16 +246,16 @@ bool SliderSetGroupFile::HasGroup(const string& queryGroupName) {
 int SliderSetGroupFile::GetAllGroups(vector<SliderSetGroup>& outAppendGroups) {
 	int count = 0;
 	bool add = true;
-	for (auto g: groupsInFile) {
+	for (auto g : groupsInFile) {
 		add = true;
-		for (auto& og: outAppendGroups) {
+		for (auto& og : outAppendGroups) {
 			if (og.GetName() == g.first) {
 				og.LoadGroup(g.second);
 				add = false;
 				break;
 			}
 		}
-		if (!add) 
+		if (!add)
 			continue;
 
 		outAppendGroups.emplace_back(g.second);
@@ -269,22 +266,22 @@ int SliderSetGroupFile::GetAllGroups(vector<SliderSetGroup>& outAppendGroups) {
 
 // Gets a single group from the XML document based on the name.
 int SliderSetGroupFile::GetGroup(const string& groupName, SliderSetGroup& outSliderSetGroup) {
-	if (groupsInFile.find(groupName) != groupsInFile.end()) {
+	if (groupsInFile.find(groupName) != groupsInFile.end())
 		outSliderSetGroup.LoadGroup(groupsInFile[groupName]);
-	} else {
+	else
 		return 1;
-	}
+
 	return 0;
 }
 
 // Updates a slider set group in the XML document with the provided information.
 // If the group does not already exist in the file (based on name) the group is added.
 int SliderSetGroupFile::UpdateGroup(SliderSetGroup& inGroup) {
-	TiXmlElement* e;
 	if (groupsInFile.find(inGroup.GetName()) != groupsInFile.end()) {
 		inGroup.WriteGroup(groupsInFile[inGroup.GetName()]);
-	} else {
-		e=root->InsertEndChild(TiXmlElement("Group"))->ToElement();
+	}
+	else {
+		TiXmlElement* e = root->InsertEndChild(TiXmlElement("Group"))->ToElement();
 		e->SetAttribute("name", inGroup.GetName().c_str());
 		inGroup.WriteGroup(e);
 	}

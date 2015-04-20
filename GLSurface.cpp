@@ -71,7 +71,6 @@ void tri::midpoint(vtx* vertref, vec3& outPoint) {
 	outPoint += vertref[p2];
 	outPoint += vertref[p3];
 	outPoint /= 3;
-
 }
 
 float tri::AxisMidPointY(vtx* vertref) {
@@ -516,17 +515,16 @@ void GLSurface::Cleanup() {
 		}
 		delete overlays[i];
 	}
-	for (int i = 0; i < materials.size(); i++) {
+	for (int i = 0; i < materials.size(); i++)
 		delete materials[i];
-	}
 
 	if (hRC) {
 		wglMakeCurrent(NULL, NULL);
 		wglDeleteContext(hRC);
 	}
-	if (hOwner && hDC) {
+	if (hOwner && hDC)
 		ReleaseDC(hOwner, hDC);
-	}
+
 	hRC = NULL;
 	hDC = NULL;
 	hOwner = NULL;
@@ -542,7 +540,6 @@ void GLSurface::SetStartingView(vec3 camPos, unsigned int vpWidth, unsigned int 
 	vpW = vpWidth;
 	vpH = vpHeight;
 	SetSize(vpWidth, vpHeight);
-	//RenderOneFrame();
 }
 	
 void GLSurface::TurnTableCamera(int dScreenX) {
@@ -553,8 +550,10 @@ void GLSurface::TurnTableCamera(int dScreenX) {
 void GLSurface::PitchCamera(int dScreenY) {
 	float pct = (float)dScreenY / (float)vpH;
 	camRot.x += (pct * 500.0f);
-	if (camRot.x > 80.0f) camRot.x = 80.0f;
-	if (camRot.x < -80.0f) camRot.x = -80.0f;
+	if (camRot.x > 80.0f)
+		camRot.x = 80.0f;
+	if (camRot.x < -80.0f)
+		camRot.x = -80.0f;
 }
 
 void GLSurface::PanCamera(int dScreenX, int dScreenY) {
@@ -564,7 +563,6 @@ void GLSurface::PanCamera(int dScreenX, int dScreenY) {
 
 void GLSurface::DollyCamera(int dAmt) {
 	camPos.z += (float)dAmt / 200.0f;
-
 }
 
 void GLSurface::UnprojectCamera(vector3& result) {
@@ -590,7 +588,6 @@ void GLSurface::GetPickRay(int ScreenX, int ScreenY, vec3& dirVect, vec3& outNea
 	glGetIntegerv(GL_VIEWPORT, vp);
 	glGetDoublev(GL_PROJECTION_MATRIX, proj);
 	glGetDoublev(GL_MODELVIEW_MATRIX, model);
-	//double ny = ScreenY / (768 / 2.0f);
 
 	gluUnProject(ScreenX, vp[3] - ScreenY, 0.0f, model, proj, vp, &sx, &sy, &sz);
 	gluUnProject(ScreenX, vp[3] - ScreenY, 1.0f, model, proj, vp, &dx, &dy, &dz);

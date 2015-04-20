@@ -34,10 +34,10 @@ public:
 	int level;
 	bool isProp;
 	bool isComment;
-	bool isDefault;								// Default values are not saved with config
+	bool isDefault;								// Default values are not saved with config.
 
-	string name;								// Name associated with this node 
-	string value;								// Value associated with this node 
+	string name;								// Name associated with this node.
+	string value;								// Value associated with this node.
 	string path;
 
 	int SettingFromXML(TiXmlElement* xml);
@@ -73,7 +73,7 @@ public:
 
 	int SaveConfig(const string& pathToFile, const string& rootElementName = "BodySlideConfig");
 
-	int EnumerateCIs (vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
+	int EnumerateCIs(vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
 
 	int EnumerateChildCIs(vector<ConfigurationItem*>& outList, const string& parentCI, bool withProperties = true, bool traverse = true);
 

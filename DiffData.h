@@ -1,18 +1,16 @@
 #pragma once
-
-//#define _HAS_ITERATOR_DEBUGGING 0
 #include <string>
 #include <map>
-#include <hash_map>
 #include <unordered_map>
 #include <vector>
-#include "niffile.h"
+#include "NifFile.h"
 
 using namespace std;
 
 class DiffDataSets {
 	map<string, unordered_map<ushort, vec3>> namedSet;
 	map<string, string> dataTargets;
+
 public:
 	inline bool TargetMatch(const string& set, const string& target);
 	int LoadSet(const string& name, const string& target, unordered_map<ushort, vec3>& inDiffData);
@@ -95,3 +93,12 @@ public:
 		dataTargets.clear();
 	}
 };
+
+// Set == slider name, target == shape name.
+bool DiffDataSets::TargetMatch(const string& set, const string& target) {
+	auto it = dataTargets.find(set);
+	if (it != dataTargets.end())
+		return it->second == target;
+
+	return false;
+}

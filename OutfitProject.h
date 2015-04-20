@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 #include "Mesh.h"
-#include "shlobj.h"
+#include "ShlObj.h"
 #include "OutfitStudio.h"
 #include "ConfigurationManager.h"
 #include "Anim.h"
@@ -95,7 +95,7 @@ public:
 
 	int AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape = "");
 
-	// Slider data can have a separate name from the shape target. 
+	// Slider data can have a separate name from the shape target.
 	string SliderShapeDataName(int index, const string& shapeName);
 	bool SliderClamp(int index);
 	bool SliderZap(int index);

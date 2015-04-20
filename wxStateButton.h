@@ -4,8 +4,7 @@
 #include <wx/sizer.h>
 
 
-class wxStateButton : public wxButton
-{
+class wxStateButton : public wxButton {
 	bool m_bChecked;
 	wxString text;
 

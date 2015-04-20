@@ -146,7 +146,6 @@
     <ClInclude Include="Anim.h" />
     <ClInclude Include="AsyncMonitor.h" />
     <ClInclude Include="Automorph.h" />
-    <ClInclude Include="BodySlide.h" />
     <ClInclude Include="BodySlideApp.h" />
     <ClInclude Include="ConfigurationManager.h" />
     <ClInclude Include="DiffData.h" />

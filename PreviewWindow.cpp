@@ -22,8 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "StdAfx.h"
-#include "Windowsx.h"
+#include "stdafx.h"
+#include "windowsx.h"
 #include "PreviewWindow.h"
 
 bool PreviewWindow::has_registered = false;
@@ -66,7 +66,6 @@ PreviewWindow::PreviewWindow(HWND owner, vector<vector3>* verts, vector<triangle
 
 void PreviewWindow::AddMeshDirect(mesh* m) {
 	gls.AddMeshDirect(m);
-	//gls.AddMeshExplicit(m->verts,m->tris,1.0f);
 }
 
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
@@ -81,9 +80,11 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			auto shader = nif->GetShaderForShape(shapeList[i]);
 			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
 				ToggleSmoothSeams(m);
-		} else if (shapeName) {
+		}
+		else if (shapeName) {
 			continue;
-		} else {
+		}
+		else {
 			gls.AddMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
@@ -108,15 +109,16 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
 			auto shader = nif->GetShaderForShape(shapeList[i]);
 			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
 				ToggleSmoothSeams(m);
-			if (shapeTexIds.find(shapeName) != shapeTexIds.end()) {
+			if (shapeTexIds.find(shapeName) != shapeTexIds.end())
 				m->MatRef = shapeTexIds[shapeName];
-			} else {
+			else
 				AddNifShapeTexture(nif, string(shapeName));
-			}
-			
-		} else if (shapeName) {
+
+		}
+		else if (shapeName) {
 			continue;
-		} else {
+		}
+		else {
 			gls.ReloadMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
@@ -125,12 +127,13 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
 				ToggleSmoothSeams(m);
 			if (shapeTexIds.find(shapeList[i]) != shapeTexIds.end()) {
 				m->MatRef = shapeTexIds[shapeList[i]];
-			} else {
+			}
+			else {
 				AddNifShapeTexture(nif, shapeList[i]);
-			}					
+			}
 		}
 	}
-	InvalidateRect(mGLWindow,NULL,FALSE);
+	InvalidateRect(mGLWindow, NULL, FALSE);
 }
 
 void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName) {
@@ -147,16 +150,16 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 }
 
 void PreviewWindow::Create(const string& title) {
-	if (!has_registered) 
+	if (!has_registered)
 		registerClass();
 
 	RECT ownerRect;
 	GetWindowRect(hOwner, &ownerRect);
-	
+
 	int sX = GetSystemMetrics(SM_CXDLGFRAME) * 2;
 	int sY = GetSystemMetrics(SM_CYDLGFRAME) * 2;
 	sY += GetSystemMetrics(SM_CYSMCAPTION);
-	mHwnd = CreateWindowExA(0, "GL_PREVIEW_WINDOW", title.c_str(), WS_OVERLAPPED | WS_THICKFRAME | WS_MAXIMIZEBOX| WS_SYSMENU, ownerRect.left + 20, 0, 768 + sX, 768 + sY, NULL, NULL, GetModuleHandle(NULL), NULL);
+	mHwnd = CreateWindowExA(0, "GL_PREVIEW_WINDOW", title.c_str(), WS_OVERLAPPED | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_SYSMENU, ownerRect.left + 20, 0, 768 + sX, 768 + sY, NULL, NULL, GetModuleHandle(NULL), NULL);
 	SetWindowLong(mHwnd, GWL_USERDATA, (LONG)this);
 
 	//query multisample caps just once to avoid laggy window activation.
@@ -165,11 +168,11 @@ void PreviewWindow::Create(const string& title) {
 		gls.QueryMultisample(queryMSWndow);
 		DestroyWindow(queryMSWndow);
 	}
-	
+
 	mGLWindow = CreateWindowA("STATIC", "Model Preview", WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | SS_NOTIFY, 0, 0, 768, 768, mHwnd, 0, GetModuleHandle(NULL), NULL);
 	OldViewProc = (WNDPROC)SetWindowLong(mGLWindow, GWL_WNDPROC, (LONG)GLWindowProc);
 	SetWindowLong(mGLWindow, GWL_USERDATA, (LONG)this);
-	
+
 	gls.Initialize(mGLWindow);
 	gls.SetStartingView(vec3(0, -5.0f, -15.0f), 768, 768, 65.0);
 }
@@ -180,17 +183,17 @@ void PreviewWindow::registerClass() {
 
 	wcex.cbSize = sizeof(WNDCLASSEX);
 
-	wcex.style			= CS_HREDRAW | CS_VREDRAW ;
-	wcex.lpfnWndProc	= GLPreviewWindowWndProc;
-	wcex.cbClsExtra		= 0;
-	wcex.cbWndExtra		= 0;
-	wcex.hInstance		= hinst;
-	wcex.hIcon			= LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
-	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground	= (HBRUSH)(COLOR_BTNFACE + 1);
-	wcex.lpszMenuName	= NULL;
-	wcex.lpszClassName	= _T("GL_PREVIEW_WINDOW");
-	wcex.hIconSm		= LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
+	wcex.style = CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc = GLPreviewWindowWndProc;
+	wcex.cbClsExtra = 0;
+	wcex.cbWndExtra = 0;
+	wcex.hInstance = hinst;
+	wcex.hIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
+	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
+	wcex.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
+	wcex.lpszMenuName = NULL;
+	wcex.lpszClassName = _T("GL_PREVIEW_WINDOW");
+	wcex.hIconSm = LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
 
 	RegisterClassEx(&wcex);
 	has_registered = true;
@@ -201,43 +204,40 @@ void PreviewWindow::RightDrag(int dX, int dY) {
 	gls.PitchCamera(dY);
 	InvalidateRect(mGLWindow, NULL, FALSE);
 }
+
 void PreviewWindow::LeftDrag(int dX, int dY) {
-	gls.PanCamera(dX,dY);
-	InvalidateRect(mGLWindow,NULL,FALSE);
+	gls.PanCamera(dX, dY);
+	InvalidateRect(mGLWindow, NULL, FALSE);
 }
 
 void PreviewWindow::TrackMouse(int X, int Y) {
-	gls.UpdateCursor(X,Y);
-	InvalidateRect(mGLWindow,NULL,FALSE);
+	gls.UpdateCursor(X, Y);
+	InvalidateRect(mGLWindow, NULL, FALSE);
 }
-
 
 void PreviewWindow::MouseWheel(int dW) {
 	gls.DollyCamera(dW);
-	InvalidateRect(mGLWindow,NULL,FALSE);
+	InvalidateRect(mGLWindow, NULL, FALSE);
 }
 
 void PreviewWindow::Pick(int X, int Y) {
 	vec3 camVec;
 	vec3 dirVec;
 	float len;
-	//gls.UnprojectCamera(camVec);
-	gls.GetPickRay(X,Y,dirVec,camVec);
+	gls.GetPickRay(X, Y, dirVec, camVec);
 	len = sqrt(camVec.x*camVec.x + camVec.y*camVec.y + camVec.z*camVec.z);
 
-	gls.AddVisRay(camVec,dirVec, len);
-	InvalidateRect(mGLWindow,NULL,FALSE);
+	gls.AddVisRay(camVec, dirVec, len);
+	InvalidateRect(mGLWindow, NULL, FALSE);
 }
-
 
 void PreviewWindow::Close() {
 	DestroyWindow(this->mHwnd);
 }
 
-LRESULT CALLBACK GLPreviewWindowWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	PreviewWindow* p = (PreviewWindow*)GetWindowLong(hWnd,GWL_USERDATA);
-	LPDRAWITEMSTRUCT pDIS ;
+LRESULT CALLBACK GLPreviewWindowWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+	PreviewWindow* p = (PreviewWindow*)GetWindowLong(hWnd, GWL_USERDATA);
+	LPDRAWITEMSTRUCT pDIS;
 	switch (message)
 	{
 	case WM_ERASEBKGND:
@@ -247,17 +247,17 @@ LRESULT CALLBACK GLPreviewWindowWndProc(HWND hWnd, UINT message, WPARAM wParam, 
 		return TRUE;
 		break;
 	case WM_SIZE:
-		p->SetSize(LOWORD(lParam),HIWORD(lParam));
+		p->SetSize(LOWORD(lParam), HIWORD(lParam));
 		break;
 	case WM_DRAWITEM:
 		pDIS = (LPDRAWITEMSTRUCT)lParam;
 		p->Render();
 		break;
 	case WM_DESTROY:
-		if(p->isSmall)
-			PostMessage(p->hOwner,MSG_PREVIEWCLOSING,0,(LPARAM)p);
+		if (p->isSmall)
+			PostMessage(p->hOwner, MSG_PREVIEWCLOSING, 0, (LPARAM)p);
 		else
-			PostMessage(p->hOwner,MSG_BIGPREVIEWCLOSING,0,(LPARAM)p);
+			PostMessage(p->hOwner, MSG_BIGPREVIEWCLOSING, 0, (LPARAM)p);
 		break;
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
@@ -273,78 +273,70 @@ LRESULT CALLBACK GLWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
 	static int lastY;
 	int x;
 	int y;
-	PreviewWindow* p = (PreviewWindow*)GetWindowLong(hWnd,GWL_USERDATA);
-	
-	switch(message) {
-		case WM_RBUTTONDOWN:
-			rbuttonDown = true;
-			lastX = GET_X_LPARAM(lParam);
-			lastY = GET_Y_LPARAM(lParam);
-			SetCapture(hWnd);
-			
-			break;
-		case WM_RBUTTONUP:
-			rbuttonDown = false;
-			lastX = GET_X_LPARAM(lParam);
-			lastY = GET_Y_LPARAM(lParam);
-			ReleaseCapture();
-			break;
-		case WM_LBUTTONDOWN:
-			lbuttonDown = true;
-			SetCapture(hWnd);
-			break;
-		case WM_LBUTTONUP:
-			lbuttonDown = false;
-		//	if(!isLDragging) {
-		//		p->Pick(GET_X_LPARAM(lParam),GET_Y_LPARAM(lParam));
-		//	}
-			isLDragging = false;
-			ReleaseCapture();
-			break;
-		case WM_MOUSEMOVE:
-			if(p->HasFocus()) {
-				SetFocus(hWnd);
-			}
-			x = GET_X_LPARAM(lParam);
-			y = GET_Y_LPARAM(lParam);
-			if(rbuttonDown) {
-				p->RightDrag(x-lastX,y-lastY);
-			}
-			if(lbuttonDown) {
-				isLDragging = true;
-				p->LeftDrag(x-lastX,y-lastY);
-			}
-			if(!rbuttonDown && !lbuttonDown) {
-				p->TrackMouse(x,y);
-			}
-			lastX = x;
-			lastY = y;
-			break;
-		case WM_KEYUP:
-			switch(wParam) {
-			case 0x4e:
-				p->ToggleSmoothSeams();
-				break;
-			case 0x54:
-				p->ToggleTextures();
-				break;
-			case 0x57:
-				p->ToggleWireframe();
-				break;
-			case 0x4c:
-				p->ToggleLighting();
-				break;
-			case 0x51:
-				p->ToggleEditMode();
-				break;
-			} 
-			break;
-		case WM_MOUSEWHEEL: 
-			p->MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
-			break;							
-		default:
-			return CallWindowProc(OldViewProc,hWnd,message,wParam, lParam);
+	PreviewWindow* p = (PreviewWindow*)GetWindowLong(hWnd, GWL_USERDATA);
 
+	switch (message) {
+	case WM_RBUTTONDOWN:
+		rbuttonDown = true;
+		lastX = GET_X_LPARAM(lParam);
+		lastY = GET_Y_LPARAM(lParam);
+		SetCapture(hWnd);
+		break;
+	case WM_RBUTTONUP:
+		rbuttonDown = false;
+		lastX = GET_X_LPARAM(lParam);
+		lastY = GET_Y_LPARAM(lParam);
+		ReleaseCapture();
+		break;
+	case WM_LBUTTONDOWN:
+		lbuttonDown = true;
+		SetCapture(hWnd);
+		break;
+	case WM_LBUTTONUP:
+		lbuttonDown = false;
+		isLDragging = false;
+		ReleaseCapture();
+		break;
+	case WM_MOUSEMOVE:
+		if (p->HasFocus())
+			SetFocus(hWnd);
+		x = GET_X_LPARAM(lParam);
+		y = GET_Y_LPARAM(lParam);
+		if (rbuttonDown)
+			p->RightDrag(x - lastX, y - lastY);
+		if (lbuttonDown) {
+			isLDragging = true;
+			p->LeftDrag(x - lastX, y - lastY);
+		}
+		if (!rbuttonDown && !lbuttonDown)
+			p->TrackMouse(x, y);
+		lastX = x;
+		lastY = y;
+		break;
+	case WM_KEYUP:
+		switch (wParam) {
+		case 0x4e:
+			p->ToggleSmoothSeams();
+			break;
+		case 0x54:
+			p->ToggleTextures();
+			break;
+		case 0x57:
+			p->ToggleWireframe();
+			break;
+		case 0x4c:
+			p->ToggleLighting();
+			break;
+		case 0x51:
+			p->ToggleEditMode();
+			break;
+		}
+		break;
+	case WM_MOUSEWHEEL:
+		p->MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
+		break;
+	default:
+		return CallWindowProc(OldViewProc, hWnd, message, wParam, lParam);
 	}
 	return 0;
 }

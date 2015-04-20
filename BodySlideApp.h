@@ -1,6 +1,6 @@
 #pragma once
 
-#include "resource.h"
+#include "Resource.h"
 #include <wx/wxprec.h>
 #include <wx/srchctrl.h>
 #include <wx/xrc/xmlres.h>
@@ -9,14 +9,13 @@
 #include <wx/statline.h>
 #include "wx/tokenzr.h"
 
-
 #include <vector>
 #include <string>
 #include <map>
 #include <tuple>
 #include <regex>
 
-#include "Commctrl.h"
+#include "CommCtrl.h"
 #include <string.h>
 #include "PreviewWindow.h"
 #include "DiffData.h"
@@ -32,10 +31,8 @@
 
 class BodySlideFrame;
 
-class BodySlideApp :
-	public wxApp
-{
-	/* UI Managers */ 
+class BodySlideApp : public wxApp {
+	/* UI Managers */
 	PreviewWindow* preview0;
 	PreviewWindow* preview1;
 
@@ -48,12 +45,12 @@ class BodySlideApp :
 	SliderSet activeSet;
 
 	/* Data Items */
-	map<string, string> outfitNameSource;		// all currently defined outfits
-	vector<string> outfitNameOrder;				// all currently defined outfits, in their order of appearance
-	map<string, vector<string>> groupMembers;	// all currently defined groups
-	map<string, string> groupAlias;				// group name aliases 
-	vector<string> ungroupedOutfits;			// outfits without a group
-	vector<string> filteredOutfits;				// filtered outfit names
+	map<string, string> outfitNameSource;		// All currently defined outfits.
+	vector<string> outfitNameOrder;				// All currently defined outfits, in their order of appearance.
+	map<string, vector<string>> groupMembers;	// All currently defined groups.
+	map<string, string> groupAlias;				// Group name aliases.
+	vector<string> ungroupedOutfits;			// Outfits without a group.
+	vector<string> filteredOutfits;				// Filtered outfit names.
 	vector<string> presetGroups;
 	vector<string> allGroups;
 	SliderSetGroupCollection gCollection;
@@ -64,28 +61,26 @@ class BodySlideApp :
 	NifFile* previewBaseNif;
 	NifFile PreviewMod;
 
-	/* Data Load/Setup */ 
+	/* Data Load/Setup */
 	void setupOutfit(const string& outfitName);
 	int createSliders(const string& outfit = "CBBE Body", bool hideAll = false);
 	int createSetSliders(const string& outfit, bool hideAll = false);
-	int saveDiffData(const string& filename, map<int,vector3>& data);
-	int loadDiffData(const string& filename, map<int,vector3>& data);
 
 public:
 	virtual ~BodySlideApp();
 	virtual bool OnInit();
-	
+
 	SliderCategoryCollection cCollection;
 
 	void SetDefaultConfig();
 	void LoadData();
-	void CharHook (wxKeyEvent& event) {
+	void CharHook(wxKeyEvent& event) {
 		wxWindow* w = (wxWindow*)event.GetEventObject();
-		if(!w) {
+		if (!w) {
 			event.Skip();
 			return;
 		}
-		
+
 		wxString nm = w->GetName();
 		if (event.GetKeyCode() == wxKeyCode::WXK_F5) {
 			if (nm == "outfitChoice") {
@@ -104,17 +99,11 @@ public:
 			wxTextCtrl* e = (wxTextCtrl*)w;
 			HWND hwndEdit = e->GetHandle();
 			::SendMessage(hwndEdit, WM_CHAR, event.GetKeyCode(), event.GetRawKeyFlags());
-		} else {
+		}
+		else {
 			event.Skip();
 		}
 	}
-	/*
-	int FilterEvent(wxEvent& event) {
-		if(event.GetEventType() == wxEVT_CHAR && outfitStudio) {
-			wxMessageBox("filterevent");
-		}
-		return -1;
-	}*/
 
 	void LoadAllCategories();
 
@@ -133,7 +122,7 @@ public:
 
 	int LoadSliderSets();
 	void RefreshOutfitList();
-	
+
 	void RefreshSliders();
 
 	void ActivateOutfit(const string& outfitName);
@@ -162,22 +151,11 @@ public:
 	}
 
 	void UpdatePreview(char PreviewType = SMALL_PREVIEW);
-
 	void RebuildPreviewMeshes(char PreviewType);
 
-	int CreateControls();
-
-	void SetMessage(string msg);
-
-	void MakeDiffFile(string shapesFile, string baseShapeName, string outDiffPath);
-
-	void MakeDiffFromObj(string baseShapeName, string objFile);
-
-	int BlenderNifToSkyrim();
-	
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
 	int BuildListBodies(const vector<string>& outfitList, map<string, string>& failedOutfits, bool remove = false, bool tri = false, const string& custPath = "");
-	
+
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
 	void SetSliderChanged(const wxString& sliderName, bool isLo);
@@ -188,8 +166,7 @@ public:
 #define SLIDER_LO 1
 #define SLIDER_HI 2
 
-class BodySlideFrame : public wxFrame
-{
+class BodySlideFrame : public wxFrame {
 public:
 	class SliderDisplay {
 	public:
@@ -207,9 +184,16 @@ public:
 		SliderDisplay() {
 			isZap = false;
 			oneSize = false;
-			lblSliderLo = NULL; sliderLo = NULL; sliderReadoutLo = NULL; lblSliderLo = NULL;
-			lblSliderHi = NULL; sliderHi = NULL; sliderReadoutLo = NULL; lblSliderLo = NULL;
-			zapCheckHi = NULL; zapCheckLo = NULL;
+			lblSliderLo = NULL;
+			sliderLo = NULL;
+			sliderReadoutLo = NULL;
+			lblSliderLo = NULL;
+			lblSliderHi = NULL;
+			sliderHi = NULL;
+			sliderReadoutLo = NULL;
+			lblSliderLo = NULL;
+			zapCheckHi = NULL;
+			zapCheckLo = NULL;
 		}
 	};
 
@@ -232,8 +216,9 @@ public:
 	BodySlideFrame::SliderDisplay* GetSliderDisplay(const string& name) {
 		if (sliderDisplays.find(name) != sliderDisplays.end())
 			return sliderDisplays[name];
+
 		return NULL;
-	}	
+	}
 
 	void ClearPresetList();
 	void ClearOutfitList();
@@ -252,7 +237,7 @@ private:
 	void OnActivateFrame(wxActivateEvent& event);
 	void OnIconizeFrame(wxIconizeEvent& event);
 	void PostIconizeFrame();
-	
+
 	void OnEnterSliderWindow(wxMouseEvent& event);
 	void OnSliderChange(wxScrollEvent& event);
 	void OnSliderReadoutChange(wxCommandEvent& event);
@@ -263,8 +248,8 @@ private:
 	void OnCategoryCheckChanged(wxCommandEvent& event);
 
 	void OnEraseBackground(wxEraseEvent& event);
-	
-    void OnDelayLoad(wxTimerEvent& event);
+
+	void OnDelayLoad(wxTimerEvent& event);
 
 	void OnChooseGroups(wxCommandEvent& event);
 	void OnRefreshGroups(wxCommandEvent& event);
@@ -291,6 +276,7 @@ private:
 
 	DECLARE_EVENT_TABLE();
 };
+
 enum {
 	ID_Hello = 1
 };

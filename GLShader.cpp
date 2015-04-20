@@ -199,7 +199,7 @@ void main (void)\
 	_snprintf(fragSrc, fragSrcLength, "%s", s.c_str());
 }
 
-GLShader::~GLShader(void) {
+GLShader::~GLShader() {
 	if (fragSrc) {
 		delete[] fragSrc;
 		fragSrc = NULL;
@@ -210,7 +210,7 @@ GLShader::~GLShader(void) {
 	}
 }
 
-GLShader::GLShader(void) {
+GLShader::GLShader() {
 	nLights = 3;
 	nTextures = 1;
 	errorstate = -1;
@@ -218,10 +218,10 @@ GLShader::GLShader(void) {
 	vertSrc = NULL;
 
 	if (!initShaders())
-		MessageBoxA(NULL, errorstring.c_str(), "Shader Error", MB_TOPMOST | MB_OK);
+		wxMessageBox(errorstring, "Shader Error");
 	else
 		if (!LoadShaders(GLSHADER_PASSTHROUGH, GLSHADER_PASSTHROUGH, false))
-			MessageBoxA(NULL, errorstring.c_str(), "Shader Error", MB_TOPMOST | MB_OK);
+			wxMessageBox(errorstring, "Shader Error");
 }
 
 GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool build) {
@@ -232,10 +232,10 @@ GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool bu
 	vertSrc = NULL;
 
 	if (!initShaders())
-		MessageBoxA(NULL, errorstring.c_str(), "Shader Error", MB_TOPMOST | MB_OK);
+		wxMessageBox(errorstring, "Shader Error");
 	else
 		if (!LoadShaders(vertexSource, fragmentSource, build))
-			MessageBoxA(NULL, errorstring.c_str(), "Shader Error", MB_TOPMOST | MB_OK);
+			wxMessageBox(errorstring, "Shader Error");
 }
 
 bool GLShader::initShaders() {

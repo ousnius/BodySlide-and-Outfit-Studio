@@ -12,11 +12,11 @@ Automorph::Automorph() {
 Automorph::~Automorph() {
 	if (morphRef) {
 		delete morphRef;
-		morphRef = 0;
+		morphRef = NULL;
 	}
 	if (refTree) {
 		delete refTree;
-		refTree = 0;
+		refTree = NULL;
 	}
 	ClearSourceShapes();
 }
@@ -35,6 +35,7 @@ void Automorph::ClearSourceShapes() {
 	for (auto shapes = sourceShapes.begin(); shapes != sourceShapes.end(); ++shapes) {
 		if (foreignShapes.find(shapes->first) != foreignShapes.end())
 			continue;
+
 		delete shapes->second;
 	}
 	sourceShapes.clear();
@@ -42,11 +43,11 @@ void Automorph::ClearSourceShapes() {
 }
 
 void Automorph::RenameResultDiffData(const string& shape, const string& oldName, const string& newName) {
-	string setname = ResultDataName(shape, oldName);
-	string newsetname = shape + newName;
+	string setName = ResultDataName(shape, oldName);
+	string newSetName = shape + newName;
 
-	resultDiffData.RenameSet(setname, newsetname);
-	targetSliderDataNames.erase(setname);
+	resultDiffData.RenameSet(setName, newSetName);
+	targetSliderDataNames.erase(setName);
 }
 
 void Automorph::RenameShape(const string& shapeName, const string& newShapeName) {
@@ -259,8 +260,8 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 	vector<vec3> nifVerts;
 	ref.GetVertsForShape(shapeName, nifVerts);
 	const vector<triangle>* nifTris = ref.GetTrisForShape(shapeName);
+	vector<triangle> localTris;
 	if (!nifTris) {
-		vector<triangle> localTris;
 		bool found = ref.GetTrisForTriStripShape(shapeName, &localTris);
 		if (found)
 			nifTris = &localTris;
@@ -510,14 +511,14 @@ void Automorph::GenerateResultDiff(const string& shapeName, const string &slider
 			if (diffItem != diffData->end()) {
 				weight = (*vertProx)[j].distance;	// "weight" is just a placeholder here...
 				if (weight == 0)
-					invDist[nearMoves] = 1000;		// exact match, choose big nearness weight.
+					invDist[nearMoves] = 1000;		// Exact match, choose big nearness weight.
 				else
 					invDist[nearMoves] = 1 / weight;
 				invDistTotal += invDist[nearMoves];
 				effectVector[nearMoves] = diffItem->second;
 				nearMoves++;
 			}
-			else if (j == 0) {						// closest proximity vert has zero movement
+			else if (j == 0) {						// Closest proximity vert has zero movement.
 				//	nearmoves=0;
 				//	break;
 			}

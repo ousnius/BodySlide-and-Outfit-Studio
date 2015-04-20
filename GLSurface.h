@@ -1,12 +1,10 @@
 #pragma once
-
-//#define _HAS_ITERATOR_DEBUGGING 0
-#include <windows.h>
-#include <gl/gl.h>
-#include <gl/glu.h>
+#include <Windows.h>
+#include <gl/GL.h>
+#include <gl/GLU.h>
 #include <gl/glext.h>
 #include <gl/wglext.h>
-#include "glshader.h"
+#include "GLShader.h"
 #include "NifFile.h"
 #include "Object3d.h"
 #include "KDMatcher.h"
@@ -18,15 +16,14 @@
 
 using namespace std;
 
-class GLSurface
-{
+class GLSurface {
 	HWND hOwner;
 	HGLRC hRC;
 	HDC hDC;
 
 	float mFov;
 	vec3 camPos;
-	vec3 camRot;		// turntable camera emulation
+	vec3 camRot;		// Turntable camera emulation.
 	unsigned int vpW;
 	unsigned int vpH;
 
@@ -42,8 +39,6 @@ class GLSurface
 	bool bTextured;
 	bool bMaskVisible;
 	bool bWeightColors;
-	//GLShader* SkinShader;
-	//GLShader* DefShader;
 
 	float defLineWidth;
 	float defPointSize;
@@ -52,9 +47,6 @@ class GLSurface
 	vector<GLMaterial*> materials;
 	unordered_map<string, int> texMats;
 
-	//GLuint defTex;
-
-	//TweakBrush* tweakBrush;
 	TweakUndo tweakUndo;
 
 	unordered_map<string, int> namedMeshes;
@@ -70,7 +62,7 @@ class GLSurface
 		if (meshID < meshes.size()) {
 			delete meshes[meshID];
 			meshes.erase(meshes.begin() + meshID);
-			for (int i = meshID; i < meshes.size(); i++) { // renumber meshes after the deleted one
+			for (int i = meshID; i < meshes.size(); i++) { // Renumber meshes after the deleted one.
 				namedMeshes[meshes[i]->shapeName] = i;
 			}
 		}
@@ -110,27 +102,17 @@ public:
 
 
 	int GetMeshID(const string& shapeName) {
-		unordered_map<string, int>::iterator it = namedMeshes.find(shapeName);
-		if (it != namedMeshes.end()) {
+		auto it = namedMeshes.find(shapeName);
+		if (it != namedMeshes.end())
 			return it->second;
-		}
-		/*
-		for(int i=0;i<meshes.size();i++) {
-		if(meshes[i]->shapeName == shapeName) {
-		return i;
-		}
-		}*/
+
 		return -1;
 	}
 	string GetMeshName(int id) {
-		for (auto mn : namedMeshes){
+		for (auto mn : namedMeshes)
 			if (mn.second == id)
 				return mn.first;
-		}
-		/*
-		if(id >=0 && id<meshes.size()) {
-		return meshes[id]->shapeName;
-		}*/
+
 		return "";
 	}
 
@@ -155,6 +137,7 @@ public:
 	mesh* GetActiveMesh() {
 		if (activeMesh >= 0 && activeMesh < meshes.size())
 			return meshes[activeMesh];
+
 		return NULL;
 	}
 
@@ -173,7 +156,6 @@ public:
 		return total;
 	}
 
-
 	bool IsValidMesh(mesh* query) {
 		for (int i = 0; i < meshes.size(); i++) {
 			if (meshes[i] == query) {
@@ -182,29 +164,35 @@ public:
 		}
 		return false;
 	}
+
 	mesh* GetMesh(const string& shapeName) {
 		int id = GetMeshID(shapeName);
 		if (id >= 0)
 			return meshes[id];
 		return NULL;
 	}
+
 	mesh* GetOverlay(int overlayID) {
 		if (overlayID >= 0)
 			return overlays[overlayID];
 		return NULL;
 	}
+
 	mesh* GetOverlay(const string& overlayName) {
 		int id = GetOverlayID(overlayName);
 		if (id >= 0)
 			return overlays[id];
 		return NULL;
 	}
+
 	float GetCursorSize() {
 		return cursorSize;
 	}
+
 	void SetCursorSize(float newsize) {
 		cursorSize = newsize;
 	}
+
 	bool IsWGLExtensionSupported(char* szTargetExtension, HDC refDC);
 	bool IsExtensionSupported(char* szTargetExtension);
 	bool MultiSampleQueried() {
@@ -230,15 +218,12 @@ public:
 	bool GetCursorVertex(int ScreenX, int ScreenY, vtx* outHoverVtx = NULL);
 	void ShowCursor(bool show = true);
 
-	// ray/mesh collision detection.  from a screen point, calculates a ray, and finds the nearest collision point and surface normal on 
-	// the active mesh.   Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay. Screen x/y
-	// are ignored if the ray is provided.
+	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
+	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
+	// Screen x/y are ignored if the ray is provided.
 	bool CollideMesh(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir = 0, vec3* inRayOrigin = 0);
-
 	bool CollidePlane(int ScreenX, int ScreenY, vec3& outOrigin, vec3& inPlaneNormal, float inPlaneDist);
-
 	int CollideOverlay(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir = 0, vec3* inRayOrigin = 0);
-
 
 	int AddVisRay(vec3& start, vec3& direction, float length);
 	int AddVisCircle(vec3& center, vec3& normal, float radius, const string& name = "RingMesh");
@@ -283,11 +268,10 @@ public:
 			bTextured = false;
 		else
 			bTextured = true;
-		for (int i = 0; i < meshes.size(); i++) {
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
+
+		for (int i = 0; i < meshes.size(); i++)
+			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
 				materials[meshes[i]->MatRef]->shader->ShowTexture(bTextured);
-			}
-		}
 	}
 
 	void ToggleWireframe() {
@@ -303,11 +287,9 @@ public:
 		else
 			bLighting = true;
 
-		for (int i = 0; i < meshes.size(); i++) {
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
+		for (int i = 0; i < meshes.size(); i++)
+			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
 				materials[meshes[i]->MatRef]->shader->EnableVertexLighting(bLighting);
-			}
-		}
 	}
 
 	void ToggleMask() {
@@ -316,21 +298,17 @@ public:
 		else
 			bMaskVisible = true;
 
-		for (int i = 0; i < meshes.size(); i++) {
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
+		for (int i = 0; i < meshes.size(); i++)
+			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
 				materials[meshes[i]->MatRef]->shader->ShowMask(bMaskVisible);
-			}
-		}
 	}
 
 	void SetWeightColors(bool bVisible = true) {
 		bWeightColors = bVisible;
 
-		for (int i = 0; i < meshes.size(); i++) {
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1)) {
+		for (int i = 0; i < meshes.size(); i++)
+			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
 				materials[meshes[i]->MatRef]->shader->ShowWeight(bWeightColors);
-			}
-		}
 	}
 
 	void ToggleWeightColors() {
@@ -338,6 +316,7 @@ public:
 			bWeightColors = false;
 		else
 			bWeightColors = true;
+
 		if (meshes.size() > 0 && (activeMesh > -1))
 			materials[meshes[activeMesh]->MatRef]->shader->ShowWeight(bWeightColors);
 	}

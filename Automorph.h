@@ -1,11 +1,12 @@
 #pragma once
+
 #include "Object3d.h"
-#include "niffile.h"
-#include "kdmatcher.h"
-#include "mesh.h"
+#include "NifFile.h"
+#include "KDMatcher.h"
+#include "Mesh.h"
 #include "SliderData.h"
 #include "DiffData.h"
-#include "objfile.h"
+#include "ObjFile.h"
 
 #include <vector>
 #include <map>
@@ -16,22 +17,22 @@ using namespace std;
 class Automorph {
 	kd_tree* refTree;
 	map<string, mesh*> sourceShapes;
-	map<string, mesh*> foreignShapes;	// meshes linked by LinkSourceShapeMesh loaded and managed outside the
-	//  class -- to prevent automorph from deleting it.  Golly, smart pointers would be nice
+	map<string, mesh*> foreignShapes;	// Meshes linked by LinkSourceShapeMesh loaded and managed outside the.
+	// Class - to prevent AutoMorph from deleting it. Golly, smart pointers would be nice.
 	map<int, vector<kd_query_result>> prox_cache;
-	DiffDataSets __srcDiffData;			// internally loaded and stored diff data.diffs loaded from existing reference .bsd files
-	DiffDataSets* srcDiffData;			// either __srcDiffData or an external linked data set 
-	DiffDataSets resultDiffData;		// Diffs calculated by automorph
+	DiffDataSets __srcDiffData;			// Unternally loaded and stored diff data.diffs loaded from existing reference .bsd files.
+	DiffDataSets* srcDiffData;			// Either __srcDiffData or an external linked data set.
+	DiffDataSets resultDiffData;		// Diffs calculated by AutoMorph.
 
 	float proximity_radius;
 	float max_prox_points;
 
-	bool bEnableMask;					// use red component of mesh vertex color as a mask for morphing. 
+	bool bEnableMask;					// Use red component of mesh vertex color as a mask for morphing.
 
-	// a translation between shapetarget+slidername and the data name for the result diff data set.  this only has values when a sliderset is loaded from disk and a slider's data name  for a target
-	// doesn't match the format targtname+slidername
+	// A translation between shapetarget + slidername and the data name for the result diff data set.
+	// This only has values when a sliderset is loaded from disk and a slider's data name for a target
+	// doesn't match the format targetname + slidername.
 	unordered_map<string, string> targetSliderDataNames;
-
 
 public:
 	mesh* morphRef;
@@ -57,7 +58,6 @@ public:
 	}
 
 	void SetRef(NifFile& Ref, const string& refShape = "BaseShape");
-	//void SetRefDiffData(DiffDataSets* set);
 
 	int InitRefDiffData(const string& srcFileName, const string& dataSetName, const string& baseDataPath);
 	void LinkRefDiffData(DiffDataSets* diffData);
@@ -77,10 +77,8 @@ public:
 
 	void BuildProximityCache(const string& shapeName);
 
-	/*
-		shapeName = name of the mesh to morph (eg "IronArmor") also known as targetname
-		sliderName = name of the morph to apply (eg "BreastsSH")
-		*/
+	// shapeName = name of the mesh to morph (eg "IronArmor") also known as target name.
+	// sliderName = name of the morph to apply (eg "BreastsSH").
 	void GenerateResultDiff(const string& shapeName, const string& sliderName, const string& refDataName);
 
 	void SetResultDataName(const string& shapeName, const string& sliderName, const string& dataName);

@@ -1,6 +1,5 @@
 #pragma once
 
-//#define _HAS_ITERATOR_DEBUGGING 0
 #include <fstream>
 #include <vector>
 #include <string>
@@ -9,7 +8,7 @@
 #include <regex>
 #include <math.h>
 #include "KDMatcher.h"
-#include "object3d.h"
+#include "Object3d.h"
 
 using namespace std;
 
@@ -46,6 +45,7 @@ struct vertexWeight {
 	float w3;
 	float w4;
 };
+
 struct boneIndices {
 	BYTE i1;
 	BYTE i2;
@@ -171,7 +171,7 @@ public:
 	vector<NifString> strings;
 	unsigned int unk2;
 
-	// foreign reference to the blocks list in NifFile.
+	// Foreign reference to the blocks list in NifFile.
 	vector<NifBlock*>* blocks;
 
 	NifBlockHeader();
@@ -691,7 +691,7 @@ public:
 	void CopyShader(const string& shapeDest, string& shaderName, NifFile& srcNif, bool addAlpha);
 	void CopyShader(const string& shapeDest, NifBlockBSLightShadeProp* srcShader, NifFile& srcNif, bool addAlpha);
 	void CopyShape(const string& shapeDest, NifFile& srcNif, const string& srcShape);
-	// copy strips is a duplicate of copy shape that works for tri strips blocks.  copy shape will call copy strips as needed.
+	// Copy strips is a duplicate of copy shape that works for TriStrips blocks. Copy shape will call copy strips as needed.
 	void CopyStrips(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 
 	void RecalculateNormals();
@@ -714,11 +714,11 @@ public:
 	void SetShapeBoneIDList(const string& shapeName, vector<int>& inList);
 	int GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& outWeights);
 
-	// Empty string for the bone name returns the overall skin transform for the shape 
+	// Empty string for the bone name returns the overall skin transform for the shape.
 	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, skin_transform& outXform, vector3& outSphereOffset, float& outSphereRadius);
-	// -1 for the bone index sets the overall skin transform for the shape
+	// -1 for the bone index sets the overall skin transform for the shape.
 	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, skin_transform& inXform, vector3& inSphereOffset, float inSphereRadius);
-	// -1 on the bone index returns the overall skin transform for the shape
+	// -1 on the bone index returns the overall skin transform for the shape.
 	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, skin_transform& outXform, vector3& outSphereOffset, float& outSphereRadius);
 	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
@@ -748,13 +748,11 @@ public:
 	void SetShapeScale(const string& shapeName, const float& newScale);
 	void ApplyShapeTranslation(const string& shapeName, const vector3& offset);
 
-	/* sets a phantom offset value in a nitrishapedata record, which will be added to vertex values when fetched later.  if sum is true, the offset is added to the current
-	   offset, allowing a series of independant changes
-	   */
+	// Sets a phantom offset value in a nitrishapedata record, which will be added to vertex values when fetched later.
+	// if sum is true, the offset is added to the current offset, allowing a series of independant changes.
 	void VirtualOffsetShape(const string& shapeName, const vector3& offset, bool sum = true);
 
-	/* sets a phantom scale value in a nitrishapedata record, which will be added to vertex values when fetched later.
-	*/
+	// Sets a phantom scale value in a NiTriShapeData record, which will be added to vertex values when fetched later.
 	void VirtualScaleShape(const string& shapeName, float scale, bool fromCenter = true);
 
 	vector3 GetShapeVirtualOffset(const string& shapeName);
@@ -773,10 +771,10 @@ public:
 
 	int CalcShapeDiff(const string& shapeName, const vector<vector3>* targetData, unordered_map<ushort, vector3>& outDiffData, float scale = 1.0f);
 	int ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<ushort, vector3>& outDiffData);
-	/* Based on the skin partitioning spell from NifSkope's source.  Uses a diffferent enough algorithm that it generates
-		different automatic partitions, but vert and triangle order is comparable */
+	// Based on the skin partitioning spell from NifSkope's source. Uses a different enough algorithm that it generates
+	// different automatic partitions, but vert and triangle order is comparable.
 	void BuildSkinPartitions(const string& shapeName, int maxBonesPerPartition = 24);
 
-	/* Maintains the number of and makeup of skin partitions, but updates the weighting values */
+	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
 };

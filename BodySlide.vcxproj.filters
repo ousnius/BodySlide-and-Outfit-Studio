@@ -110,9 +110,6 @@
     <ClInclude Include="Automorph.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="BodySlide.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="BodySlideApp.h">
       <Filter>Header Files</Filter>
     </ClInclude>
