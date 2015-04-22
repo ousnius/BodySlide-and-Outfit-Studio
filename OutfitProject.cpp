@@ -541,6 +541,16 @@ void OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeN
 		morpher.SaveResultDiff(target, sliderName, fileName);
 }
 
+void OutfitProject::SaveSliderBSDToDir(const string& sliderName, const string& shapeName, const string& dir, bool bIsOutfit) {
+	string target = ShapeToTarget(shapeName);
+	if (!bIsOutfit) {
+		string sliderData = activeSet[sliderName].TargetDataName(target);
+		baseDiffData.SaveSet(sliderData, target, dir + "\\" + shapeName + "_" + sliderName + ".bsd");
+	}
+	else
+		morpher.SaveResultDiff(target, sliderName, dir + "\\" + shapeName + "_" + sliderName + ".bsd");
+}
+
 void OutfitProject::SetSliderFromBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit) {
 	string target = ShapeToTarget(shapeName);
 	if (!bIsOutfit) {
@@ -824,6 +834,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 	DiffDataSets dds;
 	unordered_map<ushort, float> weights;
 	for (auto bone : (*boneList)) {
+		weights.clear();
 		dds.AddEmptySet(bone + "_WT_", "Weight");
 		baseAnim.GetWeights(baseShapeName, bone, weights);
 		for (auto w : weights) {
@@ -907,11 +918,12 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 	float prog = 40.0f;
 	owner->UpdateProgress(prog, "Transferring bone weights");
 
+	unordered_map<ushort, float> weights;
+	unordered_map<ushort, float> oldWeights;
 	for (auto boneName : (*boneList)) {
-		unordered_map<ushort, float> weights;
+		weights.clear();
+		oldWeights.clear();
 		baseAnim.GetWeights(baseShapeName, boneName, weights);
-
-		unordered_map<ushort, float> oldWeights;
 		workAnim.GetWeights(destShape, boneName, oldWeights);
 
 		for (auto w : weights) {
@@ -953,8 +965,9 @@ bool OutfitProject::OutfitHasUnweighted() {
 		for (int i = 0; i < verts.size(); i++)
 			influences.emplace(i, 0);
 
+		unordered_map<ushort, float> boneWeights;
 		for (auto b : bones) {
-			unordered_map<ushort, float> boneWeights;
+			boneWeights.clear();
 			workAnim.GetWeights(s, b, boneWeights);
 			for (int i = 0; i < verts.size(); i++) {
 				auto id = boneWeights.find(i);
@@ -997,6 +1010,7 @@ void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos) {
 		boneScaleOffsets.emplace(s, vector<vec3>(verts.size()));
 		for (auto b : bones) {
 			if (b == bone) {
+				weights.clear();
 				workNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
 				workAnim.GetWeights(s, b, weights);
 				for (auto w : weights) {
@@ -1020,6 +1034,7 @@ void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos) {
 		boneScaleOffsets.emplace(s, vector<vec3>(verts.size()));
 		for (auto b : bones) {
 			if (b == bone) {
+				weights.clear();
 				baseNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
 				baseAnim.GetWeights(s, b, weights);
 				for (auto w : weights) {

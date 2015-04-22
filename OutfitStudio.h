@@ -259,6 +259,32 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
+	void GetShapeMask(unordered_map<ushort, float>& mask, const string& shapeName) {
+		mesh* m = gls.GetMesh(shapeName);
+		if (!m || !m->vcolors)
+			return;
+
+		for (int i = 0; i < m->nVerts; i++) {
+			if (m->vcolors[i].x != 0.0f)
+				mask[i] = m->vcolors[i].x;
+		}
+	}
+
+	void GetShapeUnmasked(unordered_map<ushort, float>& mask, const string& shapeName) {
+		mesh* m = gls.GetMesh(shapeName);
+		if (!m)
+			return;
+
+		if (!m->vcolors) {
+			for (int i = 0; i < m->nVerts; i++)
+				mask[i] = 0.0f;
+			return;
+		}
+		for (int i = 0; i < m->nVerts; i++)
+			if (m->vcolors[i].x == 0.0f)
+				mask[i] = m->vcolors[i].x;
+	}
+
 	void InvertMask() {
 		mesh* m = gls.GetActiveMesh();
 		if (!m->vcolors)
@@ -360,6 +386,7 @@ public:
 	OutfitProject* Proj;			// Always assumed to exist!  blank one created in constructor, replaced on load/new
 	string activeShape;
 	ShapeItemData* activeItem;
+	vector<ShapeItemData*> selectedItems;
 	string activeSlider;
 	string activeBone;
 	bool bEditSlider;
@@ -627,7 +654,7 @@ private:
 	}
 
 	void OnSetSmoothThreshold(wxCommandEvent& WXUNUSED(event)) {
-		if (activeItem == NULL)
+		if (!activeItem)
 			return;
 
 		mesh* m = glView->GetMesh(activeItem->shapeName);

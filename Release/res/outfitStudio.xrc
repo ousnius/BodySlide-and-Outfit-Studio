@@ -140,7 +140,7 @@
 						<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>2</border>
 						<object class="wxTreeCtrl" name="outfitShapes">
-							<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT | wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_SINGLE</style>
+							<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
 							<bg>#404040</bg>
 							<fg>#ffffff</fg>
 						</object>
@@ -150,7 +150,7 @@
 						<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>2</border>
 						<object class="wxTreeCtrl" name="outfitBones">
-							<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT | wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_EXTENDED|wxTR_MULTIPLE</style>
+							<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
 							<bg>#404040</bg>
 							<fg>#ffffff</fg>
 							<hidden>1</hidden>
@@ -2366,61 +2366,72 @@
 	</object>
 	<object class="wxMenu" name="menuMeshContext">
 		<label>Shape</label>
-		<object class="wxMenuItem" name="offsetShape">
-			<label>Offset Shape...</label>
-			<help>Apply an offset adjustment to the shape</help>
-		</object>
-		<object class="wxMenuItem" name="virtscaleShape">
-			<label>Scale Shape...</label>
-			<help>Apply a scale adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
-		</object>
-		<object class="wxMenuItem" name="setShapeTex">
-			<label>Set Textures...</label>
-			<help>Allows you to choose a display texture, and edit the shape game texture paths</help>
-		</object>
-		<object class="wxMenuItem" name="renameShape">
-			<label>Rename Shape...</label>
-			<help>Change the name of this shape</help>
+		<object class="wxMenuItem" name="exportShape">
+			<label>Export Shape to .obj</label>
+			<help>Export the current shape as an .obj file.</help>
 		</object>
 		<object class="wxMenuItem" name="copyShape">
 			<label>Duplicate Shape...</label>
-			<help>Duplicate this shape</help>
+			<help>Duplicate the current shape.</help>
 		</object>
-		<object class="wxMenuItem" name="exportShape">
-			<label>Export Shape to .obj</label>
-			<help>Export this shape as an .obj file.</help>
+		<object class="wxMenuItem" name="renameShape">
+			<label>Rename Shape...</label>
+			<help>Change the name of the current shape.</help>
+		</object>
+		<object class="separator" />
+		<object class="wxMenuItem" name="moveShape">
+			<label>Move Shape...</label>
+			<help>Apply an offset adjustment to the mesh vertices. This permanently moves vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="offsetShape">
+			<label>Move Shape (Virtual)...</label>
+			<help>Apply an offset adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="scaleShape">
+			<label>Scale Shape...</label>
+			<help>Apply a scale adjustment to the shape. This permanently moves vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="virtscaleShape">
+			<label>Scale Shape (Virtual)...</label>
+			<help>Apply a scale adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="rotateShape">
+			<label>Rotate Shape...</label>
+			<help>Apply a rotation to the mesh vertices. This permanently moves vertices.</help>
+		</object>
+		<object class="wxMenuItem" name="setShapeTex">
+			<label>Set Textures...</label>
+			<help>Allows you to choose a display texture, and edit the shape game texture paths.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copyBoneWeight">
 			<label>Copy Bone Weights</label>
-			<help>Copies all bone weights from the reference shape to this shape.</help>
+			<help>Copies all bone weights from the reference shape to the current shape.</help>
 		</object>
 		<object class="wxMenuItem" name="copySelectedWeight">
 			<label>Copy Selected Weights</label>
-			<help>Copies selected bone weights from the reference shape to this shape.</help>
+			<help>Copies selected bone weights from the reference shape to the current shape.</help>
 		</object>
 		<object class="wxMenuItem" name="transferSelectedWeight">
 			<label>Transfer Selected Weights</label>
-			<help>Transfers selected weights from the reference shape to this shape. Requires same vertex count and order.</help>
+			<help>Transfers selected weights from the reference shape to the current shape. Requires same vertex count and order.</help>
+		</object>
+		<object class="wxMenuItem" name="maskWeightedVerts">
+			<label>Mask Weighted Vertices</label>
+			<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
 		</object>
 		<object class="wxMenuItem" name="buildSkinPartitions">
 			<label>Build Skin Partitions</label>
-			<help>Creates or rebuilds skin partitions for this shape. </help>
+			<help>Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">
 			<label>Delete Shape\tCtrl+Del</label>
-			<help>Removes this shape from the outfit.</help>
+			<help>Removes the currently selected shape from the outfit.</help>
 		</object>
 	</object>
 	<object class="wxMenu" name="menuBoneContext">
 		<label>Bones</label>
-		<!--
-		<object class="wxMenuItem" name="clearWeights">
-			<label>Clear Weights</label>
-			<help>Clears all weights associated with this bone</help>
-		</object>
-		-->
 		<object class="wxMenuItem" name="addBone">
 			<label>Add Bone...</label>
 			<help>Add a new bone to the outfit</help>
