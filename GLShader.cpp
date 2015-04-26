@@ -1,14 +1,14 @@
 #include "GLShader.h"
 
-bool GLShader::initComplete = false; 
+bool GLShader::initComplete = false;
 
 PFNGLCREATESHADERPROC glCreateShader = NULL;
 PFNGLSHADERSOURCEPROC glShaderSource = NULL;
 PFNGLCOMPILESHADERPROC glCompileShader = NULL;
 PFNGLCREATEPROGRAMPROC glCreateProgram = NULL;
 PFNGLATTACHSHADERPROC glAttachShader = NULL;
-PFNGLLINKPROGRAMPROC  glLinkProgram = NULL;
-PFNGLUSEPROGRAMPROC   glUseProgram = NULL;
+PFNGLLINKPROGRAMPROC glLinkProgram = NULL;
+PFNGLUSEPROGRAMPROC glUseProgram = NULL;
 
 PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation = NULL;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = NULL;

@@ -10,18 +10,11 @@
 #endif
 #include "SOIL.h"
 
-PFNGLGENBUFFERSPROC glGenBuffers = NULL;
-PFNGLBINDBUFFERPROC glBindBuffer = NULL;
-PFNGLBUFFERDATAPROC glBufferData = NULL;
-PFNGLDELETEBUFFERSPROC glDeleteBuffers = NULL;
-PFNGLGETBUFFERPARAMETERIVPROC glGetBufferParameteriv = NULL;
-PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray;
-PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray;
-PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer;
-PFNGLBUFFERSUBDATAPROC glBufferSubData;
-PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringArb;
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatArb;
-
+PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = NULL;
+PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = NULL;
+PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = NULL;
+PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringArb = NULL;
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatArb = NULL;
 
 short GLSurface::multisampleState = 0;
 int GLSurface::pixelFormatMS = 0;
@@ -440,29 +433,6 @@ int GLSurface::Initialize(HWND parentWnd, bool bUseDefaultShaders) {
 	bUseAF = IsExtensionSupported("GL_EXT_texture_filter_anisotropic");
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
 
-	bUseVBO = IsExtensionSupported("GL_ARB_vertex_buffer_object");
-	if (bUseVBO) {
-		glGenBuffers = (PFNGLGENBUFFERSPROC)wglGetProcAddress("glGenBuffers");
-		glBindBuffer = (PFNGLBINDBUFFERPROC)wglGetProcAddress("glBindBuffer");
-		glBufferData = (PFNGLBUFFERDATAPROC)wglGetProcAddress("glBufferData");
-		glBufferSubData = (PFNGLBUFFERSUBDATAPROC)wglGetProcAddress("glBufferSubData");
-		glDeleteBuffers = (PFNGLDELETEBUFFERSPROC)wglGetProcAddress("glDeleteBuffers");
-		glGetBufferParameteriv = (PFNGLGETBUFFERPARAMETERIVPROC)wglGetProcAddress("glGetBufferParameteriv");
-
-		glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
-		glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
-
-		/*glGenBuffersARB = (PFNGLGENBUFFERSARBPROC) wglGetProcAddress("glGenBuffersARB");
-		glBindBufferARB = (PFNGLBINDBUFFERARBPROC) wglGetProcAddress("glBindBufferARB");
-		glBufferDataARB = (PFNGLBUFFERDATAARBPROC) wglGetProcAddress("glBufferDataARB");
-		glDeleteBuffersARB = (PFNGLDELETEBUFFERSARBPROC) wglGetProcAddress("glDeleteBuffersARB");
-		glGetBufferParameterivARB = (PFNGLGETBUFFERPARAMETERIVARBPROC) wglGetProcAddress("glGetBufferParameterivARB");
-		*/
-	}
-	else {
-		MessageBoxA(NULL, "OpenGL: GL_ARB_vertex_buffer_object (VBO) not supported on this machine.", "Error", MB_TOPMOST | MB_OK);
-	}
-
 	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
 	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
 	glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glDisableVertexAttribArray");
@@ -501,20 +471,12 @@ int GLSurface::Initialize(HWND parentWnd, bool bUseDefaultShaders) {
 }
 
 void GLSurface::Cleanup() {
-	for (int i = 0; i < meshes.size(); i++) {
-		if (meshes[i]->bBuffersLoaded) {
-			glDeleteBuffers(1, &meshes[i]->VboBufName);
-			glDeleteBuffers(1, &meshes[i]->IboBufName);
-		}
+	for (int i = 0; i < meshes.size(); i++)
 		delete meshes[i];
-	}
-	for (int i = 0; i < overlays.size(); i++) {
-		if (overlays[i]->bBuffersLoaded) {
-			glDeleteBuffers(1, &overlays[i]->VboBufName);
-			glDeleteBuffers(1, &overlays[i]->IboBufName);
-		}
+
+	for (int i = 0; i < overlays.size(); i++)
 		delete overlays[i];
-	}
+
 	for (int i = 0; i < materials.size(); i++)
 		delete materials[i];
 
