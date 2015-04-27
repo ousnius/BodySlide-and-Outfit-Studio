@@ -738,12 +738,12 @@ public:
 	void CalcTangentsForShape(const string& shapeName);
 
 	void GetRootTranslation(vector3& outVec);
-	void SetRootTranslation(vector3& newTrans);
+	void SetRootTranslation(const vector3& newTrans);
 	void GetRootScale(float& outScale);
 	void SetRootScale(const float& newScale);
 
 	void GetShapeTranslation(const string& shapeName, vector3& outVec);
-	void SetShapeTranslation(const string& shapeName, vector3& newTrans);
+	void SetShapeTranslation(const string& shapeName, const vector3& newTrans);
 	void GetShapeScale(const string& shapeName, float& outScale);
 	void SetShapeScale(const string& shapeName, const float& newScale);
 	void ApplyShapeTranslation(const string& shapeName, const vector3& offset);

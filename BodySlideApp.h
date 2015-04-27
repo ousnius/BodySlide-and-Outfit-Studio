@@ -134,16 +134,17 @@ public:
 	int WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>> zapIndices);
 
 	void ShowPreview(char PreviewType = SMALL_PREVIEW);
+	void InitPreview(char PreviewType);
 	void ClosePreview(char PreviewType = SMALL_PREVIEW) {
-		if (PreviewType == SMALL_PREVIEW) {
-			if (preview0)
-				delete preview0;
-			preview0 = NULL;
-			return;
-		}
-		if (preview1)
-			delete preview1;
-		preview1 = NULL;
+		PreviewWindow* win = (PreviewType == SMALL_PREVIEW) ? preview0 : preview1;
+		// Calling Close() will cause PreviewClosed() to be called,
+		// where we reset the preview window pointer to null
+		if (win)
+			win->Close();
+	}
+	void PreviewClosed(char PreviewType = SMALL_PREVIEW) {
+		PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
+		*winPtr = NULL;
 	}
 
 	void CloseOutfitStudio() {
@@ -234,6 +235,7 @@ public:
 
 private:
 	void OnExit(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
 	void OnActivateFrame(wxActivateEvent& event);
 	void OnIconizeFrame(wxIconizeEvent& event);
 	void PostIconizeFrame();

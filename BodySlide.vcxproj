@@ -110,7 +110,6 @@
   <ItemGroup>
     <ClCompile Include="AABBTree.cpp" />
     <ClCompile Include="Anim.cpp" />
-    <ClCompile Include="AsyncMonitor.cpp" />
     <ClCompile Include="Automorph.cpp" />
     <ClCompile Include="BodySlideApp.cpp" />
     <ClCompile Include="ConfigurationManager.cpp" />
@@ -126,6 +125,7 @@
     <ClCompile Include="OutfitStudio.cpp" />
     <ClCompile Include="PresetSaveDialog.cpp" />
     <ClCompile Include="PreviewWindow.cpp" />
+    <ClCompile Include="ResourceLoader.cpp" />
     <ClCompile Include="SliderCategories.cpp" />
     <ClCompile Include="SliderData.cpp" />
     <ClCompile Include="SliderGroup.cpp" />
@@ -141,10 +141,10 @@
     <ClCompile Include="TriFile.cpp" />
     <ClCompile Include="TweakBrush.cpp" />
     <ClCompile Include="wxStateButton.cpp" />
+    <ClCompile Include="XmlFinder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Anim.h" />
-    <ClInclude Include="AsyncMonitor.h" />
     <ClInclude Include="Automorph.h" />
     <ClInclude Include="BodySlideApp.h" />
     <ClInclude Include="ConfigurationManager.h" />
@@ -162,6 +162,7 @@
     <ClInclude Include="PresetSaveDialog.h" />
     <ClInclude Include="PreviewWindow.h" />
     <ClInclude Include="Resource.h" />
+    <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="SliderCategories.h" />
     <ClInclude Include="SliderData.h" />
     <ClInclude Include="SliderGroup.h" />
@@ -173,6 +174,7 @@
     <ClInclude Include="TriFile.h" />
     <ClInclude Include="TweakBrush.h" />
     <ClInclude Include="wxStateButton.h" />
+    <ClInclude Include="XmlFinder.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="BodySlide.ico" />

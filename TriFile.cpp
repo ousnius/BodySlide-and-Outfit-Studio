@@ -7,16 +7,13 @@ int TriFile::Read(string fileName) {
 		bool packed = false;
 		int packedBytes = 4;
 
-		uint hdr = 0;
-		triFile.read((char*)&hdr, 4);
-		if (hdr != 'TRI\0' && hdr != 'TRIP')
-			return false;
-
-		if (hdr == 'TRIP') {
+		char hdr[4];
+		triFile.read(hdr, 4);
+		if (memcmp(hdr, "PIRT", 4) == 0) {
 			packed = true;
 			packedBytes = 2;
 		}
-		else if (hdr != 'TRI\0')
+		else if (memcmp(hdr, "\0IRT", 4) != 0)
 			return false;
 
 		uint shapeCount = 0;

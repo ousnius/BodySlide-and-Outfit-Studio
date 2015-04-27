@@ -1,49 +1,25 @@
 #include "SliderCategories.h"
+#include "XmlFinder.h"
 
 int SliderCategoryCollection::LoadCategories(const string& basePath) {
 	categories.clear();
-	TiXmlDocument doc;
 
-	string filter = basePath + "\\*.xml";
-
-	WIN32_FIND_DATAA wfd;
-	HANDLE hfind;
-
-	hfind = FindFirstFileA(filter.c_str(), &wfd);
-	DWORD searchStatus = 0;
-	string fileName;
-	vector<string> cNames;
-
-	if (hfind == INVALID_HANDLE_VALUE)
-		return 1;
-
-	while (searchStatus != ERROR_NO_MORE_FILES) {
-		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
-			continue;
+	XmlFinder finder(basePath);
+	while (!finder.atEnd()) {
+		string fileName = finder.next();
+		SliderCategoryFile f(fileName);
+		vector<string> cNames;
+		f.GetCategoryNames(cNames);
+		for (auto c : cNames) {
+			SliderCategory sc;
+			f.GetCategory(c, sc);
+			if (categories.find(c) != categories.end())
+				categories[c].MergeSliders(sc);
+			else
+				categories[c] = move(sc);
 		}
-		else {
-			fileName = basePath + "\\";
-			fileName += wfd.cFileName;
-
-			SliderCategoryFile f(fileName);
-			cNames.clear();
-			f.GetCategoryNames(cNames);
-			for (auto c : cNames) {
-				SliderCategory sc;
-				f.GetCategory(c, sc);
-				if (categories.find(c) != categories.end())
-					categories[c].MergeSliders(sc);
-				else
-					categories[c] = move(sc);
-			}
-		}
-		if (!FindNextFileA(hfind, &wfd))
-			searchStatus = GetLastError();
-		else
-			searchStatus = 0;
 	}
-	FindClose(hfind);
-	return 0;
+	return finder.hadError() ? 1 : 0;
 }
 
 int SliderCategoryCollection::GetAllCategories(vector<string>& outCategories) {

@@ -1,25 +1,29 @@
 #pragma once
 #include <Windows.h>
-#include <gl/GL.h>
-#include <gl/GLU.h>
-#include <gl/glext.h>
-#include <gl/wglext.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+#include <GL/wglext.h>
 #include "GLShader.h"
 #include "NifFile.h"
 #include "Object3d.h"
 #include "KDMatcher.h"
 #include "Mesh.h"
+#include "ResourceLoader.h"
 #include "TweakBrush.h"
 #include <string>
 #include <vector>
 #include <hash_map>
+#include <wx/glcanvas.h>
 
 using namespace std;
 
 class GLSurface {
-	HWND hOwner;
-	HGLRC hRC;
-	HDC hDC;
+	HWND hOwner{nullptr};
+	HGLRC hRC{nullptr};
+	HDC hDC{nullptr};
+	wxGLCanvas* canvas{nullptr};
+	wxGLContext* context{nullptr};
 
 	float mFov;
 	vec3 camPos;
@@ -32,6 +36,7 @@ class GLSurface {
 
 	bool bUseVBO;
 	static short multisampleState;
+	static int numMultiSamples;
 	static int pixelFormatMS;
 
 	bool bWireframe;
@@ -44,7 +49,9 @@ class GLSurface {
 	float defPointSize;
 	float cursorSize;
 
-	vector<GLMaterial*> materials;
+	ResourceLoader resLoader;
+	GLMaterial* noImage{nullptr};
+	GLMaterial* skinMaterial{nullptr};
 	unordered_map<string, int> texMats;
 
 	TweakUndo tweakUndo;
@@ -57,6 +64,8 @@ class GLSurface {
 
 	void initLighting();
 	void initMaterial(vec3 diffusecolor);
+	void InitGLExtensions();
+	int InitGLSettings(bool bUseDefaultShaders);
 
 	void DeleteMesh(int meshID) {
 		if (meshID < meshes.size()) {
@@ -74,6 +83,9 @@ public:
 	bool bEditMode;
 	GLSurface(void);
 	~GLSurface(void);
+
+	// Get the attributes to use for creating a wxGLCanvas
+	static const int* GetGLAttribs(wxWindow* parent);
 
 	void DeleteAllMeshes() {
 		for (auto m : meshes) {
@@ -193,12 +205,13 @@ public:
 		cursorSize = newsize;
 	}
 
-	bool IsWGLExtensionSupported(char* szTargetExtension, HDC refDC);
-	bool IsExtensionSupported(char* szTargetExtension);
-	bool MultiSampleQueried() {
+	static bool IsWGLExtensionSupported(char* szTargetExtension, HDC refDC);
+	static bool IsExtensionSupported(char* szTargetExtension);
+	static bool MultiSampleQueried() {
 		return (multisampleState > 0);
 	}
-	bool QueryMultisample(HWND queryWnd);		// must be a throwaway window, do not use the same hwnd as final context.
+	static bool QueryMultisample(HWND queryWnd);		// must be a throwaway window, do not use the same hwnd as final context.
+	int Initialize(wxGLCanvas* canvas, wxGLContext* context, bool bUseDefaultShaders = true);
 	int Initialize(HWND parentWnd, bool bUseDefaultShaders = true);
 	void Begin();
 	void Cleanup();
@@ -222,15 +235,15 @@ public:
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
 	bool CollideMesh(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir = 0, vec3* inRayOrigin = 0);
-	bool CollidePlane(int ScreenX, int ScreenY, vec3& outOrigin, vec3& inPlaneNormal, float inPlaneDist);
+	bool CollidePlane(int ScreenX, int ScreenY, vec3& outOrigin, const vec3& inPlaneNormal, float inPlaneDist);
 	int CollideOverlay(int ScreenX, int ScreenY, vec3& outOrigin, vec3& outNormal, int* outFacet = NULL, vec3* inRayDir = 0, vec3* inRayOrigin = 0);
 
 	int AddVisRay(vec3& start, vec3& direction, float length);
-	int AddVisCircle(vec3& center, vec3& normal, float radius, const string& name = "RingMesh");
-	int AddVis3dRing(vec3& center, vec3& normal, float holeRadius, float ringRadius, vec3& color, const string& name = "XRotateMesh");
-	int AddVis3dArrow(vec3& origin, vec3& direction, float stemRadius, float pointRadius, float length, vec3& color, const string& name = "XMoveMesh");
-	int AddVisPoint(vec3& p, const string& name = "PointMesh");
-	int AddVisTri(vec3& p1, vec3& p2, vec3& p3, const string& name = "TriMesh");
+	int AddVisCircle(const vec3& center, const vec3& normal, float radius, const string& name = "RingMesh");
+	int AddVis3dRing(const vec3& center, const vec3& normal, float holeRadius, float ringRadius, const vec3& color, const string& name = "XRotateMesh");
+	int AddVis3dArrow(const vec3& origin, const vec3& direction, float stemRadius, float pointRadius, float length, const vec3& color, const string& name = "XMoveMesh");
+	int AddVisPoint(const vec3& p, const string& name = "PointMesh");
+	int AddVisTri(const vec3& p1, const vec3& p2, const vec3& p3, const string& name = "TriMesh");
 	int AddVisFacets(vector<int>& triIDs, const string& name = "TriMesh");
 	int AddVisFacetsInSphere(vec3& origin, float radius, const string& name = "SphereFIntersect");
 	int AddVisPointsInSphere(vec3& origin, float radius, const string& name = "SpherePIntersect");
@@ -257,7 +270,7 @@ public:
 
 	RenderMode SetMeshRenderMode(const string& name, RenderMode mode);
 
-	int AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile);
+	GLMaterial* AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile);
 
 	int TestRender();
 	int RenderOneFrame();
@@ -270,8 +283,8 @@ public:
 			bTextured = true;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
-				materials[meshes[i]->MatRef]->shader->ShowTexture(bTextured);
+			if (meshes[i]->material && (activeMesh > -1))
+				meshes[i]->material->shader->ShowTexture(bTextured);
 	}
 
 	void ToggleWireframe() {
@@ -288,8 +301,8 @@ public:
 			bLighting = true;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
-				materials[meshes[i]->MatRef]->shader->EnableVertexLighting(bLighting);
+			if (meshes[i]->material && (activeMesh > -1))
+				meshes[i]->material->shader->EnableVertexLighting(bLighting);
 	}
 
 	void ToggleMask() {
@@ -299,16 +312,16 @@ public:
 			bMaskVisible = true;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
-				materials[meshes[i]->MatRef]->shader->ShowMask(bMaskVisible);
+			if (meshes[i]->material && (activeMesh > -1))
+				meshes[i]->material->shader->ShowMask(bMaskVisible);
 	}
 
 	void SetWeightColors(bool bVisible = true) {
 		bWeightColors = bVisible;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->MatRef >= 0 && (activeMesh > -1))
-				materials[meshes[i]->MatRef]->shader->ShowWeight(bWeightColors);
+			if (meshes[i]->material && (activeMesh > -1))
+				meshes[i]->material->shader->ShowWeight(bWeightColors);
 	}
 
 	void ToggleWeightColors() {
@@ -317,7 +330,7 @@ public:
 		else
 			bWeightColors = true;
 
-		if (meshes.size() > 0 && (activeMesh > -1))
-			materials[meshes[activeMesh]->MatRef]->shader->ShowWeight(bWeightColors);
+		if (meshes.size() > 0 && (activeMesh > -1) && meshes[activeMesh]->material)
+			meshes[activeMesh]->material->shader->ShowWeight(bWeightColors);
 	}
 };

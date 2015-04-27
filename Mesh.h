@@ -14,6 +14,8 @@ enum RenderMode {
 	LitWire
 };
 
+class GLMaterial;
+
 class mesh {
 public:
 	vtx* verts;
@@ -36,7 +38,7 @@ public:
 	bool doublesided;
 	bool textured;
 	vec2* texcoord;
-	int MatRef;					// Integer index to a material array.
+	GLMaterial* material{nullptr};
 
 	vec3* vcolors;				// Vertex colors.
 
@@ -101,7 +103,7 @@ public:
 	int GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint);
 
 	// Creates the vertex color array (if necessary) and sets all the colors to the provided value.
-	void ColorFill(vec3& color);
+	void ColorFill(const vec3& color);
 
 	void ColorChannelFill(int channel, float value);
 

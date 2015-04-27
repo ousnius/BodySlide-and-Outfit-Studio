@@ -1913,7 +1913,7 @@ void NifFile::GetRootTranslation(vector3& outVec) {
 		outVec.Zero();
 }
 
-void NifFile::SetRootTranslation(vector3& newTrans) {
+void NifFile::SetRootTranslation(const vector3& newTrans) {
 	NifBlockNiNode* root = dynamic_cast<NifBlockNiNode*>(blocks[0]);
 	if (root)
 		root->translation = newTrans;
@@ -1952,7 +1952,7 @@ void NifFile::GetShapeTranslation(const string& shapeName, vector3& outVec) {
 	//	outVec.Zero();
 }
 
-void NifFile::SetShapeTranslation(const string& shapeName, vector3& newTrans) {
+void NifFile::SetShapeTranslation(const string& shapeName, const vector3& newTrans) {
 	NifBlockTriShape* shape = shapeForName(shapeName);
 	if (!shape) {
 		NifBlockTriStrips* strips = stripsForName(shapeName);

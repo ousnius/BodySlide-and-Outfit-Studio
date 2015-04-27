@@ -22,46 +22,43 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "stdafx.h"
-#include "windowsx.h"
 #include "PreviewWindow.h"
+#include "BodySlideApp.h"
+#include "stdafx.h"
 
-bool PreviewWindow::has_registered = false;
-
-WNDPROC OldViewProc;
-
-PreviewWindow::PreviewWindow(void) {
+PreviewWindow::~PreviewWindow() {
 }
 
-PreviewWindow::~PreviewWindow(void) {
-	SendMessage(mHwnd, WM_DESTROY, 0, 0);
+const char* PreviewWindow::GetTitle(char previewType) {
+	if (previewType == SMALL_PREVIEW)
+		return "Preview: Small Size";
+	return "Preview: Large Size";
 }
 
-PreviewWindow::PreviewWindow(HWND owner, NifFile* nif, char PreviewType, char* shapeName) {
-	string title;
-	if (PreviewType == SMALL_PREVIEW) {
-		isSmall = true;
-		title = "Preview: Small Size";
-	}
-	else {
-		isSmall = false;
-		title = "Preview: Large Size";
-	}
-	hOwner = owner;
-
-	Create(title);
-	AddMeshFromNif(nif, shapeName);
-	ShowWindow(mHwnd, SW_SHOW);
-	UpdateWindow(mHwnd);
+wxSize PreviewWindow::GetDefaultSize() {
+	int xborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_X);
+	if (xborder < 0)
+		xborder = 0;
+	int yborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_Y);
+	if (yborder < 0)
+		yborder = 0;
+	return wxSize(768 + xborder * 2, 768 + yborder * 2);
 }
 
-PreviewWindow::PreviewWindow(HWND owner, vector<vector3>* verts, vector<triangle>* tris, float scale) {
-	hOwner = owner;
-	string title = "Shape Preview";
-	Create(title);
-	gls.AddMeshExplicit(verts, tris, NULL, "", scale);
-	ShowWindow(mHwnd, SW_SHOW);
-	UpdateWindow(mHwnd);
+PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType, char* shapeName)
+	: wxFrame(NULL, wxID_ANY, GetTitle(previewType), wxDefaultPosition, GetDefaultSize()),
+		app(a),
+		isSmall(previewType == SMALL_PREVIEW) {
+	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs(this));
+	context = new wxGLContext(canvas);
+	Show();
+}
+
+void PreviewWindow::OnShown() {
+	gls.Initialize(canvas, context);
+	auto size = canvas->GetSize();
+	gls.SetStartingView(vec3(0, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0);
+	app->InitPreview(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
 }
 
 void PreviewWindow::AddMeshDirect(mesh* m) {
@@ -109,8 +106,9 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
 			auto shader = nif->GetShaderForShape(shapeList[i]);
 			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
 				ToggleSmoothSeams(m);
-			if (shapeTexIds.find(shapeName) != shapeTexIds.end())
-				m->MatRef = shapeTexIds[shapeName];
+			auto iter = shapeTextures.find(shapeName);
+			if (iter != shapeTextures.end())
+				m->material = iter->second;
 			else
 				AddNifShapeTexture(nif, string(shapeName));
 
@@ -125,99 +123,48 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
 			auto shader = nif->GetShaderForShape(shapeList[i]);
 			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
 				ToggleSmoothSeams(m);
-			if (shapeTexIds.find(shapeList[i]) != shapeTexIds.end()) {
-				m->MatRef = shapeTexIds[shapeList[i]];
-			}
-			else {
+			auto iter = shapeTextures.find(shapeList[i]);
+			if (iter != shapeTextures.end())
+				m->material = iter->second;
+			else
 				AddNifShapeTexture(nif, shapeList[i]);
-			}
 		}
 	}
-	InvalidateRect(mGLWindow, NULL, FALSE);
+	Refresh();
 }
 
 void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName) {
 	int shader;
 	string texFile;
-	fromNif->GetTextureForShape((string)shapeName, texFile, 0);
-	auto sb = fromNif->GetShaderForShape((string)shapeName);
+	fromNif->GetTextureForShape(shapeName, texFile, 0);
+	auto sb = fromNif->GetShaderForShape(shapeName);
 	if (sb && sb->IsSkinShader())
 		shader = 1;
 	else
 		shader = 0;
 
-	SetShapeTexture((string)shapeName, baseDataPath + "textures\\" + texFile, shader);
-}
-
-void PreviewWindow::Create(const string& title) {
-	if (!has_registered)
-		registerClass();
-
-	RECT ownerRect;
-	GetWindowRect(hOwner, &ownerRect);
-
-	int sX = GetSystemMetrics(SM_CXDLGFRAME) * 2;
-	int sY = GetSystemMetrics(SM_CYDLGFRAME) * 2;
-	sY += GetSystemMetrics(SM_CYSMCAPTION);
-	mHwnd = CreateWindowExA(0, "GL_PREVIEW_WINDOW", title.c_str(), WS_OVERLAPPED | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_SYSMENU, ownerRect.left + 20, 0, 768 + sX, 768 + sY, NULL, NULL, GetModuleHandle(NULL), NULL);
-	SetWindowLong(mHwnd, GWL_USERDATA, (LONG)this);
-
-	//query multisample caps just once to avoid laggy window activation.
-	if (!gls.MultiSampleQueried()) {
-		HWND queryMSWndow = CreateWindowA("STATIC", "Multisampletester", WS_CHILD | SS_OWNERDRAW | SS_NOTIFY, 0, 0, 768, 768, mHwnd, 0, GetModuleHandle(NULL), NULL);
-		gls.QueryMultisample(queryMSWndow);
-		DestroyWindow(queryMSWndow);
-	}
-
-	mGLWindow = CreateWindowA("STATIC", "Model Preview", WS_CHILD | WS_VISIBLE | SS_OWNERDRAW | SS_NOTIFY, 0, 0, 768, 768, mHwnd, 0, GetModuleHandle(NULL), NULL);
-	OldViewProc = (WNDPROC)SetWindowLong(mGLWindow, GWL_WNDPROC, (LONG)GLWindowProc);
-	SetWindowLong(mGLWindow, GWL_USERDATA, (LONG)this);
-
-	gls.Initialize(mGLWindow);
-	gls.SetStartingView(vec3(0, -5.0f, -15.0f), 768, 768, 65.0);
-}
-
-void PreviewWindow::registerClass() {
-	WNDCLASSEX wcex;
-	HINSTANCE hinst = GetModuleHandle(NULL);
-
-	wcex.cbSize = sizeof(WNDCLASSEX);
-
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = GLPreviewWindowWndProc;
-	wcex.cbClsExtra = 0;
-	wcex.cbWndExtra = 0;
-	wcex.hInstance = hinst;
-	wcex.hIcon = LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
-	wcex.hCursor = LoadCursor(NULL, IDC_ARROW);
-	wcex.hbrBackground = (HBRUSH)(COLOR_BTNFACE + 1);
-	wcex.lpszMenuName = NULL;
-	wcex.lpszClassName = _T("GL_PREVIEW_WINDOW");
-	wcex.hIconSm = LoadIcon(NULL, MAKEINTRESOURCE(IDI_APPLICATION));
-
-	RegisterClassEx(&wcex);
-	has_registered = true;
+	SetShapeTexture(shapeName, baseDataPath + "textures\\" + texFile, shader);
 }
 
 void PreviewWindow::RightDrag(int dX, int dY) {
 	gls.TurnTableCamera(dX);
 	gls.PitchCamera(dY);
-	InvalidateRect(mGLWindow, NULL, FALSE);
+	Refresh();
 }
 
 void PreviewWindow::LeftDrag(int dX, int dY) {
 	gls.PanCamera(dX, dY);
-	InvalidateRect(mGLWindow, NULL, FALSE);
+	Refresh();
 }
 
 void PreviewWindow::TrackMouse(int X, int Y) {
 	gls.UpdateCursor(X, Y);
-	InvalidateRect(mGLWindow, NULL, FALSE);
+	Refresh();
 }
 
 void PreviewWindow::MouseWheel(int dW) {
 	gls.DollyCamera(dW);
-	InvalidateRect(mGLWindow, NULL, FALSE);
+	Refresh();
 }
 
 void PreviewWindow::Pick(int X, int Y) {
@@ -228,115 +175,85 @@ void PreviewWindow::Pick(int X, int Y) {
 	len = sqrt(camVec.x*camVec.x + camVec.y*camVec.y + camVec.z*camVec.z);
 
 	gls.AddVisRay(camVec, dirVec, len);
-	InvalidateRect(mGLWindow, NULL, FALSE);
+	Refresh();
 }
 
-void PreviewWindow::Close() {
-	DestroyWindow(this->mHwnd);
+void PreviewWindow::OnClose(wxCloseEvent& event) {
+	Destroy();
+	canvas = nullptr;
+	app->PreviewClosed(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
 }
 
-LRESULT CALLBACK GLPreviewWindowWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	PreviewWindow* p = (PreviewWindow*)GetWindowLong(hWnd, GWL_USERDATA);
-	LPDRAWITEMSTRUCT pDIS;
-	switch (message)
-	{
-	case WM_ERASEBKGND:
-		return TRUE;
-		break;
-	case WM_LBUTTONDOWN:
-		return TRUE;
-		break;
-	case WM_SIZE:
-		p->SetSize(LOWORD(lParam), HIWORD(lParam));
-		break;
-	case WM_DRAWITEM:
-		pDIS = (LPDRAWITEMSTRUCT)lParam;
-		p->Render();
-		break;
-	case WM_DESTROY:
-		if (p->isSmall)
-			PostMessage(p->hOwner, MSG_PREVIEWCLOSING, 0, (LPARAM)p);
-		else
-			PostMessage(p->hOwner, MSG_BIGPREVIEWCLOSING, 0, (LPARAM)p);
-		break;
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
+BEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
+	EVT_CLOSE(PreviewWindow::OnClose)
+END_EVENT_TABLE();
+
+PreviewCanvas::PreviewCanvas(PreviewWindow* pw, const int* attribs)
+	: wxGLCanvas(pw, wxID_ANY, attribs, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
+		previewWindow(pw) {
+}
+
+void PreviewCanvas::OnPaint(wxPaintEvent& event) {
+	// Initialize OpenGL the first time the window is painted.
+	// We unfortunately can't initialize it before the window is shown.
+	// We could register for the EVT_SHOW event, but unfortunately it
+	// appears to only be called after the first few EVT_PAINT events.
+	// It also isn't supported on all platforms.
+	if (firstPaint) {
+		firstPaint = false;
+		previewWindow->OnShown();
 	}
-	return 0;
+	previewWindow->Render();
 }
 
-LRESULT CALLBACK GLWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-	static bool rbuttonDown = false;
-	static bool lbuttonDown = false;
-	static bool isLDragging = false;
-	static int lastX;
-	static int lastY;
-	int x;
-	int y;
-	PreviewWindow* p = (PreviewWindow*)GetWindowLong(hWnd, GWL_USERDATA);
-
-	switch (message) {
-	case WM_RBUTTONDOWN:
-		rbuttonDown = true;
-		lastX = GET_X_LPARAM(lParam);
-		lastY = GET_Y_LPARAM(lParam);
-		SetCapture(hWnd);
+void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
+	int key = event.GetKeyCode();
+	switch (key) {
+	case 'N':
+		previewWindow->ToggleSmoothSeams();
 		break;
-	case WM_RBUTTONUP:
-		rbuttonDown = false;
-		lastX = GET_X_LPARAM(lParam);
-		lastY = GET_Y_LPARAM(lParam);
-		ReleaseCapture();
+	case 'T':
+		previewWindow->ToggleTextures();
 		break;
-	case WM_LBUTTONDOWN:
-		lbuttonDown = true;
-		SetCapture(hWnd);
+	case 'W':
+		previewWindow->ToggleWireframe();
 		break;
-	case WM_LBUTTONUP:
-		lbuttonDown = false;
-		isLDragging = false;
-		ReleaseCapture();
+	case 'L':
+		previewWindow->ToggleLighting();
 		break;
-	case WM_MOUSEMOVE:
-		if (p->HasFocus())
-			SetFocus(hWnd);
-		x = GET_X_LPARAM(lParam);
-		y = GET_Y_LPARAM(lParam);
-		if (rbuttonDown)
-			p->RightDrag(x - lastX, y - lastY);
-		if (lbuttonDown) {
-			isLDragging = true;
-			p->LeftDrag(x - lastX, y - lastY);
-		}
-		if (!rbuttonDown && !lbuttonDown)
-			p->TrackMouse(x, y);
-		lastX = x;
-		lastY = y;
+	case 'Q':
+		previewWindow->ToggleEditMode();
 		break;
-	case WM_KEYUP:
-		switch (wParam) {
-		case 0x4e:
-			p->ToggleSmoothSeams();
-			break;
-		case 0x54:
-			p->ToggleTextures();
-			break;
-		case 0x57:
-			p->ToggleWireframe();
-			break;
-		case 0x4c:
-			p->ToggleLighting();
-			break;
-		case 0x51:
-			p->ToggleEditMode();
-			break;
-		}
-		break;
-	case WM_MOUSEWHEEL:
-		p->MouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
-		break;
-	default:
-		return CallWindowProc(OldViewProc, hWnd, message, wParam, lParam);
 	}
-	return 0;
 }
+
+void PreviewCanvas::OnMotion(wxMouseEvent& event) {
+	if (event.LeftIsDown()) {
+		auto delta = event.GetPosition() - lastMousePosition;
+		previewWindow->LeftDrag(delta.x, delta.y);
+	}
+	if (event.RightIsDown()) {
+		auto delta = event.GetPosition() - lastMousePosition;
+		previewWindow->RightDrag(delta.x, delta.y);
+	}
+	if (!event.LeftIsDown() && !event.RightIsDown()) {
+		previewWindow->TrackMouse(event.GetX(), event.GetY());
+	}
+	lastMousePosition = event.GetPosition();
+}
+
+void PreviewCanvas::OnMouseWheel(wxMouseEvent& event) {
+	previewWindow->MouseWheel(event.GetWheelRotation());
+}
+
+void PreviewCanvas::OnResized(wxSizeEvent& event) {
+	previewWindow->Resized(event.GetSize().GetWidth(), event.GetSize().GetHeight());
+}
+
+BEGIN_EVENT_TABLE(PreviewCanvas, wxGLCanvas)
+	EVT_KEY_UP(PreviewCanvas::OnKeyUp)
+	EVT_MOTION(PreviewCanvas::OnMotion)
+	EVT_MOUSEWHEEL(PreviewCanvas::OnMouseWheel)
+	EVT_PAINT(PreviewCanvas::OnPaint)
+	EVT_SIZE(PreviewCanvas::OnResized)
+END_EVENT_TABLE();

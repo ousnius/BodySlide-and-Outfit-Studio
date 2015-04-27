@@ -27,45 +27,49 @@ distribution.
 #include "GLSurface.h"
 #include "NifFile.h"
 
+#include <wx/frame.h>
+#include <wx/glcanvas.h>
+
 #define SMALL_PREVIEW 0
 #define BIG_PREVIEW 1
 
-LRESULT CALLBACK GLPreviewWindowWndProc(HWND, UINT, WPARAM, LPARAM);
-LRESULT CALLBACK GLWindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+class BodySlideApp;
+class PreviewCanvas;
 
-class PreviewWindow
+class PreviewWindow : public wxFrame
 {
-	static bool has_registered;
-	HWND mHwnd;
-	HWND mGLWindow;
+	BodySlideApp* app{nullptr};
+	PreviewCanvas* canvas{nullptr};
+	wxGLContext* context{nullptr};
+
 	GLSurface gls;
-	void registerClass();
-	unordered_map<string, int> shapeTexIds;
+	unordered_map<string, GLMaterial*> shapeTextures;
 	string baseDataPath;
+	bool isSmall;
+
+	DECLARE_EVENT_TABLE();
+	static const char* GetTitle(char previewType);
+	static wxSize GetDefaultSize();
 
 public:
-	bool isSmall;
-	HWND hOwner;
-	PreviewWindow();
-	PreviewWindow(HWND owner, NifFile* nif, char PreviewType = SMALL_PREVIEW, char* shapeName = NULL);
-	PreviewWindow(HWND owner, vector<vector3>* verts, vector<triangle>* tris, float scale = 1.0f);
+	PreviewWindow(BodySlideApp* app, char previewType = SMALL_PREVIEW, char* shapeName = NULL);
 	~PreviewWindow();
+
+	void OnShown();
 
 	void SetBaseDataPath(const string& path) {
 		baseDataPath = path;
 	}
 
-	void Create(const string& title);
-
 	void Update(int shapeIndex, vector<vector3>* verts, vector<vector2>* uvs = NULL) {
 		gls.Update(shapeIndex, verts, uvs);
 		string n = gls.GetMeshName(shapeIndex);
 		gls.GetMesh(n)->SmoothNormals();
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Refresh();
 	}
 
 	void Refresh() {
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Render();
 	}
 
 	void AddMeshDirect(mesh* m);
@@ -79,36 +83,35 @@ public:
 		if (m) { // the mesh could be missing if a zap slider removes it
 			gls.GetMesh(shapeName)->SmoothNormals();
 		}
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Refresh();
 	}
 
-	void SetShapeTexture(string& shapeName, const string& texturefile, int shaderType = 0) {
+	void SetShapeTexture(const string& shapeName, const string& texturefile, int shaderType = 0) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		int mat;
+		GLMaterial* mat;
 		if (shaderType == 0)
 			mat = gls.AddMaterial(texturefile, "res\\defvshader.vs", "res\\defshader.fs");
 		else
 			mat = gls.AddMaterial(texturefile, "res\\defvshader.vs", "res\\skinshader.fs");
 
-		m->MatRef = mat;
-		shapeTexIds[shapeName] = mat;
+		m->material = mat;
+		shapeTextures[shapeName] = mat;
 	}
 
 	void Render() {
 		gls.RenderOneFrame();
 	}
 
-	void SetSize(unsigned int w, unsigned int h) {
-		SetWindowPos(mGLWindow, 0, 0, 0, w, h, SWP_NOMOVE | SWP_NOZORDER);
+	void Resized(unsigned int w, unsigned int h) {
 		gls.SetSize(w, h);
 	}
 
 	void ToggleSmoothSeams() {
 		mesh* m;
-		for (auto s : shapeTexIds) {
+		for (auto s : shapeTextures) {
 			m = gls.GetMesh(s.first);
 			if (m) {
 				if (m->smoothSeamNormals)
@@ -118,7 +121,7 @@ public:
 				m->SmoothNormals();
 			}
 		}
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Refresh();
 	}
 	void ToggleSmoothSeams(mesh* m) {
 		if (m) {
@@ -128,22 +131,22 @@ public:
 				m->smoothSeamNormals = true;
 			m->SmoothNormals();
 		}
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Refresh();
 	}
 
 	void ToggleTextures() {
 		gls.ToggleTextures();
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Refresh();
 	}
 
 	void ToggleWireframe() {
 		gls.ToggleWireframe();
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Refresh();
 	}
 
 	void ToggleLighting(){
 		gls.ToggleLighting();
-		InvalidateRect(mGLWindow, NULL, FALSE);
+		Refresh();
 	}
 
 	void ToggleEditMode() {
@@ -154,11 +157,7 @@ public:
 
 	}
 
-	void Close();
-
-	bool HasFocus() {
-		return(mHwnd == GetFocus());
-	}
+	void OnClose(wxCloseEvent& event);
 
 	void RightDrag(int dX, int dY);
 	void LeftDrag(int dX, int dY);
@@ -166,4 +165,21 @@ public:
 	void TrackMouse(int X, int Y);
 
 	void Pick(int X, int Y);
+};
+
+class PreviewCanvas : public wxGLCanvas {
+	PreviewWindow* previewWindow{nullptr};
+	bool firstPaint{true};
+	wxPoint lastMousePosition;
+
+public:
+	PreviewCanvas(PreviewWindow* pw, const int* attribs);
+
+	void OnPaint(wxPaintEvent& event);
+	void OnKeyUp(wxKeyEvent& event);
+	void OnMotion(wxMouseEvent& event);
+	void OnMouseWheel(wxMouseEvent& event);
+	void OnResized(wxSizeEvent& event);
+
+	DECLARE_EVENT_TABLE();
 };

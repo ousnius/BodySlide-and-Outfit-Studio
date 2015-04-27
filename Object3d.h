@@ -1,10 +1,10 @@
 #pragma once
 
 #include <Windows.h>
-#include <gl/GL.h>
-#include <gl/GLU.h>
-#include <gl/glext.h>
-#include <gl/wglext.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+#include <GL/wglext.h>
 #include <string>
 #include <vector>
 #include <set>
@@ -37,7 +37,7 @@ struct vec3 {
 		y = Y;
 		z = Z;
 	}
-	vec3(vtx& other);
+	vec3(const vtx& other);
 
 	void Zero() {
 		x = y = z = 0.0f;
@@ -91,7 +91,7 @@ struct vec3 {
 		z -= other.z;
 		return (*this);
 	}
-	vec3 operator - (const vec3& other) {
+	vec3 operator - (const vec3& other) const {
 		vec3 tmp = (*this);
 		tmp -= other;
 		return tmp;
@@ -102,7 +102,7 @@ struct vec3 {
 		z += other.z;
 		return (*this);
 	}
-	vec3 operator + (const vec3& other) {
+	vec3 operator + (const vec3& other) const {
 		vec3 tmp = (*this);
 		tmp += other;
 		return tmp;
@@ -113,7 +113,7 @@ struct vec3 {
 		z *= val;
 		return(*this);
 	}
-	vec3 operator * (float val) {
+	vec3 operator * (float val) const {
 		vec3 tmp = (*this);
 		tmp *= val;
 		return tmp;
@@ -124,7 +124,7 @@ struct vec3 {
 		z /= val;
 		return (*this);
 	}
-	vec3 operator / (float val) {
+	vec3 operator / (float val) const {
 		vec3 tmp = (*this);
 		tmp /= val;
 		return tmp;
@@ -770,3 +770,17 @@ struct IntersectResult {
 	vec3 HitCoord;
 	AABBTree::AABBTreeNode* bvhNode;
 };
+
+vec3& vec3::operator =(const vtx& other) {
+	x = other.x;
+	y = other.y;
+	z = other.z;
+	return (*this);
+}
+
+vec3& vec3::operator += (const vtx& other) {
+	x += other.x;
+	y += other.y;
+	z += other.z;
+	return (*this);
+}

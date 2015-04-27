@@ -1,8 +1,8 @@
 #pragma once
 #include "stdafx.h"
-#include <gl/GL.h>
-#include <gl/GLU.h>
-#include <gl/glext.h>
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
 #include <string>
 #include <fstream>
 #include "Object3d.h"
@@ -140,7 +140,7 @@ public:
 		shader = new GLShader(vertShaderProg, fragShaderProg);
 	}
 
-	void ActivateTextures(vec2* pTexCoord, GLfloat largestAF = NULL) {
+	void ActivateTextures(vec2* pTexCoord, GLfloat largestAF = 0) {
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texRef[0]);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);

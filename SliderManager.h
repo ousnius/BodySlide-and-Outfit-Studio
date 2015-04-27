@@ -77,8 +77,8 @@ public:
 		return presetCollection.SavePreset(filePath, presetName, sliderSetName, assignGroups);
 	}
 
-	void SetSliderPreset(const string& presetName, const string& slider, float big = -1, float small = -1) {
-		presetCollection.SetSliderPreset(presetName, slider, big, small);
+	void SetSliderPreset(const string& presetName, const string& slider, float big = -1, float little = -1) {
+		presetCollection.SetSliderPreset(presetName, slider, big, little);
 	}
 
 	float GetBigPresetValue(const string& presetName, const string& sliderName, float defVal = 0.0f);

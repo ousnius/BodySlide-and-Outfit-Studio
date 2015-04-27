@@ -1,48 +1,25 @@
 #include "SliderGroup.h"
+#include "XmlFinder.h"
 
 int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 	groups.clear();
-	TiXmlDocument doc;
 
-	string filter = basePath + "\\*.xml";
-
-	WIN32_FIND_DATAA wfd;
-	HANDLE hfind;
-
-	hfind = FindFirstFileA(filter.c_str(), &wfd);
-	DWORD searchStatus = 0;
-	string fileName;
-	vector<string> gNames;
-
-	if (hfind == INVALID_HANDLE_VALUE) {
-		return 1;
-	}
-	while (searchStatus != ERROR_NO_MORE_FILES) {
-		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-			continue;
-		else {
-			fileName = basePath + "\\";
-			fileName += wfd.cFileName;
-
-			SliderSetGroupFile f(fileName);
-			gNames.clear();
-			f.GetGroupNames(gNames);
-			for (auto g : gNames) {
-				SliderSetGroup ssg;
-				f.GetGroup(g, ssg);
-				if (groups.find(g) != groups.end())
-					groups[g].MergeMembers(ssg);
-				else
-					groups[g] = move(ssg);
-			}
+	XmlFinder finder(basePath);
+	while (!finder.atEnd()) {
+		string fileName = finder.next();
+		SliderSetGroupFile f(fileName);
+		vector<string> gNames;
+		f.GetGroupNames(gNames);
+		for (auto g : gNames) {
+			SliderSetGroup ssg;
+			f.GetGroup(g, ssg);
+			if (groups.find(g) != groups.end())
+				groups[g].MergeMembers(ssg);
+			else
+				groups[g] = move(ssg);
 		}
-		if (!FindNextFileA(hfind, &wfd))
-			searchStatus = GetLastError();
-		else
-			searchStatus = 0;
 	}
-	FindClose(hfind);
-	return 0;
+	return finder.hadError() ? 0 : 1;
 }
 
 int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {

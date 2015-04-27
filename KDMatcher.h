@@ -93,7 +93,7 @@ public:
 	vtx* v;
 	unsigned short vertex_index;
 	float distance;
-	bool operator < (kd_query_result& other) {
+	bool operator < (const kd_query_result& other) const {
 		return distance < other.distance;
 	}
 	//static bool distLess(kd_query_result r1, kd_query_result r2) { return r1.distance < r2.distance; }

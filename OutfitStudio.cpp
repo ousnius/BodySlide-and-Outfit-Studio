@@ -422,36 +422,6 @@ void OutfitStudio::SelectShape(const string& shapeName) {
 	UpdateActiveShapeUI();
 }
 
-void OutfitStudio::OnShapeLoadDone(AsyncMonitor* monitor) {
-	OutfitStudioThreadMonitor* ostm = (OutfitStudioThreadMonitor*)monitor;
-	vector<vector3> v;
-	vector<tri> t;
-	vector<vector2> uv;
-	Proj->testFile.CopyDataForIndex(0, &v, &t, &uv);
-
-	vector<string> shapenames;
-	Proj->testFile.GetGroupList(shapenames);
-
-	if (uv.size() > 0)
-		glView->AddExplicitMesh(&v, &t, &uv, shapenames[0]);
-	else
-		glView->AddExplicitMesh(&v, &t, NULL, shapenames[0]);
-
-	activeShape = shapenames[0];
-	glView->SetActiveShape(shapenames[0]);
-
-	wxTreeItemId item = outfitShapes->AppendItem(shapesRoot, Proj->testFile._asyncFN);
-	wxTreeItemId subitem;
-
-	subitem = outfitShapes->AppendItem(item, shapenames[0]);
-	outfitShapes->SetItemState(subitem, 0);
-	outfitShapes->SelectItem(subitem);
-
-	UpdateActiveShapeUI();
-	glView->Refresh();
-	ostm->Delete();
-}
-
 void OutfitStudio::UpdateShapeSource(const string& shapeName, bool bIsOutfit) {
 	Proj->UpdateShapeFromMesh(shapeName, glView->GetMesh(shapeName), bIsOutfit);
 }
@@ -1581,12 +1551,12 @@ void OutfitStudio::OnOutfitVisToggle(wxTreeEvent& event) {
 	int state = outfitShapes->GetItemState(event.GetItem());
 	s = outfitShapes->GetItemText(event.GetItem()).ToAscii().data();
 
-	if ((GetKeyState(VK_MENU) & 0x8000) > 0) {
+	if (wxGetKeyState(WXK_ALT)) {
 		notSelf = true;
 		state = groupstate;
 	}
 
-	if ((GetKeyState(VK_CONTROL) & 0x8000) > 0) {
+	if (wxGetKeyState(WXK_CONTROL)) {
 		if (state == 2)
 			state = 0;
 		if (state == 1)
@@ -3164,8 +3134,10 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& event) {
 	}
 
 	outfitBones->GetSelections(selItems);
-	if (selItems.size() > 0)
-		OnOutfitBoneSelect(wxTreeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems[0]));
+	if (selItems.size() > 0) {
+		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems[0]);
+		OnOutfitBoneSelect(treeEvent);
+	}
 }
 
 void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& event) {
@@ -3395,13 +3367,13 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 	if (!m)
 		return;
 
-	int mat;
+	GLMaterial* mat;
 	if (shaderType == 0)
 		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\defshader.fs");
 	else
 		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\skinshader.fs");
 
-	m->MatRef = mat;
+	m->material = mat;
 }
 
 void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<vector3>* verts, bool updateBVH) {
@@ -3538,8 +3510,8 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 	//tweakBrush.setMirror(true);
 	savedBrush = activeBrush;
 
-	if ((GetKeyState(VK_CONTROL) & 0x8000) > 0) {
-		if ((GetKeyState(VK_MENU) & 0x8000) > 0) {
+	if (wxGetKeyState(WXK_CONTROL)) {
+		if (wxGetKeyState(WXK_ALT)) {
 			UnMaskBrush.setStrength(-maskBrush.getStrength());
 			activeBrush = &UnMaskBrush;
 		}
@@ -3548,12 +3520,12 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 		}
 	}
 	else if (activeBrush == &weightBrush) {
-		if ((GetKeyState(VK_MENU) & 0x8000) > 0) {
+		if (wxGetKeyState(WXK_ALT)) {
 			unweightBrush.refBone = os->GetActiveBone();
 			unweightBrush.setStrength(-weightBrush.getStrength());
 			activeBrush = &unweightBrush;
 		}
-		else if ((GetKeyState(VK_SHIFT) & 0x8000) > 0) {
+		else if (wxGetKeyState(WXK_SHIFT)) {
 			smoothWeightBrush.refBone = os->GetActiveBone();
 			smoothWeightBrush.setStrength(weightBrush.getStrength() * 15.0f);
 			activeBrush = &smoothWeightBrush;
@@ -3562,7 +3534,7 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 			weightBrush.refBone = os->GetActiveBone();
 		}
 	}
-	else if ((GetKeyState(VK_MENU) & 0x8000) > 0) {
+	else if (wxGetKeyState(WXK_ALT)) {
 		if (activeBrush == &standardBrush) {
 			activeBrush = &deflateBrush;
 		}
@@ -3574,7 +3546,7 @@ bool wxGLPanel::StartBrushStroke(wxPoint& screenPos) {
 			activeBrush = &UnMaskBrush;
 		}
 	}
-	else if (activeBrush != &weightBrush && ((GetKeyState(VK_SHIFT) & 0x8000) > 0)) {
+	else if (activeBrush != &weightBrush && wxGetKeyState(WXK_SHIFT)) {
 		activeBrush = &smoothBrush;
 	}
 
@@ -3902,7 +3874,7 @@ void wxGLPanel::OnSize(wxSizeEvent& event) {
 }
 
 void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
-	if ((GetKeyState('S') & 0x8000) > 0)  {
+	if (wxGetKeyState(wxKeyCode('S')))  {
 		wxPoint p = event.GetPosition();
 		int delt = event.GetWheelRotation();
 		if (delt < 0)
@@ -3939,7 +3911,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (rbuttonDown) {
 		isRDragging = true;
-		if ((GetKeyState(VK_SHIFT) & 0x8000) > 0) {
+		if (wxGetKeyState(WXK_SHIFT)) {
 			gls.PanCamera(x - lastX, y - lastY);
 		}
 		else {
@@ -3957,11 +3929,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			UpdateTransform(event.GetPosition());
 		}
 		else  {
-			if (Config.MatchValue("Input/LeftMousePan", "true")) {
-				//	if((GetKeyState(VK_SHIFT) & 0x8000) > 0) {
+			if (Config.MatchValue("Input/LeftMousePan", "true"))
 				gls.PanCamera(x - lastX, y - lastY);
-				//	}
-			}
 		}
 		Refresh();
 	}

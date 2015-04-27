@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <set>
 #include <limits>
+#include <wx/msgdlg.h>
 #ifdef _DEBUG
 #pragma comment (lib, "SOIL_d.lib")
 #else
@@ -17,27 +18,14 @@ PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringArb = NULL;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatArb = NULL;
 
 short GLSurface::multisampleState = 0;
+int GLSurface::numMultiSamples = 0;
 int GLSurface::pixelFormatMS = 0;
 
 
-vec3::vec3(vtx& other) {
+vec3::vec3(const vtx& other) {
 	x = other.x;
 	y = other.y;
 	z = other.z;
-}
-
-vec3& vec3::operator =(const vtx& other) {
-	x = other.x;
-	y = other.y;
-	z = other.z;
-	return (*this);
-}
-
-vec3& vec3::operator += (const vtx& other) {
-	x += other.x;
-	y += other.y;
-	z += other.z;
-	return (*this);
 }
 
 tri::tri() {
@@ -211,12 +199,11 @@ bool tri::IntersectSphere(vtx *vertref, vec3 &origin, float radius) {
 }
 
 GLSurface::GLSurface() {
-	hOwner = NULL;
-	hDC = NULL;
-	hRC = NULL;
 	mFov = 90.0f;
 	bEditMode = false;
 	bTextured = true;
+	bWireframe = false;
+	bLighting = true;
 	bMaskVisible = false;
 	bWeightColors = false;
 	cursorSize = 0.5f;
@@ -227,54 +214,78 @@ GLSurface::~GLSurface() {
 	Cleanup();
 }
 
-/* below code taken from NEHE's example vertex buffer code: http://nehe.gamedev.net/tutorial/vertex_buffer_objects/22002/ */
 bool GLSurface::IsExtensionSupported(char* szTargetExtension) {
+	// Note that there is a wxGLCanvas::IsExtensionSupported function,
+	// but it behaves like IsWGLExtensionSupported() below.
 	const unsigned char *pszExtensions = NULL;
 	const unsigned char *pszStart;
 	unsigned char *pszWhere, *pszTerminator;
 
 	// Get Extensions String
 	pszExtensions = glGetString(GL_EXTENSIONS);
+	if (!pszExtensions) {
+		GLint numExtensions = 0;
+		glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
+		return numExtensions < 0 ? true : false;
+	}
 
 	// Search The Extensions String For An Exact Copy
 	pszStart = pszExtensions;
 	for (;;) {
 		pszWhere = (unsigned char*)strstr((const char*)pszStart, szTargetExtension);
 		if (!pszWhere)
-			break;
+			return false;
 		pszTerminator = pszWhere + strlen(szTargetExtension);
 		if (pszWhere == pszStart || *(pszWhere - 1) == ' ')
 			if (*pszTerminator == ' ' || *pszTerminator == '\0')
 				return true;
 		pszStart = pszTerminator;
 	}
-	return false;
 }
 
 bool GLSurface::IsWGLExtensionSupported(char* szTargetExtension, HDC refDC) {
-	const char *pszExtensions = NULL;
-	const char *pszStart;
-	char *pszWhere, *pszTerminator;
-	wglGetExtensionsStringArb = (PFNWGLGETEXTENSIONSSTRINGARBPROC)wglGetProcAddress("wglGetExtensionsStringARB");
-	if (wglGetExtensionsStringArb == 0)
-		return false;
+	return wxGLCanvas::IsExtensionSupported(szTargetExtension);
+}
 
-	// Get Extensions String
-	pszExtensions = wglGetExtensionsStringArb(refDC);
+const int* GLSurface::GetGLAttribs(wxWindow* parent) {
+	static bool initialized{false};
+	static int attribs[] = {
+		WX_GL_RGBA,
+		WX_GL_DOUBLEBUFFER,
+		WX_GL_MIN_RED, 8,
+		WX_GL_MIN_BLUE, 8,
+		WX_GL_MIN_GREEN, 8,
+		WX_GL_MIN_ALPHA, 8,
+		WX_GL_DEPTH_SIZE, 16,
+		WX_GL_LEVEL, 0,
+		WX_GL_SAMPLE_BUFFERS, 1,
+		WX_GL_SAMPLES, 8,
+		0,
+	};
 
-	// Search The Extensions String For An Exact Copy
-	pszStart = pszExtensions;
-	for (;;) {
-		pszWhere = (char*)strstr((const char*)pszStart, szTargetExtension);
-		if (!pszWhere)
-			break;
-		pszTerminator = pszWhere + strlen(szTargetExtension);
-		if (pszWhere == pszStart || *(pszWhere - 1) == ' ')
-			if (*pszTerminator == ' ' || *pszTerminator == '\0')
-				return true;
-		pszStart = pszTerminator;
+	if (initialized)
+		return attribs;
+
+	// The main thing we want to query support for is multisampling.
+	// Unfortunately, wxWidgets has rather crappy support for querying this
+	// on Windows.  On Windows, this can't be queried without creating a
+	// window first.  The normal wxGLCanvas::IsDisplaySupported() function
+	// doesn't support querying multisampling at all.
+	//
+	// Therefore we still use the Windows-specific QueryMultisample code
+	// here.
+	HWND queryMSWndow = CreateWindowA("STATIC", "Multisampletester", WS_CHILD | SS_OWNERDRAW | SS_NOTIFY, 0, 0, 768, 768, parent->GetHWND(), 0, GetModuleHandle(NULL), NULL);
+	QueryMultisample(queryMSWndow);
+	DestroyWindow(queryMSWndow);
+	if (numMultiSamples == 0) {
+		// Disable WX_GL_SAMPLE_BUFFERS and WX_GL_SAMPLES
+		attribs[14] = 0;
+	} else {
+		attribs[17] = numMultiSamples;
 	}
-	return false;
+
+	initialized = true;
+	return attribs;
 }
 
 bool GLSurface::QueryMultisample(HWND queryWnd) {
@@ -283,7 +294,7 @@ bool GLSurface::QueryMultisample(HWND queryWnd) {
 
 	PIXELFORMATDESCRIPTOR pfd;
 
-	hDC = GetDC(queryWnd);
+	HDC hDC = GetDC(queryWnd);
 
 	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
 	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
@@ -299,7 +310,7 @@ bool GLSurface::QueryMultisample(HWND queryWnd) {
 	int format = ChoosePixelFormat(hDC, &pfd);
 	SetPixelFormat(hDC, format, &pfd);
 
-	hRC = wglCreateContext(hDC);
+	HGLRC hRC = wglCreateContext(hDC);
 	wglMakeCurrent(hDC, hRC);
 	if (IsWGLExtensionSupported("WGL_ARB_multisample", hDC)) {
 
@@ -329,7 +340,9 @@ bool GLSurface::QueryMultisample(HWND queryWnd) {
 		if (valid && numFormats >= 1) {
 			wglMakeCurrent(NULL, NULL);
 			wglDeleteContext(hRC);
+			ReleaseDC(queryWnd, hDC);
 			multisampleState = 1;
+			numMultiSamples = 8;
 			return true;
 		}
 		iAttributes[16] = 4;							// no good, try 4x
@@ -337,7 +350,9 @@ bool GLSurface::QueryMultisample(HWND queryWnd) {
 		if (valid && numFormats >= 1) {
 			wglMakeCurrent(NULL, NULL);
 			wglDeleteContext(hRC);
+			ReleaseDC(queryWnd, hDC);
 			multisampleState = 1;
+			numMultiSamples = 4;
 			return true;
 		}
 		iAttributes[16] = 2;							// no good, try 2x
@@ -345,7 +360,9 @@ bool GLSurface::QueryMultisample(HWND queryWnd) {
 		if (valid && numFormats >= 1) {
 			wglMakeCurrent(NULL, NULL);
 			wglDeleteContext(hRC);
+			ReleaseDC(queryWnd, hDC);
 			multisampleState = 1;
+			numMultiSamples = 2;
 			return true;
 		}
 
@@ -354,6 +371,7 @@ bool GLSurface::QueryMultisample(HWND queryWnd) {
 	wglDeleteContext(hRC);
 	ReleaseDC(queryWnd, hDC);
 	multisampleState = 2;
+	numMultiSamples = 0;
 	return false;
 }
 
@@ -401,6 +419,16 @@ void GLSurface::initMaterial(vec3 diffusecolor) {
 	glMaterialfv(GL_FRONT, GL_SHININESS, shiny);
 }
 
+int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx, bool bUseDefaultShaders) {
+	canvas = can;
+	context = ctx;
+
+	canvas->SetCurrent(*context);
+
+	InitGLExtensions();
+	return InitGLSettings(bUseDefaultShaders);
+}
+
 int GLSurface::Initialize(HWND parentWnd, bool bUseDefaultShaders) {
 	PIXELFORMATDESCRIPTOR pfd;
 
@@ -421,24 +449,30 @@ int GLSurface::Initialize(HWND parentWnd, bool bUseDefaultShaders) {
 		SetPixelFormat(hDC, format, &pfd);
 		hRC = wglCreateContext(hDC);
 		wglMakeCurrent(hDC, hRC);
-
 	}
 	else {
 		SetPixelFormat(hDC, pixelFormatMS, &pfd);
 		hRC = wglCreateContext(hDC);
 		wglMakeCurrent(hDC, hRC);
-		glEnable(GL_MULTISAMPLE_ARB);
 	}
 
+	InitGLExtensions();
+	return InitGLSettings(bUseDefaultShaders);
+}
+
+void GLSurface::InitGLExtensions() {
 	bUseAF = IsExtensionSupported("GL_EXT_texture_filter_anisotropic");
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
 
 	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
 	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
 	glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glDisableVertexAttribArray");
+}
 
-	bWireframe = false;
-	bLighting = true;
+int GLSurface::InitGLSettings(bool bUseDefaultShaders) {
+	if (multisampleState != 1)
+		glEnable(GL_MULTISAMPLE_ARB);
+
 	glShadeModel(GL_SMOOTH);
 
 	glClearDepth(1.0f);
@@ -463,8 +497,7 @@ int GLSurface::Initialize(HWND parentWnd, bool bUseDefaultShaders) {
 	initMaterial(vec3(0.8f, 0.8f, 0.8f));
 
 	if (bUseDefaultShaders) { //NoImg.png
-		AddMaterial("res\\NoImg.png", "res\\defvshader.vs", "res\\defshader.fs");
-		//AddMaterial("res\\femalebody_1.dds", "res\\defvshader.vs", "res\\skinshader.fs");
+		noImage = resLoader.AddMaterial("res\\NoImg.png", "res\\defvshader.vs", "res\\defshader.fs");
 	}
 
 	return 0;
@@ -477,8 +510,7 @@ void GLSurface::Cleanup() {
 	for (int i = 0; i < overlays.size(); i++)
 		delete overlays[i];
 
-	for (int i = 0; i < materials.size(); i++)
-		delete materials[i];
+	resLoader.Cleanup();
 
 	if (hRC) {
 		wglMakeCurrent(NULL, NULL);
@@ -493,7 +525,10 @@ void GLSurface::Cleanup() {
 }
 
 void GLSurface::Begin() {
-	wglMakeCurrent(hDC, hRC);
+	if (canvas)
+		canvas->SetCurrent(*context);
+	else
+		wglMakeCurrent(hDC, hRC);
 }
 
 void GLSurface::SetStartingView(vec3 camPos, unsigned int vpWidth, unsigned int vpHeight, float fov) {
@@ -669,7 +704,7 @@ int GLSurface::CollideOverlay(int ScreenX, int ScreenY, vec3& outOrigin, vec3& o
 	return collided;
 }
 
-bool GLSurface::CollidePlane(int ScreenX, int ScreenY, vec3& outOrigin, vec3& inPlaneNormal, float inPlaneDist) {
+bool GLSurface::CollidePlane(int ScreenX, int ScreenY, vec3& outOrigin, const vec3& inPlaneNormal, float inPlaneDist) {
 	vec3 o;
 	vec3 d;
 	GetPickRay(ScreenX, ScreenY, d, o);
@@ -876,7 +911,10 @@ int GLSurface::RenderOneFrame() {
 		RenderMesh(m);
 	}
 
-	SwapBuffers(hDC);
+	if (canvas)
+		canvas->SwapBuffers();
+	else
+		SwapBuffers(hDC);
 	return 0;
 }
 
@@ -896,27 +934,36 @@ void GLSurface::RenderMesh(mesh* m) {
 		glEnable(GL_LIGHTING);
 
 	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire) {
-		if (m->MatRef >= 0)
-			materials[m->MatRef]->shader->Begin();
+		if (m->material)
+			m->material->shader->Begin();
 
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(vtx), &m->verts[0].x);
 		glEnableClientState(GL_NORMAL_ARRAY);
 		glNormalPointer(GL_FLOAT, sizeof(vtx), &m->verts[0].nx);
 
-		if (m->vcolors && bMaskVisible) {
-			glEnableVertexAttribArray(materials[m->MatRef]->shader->GetMaskAttribute());
-			glVertexAttribPointer(materials[m->MatRef]->shader->GetMaskAttribute(), 1, GL_FLOAT, GL_FALSE, sizeof(vec3), m->vcolors);
-		}
-		else
-			glDisableVertexAttribArray(materials[m->MatRef]->shader->GetMaskAttribute());
+		if (m->material) {
+			auto maskAttrib = m->material->shader->GetMaskAttribute();
+			if (maskAttrib != -1) {
+				if (m->vcolors && bMaskVisible) {
+					glEnableVertexAttribArray(maskAttrib);
+					glVertexAttribPointer(maskAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(vec3), m->vcolors);
+				}
+				else {
+					glDisableVertexAttribArray(maskAttrib);
+				}
+			}
 
-		if (m->vcolors && bWeightColors) {
-			glEnableVertexAttribArray(materials[m->MatRef]->shader->GetWeightAttribute());
-			glVertexAttribPointer(materials[m->MatRef]->shader->GetWeightAttribute(), 1, GL_FLOAT, GL_FALSE, sizeof(vec3), &m->vcolors[0].y);
+			auto weightAttrib = m->material->shader->GetWeightAttribute();
+			if (weightAttrib != -1) {
+				if (m->vcolors && bWeightColors) {
+					glEnableVertexAttribArray(weightAttrib);
+					glVertexAttribPointer(weightAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(vec3), &m->vcolors[0].y);
+				}
+				else
+					glDisableVertexAttribArray(weightAttrib);
+			}
 		}
-		else
-			glDisableVertexAttribArray(materials[m->MatRef]->shader->GetWeightAttribute());
 
 		if (!m->vcolors)
 			initMaterial(m->color);
@@ -926,14 +973,17 @@ void GLSurface::RenderMesh(mesh* m) {
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-			if (bUseAF)
-				materials[m->MatRef]->ActivateTextures(m->texcoord, largestAF);
-			else
-				materials[m->MatRef]->ActivateTextures(m->texcoord);
+			if (m->material) {
+				if (bUseAF)
+					m->material->ActivateTextures(m->texcoord, largestAF);
+				else
+					m->material->ActivateTextures(m->texcoord);
+			}
 		}
 		else {
 			glDisable(GL_BLEND);
-			materials[m->MatRef]->DeactivateTextures();
+			if (m->material)
+				m->material->DeactivateTextures();
 		}
 		elemPtr = &m->tris[0].p1;
 
@@ -943,8 +993,8 @@ void GLSurface::RenderMesh(mesh* m) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
 		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, elemPtr);
-		if (m->MatRef >= 0)
-			materials[m->MatRef]->shader->End();
+		if (m->material)
+			m->material->shader->End();
 
 		if (bWireframe) {
 			glDisable(GL_LIGHTING);
@@ -1056,7 +1106,7 @@ void GLSurface::AddMeshExplicit(vector<vector3>* verts, vector<triangle>* tris, 
 			m->texcoord[i].v = (*uvs)[i].v;
 		}
 		m->textured = true;
-		m->MatRef = 1;
+		m->material = skinMaterial;
 	}
 
 	// Load tris. Also sum face normals here.
@@ -1176,10 +1226,10 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, vec3* color, bool
 			m->texcoord[i].v = (*nifUvs)[i].v;
 		}
 		m->textured = true;
-		if (isSkin && materials.size() > 1)
-			m->MatRef = 1;
+		if (isSkin)
+			m->material = skinMaterial;
 		else
-			m->MatRef = 0;
+			m->material = noImage;
 	}
 
 	if (!nifNorms) {
@@ -1493,7 +1543,7 @@ int  GLSurface::AddVisRay(vec3& start, vec3& direction, float length) {
 	return overlays.size() - 1;
 }
 
-int GLSurface::AddVisPoint(vec3& p, const string& name) {
+int GLSurface::AddVisPoint(const vec3& p, const string& name) {
 	mesh* m;
 	int pmesh = GetOverlayID(name);
 	if (pmesh >= 0) {
@@ -1525,7 +1575,7 @@ int GLSurface::AddVisPoint(vec3& p, const string& name) {
 	return overlays.size() - 1;
 }
 
-int  GLSurface::AddVisTri(vec3& p1, vec3& p2, vec3& p3, const string& name) {
+int  GLSurface::AddVisTri(const vec3& p1, const vec3& p2, const vec3& p3, const string& name) {
 	mesh* m;
 	int trimesh = GetOverlayID(name);
 	if (trimesh >= 0) {
@@ -1570,7 +1620,7 @@ int  GLSurface::AddVisTri(vec3& p1, vec3& p2, vec3& p3, const string& name) {
 	return meshes.size() - 1;
 }
 
-int  GLSurface::AddVisCircle(vec3& center, vec3& normal, float radius, const string& name) {
+int  GLSurface::AddVisCircle(const vec3& center, const vec3& normal, float radius, const string& name) {
 	Mat4 rotMat;
 	int ringMesh = GetOverlayID(name);
 	if (ringMesh >= 0) {
@@ -1620,7 +1670,7 @@ int  GLSurface::AddVisCircle(vec3& center, vec3& normal, float radius, const str
 	return ringMesh;
 }
 
-int GLSurface::AddVis3dRing(vec3& center, vec3& normal, float holeRadius, float ringRadius, vec3& color, const string& name) {
+int GLSurface::AddVis3dRing(const vec3& center, const vec3& normal, float holeRadius, float ringRadius, const vec3& color, const string& name) {
 	int myMesh = GetOverlayID(name);
 	if (myMesh >= 0) {
 		delete overlays[myMesh];
@@ -1721,7 +1771,7 @@ int GLSurface::AddVis3dRing(vec3& center, vec3& normal, float holeRadius, float 
 }
 
 
-int GLSurface::AddVis3dArrow(vec3& origin, vec3& direction, float stemRadius, float pointRadius, float length, vec3& color, const string& name) {
+int GLSurface::AddVis3dArrow(const vec3& origin, const vec3& direction, float stemRadius, float pointRadius, float length, const vec3& color, const string& name) {
 	Mat4 rotMat;
 
 	int myMesh = GetOverlayID(name);
@@ -1903,20 +1953,13 @@ RenderMode GLSurface::SetMeshRenderMode(const string& name, RenderMode mode) {
 	return r;
 }
 
-int GLSurface::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
-	string errstr;
-	string matName = textureFile + fShaderFile;
-	if (texMats.find(matName) != texMats.end()) {
-		return texMats[matName];
-	}
-	unsigned int texid1 = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
-	if (!texid1) {
-		errstr = SOIL_last_result();
-		return 0;
-	}
-	texMats[matName] = materials.size();
-	materials.push_back(new GLMaterial(texid1, vShaderFile.c_str(), fShaderFile.c_str()));
-	return materials.size() - 1;
+GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
+	GLMaterial* mat = resLoader.AddMaterial(textureFile, vShaderFile, fShaderFile);
+	// Assume the first loaded material is always the skin material.
+	// (This seems like a hack, but matches the behavior of the old code.)
+	if (!skinMaterial)
+		skinMaterial = mat;
+	return mat;
 }
 
 void GLSurface::BeginEditMode() {

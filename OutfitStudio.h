@@ -417,8 +417,6 @@ public:
 
 	void SelectShape(const string& shapeName);
 
-	void OnShapeLoadDone(AsyncMonitor* monitor);
-
 	void UpdateShapeSource(const string& shapeName, bool bIsOutfit);
 	int PromptUpdateBase();
 
@@ -772,52 +770,4 @@ private:
 
 	// Any class wishing to process wxWidgets events must use this macro.
 	DECLARE_EVENT_TABLE()
-};
-
-class OutfitStudioThreadMonitor : public AsyncMonitor {
-protected:
-	wxStatusBar* notifyBar;
-	OutfitStudio* osRef;
-	bool cleanOK;
-
-public:
-	OutfitStudioThreadMonitor(OutfitStudio* outfitStudio, wxStatusBar* notifyBar) {
-		osRef = outfitStudio;
-		this->notifyBar = notifyBar;
-		cleanOK = false;
-	}
-	virtual ~OutfitStudioThreadMonitor() {}
-	/* Notify the host process that a thread has begun execution. */
-	virtual void Begin(const string& startStateMessage) {
-		stateMessage = startStateMessage;
-		notifyBar->SetLabel(stateMessage);
-	}
-
-	/* Update the status of the thread's ongoing execution.  */
-	virtual void Update(const string& updateStateMessage) {
-		stateMessage = updateStateMessage;
-		notifyBar->SetLabel(stateMessage);
-	}
-
-	/* Report an error state to the host process. */
-	virtual void Error(const string& errorStateMessage, int error) {
-		errorMessage = errorStateMessage;
-		errorCode = error;
-		notifyBar->SetLabel(errorStateMessage);
-	}
-
-	/* Report successful completion of the thread's work, along with an error code */
-	virtual void End(const string& endStateMessage, int code) {
-		stateMessage = endStateMessage;
-		errorCode = code;
-		notifyBar->SetLabel(stateMessage);
-		osRef->OnShapeLoadDone(this);
-		if (cleanOK) {
-			delete this;
-		}
-	}
-
-	void Delete() {
-		cleanOK = true;
-	}
 };

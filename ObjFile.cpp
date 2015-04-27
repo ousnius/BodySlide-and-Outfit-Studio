@@ -4,8 +4,6 @@ ObjFile::ObjFile() {
 	scale = vec3(1.0f, 1.0f, 1.0f);
 	offset = vec3(0.0f, 0.0f, 0.0f);
 	uvDupThreshold = 0.005f;
-
-	monitor = NULL_MONITOR;
 }
 
 ObjFile::~ObjFile() {
@@ -179,22 +177,16 @@ int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 }
 
 int ObjFile::Load(const string &inFn, const string& groupName) {
-	int error = 0;
-	monitor->Begin("Loading " + inFn);
-	fstream base(inFn.c_str(), ios_base::in | ios_base::binary);
-	if (base.fail()) {
-		error = 1;
-		monitor->Error("Failed to load obj file: " + inFn, 1);
-	}
-	else {
+	ifstream base(inFn.c_str(), ios_base::binary);
+	if (base.is_open())
 		Load(base, groupName);
-		base.close();
-	}
-	monitor->End("Obj file load complete.", error);
-	return error;
+	else
+		return 1;
+
+	return 0;
 }
 
-int ObjFile::Load(fstream &base, const string& groupName) {
+int ObjFile::Load(ifstream &base, const string& groupName) {
 	ObjData* di = new ObjData();
 
 	vec3 v;
@@ -240,11 +232,10 @@ int ObjFile::Load(fstream &base, const string& groupName) {
 		else
 			gotface = false;
 
+		// Loading Vertices
 		if (dump.compare("v") == 0) {
-			if (stage == 0) {
-				monitor->Update("Loading vertices...");
+			if (stage == 0)
 				stage++;
-			}
 
 			base >> verts[vc].x >> verts[vc].y >> verts[vc].z;
 			vc++;
@@ -267,19 +258,19 @@ int ObjFile::Load(fstream &base, const string& groupName) {
 					readgroup = false;
 			}
 		}
+		// Loading UVs
 		else if (dump.compare("vt") == 0) {
-			if (stage == 1) {
-				monitor->Update("Loading Uvs...");
+			if (stage == 1)
 				stage++;
-			}
+
 			base >> uvs[uvc].u >> uvs[uvc].v;
 			uvc++;
 		}
+		// Loading Faces
 		else if (dump.compare("f") == 0) {
-			if (stage == 2) {
-				monitor->Update("Loading faces...");
+			if (stage == 2)
 				stage++;
-			}
+
 			base >> facept1 >> facept2 >> facept3;
 			pos = facept1.find('/');
 			f[0] = atoi(facept1.c_str()) - 1;

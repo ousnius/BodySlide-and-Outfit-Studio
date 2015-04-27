@@ -1,4 +1,5 @@
 #include "SliderData.h"
+#include "XmlFinder.h"
 #include <sstream>
 
 SliderData::SliderData(const string& inName) {
@@ -554,76 +555,56 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 	string presetName, sliderName, applyTo;
 	double o, b, s;
 
-	string filefilter = basePath + "\\*.xml";
-
-	WIN32_FIND_DATAA wfd;
-	HANDLE hfind;
-	hfind = FindFirstFileA(filefilter.c_str(), &wfd);
-	DWORD searchStatus = 0;
-	string filename;
-
-	if (hfind == INVALID_HANDLE_VALUE)
-		return false;
-
-	while (searchStatus != ERROR_NO_MORE_FILES) {
-		if (wfd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+	XmlFinder finder(basePath);
+	while (!finder.atEnd()) {
+		string filename = finder.next();
+		if (!doc.LoadFile(filename.c_str()))
 			continue;
-		}
-		else {
-			filename = basePath + "\\"; //"SliderPresets\\";
-			filename += wfd.cFileName;
-			if (doc.LoadFile(filename.c_str())) {
-				root = doc.FirstChildElement("SliderPresets");
-				if (!root) return false;
-				e = root->FirstChildElement("Preset");
-				while (e) {
-					bool skip = true;
-					g = e->FirstChildElement("Group");
-					while (g) {
-						for (int i = 0; i < groupFilter.size(); i++) {
-							if (g->Attribute("name") == groupFilter[i]) {
-								skip = false;
-								break;
-							}
-						}
-						g = g->NextSiblingElement("Group");
-					}
-					if (e->Attribute("set") == sliderSet)
+		root = doc.FirstChildElement("SliderPresets");
+		if (!root)
+			continue;
+		e = root->FirstChildElement("Preset");
+		while (e) {
+			bool skip = true;
+			g = e->FirstChildElement("Group");
+			while (g) {
+				for (int i = 0; i < groupFilter.size(); i++) {
+					if (g->Attribute("name") == groupFilter[i]) {
 						skip = false;
-
-					if (skip) {
-						e = e->NextSiblingElement("Preset");
-						continue;
+						break;
 					}
-
-					presetName = e->Attribute("name");
-					setslider = e->FirstChildElement("SetSlider");
-					while (setslider) {
-						sliderName = setslider->Attribute("name");
-						applyTo = setslider->Attribute("size");
-						setslider->Attribute("value", &o);
-						o = o / 100.0;
-						s = b = -10000.0;
-						if (applyTo == "small")
-							s = o;
-						else if (applyTo == "big")
-							b = o;
-						else if (applyTo == "both")
-							s = b = o;
-						SetSliderPreset(presetName, sliderName, b, s);
-						setslider = setslider->NextSiblingElement("SetSlider");
-					}
-					e = e->NextSiblingElement("Preset");
 				}
+				g = g->NextSiblingElement("Group");
 			}
+			if (e->Attribute("set") == sliderSet)
+				skip = false;
+
+			if (skip) {
+				e = e->NextSiblingElement("Preset");
+				continue;
+			}
+
+			presetName = e->Attribute("name");
+			setslider = e->FirstChildElement("SetSlider");
+			while (setslider) {
+				sliderName = setslider->Attribute("name");
+				applyTo = setslider->Attribute("size");
+				setslider->Attribute("value", &o);
+				o = o / 100.0;
+				s = b = -10000.0;
+				if (applyTo == "small")
+					s = o;
+				else if (applyTo == "big")
+					b = o;
+				else if (applyTo == "both")
+					s = b = o;
+				SetSliderPreset(presetName, sliderName, b, s);
+				setslider = setslider->NextSiblingElement("SetSlider");
+			}
+			e = e->NextSiblingElement("Preset");
 		}
-		if (!FindNextFileA(hfind, &wfd))
-			searchStatus = GetLastError();
-		else
-			searchStatus = 0;
 	}
-	FindClose(hfind);
-	return true;
+	return !finder.hadError();
 }
 
 int PresetCollection::SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {
