@@ -33,9 +33,9 @@ public:
 };
 
 
-class wxGLPanel : public wxPanel {
+class wxGLPanel : public wxGLCanvas {
 public:
-	wxGLPanel(wxWindow* parent, const wxSize& size);
+	wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs);
 
 	void SetNotifyWindow(wxWindow* win);
 
@@ -73,12 +73,12 @@ public:
 		return activeBrush;
 	}
 
-	bool StartBrushStroke(wxPoint& screenPos);
-	void UpdateBrushStroke(wxPoint& screenPos);
+	bool StartBrushStroke(const wxPoint& screenPos);
+	void UpdateBrushStroke(const wxPoint& screenPos);
 	void EndBrushStroke();
 
-	bool StartTransform(wxPoint& screenPos);
-	void UpdateTransform(wxPoint& screenPos);
+	bool StartTransform(const wxPoint& screenPos);
+	void UpdateTransform(const wxPoint& screenPos);
 	void EndTransform();
 
 	bool UndoStroke();
@@ -304,6 +304,7 @@ public:
 
 
 private:
+	void OnShown();
 	void OnPaint(wxPaintEvent& event);
 	void OnEraseBackground(wxEraseEvent& event);
 	void OnSize(wxSizeEvent& event);
@@ -325,6 +326,7 @@ private:
 	void OnCaptureLost(wxMouseCaptureLostEvent& event);
 
 	GLSurface gls;
+	wxGLContext* context;
 
 	bool rbuttonDown;
 	bool lbuttonDown;
@@ -332,6 +334,7 @@ private:
 	bool isLDragging;
 	bool isMDragging;
 	bool isRDragging;
+	bool firstPaint{true};
 
 	int lastX;
 	int lastY;

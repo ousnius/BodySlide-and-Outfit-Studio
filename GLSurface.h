@@ -19,9 +19,6 @@
 using namespace std;
 
 class GLSurface {
-	HWND hOwner{nullptr};
-	HGLRC hRC{nullptr};
-	HDC hDC{nullptr};
 	wxGLCanvas* canvas{nullptr};
 	wxGLContext* context{nullptr};
 
@@ -35,9 +32,7 @@ class GLSurface {
 	GLfloat largestAF;
 
 	bool bUseVBO;
-	static short multisampleState;
-	static int numMultiSamples;
-	static int pixelFormatMS;
+	static bool multiSampleEnabled;
 
 	bool bWireframe;
 	bool bLighting;
@@ -66,6 +61,8 @@ class GLSurface {
 	void initMaterial(vec3 diffusecolor);
 	void InitGLExtensions();
 	int InitGLSettings(bool bUseDefaultShaders);
+	static int QueryMultisample(wxWindow* parent);
+	static int FindBestNumSamples(HDC hDC);
 
 	void DeleteMesh(int meshID) {
 		if (meshID < meshes.size()) {
@@ -205,14 +202,9 @@ public:
 		cursorSize = newsize;
 	}
 
-	static bool IsWGLExtensionSupported(char* szTargetExtension, HDC refDC);
+	static bool IsWGLExtensionSupported(char* szTargetExtension);
 	static bool IsExtensionSupported(char* szTargetExtension);
-	static bool MultiSampleQueried() {
-		return (multisampleState > 0);
-	}
-	static bool QueryMultisample(HWND queryWnd);		// must be a throwaway window, do not use the same hwnd as final context.
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context, bool bUseDefaultShaders = true);
-	int Initialize(HWND parentWnd, bool bUseDefaultShaders = true);
 	void Begin();
 	void Cleanup();
 
