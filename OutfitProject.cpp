@@ -1214,38 +1214,11 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 		}
 	}
 
-	// Clear shape and root transforms
-	vec3 trans, rootTrans;
-	float scale, rootScale;
-	baseNif.GetShapeTranslation(baseShapeName, trans);
-	baseNif.GetShapeScale(baseShapeName, scale);
-	baseNif.GetRootTranslation(rootTrans);
-	baseNif.GetRootScale(rootScale);
-	trans -= rootTrans; // Get shape translation includes the root translation
-
-	if (!rootTrans.IsZero()) {
-		baseNif.OffsetShape(baseShapeName, rootTrans);
-		baseNif.SetRootTranslation(vec3(0.0f, 0.0f, 0.0f));
-	}
-	if (rootScale != 1.0f) {
-		baseNif.ScaleShape(baseShapeName, rootScale);
-		baseNif.SetRootScale(1.0f);
-	}
-
-	if (!trans.IsZero()) {
-		baseNif.OffsetShape(baseShapeName, trans);
-		baseNif.SetShapeTranslation(baseShapeName, vec3(0.0f, 0.0f, 0.0f));
-	}
-	if (scale != 1.0f) {
-		baseNif.ScaleShape(baseShapeName, scale);
-		baseNif.SetShapeScale(baseShapeName, 1.0f);
-	}
-
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
 	//activeSet.LinkShapeTarget(shapeName, shapeName);
 
-	AutoOffset(false);
+	AutoOffset(baseNif);
 
 	return 0;
 }
@@ -1327,37 +1300,10 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 
 	baseShapeName = shape;
 
-	// Clear shape and root transforms
-	vec3 trans, rootTrans;
-	float scale, rootScale;
-	baseNif.GetRootTranslation(rootTrans);
-	baseNif.GetRootScale(rootScale);
-	baseNif.GetShapeTranslation(baseShapeName, trans);
-	baseNif.GetShapeScale(baseShapeName, scale);
-	trans -= rootTrans; // Get shape translation includes the root translation
-
-	if (!rootTrans.IsZero()) {
-		baseNif.OffsetShape(baseShapeName, rootTrans);
-		baseNif.SetRootTranslation(vec3(0.0f, 0.0f, 0.0f));
-	}
-	if (rootScale != 1.0f) {
-		baseNif.ScaleShape(baseShapeName, rootScale);
-		baseNif.SetRootScale(1.0f);
-	}
-
-	if (!trans.IsZero()) {
-		baseNif.OffsetShape(baseShapeName, trans);
-		baseNif.SetShapeTranslation(baseShapeName, vec3(0.0f, 0.0f, 0.0f));
-	}
-	if (scale != 1.0f) {
-		baseNif.ScaleShape(baseShapeName, scale);
-		baseNif.SetShapeScale(baseShapeName, 1.0f);
-	}
-
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
 
-	AutoOffset(false);
+	AutoOffset(baseNif);
 	return 0;
 }
 
@@ -1426,41 +1372,8 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 	}
 	OutfitShapes(workShapes);
 
-	////// Do some cleanup on the incoming Nif File.  ////////
-
-	// The root and shape translations are ignored by skyrim but not nifskope. Outfit studio also doesn't use them, so here we're just trying to make everything work
-	// ^ NOT TRUE, they aren't ignored (only for body shapes?)
-	vec3 rootTrans;
-	float rootScale;
-	workNif.GetRootTranslation(rootTrans);
-	workNif.GetRootScale(rootScale);
-
-	vec3 trans;
-	float scale;
-	for (auto s : workShapes) {
-		workNif.GetShapeTranslation(s, trans);
-		workNif.GetShapeScale(s, scale);
-		trans -= rootTrans; // Get shape translation includes the root translation
-
-		if (!rootTrans.IsZero())
-			workNif.OffsetShape(s, rootTrans);
-		if (rootScale != 1.0f)
-			workNif.ScaleShape(s, rootScale);
-
-		if (!trans.IsZero()) {
-			workNif.OffsetShape(s, trans);
-			workNif.SetShapeTranslation(s, vec3(0.0f, 0.0f, 0.0f));
-		}
-		if (scale != 1.0f) {
-			workNif.ScaleShape(s, scale);
-			workNif.SetShapeScale(s, 1.0f);
-		}
-	}
-	workNif.SetRootTranslation(vec3(0.0f, 0.0f, 0.0f));
-	workNif.SetRootScale(1.0f);
-
 	workAnim.LoadFromNif(&workNif);
-	AutoOffset(true);
+	AutoOffset(workNif);
 
 	// No shapes in nif file
 	if (workShapes.size() == 0)
@@ -1516,40 +1429,12 @@ int OutfitProject::AddNif(const string& filename) {
 	}
 	nif.GetShapeList(workShapes);
 
-	// The root and shape translations are ignored by skyrim but not nifskope. Outfit Studio also doesn't use them, so here we're just trying to make everything work
-	// ^ NOT TRUE, they aren't ignored (only for body shapes?)
-	vec3 rootTrans;
-	float rootScale;
-	nif.GetRootTranslation(rootTrans);
-	nif.GetRootScale(rootScale);
-
-	vec3 trans;
-	float scale;
+	AutoOffset(nif);
 	for (auto s : workShapes) {
-		nif.GetShapeTranslation(s, trans);
-		nif.GetShapeScale(s, scale);
-		trans -= rootTrans; // Get shape translation includes the root translation
-
-		if (!rootTrans.IsZero())
-			nif.OffsetShape(s, rootTrans);
-		if (rootScale != 1.0f)
-			nif.ScaleShape(s, rootScale);
-
-		if (!trans.IsZero()) {
-			nif.OffsetShape(s, trans);
-			nif.SetShapeTranslation(s, vec3(0.0f, 0.0f, 0.0f));
-		}
-		if (scale != 1.0f) {
-			nif.ScaleShape(s, scale);
-			nif.SetShapeScale(s, 1.0f);
-		}
-
 		workNif.CopyShape(s, nif, s);
 		workAnim.LoadFromNif(&nif, s);
 	}
 	nif.Clear();
-
-	AutoOffset(true);
 
 	// No shapes in nif file
 	if (workShapes.size() == 0)
@@ -1619,142 +1504,41 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	return 0;
 }
 
-void OutfitProject::AutoOffset(bool IsOutfit) {
-	vector<string> outfitShapes;
-	const AnimBone* outfitBone = NULL;
-	string foundShape;
-	vec3 offset;
+void OutfitProject::AutoOffset(NifFile& nif) {
+	vector<string> shapes;
+	nif.GetShapeList(shapes);
 
-	NifFile nif;
-	if (IsOutfit) {
-		nif.CopyFrom(workNif);
-		OutfitShapes(outfitShapes);
-	}
-	else {
-		nif.CopyFrom(baseNif);
-		RefShapes(outfitShapes);
-	}
+	bool applyOverallSkin = true;
+	wxMenuBar* menu = (wxMenuBar*)owner->GetMenuBar();
+	if (menu)
+		applyOverallSkin = menu->IsChecked(XRCID("applyOverallSkin"));
 
-	//string bone = "";
-	//vector<string> shapes;
-	//vector<string> nifBones;
-	//vector<string> skelBones;
+	for (auto s : shapes) {
+		Mat4 localGeom;
+		nif.GetShapeTransform(s, localGeom);
 
-	//if (!AnimSkeleton::getInstance().GetActiveBoneNames(skelBones))
-	//	return;
+		vec3 dummyVec3;
+		float dummyFloat;
+		skin_transform xFormSkinAll;
+		nif.GetShapeBoneTransform(s, -1, xFormSkinAll, dummyVec3, dummyFloat);
 
-	//if (!nif.GetShapeList(shapes))
-	//	return;
+		Mat4 skinAllInv = xFormSkinAll.ToMatrix().Inverse();
 
-	//for (auto s: shapes) {
-	//	if (!nif.GetShapeBoneList(s, nifBones))
-	//		return;
-	//	for (auto nb: nifBones) {
-	//		auto it = find_if(skelBones.begin(), skelBones.end(), [&](string & sb){ return _stricmp(sb.c_str(), nb.c_str()) == 0; }); 
-	//		if (it != skelBones.end()) {
-	//			bone = *it;
-	//			break;
-	//		}
-	//	}
-	//	if (bone != "")
-	//		break;
-	//	nifBones.clear();
-	//}
-
-	//if (bone == "") {
-	//	//wxMessageBox("No matching bone comparison bone found! Outfit might need manual offset correction.", "Auto Offset");
-	//	return;
-	//}
-
-	//vector<vec3> nifRot;
-	//vec3 nifTrans;
-	//float nifScale;
-	//if (!nif.GetNodeTransform(bone, nifRot, nifTrans, nifScale))
-	//	return;
-
-	//AnimBone skelBone;
-	//if (!AnimSkeleton::getInstance().GetBone(bone, skelBone))
-	//	return;
-
-	//offset = nifTrans;
-	//offset -= skelBone.trans;
-
-	//wxMessageBox("Bone: " + bone + ", " + to_string(skelBone.trans.x) + ", " + to_string(skelBone.trans.y) + ", " + to_string(skelBone.trans.z), "Auto Offset");
-
-	/*
-	//auto baseBone = baseAnim.GetShapeBone(baseShapeName, "NPC Pelvis [Pelv]");
-
-	if(baseBone == NULL)
-	return;
-	for(auto s: outfitShapes) {
-	outfitBone  = workAnim.GetShapeBone(s, "NPC Pelvis [Pelv]");
-	if(outfitBone) {
-	foundShape = s;
-	break;
-	}
-	}
-	if(outfitBone == NULL)
-	return;
-
-	offset = workAnim.shapeSkinning[foundShape].boneWeights[outfitBone->order].xform.translation;
-	offset -= baseAnim.shapeSkinning[baseShapeName].boneWeights[baseBone->order].xform.translation;
-	*/
-
-	for (auto s : outfitShapes) {
-		skin_transform xformOverall;
-		vec3 u;
-		float f;
 		vector<vec3> verts;
-		Mat4 t;
-
-		if (nif.GetShapeBoneTransform(s, -1, xformOverall, u, f)) {
-			t = xformOverall.ToMatrixSkin();
-
-			nif.GetVertsForShape(s, verts);
-			for (auto& v : verts) {
-				v = t * v;
-			}
-			nif.SetVertsForShape(s, verts);
-
-			xformOverall.translation.Zero();
-			xformOverall.rotation[0] = vec3(1.0f, 0.0f, 0.0f);
-			xformOverall.rotation[1] = vec3(0.0f, 1.0f, 0.0f);
-			xformOverall.rotation[2] = vec3(0.0f, 0.0f, 1.0f);
-			xformOverall.scale = 1.0f;
-			nif.SetShapeBoneTransform(s, -1, xformOverall, u, f);
+		nif.GetVertsForShape(s, verts);
+		for (auto &v : verts) {
+			if (applyOverallSkin)
+				v = (localGeom * skinAllInv) * v;
+			else
+				v = localGeom * v;
 		}
-		//nif.OffsetShape(s, offset * -1.0f);
+		nif.SetVertsForShape(s, verts);
 
-		//// WIP
-		//skin_transform xformBone, xformSkin;
-		//vector<vec3> vertices;
-		//vector<string> bones;
-		//nif.GetVertsForShape(s, vertices);
-		//nif.GetShapeBoneList(s, bones);
-
-		//for (auto b: bones) {
-		//	nif.GetShapeBoneTransform(s, b, xformBone, u, f);
-		//	AnimSkeleton::getInstance().GetSkinTransform(b, xformSkin);
-		//	//xformSkin = workAnim.shapeSkinning[s].boneWeights[workAnim.GetShapeBoneIndex(s, b)].xform;
-		//	Mat4 matBone(xformBone.ToMatrix());
-		//	Mat4 matSkin(xformSkin.ToMatrix());
-		//	Mat4 matResult(matBone * matSkin);
-
-		//	for (auto v: workAnim.shapeSkinning[s].boneWeights[workAnim.GetShapeBoneIndex(s, b)].weights) {
-		//		vertices[v.first] += (matResult * vertices[v.first]) * v.second;
-		//	}
-		//}
-		//nif.SetVertsForShape(s, vertices);
+		nif.SetShapeBoneTransform(s, -1, skin_transform(), dummyVec3, dummyFloat);
+		nif.ClearShapeTransform(s);
 	}
 
-	//vector<vec3> verts;
-	//AnimInfo anim;
-	//if (IsOutfit) anim = workAnim;
-	//else anim = baseAnim;
-
-	if (IsOutfit) workNif.CopyFrom(nif);
-	else baseNif.CopyFrom(nif);
-	nif.Clear();
+	nif.ClearRootTransform();
 }
 
 void OutfitProject::InitConform() {

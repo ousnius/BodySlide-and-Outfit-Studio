@@ -54,14 +54,15 @@ struct boneIndices {
 };
 
 struct skin_transform {
-	vector3 rotation[3];
-	vector3 translation;
+	vec3 rotation[3];
+	vec3 translation;
 	float scale;
 	skin_transform() {
-		rotation[0].x = 1.0f;
-		rotation[1].y = 1.0f;
-		rotation[2].z = 1.0f;
+		translation = vec3();
 		scale = 1.0f;
+		rotation[0] = vec3(1.0f, 0.0f, 0.0f);
+		rotation[1] = vec3(0.0f, 1.0f, 0.0f);
+		rotation[2] = vec3(0.0f, 0.0f, 1.0f);
 	}
 
 	Mat4 ToMatrix() {
@@ -737,6 +738,10 @@ public:
 	void SetNormalsForShape(const string& shapeName, const vector<vector3>& norms);
 	void CalcTangentsForShape(const string& shapeName);
 
+	void ClearShapeTransform(const string& shapeName);
+	void GetShapeTransform(const string& shapeName, Mat4& outTransform);
+
+	void ClearRootTransform();
 	void GetRootTranslation(vector3& outVec);
 	void SetRootTranslation(const vector3& newTrans);
 	void GetRootScale(float& outScale);

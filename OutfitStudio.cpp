@@ -2418,13 +2418,12 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	float inc = 100.0f / shapes.size();
 	float pos = 0;
 
-	ShapeItemData* activeItemSave = activeItem;
-	string activeShapeSave = activeShape;
+	auto selectedItemsSave = selectedItems;
 
 	curItem = outfitShapes->GetFirstChild(outfitRoot, cookie);
 	while (curItem.IsOk()) {
-		activeItem = (ShapeItemData*)outfitShapes->GetItemData(curItem);
-		activeShape = activeItem->shapeName;
+		selectedItems.clear();
+		selectedItems.push_back((ShapeItemData*)outfitShapes->GetItemData(curItem));
 		UpdateProgress(pos * inc, "Conforming " + activeShape);
 		StartSubProgress(pos * inc, pos * inc + inc);
 		OnSliderConform(event);
@@ -2432,8 +2431,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 		pos++;
 	}
 
-	activeItem = activeItemSave;
-	activeShape = activeShapeSave;
+	selectedItems = selectedItemsSave;
 
 	statusBar->SetStatusText("All shapes conformed.");
 	UpdateProgress(100, "All shapes conformed.");

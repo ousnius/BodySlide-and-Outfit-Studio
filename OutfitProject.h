@@ -168,7 +168,7 @@ public:
 	void ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
 	void RotateShape(const string& shapeName, vec3& angle, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
 
-	void AutoOffset(bool IsOutfit);
+	void AutoOffset(NifFile& nif);
 
 	// Uses the AutoMorph class to generate proximity values for bone weights.
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.

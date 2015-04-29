@@ -1905,6 +1905,74 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 	}
 }
 
+void NifFile::ClearShapeTransform(const string& shapeName) {
+	NifBlockTriShape* shape = shapeForName(shapeName);
+	if (!shape) {
+		NifBlockTriStrips* strips = stripsForName(shapeName);
+		if (!strips)
+			return;
+		strips->translation.Zero();
+		strips->scale = 1.0f;
+		strips->rotation[0] = vec3(1.0f, 0.0f, 0.0f);
+		strips->rotation[1] = vec3(0.0f, 1.0f, 0.0f);
+		strips->rotation[2] = vec3(0.0f, 0.0f, 1.0f);
+	}
+	else {
+		shape->translation.Zero();
+		shape->scale = 1.0f;
+		shape->rotation[0] = vec3(1.0f, 0.0f, 0.0f);
+		shape->rotation[1] = vec3(0.0f, 1.0f, 0.0f);
+		shape->rotation[2] = vec3(0.0f, 0.0f, 1.0f);
+	}
+}
+
+void NifFile::GetShapeTransform(const string& shapeName, Mat4& outTransform) {
+	skin_transform xFormRoot;
+	NifBlockNiNode* root = dynamic_cast<NifBlockNiNode*>(blocks[0]);
+	if (root) {
+		xFormRoot.translation = root->translation;
+		xFormRoot.scale = root->scale;
+		xFormRoot.rotation[0] = root->rotation[0];
+		xFormRoot.rotation[1] = root->rotation[1];
+		xFormRoot.rotation[2] = root->rotation[2];
+	}
+
+	skin_transform xFormShape;
+	NifBlockTriShape* shape = shapeForName(shapeName);
+	if (!shape) {
+		NifBlockTriStrips* strips = stripsForName(shapeName);
+		if (!strips)
+			return;
+		xFormShape.translation = strips->translation;
+		xFormShape.scale = strips->scale;
+		xFormShape.rotation[0] = strips->rotation[0];
+		xFormShape.rotation[1] = strips->rotation[1];
+		xFormShape.rotation[2] = strips->rotation[2];
+	}
+	else {
+		xFormShape.translation = shape->translation;
+		xFormShape.scale = shape->scale;
+		xFormShape.rotation[0] = shape->rotation[0];
+		xFormShape.rotation[1] = shape->rotation[1];
+		xFormShape.rotation[2] = shape->rotation[2];
+	}
+
+	Mat4 matRoot = xFormRoot.ToMatrix();
+	Mat4 matShape = xFormShape.ToMatrix();
+	outTransform = matRoot * matShape;
+}
+
+void NifFile::ClearRootTransform() {
+	NifBlockNiNode* root = dynamic_cast<NifBlockNiNode*>(blocks[0]);
+	if (root) {
+		root->translation.Zero();
+		root->scale = 1.0f;
+		root->rotation[0] = vec3(1.0f, 0.0f, 0.0f);
+		root->rotation[1] = vec3(0.0f, 1.0f, 0.0f);
+		root->rotation[2] = vec3(0.0f, 0.0f, 1.0f);
+	}
+}
+
 void NifFile::GetRootTranslation(vector3& outVec) {
 	NifBlockNiNode* root = dynamic_cast<NifBlockNiNode*>(blocks[0]);
 	if (root)

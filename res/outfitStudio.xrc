@@ -340,6 +340,12 @@
 					<label>Load Outfit...</label>
 					<help>Load a .nif file as the working outfit, replacing any current outfit objects.</help>
 				</object>
+				<object class="wxMenuItem" name="applyOverallSkin">
+					<label>Apply Overall Skin Transform</label>
+					<help>Disable for a different way of loading .nif files to see if that puts it into the right (or a better) spot.</help>
+					<checkable>1</checkable>
+					<checked>1</checked>
+				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="fileSave">
 					<label>Save Project\tCtrl+S</label>
