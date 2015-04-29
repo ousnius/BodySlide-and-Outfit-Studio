@@ -7,7 +7,8 @@
 #include <wx/imagpng.h>
 #include <wx/dcbuffer.h>
 #include <wx/statline.h>
-#include "wx/tokenzr.h"
+#include <wx/tokenzr.h>
+#include <wx/cmdline.h>
 
 #include <vector>
 #include <string>
@@ -38,6 +39,7 @@ class BodySlideApp : public wxApp {
 
 	BodySlideFrame* sliderView;
 	OutfitStudio* outfitStudio;
+	bool straightOutfitStudio = false;
 
 	/* Data Managers */
 	SliderManager sliderManager;
@@ -69,6 +71,8 @@ class BodySlideApp : public wxApp {
 public:
 	virtual ~BodySlideApp();
 	virtual bool OnInit();
+	virtual void OnInitCmdLine(wxCmdLineParser& parser);
+	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
 
 	SliderCategoryCollection cCollection;
 
@@ -161,6 +165,11 @@ public:
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
 	void SetSliderChanged(const wxString& sliderName, bool isLo);
 	int SaveSliderPositions(const string& outputFile, const string& presetName, vector<string>& groups);
+};
+
+static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
+	{ wxCMD_LINE_SWITCH, "os", "outfitstudio", "launches straight into outfit studio" },
+	{ wxCMD_LINE_NONE }
 };
 
 #define DELAYLOAD_TIMER 299

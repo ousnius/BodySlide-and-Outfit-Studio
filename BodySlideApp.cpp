@@ -53,6 +53,9 @@ BodySlideApp::~BodySlideApp() {
 }
 
 bool BodySlideApp::OnInit() {
+	if (!wxApp::OnInit())
+		return false;
+
 	wxInitAllImageHandlers();
 
 	preview0 = NULL;
@@ -82,9 +85,21 @@ bool BodySlideApp::OnInit() {
 
 	LoadAllGroups();
 
+	if (straightOutfitStudio)
+		LaunchOutfitStudio();
+
 	// If WIP preview version
 	//wxMessageBox("WIP PREVIEW, DON'T SHARE THIS VERSION ANYWHERE! -ousnius", "Alert");
 
+	return true;
+}
+
+void BodySlideApp::OnInitCmdLine(wxCmdLineParser& parser) {
+	parser.SetDesc(g_cmdLineDesc);
+}
+
+bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
+	straightOutfitStudio = parser.Found("os");
 	return true;
 }
 
