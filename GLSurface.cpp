@@ -1894,17 +1894,23 @@ RenderMode GLSurface::SetMeshRenderMode(const string& name, RenderMode mode) {
 
 GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
 	GLMaterial* mat = resLoader.AddMaterial(textureFile, vShaderFile, fShaderFile);
+	if (!mat) // Use noImage material if loader failed
+		mat = noImage;
+
 	// Assume the first loaded material is always the skin material.
 	// (This seems like a hack, but matches the behavior of the old code.)
 	if (!skinMaterial)
 		skinMaterial = mat;
+
 	return mat;
 }
 
 void GLSurface::BeginEditMode() {
-	//if (!tweakBrush)
-	//	tweakBrush = new TB_Standard();
 	bEditMode = true;
+}
+
+void GLSurface::EndEditMode() {
+	bEditMode = false;
 }
 
 void GLSurface::EditUndo() {
@@ -1913,8 +1919,4 @@ void GLSurface::EditUndo() {
 
 void GLSurface::EditRedo() {
 
-}
-
-void GLSurface::EndEditMode() {
-	bEditMode = false;
 }
