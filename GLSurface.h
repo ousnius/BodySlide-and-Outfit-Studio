@@ -264,8 +264,7 @@ public:
 
 	GLMaterial* AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile);
 
-	int TestRender();
-	int RenderOneFrame();
+	void RenderOneFrame();
 	void RenderMesh(mesh* m);
 
 	void ToggleTextures() {

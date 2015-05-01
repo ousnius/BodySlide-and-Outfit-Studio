@@ -823,13 +823,14 @@ void GLSurface::SetSize(unsigned int w, unsigned int h) {
 	vpH = h;
 }
 
-int GLSurface::RenderOneFrame() {
+void GLSurface::RenderOneFrame() {
+	if (!canvas)
+		return;
+
 	Begin();
 	mesh* m;
 
 	glClearColor(0.81f, 0.82f, 0.82f, 1.0f);
-	//glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	static float angle = 0.0f;
 	glLoadIdentity();
 	glTranslated(camPos.x, camPos.y, camPos.z);
 	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
@@ -853,7 +854,7 @@ int GLSurface::RenderOneFrame() {
 	}
 
 	canvas->SwapBuffers();
-	return 0;
+	return;
 }
 
 void GLSurface::RenderMesh(mesh* m) {
