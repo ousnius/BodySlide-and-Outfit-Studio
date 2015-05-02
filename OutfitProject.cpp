@@ -1478,7 +1478,8 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 
 	vector<string> refTargets;
 	activeSet.GetReferencedTargets(refTargets);
-	baseShapeName = activeSet.TargetToShape(refTargets[0]);
+	if (!refTargets.empty())
+		baseShapeName = activeSet.TargetToShape(refTargets[0]);
 
 	if (!baseShapeName.empty())
 		DeleteOutfitShape(baseShapeName);
