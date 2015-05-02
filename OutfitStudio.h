@@ -538,7 +538,8 @@ private:
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
 
 	void OnSaveBaseOutfit(wxCommandEvent &event);
-	void OnExportCurrentShapeNif(wxCommandEvent &event);
+	void OnExportOutfitNif(wxCommandEvent &event);
+	void OnExportOutfitNifWithRef(wxCommandEvent &event);
 	void OnMakeConvRef(wxCommandEvent& event);
 
 	void OnSSSNameCopy(wxCommandEvent& event);

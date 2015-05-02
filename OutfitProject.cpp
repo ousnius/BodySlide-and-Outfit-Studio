@@ -1610,10 +1610,6 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 	}
 }
 
-int OutfitProject::SaveOutfitNif(const string& filename) {
-	return(workNif.Save(filename));
-}
-
 void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMeshes) {
 	vector<vec3> liveNorms;
 	for (auto m : shapeMeshes) {
@@ -1627,13 +1623,8 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMes
 	}
 }
 
-int OutfitProject::SaveModifiedOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals) {
-	NifFile* clone;
-	if (!workNif.IsValid())
-		clone = new NifFile(baseNif);
-	else
-		clone = new NifFile(workNif);
-
+int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef) {
+	NifFile* clone = new NifFile(workNif);
 	clone->SetNodeName(0, "Scene Root");
 
 	vector<vec3> liveVerts;
@@ -1649,18 +1640,18 @@ int OutfitProject::SaveModifiedOutfitNif(const string& filename, const vector<me
 		auto shader = clone->GetShaderForShape(m->shapeName);
 		if (writeNormals && shader && !shader->IsSkinShader()) {
 			clone->SetNormalsForShape(m->shapeName, liveNorms);
-			//clone->RecalculateNormals();
 			clone->CalcTangentsForShape(m->shapeName);
 		}
 	}
 
 	workAnim.WriteToNif(clone);
+	if (withRef)
+		clone->CopyShape(baseShapeName, baseNif, baseShapeName);
+
 	vector<string> shapes;
 	clone->GetShapeList(shapes);
-	for (auto s : shapes) {
+	for (auto s : shapes)
 		clone->UpdateSkinPartitions(s);
-		//clone.BuildSkinPartitions(s);
-	}
 
 	int ret = clone->Save(filename);
 	delete clone;

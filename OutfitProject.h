@@ -245,8 +245,7 @@ public:
 
 	void RenameShape(const string& shapeName, const string& newShapeName, bool isOutfit);
 
-	int SaveOutfitNif(const string& filename);
-	int SaveModifiedOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals);
+	int SaveOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
 
 	int ExportShape(const string& shapeName, const string& fName, bool isOutfit);

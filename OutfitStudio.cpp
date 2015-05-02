@@ -24,7 +24,8 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_CHECKBOX(wxID_ANY, OutfitStudio::OnCheckBox)	
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSaveBaseOutfit)
-	EVT_MENU(XRCID("exportOutfitNif"), OutfitStudio::OnExportCurrentShapeNif)
+	EVT_MENU(XRCID("exportOutfitNif"), OutfitStudio::OnExportOutfitNif)
+	EVT_MENU(XRCID("exportOutfitNifWithRef"), OutfitStudio::OnExportOutfitNifWithRef)
 	EVT_MENU(XRCID("makeConvRef"), OutfitStudio::OnMakeConvRef)
 	
 	EVT_MENU(XRCID("sliderLoadPreset"), OutfitStudio::OnLoadPreset)
@@ -1475,9 +1476,10 @@ void OutfitStudio::OnSaveBaseOutfit(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudio::OnExportCurrentShapeNif(wxCommandEvent& WXUNUSED(event)) {
-	if (activeShape.empty())
+void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
+	if (!Proj->workNif.IsValid())
 		return;
+
 	if (Proj->OutfitHasUnweighted()) {
 		int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
 		if (ret != wxYES)
@@ -1486,15 +1488,41 @@ void OutfitStudio::OnExportCurrentShapeNif(wxCommandEvent& WXUNUSED(event)) {
 
 	vector<string> shapes;
 	vector<mesh*> shapeMeshes;
-	string fn = wxFileSelector("Save current shape", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fn.empty())
+	string fileName = wxFileSelector("Export outfit NIF", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.empty())
 		return;
+
 	Proj->OutfitShapes(shapes);
 	for (auto s : shapes)
 		shapeMeshes.push_back(glView->GetMesh(s));
 
 	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
-	Proj->SaveModifiedOutfitNif(fn, shapeMeshes, updateNormals);
+	Proj->SaveOutfitNif(fileName, shapeMeshes, updateNormals);
+}
+
+void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& WXUNUSED(event)) {
+	if (!Proj->workNif.IsValid() && !Proj->baseNif.IsValid())
+		return;
+
+	if (Proj->OutfitHasUnweighted()) {
+		int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
+		if (ret != wxYES)
+			return;
+	}
+
+	vector<string> shapes;
+	vector<mesh*> shapeMeshes;
+	string fileName = wxFileSelector("Export project NIF", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.empty())
+		return;
+
+	Proj->RefShapes(shapes);
+	Proj->OutfitShapes(shapes);
+	for (auto s : shapes)
+		shapeMeshes.push_back(glView->GetMesh(s));
+
+	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
+	Proj->SaveOutfitNif(fileName, shapeMeshes, updateNormals, true);
 }
 
 void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {

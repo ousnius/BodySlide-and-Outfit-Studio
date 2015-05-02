@@ -357,17 +357,15 @@
 					<help>Save the project under a new name.</help>
 				</object>
 				<object class="wxMenu" name="menuExport">
-					<label>Export Current</label>
+					<label>Export</label>
 					<object class="wxMenuItem" name="exportOutfitNif">
-						<label>Export Nif</label>
-						<help>Save the current outfit shape as a nif file. (all parts)</help>
+						<label>Export NIF</label>
+						<help>Save the current outfit as a NIF file (without reference)</help>
 					</object>
-					<!--
-					<object class="wxMenuItem" name="exportOutfitObj">
-						<label>Export Obj</label>
-						<help>Save the current outfit shape as an obj file. (all parts)</help>
+					<object class="wxMenuItem" name="exportOutfitNifWithRef">
+						<label>Export NIF With Reference</label>
+						<help>Save the current project as a NIF file (including reference)</help>
 					</object>
-					-->
 				</object>
 				<object class="wxMenuItem" name="makeConvRef">
 					<label>Make Conversion Reference</label>
