@@ -3345,7 +3345,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 
 		gls.GetMesh(shapeList[i])->BuildTriAdjacency();
 		gls.GetMesh(shapeList[i])->BuildEdgeList();
-		gls.GetMesh(shapeList[i])->ColorFill(vec3(0, 0, 0));
+		gls.GetMesh(shapeList[i])->ColorFill(vec3());
+		RecalcNormals(shapeList[i]);
 	}
 }
 
@@ -3353,7 +3354,8 @@ void wxGLPanel::AddExplicitMesh(vector<vector3>* v, vector<tri>* t, vector<vecto
 	gls.AddMeshExplicit(v, t, uv, shapename);
 	gls.GetMesh(shapename)->BuildTriAdjacency();
 	gls.GetMesh(shapename)->BuildEdgeList();
-	gls.GetMesh(shapename)->ColorFill(vec3(0, 0, 0));
+	gls.GetMesh(shapename)->ColorFill(vec3());
+	RecalcNormals(shapename);
 }
 
 void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefile, int shaderType) {
