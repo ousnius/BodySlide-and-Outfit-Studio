@@ -2993,10 +2993,12 @@ void OutfitStudio::OnSetShapeTexture(wxCommandEvent& event) {
 
 		for (int i = 0; i < 9; i++) {
 			if (activeItem->bIsOutfitShape) {
-				Proj->workNif.GetTextureForShape(activeShape, texpath, i);
+				if (!Proj->workNif.GetTextureForShape(activeShape, texpath, i))
+					continue;
 			}
 			else {
-				Proj->baseNif.GetTextureForShape(activeShape, texpath, i);
+				if (!Proj->baseNif.GetTextureForShape(activeShape, texpath, i))
+					continue;
 			}
 			stTexGrid->SetCellValue(texpath, i, 0);
 		}

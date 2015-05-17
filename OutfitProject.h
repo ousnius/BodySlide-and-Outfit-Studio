@@ -140,19 +140,29 @@ public:
 	void SetRefTexture(const string& shapeName, const string& textureFile);
 
 	int RefShapeShaderType(const string& shapeName) {
-		auto s = baseNif.GetShaderForShape(shapeName);
-		if (s && s->IsSkinShader())
+		NifBlockBSLightShadeProp* shader = baseNif.GetShaderForShape(shapeName);
+		if (!shader) {
+			NifBlockBSShadePPLgtProp* shaderPP = baseNif.GetShaderPPForShape(shapeName);
+			if (shaderPP && shaderPP->IsSkinShader())
+				return 1;
+		}
+		else if (shader->IsSkinShader())
 			return 1;
-		else
-			return 0;
+
+		return 0;
 	}
 
 	int OutfitShapeShaderType(const string& shapeName) {
-		auto s = workNif.GetShaderForShape(shapeName);
-		if (s && s->IsSkinShader())
+		NifBlockBSLightShadeProp* shader = workNif.GetShaderForShape(shapeName);
+		if (!shader) {
+			NifBlockBSShadePPLgtProp* shaderPP = workNif.GetShaderPPForShape(shapeName);
+			if (shaderPP && shaderPP->IsSkinShader())
+				return 1;
+		}
+		else if (shader->IsSkinShader())
 			return 1;
-		else
-			return 0;
+
+		return 0;
 	}
 
 	bool IsValidShape(const string& shapeName);

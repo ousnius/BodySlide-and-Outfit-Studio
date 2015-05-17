@@ -1116,22 +1116,29 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, vec3* color, bool
 	vector<vec3> nifVerts;
 	nif->GetVertsForShape(shapeName, nifVerts);
 	const vector<triangle>* nifTris = nif->GetTrisForShape(shapeName);
-	if (!nifTris) { // perhaps a tristrip
-		vector<triangle> localTris;
+	vector<triangle> localTris;
+	if (!nifTris) { // Perhaps NiTriStrips
 		bool found = nif->GetTrisForTriStripShape(shapeName, &localTris);
 		if (found)
 			nifTris = &localTris;
 	}
 
-	const vector<vector3>* nifNorms = NULL; //nif->GetNormalsForShape(shapeName);
+	const vector<vector3>* nifNorms = nullptr; //nif->GetNormalsForShape(shapeName);
 	const vector<vector2>* nifUvs = nif->GetUvsForShape(shapeName);
 
 	mesh* m = new mesh();
 
-	// Check skin and double sided shader flags.
-	auto shader = nif->GetShaderForShape(shapeName);
+	// Check skin and double sided shader flags
 	bool isSkin = false;
-	if (shader) {
+	m->doublesided = false;
+
+	NifBlockBSLightShadeProp* shader = nif->GetShaderForShape(shapeName);
+	if (!shader) {
+		NifBlockBSShadePPLgtProp* shaderPP = nif->GetShaderPPForShape(shapeName);
+		if (shaderPP)
+			isSkin = shaderPP->IsSkinShader();
+	}
+	else {
 		isSkin = shader->IsSkinShader();
 		m->doublesided = shader->IsDoubleSided();
 	}

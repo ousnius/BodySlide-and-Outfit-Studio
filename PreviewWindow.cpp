@@ -57,7 +57,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType, char* shapeName)
 void PreviewWindow::OnShown() {
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
-	gls.SetStartingView(vec3(0, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0);
+	gls.SetStartingView(vec3(0.0f, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0f);
 	app->InitPreview(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
 }
 
@@ -74,9 +74,16 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			gls.AddMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeName);
 			m->BuildTriAdjacency();
-			auto shader = nif->GetShaderForShape(shapeList[i]);
-			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
-				ToggleSmoothSeams(m);
+			if (m->smoothSeamNormals) {
+				NifBlockBSLightShadeProp* shader = nif->GetShaderForShape(shapeList[i]);
+				if (!shader) {
+					NifBlockBSShadePPLgtProp* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
+					if (shaderPP && !shaderPP->IsSkinShader())
+						ToggleSmoothSeams(m);
+				}
+				else if (!shader->IsSkinShader())
+					ToggleSmoothSeams(m);
+			}
 		}
 		else if (shapeName) {
 			continue;
@@ -85,9 +92,16 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			gls.AddMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
-			auto shader = nif->GetShaderForShape(shapeList[i]);
-			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
-				ToggleSmoothSeams(m);
+			if (m->smoothSeamNormals) {
+				NifBlockBSLightShadeProp* shader = nif->GetShaderForShape(shapeList[i]);
+				if (!shader) {
+					NifBlockBSShadePPLgtProp* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
+					if (shaderPP && !shaderPP->IsSkinShader())
+						ToggleSmoothSeams(m);
+				}
+				else if (!shader->IsSkinShader())
+					ToggleSmoothSeams(m);
+			}
 		}
 	}
 }
@@ -103,9 +117,16 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
 			gls.ReloadMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeName);
 			m->BuildTriAdjacency();
-			auto shader = nif->GetShaderForShape(shapeList[i]);
-			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
-				ToggleSmoothSeams(m);
+			if (m->smoothSeamNormals) {
+				NifBlockBSLightShadeProp* shader = nif->GetShaderForShape(shapeList[i]);
+				if (!shader) {
+					NifBlockBSShadePPLgtProp* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
+					if (shaderPP && !shaderPP->IsSkinShader())
+						ToggleSmoothSeams(m);
+				}
+				else if (!shader->IsSkinShader())
+					ToggleSmoothSeams(m);
+			}
 			auto iter = shapeTextures.find(shapeName);
 			if (iter != shapeTextures.end())
 				m->material = iter->second;
@@ -120,9 +141,16 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
 			gls.ReloadMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
-			auto shader = nif->GetShaderForShape(shapeList[i]);
-			if (shader && m->smoothSeamNormals != false && !shader->IsSkinShader())
-				ToggleSmoothSeams(m);
+			if (m->smoothSeamNormals) {
+				NifBlockBSLightShadeProp* shader = nif->GetShaderForShape(shapeList[i]);
+				if (!shader) {
+					NifBlockBSShadePPLgtProp* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
+					if (shaderPP && !shaderPP->IsSkinShader())
+						ToggleSmoothSeams(m);
+				}
+				else if (!shader->IsSkinShader())
+					ToggleSmoothSeams(m);
+			}
 			auto iter = shapeTextures.find(shapeList[i]);
 			if (iter != shapeTextures.end())
 				m->material = iter->second;
@@ -134,16 +162,20 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
 }
 
 void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName) {
-	int shader;
 	string texFile;
 	fromNif->GetTextureForShape(shapeName, texFile, 0);
-	auto sb = fromNif->GetShaderForShape(shapeName);
-	if (sb && sb->IsSkinShader())
-		shader = 1;
-	else
-		shader = 0;
 
-	SetShapeTexture(shapeName, baseDataPath + "textures\\" + texFile, shader);
+	int shaderType = 0;
+	NifBlockBSLightShadeProp* shader = fromNif->GetShaderForShape(shapeName);
+	if (!shader) {
+		NifBlockBSShadePPLgtProp* shaderPP = fromNif->GetShaderPPForShape(shapeName);
+		if (shaderPP && shaderPP->IsSkinShader())
+			shaderType = 1;
+	}
+	else if (shader->IsSkinShader())
+		shaderType = 1;
+
+	SetShapeTexture(shapeName, baseDataPath + "textures\\" + texFile, shaderType);
 }
 
 void PreviewWindow::RightDrag(int dX, int dY) {

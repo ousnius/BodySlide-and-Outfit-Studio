@@ -34,6 +34,7 @@ using namespace std;
 #define NIFBLOCK_TRISTRIPSDATA		12
 #define NIFBLOCK_NISKININSTANCE		13
 #define NIFBLOCK_STRINGEXTRADATA	14
+#define NIFBLOCK_BSSHADEPPLGTPROP	15
 
 typedef unsigned char BYTE;
 typedef unsigned int uint;
@@ -115,7 +116,7 @@ struct color4 {
 };
 
 struct matchGroup {
-	int count;
+	ushort count;
 	vector<ushort> matches;
 };
 
@@ -141,7 +142,6 @@ public:
 	virtual ~NifBlock();
 
 	virtual void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
-	virtual void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 
 	virtual void Get(fstream& file, NifBlockHeader& hdr);
@@ -170,7 +170,7 @@ public:
 	unsigned int numStrings;
 	unsigned int maxStringLen;
 	vector<NifString> strings;
-	unsigned int unk2;
+	unsigned int unkInt2;
 
 	// Foreign reference to the blocks list in NifFile.
 	vector<NifBlock*>* blocks;
@@ -226,7 +226,6 @@ public:
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
-	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 	virtual int CalcBlockSize();
 };
 
@@ -239,10 +238,12 @@ public:
 	vector<int> extradata;
 	int controllerRef;
 	ushort flags;
-	ushort unk;
+	ushort unkShort1;
 	vector3 translation;
 	vector3 rotation[3];
-	float  scale;
+	float scale;
+	uint numProperties;
+	vector<int> properties;
 
 	int collisionRef;
 	int dataRef;
@@ -251,11 +252,11 @@ public:
 	vector <NifString> materialNames;
 	vector <int> materialExtra;
 	int activeMat;
+	BYTE unkByte;
 	BYTE dirty;
 	// BSPropertiesRef array
 	int propertiesRef1;
 	int propertiesRef2;
-	// }
 
 	NifBlockTriStrips();
 	NifBlockTriStrips(fstream& file, NifBlockHeader& hdr);
@@ -264,19 +265,18 @@ public:
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
-	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 };
 
 class NifBlockTriStripsData : public NifBlock {
 public:
-	int unknown;
+	int unkInt;
 	ushort numverts;
 	BYTE keepflags;
 	BYTE compressflags;
 	BYTE hasVertices;
 	vector<vector3> vertices;
 	ushort numUVs;
-	uint unknown2;
+	uint skyrimMaterial;
 	BYTE hasNormals;
 	vector<vector3> normals;
 	vector<vector3> tangents;
@@ -314,8 +314,6 @@ public:
 	void RecalcNormals();
 	void CalcTangentSpace();
 
-	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
-
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 };
 
@@ -328,14 +326,13 @@ public:
 	vector<int> extradata;
 	int controllerRef;
 	ushort flags;
-	ushort unk;
+	ushort unkShort1;
 	vector3 translation;
 	vector3 rotation[3];
 	float scale;
-	// if(version == 11) {
-	uint numProps;
-	vector<int> propRef;
-	// }
+	uint numProperties;
+	vector<int> properties;
+
 	int collisionRef;
 	int dataRef;
 	int skinRef;
@@ -343,11 +340,10 @@ public:
 	vector <NifString> materialNames;
 	vector <int> materialExtra;
 	int activeMat;
+	BYTE unkByte;
 	BYTE dirty;
-	// if(version > 11) {
 	int propertiesRef1;
 	int propertiesRef2;
-	// }
 
 	NifBlockTriShape();
 	NifBlockTriShape(fstream& file, NifBlockHeader& hdr);
@@ -356,19 +352,18 @@ public:
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
-	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 };
 
 class NifBlockTriShapeData : public NifBlock {
 public:
-	int unknown;
+	int unkInt;
 	ushort numverts;
 	BYTE keepflags;
 	BYTE compressflags;
 	BYTE hasVertices;
 	vector<vector3> vertices;
 	ushort numUVs;
-	uint unknown2;
+	uint skyrimMaterial;
 	BYTE hasNormals;
 	vector<vector3> normals;
 	vector<vector3> tangents;
@@ -403,7 +398,6 @@ public:
 	void RecalcNormals();
 	void CalcTangentSpace();
 	int CalcBlockSize();
-	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 };
 
@@ -453,8 +447,6 @@ public:
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
-
-	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 };
 
 class NifBlockNiSkinData : public NifBlock {
@@ -505,19 +497,17 @@ public:
 		vector<vertexWeight> vertWeights;
 		vector<ushort> stripLengths;
 		BYTE hasFaces;
-		// if hasFaces && numStrips > 0
-		vector< vector<ushort> >strips;
-		// if hasFaces && numStrips == 0
+		vector<vector<ushort>>strips;
 		vector<triangle> tris;
 		BYTE hasBoneIndices;
 		vector<boneIndices> boneindex;
-		// if(hdr.userVer == 12)
 		ushort unknown;
 	};
 	uint numPartitions;
 	vector<PartitionBlock> partitionBlocks;
 
 	bool needsBuild;
+	int myver;
 
 	NifBlockNiSkinPartition();
 	NifBlockNiSkinPartition(fstream& file, NifBlockHeader& hdr);
@@ -527,7 +517,6 @@ public:
 	void Get(fstream& file, NifBlockHeader& hdr);
 	void Put(fstream& file, NifBlockHeader& hdr);
 
-	void notifyVersionChange(unsigned int ver1, unsigned int ver2);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(vector<int>& outDeletedIndices);
 };
@@ -542,34 +531,34 @@ public:
 	int controllerRef;
 	uint shaderFlags1;
 	uint shaderFlags2;
-	vector2 uvOffset;
-	vector2 uvScale;
+	vec2 uvOffset;
+	vec2 uvScale;
 	int texsetRef;
 
-	vector3 emissiveClr;
+	vec3 emissiveClr;
 	float emissivleMult;
 	uint texClampMode;
 	float alpha;
 	float unk;
 	float glossiness;
-	vector3 specClr;
+	vec3 specClr;
 	float specStr;
 	float lightFX1;
 	float lightFX2;
 
 	float envMapScale;
-	vector3 skinTintClr;
-	vector3 hairTintClr;
+	vec3 skinTintClr;
+	vec3 hairTintClr;
 	float maxPasses;
 	float scale;
 	float parallaxThickness;
 	float parallaxRefrScale;
-	vector2 parallaxTexScale;
+	vec2 parallaxTexScale;
 	float parallaxEnvMapStr;
 	color4 sparkleParams;
 	float eyeCubeScale;
-	vector3 eyeLeftReflectCenter;
-	vector3 eyeRightReflectCenter;
+	vec3 eyeLeftReflectCenter;
+	vec3 eyeRightReflectCenter;
 
 	NifBlockBSLightShadeProp();
 	NifBlockBSLightShadeProp(fstream& file, NifBlockHeader& hdr);
@@ -580,7 +569,6 @@ public:
 	void Put(fstream& file, NifBlockHeader& hdr);
 
 	void Clone(NifBlockBSLightShadeProp* Other);
-	void SetTexSetBlockID(int blockId);
 
 	bool IsSkinShader();
 	bool IsDoubleSided();
@@ -611,8 +599,11 @@ public:
 	BYTE threshold;
 
 	NifBlockAlphaProperty();
+	NifBlockAlphaProperty(fstream& file, NifBlockHeader& hdr);
 	void Get(fstream& file, NifBlockHeader& hdr);
 	void Put(fstream& file, NifBlockHeader& hdr);
+
+	int CalcBlockSize();
 };
 
 class NifBlockStringExtraData : public NifBlock {
@@ -629,6 +620,38 @@ public:
 
 	void Get(fstream& file, NifBlockHeader& hdr);
 	void Put(fstream& file, NifBlockHeader& hdr);
+};
+
+class NifBlockBSShadePPLgtProp : public NifBlock {
+public:
+	string shaderName;
+	uint nameID;
+	uint numExtraData;
+	vector<int> extraData;
+	int controllerRef;
+	ushort flags;
+	uint shaderType;
+	uint shaderFlags;
+	int unkInt2;
+	float envMapScale;
+	int unkInt3;
+	int texsetRef;
+	float unkFloat2;
+	int refractionPeriod;
+	float unkFloat4;
+	float unkFloat5;
+
+	NifBlockBSShadePPLgtProp();
+	NifBlockBSShadePPLgtProp(fstream& file, NifBlockHeader& hdr);
+
+	void notifyBlockDelete(int blockID, NifBlockHeader& hdr);
+
+	void Get(fstream& file, NifBlockHeader& hdr);
+	void Put(fstream& file, NifBlockHeader& hdr);
+
+	void Clone(NifBlockBSShadePPLgtProp* Other);
+
+	bool IsSkinShader();
 };
 
 class NifFile
@@ -682,22 +705,18 @@ public:
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);
 
-	NifBlockBSLightShadeProp* GetShader(const string& shaderName);
 	NifBlockBSLightShadeProp* GetShaderForShape(const string& shapeName);
+	NifBlockBSShadePPLgtProp* GetShaderPPForShape(const string& shapeName);
 	bool GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
 	void SetTextureForShape(const string& shapeName, string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();
 
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
-	void CopyShader(const string& shapeDest, string& shaderName, NifFile& srcNif, bool addAlpha);
 	void CopyShader(const string& shapeDest, NifBlockBSLightShadeProp* srcShader, NifFile& srcNif, bool addAlpha);
+	void CopyShaderPP(const string& shapeDest, NifBlockBSShadePPLgtProp* srcShader, NifFile& srcNif, bool addAlpha);
 	void CopyShape(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 	// Copy strips is a duplicate of copy shape that works for TriStrips blocks. Copy shape will call copy strips as needed.
 	void CopyStrips(const string& shapeDest, NifFile& srcNif, const string& srcShape);
-
-	void RecalculateNormals();
-
-	void SetUserVersions(unsigned int ver1, unsigned int ver2);
 
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
@@ -764,9 +783,9 @@ public:
 	void GetShapeVirtualScale(const string& shapeName, float& scale, bool& fromCenterFlag);
 
 	void MoveVertex(const string& shapeName, const vector3& pos, const int& id);
-	void OffsetShape(const string& shapeName, const vector3& offset, unordered_map<ushort, float>* mask = NULL);
-	void ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask = NULL);
-	void RotateShape(const string& shapeName, const vec3& angle, unordered_map<ushort, float>* mask = NULL);
+	void OffsetShape(const string& shapeName, const vector3& offset, unordered_map<ushort, float>* mask = nullptr);
+	void ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask = nullptr);
+	void RotateShape(const string& shapeName, const vec3& angle, unordered_map<ushort, float>* mask = nullptr);
 
 	void GetAlphaForShape(const string& shapeName, unsigned short& outFlags, BYTE& outThreshold);
 	void SetAlphaForShape(const string& shapeName, unsigned short flags, unsigned short threshold);

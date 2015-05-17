@@ -1638,10 +1638,20 @@ int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& mo
 			liveNorms.emplace_back(move(vec3(m->verts[i].nx * -1, m->verts[i].nz, m->verts[i].ny)));
 		}
 		clone->SetVertsForShape(m->shapeName, liveVerts);
-		auto shader = clone->GetShaderForShape(m->shapeName);
-		if (writeNormals && shader && !shader->IsSkinShader()) {
-			clone->SetNormalsForShape(m->shapeName, liveNorms);
-			clone->CalcTangentsForShape(m->shapeName);
+
+		if (writeNormals) {
+			NifBlockBSLightShadeProp* shader = clone->GetShaderForShape(m->shapeName);
+			if (!shader) {
+				NifBlockBSShadePPLgtProp* shaderPP = clone->GetShaderPPForShape(m->shapeName);
+				if (shaderPP && !shaderPP->IsSkinShader()) {
+					clone->SetNormalsForShape(m->shapeName, liveNorms);
+					clone->CalcTangentsForShape(m->shapeName);
+				}
+			}
+			else if (!shader->IsSkinShader()) {
+				clone->SetNormalsForShape(m->shapeName, liveNorms);
+				clone->CalcTangentsForShape(m->shapeName);
+			}
 		}
 	}
 
