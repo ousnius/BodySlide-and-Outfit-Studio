@@ -147,6 +147,8 @@ void NiObjectNET::notifyBlockDelete(int blockID, NiHeader& hdr) {
 
 
 void NiAVObject::Init() {
+	NiObjectNET::Init();
+
 	flags = 14;
 	unkShort1 = 8;
 	rotation[0].x = 0.0f;
@@ -158,6 +160,8 @@ void NiAVObject::Init() {
 }
 
 void NiAVObject::Get(fstream& file, NiHeader& hdr) {
+	NiObjectNET::Get(file, hdr);
+
 	file.read((char*)&flags, 2);
 
 	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
@@ -188,6 +192,8 @@ void NiAVObject::Get(fstream& file, NiHeader& hdr) {
 }
 
 void NiAVObject::Put(fstream& file, NiHeader& hdr) {
+	NiObjectNET::Put(file, hdr);
+
 	file.write((char*)&flags, 2);
 
 	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
@@ -215,6 +221,8 @@ void NiAVObject::Put(fstream& file, NiHeader& hdr) {
 }
 
 void NiAVObject::notifyBlockDelete(int blockID, NiHeader& hdr) {
+	NiObjectNET::notifyBlockDelete(blockID, hdr);
+
 	if (collisionRef == blockID)
 		collisionRef = -1;
 	else if (collisionRef > blockID)
@@ -234,6 +242,8 @@ void NiAVObject::notifyBlockDelete(int blockID, NiHeader& hdr) {
 
 
 void NiGeometry::Init() {
+	NiAVObject::Init();
+
 	propertiesRef1 = -1;
 	propertiesRef2 = -1;
 	dataRef = -1;
@@ -244,6 +254,8 @@ void NiGeometry::Init() {
 }
 
 void NiGeometry::Get(fstream& file, NiHeader& hdr) {
+	NiAVObject::Get(file, hdr);
+
 	file.read((char*)&dataRef, 4);
 	file.read((char*)&skinInstanceRef, 4);
 	file.read((char*)&numMaterials, 4);
@@ -265,6 +277,8 @@ void NiGeometry::Get(fstream& file, NiHeader& hdr) {
 }
 
 void NiGeometry::Put(fstream& file, NiHeader& hdr) {
+	NiAVObject::Put(file, hdr);
+
 	file.write((char*)&dataRef, 4);
 	file.write((char*)&skinInstanceRef, 4);
 	file.write((char*)&numMaterials, 4);
@@ -284,6 +298,8 @@ void NiGeometry::Put(fstream& file, NiHeader& hdr) {
 }
 
 void NiGeometry::notifyBlockDelete(int blockID, NiHeader& hdr) {
+	NiAVObject::notifyBlockDelete(blockID, hdr);
+
 	if (dataRef == blockID)
 		dataRef = -1;
 	else if (dataRef > blockID)
