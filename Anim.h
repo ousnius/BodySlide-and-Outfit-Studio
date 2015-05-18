@@ -13,15 +13,15 @@ public:
 	string boneName;			// bone names are node names in the nif file
 	int boneID;					// block id from the original nif file
 	int order;					// order of appearance in nif file
-	Mat4 rot;					// original node rotation value (total rotation, including parents)
-	vector3 trans;				// original node translation value (total translation, including parents)
+	Matrix4 rot;					// original node rotation value (total rotation, including parents)
+	Vector3 trans;				// original node translation value (total translation, including parents)
 	float scale;				// original node scale value
 
 	bool isValidBone;
 	AnimBone* parent;
 	vector<AnimBone*> children;
-	Mat4 localRot;				// rotation offset from parent bone.
-	vector3 localTrans;			// offset from parent bone
+	Matrix4 localRot;				// rotation offset from parent bone.
+	Vector3 localTrans;			// offset from parent bone
 
 	int refCount;				// reference count of this bone
 	AnimBone() {
@@ -44,8 +44,8 @@ class AnimWeight {
 public:
 	//int boneNum;				// Numeric index into the AnimSkin bone list.
 	unordered_map<ushort, float> weights;
-	skin_transform xform;
-	vector3 bSphereOffset;
+	SkinTransform xform;
+	Vector3 bSphereOffset;
 	float bSphereRadius;
 	AnimWeight() {}
 	AnimWeight(NifFile* loadFromFile, const string& shape, int index) {
@@ -66,8 +66,8 @@ class AnimSkin {
 public:
 	unordered_map<int, AnimWeight> boneWeights;
 	AnimSkin() { }
-	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<int>& boneIndices) {
-		for (auto i : boneIndices)
+	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<int>& BoneIndices) {
+		for (auto i : BoneIndices)
 			boneWeights[i] = AnimWeight(loadFromFile, shape, i);
 	}
 	void VertexBones(ushort queryvert, vector<int>& outbones, vector<float>& outWeights) {
@@ -96,7 +96,7 @@ public:
 class AnimPartition {
 public:
 	int bodypart;						// Body part number (from BSDismembermentSkinInstance/partiitons).
-	vector<tri> tris;					// Points are indices to the verts list for this partition. (eg. starting at 0).
+	vector<Triangle> tris;					// Points are indices to the verts list for this partition. (eg. starting at 0).
 	vector<int> verts;					// All referenced verts in this partition.
 	vector<int> bones;					// All referenced bones in this partition.
 	vector<vector<float>> vertWeights;	// Vert order list of weights per vertex.
@@ -125,9 +125,9 @@ public:
 	bool LoadFromNif(NifFile* nif, const string& shape);
 	int GetShapeBoneIndex(const string& shapeName, const string& boneName);
 	void GetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& outVertWeights);
-	void GetBoneXForm(const string& boneName, skin_transform& stransform);
+	void GetBoneXForm(const string& boneName, SkinTransform& stransform);
 	void SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights);
-	void SetShapeBoneXForm(const string& shape, const string& boneName, skin_transform& stransform);
+	void SetShapeBoneXForm(const string& shape, const string& boneName, SkinTransform& stransform);
 	void WriteToNif(NifFile* nif, bool synchBoneIDs = true);
 
 	void RenameShape(const string& shapeName, const string& newShapeName);	
@@ -157,8 +157,8 @@ public:
 
 	AnimBone* GetBonePtr(const string& boneName = "");
 	bool GetBone(const string& boneName, AnimBone& outBone);
-	bool GetSkinTransform(const string &boneName, skin_transform& xform);
-	bool GetBoneTransform(const string &boneName, skin_transform& xform);
+	bool GetSkinTransform(const string &boneName, SkinTransform& xform);
+	bool GetBoneTransform(const string &boneName, SkinTransform& xform);
 
 	int GetActiveBoneNames(vector<string>& outBoneNames);
 };

@@ -209,7 +209,7 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	activeItem = NULL;
 	selectedItems.clear();
 
-	previewMove = vec3(0.0f, 0.0f, 0.0f);
+	previewMove = Vector3(0.0f, 0.0f, 0.0f);
 	previewScale = 1.0f;
 
 	this->SetSize(size);
@@ -351,8 +351,8 @@ void OutfitStudio::SetSliderValue(const string& name, int val) {
 }
 
 void OutfitStudio::ApplySliders(bool recalcBVH) {
-	vector<vector3> refVerts;
-	vector<vector3> outfitVerts;
+	vector<Vector3> refVerts;
+	vector<Vector3> outfitVerts;
 
 	vector<string> outfitshapes;
 	vector<string> refshapes;
@@ -429,7 +429,7 @@ void OutfitStudio::UpdateShapeSource(const string& shapeName, bool bIsOutfit) {
 
 void OutfitStudio::ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo) {
 	if (bEditSlider) {
-		unordered_map<ushort, vector3> strokeDiff;
+		unordered_map<ushort, Vector3> strokeDiff;
 		for (auto p : refStroke->pointStartState) {
 			if (bIsUndo) {
 				strokeDiff[p.first] = p.second - refStroke->pointEndState[p.first];
@@ -2528,7 +2528,7 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 	else if (ret == 101) {		// User chose to merge shapes
-		vector<vec3> v;
+		vector<Vector3> v;
 		Proj->GetLiveOutfitVerts(activeShape, v);
 		glView->UpdateMeshVertices(activeShape, &v);
 		return;
@@ -2576,7 +2576,7 @@ void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	} while ((Proj->IsValidShape(newShapeName)));
 
 	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
-	for (unsigned int i = 0; i < sizeof(chars); ++i)
+	for (uint i = 0; i < sizeof(chars); ++i)
 		replace(newShapeName.begin(), newShapeName.end(), chars[i], '_');
 
 	Proj->RenameShape(activeItem->shapeName, newShapeName, activeItem->bIsOutfitShape);
@@ -2601,7 +2601,7 @@ void OutfitStudio::OnEnterClose(wxKeyEvent& event) {
 
 void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 	wxDialog dlg;
-	vec3 offs(0.0, -2.54431, 3.2879);
+	Vector3 offs(0.0, -2.54431, 3.2879);
 
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
@@ -2627,7 +2627,7 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 
 		unordered_map<ushort, float> mask;
 		unordered_map<ushort, float>* mptr = NULL;
-		unordered_map<ushort, vec3> diff;
+		unordered_map<ushort, Vector3> diff;
 		for (auto i : selectedItems) {
 			mask.clear();
 			mptr = NULL;
@@ -2635,8 +2635,8 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 			if (mask.size() > 0)
 				mptr = &mask;
 
-			vec3 d;
-			vector<vec3> verts;
+			Vector3 d;
+			vector<Vector3> verts;
 			float diffY, diffZ;
 			Proj->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 
@@ -2670,14 +2670,14 @@ void OutfitStudio::OnPreviewMove(wxCommandEvent& event) {
 	if (!parent)
 		return;
 
-	vec3 changed;
+	Vector3 changed;
 	changed.x = atof(XRCCTRL(*parent, "msCustX", wxTextCtrl)->GetValue().ToAscii().data());
 	changed.y = atof(XRCCTRL(*parent, "msCustY", wxTextCtrl)->GetValue().ToAscii().data());
 	changed.z = atof(XRCCTRL(*parent, "msCustZ", wxTextCtrl)->GetValue().ToAscii().data());
 
 	unordered_map<ushort, float> mask;
 	unordered_map<ushort, float>* mptr = NULL;
-	unordered_map<ushort, vec3> diff;
+	unordered_map<ushort, Vector3> diff;
 	for (auto i : selectedItems) {
 		mask.clear();
 		mptr = NULL;
@@ -2685,8 +2685,8 @@ void OutfitStudio::OnPreviewMove(wxCommandEvent& event) {
 		if (mask.size() > 0)
 			mptr = &mask;
 
-		vec3 d;
-		vector<vec3> verts;
+		Vector3 d;
+		vector<Vector3> verts;
 		float diffY, diffZ;
 		Proj->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 		if (bEditSlider) {
@@ -2714,8 +2714,8 @@ void OutfitStudio::OnPreviewMove(wxCommandEvent& event) {
 
 void OutfitStudio::OnOffsetShape(wxCommandEvent& event) {
 	wxDialog dlg;
-	vector<vec3> verts;
-	vec3 offs;
+	vector<Vector3> verts;
+	Vector3 offs;
 
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
@@ -2754,8 +2754,8 @@ void OutfitStudio::OnOffsetShape(wxCommandEvent& event) {
 }
 
 void OutfitStudio::OnPreviewOffset(wxCommandEvent& event) {
-	vector<vec3> verts;
-	vec3 current, changed;
+	vector<Vector3> verts;
+	Vector3 current, changed;
 	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
 	if (!parent)
 		return;
@@ -2806,7 +2806,7 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& event) {
 			if (mask.size() > 0)
 				mptr = &mask;
 
-			vector<vec3> verts;
+			vector<Vector3> verts;
 			Proj->ScaleShape(i->shapeName, scale, i->bIsOutfitShape, mptr);
 			Proj->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 			glView->UpdateMeshVertices(i->shapeName, &verts);
@@ -2836,7 +2836,7 @@ void OutfitStudio::OnPreviewScale(wxCommandEvent& event) {
 		if (mask.size() > 0)
 			mptr = &mask;
 
-		vector<vec3> verts;
+		vector<Vector3> verts;
 		Proj->ScaleShape(i->shapeName, scaleNew, i->bIsOutfitShape, mptr);
 		Proj->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 		glView->UpdateMeshVertices(i->shapeName, &verts);
@@ -2847,10 +2847,10 @@ void OutfitStudio::OnPreviewScale(wxCommandEvent& event) {
 
 void OutfitStudio::OnVirtScaleShape(wxCommandEvent& event) {
 	wxDialog dlg;
-	vector<vec3> verts;
+	vector<Vector3> verts;
 	float scale;
 	bool fromCenter;
-	//vec3 centerpoint;
+	//Vector3 centerpoint;
 
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
@@ -2884,7 +2884,7 @@ void OutfitStudio::OnVirtScaleShape(wxCommandEvent& event) {
 }
 
 void OutfitStudio::OnPreviewVirtScale(wxCommandEvent& event) {
-	vector<vec3> verts;
+	vector<Vector3> verts;
 	float scale;
 	bool fromCenter;
 
@@ -2925,7 +2925,7 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& event) {
 			float angleX = atof(XRCCTRL(dlg, "angleX", wxTextCtrl)->GetValue().ToAscii().data());
 			float angleY = atof(XRCCTRL(dlg, "angleY", wxTextCtrl)->GetValue().ToAscii().data());
 			float angleZ = atof(XRCCTRL(dlg, "angleZ", wxTextCtrl)->GetValue().ToAscii().data());
-			vec3 angle(angleX, angleY, angleZ);
+			Vector3 angle(angleX, angleY, angleZ);
 
 			unordered_map<ushort, float> mask;
 			unordered_map<ushort, float>* mptr = NULL;
@@ -2936,7 +2936,7 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& event) {
 				if (mask.size() > 0)
 					mptr = &mask;
 
-				vector<vec3> verts;
+				vector<Vector3> verts;
 				Proj->RotateShape(i->shapeName, angle, i->bIsOutfitShape, mptr);
 				Proj->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 				glView->UpdateMeshVertices(i->shapeName, &verts);
@@ -3276,7 +3276,7 @@ void OutfitStudio::OnMaskWeighted(wxCommandEvent& event) {
 		if (!m)
 			continue;
 
-		m->ColorFill(vec3(0.0f, 0.0f, 0.0f));
+		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 		for (auto b : bones) {
 			boneWeights.clear();
 			if (i->bIsOutfitShape)
@@ -3353,7 +3353,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs) :
 void wxGLPanel::OnShown() {
 	gls.Initialize(this, context, false);
 	auto size = GetSize();
-	gls.SetStartingView(vec3(0.0f, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0f);
+	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0f);
 	gls.ToggleMask();
 }
 
@@ -3375,16 +3375,16 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
 
 		gls.GetMesh(shapeList[i])->BuildTriAdjacency();
 		gls.GetMesh(shapeList[i])->BuildEdgeList();
-		gls.GetMesh(shapeList[i])->ColorFill(vec3());
+		gls.GetMesh(shapeList[i])->ColorFill(Vector3());
 		RecalcNormals(shapeList[i]);
 	}
 }
 
-void wxGLPanel::AddExplicitMesh(vector<vector3>* v, vector<tri>* t, vector<vector2>* uv, const string& shapename) {
+void wxGLPanel::AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv, const string& shapename) {
 	gls.AddMeshExplicit(v, t, uv, shapename);
 	gls.GetMesh(shapename)->BuildTriAdjacency();
 	gls.GetMesh(shapename)->BuildEdgeList();
-	gls.GetMesh(shapename)->ColorFill(vec3());
+	gls.GetMesh(shapename)->ColorFill(Vector3());
 	RecalcNormals(shapename);
 }
 
@@ -3402,7 +3402,7 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 	m->material = mat;
 }
 
-void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<vector3>* verts, bool updateBVH) {
+void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH) {
 	int id = gls.GetMeshID(shapeName);
 	gls.Update(id, verts);
 	if (updateBVH)
@@ -3460,10 +3460,10 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		wxPoint cursorPos(event.GetPosition());
 
-		unordered_map<ushort, vec3> diff;
-		vector<vec3> verts;
-		vec3 newPos;
-		vtx oldVertex;
+		unordered_map<ushort, Vector3> diff;
+		vector<Vector3> verts;
+		Vector3 newPos;
+		Vertex oldVertex;
 
 		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &oldVertex))
 			return;
@@ -3501,12 +3501,12 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 
 bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	OutfitStudio* os = (OutfitStudio*)notifyWindow;
-	vec3 o;
-	vec3 n;
-	vec3 v;
-	vec3 vo;
-	vec3 d;
-	vec3 s;
+	Vector3 o;
+	Vector3 n;
+	Vector3 v;
+	Vector3 vo;
+	Vector3 d;
+	Vector3 s;
 	bool meshHit;
 
 	TweakPickInfo tpi;
@@ -3591,13 +3591,13 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 }
 
 void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
-	vec3 o;
-	vec3 n;
-	vec3 v;
-	vec3 vo;
+	Vector3 o;
+	Vector3 n;
+	Vector3 v;
+	Vector3 vo;
 
-	vec3 d;	// Mirror pick ray direction.
-	vec3 s;	// Mirror pick ray origin.
+	Vector3 d;	// Mirror pick ray direction.
+	Vector3 s;	// Mirror pick ray origin.
 
 	TweakPickInfo tpi;
 
@@ -3611,7 +3611,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 
 		if (activeBrush->Type() == TBT_MOVE)
 		{
-			vec3 pn;
+			Vector3 pn;
 			float pd;
 			((TB_Move*)activeBrush)->GetWorkingPlane(pn, pd);
 			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
@@ -3684,16 +3684,16 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		activeBrush = &translateBrush;
 		switch (mname[0]) {
 		case 'X':
-			tpi.view = vec3(1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
+			tpi.view = Vector3(1.0f, 0.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 			break;
 		case 'Y':
-			tpi.view = vec3(0.0f, 1.0f, 0.0f);
-			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
+			tpi.view = Vector3(0.0f, 1.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 			break;
 		case 'Z':
-			tpi.view = vec3(0.0f, 0.0f, 1.0f);
-			tpi.normal = vec3(1.0f, 0.0f, 0.0f);
+			tpi.view = Vector3(0.0f, 0.0f, 1.0f);
+			tpi.normal = Vector3(1.0f, 0.0f, 0.0f);
 			break;
 		}
 	}
@@ -3702,19 +3702,19 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		activeBrush = &translateBrush;
 		switch (mname[0]) {
 		case 'X':
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, vec3(1.0f, 0.0f, 0.0f), -tpi.center.x);
-			//tpi.view = vec3(0.0f, 1.0f, 0.0f);
-			tpi.normal = vec3(1.0f, 0.0f, 0.0f);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(1.0f, 0.0f, 0.0f), -tpi.center.x);
+			//tpi.view = Vector3(0.0f, 1.0f, 0.0f);
+			tpi.normal = Vector3(1.0f, 0.0f, 0.0f);
 			break;
 		case 'Y':
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, vec3(0.0f, 1.0f, 0.0f), -tpi.center.y);
-			//tpi.view = vec3(-1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f, 1.0f, 0.0f);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 1.0f, 0.0f), -tpi.center.y);
+			//tpi.view = Vector3(-1.0f, 0.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 1.0f, 0.0f);
 			break;
 		case 'Z':
-			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, vec3(0.0f, 0.0f, 1.0f), -tpi.center.z);
-			//tpi.view = vec3(-1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 0.0f, 1.0f), -tpi.center.z);
+			//tpi.view = Vector3(-1.0f, 0.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 			break;
 		}
 	}
@@ -3723,16 +3723,16 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		activeBrush = &translateBrush;
 		switch (mname[0]) {
 		case 'X':
-			tpi.view = vec3(1.0f, 0.0f, 0.0f);
-			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
+			tpi.view = Vector3(1.0f, 0.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 			break;
 		case 'Y':
-			tpi.view = vec3(0.0f, 1.0f, 0.0f);
-			tpi.normal = vec3(0.0f, 0.0f, 1.0f);
+			tpi.view = Vector3(0.0f, 1.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 			break;
 		case 'Z':
-			tpi.view = vec3(0.0f, 0.0f, 1.0f);
-			tpi.normal = vec3(1.0f, 0.0f, 0.0f);
+			tpi.view = Vector3(0.0f, 0.0f, 1.0f);
+			tpi.normal = Vector3(1.0f, 0.0f, 0.0f);
 			break;
 		}
 	}
@@ -3750,7 +3750,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 
 void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
-	vec3 pn;
+	Vector3 pn;
 	float pd;
 
 	((TB_XForm*)(activeBrush))->GetWorkingPlane(pn, pd);
@@ -3829,7 +3829,7 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 	if (updateBrush)
 		saveBrush = activeBrush;
 
-	vec3 o;
+	Vector3 o;
 	mesh* m = gls.GetActiveMesh();
 
 	if (m) {
@@ -3847,17 +3847,17 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 		if (updateBrush)
 			saveBrush = activeBrush;
 
-		xform_move = gls.AddVis3dArrow(o, vec3(1.0f, 0.0f, 0.0f), 0.02f, 0.1f, 1.5f, vec3(1.0f, 0.0f, 0.0f), "XMoveMesh");
+		xform_move = gls.AddVis3dArrow(o, Vector3(1.0f, 0.0f, 0.0f), 0.02f, 0.1f, 1.5f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
 		gls.GetOverlay("XMoveMesh")->CreateBVH();
-		yform_move = gls.AddVis3dArrow(o, vec3(0.0f, 1.0f, 0.0f), 0.02f, 0.1f, 1.5f, vec3(0.0f, 1.0f, 0.0f), "YMoveMesh");
+		yform_move = gls.AddVis3dArrow(o, Vector3(0.0f, 1.0f, 0.0f), 0.02f, 0.1f, 1.5f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
 		gls.GetOverlay("YMoveMesh")->CreateBVH();
-		zform_move = gls.AddVis3dArrow(o, vec3(0.0f, 0.0f, 1.0f), 0.02f, 0.1f, 1.5f, vec3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
+		zform_move = gls.AddVis3dArrow(o, Vector3(0.0f, 0.0f, 1.0f), 0.02f, 0.1f, 1.5f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
 		gls.GetOverlay("ZMoveMesh")->CreateBVH();
-		gls.AddVis3dRing(o, vec3(1.0f, 0.0f, 0.0f), 1.0f, 0.03f, vec3(1.0f, 0.0f, 0.0f), "XRotateMesh");
+		gls.AddVis3dRing(o, Vector3(1.0f, 0.0f, 0.0f), 1.0f, 0.03f, Vector3(1.0f, 0.0f, 0.0f), "XRotateMesh");
 		gls.GetOverlay("XRotateMesh")->CreateBVH();
-		gls.AddVis3dRing(o, vec3(0.0f, 1.0f, 0.0f), 1.0f, 0.03f, vec3(0.0f, 1.0f, 0.0f), "YRotateMesh");
+		gls.AddVis3dRing(o, Vector3(0.0f, 1.0f, 0.0f), 1.0f, 0.03f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
 		gls.GetOverlay("YRotateMesh")->CreateBVH();
-		gls.AddVis3dRing(o, vec3(0.0f, 0.0f, 1.0f), 1.0f, 0.03f, vec3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
+		gls.AddVis3dRing(o, Vector3(0.0f, 0.0f, 1.0f), 1.0f, 0.03f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
 		gls.GetOverlay("ZRotateMesh")->CreateBVH();
 	}
 
@@ -3986,7 +3986,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			else if (bMaskPaint)
 				os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
 			else {
-				vector<vec3> verts;
+				vector<Vector3> verts;
 				os->Proj->GetLiveVerts(os->activeItem->shapeName, verts, os->activeItem->bIsOutfitShape);
 				os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
 			}

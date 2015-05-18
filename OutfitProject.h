@@ -42,7 +42,7 @@ public:
 
 	AnimInfo baseAnim;
 	AnimInfo workAnim;
-	unordered_map<string, vector<vec3>> boneScaleOffsets;
+	unordered_map<string, vector<Vector3>> boneScaleOffsets;
 
 	map<string, bool> shapeDirty;
 	unordered_map<string, string> outfitTextures;
@@ -123,9 +123,9 @@ public:
 	void ConformShape(const string& shapeName);
 
 	const string& ShapeToTarget(const string& shapeName);
-	void GetLiveVerts(const string& shapeName, vector<vec3>& outVerts, bool bIsOutfit);
-	void GetLiveRefVerts(const string& shapeName, vector<vec3>& outVerts);
-	void GetLiveOutfitVerts(const string& shapeName, vector<vec3>& outVerts);
+	void GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts, bool bIsOutfit);
+	void GetLiveRefVerts(const string& shapeName, vector<Vector3>& outVerts);
+	void GetLiveOutfitVerts(const string& shapeName, vector<Vector3>& outVerts);
 	void RefShapes(vector<string>& outShapeNames);
 	void OutfitShapes(vector<string>& outShapeNames);
 	void RefBones(vector<string>& outBoneNames);
@@ -172,11 +172,11 @@ public:
 
 	void RefreshMorphOutfitShape(const string& shapeName, bool bIsOutfit = true);
 	void UpdateShapeFromMesh(const string& shapeName, const mesh* m, bool IsOutfit);
-	void UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<ushort, vector3>& vertUpdates, bool IsOutfit);
-	void MoveVertex(const string& shapeName, vec3& pos, int& id, bool IsOutfit);
-	void OffsetShape(const string& shapeName, vec3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
+	void UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& vertUpdates, bool IsOutfit);
+	void MoveVertex(const string& shapeName, Vector3& pos, int& id, bool IsOutfit);
+	void OffsetShape(const string& shapeName, Vector3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
 	void ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
-	void RotateShape(const string& shapeName, vec3& angle, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
+	void RotateShape(const string& shapeName, Vector3& angle, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
 
 	void AutoOffset(NifFile& nif);
 

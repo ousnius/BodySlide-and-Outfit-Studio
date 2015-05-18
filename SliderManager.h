@@ -15,7 +15,7 @@ using namespace std;
 class SliderNotifyTrigger {
 public:
 	float triggerValue;
-	unsigned short triggerType;
+	ushort triggerType;
 	string targetSlider;
 };
 
@@ -101,7 +101,7 @@ public:
 	void SetSliderDefaults(const string& slider, float bigVal, float smallVal);
 	void SetClampSlider(const string& slider);
 	void AddSliderLink(const string& slider, const string& dataSetName);
-	void AddSliderTrigger(const string& slider, const string& targetSlider, float triggerVal, unsigned int triggerType);
+	void AddSliderTrigger(const string& slider, const string& targetSlider, float triggerVal, uint triggerType);
 
 	float GetSlider(const string& slider, bool isSmall);
 	void SetSlider(const string& slider, bool isSmall, float val);

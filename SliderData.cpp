@@ -148,7 +148,7 @@ int SliderSet::CopySlider(SliderData* other) {
 	return sliders.size() - 1;
 }
 
-int SliderSet::LoadSliderSet(TiXmlElement* e, unsigned int flags) {
+int SliderSet::LoadSliderSet(TiXmlElement* e, uint flags) {
 	Name = e->Attribute("name");
 	TiXmlElement* te;
 	te = e->FirstChildElement("SetFolder");
@@ -200,7 +200,7 @@ int SliderSet::LoadSliderSet(TiXmlElement* e, unsigned int flags) {
 			string stroffset = shapename->Attribute("voffset");
 			stringstream ss(stroffset);
 			string item;
-			vec3 v;
+			Vector3 v;
 			while (std::getline(ss, item, ' ')) {
 				parts.push_back(item);
 			}
@@ -426,7 +426,7 @@ void SliderSetFile::SetTargets(const string& set, vector<string>& outTargetNames
 	}
 }
 
-int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet, unsigned int flags) {
+int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet, uint flags) {
 	TiXmlElement* setPtr;
 	if (!HasSet(setName))
 		return 1;

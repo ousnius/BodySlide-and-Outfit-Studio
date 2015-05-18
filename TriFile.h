@@ -11,14 +11,10 @@
 
 using namespace std;
 
-typedef unsigned char byte;
-typedef unsigned int uint;
-typedef unsigned short ushort;
-
 
 struct MorphData {
 	string name;
-	map<int, vec3> offsets;
+	map<int, Vector3> offsets;
 };
 
 typedef shared_ptr<MorphData> MorphDataPtr;

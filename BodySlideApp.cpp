@@ -380,7 +380,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 	}
 }
 
-void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<vec3>& verts, vector<ushort>& ZapIdx, vector<vec2>* uvs) {
+void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& ZapIdx, vector<Vector2>* uvs) {
 	for (auto slider : sliderSet) {
 		float val = slider.Value;
 		if (slider.zap) {
@@ -425,7 +425,7 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 				MorphDataPtr morph = make_shared<MorphData>();
 				morph->name = sliderSet[s].Name;
 
-				vector<vec3> verts;
+				vector<Vector3> verts;
 				ushort shapeVertCount = nif.GetVertCountForShape(shape->second);
 				shapeVertCount += zapIndices[shape->second].size();
 				if (shapeVertCount > 0)
@@ -495,11 +495,11 @@ void BodySlideApp::InitPreview(char PreviewType) {
 		sliderManager.FlagReload(false);
 	}
 
-	vector<vec3> verts;
-	vector<vec2> uvs;
+	vector<Vector3> verts;
+	vector<Vector2> uvs;
 	vector<ushort> zapIdx;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		vec3 v = activeSet.GetTargetVirtualOffset(it->first);
+		Vector3 v = activeSet.GetTargetVirtualOffset(it->first);
 		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f)
 			previewBaseNif->VirtualOffsetShape(it->second, v, false);
 
@@ -559,8 +559,8 @@ void BodySlideApp::UpdatePreview(char PreviewType) {
 	if (previewBaseNif == NULL)
 		return;
 
-	vector<vector3> verts;
-	vector<vector2> uv;
+	vector<Vector3> verts;
+	vector<Vector2> uv;
 	vector<ushort> zapIdx;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		zapIdx.clear();
@@ -597,9 +597,9 @@ void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 
 	PreviewMod.CopyFrom((*previewBaseNif));
 
-	vector<vec3> verts;
+	vector<Vector3> verts;
 	vector<ushort> zapIdx;
-	vec3 v;
+	Vector3 v;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		v = activeSet.GetTargetVirtualOffset(it->first);
 		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f)
@@ -637,7 +637,7 @@ void BodySlideApp::SetDefaultConfig() {
 
 	long result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Bethesda Softworks\\Skyrim", 0, KEY_READ, &skyrimRegKey);
 	if (result == ERROR_SUCCESS) {
-		result = RegQueryValueExA(skyrimRegKey, "Installed Path", 0, 0, (BYTE*)installPath, &pathSize);
+		result = RegQueryValueExA(skyrimRegKey, "Installed Path", 0, 0, (byte*)installPath, &pathSize);
 		if (result == ERROR_SUCCESS) {
 			buildpath = installPath;
 			buildpath += "Data\\";
@@ -919,8 +919,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	if (nifBig.Load(inputFileName) != 0)
 		return 1;
 
-	vector<vec3> vertsLow;
-	vector<vec3> vertsHigh;
+	vector<Vector3> vertsLow;
+	vector<Vector3> vertsHigh;
 	vector<ushort> zapIdx;
 	unordered_map<string, vector<ushort>> zapIdxAll;
 
@@ -1136,8 +1136,8 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		}
 
 		/* Shape the NIF files */
-		vector<vec3> vertsLow;
-		vector<vec3> vertsHigh;
+		vector<Vector3> vertsLow;
+		vector<Vector3> vertsHigh;
 		vector<ushort> zapIdx;
 		unordered_map<string, vector<ushort>> zapIdxAll;
 
@@ -1204,7 +1204,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		stringstream errss;
 		int error = SHCreateDirectoryExA(NULL, dir.c_str(), NULL);
 		if ((error != ERROR_SUCCESS) && (error != ERROR_ALREADY_EXISTS) && (error != ERROR_FILE_EXISTS)) {
-			errss << "Unable to create destination directory: " << dir << " [" << hex << (unsigned int)error << "]";
+			errss << "Unable to create destination directory: " << dir << " [" << hex << (uint)error << "]";
 			failedOutfits[outfit] = errss.str();
 			continue;
 		}
@@ -1239,12 +1239,12 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
 			if ((error = nifBig.Save(outFileNameBig)) != 0) {
-				errss << "Unable to save nif file: " << outFileNameBig << " [" << hex << (unsigned int)error << "]";
+				errss << "Unable to save nif file: " << outFileNameBig << " [" << hex << (uint)error << "]";
 				failedOutfits[outfit] = errss.str();
 				continue;
 			}
 			if (nifSmall.Save(outFileNameSmall)) {
-				errss << "Unable to save nif file: " << outFileNameSmall << " [" << hex << (unsigned int)error << "]";
+				errss << "Unable to save nif file: " << outFileNameSmall << " [" << hex << (uint)error << "]";
 				failedOutfits[outfit] = errss.str();
 				continue;
 			}
@@ -1252,7 +1252,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		else {
 			outFileNameBig += ".nif";
 			if (nifBig.Save(outFileNameBig)) {
-				errss << "Unable to save nif file: " << outFileNameBig << " [" << hex << (unsigned int)error << "]";
+				errss << "Unable to save nif file: " << outFileNameBig << " [" << hex << (uint)error << "]";
 				failedOutfits[outfit] = errss.str();
 				continue;
 			}

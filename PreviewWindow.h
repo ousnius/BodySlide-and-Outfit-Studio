@@ -61,7 +61,7 @@ public:
 		baseDataPath = path;
 	}
 
-	void Update(int shapeIndex, vector<vector3>* verts, vector<vector2>* uvs = NULL) {
+	void Update(int shapeIndex, vector<Vector3>* verts, vector<Vector2>* uvs = NULL) {
 		gls.Update(shapeIndex, verts, uvs);
 		string n = gls.GetMeshName(shapeIndex);
 		gls.GetMesh(n)->SmoothNormals();
@@ -77,7 +77,7 @@ public:
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = NULL);
 	void AddNifShapeTexture(NifFile* fromNif, const string& shapeName);
 
-	void Update(string& shapeName, vector<vector3>* verts, vector<vector2>* uvs = NULL) {
+	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = NULL) {
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs);
 		mesh* m = gls.GetMesh(shapeName);
 		if (m) { // the mesh could be missing if a zap slider removes it
@@ -105,7 +105,7 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void Resized(unsigned int w, unsigned int h) {
+	void Resized(uint w, uint h) {
 		gls.SetSize(w, h);
 	}
 

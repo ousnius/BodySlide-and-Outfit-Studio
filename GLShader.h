@@ -12,9 +12,6 @@
 #define GLSHADER_DEFAULT	 "__DEFAULT__"		// Specifies default shaders that emulate the OGL fixed pipeline.
 #define GLSHADER_NONE        "__NONE__"			// Specifies no shader - fall back to OGL fixed pipeline.
 
-typedef unsigned char uint8;
-typedef unsigned int uint32;
-
 class GLShader {
 	static bool initComplete;
 	char* vertSrc;			// Source text for vertex shader
@@ -140,11 +137,11 @@ public:
 		shader = new GLShader(vertShaderProg, fragShaderProg);
 	}
 
-	void ActivateTextures(vec2* pTexCoord, GLfloat largestAF = 0) {
+	void ActivateTextures(Vector2* pTexCoord, GLfloat largestAF = 0) {
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texRef[0]);
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(vec2), pTexCoord);
+		glTexCoordPointer(2, GL_FLOAT, sizeof(Vector2), pTexCoord);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		if (largestAF)

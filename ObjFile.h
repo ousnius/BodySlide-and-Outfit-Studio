@@ -17,9 +17,9 @@ struct VertUV {
 
 struct ObjData {
 	string name;
-	vector<vec3> verts;
-	vector<tri> tris;
-	vector<vec2> uvs;
+	vector<Vector3> verts;
+	vector<Triangle> tris;
+	vector<Vector2> uvs;
 };
 
 class ObjFile {
@@ -28,14 +28,14 @@ class ObjFile {
 
 public:
 	float uvDupThreshold;
-	vec3 scale;
-	vec3 offset;
+	Vector3 scale;
+	Vector3 offset;
 
 	ObjFile();
 	~ObjFile();
 
-	void SetScale(const vec3& inScale) { scale = inScale; }
-	void SetOffset(const vec3& inOffset) { offset = inOffset; }
+	void SetScale(const Vector3& inScale) { scale = inScale; }
+	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
 
 	int LoadForNif(const string& inFn, const string& groupName = "");
 	int LoadForNif(fstream& base, const string& groupName = "");
@@ -43,8 +43,8 @@ public:
 	int Load(const string& inFn, const string& groupName = "");
 	int Load(ifstream& base, const string& groupName = "");
 
-	bool CopyDataForGroup(const string& name, vector<vec3>* v, vector<tri>* t, vector<vec2>* uv);
-	bool CopyDataForIndex(int index, vector<vec3>* v, vector<tri>* t, vector<vec2>* uv);
+	bool CopyDataForGroup(const string& name, vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv);
+	bool CopyDataForIndex(int index, vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv);
 
 	void GetGroupList(vector<string>& outNames);
 };

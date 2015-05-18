@@ -63,8 +63,8 @@ public:
 	void LinkRefDiffData(DiffDataSets* diffData);
 	void UnlinkRefDiffData();
 
-	void ApplyDiffToVerts(const string& sliderName, const string& shapeTargetName, vector<vector3>* inOutResult, float strength = 1.0f);
-	void ApplyResultToVerts(const string& sliderName, const string& shapeTargetName, vector<vector3>* inOutResult, float strength = 1.0f);
+	void ApplyDiffToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength = 1.0f);
+	void ApplyResultToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength = 1.0f);
 
 	void SourceShapesFromNif(NifFile& baseNif);
 	void SourceShapesFromObj(ObjFile& baseObj);
@@ -84,12 +84,12 @@ public:
 	void SetResultDataName(const string& shapeName, const string& sliderName, const string& dataName);
 	string ResultDataName(const string& shapeName, const string& sliderName);
 
-	void GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& outDiff);
+	void GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& outDiff);
 	int GetResultDiffSize(const string& shapeName, const string& sliderName);
 
-	void SetResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& diff);
-	void UpdateResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& diff);
-	void UpdateRefDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, vec3>& diff);
+	void SetResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff);
+	void UpdateResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff);
+	void UpdateRefDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff);
 	void EmptyResultDiff(const string& shapeName, const string& sliderName);
 	void ZeroVertDiff(const string& shapeName, const string& sliderName, vector<ushort>* vertSet, unordered_map<ushort, float>* mask);
 	void ScaleResultDiff(const string& shapeName, const string& sliderName, float scaleValue);

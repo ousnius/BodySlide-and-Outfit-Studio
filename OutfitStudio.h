@@ -40,7 +40,7 @@ public:
 	void SetNotifyWindow(wxWindow* win);
 
 	void AddMeshFromNif(NifFile* nif, char* shapename);
-	void AddExplicitMesh(vector<vector3>* v, vector<tri>* t, vector<vector2>* uv = NULL, const string& shapename = "");
+	void AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv = NULL, const string& shapename = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {
 		gls.RenameMesh(shapeName, newShapeName);
@@ -52,7 +52,7 @@ public:
 		return gls.GetMesh(shapeName);
 	}
 
-	void UpdateMeshVertices(const string& shapeName, vector<vector3>* verts, bool updateBVH = true);
+	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true);
 	void RecalculateMeshBVH(const string& shapeName);
 
 	void ShowShape(const string& shapeName, bool show = true);
@@ -221,8 +221,8 @@ public:
 	void ToggleMaskVisible() {
 		mesh* m = gls.GetActiveMesh();
 		if (!m->vcolors) {
-			m->vcolors = new vec3[m->nVerts];
-			memset(m->vcolors, 0, sizeof(vec3) * m->nVerts);
+			m->vcolors = new Vector3[m->nVerts];
+			memset(m->vcolors, 0, sizeof(Vector3) * m->nVerts);
 		}
 		gls.ToggleMask();
 	}
@@ -288,7 +288,7 @@ public:
 	void InvertMask() {
 		mesh* m = gls.GetActiveMesh();
 		if (!m->vcolors)
-			m->ColorFill(vec3(0.0f, 0.0f, 0.0f));
+			m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 		for (int i = 0; i < m->nVerts; i++)
 			m->vcolors[i].x = 1 - m->vcolors[i].x;
 	}
@@ -371,7 +371,7 @@ private:
 	TweakUndo* strokeManager;
 	TweakUndo baseStrokes;
 
-	vec3 xformCenter;		// transform center for transform brushes (rotate, specifically cares about this)
+	Vector3 xformCenter;		// transform center for transform brushes (rotate, specifically cares about this)
 
 	DECLARE_EVENT_TABLE()
 };
@@ -505,7 +505,7 @@ private:
 		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
 	};
 
-	vec3 previewMove;
+	Vector3 previewMove;
 	float previewScale;
 
 	map<string, SliderDisplay*> sliderDisplays;

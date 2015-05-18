@@ -29,27 +29,27 @@ mesh::mesh(mesh* m) {
 	vertEdges = NULL;
 	if (m->verts) {
 		nVerts = m->nVerts;
-		verts = new vtx[nVerts];
+		verts = new Vertex[nVerts];
 		for (int i = 0; i < nVerts; i++) {
 			verts[i] = m->verts[i];
 		}
 	}
 	if (m->tris) {
 		nTris = m->nTris;
-		tris = new tri[nTris];
+		tris = new Triangle[nTris];
 		for (int i = 0; i < nTris; i++) {
 			tris[i] = m->tris[i];
 		}
 	}
 	if (m->edges) {
 		nEdges = m->nEdges;
-		edges = new edge[nEdges];
+		edges = new Edge[nEdges];
 		for (int i = 0; i < nEdges; i++) {
 			edges[i] = m->edges[i];
 		}
 	}
 	if (m->vcolors) {
-		vcolors = new vec3[nVerts];
+		vcolors = new Vector3[nVerts];
 		for (int i = 0; i < nVerts; i++) {
 			vcolors[i] = m->vcolors[i];
 		}
@@ -100,17 +100,17 @@ mesh::~mesh() {
 	edges = 0;
 }
 
-void mesh::TransformPoints(const Mat4& mat) {
+void mesh::TransformPoints(const Matrix4& mat) {
 	for (int i = 0; i < nVerts; i++)
 		verts[i].pos(mat * verts[i]);
 }
 
-void mesh::TransformPoints(vector<int>& indices, const Mat4& mat) {
-	for (unsigned int i = 0; i < indices.size(); i++)
+void mesh::TransformPoints(vector<int>& indices, const Matrix4& mat) {
+	for (uint i = 0; i < indices.size(); i++)
 		verts[indices[i]].pos(mat * verts[indices[i]]);
 }
 
-void mesh::TransformPoints(set<int>& indices, const Mat4& mat) {
+void mesh::TransformPoints(set<int>& indices, const Matrix4& mat) {
 	for (auto i = indices.begin(); i != indices.end(); ++i)
 		verts[(*i)].pos(mat * verts[(*i)]);
 }
@@ -151,14 +151,14 @@ void mesh::MakeEdges() {
 	if (edges)
 		return;
 
-	unordered_set<edge> eset;
+	unordered_set<Edge> eset;
 	for (int t = 0; t < nTris; t++) {
 		eset.emplace(min(tris[t].p1, tris[t].p2), max(tris[t].p1, tris[t].p2));
 		eset.emplace(min(tris[t].p2, tris[t].p3), max(tris[t].p2, tris[t].p3));
 		eset.emplace(min(tris[t].p3, tris[t].p1), max(tris[t].p3, tris[t].p1));
 	}
 	nEdges = eset.size();
-	edges = new edge[nEdges];
+	edges = new Edge[nEdges];
 
 	int i = 0;
 	for (auto e : eset)
@@ -184,7 +184,7 @@ void mesh::GetAdjacentPoints(int querypoint, set<int>& outPoints, bool sort) {
 	if (!vertTris)
 		return;
 
-	for (unsigned int t = 0; t < vertTris[querypoint].size(); t++) {
+	for (uint t = 0; t < vertTris[querypoint].size(); t++) {
 		tp1 = tris[vertTris[querypoint][t]].p1;
 		tp2 = tris[vertTris[querypoint][t]].p2;
 		tp3 = tris[vertTris[querypoint][t]].p3;
@@ -196,9 +196,9 @@ void mesh::GetAdjacentPoints(int querypoint, set<int>& outPoints, bool sort) {
 			outPoints.insert(tp3);		
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (unsigned int v = 0; v < weldVerts[querypoint].size(); v++) {
+		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
 			wq = weldVerts[querypoint][v];
-			for (unsigned int t = 0; t < vertTris[wq].size(); t++) {
+			for (uint t = 0; t < vertTris[wq].size(); t++) {
 				tp1 = tris[vertTris[wq][t]].p1;
 				tp2 = tris[vertTris[wq][t]].p2;
 				tp3 = tris[vertTris[wq][t]].p3;
@@ -223,7 +223,7 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 	if (!vertEdges)
 		return 0;
 
-	for (unsigned int e = 0; e < vertEdges[querypoint].size(); e++) {
+	for (uint e = 0; e < vertEdges[querypoint].size(); e++) {
 		ep1 = edges[vertEdges[querypoint][e]].p1;
 		ep2 = edges[vertEdges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
@@ -234,9 +234,9 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 		}
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (unsigned int v = 0; v < weldVerts[querypoint].size(); v++) {
+		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
 			wq = weldVerts[querypoint][v];
-			for (unsigned int e = 0; e < vertEdges[wq].size(); e++) {
+			for (uint e = 0; e < vertEdges[wq].size(); e++) {
 				ep1 = edges[vertEdges[wq][e]].p1;
 				ep2 = edges[vertEdges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
@@ -259,7 +259,7 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	int ep1;
 	int ep2;
 	int n = 0;
-	for (unsigned int e = 0; e < vertEdges[querypoint].size(); e++) {
+	for (uint e = 0; e < vertEdges[querypoint].size(); e++) {
 		ep1 = edges[vertEdges[querypoint][e]].p1;
 		ep2 = edges[vertEdges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
@@ -275,9 +275,9 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 		}
 	}
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (unsigned int v = 0; v < weldVerts[querypoint].size(); v++) {
+		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
 			int wq = weldVerts[querypoint][v];
-			for (unsigned int e = 0; e < vertEdges[wq].size(); e++) {
+			for (uint e = 0; e < vertEdges[wq].size(); e++) {
 				ep1 = edges[vertEdges[wq][e]].p1;
 				ep2 = edges[vertEdges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
@@ -309,8 +309,8 @@ void mesh::SmoothNormals() {
 	if (!vertTris)
 		return;
 
-	vec3 norm;
-	vec3 tn;
+	Vector3 norm;
+	Vector3 tn;
 	for (int v = 0; v < nVerts; v++) {
 		norm.x = norm.y = norm.z = 0.0f;
 		for (auto t : vertTris[v]) {
@@ -347,8 +347,8 @@ void mesh::SmoothNormals() {
 }
 
 void mesh::FacetNormals() {
-	vec3 norm;
-	vec3 tn;
+	Vector3 norm;
+	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
 		norm.x = norm.y = norm.z = 0.0f;
 		tris[t].trinormal(verts, &tn);
@@ -365,9 +365,9 @@ void mesh::FacetNormals() {
 	}
 }
 
-void mesh::ColorFill(const vec3& color) {
+void mesh::ColorFill(const Vector3& color) {
 	if (!vcolors)
-		vcolors = new vec3[nVerts];
+		vcolors = new Vector3[nVerts];
 
 	for (int i = 0; i < nVerts; i++)
 		vcolors[i] = color;
@@ -375,7 +375,7 @@ void mesh::ColorFill(const vec3& color) {
 
 void mesh::ColorChannelFill(int channel, float value) {
 	if (!vcolors)
-		vcolors = new vec3[nVerts];
+		vcolors = new Vector3[nVerts];
 
 	for (int i = 0; i < nVerts; i++) {
 		if (channel == 0)
@@ -387,7 +387,7 @@ void mesh::ColorChannelFill(int channel, float value) {
 	}
 }
 
-bool mesh::ConnectedPointsInSphere(vec3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets) {
+bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets) {
 	if (!vertTris)
 		return false;
 	if (!vertEdges)
@@ -395,7 +395,7 @@ bool mesh::ConnectedPointsInSphere(vec3 center, float sqradius, int startTri, bo
 	if (startTri < 0)
 		return false;
 
-	vtx v;
+	Vertex v;
 	v.x = center.x;
 	v.y = center.y;
 	v.z = center.z;
@@ -460,13 +460,13 @@ bool mesh::ConnectedPointsInSphere(vec3 center, float sqradius, int startTri, bo
 	return true;
 }
 
-bool mesh::ConnectedPointsInSphere2(vec3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets) {
+bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets) {
 	if (!vertTris)
 		return false;
 	if (startTri < 0)
 		return false;
 
-	vtx v;
+	Vertex v;
 	v.x = center.x;
 	v.y = center.y;
 	v.z = center.z;

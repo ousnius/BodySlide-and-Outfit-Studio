@@ -13,7 +13,7 @@ class kd_matcher {
 public:
 	class kd_node{
 	public:
-		vtx* p;
+		Vertex* p;
 		kd_node* less;
 		kd_node* more;
 		kd_node() {
@@ -28,11 +28,11 @@ public:
 			less = more = NULL;
 
 		}
-		kd_node(vtx* point) {
+		kd_node(Vertex* point) {
 			less = more = NULL;
 			p = point;
 		}
-		vtx* add(vtx* point, int depth) {
+		Vertex* add(Vertex* point, int depth) {
 			int axis = depth % 3;
 			bool domore = false;
 			float dx = p->x - point->x;
@@ -65,33 +65,33 @@ public:
 	};
 
 	kd_node* root;
-	vtx* points;
+	Vertex* points;
 	int count;
-	vector<pair<vtx*, vtx*>> matches;
+	vector<pair<Vertex*, Vertex*>> matches;
 
 	~kd_matcher() {
 		if (root)
 			delete root;
 		root = NULL;
 	}
-	kd_matcher(vtx* points, int count) {
+	kd_matcher(Vertex* points, int count) {
 		if (count <= 0)
 			return;
 
-		vtx* pong;
+		Vertex* pong;
 		root = new kd_node(&points[0]);
 		for (int i = 1; i < count; i++) {
 			pong = root->add(&points[i], 0);
 			if (pong)
-				matches.push_back(pair<vtx*, vtx*>(&points[i], pong));
+				matches.push_back(pair<Vertex*, Vertex*>(&points[i], pong));
 		}
 	}
 };
 
 class kd_query_result {
 public:
-	vtx* v;
-	unsigned short vertex_index;
+	Vertex* v;
+	ushort vertex_index;
 	float distance;
 	bool operator < (const kd_query_result& other) const {
 		return distance < other.distance;
@@ -104,7 +104,7 @@ class kd_tree {
 public:
 	class kd_node{
 	public:
-		vtx* p;
+		Vertex* p;
 		int p_i;
 		kd_node* less;
 		kd_node* more;
@@ -121,12 +121,12 @@ public:
 			less = more = NULL;
 
 		}
-		kd_node(vtx* point, int point_index) {
+		kd_node(Vertex* point, int point_index) {
 			less = more = NULL;
 			p = point;
 			p_i = point_index;
 		}
-		void add(vtx* point, int point_index, int depth) {
+		void add(Vertex* point, int point_index, int depth) {
 			int axis = depth % 3;
 			bool domore = false;
 			float dx = p->x - point->x;
@@ -157,7 +157,7 @@ public:
 
 		// finds the closest point(s) to querypoint within the provided radius.  If radius is 0, only the single closest point 
 		// is found.  On first call, mindist should be set to FLT_MAX, and depth set to 0.
-		void find_closest(vtx* querypoint, vector<kd_query_result>& queryResult, float radius, float& mindist, int depth = 0) {
+		void find_closest(Vertex* querypoint, vector<kd_query_result>& queryResult, float radius, float& mindist, int depth = 0) {
 			kd_query_result kdqr;
 			int axis = depth % 3;		// which separating axis to use -- based on depth
 			float dx = p->x - querypoint->x; // axis sides
@@ -233,7 +233,7 @@ public:
 	};
 
 	kd_node* root;
-	vtx* points;
+	Vertex* points;
 	int count;
 	vector<kd_query_result> queryResult;
 
@@ -242,7 +242,7 @@ public:
 			delete root;
 		root = NULL;
 	}
-	kd_tree(vtx* points, int count) {
+	kd_tree(Vertex* points, int count) {
 		if (count <= 0)
 			return;
 
@@ -251,7 +251,7 @@ public:
 			root->add(&points[i], i, 0);
 	}
 
-	int kd_nn(vtx* querypoint, float radius) {
+	int kd_nn(Vertex* querypoint, float radius) {
 		queryResult.clear();
 		float mindist = FLT_MAX;
 		if (radius != 0)

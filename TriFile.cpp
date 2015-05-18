@@ -36,7 +36,7 @@ int TriFile::Read(string fileName) {
 				morphName.resize(morphLength + 1);
 				triFile.read((char*)&morphName, morphLength);
 
-				map<int, vec3> morphOffsets;
+				map<int, Vector3> morphOffsets;
 				if (packed) {
 					float mult = 0.0f;
 					ushort morphVertCount = 0;
@@ -53,7 +53,7 @@ int TriFile::Read(string fileName) {
 						triFile.read((char*)&y, 2);
 						triFile.read((char*)&z, 2);
 
-						vec3 offset = vec3(x * mult, y * mult, z * mult);
+						Vector3 offset = Vector3(x * mult, y * mult, z * mult);
 						if (!offset.IsZero(true))
 							morphOffsets.emplace(id, offset);
 					}
@@ -64,7 +64,7 @@ int TriFile::Read(string fileName) {
 
 					for (int k = 0; k < morphVertCount; k++) {
 						uint id = 0;
-						vec3 offset = vec3();
+						Vector3 offset = Vector3();
 						triFile.read((char*)&id, 4);
 						triFile.read((char*)&offset, 12);
 
@@ -153,7 +153,7 @@ int TriFile::Write(string fileName, bool packed) {
 
 					for (auto& v : morph->offsets) {
 						uint id = v.first;
-						vec3 offset = vec3(v.second.x, v.second.y, v.second.z);
+						Vector3 offset = Vector3(v.second.x, v.second.y, v.second.z);
 						triFile.write((char*)&id, 4);
 						triFile.write((char*)&offset, 12);
 					}

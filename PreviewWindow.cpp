@@ -57,7 +57,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType, char* shapeName)
 void PreviewWindow::OnShown() {
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
-	gls.SetStartingView(vec3(0.0f, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0f);
+	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0f);
 	app->InitPreview(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
 }
 
@@ -200,8 +200,8 @@ void PreviewWindow::MouseWheel(int dW) {
 }
 
 void PreviewWindow::Pick(int X, int Y) {
-	vec3 camVec;
-	vec3 dirVec;
+	Vector3 camVec;
+	Vector3 dirVec;
 	float len;
 	gls.GetPickRay(X, Y, dirVec, camVec);
 	len = sqrt(camVec.x*camVec.x + camVec.y*camVec.y + camVec.z*camVec.z);

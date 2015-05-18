@@ -144,7 +144,7 @@ void SliderManager::AddSliderLink(const string& slider, const string& dataSetNam
 			SlidersSmall[i].linkedDataSets.push_back(dataSetName);
 }
 
-void SliderManager::AddSliderTrigger(const string& slider, const string& targetSlider, float triggerVal, unsigned int triggerType) {
+void SliderManager::AddSliderTrigger(const string& slider, const string& targetSlider, float triggerVal, uint triggerType) {
 	int targetIdx = -1;
 	int sliderIdx = -1;
 	SliderNotifyTrigger trigger;

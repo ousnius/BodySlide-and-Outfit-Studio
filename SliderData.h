@@ -118,7 +118,7 @@ class SliderSet
 	bool genWeights;			 // Generate both low and high weight meshes on output.
 	map<string, string> targetshapenames;	// Target names mapped to nif file shape names.
 	map<string, string> targetdatafolders;
-	map<string, vec3> targetoffsets;		// Display offset for bodyslide (emulates bone offsets).
+	map<string, Vector3> targetoffsets;		// Display offset for bodyslide (emulates bone offsets).
 
 	vector<SliderData> sliders;
 
@@ -152,7 +152,7 @@ public:
 
 	void SetBaseDataPath(const string& inPath) { baseDataPath = inPath; }
 
-	int LoadSliderSet(TiXmlElement* SliderSetSource, unsigned int flags = LOADSS_REFERENCE | LOADSS_DIRECT);
+	int LoadSliderSet(TiXmlElement* SliderSetSource, uint flags = LOADSS_REFERENCE | LOADSS_DIRECT);
 	void LoadSetDiffData(DiffDataSets& inDataStorage);
 
 	// Add an empty set.
@@ -220,15 +220,15 @@ public:
 
 	}
 
-	void AddTargetVirtualOffset(const string& targetName, const vec3& offset) {
+	void AddTargetVirtualOffset(const string& targetName, const Vector3& offset) {
 		targetoffsets[targetName] = offset;
 	}
 
-	vec3 GetTargetVirtualOffset(const string& targetName) {
+	Vector3 GetTargetVirtualOffset(const string& targetName) {
 		if (targetoffsets.find(targetName) != targetoffsets.end())
 			return targetoffsets[targetName];
 
-		else return vec3(0.0f, 0.0f, 0.0f);
+		else return Vector3(0.0f, 0.0f, 0.0f);
 	}
 
 	void AddTargetDataFolder(const string& targetName, const string& datafolder) {
@@ -331,7 +331,7 @@ public:
 	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
 	int GetAllSets(vector<SliderSet>& outAppendSets);
 	// Gets a single slider set from the XML document based on the name.
-	int GetSet(const string& setName, SliderSet& outSliderSet, unsigned int flags = LOADSS_DIRECT | LOADSS_REFERENCE);
+	int GetSet(const string& setName, SliderSet& outSliderSet, uint flags = LOADSS_DIRECT | LOADSS_REFERENCE);
 	// Updates a slider set in the xml document with the provided set's information.
 	// If the set does not already exist in the file (based on name) the set is added.
 	int UpdateSet(SliderSet& inSliderSet);

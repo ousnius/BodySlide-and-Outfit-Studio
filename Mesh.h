@@ -18,13 +18,13 @@ class GLMaterial;
 
 class mesh {
 public:
-	vtx* verts;
+	Vertex* verts;
 	int nVerts;
 
-	tri* tris;
+	Triangle* tris;
 	int nTris;
 
-	edge* edges;
+	Edge* edges;
 	int nEdges;
 
 	float scale;				// Information only, does not cause verts to be scaled during render (except point/lines).
@@ -37,10 +37,10 @@ public:
 	RenderMode rendermode;		// 0 = normal mesh render, 1 = line based visualizer render, 2 = point based vis render.
 	bool doublesided;
 	bool textured;
-	vec2* texcoord;
+	Vector2* texcoord;
 	GLMaterial* material{nullptr};
 
-	vec3* vcolors;				// Vertex colors.
+	Vector3* vcolors;				// Vertex colors.
 
 	shared_ptr<AABBTree> bvh;
 	kd_tree* kdtree;
@@ -54,9 +54,9 @@ public:
 
 	string shapeName;
 
-	vec3 color;
+	Vector3 color;
 
-	Mat4 Transform;				// Transformation matrix for OpenGL display.
+	Matrix4 Transform;				// Transformation matrix for OpenGL display.
 
 	mesh();
 	mesh(mesh* m);				// Copy from existing mesh.
@@ -69,9 +69,9 @@ public:
 
 
 	void CreateKDTree();
-	void TransformPoints(const Mat4& mat);
-	void TransformPoints(vector<int>& indices, const Mat4& mat);
-	void TransformPoints(set<int>& indices, const Mat4& mat);
+	void TransformPoints(const Matrix4& mat);
+	void TransformPoints(vector<int>& indices, const Matrix4& mat);
+	void TransformPoints(set<int>& indices, const Matrix4& mat);
 
 	void MakeEdges();			// Creates the list of edges from the list of triangles.
 
@@ -87,10 +87,10 @@ public:
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
 	// Also requires trivisit to be allocated by the caller - one slot for every tri in the mesh.
 	// Recursive - large query will overflow the stack!
-	bool ConnectedPointsInSphere(vec3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets);
+	bool ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets);
 
 	// Similar to above, but uses an edge list to determine adjacency, with less risk of stack problems.
-	bool ConnectedPointsInSphere2(vec3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets);
+	bool ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets);
 
 	// Convenience function to gather connected points, taking into account "welded" vertices.
 	// Optionally sorts the results by distance. Does not clear the output set.
@@ -103,7 +103,7 @@ public:
 	int GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoints, bool* visPoint);
 
 	// Creates the vertex color array (if necessary) and sets all the colors to the provided value.
-	void ColorFill(const vec3& color);
+	void ColorFill(const Vector3& color);
 
 	void ColorChannelFill(int channel, float value);
 

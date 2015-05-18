@@ -1,44 +1,44 @@
 #include "NifFile.h"
 
-NifBlock::~NifBlock() { 
+NiObject::~NiObject() { 
 }
 
-void NifBlock::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
+void NiObject::notifyBlockDelete(int blockID, NiHeader& hdr) {
 	return;
 }
 
-void NifBlock::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+void NiObject::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	return;
 }
 
-void NifBlock::Get(fstream& file, NifBlockHeader& hdr) {
+void NiObject::Get(fstream& file, NiHeader& hdr) {
 }
 
-void NifBlock::Put(fstream& file, NifBlockHeader& hdr) {
+void NiObject::Put(fstream& file, NiHeader& hdr) {
 }
 
-int NifBlock::CalcBlockSize() {
+int NiObject::CalcBlockSize() {
 	return blockSize;
 }
 
-void NifBlock::SetBlockSize(int sz) {
+void NiObject::SetBlockSize(int sz) {
 	blockSize = sz;
 }
 
 
-NifString::NifString(bool wantOutputNull) {
+NiString::NiString(bool wantOutputNull) {
 	outputNull = wantOutputNull;
 }
 
-NifString::NifString(fstream& file, int szSize, bool wantNullOutput) {
+NiString::NiString(fstream& file, int szSize, bool wantNullOutput) {
 	outputNull = wantNullOutput;
 	Get(file, szSize);
 }
 
-void NifString::Put(fstream& file, int szSize) {
-	unsigned char smSize;
-	unsigned short medSize;
-	unsigned int bigSize;
+void NiString::Put(fstream& file, int szSize) {
+	byte smSize;
+	ushort medSize;
+	uint bigSize;
 	if (szSize == 1) {
 		smSize = str.length();
 		if (!smSize && outputNull)
@@ -63,11 +63,11 @@ void NifString::Put(fstream& file, int szSize) {
 		file.put(0);
 }
 
-void NifString::Get(fstream& file, int szSize) {
+void NiString::Get(fstream& file, int szSize) {
 	char buf[1025];
-	unsigned char smSize;
-	unsigned short medSize;
-	unsigned int bigSize;
+	byte smSize;
+	ushort medSize;
+	uint bigSize;
 
 	if (szSize == 1) {
 		file.read((char*)&smSize, 1);
@@ -92,7 +92,7 @@ void NifString::Get(fstream& file, int szSize) {
 }
 
 
-void NifBlockNiNode::Get(fstream& file, NifBlockHeader& hdr) {
+void NiNode::Get(fstream& file, NiHeader& hdr) {
 	int intData;
 	if (hdr.VerCheck(20, 1, 0, 3)) {
 		file.read((char*)&nameID, 4);
@@ -102,7 +102,7 @@ void NifBlockNiNode::Get(fstream& file, NifBlockHeader& hdr) {
 			nodeName = "";
 	}
 	else
-		nodeName = NifString(file, 4).str;
+		nodeName = NiString(file, 4).str;
 
 	file.read((char*)&numExtra, 4);
 	for (int i = 0; i < numExtra; i++) {
@@ -148,7 +148,7 @@ void NifBlockNiNode::Get(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockNiNode::Put(fstream& file, NifBlockHeader& hdr) {
+void NiNode::Put(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3))
 		file.write((char*)&nameID, 4);
 	else {
@@ -190,7 +190,7 @@ void NifBlockNiNode::Put(fstream& file, NifBlockHeader& hdr) {
 		file.write((char*)&effects[i], 4);
 }
 
-void NifBlockNiNode::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
+void NiNode::notifyBlockDelete(int blockID, NiHeader& hdr) {
 	for (int i = 0; i < numExtra; i++) {
 		if (extradata[i] == blockID) {
 			extradata.erase(extradata.begin() + i);
@@ -234,7 +234,7 @@ void NifBlockNiNode::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
 	}
 }
 
-NifBlockNiNode::NifBlockNiNode() {
+NiNode::NiNode() {
 	nameID = -1;
 	nodeName = "";
 	numExtra = 0;
@@ -246,21 +246,21 @@ NifBlockNiNode::NifBlockNiNode() {
 	collisionRef = -1;
 	numChildren = 0;
 	numEffects = 0;
-	blockType = NIFBLOCK_NINODE;
+	blockType = NINODE;
 	blockSize = 80;
 }
 
-NifBlockNiNode::NifBlockNiNode(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_NINODE;
+NiNode::NiNode(fstream& file, NiHeader& hdr) {
+	blockType = NINODE;
 	Get(file, hdr);
 }
 
-int NifBlockNiNode::CalcBlockSize() {
+int NiNode::CalcBlockSize() {
 	return (blockSize = 80 + (numExtra * 4) + (numChildren * 4) + (numEffects * 4));
 }
 
 
-void NifBlockTriStrips::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockTriStrips::Get(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3)) {
 		file.read((char*)&nameID, 4);
 		if (nameID != -1)
@@ -269,7 +269,7 @@ void NifBlockTriStrips::Get(fstream& file, NifBlockHeader& hdr) {
 			shapeName = "";
 	}
 	else
-		shapeName = NifString(file, 4).str;
+		shapeName = NiString(file, 4).str;
 
 	int intData;
 	file.read((char*)&numExtra, 4);
@@ -307,7 +307,7 @@ void NifBlockTriStrips::Get(fstream& file, NifBlockHeader& hdr) {
 	file.read((char*)&skinRef, 4);
 	file.read((char*)&numMat, 4);
 	for (int i = 0; i < numMat; i++)
-		materialNames.push_back(NifString(file, 2));
+		materialNames.push_back(NiString(file, 2));
 
 	for (int i = 0; i < numMat; i++){
 		file.read((char*)&intData, 4);
@@ -326,7 +326,7 @@ void NifBlockTriStrips::Get(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockTriStrips::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockTriStrips::Put(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3))
 		file.write((char*)&nameID, 4);
 	else {
@@ -374,7 +374,7 @@ void NifBlockTriStrips::Put(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockTriStrips::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
+void NifBlockTriStrips::notifyBlockDelete(int blockID, NiHeader& hdr) {
 	for (int i = 0; i < numExtra; i++) {
 		if (extradata[i] == blockID) {
 			extradata.erase(extradata.begin() + i);
@@ -424,7 +424,7 @@ void NifBlockTriStrips::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
 }
 
 NifBlockTriStrips::NifBlockTriStrips() {
-	blockType = NIFBLOCK_TRISTRIPS;
+	blockType = NITRISTRIPS;
 	nameID = -1;
 	shapeName = "";
 	propertiesRef1 = -1;
@@ -445,8 +445,8 @@ NifBlockTriStrips::NifBlockTriStrips() {
 	blockSize = 97;
 }
 
-NifBlockTriStrips::NifBlockTriStrips(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_TRISTRIPS;
+NifBlockTriStrips::NifBlockTriStrips(fstream& file, NiHeader& hdr) {
+	blockType = NITRISTRIPS;
 	propertiesRef1 = -1;
 	propertiesRef2 = -1;
 	numExtra = 0;
@@ -455,14 +455,14 @@ NifBlockTriStrips::NifBlockTriStrips(fstream& file, NifBlockHeader& hdr) {
 }
 
 
-void NifBlockTriStripsData::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockTriStripsData::Get(fstream& file, NiHeader& hdr) {
 	file.read((char*)&unkInt, 4);
 	file.read((char*)&numverts, 2);
 	file.read((char*)&keepflags, 1);
 	file.read((char*)&compressflags, 1);
 	file.read((char*)&hasVertices, 1);
 
-	vec3 v;
+	Vector3 v;
 	for (int i = 0; i < numverts; i++) {
 		file.read((char*)&v.x, 4);
 		file.read((char*)&v.y, 4);
@@ -507,14 +507,14 @@ void NifBlockTriStripsData::Get(fstream& file, NifBlockHeader& hdr) {
 	file.read((char*)&hasVertColors, 1);
 
 	if (hasVertColors == 1) {
-		color4 c;
+		Color4 c;
 		for (int i = 0; i < numverts; i++) {
 			file.read((char*)&c, 16);
 			vertcolors.push_back(c);
 		}
 	}
 	if (numUVs >= 1) {
-		vec2 uv;
+		Vector2 uv;
 		for (int i = 0; i < numverts; i++) {
 			file.read((char*)&uv.u, 4);
 			file.read((char*)&uv.v, 4);
@@ -544,7 +544,7 @@ void NifBlockTriStripsData::Get(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockTriStripsData::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockTriStripsData::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&unkInt, 4);
 	file.write((char*)&numverts, 2);
 	file.write((char*)&keepflags, 1);
@@ -636,26 +636,26 @@ void NifBlockTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndic
 		if (indexCollapse[i] == -1) {
 			vertices.erase(vertices.begin() + i);
 			numverts--;
-			blockSize -= sizeof(vector3);
+			blockSize -= sizeof(Vector3);
 			if (hasNorm) {
 				normals.erase(normals.begin() + i);
-				blockSize -= sizeof(vector3);
+				blockSize -= sizeof(Vector3);
 			}
 			if (hasTan){
 				tangents.erase(tangents.begin() + i);
-				blockSize -= sizeof(vector3);
+				blockSize -= sizeof(Vector3);
 			}
 			if (hasBin){
 				binormals.erase(binormals.begin() + i);
-				blockSize -= sizeof(vector3);
+				blockSize -= sizeof(Vector3);
 			}
 			if (hasCol) {
 				vertcolors.erase(vertcolors.begin() + i);
-				blockSize -= sizeof(color4);
+				blockSize -= sizeof(Color4);
 			}
 			if (hasUV) {
 				uvs.erase(uvs.begin() + i);
-				blockSize -= sizeof(vector2);
+				blockSize -= sizeof(Vector2);
 			}
 		}
 	}
@@ -673,14 +673,14 @@ void NifBlockTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndic
 }
 
 NifBlockTriStripsData::NifBlockTriStripsData() {
-	blockType = NIFBLOCK_TRISTRIPSDATA;
+	blockType = NITRISTRIPSDATA;
 	virtScale = 1.0f;
 	scaleFromCenter = true;
 	myver = 12;
 }
 
-NifBlockTriStripsData::NifBlockTriStripsData(fstream& file, NifBlockHeader &hdr) {
-	blockType = NIFBLOCK_TRISTRIPSDATA;
+NifBlockTriStripsData::NifBlockTriStripsData(fstream& file, NiHeader &hdr) {
+	blockType = NITRISTRIPSDATA;
 	virtScale = 1.0f;
 	scaleFromCenter = true;
 	myver = 12;
@@ -707,8 +707,8 @@ int NifBlockTriStripsData::CalcBlockSize() {
 	return blockSize;
 }
 
-void NifBlockTriStripsData::StripsToTris(vector<triangle>* outTris) {
-	triangle t;
+void NifBlockTriStripsData::StripsToTris(vector<Triangle>* outTris) {
+	Triangle t;
 	for (int strip = 0; strip < numStrips; strip++) {
 		for (int vi = 0; vi < stripLengths[strip] - 2; vi++) {
 			if (vi & 1) {
@@ -731,26 +731,22 @@ void NifBlockTriStripsData::StripsToTris(vector<triangle>* outTris) {
 }
 
 
-void NifBlockTriShape::Get(fstream& file, NifBlockHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&nameID, 4);
-		if (nameID != -1)
-			shapeName = hdr.strings[nameID].str;
-		else
-			shapeName = "";
-	}
+void NiTriShape::Get(fstream& file, NiHeader& hdr) {
+	file.read((char*)&nameRef, 4);
+	if (nameRef != -1)
+		name = hdr.strings[nameRef].str;
 	else
-		shapeName = NifString(file, 4).str;
+		name = "";
 
 	int intData;
-	file.read((char*)&numExtra, 4);
-	for (int i = 0; i < numExtra; i++) {
+	file.read((char*)&numExtraData, 4);
+	for (int i = 0; i < numExtraData; i++) {
 		file.read((char*)&intData, 4);
-		extradata.push_back(intData);
+		extraDataRef.push_back(intData);
 	}
 	file.read((char*)&controllerRef, 4);
 	file.read((char*)&flags, 2);
-	if (hdr.userVer >= 11 && hdr.userVer2 > 26)
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
 		file.read((char*)&unkShort1, 2);
 
 	file.read((char*)&translation.x, 4);
@@ -766,7 +762,7 @@ void NifBlockTriShape::Get(fstream& file, NifBlockHeader& hdr) {
 		file.read((char*)&numProperties, 4);
 		for (int i = 0; i < numProperties; i++) {
 			file.read((char*)&intData, 4);
-			properties.push_back(intData);
+			propertiesRef.push_back(intData);
 		}
 	}
 	else
@@ -774,45 +770,35 @@ void NifBlockTriShape::Get(fstream& file, NifBlockHeader& hdr) {
 
 	file.read((char*)&collisionRef, 4);
 	file.read((char*)&dataRef, 4);
-	file.read((char*)&skinRef, 4);
-	file.read((char*)&numMat, 4);
-	for (int i = 0; i < numMat; i++)
-		materialNames.push_back(NifString(file, 2));
+	file.read((char*)&skinInstanceRef, 4);
+	file.read((char*)&numMaterials, 4);
+	for (int i = 0; i < numMaterials; i++)
+		materialNames.push_back(NiString(file, 2));
 
-	for (int i = 0; i < numMat; i++){
+	for (int i = 0; i < numMaterials; i++){
 		file.read((char*)&intData, 4);
 		materialExtra.push_back(intData);
 	}
-	file.read((char*)&activeMat, 4);
-
-	if (hdr.userVer == 1)
-		file.read((char*)&unkByte, 1);
-
+	file.read((char*)&activeMaterial, 4);
 	file.read((char*)&dirty, 1);
 
-	if (hdr.userVer == 12) {
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer == 12) {
 		file.read((char*)&propertiesRef1, 4);
 		file.read((char*)&propertiesRef2, 4);
 	}
 }
 
-void NifBlockTriShape::Put(fstream& file, NifBlockHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&nameID, 4);
-	else {
-		uint length = shapeName.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&shapeName, shapeName.length());
-	}
-
-	file.write((char*)&numExtra, 4);
-	for (int i = 0; i < numExtra; i++)
-		file.write((char*)&extradata[i], 4);
+void NiTriShape::Put(fstream& file, NiHeader& hdr) {
+	file.write((char*)&nameRef, 4);
+	file.write((char*)&numExtraData, 4);
+	for (int i = 0; i < numExtraData; i++)
+		file.write((char*)&extraDataRef[i], 4);
 
 	file.write((char*)&controllerRef, 4);
 	file.write((char*)&flags, 2);
-	if (hdr.userVer >= 11 && hdr.userVer2 > 26)
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
 		file.write((char*)&unkShort1, 2);
+
 	file.write((char*)&translation.x, 4);
 	file.write((char*)&translation.y, 4);
 	file.write((char*)&translation.z, 4);
@@ -825,41 +811,37 @@ void NifBlockTriShape::Put(fstream& file, NifBlockHeader& hdr) {
 	if (hdr.userVer <= 11) {
 		file.write((char*)&numProperties, 4);
 		for (int i = 0; i < numProperties; i++)
-			file.write((char*)&properties[i], 4);
+			file.write((char*)&propertiesRef[i], 4);
 	}
 	file.write((char*)&collisionRef, 4);
 	file.write((char*)&dataRef, 4);
-	file.write((char*)&skinRef, 4);
-	file.write((char*)&numMat, 4);
-	for (int i = 0; i < numMat; i++)
+	file.write((char*)&skinInstanceRef, 4);
+	file.write((char*)&numMaterials, 4);
+	for (int i = 0; i < numMaterials; i++)
 		materialNames[i].Put(file, 2);
 
-	for (int i = 0; i < numMat; i++)
+	for (int i = 0; i < numMaterials; i++)
 		file.write((char*)&materialExtra[i], 4);
 
-	file.write((char*)&activeMat, 4);
-
-	if (hdr.userVer == 1)
-		file.write((char*)&unkByte, 1);
-
+	file.write((char*)&activeMaterial, 4);
 	file.write((char*)&dirty, 1);
 
-	if (hdr.userVer > 11) {
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer > 11) {
 		file.write((char*)&propertiesRef1, 4);
 		file.write((char*)&propertiesRef2, 4);
 	}
 }
 
-void NifBlockTriShape::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
-	for (int i = 0; i < numExtra; i++) {
-		if (extradata[i] == blockID) {
-			extradata.erase(extradata.begin() + i);
+void NiTriShape::notifyBlockDelete(int blockID, NiHeader& hdr) {
+	for (int i = 0; i < numExtraData; i++) {
+		if (extraDataRef[i] == blockID) {
+			extraDataRef.erase(extraDataRef.begin() + i);
 			i--;
-			numExtra--;
+			numExtraData--;
 			blockSize -= 4;
 		}
-		else if (extradata[i] > blockID)
-			extradata[i]--;
+		else if (extraDataRef[i] > blockID)
+			extraDataRef[i]--;
 	}
 
 	if (controllerRef == blockID)
@@ -877,20 +859,20 @@ void NifBlockTriShape::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
 	else if (dataRef > blockID)
 		dataRef--;
 
-	if (skinRef == blockID)
-		skinRef = -1;
-	else if (skinRef > blockID)
-		skinRef--;
+	if (skinInstanceRef == blockID)
+		skinInstanceRef = -1;
+	else if (skinInstanceRef > blockID)
+		skinInstanceRef--;
 
 	for (int i = 0; i < numProperties; i++) {
-		if (properties[i] == blockID) {
-			properties.erase(properties.begin() + i);
+		if (propertiesRef[i] == blockID) {
+			propertiesRef.erase(propertiesRef.begin() + i);
 			i--;
 			numProperties--;
 			blockSize -= 4;
 		}
-		else if (properties[i] > blockID)
-			properties[i]--;
+		else if (propertiesRef[i] > blockID)
+			propertiesRef[i]--;
 	}
 	if (propertiesRef1 >= blockID)
 		propertiesRef1--;
@@ -898,24 +880,23 @@ void NifBlockTriShape::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
 		propertiesRef2--;
 }
 
-NifBlockTriShape::NifBlockTriShape() {
-	blockType = NIFBLOCK_TRISHAPE;
-	nameID = -1;
-	shapeName = "";
+NiTriShape::NiTriShape() {
+	blockType = NITRISHAPE;
+	nameRef = -1;
+	name = "";
 	propertiesRef1 = -1;
 	propertiesRef2 = -1;
 	controllerRef = -1;
-	numExtra = 0;
+	numExtraData = 0;
 	numProperties = 0;
 	scale = 1.0f;
 	flags = 14;
 	unkShort1 = 8;
 	collisionRef = -1;
 	dataRef = -1;
-	skinRef = -1;
-	numMat = 0;
-	activeMat = 0;
-	unkByte = 255;
+	skinInstanceRef = -1;
+	numMaterials = 0;
+	activeMaterial = 0;
 	dirty = 0;
 	blockSize = 97;
 	rotation[0].x = 0.0f;
@@ -923,17 +904,17 @@ NifBlockTriShape::NifBlockTriShape() {
 	rotation[2].z = 0.0f;
 }
 
-NifBlockTriShape::NifBlockTriShape(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_TRISHAPE;
+NiTriShape::NiTriShape(fstream& file, NiHeader& hdr) {
+	blockType = NITRISHAPE;
 	propertiesRef1 = -1;
 	propertiesRef2 = -1;
-	numExtra = 0;
+	numExtraData = 0;
 	numProperties = 0;
 	Get(file, hdr);
 }
 
 
-void NifBlockTriShapeData::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockTriShapeData::Get(fstream& file, NiHeader& hdr) {
 	if (hdr.userVer >= 12)
 		myver = 12;
 	else
@@ -945,7 +926,7 @@ void NifBlockTriShapeData::Get(fstream& file, NifBlockHeader& hdr) {
 	file.read((char*)&compressflags, 1);
 	file.read((char*)&hasVertices, 1);
 
-	vec3 v;
+	Vector3 v;
 	for (int i = 0; i < numverts; i++) {
 		file.read((char*)&v.x, 4);
 		file.read((char*)&v.y, 4);
@@ -986,14 +967,14 @@ void NifBlockTriShapeData::Get(fstream& file, NifBlockHeader& hdr) {
 	file.read((char*)&hasVertColors, 1);
 
 	if (hasVertColors == 1) {
-		color4 c;
+		Color4 c;
 		for (int i = 0; i < numverts; i++) {
 			file.read((char*)&c, 16);
 			vertcolors.push_back(c);
 		}
 	}
 	if (numUVs >= 1) {
-		vec2 uv;
+		Vector2 uv;
 		for (int i = 0; i < numverts; i++) {
 			file.read((char*)&uv.u, 4);
 			file.read((char*)&uv.v, 4);
@@ -1006,17 +987,17 @@ void NifBlockTriShapeData::Get(fstream& file, NifBlockHeader& hdr) {
 	file.read((char*)&numTriPoints, 4);
 	file.read((char*)&hasTriangles, 1);
 	if (hasTriangles == 1) {
-		triangle tri;
+		Triangle Triangle;
 		for (int i = 0; i < numTriangles; i++) {
-			file.read((char*)&tri.p1, 2);
-			file.read((char*)&tri.p2, 2);
-			file.read((char*)&tri.p3, 2);
-			tris.push_back(tri);
+			file.read((char*)&Triangle.p1, 2);
+			file.read((char*)&Triangle.p2, 2);
+			file.read((char*)&Triangle.p3, 2);
+			tris.push_back(Triangle);
 		}
 	}
 
 	ushort uShort;
-	matchGroup mg;
+	MatchGroup mg;
 	file.read((char*)&numMatchGroups, 2);
 	for (int i = 0; i < numMatchGroups; i++) {
 		file.read((char*)&mg.count, 2);
@@ -1033,7 +1014,7 @@ void NifBlockTriShapeData::Get(fstream& file, NifBlockHeader& hdr) {
 	numMatchGroups = 0;
 }
 
-void NifBlockTriShapeData::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockTriShapeData::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&unkInt, 4);
 	file.write((char*)&numverts, 2);
 	file.write((char*)&keepflags, 1);
@@ -1104,10 +1085,10 @@ void NifBlockTriShapeData::Put(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockTriShapeData::Create(vector<vec3>* verts, vector<triangle>* inTris, vector<vec2>* texcoords) {
+void NifBlockTriShapeData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
 	unkInt = 0;
-	vec3 a(FLT_MAX, FLT_MAX, FLT_MAX);
-	vec3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
+	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 
 	Radius = 0.0f;
 	numverts = verts->size();
@@ -1154,7 +1135,7 @@ void NifBlockTriShapeData::Create(vector<vec3>* verts, vector<triangle>* inTris,
 	if (texcoords->size() > 0)
 		blockSize += 8 * numverts;	 // uv data size
 
-	blockSize += 6 * numTriangles; // tri data size
+	blockSize += 6 * numTriangles; // Triangle data size
 }
 
 void NifBlockTriShapeData::RecalcNormals() {
@@ -1167,7 +1148,7 @@ void NifBlockTriShapeData::RecalcNormals() {
 		normals[i].z = 0;
 	}
 
-	vector3 norm;
+	Vector3 norm;
 	for (int i = 0; i < numTriangles; i++) {
 		// Calc normal
 		tris[i].trinormal(vertices, &norm);
@@ -1185,7 +1166,7 @@ void NifBlockTriShapeData::RecalcNormals() {
 	for (int i = 0; i < numverts; i++)
 		normals[i].Normalize();
 
-	vtx* matchverts = new vtx[numverts];
+	Vertex* matchverts = new Vertex[numverts];
 
 	for (int i = 0; i < numverts; i++) {
 		matchverts[i].x = vertices[i].x;
@@ -1198,8 +1179,8 @@ void NifBlockTriShapeData::RecalcNormals() {
 
 	kd_matcher matcher(matchverts, numverts);
 	for (int i = 0; i < matcher.matches.size(); i++) {
-		vtx* a = matcher.matches[i].first;
-		vtx* b = matcher.matches[i].second;
+		Vertex* a = matcher.matches[i].first;
+		Vertex* b = matcher.matches[i].second;
 		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
 		if (dot < 1.57079633f) {
 			a->nx = ((a->nx + b->nx) / 2.0f);
@@ -1233,8 +1214,8 @@ void NifBlockTriShapeData::CalcTangentSpace() {
 	blockSize += tangents.size() * 12;
 	blockSize += binormals.size() * 12;
 
-	vector<vec3> tan1;
-	vector<vec3> tan2;
+	vector<Vector3> tan1;
+	vector<Vector3> tan2;
 	tan1.resize(numverts);
 	tan2.resize(numverts);
 
@@ -1243,13 +1224,13 @@ void NifBlockTriShapeData::CalcTangentSpace() {
 		int i2 = tris[i].p2;
 		int i3 = tris[i].p3;
 
-		vec3 v1 = vertices[i1];
-		vec3 v2 = vertices[i2];
-		vec3 v3 = vertices[i3];
+		Vector3 v1 = vertices[i1];
+		Vector3 v2 = vertices[i2];
+		Vector3 v3 = vertices[i3];
 
-		vec2 w1 = uvs[i1];
-		vec2 w2 = uvs[i2];
-		vec2 w3 = uvs[i3];
+		Vector2 w1 = uvs[i1];
+		Vector2 w2 = uvs[i2];
+		Vector2 w3 = uvs[i3];
 
 		float x1 = v2.x - v1.x;
 		float x2 = v3.x - v1.x;
@@ -1266,8 +1247,8 @@ void NifBlockTriShapeData::CalcTangentSpace() {
 		float r = 1.0f / (s1 * t2 - s2 * t1);
 		r = (r >= 0 ? +1 : -1);
 
-		vec3 sdir = vec3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
-		vec3 tdir = vec3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
 
 		tan1[i1] += sdir;
 		tan1[i2] += sdir;
@@ -1279,8 +1260,8 @@ void NifBlockTriShapeData::CalcTangentSpace() {
 	}
 
 	for (int i = 0; i < numverts; i++) {
-		vec3 n = normals[i];
-		vec3 t = tan1[i];
+		Vector3 n = normals[i];
+		Vector3 t = tan1[i];
 
 		// Gram-Schmidt orthogonalize
 		// Vector3.OrthoNormalize(ref n, ref t);
@@ -1379,7 +1360,7 @@ int NifBlockTriShapeData::CalcBlockSize() {
 }
 
 NifBlockTriShapeData::NifBlockTriShapeData() {
-	blockType = NIFBLOCK_TRISHAPEDATA;
+	blockType = NITRISHAPEDATA;
 	scaleFromCenter = true;
 	virtScale = 1.0f;
 	numverts = 0;
@@ -1390,8 +1371,8 @@ NifBlockTriShapeData::NifBlockTriShapeData() {
 	myver = 12;
 }
 
-NifBlockTriShapeData::NifBlockTriShapeData(fstream& file, NifBlockHeader &hdr) {
-	blockType = NIFBLOCK_TRISHAPEDATA;
+NifBlockTriShapeData::NifBlockTriShapeData(fstream& file, NiHeader &hdr) {
+	blockType = NITRISHAPEDATA;
 	scaleFromCenter = true;
 	virtScale = 1.0f;
 	numverts = 0;
@@ -1412,10 +1393,10 @@ void NifBlockTriStripsData::RecalcNormals() {
 		normals[i].z = 0;
 	}
 
-	vector<triangle> tris;
+	vector<Triangle> tris;
 	StripsToTris(&tris);
 
-	vector3 norm;
+	Vector3 norm;
 	for (int i = 0; i < tris.size(); i++) {
 		// Calc normal
 		tris[i].trinormal(vertices, &norm);
@@ -1433,7 +1414,7 @@ void NifBlockTriStripsData::RecalcNormals() {
 	for (int i = 0; i < numverts; i++)
 		normals[i].Normalize();
 
-	vtx* matchverts = new vtx[numverts];
+	Vertex* matchverts = new Vertex[numverts];
 
 	for (int i = 0; i < numverts; i++) {
 		matchverts[i].x = vertices[i].x;
@@ -1446,8 +1427,8 @@ void NifBlockTriStripsData::RecalcNormals() {
 
 	kd_matcher matcher(matchverts, numverts);
 	for (int i = 0; i < matcher.matches.size(); i++) {
-		vtx* a = matcher.matches[i].first;
-		vtx* b = matcher.matches[i].second;
+		Vertex* a = matcher.matches[i].first;
+		Vertex* b = matcher.matches[i].second;
 		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
 		if (dot < 1.57079633f) {
 			a->nx = ((a->nx + b->nx) / 2.0f);
@@ -1481,12 +1462,12 @@ void NifBlockTriStripsData::CalcTangentSpace() {
 	blockSize += tangents.size() * 12;
 	blockSize += binormals.size() * 12;
 
-	vector<vec3> tan1;
-	vector<vec3> tan2;
+	vector<Vector3> tan1;
+	vector<Vector3> tan2;
 	tan1.resize(numverts);
 	tan2.resize(numverts);
 
-	vector<triangle> tris;
+	vector<Triangle> tris;
 	StripsToTris(&tris);
 
 	for (int i = 0; i < tris.size(); i++) {
@@ -1494,13 +1475,13 @@ void NifBlockTriStripsData::CalcTangentSpace() {
 		int i2 = tris[i].p2;
 		int i3 = tris[i].p3;
 
-		vec3 v1 = vertices[i1];
-		vec3 v2 = vertices[i2];
-		vec3 v3 = vertices[i3];
+		Vector3 v1 = vertices[i1];
+		Vector3 v2 = vertices[i2];
+		Vector3 v3 = vertices[i3];
 
-		vec2 w1 = uvs[i1];
-		vec2 w2 = uvs[i2];
-		vec2 w3 = uvs[i3];
+		Vector2 w1 = uvs[i1];
+		Vector2 w2 = uvs[i2];
+		Vector2 w3 = uvs[i3];
 
 		float x1 = v2.x - v1.x;
 		float x2 = v3.x - v1.x;
@@ -1517,8 +1498,8 @@ void NifBlockTriStripsData::CalcTangentSpace() {
 		float r = 1.0f / (s1 * t2 - s2 * t1);
 		r = (r >= 0.0f ? +1.0f : -1.0f);
 
-		vec3 sdir = vec3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
-		vec3 tdir = vec3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
 
 		tan1[i1] += sdir;
 		tan1[i2] += sdir;
@@ -1530,8 +1511,8 @@ void NifBlockTriStripsData::CalcTangentSpace() {
 	}
 
 	for (int i = 0; i < numverts; i++) {
-		vec3 n = normals[i];
-		vec3 t = tan1[i];
+		Vector3 n = normals[i];
+		Vector3 t = tan1[i];
 
 		// Gram-Schmidt orthogonalize
 		// Vector3.OrthoNormalize(ref n, ref t);
@@ -1547,12 +1528,12 @@ void NifBlockTriStripsData::CalcTangentSpace() {
 }
 
 
-void NifBlockNiSkinData::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockNiSkinData::Get(fstream& file, NiHeader& hdr) {
 	file.read((char*)&rootTransform, 52);
 	file.read((char*)&numBones, 4);
 	file.read((char*)&hasVertWeights, 1);
 
-	skin_weight sWt;
+	SkinWeight sWt;
 	BoneData boneData;
 	for (int i = 0; i < numBones; i++) {
 		boneData.skin_weights.clear();
@@ -1572,7 +1553,7 @@ void NifBlockNiSkinData::Get(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockNiSkinData::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockNiSkinData::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&rootTransform, 52);
 	file.write((char*)&numBones, 4);
 	file.write((char*)&hasVertWeights, 1);
@@ -1626,15 +1607,15 @@ void NifBlockNiSkinData::notifyVerticesDelete(const vector<ushort>& vertIndices)
 }
 
 NifBlockNiSkinData::NifBlockNiSkinData() {
-	blockType = NIFBLOCK_NISKINDATA;
+	blockType = NISKINDATA;
 	rootTransform.scale = 1.0f;
 	numBones = 0;
 	hasVertWeights = 1;
 	blockSize = 57;
 }
 
-NifBlockNiSkinData::NifBlockNiSkinData(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_NISKINDATA;
+NifBlockNiSkinData::NifBlockNiSkinData(fstream& file, NiHeader& hdr) {
+	blockType = NISKINDATA;
 	Get(file, hdr);
 }
 	
@@ -1664,17 +1645,17 @@ int NifBlockNiSkinPartition::CalcBlockSize() {
 			blockSize += 2 * p.stripLengths[i];		// striplist size
 
 		if (p.numStrips == 0)
-			blockSize += 6 * p.numTriangles;		// triangle list size
+			blockSize += 6 * p.numTriangles;		// Triangle list size
 	}
 	return blockSize;
 }
 
-void NifBlockNiSkinPartition::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockNiSkinPartition::Get(fstream& file, NiHeader& hdr) {
 	PartitionBlock partBlock;
 	ushort uShort;
-	vertexWeight wt;
-	boneIndices bi;
-	triangle tri;
+	VertexWeight wt;
+	BoneIndices bi;
+	Triangle Triangle;
 
 	file.read((char*)&numPartitions, 4);
 	for (int p = 0; p < numPartitions; p++) {
@@ -1722,10 +1703,10 @@ void NifBlockNiSkinPartition::Get(fstream& file, NifBlockHeader& hdr) {
 		}
 		if (partBlock.numStrips == 0) {
 			for (int i = 0; (i < partBlock.numTriangles) && partBlock.hasFaces; i++) {
-				file.read((char*)&tri.p1, 2);
-				file.read((char*)&tri.p2, 2);
-				file.read((char*)&tri.p3, 2);
-				partBlock.tris.push_back(tri);
+				file.read((char*)&Triangle.p1, 2);
+				file.read((char*)&Triangle.p2, 2);
+				file.read((char*)&Triangle.p3, 2);
+				partBlock.tris.push_back(Triangle);
 			}
 		}
 		file.read((char*)&partBlock.hasBoneIndices, 1);
@@ -1746,7 +1727,7 @@ void NifBlockNiSkinPartition::Get(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockNiSkinPartition::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockNiSkinPartition::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&numPartitions, 4);
 	for (int p = 0; p < numPartitions; p++) {
 		file.write((char*)&partitionBlocks[p].numVertices, 2);
@@ -1908,35 +1889,35 @@ int NifBlockNiSkinPartition::RemoveEmptyPartitions(vector<int>& outDeletedIndice
 }
 
 NifBlockNiSkinPartition::NifBlockNiSkinPartition() {
-	blockType = NIFBLOCK_NISKINPARTITION;
+	blockType = NISKINPARTITION;
 	numPartitions = 0;
 	blockSize = 4;
 	myver = 12;
 	needsBuild = true;
 }
 
-NifBlockNiSkinPartition::NifBlockNiSkinPartition(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_NISKINPARTITION;
+NifBlockNiSkinPartition::NifBlockNiSkinPartition(fstream& file, NiHeader& hdr) {
+	blockType = NISKINPARTITION;
 	myver = 12;
 	Get(file, hdr);
 	needsBuild = false;
 }
 
 
-void NifBlockNiSkinInstance::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockNiSkinInstance::Get(fstream& file, NiHeader& hdr) {
 	file.read((char*)&dataRef, 4);
 	file.read((char*)&skinRef, 4);
 	file.read((char*)&skeletonRoot, 4);
 	file.read((char*)&numBones, 4);
 
-	unsigned int uInt;
+	uint uInt;
 	for (int i = 0; i < numBones; i++) {
 		file.read((char*)&uInt, 4);
 		bonePtrs.push_back(uInt);
 	}
 }
 
-void NifBlockNiSkinInstance::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockNiSkinInstance::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&dataRef, 4);
 	file.write((char*)&skinRef, 4);
 	file.write((char*)&skeletonRoot, 4);
@@ -1946,7 +1927,7 @@ void NifBlockNiSkinInstance::Put(fstream& file, NifBlockHeader& hdr) {
 }
 
 NifBlockNiSkinInstance::NifBlockNiSkinInstance() {
-	blockType = NIFBLOCK_NISKININSTANCE;
+	blockType = NISKININSTANCE;
 	dataRef = -1;
 	skinRef = -1;
 	skeletonRoot = -1;
@@ -1954,8 +1935,8 @@ NifBlockNiSkinInstance::NifBlockNiSkinInstance() {
 	blockSize = 16;
 }
 
-NifBlockNiSkinInstance::NifBlockNiSkinInstance(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_NISKININSTANCE;
+NifBlockNiSkinInstance::NifBlockNiSkinInstance(fstream& file, NiHeader& hdr) {
+	blockType = NISKININSTANCE;
 	Get(file, hdr);
 }
 
@@ -1965,7 +1946,7 @@ int NifBlockNiSkinInstance::CalcBlockSize() {
 	return blockSize;
 }
 
-void NifBlockNiSkinInstance::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
+void NifBlockNiSkinInstance::notifyBlockDelete(int blockID, NiHeader& hdr) {
 	int boneIndex = -1;
 	if (dataRef == blockID)
 		dataRef = -1;
@@ -2007,13 +1988,13 @@ void NifBlockNiSkinInstance::notifyBlockDelete(int blockID, NifBlockHeader& hdr)
 }
 
 
-void NifBlockBSDismemberment::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSDismemberment::Get(fstream& file, NiHeader& hdr) {
 	file.read((char*)&dataRef, 4);
 	file.read((char*)&skinRef, 4);
 	file.read((char*)&skeletonRoot, 4);
 	file.read((char*)&numBones, 4);
 
-	unsigned int uInt;
+	uint uInt;
 	for (int i = 0; i < numBones; i++) {
 		file.read((char*)&uInt, 4);
 		bonePtrs.push_back(uInt);
@@ -2028,7 +2009,7 @@ void NifBlockBSDismemberment::Get(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockBSDismemberment::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSDismemberment::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&dataRef, 4);
 	file.write((char*)&skinRef, 4);
 	file.write((char*)&skeletonRoot, 4);
@@ -2044,7 +2025,7 @@ void NifBlockBSDismemberment::Put(fstream& file, NifBlockHeader& hdr) {
 }
 
 NifBlockBSDismemberment::NifBlockBSDismemberment() {
-	blockType = NIFBLOCK_BSDISMEMBER;
+	blockType = BSDISMEMBERSKININSTANCE;
 	dataRef = -1;
 	skinRef = -1;
 	skeletonRoot = -1;
@@ -2053,8 +2034,8 @@ NifBlockBSDismemberment::NifBlockBSDismemberment() {
 	blockSize = 20;
 }
 
-NifBlockBSDismemberment::NifBlockBSDismemberment(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_BSDISMEMBER;
+NifBlockBSDismemberment::NifBlockBSDismemberment(fstream& file, NiHeader& hdr) {
+	blockType = BSDISMEMBERSKININSTANCE;
 	Get(file, hdr);
 }
 
@@ -2065,7 +2046,7 @@ int NifBlockBSDismemberment::CalcBlockSize() {
 	return blockSize;
 }
 
-void NifBlockBSDismemberment::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
+void NifBlockBSDismemberment::notifyBlockDelete(int blockID, NiHeader& hdr) {
 	int boneIndex = -1;
 	if (dataRef == blockID)
 		dataRef = -1;
@@ -2107,15 +2088,15 @@ void NifBlockBSDismemberment::notifyBlockDelete(int blockID, NifBlockHeader& hdr
 }
 
 
-NifBlockHeader::NifBlockHeader() {
+NiHeader::NiHeader() {
 	blockSize = 0;
 	numBlocks = 0;
 	numStrings = 0;
 	blocks = nullptr;
-	blockType = NIFBLOCK_HEADER;
+	blockType = NIHEADER;
 }
 
-void NifBlockHeader::Clear() {
+void NiHeader::Clear() {
 	numBlockTypes = 0;
 	numStrings = 0;
 	numBlocks = 0;
@@ -2126,7 +2107,7 @@ void NifBlockHeader::Clear() {
 	strings.clear();
 }
 
-void NifBlockHeader::Get(fstream& file, NifBlockHeader& hdr) {
+void NiHeader::Get(fstream& file, NiHeader& hdr) {
 	file.read(verStr, 38);
 	if (_strnicmp(verStr, "Gamebryo", 8) != 0) {
 		verStr[0] = 0;
@@ -2145,7 +2126,7 @@ void NifBlockHeader::Get(fstream& file, NifBlockHeader& hdr) {
 	exportInfo2.Get(file, 1);
 	file.read((char*)&numBlockTypes, 2);
 	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes.push_back(NifString(file, 4));
+		blockTypes.push_back(NiString(file, 4));
 
 	ushort uShort;
 	for (int i = 0; i < numBlocks; i++) {
@@ -2167,12 +2148,12 @@ void NifBlockHeader::Get(fstream& file, NifBlockHeader& hdr) {
 		file.read((char*)&numStrings, 4);
 		file.read((char*)&maxStringLen, 4);
 		for (int i = 0; i < numStrings; i++)
-			strings.push_back(NifString(file, 4));
+			strings.push_back(NiString(file, 4));
 	}
 	file.read((char*)&unkInt2, 4);
 }
 
-void NifBlockHeader::Put(fstream& file, NifBlockHeader& hdr) {
+void NiHeader::Put(fstream& file, NiHeader& hdr) {
 	file.write(verStr, 0x26);
 	file << unk1;
 	file << ver1 << ver2 << ver3 << ver4;
@@ -2204,49 +2185,49 @@ void NifBlockHeader::Put(fstream& file, NifBlockHeader& hdr) {
 	file.write((char*)&unkInt2, 4);
 }
 
-bool NifBlockHeader::VerCheck(int v1, int v2, int v3, int v4) {
+bool NiHeader::VerCheck(int v1, int v2, int v3, int v4) {
 	if (ver4 >= v1 && ver3 >= v2 && ver2 >= v3 && ver1 >= v4)
 		return true;
 
 	return false;
 }
 
-NifBlockUnknown::NifBlockUnknown() {
-	blockType = NIFBLOCK_UNKNOWN;
+NiUnknown::NiUnknown() {
+	blockType = NIUNKNOWN;
 	data = nullptr;
 }
 
-NifBlockUnknown::NifBlockUnknown(fstream& file, unsigned int size) {
-	blockType = NIFBLOCK_UNKNOWN;
+NiUnknown::NiUnknown(fstream& file, uint size) {
+	blockType = NIUNKNOWN;
 	blockSize = size;
 	data = new char[size];
-	Get(file, NifBlockHeader());
+	Get(file, NiHeader());
 }
 
-NifBlockUnknown::NifBlockUnknown(unsigned int size) {
-	blockType = NIFBLOCK_UNKNOWN;
+NiUnknown::NiUnknown(uint size) {
+	blockType = NIUNKNOWN;
 	blockSize = size;
 	data = new char[size];
 }
 
-NifBlockUnknown::~NifBlockUnknown() {
+NiUnknown::~NiUnknown() {
 	if (data)
 		delete[] data;
 }
 
-void NifBlockUnknown::Clone(NifBlockUnknown* other) {
+void NiUnknown::Clone(NiUnknown* other) {
 	if (blockSize == other->blockSize)
 		memcpy(data, other->data, blockSize);
 }
 
-void NifBlockUnknown::Get(fstream& file, NifBlockHeader& hdr) {
+void NiUnknown::Get(fstream& file, NiHeader& hdr) {
 	if (!data)
 		return;
 
 	file.read(data, blockSize);
 }
 
-void NifBlockUnknown::Put(fstream& file, NifBlockHeader& hdr) {
+void NiUnknown::Put(fstream& file, NiHeader& hdr) {
 	if (!data)
 		return;
 
@@ -2254,7 +2235,7 @@ void NifBlockUnknown::Put(fstream& file, NifBlockHeader& hdr) {
 }
 
 
-void NifBlockBSLightShadeProp::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSLightShadeProp::Get(fstream& file, NiHeader& hdr) {
 	file.read((char*)&shaderType, 4);
 	if (hdr.VerCheck(20, 1, 0, 3)) {
 		file.read((char*)&nameID, 4);
@@ -2264,7 +2245,7 @@ void NifBlockBSLightShadeProp::Get(fstream& file, NifBlockHeader& hdr) {
 			shaderName = "";
 	}
 	else
-		shaderName = NifString(file, 4).str;
+		shaderName = NiString(file, 4).str;
 
 	int intVal;
 	file.read((char*)&numExtraData, 4);
@@ -2338,7 +2319,7 @@ void NifBlockBSLightShadeProp::Get(fstream& file, NifBlockHeader& hdr) {
 	}
 }
 
-void NifBlockBSLightShadeProp::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSLightShadeProp::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&shaderType, 4);
 	if (hdr.VerCheck(20, 1, 0, 3))
 		file.write((char*)&nameID, 4);
@@ -2422,7 +2403,7 @@ void NifBlockBSLightShadeProp::Clone(NifBlockBSLightShadeProp* Other) {
 }
 
 NifBlockBSLightShadeProp::NifBlockBSLightShadeProp() {
-	blockType = NIFBLOCK_BSLGTSHADEPROP;
+	blockType = BSLIGHTINGSHADERPROPERTY;
 	shaderType = 0;
 	nameID = -1;
 	shaderName = "";
@@ -2457,12 +2438,12 @@ NifBlockBSLightShadeProp::NifBlockBSLightShadeProp() {
 	blockSize = 100;
 }
 
-NifBlockBSLightShadeProp::NifBlockBSLightShadeProp(fstream& file, NifBlockHeader& hdr){
-	blockType = NIFBLOCK_BSLGTSHADEPROP;
+NifBlockBSLightShadeProp::NifBlockBSLightShadeProp(fstream& file, NiHeader& hdr){
+	blockType = BSLIGHTINGSHADERPROPERTY;
 	Get(file, hdr);
 }
 	
-void NifBlockBSLightShadeProp::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
+void NifBlockBSLightShadeProp::notifyBlockDelete(int blockID, NiHeader& hdr) {
 	if (texsetRef == blockID)
 		texsetRef = -1;
 	else if (texsetRef > blockID)
@@ -2479,26 +2460,26 @@ bool NifBlockBSLightShadeProp::IsDoubleSided() {
 
 
 NifBlockBSShaderTextureSet::NifBlockBSShaderTextureSet() {
-	blockType = NIFBLOCK_BSSHADERTEXSET;
+	blockType = BSSHADERTEXTURESET;
 	numTex = 9;
 	for (int i = 0; i < 9; i++)
-		textures.push_back(NifString(false));
+		textures.push_back(NiString(false));
 
 	blockSize = 40;
 }
 
-NifBlockBSShaderTextureSet::NifBlockBSShaderTextureSet(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_BSSHADERTEXSET;
+NifBlockBSShaderTextureSet::NifBlockBSShaderTextureSet(fstream& file, NiHeader& hdr) {
+	blockType = BSSHADERTEXTURESET;
 	Get(file, hdr);
 }
 	
-void NifBlockBSShaderTextureSet::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSShaderTextureSet::Get(fstream& file, NiHeader& hdr) {
 	file.read((char*)&numTex, 4);
 	for (int i = 0; i < numTex; i++)
-		textures.push_back(NifString(file, 4, false));
+		textures.push_back(NiString(file, 4, false));
 }
 	
-void NifBlockBSShaderTextureSet::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSShaderTextureSet::Put(fstream& file, NiHeader& hdr) {
 	file.write((char*)&numTex, 4);
 	for (int i = 0; i < numTex; i++)
 		textures[i].Put(file, 4);
@@ -2516,7 +2497,7 @@ int NifBlockBSShaderTextureSet::CalcBlockSize() {
 
 
 NifBlockAlphaProperty::NifBlockAlphaProperty() {
-	blockType = NIFBLOCK_ALPHAPROPERTY;
+	blockType = NIALPHAPROPERTY;
 	blockSize = 15;
 	alphaName = "";
 	nameID = -1;
@@ -2526,12 +2507,12 @@ NifBlockAlphaProperty::NifBlockAlphaProperty() {
 	threshold = 128;
 }
 
-NifBlockAlphaProperty::NifBlockAlphaProperty(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_ALPHAPROPERTY;
+NifBlockAlphaProperty::NifBlockAlphaProperty(fstream& file, NiHeader& hdr) {
+	blockType = NIALPHAPROPERTY;
 	Get(file, hdr);
 }
 
-void NifBlockAlphaProperty::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockAlphaProperty::Get(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3)) {
 		file.read((char*)&nameID, 4);
 		if (nameID != -1)
@@ -2540,7 +2521,7 @@ void NifBlockAlphaProperty::Get(fstream& file, NifBlockHeader& hdr) {
 			alphaName = "";
 	}
 	else
-		alphaName = NifString(file, 4).str;
+		alphaName = NiString(file, 4).str;
 
 	int intVal;
 	file.read((char*)&numExtraData, 4);
@@ -2553,7 +2534,7 @@ void NifBlockAlphaProperty::Get(fstream& file, NifBlockHeader& hdr) {
 	file.read((char*)&threshold, 1);
 }
 
-void NifBlockAlphaProperty::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockAlphaProperty::Put(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3))
 		file.write((char*)&nameID, 4);
 	else {
@@ -2578,7 +2559,7 @@ int NifBlockAlphaProperty::CalcBlockSize() {
 	return blockSize;
 }
 
-void NifBlockStringExtraData::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockStringExtraData::Get(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3)) {
 		file.read((char*)&nameID, 4);
 		if (nameID != -1)
@@ -2587,7 +2568,7 @@ void NifBlockStringExtraData::Get(fstream& file, NifBlockHeader& hdr) {
 			name = "";
 	}
 	else
-		name = NifString(file, 4).str;
+		name = NiString(file, 4).str;
 
 	//file.read((char*)&nextExtraData, 4);
 	//file.read((char*)&bytesRemaining, 4);
@@ -2600,10 +2581,10 @@ void NifBlockStringExtraData::Get(fstream& file, NifBlockHeader& hdr) {
 			stringData = "";
 	}
 	else
-		stringData = NifString(file, 4).str;
+		stringData = NiString(file, 4).str;
 }
 
-void NifBlockStringExtraData::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockStringExtraData::Put(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3))
 		file.write((char*)&nameID, 4);
 	else {
@@ -2625,7 +2606,7 @@ void NifBlockStringExtraData::Put(fstream& file, NifBlockHeader& hdr) {
 }
 
 NifBlockStringExtraData::NifBlockStringExtraData() {
-	blockType = NIFBLOCK_STRINGEXTRADATA;
+	blockType = NISTRINGEXTRADATA;
 	blockSize = 8;
 	nameID = -1;
 	stringDataId = -1;
@@ -2635,13 +2616,13 @@ NifBlockStringExtraData::NifBlockStringExtraData() {
 	stringData = "";
 }
 
-NifBlockStringExtraData::NifBlockStringExtraData(fstream& file, NifBlockHeader& hdr) {
-	blockType = NIFBLOCK_STRINGEXTRADATA;
+NifBlockStringExtraData::NifBlockStringExtraData(fstream& file, NiHeader& hdr) {
+	blockType = NISTRINGEXTRADATA;
 	Get(file, hdr);
 }
 
 
-void NifBlockBSShadePPLgtProp::Get(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSShadePPLgtProp::Get(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3)) {
 		file.read((char*)&nameID, 4);
 		if (nameID != -1)
@@ -2650,7 +2631,7 @@ void NifBlockBSShadePPLgtProp::Get(fstream& file, NifBlockHeader& hdr) {
 			shaderName = "";
 	}
 	else
-		shaderName = NifString(file, 4).str;
+		shaderName = NiString(file, 4).str;
 
 	int intVal;
 	file.read((char*)&numExtraData, 4);
@@ -2673,7 +2654,7 @@ void NifBlockBSShadePPLgtProp::Get(fstream& file, NifBlockHeader& hdr) {
 	file.read((char*)&unkFloat5, 4);
 }
 
-void NifBlockBSShadePPLgtProp::Put(fstream& file, NifBlockHeader& hdr) {
+void NifBlockBSShadePPLgtProp::Put(fstream& file, NiHeader& hdr) {
 	if (hdr.VerCheck(20, 1, 0, 3))
 		file.write((char*)&nameID, 4);
 	else {
@@ -2704,7 +2685,7 @@ void NifBlockBSShadePPLgtProp::Clone(NifBlockBSShadePPLgtProp* Other) {
 }
 
 NifBlockBSShadePPLgtProp::NifBlockBSShadePPLgtProp() {
-	blockType = NIFBLOCK_BSSHADEPPLGTPROP;
+	blockType = BSSHADERPPLIGHTINGPROPERTY;
 	shaderType = 0;
 	nameID = -1;
 	shaderName = "";
@@ -2727,12 +2708,12 @@ NifBlockBSShadePPLgtProp::NifBlockBSShadePPLgtProp() {
 	blockSize = 58;
 }
 
-NifBlockBSShadePPLgtProp::NifBlockBSShadePPLgtProp(fstream& file, NifBlockHeader& hdr){
-	blockType = NIFBLOCK_BSSHADEPPLGTPROP;
+NifBlockBSShadePPLgtProp::NifBlockBSShadePPLgtProp(fstream& file, NiHeader& hdr){
+	blockType = BSSHADERPPLIGHTINGPROPERTY;
 	Get(file, hdr);
 }
 
-void NifBlockBSShadePPLgtProp::notifyBlockDelete(int blockID, NifBlockHeader& hdr) {
+void NifBlockBSShadePPLgtProp::notifyBlockDelete(int blockID, NiHeader& hdr) {
 	if (texsetRef == blockID)
 		texsetRef = -1;
 	else if (texsetRef > blockID)

@@ -34,7 +34,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 	// On Linux we should add code here that does a case-insensitive search
 	// for the desired file.
 
-	unsigned int texid = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
+	uint texid = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
 	if (!texid) {
 		auto errstr = SOIL_last_result();
 		return nullptr;

@@ -8,25 +8,25 @@
 using namespace std;
 
 class DiffDataSets {
-	map<string, unordered_map<ushort, vec3>> namedSet;
+	map<string, unordered_map<ushort, Vector3>> namedSet;
 	map<string, string> dataTargets;
 
 public:
 	inline bool TargetMatch(const string& set, const string& target);
-	int LoadSet(const string& name, const string& target, unordered_map<ushort, vec3>& inDiffData);
+	int LoadSet(const string& name, const string& target, unordered_map<ushort, Vector3>& inDiffData);
 	int LoadSet(const string& name, const string& target, const string& fromFile);
 	int SaveSet(const string& name, const string& target, const string& toFile);
 	void RenameSet(const string& oldName, const string& newName);
 	void DeepRename(const string& oldName, const string& newName);
 	void AddEmptySet(const string& name, const string& target);
-	void UpdateDiff(const string& name, const string& target, ushort index, vector3& newdiff);
-	void SumDiff(const string& name, const string& target, ushort index, vector3& newdiff);
+	void UpdateDiff(const string& name, const string& target, ushort index, Vector3& newdiff);
+	void SumDiff(const string& name, const string& target, ushort index, Vector3& newdiff);
 	void ScaleDiff(const string& name, const string& target, float scalevalue);
-	void OffsetDiff(const string& name, const string& target, vector3 &offset);
-	void ApplyDiff(const string& set, const string& target, float percent, vector<vector3>* inOutResult);
-	void ApplyUVDiff(const string& set, const string& target, float percent, vector<vector2>* inOutResult);
-	void ApplyClamp(const string& set, const string& target, vector<vector3>* inOutResult);
-	unordered_map<ushort, vector3>* GetDiffSet(const string& targetDataName);
+	void OffsetDiff(const string& name, const string& target, Vector3 &offset);
+	void ApplyDiff(const string& set, const string& target, float percent, vector<Vector3>* inOutResult);
+	void ApplyUVDiff(const string& set, const string& target, float percent, vector<Vector2>* inOutResult);
+	void ApplyClamp(const string& set, const string& target, vector<Vector3>* inOutResult);
+	unordered_map<ushort, Vector3>* GetDiffSet(const string& targetDataName);
 	void GetDiffIndices(const string& set, const string& target, vector<ushort>& outIndices, float threshold = 0.0f);
 
 	void ClearSet(const string& name);
@@ -38,7 +38,7 @@ public:
 	}
 
 
-	void ZeroVertDiff(const string& set, vec3* vColorMask) {
+	void ZeroVertDiff(const string& set, Vector3* vColorMask) {
 		for (auto ns : namedSet[set]) {
 			float f = vColorMask[ns.first].x;
 			if (f == 1.0f)

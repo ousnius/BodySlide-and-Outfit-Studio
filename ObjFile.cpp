@@ -1,8 +1,8 @@
 #include "ObjFile.h"
 
 ObjFile::ObjFile() {
-	scale = vec3(1.0f, 1.0f, 1.0f);
-	offset = vec3(0.0f, 0.0f, 0.0f);
+	scale = Vector3(1.0f, 1.0f, 1.0f);
+	offset = Vector3(0.0f, 0.0f, 0.0f);
 	uvDupThreshold = 0.005f;
 }
 
@@ -24,10 +24,10 @@ int ObjFile::LoadForNif(const string &inFn, const string& groupName) {
 int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 	ObjData* di = new ObjData();
 
-	vec3 v;
-	vec2 uv;
-	vec2 uv2;
-	tri t;
+	Vector3 v;
+	Vector2 uv;
+	Vector2 uv2;
+	Triangle t;
 
 	string dump;
 	string curgrp;
@@ -40,9 +40,9 @@ int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 	int nPoints = 0;
 	int v_idx[4];
 
-	vector<vector3> verts;
-	vector<vector2> uvs;
-	vector<triangle> tris;
+	vector<Vector3> verts;
+	vector<Vector2> uvs;
+	vector<Triangle> tris;
 	size_t pos;
 	map<int, vector<VertUV>> vertMap;
 	map<int, vector<VertUV>>::iterator savedVert;
@@ -189,10 +189,10 @@ int ObjFile::Load(const string &inFn, const string& groupName) {
 int ObjFile::Load(ifstream &base, const string& groupName) {
 	ObjData* di = new ObjData();
 
-	vec3 v;
-	vec2 uv;
-	vec2 uv2;
-	tri t;
+	Vector3 v;
+	Vector2 uv;
+	Vector2 uv2;
+	Triangle t;
 
 	string dump;
 	string curgrp;
@@ -205,15 +205,15 @@ int ObjFile::Load(ifstream &base, const string& groupName) {
 	int nPoints = 0;
 	int v_idx[4];
 
-	vector3 * verts;
-	vector2 * uvs;
+	Vector3 * verts;
+	Vector2 * uvs;
 	di->verts.resize(65536);
 	di->uvs.resize(65536);
 
 	int vcursor = 0;
 
-	verts = (vector3*)malloc(sizeof(vector3) * 65536);
-	uvs = (vector2*)malloc(sizeof(vector2) * 65536);
+	verts = (Vector3*)malloc(sizeof(Vector3) * 65536);
+	uvs = (Vector2*)malloc(sizeof(Vector2) * 65536);
 
 	size_t pos;
 	unordered_map<int, vector<VertUV>> vertMap;
@@ -366,7 +366,7 @@ int ObjFile::Load(ifstream &base, const string& groupName) {
 	return 0;
 }
 
-bool ObjFile::CopyDataForGroup(const string &name, vector<vec3> *v, vector<tri> *t, vector<vec2> *uv) {
+bool ObjFile::CopyDataForGroup(const string &name, vector<Vector3> *v, vector<Triangle> *t, vector<Vector2> *uv) {
 	int i;
 	if (data.find(name) == data.end())
 		return false;
@@ -397,7 +397,7 @@ bool ObjFile::CopyDataForGroup(const string &name, vector<vec3> *v, vector<tri> 
 	return true;
 }
 
-bool ObjFile::CopyDataForIndex(int index, vector<vec3> *v, vector<tri> *t, vector<vec2> *uv) {
+bool ObjFile::CopyDataForIndex(int index, vector<Vector3> *v, vector<Triangle> *t, vector<Vector2> *uv) {
 	if (objGroups.size() > index)
 		return CopyDataForGroup(objGroups[index], v, t, uv);
 	else

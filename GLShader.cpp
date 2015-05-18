@@ -40,18 +40,18 @@ vec4 Diffuse;\
 vec4 Specular;\
 \
 \
-void pointLight(in int i, in vec3 normal, in vec3 eye, in vec3 ecPosition3)\
+void pointLight(in int i, in Vector3 normal, in Vector3 eye, in Vector3 ecPosition3)\
 {\
    float nDotVP;       // normal . light direction\
    float nDotHV;       // normal . light half vector\
    float pf;           // power factor\
    float attenuation;  // computed attenuation factor\
    float d;            // distance from surface to light source\
-   vec3  VP;           // direction from surface to light position\
-   vec3  halfVector;   // direction of maximum highlights\
+   Vector3  VP;           // direction from surface to light position\
+   Vector3  halfVector;   // direction of maximum highlights\
 \
    // Compute vector from surface to light position\
-   VP = vec3 (gl_LightSource[i].position) - ecPosition3;\
+   VP = Vector3 (gl_LightSource[i].position) - ecPosition3;\
 \
    // Compute distance between surface and light position\
    d = length(VP);\
@@ -83,14 +83,14 @@ void pointLight(in int i, in vec3 normal, in vec3 eye, in vec3 ecPosition3)\
    Specular += gl_LightSource[i].specular * pf * attenuation;\
 }\
 \
-void directionalLight(in int i, in vec3 normal)\
+void directionalLight(in int i, in Vector3 normal)\
 {\
    float nDotVP;         // normal . light direction\
    float nDotHV;         // normal . light half vector\
    float pf;             // power factor\
 \
-   nDotVP = max(0.0, dot(normal, normalize(vec3 (gl_LightSource[i].position))));\
-   nDotHV = max(0.0, dot(normal, vec3 (gl_LightSource[i].halfVector)));\
+   nDotVP = max(0.0, dot(normal, normalize(Vector3 (gl_LightSource[i].position))));\
+   nDotHV = max(0.0, dot(normal, Vector3 (gl_LightSource[i].halfVector)));\
 \
    if (nDotVP == 0.0)\
    {\
@@ -106,28 +106,28 @@ void directionalLight(in int i, in vec3 normal)\
    Specular += gl_LightSource[i].specular * pf;\
 }\
 \
-vec3 fnormal(void)\
+Vector3 fnormal(void)\
 {\
     //Compute the normal \
-    vec3 normal = gl_NormalMatrix * gl_Normal;\
+    Vector3 normal = gl_NormalMatrix * gl_Normal;\
     normal = normalize(normal);\
     return normal;\
 }\
 \
-void ftexgen(in vec3 normal, in vec4 ecPosition)\
+void ftexgen(in Vector3 normal, in vec4 ecPosition)\
 {\
 \
     gl_TexCoord[0] = gl_MultiTexCoord0;\
 }\
 \
-void flight(in vec3 normal, in vec4 ecPosition, float alphaFade)\
+void flight(in Vector3 normal, in vec4 ecPosition, float alphaFade)\
 {\
     vec4 color;\
-    vec3 ecPosition3;\
-    vec3 eye;\
+    Vector3 ecPosition3;\
+    Vector3 eye;\
 \
-    ecPosition3 = (vec3 (ecPosition)) / ecPosition.w;\
-    eye = vec3(0.0, 0.0, 1.0);\
+    ecPosition3 = (Vector3 (ecPosition)) / ecPosition.w;\
+    eye = Vector3(0.0, 0.0, 1.0);\
 \
     // Clear the light intensity accumulators\
     Ambient  = vec4(0.0);\
@@ -153,7 +153,7 @@ void flight(in vec3 normal, in vec4 ecPosition, float alphaFade)\
 \
 void main (void)\
 {\
-    vec3  transformedNormal;\
+    Vector3  transformedNormal;\
     float alphaFade = 1.0;\
 \
     // Eye-coordinate position of vertex, needed in various calculations\
