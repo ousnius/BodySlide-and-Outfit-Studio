@@ -711,32 +711,46 @@ void NifFile::CopyShaderPP(const string& shapeDest, NifBlockBSShadePPLgtProp* sr
 	int* props1 = nullptr;
 	int* props2 = nullptr;
 	bool isStrips;
+
 	NiTriShape* shape = shapeForName(shapeDest);
 	if (!shape) {
 		NifBlockTriStrips* strips = stripsForName(shapeDest);
 		if (!strips)
 			return;
-		for (int i = 0; i < strips->numProperties; i++) {
-			NifBlockBSShadePPLgtProp* shaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(strips->properties[i]));
-			if (shaderPP)
-				props1 = &strips->properties[i];
 
-			NifBlockAlphaProperty* alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(strips->properties[i]));
-			if (alpha)
-				props2 = &strips->properties[i];
+		NifBlockBSShadePPLgtProp* shaderPP = nullptr;
+		NifBlockAlphaProperty* alpha = nullptr;
+		for (int i = 0; i < strips->numProperties; i++) {
+			if (!shaderPP) {
+				shaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(strips->properties[i]));
+				if (shaderPP)
+					props1 = &strips->properties[i];
+			}
+
+			if (!alpha) {
+				alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(strips->properties[i]));
+				if (alpha)
+					props2 = &strips->properties[i];
+			}
 		}
 		isStrips = true;
 		dataRef = strips->dataRef;
 	}
 	else {
+		NifBlockBSShadePPLgtProp* shaderPP = nullptr;
+		NifBlockAlphaProperty* alpha = nullptr;
 		for (int i = 0; i < shape->numProperties; i++) {
-			NifBlockBSShadePPLgtProp* shaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(shape->propertiesRef[i]));
-			if (shaderPP)
-				props1 = &shape->propertiesRef[i];
+			if (!shaderPP) {
+				shaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(shape->propertiesRef[i]));
+				if (shaderPP)
+					props1 = &shape->propertiesRef[i];
+			}
 
-			NifBlockAlphaProperty* alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(shape->propertiesRef[i]));
-			if (alpha)
-				props2 = &shape->propertiesRef[i];
+			if (!alpha) {
+				alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(shape->propertiesRef[i]));
+				if (alpha)
+					props2 = &shape->propertiesRef[i];
+			}
 		}
 		isStrips = false;
 		dataRef = shape->dataRef;
@@ -968,8 +982,10 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 		NifBlockBSShadePPLgtProp* srcShaderPP = nullptr;
 		NifBlockAlphaProperty* alpha = nullptr;
 		for (int i = 0; i < src->numProperties; i++) {
-			srcShaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(src->properties[i]));
-			alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(src->properties[i]));
+			if (!srcShaderPP)
+				srcShaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(src->properties[i]));
+			if (!alpha)
+				alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(src->properties[i]));
 		}
 		if (srcShaderPP) {
 			if (alpha)
@@ -1141,8 +1157,10 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 		NifBlockBSShadePPLgtProp* srcShaderPP = nullptr;
 		NifBlockAlphaProperty* alpha = nullptr;
 		for (int i = 0; i < src->numProperties; i++) {
-			srcShaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(src->propertiesRef[i]));
-			alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (!srcShaderPP)
+				srcShaderPP = dynamic_cast<NifBlockBSShadePPLgtProp*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (!alpha)
+				alpha = dynamic_cast<NifBlockAlphaProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
 		}
 		if (srcShaderPP) {
 			if (alpha)
@@ -1696,7 +1714,9 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 		return true;
 	}
 
-	if (boneIndex > skinData->Bones.size()) return 0;
+	if (boneIndex > skinData->Bones.size())
+		return 0;
+
 	NifBlockNiSkinData::BoneData* bone = &skinData->Bones[boneIndex];
 	outXform = bone->boneTransform;
 	outSphereOffset = bone->boundSphereOffset;
@@ -2467,20 +2487,30 @@ void NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& 
 
 		alphaRef = strips->propertiesRef2;
 		if (alphaRef == -1) {
+			NifBlockAlphaProperty* alphaProp = nullptr;
 			for (int i = 0; i < strips->numProperties; i++) {
-				NifBlockAlphaProperty* alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(strips->properties[i]));
-				if (alphaProp)
-					alphaRef = strips->properties[i];
+				if (!alphaProp) {
+					alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(strips->properties[i]));
+					if (alphaProp)
+						alphaRef = strips->properties[i];
+				}
+				else
+					break;
 			}
 		}
 	}
 	else {
 		alphaRef = shape->propertiesRef2;
 		if (alphaRef == -1) {
+			NifBlockAlphaProperty* alphaProp = nullptr;
 			for (int i = 0; i < shape->numProperties; i++) {
-				NifBlockAlphaProperty* alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(shape->propertiesRef[i]));
-				if (alphaProp)
-					alphaRef = shape->propertiesRef[i];
+				if (!alphaProp) {
+					alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(shape->propertiesRef[i]));
+					if (alphaProp)
+						alphaRef = shape->propertiesRef[i];
+				}
+				else
+					break;
 			}
 		}
 	}
@@ -2503,20 +2533,30 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 
 		alphaRef = strips->propertiesRef2;
 		if (alphaRef == -1) {
+			NifBlockAlphaProperty* alphaProp = nullptr;
 			for (int i = 0; i < strips->numProperties; i++) {
-				NifBlockAlphaProperty* alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(strips->properties[i]));
-				if (alphaProp)
-					alphaRef = strips->properties[i];
+				if (!alphaProp) {
+					alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(strips->properties[i]));
+					if (alphaProp)
+						alphaRef = strips->properties[i];
+				}
+				else
+					break;
 			}
 		}
 	}
 	else {
 		alphaRef = shape->propertiesRef2;
 		if (alphaRef == -1) {
+			NifBlockAlphaProperty* alphaProp = nullptr;
 			for (int i = 0; i < shape->numProperties; i++) {
-				NifBlockAlphaProperty* alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(shape->propertiesRef[i]));
-				if (alphaProp)
-					alphaRef = shape->propertiesRef[i];
+				if (!alphaProp) {
+					alphaProp = dynamic_cast<NifBlockAlphaProperty*>(GetBlock(shape->propertiesRef[i]));
+					if (alphaProp)
+						alphaRef = shape->propertiesRef[i];
+				}
+				else
+					break;
 			}
 		}
 	}

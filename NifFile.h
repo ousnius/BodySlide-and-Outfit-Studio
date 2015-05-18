@@ -197,6 +197,7 @@ public:
 class NiUnknown : public NiObject {
 public:
 	char* data;
+
 	NiUnknown();
 	NiUnknown(fstream& file, uint size);
 	NiUnknown(uint size);
@@ -204,7 +205,6 @@ public:
 	void Clone(NiUnknown* other);
 	void Get(fstream& file, NiHeader& hdr);
 	void Put(fstream& file, NiHeader& hdr);
-
 };
 
 class NiObjectNET : public NiObject {
@@ -215,6 +215,12 @@ public:
 	int numExtraData;
 	vector<int> extraDataRef;
 	int controllerRef;
+
+	void Init();
+	void Init(fstream& file, NiHeader& hdr);
+	void Get(fstream& file, NiHeader& hdr);
+	void Put(fstream& file, NiHeader& hdr);
+	void notifyBlockDelete(int blockID, NiHeader& hdr);
 };
 
 class NiAVObject : public NiObjectNET {
@@ -227,6 +233,12 @@ public:
 	uint numProperties;
 	vector<int> propertiesRef;
 	int collisionRef;
+
+	void Init();
+	void Init(fstream& file, NiHeader& hdr);
+	void Get(fstream& file, NiHeader& hdr);
+	void Put(fstream& file, NiHeader& hdr);
+	void notifyBlockDelete(int blockID, NiHeader& hdr);
 };
 
 class NiGeometry : public NiAVObject {
@@ -240,20 +252,64 @@ public:
 	byte dirty;
 	int propertiesRef1;				// Version >= 20.2.0.7 && User Version == 12
 	int propertiesRef2;				// Version >= 20.2.0.7 && User Version == 12
+
+	void Init();
+	void Init(fstream& file, NiHeader& hdr);
+	void Get(fstream& file, NiHeader& hdr);
+	void Put(fstream& file, NiHeader& hdr);
+	void notifyBlockDelete(int blockID, NiHeader& hdr);
 };
 
 class NiTriBasedGeom : public NiGeometry {
+public:
+	void Init() {
+	}
+	void Init(fstream& file, NiHeader& hdr) {
+	}
+	void Get(fstream& file, NiHeader& hdr) {
+	}
+	void Put(fstream& file, NiHeader& hdr) {
+	}
+	void notifyBlockDelete(int blockID, NiHeader& hdr) {
+	}
 };
 
 class NiTriShape : public NiTriBasedGeom {
 public:
-	NiTriShape();
-	NiTriShape(fstream& file, NiHeader& hdr);
-
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
-
-	void notifyBlockDelete(int blockID, NiHeader& hdr);
+	NiTriShape() {
+		blockType = NITRISHAPE;
+		blockSize = 97;
+		NiObjectNET::Init();
+		NiAVObject::Init();
+		NiGeometry::Init();
+		NiTriBasedGeom::Init();
+	}
+	NiTriShape(fstream& file, NiHeader& hdr) {
+		blockType = NITRISHAPE;
+		NiObjectNET::Init();
+		NiAVObject::Init();
+		NiGeometry::Init();
+		NiTriBasedGeom::Init();
+		Get(file, hdr);
+	}
+	void Get(fstream& file, NiHeader& hdr) {
+		NiObjectNET::Get(file, hdr);
+		NiAVObject::Get(file, hdr);
+		NiGeometry::Get(file, hdr);
+		NiTriBasedGeom::Get(file, hdr);
+	}
+	void Put(fstream& file, NiHeader& hdr) {
+		NiObjectNET::Put(file, hdr);
+		NiAVObject::Put(file, hdr);
+		NiGeometry::Put(file, hdr);
+		NiTriBasedGeom::Put(file, hdr);
+	}
+	void notifyBlockDelete(int blockID, NiHeader& hdr) {
+		NiObjectNET::notifyBlockDelete(blockID, hdr);
+		NiAVObject::notifyBlockDelete(blockID, hdr);
+		NiGeometry::notifyBlockDelete(blockID, hdr);
+		NiTriBasedGeom::notifyBlockDelete(blockID, hdr);
+	}
 };
 
 class NiNode : public NiObject {

@@ -92,17 +92,222 @@ void NiString::Get(fstream& file, int szSize) {
 }
 
 
+void NiObjectNET::Init() {
+	skyrimShaderType = 0;
+	name = "";
+	nameRef = -1;
+	numExtraData = 0;
+	controllerRef = -1;
+}
+
+void NiObjectNET::Get(fstream& file, NiHeader& hdr) {
+	file.read((char*)&nameRef, 4);
+	if (nameRef != -1)
+		name = hdr.strings[nameRef].str;
+	else
+		name = "";
+
+	int intData;
+	file.read((char*)&numExtraData, 4);
+	for (int i = 0; i < numExtraData; i++) {
+		file.read((char*)&intData, 4);
+		extraDataRef.push_back(intData);
+	}
+
+	file.read((char*)&controllerRef, 4);
+}
+
+void NiObjectNET::Put(fstream& file, NiHeader& hdr) {
+	file.write((char*)&nameRef, 4);
+
+	file.write((char*)&numExtraData, 4);
+	for (int i = 0; i < numExtraData; i++)
+		file.write((char*)&extraDataRef[i], 4);
+
+	file.write((char*)&controllerRef, 4);
+}
+
+void NiObjectNET::notifyBlockDelete(int blockID, NiHeader& hdr) {
+	for (int i = 0; i < numExtraData; i++) {
+		if (extraDataRef[i] == blockID) {
+			extraDataRef.erase(extraDataRef.begin() + i);
+			i--;
+			numExtraData--;
+			blockSize -= 4;
+		}
+		else if (extraDataRef[i] > blockID)
+			extraDataRef[i]--;
+	}
+
+	if (controllerRef == blockID)
+		controllerRef = -1;
+	else if (controllerRef > blockID)
+		controllerRef--;
+}
+
+
+void NiAVObject::Init() {
+	flags = 14;
+	unkShort1 = 8;
+	rotation[0].x = 0.0f;
+	rotation[1].y = 0.0f;
+	rotation[2].z = 0.0f;
+	scale = 1.0f;
+	numProperties = 0;
+	collisionRef = -1;
+}
+
+void NiAVObject::Get(fstream& file, NiHeader& hdr) {
+	file.read((char*)&flags, 2);
+
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
+		file.read((char*)&unkShort1, 2);
+
+	file.read((char*)&translation.x, 4);
+	file.read((char*)&translation.y, 4);
+	file.read((char*)&translation.z, 4);
+
+	for (int i = 0; i < 3; i++) {
+		file.read((char*)&rotation[i].x, 4);
+		file.read((char*)&rotation[i].y, 4);
+		file.read((char*)&rotation[i].z, 4);
+	}
+
+	file.read((char*)&scale, 4);
+
+	int intData;
+	if (hdr.userVer <= 11) {
+		file.read((char*)&numProperties, 4);
+		for (int i = 0; i < numProperties; i++) {
+			file.read((char*)&intData, 4);
+			propertiesRef.push_back(intData);
+		}
+	}
+
+	file.read((char*)&collisionRef, 4);
+}
+
+void NiAVObject::Put(fstream& file, NiHeader& hdr) {
+	file.write((char*)&flags, 2);
+
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
+		file.write((char*)&unkShort1, 2);
+
+	file.write((char*)&translation.x, 4);
+	file.write((char*)&translation.y, 4);
+	file.write((char*)&translation.z, 4);
+
+	for (int i = 0; i < 3; i++) {
+		file.write((char*)&rotation[i].x, 4);
+		file.write((char*)&rotation[i].y, 4);
+		file.write((char*)&rotation[i].z, 4);
+	}
+
+	file.write((char*)&scale, 4);
+
+	if (hdr.userVer <= 11) {
+		file.write((char*)&numProperties, 4);
+		for (int i = 0; i < numProperties; i++)
+			file.write((char*)&propertiesRef[i], 4);
+	}
+
+	file.write((char*)&collisionRef, 4);
+}
+
+void NiAVObject::notifyBlockDelete(int blockID, NiHeader& hdr) {
+	if (collisionRef == blockID)
+		collisionRef = -1;
+	else if (collisionRef > blockID)
+		collisionRef--;
+
+	for (int i = 0; i < numProperties; i++) {
+		if (propertiesRef[i] == blockID) {
+			propertiesRef.erase(propertiesRef.begin() + i);
+			i--;
+			numProperties--;
+			blockSize -= 4;
+		}
+		else if (propertiesRef[i] > blockID)
+			propertiesRef[i]--;
+	}
+}
+
+
+void NiGeometry::Init() {
+	propertiesRef1 = -1;
+	propertiesRef2 = -1;
+	dataRef = -1;
+	skinInstanceRef = -1;
+	numMaterials = 0;
+	activeMaterial = 0;
+	dirty = 0;
+}
+
+void NiGeometry::Get(fstream& file, NiHeader& hdr) {
+	file.read((char*)&dataRef, 4);
+	file.read((char*)&skinInstanceRef, 4);
+	file.read((char*)&numMaterials, 4);
+	for (int i = 0; i < numMaterials; i++)
+		materialNames.push_back(NiString(file, 2));
+
+	int intData;
+	for (int i = 0; i < numMaterials; i++){
+		file.read((char*)&intData, 4);
+		materialExtra.push_back(intData);
+	}
+	file.read((char*)&activeMaterial, 4);
+	file.read((char*)&dirty, 1);
+
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer == 12) {
+		file.read((char*)&propertiesRef1, 4);
+		file.read((char*)&propertiesRef2, 4);
+	}
+}
+
+void NiGeometry::Put(fstream& file, NiHeader& hdr) {
+	file.write((char*)&dataRef, 4);
+	file.write((char*)&skinInstanceRef, 4);
+	file.write((char*)&numMaterials, 4);
+	for (int i = 0; i < numMaterials; i++)
+		materialNames[i].Put(file, 2);
+
+	for (int i = 0; i < numMaterials; i++)
+		file.write((char*)&materialExtra[i], 4);
+
+	file.write((char*)&activeMaterial, 4);
+	file.write((char*)&dirty, 1);
+
+	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer > 11) {
+		file.write((char*)&propertiesRef1, 4);
+		file.write((char*)&propertiesRef2, 4);
+	}
+}
+
+void NiGeometry::notifyBlockDelete(int blockID, NiHeader& hdr) {
+	if (dataRef == blockID)
+		dataRef = -1;
+	else if (dataRef > blockID)
+		dataRef--;
+
+	if (skinInstanceRef == blockID)
+		skinInstanceRef = -1;
+	else if (skinInstanceRef > blockID)
+		skinInstanceRef--;
+
+	if (propertiesRef1 >= blockID)
+		propertiesRef1--;
+	if (propertiesRef2 >= blockID)
+		propertiesRef2--;
+}
+
+
 void NiNode::Get(fstream& file, NiHeader& hdr) {
 	int intData;
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&nameID, 4);
-		if (nameID != -1)
-			nodeName = hdr.strings[nameID].str;
-		else
-			nodeName = "";
-	}
+	file.read((char*)&nameID, 4);
+	if (nameID != -1)
+		nodeName = hdr.strings[nameID].str;
 	else
-		nodeName = NiString(file, 4).str;
+		nodeName = "";
 
 	file.read((char*)&numExtra, 4);
 	for (int i = 0; i < numExtra; i++) {
@@ -149,14 +354,7 @@ void NiNode::Get(fstream& file, NiHeader& hdr) {
 }
 
 void NiNode::Put(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&nameID, 4);
-	else {
-		uint length = nodeName.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&nodeName, nodeName.length());
-	}
-
+	file.write((char*)&nameID, 4);
 	file.write((char*)&numExtra, 4);
 	for (int i = 0; i < numExtra; i++)
 		file.write((char*)&extradata[i], 4);
@@ -232,6 +430,16 @@ void NiNode::notifyBlockDelete(int blockID, NiHeader& hdr) {
 		else if (effects[i] > blockID)
 			effects[i]--;
 	}
+	for (int i = 0; i < numProps; i++) {
+		if (propRef[i] == blockID) {
+			propRef.erase(propRef.begin() + i);
+			i--;
+			numProps--;
+			blockSize -= 4;
+		}
+		else if (propRef[i] > blockID)
+			propRef[i]--;
+	}
 }
 
 NiNode::NiNode() {
@@ -252,24 +460,26 @@ NiNode::NiNode() {
 
 NiNode::NiNode(fstream& file, NiHeader& hdr) {
 	blockType = NINODE;
+	numProps = 0;
 	Get(file, hdr);
 }
 
 int NiNode::CalcBlockSize() {
-	return (blockSize = 80 + (numExtra * 4) + (numChildren * 4) + (numEffects * 4));
+	blockSize = 80;
+	blockSize += numExtra * 4;
+	blockSize += numChildren * 4;
+	blockSize += numEffects * 4;
+	blockSize += numProps * 4;
+	return blockSize;
 }
 
 
 void NifBlockTriStrips::Get(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&nameID, 4);
-		if (nameID != -1)
-			shapeName = hdr.strings[nameID].str;
-		else
-			shapeName = "";
-	}
+	file.read((char*)&nameID, 4);
+	if (nameID != -1)
+		shapeName = hdr.strings[nameID].str;
 	else
-		shapeName = NiString(file, 4).str;
+		shapeName = "";
 
 	int intData;
 	file.read((char*)&numExtra, 4);
@@ -327,14 +537,7 @@ void NifBlockTriStrips::Get(fstream& file, NiHeader& hdr) {
 }
 
 void NifBlockTriStrips::Put(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&nameID, 4);
-	else {
-		uint length = shapeName.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&shapeName, shapeName.length());
-	}
-
+	file.write((char*)&nameID, 4);
 	file.write((char*)&numExtra, 4);
 	for (int i = 0; i < numExtra; i++)
 		file.write((char*)&extradata[i], 4);
@@ -728,189 +931,6 @@ void NifBlockTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 			outTris->push_back(t);
 		}
 	}
-}
-
-
-void NiTriShape::Get(fstream& file, NiHeader& hdr) {
-	file.read((char*)&nameRef, 4);
-	if (nameRef != -1)
-		name = hdr.strings[nameRef].str;
-	else
-		name = "";
-
-	int intData;
-	file.read((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++) {
-		file.read((char*)&intData, 4);
-		extraDataRef.push_back(intData);
-	}
-	file.read((char*)&controllerRef, 4);
-	file.read((char*)&flags, 2);
-	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
-		file.read((char*)&unkShort1, 2);
-
-	file.read((char*)&translation.x, 4);
-	file.read((char*)&translation.y, 4);
-	file.read((char*)&translation.z, 4);
-	for (int i = 0; i < 3; i++) {
-		file.read((char*)&rotation[i].x, 4);
-		file.read((char*)&rotation[i].y, 4);
-		file.read((char*)&rotation[i].z, 4);
-	}
-	file.read((char*)&scale, 4);
-	if (hdr.userVer <= 11) {
-		file.read((char*)&numProperties, 4);
-		for (int i = 0; i < numProperties; i++) {
-			file.read((char*)&intData, 4);
-			propertiesRef.push_back(intData);
-		}
-	}
-	else
-		numProperties = 0;
-
-	file.read((char*)&collisionRef, 4);
-	file.read((char*)&dataRef, 4);
-	file.read((char*)&skinInstanceRef, 4);
-	file.read((char*)&numMaterials, 4);
-	for (int i = 0; i < numMaterials; i++)
-		materialNames.push_back(NiString(file, 2));
-
-	for (int i = 0; i < numMaterials; i++){
-		file.read((char*)&intData, 4);
-		materialExtra.push_back(intData);
-	}
-	file.read((char*)&activeMaterial, 4);
-	file.read((char*)&dirty, 1);
-
-	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer == 12) {
-		file.read((char*)&propertiesRef1, 4);
-		file.read((char*)&propertiesRef2, 4);
-	}
-}
-
-void NiTriShape::Put(fstream& file, NiHeader& hdr) {
-	file.write((char*)&nameRef, 4);
-	file.write((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++)
-		file.write((char*)&extraDataRef[i], 4);
-
-	file.write((char*)&controllerRef, 4);
-	file.write((char*)&flags, 2);
-	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer >= 11 && hdr.userVer2 > 26)
-		file.write((char*)&unkShort1, 2);
-
-	file.write((char*)&translation.x, 4);
-	file.write((char*)&translation.y, 4);
-	file.write((char*)&translation.z, 4);
-	for (int i = 0; i < 3; i++) {
-		file.write((char*)&rotation[i].x, 4);
-		file.write((char*)&rotation[i].y, 4);
-		file.write((char*)&rotation[i].z, 4);
-	}
-	file.write((char*)&scale, 4);
-	if (hdr.userVer <= 11) {
-		file.write((char*)&numProperties, 4);
-		for (int i = 0; i < numProperties; i++)
-			file.write((char*)&propertiesRef[i], 4);
-	}
-	file.write((char*)&collisionRef, 4);
-	file.write((char*)&dataRef, 4);
-	file.write((char*)&skinInstanceRef, 4);
-	file.write((char*)&numMaterials, 4);
-	for (int i = 0; i < numMaterials; i++)
-		materialNames[i].Put(file, 2);
-
-	for (int i = 0; i < numMaterials; i++)
-		file.write((char*)&materialExtra[i], 4);
-
-	file.write((char*)&activeMaterial, 4);
-	file.write((char*)&dirty, 1);
-
-	if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVer > 11) {
-		file.write((char*)&propertiesRef1, 4);
-		file.write((char*)&propertiesRef2, 4);
-	}
-}
-
-void NiTriShape::notifyBlockDelete(int blockID, NiHeader& hdr) {
-	for (int i = 0; i < numExtraData; i++) {
-		if (extraDataRef[i] == blockID) {
-			extraDataRef.erase(extraDataRef.begin() + i);
-			i--;
-			numExtraData--;
-			blockSize -= 4;
-		}
-		else if (extraDataRef[i] > blockID)
-			extraDataRef[i]--;
-	}
-
-	if (controllerRef == blockID)
-		controllerRef = -1;
-	else if (controllerRef > blockID)
-		controllerRef--;
-
-	if (collisionRef == blockID)
-		collisionRef = -1;
-	else if (collisionRef > blockID)
-		collisionRef--;
-
-	if (dataRef == blockID)
-		dataRef = -1;
-	else if (dataRef > blockID)
-		dataRef--;
-
-	if (skinInstanceRef == blockID)
-		skinInstanceRef = -1;
-	else if (skinInstanceRef > blockID)
-		skinInstanceRef--;
-
-	for (int i = 0; i < numProperties; i++) {
-		if (propertiesRef[i] == blockID) {
-			propertiesRef.erase(propertiesRef.begin() + i);
-			i--;
-			numProperties--;
-			blockSize -= 4;
-		}
-		else if (propertiesRef[i] > blockID)
-			propertiesRef[i]--;
-	}
-	if (propertiesRef1 >= blockID)
-		propertiesRef1--;
-	if (propertiesRef2 >= blockID)
-		propertiesRef2--;
-}
-
-NiTriShape::NiTriShape() {
-	blockType = NITRISHAPE;
-	nameRef = -1;
-	name = "";
-	propertiesRef1 = -1;
-	propertiesRef2 = -1;
-	controllerRef = -1;
-	numExtraData = 0;
-	numProperties = 0;
-	scale = 1.0f;
-	flags = 14;
-	unkShort1 = 8;
-	collisionRef = -1;
-	dataRef = -1;
-	skinInstanceRef = -1;
-	numMaterials = 0;
-	activeMaterial = 0;
-	dirty = 0;
-	blockSize = 97;
-	rotation[0].x = 0.0f;
-	rotation[1].y = 0.0f;
-	rotation[2].z = 0.0f;
-}
-
-NiTriShape::NiTriShape(fstream& file, NiHeader& hdr) {
-	blockType = NITRISHAPE;
-	propertiesRef1 = -1;
-	propertiesRef2 = -1;
-	numExtraData = 0;
-	numProperties = 0;
-	Get(file, hdr);
 }
 
 
@@ -2176,12 +2196,11 @@ void NiHeader::Put(fstream& file, NiHeader& hdr) {
 			file.write((char*)&blockSizes[i], 4);
 	}
 
-	if (VerCheck(20, 1, 0, 3)) {
-		file.write((char*)&numStrings, 4);
-		file.write((char*)&maxStringLen, 4);
-		for (int i = 0; i < numStrings; i++)
-			strings[i].Put(file, 4);
-	}
+	file.write((char*)&numStrings, 4);
+	file.write((char*)&maxStringLen, 4);
+	for (int i = 0; i < numStrings; i++)
+		strings[i].Put(file, 4);
+
 	file.write((char*)&unkInt2, 4);
 }
 
@@ -2236,16 +2255,15 @@ void NiUnknown::Put(fstream& file, NiHeader& hdr) {
 
 
 void NifBlockBSLightShadeProp::Get(fstream& file, NiHeader& hdr) {
+
+	// read skyrim shader type before getting NiObjectNET parent
+
 	file.read((char*)&shaderType, 4);
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&nameID, 4);
-		if (nameID != -1)
-			shaderName = hdr.strings[nameID].str;
-		else
-			shaderName = "";
-	}
+	file.read((char*)&nameID, 4);
+	if (nameID != -1)
+		shaderName = hdr.strings[nameID].str;
 	else
-		shaderName = NiString(file, 4).str;
+		shaderName = "";
 
 	int intVal;
 	file.read((char*)&numExtraData, 4);
@@ -2320,14 +2338,11 @@ void NifBlockBSLightShadeProp::Get(fstream& file, NiHeader& hdr) {
 }
 
 void NifBlockBSLightShadeProp::Put(fstream& file, NiHeader& hdr) {
+
+	// write skyrim shader type before putting NiObjectNET parent
+
 	file.write((char*)&shaderType, 4);
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&nameID, 4);
-	else {
-		uint length = shaderName.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&shaderName, shaderName.length());
-	}
+	file.write((char*)&nameID, 4);
 
 	file.write((char*)&numExtraData, 4);
 	for (int i = 0; i < numExtraData; i++)
@@ -2513,15 +2528,11 @@ NifBlockAlphaProperty::NifBlockAlphaProperty(fstream& file, NiHeader& hdr) {
 }
 
 void NifBlockAlphaProperty::Get(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&nameID, 4);
-		if (nameID != -1)
-			alphaName = hdr.strings[nameID].str;
-		else
-			alphaName = "";
-	}
+	file.read((char*)&nameID, 4);
+	if (nameID != -1)
+		alphaName = hdr.strings[nameID].str;
 	else
-		alphaName = NiString(file, 4).str;
+		alphaName = "";
 
 	int intVal;
 	file.read((char*)&numExtraData, 4);
@@ -2535,14 +2546,7 @@ void NifBlockAlphaProperty::Get(fstream& file, NiHeader& hdr) {
 }
 
 void NifBlockAlphaProperty::Put(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&nameID, 4);
-	else {
-		uint length = alphaName.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&alphaName, alphaName.length());
-	}
-
+	file.write((char*)&nameID, 4);
 	file.write((char*)&numExtraData, 4);
 	for (int i = 0; i < numExtraData; i++)
 		file.write((char*)&extraData[i], 4);
@@ -2560,49 +2564,29 @@ int NifBlockAlphaProperty::CalcBlockSize() {
 }
 
 void NifBlockStringExtraData::Get(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&nameID, 4);
-		if (nameID != -1)
-			name = hdr.strings[nameID].str;
-		else
-			name = "";
-	}
+	file.read((char*)&nameID, 4);
+	if (nameID != -1)
+		name = hdr.strings[nameID].str;
 	else
-		name = NiString(file, 4).str;
+		name = "";
 
 	//file.read((char*)&nextExtraData, 4);
 	//file.read((char*)&bytesRemaining, 4);
 
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&stringDataId, 4);
-		if (stringDataId != -1)
-			stringData = hdr.strings[stringDataId].str;
-		else
-			stringData = "";
-	}
+	file.read((char*)&stringDataId, 4);
+	if (stringDataId != -1)
+		stringData = hdr.strings[stringDataId].str;
 	else
-		stringData = NiString(file, 4).str;
+		stringData = "";
 }
 
 void NifBlockStringExtraData::Put(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&nameID, 4);
-	else {
-		uint length = name.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&name, name.length());
-	}
+	file.write((char*)&nameID, 4);
 
 	//file.write((char*)&nextExtraData, 4);
 	//file.write((char*)&bytesRemaining, 4);
 
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&stringDataId, 4);
-	else {
-		uint length = stringData.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&stringData, stringData.length());
-	}
+	file.write((char*)&stringDataId, 4);
 }
 
 NifBlockStringExtraData::NifBlockStringExtraData() {
@@ -2623,15 +2607,11 @@ NifBlockStringExtraData::NifBlockStringExtraData(fstream& file, NiHeader& hdr) {
 
 
 void NifBlockBSShadePPLgtProp::Get(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3)) {
-		file.read((char*)&nameID, 4);
-		if (nameID != -1)
-			shaderName = hdr.strings[nameID].str;
-		else
-			shaderName = "";
-	}
+	file.read((char*)&nameID, 4);
+	if (nameID != -1)
+		shaderName = hdr.strings[nameID].str;
 	else
-		shaderName = NiString(file, 4).str;
+		shaderName = "";
 
 	int intVal;
 	file.read((char*)&numExtraData, 4);
@@ -2655,13 +2635,7 @@ void NifBlockBSShadePPLgtProp::Get(fstream& file, NiHeader& hdr) {
 }
 
 void NifBlockBSShadePPLgtProp::Put(fstream& file, NiHeader& hdr) {
-	if (hdr.VerCheck(20, 1, 0, 3))
-		file.write((char*)&nameID, 4);
-	else {
-		uint length = shaderName.length();
-		file.write((char*)&length, 4);
-		file.write((char*)&shaderName, shaderName.length());
-	}
+	file.write((char*)&nameID, 4);
 	file.write((char*)&numExtraData, 4);
 	for (int i = 0; i < numExtraData; i++)
 		file.write((char*)&extraData[i], 4);

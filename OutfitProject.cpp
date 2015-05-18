@@ -406,9 +406,9 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 
 	int nameID = blank.AddOrFindStringId(useShapeName);
 	nifTriShape->dataRef = shapeID;
-	nifTriShape->skinRef = dismemberID;
-	nifTriShape->nameID = nameID;
-	nifTriShape->shapeName = useShapeName;
+	nifTriShape->skinInstanceRef = dismemberID;
+	nifTriShape->nameRef = nameID;
+	nifTriShape->name = useShapeName;
 
 	if (!workNif.IsValid())
 		LoadOutfit("res\\SkeletonBlank.nif", "New Outfit");
