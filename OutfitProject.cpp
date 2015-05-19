@@ -377,27 +377,30 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	if (!blank.IsValid())
 		return 2;
 
-	NifBlockTriShapeData* nifShapeData = new NifBlockTriShapeData();
+	if (!workNif.IsValid())
+		LoadOutfit("res\\SkeletonBlank.nif", "New Outfit");
+
+	NifBlockTriShapeData* nifShapeData = new NifBlockTriShapeData(workNif.hdr);
 	nifShapeData->Create(&v, &t, &uv);
 	int shapeID = blank.AddBlock((NiObject*)nifShapeData, "NiTriShapeData");
 
-	NifBlockNiSkinData* nifSkinData = new NifBlockNiSkinData();
+	NifBlockNiSkinData* nifSkinData = new NifBlockNiSkinData(workNif.hdr);
 	int skinID = blank.AddBlock((NiObject*)nifSkinData, "NiSkinData");
 
-	NifBlockNiSkinPartition* nifSkinPartition = new NifBlockNiSkinPartition();
+	NifBlockNiSkinPartition* nifSkinPartition = new NifBlockNiSkinPartition(workNif.hdr);
 	int partID = blank.AddBlock((NiObject*)nifSkinPartition, "NiSkinPartition");
 
-	NifBlockBSDismemberment* nifDismemberInst = new NifBlockBSDismemberment();
+	NifBlockBSDismemberment* nifDismemberInst = new NifBlockBSDismemberment(workNif.hdr);
 	int dismemberID = blank.AddBlock((NiObject*)nifDismemberInst, "BSDismemberSkinInstance");
 
-	NifBlockBSLightShadeProp* nifShader = new NifBlockBSLightShadeProp();
+	NifBlockBSLightShadeProp* nifShader = new NifBlockBSLightShadeProp(workNif.hdr);
 	int shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");
 
-	NifBlockBSShaderTextureSet* nifTexset = new NifBlockBSShaderTextureSet();
+	NifBlockBSShaderTextureSet* nifTexset = new NifBlockBSShaderTextureSet(workNif.hdr);
 	int texsetID = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
 	nifShader->texsetRef = texsetID;
 
-	NiTriShape* nifTriShape = new NiTriShape();
+	NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
 	int triShapeID = blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
 	nifDismemberInst->dataRef = skinID;
 	nifDismemberInst->skinRef = partID;
@@ -410,8 +413,6 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	nifTriShape->nameRef = nameID;
 	nifTriShape->name = useShapeName;
 
-	if (!workNif.IsValid())
-		LoadOutfit("res\\SkeletonBlank.nif", "New Outfit");
 
 	workNif.CopyShape(useShapeName, blank, useShapeName);
 	SetOutfitTexture(useShapeName, "_AUTO_");

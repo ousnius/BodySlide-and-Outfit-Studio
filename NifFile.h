@@ -134,18 +134,22 @@ class NiObject {
 protected:
 	uint blockSize;
 public:
+	NiHeader* header;
 	ushort blockType;
 
 	virtual ~NiObject();
 
-	virtual void notifyBlockDelete(int blockID, NiHeader& hdr);
+	virtual void Init();
+	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 
-	virtual void Get(fstream& file, NiHeader& hdr);
-	virtual void Put(fstream& file, NiHeader& hdr);
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
 
 	virtual int CalcBlockSize();
 	virtual void SetBlockSize(int sz);
+
+	virtual bool VerCheck(int v1, int v2, int v3, int v4);
 };
 
 class NiHeader : public NiObject {
@@ -161,15 +165,16 @@ public:
 	// User Version 2:		83
 
 	char verStr[0x26];
+	byte version1;
+	byte version2;
+	byte version3;
+	byte version4;
+	uint userVersion;
+	uint userVersion2;
+
 	byte unk1;
-	byte ver1;
-	byte ver2;
-	byte ver3;
-	byte ver4;
 	byte endian;
-	uint userVer;
 	uint numBlocks;
-	uint userVer2;
 	NiString creator;
 	NiString exportInfo1;
 	NiString exportInfo2;
@@ -188,10 +193,8 @@ public:
 	NiHeader();
 	void Clear();
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
-
-	bool VerCheck(int v1, int v2, int v3, int v4);
+	void Get(fstream& file);
+	void Put(fstream& file);
 };
 
 class NiUnknown : public NiObject {
@@ -203,8 +206,8 @@ public:
 	NiUnknown(uint size);
 	virtual ~NiUnknown();
 	void Clone(NiUnknown* other);
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 };
 
 class NiObjectNET : public NiObject {
@@ -217,9 +220,10 @@ public:
 	int controllerRef;
 
 	virtual void Init();
-	virtual void Get(fstream& file, NiHeader& hdr);
-	virtual void Put(fstream& file, NiHeader& hdr);
-	virtual void notifyBlockDelete(int blockID, NiHeader& hdr);
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
 };
 
 class NiAVObject : public NiObjectNET {
@@ -234,9 +238,27 @@ public:
 	int collisionRef;
 
 	virtual void Init();
-	virtual void Get(fstream& file, NiHeader& hdr);
-	virtual void Put(fstream& file, NiHeader& hdr);
-	virtual void notifyBlockDelete(int blockID, NiHeader& hdr);
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiNode : public NiAVObject {
+public:
+	uint numChildren;
+	vector<int> children;
+	uint numEffects;
+	vector<int> effects;
+
+	NiNode(NiHeader& hdr);
+	NiNode(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
 };
 
 class NiGeometry : public NiAVObject {
@@ -252,80 +274,30 @@ public:
 	int propertiesRef2;				// Version >= 20.2.0.7 && User Version == 12
 
 	virtual void Init();
-	virtual void Get(fstream& file, NiHeader& hdr);
-	virtual void Put(fstream& file, NiHeader& hdr);
-	virtual void notifyBlockDelete(int blockID, NiHeader& hdr);
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
 };
 
 class NiTriBasedGeom : public NiGeometry {
 public:
-	virtual void Init() {
-		NiGeometry::Init();
-	}
-	virtual void Get(fstream& file, NiHeader& hdr) {
-		NiGeometry::Get(file, hdr);
-	}
-	virtual void Put(fstream& file, NiHeader& hdr) {
-		NiGeometry::Put(file, hdr);
-	}
-	virtual void notifyBlockDelete(int blockID, NiHeader& hdr) {
-		NiGeometry::notifyBlockDelete(blockID, hdr);
-	}
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
 };
 
 class NiTriShape : public NiTriBasedGeom {
 public:
-	NiTriShape() {
-		blockType = NITRISHAPE;
-		blockSize = 97;
-		NiTriBasedGeom::Init();
-	}
-	NiTriShape(fstream& file, NiHeader& hdr) {
-		blockType = NITRISHAPE;
-		NiTriBasedGeom::Init();
-		Get(file, hdr);
-	}
-	void Get(fstream& file, NiHeader& hdr) {
-		NiTriBasedGeom::Get(file, hdr);
-	}
-	void Put(fstream& file, NiHeader& hdr) {
-		NiTriBasedGeom::Put(file, hdr);
-	}
-	void notifyBlockDelete(int blockID, NiHeader& hdr) {
-		NiTriBasedGeom::notifyBlockDelete(blockID, hdr);
-	}
+	NiTriShape(NiHeader& hdr);
+	NiTriShape(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
 };
-
-class NiNode : public NiObject {
-public:
-	string nodeName;
-	uint nameID;
-	int numExtra;
-	vector<int> extradata;
-	int controllerRef;
-	ushort flags;
-	ushort unk;
-	Vector3 translation;
-	Vector3 rotation[3];
-	float scale;
-	uint numProps;
-	vector<int> propRef;
-	int collisionRef;
-	uint numChildren;
-	vector<int> children;
-	uint numEffects;
-	vector<int> effects;
-
-	NiNode();
-	NiNode(fstream& file, NiHeader& hdr);
-
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
-
-	void notifyBlockDelete(int blockID, NiHeader& hdr);
-	virtual int CalcBlockSize();
-};
-
 
 class NifBlockTriStrips : public NiObject {
 public:
@@ -355,13 +327,13 @@ public:
 	int propertiesRef1;
 	int propertiesRef2;
 
-	NifBlockTriStrips();
+	NifBlockTriStrips(NiHeader& hdr);
 	NifBlockTriStrips(fstream& file, NiHeader& hdr);
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
-	void notifyBlockDelete(int blockID, NiHeader& hdr);
+	void notifyBlockDelete(int blockID);
 };
 
 class NifBlockTriStripsData : public NiObject {
@@ -397,13 +369,13 @@ public:
 	bool scaleFromCenter;
 	int myver;
 
-	NifBlockTriStripsData();
-	NifBlockTriStripsData(fstream& file, NiHeader &hdr);
+	NifBlockTriStripsData(NiHeader& hdr);
+	NifBlockTriStripsData(fstream& file, NiHeader& hdr);
 
 	int CalcBlockSize();
 
-	void Get(fstream& file, NiHeader &hdr);
-	void Put(fstream& file, NiHeader &hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
 	void StripsToTris(vector<Triangle>* outTris);
 
@@ -449,11 +421,11 @@ public:
 	bool scaleFromCenter;
 	int myver;
 
-	NifBlockTriShapeData();
-	NifBlockTriShapeData(fstream& file, NiHeader &hdr);
+	NifBlockTriShapeData(NiHeader& hdr);
+	NifBlockTriShapeData(fstream& file, NiHeader& hdr);
 
-	void Get(fstream& file, NiHeader &hdr);
-	void Put(fstream& file, NiHeader &hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	void RecalcNormals();
 	void CalcTangentSpace();
@@ -475,13 +447,13 @@ public:
 
 	int CalcBlockSize();
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
-	NifBlockNiSkinInstance();
+	NifBlockNiSkinInstance(NiHeader& hdr);
 	NifBlockNiSkinInstance(fstream& file, NiHeader& hdr);
 
-	void notifyBlockDelete(int blockID, NiHeader& hdr);
+	void notifyBlockDelete(int blockID);
 };
 
 class NifBlockBSDismemberment : public NiObject {
@@ -498,15 +470,15 @@ public:
 	int numPartitions;
 	vector<Partition> partitions;
 
-	NifBlockBSDismemberment();
+	NifBlockBSDismemberment(NiHeader& hdr);
 	NifBlockBSDismemberment(fstream& file, NiHeader& hdr);
 
 	int CalcBlockSize();
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
-	void notifyBlockDelete(int blockID, NiHeader& hdr);
+	void notifyBlockDelete(int blockID);
 };
 
 class NifBlockNiSkinData : public NiObject {
@@ -532,11 +504,11 @@ public:
 	byte hasVertWeights;
 	vector<BoneData> Bones;
 
-	NifBlockNiSkinData();
+	NifBlockNiSkinData(NiHeader& hdr);
 	NifBlockNiSkinData(fstream& file, NiHeader& hdr);
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 };
@@ -569,13 +541,13 @@ public:
 	bool needsBuild;
 	int myver;
 
-	NifBlockNiSkinPartition();
+	NifBlockNiSkinPartition(NiHeader& hdr);
 	NifBlockNiSkinPartition(fstream& file, NiHeader& hdr);
 
 	int CalcBlockSize();
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(vector<int>& outDeletedIndices);
@@ -620,13 +592,13 @@ public:
 	Vector3 eyeLeftReflectCenter;
 	Vector3 eyeRightReflectCenter;
 
-	NifBlockBSLightShadeProp();
+	NifBlockBSLightShadeProp(NiHeader& hdr);
 	NifBlockBSLightShadeProp(fstream& file, NiHeader& hdr);
 
-	void notifyBlockDelete(int blockID, NiHeader& hdr);
+	void notifyBlockDelete(int blockID);
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
 	void Clone(NifBlockBSLightShadeProp* Other);
 
@@ -639,11 +611,11 @@ public:
 	uint numTex;
 	vector<NiString> textures;
 
-	NifBlockBSShaderTextureSet();
+	NifBlockBSShaderTextureSet(NiHeader& hdr);
 	NifBlockBSShaderTextureSet(fstream& file, NiHeader& hdr);
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
 	int CalcBlockSize();
 };
@@ -658,10 +630,10 @@ public:
 	ushort flags;
 	byte threshold;
 
-	NifBlockAlphaProperty();
+	NifBlockAlphaProperty(NiHeader& hdr);
 	NifBlockAlphaProperty(fstream& file, NiHeader& hdr);
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
 	int CalcBlockSize();
 };
@@ -675,11 +647,11 @@ public:
 	uint stringDataId;
 	string stringData;
 
-	NifBlockStringExtraData();
+	NifBlockStringExtraData(NiHeader& hdr);
 	NifBlockStringExtraData(fstream& file, NiHeader& hdr);
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 };
 
 class NifBlockBSShadePPLgtProp : public NiObject {
@@ -701,13 +673,13 @@ public:
 	float unkFloat4;
 	float unkFloat5;
 
-	NifBlockBSShadePPLgtProp();
+	NifBlockBSShadePPLgtProp(NiHeader& hdr);
 	NifBlockBSShadePPLgtProp(fstream& file, NiHeader& hdr);
 
-	void notifyBlockDelete(int blockID, NiHeader& hdr);
+	void notifyBlockDelete(int blockID);
 
-	void Get(fstream& file, NiHeader& hdr);
-	void Put(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
 
 	void Clone(NifBlockBSShadePPLgtProp* Other);
 
@@ -717,7 +689,6 @@ public:
 class NifFile
 {
 	string fileName;
-	NiHeader hdr;
 	vector<NiObject*> blocks;
 	bool isValid;
 
@@ -736,6 +707,8 @@ public:
 	NifFile();
 	NifFile(NifFile& other);
 	~NifFile();
+
+	NiHeader hdr;
 
 	void CopyFrom(NifFile& other);
 
