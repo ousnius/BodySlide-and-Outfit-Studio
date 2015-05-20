@@ -380,7 +380,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	if (!workNif.IsValid())
 		LoadOutfit("res\\SkeletonBlank.nif", "New Outfit");
 
-	NifBlockTriShapeData* nifShapeData = new NifBlockTriShapeData(workNif.hdr);
+	NiTriShapeData* nifShapeData = new NiTriShapeData(workNif.hdr);
 	nifShapeData->Create(&v, &t, &uv);
 	int shapeID = blank.AddBlock((NiObject*)nifShapeData, "NiTriShapeData");
 

@@ -4,15 +4,12 @@ NiObject::~NiObject() {
 }
 
 void NiObject::Init() {
-	blockSize = 0;
 }
 
 void NiObject::notifyBlockDelete(int blockID) {
-	return;
 }
 
 void NiObject::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	return;
 }
 
 void NiObject::Get(fstream& file) {
@@ -22,6 +19,7 @@ void NiObject::Put(fstream& file) {
 }
 
 int NiObject::CalcBlockSize() {
+	blockSize = 0;	// Calculate from the ground up
 	return blockSize;
 }
 
@@ -533,6 +531,271 @@ int NiGeometry::CalcBlockSize() {
 }
 
 
+void NiGeometryData::Init() {
+	NiObject::Init();
+
+	unkInt = 0;
+	numVertices = 0;
+	keepFlags = 0;
+	compressFlags = 0;
+	hasVertices = true;
+	numUVSets = 0;
+	//extraVectorsFlags = 0;
+	unkInt2 = 0;
+	hasNormals = false;
+	radius = 0.0f;
+	hasVertexColors = false;
+	consistencyFlags = 0;
+	additionalData = -1;
+}
+
+void NiGeometryData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&unkInt, 4);
+	file.read((char*)&numVertices, 2);
+	file.read((char*)&keepFlags, 1);
+	file.read((char*)&compressFlags, 1);
+	file.read((char*)&hasVertices, 1);
+
+	Vector3 v;
+	for (int i = 0; i < numVertices; i++) {
+		file.read((char*)&v.x, 4);
+		file.read((char*)&v.y, 4);
+		file.read((char*)&v.z, 4);
+		vertices.push_back(v);
+	}
+
+	file.read((char*)&numUVSets, 2);
+	//file.read((char*)&extraVectorsFlags, 1);
+	if (header->userVersion == 12)
+		file.read((char*)&unkInt2, 4);
+
+	file.read((char*)&hasNormals, 1);
+	if (hasNormals == 1) {
+		for (int i = 0; i < numVertices; i++) {
+			file.read((char*)&v.x, 4);
+			file.read((char*)&v.y, 4);
+			file.read((char*)&v.z, 4);
+			normals.push_back(v);
+		}
+		if (numUVSets & 0xF000) {
+			for (int i = 0; i < numVertices; i++) {
+				file.read((char*)&v.x, 4);
+				file.read((char*)&v.y, 4);
+				file.read((char*)&v.z, 4);
+				tangents.push_back(v);
+			}
+			for (int i = 0; i < numVertices; i++) {
+				file.read((char*)&v.x, 4);
+				file.read((char*)&v.y, 4);
+				file.read((char*)&v.z, 4);
+				bitangents.push_back(v);
+			}
+		}
+	}
+
+	file.read((char*)&center.x, 4);
+	file.read((char*)&center.y, 4);
+	file.read((char*)&center.z, 4);
+	file.read((char*)&radius, 4);
+
+	file.read((char*)&hasVertexColors, 1);
+	if (hasVertexColors == 1) {
+		Color4 c;
+		for (int i = 0; i < numVertices; i++) {
+			file.read((char*)&c, 16);
+			vertexColors.push_back(c);
+		}
+	}
+	if (numUVSets >= 1) {
+		Vector2 uv;
+		for (int i = 0; i < numVertices; i++) {
+			file.read((char*)&uv.u, 4);
+			file.read((char*)&uv.v, 4);
+			uvSets.push_back(uv);
+		}
+	}
+
+	file.read((char*)&consistencyFlags, 2);
+	file.read((char*)&additionalData, 4);
+}
+
+void NiGeometryData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&unkInt, 4);
+	file.write((char*)&numVertices, 2);
+	file.write((char*)&keepFlags, 1);
+	file.write((char*)&compressFlags, 1);
+
+	file.write((char*)&hasVertices, 1);
+	for (int i = 0; i < numVertices; i++) {
+		file.write((char*)&vertices[i].x, 4);
+		file.write((char*)&vertices[i].y, 4);
+		file.write((char*)&vertices[i].z, 4);
+	}
+
+	file.write((char*)&numUVSets, 2);
+	//file.write((char*)&extraVectorsFlags, 1);
+	if (header->userVersion == 12)
+		file.write((char*)&unkInt2, 4);
+
+	file.write((char*)&hasNormals, 1);
+	if (hasNormals == 1) {
+		for (int i = 0; i < numVertices; i++) {
+			file.write((char*)&normals[i].x, 4);
+			file.write((char*)&normals[i].y, 4);
+			file.write((char*)&normals[i].z, 4);
+		}
+		if (numUVSets & 0xF000) {
+			for (int i = 0; i < numVertices; i++) {
+				file.write((char*)&tangents[i].x, 4);
+				file.write((char*)&tangents[i].y, 4);
+				file.write((char*)&tangents[i].z, 4);
+			}
+			for (int i = 0; i < numVertices; i++) {
+				file.write((char*)&bitangents[i].x, 4);
+				file.write((char*)&bitangents[i].y, 4);
+				file.write((char*)&bitangents[i].z, 4);
+			}
+		}
+	}
+	file.write((char*)&center.x, 4);
+	file.write((char*)&center.y, 4);
+	file.write((char*)&center.z, 4);
+	file.write((char*)&radius, 4);
+
+	file.write((char*)&hasVertexColors, 1);
+	if (hasVertexColors == 1) {
+		for (int i = 0; i < numVertices; i++)
+			file.write((char*)&vertexColors[i], 16);
+	}
+	if (numUVSets >= 1) {
+		for (int i = 0; i < numVertices; i++) {
+			file.write((char*)&uvSets[i].u, 4);
+			file.write((char*)&uvSets[i].v, 4);
+		}
+	}
+	file.write((char*)&consistencyFlags, 2);
+	file.write((char*)&additionalData, 4);
+}
+
+void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
+	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
+	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+
+	unkInt = 0;
+	radius = 0.0f;
+	numVertices = verts->size();
+	keepFlags = 0;
+	compressFlags = 0;
+	hasVertices = true;
+	for (auto v : (*verts)) {
+		vertices.push_back(v);
+		a.x = min(a.x, v.x);
+		a.y = min(a.y, v.y);
+		a.z = min(a.z, v.z);
+		b.x = max(b.x, v.x);
+		b.y = max(b.y, v.y);
+		b.z = max(b.z, v.z);
+	}
+
+	if (texcoords->size() > 0)
+		numUVSets = 4097;
+	else
+		numUVSets = 0;
+
+	unkInt2 = 0;
+	hasNormals = false;
+	center = (a + b) / 2.0f;
+	for (auto v : (*verts))
+		radius = max(radius, center.DistanceTo(v));
+
+	hasVertexColors = false;
+
+	for (auto uv : (*texcoords))
+		uvSets.push_back(uv);
+
+	consistencyFlags = 16384;
+	additionalData = -1;
+}
+
+
+void NiGeometryData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	vector<int> indexCollapse(vertices.size(), 0);
+	bool hasNorm = normals.size() > 0;
+	bool hasTan = tangents.size() > 0;
+	bool hasBin = bitangents.size() > 0;
+	bool hasCol = vertexColors.size() > 0;
+	bool hasUV = uvSets.size() > 0;
+
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapse[i] = remCount;
+	}
+
+	for (int i = vertices.size() - 1; i >= 0; i--) {
+		if (indexCollapse[i] == -1) {
+			vertices.erase(vertices.begin() + i);
+			numVertices--;
+			if (hasNorm)
+				normals.erase(normals.begin() + i);
+			if (hasTan)
+				tangents.erase(tangents.begin() + i);
+			if (hasBin)
+				bitangents.erase(bitangents.begin() + i);
+			if (hasCol)
+				vertexColors.erase(vertexColors.begin() + i);
+			if (hasUV)
+				uvSets.erase(uvSets.begin() + i);
+		}
+	}
+}
+
+void NiGeometryData::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+}
+
+void NiGeometryData::RecalcNormals() {
+	for (int i = 0; i < numVertices; i++) {
+		normals[i].x = 0;
+		normals[i].y = 0;
+		normals[i].z = 0;
+	}
+}
+
+void NiGeometryData::CalcTangentSpace() {
+	numUVSets |= 4096;
+
+	tangents.resize(numVertices);
+	bitangents.resize(numVertices);
+}
+
+int NiGeometryData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 35;
+	if (header->userVersion == 12)
+		blockSize += 4;
+
+	blockSize += numVertices * 12;			// Verts
+	blockSize += normals.size() * 12;		// Normals
+	blockSize += tangents.size() * 12;		// Tangents
+	blockSize += bitangents.size() * 12;	// Bitangents
+	blockSize += vertexColors.size() * 16;	// Vertex Colors
+	blockSize += uvSets.size() * 8;			// UVs 
+
+	return blockSize;
+}
+
+
 void NiTriBasedGeom::Init() {
 	NiGeometry::Init();
 }
@@ -551,6 +814,54 @@ void NiTriBasedGeom::notifyBlockDelete(int blockID) {
 
 int NiTriBasedGeom::CalcBlockSize() {
 	return NiGeometry::CalcBlockSize();
+}
+
+
+void NiTriBasedGeomData::Init() {
+	NiGeometryData::Init();
+
+	numTriangles = 0;
+}
+
+void NiTriBasedGeomData::Get(fstream& file) {
+	NiGeometryData::Get(file);
+
+	file.read((char*)&numTriangles, 2);
+}
+
+void NiTriBasedGeomData::Put(fstream& file) {
+	NiGeometryData::Put(file);
+
+	file.write((char*)&numTriangles, 2);
+}
+
+void NiTriBasedGeomData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
+	NiGeometryData::Create(verts, inTris, texcoords);
+
+	numTriangles = inTris->size();
+}
+
+void NiTriBasedGeomData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	NiGeometryData::notifyVerticesDelete(vertIndices);
+}
+
+void NiTriBasedGeomData::notifyBlockDelete(int blockID) {
+	NiGeometryData::notifyBlockDelete(blockID);
+}
+
+void NiTriBasedGeomData::RecalcNormals() {
+	NiGeometryData::RecalcNormals();
+}
+
+void NiTriBasedGeomData::CalcTangentSpace() {
+	NiGeometryData::CalcTangentSpace();
+}
+
+int NiTriBasedGeomData::CalcBlockSize() {
+	NiGeometryData::CalcBlockSize();
+
+	blockSize += 2;
+	return blockSize;
 }
 
 
@@ -590,549 +901,47 @@ int NiTriShape::CalcBlockSize() {
 }
 
 
-void NifBlockTriStrips::Get(fstream& file) {
-	file.read((char*)&nameID, 4);
-	if (nameID != -1)
-		shapeName = header->strings[nameID].str;
-	else
-		shapeName = "";
+NiTriShapeData::NiTriShapeData(NiHeader& hdr) {
+	NiTriBasedGeomData::Init();
 
-	int intData;
-	file.read((char*)&numExtra, 4);
-	for (int i = 0; i < numExtra; i++) {
-		file.read((char*)&intData, 4);
-		extradata.push_back(intData);
-	}
-	file.read((char*)&controllerRef, 4);
-	file.read((char*)&flags, 2);
-	if (header->userVersion >= 11 && header->userVersion2 > 26)
-		file.read((char*)&unkShort1, 2);
-
-	file.read((char*)&translation.x, 4);
-	file.read((char*)&translation.y, 4);
-	file.read((char*)&translation.z, 4);
-	for (int i = 0; i < 3; i++) {
-		file.read((char*)&rotation[i].x, 4);
-		file.read((char*)&rotation[i].y, 4);
-		file.read((char*)&rotation[i].z, 4);
-	}
-	file.read((char*)&scale, 4);
-	if (header->userVersion <= 11) {
-		file.read((char*)&numProperties, 4);
-		for (int i = 0; i < numProperties; i++) {
-			file.read((char*)&intData, 4);
-			properties.push_back(intData);
-		}
-	}
-	else
-		numProperties = 0;
-
-
-	file.read((char*)&collisionRef, 4);
-	file.read((char*)&dataRef, 4);
-	file.read((char*)&skinRef, 4);
-	file.read((char*)&numMat, 4);
-	for (int i = 0; i < numMat; i++)
-		materialNames.push_back(NiString(file, 2));
-
-	for (int i = 0; i < numMat; i++){
-		file.read((char*)&intData, 4);
-		materialExtra.push_back(intData);
-	}
-	file.read((char*)&activeMat, 4);
-
-	if (header->userVersion == 1)
-		file.read((char*)&unkByte, 1);
-
-	file.read((char*)&dirty, 1);
-
-	if (header->userVersion == 12) {
-		file.read((char*)&propertiesRef1, 4);
-		file.read((char*)&propertiesRef2, 4);
-	}
-}
-
-void NifBlockTriStrips::Put(fstream& file) {
-	file.write((char*)&nameID, 4);
-	file.write((char*)&numExtra, 4);
-	for (int i = 0; i < numExtra; i++)
-		file.write((char*)&extradata[i], 4);
-	file.write((char*)&controllerRef, 4);
-	file.write((char*)&flags, 2);
-	if (header->userVersion >= 11 && header->userVersion2 > 26)
-		file.write((char*)&unkShort1, 2);
-	file.write((char*)&translation.x, 4);
-	file.write((char*)&translation.y, 4);
-	file.write((char*)&translation.z, 4);
-	for (int i = 0; i < 3; i++) {
-		file.write((char*)&rotation[i].x, 4);
-		file.write((char*)&rotation[i].y, 4);
-		file.write((char*)&rotation[i].z, 4);
-	}
-	file.write((char*)&scale, 4);
-	if (header->userVersion <= 11) {
-		file.write((char*)&numProperties, 4);
-		for (int i = 0; i < numProperties; i++)
-			file.write((char*)&properties[i], 4);
-	}
-	file.write((char*)&collisionRef, 4);
-	file.write((char*)&dataRef, 4);
-	file.write((char*)&skinRef, 4);
-	file.write((char*)&numMat, 4);
-	for (int i = 0; i < numMat; i++)
-		materialNames[i].Put(file, 2);
-	for (int i = 0; i < numMat; i++)
-		file.write((char*)&materialExtra[i], 4);
-	file.write((char*)&activeMat, 4);
-	if (header->userVersion == 1)
-		file.write((char*)&unkByte, 1);
-	file.write((char*)&dirty, 1);
-	if (header->userVersion == 12) {
-		file.write((char*)&propertiesRef1, 4);
-		file.write((char*)&propertiesRef2, 4);
-	}
-}
-
-void NifBlockTriStrips::notifyBlockDelete(int blockID) {
-	for (int i = 0; i < numExtra; i++) {
-		if (extradata[i] == blockID) {
-			extradata.erase(extradata.begin() + i);
-			i--;
-			numExtra--;
-			blockSize -= 4;
-		}
-		else if (extradata[i] > blockID)
-			extradata[i]--;
-	}
-
-	if (controllerRef == blockID)
-		controllerRef = -1;
-	else if (controllerRef > blockID)
-		controllerRef--;
-
-	for (int i = 0; i < numProperties; i++) {
-		if (properties[i] == blockID) {
-			properties.erase(properties.begin() + i);
-			i--;
-			numProperties--;
-			blockSize -= 4;
-		}
-		else if (properties[i] > blockID)
-			properties[i]--;
-	}
-
-	if (collisionRef == blockID)
-		collisionRef = -1;
-	else if (collisionRef > blockID)
-		collisionRef--;
-
-	if (dataRef == blockID)
-		dataRef = -1;
-	else if (dataRef > blockID)
-		dataRef--;
-
-	if (skinRef == blockID)
-		skinRef = -1;
-	else if (skinRef > blockID)
-		skinRef--;
-
-	if (propertiesRef1 >= blockID)
-		propertiesRef1--;
-	if (propertiesRef2 >= blockID)
-		propertiesRef2--;
-}
-
-NifBlockTriStrips::NifBlockTriStrips(NiHeader& hdr) {
 	header = &hdr;
-	blockType = NITRISTRIPS;
-	nameID = -1;
-	shapeName = "";
-	propertiesRef1 = -1;
-	propertiesRef2 = -1;
-	controllerRef = -1;
-	numExtra = 0;
-	scale = 1.0f;
-	numProperties = 0;
-	flags = 14;
-	unkShort1 = 8;
-	collisionRef = -1;
-	dataRef = -1;
-	skinRef = -1;
-	numMat = 0;
-	activeMat = 0;
-	unkByte = 255;
-	dirty = 0;
-	blockSize = 97;
-}
-
-NifBlockTriStrips::NifBlockTriStrips(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = NITRISTRIPS;
-	propertiesRef1 = -1;
-	propertiesRef2 = -1;
-	numExtra = 0;
-	numProperties = 0;
-	Get(file);
-}
-
-
-void NifBlockTriStripsData::Get(fstream& file) {
-	file.read((char*)&unkInt, 4);
-	file.read((char*)&numverts, 2);
-	file.read((char*)&keepflags, 1);
-	file.read((char*)&compressflags, 1);
-	file.read((char*)&hasVertices, 1);
-
-	Vector3 v;
-	for (int i = 0; i < numverts; i++) {
-		file.read((char*)&v.x, 4);
-		file.read((char*)&v.y, 4);
-		file.read((char*)&v.z, 4);
-		vertices.push_back(v);
-	}
-	file.read((char*)&numUVs, 2);
-	if (header->userVersion == 12) {
-		file.read((char*)&skyrimMaterial, 4);
-		myver = 12;
-	}
-	else
-		myver = 11;
-
-	file.read((char*)&hasNormals, 1);
-	if (hasNormals == 1) {
-		for (int i = 0; i < numverts; i++) {
-			file.read((char*)&v.x, 4);
-			file.read((char*)&v.y, 4);
-			file.read((char*)&v.z, 4);
-			normals.push_back(v);
-		}
-		if (numUVs & 0xF000) {
-			for (int i = 0; i < numverts; i++) {
-				file.read((char*)&v.x, 4);
-				file.read((char*)&v.y, 4);
-				file.read((char*)&v.z, 4);
-				tangents.push_back(v);
-			}
-			for (int i = 0; i < numverts; i++) {
-				file.read((char*)&v.x, 4);
-				file.read((char*)&v.y, 4);
-				file.read((char*)&v.z, 4);
-				binormals.push_back(v);
-			}
-		}
-	}
-	file.read((char*)&Center.x, 4);
-	file.read((char*)&Center.y, 4);
-	file.read((char*)&Center.z, 4);
-	file.read((char*)&Radius, 4);
-	file.read((char*)&hasVertColors, 1);
-
-	if (hasVertColors == 1) {
-		Color4 c;
-		for (int i = 0; i < numverts; i++) {
-			file.read((char*)&c, 16);
-			vertcolors.push_back(c);
-		}
-	}
-	if (numUVs >= 1) {
-		Vector2 uv;
-		for (int i = 0; i < numverts; i++) {
-			file.read((char*)&uv.u, 4);
-			file.read((char*)&uv.v, 4);
-			uvs.push_back(uv);
-		}
-	}
-	file.read((char*)&consistencyflags, 2);
-	file.read((char*)&additionaldata, 4);
-	file.read((char*)&numTriangles, 2);
-
-	ushort uShort;
-	file.read((char*)&numStrips, 2);
-	for (int i = 0; i < numStrips; i++) {
-		file.read((char*)&uShort, 2);
-		stripLengths.push_back(uShort);
-	}
-
-	file.read((char*)&hasPoints, 1);
-	if (hasPoints) {
-		for (int i = 0; i < numStrips; i++) {
-			points.push_back(vector<ushort>());
-			for (int j = 0; j < stripLengths[i]; j++) {
-				file.read((char*)&uShort, 2);
-				points[i].push_back(uShort);
-			}
-		}
-	}
-}
-
-void NifBlockTriStripsData::Put(fstream& file) {
-	file.write((char*)&unkInt, 4);
-	file.write((char*)&numverts, 2);
-	file.write((char*)&keepflags, 1);
-	file.write((char*)&compressflags, 1);
-	file.write((char*)&hasVertices, 1);
-	for (int i = 0; i < numverts; i++) {
-		file.write((char*)&vertices[i].x, 4);
-		file.write((char*)&vertices[i].y, 4);
-		file.write((char*)&vertices[i].z, 4);
-	}
-	file.write((char*)&numUVs, 2);
-	if (header->userVersion == 12)
-		file.write((char*)&skyrimMaterial, 4);
-
-	file.write((char*)&hasNormals, 1);
-	if (hasNormals == 1) {
-		for (int i = 0; i < numverts; i++) {
-			file.write((char*)&normals[i].x, 4);
-			file.write((char*)&normals[i].y, 4);
-			file.write((char*)&normals[i].z, 4);
-		}
-		if (numUVs & 0xF000) {
-			for (int i = 0; i < numverts; i++) {
-				file.write((char*)&tangents[i].x, 4);
-				file.write((char*)&tangents[i].y, 4);
-				file.write((char*)&tangents[i].z, 4);
-			}
-			for (int i = 0; i < numverts; i++) {
-				file.write((char*)&binormals[i].x, 4);
-				file.write((char*)&binormals[i].y, 4);
-				file.write((char*)&binormals[i].z, 4);
-			}
-		}
-	}
-	file.write((char*)&Center.x, 4);
-	file.write((char*)&Center.y, 4);
-	file.write((char*)&Center.z, 4);
-	file.write((char*)&Radius, 4);
-	file.write((char*)&hasVertColors, 1);
-
-	if (hasVertColors == 1) {
-		for (int i = 0; i < numverts; i++)
-			file.write((char*)&vertcolors[i], 16);
-	}
-
-	if (numUVs >= 1) {
-		for (int i = 0; i < numverts; i++) {
-			file.write((char*)&uvs[i].u, 4);
-			file.write((char*)&uvs[i].v, 4);
-		}
-	}
-	file.write((char*)&consistencyflags, 2);
-	file.write((char*)&additionaldata, 4);
-	file.write((char*)&numTriangles, 2);
-	file.write((char*)&numStrips, 2);
-	for (int i = 0; i < numStrips; i++)
-		file.write((char*)&stripLengths[i], 2);
-
-	file.write((char*)&hasPoints, 1);
-
-	if (hasPoints) {
-		for (int i = 0; i < numStrips; i++)
-			for (int j = 0; j < stripLengths[i]; j++)
-				file.write((char*)&points[i][j], 2);
-	}
-}
-
-void NifBlockTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	vector<int> indexCollapse(vertices.size(), 0);
-	bool hasNorm = normals.size() > 0;
-	bool hasTan = tangents.size() > 0;
-	bool hasBin = binormals.size() > 0;
-	bool hasCol = vertcolors.size() > 0;
-	bool hasUV = uvs.size() > 0;
-
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < vertIndices.size() && vertIndices[j] == i) {  // Found one to remove
-			indexCollapse[i] = -1;  // Flag delete
-			remCount++;
-			j++;
-		}
-		else {
-			indexCollapse[i] = remCount;
-		}
-	}
-
-	for (int i = vertices.size() - 1; i >= 0; i--) {
-		if (indexCollapse[i] == -1) {
-			vertices.erase(vertices.begin() + i);
-			numverts--;
-			blockSize -= sizeof(Vector3);
-			if (hasNorm) {
-				normals.erase(normals.begin() + i);
-				blockSize -= sizeof(Vector3);
-			}
-			if (hasTan){
-				tangents.erase(tangents.begin() + i);
-				blockSize -= sizeof(Vector3);
-			}
-			if (hasBin){
-				binormals.erase(binormals.begin() + i);
-				blockSize -= sizeof(Vector3);
-			}
-			if (hasCol) {
-				vertcolors.erase(vertcolors.begin() + i);
-				blockSize -= sizeof(Color4);
-			}
-			if (hasUV) {
-				uvs.erase(uvs.begin() + i);
-				blockSize -= sizeof(Vector2);
-			}
-		}
-	}
-
-	// This is not a healthy way to delete strip data. Probably need to restrip the shape.
-	for (int i = 0; i < numStrips; i++) {
-		for (int j = 0; j < stripLengths[i]; j++) {
-			if (indexCollapse[points[i][j]] == -1) {
-				points[i].erase(points[i].begin() + j);
-				stripLengths[i]--;
-				blockSize -= 2;
-			}
-		}
-	}
-}
-
-NifBlockTriStripsData::NifBlockTriStripsData(NiHeader& hdr) {
-	header = &hdr;
-	blockType = NITRISTRIPSDATA;
-	virtScale = 1.0f;
+	blockType = NITRISHAPEDATA;
 	scaleFromCenter = true;
-	myver = 12;
-}
-
-NifBlockTriStripsData::NifBlockTriStripsData(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = NITRISTRIPSDATA;
 	virtScale = 1.0f;
+	numTrianglePoints = 0;
+	hasTriangles = false;
+	numMatchGroups = 0;
+
+	CalcBlockSize();
+}
+
+NiTriShapeData::NiTriShapeData(fstream& file, NiHeader& hdr) {
+	NiTriBasedGeomData::Init();
+
+	header = &hdr;
+	blockType = NITRISHAPEDATA;
 	scaleFromCenter = true;
-	myver = 12;
+	virtScale = 1.0f;
+	numTrianglePoints = 0;
+	hasTriangles = false;
+	numMatchGroups = 0;
+
 	Get(file);
+	CalcBlockSize();
 }
 
-int NifBlockTriStripsData::CalcBlockSize() {
-	if (myver == 12)
-		blockSize = 44;
-	else
-		blockSize = 40;
+void NiTriShapeData::Get(fstream& file) {
+	NiTriBasedGeomData::Get(file);
 
-	blockSize += numverts * 12;				//verts
-	blockSize += normals.size() * 12;		//normals
-	blockSize += tangents.size() * 12;		//tangents
-	blockSize += binormals.size() * 12;		//binormals
-	blockSize += vertcolors.size() * 16;	//vertcolors
-	blockSize += uvs.size() * 8;			//uvs
-	blockSize += stripLengths.size() * 2;	//striplengths
-
-	for (auto pl : points)
-		blockSize += pl.size() * 2;
-
-	return blockSize;
-}
-
-void NifBlockTriStripsData::StripsToTris(vector<Triangle>* outTris) {
-	Triangle t;
-	for (int strip = 0; strip < numStrips; strip++) {
-		for (int vi = 0; vi < stripLengths[strip] - 2; vi++) {
-			if (vi & 1) {
-				t.p1 = points[strip][vi];
-				t.p2 = points[strip][vi + 2];
-				t.p3 = points[strip][vi + 1];
-			}
-			else {
-				t.p1 = points[strip][vi];
-				t.p2 = points[strip][vi + 1];
-				t.p3 = points[strip][vi + 2];
-			}
-
-			if (t.p1 == t.p2 || t.p2 == t.p3 || t.p3 == t.p1)
-				continue;
-
-			outTris->push_back(t);
-		}
-	}
-}
-
-
-void NifBlockTriShapeData::Get(fstream& file) {
-	if (header->userVersion >= 12)
-		myver = 12;
-	else
-		myver = 11;
-
-	file.read((char*)&unkInt, 4);
-	file.read((char*)&numverts, 2);
-	file.read((char*)&keepflags, 1);
-	file.read((char*)&compressflags, 1);
-	file.read((char*)&hasVertices, 1);
-
-	Vector3 v;
-	for (int i = 0; i < numverts; i++) {
-		file.read((char*)&v.x, 4);
-		file.read((char*)&v.y, 4);
-		file.read((char*)&v.z, 4);
-		vertices.push_back(v);
-	}
-	file.read((char*)&numUVs, 2);
-	if (header->userVersion == 12)
-		file.read((char*)&skyrimMaterial, 4);
-
-	file.read((char*)&hasNormals, 1);
-	if (hasNormals == 1) {
-		for (int i = 0; i < numverts; i++) {
-			file.read((char*)&v.x, 4);
-			file.read((char*)&v.y, 4);
-			file.read((char*)&v.z, 4);
-			normals.push_back(v);
-		}
-		if (numUVs & 0xF000) {
-			for (int i = 0; i < numverts; i++) {
-				file.read((char*)&v.x, 4);
-				file.read((char*)&v.y, 4);
-				file.read((char*)&v.z, 4);
-				tangents.push_back(v);
-			}
-			for (int i = 0; i < numverts; i++) {
-				file.read((char*)&v.x, 4);
-				file.read((char*)&v.y, 4);
-				file.read((char*)&v.z, 4);
-				binormals.push_back(v);
-			}
-		}
-	}
-	file.read((char*)&Center.x, 4);
-	file.read((char*)&Center.y, 4);
-	file.read((char*)&Center.z, 4);
-	file.read((char*)&Radius, 4);
-	file.read((char*)&hasVertColors, 1);
-
-	if (hasVertColors == 1) {
-		Color4 c;
-		for (int i = 0; i < numverts; i++) {
-			file.read((char*)&c, 16);
-			vertcolors.push_back(c);
-		}
-	}
-	if (numUVs >= 1) {
-		Vector2 uv;
-		for (int i = 0; i < numverts; i++) {
-			file.read((char*)&uv.u, 4);
-			file.read((char*)&uv.v, 4);
-			uvs.push_back(uv);
-		}
-	}
-	file.read((char*)&consistencyflags, 2);
-	file.read((char*)&additionaldata, 4);
-	file.read((char*)&numTriangles, 2);
-	file.read((char*)&numTriPoints, 4);
+	file.read((char*)&numTrianglePoints, 4);
 	file.read((char*)&hasTriangles, 1);
 	if (hasTriangles == 1) {
-		Triangle Triangle;
+		Triangle triangle;
 		for (int i = 0; i < numTriangles; i++) {
-			file.read((char*)&Triangle.p1, 2);
-			file.read((char*)&Triangle.p2, 2);
-			file.read((char*)&Triangle.p3, 2);
-			tris.push_back(Triangle);
+			file.read((char*)&triangle.p1, 2);
+			file.read((char*)&triangle.p2, 2);
+			file.read((char*)&triangle.p3, 2);
+			triangles.push_back(triangle);
 		}
 	}
 
@@ -1154,67 +963,16 @@ void NifBlockTriShapeData::Get(fstream& file) {
 	numMatchGroups = 0;
 }
 
-void NifBlockTriShapeData::Put(fstream& file) {
-	file.write((char*)&unkInt, 4);
-	file.write((char*)&numverts, 2);
-	file.write((char*)&keepflags, 1);
-	file.write((char*)&compressflags, 1);
-	file.write((char*)&hasVertices, 1);
-	for (int i = 0; i < numverts; i++) {
-		file.write((char*)&vertices[i].x, 4);
-		file.write((char*)&vertices[i].y, 4);
-		file.write((char*)&vertices[i].z, 4);
-	}
-	file.write((char*)&numUVs, 2);
-	if (header->userVersion == 12)
-		file.write((char*)&skyrimMaterial, 4);
+void NiTriShapeData::Put(fstream& file) {
+	NiTriBasedGeomData::Put(file);
 
-	file.write((char*)&hasNormals, 1);
-	if (hasNormals == 1) {
-		for (int i = 0; i < numverts; i++) {
-			file.write((char*)&normals[i].x, 4);
-			file.write((char*)&normals[i].y, 4);
-			file.write((char*)&normals[i].z, 4);
-		}
-		if (numUVs & 0xF000) {
-			for (int i = 0; i < numverts; i++) {
-				file.write((char*)&tangents[i].x, 4);
-				file.write((char*)&tangents[i].y, 4);
-				file.write((char*)&tangents[i].z, 4);
-			}
-			for (int i = 0; i < numverts; i++) {
-				file.write((char*)&binormals[i].x, 4);
-				file.write((char*)&binormals[i].y, 4);
-				file.write((char*)&binormals[i].z, 4);
-			}
-		}
-	}
-	file.write((char*)&Center.x, 4);
-	file.write((char*)&Center.y, 4);
-	file.write((char*)&Center.z, 4);
-	file.write((char*)&Radius, 4);
-	file.write((char*)&hasVertColors, 1);
-
-	if (hasVertColors == 1) {
-		for (int i = 0; i < numverts; i++)
-			file.write((char*)&vertcolors[i], 16);
-	}
-	if (numUVs >= 1) {
-		for (int i = 0; i < numverts; i++) {
-			file.write((char*)&uvs[i].u, 4);
-			file.write((char*)&uvs[i].v, 4);
-		}
-	}
-	file.write((char*)&consistencyflags, 2);
-	file.write((char*)&additionaldata, 4);
-	file.write((char*)&numTriangles, 2);
-	file.write((char*)&numTriPoints, 4);
+	file.write((char*)&numTrianglePoints, 4);
 	file.write((char*)&hasTriangles, 1);
 	if (hasTriangles == 1) {
 		for (int i = 0; i < numTriangles; i++) {
-			file.write((char*)&tris[i].p1, 2);
-			file.write((char*)&tris[i].p2, 2);
-			file.write((char*)&tris[i].p3, 2);
+			file.write((char*)&triangles[i].p1, 2);
+			file.write((char*)&triangles[i].p2, 2);
+			file.write((char*)&triangles[i].p3, 2);
 		}
 	}
 	file.write((char*)&numMatchGroups, 2);
@@ -1225,99 +983,82 @@ void NifBlockTriShapeData::Put(fstream& file) {
 	}
 }
 
-void NifBlockTriShapeData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
-	unkInt = 0;
-	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
-	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+void NiTriShapeData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
+	NiTriBasedGeomData::Create(verts, inTris, texcoords);
 
-	Radius = 0.0f;
-	numverts = verts->size();
-	keepflags = 0;
-	compressflags = 0;
-	hasVertices = true;
-	for (auto v : (*verts)) {
-		vertices.push_back(v);
-		a.x = min(a.x, v.x);
-		a.y = min(a.y, v.y);
-		a.z = min(a.z, v.z);
-		b.x = max(b.x, v.x);
-		b.y = max(b.y, v.y);
-		b.z = max(b.z, v.z);
-	}
-	if (texcoords->size() > 0)
-		numUVs = 4097;
-	else
-		numUVs = 0;
-
-	skyrimMaterial = 0;
-	hasNormals = false;
-	Center = (a + b) / 2.0f;
-	for (auto v : (*verts))
-		Radius = max(Radius, Center.DistanceTo(v));
-
-	hasVertColors = false;
-
-	for (auto uv : (*texcoords))
-		uvs.push_back(uv);
-
-	consistencyflags = 16384;
-	additionaldata = -1;
-	numTriangles = inTris->size();
-	numTriPoints = numTriangles * 3;
+	numTrianglePoints = numTriangles * 3;
 	hasTriangles = true;
 	for (auto t : (*inTris))
-		tris.push_back(t);
+		triangles.push_back(t);
 
 	numMatchGroups = 0;
 
-	blockSize = 48;
-	blockSize += 12 * numverts;  // vert data size
-	if (texcoords->size() > 0)
-		blockSize += 8 * numverts;	 // uv data size
-
-	blockSize += 6 * numTriangles; // Triangle data size
+	CalcBlockSize();
 }
 
-void NifBlockTriShapeData::RecalcNormals() {
+void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	NiTriBasedGeomData::notifyVerticesDelete(vertIndices);
+
+	vector<int> indexCollapse(vertices.size(), 0);
+	for (int i = numTriangles - 1; i >= 0; i--) {
+		if (indexCollapse[triangles[i].p1] == -1 || indexCollapse[triangles[i].p2] == -1 || indexCollapse[triangles[i].p3] == -1) {
+			triangles.erase(triangles.begin() + i);
+			numTriangles--;
+			numTrianglePoints -= 3;
+		}
+		else {
+			triangles[i].p1 = triangles[i].p1 - indexCollapse[triangles[i].p1];
+			triangles[i].p2 = triangles[i].p2 - indexCollapse[triangles[i].p2];
+			triangles[i].p3 = triangles[i].p3 - indexCollapse[triangles[i].p3];
+		}
+	}
+
+	CalcBlockSize();
+}
+
+void NiTriShapeData::notifyBlockDelete(int blockID) {
+	NiTriBasedGeomData::notifyBlockDelete(blockID);
+
+	CalcBlockSize();
+}
+
+void NiTriShapeData::RecalcNormals() {
 	if (!hasNormals)
 		return;
 
-	for (int i = 0; i < numverts; i++) {
-		normals[i].x = 0;
-		normals[i].y = 0;
-		normals[i].z = 0;
-	}
+	NiTriBasedGeomData::RecalcNormals();
 
+	// Calc normal
 	Vector3 norm;
 	for (int i = 0; i < numTriangles; i++) {
-		// Calc normal
-		tris[i].trinormal(vertices, &norm);
-		normals[tris[i].p1].x += norm.x;
-		normals[tris[i].p1].y += norm.y;
-		normals[tris[i].p1].z += norm.z;
-		normals[tris[i].p2].x += norm.x;
-		normals[tris[i].p2].y += norm.y;
-		normals[tris[i].p2].z += norm.z;
-		normals[tris[i].p3].x += norm.x;
-		normals[tris[i].p3].y += norm.y;
-		normals[tris[i].p3].z += norm.z;
+		triangles[i].trinormal(vertices, &norm);
+		normals[triangles[i].p1].x += norm.x;
+		normals[triangles[i].p1].y += norm.y;
+		normals[triangles[i].p1].z += norm.z;
+		normals[triangles[i].p2].x += norm.x;
+		normals[triangles[i].p2].y += norm.y;
+		normals[triangles[i].p2].z += norm.z;
+		normals[triangles[i].p3].x += norm.x;
+		normals[triangles[i].p3].y += norm.y;
+		normals[triangles[i].p3].z += norm.z;
 	}
+
 	// Normalize all vertex normals to smooth them out
-	for (int i = 0; i < numverts; i++)
+	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
-	Vertex* matchverts = new Vertex[numverts];
+	Vertex* matchVerts = new Vertex[numVertices];
 
-	for (int i = 0; i < numverts; i++) {
-		matchverts[i].x = vertices[i].x;
-		matchverts[i].nx = normals[i].x;
-		matchverts[i].y = vertices[i].y;
-		matchverts[i].ny = normals[i].y;
-		matchverts[i].z = vertices[i].z;
-		matchverts[i].nz = normals[i].z;
+	for (int i = 0; i < numVertices; i++) {
+		matchVerts[i].x = vertices[i].x;
+		matchVerts[i].nx = normals[i].x;
+		matchVerts[i].y = vertices[i].y;
+		matchVerts[i].ny = normals[i].y;
+		matchVerts[i].z = vertices[i].z;
+		matchVerts[i].nz = normals[i].z;
 	}
 
-	kd_matcher matcher(matchverts, numverts);
+	kd_matcher matcher(matchVerts, numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		Vertex* a = matcher.matches[i].first;
 		Vertex* b = matcher.matches[i].second;
@@ -1332,45 +1073,38 @@ void NifBlockTriShapeData::RecalcNormals() {
 		}
 	}
 
-	for (int i = 0; i < numverts; i++) {
-		normals[i].x = matchverts[i].nx;
-		normals[i].y = matchverts[i].ny;
-		normals[i].z = matchverts[i].nz;
+	for (int i = 0; i < numVertices; i++) {
+		normals[i].x = matchVerts[i].nx;
+		normals[i].y = matchVerts[i].ny;
+		normals[i].z = matchVerts[i].nz;
 	}
 
-	delete[] matchverts;
+	delete[] matchVerts;
 }
 
-void NifBlockTriShapeData::CalcTangentSpace() {
+void NiTriShapeData::CalcTangentSpace() {
 	if (!hasNormals)
 		return;
 
-	numUVs |= 4096;
-
-	blockSize -= tangents.size() * 12;
-	blockSize -= binormals.size() * 12;
-	tangents.resize(numverts);
-	binormals.resize(numverts);
-	blockSize += tangents.size() * 12;
-	blockSize += binormals.size() * 12;
+	NiTriBasedGeomData::CalcTangentSpace();
 
 	vector<Vector3> tan1;
 	vector<Vector3> tan2;
-	tan1.resize(numverts);
-	tan2.resize(numverts);
+	tan1.resize(numVertices);
+	tan2.resize(numVertices);
 
 	for (int i = 0; i < numTriangles; i++) {
-		int i1 = tris[i].p1;
-		int i2 = tris[i].p2;
-		int i3 = tris[i].p3;
+		int i1 = triangles[i].p1;
+		int i2 = triangles[i].p2;
+		int i3 = triangles[i].p3;
 
 		Vector3 v1 = vertices[i1];
 		Vector3 v2 = vertices[i2];
 		Vector3 v3 = vertices[i3];
 
-		Vector2 w1 = uvs[i1];
-		Vector2 w2 = uvs[i2];
-		Vector2 w3 = uvs[i3];
+		Vector2 w1 = uvSets[i1];
+		Vector2 w2 = uvSets[i2];
+		Vector2 w3 = uvSets[i3];
 
 		float x1 = v2.x - v1.x;
 		float x2 = v3.x - v1.x;
@@ -1399,98 +1133,25 @@ void NifBlockTriShapeData::CalcTangentSpace() {
 		tan2[i3] += tdir;
 	}
 
-	for (int i = 0; i < numverts; i++) {
+	for (int i = 0; i < numVertices; i++) {
 		Vector3 n = normals[i];
 		Vector3 t = tan1[i];
 
-		// Gram-Schmidt orthogonalize
-		// Vector3.OrthoNormalize(ref n, ref t);
-		binormals[i].x = t.x;
-		binormals[i].y = t.y;
-		binormals[i].z = t.z;
-		binormals[i].Normalize();
+		bitangents[i].x = t.x;
+		bitangents[i].y = t.y;
+		bitangents[i].z = t.z;
+		bitangents[i].Normalize();
 
-		tangents[i] = binormals[i].cross(normals[i]);
+		tangents[i] = bitangents[i].cross(normals[i]);
 		tangents[i].Normalize();
 	}
-	//theMesh.tangents = tangents; 
 }
 
-void NifBlockTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	vector<int> indexCollapse(vertices.size(), 0);
-	bool hasNorm = normals.size() > 0;
-	bool hasTan = tangents.size() > 0;
-	bool hasBin = binormals.size() > 0;
-	bool hasCol = vertcolors.size() > 0;
-	bool hasUV = uvs.size() > 0;
+int NiTriShapeData::CalcBlockSize() {
+	NiTriBasedGeomData::CalcBlockSize();
 
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
-			indexCollapse[i] = -1;	// Flag delete
-			remCount++;
-			j++;
-		}
-		else
-			indexCollapse[i] = remCount;
-	}
-
-	for (int i = vertices.size() - 1; i >= 0; i--) {
-		if (indexCollapse[i] == -1) {
-			vertices.erase(vertices.begin() + i);
-			numverts--;
-			blockSize -= 12;
-			if (hasNorm) {
-				normals.erase(normals.begin() + i);
-				blockSize -= 12;
-			}
-			if (hasTan){
-				tangents.erase(tangents.begin() + i);
-				blockSize -= 12;
-			}
-			if (hasBin){
-				binormals.erase(binormals.begin() + i);
-				blockSize -= 12;
-			}
-			if (hasCol) {
-				vertcolors.erase(vertcolors.begin() + i);
-				blockSize -= 16;
-			}
-			if (hasUV) {
-				uvs.erase(uvs.begin() + i);
-				blockSize -= 8;
-			}
-		}
-
-	}
-	for (int i = numTriangles - 1; i >= 0; i--) {
-		if (indexCollapse[tris[i].p1] == -1 || indexCollapse[tris[i].p2] == -1 || indexCollapse[tris[i].p3] == -1) {
-			tris.erase(tris.begin() + i);
-			numTriangles--;
-			numTriPoints -= 3;
-			blockSize -= 6;
-		}
-		else {
-			tris[i].p1 = tris[i].p1 - indexCollapse[tris[i].p1];
-			tris[i].p2 = tris[i].p2 - indexCollapse[tris[i].p2];
-			tris[i].p3 = tris[i].p3 - indexCollapse[tris[i].p3];
-		}
-	}
-}
-
-int NifBlockTriShapeData::CalcBlockSize() {
-	if (myver == 12)
-		blockSize = 48;
-	else
-		blockSize = 44;
-
-	blockSize += numverts * 12;	//verts
-	blockSize += normals.size() * 12;	//normals
-	blockSize += tangents.size() * 12;	//tangents
-	blockSize += binormals.size() * 12;	//binormals
-	blockSize += vertcolors.size() * 16;  //vertcolors
-	blockSize += uvs.size() * 8;	//uvs 
-	blockSize += tris.size() * 6;	//tris
+	blockSize += 7;
+	blockSize += triangles.size() * 6;	// Triangles
 	for (auto mg : matchGroups) {
 		blockSize += 4;
 		blockSize += mg.count * 2;
@@ -1499,48 +1160,166 @@ int NifBlockTriShapeData::CalcBlockSize() {
 	return blockSize;
 }
 
-NifBlockTriShapeData::NifBlockTriShapeData(NiHeader& hdr) {
+
+NiTriStrips::NiTriStrips(NiHeader& hdr) {
+	NiTriBasedGeom::Init();
+
 	header = &hdr;
-	blockType = NITRISHAPEDATA;
-	scaleFromCenter = true;
-	virtScale = 1.0f;
-	numverts = 0;
-	numUVs = 0;
-	numTriangles = 0;
-	numTriPoints = 0;
-	numMatchGroups = 0;
-	myver = 12;
+	blockType = NITRISTRIPS;
+
+	CalcBlockSize();
 }
 
-NifBlockTriShapeData::NifBlockTriShapeData(fstream& file, NiHeader& hdr) {
+NiTriStrips::NiTriStrips(fstream& file, NiHeader& hdr) {
+	NiTriBasedGeom::Init();
+
 	header = &hdr;
-	blockType = NITRISHAPEDATA;
-	scaleFromCenter = true;
-	virtScale = 1.0f;
-	numverts = 0;
-	numUVs = 0;
-	numTriangles = 0;
-	numTriPoints = 0;
-	numMatchGroups = 0;
+	blockType = NITRISTRIPS;
+
 	Get(file);
+	CalcBlockSize();
+}
+
+void NiTriStrips::Get(fstream& file) {
+	NiTriBasedGeom::Get(file);
+}
+
+void NiTriStrips::Put(fstream& file) {
+	NiTriBasedGeom::Put(file);
+}
+
+void NiTriStrips::notifyBlockDelete(int blockID) {
+	NiTriBasedGeom::notifyBlockDelete(blockID);
+}
+
+int NiTriStrips::CalcBlockSize() {
+	return NiTriBasedGeom::CalcBlockSize();
+}
+
+
+NiTriStripsData::NiTriStripsData(NiHeader& hdr) {
+	NiTriBasedGeomData::Init();
+
+	header = &hdr;
+	blockType = NITRISTRIPSDATA;
+	numStrips = 0;
+	hasPoints = false;
+	virtScale = 1.0f;
+	scaleFromCenter = true;
+
+	CalcBlockSize();
+}
+
+NiTriStripsData::NiTriStripsData(fstream& file, NiHeader& hdr) {
+	NiTriBasedGeomData::Init();
+
+	header = &hdr;
+	blockType = NITRISTRIPSDATA;
+	numStrips = 0;
+	hasPoints = false;
+	virtScale = 1.0f;
+	scaleFromCenter = true;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiTriStripsData::Get(fstream& file) {
+	NiTriBasedGeomData::Get(file);
+
+	ushort uShort;
+	file.read((char*)&numStrips, 2);
+	for (int i = 0; i < numStrips; i++) {
+		file.read((char*)&uShort, 2);
+		stripLengths.push_back(uShort);
+	}
+
+	file.read((char*)&hasPoints, 1);
+	if (hasPoints) {
+		for (int i = 0; i < numStrips; i++) {
+			points.push_back(vector<ushort>());
+			for (int j = 0; j < stripLengths[i]; j++) {
+				file.read((char*)&uShort, 2);
+				points[i].push_back(uShort);
+			}
+		}
+	}
+}
+
+void NiTriStripsData::Put(fstream& file) {
+	NiTriBasedGeomData::Put(file);
+
+	file.write((char*)&numStrips, 2);
+	for (int i = 0; i < numStrips; i++)
+		file.write((char*)&stripLengths[i], 2);
+
+	file.write((char*)&hasPoints, 1);
+
+	if (hasPoints) {
+		for (int i = 0; i < numStrips; i++)
+			for (int j = 0; j < stripLengths[i]; j++)
+				file.write((char*)&points[i][j], 2);
+	}
+}
+
+void NiTriStripsData::notifyBlockDelete(int blockID) {
+	NiTriBasedGeomData::notifyBlockDelete(blockID);
+
+	CalcBlockSize();
+}
+
+void NiTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	NiTriBasedGeomData::notifyVerticesDelete(vertIndices);
+
+	// This is not a healthy way to delete strip data. Probably need to restrip the shape.
+	vector<int> indexCollapse(vertices.size(), 0);
+	for (int i = 0; i < numStrips; i++) {
+		for (int j = 0; j < stripLengths[i]; j++) {
+			if (indexCollapse[points[i][j]] == -1) {
+				points[i].erase(points[i].begin() + j);
+				stripLengths[i]--;
+			}
+		}
+	}
+
+	CalcBlockSize();
+}
+
+void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
+	Triangle triangle;
+	for (int strip = 0; strip < numStrips; strip++) {
+		for (int vi = 0; vi < stripLengths[strip] - 2; vi++) {
+			if (vi & 1) {
+				triangle.p1 = points[strip][vi];
+				triangle.p2 = points[strip][vi + 2];
+				triangle.p3 = points[strip][vi + 1];
+			}
+			else {
+				triangle.p1 = points[strip][vi];
+				triangle.p2 = points[strip][vi + 1];
+				triangle.p3 = points[strip][vi + 2];
+			}
+
+			if (triangle.p1 == triangle.p2 || triangle.p2 == triangle.p3 || triangle.p3 == triangle.p1)
+				continue;
+
+			outTris->push_back(triangle);
+		}
+	}
 }
  
-void NifBlockTriStripsData::RecalcNormals() {
+void NiTriStripsData::RecalcNormals() {
 	if (!hasNormals)
 		return;
 
-	for (int i = 0; i < numverts; i++) {
-		normals[i].x = 0;
-		normals[i].y = 0;
-		normals[i].z = 0;
-	}
+	NiTriBasedGeomData::RecalcNormals();
 
 	vector<Triangle> tris;
 	StripsToTris(&tris);
 
+	// Calc normal
 	Vector3 norm;
 	for (int i = 0; i < tris.size(); i++) {
-		// Calc normal
 		tris[i].trinormal(vertices, &norm);
 		normals[tris[i].p1].x += norm.x;
 		normals[tris[i].p1].y += norm.y;
@@ -1552,22 +1331,23 @@ void NifBlockTriStripsData::RecalcNormals() {
 		normals[tris[i].p3].y += norm.y;
 		normals[tris[i].p3].z += norm.z;
 	}
+
 	// Normalize all vertex normals to smooth them out
-	for (int i = 0; i < numverts; i++)
+	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
-	Vertex* matchverts = new Vertex[numverts];
+	Vertex* matchVerts = new Vertex[numVertices];
 
-	for (int i = 0; i < numverts; i++) {
-		matchverts[i].x = vertices[i].x;
-		matchverts[i].nx = normals[i].x;
-		matchverts[i].y = vertices[i].y;
-		matchverts[i].ny = normals[i].y;
-		matchverts[i].z = vertices[i].z;
-		matchverts[i].nz = normals[i].z;
+	for (int i = 0; i < numVertices; i++) {
+		matchVerts[i].x = vertices[i].x;
+		matchVerts[i].nx = normals[i].x;
+		matchVerts[i].y = vertices[i].y;
+		matchVerts[i].ny = normals[i].y;
+		matchVerts[i].z = vertices[i].z;
+		matchVerts[i].nz = normals[i].z;
 	}
 
-	kd_matcher matcher(matchverts, numverts);
+	kd_matcher matcher(matchVerts, numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		Vertex* a = matcher.matches[i].first;
 		Vertex* b = matcher.matches[i].second;
@@ -1582,32 +1362,25 @@ void NifBlockTriStripsData::RecalcNormals() {
 		}
 	}
 
-	for (int i = 0; i < numverts; i++) {
-		normals[i].x = matchverts[i].nx;
-		normals[i].y = matchverts[i].ny;
-		normals[i].z = matchverts[i].nz;
+	for (int i = 0; i < numVertices; i++) {
+		normals[i].x = matchVerts[i].nx;
+		normals[i].y = matchVerts[i].ny;
+		normals[i].z = matchVerts[i].nz;
 	}
 
-	delete[] matchverts;
+	delete[] matchVerts;
 }
 
-void NifBlockTriStripsData::CalcTangentSpace() {
+void NiTriStripsData::CalcTangentSpace() {
 	if (!hasNormals)
 		return;
 
-	numUVs |= 4096;
-
-	blockSize -= tangents.size() * 12;
-	blockSize -= binormals.size() * 12;
-	tangents.resize(numverts);
-	binormals.resize(numverts);
-	blockSize += tangents.size() * 12;
-	blockSize += binormals.size() * 12;
+	NiTriBasedGeomData::CalcTangentSpace();
 
 	vector<Vector3> tan1;
 	vector<Vector3> tan2;
-	tan1.resize(numverts);
-	tan2.resize(numverts);
+	tan1.resize(numVertices);
+	tan2.resize(numVertices);
 
 	vector<Triangle> tris;
 	StripsToTris(&tris);
@@ -1621,9 +1394,9 @@ void NifBlockTriStripsData::CalcTangentSpace() {
 		Vector3 v2 = vertices[i2];
 		Vector3 v3 = vertices[i3];
 
-		Vector2 w1 = uvs[i1];
-		Vector2 w2 = uvs[i2];
-		Vector2 w3 = uvs[i3];
+		Vector2 w1 = uvSets[i1];
+		Vector2 w2 = uvSets[i2];
+		Vector2 w3 = uvSets[i3];
 
 		float x1 = v2.x - v1.x;
 		float x2 = v3.x - v1.x;
@@ -1652,23 +1425,39 @@ void NifBlockTriStripsData::CalcTangentSpace() {
 		tan2[i3] += tdir;
 	}
 
-	for (int i = 0; i < numverts; i++) {
+	for (int i = 0; i < numVertices; i++) {
 		Vector3 n = normals[i];
 		Vector3 t = tan1[i];
 
-		// Gram-Schmidt orthogonalize
-		// Vector3.OrthoNormalize(ref n, ref t);
-		binormals[i].x = t.x;
-		binormals[i].y = t.y;
-		binormals[i].z = t.z;
-		binormals[i].Normalize();
+		bitangents[i].x = t.x;
+		bitangents[i].y = t.y;
+		bitangents[i].z = t.z;
+		bitangents[i].Normalize();
 
-		tangents[i] = binormals[i].cross(normals[i]);
+		tangents[i] = bitangents[i].cross(normals[i]);
 		tangents[i].Normalize();
 	}
-	//theMesh.tangents = tangents; 
+
+	CalcBlockSize();
 }
 
+int NiTriStripsData::CalcBlockSize() {
+	NiTriBasedGeomData::CalcBlockSize();
+
+	blockSize += 3;
+	blockSize += numVertices * 12;			// Verts
+	blockSize += normals.size() * 12;		// Normals
+	blockSize += tangents.size() * 12;		// Tangents
+	blockSize += bitangents.size() * 12;	// Bitangents
+	blockSize += vertexColors.size() * 16;	// Vertex Colors
+	blockSize += uvSets.size() * 8;			// UVs
+	blockSize += stripLengths.size() * 2;	// Strip Lengths
+
+	for (auto pl : points)
+		blockSize += pl.size() * 2;
+
+	return blockSize;
+}
 
 void NifBlockNiSkinData::Get(fstream& file) {
 	file.read((char*)&rootTransform, 52);
@@ -2239,21 +2028,31 @@ void NifBlockBSDismemberment::notifyBlockDelete(int blockID) {
 
 
 NiUnknown::NiUnknown() {
+	NiObject::Init();
+
 	blockType = NIUNKNOWN;
 	data = nullptr;
+
+	CalcBlockSize();
 }
 
 NiUnknown::NiUnknown(fstream& file, uint size) {
+	NiObject::Init();
+
 	blockType = NIUNKNOWN;
-	blockSize = size;
 	data = new char[size];
+
+	blockSize = size;
 	Get(file);
 }
 
 NiUnknown::NiUnknown(uint size) {
+	NiObject::Init();
+
 	blockType = NIUNKNOWN;
-	blockSize = size;
 	data = new char[size];
+
+	blockSize = size;
 }
 
 NiUnknown::~NiUnknown() {
@@ -2278,6 +2077,10 @@ void NiUnknown::Put(fstream& file) {
 		return;
 
 	file.write(data, blockSize);
+}
+
+int NiUnknown::CalcBlockSize() {
+	return blockSize;
 }
 
 

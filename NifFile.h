@@ -208,6 +208,7 @@ public:
 	void Clone(NiUnknown* other);
 	void Get(fstream& file);
 	void Put(fstream& file);
+	int CalcBlockSize();
 };
 
 class NiObjectNET : public NiObject {
@@ -280,12 +281,61 @@ public:
 	virtual int CalcBlockSize();
 };
 
+class NiGeometryData : public NiObject {
+public:
+	int unkInt;
+	ushort numVertices;
+	byte keepFlags;
+	byte compressFlags;
+	byte hasVertices;
+	vector<Vector3> vertices;
+	ushort numUVSets;
+	//byte extraVectorsFlags;
+	uint unkInt2;					// Version >= 20.2.0.7 && User Version == 12
+	byte hasNormals;
+	vector<Vector3> normals;
+	vector<Vector3> tangents;
+	vector<Vector3> bitangents;
+	Vector3 center;
+	float radius;
+	byte hasVertexColors;
+	vector<Color4> vertexColors;
+	vector<Vector2> uvSets;
+	ushort consistencyFlags;
+	uint additionalData;
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
+	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void RecalcNormals();
+	virtual void CalcTangentSpace();
+	virtual int CalcBlockSize();
+};
+
 class NiTriBasedGeom : public NiGeometry {
 public:
 	virtual void Init();
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiTriBasedGeomData : public NiGeometryData {
+public:
+	ushort numTriangles;
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
+	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void RecalcNormals();
+	virtual void CalcTangentSpace();
 	virtual int CalcBlockSize();
 };
 
@@ -299,138 +349,67 @@ public:
 	int CalcBlockSize();
 };
 
-class NifBlockTriStrips : public NiObject {
+class NiTriShapeData : public NiTriBasedGeomData {
 public:
-	string shapeName;
-	uint nameID;
-	int numExtra;
-	vector<int> extradata;
-	int controllerRef;
-	ushort flags;
-	ushort unkShort1;
-	Vector3 translation;
-	Vector3 rotation[3];
-	float scale;
-	uint numProperties;
-	vector<int> properties;
-
-	int collisionRef;
-	int dataRef;
-	int skinRef;
-	uint numMat;
-	vector<NiString> materialNames;
-	vector<int> materialExtra;
-	int activeMat;
-	byte unkByte;
-	byte dirty;
-	// BSPropertiesRef array
-	int propertiesRef1;
-	int propertiesRef2;
-
-	NifBlockTriStrips(NiHeader& hdr);
-	NifBlockTriStrips(fstream& file, NiHeader& hdr);
-
-	void Get(fstream& file);
-	void Put(fstream& file);
-
-	void notifyBlockDelete(int blockID);
-};
-
-class NifBlockTriStripsData : public NiObject {
-public:
-	int unkInt;
-	ushort numverts;
-	byte keepflags;
-	byte compressflags;
-	byte hasVertices;
-	vector<Vector3> vertices;
-	ushort numUVs;
-	uint skyrimMaterial;
-	byte hasNormals;
-	vector<Vector3> normals;
-	vector<Vector3> tangents;
-	vector<Vector3> binormals;
-	Vector3 Center;
-	float Radius;
-	byte hasVertColors;
-	vector<Color4> vertcolors;
-	vector<Vector2> uvs;
-	ushort consistencyflags;
-	uint additionaldata;
-	ushort numTriangles;
-	ushort numStrips;
-	vector<ushort> stripLengths;
-	byte hasPoints;
-	vector<vector<ushort>>points;
-
-	// virtual values not saved with nif, used for vertex position retrieval
-	Vector3 virtOffset;
-	float virtScale;
-	bool scaleFromCenter;
-	int myver;
-
-	NifBlockTriStripsData(NiHeader& hdr);
-	NifBlockTriStripsData(fstream& file, NiHeader& hdr);
-
-	int CalcBlockSize();
-
-	void Get(fstream& file);
-	void Put(fstream& file);
-
-	void StripsToTris(vector<Triangle>* outTris);
-
-	// not supported yet -- relies on tri data, most of code will likely port from nitrishapedata, but not yet.
-	void RecalcNormals();
-	void CalcTangentSpace();
-
-	void notifyVerticesDelete(const vector<ushort>& vertIndices);
-};
-
-class NifBlockTriShapeData : public NiObject {
-public:
-	int unkInt;
-	ushort numverts;
-	byte keepflags;
-	byte compressflags;
-	byte hasVertices;
-	vector<Vector3> vertices;
-	ushort numUVs;
-	uint skyrimMaterial;
-	byte hasNormals;
-	vector<Vector3> normals;
-	vector<Vector3> tangents;
-	vector<Vector3> binormals;
-	Vector3 Center;
-	float Radius;
-	byte hasVertColors;
-	vector<Color4> vertcolors;
-	vector<Vector2> uvs;
-	ushort consistencyflags;
-	uint additionaldata;
-	ushort numTriangles;
-	uint numTriPoints;
+	uint numTrianglePoints;
 	byte hasTriangles;
-	vector<Triangle> tris;
+	vector<Triangle> triangles;
 	ushort numMatchGroups;
 	vector<MatchGroup> matchGroups;
 
-	// virtual values not saved with nif, used for vertex position retrieval
+	// Virtual values not saved with nif, used for vertex position retrieval
 	Vector3 virtOffset;
 	float virtScale;
 
 	bool scaleFromCenter;
 	int myver;
 
-	NifBlockTriShapeData(NiHeader& hdr);
-	NifBlockTriShapeData(fstream& file, NiHeader& hdr);
+	NiTriShapeData(NiHeader& hdr);
+	NiTriShapeData(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
+	void notifyBlockDelete(int blockID);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void RecalcNormals();
 	void CalcTangentSpace();
 	int CalcBlockSize();
+};
+
+class NiTriStrips : public NiTriBasedGeom {
+public:
+	NiTriStrips(NiHeader& hdr);
+	NiTriStrips(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class NiTriStripsData : public NiTriBasedGeomData {
+public:
+	ushort numStrips;
+	vector<ushort> stripLengths;
+	byte hasPoints;
+	vector<vector<ushort>> points;
+
+	// Virtual values not saved with nif, used for vertex position retrieval
+	Vector3 virtOffset;
+	float virtScale;
+	bool scaleFromCenter;
+
+	NiTriStripsData(NiHeader& hdr);
+	NiTriStripsData(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	void StripsToTris(vector<Triangle>* outTris);
+	void RecalcNormals();
+	void CalcTangentSpace();
+	int CalcBlockSize();
 };
 
 class NifBlockNiSkinInstance : public NiObject {
@@ -693,7 +672,7 @@ class NifFile
 	bool isValid;
 
 	NiTriShape* shapeForName(const string& name, int dupIndex = 0);
-	NifBlockTriStrips* stripsForName(const string& name, int dupIndex = 0);
+	NiTriStrips* stripsForName(const string& name, int dupIndex = 0);
 
 	int shapeDataIdForName(const string& name, int& outBlockType);
 	int shapeIdForName(const string& name);
