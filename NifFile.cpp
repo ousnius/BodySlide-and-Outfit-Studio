@@ -516,7 +516,7 @@ void NifFile::TrimTexturePaths() {
 			for (int i = 0; i < 9; i++) {
 				if (GetTextureForShape(s, tFile, i)) {
 					tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-					tFile = regex_replace(tFile, regex(".*textures\\\\", regex_constants::icase), ""); // Remove everything before and including the texture path
+					tFile = regex_replace(tFile, regex("^textures\\\\|^Data\\\\textures\\\\", regex_constants::icase), ""); // Remove everything before and including the texture path
 					tFile = regex_replace(tFile, regex("AstridBody", regex_constants::icase), "femalebody_1"); // Change astrid body to femalebody_1
 					SetTextureForShape(s, tFile, i);
 				}
