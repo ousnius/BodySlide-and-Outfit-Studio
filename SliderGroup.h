@@ -1,13 +1,14 @@
 #pragma once
-#include "stdafx.h"
+
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
 #include <unordered_set>
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 using namespace std;
+using namespace tinyxml2;
 
 class SliderSetGroup {
 	string name;
@@ -17,15 +18,19 @@ class SliderSetGroup {
 	bool isValid;
 
 public:
-	SliderSetGroup() :isValid(false) {}
-	SliderSetGroup(TiXmlElement* srcGroupElement) {
+	SliderSetGroup() :isValid(false) { }
+	SliderSetGroup(XMLElement * srcGroupElement) {
 		if (LoadGroup(srcGroupElement))
 			isValid = false;
 		isValid = true;
 	}
 
-	string GetName() { return name; }
-	void SetName(const string& inName) { name = inName; }
+	string GetName() {
+		return name;
+	}
+	void SetName(const string& inName) {
+		name = inName;
+	}
 
 	bool HasMember(const string& search);
 	int GetMembers(vector<string>& outMembers);
@@ -37,8 +42,8 @@ public:
 	// Combine the source groups members into this one's list. Also merges the source file list.
 	void MergeMembers(const SliderSetGroup& sourceGroup);
 
-	int LoadGroup(TiXmlElement* srcGroupElement);
-	void WriteGroup(TiXmlElement* groupElement, bool append = false);
+	int LoadGroup(XMLElement* srcGroupElement);
+	void WriteGroup(XMLElement* groupElement, bool append = false);
 	void AddSourceFile(const string& fileName);
 };
 
@@ -59,19 +64,23 @@ public:
 
 
 class SliderSetGroupFile {
-	TiXmlDocument doc;
-	TiXmlElement* root;
-	map<string, TiXmlElement*> groupsInFile;
+	XMLDoc doc;
+	XMLElement* root;
+	map<string, XMLElement*> groupsInFile;
 	int error;
 
 public:
 	string fileName;
-	SliderSetGroupFile() :error(0), root(NULL) {}
+	SliderSetGroupFile() :error(0), root(nullptr) { }
 	SliderSetGroupFile(const string& srcFileName);
-	~SliderSetGroupFile() {};
+	~SliderSetGroupFile() { }
 
-	bool fail() { return error != 0; }
-	int GetError() { return error; }
+	bool fail() {
+		return error != 0;
+	}
+	int GetError() {
+		return error;
+	}
 
 	// Loads the XML document and identifies included group names. On a failure, sets the internal error value.
 	void Open(const string& srcFileName);

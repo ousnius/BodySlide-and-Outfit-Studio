@@ -3,20 +3,19 @@
 #include <string>
 #include <vector>
 #include <map>
-#include "tinyxml.h"
 #include "DiffData.h"
-
-#pragma warning (disable: 4018)
+#include "tinyxml2.h"
 
 using namespace std;
+using namespace tinyxml2;
 
 struct DiffDataFile {
 	bool bLocal;			// Local files use the slider set's directory for path info. Otherwise, it uses the target's data path.
 	string dataName;		// Alias for the data.
 	string targetName;		// Shape affected by the data.
 	string fileName;		// File name not including path.
-	DiffDataFile(bool l = false, const string& dn = "", const string& tn = "", const string& fn = "") : bLocal(l), dataName(dn), targetName(tn), fileName(fn) {
-
+	DiffDataFile(bool l = false, const string& dn = "", const string& tn = "", const string& fn = "")
+		: bLocal(l), dataName(dn), targetName(tn), fileName(fn) {
 	}
 };
 
@@ -36,7 +35,7 @@ public:
 class SliderData
 {
 public:
-	string Name;
+	string name;
 	bool bHidden;
 	bool bInvert;
 	bool bZap;
@@ -53,7 +52,7 @@ public:
 	map<string, float> requirements;
 
 	SliderData(const string& inName = "");
-	SliderData(TiXmlElement* e);
+	SliderData(XMLElement* element);
 	~SliderData();
 
 	// Gets the slider's data record name for the specified target.
@@ -99,7 +98,7 @@ public:
 	void ClearDataFiles() {
 		dataFiles.clear();
 	}
-	int LoadSliderData(TiXmlElement* srcdata, set<string>* exclude_targets = NULL);
+	int LoadSliderData(XMLElement* srcdata, set<string>* exclude_targets = nullptr);
 };
 
 
@@ -109,7 +108,7 @@ public:
 
 class SliderSet
 {
-	string Name;
+	string name;
 	string baseDataPath;		// Base data path - from application configuration.
 	string datafolder;			// Default data folder specified for a slider set (overridden by target data folders, usually).
 	string inputfile;
@@ -129,15 +128,27 @@ class SliderSet
 
 public:
 	SliderSet();
-	SliderSet(TiXmlElement* SliderSetSource);
+	SliderSet(XMLElement* sliderSetSource);
 	~SliderSet();
 
-	void SetName(const string& newName) { Name = newName; }
-	void SetDataFolder(const string& newDataFolder) { datafolder = newDataFolder; }
-	void SetInputFile(const string& newInputFile) { inputfile = newInputFile; }
-	void SetOutputPath(const string& newOutputpath) { outputpath = newOutputpath; }
-	void SetOutputFile(const string& newOutputFile) { outputfile = newOutputFile; }
-	void SetGenWeights(bool inGenWeights) { genWeights = inGenWeights; }
+	void SetName(const string& newName) {
+		name = newName;
+	}
+	void SetDataFolder(const string& newDataFolder) {
+		datafolder = newDataFolder;
+	}
+	void SetInputFile(const string& newInputFile) {
+		inputfile = newInputFile;
+	}
+	void SetOutputPath(const string& newOutputpath) {
+		outputpath = newOutputpath;
+	}
+	void SetOutputFile(const string& newOutputFile) {
+		outputfile = newOutputFile;
+	}
+	void SetGenWeights(bool inGenWeights) {
+		genWeights = inGenWeights;
+	}
 
 	int GetTargetShapeCount() {
 		return targetshapenames.size();
@@ -152,7 +163,7 @@ public:
 
 	void SetBaseDataPath(const string& inPath) { baseDataPath = inPath; }
 
-	int LoadSliderSet(TiXmlElement* SliderSetSource, uint flags = LOADSS_REFERENCE | LOADSS_DIRECT);
+	int LoadSliderSet(XMLElement* sliderSetSource, uint flags = LOADSS_REFERENCE | LOADSS_DIRECT);
 	void LoadSetDiffData(DiffDataSets& inDataStorage);
 
 	// Add an empty set.
@@ -160,17 +171,25 @@ public:
 
 	int CopySlider(SliderData* other);
 
-	void WriteSliderSet(TiXmlElement* SliderSetElement);
+	void WriteSliderSet(XMLElement* sliderSetElement);
 
 	void DeleteSlider(const string& setName);
 
-	string GetName() { return Name; }
+	string GetName() {
+		return name;
+	}
 
 	string GetInputFileName();
-	string GetOutputPath() { return outputpath; }
-	string GetOutputFile() { return outputfile; }
+	string GetOutputPath() {
+		return outputpath;
+	}
+	string GetOutputFile() {
+		return outputfile;
+	}
 	string GetOutputFilePath();
-	string GetDefaultDataFolder() { return datafolder; }
+	string GetDefaultDataFolder() {
+		return datafolder;
+	}
 	bool GenWeights();
 
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.
@@ -272,9 +291,9 @@ public:
 		return sliders[idx];
 	}
 
-	SliderData& operator [] (const string& slidername) {
+	SliderData& operator [] (const string& sliderName) {
 		for (int i = 0; i < sliders.size(); i++)
-			if (sliders[i].Name == slidername)
+			if (sliders[i].name == sliderName)
 				return sliders[i];
 
 		return Empty;			// Err... sorry... this is bad, but I really like returning references.
@@ -282,7 +301,7 @@ public:
 
 	bool SliderExists(const string& sliderName) {
 		for (int i = 0; i < sliders.size(); i++)
-			if (sliders[i].Name == sliderName)
+			if (sliders[i].name == sliderName)
 				return true;
 
 		return false;
@@ -294,10 +313,10 @@ public:
    document while the slidersetfile object exists.
 */
 class SliderSetFile {
-	TiXmlDocument doc;
-	TiXmlElement* root;
-	map<string, TiXmlElement*> SetsInFile;
-	vector<string> SetsOrder;
+	XMLDoc doc;
+	XMLElement* root;
+	map<string, XMLElement*> setsInFile;
+	vector<string> setsOrder;
 	int error;
 
 public:
@@ -306,8 +325,12 @@ public:
 	SliderSetFile(const string& srcFileName);
 	~SliderSetFile() { }
 
-	bool fail() { return error != 0; }
-	int GetError() { return error; }
+	bool fail() {
+		return error != 0;
+	}
+	int GetError() {
+		return error;
+	}
 
 	// Loads the XML document and identifies included slider set names. On a failure, sets the internal error value.
 	void Open(const string& srcFileName);
@@ -349,9 +372,6 @@ public:
 	float small;
 };
 
-#define SP_BIG 1
-#define SP_SMALL 2
-
 class PresetCollection {
 	map<string, map<string, SliderPreset>> namedSliderPresets;
 public:
@@ -365,5 +385,4 @@ public:
 	bool LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter);
 
 	int SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups);
-
 };

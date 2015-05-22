@@ -24,7 +24,6 @@ distribution.
 
 #include "PreviewWindow.h"
 #include "BodySlideApp.h"
-#include "stdafx.h"
 
 PreviewWindow::~PreviewWindow() {
 }

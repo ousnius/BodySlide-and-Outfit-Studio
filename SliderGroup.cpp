@@ -70,12 +70,12 @@ void SliderSetGroup::MergeMembers(const SliderSetGroup& sourceGroup) {
 	}
 }
 
-int SliderSetGroup::LoadGroup(TiXmlElement* srcGroupElement) {
-	if (srcGroupElement == NULL)
+int SliderSetGroup::LoadGroup(XMLElement* srcGroupElement) {
+	if (srcGroupElement == nullptr)
 		return 1;
 
 	name = srcGroupElement->Attribute("name");
-	TiXmlElement* member = srcGroupElement->FirstChildElement("Member");
+	XMLElement* member = srcGroupElement->FirstChildElement("Member");
 	while (member) {
 		string mName = member->Attribute("name");
 		members.push_back(mName);
@@ -121,13 +121,14 @@ int SliderSetGroup::AddMembers(const vector<string>& inMembers) {
 	return members.size();
 }
 
-void SliderSetGroup::WriteGroup(TiXmlElement* groupElement, bool append) {
+void SliderSetGroup::WriteGroup(XMLElement* groupElement, bool append) {
 	if (!append)
-		groupElement->Clear();
-
-	for (auto m : members) {
-		TiXmlElement* e = groupElement->InsertEndChild(TiXmlElement("Member"))->ToElement();
-		e->SetAttribute("name", m.c_str());
+		groupElement->DeleteChildren();
+	
+	for (auto member : members) {
+		XMLElement* newElement = groupElement->GetDocument()->NewElement("Member");
+		XMLElement* element = groupElement->InsertEndChild(newElement)->ToElement();
+		element->SetAttribute("name", member.c_str());
 	}
 }
 
@@ -136,7 +137,7 @@ void SliderSetGroup::AddSourceFile(const string& fileName) {
 }
 
 SliderSetGroupFile::SliderSetGroupFile(const string& srcFileName) {
-	root = NULL;
+	root = nullptr;
 	error = 0;
 	Open(srcFileName);
 }
@@ -151,10 +152,10 @@ void SliderSetGroupFile::Open(const string& srcFileName) {
 			return;
 		}
 
-		TiXmlElement* e = root->FirstChildElement("Group");
-		while (e) {
-			groupsInFile[e->Attribute("name")] = e;
-			e = e->NextSiblingElement("Group");
+		XMLElement* element = root->FirstChildElement("Group");
+		while (element) {
+			groupsInFile[element->Attribute("name")] = element;
+			element = element->NextSiblingElement("Group");
 		}
 		if (groupsInFile.empty()) {
 			error = 3;
@@ -179,7 +180,8 @@ void SliderSetGroupFile::New(const string& newFileName) {
 		error = 1;
 	}
 	else {
-		root = doc.InsertEndChild(TiXmlElement("SliderGroups"))->ToElement();
+		XMLElement* newElement = doc.NewElement("SliderGroups");
+		root = doc.InsertEndChild(newElement)->ToElement();
 		fileName = newFileName;
 	}
 	error = 0;
@@ -258,9 +260,10 @@ int SliderSetGroupFile::UpdateGroup(SliderSetGroup& inGroup) {
 		inGroup.WriteGroup(groupsInFile[inGroup.GetName()]);
 	}
 	else {
-		TiXmlElement* e = root->InsertEndChild(TiXmlElement("Group"))->ToElement();
-		e->SetAttribute("name", inGroup.GetName().c_str());
-		inGroup.WriteGroup(e);
+		XMLElement* newElement = doc.NewElement("Group");
+		XMLElement* element = root->InsertEndChild(newElement)->ToElement();
+		element->SetAttribute("name", inGroup.GetName().c_str());
+		inGroup.WriteGroup(element);
 	}
 	return 0;
 }

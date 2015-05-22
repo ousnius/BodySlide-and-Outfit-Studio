@@ -1,18 +1,20 @@
 #pragma once
+
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 using namespace std;
+using namespace tinyxml2;
 
 class ConfigurationItem {
 	vector<ConfigurationItem*> children;
 	vector<ConfigurationItem*> properties;
 
 public:
-	ConfigurationItem() : parent(NULL), level(0), isProp(false), isComment(false), isDefault(false) { }
-	ConfigurationItem(TiXmlElement* srcElement, ConfigurationItem* inParent = NULL, int inLevel = 0) {
+	ConfigurationItem() : parent(nullptr), level(0), isProp(false), isComment(false), isDefault(false) { }
+	ConfigurationItem(XMLElement* srcElement, ConfigurationItem* inParent = nullptr, int inLevel = 0) {
 		parent = inParent;
 		level = inLevel;
 		isProp = false;
@@ -20,7 +22,7 @@ public:
 		isDefault = false;
 		SettingFromXML(srcElement);
 	}
-	ConfigurationItem(const string& text, ConfigurationItem* inParent = NULL, int inLevel = 0) {
+	ConfigurationItem(const string& text, ConfigurationItem* inParent = nullptr, int inLevel = 0) {
 		parent = inParent;
 		level = inLevel;
 		isProp = false;
@@ -40,9 +42,9 @@ public:
 	string value;								// Value associated with this node.
 	string path;
 
-	int SettingFromXML(TiXmlElement* xml);
+	int SettingFromXML(XMLElement* xml);
 
-	void ToXML(TiXmlElement* parent);
+	void ToXML(XMLElement* parent);
 	int EnumerateProperties(vector<ConfigurationItem*>& outList);
 	int EnumerateProperties(string& outList);
 	int EnumerateChildren(vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);

@@ -16,26 +16,26 @@ void SliderManager::AddSlidersInSet(SliderSet& inSet, bool hideAll) {
 
 	for (int i = 0; i < sz; i++) {
 		if (inSet[i].bHidden || hideAll) {
-			AddHiddenSlider(inSet[i].Name, inSet[i].bInvert, inSet[i].bZap, inSet[i].bUV);
+			AddHiddenSlider(inSet[i].name, inSet[i].bInvert, inSet[i].bZap, inSet[i].bUV);
 		}
 		else {
 			if (inSet[i].bZap)
-				AddZapSlider(inSet[i].Name);
+				AddZapSlider(inSet[i].name);
 			else if (inSet[i].bUV)
-				AddUVSlider(inSet[i].Name, inSet[i].bInvert);
+				AddUVSlider(inSet[i].name, inSet[i].bInvert);
 			else
-				AddSlider(inSet[i].Name, inSet[i].bInvert);
+				AddSlider(inSet[i].name, inSet[i].bInvert);
 		}
 
-		SetSliderDefaults(inSet[i].Name, inSet[i].defBigValue / 100.0f, inSet[i].defSmallValue / 100.0f);
+		SetSliderDefaults(inSet[i].name, inSet[i].defBigValue / 100.0f, inSet[i].defSmallValue / 100.0f);
 		if (inSet[i].bClamp)
-			SetClampSlider(inSet[i].Name);
+			SetClampSlider(inSet[i].name);
 
 		for (int j = 0; j < inSet[i].dataFiles.size(); j++)
-			AddSliderLink(inSet[i].Name, inSet[i].dataFiles[j].dataName);
+			AddSliderLink(inSet[i].name, inSet[i].dataFiles[j].dataName);
 
 		for (auto reqIter = inSet[i].requirements.begin(); reqIter != inSet[i].requirements.end(); ++reqIter)
-			AddSliderTrigger(reqIter->first, inSet[i].Name, reqIter->second, 0);
+			AddSliderTrigger(reqIter->first, inSet[i].name, reqIter->second, 0);
 	}
 }
 

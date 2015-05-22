@@ -338,7 +338,7 @@ void BodySlideApp::DisplayActiveSet() {
 		int iter = 0;
 		for (auto cat : sliderCategories) {
 			catSliders.push_back(vector<int>());
-			if (find(get<1>(cat).begin(), get<1>(cat).end(), activeSet[i].Name) != get<1>(cat).end()) {
+			if (find(get<1>(cat).begin(), get<1>(cat).end(), activeSet[i].name) != get<1>(cat).end()) {
 				catSliders[iter].push_back(i);
 				regularSlider = false;
 				break;
@@ -346,7 +346,7 @@ void BodySlideApp::DisplayActiveSet() {
 			iter++;
 		}
 		if (regularSlider)
-			sliderView->AddSliderGUI(activeSet[i].Name.c_str(), activeSet[i].bZap, !activeSet.GenWeights());
+			sliderView->AddSliderGUI(activeSet[i].name.c_str(), activeSet[i].bZap, !activeSet.GenWeights());
 	}
 
 	// Create category UI
@@ -360,7 +360,7 @@ void BodySlideApp::DisplayActiveSet() {
 				sliderView->AddCategorySliderUI(name, show, !activeSet.GenWeights());
 				if (show)
 					for (auto s : catSliders[iter])
-						sliderView->AddSliderGUI(activeSet[s].Name.c_str(), activeSet[s].bZap, !activeSet.GenWeights());
+						sliderView->AddSliderGUI(activeSet[s].name.c_str(), activeSet[s].bZap, !activeSet.GenWeights());
 			}
 			iter++;
 		}
@@ -423,7 +423,7 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 
 			if (!sliderSet[s].bUV && !sliderSet[s].bClamp && !sliderSet[s].bZap) {
 				MorphDataPtr morph = make_shared<MorphData>();
-				morph->name = sliderSet[s].Name;
+				morph->name = sliderSet[s].name;
 
 				vector<Vector3> verts;
 				ushort shapeVertCount = nif.GetVertCountForShape(shape->second);
@@ -1164,8 +1164,8 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 					continue;
 				}
 
-				vsmall = sliderManager.GetSmallPresetValue(activePreset, currentSet[s].Name, currentSet[s].defSmallValue / 100.0f);
-				vbig = sliderManager.GetBigPresetValue(activePreset, currentSet[s].Name, currentSet[s].defBigValue / 100.0f);
+				vsmall = sliderManager.GetSmallPresetValue(activePreset, currentSet[s].name, currentSet[s].defSmallValue / 100.0f);
+				vbig = sliderManager.GetBigPresetValue(activePreset, currentSet[s].name, currentSet[s].defBigValue / 100.0f);
 				if (currentSet[s].bInvert) {
 					vsmall = 1.0f - vsmall;
 					vbig = 1.0f - vbig;

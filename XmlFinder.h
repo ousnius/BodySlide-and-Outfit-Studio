@@ -25,5 +25,5 @@ private:
 	WIN32_FIND_DATAA wfd;
 	HANDLE hfind;
 	std::string basePath;
-	bool error{false};
+	bool error { false };
 };

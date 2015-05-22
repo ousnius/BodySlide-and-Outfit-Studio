@@ -23,6 +23,7 @@ distribution.
 */
 
 #pragma once
+
 #include "stdafx.h"
 #include "GLSurface.h"
 #include "NifFile.h"

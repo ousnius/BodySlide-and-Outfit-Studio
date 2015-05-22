@@ -109,12 +109,12 @@ string OutfitProject::Save(const string& strFileName,
 
 		for (auto os : outfitShapes) {
 			targ = ShapeToTarget(os);
-			targSlider = targ + outSet[i].Name;
+			targSlider = targ + outSet[i].name;
 			targSliderFile = targSlider + ".bsd";
-			if (morpher.GetResultDiffSize(os, activeSet[i].Name) > 0) {
+			if (morpher.GetResultDiffSize(os, activeSet[i].name) > 0) {
 				outSet[i].AddDataFile(targ, targSlider, targSliderFile);
 				saveFileName = saveDataPath + "\\" + targSliderFile;
-				morpher.SaveResultDiff(os, activeSet[i].Name, saveFileName);
+				morpher.SaveResultDiff(os, activeSet[i].name, saveFileName);
 			}
 		}
 		owner->UpdateProgress(prog += step, "");
@@ -260,13 +260,13 @@ int OutfitProject::SliderCount() {
 
 void OutfitProject::GetSliderList(vector<string>& sliderNames) {
 	for (int i = 0; i < activeSet.size(); i++)
-		sliderNames.push_back(activeSet[i].Name);
+		sliderNames.push_back(activeSet[i].name);
 }
 
 const string& OutfitProject::SliderName(int index) {
 	if (!ValidSlider(index))
 		return emptyname;
-	return activeSet[index].Name;
+	return activeSet[index].name;
 }
 
 void OutfitProject::AddEmptySlider(const string& newName) {
@@ -482,13 +482,13 @@ void OutfitProject::SetSliderName(int index, const string& newName) {
 	if (!ValidSlider(index))
 		return;
 
-	string oldName = activeSet[index].Name;
+	string oldName = activeSet[index].name;
 	vector<string> outfitShapes;
 	OutfitShapes(outfitShapes);
 	for (auto s : outfitShapes)
 		morpher.RenameResultDiffData(s, oldName, newName);
 
-	activeSet[index].Name = newName;
+	activeSet[index].name = newName;
 }
 
 float& OutfitProject::SliderValue(int index) {
@@ -516,7 +516,7 @@ bool& OutfitProject::SliderShow(const string& sliderName) {
 
 int OutfitProject::SliderIndexFromName(const string& sliderName) {
 	for (int i = 0; i < activeSet.size(); i++)
-		if (activeSet[i].Name == sliderName)
+		if (activeSet[i].name == sliderName)
 			return i;
 
 	return -1;
@@ -631,7 +631,7 @@ void OutfitProject::GetLiveOutfitVerts(const string& shapeName, vector<Vector3>&
 	workNif.GetVertsForShape(shapeName, outVerts);
 	for (int i = 0; i < activeSet.size(); i++)
 		if (activeSet[i].bShow && activeSet[i].curValue != 0.0f)
-			morpher.ApplyResultToVerts(activeSet[i].Name, target, &outVerts, activeSet[i].curValue);
+			morpher.ApplyResultToVerts(activeSet[i].name, target, &outVerts, activeSet[i].curValue);
 }
 
 const string& OutfitProject::ShapeToTarget(const string& shapeName) {
@@ -1279,7 +1279,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 		SliderSet tmpSS;
 		sset.GetSet(setName, tmpSS);
 		for (int i = 0; i < tmpSS.size(); i++){
-			activeSet.DeleteSlider(tmpSS[i].Name);
+			activeSet.DeleteSlider(tmpSS[i].name);
 		}
 		oldTarget = ShapeToTarget(baseShapeName);
 		activeSet.RenameShape(baseShapeName, shape);
@@ -1558,7 +1558,7 @@ void OutfitProject::ConformShape(const string& shapeName) {
 	string refTarget = ShapeToTarget(baseShapeName);
 	for (int i = 0; i < activeSet.size(); i++)
 		if (SliderShow(i))
-			morpher.GenerateResultDiff(shapeName, activeSet[i].Name, activeSet[i].TargetDataName(refTarget));
+			morpher.GenerateResultDiff(shapeName, activeSet[i].name, activeSet[i].TargetDataName(refTarget));
 }
 
 void OutfitProject::DuplicateOutfitShape(const string& sourceShape, const string& destShape, const mesh* m) {

@@ -87,14 +87,14 @@ void SliderCategory::MergeSliders(const SliderCategory& sourceCategory) {
 	}
 }
 
-int SliderCategory::LoadCategory(TiXmlElement* srcCategoryElement) {
-	if (srcCategoryElement == NULL)
+int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
+	if (srcCategoryElement == nullptr)
 		return 1;
 
 	srcCategoryElement->QueryBoolAttribute("defaultHidden", &isHidden);
 
 	name = srcCategoryElement->Attribute("name");
-	TiXmlElement* slider = srcCategoryElement->FirstChildElement("Slider");
+	XMLElement* slider = srcCategoryElement->FirstChildElement("Slider");
 	while (slider) {
 		string tempC = "";
 		string sName = slider->Attribute("name");
@@ -148,13 +148,14 @@ int SliderCategory::AddSliders(const vector<string>& inSliders) {
 	return sliders.size();
 }
 
-void SliderCategory::WriteCategory(TiXmlElement* categoryElement, bool append) {
+void SliderCategory::WriteCategory(XMLElement* categoryElement, bool append) {
 	if (!append)
-		categoryElement->Clear();
+		categoryElement->DeleteChildren();
 
-	for (auto s : sliders) {
-		TiXmlElement* e = categoryElement->InsertEndChild(TiXmlElement("Slider"))->ToElement();
-		e->SetAttribute("name", s.c_str());
+	for (auto slider : sliders) {
+		XMLElement* newElement = categoryElement->GetDocument()->NewElement("Slider");
+		XMLElement* element = categoryElement->InsertEndChild(newElement)->ToElement();
+		element->SetAttribute("name", slider.c_str());
 	}
 }
 
@@ -163,7 +164,7 @@ void SliderCategory::AddSourceFile(const string& fileName) {
 }
 
 SliderCategoryFile::SliderCategoryFile(const string& srcFileName) {
-	root = NULL;
+	root = nullptr;
 	error = 0;
 	Open(srcFileName);
 }
@@ -177,10 +178,10 @@ void SliderCategoryFile::Open(const string& srcFileName) {
 			return;
 		}
 
-		TiXmlElement* e = root->FirstChildElement("Category");
-		while (e) {
-			categoriesInFile[e->Attribute("name")] = e;
-			e = e->NextSiblingElement("Category");
+		XMLElement* element = root->FirstChildElement("Category");
+		while (element) {
+			categoriesInFile[element->Attribute("name")] = element;
+			element = element->NextSiblingElement("Category");
 		}
 		if (categoriesInFile.empty()) {
 			error = 3;
@@ -204,7 +205,8 @@ void SliderCategoryFile::New(const string& newFileName) {
 		error = 1;
 	}
 	else {
-		root = doc.InsertEndChild(TiXmlElement("SliderCategories"))->ToElement();
+		XMLElement* newElement = doc.NewElement("SliderCategories");
+		root = doc.InsertEndChild(newElement)->ToElement();
 		fileName = newFileName;
 	}
 	error = 0;
@@ -275,9 +277,10 @@ int SliderCategoryFile::UpdateCategory(SliderCategory& inCategory) {
 		inCategory.WriteCategory(categoriesInFile[inCategory.GetName()]);
 	}
 	else {
-		TiXmlElement* e = root->InsertEndChild(TiXmlElement("Category"))->ToElement();
-		e->SetAttribute("name", inCategory.GetName().c_str());
-		inCategory.WriteCategory(e);
+		XMLElement* newElement = doc.NewElement("Category");
+		XMLElement* element = root->InsertEndChild(newElement)->ToElement();
+		element->SetAttribute("name", inCategory.GetName().c_str());
+		inCategory.WriteCategory(element);
 	}
 	return 0;
 }

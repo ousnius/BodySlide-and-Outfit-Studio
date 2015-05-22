@@ -1,13 +1,14 @@
 #pragma once
-#include "stdafx.h"
+
 #include <string>
 #include <vector>
 #include <map>
 #include <set>
 #include <unordered_set>
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 using namespace std;
+using namespace tinyxml2;
 
 class SliderCategory {
 	string name;
@@ -19,15 +20,20 @@ class SliderCategory {
 
 public:
 	SliderCategory() :isValid(false), isHidden(false) { }
-	SliderCategory(TiXmlElement* srcCategoryElement) {
+	SliderCategory(XMLElement* srcCategoryElement) {
 		if (LoadCategory(srcCategoryElement))
 			isValid = false;
+
 		isValid = true;
 		isHidden = false;
 	}
 
-	string GetName() { return name; }
-	void SetName(const string& inName) { name = inName; }
+	string GetName() {
+		return name;
+	}
+	void SetName(const string& inName) {
+		name = inName;
+	}
 
 	int AddSliders(const vector<string>& inSliders);
 	bool HasSlider(const string& search);
@@ -42,8 +48,8 @@ public:
 	// Combine the source category's sliders into this one's list. Also merges the source file list.
 	void MergeSliders(const SliderCategory& sourceCategory);
 
-	int LoadCategory(TiXmlElement* srcCategoryElement);
-	void WriteCategory(TiXmlElement* categoryElement, bool append = false);
+	int LoadCategory(XMLElement* srcCategoryElement);
+	void WriteCategory(XMLElement* categoryElement, bool append = false);
 	void AddSourceFile(const string& fileName);
 };
 
@@ -67,19 +73,23 @@ public:
 
 
 class SliderCategoryFile {
-	TiXmlDocument doc;
-	TiXmlElement* root;
-	map<string, TiXmlElement*> categoriesInFile;
+	XMLDoc doc;
+	XMLElement* root;
+	map<string, XMLElement*> categoriesInFile;
 	int error;
 
 public:
 	string fileName;
-	SliderCategoryFile() :error(0), root(NULL) { }
+	SliderCategoryFile() :error(0), root(nullptr) { }
 	SliderCategoryFile(const string& srcFileName);
 	~SliderCategoryFile() {};
 
-	bool fail() { return error != 0; }
-	int GetError() { return error; }
+	bool fail() {
+		return error != 0;
+	}
+	int GetError() {
+		return error;
+	}
 
 	// Loads the XML document and identifies included category names. On a failure, sets the internal error value.
 	void Open(const string& srcFileName);

@@ -406,8 +406,8 @@ void Automorph::LoadResultDiffs(SliderSet &fromSet) {
 	targetSliderDataNames.clear();
 	for (int i = 0; i < fromSet.size(); i++)
 		for (auto df : fromSet[i].dataFiles)
-			if (df.dataName != (df.targetName + fromSet[i].Name))
-				SetResultDataName(df.targetName, fromSet[i].Name, df.dataName);
+			if (df.dataName != (df.targetName + fromSet[i].name))
+				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
 }
 
 void Automorph::ClearResultSet(const string& sliderName) {

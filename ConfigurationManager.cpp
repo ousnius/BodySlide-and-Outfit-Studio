@@ -11,7 +11,7 @@ ConfigurationItem::~ConfigurationItem() {
 	children.clear();
 }
 
-int ConfigurationItem::SettingFromXML(TiXmlElement* xml) {
+int ConfigurationItem::SettingFromXML(XMLElement* xml) {
 	name = xml->Value();
 	if (parent) {
 		path = parent->path + "/";
@@ -21,10 +21,10 @@ int ConfigurationItem::SettingFromXML(TiXmlElement* xml) {
 		level = 0;
 		path = name;
 	}
-	if (xml->GetText() != NULL)
+	if (xml->GetText() != nullptr)
 		value = xml->GetText();
 
-	TiXmlAttribute* attr = xml->FirstAttribute();
+	const XMLAttribute* attr = xml->FirstAttribute();
 	while (attr) {
 		ConfigurationItem* newCI = new ConfigurationItem();
 		newCI->parent = this;
@@ -39,11 +39,11 @@ int ConfigurationItem::SettingFromXML(TiXmlElement* xml) {
 		attr = attr->Next();
 	}
 
-	TiXmlNode* child = xml->FirstChild();
+	XMLNode* child = xml->FirstChild();
 	while (child) {
-		if (child->Type() == TiXmlNode::TINYXML_COMMENT)
+		if (child->ToComment())
 			children.push_back(new ConfigurationItem(child->ToComment()->Value(), this, level + 1));
-		else if (child->Type() == TiXmlNode::TINYXML_ELEMENT)
+		else if (child->ToElement())
 			children.push_back(new ConfigurationItem(child->ToElement(), this, level + 1));
 		child = child->NextSibling();
 	}
@@ -51,23 +51,28 @@ int ConfigurationItem::SettingFromXML(TiXmlElement* xml) {
 	return 0;
 }
 
-void ConfigurationItem::ToXML(TiXmlElement* parent) {
-	TiXmlElement* elem = parent->InsertEndChild(TiXmlElement(name.c_str()))->ToElement();
+void ConfigurationItem::ToXML(XMLElement* parent) {
+	XMLElement* newElement = parent->GetDocument()->NewElement(name.c_str());
+	XMLElement* element = parent->InsertEndChild(newElement)->ToElement();
 
 	for (auto prop : properties) {
 		if (prop->isDefault)
 			continue;
-		elem->SetAttribute(prop->name.c_str(), prop->value.c_str());
+		element->SetAttribute(prop->name.c_str(), prop->value.c_str());
 	}
 	for (auto child : children) {
 		if (child->isDefault)
 			continue;
-		if (child->isComment)
-			elem->InsertEndChild(TiXmlComment(child->value.c_str()));
+		if (child->isComment) {
+			XMLComment* newComment = parent->GetDocument()->NewComment(child->value.c_str());
+			element->InsertEndChild(newComment);
+		}
 		else
-			child->ToXML(elem);
+			child->ToXML(element);
 	}
-	elem->InsertEndChild(TiXmlText(value.c_str()));
+
+	XMLText* newText = parent->GetDocument()->NewText(value.c_str());
+	element->InsertEndChild(newText);
 }
 
 int ConfigurationItem::EnumerateProperties(vector<ConfigurationItem*>& outList) {
@@ -133,7 +138,7 @@ int ConfigurationItem::EnumerateChildrenProperty(const string& inName, const str
 }
 
 ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recurse) {
-	ConfigurationItem* found = NULL;
+	ConfigurationItem* found = nullptr;
 	size_t pos = inName.find_first_of("/.");
 
 	if (pos != string::npos) {
@@ -146,7 +151,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 		}
 
 		if (!found)
-			return NULL;
+			return nullptr;
 		else if (!recurse)
 			return found;
 
@@ -156,7 +161,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 			found = found->FindProperty(inName.substr(pos + 1));
 
 		if (!found)
-			return NULL;
+			return nullptr;
 	}
 	else {
 		for (auto child : children) {
@@ -172,7 +177,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 }
 
 ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const string& value, bool isElement) {
-	ConfigurationItem* found = NULL;
+	ConfigurationItem* found = nullptr;
 	int pos = inName.find_first_of("/.");
 	string tmpName = inName.substr(0, pos);
 
@@ -211,7 +216,7 @@ ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const strin
 	}
 	else {
 		if (pos == -1)
-			return NULL;
+			return nullptr;
 		else if (inName.at(pos) == '/')
 			found = found->AddChild(inName.substr(pos + 1), value, true);
 		else if (inName.at(pos) == '.')
@@ -226,7 +231,7 @@ ConfigurationItem* ConfigurationItem::FindProperty(const string& inName) {
 		if (prop->Match(inName))
 			return prop;
 
-	return NULL;
+	return nullptr;
 }
 
 ConfigurationManager::ConfigurationManager() {
@@ -244,7 +249,7 @@ void ConfigurationManager::Clear() {
 }
 
 int ConfigurationManager::LoadConfig(const string& pathToFile, const string& rootElement) {
-	TiXmlDocument configXML(pathToFile.c_str());
+	XMLDoc configXML(pathToFile.c_str());
 	configXML.LoadFile(pathToFile.c_str());
 
 	if (configXML.Error())
@@ -252,15 +257,15 @@ int ConfigurationManager::LoadConfig(const string& pathToFile, const string& roo
 
 	Clear();
 
-	TiXmlElement* rootElem = configXML.FirstChildElement(rootElement.c_str());
-	if (!rootElem)
+	XMLElement* root = configXML.FirstChildElement(rootElement.c_str());
+	if (!root)
 		return 2;
 
-	TiXmlNode* child = rootElem->FirstChild();
+	XMLNode* child = root->FirstChild();
 	while (child) {
-		if (child->Type() == TiXmlNode::TINYXML_COMMENT)
+		if (child->ToComment())
 			ciList.push_back(new ConfigurationItem(child->ToComment()->Value(), 0, 0));
-		else if (child->Type() == TiXmlNode::TINYXML_ELEMENT)
+		else if (child->ToElement())
 			ciList.push_back(new ConfigurationItem(child->ToElement()));
 
 		child = child->NextSibling();
@@ -302,7 +307,7 @@ bool ConfigurationManager::Exists(const string& name) {
 }
 
 ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
-	ConfigurationItem* found = NULL;
+	ConfigurationItem* found = nullptr;
 	int pos = inName.find_first_of("/.");
 
 	if (pos != -1) {
@@ -312,7 +317,7 @@ ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
 				found = ci;
 
 		if (!found)
-			return NULL;
+			return nullptr;
 
 		if (inName.at(pos) == '/')
 			found = found->FindChild(inName.substr(pos + 1));
@@ -320,7 +325,7 @@ ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
 			found = found->FindProperty(inName.substr(pos + 1));
 
 		if (!found)
-			return NULL;
+			return nullptr;
 	}
 	else
 		for (auto ci : ciList)
@@ -479,24 +484,26 @@ int ConfigurationManager::SaveConfig(const string& pathToFile, const string& roo
 	if (rootElementName.empty())
 		return 1;
 
-	TiXmlDocument doc(pathToFile.c_str());
-	if (doc.Error())
+	XMLDoc doc;
+	if (doc.LoadFile(pathToFile.c_str()))
 		return 2;
 
 	doc.Clear();
 
-	TiXmlElement* rootElem = (TiXmlElement*)doc.InsertEndChild(TiXmlElement(rootElementName.c_str()));
+	XMLElement* newElement = doc.NewElement(rootElementName.c_str());
+	XMLElement* root = doc.InsertEndChild(newElement)->ToElement();
 
 	for (auto ci : ciList) {
 		if (ci->isDefault)
 			continue;
-		if (ci->isComment)
-			rootElem->InsertEndChild(TiXmlComment(ci->value.c_str()));
+		if (ci->isComment) {
+			XMLComment* newComment = doc.NewComment(ci->value.c_str());
+			root->InsertEndChild(newComment);
+		}
 		else
-			ci->ToXML(rootElem);
-
+			ci->ToXML(root);
 	}
 
-	doc.SaveFile();
+	doc.SaveFile(pathToFile.c_str());
 	return 0;
 }
