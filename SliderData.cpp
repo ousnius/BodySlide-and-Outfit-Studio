@@ -664,14 +664,14 @@ int PresetCollection::SavePreset(const string& filePath, const string& presetNam
 			sliderElem = presetElem->InsertEndChild(newElement)->ToElement();
 			sliderElem->SetAttribute("name", p.first.c_str());
 			sliderElem->SetAttribute("size", "big");
-			sliderElem->SetAttribute("value", p.second.big * 100);
+			sliderElem->SetAttribute("value", (int)(p.second.big * 100.0f));
 		}
 		if (p.second.small > -10000.0f) {
 			newElement = outDoc.NewElement("SetSlider");
 			sliderElem = presetElem->InsertEndChild(newElement)->ToElement();
 			sliderElem->SetAttribute("name", p.first.c_str());
 			sliderElem->SetAttribute("size", "small");
-			sliderElem->SetAttribute("value", p.second.small * 100);
+			sliderElem->SetAttribute("value", (int)(p.second.small * 100.0f));
 		}
 	}
 	if (outDoc.SaveFile(filePath.c_str()) != XML_SUCCESS)

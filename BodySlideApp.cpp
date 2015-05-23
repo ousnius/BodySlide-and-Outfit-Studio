@@ -1598,7 +1598,7 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 	if (!sd)
 		return;
 
-	app->SetSliderValue(name, isLo, ((float)event.GetPosition() / 100.0f));
+	app->SetSliderValue(name, isLo, event.GetPosition() / 100.0f);
 	app->SetSliderChanged(name, isLo);
 	if (isLo) {
 		sd->sliderReadoutLo->SetValue(wxString::Format("%d%%", event.GetPosition()));

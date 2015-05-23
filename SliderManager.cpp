@@ -193,8 +193,8 @@ void SliderManager::SetSlider(const string& slider, bool isSmall, float val) {
 			if (slidersBig[i].name == slider) {
 				if (slidersBig[i].zap) {
 					FlagReload(true);
-					if (val > 0)
-						val = 1.0;
+					if (val > 0.0f)
+						val = 1.0f;
 				}
 				slidersBig[i].Set(val);
 				return;
@@ -206,8 +206,8 @@ void SliderManager::SetSlider(const string& slider, bool isSmall, float val) {
 			if (slidersSmall[i].name == slider) {
 				if (slidersSmall[i].zap) {
 					FlagReload(true);
-					if (val > 0)
-						val = 1.0;
+					if (val > 0.0f)
+						val = 1.0f;
 				}
 				slidersSmall[i].Set(val);
 				return;
