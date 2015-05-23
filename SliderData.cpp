@@ -21,7 +21,7 @@ SliderData::SliderData(XMLElement* element) {
 }
 
 int SliderData::LoadSliderData(XMLElement* element, set<string>* exclude_targets) {
-	//Outfit Studio state values, not saved in xml.
+	//Outfit Studio state values, not saved in XML.
 	curValue = 0;
 	bShow = false;
 	int numDatafiles = 0;
@@ -42,21 +42,18 @@ int SliderData::LoadSliderData(XMLElement* element, set<string>* exclude_targets
 	defBigValue = b;
 	defSmallValue = s;
 
-	if (element->Attribute("hidden")) {
+	if (element->Attribute("hidden"))
 		bHidden = (_strnicmp(element->Attribute("hidden"), "true", 4) == 0);
-	}
 	else
 		bHidden = false;
 
-	if (element->Attribute("zap")) {
+	if (element->Attribute("zap"))
 		bZap = (_strnicmp(element->Attribute("zap"), "true", 4) == 0);
-	}
 	else
 		bZap = false;
 
-	if (element->Attribute("clamp")) {
+	if (element->Attribute("clamp"))
 		bClamp = (_strnicmp(element->Attribute("clamp"), "true", 4) == 0);
-	}
 	else
 		bClamp = false;
 
@@ -69,18 +66,15 @@ int SliderData::LoadSliderData(XMLElement* element, set<string>* exclude_targets
 				datafile = datafile->NextSiblingElement("datafile");
 				continue;
 			}
-
 		}
 
-		if (datafile->Attribute("local")) {
+		if (datafile->Attribute("local"))
 			tmpDataFile.bLocal = (_strnicmp(datafile->Attribute("local"), "true", 4) == 0);
-		}
 		else
 			tmpDataFile.bLocal = false;
 
-		if (datafile->Attribute("name")) {
+		if (datafile->Attribute("name"))
 			tmpDataFile.dataName = datafile->Attribute("name");
-		}
 		else
 			tmpDataFile.dataName = name;
 
@@ -171,7 +165,7 @@ int SliderSet::LoadSliderSet(XMLElement* element, uint flags) {
 			}
 		}
 	}
-	set <string> exclude_targets;
+	set<string> exclude_targets;
 	XMLElement* shapeName = element->FirstChildElement("BaseShapeName");
 	while (shapeName) {
 		if (shapeName->Attribute("DataFolder")) {
@@ -367,10 +361,9 @@ void SliderSetFile::Open(const string& srcFileName) {
 	XMLElement* setElement;
 	string setname;
 	fileName = srcFileName;
-	if (!doc.LoadFile(srcFileName.c_str())) {
-		error = doc.ErrorID();
+	error = doc.LoadFile(srcFileName.c_str());
+	if (error)
 		return;
-	}
 
 	root = doc.FirstChildElement("SliderSetInfo");
 	if (!root) {
@@ -497,10 +490,8 @@ void PresetCollection::Clear() {
 }
 
 void PresetCollection::GetPresetNames(vector<string>& outNames) {
-	map<string, map<string, SliderPreset>>::iterator it;
-	for (it = namedSliderPresets.begin(); it != namedSliderPresets.end(); ++it) {
+	for (auto it = namedSliderPresets.begin(); it != namedSliderPresets.end(); ++it)
 		outNames.push_back(it->first);
-	}
 }
 
 void PresetCollection::SetSliderPreset(const string& set, const string& slider, float big, float small) {
@@ -508,9 +499,9 @@ void PresetCollection::SetSliderPreset(const string& set, const string& slider, 
 	SliderPreset sp;
 	if (namedSliderPresets.find(set) == namedSliderPresets.end()) {
 		sp.big = sp.small = -10000.0f;
-		if (big > -10000)
+		if (big > -10000.0f)
 			sp.big = big;
-		if (small > -10000)
+		if (small > -10000.0f)
 			sp.small = small;
 		newPreset[slider] = sp;
 		namedSliderPresets[set] = newPreset;
@@ -519,17 +510,17 @@ void PresetCollection::SetSliderPreset(const string& set, const string& slider, 
 	else {
 		if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end()) {
 			sp.big = sp.small = -10000.0f;
-			if (big > -10000)
+			if (big > -10000.0f)
 				sp.big = big;
-			if (small > -10000)
+			if (small > -10000.0f)
 				sp.small = small;
 			namedSliderPresets[set][slider] = sp;
 		}
 		else {
-			if (big > -10000) {
+			if (big > -10000.0f) {
 				namedSliderPresets[set][slider].big = big;
 			}
-			if (small > -10000) {
+			if (small > -10000.0f) {
 				namedSliderPresets[set][slider].small = small;
 			}
 		}
@@ -543,7 +534,7 @@ bool PresetCollection::GetBigPreset(const string& set, const string& slider, flo
 	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end())
 		return false;
 	b = namedSliderPresets[set][slider].big;
-	if (b > -10000) {
+	if (b > -10000.0f) {
 		big = b;
 		return true;
 	}
@@ -557,7 +548,7 @@ bool PresetCollection::GetSmallPreset(const string& set, const string& slider, f
 	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end())
 		return false;
 	b = namedSliderPresets[set][slider].small;
-	if (b > -10000) {
+	if (b > -10000.0f) {
 		small = b;
 		return true;
 	}
@@ -577,7 +568,7 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 	XmlFinder finder(basePath);
 	while (!finder.atEnd()) {
 		string filename = finder.next();
-		if (!doc.LoadFile(filename.c_str()))
+		if (doc.LoadFile(filename.c_str()) != XML_SUCCESS)
 			continue;
 
 		root = doc.FirstChildElement("SliderPresets");
@@ -636,7 +627,7 @@ int PresetCollection::SavePreset(const string& filePath, const string& presetNam
 	XMLDoc outDoc;
 	XMLNode* slidersNode;
 	XMLElement* presetElem;
-	if (outDoc.LoadFile(filePath.c_str())) {
+	if (outDoc.LoadFile(filePath.c_str()) == XML_SUCCESS) {
 		// File exists - merge data.
 		slidersNode = outDoc.FirstChildElement("SliderPresets");
 		presetElem = slidersNode->FirstChildElement("Preset");
@@ -683,7 +674,7 @@ int PresetCollection::SavePreset(const string& filePath, const string& presetNam
 			sliderElem->SetAttribute("value", p.second.small * 100);
 		}
 	}
-	if (!outDoc.SaveFile(filePath.c_str()))
+	if (outDoc.SaveFile(filePath.c_str()) != XML_SUCCESS)
 		return outDoc.ErrorID();
 
 	return 0;

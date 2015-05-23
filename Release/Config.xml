@@ -8,24 +8,20 @@
 	This information is used by BodySlide for choosing what presets to display for outfits.
 	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
     <DefaultGroups includeInBuild="true">
-        <GroupName>CBAdvanced</GroupName>
-    </DefaultGroups>
+        <GroupName>CBAdvanced</GroupName></DefaultGroups>
     <!-- Group aliases provide a way for presets saved under older group names to still apply when a group has been renamed -->
     <GroupAliases>
         <GroupAlias alias="CB++" group="CBAdvanced"></GroupAlias>
-        <GroupAlias alias="CBAdvanced" group="CB++"></GroupAlias>
-    </GroupAliases>
+        <GroupAlias alias="CBAdvanced" group="CB++"></GroupAlias></GroupAliases>
     <Input>
         <!-- Sets the minimum and maximum slider values for the BodySlide UI. There might be clipping outside of the 0-100 range! -->
         <SliderMinimum>0</SliderMinimum>
         <SliderMaximum>100</SliderMaximum>
         <!-- Set the left mouse button to pan the view when dragged on the canvas in Outfit Studio -->
-        <LeftMousePan>false</LeftMousePan>
-    </Input>
+        <LeftMousePan>false</LeftMousePan></Input>
     <Editing>
         <!-- Center for move/rotate operations. Object = bounding box center, Origin = (0,0,0), Selected = unmasked vertex centroid -->
-        <CenterMode>Object</CenterMode>
-    </Editing>
+        <CenterMode>Object</CenterMode></Editing>
     <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
     <ReferenceTemplates>
         <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body">CBBE Body</Template>
@@ -45,15 +41,13 @@
         <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert Skyrim2CBBE">Convert: Vanilla to CBBE</Template>
         <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert ADEC2CBBE">Convert: ADEC to CBBE</Template>
         <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBPE2CBBE">Convert: CBPE to CBBE</Template>
-        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body">Select an XML file from ConversionSets below for more!</Template>
-    </ReferenceTemplates>
+        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body">Select an XML file from ConversionSets below for more!</Template></ReferenceTemplates>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference>res\skeleton_female_xpmse.nif</DefaultSkeletonReference>
         <SkeletonRootName>NPC</SkeletonRootName>
         <!-- <DefaultSkeletonReference>res\skeleton_fo3nv.nif</DefaultSkeletonReference> -->
-        <!-- <SkeletonRootName>Bip01</SkeletonRootName> -->
-    </Anim>
+        <!-- <SkeletonRootName>Bip01</SkeletonRootName> --></Anim>
     <!-- Window position/size and filter state parameters -->
     <BodySlideFrame width="800" height="600"></BodySlideFrame>
     <OutfitStudioFrame width="990" height="757"></OutfitStudioFrame>

@@ -38,9 +38,9 @@ END_EVENT_TABLE();
 IMPLEMENT_APP(BodySlideApp)
 
 BodySlideApp::~BodySlideApp() {
-	if (previewBaseNif != NULL) {
+	if (previewBaseNif) {
 		delete previewBaseNif;
-		previewBaseNif = NULL;
+		previewBaseNif = nullptr;
 	}
 
 	if (preview0)
@@ -58,11 +58,11 @@ bool BodySlideApp::OnInit() {
 
 	wxInitAllImageHandlers();
 
-	preview0 = NULL;
-	preview1 = NULL;
-	sliderView = NULL;
-	previewBaseNif = NULL;
-	outfitStudio = NULL;
+	preview0 = nullptr;
+	preview1 = nullptr;
+	sliderView = nullptr;
+	previewBaseNif = nullptr;
+	outfitStudio = nullptr;
 
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
 
@@ -241,13 +241,13 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 void BodySlideApp::ActivatePreset(const string &presetName) {
 	Config.SetValue("SelectedPreset", presetName);
 	sliderManager.InitializeSliders(presetName);
-	Slider* slider = NULL;
-	for (int i = 0; i < sliderManager.SlidersBig.size(); i++) {
-		slider = &sliderManager.SlidersBig[i];
-		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_HI);
+	Slider* slider = nullptr;
+	for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
+		slider = &sliderManager.slidersBig[i];
+		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_HI);
 
-		slider = &sliderManager.SlidersSmall[i];
-		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_LO);
+		slider = &sliderManager.slidersSmall[i];
+		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
 	}
 
 	if (preview0)
@@ -258,13 +258,13 @@ void BodySlideApp::ActivatePreset(const string &presetName) {
 }
 
 void BodySlideApp::RefreshSliders() {
-	Slider* slider = NULL;
-	for (int i = 0; i < sliderManager.SlidersBig.size(); i++) {
-		slider = &sliderManager.SlidersBig[i];
-		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_HI);
+	Slider* slider = nullptr;
+	for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
+		slider = &sliderManager.slidersBig[i];
+		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_HI);
 
-		slider = &sliderManager.SlidersSmall[i];
-		sliderView->SetSliderPosition(slider->Name.c_str(), slider->Value, SLIDER_LO);
+		slider = &sliderManager.slidersSmall[i];
+		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
 	}
 	if (preview0)
 		UpdatePreview(SMALL_PREVIEW);
@@ -382,7 +382,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 
 void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& ZapIdx, vector<Vector2>* uvs) {
 	for (auto slider : sliderSet) {
-		float val = slider.Value;
+		float val = slider.value;
 		if (slider.zap) {
 			if (val > 0)
 				for (int j = 0; j < slider.linkedDataSets.size(); j++)
@@ -402,7 +402,7 @@ void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& slide
 	}
 
 	for (auto slider : sliderSet)
-		if (slider.clamp && slider.Value > 0)
+		if (slider.clamp && slider.value > 0)
 			for (int j = 0; j < slider.linkedDataSets.size(); j++)
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
@@ -458,7 +458,7 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 
 void BodySlideApp::ShowPreview(char PreviewType) {
 	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-	if (*winPtr != NULL)
+	if (*winPtr)
 		return;
 
 	*winPtr = new PreviewWindow(this, PreviewType);
@@ -510,9 +510,9 @@ void BodySlideApp::InitPreview(char PreviewType) {
 		previewBaseNif->GetUvsForShape(it->second, uvs);
 
 		if (PreviewType == SMALL_PREVIEW)
-			ApplySliders(it->first, sliderManager.SlidersSmall, verts, zapIdx, &uvs);
+			ApplySliders(it->first, sliderManager.slidersSmall, verts, zapIdx, &uvs);
 		else
-			ApplySliders(it->first, sliderManager.SlidersBig, verts, zapIdx, &uvs);
+			ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx, &uvs);
 
 		// Zap deleted verts before preview
 		if (freshLoad && zapIdx.size() > 0) {
@@ -553,10 +553,10 @@ void BodySlideApp::InitPreview(char PreviewType) {
 
 void BodySlideApp::UpdatePreview(char PreviewType) {
 	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-	if (*winPtr == NULL)
+	if (!(*winPtr))
 		return;
 
-	if (previewBaseNif == NULL)
+	if (!previewBaseNif)
 		return;
 
 	vector<Vector3> verts;
@@ -570,9 +570,9 @@ void BodySlideApp::UpdatePreview(char PreviewType) {
 		previewBaseNif->GetUvsForShape(it->second, uv);
 
 		if (PreviewType == SMALL_PREVIEW)
-			ApplySliders(it->first, sliderManager.SlidersSmall, verts, zapIdx, &uv);
+			ApplySliders(it->first, sliderManager.slidersSmall, verts, zapIdx, &uv);
 		else
-			ApplySliders(it->first, sliderManager.SlidersBig, verts, zapIdx, &uv);
+			ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx, &uv);
 
 		// Zap deleted verts before applying to the shape
 		if (zapIdx.size() > 0) {
@@ -589,10 +589,10 @@ void BodySlideApp::UpdatePreview(char PreviewType) {
 
 void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-	if (*winPtr == NULL)
+	if (!(*winPtr))
 		return;
 
-	if (previewBaseNif == NULL)
+	if (!previewBaseNif)
 		return;
 
 	PreviewMod.CopyFrom((*previewBaseNif));
@@ -610,9 +610,9 @@ void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 			continue;
 
 		if (PreviewType == SMALL_PREVIEW)
-			ApplySliders(it->first, sliderManager.SlidersSmall, verts, zapIdx);
+			ApplySliders(it->first, sliderManager.slidersSmall, verts, zapIdx);
 		else
-			ApplySliders(it->first, sliderManager.SlidersBig, verts, zapIdx);
+			ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx);
 
 		// Zap deleted verts before preview
 		if (zapIdx.size() > 0) {
@@ -870,7 +870,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameSmall = Config["GameDataPath"] + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
 		string tmp = Config["GameDataPath"] + activeSet.GetOutputPath();
-		SHCreateDirectoryExA(NULL, tmp.c_str(), NULL);
+		SHCreateDirectoryExA(0, tmp.c_str(), nullptr);
 	}
 
 	// ALT key
@@ -933,9 +933,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 		zapIdxAll.emplace(it->second, vector<ushort>());
 
-		ApplySliders(it->first, sliderManager.SlidersSmall, vertsLow, zapIdx);
+		ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
 		zapIdx.clear();
-		ApplySliders(it->first, sliderManager.SlidersBig, vertsHigh, zapIdx);
+		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
 
 		nifSmall.SetVertsForShape(it->second, vertsLow);
 		nifSmall.DeleteVertsForShape(it->second, zapIdx);
@@ -1061,7 +1061,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		datapath = Config["GameDataPath"];
 	}
 
-	progWnd = new wxProgressDialog("Processing Outfits", "Starting...", 1000, NULL, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
+	progWnd = new wxProgressDialog("Processing Outfits", "Starting...", 1000, nullptr, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
 	progWnd->SetSize(400, 150);
 	stringstream progmsg;
 	float progstep = 1000.0f / outfitList.size();
@@ -1097,7 +1097,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 		// ALT key
 		if (clean && custPath == "") {
-			FILE * file;
+			FILE *file;
 			string removeHigh, removeLow;
 			string removePath = datapath + currentSet.GetOutputFilePath();
 			bool genWeights = currentSet.GenWeights();
@@ -1108,7 +1108,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 				removeHigh = removePath + ".nif";
 
 			file = fopen(removeHigh.c_str(), "r+");
-			if (file != NULL) {
+			if (file) {
 				fclose(file);
 				remove(removeHigh.c_str());
 			}
@@ -1118,7 +1118,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 			removeLow = removePath + "_0.nif";
 			file = fopen(removeLow.c_str(), "r+");
-			if (file != NULL) {
+			if (file) {
 				fclose(file);
 				remove(removeLow.c_str());
 			}
@@ -1202,7 +1202,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		/* Create directory for the outfit */
 		string dir = datapath + currentSet.GetOutputPath();
 		stringstream errss;
-		int error = SHCreateDirectoryExA(NULL, dir.c_str(), NULL);
+		int error = SHCreateDirectoryExA(0, dir.c_str(), nullptr);
 		if ((error != ERROR_SUCCESS) && (error != ERROR_ALREADY_EXISTS) && (error != ERROR_FILE_EXISTS)) {
 			errss << "Unable to create destination directory: " << dir << " [" << hex << (uint)error << "]";
 			failedOutfits[outfit] = errss.str();
@@ -1303,7 +1303,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const w
 	this->SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
 	this->SetDoubleBuffered(true);
 
-	batchBuildList = NULL;
+	batchBuildList = nullptr;
 	wxMenu* srchMenu = rsrc->LoadMenu("menuGroupContext");
 	wxMenu* outfitsrchMenu = rsrc->LoadMenu("menuOutfitSrchContext");
 
@@ -1432,7 +1432,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 
 			sd->sliderReadoutLo = new wxTextCtrl(sw, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, 18), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 			sd->sliderReadoutLo->SetName(name + "|RLO");
-			sd->sliderReadoutLo->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), NULL, this);
+			sd->sliderReadoutLo->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
 			sliderLayout->Add(sd->sliderReadoutLo, 0, wxALL, 0);
 		}
 	}
@@ -1458,7 +1458,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 
 		sd->sliderReadoutHi = new wxTextCtrl(sw, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, 18), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 		sd->sliderReadoutHi->SetName(name + "|RHI");
-		sd->sliderReadoutHi->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), NULL, this);
+		sd->sliderReadoutHi->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(BodySlideFrame::OnSliderReadoutChange), nullptr, this);
 		sliderLayout->Add(sd->sliderReadoutHi, 0, wxRIGHT, 10);
 	}
 
@@ -1471,12 +1471,14 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 
 void BodySlideFrame::ClearPresetList() {
 	wxChoice* c = (wxChoice*)FindWindowByName("presetChoice", this);
-	if (c) c->Clear();
+	if (c)
+		c->Clear();
 }
 
 void  BodySlideFrame::ClearOutfitList() {
 	wxChoice* c = (wxChoice*)FindWindowByName("outfitChoice", this);
-	if (c) c->Clear();
+	if (c)
+		c->Clear();
 }
 
 void BodySlideFrame::ClearSliderGUI() {
@@ -1934,7 +1936,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		for (auto e : failedOutfits)
 			errlist.Add(e.first + ":" + e.second);
 
-		wxSingleChoiceDialog errdisplay(this, "The following outfits failed", "Failed", errlist, (void**)NULL, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
+		wxSingleChoiceDialog errdisplay(this, "The following outfits failed", "Failed", errlist, (void**)0, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
 		errdisplay.ShowModal();
 	}
 }

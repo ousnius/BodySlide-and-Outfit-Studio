@@ -1823,6 +1823,7 @@ XMLError XMLDoc::LoadFile( const char* filename )
         return _errorID;
     }
     LoadFile( fp );
+	SetValue(filename);
     fclose( fp );
     return _errorID;
 }
@@ -2365,4 +2366,3 @@ bool XMLPrinter::Visit( const XMLUnknown& unknown )
 }
 
 }   // namespace tinyxml2
-

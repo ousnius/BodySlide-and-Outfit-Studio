@@ -45,7 +45,7 @@ wxSize PreviewWindow::GetDefaultSize() {
 }
 
 PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType, char* shapeName)
-	: wxFrame(NULL, wxID_ANY, GetTitle(previewType), wxDefaultPosition, GetDefaultSize()),
+	: wxFrame(nullptr, wxID_ANY, GetTitle(previewType), wxDefaultPosition, GetDefaultSize()),
 		app(a),
 		isSmall(previewType == SMALL_PREVIEW) {
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs(this));
@@ -67,7 +67,7 @@ void PreviewWindow::AddMeshDirect(mesh* m) {
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 	vector<string> shapeList;
 	nif->GetShapeList(shapeList);
-	mesh* m;
+	mesh* m = nullptr;
 	for (int i = 0; i < shapeList.size(); i++) {
 		if (shapeName && (shapeList[i] == shapeName)) {
 			gls.AddMeshFromNif(nif, shapeList[i]);
@@ -105,12 +105,13 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 	}
 }
 
-void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName){
+void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 	vector<string> shapeList;
 	nif->GetShapeList(shapeList);
-	mesh* m;
-	if (shapeName == NULL)
+	mesh* m = nullptr;
+	if (shapeName == nullptr)
 		gls.DeleteAllMeshes();
+
 	for (int i = 0; i < shapeList.size(); i++) {
 		if (shapeName && (shapeList[i] == shapeName)) {
 			gls.ReloadMeshFromNif(nif, shapeList[i]);

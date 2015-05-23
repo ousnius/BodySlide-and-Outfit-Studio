@@ -148,11 +148,11 @@ public:
 	}
 	void PreviewClosed(char PreviewType = SMALL_PREVIEW) {
 		PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-		*winPtr = NULL;
+		*winPtr = nullptr;
 	}
 
 	void CloseOutfitStudio() {
-		outfitStudio = NULL;
+		outfitStudio = nullptr;
 	}
 
 	void UpdatePreview(char PreviewType = SMALL_PREVIEW);
@@ -194,16 +194,16 @@ public:
 		SliderDisplay() {
 			isZap = false;
 			oneSize = false;
-			lblSliderLo = NULL;
-			sliderLo = NULL;
-			sliderReadoutLo = NULL;
-			lblSliderLo = NULL;
-			lblSliderHi = NULL;
-			sliderHi = NULL;
-			sliderReadoutLo = NULL;
-			lblSliderLo = NULL;
-			zapCheckHi = NULL;
-			zapCheckLo = NULL;
+			lblSliderLo = nullptr;
+			sliderLo = nullptr;
+			sliderReadoutLo = nullptr;
+			lblSliderLo = nullptr;
+			lblSliderHi = nullptr;
+			sliderHi = nullptr;
+			sliderReadoutLo = nullptr;
+			lblSliderLo = nullptr;
+			zapCheckHi = nullptr;
+			zapCheckLo = nullptr;
 		}
 	};
 
@@ -227,7 +227,7 @@ public:
 		if (sliderDisplays.find(name) != sliderDisplays.end())
 			return sliderDisplays[name];
 
-		return NULL;
+		return nullptr;
 	}
 
 	void ClearPresetList();

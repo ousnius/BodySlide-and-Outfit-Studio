@@ -161,7 +161,9 @@ public:
 	}
 
 
-	void SetBaseDataPath(const string& inPath) { baseDataPath = inPath; }
+	void SetBaseDataPath(const string& inPath) {
+		baseDataPath = inPath;
+	}
 
 	int LoadSliderSet(XMLElement* sliderSetSource, uint flags = LOADSS_REFERENCE | LOADSS_DIRECT);
 	void LoadSetDiffData(DiffDataSets& inDataStorage);
@@ -236,7 +238,6 @@ public:
 		for (auto& tsn : targetshapenames)
 			if (tsn.second == shapeName)
 				tsn.second = newShapeName;
-
 	}
 
 	void AddTargetVirtualOffset(const string& targetName, const Vector3& offset) {
@@ -285,7 +286,9 @@ public:
 			return datafolder;
 	}
 
-	size_t size() { return sliders.size(); }
+	size_t size() {
+		return sliders.size();
+	}
 
 	SliderData& operator [] (int idx) {
 		return sliders[idx];

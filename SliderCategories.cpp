@@ -170,7 +170,7 @@ SliderCategoryFile::SliderCategoryFile(const string& srcFileName) {
 }
 
 void SliderCategoryFile::Open(const string& srcFileName) {
-	if (doc.LoadFile(srcFileName.c_str())) {
+	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
 		fileName = srcFileName;
 		root = doc.FirstChildElement("SliderCategories");
 		if (!root) {
@@ -201,7 +201,7 @@ void SliderCategoryFile::New(const string& newFileName) {
 		return;
 
 	doc.Clear();
-	if (doc.LoadFile(newFileName.c_str())) {
+	if (doc.LoadFile(newFileName.c_str()) == XML_SUCCESS) {
 		error = 1;
 	}
 	else {
@@ -286,6 +286,8 @@ int SliderCategoryFile::UpdateCategory(SliderCategory& inCategory) {
 }
 
 int SliderCategoryFile::Save(){
-	doc.SaveFile(fileName.c_str());
+	if (doc.SaveFile(fileName.c_str()) != XML_SUCCESS)
+		return 1;
+
 	return 0;
 }

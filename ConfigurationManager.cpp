@@ -249,7 +249,7 @@ void ConfigurationManager::Clear() {
 }
 
 int ConfigurationManager::LoadConfig(const string& pathToFile, const string& rootElement) {
-	XMLDoc configXML(pathToFile.c_str());
+	XMLDoc configXML;
 	configXML.LoadFile(pathToFile.c_str());
 
 	if (configXML.Error())
@@ -485,7 +485,7 @@ int ConfigurationManager::SaveConfig(const string& pathToFile, const string& roo
 		return 1;
 
 	XMLDoc doc;
-	if (doc.LoadFile(pathToFile.c_str()))
+	if (doc.LoadFile(pathToFile.c_str()) != XML_SUCCESS)
 		return 2;
 
 	doc.Clear();
@@ -504,6 +504,8 @@ int ConfigurationManager::SaveConfig(const string& pathToFile, const string& roo
 			ci->ToXML(root);
 	}
 
-	doc.SaveFile(pathToFile.c_str());
+	if (doc.SaveFile(pathToFile.c_str()) != XML_SUCCESS)
+		return 3;
+
 	return 0;
 }

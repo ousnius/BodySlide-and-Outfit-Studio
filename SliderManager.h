@@ -21,22 +21,22 @@ public:
 
 class Slider {
 public:
-	string Name;
+	string name;
 	bool invert;
 	bool zap;
 	bool clamp;
 	bool uv;
 	bool changed;
 	float defValue;
-	float Value;
+	float value;
 	vector<string> linkedDataSets;
 	vector<SliderNotifyTrigger> triggers;
 
 	float Get() {
-		return Value;
+		return value;
 	}
 	void Set(float val) {
-		Value = val;
+		value = val;
 	}
 };
 
@@ -46,8 +46,8 @@ class SliderManager {
 	bool bNeedReload;
 
 public:
-	vector<Slider> SlidersBig;
-	vector<Slider> SlidersSmall;
+	vector<Slider> slidersBig;
+	vector<Slider> slidersSmall;
 
 	map<int, int> sliderEdits;  // ControlID -> slider index.
 
@@ -56,8 +56,8 @@ public:
 	~SliderManager();
 
 	void ClearSliders() {
-		SlidersBig.clear();
-		SlidersSmall.clear();
+		slidersBig.clear();
+		slidersSmall.clear();
 		mSliderCount = 0;
 	}
 
@@ -67,11 +67,11 @@ public:
 
 	int SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {
 		int index = 0;
-		for (auto s : SlidersBig) {
-			if (SliderHasChanged(s.Name, true))
-				presetCollection.SetSliderPreset(presetName, s.Name, s.Value);
-			if (SliderHasChanged(s.Name, false))
-				presetCollection.SetSliderPreset(presetName, SlidersSmall[index].Name, -10000.0f, SlidersSmall[index].Value);
+		for (auto s : slidersBig) {
+			if (SliderHasChanged(s.name, true))
+				presetCollection.SetSliderPreset(presetName, s.name, s.value);
+			if (SliderHasChanged(s.name, false))
+				presetCollection.SetSliderPreset(presetName, slidersSmall[index].name, -10000.0f, slidersSmall[index].value);
 			index++;
 		}
 		return presetCollection.SavePreset(filePath, presetName, sliderSetName, assignGroups);

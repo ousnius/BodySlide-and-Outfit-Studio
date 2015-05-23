@@ -144,7 +144,7 @@ SliderSetGroupFile::SliderSetGroupFile(const string& srcFileName) {
 
 // Loads the XML document and identifies included group names. On a failure, sets the internal error value.
 void SliderSetGroupFile::Open(const string& srcFileName) {
-	if (doc.LoadFile(srcFileName.c_str())) {
+	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
 		fileName = srcFileName;
 		root = doc.FirstChildElement("SliderGroups");
 		if (!root) {
@@ -176,7 +176,7 @@ void SliderSetGroupFile::New(const string& newFileName) {
 		return;
 
 	doc.Clear();
-	if (doc.LoadFile(newFileName.c_str())) {
+	if (doc.LoadFile(newFileName.c_str()) == XML_SUCCESS) {
 		error = 1;
 	}
 	else {
@@ -269,7 +269,9 @@ int SliderSetGroupFile::UpdateGroup(SliderSetGroup& inGroup) {
 }
 
 // Writes the XML file using the internal fileName (use Rename() to change the name).
-int SliderSetGroupFile::Save(){
-	doc.SaveFile(fileName.c_str());
+int SliderSetGroupFile::Save() {
+	if (doc.SaveFile(fileName.c_str()) != XML_SUCCESS)
+		return 1;
+
 	return 0;
 }

@@ -39,9 +39,9 @@ class PreviewCanvas;
 
 class PreviewWindow : public wxFrame
 {
-	BodySlideApp* app{nullptr};
-	PreviewCanvas* canvas{nullptr};
-	wxGLContext* context{nullptr};
+	BodySlideApp* app{ nullptr };
+	PreviewCanvas* canvas{ nullptr };
+	wxGLContext* context{ nullptr };
 
 	GLSurface gls;
 	unordered_map<string, GLMaterial*> shapeTextures;
@@ -53,7 +53,7 @@ class PreviewWindow : public wxFrame
 	static wxSize GetDefaultSize();
 
 public:
-	PreviewWindow(BodySlideApp* app, char previewType = SMALL_PREVIEW, char* shapeName = NULL);
+	PreviewWindow(BodySlideApp* app, char previewType = SMALL_PREVIEW, char* shapeName = nullptr);
 	~PreviewWindow();
 
 	void OnShown();
@@ -62,7 +62,7 @@ public:
 		baseDataPath = path;
 	}
 
-	void Update(int shapeIndex, vector<Vector3>* verts, vector<Vector2>* uvs = NULL) {
+	void Update(int shapeIndex, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
 		gls.Update(shapeIndex, verts, uvs);
 		string n = gls.GetMeshName(shapeIndex);
 		gls.GetMesh(n)->SmoothNormals();
@@ -74,14 +74,14 @@ public:
 	}
 
 	void AddMeshDirect(mesh* m);
-	void AddMeshFromNif(NifFile* nif, char* shapeName = NULL);
-	void RefreshMeshFromNif(NifFile* nif, char* shapeName = NULL);
+	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
+	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void AddNifShapeTexture(NifFile* fromNif, const string& shapeName);
 
-	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = NULL) {
+	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs);
 		mesh* m = gls.GetMesh(shapeName);
-		if (m) { // the mesh could be missing if a zap slider removes it
+		if (m) {	// The mesh could be missing if a zap removes it
 			gls.GetMesh(shapeName)->SmoothNormals();
 		}
 		Refresh();
