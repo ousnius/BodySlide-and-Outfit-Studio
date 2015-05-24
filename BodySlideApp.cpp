@@ -635,34 +635,30 @@ void BodySlideApp::SetDefaultConfig() {
 	DWORD pathSize = 256;
 	string buildpath;
 
-	long result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Bethesda Softworks\\Skyrim", 0, KEY_READ, &skyrimRegKey);
-	if (result == ERROR_SUCCESS) {
-		result = RegQueryValueExA(skyrimRegKey, "Installed Path", 0, 0, (byte*)installPath, &pathSize);
-		if (result == ERROR_SUCCESS) {
-			buildpath = installPath;
-			buildpath += "Data\\";
-			Config.SetDefaultValue("GameDataPath", buildpath);
-		}
-		else
-			wxMessageBox("Could not find your Skyrim install path (registry key value). Did you launch it through the official launcher once?", "Warning");
-	}
-	else
-		wxMessageBox("Could not find your Skyrim installation (registry key). Did you launch it through the official launcher once?", "Warning");
-
 	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
 	Config.SetDefaultValue("SelectedPreset", "");
+	Config.SetDefaultValue("SelectedOutfit", "");
+	Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
+	Config.SetDefaultValue("ReferenceTemplates", "");
+	Config.SetDefaultValue("Input/SliderMinimum", -30);
+	Config.SetDefaultValue("Input/SliderMaximum", 100);
 
-	if (!Config.Exists("SelectedOutfit"))
-		Config.SetValue("SelectedOutfit", "");
-	if (!Config.Exists("Anim/DefaultSkeletonReference"))
-		Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
-	if (!Config.Exists("ReferenceTemplates"))
-		Config.SetValue("ReferenceTemplates", "");
-	if (!Config.Exists("Input/SliderMinimum"))
-		Config.SetValue("Input/SliderMinimum", -30);
-	if (!Config.Exists("Input/SliderMaximum"))
-		Config.SetValue("Input/SliderMaximum", 100);
+	if (!Config.Exists("GameDataPath")) {
+		long result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Bethesda Softworks\\Skyrim", 0, KEY_READ, &skyrimRegKey);
+		if (result == ERROR_SUCCESS) {
+			result = RegQueryValueExA(skyrimRegKey, "Installed Path", 0, 0, (byte*)installPath, &pathSize);
+			if (result == ERROR_SUCCESS) {
+				buildpath = installPath;
+				buildpath += "Data\\";
+				Config.SetDefaultValue("GameDataPath", buildpath);
+			}
+			else if (Config["WarnMissingGamePath"] == "true")
+				wxMessageBox("Could not find both your game install path (registry key value) and GameDataPath in the configuration.", "Warning");
+		}
+		else if (Config["WarnMissingGamePath"] == "true")
+			wxMessageBox("Could not find both your game installation (registry key) and GameDataPath in the configuration.", "Warning");
+	}
 }
 
 void BodySlideApp::LoadAllCategories() {

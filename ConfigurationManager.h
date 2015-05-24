@@ -93,6 +93,7 @@ public:
 	void SetValue(const string& inName, float newValue, bool flagDefault = false);
 
 	void SetDefaultValue(const string& inName, const string& newValue);
+	void SetDefaultValue(const string& inName, int newValue);
 
 	bool MatchValue(const string& inName, const string& val, bool useCase = false);
 

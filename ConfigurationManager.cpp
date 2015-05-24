@@ -380,6 +380,13 @@ void ConfigurationManager::SetDefaultValue(const string& inName, const string& n
 	SetValue(inName, newValue, true);
 }
 
+void ConfigurationManager::SetDefaultValue(const string& inName, int newValue) {
+	if (FindCI(inName))
+		return;
+
+	SetValue(inName, newValue, true);
+}
+
 void ConfigurationManager::SetValue(const string& inName, const string& newValue, bool flagDefault) {
 	string search = inName;
 
