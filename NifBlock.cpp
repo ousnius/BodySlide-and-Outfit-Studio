@@ -730,15 +730,11 @@ void NiGeometryData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	bool hasCol = vertexColors.size() > 0;
 	bool hasUV = uvSets.size() > 0;
 
-	int remCount = 0;
 	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
 		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
 			indexCollapse[i] = -1;	// Flag delete
-			remCount++;
 			j++;
 		}
-		else
-			indexCollapse[i] = remCount;
 	}
 
 	for (int i = vertices.size() - 1; i >= 0; i--) {
@@ -997,9 +993,20 @@ void NiTriShapeData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 }
 
 void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	vector<int> indexCollapse(vertices.size(), 0);
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapse[i] = remCount;
+	}
+
 	NiTriBasedGeomData::notifyVerticesDelete(vertIndices);
 
-	vector<int> indexCollapse(vertices.size(), 0);
 	for (int i = numTriangles - 1; i >= 0; i--) {
 		if (indexCollapse[triangles[i].p1] == -1 || indexCollapse[triangles[i].p2] == -1 || indexCollapse[triangles[i].p3] == -1) {
 			triangles.erase(triangles.begin() + i);
@@ -1269,10 +1276,21 @@ void NiTriStripsData::notifyBlockDelete(int blockID) {
 }
 
 void NiTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	vector<int> indexCollapse(vertices.size(), 0);
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapse[i] = remCount;
+	}
+
 	NiTriBasedGeomData::notifyVerticesDelete(vertIndices);
 
 	// This is not a healthy way to delete strip data. Probably need to restrip the shape.
-	vector<int> indexCollapse(vertices.size(), 0);
 	for (int i = 0; i < numStrips; i++) {
 		for (int j = 0; j < stripLengths[i]; j++) {
 			if (indexCollapse[points[i][j]] == -1) {

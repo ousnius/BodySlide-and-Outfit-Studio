@@ -474,7 +474,7 @@ void BodySlideApp::InitPreview(char PreviewType) {
 	inputFileName = activeSet.GetInputFileName();
 
 	if (!previewBaseNif) {
-		previewBaseNif = new NifFile;
+		previewBaseNif = new NifFile();
 		previewBaseNif->Load(inputFileName);
 		previewBaseName = inputFileName;
 		if (PreviewMod.Load(inputFileName))
@@ -485,7 +485,7 @@ void BodySlideApp::InitPreview(char PreviewType) {
 	}
 	else if ((previewBaseName != inputFileName) || sliderManager.NeedReload()) {
 		delete previewBaseNif;
-		previewBaseNif = new NifFile;
+		previewBaseNif = new NifFile();
 		previewBaseNif->Load(inputFileName);
 		previewBaseName = inputFileName;
 		if (PreviewMod.Load(inputFileName) != 0)
