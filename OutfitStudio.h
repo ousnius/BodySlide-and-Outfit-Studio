@@ -25,7 +25,7 @@ public:
 	bool bIsOutfitShape;
 	NifFile* refFile;
 	string shapeName;
-	ShapeItemData(bool isOutfit = false, NifFile* inRefFile = NULL, const string& inShapeName = "") {
+	ShapeItemData(bool isOutfit = false, NifFile* inRefFile = nullptr, const string& inShapeName = "") {
 		bIsOutfitShape = isOutfit;
 		refFile = inRefFile;
 		shapeName = inShapeName;
@@ -39,8 +39,8 @@ public:
 
 	void SetNotifyWindow(wxWindow* win);
 
-	void AddMeshFromNif(NifFile* nif, char* shapename);
-	void AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv = NULL, const string& shapename = "");
+	void AddMeshFromNif(NifFile* nif, char* shapeName);
+	void AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv = nullptr, const string& shapeName = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {
 		gls.RenameMesh(shapeName, newShapeName);
@@ -62,7 +62,7 @@ public:
 		return strokeManager;
 	}
 	void SetStrokeManager(TweakUndo* manager) {
-		if (manager == NULL)
+		if (!manager)
 			strokeManager = &baseStrokes;
 		else
 			strokeManager = manager;
@@ -100,6 +100,12 @@ public:
 			transformMode = 1;
 			ShowTransformTool();
 		}
+	}
+	bool GetXMirror() {
+		return bXMirror;
+	}
+	void SetXMirror(bool on = true) {
+		bXMirror = on;
 	}
 	void ToggleXMirror() {
 		if (bXMirror)
@@ -222,7 +228,7 @@ public:
 		mesh* m = gls.GetActiveMesh();
 		if (!m->vcolors) {
 			m->vcolors = new Vector3[m->nVerts];
-			memset(m->vcolors, 0, sizeof(Vector3) * m->nVerts);
+			memset(m->vcolors, 0, 12 * m->nVerts);
 		}
 		gls.ToggleMask();
 	}
@@ -467,7 +473,7 @@ public:
 		progressStack.pop_back();
 		if (progressStack.size() == 0)  {
 			delete progWnd;
-			progWnd = NULL;
+			progWnd = nullptr;
 		}
 	}
 	void UpdateProgress(float val, const string& msg) {
@@ -484,7 +490,6 @@ public:
 	}
 
 private:
-
 	class SliderDisplay {
 	public:
 		bool hilite;
@@ -505,6 +510,7 @@ private:
 		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
 	};
 
+	bool previousMirror;
 	Vector3 previewMove;
 	float previewScale;
 
