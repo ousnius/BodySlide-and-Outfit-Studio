@@ -81,7 +81,7 @@ public:
 
 	bool Exists(const string& inName);
 
-	const char* GetCString(const string& inName, const string& def = NULL);
+	const char* GetCString(const string& inName, const string& def = "");
 
 	string GetString(const string& inName);
 

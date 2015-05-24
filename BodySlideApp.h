@@ -65,7 +65,7 @@ class BodySlideApp : public wxApp {
 
 	/* Data Load/Setup */
 	void setupOutfit(const string& outfitName);
-	int createSliders(const string& outfit = "CBBE Body", bool hideAll = false);
+	int createSliders(const string& outfit, bool hideAll = false);
 	int createSetSliders(const string& outfit, bool hideAll = false);
 
 public:

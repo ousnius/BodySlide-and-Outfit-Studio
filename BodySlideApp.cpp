@@ -80,7 +80,7 @@ bool BodySlideApp::OnInit() {
 	sliderView->Show(true);
 	SetTopWindow(sliderView);
 
-	string activeOutfit = Config.GetCString("SelectedOutfit", "CBBE Body");
+	string activeOutfit = Config.GetCString("SelectedOutfit");
 	curOutfit = activeOutfit;
 
 	LoadAllGroups();
@@ -106,8 +106,8 @@ bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
 void BodySlideApp::LoadData() {
 	sliderView->Freeze();
 	setupOutfit(curOutfit);
-	string activeOutfit = Config.GetCString("SelectedOutfit", "CBBE Body");
-	string activePreset = Config.GetCString("SelectedPreset", "CBBE");
+	string activeOutfit = Config.GetCString("SelectedOutfit");
+	string activePreset = Config.GetCString("SelectedPreset");
 	ActivatePreset(activePreset);
 	sliderView->Thaw();
 }
@@ -130,8 +130,8 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 	sliderManager.ClearPresets();
 	SetPresetGroups(outfitName);
 
-	string activeOutfit = Config.GetCString("SelectedOutfit", "CBBE Body");
-	string activePreset = Config.GetCString("SelectedPreset", "CBBE");
+	string activeOutfit = Config.GetCString("SelectedOutfit");
+	string activePreset = Config.GetCString("SelectedPreset");
 	LoadPresets(activeOutfit);
 	PopulatePresetList(activePreset);
 	createSliders(outfitName);
@@ -167,7 +167,7 @@ int BodySlideApp::createSliders(const string& outfit, bool hideAll) {
 
 	createSetSliders(outfit, hideAll);
 	PopulateOutfitList(outfit);
-	string activePreset = Config.GetCString("SelectedPreset", "CBBE");
+	string activePreset = Config.GetCString("SelectedPreset");
 	sliderManager.InitializeSliders(activePreset);
 
 	return 0;
@@ -175,7 +175,7 @@ int BodySlideApp::createSliders(const string& outfit, bool hideAll) {
 
 void BodySlideApp::RefreshOutfitList() {
 	LoadSliderSets();
-	string activeOutfit = Config.GetCString("SelectedOutfit", "CBBE Body");
+	string activeOutfit = Config.GetCString("SelectedOutfit");
 	PopulateOutfitList(activeOutfit);
 }
 
@@ -224,7 +224,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	if (preview1)
 		preview1->Close();
 
-	string activePreset = Config.GetCString("SelectedPreset", "CBBE");
+	string activePreset = Config.GetCString("SelectedPreset");
 
 	sliderManager.ClearPresets();
 	SetPresetGroups(outfitName);
@@ -651,16 +651,16 @@ void BodySlideApp::SetDefaultConfig() {
 
 	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
-	Config.SetDefaultValue("SelectedPreset", "CBBE");
+	Config.SetDefaultValue("SelectedPreset", "");
 
 	if (!Config.Exists("SelectedOutfit"))
-		Config.SetValue("SelectedOutfit", "CBBE Body");
+		Config.SetValue("SelectedOutfit", "");
 	if (!Config.Exists("Anim/DefaultSkeletonReference"))
 		Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
 	if (!Config.Exists("ReferenceTemplates"))
 		Config.SetValue("ReferenceTemplates", "");
 	if (!Config.Exists("Input/SliderMinimum"))
-		Config.SetValue("Input/SliderMinimum", 0);
+		Config.SetValue("Input/SliderMinimum", -30);
 	if (!Config.Exists("Input/SliderMaximum"))
 		Config.SetValue("Input/SliderMaximum", 100);
 }
@@ -826,7 +826,7 @@ int BodySlideApp::GetFilteredOutfits(vector<string>& outList) {
 void BodySlideApp::LoadPresets(const string& sliderSet) {
 	string outfit = sliderSet;
 	if (sliderSet.empty())
-		outfit = Config.GetCString("SelectedOutfit", "");
+		outfit = Config.GetCString("SelectedOutfit");
 
 	vector<string> groups_and_aliases;
 
@@ -1283,7 +1283,7 @@ void BodySlideApp::SetSliderChanged(const wxString& sliderName, bool isLo) {
 }
 
 int BodySlideApp::SaveSliderPositions(const string& outputFile, const string& presetName, vector<string>& groups) {
-	string outfitName = Config.GetCString("SelectedOutfit", "CBBE Body");
+	string outfitName = Config.GetCString("SelectedOutfit");
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
@@ -1332,9 +1332,9 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const w
 	sw->SetBackgroundColour(wxColor(0x40, 0x40, 0x40));
 	sw->Bind(wxEVT_ENTER_WINDOW, &BodySlideFrame::OnEnterSliderWindow, this);
 
-	wxString val = Config.GetCString("LastGroupFilter", "");
+	wxString val = Config.GetCString("LastGroupFilter");
 	search->ChangeValue(val);
-	val = Config.GetCString("LastOutfitFilter", "");
+	val = Config.GetCString("LastOutfitFilter");
 	outfitsearch->ChangeValue(val);
 }
 
@@ -1505,7 +1505,9 @@ void BodySlideFrame::PopulateOutfitList(const wxArrayString& items, const wxStri
 		//c->SetValue("BWWW");
 
 		int i;
-		if (selectItem.First('['))
+		if (selectItem.empty())
+			i = c->Append("");
+		else if (selectItem.First('['))
 			i = c->Append("[" + selectItem + "]");
 		else
 			i = c->Append(selectItem);
