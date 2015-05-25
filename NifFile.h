@@ -357,9 +357,7 @@ public:
 	// Virtual values not saved with nif, used for vertex position retrieval
 	Vector3 virtOffset;
 	float virtScale;
-
 	bool scaleFromCenter;
-	int myver;
 
 	NiTriShapeData(NiHeader& hdr);
 	NiTriShapeData(fstream& file, NiHeader& hdr);

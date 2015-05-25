@@ -930,8 +930,8 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 		}
 	}
 
-	hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriShape"));
-	hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriShapeData"));
+	hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriStrips"));
+	hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriStripsData"));
 	if (!skipSkinInst) {
 		if (skipBSDSkinInst)
 			hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiSkinInstance"));
