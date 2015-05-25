@@ -1775,7 +1775,7 @@ void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 		return;
 	}
 
-	if (glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
+	if (glView->GetActiveBrush() != nullptr && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
 		glView->SetXMirror(previousMirror);
 		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
 	}

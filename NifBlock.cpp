@@ -1497,13 +1497,7 @@ int NiTriStripsData::CalcBlockSize() {
 	NiTriBasedGeomData::CalcBlockSize();
 
 	blockSize += 3;
-	blockSize += numVertices * 12;			// Verts
-	blockSize += normals.size() * 12;		// Normals
-	blockSize += tangents.size() * 12;		// Tangents
-	blockSize += bitangents.size() * 12;	// Bitangents
-	blockSize += vertexColors.size() * 16;	// Vertex Colors
-	blockSize += uvSets.size() * 8;			// UVs
-	blockSize += stripLengths.size() * 2;	// Strip Lengths
+	blockSize += numStrips * 2;				// Strip Lengths
 
 	for (auto pl : points)
 		blockSize += pl.size() * 2;

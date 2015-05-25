@@ -616,7 +616,9 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 
 	if (texSetFound) {
 		// Create texture set block and copy
-		destTexSet = new BSShaderTextureSet((*srcTexSet));
+		//destTexSet = new BSShaderTextureSet((*srcTexSet));
+		destTexSet = new BSShaderTextureSet(hdr);
+		(*destTexSet) = (*srcTexSet);
 
 		// Add texture block to nif
 		texsetId = blocks.size();
@@ -749,7 +751,9 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 
 	if (texSetFound) {
 		// Create texture set block and copy
-		destTexSet = new BSShaderTextureSet((*srcTexSet));
+		//destTexSet = new BSShaderTextureSet((*srcTexSet));
+		destTexSet = new BSShaderTextureSet(hdr);
+		(*destTexSet) = (*srcTexSet);
 
 		// Add texture block to nif
 		texsetId = blocks.size();
@@ -2582,10 +2586,15 @@ void NifFile::DeleteShape(const string& shapeName) {
 			if (shaderPP) {
 				DeleteBlock(shaderPP->textureSetRef);
 				DeleteBlock(strips->propertiesRef[i]);
+				i--;
+				continue;
 			}
 			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(strips->propertiesRef[i]));
-			if (alpha)
+			if (alpha) {
 				DeleteBlock(strips->propertiesRef[i]);
+				i--;
+				continue;
+			}
 		}
 
 		for (int i = 0; i < strips->numExtraData; i++)
@@ -2625,10 +2634,15 @@ void NifFile::DeleteShape(const string& shapeName) {
 			if (shaderPP) {
 				DeleteBlock(shaderPP->textureSetRef);
 				DeleteBlock(shape->propertiesRef[i]);
+				i--;
+				continue;
 			}
 			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(shape->propertiesRef[i]));
-			if (alpha)
+			if (alpha) {
 				DeleteBlock(shape->propertiesRef[i]);
+				i--;
+				continue;
+			}
 		}
 
 		for (int i = 0; i < shape->numExtraData; i++)
