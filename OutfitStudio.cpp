@@ -21,7 +21,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_COMMAND_SCROLL(wxID_ANY, OutfitStudio::OnSlider)
 	EVT_BUTTON(wxID_ANY, OutfitStudio::OnClickSliderButton)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudio::OnSelectSliders)
-	EVT_CHECKBOX(wxID_ANY, OutfitStudio::OnCheckBox)	
+	EVT_CHECKBOX(wxID_ANY, OutfitStudio::OnCheckBox)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSaveBaseOutfit)
 	EVT_MENU(XRCID("exportOutfitNif"), OutfitStudio::OnExportOutfitNif)
@@ -1279,7 +1279,10 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& WXUNUSED(event)) {
 			if (ret != wxYES)
 				return;
 		}
+
 		StartProgress("Saving...");
+		Proj->ClearBoneScale();
+
 		vector<string> shapes;
 		vector<mesh*> shapeMeshes;
 		Proj->OutfitShapes(shapes);
@@ -1431,6 +1434,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
 
 	StartProgress("Saving...");
+	Proj->ClearBoneScale();
 
 	vector<string> shapes;
 	vector<mesh*> shapeMeshes;
@@ -1465,6 +1469,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnSaveBaseOutfit(wxCommandEvent& WXUNUSED(event)) {
+	Proj->ClearBoneScale();
 	vector<string> shapes;
 	Proj->OutfitShapes(shapes);
 	for (auto s : shapes)
@@ -1493,12 +1498,14 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 			return;
 	}
 
-	vector<string> shapes;
-	vector<mesh*> shapeMeshes;
 	string fileName = wxFileSelector("Export outfit NIF", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.empty())
 		return;
 
+	Proj->ClearBoneScale();
+
+	vector<string> shapes;
+	vector<mesh*> shapeMeshes;
 	Proj->OutfitShapes(shapes);
 	for (auto s : shapes)
 		shapeMeshes.push_back(glView->GetMesh(s));
@@ -1522,12 +1529,14 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& WXUNUSED(event)) {
 			return;
 	}
 
-	vector<string> shapes;
-	vector<mesh*> shapeMeshes;
 	string fileName = wxFileSelector("Export project NIF", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.empty())
 		return;
 
+	Proj->ClearBoneScale();
+
+	vector<string> shapes;
+	vector<mesh*> shapeMeshes;
 	Proj->OutfitShapes(shapes);
 	Proj->RefShapes(shapes);
 	for (auto s : shapes)
@@ -1553,8 +1562,9 @@ void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	string finalName = wxGetTextFromUser("Create a conversion slider for the current slider settings with the following name: ", "Create New Conversion Slider", thename, this);
 	if (finalName == "")
 		return;
-	finalName = Proj->NameAbbreviate(finalName);
 
+	finalName = Proj->NameAbbreviate(finalName);
+	Proj->ClearBoneScale();
 	Proj->AddCombinedSlider(finalName);
 
 	vector<string> refShapes;
@@ -2108,7 +2118,6 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 	if (sliderName.empty())
 		return;
 
-
 	SetSliderValue(sliderName, event.GetPosition());
 
 	if (!bEditSlider && event.GetEventType() == wxEVT_SCROLL_CHANGED)
@@ -2581,13 +2590,16 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 		if (dir.empty())
 			return;
 
+		Proj->ClearBoneScale();
 		for (auto i : selectedItems)
 			Proj->ExportShape(i->shapeName, dir + "\\" + i->shapeName + ".obj", i->bIsOutfitShape);
 	}
 	else {
 		string fname = wxFileSelector("Export shape as an .obj file", wxEmptyString, wxString(activeItem->shapeName + ".obj"), "", "Obj Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (!fname.empty())
+		if (!fname.empty()) {
+			Proj->ClearBoneScale();
 			Proj->ExportShape(activeItem->shapeName, fname, activeItem->bIsOutfitShape);
+		}
 	}
 }
 
@@ -3095,6 +3107,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& event) {
 			newname = result;
 		} while (Proj->IsValidShape(newname));
 
+		Proj->ClearBoneScale();
 		mesh* curshapemesh = glView->GetMesh(activeShape);
 
 		if (activeItem->bIsOutfitShape)

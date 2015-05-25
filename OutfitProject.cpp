@@ -1069,17 +1069,13 @@ void OutfitProject::ClearBoneScale() {
 		}
 	}
 
-	shapes.clear();
-	RefShapes(shapes);
-	for (auto s : shapes) {
-		if (boneScaleOffsets.find(s) != boneScaleOffsets.end()) {
-			baseNif.GetVertsForShape(s, verts);
-			if (verts.size() == boneScaleOffsets[s].size()) {
-				for (int i = 0; i < verts.size(); i++)
-					verts[i] -= boneScaleOffsets[s][i];
-				baseNif.SetVertsForShape(s, verts);
-				owner->glView->UpdateMeshVertices(s, &verts);
-			}
+	if (boneScaleOffsets.find(baseShapeName) != boneScaleOffsets.end()) {
+		baseNif.GetVertsForShape(baseShapeName, verts);
+		if (verts.size() == boneScaleOffsets[baseShapeName].size()) {
+			for (int i = 0; i < verts.size(); i++)
+				verts[i] -= boneScaleOffsets[baseShapeName][i];
+			baseNif.SetVertsForShape(baseShapeName, verts);
+			owner->glView->UpdateMeshVertices(baseShapeName, &verts);
 		}
 	}
 
