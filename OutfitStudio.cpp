@@ -23,7 +23,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudio::OnSelectSliders)
 	EVT_CHECKBOX(wxID_ANY, OutfitStudio::OnCheckBox)
 
-	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSaveBaseOutfit)
+	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSetBaseShape)
 	EVT_MENU(XRCID("exportOutfitNif"), OutfitStudio::OnExportOutfitNif)
 	EVT_MENU(XRCID("exportOutfitNifWithRef"), OutfitStudio::OnExportOutfitNifWithRef)
 	EVT_MENU(XRCID("makeConvRef"), OutfitStudio::OnMakeConvRef)
@@ -42,7 +42,6 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("sliderDelete"), OutfitStudio::OnDeleteSlider)
 	EVT_MENU(XRCID("sliderProperties"), OutfitStudio::OnSliderProperties)
 	
-	EVT_MENU(XRCID("btnEditMode"), OutfitStudio::OnEditMode)
 	EVT_MENU(XRCID("btnXMirror"), OutfitStudio::OnXMirror)
 	EVT_MENU(XRCID("btnConnected"), OutfitStudio::OnConnectedOnly)
 	
@@ -63,12 +62,11 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("btnInvertMask"), OutfitStudio::OnInvertMask)
 	EVT_MENU(XRCID("btnShowMask"), OutfitStudio::OnShowMask)
 
-	EVT_MENU(XRCID("btnGhostMode"), OutfitStudio::OnGhostMesh)
 	EVT_MENU(XRCID("btnRecalcNormals"), OutfitStudio::OnRecalcNormals)
 	EVT_MENU(XRCID("btnAutoNormals"), OutfitStudio::OnAutoNormals)
 	EVT_MENU(XRCID("btnSmoothSeams"), OutfitStudio::OnSmoothNormalSeams)
-	EVT_MENU(XRCID("btnSmoothThresh"), OutfitStudio::OnSetSmoothThreshold)
 
+	EVT_MENU(XRCID("btnGhostMode"), OutfitStudio::OnGhostMesh)
 	EVT_MENU(XRCID("btnShowWireframe"), OutfitStudio::OnShowWireframe)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudio::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudio::OnEnableTextures)
@@ -101,7 +99,6 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitBones"), OutfitStudio::OnOutfitBoneSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitShapes"), OutfitStudio::OnOutfitShapeContext)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudio::OnBoneContext)
-	EVT_COMMAND_KILL_FOCUS(XRCID("outfitShapes"), OutfitStudio::OnKillFocusOutfitShapes)
 	
 	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudio::OnMeshBoneButtonClick)
 	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudio::OnMeshBoneButtonClick)
@@ -1468,7 +1465,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	EndProgress();
 }
 
-void OutfitStudio::OnSaveBaseOutfit(wxCommandEvent& WXUNUSED(event)) {
+void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 	Proj->ClearBoneScale();
 	vector<string> shapes;
 	Proj->OutfitShapes(shapes);
@@ -1658,7 +1655,6 @@ void OutfitStudio::OnOutfitShapeSelect(wxTreeEvent& event) {
 		activeShape = outfitShapes->GetItemText(item);
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(item);
 		glView->SetActiveShape(activeShape);
-
 	}
 	else {
 		subitem = outfitShapes->GetFirstChild(item, cookie);
@@ -1779,10 +1775,6 @@ void OutfitStudio::OnCheckBox(wxCommandEvent& event) {
 	ApplySliders();
 }
 
-void OutfitStudio::OnKillFocusOutfitShapes(wxCommandEvent& event) {
-	event.Skip();
-}
-
 void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 	int id = event.GetId();
 	wxWindow* w = FindFocus();
@@ -1792,7 +1784,7 @@ void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 		return;
 	}
 
-	if (glView->GetActiveBrush() != nullptr && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
+	if (glView->GetActiveBrush() && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
 		glView->SetXMirror(previousMirror);
 		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
 	}

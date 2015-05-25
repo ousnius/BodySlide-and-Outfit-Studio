@@ -543,7 +543,7 @@ private:
 	void OnLoadOutfitFP_OBJ(wxFileDirPickerEvent& event);
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
 
-	void OnSaveBaseOutfit(wxCommandEvent &event);
+	void OnSetBaseShape(wxCommandEvent &event);
 	void OnExportOutfitNif(wxCommandEvent &event);
 	void OnExportOutfitNifWithRef(wxCommandEvent &event);
 	void OnMakeConvRef(wxCommandEvent& event);
@@ -569,7 +569,6 @@ private:
 	void OnBoneContext(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);
-	void OnKillFocusOutfitShapes(wxCommandEvent& event);
 
 	void OnSelectBrush(wxCommandEvent& event);
 
@@ -624,10 +623,6 @@ private:
 
 	void OnBrushSettingsSlider(wxScrollEvent& event);
 
-	void OnEditMode(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleEditMode();
-	}
-
 	void OnXMirror(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleXMirror();
 	}
@@ -641,11 +636,6 @@ private:
 	}
 	void OnRedo(wxCommandEvent& WXUNUSED(event)) {
 		glView->RedoStroke();
-	}
-
-	void OnGhostMesh(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleGhostMode();
-		glView->Refresh();
 	}
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
@@ -663,20 +653,8 @@ private:
 		glView->Refresh();
 	}
 
-	void OnSetSmoothThreshold(wxCommandEvent& WXUNUSED(event)) {
-		if (!activeItem)
-			return;
-
-		mesh* m = glView->GetMesh(activeItem->shapeName);
-		double a;
-		a = m->GetSmoothThreshold();
-		wxString resp = wxString::FromDouble(a, 4);
-		resp = wxGetTextFromUser("Enter the maximum angle between faces for smoothing to take place", "Set Smooth Angle", resp, this);
-		if (resp.empty())
-			return;
-		resp.ToDouble(&a);
-		m->SetSmoothThreshold((float)a);
-		m->SmoothNormals();
+	void OnGhostMesh(wxCommandEvent& WXUNUSED(event)) {
+		glView->ToggleGhostMode();
 		glView->Refresh();
 	}
 
