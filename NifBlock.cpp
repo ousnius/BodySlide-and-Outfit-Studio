@@ -194,6 +194,7 @@ void NiString::Get(fstream& file, int szSize) {
 void NiObjectNET::Init() {
 	NiObject::Init();
 
+	bBSLightingShaderProperty = false;
 	skyrimShaderType = 0;
 	name = "";
 	nameRef = -1;
@@ -203,6 +204,9 @@ void NiObjectNET::Init() {
 
 void NiObjectNET::Get(fstream& file) {
 	NiObject::Get(file);
+
+	if (bBSLightingShaderProperty && header->userVersion >= 12)
+		file.read((char*)&skyrimShaderType, 4);
 
 	file.read((char*)&nameRef, 4);
 	if (nameRef != -1)
@@ -222,6 +226,9 @@ void NiObjectNET::Get(fstream& file) {
 
 void NiObjectNET::Put(fstream& file) {
 	NiObject::Put(file);
+
+	if (bBSLightingShaderProperty && header->userVersion >= 12)
+		file.write((char*)&skyrimShaderType, 4);
 
 	file.write((char*)&nameRef, 4);
 
@@ -254,9 +261,34 @@ void NiObjectNET::notifyBlockDelete(int blockID) {
 int NiObjectNET::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
+	if (bBSLightingShaderProperty && header->userVersion >= 12)
+		blockSize += 4;
+
 	blockSize += 12;
 	blockSize += numExtraData * 4;
+
 	return blockSize;
+}
+
+
+void NiProperty::Init() {
+	NiObjectNET::Init();
+}
+
+void NiProperty::Get(fstream& file) {
+	NiObjectNET::Get(file);
+}
+
+void NiProperty::Put(fstream& file) {
+	NiObjectNET::Put(file);
+}
+
+void NiProperty::notifyBlockDelete(int blockID) {
+	NiObjectNET::notifyBlockDelete(blockID);
+}
+
+int NiProperty::CalcBlockSize() {
+	return NiObjectNET::CalcBlockSize();
 }
 
 
@@ -357,13 +389,39 @@ int NiAVObject::CalcBlockSize() {
 	NiObjectNET::CalcBlockSize();
 
 	blockSize += 58;
-	blockSize += numProperties * 4;
+	if (header->userVersion <= 11) {
+		blockSize += 4;
+		blockSize += numProperties * 4;
+	}
 	if (header->userVersion >= 11 && header->userVersion2 > 26)
 		blockSize += 2;
 
 	return blockSize;
 }
 
+
+NiNode::NiNode(NiHeader& hdr) {
+	NiAVObject::Init();
+
+	header = &hdr;
+	blockType = NINODE;
+	numChildren = 0;
+	numEffects = 0;
+
+	CalcBlockSize();
+}
+
+NiNode::NiNode(fstream& file, NiHeader& hdr) {
+	NiAVObject::Init();
+
+	header = &hdr;
+	blockType = NINODE;
+	numChildren = 0;
+	numEffects = 0;
+
+	Get(file);
+	CalcBlockSize();
+}
 
 void NiNode::Get(fstream& file) {
 	NiAVObject::Get(file);
@@ -415,36 +473,12 @@ void NiNode::notifyBlockDelete(int blockID) {
 		else if (effects[i] > blockID)
 			effects[i]--;
 	}
-
-	CalcBlockSize();
-}
-
-NiNode::NiNode(NiHeader& hdr) {
-	NiAVObject::Init();
-
-	header = &hdr;
-	blockType = NINODE;
-	numChildren = 0;
-	numEffects = 0;
-
-	CalcBlockSize();
-}
-
-NiNode::NiNode(fstream& file, NiHeader& hdr) {
-	NiAVObject::Init();
-
-	header = &hdr;
-	blockType = NINODE;
-	numChildren = 0;
-	numEffects = 0;
-
-	Get(file);
-	CalcBlockSize();
 }
 
 int NiNode::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
+	blockSize += 8;
 	blockSize += numChildren * 4;
 	blockSize += numEffects * 4;
 	return blockSize;
@@ -527,7 +561,15 @@ void NiGeometry::notifyBlockDelete(int blockID) {
 }
 
 int NiGeometry::CalcBlockSize() {
-	return NiAVObject::CalcBlockSize();
+	NiAVObject::CalcBlockSize();
+
+	blockSize += 17;
+	blockSize += numMaterials * 2;
+	blockSize += numMaterials * 4;
+	if (header->userVersion > 11)
+		blockSize += 8;
+
+	return blockSize;
 }
 
 
@@ -1019,14 +1061,10 @@ void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 			triangles[i].p3 = triangles[i].p3 - indexCollapse[triangles[i].p3];
 		}
 	}
-
-	CalcBlockSize();
 }
 
 void NiTriShapeData::notifyBlockDelete(int blockID) {
 	NiTriBasedGeomData::notifyBlockDelete(blockID);
-
-	CalcBlockSize();
 }
 
 void NiTriShapeData::RecalcNormals() {
@@ -1271,8 +1309,6 @@ void NiTriStripsData::Put(fstream& file) {
 
 void NiTriStripsData::notifyBlockDelete(int blockID) {
 	NiTriBasedGeomData::notifyBlockDelete(blockID);
-
-	CalcBlockSize();
 }
 
 void NiTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
@@ -1299,8 +1335,6 @@ void NiTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 			}
 		}
 	}
-
-	CalcBlockSize();
 }
 
 void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
@@ -1477,483 +1511,136 @@ int NiTriStripsData::CalcBlockSize() {
 	return blockSize;
 }
 
-void NifBlockNiSkinData::Get(fstream& file) {
-	file.read((char*)&rootTransform, 52);
-	file.read((char*)&numBones, 4);
-	file.read((char*)&hasVertWeights, 1);
 
-	SkinWeight sWt;
-	BoneData boneData;
-	for (int i = 0; i < numBones; i++) {
-		boneData.skin_weights.clear();
+NiSkinInstance::NiSkinInstance(NiHeader& hdr) {
+	Init();
 
-		file.read((char*)&boneData.boneTransform, 52);
-		file.read((char*)&boneData.boundSphereOffset, 12);
-		file.read((char*)&boneData.boundSphereRadius, 4);
-		file.read((char*)&boneData.numVerts, 2);
-
-		for (int j = 0; j < boneData.numVerts; j++) {
-			file.read((char*)&sWt.index, 2);
-			file.read((char*)&sWt.weight, 4);
-			boneData.skin_weights.push_back(sWt);
-		}
-
-		Bones.push_back(boneData);
-	}
-}
-
-void NifBlockNiSkinData::Put(fstream& file) {
-	file.write((char*)&rootTransform, 52);
-	file.write((char*)&numBones, 4);
-	file.write((char*)&hasVertWeights, 1);
-
-	for (int i = 0; i < numBones; i++) {
-		file.write((char*)&Bones[i].boneTransform, 52);
-		file.write((char*)&Bones[i].boundSphereOffset, 12);
-		file.write((char*)&Bones[i].boundSphereRadius, 4);
-		file.write((char*)&Bones[i].numVerts, 2);
-
-		for (int j = 0; j < Bones[i].numVerts; j++) {
-			file.write((char*)&Bones[i].skin_weights[j].index, 2);
-			file.write((char*)&Bones[i].skin_weights[j].weight, 4);
-		}
-	}
-}
-
-void NifBlockNiSkinData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	ushort highestRemoved = vertIndices[vertIndices.size() - 1];
-	vector<int> indexCollapse(highestRemoved + 1, 0);
-
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
-			indexCollapse[i] = -1;	// Flag delete
-			remCount++;
-			j++;
-		}
-		else
-			indexCollapse[i] = remCount;
-	}
-
-	ushort ival;
-	for (auto b = Bones.begin(); b != Bones.end(); ++b) {
-		for (int i = b->numVerts - 1; i >= 0; i--) {
-			ival = b->skin_weights[i].index;
-			if (b->skin_weights[i].index > highestRemoved) {
-				b->skin_weights[i].index -= remCount;
-			}
-			else
-				if (indexCollapse[ival] == -1) {
-					b->skin_weights.erase(b->skin_weights.begin() + i);
-					b->numVerts--;
-					blockSize -= 6;
-				}
-				else {
-					b->skin_weights[i].index -= indexCollapse[ival];
-				}
-		}
-	}
-}
-
-NifBlockNiSkinData::NifBlockNiSkinData(NiHeader& hdr) {
 	header = &hdr;
-	blockType = NISKINDATA;
-	rootTransform.scale = 1.0f;
+	blockType = NISKININSTANCE;
+
+	CalcBlockSize();
+}
+
+NiSkinInstance::NiSkinInstance(fstream& file, NiHeader& hdr) {
+	Init();
+
+	header = &hdr;
+	blockType = NISKININSTANCE;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiSkinInstance::Init() {
+	NiObject::Init();
+
+	dataRef = -1;
+	skinPartitionRef = -1;
+	skeletonRootRef = -1;
 	numBones = 0;
-	hasVertWeights = 1;
-	blockSize = 57;
 }
 
-NifBlockNiSkinData::NifBlockNiSkinData(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = NISKINDATA;
-	Get(file);
-}
-	
-int NifBlockNiSkinData::CalcBlockSize() {
-	numBones = Bones.size();
-	blockSize = 57;
-	for (auto bd : Bones)
-		blockSize += bd.CalcSize();
+void NiSkinInstance::Get(fstream& file) {
+	NiObject::Get(file);
 
-	return blockSize;
-}
-
-
-int NifBlockNiSkinPartition::CalcBlockSize() {
-	blockSize = 4;
-	for (auto p : partitionBlocks) {
-		if (myver >= 12)							// plain data size
-			blockSize += 16;
-		else
-			blockSize += 14;
-		blockSize += 2 * p.numBones;				// bonelist size
-		blockSize += 2 * p.numVertices;				// vertmap size
-		blockSize += 4 * p.numVertices;				// boneindex size
-		blockSize += 16 * p.numVertices;			// vertexWeights size
-		blockSize += 2 * p.numStrips;				// striplengths size
-		for (int i = 0; i < p.numStrips; i++)
-			blockSize += 2 * p.stripLengths[i];		// striplist size
-
-		if (p.numStrips == 0)
-			blockSize += 6 * p.numTriangles;		// Triangle list size
-	}
-	return blockSize;
-}
-
-void NifBlockNiSkinPartition::Get(fstream& file) {
-	PartitionBlock partBlock;
-	ushort uShort;
-	VertexWeight wt;
-	BoneIndices bi;
-	Triangle Triangle;
-
-	file.read((char*)&numPartitions, 4);
-	for (int p = 0; p < numPartitions; p++) {
-		partBlock.bones.clear();
-		partBlock.vertMap.clear();
-		partBlock.vertWeights.clear();
-		partBlock.stripLengths.clear();
-		partBlock.strips.clear();
-		partBlock.tris.clear();
-		partBlock.boneindex.clear();
-
-		file.read((char*)&partBlock.numVertices, 2);
-		file.read((char*)&partBlock.numTriangles, 2);
-		file.read((char*)&partBlock.numBones, 2);
-		file.read((char*)&partBlock.numStrips, 2);
-		file.read((char*)&partBlock.numWeightsPerVert, 2);
-		for (int i = 0; i < partBlock.numBones; i++) {
-			file.read((char*)&uShort, 2);
-			partBlock.bones.push_back(uShort);
-		}
-		file.read((char*)&partBlock.hasVertMap, 1);
-		for (int i = 0; (i < partBlock.numVertices) && partBlock.hasVertMap; i++) {
-			file.read((char*)&uShort, 2);
-			partBlock.vertMap.push_back(uShort);
-		}
-		file.read((char*)&partBlock.hasVertWeights, 1);
-		for (int i = 0; (i < partBlock.numVertices) && partBlock.hasVertWeights; i++) {
-			file.read((char*)&wt.w1, 4);
-			file.read((char*)&wt.w2, 4);
-			file.read((char*)&wt.w3, 4);
-			file.read((char*)&wt.w4, 4);
-			partBlock.vertWeights.push_back(wt);
-		}
-		for (int i = 0; i < partBlock.numStrips; i++) {
-			file.read((char*)&uShort, 2);
-			partBlock.stripLengths.push_back(uShort);
-		}
-		file.read((char*)&partBlock.hasFaces, 1);
-		for (int i = 0; (i < partBlock.numStrips) && partBlock.hasFaces; i++) {
-			partBlock.strips.push_back(vector<ushort>());
-			for (int j = 0; j < partBlock.stripLengths[i]; j++) {
-				file.read((char*)&uShort, 2);
-				partBlock.strips[i].push_back(uShort);
-			}
-		}
-		if (partBlock.numStrips == 0) {
-			for (int i = 0; (i < partBlock.numTriangles) && partBlock.hasFaces; i++) {
-				file.read((char*)&Triangle.p1, 2);
-				file.read((char*)&Triangle.p2, 2);
-				file.read((char*)&Triangle.p3, 2);
-				partBlock.tris.push_back(Triangle);
-			}
-		}
-		file.read((char*)&partBlock.hasBoneIndices, 1);
-		for (int i = 0; i < partBlock.numVertices && partBlock.hasBoneIndices; i++) {
-			file.read((char*)&bi.i1, 1);
-			file.read((char*)&bi.i2, 1);
-			file.read((char*)&bi.i3, 1);
-			file.read((char*)&bi.i4, 1);
-			partBlock.boneindex.push_back(bi);
-		}
-		if (header->userVersion >= 12) {
-			file.read((char*)&partBlock.unknown, 2);
-			myver = 12;
-		}
-		else
-			myver = 11;
-		partitionBlocks.push_back(partBlock);
-	}
-}
-
-void NifBlockNiSkinPartition::Put(fstream& file) {
-	file.write((char*)&numPartitions, 4);
-	for (int p = 0; p < numPartitions; p++) {
-		file.write((char*)&partitionBlocks[p].numVertices, 2);
-		file.write((char*)&partitionBlocks[p].numTriangles, 2);
-		file.write((char*)&partitionBlocks[p].numBones, 2);
-		file.write((char*)&partitionBlocks[p].numStrips, 2);
-		file.write((char*)&partitionBlocks[p].numWeightsPerVert, 2);
-		for (int i = 0; i < partitionBlocks[p].numBones; i++)
-			file.write((char*)&partitionBlocks[p].bones[i], 2);
-
-		file.write((char*)&partitionBlocks[p].hasVertMap, 1);
-		for (int i = 0; (i < partitionBlocks[p].numVertices) && partitionBlocks[p].hasVertMap; i++)
-			file.write((char*)&partitionBlocks[p].vertMap[i], 2);
-
-		file.write((char*)&partitionBlocks[p].hasVertWeights, 1);
-		for (int i = 0; (i < partitionBlocks[p].numVertices) && partitionBlocks[p].hasVertWeights; i++)
-			file.write((char*)&partitionBlocks[p].vertWeights[i], 16);
-
-		for (int i = 0; i < partitionBlocks[p].numStrips; i++)
-			file.write((char*)&partitionBlocks[p].stripLengths[i], 2);
-
-		file.write((char*)&partitionBlocks[p].hasFaces, 1);
-		for (int i = 0; (i < partitionBlocks[p].numStrips) && partitionBlocks[p].hasFaces; i++)
-			for (int j = 0; j < partitionBlocks[p].stripLengths[i]; j++)
-				file.write((char*)&partitionBlocks[p].strips[i][j], 2);
-
-		if (partitionBlocks[p].numStrips == 0) {
-			for (int i = 0; (i < partitionBlocks[p].numTriangles) && partitionBlocks[p].hasFaces; i++)
-				file.write((char*)&partitionBlocks[p].tris[i].p1, 6);
-		}
-
-		file.write((char*)&partitionBlocks[p].hasBoneIndices, 1);
-		for (int i = 0; i < partitionBlocks[p].numVertices && partitionBlocks[p].hasBoneIndices; i++)
-			file.write((char*)&partitionBlocks[p].boneindex[i], 4);
-
-		if (header->userVersion >= 12)
-			file.write((char*)&partitionBlocks[p].unknown, 2);
-	}
-}
-
-void NifBlockNiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	ushort highestRemoved = vertIndices.back();
-	vector<int> indexCollapse(highestRemoved + 1, 0);
-
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
-		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
-			indexCollapse[i] = -1;	// Flag delete
-			remCount++;
-			j++;
-		}
-		else
-			indexCollapse[i] = remCount;
-	}
-
-	ushort ival;
-	size_t maxVertMapSz = 0;
-	for (auto p = partitionBlocks.begin(); p != partitionBlocks.end(); ++p)
-		if (p->vertMap.size() > maxVertMapSz)
-			maxVertMapSz = p->vertMap.size();
-
-	vector<int> mapCollapse(maxVertMapSz, 0);
-	int mapRemCount = 0;
-	int mapHighestRemoved = maxVertMapSz;
-
-	for (auto p = partitionBlocks.begin(); p != partitionBlocks.end(); ++p) {
-		mapRemCount = 0;
-		mapHighestRemoved = maxVertMapSz;
-		for (int i = 0; i < p->vertMap.size(); i++) {
-			if (p->vertMap[i] < indexCollapse.size() && indexCollapse[p->vertMap[i]] == -1) {
-				mapRemCount++;
-				mapCollapse[i] = -1;
-				mapHighestRemoved = i;
-			}
-			else {
-				mapCollapse[i] = mapRemCount;
-			}
-		}
-		for (int i = p->vertMap.size() - 1; i >= 0; i--) {
-			ival = p->vertMap[i];
-			if (ival > highestRemoved) {
-				p->vertMap[i] -= remCount;
-			}
-			else
-				if (indexCollapse[ival] == -1) {
-					p->vertMap.erase(p->vertMap.begin() + i);
-					p->numVertices--;
-					blockSize -= 2;
-					if (p->hasVertWeights) {
-						p->vertWeights.erase(p->vertWeights.begin() + i);
-						blockSize -= 16;
-					} if (p->hasBoneIndices)
-						p->boneindex.erase(p->boneindex.begin() + i);
-					blockSize -= 4;
-				}
-				else {
-					p->vertMap[i] -= indexCollapse[ival];
-				}
-		}
-
-		for (int i = p->numTriangles - 1; i >= 0; i--) {
-			if (p->tris[i].p1 > mapHighestRemoved) {
-				p->tris[i].p1 -= mapRemCount;
-			}
-			else
-				if (mapCollapse[p->tris[i].p1] == -1) {
-					p->tris.erase(p->tris.begin() + i);
-					p->numTriangles--;
-					blockSize -= 6;
-					continue;
-				}
-				else {
-					p->tris[i].p1 -= mapCollapse[p->tris[i].p1];
-				}
-				if (p->tris[i].p2 > mapHighestRemoved) {
-					p->tris[i].p2 -= mapRemCount;
-				}
-				else
-					if (mapCollapse[p->tris[i].p2] == -1) {
-						p->tris.erase(p->tris.begin() + i);
-						p->numTriangles--;
-						blockSize -= 6;
-						continue;
-					}
-					else {
-						p->tris[i].p2 -= mapCollapse[p->tris[i].p2];
-					}
-					if (p->tris[i].p3 > mapHighestRemoved) {
-						p->tris[i].p3 -= mapRemCount;
-					}
-					else
-						if (mapCollapse[p->tris[i].p3] == -1) {
-							p->tris.erase(p->tris.begin() + i);
-							p->numTriangles--;
-							blockSize -= 6;
-							continue;
-						}
-						else {
-							p->tris[i].p3 -= mapCollapse[p->tris[i].p3];
-						}
-		}
-	}
-}
-
-int NifBlockNiSkinPartition::RemoveEmptyPartitions(vector<int>& outDeletedIndices) {
-	outDeletedIndices.clear();
-	for (int i = partitionBlocks.size() - 1; i >= 0; i--) {
-		if (partitionBlocks[i].numVertices == 0) {
-			if (myver >= 12)
-				blockSize -= (16 + 2 * partitionBlocks[i].numBones);
-			else
-				blockSize -= (14 + 2 * partitionBlocks[i].numBones);
-			outDeletedIndices.insert(outDeletedIndices.begin(), i);
-			partitionBlocks.erase(partitionBlocks.begin() + i);
-			numPartitions--;
-		}
-	}
-	return outDeletedIndices.size();
-}
-
-NifBlockNiSkinPartition::NifBlockNiSkinPartition(NiHeader& hdr) {
-	header = &hdr;
-	blockType = NISKINPARTITION;
-	numPartitions = 0;
-	blockSize = 4;
-	myver = 12;
-	needsBuild = true;
-}
-
-NifBlockNiSkinPartition::NifBlockNiSkinPartition(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = NISKINPARTITION;
-	myver = 12;
-	Get(file);
-	needsBuild = false;
-}
-
-
-void NifBlockNiSkinInstance::Get(fstream& file) {
 	file.read((char*)&dataRef, 4);
-	file.read((char*)&skinRef, 4);
-	file.read((char*)&skeletonRoot, 4);
+	file.read((char*)&skinPartitionRef, 4);
+	file.read((char*)&skeletonRootRef, 4);
 	file.read((char*)&numBones, 4);
 
 	uint uInt;
 	for (int i = 0; i < numBones; i++) {
 		file.read((char*)&uInt, 4);
-		bonePtrs.push_back(uInt);
+		bones.push_back(uInt);
 	}
 }
 
-void NifBlockNiSkinInstance::Put(fstream& file) {
+void NiSkinInstance::Put(fstream& file) {
+	NiObject::Put(file);
+
 	file.write((char*)&dataRef, 4);
-	file.write((char*)&skinRef, 4);
-	file.write((char*)&skeletonRoot, 4);
+	file.write((char*)&skinPartitionRef, 4);
+	file.write((char*)&skeletonRootRef, 4);
 	file.write((char*)&numBones, 4);
 	for (int i = 0; i < numBones; i++)
-		file.write((char*)&bonePtrs[i], 4);
+		file.write((char*)&bones[i], 4);
 }
 
-NifBlockNiSkinInstance::NifBlockNiSkinInstance(NiHeader& hdr) {
-	header = &hdr;
-	blockType = NISKININSTANCE;
-	dataRef = -1;
-	skinRef = -1;
-	skeletonRoot = -1;
-	numBones = 0;
-	blockSize = 16;
-}
+void NiSkinInstance::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
 
-NifBlockNiSkinInstance::NifBlockNiSkinInstance(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = NISKININSTANCE;
-	Get(file);
-}
-
-int NifBlockNiSkinInstance::CalcBlockSize() {
-	blockSize = 16;
-	blockSize += numBones * 4;
-	return blockSize;
-}
-
-void NifBlockNiSkinInstance::notifyBlockDelete(int blockID) {
 	int boneIndex = -1;
 	if (dataRef == blockID)
 		dataRef = -1;
 	else if (dataRef > blockID)
 		dataRef--;
 
-	if (skinRef == blockID)
-		skinRef = -1;
-	else if (skinRef > blockID)
-		skinRef--;
+	if (skinPartitionRef == blockID)
+		skinPartitionRef = -1;
+	else if (skinPartitionRef > blockID)
+		skinPartitionRef--;
 
-	if (skeletonRoot == blockID)
-		skeletonRoot = -1;
-	else if (skeletonRoot > blockID)
-		skeletonRoot--;
+	if (skeletonRootRef == blockID)
+		skeletonRootRef = -1;
+	else if (skeletonRootRef > blockID)
+		skeletonRootRef--;
 
 	for (int i = 0; i < numBones; i++) {
-		if (bonePtrs[i] == blockID) {
-			bonePtrs.erase(bonePtrs.begin() + i);
+		if (bones[i] == blockID) {
+			bones.erase(bones.begin() + i);
 			i--;
 			boneIndex = i;
 			numBones--;
-			blockSize -= 4;
 		}
-		else if (bonePtrs[i] > blockID)
-			bonePtrs[i]--;
+		else if (bones[i] > blockID)
+			bones[i]--;
 	}
 	if (boneIndex >= 0 && dataRef != -1) { // Bone was removed, clear out the skinning data for it.
 		if (header->blocks == nullptr)
 			return;
 
-		NifBlockNiSkinData* skinData = dynamic_cast<NifBlockNiSkinData*>((*header->blocks)[dataRef]);
+		NiSkinData* skinData = dynamic_cast<NiSkinData*>((*header->blocks)[dataRef]);
 		if (!skinData)
 			return;
 
-		skinData->Bones.erase(skinData->Bones.begin() + boneIndex);
+		skinData->bones.erase(skinData->bones.begin() + boneIndex);
+		skinData->numBones--;
 		skinData->CalcBlockSize();
 	}
 }
 
+int NiSkinInstance::CalcBlockSize() {
+	NiObject::CalcBlockSize();
 
-void NifBlockBSDismemberment::Get(fstream& file) {
-	file.read((char*)&dataRef, 4);
-	file.read((char*)&skinRef, 4);
-	file.read((char*)&skeletonRoot, 4);
-	file.read((char*)&numBones, 4);
+	blockSize += 16;
+	blockSize += numBones * 4;
+	return blockSize;
+}
 
-	uint uInt;
-	for (int i = 0; i < numBones; i++) {
-		file.read((char*)&uInt, 4);
-		bonePtrs.push_back(uInt);
-	}
+
+BSDismemberSkinInstance::BSDismemberSkinInstance(NiHeader& hdr) {
+	NiSkinInstance::Init();
+
+	header = &hdr;
+	blockType = BSDISMEMBERSKININSTANCE;
+	numPartitions = 0;
+
+	CalcBlockSize();
+}
+
+BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader& hdr) {
+	NiSkinInstance::Init();
+
+	header = &hdr;
+	blockType = BSDISMEMBERSKININSTANCE;
+	numPartitions = 0;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void BSDismemberSkinInstance::Get(fstream& file) {
+	NiSkinInstance::Get(file);
 
 	Partition part;
 	file.read((char*)&numPartitions, 4);
@@ -1964,13 +1651,8 @@ void NifBlockBSDismemberment::Get(fstream& file) {
 	}
 }
 
-void NifBlockBSDismemberment::Put(fstream& file) {
-	file.write((char*)&dataRef, 4);
-	file.write((char*)&skinRef, 4);
-	file.write((char*)&skeletonRoot, 4);
-	file.write((char*)&numBones, 4);
-	for (int i = 0; i < numBones; i++)
-		file.write((char*)&bonePtrs[i], 4);
+void BSDismemberSkinInstance::Put(fstream& file) {
+	NiSkinInstance::Put(file);
 
 	file.write((char*)&numPartitions, 4);
 	for (int i = 0; i < numPartitions; i++) {
@@ -1979,69 +1661,1043 @@ void NifBlockBSDismemberment::Put(fstream& file) {
 	}
 }
 
-NifBlockBSDismemberment::NifBlockBSDismemberment(NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSDISMEMBERSKININSTANCE;
-	dataRef = -1;
-	skinRef = -1;
-	skeletonRoot = -1;
-	numBones = 0;
-	numPartitions = 0;
-	blockSize = 20;
+void BSDismemberSkinInstance::notifyBlockDelete(int blockID) {
+	NiSkinInstance::notifyBlockDelete(blockID);
 }
 
-NifBlockBSDismemberment::NifBlockBSDismemberment(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSDISMEMBERSKININSTANCE;
-	Get(file);
-}
+int BSDismemberSkinInstance::CalcBlockSize() {
+	NiSkinInstance::CalcBlockSize();
 
-int NifBlockBSDismemberment::CalcBlockSize() {
-	blockSize = 20;
-	blockSize += numBones * 4;
+	blockSize += 4;
 	blockSize += numPartitions * 4;
 	return blockSize;
 }
 
-void NifBlockBSDismemberment::notifyBlockDelete(int blockID) {
-	int boneIndex = -1;
-	if (dataRef == blockID)
-		dataRef = -1;
-	else if (dataRef > blockID)
-		dataRef--;
 
-	if (skinRef == blockID)
-		skinRef = -1;
-	else if (skinRef > blockID)
-		skinRef--;
+NiSkinData::NiSkinData(NiHeader& hdr) {
+	NiObject::Init();
 
-	if (skeletonRoot == blockID)
-		skeletonRoot = -1;
-	else if (skeletonRoot > blockID)
-		skeletonRoot--;
+	header = &hdr;
+	blockType = NISKINDATA;
+	skinTransform.scale = 1.0f;
+	numBones = 0;
+	hasVertWeights = 1;
+
+	CalcBlockSize();
+}
+
+NiSkinData::NiSkinData(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NISKINDATA;
+	skinTransform.scale = 1.0f;
+	numBones = 0;
+	hasVertWeights = 1;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiSkinData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&skinTransform, 52);
+	file.read((char*)&numBones, 4);
+	file.read((char*)&hasVertWeights, 1);
+
+	SkinWeight sWt;
+	BoneData boneData;
+	for (int i = 0; i < numBones; i++) {
+		boneData.vertexWeights.clear();
+
+		file.read((char*)&boneData.boneTransform, 52);
+		file.read((char*)&boneData.boundSphereOffset, 12);
+		file.read((char*)&boneData.boundSphereRadius, 4);
+		file.read((char*)&boneData.numVertices, 2);
+
+		for (int j = 0; j < boneData.numVertices; j++) {
+			file.read((char*)&sWt.index, 2);
+			file.read((char*)&sWt.weight, 4);
+			boneData.vertexWeights.push_back(sWt);
+		}
+
+		bones.push_back(boneData);
+	}
+	numBones = bones.size();
+}
+
+void NiSkinData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&skinTransform, 52);
+	file.write((char*)&numBones, 4);
+	file.write((char*)&hasVertWeights, 1);
 
 	for (int i = 0; i < numBones; i++) {
-		if (bonePtrs[i] == blockID) {
-			bonePtrs.erase(bonePtrs.begin() + i);
-			boneIndex = i;
-			i--;
-			numBones--;
-			blockSize -= 4;
+		file.write((char*)&bones[i].boneTransform, 52);
+		file.write((char*)&bones[i].boundSphereOffset, 12);
+		file.write((char*)&bones[i].boundSphereRadius, 4);
+		file.write((char*)&bones[i].numVertices, 2);
+
+		for (int j = 0; j < bones[i].numVertices; j++) {
+			file.write((char*)&bones[i].vertexWeights[j].index, 2);
+			file.write((char*)&bones[i].vertexWeights[j].weight, 4);
 		}
-		else if (bonePtrs[i] > blockID)
-			bonePtrs[i]--;
 	}
-	if (boneIndex >= 0 && dataRef != -1) { // Bone was removed, clear out the skinning data for it.
-		if (!header->blocks)
-			return;
+}
 
-		NifBlockNiSkinData* skinData = dynamic_cast<NifBlockNiSkinData*>((*header->blocks)[dataRef]);
-		if (!skinData)
-			return;
+void NiSkinData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	ushort highestRemoved = vertIndices[vertIndices.size() - 1];
+	vector<int> indexCollapse(highestRemoved + 1, 0);
 
-		skinData->Bones.erase(skinData->Bones.begin() + boneIndex);
-		skinData->CalcBlockSize();
+	NiObject::notifyVerticesDelete(vertIndices);
+
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapse[i] = remCount;
 	}
+
+	ushort ival;
+	for (auto b = bones.begin(); b != bones.end(); ++b) {
+		for (int i = b->numVertices - 1; i >= 0; i--) {
+			ival = b->vertexWeights[i].index;
+			if (b->vertexWeights[i].index > highestRemoved) {
+				b->vertexWeights[i].index -= remCount;
+			}
+			else if (indexCollapse[ival] == -1) {
+				b->vertexWeights.erase(b->vertexWeights.begin() + i);
+				b->numVertices--;
+			}
+			else
+				b->vertexWeights[i].index -= indexCollapse[ival];
+		}
+	}
+}
+	
+int NiSkinData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 57;
+	for (auto b : bones)
+		blockSize += b.CalcSize();
+
+	return blockSize;
+}
+
+
+NiSkinPartition::NiSkinPartition(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NISKINPARTITION;
+	numPartitions = 0;
+	needsBuild = true;
+
+	CalcBlockSize();
+}
+
+NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NISKINPARTITION;
+	numPartitions = 0;
+	needsBuild = false;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiSkinPartition::Get(fstream& file) {
+	NiObject::Get(file);
+
+	PartitionBlock partition;
+	ushort uShort;
+	VertexWeight weights;
+	BoneIndices indices;
+	Triangle triangle;
+
+	file.read((char*)&numPartitions, 4);
+	for (int p = 0; p < numPartitions; p++) {
+		partition.bones.clear();
+		partition.vertexMap.clear();
+		partition.vertexWeights.clear();
+		partition.stripLengths.clear();
+		partition.strips.clear();
+		partition.triangles.clear();
+		partition.boneIndices.clear();
+
+		file.read((char*)&partition.numVertices, 2);
+		file.read((char*)&partition.numTriangles, 2);
+		file.read((char*)&partition.numBones, 2);
+		file.read((char*)&partition.numStrips, 2);
+		file.read((char*)&partition.numWeightsPerVertex, 2);
+
+		for (int i = 0; i < partition.numBones; i++) {
+			file.read((char*)&uShort, 2);
+			partition.bones.push_back(uShort);
+		}
+
+		file.read((char*)&partition.hasVertexMap, 1);
+		for (int i = 0; (i < partition.numVertices) && partition.hasVertexMap; i++) {
+			file.read((char*)&uShort, 2);
+			partition.vertexMap.push_back(uShort);
+		}
+
+		file.read((char*)&partition.hasVertexWeights, 1);
+		for (int i = 0; (i < partition.numVertices) && partition.hasVertexWeights; i++) {
+			file.read((char*)&weights.w1, 4);
+			file.read((char*)&weights.w2, 4);
+			file.read((char*)&weights.w3, 4);
+			file.read((char*)&weights.w4, 4);
+			partition.vertexWeights.push_back(weights);
+		}
+
+		for (int i = 0; i < partition.numStrips; i++) {
+			file.read((char*)&uShort, 2);
+			partition.stripLengths.push_back(uShort);
+		}
+
+		file.read((char*)&partition.hasFaces, 1);
+		for (int i = 0; (i < partition.numStrips) && partition.hasFaces; i++) {
+			partition.strips.push_back(vector<ushort>());
+			for (int j = 0; j < partition.stripLengths[i]; j++) {
+				file.read((char*)&uShort, 2);
+				partition.strips[i].push_back(uShort);
+			}
+		}
+
+		if (partition.numStrips == 0) {
+			for (int i = 0; (i < partition.numTriangles) && partition.hasFaces; i++) {
+				file.read((char*)&triangle.p1, 2);
+				file.read((char*)&triangle.p2, 2);
+				file.read((char*)&triangle.p3, 2);
+				partition.triangles.push_back(triangle);
+			}
+		}
+
+		file.read((char*)&partition.hasBoneIndices, 1);
+		for (int i = 0; i < partition.numVertices && partition.hasBoneIndices; i++) {
+			file.read((char*)&indices.i1, 1);
+			file.read((char*)&indices.i2, 1);
+			file.read((char*)&indices.i3, 1);
+			file.read((char*)&indices.i4, 1);
+			partition.boneIndices.push_back(indices);
+		}
+
+		if (header->userVersion >= 12)
+			file.read((char*)&partition.unkShort, 2);
+
+		partitions.push_back(partition);
+	}
+}
+
+void NiSkinPartition::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&numPartitions, 4);
+	for (int p = 0; p < numPartitions; p++) {
+		file.write((char*)&partitions[p].numVertices, 2);
+		file.write((char*)&partitions[p].numTriangles, 2);
+		file.write((char*)&partitions[p].numBones, 2);
+		file.write((char*)&partitions[p].numStrips, 2);
+		file.write((char*)&partitions[p].numWeightsPerVertex, 2);
+		for (int i = 0; i < partitions[p].numBones; i++)
+			file.write((char*)&partitions[p].bones[i], 2);
+
+		file.write((char*)&partitions[p].hasVertexMap, 1);
+		for (int i = 0; (i < partitions[p].numVertices) && partitions[p].hasVertexMap; i++)
+			file.write((char*)&partitions[p].vertexMap[i], 2);
+
+		file.write((char*)&partitions[p].hasVertexWeights, 1);
+		for (int i = 0; (i < partitions[p].numVertices) && partitions[p].hasVertexWeights; i++)
+			file.write((char*)&partitions[p].vertexWeights[i], 16);
+
+		for (int i = 0; i < partitions[p].numStrips; i++)
+			file.write((char*)&partitions[p].stripLengths[i], 2);
+
+		file.write((char*)&partitions[p].hasFaces, 1);
+		for (int i = 0; (i < partitions[p].numStrips) && partitions[p].hasFaces; i++)
+			for (int j = 0; j < partitions[p].stripLengths[i]; j++)
+				file.write((char*)&partitions[p].strips[i][j], 2);
+
+		if (partitions[p].numStrips == 0) {
+			for (int i = 0; (i < partitions[p].numTriangles) && partitions[p].hasFaces; i++)
+				file.write((char*)&partitions[p].triangles[i].p1, 6);
+		}
+
+		file.write((char*)&partitions[p].hasBoneIndices, 1);
+		for (int i = 0; i < partitions[p].numVertices && partitions[p].hasBoneIndices; i++)
+			file.write((char*)&partitions[p].boneIndices[i], 4);
+
+		if (header->userVersion >= 12)
+			file.write((char*)&partitions[p].unkShort, 2);
+	}
+}
+
+void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	ushort highestRemoved = vertIndices.back();
+	vector<int> indexCollapse(highestRemoved + 1, 0);
+
+	NiObject::notifyVerticesDelete(vertIndices);
+
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapse[i] = remCount;
+	}
+
+	size_t maxVertexMapSz = 0;
+	for (auto p = partitions.begin(); p != partitions.end(); ++p)
+		if (p->vertexMap.size() > maxVertexMapSz)
+			maxVertexMapSz = p->vertexMap.size();
+
+	vector<int> mapCollapse(maxVertexMapSz, 0);
+	int mapRemCount = 0;
+	int mapHighestRemoved = maxVertexMapSz;
+
+	ushort index;
+	for (auto p = partitions.begin(); p != partitions.end(); ++p) {
+		mapRemCount = 0;
+		mapHighestRemoved = maxVertexMapSz;
+		for (int i = 0; i < p->vertexMap.size(); i++) {
+			if (p->vertexMap[i] < indexCollapse.size() && indexCollapse[p->vertexMap[i]] == -1) {
+				mapRemCount++;
+				mapCollapse[i] = -1;
+				mapHighestRemoved = i;
+			}
+			else
+				mapCollapse[i] = mapRemCount;
+		}
+
+		for (int i = p->vertexMap.size() - 1; i >= 0; i--) {
+			index = p->vertexMap[i];
+			if (index > highestRemoved) {
+				p->vertexMap[i] -= remCount;
+			}
+			else if (indexCollapse[index] == -1) {
+				p->vertexMap.erase(p->vertexMap.begin() + i);
+				p->numVertices--;
+				if (p->hasVertexWeights)
+					p->vertexWeights.erase(p->vertexWeights.begin() + i);
+				if (p->hasBoneIndices)
+					p->boneIndices.erase(p->boneIndices.begin() + i);
+			}
+			else
+				p->vertexMap[i] -= indexCollapse[index];
+		}
+
+		for (int i = p->numTriangles - 1; i >= 0; i--) {
+			if (p->triangles[i].p1 > mapHighestRemoved) {
+				p->triangles[i].p1 -= mapRemCount;
+			}
+			else if (mapCollapse[p->triangles[i].p1] == -1) {
+				p->triangles.erase(p->triangles.begin() + i);
+				p->numTriangles--;
+				continue;
+			}
+			else
+				p->triangles[i].p1 -= mapCollapse[p->triangles[i].p1];
+
+			if (p->triangles[i].p2 > mapHighestRemoved) {
+				p->triangles[i].p2 -= mapRemCount;
+			}
+			else if (mapCollapse[p->triangles[i].p2] == -1) {
+				p->triangles.erase(p->triangles.begin() + i);
+				p->numTriangles--;
+				continue;
+			}
+			else
+				p->triangles[i].p2 -= mapCollapse[p->triangles[i].p2];
+
+			if (p->triangles[i].p3 > mapHighestRemoved) {
+				p->triangles[i].p3 -= mapRemCount;
+			}
+			else if (mapCollapse[p->triangles[i].p3] == -1) {
+				p->triangles.erase(p->triangles.begin() + i);
+				p->numTriangles--;
+				continue;
+			}
+			else
+				p->triangles[i].p3 -= mapCollapse[p->triangles[i].p3];
+		}
+	}
+}
+
+int NiSkinPartition::RemoveEmptyPartitions(vector<int>& outDeletedIndices) {
+	outDeletedIndices.clear();
+	for (int i = partitions.size() - 1; i >= 0; i--) {
+		if (partitions[i].numVertices == 0) {
+			outDeletedIndices.insert(outDeletedIndices.begin(), i);
+			partitions.erase(partitions.begin() + i);
+			numPartitions--;
+		}
+	}
+	return outDeletedIndices.size();
+}
+
+int NiSkinPartition::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 4;
+	for (auto p : partitions) {
+		if (header->userVersion >= 12)				// Plain data size
+			blockSize += 16;
+		else
+			blockSize += 14;
+
+		blockSize += 2 * p.numBones;				// Bone list size
+		blockSize += 2 * p.numVertices;				// Vertex map size
+		blockSize += 4 * p.numVertices;				// Bone index size
+		blockSize += 16 * p.numVertices;			// Vertex weights size
+		blockSize += 2 * p.numStrips;				// Strip lengths size
+		for (int i = 0; i < p.numStrips; i++)
+			blockSize += 2 * p.stripLengths[i];		// Strip list size
+
+		if (p.numStrips == 0)
+			blockSize += 6 * p.numTriangles;		// Triangle list size
+	}
+
+	return blockSize;
+}
+
+
+BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
+	NiProperty::Init();
+	NiObjectNET::bBSLightingShaderProperty = true;
+
+	header = &hdr;
+	blockType = BSLIGHTINGSHADERPROPERTY;
+	shaderFlags1 = 0x82400303;
+	shaderFlags2 = 0x8001;
+	uvOffset.u = 0.0f;
+	uvOffset.v = 0.0f;
+	uvScale.u = 1.0f;
+	uvScale.v = 1.0f;
+	textureSetRef = -1;
+
+	emissiveMultiple = 1.0f;
+	textureClampMode = 3;
+	alpha = 1.0f;
+	refractionStrength = 0.0f;
+	glossiness = 20.0f;
+	specularColor = Vector3(1.0f, 1.0f, 1.0f);
+	specularStrength = 1.0f;
+	lightingEffect1 = 0.3f;
+	lightingEffect2 = 2.0f;
+
+	environmentMapScale = 1.0f;
+	maxPasses = 1.0f;
+	scale = 1.0f;
+	parallaxInnerLayerThickness = 0.0f;
+	parallaxRefractionScale = 1.0f;
+	parallaxInnerLayerTextureScale.u = 1.0f;
+	parallaxInnerLayerTextureScale.v = 1.0f;
+	parallaxEnvmapStrength = 1.0f;
+	sparkleParameters.r = 0.0f;
+	sparkleParameters.g = 0.0f;
+	sparkleParameters.b = 0.0f;
+	sparkleParameters.a = 0.0f;
+	eyeCubemapScale = 1.0f;
+
+	CalcBlockSize();
+}
+
+BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr) {
+	NiProperty::Init();
+	NiObjectNET::bBSLightingShaderProperty = true;
+
+	header = &hdr;
+	blockType = BSLIGHTINGSHADERPROPERTY;
+	shaderFlags1 = 0x82400303;
+	shaderFlags2 = 0x8001;
+
+	environmentMapScale = 1.0f;
+	maxPasses = 1.0f;
+	scale = 1.0f;
+	parallaxInnerLayerThickness = 0.0f;
+	parallaxRefractionScale = 1.0f;
+	parallaxInnerLayerTextureScale.u = 1.0f;
+	parallaxInnerLayerTextureScale.v = 1.0f;
+	parallaxEnvmapStrength = 1.0f;
+	sparkleParameters.r = 0.0f;
+	sparkleParameters.g = 0.0f;
+	sparkleParameters.b = 0.0f;
+	sparkleParameters.a = 0.0f;
+	eyeCubemapScale = 1.0f;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void BSLightingShaderProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	if (header->userVersion == 12) {
+		file.read((char*)&shaderFlags1, 4);
+		file.read((char*)&shaderFlags2, 4);
+	}
+
+	file.read((char*)&uvOffset.u, 4);
+	file.read((char*)&uvOffset.v, 4);
+	file.read((char*)&uvScale.u, 4);
+	file.read((char*)&uvScale.v, 4);
+	file.read((char*)&textureSetRef, 4);
+
+	file.read((char*)&emissiveColor.x, 4);
+	file.read((char*)&emissiveColor.y, 4);
+	file.read((char*)&emissiveColor.z, 4);
+	file.read((char*)&emissiveMultiple, 4);
+	file.read((char*)&textureClampMode, 4);
+	file.read((char*)&alpha, 4);
+	file.read((char*)&refractionStrength, 4);
+	file.read((char*)&glossiness, 4);
+	file.read((char*)&specularColor.x, 4);
+	file.read((char*)&specularColor.y, 4);
+	file.read((char*)&specularColor.z, 4);
+	file.read((char*)&specularStrength, 4);
+	file.read((char*)&lightingEffect1, 4);
+	file.read((char*)&lightingEffect2, 4);
+
+	if (skyrimShaderType == 1) {
+		file.read((char*)&environmentMapScale, 4);
+	}
+	else if (skyrimShaderType == 5) {
+		file.read((char*)&skinTintColor.x, 4);
+		file.read((char*)&skinTintColor.y, 4);
+		file.read((char*)&skinTintColor.z, 4);
+	}
+	else if (skyrimShaderType == 6) {
+		file.read((char*)&hairTintColor.x, 4);
+		file.read((char*)&hairTintColor.y, 4);
+		file.read((char*)&hairTintColor.z, 4);
+	}
+	else if (skyrimShaderType == 7) {
+		file.read((char*)&maxPasses, 4);
+		file.read((char*)&scale, 4);
+	}
+	else if (skyrimShaderType == 11) {
+		file.read((char*)&parallaxInnerLayerThickness, 4);
+		file.read((char*)&parallaxRefractionScale, 4);
+		file.read((char*)&parallaxInnerLayerTextureScale.u, 4);
+		file.read((char*)&parallaxInnerLayerTextureScale.v, 4);
+		file.read((char*)&parallaxEnvmapStrength, 4);
+	}
+	else if (skyrimShaderType == 14) {
+		file.read((char*)&sparkleParameters.r, 4);
+		file.read((char*)&sparkleParameters.g, 4);
+		file.read((char*)&sparkleParameters.b, 4);
+		file.read((char*)&sparkleParameters.a, 4);
+	}
+	else if (skyrimShaderType == 16) {
+		file.read((char*)&eyeCubemapScale, 4);
+		file.read((char*)&eyeLeftReflectionCenter.x, 4);
+		file.read((char*)&eyeLeftReflectionCenter.y, 4);
+		file.read((char*)&eyeLeftReflectionCenter.z, 4);
+		file.read((char*)&eyeRightReflectionCenter.x, 4);
+		file.read((char*)&eyeRightReflectionCenter.y, 4);
+		file.read((char*)&eyeRightReflectionCenter.z, 4);
+	}
+}
+
+void BSLightingShaderProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	if (header->userVersion == 12) {
+		file.write((char*)&shaderFlags1, 4);
+		file.write((char*)&shaderFlags2, 4);
+	}
+
+	file.write((char*)&uvOffset.u, 4);
+	file.write((char*)&uvOffset.v, 4);
+	file.write((char*)&uvScale.u, 4);
+	file.write((char*)&uvScale.v, 4);
+	file.write((char*)&textureSetRef, 4);
+
+	file.write((char*)&emissiveColor.x, 4);
+	file.write((char*)&emissiveColor.y, 4);
+	file.write((char*)&emissiveColor.z, 4);
+	file.write((char*)&emissiveMultiple, 4);
+	file.write((char*)&textureClampMode, 4);
+	file.write((char*)&alpha, 4);
+	file.write((char*)&refractionStrength, 4);
+	file.write((char*)&glossiness, 4);
+	file.write((char*)&specularColor.x, 4);
+	file.write((char*)&specularColor.y, 4);
+	file.write((char*)&specularColor.z, 4);
+	file.write((char*)&specularStrength, 4);
+	file.write((char*)&lightingEffect1, 4);
+	file.write((char*)&lightingEffect2, 4);
+
+	if (skyrimShaderType == 1) {
+		file.write((char*)&environmentMapScale, 4);
+	}
+	else if (skyrimShaderType == 5) {
+		file.write((char*)&skinTintColor.x, 4);
+		file.write((char*)&skinTintColor.y, 4);
+		file.write((char*)&skinTintColor.z, 4);
+	}
+	else if (skyrimShaderType == 6) {
+		file.write((char*)&hairTintColor.x, 4);
+		file.write((char*)&hairTintColor.y, 4);
+		file.write((char*)&hairTintColor.z, 4);
+	}
+	else if (skyrimShaderType == 7) {
+		file.write((char*)&maxPasses, 4);
+		file.write((char*)&scale, 4);
+	}
+	else if (skyrimShaderType == 11) {
+		file.write((char*)&parallaxInnerLayerThickness, 4);
+		file.write((char*)&parallaxRefractionScale, 4);
+		file.write((char*)&parallaxInnerLayerTextureScale.u, 4);
+		file.write((char*)&parallaxInnerLayerTextureScale.v, 4);
+		file.write((char*)&parallaxEnvmapStrength, 4);
+	}
+	else if (skyrimShaderType == 14) {
+		file.write((char*)&sparkleParameters.r, 4);
+		file.write((char*)&sparkleParameters.g, 4);
+		file.write((char*)&sparkleParameters.b, 4);
+		file.write((char*)&sparkleParameters.a, 4);
+	}
+	else if (skyrimShaderType == 16) {
+		file.write((char*)&eyeCubemapScale, 4);
+		file.write((char*)&eyeLeftReflectionCenter.x, 4);
+		file.write((char*)&eyeLeftReflectionCenter.y, 4);
+		file.write((char*)&eyeLeftReflectionCenter.z, 4);
+		file.write((char*)&eyeRightReflectionCenter.x, 4);
+		file.write((char*)&eyeRightReflectionCenter.y, 4);
+		file.write((char*)&eyeRightReflectionCenter.z, 4);
+	}
+}
+
+void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
+	NiProperty::notifyBlockDelete(blockID);
+
+	if (textureSetRef == blockID)
+		textureSetRef = -1;
+	else if (textureSetRef > blockID)
+		textureSetRef--;
+}
+
+void BSLightingShaderProperty::Clone(BSLightingShaderProperty* other) {
+	(*this) = (*other);
+}
+
+bool BSLightingShaderProperty::IsSkinShader() {
+	return (shaderFlags1 & (1 << 21)) != 0;
+}
+
+bool BSLightingShaderProperty::IsDoubleSided() {
+	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+int BSLightingShaderProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	if (header->userVersion == 12)
+		blockSize += 8;
+
+	blockSize += 76;
+
+	if (skyrimShaderType == 1)
+		blockSize += 4;
+	else if (skyrimShaderType == 5)
+		blockSize += 12;
+	else if (skyrimShaderType == 6)
+		blockSize += 12;
+	else if (skyrimShaderType == 7)
+		blockSize += 8;
+	else if (skyrimShaderType == 11)
+		blockSize += 20;
+	else if (skyrimShaderType == 14)
+		blockSize += 16;
+	else if (skyrimShaderType == 16)
+		blockSize += 28;
+
+	return blockSize;
+}
+
+
+void BSShaderProperty::Init() {
+	NiProperty::Init();
+
+	smooth = 1;
+	shaderType = 1;
+	shaderFlags = 0x82000000;
+	shaderFlags2 = 1;
+	environmentMapScale = 1.0f;
+}
+
+void BSShaderProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	file.read((char*)&smooth, 2);
+	file.read((char*)&shaderType, 4);
+	file.read((char*)&shaderFlags, 4);
+	file.read((char*)&shaderFlags2, 4);
+
+	if (header->userVersion == 11)
+		file.read((char*)&environmentMapScale, 4);
+}
+
+void BSShaderProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	file.write((char*)&smooth, 2);
+	file.write((char*)&shaderType, 4);
+	file.write((char*)&shaderFlags, 4);
+	file.write((char*)&shaderFlags2, 4);
+
+	if (header->userVersion == 11)
+		file.write((char*)&environmentMapScale, 4);
+}
+
+void BSShaderProperty::notifyBlockDelete(int blockID) {
+	NiProperty::notifyBlockDelete(blockID);
+}
+
+int BSShaderProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	blockSize += 14;
+	if (header->userVersion == 11)
+		blockSize += 4;
+
+	return blockSize;
+}
+
+
+void BSShaderLightingProperty::Init() {
+	BSShaderProperty::Init();
+
+	textureClampMode = 3;
+}
+
+void BSShaderLightingProperty::Get(fstream& file) {
+	BSShaderProperty::Get(file);
+
+	if (header->userVersion <= 11)
+		file.read((char*)&textureClampMode, 4);
+}
+
+void BSShaderLightingProperty::Put(fstream& file) {
+	BSShaderProperty::Put(file);
+
+	if (header->userVersion <= 11)
+		file.write((char*)&textureClampMode, 4);
+}
+
+void BSShaderLightingProperty::notifyBlockDelete(int blockID) {
+	BSShaderProperty::notifyBlockDelete(blockID);
+}
+
+int BSShaderLightingProperty::CalcBlockSize() {
+	BSShaderProperty::CalcBlockSize();
+
+	if (header->userVersion <= 11)
+		blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader& hdr) {
+	BSShaderLightingProperty::Init();
+
+	header = &hdr;
+	blockType = BSSHADERPPLIGHTINGPROPERTY;
+	textureSetRef = -1;
+	refractionStrength = 0.0;
+	refractionFirePeriod = 0;
+	unkFloat4 = 4.0f;
+	unkFloat5 = 1.0f;
+	emissiveColor.r = 0.0f;
+	emissiveColor.g = 0.0f;
+	emissiveColor.b = 0.0f;
+	emissiveColor.a = 0.0f;
+
+	CalcBlockSize();
+}
+
+BSShaderPPLightingProperty::BSShaderPPLightingProperty(fstream& file, NiHeader& hdr) {
+	BSShaderLightingProperty::Init();
+
+	header = &hdr;
+	blockType = BSSHADERPPLIGHTINGPROPERTY;
+	refractionStrength = 0.0;
+	refractionFirePeriod = 0;
+	unkFloat4 = 4.0f;
+	unkFloat5 = 1.0f;
+	emissiveColor.r = 0.0f;
+	emissiveColor.g = 0.0f;
+	emissiveColor.b = 0.0f;
+	emissiveColor.a = 0.0f;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void BSShaderPPLightingProperty::Get(fstream& file) {
+	BSShaderLightingProperty::Get(file);
+
+	file.read((char*)&textureSetRef, 4);
+	
+	if (header->userVersion == 11) {
+		file.read((char*)&refractionStrength, 4);
+		file.read((char*)&refractionFirePeriod, 4);
+		file.read((char*)&unkFloat4, 4);
+		file.read((char*)&unkFloat5, 4);
+	}
+
+	if (header->userVersion >= 12) {
+		file.read((char*)&emissiveColor.r, 4);
+		file.read((char*)&emissiveColor.g, 4);
+		file.read((char*)&emissiveColor.b, 4);
+		file.read((char*)&emissiveColor.a, 4);
+	}
+}
+
+void BSShaderPPLightingProperty::Put(fstream& file) {
+	BSShaderLightingProperty::Put(file);
+
+	file.write((char*)&textureSetRef, 4);
+
+	if (header->userVersion == 11) {
+		file.write((char*)&refractionStrength, 4);
+		file.write((char*)&refractionFirePeriod, 4);
+		file.write((char*)&unkFloat4, 4);
+		file.write((char*)&unkFloat5, 4);
+	}
+
+	if (header->userVersion >= 12) {
+		file.write((char*)&emissiveColor.r, 4);
+		file.write((char*)&emissiveColor.g, 4);
+		file.write((char*)&emissiveColor.b, 4);
+		file.write((char*)&emissiveColor.a, 4);
+	}
+}
+
+void BSShaderPPLightingProperty::notifyBlockDelete(int blockID) {
+	if (textureSetRef == blockID)
+		textureSetRef = -1;
+	else if (textureSetRef > blockID)
+		textureSetRef--;
+}
+
+void BSShaderPPLightingProperty::Clone(BSShaderPPLightingProperty* other) {
+	(*this) = (*other);
+}
+
+bool BSShaderPPLightingProperty::IsSkinShader() {
+	return shaderType == 0x0000000e;
+}
+
+int BSShaderPPLightingProperty::CalcBlockSize() {
+	BSShaderLightingProperty::CalcBlockSize();
+
+	blockSize += 4;
+
+	if (header->userVersion == 11)
+		blockSize += 16;
+
+	if (header->userVersion >= 12)
+		blockSize += 16;
+
+	return blockSize;
+}
+
+
+BSShaderTextureSet::BSShaderTextureSet(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSSHADERTEXTURESET;
+
+	if (header->userVersion == 12)
+		numTextures = 9;
+	else
+		numTextures = 6;
+
+	for (int i = 0; i < numTextures; i++)
+		textures.push_back(NiString(false));
+
+	CalcBlockSize();
+}
+
+BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSSHADERTEXTURESET;
+
+	Get(file);
+	CalcBlockSize();
+}
+	
+void BSShaderTextureSet::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&numTextures, 4);
+	for (int i = 0; i < numTextures; i++)
+		textures.push_back(NiString(file, 4, false));
+}
+	
+void BSShaderTextureSet::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&numTextures, 4);
+	for (int i = 0; i < numTextures; i++)
+		textures[i].Put(file, 4);
+}
+
+int BSShaderTextureSet::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 4;
+	for (auto tex : textures) {
+		blockSize += 4;
+		blockSize += tex.str.length();
+	}
+
+	return blockSize;
+}
+
+
+NiAlphaProperty::NiAlphaProperty(NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = NIALPHAPROPERTY;
+	flags = 4844;
+	threshold = 128;
+
+	CalcBlockSize();
+}
+
+NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = NIALPHAPROPERTY;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiAlphaProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	file.read((char*)&flags, 2);
+	file.read((char*)&threshold, 1);
+}
+
+void NiAlphaProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&threshold, 1);
+}
+
+void NiAlphaProperty::notifyBlockDelete(int blockID) {
+	NiProperty::notifyBlockDelete(blockID);
+}
+
+int NiAlphaProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	blockSize += 3;
+
+	return blockSize;
+}
+
+
+void NiExtraData::Init() {
+	NiObject::Init();
+
+	nameRef = -1;
+	name = "";
+}
+
+void NiExtraData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&nameRef, 4);
+	if (nameRef != -1)
+		name = header->strings[nameRef].str;
+	else
+		name = "";
+}
+
+void NiExtraData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&nameRef, 4);
+}
+
+int NiExtraData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiStringExtraData::NiStringExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NISTRINGEXTRADATA;
+	stringDataRef = -1;
+	stringData = "";
+
+	CalcBlockSize();
+}
+
+NiStringExtraData::NiStringExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NISTRINGEXTRADATA;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiStringExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&stringDataRef, 4);
+	if (stringDataRef != -1)
+		stringData = header->strings[stringDataRef].str;
+	else
+		stringData = "";
+}
+
+void NiStringExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&stringDataRef, 4);
+}
+
+int NiStringExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
 }
 
 
@@ -2078,11 +2734,6 @@ NiUnknown::~NiUnknown() {
 		delete[] data;
 }
 
-void NiUnknown::Clone(NiUnknown* other) {
-	if (blockSize == other->blockSize)
-		memcpy(data, other->data, blockSize);
-}
-
 void NiUnknown::Get(fstream& file) {
 	if (!data)
 		return;
@@ -2097,461 +2748,11 @@ void NiUnknown::Put(fstream& file) {
 	file.write(data, blockSize);
 }
 
+void NiUnknown::Clone(NiUnknown* other) {
+	if (blockSize == other->blockSize)
+		memcpy(data, other->data, blockSize);
+}
+
 int NiUnknown::CalcBlockSize() {
 	return blockSize;
-}
-
-
-void NifBlockBSLightShadeProp::Get(fstream& file) {
-
-	// read skyrim shader type before getting NiObjectNET parent
-
-	file.read((char*)&shaderType, 4);
-	file.read((char*)&nameID, 4);
-	if (nameID != -1)
-		shaderName = header->strings[nameID].str;
-	else
-		shaderName = "";
-
-	int intVal;
-	file.read((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++) {
-		file.read((char*)&intVal, 4);
-		extraData.push_back(intVal);
-	}
-
-	file.read((char*)&controllerRef, 4);
-	file.read((char*)&shaderFlags1, 4);
-	file.read((char*)&shaderFlags2, 4);
-	file.read((char*)&uvOffset.u, 4);
-	file.read((char*)&uvOffset.v, 4);
-	file.read((char*)&uvScale.u, 4);
-	file.read((char*)&uvScale.v, 4);
-	file.read((char*)&texsetRef, 4);
-
-	file.read((char*)&emissiveClr.x, 4);
-	file.read((char*)&emissiveClr.y, 4);
-	file.read((char*)&emissiveClr.z, 4);
-	file.read((char*)&emissivleMult, 4);
-	file.read((char*)&texClampMode, 4);
-	file.read((char*)&alpha, 4);
-	file.read((char*)&unk, 4);
-	file.read((char*)&glossiness, 4);
-	file.read((char*)&specClr.x, 4);
-	file.read((char*)&specClr.y, 4);
-	file.read((char*)&specClr.z, 4);
-	file.read((char*)&specStr, 4);
-	file.read((char*)&lightFX1, 4);
-	file.read((char*)&lightFX2, 4);
-
-	if (shaderType == 1) {
-		file.read((char*)&envMapScale, 4);
-	}
-	else if (shaderType == 5) {
-		file.read((char*)&skinTintClr.x, 4);
-		file.read((char*)&skinTintClr.y, 4);
-		file.read((char*)&skinTintClr.z, 4);
-	}
-	else if (shaderType == 6) {
-		file.read((char*)&hairTintClr.x, 4);
-		file.read((char*)&hairTintClr.y, 4);
-		file.read((char*)&hairTintClr.z, 4);
-	}
-	else if (shaderType == 7) {
-		file.read((char*)&maxPasses, 4);
-		file.read((char*)&scale, 4);
-	}
-	else if (shaderType == 11) {
-		file.read((char*)&parallaxThickness, 4);
-		file.read((char*)&parallaxRefrScale, 4);
-		file.read((char*)&parallaxTexScale.u, 4);
-		file.read((char*)&parallaxTexScale.v, 4);
-		file.read((char*)&parallaxEnvMapStr, 4);
-	}
-	else if (shaderType == 14) {
-		file.read((char*)&sparkleParams.r, 4);
-		file.read((char*)&sparkleParams.g, 4);
-		file.read((char*)&sparkleParams.b, 4);
-		file.read((char*)&sparkleParams.a, 4);
-	}
-	else if (shaderType == 16) {
-		file.read((char*)&eyeCubeScale, 4);
-		file.read((char*)&eyeLeftReflectCenter.x, 4);
-		file.read((char*)&eyeLeftReflectCenter.y, 4);
-		file.read((char*)&eyeLeftReflectCenter.z, 4);
-		file.read((char*)&eyeRightReflectCenter.x, 4);
-		file.read((char*)&eyeRightReflectCenter.y, 4);
-		file.read((char*)&eyeRightReflectCenter.z, 4);
-	}
-}
-
-void NifBlockBSLightShadeProp::Put(fstream& file) {
-
-	// write skyrim shader type before putting NiObjectNET parent
-
-	file.write((char*)&shaderType, 4);
-	file.write((char*)&nameID, 4);
-
-	file.write((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++)
-		file.write((char*)&extraData[i], 4);
-
-	file.write((char*)&controllerRef, 4);
-	file.write((char*)&shaderFlags1, 4);
-	file.write((char*)&shaderFlags2, 4);
-	file.write((char*)&uvOffset.u, 4);
-	file.write((char*)&uvOffset.v, 4);
-	file.write((char*)&uvScale.u, 4);
-	file.write((char*)&uvScale.v, 4);
-
-	file.write((char*)&texsetRef, 4);
-	file.write((char*)&emissiveClr.x, 4);
-	file.write((char*)&emissiveClr.y, 4);
-	file.write((char*)&emissiveClr.z, 4);
-	file.write((char*)&emissivleMult, 4);
-	file.write((char*)&texClampMode, 4);
-	file.write((char*)&alpha, 4);
-	file.write((char*)&unk, 4);
-	file.write((char*)&glossiness, 4);
-	file.write((char*)&specClr.x, 4);
-	file.write((char*)&specClr.y, 4);
-	file.write((char*)&specClr.z, 4);
-	file.write((char*)&specStr, 4);
-	file.write((char*)&lightFX1, 4);
-	file.write((char*)&lightFX2, 4);
-
-	if (shaderType == 1) {
-		file.write((char*)&envMapScale, 4);
-	}
-	else if (shaderType == 5) {
-		file.write((char*)&skinTintClr.x, 4);
-		file.write((char*)&skinTintClr.y, 4);
-		file.write((char*)&skinTintClr.z, 4);
-	}
-	else if (shaderType == 6) {
-		file.write((char*)&hairTintClr.x, 4);
-		file.write((char*)&hairTintClr.y, 4);
-		file.write((char*)&hairTintClr.z, 4);
-	}
-	else if (shaderType == 7) {
-		file.write((char*)&maxPasses, 4);
-		file.write((char*)&scale, 4);
-	}
-	else if (shaderType == 11) {
-		file.write((char*)&parallaxThickness, 4);
-		file.write((char*)&parallaxRefrScale, 4);
-		file.write((char*)&parallaxTexScale.u, 4);
-		file.write((char*)&parallaxTexScale.v, 4);
-		file.write((char*)&parallaxEnvMapStr, 4);
-	}
-	else if (shaderType == 14) {
-		file.write((char*)&sparkleParams.r, 4);
-		file.write((char*)&sparkleParams.g, 4);
-		file.write((char*)&sparkleParams.b, 4);
-		file.write((char*)&sparkleParams.a, 4);
-	}
-	else if (shaderType == 16) {
-		file.write((char*)&eyeCubeScale, 4);
-		file.write((char*)&eyeLeftReflectCenter.x, 4);
-		file.write((char*)&eyeLeftReflectCenter.y, 4);
-		file.write((char*)&eyeLeftReflectCenter.z, 4);
-		file.write((char*)&eyeRightReflectCenter.x, 4);
-		file.write((char*)&eyeRightReflectCenter.y, 4);
-		file.write((char*)&eyeRightReflectCenter.z, 4);
-	}
-}
-
-void NifBlockBSLightShadeProp::Clone(NifBlockBSLightShadeProp* Other) {
-	(*this) = (*Other);
-}
-
-NifBlockBSLightShadeProp::NifBlockBSLightShadeProp(NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSLIGHTINGSHADERPROPERTY;
-	shaderType = 0;
-	nameID = -1;
-	shaderName = "";
-	numExtraData = 0;
-	controllerRef = -1;
-	shaderFlags1 = 0x82400303;
-	shaderFlags2 = 0x8001;
-
-	uvOffset.u = 0.0f;
-	uvOffset.v = 0.0f;
-	uvScale.u = 1.0f;
-	uvScale.v = 1.0f;
-
-	texsetRef = -1;
-	emissiveClr.x = 0.0f;
-	emissiveClr.y = 0.0f;
-	emissiveClr.z = 0.0f;;
-	emissivleMult = 1.0f;
-
-	texClampMode = 3;
-	alpha = 1.0f;
-	unk = 0.0f;
-
-	glossiness = 20.0f;
-	specClr.x = 1.0f;
-	specClr.y = 1.0f;
-	specClr.z = 1.0f;
-	specStr = 1.0f;
-
-	lightFX1 = 0.3f;
-	lightFX2 = 2.0f;
-	blockSize = 100;
-}
-
-NifBlockBSLightShadeProp::NifBlockBSLightShadeProp(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSLIGHTINGSHADERPROPERTY;
-	Get(file);
-}
-	
-void NifBlockBSLightShadeProp::notifyBlockDelete(int blockID) {
-	if (texsetRef == blockID)
-		texsetRef = -1;
-	else if (texsetRef > blockID)
-		texsetRef--;
-}
-
-bool NifBlockBSLightShadeProp::IsSkinShader() {
-	return (shaderFlags1 & (1 << 21)) != 0;
-}
-
-bool NifBlockBSLightShadeProp::IsDoubleSided() {
-	return (shaderFlags2 & (1 << 4)) == 16;
-}
-
-
-NifBlockBSShaderTextureSet::NifBlockBSShaderTextureSet(NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSSHADERTEXTURESET;
-	numTex = 9;
-	for (int i = 0; i < 9; i++)
-		textures.push_back(NiString(false));
-
-	blockSize = 40;
-}
-
-NifBlockBSShaderTextureSet::NifBlockBSShaderTextureSet(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSSHADERTEXTURESET;
-	Get(file);
-}
-	
-void NifBlockBSShaderTextureSet::Get(fstream& file) {
-	file.read((char*)&numTex, 4);
-	for (int i = 0; i < numTex; i++)
-		textures.push_back(NiString(file, 4, false));
-}
-	
-void NifBlockBSShaderTextureSet::Put(fstream& file) {
-	file.write((char*)&numTex, 4);
-	for (int i = 0; i < numTex; i++)
-		textures[i].Put(file, 4);
-}
-
-int NifBlockBSShaderTextureSet::CalcBlockSize() {
-	blockSize = 4;
-	for (auto tex : textures) {
-		blockSize += 4;
-		blockSize += tex.str.length();
-	}
-
-	return blockSize;
-}
-
-
-NifBlockAlphaProperty::NifBlockAlphaProperty(NiHeader& hdr) {
-	header = &hdr;
-	blockType = NIALPHAPROPERTY;
-	blockSize = 15;
-	alphaName = "";
-	nameID = -1;
-	numExtraData = 0;
-	controllerRef = -1;
-	flags = 4844;
-	threshold = 128;
-}
-
-NifBlockAlphaProperty::NifBlockAlphaProperty(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = NIALPHAPROPERTY;
-	Get(file);
-}
-
-void NifBlockAlphaProperty::Get(fstream& file) {
-	file.read((char*)&nameID, 4);
-	if (nameID != -1)
-		alphaName = header->strings[nameID].str;
-	else
-		alphaName = "";
-
-	int intVal;
-	file.read((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++) {
-		file.read((char*)&intVal, 4);
-		extraData.push_back(intVal);
-	}
-	file.read((char*)&controllerRef, 4);
-	file.read((char*)&flags, 2);
-	file.read((char*)&threshold, 1);
-}
-
-void NifBlockAlphaProperty::Put(fstream& file) {
-	file.write((char*)&nameID, 4);
-	file.write((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++)
-		file.write((char*)&extraData[i], 4);
-	file.write((char*)&controllerRef, 4);
-	file.write((char*)&flags, 2);
-	file.write((char*)&threshold, 1);
-}
-
-int NifBlockAlphaProperty::CalcBlockSize() {
-	blockSize = 15;
-	for (int i = 0; i < numExtraData; i++)
-		blockSize += 4;
-
-	return blockSize;
-}
-
-void NifBlockStringExtraData::Get(fstream& file) {
-	file.read((char*)&nameID, 4);
-	if (nameID != -1)
-		name = header->strings[nameID].str;
-	else
-		name = "";
-
-	//file.read((char*)&nextExtraData, 4);
-	//file.read((char*)&bytesRemaining, 4);
-
-	file.read((char*)&stringDataId, 4);
-	if (stringDataId != -1)
-		stringData = header->strings[stringDataId].str;
-	else
-		stringData = "";
-}
-
-void NifBlockStringExtraData::Put(fstream& file) {
-	file.write((char*)&nameID, 4);
-
-	//file.write((char*)&nextExtraData, 4);
-	//file.write((char*)&bytesRemaining, 4);
-
-	file.write((char*)&stringDataId, 4);
-}
-
-NifBlockStringExtraData::NifBlockStringExtraData(NiHeader& hdr) {
-	header = &hdr;
-	blockType = NISTRINGEXTRADATA;
-	blockSize = 8;
-	nameID = -1;
-	stringDataId = -1;
-	name = "";
-	//nextExtraData = -1;
-	//bytesRemaining = 4;
-	stringData = "";
-}
-
-NifBlockStringExtraData::NifBlockStringExtraData(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = NISTRINGEXTRADATA;
-	Get(file);
-}
-
-
-void NifBlockBSShadePPLgtProp::Get(fstream& file) {
-	file.read((char*)&nameID, 4);
-	if (nameID != -1)
-		shaderName = header->strings[nameID].str;
-	else
-		shaderName = "";
-
-	int intVal;
-	file.read((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++) {
-		file.read((char*)&intVal, 4);
-		extraData.push_back(intVal);
-	}
-
-	file.read((char*)&controllerRef, 4);
-	file.read((char*)&flags, 2);
-	file.read((char*)&shaderType, 4);
-	file.read((char*)&shaderFlags, 4);
-	file.read((char*)&unkInt2, 4);
-	file.read((char*)&envMapScale, 4);
-	file.read((char*)&unkInt3, 4);
-	file.read((char*)&texsetRef, 4);
-	file.read((char*)&unkFloat2, 4);
-	file.read((char*)&refractionPeriod, 4);
-	file.read((char*)&unkFloat4, 4);
-	file.read((char*)&unkFloat5, 4);
-}
-
-void NifBlockBSShadePPLgtProp::Put(fstream& file) {
-	file.write((char*)&nameID, 4);
-	file.write((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++)
-		file.write((char*)&extraData[i], 4);
-
-	file.write((char*)&controllerRef, 4);
-	file.write((char*)&flags, 2);
-	file.write((char*)&shaderType, 4);
-	file.write((char*)&shaderFlags, 4);
-	file.write((char*)&unkInt2, 4);
-	file.write((char*)&envMapScale, 4);
-	file.write((char*)&unkInt3, 4);
-	file.write((char*)&texsetRef, 4);
-	file.write((char*)&unkFloat2, 4);
-	file.write((char*)&refractionPeriod, 4);
-	file.write((char*)&unkFloat4, 4);
-	file.write((char*)&unkFloat5, 4);
-}
-
-void NifBlockBSShadePPLgtProp::Clone(NifBlockBSShadePPLgtProp* Other) {
-	(*this) = (*Other);
-}
-
-NifBlockBSShadePPLgtProp::NifBlockBSShadePPLgtProp(NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSSHADERPPLIGHTINGPROPERTY;
-	shaderType = 0;
-	nameID = -1;
-	shaderName = "";
-	numExtraData = 0;
-	controllerRef = -1;
-	flags = 0x0001;
-	shaderType = 0x00000001;
-	shaderFlags = 0x82000103;
-
-	unkInt2 = 1;
-	envMapScale = 1.0f;
-	unkInt3 = 3;
-
-	texsetRef = -1;
-	unkFloat2 = 0.0f;
-	refractionPeriod = 0;
-	unkFloat4 = 4.0f;
-	unkFloat5 = 1.0f;
-
-	blockSize = 58;
-}
-
-NifBlockBSShadePPLgtProp::NifBlockBSShadePPLgtProp(fstream& file, NiHeader& hdr) {
-	header = &hdr;
-	blockType = BSSHADERPPLIGHTINGPROPERTY;
-	Get(file);
-}
-
-void NifBlockBSShadePPLgtProp::notifyBlockDelete(int blockID) {
-	if (texsetRef == blockID)
-		texsetRef = -1;
-	else if (texsetRef > blockID)
-		texsetRef--;
-}
-
-bool NifBlockBSShadePPLgtProp::IsSkinShader() {
-	return shaderType == 0x0000000e;
 }

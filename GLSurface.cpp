@@ -1132,9 +1132,9 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	bool isSkin = false;
 	m->doublesided = false;
 
-	NifBlockBSLightShadeProp* shader = nif->GetShaderForShape(shapeName);
+	BSLightingShaderProperty* shader = nif->GetShaderForShape(shapeName);
 	if (!shader) {
-		NifBlockBSShadePPLgtProp* shaderPP = nif->GetShaderPPForShape(shapeName);
+		BSShaderPPLightingProperty* shaderPP = nif->GetShaderPPForShape(shapeName);
 		if (shaderPP)
 			isSkin = shaderPP->IsSkinShader();
 	}

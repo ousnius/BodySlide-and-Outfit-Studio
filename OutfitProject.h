@@ -140,9 +140,9 @@ public:
 	void SetRefTexture(const string& shapeName, const string& textureFile);
 
 	int RefShapeShaderType(const string& shapeName) {
-		NifBlockBSLightShadeProp* shader = baseNif.GetShaderForShape(shapeName);
+		BSLightingShaderProperty* shader = baseNif.GetShaderForShape(shapeName);
 		if (!shader) {
-			NifBlockBSShadePPLgtProp* shaderPP = baseNif.GetShaderPPForShape(shapeName);
+			BSShaderPPLightingProperty* shaderPP = baseNif.GetShaderPPForShape(shapeName);
 			if (shaderPP && shaderPP->IsSkinShader())
 				return 1;
 		}
@@ -153,9 +153,9 @@ public:
 	}
 
 	int OutfitShapeShaderType(const string& shapeName) {
-		NifBlockBSLightShadeProp* shader = workNif.GetShaderForShape(shapeName);
+		BSLightingShaderProperty* shader = workNif.GetShaderForShape(shapeName);
 		if (!shader) {
-			NifBlockBSShadePPLgtProp* shaderPP = workNif.GetShaderPPForShape(shapeName);
+			BSShaderPPLightingProperty* shaderPP = workNif.GetShaderPPForShape(shapeName);
 			if (shaderPP && shaderPP->IsSkinShader())
 				return 1;
 		}

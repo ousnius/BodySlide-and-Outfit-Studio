@@ -197,28 +197,16 @@ public:
 	void Put(fstream& file);
 };
 
-class NiUnknown : public NiObject {
-public:
-	char* data;
-
-	NiUnknown();
-	NiUnknown(fstream& file, uint size);
-	NiUnknown(uint size);
-	virtual ~NiUnknown();
-	void Clone(NiUnknown* other);
-	void Get(fstream& file);
-	void Put(fstream& file);
-	int CalcBlockSize();
-};
-
 class NiObjectNET : public NiObject {
 public:
-	uint skyrimShaderType;			// BSLightingShaderProperty && User Version >= 12
+	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
 	string name;
 	uint nameRef;
 	int numExtraData;
 	vector<int> extraDataRef;
 	int controllerRef;
+
+	bool bBSLightingShaderProperty;
 
 	virtual void Init();
 	virtual void Get(fstream& file);
@@ -230,7 +218,7 @@ public:
 class NiAVObject : public NiObjectNET {
 public:
 	uint flags;
-	ushort unkShort1;				// Version >= 20.2.0.7 && User Version >= 11 && User Version 2 > 26
+	ushort unkShort1;						// Version >= 20.2.0.7 && User Version >= 11 && User Version 2 > 26
 	Vector3 translation;
 	Vector3 rotation[3];
 	float scale;
@@ -238,6 +226,15 @@ public:
 	vector<int> propertiesRef;
 	int collisionRef;
 
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiProperty : public NiObjectNET {
+public:
 	virtual void Init();
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
@@ -271,8 +268,8 @@ public:
 	vector<int> materialExtra;
 	int activeMaterial;
 	byte dirty;
-	int propertiesRef1;				// Version >= 20.2.0.7 && User Version == 12
-	int propertiesRef2;				// Version >= 20.2.0.7 && User Version == 12
+	int propertiesRef1;						// Version >= 20.2.0.7 && User Version == 12
+	int propertiesRef2;						// Version >= 20.2.0.7 && User Version == 12
 
 	virtual void Init();
 	virtual void Get(fstream& file);
@@ -291,7 +288,7 @@ public:
 	vector<Vector3> vertices;
 	ushort numUVSets;
 	//byte extraVectorsFlags;
-	uint unkInt2;					// Version >= 20.2.0.7 && User Version == 12
+	uint unkInt2;							// Version >= 20.2.0.7 && User Version == 12
 	byte hasNormals;
 	vector<Vector3> normals;
 	vector<Vector3> tangents;
@@ -412,79 +409,71 @@ public:
 	int CalcBlockSize();
 };
 
-class NifBlockNiSkinInstance : public NiObject {
+class NiSkinInstance : public NiObject {
 public:
-	struct Partition{
-		short flags;
-		short partID;
-	};
 	int dataRef;
-	int skinRef;
-	int skeletonRoot;
+	int skinPartitionRef;
+	int skeletonRootRef;
 	uint numBones;
-	vector<int> bonePtrs;
+	vector<int> bones;
 
-	int CalcBlockSize();
+	NiSkinInstance() { };
+	NiSkinInstance(NiHeader& hdr);
+	NiSkinInstance(fstream& file, NiHeader& hdr);
 
-	void Get(fstream& file);
-	void Put(fstream& file);
-
-	NifBlockNiSkinInstance(NiHeader& hdr);
-	NifBlockNiSkinInstance(fstream& file, NiHeader& hdr);
-
-	void notifyBlockDelete(int blockID);
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
 };
 
-class NifBlockBSDismemberment : public NiObject {
+class BSDismemberSkinInstance : public NiSkinInstance {
 public:
-	struct Partition{
+	struct Partition {
 		short flags;
 		short partID;
 	};
-	int dataRef;
-	int skinRef;
-	int skeletonRoot;
-	uint numBones;
-	vector<int> bonePtrs;
+
 	int numPartitions;
 	vector<Partition> partitions;
 
-	NifBlockBSDismemberment(NiHeader& hdr);
-	NifBlockBSDismemberment(fstream& file, NiHeader& hdr);
-
-	int CalcBlockSize();
+	BSDismemberSkinInstance(NiHeader& hdr);
+	BSDismemberSkinInstance(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
-
 	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
 };
 
-class NifBlockNiSkinData : public NiObject {
+class NiSkinData : public NiObject {
 public:
 	class BoneData {
 	public:
 		SkinTransform boneTransform;
 		Vector3 boundSphereOffset;
 		float boundSphereRadius;
-		ushort numVerts;
-		vector<SkinWeight> skin_weights;
+		ushort numVertices;
+		vector<SkinWeight> vertexWeights;
+
 		BoneData() {
+			boneTransform.scale = 1.0f;
 			boundSphereRadius = 0.0f;
-			numVerts = 0;
+			numVertices = 0;
 		}
 		int CalcSize() {
-			return (70 + numVerts * 6);
+			return (70 + numVertices * 6);
 		}
-
 	};
-	SkinTransform rootTransform;
+
+	SkinTransform skinTransform;
 	uint numBones;
 	byte hasVertWeights;
-	vector<BoneData> Bones;
+	vector<BoneData> bones;
 
-	NifBlockNiSkinData(NiHeader& hdr);
-	NifBlockNiSkinData(fstream& file, NiHeader& hdr);
+	NiSkinData(NiHeader& hdr);
+	NiSkinData(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -492,7 +481,7 @@ public:
 	int CalcBlockSize();
 };
 
-class NifBlockNiSkinPartition : public NiObject {
+class NiSkinPartition : public NiObject {
 public:
 	class PartitionBlock {
 	public:
@@ -500,169 +489,190 @@ public:
 		ushort numTriangles;
 		ushort numBones;
 		ushort numStrips;
-		ushort numWeightsPerVert;
+		ushort numWeightsPerVertex;
 		vector<ushort> bones;
-		byte hasVertMap;
-		vector<ushort> vertMap;
-		byte hasVertWeights;
-		vector<VertexWeight> vertWeights;
+		byte hasVertexMap;
+		vector<ushort> vertexMap;
+		byte hasVertexWeights;
+		vector<VertexWeight> vertexWeights;
 		vector<ushort> stripLengths;
 		byte hasFaces;
-		vector<vector<ushort>>strips;
-		vector<Triangle> tris;
+		vector<vector<ushort>> strips;
+		vector<Triangle> triangles;
 		byte hasBoneIndices;
-		vector<BoneIndices> boneindex;
-		ushort unknown;
+		vector<BoneIndices> boneIndices;
+		ushort unkShort;					// User Version >= 12
 	};
+
 	uint numPartitions;
-	vector<PartitionBlock> partitionBlocks;
+	vector<PartitionBlock> partitions;
 
 	bool needsBuild;
-	int myver;
 
-	NifBlockNiSkinPartition(NiHeader& hdr);
-	NifBlockNiSkinPartition(fstream& file, NiHeader& hdr);
-
-	int CalcBlockSize();
+	NiSkinPartition(NiHeader& hdr);
+	NiSkinPartition(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
-
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(vector<int>& outDeletedIndices);
-};
-
-class NifBlockBSLightShadeProp : public NiObject {
-public:
-	uint shaderType;
-	string shaderName;
-	uint nameID;
-	uint numExtraData;
-	vector<int> extraData;
-	int controllerRef;
-	uint shaderFlags1;
-	uint shaderFlags2;
-	Vector2 uvOffset;
-	Vector2 uvScale;
-	int texsetRef;
-
-	Vector3 emissiveClr;
-	float emissivleMult;
-	uint texClampMode;
-	float alpha;
-	float unk;
-	float glossiness;
-	Vector3 specClr;
-	float specStr;
-	float lightFX1;
-	float lightFX2;
-
-	float envMapScale;
-	Vector3 skinTintClr;
-	Vector3 hairTintClr;
-	float maxPasses;
-	float scale;
-	float parallaxThickness;
-	float parallaxRefrScale;
-	Vector2 parallaxTexScale;
-	float parallaxEnvMapStr;
-	Color4 sparkleParams;
-	float eyeCubeScale;
-	Vector3 eyeLeftReflectCenter;
-	Vector3 eyeRightReflectCenter;
-
-	NifBlockBSLightShadeProp(NiHeader& hdr);
-	NifBlockBSLightShadeProp(fstream& file, NiHeader& hdr);
-
-	void notifyBlockDelete(int blockID);
-
-	void Get(fstream& file);
-	void Put(fstream& file);
-
-	void Clone(NifBlockBSLightShadeProp* Other);
-
-	bool IsSkinShader();
-	bool IsDoubleSided();
-};
-
-class NifBlockBSShaderTextureSet : public NiObject {
-public:
-	uint numTex;
-	vector<NiString> textures;
-
-	NifBlockBSShaderTextureSet(NiHeader& hdr);
-	NifBlockBSShaderTextureSet(fstream& file, NiHeader& hdr);
-
-	void Get(fstream& file);
-	void Put(fstream& file);
-
 	int CalcBlockSize();
 };
 
-class NifBlockAlphaProperty : public NiObject {
+class BSLightingShaderProperty : public NiProperty {
 public:
-	string alphaName;
-	uint nameID;
-	uint numExtraData;
-	vector<int> extraData;
-	int controllerRef;
+	uint shaderFlags1;						// User Version == 12
+	uint shaderFlags2;						// User Version == 12
+	Vector2 uvOffset;
+	Vector2 uvScale;
+	int textureSetRef;
+
+	Vector3 emissiveColor;
+	float emissiveMultiple;
+	uint textureClampMode;
+	float alpha;
+	float refractionStrength;
+	float glossiness;
+	Vector3 specularColor;
+	float specularStrength;
+	float lightingEffect1;
+	float lightingEffect2;
+
+	float environmentMapScale;
+	Vector3 skinTintColor;
+	Vector3 hairTintColor;
+	float maxPasses;
+	float scale;
+	float parallaxInnerLayerThickness;
+	float parallaxRefractionScale;
+	Vector2 parallaxInnerLayerTextureScale;
+	float parallaxEnvmapStrength;
+	Color4 sparkleParameters;
+	float eyeCubemapScale;
+	Vector3 eyeLeftReflectionCenter;
+	Vector3 eyeRightReflectionCenter;
+
+	BSLightingShaderProperty(NiHeader& hdr);
+	BSLightingShaderProperty(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void Clone(BSLightingShaderProperty* other);
+	bool IsSkinShader();
+	bool IsDoubleSided();
+	int CalcBlockSize();
+};
+
+class BSShaderProperty : public NiProperty {
+public:
+	ushort smooth;
+	uint shaderType;
+	uint shaderFlags;
+	uint shaderFlags2;
+	float environmentMapScale;				// User Version == 11
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class BSShaderLightingProperty : public BSShaderProperty {
+public:
+	uint textureClampMode;					// User Version <= 11
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class BSShaderPPLightingProperty : public BSShaderLightingProperty {
+public:
+	int textureSetRef;
+	float refractionStrength;				// User Version == 11 && User Version 2 > 14
+	int refractionFirePeriod;				// User Version == 11 && User Version 2 > 14
+	float unkFloat4;						// User Version == 11 && User Version 2 > 24
+	float unkFloat5;						// User Version == 11 && User Version 2 > 24
+	Color4 emissiveColor;					// User Version >= 12
+
+	BSShaderPPLightingProperty(NiHeader& hdr);
+	BSShaderPPLightingProperty(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void Clone(BSShaderPPLightingProperty* other);
+	bool IsSkinShader();
+	int CalcBlockSize();
+};
+
+class BSShaderTextureSet : public NiObject {
+public:
+	int numTextures;
+	vector<NiString> textures;
+
+	BSShaderTextureSet(NiHeader& hdr);
+	BSShaderTextureSet(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
+};
+
+class NiAlphaProperty : public NiProperty {
+public:
 	ushort flags;
 	byte threshold;
 
-	NifBlockAlphaProperty(NiHeader& hdr);
-	NifBlockAlphaProperty(fstream& file, NiHeader& hdr);
+	NiAlphaProperty(NiHeader& hdr);
+	NiAlphaProperty(fstream& file, NiHeader& hdr);
+
 	void Get(fstream& file);
 	void Put(fstream& file);
-
+	void notifyBlockDelete(int blockID);
 	int CalcBlockSize();
 };
 
-class NifBlockStringExtraData : public NiObject {
+class NiExtraData : public NiObject {
 public:
-	uint nameID;
+	uint nameRef;
 	string name;
-	//int nextExtraData;
-	//uint bytesRemaining;
-	uint stringDataId;
-	string stringData;
 
-	NifBlockStringExtraData(NiHeader& hdr);
-	NifBlockStringExtraData(fstream& file, NiHeader& hdr);
-
-	void Get(fstream& file);
-	void Put(fstream& file);
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual int CalcBlockSize();
 };
 
-class NifBlockBSShadePPLgtProp : public NiObject {
+class NiStringExtraData : public NiExtraData {
 public:
-	string shaderName;
-	uint nameID;
-	uint numExtraData;
-	vector<int> extraData;
-	int controllerRef;
-	ushort flags;
-	uint shaderType;
-	uint shaderFlags;
-	int unkInt2;
-	float envMapScale;
-	int unkInt3;
-	int texsetRef;
-	float unkFloat2;
-	int refractionPeriod;
-	float unkFloat4;
-	float unkFloat5;
+	uint stringDataRef;
+	string stringData;
 
-	NifBlockBSShadePPLgtProp(NiHeader& hdr);
-	NifBlockBSShadePPLgtProp(fstream& file, NiHeader& hdr);
-
-	void notifyBlockDelete(int blockID);
+	NiStringExtraData(NiHeader& hdr);
+	NiStringExtraData(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
+	int CalcBlockSize();
+};
 
-	void Clone(NifBlockBSShadePPLgtProp* Other);
+class NiUnknown : public NiObject {
+public:
+	char* data;
 
-	bool IsSkinShader();
+	NiUnknown();
+	NiUnknown(fstream& file, uint size);
+	NiUnknown(uint size);
+	virtual ~NiUnknown();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void Clone(NiUnknown* other);
+	int CalcBlockSize();
 };
 
 class NifFile
@@ -717,15 +727,15 @@ public:
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);
 
-	NifBlockBSLightShadeProp* GetShaderForShape(const string& shapeName);
-	NifBlockBSShadePPLgtProp* GetShaderPPForShape(const string& shapeName);
+	BSLightingShaderProperty* GetShaderForShape(const string& shapeName);
+	BSShaderPPLightingProperty* GetShaderPPForShape(const string& shapeName);
 	bool GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
 	void SetTextureForShape(const string& shapeName, string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();
 
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
-	void CopyShader(const string& shapeDest, NifBlockBSLightShadeProp* srcShader, NifFile& srcNif, bool addAlpha);
-	void CopyShaderPP(const string& shapeDest, NifBlockBSShadePPLgtProp* srcShader, NifFile& srcNif, bool addAlpha);
+	void CopyShader(const string& shapeDest, BSLightingShaderProperty* srcShader, NifFile& srcNif, bool addAlpha);
+	void CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* srcShader, NifFile& srcNif, bool addAlpha);
 	void CopyShape(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 	// Copy strips is a duplicate of copy shape that works for TriStrips blocks. Copy shape will call copy strips as needed.
 	void CopyStrips(const string& shapeDest, NifFile& srcNif, const string& srcShape);

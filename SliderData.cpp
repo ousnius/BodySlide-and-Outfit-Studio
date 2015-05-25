@@ -482,7 +482,7 @@ int SliderSetFile::UpdateSet(SliderSet &inSliderSet) {
 }
 
 int SliderSetFile::Save() {
-	return doc.SaveFile(fileName.c_str());
+	return doc.SaveFile(fileName.c_str()) == XML_SUCCESS;
 }
 
 void PresetCollection::Clear() {

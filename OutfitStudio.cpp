@@ -1264,9 +1264,9 @@ void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 	fp->SetPath(defOutputFile);
 }
 
-void OutfitStudio::OnSaveSliderSet(wxCommandEvent &event) {
+void OutfitStudio::OnSaveSliderSet(wxCommandEvent& WXUNUSED(event)) {
 	if (Proj->mFileName.empty()) {
-		OnSaveSliderSetAs(event);
+		OnSaveSliderSetAs(wxCommandEvent());
 	}
 	else {
 		if (Proj->OutfitHasUnweighted()) {
@@ -1295,14 +1295,11 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent &event) {
 		if (updateNormals)
 			Proj->UpdateNifNormals(&Proj->workNif, shapeMeshes);
 
-		Proj->Save(Proj->mFileName,
-			Proj->mOutfitName,
-			Proj->mDataDir,
-			Proj->mBaseFile,
-			Proj->mGamePath,
-			Proj->mGameFile,
-			Proj->mGenWeights,
-			Proj->mCopyRef);
+		string res = Proj->Save(Proj->mFileName, Proj->mOutfitName, Proj->mDataDir, Proj->mBaseFile,
+			Proj->mGamePath, Proj->mGameFile, Proj->mGenWeights, Proj->mCopyRef);
+
+		if (!res.empty())
+			wxMessageBox(res, "Error", wxOK | wxICON_ERROR);
 
 		EndProgress();
 	}
@@ -1454,6 +1451,8 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	if (res.empty())
 		this->GetMenuBar()->Enable(XRCID("fileSave"), true);
+	else
+		wxMessageBox(res, "Error", wxOK | wxICON_ERROR);
 
 	EndProgress();
 }
@@ -1502,8 +1501,13 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& WXUNUSED(event)) {
-	if (!Proj->workNif.IsValid() && !Proj->baseNif.IsValid())
+	if (!Proj->workNif.IsValid())
 		return;
+
+	if (!Proj->baseNif.IsValid()) {
+		OnExportOutfitNif(wxCommandEvent());
+		return;
+	}
 
 	if (Proj->OutfitHasUnweighted()) {
 		int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
@@ -1517,8 +1521,8 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.empty())
 		return;
 
-	Proj->RefShapes(shapes);
 	Proj->OutfitShapes(shapes);
+	Proj->RefShapes(shapes);
 	for (auto s : shapes)
 		shapeMeshes.push_back(glView->GetMesh(s));
 

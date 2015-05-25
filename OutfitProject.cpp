@@ -384,27 +384,27 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	nifShapeData->Create(&v, &t, &uv);
 	int shapeID = blank.AddBlock((NiObject*)nifShapeData, "NiTriShapeData");
 
-	NifBlockNiSkinData* nifSkinData = new NifBlockNiSkinData(workNif.hdr);
+	NiSkinData* nifSkinData = new NiSkinData(workNif.hdr);
 	int skinID = blank.AddBlock((NiObject*)nifSkinData, "NiSkinData");
 
-	NifBlockNiSkinPartition* nifSkinPartition = new NifBlockNiSkinPartition(workNif.hdr);
+	NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.hdr);
 	int partID = blank.AddBlock((NiObject*)nifSkinPartition, "NiSkinPartition");
 
-	NifBlockBSDismemberment* nifDismemberInst = new NifBlockBSDismemberment(workNif.hdr);
+	BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.hdr);
 	int dismemberID = blank.AddBlock((NiObject*)nifDismemberInst, "BSDismemberSkinInstance");
 
-	NifBlockBSLightShadeProp* nifShader = new NifBlockBSLightShadeProp(workNif.hdr);
+	BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.hdr);
 	int shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");
 
-	NifBlockBSShaderTextureSet* nifTexset = new NifBlockBSShaderTextureSet(workNif.hdr);
+	BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.hdr);
 	int texsetID = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
-	nifShader->texsetRef = texsetID;
+	nifShader->textureSetRef = texsetID;
 
 	NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
 	int triShapeID = blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
 	nifDismemberInst->dataRef = skinID;
-	nifDismemberInst->skinRef = partID;
-	nifDismemberInst->skeletonRoot = 0;
+	nifDismemberInst->skinPartitionRef = partID;
+	nifDismemberInst->skeletonRootRef = 0;
 	nifTriShape->propertiesRef1 = shaderID;
 
 	int nameID = blank.AddOrFindStringId(useShapeName);
@@ -1626,8 +1626,9 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMes
 }
 
 int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef) {
-	NifFile* clone = new NifFile(workNif);
-	clone->SetNodeName(0, "Scene Root");
+	NifFile clone(workNif);
+
+	clone.SetNodeName(0, "Scene Root");
 
 	vector<Vector3> liveVerts;
 	vector<Vector3> liveNorms;
@@ -1638,37 +1639,36 @@ int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& mo
 			liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
 			liveNorms.emplace_back(move(Vector3(m->verts[i].nx * -1, m->verts[i].nz, m->verts[i].ny)));
 		}
-		clone->SetVertsForShape(m->shapeName, liveVerts);
+		clone.SetVertsForShape(m->shapeName, liveVerts);
 
 		if (writeNormals) {
-			NifBlockBSLightShadeProp* shader = clone->GetShaderForShape(m->shapeName);
+			BSLightingShaderProperty* shader = clone.GetShaderForShape(m->shapeName);
 			if (!shader) {
-				NifBlockBSShadePPLgtProp* shaderPP = clone->GetShaderPPForShape(m->shapeName);
+				BSShaderPPLightingProperty* shaderPP = clone.GetShaderPPForShape(m->shapeName);
 				if (shaderPP && !shaderPP->IsSkinShader()) {
-					clone->SetNormalsForShape(m->shapeName, liveNorms);
-					clone->CalcTangentsForShape(m->shapeName);
+					clone.SetNormalsForShape(m->shapeName, liveNorms);
+					clone.CalcTangentsForShape(m->shapeName);
 				}
 			}
 			else if (!shader->IsSkinShader()) {
-				clone->SetNormalsForShape(m->shapeName, liveNorms);
-				clone->CalcTangentsForShape(m->shapeName);
+				clone.SetNormalsForShape(m->shapeName, liveNorms);
+				clone.CalcTangentsForShape(m->shapeName);
 			}
 		}
 	}
 
-	workAnim.WriteToNif(clone);
-	if (withRef)
-		clone->CopyShape(baseShapeName, baseNif, baseShapeName);
+	if (withRef) {
+		clone.CopyShape(baseShapeName, baseNif, baseShapeName);
+		baseAnim.WriteToNif(&clone, false);
+	}
+	workAnim.WriteToNif(&clone);
 
 	vector<string> shapes;
-	clone->GetShapeList(shapes);
+	clone.GetShapeList(shapes);
 	for (auto s : shapes)
-		clone->UpdateSkinPartitions(s);
+		clone.UpdateSkinPartitions(s);
 
-	int ret = clone->Save(filename);
-	delete clone;
-
-	return ret;
+	return clone.Save(filename);
 }
 
 int OutfitProject::ExportShape(const string& shapeName, const string& fName, bool isOutfit) {
