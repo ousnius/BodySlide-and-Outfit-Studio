@@ -549,6 +549,8 @@ private:
 	void OnMakeConvRef(wxCommandEvent& event);
 
 	void OnSSSNameCopy(wxCommandEvent& event);
+	void OnSSSGenWeightsTrue(wxCommandEvent& event);
+	void OnSSSGenWeightsFalse(wxCommandEvent& event);
 	void OnSaveSliderSet(wxCommandEvent &event);
 	void OnSaveSliderSetAs(wxCommandEvent &event);
 

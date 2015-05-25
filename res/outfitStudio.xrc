@@ -2853,8 +2853,8 @@
 								<flag>wxALL</flag>
 								<border>5</border>
 								<object class="wxButton" name="sssNameCopy">
-									<tooltip>Copies the current display name to all text controls below.</tooltip>						
-									<label>Copy Name</label>
+									<tooltip>Copies the current display name to the project text fields below.</tooltip>						
+									<label>To Project</label>
 								</object>
 							</object>
 						</object>

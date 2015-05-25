@@ -1242,17 +1242,12 @@ void OutfitStudio::WorkingGUIFromProj() {
 
 void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 	wxWindow* win = ((wxButton*)event.GetEventObject())->GetParent();
-	wxTextCtrl* sssName = (wxTextCtrl*)win->FindWindowByName("sssName");
 
-	string copyStr = sssName->GetValue();
+	string copyStr = XRCCTRL(*win, "sssName", wxTextCtrl)->GetValue();
 	copyStr = Proj->NameAbbreviate(copyStr);
 	string defSliderSetFile = copyStr + ".xml";
 	string defShapeDataDir = copyStr;
 	string defOutputFile = copyStr + ".nif";
-	string defOutputPath = "meshes\\armor\\" + copyStr;
-
-	XRCCTRL((*win), "sssOutputFileName", wxTextCtrl)->SetLabel(copyStr);
-	XRCCTRL((*win), "sssOutputDataPath", wxTextCtrl)->SetLabel(defOutputPath);
 
 	wxFilePickerCtrl* fp = (wxFilePickerCtrl*)win->FindWindowByName("sssSliderSetFile");
 	fp->SetPath(defSliderSetFile);
@@ -1262,6 +1257,16 @@ void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 
 	fp = (wxFilePickerCtrl*)win->FindWindowByName("sssShapeDataFile");
 	fp->SetPath(defOutputFile);
+}
+
+void OutfitStudio::OnSSSGenWeightsTrue(wxCommandEvent& event) {
+	wxWindow* win = ((wxRadioButton*)event.GetEventObject())->GetParent();
+	XRCCTRL(*win, "m_lowHighInfo", wxStaticText)->SetLabel("_0/_1.nif");
+}
+
+void OutfitStudio::OnSSSGenWeightsFalse(wxCommandEvent& event) {
+	wxWindow* win = ((wxRadioButton*)event.GetEventObject())->GetParent();
+	XRCCTRL(*win, "m_lowHighInfo", wxStaticText)->SetLabel(".nif");
 }
 
 void OutfitStudio::OnSaveSliderSet(wxCommandEvent& WXUNUSED(event)) {
@@ -1321,7 +1326,9 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgSaveProject", "wxDialog")) {
-		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_COMMAND_BUTTON_CLICKED, &OutfitStudio::OnSSSNameCopy, this);
+		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudio::OnSSSNameCopy, this);
+		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsTrue, this);
+		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsFalse, this);
 		string sssName;
 		if (!Proj->mOutfitName.empty())
 			sssName = Proj->mOutfitName;
