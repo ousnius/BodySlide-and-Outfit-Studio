@@ -1558,8 +1558,8 @@ void OutfitProject::ConformShape(const string& shapeName) {
 }
 
 void OutfitProject::DuplicateOutfitShape(const string& sourceShape, const string& destShape, const mesh* m) {
-	NifFile* clone = new NifFile(workNif);
-	workAnim.WriteToNif(clone);
+	NifFile clone(workNif);
+	workAnim.WriteToNif(&clone);
 
 	vector<Vector3> liveVerts;
 	//vector<Vector3> liveNorms;
@@ -1567,16 +1567,15 @@ void OutfitProject::DuplicateOutfitShape(const string& sourceShape, const string
 		liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
 		//liveNorms.emplace_back(move(Vector3(m->verts[i].nx* -1, m->verts[i].nz, m->verts[i].ny)));
 	}
-	clone->SetVertsForShape(m->shapeName, liveVerts);
+	clone.SetVertsForShape(m->shapeName, liveVerts);
 
-	workNif.CopyShape(destShape, *clone, sourceShape);
+	workNif.CopyShape(destShape, clone, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);
-	delete clone;
 }
 
 void OutfitProject::DuplicateRefShape(const string& sourceShape, const string& destShape, const mesh* m) {
-	NifFile* clone = new NifFile(baseNif);
-	baseAnim.WriteToNif(clone);
+	NifFile clone(baseNif);
+	baseAnim.WriteToNif(&clone);
 
 	vector<Vector3> liveVerts;
 	//vector<Vector3> liveNorms;
@@ -1584,11 +1583,10 @@ void OutfitProject::DuplicateRefShape(const string& sourceShape, const string& d
 		liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
 		//liveNorms.emplace_back(move(Vector3(m->verts[i].nx* -1, m->verts[i].nz, m->verts[i].ny)));
 	}
-	clone->SetVertsForShape(m->shapeName, liveVerts);
+	clone.SetVertsForShape(m->shapeName, liveVerts);
 
-	workNif.CopyShape(destShape, *clone, sourceShape);
+	workNif.CopyShape(destShape, clone, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);
-	delete clone;
 }
 
 void OutfitProject::RenameShape(const string& shapeName, const string& newShapeName, bool isOutfit) {

@@ -39,7 +39,7 @@ public:
 
 	void SetNotifyWindow(wxWindow* win);
 
-	void AddMeshFromNif(NifFile* nif, char* shapeName);
+	void AddMeshFromNif(NifFile* nif, const string& shapeName);
 	void AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv = nullptr, const string& shapeName = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {

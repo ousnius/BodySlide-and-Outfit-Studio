@@ -35,6 +35,7 @@ using namespace std;
 #define NISKININSTANCE				13
 #define NISTRINGEXTRADATA			14
 #define BSSHADERPPLIGHTINGPROPERTY	15
+#define NIMATERIALPROPERTY			16
 
 
 struct VertexWeight {
@@ -149,7 +150,7 @@ public:
 	virtual int CalcBlockSize();
 	virtual void SetBlockSize(int sz);
 
-	virtual bool VerCheck(int v1, int v2, int v3, int v4);
+	virtual bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 };
 
 class NiHeader : public NiObject {
@@ -556,7 +557,6 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	void Clone(BSLightingShaderProperty* other);
 	bool IsSkinShader();
 	bool IsDoubleSided();
 	int CalcBlockSize();
@@ -603,7 +603,6 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	void Clone(BSShaderPPLightingProperty* other);
 	bool IsSkinShader();
 	int CalcBlockSize();
 };
@@ -628,6 +627,26 @@ public:
 
 	NiAlphaProperty(NiHeader& hdr);
 	NiAlphaProperty(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+
+class NiMaterialProperty : public NiProperty {
+public:
+	Vector3 colorAmbient;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
+	Vector3 colorDiffuse;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
+	Vector3 colorSpecular;
+	Vector3 colorEmissive;
+	float glossiness;
+	float alpha;
+	float emitMulti;						// Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21
+
+	NiMaterialProperty(NiHeader& hdr);
+	NiMaterialProperty(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -661,12 +680,11 @@ public:
 
 class NiUnknown : public NiObject {
 public:
-	char* data;
+	vector<char> data;
 
 	NiUnknown();
 	NiUnknown(fstream& file, uint size);
 	NiUnknown(uint size);
-	virtual ~NiUnknown();
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void Clone(NiUnknown* other);

@@ -27,9 +27,15 @@ void NiObject::SetBlockSize(int sz) {
 	blockSize = sz;
 }
 
-bool NiObject::VerCheck(int v1, int v2, int v3, int v4) {
-	if (header->version4 >= v1 && header->version3 >= v2 && header->version2 >= v3 && header->version1 >= v4)
-		return true;
+bool NiObject::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
+	if (equal) {
+		if (header->version4 == v1 && header->version3 == v2 && header->version2 == v3 && header->version1 == v4)
+			return true;
+	}
+	else {
+		if (header->version4 >= v1 && header->version3 >= v2 && header->version2 >= v3 && header->version1 >= v4)
+			return true;
+	}
 
 	return false;
 }
@@ -2285,10 +2291,6 @@ void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
 		textureSetRef--;
 }
 
-void BSLightingShaderProperty::Clone(BSLightingShaderProperty* other) {
-	(*this) = (*other);
-}
-
 bool BSLightingShaderProperty::IsSkinShader() {
 	return (shaderFlags1 & (1 << 21)) != 0;
 }
@@ -2490,10 +2492,6 @@ void BSShaderPPLightingProperty::notifyBlockDelete(int blockID) {
 		textureSetRef--;
 }
 
-void BSShaderPPLightingProperty::Clone(BSShaderPPLightingProperty* other) {
-	(*this) = (*other);
-}
-
 bool BSShaderPPLightingProperty::IsSkinShader() {
 	return shaderType == 0x0000000e;
 }
@@ -2617,6 +2615,81 @@ int NiAlphaProperty::CalcBlockSize() {
 }
 
 
+NiMaterialProperty::NiMaterialProperty(NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = NIMATERIALPROPERTY;
+	glossiness = 1.0f;
+	alpha = 1.0f;
+	emitMulti = 1.0f;
+
+	CalcBlockSize();
+}
+
+NiMaterialProperty::NiMaterialProperty(fstream& file, NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = NIMATERIALPROPERTY;
+	emitMulti = 1.0f;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiMaterialProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	if (!(header->VerCheck(20, 2, 0, 7, true) && header->userVersion >= 11 && header->userVersion2 > 21)) {
+		file.read((char*)&colorAmbient, 12);
+		file.read((char*)&colorDiffuse, 12);
+	}
+
+	file.read((char*)&colorSpecular, 12);
+	file.read((char*)&colorEmissive, 12);
+	file.read((char*)&glossiness, 4);
+	file.read((char*)&alpha, 4);
+
+	if (header->VerCheck(20, 2, 0, 7, true) && header->userVersion >= 11 && header->userVersion2 > 21)
+		file.read((char*)&emitMulti, 4);
+}
+
+void NiMaterialProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	if (!(header->VerCheck(20, 2, 0, 7, true) && header->userVersion >= 11 && header->userVersion2 > 21)) {
+		file.write((char*)&colorAmbient, 12);
+		file.write((char*)&colorDiffuse, 12);
+	}
+
+	file.write((char*)&colorSpecular, 12);
+	file.write((char*)&colorEmissive, 12);
+	file.write((char*)&glossiness, 4);
+	file.write((char*)&alpha, 4);
+
+	if (header->VerCheck(20, 2, 0, 7, true) && header->userVersion >= 11 && header->userVersion2 > 21)
+		file.write((char*)&emitMulti, 4);
+}
+
+void NiMaterialProperty::notifyBlockDelete(int blockID) {
+	NiProperty::notifyBlockDelete(blockID);
+}
+
+int NiMaterialProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	if (!(header->VerCheck(20, 2, 0, 7, true) && header->userVersion >= 11 && header->userVersion2 > 21))
+		blockSize += 24;
+	else
+		blockSize += 4;
+
+	blockSize += 32;
+
+	return blockSize;
+}
+
+
 void NiExtraData::Init() {
 	NiObject::Init();
 
@@ -2699,7 +2772,6 @@ NiUnknown::NiUnknown() {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
-	data = nullptr;
 
 	CalcBlockSize();
 }
@@ -2708,7 +2780,7 @@ NiUnknown::NiUnknown(fstream& file, uint size) {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
-	data = new char[size];
+	data.resize(size);
 
 	blockSize = size;
 	Get(file);
@@ -2718,33 +2790,29 @@ NiUnknown::NiUnknown(uint size) {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
-	data = new char[size];
+	data.resize(size);
 
 	blockSize = size;
 }
 
-NiUnknown::~NiUnknown() {
-	if (data)
-		delete[] data;
-}
-
 void NiUnknown::Get(fstream& file) {
-	if (!data)
+	if (data.empty())
 		return;
 
-	file.read(data, blockSize);
+	file.read(&data[0], blockSize);
 }
 
 void NiUnknown::Put(fstream& file) {
-	if (!data)
+	if (data.empty())
 		return;
 
-	file.write(data, blockSize);
+	file.write(&data[0], blockSize);
 }
 
 void NiUnknown::Clone(NiUnknown* other) {
 	if (blockSize == other->blockSize)
-		memcpy(data, other->data, blockSize);
+		for (int i = 0; i < blockSize; i++)
+			data[i] = other->data[i];
 }
 
 int NiUnknown::CalcBlockSize() {

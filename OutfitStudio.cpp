@@ -1206,7 +1206,7 @@ void OutfitStudio::ReferenceGUIFromProj() {
 	baseSubItem = outfitShapes->AppendItem(refRoot, shape);
 	outfitShapes->SetItemState(baseSubItem, 0);
 	outfitShapes->SetItemData(baseSubItem, new ShapeItemData(false, &Proj->baseNif, Proj->baseShapeName));
-	glView->AddMeshFromNif(&Proj->baseNif, (char*)shape.c_str());
+	glView->AddMeshFromNif(&Proj->baseNif, shape);
 	glView->SetMeshTexture(shape, Proj->RefTexture(shape), Proj->RefShapeShaderType(shape));
 }
 
@@ -1229,7 +1229,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 	for (auto shape : workshapes) {
 		glView->DeleteMesh(shape);
 
-		glView->AddMeshFromNif(&Proj->workNif, (char*)shape.c_str());
+		glView->AddMeshFromNif(&Proj->workNif, shape);
 		glView->SetMeshTexture(shape, Proj->OutfitTexture(shape), Proj->OutfitShapeShaderType(shape));
 		subitem = outfitShapes->AppendItem(outfitRoot, shape);
 		outfitShapes->SetItemState(subitem, 0);
@@ -3084,7 +3084,7 @@ void OutfitStudio::OnApplyDiffuse(wxCommandEvent& event) {
 	}
 }
 
-void OutfitStudio::OnDupeShape(wxCommandEvent& event) {
+void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 	string newname;
 	wxTreeItemId subitem;
 	if (activeItem) {
@@ -3095,7 +3095,8 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& event) {
 
 		do {
 			wxString result = wxGetTextFromUser("Please enter a unique name for the duplicated shape.", "Duplicate Shape");
-			if (result.empty()) return;
+			if (result.empty())
+				return;
 			newname = result;
 		} while (Proj->IsValidShape(newname));
 
@@ -3107,7 +3108,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& event) {
 		else
 			Proj->DuplicateRefShape(activeShape, newname, curshapemesh);
 
-		glView->AddMeshFromNif(&Proj->workNif, (char*)newname.c_str());
+		glView->AddMeshFromNif(&Proj->workNif, newname);
 		Proj->SetOutfitTexture(newname, "_AUTO_");
 
 		glView->SetMeshTexture(newname, Proj->OutfitTexture(newname), Proj->OutfitShapeShaderType(newname));
@@ -3395,14 +3396,14 @@ void wxGLPanel::SetNotifyWindow(wxWindow* win) {
 	notifyWindow = win;
 }
 
-void wxGLPanel::AddMeshFromNif(NifFile* nif, char* shapeName) {
+void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName) {
 	vector<string> shapeList;
 	nif->GetShapeList(shapeList);
 
 	for (int i = 0; i < shapeList.size(); i++) {
-		if (shapeName && (shapeList[i] == shapeName))
+		if (!shapeName.empty() && (shapeList[i] == shapeName))
 			gls.AddMeshFromNif(nif, shapeList[i]);
-		else if (shapeName)
+		else if (!shapeName.empty())
 			continue;
 		else
 			gls.AddMeshFromNif(nif, shapeList[i]);

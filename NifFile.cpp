@@ -203,6 +203,9 @@ void NifFile::CopyFrom(NifFile& other) {
 			break;
 		case BSSHADERPPLIGHTINGPROPERTY:
 			nb = new BSShaderPPLightingProperty((*(BSShaderPPLightingProperty*)other.blocks[i]));
+			break;
+		case NIMATERIALPROPERTY:
+			nb = new NiMaterialProperty((*(NiMaterialProperty*)other.blocks[i]));
 		}
 		blocks.push_back(nb);
 	}
@@ -269,6 +272,8 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new NiStringExtraData(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSShaderPPLightingProperty"))
 				block = (NiObject*) new BSShaderPPLightingProperty(file, hdr);
+			else if (!thisBlockTypeStr.compare("NiMaterialProperty"))
+				block = (NiObject*) new NiMaterialProperty(file, hdr);
 			else
 				block = (NiObject*) new NiUnknown(file, hdr.blockSizes[i]);
 
@@ -575,14 +580,16 @@ int NifFile::AddOrFindStringId(const string& str) {
 
 void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcShader, NifFile& srcNif, bool addAlpha) {
 	int dataRef;
-	int* props1;
-	int* props2;
+	int* props1 = nullptr;
+	int* props2 = nullptr;
 	bool isStrips;
+
 	NiTriShape* shape = shapeForName(shapeDest);
 	if (!shape) {
 		NiTriStrips* strips = stripsForName(shapeDest);
 		if (!strips)
 			return;
+
 		props1 = &strips->propertiesRef1;
 		props2 = &strips->propertiesRef2;
 		isStrips = true;
@@ -602,8 +609,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 		texSetFound = true;
 
 	// Create destination shader block and copy
-	BSLightingShaderProperty* destShader = new BSLightingShaderProperty(hdr);
-	destShader->Clone(srcShader);
+	BSLightingShaderProperty* destShader = new BSLightingShaderProperty((*srcShader));
 	destShader->nameRef = -1;
 
 	// Add shader block to nif
@@ -616,9 +622,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 
 	if (texSetFound) {
 		// Create texture set block and copy
-		//destTexSet = new BSShaderTextureSet((*srcTexSet));
-		destTexSet = new BSShaderTextureSet(hdr);
-		(*destTexSet) = (*srcTexSet);
+		destTexSet = new BSShaderTextureSet((*srcTexSet));
 
 		// Add texture block to nif
 		texsetId = blocks.size();
@@ -737,8 +741,7 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 		texSetFound = true;
 
 	// Create destination shader block and copy
-	BSShaderPPLightingProperty* destShader = new BSShaderPPLightingProperty(hdr);
-	destShader->Clone(srcShader);
+	BSShaderPPLightingProperty* destShader = new BSShaderPPLightingProperty((*srcShader));
 	destShader->nameRef = -1;
 
 	// Add shader block to nif
@@ -751,9 +754,7 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 
 	if (texSetFound) {
 		// Create texture set block and copy
-		//destTexSet = new BSShaderTextureSet((*srcTexSet));
-		destTexSet = new BSShaderTextureSet(hdr);
-		(*destTexSet) = (*srcTexSet);
+		destTexSet = new BSShaderTextureSet((*srcTexSet));
 
 		// Add texture block to nif
 		texsetId = blocks.size();
@@ -956,18 +957,45 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 	BSLightingShaderProperty* srcShader = dynamic_cast<BSLightingShaderProperty*>(srcNif.GetBlock(src->propertiesRef1));
 	if (!srcShader) {
 		BSShaderPPLightingProperty* srcShaderPP = nullptr;
-		NiAlphaProperty* alpha = nullptr;
 		for (int i = 0; i < src->numProperties; i++) {
-			if (!srcShaderPP)
+			if (!srcShaderPP) {
 				srcShaderPP = dynamic_cast<BSShaderPPLightingProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
-			if (!alpha)
-				alpha = dynamic_cast<NiAlphaProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+				if (srcShaderPP)
+					continue;
+			}
+			if (!shaderAlpha) {
+				NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+				if (alpha) {
+					shaderAlpha = true;
+					continue;
+				}
+			}
+
+			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (material) {
+				NiMaterialProperty* destMaterial = new NiMaterialProperty((*material));
+				int materialId = blocks.size();
+				blocks.push_back(destMaterial);
+				hdr.numBlocks++;
+				hdr.blockSizes.push_back(destMaterial->CalcBlockSize());
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiMaterialProperty"));
+				dest->propertiesRef[i] = materialId;
+				continue;
+			}
+
+			NiUnknown* srcUnknown = dynamic_cast<NiUnknown*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (srcUnknown) {
+				NiUnknown* destUnknown = new NiUnknown((*srcUnknown));
+				int unknownId = blocks.size();
+				blocks.push_back(destUnknown);
+				hdr.numBlocks++;
+				hdr.blockSizes.push_back(destUnknown->CalcBlockSize());
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[src->propertiesRef[i]]].str));
+				dest->propertiesRef[i] = unknownId;
+			}
 		}
-		if (srcShaderPP) {
-			if (alpha)
-				shaderAlpha = true;
+		if (srcShaderPP)
 			CopyShaderPP(shapeDest, srcShaderPP, srcNif, shaderAlpha);
-		}
 		else
 			dest->propertiesRef1 = -1;
 	}
@@ -1131,18 +1159,45 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 	BSLightingShaderProperty* srcShader = dynamic_cast<BSLightingShaderProperty*>(srcNif.GetBlock(src->propertiesRef1));
 	if (!srcShader) {
 		BSShaderPPLightingProperty* srcShaderPP = nullptr;
-		NiAlphaProperty* alpha = nullptr;
 		for (int i = 0; i < src->numProperties; i++) {
-			if (!srcShaderPP)
+			if (!srcShaderPP) {
 				srcShaderPP = dynamic_cast<BSShaderPPLightingProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
-			if (!alpha)
-				alpha = dynamic_cast<NiAlphaProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+				if (srcShaderPP)
+					continue;
+			}
+			if (!shaderAlpha) {
+				NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+				if (alpha) {
+					shaderAlpha = true;
+					continue;
+				}
+			}
+
+			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (material) {
+				NiMaterialProperty* destMaterial = new NiMaterialProperty((*material));
+				int materialId = blocks.size();
+				blocks.push_back(destMaterial);
+				hdr.numBlocks++;
+				hdr.blockSizes.push_back(destMaterial->CalcBlockSize());
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiMaterialProperty"));
+				dest->propertiesRef[i] = materialId;
+				continue;
+			}
+
+			NiUnknown* srcUnknown = dynamic_cast<NiUnknown*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (srcUnknown) {
+				NiUnknown* destUnknown = new NiUnknown((*srcUnknown));
+				int unknownId = blocks.size();
+				blocks.push_back(destUnknown);
+				hdr.numBlocks++;
+				hdr.blockSizes.push_back(destUnknown->CalcBlockSize());
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[src->propertiesRef[i]]].str));
+				dest->propertiesRef[i] = unknownId;
+			}
 		}
-		if (srcShaderPP) {
-			if (alpha)
-				shaderAlpha = true;
+		if (srcShaderPP)
 			CopyShaderPP(shapeDest, srcShaderPP, srcNif, shaderAlpha);
-		}
 		else
 			dest->propertiesRef1 = -1;
 	}
@@ -2595,6 +2650,18 @@ void NifFile::DeleteShape(const string& shapeName) {
 				i--;
 				continue;
 			}
+			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(GetBlock(strips->propertiesRef[i]));
+			if (material) {
+				DeleteBlock(strips->propertiesRef[i]);
+				i--;
+				continue;
+			}
+			NiUnknown* unknown = dynamic_cast<NiUnknown*>(GetBlock(strips->propertiesRef[i]));
+			if (unknown) {
+				DeleteBlock(strips->propertiesRef[i]);
+				i--;
+				continue;
+			}
 		}
 
 		for (int i = 0; i < strips->numExtraData; i++)
@@ -2639,6 +2706,18 @@ void NifFile::DeleteShape(const string& shapeName) {
 			}
 			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(shape->propertiesRef[i]));
 			if (alpha) {
+				DeleteBlock(shape->propertiesRef[i]);
+				i--;
+				continue;
+			}
+			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(GetBlock(shape->propertiesRef[i]));
+			if (material) {
+				DeleteBlock(shape->propertiesRef[i]);
+				i--;
+				continue;
+			}
+			NiUnknown* unknown = dynamic_cast<NiUnknown*>(GetBlock(shape->propertiesRef[i]));
+			if (unknown) {
 				DeleteBlock(shape->propertiesRef[i]);
 				i--;
 				continue;
