@@ -147,7 +147,7 @@ public:
 		if (activeMesh >= 0 && activeMesh < meshes.size())
 			return meshes[activeMesh];
 
-		return NULL;
+		return nullptr;
 	}
 
 	Vector3 GetActiveCenter(bool useMask = true) {
@@ -178,20 +178,23 @@ public:
 		int id = GetMeshID(shapeName);
 		if (id >= 0)
 			return meshes[id];
-		return NULL;
+		
+		return nullptr;
 	}
 
 	mesh* GetOverlay(int overlayID) {
 		if (overlayID >= 0)
 			return overlays[overlayID];
-		return NULL;
+		
+		return nullptr;
 	}
 
 	mesh* GetOverlay(const string& overlayName) {
 		int id = GetOverlayID(overlayName);
 		if (id >= 0)
 			return overlays[id];
-		return NULL;
+		
+		return nullptr;
 	}
 
 	float GetCursorSize() {
@@ -219,16 +222,16 @@ public:
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri = NULL, float* outHoverWeight = NULL, float* outHoverMask = NULL);
-	bool GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx = NULL);
+	bool UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
+	bool GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx = nullptr);
 	void ShowCursor(bool show = true);
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
-	bool CollideMesh(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = NULL, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
+	bool CollideMesh(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
-	int CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = NULL, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
+	int CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 
 	int AddVisRay(Vector3& start, Vector3& direction, float length);
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");
@@ -245,11 +248,11 @@ public:
 	void EditRedo();
 	void EndEditMode();
 
-	void AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color = NULL, bool smoothNormalSeams = true);
-	void AddMeshExplicit(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs = NULL, const string& name = "", float scale = 1.0f);
+	void AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
+	void AddMeshExplicit(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs = nullptr, const string& name = "", float scale = 1.0f);
 	void AddMeshDirect(mesh* m);
-	void Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs = NULL);
-	void Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs = NULL);
+	void Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr);
+	void Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr);
 	void ReloadMeshFromNif(NifFile* nif, string shapeName);
 	void RecalculateMeshBVH(const string& shapeName);
 	void RecalculateMeshBVH(int shapeIndex);

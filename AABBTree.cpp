@@ -301,9 +301,9 @@ bool AABB::IntersectSphere(Vector3& Origin, float radius) {
 }
 
 AABBTree::AABBTreeNode::AABBTreeNode() {
-	N = P = NULL;
-	tree = NULL;
-	mIFacets = NULL;
+	N = P = nullptr;
+	tree = nullptr;
+	mIFacets = nullptr;
 }
 
 AABBTree::AABBTreeNode::~AABBTreeNode() {
@@ -316,8 +316,8 @@ AABBTree::AABBTreeNode::~AABBTreeNode() {
 AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parent, int depth) {
 	int axis;
 	Vector3 axis_avg;
-	N = P = NULL;
-	mIFacets = NULL;
+	N = P = nullptr;
+	mIFacets = nullptr;
 	tree = treeRef;
 	this->parent = parent;
 	int moreStart = 0;
@@ -425,8 +425,8 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int e
 AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parent, int depth) {
 	int axis;
 	Vector3 axis_avg;
-	N = P = NULL;
-	mIFacets = NULL;
+	N = P = nullptr;
+	mIFacets = nullptr;
 	tree = treeRef;
 	this->parent = parent;
 
@@ -530,7 +530,7 @@ void AABBTree::AABBTreeNode::AddDebugFrames(vector<Vertex>& verts, vector<Edge>&
 }
 
 void AABBTree::AABBTreeNode::AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vertex>& verts, vector<Edge>& edges) {
-	bool collision = mBB.IntersectRay(origin, direction, NULL);
+	bool collision = mBB.IntersectRay(origin, direction, nullptr);
 	if (collision) {
 		mBB.AddBoxToMesh(verts, edges);
 	}
@@ -543,7 +543,7 @@ void AABBTree::AABBTreeNode::AddRayIntersectFrames(Vector3& origin, Vector3& dir
 
 bool AABBTree::AABBTreeNode::IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results) {
 	IntersectResult r;
-	bool collision = mBB.IntersectRay(origin, direction, NULL);
+	bool collision = mBB.IntersectRay(origin, direction, nullptr);
 	if (!collision) return false;
 
 	if (!P && !N) {
@@ -621,7 +621,7 @@ AABBTree::AABBTree() {
 	bFlag = false;
 	depthCounter = 0;
 	sentinel = 0;
-	root = NULL;
+	root = nullptr;
 }
 
 AABBTree::AABBTree(Vertex* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets) {
@@ -639,8 +639,8 @@ AABBTree::AABBTree(Vertex* vertices, Triangle* facets, int nFacets, int maxDepth
 		facetIndices[i] = i;
 	}
 
-	//root = new AABBTreeNode(facetIndices, this, NULL, 0);
-	root = new AABBTreeNode(facetIndices, 0, nFacets - 1, this, NULL, 0);
+	//root = new AABBTreeNode(facetIndices, this, nullptr, 0);
+	root = new AABBTreeNode(facetIndices, 0, nFacets - 1, this, nullptr, 0);
 }
 
 AABBTree::~AABBTree() {

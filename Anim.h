@@ -33,10 +33,10 @@ public:
 
 	AnimBone(const string& bn, int bid, int ord) : boneName(bn), boneID(bid), order(ord) {
 		refCount = 0;
-		parent = NULL;
+		parent = nullptr;
 		isValidBone = true;
 	}
-	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = NULL);
+	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
 };
 
 // Vertex to weight value association. Also keeps track of skin transform and bounding sphere.
@@ -109,7 +109,7 @@ public:
 	map<string, vector<string>> shapeBones;
 	unordered_map<string, AnimSkin> shapeSkinning;			// Shape to skin association.
 	NifFile* refNif;
-	AnimInfo() { refNif = NULL; }
+	AnimInfo() { refNif = nullptr; }
 
 	// Returns true if a new bone is added, false if the bone already exists.
 	bool AddShapeBone(const string& shape, AnimBone& boneDataRef);

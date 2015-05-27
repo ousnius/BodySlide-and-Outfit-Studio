@@ -378,17 +378,17 @@ public:
 		newStroke = true;
 		refMesh = theMesh;
 		refBrush = theBrush;
-		pts1 = pts2 = NULL;
+		pts1 = pts2 = nullptr;
 		bvhValid = true;
 
 		nStrokes++;
 	}
 	~TweakStroke() {
 		nStrokes--;
-		if (nStrokes == 0 && outPositions != NULL) {
+		if (nStrokes == 0 && outPositions) {
 			delete[] outPositions;
 			outPositionCount = 0;
-			outPositions = NULL;
+			outPositions = nullptr;
 		}
 	}
 
@@ -435,13 +435,13 @@ public:
 
 	TweakStroke* GetCurStateStroke() {
 		if (curState == -1)
-			return NULL;
+			return nullptr;
 
 		return strokes[curState];
 	}
 	mesh* GetCurStateMesh() {
 		if (curState == -1)
-			return NULL;
+			return nullptr;
 
 		return strokes[curState]->GetRefMesh();
 	}
@@ -449,7 +449,7 @@ public:
 		int sz = strokes.size();
 		sz -= 1;
 		if (curState >= sz)
-			return NULL;
+			return nullptr;
 
 		return strokes[curState + 1]->GetRefMesh();
 	}

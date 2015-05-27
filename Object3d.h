@@ -592,7 +592,7 @@ struct Triangle {
 	float AxisMidPointX(Vertex* vertref);
 	float AxisMidPointZ(Vertex* vertref);
 
-	bool IntersectRay(Vertex* vertref, Vector3& origin, Vector3& direction, float* outDistance = NULL, Vector3* worldPos = NULL);
+	bool IntersectRay(Vertex* vertref, Vector3& origin, Vector3& direction, float* outDistance = nullptr, Vector3* worldPos = nullptr);
 
 	bool IntersectSphere(Vertex* vertref, Vector3& origin, float radius);
 
@@ -729,7 +729,7 @@ public:
 
 		bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results);
 
-		void UpdateAABB(AABB* childBB = NULL);
+		void UpdateAABB(AABB* childBB = nullptr);
 	};
 
 	AABBTreeNode* root;
@@ -759,9 +759,9 @@ public:
 
 	void BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vertex** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
 
-	bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results = NULL);
+	bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results = nullptr);
 
-	bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results = NULL);
+	bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results = nullptr);
 };
 
 struct IntersectResult {

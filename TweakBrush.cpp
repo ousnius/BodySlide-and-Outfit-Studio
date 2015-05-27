@@ -17,7 +17,7 @@ void TweakUndo::Clear()	{
 
 int TweakStroke::nStrokes = 0;
 int TweakStroke::outPositionCount = 0;
-Vector3* TweakStroke::outPositions = NULL;
+Vector3* TweakStroke::outPositions = nullptr;
 
 TweakStroke* TweakUndo::CreateStroke(mesh* refmesh, TweakBrush* refBrush) {
 	TweakStroke* newStroke = new TweakStroke(refmesh, refBrush);
@@ -178,17 +178,17 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	if (brushType == TBT_MOVE || brushType == TBT_XFORM) {
 		// Move brush handles most operations differently than other brushes.  Mirroring, for instance, is done internally. 
 		// most of the pick info values are ignored.
-		if (!refBrush->queryPoints(refMesh, pickInfo, NULL, nPts1, facets, affectedNodes))
+		if (!refBrush->queryPoints(refMesh, pickInfo, nullptr, nPts1, facets, affectedNodes))
 			return;
 
 		if (nPts1 > outPositionCount) {
-			if (outPositions != NULL) {
+			if (outPositions) {
 				delete[] outPositions;
 			}
 			outPositions = new Vector3[nPts1];
 			outPositionCount = nPts1;
 		}
-		refBrush->brushAction(refMesh, pickInfo, NULL, nPts1, outPositions);
+		refBrush->brushAction(refMesh, pickInfo, nullptr, nPts1, outPositions);
 
 		/*for(auto mP : movedpoints) {
 			addPoint(mP.first,mP.second,0);
@@ -232,7 +232,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 		int totalpoints = max(nPts1, nPts2);
 		if (totalpoints > outPositionCount) {
-			if (outPositions != NULL) {
+			if (outPositions) {
 				delete[] outPositions;
 			}
 			outPositions = new Vector3[totalpoints];
@@ -596,15 +596,15 @@ TB_Smooth::TB_Smooth() :TweakBrush() {
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	bMirror = false;
-	b = NULL;
-	lastMesh = NULL;
+	b = nullptr;
+	lastMesh = nullptr;
 	brushName = "Smooth Brush";
 }
 
 TB_Smooth::~TB_Smooth() {
 	if (b) {
 		free(b);
-		b = NULL;
+		b = nullptr;
 	}
 }
 
@@ -814,8 +814,8 @@ TB_Move::TB_Move(void) : TweakBrush() {
 	bLiveBVH = false;
 	focus = 2.0f;
 	strength = 0.1f;
-	cachedPoints = NULL;
-	cachedPointsM = NULL;
+	cachedPoints = nullptr;
+	cachedPointsM = nullptr;
 }
 
 TB_Move::~TB_Move(void) {
@@ -888,7 +888,7 @@ bool TB_Move::strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
 bool TB_Move::queryPoints(mesh* refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
 	if (nCachedPoints == 0)
 		return false;
-	if (resultPoints != NULL) {
+	if (resultPoints) {
 		memcpy(resultPoints, cachedPoints, nCachedPoints*sizeof(int));
 		memcpy(resultPoints + nCachedPoints, cachedPointsM, nCachedPointsM*sizeof(int));
 	}
@@ -1028,7 +1028,7 @@ TB_XForm::TB_XForm() {
 	bLiveNormals = false;
 	focus = 1.0f;
 	strength = 1.0f;
-	cachedPositions = NULL;
+	cachedPositions = nullptr;
 	xformType = 0;
 }
 
@@ -1064,7 +1064,7 @@ bool TB_XForm::strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
 bool TB_XForm::queryPoints(mesh* refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
 	if (nCachedPoints == 0)
 		return false;
-	if (resultPoints != NULL) {
+	if (resultPoints) {
 		for (int i = 0; i < refmesh->nVerts; i++)	{
 			resultPoints[i] = i;
 		}
@@ -1298,15 +1298,15 @@ TB_SmoothWeight::TB_SmoothWeight() :TweakBrush() {
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	bMirror = false;
-	b = NULL;
-	lastMesh = NULL;
+	b = nullptr;
+	lastMesh = nullptr;
 	brushName = "Weight Smooth";
 }
 
 TB_SmoothWeight::~TB_SmoothWeight() {
 	if (b) {
 		free(b);
-		b = NULL;
+		b = nullptr;
 	}
 }
 

@@ -172,7 +172,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 		}
 	}
 
-	// return NULL if nothing was found
+	// return nullptr if nothing was found
 	return found;
 }
 

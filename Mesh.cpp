@@ -1,15 +1,15 @@
 #include "Mesh.h"
 
 mesh::mesh() {
-	verts = NULL;
-	vcolors = NULL;
-	tris = NULL;
-	edges = NULL;
-	bvh = NULL;
-	kdtree = NULL;
-	texcoord = NULL;
-	vertTris = NULL;
-	vertEdges = NULL;
+	verts = nullptr;
+	vcolors = nullptr;
+	tris = nullptr;
+	edges = nullptr;
+	bvh = nullptr;
+	kdtree = nullptr;
+	texcoord = nullptr;
+	vertTris = nullptr;
+	vertEdges = nullptr;
 	bVisible = true;
 	textured = false;
 	bBuffersLoaded = false;
@@ -21,12 +21,12 @@ mesh::mesh() {
 }
 
 mesh::mesh(mesh* m) {
-	verts = NULL;
-	tris = NULL;
-	edges = NULL;
-	vcolors = NULL;
-	vertTris = NULL;
-	vertEdges = NULL;
+	verts = nullptr;
+	tris = nullptr;
+	edges = nullptr;
+	vcolors = nullptr;
+	vertTris = nullptr;
+	vertEdges = nullptr;
 	if (m->verts) {
 		nVerts = m->nVerts;
 		verts = new Vertex[nVerts];

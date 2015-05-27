@@ -216,5 +216,5 @@ MorphDataPtr TriFile::GetMorph(string shapeName, string morphName) {
 			return *morph;
 	}
 
-	return NULL;
+	return nullptr;
 }

@@ -196,7 +196,7 @@ void DiffDataSets::ApplyClamp(const string& set, const string& target, vector<Ve
 
 unordered_map<ushort, Vector3>* DiffDataSets::GetDiffSet(const string& targetDataName) {
 	if (namedSet.find(targetDataName) == namedSet.end())
-		return NULL;
+		return nullptr;
 
 	return &namedSet[targetDataName];
 }

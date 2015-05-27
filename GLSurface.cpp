@@ -4,6 +4,7 @@
 #include <set>
 #include <limits>
 #include <wx/msgdlg.h>
+
 #ifdef _DEBUG
 #pragma comment (lib, "SOIL_d.lib")
 #else
@@ -11,13 +12,13 @@
 #endif
 #include "SOIL.h"
 
-PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = NULL;
-PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = NULL;
-PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = NULL;
-PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringArb = NULL;
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatArb = NULL;
+PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
+PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
+PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
+PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringArb = nullptr;
+PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatArb = nullptr;
 
-bool GLSurface::multiSampleEnabled{false};
+bool GLSurface::multiSampleEnabled = { false };
 
 
 Vector3::Vector3(const Vertex& other) {
@@ -213,9 +214,10 @@ GLSurface::~GLSurface() {
 }
 
 bool GLSurface::IsExtensionSupported(char* szTargetExtension) {
-	const byte *pszExtensions = NULL;
-	const byte *pszStart;
-	byte *pszWhere, *pszTerminator;
+	const byte *pszExtensions = nullptr;
+	const byte *pszStart = nullptr;
+	byte *pszWhere = nullptr;
+	byte *pszTerminator = nullptr;
 
 	// Get Extensions String
 	pszExtensions = glGetString(GL_EXTENSIONS);
@@ -285,7 +287,7 @@ const int* GLSurface::GetGLAttribs(wxWindow* parent) {
 }
 
 int GLSurface::QueryMultisample(wxWindow* parent) {
-	HWND queryWnd = CreateWindowA("STATIC", "Multisampletester", WS_CHILD | SS_OWNERDRAW | SS_NOTIFY, 0, 0, 768, 768, parent->GetHWND(), 0, GetModuleHandle(NULL), NULL);
+	HWND queryWnd = CreateWindow(L"STATIC", L"Multisampletester", WS_CHILD | SS_OWNERDRAW | SS_NOTIFY, 0, 0, 768, 768, parent->GetHWND(), 0, GetModuleHandle(nullptr), nullptr);
 	HDC hDC = GetDC(queryWnd);
 
 	PIXELFORMATDESCRIPTOR pfd;
@@ -307,7 +309,7 @@ int GLSurface::QueryMultisample(wxWindow* parent) {
 
 	int numMultiSamples = FindBestNumSamples(hDC);
 
-	wglMakeCurrent(NULL, NULL);
+	wglMakeCurrent(0, 0);
 	wglDeleteContext(hRC);
 	ReleaseDC(queryWnd, hDC);
 	DestroyWindow(queryWnd);
@@ -568,7 +570,7 @@ bool GLSurface::CollideMesh(int ScreenX, int ScreenY, Vector3& outOrigin, Vector
 	Vector3 o;
 	Vector3 d;
 
-	if (inRayDir == NULL) {
+	if (!inRayDir) {
 		GetPickRay(ScreenX, ScreenY, d, o);
 	}
 	else {
@@ -603,7 +605,7 @@ int GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 	Vector3 origin;
 	Vector3 d;
 
-	if (inRayDir == NULL) {
+	if (!inRayDir) {
 		GetPickRay(ScreenX, ScreenY, d, origin);
 	}
 	else {
@@ -615,7 +617,7 @@ int GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 	int oid = 0;
 	for (auto o : overlays) {
 		vector<IntersectResult> results;
-		if (o->bvh == NULL) {
+		if (!o->bvh) {
 			oid++;
 			continue;
 		}
@@ -1701,7 +1703,7 @@ int GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float 
 
 
 	m->nEdges = 0;
-	m->edges = NULL;
+	m->edges = nullptr;
 	m->shapeName = name;
 
 	if (myMesh >= 0) {
@@ -1798,7 +1800,7 @@ int GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, fl
 	}
 
 	m->nEdges = 0;
-	m->edges = NULL;
+	m->edges = nullptr;
 	m->shapeName = name;
 
 	if (myMesh >= 0) {

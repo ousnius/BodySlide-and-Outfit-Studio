@@ -645,9 +645,9 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 
 	if (!Config.Exists("GameDataPath")) {
-		long result = RegOpenKeyExA(HKEY_LOCAL_MACHINE, "SOFTWARE\\Bethesda Softworks\\Skyrim", 0, KEY_READ, &skyrimRegKey);
+		long result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Bethesda Softworks\\Skyrim", 0, KEY_READ, &skyrimRegKey);
 		if (result == ERROR_SUCCESS) {
-			result = RegQueryValueExA(skyrimRegKey, "Installed Path", 0, 0, (byte*)installPath, &pathSize);
+			result = RegQueryValueEx(skyrimRegKey, L"Installed Path", 0, 0, (byte*)installPath, &pathSize);
 			if (result == ERROR_SUCCESS) {
 				buildpath = installPath;
 				buildpath += "Data\\";
@@ -866,7 +866,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameSmall = Config["GameDataPath"] + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
 		string tmp = Config["GameDataPath"] + activeSet.GetOutputPath();
-		SHCreateDirectoryExA(0, tmp.c_str(), nullptr);
+		SHCreateDirectoryEx(0, charToWChar(tmp.c_str()), nullptr);
 	}
 
 	// ALT key
@@ -1198,7 +1198,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		/* Create directory for the outfit */
 		string dir = datapath + currentSet.GetOutputPath();
 		stringstream errss;
-		int error = SHCreateDirectoryExA(0, dir.c_str(), nullptr);
+		int error = SHCreateDirectoryEx(0, charToWChar(dir.c_str()), nullptr);
 		if ((error != ERROR_SUCCESS) && (error != ERROR_ALREADY_EXISTS) && (error != ERROR_FILE_EXISTS)) {
 			errss << "Unable to create destination directory: " << dir << " [" << hex << (uint)error << "]";
 			failedOutfits[outfit] = errss.str();

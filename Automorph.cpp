@@ -1,9 +1,9 @@
 #include "Automorph.h"
 
 Automorph::Automorph() {
-	morphRef = NULL;
-	refTree = NULL;
-	srcDiffData = NULL;
+	morphRef = nullptr;
+	refTree = nullptr;
+	srcDiffData = nullptr;
 	bEnableMask = true;
 	proximity_radius = 10.0f;
 	max_prox_points = 5.0f;
@@ -12,19 +12,19 @@ Automorph::Automorph() {
 Automorph::~Automorph() {
 	if (morphRef) {
 		delete morphRef;
-		morphRef = NULL;
+		morphRef = nullptr;
 	}
 	if (refTree) {
 		delete refTree;
-		refTree = NULL;
+		refTree = nullptr;
 	}
 	ClearSourceShapes();
 }
 
 Automorph::Automorph(NifFile &ref, const string& refShape) {
-	morphRef = NULL;
-	refTree = NULL;
-	srcDiffData = NULL;
+	morphRef = nullptr;
+	refTree = nullptr;
+	srcDiffData = nullptr;
 	bEnableMask = true;
 	proximity_radius = 10.0f;
 	max_prox_points = 5.0f;
@@ -200,7 +200,7 @@ void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName)
 	m->shapeName = shapeName;
 	vector<Vector3> objVerts;
 	vector<Triangle> objTris;
-	ref.CopyDataForGroup(shapeName, &objVerts, &objTris, NULL);
+	ref.CopyDataForGroup(shapeName, &objVerts, &objTris, nullptr);
 
 	//float c = 0.4f + (meshes.size() * 0.3f);
 	//m->color = Vector3(c, c, c);

@@ -2,23 +2,23 @@
 
 bool GLShader::initComplete = false;
 
-PFNGLCREATESHADERPROC glCreateShader = NULL;
-PFNGLSHADERSOURCEPROC glShaderSource = NULL;
-PFNGLCOMPILESHADERPROC glCompileShader = NULL;
-PFNGLCREATEPROGRAMPROC glCreateProgram = NULL;
-PFNGLATTACHSHADERPROC glAttachShader = NULL;
-PFNGLLINKPROGRAMPROC glLinkProgram = NULL;
-PFNGLUSEPROGRAMPROC glUseProgram = NULL;
+PFNGLCREATESHADERPROC glCreateShader = nullptr;
+PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
+PFNGLCOMPILESHADERPROC glCompileShader = nullptr;
+PFNGLCREATEPROGRAMPROC glCreateProgram = nullptr;
+PFNGLATTACHSHADERPROC glAttachShader = nullptr;
+PFNGLLINKPROGRAMPROC glLinkProgram = nullptr;
+PFNGLUSEPROGRAMPROC glUseProgram = nullptr;
 
-PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation = NULL;
-PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = NULL;
-PFNGLUNIFORM1FPROC glUniform1f = NULL;
-PFNGLPROGRAMUNIFORM1FPROC glProgramUniform1f = NULL;
+PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation = nullptr;
+PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
+PFNGLUNIFORM1FPROC glUniform1f = nullptr;
+PFNGLPROGRAMUNIFORM1FPROC glProgramUniform1f = nullptr;
 
-PFNGLGETSHADERIVPROC glGetShaderiv = NULL;
-PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = NULL;
-PFNGLGETPROGRAMIVPROC glGetProgramiv = NULL;
-PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = NULL;
+PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
+PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = nullptr;
+PFNGLGETPROGRAMIVPROC glGetProgramiv = nullptr;
+PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = nullptr;
 
 void GLShader::generatePassThruVert() {
 	string s = 
@@ -202,11 +202,11 @@ void main (void)\
 GLShader::~GLShader() {
 	if (fragSrc) {
 		delete[] fragSrc;
-		fragSrc = NULL;
+		fragSrc = nullptr;
 	}
 	if (vertSrc) {
 		delete[] vertSrc;
-		vertSrc = NULL;
+		vertSrc = nullptr;
 	}
 }
 
@@ -214,8 +214,8 @@ GLShader::GLShader() {
 	nLights = 3;
 	nTextures = 1;
 	errorstate = -1;
-	fragSrc = NULL;
-	vertSrc = NULL;
+	fragSrc = nullptr;
+	vertSrc = nullptr;
 
 	if (!initShaders())
 		wxMessageBox(errorstring, "Shader Error");
@@ -228,8 +228,8 @@ GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool bu
 	nLights = 3;
 	nTextures = 1;
 	errorstate = -1;
-	fragSrc = NULL;
-	vertSrc = NULL;
+	fragSrc = nullptr;
+	vertSrc = nullptr;
 
 	if (!initShaders())
 		wxMessageBox(errorstring, "Shader Error");
@@ -244,7 +244,7 @@ bool GLShader::initShaders() {
 		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
 		glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
 
-		if (glCreateShader == NULL || glShaderSource == NULL || glCompileShader == NULL) {
+		if (!glCreateShader || !glShaderSource || !glCompileShader) {
 			errorstate = 1;
 			errorstring = "OpenGL: One or more shader functions are not supported.";
 			return false;
@@ -255,7 +255,7 @@ bool GLShader::initShaders() {
 		glLinkProgram = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
 		glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
 
-		if (glCreateProgram == NULL || glAttachShader == NULL || glLinkProgram == NULL || glUseProgram == NULL) {
+		if (!glCreateProgram || !glAttachShader || !glLinkProgram || !glUseProgram) {
 			errorstate = 1;
 			errorstring = "OpenGL: One or more shader program functions are not supported.";
 			return false;
@@ -311,11 +311,11 @@ bool GLShader::LoadShaders(const char *vertexSource, const char *fragmentSource,
 
 	if (fragSrc){
 		delete[] fragSrc;
-		fragSrc = NULL;
+		fragSrc = nullptr;
 	}
 	if (vertSrc) {
 		delete[] vertSrc;
-		vertSrc = NULL;
+		vertSrc = nullptr;
 	}
 	if (vertexSource == GLSHADER_PASSTHROUGH) {
 		generatePassThruVert();
@@ -423,7 +423,7 @@ bool GLShader::BuildShaders() {
 		if (!compiled) {
 			glGetShaderiv(vertShadID, GL_INFO_LOG_LENGTH, &loglength);
 			logdata = new char[loglength];
-			glGetShaderInfoLog(vertShadID, loglength, NULL, logdata);
+			glGetShaderInfoLog(vertShadID, loglength, nullptr, logdata);
 			errorstate = 2;
 			errorstring = "OpenGL: Vertex shader compile failed: ";
 			errorstring += logdata;
@@ -439,7 +439,7 @@ bool GLShader::BuildShaders() {
 		if (!compiled) {
 			glGetShaderiv(fragShadID, GL_INFO_LOG_LENGTH, &loglength);
 			logdata = new char[loglength];
-			glGetShaderInfoLog(fragShadID, loglength, NULL, logdata);
+			glGetShaderInfoLog(fragShadID, loglength, nullptr, logdata);
 			errorstate = 3;
 			errorstring = "OpenGL: Fragment shader compile failed: ";
 			errorstring += logdata;
@@ -458,7 +458,7 @@ bool GLShader::BuildShaders() {
 	if (!compiled) {
 		glGetProgramiv(progID, GL_INFO_LOG_LENGTH, &loglength);
 		logdata = new char[loglength];
-		glGetProgramInfoLog(progID, loglength, NULL, logdata);
+		glGetProgramInfoLog(progID, loglength, nullptr, logdata);
 		errorstate = 4;
 		errorstring = "OpenGL: Shader program link failed: ";
 		errorstring += logdata;

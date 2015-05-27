@@ -99,7 +99,7 @@ private:
 	void _init() {
 		memset(texRef, 0, sizeof(GLuint) * 8);
 		nTextures = 0;
-		shader = NULL;
+		shader = nullptr;
 	}
 
 public:

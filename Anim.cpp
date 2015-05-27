@@ -46,7 +46,7 @@ void AnimInfo::Clear() {
 		for (auto s : shapes)
 			shapeBones[s].clear();
 
-		refNif = NULL;
+		refNif = nullptr;
 	}
 }
 
@@ -296,7 +296,7 @@ int AnimSkeleton::LoadFromNif(const string& filename) {
 	if (isValid)
 		allBones.clear();
 
-	AddBone(rootBone).LoadFromNif(&nif, nodeid, NULL);
+	AddBone(rootBone).LoadFromNif(&nif, nodeid, nullptr);
 	isValid = true;
 	return 0;
 }
@@ -351,7 +351,7 @@ AnimBone* AnimSkeleton::GetBonePtr(const string& boneName) {
 	if (allowCustom && customBones.find(boneName) != customBones.end())
 		return &customBones[boneName];
 
-	return NULL;
+	return nullptr;
 }
 
 bool AnimSkeleton::GetBone(const string& boneName, AnimBone& outBone) {

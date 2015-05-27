@@ -47,11 +47,11 @@ string OutfitProject::Save(const string& strFileName,
 	RefShapes(refShapes);
 	OutfitShapes(outfitShapes);
 
-	char curdir[MAX_PATH];
-	GetCurrentDirectoryA(MAX_PATH, curdir);
+	wchar_t curdir[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, curdir);
 	char folder[MAX_PATH];
 	_snprintf_s(folder, MAX_PATH, MAX_PATH, "%s\\%s\\%s", curdir, "ShapeData", strDataDir.c_str());
-	SHCreateDirectoryExA(NULL, folder, NULL);
+	SHCreateDirectoryEx(0, charToWChar(folder), nullptr);
 
 	float prog = 5.0f;
 	float step = 10.0f / (outfitShapes.size() + refShapes.size());
@@ -95,7 +95,7 @@ string OutfitProject::Save(const string& strFileName,
 				targ = ShapeToTarget(rs);
 				targSlider = activeSet[i].TargetDataName(targ);
 				targSliderFile = activeSet[i].DataFileName(targSlider);
-				if ((baseDiffData.GetDiffSet(targSlider) != NULL) && (baseDiffData.GetDiffSet(targSlider)->size() > 0)) {
+				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 					if (activeSet[i].IsLocalData(targSlider)) {
 						outSet[id].AddDataFile(targ, targSlider, targSliderFile, true);
 						saveFileName = saveDataPath + "\\" + targSliderFile;
@@ -139,11 +139,11 @@ string OutfitProject::Save(const string& strFileName,
 	auto it = strFileName.rfind('\\');
 	if (it != string::npos) {
 		_snprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, "%s\\%s", curdir, strFileName.substr(0, it).c_str());
-		SHCreateDirectoryExA(NULL, ssNewFolder, NULL);
+		SHCreateDirectoryEx(0, charToWChar(ssNewFolder), nullptr);
 	}
 	else {
 		_snprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, "%s\\%s", curdir, "SliderSets");
-		SHCreateDirectoryExA(NULL, ssNewFolder, NULL);
+		SHCreateDirectoryEx(0, charToWChar(ssNewFolder), nullptr);
 	}
 
 	prog = 61.0f;
@@ -585,7 +585,7 @@ bool OutfitProject::SetSliderFromOBJ(const string& sliderName, const string& sha
 	}
 
 	vector<Vector3> objVerts;
-	obj.CopyDataForIndex(index, &objVerts, NULL, NULL);
+	obj.CopyDataForIndex(index, &objVerts, nullptr, nullptr);
 
 	unordered_map<ushort, Vector3> diff;
 	if (!bIsOutfit) {
@@ -823,7 +823,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 
 	owner->UpdateProgress(1, "Gathering bones");
 
-	if (inBoneList == NULL) {
+	if (!inBoneList) {
 		for (auto bn : baseAnim.shapeBones[baseShapeName])
 			lboneList.push_back(bn);
 
@@ -905,7 +905,7 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 	owner->UpdateProgress(10, "Gathering bones");
 
 	vector<string>* boneList;
-	if (inBoneList == NULL) {
+	if (!inBoneList) {
 		vector<string> allBoneList;
 		for (auto boneName : baseAnim.shapeBones[baseShapeName])
 			allBoneList.push_back(boneName);
@@ -1148,10 +1148,10 @@ void OutfitProject::ClearUnmaskedDiff(const string& shapeName, const string& sli
 	string target = ShapeToTarget(shapeName);
 	if (!isOutfit) {
 		string data = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.ZeroVertDiff(data, target, NULL, mask);
+		baseDiffData.ZeroVertDiff(data, target, nullptr, mask);
 	}
 	else
-		morpher.ZeroVertDiff(target, sliderName, NULL, mask);
+		morpher.ZeroVertDiff(target, sliderName, nullptr, mask);
 }
 
 void OutfitProject::DeleteSlider(const string& sliderName) {

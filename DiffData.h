@@ -57,7 +57,7 @@ public:
 			return;
 
 		vector<ushort> v;
-		if (vertSet != NULL) {
+		if (vertSet) {
 			v = (*vertSet);
 		}
 		else {

@@ -17,19 +17,19 @@ public:
 		kd_node* less;
 		kd_node* more;
 		kd_node() {
-			less = more = NULL;
-			p = NULL;
+			less = more = nullptr;
+			p = nullptr;
 		}
 		~kd_node() {
 			if (less)
 				delete less;
 			if (more)
 				delete more;
-			less = more = NULL;
+			less = more = nullptr;
 
 		}
 		kd_node(Vertex* point) {
-			less = more = NULL;
+			less = more = nullptr;
 			p = point;
 		}
 		Vertex* add(Vertex* point, int depth) {
@@ -72,7 +72,7 @@ public:
 	~kd_matcher() {
 		if (root)
 			delete root;
-		root = NULL;
+		root = nullptr;
 	}
 	kd_matcher(Vertex* points, int count) {
 		if (count <= 0)
@@ -109,8 +109,8 @@ public:
 		kd_node* less;
 		kd_node* more;
 		kd_node() {
-			less = more = NULL;
-			p = NULL;
+			less = more = nullptr;
+			p = nullptr;
 			p_i = -1;
 		}
 		~kd_node() {
@@ -118,11 +118,11 @@ public:
 				delete less;
 			if (more)
 				delete more;
-			less = more = NULL;
+			less = more = nullptr;
 
 		}
 		kd_node(Vertex* point, int point_index) {
-			less = more = NULL;
+			less = more = nullptr;
 			p = point;
 			p_i = point_index;
 		}
@@ -240,7 +240,7 @@ public:
 	~kd_tree() {
 		if (root)
 			delete root;
-		root = NULL;
+		root = nullptr;
 	}
 	kd_tree(Vertex* points, int count) {
 		if (count <= 0)

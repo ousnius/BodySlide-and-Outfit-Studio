@@ -49,7 +49,7 @@ public:
 	unordered_map<string, string> baseTextures;
 
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
-	OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner = NULL);
+	OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner = nullptr);
 	~OutfitProject();
 
 	string mFileName;
@@ -174,9 +174,9 @@ public:
 	void UpdateShapeFromMesh(const string& shapeName, const mesh* m, bool IsOutfit);
 	void UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& vertUpdates, bool IsOutfit);
 	void MoveVertex(const string& shapeName, Vector3& pos, int& id, bool IsOutfit);
-	void OffsetShape(const string& shapeName, Vector3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
-	void ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
-	void RotateShape(const string& shapeName, Vector3& angle, bool IsOutfit, unordered_map<ushort, float>* mask = NULL);
+	void OffsetShape(const string& shapeName, Vector3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask = nullptr);
+	void ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<ushort, float>* mask = nullptr);
+	void RotateShape(const string& shapeName, Vector3& angle, bool IsOutfit, unordered_map<ushort, float>* mask = nullptr);
 
 	void AutoOffset(NifFile& nif);
 
@@ -184,9 +184,9 @@ public:
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(const string& destShape, unordered_map<ushort, float>* mask = NULL, vector<string>* inBoneList = NULL);
+	void CopyBoneWeights(const string& destShape, unordered_map<ushort, float>* mask = nullptr, vector<string>* inBoneList = nullptr);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
-	void TransferSelectedWeights(const string& destShape, unordered_map<ushort, float>* mask = NULL, vector<string>* inBoneList = NULL);
+	void TransferSelectedWeights(const string& destShape, unordered_map<ushort, float>* mask = nullptr, vector<string>* inBoneList = nullptr);
 	bool OutfitHasUnweighted();
 
 	void ApplyBoneScale(const string& bone, int sliderPos);
