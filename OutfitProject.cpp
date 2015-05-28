@@ -47,11 +47,12 @@ string OutfitProject::Save(const string& strFileName,
 	RefShapes(refShapes);
 	OutfitShapes(outfitShapes);
 
-	wchar_t curdir[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, curdir);
-	char folder[MAX_PATH];
-	_snprintf_s(folder, MAX_PATH, MAX_PATH, "%s\\%s\\%s", curdir, "ShapeData", strDataDir.c_str());
-	SHCreateDirectoryEx(0, charToWChar(folder), nullptr);
+	wchar_t curDir[MAX_PATH];
+	GetCurrentDirectory(MAX_PATH, curDir);
+
+	wchar_t folder[MAX_PATH];
+	_snwprintf_s(folder, MAX_PATH, MAX_PATH, L"%s\\%s\\%s", curDir, L"ShapeData", charToWChar(strDataDir.c_str()));
+	SHCreateDirectoryEx(0, folder, nullptr);
 
 	float prog = 5.0f;
 	float step = 10.0f / (outfitShapes.size() + refShapes.size());
@@ -135,15 +136,15 @@ string OutfitProject::Save(const string& strFileName,
 		}
 	}
 
-	char ssNewFolder[MAX_PATH];
+	wchar_t ssNewFolder[MAX_PATH];
 	auto it = strFileName.rfind('\\');
 	if (it != string::npos) {
-		_snprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, "%s\\%s", curdir, strFileName.substr(0, it).c_str());
-		SHCreateDirectoryEx(0, charToWChar(ssNewFolder), nullptr);
+		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, charToWChar(strFileName.substr(0, it).c_str()));
+		SHCreateDirectoryEx(0, ssNewFolder, nullptr);
 	}
 	else {
-		_snprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, "%s\\%s", curdir, "SliderSets");
-		SHCreateDirectoryEx(0, charToWChar(ssNewFolder), nullptr);
+		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, L"SliderSets");
+		SHCreateDirectoryEx(0, ssNewFolder, nullptr);
 	}
 
 	owner->UpdateProgress(61.0f, "Saving slider set file...");
