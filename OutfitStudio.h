@@ -450,13 +450,15 @@ public:
 	bool IsDirty(const string& shapeName);
 	void SetClean(const string& shapeName);
 
-	// slider edit states -- enable/disable menu items
+	// Slider edit states - enable/disable menu items
 	void EnterSliderEdit();
 	void ExitSliderEdit();
+
 
 	wxProgressDialog* progWnd;
 	vector<pair<float, float>> progressStack;
 	int progressVal;
+
 	void StartProgress(const string& title) {
 		if (progressStack.size() == 0) {
 			progWnd = new wxProgressDialog(title, "Starting...", 10000, this, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
@@ -465,6 +467,7 @@ public:
 			progressStack.emplace_back(0.0f, 10000.0f);
 		}
 	}
+
 	void StartSubProgress(float min, float max) {
 		float range = progressStack.back().second - progressStack.front().first;
 		float mindiv = min / 100.0f;
@@ -473,26 +476,32 @@ public:
 		float maxoff = maxdiv * range;
 		progressStack.emplace_back(progressStack.front().first + minoff, progressStack.front().first + maxoff);
 	}
+
 	void EndProgress() {
 		if (progressStack.size() == 0)
 			return;
+
 		progWnd->Update(progressStack.back().second);
 		progressStack.pop_back();
-		if (progressStack.size() == 0)  {
+
+		if (progressStack.size() == 0) {
 			delete progWnd;
 			progWnd = nullptr;
 		}
 	}
-	void UpdateProgress(float val, const string& msg) {
-		if (progressStack.size() == 0) return;
+
+	void UpdateProgress(float val, const string& msg = "") {
+		if (progressStack.size() == 0)
+			return;
+
 		float range = progressStack.back().second - progressStack.back().first;
 		float div = val / 100.0f;
 		float offset = range * div;
 
-
 		progressVal = progressStack.back().first + offset;
 		if (progressVal > 10000)
 			progressVal = 10000;
+
 		progWnd->Update(progressVal, msg);
 	}
 

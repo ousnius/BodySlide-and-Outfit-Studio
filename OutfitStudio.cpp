@@ -243,13 +243,13 @@ void OutfitStudio::OnSetSize(wxSizeEvent& event) {
 }
 
 void OutfitStudio::CreateSetSliders() {
-	int inc = 1;
-	if (Proj->SliderCount() != 0) {
-		inc = 90 / (Proj->SliderCount());
-		StartProgress("Creating Set Sliders");
+	float inc = 1.0f;
+	if (Proj->SliderCount()) {
+		inc = 90.0f / Proj->SliderCount();
+		StartProgress("Creating sliders...");
 	}
 
-	UpdateProgress(0, "Clearing old Sliders");
+	UpdateProgress(0.0f, "Clearing old sliders...");
 
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
 	sliderScroll->Freeze();
@@ -262,7 +262,7 @@ void OutfitStudio::CreateSetSliders() {
 	wxSizer* rootSz = sliderScroll->GetSizer();
 
 	for (int i = 0; i < Proj->SliderCount(); i++)  {
-		UpdateProgress(inc, "Slider " + Proj->SliderName(i));
+		UpdateProgress(inc, "Loading slider: " + Proj->SliderName(i));
 		if (Proj->SliderClamp(i))    // clamp sliders are a special case, usually an incorrect scale
 			continue;
 
@@ -574,7 +574,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	else
 		return;
 
-	StartProgress("Loading files for project");
+	StartProgress("Creating project...");
 
 	ClearProject();
 	Proj->ClearReference();
@@ -583,8 +583,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	delete Proj;
 	Proj = new OutfitProject(appConfig, this);
 
-	UpdateProgress(10, "Loading Outfit data");
-	StartSubProgress(10, 40);
+	UpdateProgress(10.0f, "Loading outfit data...");
+	StartSubProgress(10.0f, 40.0f);
 
 	int ret = Proj->OutfitFromSliderSet(file, outfit);
 	if (ret) {
@@ -594,7 +594,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	UpdateProgress(50, "Creating reference shape");
+	UpdateProgress(50.0f, "Loading reference shape...");
 	string shape = Proj->baseShapeName;
 	if (!shape.empty()) {
 		ret = Proj->LoadReferenceNif(Proj->activeSet.GetInputFileName(), shape, false);
@@ -606,7 +606,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
-	UpdateProgress(60, "Loading Textures");
+	UpdateProgress(60.0f, "Loading textures...");
 	vector<string> shapes;
 	Proj->RefShapes(shapes);
 	for (auto s : shapes)
@@ -614,10 +614,10 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	Proj->SetOutfitTextures("_AUTO_");
 
-	UpdateProgress(80, "Creating Reference UI");
+	UpdateProgress(80, "Creating reference...");
 	ReferenceGUIFromProj();
 
-	UpdateProgress(85, "Creating Working UI");
+	UpdateProgress(85, "Creating outfit...");
 	WorkingGUIFromProj();
 	AnimationGUIFromProj();
 
@@ -643,16 +643,16 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	outfitShapes->ExpandAll();
 
-	UpdateProgress(90, "Creating Sliders");
-	StartSubProgress(90, 99);
+	UpdateProgress(90.0f, "Creating sliders...");
+	StartSubProgress(90.0f, 99.0f);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 
-	UpdateProgress(99, "Applying Slider effect");
+	UpdateProgress(99.0f, "Applying slider effects...");
 	ApplySliders();
 
-	UpdateProgress(100, "Complete");
+	UpdateProgress(100.0f, "Finished");
 	this->GetMenuBar()->Enable(XRCID("fileSave"), true);
 	EndProgress();
 }
@@ -851,7 +851,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	string outfitName = XRCCTRL(wiz, "npOutfitName", wxTextCtrl)->GetValue();
 
-	StartProgress("Loading files for new project");
+	StartProgress("Creating project...");
 
 	ClearProject();
 	Proj->ClearReference();
@@ -860,7 +860,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	delete Proj;
 	Proj = new OutfitProject(appConfig, this);
 
-	UpdateProgress(10, "Loading Reference");
+	UpdateProgress(10.0f, "Loading reference...");
 
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
 		Proj->LoadReferenceTemplate(string(XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection()));
@@ -888,7 +888,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	for (auto s : shapes)
 		Proj->SetRefTexture(s, "_AUTO_");
 
-	UpdateProgress(40, "Loading outfit");
+	UpdateProgress(40.0f, "Loading outfit...");
 	int loadReturn = 0;
 	int objReturn = 0;
 
@@ -905,7 +905,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	else if (objReturn == 2)
 		wxMessageBox("Failed to load skeleton template (res\\SkeletonBlank.nif)");
 
-	UpdateProgress(80, "Creating Reference UI");
+	UpdateProgress(80.0f, "Creating reference...");
 
 	if (XRCCTRL(wiz, "npTexAuto", wxRadioButton)->GetValue() == true)
 		Proj->SetOutfitTextures("_AUTO_");
@@ -915,7 +915,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		Proj->SetOutfitTextures(string(XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->GetPath()));
 
 	ReferenceGUIFromProj();
-	UpdateProgress(85, "Creating Working UI");
+	UpdateProgress(85.0f, "Creating outfit...");
 	WorkingGUIFromProj();
 	AnimationGUIFromProj();
 
@@ -941,16 +941,16 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	if (activeItem)
 		selectedItems.push_back(activeItem);
 
-	UpdateProgress(90, "Creating Sliders");
-	StartSubProgress(90, 99);
+	UpdateProgress(90.0f, "Creating sliders...");
+	StartSubProgress(90.0f, 99.0f);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 
-	UpdateProgress(99, "Applying Slider Values");
+	UpdateProgress(99.0f, "Applying slider effects...");
 	ApplySliders();
 
-	UpdateProgress(100, "Complete");
+	UpdateProgress(100.0f, "Finished");
 
 	EndProgress();
 }
@@ -981,14 +981,14 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (result == wxID_CANCEL)
 		return;
 
-	StartProgress("Loading files for reference");
+	StartProgress("Loading reference...");
 
 	vector<string> oldShapes;
 	Proj->RefShapes(oldShapes);
 	for (auto s : oldShapes)
 		glView->DeleteMesh(s);
 
-	UpdateProgress(10, "Loading Reference Slider Set");
+	UpdateProgress(10.0f, "Loading reference set...");
 
 	bool ClearRef = !(XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
 
@@ -1020,18 +1020,18 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	for (auto s : oldShapes)
 		Proj->SetRefTexture(s, "_AUTO_");
 
-	UpdateProgress(60, "Creating Reference UI");
+	UpdateProgress(60.0f, "Creating reference...");
 	ReferenceGUIFromProj();
 	AnimationGUIFromProj();
 
 	outfitShapes->ExpandAll();
 
-	UpdateProgress(70, "Creating Sliders");
-	StartSubProgress(70, 99);
+	UpdateProgress(70.0f, "Creating sliders...");
+	StartSubProgress(70.0f, 99.0f);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
-	UpdateProgress(99, "Applying Slider Values");
+	UpdateProgress(99.0f, "Applying slider effects...");
 	ApplySliders();
 
 	wxTreeItemId itemToSelect;
@@ -1054,7 +1054,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (activeItem)
 		selectedItems.push_back(activeItem);
 
-	UpdateProgress(100, "Complete");
+	UpdateProgress(100.0f, "Finished");
 	EndProgress();
 }
 
@@ -1078,14 +1078,14 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	this->GetMenuBar()->Enable(XRCID("fileSave"), false);
 
-	StartProgress("Loading files for outfit");
+	StartProgress("Loading outfit...");
 
 	vector<string> oldShapes;
 	Proj->OutfitShapes(oldShapes);
 	for (auto s : oldShapes)
 		glView->DeleteMesh(s);
 
-	UpdateProgress(0, "Loading outfit");
+	UpdateProgress(1.0f, "Loading outfit...");
 
 	int loadReturn = 0;
 	int objReturn = 0;
@@ -1115,7 +1115,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	else
 		Proj->SetOutfitTextures(string(XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath()));
 
-	UpdateProgress(50, "Creating Working UI");
+	UpdateProgress(50.0f, "Creating outfit...");
 	WorkingGUIFromProj();
 	AnimationGUIFromProj();
 
@@ -1138,7 +1138,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		selectedItems.push_back(activeItem);
 
 	outfitShapes->ExpandAll();
-	UpdateProgress(100, "Complete");
+	UpdateProgress(100.0f, "Finished");
 
 	EndProgress();
 }
@@ -1277,7 +1277,7 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& WXUNUSED(event)) {
 				return;
 		}
 
-		StartProgress("Saving...");
+		StartProgress("Saving project...");
 		Proj->ClearBoneScale();
 
 		vector<string> shapes;
@@ -1430,7 +1430,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
 	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
 
-	StartProgress("Saving...");
+	StartProgress("Saving project...");
 	Proj->ClearBoneScale();
 
 	vector<string> shapes;
@@ -2472,9 +2472,9 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	if (!Proj->baseNif.IsValid())
 		return;
 
-	StartProgress("Conforming All Shapes");
+	StartProgress("Conforming all shapes...");
 	float inc = 100.0f / shapes.size();
-	float pos = 0;
+	float pos = 0.0f;
 
 	auto selectedItemsSave = selectedItems;
 
@@ -2482,7 +2482,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	while (curItem.IsOk()) {
 		selectedItems.clear();
 		selectedItems.push_back((ShapeItemData*)outfitShapes->GetItemData(curItem));
-		UpdateProgress(pos * inc, "Conforming " + activeShape);
+		UpdateProgress(pos * inc, "Conforming: " + activeShape);
 		StartSubProgress(pos * inc, pos * inc + inc);
 		OnSliderConform(event);
 		curItem = outfitShapes->GetNextChild(outfitRoot, cookie);
@@ -2492,7 +2492,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	selectedItems = selectedItemsSave;
 
 	statusBar->SetStatusText("All shapes conformed.");
-	UpdateProgress(100, "All shapes conformed.");
+	UpdateProgress(100.0f, "Finished");
 	EndProgress();
 }
 
@@ -2505,6 +2505,7 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 	if (!Proj->baseNif.IsValid())
 		return;
 
+	StartProgress("Conforming...");
 	ZeroSliders();
 
 	for (auto i : selectedItems) {
@@ -2513,34 +2514,24 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 			continue;
 		}
 
-		string msg;
-		string msgLbl = "Conforming [" + i->shapeName + "]: ";
-
-		StartProgress("Conforming " + i->shapeName);
-
-		msg = msgLbl + "Initializing data";
-		statusBar->SetStatusText(msg);
-		UpdateProgress(0, msgLbl);
-
+		UpdateProgress(1.0f, "Initializing data...");
 		Proj->InitConform();
 
 		if (IsDirty(i->shapeName)) {
-			msg = msgLbl + "Recording Modified Shape Data";
-			statusBar->SetStatusText(msg);
 			UpdateShapeSource(i->shapeName, true);
 			Proj->RefreshMorphOutfitShape(i->shapeName);
 		}
-		UpdateProgress(50, "Conforming " + i->shapeName);
+		UpdateProgress(50.0f, "Conforming: " + i->shapeName);
 
 		Proj->morpher.CopyMeshMask(glView->GetMesh(i->shapeName), i->shapeName);
 		Proj->ConformShape(i->shapeName);
 
-		msg = msgLbl + "Finished.";
-		statusBar->SetStatusText(msg);
-		UpdateProgress(100, msg);
-
-		EndProgress();
+		statusBar->SetStatusText("Shape(s) conformed.");
+		UpdateProgress(99.0f);
 	}
+
+	UpdateProgress(100.0f, "Finished");
+	EndProgress();
 }
 
 void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3211,20 +3202,21 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& event) {
 	if (!Proj->baseNif.IsValid())
 		return;
 
+	StartProgress("Copying bone weights...");
+
 	unordered_map<ushort, float> mask;
-	for (auto i : selectedItems) {
-		if (i->bIsOutfitShape) {
-			StartProgress("Copy bone weights");
-
+	for (int i = 0; i < selectedItems.size(); i++) {
+		if (selectedItems[i]->bIsOutfitShape) {
 			mask.clear();
-			glView->GetShapeMask(mask, i->shapeName);
-			Proj->CopyBoneWeights(i->shapeName, &mask);
-
-			EndProgress();
+			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
+			Proj->CopyBoneWeights(selectedItems[i]->shapeName, &mask);
 		}
 		else
-			wxMessageBox("Sorry, you cannot copy weights from the reference shape to itself. Skipping this shape.", "Cannot copy weights", wxICON_WARNING);
+			wxMessageBox("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape.", "Can't copy weights", wxICON_WARNING);
 	}
+
+	UpdateProgress(100.0f, "Finished");
+	EndProgress();
 }
 
 void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& event) {
@@ -3244,20 +3236,21 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& event) {
 	for (int i = 0; i < selItems.size(); i++)
 		selectedBones.push_back(string(outfitBones->GetItemText(selItems[i])));
 
+	StartProgress("Copying selected bone weights...");
+
 	unordered_map<ushort, float> mask;
-	for (auto i : selectedItems) {
-		if (i->bIsOutfitShape) {
-			StartProgress("Copy bone weights");
-
+	for (int i = 0; i < selectedItems.size(); i++) {
+		if (selectedItems[i]->bIsOutfitShape) {
 			mask.clear();
-			glView->GetShapeMask(mask, i->shapeName);
-			Proj->CopyBoneWeights(i->shapeName, &mask, &selectedBones);
-
-			EndProgress();
+			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
+			Proj->CopyBoneWeights(selectedItems[i]->shapeName, &mask, &selectedBones);
 		}
 		else
-			wxMessageBox("Sorry, you cannot copy weights from the reference shape to itself. Skipping this shape.", "Cannot copy weights", wxICON_WARNING);
+			wxMessageBox("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape.", "Can't copy weights", wxICON_WARNING);
 	}
+
+	UpdateProgress(100.0f, "Finished");
+	EndProgress();
 }
 
 void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& event) {
@@ -3269,7 +3262,7 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& event) {
 		return;
 
 	if (!activeItem->bIsOutfitShape) {
-		wxMessageBox("Sorry, you cannot copy weights from the reference shape to itself.", "Error");
+		wxMessageBox("Sorry, you can't copy weights from the reference shape to itself.", "Error");
 		return;
 	}
 
@@ -3289,10 +3282,12 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& event) {
 	for (int i = 0; i < selItems.size(); i++)
 		selectedBones.push_back(string(outfitBones->GetItemText(selItems[i])));
 
-	StartProgress("Transfer bone weights");
+	StartProgress("Transferring bone weights...");
+
 	unordered_map<ushort, float> mask;
 	glView->GetActiveMask(mask);
 	Proj->TransferSelectedWeights(activeShape, &mask, &selectedBones);
+
 	EndProgress();
 }
 

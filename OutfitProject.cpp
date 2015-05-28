@@ -23,7 +23,7 @@ string OutfitProject::Save(const string& strFileName,
 	bool genWeights,
 	bool copyRef) {
 
-	owner->UpdateProgress(1, "Checking destination locations");
+	owner->UpdateProgress(1.0f, "Checking destination...");
 	string errmsg = "";
 	string outfitName = strOutfitName, baseFile = strBaseFile, gameFile = strGameFile;
 
@@ -55,14 +55,14 @@ string OutfitProject::Save(const string& strFileName,
 
 	float prog = 5.0f;
 	float step = 10.0f / (outfitShapes.size() + refShapes.size());
-	owner->UpdateProgress(prog, "Checking destination locations");
+	owner->UpdateProgress(prog);
 
 	if (copyRef) {
 		// Add all the reference shapes to the target list. Reference shapes also get reference data folders for their bsd files.
 		for (auto rs : refShapes) {
 			outSet.AddShapeTarget(rs, ShapeToTarget(rs));
 			outSet.AddTargetDataFolder(ShapeToTarget(rs), activeSet.ShapeToDataFolder(rs));
-			owner->UpdateProgress(prog += step, "");
+			owner->UpdateProgress(prog += step, "Adding reference shapes...");
 		}
 	}
 	// Add all the outfit shapes to the target list. 
@@ -73,7 +73,7 @@ string OutfitProject::Save(const string& strFileName,
 			outSet.AddTargetVirtualOffset(ShapeToTarget(os), offs);
 
 		outSet.AddShapeTarget(os, ShapeToTarget(os));
-		owner->UpdateProgress(prog += step, "");
+		owner->UpdateProgress(prog += step, "Adding outfit shapes...");
 	}
 
 	// Copy the reference slider info and add the outfit data to them.
@@ -86,7 +86,7 @@ string OutfitProject::Save(const string& strFileName,
 
 	prog = 10.0f;
 	step = 50.0f / activeSet.size();
-	owner->UpdateProgress(prog, "Calculating slider data");
+	owner->UpdateProgress(prog);
 	for (int i = 0; i < activeSet.size(); i++) {
 		id = outSet.CopySlider(&activeSet[i]);
 		outSet[id].ClearDataFiles();
@@ -117,10 +117,10 @@ string OutfitProject::Save(const string& strFileName,
 				morpher.SaveResultDiff(os, activeSet[i].name, saveFileName);
 			}
 		}
-		owner->UpdateProgress(prog += step, "");
+		owner->UpdateProgress(prog += step, "Calculating slider data...");
 	}
 	prog = 60.0f;
-	owner->UpdateProgress(prog, "Creating slider set file");
+	owner->UpdateProgress(prog, "Creating slider set file...");
 
 	string ssFileName = strFileName;
 	if (ssFileName.find("SliderSets\\") == string::npos)
@@ -146,16 +146,14 @@ string OutfitProject::Save(const string& strFileName,
 		SHCreateDirectoryEx(0, charToWChar(ssNewFolder), nullptr);
 	}
 
-	prog = 61.0f;
-	owner->UpdateProgress(prog, "");
+	owner->UpdateProgress(61.0f, "Saving slider set file...");
 	ssf.UpdateSet(outSet);
 	if (!ssf.Save()) {
 		errmsg = "Failed to write to slider set file: " + ssFileName;
 		return errmsg;
 	}
 
-	prog = 70.0f;
-	owner->UpdateProgress(prog, "Saving Base Nif file");
+	owner->UpdateProgress(70.0f, "Saving NIF file...");
 
 	saveFileName = saveDataPath + "\\" + baseFile;
 
@@ -194,8 +192,7 @@ string OutfitProject::Save(const string& strFileName,
 		}
 	}
 
-	prog = 100.0f;
-	owner->UpdateProgress(prog, "Complete");
+	owner->UpdateProgress(100.0f, "Finished");
 
 	mFileName = ssFileName;
 	mOutfitName = outfitName;
@@ -786,7 +783,7 @@ void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sli
 	}
 }
 
-void OutfitProject::MoveVertex(const string& shapeName, Vector3& pos, int& id, bool IsOutfit) {
+void OutfitProject::MoveVertex(const string& shapeName, Vector3& pos, const int& id, bool IsOutfit) {
 	if (IsOutfit)
 		workNif.MoveVertex(shapeName, pos, id);
 	else
@@ -821,7 +818,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 	vector<string> lboneList;
 	vector<string>* boneList;
 
-	owner->UpdateProgress(1, "Gathering bones");
+	owner->UpdateProgress(1.0f, "Gathering bones...");
 
 	if (!inBoneList) {
 		for (auto bn : baseAnim.shapeBones[baseShapeName])
@@ -845,15 +842,15 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 		}
 	}
 
-	owner->UpdateProgress(10, "Initializing proximity data");
+	owner->UpdateProgress(10.0f, "Initializing proximity data...");
 
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
 	morpher.BuildProximityCache(destShape);
 
-	float step = 50.0f / boneList->size();
+	float step = 40.0f / boneList->size();
 	float prog = 40.0f;
-	owner->UpdateProgress(prog, "Copying bone weights");
+	owner->UpdateProgress(prog);
 
 	for (auto bone : (*boneList)) {
 		string wtSet = bone + "_WT_";
@@ -891,18 +888,18 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 		}
 
 		workAnim.SetWeights(destShape, bone, weights);
-		owner->UpdateProgress(prog += step, "");
+		owner->UpdateProgress(prog += step, "Copying bone weights...");
 	}
 
 	morpher.UnlinkRefDiffData();
-	owner->UpdateProgress(100, "Finished");
+	owner->UpdateProgress(90.0f);
 }
 
 void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_map<ushort, float>* mask, vector<string>* inBoneList) {
 	if (!baseNif.IsValid())
 		return;
 
-	owner->UpdateProgress(10, "Gathering bones");
+	owner->UpdateProgress(10.0f, "Gathering bones...");
 
 	vector<string>* boneList;
 	if (!inBoneList) {
@@ -917,7 +914,7 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 
 	float step = 50.0f / boneList->size();
 	float prog = 40.0f;
-	owner->UpdateProgress(prog, "Transferring bone weights");
+	owner->UpdateProgress(prog, "Transferring bone weights...");
 
 	unordered_map<ushort, float> weights;
 	unordered_map<ushort, float> oldWeights;
@@ -950,7 +947,7 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 		owner->UpdateProgress(prog += step, "");
 	}
 
-	owner->UpdateProgress(100, "Finished");
+	owner->UpdateProgress(100.0f, "Finished");
 }
 
 bool OutfitProject::OutfitHasUnweighted() {
@@ -1445,19 +1442,19 @@ int OutfitProject::LoadProject(const string& filename) {
 }
 
 int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sliderSetName) {
-	owner->StartProgress("Loading slider set");
+	owner->StartProgress("Loading slider set...");
 	SliderSetFile InSS(filename);
 	if (InSS.fail()) {
 		owner->EndProgress();
 		return 1;
 	}
-	owner->UpdateProgress(10, "Retrieving outfit sliders");
+	owner->UpdateProgress(10.0f, "Retrieving outfit sliders...");
 	SliderSet tmpSet;
 	if (InSS.GetSet(sliderSetName, tmpSet)) {
 		owner->EndProgress();
 		return 2;
 	}
-	owner->UpdateProgress(20, "Retrieving reference sliders");
+	owner->UpdateProgress(20.0f, "Retrieving reference sliders...");
 	if (InSS.GetSet(sliderSetName, activeSet, LOADSS_REFERENCE | LOADSS_ADDEXCLUDED)) {
 		owner->EndProgress();
 		return 3;
@@ -1467,7 +1464,7 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	activeSet.SetBaseDataPath("ShapeData");
 	string inputNif = tmpSet.GetInputFileName();
 
-	owner->UpdateProgress(30, "Loading outfit shapes");
+	owner->UpdateProgress(30.0f, "Loading outfit shapes...");
 	if (LoadOutfit(inputNif, sliderSetName)) {
 		owner->EndProgress();
 		return 4;
@@ -1481,7 +1478,7 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	if (!baseShapeName.empty())
 		DeleteOutfitShape(baseShapeName);
 
-	owner->UpdateProgress(90, "Updating outfit slider data");
+	owner->UpdateProgress(90.0f, "Updating slider data...");
 	morpher.LoadResultDiffs(tmpSet);
 
 	mFileName = filename;
@@ -1497,7 +1494,7 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 	mCopyRef = true;
 	mGenWeights = tmpSet.GenWeights();
 
-	owner->UpdateProgress(100, "Complete");
+	owner->UpdateProgress(100.0f, "Finished");
 	owner->EndProgress();
 	return 0;
 }

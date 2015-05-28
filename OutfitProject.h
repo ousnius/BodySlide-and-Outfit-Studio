@@ -173,7 +173,7 @@ public:
 	void RefreshMorphOutfitShape(const string& shapeName, bool bIsOutfit = true);
 	void UpdateShapeFromMesh(const string& shapeName, const mesh* m, bool IsOutfit);
 	void UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& vertUpdates, bool IsOutfit);
-	void MoveVertex(const string& shapeName, Vector3& pos, int& id, bool IsOutfit);
+	void MoveVertex(const string& shapeName, Vector3& pos, const int& id, bool IsOutfit);
 	void OffsetShape(const string& shapeName, Vector3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask = nullptr);
 	void ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(const string& shapeName, Vector3& angle, bool IsOutfit, unordered_map<ushort, float>* mask = nullptr);
