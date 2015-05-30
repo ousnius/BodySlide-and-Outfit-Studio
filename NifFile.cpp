@@ -634,7 +634,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	}
 
 	(*props1) = shaderId;
-	if (destShader->IsSkinShader()) { // Skin shader. Kill normals, set numUVSets to 1
+	if (destShader->IsSkinShader() && hdr.userVersion >= 12) { // Kill normals, set numUVSets to 1
 		if (isStrips) {
 			NiTriStripsData* stripsData = ((NiTriStripsData*)blocks[dataRef]);
 			stripsData->hasNormals = 0;
@@ -766,7 +766,7 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 	}
 
 	(*props1) = shaderId;
-	if (destShader->IsSkinShader()) { // Skin shader. Kill normals, set numUVSets to 1
+	if (destShader->IsSkinShader() && hdr.userVersion >= 12) { // Kill normals, set numUVSets to 1
 		if (isStrips) {
 			NiTriStripsData* stripsData = ((NiTriStripsData*)blocks[dataRef]);
 			stripsData->hasNormals = 0;
