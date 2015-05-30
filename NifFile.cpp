@@ -2628,7 +2628,7 @@ void NifFile::DeleteShape(const string& shapeName) {
 
 		if (strips->propertiesRef1 != -1) {
 			BSLightingShaderProperty* shader = dynamic_cast<BSLightingShaderProperty*>(GetBlock(strips->propertiesRef1));
-			if (!shader) {
+			if (shader) {
 				DeleteBlock(shader->textureSetRef);
 				DeleteBlock(strips->propertiesRef1);
 			}
@@ -2666,7 +2666,6 @@ void NifFile::DeleteShape(const string& shapeName) {
 
 		for (int i = 0; i < strips->numExtraData; i++)
 			DeleteBlock(strips->extraDataRef[i]);
-
 	}
 	else {
 		DeleteBlock(shape->dataRef);
@@ -2688,7 +2687,7 @@ void NifFile::DeleteShape(const string& shapeName) {
 		}
 		if (shape->propertiesRef1 != -1) {
 			BSLightingShaderProperty* shader = dynamic_cast<BSLightingShaderProperty*>(GetBlock(shape->propertiesRef1));
-			if (!shader) {
+			if (shader) {
 				DeleteBlock(shader->textureSetRef);
 				DeleteBlock(shape->propertiesRef1);
 			}
@@ -2842,16 +2841,12 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		return;
 
 	int skinRef;
-	NiTriShapeData* shapeData = nullptr;
-	NiTriStripsData* stripsData = nullptr;
 	if (bType == NITRISHAPEDATA) {
 		NiTriShape* shape = shapeForName(shapeName);
-		shapeData = (NiTriShapeData*)blocks[shape->dataRef];
 		skinRef = shape->skinInstanceRef;
 	}
 	else {
 		NiTriStrips* strips = stripsForName(shapeName);
-		stripsData = (NiTriStripsData*)blocks[strips->dataRef];
 		skinRef = strips->skinInstanceRef;
 	}
 	if (skinRef == -1)
