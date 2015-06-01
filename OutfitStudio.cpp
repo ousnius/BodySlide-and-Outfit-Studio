@@ -554,7 +554,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> setnames;
 	SliderSetFile InFile(file);
 	if (InFile.fail()) {
-		wxMessageBox("Failed to open " + file + " as a slider set file!", "Slider set import failure", 5L | wxICON_ERROR);
+		wxMessageBox("Failed to open " + file + " as a slider set file!", "Slider set import failure", wxICON_ERROR);
 		return;
 	}
 
@@ -589,7 +589,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	int ret = Proj->OutfitFromSliderSet(file, outfit);
 	if (ret) {
 		EndProgress();
-		wxMessageBox("Failed to create project from slider set file!", "Slider set import failure", 5L | wxICON_ERROR);
+		wxMessageBox("Failed to create project from slider set file!", "Slider set import failure", wxICON_ERROR);
 		RefreshGUIFromProj();
 		return;
 	}
@@ -600,7 +600,6 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 		ret = Proj->LoadReferenceNif(Proj->activeSet.GetInputFileName(), shape, false);
 		if (ret) {
 			EndProgress();
-			wxMessageBox("Failed to migrate reference mesh!", "Slider set import failure", 5L | wxICON_ERROR);
 			RefreshGUIFromProj();
 			return;
 		}
@@ -862,25 +861,28 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	UpdateProgress(10.0f, "Loading reference...");
 
+	int ret = 0;
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
-		Proj->LoadReferenceTemplate(string(XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection()));
+		ret = Proj->LoadReferenceTemplate(string(XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection()));
 	}
 	else if (XRCCTRL(wiz, "npRefIsSliderset", wxRadioButton)->GetValue() == true) {
 		string fname = string(XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath());
 
 		if (fname.rfind(".xml") != string::npos) {
-			Proj->LoadReference(
-				string(XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
-				string(XRCCTRL(wiz, "npSliderSetName", wxChoice)->GetStringSelection()),
-				true,
+			ret = Proj->LoadReference(string(XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
+				string(XRCCTRL(wiz, "npSliderSetName", wxChoice)->GetStringSelection()), true,
 				string(XRCCTRL(wiz, "npRefShapeName", wxChoice)->GetStringSelection()));
-
 		}
 		else if (fname.rfind(".nif") != string::npos) {
-			Proj->LoadReferenceNif(
-				string(XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
+			ret = Proj->LoadReferenceNif(string(XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
 				string(XRCCTRL(wiz, "npRefShapeName", wxChoice)->GetStringSelection()));
 		}
+	}
+
+	if (ret) {
+		EndProgress();
+		RefreshGUIFromProj();
+		return;
 	}
 
 	vector<string> shapes;
@@ -889,21 +891,18 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		Proj->SetRefTexture(s, "_AUTO_");
 
 	UpdateProgress(40.0f, "Loading outfit...");
-	int loadReturn = 0;
-	int objReturn = 0;
 
+	ret = 0;
 	if (XRCCTRL(wiz, "npWorkNif", wxRadioButton)->GetValue() == true)
-		loadReturn = Proj->LoadOutfit(string(XRCCTRL(wiz, "npNifFilename", wxFilePickerCtrl)->GetPath()), outfitName);
+		ret = Proj->LoadOutfit(string(XRCCTRL(wiz, "npNifFilename", wxFilePickerCtrl)->GetPath()), outfitName);
 	else if (XRCCTRL(wiz, "npWorkObj", wxRadioButton)->GetValue() == true)
-		objReturn = Proj->AddShapeFromObjFile(string(XRCCTRL(wiz, "npObjFilename", wxFilePickerCtrl)->GetPath()), outfitName);
+		ret = Proj->AddShapeFromObjFile(string(XRCCTRL(wiz, "npObjFilename", wxFilePickerCtrl)->GetPath()), outfitName);
 
-	if (loadReturn == 1)
-		wxMessageBox("Failed to load outfit .nif file!", "Load failure", wxOK | wxICON_ERROR, this);
-
-	if (objReturn == 1)
-		wxMessageBox("Unable to load specified obj file!");
-	else if (objReturn == 2)
-		wxMessageBox("Failed to load skeleton template (res\\SkeletonBlank.nif)");
+	if (ret) {
+		EndProgress();
+		RefreshGUIFromProj();
+		return;
+	}
 
 	UpdateProgress(80.0f, "Creating reference...");
 
@@ -992,29 +991,31 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 	bool ClearRef = !(XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
 
+	int ret = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
-		Proj->LoadReferenceTemplate(string(XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection()), ClearRef);
+		ret = Proj->LoadReferenceTemplate(string(XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection()), ClearRef);
 	}
 	else if (XRCCTRL(dlg, "npRefIsSliderset", wxRadioButton)->GetValue() == true) {
 		string fname = string(XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath());
 
 		if (fname.rfind(".xml") != string::npos) {
-			Proj->LoadReference(
-				string(XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
-				string(XRCCTRL(dlg, "npSliderSetName", wxChoice)->GetStringSelection()),
-				ClearRef,
+			ret = Proj->LoadReference(string(XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
+				string(XRCCTRL(dlg, "npSliderSetName", wxChoice)->GetStringSelection()), ClearRef,
 				string(XRCCTRL(dlg, "npRefShapeName", wxChoice)->GetStringSelection()));
-
 		}
 		else if (fname.rfind(".nif") != string::npos) {
-			Proj->LoadReferenceNif(
-				string(XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
-				string(XRCCTRL(dlg, "npRefShapeName", wxChoice)->GetStringSelection()),
-				ClearRef);
+			ret = Proj->LoadReferenceNif(string(XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath()),
+				string(XRCCTRL(dlg, "npRefShapeName", wxChoice)->GetStringSelection()), ClearRef);
 		}
 	}
 	else
 		Proj->ClearReference();
+
+	if (ret) {
+		EndProgress();
+		RefreshGUIFromProj();
+		return;
+	}
 
 	Proj->RefShapes(oldShapes);
 	for (auto s : oldShapes)
@@ -1087,26 +1088,23 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	UpdateProgress(1.0f, "Loading outfit...");
 
-	int loadReturn = 0;
-	int objReturn = 0;
+	int ret = 0;
 	if (XRCCTRL(dlg, "npWorkNif", wxRadioButton)->GetValue() == true) {
 		if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked())
-			loadReturn = Proj->LoadOutfit(string(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath()), outfitName);
+			ret = Proj->LoadOutfit(string(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath()), outfitName);
 		else
-			loadReturn = Proj->AddNif(string(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath()));
+			ret = Proj->AddNif(string(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath()));
 	}
 	else if (XRCCTRL(dlg, "npWorkObj", wxRadioButton)->GetValue() == true)
-		objReturn = Proj->AddShapeFromObjFile(string(XRCCTRL(dlg, "npObjFilename", wxFilePickerCtrl)->GetPath()), outfitName);
+		ret = Proj->AddShapeFromObjFile(string(XRCCTRL(dlg, "npObjFilename", wxFilePickerCtrl)->GetPath()), outfitName);
 	else
 		Proj->ClearOutfit();
 
-	if (loadReturn == 1)
-		wxMessageBox("Failed to load outfit .nif file!", "Load Failure", wxOK | wxICON_ERROR, this);
-
-	if (objReturn == 1)
-		wxMessageBox("Unable to load specified .obj file!");
-	else if (objReturn == 2)
-		wxMessageBox("Failed to load skeleton template (res\\SkeletonBlank.nif).");
+	if (ret) {
+		EndProgress();
+		RefreshGUIFromProj();
+		return;
+	}
 
 	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true)
 		Proj->SetOutfitTextures("_AUTO_");
@@ -2540,21 +2538,13 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	int ret = Proj->AddShapeFromObjFile(fn, "New Shape", activeShape);
-	if (ret == 1) {
-		wxMessageBox("Unable to load file: " + fn);
-		return;
-	}
-	else if (ret == 2) {
-		wxMessageBox("Failed to load skeleton template (res\\SkeletonBlank.nif)");
-		return;
-	}
-	else if (ret == 101) {		// User chose to merge shapes
+	if (ret == 101) {			// User chose to merge shapes
 		vector<Vector3> v;
 		Proj->GetLiveOutfitVerts(activeShape, v);
 		glView->UpdateMeshVertices(activeShape, &v);
 		return;
 	}
-	else if (ret == 100)		// User canceled at the shape name prompt
+	else if (ret)
 		return;
 
 	WorkingGUIFromProj();

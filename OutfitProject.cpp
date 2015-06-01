@@ -344,14 +344,18 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape) {
 	ObjFile obj;
 	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
-	if (obj.LoadForNif(fileName))
+	if (obj.LoadForNif(fileName)) {
+		wxMessageBox("Could not load OBJ file.", "OBJ Error", wxICON_ERROR);
 		return 1;
+	}
 
 	vector<Vector3> v;
 	vector<Triangle> t;
 	vector<Vector2> uv;
-	if (!obj.CopyDataForIndex(0, &v, &t, &uv))
+	if (!obj.CopyDataForIndex(0, &v, &t, &uv)) {
+		wxMessageBox("Could not copy data from OBJ file.", "OBJ Error", wxICON_ERROR);
 		return 3;
+	}
 
 	string useShapeName = shapeName;
 
@@ -372,8 +376,10 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 
 	NifFile blank;
 	blank.Load("res\\SkeletonBlank.nif");
-	if (!blank.IsValid())
+	if (!blank.IsValid()) {
+		wxMessageBox("Could not load 'SkeletonBlank.nif' for OBJ file.", "OBJ Error", wxICON_ERROR);
 		return 2;
+	}
 
 	if (!workNif.IsValid())
 		LoadOutfit("res\\SkeletonBlank.nif", "New Outfit");
@@ -1112,10 +1118,9 @@ void OutfitProject::ClearWorkSliders() {
 }
 
 void OutfitProject::ClearReference() {
-	if (baseNif.IsValid()) {
-		baseAnim.Clear();
-		baseNif.Clear();
-	}
+	baseAnim.Clear();
+	baseNif.Clear();
+
 	if (activeSet.size() > 0)
 		activeSet.Clear();
 
@@ -1125,10 +1130,8 @@ void OutfitProject::ClearReference() {
 }
 
 void OutfitProject::ClearOutfit() {
-	if (workNif.IsValid()) {
-		workAnim.Clear();
-		workNif.Clear();
-	}
+	workAnim.Clear();
+	workNif.Clear();
 	ClearWorkSliders();
 }
 
@@ -1180,7 +1183,7 @@ int OutfitProject::LoadReferenceTemplate(const string& templateName, bool ClearR
 		}
 	}
 	if (srcfile.empty()) {
-		wxMessageBox("Template source file entry is invalid.", "Error");
+		wxMessageBox("Template source file entry is invalid.", "Reference Error", wxICON_ERROR);
 		return 1;
 	}
 
@@ -1191,8 +1194,17 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	if (ClearRef)
 		ClearReference();
 
-	if (baseNif.Load(fileName))
+	int ret = baseNif.Load(fileName);
+	if (ret) {
+		if (ret == 2) {
+			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				baseNif.GetFileName(), baseNif.hdr.verStr, baseNif.hdr.userVersion, baseNif.hdr.userVersion2), "Reference Error", wxICON_ERROR);
+			return 3;
+		}
+
+		wxMessageBox("Could not load reference NIF.", "Reference Error", wxICON_ERROR);
 		return 2;
+	}
 
 	baseShapeName = shapeName;
 
@@ -1228,7 +1240,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	int newVertCount;
 
 	if (sset.fail()) {
-		wxMessageBox("Could not load slider set XML file.", "Load Reference", 5L | wxICON_ERROR);
+		wxMessageBox("Could not load slider set XML file.", "Reference Error", wxICON_ERROR);
 		return 1;
 	}
 
@@ -1239,9 +1251,17 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	if (!ClearRef)
 		oldVertCount = baseNif.GetVertCountForShape(baseShapeName);
 
-	if (baseNif.Load(inMeshFile)) {
+	int ret = baseNif.Load(inMeshFile);
+	if (ret) {
+		if (ret == 2) {
+			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				baseNif.GetFileName(), baseNif.hdr.verStr, baseNif.hdr.userVersion, baseNif.hdr.userVersion2), "Reference Error", wxICON_ERROR);
+			ClearReference();
+			return 5;
+		}
+
 		ClearReference();
-		wxMessageBox("Could not load reference NIF.", "Load Reference", 5L | wxICON_ERROR);
+		wxMessageBox("Could not load reference NIF.", "Reference Error", wxICON_ERROR);
 		return 2;
 	}
 
@@ -1249,7 +1269,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	baseNif.GetShapeList(shapes);
 	if (shapes.size() == 0) {
 		ClearReference();
-		wxMessageBox("Reference NIF does not contain any shapes.", "Load Reference", 5L | wxICON_ERROR);
+		wxMessageBox("Reference NIF does not contain any shapes.", "Reference Error", wxICON_ERROR);
 		return 3;
 	}
 
@@ -1283,7 +1303,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	newVertCount = baseNif.GetVertCountForShape(shape);
 	if (newVertCount == -1) {
 		ClearReference();
-		wxMessageBox("Shape not found in the reference NIF.", "Load Reference", 5L | wxICON_ERROR);
+		wxMessageBox("Shape not found in the reference NIF.", "Reference Error", wxICON_ERROR);
 		return 4;
 	}
 
@@ -1337,8 +1357,17 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 	if (filename.empty())
 		return 0;
 
-	if (workNif.Load(filename))
+	int ret = workNif.Load(filename);
+	if (ret) {
+		if (ret == 2) {
+			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				workNif.GetFileName(), workNif.hdr.verStr, workNif.hdr.userVersion, workNif.hdr.userVersion2), "Outfit Error", wxICON_ERROR);
+			return 3;
+		}
+
+		wxMessageBox("Could not load outfit NIF.", "Outfit Error", wxICON_ERROR);
 		return 1;
+	}
 
 	RefShapes(refShapes);
 	for (auto s : refShapes)
@@ -1385,8 +1414,17 @@ int OutfitProject::AddNif(const string& filename) {
 	if (filename.empty())
 		return 0;
 
-	if (nif.Load(filename))
+	int ret = nif.Load(filename);
+	if (ret) {
+		if (ret == 2) {
+			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				nif.GetFileName(), nif.hdr.verStr, nif.hdr.userVersion, nif.hdr.userVersion2), "NIF Error", wxICON_ERROR);
+			return 4;
+		}
+
+		wxMessageBox("Could not load NIF.", "NIF Error", wxICON_ERROR);
 		return 1;
+	}
 
 	RefShapes(refShapes);
 	for (auto s : refShapes)

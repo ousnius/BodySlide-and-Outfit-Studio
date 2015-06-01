@@ -236,9 +236,15 @@ int NifFile::Load(const string& filename) {
 
 		hdr.Get(file);
 		if (hdr.verStr[0] == 0) {
-			isValid = false;
+			Clear();
 			return 1;
 		}
+		
+		if (!(hdr.VerCheck(20, 2, 0, 7) && (hdr.userVersion == 11 || hdr.userVersion == 12))) {
+			Clear();
+			return 2;
+		}
+
 		hdr.blocks = &blocks;
 
 		for (int i = 0; i < hdr.numBlocks; i++) {
@@ -282,7 +288,7 @@ int NifFile::Load(const string& filename) {
 		file.close();
 	}
 	else {
-		isValid = false;
+		Clear();
 		return 1;
 	}
 	TrimTexturePaths();
