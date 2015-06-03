@@ -677,15 +677,8 @@
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxRadioBox" name="msOffsetChoice">
-					<style>wxRA_SPECIFY_ROWS</style>
-					<label>Enter an amount to offset the currently selected shape</label>
-					<selection>1</selection>
-					<content>
-						<item>Old CBBE to Vanilla offset (0, -2.54431, 3.2879)</item>
-						<item>Custom:</item>
-					</content>
-					<dimension>2</dimension>
+				<object class="wxButton" name="msOldOffset">
+					<label>CBBE to Vanilla (old)</label>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -693,62 +686,132 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText3">
-							<label>X</label>
-							<wrap>-1</wrap>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="msLabelX">
+									<label>X</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="msX">
+									<value>0</value>
+									<min>-25000</min>
+									<max>25000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="msTextX">
+									<size>60,-1</size>
+									<value>0.00000</value>
+								</object>
+							</object>
 						</object>
 					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="msCustX">
-							<value>0.0</value>
-						</object>
-					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText4">
-							<label>Y</label>
-							<wrap>-1</wrap>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="msLabelY">
+									<label>Y</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="msY">
+									<value>0</value>
+									<min>-25000</min>
+									<max>25000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="msTextY">
+									<size>60,-1</size>
+									<value>0.00000</value>
+								</object>
+							</object>
 						</object>
 					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="msCustY">
-							<value>0.0</value>
-						</object>
-					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText5">
-							<label>Z</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="msCustZ">
-							<value>0.0</value>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="msLabelZ">
+									<label>Z</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="msZ">
+									<value>0</value>
+									<min>-25000</min>
+									<max>25000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="msTextZ">
+									<size>60,-1</size>
+									<value>0.00000</value>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>
@@ -780,7 +843,7 @@
 	<object class="wxDialog" name="dlgOffsetShape">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
 		<size>423,155</size>
-		<title>Apply a virtual shape offset</title>
+		<title>Move Shape (Virtual)</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
@@ -788,8 +851,8 @@
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStaticText" name="m_staticText32">
-					<label>A virtual shape offset visually lines up meshes in Outfit Studio and Bodyslide, but does not actually move the vertex locations.</label>
+				<object class="wxStaticText" name="osDescription">
+					<label>A virtual shape offset visually lines up meshes in Outfit Studio and BodySlide, but does not actually move the vertices.</label>
 					<wrap>400</wrap>
 				</object>
 			</object>
@@ -798,62 +861,132 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText3">
-							<label>X</label>
-							<wrap>-1</wrap>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="osLabelX">
+									<label>X</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="osX">
+									<value>0</value>
+									<min>-25000</min>
+									<max>25000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="osTextX">
+									<size>60,-1</size>
+									<value>0.00000</value>
+								</object>
+							</object>
 						</object>
 					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="osCustX">
-							<value>0.0</value>
-						</object>
-					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText4">
-							<label>Y</label>
-							<wrap>-1</wrap>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="osLabelY">
+									<label>Y</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="osY">
+									<value>0</value>
+									<min>-25000</min>
+									<max>25000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="osTextY">
+									<size>60,-1</size>
+									<value>0.00000</value>
+								</object>
+							</object>
 						</object>
 					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="osCustY">
-							<value>0.0</value>
-						</object>
-					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText5">
-							<label>Z</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="osCustZ">
-							<value>0.0</value>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="osLabelZ">
+									<label>Z</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="osZ">
+									<value>0</value>
+									<min>-25000</min>
+									<max>25000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="osTextZ">
+									<size>60,-1</size>
+									<value>0.00000</value>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>

@@ -2615,7 +2615,7 @@ void OutfitStudio::OnEnterClose(wxKeyEvent& event) {
 
 void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 	wxDialog dlg;
-	Vector3 offs(0.0, -2.54431, 3.2879);
+	Vector3 offs;
 
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
@@ -2623,21 +2623,20 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 	}
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgMoveShape")) {
-		XRCCTRL(dlg, "msCustX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewMove, this);
-		XRCCTRL(dlg, "msCustY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewMove, this);
-		XRCCTRL(dlg, "msCustZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewMove, this);
+		XRCCTRL(dlg, "msOldOffset", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudio::OnMoveShapeOldOffset, this);
+		XRCCTRL(dlg, "msX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnMoveShapeSlider, this);
+		XRCCTRL(dlg, "msY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnMoveShapeSlider, this);
+		XRCCTRL(dlg, "msZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnMoveShapeSlider, this);
+		XRCCTRL(dlg, "msTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnMoveShapeText, this);
+		XRCCTRL(dlg, "msTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnMoveShapeText, this);
+		XRCCTRL(dlg, "msTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnMoveShapeText, this);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
-			wxRadioBox* b = XRCCTRL(dlg, "msOffsetChoice", wxRadioBox);
-			if (b->GetSelection() != 0) {
-				offs.x = atof(XRCCTRL(dlg, "msCustX", wxTextCtrl)->GetValue().ToAscii().data());
-				offs.y = atof(XRCCTRL(dlg, "msCustY", wxTextCtrl)->GetValue().ToAscii().data());
-				offs.z = atof(XRCCTRL(dlg, "msCustZ", wxTextCtrl)->GetValue().ToAscii().data());
-			}
+			offs.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().ToAscii().data());
+			offs.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().ToAscii().data());
+			offs.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().ToAscii().data());
 		}
-		else
-			offs.Zero();
 
 		unordered_map<ushort, float> mask;
 		unordered_map<ushort, float>* mptr = nullptr;
@@ -2679,15 +2678,64 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 	}
 }
 
-void OutfitStudio::OnPreviewMove(wxCommandEvent& event) {
+void OutfitStudio::OnMoveShapeOldOffset(wxCommandEvent& event) {
+	wxWindow* parent = ((wxButton*)event.GetEventObject())->GetParent();
+	if (!parent)
+		return;
+
+	XRCCTRL(*parent, "msX", wxSlider)->SetValue(0);
+	XRCCTRL(*parent, "msY", wxSlider)->SetValue(-2544);
+	XRCCTRL(*parent, "msZ", wxSlider)->SetValue(3287);
+	XRCCTRL(*parent, "msTextX", wxTextCtrl)->SetValue("0.00000");
+	XRCCTRL(*parent, "msTextY", wxTextCtrl)->SetValue("-2.54431");
+	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->SetValue("3.28790");
+
+	OnPreviewMove(event);
+}
+
+void OutfitStudio::OnMoveShapeSlider(wxCommandEvent& event) {
+	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
+	if (!parent)
+		return;
+
+	Vector3 slider;
+	slider.x = XRCCTRL(*parent, "msX", wxSlider)->GetValue() / 1000.0f;
+	slider.y = XRCCTRL(*parent, "msY", wxSlider)->GetValue() / 1000.0f;
+	slider.z = XRCCTRL(*parent, "msZ", wxSlider)->GetValue() / 1000.0f;
+
+	XRCCTRL(*parent, "msTextX", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.x));
+	XRCCTRL(*parent, "msTextY", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.y));
+	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.z));
+
+	OnPreviewMove(event);
+}
+
+void OutfitStudio::OnMoveShapeText(wxCommandEvent& event) {
 	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
+	if (!parent)
+		return;
+	
+	Vector3 changed;
+	changed.x = atof(XRCCTRL(*parent, "msTextX", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.y = atof(XRCCTRL(*parent, "msTextY", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.z = atof(XRCCTRL(*parent, "msTextZ", wxTextCtrl)->GetValue().ToAscii().data());
+
+	XRCCTRL(*parent, "msX", wxSlider)->SetValue(changed.x * 1000);
+	XRCCTRL(*parent, "msY", wxSlider)->SetValue(changed.y * 1000);
+	XRCCTRL(*parent, "msZ", wxSlider)->SetValue(changed.z * 1000);
+
+	OnPreviewMove(event);
+}
+
+void OutfitStudio::OnPreviewMove(wxCommandEvent& event) {
+	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
 	if (!parent)
 		return;
 
 	Vector3 changed;
-	changed.x = atof(XRCCTRL(*parent, "msCustX", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.y = atof(XRCCTRL(*parent, "msCustY", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.z = atof(XRCCTRL(*parent, "msCustZ", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.x = atof(XRCCTRL(*parent, "msTextX", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.y = atof(XRCCTRL(*parent, "msTextY", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.z = atof(XRCCTRL(*parent, "msTextZ", wxTextCtrl)->GetValue().ToAscii().data());
 
 	unordered_map<ushort, float> mask;
 	unordered_map<ushort, float>* mptr = nullptr;
@@ -2742,19 +2790,25 @@ void OutfitStudio::OnOffsetShape(wxCommandEvent& event) {
 		offs = Proj->baseNif.GetShapeVirtualOffset(activeItem->shapeName);
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgOffsetShape")) {
-		XRCCTRL(dlg, "osCustX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", offs.x));
-		XRCCTRL(dlg, "osCustY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", offs.y));
-		XRCCTRL(dlg, "osCustZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", offs.z));
-
-		XRCCTRL(dlg, "osCustX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewOffset, this);
-		XRCCTRL(dlg, "osCustY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewOffset, this);
-		XRCCTRL(dlg, "osCustZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnPreviewOffset, this);
+		XRCCTRL(dlg, "osX", wxSlider)->SetValue(offs.x * 1000);
+		XRCCTRL(dlg, "osY", wxSlider)->SetValue(offs.y * 1000);
+		XRCCTRL(dlg, "osZ", wxSlider)->SetValue(offs.z * 1000);
+		XRCCTRL(dlg, "osTextX", wxTextCtrl)->SetValue(wxString::Format("%0.5f", offs.x));
+		XRCCTRL(dlg, "osTextY", wxTextCtrl)->SetValue(wxString::Format("%0.5f", offs.y));
+		XRCCTRL(dlg, "osTextZ", wxTextCtrl)->SetValue(wxString::Format("%0.5f", offs.z));
+		
+		XRCCTRL(dlg, "osX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnOffsetShapeSlider, this);
+		XRCCTRL(dlg, "osY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnOffsetShapeSlider, this);
+		XRCCTRL(dlg, "osZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnOffsetShapeSlider, this);
+		XRCCTRL(dlg, "osTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnOffsetShapeText, this);
+		XRCCTRL(dlg, "osTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnOffsetShapeText, this);
+		XRCCTRL(dlg, "osTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnOffsetShapeText, this);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
-			offs.x = atof(XRCCTRL(dlg, "osCustX", wxTextCtrl)->GetValue().ToAscii().data());
-			offs.y = atof(XRCCTRL(dlg, "osCustY", wxTextCtrl)->GetValue().ToAscii().data());
-			offs.z = atof(XRCCTRL(dlg, "osCustZ", wxTextCtrl)->GetValue().ToAscii().data());
+			offs.x = atof(XRCCTRL(dlg, "osTextX", wxTextCtrl)->GetValue().ToAscii().data());
+			offs.y = atof(XRCCTRL(dlg, "osTextY", wxTextCtrl)->GetValue().ToAscii().data());
+			offs.z = atof(XRCCTRL(dlg, "osTextZ", wxTextCtrl)->GetValue().ToAscii().data());
 		}
 
 		if (activeItem->bIsOutfitShape)
@@ -2765,6 +2819,40 @@ void OutfitStudio::OnOffsetShape(wxCommandEvent& event) {
 		Proj->GetLiveVerts(activeItem->shapeName, verts, activeItem->bIsOutfitShape);
 		glView->UpdateMeshVertices(activeItem->shapeName, &verts);
 	}
+}
+
+void OutfitStudio::OnOffsetShapeSlider(wxCommandEvent& event) {
+	wxWindow* parent = ((wxSlider*)event.GetEventObject())->GetParent();
+	if (!parent)
+		return;
+
+	Vector3 slider;
+	slider.x = XRCCTRL(*parent, "osX", wxSlider)->GetValue() / 1000.0f;
+	slider.y = XRCCTRL(*parent, "osY", wxSlider)->GetValue() / 1000.0f;
+	slider.z = XRCCTRL(*parent, "osZ", wxSlider)->GetValue() / 1000.0f;
+
+	XRCCTRL(*parent, "osTextX", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.x));
+	XRCCTRL(*parent, "osTextY", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.y));
+	XRCCTRL(*parent, "osTextZ", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.z));
+
+	OnPreviewOffset(event);
+}
+
+void OutfitStudio::OnOffsetShapeText(wxCommandEvent& event) {
+	wxWindow* parent = ((wxTextCtrl*)event.GetEventObject())->GetParent();
+	if (!parent)
+		return;
+	
+	Vector3 changed;
+	changed.x = atof(XRCCTRL(*parent, "osTextX", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.y = atof(XRCCTRL(*parent, "osTextY", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.z = atof(XRCCTRL(*parent, "osTextZ", wxTextCtrl)->GetValue().ToAscii().data());
+
+	XRCCTRL(*parent, "osX", wxSlider)->SetValue(changed.x * 1000);
+	XRCCTRL(*parent, "osY", wxSlider)->SetValue(changed.y * 1000);
+	XRCCTRL(*parent, "osZ", wxSlider)->SetValue(changed.z * 1000);
+
+	OnPreviewOffset(event);
 }
 
 void OutfitStudio::OnPreviewOffset(wxCommandEvent& event) {
@@ -2779,9 +2867,9 @@ void OutfitStudio::OnPreviewOffset(wxCommandEvent& event) {
 	else
 		current = Proj->baseNif.GetShapeVirtualOffset(activeItem->shapeName);
 
-	changed.x = atof(XRCCTRL(*parent, "osCustX", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.y = atof(XRCCTRL(*parent, "osCustY", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.z = atof(XRCCTRL(*parent, "osCustZ", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.x = atof(XRCCTRL(*parent, "osTextX", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.y = atof(XRCCTRL(*parent, "osTextY", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.z = atof(XRCCTRL(*parent, "osTextZ", wxTextCtrl)->GetValue().ToAscii().data());
 
 	if (activeItem->bIsOutfitShape)
 		Proj->workNif.VirtualOffsetShape(activeItem->shapeName, changed, false);

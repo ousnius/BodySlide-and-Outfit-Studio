@@ -607,10 +607,16 @@ private:
 	void OnExportShape(wxCommandEvent& event);
 
 	void OnEnterClose(wxKeyEvent& event);
-
+	
 	void OnMoveShape(wxCommandEvent& event);
-	void OnOffsetShape(wxCommandEvent& event);
+	void OnMoveShapeOldOffset(wxCommandEvent& event);
+	void OnMoveShapeSlider(wxCommandEvent& event);
+	void OnMoveShapeText(wxCommandEvent& event);
 	void OnPreviewMove(wxCommandEvent& event);
+
+	void OnOffsetShape(wxCommandEvent& event);
+	void OnOffsetShapeSlider(wxCommandEvent& event);
+	void OnOffsetShapeText(wxCommandEvent& event);
 	void OnPreviewOffset(wxCommandEvent& event);
 
 	void OnScaleShape(wxCommandEvent& event);
