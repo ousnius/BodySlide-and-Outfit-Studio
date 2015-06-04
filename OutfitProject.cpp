@@ -794,28 +794,28 @@ void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sli
 	}
 }
 
-void OutfitProject::MoveVertex(const string& shapeName, Vector3& pos, const int& id, bool IsOutfit) {
+void OutfitProject::MoveVertex(const string& shapeName, const Vector3& pos, const int& id, bool IsOutfit) {
 	if (IsOutfit)
 		workNif.MoveVertex(shapeName, pos, id);
 	else
 		baseNif.MoveVertex(shapeName, pos, id);
 }
 
-void OutfitProject::OffsetShape(const string& shapeName, Vector3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask) {
+void OutfitProject::OffsetShape(const string& shapeName, const Vector3& xlate, bool IsOutfit, unordered_map<ushort, float>* mask) {
 	if (IsOutfit)
 		workNif.OffsetShape(shapeName, xlate, mask);
 	else
 		baseNif.OffsetShape(shapeName, xlate, mask);
 }
 
-void OutfitProject::ScaleShape(const string& shapeName, float& scale, bool IsOutfit, unordered_map<ushort, float>* mask) {
+void OutfitProject::ScaleShape(const string& shapeName, const float& scale, bool IsOutfit, unordered_map<ushort, float>* mask) {
 	if (IsOutfit)
 		workNif.ScaleShape(shapeName, scale, mask);
 	else
 		baseNif.ScaleShape(shapeName, scale, mask);
 }
 
-void OutfitProject::RotateShape(const string& shapeName, Vector3& angle, bool IsOutfit, unordered_map<ushort, float>* mask) {
+void OutfitProject::RotateShape(const string& shapeName, const Vector3& angle, bool IsOutfit, unordered_map<ushort, float>* mask) {
 	if (IsOutfit)
 		workNif.RotateShape(shapeName, angle, mask);
 	else

@@ -706,7 +706,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="msX">
+								<object class="wxSlider" name="msSliderX">
 									<value>0</value>
 									<min>-25000</min>
 									<max>25000</max>
@@ -751,7 +751,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="msY">
+								<object class="wxSlider" name="msSliderY">
 									<value>0</value>
 									<min>-25000</min>
 									<max>25000</max>
@@ -796,7 +796,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="msZ">
+								<object class="wxSlider" name="msSliderZ">
 									<value>0</value>
 									<min>-25000</min>
 									<max>25000</max>
@@ -852,8 +852,8 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStaticText" name="osDescription">
-					<label>A virtual shape offset visually lines up meshes in Outfit Studio and BodySlide, but does not actually move the vertices.</label>
-					<wrap>400</wrap>
+					<label>A virtual shape offset visually moves meshes in Outfit Studio and BodySlide, but does not actually move the vertices. It is stored here, so it can be cleared again later.</label>
+					<wrap>475</wrap>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -881,7 +881,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="osX">
+								<object class="wxSlider" name="osSliderX">
 									<value>0</value>
 									<min>-25000</min>
 									<max>25000</max>
@@ -926,7 +926,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="osY">
+								<object class="wxSlider" name="osSliderY">
 									<value>0</value>
 									<min>-25000</min>
 									<max>25000</max>
@@ -971,7 +971,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="osZ">
+								<object class="wxSlider" name="osSliderZ">
 									<value>0</value>
 									<min>-25000</min>
 									<max>25000</max>
@@ -1018,7 +1018,7 @@
 	<object class="wxDialog" name="dlgScaleShape">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
 		<size>423,155</size>
-		<title>Apply a shape scale</title>
+		<title>Scale Shape</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
@@ -1026,8 +1026,8 @@
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStaticText" name="m_staticText32">
-					<label>Scaling will grow/shrink a mesh in order to make it better match up with other meshes. This permanently affects vertices in the exported .nif files.</label>
+				<object class="wxStaticText" name="ssDescription">
+					<label>Scaling will adjust the size of a mesh. This permanently affects vertices.</label>
 					<wrap>400</wrap>
 				</object>
 			</object>
@@ -1036,35 +1036,43 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText3">
-							<label>Scale:</label>
-							<wrap>-1</wrap>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="ssLabel">
+									<label>Scale</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="ssSlider">
+									<value>1000</value>
+									<min>10</min>
+									<max>3000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="ssText">
+									<size>60,-1</size>
+									<value>1.00000</value>
+								</object>
+							</object>
 						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="scaleValue">
-							<value>1.00000</value>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
 					</object>
 				</object>
 			</object>
@@ -1095,7 +1103,7 @@
 	<object class="wxDialog" name="dlgVirtScaleShape">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
 		<size>423,155</size>
-		<title>Apply a virtual shape scale</title>
+		<title>Scale Shape (Virtual)</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
@@ -1103,9 +1111,9 @@
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStaticText" name="m_staticText32">
-					<label>A virtual scale will grow/shrink a mesh in order to make it better match up with other meshes. This value does not get stored with exported .nif files.</label>
-					<wrap>400</wrap>
+				<object class="wxStaticText" name="vsDescription">
+					<label>A virtual shape scale visually affects meshes in Outfit Studio and BodySlide, but does not actually move the vertices. It is stored here, so it can be cleared again later.</label>
+					<wrap>475</wrap>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -1113,35 +1121,43 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText3">
-							<label>Scale:</label>
-							<wrap>-1</wrap>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="vssLabel">
+									<label>Scale</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="vssSlider">
+									<value>1000</value>
+									<min>10</min>
+									<max>3000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="vssText">
+									<size>60,-1</size>
+									<value>1.00000</value>
+								</object>
+							</object>
 						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="scaleValue">
-							<value>0.0</value>
-						</object>
-					</object>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
 					</object>
 				</object>
 			</object>
@@ -1172,17 +1188,53 @@
 	<object class="wxDialog" name="dlgRotateShape">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
 		<size>423,155</size>
-		<title>Apply a shape rotation</title>
+		<title>Rotate Shape</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
+				<flag>wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStaticText" name="m_staticText32">
-					<label>A shape rotation can be used to line up meshes. This permanently affects vertices in the exported .nif files.</label>
-					<wrap>400</wrap>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="rsLabelX">
+									<label>X</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="rsSliderX">
+									<value>0</value>
+									<min>-18000</min>
+									<max>18000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="rsTextX">
+									<size>60,-1</size>
+									<value>0.0000</value>
+								</object>
+							</object>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
@@ -1190,62 +1242,87 @@
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText3">
-							<label>X</label>
-							<wrap>-1</wrap>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="rsLabelY">
+									<label>Y</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="rsSliderY">
+									<value>0</value>
+									<min>-18000</min>
+									<max>18000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="rsTextY">
+									<size>60,-1</size>
+									<value>0.0000</value>
+								</object>
+							</object>
 						</object>
 					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="angleX">
-							<value>0.0</value>
-						</object>
-					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText4">
-							<label>Y</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="angleY">
-							<value>0.0</value>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="m_staticText5">
-							<label>Z</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxTextCtrl" name="angleZ">
-							<value>0.0</value>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="rsLabelZ">
+									<label>Z</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="rsSliderZ">
+									<value>0</value>
+									<min>-18000</min>
+									<max>18000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="rsTextZ">
+									<size>60,-1</size>
+									<value>0.0000</value>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>

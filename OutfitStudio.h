@@ -521,6 +521,7 @@ private:
 	bool previousMirror;
 	Vector3 previewMove;
 	float previewScale;
+	Vector3 previewRotation;
 
 	map<string, SliderDisplay*> sliderDisplays;
 
@@ -624,6 +625,7 @@ private:
 	void OnRotateShape(wxCommandEvent& event);
 	void OnRotateShapeSlider(wxCommandEvent& event);
 	void OnRotateShapeText(wxCommandEvent& event);
+	void PreviewRotation(const Vector3& changed);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetShapeTexture(wxCommandEvent& event);

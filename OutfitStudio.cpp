@@ -3028,27 +3028,31 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& event) {
 		XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnRotateShapeText, this);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
+		Vector3 angle;
 		if (dlg.ShowModal() == wxID_OK) {
-			float angleX = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().ToAscii().data());
-			float angleY = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().ToAscii().data());
-			float angleZ = atof(XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->GetValue().ToAscii().data());
-			Vector3 angle(angleX, angleY, angleZ);
-
-			unordered_map<ushort, float> mask;
-			unordered_map<ushort, float>* mptr = nullptr;
-			for (auto i : selectedItems) {
-				mask.clear();
-				mptr = nullptr;
-				glView->GetShapeMask(mask, i->shapeName);
-				if (mask.size() > 0)
-					mptr = &mask;
-
-				vector<Vector3> verts;
-				project->RotateShape(i->shapeName, angle, i->bIsOutfitShape, mptr);
-				project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
-				glView->UpdateMeshVertices(i->shapeName, &verts);
-			}
+			angle.x = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().ToAscii().data());
+			angle.y = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().ToAscii().data());
+			angle.z = atof(XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->GetValue().ToAscii().data());
 		}
+
+		angle -= previewRotation;
+
+		unordered_map<ushort, float> mask;
+		unordered_map<ushort, float>* mptr = nullptr;
+		for (auto i : selectedItems) {
+			mask.clear();
+			mptr = nullptr;
+			glView->GetShapeMask(mask, i->shapeName);
+			if (mask.size() > 0)
+				mptr = &mask;
+
+			vector<Vector3> verts;
+			project->RotateShape(i->shapeName, angle, i->bIsOutfitShape, mptr);
+			project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
+			glView->UpdateMeshVertices(i->shapeName, &verts);
+		}
+
+		previewRotation.Zero();
 	}
 }
 
@@ -3065,6 +3069,8 @@ void OutfitStudio::OnRotateShapeSlider(wxCommandEvent& event) {
 	XRCCTRL(*parent, "rsTextX", wxTextCtrl)->SetValue(wxString::Format("%0.4f", slider.x));
 	XRCCTRL(*parent, "rsTextY", wxTextCtrl)->SetValue(wxString::Format("%0.4f", slider.y));
 	XRCCTRL(*parent, "rsTextZ", wxTextCtrl)->SetValue(wxString::Format("%0.4f", slider.z));
+
+	PreviewRotation(slider);
 }
 
 void OutfitStudio::OnRotateShapeText(wxCommandEvent& event) {
@@ -3080,6 +3086,27 @@ void OutfitStudio::OnRotateShapeText(wxCommandEvent& event) {
 	XRCCTRL(*parent, "rsSliderX", wxSlider)->SetValue(changed.x * 100);
 	XRCCTRL(*parent, "rsSliderY", wxSlider)->SetValue(changed.y * 100);
 	XRCCTRL(*parent, "rsSliderZ", wxSlider)->SetValue(changed.z * 100);
+
+	PreviewRotation(changed);
+}
+
+
+void OutfitStudio::PreviewRotation(const Vector3& changed) {
+	unordered_map<ushort, float> mask;
+	unordered_map<ushort, float>* mptr = nullptr;
+	for (auto i : selectedItems) {
+		mask.clear();
+		mptr = nullptr;
+		glView->GetShapeMask(mask, i->shapeName);
+		if (mask.size() > 0)
+			mptr = &mask;
+
+		vector<Vector3> verts;
+		project->RotateShape(i->shapeName, changed - previewRotation, i->bIsOutfitShape, mptr);
+		project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
+		glView->UpdateMeshVertices(i->shapeName, &verts);
+	}
+	previewRotation = changed;
 }
 
 void OutfitStudio::OnSetShapeTexture(wxCommandEvent& event) {
