@@ -71,9 +71,9 @@ public:
 		bool genWeights,
 		bool copyRef);
 
-	string SliderSetName(void);
-	string SliderSetFileName(void);
-	string OutfitName(void);
+	string SliderSetName();
+	string SliderSetFileName();
+	string OutfitName();
 
 	bool IsDirty();
 	void Clean() {

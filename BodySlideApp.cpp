@@ -38,10 +38,8 @@ END_EVENT_TABLE();
 IMPLEMENT_APP(BodySlideApp)
 
 BodySlideApp::~BodySlideApp() {
-	if (previewBaseNif) {
-		delete previewBaseNif;
-		previewBaseNif = nullptr;
-	}
+	delete previewBaseNif;
+	previewBaseNif = nullptr;
 
 	if (preview0)
 		ClosePreview(SMALL_PREVIEW);
@@ -865,8 +863,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 		outFileNameSmall = Config["GameDataPath"] + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
-		string tmp = Config["GameDataPath"] + activeSet.GetOutputPath();
-		SHCreateDirectoryEx(0, charToWChar(tmp.c_str()), nullptr);
+		string path = Config["GameDataPath"] + activeSet.GetOutputPath();
+		wchar_t* wPath = charToWChar(path.c_str());
+		SHCreateDirectoryEx(0, wPath, nullptr);
+		delete[] wPath;
 	}
 
 	// ALT key
@@ -1197,8 +1197,11 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 		/* Create directory for the outfit */
 		string dir = datapath + currentSet.GetOutputPath();
+		wchar_t* wDir = charToWChar(dir.c_str());
+		int error = SHCreateDirectoryEx(0, wDir, nullptr);
+		delete[] wDir;
+
 		stringstream errss;
-		int error = SHCreateDirectoryEx(0, charToWChar(dir.c_str()), nullptr);
 		if ((error != ERROR_SUCCESS) && (error != ERROR_ALREADY_EXISTS) && (error != ERROR_FILE_EXISTS)) {
 			errss << "Unable to create destination directory: " << dir << " [" << hex << (uint)error << "]";
 			failedOutfits[outfit] = errss.str();

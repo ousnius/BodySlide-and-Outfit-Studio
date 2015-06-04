@@ -43,6 +43,7 @@ public:
 class wxGLPanel : public wxGLCanvas {
 public:
 	wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs);
+	~wxGLPanel();
 
 	void SetNotifyWindow(wxWindow* win);
 
@@ -319,7 +320,6 @@ public:
 private:
 	void OnShown();
 	void OnPaint(wxPaintEvent& event);
-	void OnEraseBackground(wxEraseEvent& event);
 	void OnSize(wxSizeEvent& event);
 
 	void OnMouseWheel(wxMouseEvent& event);
@@ -358,7 +358,7 @@ private:
 
 	float brushSize;
 	bool editMode;
-	bool transformMode;		// 0 = off, 1 = move, 2 = rotate, 3 = scale
+	bool transformMode;			// 0 = off, 1 = move, 2 = rotate, 3 = scale
 	bool bMaskPaint;
 	bool bWeightPaint;
 	bool isPainting;
@@ -384,23 +384,20 @@ private:
 	TweakUndo* strokeManager;
 	TweakUndo baseStrokes;
 
-	Vector3 xformCenter;		// transform center for transform brushes (rotate, specifically cares about this)
+	Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
 
 	DECLARE_EVENT_TABLE()
 };
 
 class OutfitProject;
 
-// Define a new frame type: this is going to be our main frame
 class OutfitStudio : public wxFrame {
 public:
-	// ctor(s)
 	OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
 	~OutfitStudio();
 	wxGLPanel* glView;
 
-	OutfitProject* Proj;			// Always assumed to exist!  blank one created in constructor, replaced on load/new
-	string activeShape;
+	OutfitProject* project;		// Always assumed to exist. Blank one created in constructor, replaced on load/new
 	ShapeItemData* activeItem;
 	vector<ShapeItemData*> selectedItems;
 	string activeSlider;
@@ -416,7 +413,6 @@ public:
 	wxTreeItemId refRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
-	//wxTreemListCtrl* outfitShapes;
 	wxImageList* visStateImages;
 
 	ConfigurationManager& appConfig;
@@ -437,14 +433,11 @@ public:
 	int PromptUpdateBase();
 
 	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false);
-
-	bool NotifyStrokeStarting();
-
 	void UpdateActiveShapeUI();
 
-	string GetActiveShape();
 	string GetActiveBone();
 
+	bool NotifyStrokeStarting();
 
 	bool IsDirty();
 	bool IsDirty(const string& shapeName);
@@ -454,13 +447,12 @@ public:
 	void EnterSliderEdit();
 	void ExitSliderEdit();
 
-
 	wxProgressDialog* progWnd;
 	vector<pair<float, float>> progressStack;
 	int progressVal;
 
 	void StartProgress(const string& title) {
-		if (progressStack.size() == 0) {
+		if (progressStack.empty()) {
 			progWnd = new wxProgressDialog(title, "Starting...", 10000, this, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
 			progWnd->SetSize(400, 150);
 			progressVal = 0;
@@ -478,20 +470,20 @@ public:
 	}
 
 	void EndProgress() {
-		if (progressStack.size() == 0)
+		if (progressStack.empty())
 			return;
 
 		progWnd->Update(progressStack.back().second);
 		progressStack.pop_back();
 
-		if (progressStack.size() == 0) {
+		if (progressStack.empty()) {
 			delete progWnd;
 			progWnd = nullptr;
 		}
 	}
 
 	void UpdateProgress(float val, const string& msg = "") {
-		if (progressStack.size() == 0)
+		if (progressStack.empty())
 			return;
 
 		float range = progressStack.back().second - progressStack.back().first;
@@ -661,7 +653,7 @@ private:
 	}
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
-		glView->RecalcNormals(activeShape);
+		glView->RecalcNormals(activeItem->shapeName);
 		glView->Refresh();
 	}
 
@@ -696,8 +688,9 @@ private:
 	}
 
 	void OnShowMask(wxCommandEvent& WXUNUSED(event)) {
-		if (activeShape.empty())
+		if (!activeItem)
 			return;
+
 		glView->ToggleMaskVisible();
 		glView->Refresh();
 	}
@@ -762,24 +755,20 @@ private:
 	}
 
 	void OnClearMask(wxCommandEvent& WXUNUSED(event)) {
-		if (activeShape.empty())
+		if (!activeItem)
 			return;
+
 		glView->ClearMask();
 		glView->Refresh();
 	}
 
 	void OnInvertMask(wxCommandEvent& WXUNUSED(event)) {
-		if (activeShape.empty())
+		if (!activeItem)
 			return;
+
 		glView->InvertMask();
 		glView->Refresh();
 	}
 
-	void OnEraseBackground(wxEraseEvent& WXUNUSED(event)) {
-		int a;
-		a = 1;
-	}
-
-	// Any class wishing to process wxWidgets events must use this macro.
 	DECLARE_EVENT_TABLE()
 };

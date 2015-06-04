@@ -51,7 +51,9 @@ string OutfitProject::Save(const string& strFileName,
 	GetCurrentDirectory(MAX_PATH, curDir);
 
 	wchar_t folder[MAX_PATH];
-	_snwprintf_s(folder, MAX_PATH, MAX_PATH, L"%s\\%s\\%s", curDir, L"ShapeData", charToWChar(strDataDir.c_str()));
+	wchar_t* wStrDataDir = charToWChar(strDataDir.c_str());
+	_snwprintf_s(folder, MAX_PATH, MAX_PATH, L"%s\\%s\\%s", curDir, L"ShapeData", wStrDataDir);
+	delete[] wStrDataDir;
 	SHCreateDirectoryEx(0, folder, nullptr);
 
 	float prog = 5.0f;
@@ -139,7 +141,9 @@ string OutfitProject::Save(const string& strFileName,
 	wchar_t ssNewFolder[MAX_PATH];
 	auto it = strFileName.rfind('\\');
 	if (it != string::npos) {
-		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, charToWChar(strFileName.substr(0, it).c_str()));
+		wchar_t* wStrFileName = charToWChar(strFileName.substr(0, it).c_str());
+		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, wStrFileName);
+		delete[] wStrFileName;
 		SHCreateDirectoryEx(0, ssNewFolder, nullptr);
 	}
 	else {
