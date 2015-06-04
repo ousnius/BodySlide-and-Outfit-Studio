@@ -604,20 +604,26 @@ private:
 	void OnMoveShapeOldOffset(wxCommandEvent& event);
 	void OnMoveShapeSlider(wxCommandEvent& event);
 	void OnMoveShapeText(wxCommandEvent& event);
-	void OnPreviewMove(wxCommandEvent& event);
+	void PreviewMove(const Vector3& changed);
 
 	void OnOffsetShape(wxCommandEvent& event);
 	void OnOffsetShapeSlider(wxCommandEvent& event);
 	void OnOffsetShapeText(wxCommandEvent& event);
-	void OnPreviewOffset(wxCommandEvent& event);
+	void PreviewOffset(const Vector3& changed);
 
 	void OnScaleShape(wxCommandEvent& event);
+	void OnScaleShapeSlider(wxCommandEvent& event);
+	void OnScaleShapeText(wxCommandEvent& event);
+	void PreviewScale(const float& scale);
+
 	void OnVirtScaleShape(wxCommandEvent& event);
-	void OnPreviewScale(wxCommandEvent& event);
-	void OnPreviewVirtScale(wxCommandEvent& event);
+	void OnVirtScaleShapeSlider(wxCommandEvent& event);
+	void OnVirtScaleShapeText(wxCommandEvent& event);
+	void PreviewVirtScale(const float& scale);
 
 	void OnRotateShape(wxCommandEvent& event);
-	void OnVirtRotateShape(wxCommandEvent& event);
+	void OnRotateShapeSlider(wxCommandEvent& event);
+	void OnRotateShapeText(wxCommandEvent& event);
 
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetShapeTexture(wxCommandEvent& event);
