@@ -80,6 +80,31 @@
 				<disabled>1</disabled>
 				<radio>1</radio>
 			</object>
+			<object class="separator" />
+			<object class="tool" name="btnViewFront">
+				<label>View Front</label>
+				<tooltip>Change camera view to the front.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>ViewFront.png</bitmap>
+			</object>
+			<object class="tool" name="btnViewBack">
+				<label>View Back</label>
+				<tooltip>Change camera view to the back.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>ViewBack.png</bitmap>
+			</object>
+			<object class="tool" name="btnViewLeft">
+				<label>View Left</label>
+				<tooltip>Change camera view to the left.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>ViewLeft.png</bitmap>
+			</object>
+			<object class="tool" name="btnViewRight">
+				<label>View Right</label>
+				<tooltip>Change camera view to the right.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>ViewRight.png</bitmap>
+			</object>
 		</object>
 		<object class="wxSplitterWindow" name="splitter">
 			<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
