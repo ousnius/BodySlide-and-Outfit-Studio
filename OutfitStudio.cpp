@@ -55,6 +55,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("btnViewBack"), OutfitStudio::OnSetView)
 	EVT_MENU(XRCID("btnViewLeft"), OutfitStudio::OnSetView)
 	EVT_MENU(XRCID("btnViewRight"), OutfitStudio::OnSetView)
+	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudio::OnTogglePerspective)
 	
 	EVT_MENU(XRCID("brushSettings"), OutfitStudio::OnBrushSettings)
 	EVT_MENU(XRCID("btnIncreaseSize"), OutfitStudio::OnIncBrush)
@@ -1832,6 +1833,11 @@ void OutfitStudio::OnSetView(wxCommandEvent& event) {
 		glView->SetView('L');
 	else if (id == XRCID("btnViewRight"))
 		glView->SetView('R');
+}
+
+void OutfitStudio::OnTogglePerspective(wxCommandEvent& event) {
+	bool enabled = GetToolBar()->GetToolState(XRCID("btnViewPerspective"));
+	glView->SetPerspective(enabled);
 }
 
 void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
@@ -4111,6 +4117,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 	else {
 		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
+		gls.UpdateProjection();
 	}
 	Refresh();
 }

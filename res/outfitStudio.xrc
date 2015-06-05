@@ -105,6 +105,14 @@
 				<longhelp></longhelp>
 				<bitmap>ViewRight.png</bitmap>
 			</object>
+			<object class="tool" name="btnViewPerspective">
+				<label>Perspective View</label>
+				<tooltip>Toggle perspective view.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>ViewPerspective.png</bitmap>
+				<toggle>1</toggle>
+				<checked>1</checked>
+			</object>
 		</object>
 		<object class="wxSplitterWindow" name="splitter">
 			<style>wxSP_3D|wxSP_LIVE_UPDATE</style>

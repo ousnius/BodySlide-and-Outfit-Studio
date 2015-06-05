@@ -475,11 +475,12 @@ void GLSurface::Begin() {
 }
 
 void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const uint& vpWidth, const uint& vpHeight, const float& fov) {
+	perspective = true;
 	camPos = pos;
 	camRot = rot;
-	mFov = fov;
 	vpW = vpWidth;
 	vpH = vpHeight;
+	mFov = fov;
 	SetSize(vpWidth, vpHeight);
 }
 	
@@ -523,20 +524,26 @@ void GLSurface::UnprojectCamera(Vector3& result) {
 void GLSurface::SetView(const char& type) {
 	if (type == 'F') {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
-		camRot = Vector3(15.0f, 0.0f, 0.0f);
+		camRot = Vector3();
 	}
 	else if (type == 'B') {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
-		camRot = Vector3(15.0f, 180.0f, 0.0f);
+		camRot = Vector3(0.0f, 180.0f, 0.0f);
 	}
 	else if (type == 'L') {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
-		camRot = Vector3(15.0f, -90.0f, 0.0f);
+		camRot = Vector3(0.0f, -90.0f, 0.0f);
 	}
 	else if (type == 'R') {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
-		camRot = Vector3(15.0f, 90.0f, 0.0f);
+		camRot = Vector3(0.0f, 90.0f, 0.0f);
 	}
+	UpdateProjection();
+}
+
+void GLSurface::SetPerspective(const bool& enabled) {
+	perspective = enabled;
+	UpdateProjection();
 }
 
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos) {
@@ -835,14 +842,23 @@ void GLSurface::ShowCursor(bool show) {
 }
 
 void GLSurface::SetSize(uint w, uint h) {
-	float aspect = (float)w / (float)h;
 	glViewport(0, 0, w, h);
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-	gluPerspective(mFov, aspect, 0.1, 1000);
-	glMatrixMode(GL_MODELVIEW);
 	vpW = w;
 	vpH = h;
+	UpdateProjection();
+}
+
+void GLSurface::UpdateProjection() {
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+
+	double aspect = (double)vpW / (double)vpH;
+	if (perspective)
+		gluPerspective(mFov, aspect, 0.1, 1000);
+	else
+		glOrtho(camPos.z / 2 * aspect, -camPos.z / 2 * aspect, camPos.z / 2, -camPos.z / 2, 0.1, 1000);
+
+	glMatrixMode(GL_MODELVIEW);
 }
 
 void GLSurface::RenderOneFrame() {
@@ -854,7 +870,7 @@ void GLSurface::RenderOneFrame() {
 
 	glClearColor(0.81f, 0.82f, 0.82f, 1.0f);
 	glLoadIdentity();
-	glTranslated(camPos.x, camPos.y, camPos.z);
+	glTranslatef(camPos.x, camPos.y, camPos.z);
 	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
 	glRotatef(camRot.y, 0.0f, 1.0f, 0.0f);
 

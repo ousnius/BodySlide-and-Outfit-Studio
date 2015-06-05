@@ -321,6 +321,11 @@ public:
 		Refresh();
 	}
 
+	void SetPerspective(const bool& enabled) {
+		gls.SetPerspective(enabled);
+		Refresh();
+	}
+
 
 private:
 	void OnShown();
@@ -587,6 +592,7 @@ private:
 	void OnSelectBrush(wxCommandEvent& event);
 
 	void OnSetView(wxCommandEvent& event);
+	void OnTogglePerspective(wxCommandEvent& event);
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSliderConform(wxCommandEvent& event);

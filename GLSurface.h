@@ -22,6 +22,7 @@ class GLSurface {
 	wxGLCanvas* canvas{nullptr};
 	wxGLContext* context{nullptr};
 
+	bool perspective;
 	float mFov;
 	Vector3 camPos;
 	Vector3 camRot;		// Turntable camera emulation.
@@ -213,6 +214,7 @@ public:
 
 	void SetStartingView(const Vector3& camPos, const Vector3& camRot, const uint& vpWidth, const uint& vpHeight, const float& fov = 65.0f);
 	void SetSize(uint w, uint h);
+	void UpdateProjection();
 
 	void TurnTableCamera(int dScreenX);
 	void PitchCamera(int dScreenY);
@@ -221,6 +223,7 @@ public:
 	void UnprojectCamera(Vector3& result);
 
 	void SetView(const char& type);
+	void SetPerspective(const bool& enabled);
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
