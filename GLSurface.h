@@ -211,7 +211,7 @@ public:
 	void Begin();
 	void Cleanup();
 
-	void SetStartingView(Vector3 camPos, uint vpWidth, uint vpHeight, float fov = 60.0f);
+	void SetStartingView(const Vector3& camPos, const Vector3& camRot, const uint& vpWidth, const uint& vpHeight, const float& fov = 65.0f);
 	void SetSize(uint w, uint h);
 
 	void TurnTableCamera(int dScreenX);
@@ -219,6 +219,8 @@ public:
 	void PanCamera(int dScreenX, int dScreenY);
 	void DollyCamera(int dAmount);
 	void UnprojectCamera(Vector3& result);
+
+	void SetView(const char& type);
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);

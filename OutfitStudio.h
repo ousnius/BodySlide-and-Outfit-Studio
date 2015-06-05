@@ -316,6 +316,11 @@ public:
 		Refresh();
 	}
 
+	void SetView(const char& type) {
+		gls.SetView(type);
+		Refresh();
+	}
+
 
 private:
 	void OnShown();
@@ -580,6 +585,8 @@ private:
 	void OnCheckBox(wxCommandEvent& event);
 
 	void OnSelectBrush(wxCommandEvent& event);
+
+	void OnSetView(wxCommandEvent& event);
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSliderConform(wxCommandEvent& event);

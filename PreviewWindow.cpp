@@ -56,7 +56,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType, char* shapeName)
 void PreviewWindow::OnShown() {
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
-	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0f);
+	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
 	app->InitPreview(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
 }
 

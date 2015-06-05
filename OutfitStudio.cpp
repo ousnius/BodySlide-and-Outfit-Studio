@@ -50,6 +50,11 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("btnMoveBrush"), OutfitStudio::OnSelectBrush)
 	EVT_MENU(XRCID("btnSmoothBrush"), OutfitStudio::OnSelectBrush)
 	EVT_MENU(XRCID("btnWeightBrush"), OutfitStudio::OnSelectBrush)
+
+	EVT_MENU(XRCID("btnViewFront"), OutfitStudio::OnSetView)
+	EVT_MENU(XRCID("btnViewBack"), OutfitStudio::OnSetView)
+	EVT_MENU(XRCID("btnViewLeft"), OutfitStudio::OnSetView)
+	EVT_MENU(XRCID("btnViewRight"), OutfitStudio::OnSetView)
 	
 	EVT_MENU(XRCID("brushSettings"), OutfitStudio::OnBrushSettings)
 	EVT_MENU(XRCID("btnIncreaseSize"), OutfitStudio::OnIncBrush)
@@ -1816,6 +1821,19 @@ void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 	glView->SetEditMode();
 }
 
+void OutfitStudio::OnSetView(wxCommandEvent& event) {
+	int id = event.GetId();
+
+	if (id == XRCID("btnViewFront"))
+		glView->SetView('F');
+	else if (id == XRCID("btnViewBack"))
+		glView->SetView('B');
+	else if (id == XRCID("btnViewLeft"))
+		glView->SetView('L');
+	else if (id == XRCID("btnViewRight"))
+		glView->SetView('R');
+}
+
 void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
 	wxBitmapButton* btn = (wxBitmapButton*)event.GetEventObject();
 	if (!btn)
@@ -3527,7 +3545,7 @@ wxGLPanel::~wxGLPanel() {
 void wxGLPanel::OnShown() {
 	gls.Initialize(this, context, false);
 	auto size = GetSize();
-	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), size.GetWidth(), size.GetHeight(), 65.0f);
+	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
 	gls.ToggleMask();
 }
 

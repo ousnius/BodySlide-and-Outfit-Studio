@@ -474,9 +474,10 @@ void GLSurface::Begin() {
 	canvas->SetCurrent(*context);
 }
 
-void GLSurface::SetStartingView(Vector3 camPos, uint vpWidth, uint vpHeight, float fov) {
-	this->camPos = camPos;
-	this->mFov = fov;
+void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const uint& vpWidth, const uint& vpHeight, const float& fov) {
+	camPos = pos;
+	camRot = rot;
+	mFov = fov;
 	vpW = vpWidth;
 	vpH = vpHeight;
 	SetSize(vpWidth, vpHeight);
@@ -517,6 +518,25 @@ void GLSurface::UnprojectCamera(Vector3& result) {
 	result.x = dx;
 	result.y = dy;
 	result.z = dz;
+}
+
+void GLSurface::SetView(const char& type) {
+	if (type == 'F') {
+		camPos = Vector3(0.0f, -5.0f, -15.0f);
+		camRot = Vector3(15.0f, 0.0f, 0.0f);
+	}
+	else if (type == 'B') {
+		camPos = Vector3(0.0f, -5.0f, -15.0f);
+		camRot = Vector3(15.0f, 180.0f, 0.0f);
+	}
+	else if (type == 'L') {
+		camPos = Vector3(0.0f, -5.0f, -15.0f);
+		camRot = Vector3(15.0f, -90.0f, 0.0f);
+	}
+	else if (type == 'R') {
+		camPos = Vector3(0.0f, -5.0f, -15.0f);
+		camRot = Vector3(15.0f, 90.0f, 0.0f);
+	}
 }
 
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos) {
