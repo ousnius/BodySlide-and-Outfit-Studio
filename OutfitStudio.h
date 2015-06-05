@@ -326,6 +326,11 @@ public:
 		Refresh();
 	}
 
+	void SetFieldOfView(const int& fieldOfView) {
+		gls.SetFieldOfView(fieldOfView);
+		Refresh();
+	}
+
 
 private:
 	void OnShown();
@@ -593,6 +598,7 @@ private:
 
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
+	void OnFieldOfViewSlider(wxCommandEvent& event);
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSliderConform(wxCommandEvent& event);

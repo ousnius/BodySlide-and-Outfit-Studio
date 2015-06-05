@@ -113,6 +113,17 @@
 				<toggle>1</toggle>
 				<checked>1</checked>
 			</object>
+			<object class="wxSlider" name="fovSlider">
+				<size>100,25</size>
+				<value>65</value>
+				<min>20</min>
+				<max>120</max>
+				<tooltip>Field of View</tooltip>
+			</object>
+			<object class="wxStaticText" name="fovLabel">
+				<fg>#ffffff</fg>
+				<label>Field of View: 65</label>
+			</object>
 		</object>
 		<object class="wxSplitterWindow" name="splitter">
 			<style>wxSP_3D|wxSP_LIVE_UPDATE</style>

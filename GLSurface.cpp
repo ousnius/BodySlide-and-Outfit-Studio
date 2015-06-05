@@ -546,6 +546,11 @@ void GLSurface::SetPerspective(const bool& enabled) {
 	UpdateProjection();
 }
 
+void GLSurface::SetFieldOfView(const int& fieldOfView) {
+	mFov = fieldOfView;
+	UpdateProjection();
+}
+
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos) {
 	GLint vp[4];
 	GLdouble proj[16];

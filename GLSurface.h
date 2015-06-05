@@ -224,6 +224,7 @@ public:
 
 	void SetView(const char& type);
 	void SetPerspective(const bool& enabled);
+	void SetFieldOfView(const int& fieldOfView);
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);

@@ -153,6 +153,9 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		toolBar->SetToolDisabledBitmap(XRCID("btnMoveBrush"), wxBitmap("res\\MoveBrush_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnSmoothBrush"), wxBitmap("res\\SmoothBrush_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnWeightBrush"), wxBitmap("res\\WeightBrush_d.png", wxBITMAP_TYPE_PNG));
+		wxSlider* fovSlider = (wxSlider*)toolBar->FindWindowByName("fovSlider");
+		if (fovSlider)
+			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
 	}
 
 	if (menu)
@@ -1838,6 +1841,18 @@ void OutfitStudio::OnSetView(wxCommandEvent& event) {
 void OutfitStudio::OnTogglePerspective(wxCommandEvent& event) {
 	bool enabled = GetToolBar()->GetToolState(XRCID("btnViewPerspective"));
 	glView->SetPerspective(enabled);
+}
+
+void OutfitStudio::OnFieldOfViewSlider(wxCommandEvent& event) {
+	wxSlider* fovSlider = (wxSlider*)event.GetEventObject();
+	if (fovSlider) {
+		int fieldOfView = fovSlider->GetValue();
+		wxStaticText* fovLabel = (wxStaticText*)GetToolBar()->FindWindowByName("fovLabel");
+		if (fovLabel)
+			fovLabel->SetLabel(wxString::Format("Field of View: %d", fieldOfView));
+
+		glView->SetFieldOfView(fieldOfView);
+	}
 }
 
 void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
