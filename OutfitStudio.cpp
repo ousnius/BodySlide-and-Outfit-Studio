@@ -4152,7 +4152,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (mbuttonDown) {
 		isMDragging = true;
-		gls.PanCamera(x - lastX, y - lastY);
+		if (wxGetKeyState(wxKeyCode::WXK_SHIFT))
+			gls.DollyCamera(y - lastY);
+		else
+			gls.PanCamera(x - lastX, y - lastY);
 		Refresh();
 	}
 
