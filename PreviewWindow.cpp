@@ -57,6 +57,13 @@ void PreviewWindow::OnShown() {
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
+
+	int ambient = Config.GetIntValue("Lights/Ambient", 80);
+	int brightness1 = Config.GetIntValue("Lights/Brightness1", 55);
+	int brightness2 = Config.GetIntValue("Lights/Brightness2", 45);
+	int brightness3 = Config.GetIntValue("Lights/Brightness3", 45);
+	gls.UpdateLights(ambient, brightness1, brightness2, brightness3);
+
 	app->InitPreview(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
 }
 

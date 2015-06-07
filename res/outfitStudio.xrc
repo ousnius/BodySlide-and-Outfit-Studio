@@ -113,6 +113,7 @@
 				<toggle>1</toggle>
 				<checked>1</checked>
 			</object>
+			<object class="separator" />
 			<object class="wxSlider" name="fovSlider">
 				<size>100,25</size>
 				<value>65</value>
@@ -177,6 +178,18 @@
 									<default>0</default>
 								</object>
 							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>0</border>
+								<object class="wxButton" name="lightsTabButton" subclass="wxStateButton">
+									<size>-1,20</size>
+									<style>wxNO_BORDER</style>
+									<label>Lights</label>
+									<bg>#646464</bg>
+									<default>0</default>
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
@@ -198,6 +211,120 @@
 							<bg>#404040</bg>
 							<fg>#ffffff</fg>
 							<hidden>1</hidden>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<border>3</border>
+						<object class="wxPanel" name="lightSettings">
+							<style>wxTAB_TRAVERSAL</style>
+							<bg>#404040</bg>
+							<fg>#ffffff</fg>
+							<hidden>1</hidden>
+							<object class="wxBoxSizer">
+								<orient>wxVERTICAL</orient>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>0</option>
+											<object class="wxStaticText" name="lightAmbientLabel">
+												<size>75,25</size>
+												<label>Ambient</label>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALL|wxEXPAND</flag>
+											<object class="wxSlider" name="lightAmbientSlider">
+												<size>-1,25</size>
+												<value>50</value>
+												<min>0</min>
+												<max>100</max>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>0</option>
+											<object class="wxStaticText" name="lightBrightnessLabel1">
+												<size>75,25</size>
+												<label>Brightness 1</label>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALL|wxEXPAND</flag>
+											<object class="wxSlider" name="lightBrightnessSlider1">
+												<size>-1,25</size>
+												<value>50</value>
+												<min>0</min>
+												<max>100</max>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>0</option>
+											<object class="wxStaticText" name="lightBrightnessLabel2">
+												<size>75,25</size>
+												<label>Brightness 2</label>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALL|wxEXPAND</flag>
+											<object class="wxSlider" name="lightBrightnessSlider2">
+												<size>-1,25</size>
+												<value>50</value>
+												<min>0</min>
+												<max>100</max>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>0</option>
+											<object class="wxStaticText" name="lightBrightnessLabel3">
+												<size>75,25</size>
+												<label>Brightness 3</label>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALL|wxEXPAND</flag>
+											<object class="wxSlider" name="lightBrightnessSlider3">
+												<size>-1,25</size>
+												<value>50</value>
+												<min>0</min>
+												<max>100</max>
+											</object>
+										</object>
+									</object>
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">

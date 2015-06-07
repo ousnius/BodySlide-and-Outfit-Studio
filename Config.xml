@@ -27,6 +27,13 @@
         <!-- Center for move/rotate operations. Object = bounding box center, Origin = (0,0,0), Selected = unmasked vertex centroid -->
         <CenterMode>Object</CenterMode>
     </Editing>
+    <!--Light Settings-->
+    <Lights>
+        <Ambient>80</Ambient>
+        <Brightness1>55</Brightness1>
+        <Brightness2>45</Brightness2>
+        <Brightness3>45</Brightness3>
+    </Lights>
     <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
     <ReferenceTemplates>
         <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body">CBBE Body</Template>

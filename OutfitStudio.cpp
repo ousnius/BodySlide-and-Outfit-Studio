@@ -104,8 +104,15 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitShapes"), OutfitStudio::OnOutfitShapeContext)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudio::OnBoneContext)
 	
-	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudio::OnMeshBoneButtonClick)
-	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudio::OnMeshBoneButtonClick)
+	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudio::OnTabButtonClick)
+	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudio::OnTabButtonClick)
+	EVT_BUTTON(XRCID("lightsTabButton"), OutfitStudio::OnTabButtonClick)
+
+	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudio::OnUpdateLights)
+	EVT_SLIDER(XRCID("lightBrightnessSlider1"), OutfitStudio::OnUpdateLights)
+	EVT_SLIDER(XRCID("lightBrightnessSlider2"), OutfitStudio::OnUpdateLights)
+	EVT_SLIDER(XRCID("lightBrightnessSlider3"), OutfitStudio::OnUpdateLights)
+	EVT_BUTTON(XRCID("lightReset"), OutfitStudio::OnResetLights)
 	
 	EVT_MOVE_END(OutfitStudio::OnMoveWindow)
 	EVT_SIZE(OutfitStudio::OnSetSize)
@@ -184,6 +191,17 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
 	bonesRoot = outfitBones->AddRoot("Bones");
+
+	int ambient = Config.GetIntValue("Lights/Ambient", 80);
+	int brightness1 = Config.GetIntValue("Lights/Brightness1", 55);
+	int brightness2 = Config.GetIntValue("Lights/Brightness2", 45);
+	int brightness3 = Config.GetIntValue("Lights/Brightness3", 45);
+
+	lightSettings = (wxPanel*)FindWindowByName("lightSettings");
+	((wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider"))->SetValue(ambient);
+	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1"))->SetValue(brightness1);
+	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2"))->SetValue(brightness2);
+	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3"))->SetValue(brightness3);
 
 	glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs(this));
 	glView->SetNotifyWindow(this);
@@ -1838,7 +1856,7 @@ void OutfitStudio::OnSetView(wxCommandEvent& event) {
 		glView->SetView('R');
 }
 
-void OutfitStudio::OnTogglePerspective(wxCommandEvent& event) {
+void OutfitStudio::OnTogglePerspective(wxCommandEvent& WXUNUSED(event)) {
 	bool enabled = GetToolBar()->GetToolState(XRCID("btnViewPerspective"));
 	glView->SetPerspective(enabled);
 }
@@ -1853,6 +1871,43 @@ void OutfitStudio::OnFieldOfViewSlider(wxCommandEvent& event) {
 
 		glView->SetFieldOfView(fieldOfView);
 	}
+}
+
+void OutfitStudio::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
+	wxSlider* ambientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
+	wxSlider* brightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
+	wxSlider* brightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
+	wxSlider* brightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
+
+	int ambient = ambientSlider->GetValue();
+	int brightness1 = brightnessSlider1->GetValue();
+	int brightness2 = brightnessSlider2->GetValue();
+	int brightness3 = brightnessSlider3->GetValue();
+	glView->UpdateLights(ambient, brightness1, brightness2, brightness3);
+
+	Config.SetValue("Lights/Ambient", ambient);
+	Config.SetValue("Lights/Brightness1", brightness1);
+	Config.SetValue("Lights/Brightness2", brightness2);
+	Config.SetValue("Lights/Brightness3", brightness3);
+}
+
+void OutfitStudio::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
+	int ambient = 80;
+	int brightness1 = 55;
+	int brightness2 = 45;
+	int brightness3 = 45;
+
+	glView->UpdateLights(ambient, brightness1, brightness2, brightness3);
+
+	((wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider"))->SetValue(ambient);
+	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1"))->SetValue(brightness1);
+	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2"))->SetValue(brightness2);
+	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3"))->SetValue(brightness3);
+
+	Config.SetValue("Lights/Ambient", ambient);
+	Config.SetValue("Lights/Brightness1", brightness1);
+	Config.SetValue("Lights/Brightness2", brightness2);
+	Config.SetValue("Lights/Brightness3", brightness3);
 }
 
 void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
@@ -1956,60 +2011,67 @@ void OutfitStudio::OnReadoutChange(wxCommandEvent& event){
 	ApplySliders();
 }
 
-void OutfitStudio::OnMeshBoneButtonClick(wxCommandEvent& event) {
+void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 	wxMenuBar* menuBar = GetMenuBar();
-	if (id == XRCID("meshTabButton")) {
-		outfitBones->Hide();
-		outfitShapes->Show();
-		((wxStateButton*)FindWindowByName("boneTabButton"))->SetCheck(false);
+
+	if (id != XRCID("boneTabButton")) {
 		((wxSlider*)FindWindowByName("boneScale"))->Show(false);
 		((wxStaticText*)FindWindowByName("boneScaleLabel"))->Show(false);
-		outfitShapes->GetParent()->Layout();
 		project->ClearBoneScale();
 
-		if (glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
+		if (glView->GetActiveBrush() && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
 			glView->SetXMirror(previousMirror);
 			GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
+
+			glView->SetActiveBrush(1);
+			toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
+			menuBar->Check(XRCID("btnInflateBrush"), true);
+			glView->SetWeightVisible(false);
+
+			toolBar->EnableTool(XRCID("btnWeightBrush"), false);
+
+			toolBar->EnableTool(XRCID("btnInflateBrush"), true);
+			toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
+			toolBar->EnableTool(XRCID("btnMoveBrush"), true);
+			toolBar->EnableTool(XRCID("btnSmoothBrush"), true);
+
+			menuBar->Enable(XRCID("btnWeightBrush"), false);
+
+			menuBar->Enable(XRCID("btnInflateBrush"), true);
+			menuBar->Enable(XRCID("btnDeflateBrush"), true);
+			menuBar->Enable(XRCID("btnMoveBrush"), true);
+			menuBar->Enable(XRCID("btnSmoothBrush"), true);
 		}
+	}
 
-		glView->SetActiveBrush(1);
-		toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
-		menuBar->Check(XRCID("btnInflateBrush"), true);
-		glView->SetWeightVisible(false);
-		Refresh();
-
-		toolBar->EnableTool(XRCID("btnWeightBrush"), false);
-
-		toolBar->EnableTool(XRCID("btnInflateBrush"), true);
-		toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
-		toolBar->EnableTool(XRCID("btnMoveBrush"), true);
-		toolBar->EnableTool(XRCID("btnSmoothBrush"), true);
-
-		menuBar->Enable(XRCID("btnWeightBrush"), false);
-
-		menuBar->Enable(XRCID("btnInflateBrush"), true);
-		menuBar->Enable(XRCID("btnDeflateBrush"), true);
-		menuBar->Enable(XRCID("btnMoveBrush"), true);
-		menuBar->Enable(XRCID("btnSmoothBrush"), true);
-
+	if (id == XRCID("meshTabButton")) {
+		outfitBones->Hide();
+		lightSettings->Hide();
+		outfitShapes->Show();
+		((wxStateButton*)FindWindowByName("boneTabButton"))->SetCheck(false);
+		((wxStateButton*)FindWindowByName("lightsTabButton"))->SetCheck(false);
 	}
 	else if (id == XRCID("boneTabButton")) {
 		outfitShapes->Hide();
+		lightSettings->Hide();
 		outfitBones->Show();
 		((wxStateButton*)FindWindowByName("meshTabButton"))->SetCheck(false);
+		((wxStateButton*)FindWindowByName("lightsTabButton"))->SetCheck(false);
+
 		wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
 		boneScale->SetValue(0);
 		boneScale->Show();
 		((wxStaticText*)FindWindowByName("boneScaleLabel"))->Show();
-		outfitShapes->GetParent()->Layout();
 
 		glView->SetActiveBrush(10);
 		toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
 		menuBar->Check(XRCID("btnWeightBrush"), true);
+
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
+
 		glView->SetEditMode();
 		glView->SetWeightVisible(true);
 
@@ -2026,9 +2088,17 @@ void OutfitStudio::OnMeshBoneButtonClick(wxCommandEvent& event) {
 		menuBar->Enable(XRCID("btnDeflateBrush"), false);
 		menuBar->Enable(XRCID("btnMoveBrush"), false);
 		menuBar->Enable(XRCID("btnSmoothBrush"), false);
-
-		Refresh();
 	}
+	else if (id == XRCID("lightsTabButton")) {
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		lightSettings->Show();
+		((wxStateButton*)FindWindowByName("meshTabButton"))->SetCheck(false);
+		((wxStateButton*)FindWindowByName("boneTabButton"))->SetCheck(false);
+	}
+
+	((wxPanel*)FindWindowByName("rightSplitPanel"))->Layout();
+	Refresh();
 }
 
 void OutfitStudio::HighlightSlider(const string& name) {
@@ -3568,6 +3638,12 @@ void wxGLPanel::OnShown() {
 	auto size = GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
 	gls.ToggleMask();
+
+	int ambient = Config.GetIntValue("Lights/Ambient", 80);
+	int brightness1 = Config.GetIntValue("Lights/Brightness1", 55);
+	int brightness2 = Config.GetIntValue("Lights/Brightness2", 45);
+	int brightness3 = Config.GetIntValue("Lights/Brightness3", 45);
+	UpdateLights(ambient, brightness1, brightness2, brightness3);
 }
 
 void wxGLPanel::SetNotifyWindow(wxWindow* win) {

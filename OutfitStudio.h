@@ -331,6 +331,11 @@ public:
 		Refresh();
 	}
 
+	void UpdateLights(const int& ambient = 50, const int& brightness1 = 50, const int& brightness2 = 50, const int& brightness3 = 50) {
+		gls.UpdateLights(ambient, brightness1, brightness2, brightness3);
+		Refresh();
+	}
+
 
 private:
 	void OnShown();
@@ -421,6 +426,7 @@ public:
 
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
+	wxPanel* lightSettings;
 	wxScrolledWindow* sliderScroll;
 	wxStatusBar* statusBar;
 	wxToolBar* toolBar;
@@ -583,7 +589,7 @@ private:
 	void OnClickSliderButton(wxCommandEvent &event);
 	void OnReadoutChange(wxCommandEvent& event);
 
-	void OnMeshBoneButtonClick(wxCommandEvent& event);
+	void OnTabButtonClick(wxCommandEvent& event);
 
 	void OnSelectSliders(wxCommandEvent& event);
 	void OnOutfitVisToggle(wxTreeEvent& event);
@@ -599,6 +605,8 @@ private:
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);
 	void OnFieldOfViewSlider(wxCommandEvent& event);
+	void OnUpdateLights(wxCommandEvent& event);
+	void OnResetLights(wxCommandEvent& event);
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSliderConform(wxCommandEvent& event);

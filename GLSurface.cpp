@@ -365,8 +365,8 @@ int GLSurface::FindBestNumSamples(HDC hDC) {
 
 void GLSurface::initLighting() {
 	glEnable(GL_LIGHTING);
-	float amb[] = { 0.7f, 0.2f, 0.0f, 1.0f };
-	float diff[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	float amb[] = { 0.8f, 0.2288f, 0.0f, 1.0f };
+	float diff[] = { 0.55, 0.55, 0.55, 1.0f };
 	float spec[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	float lightpos[] = { 1.0f, 0.2f, 0.5f, 0.0f };
 	glEnable(GL_LIGHT0);
@@ -375,8 +375,8 @@ void GLSurface::initLighting() {
 	glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
 	glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
 
-	float lightpos2[] = { -1.0f, -1.0f, -1.0f, 0.0f };
-	float diff2[] = { 0.2f, 0.3f, 0.6f, 1.0f };
+	float lightpos2[] = { -1.0f, -1.0f, 1.0f, 0.0f };
+	float diff2[] = { 0.45f, 0.45f, 0.45f, 1.0f };
 	float rimspec[] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	glEnable(GL_LIGHT1);
 	glLightfv(GL_LIGHT1, GL_DIFFUSE, diff2);
@@ -384,7 +384,7 @@ void GLSurface::initLighting() {
 	glLightfv(GL_LIGHT1, GL_POSITION, lightpos2);
 
 	float lightpos3[] = { -2.0f, 2.0f, 1.0f, 0.0f };
-	float diff3[] = { 0.3f, 0.3f, 0.4f, 1.0f };
+	float diff3[] = { 0.45f, 0.45f, 0.45f, 1.0f };
 	glEnable(GL_LIGHT2);
 	glLightfv(GL_LIGHT2, GL_DIFFUSE, diff3);
 	glLightfv(GL_LIGHT2, GL_SPECULAR, spec);
@@ -394,7 +394,6 @@ void GLSurface::initLighting() {
 void GLSurface::initMaterial(Vector3 diffusecolor) {
 	float spec[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	float amb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-	//float matcolor[] = { 0.8f, 0.8f, 0.8f, 1.0f };
 	float matcolor[4];
 	matcolor[0] = diffusecolor.x;
 	matcolor[1] = diffusecolor.x;
@@ -549,6 +548,20 @@ void GLSurface::SetPerspective(const bool& enabled) {
 void GLSurface::SetFieldOfView(const int& fieldOfView) {
 	mFov = fieldOfView;
 	UpdateProjection();
+}
+
+void GLSurface::UpdateLights(const int& ambient, const int& brightness1, const int& brightness2, const int& brightness3) {
+	float amb[] = { 0.01f * ambient, 0.00286f * ambient, 0.0f, 1.0f };
+	glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
+
+	float diff1[] = { 0.01f * brightness1, 0.01f * brightness1, 0.01f * brightness1, 1.0f };
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diff1);
+
+	float diff2[] = { 0.01f * brightness2, 0.01f * brightness2, 0.01f * brightness2, 1.0f };
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, diff2);
+
+	float diff3[] = { 0.01f * brightness3, 0.01f * brightness3, 0.01f * brightness3, 1.0f };
+	glLightfv(GL_LIGHT2, GL_DIFFUSE, diff3);
 }
 
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos) {
