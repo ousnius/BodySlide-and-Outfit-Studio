@@ -629,9 +629,8 @@ void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 
 void BodySlideApp::SetDefaultConfig() {
 	HKEY skyrimRegKey;
-	char installPath[256];
+	wchar_t installPath[256];
 	DWORD pathSize = 256;
-	string buildpath;
 
 	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
@@ -645,11 +644,12 @@ void BodySlideApp::SetDefaultConfig() {
 	if (!Config.Exists("GameDataPath")) {
 		long result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Bethesda Softworks\\Skyrim", 0, KEY_READ, &skyrimRegKey);
 		if (result == ERROR_SUCCESS) {
-			result = RegQueryValueEx(skyrimRegKey, L"Installed Path", 0, 0, (byte*)installPath, &pathSize);
+			result = RegQueryValueEx(skyrimRegKey, L"Installed Path", 0, 0, (LPBYTE)&installPath, &pathSize);
 			if (result == ERROR_SUCCESS) {
-				buildpath = installPath;
-				buildpath += "Data\\";
-				Config.SetDefaultValue("GameDataPath", buildpath);
+				wstring wGameDataPath(installPath);
+				string gameDataPath(wGameDataPath.begin(), wGameDataPath.end());
+				gameDataPath += "Data\\";
+				Config.SetDefaultValue("GameDataPath", gameDataPath);
 			}
 			else if (Config["WarnMissingGamePath"] == "true")
 				wxMessageBox("Could not find both your game install path (registry key value) and GameDataPath in the configuration.", "Warning");
