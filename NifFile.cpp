@@ -2882,8 +2882,10 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		return;
 	}
 
-	map<int, vector<int>> vertBones;
-	map<int, vector<float>> vertWeights;
+
+	//Make maps of new bone weights
+	map<ushort, vector<int>> vertBones;
+	map<ushort, vector<float>> vertWeights;
 	int b = 0;
 	for (auto bone : skinData->bones) {
 		for (auto bw : bone.vertexWeights) {
@@ -2899,26 +2901,37 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		b++;
 	}
 
+	//Erase influences over 4
+	for (auto bones : vertBones) {
+		for (int bi = 0; bi < bones.second.size(); bi++) {
+			if (bi == 4) {
+				vertBones[bones.first].erase(vertBones[bones.first].begin() + 4, vertBones[bones.first].end());
+				vertWeights[bones.first].erase(vertWeights[bones.first].begin() + 4, vertWeights[bones.first].end());
+				break;
+			}
+		}
+	}
+
 	for (auto& part : skinPart->partitions) {
+		//Make list of new bones
 		set<int> bones;
-		set<ushort> verts(part.vertexMap.begin(), part.vertexMap.end());
 		for (auto v : part.vertexMap) {
 			for (int bi = 0; bi < vertBones[v].size(); bi++) {
-				if (bi == 4) {
-					break;
-				}
 				int bid = vertBones[v][bi];
 				bones.insert(bid);
 			}
 		}
 
-		unordered_map<int, int> bonelookup;
+		//Clear old data
 		part.bones.clear();
 		part.boneIndices.clear();
 		part.vertexWeights.clear();
+
+		//Add new bones to partition
+		unordered_map<int, int> boneLookup;
 		for (auto b : bones) {
 			part.bones.push_back(b);
-			bonelookup[b] = part.bones.size() - 1;
+			boneLookup[b] = part.bones.size() - 1;
 		}
 
 		for (auto v : part.vertexMap) {
@@ -2926,21 +2939,20 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 			VertexWeight vw;
 			b.i1 = b.i2 = b.i3 = b.i4 = 0;
 			vw.w1 = vw.w2 = vw.w3 = vw.w4 = 0;
+
+			//Normalize weights
 			byte* pb = (byte*)&b.i1;
 			float* pw = (float*)&vw.w1;
 			float tot = 0.0f;
 			for (int bi = 0; bi < vertBones[v].size(); bi++) {
-				if (bi == 4) {
-					break;
-				}
-
-				pb[bi] = bonelookup[vertBones[v][bi]];
+				pb[bi] = boneLookup[vertBones[v][bi]];
 				pw[bi] = vertWeights[v][bi];
 				tot += pw[bi];
 			}
 			for (int bi = 0; bi < 4; bi++)
 				pw[bi] /= tot;
 
+			//Add new bone indices and weights to partition
 			part.boneIndices.push_back(b);
 			part.vertexWeights.push_back(vw);
 		}
@@ -3066,8 +3078,8 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		vertTris[tris[t].p3].push_back(t);
 	}
 
-	unordered_map<int, vector<int>> vertBones;
-	unordered_map<int, vector<float>> vertWeights;
+	unordered_map<ushort, vector<int>> vertBones;
+	unordered_map<ushort, vector<float>> vertWeights;
 	int b = 0;
 
 	for (auto bone : skinData->bones) {
@@ -3112,7 +3124,6 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	};
 
 	int partID = 0;
-	//unordered_map<int, vector<int>> partTris;
 	unordered_map<int, int> triParts;
 	unordered_map<int, set<int>> partBones;
 
@@ -3301,11 +3312,16 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		bsdSkinInst->partitions.clear();
 		for (int i = 0; i < bsdSkinInst->numPartitions; i++) {
 			BSDismemberSkinInstance::Partition p;
-			p.partID = 32;
+			if (hdr.VerCheck(20, 2, 0, 7) && hdr.userVersion == 11)
+				p.partID = 0;
+			else
+				p.partID = 32;
+
 			if (i == 0)
 				p.flags = 257;
 			else
 				p.flags = 257;
+
 			bsdSkinInst->partitions.push_back(p);
 		}
 		hdr.blockSizes[bsdSkinInst->skinPartitionRef] = skinPart->CalcBlockSize();
