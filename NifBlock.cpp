@@ -68,10 +68,10 @@ void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const 
 	string verString = "Gamebryo File Format, Version " + to_string(v1) + '.' + to_string(v2) + '.' + to_string(v3) + '.' + to_string(v4);
 	strncpy(verStr, verString.c_str(), 0x26);
 
-	version1 = v1;
-	version2 = v2;
-	version3 = v3;
-	version4 = v4;
+	version4 = v1;
+	version3 = v2;
+	version2 = v3;
+	version1 = v4;
 	userVersion = userVer;
 	userVersion2 = userVer2;
 }

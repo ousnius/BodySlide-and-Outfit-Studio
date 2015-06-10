@@ -1220,7 +1220,6 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 		return 2;
 	}
 
-	owner->targetGame = 0;
 	baseShapeName = shapeName;
 
 	vector<string> baseShapes;
