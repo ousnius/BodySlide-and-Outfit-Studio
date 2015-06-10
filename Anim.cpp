@@ -288,7 +288,7 @@ int AnimSkeleton::LoadFromNif(const string& filename) {
 	if (!nif.IsValid())
 		return 1;
 
-	rootBone = Config.GetCString("Anim/SkeletonRootName", "NPC");
+	rootBone = Config.GetCString("Anim/SkeletonRootName");
 	int nodeid = nif.GetNodeID(rootBone);
 	if (nodeid == -1)
 		return 2;

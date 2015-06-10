@@ -1,6 +1,12 @@
 #pragma once
 
-//#define _HAS_ITERATOR_DEBUGGING 0
+#ifndef FO3NV
+#define FO3NV 0
+#endif
+#ifndef SKYRIM
+#define SKYRIM 1
+#endif
+
 #include "wx/wx.h"
 #include "wx/image.h"
 #include "wx/xrc/xmlres.h"
@@ -417,6 +423,7 @@ public:
 	~OutfitStudio();
 	wxGLPanel* glView;
 
+	int targetGame;
 	OutfitProject* project;		// Always assumed to exist. Blank one created in constructor, replaced on load/new
 	ShapeItemData* activeItem;
 	vector<ShapeItemData*> selectedItems;

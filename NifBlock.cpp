@@ -12,6 +12,9 @@ void NiObject::notifyBlockDelete(int blockID) {
 void NiObject::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 }
 
+void NiObject::notifyVersionChange(const int& v1, const int& v2, const int& v3, const int& v4, const int& userVer, const int& userVer2) {
+}
+
 void NiObject::Get(fstream& file) {
 }
 
@@ -59,6 +62,18 @@ void NiHeader::Clear() {
 	blockIndex.clear();
 	blockSizes.clear();
 	strings.clear();
+}
+
+void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2) {
+	string verString = "Gamebryo File Format, Version " + to_string(v1) + '.' + to_string(v2) + '.' + to_string(v3) + '.' + to_string(v4);
+	strncpy(verStr, verString.c_str(), 0x26);
+
+	version1 = v1;
+	version2 = v2;
+	version3 = v3;
+	version4 = v4;
+	userVersion = userVer;
+	userVersion2 = userVer2;
 }
 
 void NiHeader::Get(fstream& file) {

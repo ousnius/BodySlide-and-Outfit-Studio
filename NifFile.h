@@ -143,6 +143,7 @@ public:
 	virtual void Init();
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual void notifyVersionChange(const int& v1, const int& v2, const int& v3, const int& v4, const int& userVer, const int& userVer2);
 
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
@@ -193,6 +194,7 @@ public:
 
 	NiHeader();
 	void Clear();
+	void SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2);
 
 	void Get(fstream& file);
 	void Put(fstream& file);

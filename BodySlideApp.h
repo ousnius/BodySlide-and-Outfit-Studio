@@ -1,5 +1,12 @@
 #pragma once
 
+#ifndef FO3NV
+#define FO3NV 0
+#endif
+#ifndef SKYRIM
+#define SKYRIM 1
+#endif
+
 #include "Resource.h"
 #include <wx/wxprec.h>
 #include <wx/srchctrl.h>
@@ -75,6 +82,7 @@ public:
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
 
 	SliderCategoryCollection cCollection;
+	int targetGame;
 
 	void SetDefaultConfig();
 	void LoadData();

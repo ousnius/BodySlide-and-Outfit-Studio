@@ -70,11 +70,11 @@ bool BodySlideApp::OnInit() {
 	SetDefaultConfig();	
 	LoadAllCategories();
 
-	int w = Config.GetIntValue("BodySlideFrame.width", 800);	
-	int h = Config.GetIntValue("BodySlideFrame.height", 600);
+	int w = Config.GetIntValue("BodySlideFrame.width");	
+	int h = Config.GetIntValue("BodySlideFrame.height");
 
 	sliderView = new BodySlideFrame(this, "BodySlide", wxPoint(1, 1), wxSize(w, h));
-	sliderView->SetPosition(wxPoint(Config.GetIntValue("BodySlideFrame.x", 100), Config.GetIntValue("BodySlideFrame.y", 100)));
+	sliderView->SetPosition(wxPoint(Config.GetIntValue("BodySlideFrame.x"), Config.GetIntValue("BodySlideFrame.y")));
 	sliderView->Show(true);
 	SetTopWindow(sliderView);
 
@@ -370,9 +370,9 @@ void BodySlideApp::LaunchOutfitStudio() {
 		outfitStudio->SetFocus();
 	}
 	else {
-		int w = Config.GetIntValue("OutfitStudioFrame.width", 990);
-		int h = Config.GetIntValue("OutfitStudioFrame.height", 757);
-		wxPoint loc(Config.GetIntValue("OutfitStudioFrame.x", 100), Config.GetIntValue("OutfitStudioFrame.y", 100));
+		int w = Config.GetIntValue("OutfitStudioFrame.width");
+		int h = Config.GetIntValue("OutfitStudioFrame.height");
+		wxPoint loc(Config.GetIntValue("OutfitStudioFrame.x"), Config.GetIntValue("OutfitStudioFrame.y"));
 		outfitStudio = new OutfitStudio(sliderView, loc, wxSize(w, h), Config);
 		outfitStudio->Show();
 	}
@@ -628,23 +628,59 @@ void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 }
 
 void BodySlideApp::SetDefaultConfig() {
-	HKEY skyrimRegKey;
-	wchar_t installPath[256];
-	DWORD pathSize = 256;
+	Config.SetDefaultValue("TargetGame", 1);
+	targetGame = Config.GetIntValue("TargetGame");
 
 	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("SelectedOutfit", "");
-	Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
+	
+	wstring gameKey;
+	wstring gameValueKey;
+	switch (targetGame) {
+		case FO3NV:
+			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
+			Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
+			gameKey = L"SOFTWARE\\Bethesda Softworks\\Fallout3";
+			gameValueKey = L"Installed Path";
+			break;
+		case SKYRIM:
+			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
+			Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
+			gameKey = L"SOFTWARE\\Bethesda Softworks\\Skyrim";
+			gameValueKey = L"Installed Path";
+			break;
+		default:
+			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
+			Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
+	}
+
 	Config.SetDefaultValue("ReferenceTemplates", "");
-	Config.SetDefaultValue("Input/SliderMinimum", -30);
+	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
+	Config.SetDefaultValue("Input/LeftMousePan", "false");
+	Config.SetDefaultValue("Editing/CenterMode", "Object");
+	Config.SetDefaultValue("Lights/Ambient", 80);
+	Config.SetDefaultValue("Lights/Brightness1", 55);
+	Config.SetDefaultValue("Lights/Brightness2", 45);
+	Config.SetDefaultValue("Lights/Brightness3", 45);
+	Config.SetDefaultValue("BodySlideFrame.width", 800);
+	Config.SetDefaultValue("BodySlideFrame.height", 600);
+	Config.SetDefaultValue("BodySlideFrame.x", 100);
+	Config.SetDefaultValue("BodySlideFrame.y", 100);
+	Config.SetDefaultValue("OutfitStudioFrame.width", 990);
+	Config.SetDefaultValue("OutfitStudioFrame.height", 757);
+	Config.SetDefaultValue("OutfitStudioFrame.x", 100);
+	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
 
 	if (!Config.Exists("GameDataPath")) {
-		long result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, L"SOFTWARE\\Bethesda Softworks\\Skyrim", 0, KEY_READ, &skyrimRegKey);
+		HKEY regKey;
+		long result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, gameKey.c_str(), 0, KEY_READ, &regKey);
 		if (result == ERROR_SUCCESS) {
-			result = RegQueryValueEx(skyrimRegKey, L"Installed Path", 0, 0, (LPBYTE)&installPath, &pathSize);
+			wchar_t installPath[256];
+			DWORD pathSize = 256;
+			result = RegQueryValueEx(regKey, gameValueKey.c_str(), 0, 0, (LPBYTE)&installPath, &pathSize);
 			if (result == ERROR_SUCCESS) {
 				wstring wGameDataPath(installPath);
 				string gameDataPath(wGameDataPath.begin(), wGameDataPath.end());
@@ -1406,8 +1442,8 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 	sd->isZap = isZap;
 	sd->oneSize = oneSize;
 
-	int minValue = Config.GetIntValue("Input/SliderMinimum", 0);
-	int maxValue = Config.GetIntValue("Input/SliderMaximum", 100);
+	int minValue = Config.GetIntValue("Input/SliderMinimum");
+	int maxValue = Config.GetIntValue("Input/SliderMaximum");
 
 	if (!oneSize) {
 		sd->lblSliderLo = new wxStaticText(sw, wxID_ANY, name, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);

@@ -192,16 +192,18 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
 	bonesRoot = outfitBones->AddRoot("Bones");
 
-	int ambient = Config.GetIntValue("Lights/Ambient", 80);
-	int brightness1 = Config.GetIntValue("Lights/Brightness1", 55);
-	int brightness2 = Config.GetIntValue("Lights/Brightness2", 45);
-	int brightness3 = Config.GetIntValue("Lights/Brightness3", 45);
+	int ambient = appConfig.GetIntValue("Lights/Ambient");
+	int brightness1 = appConfig.GetIntValue("Lights/Brightness1");
+	int brightness2 = appConfig.GetIntValue("Lights/Brightness2");
+	int brightness3 = appConfig.GetIntValue("Lights/Brightness3");
 
 	lightSettings = (wxPanel*)FindWindowByName("lightSettings");
 	((wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider"))->SetValue(ambient);
 	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1"))->SetValue(brightness1);
 	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2"))->SetValue(brightness2);
 	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3"))->SetValue(brightness3);
+	
+	targetGame = appConfig.GetIntValue("TargetGame");
 
 	glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs(this));
 	glView->SetNotifyWindow(this);
@@ -3639,10 +3641,10 @@ void wxGLPanel::OnShown() {
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
 	gls.ToggleMask();
 
-	int ambient = Config.GetIntValue("Lights/Ambient", 80);
-	int brightness1 = Config.GetIntValue("Lights/Brightness1", 55);
-	int brightness2 = Config.GetIntValue("Lights/Brightness2", 45);
-	int brightness3 = Config.GetIntValue("Lights/Brightness3", 45);
+	int ambient = Config.GetIntValue("Lights/Ambient");
+	int brightness1 = Config.GetIntValue("Lights/Brightness1");
+	int brightness2 = Config.GetIntValue("Lights/Brightness2");
+	int brightness3 = Config.GetIntValue("Lights/Brightness3");
 	UpdateLights(ambient, brightness1, brightness2, brightness3);
 }
 
