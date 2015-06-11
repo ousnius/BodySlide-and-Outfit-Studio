@@ -3322,7 +3322,15 @@ void OutfitStudio::OnApplyDiffuse(wxCommandEvent& event) {
 
 	string tex = texGrid->GetCellValue(0, 0);
 	if (!tex.empty()) {
-		string newTex = appConfig["GameDataPath"] + "textures\\" + tex;
+		string newTex;
+		switch (targetGame) {
+			case FO3NV:
+				newTex = appConfig["GameDataPath"] + tex;
+				break;
+			case SKYRIM:
+			default:
+				newTex = appConfig["GameDataPath"] + "textures\\" + tex;
+		}
 		dispPath->SetPath(newTex);
 	}
 }

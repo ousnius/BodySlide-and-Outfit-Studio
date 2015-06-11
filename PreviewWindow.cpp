@@ -182,7 +182,14 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 	else if (shader->IsSkinShader())
 		shaderType = 1;
 
-	SetShapeTexture(shapeName, baseDataPath + "textures\\" + texFile, shaderType);
+	switch (app->targetGame) {
+		case FO3NV:
+			SetShapeTexture(shapeName, baseDataPath + texFile, shaderType);
+			break;
+		case SKYRIM:
+		default:
+			SetShapeTexture(shapeName, baseDataPath + "textures\\" + texFile, shaderType);
+	}
 }
 
 void PreviewWindow::RightDrag(int dX, int dY) {
