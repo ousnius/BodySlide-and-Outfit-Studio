@@ -36,6 +36,7 @@ using namespace std;
 #define NISTRINGEXTRADATA			14
 #define BSSHADERPPLIGHTINGPROPERTY	15
 #define NIMATERIALPROPERTY			16
+#define NISTENCILPROPERTY			17
 
 
 struct VertexWeight {
@@ -649,6 +650,21 @@ public:
 
 	NiMaterialProperty(NiHeader& hdr);
 	NiMaterialProperty(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class NiStencilProperty : public NiProperty {
+public:
+	ushort flags;
+	uint stencilRef;
+	uint stencilMask;
+
+	NiStencilProperty(NiHeader& hdr);
+	NiStencilProperty(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);

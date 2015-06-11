@@ -2705,6 +2705,57 @@ int NiMaterialProperty::CalcBlockSize() {
 }
 
 
+NiStencilProperty::NiStencilProperty(NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = NISTENCILPROPERTY;
+	flags = 19840;
+	stencilRef = 0;
+	stencilMask = 0xffffffff;
+
+	CalcBlockSize();
+}
+
+NiStencilProperty::NiStencilProperty(fstream& file, NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = NISTENCILPROPERTY;
+
+	Get(file);
+	CalcBlockSize();
+}
+
+void NiStencilProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	file.read((char*)&flags, 2);
+	file.read((char*)&stencilRef, 4);
+	file.read((char*)&stencilMask, 4);
+}
+
+void NiStencilProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&stencilRef, 4);
+	file.write((char*)&stencilMask, 4);
+}
+
+void NiStencilProperty::notifyBlockDelete(int blockID) {
+	NiProperty::notifyBlockDelete(blockID);
+}
+
+int NiStencilProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	blockSize += 10;
+
+	return blockSize;
+}
+
+
 void NiExtraData::Init() {
 	NiObject::Init();
 

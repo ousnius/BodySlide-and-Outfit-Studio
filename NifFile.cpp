@@ -206,6 +206,9 @@ void NifFile::CopyFrom(NifFile& other) {
 			break;
 		case NIMATERIALPROPERTY:
 			nb = new NiMaterialProperty((*(NiMaterialProperty*)other.blocks[i]));
+			break;
+		case NISTENCILPROPERTY:
+			nb = new NiStencilProperty((*(NiStencilProperty*)other.blocks[i]));
 		}
 		blocks.push_back(nb);
 	}
@@ -280,6 +283,8 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new BSShaderPPLightingProperty(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiMaterialProperty"))
 				block = (NiObject*) new NiMaterialProperty(file, hdr);
+			else if (!thisBlockTypeStr.compare("NiStencilProperty"))
+				block = (NiObject*) new NiStencilProperty(file, hdr);
 			else
 				block = (NiObject*) new NiUnknown(file, hdr.blockSizes[i]);
 
@@ -989,6 +994,18 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 				continue;
 			}
 
+			NiStencilProperty* stencil = dynamic_cast<NiStencilProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (stencil) {
+				NiStencilProperty* destStencil = new NiStencilProperty((*stencil));
+				int stencilId = blocks.size();
+				blocks.push_back(destStencil);
+				hdr.numBlocks++;
+				hdr.blockSizes.push_back(destStencil->CalcBlockSize());
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiStencilProperty"));
+				dest->propertiesRef[i] = stencilId;
+				continue;
+			}
+
 			NiUnknown* srcUnknown = dynamic_cast<NiUnknown*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (srcUnknown) {
 				NiUnknown* destUnknown = new NiUnknown((*srcUnknown));
@@ -1188,6 +1205,18 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 				hdr.blockSizes.push_back(destMaterial->CalcBlockSize());
 				hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiMaterialProperty"));
 				dest->propertiesRef[i] = materialId;
+				continue;
+			}
+
+			NiStencilProperty* stencil = dynamic_cast<NiStencilProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
+			if (stencil) {
+				NiStencilProperty* destStencil = new NiStencilProperty((*stencil));
+				int stencilId = blocks.size();
+				blocks.push_back(destStencil);
+				hdr.numBlocks++;
+				hdr.blockSizes.push_back(destStencil->CalcBlockSize());
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiStencilProperty"));
+				dest->propertiesRef[i] = stencilId;
 				continue;
 			}
 
@@ -2648,25 +2677,10 @@ void NifFile::DeleteShape(const string& shapeName) {
 				DeleteBlock(shaderPP->textureSetRef);
 				DeleteBlock(strips->propertiesRef[i]);
 				i--;
-				continue;
 			}
-			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(strips->propertiesRef[i]));
-			if (alpha) {
+			else {
 				DeleteBlock(strips->propertiesRef[i]);
 				i--;
-				continue;
-			}
-			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(GetBlock(strips->propertiesRef[i]));
-			if (material) {
-				DeleteBlock(strips->propertiesRef[i]);
-				i--;
-				continue;
-			}
-			NiUnknown* unknown = dynamic_cast<NiUnknown*>(GetBlock(strips->propertiesRef[i]));
-			if (unknown) {
-				DeleteBlock(strips->propertiesRef[i]);
-				i--;
-				continue;
 			}
 		}
 
@@ -2707,25 +2721,10 @@ void NifFile::DeleteShape(const string& shapeName) {
 				DeleteBlock(shaderPP->textureSetRef);
 				DeleteBlock(shape->propertiesRef[i]);
 				i--;
-				continue;
 			}
-			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(shape->propertiesRef[i]));
-			if (alpha) {
+			else {
 				DeleteBlock(shape->propertiesRef[i]);
 				i--;
-				continue;
-			}
-			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(GetBlock(shape->propertiesRef[i]));
-			if (material) {
-				DeleteBlock(shape->propertiesRef[i]);
-				i--;
-				continue;
-			}
-			NiUnknown* unknown = dynamic_cast<NiUnknown*>(GetBlock(shape->propertiesRef[i]));
-			if (unknown) {
-				DeleteBlock(shape->propertiesRef[i]);
-				i--;
-				continue;
 			}
 		}
 
