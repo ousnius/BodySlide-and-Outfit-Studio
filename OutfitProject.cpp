@@ -1258,7 +1258,6 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	//activeSet.LinkShapeTarget(shapeName, shapeName);
 
 	AutoOffset(baseNif);
-	ConvertVersion(baseNif);
 
 	return 0;
 }
@@ -1352,7 +1351,6 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	activeSet.LoadSetDiffData(baseDiffData);
 
 	AutoOffset(baseNif);
-	ConvertVersion(baseNif);
 	return 0;
 }
 
@@ -1432,7 +1430,6 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 
 	workAnim.LoadFromNif(&workNif);
 	AutoOffset(workNif);
-	ConvertVersion(workNif);
 
 	// No shapes in nif file
 	if (workShapes.size() == 0)
@@ -1498,7 +1495,6 @@ int OutfitProject::AddNif(const string& filename) {
 	nif.GetShapeList(workShapes);
 
 	AutoOffset(nif);
-	ConvertVersion(nif);
 	for (auto s : workShapes) {
 		workNif.CopyShape(s, nif, s);
 		workAnim.LoadFromNif(&nif, s);
@@ -1609,39 +1605,6 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 	}
 
 	nif.ClearRootTransform();
-}
-
-void OutfitProject::ConvertVersion(NifFile& nif) {
-	byte v1;
-	byte v2;
-	byte v3;
-	byte v4;
-	uint userVer;
-	uint userVer2;
-
-	switch (owner->targetGame) {
-		case FO3NV:
-			v1 = 20;
-			v2 = 2;
-			v3 = 0;
-			v4 = 7;
-			userVer = 11;
-			userVer2 = 34;
-			break;
-		case SKYRIM:
-		default:
-			v1 = 20;
-			v2 = 2;
-			v3 = 0;
-			v4 = 7;
-			userVer = 12;
-			userVer2 = 83;
-	}
-
-	for (auto block : *nif.hdr.blocks)
-		block->notifyVersionChange(v1, v2, v3, v4, userVer, userVer2);
-
-	nif.hdr.SetVersion(v1, v2, v3, v4, userVer, userVer2);
 }
 
 void OutfitProject::InitConform() {

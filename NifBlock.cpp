@@ -12,9 +12,6 @@ void NiObject::notifyBlockDelete(int blockID) {
 void NiObject::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 }
 
-void NiObject::notifyVersionChange(const int& v1, const int& v2, const int& v3, const int& v4, const int& userVer, const int& userVer2) {
-}
-
 void NiObject::Get(fstream& file) {
 }
 
