@@ -180,7 +180,6 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	wxWindow* rightPanel = FindWindowByName("rightSplitPanel");
 	rightPanel->SetDoubleBuffered(true);
-	rightPanel->SetBackgroundColour(wxColor(112, 112, 112));
 
 	wxStateButton* meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
 	meshTab->SetCheck();
@@ -2099,7 +2098,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		((wxStateButton*)FindWindowByName("boneTabButton"))->SetCheck(false);
 	}
 
-	((wxPanel*)FindWindowByName("rightSplitPanel"))->Layout();
+	((wxPanel*)FindWindowByName("topSplitPanel"))->Layout();
 	Refresh();
 }
 

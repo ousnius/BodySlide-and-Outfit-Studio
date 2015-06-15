@@ -146,334 +146,372 @@
 			</object>
 			<object class="wxPanel" name="rightSplitPanel">
 				<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
+				<bg>#707070</bg>
 				<object class="wxBoxSizer">
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
-						<option>0</option>
+						<option>1</option>
 						<flag>wxEXPAND</flag>
 						<border>0</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL</flag>
-								<border>0</border>
-								<object class="wxButton" name="meshTabButton" subclass="wxStateButton">
-									<size>-1,20</size>
-									<style>wxNO_BORDER</style>
-									<label>Meshes</label>
-									<bg>#646464</bg>
-									<default>0</default>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL</flag>
-								<border>0</border>
-								<object class="wxButton" name="boneTabButton" subclass="wxStateButton">
-									<size>-1,20</size>
-									<style>wxNO_BORDER</style>
-									<label>Bones</label>
-									<bg>#646464</bg>
-									<default>0</default>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL</flag>
-								<border>0</border>
-								<object class="wxButton" name="lightsTabButton" subclass="wxStateButton">
-									<size>-1,20</size>
-									<style>wxNO_BORDER</style>
-									<label>Lights</label>
-									<bg>#646464</bg>
-									<default>0</default>
-								</object>
-							</object>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-						<border>2</border>
-						<object class="wxTreeCtrl" name="outfitShapes">
-							<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
-							<bg>#404040</bg>
-							<fg>#ffffff</fg>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-						<border>2</border>
-						<object class="wxTreeCtrl" name="outfitBones">
-							<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
-							<bg>#404040</bg>
-							<fg>#ffffff</fg>
-							<hidden>1</hidden>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
-						<border>3</border>
-						<object class="wxPanel" name="lightSettings">
-							<style>wxTAB_TRAVERSAL</style>
-							<bg>#404040</bg>
-							<fg>#ffffff</fg>
-							<hidden>1</hidden>
-							<object class="wxBoxSizer">
-								<orient>wxVERTICAL</orient>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
-									<border>5</border>
-									<object class="wxBoxSizer">
-										<orient>wxHORIZONTAL</orient>
-										<object class="sizeritem">
-											<option>0</option>
-											<object class="wxStaticText" name="lightAmbientLabel">
-												<size>75,25</size>
-												<label>Ambient</label>
-											</object>
-										</object>
-										<object class="sizeritem">
-											<option>1</option>
-											<flag>wxALL|wxEXPAND</flag>
-											<object class="wxSlider" name="lightAmbientSlider">
-												<size>-1,25</size>
-												<value>50</value>
-												<min>0</min>
-												<max>100</max>
-											</object>
-										</object>
-									</object>
-								</object>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-									<border>5</border>
-									<object class="wxBoxSizer">
-										<orient>wxHORIZONTAL</orient>
-										<object class="sizeritem">
-											<option>0</option>
-											<object class="wxStaticText" name="lightBrightnessLabel1">
-												<size>75,25</size>
-												<label>Brightness 1</label>
-											</object>
-										</object>
-										<object class="sizeritem">
-											<option>1</option>
-											<flag>wxALL|wxEXPAND</flag>
-											<object class="wxSlider" name="lightBrightnessSlider1">
-												<size>-1,25</size>
-												<value>50</value>
-												<min>0</min>
-												<max>100</max>
-											</object>
-										</object>
-									</object>
-								</object>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-									<border>5</border>
-									<object class="wxBoxSizer">
-										<orient>wxHORIZONTAL</orient>
-										<object class="sizeritem">
-											<option>0</option>
-											<object class="wxStaticText" name="lightBrightnessLabel2">
-												<size>75,25</size>
-												<label>Brightness 2</label>
-											</object>
-										</object>
-										<object class="sizeritem">
-											<option>1</option>
-											<flag>wxALL|wxEXPAND</flag>
-											<object class="wxSlider" name="lightBrightnessSlider2">
-												<size>-1,25</size>
-												<value>50</value>
-												<min>0</min>
-												<max>100</max>
-											</object>
-										</object>
-									</object>
-								</object>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
-									<border>5</border>
-									<object class="wxBoxSizer">
-										<orient>wxHORIZONTAL</orient>
-										<object class="sizeritem">
-											<option>0</option>
-											<object class="wxStaticText" name="lightBrightnessLabel3">
-												<size>75,25</size>
-												<label>Brightness 3</label>
-											</object>
-										</object>
-										<object class="sizeritem">
-											<option>1</option>
-											<flag>wxALL|wxEXPAND</flag>
-											<object class="wxSlider" name="lightBrightnessSlider3">
-												<size>-1,25</size>
-												<value>50</value>
-												<min>0</min>
-												<max>100</max>
-											</object>
-										</object>
-									</object>
-								</object>
-							</object>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALL|wxEXPAND|wxLEFT</flag>
-						<border>2</border>
-						<object class="wxPanel" name="m_panel6">
-							<style>wxTAB_TRAVERSAL</style>
-							<object class="wxBoxSizer">
-								<orient>wxVERTICAL</orient>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxALL|wxEXPAND</flag>
-									<border>5</border>
-									<object class="wxCheckBox" name="selectSliders">
-										<fg>#ffffff</fg>
-										<label>De-/Select Sliders</label>
-										<checked>1</checked>
-										<enabled>1</enabled>
-									</object>
-								</object>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxALL|wxEXPAND</flag>
-									<border>5</border>
-									<object class="wxBoxSizer">
-										<orient>wxHORIZONTAL</orient>
-										<object class="sizeritem">
-											<option>0</option>
-											<object class="wxStaticText" name="boneScaleLabel">
-												<fg>#ffffff</fg>
-												<label>Preview Scaling</label>
-												<hidden>1</hidden>
-											</object>
-										</object>
-										<object class="sizeritem">
-											<option>1</option>
-											<flag>wxALL|wxEXPAND</flag>
-											<object class="wxSlider" name="boneScale">
-												<size>-1,25</size>
-												<value>0</value>
-												<min>-100</min>
-												<max>100</max>
-												<hidden>1</hidden>
-											</object>
-										</object>
-									</object>
-								</object>
-							</object>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>3</option>
-						<flag>wxEXPAND</flag>
-						<border>0</border>
-						<object class="wxScrolledWindow" name="sliderScroll">
-							<style>wxHSCROLL|wxVSCROLL</style>
-							<bg>#404040</bg>
-							<scrollrate>5,5</scrollrate>
-							<object class="wxBoxSizer">
-								<orient>wxVERTICAL</orient>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxALL|wxEXPAND|wxFIXED_MINSIZE</flag>
-									<border>1</border>
-									<object class="wxPanel" name="sliderPane">
-										<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
-										<bg>#7d4d8a</bg>
+						<object class="wxSplitterWindow" name="splitterRight">
+							<option>1</option>
+							<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
+							<sashpos>200</sashpos>
+							<gravity>0</gravity>
+							<minsize>100</minsize>
+							<orientation>horizontal</orientation>
+							<object class="wxPanel" name="topSplitPanel">
+								<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
+								<bg>#707070</bg>
+								<object class="wxBoxSizer">
+									<orient>wxVERTICAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
 										<object class="wxBoxSizer">
 											<orient>wxHORIZONTAL</orient>
 											<object class="sizeritem">
 												<option>0</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-												<border>5</border>
-												<object class="wxCheckBox" name="sliderNameCheck">
-													<fg>#ffffff</fg>
-													<label>Check Me!</label>
-													<checked>0</checked>
-												</object>
-											</object>
-											<object class="sizeritem">
-												<option>1</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND</flag>
-												<border>5</border>
-												<object class="wxSlider" name="slider">
-													<style>wxSL_HORIZONTAL</style>
-													<size>-1,10</size>
-													<value>100</value>
-													<min>0</min>
-													<max>100</max>
+												<flag>wxALL</flag>
+												<border>0</border>
+												<object class="wxButton" name="meshTabButton" subclass="wxStateButton">
+													<size>-1,20</size>
+													<style>wxNO_BORDER</style>
+													<label>Meshes</label>
+													<bg>#646464</bg>
+													<default>0</default>
 												</object>
 											</object>
 											<object class="sizeritem">
 												<option>0</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-												<border>2</border>
-												<object class="wxTextCtrl" name="sliderReadout">
-													<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
-													<size>40,-1</size>
-													<bg>#303030</bg>
-													<fg>#ffffff</fg>
-													<value>50%</value>
-													<maxlength>0</maxlength>
+												<flag>wxALL</flag>
+												<border>0</border>
+												<object class="wxButton" name="boneTabButton" subclass="wxStateButton">
+													<size>-1,20</size>
+													<style>wxNO_BORDER</style>
+													<label>Bones</label>
+													<bg>#646464</bg>
+													<default>0</default>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL</flag>
+												<border>0</border>
+												<object class="wxButton" name="lightsTabButton" subclass="wxStateButton">
+													<size>-1,20</size>
+													<style>wxNO_BORDER</style>
+													<label>Lights</label>
+													<bg>#646464</bg>
+													<default>0</default>
+												</object>
+											</object>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+										<border>2</border>
+										<object class="wxTreeCtrl" name="outfitShapes">
+											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
+											<bg>#404040</bg>
+											<fg>#ffffff</fg>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+										<border>2</border>
+										<object class="wxTreeCtrl" name="outfitBones">
+											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS|wxTR_MULTIPLE</style>
+											<bg>#404040</bg>
+											<fg>#ffffff</fg>
+											<hidden>1</hidden>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+										<border>3</border>
+										<object class="wxScrolledWindow" name="lightSettings">
+											<style>wxVSCROLL</style>
+											<scrollrate>5,5</scrollrate>
+											<bg>#404040</bg>
+											<fg>#ffffff</fg>
+											<hidden>1</hidden>
+											<object class="wxBoxSizer">
+												<orient>wxVERTICAL</orient>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxButton" name="lightReset">
+														<size>-1,25</size>
+														<label>Reset</label>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxLEFT|wxRIGHT|wxTOP|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<object class="wxStaticText" name="lightAmbientLabel">
+																<size>75,25</size>
+																<label>Ambient</label>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<object class="wxSlider" name="lightAmbientSlider">
+																<size>-1,25</size>
+																<value>50</value>
+																<min>0</min>
+																<max>100</max>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<object class="wxStaticText" name="lightBrightnessLabel1">
+																<size>75,25</size>
+																<label>Brightness 1</label>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<object class="wxSlider" name="lightBrightnessSlider1">
+																<size>-1,25</size>
+																<value>50</value>
+																<min>0</min>
+																<max>100</max>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<object class="wxStaticText" name="lightBrightnessLabel2">
+																<size>75,25</size>
+																<label>Brightness 2</label>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<object class="wxSlider" name="lightBrightnessSlider2">
+																<size>-1,25</size>
+																<value>50</value>
+																<min>0</min>
+																<max>100</max>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<object class="wxStaticText" name="lightBrightnessLabel3">
+																<size>75,25</size>
+																<label>Brightness 3</label>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<object class="wxSlider" name="lightBrightnessSlider3">
+																<size>-1,25</size>
+																<value>50</value>
+																<min>0</min>
+																<max>100</max>
+															</object>
+														</object>
+													</object>
 												</object>
 											</object>
 										</object>
 									</object>
 								</object>
-								<object class="sizeritem">
-									<option>0</option>
-									<flag>wxEXPAND | wxALL</flag>
-									<border>1</border>
-									<object class="wxPanel" name="m_panel191">
-										<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
-										<object class="wxBoxSizer">
-											<orient>wxHORIZONTAL</orient>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-												<border>5</border>
-												<object class="wxCheckBox" name="m_checkBox3">
-													<fg>#ffffff</fg>
-													<label>Check Me!</label>
-													<checked>0</checked>
+							</object>
+							<object class="wxPanel" name="bottomSplitPanel">
+								<style>wxTAB_TRAVERSAL|wxTRANSPARENT_WINDOW</style>
+								<bg>#707070</bg>
+								<object class="wxBoxSizer">
+									<orient>wxVERTICAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALL|wxEXPAND|wxLEFT</flag>
+										<border>2</border>
+										<object class="wxPanel" name="m_panel6">
+											<style>wxTAB_TRAVERSAL</style>
+											<object class="wxBoxSizer">
+												<orient>wxVERTICAL</orient>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxCheckBox" name="selectSliders">
+														<fg>#ffffff</fg>
+														<label>De-/Select Sliders</label>
+														<checked>1</checked>
+														<enabled>1</enabled>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<object class="wxStaticText" name="boneScaleLabel">
+																<fg>#ffffff</fg>
+																<label>Preview Scaling</label>
+																<hidden>1</hidden>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<object class="wxSlider" name="boneScale">
+																<size>-1,25</size>
+																<value>0</value>
+																<min>-100</min>
+																<max>100</max>
+																<hidden>1</hidden>
+															</object>
+														</object>
+													</object>
 												</object>
 											</object>
-											<object class="sizeritem">
-												<option>1</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND</flag>
-												<border>5</border>
-												<object class="wxSlider" name="m_slider31">
-													<style>wxSL_HORIZONTAL</style>
-													<size>-1,10</size>
-													<value>100</value>
-													<min>0</min>
-													<max>100</max>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>3</option>
+										<flag>wxEXPAND</flag>
+										<border>0</border>
+										<object class="wxScrolledWindow" name="sliderScroll">
+											<style>wxHSCROLL|wxVSCROLL</style>
+											<bg>#404040</bg>
+											<scrollrate>5,5</scrollrate>
+											<object class="wxBoxSizer">
+												<orient>wxVERTICAL</orient>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND|wxFIXED_MINSIZE</flag>
+													<border>1</border>
+													<object class="wxPanel" name="sliderPane">
+														<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
+														<bg>#7d4d8a</bg>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<border>5</border>
+																<object class="wxCheckBox" name="sliderNameCheck">
+																	<fg>#ffffff</fg>
+																	<label>Check Me!</label>
+																	<checked>0</checked>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND</flag>
+																<border>5</border>
+																<object class="wxSlider" name="slider">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>100</value>
+																	<min>0</min>
+																	<max>100</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<border>2</border>
+																<object class="wxTextCtrl" name="sliderReadout">
+																	<style>wxTE_RIGHT|wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<bg>#303030</bg>
+																	<fg>#ffffff</fg>
+																	<value>50%</value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
 												</object>
-											</object>
-											<object class="sizeritem">
-												<option>0</option>
-												<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-												<border>2</border>
-												<object class="wxTextCtrl" name="m_textCtrl11">
-													<style>wxSIMPLE_BORDER</style>
-													<size>40,-1</size>
-													<bg>#303030</bg>
-													<fg>#ffffff</fg>
-													<value></value>
-													<maxlength>0</maxlength>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxEXPAND | wxALL</flag>
+													<border>1</border>
+													<object class="wxPanel" name="m_panel191">
+														<style>wxSIMPLE_BORDER|wxTAB_TRAVERSAL</style>
+														<object class="wxBoxSizer">
+															<orient>wxHORIZONTAL</orient>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<border>5</border>
+																<object class="wxCheckBox" name="m_checkBox3">
+																	<fg>#ffffff</fg>
+																	<label>Check Me!</label>
+																	<checked>0</checked>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>1</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND</flag>
+																<border>5</border>
+																<object class="wxSlider" name="m_slider31">
+																	<style>wxSL_HORIZONTAL</style>
+																	<size>-1,10</size>
+																	<value>100</value>
+																	<min>0</min>
+																	<max>100</max>
+																</object>
+															</object>
+															<object class="sizeritem">
+																<option>0</option>
+																<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+																<border>2</border>
+																<object class="wxTextCtrl" name="m_textCtrl11">
+																	<style>wxSIMPLE_BORDER</style>
+																	<size>40,-1</size>
+																	<bg>#303030</bg>
+																	<fg>#ffffff</fg>
+																	<value></value>
+																	<maxlength>0</maxlength>
+																</object>
+															</object>
+														</object>
+													</object>
 												</object>
 											</object>
 										</object>
