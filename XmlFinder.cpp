@@ -1,11 +1,9 @@
 #include "XmlFinder.h"
 
-using std::string;
-
-XmlFinder::XmlFinder(const std::string& path) {
+XmlFinder::XmlFinder(const wxString& path) {
 	basePath = path + "\\";
-	string filefilter = path + "\\*.xml";
-	hfind = FindFirstFileA(filefilter.c_str(), &wfd);
+	wxString fileFilter = path + "\\*.xml";
+	hfind = FindFirstFile(fileFilter.wc_str(), &wfd);
 	if (hfind == INVALID_HANDLE_VALUE) {
 		return;
 	}
@@ -17,10 +15,10 @@ XmlFinder::~XmlFinder() {
 	}
 }
 
-std::string XmlFinder::next() {
-	std::string filename = basePath + wfd.cFileName;
+wxString XmlFinder::next() {
+	wxString fileName = basePath + wfd.cFileName;
 
-	if (!FindNextFileA(hfind, &wfd)) {
+	if (!FindNextFile(hfind, &wfd)) {
 		DWORD searchStatus = GetLastError();
 		if (searchStatus != ERROR_NO_MORE_FILES) {
 			error = true;
@@ -28,7 +26,7 @@ std::string XmlFinder::next() {
 		close();
 	}
 
-	return filename;
+	return fileName;
 }
 
 void XmlFinder::close() {

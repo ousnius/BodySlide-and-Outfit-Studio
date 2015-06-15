@@ -16,13 +16,8 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+#include <wx/string.h>
 #include "Resource.h"
 
 #define MSG_PREVIEWCLOSING WM_USER+42
 #define MSG_BIGPREVIEWCLOSING WM_USER+43
-
-#ifdef _UNICODE 
-#define char_t wchar_t
-#else
-#define char_t char
-#endif

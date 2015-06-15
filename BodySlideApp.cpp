@@ -888,8 +888,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 				if (ret != wxYES)
 					return 4;
 			}
-			char buffer[MAX_PATH];
-			GetCurrentDirectoryA(MAX_PATH, buffer);
+
+			wchar_t buffer[MAX_PATH];
+			GetCurrentDirectory(MAX_PATH, buffer);
 			string response = wxDirSelector("Please choose a directory to set as your Skyrim Data directory.", buffer);
 			if (response.empty())
 				return 4;
@@ -1086,9 +1087,10 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 				if (ret != wxYES)
 					return 1;
 			}
-			char buffer[MAX_PATH];
-			GetCurrentDirectoryA(MAX_PATH, buffer);
-			Config.SetValue("GameDataPath", string(buffer) + "\\");
+
+			wchar_t buffer[MAX_PATH];
+			GetCurrentDirectory(MAX_PATH, buffer);
+			Config.SetValue("GameDataPath", wxString(buffer).ToStdString() + "\\");
 		}
 		datapath = Config["GameDataPath"];
 	}

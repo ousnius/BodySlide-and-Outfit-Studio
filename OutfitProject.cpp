@@ -722,7 +722,7 @@ void  OutfitProject::SetOutfitTextures(const string& textureFile) {
 void OutfitProject::SetOutfitTexture(const string& shapeName, const string& textureFile) {
 	if (textureFile == "_AUTO_") {
 		string nifTexFile;
-		workNif.GetTextureForShape((string)shapeName, nifTexFile);
+		workNif.GetTextureForShape(shapeName, nifTexFile);
 		if (nifTexFile.empty())
 			nifTexFile = "noimg.dds";
 
@@ -736,11 +736,11 @@ void OutfitProject::SetOutfitTexture(const string& shapeName, const string& text
 				texturesDir = appConfig["GameDataPath"] + "textures\\";
 		}
 
-		string combinedTexFile = texturesDir + nifTexFile;
-		if (GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES)
+		wxString combinedTexFile = texturesDir + nifTexFile;
+		if (GetFileAttributes(combinedTexFile.wc_str()) == INVALID_FILE_ATTRIBUTES)
 			outfitTextures[shapeName] = defaultTexFile;
 		else
-			outfitTextures[shapeName] = combinedTexFile;
+			outfitTextures[shapeName] = combinedTexFile.ToStdString();
 	}
 	else
 		outfitTextures[shapeName] = textureFile;
@@ -749,7 +749,7 @@ void OutfitProject::SetOutfitTexture(const string& shapeName, const string& text
 void OutfitProject::SetRefTexture(const string& shapeName, const string& textureFile) {
 	if (textureFile == "_AUTO_") {
 		string nifTexFile;
-		baseNif.GetTextureForShape((string)shapeName, nifTexFile);
+		baseNif.GetTextureForShape(shapeName, nifTexFile);
 		if (nifTexFile.empty())
 			nifTexFile = "noimg.dds";
 
@@ -763,11 +763,11 @@ void OutfitProject::SetRefTexture(const string& shapeName, const string& texture
 			texturesDir = appConfig["GameDataPath"] + "textures\\";
 		}
 
-		string combinedTexFile = texturesDir + nifTexFile;
-		if (GetFileAttributesA(combinedTexFile.c_str()) == INVALID_FILE_ATTRIBUTES)
+		wxString combinedTexFile = texturesDir + nifTexFile;
+		if (GetFileAttributes(combinedTexFile.wc_str()) == INVALID_FILE_ATTRIBUTES)
 			baseTextures[shapeName] = defaultTexFile;
 		else
-			baseTextures[shapeName] = combinedTexFile;
+			baseTextures[shapeName] = combinedTexFile.ToStdString();
 	}
 	else
 		baseTextures[shapeName] = textureFile;
