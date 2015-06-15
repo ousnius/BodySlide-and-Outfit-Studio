@@ -1,6 +1,8 @@
 #include "BodySlideApp.h"
 #include "XmlFinder.h"
 
+#include <sstream>
+
 ConfigurationManager Config;
 
 BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)

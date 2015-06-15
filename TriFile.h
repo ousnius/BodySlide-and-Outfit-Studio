@@ -2,9 +2,7 @@
 
 #include "Object3d.h"
 
-#include <vector>
 #include <map>
-#include <unordered_map>
 #include <fstream>
 #include <memory>
 #include <algorithm>

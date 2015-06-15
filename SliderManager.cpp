@@ -1,6 +1,4 @@
 #include "SliderManager.h"
-#include <sstream>
-#include <algorithm>
 
 
 SliderManager::SliderManager() {

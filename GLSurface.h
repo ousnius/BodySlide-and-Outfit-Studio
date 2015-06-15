@@ -13,9 +13,7 @@
 #include <GL/glext.h>
 #include <GL/wglext.h>
 
-#include <string>
 #include <vector>
-#include <hash_map>
 #include <wx/glcanvas.h>
 
 using namespace std;

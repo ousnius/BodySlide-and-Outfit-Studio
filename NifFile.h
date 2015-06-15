@@ -7,7 +7,6 @@
 #include <map>
 #include <unordered_map>
 #include <regex>
-#include <math.h>
 
 using namespace std;
 

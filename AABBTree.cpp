@@ -1,5 +1,4 @@
 #include "GLSurface.h"
-#include "math.h"
 
 
 AABB::AABB() {

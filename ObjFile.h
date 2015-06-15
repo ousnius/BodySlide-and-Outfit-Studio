@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Object3d.h"
-#include <vector>
 #include <map>
 #include <unordered_map>
 #include <fstream>

@@ -1,9 +1,8 @@
 #include "GLSurface.h"
-#include "math.h"
+
 #include <algorithm>
 #include <set>
 #include <limits>
-#include <wx/msgdlg.h>
 
 #ifdef _DEBUG
 #pragma comment (lib, "SOIL_d.lib")

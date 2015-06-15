@@ -1,7 +1,6 @@
 #include "DiffData.h"
 
 #include <algorithm>
-#include <unordered_map>
 
 int DiffDataSets::LoadSet(const string& name, const string& target, unordered_map<ushort, Vector3>& inDiffData) {
 	if (namedSet.find(name) != namedSet.end())

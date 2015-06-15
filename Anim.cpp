@@ -1,6 +1,4 @@
 #include "Anim.h"
-#include <sstream>
-#include <wx/wx.h>
 
 bool AnimInfo::AddShapeBone(const string& shape, AnimBone& boneDataRef) {
 	for (auto bone : shapeBones[shape])
@@ -311,10 +309,7 @@ AnimBone& AnimSkeleton::AddBone(const string& boneName, bool bCustom) {
 }
 
 string AnimSkeleton::GenerateBoneName() {
-	stringstream ss;
-	ss << "UnnamedBone_" << unknownCount++;
-
-	return ss.str();
+	return wxString::Format("UnnamedBone_%i", unknownCount++).ToStdString();
 }
 	
 bool AnimSkeleton::RefBone(const string& boneName) {
