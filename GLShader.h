@@ -1,12 +1,12 @@
 #pragma once
-#include "stdafx.h"
+
+#include "Object3d.h"
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glext.h>
 #include <string>
 #include <fstream>
-#include "Object3d.h"
-#include <wx/msgdlg.h>
 
 #define GLSHADER_PASSTHROUGH "__PASSTHRU__"		// Specifies the basic "do nothing" shader.
 #define GLSHADER_DEFAULT	 "__DEFAULT__"		// Specifies default shaders that emulate the OGL fixed pipeline.

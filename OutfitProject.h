@@ -1,17 +1,19 @@
 #pragma once
+
 #include "NifFile.h"
 #include "ObjFile.h"
 #include "DiffData.h"
 #include "SliderData.h"
 #include "Automorph.h"
-#include <map>
-#include <string>
-#include <vector>
 #include "Mesh.h"
 #include "ShlObj.h"
 #include "OutfitStudio.h"
 #include "ConfigurationManager.h"
 #include "Anim.h"
+
+#include <map>
+#include <vector>
+
 
 #pragma warning (disable: 4018)
 using namespace std;

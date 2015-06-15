@@ -7,24 +7,9 @@
 #define SKYRIM 1
 #endif
 
+#include "stdafx.h"
 #include "Resource.h"
-#include <wx/wxprec.h>
-#include <wx/srchctrl.h>
-#include <wx/xrc/xmlres.h>
-#include <wx/imagpng.h>
-#include <wx/dcbuffer.h>
-#include <wx/statline.h>
-#include <wx/tokenzr.h>
-#include <wx/cmdline.h>
-
-#include <vector>
-#include <string>
-#include <map>
-#include <tuple>
-#include <regex>
-
 #include "CommCtrl.h"
-#include <string.h>
 #include "PreviewWindow.h"
 #include "DiffData.h"
 #include "SliderData.h"
@@ -35,6 +20,20 @@
 #include "ConfigurationManager.h"
 #include "PresetSaveDialog.h"
 #include "TriFile.h"
+
+#include <wx/wxprec.h>
+#include <wx/srchctrl.h>
+#include <wx/xrc/xmlres.h>
+#include <wx/imagpng.h>
+#include <wx/dcbuffer.h>
+#include <wx/statline.h>
+#include <wx/tokenzr.h>
+#include <wx/cmdline.h>
+
+#include <vector>
+#include <map>
+#include <tuple>
+#include <regex>
 
 
 class BodySlideFrame;

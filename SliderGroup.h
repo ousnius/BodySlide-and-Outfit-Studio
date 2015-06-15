@@ -1,11 +1,11 @@
 #pragma once
 
-#include <string>
+#include "tinyxml2.h"
+
 #include <vector>
 #include <map>
 #include <set>
 #include <unordered_set>
-#include "tinyxml2.h"
 
 using namespace std;
 using namespace tinyxml2;

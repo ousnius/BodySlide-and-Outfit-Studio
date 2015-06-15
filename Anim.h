@@ -1,6 +1,8 @@
 #pragma once
+
 #include "NifFile.h"
 #include "ConfigurationManager.h"
+
 #include <map>
 #include <unordered_map>
 #include <string>

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <Windows.h>
+#include "stdafx.h"
+
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glext.h>
 #include <GL/wglext.h>
-#include <string>
 #include <vector>
 #include <set>
 #include <math.h>

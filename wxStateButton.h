@@ -1,7 +1,6 @@
 #pragma once
 
-#include <wx/wx.h>
-#include <wx/sizer.h>
+#include "stdafx.h"
 
 
 class wxStateButton : public wxButton {

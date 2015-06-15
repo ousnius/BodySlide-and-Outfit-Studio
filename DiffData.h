@@ -1,9 +1,10 @@
 #pragma once
-#include <string>
+
+#include "NifFile.h"
+
 #include <map>
 #include <unordered_map>
 #include <vector>
-#include "NifFile.h"
 
 using namespace std;
 

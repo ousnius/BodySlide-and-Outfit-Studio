@@ -1,8 +1,8 @@
 #pragma once
+
+#include "Object3d.h"
 #include <vector> 
 #include <map>
-#include <float.h>
-#include "Object3d.h"
 #include <algorithm>
 
 using namespace std;
@@ -11,7 +11,7 @@ using namespace std;
 
 class kd_matcher {
 public:
-	class kd_node{
+	class kd_node {
 	public:
 		Vertex* p;
 		kd_node* less;

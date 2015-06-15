@@ -1,10 +1,10 @@
 #pragma once
 
-#include <string>
+#include "tinyxml2.h"
+#include "DiffData.h"
+
 #include <vector>
 #include <map>
-#include "DiffData.h"
-#include "tinyxml2.h"
 
 using namespace std;
 using namespace tinyxml2;

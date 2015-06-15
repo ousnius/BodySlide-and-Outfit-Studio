@@ -1,14 +1,13 @@
 #pragma once
 
+#include "KDMatcher.h"
+
 #include <fstream>
 #include <vector>
-#include <string>
 #include <map>
 #include <unordered_map>
 #include <regex>
 #include <math.h>
-#include "KDMatcher.h"
-#include "Object3d.h"
 
 using namespace std;
 

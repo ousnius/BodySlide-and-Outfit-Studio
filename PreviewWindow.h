@@ -28,7 +28,6 @@ distribution.
 #include "GLSurface.h"
 #include "NifFile.h"
 
-#include <wx/frame.h>
 #include <wx/glcanvas.h>
 
 #define SMALL_PREVIEW 0

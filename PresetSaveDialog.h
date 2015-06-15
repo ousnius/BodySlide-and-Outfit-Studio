@@ -1,9 +1,9 @@
 #pragma once
 
-#include <wx/wx.h>
+#include "stdafx.h"
+
 #include <wx/xrc/xmlres.h>
 #include <wx/srchctrl.h>
-#include <string>
 #include <regex>
 #include <set>
 #include <vector>

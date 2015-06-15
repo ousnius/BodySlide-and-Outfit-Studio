@@ -1,10 +1,9 @@
 #pragma once
+
 #include "stdafx.h"
-#include "wx/wx.h"
-#include "wx/image.h"
-#include "wx/xrc/xmlres.h"
-#include <string>
 #include "SliderGroup.h"
+
+#include <wx/xrc/xmlres.h>
 
 using namespace std;
 

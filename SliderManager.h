@@ -1,14 +1,14 @@
 #pragma once
 
 #include "stdafx.h"
-#include <string>
+#include "NifFile.h"
+#include "DiffData.h"
+#include "SliderData.h"
+
 #include <map>
 #include <vector>
 #include <fstream>
 #include <sstream>
-#include "NifFile.h"
-#include "DiffData.h"
-#include "SliderData.h"
 
 using namespace std;
 

@@ -7,17 +7,8 @@
 #define SKYRIM 1
 #endif
 
-#include "wx/wx.h"
-#include "wx/image.h"
-#include "wx/xrc/xmlres.h"
-#include "wx/treectrl.h"
-#include "wx/wizard.h"
-#include "wx/filepicker.h"
-#include "wx/grid.h"
-#include "wx/progdlg.h"
-#include "wx/spinctrl.h"
+#include "stdafx.h"
 #include "wxStateButton.h"
-#include "wx/dataview.h"
 #include "GLSurface.h"
 #include "SliderData.h"
 #include "ObjFile.h"
@@ -25,6 +16,16 @@
 #include "Automorph.h"
 #include "OutfitProject.h"
 #include "ConfigurationManager.h"
+
+#include <wx/xrc/xmlres.h>
+#include <wx/treectrl.h>
+#include <wx/wizard.h>
+#include <wx/filepicker.h>
+#include <wx/grid.h>
+#include <wx/progdlg.h>
+#include <wx/spinctrl.h>
+#include <wx/dataview.h>
+
 
 static wchar_t* charToWChar(const char* text) {
 	size_t size = strlen(text) + 1;
