@@ -112,8 +112,11 @@
     <ClCompile Include="Anim.cpp" />
     <ClCompile Include="Automorph.cpp" />
     <ClCompile Include="BodySlideApp.cpp" />
+    <ClCompile Include="FSBSA.cpp" />
     <ClCompile Include="ConfigurationManager.cpp" />
     <ClCompile Include="DiffData.cpp" />
+    <ClCompile Include="FSEngine.cpp" />
+    <ClCompile Include="FSManager.cpp" />
     <ClCompile Include="GLShader.cpp" />
     <ClCompile Include="GLSurface.cpp" />
     <ClCompile Include="GroupManager.cpp" />
@@ -144,8 +147,11 @@
     <ClInclude Include="Anim.h" />
     <ClInclude Include="Automorph.h" />
     <ClInclude Include="BodySlideApp.h" />
+    <ClInclude Include="FSBSA.h" />
     <ClInclude Include="ConfigurationManager.h" />
     <ClInclude Include="DiffData.h" />
+    <ClInclude Include="FSEngine.h" />
+    <ClInclude Include="FSManager.h" />
     <ClInclude Include="GLShader.h" />
     <ClInclude Include="GLSurface.h" />
     <ClInclude Include="GroupManager.h" />
