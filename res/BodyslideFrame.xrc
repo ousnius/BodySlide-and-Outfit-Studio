@@ -78,9 +78,9 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxButton" name="btnPresets">
+							<fg>#000000</fg>
 							<tooltip>Save the current slider settings as a preset for this outfit</tooltip>
 							<label>Save Preset...</label>
-							<default>0</default>
 						</object>
 					</object>
 				</object>
@@ -190,11 +190,10 @@
 								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
 								<object class="wxButton" name="btnPreviewLo">
-									<pos>-1,-1</pos>
 									<size>128,-1</size>
+									<fg>#000000</fg>
 									<tooltip>Show a preview of the low weight mesh for this outfit</tooltip>
 									<label>Preview Small</label>
-									<default>0</default>
 								</object>
 							</object>
 							<object class="spacer">
@@ -209,9 +208,9 @@
 								<border>5</border>
 								<object class="wxButton" name="btnBuildBatch">
 									<size>128,-1</size>
+									<fg>#000000</fg>
 									<tooltip>Build multiple outfits using the currently selected preset.\nNote: You must save slider settings to a preset before you can batch build with them.\n\nHold CTRL = Build to custom folders\nHold ALT = Clean all files from folders</tooltip>
 									<label>Batch Build...</label>
-									<default>0</default>
 								</object>
 							</object>
 						</object>
@@ -235,6 +234,7 @@
 										<underlined>0</underlined>
 										<face>Andalus</face>
 									</font>
+									<fg>#000000</fg>
 									<tooltip>Create the low and high weight meshes for the currently selected outfit.\n\nHold CTRL = Build to custom folder\nHold ALT = Clean all files from folder</tooltip>
 									<label>Build</label>
 									<default>0</default>
@@ -264,9 +264,9 @@
 								<border>5</border>
 								<object class="wxButton" name="btnPreviewHi">
 									<size>128,-1</size>
+									<fg>#000000</fg>
 									<tooltip>Show a preview of the high weight mesh for this outfit</tooltip>
 									<label>Preview Big</label>
-									<default>0</default>
 								</object>
 							</object>
 							<object class="spacer">
@@ -279,11 +279,28 @@
 								<option>0</option>
 								<flag>wxALIGN_RIGHT|wxALL</flag>
 								<border>5</border>
-								<object class="wxButton" name="btnOutfitStudio">
-									<size>128,-1</size>
-									<tooltip>Open Outfit Studio, a full-featured tool for creating and converting outfits.</tooltip>
-									<label>Open Outfit Studio...</label>
-									<default>0</default>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxBitmapButton" name="btnAbout">
+											<style>wxBU_AUTODRAW</style>
+											<bitmap>About.png</bitmap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxButton" name="btnOutfitStudio">
+											<size>128,-1</size>
+											<fg>#000000</fg>
+											<tooltip>Open Outfit Studio, a full-featured tool for creating and converting outfits.</tooltip>
+											<label>Open Outfit Studio...</label>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>
@@ -477,6 +494,35 @@
 							<label>&amp;Cancel</label>
 						</object>
 					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgAbout">
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
+		<title>About</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxHtmlWindow" name="htmlAbout">
+					<style>wxHW_SCROLLBAR_AUTO</style>
+					<htmlcode>
+						<![CDATA[<center><b>BSA Library:</b><br><br>BSD License<br>Copyright (c) 2005-2012, NIF File Format Library and Tools<br>All rights reserved.<br><br>Redistribution and use in source and binary forms, with or without<br>modification, are permitted provided that the following conditions are met:<br>1. Redistributions of source code must retain the above copyright<br>   notice, this list of conditions and the following disclaimer.<br>2. Redistributions in binary form must reproduce the above copyright<br>   notice, this list of conditions and the following disclaimer in the<br>   documentation and/or other materials provided with the distribution.<br>3. The name of the NIF File Format Library and Tools project may not be<br>   used to endorse or promote products derived from this software<br>   without specific prior written permission.<br><br>THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR<br>IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES<br>OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.<br>IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,<br>INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT<br>NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,<br>DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY<br>THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT<br>(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF<br>THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</center>]]>
+					</htmlcode>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxButton" name="wxID_OK">
+					<size>-1,30</size>
+					<label>Close</label>
+					<default>0</default>
 				</object>
 			</object>
 		</object>

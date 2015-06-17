@@ -23,6 +23,7 @@ BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnBuildBatch"), BodySlideFrame::OnBatchBuild)
 	EVT_BUTTON(XRCID("btnBuild"), BodySlideFrame::OnBuildBodies)
 	EVT_BUTTON(XRCID("btnOutfitStudio"), BodySlideFrame::OnOutfitStudio)
+	EVT_BUTTON(XRCID("btnAbout"), BodySlideFrame::OnAbout)
 	EVT_BUTTON(XRCID("btnPresets"), BodySlideFrame::OnSavePreset)
 	EVT_BUTTON(XRCID("btnChooseGroups"), BodySlideFrame::OnChooseGroups)
 	EVT_BUTTON(XRCID("btnRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
@@ -2004,6 +2005,14 @@ void BodySlideFrame::OnBatchBuildSelect(wxCommandEvent& event) {
 
 void BodySlideFrame::OnOutfitStudio(wxCommandEvent& WXUNUSED(event)) {
 	app->LaunchOutfitStudio();
+}
+
+void BodySlideFrame::OnAbout(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog* about = wxXmlResource::Get()->LoadDialog(this, "dlgAbout");
+	about->SetSize(wxSize(625, 375));
+	about->SetMinSize(wxSize(625, 375));
+	about->CenterOnParent();
+	about->ShowModal();
 }
 
 void BodySlideFrame::OnMoveWindow(wxMoveEvent& event) {
