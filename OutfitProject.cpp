@@ -407,7 +407,8 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	BSLightingShaderProperty* nifShader = nullptr;
 	BSShaderPPLightingProperty* nifShaderPP = nullptr;
 	switch (owner->targetGame) {
-		case FO3NV:
+		case FO3:
+		case FONV:
 			nifShaderPP = new BSShaderPPLightingProperty(workNif.hdr);
 			shaderID = blank.AddBlock((NiObject*)nifShaderPP, "BSShaderPPLightingProperty");
 			nifShaderPP->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
@@ -728,7 +729,8 @@ void OutfitProject::SetOutfitTexture(const string& shapeName, const string& text
 
 		string texturesDir;
 		switch (owner->targetGame) {
-			case FO3NV:
+			case FO3:
+			case FONV:
 				texturesDir = appConfig["GameDataPath"];
 				break;
 			case SKYRIM:
@@ -755,7 +757,8 @@ void OutfitProject::SetRefTexture(const string& shapeName, const string& texture
 
 		string texturesDir;
 		switch (owner->targetGame) {
-		case FO3NV:
+		case FO3:
+		case FONV:
 			texturesDir = appConfig["GameDataPath"];
 			break;
 		case SKYRIM:

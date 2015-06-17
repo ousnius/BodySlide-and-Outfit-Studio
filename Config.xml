@@ -2,8 +2,8 @@
     <!-- Game install path. Normally this is harvested from the windows registry, but if that's not working
     or you want to work with a different game, uncomment/change the below line. Notice the important trailing slash. -->
     <!-- <GameDataPath>C:\Steam\SteamApps\common\Skyrim\Data\</GameDataPath> -->
-    <!-- 0 = Fallout 3/New Vegas, 1 = Skyrim -->
-    <TargetGame>1</TargetGame>
+    <!-- 0 = Fallout 3, 1 = Fallout New Vegas, 2 = Skyrim -->
+    <TargetGame>2</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <SelectedOutfit>CBBE Body</SelectedOutfit>
     <SelectedPreset>CBBE Curvy</SelectedPreset>

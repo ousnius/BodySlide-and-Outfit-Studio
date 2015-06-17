@@ -1,10 +1,13 @@
 #pragma once
 
-#ifndef FO3NV
-#define FO3NV 0
+#ifndef FO3
+#define FO3 0
+#endif
+#ifndef FONV
+#define FONV 1
 #endif
 #ifndef SKYRIM
-#define SKYRIM 1
+#define SKYRIM 2
 #endif
 
 #include "stdafx.h"

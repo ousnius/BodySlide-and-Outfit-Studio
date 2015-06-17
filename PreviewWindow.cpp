@@ -183,7 +183,8 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 		shaderType = 1;
 
 	switch (app->targetGame) {
-		case FO3NV:
+		case FO3:
+		case FONV:
 			SetShapeTexture(shapeName, baseDataPath + texFile, shaderType);
 			break;
 		case SKYRIM:

@@ -631,7 +631,7 @@ void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 }
 
 void BodySlideApp::SetDefaultConfig() {
-	Config.SetDefaultValue("TargetGame", 1);
+	Config.SetDefaultValue("TargetGame", 2);
 	targetGame = Config.GetIntValue("TargetGame");
 
 	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
@@ -642,10 +642,16 @@ void BodySlideApp::SetDefaultConfig() {
 	wstring gameKey;
 	wstring gameValueKey;
 	switch (targetGame) {
-		case FO3NV:
+		case FO3:
 			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
 			Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
 			gameKey = L"SOFTWARE\\Bethesda Softworks\\Fallout3";
+			gameValueKey = L"Installed Path";
+			break;
+		case FONV:
+			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
+			Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
+			gameKey = L"SOFTWARE\\Bethesda Softworks\\FalloutNV";
 			gameValueKey = L"Installed Path";
 			break;
 		case SKYRIM:

@@ -3323,7 +3323,8 @@ void OutfitStudio::OnApplyDiffuse(wxCommandEvent& event) {
 	if (!tex.empty()) {
 		string newTex;
 		switch (targetGame) {
-			case FO3NV:
+			case FO3:
+			case FONV:
 				newTex = appConfig["GameDataPath"] + tex;
 				break;
 			case SKYRIM:
