@@ -1376,6 +1376,25 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const w
 	search->ChangeValue(val);
 	val = Config.GetCString("LastOutfitFilter");
 	outfitsearch->ChangeValue(val);
+
+	wxButton* btnAbout = (wxButton*)FindWindowByName("btnAbout");
+	btnAbout->SetBitmap(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER, wxSize(15, 15)));
+}
+
+void BodySlideFrame::OnLinkClicked(wxHtmlLinkEvent& link) {
+	wxLaunchDefaultBrowser(link.GetLinkInfo().GetHref());
+}
+
+void BodySlideFrame::OnEnterClose(wxKeyEvent& event) {
+	if (event.GetKeyCode() == WXK_RETURN) {
+		wxDialog* parent = (wxDialog*)((wxWindow*)event.GetEventObject())->GetParent();
+		if (!parent)
+			return;
+
+		parent->Close();
+		parent->SetReturnCode(wxID_OK);
+	}
+	event.Skip();
 }
 
 void BodySlideFrame::OnEnterSliderWindow(wxMouseEvent& event) {
@@ -2012,6 +2031,8 @@ void BodySlideFrame::OnAbout(wxCommandEvent& WXUNUSED(event)) {
 	about->SetSize(wxSize(625, 375));
 	about->SetMinSize(wxSize(625, 375));
 	about->CenterOnParent();
+	about->Bind(wxEVT_CHAR_HOOK, &BodySlideFrame::OnEnterClose, this);
+	about->Bind(wxEVT_HTML_LINK_CLICKED, &BodySlideFrame::OnLinkClicked, this);
 	about->ShowModal();
 }
 

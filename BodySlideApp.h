@@ -29,6 +29,7 @@
 #include <wx/statline.h>
 #include <wx/tokenzr.h>
 #include <wx/cmdline.h>
+#include <wx/html/htmlwin.h>
 
 #include <vector>
 #include <map>
@@ -255,6 +256,9 @@ private:
 	void OnActivateFrame(wxActivateEvent& event);
 	void OnIconizeFrame(wxIconizeEvent& event);
 	void PostIconizeFrame();
+
+	void OnLinkClicked(wxHtmlLinkEvent& link);
+	void OnEnterClose(wxKeyEvent& event);
 
 	void OnEnterSliderWindow(wxMouseEvent& event);
 	void OnSliderChange(wxScrollEvent& event);
