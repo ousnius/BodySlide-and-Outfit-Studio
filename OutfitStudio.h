@@ -28,6 +28,7 @@
 #include <wx/progdlg.h>
 #include <wx/spinctrl.h>
 #include <wx/dataview.h>
+#include <wx/splitter.h>
 
 
 static wchar_t* charToWChar(const char* text) {

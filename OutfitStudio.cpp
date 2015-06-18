@@ -223,6 +223,9 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	SetPosition(pos);
 
 	leftPanel->Layout();
+
+	((wxSplitterWindow*)FindWindowByName("splitter"))->SetSashPosition(850);
+	((wxSplitterWindow*)FindWindowByName("splitterRight"))->SetSashPosition(200);
 }
 
 OutfitStudio::~OutfitStudio() {
@@ -2099,6 +2102,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 	}
 
 	((wxPanel*)FindWindowByName("topSplitPanel"))->Layout();
+	((wxPanel*)FindWindowByName("bottomSplitPanel"))->Layout();
 	Refresh();
 }
 

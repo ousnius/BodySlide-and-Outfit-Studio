@@ -128,7 +128,7 @@
 		</object>
 		<object class="wxSplitterWindow" name="splitter">
 			<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
-			<sashpos>665</sashpos>
+			<sashpos>850</sashpos>
 			<gravity>0</gravity>
 			<minsize>250</minsize>
 			<orientation>vertical</orientation>
