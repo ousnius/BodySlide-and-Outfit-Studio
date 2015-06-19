@@ -602,8 +602,9 @@ private:
 	void OnReadoutChange(wxCommandEvent& event);
 
 	void OnTabButtonClick(wxCommandEvent& event);
-
+	void OnFixedWeight(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
+
 	void OnOutfitVisToggle(wxTreeEvent& event);
 	void OnOutfitShapeSelect(wxTreeEvent& event);
 	void OnOutfitBoneSelect(wxTreeEvent& event);

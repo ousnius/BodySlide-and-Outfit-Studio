@@ -297,6 +297,8 @@ public:
 class TB_Weight : public TweakBrush {
 public:
 	string refBone;
+	bool bFixedWeight;
+
 	TB_Weight();
 	virtual ~TB_Weight();
 
@@ -314,6 +316,7 @@ public:
 class TB_Unweight : public TweakBrush {
 public:
 	string refBone;
+
 	TB_Unweight();
 	virtual ~TB_Unweight();
 
@@ -332,7 +335,7 @@ class TB_SmoothWeight : public TweakBrush {
 public:
 	string refBone;
 	int iterations;
-	byte method;	// 0 for laplacian, 1 for HC-Smooth.
+	byte method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;			// Blending constants.
 	float hcBeta;
 

@@ -1179,6 +1179,7 @@ void TB_XForm::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, 
 TB_Weight::TB_Weight() :TweakBrush() {
 	brushType = TBT_WEIGHT;
 	strength = 0.0015f;
+	bFixedWeight = false;
 	brushName = "Weight Paint";
 }
 
@@ -1222,7 +1223,7 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		movedpoints[i] = vc;
 
 		ve = vc;
-		ve.y += strength;
+		bFixedWeight ? ve.y = strength * 10.0f : ve.y += strength;
 		ve -= vc;
 
 		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));

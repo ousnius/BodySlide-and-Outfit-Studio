@@ -19,6 +19,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_COMMAND_SCROLL(wxID_ANY, OutfitStudio::OnSlider)
 	EVT_BUTTON(wxID_ANY, OutfitStudio::OnClickSliderButton)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudio::OnSelectSliders)
+	EVT_CHECKBOX(XRCID("cbFixedWeight"), OutfitStudio::OnFixedWeight)
 	EVT_CHECKBOX(wxID_ANY, OutfitStudio::OnCheckBox)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSetBaseShape)
@@ -1597,6 +1598,13 @@ void OutfitStudio::OnSelectSliders(wxCommandEvent& event) {
 	ApplySliders();
 }
 
+void OutfitStudio::OnFixedWeight(wxCommandEvent& event) {
+	bool checked = event.IsChecked();
+	TB_Weight* weightBrush = dynamic_cast<TB_Weight*>(glView->GetActiveBrush());
+	if (weightBrush)
+		weightBrush->bFixedWeight = checked;
+}
+
 void OutfitStudio::OnOutfitVisToggle(wxTreeEvent& event) {
 	string s;
 	static int groupstate = 0;
@@ -2022,6 +2030,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 	if (id != XRCID("boneTabButton")) {
 		((wxSlider*)FindWindowByName("boneScale"))->Show(false);
 		((wxStaticText*)FindWindowByName("boneScaleLabel"))->Show(false);
+		((wxStaticText*)FindWindowByName("cbFixedWeight"))->Show(false);
 		project->ClearBoneScale();
 
 		if (glView->GetActiveBrush() && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
@@ -2067,6 +2076,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		boneScale->SetValue(0);
 		boneScale->Show();
 		((wxStaticText*)FindWindowByName("boneScaleLabel"))->Show();
+		((wxStaticText*)FindWindowByName("cbFixedWeight"))->Show();
 
 		glView->SetActiveBrush(10);
 		toolBar->ToggleTool(XRCID("btnWeightBrush"), true);

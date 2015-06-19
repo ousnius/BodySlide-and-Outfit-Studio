@@ -384,6 +384,17 @@
 													<option>0</option>
 													<flag>wxALL|wxEXPAND</flag>
 													<border>5</border>
+													<object class="wxCheckBox" name="cbFixedWeight">
+														<fg>#ffffff</fg>
+														<label>Fixed Weight Brush</label>
+														<checked>0</checked>
+														<hidden>1</hidden>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
 													<object class="wxBoxSizer">
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">
