@@ -316,14 +316,10 @@ int GLSurface::QueryMultisample(wxWindow* parent) {
 }
 
 int GLSurface::FindBestNumSamples(HDC hDC) {
-	if (!IsWGLExtensionSupported("WGL_ARB_multisample")) {
+	if (!IsWGLExtensionSupported("WGL_ARB_multisample"))
 		return 0;
-	}
 
 	wglChoosePixelFormatArb = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-	bool valid;
-	UINT numFormats;
-	float fAttributes[] = { 0, 0 };
 
 	// These Attributes Are The Bits We Want To Test For In Our Sample
 	// Everything Is Pretty Standard, The Only One We Want To
@@ -342,8 +338,10 @@ int GLSurface::FindBestNumSamples(HDC hDC) {
 		WGL_SAMPLES_ARB, 8,                        // Check For 8x Multisampling
 		0, 0 };
 
+	float fAttributes[] = { 0, 0 };
 	int pixelFormatMS = 0;
-	valid = wglChoosePixelFormatArb(hDC, iAttributes, fAttributes, 1, &pixelFormatMS, &numFormats);
+	uint numFormats;
+	int valid = wglChoosePixelFormatArb(hDC, iAttributes, fAttributes, 1, &pixelFormatMS, &numFormats);
 	if (valid && numFormats >= 1)
 		return 8;
 
@@ -365,7 +363,7 @@ int GLSurface::FindBestNumSamples(HDC hDC) {
 void GLSurface::initLighting() {
 	glEnable(GL_LIGHTING);
 	float amb[] = { 0.8f, 0.2288f, 0.0f, 1.0f };
-	float diff[] = { 0.55, 0.55, 0.55, 1.0f };
+	float diff[] = { 0.55f, 0.55f, 0.55f, 1.0f };
 	float spec[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	float lightpos[] = { 1.0f, 0.2f, 0.5f, 0.0f };
 	glEnable(GL_LIGHT0);
@@ -1393,10 +1391,6 @@ int GLSurface::AddVisFacetsInSphere(Vector3& origin, float radius, const string&
 	return 0;
 }
 
-int GLSurface::AddVisPointsInSphere(Vector3& origin, float radius, const string& name) {
-	return 0;
-}
-
 int  GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 	int rayMesh = GetOverlayID("RayMesh");
 	int boxMesh = GetOverlayID("BoxMesh");
@@ -1644,7 +1638,7 @@ int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float
 	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), normal);
 	rotMat.Translate(center);
 
-	float rStep = (3.141592653 / 180) * 5.0f;
+	float rStep = DEG2RAD * 5.0f;
 	float i = 0.0f;
 	for (int j = 0; j < m->nVerts; j++) {
 		m->verts[j].x = sin(i) * radius; // center.x + sin(i) * radius;
@@ -1654,8 +1648,8 @@ int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float
 		m->edges[j].p2 = j + 1;
 		i += rStep;
 		m->verts[j].pos(rotMat * m->verts[j]);
-
 	}
+
 	m->edges[m->nEdges - 1].p2 = 0;
 	m->shapeName = name;
 	m->color = Vector3(1.0f, 0.0f, 0.0f);
@@ -1701,7 +1695,7 @@ int GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float 
 	xf3.Align(Vector3(0.0f, 0.0f, 1.0f), normal);
 	xf3.Translate(center);
 
-	float rStep = (PI / 180) * (360.0f / nRingSteps);
+	float rStep = DEG2RAD * (360.0f / nRingSteps);
 	float i = 0.0f;
 	for (int r = 0; r < nRingSteps; r++) {
 		loftVerts[r].x = sin(i) * ringRadius;
@@ -1711,7 +1705,7 @@ int GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float 
 		loftVerts[r] = xf1 * loftVerts[r];
 	}
 
-	rStep = (PI / 180) * (360.0f / nRingSegments);
+	rStep = DEG2RAD * (360.0f / nRingSegments);
 	Matrix4 xf2;
 	int seg = 0.0f;
 	int ctri = 0;
@@ -1875,14 +1869,14 @@ void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vecto
 }
 
 void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs) {
-	int i;
 	if (shapeIndex >= meshes.size())
 		return;
+
 	mesh* m = meshes[shapeIndex];
 	if (m->nVerts != vertices->size())
 		return;
 
-	for (i = 0; i < m->nVerts; i++) {
+	for (int i = 0; i < m->nVerts; i++) {
 		m->verts[i].x = (*vertices)[i].x / -10.0f;
 		m->verts[i].z = (*vertices)[i].y / 10.0f;
 		m->verts[i].y = (*vertices)[i].z / 10.0f;

@@ -377,16 +377,16 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 		wxMutexLocker lock(bsaMutex);
 		if (bsa.Seek(file->offset)) {
 			wxInt64 filesz = file->size();
-			bool ok = true;
+			wxInt32 ok = 1;
 			if (namePrefix) {
 				char len;
 				ok = bsa.Read(&len, 1);
 				filesz -= len;
-				if (ok)
+				if (ok != wxInvalidOffset)
 					ok = bsa.Seek(file->offset + 1 + len);
 			}
 			content.SetBufSize(filesz);
-			if (ok && bsa.Read(content.GetData(), filesz) == filesz) {
+			if (ok != wxInvalidOffset && bsa.Read(content.GetData(), filesz) == filesz) {
 				if (file->compressed() ^ compressToggle) {
 					char* cptr = static_cast<char*>(content.GetData());
 					wxUint8 x = cptr[0];

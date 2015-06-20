@@ -16,7 +16,7 @@ mesh::mesh() {
 	rendermode = RenderMode::Normal;
 	doublesided = false;
 	smoothSeamNormals = true;
-	smoothThresh = 60.0f * (float)PI / 180.0f;
+	smoothThresh = 60.0f * DEG2RAD;
 	scale = 1.0f;
 }
 
@@ -115,7 +115,7 @@ void mesh::TransformPoints(set<int>& indices, const Matrix4& mat) {
 		verts[(*i)].pos(mat * verts[(*i)]);
 }
 
-shared_ptr<AABBTree> mesh::CreateBVH(bool doDelete) {
+shared_ptr<AABBTree> mesh::CreateBVH() {
 	bvh = make_shared<AABBTree>(verts, tris, nTris, 100, 2); // new AABBTree(verts, tris, nTris, 100, 2);
 	return bvh;
 }
@@ -298,11 +298,11 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 }
 
 float mesh::GetSmoothThreshold() {
-	return (smoothThresh * 180) / (float)PI;
+	return (smoothThresh * 180) / PI;
 }
 
 void mesh::SetSmoothThreshold(float degrees) {
-	smoothThresh = degrees * (float)PI / 180.0f;
+	smoothThresh = degrees * DEG2RAD;
 }
 
 void mesh::SmoothNormals() {

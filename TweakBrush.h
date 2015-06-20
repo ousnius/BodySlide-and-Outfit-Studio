@@ -106,32 +106,66 @@ public:
 	TweakBrush();
 	virtual ~TweakBrush();
 
-	int Type() { return brushType; }
-	string Name() { return brushName; }
+	int Type() {
+		return brushType;
+	}
+	string Name() {
+		return brushName;
+	}
 
-	virtual float getRadius() { return radius; }
-	virtual float getStrength() { return strength * 10.0f; }
-	virtual float getFocus() { return focus / 5.0f; }
-	virtual float getSpacing() { return spacing; }
-	virtual void setRadius(float newRadius) { radius = newRadius; }
-	virtual void setFocus(float newFocus) { focus = newFocus * 5.0f; }
-	virtual void setStrength(float newStr) { strength = newStr / 10.0f; }
-	virtual void setSpacing(float newSpacing) { spacing = newSpacing; }
-	virtual void setLiveNormals(bool newLiveNormals = true) { bLiveNormals = newLiveNormals; }
+	virtual float getRadius() {
+		return radius;
+	}
+	virtual float getStrength() {
+		return strength * 10.0f;
+	}
+	virtual float getFocus() {
+		return focus / 5.0f;
+	}
+	virtual float getSpacing() {
+		return spacing;
+	}
+	virtual void setRadius(float newRadius) {
+		radius = newRadius;
+	}
+	virtual void setFocus(float newFocus) {
+		focus = newFocus * 5.0f;
+	}
+	virtual void setStrength(float newStr) {
+		strength = newStr / 10.0f;
+	}
+	virtual void setSpacing(float newSpacing) {
+		spacing = newSpacing;
+	}
+	virtual void setLiveNormals(bool newLiveNormals = true) {
+		bLiveNormals = newLiveNormals;
+	}
 
-	virtual int CachedPointIndex(int query) {
+	virtual int CachedPointIndex(int) {
 		return 0;
 	}
 
-	virtual void setMirror(bool wantMirror = true) { bMirror = wantMirror; }
-	virtual void setConnected(bool wantConnected = true) { bConnected = wantConnected; }
-	virtual bool isMirrored() { return bMirror; }
-	virtual bool LiveBVH() { return bLiveBVH; }
-	virtual bool LiveNormals() { return bLiveNormals; }
+	virtual void setMirror(bool wantMirror = true) {
+		bMirror = wantMirror;
+	}
+	virtual void setConnected(bool wantConnected = true) {
+		bConnected = wantConnected;
+	}
+	virtual bool isMirrored() {
+		return bMirror;
+	}
+	virtual bool LiveBVH() {
+		return bLiveBVH;
+	}
+	virtual bool LiveNormals() {
+		return bLiveNormals;
+	}
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
 	// Default implementation is to return true. Return false to cancel stroke based on provided data.
-	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) { return true; }
+	virtual bool strokeInit(mesh*, TweakPickInfo&) {
+		return true;
+	}
 
 	// Using the start and end points, determine if enough distance has been covered to satisfy the spacing setting.
 	virtual bool checkSpacing(Vector3& start, Vector3& end);
@@ -163,16 +197,18 @@ public:
 	TB_Mask();
 	virtual ~TB_Mask();
 
-	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
+	virtual bool strokeInit(mesh* refmesh, TweakPickInfo&) {
 		if (!refmesh->vcolors)
-			refmesh->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+			refmesh->ColorFill(Vector3());
 		return true;
 	}
 
 	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
-	virtual bool checkSpacing(Vector3& start, Vector3& end) { return true; }
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
 };
 
 class TB_Unmask : public TweakBrush {
@@ -180,16 +216,18 @@ public:
 	TB_Unmask();
 	virtual ~TB_Unmask();
 
-	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
+	virtual bool strokeInit(mesh* refmesh, TweakPickInfo&) {
 		if (!refmesh->vcolors)
-			refmesh->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+			refmesh->ColorFill(Vector3());
 		return true;
 	}
 
 	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
-	virtual bool checkSpacing(Vector3& start, Vector3& end) { return true; }
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
 };
 
 class TB_Deflate : public TweakBrush {
@@ -228,7 +266,9 @@ public:
 	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
-	virtual bool checkSpacing(Vector3& start, Vector3& end) { return true; }
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
 };
 
 // Move brush behavior is significantly different from other brush types.
@@ -250,13 +290,17 @@ class TB_Move : public TweakBrush {
 public:
 	unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
 	unordered_set<AABBTree::AABBTreeNode*> cachedNodesM;
+
 	TB_Move();
 	virtual ~TB_Move();
+
 	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo);
 	virtual bool queryPoints(mesh* refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
-	virtual bool checkSpacing(Vector3& start, Vector3& end) { return true; }
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
 
 	void GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist);
 	int CachedPointIndex(int query) {
@@ -285,13 +329,17 @@ public:
 	int CachedPointIndex(int query) {
 		return query;
 	}
-	void SetXFormType(int type) { xformType = type; }
+	void SetXFormType(int type) {
+		xformType = type;
+	}
 
 	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo);
 	virtual bool queryPoints(mesh* refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
-	virtual bool checkSpacing(Vector3& start, Vector3& end) { return true; }
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
 };
 
 class TB_Weight : public TweakBrush {
@@ -302,9 +350,9 @@ public:
 	TB_Weight();
 	virtual ~TB_Weight();
 
-	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
+	virtual bool strokeInit(mesh* refmesh, TweakPickInfo&) {
 		if (!refmesh->vcolors)
-			refmesh->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+			refmesh->ColorFill(Vector3());
 		return true;
 	}
 
@@ -320,9 +368,9 @@ public:
 	TB_Unweight();
 	virtual ~TB_Unweight();
 
-	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
+	virtual bool strokeInit(mesh* refmesh, TweakPickInfo&) {
 		if (!refmesh->vcolors)
-			refmesh->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+			refmesh->ColorFill(Vector3());
 		return true;
 	}
 
@@ -348,9 +396,9 @@ public:
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
 
-	virtual bool strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
+	virtual bool strokeInit(mesh* refmesh, TweakPickInfo&) {
 		if (!refmesh->vcolors)
-			refmesh->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+			refmesh->ColorFill(Vector3());
 		return true;
 	}
 
@@ -400,10 +448,14 @@ public:
 	unordered_map<int, Vector3> pointStartState;
 	unordered_map<int, Vector3> pointEndState;
 	unordered_set<AABBTree::AABBTreeNode*> affectedNodes;
-	void addPoint(int point, Vector3& newPos, int strokeType);
+	void addPoint(int point, Vector3& newPos);
 
-	void InvalidateBVH() { bvhValid = false; }
-	void PushBVH(mesh* refMesh) { endBVH = refMesh->bvh; }
+	void InvalidateBVH() {
+		bvhValid = false;
+	}
+	void PushBVH(mesh* refMesh) {
+		endBVH = refMesh->bvh;
+	}
 	void restoreStartState();
 	void restoreEndState();
 
@@ -432,6 +484,7 @@ class TweakUndo {
 public:
 	TweakUndo();
 	~TweakUndo();
+
 	TweakStroke* CreateStroke(mesh* refmesh, TweakBrush* refBrush);
 	void addStroke(TweakStroke* stroke);
 	bool backStroke(bool skipUpdate = false);
@@ -444,12 +497,14 @@ public:
 
 		return strokes[curState];
 	}
+
 	mesh* GetCurStateMesh() {
 		if (curState == -1)
 			return nullptr;
 
 		return strokes[curState]->GetRefMesh();
 	}
+
 	mesh* GetNextStateMesh() {
 		int sz = strokes.size();
 		sz -= 1;
@@ -458,6 +513,7 @@ public:
 
 		return strokes[curState + 1]->GetRefMesh();
 	}
+
 	void PushBVH() {
 		TweakStroke* curstroke = GetCurStateStroke();
 		if (curstroke)

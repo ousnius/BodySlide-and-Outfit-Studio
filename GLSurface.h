@@ -248,7 +248,6 @@ public:
 	int AddVisTri(const Vector3& p1, const Vector3& p2, const Vector3& p3, const string& name = "TriMesh");
 	int AddVisFacets(vector<int>& triIDs, const string& name = "TriMesh");
 	int AddVisFacetsInSphere(Vector3& origin, float radius, const string& name = "SphereFIntersect");
-	int AddVisPointsInSphere(Vector3& origin, float radius, const string& name = "SpherePIntersect");
 
 	void BeginEditMode();
 	void EditUndo();

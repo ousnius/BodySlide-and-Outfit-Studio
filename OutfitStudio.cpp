@@ -1275,9 +1275,9 @@ void OutfitStudio::OnSSSGenWeightsFalse(wxCommandEvent& event) {
 	XRCCTRL(*win, "m_lowHighInfo", wxStaticText)->SetLabel(".nif");
 }
 
-void OutfitStudio::OnSaveSliderSet(wxCommandEvent& WXUNUSED(event)) {
+void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 	if (project->mFileName.empty()) {
-		OnSaveSliderSetAs(wxCommandEvent());
+		OnSaveSliderSetAs(event);
 	}
 	else {
 		if (project->OutfitHasUnweighted()) {
@@ -1520,12 +1520,12 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 	project->SaveOutfitNif(fileName, shapeMeshes, updateNormals);
 }
 
-void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& WXUNUSED(event)) {
+void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
 	if (!project->workNif.IsValid())
 		return;
 
 	if (!project->baseNif.IsValid()) {
-		OnExportOutfitNif(wxCommandEvent());
+		OnExportOutfitNif(event);
 		return;
 	}
 
@@ -2719,7 +2719,7 @@ void OutfitStudio::OnEnterClose(wxKeyEvent& event) {
 	event.Skip();
 }
 
-void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
+void OutfitStudio::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	Vector3 offs;
 
@@ -2761,14 +2761,14 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& event) {
 
 			if (bEditSlider) {
 				diff.clear();
-				for (int i = 0; i < verts.size(); i++) {
-					d = (offs - previewMove) * (1.0f - mask[i]);
-					diff[i] = d;
-					diffY = diff[i].y / 10.0f;
-					diffZ = diff[i].z / 10.0f;
-					diff[i].z = diffY;
-					diff[i].y = diffZ;
-					verts[i] += d;
+				for (int j = 0; j < verts.size(); j++) {
+					d = (offs - previewMove) * (1.0f - mask[j]);
+					diff[j] = d;
+					diffY = diff[j].y / 10.0f;
+					diffZ = diff[j].z / 10.0f;
+					diff[j].z = diffY;
+					diff[j].y = diffZ;
+					verts[j] += d;
 				}
 				project->UpdateMorphResult(i->shapeName, activeSlider, diff, i->bIsOutfitShape);
 			}
@@ -2849,14 +2849,14 @@ void OutfitStudio::PreviewMove(const Vector3& changed) {
 		float diffY, diffZ;
 		project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 		if (bEditSlider) {
-			for (int i = 0; i < verts.size(); i++) {
-				d = (changed - previewMove) * (1.0f - mask[i]);
-				diff[i] = d;
-				diffY = diff[i].y / 10.0f;
-				diffZ = diff[i].z / 10.0f;
-				diff[i].z = diffY;
-				diff[i].y = diffZ;
-				verts[i] += d;
+			for (int j = 0; j < verts.size(); j++) {
+				d = (changed - previewMove) * (1.0f - mask[j]);
+				diff[j] = d;
+				diffY = diff[j].y / 10.0f;
+				diffZ = diff[j].z / 10.0f;
+				diff[j].z = diffY;
+				diff[j].y = diffZ;
+				verts[j] += d;
 			}
 			project->UpdateMorphResult(i->shapeName, activeSlider, diff, i->bIsOutfitShape);
 		}
@@ -2871,7 +2871,7 @@ void OutfitStudio::PreviewMove(const Vector3& changed) {
 	previewMove = changed;
 }
 
-void OutfitStudio::OnOffsetShape(wxCommandEvent& event) {
+void OutfitStudio::OnOffsetShape(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	vector<Vector3> verts;
 	Vector3 offs;
@@ -2970,7 +2970,7 @@ void OutfitStudio::PreviewOffset(const Vector3& changed) {
 	glView->UpdateMeshVertices(activeItem->shapeName, &verts);
 }
 
-void OutfitStudio::OnScaleShape(wxCommandEvent& event) {
+void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3059,7 +3059,7 @@ void OutfitStudio::PreviewScale(const float& scale) {
 	previewScale = scale;
 }
 
-void OutfitStudio::OnVirtScaleShape(wxCommandEvent& event) {
+void OutfitStudio::OnVirtScaleShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3136,7 +3136,7 @@ void OutfitStudio::PreviewVirtScale(const float& scale) {
 	glView->UpdateMeshVertices(activeItem->shapeName, &verts);
 }
 
-void OutfitStudio::OnRotateShape(wxCommandEvent& event) {
+void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3233,7 +3233,7 @@ void OutfitStudio::PreviewRotation(const Vector3& changed) {
 	previewRotation = changed;
 }
 
-void OutfitStudio::OnSetShapeTexture(wxCommandEvent& event) {
+void OutfitStudio::OnSetShapeTexture(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	string texpath;
 	string oDispPath;
@@ -3384,7 +3384,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudio::OnDeleteShape(wxCommandEvent& event) {
+void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3412,7 +3412,7 @@ void OutfitStudio::OnDeleteShape(wxCommandEvent& event) {
 	AnimationGUIFromProj();
 }
 
-void OutfitStudio::OnAddBone(wxCommandEvent& event) {
+void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSkeletonBones"))
 		return;
@@ -3449,7 +3449,7 @@ void OutfitStudio::OnAddBone(wxCommandEvent& event) {
 	}
 }
 
-void OutfitStudio::OnDeleteBone(wxCommandEvent& event) {
+void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
 	for (int i = 0; i < selItems.size(); i++) {
@@ -3468,7 +3468,7 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& event) {
 	}
 }
 
-void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& event) {
+void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3493,7 +3493,7 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& event) {
 	EndProgress();
 }
 
-void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& event) {
+void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3527,7 +3527,7 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& event) {
 	EndProgress();
 }
 
-void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& event) {
+void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3565,7 +3565,7 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& event) {
 	EndProgress();
 }
 
-void OutfitStudio::OnMaskWeighted(wxCommandEvent& event) {
+void OutfitStudio::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3595,7 +3595,7 @@ void OutfitStudio::OnMaskWeighted(wxCommandEvent& event) {
 	glView->Refresh();
 }
 
-void OutfitStudio::OnBuildSkinPartitions(wxCommandEvent& event) {
+void OutfitStudio::OnBuildSkinPartitions(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -4191,7 +4191,7 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 	Refresh();
 }
 
-void wxGLPanel::OnIdle(wxIdleEvent& event) {
+void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
 	for (auto it : BVHUpdateQueue) {
 		gls.RecalculateMeshBVH(it);
 	}
@@ -4333,12 +4333,12 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 	}
 }
 
-void wxGLPanel::OnMiddleDown(wxMouseEvent& event) {
+void wxGLPanel::OnMiddleDown(wxMouseEvent& WXUNUSED(event)) {
 	CaptureMouse();
 	mbuttonDown = true;
 }
 
-void wxGLPanel::OnMiddleUp(wxMouseEvent& event) {
+void wxGLPanel::OnMiddleUp(wxMouseEvent& WXUNUSED(event)) {
 	if (GetCapture() == this) {
 		ReleaseMouse();
 	}

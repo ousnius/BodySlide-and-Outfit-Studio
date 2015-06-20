@@ -62,9 +62,8 @@ public:
 	mesh();
 	mesh(mesh* m);				// Copy from existing mesh.
 
-	// Creates a new bvh tree for the mesh. The old tree is deleted if doDelete is true, otherwise, the old tree stays
-	// allocated (it is assumed an external function will later delete the old tree as needed).
-	shared_ptr<AABBTree> CreateBVH(bool doDelete = true);
+	// Creates a new bvh tree for the mesh.
+	shared_ptr<AABBTree> CreateBVH();
 	// Swaps in a new BVH tree and returns the old one.
 	shared_ptr<AABBTree> SetBVH(shared_ptr<AABBTree> myNewTree);
 

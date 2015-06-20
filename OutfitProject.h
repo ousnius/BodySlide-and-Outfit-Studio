@@ -215,7 +215,6 @@ public:
 	int LoadOutfit(const string& filename, const string& inOutfitName);
 	int AddNif(const string& filename);
 
-	int LoadProject(const string& filename);
 	int OutfitFromSliderSet(const string& filename, const string& setName);
 
 	/* Shape duplication - resulting shape ends up in workNif. */

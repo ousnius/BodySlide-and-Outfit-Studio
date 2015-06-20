@@ -491,7 +491,7 @@ void Automorph::GenerateResultDiff(const string& shapeName, const string &slider
 
 	resultDiffData.AddEmptySet(shapeName + sliderName, shapeName);
 
-	ushort index = -1;
+	ushort index = 0xFFFF;
 	for (int i = 0; i < m->nVerts; i++) {
 		index++;
 		vector<kd_query_result>* vertProx = &prox_cache[i];

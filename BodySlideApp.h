@@ -1,18 +1,6 @@
 #pragma once
 
-#ifndef FO3
-#define FO3 0
-#endif
-#ifndef FONV
-#define FONV 1
-#endif
-#ifndef SKYRIM
-#define SKYRIM 2
-#endif
-
 #include "stdafx.h"
-#include "Resource.h"
-#include "CommCtrl.h"
 #include "PreviewWindow.h"
 #include "DiffData.h"
 #include "SliderData.h"
@@ -225,7 +213,7 @@ public:
 	wxSearchCtrl* outfitsearch;
 	wxCheckListBox* batchBuildList;
 
-	BodySlideFrame(BodySlideApp* app, const wxString& title, const wxPoint& pos, const wxSize& size);
+	BodySlideFrame(BodySlideApp* app, const wxSize& size);
 	~BodySlideFrame() {
 		ClearSliderGUI();
 	}

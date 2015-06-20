@@ -191,17 +191,17 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 		refBrush->brushAction(refMesh, pickInfo, nullptr, nPts1, outPositions);
 
 		/*for(auto mP : movedpoints) {
-			addPoint(mP.first,mP.second,0);
+			addPoint(mP.first,mP.second);
 			}*/
 
 
 		for (int i = 0; i < nPts1; i++){
-			addPoint(refBrush->CachedPointIndex(i), outPositions[i], brushType);
+			addPoint(refBrush->CachedPointIndex(i), outPositions[i]);
 		}
 
 
 		/*for (pI = points.begin();pI!=points.end();++pI) {
-			addPoint((*pI), movedpoints[(*pI)], 0);
+			addPoint((*pI), movedpoints[(*pI)]);
 			}*/
 	}
 	else {/*
@@ -220,13 +220,13 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 		/*refBrush->brushAction(refMesh, pickInfo, pts1, nPts1, movedpoints);
 		for(auto mP : movedpoints) {
-		addPoint(mP.first,mP.second,0);
+		addPoint(mP.first,mP.second);
 		}
 		if(refBrush->isMirrored())  {
 		refBrush->brushAction(refMesh, mirrorPick, pts2, nPts2, movedpoints);
 
 		for(auto mP : movedpoints) {
-		addPoint(mP.first,mP.second,0);
+		addPoint(mP.first,mP.second);
 		}
 		}*/
 
@@ -241,12 +241,12 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 		refBrush->brushAction(refMesh, pickInfo, pts1, nPts1, outPositions);
 		for (int i = 0; i < nPts1; i++){
-			addPoint(pts1[i], outPositions[i], brushType);
+			addPoint(pts1[i], outPositions[i]);
 		}
 		if (refBrush->isMirrored())  {
 			refBrush->brushAction(refMesh, mirrorPick, pts2, nPts2, outPositions);
 			for (int i = 0; i < nPts2; i++){
-				addPoint(pts2[i], outPositions[i], brushType);
+				addPoint(pts2[i], outPositions[i]);
 			}
 		}
 
@@ -291,7 +291,7 @@ void TweakStroke::endStroke() {
 	endBVH = refMesh->bvh;
 }
 
-void TweakStroke::addPoint(int point, Vector3& newPos, int strokeType) {
+void TweakStroke::addPoint(int point, Vector3& newPos) {
 	if (pointStartState.find(point) == pointStartState.end())
 		pointStartState[point] = newPos;
 
@@ -888,9 +888,10 @@ bool TB_Move::strokeInit(mesh* refmesh, TweakPickInfo& pickInfo) {
 bool TB_Move::queryPoints(mesh* refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
 	if (nCachedPoints == 0)
 		return false;
+
 	if (resultPoints) {
-		memcpy(resultPoints, cachedPoints, nCachedPoints*sizeof(int));
-		memcpy(resultPoints + nCachedPoints, cachedPointsM, nCachedPointsM*sizeof(int));
+		memcpy(resultPoints, cachedPoints, nCachedPoints * sizeof(int));
+		memcpy(resultPoints + nCachedPoints, cachedPointsM, nCachedPointsM * sizeof(int));
 	}
 
 	outResultCount = nCachedPoints + nCachedPointsM;
@@ -1088,7 +1089,7 @@ void TB_XForm::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, 
 
 	Matrix4 xform;
 	//xform.Translate(dv * strength);
-	xform.Rotate(2 * (float)PI * 10 / dv.x, pick.normal.x, pick.normal.y, pick.normal.z);
+	xform.Rotate(2.0f * PI * 10.0f / dv.x, pick.normal.x, pick.normal.y, pick.normal.z);
 	Vector3 vs;
 	Vector3 ve;
 	Vector3 vf;

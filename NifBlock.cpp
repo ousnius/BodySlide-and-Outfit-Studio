@@ -1,6 +1,6 @@
 #include "NifFile.h"
 
-NiObject::~NiObject() { 
+NiObject::~NiObject() {
 }
 
 void NiObject::Init() {
@@ -215,7 +215,7 @@ void NiObjectNET::Init() {
 	bBSLightingShaderProperty = false;
 	skyrimShaderType = 0;
 	name = "";
-	nameRef = -1;
+	nameRef = 0xFFFFFFFF;
 	numExtraData = 0;
 	controllerRef = -1;
 }
@@ -606,7 +606,7 @@ void NiGeometryData::Init() {
 	radius = 0.0f;
 	hasVertexColors = false;
 	consistencyFlags = 0;
-	additionalData = -1;
+	additionalData = 0xFFFFFFFF;
 }
 
 void NiGeometryData::Get(fstream& file) {
@@ -778,7 +778,7 @@ void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 		uvSets.push_back(uv);
 
 	consistencyFlags = 16384;
-	additionalData = -1;
+	additionalData = 0xFFFFFFFF;
 }
 
 
@@ -2756,7 +2756,7 @@ int NiStencilProperty::CalcBlockSize() {
 void NiExtraData::Init() {
 	NiObject::Init();
 
-	nameRef = -1;
+	nameRef = 0xFFFFFFFF;
 	name = "";
 }
 
@@ -2790,7 +2790,7 @@ NiStringExtraData::NiStringExtraData(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NISTRINGEXTRADATA;
-	stringDataRef = -1;
+	stringDataRef = 0xFFFFFFFF;
 	stringData = "";
 
 	CalcBlockSize();

@@ -51,9 +51,8 @@ string OutfitProject::Save(const string& strFileName,
 	GetCurrentDirectory(MAX_PATH, curDir);
 
 	wchar_t folder[MAX_PATH];
-	wchar_t* wStrDataDir = charToWChar(strDataDir.c_str());
-	_snwprintf_s(folder, MAX_PATH, MAX_PATH, L"%s\\%s\\%s", curDir, L"ShapeData", wStrDataDir);
-	delete[] wStrDataDir;
+	wxString wStrDataDir = strDataDir;
+	_snwprintf_s(folder, MAX_PATH, MAX_PATH, L"%s\\%s\\%s", curDir, L"ShapeData", wStrDataDir.wc_str());
 	SHCreateDirectoryEx(0, folder, nullptr);
 
 	float prog = 5.0f;
@@ -141,9 +140,8 @@ string OutfitProject::Save(const string& strFileName,
 	wchar_t ssNewFolder[MAX_PATH];
 	auto it = strFileName.rfind('\\');
 	if (it != string::npos) {
-		wchar_t* wStrFileName = charToWChar(strFileName.substr(0, it).c_str());
-		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, wStrFileName);
-		delete[] wStrFileName;
+		wxString wStrFileName = strFileName.substr(0, it);
+		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, wStrFileName.wc_str());
 		SHCreateDirectoryEx(0, ssNewFolder, nullptr);
 	}
 	else {
@@ -421,7 +419,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	}
 
 	NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
-	int triShapeID = blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
+	blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
 	nifDismemberInst->dataRef = skinID;
 	nifDismemberInst->skinPartitionRef = partID;
 	nifDismemberInst->skeletonRootRef = 0;
@@ -1511,10 +1509,6 @@ int OutfitProject::AddNif(const string& filename) {
 	return 0;
 }
 
-int OutfitProject::LoadProject(const string& filename) {
-	return 0;
-}
-
 int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sliderSetName) {
 	owner->StartProgress("Loading slider set...");
 	SliderSetFile InSS(filename);
@@ -1603,7 +1597,8 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 		}
 		nif.SetVertsForShape(s, verts);
 
-		nif.SetShapeBoneTransform(s, -1, SkinTransform(), dummyVec3, dummyFloat);
+		SkinTransform defXForm;
+		nif.SetShapeBoneTransform(s, -1, defXForm, dummyVec3, dummyFloat);
 		nif.ClearShapeTransform(s);
 	}
 

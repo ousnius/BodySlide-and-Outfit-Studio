@@ -143,9 +143,6 @@
     <ClInclude Include="PreviewWindow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="SliderData.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -209,12 +206,12 @@
     <ClInclude Include="FSBSA.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="BodySlide.ico">
-      <Filter>Resource Files</Filter>
-    </Image>
-    <Image Include="small.ico">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

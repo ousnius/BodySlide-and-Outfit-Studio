@@ -15,8 +15,8 @@ using namespace std;
 #ifndef EPSILON
 	#define EPSILON (1.0E-4)
 #endif
-#define PI  3.14159265359
-#define DEG2RAD  PI/180.0f
+#define PI			3.141592f
+#define DEG2RAD		(PI/180.0f)
 
 typedef unsigned char byte;
 typedef unsigned short ushort;

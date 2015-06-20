@@ -621,7 +621,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 
 	// Create destination shader block and copy
 	BSLightingShaderProperty* destShader = new BSLightingShaderProperty((*srcShader));
-	destShader->nameRef = -1;
+	destShader->nameRef = 0xFFFFFFFF;
 
 	// Add shader block to nif
 	int shaderId = blocks.size();
@@ -753,7 +753,7 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 
 	// Create destination shader block and copy
 	BSShaderPPLightingProperty* destShader = new BSShaderPPLightingProperty((*srcShader));
-	destShader->nameRef = -1;
+	destShader->nameRef = 0xFFFFFFFF;
 
 	// Add shader block to nif
 	int shaderId = blocks.size();

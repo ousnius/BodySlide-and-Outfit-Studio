@@ -76,7 +76,7 @@ bool BodySlideApp::OnInit() {
 	int w = Config.GetIntValue("BodySlideFrame.width");	
 	int h = Config.GetIntValue("BodySlideFrame.height");
 
-	sliderView = new BodySlideFrame(this, "BodySlide", wxPoint(1, 1), wxSize(w, h));
+	sliderView = new BodySlideFrame(this, wxSize(w, h));
 	sliderView->SetPosition(wxPoint(Config.GetIntValue("BodySlideFrame.x"), Config.GetIntValue("BodySlideFrame.y")));
 	sliderView->Show(true);
 	SetTopWindow(sliderView);
@@ -909,10 +909,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 		outFileNameSmall = Config["GameDataPath"] + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
-		string path = Config["GameDataPath"] + activeSet.GetOutputPath();
-		wchar_t* wPath = charToWChar(path.c_str());
-		SHCreateDirectoryEx(0, wPath, nullptr);
-		delete[] wPath;
+		wxString path = Config["GameDataPath"] + activeSet.GetOutputPath();
+		SHCreateDirectoryEx(0, path.wc_str(), nullptr);
 	}
 
 	// ALT key
@@ -1243,14 +1241,12 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		}
 
 		/* Create directory for the outfit */
-		string dir = datapath + currentSet.GetOutputPath();
-		wchar_t* wDir = charToWChar(dir.c_str());
-		int error = SHCreateDirectoryEx(0, wDir, nullptr);
-		delete[] wDir;
+		wxString dir = datapath + currentSet.GetOutputPath();
+		int error = SHCreateDirectoryEx(0, dir.wc_str(), nullptr);
 
 		stringstream errss;
 		if ((error != ERROR_SUCCESS) && (error != ERROR_ALREADY_EXISTS) && (error != ERROR_FILE_EXISTS)) {
-			errss << "Unable to create destination directory: " << dir << " [" << hex << (uint)error << "]";
+			errss << "Unable to create destination directory: " << dir.ToStdString() << " [" << hex << (uint)error << "]";
 			failedOutfits[outfit] = errss.str();
 			continue;
 		}
@@ -1333,21 +1329,21 @@ int BodySlideApp::SaveSliderPositions(const string& outputFile, const string& pr
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
-BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxString &title, const wxPoint &pos, const wxSize &size)
-	: delayLoad(this, DELAYLOAD_TIMER) {
+BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoad(this, DELAYLOAD_TIMER) {
 	this->app = app;
 	delayLoad.Start(100, true);
 	rowCount = 0;
+
 	wxXmlResource* rsrc = wxXmlResource::Get();
-	bool loaded;
 	rsrc->InitAllHandlers();
-	loaded = rsrc->Load("res\\BodyslideFrame.xrc");
+	bool loaded = rsrc->Load("res\\BodyslideFrame.xrc");
 	if (!loaded)
 		return;
+
 	rsrc->LoadFrame(this, GetParent(), "BodyslideFrame");
 
-	this->SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
-	this->SetDoubleBuffered(true);
+	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
+	SetDoubleBuffered(true);
 
 	batchBuildList = nullptr;
 	wxMenu* srchMenu = rsrc->LoadMenu("menuGroupContext");
@@ -1490,7 +1486,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 		else {
 			sd->sliderLo = new wxSlider(sw, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 22), wxSL_AUTOTICKS | wxSL_BOTTOM | wxSL_HORIZONTAL);
 			sd->sliderLo->SetMaxSize(wxSize(-1, 22));
-			sd->sliderLo->SetTickFreq(5, 0);
+			sd->sliderLo->SetTickFreq(5);
 			sd->sliderLo->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
 			sd->sliderLo->SetName(name + "|LO");
 			sliderLayout->Add(sd->sliderLo, 1, wxALIGN_LEFT | wxEXPAND, 0);
@@ -1516,7 +1512,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 	else {
 		sd->sliderHi = new wxSlider(sw, wxID_ANY, 0, minValue, maxValue, wxDefaultPosition, wxSize(-1, 22), wxSL_AUTOTICKS | wxSL_HORIZONTAL);
 		sd->sliderHi->SetMaxSize(wxSize(-1, 22));
-		sd->sliderHi->SetTickFreq(5, 0);
+		sd->sliderHi->SetTickFreq(5);
 		sd->sliderHi->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
 		sd->sliderHi->SetName(name + "|HI");
 		sliderLayout->Add(sd->sliderHi, 1, wxALIGN_LEFT | wxEXPAND, 0);
@@ -1620,7 +1616,7 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 	Close(true);
 }
 
-void BodySlideFrame::OnClose(wxCloseEvent& event) {
+void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	app->ClosePreview(SMALL_PREVIEW);
 	app->ClosePreview(BIG_PREVIEW);
 	Destroy();

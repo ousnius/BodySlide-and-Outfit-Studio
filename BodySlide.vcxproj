@@ -164,7 +164,7 @@
     <ClInclude Include="OutfitStudio.h" />
     <ClInclude Include="PresetSaveDialog.h" />
     <ClInclude Include="PreviewWindow.h" />
-    <ClInclude Include="Resource.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceLoader.h" />
     <ClInclude Include="SliderCategories.h" />
     <ClInclude Include="SliderData.h" />
@@ -180,7 +180,6 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="BodySlide.ico" />
-    <Image Include="small.ico" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="BodySlide.rc" />

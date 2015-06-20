@@ -52,7 +52,7 @@ class PreviewWindow : public wxFrame
 	static wxSize GetDefaultSize();
 
 public:
-	PreviewWindow(BodySlideApp* app, char previewType = SMALL_PREVIEW, char* shapeName = nullptr);
+	PreviewWindow(BodySlideApp* app, char previewType = SMALL_PREVIEW);
 	~PreviewWindow();
 
 	void OnShown();

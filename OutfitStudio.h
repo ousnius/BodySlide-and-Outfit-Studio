@@ -31,13 +31,6 @@
 #include <wx/splitter.h>
 
 
-static wchar_t* charToWChar(const char* text) {
-	size_t size = strlen(text) + 1;
-	wchar_t* wa = new wchar_t[size];
-	mbstowcs(wa, text, size);
-	return wa;
-}
-
 class ShapeItemData : public wxTreeItemData  {
 public:
 	bool bIsOutfitShape;

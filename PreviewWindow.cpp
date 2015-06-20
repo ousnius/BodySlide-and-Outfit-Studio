@@ -44,10 +44,9 @@ wxSize PreviewWindow::GetDefaultSize() {
 	return wxSize(768 + xborder * 2, 768 + yborder * 2);
 }
 
-PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType, char* shapeName)
-	: wxFrame(nullptr, wxID_ANY, GetTitle(previewType), wxDefaultPosition, GetDefaultSize()),
-		app(a),
-		isSmall(previewType == SMALL_PREVIEW) {
+PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType)
+	: wxFrame(nullptr, wxID_ANY, GetTitle(previewType), wxDefaultPosition, GetDefaultSize()), app(a), isSmall(previewType == SMALL_PREVIEW) {
+	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs(this));
 	context = new wxGLContext(canvas);
 	Show();
@@ -225,7 +224,7 @@ void PreviewWindow::Pick(int X, int Y) {
 	Refresh();
 }
 
-void PreviewWindow::OnClose(wxCloseEvent& event) {
+void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	Destroy();
 	canvas = nullptr;
 	app->PreviewClosed(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
@@ -240,7 +239,7 @@ PreviewCanvas::PreviewCanvas(PreviewWindow* pw, const int* attribs)
 		previewWindow(pw) {
 }
 
-void PreviewCanvas::OnPaint(wxPaintEvent& event) {
+void PreviewCanvas::OnPaint(wxPaintEvent& WXUNUSED(event)) {
 	// Initialize OpenGL the first time the window is painted.
 	// We unfortunately can't initialize it before the window is shown.
 	// We could register for the EVT_SHOW event, but unfortunately it
