@@ -34,6 +34,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FSManager.h"
 #include "FSEngine.h"
 #include "FSBSA.h"
+#include "ConfigurationManager.h"
 #include <algorithm>
 
 
@@ -77,16 +78,13 @@ FSManager::~FSManager() {
 
 wxArrayString FSManager::autodetectArchives() {
 	wxArrayString list;
-	wxString path = "Insert GameDataPath from config here";
+	wxString path = Config["GameDataPath"];
 	if (!path.IsEmpty()) {
 		wxArrayString files;
 		wxDir::GetAllFiles(path, &files, "*.bsa", wxDIR_FILES);
 
-		if (!path.EndsWith("/") && !path.EndsWith("\\"))
-			path += "/";
-
 		for (auto file : files)
-			list.Add(path + file);
+			list.Add(file);
 	}
 
 	return list;

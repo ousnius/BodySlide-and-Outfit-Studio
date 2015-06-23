@@ -636,6 +636,7 @@ void BodySlideApp::SetDefaultConfig() {
 
 	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
+	Config.SetDefaultValue("BSATextureScan", "true");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("SelectedOutfit", "");
 	

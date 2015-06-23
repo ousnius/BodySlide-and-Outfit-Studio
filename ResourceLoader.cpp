@@ -1,5 +1,8 @@
 #include "ResourceLoader.h"
 #include "GLShader.h"
+#include "ConfigurationManager.h"
+#include "FSManager.h"
+#include "FSEngine.h"
 
 #include "SOIL.h"
 #ifdef _DEBUG
@@ -34,14 +37,38 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 	// On Linux we should add code here that does a case-insensitive search
 	// for the desired file.
 
-	uint texid = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
-	if (!texid) {
-		auto errstr = SOIL_last_result();
-		return nullptr;
+	uint textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
+	if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
+		wxMemoryBuffer data;
+		wxString texFile = textureFile;
+		texFile.Replace(Config["GameDataPath"], "");
+		texFile.Replace("\\", "/");
+		for (FSArchiveFile *archive : FSManager::archiveList()) {
+			if (archive) {
+				if (archive->hasFile(texFile)) {
+					wxMemoryBuffer outData;
+					archive->fileContents(texFile, outData);
+
+					if (!outData.IsEmpty()) {
+						data = outData;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!data.IsEmpty()) {
+			byte* texBuffer = static_cast<byte*>(data.GetData());
+			textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
+		}
+		else {
+			auto errstr = SOIL_last_result();
+			return nullptr;
+		}
 	}
 
 	auto& entry = materials[key];
-	entry.reset(new GLMaterial(texid, vShaderFile.c_str(), fShaderFile.c_str()));
+	entry.reset(new GLMaterial(textureID, vShaderFile.c_str(), fShaderFile.c_str()));
 	return entry.get();
 }
 

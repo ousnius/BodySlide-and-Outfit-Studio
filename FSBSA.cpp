@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/zstream.h>
 #include <wx/mstream.h>
 
+
 /* Default header data */
 #define MW_BSAHEADER_FILEID  0x00000100 //!< Magic for Morrowind BSA
 #define OB_BSAHEADER_FILEID  0x00415342 //!< Magic for Oblivion BSA, the literal string "BSA\0".
@@ -157,7 +158,7 @@ static bool BSAReadSizedString(wxFile &bsa, wxString &s) {
 // see bsa.h
 BSA::BSA(const wxString &filename) : FSArchiveFile(), bsa(filename), bsaInfo(filename), status("initialized") {
 	// see bsa.h
-	bsaPath = bsaInfo.GetPath(true) + bsaInfo.GetFullName();
+	bsaPath = bsaInfo.GetPathWithSep() + bsaInfo.GetFullName();
 	bsaBase = bsaInfo.GetPath();
 	bsaName = bsaInfo.GetFullName();
 }
@@ -323,7 +324,7 @@ bool BSA::open() {
 			for (wxUint32 c = 0; c < header.FileCount; c++) {
 				wxString fname = static_cast<char*>(fileNames.GetData()) + nameOffset[c];
 				wxString dname;
-				int x = fname.find_last_of("\\");
+				int x = fname.Last('\\');
 				if (x > 0) {
 					dname = fname.Left(x);
 					fname = fname.Remove(0, x + 1);
@@ -377,7 +378,7 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 		wxMutexLocker lock(bsaMutex);
 		if (bsa.Seek(file->offset)) {
 			wxInt64 filesz = file->size();
-			wxInt32 ok = 1;
+			ssize_t ok = 1;
 			if (namePrefix) {
 				char len;
 				ok = bsa.Read(&len, 1);
@@ -385,18 +386,22 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 				if (ok != wxInvalidOffset)
 					ok = bsa.Seek(file->offset + 1 + len);
 			}
+
 			content.SetBufSize(filesz);
+
 			if (ok != wxInvalidOffset && bsa.Read(content.GetData(), filesz) == filesz) {
 				if (file->compressed() ^ compressToggle) {
-					char* cptr = static_cast<char*>(content.GetData());
-					wxUint8 x = cptr[0];
-					cptr[0] = cptr[3];
-					cptr[3] = x;
-					x = cptr[1];
-					cptr[1] = cptr[2];
-					cptr[2] = x;
+					char *dataPtr = static_cast<char*>(content.GetData());
+					//wxUint8 a = dataPtr[0];
+					//wxUint8 b = dataPtr[1];
+					//wxUint8 c = dataPtr[2];
+					//wxUint8 d = dataPtr[3];
+					//dataPtr[0] = d;
+					//dataPtr[1] = c;
+					//dataPtr[2] = b;
+					//dataPtr[3] = a;
 
-					wxMemoryInputStream memInStream(content.GetData(), content.GetDataLen());
+					wxMemoryInputStream memInStream(dataPtr + 4, filesz);
 					wxMemoryOutputStream memOutStream;
 					wxZlibInputStream* zOutput = new wxZlibInputStream(memInStream);
 					zOutput->Read(memOutStream);
@@ -404,6 +409,7 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 
 					size_t streamSize = memOutStream.GetSize();
 					content.SetBufSize(streamSize);
+					content.SetDataLen(streamSize);
 					size_t numCopied = memOutStream.CopyTo(content.GetData(), streamSize);
 
 					if (numCopied != streamSize)
@@ -441,7 +447,7 @@ BSA::BSAFolder *BSA::insertFolder(wxString name) {
 		folder = new BSAFolder;
 		folders[name.ToStdString()] = folder;
 
-		int p = name.find_last_of("/");
+		int p = name.Last('/');
 		if (p >= 0) {
 			folder->parent = insertFolder(name.Left(p));
 			folder->parent->children[name.Right(name.length() - p - 1).ToStdString()] = folder;
@@ -469,29 +475,44 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, wxString name, wxUint32 sizeFla
 
 // see bsa.h
 const BSA::BSAFolder *BSA::getFolder(wxString fn) const {
-	if (fn.IsEmpty())
+	if (fn.IsEmpty()) {
 		return &root;
-	else
-		return folders.at(fn.ToStdString());
+	}
+	else {
+		auto it = folders.find(fn.Lower().ToStdString());
+		if (it != folders.end()) {
+			BSA::BSAFolder* folder = it->second;
+			if (folder)
+				return folder;
+		}
+	}
+
+	return nullptr;
 }
 
 // see bsa.h
-const BSA::BSAFile * BSA::getFile(wxString fn) const {
+const BSA::BSAFile *BSA::getFile(wxString fn) const {
 	wxString folderName;
-	wxString fileName = fn;
-	int p = fn.find_last_of("/");
+	wxString fileName = fn.Lower();
+	int p = fileName.Last('/');
 	if (p >= 0) {
-		folderName = fn.Left(p);
-		fileName = fn.Right(fn.length() - p - 1);
+		folderName = fileName.Left(p);
+		fileName = fileName.Right(fileName.length() - p - 1);
 	}
 
 	// TODO: Multiple matches occur and user has no say which version gets loaded
 	// When it comes to the AUTO feature, should give preference to certain BSAs
 	// or take the newest and or highest quality version.
-	if (const BSAFolder *folder = getFolder(folderName))
-		return folder->files.at(fileName.ToStdString());
-	else
-		return 0;
+	if (const BSAFolder *folder = getFolder(folderName)) {
+		auto it = folder->files.find(fileName.ToStdString());
+		if (it != folder->files.end()) {
+			BSA::BSAFile* file = it->second;
+			if (file)
+				return file;
+		}
+	}
+
+	return nullptr;
 }
 
 // see bsa.h

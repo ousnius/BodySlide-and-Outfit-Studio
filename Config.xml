@@ -5,6 +5,7 @@
     <!-- 0 = Fallout 3, 1 = Fallout New Vegas, 2 = Skyrim -->
     <TargetGame>2</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
+	<BSATextureScan>true</BSATextureScan>
     <SelectedOutfit>CBBE Body</SelectedOutfit>
     <SelectedPreset>CBBE Curvy</SelectedPreset>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
