@@ -61,7 +61,7 @@ class GLSurface {
 	void initLighting();
 	void initMaterial(Vector3 diffusecolor);
 	void InitGLExtensions();
-	int InitGLSettings(bool bUseDefaultShaders);
+	int InitGLSettings();
 	static int QueryMultisample(wxWindow* parent);
 	static int FindBestNumSamples(HDC hDC);
 
@@ -208,7 +208,7 @@ public:
 
 	static bool IsWGLExtensionSupported(char* szTargetExtension);
 	static bool IsExtensionSupported(char* szTargetExtension);
-	int Initialize(wxGLCanvas* canvas, wxGLContext* context, bool bUseDefaultShaders = true);
+	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Begin();
 	void Cleanup();
 

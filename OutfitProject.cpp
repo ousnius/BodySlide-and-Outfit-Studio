@@ -737,10 +737,7 @@ void OutfitProject::SetOutfitTexture(const string& shapeName, const string& text
 		}
 
 		wxString combinedTexFile = texturesDir + nifTexFile;
-		if (GetFileAttributes(combinedTexFile.wc_str()) == INVALID_FILE_ATTRIBUTES)
-			outfitTextures[shapeName] = defaultTexFile;
-		else
-			outfitTextures[shapeName] = combinedTexFile.ToStdString();
+		outfitTextures[shapeName] = combinedTexFile.ToStdString();
 	}
 	else
 		outfitTextures[shapeName] = textureFile;
@@ -765,10 +762,7 @@ void OutfitProject::SetRefTexture(const string& shapeName, const string& texture
 		}
 
 		wxString combinedTexFile = texturesDir + nifTexFile;
-		if (GetFileAttributes(combinedTexFile.wc_str()) == INVALID_FILE_ATTRIBUTES)
-			baseTextures[shapeName] = defaultTexFile;
-		else
-			baseTextures[shapeName] = combinedTexFile.ToStdString();
+		baseTextures[shapeName] = combinedTexFile.ToStdString();
 	}
 	else
 		baseTextures[shapeName] = textureFile;

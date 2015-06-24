@@ -403,14 +403,14 @@ void GLSurface::initMaterial(Vector3 diffusecolor) {
 	glMaterialfv(GL_FRONT, GL_SHININESS, shiny);
 }
 
-int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx, bool bUseDefaultShaders) {
+int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 	canvas = can;
 	context = ctx;
 
 	canvas->SetCurrent(*context);
 
 	InitGLExtensions();
-	return InitGLSettings(bUseDefaultShaders);
+	return InitGLSettings();
 }
 
 void GLSurface::InitGLExtensions() {
@@ -422,7 +422,7 @@ void GLSurface::InitGLExtensions() {
 	glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glDisableVertexAttribArray");
 }
 
-int GLSurface::InitGLSettings(bool bUseDefaultShaders) {
+int GLSurface::InitGLSettings() {
 	if (multiSampleEnabled)
 		glEnable(GL_MULTISAMPLE_ARB);
 
@@ -449,9 +449,7 @@ int GLSurface::InitGLSettings(bool bUseDefaultShaders) {
 	initLighting();
 	initMaterial(Vector3(0.8f, 0.8f, 0.8f));
 
-	if (bUseDefaultShaders) { //NoImg.png
-		noImage = resLoader.AddMaterial("res\\NoImg.png", "res\\defvshader.vs", "res\\defshader.fs");
-	}
+	noImage = resLoader.AddMaterial("res\\NoImg.png", "res\\defvshader.vs", "res\\defshader.fs");
 
 	return 0;
 }

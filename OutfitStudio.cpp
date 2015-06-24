@@ -3658,7 +3658,7 @@ wxGLPanel::~wxGLPanel() {
 }
 
 void wxGLPanel::OnShown() {
-	gls.Initialize(this, context, false);
+	gls.Initialize(this, context);
 	auto size = GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
 	gls.ToggleMask();
