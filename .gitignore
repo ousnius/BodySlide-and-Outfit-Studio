@@ -1,0 +1,13 @@
+*.obj
+*.tlog
+*.exe
+*.aps
+*.res
+*.pch
+*.log
+*.ipch
+*.pdb
+*.suo
+*.sdf
+*.opensdf
+*.user
