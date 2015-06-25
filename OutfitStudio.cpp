@@ -141,17 +141,15 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 
 	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
 
-	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
-	toolBar = (wxToolBar*)FindWindowByName("toolbar");
-	wxMenuBar* menu = GetMenuBar();
-
 	int statusWidths[] = { -1, 275, 100 };
+	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
 	if (statusBar) {
 		statusBar->SetFieldsCount(3);
 		statusBar->SetStatusWidths(3, statusWidths);
 		statusBar->SetStatusText("Ready!");
 	}
-
+	
+	toolBar = (wxToolBar*)FindWindowByName("toolbar");
 	if (toolBar) {
 		toolBar->ToggleTool(XRCID("btnSelect"), true);
 		toolBar->SetToolDisabledBitmap(XRCID("btnSelect"), wxBitmap("res\\SelectBrush_d.png", wxBITMAP_TYPE_PNG));
@@ -165,7 +163,8 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		if (fovSlider)
 			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
 	}
-
+	
+	wxMenuBar* menu = GetMenuBar();
 	if (menu)
 		menu->Enable(XRCID("btnWeightBrush"), false);
 
@@ -178,19 +177,19 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	visStateImages->Add(invImg);
 	visStateImages->Add(wfImg);
 
-	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
-	wxWindow* rightPanel = FindWindowByName("rightSplitPanel");
-	rightPanel->SetDoubleBuffered(true);
-
 	wxStateButton* meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
-	meshTab->SetCheck();
+	if (meshTab)
+		meshTab->SetCheck();
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
-	outfitShapes->AssignStateImageList(visStateImages);
-	shapesRoot = outfitShapes->AddRoot("Shapes");
+	if (outfitShapes) {
+		outfitShapes->AssignStateImageList(visStateImages);
+		shapesRoot = outfitShapes->AddRoot("Shapes");
+	}
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
-	bonesRoot = outfitBones->AddRoot("Bones");
+	if (outfitBones)
+		bonesRoot = outfitBones->AddRoot("Bones");
 
 	int ambient = appConfig.GetIntValue("Lights/Ambient");
 	int brightness1 = appConfig.GetIntValue("Lights/Brightness1");
@@ -198,15 +197,35 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	int brightness3 = appConfig.GetIntValue("Lights/Brightness3");
 
 	lightSettings = (wxPanel*)FindWindowByName("lightSettings");
-	((wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider"))->SetValue(ambient);
-	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1"))->SetValue(brightness1);
-	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2"))->SetValue(brightness2);
-	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3"))->SetValue(brightness3);
+	if (lightSettings) {
+		wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
+		if (lightAmbientSlider)
+			lightAmbientSlider->SetValue(ambient);
+
+		wxSlider* lightBrightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
+		if (lightBrightnessSlider1)
+			lightBrightnessSlider1->SetValue(brightness1);
+
+		wxSlider* lightBrightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
+		if (lightBrightnessSlider2)
+			lightBrightnessSlider2->SetValue(brightness2);
+
+		wxSlider* lightBrightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
+		if (lightBrightnessSlider3)
+			lightBrightnessSlider3->SetValue(brightness3);
+	}
 	
 	targetGame = appConfig.GetIntValue("TargetGame");
+	
+	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
+	if (leftPanel) {
+		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs(this));
+		glView->SetNotifyWindow(this);
+	}
 
-	glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs(this));
-	glView->SetNotifyWindow(this);
+	wxWindow* rightPanel = FindWindowByName("rightSplitPanel");
+	if (rightPanel)
+		rightPanel->SetDoubleBuffered(true);
 
 	resource->AttachUnknownControl("mGLView", glView, this);
 
@@ -223,10 +242,16 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	SetSize(size);
 	SetPosition(pos);
 
-	leftPanel->Layout();
+	if (leftPanel)
+		leftPanel->Layout();
 
-	((wxSplitterWindow*)FindWindowByName("splitter"))->SetSashPosition(850);
-	((wxSplitterWindow*)FindWindowByName("splitterRight"))->SetSashPosition(200);
+	wxSplitterWindow* splitter = (wxSplitterWindow*)FindWindowByName("splitter");
+	if (splitter)
+		splitter->SetSashPosition(850);
+
+	wxSplitterWindow* splitterRight = (wxSplitterWindow*)FindWindowByName("splitterRight");
+	if (splitterRight)
+		splitterRight->SetSashPosition(200);
 }
 
 OutfitStudio::~OutfitStudio() {
@@ -255,6 +280,10 @@ void OutfitStudio::OnSetSize(wxSizeEvent& event) {
 }
 
 void OutfitStudio::CreateSetSliders() {
+	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
+	if (!sliderScroll)
+		return;
+
 	float inc = 1.0f;
 	if (project->SliderCount()) {
 		inc = 90.0f / project->SliderCount();
@@ -263,7 +292,6 @@ void OutfitStudio::CreateSetSliders() {
 
 	UpdateProgress(0.0f, "Clearing old sliders...");
 
-	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
 	sliderScroll->Freeze();
 	sliderScroll->DestroyChildren();
 	for (auto sd : sliderDisplays)
@@ -381,10 +409,14 @@ void OutfitStudio::ApplySliders(bool recalcBVH) {
 void OutfitStudio::ShowSliderEffect(int sliderID, bool show) {
 	if (project->ValidSlider(sliderID)) {
 		project->SliderShow(sliderID) = show;
+		wxCheckBox* sliderState = (wxCheckBox*)FindWindowById(1000 + sliderID);
+		if (!sliderState)
+			return;
+
 		if (show)
-			((wxCheckBox*)FindWindowById(1000 + sliderID))->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+			sliderState->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
 		else
-			((wxCheckBox*)FindWindowById(1000 + sliderID))->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
+			sliderState->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
 	}
 }
 
@@ -413,6 +445,9 @@ void OutfitStudio::UpdateActiveShapeUI() {
 }
 
 void OutfitStudio::SelectShape(const string& shapeName) {
+	if (!outfitShapes)
+		return;
+
 	wxTreeItemId item;
 	wxTreeItemId subitem;
 	wxTreeItemIdValue cookie;
@@ -646,7 +681,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	if (activeItem)
 		selectedItems.push_back(activeItem);
 
-	outfitShapes->ExpandAll();
+	if (outfitShapes)
+		outfitShapes->ExpandAll();
 
 	UpdateProgress(90.0f, "Creating sliders...");
 	StartSubProgress(90.0f, 99.0f);
@@ -941,7 +977,8 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	else
 		activeItem = nullptr;
 
-	outfitShapes->ExpandAll();
+	if (outfitShapes)
+		outfitShapes->ExpandAll();
 
 	selectedItems.clear();
 	if (activeItem)
@@ -1032,7 +1069,8 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	ReferenceGUIFromProj();
 	AnimationGUIFromProj();
 
-	outfitShapes->ExpandAll();
+	if (outfitShapes)
+		outfitShapes->ExpandAll();
 
 	UpdateProgress(70.0f, "Creating sliders...");
 	StartSubProgress(70.0f, 99.0f);
@@ -1146,9 +1184,10 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	if (activeItem)
 		selectedItems.push_back(activeItem);
 
-	outfitShapes->ExpandAll();
-	UpdateProgress(100.0f, "Finished");
+	if (outfitShapes)
+		outfitShapes->ExpandAll();
 
+	UpdateProgress(100.0f, "Finished");
 	EndProgress();
 }
 
@@ -1181,6 +1220,9 @@ void OutfitStudio::RefreshGUIFromProj() {
 }
 
 void OutfitStudio::AnimationGUIFromProj() {
+	if (!outfitBones)
+		return;
+
 	vector<string> refBones;
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
 		outfitBones->DeleteChildren(bonesRoot);
@@ -1206,15 +1248,17 @@ void OutfitStudio::ReferenceGUIFromProj() {
 
 	vector<string> refShapes;
 	project->RefShapes(refShapes);
-	if (refShapes.size() > 0)
+	if (outfitShapes && refShapes.size() > 0)
 		refRoot = outfitShapes->InsertItem(shapesRoot, 0, ssfname);
 
 	wxTreeItemId baseSubItem;
 	string shape = project->baseShapeName;
 
-	baseSubItem = outfitShapes->AppendItem(refRoot, shape);
-	outfitShapes->SetItemState(baseSubItem, 0);
-	outfitShapes->SetItemData(baseSubItem, new ShapeItemData(false, &project->baseNif, project->baseShapeName));
+	if (outfitShapes) {
+		baseSubItem = outfitShapes->AppendItem(refRoot, shape);
+		outfitShapes->SetItemState(baseSubItem, 0);
+		outfitShapes->SetItemData(baseSubItem, new ShapeItemData(false, &project->baseNif, project->baseShapeName));
+	}
 	glView->AddMeshFromNif(&project->baseNif, shape);
 	glView->SetMeshTexture(shape, project->RefTexture(shape), project->RefShapeShaderType(shape));
 }
@@ -1232,7 +1276,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 	activeItem = nullptr;
 	selectedItems.clear();
 
-	if (workshapes.size() > 0)
+	if (outfitShapes && workshapes.size() > 0)
 		outfitRoot = outfitShapes->AppendItem(shapesRoot, project->OutfitName());
 
 	for (auto shape : workshapes) {
@@ -1240,9 +1284,11 @@ void OutfitStudio::WorkingGUIFromProj() {
 
 		glView->AddMeshFromNif(&project->workNif, shape);
 		glView->SetMeshTexture(shape, project->OutfitTexture(shape), project->OutfitShapeShaderType(shape));
-		subitem = outfitShapes->AppendItem(outfitRoot, shape);
-		outfitShapes->SetItemState(subitem, 0);
-		outfitShapes->SetItemData(subitem, new ShapeItemData(true, &project->workNif, shape));
+		if (outfitShapes) {
+			subitem = outfitShapes->AppendItem(outfitRoot, shape);
+			outfitShapes->SetItemState(subitem, 0);
+			outfitShapes->SetItemData(subitem, new ShapeItemData(true, &project->workNif, shape));
+		}
 	}
 }
 
@@ -1256,13 +1302,16 @@ void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 	string defOutputFile = copyStr + ".nif";
 
 	wxFilePickerCtrl* fp = (wxFilePickerCtrl*)win->FindWindowByName("sssSliderSetFile");
-	fp->SetPath(defSliderSetFile);
+	if (fp)
+		fp->SetPath(defSliderSetFile);
 
 	wxDirPickerCtrl* dp = (wxDirPickerCtrl*)win->FindWindowByName("sssShapeDataFolder");
-	dp->SetPath(defShapeDataDir);
+	if (dp)
+		dp->SetPath(defShapeDataDir);
 
 	fp = (wxFilePickerCtrl*)win->FindWindowByName("sssShapeDataFile");
-	fp->SetPath(defOutputFile);
+	if (fp)
+		fp->SetPath(defOutputFile);
 }
 
 void OutfitStudio::OnSSSGenWeightsTrue(wxCommandEvent& event) {
@@ -1708,7 +1757,9 @@ void OutfitStudio::OnOutfitBoneSelect(wxTreeEvent& event) {
 	wxTreeItemId subitem;
 
 	project->ClearBoneScale();
-	((wxSlider*)FindWindowByName("boneScale"))->SetValue(0);
+	wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
+	if (boneScale)
+		boneScale->SetValue(0);
 
 	if (!activeItem)
 		return;
@@ -1891,6 +1942,9 @@ void OutfitStudio::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
 	wxSlider* brightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
 	wxSlider* brightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
 
+	if (!ambientSlider || !brightnessSlider1 || !brightnessSlider2 || !brightnessSlider3)
+		return;
+
 	int ambient = ambientSlider->GetValue();
 	int brightness1 = brightnessSlider1->GetValue();
 	int brightness2 = brightnessSlider2->GetValue();
@@ -1911,10 +1965,21 @@ void OutfitStudio::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 
 	glView->UpdateLights(ambient, brightness1, brightness2, brightness3);
 
-	((wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider"))->SetValue(ambient);
-	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1"))->SetValue(brightness1);
-	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2"))->SetValue(brightness2);
-	((wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3"))->SetValue(brightness3);
+	wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
+	if (lightAmbientSlider)
+		lightAmbientSlider->SetValue(ambient);
+
+	wxSlider* lightBrightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
+	if (lightBrightnessSlider1)
+		lightBrightnessSlider1->SetValue(brightness1);
+
+	wxSlider* lightBrightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
+	if (lightBrightnessSlider2)
+		lightBrightnessSlider2->SetValue(brightness2);
+
+	wxSlider* lightBrightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
+	if (lightBrightnessSlider3)
+		lightBrightnessSlider3->SetValue(brightness3);
 
 	Config.SetValue("Lights/Ambient", ambient);
 	Config.SetValue("Lights/Brightness1", brightness1);
@@ -2028,91 +2093,141 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 	wxMenuBar* menuBar = GetMenuBar();
 
 	if (id != XRCID("boneTabButton")) {
-		((wxSlider*)FindWindowByName("boneScale"))->Show(false);
-		((wxStaticText*)FindWindowByName("boneScaleLabel"))->Show(false);
-		((wxStaticText*)FindWindowByName("cbFixedWeight"))->Show(false);
+		wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
+		if (boneScale)
+			boneScale->Show(false);
+
+		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
+		if (boneScaleLabel)
+			boneScaleLabel->Show(false);
+
+		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		if (cbFixedWeight)
+			cbFixedWeight->Show(false);
+
 		project->ClearBoneScale();
 
 		if (glView->GetActiveBrush() && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
 			glView->SetXMirror(previousMirror);
-			GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
-
 			glView->SetActiveBrush(1);
-			toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
-			menuBar->Check(XRCID("btnInflateBrush"), true);
 			glView->SetWeightVisible(false);
 
-			toolBar->EnableTool(XRCID("btnWeightBrush"), false);
+			if (menuBar) {
+				menuBar->Check(XRCID("btnXMirror"), previousMirror);
+				menuBar->Check(XRCID("btnInflateBrush"), true);
+				menuBar->Enable(XRCID("btnWeightBrush"), false);
+				menuBar->Enable(XRCID("btnInflateBrush"), true);
+				menuBar->Enable(XRCID("btnDeflateBrush"), true);
+				menuBar->Enable(XRCID("btnMoveBrush"), true);
+				menuBar->Enable(XRCID("btnSmoothBrush"), true);
+			}
 
-			toolBar->EnableTool(XRCID("btnInflateBrush"), true);
-			toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
-			toolBar->EnableTool(XRCID("btnMoveBrush"), true);
-			toolBar->EnableTool(XRCID("btnSmoothBrush"), true);
-
-			menuBar->Enable(XRCID("btnWeightBrush"), false);
-
-			menuBar->Enable(XRCID("btnInflateBrush"), true);
-			menuBar->Enable(XRCID("btnDeflateBrush"), true);
-			menuBar->Enable(XRCID("btnMoveBrush"), true);
-			menuBar->Enable(XRCID("btnSmoothBrush"), true);
+			if (toolBar) {
+				toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
+				toolBar->EnableTool(XRCID("btnWeightBrush"), false);
+				toolBar->EnableTool(XRCID("btnInflateBrush"), true);
+				toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
+				toolBar->EnableTool(XRCID("btnMoveBrush"), true);
+				toolBar->EnableTool(XRCID("btnSmoothBrush"), true);
+			}
 		}
 	}
 
 	if (id == XRCID("meshTabButton")) {
-		outfitBones->Hide();
-		lightSettings->Hide();
-		outfitShapes->Show();
-		((wxStateButton*)FindWindowByName("boneTabButton"))->SetCheck(false);
-		((wxStateButton*)FindWindowByName("lightsTabButton"))->SetCheck(false);
+		if (outfitBones)
+			outfitBones->Hide();
+		if (lightSettings)
+			lightSettings->Hide();
+		if (outfitShapes)
+			outfitShapes->Show();
+
+		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		if (boneTabButton)
+			boneTabButton->SetCheck(false);
+
+		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+		if (lightsTabButton)
+			lightsTabButton->SetCheck(false);
 	}
 	else if (id == XRCID("boneTabButton")) {
-		outfitShapes->Hide();
-		lightSettings->Hide();
-		outfitBones->Show();
-		((wxStateButton*)FindWindowByName("meshTabButton"))->SetCheck(false);
-		((wxStateButton*)FindWindowByName("lightsTabButton"))->SetCheck(false);
+		if (outfitShapes)
+			outfitShapes->Hide();
+		if (lightSettings)
+			lightSettings->Hide();
+		if (outfitBones)
+			outfitBones->Show();
+
+		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
+		if (meshTabButton)
+			meshTabButton->SetCheck(false);
+
+		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+		if (lightsTabButton)
+			lightsTabButton->SetCheck(false);
 
 		wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
-		boneScale->SetValue(0);
-		boneScale->Show();
-		((wxStaticText*)FindWindowByName("boneScaleLabel"))->Show();
-		((wxStaticText*)FindWindowByName("cbFixedWeight"))->Show();
+		if (boneScale) {
+			boneScale->SetValue(0);
+			boneScale->Show();
+		}
+		
+		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
+		if (boneScaleLabel)
+			boneScaleLabel->Show();
+
+		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
+		if (cbFixedWeight)
+			cbFixedWeight->Show();
 
 		glView->SetActiveBrush(10);
-		toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
-		menuBar->Check(XRCID("btnWeightBrush"), true);
-
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
-		GetMenuBar()->Check(XRCID("btnXMirror"), false);
-
 		glView->SetEditMode();
 		glView->SetWeightVisible(true);
 
-		toolBar->EnableTool(XRCID("btnWeightBrush"), true);
+		if (menuBar) {
+			menuBar->Check(XRCID("btnWeightBrush"), true);
+			menuBar->Check(XRCID("btnXMirror"), false);
+			menuBar->Enable(XRCID("btnWeightBrush"), true);
+			menuBar->Enable(XRCID("btnInflateBrush"), false);
+			menuBar->Enable(XRCID("btnDeflateBrush"), false);
+			menuBar->Enable(XRCID("btnMoveBrush"), false);
+			menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		}
 
-		toolBar->EnableTool(XRCID("btnInflateBrush"), false);
-		toolBar->EnableTool(XRCID("btnDeflateBrush"), false);
-		toolBar->EnableTool(XRCID("btnMoveBrush"), false);
-		toolBar->EnableTool(XRCID("btnSmoothBrush"), false);
-
-		menuBar->Enable(XRCID("btnWeightBrush"), true);
-
-		menuBar->Enable(XRCID("btnInflateBrush"), false);
-		menuBar->Enable(XRCID("btnDeflateBrush"), false);
-		menuBar->Enable(XRCID("btnMoveBrush"), false);
-		menuBar->Enable(XRCID("btnSmoothBrush"), false);
+		if (toolBar) {
+			toolBar->EnableTool(XRCID("btnWeightBrush"), true);
+			toolBar->EnableTool(XRCID("btnInflateBrush"), false);
+			toolBar->EnableTool(XRCID("btnDeflateBrush"), false);
+			toolBar->EnableTool(XRCID("btnMoveBrush"), false);
+			toolBar->EnableTool(XRCID("btnSmoothBrush"), false);
+		}
 	}
 	else if (id == XRCID("lightsTabButton")) {
-		outfitShapes->Hide();
-		outfitBones->Hide();
-		lightSettings->Show();
-		((wxStateButton*)FindWindowByName("meshTabButton"))->SetCheck(false);
-		((wxStateButton*)FindWindowByName("boneTabButton"))->SetCheck(false);
+		if (outfitShapes)
+			outfitShapes->Hide();
+		if (outfitBones)
+			outfitBones->Hide();
+		if (lightSettings)
+			lightSettings->Show();
+
+		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
+		if (meshTabButton)
+			meshTabButton->SetCheck(false);
+
+		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		if (boneTabButton)
+			boneTabButton->SetCheck(false);
 	}
 
-	((wxPanel*)FindWindowByName("topSplitPanel"))->Layout();
-	((wxPanel*)FindWindowByName("bottomSplitPanel"))->Layout();
+	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
+	if (topSplitPanel)
+		topSplitPanel->Layout();
+
+	wxPanel* bottomSplitPanel = (wxPanel*)FindWindowByName("bottomSplitPanel");
+	if (bottomSplitPanel)
+		bottomSplitPanel->Layout();
+
 	Refresh();
 }
 
@@ -2202,7 +2317,7 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 	}
 
 	string sliderName = s->GetName();
-	if (sliderName == "boneScale") {
+	if (outfitBones && sliderName == "boneScale") {
 		wxArrayTreeItemIds selItems;
 		outfitBones->GetSelections(selItems);
 		if (selItems.size() > 0) {
@@ -2517,36 +2632,36 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxDialog dlg;
+	wxDialog* dlg = nullptr;
 	wxString tmpstr;
 
 	string sstr;
-	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSliderProp")) {
+	if (wxXmlResource::Get()->LoadDialog(dlg, this, "dlgSliderProp")) {
 		int curSlider = project->SliderIndexFromName(activeSlider);
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
-		XRCCTRL(dlg, "edSliderName", wxTextCtrl)->SetLabel(activeSlider);
+		XRCCTRL(*dlg, "edSliderName", wxTextCtrl)->SetLabel(activeSlider);
 		tmpstr.sprintf("%d", loVal);
-		XRCCTRL(dlg, "edValLo", wxTextCtrl)->SetValue(tmpstr);
+		XRCCTRL(*dlg, "edValLo", wxTextCtrl)->SetValue(tmpstr);
 		tmpstr.sprintf("%d", hiVal);
-		XRCCTRL(dlg, "edValHi", wxTextCtrl)->SetValue(tmpstr);
+		XRCCTRL(*dlg, "edValHi", wxTextCtrl)->SetValue(tmpstr);
 		if (project->SliderHidden(curSlider))
-			XRCCTRL(dlg, "chkHidden", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+			XRCCTRL(*dlg, "chkHidden", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
 		if (project->SliderInvert(curSlider))
-			XRCCTRL(dlg, "chkInvert", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+			XRCCTRL(*dlg, "chkInvert", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
 		if (project->SliderZap(curSlider))
-			XRCCTRL(dlg, "chkZap", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-		XRCCTRL(dlg, "wxID_CANCEL", wxButton)->SetFocus();
+			XRCCTRL(*dlg, "chkZap", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+		XRCCTRL(*dlg, "wxID_CANCEL", wxButton)->SetFocus();
 
-		if (dlg.ShowModal() == wxID_OK) {
-			project->SetSliderZap(curSlider, XRCCTRL(dlg, "chkZap", wxCheckBox)->GetValue());
-			project->SetSliderInvert(curSlider, XRCCTRL(dlg, "chkInvert", wxCheckBox)->GetValue());
-			project->SetSliderHidden(curSlider, XRCCTRL(dlg, "chkHidden", wxCheckBox)->GetValue());
-			XRCCTRL(dlg, "edValLo", wxTextCtrl)->GetValue().ToLong(&loVal);
+		if (dlg->ShowModal() == wxID_OK) {
+			project->SetSliderZap(curSlider, XRCCTRL(*dlg, "chkZap", wxCheckBox)->GetValue());
+			project->SetSliderInvert(curSlider, XRCCTRL(*dlg, "chkInvert", wxCheckBox)->GetValue());
+			project->SetSliderHidden(curSlider, XRCCTRL(*dlg, "chkHidden", wxCheckBox)->GetValue());
+			XRCCTRL(*dlg, "edValLo", wxTextCtrl)->GetValue().ToLong(&loVal);
 			project->SetSliderDefault(curSlider, loVal, false);
-			XRCCTRL(dlg, "edValHi", wxTextCtrl)->GetValue().ToLong(&hiVal);
+			XRCCTRL(*dlg, "edValHi", wxTextCtrl)->GetValue().ToLong(&hiVal);
 			project->SetSliderDefault(curSlider, hiVal, true);
-			tmpstr = XRCCTRL(dlg, "edSliderName", wxTextCtrl)->GetValue();
+			tmpstr = XRCCTRL(*dlg, "edSliderName", wxTextCtrl)->GetValue();
 			sstr = tmpstr.ToAscii().data();
 
 			if (activeSlider != sstr) {
@@ -2563,6 +2678,7 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 				activeSlider = sstr;
 			}
 		}
+		delete dlg;
 	}
 }
 
@@ -2575,6 +2691,9 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	if (shapes.size() == 0)
 		return;
 	if (!project->baseNif.IsValid())
+		return;
+
+	if (!outfitShapes)
 		return;
 
 	StartProgress("Conforming all shapes...");
@@ -2596,7 +2715,9 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 
 	selectedItems = selectedItemsSave;
 
-	statusBar->SetStatusText("All shapes conformed.");
+	if (statusBar)
+		statusBar->SetStatusText("All shapes conformed.");
+
 	UpdateProgress(100.0f, "Finished");
 	EndProgress();
 }
@@ -2631,7 +2752,9 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 		project->morpher.CopyMeshMask(glView->GetMesh(i->shapeName), i->shapeName);
 		project->ConformShape(i->shapeName);
 
-		statusBar->SetStatusText("Shape(s) conformed.");
+		if (statusBar)
+			statusBar->SetStatusText("Shape(s) conformed.");
+
 		UpdateProgress(99.0f);
 	}
 
@@ -3494,6 +3617,9 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
+	if (!outfitBones)
+		return;
+
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3528,6 +3654,9 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
+	if (!outfitBones)
+		return;
+
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3951,9 +4080,12 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				int boneScalePos = ((wxSlider*)FindWindowByName("boneScale"))->GetValue();
-				os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
-				os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
+				if (boneScale) {
+					int boneScalePos = boneScale->GetValue();
+					os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
+					os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				}
 			}
 		}
 	}
@@ -3967,13 +4099,16 @@ void wxGLPanel::EndBrushStroke() {
 		if (activeStroke->BrushType() != TBT_MASK)
 			os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
 
-		if (activeStroke->BrushType() == TBT_WEIGHT) {
+		if (activeStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				int boneScalePos = ((wxSlider*)FindWindowByName("boneScale"))->GetValue();
-				os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
+				if (boneScale) {
+					int boneScalePos = boneScale->GetValue();
+					os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				}
 			}
 		}
 
@@ -4093,16 +4228,20 @@ bool wxGLPanel::UndoStroke() {
 			if (curStroke->BrushType() == TBT_XFORM)
 				ShowTransformTool(true, false);
 		}
-		if (curStroke && curStroke->BrushType() == TBT_WEIGHT) {
+		if (curStroke && curStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				int boneScalePos = ((wxSlider*)FindWindowByName("boneScale"))->GetValue();
-				os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
+				if (boneScale) {
+					int boneScalePos = boneScale->GetValue();
+					os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				}
 			}
 		}
 	}
+
 	Refresh();
 	return ret;
 }
@@ -4124,8 +4263,11 @@ bool wxGLPanel::RedoStroke() {
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				int boneScalePos = ((wxSlider*)FindWindowByName("boneScale"))->GetValue();
-				os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				wxSlider* boneScale = (wxSlider*)FindWindowByName("boneScale");
+				if (boneScale) {
+					int boneScalePos = boneScale->GetValue();
+					os->project->ApplyBoneScale(selectedBone, boneScalePos);
+				}
 			}
 		}
 	}
@@ -4294,20 +4436,23 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		}
 
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
-		if (cursorExists) {
-			if (bWeightPaint)
-				os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, w), 1);
-			else if (bMaskPaint)
-				os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
+		if (os->statusBar) {
+			if (cursorExists) {
+				if (bWeightPaint)
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, w), 1);
+				else if (bMaskPaint)
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
+				else {
+					vector<Vector3> verts;
+					os->project->GetLiveVerts(os->activeItem->shapeName, verts, os->activeItem->bIsOutfitShape);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
+				}
+			}
 			else {
-				vector<Vector3> verts;
-				os->project->GetLiveVerts(os->activeItem->shapeName, verts, os->activeItem->bIsOutfitShape);
-				os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
+				os->statusBar->SetStatusText("", 1);
 			}
 		}
-		else {
-			os->statusBar->SetStatusText("", 1);
-		}
+
 		Refresh();
 	}
 	lastX = x;

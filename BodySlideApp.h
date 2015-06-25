@@ -284,6 +284,14 @@ private:
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
 
+	bool OutfitIsEmpty() {
+		wxChoice* outfitChoice = (wxChoice*)FindWindowByName("outfitChoice");
+		if (outfitChoice && !outfitChoice->GetStringSelection().empty())
+			return false;
+
+		return true;
+	}
+
 	long MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam);
 
 	BodySlideApp* app;

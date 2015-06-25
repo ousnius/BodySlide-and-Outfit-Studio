@@ -741,28 +741,36 @@ private:
 	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
 			float v = glView->IncBrush() / 3.0f;
-			statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+
 			CheckBrushBounds();
 		}
 	}
 	void OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() > 0.0f) {
 			float v = glView->DecBrush() / 3.0f;
-			statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
+
 			CheckBrushBounds();
 		}
 	}
 	void OnIncStr(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() < 1.0f) {
 			float v = glView->IncStr();
-			statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+
 			CheckBrushBounds();
 		}
 	}
 	void OnDecStr(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetActiveBrush()->getStrength() > 0.0f) {
 			float v = glView->DecStr();
-			statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+			if (statusBar)
+				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
+
 			CheckBrushBounds();
 		}
 	}

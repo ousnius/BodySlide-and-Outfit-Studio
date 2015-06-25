@@ -78,6 +78,9 @@ FSManager::~FSManager() {
 
 wxArrayString FSManager::autodetectArchives() {
 	wxArrayString list;
+	if (Config["GameDataPath"].empty())
+		return list;
+
 	wxString path = Config["GameDataPath"];
 	if (!path.IsEmpty()) {
 		wxArrayString files;
