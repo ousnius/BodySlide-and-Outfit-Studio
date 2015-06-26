@@ -31,8 +31,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 
-#ifndef ARCHIVEENGINE_H
-#define ARCHIVEENGINE_H
+#pragma once
 
 #include <wx/string.h>
 #include <wx/datetime.h>
@@ -88,5 +87,3 @@ protected:
 
 	friend class FSArchiveHandler;
 };
-
-#endif

@@ -37,8 +37,7 @@
 	* everybody at gamedev.net
 **/
 
-#ifndef HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
-#define HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -429,5 +428,3 @@ const char*
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* HEADER_SIMPLE_OPENGL_IMAGE_LIBRARY	*/

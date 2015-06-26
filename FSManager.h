@@ -30,9 +30,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ***** END LICENCE BLOCK *****/
 
-
-#ifndef FSMANAGER_H
-#define FSMANAGER_H
+#pragma once
 
 #include <wx/arrstr.h>
 #include <map>
@@ -63,6 +61,3 @@ protected:
 	//! Builds a list of global BSAs on Windows platforms
 	static wxArrayString autodetectArchives();
 };
-
-#endif
-
