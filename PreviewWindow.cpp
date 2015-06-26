@@ -227,6 +227,7 @@ void PreviewWindow::Pick(int X, int Y) {
 void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	Destroy();
 	canvas = nullptr;
+	delete context;
 	app->PreviewClosed(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
 }
 

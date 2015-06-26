@@ -86,10 +86,6 @@ public:
 	*/
 	bool fileContents(const wxString&, wxMemoryBuffer&) override final;
 
-	//! See QFileInfo::ownerId().
-	wxUint32 ownerId(const wxString&) const override final;
-	//! See QFileInfo::owner().
-	wxString owner(const wxString&) const override final;
 	//! See QFileInfo::created().
 	wxDateTime fileTime(const wxString&) const override final;
 	//! See QFileInfo::absoluteFilePath().

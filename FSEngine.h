@@ -80,8 +80,6 @@ public:
 	virtual bool fileContents(const wxString&, wxMemoryBuffer&) = 0;
 	virtual wxString absoluteFilePath(const wxString&) const = 0;
 
-	virtual wxUint32 ownerId(const wxString&) const = 0;
-	virtual wxString owner(const wxString&) const = 0;
 	virtual wxDateTime fileTime(const wxString&) const = 0;
 
 protected:

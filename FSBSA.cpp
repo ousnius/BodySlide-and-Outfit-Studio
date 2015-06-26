@@ -123,12 +123,10 @@ struct MWBSAFileSizeOffset {
 	wxUint32 offset; //!< The offset of the file
 };
 
-// see bsa.h
 wxUint32 BSA::BSAFile::size() const {
 	return sizeFlags & OB_BSAFILE_SIZEMASK;
 }
 
-// see bsa.h
 bool BSA::BSAFile::compressed() const {
 	return sizeFlags & OB_BSAFILE_FLAG_COMPRESS;
 }
@@ -155,20 +153,16 @@ static bool BSAReadSizedString(wxFile &bsa, wxString &s) {
 	}
 }
 
-// see bsa.h
 BSA::BSA(const wxString &filename) : FSArchiveFile(), bsa(filename), bsaInfo(filename), status("initialized") {
-	// see bsa.h
 	bsaPath = bsaInfo.GetPathWithSep() + bsaInfo.GetFullName();
 	bsaBase = bsaInfo.GetPath();
 	bsaName = bsaInfo.GetFullName();
 }
 
-// see bsa.h
 BSA::~BSA() {
 	close();
 }
 
-// see bsa.h
 bool BSA::canOpen(const wxString &fn) {
 	wxFile f(fn);
 	if (f.IsOpened()) {
@@ -191,7 +185,6 @@ bool BSA::canOpen(const wxString &fn) {
 	return false;
 }
 
-// see bsa.h
 bool BSA::open() {
 	wxMutexLocker lock(bsaMutex);
 
@@ -348,7 +341,6 @@ bool BSA::open() {
 	return true;
 }
 
-// see bsa.h
 void BSA::close() {
 	wxMutexLocker lock(bsaMutex);
 
@@ -357,12 +349,12 @@ void BSA::close() {
 		delete it.second;
 	for (auto it : root.files)
 		delete it.second;
+
 	root.children.clear();
 	root.files.clear();
 	folders.clear();
 }
 
-// see bsa.h
 wxInt64 BSA::fileSize(const wxString & fn) const {
 	// note: lazy size count (not accurate for compressed files)
 	if (const BSAFile *file = getFile(fn))
@@ -371,7 +363,6 @@ wxInt64 BSA::fileSize(const wxString & fn) const {
 	return 0;
 }
 
-// see bsa.h
 bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 	//qDebug() << "entering fileContents for" << fn;
 	if (const BSAFile *file = getFile(fn)) {
@@ -422,7 +413,6 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 	return false;
 }
 
-// see bsa.h
 wxString BSA::absoluteFilePath(const wxString &fn) const {
 	if (hasFile(fn)) {
 		wxFileName fileInfo(fn);
@@ -432,7 +422,6 @@ wxString BSA::absoluteFilePath(const wxString &fn) const {
 	return wxString();
 }
 
-// see bsa.h
 BSA::BSAFolder *BSA::insertFolder(wxString name) {
 	if (name.IsEmpty())
 		return &root;
@@ -461,7 +450,6 @@ BSA::BSAFolder *BSA::insertFolder(wxString name) {
 	return folder;
 }
 
-// see bsa.h
 BSA::BSAFile *BSA::insertFile(BSAFolder *folder, wxString name, wxUint32 sizeFlags, wxUint32 offset) {
 	name = name.Lower();
 
@@ -473,7 +461,6 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, wxString name, wxUint32 sizeFla
 	return file;
 }
 
-// see bsa.h
 const BSA::BSAFolder *BSA::getFolder(wxString fn) const {
 	if (fn.IsEmpty()) {
 		return &root;
@@ -490,7 +477,6 @@ const BSA::BSAFolder *BSA::getFolder(wxString fn) const {
 	return nullptr;
 }
 
-// see bsa.h
 const BSA::BSAFile *BSA::getFile(wxString fn) const {
 	wxString folderName;
 	wxString fileName = fn.Lower();
@@ -515,29 +501,14 @@ const BSA::BSAFile *BSA::getFile(wxString fn) const {
 	return nullptr;
 }
 
-// see bsa.h
 bool BSA::hasFile(const wxString &fn) const {
 	return getFile(fn);
 }
 
-// see bsa.h
 bool BSA::hasFolder(const wxString &fn) const {
 	return getFolder(fn);
 }
 
-// see bsa.h
-wxUint32 BSA::ownerId(const wxString&) const {
-	// not Windows
-	return -2;
-}
-
-// see bsa.h
-wxString BSA::owner(const wxString&) const {
-	// not Windows
-	return "";
-}
-
-// see bsa.h
 wxDateTime BSA::fileTime(const wxString&) const {
 	wxDateTime created;
 	bsaInfo.GetTimes(nullptr, nullptr, &created);

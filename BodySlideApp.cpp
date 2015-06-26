@@ -1,5 +1,6 @@
 #include "BodySlideApp.h"
 #include "XmlFinder.h"
+#include "FSManager.h"
 
 #include <sstream>
 
@@ -51,6 +52,7 @@ BodySlideApp::~BodySlideApp() {
 		ClosePreview(BIG_PREVIEW);
 
 	Config.SaveConfig("Config.xml");
+	FSManager::del();
 }
 
 bool BodySlideApp::OnInit() {

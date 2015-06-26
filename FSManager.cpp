@@ -40,14 +40,18 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 //! Global BSA file manager
 static FSManager *theFSManager = nullptr;
-// see fsmanager.h
+
 FSManager* FSManager::get() {
 	if (!theFSManager)
 		theFSManager = new FSManager();
 	return theFSManager;
 }
 
-// see fsmanager.h
+void FSManager::del() {
+	if (theFSManager)
+		delete theFSManager;
+}
+
 std::list<FSArchiveFile*> FSManager::archiveList() {
 	std::list<FSArchiveFile*> archives;
 
@@ -57,7 +61,6 @@ std::list<FSArchiveFile*> FSManager::archiveList() {
 	return archives;
 }
 
-// see fsmanager.h
 FSManager::FSManager() {
 	wxArrayString list;
 	list = autodetectArchives();
@@ -68,7 +71,6 @@ FSManager::FSManager() {
 	}
 }
 
-// see fsmanager.h
 FSManager::~FSManager() {
 	for (auto it : archives)
 		delete it.second;
@@ -92,72 +94,3 @@ wxArrayString FSManager::autodetectArchives() {
 
 	return list;
 }
-
-/* TEMPLATE CODE HERE
-FSSelector::~FSSelector()
-{
-	QSettings cfg;
-	QStringList list( manager->automatic ? QStringList() << "AUTO" : manager->archives.keys() );
-	cfg.setValue( "FSEngine/Archives", list );
-
-	emit Options::get()->sigFlush3D();
-}
-
-void FSSelector::sltAuto( bool x )
-{
-	if ( x )
-	{
-		qDeleteAll( manager->archives );
-		manager->archives.clear();
-		
-		for ( const QString an : manager->autodetectArchives() )
-		{
-			if ( FSArchiveHandler * a = FSArchiveHandler::openArchive( an ) )
-			{
-				manager->archives.insert( an, a );
-			}
-		}
-		
-		model->setStringList( manager->archives.keys() );
-	}
-	
-	manager->automatic = x;
-	
-	btAdd->setDisabled( x );
-	btDel->setDisabled( x );
-	btDelAll->setDisabled( x );
-}
-
-void FSSelector::sltAdd()
-{
-	QStringList list = QFileDialog::getOpenFileNames( this, "Select resource files to add", QString(), "BSA (*.bsa)" );
-	
-	for ( const QString an : list )
-	{
-		if ( ! manager->archives.contains( an ) )
-			if ( FSArchiveHandler * a = FSArchiveHandler::openArchive( an ) )
-				manager->archives.insert( an, a );
-	}
-	
-	model->setStringList( manager->archives.keys() );
-}
-
-void FSSelector::sltDel()
-{
-	QString an = view->currentIndex().data( Qt::DisplayRole ).toString();
-	if ( FSArchiveHandler * a = manager->archives.take( an ) )
-	{
-		delete a;
-	}
-	
-	model->setStringList( manager->archives.keys() );
-}
-
-void FSSelector::sltDelAll()
-{
-	qDeleteAll( manager->archives );
-	manager->archives.clear();
-
-	model->setStringList( QStringList() );
-}
-*/

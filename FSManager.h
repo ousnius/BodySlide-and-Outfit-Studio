@@ -47,6 +47,8 @@ class FSManager {
 public:
 	//! Gets the global file system manager
 	static FSManager *get();
+	//! Deletes the global file system manager
+	static void del();
 	//! Gets the list of globally registered BSA files
 	static std::list<FSArchiveFile*> archiveList();
 
