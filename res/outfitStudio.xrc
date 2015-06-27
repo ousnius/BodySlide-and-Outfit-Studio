@@ -137,6 +137,152 @@
 				<object class="wxBoxSizer">
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>0</border>
+						<object class="wxCollapsiblePane" name="brushPane">
+							<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+							<collapsed>1</collapsed>
+							<label>Brush Settings</label>
+							<object class="panewindow">
+								<object class="wxFlexGridSizer">
+									<rows>0</rows>
+									<cols>3</cols>
+									<vgap>0</vgap>
+									<hgap>0</hgap>
+									<growablecols>1</growablecols>
+									<growablerows></growablerows>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="lbBrushSize">
+											<label>Size</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>5</border>
+										<object class="wxSlider" name="brushSize">
+											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+											<size>-1,25</size>
+											<value>0</value>
+											<min>0</min>
+											<max>1000</max>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="valSize">
+											<label>0.000</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="lbBrushStrength">
+											<label>Strength</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>5</border>
+										<object class="wxSlider" name="brushStr">
+											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+											<size>-1,25</size>
+											<value>0</value>
+											<min>0</min>
+											<max>1000</max>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="valStr">
+											<label>0.000</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="lbBrushFocus">
+											<label>Focus</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>5</border>
+										<object class="wxSlider" name="brushFocus">
+											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+											<size>-1,25</size>
+											<value>0</value>
+											<min>0</min>
+											<max>1000</max>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="valFocus">
+											<label>0.000</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="lbBrushSpace">
+											<label>Spacing</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>5</border>
+										<object class="wxSlider" name="brushSpace">
+											<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
+											<size>-1,25</size>
+											<value>0</value>
+											<min>0</min>
+											<max>1000</max>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="valSpace">
+											<label>0.000</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="spacer">
+										<option>4</option>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>5</border>
+										<size>0,0</size>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
 						<option>1</option>
 						<flag>wxALL|wxEXPAND</flag>
 						<border>0</border>
@@ -846,10 +992,6 @@
 						<disabled>1</disabled>
 						<radio>1</radio>
 					</object>
-				</object>
-				<object class="wxMenuItem" name="brushSettings">
-					<label>Settings...\tSpace</label>
-					<help>Configure current brush settings.</help>
 				</object>
 				<object class="wxMenuItem" name="btnIncreaseSize">
 					<label>Increase Brush Size\tShift++</label>
@@ -3040,185 +3182,6 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND|wxALL</flag>
-				<border>5</border>
-				<object class="wxStdDialogButtonSizer">
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxButton" name="wxID_OK">
-							<label>&amp;OK</label>
-						</object>
-					</object>
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxButton" name="wxID_CANCEL">
-							<label>&amp;Cancel</label>
-						</object>
-					</object>
-				</object>
-			</object>
-		</object>
-	</object>
-	<object class="wxDialog" name="dlgBrushSettings">
-		<style>wxDEFAULT_DIALOG_STYLE|wxCLIP_CHILDREN</style>
-		<size>420,160</size>
-		<title>Brush Settings</title>
-		<centered>1</centered>
-		<object class="wxFlexGridSizer">
-			<rows>0</rows>
-			<cols>3</cols>
-			<vgap>0</vgap>
-			<hgap>0</hgap>
-			<growablecols></growablecols>
-			<growablerows></growablerows>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="m_staticText1">
-					<label>Size</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxSlider" name="slideSize">
-					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-					<size>450,25</size>
-					<value>0</value>
-					<min>0</min>
-					<max>1000</max>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="valSize">
-					<label>1.000</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="m_staticText2">
-					<label>Strength</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxSlider" name="slideStr">
-					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-					<size>450,25</size>
-					<value>0</value>
-					<min>0</min>
-					<max>1000</max>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="valStr">
-					<label>0</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="lblslideFocus">
-					<label>Focus</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxSlider" name="slideFocus">
-					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-					<size>450,25</size>
-					<value>0</value>
-					<min>0</min>
-					<max>1000</max>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="valFocus">
-					<label>0</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="lblslideSpace">
-					<label>Spacing</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxSlider" name="slideSpace">
-					<style>wxSL_BOTH|wxSL_HORIZONTAL</style>
-					<size>450,25</size>
-					<value>0</value>
-					<min>0</min>
-					<max>1000</max>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALIGN_CENTER|wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="valSpace">
-					<label>0</label>
-					<wrap>-1</wrap>
-				</object>
-			</object>
-			<object class="spacer">
-				<option>1</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<size>0,0</size>
-			</object>
-			<object class="spacer">
-				<option>1</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<size>0,0</size>
-			</object>
-			<object class="spacer">
-				<option>1</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<size>0,0</size>
-			</object>
-			<object class="spacer">
-				<option>1</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<size>0,50</size>
-			</object>
-			<object class="sizeritem">
-				<option>1</option>
 				<flag>wxEXPAND|wxALL</flag>
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">

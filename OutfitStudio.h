@@ -29,6 +29,7 @@
 #include <wx/spinctrl.h>
 #include <wx/dataview.h>
 #include <wx/splitter.h>
+#include <wx/collpane.h>
 
 
 class ShapeItemData : public wxTreeItemData  {
@@ -589,6 +590,7 @@ private:
 	void OnSaveSliderSet(wxCommandEvent &event);
 	void OnSaveSliderSetAs(wxCommandEvent &event);
 
+	void OnBrushPane(wxCollapsiblePaneEvent &event);
 
 	void OnSlider(wxScrollEvent& event);
 	void OnClickSliderButton(wxCommandEvent &event);
@@ -736,8 +738,6 @@ private:
 		glView->Refresh();
 	}
 
-	void OnBrushSettings(wxCommandEvent& event);
-
 	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
 		if (glView->GetActiveBrush() && glView->GetBrushSize() < 1.0f) {
 			float v = glView->IncBrush() / 3.0f;
@@ -745,6 +745,7 @@ private:
 				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 
 			CheckBrushBounds();
+			UpdateBrushPane();
 		}
 	}
 	void OnDecBrush(wxCommandEvent& WXUNUSED(event)) {
@@ -754,6 +755,7 @@ private:
 				statusBar->SetStatusText(wxString::Format("Rad: %f", v), 2);
 
 			CheckBrushBounds();
+			UpdateBrushPane();
 		}
 	}
 	void OnIncStr(wxCommandEvent& WXUNUSED(event)) {
@@ -763,6 +765,7 @@ private:
 				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
 
 			CheckBrushBounds();
+			UpdateBrushPane();
 		}
 	}
 	void OnDecStr(wxCommandEvent& WXUNUSED(event)) {
@@ -772,11 +775,45 @@ private:
 				statusBar->SetStatusText(wxString::Format("Str: %f", v), 2);
 
 			CheckBrushBounds();
+			UpdateBrushPane();
 		}
+	}
+
+	void UpdateBrushPane() {
+		TweakBrush* brush = glView->GetActiveBrush();
+		if (!brush)
+			return;
+
+		wxCollapsiblePane* parent = (wxCollapsiblePane*)FindWindowByName("brushPane");
+		if (!parent)
+			return;
+
+		XRCCTRL(*parent, "brushSize", wxSlider)->SetValue(glView->GetBrushSize() * 1000.0f);
+		wxStaticText* valSize = (wxStaticText*)XRCCTRL(*parent, "valSize", wxStaticText);
+		wxString valSizeStr = wxString::Format("%0.3f", glView->GetBrushSize());
+		valSize->SetLabel(valSizeStr);
+
+		XRCCTRL(*parent, "brushStr", wxSlider)->SetValue(brush->getStrength() * 1000.0f);
+		wxStaticText* valStr = (wxStaticText*)XRCCTRL(*parent, "valStr", wxStaticText);
+		wxString valStrengthStr = wxString::Format("%0.3f", brush->getStrength());
+		valStr->SetLabel(valStrengthStr);
+
+		XRCCTRL(*parent, "brushFocus", wxSlider)->SetValue(brush->getFocus() * 1000.0f);
+		wxStaticText* valFocus = (wxStaticText*)XRCCTRL(*parent, "valFocus", wxStaticText);
+		wxString valFocusStr = wxString::Format("%0.3f", brush->getFocus());
+		valFocus->SetLabel(valFocusStr);
+
+		XRCCTRL(*parent, "brushSpace", wxSlider)->SetValue(brush->getSpacing() * 1000.0f);
+		wxStaticText* valSpace = (wxStaticText*)XRCCTRL(*parent, "valSpace", wxStaticText);
+		wxString valSpacingStr = wxString::Format("%0.3f", brush->getSpacing());
+		valSpace->SetLabel(valSpacingStr);
 	}
 
 	void CheckBrushBounds() {
 		TweakBrush* brush = glView->GetActiveBrush();
+		if (!brush)
+			return;
+
 		float size = glView->GetBrushSize();
 		float strength = brush->getStrength();
 		//float focus = brush->getFocus();

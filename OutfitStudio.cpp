@@ -14,6 +14,12 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("fileLoadOutfit"), OutfitStudio::OnLoadOutfit)
 	EVT_MENU(XRCID("fileSave"), OutfitStudio::OnSaveSliderSet)
 	EVT_MENU(XRCID("fileSaveAs"), OutfitStudio::OnSaveSliderSetAs)
+
+	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("brushPane"), OutfitStudio::OnBrushPane)
+	EVT_COMMAND_SCROLL(XRCID("brushSize"), OutfitStudio::OnBrushSettingsSlider)
+	EVT_COMMAND_SCROLL(XRCID("brushStr"), OutfitStudio::OnBrushSettingsSlider)
+	EVT_COMMAND_SCROLL(XRCID("brushFocus"), OutfitStudio::OnBrushSettingsSlider)
+	EVT_COMMAND_SCROLL(XRCID("brushSpace"), OutfitStudio::OnBrushSettingsSlider)
 	
 	EVT_TEXT_ENTER(wxID_ANY, OutfitStudio::OnReadoutChange)
 	EVT_COMMAND_SCROLL(wxID_ANY, OutfitStudio::OnSlider)
@@ -58,7 +64,6 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("btnViewRight"), OutfitStudio::OnSetView)
 	EVT_MENU(XRCID("btnViewPerspective"), OutfitStudio::OnTogglePerspective)
 	
-	EVT_MENU(XRCID("brushSettings"), OutfitStudio::OnBrushSettings)
 	EVT_MENU(XRCID("btnIncreaseSize"), OutfitStudio::OnIncBrush)
 	EVT_MENU(XRCID("btnDecreaseSize"), OutfitStudio::OnDecBrush)
 	EVT_MENU(XRCID("btnIncreaseStr"), OutfitStudio::OnIncStr)
@@ -698,80 +703,38 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	EndProgress();
 }
 
-void OutfitStudio::OnBrushSettingsSlider(wxScrollEvent& event) {
-	int id = event.GetId();
-	wxString valStr;
-	if (id == XRCID("slideSize")) {
-		wxWindow* w = ((wxSlider*)event.GetEventObject())->GetParent();
-		wxStaticText* lbl = (wxStaticText*)XRCCTRL((*w), "valSize", wxStaticText);
-		valStr.sprintf("%.3f", (float)event.GetInt() / 1000.0f);
-		lbl->SetLabel(valStr);
-	}
-	else if (id == XRCID("slideStr")) {
-		wxWindow* w = ((wxSlider*)event.GetEventObject())->GetParent();
-		wxStaticText* lbl = (wxStaticText*)XRCCTRL((*w), "valStr", wxStaticText);
-		valStr.sprintf("%.3f", (float)event.GetInt() / 1000.0f);
-		lbl->SetLabel(valStr);
-	}
-	else if (id == XRCID("slideFocus")) {
-		wxWindow* w = ((wxSlider*)event.GetEventObject())->GetParent();
-		wxStaticText* lbl = (wxStaticText*)XRCCTRL((*w), "valFocus", wxStaticText);
-		valStr.sprintf("%.3f", (float)event.GetInt() / 1000.0f);
-		lbl->SetLabel(valStr);
-	}
-	else if (id == XRCID("slideSpace")) {
-		wxWindow* w = ((wxSlider*)event.GetEventObject())->GetParent();
-		wxStaticText* lbl = (wxStaticText*)XRCCTRL((*w), "valSpace", wxStaticText);
-		valStr.sprintf("%.3f", (float)event.GetInt() / 1000.0f);
-		lbl->SetLabel(valStr);
-	}
-}
-
-void OutfitStudio::OnBrushSettings(wxCommandEvent& WXUNUSED(event)) {
-	TweakBrush* tb = glView->GetActiveBrush();
-	if (!tb)
+void OutfitStudio::OnBrushSettingsSlider(wxScrollEvent& WXUNUSED(event)) {
+	TweakBrush* brush = glView->GetActiveBrush();
+	wxCollapsiblePane* parent = (wxCollapsiblePane*)FindWindowByName("brushPane");
+	if (!parent)
 		return;
 
-	wxDialog dlg;
-	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgBrushSettings", "wxDialog")) {
-		wxString valstr;
-		XRCCTRL(dlg, "slideSize", wxSlider)->SetValue(glView->GetBrushSize() * 1000.0f);
-		wxStaticText* lbl = (wxStaticText*)XRCCTRL(dlg, "valSize", wxStaticText);
-		valstr.sprintf("%.3f", glView->GetBrushSize());
-		lbl->SetLabel(valstr);
+	wxStaticText* valSize = (wxStaticText*)XRCCTRL(*parent, "valSize", wxStaticText);
+	wxStaticText* valStrength = (wxStaticText*)XRCCTRL(*parent, "valStr", wxStaticText);
+	wxStaticText* valFocus = (wxStaticText*)XRCCTRL(*parent, "valFocus", wxStaticText);
+	wxStaticText* valSpacing = (wxStaticText*)XRCCTRL(*parent, "valSpace", wxStaticText);
 
-		XRCCTRL(dlg, "slideStr", wxSlider)->SetValue(tb->getStrength() * 1000.0f);
-		lbl = (wxStaticText*)XRCCTRL(dlg, "valStr", wxStaticText);
-		valstr.sprintf("%.3f", tb->getStrength());
-		lbl->SetLabel(valstr);
+	float slideSize = XRCCTRL(*parent, "brushSize", wxSlider)->GetValue() / 1000.0f;
+	float slideStr = XRCCTRL(*parent, "brushStr", wxSlider)->GetValue() / 1000.0f;
+	float slideFocus = XRCCTRL(*parent, "brushFocus", wxSlider)->GetValue() / 1000.0f;
+	float slideSpace = XRCCTRL(*parent, "brushSpace", wxSlider)->GetValue() / 1000.0f;
 
-		XRCCTRL(dlg, "slideFocus", wxSlider)->SetValue(tb->getFocus() * 1000.0f);
-		lbl = (wxStaticText*)XRCCTRL(dlg, "valFocus", wxStaticText);
-		valstr.sprintf("%.3f", tb->getFocus());
-		lbl->SetLabel(valstr);
+	wxString valSizeStr = wxString::Format("%0.3f", slideSize);
+	wxString valStrengthStr = wxString::Format("%0.3f", slideStr);
+	wxString valFocusStr = wxString::Format("%0.3f", slideFocus);
+	wxString valSpacingStr = wxString::Format("%0.3f", slideSpace);
 
-		XRCCTRL(dlg, "slideSpace", wxSlider)->SetValue(tb->getSpacing() * 1000.0f);
-		lbl = (wxStaticText*)XRCCTRL(dlg, "valSpace", wxStaticText);
-		valstr.sprintf("%.3f", tb->getSpacing());
-		lbl->SetLabel(valstr);
+	valSize->SetLabel(valSizeStr);
+	valStrength->SetLabel(valStrengthStr);
+	valFocus->SetLabel(valFocusStr);
+	valSpacing->SetLabel(valSpacingStr);
 
-		dlg.Connect(wxEVT_SLIDER, wxScrollEventHandler(OutfitStudio::OnBrushSettingsSlider), 0, this);
-		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
-
-		int result = dlg.ShowModal();
-		if (result == wxID_OK) {
-			float slideSize = XRCCTRL(dlg, "slideSize", wxSlider)->GetValue() / 1000.0f;
-			float slideStr = XRCCTRL(dlg, "slideStr", wxSlider)->GetValue() / 1000.0f;
-			float slideFocus = XRCCTRL(dlg, "slideFocus", wxSlider)->GetValue() / 1000.0f;
-			float slideSpace = XRCCTRL(dlg, "slideSpace", wxSlider)->GetValue() / 1000.0f;
-
-			glView->SetBrushSize(slideSize);
-			tb->setStrength(slideStr);
-			tb->setFocus(slideFocus);
-			tb->setSpacing(slideSpace);
-
-			CheckBrushBounds();
-		}
+	if (brush) {
+		glView->SetBrushSize(slideSize);
+		brush->setStrength(slideStr);
+		brush->setFocus(slideFocus);
+		brush->setSpacing(slideSpace);
+		CheckBrushBounds();
 	}
 }
 
@@ -1524,6 +1487,19 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	EndProgress();
 }
 
+void OutfitStudio::OnBrushPane(wxCollapsiblePaneEvent& event) {
+	wxCollapsiblePane* brushPane = (wxCollapsiblePane*)event.GetEventObject();
+	if (!brushPane)
+		return;
+
+	if (!glView->GetActiveBrush())
+		brushPane->Collapse();
+
+	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
+	if (leftPanel)
+		leftPanel->Layout();
+}
+
 void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearBoneScale();
 	vector<string> shapes;
@@ -1850,61 +1826,67 @@ void OutfitStudio::OnCheckBox(wxCommandEvent& event) {
 void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 	int id = event.GetId();
 	wxWindow* w = FindFocus();
+	wxMenuBar* menuBar = GetMenuBar();
+	wxToolBar* toolBar = GetToolBar();
+
 	wxString s = w->GetName();
 	if (s.EndsWith("|readout")){
-		GetMenuBar()->Disable();
+		menuBar->Disable();
 		return;
 	}
 
 	if (glView->GetActiveBrush() && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
 		glView->SetXMirror(previousMirror);
-		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
+		menuBar->Check(XRCID("btnXMirror"), previousMirror);
 	}
 
 	if (id == XRCID("btnSelect")) {
 		glView->SetEditMode(false);
-		GetMenuBar()->Check(XRCID("btnSelect"), true);
-		GetToolBar()->ToggleTool(XRCID("btnSelect"), true);
+		menuBar->Check(XRCID("btnSelect"), true);
+		toolBar->ToggleTool(XRCID("btnSelect"), true);
 		return;
 	}
 	if (id == XRCID("btnMaskBrush")) {
 		glView->SetActiveBrush(0);
-		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
-		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
+		menuBar->Check(XRCID("btnMaskBrush"), true);
+		toolBar->ToggleTool(XRCID("btnMaskBrush"), true);
 	}
 	else if (id == XRCID("btnInflateBrush")) {
 		glView->SetActiveBrush(1);
-		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
-		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
+		menuBar->Check(XRCID("btnInflateBrush"), true);
+		toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
 	}
 	else if (id == XRCID("btnDeflateBrush")) {
 		glView->SetActiveBrush(2);
-		GetMenuBar()->Check(XRCID("btnDeflateBrush"), true);
-		GetToolBar()->ToggleTool(XRCID("btnDeflateBrush"), true);
+		menuBar->Check(XRCID("btnDeflateBrush"), true);
+		toolBar->ToggleTool(XRCID("btnDeflateBrush"), true);
 	}
 	else if (id == XRCID("btnMoveBrush")) {
 		glView->SetActiveBrush(3);
-		GetMenuBar()->Check(XRCID("btnMoveBrush"), true);
-		GetToolBar()->ToggleTool(XRCID("btnMoveBrush"), true);
+		menuBar->Check(XRCID("btnMoveBrush"), true);
+		toolBar->ToggleTool(XRCID("btnMoveBrush"), true);
 	}
 	else if (id == XRCID("btnSmoothBrush")) {
 		glView->SetActiveBrush(4);
-		GetMenuBar()->Check(XRCID("btnSmoothBrush"), true);
-		GetToolBar()->ToggleTool(XRCID("btnSmoothBrush"), true);
+		menuBar->Check(XRCID("btnSmoothBrush"), true);
+		toolBar->ToggleTool(XRCID("btnSmoothBrush"), true);
 	}
 	else if (id == XRCID("btnWeightBrush")) {
 		glView->SetActiveBrush(10);
-		GetMenuBar()->Check(XRCID("btnWeightBrush"), true);
-		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
+		menuBar->Check(XRCID("btnWeightBrush"), true);
+		toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
-		GetMenuBar()->Check(XRCID("btnXMirror"), false);
+		menuBar->Check(XRCID("btnXMirror"), false);
 	}
 	else {
 		glView->SetEditMode(false);
 		return;
 	}
 	glView->SetEditMode();
+
+	CheckBrushBounds();
+	UpdateBrushPane();
 }
 
 void OutfitStudio::OnSetView(wxCommandEvent& event) {
@@ -2197,6 +2179,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		}
 
 		if (toolBar) {
+			toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
 			toolBar->EnableTool(XRCID("btnWeightBrush"), true);
 			toolBar->EnableTool(XRCID("btnInflateBrush"), false);
 			toolBar->EnableTool(XRCID("btnDeflateBrush"), false);
@@ -2220,6 +2203,9 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		if (boneTabButton)
 			boneTabButton->SetCheck(false);
 	}
+
+	CheckBrushBounds();
+	UpdateBrushPane();
 
 	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
 	if (topSplitPanel)
@@ -2310,6 +2296,10 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 	if (!s)
 		return;
 
+	string sliderName = s->GetName();
+	if (sliderName == "brushSize" || sliderName == "brushStrength" || sliderName == "brushFocus" || sliderName == "brushSpacing")
+		return;
+
 	if (IsDirty() && !bEditSlider) {
 		sentinel = true;
 		if (PromptUpdateBase() == wxCANCEL)
@@ -2317,7 +2307,6 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 		sentinel = false;
 	}
 
-	string sliderName = s->GetName();
 	if (outfitBones && sliderName == "boneScale") {
 		wxArrayTreeItemIds selItems;
 		outfitBones->GetSelections(selItems);
