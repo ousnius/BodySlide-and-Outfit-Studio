@@ -167,7 +167,9 @@ string OutfitProject::Save(const string& strFileName,
 		if (copyRef) {
 			for (auto rs : refShapes)
 				clone.CopyShape(rs, baseNif, rs);
-			baseAnim.WriteToNif(&clone, false);
+
+			if (!refShapes.empty())
+				baseAnim.WriteToNif(&clone, false);
 		}
 
 		workAnim.WriteToNif(&clone);
@@ -660,8 +662,8 @@ const string& OutfitProject::ShapeToTarget(const string& shapeName) {
 }
 
 void OutfitProject::RefShapes(vector<string>& outShapeNames) {
-	outShapeNames.push_back(baseShapeName);
-	//baseNif.GetShapeList(outShapeNames);
+	if (!baseShapeName.empty())
+		outShapeNames.push_back(baseShapeName);
 }
 
 void OutfitProject::OutfitShapes(vector<string>& outShapeNames) {

@@ -1372,11 +1372,6 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	int result = wxID_CANCEL;
 
-	if (!project->baseNif.IsValid()) {
-		wxMessageBox("You can not save a project without a valid reference shape loaded!", "Error", wxOK | wxICON_ERROR, this);
-		return;
-	}
-
 	if (project->OutfitHasUnweighted()) {
 		int ret = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
 		if (ret != wxYES)
@@ -1432,7 +1427,13 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->SetValue(false);
 			XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->SetValue(true);
 		}
-		XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(project->mCopyRef);
+		if (project->baseShapeName.empty()) {
+			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->Disable();
+		}
+		else
+			XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->SetValue(project->mCopyRef);
+
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
