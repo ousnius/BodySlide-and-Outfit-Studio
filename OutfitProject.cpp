@@ -1455,7 +1455,7 @@ int OutfitProject::AddNif(const string& filename) {
 
 	RefShapes(refShapes);
 	for (auto s : refShapes)
-		nif.RenameShape(s, s + "_outfit");
+		RenameShape(s, s + "_outfit", true);
 
 	nif.GetShapeList(workShapes);
 
@@ -1484,7 +1484,7 @@ int OutfitProject::AddNif(const string& filename) {
 
 	if (!dups.empty()) {
 		for (auto d : dups) {
-			nif.RenameShape(d, d + "_dup");
+			nif.RenameDuplicateShape(d);
 		}
 	}
 	nif.GetShapeList(workShapes);
