@@ -209,7 +209,7 @@ public:
 	void DeleteSlider(const string& sliderName);
 
 	int LoadSkeletonReference(const string& skeletonFileName);
-	int LoadReferenceTemplate(const string& templateName, bool ClearRef = true);
+	int LoadReferenceTemplate(const string& templateName, bool clearRef = true);
 	int LoadReferenceNif(const string& fileName, const string& shapeName, bool ClearRef = true);
 	int LoadReference(const string& filename, const string& setName, bool ClearRef = true, const string& shapeName = "");
 	int LoadOutfit(const string& filename, const string& inOutfitName);

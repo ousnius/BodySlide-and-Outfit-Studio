@@ -1194,29 +1194,36 @@ int OutfitProject::LoadSkeletonReference(const string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const string& templateName, bool ClearRef) {
+int OutfitProject::LoadReferenceTemplate(const string& templateName, bool clearRef) {
 	vector<string> templateNames;
 	vector<string> templateFiles;
 	vector<string> templateSets;
+	vector<string> templateShapes;
 	Config.GetValueArray("ReferenceTemplates", "Template", templateNames);
 	Config.GetValueAttributeArray("ReferenceTemplates", "Template", "sourcefile", templateFiles);
 	Config.GetValueAttributeArray("ReferenceTemplates", "Template", "set", templateSets);
+	Config.GetValueAttributeArray("ReferenceTemplates", "Template", "shape", templateShapes);
 
-	string srcfile;
-	string srcset;
+	string srcFile;
+	string srcSet;
+	string srcShape;
 
 	for (int i = 0; i < templateNames.size(); i++) {
 		if (templateNames[i] == templateName) {
-			srcfile = templateFiles[i];
-			srcset = templateSets[i];
+			if (templateFiles.size() >= templateNames.size())
+				srcFile = templateFiles[i];
+			if (templateSets.size() >= templateNames.size())
+				srcSet = templateSets[i];
+			if (templateShapes.size() >= templateNames.size())
+				srcShape = templateShapes[i];
 		}
 	}
-	if (srcfile.empty()) {
-		wxMessageBox("Template source file entry is invalid.", "Reference Error", wxICON_ERROR);
+	if (srcFile.empty() || srcSet.empty()) {
+		wxMessageBox("Template source entries are invalid.", "Reference Error", wxICON_ERROR);
 		return 1;
 	}
 
-	return LoadReference(srcfile, srcset, ClearRef);
+	return LoadReference(srcFile, srcSet, clearRef, srcShape);
 }
 
 int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeName, bool ClearRef) {
