@@ -1668,15 +1668,30 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 	}
 }
 
+bool OutfitProject::IsShapeSkinShaded(NifFile* nif, const string& shapeName) {
+	BSLightingShaderProperty* shader = nif->GetShaderForShape(shapeName);
+	if (!shader) {
+		BSShaderPPLightingProperty* shaderPP = nif->GetShaderPPForShape(shapeName);
+		if (shaderPP && shaderPP->IsSkinShader())
+			return true;
+	}
+	else if (shader->IsSkinShader())
+		return true;
+
+	return false;
+}
+
 void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMeshes) {
 	vector<Vector3> liveNorms;
 	for (auto m : shapeMeshes) {
+		if (IsShapeSkinShaded(nif, m->shapeName))
+			continue;
+
 		liveNorms.clear();
 		for (int i = 0; i < m->nVerts; i++)
 			liveNorms.emplace_back(move(Vector3(m->verts[i].nx* -1, m->verts[i].nz, m->verts[i].ny)));
 
 		nif->SetNormalsForShape(m->shapeName, liveNorms);
-		//nif->RecalculateNormals();
 		nif->CalcTangentsForShape(m->shapeName);
 	}
 }
@@ -1698,18 +1713,11 @@ int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& mo
 		clone.SetVertsForShape(m->shapeName, liveVerts);
 
 		if (writeNormals) {
-			BSLightingShaderProperty* shader = clone.GetShaderForShape(m->shapeName);
-			if (!shader) {
-				BSShaderPPLightingProperty* shaderPP = clone.GetShaderPPForShape(m->shapeName);
-				if (shaderPP && !shaderPP->IsSkinShader()) {
-					clone.SetNormalsForShape(m->shapeName, liveNorms);
-					clone.CalcTangentsForShape(m->shapeName);
-				}
-			}
-			else if (!shader->IsSkinShader()) {
-				clone.SetNormalsForShape(m->shapeName, liveNorms);
-				clone.CalcTangentsForShape(m->shapeName);
-			}
+			if (IsShapeSkinShaded(&clone, m->shapeName))
+				continue;
+
+			clone.SetNormalsForShape(m->shapeName, liveNorms);
+			clone.CalcTangentsForShape(m->shapeName);
 		}
 	}
 

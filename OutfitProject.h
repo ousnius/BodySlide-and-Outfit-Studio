@@ -256,8 +256,9 @@ public:
 
 	void RenameShape(const string& shapeName, const string& newShapeName, bool isOutfit);
 
-	int SaveOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
+	bool IsShapeSkinShaded(NifFile* nif, const string& shapeName);
+	int SaveOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 
 	int ExportShape(const string& shapeName, const string& fName, bool isOutfit);
 
