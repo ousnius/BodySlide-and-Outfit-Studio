@@ -4442,7 +4442,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, w), 1);
 				else if (bMaskPaint)
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
-				else {
+				else if (os->activeItem) {
 					vector<Vector3> verts;
 					os->project->GetLiveVerts(os->activeItem->shapeName, verts, os->activeItem->bIsOutfitShape);
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
