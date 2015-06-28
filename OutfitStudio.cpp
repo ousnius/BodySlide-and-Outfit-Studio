@@ -1842,8 +1842,17 @@ void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 
 	if (id == XRCID("btnSelect")) {
 		glView->SetEditMode(false);
+		glView->SetActiveBrush(-1);
 		menuBar->Check(XRCID("btnSelect"), true);
 		toolBar->ToggleTool(XRCID("btnSelect"), true);
+
+		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
+		if (brushPane) {
+			brushPane->Collapse();
+			wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
+			if (leftPanel)
+				leftPanel->Layout();
+		}
 		return;
 	}
 	if (id == XRCID("btnMaskBrush")) {
@@ -2090,29 +2099,27 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 
 		project->ClearBoneScale();
 
-		if (glView->GetActiveBrush() && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
-			glView->SetXMirror(previousMirror);
-			glView->SetActiveBrush(1);
-			glView->SetWeightVisible(false);
+		glView->SetXMirror(previousMirror);
+		glView->SetActiveBrush(1);
+		glView->SetWeightVisible(false);
 
-			if (menuBar) {
-				menuBar->Check(XRCID("btnXMirror"), previousMirror);
-				menuBar->Check(XRCID("btnInflateBrush"), true);
-				menuBar->Enable(XRCID("btnWeightBrush"), false);
-				menuBar->Enable(XRCID("btnInflateBrush"), true);
-				menuBar->Enable(XRCID("btnDeflateBrush"), true);
-				menuBar->Enable(XRCID("btnMoveBrush"), true);
-				menuBar->Enable(XRCID("btnSmoothBrush"), true);
-			}
+		if (menuBar) {
+			menuBar->Check(XRCID("btnXMirror"), previousMirror);
+			menuBar->Check(XRCID("btnInflateBrush"), true);
+			menuBar->Enable(XRCID("btnWeightBrush"), false);
+			menuBar->Enable(XRCID("btnInflateBrush"), true);
+			menuBar->Enable(XRCID("btnDeflateBrush"), true);
+			menuBar->Enable(XRCID("btnMoveBrush"), true);
+			menuBar->Enable(XRCID("btnSmoothBrush"), true);
+		}
 
-			if (toolBar) {
-				toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
-				toolBar->EnableTool(XRCID("btnWeightBrush"), false);
-				toolBar->EnableTool(XRCID("btnInflateBrush"), true);
-				toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
-				toolBar->EnableTool(XRCID("btnMoveBrush"), true);
-				toolBar->EnableTool(XRCID("btnSmoothBrush"), true);
-			}
+		if (toolBar) {
+			toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
+			toolBar->EnableTool(XRCID("btnWeightBrush"), false);
+			toolBar->EnableTool(XRCID("btnInflateBrush"), true);
+			toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
+			toolBar->EnableTool(XRCID("btnMoveBrush"), true);
+			toolBar->EnableTool(XRCID("btnSmoothBrush"), true);
 		}
 	}
 
@@ -3863,6 +3870,9 @@ void wxGLPanel::SetActiveBrush(int brushID) {
 	bWeightPaint = false;
 
 	switch (brushID) {
+	case -1:
+		activeBrush = nullptr;
+		break;
 	case 0:
 		activeBrush = &maskBrush;
 		bMaskPaint = true;

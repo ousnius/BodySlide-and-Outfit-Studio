@@ -141,7 +141,7 @@
 						<flag>wxALL|wxEXPAND</flag>
 						<border>0</border>
 						<object class="wxCollapsiblePane" name="brushPane">
-							<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+							<style>wxCP_NO_TLW_RESIZE</style>
 							<collapsed>1</collapsed>
 							<label>Brush Settings</label>
 							<object class="panewindow">
@@ -154,8 +154,8 @@
 									<growablerows></growablerows>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxLEFT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="lbBrushSize">
 											<label>Size</label>
 											<wrap>-1</wrap>
@@ -175,8 +175,8 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxRIGHT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="valSize">
 											<label>0.000</label>
 											<wrap>-1</wrap>
@@ -184,8 +184,8 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxLEFT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="lbBrushStrength">
 											<label>Strength</label>
 											<wrap>-1</wrap>
@@ -205,8 +205,8 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxRIGHT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="valStr">
 											<label>0.000</label>
 											<wrap>-1</wrap>
@@ -214,8 +214,8 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxLEFT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="lbBrushFocus">
 											<label>Focus</label>
 											<wrap>-1</wrap>
@@ -235,8 +235,8 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxRIGHT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="valFocus">
 											<label>0.000</label>
 											<wrap>-1</wrap>
@@ -244,8 +244,8 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxLEFT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="lbBrushSpace">
 											<label>Spacing</label>
 											<wrap>-1</wrap>
@@ -265,8 +265,8 @@
 									</object>
 									<object class="sizeritem">
 										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
+										<flag>wxALIGN_CENTER|wxRIGHT</flag>
+										<border>15</border>
 										<object class="wxStaticText" name="valSpace">
 											<label>0.000</label>
 											<wrap>-1</wrap>
