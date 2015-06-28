@@ -80,6 +80,7 @@ int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 		}
 		else if (dump.compare("vt") == 0) {
 			base >> uv.u >> uv.v;
+			uv.v = 1.0f - uv.v;
 			uvs.push_back(uv);
 		}
 		else if (dump.compare("f") == 0) {

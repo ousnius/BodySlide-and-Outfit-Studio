@@ -2764,7 +2764,12 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.empty())
 		return;
 
-	int ret = project->AddShapeFromObjFile(fn, "New Shape", activeItem->shapeName);
+	int ret;
+	if (activeItem)
+		ret = project->AddShapeFromObjFile(fn, "New Shape", activeItem->shapeName);
+	else
+		ret = project->AddShapeFromObjFile(fn, "New Shape");
+
 	if (ret == 101) {	// User chose to merge shapes
 		vector<Vector3> v;
 		project->GetLiveOutfitVerts(activeItem->shapeName, v);

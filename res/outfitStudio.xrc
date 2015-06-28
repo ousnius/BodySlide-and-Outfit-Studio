@@ -2942,6 +2942,10 @@
 	</object>
 	<object class="wxMenu" name="menuMeshContext">
 		<label>Shape</label>
+		<object class="wxMenuItem" name="importShape">
+			<label>Import Shape from .obj</label>
+			<help>Import an .obj file as a new shape in the outfit.</help>
+		</object>
 		<object class="wxMenuItem" name="exportShape">
 			<label>Export Shape to .obj</label>
 			<help>Export the current shape as an .obj file.</help>
