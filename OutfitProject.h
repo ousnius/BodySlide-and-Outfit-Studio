@@ -6,7 +6,6 @@
 #include "SliderData.h"
 #include "Automorph.h"
 #include "Mesh.h"
-#include "ShlObj.h"
 #include "OutfitStudio.h"
 #include "ConfigurationManager.h"
 #include "Anim.h"

@@ -910,7 +910,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameSmall = Config["GameDataPath"] + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
 		wxString path = Config["GameDataPath"] + activeSet.GetOutputPath();
-		SHCreateDirectoryEx(0, path.wc_str(), nullptr);
+		wxFileName::Mkdir(path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 
 	// ALT key
@@ -1242,11 +1242,11 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 		/* Create directory for the outfit */
 		wxString dir = datapath + currentSet.GetOutputPath();
-		int error = SHCreateDirectoryEx(0, dir.wc_str(), nullptr);
+		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 		stringstream errss;
-		if ((error != ERROR_SUCCESS) && (error != ERROR_ALREADY_EXISTS) && (error != ERROR_FILE_EXISTS)) {
-			errss << "Unable to create destination directory: " << dir.ToStdString() << " [" << hex << (uint)error << "]";
+		if (!success) {
+			errss << "Unable to create destination directory: " << dir.ToStdString();
 			failedOutfits[outfit] = errss.str();
 			continue;
 		}
@@ -1280,13 +1280,13 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		if (currentSet.GenWeights()) {
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
-			if ((error = nifBig.Save(outFileNameBig)) != 0) {
-				errss << "Unable to save nif file: " << outFileNameBig << " [" << hex << (uint)error << "]";
+			if (nifBig.Save(outFileNameBig)) {
+				errss << "Unable to save nif file: " << outFileNameBig;
 				failedOutfits[outfit] = errss.str();
 				continue;
 			}
 			if (nifSmall.Save(outFileNameSmall)) {
-				errss << "Unable to save nif file: " << outFileNameSmall << " [" << hex << (uint)error << "]";
+				errss << "Unable to save nif file: " << outFileNameSmall;
 				failedOutfits[outfit] = errss.str();
 				continue;
 			}
@@ -1294,7 +1294,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		else {
 			outFileNameBig += ".nif";
 			if (nifBig.Save(outFileNameBig)) {
-				errss << "Unable to save nif file: " << outFileNameBig << " [" << hex << (uint)error << "]";
+				errss << "Unable to save nif file: " << outFileNameBig;
 				failedOutfits[outfit] = errss.str();
 				continue;
 			}

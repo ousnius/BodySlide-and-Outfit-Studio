@@ -47,13 +47,9 @@ string OutfitProject::Save(const string& strFileName,
 	RefShapes(refShapes);
 	OutfitShapes(outfitShapes);
 
-	wchar_t curDir[MAX_PATH];
-	GetCurrentDirectory(MAX_PATH, curDir);
-
-	wchar_t folder[MAX_PATH];
-	wxString wStrDataDir = strDataDir;
-	_snwprintf_s(folder, MAX_PATH, MAX_PATH, L"%s\\%s\\%s", curDir, L"ShapeData", wStrDataDir.wc_str());
-	SHCreateDirectoryEx(0, folder, nullptr);
+	wxString curDir(wxGetCwd());
+	wxString folder(wxString::Format("%s/%s/%s", curDir, "ShapeData", strDataDir));
+	wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 	float prog = 5.0f;
 	float step = 10.0f / (outfitShapes.size() + refShapes.size());
@@ -137,16 +133,14 @@ string OutfitProject::Save(const string& strFileName,
 		}
 	}
 
-	wchar_t ssNewFolder[MAX_PATH];
 	auto it = strFileName.rfind('\\');
 	if (it != string::npos) {
-		wxString wStrFileName = strFileName.substr(0, it);
-		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, wStrFileName.wc_str());
-		SHCreateDirectoryEx(0, ssNewFolder, nullptr);
+		wxString ssNewFolder(wxString::Format("%s/%s", curDir, strFileName.substr(0, it)));
+		wxFileName::Mkdir(ssNewFolder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 	else {
-		_snwprintf_s(ssNewFolder, MAX_PATH, MAX_PATH, L"%s\\%s", curDir, L"SliderSets");
-		SHCreateDirectoryEx(0, ssNewFolder, nullptr);
+		wxString ssNewFolder(wxString::Format("%s/%s", curDir, "SliderSets"));
+		wxFileName::Mkdir(ssNewFolder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 
 	owner->UpdateProgress(61.0f, "Saving slider set file...");
