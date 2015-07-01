@@ -88,6 +88,9 @@ public:
 	// Creates a new empty group document structure, ready to add new groups and members to.
 	void New(const string& newFileName);
 
+	// Clears all data of the file.
+	void Clear();
+
 	// Changes the internal file name. The XML file isn't saved until the Save() function is used.
 	// Note the original file name is not changed. This method allows you to save a group as a new file without altering the original.
 	void Rename(const string& newFileName);

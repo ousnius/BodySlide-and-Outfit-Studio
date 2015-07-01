@@ -187,6 +187,14 @@ void SliderSetGroupFile::New(const string& newFileName) {
 	error = 0;
 }
 
+// Clears all data of the file.
+void SliderSetGroupFile::Clear() {
+	root = nullptr;
+	doc.Clear();
+	groupsInFile.clear();
+	error = 0;
+}
+
 // Changes the internal file name. The XML file isn't saved until the save() function is used.
 // Note the original file name is not changed. This method allows you to save a group as a new file without altering the original.
 void SliderSetGroupFile::Rename(const string& newFileName) {

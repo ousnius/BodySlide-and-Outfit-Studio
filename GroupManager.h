@@ -5,7 +5,6 @@
 
 #include <wx/xrc/xmlres.h>
 #include <wx/filepicker.h>
-#include <wx/dnd.h>
 
 using namespace std;
 
@@ -20,6 +19,8 @@ private:
 	wxButton* btAddGroup;
 	wxButton* btSave;
 	wxButton* btSaveAs;
+	wxButton* btRemoveMember;
+	wxButton* btAddMember;
 	wxListBox* listMembers;
 	wxListBox* listOutfits;
 

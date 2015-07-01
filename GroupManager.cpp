@@ -10,7 +10,7 @@ GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
 	wxXmlResource * rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgGroupManager");
 
-	SetSize(700, 430);
+	SetSize(800, 500);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
@@ -19,6 +19,8 @@ GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
 	btAddGroup = (wxButton*)FindWindowByName("btAddGroup", this);
 	btSave = (wxButton*)FindWindowByName("btSave", this);
 	btSaveAs = (wxButton*)FindWindowByName("btSaveAs", this);
+	btRemoveMember = (wxButton*)FindWindowByName("btRemoveMember", this);
+	btAddMember = (wxButton*)FindWindowByName("btAddMember", this);
 	listMembers = (wxListBox*)FindWindowByName("listMembers", this);
 	listOutfits = (wxListBox*)FindWindowByName("listOutfits", this);
 
@@ -41,6 +43,7 @@ void GroupManager::ResetUI() {
 }
 
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
+	currentGroupFile.Clear();
 	currentGroupFile.Open(event.GetPath().ToStdString());
 	if (currentGroupFile.fail())
 		return;
@@ -69,7 +72,7 @@ void GroupManager::OnSelectGroup(wxCommandEvent& event) {
 }
 
 void GroupManager::OnAddGroup(wxCommandEvent& WXUNUSED(event)) {
-	wxString name = groupName->GetValue();
+	wxString name = groupName->GetValue().Trim();
 	if (name.empty())
 		return;
 
