@@ -6,7 +6,7 @@ BEGIN_EVENT_TABLE (GroupManager, wxDialog)
 	EVT_BUTTON(XRCID("btAddGroup"), GroupManager::OnAddGroup)
 END_EVENT_TABLE();
 
-GroupManager::GroupManager(wxWindow* parent) {
+GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
 	wxXmlResource * rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgGroupManager");
 
@@ -21,16 +21,23 @@ GroupManager::GroupManager(wxWindow* parent) {
 	btSaveAs = (wxButton*)FindWindowByName("btSaveAs", this);
 	listMembers = (wxListBox*)FindWindowByName("listMembers", this);
 	listOutfits = (wxListBox*)FindWindowByName("listOutfits", this);
+
+	allOutfits = outfits;
+	for (auto outfit : allOutfits)
+		listOutfits->Append(outfit);
 }
 
 GroupManager::~GroupManager() {
 }
 
-void GroupManager::ClearUI() {
+void GroupManager::ResetUI() {
 	listGroups->Clear();
 	groupName->Clear();
 	listMembers->Clear();
 	listOutfits->Clear();
+
+	for (auto outfit : allOutfits)
+		listOutfits->Append(outfit);
 }
 
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
@@ -38,7 +45,7 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	if (currentGroupFile.fail())
 		return;
 
-	ClearUI();
+	ResetUI();
 	btAddGroup->Enable();
 	btSave->Enable();
 

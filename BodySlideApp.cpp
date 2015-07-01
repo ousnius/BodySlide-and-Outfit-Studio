@@ -858,6 +858,11 @@ void BodySlideApp::ApplyOutfitFilter() {
 	Config.SetValue("LastOutfitFilter", string(outfitSrch));
 }
 
+int BodySlideApp::GetOutfits(vector<string>& outList) {
+	outList.assign(outfitNameOrder.begin(), outfitNameOrder.end());
+	return outList.size();
+}
+
 int BodySlideApp::GetFilteredOutfits(vector<string>& outList) {
 	outList.assign(filteredOutfits.begin(), filteredOutfits.end());
 	return outList.size();
@@ -1952,7 +1957,10 @@ void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
 	if (!groupManager)
 		return;
 
-	GroupManager gm(this);
+	vector<string> outfits;
+	app->GetOutfits(outfits);
+
+	GroupManager gm(this, outfits);
 	gm.ShowModal();
 	app->LoadPresets("");
 }

@@ -117,6 +117,7 @@ public:
 	int SaveGroupList(const string& filename, const string& groupname);
 
 	void ApplyOutfitFilter();
+	int GetOutfits(vector<string>& outList);
 	int GetFilteredOutfits(vector<string>& outList);
 
 	void LoadPresets(const string& sliderSet);

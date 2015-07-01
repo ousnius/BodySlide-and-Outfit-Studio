@@ -3,12 +3,17 @@
 #include "stdafx.h"
 #include "SliderGroup.h"
 
-#include <wx/filepicker.h>
 #include <wx/xrc/xmlres.h>
+#include <wx/filepicker.h>
+#include <wx/dnd.h>
 
 using namespace std;
 
 class GroupManager : public wxDialog {
+public:
+	GroupManager(wxWindow*, vector<string>);
+	~GroupManager();
+
 private:
 	wxListBox* listGroups;
 	wxTextCtrl* groupName;
@@ -20,15 +25,15 @@ private:
 
 	SliderSetGroupFile currentGroupFile;
 	map<string, string> groupMembers;
+	vector<string> allOutfits;
 
-public:
-	GroupManager(wxWindow* parent);
-	~GroupManager();
+	bool mouseDownOutfits = false;
+	wxPoint mouseDownPos;
 
-	void ClearUI();
-	void OnLoadGroup(wxFileDirPickerEvent& event);
-	void OnSelectGroup(wxCommandEvent& event);
-	void OnAddGroup(wxCommandEvent& event);
+	void ResetUI();
+	void OnLoadGroup(wxFileDirPickerEvent&);
+	void OnSelectGroup(wxCommandEvent&);
+	void OnAddGroup(wxCommandEvent&);
 
 	DECLARE_EVENT_TABLE()
 };
