@@ -26,6 +26,7 @@ BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnOutfitStudio"), BodySlideFrame::OnOutfitStudio)
 	EVT_BUTTON(XRCID("btnAbout"), BodySlideFrame::OnAbout)
 	EVT_BUTTON(XRCID("btnPresets"), BodySlideFrame::OnSavePreset)
+	EVT_BUTTON(XRCID("btnGroupManager"), BodySlideFrame::OnGroupManager)
 	EVT_BUTTON(XRCID("btnChooseGroups"), BodySlideFrame::OnChooseGroups)
 	EVT_BUTTON(XRCID("btnRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
 		
@@ -1943,6 +1944,17 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
+}
+
+void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
+	wxXmlResource* rsrc = wxXmlResource::Get();
+	wxDialog* groupManager = rsrc->LoadDialog(this, "dlgGroupManager");
+	if (!groupManager)
+		return;
+
+	GroupManager gm(this);
+	gm.ShowModal();
+	app->LoadPresets("");
 }
 
 void BodySlideFrame::OnPreviewHi(wxCommandEvent& WXUNUSED(event)) {

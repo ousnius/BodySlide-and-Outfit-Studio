@@ -10,6 +10,7 @@
 #include "SliderCategories.h"
 #include "ConfigurationManager.h"
 #include "PresetSaveDialog.h"
+#include "GroupManager.h"
 #include "TriFile.h"
 
 #include <wx/wxprec.h>
@@ -273,6 +274,7 @@ private:
 	void OnChoosePreset(wxCommandEvent& event);
 
 	void OnSavePreset(wxCommandEvent& event);
+	void OnGroupManager(wxCommandEvent& event);
 	void OnPreviewHi(wxCommandEvent& event);
 	void OnPreviewLo(wxCommandEvent& event);
 	void OnBuildBodies(wxCommandEvent& event);

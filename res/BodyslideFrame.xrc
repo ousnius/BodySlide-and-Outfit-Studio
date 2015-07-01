@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxFrame" name="BodyslideFrame">
-		<style>wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER|wxSYSTEM_MENU|wxTAB_TRAVERSAL |  wxCLIP_CHILDREN</style>
+		<style>wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER|wxSYSTEM_MENU|wxTAB_TRAVERSAL|wxCLIP_CHILDREN</style>
 		<size>800,750</size>
 		<bg>#404040</bg>
 		<title>Caliente's BodySlide</title>
@@ -17,70 +17,82 @@
 					<cols>4</cols>
 					<vgap>0</vgap>
 					<hgap>0</hgap>
-					<growablecols></growablecols>
+					<growablecols>1</growablecols>
 					<growablerows></growablerows>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lblOutfits">
 							<fg>#c8c8c8</fg>
-							<label>Outfit/Body:</label>
+							<label>Outfit/Body</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxChoice" name="outfitChoice">
-							<size>265,-1</size>
+							<size>200,-1</size>
 							<tooltip>Select an outfit to modify</tooltip>
 							<selection>0</selection>
 							<content />
 						</object>
 					</object>
 					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="unknown" name="searchHolder" />
 					</object>
 					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="unknown" name="outfitsearchHolder" />
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lblPresets">
 							<fg>#c8c8c8</fg>
-							<label>Preset:</label>
+							<label>Preset</label>
 							<wrap>-1</wrap>
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxChoice" name="presetChoice">
-							<size>265,-1</size>
-							<tooltip>Choose from a list of pre-created body shape configurations</tooltip>
+							<size>200,-1</size>
+							<tooltip>Choose from a list of slider settings presets</tooltip>
 							<selection>0</selection>
 							<content />
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxButton" name="btnPresets">
+							<size>-1,20</size>
 							<fg>#000000</fg>
-							<tooltip>Save the current slider settings as a preset for this outfit</tooltip>
+							<tooltip>Save the current slider settings as a preset</tooltip>
 							<label>Save Preset...</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnGroupManager">
+							<size>-1,20</size>
+							<fg>#000000</fg>
+							<tooltip>Opens the group manager where you can edit existing or create new groups</tooltip>
+							<label>Group Manager</label>
 						</object>
 					</object>
 				</object>
@@ -422,6 +434,177 @@
 							<border>5</border>
 							<object class="wxButton" name="wxID_SAVE">
 								<label>&amp;Save</label>
+							</object>
+						</object>
+						<object class="button">
+							<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+							<border>5</border>
+							<object class="wxButton" name="wxID_CANCEL">
+								<label>&amp;Cancel</label>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+		
+		<object class="wxDialog" name="dlgGroupManager">
+			<style>wxDEFAULT_DIALOG_STYLE|wxMAXIMIZE_BOX|wxRESIZE_BORDER</style>
+			<size>700,430</size>
+			<bg>#f0f0f0</bg>
+			<title>Group Manager</title>
+			<centered>1</centered>
+			<object class="wxBoxSizer">
+				<orient>wxVERTICAL</orient>
+				<object class="sizeritem">
+					<option>0</option>
+					<flag>wxALL|wxEXPAND</flag>
+					<border>5</border>
+					<object class="wxStaticText" name="lbHeader">
+						<style>wxALIGN_CENTRE</style>
+						<label>Drag and drop outfits in and out of the member list.</label>
+						<wrap>-1</wrap>
+					</object>
+				</object>
+				<object class="sizeritem">
+					<option>0</option>
+					<flag>wxEXPAND</flag>
+					<border>5</border>
+					<object class="wxBoxSizer">
+						<orient>wxHORIZONTAL</orient>
+						<object class="sizeritem">
+							<option>2</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxFilePickerCtrl" name="fpGroupXML">
+								<value></value>
+								<message>Select a group XML file</message>
+								<wildcard>*.xml</wildcard>
+								<style>wxFLP_DEFAULT_STYLE</style>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>1</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxButton" name="btSave">
+								<label>Save</label>
+								<default>0</default>
+								<enabled>0</enabled>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>1</option>
+							<flag>wxALL</flag>
+							<border>5</border>
+							<object class="wxButton" name="btSaveAs">
+								<label>Save As</label>
+								<default>0</default>
+							</object>
+						</object>
+					</object>
+				</object>
+				<object class="sizeritem">
+					<option>1</option>
+					<flag>wxEXPAND</flag>
+					<border>5</border>
+					<object class="wxBoxSizer">
+						<orient>wxHORIZONTAL</orient>
+						<object class="sizeritem">
+							<option>1</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<object class="wxStaticBoxSizer">
+								<orient>wxVERTICAL</orient>
+								<label>Groups</label>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxEXPAND|wxALL</flag>
+									<border>5</border>
+									<object class="wxListBox" name="listGroups">
+										<style>wxLB_ALWAYS_SB|wxLB_SORT</style>
+										<content />
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>2</option>
+											<flag>wxALL</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="groupName">
+												<value></value>
+												<maxlength>75</maxlength>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALL</flag>
+											<border>5</border>
+											<object class="wxButton" name="btAddGroup">
+												<style>wxBU_EXACTFIT</style>
+												<tooltip>Add a new group</tooltip>
+												<label>Add Group</label>
+												<default>0</default>
+												<enabled>0</enabled>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxStaticBoxSizer">
+										<orient>wxVERTICAL</orient>
+										<label>Members</label>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxALL|wxEXPAND</flag>
+											<border>5</border>
+											<object class="wxListBox" name="listMembers">
+												<style>wxLB_ALWAYS_SB|wxLB_EXTENDED|wxLB_SORT</style>
+												<content />
+											</object>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+						<object class="sizeritem">
+							<option>1</option>
+							<flag>wxEXPAND</flag>
+							<border>5</border>
+							<object class="wxStaticBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<label>Outfits</label>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxListBox" name="listOutfits">
+										<style>wxLB_ALWAYS_SB|wxLB_EXTENDED|wxLB_SORT</style>
+										<content />
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+				<object class="sizeritem">
+					<option>0</option>
+					<flag>wxALL|wxEXPAND</flag>
+					<border>5</border>
+					<object class="wxStdDialogButtonSizer">
+						<object class="button">
+							<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+							<border>5</border>
+							<object class="wxButton" name="wxID_OK">
+								<label>&amp;OK</label>
 							</object>
 						</object>
 						<object class="button">

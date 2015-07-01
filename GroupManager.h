@@ -3,25 +3,32 @@
 #include "stdafx.h"
 #include "SliderGroup.h"
 
+#include <wx/filepicker.h>
 #include <wx/xrc/xmlres.h>
 
 using namespace std;
 
 class GroupManager : public wxDialog {
+private:
+	wxListBox* listGroups;
+	wxTextCtrl* groupName;
+	wxButton* btAddGroup;
+	wxButton* btSave;
+	wxButton* btSaveAs;
+	wxListBox* listMembers;
+	wxListBox* listOutfits;
 
-	wxCheckListBox* lstGroups;
-	wxCheckListBox* lstOutfits;
-	wxListBox* lstGroupMembers;
-
-	string FilterString;
+	SliderSetGroupFile currentGroupFile;
+	map<string, string> groupMembers;
 
 public:
-	GroupManager(wxWindow* parent, wxWindowID id = wxID_ANY, const wxString& title = wxT("Filter Group and Outfits"), const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxSize(696, 434), long style = wxDEFAULT_DIALOG_STYLE);
+	GroupManager(wxWindow* parent);
 	~GroupManager();
 
+	void ClearUI();
+	void OnLoadGroup(wxFileDirPickerEvent& event);
+	void OnSelectGroup(wxCommandEvent& event);
 	void OnAddGroup(wxCommandEvent& event);
-	void OnAddOutfitToGroup(wxCommandEvent& event);
-	void OnRemoveOutfit(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

@@ -10,9 +10,7 @@
 
 using namespace std;
 
-class PresetSaveDialog :
-	public wxDialog
-{
+class PresetSaveDialog : public wxDialog {
 public:
 	vector<string> allGroupNames;
 	vector<string> filteredGroups;

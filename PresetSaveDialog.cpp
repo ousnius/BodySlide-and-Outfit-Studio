@@ -11,10 +11,10 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 	wxXmlResource* rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgSavePreset");
 
-	this->SetDoubleBuffered(true);
-	this->SetSize(460, 300);
-	this->SetSizeHints(wxSize(460, 300), wxSize(460, -1));
-	this->CenterOnParent();
+	SetDoubleBuffered(true);
+	SetSize(460, 300);
+	SetSizeHints(wxSize(460, 300), wxSize(460, -1));
+	CenterOnParent();
 
 	wxSearchCtrl* search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxSize(200, -1), wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
@@ -26,7 +26,7 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 	chkbox->SetDoubleBuffered(true);
 }
 	
-PresetSaveDialog::~PresetSaveDialog(void) {
+PresetSaveDialog::~PresetSaveDialog() {
 }
 
 void PresetSaveDialog::FilterGroups(const string& filter) {
@@ -75,7 +75,7 @@ void PresetSaveDialog::CheckGroup(wxCommandEvent& event) {
 	}
 }
 
-void PresetSaveDialog::OnSave(wxCommandEvent& event) {
+void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue();
 	string presetFile = outPresetName + ".xml";
 
@@ -87,6 +87,6 @@ void PresetSaveDialog::OnSave(wxCommandEvent& event) {
 	}
 }
 
-void PresetSaveDialog::OnEraseBackground(wxEraseEvent &event) {
+void PresetSaveDialog::OnEraseBackground(wxEraseEvent& WXUNUSED(event)) {
 	return;
 }
