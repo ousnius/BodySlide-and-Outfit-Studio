@@ -4,6 +4,8 @@ BEGIN_EVENT_TABLE (GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)
 	EVT_BUTTON(XRCID("btAddGroup"), GroupManager::OnAddGroup)
+	EVT_BUTTON(XRCID("btRemoveMember"), GroupManager::OnRemoveMember)
+	EVT_BUTTON(XRCID("btAddMember"), GroupManager::OnAddMember)
 END_EVENT_TABLE();
 
 GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
@@ -77,4 +79,19 @@ void GroupManager::OnAddGroup(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	listGroups->Append(name);
+}
+
+void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
+	wxArrayInt selections;
+	listMembers->GetSelections(selections);
+
+	for (auto id : selections) {
+		listMembers->Delete(id);
+		wxString member = listMembers->GetString(id);
+		// todo
+	}
+}
+
+void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
+
 }

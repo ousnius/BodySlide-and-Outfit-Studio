@@ -35,6 +35,8 @@ private:
 	void OnLoadGroup(wxFileDirPickerEvent&);
 	void OnSelectGroup(wxCommandEvent&);
 	void OnAddGroup(wxCommandEvent&);
+	void OnRemoveMember(wxCommandEvent&);
+	void OnAddMember(wxCommandEvent&);
 
 	DECLARE_EVENT_TABLE()
 };
