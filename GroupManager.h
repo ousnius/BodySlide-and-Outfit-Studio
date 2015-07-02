@@ -25,14 +25,16 @@ private:
 	wxListBox* listOutfits;
 
 	SliderSetGroupFile currentGroupFile;
-	map<string, string> groupMembers;
+	map<string, vector<string>> groupMembers;
 	vector<string> allOutfits;
 
 	bool mouseDownOutfits = false;
 	wxPoint mouseDownPos;
 
-	void ResetUI();
+	void RefreshLists(const bool& = false);
 	void OnLoadGroup(wxFileDirPickerEvent&);
+	void OnSaveGroup(wxCommandEvent&);
+	void OnSaveGroupAs(wxCommandEvent&);
 	void OnSelectGroup(wxCommandEvent&);
 	void OnAddGroup(wxCommandEvent&);
 	void OnRemoveMember(wxCommandEvent&);
