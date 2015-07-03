@@ -106,7 +106,7 @@ void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog file(this, "Saving group XML file...", "SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog file(this, "Saving group XML file...", "SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (file.ShowModal() != wxID_OK)
 		return;
 
