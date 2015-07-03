@@ -30,4 +30,5 @@ public:
 	void DeleteMorphFromAll(string morphName);
 
 	MorphDataPtr GetMorph(string shapeName, string morphName);
+	map<string, vector<MorphDataPtr>> GetMorphs();
 };

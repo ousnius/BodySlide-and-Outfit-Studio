@@ -21,20 +21,20 @@ int TriFile::Read(string fileName) {
 
 		for (int i = 0; i < shapeCount; i++) {
 			byte shapeLength = 0;
-			string shapeName = "";
+			string shapeName;
 			triFile.read((char*)&shapeLength, 1);
-			shapeName.resize(shapeLength + 1);
-			triFile.read((char*)&shapeName, shapeLength);
+			shapeName.resize(shapeLength, ' ');
+			triFile.read((char*)&shapeName.front(), shapeLength);
 
 			uint morphCount = 0;
 			triFile.read((char*)&morphCount, packedBytes);
 
 			for (int j = 0; j < morphCount; j++) {
 				byte morphLength = 0;
-				string morphName = "";
+				string morphName;
 				triFile.read((char*)&morphLength, 1);
-				morphName.resize(morphLength + 1);
-				triFile.read((char*)&morphName, morphLength);
+				morphName.resize(morphLength, ' ');
+				triFile.read((char*)&morphName.front(), morphLength);
 
 				map<int, Vector3> morphOffsets;
 				if (packed) {
@@ -217,4 +217,8 @@ MorphDataPtr TriFile::GetMorph(string shapeName, string morphName) {
 	}
 
 	return nullptr;
+}
+
+map<string, vector<MorphDataPtr>> TriFile::GetMorphs() {
+	return shapeMorphs;
 }

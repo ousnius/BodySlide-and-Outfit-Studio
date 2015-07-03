@@ -38,6 +38,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudio::OnSliderConformAll)
 	EVT_MENU(XRCID("importSliderBSD"), OutfitStudio::OnSliderImportBSD)
 	EVT_MENU(XRCID("importSliderOBJ"), OutfitStudio::OnSliderImportOBJ)
+	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudio::OnSliderImportTRI)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudio::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderNew"), OutfitStudio::OnNewSlider)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudio::OnNewZapSlider)
@@ -2393,35 +2394,6 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
-		return;
-	}
-	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to export data from!", "Error");
-		return;
-	}
-
-	if (selectedItems.size() > 1) {
-		string dir = wxDirSelector("Export.bsd slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
-		if (dir.empty())
-			return;
-
-		for (auto i : selectedItems)
-			project->SaveSliderBSDToDir(activeSlider, i->shapeName, dir, i->bIsOutfitShape);
-	}
-	else {
-		string fn = wxFileSelector("Export .bsd slider data", wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fn.empty())
-			return;
-
-		project->SaveSliderBSD(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape);
-	}
-
-	ApplySliders();
-}
-
 void OutfitStudio::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
@@ -2459,6 +2431,102 @@ void OutfitStudio::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	ApplySliders();
+}
+
+void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox("There is no slider in edit mode to export data from!", "Error");
+		return;
+	}
+
+	if (selectedItems.size() > 1) {
+		string dir = wxDirSelector("Export.bsd slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		if (dir.empty())
+			return;
+
+		for (auto i : selectedItems)
+			project->SaveSliderBSDToDir(activeSlider, i->shapeName, dir, i->bIsOutfitShape);
+	}
+	else {
+		string fn = wxFileSelector("Export .bsd slider data", wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fn.empty())
+			return;
+
+		project->SaveSliderBSD(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape);
+	}
+
+	ApplySliders();
+}
+
+void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->workNif.IsValid() && !project->baseNif.IsValid()) {
+		wxMessageBox("There are no valid shapes loaded!", "Error");
+		return;
+	}
+
+	string fn = wxFileSelector("Import .tri morphs", wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_FILE_MUST_EXIST, this);
+	if (fn.empty())
+		return;
+
+	int result = wxMessageBox("This will delete all loaded sliders. Are you sure?", "TRI Import", wxYES_NO | wxCANCEL | wxICON_WARNING, this);
+	if (result != wxYES)
+		return;
+
+	TriFile tri;
+	if (!tri.Read(fn)) {
+		wxMessageBox("TRI file could not be loaded!", "Error");
+		return;
+	}
+
+	// Deleting sliders
+	vector<string> erase;
+	for (auto sd : sliderDisplays) {
+		sd.second->sliderStrokes.Clear();
+		sd.second->btnSliderEdit->Destroy();
+		sd.second->slider->Destroy();
+		sd.second->sliderName->Destroy();
+		sd.second->sliderNameCheck->Destroy();
+		sd.second->sliderReadout->Destroy();
+		sd.second->sliderPane->Destroy();
+		delete sd.second;
+
+		erase.push_back(sd.first);
+		project->DeleteSlider(sd.first);
+	}
+
+	for (auto e : erase)
+		sliderDisplays.erase(e);
+	
+	glView->SetStrokeManager(nullptr);
+	ExitSliderEdit();
+	sliderScroll->FitInside();
+	activeSlider = "";
+
+	vector<string> shapes;
+	project->OutfitShapes(shapes);
+	project->RefShapes(shapes);
+
+	auto morphs = tri.GetMorphs();
+	for (auto morph : morphs) {
+		if (find(shapes.begin(), shapes.end(), morph.first) == shapes.end())
+			continue;
+
+		string finalName = project->NameAbbreviate(morph.first);
+		createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+
+		project->AddEmptySlider(finalName);
+		ShowSliderEffect(finalName);
+
+		// TODO: project->SetSliderFromTRIMorph
+
+	}
+
+	sliderScroll->FitInside();
 	ApplySliders();
 }
 
