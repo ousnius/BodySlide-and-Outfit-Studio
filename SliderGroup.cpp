@@ -175,15 +175,12 @@ void SliderSetGroupFile::New(const string& newFileName) {
 	if (root)
 		return;
 
-	doc.Clear();
-	if (doc.LoadFile(newFileName.c_str()) == XML_SUCCESS) {
-		error = 1;
-	}
-	else {
-		XMLElement* newElement = doc.NewElement("SliderGroups");
-		root = doc.InsertEndChild(newElement)->ToElement();
-		fileName = newFileName;
-	}
+	Clear();
+
+	XMLElement* newElement = doc.NewElement("SliderGroups");
+	root = doc.InsertEndChild(newElement)->ToElement();
+	fileName = newFileName;
+
 	error = 0;
 }
 
@@ -272,6 +269,7 @@ int SliderSetGroupFile::UpdateGroup(SliderSetGroup& inGroup) {
 		XMLElement* element = root->InsertEndChild(newElement)->ToElement();
 		element->SetAttribute("name", inGroup.GetName().c_str());
 		inGroup.WriteGroup(element);
+		groupsInFile[inGroup.GetName()] = element;
 	}
 	return 0;
 }

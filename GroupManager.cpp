@@ -4,6 +4,7 @@ BEGIN_EVENT_TABLE (GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)
 	EVT_BUTTON(XRCID("btAddGroup"), GroupManager::OnAddGroup)
+	EVT_BUTTON(XRCID("btRemoveGroup"), GroupManager::OnRemoveGroup)
 	EVT_BUTTON(XRCID("btSave"), GroupManager::OnSaveGroup)
 	EVT_BUTTON(XRCID("btSaveAs"), GroupManager::OnSaveGroupAs)
 	EVT_BUTTON(XRCID("btRemoveMember"), GroupManager::OnRemoveMember)
@@ -18,26 +19,29 @@ GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
-	listGroups = (wxListBox*)FindWindowByName("listGroups", this);
-	groupName = (wxTextCtrl*)FindWindowByName("groupName", this);
-	btAddGroup = (wxButton*)FindWindowByName("btAddGroup", this);
-	btSave = (wxButton*)FindWindowByName("btSave", this);
-	btSaveAs = (wxButton*)FindWindowByName("btSaveAs", this);
-	btRemoveMember = (wxButton*)FindWindowByName("btRemoveMember", this);
-	btAddMember = (wxButton*)FindWindowByName("btAddMember", this);
-	listMembers = (wxListBox*)FindWindowByName("listMembers", this);
-	listOutfits = (wxListBox*)FindWindowByName("listOutfits", this);
+	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory("SliderGroups");
+	listGroups = XRCCTRL(*this, "listGroups", wxListBox);
+	groupName = XRCCTRL(*this, "groupName", wxTextCtrl);
+	btAddGroup = XRCCTRL(*this, "btAddGroup", wxButton);
+	btSave = XRCCTRL(*this, "btSave", wxButton);
+	btSaveAs = XRCCTRL(*this, "btSaveAs", wxButton);
+	btRemoveMember = XRCCTRL(*this, "btRemoveMember", wxButton);
+	btAddMember = XRCCTRL(*this, "btAddMember", wxButton);
+	listMembers = XRCCTRL(*this, "listMembers", wxListBox);
+	listOutfits = XRCCTRL(*this, "listOutfits", wxListBox);
 
 	allOutfits = outfits;
-	RefreshLists();
+	RefreshUI();
 }
 
 GroupManager::~GroupManager() {
 }
 
-void GroupManager::RefreshLists(const bool& clearGroups) {
+void GroupManager::RefreshUI(const bool& clearGroups) {
 	listMembers->Clear();
 	listOutfits->Clear();
+
+	btSave->Enable(dirty & !fileName.empty());
 
 	// Get group selection if existing
 	string selectedGroup = listGroups->GetStringSelection().ToStdString();
@@ -69,7 +73,6 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 
 	groupMembers.clear();
 	btAddGroup->Enable();
-	btSave->Enable();
 
 	// Fill group member map
 	vector<string> groupNames;
@@ -84,7 +87,9 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 		groupMembers[grp] = members;
 	}
 
-	RefreshLists(true);
+	wxFileName fileInfo(event.GetPath());
+	fileName = fileInfo.GetFullName();
+	RefreshUI(true);
 }
 
 void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
@@ -95,14 +100,33 @@ void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
 		currentGroupFile.UpdateGroup(group);
 	}
 	currentGroupFile.Save();
+
+	dirty = false;
+	btSave->Enable(dirty & !fileName.empty());
 }
 
 void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog file(this, "Saving group XML file...", "SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE);
+	if (file.ShowModal() != wxID_OK)
+		return;
 
+	currentGroupFile.New(file.GetPath().ToStdString());
+	for (auto grp : groupMembers) {
+		SliderSetGroup group;
+		group.SetName(grp.first);
+		group.AddMembers(grp.second);
+		currentGroupFile.UpdateGroup(group);
+	}
+
+	currentGroupFile.Save();
+	fileName = file.GetFilename();
+
+	dirty = false;
+	btSave->Enable(dirty & !fileName.empty());
 }
 
 void GroupManager::OnSelectGroup(wxCommandEvent& WXUNUSED(event)) {
-	RefreshLists();
+	RefreshUI();
 }
 
 void GroupManager::OnAddGroup(wxCommandEvent& WXUNUSED(event)) {
@@ -120,6 +144,22 @@ void GroupManager::OnAddGroup(wxCommandEvent& WXUNUSED(event)) {
 	// Create empty group entry
 	groupMembers[name.ToStdString()] = vector<string>();
 	listGroups->Append(name);
+
+	dirty = true;
+	btSave->Enable(dirty & !fileName.empty());
+}
+
+void GroupManager::OnRemoveGroup(wxCommandEvent& WXUNUSED(event)) {
+	int id = listGroups->GetSelection();
+	if (id == wxNOT_FOUND)
+		return;
+
+	// Remove empty group entry
+	wxString group = listGroups->GetString(id);
+	groupMembers.erase(group.ToStdString());
+
+	dirty = true;
+	RefreshUI(true);
 }
 
 void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
@@ -137,8 +177,9 @@ void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
+	dirty = true;
 	selections.Clear();
-	RefreshLists();
+	RefreshUI();
 }
 
 void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
@@ -154,6 +195,7 @@ void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
+	dirty = true;
 	selections.Clear();
-	RefreshLists();
+	RefreshUI();
 }
