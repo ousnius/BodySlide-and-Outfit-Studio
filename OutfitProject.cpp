@@ -617,6 +617,18 @@ bool OutfitProject::SetSliderFromOBJ(const string& sliderName, const string& sha
 	return true;
 }
 
+void OutfitProject::SetSliderFromTRI(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff, bool bIsOutfit) {
+	string target = ShapeToTarget(shapeName);
+	if (!bIsOutfit) {
+		string sliderData = activeSet[sliderName].TargetDataName(target);
+		baseDiffData.LoadSet(sliderData, target, diff);
+	}
+	else {
+		morpher.EmptyResultDiff(target, sliderName);
+		morpher.SetResultDiff(target, sliderName, diff);
+	}
+}
+
 void OutfitProject::GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts, bool bIsOutfit) {
 	if (bIsOutfit)
 		GetLiveOutfitVerts(shapeName, outVerts);

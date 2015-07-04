@@ -2484,9 +2484,15 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	// Deleting sliders
+	sliderScroll->Freeze();
 	vector<string> erase;
 	for (auto sd : sliderDisplays) {
+		sd.second->slider->SetValue(0);
+		SetSliderValue(sd.first, 0);
+		ShowSliderEffect(sd.first, true);
 		sd.second->sliderStrokes.Clear();
+		sd.second->slider->SetFocus();
+
 		sd.second->btnSliderEdit->Destroy();
 		sd.second->slider->Destroy();
 		sd.second->sliderName->Destroy();
@@ -2511,23 +2517,35 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	project->OutfitShapes(shapes);
 	project->RefShapes(shapes);
 
+	wxString addedMorphs;
 	auto morphs = tri.GetMorphs();
 	for (auto morph : morphs) {
 		if (find(shapes.begin(), shapes.end(), morph.first) == shapes.end())
 			continue;
 
-		string finalName = project->NameAbbreviate(morph.first);
-		createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+		bool isOutfit = true;
+		if (morph.first == project->baseShapeName)
+			isOutfit = false;
 
-		project->AddEmptySlider(finalName);
-		ShowSliderEffect(finalName);
+		addedMorphs += morph.first + "\n";
+		for (auto morphData : morph.second) {
+			string finalName = project->NameAbbreviate(morphData->name);
+			if (!project->ValidSlider(finalName)) {
+				createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+				project->AddEmptySlider(finalName);
+				ShowSliderEffect(finalName);
+			}
 
-		// TODO: project->SetSliderFromTRIMorph
-
+			unordered_map<ushort, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
+			project->SetSliderFromTRI(morphData->name, morph.first, diff, isOutfit);
+		}
 	}
 
 	sliderScroll->FitInside();
+	sliderScroll->Thaw();
 	ApplySliders();
+
+	wxMessageBox("Added morphs for the following shapes:\n\n" + addedMorphs, "TRI Import");
 }
 
 void OutfitStudio::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
