@@ -4042,6 +4042,10 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 			}
 		}
 	}
+	else if (event.GetKeyCode() == WXK_SPACE) {
+		OutfitStudio* os = (OutfitStudio*)notifyWindow;
+		os->ToggleBrushPane();
+	}
 	event.Skip();
 }
 

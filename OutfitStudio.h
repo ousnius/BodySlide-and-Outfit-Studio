@@ -474,6 +474,18 @@ public:
 	void EnterSliderEdit();
 	void ExitSliderEdit();
 
+	void ToggleBrushPane() {
+		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
+		if (!brushPane)
+			return;
+
+		brushPane->Collapse(!brushPane->IsCollapsed());
+
+		wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
+		if (leftPanel)
+			leftPanel->Layout();
+	}
+
 	void UpdateBrushPane() {
 		TweakBrush* brush = glView->GetActiveBrush();
 		if (!brush)
