@@ -463,6 +463,7 @@ void OutfitStudio::SelectShape(const string& shapeName) {
 		subitem = outfitShapes->GetFirstChild(item, subcookie);
 		while (subitem.IsOk()) {
 			if (outfitShapes->GetItemText(subitem) == shapeName) {
+				outfitShapes->UnselectAll();
 				outfitShapes->SelectItem(subitem);
 				outfitShapes->EnsureVisible(subitem);
 				return;
@@ -678,6 +679,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 			glView->SetActiveShape(activeItem->shapeName);
 		else
 			glView->SetActiveShape("");
+
+		outfitShapes->UnselectAll();
 		outfitShapes->SelectItem(itemToSelect);
 	}
 	else
@@ -936,6 +939,8 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 			glView->SetActiveShape(activeItem->shapeName);
 		else
 			glView->SetActiveShape("");
+
+		outfitShapes->UnselectAll();
 		outfitShapes->SelectItem(itemToSelect);
 	}
 	else
@@ -1057,6 +1062,8 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 			glView->SetActiveShape(activeItem->shapeName);
 		else
 			glView->SetActiveShape("");
+
+		outfitShapes->UnselectAll();
 		outfitShapes->SelectItem(itemToSelect);
 	}
 	else
@@ -1139,6 +1146,8 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 			glView->SetActiveShape(activeItem->shapeName);
 		else
 			glView->SetActiveShape("");
+
+		outfitShapes->UnselectAll();
 		outfitShapes->SelectItem(itemToSelect);
 	}
 	else
@@ -1694,6 +1703,9 @@ void OutfitStudio::OnOutfitShapeSelect(wxTreeEvent& event) {
 	wxTreeItemId subitem;
 	wxTreeItemIdValue cookie;
 
+	if (!item.IsOk())
+		return;
+
 	if (outfitShapes->GetItemParent(item).IsOk()) {
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(item);
 		if (activeItem)
@@ -1807,6 +1819,7 @@ void OutfitStudio::OnOutfitShapeContext(wxTreeEvent& event) {
 void OutfitStudio::OnBoneContext(wxTreeEvent& event) {
 	wxTreeItemId item = event.GetItem();
 	outfitBones->SelectItem(item);
+
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneContext");
 	if (menu) {
 		PopupMenu(menu);
