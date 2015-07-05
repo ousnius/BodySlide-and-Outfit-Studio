@@ -4467,6 +4467,10 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		gls.DollyCamera(delt);
 		gls.UpdateProjection();
 	}
+	
+	OutfitStudio* os = (OutfitStudio*)notifyWindow;
+	os->CheckBrushBounds();
+	os->UpdateBrushPane();
 	Refresh();
 }
 

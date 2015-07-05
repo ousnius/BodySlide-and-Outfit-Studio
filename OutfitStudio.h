@@ -474,6 +474,67 @@ public:
 	void EnterSliderEdit();
 	void ExitSliderEdit();
 
+	void UpdateBrushPane() {
+		TweakBrush* brush = glView->GetActiveBrush();
+		if (!brush)
+			return;
+
+		wxCollapsiblePane* parent = (wxCollapsiblePane*)FindWindowByName("brushPane");
+		if (!parent)
+			return;
+
+		XRCCTRL(*parent, "brushSize", wxSlider)->SetValue(glView->GetBrushSize() * 1000.0f);
+		wxStaticText* valSize = (wxStaticText*)XRCCTRL(*parent, "valSize", wxStaticText);
+		wxString valSizeStr = wxString::Format("%0.3f", glView->GetBrushSize());
+		valSize->SetLabel(valSizeStr);
+
+		XRCCTRL(*parent, "brushStr", wxSlider)->SetValue(brush->getStrength() * 1000.0f);
+		wxStaticText* valStr = (wxStaticText*)XRCCTRL(*parent, "valStr", wxStaticText);
+		wxString valStrengthStr = wxString::Format("%0.3f", brush->getStrength());
+		valStr->SetLabel(valStrengthStr);
+
+		XRCCTRL(*parent, "brushFocus", wxSlider)->SetValue(brush->getFocus() * 1000.0f);
+		wxStaticText* valFocus = (wxStaticText*)XRCCTRL(*parent, "valFocus", wxStaticText);
+		wxString valFocusStr = wxString::Format("%0.3f", brush->getFocus());
+		valFocus->SetLabel(valFocusStr);
+
+		XRCCTRL(*parent, "brushSpace", wxSlider)->SetValue(brush->getSpacing() * 1000.0f);
+		wxStaticText* valSpace = (wxStaticText*)XRCCTRL(*parent, "valSpace", wxStaticText);
+		wxString valSpacingStr = wxString::Format("%0.3f", brush->getSpacing());
+		valSpace->SetLabel(valSpacingStr);
+	}
+
+	void CheckBrushBounds() {
+		TweakBrush* brush = glView->GetActiveBrush();
+		if (!brush)
+			return;
+
+		float size = glView->GetBrushSize();
+		float strength = brush->getStrength();
+		//float focus = brush->getFocus();
+		//float spacing = brush->getSpacing();
+
+		if (size >= 1.0f)
+			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), false);
+		else
+			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), true);
+
+		if (size <= 0.0f)
+			GetMenuBar()->Enable(XRCID("btnDecreaseSize"), false);
+		else
+			GetMenuBar()->Enable(XRCID("btnDecreaseSize"), true);
+
+		if (strength >= 1.0f)
+			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), false);
+		else
+			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), true);
+
+		if (strength <= 0.0f)
+			GetMenuBar()->Enable(XRCID("btnDecreaseStr"), false);
+		else
+			GetMenuBar()->Enable(XRCID("btnDecreaseStr"), true);
+	}
+
 	wxProgressDialog* progWnd;
 	vector<pair<float, float>> progressStack;
 	int progressVal;
@@ -778,67 +839,6 @@ private:
 			CheckBrushBounds();
 			UpdateBrushPane();
 		}
-	}
-
-	void UpdateBrushPane() {
-		TweakBrush* brush = glView->GetActiveBrush();
-		if (!brush)
-			return;
-
-		wxCollapsiblePane* parent = (wxCollapsiblePane*)FindWindowByName("brushPane");
-		if (!parent)
-			return;
-
-		XRCCTRL(*parent, "brushSize", wxSlider)->SetValue(glView->GetBrushSize() * 1000.0f);
-		wxStaticText* valSize = (wxStaticText*)XRCCTRL(*parent, "valSize", wxStaticText);
-		wxString valSizeStr = wxString::Format("%0.3f", glView->GetBrushSize());
-		valSize->SetLabel(valSizeStr);
-
-		XRCCTRL(*parent, "brushStr", wxSlider)->SetValue(brush->getStrength() * 1000.0f);
-		wxStaticText* valStr = (wxStaticText*)XRCCTRL(*parent, "valStr", wxStaticText);
-		wxString valStrengthStr = wxString::Format("%0.3f", brush->getStrength());
-		valStr->SetLabel(valStrengthStr);
-
-		XRCCTRL(*parent, "brushFocus", wxSlider)->SetValue(brush->getFocus() * 1000.0f);
-		wxStaticText* valFocus = (wxStaticText*)XRCCTRL(*parent, "valFocus", wxStaticText);
-		wxString valFocusStr = wxString::Format("%0.3f", brush->getFocus());
-		valFocus->SetLabel(valFocusStr);
-
-		XRCCTRL(*parent, "brushSpace", wxSlider)->SetValue(brush->getSpacing() * 1000.0f);
-		wxStaticText* valSpace = (wxStaticText*)XRCCTRL(*parent, "valSpace", wxStaticText);
-		wxString valSpacingStr = wxString::Format("%0.3f", brush->getSpacing());
-		valSpace->SetLabel(valSpacingStr);
-	}
-
-	void CheckBrushBounds() {
-		TweakBrush* brush = glView->GetActiveBrush();
-		if (!brush)
-			return;
-
-		float size = glView->GetBrushSize();
-		float strength = brush->getStrength();
-		//float focus = brush->getFocus();
-		//float spacing = brush->getSpacing();
-
-		if (size >= 1.0f)
-			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), false);
-		else
-			GetMenuBar()->Enable(XRCID("btnIncreaseSize"), true);
-
-		if (size <= 0.0f)
-			GetMenuBar()->Enable(XRCID("btnDecreaseSize"), false);
-		else
-			GetMenuBar()->Enable(XRCID("btnDecreaseSize"), true);
-
-		if (strength >= 1.0f)
-			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), false);
-		else
-			GetMenuBar()->Enable(XRCID("btnIncreaseStr"), true);
-
-		if (strength <= 0.0f)
-			GetMenuBar()->Enable(XRCID("btnDecreaseStr"), false);
-		else
-			GetMenuBar()->Enable(XRCID("btnDecreaseStr"), true);
 	}
 
 	void OnClearMask(wxCommandEvent& WXUNUSED(event)) {
