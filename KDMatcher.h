@@ -16,28 +16,32 @@ public:
 		Vertex* p;
 		kd_node* less;
 		kd_node* more;
+
 		kd_node() {
 			less = more = nullptr;
 			p = nullptr;
 		}
+
 		~kd_node() {
 			if (less)
 				delete less;
 			if (more)
 				delete more;
 			less = more = nullptr;
-
 		}
+
 		kd_node(Vertex* point) {
 			less = more = nullptr;
 			p = point;
 		}
+
 		Vertex* add(Vertex* point, int depth) {
 			int axis = depth % 3;
 			bool domore = false;
 			float dx = p->x - point->x;
 			float dy = p->y - point->y;
 			float dz = p->z - point->z;
+
 			if (fabs(dx) < .00001 && fabs(dy) < .00001 && fabs(dz) < .00001)
 				return p;
 			switch (axis) {
@@ -72,8 +76,10 @@ public:
 	~kd_matcher() {
 		if (root)
 			delete root;
+
 		root = nullptr;
 	}
+
 	kd_matcher(Vertex* points, int count) {
 		if (count <= 0)
 			return;
@@ -108,11 +114,13 @@ public:
 		int p_i;
 		kd_node* less;
 		kd_node* more;
+
 		kd_node() {
 			less = more = nullptr;
 			p = nullptr;
 			p_i = -1;
 		}
+
 		~kd_node() {
 			if (less)
 				delete less;
@@ -121,11 +129,13 @@ public:
 			less = more = nullptr;
 
 		}
+
 		kd_node(Vertex* point, int point_index) {
 			less = more = nullptr;
 			p = point;
 			p_i = point_index;
 		}
+
 		void add(Vertex* point, int point_index, int depth) {
 			int axis = depth % 3;
 			bool domore = false;
@@ -151,22 +161,21 @@ public:
 			else {
 				if (less) return less->add(point, point_index, depth + 1);
 				else less = new kd_node(point, point_index);
-
 			}
 		}
 
-		// finds the closest point(s) to querypoint within the provided radius.  If radius is 0, only the single closest point 
-		// is found.  On first call, mindist should be set to FLT_MAX, and depth set to 0.
+		// Finds the closest point(s) to "querypoint" within the provided radius. If radius is 0, only the single closest point is found.
+		// On first call, "mindist" should be set to FLT_MAX and depth set to 0.
 		void find_closest(Vertex* querypoint, vector<kd_query_result>& queryResult, float radius, float& mindist, int depth = 0) {
 			kd_query_result kdqr;
-			int axis = depth % 3;		// which separating axis to use -- based on depth
-			float dx = p->x - querypoint->x; // axis sides
+			int axis = depth % 3;				// Which separating axis to use based on depth
+			float dx = p->x - querypoint->x;	// Axis sides
 			float dy = p->y - querypoint->y;
 			float dz = p->z - querypoint->z;
-			kd_node* act = less;			// active search branch 
-			kd_node* opp = more;			// opposite search branch
-			float axisdist = 0;			// distance from the query point to the separating axis
-			float pointdist;			// distance from the query point to the node's point
+			kd_node* act = less;				// Active search branch
+			kd_node* opp = more;				// Opposite search branch
+			float axisdist = 0;					// Distance from the query point to the separating axis
+			float pointdist;					// Distance from the query point to the node's point
 
 			switch (axis) {
 			case 0:
@@ -191,15 +200,18 @@ public:
 				axisdist = fabs(dz);
 				break;
 			}
-			if (act) // the axis choice tells us which branch to search
+
+			// The axis choice tells us which branch to search
+			if (act)
 				act->find_closest(querypoint, queryResult, radius, mindist, depth + 1);
 
-			// on the way back out check current point to see if it's the closest
-			pointdist = querypoint->DistanceTo(p);		// Fix? might want to use squared distance instead... probably unnecessary. 
-			/*bool notopp = ((querypoint->nx*p->nx +
-						querypoint->ny*p->ny +
-						querypoint->nz*p->nz) > 0);*/
-			bool notopp = true;
+			// On the way back out check current point to see if it's the closest
+			// Fix? Might want to use squared distance instead... probably unnecessary.
+			pointdist = querypoint->DistanceTo(p);
+
+			// Axis crossing
+			bool notopp = ((querypoint->nx*p->nx + querypoint->ny*p->ny + querypoint->nz*p->nz) > 0);
+
 			if (pointdist <= mindist && notopp) {
 				kdqr.v = p;
 				kdqr.vertex_index = p_i;
@@ -207,24 +219,24 @@ public:
 				queryResult.push_back(kdqr);
 				mindist = pointdist;
 			}
-			else if (radius > mindist && notopp) {  // if there's room between the minimum distance and the search radius
-				if (pointdist <= radius) {  // check to see if the point falls in that space, and if so add it
+			else if (radius > mindist && notopp) {	// If there's room between the minimum distance and the search radius
+				if (pointdist <= radius) {			// check to see if the point falls in that space, and if so, add it.
 					kdqr.v = p;
 					kdqr.vertex_index = p_i;
 					kdqr.distance = pointdist;
-					queryResult.push_back(kdqr); // (This is skipped if radius is 0, ofc)
+					queryResult.push_back(kdqr);	// This is skipped if radius is 0
 				}
 			}
 
-			if (opp) {		// check the opposite branch if it exists
-				if (radius){
-					if (radius >= axisdist) {	// if separating axis is within the check radius
+			// Check the opposite branch if it exists
+			if (opp) {
+				if (radius) {
+					if (radius >= axisdist)	// If separating axis is within the check radius
 						opp->find_closest(querypoint, queryResult, radius, mindist, depth + 1);
-					}
 				}
 				else  {
-					// if separating axis is closer than the current minimum point
-					// check if a closer point is on the other side of the axis
+					// If separating axis is closer than the current minimum point
+					// check if a closer point is on the other side of the axis.
 					if (axisdist < mindist)
 						opp->find_closest(querypoint, queryResult, radius, mindist, depth + 1);
 				}
@@ -240,8 +252,10 @@ public:
 	~kd_tree() {
 		if (root)
 			delete root;
+
 		root = nullptr;
 	}
+
 	kd_tree(Vertex* points, int count) {
 		if (count <= 0)
 			return;
@@ -252,10 +266,11 @@ public:
 	}
 
 	int kd_nn(Vertex* querypoint, float radius) {
-		queryResult.clear();
 		float mindist = FLT_MAX;
-		if (radius != 0)
+		if (radius != 0.0f)
 			mindist = radius;
+
+		queryResult.clear();
 		root->find_closest(querypoint, queryResult, radius, mindist);
 		if (queryResult.size() > 1)
 			std::sort(queryResult.begin(), queryResult.end());
