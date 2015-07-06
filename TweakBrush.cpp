@@ -182,12 +182,13 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			return;
 
 		if (nPts1 > outPositionCount) {
-			if (outPositions) {
+			if (outPositions)
 				delete[] outPositions;
-			}
+
 			outPositions = new Vector3[nPts1];
 			outPositionCount = nPts1;
 		}
+
 		refBrush->brushAction(refMesh, pickInfo, nullptr, nPts1, outPositions);
 
 		/*for(auto mP : movedpoints) {
@@ -195,10 +196,8 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			}*/
 
 
-		for (int i = 0; i < nPts1; i++){
+		for (int i = 0; i < nPts1; i++)
 			addPoint(refBrush->CachedPointIndex(i), outPositions[i]);
-		}
-
 
 		/*for (pI = points.begin();pI!=points.end();++pI) {
 			addPoint((*pI), movedpoints[(*pI)]);
@@ -213,6 +212,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	 */
 		if (!refBrush->queryPoints(refMesh, pickInfo, pts1, nPts1, facets, affectedNodes))
 			return;
+
 		if (refBrush->isMirrored()) {
 			refBrush->queryPoints(refMesh, mirrorPick, pts2, nPts2, facets2, affectedNodes);
 			//refBrush->queryPoints(refMesh, mirrorPick, pts1+nPts1, nPts2, facets2,affectedNodes);	
@@ -232,30 +232,28 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 		int totalpoints = max(nPts1, nPts2);
 		if (totalpoints > outPositionCount) {
-			if (outPositions) {
+			if (outPositions)
 				delete[] outPositions;
-			}
+
 			outPositions = new Vector3[totalpoints];
 			outPositionCount = totalpoints;
 		}
 
 		refBrush->brushAction(refMesh, pickInfo, pts1, nPts1, outPositions);
-		for (int i = 0; i < nPts1; i++){
+		for (int i = 0; i < nPts1; i++)
 			addPoint(pts1[i], outPositions[i]);
-		}
+
 		if (refBrush->isMirrored())  {
 			refBrush->brushAction(refMesh, mirrorPick, pts2, nPts2, outPositions);
-			for (int i = 0; i < nPts2; i++){
+			for (int i = 0; i < nPts2; i++)
 				addPoint(pts2[i], outPositions[i]);
-			}
 		}
-
 	}
+
 	lastPoint = pickInfo.origin;
 
-	if (refBrush->LiveNormals()) {
+	if (refBrush->LiveNormals() && brushType != TBT_WEIGHT)
 		refMesh->SmoothNormals();
-	}
 
 	if (refBrush->LiveBVH() && brushType != TBT_WEIGHT) {
 		unordered_set<AABBTree::AABBTreeNode*>::iterator bvhNode;
@@ -282,7 +280,7 @@ void TweakStroke::endStroke() {
 		for (auto bvhNode : affectedNodes)
 			bvhNode->UpdateAABB();
 
-	if (!refBrush->LiveNormals())
+	if (!refBrush->LiveNormals() || refBrush->Type() == TBT_WEIGHT)
 		refMesh->SmoothNormals();
 
 	if (pts1) free(pts1);

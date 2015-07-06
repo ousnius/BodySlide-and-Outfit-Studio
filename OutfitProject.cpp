@@ -1032,92 +1032,109 @@ bool OutfitProject::OutfitHasUnweighted() {
 	return false;
 }
 
-void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos) {
+void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos, bool clear) {
 	vector<string> bones;
 	vector<Vector3> boneRot;
 	Vector3 boneTranslation;
 	float boneScale;
-	unordered_map<ushort, float> weights;
 
-	vector<Vector3> verts;
 	vector<string> shapes;
-	ClearBoneScale();
+	ClearBoneScale(false);
 
 	OutfitShapes(shapes);
-	for (auto s : shapes) {
-		workNif.GetVertsForShape(s, verts);
-		workNif.GetShapeBoneList(s, bones);
-		boneScaleOffsets.emplace(s, vector<Vector3>(verts.size()));
-		for (auto b : bones) {
-			if (b == bone) {
-				weights.clear();
-				workNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
-				workAnim.GetWeights(s, b, weights);
-				for (auto w : weights) {
-					Vector3 dir = verts[w.first] - boneTranslation;
-					dir.Normalize();
-					Vector3 offset = dir * w.second * sliderPos / 5.0f;
-					verts[w.first] += offset;
-					boneScaleOffsets[s][w.first] += offset;
-				}
-			}
-		}
-		workNif.SetVertsForShape(s, verts);
-		owner->glView->UpdateMeshVertices(s, &verts);
-	}
-
-	shapes.clear();
 	RefShapes(shapes);
 	for (auto s : shapes) {
-		baseNif.GetVertsForShape(s, verts);
-		baseNif.GetShapeBoneList(s, bones);
-		boneScaleOffsets.emplace(s, vector<Vector3>(verts.size()));
-		for (auto b : bones) {
-			if (b == bone) {
-				weights.clear();
-				baseNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
-				baseAnim.GetWeights(s, b, weights);
-				for (auto w : weights) {
-					Vector3 dir = verts[w.first] - boneTranslation;
-					dir.Normalize();
-					Vector3 offset = dir * w.second * sliderPos / 5.0f;
-					verts[w.first] += offset;
-					boneScaleOffsets[s][w.first] += offset;
+		auto it = boneScaleVerts.find(s);
+		if (it == boneScaleVerts.end()) {
+			mesh* m = owner->glView->GetMesh(s);
+			boneScaleVerts.emplace(s, vector<Vector3>(m->nVerts));
+			it = boneScaleVerts.find(s);
+			for (int i = 0; i < m->nVerts; i++)
+				it->second[i] = move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10));
+		}
+
+		vector<Vector3>* verts = &it->second;
+
+		it = boneScaleOffsets.find(s);
+		if (it == boneScaleOffsets.end())
+			boneScaleOffsets.emplace(s, vector<Vector3>(verts->size()));
+		it = boneScaleOffsets.find(s);
+
+		if (s == baseShapeName) {
+			baseNif.GetShapeBoneList(s, bones);
+
+			for (auto b : bones) {
+				if (b == bone) {
+					baseNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
+					if (workWeights[s].empty())
+						baseAnim.GetWeights(s, b, workWeights[s]);
+
+					for (auto w : workWeights[s]) {
+						Vector3 dir = (*verts)[w.first] - boneTranslation;
+						dir.Normalize();
+						Vector3 offset = dir * w.second * sliderPos / 5.0f;
+						(*verts)[w.first] += offset;
+						it->second[w.first] += offset;
+					}
 				}
 			}
 		}
-		baseNif.SetVertsForShape(s, verts);
-		owner->glView->UpdateMeshVertices(s, &verts);
+		else {
+			workNif.GetShapeBoneList(s, bones);
+
+			for (auto b : bones) {
+				if (b == bone) {
+					workNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
+					if (workWeights[s].empty())
+						workAnim.GetWeights(s, b, workWeights[s]);
+
+					for (auto w : workWeights[s]) {
+						Vector3 dir = (*verts)[w.first] - boneTranslation;
+						dir.Normalize();
+						Vector3 offset = dir * w.second * sliderPos / 5.0f;
+						(*verts)[w.first] += offset;
+						it->second[w.first] += offset;
+					}
+				}
+			}
+		}
+
+		if (clear)
+			owner->glView->UpdateMeshVertices(s, verts);
+		else
+			owner->glView->UpdateMeshVertices(s, verts, false, false);
 	}
 }
 
-void OutfitProject::ClearBoneScale() {
-	vector<Vector3> verts;
-	vector<string> shapes;
+void OutfitProject::ClearBoneScale(bool clear) {
+	if (boneScaleOffsets.empty())
+		return;
 
+	vector<string> shapes;
 	OutfitShapes(shapes);
+	RefShapes(shapes);
+
 	for (auto s : shapes) {
-		if (boneScaleOffsets.find(s) != boneScaleOffsets.end()) {
-			workNif.GetVertsForShape(s, verts);
-			if (verts.size() == boneScaleOffsets[s].size()) {
-				for (int i = 0; i < verts.size(); i++)
-					verts[i] -= boneScaleOffsets[s][i];
-				workNif.SetVertsForShape(s, verts);
-				owner->glView->UpdateMeshVertices(s, &verts);
+		auto it = boneScaleVerts.find(s);
+		vector<Vector3>* verts = &it->second;
+
+		it = boneScaleOffsets.find(s);
+		if (it != boneScaleOffsets.end()) {
+			if (verts->size() == it->second.size()) {
+				for (int i = 0; i < verts->size(); i++)
+					(*verts)[i] -= it->second[i];
+
+				if (clear) {
+					owner->glView->UpdateMeshVertices(s, verts);
+					workWeights.clear();
+				}
+				else
+					owner->glView->UpdateMeshVertices(s, verts, false, false);
 			}
 		}
 	}
 
-	if (boneScaleOffsets.find(baseShapeName) != boneScaleOffsets.end()) {
-		baseNif.GetVertsForShape(baseShapeName, verts);
-		if (verts.size() == boneScaleOffsets[baseShapeName].size()) {
-			for (int i = 0; i < verts.size(); i++)
-				verts[i] -= boneScaleOffsets[baseShapeName][i];
-			baseNif.SetVertsForShape(baseShapeName, verts);
-			owner->glView->UpdateMeshVertices(baseShapeName, &verts);
-		}
-	}
-
+	boneScaleVerts.clear();
 	boneScaleOffsets.clear();
 }
 

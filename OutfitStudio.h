@@ -65,7 +65,7 @@ public:
 		return gls.GetMesh(shapeName);
 	}
 
-	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true);
+	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true);
 	void RecalculateMeshBVH(const string& shapeName);
 
 	void ShowShape(const string& shapeName, bool show = true);
@@ -433,6 +433,7 @@ public:
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
 	wxPanel* lightSettings;
+	wxSlider* boneScale;
 	wxScrolledWindow* sliderScroll;
 	wxStatusBar* statusBar;
 	wxToolBar* toolBar;
@@ -459,7 +460,7 @@ public:
 	void UpdateShapeSource(const string& shapeName, bool bIsOutfit);
 	int PromptUpdateBase();
 
-	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false);
+	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
 
 	string GetActiveBone();

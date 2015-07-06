@@ -43,7 +43,9 @@ public:
 
 	AnimInfo baseAnim;
 	AnimInfo workAnim;
-	unordered_map<string, vector<Vector3>> boneScaleOffsets;
+	map<string, vector<Vector3>> boneScaleOffsets;
+	map<string, vector<Vector3>> boneScaleVerts;
+	map<string, unordered_map<ushort, float>> workWeights;
 
 	map<string, bool> shapeDirty;
 	unordered_map<string, string> outfitTextures;
@@ -191,8 +193,8 @@ public:
 	void TransferSelectedWeights(const string& destShape, unordered_map<ushort, float>* mask = nullptr, vector<string>* inBoneList = nullptr);
 	bool OutfitHasUnweighted();
 
-	void ApplyBoneScale(const string& bone, int sliderPos);
-	void ClearBoneScale();
+	void ApplyBoneScale(const string& bone, int sliderPos, bool clear = false);
+	void ClearBoneScale(bool clear = true);
 
 	void AddBoneRef(const string& boneName, bool IsOutfit = true);
 
