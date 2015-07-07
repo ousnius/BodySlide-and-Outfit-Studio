@@ -733,17 +733,7 @@ void OutfitProject::SetOutfitTexture(const string& shapeName, const string& text
 		if (nifTexFile.empty())
 			nifTexFile = "noimg.dds";
 
-		string texturesDir;
-		switch (owner->targetGame) {
-			case FO3:
-			case FONV:
-				texturesDir = appConfig["GameDataPath"];
-				break;
-			case SKYRIM:
-			default:
-				texturesDir = appConfig["GameDataPath"] + "textures\\";
-		}
-
+		string texturesDir = appConfig["GameDataPath"];
 		wxString combinedTexFile = texturesDir + nifTexFile;
 		outfitTextures[shapeName] = combinedTexFile.ToStdString();
 	}
@@ -758,17 +748,7 @@ void OutfitProject::SetRefTexture(const string& shapeName, const string& texture
 		if (nifTexFile.empty())
 			nifTexFile = "noimg.dds";
 
-		string texturesDir;
-		switch (owner->targetGame) {
-		case FO3:
-		case FONV:
-			texturesDir = appConfig["GameDataPath"];
-			break;
-		case SKYRIM:
-		default:
-			texturesDir = appConfig["GameDataPath"] + "textures\\";
-		}
-
+		string texturesDir = appConfig["GameDataPath"];
 		wxString combinedTexFile = texturesDir + nifTexFile;
 		baseTextures[shapeName] = combinedTexFile.ToStdString();
 	}
