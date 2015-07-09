@@ -899,20 +899,20 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	else {
 		if (!Config.Exists("GameDataPath")) {
 			if (Config["WarnMissingGamePath"] == "true") {
-				int ret = wxMessageBox("WARNING: Skyrim data path not configured. Would you like to show BodySlide where it is?", "Skyrim not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
+				int ret = wxMessageBox("WARNING: Game data path not configured. Would you like to show BodySlide where it is?", "Game not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 				if (ret != wxYES)
 					return 4;
 			}
 
-			wchar_t buffer[MAX_PATH];
-			GetCurrentDirectory(MAX_PATH, buffer);
-			string response = wxDirSelector("Please choose a directory to set as your Skyrim Data directory.", buffer);
-			if (response.empty())
+			wxString cwd = wxGetCwd();
+			wxString response = wxDirSelector("Please choose a directory to set as your Data path", cwd);
+			if (response.IsEmpty())
 				return 4;
 
-			response += "\\";
-			Config.SetValue("GameDataPath", response);
+			response.Append('\\');
+			Config.SetValue("GameDataPath", response.ToStdString());
 		}
+
 		outFileNameSmall = Config["GameDataPath"] + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
 		wxString path = Config["GameDataPath"] + activeSet.GetOutputPath();
@@ -925,22 +925,20 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		if (ret != wxYES)
 			return 4;
 
-		FILE * file;
-		string removeHigh, removeLow;
-		string msg = "Successfully removed the following files:\n";
+		wxString removeHigh, removeLow;
+		wxString msg = "Removed the following files:\n";
 		bool genWeights = activeSet.GenWeights();
 
 		if (genWeights)
 			removeHigh = outFileNameSmall + "_1.nif";
 		else
 			removeHigh = outFileNameSmall + ".nif";
-		msg += removeHigh + "\n";
-
-		file = fopen(removeHigh.c_str(), "r+");
-		if (file) {
-			fclose(file);
-			remove(removeHigh.c_str());
-		}
+		
+		bool remHigh = wxRemoveFile(removeHigh);
+		if (remHigh)
+			msg.Append(removeHigh + "\n");
+		else
+			msg.Append(removeHigh + " (no action)\n");
 
 		if (!genWeights) {
 			wxMessageBox(msg, "Process Successful");
@@ -948,21 +946,20 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 
 		removeLow = outFileNameSmall + "_0.nif";
-		msg += removeHigh;
+		bool remLow = wxRemoveFile(removeLow);
+		if (remLow)
+			msg.Append(removeLow + "\n");
+		else
+			msg.Append(removeLow + " (no action)\n");
 
-		file = fopen(removeLow.c_str(), "r+");
-		if (file) {
-			fclose(file);
-			remove(removeLow.c_str());
-		}
 		wxMessageBox(msg, "Process Successful");
 		return 0;
 	}
 
-	if (nifSmall.Load(inputFileName) != 0)
+	if (nifSmall.Load(inputFileName))
 		return 1;
 
-	if (nifBig.Load(inputFileName) != 0)
+	if (nifBig.Load(inputFileName))
 		return 1;
 
 	vector<Vector3> vertsLow;
@@ -999,10 +996,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 		triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
-			wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath),
-				wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
-		}
+		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll))
+			wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath), "Unable to process", wxOK | wxICON_ERROR);
 
 		string triShapeLink;
 		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
@@ -1015,28 +1010,32 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 	}
 
-	string savedLow;
-	string savedHigh;
+	wxString savedLow;
+	wxString savedHigh;
+	wxString custName;
 	bool useCustName = false;
-	string custName;
+
 	if (activeSet.GenWeights()) {
 		outFileNameSmall += "_0.nif";
 		outFileNameBig += "_1.nif";
 		custName = outFileNameSmall;
 		savedLow = custName;
-		while (nifSmall.Save(custName)) {
-			wxMessageBox(wxString().Format("Unable to process bodies/outfits in the following location\n\n%s", custName),
-				wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
+		while (nifSmall.Save(custName.ToStdString())) {
+			wxMessageBox(wxString().Format("Unable to build bodies/outfits to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
 
-			custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName.c_str());
-			if (custName.empty())
+			custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName);
+			if (custName.IsEmpty())
 				return 4;
 
 			useCustName = true;
 			savedLow = custName;
 		}
 
-		custName = custName.substr(0, custName.rfind("_0.nif")) + "_1.nif";
+		wxString *custEnd = nullptr;
+		if (custName.EndsWith("_0.nif", custEnd))
+			custName = *custEnd + "_1.nif";
+		else
+			custName.Empty();
 	}
 	else {
 		outFileNameBig += ".nif";
@@ -1047,24 +1046,23 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameBig = custName;
 
 	savedHigh = custName;
-	while (nifBig.Save(custName)) {
-		wxMessageBox(wxString().Format("Unable to process bodies/outfits in the following location\n\n%s", custName),
-			wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
+	while (nifBig.Save(custName.ToStdString())) {
+		wxMessageBox(wxString().Format("Unable to build bodies/outfits to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
 
-		custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName.c_str());
-		if (custName.empty())
+		custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName);
+		if (custName.IsEmpty())
 			return 4;
 
 		useCustName = true;
 		savedHigh = custName;
 	}
 
-	string msg = "Successfully processed the following files:\n";
-	if (!savedLow.empty())
-		msg += savedLow += "\n";
+	wxString msg = "Successfully processed the following files:\n";
+	if (!savedLow.IsEmpty())
+		msg.Append(savedLow += "\n");
 
-	if (!savedHigh.empty())
-		msg += savedHigh;
+	if (!savedHigh.IsEmpty())
+		msg.Append(savedHigh);
 
 	wxMessageBox(msg, "Process Successful");
 	return 0;
@@ -1092,18 +1090,17 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 	if (datapath.empty()) {
 		if (!Config.Exists("GameDataPath")) {
 			if (clean) {
-				wxMessageBox("WARNING: Skyrim data path not configured. Files can't be removed that way.", "Skyrim not found", wxOK | wxICON_ERROR);
+				wxMessageBox("WARNING: Game data path not configured. Files can't be removed that way.", "Game not found", wxOK | wxICON_ERROR);
 				return 1;
 			}
 			if (Config["WarnMissingGamePath"] == "true") {
-				int ret = wxMessageBox("WARNING: Skyrim data path not configured. Continue saving files? \r\n(Files will be saved in the BodySlide\\meshes directory)", "Skyrim not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
+				int ret = wxMessageBox("WARNING: Game data path not configured. Continue saving files to the working directory?", "Game not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 				if (ret != wxYES)
 					return 1;
 			}
 
-			wchar_t buffer[MAX_PATH];
-			GetCurrentDirectory(MAX_PATH, buffer);
-			Config.SetValue("GameDataPath", wxString(buffer).ToStdString() + "\\");
+			wxString cwd = wxGetCwd();
+			Config.SetValue("GameDataPath", cwd.ToStdString() + "\\");
 		}
 		datapath = Config["GameDataPath"];
 	}
