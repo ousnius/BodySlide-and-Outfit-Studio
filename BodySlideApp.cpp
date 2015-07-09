@@ -639,31 +639,31 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("BSATextureScan", "true");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("SelectedOutfit", "");
-	
-	wstring gameKey;
-	wstring gameValueKey;
+
+	wxString gameKey;
+	wxString gameValueKey;
 	switch (targetGame) {
-		case FO3:
-			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
-			Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
-			gameKey = L"SOFTWARE\\Bethesda Softworks\\Fallout3";
-			gameValueKey = L"Installed Path";
-			break;
-		case FONV:
-			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
-			Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
-			gameKey = L"SOFTWARE\\Bethesda Softworks\\FalloutNV";
-			gameValueKey = L"Installed Path";
-			break;
-		case SKYRIM:
-			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
-			Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
-			gameKey = L"SOFTWARE\\Bethesda Softworks\\Skyrim";
-			gameValueKey = L"Installed Path";
-			break;
-		default:
-			Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
-			Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
+	case FO3:
+		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
+		Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
+		gameKey = "SOFTWARE\\Bethesda Softworks\\Fallout3";
+		gameValueKey = "Installed Path";
+		break;
+	case FONV:
+		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
+		Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
+		gameKey = "SOFTWARE\\Bethesda Softworks\\FalloutNV";
+		gameValueKey = "Installed Path";
+		break;
+	case SKYRIM:
+		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
+		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
+		gameKey = "SOFTWARE\\Bethesda Softworks\\Skyrim";
+		gameValueKey = "Installed Path";
+		break;
+	default:
+		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
+		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
 	}
 
 	Config.SetDefaultValue("ReferenceTemplates", "");
@@ -685,17 +685,12 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
 
 	if (!Config.Exists("GameDataPath")) {
-		HKEY regKey;
-		long result = RegOpenKeyEx(HKEY_LOCAL_MACHINE, gameKey.c_str(), 0, KEY_READ, &regKey);
-		if (result == ERROR_SUCCESS) {
-			wchar_t installPath[256];
-			DWORD pathSize = 256;
-			result = RegQueryValueEx(regKey, gameValueKey.c_str(), 0, 0, (LPBYTE)&installPath, &pathSize);
-			if (result == ERROR_SUCCESS) {
-				wstring wGameDataPath(installPath);
-				string gameDataPath(wGameDataPath.begin(), wGameDataPath.end());
-				gameDataPath += "Data\\";
-				Config.SetDefaultValue("GameDataPath", gameDataPath);
+		wxRegKey key(wxRegKey::HKLM, gameKey);
+		if (key.Exists()) {
+			wxString installPath;
+			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
+				installPath.Append("Data\\");
+				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
 			}
 			else if (Config["WarnMissingGamePath"] == "true")
 				wxMessageBox("Could not find both your game install path (registry key value) and GameDataPath in the configuration.", "Warning");
