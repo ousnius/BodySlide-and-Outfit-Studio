@@ -634,7 +634,7 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("TargetGame", 2);
 	targetGame = Config.GetIntValue("TargetGame");
 
-	Config.SetDefaultValue("ShapeDataPath", ".\\ShapeData");
+	Config.SetDefaultValue("ShapeDataPath", wxGetCwd().ToStdString() + "\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
 	Config.SetDefaultValue("BSATextureScan", "true");
 	Config.SetDefaultValue("SelectedPreset", "");

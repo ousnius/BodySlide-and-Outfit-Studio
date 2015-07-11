@@ -1284,7 +1284,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	}
 
 	sset.GetSet(setName, activeSet);
-	activeSet.SetBaseDataPath("ShapeData");
+	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
 	string inMeshFile = activeSet.GetInputFileName();
 
 	if (!ClearRef)
@@ -1534,8 +1534,8 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 		return 3;
 	}
 
-	tmpSet.SetBaseDataPath("ShapeData");
-	activeSet.SetBaseDataPath("ShapeData");
+	tmpSet.SetBaseDataPath(Config["ShapeDataPath"]);
+	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
 	string inputNif = tmpSet.GetInputFileName();
 
 	owner->UpdateProgress(30.0f, "Loading outfit shapes...");
