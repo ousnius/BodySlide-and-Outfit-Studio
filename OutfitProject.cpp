@@ -1247,23 +1247,19 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 
 	baseShapeName = shapeName;
 
-	vector<string> baseShapes;
 	vector<string> workShapes;
-	RefShapes(baseShapes);
 	OutfitShapes(workShapes);
-	for (auto s1 : workShapes) {
-		for (auto s2 : baseShapes) {
-			if (s1 == s2) {
-				RenameShape(s1, s1 + "_ref", false);
-				baseShapeName = s1 + "_ref";
-			}
+	for (auto s : workShapes) {
+		if (s == baseShapeName) {
+			string newName = s + "_ref";
+			baseNif.RenameShape(s, newName);
+			baseShapeName = newName;
+			break;
 		}
 	}
 
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
-	//activeSet.LinkShapeTarget(shapeName, shapeName);
-
 	AutoOffset(baseNif);
 
 	return 0;
@@ -1306,34 +1302,33 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 
 	vector<string> shapes;
 	baseNif.GetShapeList(shapes);
-	if (shapes.size() == 0) {
+	if (shapes.empty()) {
 		ClearReference();
 		wxMessageBox("Reference NIF does not contain any shapes.", "Reference Error", wxICON_ERROR);
 		return 3;
 	}
 
 	string shape = shapeName;
-	if (shape == "") {
+	if (shape.empty())
 		shape = shapes[0];
-	}
 
 	vector<string> workShapes;
 	OutfitShapes(workShapes);
-	for (auto s1 : workShapes) {
-		for (auto s2 : shapes) {
-			if (s1 == s2) {
-				RenameShape(s1, s1 + "_ref", false);
-				shape = s1 + "_ref";
-			}
+	for (auto s : workShapes) {
+		if (s == shape) {
+			string newName = s + "_ref";
+			baseNif.RenameShape(s, newName);
+			shape = newName;
+			break;
 		}
 	}
 
 	if (!ClearRef) {
 		SliderSet tmpSS;
 		sset.GetSet(setName, tmpSS);
-		for (int i = 0; i < tmpSS.size(); i++){
+		for (int i = 0; i < tmpSS.size(); i++)
 			activeSet.DeleteSlider(tmpSS[i].name);
-		}
+
 		oldTarget = ShapeToTarget(baseShapeName);
 		activeSet.RenameShape(baseShapeName, shape);
 		activeSet.ClearTargets(oldTarget);
@@ -1356,16 +1351,16 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
-
 	AutoOffset(baseNif);
+
 	return 0;
 }
 
 int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName) {
-	vector<string> refShapes;
-	vector<string> workShapes;
-
 	ClearOutfit();
+
+	if (filename.empty())
+		return 0;
 
 	outfitName = inOutfitName;
 	size_t fnpos = filename.rfind("\\");
@@ -1393,9 +1388,6 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 			mGamePath = "";
 	}
 
-	if (filename.empty())
-		return 0;
-
 	int ret = workNif.Load(filename);
 	if (ret) {
 		if (ret == 2) {
@@ -1408,51 +1400,42 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 		return 1;
 	}
 
+	vector<string> workShapes;
+	OutfitShapes(workShapes);
+	for (auto s : workShapes)
+		workNif.RenameDuplicateShape(s);
+
+	vector<string> refShapes;
 	RefShapes(refShapes);
 	for (auto s : refShapes)
-		RenameShape(s, s + "_outfit", true);
-
-	OutfitShapes(workShapes);
+		workNif.RenameShape(s, s + "_outfit");
 
 	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
-	unordered_set<string> uniqueNames;
-	vector<string> dups;
-	for (auto ws : workShapes) {
-		string oldWs = ws;
-		for (uint i = 0; i < sizeof(chars); ++i)
-			replace(ws.begin(), ws.end(), chars[i], '_');
-		if (oldWs != ws)
-			RenameShape(oldWs, ws, true);
-		if (uniqueNames.find(ws) == uniqueNames.end())
-			uniqueNames.insert(ws);
-		else
-			dups.push_back(ws);
-	}
-	if (!dups.empty()) {
-		for (auto d : dups){
-			workNif.RenameDuplicateShape(d);
-		}
-	}
 	OutfitShapes(workShapes);
+	for (auto s : workShapes) {
+		string oldName = s;
+		for (uint i = 0; i < sizeof(chars); ++i)
+			replace(s.begin(), s.end(), chars[i], '_');
+
+		if (oldName != s)
+			workNif.RenameShape(oldName, s);
+	}
+
+	OutfitShapes(workShapes);
+	if (workShapes.empty())
+		return 2;
 
 	workAnim.LoadFromNif(&workNif);
 	AutoOffset(workNif);
-
-	// No shapes in nif file
-	if (workShapes.size() == 0)
-		return 2;
 
 	return 0;
 }
 
 int OutfitProject::AddNif(const string& filename) {
-	vector<string> refShapes;
-	vector<string> workShapes;
-	NifFile nif;
-
 	if (filename.empty())
 		return 0;
 
+	NifFile nif;
 	int ret = nif.Load(filename);
 	if (ret) {
 		if (ret == 2) {
@@ -1465,52 +1448,60 @@ int OutfitProject::AddNif(const string& filename) {
 		return 1;
 	}
 
+	vector<string> nifShapes;
+	nif.GetShapeList(nifShapes);
+	for (auto s : nifShapes)
+		nif.RenameDuplicateShape(s);
+
+	vector<string> refShapes;
 	RefShapes(refShapes);
 	for (auto s : refShapes)
-		RenameShape(s, s + "_outfit", true);
-
-	nif.GetShapeList(workShapes);
+		nif.RenameShape(s, s + "_outfit");
 
 	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
-	unordered_set<string> uniqueNames;
-	vector<string> dups;
-	for (auto ws : workShapes) {
-		string oldWs = ws;
+	vector<string> workShapes;
+	OutfitShapes(workShapes);
+
+	nif.GetShapeList(nifShapes);
+	for (auto s : nifShapes) {
+		string oldName = s;
 		for (uint i = 0; i < sizeof(chars); ++i)
-			replace(ws.begin(), ws.end(), chars[i], '_');
-		if (oldWs != ws)
-			nif.RenameShape(oldWs, ws);
-		if (uniqueNames.find(ws) == uniqueNames.end())
-			uniqueNames.insert(ws);
-		else
-			dups.push_back(ws);
+			replace(s.begin(), s.end(), chars[i], '_');
 
-		unordered_set<string> existing;
-		vector<string> existingShapes;
-		workNif.GetShapeList(existingShapes);
-		for (auto s : existingShapes)
-			existing.insert(s);
-		if (existing.find(ws) != existing.end())
-			dups.push_back(ws);
-	}
+		if (oldName != s)
+			nif.RenameShape(oldName, s);
 
-	if (!dups.empty()) {
-		for (auto d : dups) {
-			nif.RenameDuplicateShape(d);
+		vector<string> uniqueShapes;
+		nif.GetShapeList(uniqueShapes);
+		uniqueShapes.insert(uniqueShapes.end(), workShapes.begin(), workShapes.end());
+
+		string newName = s;
+		int uniqueCount = 0;
+		for (;;) {
+			if (find(uniqueShapes.begin(), uniqueShapes.end(), newName) != uniqueShapes.end()) {
+				uniqueCount++;
+				newName = s + wxString::Format("_%d", uniqueCount).ToStdString();
+			}
+			else {
+				if (uniqueCount > 0)
+					nif.RenameShape(s, newName);
+				break;
+			}
 		}
 	}
-	nif.GetShapeList(workShapes);
 
 	AutoOffset(nif);
-	for (auto s : workShapes) {
+
+	nif.GetShapeList(nifShapes);
+	if (nifShapes.empty())
+		return 3;
+
+	for (auto s : nifShapes) {
 		workNif.CopyShape(s, nif, s);
 		workAnim.LoadFromNif(&nif, s);
 	}
-	nif.Clear();
 
-	// No shapes in nif file
-	if (workShapes.size() == 0)
-		return 3;
+	nif.Clear();
 
 	return 0;
 }
