@@ -1026,9 +1026,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			savedLow = custName;
 		}
 
-		wxString *custEnd = nullptr;
-		if (custName.EndsWith("_0.nif", custEnd))
-			custName = *custEnd + "_1.nif";
+		wxString custEnd;
+		if (custName.EndsWith("_0.nif", &custEnd))
+			custName = custEnd + "_1.nif";
 		else
 			custName.Empty();
 	}
