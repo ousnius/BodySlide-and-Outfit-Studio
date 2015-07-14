@@ -1321,6 +1321,10 @@ int NifFile::ExportShapeObj(const string& filename, const string& shape, float s
 	const vector<Triangle>* tris = GetTrisForShape(shape);
 	const vector<Vector2>* uvs = GetUvsForShape(shape);
 
+	vector<Triangle> stripTris;
+	if (!tris)
+		GetTrisForTriStripShape(shape, &stripTris);
+
 	Vector3 shapeTrans;
 	GetShapeTranslation(shape, shapeTrans);
 
@@ -1348,11 +1352,23 @@ int NifFile::ExportShapeObj(const string& filename, const string& shape, float s
 	}
 	file << endl;
 
-	for (int i = 0; i < tris->size(); i++) {
-		file << "f " << tris->at(i).p1 + 1 << "/" << tris->at(i).p1 + 1 << " "
-			<< tris->at(i).p2 + 1 << "/" << tris->at(i).p2 + 1 << " "
-			<< tris->at(i).p3 + 1 << "/" << tris->at(i).p3 + 1
-			<< endl;
+	// NiTriShapeData
+	if (tris) {
+		for (int i = 0; i < tris->size(); i++) {
+			file << "f " << tris->at(i).p1 + 1 << "/" << tris->at(i).p1 + 1 << " "
+				<< tris->at(i).p2 + 1 << "/" << tris->at(i).p2 + 1 << " "
+				<< tris->at(i).p3 + 1 << "/" << tris->at(i).p3 + 1
+				<< endl;
+		}
+	}
+	// NiTriStripsData
+	else {
+		for (int i = 0; i < stripTris.size(); i++) {
+			file << "f " << stripTris.at(i).p1 + 1 << "/" << stripTris.at(i).p1 + 1 << " "
+				<< stripTris.at(i).p2 + 1 << "/" << stripTris.at(i).p2 + 1 << " "
+				<< stripTris.at(i).p3 + 1 << "/" << stripTris.at(i).p3 + 1
+				<< endl;
+		}
 	}
 	file << endl;
 
