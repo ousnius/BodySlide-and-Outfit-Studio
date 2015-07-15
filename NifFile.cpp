@@ -650,8 +650,8 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	// Controller
 	NiUnknown* srcController = dynamic_cast<NiUnknown*>(srcNif.GetBlock(srcShader->controllerRef));
 	if (srcController) {
-		NiUnknown* destController = new NiUnknown((*srcController));
-		destController->header = &hdr;
+		NiUnknown* destController = new NiUnknown(srcController->CalcBlockSize());
+		destController->Clone(srcController);
 		int controllerId = blocks.size();
 		blocks.push_back(destController);
 		hdr.numBlocks++;
@@ -797,8 +797,8 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 	// Controller
 	NiUnknown* srcController = dynamic_cast<NiUnknown*>(srcNif.GetBlock(srcShader->controllerRef));
 	if (srcController) {
-		NiUnknown* destController = new NiUnknown((*srcController));
-		destController->header = &hdr;
+		NiUnknown* destController = new NiUnknown(srcController->CalcBlockSize());
+		destController->Clone(srcController);
 		int controllerId = blocks.size();
 		blocks.push_back(destController);
 		hdr.numBlocks++;
@@ -1048,8 +1048,8 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 
 			NiUnknown* srcUnknown = dynamic_cast<NiUnknown*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (srcUnknown) {
-				NiUnknown* destUnknown = new NiUnknown((*srcUnknown));
-				destUnknown->header = &hdr;
+				NiUnknown* destUnknown = new NiUnknown(srcUnknown->CalcBlockSize());
+				destUnknown->Clone(srcUnknown);
 				int unknownId = blocks.size();
 				blocks.push_back(destUnknown);
 				hdr.numBlocks++;
@@ -1271,8 +1271,8 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 
 			NiUnknown* srcUnknown = dynamic_cast<NiUnknown*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (srcUnknown) {
-				NiUnknown* destUnknown = new NiUnknown((*srcUnknown));
-				destUnknown->header = &hdr;
+				NiUnknown* destUnknown = new NiUnknown(srcUnknown->CalcBlockSize());
+				destUnknown->Clone(srcUnknown);
 				int unknownId = blocks.size();
 				blocks.push_back(destUnknown);
 				hdr.numBlocks++;
