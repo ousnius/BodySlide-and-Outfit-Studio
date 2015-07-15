@@ -425,8 +425,6 @@ NiNode::NiNode(NiHeader& hdr) {
 	blockType = NINODE;
 	numChildren = 0;
 	numEffects = 0;
-
-	CalcBlockSize();
 }
 
 NiNode::NiNode(fstream& file, NiHeader& hdr) {
@@ -438,7 +436,6 @@ NiNode::NiNode(fstream& file, NiHeader& hdr) {
 	numEffects = 0;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiNode::Get(fstream& file) {
@@ -926,8 +923,6 @@ NiTriShape::NiTriShape(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NITRISHAPE;
-
-	CalcBlockSize();
 }
 
 NiTriShape::NiTriShape(fstream& file, NiHeader& hdr) {
@@ -937,7 +932,6 @@ NiTriShape::NiTriShape(fstream& file, NiHeader& hdr) {
 	blockType = NITRISHAPE;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiTriShape::Get(fstream& file) {
@@ -967,8 +961,6 @@ NiTriShapeData::NiTriShapeData(NiHeader& hdr) {
 	numTrianglePoints = 0;
 	hasTriangles = false;
 	numMatchGroups = 0;
-
-	CalcBlockSize();
 }
 
 NiTriShapeData::NiTriShapeData(fstream& file, NiHeader& hdr) {
@@ -983,7 +975,6 @@ NiTriShapeData::NiTriShapeData(fstream& file, NiHeader& hdr) {
 	numMatchGroups = 0;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiTriShapeData::Get(fstream& file) {
@@ -1048,8 +1039,6 @@ void NiTriShapeData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 		triangles.push_back(t);
 
 	numMatchGroups = 0;
-
-	CalcBlockSize();
 }
 
 void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
@@ -1229,8 +1218,6 @@ NiTriStrips::NiTriStrips(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NITRISTRIPS;
-
-	CalcBlockSize();
 }
 
 NiTriStrips::NiTriStrips(fstream& file, NiHeader& hdr) {
@@ -1240,7 +1227,6 @@ NiTriStrips::NiTriStrips(fstream& file, NiHeader& hdr) {
 	blockType = NITRISTRIPS;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiTriStrips::Get(fstream& file) {
@@ -1269,8 +1255,6 @@ NiTriStripsData::NiTriStripsData(NiHeader& hdr) {
 	hasPoints = false;
 	virtScale = 1.0f;
 	scaleFromCenter = true;
-
-	CalcBlockSize();
 }
 
 NiTriStripsData::NiTriStripsData(fstream& file, NiHeader& hdr) {
@@ -1284,7 +1268,6 @@ NiTriStripsData::NiTriStripsData(fstream& file, NiHeader& hdr) {
 	scaleFromCenter = true;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiTriStripsData::Get(fstream& file) {
@@ -1507,8 +1490,6 @@ void NiTriStripsData::CalcTangentSpace() {
 		tangents[i] = bitangents[i].cross(normals[i]);
 		tangents[i].Normalize();
 	}
-
-	CalcBlockSize();
 }
 
 int NiTriStripsData::CalcBlockSize() {
@@ -1529,8 +1510,6 @@ NiSkinInstance::NiSkinInstance(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NISKININSTANCE;
-
-	CalcBlockSize();
 }
 
 NiSkinInstance::NiSkinInstance(fstream& file, NiHeader& hdr) {
@@ -1540,7 +1519,6 @@ NiSkinInstance::NiSkinInstance(fstream& file, NiHeader& hdr) {
 	blockType = NISKININSTANCE;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiSkinInstance::Init() {
@@ -1617,7 +1595,6 @@ void NiSkinInstance::notifyBlockDelete(int blockID) {
 
 		skinData->bones.erase(skinData->bones.begin() + boneIndex);
 		skinData->numBones--;
-		skinData->CalcBlockSize();
 	}
 }
 
@@ -1636,8 +1613,6 @@ BSDismemberSkinInstance::BSDismemberSkinInstance(NiHeader& hdr) {
 	header = &hdr;
 	blockType = BSDISMEMBERSKININSTANCE;
 	numPartitions = 0;
-
-	CalcBlockSize();
 }
 
 BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader& hdr) {
@@ -1648,7 +1623,6 @@ BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader& hdr) {
 	numPartitions = 0;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void BSDismemberSkinInstance::Get(fstream& file) {
@@ -1694,8 +1668,6 @@ NiSkinData::NiSkinData(NiHeader& hdr) {
 	skinTransform.scale = 1.0f;
 	numBones = 0;
 	hasVertWeights = 1;
-
-	CalcBlockSize();
 }
 
 NiSkinData::NiSkinData(fstream& file, NiHeader& hdr) {
@@ -1708,7 +1680,6 @@ NiSkinData::NiSkinData(fstream& file, NiHeader& hdr) {
 	hasVertWeights = 1;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiSkinData::Get(fstream& file) {
@@ -1811,8 +1782,6 @@ NiSkinPartition::NiSkinPartition(NiHeader& hdr) {
 	blockType = NISKINPARTITION;
 	numPartitions = 0;
 	needsBuild = true;
-
-	CalcBlockSize();
 }
 
 NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
@@ -1824,7 +1793,6 @@ NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
 	needsBuild = false;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiSkinPartition::Get(fstream& file) {
@@ -2123,8 +2091,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	sparkleParameters.b = 0.0f;
 	sparkleParameters.a = 0.0f;
 	eyeCubemapScale = 1.0f;
-
-	CalcBlockSize();
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr) {
@@ -2151,7 +2117,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr)
 	eyeCubemapScale = 1.0f;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void BSLightingShaderProperty::Get(fstream& file) {
@@ -2435,8 +2400,6 @@ BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader& hdr) {
 	emissiveColor.g = 0.0f;
 	emissiveColor.b = 0.0f;
 	emissiveColor.a = 0.0f;
-
-	CalcBlockSize();
 }
 
 BSShaderPPLightingProperty::BSShaderPPLightingProperty(fstream& file, NiHeader& hdr) {
@@ -2454,7 +2417,6 @@ BSShaderPPLightingProperty::BSShaderPPLightingProperty(fstream& file, NiHeader& 
 	emissiveColor.a = 0.0f;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void BSShaderPPLightingProperty::Get(fstream& file) {
@@ -2536,8 +2498,6 @@ BSShaderTextureSet::BSShaderTextureSet(NiHeader& hdr) {
 
 	for (int i = 0; i < numTextures; i++)
 		textures.push_back(NiString(false));
-
-	CalcBlockSize();
 }
 
 BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader& hdr) {
@@ -2547,7 +2507,6 @@ BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader& hdr) {
 	blockType = BSSHADERTEXTURESET;
 
 	Get(file);
-	CalcBlockSize();
 }
 	
 void BSShaderTextureSet::Get(fstream& file) {
@@ -2586,8 +2545,6 @@ NiAlphaProperty::NiAlphaProperty(NiHeader& hdr) {
 	blockType = NIALPHAPROPERTY;
 	flags = 4844;
 	threshold = 128;
-
-	CalcBlockSize();
 }
 
 NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader& hdr) {
@@ -2597,7 +2554,6 @@ NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader& hdr) {
 	blockType = NIALPHAPROPERTY;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiAlphaProperty::Get(fstream& file) {
@@ -2635,8 +2591,6 @@ NiMaterialProperty::NiMaterialProperty(NiHeader& hdr) {
 	glossiness = 1.0f;
 	alpha = 1.0f;
 	emitMulti = 1.0f;
-
-	CalcBlockSize();
 }
 
 NiMaterialProperty::NiMaterialProperty(fstream& file, NiHeader& hdr) {
@@ -2647,7 +2601,6 @@ NiMaterialProperty::NiMaterialProperty(fstream& file, NiHeader& hdr) {
 	emitMulti = 1.0f;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiMaterialProperty::Get(fstream& file) {
@@ -2710,8 +2663,6 @@ NiStencilProperty::NiStencilProperty(NiHeader& hdr) {
 	flags = 19840;
 	stencilRef = 0;
 	stencilMask = 0xffffffff;
-
-	CalcBlockSize();
 }
 
 NiStencilProperty::NiStencilProperty(fstream& file, NiHeader& hdr) {
@@ -2721,7 +2672,6 @@ NiStencilProperty::NiStencilProperty(fstream& file, NiHeader& hdr) {
 	blockType = NISTENCILPROPERTY;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiStencilProperty::Get(fstream& file) {
@@ -2792,8 +2742,6 @@ NiStringExtraData::NiStringExtraData(NiHeader& hdr) {
 	blockType = NISTRINGEXTRADATA;
 	stringDataRef = 0xFFFFFFFF;
 	stringData = "";
-
-	CalcBlockSize();
 }
 
 NiStringExtraData::NiStringExtraData(fstream& file, NiHeader& hdr) {
@@ -2803,7 +2751,6 @@ NiStringExtraData::NiStringExtraData(fstream& file, NiHeader& hdr) {
 	blockType = NISTRINGEXTRADATA;
 
 	Get(file);
-	CalcBlockSize();
 }
 
 void NiStringExtraData::Get(fstream& file) {
@@ -2835,8 +2782,6 @@ NiUnknown::NiUnknown() {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
-
-	CalcBlockSize();
 }
 
 NiUnknown::NiUnknown(fstream& file, uint size) {

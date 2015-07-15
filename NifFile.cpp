@@ -153,8 +153,9 @@ void NifFile::CopyFrom(NifFile& other) {
 		Clear();
 
 	isValid = other.isValid;
-	this->fileName = other.fileName;
-	this->hdr = other.hdr;
+	fileName = other.fileName;
+	hdr = other.hdr;
+
 	NiObject* nb;
 	for (int i = 0; i < other.blocks.size(); i++) {
 		switch (other.blocks[i]->blockType) {
@@ -209,7 +210,9 @@ void NifFile::CopyFrom(NifFile& other) {
 			break;
 		case NISTENCILPROPERTY:
 			nb = new NiStencilProperty((*(NiStencilProperty*)other.blocks[i]));
+			break;
 		}
+		nb->header = &hdr;
 		blocks.push_back(nb);
 	}
 	this->hdr.blocks = &blocks;
@@ -619,6 +622,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 
 	// Create destination shader block and copy
 	BSLightingShaderProperty* destShader = new BSLightingShaderProperty((*srcShader));
+	destShader->header = &hdr;
 	destShader->nameRef = 0xFFFFFFFF;
 
 	// Add shader block to nif
@@ -632,6 +636,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	if (texSetFound) {
 		// Create texture set block and copy
 		destTexSet = new BSShaderTextureSet((*srcTexSet));
+		destTexSet->header = &hdr;
 
 		// Add texture block to nif
 		texsetId = blocks.size();
@@ -646,6 +651,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	NiUnknown* srcController = dynamic_cast<NiUnknown*>(srcNif.GetBlock(srcShader->controllerRef));
 	if (srcController) {
 		NiUnknown* destController = new NiUnknown((*srcController));
+		destController->header = &hdr;
 		int controllerId = blocks.size();
 		blocks.push_back(destController);
 		hdr.numBlocks++;
@@ -763,6 +769,7 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 
 	// Create destination shader block and copy
 	BSShaderPPLightingProperty* destShader = new BSShaderPPLightingProperty((*srcShader));
+	destShader->header = &hdr;
 	destShader->nameRef = 0xFFFFFFFF;
 
 	// Add shader block to nif
@@ -776,6 +783,7 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 	if (texSetFound) {
 		// Create texture set block and copy
 		destTexSet = new BSShaderTextureSet((*srcTexSet));
+		destTexSet->header = &hdr;
 
 		// Add texture block to nif
 		texsetId = blocks.size();
@@ -790,6 +798,7 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 	NiUnknown* srcController = dynamic_cast<NiUnknown*>(srcNif.GetBlock(srcShader->controllerRef));
 	if (srcController) {
 		NiUnknown* destController = new NiUnknown((*srcController));
+		destController->header = &hdr;
 		int controllerId = blocks.size();
 		blocks.push_back(destController);
 		hdr.numBlocks++;
@@ -855,6 +864,7 @@ int NifFile::CopyNamedNode(string& nodeName, NifFile& srcNif) {
 		return -1;
 
 	NiNode* destNode = new NiNode((*srcNode));
+	destNode->header = &hdr;
 	int strPtr = AddOrFindStringId(nodeName);
 	destNode->nameRef = strPtr;
 	destNode->name = nodeName;
@@ -901,25 +911,31 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 				srcSkinData = (NiSkinData*)srcNif.GetBlock(srcNiSkinInst->dataRef);
 				srcSkinPart = (NiSkinPartition*)srcNif.GetBlock(srcNiSkinInst->skinPartitionRef);
 				destNiSkinInst = new NiSkinInstance((*srcNiSkinInst));
+				destNiSkinInst->header = &hdr;
 			}
 		}
 		else {
 			srcSkinData = (NiSkinData*)srcNif.GetBlock(srcBSDSkinInst->dataRef);
 			srcSkinPart = (NiSkinPartition*)srcNif.GetBlock(srcBSDSkinInst->skinPartitionRef);
 			destBSDSkinInst = new BSDismemberSkinInstance((*srcBSDSkinInst));
+			destBSDSkinInst->header = &hdr;
 		}
 	}
 
 	NiTriStrips* dest = new NiTriStrips((*src));
+	dest->header = &hdr;
 	dest->nameRef = AddOrFindStringId(shapeDest);
 	dest->name = shapeDest;
 
 	NiTriStripsData* destData = new NiTriStripsData((*srcData));
+	destData->header = &hdr;
 
 	if (!skipSkinInst) {
 		// Treat skinning and partition info as blobs of anonymous data.
 		destSkinData = new NiSkinData((*srcSkinData));
+		destSkinData->header = &hdr;
 		destSkinPart = new NiSkinPartition((*srcSkinPart));
+		destSkinPart->header = &hdr;
 	}
 
 	int destId = blocks.size();
@@ -1007,6 +1023,7 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (material) {
 				NiMaterialProperty* destMaterial = new NiMaterialProperty((*material));
+				destMaterial->header = &hdr;
 				int materialId = blocks.size();
 				blocks.push_back(destMaterial);
 				hdr.numBlocks++;
@@ -1019,6 +1036,7 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 			NiStencilProperty* stencil = dynamic_cast<NiStencilProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (stencil) {
 				NiStencilProperty* destStencil = new NiStencilProperty((*stencil));
+				destStencil->header = &hdr;
 				int stencilId = blocks.size();
 				blocks.push_back(destStencil);
 				hdr.numBlocks++;
@@ -1031,6 +1049,7 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 			NiUnknown* srcUnknown = dynamic_cast<NiUnknown*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (srcUnknown) {
 				NiUnknown* destUnknown = new NiUnknown((*srcUnknown));
+				destUnknown->header = &hdr;
 				int unknownId = blocks.size();
 				blocks.push_back(destUnknown);
 				hdr.numBlocks++;
@@ -1115,25 +1134,31 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 				srcSkinData = (NiSkinData*)srcNif.GetBlock(srcNiSkinInst->dataRef);
 				srcSkinPart = (NiSkinPartition*)srcNif.GetBlock(srcNiSkinInst->skinPartitionRef);
 				destNiSkinInst = new NiSkinInstance((*srcNiSkinInst));
+				destNiSkinInst->header = &hdr;
 			}
 		}
 		else {
 			srcSkinData = (NiSkinData*)srcNif.GetBlock(srcBSDSkinInst->dataRef);
 			srcSkinPart = (NiSkinPartition*)srcNif.GetBlock(srcBSDSkinInst->skinPartitionRef);
 			destBSDSkinInst = new BSDismemberSkinInstance((*srcBSDSkinInst));
+			destBSDSkinInst->header = &hdr;
 		}
 	}
 
 	NiTriShape* dest = new NiTriShape((*src));
+	dest->header = &hdr;
 	dest->nameRef = AddOrFindStringId(shapeDest);
 	dest->name = shapeDest;
 
 	NiTriShapeData* destData = new NiTriShapeData((*srcData));
+	destData->header = &hdr;
 
 	if (!skipSkinInst) {
 		// Treat skinning and partition info as blobs of anonymous data.
 		destSkinData = new NiSkinData((*srcSkinData));
+		destSkinData->header = &hdr;
 		destSkinPart = new NiSkinPartition((*srcSkinPart));
+		destSkinPart->header = &hdr;
 	}
 
 	int destId = blocks.size();
@@ -1221,6 +1246,7 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 			NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (material) {
 				NiMaterialProperty* destMaterial = new NiMaterialProperty((*material));
+				destMaterial->header = &hdr;
 				int materialId = blocks.size();
 				blocks.push_back(destMaterial);
 				hdr.numBlocks++;
@@ -1233,6 +1259,7 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 			NiStencilProperty* stencil = dynamic_cast<NiStencilProperty*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (stencil) {
 				NiStencilProperty* destStencil = new NiStencilProperty((*stencil));
+				destStencil->header = &hdr;
 				int stencilId = blocks.size();
 				blocks.push_back(destStencil);
 				hdr.numBlocks++;
@@ -1245,6 +1272,7 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 			NiUnknown* srcUnknown = dynamic_cast<NiUnknown*>(srcNif.GetBlock(src->propertiesRef[i]));
 			if (srcUnknown) {
 				NiUnknown* destUnknown = new NiUnknown((*srcUnknown));
+				destUnknown->header = &hdr;
 				int unknownId = blocks.size();
 				blocks.push_back(destUnknown);
 				hdr.numBlocks++;
@@ -1297,7 +1325,11 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 int NifFile::Save(const string& filename) {
 	fstream file(filename.c_str(), ios_base::out | ios_base::binary);
 	if (file.is_open()) {
+		for (int i = 0; i < hdr.numBlocks; i++)
+			hdr.blockSizes[i] = blocks[i]->CalcBlockSize();
+
 		hdr.Put(file);
+
 		for (int i = 0; i < hdr.numBlocks; i++)
 			blocks[i]->Put(file);
 
