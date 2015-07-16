@@ -618,12 +618,6 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 		dataRef = shape->dataRef;
 	}
 
-	// Get source block info
-	BSShaderTextureSet* srcTexSet = dynamic_cast<BSShaderTextureSet*>(srcNif.GetBlock(srcShader->textureSetRef));
-	bool texSetFound = false;
-	if (srcTexSet)
-		texSetFound = true;
-
 	// Create destination shader block and copy
 	BSLightingShaderProperty* destShader = new BSLightingShaderProperty((*srcShader));
 	destShader->header = &hdr;
@@ -634,38 +628,43 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	blocks.push_back(destShader);
 	hdr.numBlocks++;
 
+	// Texture Set
 	BSShaderTextureSet* destTexSet = nullptr;
-	int texsetId;
-
-	if (texSetFound) {
+	BSShaderTextureSet* srcTexSet = dynamic_cast<BSShaderTextureSet*>(srcNif.GetBlock(srcShader->textureSetRef));
+	bool texSetFound = false;
+	if (srcTexSet) {
 		// Create texture set block and copy
+		texSetFound = true;
 		destTexSet = new BSShaderTextureSet((*srcTexSet));
 		destTexSet->header = &hdr;
 
 		// Add texture block to nif
-		texsetId = blocks.size();
+		int texsetId = blocks.size();
 		blocks.push_back(destTexSet);
 		hdr.numBlocks++;
 
-		// Assign textureset block id to shader
+		// Assign texture set block id to shader
 		destShader->textureSetRef = texsetId;
 	}
 
 	// Controller
+	NiUnknown* destController = nullptr;
 	NiUnknown* srcController = dynamic_cast<NiUnknown*>(srcNif.GetBlock(srcShader->controllerRef));
+	bool controllerFound = false;
 	if (srcController) {
-		NiUnknown* destController = new NiUnknown(srcController->CalcBlockSize());
+		controllerFound = true;
+		destController = new NiUnknown(srcController->CalcBlockSize());
 		destController->Clone(srcController);
 		int controllerId = blocks.size();
 		blocks.push_back(destController);
 		hdr.numBlocks++;
-		hdr.blockSizes.push_back(destController->CalcBlockSize());
-		hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->controllerRef]].str));
 		destShader->controllerRef = controllerId;
 	}
 
 	(*props1) = shaderId;
-	if (destShader->IsSkinShader() && hdr.userVersion >= 12) { // Kill normals, set numUVSets to 1
+
+	// Kill normals, set numUVSets to 1
+	if (destShader->IsSkinShader() && hdr.userVersion >= 12) {
 		if (isStrips) {
 			NiTriStripsData* stripsData = ((NiTriStripsData*)blocks[dataRef]);
 			stripsData->hasNormals = 0;
@@ -686,11 +685,15 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 		}
 	}
 
-	// Add shader and textureset sizes to block size info
+	// Add shader and other sizes to block size info
 	hdr.blockSizes.push_back(destShader->CalcBlockSize());
-	if (texSetFound) {
+
+	if (texSetFound)
 		hdr.blockSizes.push_back(destTexSet->CalcBlockSize());
-	}
+
+	if (controllerFound)
+		hdr.blockSizes.push_back(destController->CalcBlockSize());
+
 	if (addAlpha) {
 		NiAlphaProperty* alphaProp = new NiAlphaProperty(hdr);
 		(*props2) = blocks.size();
@@ -699,14 +702,18 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 		hdr.blockSizes.push_back(alphaProp->CalcBlockSize());
 	}
 
-	ushort shaderTypeId = AddOrFindBlockTypeId("BSLightingShaderProperty");
 	// Record the block type in the block type index.
+	ushort shaderTypeId = AddOrFindBlockTypeId("BSLightingShaderProperty");
 	hdr.blockIndex.push_back(shaderTypeId);
 
 	if (texSetFound) {
 		ushort texSetTypeId = AddOrFindBlockTypeId("BSShaderTextureSet");
-		// Record the block type in the block type index
 		hdr.blockIndex.push_back(texSetTypeId);
+	}
+
+	if (controllerFound) {
+		ushort controllerTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->controllerRef]].str);
+		hdr.blockIndex.push_back(controllerTypeId);
 	}
 
 	if (addAlpha) {
@@ -765,12 +772,6 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 		dataRef = shape->dataRef;
 	}
 
-	// Get source block info
-	BSShaderTextureSet* srcTexSet = dynamic_cast<BSShaderTextureSet*>(srcNif.GetBlock(srcShader->textureSetRef));
-	bool texSetFound = false;
-	if (srcTexSet)
-		texSetFound = true;
-
 	// Create destination shader block and copy
 	BSShaderPPLightingProperty* destShader = new BSShaderPPLightingProperty((*srcShader));
 	destShader->header = &hdr;
@@ -781,38 +782,43 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 	blocks.push_back(destShader);
 	hdr.numBlocks++;
 
+	// Texture Set
 	BSShaderTextureSet* destTexSet = nullptr;
-	int texsetId;
-
-	if (texSetFound) {
+	BSShaderTextureSet* srcTexSet = dynamic_cast<BSShaderTextureSet*>(srcNif.GetBlock(srcShader->textureSetRef));
+	bool texSetFound = false;
+	if (srcTexSet) {
 		// Create texture set block and copy
+		texSetFound = true;
 		destTexSet = new BSShaderTextureSet((*srcTexSet));
 		destTexSet->header = &hdr;
 
 		// Add texture block to nif
-		texsetId = blocks.size();
+		int texsetId = blocks.size();
 		blocks.push_back(destTexSet);
 		hdr.numBlocks++;
 
-		// Assign textureset block id to shader
+		// Assign texture set block id to shader
 		destShader->textureSetRef = texsetId;
 	}
 
 	// Controller
+	NiUnknown* destController = nullptr;
 	NiUnknown* srcController = dynamic_cast<NiUnknown*>(srcNif.GetBlock(srcShader->controllerRef));
+	bool controllerFound = false;
 	if (srcController) {
-		NiUnknown* destController = new NiUnknown(srcController->CalcBlockSize());
+		controllerFound = true;
+		destController = new NiUnknown(srcController->CalcBlockSize());
 		destController->Clone(srcController);
 		int controllerId = blocks.size();
 		blocks.push_back(destController);
 		hdr.numBlocks++;
-		hdr.blockSizes.push_back(destController->CalcBlockSize());
-		hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->controllerRef]].str));
 		destShader->controllerRef = controllerId;
 	}
 
 	(*props1) = shaderId;
-	if (destShader->IsSkinShader() && hdr.userVersion >= 12) { // Kill normals, set numUVSets to 1
+
+	// Kill normals, set numUVSets to 1
+	if (destShader->IsSkinShader() && hdr.userVersion >= 12) {
 		if (isStrips) {
 			NiTriStripsData* stripsData = ((NiTriStripsData*)blocks[dataRef]);
 			stripsData->hasNormals = 0;
@@ -833,11 +839,15 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 		}
 	}
 
-	// Add shader and textureset sizes to block size info
+	// Add shader and other sizes to block size info
 	hdr.blockSizes.push_back(destShader->CalcBlockSize());
-	if (texSetFound) {
+
+	if (texSetFound)
 		hdr.blockSizes.push_back(destTexSet->CalcBlockSize());
-	}
+
+	if (controllerFound)
+		hdr.blockSizes.push_back(destController->CalcBlockSize());
+
 	if (addAlpha) {
 		NiAlphaProperty* alphaProp = new NiAlphaProperty(hdr);
 		(*props2) = blocks.size();
@@ -846,14 +856,18 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 		hdr.blockSizes.push_back(alphaProp->CalcBlockSize());
 	}
 
-	ushort shaderTypeId = AddOrFindBlockTypeId("BSShaderPPLightingProperty");
 	// Record the block type in the block type index.
+	ushort shaderTypeId = AddOrFindBlockTypeId("BSShaderPPLightingProperty");
 	hdr.blockIndex.push_back(shaderTypeId);
 
 	if (texSetFound) {
 		ushort texSetTypeId = AddOrFindBlockTypeId("BSShaderTextureSet");
-		// Record the block type in the block type index
 		hdr.blockIndex.push_back(texSetTypeId);
+	}
+
+	if (controllerFound) {
+		ushort controllerTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->controllerRef]].str);
+		hdr.blockIndex.push_back(controllerTypeId);
 	}
 
 	if (addAlpha) {
