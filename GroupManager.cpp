@@ -23,6 +23,7 @@ GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
 	listGroups = XRCCTRL(*this, "listGroups", wxListBox);
 	groupName = XRCCTRL(*this, "groupName", wxTextCtrl);
 	btAddGroup = XRCCTRL(*this, "btAddGroup", wxButton);
+	btRemoveGroup = XRCCTRL(*this, "btRemoveGroup", wxButton);
 	btSave = XRCCTRL(*this, "btSave", wxButton);
 	btSaveAs = XRCCTRL(*this, "btSaveAs", wxButton);
 	btRemoveMember = XRCCTRL(*this, "btRemoveMember", wxButton);
@@ -43,14 +44,16 @@ void GroupManager::RefreshUI(const bool& clearGroups) {
 
 	btSave->Enable(dirty & !fileName.empty());
 
-	// Get group selection if existing
-	string selectedGroup = listGroups->GetStringSelection().ToStdString();
-
+	string selectedGroup;
 	if (clearGroups) {
 		// Add groups to list
 		listGroups->Clear();
 		for (auto group : groupMembers)
 			listGroups->Append(group.first);
+	}
+	else {
+		// Get group selection if existing
+		selectedGroup = listGroups->GetStringSelection().ToStdString();
 	}
 
 	// Add members of selected group to list
@@ -73,6 +76,7 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 
 	groupMembers.clear();
 	btAddGroup->Enable();
+	btRemoveGroup->Enable();
 
 	// Fill group member map
 	vector<string> groupNames;

@@ -17,6 +17,7 @@ private:
 	wxListBox* listGroups;
 	wxTextCtrl* groupName;
 	wxButton* btAddGroup;
+	wxButton* btRemoveGroup;
 	wxButton* btSave;
 	wxButton* btSaveAs;
 	wxButton* btRemoveMember;
