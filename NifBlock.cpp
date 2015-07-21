@@ -1,4 +1,5 @@
 #include "NifFile.h"
+#pragma warning (disable : 4100)
 
 NiObject::~NiObject() {
 }

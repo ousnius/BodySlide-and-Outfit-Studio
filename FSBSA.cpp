@@ -128,7 +128,7 @@ wxUint32 BSA::BSAFile::size() const {
 }
 
 bool BSA::BSAFile::compressed() const {
-	return sizeFlags & OB_BSAFILE_FLAG_COMPRESS;
+	return (sizeFlags & OB_BSAFILE_FLAG_COMPRESS) != 0;
 }
 
 //! Reads a foldername sized string (length + null-terminated string) from the BSA
@@ -214,10 +214,10 @@ bool BSA::open() {
 			if ((header.ArchiveFlags & OB_BSAARCHIVE_PATHNAMES) == 0 || (header.ArchiveFlags & OB_BSAARCHIVE_FILENAMES) == 0)
 				throw wxString("header flags");
 
-			compressToggle = header.ArchiveFlags & OB_BSAARCHIVE_COMPRESSFILES;
+			compressToggle = (header.ArchiveFlags & OB_BSAARCHIVE_COMPRESSFILES) != 0;
 
 			if (version == F3_BSAHEADER_VERSION)
-				namePrefix = header.ArchiveFlags & F3_BSAARCHIVE_PREFIXFULLFILENAMES;
+				namePrefix = (header.ArchiveFlags & F3_BSAARCHIVE_PREFIXFULLFILENAMES) != 0;
 			else
 				namePrefix = false;
 
@@ -502,11 +502,11 @@ const BSA::BSAFile *BSA::getFile(wxString fn) const {
 }
 
 bool BSA::hasFile(const wxString &fn) const {
-	return getFile(fn);
+	return getFile(fn) != nullptr;
 }
 
 bool BSA::hasFolder(const wxString &fn) const {
-	return getFolder(fn);
+	return getFolder(fn) != nullptr;
 }
 
 wxDateTime BSA::fileTime(const wxString&) const {

@@ -1,4 +1,5 @@
 #include "GLShader.h"
+#pragma warning (disable : 4130)
 
 bool GLShader::initComplete = false;
 

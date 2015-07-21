@@ -1,4 +1,5 @@
 #include "TweakBrush.h"
+#pragma warning (disable : 4100)
 
 TweakUndo::TweakUndo() : curState(-1) {
 }
