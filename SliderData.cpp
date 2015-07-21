@@ -527,6 +527,15 @@ void PresetCollection::SetSliderPreset(const string& set, const string& slider, 
 	}
 }
 
+bool PresetCollection::GetSliderExists(const string& set, const string& slider) {
+	if (namedSliderPresets.find(set) == namedSliderPresets.end())
+		return false;
+	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end())
+		return false;
+
+	return true;
+}
+
 bool PresetCollection::GetBigPreset(const string& set, const string& slider, float& big) {
 	float b;
 	if (namedSliderPresets.find(set) == namedSliderPresets.end())
@@ -555,7 +564,7 @@ bool PresetCollection::GetSmallPreset(const string& set, const string& slider, f
 	return false;
 }
 
-bool PresetCollection::LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter) {
+bool PresetCollection::LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter, bool allPresets) {
 	XMLDoc doc;
 	XMLElement* root;
 	XMLElement* element;
@@ -588,7 +597,7 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 				}
 				g = g->NextSiblingElement("Group");
 			}
-			if (element->Attribute("set") == sliderSet)
+			if (element->Attribute("set") == sliderSet || allPresets)
 				skip = false;
 
 			if (skip) {

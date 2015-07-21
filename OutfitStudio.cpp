@@ -2367,7 +2367,7 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 		if (PromptUpdateBase() == wxCANCEL)
 			return;
 
-	presets.LoadPresets("SliderPresets", project->SliderSetName(), names);
+	presets.LoadPresets("SliderPresets", choice, names, true);
 	presets.GetPresetNames(names);
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgChoosePreset")) {
@@ -2392,6 +2392,9 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 			return;
 		}
 		for (int i = 0; i < project->SliderCount(); i++) {
+			if (!presets.GetSliderExists(choice, project->SliderName(i)))
+				continue;
+
 			if (project->SliderClamp(i))
 				continue;
 
