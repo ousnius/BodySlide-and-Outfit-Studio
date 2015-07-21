@@ -449,7 +449,7 @@ int GLSurface::InitGLSettings() {
 	initLighting();
 	initMaterial(Vector3(0.8f, 0.8f, 0.8f));
 
-	noImage = resLoader.AddMaterial("res\\NoImg.png", "res\\defvshader.vs", "res\\defshader.fs");
+	noImage = resLoader.AddMaterial("res\\NoImg.png", "res\\maskvshader.vs", "res\\defshader.fs");
 
 	return 0;
 }
