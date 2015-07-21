@@ -108,7 +108,7 @@ public:
 // More general purpose KD tree that assembles a tree from input points and allows nearest neighbor and radius searches on the data.
 class kd_tree {
 public:
-	class kd_node{
+	class kd_node {
 	public:
 		Vertex* p;
 		int p_i;
@@ -127,7 +127,6 @@ public:
 			if (more)
 				delete more;
 			less = more = nullptr;
-
 		}
 
 		kd_node(Vertex* point, int point_index) {
@@ -209,17 +208,18 @@ public:
 			// Fix? Might want to use squared distance instead... probably unnecessary.
 			pointdist = querypoint->DistanceTo(p);
 
-			// Axis crossing
-			bool notopp = ((querypoint->nx*p->nx + querypoint->ny*p->ny + querypoint->nz*p->nz) > 0);
+			// No opposites
+			bool notOpp = true;
+			//notOpp = (querypoint->nx * p->nx + querypoint->ny * p->ny + querypoint->nz * p->nz) > 0.0f;
 
-			if (pointdist <= mindist && notopp) {
+			if (pointdist <= mindist && notOpp) {
 				kdqr.v = p;
 				kdqr.vertex_index = p_i;
 				kdqr.distance = pointdist;
 				queryResult.push_back(kdqr);
 				mindist = pointdist;
 			}
-			else if (radius > mindist && notopp) {	// If there's room between the minimum distance and the search radius
+			else if (radius > mindist && notOpp) {	// If there's room between the minimum distance and the search radius
 				if (pointdist <= radius) {			// check to see if the point falls in that space, and if so, add it.
 					kdqr.v = p;
 					kdqr.vertex_index = p_i;
@@ -246,7 +246,6 @@ public:
 
 	kd_node* root;
 	Vertex* points;
-	int count;
 	vector<kd_query_result> queryResult;
 
 	~kd_tree() {
@@ -273,7 +272,7 @@ public:
 		queryResult.clear();
 		root->find_closest(querypoint, queryResult, radius, mindist);
 		if (queryResult.size() > 1)
-			std::sort(queryResult.begin(), queryResult.end());
+			sort(queryResult.begin(), queryResult.end());
 
 		return queryResult.size();
 	}
