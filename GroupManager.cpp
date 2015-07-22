@@ -75,7 +75,6 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 		return;
 
 	groupMembers.clear();
-	btAddGroup->Enable();
 	btRemoveGroup->Enable();
 
 	// Fill group member map
