@@ -4191,8 +4191,8 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
 				if (os->boneScale) {
 					int boneScalePos = os->boneScale->GetValue();
-					os->ActiveShapeUpdated(strokeManager->GetCurStateStroke(), false, false);
 					os->project->ApplyBoneScale(selectedBone, boneScalePos);
+					os->ActiveShapeUpdated(strokeManager->GetCurStateStroke(), false, false);
 				}
 			}
 		}
@@ -4204,9 +4204,6 @@ void wxGLPanel::EndBrushStroke() {
 		activeStroke->endStroke();
 
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
-		if (activeStroke->BrushType() != TBT_MASK)
-			os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
-
 		if (activeStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -4218,6 +4215,9 @@ void wxGLPanel::EndBrushStroke() {
 				}
 			}
 		}
+
+		if (activeStroke->BrushType() != TBT_MASK)
+			os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
 
 		activeStroke = nullptr;
 		activeBrush = savedBrush;
@@ -4330,11 +4330,6 @@ bool wxGLPanel::UndoStroke() {
 	bool ret = strokeManager->backStroke(skip);
 	if (!skip && ret) {
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
-		if (curStroke && curStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapeUpdated(curStroke, true);
-			if (curStroke->BrushType() == TBT_XFORM)
-				ShowTransformTool(true, false);
-		}
 		if (curStroke && curStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -4345,6 +4340,12 @@ bool wxGLPanel::UndoStroke() {
 					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
 				}
 			}
+		}
+
+		if (curStroke && curStroke->BrushType() != TBT_MASK) {
+			os->ActiveShapeUpdated(curStroke, true);
+			if (curStroke->BrushType() == TBT_XFORM)
+				ShowTransformTool(true, false);
 		}
 	}
 
@@ -4359,11 +4360,6 @@ bool wxGLPanel::RedoStroke() {
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 	if (!skip && ret) {
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
-		if (curStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapeUpdated(curStroke);
-			if (curStroke->BrushType() == TBT_XFORM)
-				ShowTransformTool(true, false);
-		}
 		if (curStroke->BrushType() == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -4374,6 +4370,12 @@ bool wxGLPanel::RedoStroke() {
 					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
 				}
 			}
+		}
+
+		if (curStroke->BrushType() != TBT_MASK) {
+			os->ActiveShapeUpdated(curStroke);
+			if (curStroke->BrushType() == TBT_XFORM)
+				ShowTransformTool(true, false);
 		}
 	}
 	Refresh();
