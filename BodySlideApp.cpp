@@ -24,6 +24,7 @@ BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnBuildBatch"), BodySlideFrame::OnBatchBuild)
 	EVT_BUTTON(XRCID("btnBuild"), BodySlideFrame::OnBuildBodies)
 	EVT_BUTTON(XRCID("btnOutfitStudio"), BodySlideFrame::OnOutfitStudio)
+	EVT_BUTTON(XRCID("btnSettings"), BodySlideFrame::OnSettings)
 	EVT_BUTTON(XRCID("btnAbout"), BodySlideFrame::OnAbout)
 	EVT_BUTTON(XRCID("btnPresets"), BodySlideFrame::OnSavePreset)
 	EVT_BUTTON(XRCID("btnGroupManager"), BodySlideFrame::OnGroupManager)
@@ -2097,6 +2098,71 @@ void BodySlideFrame::OnBatchBuildSelect(wxCommandEvent& event) {
 
 void BodySlideFrame::OnOutfitStudio(wxCommandEvent& WXUNUSED(event)) {
 	app->LaunchOutfitStudio();
+}
+
+void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
+	wxChoice* choiceTargetGame = (wxChoice*)event.GetEventObject();
+	wxWindow* parent = choiceTargetGame->GetGrandParent();
+	wxChoice* choiceSkeletonRoot = XRCCTRL(*parent, "choiceSkeletonRoot", wxChoice);
+	switch (choiceTargetGame->GetSelection()) {
+		case FO3:
+		case FONV:
+			choiceSkeletonRoot->SetStringSelection("Bip01");
+			break;
+		case SKYRIM:
+		default:
+			choiceSkeletonRoot->SetStringSelection("NPC");
+			break;
+	}
+}
+
+void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
+	if (settings) {
+		settings->SetSize(wxSize(475, 390));
+		settings->CenterOnParent();
+
+		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);
+		choiceTargetGame->Select(Config.GetIntValue("TargetGame"));
+		
+		wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*settings, "dpGameDataPath", wxDirPickerCtrl);
+		wxString gameDataPath = Config["GameDataPath"];
+		dpGameDataPath->SetPath(gameDataPath);
+
+		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
+		cbBSATextures->SetValue(Config["BSATextureScan"] != "false");
+
+		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
+		cbLeftMousePan->SetValue(Config["Input/LeftMousePan"] != "false");
+
+		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
+		fpSkeletonFile->SetPath(Config["Anim/DefaultSkeletonReference"]);
+
+		wxChoice* choiceSkeletonRoot = XRCCTRL(*settings, "choiceSkeletonRoot", wxChoice);
+		choiceSkeletonRoot->SetStringSelection(Config["Anim/SkeletonRootName"]);
+		
+		settings->Bind(wxEVT_CHOICE, &BodySlideFrame::OnChooseTargetGame, this);
+
+		if (settings->ShowModal() == wxID_OK) {
+			Config.SetValue("TargetGame", choiceTargetGame->GetSelection());
+
+			if (!dpGameDataPath->GetPath().IsEmpty()) {
+				wxFileName gameDataDir = dpGameDataPath->GetDirName();
+				gameDataDir.MakeRelativeTo();
+				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
+			}
+
+			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
+			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
+
+			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
+			skeletonFile.MakeRelativeTo();
+			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
+
+			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());
+		}
+		delete settings;
+	}
 }
 
 void BodySlideFrame::OnAbout(wxCommandEvent& WXUNUSED(event)) {

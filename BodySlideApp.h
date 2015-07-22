@@ -283,6 +283,8 @@ private:
 	void OnBatchBuildContext(wxMouseEvent& event);
 	void OnBatchBuildSelect(wxCommandEvent& event);
 	void OnOutfitStudio(wxCommandEvent& event);
+	void OnSettings(wxCommandEvent& event);
+	void OnChooseTargetGame(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
