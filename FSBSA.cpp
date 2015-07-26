@@ -382,17 +382,9 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 			content.SetBufSize(filesz);
 
 			if (ok != wxInvalidOffset && bsa.Read(content.GetData(), filesz) == filesz) {
-				if (file->compressed() ^ compressToggle) {
-					char *dataPtr = static_cast<char*>(content.GetData());
-					//wxUint8 a = dataPtr[0];
-					//wxUint8 b = dataPtr[1];
-					//wxUint8 c = dataPtr[2];
-					//wxUint8 d = dataPtr[3];
-					//dataPtr[0] = d;
-					//dataPtr[1] = c;
-					//dataPtr[2] = b;
-					//dataPtr[3] = a;
+				char *dataPtr = static_cast<char*>(content.GetData());
 
+				if (file->compressed() ^ compressToggle) {
 					wxMemoryInputStream memInStream(dataPtr + 4, filesz);
 					wxMemoryOutputStream memOutStream;
 					wxZlibInputStream* zOutput = new wxZlibInputStream(memInStream);
@@ -407,6 +399,9 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 					if (numCopied != streamSize)
 						return false;
 				}
+				else
+					content.SetDataLen(filesz);
+
 				return true;
 			}
 		}
