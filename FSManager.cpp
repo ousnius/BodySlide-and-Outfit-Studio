@@ -48,8 +48,10 @@ FSManager* FSManager::get() {
 }
 
 void FSManager::del() {
-	if (theFSManager)
+	if (theFSManager) {
 		delete theFSManager;
+		theFSManager = nullptr;
+	}
 }
 
 std::list<FSArchiveFile*> FSManager::archiveList() {

@@ -2150,6 +2150,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
 				gameDataDir.MakeRelativeTo();
 				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
+				FSManager::del();
 			}
 
 			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
