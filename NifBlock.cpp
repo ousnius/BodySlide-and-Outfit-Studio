@@ -1579,8 +1579,8 @@ void NiSkinInstance::notifyBlockDelete(int blockID) {
 	for (int i = 0; i < numBones; i++) {
 		if (bones[i] == blockID) {
 			bones.erase(bones.begin() + i);
-			i--;
 			boneIndex = i;
+			i--;
 			numBones--;
 		}
 		else if (bones[i] > blockID)
