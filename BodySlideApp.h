@@ -138,6 +138,7 @@ public:
 	void ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& zapidx, vector<Vector2>* uvs = nullptr);
 	int WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>> zapIndices);
 
+	void CopySliderValues(bool toHigh);
 	void ShowPreview(char PreviewType = SMALL_PREVIEW);
 	void InitPreview(char PreviewType);
 	void ClosePreview(char PreviewType = SMALL_PREVIEW) {
@@ -276,8 +277,11 @@ private:
 
 	void OnSavePreset(wxCommandEvent& event);
 	void OnGroupManager(wxCommandEvent& event);
+
 	void OnPreviewHi(wxCommandEvent& event);
 	void OnPreviewLo(wxCommandEvent& event);
+	void OnHighToLow(wxCommandEvent& event);
+	void OnLowToHigh(wxCommandEvent& event);
 	void OnBuildBodies(wxCommandEvent& event);
 	void OnBatchBuild(wxCommandEvent& event);
 	void OnBatchBuildContext(wxMouseEvent& event);

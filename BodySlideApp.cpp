@@ -21,6 +21,8 @@ BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 
 	EVT_BUTTON(XRCID("btnPreviewHi"), BodySlideFrame::OnPreviewHi)
 	EVT_BUTTON(XRCID("btnPreviewLo"), BodySlideFrame::OnPreviewLo)
+	EVT_BUTTON(XRCID("btnHighToLow"), BodySlideFrame::OnHighToLow)
+	EVT_BUTTON(XRCID("btnLowToHigh"), BodySlideFrame::OnLowToHigh)
 	EVT_BUTTON(XRCID("btnBuildBatch"), BodySlideFrame::OnBatchBuild)
 	EVT_BUTTON(XRCID("btnBuild"), BodySlideFrame::OnBuildBodies)
 	EVT_BUTTON(XRCID("btnOutfitStudio"), BodySlideFrame::OnOutfitStudio)
@@ -456,6 +458,37 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 		return false;
 
 	return true;
+}
+
+void BodySlideApp::CopySliderValues(bool toHigh) {
+	if (toHigh) {
+		for (int i = 0; i < sliderManager.slidersSmall.size(); i++) {
+			Slider* slider = &sliderManager.slidersSmall[i];
+			if (slider->zap || slider->clamp)
+				continue;
+
+			sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_HI);
+			SetSliderValue(slider->name, false, slider->value);
+			SetSliderChanged(slider->name, false);
+		}
+	}
+	else {
+		for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
+			Slider* slider = &sliderManager.slidersBig[i];
+			if (slider->zap || slider->clamp)
+				continue;
+
+			sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
+			SetSliderValue(slider->name, true, slider->value);
+			SetSliderChanged(slider->name, true);
+		}
+	}
+
+	if (preview0)
+		UpdatePreview(SMALL_PREVIEW);
+
+	if (preview1)
+		UpdatePreview(BIG_PREVIEW);
 }
 
 void BodySlideApp::ShowPreview(char PreviewType) {
@@ -1957,6 +1990,14 @@ void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
 	GroupManager gm(this, outfits);
 	gm.ShowModal();
 	app->LoadPresets("");
+}
+
+void BodySlideFrame::OnHighToLow(wxCommandEvent& WXUNUSED(event)) {
+	app->CopySliderValues(false);
+}
+
+void BodySlideFrame::OnLowToHigh(wxCommandEvent& WXUNUSED(event)) {
+	app->CopySliderValues(true);
 }
 
 void BodySlideFrame::OnPreviewHi(wxCommandEvent& WXUNUSED(event)) {
