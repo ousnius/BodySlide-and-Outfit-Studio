@@ -346,9 +346,9 @@ void BSA::close() {
 	wxMutexLocker lock(bsaMutex);
 
 	bsa.Close();
-	for (auto it : root.children)
+	for (auto &it : root.children)
 		delete it.second;
-	for (auto it : root.files)
+	for (auto &it : root.files)
 		delete it.second;
 
 	root.children.clear();

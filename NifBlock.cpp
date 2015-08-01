@@ -749,7 +749,7 @@ void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 	keepFlags = 0;
 	compressFlags = 0;
 	hasVertices = true;
-	for (auto v : (*verts)) {
+	for (auto &v : *verts) {
 		vertices.push_back(v);
 		a.x = min(a.x, v.x);
 		a.y = min(a.y, v.y);
@@ -767,12 +767,12 @@ void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 	unkInt2 = 0;
 	hasNormals = false;
 	center = (a + b) / 2.0f;
-	for (auto v : (*verts))
+	for (auto &v : *verts)
 		radius = max(radius, center.DistanceTo(v));
 
 	hasVertexColors = false;
 
-	for (auto uv : (*texcoords))
+	for (auto &uv : *texcoords)
 		uvSets.push_back(uv);
 
 	consistencyFlags = 16384;
@@ -1036,7 +1036,7 @@ void NiTriShapeData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 
 	numTrianglePoints = numTriangles * 3;
 	hasTriangles = true;
-	for (auto t : (*inTris))
+	for (auto &t : *inTris)
 		triangles.push_back(t);
 
 	numMatchGroups = 0;
@@ -1205,7 +1205,7 @@ int NiTriShapeData::CalcBlockSize() {
 
 	blockSize += 7;
 	blockSize += triangles.size() * 6;	// Triangles
-	for (auto mg : matchGroups) {
+	for (auto &mg : matchGroups) {
 		blockSize += 4;
 		blockSize += mg.count * 2;
 	}
@@ -1499,7 +1499,7 @@ int NiTriStripsData::CalcBlockSize() {
 	blockSize += 3;
 	blockSize += numStrips * 2;				// Strip Lengths
 
-	for (auto pl : points)
+	for (auto &pl : points)
 		blockSize += pl.size() * 2;
 
 	return blockSize;
@@ -1749,18 +1749,18 @@ void NiSkinData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 
 	ushort ival;
-	for (auto b = bones.begin(); b != bones.end(); ++b) {
-		for (int i = b->numVertices - 1; i >= 0; i--) {
-			ival = b->vertexWeights[i].index;
-			if (b->vertexWeights[i].index > highestRemoved) {
-				b->vertexWeights[i].index -= remCount;
+	for (auto &b : bones) {
+		for (int i = b.numVertices - 1; i >= 0; i--) {
+			ival = b.vertexWeights[i].index;
+			if (b.vertexWeights[i].index > highestRemoved) {
+				b.vertexWeights[i].index -= remCount;
 			}
 			else if (indexCollapse[ival] == -1) {
-				b->vertexWeights.erase(b->vertexWeights.begin() + i);
-				b->numVertices--;
+				b.vertexWeights.erase(b.vertexWeights.begin() + i);
+				b.numVertices--;
 			}
 			else
-				b->vertexWeights[i].index -= indexCollapse[ival];
+				b.vertexWeights[i].index -= indexCollapse[ival];
 		}
 	}
 }
@@ -1769,7 +1769,7 @@ int NiSkinData::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
 	blockSize += 57;
-	for (auto b : bones)
+	for (auto & b : bones)
 		blockSize += b.CalcSize();
 
 	return blockSize;
@@ -1941,20 +1941,20 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 
 	size_t maxVertexMapSz = 0;
-	for (auto p = partitions.begin(); p != partitions.end(); ++p)
-		if (p->vertexMap.size() > maxVertexMapSz)
-			maxVertexMapSz = p->vertexMap.size();
+	for (auto &p : partitions)
+		if (p.vertexMap.size() > maxVertexMapSz)
+			maxVertexMapSz = p.vertexMap.size();
 
 	vector<int> mapCollapse(maxVertexMapSz, 0);
 	int mapRemCount = 0;
 	int mapHighestRemoved = maxVertexMapSz;
 
 	ushort index;
-	for (auto p = partitions.begin(); p != partitions.end(); ++p) {
+	for (auto &p : partitions) {
 		mapRemCount = 0;
 		mapHighestRemoved = maxVertexMapSz;
-		for (int i = 0; i < p->vertexMap.size(); i++) {
-			if (p->vertexMap[i] < indexCollapse.size() && indexCollapse[p->vertexMap[i]] == -1) {
+		for (int i = 0; i < p.vertexMap.size(); i++) {
+			if (p.vertexMap[i] < indexCollapse.size() && indexCollapse[p.vertexMap[i]] == -1) {
 				mapRemCount++;
 				mapCollapse[i] = -1;
 				mapHighestRemoved = i;
@@ -1963,56 +1963,56 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 				mapCollapse[i] = mapRemCount;
 		}
 
-		for (int i = p->vertexMap.size() - 1; i >= 0; i--) {
-			index = p->vertexMap[i];
+		for (int i = p.vertexMap.size() - 1; i >= 0; i--) {
+			index = p.vertexMap[i];
 			if (index > highestRemoved) {
-				p->vertexMap[i] -= remCount;
+				p.vertexMap[i] -= remCount;
 			}
 			else if (indexCollapse[index] == -1) {
-				p->vertexMap.erase(p->vertexMap.begin() + i);
-				p->numVertices--;
-				if (p->hasVertexWeights)
-					p->vertexWeights.erase(p->vertexWeights.begin() + i);
-				if (p->hasBoneIndices)
-					p->boneIndices.erase(p->boneIndices.begin() + i);
+				p.vertexMap.erase(p.vertexMap.begin() + i);
+				p.numVertices--;
+				if (p.hasVertexWeights)
+					p.vertexWeights.erase(p.vertexWeights.begin() + i);
+				if (p.hasBoneIndices)
+					p.boneIndices.erase(p.boneIndices.begin() + i);
 			}
 			else
-				p->vertexMap[i] -= indexCollapse[index];
+				p.vertexMap[i] -= indexCollapse[index];
 		}
 
-		for (int i = p->numTriangles - 1; i >= 0; i--) {
-			if (p->triangles[i].p1 > mapHighestRemoved) {
-				p->triangles[i].p1 -= mapRemCount;
+		for (int i = p.numTriangles - 1; i >= 0; i--) {
+			if (p.triangles[i].p1 > mapHighestRemoved) {
+				p.triangles[i].p1 -= mapRemCount;
 			}
-			else if (mapCollapse[p->triangles[i].p1] == -1) {
-				p->triangles.erase(p->triangles.begin() + i);
-				p->numTriangles--;
+			else if (mapCollapse[p.triangles[i].p1] == -1) {
+				p.triangles.erase(p.triangles.begin() + i);
+				p.numTriangles--;
 				continue;
 			}
 			else
-				p->triangles[i].p1 -= mapCollapse[p->triangles[i].p1];
+				p.triangles[i].p1 -= mapCollapse[p.triangles[i].p1];
 
-			if (p->triangles[i].p2 > mapHighestRemoved) {
-				p->triangles[i].p2 -= mapRemCount;
+			if (p.triangles[i].p2 > mapHighestRemoved) {
+				p.triangles[i].p2 -= mapRemCount;
 			}
-			else if (mapCollapse[p->triangles[i].p2] == -1) {
-				p->triangles.erase(p->triangles.begin() + i);
-				p->numTriangles--;
+			else if (mapCollapse[p.triangles[i].p2] == -1) {
+				p.triangles.erase(p.triangles.begin() + i);
+				p.numTriangles--;
 				continue;
 			}
 			else
-				p->triangles[i].p2 -= mapCollapse[p->triangles[i].p2];
+				p.triangles[i].p2 -= mapCollapse[p.triangles[i].p2];
 
-			if (p->triangles[i].p3 > mapHighestRemoved) {
-				p->triangles[i].p3 -= mapRemCount;
+			if (p.triangles[i].p3 > mapHighestRemoved) {
+				p.triangles[i].p3 -= mapRemCount;
 			}
-			else if (mapCollapse[p->triangles[i].p3] == -1) {
-				p->triangles.erase(p->triangles.begin() + i);
-				p->numTriangles--;
+			else if (mapCollapse[p.triangles[i].p3] == -1) {
+				p.triangles.erase(p.triangles.begin() + i);
+				p.numTriangles--;
 				continue;
 			}
 			else
-				p->triangles[i].p3 -= mapCollapse[p->triangles[i].p3];
+				p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
 		}
 	}
 }
@@ -2033,7 +2033,7 @@ int NiSkinPartition::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
 	blockSize += 4;
-	for (auto p : partitions) {
+	for (auto &p : partitions) {
 		if (header->userVersion >= 12)				// Plain data size
 			blockSize += 16;
 		else
@@ -2530,7 +2530,7 @@ int BSShaderTextureSet::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
 	blockSize += 4;
-	for (auto tex : textures) {
+	for (auto &tex : textures) {
 		blockSize += 4;
 		blockSize += tex.str.length();
 	}

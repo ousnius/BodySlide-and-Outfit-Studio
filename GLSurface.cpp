@@ -65,9 +65,9 @@ float Triangle::AxisMidPointZ(Vertex* vertref) {
 }
 
 bool Triangle::IntersectRay(Vertex* vertref, Vector3& origin, Vector3& direction, float* outDistance, Vector3* worldPos) {
-	Vector3 c0(vertref[p1].x, vertref[p1].y, vertref[p1].z); //(*(Vector3*)&vertref[p1]);
-	Vector3 c1(vertref[p2].x, vertref[p2].y, vertref[p2].z); //(*(Vector3*)&vertref[p2]);
-	Vector3 c2(vertref[p3].x, vertref[p3].y, vertref[p3].z); //(*(Vector3*)&vertref[p3]);
+	Vector3 c0(vertref[p1].x, vertref[p1].y, vertref[p1].z);
+	Vector3 c1(vertref[p2].x, vertref[p2].y, vertref[p2].z);
+	Vector3 c2(vertref[p3].x, vertref[p3].y, vertref[p3].z);
 
 	Vector3 e1 = c1 - c0;
 	Vector3 e2 = c2 - c0;
@@ -655,7 +655,7 @@ int GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 	float nearestDist = FLT_MAX;
 	int collided = -1;
 	int oid = 0;
-	for (auto o : overlays) {
+	for (auto &o : overlays) {
 		vector<IntersectResult> results;
 		if (!o->bvh) {
 			oid++;
@@ -721,10 +721,6 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri, float* 
 		vector<IntersectResult> results;
 		if (meshes[activeMesh]->bvh->IntersectRay(o, d, &results)) {
 			ret = true;
-			//mesh* mv = new mesh();
-			//meshes[0]->bvh->BuildRayIntersectFrames(o,d, mv);
-			//mv->shapeName = "BoxMesh";
-			//meshes.push_back(mv);
 			if (results.size() > 0) {
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
@@ -732,7 +728,6 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri, float* 
 					if (results[i].HitDistance < minDist)
 						min_i = i;
 				}
-				//Vector3 center(results[min_i].HitCoord.x,results[min_i].HitCoord.y,results[min_i].HitCoord.z);
 
 				Vector3 origin = results[min_i].HitCoord;
 				Vector3 norm;
@@ -848,8 +843,6 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx) {
 
 void GLSurface::ShowCursor(bool show) {
 	SetOverlayVisibility("cursormesh", show);
-	//SetMeshVisibility("adjacency", false);
-	//SetMeshVisibility("adjacencyb", false);
 	SetOverlayVisibility("pointhilite", show);
 	SetOverlayVisibility("cursorcenter", show);
 }
@@ -1068,9 +1061,6 @@ void GLSurface::AddMeshExplicit(vector<Vector3>* verts, vector<Triangle>* tris, 
 	m->shapeName = name;
 
 	scale *= 0.1f;
-	//
-	//	float c = 0.4f + (meshes.size()*0.3f);
-	//	m->color = Vector3(c,c,c);
 
 	m->nVerts = verts->size();
 	m->verts = new Vertex[m->nVerts];
@@ -1197,9 +1187,6 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	m->shapeName = shapeName;
 	m->smoothSeamNormals = smoothNormalSeams;
 
-	//float c = 0.4f + (meshes.size()*0.3f);
-	//m->color = Vector3(c,c,c);
-
 	m->nVerts = nifVerts.size();
 	m->verts = new Vertex[m->nVerts];
 
@@ -1305,10 +1292,6 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			meshes[i]->color = Vector3(c, c, c);
 		}
 	}
-
-	//mesh* mv = new mesh();
-	//m->bvh->BuildDebugFrames(mv);
-	//meshes.push_back(mv);
 }
 
 int GLSurface::AddVisFacets(vector<int>& ids, const string& name) {
@@ -1389,7 +1372,7 @@ int GLSurface::AddVisFacetsInSphere(Vector3& origin, float radius, const string&
 	return 0;
 }
 
-int  GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
+int GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 	int rayMesh = GetOverlayID("RayMesh");
 	int boxMesh = GetOverlayID("BoxMesh");
 
@@ -1436,7 +1419,6 @@ int  GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 	m->shapeName = "RayMesh";
 	namedOverlays[m->shapeName] = overlays.size();
 	overlays.push_back(m);
-	//rayMesh = meshes.size()-1;
 
 	Vector3 o(start.x, start.y, start.z);
 	Vector3 d(direction.x, direction.y, direction.z);
@@ -1456,7 +1438,6 @@ int  GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 				if (results[i].HitDistance < minDist)
 					min_i = i;
 			}
-			//Vector3 center(results[min_i].HitCoord.x,results[min_i].HitCoord.y,results[min_i].HitCoord.z);
 
 			Vector3 origin;
 			origin = results[min_i].HitCoord;
@@ -1469,7 +1450,6 @@ int  GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 			querypoint = origin;
 
 			meshes[0]->kdtree->kd_nn(&querypoint, .40f);
-			vector<kd_query_result>::iterator kd_result_it;
 			mesh* mv = new mesh();
 			mv->nVerts = meshes[0]->kdtree->queryResult.size() + 1;
 			mv->verts = new Vertex[mv->nVerts];
@@ -1477,60 +1457,12 @@ int  GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 			mv->color = Vector3(0.0f, 1.0f, 1.0f);
 			mv->shapeName = "TriMesh";
 			int i = 0;
-			for (kd_result_it = meshes[0]->kdtree->queryResult.begin();
-				kd_result_it != meshes[0]->kdtree->queryResult.end(); ++kd_result_it) {
-				mv->verts[i++] = (*kd_result_it->v);
-			}
+			for (auto &kd_result_it : meshes[0]->kdtree->queryResult)
+				mv->verts[i++] = (*kd_result_it.v);
+			
 			mv->verts[i] = origin;
 			namedOverlays[mv->shapeName] = overlays.size();
 			overlays.push_back(mv);
-			//+[19](19, [23](2096, 1403, 1410, 2097, 2090, 1409, 2892, 1404, 2084, 2728, 2091, 2085, 1399, 2730, 0, 2890, 2726, 2691, 1400, 2080, 149, 173, 2081))	std::pair < int const, std::vector<int, std::allocator<int> > >
-
-			//AABB tree sphere search for transform points.
-			//	results.clear();
-			//if (meshes[0]->bvh->IntersectSphere(origin, 0.5f, &results)) {
-			//	Matrix4 pointTrans;
-			//	pointTrans.Translate(norm*1.0);
-
-			//	set<int> points;
-			//	Triangle t;
-			//	for (int i = 0; i < results.size(); i++) {
-			//		t = meshes[0]->tris[results[i].HitFacet];
-			//		points.insert(t.p1);
-			//		points.insert(t.p2);
-			//		points.insert(t.p3);
-			//	}
-			//	//	std::sort(points.begin(),points.end());
-			//	//	vector<int>::iterator newsz = std::unique(points.begin(), points.end());
-			//	//	points.resize(newsz-points.begin());
-
-			//	meshes[0]->TransformPoints(points, pointTrans);
-
-			//	mesh* mv = new mesh();
-			//	mv->nVerts = results.size() * 3;
-			//	mv->nEdges = mv->nVerts;
-
-			//	mv->verts = new Vertex[mv->nVerts];
-			//	mv->edges = new Edge[mv->nEdges];
-
-
-			//	for (int i = 0; i < results.size(); i++) {
-			//		IntersectResult r = results[i];
-			//		t = meshes[0]->tris[results[i].HitFacet];
-			//		mv->verts[i * 3] = meshes[0]->verts[t.p1];
-			//		mv->verts[i * 3 + 1] = meshes[0]->verts[t.p2];
-			//		mv->verts[i * 3 + 2] = meshes[0]->verts[t.p3];
-			//		mv->edges[i * 3].p1 = i * 3; 	mv->edges[i * 3].p2 = i * 3 + 1;
-			//		mv->edges[i * 3 + 1].p1 = i * 3 + 1; 	mv->edges[i * 3 + 1].p2 = i * 3 + 2;
-			//		mv->edges[i * 3 + 2].p1 = i * 3 + 2; 	mv->edges[i * 3 + 2].p2 = i * 3;
-			//	}
-
-			//	mv->rendermode = 1;
-			//	mv->color = Vector3(0, 1.0, 1.0f);
-
-			//	mv->shapeName = "TriMesh";
-			//	meshes.push_back(mv);
-			//}
 		}
 	}
 	return overlays.size() - 1;
@@ -1540,9 +1472,6 @@ int GLSurface::AddVisPoint(const Vector3& p, const string& name) {
 	mesh* m;
 	int pmesh = GetOverlayID(name);
 	if (pmesh >= 0) {
-		//delete meshes[trimesh];
-		//meshes.erase(meshes.begin() + trimesh);
-		//trimesh = 0;
 		m = overlays[pmesh];
 		m->verts[0] = p;
 
@@ -1572,9 +1501,6 @@ int  GLSurface::AddVisTri(const Vector3& p1, const Vector3& p2, const Vector3& p
 	mesh* m;
 	int trimesh = GetOverlayID(name);
 	if (trimesh >= 0) {
-		//delete meshes[trimesh];
-		//meshes.erase(meshes.begin() + trimesh);
-		//trimesh = 0;
 		m = overlays[trimesh];
 		m->verts[0] = p1;
 		m->verts[1] = p2;
@@ -1618,8 +1544,6 @@ int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float
 	int ringMesh = GetOverlayID(name);
 	if (ringMesh >= 0) {
 		delete overlays[ringMesh];
-		//meshes.erase(meshes.begin() + ringMesh);
-		//ringMesh = 0;
 	}
 	else {
 		ringMesh = -1;
@@ -1639,9 +1563,9 @@ int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float
 	float rStep = DEG2RAD * 5.0f;
 	float i = 0.0f;
 	for (int j = 0; j < m->nVerts; j++) {
-		m->verts[j].x = sin(i) * radius; // center.x + sin(i) * radius;
-		m->verts[j].y = cos(i) * radius; // center.y + cos(i) * radius;
-		m->verts[j].z = 0; // center.z;
+		m->verts[j].x = sin(i) * radius;
+		m->verts[j].y = cos(i) * radius;
+		m->verts[j].z = 0;
 		m->edges[j].p1 = j;
 		m->edges[j].p2 = j + 1;
 		i += rStep;
@@ -1770,8 +1694,6 @@ int GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, fl
 	int myMesh = GetOverlayID(name);
 	if (myMesh >= 0) {
 		delete overlays[myMesh];
-		//meshes.erase(meshes.begin() + ringMesh);
-		//ringMesh = 0;
 	}
 	else {
 		myMesh = -1;
@@ -1786,8 +1708,6 @@ int GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, fl
 	m->verts = new Vertex[m->nVerts];
 	m->rendermode = RenderMode::UnlitSolid;
 	m->color = color;
-	//m->nEdges = m->nVerts;
-	//	m->edges = new Edge[m->nEdges];
 
 	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), direction);
 	rotMat.Translate(origin);
@@ -1798,17 +1718,15 @@ int GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, fl
 	for (int j = 0; j < nRingVerts; j++) {
 		float si = sin(i);
 		float ci = cos(i);
-		m->verts[j].x = si * stemRadius; // center.x + sin(i) * radius;
+		m->verts[j].x = si * stemRadius;
 		m->verts[j + nRingVerts].x = m->verts[j].x;
 		m->verts[j + (nRingVerts * 2)].x = si * pointRadius;
-		m->verts[j].y = ci * stemRadius; // center.y + cos(i) * radius;
+		m->verts[j].y = ci * stemRadius;
 		m->verts[j + nRingVerts].y = m->verts[j].y;
 		m->verts[j + (nRingVerts * 2)].y = ci * pointRadius;
-		m->verts[j].z = 0; // center.z;
+		m->verts[j].z = 0;
 		m->verts[j + nRingVerts].z = stemlen;
 		m->verts[j + (nRingVerts * 2)].z = stemlen;
-		//	m->edges[j].p1 = j;
-		//	m->edges[j].p2 = j+1;
 		i += rStep;
 		m->verts[j].pos(rotMat * m->verts[j]);
 		m->verts[j + nRingVerts].pos(rotMat * m->verts[j + nRingVerts]);

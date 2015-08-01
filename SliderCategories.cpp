@@ -10,7 +10,7 @@ int SliderCategoryCollection::LoadCategories(const string& basePath) {
 		SliderCategoryFile f(fileName);
 		vector<string> cNames;
 		f.GetCategoryNames(cNames);
-		for (auto c : cNames) {
+		for (auto &c : cNames) {
 			SliderCategory sc;
 			f.GetCategory(c, sc);
 			if (categories.find(c) != categories.end())
@@ -24,14 +24,14 @@ int SliderCategoryCollection::LoadCategories(const string& basePath) {
 
 int SliderCategoryCollection::GetAllCategories(vector<string>& outCategories) {
 	outCategories.clear();
-	for (auto c : categories)
+	for (auto &c : categories)
 		outCategories.push_back(c.first);
 
 	return outCategories.size();
 }
 
 int SliderCategoryCollection::GetSliderCategory(const string& sliderName, string& outCategory) {
-	for (auto c : categories)
+	for (auto &c : categories)
 		if (c.second.HasSlider(sliderName)) {
 			outCategory = c.first;
 			break;
@@ -107,7 +107,7 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 }
 
 bool SliderCategory::HasSlider(const string& search) {
-	for (auto m : sliders)
+	for (auto &m : sliders)
 		if (m.compare(search) == 0)
 			return true;
 
@@ -152,7 +152,7 @@ void SliderCategory::WriteCategory(XMLElement* categoryElement, bool append) {
 	if (!append)
 		categoryElement->DeleteChildren();
 
-	for (auto slider : sliders) {
+	for (auto &slider : sliders) {
 		XMLElement* newElement = categoryElement->GetDocument()->NewElement("Slider");
 		XMLElement* element = categoryElement->InsertEndChild(newElement)->ToElement();
 		element->SetAttribute("name", slider.c_str());
@@ -224,7 +224,7 @@ int SliderCategoryFile::GetCategoryNames(vector<string>& outCategoryNames, bool 
 	if (unique)
 		existingNames.insert(outCategoryNames.begin(), outCategoryNames.end());
 
-	for (auto cn : categoriesInFile) {
+	for (auto &cn : categoriesInFile) {
 		if (unique && existingNames.find(cn.first) != existingNames.end())
 			continue;
 		else if (unique)
@@ -245,7 +245,7 @@ bool SliderCategoryFile::HasCategory(const string& queryCategoryName) {
 int SliderCategoryFile::GetAllCategories(vector<SliderCategory>& outAppendCategories) {
 	int count = 0;
 	bool add = true;
-	for (auto c : categoriesInFile) {
+	for (auto &c : categoriesInFile) {
 		add = true;
 		for (auto& oc : outAppendCategories) {
 			if (oc.GetName() == c.first) {

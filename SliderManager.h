@@ -64,7 +64,7 @@ public:
 
 	int SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {
 		int index = 0;
-		for (auto s : slidersBig) {
+		for (auto &s : slidersBig) {
 			if (SliderHasChanged(s.name, true))
 				presetCollection.SetSliderPreset(presetName, s.name, s.value);
 			if (SliderHasChanged(s.name, false))

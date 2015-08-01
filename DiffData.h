@@ -40,7 +40,7 @@ public:
 
 
 	void ZeroVertDiff(const string& set, Vector3* vColorMask) {
-		for (auto ns : namedSet[set]) {
+		for (auto &ns : namedSet[set]) {
 			float f = vColorMask[ns.first].x;
 			if (f == 1.0f)
 				continue;
@@ -62,11 +62,11 @@ public:
 			v = (*vertSet);
 		}
 		else {
-			for (auto diff : namedSet[set])
+			for (auto &diff : namedSet[set])
 				v.push_back(diff.first);
 		}
 
-		for (auto i : v) {
+		for (auto &i : v) {
 			auto d = namedSet[set].find(i);
 			if (d == namedSet[set].end())
 				continue;

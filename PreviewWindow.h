@@ -111,7 +111,7 @@ public:
 
 	void ToggleSmoothSeams() {
 		mesh* m;
-		for (auto s : shapeTextures) {
+		for (auto &s : shapeTextures) {
 			m = gls.GetMesh(s.first);
 			if (m) {
 				if (m->smoothSeamNormals)
@@ -131,7 +131,6 @@ public:
 				m->smoothSeamNormals = true;
 			m->SmoothNormals();
 		}
-		Refresh();
 	}
 
 	void ToggleTextures() {

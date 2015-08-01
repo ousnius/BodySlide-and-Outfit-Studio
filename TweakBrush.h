@@ -521,7 +521,7 @@ public:
 	}
 
 	void InvalidateHistoricalBVH() {
-		for (auto s : strokes)
+		for (auto &s : strokes)
 			s->InvalidateBVH();
 	}
 };

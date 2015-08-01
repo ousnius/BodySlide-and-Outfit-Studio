@@ -533,7 +533,7 @@ void NifFile::TrimTexturePaths() {
 	vector<string> shapes;
 	GetShapeList(shapes);
 
-	for (auto s : shapes) {
+	for (auto &s : shapes) {
 		for (int i = 0; i < 9; i++) {
 			if (GetTextureForShape(s, tFile, i) && !tFile.empty()) {
 				tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
@@ -1098,7 +1098,7 @@ void NifFile::CopyStrips(const string& shapeDest, NifFile& srcNif, const string&
 
 	int bonePtr;
 	NiNode* rootNode = (NiNode*)blocks[0];
-	for (auto boneName : srcBoneList) {
+	for (auto &boneName : srcBoneList) {
 		bonePtr = nodeIdForName(boneName);
 		if (bonePtr == -1) {
 			bonePtr = CopyNamedNode(boneName, srcNif);
@@ -1321,7 +1321,7 @@ void NifFile::CopyShape(const string& shapeDest, NifFile& srcNif, const string& 
 
 	int bonePtr;
 	NiNode* rootNode = (NiNode*)blocks[0];
-	for (auto boneName : srcBoneList) {
+	for (auto &boneName : srcBoneList) {
 		bonePtr = nodeIdForName(boneName);
 		if (bonePtr == -1) {
 			bonePtr = CopyNamedNode(boneName, srcNif);
@@ -1766,7 +1766,7 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 		return 0;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
-	for (auto sw : bone->vertexWeights) {
+	for (auto &sw : bone->vertexWeights) {
 		outWeights[sw.index] = sw.weight;
 		if (sw.weight < 0.0001f)
 			outWeights[sw.index] = 0.0f;
@@ -1962,7 +1962,7 @@ void NifFile::SetShapeBoneWeights(const string& shapeName, int boneIndex, unorde
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	bone->vertexWeights.clear();
-	for (auto sw : inWeights)
+	for (auto &sw : inWeights)
 		if (sw.second >= 0.0001f)
 			bone->vertexWeights.emplace_back(SkinWeight(sw.first, sw.second));
 
@@ -2974,10 +2974,10 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	map<ushort, vector<int>> vertBones;
 	map<ushort, vector<float>> vertWeights;
 	int b = 0;
-	for (auto bone : skinData->bones) {
-		for (auto bw : bone.vertexWeights) {
+	for (auto &bone : skinData->bones) {
+		for (auto &bw : bone.vertexWeights) {
 			int i = 0;
-			for (auto w : vertWeights[bw.index]) {
+			for (auto &w : vertWeights[bw.index]) {
 				if (bw.weight > w)
 					break;
 				i++;
@@ -2989,7 +2989,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	}
 
 	//Erase influences over 4
-	for (auto bones : vertBones) {
+	for (auto &bones : vertBones) {
 		for (int bi = 0; bi < bones.second.size(); bi++) {
 			if (bi == 4) {
 				vertBones[bones.first].erase(vertBones[bones.first].begin() + 4, vertBones[bones.first].end());
@@ -3002,7 +3002,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	for (auto& part : skinPart->partitions) {
 		//Make list of new bones
 		set<int> bones;
-		for (auto v : part.vertexMap) {
+		for (auto &v : part.vertexMap) {
 			for (int bi = 0; bi < vertBones[v].size(); bi++) {
 				int bid = vertBones[v][bi];
 				bones.insert(bid);
@@ -3016,12 +3016,12 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 
 		//Add new bones to partition
 		unordered_map<int, int> boneLookup;
-		for (auto b : bones) {
+		for (auto &b : bones) {
 			part.bones.push_back(b);
 			boneLookup[b] = part.bones.size() - 1;
 		}
 
-		for (auto v : part.vertexMap) {
+		for (auto &v : part.vertexMap) {
 			BoneIndices b;
 			VertexWeight vw;
 			b.i1 = b.i2 = b.i3 = b.i4 = 0;
@@ -3169,10 +3169,10 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	unordered_map<ushort, vector<float>> vertWeights;
 	int b = 0;
 
-	for (auto bone : skinData->bones) {
-		for (auto bw : bone.vertexWeights) {
+	for (auto &bone : skinData->bones) {
+		for (auto &bw : bone.vertexWeights) {
 			int i = 0;
-			for (auto w : vertWeights[bw.index]) {
+			for (auto &w : vertWeights[bw.index]) {
 				if (bw.weight > w)
 					break;
 				i++;
@@ -3184,12 +3184,12 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	}
 
 	// Enforce vertex bone weight maximum count
-	for (auto vb : vertBones) {
+	for (auto &vb : vertBones) {
 		if (vb.second.size() > maxBonesPerVertex) {
 			vb.second.erase(vb.second.begin() + maxBonesPerVertex);
 		}
 	}
-	for (auto vw : vertWeights) {
+	for (auto &vw : vertWeights) {
 		if (vw.second.size() > maxBonesPerVertex) {
 			vw.second.erase(vw.second.begin() + maxBonesPerVertex);
 		}
@@ -3202,10 +3202,10 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		p[0] = tris[x].p1;
 		p[1] = tris[x].p2;
 		p[2] = tris[x].p3;
-		for (auto ip : p) {
+		for (auto &ip : p) {
 			//if (ip == 516)
 			//int a = 4;
-			for (auto tb : vertBones[ip])
+			for (auto &tb : vertBones[ip])
 				testBones.insert(tb);
 		}
 	};
@@ -3234,7 +3234,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 
 		// How many new bones are in the tri's bonelist?
 		int newBoneCount = 0;
-		for (auto tb : testBones) {
+		for (auto &tb : testBones) {
 			if (partBones[partID].find(tb) == partBones[partID].end()) {
 				newBoneCount++;
 			}
@@ -3276,7 +3276,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 			int adjVert = vertQueue.front();
 			vertQueue.pop();
 
-			for (auto adjTri : vertTris[adjVert]) {
+			for (auto &adjTri : vertTris[adjVert]) {
 				if (triAssign[adjTri])			// skip triangles we've already assigned
 					continue;
 
@@ -3289,7 +3289,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 
 				// How many new bones are in the tri's bonelist?
 				int newBoneCount = 0;
-				for (auto tb : testBones) {
+				for (auto &tb : testBones) {
 					if (partBones[partID].find(tb) == partBones[partID].end()) {
 						newBoneCount++;
 					}
@@ -3328,7 +3328,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		//pblock.numTriangles = partTris[pID].size();
 		unordered_map<int, int> vertMap;
 
-		//for(auto triID : partTris[pID]) {
+		//for (auto &triID : partTris[pID]) {
 		for (int triID = 0; triID < tris.size(); triID++) {
 			if (triParts[triID] != pID)
 				continue;
@@ -3363,11 +3363,11 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		pblock.numTriangles = pblock.triangles.size();
 		pblock.numBones = partBones[pID].size();
 		unordered_map<int, int> bonelookup;
-		for (auto b : partBones[pID]) {
+		for (auto &b : partBones[pID]) {
 			pblock.bones.push_back(b);
 			bonelookup[b] = pblock.bones.size() - 1;
 		}
-		for (auto v : pblock.vertexMap) {
+		for (auto &v : pblock.vertexMap) {
 			BoneIndices b;
 			VertexWeight vw;
 			b.i1 = b.i2 = b.i3 = b.i4 = 0;

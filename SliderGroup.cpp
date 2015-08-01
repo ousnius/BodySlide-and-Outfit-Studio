@@ -10,7 +10,7 @@ int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 		SliderSetGroupFile f(fileName);
 		vector<string> gNames;
 		f.GetGroupNames(gNames);
-		for (auto g : gNames) {
+		for (auto &g : gNames) {
 			SliderSetGroup ssg;
 			f.GetGroup(g, ssg);
 			if (groups.find(g) != groups.end())
@@ -24,7 +24,7 @@ int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 
 int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {
 	outGroups.clear();
-	for (auto g : groups)
+	for (auto &g : groups)
 		outGroups.insert(g.first);
 
 	return outGroups.size();
@@ -32,7 +32,7 @@ int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {
 
 int SliderSetGroupCollection::GetOutfitGroups(const string& outfitName, vector<string>& outGroups) {
 	outGroups.clear();
-	for (auto g : groups)
+	for (auto &g : groups)
 		if (g.second.HasMember(outfitName))
 			outGroups.push_back(g.first);
 
@@ -87,7 +87,7 @@ int SliderSetGroup::LoadGroup(XMLElement* srcGroupElement) {
 }
 
 bool SliderSetGroup::HasMember(const string& search) {
-	for (auto m : members)
+	for (auto &m : members)
 		if (m.compare(search) == 0)
 			return true;
 
@@ -125,7 +125,7 @@ void SliderSetGroup::WriteGroup(XMLElement* groupElement, bool append) {
 	if (!append)
 		groupElement->DeleteChildren();
 	
-	for (auto member : members) {
+	for (auto &member : members) {
 		XMLElement* newElement = groupElement->GetDocument()->NewElement("Member");
 		XMLElement* element = groupElement->InsertEndChild(newElement)->ToElement();
 		element->SetAttribute("name", member.c_str());
@@ -207,7 +207,7 @@ int SliderSetGroupFile::GetGroupNames(vector<string>& outGroupNames, bool append
 	if (unique)
 		existingNames.insert(outGroupNames.begin(), outGroupNames.end());
 
-	for (auto gn : groupsInFile) {
+	for (auto &gn : groupsInFile) {
 		if (unique && existingNames.find(gn.first) != existingNames.end())
 			continue;
 		else if (unique)
@@ -230,7 +230,7 @@ bool SliderSetGroupFile::HasGroup(const string& queryGroupName) {
 int SliderSetGroupFile::GetAllGroups(vector<SliderSetGroup>& outAppendGroups) {
 	int count = 0;
 	bool add = true;
-	for (auto g : groupsInFile) {
+	for (auto &g : groupsInFile) {
 		add = true;
 		for (auto& og : outAppendGroups) {
 			if (og.GetName() == g.first) {

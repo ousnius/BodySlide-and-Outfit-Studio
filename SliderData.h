@@ -57,14 +57,14 @@ public:
 
 	// Gets the slider's data record name for the specified target.
 	string TargetDataName(const string& targetName) {
-		for (auto df : dataFiles)
+		for (auto &df : dataFiles)
 			if (df.targetName == targetName)
 				return df.dataName;
 
 		return "";
 	}
 	string DataFileName(const string& targetDataName) {
-		for (auto df : dataFiles)
+		for (auto &df : dataFiles)
 			if (df.dataName == targetDataName)
 				return df.fileName;
 
@@ -78,7 +78,7 @@ public:
 	}
 
 	bool IsLocalData(const string& dataAlias) {
-		for (auto df : dataFiles)
+		for (auto &df : dataFiles)
 			if (df.dataName == dataAlias)
 				return df.bLocal;
 
@@ -86,7 +86,7 @@ public:
 	}
 
 	void SetLocalData(const string& dataAlias) {
-		for (auto df : dataFiles)
+		for (auto &df : dataFiles)
 			if (df.dataName == dataAlias)
 				df.bLocal = true;
 	}
@@ -197,7 +197,7 @@ public:
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.
 	// Use TargetToShape to get the NIF file shape name.
 	void GetReferencedTargets(vector<string> &outTargets) {
-		for (auto tdf : targetdatafolders)
+		for (auto &tdf : targetdatafolders)
 			if (tdf.second != datafolder)
 				outTargets.push_back(tdf.first);
 	}
@@ -212,8 +212,8 @@ public:
 	// Adds a shape target and also ensures that any diff data in the set knows about the shape target.
 	void LinkShapeTarget(const string& shapeName, const string& targetName) {
 		targetshapenames[targetName] = shapeName;
-		for (auto &s : sliders)
-			for (auto df : s.dataFiles)
+		for (auto &&s : sliders)
+			for (auto &df : s.dataFiles)
 				df.targetName = targetName;
 	}
 
@@ -263,7 +263,7 @@ public:
 	}
 
 	string ShapeToDataName(int index, const string& shapeName) {
-		for (auto tsn : targetshapenames)
+		for (auto &tsn : targetshapenames)
 			if (tsn.second == shapeName)
 				return sliders[index].TargetDataName(tsn.first);
 
@@ -271,7 +271,7 @@ public:
 	}
 
 	string ShapeToTarget(const string& shapeName) {
-		for (auto tsn : targetshapenames)
+		for (auto &tsn : targetshapenames)
 			if (tsn.second == shapeName)
 				return tsn.first;
 

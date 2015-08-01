@@ -48,7 +48,7 @@ void GroupManager::RefreshUI(const bool& clearGroups) {
 	if (clearGroups) {
 		// Add groups to list
 		listGroups->Clear();
-		for (auto group : groupMembers)
+		for (auto &group : groupMembers)
 			listGroups->Append(group.first);
 	}
 	else {
@@ -58,11 +58,11 @@ void GroupManager::RefreshUI(const bool& clearGroups) {
 
 	// Add members of selected group to list
 	if (!selectedGroup.empty())
-		for (auto member : groupMembers[selectedGroup])
+		for (auto &member : groupMembers[selectedGroup])
 			listMembers->Append(member);
 
 	// Add outfits that are no members to list
-	for (auto outfit : allOutfits)
+	for (auto &outfit : allOutfits)
 		if (listMembers->FindString(outfit) == wxNOT_FOUND)
 			listOutfits->Append(outfit);
 }
@@ -80,7 +80,7 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	// Fill group member map
 	vector<string> groupNames;
 	currentGroupFile.GetGroupNames(groupNames, true, true);
-	for (auto grp : groupNames) {
+	for (auto &grp : groupNames) {
 		SliderSetGroup group;
 		if (currentGroupFile.GetGroup(grp, group))
 			return;
@@ -96,7 +96,7 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 }
 
 void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
-	for (auto grp : groupMembers) {
+	for (auto &grp : groupMembers) {
 		SliderSetGroup group;
 		group.SetName(grp.first);
 		group.AddMembers(grp.second);
@@ -114,7 +114,7 @@ void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	currentGroupFile.New(file.GetPath().ToStdString());
-	for (auto grp : groupMembers) {
+	for (auto &grp : groupMembers) {
 		SliderSetGroup group;
 		group.SetName(grp.first);
 		group.AddMembers(grp.second);

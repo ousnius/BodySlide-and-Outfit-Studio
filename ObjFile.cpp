@@ -7,8 +7,8 @@ ObjFile::ObjFile() {
 }
 
 ObjFile::~ObjFile() {
-	for (auto dataitems = data.begin(); dataitems != data.end(); ++dataitems)
-		delete dataitems->second;
+	for (auto &dataItems : data)
+		delete dataItems.second;
 }
 
 int ObjFile::LoadForNif(const string &inFn, const string& groupName) {

@@ -86,7 +86,7 @@ public:
 	static const int* GetGLAttribs(wxWindow* parent);
 
 	void DeleteAllMeshes() {
-		for (auto m : meshes) {
+		for (auto &m : meshes) {
 			delete m;
 		}
 		meshes.clear();
@@ -119,7 +119,7 @@ public:
 		return -1;
 	}
 	string GetMeshName(int id) {
-		for (auto mn : namedMeshes)
+		for (auto &mn : namedMeshes)
 			if (mn.second == id)
 				return mn.first;
 

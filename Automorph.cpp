@@ -32,11 +32,11 @@ Automorph::Automorph(NifFile &ref, const string& refShape) {
 }
 
 void Automorph::ClearSourceShapes() {
-	for (auto shapes = sourceShapes.begin(); shapes != sourceShapes.end(); ++shapes) {
-		if (foreignShapes.find(shapes->first) != foreignShapes.end())
+	for (auto &shapes : sourceShapes) {
+		if (foreignShapes.find(shapes.first) != foreignShapes.end())
 			continue;
 
-		delete shapes->second;
+		delete shapes.second;
 	}
 	sourceShapes.clear();
 	foreignShapes.clear();
@@ -384,7 +384,7 @@ void Automorph::GetRawResultDiff(const string& shapeName, const string& sliderNa
 	outDiff.clear();
 
 	unordered_map<ushort, Vector3>* set = resultDiffData.GetDiffSet(setName);
-	for (auto i : (*set))
+	for (auto &i : *set)
 		outDiff[i.first] = i.second;
 }
 
@@ -405,7 +405,7 @@ void Automorph::LoadResultDiffs(SliderSet &fromSet) {
 	fromSet.LoadSetDiffData(resultDiffData);
 	targetSliderDataNames.clear();
 	for (int i = 0; i < fromSet.size(); i++)
-		for (auto df : fromSet[i].dataFiles)
+		for (auto &df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
 }
@@ -425,7 +425,7 @@ void Automorph::SetResultDiff(const string& shapeName, const string& sliderName,
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		resultDiffData.AddEmptySet(setName, shapeName);
 
-	for (auto i : diff)
+	for (auto &i : diff)
 		resultDiffData.SumDiff(setName, shapeName, i.first, i.second);
 }
 
@@ -435,7 +435,7 @@ void Automorph::UpdateResultDiff(const string& shapeName, const string& sliderNa
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		resultDiffData.AddEmptySet(setName, shapeName);
 
-	for (auto i: diff) {
+	for (auto &i: diff) {
 		Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
 		resultDiffData.SumDiff(setName, shapeName, i.first, diffscale);
 	}
@@ -447,7 +447,7 @@ void Automorph::UpdateRefDiff(const string& shapeName, const string& sliderName,
 	if (!srcDiffData->TargetMatch(setName, shapeName))
 		srcDiffData->AddEmptySet(setName, shapeName);
 
-	for (auto i : diff) {
+	for (auto &i : diff) {
 		Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
 		srcDiffData->SumDiff(setName, shapeName, i.first, diffscale);
 	}

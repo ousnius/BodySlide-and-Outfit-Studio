@@ -1,11 +1,11 @@
 #include "ConfigurationManager.h"
 
 ConfigurationItem::~ConfigurationItem() {
-	for (auto it = properties.begin(); it != properties.end(); ++it)
-		delete(*it);
+	for (auto &it : properties)
+		delete it;
 
-	for (auto it = children.begin(); it != children.end(); ++it)
-		delete(*it);
+	for (auto &it : children)
+		delete it;
 
 	properties.clear();
 	children.clear();
@@ -55,12 +55,12 @@ void ConfigurationItem::ToXML(XMLElement* parent) {
 	XMLElement* newElement = parent->GetDocument()->NewElement(name.c_str());
 	XMLElement* element = parent->InsertEndChild(newElement)->ToElement();
 
-	for (auto prop : properties) {
+	for (auto &prop : properties) {
 		if (prop->isDefault)
 			continue;
 		element->SetAttribute(prop->name.c_str(), prop->value.c_str());
 	}
-	for (auto child : children) {
+	for (auto &child : children) {
 		if (child->isDefault)
 			continue;
 		if (child->isComment) {
@@ -77,7 +77,7 @@ void ConfigurationItem::ToXML(XMLElement* parent) {
 
 int ConfigurationItem::EnumerateProperties(vector<ConfigurationItem*>& outList) {
 	int count = 0;
-	for (auto prop : properties) {
+	for (auto &prop : properties) {
 		count++;
 		outList.push_back(prop);
 	}
@@ -88,7 +88,7 @@ int ConfigurationItem::EnumerateProperties(string& outList) {
 	int count = 0;
 	outList = "";
 
-	for (auto prop : properties) {
+	for (auto &prop : properties) {
 		count++;
 		outList += prop->name + "=\"" + prop->value + "\" ";
 	}
@@ -98,7 +98,7 @@ int ConfigurationItem::EnumerateProperties(string& outList) {
 
 int ConfigurationItem::EnumerateChildren(vector<ConfigurationItem*>& outList, bool withProperties, bool traverse) {
 	int count = 0;
-	for (auto child : children) {
+	for (auto &child : children) {
 		if (child->isComment)
 			continue;
 
@@ -114,7 +114,7 @@ int ConfigurationItem::EnumerateChildren(vector<ConfigurationItem*>& outList, bo
 }
 
 int ConfigurationItem::EnumerateChildren(const string& inName, vector<string>& outList) {
-	for (auto child : children) {
+	for (auto &child : children) {
 		if (child->isComment)
 			continue;
 		if (child->Match(inName))
@@ -124,7 +124,7 @@ int ConfigurationItem::EnumerateChildren(const string& inName, vector<string>& o
 }
 
 int ConfigurationItem::EnumerateChildrenProperty(const string& inName, const string& propertyName, vector<string>& outList) {
-	for (auto child : children) {
+	for (auto &child : children) {
 		if (child->isComment)
 			continue;
 
@@ -143,7 +143,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 
 	if (pos != string::npos) {
 		string tmpName = inName.substr(0, pos);
-		for (auto child : children) {
+		for (auto &child : children) {
 			if (child->isComment)
 				continue;
 			if (child->Match(tmpName))
@@ -164,7 +164,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 			return nullptr;
 	}
 	else {
-		for (auto child : children) {
+		for (auto &child : children) {
 			if (child->isComment)
 				continue;
 			if (child->Match(inName))
@@ -181,7 +181,7 @@ ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const strin
 	int pos = inName.find_first_of("/.");
 	string tmpName = inName.substr(0, pos);
 
-	for (auto child : children) {
+	for (auto &child : children) {
 		if (child->isComment)
 			continue;
 		if (child->Match(tmpName))
@@ -227,7 +227,7 @@ ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const strin
 }
 
 ConfigurationItem* ConfigurationItem::FindProperty(const string& inName) {
-	for (auto prop : properties)
+	for (auto &prop : properties)
 		if (prop->Match(inName))
 			return prop;
 
@@ -242,7 +242,7 @@ ConfigurationManager::~ConfigurationManager() {
 }
 
 void ConfigurationManager::Clear() {
-	for (auto ci : ciList)
+	for (auto &ci : ciList)
 		delete ci;
 
 	ciList.clear();
@@ -278,7 +278,7 @@ int ConfigurationManager::EnumerateCIs(vector<ConfigurationItem*>& outList, bool
 		return 0;
 
 	int count = 0;
-	for (auto ci : ciList) {
+	for (auto &ci : ciList) {
 		outList.push_back(ci);
 		count++;
 		if (traverse) {
@@ -312,7 +312,7 @@ ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
 
 	if (pos != -1) {
 		string tmpName = inName.substr(0, pos);
-		for (auto ci : ciList)
+		for (auto &ci : ciList)
 			if (ci->Match(tmpName))
 				found = ci;
 
@@ -328,7 +328,7 @@ ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
 			return nullptr;
 	}
 	else
-		for (auto ci : ciList)
+		for (auto &ci : ciList)
 			if (ci->Match(inName))
 				found = ci;
 
@@ -398,7 +398,7 @@ void ConfigurationManager::SetValue(const string& inName, const string& newValue
 	else {
 		int pos = search.find_first_of("/.");
 		string tmpName = search.substr(0, pos);
-		for (auto ci : ciList) {
+		for (auto &ci : ciList) {
 			if (ci->Match(tmpName))
 				itemFound = ci;
 		}
@@ -500,7 +500,7 @@ int ConfigurationManager::SaveConfig(const string& pathToFile, const string& roo
 	XMLElement* newElement = doc.NewElement(rootElementName.c_str());
 	XMLElement* root = doc.InsertEndChild(newElement)->ToElement();
 
-	for (auto ci : ciList) {
+	for (auto &ci : ciList) {
 		if (ci->isDefault)
 			continue;
 		if (ci->isComment) {

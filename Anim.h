@@ -68,12 +68,12 @@ public:
 	unordered_map<int, AnimWeight> boneWeights;
 	AnimSkin() { }
 	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<int>& BoneIndices) {
-		for (auto i : BoneIndices)
+		for (auto &i : BoneIndices)
 			boneWeights[i] = AnimWeight(loadFromFile, shape, i);
 	}
 	void VertexBones(ushort queryvert, vector<int>& outbones, vector<float>& outWeights) {
 		float wresult;
-		for (auto bw : boneWeights) {
+		for (auto &bw : boneWeights) {
 			if (bw.second.VertWeight(queryvert, wresult)) {
 				outbones.push_back(bw.first);
 				outWeights.push_back(wresult);
@@ -82,14 +82,14 @@ public:
 	}
 	void RemoveBone(int boneOrder) {
 		unordered_map<int, AnimWeight> bwtemp;
-		for (auto bw : boneWeights) {
+		for (auto &bw : boneWeights) {
 			if (bw.first > boneOrder)
 				bwtemp[bw.first - 1] = move(bw.second);
 			else if (bw.first < boneOrder)
 				bwtemp[bw.first] = move(bw.second);
 		}
 		boneWeights.clear();
-		for (auto bw : bwtemp)
+		for (auto &bw : bwtemp)
 			boneWeights[bw.first] = move(bw.second);
 	}
 };

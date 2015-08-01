@@ -236,7 +236,7 @@ public:
 		vector<string> shapes;
 		if (workNif.IsValid()) {
 			OutfitShapes(shapes);
-			for (auto s : shapes)
+			for (auto &s : shapes)
 				workAnim.RemoveShapeBone(s, boneName);
 
 			int blockID = workNif.GetNodeID(boneName);
@@ -246,7 +246,7 @@ public:
 
 		if (baseNif.IsValid()) {
 			RefShapes(shapes);
-			for (auto rs : shapes)
+			for (auto &rs : shapes)
 				baseAnim.RemoveShapeBone(rs, boneName);
 
 			int blockIDRef = baseNif.GetNodeID(boneName);

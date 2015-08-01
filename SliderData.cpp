@@ -273,7 +273,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	XMLElement* dataFileElement;
 	char buf[256];
 
-	for (auto tsn : targetshapenames) {
+	for (auto &tsn : targetshapenames) {
 		newElement = sliderSetElement->GetDocument()->NewElement("BaseShapeName");
 		baseShapeElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 		baseShapeElement->SetAttribute("target", tsn.first.c_str());
@@ -290,7 +290,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		baseShapeElement->InsertEndChild(newText);
 	}
 
-	for (auto slider : sliders) {
+	for (auto &slider : sliders) {
 		if (slider.dataFiles.size() == 0)
 			continue;
 		
@@ -308,7 +308,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			sliderElement->SetAttribute("zap", "true");
 		if (slider.bUV)
 			sliderElement->SetAttribute("uv", "true");
-		for (auto df : slider.dataFiles) {
+		for (auto &df : slider.dataFiles) {
 			newElement = sliderSetElement->GetDocument()->NewElement("datafile");
 			dataFileElement = sliderElement->InsertEndChild(newElement)->ToElement();
 			dataFileElement->SetAttribute("name", df.dataName.c_str());
@@ -394,8 +394,8 @@ int SliderSetFile::GetSetNames(vector<string> &outSetNames, bool append) {
 	if (!append)
 		outSetNames.clear();
 
-	for (auto xmlit = setsInFile.begin(); xmlit != setsInFile.end(); ++xmlit)
-		outSetNames.push_back(xmlit->first);
+	for (auto &xmlit : setsInFile)
+		outSetNames.push_back(xmlit.first);
 
 	return outSetNames.size();
 }
@@ -455,8 +455,8 @@ int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet, uint f
 int SliderSetFile::GetAllSets(vector<SliderSet> &outAppendSets) {
 	int err;
 	SliderSet tmpSet;
-	for (auto xmlit = setsInFile.begin(); xmlit != setsInFile.end(); ++xmlit) {
-		err = tmpSet.LoadSliderSet(xmlit->second);
+	for (auto &xmlit : setsInFile) {
+		err = tmpSet.LoadSliderSet(xmlit.second);
 		if (err)
 			return err;
 		outAppendSets.push_back(tmpSet);
@@ -490,8 +490,8 @@ void PresetCollection::Clear() {
 }
 
 void PresetCollection::GetPresetNames(vector<string>& outNames) {
-	for (auto it = namedSliderPresets.begin(); it != namedSliderPresets.end(); ++it)
-		outNames.push_back(it->first);
+	for (auto &it : namedSliderPresets)
+		outNames.push_back(it.first);
 }
 
 void PresetCollection::SetSliderPreset(const string& set, const string& slider, float big, float small) {
@@ -667,7 +667,7 @@ int PresetCollection::SavePreset(const string& filePath, const string& presetNam
 		sliderElem = presetElem->InsertEndChild(newElement)->ToElement();
 		sliderElem->SetAttribute("name", assignGroups[i].c_str());
 	}
-	for (auto p : namedSliderPresets[presetName]) {
+	for (auto &p : namedSliderPresets[presetName]) {
 		if (p.second.big > -10000.0f) {
 			newElement = outDoc.NewElement("SetSlider");
 			sliderElem = presetElem->InsertEndChild(newElement)->ToElement();

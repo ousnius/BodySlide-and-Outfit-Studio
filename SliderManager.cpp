@@ -32,8 +32,8 @@ void SliderManager::AddSlidersInSet(SliderSet& inSet, bool hideAll) {
 		for (int j = 0; j < inSet[i].dataFiles.size(); j++)
 			AddSliderLink(inSet[i].name, inSet[i].dataFiles[j].dataName);
 
-		for (auto reqIter = inSet[i].requirements.begin(); reqIter != inSet[i].requirements.end(); ++reqIter)
-			AddSliderTrigger(reqIter->first, inSet[i].name, reqIter->second, 0);
+		for (auto &reqIter : inSet[i].requirements)
+			AddSliderTrigger(reqIter.first, inSet[i].name, reqIter.second, 0);
 	}
 }
 

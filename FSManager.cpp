@@ -67,14 +67,14 @@ FSManager::FSManager() {
 	wxArrayString list;
 	list = autodetectArchives();
 
-	for (auto an : list) {
+	for (auto &an : list) {
 		if (FSArchiveHandler *a = FSArchiveHandler::openArchive(an))
 			archives[an.ToStdString()] = a;
 	}
 }
 
 FSManager::~FSManager() {
-	for (auto it : archives)
+	for (auto &it : archives)
 		delete it.second;
 
 	archives.clear();
@@ -90,7 +90,7 @@ wxArrayString FSManager::autodetectArchives() {
 		wxArrayString files;
 		wxDir::GetAllFiles(path, &files, "*.bsa", wxDIR_FILES);
 
-		for (auto file : files)
+		for (auto &file : files)
 			list.Add(file);
 	}
 

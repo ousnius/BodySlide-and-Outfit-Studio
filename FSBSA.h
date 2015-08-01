@@ -117,9 +117,9 @@ protected:
 		BSAFolder() : parent(0) {}
 		//! Destructor
 		~BSAFolder() {
-			for (auto it : children)
+			for (auto &it : children)
 				delete it.second;
-			for (auto it : files)
+			for (auto &it : files)
 				delete it.second;
 
 			children.clear();

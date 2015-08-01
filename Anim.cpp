@@ -1,7 +1,7 @@
 #include "Anim.h"
 
 bool AnimInfo::AddShapeBone(const string& shape, AnimBone& boneDataRef) {
-	for (auto bone : shapeBones[shape])
+	for (auto &bone : shapeBones[shape])
 		if (!bone.compare(boneDataRef.boneName))
 			return false;
 
@@ -13,7 +13,7 @@ bool AnimInfo::AddShapeBone(const string& shape, AnimBone& boneDataRef) {
 bool AnimInfo::RemoveShapeBone(const string& shape, const string& boneName) {
 	int bidx = 0;
 	bool found = false;
-	for (auto bone : shapeBones[shape]) {
+	for (auto &bone : shapeBones[shape]) {
 		if (bone.compare(boneName) == 0) {
 			found = true;
 			break;
@@ -36,12 +36,12 @@ void AnimInfo::Clear() {
 		vector<string> shapes;
 		refNif->GetShapeList(shapes);
 
-		for (auto shapeBoneList : shapeBones)
-			for (auto boneName : shapeBoneList.second)
+		for (auto &shapeBoneList : shapeBones)
+			for (auto &boneName : shapeBoneList.second)
 				AnimSkeleton::getInstance().ReleaseBone(boneName);
 
 		shapeSkinning.clear();
-		for (auto s : shapes)
+		for (auto &s : shapes)
 			shapeBones[s].clear();
 
 		refNif = nullptr;
@@ -49,7 +49,7 @@ void AnimInfo::Clear() {
 }
 
 void AnimInfo::ClearShape(const string& shape) {
-	for (auto boneName : shapeBones[shape])
+	for (auto &boneName : shapeBones[shape])
 		AnimSkeleton::getInstance().ReleaseBone(boneName);
 
 	shapeBones.erase(shape);
@@ -62,7 +62,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif) {
 
 	Clear();
 
-	for (auto s : shapes)
+	for (auto &s : shapes)
 		LoadFromNif(nif, s);
 
 	refNif = nif;
@@ -78,7 +78,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
 		return false;
 
 	int slot = 0;
-	for (auto bn : boneNames) {
+	for (auto &bn : boneNames) {
 		if (!AnimSkeleton::getInstance().RefBone(bn)) {
 			AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
 			if (!cstm.isValidBone)
@@ -156,7 +156,7 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 
 		Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
 		Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-		for (auto w : inVertWeights) {
+		for (auto &w : inVertWeights) {
 			Vector3 v = verts[w.first];
 			a.x = min(a.x, v.x);
 			a.y = min(a.y, v.y);
@@ -168,7 +168,7 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 
 		Vector3 tot = (a + b) / 2.0f;
 		float d = 0.0f;
-		for (auto w : inVertWeights) {
+		for (auto &w : inVertWeights) {
 			Vector3 v = verts[w.first];
 			d = max(d, tot.DistanceTo(v));
 		}
@@ -182,9 +182,9 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 
 void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs) {
 	if (synchBoneIDs) {
-		for (auto bones : shapeBones) {
+		for (auto &bones : shapeBones) {
 			vector<int> bids;
-			for (auto bone : bones.second) {
+			for (auto &bone : bones.second) {
 				int id = nif->GetNodeID(bone);
 				if (id == -1) {
 					AnimBone boneRef;
@@ -207,8 +207,8 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs) {
 	}
 
 	SkinTransform xForm;
-	for (auto shapeBoneList : shapeBones) {
-		for (auto boneName : shapeBoneList.second) {
+	for (auto &shapeBoneList : shapeBones) {
+		for (auto &boneName : shapeBoneList.second) {
 			if (!AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
 				continue;
 
@@ -267,7 +267,7 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 		rot = localRot;
 	}
 
-	for (auto c : node->children) {
+	for (auto &c : node->children) {
 		string name = skeletonNif->NodeName(c);
 		if (!name.empty()){
 			if (name == "_unnamed_")
@@ -394,7 +394,7 @@ bool AnimSkeleton::GetSkinTransform(const string &boneName, SkinTransform& xform
 
 int AnimSkeleton::GetActiveBoneNames(vector<string>& outBoneNames) {
 	int c = 0;
-	for (auto ab : allBones) {
+	for (auto &ab : allBones) {
 		if (ab.second.refCount > 0) {
 			outBoneNames.push_back(ab.first);
 			c++;

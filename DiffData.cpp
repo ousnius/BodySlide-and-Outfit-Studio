@@ -20,13 +20,13 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 	int sz;
 	inFile.read((char*)&sz, 4);
 
-	unordered_map<ushort, Vector3> data;
+	unordered_map<ushort, Vector3> data(sz);
 	int idx;
 	Vector3 v;
 	for (int i = 0; i < sz; i++) {
 		inFile.read((char*)&idx, sizeof(int));
 		inFile.read((char*)&v, sizeof(Vector3));
-		data[(ushort)idx] = v;
+		data.emplace(idx, v);
 	}
 	inFile.close();
 	if (namedSet.find(name) != namedSet.end())

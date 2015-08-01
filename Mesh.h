@@ -64,14 +64,9 @@ public:
 
 	// Creates a new bvh tree for the mesh.
 	shared_ptr<AABBTree> CreateBVH();
-	// Swaps in a new BVH tree and returns the old one.
-	shared_ptr<AABBTree> SetBVH(shared_ptr<AABBTree> myNewTree);
 
 
 	void CreateKDTree();
-	void TransformPoints(const Matrix4& mat);
-	void TransformPoints(vector<int>& indices, const Matrix4& mat);
-	void TransformPoints(set<int>& indices, const Matrix4& mat);
 
 	void MakeEdges();			// Creates the list of edges from the list of triangles.
 

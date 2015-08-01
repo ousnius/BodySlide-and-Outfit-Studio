@@ -203,7 +203,7 @@ int BodySlideApp::LoadSliderSets() {
 	}
 
 	ungroupedOutfits.clear();
-	for (auto o : outfitNameSource) {
+	for (auto &o : outfitNameSource) {
 		vector<string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
 		if (groups.empty())
@@ -299,7 +299,7 @@ void BodySlideApp::PopulateOutfitList(const string& select) {
 
 	ApplyOutfitFilter();
 
-	for (auto fo : filteredOutfits)
+	for (auto &fo : filteredOutfits)
 		items.Add(fo);
 
 	sliderView->PopulateOutfitList(items, wxString(myselect.c_str()));
@@ -317,7 +317,7 @@ void BodySlideApp::DisplayActiveSet() {
 	cCollection.GetAllCategories(cats);
 
 	// Populate category data
-	for (auto cat : cats) {
+	for (auto &cat : cats) {
 		vector<string> catSliders;
 		cCollection.GetCategorySliders(cat, catSliders);
 
@@ -338,7 +338,7 @@ void BodySlideApp::DisplayActiveSet() {
 		// Find the category in the list
 		bool regularSlider = true;
 		int iter = 0;
-		for (auto cat : sliderCategories) {
+		for (auto &cat : sliderCategories) {
 			catSliders.push_back(vector<int>());
 			if (find(get<1>(cat).begin(), get<1>(cat).end(), activeSet[i].name) != get<1>(cat).end()) {
 				catSliders[iter].push_back(i);
@@ -354,14 +354,14 @@ void BodySlideApp::DisplayActiveSet() {
 	// Create category UI
 	int iter = 0;
 	if (catSliders.size() > 0) {
-		for (auto cat : sliderCategories) {
+		for (auto &cat : sliderCategories) {
 			string name = get<0>(cat);
 			bool show = get<2>(cat);
 
 			if (catSliders.size() > iter && catSliders[iter].size() > 0) {
 				sliderView->AddCategorySliderUI(name, show, !activeSet.GenWeights());
 				if (show)
-					for (auto s : catSliders[iter])
+					for (auto &s : catSliders[iter])
 						sliderView->AddSliderGUI(activeSet[s].name.c_str(), activeSet[s].bZap, !activeSet.GenWeights());
 			}
 			iter++;
@@ -383,7 +383,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 }
 
 void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& ZapIdx, vector<Vector2>* uvs) {
-	for (auto slider : sliderSet) {
+	for (auto &slider : sliderSet) {
 		float val = slider.value;
 		if (slider.zap) {
 			if (val > 0)
@@ -403,7 +403,7 @@ void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& slide
 		}
 	}
 
-	for (auto slider : sliderSet)
+	for (auto &slider : sliderSet)
 		if (slider.clamp && slider.value > 0)
 			for (int j = 0; j < slider.linkedDataSets.size(); j++)
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
@@ -547,10 +547,10 @@ void BodySlideApp::InitPreview(char PreviewType) {
 
 	vector<string> shapeNames;
 	PreviewMod.GetShapeList(shapeNames);
-	for (auto s : shapeNames) {
+	for (auto &s : shapeNames)
 		win->AddNifShapeTexture(&PreviewMod, s);
-		win->Refresh();
-	}
+
+	win->Refresh();
 }
 
 void BodySlideApp::UpdatePreview(char PreviewType) {
@@ -717,7 +717,7 @@ void BodySlideApp::LoadAllGroups() {
 	gCollection.LoadGroups("SliderGroups");
 
 	ungroupedOutfits.clear();
-	for (auto o : outfitNameSource) {
+	for (auto &o : outfitNameSource) {
 		vector<string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
 		if (groups.empty())
@@ -758,7 +758,7 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 
 	outfile.GetGroupNames(existing);
 	bool found = false;
-	for (auto e : existing) {
+	for (auto &e : existing) {
 		if (_stricmp(e.c_str(), groupName.c_str()) == 0) {
 			found = true;
 			break;
@@ -816,7 +816,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 		showUngrouped = true;
 	}
 
-	for (auto gn : grouplist) {
+	for (auto &gn : grouplist) {
 		if (gn == "Unassigned")
 			showUngrouped = true;
 		else
@@ -824,28 +824,28 @@ void BodySlideApp::ApplyOutfitFilter() {
 	}
 
 	if (showUngrouped)
-		for (auto ug : ungroupedOutfits)
+		for (auto &ug : ungroupedOutfits)
 			grpFiltOutfits.insert(ug);
 
-	for (auto no : outfitNameOrder)
+	for (auto &no : outfitNameOrder)
 		if (grpFiltOutfits.find(no) != grpFiltOutfits.end())
 			workfiltList.push_back(no);
 
 
 	if (outfitSrch.empty()) {
-		for (auto w : workfiltList)
+		for (auto &w : workfiltList)
 			filteredOutfits.push_back(w);
 	}
 	else {
 		regex re;
 		try {
 			re.assign(outfitSrch, regex::icase);
-			for (auto w : workfiltList)
+			for (auto &w : workfiltList)
 				if (regex_search(w, re))
 					filteredOutfits.push_back(w);
 		}
 		catch (regex_error) {
-			for (auto w : workfiltList)
+			for (auto &w : workfiltList)
 				filteredOutfits.push_back(w);
 		}
 	}
@@ -871,9 +871,9 @@ void BodySlideApp::LoadPresets(const string& sliderSet) {
 
 	vector<string> groups_and_aliases;
 
-	for (auto g : presetGroups) {
+	for (auto &g : presetGroups) {
 		groups_and_aliases.push_back(g);
-		for (auto ag : this->groupAlias)
+		for (auto &ag : this->groupAlias)
 			if (ag.second == g)
 				groups_and_aliases.push_back(ag.first);
 	}
@@ -1107,7 +1107,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
-	for (auto outfit : outfitList) {
+	for (auto &outfit : outfitList) {
 		bool triEnd = tri;
 		progmsg.str("");
 		progmsg << "Processing '" << outfit << "' ( " << count << " of " << outfitList.size() << " )";
@@ -1123,6 +1123,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		sliderDoc.Open(outfitNameSource[outfit]);
 		if (!sliderDoc.fail()) {
 			currentSet.Clear();
+			currentDiffs.Clear();
 			if (!sliderDoc.GetSet(outfit, currentSet)) {
 				currentSet.SetBaseDataPath(Config["ShapeDataPath"]);
 				currentSet.LoadSetDiffData(currentDiffs);
@@ -1222,7 +1223,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 				currentDiffs.ApplyDiff(dn, target, vbig, &vertsHigh);
 			}
 			if (!clamps.empty()) {
-				for (auto c : clamps) {
+				for (auto &c : clamps) {
 					string dn = currentSet[c].TargetDataName(it->first);
 					string target = it->first;
 					if (currentSet[c].defSmallValue > 0)
@@ -1564,7 +1565,7 @@ void BodySlideFrame::ClearSliderGUI() {
 		scrollWindow->GetSizer()->Clear();
 		scrollWindow->DestroyChildren();
 	}
-	for (auto sd : sliderDisplays)
+	for (auto &sd : sliderDisplays)
 		delete sd.second;
 
 	sliderDisplays.clear();
@@ -1852,7 +1853,7 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayString grpChoices;
 	wxArrayInt grpSelections;
 	int idx = 0;
-	for (auto g : groupNames) {
+	for (auto &g : groupNames) {
 		grpChoices.Add(g);
 		if (curGroupNames.find(g) != curGroupNames.end()) {
 			grpSelections.Add(idx);
@@ -2013,7 +2014,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	app->GetFilteredOutfits(outfitChoices);
 
 	int idx = 0;
-	for (auto o : outfitChoices) {
+	for (auto &o : outfitChoices) {
 		oChoices.Add(o);
 		oSelections.Add(idx);
 		idx++;
@@ -2068,7 +2069,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	}
 	else if (ret == 3) {
 		wxArrayString errlist;
-		for (auto e : failedOutfits)
+		for (auto &e : failedOutfits)
 			errlist.Add(e.first + ":" + e.second);
 
 		wxSingleChoiceDialog errdisplay(this, "The following outfits failed", "Failed", errlist, (void**)0, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);

@@ -40,7 +40,7 @@ void PresetSaveDialog::FilterGroups(const string& filter) {
 	else {
 		try {
 			regex re(filter, regex_constants::icase);
-			for (auto s : allGroupNames) {
+			for (auto &s : allGroupNames) {
 				if (regex_search(s, re))
 					filteredGroups.push_back(s);
 			}
@@ -48,7 +48,7 @@ void PresetSaveDialog::FilterGroups(const string& filter) {
 		catch (...) {}
 
 	}
-	for (auto g : filteredGroups) {
+	for (auto &g : filteredGroups) {
 		int i = chkbox->Append(g);
 		if (selectedGroups.find(g) != selectedGroups.end()) {
 			chkbox->Check(i);
