@@ -117,7 +117,6 @@ class SliderSet
 	bool genWeights;			 // Generate both low and high weight meshes on output.
 	map<string, string> targetshapenames;	// Target names mapped to nif file shape names.
 	map<string, string> targetdatafolders;
-	map<string, Vector3> targetoffsets;		// Display offset for bodyslide (emulates bone offsets).
 
 	vector<SliderData> sliders;
 
@@ -220,7 +219,6 @@ public:
 	void ClearTargets(const string& oldTarget) {
 		targetshapenames.erase(oldTarget);
 		targetdatafolders.erase(oldTarget);
-		targetoffsets.erase(oldTarget);
 	}
 
 	void Retarget(const string& oldTarget, const string& newTarget) {
@@ -238,17 +236,6 @@ public:
 		for (auto& tsn : targetshapenames)
 			if (tsn.second == shapeName)
 				tsn.second = newShapeName;
-	}
-
-	void AddTargetVirtualOffset(const string& targetName, const Vector3& offset) {
-		targetoffsets[targetName] = offset;
-	}
-
-	Vector3 GetTargetVirtualOffset(const string& targetName) {
-		if (targetoffsets.find(targetName) != targetoffsets.end())
-			return targetoffsets[targetName];
-
-		else return Vector3(0.0f, 0.0f, 0.0f);
 	}
 
 	void AddTargetDataFolder(const string& targetName, const string& datafolder) {

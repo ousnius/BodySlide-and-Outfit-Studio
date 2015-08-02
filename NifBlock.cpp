@@ -957,8 +957,6 @@ NiTriShapeData::NiTriShapeData(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NITRISHAPEDATA;
-	scaleFromCenter = true;
-	virtScale = 1.0f;
 	numTrianglePoints = 0;
 	hasTriangles = false;
 	numMatchGroups = 0;
@@ -969,8 +967,6 @@ NiTriShapeData::NiTriShapeData(fstream& file, NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NITRISHAPEDATA;
-	scaleFromCenter = true;
-	virtScale = 1.0f;
 	numTrianglePoints = 0;
 	hasTriangles = false;
 	numMatchGroups = 0;
@@ -1254,8 +1250,6 @@ NiTriStripsData::NiTriStripsData(NiHeader& hdr) {
 	blockType = NITRISTRIPSDATA;
 	numStrips = 0;
 	hasPoints = false;
-	virtScale = 1.0f;
-	scaleFromCenter = true;
 }
 
 NiTriStripsData::NiTriStripsData(fstream& file, NiHeader& hdr) {
@@ -1265,8 +1259,6 @@ NiTriStripsData::NiTriStripsData(fstream& file, NiHeader& hdr) {
 	blockType = NITRISTRIPSDATA;
 	numStrips = 0;
 	hasPoints = false;
-	virtScale = 1.0f;
-	scaleFromCenter = true;
 
 	Get(file);
 }

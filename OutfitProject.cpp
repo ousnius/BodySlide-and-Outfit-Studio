@@ -63,13 +63,8 @@ string OutfitProject::Save(const string& strFileName,
 			owner->UpdateProgress(prog += step, "Adding reference shapes...");
 		}
 	}
-	// Add all the outfit shapes to the target list. 
-	Vector3 offs;
+	// Add all the outfit shapes to the target list.
 	for (auto &os : outfitShapes) {
-		offs = workNif.GetShapeVirtualOffset(os);
-		if (offs.x != 0.0f || offs.y != 0.0f || offs.z != 0.0f)
-			outSet.AddTargetVirtualOffset(ShapeToTarget(os), offs);
-
 		outSet.AddShapeTarget(os, ShapeToTarget(os));
 		owner->UpdateProgress(prog += step, "Adding outfit shapes...");
 	}

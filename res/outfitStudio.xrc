@@ -824,17 +824,9 @@
 					<label>Move Shape...</label>
 					<help>Apply an offset adjustment to the mesh vertices. This permanently moves vertices.</help>
 				</object>
-				<object class="wxMenuItem" name="offsetShape">
-					<label>Move Shape (Virtual)...</label>
-					<help>Apply an offset adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
-				</object>
 				<object class="wxMenuItem" name="scaleShape">
 					<label>Scale Shape...</label>
 					<help>Apply a scale adjustment to the shape. This permanently moves vertices.</help>
-				</object>
-				<object class="wxMenuItem" name="virtscaleShape">
-					<label>Scale Shape (Virtual)...</label>
-					<help>Apply a scale adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
 				</object>
 				<object class="wxMenuItem" name="rotateShape">
 					<label>Rotate Shape...</label>
@@ -1206,181 +1198,6 @@
 		</object>
 	</object>
 	
-	<object class="wxDialog" name="dlgOffsetShape">
-		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-		<size>423,155</size>
-		<title>Move Shape (Virtual)</title>
-		<centered>1</centered>
-		<object class="wxBoxSizer">
-			<orient>wxVERTICAL</orient>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="osDescription">
-					<label>A virtual shape offset visually moves meshes in Outfit Studio and BodySlide, but does not actually move the vertices. It is stored here, so it can be cleared again later.</label>
-					<wrap>475</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxVERTICAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="osLabelX">
-									<label>X</label>
-									<wrap>-1</wrap>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxSlider" name="osSliderX">
-									<value>0</value>
-									<min>-25000</min>
-									<max>25000</max>
-									<size>400,-1</size>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxTextCtrl" name="osTextX">
-									<size>60,-1</size>
-									<value>0.00000</value>
-								</object>
-							</object>
-						</object>
-					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxVERTICAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="osLabelY">
-									<label>Y</label>
-									<wrap>-1</wrap>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxSlider" name="osSliderY">
-									<value>0</value>
-									<min>-25000</min>
-									<max>25000</max>
-									<size>400,-1</size>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxTextCtrl" name="osTextY">
-									<size>60,-1</size>
-									<value>0.00000</value>
-								</object>
-							</object>
-						</object>
-					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxVERTICAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="osLabelZ">
-									<label>Z</label>
-									<wrap>-1</wrap>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxSlider" name="osSliderZ">
-									<value>0</value>
-									<min>-25000</min>
-									<max>25000</max>
-									<size>400,-1</size>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxTextCtrl" name="osTextZ">
-									<size>60,-1</size>
-									<value>0.00000</value>
-								</object>
-							</object>
-						</object>
-					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxEXPAND|wxALL</flag>
-				<border>5</border>
-				<object class="wxStdDialogButtonSizer">
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxButton" name="wxID_OK">
-							<label>&amp;OK</label>
-						</object>
-					</object>
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxButton" name="wxID_CANCEL">
-							<label>&amp;Cancel</label>
-						</object>
-					</object>
-				</object>
-			</object>
-		</object>
-	</object>
-	
 	<object class="wxDialog" name="dlgScaleShape">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
 		<size>423,155</size>
@@ -1461,91 +1278,6 @@
 						<label>&amp;Cancel</label>
 					</object>
 				</object>
-				</object>
-			</object>
-		</object>
-	</object>
-	
-	<object class="wxDialog" name="dlgVirtScaleShape">
-		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-		<size>423,155</size>
-		<title>Scale Shape (Virtual)</title>
-		<centered>1</centered>
-		<object class="wxBoxSizer">
-			<orient>wxVERTICAL</orient>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxStaticText" name="vsDescription">
-					<label>A virtual shape scale visually affects meshes in Outfit Studio and BodySlide, but does not actually move the vertices. It is stored here, so it can be cleared again later.</label>
-					<wrap>475</wrap>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxVERTICAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="vssLabel">
-									<label>Scale</label>
-									<wrap>-1</wrap>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxSlider" name="vssSlider">
-									<value>1000</value>
-									<min>10</min>
-									<max>3000</max>
-									<size>400,-1</size>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxLEFT|wxRIGHT</flag>
-								<border>5</border>
-								<object class="wxTextCtrl" name="vssText">
-									<size>60,-1</size>
-									<value>1.00000</value>
-								</object>
-							</object>
-						</object>
-					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxEXPAND|wxALL</flag>
-				<border>5</border>
-				<object class="wxStdDialogButtonSizer">
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxButton" name="wxID_OK">
-							<label>&amp;OK</label>
-						</object>
-					</object>
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxButton" name="wxID_CANCEL">
-							<label>&amp;Cancel</label>
-						</object>
-					</object>
 				</object>
 			</object>
 		</object>
@@ -2967,17 +2699,9 @@
 			<label>Move Shape...</label>
 			<help>Apply an offset adjustment to the mesh vertices. This permanently moves vertices.</help>
 		</object>
-		<object class="wxMenuItem" name="offsetShape">
-			<label>Move Shape (Virtual)...</label>
-			<help>Apply an offset adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
-		</object>
 		<object class="wxMenuItem" name="scaleShape">
 			<label>Scale Shape...</label>
 			<help>Apply a scale adjustment to the shape. This permanently moves vertices.</help>
-		</object>
-		<object class="wxMenuItem" name="virtscaleShape">
-			<label>Scale Shape (Virtual)...</label>
-			<help>Apply a scale adjustment to the shape. This is used to line up meshes, but does not modify their vertices.</help>
 		</object>
 		<object class="wxMenuItem" name="rotateShape">
 			<label>Rotate Shape...</label>

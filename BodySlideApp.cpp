@@ -534,10 +534,6 @@ void BodySlideApp::InitPreview(char PreviewType) {
 	vector<Vector2> uvs;
 	vector<ushort> zapIdx;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		Vector3 v = activeSet.GetTargetVirtualOffset(it->first);
-		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f)
-			previewBaseNif->VirtualOffsetShape(it->second, v, false);
-
 		zapIdx.clear();
 		if (!previewBaseNif->GetVertsForShape(it->second, verts))
 			continue;
@@ -636,10 +632,6 @@ void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 	vector<ushort> zapIdx;
 	Vector3 v;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		v = activeSet.GetTargetVirtualOffset(it->first);
-		if (v.x != 0.0f || v.y != 0.0f || v.z != 0.0f)
-			previewBaseNif->VirtualOffsetShape(it->second, v, false);
-
 		zapIdx.clear();
 		if (!previewBaseNif->GetVertsForShape(it->second, verts))
 			continue;

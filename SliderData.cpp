@@ -187,24 +187,6 @@ int SliderSet::LoadSliderSet(XMLElement* element, uint flags) {
 			targetshapenames[shapeName->Attribute("target")] = shapeName->GetText();
 		}
 
-
-		if (shapeName->Attribute("voffset")) {
-			vector<string> parts;
-			string stroffset = shapeName->Attribute("voffset");
-			stringstream ss(stroffset);
-			string item;
-			Vector3 v;
-			while (std::getline(ss, item, ' ')) {
-				parts.push_back(item);
-			}
-			if (parts.size() == 3) {
-				v.x = (float)atof(parts[0].c_str());
-				v.y = (float)atof(parts[1].c_str());
-				v.z = (float)atof(parts[2].c_str());
-			}
-			targetoffsets[shapeName->Attribute("target")] = v;
-		}
-
 		shapeName = shapeName->NextSiblingElement("BaseShapeName");
 	}
 
@@ -271,20 +253,13 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	XMLElement* baseShapeElement;
 	XMLElement* sliderElement;
 	XMLElement* dataFileElement;
-	char buf[256];
 
 	for (auto &tsn : targetshapenames) {
 		newElement = sliderSetElement->GetDocument()->NewElement("BaseShapeName");
 		baseShapeElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 		baseShapeElement->SetAttribute("target", tsn.first.c_str());
-		if (targetdatafolders.find(tsn.first) != targetdatafolders.end()) {
+		if (targetdatafolders.find(tsn.first) != targetdatafolders.end())
 			baseShapeElement->SetAttribute("DataFolder", targetdatafolders[tsn.first].c_str());
-		}
-		auto o = targetoffsets.find(tsn.first);
-		if (o != targetoffsets.end()) {
-			_snprintf_s(buf, 256, 256, "%.5f %.5f %.5f", o->second.x, o->second.y, o->second.z);
-			baseShapeElement->SetAttribute("voffset", buf);
-		}
 
 		newText = sliderSetElement->GetDocument()->NewText(tsn.second.c_str());
 		baseShapeElement->InsertEndChild(newText);

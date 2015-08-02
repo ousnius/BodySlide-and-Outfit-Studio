@@ -355,11 +355,6 @@ public:
 	ushort numMatchGroups;
 	vector<MatchGroup> matchGroups;
 
-	// Virtual values not saved with nif, used for vertex position retrieval
-	Vector3 virtOffset;
-	float virtScale;
-	bool scaleFromCenter;
-
 	NiTriShapeData(NiHeader& hdr);
 	NiTriShapeData(fstream& file, NiHeader& hdr);
 
@@ -389,11 +384,6 @@ public:
 	vector<ushort> stripLengths;
 	byte hasPoints;
 	vector<vector<ushort>> points;
-
-	// Virtual values not saved with nif, used for vertex position retrieval
-	Vector3 virtOffset;
-	float virtScale;
-	bool scaleFromCenter;
 
 	NiTriStripsData(NiHeader& hdr);
 	NiTriStripsData(fstream& file, NiHeader& hdr);
@@ -824,16 +814,6 @@ public:
 	void GetShapeScale(const string& shapeName, float& outScale);
 	void SetShapeScale(const string& shapeName, const float& newScale);
 	void ApplyShapeTranslation(const string& shapeName, const Vector3& offset);
-
-	// Sets a phantom offset value in a nitrishapedata record, which will be added to vertex values when fetched later.
-	// if sum is true, the offset is added to the current offset, allowing a series of independant changes.
-	void VirtualOffsetShape(const string& shapeName, const Vector3& offset, bool sum = true);
-
-	// Sets a phantom scale value in a NiTriShapeData record, which will be added to vertex values when fetched later.
-	void VirtualScaleShape(const string& shapeName, float scale, bool fromCenter = true);
-
-	Vector3 GetShapeVirtualOffset(const string& shapeName);
-	void GetShapeVirtualScale(const string& shapeName, float& scale, bool& fromCenterFlag);
 
 	void MoveVertex(const string& shapeName, const Vector3& pos, const int& id);
 	void OffsetShape(const string& shapeName, const Vector3& offset, unordered_map<ushort, float>* mask = nullptr);

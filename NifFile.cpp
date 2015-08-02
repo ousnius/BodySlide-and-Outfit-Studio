@@ -2092,7 +2092,6 @@ const vector<vector<int>>* NifFile::GetSeamVertsForShape(const string& shapeName
 bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVerts) {
 	outVerts.clear();
 
-	Matrix4 xForm;
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
 	if (dataID == -1)
@@ -2100,25 +2099,13 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 
 	if (bType == NITRISHAPEDATA) {
 		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
-		xForm.Translate(shapeData->virtOffset);
-		xForm.Scale(shapeData->virtScale, shapeData->virtScale, shapeData->virtScale);
-		for (int i = 0; i < shapeData->vertices.size(); i++) {
-			if (shapeData->virtScale != 1.0f)
-				outVerts.push_back(xForm * shapeData->vertices[i]);
-			else
-				outVerts.push_back(shapeData->vertices[i] + shapeData->virtOffset);
-		}
+		for (auto &v : shapeData->vertices)
+			outVerts.push_back(v);
 	}
 	else {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
-		xForm.Translate(stripsData->virtOffset);
-		xForm.Scale(stripsData->virtScale, stripsData->virtScale, stripsData->virtScale);
-		for (int i = 0; i < stripsData->vertices.size(); i++) {
-			if (stripsData->virtScale != 1.0f)
-				outVerts.push_back(xForm * stripsData->vertices[i]);
-			else
-				outVerts.push_back(stripsData->vertices[i] + stripsData->virtOffset);
-		}
+		for (auto &v : stripsData->vertices)
+			outVerts.push_back(v);
 	}
 	return true;
 }
@@ -2143,7 +2130,6 @@ int NifFile::GetVertCountForShape(const string& shapeName) {
 }
 
 void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& verts) {
-	Matrix4 xForm;
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
 	if (dataID == -1)
@@ -2154,28 +2140,16 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 		if (verts.size() != shapeData->vertices.size())
 			return;
 
-		for (int i = 0; i < shapeData->vertices.size(); i++) {
+		for (int i = 0; i < shapeData->vertices.size(); i++)
 			shapeData->vertices[i] = verts[i];
-			xForm.Translate(shapeData->virtOffset);
-			if (shapeData->virtScale != 0.0f) {
-				float negatedScale = shapeData->virtScale * (1 / shapeData->virtScale);
-				xForm.Scale(negatedScale, negatedScale, negatedScale);
-			}
-		}
 	}
 	else {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		if (verts.size() != stripsData->vertices.size())
 			return;
 
-		for (int i = 0; i < stripsData->vertices.size(); i++) {
+		for (int i = 0; i < stripsData->vertices.size(); i++)
 			stripsData->vertices[i] = verts[i];
-			xForm.Translate(stripsData->virtOffset);
-			if (stripsData->virtScale != 0.0f) {
-				float negatedScale = stripsData->virtScale * (1 / stripsData->virtScale);
-				xForm.Scale(negatedScale, negatedScale, negatedScale);
-			}
-		}
 	}
 }
 
@@ -2420,86 +2394,6 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 		strips->translation = Vector3(0.0f, 0.0f, 0.0f);
 	}
 }
-	
-/* Sets a phantom offset value in a NiTriShape/StripsData record, which will be added to vertex values when fetched later.
-If sum is true, the offset is added to the current offset, allowing a series of independant changes.*/
-void NifFile::VirtualOffsetShape(const string& shapeName, const Vector3& offset, bool sum) {
-	int bType;
-	int dataID = shapeDataIdForName(shapeName, bType);
-	if (dataID == -1)
-		return;
-
-	if (bType == NITRISHAPEDATA) {
-		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
-		if (sum)
-			shapeData->virtOffset += offset;
-		else
-			shapeData->virtOffset = offset;
-	}
-	else {
-		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
-		if (sum)
-			stripsData->virtOffset += offset;
-		else
-			stripsData->virtOffset = offset;
-	}
-}
-	
-/* Sets a phantom scale value in a NiTriShape/StripsData record, which will be added to vertex values when fetched later.*/
-void NifFile::VirtualScaleShape(const string& shapeName, float scale, bool fromCenter) {
-	int bType;
-	int dataID = shapeDataIdForName(shapeName, bType);
-	if (dataID == -1)
-		return;
-
-	if (bType == NITRISHAPEDATA) {
-		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
-		shapeData->scaleFromCenter = fromCenter;
-		shapeData->virtScale = scale;
-	}
-	else {
-		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
-		stripsData->scaleFromCenter = fromCenter;
-		stripsData->virtScale = scale;
-	}
-}
-
-Vector3 NifFile::GetShapeVirtualOffset(const string& shapeName) {
-	Vector3 ret(0.0f, 0.0f, 0.0f);
-	int bType;
-	int dataID = shapeDataIdForName(shapeName, bType);
-	if (dataID == -1)
-		return ret;
-
-	if (bType == NITRISHAPEDATA) {
-		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
-		ret = shapeData->virtOffset;
-	}
-	else {
-		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
-		ret = stripsData->virtOffset;
-	}
-	return ret;
-}
-		
-void NifFile::GetShapeVirtualScale(const string& shapeName, float& scale, bool& fromCenterFlag) {
-	int bType;
-	int dataID = shapeDataIdForName(shapeName, bType);
-	if (dataID == -1)
-		return;
-
-	if (bType == NITRISHAPEDATA) {
-		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
-		scale = shapeData->virtScale;
-		fromCenterFlag = shapeData->scaleFromCenter;
-	}
-	else {
-		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
-		scale = stripsData->virtScale;
-		fromCenterFlag = stripsData->scaleFromCenter;
-	}
-	return;
-}
 
 void NifFile::MoveVertex(const string& shapeName, const Vector3& pos, const int& id) {
 	int bType;
@@ -2529,12 +2423,10 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 	if (bType == NITRISHAPEDATA) {
 		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
 		verts = &shapeData->vertices;
-		// dosomthin
 	}
 	else {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		verts = &stripsData->vertices;
-		// dosomthin
 	}
 
 	float m;
