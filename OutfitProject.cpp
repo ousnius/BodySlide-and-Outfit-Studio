@@ -800,6 +800,17 @@ void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sli
 	}
 }
 
+void OutfitProject::ScaleMorphResult(const string& shapeName, const string& sliderName, float scaleValue, bool IsOutfit) {
+	if (IsOutfit) {
+		morpher.ScaleResultDiff(shapeName, sliderName, scaleValue);
+	}
+	else {
+		string target = ShapeToTarget(shapeName);
+		string dataName = activeSet[sliderName].TargetDataName(target);
+		baseDiffData.ScaleDiff(dataName, target, scaleValue);
+	}
+}
+
 void OutfitProject::MoveVertex(const string& shapeName, const Vector3& pos, const int& id, bool IsOutfit) {
 	if (IsOutfit)
 		workNif.MoveVertex(shapeName, pos, id);

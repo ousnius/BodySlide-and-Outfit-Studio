@@ -330,34 +330,40 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 
 	d->paneSz = new wxBoxSizer(wxHORIZONTAL);
 
-	d->btnSliderEditID = 900 + id;
-	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, 900 + id, wxBitmap(wxT("res\\EditSmall.png"), wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
-
+	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap(wxT("res\\EditSmall.png"), wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
 	d->btnSliderEdit->SetBitmapDisabled(wxBitmap(wxT("res\\EditSmall_d.png"), wxBITMAP_TYPE_ANY));
-	d->btnSliderEdit->SetToolTip(wxT("Turn on edit mode for this slider."));
+	d->btnSliderEdit->SetToolTip("Turn on edit mode for this slider.");
+	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
-	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
+	d->btnMinus = new wxButton(d->sliderPane, wxID_ANY, "-", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnMinus");
+	d->btnMinus->SetToolTip("Weaken slider data by 1%.");
+	d->btnMinus->SetForegroundColour(wxTransparentColour);
+	d->btnMinus->Hide();
+	d->paneSz->Add(d->btnMinus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
+
+	d->btnPlus = new wxButton(d->sliderPane, wxID_ANY, "+", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnPlus");
+	d->btnPlus->SetToolTip("Strengthen slider data by 1%.");
+	d->btnPlus->SetForegroundColour(wxTransparentColour);
+	d->btnPlus->Hide();
+	d->paneSz->Add(d->btnPlus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	d->sliderNameCheckID = 1000 + id;
-	d->sliderNameCheck = new wxCheckBox(d->sliderPane, 1000 + id, "", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, name + "|check");
+	d->sliderNameCheck = new wxCheckBox(d->sliderPane, d->sliderNameCheckID, "", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, name + "|check");
 	d->sliderNameCheck->SetForegroundColour(wxColour(255, 255, 255));
 	d->paneSz->Add(d->sliderNameCheck, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-	//d->sliderNameID = 1050+id;
 	d->sliderName = new wxStaticText(d->sliderPane, wxID_ANY, name.c_str(), wxDefaultPosition, wxDefaultSize, 0, name + "|lbl");
 	d->sliderName->SetForegroundColour(wxColour(255, 255, 255));
-
-	d->paneSz->Add(d->sliderName, 0, wxALIGN_CENTER_VERTICAL | wxALL, 0);
+	d->paneSz->Add(d->sliderName, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	d->sliderID = 2000 + id;
-	d->slider = new wxSlider(d->sliderPane, 2000 + id, 0, 0, 100, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
+	d->slider = new wxSlider(d->sliderPane, d->sliderID, 0, 0, 100, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
 	d->slider->SetMinSize(wxSize(-1, 20));
 	d->slider->SetMaxSize(wxSize(-1, 20));
 
 	d->paneSz->Add(d->slider, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT | wxEXPAND, 5);
 
-	d->sliderReadoutID = 1200;
-	d->sliderReadout = new wxTextCtrl(d->sliderPane, 1200 + id, wxT("0%"), wxDefaultPosition, wxSize(40, -1), wxWANTS_CHARS | wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, name + "|readout");
+	d->sliderReadout = new wxTextCtrl(d->sliderPane, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxWANTS_CHARS | wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, name + "|readout");
 	d->sliderReadout->SetMaxLength(0);
 	d->sliderReadout->SetForegroundColour(wxColour(255, 255, 255));
 	d->sliderReadout->SetBackgroundColour(wxColour(48, 48, 48));
@@ -1993,13 +1999,33 @@ void OutfitStudio::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
-	wxBitmapButton* btn = (wxBitmapButton*)event.GetEventObject();
+	wxWindow* btn = (wxWindow*)event.GetEventObject();
 	if (!btn)
 		return;
 
-	string clickedName = btn->GetName().BeforeLast('|');
+	wxString buttonName = btn->GetName();
+	string clickedName = buttonName.BeforeLast('|').ToStdString();
 	if (clickedName.empty()) {
 		event.Skip();
+		return;
+	}
+
+	if (buttonName.AfterLast('|') == "btnMinus") {
+		for (auto &i : selectedItems) {
+			vector<Vector3> verts;
+			project->ScaleMorphResult(i->shapeName, activeSlider, 0.99f, i->bIsOutfitShape);
+			project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
+			glView->UpdateMeshVertices(i->shapeName, &verts);
+		}
+		return;
+	}
+	else if (buttonName.AfterLast('|') == "btnPlus") {
+		for (auto &i : selectedItems) {
+			vector<Vector3> verts;
+			project->ScaleMorphResult(i->shapeName, activeSlider, 1.01f, i->bIsOutfitShape);
+			project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
+			glView->UpdateMeshVertices(i->shapeName, &verts);
+		}
 		return;
 	}
 
@@ -2044,7 +2070,9 @@ void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
 		}
 		d->sliderNameCheck->Enable(false);
 		d->slider->SetFocus();
-		//glView->GetStrokeManager()->InvalidateHistoricalBVH();
+		d->btnMinus->Show();
+		d->btnPlus->Show();
+		d->sliderPane->Layout();
 		glView->GetStrokeManager()->PushBVH();
 		glView->SetStrokeManager(&d->sliderStrokes);
 		EnterSliderEdit();
@@ -2055,15 +2083,16 @@ void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
 		d->slider->SetValue(0);
 		SetSliderValue(activeSlider, 0);
 		ShowSliderEffect(activeSlider, true);
-		activeSlider = "";
-		//d->sliderStrokes.InvalidateHistoricalBVH();
-		glView->GetStrokeManager()->PushBVH();
 		d->slider->SetFocus();
+		d->btnMinus->Hide();
+		d->btnPlus->Hide();
+		d->sliderPane->Layout();
+		activeSlider = "";
+		glView->GetStrokeManager()->PushBVH();
 		glView->SetStrokeManager(nullptr);
 		ExitSliderEdit();
 	}
-	//d->slider->SetValue(100);
-	//d->sliderReadout->SetLabel("100");
+
 	HighlightSlider(activeSlider);
 	ApplySliders();
 }

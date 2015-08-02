@@ -605,15 +605,15 @@ private:
 		wxPanel* sliderPane;
 		wxBoxSizer* paneSz;
 
-		int btnSliderEditID;
-		wxBitmapButton* btnSliderEdit;
 		int sliderNameCheckID;
-		wxCheckBox* sliderNameCheck;
-		int sliderNameID;
-		wxStaticText* sliderName;
 		int sliderID;
+
+		wxBitmapButton* btnSliderEdit;
+		wxButton* btnMinus;
+		wxButton* btnPlus;
+		wxCheckBox* sliderNameCheck;
+		wxStaticText* sliderName;
 		wxSlider* slider;
-		int sliderReadoutID;
 		wxTextCtrl* sliderReadout;
 
 		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
