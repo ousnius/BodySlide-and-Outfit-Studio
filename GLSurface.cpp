@@ -948,9 +948,6 @@ void GLSurface::RenderMesh(mesh* m) {
 			}
 		}
 
-		if (!m->vcolors)
-			initMaterial(m->color);
-
 		if (m->textured && bTextured) {
 			// Alpha
 			glEnable(GL_BLEND);

@@ -3,7 +3,6 @@ vec4 Ambient;
 vec4 Diffuse;
 vec4 Specular;
 uniform bool bLightEnabled = true;
-uniform bool bColorEnabled = true;
 
 void directionalLight(in int i, in vec3 normal)
 {
@@ -16,12 +15,11 @@ void directionalLight(in int i, in vec3 normal)
 
    if (nDotVP == 0.0)
    {
-       pf = 0.0;
+	   pf = 0.0;
    }
    else
    {
-       pf = pow(nDotHV, gl_FrontMaterial.shininess);
-
+	   pf = pow(nDotHV, gl_FrontMaterial.shininess);
    }
    Ambient  += gl_LightSource[i].ambient;
    Diffuse  += gl_LightSource[i].diffuse * nDotVP;
@@ -30,53 +28,43 @@ void directionalLight(in int i, in vec3 normal)
 
 void flight(in vec3 normal, in vec4 ecPosition)
 {
-    vec4 color;
-    vec3 ecPosition3;
-    vec3 eye;
+	vec4 color;
+	vec3 ecPosition3;
+	vec3 eye;
 
-    ecPosition3 = (vec3 (ecPosition)) / ecPosition.w;
-    eye = vec3(0.0, 0.0, 1.0);
+	ecPosition3 = (vec3 (ecPosition)) / ecPosition.w;
+	eye = vec3(0.0, 0.0, 1.0);
 	if(bLightEnabled) {
 		Ambient = vec4(0.0);
 		Diffuse = vec4(0.0);
 		Specular = vec4(0.0);
-	
+
 		directionalLight(0, normal);
-	
 		directionalLight(1, normal);
-
 		directionalLight(2, normal);
-		if(bColorEnabled) {
-			color = gl_FrontLightModelProduct.sceneColor;
-		} else {
-			color =  vec4(0.3);
-		
-		}
 
-		  color +=
-		  Ambient  * gl_FrontMaterial.ambient +
-		  Diffuse  * gl_FrontMaterial.diffuse +
-		  Specular * gl_FrontMaterial.specular;
-	} else {	
-	  color = gl_Color;
+		color = Ambient * gl_FrontMaterial.ambient +
+				Diffuse  * gl_FrontMaterial.diffuse +
+				Specular * gl_FrontMaterial.specular;
+	} else {
+		color = gl_Color;
 	}
 	color = clamp(color, 0.0, 1.0);
-    gl_FrontColor = color;
-
+	gl_FrontColor = color;
 }
 
 void main (void)
 {
-    vec3  transformedNormal;
+	vec3  transformedNormal;
 
-    // Eye-coordinate position of vertex, needed in various calculations
-    vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
+	// Eye-coordinate position of vertex, needed in various calculations
+	vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
 
-    // Transform and Light
-    gl_Position = ftransform();
-    transformedNormal = normalize(gl_NormalMatrix * gl_Normal);
-    flight(transformedNormal, ecPosition);
+	// Transform and Light
+	gl_Position = ftransform();
+	transformedNormal = normalize(gl_NormalMatrix * gl_Normal);
+	flight(transformedNormal, ecPosition);
 
 	// Gen Texture Coordinates
-    gl_TexCoord[0] = gl_MultiTexCoord0;
+	gl_TexCoord[0] = gl_MultiTexCoord0;
 }
