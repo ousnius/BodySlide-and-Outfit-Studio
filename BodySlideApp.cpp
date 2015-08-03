@@ -443,10 +443,13 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 					for (int i = verts.size() - 1; i >= 0; i--)
 						if (find(zapIndices[shape->second].begin(), zapIndices[shape->second].end(), i) != zapIndices[shape->second].end())
 							verts.erase(verts.begin() + i);
-
-				for (ushort i = 0; i < verts.size(); i++)
-					if (!verts[i].IsZero(true))
-						morph->offsets.emplace(i, verts[i]);
+				
+				int i = 0;
+				for (auto &v : verts) {
+					if (!v.IsZero(true))
+						morph->offsets.emplace(i, v);
+					i++;
+				}
 
 				if (morph->offsets.size() > 0)
 					tri.AddMorph(shape->second, morph);

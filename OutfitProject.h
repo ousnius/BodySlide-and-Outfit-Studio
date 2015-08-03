@@ -112,6 +112,8 @@ public:
 	void SetSliderDefault(int index, int val, bool isHi);
 	void SetSliderName(int index, const string& newName);
 
+	int WriteMorphTRI(const string& triPath);
+
 	void SetSliderFromBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
 	bool SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
 	void SetSliderFromTRI(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff, bool bIsOutfit);

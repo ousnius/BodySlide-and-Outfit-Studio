@@ -905,13 +905,18 @@
 				<object class="separator" />
 				<object class="wxMenuItem" name="sliderImportTRI">
 					<label>Import TRI Morphs...</label>
-					<help>Imports TRI morphs and creates sliders for shapes with a matching name.</help>
+					<help>Imports TRI morphs from a .tri file and creates sliders for shapes with a matching name.</help>
 				</object>
+				<object class="wxMenuItem" name="sliderExportTRI">
+					<label>Export TRI Morphs...</label>
+					<help>Exports TRI morphs to a .tri file.</help>
+				</object>
+				<object class="separator" />
 				<object class="wxMenu" name="menuImportSlider">
 					<label>Import Slider Data</label>
 					<object class="wxMenuItem" name="importSliderBSD">
 						<label>Import .bsd...</label>
-						<help>Import a bodyslide .bsd file and overwrites the current shape's slider data</help>
+						<help>Import a BodySlide .bsd file and overwrites the current shape's slider data</help>
 					</object>
 					<object class="wxMenuItem" name="importSliderOBJ">
 						<label>Import .obj...</label>
@@ -921,7 +926,7 @@
 				</object>
 				<object class="wxMenuItem" name="sliderExportBSD">
 					<label>Export Slider...</label>
-					<help>Exports the current slider's data as a bodyslide .bsd file.</help>
+					<help>Exports the current slider's data as a BodySlide .bsd file.</help>
 					<enabled>0</enabled>
 				</object>
 				<object class="separator" />

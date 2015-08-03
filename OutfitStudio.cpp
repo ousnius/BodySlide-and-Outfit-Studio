@@ -39,6 +39,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("importSliderBSD"), OutfitStudio::OnSliderImportBSD)
 	EVT_MENU(XRCID("importSliderOBJ"), OutfitStudio::OnSliderImportOBJ)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudio::OnSliderImportTRI)
+	EVT_MENU(XRCID("sliderExportTRI"), OutfitStudio::OnSliderExportTRI)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudio::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderNew"), OutfitStudio::OnNewSlider)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudio::OnNewZapSlider)
@@ -2594,6 +2595,24 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 
 	wxMessageBox("Added morphs for the following shapes:\n\n" + addedMorphs, "TRI Import");
+}
+
+void OutfitStudio::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->workNif.IsValid() && !project->baseNif.IsValid()) {
+		wxMessageBox("There are no valid shapes loaded!", "Error");
+		return;
+	}
+
+	string fn = wxFileSelector("Export .tri morphs", wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fn.empty())
+		return;
+
+	if (!project->WriteMorphTRI(fn)) {
+		wxMessageBox("TRI file could not be exported!", "Error");
+		return;
+	}
+
+	wxMessageBox("Successfully exported morphs.", "TRI Export");
 }
 
 void OutfitStudio::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {

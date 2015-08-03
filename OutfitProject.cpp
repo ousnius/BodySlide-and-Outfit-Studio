@@ -1,4 +1,5 @@
 #include "OutfitProject.h"
+#include "TriFile.h"
 
 OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner) : appConfig(inConfig) {
 	morpherInitialized = false;
@@ -538,6 +539,69 @@ void OutfitProject::NegateSlider(const string& sliderName, const string& shapeNa
 	}
 	else
 		morpher.ScaleResultDiff(target, sliderName, -1.0f); // SaveResultDiff(target, sliderName, fileName);
+}
+
+int OutfitProject::WriteMorphTRI(const string& triPath) {
+	vector<string> shapes;
+	OutfitShapes(shapes);
+	RefShapes(shapes);
+
+	DiffDataSets currentDiffs;
+	activeSet.LoadSetDiffData(currentDiffs);
+
+	TriFile tri;
+	string triFilePath = triPath;
+
+	for (auto &shape : shapes) {
+		bool bIsOutfit = true;
+		if (shape == baseShapeName)
+			bIsOutfit = false;
+
+		for (int s = 0; s < activeSet.size(); s++) {
+			if (!activeSet[s].bUV && !activeSet[s].bClamp && !activeSet[s].bZap) {
+				MorphDataPtr morph = make_shared<MorphData>();
+				morph->name = activeSet[s].name;
+
+				vector<Vector3> verts;
+				ushort shapeVertCount;
+				if (!bIsOutfit)
+					shapeVertCount = baseNif.GetVertCountForShape(shape);
+				else
+					shapeVertCount = workNif.GetVertCountForShape(shape);
+
+				if (shapeVertCount > 0)
+					verts.resize(shapeVertCount);
+				else
+					continue;
+				
+				string target = ShapeToTarget(shape);
+				if (!bIsOutfit) {
+					string dn = activeSet[s].TargetDataName(target);
+					if (dn.empty())
+						continue;
+
+					currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
+				}
+				else
+					morpher.ApplyResultToVerts(morph->name, target, &verts);
+
+				int i = 0;
+				for (auto &v : verts) {
+					if (!v.IsZero(true))
+						morph->offsets.emplace(i, v);
+					i++;
+				}
+
+				if (morph->offsets.size() > 0)
+					tri.AddMorph(shape, morph);
+			}
+		}
+	}
+
+	if (!tri.Write(triFilePath, true))
+		return false;
+
+	return true;
 }
 
 void OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit) {
