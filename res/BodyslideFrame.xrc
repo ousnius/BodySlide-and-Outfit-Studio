@@ -278,7 +278,7 @@
 								<object class="wxCheckBox" name="cbRaceMenu">
 									<fg>#c8c8c8</fg>
 									<label>RaceMenu Morphs</label>
-									<tooltip>CAN RESULT IN GIGABYTES OF DATA WITH A BIG BATCH BUILD!\nOnly needs to be built once per set, even if you adjust slider values.\n\nBuilds a TRI file alongside the low and high weight meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
+									<tooltip>Builds a TRI file alongside the low and high weight meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
 								</object>
 							</object>
 						</object>
@@ -605,7 +605,6 @@
 											<flag>wxALL</flag>
 											<border>5</border>
 											<object class="wxButton" name="btRemoveGroup">
-												<enabled>0</enabled>
 												<label>Remove Group</label>
 												<default>0</default>
 											</object>
