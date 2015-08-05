@@ -1145,6 +1145,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		progmsg << "Processing '" << outfit << "' ( " << count << " of " << outfitList.size() << " )";
 		progWnd->Update((int)(count*progstep), progmsg.str());
 		count++;
+
 		/* Load set */
 		if (outfitNameSource.find(outfit) == outfitNameSource.end()) {
 			failedOutfits[outfit] = "No recorded outfit name source";
@@ -1169,32 +1170,24 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		}
 
 		// ALT key
-		if (clean && custPath == "") {
-			FILE *file;
-			string removeHigh, removeLow;
-			string removePath = datapath + currentSet.GetOutputFilePath();
+		if (clean && custPath.empty()) {
 			bool genWeights = currentSet.GenWeights();
 
+			string removePath = datapath + currentSet.GetOutputFilePath();
+			string removeHigh = removePath + ".nif";
 			if (genWeights)
 				removeHigh = removePath + "_1.nif";
-			else
-				removeHigh = removePath + ".nif";
-
-			file = fopen(removeHigh.c_str(), "r+");
-			if (file) {
-				fclose(file);
-				remove(removeHigh.c_str());
-			}
+			
+			if (wxFileName::FileExists(removeHigh))
+				wxRemoveFile(removeHigh);
 
 			if (!genWeights)
 				continue;
 
-			removeLow = removePath + "_0.nif";
-			file = fopen(removeLow.c_str(), "r+");
-			if (file) {
-				fclose(file);
-				remove(removeLow.c_str());
-			}
+			string removeLow = removePath + "_0.nif";
+			if (wxFileName::FileExists(removeLow))
+				wxRemoveFile(removeLow);
+
 			continue;
 		}
 
@@ -1293,10 +1286,8 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 			triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
-				wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath),
-					wxString().Format("Unable to process (error%d)", GetLastError()), wxOK | wxICON_ERROR);
-			}
+			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
+				wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath), "TRI File", wxOK | wxICON_ERROR);
 
 			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
 				string triShapeLink = it->second;
@@ -1333,8 +1324,10 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		}
 
 	}
+
 	progWnd->Update(1000);
 	delete progWnd;
+
 	if (failedOutfits.size() > 0)
 		return 3;
 
