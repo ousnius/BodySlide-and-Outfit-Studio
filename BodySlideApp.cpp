@@ -470,9 +470,11 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 			if (slider->zap || slider->clamp)
 				continue;
 
-			sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_HI);
-			SetSliderValue(slider->name, false, slider->value);
-			SetSliderChanged(slider->name, false);
+			if (sliderView->GetSliderDisplay(slider->name)) {
+				sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_HI);
+				SetSliderValue(slider->name, false, slider->value);
+				SetSliderChanged(slider->name, false);
+			}
 		}
 	}
 	else {
@@ -481,9 +483,11 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 			if (slider->zap || slider->clamp)
 				continue;
 
-			sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
-			SetSliderValue(slider->name, true, slider->value);
-			SetSliderChanged(slider->name, true);
+			if (sliderView->GetSliderDisplay(slider->name)) {
+				sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
+				SetSliderValue(slider->name, true, slider->value);
+				SetSliderChanged(slider->name, true);
+			}
 		}
 	}
 
