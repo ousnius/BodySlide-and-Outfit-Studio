@@ -1232,21 +1232,38 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 				vsmall = sliderManager.GetSmallPresetValue(activePreset, currentSet[s].name, currentSet[s].defSmallValue / 100.0f);
 				vbig = sliderManager.GetBigPresetValue(activePreset, currentSet[s].name, currentSet[s].defBigValue / 100.0f);
+
+				for (auto &sliderSmall : sliderManager.slidersSmall) {
+					if (sliderSmall.name == currentSet[s].name && sliderSmall.changed && !sliderSmall.clamp) {
+						vsmall = sliderSmall.value;
+						break;
+					}
+				}
+
+				for (auto &sliderBig : sliderManager.slidersBig) {
+					if (sliderBig.name == currentSet[s].name && sliderBig.changed && !sliderBig.clamp) {
+						vbig = sliderBig.value;
+						break;
+					}
+				}
+
 				if (currentSet[s].bInvert) {
 					vsmall = 1.0f - vsmall;
 					vbig = 1.0f - vbig;
 				}
 
 				if (currentSet[s].bZap) {
-					if (vbig > 0) {
+					if (vbig > 0.0f) {
 						currentDiffs.GetDiffIndices(dn, target, zapIdx);
 						zapIdxAll[it->second] = zapIdx;
 					}
 					continue;
 				}
+
 				currentDiffs.ApplyDiff(dn, target, vsmall, &vertsLow);
 				currentDiffs.ApplyDiff(dn, target, vbig, &vertsHigh);
 			}
+
 			if (!clamps.empty()) {
 				for (auto &c : clamps) {
 					string dn = currentSet[c].TargetDataName(it->first);
@@ -1826,7 +1843,6 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 			else
 				sliderDisplays[sliderName]->zapCheckLo->SetValue(true);
 		}
-
 	}
 	else {
 		if (sliderDisplays[sliderName]->oneSize) {
@@ -1841,6 +1857,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 				sliderDisplays[sliderName]->zapCheckLo->SetValue(false);
 		}
 	}
+	app->SetSliderChanged(sliderName, isLo);
 
 	wxBeginBusyCursor();
 	app->RebuildPreviewMeshes(SMALL_PREVIEW);
