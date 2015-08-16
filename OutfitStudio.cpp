@@ -1496,8 +1496,13 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	string res = project->Save(strFileName, strOutfitName, strDataDir, strBaseFile,
 		strGamePath, strGameFile, genWeights, copyRef);
 
-	if (res.empty())
-		this->GetMenuBar()->Enable(XRCID("fileSave"), true);
+	if (res.empty()) {
+		GetMenuBar()->Enable(XRCID("fileSave"), true);
+		project->outfitName = strOutfitName;
+		WorkingGUIFromProj();
+		if (outfitShapes)
+			outfitShapes->ExpandAll();
+	}
 	else
 		wxMessageBox(res, "Error", wxOK | wxICON_ERROR);
 
