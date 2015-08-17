@@ -816,7 +816,7 @@
 					<help>Duplicate the current shape.</help>
 				</object>
 				<object class="wxMenuItem" name="renameShape">
-					<label>Rename Shape...</label>
+					<label>Rename Shape...\tF2</label>
 					<help>Change the name of the current shape.</help>
 				</object>
 				<object class="separator" />
@@ -865,7 +865,7 @@
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="deleteShape">
-					<label>Delete Shape\tCtrl+Del</label>
+					<label>Delete Shape\tDel</label>
 					<help>Removes the currently selected shape from the outfit.</help>
 				</object>
 			</object>
@@ -2696,7 +2696,7 @@
 			<help>Duplicate the current shape.</help>
 		</object>
 		<object class="wxMenuItem" name="renameShape">
-			<label>Rename Shape...</label>
+			<label>Rename Shape...\tF2</label>
 			<help>Change the name of the current shape.</help>
 		</object>
 		<object class="separator" />
@@ -2739,7 +2739,7 @@
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">
-			<label>Delete Shape\tCtrl+Del</label>
+			<label>Delete Shape\tDel</label>
 			<help>Removes the currently selected shape from the outfit.</help>
 		</object>
 	</object>
