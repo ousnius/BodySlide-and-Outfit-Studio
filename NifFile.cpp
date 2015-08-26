@@ -418,7 +418,6 @@ int NifFile::AddStringExtraData(const string& shapeName, const string& name, con
 		if (shape) {
 			shape->extraDataRef.push_back(strExtraDataId);
 			shape->numExtraData++;
-			shape->SetBlockSize(shape->CalcBlockSize() + 4);
 			hdr.blockSizes[id] = shape->CalcBlockSize();
 		}
 		else {
@@ -427,7 +426,6 @@ int NifFile::AddStringExtraData(const string& shapeName, const string& name, con
 				return -1;
 			strips->extraDataRef.push_back(strExtraDataId);
 			strips->numExtraData++;
-			strips->SetBlockSize(strips->CalcBlockSize() + 4);
 			hdr.blockSizes[id] = strips->CalcBlockSize();
 		}
 	}

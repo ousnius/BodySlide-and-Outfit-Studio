@@ -24,10 +24,6 @@ int NiObject::CalcBlockSize() {
 	return blockSize;
 }
 
-void NiObject::SetBlockSize(int sz) {
-	blockSize = sz;
-}
-
 bool NiObject::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
 	if (equal) {
 		if (header->version4 == v1 && header->version3 == v2 && header->version2 == v3 && header->version1 == v4)

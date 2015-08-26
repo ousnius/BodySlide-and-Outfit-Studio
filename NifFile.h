@@ -147,7 +147,6 @@ public:
 	virtual void Put(fstream& file);
 
 	virtual int CalcBlockSize();
-	virtual void SetBlockSize(int sz);
 
 	virtual bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 };
