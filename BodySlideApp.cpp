@@ -430,7 +430,7 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 				morph->name = sliderSet[s].name;
 
 				vector<Vector3> verts;
-				ushort shapeVertCount = nif.GetVertCountForShape(shape->second);
+				int shapeVertCount = nif.GetVertCountForShape(shape->second);
 				shapeVertCount += zapIndices[shape->second].size();
 				if (shapeVertCount > 0)
 					verts.resize(shapeVertCount);

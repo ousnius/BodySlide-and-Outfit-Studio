@@ -129,6 +129,7 @@ public:
 	void ConformShape(const string& shapeName);
 
 	const string& ShapeToTarget(const string& shapeName);
+	int GetVertexCount(const string& shapeName, bool bIsOutfit);
 	void GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts, bool bIsOutfit);
 	void GetLiveRefVerts(const string& shapeName, vector<Vector3>& outVerts);
 	void GetLiveOutfitVerts(const string& shapeName, vector<Vector3>& outVerts);

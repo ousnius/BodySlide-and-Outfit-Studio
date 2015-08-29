@@ -478,7 +478,7 @@ public:
 };
 
 class TweakUndo {
-	int curState;
+	int curState = -1;
 	vector<TweakStroke*> strokes;
 
 public:

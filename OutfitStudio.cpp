@@ -3039,20 +3039,19 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 				mptr = &mask;
 
 			Vector3 d;
-			vector<Vector3> verts;
-			float diffY, diffZ;
-			project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
-
+			float diffX, diffY, diffZ;
 			if (bEditSlider) {
 				diff.clear();
-				for (int j = 0; j < verts.size(); j++) {
+				int vertexCount = project->GetVertexCount(i->shapeName, i->bIsOutfitShape);
+				for (int j = 0; j < vertexCount; j++) {
 					d = (offs - previewMove) * (1.0f - mask[j]);
 					diff[j] = d;
+					diffX = diff[j].x / -10.0f;
 					diffY = diff[j].y / 10.0f;
 					diffZ = diff[j].z / 10.0f;
 					diff[j].z = diffY;
 					diff[j].y = diffZ;
-					verts[j] += d;
+					diff[j].x = diffX;
 				}
 				project->UpdateMorphResult(i->shapeName, activeSlider, diff, i->bIsOutfitShape);
 			}
@@ -3061,6 +3060,7 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 				project->OffsetShape(i->shapeName, d, i->bIsOutfitShape, mptr);
 			}
 
+			vector<Vector3> verts;
 			project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 			glView->UpdateMeshVertices(i->shapeName, &verts);
 		}
@@ -3129,18 +3129,18 @@ void OutfitStudio::PreviewMove(const Vector3& changed) {
 			mptr = &mask;
 
 		Vector3 d;
-		vector<Vector3> verts;
-		float diffY, diffZ;
-		project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
+		float diffX, diffY, diffZ;
 		if (bEditSlider) {
-			for (int j = 0; j < verts.size(); j++) {
+			int vertexCount = project->GetVertexCount(i->shapeName, i->bIsOutfitShape);
+			for (int j = 0; j < vertexCount; j++) {
 				d = (changed - previewMove) * (1.0f - mask[j]);
 				diff[j] = d;
+				diffX = diff[j].x / -10.0f;
 				diffY = diff[j].y / 10.0f;
 				diffZ = diff[j].z / 10.0f;
 				diff[j].z = diffY;
 				diff[j].y = diffZ;
-				verts[j] += d;
+				diff[j].x = diffX;
 			}
 			project->UpdateMorphResult(i->shapeName, activeSlider, diff, i->bIsOutfitShape);
 		}
@@ -3149,6 +3149,7 @@ void OutfitStudio::PreviewMove(const Vector3& changed) {
 			project->OffsetShape(i->shapeName, d, i->bIsOutfitShape, mptr);
 		}
 
+		vector<Vector3> verts;
 		project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
 		glView->UpdateMeshVertices(i->shapeName, &verts);
 	}
@@ -3185,8 +3186,8 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				mptr = &mask;
 
 			vector<Vector3> verts;
-			project->ScaleShape(i->shapeName, scale, i->bIsOutfitShape, mptr);
 			project->GetLiveVerts(i->shapeName, verts, i->bIsOutfitShape);
+			project->ScaleShape(i->shapeName, scale, i->bIsOutfitShape, mptr);
 			glView->UpdateMeshVertices(i->shapeName, &verts);
 		}
 
@@ -3224,7 +3225,7 @@ void OutfitStudio::OnScaleShapeText(wxCommandEvent& event) {
 }
 
 void OutfitStudio::PreviewScale(const float& scale) {
-	float scaleNew = scale * (1.0f / previewScale);
+	float scaleNew = scale * 1.0f / previewScale;
 
 	unordered_map<ushort, float> mask;
 	unordered_map<ushort, float>* mptr = nullptr;
@@ -3645,8 +3646,8 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	int baseVertCount = project->baseNif.GetVertCountForShape(project->baseShapeName);
-	int workVertCount = project->workNif.GetVertCountForShape(activeItem->shapeName);
+	int baseVertCount = project->GetVertexCount(project->baseShapeName, false);
+	int workVertCount = project->GetVertexCount(activeItem->shapeName, true);
 	if (baseVertCount != workVertCount) {
 		wxMessageBox("The vertex count of the reference and chosen shape is not the same!", "Error");
 		return;

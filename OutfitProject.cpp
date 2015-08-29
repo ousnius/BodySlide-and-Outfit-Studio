@@ -563,11 +563,7 @@ int OutfitProject::WriteMorphTRI(const string& triPath) {
 				morph->name = activeSet[s].name;
 
 				vector<Vector3> verts;
-				ushort shapeVertCount;
-				if (!bIsOutfit)
-					shapeVertCount = baseNif.GetVertCountForShape(shape);
-				else
-					shapeVertCount = workNif.GetVertCountForShape(shape);
+				int shapeVertCount = GetVertexCount(shape, bIsOutfit);
 
 				if (shapeVertCount > 0)
 					verts.resize(shapeVertCount);
@@ -686,6 +682,18 @@ void OutfitProject::SetSliderFromTRI(const string& sliderName, const string& sha
 		morpher.EmptyResultDiff(target, sliderName);
 		morpher.SetResultDiff(target, sliderName, diff);
 	}
+}
+
+int OutfitProject::GetVertexCount(const string& shapeName, bool bIsOutfit) {
+	if (bIsOutfit) {
+		if (workNif.IsValid())
+			return workNif.GetVertCountForShape(shapeName);
+	}
+	else {
+		if (baseNif.IsValid())
+			return baseNif.GetVertCountForShape(shapeName);
+	}
+	return -1;
 }
 
 void OutfitProject::GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts, bool bIsOutfit) {
@@ -1354,7 +1362,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	string inMeshFile = activeSet.GetInputFileName();
 
 	if (!ClearRef)
-		oldVertCount = baseNif.GetVertCountForShape(baseShapeName);
+		oldVertCount = GetVertexCount(baseShapeName, false);
 
 	int ret = baseNif.Load(inMeshFile);
 	if (ret) {
@@ -1404,7 +1412,7 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 		activeSet.ClearTargets(oldTarget);
 	}
 
-	newVertCount = baseNif.GetVertCountForShape(shape);
+	newVertCount = GetVertexCount(shape, false);
 	if (newVertCount == -1) {
 		ClearReference();
 		wxMessageBox("Shape not found in the reference NIF.", "Reference Error", wxICON_ERROR);
