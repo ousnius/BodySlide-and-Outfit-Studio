@@ -455,11 +455,16 @@ int GLSurface::InitGLSettings() {
 }
 
 void GLSurface::Cleanup() {
-	for (int i = 0; i < meshes.size(); i++)
-		delete meshes[i];
+	for (auto &m : meshes)
+		delete m;
+	
+	for (auto &o : overlays)
+		delete o;
 
-	for (int i = 0; i < overlays.size(); i++)
-		delete overlays[i];
+	meshes.clear();
+	overlays.clear();
+	namedMeshes.clear();
+	namedOverlays.clear();
 
 	resLoader.Cleanup();
 }

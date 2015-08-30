@@ -48,7 +48,6 @@ class GLSurface {
 	ResourceLoader resLoader;
 	GLMaterial* noImage{nullptr};
 	GLMaterial* skinMaterial{nullptr};
-	unordered_map<string, int> texMats;
 
 	TweakUndo tweakUndo;
 
@@ -86,13 +85,13 @@ public:
 	static const int* GetGLAttribs(wxWindow* parent);
 
 	void DeleteAllMeshes() {
-		for (auto &m : meshes) {
+		for (auto &m : meshes)
 			delete m;
-		}
+
 		meshes.clear();
 		namedMeshes.clear();
+		activeMesh = 0;
 	}
-
 
 	void DeleteMesh(const string& shapeName) {
 		int id = GetMeshID(shapeName);

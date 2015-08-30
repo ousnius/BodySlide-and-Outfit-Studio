@@ -37,7 +37,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 	// On Linux we should add code here that does a case-insensitive search
 	// for the desired file.
 
-	uint textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
+	uint textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS);
 	if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
 		if (Config["GameDataPath"].empty())
 			return nullptr;
@@ -62,7 +62,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 
 		if (!data.IsEmpty()) {
 			byte* texBuffer = static_cast<byte*>(data.GetData());
-			textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, 0, SOIL_FLAG_TEXTURE_REPEATS);
+			textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS);
 		}
 		else
 			return nullptr;
