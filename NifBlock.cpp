@@ -150,28 +150,25 @@ NiString::NiString(fstream& file, int szSize, bool wantNullOutput) {
 }
 
 void NiString::Put(fstream& file, int szSize) {
-	byte smSize;
-	ushort medSize;
-	uint bigSize;
 	if (szSize == 1) {
-		smSize = str.length();
+		byte smSize = str.length();
 		if (!smSize && outputNull)
 			smSize = 1;
 		file.write((char*)&smSize, 1);
 	}
 	else if (szSize == 2) {
-		medSize = str.length();
+		ushort medSize = str.length();
 		if (!medSize && outputNull)
 			medSize = 1;
 		file.write((char*)&medSize, 2);
 	}
 	else if (szSize == 4) {
-		bigSize = str.length();
+		uint bigSize = str.length();
 		if (!bigSize && outputNull)
 			bigSize = 1;
 		file.write((char*)&bigSize, 4);
-
 	}
+
 	file.write(str.c_str(), str.length());
 	if (str.length() == 0 && outputNull)
 		file.put(0);
@@ -179,22 +176,22 @@ void NiString::Put(fstream& file, int szSize) {
 
 void NiString::Get(fstream& file, int szSize) {
 	char buf[1025];
-	byte smSize;
-	ushort medSize;
-	uint bigSize;
 
 	if (szSize == 1) {
+		byte smSize;
 		file.read((char*)&smSize, 1);
 		file.read(buf, smSize);
 		buf[smSize] = 0;
 	}
 	else if (szSize == 2) {
+		ushort medSize;
 		file.read((char*)&medSize, 2);
 		if (medSize < 1025)
 			file.read(buf, medSize);
 		buf[medSize] = 0;
 	}
 	else if (szSize == 4) {
+		uint bigSize;
 		file.read((char*)&bigSize, 4);
 		if (bigSize < 1025)
 			file.read(buf, bigSize);
@@ -202,6 +199,7 @@ void NiString::Get(fstream& file, int szSize) {
 	}
 	else
 		return;
+
 	str = buf;
 }
 
@@ -2336,6 +2334,109 @@ int BSShaderProperty::CalcBlockSize() {
 	blockSize += 14;
 	if (header->userVersion == 11)
 		blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSEffectShaderProperty::BSEffectShaderProperty(NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = BSEFFECTSHADERPROPERTY;
+	shaderFlags1 = 0;
+	shaderFlags2 = 0;
+	uvOffset.u = 0.0f;
+	uvOffset.v = 0.0f;
+	uvScale.u = 1.0f;
+	uvScale.v = 1.0f;
+	sourceTexture = NiString(false);
+	textureClampMode = 0;
+
+	falloffStartAngle = 1.0f;
+	falloffStopAngle = 1.0f;
+	falloffStartOpacity = 0.0f;
+	falloffStopOpacity = 0.0f;
+	emissiveColor.r = 0.0f;
+	emissiveColor.g = 0.0f;
+	emissiveColor.b = 0.0f;
+	emissiveColor.a = 0.0f;
+	emissiveMultiple = 0.0f;
+	softFalloffDepth = 0.0f;
+	greyscaleTexture = NiString(false);
+}
+
+BSEffectShaderProperty::BSEffectShaderProperty(fstream& file, NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = BSEFFECTSHADERPROPERTY;
+
+	Get(file);
+}
+
+void BSEffectShaderProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	file.read((char*)&shaderFlags1, 4);
+	file.read((char*)&shaderFlags2, 4);
+	file.read((char*)&uvOffset.u, 4);
+	file.read((char*)&uvOffset.v, 4);
+	file.read((char*)&uvScale.u, 4);
+	file.read((char*)&uvScale.v, 4);
+	sourceTexture = NiString(file, 4, false);
+	file.read((char*)&textureClampMode, 4);
+
+	file.read((char*)&falloffStartAngle, 4);
+	file.read((char*)&falloffStopAngle, 4);
+	file.read((char*)&falloffStartOpacity, 4);
+	file.read((char*)&falloffStopOpacity, 4);
+	file.read((char*)&emissiveColor, 16);
+	file.read((char*)&emissiveMultiple, 4);
+	file.read((char*)&softFalloffDepth, 4);
+	greyscaleTexture = NiString(file, 4, false);
+}
+
+void BSEffectShaderProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	file.write((char*)&shaderFlags1, 4);
+	file.write((char*)&shaderFlags2, 4);
+	file.write((char*)&uvOffset.u, 4);
+	file.write((char*)&uvOffset.v, 4);
+	file.write((char*)&uvScale.u, 4);
+	file.write((char*)&uvScale.v, 4);
+	sourceTexture.Put(file, 4);
+	file.write((char*)&textureClampMode, 4);
+
+	file.write((char*)&falloffStartAngle, 4);
+	file.write((char*)&falloffStopAngle, 4);
+	file.write((char*)&falloffStartOpacity, 4);
+	file.write((char*)&falloffStopOpacity, 4);
+	file.write((char*)&emissiveColor, 16);
+	file.write((char*)&emissiveMultiple, 4);
+	file.write((char*)&softFalloffDepth, 4);
+	greyscaleTexture.Put(file, 4);
+}
+
+void BSEffectShaderProperty::notifyBlockDelete(int blockID) {
+	NiProperty::notifyBlockDelete(blockID);
+}
+
+bool BSEffectShaderProperty::IsSkinShader() {
+	return (shaderFlags1 & (1 << 21)) != 0;
+}
+
+bool BSEffectShaderProperty::IsDoubleSided() {
+	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+int BSEffectShaderProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	blockSize += 76;
+	blockSize += sourceTexture.str.length();
+	blockSize += greyscaleTexture.str.length();
 
 	return blockSize;
 }

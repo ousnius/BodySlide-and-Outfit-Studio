@@ -211,6 +211,9 @@ void NifFile::CopyFrom(NifFile& other) {
 		case NISTENCILPROPERTY:
 			blockCopy = new NiStencilProperty((*(NiStencilProperty*)other.blocks[i]));
 			break;
+		case BSEFFECTSHADERPROPERTY:
+			blockCopy = new BSEffectShaderProperty((*(BSEffectShaderProperty*)other.blocks[i]));
+			break;
 		}
 
 		if (blockCopy) {
@@ -291,6 +294,8 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new NiMaterialProperty(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiStencilProperty"))
 				block = (NiObject*) new NiStencilProperty(file, hdr);
+			else if (!thisBlockTypeStr.compare("BSEffectShaderProperty"))
+				block = (NiObject*) new BSEffectShaderProperty(file, hdr);
 			else
 				block = (NiObject*) new NiUnknown(file, hdr.blockSizes[i]);
 

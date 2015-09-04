@@ -35,6 +35,7 @@ using namespace std;
 #define BSSHADERPPLIGHTINGPROPERTY	15
 #define NIMATERIALPROPERTY			16
 #define NISTENCILPROPERTY			17
+#define BSEFFECTSHADERPROPERTY		18
 
 
 struct VertexWeight {
@@ -564,6 +565,34 @@ public:
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual int CalcBlockSize();
+};
+
+class BSEffectShaderProperty : public NiProperty {
+public:
+	uint shaderFlags1;
+	uint shaderFlags2;
+	Vector2 uvOffset;
+	Vector2 uvScale;
+	NiString sourceTexture;
+	uint textureClampMode;
+	float falloffStartAngle;
+	float falloffStopAngle;
+	float falloffStartOpacity;
+	float falloffStopOpacity;
+	Color4 emissiveColor;
+	float emissiveMultiple;
+	float softFalloffDepth;
+	NiString greyscaleTexture;
+
+	BSEffectShaderProperty(NiHeader& hdr);
+	BSEffectShaderProperty(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	bool IsSkinShader();
+	bool IsDoubleSided();
+	int CalcBlockSize();
 };
 
 class BSShaderLightingProperty : public BSShaderProperty {
