@@ -566,6 +566,28 @@ public:
 };
 
 
+struct Quaternion {
+	float w;
+	float x;
+	float y;
+	float z;
+
+	Quaternion() {
+		w = 1.0f;
+		x = 0.0f;
+		y = 0.0f;
+		z = 0.0f;
+	}
+
+	Quaternion(float w, float x, float y, float z) {
+		this->w = w;
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
+};
+
+
 struct Triangle {
 	ushort p1;
 	ushort p2;

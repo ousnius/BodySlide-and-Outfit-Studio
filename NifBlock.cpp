@@ -2041,6 +2041,423 @@ int NiSkinPartition::CalcBlockSize() {
 }
 
 
+void NiInterpolator::Init() {
+	NiObject::Init();
+}
+
+void NiInterpolator::Get(fstream& file) {
+	NiObject::Get(file);
+}
+
+void NiInterpolator::Put(fstream& file) {
+	NiObject::Put(file);
+}
+
+void NiInterpolator::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+}
+
+int NiInterpolator::CalcBlockSize() {
+	return NiObject::CalcBlockSize();
+}
+
+
+void NiKeyBasedInterpolator::Init() {
+	NiInterpolator::Init();
+}
+
+void NiKeyBasedInterpolator::Get(fstream& file) {
+	NiInterpolator::Get(file);
+}
+
+void NiKeyBasedInterpolator::Put(fstream& file) {
+	NiInterpolator::Put(file);
+}
+
+void NiKeyBasedInterpolator::notifyBlockDelete(int blockID) {
+	NiInterpolator::notifyBlockDelete(blockID);
+}
+
+int NiKeyBasedInterpolator::CalcBlockSize() {
+	return NiInterpolator::CalcBlockSize();
+}
+
+
+NiFloatInterpolator::NiFloatInterpolator(NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIFLOATINTERPOLATOR;
+	floatValue = 0.0f;
+	dataRef = -1;
+}
+
+NiFloatInterpolator::NiFloatInterpolator(fstream& file, NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIFLOATINTERPOLATOR;
+
+	Get(file);
+}
+
+void NiFloatInterpolator::Get(fstream& file) {
+	NiKeyBasedInterpolator::Get(file);
+
+	file.read((char*)&floatValue, 4);
+	file.read((char*)&dataRef, 4);
+}
+
+void NiFloatInterpolator::Put(fstream& file) {
+	NiKeyBasedInterpolator::Put(file);
+
+	file.write((char*)&floatValue, 4);
+	file.write((char*)&dataRef, 4);
+}
+
+void NiFloatInterpolator::notifyBlockDelete(int blockID) {
+	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
+
+	if (dataRef == blockID)
+		dataRef = -1;
+	else if (dataRef > blockID)
+		dataRef--;
+}
+
+int NiFloatInterpolator::CalcBlockSize() {
+	NiKeyBasedInterpolator::CalcBlockSize();
+
+	blockSize += 8;
+
+	return blockSize;
+}
+
+
+NiTransformInterpolator::NiTransformInterpolator(NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NITRANSFORMINTERPOLATOR;
+	scale = 0.0f;
+	dataRef = -1;
+}
+
+NiTransformInterpolator::NiTransformInterpolator(fstream& file, NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NITRANSFORMINTERPOLATOR;
+
+	Get(file);
+}
+
+void NiTransformInterpolator::Get(fstream& file) {
+	NiKeyBasedInterpolator::Get(file);
+
+	file.read((char*)&translation, 12);
+	file.read((char*)&rotation, 16);
+	file.read((char*)&scale, 4);
+	file.read((char*)&dataRef, 4);
+}
+
+void NiTransformInterpolator::Put(fstream& file) {
+	NiKeyBasedInterpolator::Put(file);
+
+	file.write((char*)&translation, 12);
+	file.write((char*)&rotation, 16);
+	file.write((char*)&scale, 4);
+	file.write((char*)&dataRef, 4);
+}
+
+void NiTransformInterpolator::notifyBlockDelete(int blockID) {
+	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
+
+	if (dataRef == blockID)
+		dataRef = -1;
+	else if (dataRef > blockID)
+		dataRef--;
+}
+
+int NiTransformInterpolator::CalcBlockSize() {
+	NiKeyBasedInterpolator::CalcBlockSize();
+
+	blockSize += 36;
+
+	return blockSize;
+}
+
+
+NiPoint3Interpolator::NiPoint3Interpolator(NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIPOINT3INTERPOLATOR;
+	dataRef = -1;
+}
+
+NiPoint3Interpolator::NiPoint3Interpolator(fstream& file, NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIPOINT3INTERPOLATOR;
+
+	Get(file);
+}
+
+void NiPoint3Interpolator::Get(fstream& file) {
+	NiKeyBasedInterpolator::Get(file);
+
+	file.read((char*)&point3Value, 12);
+	file.read((char*)&dataRef, 4);
+}
+
+void NiPoint3Interpolator::Put(fstream& file) {
+	NiKeyBasedInterpolator::Put(file);
+
+	file.write((char*)&point3Value, 12);
+	file.write((char*)&dataRef, 4);
+}
+
+void NiPoint3Interpolator::notifyBlockDelete(int blockID) {
+	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
+
+	if (dataRef == blockID)
+		dataRef = -1;
+	else if (dataRef > blockID)
+		dataRef--;
+}
+
+int NiPoint3Interpolator::CalcBlockSize() {
+	NiKeyBasedInterpolator::CalcBlockSize();
+
+	blockSize += 16;
+
+	return blockSize;
+}
+
+
+void NiTimeController::Init() {
+	NiObject::Init();
+
+	nextControllerRef = -1;
+	flags = 0x000C;
+	frequency = 1.0f;
+	phase = 0.0f;
+	startTime = 0.0f;
+	stopTime = 0.0f;
+	targetRef = -1;
+}
+
+void NiTimeController::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&nextControllerRef, 4);
+	file.read((char*)&flags, 2);
+	file.read((char*)&frequency, 4);
+	file.read((char*)&phase, 4);
+	file.read((char*)&startTime, 4);
+	file.read((char*)&stopTime, 4);
+	file.read((char*)&targetRef, 4);
+}
+
+void NiTimeController::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&nextControllerRef, 4);
+	file.write((char*)&flags, 2);
+	file.write((char*)&frequency, 4);
+	file.write((char*)&phase, 4);
+	file.write((char*)&startTime, 4);
+	file.write((char*)&stopTime, 4);
+	file.write((char*)&targetRef, 4);
+}
+
+void NiTimeController::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+
+	if (nextControllerRef == blockID)
+		nextControllerRef = -1;
+	else if (nextControllerRef > blockID)
+		nextControllerRef--;
+
+	if (targetRef == blockID)
+		targetRef = -1;
+	else if (targetRef > blockID)
+		targetRef--;
+}
+
+int NiTimeController::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 26;
+
+	return blockSize;
+}
+
+
+void NiInterpController::Init() {
+	NiTimeController::Init();
+}
+
+void NiInterpController::Get(fstream& file) {
+	NiTimeController::Get(file);
+}
+
+void NiInterpController::Put(fstream& file) {
+	NiTimeController::Put(file);
+}
+
+void NiInterpController::notifyBlockDelete(int blockID) {
+	NiTimeController::notifyBlockDelete(blockID);
+}
+
+int NiInterpController::CalcBlockSize() {
+	return NiTimeController::CalcBlockSize();
+}
+
+
+void NiSingleInterpController::Init() {
+	NiInterpController::Init();
+
+	interpolatorRef = -1;
+}
+
+void NiSingleInterpController::Get(fstream& file) {
+	NiInterpController::Get(file);
+
+	file.read((char*)&interpolatorRef, 4);
+}
+
+void NiSingleInterpController::Put(fstream& file) {
+	NiInterpController::Put(file);
+
+	file.write((char*)&interpolatorRef, 4);
+}
+
+void NiSingleInterpController::notifyBlockDelete(int blockID) {
+	NiInterpController::notifyBlockDelete(blockID);
+
+	if (interpolatorRef == blockID)
+		interpolatorRef = -1;
+	else if (interpolatorRef > blockID)
+		interpolatorRef--;
+}
+
+int NiSingleInterpController::CalcBlockSize() {
+	NiInterpController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+void NiFloatInterpController::Init() {
+	NiSingleInterpController::Init();
+}
+
+void NiFloatInterpController::Get(fstream& file) {
+	NiSingleInterpController::Get(file);
+}
+
+void NiFloatInterpController::Put(fstream& file) {
+	NiSingleInterpController::Put(file);
+}
+
+void NiFloatInterpController::notifyBlockDelete(int blockID) {
+	NiSingleInterpController::notifyBlockDelete(blockID);
+}
+
+int NiFloatInterpController::CalcBlockSize() {
+	return NiSingleInterpController::CalcBlockSize();
+}
+
+
+BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER;
+	typeOfControlledColor = 0;
+}
+
+BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(fstream& file, NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER;
+	typeOfControlledColor = 0;
+
+	Get(file);
+}
+
+void BSLightingShaderPropertyColorController::Get(fstream& file) {
+	NiFloatInterpController::Get(file);
+
+	file.read((char*)&typeOfControlledColor, 4);
+}
+
+void BSLightingShaderPropertyColorController::Put(fstream& file) {
+	NiFloatInterpController::Put(file);
+
+	file.write((char*)&typeOfControlledColor, 4);
+}
+
+void BSLightingShaderPropertyColorController::notifyBlockDelete(int blockID) {
+	NiFloatInterpController::notifyBlockDelete(blockID);
+}
+
+int BSLightingShaderPropertyColorController::CalcBlockSize() {
+	NiFloatInterpController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER;
+	typeOfControlledVariable = 0;
+}
+
+BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(fstream& file, NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER;
+
+	Get(file);
+}
+
+void BSLightingShaderPropertyFloatController::Get(fstream& file) {
+	NiFloatInterpController::Get(file);
+
+	file.read((char*)&typeOfControlledVariable, 4);
+}
+
+void BSLightingShaderPropertyFloatController::Put(fstream& file) {
+	NiFloatInterpController::Put(file);
+
+	file.write((char*)&typeOfControlledVariable, 4);
+}
+
+void BSLightingShaderPropertyFloatController::notifyBlockDelete(int blockID) {
+	NiFloatInterpController::notifyBlockDelete(blockID);
+}
+
+int BSLightingShaderPropertyFloatController::CalcBlockSize() {
+	NiFloatInterpController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
 BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	NiProperty::Init();
 	NiObjectNET::bBSLightingShaderProperty = true;

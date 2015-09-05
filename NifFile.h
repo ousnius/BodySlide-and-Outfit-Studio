@@ -17,25 +17,30 @@ using namespace std;
 #endif
 
 
-#define NIHEADER					0
-#define NIUNKNOWN					1
-#define NITRISHAPE					2
-#define NITRISHAPEDATA				3
-#define NINODE						4
-#define BSDISMEMBERSKININSTANCE		5
-#define NISKINPARTITION				6
-#define BSLIGHTINGSHADERPROPERTY	7
-#define NIALPHAPROPERTY				8
-#define NISKINDATA					9
-#define BSSHADERTEXTURESET			10
-#define NITRISTRIPS					11
-#define NITRISTRIPSDATA				12
-#define NISKININSTANCE				13
-#define NISTRINGEXTRADATA			14
-#define BSSHADERPPLIGHTINGPROPERTY	15
-#define NIMATERIALPROPERTY			16
-#define NISTENCILPROPERTY			17
-#define BSEFFECTSHADERPROPERTY		18
+#define NIHEADER 0
+#define NIUNKNOWN 1
+#define NITRISHAPE 2
+#define NITRISHAPEDATA 3
+#define NINODE 4
+#define BSDISMEMBERSKININSTANCE 5
+#define NISKINPARTITION 6
+#define BSLIGHTINGSHADERPROPERTY 7
+#define NIALPHAPROPERTY 8
+#define NISKINDATA 9
+#define BSSHADERTEXTURESET 10
+#define NITRISTRIPS 11
+#define NITRISTRIPSDATA 12
+#define NISKININSTANCE 13
+#define NISTRINGEXTRADATA 14
+#define BSSHADERPPLIGHTINGPROPERTY 15
+#define NIMATERIALPROPERTY 16
+#define NISTENCILPROPERTY 17
+#define BSEFFECTSHADERPROPERTY 18
+#define NIFLOATINTERPOLATOR 19
+#define NITRANSFORMINTERPOLATOR 20
+#define NIPOINT3INTERPOLATOR 21
+#define BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER 22
+#define BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER 23
 
 
 struct VertexWeight {
@@ -505,6 +510,140 @@ public:
 	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(vector<int>& outDeletedIndices);
+	int CalcBlockSize();
+};
+
+class NiInterpolator : public NiObject {
+public:
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiKeyBasedInterpolator : public NiInterpolator {
+public:
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiFloatInterpolator : public NiKeyBasedInterpolator {
+public:
+	float floatValue;
+	int dataRef;
+
+	NiFloatInterpolator(NiHeader& hdr);
+	NiFloatInterpolator(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class NiTransformInterpolator : public NiKeyBasedInterpolator {
+public:
+	Vector3 translation;
+	Quaternion rotation;
+	float scale;
+	int dataRef;
+
+	NiTransformInterpolator(NiHeader& hdr);
+	NiTransformInterpolator(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class NiPoint3Interpolator : public NiKeyBasedInterpolator {
+public:
+	Vector3 point3Value;
+	int dataRef;
+
+	NiPoint3Interpolator(NiHeader& hdr);
+	NiPoint3Interpolator(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class NiTimeController : public NiObject {
+public:
+	int nextControllerRef;
+	uint flags;
+	float frequency;
+	float phase;
+	float startTime;
+	float stopTime;
+	int targetRef;
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiInterpController : public NiTimeController {
+public:
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiSingleInterpController : public NiInterpController {
+public:
+	int interpolatorRef;
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class NiFloatInterpController : public NiSingleInterpController {
+public:
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual int CalcBlockSize();
+};
+
+class BSLightingShaderPropertyColorController : public NiFloatInterpController {
+public:
+	uint typeOfControlledColor;
+
+	BSLightingShaderPropertyColorController(NiHeader& hdr);
+	BSLightingShaderPropertyColorController(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class BSLightingShaderPropertyFloatController : public NiFloatInterpController {
+public:
+	uint typeOfControlledVariable;
+
+	BSLightingShaderPropertyFloatController(NiHeader& hdr);
+	BSLightingShaderPropertyFloatController(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
 	int CalcBlockSize();
 };
 
