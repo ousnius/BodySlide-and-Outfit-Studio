@@ -156,7 +156,7 @@ string OutfitProject::Save(const string& strFileName,
 
 		if (copyRef) {
 			for (auto &rs : refShapes)
-				clone.CopyShape(rs, baseNif, rs);
+				clone.CopyGeometry(rs, baseNif, rs);
 
 			if (!refShapes.empty())
 				baseAnim.WriteToNif(&clone, false);
@@ -423,7 +423,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	nifTriShape->nameRef = nameID;
 	nifTriShape->name = useShapeName;
 
-	workNif.CopyShape(useShapeName, blank, useShapeName);
+	workNif.CopyGeometry(useShapeName, blank, useShapeName);
 	SetOutfitTexture(useShapeName, "_AUTO_");
 
 	return 0;
@@ -1575,7 +1575,7 @@ int OutfitProject::AddNif(const string& filename) {
 		return 3;
 
 	for (auto &s : nifShapes) {
-		workNif.CopyShape(s, nif, s);
+		workNif.CopyGeometry(s, nif, s);
 		workAnim.LoadFromNif(&nif, s);
 	}
 
@@ -1710,7 +1710,7 @@ void OutfitProject::DuplicateOutfitShape(const string& sourceShape, const string
 	}
 	clone.SetVertsForShape(m->shapeName, liveVerts);
 
-	workNif.CopyShape(destShape, clone, sourceShape);
+	workNif.CopyGeometry(destShape, clone, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);
 }
 
@@ -1726,7 +1726,7 @@ void OutfitProject::DuplicateRefShape(const string& sourceShape, const string& d
 	}
 	clone.SetVertsForShape(m->shapeName, liveVerts);
 
-	workNif.CopyShape(destShape, clone, sourceShape);
+	workNif.CopyGeometry(destShape, clone, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);
 }
 
@@ -1801,7 +1801,7 @@ int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& mo
 	}
 
 	if (withRef) {
-		clone.CopyShape(baseShapeName, baseNif, baseShapeName);
+		clone.CopyGeometry(baseShapeName, baseNif, baseShapeName);
 		baseAnim.WriteToNif(&clone, false);
 	}
 	workAnim.WriteToNif(&clone);

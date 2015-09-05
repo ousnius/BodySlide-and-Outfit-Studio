@@ -1157,16 +1157,11 @@ void  GLSurface::ReloadMeshFromNif(NifFile* nif, string shapeName) {
 
 void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, bool smoothNormalSeams) {
 	vector<Vector3> nifVerts;
+	vector<Triangle> nifTris;
 	nif->GetVertsForShape(shapeName, nifVerts);
-	const vector<Triangle>* nifTris = nif->GetTrisForShape(shapeName);
-	vector<Triangle> localTris;
-	if (!nifTris) { // Perhaps NiTriStrips
-		bool found = nif->GetTrisForTriStripShape(shapeName, &localTris);
-		if (found)
-			nifTris = &localTris;
-	}
+	nif->GetTrisForShape(shapeName, &nifTris);
 
-	const vector<Vector3>* nifNorms = nullptr; //nif->GetNormalsForShape(shapeName);
+	const vector<Vector3>* nifNorms = nullptr;
 	const vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
 
 	mesh* m = new mesh();
@@ -1192,7 +1187,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	m->nVerts = nifVerts.size();
 	m->verts = new Vertex[m->nVerts];
 
-	m->nTris = nifTris->size();
+	m->nTris = nifTris.size();
 	m->tris = new Triangle[m->nTris];
 
 	// Load verts. NIF verts are scaled up by approx. 10 and rotated on the x axis (Z up, Y forward).  
@@ -1222,9 +1217,9 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		// Load tris. Also sum face normals here.
 		for (int j = 0; j < m->nTris; j++) {
 			Vector3 norm;
-			m->tris[j].p1 = (*nifTris)[j].p1;
-			m->tris[j].p2 = (*nifTris)[j].p2;
-			m->tris[j].p3 = (*nifTris)[j].p3;
+			m->tris[j].p1 = nifTris[j].p1;
+			m->tris[j].p2 = nifTris[j].p2;
+			m->tris[j].p3 = nifTris[j].p3;
 			m->tris[j].trinormal(m->verts, &norm);
 			m->verts[m->tris[j].p1].nx += norm.x;
 			m->verts[m->tris[j].p1].ny += norm.y;
@@ -1267,9 +1262,9 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	else {
 		// Already have normals, just copy the data over.
 		for (int j = 0; j < m->nTris; j++) {
-			m->tris[j].p1 = (*nifTris)[j].p1;
-			m->tris[j].p2 = (*nifTris)[j].p2;
-			m->tris[j].p3 = (*nifTris)[j].p3;
+			m->tris[j].p1 = nifTris[j].p1;
+			m->tris[j].p2 = nifTris[j].p2;
+			m->tris[j].p3 = nifTris[j].p3;
 		}
 		// Copy normals. Note, normals are transformed the same way the vertices are.
 		for (int i = 0; i < m->nVerts; i++) {

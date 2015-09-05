@@ -258,14 +258,9 @@ void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName)
 
 void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName) {
 	vector<Vector3> nifVerts;
+	vector<Triangle> nifTris;
 	ref.GetVertsForShape(shapeName, nifVerts);
-	const vector<Triangle>* nifTris = ref.GetTrisForShape(shapeName);
-	vector<Triangle> localTris;
-	if (!nifTris) {
-		bool found = ref.GetTrisForTriStripShape(shapeName, &localTris);
-		if (found)
-			nifTris = &localTris;
-	}
+	ref.GetTrisForShape(shapeName, &nifTris);
 
 	const vector<Vector3>* nifNorms = ref.GetNormalsForShape(shapeName);
 
@@ -277,7 +272,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 	m->nVerts = nifVerts.size();
 	m->verts = new Vertex[m->nVerts];
 
-	m->nTris = nifTris->size();
+	m->nTris = nifTris.size();
 	m->tris = new Triangle[m->nTris];
 
 	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
@@ -293,9 +288,9 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 	if (!nifNorms) {
 		// Load tris. Also sum face normals here.
 		for (int j = 0; j < m->nTris; j++) {
-			m->tris[j].p1 = (*nifTris)[j].p1;
-			m->tris[j].p2 = (*nifTris)[j].p2;
-			m->tris[j].p3 = (*nifTris)[j].p3;
+			m->tris[j].p1 = nifTris[j].p1;
+			m->tris[j].p2 = nifTris[j].p2;
+			m->tris[j].p3 = nifTris[j].p3;
 			m->tris[j].trinormal(m->verts, &norm);
 			m->verts[m->tris[j].p1].nx += norm.x;
 			m->verts[m->tris[j].p1].ny += norm.y;
@@ -334,7 +329,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 	else {
 		// Already have normals, just copy the data over.
 		for (int j = 0; j < m->nTris; j++)
-			m->tris[j] = (*nifTris)[j];
+			m->tris[j] = nifTris[j];
 
 		// Copy normals. No transformation is done on the normals.
 		for (int i = 0; i < m->nVerts; i++) {

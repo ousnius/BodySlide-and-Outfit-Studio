@@ -730,8 +730,7 @@ class NifFile
 	vector<NiObject*> blocks;
 	bool isValid;
 
-	NiTriShape* shapeForName(const string& name, int dupIndex = 0);
-	NiTriStrips* stripsForName(const string& name, int dupIndex = 0);
+	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
 
 	int shapeDataIdForName(const string& name, int& outBlockType);
 	int shapeIdForName(const string& name);
@@ -785,16 +784,12 @@ public:
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
 	void CopyShader(const string& shapeDest, BSLightingShaderProperty* srcShader, NifFile& srcNif, bool addAlpha);
 	void CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* srcShader, NifFile& srcNif, bool addAlpha);
-	void CopyShape(const string& shapeDest, NifFile& srcNif, const string& srcShape);
-	// Copy strips is a duplicate of copy shape that works for TriStrips blocks. Copy shape will call copy strips as needed.
-	void CopyStrips(const string& shapeDest, NifFile& srcNif, const string& srcShape);
+	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
 	void RenameDuplicateShape(const string& dupedShape);
 	void SetNodeName(int blockID, const string& newName);
-
-	int GetShaderList(vector<string>& outList);
 
 	int GetNodeID(const string& nodeName);
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
@@ -815,8 +810,7 @@ public:
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
 
 	const vector<Vector3>* GetRawVertsForShape(const string& shapeName);
-	const vector<Triangle>* GetTrisForShape(const string& shapeName);
-	bool GetTrisForTriStripShape(const string& shapeName, vector<Triangle>* outTris);
+	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);
 	const vector<Vector3>* GetNormalsForShape(const string& shapeName);
 	const vector<Vector2>* GetUvsForShape(const string& shapeName);
 	bool GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs);
