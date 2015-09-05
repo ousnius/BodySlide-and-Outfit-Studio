@@ -1607,7 +1607,6 @@ BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = BSDISMEMBERSKININSTANCE;
-	numPartitions = 0;
 
 	Get(file);
 }

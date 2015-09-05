@@ -13,9 +13,9 @@ class kd_matcher {
 public:
 	class kd_node {
 	public:
-		Vertex* p;
-		kd_node* less;
-		kd_node* more;
+		Vertex* p = nullptr;
+		kd_node* less = nullptr;
+		kd_node* more = nullptr;
 
 		kd_node() {
 			less = more = nullptr;
@@ -68,8 +68,8 @@ public:
 		}
 	};
 
-	kd_node* root;
-	Vertex* points;
+	kd_node* root = nullptr;
+	Vertex* points = nullptr;
 	int count;
 	vector<pair<Vertex*, Vertex*>> matches;
 

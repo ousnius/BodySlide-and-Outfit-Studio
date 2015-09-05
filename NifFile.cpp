@@ -38,7 +38,8 @@ int NifFile::shapeDataIdForName(const string& name, int& outBlockType) {
 		if (type == NITRISHAPE || type == NITRISTRIPS) {
 			NiTriBasedGeom* geom = dynamic_cast<NiTriBasedGeom*>(block);
 			if (geom && !name.compare(geom->name)) {
-				outBlockType = type;
+				NiTriBasedGeomData* geomData = dynamic_cast<NiTriBasedGeomData*>(blocks[geom->dataRef]);
+				outBlockType = geomData->blockType;
 				return geom->dataRef;
 			}
 		}
@@ -94,24 +95,10 @@ int NifFile::shapeBoneIndex(const string& shapeName, const string& boneName) {
 	if (skinRef == -1)
 		return -1;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	if (!bsdSkinInst) {
-		NiSkinInstance* niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst)
-			return -1;
-
-		for (int i = 0; i < niSkinInst->bones.size(); i++) {
-			int boneBlock = niSkinInst->bones[i];
-			if (boneBlock != -1) {
-				NiNode* node = (NiNode*)blocks[boneBlock];
-				if (node->name == boneName)
-					return i;
-			}
-		}
-	}
-	else {
-		for (int i = 0; i < bsdSkinInst->bones.size(); i++) {
-			int boneBlock = bsdSkinInst->bones[i];
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (skinInst) {
+		for (int i = 0; i < skinInst->bones.size(); i++) {
+			int boneBlock = skinInst->bones[i];
 			if (boneBlock != -1) {
 				NiNode* node = (NiNode*)blocks[boneBlock];
 				if (node->name == boneName)
@@ -645,6 +632,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 		destShader->controllerRef = controllerId;
 	}
 
+	int srcShaderId = geom->propertiesRef1;
 	geom->propertiesRef1 = shaderId;
 
 	// Kill normals, set numUVSets to 1
@@ -678,11 +666,11 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	}
 
 	// Record the block type in the block type index.
-	ushort shaderTypeId = AddOrFindBlockTypeId("BSLightingShaderProperty");
+	ushort shaderTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShaderId]].str);
 	hdr.blockIndex.push_back(shaderTypeId);
 
 	if (srcTexSet) {
-		ushort texSetTypeId = AddOrFindBlockTypeId("BSShaderTextureSet");
+		ushort texSetTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->textureSetRef]].str);
 		hdr.blockIndex.push_back(texSetTypeId);
 	}
 
@@ -816,11 +804,11 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 	}
 
 	// Record the block type in the block type index.
-	ushort shaderTypeId = AddOrFindBlockTypeId("BSShaderPPLightingProperty");
+	ushort shaderTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[propRef1]].str);
 	hdr.blockIndex.push_back(shaderTypeId);
 
 	if (srcTexSet) {
-		ushort texSetTypeId = AddOrFindBlockTypeId("BSShaderTextureSet");
+		ushort texSetTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->textureSetRef]].str);
 		hdr.blockIndex.push_back(texSetTypeId);
 	}
 
@@ -860,43 +848,38 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	if (!srcGeom)
 		return;
 
-	NiTriBasedGeomData* srcGeomData = dynamic_cast<NiTriBasedGeomData*>(srcNif.GetBlock(srcGeom->dataRef));
-	BSDismemberSkinInstance* srcBSDSkinInst = nullptr;
-	NiSkinInstance* srcNiSkinInst = nullptr;
-	NiSkinData* srcSkinData = nullptr;
-	NiSkinPartition* srcSkinPart = nullptr;
-
-	BSDismemberSkinInstance* destBSDSkinInst = nullptr;
-	NiSkinInstance* destNiSkinInst = nullptr;
-	NiSkinData* destSkinData = nullptr;
-	NiSkinPartition* destSkinPart = nullptr;
-
 	bool skipSkinInst = false;
 	if (srcGeom->skinInstanceRef == -1)
 		skipSkinInst = true;
 
-	bool skipBSDSkinInst = false;
+	NiSkinInstance* srcSkinInst = nullptr;
+	NiSkinInstance* destSkinInst = nullptr;
+	NiSkinData* srcSkinData = nullptr;
+	NiSkinData* destSkinData = nullptr;
+	NiSkinPartition* srcSkinPart = nullptr;
+	NiSkinPartition* destSkinPart = nullptr;
 	if (!skipSkinInst) {
-		srcBSDSkinInst = dynamic_cast<BSDismemberSkinInstance*>(srcNif.GetBlock(srcGeom->skinInstanceRef));
-		if (!srcBSDSkinInst) {
-			skipBSDSkinInst = true;
-			srcNiSkinInst = dynamic_cast<NiSkinInstance*>(srcNif.GetBlock(srcGeom->skinInstanceRef));
-			if (!srcNiSkinInst)
-				skipSkinInst = true;
+		srcSkinInst = dynamic_cast<NiSkinInstance*>(srcNif.GetBlock(srcGeom->skinInstanceRef));
+		if (srcSkinInst) {
+			srcSkinData = (NiSkinData*)srcNif.GetBlock(srcSkinInst->dataRef);
+			srcSkinPart = (NiSkinPartition*)srcNif.GetBlock(srcSkinInst->skinPartitionRef);
 
-			if (!skipSkinInst) {
-				srcSkinData = (NiSkinData*)srcNif.GetBlock(srcNiSkinInst->dataRef);
-				srcSkinPart = (NiSkinPartition*)srcNif.GetBlock(srcNiSkinInst->skinPartitionRef);
-				destNiSkinInst = new NiSkinInstance((*srcNiSkinInst));
-				destNiSkinInst->header = &hdr;
+			if (srcSkinInst->blockType == NISKININSTANCE) {
+				destSkinInst = new NiSkinInstance(*srcSkinInst);
 			}
+			else if (srcSkinInst->blockType == BSDISMEMBERSKININSTANCE) {
+				BSDismemberSkinInstance* srcBsdSkinInst = (BSDismemberSkinInstance*)srcSkinInst;
+				BSDismemberSkinInstance* destBsdSkinInst = new BSDismemberSkinInstance(*srcBsdSkinInst);
+				destSkinInst = dynamic_cast<NiSkinInstance*>(destBsdSkinInst);
+			}
+
+			if (destSkinInst)
+				destSkinInst->header = &hdr;
+			else
+				skipSkinInst = true;
 		}
-		else {
-			srcSkinData = (NiSkinData*)srcNif.GetBlock(srcBSDSkinInst->dataRef);
-			srcSkinPart = (NiSkinPartition*)srcNif.GetBlock(srcBSDSkinInst->skinPartitionRef);
-			destBSDSkinInst = new BSDismemberSkinInstance((*srcBSDSkinInst));
-			destBSDSkinInst->header = &hdr;
-		}
+		else
+			skipSkinInst = true;
 	}
 
 	NiTriBasedGeom* destGeom = nullptr;
@@ -916,6 +899,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	destGeom->name = shapeDest;
 
 	NiTriBasedGeomData* destGeomData = nullptr;
+	NiTriBasedGeomData* srcGeomData = dynamic_cast<NiTriBasedGeomData*>(srcNif.GetBlock(srcGeom->dataRef));
 	if (srcGeomData) {
 		if (srcGeomData->blockType == NITRISHAPEDATA) {
 			NiTriShapeData* shapeData = (NiTriShapeData*)srcGeomData;
@@ -955,10 +939,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	int destSkinPartId = -1;
 	if (!skipSkinInst) {
 		destSkinId = blocks.size();
-		if (skipBSDSkinInst)
-			blocks.push_back(destNiSkinInst);
-		else
-			blocks.push_back(destBSDSkinInst);
+		blocks.push_back(destSkinInst);
 		hdr.numBlocks++;
 
 		destSkinDataId = blocks.size();
@@ -974,35 +955,20 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	destGeom->skinInstanceRef = destSkinId;
 
 	if (!skipSkinInst) {
-		if (skipBSDSkinInst) {
-			destNiSkinInst->dataRef = destSkinDataId;
-			destNiSkinInst->skinPartitionRef = destSkinPartId;
-		}
-		else {
-			destBSDSkinInst->dataRef = destSkinDataId;
-			destBSDSkinInst->skinPartitionRef = destSkinPartId;
-		}
+		destSkinInst->dataRef = destSkinDataId;
+		destSkinInst->skinPartitionRef = destSkinPartId;
 	}
 
-	if (srcGeom->blockType == NITRISHAPE)
-		hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriShape"));
-	else if (srcGeom->blockType == NITRISTRIPS)
-		hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriStrips"));
+	int srcGeomId = srcNif.shapeIdForName(srcShape);
+	hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcGeomId]].str));
 
-	if (srcGeomData) {
-		if (srcGeomData->blockType == NITRISHAPEDATA)
-			hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriShapeData"));
-		else if (srcGeomData->blockType == NITRISTRIPSDATA)
-			hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiTriStripsData"));
-	}
+	if (srcGeomData)
+		hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcGeom->dataRef]].str));
 
 	if (!skipSkinInst) {
-		if (skipBSDSkinInst)
-			hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiSkinInstance"));
-		else
-			hdr.blockIndex.push_back(AddOrFindBlockTypeId("BSDismemberSkinInstance"));
-		hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiSkinData"));
-		hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiSkinPartition"));
+		hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcGeom->skinInstanceRef]].str));
+		hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcSkinInst->dataRef]].str));
+		hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcSkinInst->skinPartitionRef]].str));
 	}
 
 	hdr.blockSizes.push_back(destGeom->CalcBlockSize());
@@ -1010,10 +976,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 		hdr.blockSizes.push_back(destGeomData->CalcBlockSize());
 
 	if (!skipSkinInst) {
-		if (skipBSDSkinInst)
-			hdr.blockSizes.push_back(destNiSkinInst->CalcBlockSize());
-		else
-			hdr.blockSizes.push_back(destBSDSkinInst->CalcBlockSize());
+		hdr.blockSizes.push_back(destSkinInst->CalcBlockSize());
 		hdr.blockSizes.push_back(destSkinData->CalcBlockSize());
 		hdr.blockSizes.push_back(destSkinPart->CalcBlockSize());
 	}
@@ -1044,7 +1007,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 				blocks.push_back(destMaterial);
 				hdr.numBlocks++;
 				hdr.blockSizes.push_back(destMaterial->CalcBlockSize());
-				hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiMaterialProperty"));
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcGeom->propertiesRef[i]]].str));
 				destGeom->propertiesRef[i] = materialId;
 				continue;
 			}
@@ -1057,7 +1020,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 				blocks.push_back(destStencil);
 				hdr.numBlocks++;
 				hdr.blockSizes.push_back(destStencil->CalcBlockSize());
-				hdr.blockIndex.push_back(AddOrFindBlockTypeId("NiStencilProperty"));
+				hdr.blockIndex.push_back(AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcGeom->propertiesRef[i]]].str));
 				destGeom->propertiesRef[i] = stencilId;
 				continue;
 			}
@@ -1087,12 +1050,9 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	}
 
 	vector<string> srcBoneList;
-	srcNif.GetShapeBoneList(srcShape, srcBoneList);
 	if (!skipSkinInst) {
-		if (skipBSDSkinInst)
-			destNiSkinInst->bones.clear();
-		else
-			destBSDSkinInst->bones.clear();
+		srcNif.GetShapeBoneList(srcShape, srcBoneList);
+		destSkinInst->bones.clear();
 	}
 
 	int bonePtr;
@@ -1105,10 +1065,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 			rootNode->numChildren++;
 			hdr.blockSizes[0] = rootNode->CalcBlockSize();
 		}
-		if (skipBSDSkinInst)
-			destNiSkinInst->bones.push_back(bonePtr);
-		else
-			destBSDSkinInst->bones.push_back(bonePtr);
+		destSkinInst->bones.push_back(bonePtr);
 	}
 
 	rootNode->children.push_back(destId);
@@ -1308,33 +1265,16 @@ int NifFile::GetShapeBoneList(const string& shapeName, vector<string>& outList) 
 	if (skinRef == -1)
 		return 0;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst)
-			return 0;
-	}
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
+		return 0;
 
 	int boneBlock;
-	if (skipBSDSkinInst) {
-		for (int i = 0; i < niSkinInst->bones.size(); i++) {
-			boneBlock = niSkinInst->bones[i];
-			if (boneBlock != -1) {
-				NiNode* node = (NiNode*)blocks[boneBlock];
-				outList.push_back(node->name);
-			}
-		}
-	}
-	else {
-		for (int i = 0; i < bsdSkinInst->bones.size(); i++) {
-			boneBlock = bsdSkinInst->bones[i];
-			if (boneBlock != -1) {
-				NiNode* node = (NiNode*)blocks[boneBlock];
-				outList.push_back(node->name);
-			}
+	for (int i = 0; i < skinInst->bones.size(); i++) {
+		boneBlock = skinInst->bones[i];
+		if (boneBlock != -1) {
+			NiNode* node = (NiNode*)blocks[boneBlock];
+			outList.push_back(node->name);
 		}
 	}
 	return outList.size();
@@ -1351,28 +1291,14 @@ int NifFile::GetShapeBoneIDList(const string& shapeName, vector<int>& outList) {
 	if (skinRef == -1)
 		return 0;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst)
-			return 0;
-	}
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
+		return 0;
 
 	int boneBlock;
-	if (skipBSDSkinInst) {
-		for (int i = 0; i < niSkinInst->bones.size(); i++) {
-			boneBlock = niSkinInst->bones[i];
-			outList.push_back(boneBlock);
-		}
-	}
-	else {
-		for (int i = 0; i < bsdSkinInst->bones.size(); i++) {
-			boneBlock = bsdSkinInst->bones[i];
-			outList.push_back(boneBlock);
-		}
+	for (int i = 0; i < skinInst->bones.size(); i++) {
+		boneBlock = skinInst->bones[i];
+		outList.push_back(boneBlock);
 	}
 	return outList.size();
 }
@@ -1387,56 +1313,27 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 	if (skinRef == -1)
 		return;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst)
-			return;
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
+		return;
+
+	skinInst->bones.clear();
+	skinInst->numBones = 0;
+	for (int i = 0; i < inList.size(); i++) {
+		skinInst->bones.push_back(inList[i]);
+		skinInst->numBones++;
 	}
+	hdr.blockSizes[skinRef] = skinInst->CalcBlockSize();
 
-	NiSkinData* skinData = nullptr;
-	if (skipBSDSkinInst) {
-		niSkinInst->bones.clear();
-		niSkinInst->numBones = 0;
-		for (int i = 0; i < inList.size(); i++) {
-			niSkinInst->bones.push_back(inList[i]);
-			niSkinInst->numBones++;
+	NiSkinData* skinData = (NiSkinData*)blocks[skinInst->dataRef];
+	int nBonesToAdd = skinInst->bones.size() - skinData->numBones;
+	if (nBonesToAdd > 0) {
+		for (int i = 0; i < nBonesToAdd; i++) {
+			skinData->bones.emplace_back();
+			skinData->bones.back().numVertices = 0;
+			skinData->numBones++;
 		}
-		hdr.blockSizes[skinRef] = niSkinInst->CalcBlockSize();
-
-		skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-		int nBonesToAdd = niSkinInst->bones.size() - skinData->numBones;
-		if (nBonesToAdd > 0) {
-			for (int i = 0; i < nBonesToAdd; i++) {
-				skinData->bones.emplace_back();
-				skinData->bones.back().numVertices = 0;
-				skinData->numBones++;
-			}
-			hdr.blockSizes[niSkinInst->dataRef] = skinData->CalcBlockSize();
-		}
-	}
-	else {
-		bsdSkinInst->bones.clear();
-		bsdSkinInst->numBones = 0;
-		for (int i = 0; i < inList.size(); i++) {
-			bsdSkinInst->bones.push_back(inList[i]);
-			bsdSkinInst->numBones++;
-		}
-		hdr.blockSizes[skinRef] = bsdSkinInst->CalcBlockSize();
-
-		skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
-		int nBonesToAdd = bsdSkinInst->bones.size() - skinData->numBones;
-		if (nBonesToAdd > 0) {
-			for (int i = 0; i < nBonesToAdd; i++) {
-				skinData->bones.emplace_back();
-				skinData->bones.back().numVertices = 0;
-				skinData->numBones++;
-			}
-			hdr.blockSizes[bsdSkinInst->dataRef] = skinData->CalcBlockSize();
-		}
+		hdr.blockSizes[skinInst->dataRef] = skinData->CalcBlockSize();
 	}
 }
 
@@ -1451,24 +1348,14 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 	if (skinRef == -1)
 		return 0;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst || niSkinInst->skinPartitionRef == -1)
-			return 0;
-	}
-	else if (bsdSkinInst->skinPartitionRef == -1)
-			return 0;
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
+		return 0;
 
-	NiSkinData* skinData = nullptr;
-	if (skipBSDSkinInst)
-		skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-	else
-		skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
+	if (skinInst->dataRef == -1)
+		return 0;
 
+	NiSkinData* skinData = (NiSkinData*)blocks[skinInst->dataRef];
 	if (boneIndex > skinData->numBones)
 		return 0;
 
@@ -1497,27 +1384,18 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 		skinRef = geom->skinInstanceRef;
 
 	if (skinRef == -1)
-		return 0;
-
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst || niSkinInst->skinPartitionRef == -1)
-			return false;
-	}
-	else if (bsdSkinInst->skinPartitionRef == -1)
 		return false;
 
-	NiSkinData* skinData = nullptr;
-	if (skipBSDSkinInst)
-		skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-	else
-		skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
+		return false;
 
-	if (boneIndex == -1) { // set the overall skin transform
+	if (skinInst->dataRef == -1)
+		return false;
+
+	NiSkinData* skinData = (NiSkinData*)blocks[skinInst->dataRef];
+	if (boneIndex == -1) {
+		// Set the overall skin transform
 		skinData->skinTransform = inXform;
 		return true;
 	}
@@ -1539,27 +1417,18 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 		skinRef = geom->skinInstanceRef;
 
 	if (skinRef == -1)
-		return 0;
-
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst || niSkinInst->skinPartitionRef == -1)
-			return false;
-	}
-	else if (bsdSkinInst->skinPartitionRef == -1)
 		return false;
 
-	NiSkinData* skinData = nullptr;
-	if (skipBSDSkinInst)
-		skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-	else
-		skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
+		return false;
 
-	if (boneIndex == -1) { // want the overall skin transform
+	if (skinInst->dataRef == -1)
+		return false;
+
+	NiSkinData* skinData = (NiSkinData*)blocks[skinInst->dataRef];
+	if (boneIndex == -1) {
+		// Want the overall skin transform
 		outXform = skinData->skinTransform;
 		outSphereOffset = Vector3(0.0f, 0.0f, 0.0f);
 		outSphereRadius = 0.0f;
@@ -1586,32 +1455,14 @@ void NifFile::UpdateShapeBoneID(const string& shapeName, int oldID, int newID) {
 	if (skinRef == -1)
 		return;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst || niSkinInst->skinPartitionRef == -1)
-			return;
-	}
-	else if (bsdSkinInst->skinPartitionRef == -1)
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
 		return;
 
-	if (skipBSDSkinInst) {
-		for (auto &bp : niSkinInst->bones) {
-			if (bp == oldID) {
-				bp = newID;
-				return;
-			}
-		}
-	}
-	else {
-		for (auto &bp : bsdSkinInst->bones) {
-			if (bp == oldID) {
-				bp = newID;
-				return;
-			}
+	for (auto &bp : skinInst->bones) {
+		if (bp == oldID) {
+			bp = newID;
+			return;
 		}
 	}
 }
@@ -1626,24 +1477,14 @@ void NifFile::SetShapeBoneWeights(const string& shapeName, int boneIndex, unorde
 	if (skinRef == -1)
 		return;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
-	bool skipBSDSkinInst = false;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst || niSkinInst->skinPartitionRef == -1)
-			return;
-	}
-	else if (bsdSkinInst->skinPartitionRef == -1)
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (!skinInst)
 		return;
 
-	NiSkinData* skinData = nullptr;
-	if (skipBSDSkinInst)
-		skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-	else
-		skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
+	if (skinInst->dataRef == -1)
+		return;
 
+	NiSkinData* skinData = (NiSkinData*)blocks[skinInst->dataRef];
 	if (boneIndex > skinData->numBones)
 		return;
 
@@ -1654,10 +1495,7 @@ void NifFile::SetShapeBoneWeights(const string& shapeName, int boneIndex, unorde
 			bone->vertexWeights.emplace_back(SkinWeight(sw.first, sw.second));
 
 	bone->numVertices = (ushort)bone->vertexWeights.size();
-	if (skipBSDSkinInst)
-		hdr.blockSizes[niSkinInst->dataRef] = skinData->CalcBlockSize();
-	else
-		hdr.blockSizes[bsdSkinInst->dataRef] = skinData->CalcBlockSize();
+	hdr.blockSizes[skinInst->dataRef] = skinData->CalcBlockSize();
 }
 
 const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
@@ -1703,7 +1541,7 @@ const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName) {
 		if (shapeData->hasNormals)
 			return &shapeData->normals;
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		if (stripsData->hasNormals)
 			return &stripsData->normals;
@@ -1722,7 +1560,7 @@ const vector<Vector2>* NifFile::GetUvsForShape(const string& shapeName) {
 		if (shapeData->numUVSets > 0)
 			return &shapeData->uvSets;
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		if (stripsData->numUVSets > 0)
 			return &stripsData->uvSets;
@@ -1741,11 +1579,12 @@ bool NifFile::GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs) {
 		outUvs.assign(shapeData->uvSets.begin(), shapeData->uvSets.end());
 		return true;
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		outUvs.assign(stripsData->uvSets.begin(), stripsData->uvSets.end());
 		return true;
 	}
+	return false;
 }
 
 const vector<vector<int>>* NifFile::GetSeamVertsForShape(const string& shapeName) {
@@ -1769,21 +1608,23 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 	outVerts.clear();
 
 	int bType;
-	int dataID = shapeDataIdForName(shapeName, bType);
-	if (dataID == -1)
+	int dataRef = shapeDataIdForName(shapeName, bType);
+	if (dataRef == -1)
 		return false;
 
 	if (bType == NITRISHAPEDATA) {
-		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
+		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataRef];
 		for (auto &v : shapeData->vertices)
 			outVerts.push_back(v);
+		return true;
 	}
-	else {
-		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
+	else if (bType == NITRISTRIPSDATA) {
+		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataRef];
 		for (auto &v : stripsData->vertices)
 			outVerts.push_back(v);
+		return true;
 	}
-	return true;
+	return false;
 }
 
 int NifFile::GetVertCountForShape(const string& shapeName) {
@@ -1793,12 +1634,12 @@ int NifFile::GetVertCountForShape(const string& shapeName) {
 		return -1;
 
 	if (bType == NITRISHAPEDATA) {
-		NiTriShapeData* shapeData = dynamic_cast<NiTriShapeData*>(blocks[dataID]);
+		NiTriShapeData* shapeData = (NiTriShapeData*)blocks[dataID];
 		if (shapeData)
 			return shapeData->numVertices;
 	}
-	else {
-		NiTriStripsData* stripsData = dynamic_cast<NiTriStripsData*>(blocks[dataID]);
+	else if (bType == NITRISTRIPSDATA) {
+		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		if (stripsData)
 			return stripsData->numVertices;
 	}
@@ -1819,7 +1660,7 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 		for (int i = 0; i < shapeData->vertices.size(); i++)
 			shapeData->vertices[i] = verts[i];
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		if (verts.size() != stripsData->vertices.size())
 			return;
@@ -1842,7 +1683,7 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 
 		shapeData->uvSets.assign(uvs.begin(), uvs.end());
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		if (uvs.size() != stripsData->vertices.size())
 			return;
@@ -1867,7 +1708,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 		shapeData->numUVSets |= 1;
 		hdr.blockSizes[dataID] = shapeData->CalcBlockSize();
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		if (norms.size() != stripsData->normals.size())
 			stripsData->normals.resize(norms.size());
@@ -1890,7 +1731,7 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 		shapeData->CalcTangentSpace();
 		hdr.blockSizes[dataID] = shapeData->CalcBlockSize();
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = (NiTriStripsData*)blocks[dataID];
 		stripsData->CalcTangentSpace();
 		hdr.blockSizes[dataID] = stripsData->CalcBlockSize();
@@ -2187,19 +2028,11 @@ void NifFile::DeleteShape(const string& shapeName) {
 	if (geom) {
 		DeleteBlock(geom->dataRef);
 		if (geom->skinInstanceRef != -1) {
-			BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(GetBlock(geom->skinInstanceRef));
-			if (bsdSkinInst) {
-				DeleteBlock(bsdSkinInst->dataRef);
-				DeleteBlock(bsdSkinInst->skinPartitionRef);
+			NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(GetBlock(geom->skinInstanceRef));
+			if (skinInst) {
+				DeleteBlock(skinInst->dataRef);
+				DeleteBlock(skinInst->skinPartitionRef);
 				DeleteBlock(geom->skinInstanceRef);
-			}
-			else {
-				NiSkinInstance* niSkinInst = dynamic_cast<NiSkinInstance*>(GetBlock(geom->skinInstanceRef));
-				if (niSkinInst) {
-					DeleteBlock(niSkinInst->dataRef);
-					DeleteBlock(niSkinInst->skinPartitionRef);
-					DeleteBlock(geom->skinInstanceRef);
-				}
 			}
 		}
 
@@ -2263,37 +2096,25 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 	if (skinRef == -1)
 		return;
 
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	if (bsdSkinInst) {
-		NiSkinData* skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (skinInst) {
+		NiSkinData* skinData = (NiSkinData*)blocks[skinInst->dataRef];
 		skinData->notifyVerticesDelete(indices);
-		hdr.blockSizes[bsdSkinInst->dataRef] = skinData->CalcBlockSize();
+		hdr.blockSizes[skinInst->dataRef] = skinData->CalcBlockSize();
 
-		NiSkinPartition* skinPartition = (NiSkinPartition*)blocks[bsdSkinInst->skinPartitionRef];
+		NiSkinPartition* skinPartition = (NiSkinPartition*)blocks[skinInst->skinPartitionRef];
 		skinPartition->notifyVerticesDelete(indices);
 		vector<int> emptyIndices;
 		if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
-			bsdSkinInst->numPartitions -= emptyIndices.size();
-			for (int i = emptyIndices.size() - 1; i >= 0; i--)
-				bsdSkinInst->partitions.erase(bsdSkinInst->partitions.begin() + i);
+			if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
+				BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
+				bsdSkinInst->numPartitions -= emptyIndices.size();
+				for (int i = emptyIndices.size() - 1; i >= 0; i--)
+					bsdSkinInst->partitions.erase(bsdSkinInst->partitions.begin() + i);
+			}
 		}
-		hdr.blockSizes[bsdSkinInst->skinPartitionRef] = skinPartition->CalcBlockSize();
-		hdr.blockSizes[skinRef] = bsdSkinInst->CalcBlockSize();
-	}
-	else {
-		NiSkinInstance* niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (niSkinInst) {
-			NiSkinData* skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-			skinData->notifyVerticesDelete(indices);
-			hdr.blockSizes[niSkinInst->dataRef] = skinData->CalcBlockSize();
-
-			NiSkinPartition* skinPartition = (NiSkinPartition*)blocks[niSkinInst->skinPartitionRef];
-			skinPartition->notifyVerticesDelete(indices);
-			vector<int> emptyIndices;
-			skinPartition->RemoveEmptyPartitions(emptyIndices);
-			hdr.blockSizes[niSkinInst->skinPartitionRef] = skinPartition->CalcBlockSize();
-			hdr.blockSizes[skinRef] = niSkinInst->CalcBlockSize();
-		}
+		hdr.blockSizes[skinInst->skinPartitionRef] = skinPartition->CalcBlockSize();
+		hdr.blockSizes[skinRef] = skinInst->CalcBlockSize();
 	}
 }
 
@@ -2335,30 +2156,20 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	if (skinRef == -1)
 		return;
 
-	bool skipBSDSkinInst = false;
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
 	NiSkinData* skinData = nullptr;
 	NiSkinPartition* skinPart = nullptr;
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst)
-			return;
-
-		skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-		skinPart = (NiSkinPartition*)blocks[niSkinInst->skinPartitionRef];
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (skinInst) {
+		skinData = (NiSkinData*)blocks[skinInst->dataRef];
+		skinPart = (NiSkinPartition*)blocks[skinInst->skinPartitionRef];
 	}
-	else {
-		skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
-		skinPart = (NiSkinPartition*)blocks[bsdSkinInst->skinPartitionRef];
-	}
+	else
+		return;
 
 	if (skinPart->needsBuild) {
 		BuildSkinPartitions(shapeName);
 		return;
 	}
-
 
 	//Make maps of new bone weights
 	map<ushort, vector<int>> vertBones;
@@ -2436,7 +2247,8 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		part.numBones = part.bones.size();
 	}
 
-	if (!skipBSDSkinInst) {
+	if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
+		BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
 		unordered_map<int, int> partIDCount;
 		for (int i = 0; i < bsdSkinInst->numPartitions; i++) {
 			auto pidc = partIDCount.find(bsdSkinInst->partitions[i].partID);
@@ -2445,10 +2257,8 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 			else
 				partIDCount[bsdSkinInst->partitions[i].partID]++;
 		}
-		hdr.blockSizes[bsdSkinInst->skinPartitionRef] = skinPart->CalcBlockSize();
 	}
-	else
-		hdr.blockSizes[niSkinInst->skinPartitionRef] = skinPart->CalcBlockSize();
+	hdr.blockSizes[skinInst->skinPartitionRef] = skinPart->CalcBlockSize();
 }
 
 void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartition) {
@@ -2508,25 +2318,15 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		}
 	}
 
-	bool skipBSDSkinInst = false;
-	BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(blocks[skinRef]);
-	NiSkinInstance* niSkinInst = nullptr;
 	NiSkinData* skinData = nullptr;
 	NiSkinPartition* skinPart = nullptr;
-
-	if (!bsdSkinInst) {
-		skipBSDSkinInst = true;
-		niSkinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
-		if (!niSkinInst)
-			return;
-
-		skinData = (NiSkinData*)blocks[niSkinInst->dataRef];
-		skinPart = (NiSkinPartition*)blocks[niSkinInst->skinPartitionRef];
+	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(blocks[skinRef]);
+	if (skinInst) {
+		skinData = (NiSkinData*)blocks[skinInst->dataRef];
+		skinPart = (NiSkinPartition*)blocks[skinInst->skinPartitionRef];
 	}
-	else {
-		skinData = (NiSkinData*)blocks[bsdSkinInst->dataRef];
-		skinPart = (NiSkinPartition*)blocks[bsdSkinInst->skinPartitionRef];
-	}
+	else
+		return;
 
 	vector<Triangle> tris;
 	ushort numTriangles;
@@ -2780,7 +2580,9 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		skinPart->partitions.push_back(move(pblock));
 
 	}
-	if (!skipBSDSkinInst) {
+
+	if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
+		BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
 		bsdSkinInst->numPartitions = skinPart->numPartitions;
 		bsdSkinInst->partitions.clear();
 		for (int i = 0; i < bsdSkinInst->numPartitions; i++) {
@@ -2797,11 +2599,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 
 			bsdSkinInst->partitions.push_back(p);
 		}
-		hdr.blockSizes[bsdSkinInst->skinPartitionRef] = skinPart->CalcBlockSize();
-		hdr.blockSizes[skinRef] = bsdSkinInst->CalcBlockSize();
 	}
-	else {
-		hdr.blockSizes[niSkinInst->skinPartitionRef] = skinPart->CalcBlockSize();
-		hdr.blockSizes[skinRef] = niSkinInst->CalcBlockSize();
-	}
+	hdr.blockSizes[skinInst->skinPartitionRef] = skinPart->CalcBlockSize();
+	hdr.blockSizes[skinRef] = skinInst->CalcBlockSize();
 }
