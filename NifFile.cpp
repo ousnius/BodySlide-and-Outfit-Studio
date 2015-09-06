@@ -176,12 +176,6 @@ void NifFile::CopyFrom(NifFile& other) {
 		case BSEFFECTSHADERPROPERTY:
 			blockCopy = new BSEffectShaderProperty((*(BSEffectShaderProperty*)other.blocks[i]));
 			break;
-		case BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER:
-			blockCopy = new BSLightingShaderPropertyColorController((*(BSLightingShaderPropertyColorController*)other.blocks[i]));
-			break;
-		case BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER:
-			blockCopy = new BSLightingShaderPropertyFloatController((*(BSLightingShaderPropertyFloatController*)other.blocks[i]));
-			break;
 		case NIFLOATINTERPOLATOR:
 			blockCopy = new NiFloatInterpolator((*(NiFloatInterpolator*)other.blocks[i]));
 			break;
@@ -190,6 +184,18 @@ void NifFile::CopyFrom(NifFile& other) {
 			break;
 		case NIPOINT3INTERPOLATOR:
 			blockCopy = new NiPoint3Interpolator((*(NiPoint3Interpolator*)other.blocks[i]));
+			break;
+		case BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER:
+			blockCopy = new BSLightingShaderPropertyColorController((*(BSLightingShaderPropertyColorController*)other.blocks[i]));
+			break;
+		case BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER:
+			blockCopy = new BSLightingShaderPropertyFloatController((*(BSLightingShaderPropertyFloatController*)other.blocks[i]));
+			break;
+		case BSEFFECTSHADERPROPERTYCOLORCONTROLLER:
+			blockCopy = new BSEffectShaderPropertyColorController((*(BSEffectShaderPropertyColorController*)other.blocks[i]));
+			break;
+		case BSEFFECTSHADERPROPERTYFLOATCONTROLLER:
+			blockCopy = new BSEffectShaderPropertyFloatController((*(BSEffectShaderPropertyFloatController*)other.blocks[i]));
 			break;
 		}
 
@@ -273,16 +279,20 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new NiStencilProperty(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSEffectShaderProperty"))
 				block = (NiObject*) new BSEffectShaderProperty(file, hdr);
-			else if (!thisBlockTypeStr.compare("BSLightingShaderPropertyColorController"))
-				block = (NiObject*) new BSLightingShaderPropertyColorController(file, hdr);
-			else if (!thisBlockTypeStr.compare("BSLightingShaderPropertyFloatController"))
-				block = (NiObject*) new BSLightingShaderPropertyFloatController(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiFloatInterpolator"))
 				block = (NiObject*) new NiFloatInterpolator(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiTransformInterpolator"))
 				block = (NiObject*) new NiTransformInterpolator(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiPoint3Interpolator"))
 				block = (NiObject*) new NiPoint3Interpolator(file, hdr);
+			else if (!thisBlockTypeStr.compare("BSLightingShaderPropertyColorController"))
+				block = (NiObject*) new BSLightingShaderPropertyColorController(file, hdr);
+			else if (!thisBlockTypeStr.compare("BSLightingShaderPropertyFloatController"))
+				block = (NiObject*) new BSLightingShaderPropertyFloatController(file, hdr);
+			else if (!thisBlockTypeStr.compare("BSEffectShaderPropertyColorController"))
+				block = (NiObject*) new BSEffectShaderPropertyColorController(file, hdr);
+			else if (!thisBlockTypeStr.compare("BSEffectShaderPropertyFloatController"))
+				block = (NiObject*) new BSEffectShaderPropertyFloatController(file, hdr);
 			else
 				block = (NiObject*) new NiUnknown(file, hdr.blockSizes[i]);
 
@@ -621,6 +631,16 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 			BSLightingShaderPropertyFloatController* controllerCopy = new BSLightingShaderPropertyFloatController(*controller);
 			destController = dynamic_cast<NiTimeController*>(controllerCopy);
 		}
+		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
+			BSEffectShaderPropertyFloatController* controller = (BSEffectShaderPropertyFloatController*)srcController;
+			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
+			destController = dynamic_cast<NiTimeController*>(controllerCopy);
+		}
+		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
+			BSEffectShaderPropertyFloatController* controller = (BSEffectShaderPropertyFloatController*)srcController;
+			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
+			destController = dynamic_cast<NiTimeController*>(controllerCopy);
+		}
 		else
 			destShader->controllerRef = -1;
 	}
@@ -759,6 +779,16 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 		else if (srcController->blockType == BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER) {
 			BSLightingShaderPropertyFloatController* controller = (BSLightingShaderPropertyFloatController*)srcController;
 			BSLightingShaderPropertyFloatController* controllerCopy = new BSLightingShaderPropertyFloatController(*controller);
+			destController = dynamic_cast<NiTimeController*>(controllerCopy);
+		}
+		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
+			BSEffectShaderPropertyFloatController* controller = (BSEffectShaderPropertyFloatController*)srcController;
+			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
+			destController = dynamic_cast<NiTimeController*>(controllerCopy);
+		}
+		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
+			BSEffectShaderPropertyFloatController* controller = (BSEffectShaderPropertyFloatController*)srcController;
+			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
 			destController = dynamic_cast<NiTimeController*>(controllerCopy);
 		}
 		else

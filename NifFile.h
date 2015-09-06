@@ -41,6 +41,8 @@ using namespace std;
 #define NIPOINT3INTERPOLATOR 21
 #define BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER 22
 #define BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER 23
+#define BSEFFECTSHADERPROPERTYCOLORCONTROLLER 24
+#define BSEFFECTSHADERPROPERTYFLOATCONTROLLER 25
 
 
 struct VertexWeight {
@@ -640,6 +642,32 @@ public:
 
 	BSLightingShaderPropertyFloatController(NiHeader& hdr);
 	BSLightingShaderPropertyFloatController(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class BSEffectShaderPropertyColorController : public NiFloatInterpController {
+public:
+	uint typeOfControlledColor;
+
+	BSEffectShaderPropertyColorController(NiHeader& hdr);
+	BSEffectShaderPropertyColorController(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	int CalcBlockSize();
+};
+
+class BSEffectShaderPropertyFloatController : public NiFloatInterpController {
+public:
+	uint typeOfControlledVariable;
+
+	BSEffectShaderPropertyFloatController(NiHeader& hdr);
+	BSEffectShaderPropertyFloatController(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);

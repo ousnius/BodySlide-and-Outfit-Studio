@@ -2457,6 +2457,91 @@ int BSLightingShaderPropertyFloatController::CalcBlockSize() {
 }
 
 
+BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSEFFECTSHADERPROPERTYCOLORCONTROLLER;
+	typeOfControlledColor = 0;
+}
+
+BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(fstream& file, NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSEFFECTSHADERPROPERTYCOLORCONTROLLER;
+	typeOfControlledColor = 0;
+
+	Get(file);
+}
+
+void BSEffectShaderPropertyColorController::Get(fstream& file) {
+	NiFloatInterpController::Get(file);
+
+	file.read((char*)&typeOfControlledColor, 4);
+}
+
+void BSEffectShaderPropertyColorController::Put(fstream& file) {
+	NiFloatInterpController::Put(file);
+
+	file.write((char*)&typeOfControlledColor, 4);
+}
+
+void BSEffectShaderPropertyColorController::notifyBlockDelete(int blockID) {
+	NiFloatInterpController::notifyBlockDelete(blockID);
+}
+
+int BSEffectShaderPropertyColorController::CalcBlockSize() {
+	NiFloatInterpController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSEFFECTSHADERPROPERTYFLOATCONTROLLER;
+	typeOfControlledVariable = 0;
+}
+
+BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(fstream& file, NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = BSEFFECTSHADERPROPERTYFLOATCONTROLLER;
+
+	Get(file);
+}
+
+void BSEffectShaderPropertyFloatController::Get(fstream& file) {
+	NiFloatInterpController::Get(file);
+
+	file.read((char*)&typeOfControlledVariable, 4);
+}
+
+void BSEffectShaderPropertyFloatController::Put(fstream& file) {
+	NiFloatInterpController::Put(file);
+
+	file.write((char*)&typeOfControlledVariable, 4);
+}
+
+void BSEffectShaderPropertyFloatController::notifyBlockDelete(int blockID) {
+	NiFloatInterpController::notifyBlockDelete(blockID);
+}
+
+int BSEffectShaderPropertyFloatController::CalcBlockSize() {
+	NiFloatInterpController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
 BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	NiProperty::Init();
 	NiObjectNET::bBSLightingShaderProperty = true;
