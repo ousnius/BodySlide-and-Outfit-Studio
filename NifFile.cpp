@@ -631,9 +631,9 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 			BSLightingShaderPropertyFloatController* controllerCopy = new BSLightingShaderPropertyFloatController(*controller);
 			destController = dynamic_cast<NiTimeController*>(controllerCopy);
 		}
-		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
-			BSEffectShaderPropertyFloatController* controller = (BSEffectShaderPropertyFloatController*)srcController;
-			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
+		else if (srcController->blockType == BSEFFECTSHADERPROPERTYCOLORCONTROLLER) {
+			BSEffectShaderPropertyColorController* controller = (BSEffectShaderPropertyColorController*)srcController;
+			BSEffectShaderPropertyColorController* controllerCopy = new BSEffectShaderPropertyColorController(*controller);
 			destController = dynamic_cast<NiTimeController*>(controllerCopy);
 		}
 		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
@@ -781,9 +781,9 @@ void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* 
 			BSLightingShaderPropertyFloatController* controllerCopy = new BSLightingShaderPropertyFloatController(*controller);
 			destController = dynamic_cast<NiTimeController*>(controllerCopy);
 		}
-		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
-			BSEffectShaderPropertyFloatController* controller = (BSEffectShaderPropertyFloatController*)srcController;
-			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
+		else if (srcController->blockType == BSEFFECTSHADERPROPERTYCOLORCONTROLLER) {
+			BSEffectShaderPropertyColorController* controller = (BSEffectShaderPropertyColorController*)srcController;
+			BSEffectShaderPropertyColorController* controllerCopy = new BSEffectShaderPropertyColorController(*controller);
 			destController = dynamic_cast<NiTimeController*>(controllerCopy);
 		}
 		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
