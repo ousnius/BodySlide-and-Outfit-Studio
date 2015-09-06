@@ -146,32 +146,6 @@ public:
 	void SetOutfitTexture(const string& shapeName, const string& textureFile);
 	void SetRefTexture(const string& shapeName, const string& textureFile);
 
-	int RefShapeShaderType(const string& shapeName) {
-		BSLightingShaderProperty* shader = baseNif.GetShaderForShape(shapeName);
-		if (!shader) {
-			BSShaderPPLightingProperty* shaderPP = baseNif.GetShaderPPForShape(shapeName);
-			if (shaderPP && shaderPP->IsSkinShader())
-				return 1;
-		}
-		else if (shader->IsSkinShader())
-			return 1;
-
-		return 0;
-	}
-
-	int OutfitShapeShaderType(const string& shapeName) {
-		BSLightingShaderProperty* shader = workNif.GetShaderForShape(shapeName);
-		if (!shader) {
-			BSShaderPPLightingProperty* shaderPP = workNif.GetShaderPPForShape(shapeName);
-			if (shaderPP && shaderPP->IsSkinShader())
-				return 1;
-		}
-		else if (shader->IsSkinShader())
-			return 1;
-
-		return 0;
-	}
-
 	bool IsValidShape(const string& shapeName);
 
 	bool& SliderShow(int index);
@@ -263,7 +237,6 @@ public:
 	void RenameShape(const string& shapeName, const string& newShapeName, bool isOutfit);
 
 	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
-	bool IsShapeSkinShaded(NifFile* nif, const string& shapeName);
 	int SaveOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 
 	int ExportShape(const string& shapeName, const string& fName, bool isOutfit);

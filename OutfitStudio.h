@@ -59,7 +59,7 @@ public:
 		gls.RenameMesh(shapeName, newShapeName);
 	}
 
-	void SetMeshTexture(const string& shapeName, const string& texturefile, int shaderType = 0);
+	void SetMeshTexture(const string& shapeName, const string& texturefile, bool isSkin = false);
 
 	mesh* GetMesh(const string& shapeName) {
 		return gls.GetMesh(shapeName);

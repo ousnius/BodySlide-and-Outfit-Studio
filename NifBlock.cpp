@@ -2542,6 +2542,36 @@ int BSEffectShaderPropertyFloatController::CalcBlockSize() {
 }
 
 
+void NiShader::Get(fstream& file) {
+}
+
+void NiShader::Put(fstream& file) {
+}
+
+void NiShader::notifyBlockDelete(int blockID) {
+}
+
+bool NiShader::IsSkin() {
+	return false;
+}
+
+bool NiShader::IsDoubleSided() {
+	return false;
+}
+
+int NiShader::GetTextureSetRef() {
+	return -1;
+}
+
+void NiShader::SetTextureSetRef(int texSetRef) {
+}
+
+int NiShader::CalcBlockSize() {
+	return blockSize;
+}
+
+
+
 BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	NiProperty::Init();
 	NiObjectNET::bBSLightingShaderProperty = true;
@@ -2756,12 +2786,20 @@ void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
 		textureSetRef--;
 }
 
-bool BSLightingShaderProperty::IsSkinShader() {
+bool BSLightingShaderProperty::IsSkin() {
 	return (shaderFlags1 & (1 << 21)) != 0;
 }
 
 bool BSLightingShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+int BSLightingShaderProperty::GetTextureSetRef() {
+	return textureSetRef;
+}
+
+void BSLightingShaderProperty::SetTextureSetRef(int texSetRef) {
+	textureSetRef = texSetRef;
 }
 
 int BSLightingShaderProperty::CalcBlockSize() {
@@ -2924,7 +2962,7 @@ void BSEffectShaderProperty::notifyBlockDelete(int blockID) {
 	NiProperty::notifyBlockDelete(blockID);
 }
 
-bool BSEffectShaderProperty::IsSkinShader() {
+bool BSEffectShaderProperty::IsSkin() {
 	return (shaderFlags1 & (1 << 21)) != 0;
 }
 
@@ -3057,8 +3095,16 @@ void BSShaderPPLightingProperty::notifyBlockDelete(int blockID) {
 		textureSetRef--;
 }
 
-bool BSShaderPPLightingProperty::IsSkinShader() {
+bool BSShaderPPLightingProperty::IsSkin() {
 	return shaderType == 0x0000000e;
+}
+
+int BSShaderPPLightingProperty::GetTextureSetRef() {
+	return textureSetRef;
+}
+
+void BSShaderPPLightingProperty::SetTextureSetRef(int texSetRef) {
+	textureSetRef = texSetRef;
 }
 
 int BSShaderPPLightingProperty::CalcBlockSize() {

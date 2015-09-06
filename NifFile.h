@@ -675,7 +675,19 @@ public:
 	int CalcBlockSize();
 };
 
-class BSLightingShaderProperty : public NiProperty {
+class NiShader : public NiProperty {
+public:
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual bool IsSkin();
+	virtual bool IsDoubleSided();
+	virtual int GetTextureSetRef();
+	virtual void SetTextureSetRef(int texSetRef);
+	virtual int CalcBlockSize();
+};
+
+class BSLightingShaderProperty : public NiShader {
 public:
 	uint shaderFlags1;						// User Version == 12
 	uint shaderFlags2;						// User Version == 12
@@ -714,12 +726,14 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	bool IsSkinShader();
+	bool IsSkin();
 	bool IsDoubleSided();
+	int GetTextureSetRef();
+	void SetTextureSetRef(int texSetRef);
 	int CalcBlockSize();
 };
 
-class BSShaderProperty : public NiProperty {
+class BSShaderProperty : public NiShader {
 public:
 	ushort smooth;
 	uint shaderType;
@@ -734,7 +748,7 @@ public:
 	virtual int CalcBlockSize();
 };
 
-class BSEffectShaderProperty : public NiProperty {
+class BSEffectShaderProperty : public NiShader {
 public:
 	uint shaderFlags1;
 	uint shaderFlags2;
@@ -757,7 +771,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	bool IsSkinShader();
+	bool IsSkin();
 	bool IsDoubleSided();
 	int CalcBlockSize();
 };
@@ -788,7 +802,9 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	bool IsSkinShader();
+	bool IsSkin();
+	int GetTextureSetRef();
+	void SetTextureSetRef(int texSetRef);
 	int CalcBlockSize();
 };
 
@@ -942,15 +958,14 @@ public:
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);
 
-	BSLightingShaderProperty* GetShaderForShape(const string& shapeName);
-	BSShaderPPLightingProperty* GetShaderPPForShape(const string& shapeName);
+	NiShader* GetShader(const string& shapeName);
+	bool IsShaderSkin(const string& shapeName);
 	bool GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
 	void SetTextureForShape(const string& shapeName, string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();
 
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
-	void CopyShader(const string& shapeDest, BSLightingShaderProperty* srcShader, NifFile& srcNif, bool addAlpha);
-	void CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* srcShader, NifFile& srcNif, bool addAlpha);
+	void CopyShader(const string& shapeDest, int srcShaderRef, NifFile& srcNif, bool addAlpha, int propRef1, int propRef2);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 
 	int GetShapeList(vector<string>& outList);

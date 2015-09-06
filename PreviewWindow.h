@@ -86,13 +86,13 @@ public:
 		Refresh();
 	}
 
-	void SetShapeTexture(const string& shapeName, const string& texturefile, int shaderType = 0) {
+	void SetShapeTexture(const string& shapeName, const string& texturefile, bool isSkin = false) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
 		GLMaterial* mat;
-		if (shaderType == 0)
+		if (!isSkin)
 			mat = gls.AddMaterial(texturefile, "res\\defvshader.vs", "res\\defshader.fs");
 		else
 			mat = gls.AddMaterial(texturefile, "res\\defvshader.vs", "res\\skinshader.fs");

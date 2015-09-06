@@ -80,13 +80,8 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			m = gls.GetMesh(shapeName);
 			m->BuildTriAdjacency();
 			if (m->smoothSeamNormals) {
-				BSLightingShaderProperty* shader = nif->GetShaderForShape(shapeList[i]);
-				if (!shader) {
-					BSShaderPPLightingProperty* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
-					if (shaderPP && !shaderPP->IsSkinShader())
-						ToggleSmoothSeams(m);
-				}
-				else if (!shader->IsSkinShader())
+				NiShader* shader = nif->GetShader(shapeList[i]);
+				if (shader && !shader->IsSkin())
 					ToggleSmoothSeams(m);
 			}
 		}
@@ -98,13 +93,8 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
 			if (m->smoothSeamNormals) {
-				BSLightingShaderProperty* shader = nif->GetShaderForShape(shapeList[i]);
-				if (!shader) {
-					BSShaderPPLightingProperty* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
-					if (shaderPP && !shaderPP->IsSkinShader())
-						ToggleSmoothSeams(m);
-				}
-				else if (!shader->IsSkinShader())
+				NiShader* shader = nif->GetShader(shapeList[i]);
+				if (shader && !shader->IsSkin())
 					ToggleSmoothSeams(m);
 			}
 		}
@@ -124,13 +114,8 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			m = gls.GetMesh(shapeName);
 			m->BuildTriAdjacency();
 			if (m->smoothSeamNormals) {
-				BSLightingShaderProperty* shader = nif->GetShaderForShape(shapeList[i]);
-				if (!shader) {
-					BSShaderPPLightingProperty* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
-					if (shaderPP && !shaderPP->IsSkinShader())
-						ToggleSmoothSeams(m);
-				}
-				else if (!shader->IsSkinShader())
+				NiShader* shader = nif->GetShader(shapeList[i]);
+				if (shader && !shader->IsSkin())
 					ToggleSmoothSeams(m);
 			}
 			auto iter = shapeTextures.find(shapeName);
@@ -148,13 +133,8 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
 			if (m->smoothSeamNormals) {
-				BSLightingShaderProperty* shader = nif->GetShaderForShape(shapeList[i]);
-				if (!shader) {
-					BSShaderPPLightingProperty* shaderPP = nif->GetShaderPPForShape(shapeList[i]);
-					if (shaderPP && !shaderPP->IsSkinShader())
-						ToggleSmoothSeams(m);
-				}
-				else if (!shader->IsSkinShader())
+				NiShader* shader = nif->GetShader(shapeList[i]);
+				if (shader && !shader->IsSkin())
 					ToggleSmoothSeams(m);
 			}
 			auto iter = shapeTextures.find(shapeList[i]);
@@ -171,17 +151,12 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 	string texFile;
 	fromNif->GetTextureForShape(shapeName, texFile, 0);
 
-	int shaderType = 0;
-	BSLightingShaderProperty* shader = fromNif->GetShaderForShape(shapeName);
-	if (!shader) {
-		BSShaderPPLightingProperty* shaderPP = fromNif->GetShaderPPForShape(shapeName);
-		if (shaderPP && shaderPP->IsSkinShader())
-			shaderType = 1;
-	}
-	else if (shader->IsSkinShader())
-		shaderType = 1;
+	bool isSkin = false;
+	NiShader* shader = fromNif->GetShader(shapeName);
+	if (shader && shader->IsSkin())
+		isSkin = true;
 
-	SetShapeTexture(shapeName, baseDataPath + texFile, shaderType);
+	SetShapeTexture(shapeName, baseDataPath + texFile, isSkin);
 }
 
 void PreviewWindow::RightDrag(int dX, int dY) {

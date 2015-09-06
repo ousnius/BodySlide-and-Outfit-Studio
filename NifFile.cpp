@@ -428,88 +428,87 @@ int NifFile::AddStringExtraData(const string& shapeName, const string& name, con
 	return strExtraDataId;
 }
 
-BSLightingShaderProperty* NifFile::GetShaderForShape(const string& shapeName) {
+NiShader* NifFile::GetShader(const string& shapeName) {
 	int prop1 = -1;
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom)
 		prop1 = geom->propertiesRef1;
-
-	if (prop1 == -1)
+	else
 		return nullptr;
 
-	BSLightingShaderProperty* shader = dynamic_cast<BSLightingShaderProperty*>(blocks[prop1]);
-	return shader;
-}
-
-BSShaderPPLightingProperty* NifFile::GetShaderPPForShape(const string& shapeName) {
-	vector<int> props;
-
-	NiTriBasedGeom* geom = geomForName(shapeName);
-	if (geom)
-		props = geom->propertiesRef;
-
-	if (props.empty())
-		return nullptr;
-
-	for (int i = 0; i < props.size(); i++) {
-		BSShaderPPLightingProperty* shader = dynamic_cast<BSShaderPPLightingProperty*>(blocks[props[i]]);
-		if (shader)
-			return shader;
+	if (prop1 != -1) {
+		NiShader* shader = dynamic_cast<NiShader*>(blocks[prop1]);
+		if (shader) {
+			ushort type = shader->blockType;
+			if (type == BSLIGHTINGSHADERPROPERTY ||
+				type == BSEFFECTSHADERPROPERTY ||
+				type == BSSHADERPPLIGHTINGPROPERTY)
+				return shader;
+		}
 	}
+	else {
+		vector<int> props = geom->propertiesRef;
+		if (props.empty())
+			return nullptr;
+
+		for (int i = 0; i < props.size(); i++) {
+			NiShader* shader = dynamic_cast<NiShader*>(blocks[props[i]]);
+			if (shader) {
+				ushort type = shader->blockType;
+				if (type == BSLIGHTINGSHADERPROPERTY ||
+					type == BSEFFECTSHADERPROPERTY ||
+					type == BSSHADERPPLIGHTINGPROPERTY)
+					return shader;
+			}
+		}
+	}
+
 	return nullptr;
 }
 
+bool NifFile::IsShaderSkin(const string& shapeName) {
+	NiShader* shader = GetShader(shapeName);
+	if (shader)
+		return shader->IsSkin();
+
+	return false;
+}
+
 bool NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
-	BSShaderTextureSet* ts = nullptr;
-	BSLightingShaderProperty* shader = GetShaderForShape(shapeName);
-	if (!shader) {
-		BSShaderPPLightingProperty* shaderPP = GetShaderPPForShape(shapeName);
-		if (!shaderPP || shaderPP->textureSetRef == -1)
-			return false;
+	int textureSetRef = -1;
 
-		ts = dynamic_cast<BSShaderTextureSet*>(blocks[shaderPP->textureSetRef]);
-	}
-	else {
-		if (shader->textureSetRef == -1)
-			return false;
+	NiShader* shader = GetShader(shapeName);
+	if (shader)
+		textureSetRef = shader->GetTextureSetRef();
 
-		ts = dynamic_cast<BSShaderTextureSet*>(blocks[shader->textureSetRef]);
-	}
-
-	if (!ts || texIndex + 1 > ts->numTextures)
+	if (textureSetRef == -1)
 		return false;
 
-	outTexFile = ts->textures[texIndex].str;
+	BSShaderTextureSet* textureSet = dynamic_cast<BSShaderTextureSet*>(blocks[textureSetRef]);
+	if (!textureSet || texIndex + 1 > textureSet->numTextures)
+		return false;
+
+	outTexFile = textureSet->textures[texIndex].str;
 	return true;
 }
 
 void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
-	BSShaderTextureSet* ts = nullptr;
-	BSLightingShaderProperty* shader = GetShaderForShape(shapeName);
-	if (!shader) {
-		BSShaderPPLightingProperty* shaderPP = GetShaderPPForShape(shapeName);
-		if (!shaderPP || shaderPP->textureSetRef == -1)
-			return;
+	int textureSetRef = -1;
 
-		ts = dynamic_cast<BSShaderTextureSet*>(blocks[shaderPP->textureSetRef]);
-		if (!ts || texIndex + 1 > ts->numTextures)
-			return;
+	NiShader* shader = GetShader(shapeName);
+	if (shader)
+		textureSetRef = shader->GetTextureSetRef();
 
-		ts->textures[texIndex].str = outTexFile;
-		hdr.blockSizes[shaderPP->textureSetRef] = ts->CalcBlockSize();
-	}
-	else {
-		if (shader->textureSetRef == -1)
-			return;
+	if (textureSetRef == -1)
+		return;
 
-		ts = dynamic_cast<BSShaderTextureSet*>(blocks[shader->textureSetRef]);
-		if (!ts || texIndex + 1 > ts->numTextures)
-			return;
+	BSShaderTextureSet* textureSet = dynamic_cast<BSShaderTextureSet*>(blocks[textureSetRef]);
+	if (!textureSet || texIndex + 1 > textureSet->numTextures)
+		return;
 
-		ts->textures[texIndex].str = outTexFile;
-		hdr.blockSizes[shader->textureSetRef] = ts->CalcBlockSize();
-	}
+	textureSet->textures[texIndex].str = outTexFile;
+	hdr.blockSizes[textureSetRef] = textureSet->CalcBlockSize();
 }
 
 void NifFile::TrimTexturePaths() {
@@ -579,7 +578,7 @@ int NifFile::AddOrFindStringId(const string& str) {
 	return r;
 }
 
-void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcShader, NifFile& srcNif, bool addAlpha) {
+void NifFile::CopyShader(const string& shapeDest, int srcShaderRef, NifFile& srcNif, bool addAlpha, int propRef1 = -1, int propRef2 = -1) {
 	int dataRef = -1;
 
 	NiTriBasedGeom* geom = geomForName(shapeDest);
@@ -588,8 +587,32 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	else
 		return;
 
-	// Create destination shader block and copy
-	BSLightingShaderProperty* destShader = new BSLightingShaderProperty(*srcShader);
+	// Get source shader
+	NiShader* srcShader = dynamic_cast<NiShader*>(srcNif.GetBlock(srcShaderRef));
+	if (!srcShader)
+		return;
+
+	// Create destination shader and copy
+	NiShader* destShader = nullptr;
+	if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY) {
+		BSLightingShaderProperty* shader = (BSLightingShaderProperty*)srcShader;
+		BSLightingShaderProperty* copyShader = new BSLightingShaderProperty(*shader);
+		destShader = dynamic_cast<NiShader*>(copyShader);
+	}
+	else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY) {
+		BSShaderPPLightingProperty* shader = (BSShaderPPLightingProperty*)srcShader;
+		BSShaderPPLightingProperty* copyShader = new BSShaderPPLightingProperty(*shader);
+		destShader = dynamic_cast<NiShader*>(copyShader);
+	}
+	else if (srcShader->blockType == BSEFFECTSHADERPROPERTY) {
+		BSEffectShaderProperty* shader = (BSEffectShaderProperty*)srcShader;
+		BSEffectShaderProperty* copyShader = new BSEffectShaderProperty(*shader);
+		destShader = dynamic_cast<NiShader*>(copyShader);
+	}
+
+	if (!destShader)
+		return;
+
 	destShader->header = &hdr;
 	destShader->nameRef = 0xFFFFFFFF;
 
@@ -600,9 +623,10 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 
 	// Texture Set
 	BSShaderTextureSet* destTexSet = nullptr;
-	BSShaderTextureSet* srcTexSet = dynamic_cast<BSShaderTextureSet*>(srcNif.GetBlock(srcShader->textureSetRef));
-	if (srcTexSet) {
+	int textureSetRef = srcShader->GetTextureSetRef();
+	if (textureSetRef != -1) {
 		// Create texture set block and copy
+		BSShaderTextureSet* srcTexSet = dynamic_cast<BSShaderTextureSet*>(srcNif.GetBlock(textureSetRef));
 		destTexSet = new BSShaderTextureSet(*srcTexSet);
 		destTexSet->header = &hdr;
 
@@ -612,7 +636,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 		hdr.numBlocks++;
 
 		// Assign texture set block id to shader
-		destShader->textureSetRef = texsetId;
+		destShader->SetTextureSetRef(texsetId);
 	}
 
 	// Controller
@@ -652,11 +676,15 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 		destShader->controllerRef = controllerId;
 	}
 
-	int srcShaderId = geom->propertiesRef1;
-	geom->propertiesRef1 = shaderId;
+	if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY)
+		geom->propertiesRef1 = shaderId;
+	else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+		geom->propertiesRef[propRef1] = shaderId;
+	else if (srcShader->blockType == BSEFFECTSHADERPROPERTY)
+		geom->propertiesRef1 = shaderId;
 
 	// Kill normals, set numUVSets to 1
-	if (dataRef != -1 && destShader->IsSkinShader() && hdr.userVersion >= 12) {
+	if (dataRef != -1 && destShader->IsSkin() && hdr.userVersion >= 12) {
 		NiTriBasedGeomData* geomData = dynamic_cast<NiTriBasedGeomData*>(blocks[dataRef]);
 		if (geomData) {
 			geomData->hasNormals = 0;
@@ -671,7 +699,7 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 	// Add shader and other sizes to block size info
 	hdr.blockSizes.push_back(destShader->CalcBlockSize());
 
-	if (srcTexSet)
+	if (destTexSet)
 		hdr.blockSizes.push_back(destTexSet->CalcBlockSize());
 
 	if (destController)
@@ -679,166 +707,23 @@ void NifFile::CopyShader(const string& shapeDest, BSLightingShaderProperty* srcS
 
 	if (addAlpha) {
 		NiAlphaProperty* alphaProp = new NiAlphaProperty(hdr);
-		geom->propertiesRef2 = blocks.size();
+		if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY)
+			geom->propertiesRef2 = blocks.size();
+		else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+			geom->propertiesRef[propRef2] = blocks.size();
+		else if (srcShader->blockType == BSEFFECTSHADERPROPERTY)
+			geom->propertiesRef2 = blocks.size();
 		blocks.push_back(alphaProp);
 		hdr.numBlocks++;
 		hdr.blockSizes.push_back(alphaProp->CalcBlockSize());
 	}
 
 	// Record the block type in the block type index.
-	ushort shaderTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShaderId]].str);
+	ushort shaderTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShaderRef]].str);
 	hdr.blockIndex.push_back(shaderTypeId);
 
-	if (srcTexSet) {
-		ushort texSetTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->textureSetRef]].str);
-		hdr.blockIndex.push_back(texSetTypeId);
-	}
-
-	if (destController) {
-		ushort controllerTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->controllerRef]].str);
-		hdr.blockIndex.push_back(controllerTypeId);
-	}
-
-	if (addAlpha) {
-		ushort alphaBlockTypeId = AddOrFindBlockTypeId("NiAlphaProperty");
-		hdr.blockIndex.push_back(alphaBlockTypeId);
-	}
-}
-
-void NifFile::CopyShaderPP(const string& shapeDest, BSShaderPPLightingProperty* srcShader, NifFile& srcNif, bool addAlpha) {
-	int dataRef = -1;
-	int propRef1 = -1;
-	int propRef2 = -1;
-
-	NiTriBasedGeom* geom = geomForName(shapeDest);
-	if (geom) {
-		BSShaderPPLightingProperty* shaderPP = nullptr;
-		NiAlphaProperty* alpha = nullptr;
-		for (int i = 0; i < geom->numProperties; i++) {
-			if (!shaderPP) {
-				shaderPP = dynamic_cast<BSShaderPPLightingProperty*>(srcNif.GetBlock(geom->propertiesRef[i]));
-				if (shaderPP)
-					propRef1 = i;
-			}
-
-			if (!alpha) {
-				alpha = dynamic_cast<NiAlphaProperty*>(srcNif.GetBlock(geom->propertiesRef[i]));
-				if (alpha)
-					propRef2 = i;
-			}
-		}
-		dataRef = geom->dataRef;
-	}
-	else
-		return;
-
-	if (propRef1 == -1)
-		return;
-
-	if (propRef2 == -1)
-		addAlpha = false;
-
-	// Create destination shader block and copy
-	BSShaderPPLightingProperty* destShader = new BSShaderPPLightingProperty(*srcShader);
-	destShader->header = &hdr;
-	destShader->nameRef = 0xFFFFFFFF;
-
-	// Add shader block to nif
-	int shaderId = blocks.size();
-	blocks.push_back(destShader);
-	hdr.numBlocks++;
-
-	// Texture Set
-	BSShaderTextureSet* destTexSet = nullptr;
-	BSShaderTextureSet* srcTexSet = dynamic_cast<BSShaderTextureSet*>(srcNif.GetBlock(srcShader->textureSetRef));
-	if (srcTexSet) {
-		// Create texture set block and copy
-		destTexSet = new BSShaderTextureSet(*srcTexSet);
-		destTexSet->header = &hdr;
-
-		// Add texture block to nif
-		int texsetId = blocks.size();
-		blocks.push_back(destTexSet);
-		hdr.numBlocks++;
-
-		// Assign texture set block id to shader
-		destShader->textureSetRef = texsetId;
-	}
-
-	// Controller
-	int controllerId = -1;
-	NiTimeController* destController = nullptr;
-	NiTimeController* srcController = dynamic_cast<NiTimeController*>(srcNif.GetBlock(srcShader->controllerRef));
-	if (srcController) {
-		controllerId = blocks.size();
-		if (srcController->blockType == BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER) {
-			BSLightingShaderPropertyColorController* controller = (BSLightingShaderPropertyColorController*)srcController;
-			BSLightingShaderPropertyColorController* controllerCopy = new BSLightingShaderPropertyColorController(*controller);
-			destController = dynamic_cast<NiTimeController*>(controllerCopy);
-		}
-		else if (srcController->blockType == BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER) {
-			BSLightingShaderPropertyFloatController* controller = (BSLightingShaderPropertyFloatController*)srcController;
-			BSLightingShaderPropertyFloatController* controllerCopy = new BSLightingShaderPropertyFloatController(*controller);
-			destController = dynamic_cast<NiTimeController*>(controllerCopy);
-		}
-		else if (srcController->blockType == BSEFFECTSHADERPROPERTYCOLORCONTROLLER) {
-			BSEffectShaderPropertyColorController* controller = (BSEffectShaderPropertyColorController*)srcController;
-			BSEffectShaderPropertyColorController* controllerCopy = new BSEffectShaderPropertyColorController(*controller);
-			destController = dynamic_cast<NiTimeController*>(controllerCopy);
-		}
-		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
-			BSEffectShaderPropertyFloatController* controller = (BSEffectShaderPropertyFloatController*)srcController;
-			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
-			destController = dynamic_cast<NiTimeController*>(controllerCopy);
-		}
-		else
-			destShader->controllerRef = -1;
-	}
-
-	if (destController) {
-		blocks.push_back(destController);
-		hdr.numBlocks++;
-		destShader->controllerRef = controllerId;
-	}
-	
-	geom->propertiesRef[propRef1] = shaderId;
-
-	// Kill normals, set numUVSets to 1
-	if (dataRef != -1 && destShader->IsSkinShader() && hdr.userVersion >= 12) {
-		NiTriBasedGeomData* geomData = dynamic_cast<NiTriBasedGeomData*>(blocks[dataRef]);
-		if (geomData) {
-			geomData->hasNormals = 0;
-			geomData->normals.clear();
-			geomData->bitangents.clear();
-			geomData->tangents.clear();
-			geomData->numUVSets = 1;
-			hdr.blockSizes[dataRef] = geomData->CalcBlockSize();
-		}
-	}
-
-	// Add shader and other sizes to block size info
-	hdr.blockSizes.push_back(destShader->CalcBlockSize());
-
-	if (srcTexSet)
-		hdr.blockSizes.push_back(destTexSet->CalcBlockSize());
-
-	if (destController)
-		hdr.blockSizes.push_back(destController->CalcBlockSize());
-
-	if (addAlpha) {
-		NiAlphaProperty* alphaProp = new NiAlphaProperty(hdr);
-		geom->propertiesRef[propRef2] = blocks.size();
-		blocks.push_back(alphaProp);
-		hdr.numBlocks++;
-		hdr.blockSizes.push_back(alphaProp->CalcBlockSize());
-	}
-
-	// Record the block type in the block type index.
-	ushort shaderTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[propRef1]].str);
-	hdr.blockIndex.push_back(shaderTypeId);
-
-	if (srcTexSet) {
-		ushort texSetTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[srcShader->textureSetRef]].str);
+	if (destTexSet) {
+		ushort texSetTypeId = AddOrFindBlockTypeId(srcNif.hdr.blockTypes[srcNif.hdr.blockIndex[textureSetRef]].str);
 		hdr.blockIndex.push_back(texSetTypeId);
 	}
 
@@ -1012,19 +897,29 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	}
 
 	bool shaderAlpha = false;
-	BSLightingShaderProperty* srcShader = dynamic_cast<BSLightingShaderProperty*>(srcNif.GetBlock(srcGeom->propertiesRef1));
-	if (!srcShader) {
-		BSShaderPPLightingProperty* srcShaderPP = nullptr;
+	NiShader* srcShader = dynamic_cast<NiShader*>(srcNif.GetBlock(srcGeom->propertiesRef1));
+	if (srcShader) {
+		if (srcGeom->propertiesRef2 != -1)
+			shaderAlpha = true;
+
+		CopyShader(shapeDest, srcGeom->propertiesRef1, srcNif, shaderAlpha);
+	}
+	else {
+		int propRef1 = -1;
+		int propRef2 = -1;
 		for (int i = 0; i < srcGeom->numProperties; i++) {
-			if (!srcShaderPP) {
-				srcShaderPP = dynamic_cast<BSShaderPPLightingProperty*>(srcNif.GetBlock(srcGeom->propertiesRef[i]));
-				if (srcShaderPP)
+			if (!srcShader) {
+				srcShader = dynamic_cast<NiShader*>(srcNif.GetBlock(srcGeom->propertiesRef[i]));
+				if (srcShader) {
+					propRef1 = i;
 					continue;
+				}
 			}
 			if (!shaderAlpha) {
 				NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(srcNif.GetBlock(srcGeom->propertiesRef[i]));
 				if (alpha) {
 					shaderAlpha = true;
+					propRef2 = i;
 					continue;
 				}
 			}
@@ -1067,16 +962,13 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 				destGeom->propertiesRef[i] = unknownId;
 			}
 		}
-		if (srcShaderPP)
-			CopyShaderPP(shapeDest, srcShaderPP, srcNif, shaderAlpha);
-		else
-			destGeom->propertiesRef1 = -1;
-	}
-	else {
-		if (srcGeom->propertiesRef2 != -1)
-			shaderAlpha = true;
 
-		CopyShader(shapeDest, srcShader, srcNif, shaderAlpha);
+		if (propRef1 != -1) {
+			if (srcShader)
+				CopyShader(shapeDest, srcGeom->propertiesRef[propRef1], srcNif, shaderAlpha, propRef1, propRef2);
+			else
+				destGeom->propertiesRef[propRef1] = -1;
+		}
 	}
 
 	vector<string> srcBoneList;
@@ -2067,9 +1959,9 @@ void NifFile::DeleteShape(const string& shapeName) {
 		}
 
 		if (geom->propertiesRef1 != -1) {
-			BSLightingShaderProperty* shader = dynamic_cast<BSLightingShaderProperty*>(GetBlock(geom->propertiesRef1));
+			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef1));
 			if (shader) {
-				DeleteBlock(shader->textureSetRef);
+				DeleteBlock(shader->GetTextureSetRef());
 				DeleteBlock(geom->propertiesRef1);
 			}
 		}
@@ -2077,9 +1969,9 @@ void NifFile::DeleteShape(const string& shapeName) {
 			DeleteBlock(geom->propertiesRef2);
 
 		for (int i = 0; i < geom->numProperties; i++) {
-			BSShaderPPLightingProperty* shaderPP = dynamic_cast<BSShaderPPLightingProperty*>(GetBlock(geom->propertiesRef[i]));
-			if (shaderPP) {
-				DeleteBlock(shaderPP->textureSetRef);
+			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef[i]));
+			if (shader) {
+				DeleteBlock(shader->GetTextureSetRef());
 				DeleteBlock(geom->propertiesRef[i]);
 				i--;
 			}

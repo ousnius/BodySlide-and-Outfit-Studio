@@ -1240,7 +1240,7 @@ void OutfitStudio::ReferenceGUIFromProj() {
 		outfitShapes->SetItemData(baseSubItem, new ShapeItemData(false, &project->baseNif, project->baseShapeName));
 	}
 	glView->AddMeshFromNif(&project->baseNif, shape);
-	glView->SetMeshTexture(shape, project->RefTexture(shape), project->RefShapeShaderType(shape));
+	glView->SetMeshTexture(shape, project->RefTexture(shape), project->baseNif.IsShaderSkin(shape));
 }
 
 void OutfitStudio::WorkingGUIFromProj() {
@@ -1263,7 +1263,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 		glView->DeleteMesh(shape);
 
 		glView->AddMeshFromNif(&project->workNif, shape);
-		glView->SetMeshTexture(shape, project->OutfitTexture(shape), project->OutfitShapeShaderType(shape));
+		glView->SetMeshTexture(shape, project->OutfitTexture(shape), project->workNif.IsShaderSkin(shape));
 		if (outfitShapes) {
 			subitem = outfitShapes->AppendItem(outfitRoot, shape);
 			outfitShapes->SetItemState(subitem, 0);
@@ -3366,7 +3366,7 @@ void OutfitStudio::OnSetShapeTexture(wxCommandEvent& WXUNUSED(event)) {
 		stTexGrid->EnableDragColMove(false);
 		stTexGrid->EnableDragColSize(false);
 		stTexGrid->SetColLabelSize(30);
-		stTexGrid->SetColLabelValue(0, wxT("Game Texture Paths (not including game data\\textures path)"));
+		stTexGrid->SetColLabelValue(0, wxT("Game Texture Paths"));
 		stTexGrid->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
 
 		// Rows
@@ -3409,11 +3409,11 @@ void OutfitStudio::OnSetShapeTexture(wxCommandEvent& WXUNUSED(event)) {
 			if (nDispPath != oDispPath) {
 				if (activeItem->bIsOutfitShape) {
 					project->SetOutfitTexture(activeItem->shapeName, nDispPath);
-					glView->SetMeshTexture(activeItem->shapeName, nDispPath, project->OutfitShapeShaderType(activeItem->shapeName));
+					glView->SetMeshTexture(activeItem->shapeName, nDispPath, project->workNif.IsShaderSkin(activeItem->shapeName));
 				}
 				else {
 					project->SetRefTexture(activeItem->shapeName, nDispPath);
-					glView->SetMeshTexture(activeItem->shapeName, nDispPath, project->RefShapeShaderType(activeItem->shapeName));
+					glView->SetMeshTexture(activeItem->shapeName, nDispPath, project->baseNif.IsShaderSkin(activeItem->shapeName));
 				}
 			}
 
@@ -3476,7 +3476,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		glView->AddMeshFromNif(&project->workNif, newname);
 		project->SetOutfitTexture(newname, "_AUTO_");
 
-		glView->SetMeshTexture(newname, project->OutfitTexture(newname), project->OutfitShapeShaderType(newname));
+		glView->SetMeshTexture(newname, project->OutfitTexture(newname), project->workNif.IsShaderSkin(newname));
 
 		subitem = outfitShapes->AppendItem(outfitRoot, newname);
 		outfitShapes->SetItemState(subitem, 0);
@@ -3807,13 +3807,13 @@ void wxGLPanel::AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<
 	RecalcNormals(shapeName);
 }
 
-void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefile, int shaderType) {
+void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefile, bool isSkin) {
 	mesh* m = gls.GetMesh(shapeName);
 	if (!m)
 		return;
 
 	GLMaterial* mat;
-	if (shaderType == 0)
+	if (!isSkin)
 		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\defshader.fs");
 	else
 		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\skinshader.fs");

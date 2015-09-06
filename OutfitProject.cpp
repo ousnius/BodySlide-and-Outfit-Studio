@@ -1747,23 +1747,10 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 	}
 }
 
-bool OutfitProject::IsShapeSkinShaded(NifFile* nif, const string& shapeName) {
-	BSLightingShaderProperty* shader = nif->GetShaderForShape(shapeName);
-	if (!shader) {
-		BSShaderPPLightingProperty* shaderPP = nif->GetShaderPPForShape(shapeName);
-		if (shaderPP && shaderPP->IsSkinShader())
-			return true;
-	}
-	else if (shader->IsSkinShader())
-		return true;
-
-	return false;
-}
-
 void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMeshes) {
 	vector<Vector3> liveNorms;
 	for (auto &m : shapeMeshes) {
-		if (IsShapeSkinShaded(nif, m->shapeName))
+		if (nif->IsShaderSkin(m->shapeName))
 			continue;
 
 		liveNorms.clear();
@@ -1792,7 +1779,7 @@ int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& mo
 		clone.SetVertsForShape(m->shapeName, liveVerts);
 
 		if (writeNormals) {
-			if (IsShapeSkinShaded(&clone, m->shapeName))
+			if (clone.IsShaderSkin(m->shapeName))
 				continue;
 
 			clone.SetNormalsForShape(m->shapeName, liveNorms);
