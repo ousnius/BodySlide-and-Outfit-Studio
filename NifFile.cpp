@@ -58,7 +58,7 @@ int NifFile::shapeIdForName(const string& name) {
 				return id;
 		}
 	}
-	return id;
+	return -1;
 }
 
 NiNode* NifFile::nodeForName(const string& name) {
@@ -82,7 +82,7 @@ int NifFile::nodeIdForName(const string& name) {
 				return id;
 		}
 	}
-	return id;
+	return -1;
 }
 
 int NifFile::shapeBoneIndex(const string& shapeName, const string& boneName) {
@@ -1164,7 +1164,7 @@ int NifFile::GetNodeID(const string& nodeName) {
 				return id;
 		}
 	}
-	return id;
+	return -1;
 }
 
 bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
