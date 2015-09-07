@@ -89,7 +89,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudio::OnScaleShape)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudio::OnRotateShape)
 	EVT_MENU(XRCID("renameShape"), OutfitStudio::OnRenameShape)
-	EVT_MENU(XRCID("setShapeTex"), OutfitStudio::OnSetShapeTexture)
+	EVT_MENU(XRCID("setShapeTex"), OutfitStudio::OnSetTextures)
 	EVT_MENU(XRCID("copyShape"), OutfitStudio::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudio::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudio::OnAddBone)
@@ -331,8 +331,8 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 
 	d->paneSz = new wxBoxSizer(wxHORIZONTAL);
 
-	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap(wxT("res\\EditSmall.png"), wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
-	d->btnSliderEdit->SetBitmapDisabled(wxBitmap(wxT("res\\EditSmall_d.png"), wxBITMAP_TYPE_ANY));
+	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap("res\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
+	d->btnSliderEdit->SetBitmapDisabled(wxBitmap("res\\EditSmall_d.png", wxBITMAP_TYPE_ANY));
 	d->btnSliderEdit->SetToolTip("Turn on edit mode for this slider.");
 	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
@@ -3342,17 +3342,16 @@ void OutfitStudio::PreviewRotation(const Vector3& changed) {
 	previewRotation = changed;
 }
 
-void OutfitStudio::OnSetShapeTexture(wxCommandEvent& WXUNUSED(event)) {
-	wxDialog dlg;
-	string texpath;
-	string oDispPath;
-	string nDispPath;
-
+void OutfitStudio::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
 	}
-
+	
+	wxDialog dlg;
+	string texpath;
+	string oDispPath;
+	string nDispPath;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgShapeTextures")) {
 		wxGrid* stTexGrid = XRCCTRL(dlg, "stTexGrid", wxGrid);
 		stTexGrid->CreateGrid(9, 1);
@@ -3366,23 +3365,23 @@ void OutfitStudio::OnSetShapeTexture(wxCommandEvent& WXUNUSED(event)) {
 		stTexGrid->EnableDragColMove(false);
 		stTexGrid->EnableDragColSize(false);
 		stTexGrid->SetColLabelSize(30);
-		stTexGrid->SetColLabelValue(0, wxT("Game Texture Paths"));
+		stTexGrid->SetColLabelValue(0, "Game Texture Paths");
 		stTexGrid->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
 
 		// Rows
 		stTexGrid->AutoSizeRows();
 		stTexGrid->EnableDragRowSize(false);
 		stTexGrid->SetRowLabelSize(80);
-		stTexGrid->SetRowLabelValue(0, wxT("Diffuse"));
-		stTexGrid->SetRowLabelValue(1, wxT("Normal"));
-		stTexGrid->SetRowLabelValue(2, wxT("Glow/Skin"));
-		stTexGrid->SetRowLabelValue(3, wxT("Parallax"));
-		stTexGrid->SetRowLabelValue(4, wxT("Environment"));
-		stTexGrid->SetRowLabelValue(5, wxT("Env Mask"));
-		stTexGrid->SetRowLabelValue(6, wxT("6"));
-		stTexGrid->SetRowLabelValue(7, wxT("Specular"));
-		stTexGrid->SetRowLabelValue(8, wxT("8"));
-		stTexGrid->SetRowLabelValue(9, wxT("9"));
+		stTexGrid->SetRowLabelValue(0, "Diffuse");
+		stTexGrid->SetRowLabelValue(1, "Normal");
+		stTexGrid->SetRowLabelValue(2, "Glow/Skin");
+		stTexGrid->SetRowLabelValue(3, "Parallax");
+		stTexGrid->SetRowLabelValue(4, "Environment");
+		stTexGrid->SetRowLabelValue(5, "Env Mask");
+		stTexGrid->SetRowLabelValue(6, "6");
+		stTexGrid->SetRowLabelValue(7, "Specular");
+		stTexGrid->SetRowLabelValue(8, "8");
+		stTexGrid->SetRowLabelValue(9, "9");
 		stTexGrid->SetRowLabelAlignment(wxALIGN_LEFT, wxALIGN_CENTRE);
 
 		// Cell Defaults
