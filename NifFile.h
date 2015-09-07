@@ -960,7 +960,7 @@ public:
 
 	NiShader* GetShader(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
-	bool GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
+	int GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
 	void SetTextureForShape(const string& shapeName, string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();
 

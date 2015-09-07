@@ -475,22 +475,36 @@ bool NifFile::IsShaderSkin(const string& shapeName) {
 	return false;
 }
 
-bool NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
+int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
 	int textureSetRef = -1;
+	outTexFile.clear();
 
 	NiShader* shader = GetShader(shapeName);
 	if (shader)
 		textureSetRef = shader->GetTextureSetRef();
+	else
+		return 0;
 
-	if (textureSetRef == -1)
-		return false;
+	if (textureSetRef == -1) {
+		if (shader->blockType == BSEFFECTSHADERPROPERTY) {
+			BSEffectShaderProperty* effectShader = (BSEffectShaderProperty*)shader;
+			if (texIndex == 0)
+				outTexFile = effectShader->sourceTexture.str;
+			else if (texIndex == 1)
+				outTexFile = effectShader->greyscaleTexture.str;
+
+			return BSEFFECTSHADERPROPERTY;
+		}
+		else
+			return 0;
+	}
 
 	BSShaderTextureSet* textureSet = dynamic_cast<BSShaderTextureSet*>(blocks[textureSetRef]);
 	if (!textureSet || texIndex + 1 > textureSet->numTextures)
-		return false;
+		return 0;
 
 	outTexFile = textureSet->textures[texIndex].str;
-	return true;
+	return 1;
 }
 
 void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
@@ -499,9 +513,21 @@ void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, in
 	NiShader* shader = GetShader(shapeName);
 	if (shader)
 		textureSetRef = shader->GetTextureSetRef();
-
-	if (textureSetRef == -1)
+	else
 		return;
+	
+	if (textureSetRef == -1) {
+		if (shader->blockType == BSEFFECTSHADERPROPERTY) {
+			BSEffectShaderProperty* effectShader = (BSEffectShaderProperty*)shader;
+			if (texIndex == 0)
+				effectShader->sourceTexture.str = outTexFile;
+			else if (texIndex == 1)
+				effectShader->greyscaleTexture.str = outTexFile;
+			return;
+		}
+		else
+			return;
+	}
 
 	BSShaderTextureSet* textureSet = dynamic_cast<BSShaderTextureSet*>(blocks[textureSetRef]);
 	if (!textureSet || texIndex + 1 > textureSet->numTextures)

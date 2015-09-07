@@ -3387,16 +3387,31 @@ void OutfitStudio::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		// Cell Defaults
 		stTexGrid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
 
+		int shaderType = 0;
 		for (int i = 0; i < 9; i++) {
 			if (activeItem->bIsOutfitShape) {
-				if (!project->workNif.GetTextureForShape(activeItem->shapeName, texpath, i))
+				shaderType = project->workNif.GetTextureForShape(activeItem->shapeName, texpath, i);
+				if (!shaderType)
 					continue;
 			}
 			else {
-				if (!project->baseNif.GetTextureForShape(activeItem->shapeName, texpath, i))
+				shaderType = project->baseNif.GetTextureForShape(activeItem->shapeName, texpath, i);
+				if (!shaderType)
 					continue;
 			}
 			stTexGrid->SetCellValue(texpath, i, 0);
+		}
+
+		if (shaderType == BSEFFECTSHADERPROPERTY) {
+			stTexGrid->SetRowLabelValue(0, "Source");
+			stTexGrid->SetRowLabelValue(1, "Greyscale");
+			stTexGrid->HideRow(2);
+			stTexGrid->HideRow(3);
+			stTexGrid->HideRow(4);
+			stTexGrid->HideRow(5);
+			stTexGrid->HideRow(6);
+			stTexGrid->HideRow(7);
+			stTexGrid->HideRow(8);
 		}
 
 		oDispPath = project->OutfitTexture(activeItem->shapeName);
