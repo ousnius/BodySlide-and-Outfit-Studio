@@ -310,9 +310,9 @@ void NiAVObject::Init() {
 
 	flags = 14;
 	unkShort1 = 8;
-	rotation[0].x = 0.0f;
-	rotation[1].y = 0.0f;
-	rotation[2].z = 0.0f;
+	rotation[0].x = 1.0f;
+	rotation[1].y = 1.0f;
+	rotation[2].z = 1.0f;
 	scale = 1.0f;
 	numProperties = 0;
 	collisionRef = -1;
