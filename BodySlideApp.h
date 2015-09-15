@@ -33,11 +33,9 @@ class BodySlideFrame;
 
 class BodySlideApp : public wxApp {
 	/* UI Managers */
-	PreviewWindow* preview0;
-	PreviewWindow* preview1;
-
-	BodySlideFrame* sliderView;
-	OutfitStudio* outfitStudio;
+	BodySlideFrame* sliderView = nullptr;
+	PreviewWindow* preview = nullptr;
+	OutfitStudio* outfitStudio = nullptr;
 	bool straightOutfitStudio = false;
 
 	/* Data Managers */
@@ -59,7 +57,7 @@ class BodySlideApp : public wxApp {
 	string curOutfit;
 
 	string previewBaseName;
-	NifFile* previewBaseNif;
+	NifFile* previewBaseNif = nullptr;
 	NifFile PreviewMod;
 
 	/* Data Load/Setup */
@@ -72,7 +70,7 @@ public:
 	virtual bool OnInit();
 	virtual void OnInitCmdLine(wxCmdLineParser& parser);
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
-
+	
 	SliderCategoryCollection cCollection;
 	int targetGame;
 
@@ -139,26 +137,24 @@ public:
 	int WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>> zapIndices);
 
 	void CopySliderValues(bool toHigh);
-	void ShowPreview(char PreviewType = SMALL_PREVIEW);
-	void InitPreview(char PreviewType);
-	void ClosePreview(char PreviewType = SMALL_PREVIEW) {
-		PreviewWindow* win = (PreviewType == SMALL_PREVIEW) ? preview0 : preview1;
+	void ShowPreview();
+	void InitPreview();
+	void ClosePreview() {
 		// Calling Close() will cause PreviewClosed() to be called,
 		// where we reset the preview window pointer to null
-		if (win)
-			win->Close();
+		if (preview)
+			preview->Close();
 	}
-	void PreviewClosed(char PreviewType = SMALL_PREVIEW) {
-		PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-		*winPtr = nullptr;
+	void PreviewClosed() {
+		preview = nullptr;
 	}
 
 	void CloseOutfitStudio() {
 		outfitStudio = nullptr;
 	}
 
-	void UpdatePreview(char PreviewType = SMALL_PREVIEW);
-	void RebuildPreviewMeshes(char PreviewType);
+	void UpdatePreview();
+	void RebuildPreviewMeshes();
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
 	int BuildListBodies(const vector<string>& outfitList, map<string, string>& failedOutfits, bool remove = false, bool tri = false, const string& custPath = "");
@@ -278,8 +274,7 @@ private:
 	void OnSavePreset(wxCommandEvent& event);
 	void OnGroupManager(wxCommandEvent& event);
 
-	void OnPreviewHi(wxCommandEvent& event);
-	void OnPreviewLo(wxCommandEvent& event);
+	void OnPreview(wxCommandEvent& event);
 	void OnHighToLow(wxCommandEvent& event);
 	void OnLowToHigh(wxCommandEvent& event);
 	void OnBuildBodies(wxCommandEvent& event);
@@ -301,13 +296,7 @@ private:
 		return true;
 	}
 
-	long MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam);
-
 	BodySlideApp* app;
 
 	DECLARE_EVENT_TABLE();
-};
-
-enum {
-	ID_Hello = 1
 };

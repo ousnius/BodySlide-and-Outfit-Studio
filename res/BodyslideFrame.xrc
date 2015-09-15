@@ -201,47 +201,46 @@
 								<option>0</option>
 								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
-								<object class="wxBoxSizer">
-									<orient>wxHORIZONTAL</orient>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnPreviewLo">
-											<size>128,-1</size>
-											<fg>#000000</fg>
-											<tooltip>Show a preview of the low weight mesh for this outfit</tooltip>
-											<label>Preview Small</label>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnLowToHigh">
-											<size>26,-1</size>
-											<fg>#000000</fg>
-											<tooltip>Copy the low weight slider values to the high weight section.</tooltip>
-											<label>&#8594;</label>
-										</object>
-									</object>
+								<object class="wxButton" name="btnLowToHigh">
+									<size>26,-1</size>
+									<fg>#000000</fg>
+									<tooltip>Copy the low weight slider values to the high weight section.</tooltip>
+									<label>&#8594;</label>
 								</object>
 							</object>
 							<object class="spacer">
 								<option>1</option>
 								<flag>wxEXPAND</flag>
 								<border>5</border>
-								<size>0,25</size>
+								<size>0,15</size>
 							</object>
 							<object class="sizeritem">
 								<option>0</option>
 								<flag>wxALL</flag>
-								<border>10</border>
-								<object class="wxButton" name="btnBuildBatch">
-									<size>128,-1</size>
-									<fg>#000000</fg>
-									<tooltip>Build multiple outfits using the currently selected preset.\nNote: You must save slider settings to a preset before you can batch build with them.\n\nHold CTRL = Build to custom folders\nHold ALT = Clean all files from folders</tooltip>
-									<label>Batch Build...</label>
+								<border>5</border>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxButton" name="btnBuildBatch">
+											<size>128,-1</size>
+											<fg>#000000</fg>
+											<tooltip>Build multiple outfits using the currently selected preset.\nNote: You must save slider settings to a preset before you can batch build with them.\n\nHold CTRL = Build to custom folders\nHold ALT = Clean all files from folders</tooltip>
+											<label>Batch Build...</label>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxCheckBox" name="cbRaceMenu">
+											<fg>#c8c8c8</fg>
+											<label>RaceMenu Morphs</label>
+											<tooltip>Builds a TRI file alongside the low and high weight meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>
@@ -256,8 +255,19 @@
 								<option>0</option>
 								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
+								<object class="wxButton" name="btnPreview">
+									<size>128,-1</size>
+									<fg>#000000</fg>
+									<tooltip>Show a preview window for this outfit.</tooltip>
+									<label>Preview</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
 								<object class="wxButton" name="btnBuild">
-									<size>128,50</size>
+									<size>128,45</size>
 									<font>
 										<size>12</size>
 										<style>normal</style>
@@ -269,16 +279,6 @@
 									<tooltip>Create the low and high weight meshes for the currently selected outfit.\n\nHold CTRL = Build to custom folder\nHold ALT = Clean all files from folder</tooltip>
 									<label>Build</label>
 									<default>0</default>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALIGN_CENTER|wxALL</flag>
-								<border>5</border>
-								<object class="wxCheckBox" name="cbRaceMenu">
-									<fg>#c8c8c8</fg>
-									<label>RaceMenu Morphs</label>
-									<tooltip>Builds a TRI file alongside the low and high weight meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
 								</object>
 							</object>
 						</object>
@@ -293,37 +293,18 @@
 								<option>0</option>
 								<flag>wxALIGN_CENTER|wxALL</flag>
 								<border>5</border>
-								<object class="wxBoxSizer">
-									<orient>wxHORIZONTAL</orient>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnHighToLow">
-											<size>26,-1</size>
-											<fg>#000000</fg>
-											<tooltip>Copy the high weight slider values to the low weight section.</tooltip>
-											<label>&#8592;</label>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER|wxALL</flag>
-										<border>5</border>
-										<object class="wxButton" name="btnPreviewHi">
-											<size>128,-1</size>
-											<fg>#000000</fg>
-											<tooltip>Show a preview of the high weight mesh for this outfit</tooltip>
-											<label>Preview Big</label>
-										</object>
-									</object>
+								<object class="wxButton" name="btnHighToLow">
+									<size>26,-1</size>
+									<fg>#000000</fg>
+									<tooltip>Copy the high weight slider values to the low weight section.</tooltip>
+									<label>&#8592;</label>
 								</object>
 							</object>
 							<object class="spacer">
 								<option>1</option>
 								<flag>wxEXPAND</flag>
 								<border>5</border>
-								<size>0,26</size>
+								<size>0,15</size>
 							</object>
 							<object class="sizeritem">
 								<option>0</option>

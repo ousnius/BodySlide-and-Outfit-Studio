@@ -30,32 +30,32 @@ distribution.
 
 #include <wx/glcanvas.h>
 
-#define SMALL_PREVIEW 0
-#define BIG_PREVIEW 1
-
 class BodySlideApp;
 class PreviewCanvas;
 
 class PreviewWindow : public wxFrame
 {
-	BodySlideApp* app{ nullptr };
-	PreviewCanvas* canvas{ nullptr };
-	wxGLContext* context{ nullptr };
+	BodySlideApp* app = nullptr;
+	PreviewCanvas* canvas = nullptr; 
+	wxGLContext* context = nullptr;
 
 	GLSurface gls;
 	unordered_map<string, GLMaterial*> shapeTextures;
 	string baseDataPath;
-	bool isSmall;
+	int weight = 100;
 
 	DECLARE_EVENT_TABLE();
-	static const char* GetTitle(char previewType);
 	static wxSize GetDefaultSize();
 
 public:
-	PreviewWindow(BodySlideApp* app, char previewType = SMALL_PREVIEW);
+	PreviewWindow(BodySlideApp* app);
 	~PreviewWindow();
 
 	void OnShown();
+
+	int GetWeight() {
+		return weight;
+	}
 
 	void SetBaseDataPath(const string& path) {
 		baseDataPath = path;
@@ -156,6 +156,7 @@ public:
 
 	}
 
+	void OnWeightSlider(wxScrollEvent& event);
 	void OnClose(wxCloseEvent& event);
 
 	void RightDrag(int dX, int dY);
@@ -167,8 +168,8 @@ public:
 };
 
 class PreviewCanvas : public wxGLCanvas {
-	PreviewWindow* previewWindow{nullptr};
-	bool firstPaint{true};
+	PreviewWindow* previewWindow = nullptr;
+	bool firstPaint = true;
 	wxPoint lastMousePosition;
 
 public:

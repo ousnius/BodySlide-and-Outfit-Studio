@@ -28,12 +28,6 @@ distribution.
 PreviewWindow::~PreviewWindow() {
 }
 
-const char* PreviewWindow::GetTitle(char previewType) {
-	if (previewType == SMALL_PREVIEW)
-		return "Preview: Small Size";
-	return "Preview: Large Size";
-}
-
 wxSize PreviewWindow::GetDefaultSize() {
 	int xborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_X);
 	if (xborder < 0)
@@ -41,14 +35,31 @@ wxSize PreviewWindow::GetDefaultSize() {
 	int yborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_Y);
 	if (yborder < 0)
 		yborder = 0;
-	return wxSize(768 + xborder * 2, 768 + yborder * 2);
+	return wxSize(720 + xborder * 2, 720 + yborder * 2);
 }
 
-PreviewWindow::PreviewWindow(BodySlideApp* a, char previewType)
-	: wxFrame(nullptr, wxID_ANY, GetTitle(previewType), wxDefaultPosition, GetDefaultSize()), app(a), isSmall(previewType == SMALL_PREVIEW) {
+PreviewWindow::PreviewWindow(BodySlideApp* a)
+	: wxFrame(nullptr, wxID_ANY, "Preview", wxDefaultPosition, GetDefaultSize()), app(a) {
 	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
+
+	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
+
+	wxPanel* uiPanel = new wxPanel(this);
+	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS);
+
+	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
+
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs(this));
 	context = new wxGLContext(canvas);
+	
+	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
+	uiPanel->SetSizer(sizerPanel);
+
+	sizer->Add(uiPanel, 0, wxEXPAND);
+	sizer->Add(canvas, 1, wxEXPAND);
+
+	SetSizer(sizer);
 	Show();
 }
 
@@ -63,7 +74,7 @@ void PreviewWindow::OnShown() {
 	int brightness3 = Config.GetIntValue("Lights/Brightness3");
 	gls.UpdateLights(ambient, brightness1, brightness2, brightness3);
 
-	app->InitPreview(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
+	app->InitPreview();
 }
 
 void PreviewWindow::AddMeshDirect(mesh* m) {
@@ -191,15 +202,21 @@ void PreviewWindow::Pick(int X, int Y) {
 	Refresh();
 }
 
+void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
+	weight = event.GetPosition();
+	app->UpdatePreview();
+}
+
 void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	Destroy();
 	canvas = nullptr;
 	delete context;
-	app->PreviewClosed(isSmall ? SMALL_PREVIEW : BIG_PREVIEW);
+	app->PreviewClosed();
 }
 
 BEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
 	EVT_CLOSE(PreviewWindow::OnClose)
+	EVT_COMMAND_SCROLL(wxID_ANY, PreviewWindow::OnWeightSlider)
 END_EVENT_TABLE();
 
 PreviewCanvas::PreviewCanvas(PreviewWindow* pw, const int* attribs)
@@ -242,6 +259,9 @@ void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
 }
 
 void PreviewCanvas::OnMotion(wxMouseEvent& event) {
+	if (previewWindow->IsActive())
+		SetFocus();
+
 	if (event.LeftIsDown()) {
 		auto delta = event.GetPosition() - lastMousePosition;
 		previewWindow->LeftDrag(delta.x, delta.y);

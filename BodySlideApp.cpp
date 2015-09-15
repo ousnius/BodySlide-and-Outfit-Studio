@@ -19,8 +19,7 @@ BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_CHOICE(XRCID("outfitChoice"), BodySlideFrame::OnChooseOutfit)
 	EVT_CHOICE(XRCID("presetChoice"), BodySlideFrame::OnChoosePreset)
 
-	EVT_BUTTON(XRCID("btnPreviewHi"), BodySlideFrame::OnPreviewHi)
-	EVT_BUTTON(XRCID("btnPreviewLo"), BodySlideFrame::OnPreviewLo)
+	EVT_BUTTON(XRCID("btnPreview"), BodySlideFrame::OnPreview)
 	EVT_BUTTON(XRCID("btnHighToLow"), BodySlideFrame::OnHighToLow)
 	EVT_BUTTON(XRCID("btnLowToHigh"), BodySlideFrame::OnLowToHigh)
 	EVT_BUTTON(XRCID("btnBuildBatch"), BodySlideFrame::OnBatchBuild)
@@ -49,12 +48,6 @@ BodySlideApp::~BodySlideApp() {
 	delete previewBaseNif;
 	previewBaseNif = nullptr;
 
-	if (preview0)
-		ClosePreview(SMALL_PREVIEW);
-
-	if (preview1)
-		ClosePreview(BIG_PREVIEW);
-
 	Config.SaveConfig("Config.xml");
 	FSManager::del();
 }
@@ -65,8 +58,7 @@ bool BodySlideApp::OnInit() {
 
 	wxInitAllImageHandlers();
 
-	preview0 = nullptr;
-	preview1 = nullptr;
+	preview = nullptr;
 	sliderView = nullptr;
 	previewBaseNif = nullptr;
 	outfitStudio = nullptr;
@@ -127,11 +119,8 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 	sliderView->ClearPresetList();
 	sliderView->ClearSliderGUI();
 
-	if (preview0)
-		preview0->Close();
-
-	if (preview1)
-		preview1->Close();
+	if (preview)
+		preview->Close();
 
 	sliderManager.ClearSliders();
 	sliderManager.ClearPresets();
@@ -222,11 +211,8 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	sliderView->ClearPresetList();
 	sliderView->ClearSliderGUI();
 
-	if (preview0)
-		preview0->Close();
-
-	if (preview1)
-		preview1->Close();
+	if (preview)
+		preview->Close();
 
 	string activePreset = Config.GetCString("SelectedPreset");
 
@@ -254,11 +240,8 @@ void BodySlideApp::ActivatePreset(const string &presetName) {
 		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
 	}
 
-	if (preview0)
-		UpdatePreview(SMALL_PREVIEW);
-
-	if (preview1)
-		UpdatePreview(BIG_PREVIEW);
+	if (preview)
+		UpdatePreview();
 }
 
 void BodySlideApp::RefreshSliders() {
@@ -270,11 +253,9 @@ void BodySlideApp::RefreshSliders() {
 		slider = &sliderManager.slidersSmall[i];
 		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
 	}
-	if (preview0)
-		UpdatePreview(SMALL_PREVIEW);
 
-	if (preview1)
-		UpdatePreview(BIG_PREVIEW);
+	if (preview)
+		UpdatePreview();
 }
 
 void BodySlideApp::PopulatePresetList(const string& select) {
@@ -491,24 +472,19 @@ void BodySlideApp::CopySliderValues(bool toHigh) {
 		}
 	}
 
-	if (preview0)
-		UpdatePreview(SMALL_PREVIEW);
-
-	if (preview1)
-		UpdatePreview(BIG_PREVIEW);
+	if (preview)
+		UpdatePreview();
 }
 
-void BodySlideApp::ShowPreview(char PreviewType) {
-	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-	if (*winPtr)
+void BodySlideApp::ShowPreview() {
+	if (preview)
 		return;
 
-	*winPtr = new PreviewWindow(this, PreviewType);
+	preview = new PreviewWindow(this);
 }
 
-void BodySlideApp::InitPreview(char PreviewType) {
-	PreviewWindow* win = (PreviewType == SMALL_PREVIEW) ? preview0 : preview1;
-	if (!win)
+void BodySlideApp::InitPreview() {
+	if (!preview)
 		return;
 
 	string inputFileName;
@@ -547,10 +523,7 @@ void BodySlideApp::InitPreview(char PreviewType) {
 
 		previewBaseNif->GetUvsForShape(it->second, uvs);
 
-		if (PreviewType == SMALL_PREVIEW)
-			ApplySliders(it->first, sliderManager.slidersSmall, verts, zapIdx, &uvs);
-		else
-			ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx, &uvs);
+		ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx, &uvs);
 
 		// Zap deleted verts before preview
 		if (freshLoad && zapIdx.size() > 0) {
@@ -578,26 +551,26 @@ void BodySlideApp::InitPreview(char PreviewType) {
 	}
 
 	string baseGamePath = Config["GameDataPath"];
-	win->AddMeshFromNif(&PreviewMod);
-	win->SetBaseDataPath(baseGamePath);
+	preview->AddMeshFromNif(&PreviewMod);
+	preview->SetBaseDataPath(baseGamePath);
 
 	vector<string> shapeNames;
 	PreviewMod.GetShapeList(shapeNames);
 	for (auto &s : shapeNames)
-		win->AddNifShapeTexture(&PreviewMod, s);
+		preview->AddNifShapeTexture(&PreviewMod, s);
 
-	win->Refresh();
+	preview->Refresh();
 }
 
-void BodySlideApp::UpdatePreview(char PreviewType) {
-	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-	if (!(*winPtr))
+void BodySlideApp::UpdatePreview() {
+	if (!preview)
 		return;
 
 	if (!previewBaseNif)
 		return;
-
-	vector<Vector3> verts;
+	
+	int weight = preview->GetWeight();
+	vector<Vector3> verts, vertsLow, vertsHigh;
 	vector<Vector2> uv;
 	vector<ushort> zapIdx;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
@@ -606,11 +579,15 @@ void BodySlideApp::UpdatePreview(char PreviewType) {
 			continue;
 
 		previewBaseNif->GetUvsForShape(it->second, uv);
+		vertsHigh = verts;
+		vertsLow = verts;
 
-		if (PreviewType == SMALL_PREVIEW)
-			ApplySliders(it->first, sliderManager.slidersSmall, verts, zapIdx, &uv);
-		else
-			ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx, &uv);
+		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uv);
+		ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uv);
+
+		// Calculate result of weight
+		for (int i = 0; i < verts.size(); i++)
+			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
 
 		// Zap deleted verts before applying to the shape
 		if (zapIdx.size() > 0) {
@@ -621,32 +598,37 @@ void BodySlideApp::UpdatePreview(char PreviewType) {
 				uv.erase(uv.begin() + zapIdx[z]);
 			}
 		}
-		(*winPtr)->Update(it->second, &verts, &uv);
+		preview->Update(it->second, &verts, &uv);
 	}
 }
 
-void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
-	PreviewWindow** winPtr = (PreviewType == SMALL_PREVIEW) ? &preview0 : &preview1;
-	if (!(*winPtr))
+void BodySlideApp::RebuildPreviewMeshes() {
+	if (!preview)
 		return;
 
 	if (!previewBaseNif)
 		return;
 
+	int weight = preview->GetWeight();
 	PreviewMod.CopyFrom((*previewBaseNif));
-
-	vector<Vector3> verts;
+	
+	vector<Vector3> verts, vertsLow, vertsHigh;
 	vector<ushort> zapIdx;
 	Vector3 v;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		zapIdx.clear();
 		if (!previewBaseNif->GetVertsForShape(it->second, verts))
 			continue;
+		
+		vertsHigh = verts;
+		vertsLow = verts;
 
-		if (PreviewType == SMALL_PREVIEW)
-			ApplySliders(it->first, sliderManager.slidersSmall, verts, zapIdx);
-		else
-			ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx);
+		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
+		ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
+		
+		// Calculate result of weight
+		for (int i = 0; i < verts.size(); i++)
+			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
 
 		// Zap deleted verts before preview
 		if (zapIdx.size() > 0) {
@@ -660,7 +642,7 @@ void  BodySlideApp::RebuildPreviewMeshes(char PreviewType) {
 		}
 	}
 
-	(*winPtr)->RefreshMeshFromNif(&PreviewMod);
+	preview->RefreshMeshFromNif(&PreviewMod);
 }
 
 void BodySlideApp::SetDefaultConfig() {
@@ -1464,13 +1446,11 @@ void BodySlideFrame::ShowLowColumn(bool show) {
 	if (show) {
 		XRCCTRL(*this, "lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(true);
 		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(false);
-		XRCCTRL(*this, "btnPreviewLo", wxButton)->Show(true);
 		sliderLayout->SetCols(6);
 	}
 	else {
 		XRCCTRL(*this, "lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(false);
 		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(true);
-		XRCCTRL(*this, "btnPreviewLo", wxButton)->Hide();
 		sliderLayout->SetCols(3);
 	}
 }
@@ -1677,8 +1657,7 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
-	app->ClosePreview(SMALL_PREVIEW);
-	app->ClosePreview(BIG_PREVIEW);
+	app->ClosePreview();
 	Destroy();
 }
 
@@ -1732,14 +1711,12 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 
 	app->SetSliderValue(name, isLo, event.GetPosition() / 100.0f);
 	app->SetSliderChanged(name, isLo);
-	if (isLo) {
+	if (isLo)
 		sd->sliderReadoutLo->SetValue(wxString::Format("%d%%", event.GetPosition()));
-		app->UpdatePreview(SMALL_PREVIEW);
-	}
-	else {
+	else
 		sd->sliderReadoutHi->SetValue(wxString::Format("%d%%", event.GetPosition()));
-		app->UpdatePreview(BIG_PREVIEW);
-	}
+
+	app->UpdatePreview();
 }
 
 void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
@@ -1764,15 +1741,12 @@ void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 
 	app->SetSliderValue(name, isLo, (float)v / 100.0f);
 
-	if (isLo) {
+	if (isLo)
 		sd->sliderLo->SetValue(v);
-		app->UpdatePreview(SMALL_PREVIEW);
-
-	}
-	else {
+	else
 		sd->sliderHi->SetValue(v);
-		app->UpdatePreview(BIG_PREVIEW);
-	}
+
+	app->UpdatePreview();
 
 	event.Skip();
 }
@@ -1860,8 +1834,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	app->SetSliderChanged(sliderName, isLo);
 
 	wxBeginBusyCursor();
-	app->RebuildPreviewMeshes(SMALL_PREVIEW);
-	app->RebuildPreviewMeshes(BIG_PREVIEW);
+	app->RebuildPreviewMeshes();
 	wxEndBusyCursor();
 }
 
@@ -2009,18 +1982,11 @@ void BodySlideFrame::OnLowToHigh(wxCommandEvent& WXUNUSED(event)) {
 	app->CopySliderValues(true);
 }
 
-void BodySlideFrame::OnPreviewHi(wxCommandEvent& WXUNUSED(event)) {
+void BodySlideFrame::OnPreview(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	app->ShowPreview(BIG_PREVIEW);
-}
-
-void BodySlideFrame::OnPreviewLo(wxCommandEvent& WXUNUSED(event)) {
-	if (OutfitIsEmpty())
-		return;
-
-	app->ShowPreview(SMALL_PREVIEW);
+	app->ShowPreview();
 }
 
 void BodySlideFrame::OnBuildBodies(wxCommandEvent& WXUNUSED(event)) {
@@ -2242,20 +2208,4 @@ void BodySlideFrame::OnSetSize(wxSizeEvent& event) {
 	Config.SetValue("BodySlideFrame.width", p.x);
 	Config.SetValue("BodySlideFrame.height", p.y);
 	event.Skip();
-}
-
-long BodySlideFrame::MSWWindowProc(WXUINT nMsg, WXWPARAM wParam, WXLPARAM lParam) {
-	switch (nMsg) {
-	case MSG_PREVIEWCLOSING:
-		app->ClosePreview(SMALL_PREVIEW);
-		return 0;
-		break;
-	case MSG_BIGPREVIEWCLOSING:
-		app->ClosePreview(BIG_PREVIEW);
-		return 0;
-		break;
-	default:
-		break;
-	}
-	return wxFrame::MSWWindowProc(nMsg, wParam, lParam);
 }
