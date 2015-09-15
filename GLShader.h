@@ -111,6 +111,7 @@ public:
 	}
 
 	~GLMaterial() {
+		glDeleteTextures(8, &texRef[0]);
 		if (shader)
 			delete shader;
 	}

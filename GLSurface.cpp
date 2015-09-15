@@ -449,8 +449,6 @@ int GLSurface::InitGLSettings() {
 	initLighting();
 	initMaterial(Vector3(0.8f, 0.8f, 0.8f));
 
-	noImage = resLoader.AddMaterial("res\\NoImg.png", "res\\maskvshader.vs", "res\\defshader.fs");
-
 	return 0;
 }
 
@@ -465,6 +463,8 @@ void GLSurface::Cleanup() {
 	overlays.clear();
 	namedMeshes.clear();
 	namedOverlays.clear();
+	skinMaterial = nullptr;
+	noImage = nullptr;
 
 	resLoader.Cleanup();
 }
@@ -1858,8 +1858,12 @@ RenderMode GLSurface::SetMeshRenderMode(const string& name, RenderMode mode) {
 
 GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
 	GLMaterial* mat = resLoader.AddMaterial(textureFile, vShaderFile, fShaderFile);
-	if (!mat) // Use noImage material if loader failed
+	if (!mat) {
+		// Use noImage material if loader failed
+		if (!noImage)
+			noImage = resLoader.AddMaterial("res\\NoImg.png", "res\\maskvshader.vs", "res\\defshader.fs");
 		mat = noImage;
+	}
 
 	// Assume the first loaded material is always the skin material.
 	// (This seems like a hack, but matches the behavior of the old code.)

@@ -46,9 +46,6 @@ public:
 	vector<Slider> slidersBig;
 	vector<Slider> slidersSmall;
 
-	map<int, int> sliderEdits;  // ControlID -> slider index.
-
-
 	SliderManager();
 	~SliderManager();
 

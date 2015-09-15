@@ -53,6 +53,11 @@ public:
 
 	void OnShown();
 
+	void Cleanup() {
+		gls.Cleanup();
+		shapeTextures.clear();
+	}
+
 	int GetWeight() {
 		return weight;
 	}

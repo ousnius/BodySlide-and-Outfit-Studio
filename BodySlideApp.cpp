@@ -134,6 +134,7 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 }
 
 int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
+	dataSets.Clear();
 	if (outfitNameSource.find(outfit) == outfitNameSource.end())
 		return 1;
 
@@ -211,9 +212,6 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	sliderView->ClearPresetList();
 	sliderView->ClearSliderGUI();
 
-	if (preview)
-		preview->Close();
-
 	string activePreset = Config.GetCString("SelectedPreset");
 
 	sliderManager.ClearPresets();
@@ -221,8 +219,10 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	LoadPresets(outfitName);
 	PopulatePresetList(activePreset);
 	createSetSliders(outfitName);
-	ActivatePreset(activePreset);
 	PopulateOutfitList(outfitName);
+
+	InitPreview();
+	ActivatePreset(activePreset);
 
 	sliderView->Thaw();
 	sliderView->Refresh();
@@ -486,6 +486,8 @@ void BodySlideApp::ShowPreview() {
 void BodySlideApp::InitPreview() {
 	if (!preview)
 		return;
+
+	preview->Cleanup();
 
 	string inputFileName;
 	bool freshLoad = false;
