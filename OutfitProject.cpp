@@ -109,7 +109,10 @@ string OutfitProject::Save(const string& strFileName,
 
 		for (auto &os : outfitShapes) {
 			targ = ShapeToTarget(os);
-			targSlider = targ + outSet[i].name;
+			targSlider = activeSet[i].TargetDataName(targ);
+			if (targSlider.empty())
+				targSlider = targ + outSet[i].name;
+
 			targSliderFile = targSlider + ".bsd";
 			if (morpher.GetResultDiffSize(os, activeSet[i].name) > 0) {
 				string shapeDataFolder = activeSet.ShapeToDataFolder(os);
@@ -871,8 +874,12 @@ void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sli
 	
 	string target = ShapeToTarget(shapeName);
 	string dataName = activeSet[sliderName].TargetDataName(target);
-	if (!vertUpdates.empty())
-		activeSet[sliderName].SetLocalData(dataName);
+	if (!vertUpdates.empty()) {
+		if (dataName.empty())
+			activeSet[sliderName].AddDataFile(target, target + sliderName, target + sliderName + ".bsd");
+		else
+			activeSet[sliderName].SetLocalData(dataName);
+	}
 
 	if (IsOutfit) {
 		morpher.UpdateResultDiff(shapeName, sliderName, vertUpdates);
