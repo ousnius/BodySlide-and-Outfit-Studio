@@ -2862,7 +2862,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	while (curItem.IsOk()) {
 		selectedItems.clear();
 		selectedItems.push_back((ShapeItemData*)outfitShapes->GetItemData(curItem));
-		UpdateProgress(pos * inc, "Conforming: " + activeItem->shapeName);
+		UpdateProgress(pos * inc, "Conforming: " + selectedItems.front()->shapeName);
 		StartSubProgress(pos * inc, pos * inc + inc);
 		OnSliderConform(event);
 		curItem = outfitShapes->GetNextChild(outfitRoot, cookie);

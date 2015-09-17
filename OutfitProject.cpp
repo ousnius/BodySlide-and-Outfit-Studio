@@ -57,7 +57,7 @@ string OutfitProject::Save(const string& strFileName,
 	owner->UpdateProgress(prog);
 
 	if (copyRef) {
-		// Add all the reference shapes to the target list. Reference shapes also get reference data folders for their bsd files.
+		// Add all the reference shapes to the target list.
 		for (auto &rs : refShapes) {
 			outSet.AddShapeTarget(rs, ShapeToTarget(rs));
 			outSet.AddTargetDataFolder(ShapeToTarget(rs), activeSet.ShapeToDataFolder(rs));
@@ -67,6 +67,12 @@ string OutfitProject::Save(const string& strFileName,
 	// Add all the outfit shapes to the target list.
 	for (auto &os : outfitShapes) {
 		outSet.AddShapeTarget(os, ShapeToTarget(os));
+
+		// Reference only if not local folder
+		string shapeDataFolder = activeSet.ShapeToDataFolder(os);
+		if (shapeDataFolder != activeSet.GetDefaultDataFolder())
+			outSet.AddTargetDataFolder(ShapeToTarget(os), activeSet.ShapeToDataFolder(os));
+
 		owner->UpdateProgress(prog += step, "Adding outfit shapes...");
 	}
 
@@ -91,7 +97,7 @@ string OutfitProject::Save(const string& strFileName,
 				targSliderFile = activeSet[i].DataFileName(targSlider);
 				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 					if (activeSet[i].IsLocalData(targSlider)) {
-						outSet[id].AddDataFile(targ, targSlider, targSliderFile, true);
+						outSet[id].AddDataFile(targ, targSlider, targSliderFile);
 						saveFileName = saveDataPath + "\\" + targSliderFile;
 						baseDiffData.SaveSet(targSlider, targ, saveFileName);
 					}
@@ -106,9 +112,14 @@ string OutfitProject::Save(const string& strFileName,
 			targSlider = targ + outSet[i].name;
 			targSliderFile = targSlider + ".bsd";
 			if (morpher.GetResultDiffSize(os, activeSet[i].name) > 0) {
-				outSet[i].AddDataFile(targ, targSlider, targSliderFile);
-				saveFileName = saveDataPath + "\\" + targSliderFile;
-				morpher.SaveResultDiff(os, activeSet[i].name, saveFileName);
+				string shapeDataFolder = activeSet.ShapeToDataFolder(os);
+				if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
+					outSet[i].AddDataFile(targ, targSlider, targSliderFile);
+					saveFileName = saveDataPath + "\\" + targSliderFile;
+					morpher.SaveResultDiff(os, activeSet[i].name, saveFileName);
+				}
+				else
+					outSet[i].AddDataFile(targ, targSlider, targSliderFile, false);
 			}
 		}
 		owner->UpdateProgress(prog += step, "Calculating slider data...");
@@ -272,7 +283,7 @@ void OutfitProject::AddEmptySlider(const string& newName) {
 		string target = ShapeToTarget(s);
 		string shapeAbbrev = NameAbbreviate(s);
 		string shapeSlider = target + sliderAbbrev;
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd", true);
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
 		activeSet.AddShapeTarget(s, target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 	}
@@ -298,7 +309,7 @@ void OutfitProject::AddZapSlider(const string& newName, unordered_map<ushort, fl
 		morpher.SetResultDiff(shapeName, newName, diffData);
 	}
 	else {
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd", true);
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
 		activeSet.AddShapeTarget(shapeName, target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 		for (auto &i : diffData)
@@ -326,7 +337,7 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 	for (auto &rs : refShapes) {
 		string target = ShapeToTarget(rs);
 		string shapeSlider = target + sliderAbbrev;
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd", true);
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
 		baseDiffData.AddEmptySet(shapeSlider, target);
 		GetLiveRefVerts(rs, verts);
 		baseNif.CalcShapeDiff(rs, &verts, diffData);
@@ -857,17 +868,19 @@ void OutfitProject::UpdateShapeFromMesh(const string& shapeName, const mesh* m, 
 void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& vertUpdates, bool IsOutfit) {
 	// Morph results are stored in two different places depending on whether it's an outfit or the base shape.
 	// The outfit morphs are stored in the automorpher, whereas the base shape diff info is stored in directly in basediffdata.
+	
+	string target = ShapeToTarget(shapeName);
+	string dataName = activeSet[sliderName].TargetDataName(target);
+	if (!vertUpdates.empty())
+		activeSet[sliderName].SetLocalData(dataName);
+
 	if (IsOutfit) {
 		morpher.UpdateResultDiff(shapeName, sliderName, vertUpdates);
 	}
 	else {
-		string target = ShapeToTarget(shapeName);
-		string dataName = activeSet[sliderName].TargetDataName(target);
-
 		for (auto &i : vertUpdates) {
 			Vector3 diffscale = Vector3(i.second.x * -10, i.second.z * 10, i.second.y * 10);
 			baseDiffData.SumDiff(dataName, target, i.first, diffscale);
-			activeSet[sliderName].SetLocalData(dataName);
 		}
 	}
 }
@@ -1591,21 +1604,15 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 		owner->EndProgress();
 		return 1;
 	}
-	owner->UpdateProgress(10.0f, "Retrieving outfit sliders...");
-	SliderSet tmpSet;
-	if (InSS.GetSet(sliderSetName, tmpSet)) {
-		owner->EndProgress();
-		return 2;
-	}
-	owner->UpdateProgress(20.0f, "Retrieving reference sliders...");
-	if (InSS.GetSet(sliderSetName, activeSet, LOADSS_REFERENCE | LOADSS_ADDEXCLUDED)) {
+
+	owner->UpdateProgress(20.0f, "Retrieving sliders...");
+	if (InSS.GetSet(sliderSetName, activeSet)) {
 		owner->EndProgress();
 		return 3;
 	}
 
-	tmpSet.SetBaseDataPath(Config["ShapeDataPath"]);
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
-	string inputNif = tmpSet.GetInputFileName();
+	string inputNif = activeSet.GetInputFileName();
 
 	owner->UpdateProgress(30.0f, "Loading outfit shapes...");
 	if (LoadOutfit(inputNif, sliderSetName)) {
@@ -1613,29 +1620,35 @@ int OutfitProject::OutfitFromSliderSet(const string& filename, const string& sli
 		return 4;
 	}
 
+	// First external target with skin shader becomes reference
 	vector<string> refTargets;
 	activeSet.GetReferencedTargets(refTargets);
-	if (!refTargets.empty())
-		baseShapeName = activeSet.TargetToShape(refTargets[0]);
+	for (auto &target : refTargets) {
+		if (workNif.IsShaderSkin(target)) {
+			baseShapeName = activeSet.TargetToShape(target);
+			break;
+		}
+	}
 
+	// Prevent duplication if valid reference was found
 	if (!baseShapeName.empty())
 		DeleteOutfitShape(baseShapeName);
 
 	owner->UpdateProgress(90.0f, "Updating slider data...");
-	morpher.LoadResultDiffs(tmpSet);
+	morpher.LoadResultDiffs(activeSet);
 
 	mFileName = filename;
 	mOutfitName = sliderSetName;
-	mDataDir = tmpSet.GetDefaultDataFolder();
-	mBaseFile = tmpSet.GetInputFileName();
+	mDataDir = activeSet.GetDefaultDataFolder();
+	mBaseFile = activeSet.GetInputFileName();
 	size_t slashpos = mBaseFile.rfind("\\");
 	if (slashpos != string::npos)
 		mBaseFile = mBaseFile.substr(slashpos + 1);
 
-	mGamePath = tmpSet.GetOutputPath();
-	mGameFile = tmpSet.GetOutputFile();
+	mGamePath = activeSet.GetOutputPath();
+	mGameFile = activeSet.GetOutputFile();
 	mCopyRef = true;
-	mGenWeights = tmpSet.GenWeights();
+	mGenWeights = activeSet.GenWeights();
 
 	owner->UpdateProgress(100.0f, "Finished");
 	owner->EndProgress();
@@ -1739,8 +1752,10 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 	else {
 		baseNif.RenameShape(shapeName, newShapeName);
 		baseAnim.RenameShape(shapeName, newShapeName);
-		activeSet.RenameShape(shapeName, newShapeName);
 	}
+
+	activeSet.RenameShape(shapeName, newShapeName);
+
 	if (shapeDirty.find(shapeName) != shapeDirty.end()) {
 		shapeDirty.erase(shapeName);
 		shapeDirty[newShapeName] = true;

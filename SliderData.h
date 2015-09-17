@@ -98,13 +98,12 @@ public:
 	void ClearDataFiles() {
 		dataFiles.clear();
 	}
-	int LoadSliderData(XMLElement* srcdata, set<string>* exclude_targets = nullptr);
+	int LoadSliderData(XMLElement* srcdata);
 };
 
 
 #define LOADSS_REFERENCE 1		// Excludes targets from slider set that are referenced.
 #define LOADSS_DIRECT    2		// Excludes targets from slider set that are referenced.
-#define LOADSS_ADDEXCLUDED 4	// Creates an empty slider entry when an excluded target doesn't have a data file for a particular slider.
 
 class SliderSet
 {
@@ -164,7 +163,7 @@ public:
 		baseDataPath = inPath;
 	}
 
-	int LoadSliderSet(XMLElement* sliderSetSource, uint flags = LOADSS_REFERENCE | LOADSS_DIRECT);
+	int LoadSliderSet(XMLElement* sliderSetSource);
 	void LoadSetDiffData(DiffDataSets& inDataStorage);
 
 	// Add an empty set.
@@ -344,7 +343,7 @@ public:
 	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
 	int GetAllSets(vector<SliderSet>& outAppendSets);
 	// Gets a single slider set from the XML document based on the name.
-	int GetSet(const string& setName, SliderSet& outSliderSet, uint flags = LOADSS_DIRECT | LOADSS_REFERENCE);
+	int GetSet(const string& setName, SliderSet& outSliderSet);
 	// Updates a slider set in the xml document with the provided set's information.
 	// If the set does not already exist in the file (based on name) the set is added.
 	int UpdateSet(SliderSet& inSliderSet);

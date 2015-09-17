@@ -20,7 +20,7 @@ SliderData::SliderData(XMLElement* element) {
 	LoadSliderData(element);
 }
 
-int SliderData::LoadSliderData(XMLElement* element, set<string>* exclude_targets) {
+int SliderData::LoadSliderData(XMLElement* element) {
 	//Outfit Studio state values, not saved in XML.
 	curValue = 0;
 	bShow = false;
@@ -61,12 +61,6 @@ int SliderData::LoadSliderData(XMLElement* element, set<string>* exclude_targets
 	XMLElement* datafile = element->FirstChildElement("datafile");
 	while (datafile) {
 		tmpDataFile.targetName = datafile->Attribute("target");
-		if (exclude_targets) {
-			if (exclude_targets->find(tmpDataFile.targetName) != exclude_targets->end()) {
-				datafile = datafile->NextSiblingElement("datafile");
-				continue;
-			}
-		}
 
 		if (datafile->Attribute("local"))
 			tmpDataFile.bLocal = (_strnicmp(datafile->Attribute("local"), "true", 4) == 0);
@@ -141,7 +135,7 @@ int SliderSet::CopySlider(SliderData* other) {
 	return sliders.size() - 1;
 }
 
-int SliderSet::LoadSliderSet(XMLElement* element, uint flags) {
+int SliderSet::LoadSliderSet(XMLElement* element) {
 	name = element->Attribute("name");
 	XMLElement* tmpElement;
 	tmpElement = element->FirstChildElement("SetFolder");
@@ -165,28 +159,13 @@ int SliderSet::LoadSliderSet(XMLElement* element, uint flags) {
 			}
 		}
 	}
-	set<string> exclude_targets;
+
 	XMLElement* shapeName = element->FirstChildElement("BaseShapeName");
 	while (shapeName) {
-		if (shapeName->Attribute("DataFolder")) {
-			if ((flags & LOADSS_REFERENCE) == 0) {
-				exclude_targets.insert(shapeName->Attribute("target"));
-				shapeName = shapeName->NextSiblingElement("BaseShapeName");
-				continue;
-			}
+		if (shapeName->Attribute("DataFolder"))
 			targetdatafolders[shapeName->Attribute("target")] = shapeName->Attribute("DataFolder");
-			targetshapenames[shapeName->Attribute("target")] = shapeName->GetText();
-		}
-		else {
-			if ((flags & LOADSS_DIRECT) == 0) {
-				exclude_targets.insert(shapeName->Attribute("target"));
-				shapeName = shapeName->NextSiblingElement("BaseShapeName");
-				continue;
-			}
-			targetdatafolders[shapeName->Attribute("target")] = datafolder;
-			targetshapenames[shapeName->Attribute("target")] = shapeName->GetText();
-		}
 
+		targetshapenames[shapeName->Attribute("target")] = shapeName->GetText();
 		shapeName = shapeName->NextSiblingElement("BaseShapeName");
 	}
 
@@ -194,13 +173,8 @@ int SliderSet::LoadSliderSet(XMLElement* element, uint flags) {
 	SliderData tmpSlider;
 	while (sliderEntry) {
 		tmpSlider.Clear();
-		if (tmpSlider.LoadSliderData(sliderEntry, &exclude_targets) == 0) {
+		if (tmpSlider.LoadSliderData(sliderEntry) == 0)
 			sliders.push_back(tmpSlider);
-		}
-		else if ((flags & LOADSS_ADDEXCLUDED) != 0) {
-			tmpSlider.ClearDataFiles();
-			sliders.push_back(tmpSlider);
-		}
 
 		sliderEntry = sliderEntry->NextSiblingElement("Slider");
 	}
@@ -414,7 +388,7 @@ void SliderSetFile::SetTargets(const string& set, vector<string>& outTargetNames
 	}
 }
 
-int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet, uint flags) {
+int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet) {
 	XMLElement* setPtr;
 	if (!HasSet(setName))
 		return 1;
@@ -422,7 +396,7 @@ int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet, uint f
 	setPtr = setsInFile[setName];
 
 	int ret;
-	ret = outSliderSet.LoadSliderSet(setPtr, flags);
+	ret = outSliderSet.LoadSliderSet(setPtr);
 
 	return ret;
 }
