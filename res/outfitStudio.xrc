@@ -832,10 +832,6 @@
 					<label>Rotate Shape...</label>
 					<help>Apply a rotation to the mesh vertices. This permanently moves vertices.</help>
 				</object>
-				<object class="wxMenuItem" name="setShapeTex">
-					<label>Set Textures...</label>
-					<help>Allows you to choose a display texture, and edit the shape game texture paths.</help>
-				</object>
 				<object class="wxMenuItem" name="btnSmoothSeams">
 					<label>Smooth Seam Normals</label>
 					<help>Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape.</help>
@@ -867,6 +863,10 @@
 				<object class="wxMenuItem" name="deleteShape">
 					<label>Delete Shape\tDel</label>
 					<help>Removes the currently selected shape from the outfit.</help>
+				</object>
+				<object class="wxMenuItem" name="shapeProperties">
+					<label>Properties...</label>
+					<help>Opens the properties dialog for shader, texture and more settings of the selected shape.</help>
 				</object>
 			</object>
 			<object class="wxMenu" name="menuSlider">
@@ -2712,10 +2712,6 @@
 			<label>Rotate Shape...</label>
 			<help>Apply a rotation to the mesh vertices. This permanently moves vertices.</help>
 		</object>
-		<object class="wxMenuItem" name="setShapeTex">
-			<label>Set Textures...</label>
-			<help>Allows you to choose a display texture, and edit the shape game texture paths.</help>
-		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="copyBoneWeight">
 			<label>Copy Bone Weights</label>
@@ -2741,6 +2737,10 @@
 		<object class="wxMenuItem" name="deleteShape">
 			<label>Delete Shape\tDel</label>
 			<help>Removes the currently selected shape from the outfit.</help>
+		</object>
+		<object class="wxMenuItem" name="shapeProperties">
+			<label>Properties...</label>
+			<help>Opens the properties dialog for shader, texture and more settings of the selected shape.</help>
 		</object>
 	</object>
 	<object class="wxMenu" name="menuBoneContext">
@@ -3186,6 +3186,243 @@
 						<border>5</border>
 						<object class="wxButton" name="wxID_OK">
 							<label>&amp;Save</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	
+	<object class="wxDialog" name="dlgShapeProp">
+		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<size>535,310</size>
+		<title>Shape Properties</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="lbName">
+					<font>
+						<size>10</size>
+						<style>normal</style>
+						<weight>normal</weight>
+						<underlined>0</underlined>
+					</font>
+					<label>Name: &lt;shape&gt;</label>
+					<wrap>-1</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<label>Shader</label>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbShaderType">
+									<label>Type</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxChoice" name="shaderType">
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbSpecularStrength">
+									<label>Specular Strength</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxSpinCtrl" name="specularStrength">
+									<style>wxSP_ARROW_KEYS</style>
+									<value>1</value>
+									<min>0</min>
+									<max>10</max>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbSpecularPower">
+									<label>Specular Power</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxSpinCtrl" name="specularPower">
+									<style>wxSP_ARROW_KEYS</style>
+									<value>1</value>
+									<min>0</min>
+									<max>10</max>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND | wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticLine" name="lineShader">
+							<style>wxLI_VERTICAL</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnAddShader">
+									<enabled>0</enabled>
+									<label>Add</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnRemoveShader">
+									<label>Remove</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSetTextures">
+									<label>Set Textures...</label>
+									<default>0</default>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<label>Stuff</label>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbStuff2">
+									<label>Stuff</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND | wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticLine" name="lineStuff">
+							<style>wxLI_VERTICAL</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>1</growablecols>
+							<growablerows></growablerows>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbStuff3">
+									<label>Stuff</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="spacer">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,5</size>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
 						</object>
 					</object>
 					<object class="button">

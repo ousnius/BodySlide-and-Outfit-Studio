@@ -1,5 +1,6 @@
 #include "OutfitStudio.h"
 #include "BodySlideApp.h"
+#include "ShapeProperties.h"
 #include <functional>
 
 // ----------------------------------------------------------------------------
@@ -89,7 +90,6 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudio::OnScaleShape)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudio::OnRotateShape)
 	EVT_MENU(XRCID("renameShape"), OutfitStudio::OnRenameShape)
-	EVT_MENU(XRCID("setShapeTex"), OutfitStudio::OnSetTextures)
 	EVT_MENU(XRCID("copyShape"), OutfitStudio::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudio::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudio::OnAddBone)
@@ -99,6 +99,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudio::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudio::OnMaskWeighted)
 	EVT_MENU(XRCID("buildSkinPartitions"), OutfitStudio::OnBuildSkinPartitions)
+	EVT_MENU(XRCID("shapeProperties"), OutfitStudio::OnShapeProperties)
 
 	EVT_MENU(XRCID("editUndo"), OutfitStudio::OnUndo)
 	EVT_MENU(XRCID("editRedo"), OutfitStudio::OnRedo)
@@ -3342,127 +3343,6 @@ void OutfitStudio::PreviewRotation(const Vector3& changed) {
 	previewRotation = changed;
 }
 
-void OutfitStudio::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
-		return;
-	}
-	
-	wxDialog dlg;
-	string texpath;
-	string oDispPath;
-	string nDispPath;
-	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgShapeTextures")) {
-		wxGrid* stTexGrid = XRCCTRL(dlg, "stTexGrid", wxGrid);
-		stTexGrid->CreateGrid(9, 1);
-		stTexGrid->EnableEditing(true);
-		stTexGrid->EnableGridLines(true);
-		stTexGrid->EnableDragGridSize(false);
-		stTexGrid->SetMargins(0, 0);
-
-		// Columns
-		stTexGrid->SetColSize(0, 350);
-		stTexGrid->EnableDragColMove(false);
-		stTexGrid->EnableDragColSize(false);
-		stTexGrid->SetColLabelSize(30);
-		stTexGrid->SetColLabelValue(0, "Game Texture Paths");
-		stTexGrid->SetColLabelAlignment(wxALIGN_CENTRE, wxALIGN_CENTRE);
-
-		// Rows
-		stTexGrid->AutoSizeRows();
-		stTexGrid->EnableDragRowSize(false);
-		stTexGrid->SetRowLabelSize(80);
-		stTexGrid->SetRowLabelValue(0, "Diffuse");
-		stTexGrid->SetRowLabelValue(1, "Normal");
-		stTexGrid->SetRowLabelValue(2, "Glow/Skin");
-		stTexGrid->SetRowLabelValue(3, "Parallax");
-		stTexGrid->SetRowLabelValue(4, "Environment");
-		stTexGrid->SetRowLabelValue(5, "Env Mask");
-		stTexGrid->SetRowLabelValue(6, "6");
-		stTexGrid->SetRowLabelValue(7, "Specular");
-		stTexGrid->SetRowLabelValue(8, "8");
-		stTexGrid->SetRowLabelValue(9, "9");
-		stTexGrid->SetRowLabelAlignment(wxALIGN_LEFT, wxALIGN_CENTRE);
-
-		// Cell Defaults
-		stTexGrid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
-
-		int shaderType = 0;
-		for (int i = 0; i < 9; i++) {
-			if (activeItem->bIsOutfitShape) {
-				shaderType = project->workNif.GetTextureForShape(activeItem->shapeName, texpath, i);
-				if (!shaderType)
-					continue;
-			}
-			else {
-				shaderType = project->baseNif.GetTextureForShape(activeItem->shapeName, texpath, i);
-				if (!shaderType)
-					continue;
-			}
-			stTexGrid->SetCellValue(texpath, i, 0);
-		}
-
-		if (shaderType == BSEFFECTSHADERPROPERTY) {
-			stTexGrid->SetRowLabelValue(0, "Source");
-			stTexGrid->SetRowLabelValue(1, "Greyscale");
-			stTexGrid->HideRow(2);
-			stTexGrid->HideRow(3);
-			stTexGrid->HideRow(4);
-			stTexGrid->HideRow(5);
-			stTexGrid->HideRow(6);
-			stTexGrid->HideRow(7);
-			stTexGrid->HideRow(8);
-		}
-
-		oDispPath = project->OutfitTexture(activeItem->shapeName);
-		XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->SetPath(oDispPath);
-		XRCCTRL(dlg, "btApplyDiffuse", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudio::OnApplyDiffuse, this);
-
-		if (dlg.ShowModal() == wxID_OK) {
-			nDispPath = XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->GetPath();
-			if (nDispPath != oDispPath) {
-				if (activeItem->bIsOutfitShape) {
-					project->SetOutfitTexture(activeItem->shapeName, nDispPath);
-					glView->SetMeshTexture(activeItem->shapeName, nDispPath, project->workNif.IsShaderSkin(activeItem->shapeName));
-				}
-				else {
-					project->SetRefTexture(activeItem->shapeName, nDispPath);
-					glView->SetMeshTexture(activeItem->shapeName, nDispPath, project->baseNif.IsShaderSkin(activeItem->shapeName));
-				}
-			}
-
-			for (int i = 0; i < 9; i++) {
-				texpath = stTexGrid->GetCellValue(i, 0);
-				if (activeItem->bIsOutfitShape) {
-					project->workNif.SetTextureForShape(activeItem->shapeName, texpath, i);
-					project->workNif.TrimTexturePaths();
-				}
-				else {
-					project->baseNif.SetTextureForShape(activeItem->shapeName, texpath, i);
-					project->baseNif.TrimTexturePaths();
-				}
-			}
-		}
-	}
-}
-
-void OutfitStudio::OnApplyDiffuse(wxCommandEvent& event) {
-	wxDialog* dlg = (wxDialog*)((wxWindow*)event.GetEventObject())->GetParent();
-	if (!dlg)
-		return;
-
-	wxFilePickerCtrl* dispPath = (wxFilePickerCtrl*)dlg->FindWindow("stDisplayTexture");
-	wxGrid* texGrid = (wxGrid*)dlg->FindWindow("stTexGrid");
-	if (!dispPath || !texGrid)
-		return;
-
-	string tex = texGrid->GetCellValue(0, 0);
-	if (!tex.empty()) {
-		string newTex = appConfig["GameDataPath"] + tex;
-		dispPath->SetPath(newTex);
-	}
-}
-
 void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 	string newname;
 	wxTreeItemId subitem;
@@ -3524,6 +3404,21 @@ void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	AnimationGUIFromProj();
+}
+
+void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+
+	wxXmlResource* rsrc = wxXmlResource::Get();
+	wxDialog* shapeProperties = rsrc->LoadDialog(this, "dlgShapeProp");
+	if (!shapeProperties)
+		return;
+
+	ShapeProperties prop(this);
+	prop.ShowModal();
 }
 
 void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {

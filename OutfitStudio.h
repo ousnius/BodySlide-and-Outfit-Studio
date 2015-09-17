@@ -729,8 +729,6 @@ private:
 	void PreviewRotation(const Vector3& changed);
 
 	void OnRenameShape(wxCommandEvent& event);
-	void OnSetTextures(wxCommandEvent& event);
-	void OnApplyDiffuse(wxCommandEvent& event);
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
 	void OnAddBone(wxCommandEvent& event);
@@ -740,6 +738,7 @@ private:
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnBuildSkinPartitions(wxCommandEvent& event);
+	void OnShapeProperties(wxCommandEvent& event);
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);

@@ -128,6 +128,7 @@
     <ClCompile Include="PresetSaveDialog.cpp" />
     <ClCompile Include="PreviewWindow.cpp" />
     <ClCompile Include="ResourceLoader.cpp" />
+    <ClCompile Include="ShapeProperties.cpp" />
     <ClCompile Include="SliderCategories.cpp" />
     <ClCompile Include="SliderData.cpp" />
     <ClCompile Include="SliderGroup.cpp" />
@@ -165,6 +166,7 @@
     <ClInclude Include="PreviewWindow.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="ResourceLoader.h" />
+    <ClInclude Include="ShapeProperties.h" />
     <ClInclude Include="SliderCategories.h" />
     <ClInclude Include="SliderData.h" />
     <ClInclude Include="SliderGroup.h" />

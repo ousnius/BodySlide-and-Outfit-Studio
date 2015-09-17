@@ -2015,6 +2015,34 @@ void NifFile::DeleteShape(const string& shapeName) {
 	DeleteBlock(shapeID);
 }
 
+void NifFile::DeleteShader(const string& shapeName) {
+	NiTriBasedGeom* geom = geomForName(shapeName);
+	if (geom) {
+		if (geom->propertiesRef1 != -1) {
+			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef1));
+			if (shader) {
+				DeleteBlock(shader->GetTextureSetRef());
+				DeleteBlock(geom->propertiesRef1);
+			}
+		}
+		if (geom->propertiesRef2 != -1)
+			DeleteBlock(geom->propertiesRef2);
+
+		for (int i = 0; i < geom->numProperties; i++) {
+			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef[i]));
+			if (shader) {
+				DeleteBlock(shader->GetTextureSetRef());
+				DeleteBlock(geom->propertiesRef[i]);
+				i--;
+			}
+			else {
+				DeleteBlock(geom->propertiesRef[i]);
+				i--;
+			}
+		}
+	}
+}
+
 void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices) {
 	if (indices.size() == 0)
 		return;

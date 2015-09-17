@@ -913,8 +913,6 @@ class NifFile
 	vector<NiObject*> blocks;
 	bool isValid;
 
-	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
-
 	int shapeDataIdForName(const string& name, int& outBlockType);
 	int shapeIdForName(const string& name);
 
@@ -958,6 +956,7 @@ public:
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);
 
+	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
 	NiShader* GetShader(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
 	int GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
@@ -1028,6 +1027,7 @@ public:
 	void SetAlphaForShape(const string& shapeName, ushort flags, ushort threshold);
 
 	void DeleteShape(const string& shapeName);
+	void DeleteShader(const string& shapeName);
 	void DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
 
 	int CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
