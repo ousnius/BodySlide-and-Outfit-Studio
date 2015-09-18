@@ -1,6 +1,7 @@
 #pragma once
 
 #include "OutfitStudio.h"
+#include <wx/clrpicker.h>
 
 using namespace std;
 
@@ -12,11 +13,13 @@ public:
 private:
 	wxStaticText* lbName = nullptr;
 	wxChoice* shaderType = nullptr;
-	wxSpinCtrl* specularStrength = nullptr;
-	wxSpinCtrl* specularPower = nullptr;
+	wxColourPickerCtrl* specularColor = nullptr;
+	wxTextCtrl* specularStrength = nullptr;
+	wxTextCtrl* specularPower = nullptr;
 	wxButton* btnAddShader = nullptr;
 	wxButton* btnRemoveShader = nullptr;
 	wxButton* btnSetTextures = nullptr;
+	wxButton* btnTransparency = nullptr;
 
 	OutfitStudio* os = nullptr;
 	NiShader* shader = nullptr;
@@ -30,6 +33,7 @@ private:
 	void OnRemoveShader(wxCommandEvent& event);
 	void OnSetTextures(wxCommandEvent& event);
 	void OnApplyDiffuse(wxCommandEvent& event);
+	void OnTransparency(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

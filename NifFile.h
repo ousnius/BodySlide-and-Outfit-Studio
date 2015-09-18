@@ -682,6 +682,9 @@ public:
 	virtual void notifyBlockDelete(int blockID);
 	virtual bool IsSkin();
 	virtual bool IsDoubleSided();
+	virtual Vector3 GetSpecularColor();
+	virtual float GetSpecularStrength();
+	virtual float GetGlossiness();
 	virtual int GetTextureSetRef();
 	virtual void SetTextureSetRef(int texSetRef);
 	virtual int CalcBlockSize();
@@ -728,6 +731,9 @@ public:
 	void notifyBlockDelete(int blockID);
 	bool IsSkin();
 	bool IsDoubleSided();
+	Vector3 GetSpecularColor();
+	float GetSpecularStrength();
+	float GetGlossiness();
 	int GetTextureSetRef();
 	void SetTextureSetRef(int texSetRef);
 	int CalcBlockSize();
@@ -852,6 +858,8 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	Vector3 GetSpecularColor();
+	float GetGlossiness();
 	int CalcBlockSize();
 };
 
@@ -957,8 +965,11 @@ public:
 	int AddOrFindStringId(const string& str);
 
 	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
+
 	NiShader* GetShader(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
+	NiMaterialProperty* GetMaterialProperty(const string& shapeName);
+
 	int GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex = 0);
 	void SetTextureForShape(const string& shapeName, string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();

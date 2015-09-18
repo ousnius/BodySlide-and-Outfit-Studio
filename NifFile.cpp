@@ -475,6 +475,24 @@ bool NifFile::IsShaderSkin(const string& shapeName) {
 	return false;
 }
 
+NiMaterialProperty* NifFile::GetMaterialProperty(const string& shapeName) {
+	NiTriBasedGeom* geom = geomForName(shapeName);
+	if (!geom)
+		return nullptr;
+
+	vector<int> props = geom->propertiesRef;
+	if (props.empty())
+		return nullptr;
+
+	for (int i = 0; i < props.size(); i++) {
+		NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(blocks[props[i]]);
+		if (material)
+			return material;
+	}
+
+	return nullptr;
+}
+
 int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
 	int textureSetRef = -1;
 	outTexFile.clear();

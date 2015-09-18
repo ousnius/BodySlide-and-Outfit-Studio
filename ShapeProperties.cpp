@@ -1,16 +1,17 @@
 #include "ShapeProperties.h"
 
 BEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
-	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
 	EVT_BUTTON(XRCID("btnAddShader"), ShapeProperties::OnAddShader)
 	EVT_BUTTON(XRCID("btnRemoveShader"), ShapeProperties::OnRemoveShader)
+	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
+	EVT_BUTTON(XRCID("btnTransparency"), ShapeProperties::OnTransparency)
 END_EVENT_TABLE();
 
 ShapeProperties::ShapeProperties(wxWindow* parent) {
 	wxXmlResource * rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgShapeProp");
 
-	SetSize(535, 310);
+	SetSize(535, 335);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
@@ -18,11 +19,13 @@ ShapeProperties::ShapeProperties(wxWindow* parent) {
 
 	lbName = XRCCTRL(*this, "lbName", wxStaticText);
 	shaderType = XRCCTRL(*this, "shaderType", wxChoice);
-	specularStrength = XRCCTRL(*this, "specularStrength", wxSpinCtrl);
-	specularPower = XRCCTRL(*this, "specularPower", wxSpinCtrl);
+	specularColor = XRCCTRL(*this, "specularColor", wxColourPickerCtrl);
+	specularStrength = XRCCTRL(*this, "specularStrength", wxTextCtrl);
+	specularPower = XRCCTRL(*this, "specularPower", wxTextCtrl);
 	btnAddShader = XRCCTRL(*this, "btnAddShader", wxButton);
 	btnRemoveShader = XRCCTRL(*this, "btnRemoveShader", wxButton);
 	btnSetTextures = XRCCTRL(*this, "btnSetTextures", wxButton);
+	btnTransparency = XRCCTRL(*this, "btnTransparency", wxButton);
 
 	lbName->SetLabel("Name: " + os->activeItem->shapeName);
 	GetShader();
@@ -42,8 +45,43 @@ void ShapeProperties::GetShader() {
 		btnRemoveShader->Disable();
 		btnSetTextures->Disable();
 		shaderType->Disable();
+		specularColor->Disable();
 		specularStrength->Disable();
 		specularPower->Disable();
+	}
+	else {
+		Vector3 color;
+		switch (shader->blockType) {
+			case BSEFFECTSHADERPROPERTY:
+				specularColor->Disable();
+				specularStrength->Disable();
+				specularPower->Disable();
+				break;
+			case BSLIGHTINGSHADERPROPERTY:
+				color = shader->GetSpecularColor() * 255.0f;
+				specularColor->SetColour(wxColour(color.x, color.y, color.z));
+				specularStrength->SetValue(wxString::Format("%g", shader->GetSpecularStrength()));
+				specularPower->SetValue(wxString::Format("%g", shader->GetGlossiness()));
+				break;
+			case BSSHADERPPLIGHTINGPROPERTY:
+				NifFile* nif;
+				if (os->activeItem->bIsOutfitShape)
+					nif = &os->project->workNif;
+				else
+					nif = &os->project->baseNif;
+
+				if (!nif)
+					break;
+
+				NiMaterialProperty* material = nif->GetMaterialProperty(os->activeItem->shapeName);
+				if (!material)
+					break;
+				
+				color = material->colorSpecular * 255.0f;
+				specularColor->SetColour(wxColour(color.x, color.y, color.z));
+				specularPower->SetValue(wxString::Format("%g", material->GetGlossiness()));
+				break;
+		}
 	}
 }
 
@@ -55,6 +93,7 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	btnRemoveShader->Enable();
 	btnSetTextures->Enable();
 	shaderType->Enable();
+	specularColor->Enable();
 	specularStrength->Enable();
 	specularPower->Enable();
 }
@@ -103,6 +142,7 @@ void ShapeProperties::OnRemoveShader(wxCommandEvent& WXUNUSED(event)) {
 	btnRemoveShader->Disable();
 	btnSetTextures->Disable();
 	shaderType->Disable();
+	specularColor->Disable();
 	specularStrength->Disable();
 	specularPower->Disable();
 }
@@ -119,19 +159,6 @@ void ShapeProperties::RemoveShader() {
 
 	nif->DeleteShader(os->activeItem->shapeName);
 	AssignDefaultTexture();
-}
-
-void ShapeProperties::AssignDefaultTexture() {
-	string texNoImg = os->appConfig["GameDataPath"] + "noimg.dds";
-	if (os->activeItem->bIsOutfitShape) {
-		os->project->SetOutfitTexture(os->activeItem->shapeName, "_AUTO_");
-		os->glView->SetMeshTexture(os->activeItem->shapeName, texNoImg, os->project->workNif.IsShaderSkin(os->activeItem->shapeName));
-	}
-	else {
-		os->project->SetRefTexture(os->activeItem->shapeName, "_AUTO_");
-		os->glView->SetMeshTexture(os->activeItem->shapeName, texNoImg, os->project->baseNif.IsShaderSkin(os->activeItem->shapeName));
-	}
-	os->glView->Refresh();
 }
 
 void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
@@ -249,4 +276,21 @@ void ShapeProperties::OnApplyDiffuse(wxCommandEvent& event) {
 		string newTex = os->appConfig["GameDataPath"] + tex;
 		dispPath->SetPath(newTex);
 	}
+}
+
+void ShapeProperties::AssignDefaultTexture() {
+	string texNoImg = os->appConfig["GameDataPath"] + "noimg.dds";
+	if (os->activeItem->bIsOutfitShape) {
+		os->project->SetOutfitTexture(os->activeItem->shapeName, "_AUTO_");
+		os->glView->SetMeshTexture(os->activeItem->shapeName, texNoImg, os->project->workNif.IsShaderSkin(os->activeItem->shapeName));
+	}
+	else {
+		os->project->SetRefTexture(os->activeItem->shapeName, "_AUTO_");
+		os->glView->SetMeshTexture(os->activeItem->shapeName, texNoImg, os->project->baseNif.IsShaderSkin(os->activeItem->shapeName));
+	}
+	os->glView->Refresh();
+}
+
+void ShapeProperties::OnTransparency(wxCommandEvent& WXUNUSED(event)) {
+
 }

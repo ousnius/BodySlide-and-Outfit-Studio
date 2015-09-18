@@ -3202,7 +3202,7 @@
 	
 	<object class="wxDialog" name="dlgShapeProp">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
-		<size>535,310</size>
+		<size>535,335</size>
 		<title>Shape Properties</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -3262,6 +3262,24 @@
 								<option>0</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
+								<object class="wxStaticText" name="lbSpecularColor">
+									<label>Specular Color</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxColourPickerCtrl" name="specularColor">
+									<value>#ffffff</value>
+									<style>wxCLRP_DEFAULT_STYLE|wxCLRP_SHOW_LABEL</style>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
 								<object class="wxStaticText" name="lbSpecularStrength">
 									<label>Specular Strength</label>
 									<wrap>-1</wrap>
@@ -3271,11 +3289,10 @@
 								<option>0</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
-								<object class="wxSpinCtrl" name="specularStrength">
-									<style>wxSP_ARROW_KEYS</style>
-									<value>1</value>
-									<min>0</min>
-									<max>10</max>
+								<object class="wxTextCtrl" name="specularStrength">
+									<style>wxTE_CENTRE</style>
+									<value>2.0000</value>
+									<maxlength>25</maxlength>
 								</object>
 							</object>
 							<object class="sizeritem">
@@ -3291,11 +3308,10 @@
 								<option>0</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
-								<object class="wxSpinCtrl" name="specularPower">
-									<style>wxSP_ARROW_KEYS</style>
-									<value>1</value>
-									<min>0</min>
-									<max>10</max>
+								<object class="wxTextCtrl" name="specularPower">
+									<style>wxTE_CENTRE</style>
+									<value>30.0000</value>
+									<maxlength>25</maxlength>
 								</object>
 							</object>
 						</object>
@@ -3312,8 +3328,13 @@
 						<option>1</option>
 						<flag>wxEXPAND</flag>
 						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxVERTICAL</orient>
+						<object class="wxFlexGridSizer">
+							<rows>0</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<growablecols>0,1</growablecols>
+							<growablerows></growablerows>
 							<object class="sizeritem">
 								<option>0</option>
 								<flag>wxALL|wxEXPAND</flag>
@@ -3338,7 +3359,16 @@
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
 								<object class="wxButton" name="btnSetTextures">
-									<label>Set Textures...</label>
+									<label>Textures...</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnTransparency">
+									<label>Transparency...</label>
 									<default>0</default>
 								</object>
 							</object>

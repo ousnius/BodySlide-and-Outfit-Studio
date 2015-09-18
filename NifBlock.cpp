@@ -2559,6 +2559,18 @@ bool NiShader::IsDoubleSided() {
 	return false;
 }
 
+Vector3 NiShader::GetSpecularColor() {
+	return Vector3();
+}
+
+float NiShader::GetSpecularStrength() {
+	return 0.0f;
+}
+
+float NiShader::GetGlossiness() {
+	return 0.0f;
+}
+
 int NiShader::GetTextureSetRef() {
 	return -1;
 }
@@ -2792,6 +2804,18 @@ bool BSLightingShaderProperty::IsSkin() {
 
 bool BSLightingShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+Vector3 BSLightingShaderProperty::GetSpecularColor() {
+	return specularColor;
+}
+
+float BSLightingShaderProperty::GetSpecularStrength() {
+	return specularStrength;
+}
+
+float BSLightingShaderProperty::GetGlossiness() {
+	return glossiness;
 }
 
 int BSLightingShaderProperty::GetTextureSetRef() {
@@ -3276,6 +3300,14 @@ void NiMaterialProperty::Put(fstream& file) {
 
 void NiMaterialProperty::notifyBlockDelete(int blockID) {
 	NiProperty::notifyBlockDelete(blockID);
+}
+
+Vector3 NiMaterialProperty::GetSpecularColor() {
+	return colorSpecular;
+}
+
+float NiMaterialProperty::GetGlossiness() {
+	return glossiness;
 }
 
 int NiMaterialProperty::CalcBlockSize() {
