@@ -164,6 +164,8 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	while (shapeName) {
 		if (shapeName->Attribute("DataFolder"))
 			targetdatafolders[shapeName->Attribute("target")] = shapeName->Attribute("DataFolder");
+		else
+			targetdatafolders[shapeName->Attribute("target")] = datafolder;
 
 		targetshapenames[shapeName->Attribute("target")] = shapeName->GetText();
 		shapeName = shapeName->NextSiblingElement("BaseShapeName");
