@@ -34,6 +34,7 @@ private:
 	void OnSetTextures(wxCommandEvent& event);
 	void OnApplyDiffuse(wxCommandEvent& event);
 	void OnTransparency(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };

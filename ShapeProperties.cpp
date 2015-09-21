@@ -5,6 +5,7 @@ BEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnRemoveShader"), ShapeProperties::OnRemoveShader)
 	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
 	EVT_BUTTON(XRCID("btnTransparency"), ShapeProperties::OnTransparency)
+	EVT_CLOSE(ShapeProperties::OnClose)
 END_EVENT_TABLE();
 
 ShapeProperties::ShapeProperties(wxWindow* parent) {
@@ -60,8 +61,8 @@ void ShapeProperties::GetShader() {
 			case BSLIGHTINGSHADERPROPERTY:
 				color = shader->GetSpecularColor() * 255.0f;
 				specularColor->SetColour(wxColour(color.x, color.y, color.z));
-				specularStrength->SetValue(wxString::Format("%g", shader->GetSpecularStrength()));
-				specularPower->SetValue(wxString::Format("%g", shader->GetGlossiness()));
+				specularStrength->SetValue(wxString::Format("%.4f", shader->GetSpecularStrength()));
+				specularPower->SetValue(wxString::Format("%.4f", shader->GetGlossiness()));
 				break;
 			case BSSHADERPPLIGHTINGPROPERTY:
 				NifFile* nif;
@@ -79,7 +80,7 @@ void ShapeProperties::GetShader() {
 				
 				color = material->colorSpecular * 255.0f;
 				specularColor->SetColour(wxColour(color.x, color.y, color.z));
-				specularPower->SetValue(wxString::Format("%g", material->GetGlossiness()));
+				specularPower->SetValue(wxString::Format("%.4f", material->GetGlossiness()));
 				break;
 		}
 	}
@@ -292,5 +293,9 @@ void ShapeProperties::AssignDefaultTexture() {
 }
 
 void ShapeProperties::OnTransparency(wxCommandEvent& WXUNUSED(event)) {
+
+}
+
+void ShapeProperties::OnClose(wxCloseEvent& event) {
 
 }
