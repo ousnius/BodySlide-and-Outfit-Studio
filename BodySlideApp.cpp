@@ -1014,7 +1014,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		string triShapeLink;
 		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 			triShapeLink = it->second;
-			if (tri && !triShapeLink.empty()) {
+			if (tri && nifBig.GetVertCountForShape(triShapeLink) > 0) {
 				nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 				nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 				tri = false;
@@ -1292,7 +1292,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
 				string triShapeLink = it->second;
-				if (triEnd && !triShapeLink.empty()) {
+				if (triEnd && nifBig.GetVertCountForShape(triShapeLink) > 0) {
 					nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 					nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 					triEnd = false;
