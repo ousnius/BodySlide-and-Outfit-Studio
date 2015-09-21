@@ -631,6 +631,7 @@ private:
 	void ZeroSliders();
 
 	void ClearProject();
+	void RenameProject(const string& projectName);
 
 	void RefreshGUIFromProj();
 	void AnimationGUIFromProj();

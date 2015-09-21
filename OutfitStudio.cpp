@@ -1194,6 +1194,12 @@ void OutfitStudio::ClearProject() {
 	glView->DestroyOverlays();
 }
 
+void OutfitStudio::RenameProject(const string& projectName) {
+	project->outfitName = projectName;
+	if (outfitRoot.IsOk() && outfitShapes)
+		outfitShapes->SetItemText(outfitRoot, projectName);
+}
+
 void OutfitStudio::RefreshGUIFromProj() {
 	ReferenceGUIFromProj();
 	WorkingGUIFromProj();
@@ -1499,10 +1505,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	if (res.empty()) {
 		GetMenuBar()->Enable(XRCID("fileSave"), true);
-		project->outfitName = strOutfitName;
-		WorkingGUIFromProj();
-		if (outfitShapes)
-			outfitShapes->ExpandAll();
+		RenameProject(strOutfitName);
 	}
 	else
 		wxMessageBox(res, "Error", wxOK | wxICON_ERROR);
