@@ -3420,7 +3420,7 @@ void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 	if (!shapeProperties)
 		return;
 
-	ShapeProperties prop(this);
+	ShapeProperties prop(this, activeItem->bIsOutfitShape ? &project->workNif : &project->baseNif, activeItem->shapeName);
 	prop.ShowModal();
 }
 

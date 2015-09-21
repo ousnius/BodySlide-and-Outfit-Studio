@@ -125,6 +125,18 @@ struct MatchGroup {
 	vector<ushort> matches;
 };
 
+enum BSShaderType : uint {
+	SHADER_TALL_GRASS, SHADER_DEFAULT, SHADER_SKY = 10, SHADER_SKIN = 14,
+	SHADER_WATER = 17, SHADER_LIGHTING30 = 29, SHADER_TILE = 32, SHADER_NOLIGHTING
+};
+
+enum BSLightingShaderPropertyShaderType : uint {
+	Default,  EnvironmentMap, GlowShader, Heightmap,
+	FaceTint, SkinTint, HairTint, ParallaxOccMaterial,
+	WorldMultitexture, WorldMap1, Unknown10, MultiLayerParallax,
+	Unknown12, WorldMap2, SparkleSnow, WorldMap3,
+	EyeEnvmap, Unknown17, WorldMap4, WorldLODMultitexture
+};
 
 class NiString {
 public:
@@ -682,9 +694,14 @@ public:
 	virtual void notifyBlockDelete(int blockID);
 	virtual bool IsSkin();
 	virtual bool IsDoubleSided();
+	virtual uint GetType();
+	virtual void SetType(uint type);
 	virtual Vector3 GetSpecularColor();
+	virtual void SetSpecularColor(Vector3 color);
 	virtual float GetSpecularStrength();
+	virtual void SetSpecularStrength(float strength);
 	virtual float GetGlossiness();
+	virtual void SetGlossiness(float gloss);
 	virtual int GetTextureSetRef();
 	virtual void SetTextureSetRef(int texSetRef);
 	virtual int CalcBlockSize();
@@ -731,9 +748,14 @@ public:
 	void notifyBlockDelete(int blockID);
 	bool IsSkin();
 	bool IsDoubleSided();
+	uint GetType();
+	void SetType(uint type);
 	Vector3 GetSpecularColor();
+	void SetSpecularColor(Vector3 color);
 	float GetSpecularStrength();
+	void SetSpecularStrength(float strength);
 	float GetGlossiness();
+	void SetGlossiness(float gloss);
 	int GetTextureSetRef();
 	void SetTextureSetRef(int texSetRef);
 	int CalcBlockSize();
@@ -751,6 +773,8 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual uint GetType();
+	virtual void SetType(uint type);
 	virtual int CalcBlockSize();
 };
 
@@ -859,7 +883,9 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	Vector3 GetSpecularColor();
+	void SetSpecularColor(Vector3 color);
 	float GetGlossiness();
+	void SetGlossiness(float gloss);
 	int CalcBlockSize();
 };
 

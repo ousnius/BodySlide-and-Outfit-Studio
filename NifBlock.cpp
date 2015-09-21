@@ -2559,16 +2559,32 @@ bool NiShader::IsDoubleSided() {
 	return false;
 }
 
+uint NiShader::GetType() {
+	return 0xFFFFFFFF;
+}
+
+void NiShader::SetType(uint type) {
+}
+
 Vector3 NiShader::GetSpecularColor() {
 	return Vector3();
+}
+
+void NiShader::SetSpecularColor(Vector3 color) {
 }
 
 float NiShader::GetSpecularStrength() {
 	return 0.0f;
 }
 
+void NiShader::SetSpecularStrength(float strength) {
+}
+
 float NiShader::GetGlossiness() {
 	return 0.0f;
+}
+
+void NiShader::SetGlossiness(float gloss) {
 }
 
 int NiShader::GetTextureSetRef() {
@@ -2806,16 +2822,36 @@ bool BSLightingShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
 }
 
+uint BSLightingShaderProperty::GetType() {
+	return skyrimShaderType;
+}
+
+void BSLightingShaderProperty::SetType(uint type) {
+	skyrimShaderType = type;
+}
+
 Vector3 BSLightingShaderProperty::GetSpecularColor() {
 	return specularColor;
+}
+
+void BSLightingShaderProperty::SetSpecularColor(Vector3 color) {
+	specularColor = color;
 }
 
 float BSLightingShaderProperty::GetSpecularStrength() {
 	return specularStrength;
 }
 
+void BSLightingShaderProperty::SetSpecularStrength(float strength) {
+	specularStrength = strength;
+}
+
 float BSLightingShaderProperty::GetGlossiness() {
 	return glossiness;
+}
+
+void BSLightingShaderProperty::SetGlossiness(float gloss) {
+	glossiness = gloss;
 }
 
 int BSLightingShaderProperty::GetTextureSetRef() {
@@ -2889,6 +2925,14 @@ void BSShaderProperty::Put(fstream& file) {
 
 void BSShaderProperty::notifyBlockDelete(int blockID) {
 	NiProperty::notifyBlockDelete(blockID);
+}
+
+uint BSShaderProperty::GetType() {
+	return shaderType;
+}
+
+void BSShaderProperty::SetType(uint type) {
+	shaderType = type;
 }
 
 int BSShaderProperty::CalcBlockSize() {
@@ -3306,8 +3350,16 @@ Vector3 NiMaterialProperty::GetSpecularColor() {
 	return colorSpecular;
 }
 
+void NiMaterialProperty::SetSpecularColor(Vector3 color) {
+	colorSpecular = color;
+}
+
 float NiMaterialProperty::GetGlossiness() {
 	return glossiness;
+}
+
+void NiMaterialProperty::SetGlossiness(float gloss) {
+	glossiness = gloss;
 }
 
 int NiMaterialProperty::CalcBlockSize() {

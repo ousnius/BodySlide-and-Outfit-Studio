@@ -2049,13 +2049,12 @@ void NifFile::DeleteShader(const string& shapeName) {
 		for (int i = 0; i < geom->numProperties; i++) {
 			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef[i]));
 			if (shader) {
-				DeleteBlock(shader->GetTextureSetRef());
-				DeleteBlock(geom->propertiesRef[i]);
-				i--;
-			}
-			else {
-				DeleteBlock(geom->propertiesRef[i]);
-				i--;
+				if (shader->blockType == BSSHADERPPLIGHTINGPROPERTY || shader->blockType == NIMATERIALPROPERTY) {
+					DeleteBlock(shader->GetTextureSetRef());
+					DeleteBlock(geom->propertiesRef[i]);
+					i--;
+					continue;
+				}
 			}
 		}
 	}

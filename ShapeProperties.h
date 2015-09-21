@@ -7,7 +7,7 @@ using namespace std;
 
 class ShapeProperties : public wxDialog {
 public:
-	ShapeProperties(wxWindow*);
+	ShapeProperties(wxWindow*, NifFile*, const string&);
 	~ShapeProperties();
 
 private:
@@ -22,19 +22,23 @@ private:
 	wxButton* btnTransparency = nullptr;
 
 	OutfitStudio* os = nullptr;
-	NiShader* shader = nullptr;
+	NifFile* nif = nullptr;
+	string shape;
 
 	void GetShader();
+	void GetShaderType();
 	bool AddShader();
 	void RemoveShader();
+
 	void AssignDefaultTexture();
+	void ApplyChanges();
 
 	void OnAddShader(wxCommandEvent& event);
 	void OnRemoveShader(wxCommandEvent& event);
 	void OnSetTextures(wxCommandEvent& event);
 	void OnApplyDiffuse(wxCommandEvent& event);
 	void OnTransparency(wxCommandEvent& event);
-	void OnClose(wxCloseEvent& event);
+	void OnApply(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()
 };
