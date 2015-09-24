@@ -2594,6 +2594,20 @@ int NiShader::GetTextureSetRef() {
 void NiShader::SetTextureSetRef(int texSetRef) {
 }
 
+Color4 NiShader::GetEmissiveColor() {
+	return Color4();
+}
+
+void NiShader::SetEmissiveColor(Color4 color) {
+}
+
+float NiShader::GetEmissiveMultiple() {
+	return 0.0f;
+}
+
+void NiShader::SetEmissiveMultiple(float emissive) {
+}
+
 int NiShader::CalcBlockSize() {
 	return blockSize;
 }
@@ -2862,6 +2876,28 @@ void BSLightingShaderProperty::SetTextureSetRef(int texSetRef) {
 	textureSetRef = texSetRef;
 }
 
+Color4 BSLightingShaderProperty::GetEmissiveColor() {
+	Color4 color;
+	color.r = emissiveColor.x;
+	color.g = emissiveColor.y;
+	color.b = emissiveColor.z;
+	return color;
+}
+
+void BSLightingShaderProperty::SetEmissiveColor(Color4 color) {
+	emissiveColor.x = color.r;
+	emissiveColor.y = color.g;
+	emissiveColor.z = color.b;
+}
+
+float BSLightingShaderProperty::GetEmissiveMultiple() {
+	return emissiveMultiple;
+}
+
+void BSLightingShaderProperty::SetEmissiveMultiple(float emissive) {
+	emissiveMultiple = emissive;
+}
+
 int BSLightingShaderProperty::CalcBlockSize() {
 	NiProperty::CalcBlockSize();
 
@@ -3036,6 +3072,22 @@ bool BSEffectShaderProperty::IsSkin() {
 
 bool BSEffectShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+Color4 BSEffectShaderProperty::GetEmissiveColor() {
+	return emissiveColor;
+}
+
+void BSEffectShaderProperty::SetEmissiveColor(Color4 color) {
+	emissiveColor = color;
+}
+
+float BSEffectShaderProperty::GetEmissiveMultiple() {
+	return emissiveMultiple;
+}
+
+void BSEffectShaderProperty::SetEmissiveMultiple(float emissive) {
+	emissiveMultiple = emissive;
 }
 
 int BSEffectShaderProperty::CalcBlockSize() {
@@ -3360,6 +3412,28 @@ float NiMaterialProperty::GetGlossiness() {
 
 void NiMaterialProperty::SetGlossiness(float gloss) {
 	glossiness = gloss;
+}
+
+Color4 NiMaterialProperty::GetEmissiveColor() {
+	Color4 color;
+	color.r = colorEmissive.x;
+	color.g = colorEmissive.y;
+	color.b = colorEmissive.z;
+	return color;
+}
+
+void NiMaterialProperty::SetEmissiveColor(Color4 color) {
+	colorEmissive.x = color.r;
+	colorEmissive.y = color.g;
+	colorEmissive.z = color.b;
+}
+
+float NiMaterialProperty::GetEmissiveMultiple() {
+	return emitMulti;
+}
+
+void NiMaterialProperty::SetEmissiveMultiple(float emissive) {
+	emitMulti = emissive;
 }
 
 int NiMaterialProperty::CalcBlockSize() {

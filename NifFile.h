@@ -704,6 +704,10 @@ public:
 	virtual void SetGlossiness(float gloss);
 	virtual int GetTextureSetRef();
 	virtual void SetTextureSetRef(int texSetRef);
+	virtual Color4 GetEmissiveColor();
+	virtual void SetEmissiveColor(Color4 color);
+	virtual float GetEmissiveMultiple();
+	virtual void SetEmissiveMultiple(float emissive);
 	virtual int CalcBlockSize();
 };
 
@@ -758,6 +762,10 @@ public:
 	void SetGlossiness(float gloss);
 	int GetTextureSetRef();
 	void SetTextureSetRef(int texSetRef);
+	Color4 GetEmissiveColor();
+	void SetEmissiveColor(Color4 color);
+	float GetEmissiveMultiple();
+	void SetEmissiveMultiple(float emissive);
 	int CalcBlockSize();
 };
 
@@ -803,6 +811,10 @@ public:
 	void notifyBlockDelete(int blockID);
 	bool IsSkin();
 	bool IsDoubleSided();
+	Color4 GetEmissiveColor();
+	void SetEmissiveColor(Color4 color);
+	float GetEmissiveMultiple();
+	void SetEmissiveMultiple(float emissive);
 	int CalcBlockSize();
 };
 
@@ -886,6 +898,10 @@ public:
 	void SetSpecularColor(Vector3 color);
 	float GetGlossiness();
 	void SetGlossiness(float gloss);
+	Color4 GetEmissiveColor();
+	void SetEmissiveColor(Color4 color);
+	float GetEmissiveMultiple();
+	void SetEmissiveMultiple(float emissive);
 	int CalcBlockSize();
 };
 
