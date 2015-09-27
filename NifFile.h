@@ -118,6 +118,42 @@ struct Color4 {
 	float r;
 	float g;
 	float b;
+
+	Color4() {
+		r = g = b = a = 0.0f;
+	}
+	Color4(float R, float G, float B, float A) {
+		r = R;
+		g = G;
+		b = B;
+		a = A;
+	}
+
+	Color4& operator *= (float val) {
+		r *= val;
+		g *= val;
+		b *= val;
+		a *= val;
+		return *this;
+	}
+	Color4 operator * (float val) const {
+		Color4 tmp = *this;
+		tmp *= val;
+		return tmp;
+	}
+
+	Color4& operator /= (float val) {
+		r /= val;
+		g /= val;
+		b /= val;
+		a /= val;
+		return *this;
+	}
+	Color4 operator / (float val) const {
+		Color4 tmp = *this;
+		tmp /= val;
+		return tmp;
+	}
 };
 
 struct MatchGroup {

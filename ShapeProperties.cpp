@@ -12,7 +12,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	wxXmlResource * rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgShapeProp");
 
-	SetSize(535, 335);
+	SetSize(620, 285);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
@@ -20,17 +20,17 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	nif = refNif;
 	shape = shapeName;
 
-	lbName = XRCCTRL(*this, "lbName", wxStaticText);
 	shaderType = XRCCTRL(*this, "shaderType", wxChoice);
 	specularColor = XRCCTRL(*this, "specularColor", wxColourPickerCtrl);
 	specularStrength = XRCCTRL(*this, "specularStrength", wxTextCtrl);
 	specularPower = XRCCTRL(*this, "specularPower", wxTextCtrl);
+	emissiveColor = XRCCTRL(*this, "emissiveColor", wxColourPickerCtrl);
+	emissiveMultiple = XRCCTRL(*this, "emissiveMultiple", wxTextCtrl);
 	btnAddShader = XRCCTRL(*this, "btnAddShader", wxButton);
 	btnRemoveShader = XRCCTRL(*this, "btnRemoveShader", wxButton);
 	btnSetTextures = XRCCTRL(*this, "btnSetTextures", wxButton);
 	btnTransparency = XRCCTRL(*this, "btnTransparency", wxButton);
 
-	lbName->SetLabel("Name: " + os->activeItem->shapeName);
 	GetShader();
 }
 
@@ -48,36 +48,50 @@ void ShapeProperties::GetShader() {
 		specularColor->Disable();
 		specularStrength->Disable();
 		specularPower->Disable();
+		emissiveColor->Disable();
+		emissiveMultiple->Disable();
 	}
 	else {
-		Vector3 color;
+		Color4 color;
+		Vector3 colorVec;
 		switch (shader->blockType) {
 			case BSEFFECTSHADERPROPERTY:
 				specularColor->Disable();
 				specularStrength->Disable();
 				specularPower->Disable();
+
+				color = shader->GetEmissiveColor() * 255.0f;
+				emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
+				emissiveMultiple->SetValue(wxString::Format("%.4f", shader->GetEmissiveMultiple()));
 				break;
 			case BSLIGHTINGSHADERPROPERTY:
-				color = shader->GetSpecularColor() * 255.0f;
-				specularColor->SetColour(wxColour(color.x, color.y, color.z));
+				colorVec = shader->GetSpecularColor() * 255.0f;
+				specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
 				specularStrength->SetValue(wxString::Format("%.4f", shader->GetSpecularStrength()));
 				specularPower->SetValue(wxString::Format("%.4f", shader->GetGlossiness()));
+
+				color = shader->GetEmissiveColor() * 255.0f;
+				emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
+				emissiveMultiple->SetValue(wxString::Format("%.4f", shader->GetEmissiveMultiple()));
 				break;
 			case BSSHADERPPLIGHTINGPROPERTY:
 				NiMaterialProperty* material = nif->GetMaterialProperty(shape);
 				if (!material)
 					break;
 				
-				color = material->colorSpecular * 255.0f;
-				specularColor->SetColour(wxColour(color.x, color.y, color.z));
+				colorVec = material->GetSpecularColor() * 255.0f;
+				specularColor->SetColour(wxColour(colorVec.x, colorVec.y, colorVec.z));
 				specularPower->SetValue(wxString::Format("%.4f", material->GetGlossiness()));
+
+				color = material->GetEmissiveColor() * 255.0f;
+				emissiveColor->SetColour(wxColour(color.r, color.g, color.b, color.a));
+				emissiveMultiple->SetValue(wxString::Format("%.4f", material->GetEmissiveMultiple()));
 				break;
 		}
 	}
 
 	GetShaderType();
 }
-
 
 
 void ShapeProperties::GetShaderType() {
@@ -171,6 +185,8 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	specularColor->Enable();
 	specularStrength->Enable();
 	specularPower->Enable();
+	emissiveColor->Enable();
+	emissiveMultiple->Enable();
 }
 
 bool ShapeProperties::AddShader() {
@@ -220,6 +236,8 @@ void ShapeProperties::OnRemoveShader(wxCommandEvent& WXUNUSED(event)) {
 	specularColor->Disable();
 	specularStrength->Disable();
 	specularPower->Disable();
+	emissiveColor->Disable();
+	emissiveMultiple->Disable();
 }
 
 void ShapeProperties::RemoveShader() {
@@ -361,14 +379,22 @@ void ShapeProperties::ApplyChanges() {
 	if (shader) {
 		uint type = 0xFFFFFFFF;
 		uint typeSelection = shaderType->GetSelection();
+
 		wxColour color = specularColor->GetColour();
 		Vector3 specColor(color.Red(), color.Green(), color.Blue());
 		specColor /= 255.0f;
 		float specStrength = atof(specularStrength->GetValue().ToAscii().data());
 		float specPower = atof(specularPower->GetValue().ToAscii().data());
 
+		color = emissiveColor->GetColour();
+		Color4 emisColor(color.Red(), color.Green(), color.Blue(), color.Alpha());
+		emisColor /= 255.0f;
+		float emisMultiple = atof(emissiveMultiple->GetValue().ToAscii().data());
+
 		switch (shader->blockType) {
 			case BSEFFECTSHADERPROPERTY: {
+				shader->SetEmissiveColor(emisColor);
+				shader->SetEmissiveMultiple(emisMultiple);
 				break;
 			}
 			case BSLIGHTINGSHADERPROPERTY: {
@@ -400,6 +426,9 @@ void ShapeProperties::ApplyChanges() {
 				shader->SetSpecularColor(specColor);
 				shader->SetSpecularStrength(specStrength);
 				shader->SetGlossiness(specPower);
+
+				shader->SetEmissiveColor(emisColor);
+				shader->SetEmissiveMultiple(emisMultiple);
 				break;
 			}
 			case BSSHADERPPLIGHTINGPROPERTY: {
@@ -423,6 +452,9 @@ void ShapeProperties::ApplyChanges() {
 
 				material->SetSpecularColor(specColor);
 				material->SetGlossiness(specPower);
+
+				material->SetEmissiveColor(emisColor);
+				material->SetEmissiveMultiple(emisMultiple);
 				break;
 			}
 		}

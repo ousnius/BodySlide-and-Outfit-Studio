@@ -11,11 +11,12 @@ public:
 	~ShapeProperties();
 
 private:
-	wxStaticText* lbName = nullptr;
 	wxChoice* shaderType = nullptr;
 	wxColourPickerCtrl* specularColor = nullptr;
 	wxTextCtrl* specularStrength = nullptr;
 	wxTextCtrl* specularPower = nullptr;
+	wxColourPickerCtrl* emissiveColor = nullptr;
+	wxTextCtrl* emissiveMultiple = nullptr;
 	wxButton* btnAddShader = nullptr;
 	wxButton* btnRemoveShader = nullptr;
 	wxButton* btnSetTextures = nullptr;

@@ -2138,7 +2138,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
-		settings->SetSize(wxSize(475, 390));
+		settings->SetSize(wxSize(475, 400));
 		settings->CenterOnParent();
 
 		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);

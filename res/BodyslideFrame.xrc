@@ -737,7 +737,7 @@
 	</object>
 	<object class="wxDialog" name="dlgSettings">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
-		<size>472,390</size>
+		<size>475,400</size>
 		<title>Settings</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
