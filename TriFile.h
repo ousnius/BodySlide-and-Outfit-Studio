@@ -22,7 +22,7 @@ class TriFile {
 
 public:
 	int Read(string fileName);
-	int Write(string fileName, bool packed = false);
+	int Write(string fileName);
 	
 	void AddMorph(string shapeName, MorphDataPtr data);
 	void DeleteMorph(string shapeName, string morphName);

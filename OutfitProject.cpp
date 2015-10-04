@@ -608,7 +608,7 @@ int OutfitProject::WriteMorphTRI(const string& triPath) {
 		}
 	}
 
-	if (!tri.Write(triFilePath, true))
+	if (!tri.Write(triFilePath))
 		return false;
 
 	return true;

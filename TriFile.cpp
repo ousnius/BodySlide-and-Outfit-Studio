@@ -26,6 +26,9 @@ int TriFile::Read(string fileName) {
 			shapeName.resize(shapeLength, ' ');
 			triFile.read((char*)&shapeName.front(), shapeLength);
 
+			if (!packed)
+				triFile.seekg(packedBytes, ios_base::cur);
+
 			uint morphCount = 0;
 			triFile.read((char*)&morphCount, packedBytes);
 
@@ -35,6 +38,9 @@ int TriFile::Read(string fileName) {
 				triFile.read((char*)&morphLength, 1);
 				morphName.resize(morphLength, ' ');
 				triFile.read((char*)&morphName.front(), morphLength);
+
+				if (!packed)
+					triFile.seekg(packedBytes, ios_base::cur);
 
 				map<int, Vector3> morphOffsets;
 				if (packed) {
@@ -88,21 +94,15 @@ int TriFile::Read(string fileName) {
 	return true;
 }
 
-int TriFile::Write(string fileName, bool packed) {
+int TriFile::Write(string fileName) {
 	ofstream triFile(fileName.c_str(), ios_base::binary);
 
 	if (triFile.is_open()) {
-		int packedBytes = 2;
 		uint hdr = 'TRIP';
-
-		if (!packed) {
-			hdr = 'TRI\0';
-			packedBytes = 4;
-		}
 		triFile.write((char*)&hdr, 4);
 
 		uint shapeCount = shapeMorphs.size();
-		triFile.write((char*)&shapeCount, packedBytes);
+		triFile.write((char*)&shapeCount, 2);
 
 		for (auto& shape : shapeMorphs) {
 			byte shapeLength = shape.first.length();
@@ -111,7 +111,7 @@ int TriFile::Write(string fileName, bool packed) {
 			triFile.write(shapeName.c_str(), shapeLength);
 
 			uint morphCount = shape.second.size();
-			triFile.write((char*)&morphCount, packedBytes);
+			triFile.write((char*)&morphCount, 2);
 
 			for (auto& morph : shape.second) {
 				byte morphLength = morph->name.length();
@@ -119,44 +119,31 @@ int TriFile::Write(string fileName, bool packed) {
 				triFile.write((char*)&morphLength, 1);
 				triFile.write(morphName.c_str(), morphLength);
 
-				if (packed) {
-					float mult = 0.0f;
-					for (auto& v : morph->offsets) {
-						if (abs(v.second.x) > mult)
-							mult = abs(v.second.x);
-						if (abs(v.second.y) > mult)
-							mult = abs(v.second.y);
-						if (abs(v.second.z) > mult)
-							mult = abs(v.second.z);
-					}
-
-					mult /= 0x7FFF;
-					triFile.write((char*)&mult, 4);
-
-					ushort morphVertCount = morph->offsets.size();
-					triFile.write((char*)&morphVertCount, packedBytes);
-
-					for (auto& v : morph->offsets) {
-						ushort id = v.first;
-						short x = v.second.x / mult;
-						short y = v.second.y / mult;
-						short z = v.second.z / mult;
-						triFile.write((char*)&id, 2);
-						triFile.write((char*)&x, 2);
-						triFile.write((char*)&y, 2);
-						triFile.write((char*)&z, 2);
-					}
+				float mult = 0.0f;
+				for (auto& v : morph->offsets) {
+					if (abs(v.second.x) > mult)
+						mult = abs(v.second.x);
+					if (abs(v.second.y) > mult)
+						mult = abs(v.second.y);
+					if (abs(v.second.z) > mult)
+						mult = abs(v.second.z);
 				}
-				else {
-					uint morphVertCount = morph->offsets.size();
-					triFile.write((char*)&morphVertCount, packedBytes);
 
-					for (auto& v : morph->offsets) {
-						uint id = v.first;
-						Vector3 offset = Vector3(v.second.x, v.second.y, v.second.z);
-						triFile.write((char*)&id, 4);
-						triFile.write((char*)&offset, 12);
-					}
+				mult /= 0x7FFF;
+				triFile.write((char*)&mult, 4);
+
+				ushort morphVertCount = morph->offsets.size();
+				triFile.write((char*)&morphVertCount, 2);
+
+				for (auto& v : morph->offsets) {
+					ushort id = v.first;
+					short x = v.second.x / mult;
+					short y = v.second.y / mult;
+					short z = v.second.z / mult;
+					triFile.write((char*)&id, 2);
+					triFile.write((char*)&x, 2);
+					triFile.write((char*)&y, 2);
+					triFile.write((char*)&z, 2);
 				}
 			}
 		}

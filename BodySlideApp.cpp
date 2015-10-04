@@ -438,7 +438,7 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 		}
 	}
 
-	if (!tri.Write(triFilePath, true))
+	if (!tri.Write(triFilePath))
 		return false;
 
 	return true;
