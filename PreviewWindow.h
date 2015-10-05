@@ -56,6 +56,7 @@ public:
 	void Cleanup() {
 		gls.Cleanup();
 		shapeTextures.clear();
+		Refresh();
 	}
 
 	int GetWeight() {

@@ -211,6 +211,8 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 
 	sliderView->ClearPresetList();
 	sliderView->ClearSliderGUI();
+	
+	CleanupPreview();
 
 	string activePreset = Config.GetCString("SelectedPreset");
 
@@ -487,8 +489,6 @@ void BodySlideApp::InitPreview() {
 	if (!preview)
 		return;
 
-	preview->Cleanup();
-
 	string inputFileName;
 	bool freshLoad = false;
 	inputFileName = activeSet.GetInputFileName();
@@ -602,6 +602,10 @@ void BodySlideApp::UpdatePreview() {
 		}
 		preview->Update(it->second, &verts, &uv);
 	}
+}
+
+void BodySlideApp::CleanupPreview() {
+	preview->Cleanup();
 }
 
 void BodySlideApp::RebuildPreviewMeshes() {

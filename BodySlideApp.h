@@ -139,6 +139,7 @@ public:
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();
 	void InitPreview();
+	void CleanupPreview();
 	void ClosePreview() {
 		// Calling Close() will cause PreviewClosed() to be called,
 		// where we reset the preview window pointer to null
