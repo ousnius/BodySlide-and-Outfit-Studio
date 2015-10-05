@@ -605,6 +605,9 @@ void BodySlideApp::UpdatePreview() {
 }
 
 void BodySlideApp::CleanupPreview() {
+	if (!preview)
+		return;
+
 	preview->Cleanup();
 }
 
