@@ -2077,8 +2077,8 @@ int NifFile::CalcShapeDiff(const string& shapeName, const vector<Vector3>* targe
 		v.y = (targetData->at(i).y * scale) - myData->at(i).y;
 		v.z = (targetData->at(i).z * scale) - myData->at(i).z;
 
-		//if (fabs(v.x) > EPSILON || fabs(v.y) > EPSILON || fabs(v.z) > EPSILON)
-		outDiffData[i] = v;
+		if (!v.IsZero(true))
+			outDiffData[i] = v;
 	}
 	return 0;
 }

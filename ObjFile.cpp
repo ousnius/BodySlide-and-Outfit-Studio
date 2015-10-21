@@ -413,6 +413,7 @@ int ObjFile::Save(const string &fileName) {
 	}
 
 	file.close();
+	return 0;
 }
 
 bool ObjFile::CopyDataForGroup(const string &name, vector<Vector3> *v, vector<Triangle> *t, vector<Vector2> *uv) {

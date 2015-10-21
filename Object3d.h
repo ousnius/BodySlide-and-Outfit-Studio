@@ -49,7 +49,7 @@ struct Vector3 {
 
 	bool IsZero(bool bUseEpsilon = false) {
 		if (bUseEpsilon) {
-			if (x < EPSILON && x > -EPSILON && y < EPSILON && y > -EPSILON && z < EPSILON && z > -EPSILON)
+			if (fabs(x) < EPSILON && fabs(y) < EPSILON && fabs(z) < EPSILON)
 				return true;
 		}
 		else {
