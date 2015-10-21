@@ -1030,8 +1030,6 @@ public:
 
 	bool IsValid() { return isValid; }
 
-	int ExportShapeObj(const string& filename, const string& shape, float scale = 1.0f, Vector3 offset = Vector3(0.0f, 0.0f, 0.0f));
-
 	void Clear();
 
 	void DeleteBlock(int blockIndex);

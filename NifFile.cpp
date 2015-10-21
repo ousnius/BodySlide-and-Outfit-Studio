@@ -1062,56 +1062,6 @@ int NifFile::Save(const string& filename) {
 	return 0;
 }
 
-int NifFile::ExportShapeObj(const string& filename, const string& shape, float scale, Vector3 offset) {
-	ofstream file(filename.c_str(), ios_base::binary);
-	if (file.fail())
-		return 1;
-
-	vector<Triangle> tris;
-	GetTrisForShape(shape, &tris);
-	const vector<Vector3>* verts = GetRawVertsForShape(shape);
-	const vector<Vector2>* uvs = GetUvsForShape(shape);
-
-
-	Vector3 shapeTrans;
-	GetShapeTranslation(shape, shapeTrans);
-
-	float xtrans = shapeTrans.x + offset.x;
-	float ytrans = shapeTrans.y + offset.y;
-	float ztrans = shapeTrans.z + offset.z;
-
-	file << "# Shape export from Caliente's Body Slide" << endl;
-	file << "# original nif: " << fileName << endl;
-	file << "# translation: " << xtrans << ", " << ytrans << ", " << ztrans;
-	file << "# scale: " << scale << endl << endl;
-
-	file << "g " << shape << endl;
-	file << "usemtl NoMaterial" << endl << endl;
-
-	for (int i = 0; i < verts->size(); i++) {
-		file << "v " << (verts->at(i).x + xtrans) * scale
-			<< " " << (verts->at(i).y + ytrans) * scale
-			<< " " << (verts->at(i).z + ztrans) * scale
-			<< endl;
-	}
-	file << endl;
-	for (int i = 0; i < uvs->size(); i++) {
-		file << "vt " << uvs->at(i).u << " " << (1.0f - uvs->at(i).v) << endl;
-	}
-	file << endl;
-
-	for (int i = 0; i < tris.size(); i++) {
-		file << "f " << tris.at(i).p1 + 1 << "/" << tris.at(i).p1 + 1 << " "
-			<< tris.at(i).p2 + 1 << "/" << tris.at(i).p2 + 1 << " "
-			<< tris.at(i).p3 + 1 << "/" << tris.at(i).p3 + 1
-			<< endl;
-	}
-	file << endl;
-
-	file.close();
-	return 0;
-}
-
 int NifFile::GetShapeList(vector<string>& outList) {
 	outList.clear();
 	for (auto& block : blocks) {

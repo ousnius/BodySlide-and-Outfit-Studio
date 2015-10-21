@@ -37,11 +37,12 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("sliderLoadPreset"), OutfitStudio::OnLoadPreset)
 	EVT_MENU(XRCID("sliderConform"), OutfitStudio::OnSliderConform)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudio::OnSliderConformAll)
-	EVT_MENU(XRCID("importSliderBSD"), OutfitStudio::OnSliderImportBSD)
-	EVT_MENU(XRCID("importSliderOBJ"), OutfitStudio::OnSliderImportOBJ)
+	EVT_MENU(XRCID("sliderImportBSD"), OutfitStudio::OnSliderImportBSD)
+	EVT_MENU(XRCID("sliderImportOBJ"), OutfitStudio::OnSliderImportOBJ)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudio::OnSliderImportTRI)
-	EVT_MENU(XRCID("sliderExportTRI"), OutfitStudio::OnSliderExportTRI)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudio::OnSliderExportBSD)
+	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudio::OnSliderExportOBJ)
+	EVT_MENU(XRCID("sliderExportTRI"), OutfitStudio::OnSliderExportTRI)
 	EVT_MENU(XRCID("sliderNew"), OutfitStudio::OnNewSlider)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudio::OnNewZapSlider)
 	EVT_MENU(XRCID("sliderNewCombined"), OutfitStudio::OnNewCombinedSlider)
@@ -562,7 +563,7 @@ void OutfitStudio::SetClean(const string& shapeName) {
 void OutfitStudio::EnterSliderEdit() {
 	wxMenuBar* menu = GetMenuBar();
 	menu->Enable(XRCID("menuImportSlider"), true);
-	menu->Enable(XRCID("sliderExportBSD"), true);
+	menu->Enable(XRCID("menuExportSlider"), true);
 	menu->Enable(XRCID("sliderNegate"), true);
 	menu->Enable(XRCID("sliderClear"), true);
 	menu->Enable(XRCID("sliderDelete"), true);
@@ -572,7 +573,7 @@ void OutfitStudio::EnterSliderEdit() {
 void OutfitStudio::ExitSliderEdit() {
 	wxMenuBar* menu = GetMenuBar();
 	menu->Enable(XRCID("menuImportSlider"), false);
-	menu->Enable(XRCID("sliderExportBSD"), false);
+	menu->Enable(XRCID("menuExportSlider"), false);
 	menu->Enable(XRCID("sliderNegate"), false);
 	menu->Enable(XRCID("sliderClear"), false);
 	menu->Enable(XRCID("sliderDelete"), false);
@@ -2492,35 +2493,6 @@ void OutfitStudio::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 }
 
-void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
-		return;
-	}
-	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to export data from!", "Error");
-		return;
-	}
-
-	if (selectedItems.size() > 1) {
-		string dir = wxDirSelector("Export.bsd slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
-		if (dir.empty())
-			return;
-
-		for (auto &i : selectedItems)
-			project->SaveSliderBSDToDir(activeSlider, i->shapeName, dir, i->bIsOutfitShape);
-	}
-	else {
-		string fn = wxFileSelector("Export .bsd slider data", wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fn.empty())
-			return;
-
-		project->SaveSliderBSD(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape);
-	}
-
-	ApplySliders();
-}
-
 void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->workNif.IsValid() && !project->baseNif.IsValid()) {
 		wxMessageBox("There are no valid shapes loaded!", "Error");
@@ -2565,7 +2537,7 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 	for (auto &e : erase)
 		sliderDisplays.erase(e);
-	
+
 	glView->SetStrokeManager(nullptr);
 	ExitSliderEdit();
 	sliderScroll->FitInside();
@@ -2604,6 +2576,65 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 
 	wxMessageBox("Added morphs for the following shapes:\n\n" + addedMorphs, "TRI Import");
+}
+
+void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox("There is no slider in edit mode to export data from!", "Error");
+		return;
+	}
+
+	if (selectedItems.size() > 1) {
+		string dir = wxDirSelector("Export .bsd slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		if (dir.empty())
+			return;
+
+		for (auto &i : selectedItems)
+			project->SaveSliderBSD(activeSlider, i->shapeName, dir + "\\" + i->shapeName + "_" + activeSlider + ".obj", i->bIsOutfitShape);
+	}
+	else {
+		string fn = wxFileSelector("Export .bsd slider data", wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fn.empty())
+			return;
+
+		project->SaveSliderBSD(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape);
+	}
+
+	ApplySliders();
+}
+
+void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox("There is no slider in edit mode to export data from!", "Error");
+		return;
+	}
+
+	if (selectedItems.size() > 1) {
+		string dir = wxDirSelector("Export .obj slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		if (dir.empty())
+			return;
+
+		for (auto &i : selectedItems)
+			project->SaveSliderOBJ(activeSlider, i->shapeName, dir + "\\" + i->shapeName + "_" + activeSlider + ".obj", i->bIsOutfitShape);
+	}
+	else {
+		string fn = wxFileSelector("Export .obj slider data", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fn.empty())
+			return;
+
+		if (project->SaveSliderOBJ(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape))
+			wxMessageBox("OBJ file could not be exported!", "Error", wxICON_ERROR);
+	}
+
+	ApplySliders();
 }
 
 void OutfitStudio::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {
@@ -2960,13 +2991,14 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 
 		project->ClearBoneScale();
 		for (auto &i : selectedItems)
-			project->ExportShape(i->shapeName, dir + "\\" + i->shapeName + ".obj", i->bIsOutfitShape);
+			project->ExportShapeObj(dir + "\\" + i->shapeName + ".obj", i->shapeName, i->bIsOutfitShape, Vector3(0.1f, 0.1f, 0.1f));
 	}
 	else {
-		string fname = wxFileSelector("Export shape as an .obj file", wxEmptyString, wxString(activeItem->shapeName + ".obj"), "", "Obj Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (!fname.empty()) {
+		string fileName = wxFileSelector("Export shape as an .obj file", wxEmptyString, wxString(activeItem->shapeName + ".obj"), "", "Obj Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (!fileName.empty()) {
 			project->ClearBoneScale();
-			project->ExportShape(activeItem->shapeName, fname, activeItem->bIsOutfitShape);
+			if (project->ExportShapeObj(fileName, activeItem->shapeName, activeItem->bIsOutfitShape, Vector3(0.1f, 0.1f, 0.1f)))
+				wxMessageBox("Failed to export OBJ file!", "Error", wxICON_ERROR);
 		}
 	}
 }

@@ -697,8 +697,9 @@ private:
 	void OnSliderImportBSD(wxCommandEvent& event);
 	void OnSliderImportOBJ(wxCommandEvent& event);
 	void OnSliderImportTRI(wxCommandEvent& event);
-	void OnSliderExportTRI(wxCommandEvent& event);
 	void OnSliderExportBSD(wxCommandEvent& event);
+	void OnSliderExportOBJ(wxCommandEvent& event);
+	void OnSliderExportTRI(wxCommandEvent& event);
 
 	void OnNewSlider(wxCommandEvent& event);
 	void OnNewZapSlider(wxCommandEvent& event);

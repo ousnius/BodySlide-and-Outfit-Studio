@@ -2,13 +2,26 @@
 
 ObjFile::ObjFile() {
 	scale = Vector3(1.0f, 1.0f, 1.0f);
-	offset = Vector3(0.0f, 0.0f, 0.0f);
 	uvDupThreshold = 0.005f;
 }
 
 ObjFile::~ObjFile() {
-	for (auto &dataItems : data)
-		delete dataItems.second;
+	for (auto &d : data)
+		delete d.second;
+}
+
+int ObjFile::AddGroup(const string& name, const vector<Vector3>& verts, const vector<Triangle>& tris, const vector<Vector2>& uvs) {
+	if (name.empty() || verts.empty())
+		return 1;
+
+	ObjData* newData = new ObjData();
+	newData->name = name;
+	newData->verts = verts;
+	newData->tris = tris;
+	newData->uvs = uvs;
+
+	data[name] = newData;
+	return 0;
 }
 
 int ObjFile::LoadForNif(const string &inFn, const string& groupName) {
@@ -365,6 +378,41 @@ int ObjFile::Load(ifstream &base, const string& groupName) {
 	free(uvs);
 
 	return 0;
+}
+
+int ObjFile::Save(const string &fileName) {
+	ofstream file(fileName.c_str(), ios_base::binary);
+	if (file.fail())
+		return 1;
+
+	file << "# BodySlide OBJ export" << endl << endl;
+
+	for (auto& d : data) {
+		file << "g " << d.first << endl;
+		file << "usemtl NoMaterial" << endl << endl;
+
+		for (int i = 0; i < d.second->verts.size(); i++) {
+			file << "v " << (d.second->verts[i].x + offset.x) * scale.x
+				<< " " << (d.second->verts[i].y + offset.y) * scale.y
+				<< " " << (d.second->verts[i].z + offset.z) * scale.z
+				<< endl;
+		}
+		file << endl;
+
+		for (int i = 0; i < d.second->uvs.size(); i++)
+			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << endl;
+		file << endl;
+
+		for (int i = 0; i < d.second->tris.size(); i++) {
+			file << "f " << d.second->tris[i].p1 + 1 << "/" << d.second->tris[i].p1 + 1 << " "
+				<< d.second->tris[i].p2 + 1 << "/" << d.second->tris[i].p2 + 1 << " "
+				<< d.second->tris[i].p3 + 1 << "/" << d.second->tris[i].p3 + 1
+				<< endl;
+		}
+		file << endl;
+	}
+
+	file.close();
 }
 
 bool ObjFile::CopyDataForGroup(const string &name, vector<Vector3> *v, vector<Triangle> *t, vector<Vector2> *uv) {

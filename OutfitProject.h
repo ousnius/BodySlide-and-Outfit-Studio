@@ -117,8 +117,8 @@ public:
 	void SetSliderFromBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
 	bool SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
 	void SetSliderFromTRI(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff, bool bIsOutfit);
-	void SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
-	void SaveSliderBSDToDir(const string& sliderName, const string& shapeName, const string& dir, bool bIsOutfit);
+	int SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
+	int SaveSliderOBJ(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit);
 	void NegateSlider(const string& sliderName, const string& shapeName, bool bIsOutfit);
 
 	float& SliderValue(int index);
@@ -239,7 +239,7 @@ public:
 	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
 	int SaveOutfitNif(const string& filename, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 
-	int ExportShape(const string& shapeName, const string& fName, bool isOutfit);
+	int ExportShapeObj(const string& fileName, const string& shapeName, bool isOutfit, Vector3 scale = Vector3(1.0f, 1.0f, 1.0f), Vector3 offset = Vector3());
 
 	/* Creates an abbreviated name for use in data file identifiers. Mostly removes spaces and other special characters. */
 	string NameAbbreviate(const string& inputName);

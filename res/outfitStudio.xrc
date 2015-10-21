@@ -704,11 +704,11 @@
 				</object>
 				<object class="wxMenuItem" name="fileLoadOutfit">
 					<label>Load Outfit...</label>
-					<help>Load a .nif file as the working outfit, replacing any current outfit objects.</help>
+					<help>Load a NIF file as the working outfit, replacing any current outfit objects.</help>
 				</object>
 				<object class="wxMenuItem" name="applyOverallSkin">
 					<label>Apply Overall Skin Transform</label>
-					<help>Disable for a different way of loading .nif files to see if that puts it into the right (or a better) spot.</help>
+					<help>Disable for a different way of loading NIF files to see if that puts it into the right (or a better) spot.</help>
 					<checkable>1</checkable>
 					<checked>1</checked>
 				</object>
@@ -804,12 +804,12 @@
 			<object class="wxMenu" name="menuMesh">
 				<label>Shape</label>
 				<object class="wxMenuItem" name="importShape">
-					<label>Import Shape from .obj</label>
-					<help>Import an .obj file as a new shape in the outfit.</help>
+					<label>Import Shape from OBJ</label>
+					<help>Import an OBJ file as a new shape in the outfit.</help>
 				</object>
 				<object class="wxMenuItem" name="exportShape">
-					<label>Export Shape to .obj</label>
-					<help>Export the current shape as an .obj file.</help>
+					<label>Export Shape to OBJ</label>
+					<help>Export the current shape as an OBJ file.</help>
 				</object>
 				<object class="wxMenuItem" name="copyShape">
 					<label>Duplicate Shape...</label>
@@ -905,28 +905,35 @@
 				<object class="separator" />
 				<object class="wxMenuItem" name="sliderImportTRI">
 					<label>Import TRI Morphs...</label>
-					<help>Imports TRI morphs from a .tri file and creates sliders for shapes with a matching name.</help>
+					<help>Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.</help>
 				</object>
 				<object class="wxMenuItem" name="sliderExportTRI">
 					<label>Export TRI Morphs...</label>
-					<help>Exports TRI morphs to a .tri file.</help>
+					<help>Exports TRI morphs to a TRI file.</help>
 				</object>
 				<object class="separator" />
 				<object class="wxMenu" name="menuImportSlider">
 					<label>Import Slider Data</label>
-					<object class="wxMenuItem" name="importSliderBSD">
-						<label>Import .bsd...</label>
-						<help>Import a BodySlide .bsd file and overwrites the current shape's slider data</help>
+					<object class="wxMenuItem" name="sliderImportBSD">
+						<label>Import BSD...</label>
+						<help>Import a BodySlide BSD file and overwrites the current shape's slider data.</help>
 					</object>
-					<object class="wxMenuItem" name="importSliderOBJ">
-						<label>Import .obj...</label>
-						<help>Import an .obj file matching the current shape's vertex count, and calculate slider data from the difference.</help>
+					<object class="wxMenuItem" name="sliderImportOBJ">
+						<label>Import OBJ...</label>
+						<help>Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.</help>
 					</object>
 					<enabled>0</enabled>
 				</object>
-				<object class="wxMenuItem" name="sliderExportBSD">
-					<label>Export Slider...</label>
-					<help>Exports the current slider's data as a BodySlide .bsd file.</help>
+				<object class="wxMenu" name="menuExportSlider">
+					<label>Export Slider Data</label>
+					<object class="wxMenuItem" name="sliderExportBSD">
+						<label>Export BSD...</label>
+						<help>Exports the current slider's data as a BodySlide BSD file.</help>
+					</object>
+					<object class="wxMenuItem" name="sliderExportOBJ">
+						<label>Export OBJ...</label>
+						<help>Exports the current slider's data as an OBJ file.</help>
+					</object>
 					<enabled>0</enabled>
 				</object>
 				<object class="separator" />
@@ -1665,7 +1672,7 @@
 									<border>5</border>
 									<object class="wxFilePickerCtrl" name="npSliderSetFile">
 										<value></value>
-										<message>Select a slider set XML file, or a Reference .nif file</message>
+										<message>Select a slider set XML file, or a Reference NIF file</message>
 										<wildcard>*.xml;*.nif</wildcard>
 										<style>wxFLP_DEFAULT_STYLE</style>
 									</object>
@@ -1801,7 +1808,7 @@
 							<border>5</border>
 							<object class="wxRadioButton" name="npWorkNif">
 								<style>wxRB_GROUP</style>
-								<label>Load from a .nif file</label>
+								<label>Load from a NIF file</label>
 								<value>0</value>
 							</object>
 						</object>
@@ -1822,7 +1829,7 @@
 									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 									<border>5</border>
 									<object class="wxStaticText" name="m_staticText24">
-										<label>.Nif file:</label>
+										<label>NIF file:</label>
 										<wrap>-1</wrap>
 									</object>
 								</object>
@@ -1832,7 +1839,7 @@
 									<border>5</border>
 									<object class="wxFilePickerCtrl" name="npNifFilename">
 										<value></value>
-										<message>Select a .Nif file</message>
+										<message>Select a NIF file</message>
 										<wildcard>*.nif</wildcard>
 										<style>wxFLP_DEFAULT_STYLE</style>
 									</object>
@@ -1844,7 +1851,7 @@
 							<flag>wxALL</flag>
 							<border>5</border>
 							<object class="wxRadioButton" name="npWorkObj">
-								<label>Load from .obj file</label>
+								<label>Load from OBJ file</label>
 								<value>0</value>
 							</object>
 						</object>
@@ -1865,7 +1872,7 @@
 									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 									<border>5</border>
 									<object class="wxStaticText" name="m_staticText241">
-										<label>.Obj file:</label>
+										<label>OBJ file:</label>
 										<wrap>-1</wrap>
 									</object>
 								</object>
@@ -1875,7 +1882,7 @@
 									<border>5</border>
 									<object class="wxFilePickerCtrl" name="npObjFilename">
 										<value></value>
-										<message>Select an .Obj file</message>
+										<message>Select an OBJ file</message>
 										<wildcard>*.obj</wildcard>
 										<style>wxFLP_DEFAULT_STYLE</style>
 									</object>
@@ -2276,7 +2283,7 @@
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="npSliderSetFile">
 									<value></value>
-									<message>Select a slider set XML file, or a Reference .nif file</message>
+									<message>Select a slider set XML file, or a Reference NIF file</message>
 									<wildcard>*.xml;*.nif</wildcard>
 									<style>wxFLP_DEFAULT_STYLE</style>
 								</object>
@@ -2446,7 +2453,7 @@
 						<border>5</border>
 						<object class="wxRadioButton" name="npWorkNif">
 							<style>wxRB_GROUP</style>
-							<label>Load from a .nif file</label>
+							<label>Load from a NIF file</label>
 							<value>0</value>
 						</object>
 					</object>
@@ -2467,7 +2474,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="m_staticText24">
-									<label>.Nif file:</label>
+									<label>NIF file:</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -2477,7 +2484,7 @@
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="npNifFilename">
 									<value></value>
-									<message>Select a .Nif file</message>
+									<message>Select a NIF file</message>
 									<wildcard>*.nif</wildcard>
 									<style>wxFLP_DEFAULT_STYLE</style>
 								</object>
@@ -2489,7 +2496,7 @@
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxRadioButton" name="npWorkObj">
-							<label>Load from .obj file</label>
+							<label>Load from OBJ file</label>
 							<value>0</value>
 						</object>
 					</object>
@@ -2510,7 +2517,7 @@
 							<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 							<border>5</border>
 							<object class="wxStaticText" name="m_staticText241">
-								<label>.Obj file:</label>
+								<label>OBJ file:</label>
 								<wrap>-1</wrap>
 							</object>
 						</object>
@@ -2520,7 +2527,7 @@
 							<border>5</border>
 							<object class="wxFilePickerCtrl" name="npObjFilename">
 								<value></value>
-								<message>Select an .Obj file</message>
+								<message>Select an OBJ file</message>
 								<wildcard>*.obj</wildcard>
 								<style>wxFLP_DEFAULT_STYLE</style>
 							</object>
@@ -2684,12 +2691,12 @@
 	<object class="wxMenu" name="menuMeshContext">
 		<label>Shape</label>
 		<object class="wxMenuItem" name="importShape">
-			<label>Import Shape from .obj</label>
-			<help>Import an .obj file as a new shape in the outfit.</help>
+			<label>Import Shape from OBJ</label>
+			<help>Import an OBJ file as a new shape in the outfit.</help>
 		</object>
 		<object class="wxMenuItem" name="exportShape">
-			<label>Export Shape to .obj</label>
-			<help>Export the current shape as an .obj file.</help>
+			<label>Export Shape to OBJ</label>
+			<help>Export the current shape as an OBJ file.</help>
 		</object>
 		<object class="wxMenuItem" name="copyShape">
 			<label>Duplicate Shape...</label>
@@ -3128,7 +3135,7 @@
 								<border>5</border>
 								<object class="wxDirPickerCtrl" name="sssShapeDataFolder">
 									<value></value>
-									<tooltip>The folder where all the slider data (*.BSD) files will go, as well as the base outfit .NIF file.</tooltip>
+									<tooltip>The folder where all the slider data (*.BSD) files will go, as well as the base outfit NIF file.</tooltip>
 									<message>Select slider data folder</message>
 									<style>wxDIRP_DIR_MUST_EXIST|wxDIRP_USE_TEXTCTRL</style>
 								</object>
@@ -3156,8 +3163,8 @@
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="sssShapeDataFile">
 									<value></value>
-									<tooltip>The name of the output's base .NIF file.</tooltip>
-									<message>Select output .NIF file name</message>
+									<tooltip>The name of the output's base NIF file.</tooltip>
+									<message>Select output NIF file name</message>
 									<wildcard>*.nif</wildcard>
 									<style>wxFLP_DEFAULT_STYLE</style>
 								</object>

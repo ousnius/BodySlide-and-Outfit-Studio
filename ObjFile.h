@@ -32,6 +32,8 @@ public:
 	ObjFile();
 	~ObjFile();
 
+	int AddGroup(const string& name, const vector<Vector3>& verts, const vector<Triangle>& tris, const vector<Vector2>& uvs);
+
 	void SetScale(const Vector3& inScale) { scale = inScale; }
 	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
 
@@ -40,6 +42,8 @@ public:
 
 	int Load(const string& inFn, const string& groupName = "");
 	int Load(ifstream& base, const string& groupName = "");
+
+	int Save(const string& fileName);
 
 	bool CopyDataForGroup(const string& name, vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv);
 	bool CopyDataForIndex(int index, vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv);

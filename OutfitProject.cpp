@@ -614,7 +614,7 @@ int OutfitProject::WriteMorphTRI(const string& triPath) {
 	return true;
 }
 
-void OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit) {
+int OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit) {
 	string target = ShapeToTarget(shapeName);
 	if (!bIsOutfit) {
 		string sliderData = activeSet[sliderName].TargetDataName(target);
@@ -622,16 +622,38 @@ void OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeN
 	}
 	else
 		morpher.SaveResultDiff(target, sliderName, fileName);
+
+	return 0;
 }
 
-void OutfitProject::SaveSliderBSDToDir(const string& sliderName, const string& shapeName, const string& dir, bool bIsOutfit) {
+int OutfitProject::SaveSliderOBJ(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit) {
 	string target = ShapeToTarget(shapeName);
+	NifFile* nif = nullptr;
+	if (bIsOutfit)
+		nif = &workNif;
+	else
+		nif = &baseNif;
+
+	vector<Triangle> tris;
+	const vector<Vector3>* verts = nif->GetRawVertsForShape(shapeName);
+	nif->GetTrisForShape(shapeName, &tris);
+	const vector<Vector2>* uvs = nif->GetUvsForShape(shapeName);
+
+	vector<Vector3> outVerts = *verts;
 	if (!bIsOutfit) {
 		string sliderData = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.SaveSet(sliderData, target, dir + "\\" + shapeName + "_" + sliderName + ".bsd");
+		baseDiffData.ApplyDiff(sliderData, target, 1.0f, &outVerts);
 	}
 	else
-		morpher.SaveResultDiff(target, sliderName, dir + "\\" + shapeName + "_" + sliderName + ".bsd");
+		morpher.ApplyResultToVerts(sliderName, target, &outVerts);
+
+	ObjFile obj;
+	obj.SetScale(Vector3(0.1f, 0.1f, 0.1f));
+	obj.AddGroup(shapeName, outVerts, tris, *uvs);
+	if (obj.Save(fileName))
+		return 1;
+
+	return 0;
 }
 
 void OutfitProject::SetSliderFromBSD(const string& sliderName, const string& shapeName, const string& fileName, bool bIsOutfit) {
@@ -1823,11 +1845,31 @@ int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& mo
 	return clone.Save(filename);
 }
 
-int OutfitProject::ExportShape(const string& shapeName, const string& fName, bool isOutfit) {
+int OutfitProject::ExportShapeObj(const string& fileName, const string& shapeName, bool isOutfit, Vector3 scale, Vector3 offset) {
+	NifFile* nif = nullptr;
 	if (isOutfit)
-		return workNif.ExportShapeObj(fName, shapeName, 0.1f);
+		nif = &workNif;
 	else
-		return baseNif.ExportShapeObj(fName, shapeName, 0.1f);
+		nif = &baseNif;
+
+	vector<Triangle> tris;
+	nif->GetTrisForShape(shapeName, &tris);
+	const vector<Vector3>* verts = nif->GetRawVertsForShape(shapeName);
+	const vector<Vector2>* uvs = nif->GetUvsForShape(shapeName);
+
+	Vector3 shapeTrans;
+	nif->GetShapeTranslation(shapeName, shapeTrans);
+	Vector3 offs(shapeTrans.x + offset.x, shapeTrans.y + offset.y, shapeTrans.z + offset.z);
+
+	ObjFile obj;
+	obj.SetScale(scale);
+	obj.SetOffset(offs);
+
+	obj.AddGroup(shapeName, *verts, tris, *uvs);
+	if (obj.Save(fileName))
+		return 1;
+
+	return 0;
 }
 
 string OutfitProject::NameAbbreviate(const string& inputName) {
