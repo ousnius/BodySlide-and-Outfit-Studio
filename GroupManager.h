@@ -27,7 +27,6 @@ private:
 
 	bool dirty = false;
 	wxString fileName;
-	SliderSetGroupFile currentGroupFile;
 	map<string, vector<string>> groupMembers;
 	vector<string> allOutfits;
 

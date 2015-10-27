@@ -68,10 +68,9 @@ void GroupManager::RefreshUI(const bool& clearGroups) {
 }
 
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
-	// Clear and load group file
-	currentGroupFile.Clear();
-	currentGroupFile.Open(event.GetPath().ToStdString());
-	if (currentGroupFile.fail())
+	// Load group file
+	SliderSetGroupFile groupFile(event.GetPath().ToStdString());
+	if (groupFile.fail())
 		return;
 
 	groupMembers.clear();
@@ -79,10 +78,10 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 
 	// Fill group member map
 	vector<string> groupNames;
-	currentGroupFile.GetGroupNames(groupNames, true, true);
+	groupFile.GetGroupNames(groupNames, true, true);
 	for (auto &grp : groupNames) {
 		SliderSetGroup group;
-		if (currentGroupFile.GetGroup(grp, group))
+		if (groupFile.GetGroup(grp, group))
 			return;
 
 		vector<string> members;
@@ -91,18 +90,20 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	}
 
 	wxFileName fileInfo(event.GetPath());
-	fileName = fileInfo.GetFullName();
+	fileName = fileInfo.GetFullPath();
 	RefreshUI(true);
 }
 
 void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
+	SliderSetGroupFile groupFile;
+	groupFile.New(fileName.ToStdString());
 	for (auto &grp : groupMembers) {
 		SliderSetGroup group;
 		group.SetName(grp.first);
 		group.AddMembers(grp.second);
-		currentGroupFile.UpdateGroup(group);
+		groupFile.UpdateGroup(group);
 	}
-	currentGroupFile.Save();
+	groupFile.Save();
 
 	dirty = false;
 	btSave->Enable(dirty & !fileName.empty());
@@ -113,16 +114,17 @@ void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
 	if (file.ShowModal() != wxID_OK)
 		return;
 
-	currentGroupFile.New(file.GetPath().ToStdString());
+	SliderSetGroupFile groupFile;
+	groupFile.New(file.GetPath().ToStdString());
 	for (auto &grp : groupMembers) {
 		SliderSetGroup group;
 		group.SetName(grp.first);
 		group.AddMembers(grp.second);
-		currentGroupFile.UpdateGroup(group);
+		groupFile.UpdateGroup(group);
 	}
 
-	currentGroupFile.Save();
-	fileName = file.GetFilename();
+	groupFile.Save();
+	fileName = file.GetPath();
 
 	dirty = false;
 	btSave->Enable(dirty & !fileName.empty());
