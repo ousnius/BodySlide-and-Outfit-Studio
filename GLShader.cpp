@@ -1,3 +1,9 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2015  Caliente & ousnius
+See the included LICENSE file
+*/
+
 #include "GLShader.h"
 #pragma warning (disable : 4130)
 

@@ -984,15 +984,21 @@
 					<style>wxHW_SCROLLBAR_AUTO</style>
 					<htmlcode>
 <![CDATA[<center>
-<b>BodySlide and Outfit Studio</b><br><br><font size="2">The MIT License (MIT)<br>Copyright (c) 2015 Caliente & ousnius<br><br>
-<i>Permission is hereby granted, free of charge, to any person obtaining a copy<br>of this software and associated documentation files (the "Software"), to deal<br>
-in the Software without restriction, including without limitation the rights<br>to use, copy, modify, merge, publish, distribute, sublicense, and/or sell<br>
-copies of the Software, and to permit persons to whom the Software is<br>furnished to do so, subject to the following conditions:<br><br>
-The above copyright notice and this permission notice shall be included in all<br>copies or substantial portions of the Software.<br><br>
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR<br>IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,<br>
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE<br>AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER<br>
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,<br>OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-<br>SOFTWARE.</i></font><br><br><br>
+<b>BodySlide and Outfit Studio</b><br>
+<font size="2">Copyright(C) 2015  Caliente & ousnius<br><br>
+
+<i>This program is free software: you can redistribute it and/or modify<br>
+it under the terms of the GNU General Public License as published by<br>
+the Free Software Foundation, either version 3 of the License, or<br>
+(at your option) any later version.<br><br>
+
+This program is distributed in the hope that it will be useful,<br>
+but WITHOUT ANY WARRANTY; without even the implied warranty of<br>
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the<br>
+GNU General Public License for more details.<br><br>
+
+You should have received a copy of the GNU General Public License<br>
+along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>.<br><br></i></font>
 
 <b>wxWidgets</b><br><br><font size="2">wxWindows License<br><a href="http://www.wxwidgets.org/">http://www.wxwidgets.org/</a></font><br><br><br>
 

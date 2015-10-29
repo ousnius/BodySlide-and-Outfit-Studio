@@ -1,3 +1,9 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2015  Caliente & ousnius
+See the included LICENSE file
+*/
+
 /* Vertex tweaking classes. Patterned off of 3d sculpting applications like ZBrush.
 	Process overview:
 	1) App enters edit mode.
