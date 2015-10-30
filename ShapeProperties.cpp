@@ -116,6 +116,7 @@ void ShapeProperties::GetShaderType() {
 				shaderType->Append("Heightmap");
 				shaderType->Append("Face Tint");
 				shaderType->Append("Skin Tint");
+				shaderType->Append("Hair Tint");
 				shaderType->Append("Parallax Occlusion Material");
 				shaderType->Append("World Multitexture");
 				shaderType->Append("World Map 1");
@@ -131,27 +132,7 @@ void ShapeProperties::GetShaderType() {
 				shaderType->Append("World LOD Multitexture");
 				shaderType->Enable();
 
-				switch (type) {
-					case BSLightingShaderPropertyShaderType::Default: shaderType->SetSelection(0); break;
-					case BSLightingShaderPropertyShaderType::EnvironmentMap: shaderType->SetSelection(1); break;
-					case BSLightingShaderPropertyShaderType::GlowShader: shaderType->SetSelection(2); break;
-					case BSLightingShaderPropertyShaderType::Heightmap: shaderType->SetSelection(3); break;
-					case BSLightingShaderPropertyShaderType::FaceTint: shaderType->SetSelection(4); break;
-					case BSLightingShaderPropertyShaderType::SkinTint: shaderType->SetSelection(5); break;
-					case BSLightingShaderPropertyShaderType::ParallaxOccMaterial: shaderType->SetSelection(6); break;
-					case BSLightingShaderPropertyShaderType::WorldMultitexture: shaderType->SetSelection(7); break;
-					case BSLightingShaderPropertyShaderType::WorldMap1: shaderType->SetSelection(8); break;
-					case BSLightingShaderPropertyShaderType::Unknown10: shaderType->SetSelection(9); break;
-					case BSLightingShaderPropertyShaderType::MultiLayerParallax: shaderType->SetSelection(10); break;
-					case BSLightingShaderPropertyShaderType::Unknown12: shaderType->SetSelection(11); break;
-					case BSLightingShaderPropertyShaderType::WorldMap2: shaderType->SetSelection(12); break;
-					case BSLightingShaderPropertyShaderType::SparkleSnow: shaderType->SetSelection(13); break;
-					case BSLightingShaderPropertyShaderType::WorldMap3: shaderType->SetSelection(14); break;
-					case BSLightingShaderPropertyShaderType::EyeEnvmap: shaderType->SetSelection(15); break;
-					case BSLightingShaderPropertyShaderType::Unknown17: shaderType->SetSelection(16); break;
-					case BSLightingShaderPropertyShaderType::WorldMap4: shaderType->SetSelection(17); break;
-					case BSLightingShaderPropertyShaderType::WorldLODMultitexture: shaderType->SetSelection(18); break;
-				}
+				shaderType->SetSelection(type);
 				break;
 			case BSSHADERPPLIGHTINGPROPERTY:
 				type = shader->GetType();
@@ -383,9 +364,7 @@ void ShapeProperties::ApplyChanges() {
 	NiShader* shader = nif->GetShader(shape);
 
 	if (shader) {
-		uint type = 0xFFFFFFFF;
-		uint typeSelection = shaderType->GetSelection();
-
+		uint type = shaderType->GetSelection();
 		wxColour color = specularColor->GetColour();
 		Vector3 specColor(color.Red(), color.Green(), color.Blue());
 		specColor /= 255.0f;
@@ -404,30 +383,7 @@ void ShapeProperties::ApplyChanges() {
 				break;
 			}
 			case BSLIGHTINGSHADERPROPERTY: {
-				switch (typeSelection) {
-					case 0: type = BSLightingShaderPropertyShaderType::Default; break;
-					case 1: type = BSLightingShaderPropertyShaderType::EnvironmentMap; break;
-					case 2: type = BSLightingShaderPropertyShaderType::GlowShader; break;
-					case 3: type = BSLightingShaderPropertyShaderType::Heightmap; break;
-					case 4: type = BSLightingShaderPropertyShaderType::FaceTint; break;
-					case 5: type = BSLightingShaderPropertyShaderType::SkinTint; break;
-					case 6: type = BSLightingShaderPropertyShaderType::ParallaxOccMaterial; break;
-					case 7: type = BSLightingShaderPropertyShaderType::WorldMultitexture; break;
-					case 8: type = BSLightingShaderPropertyShaderType::WorldMap1; break;
-					case 9: type = BSLightingShaderPropertyShaderType::Unknown10; break;
-					case 10: type = BSLightingShaderPropertyShaderType::MultiLayerParallax; break;
-					case 11: type = BSLightingShaderPropertyShaderType::Unknown12; break;
-					case 12: type = BSLightingShaderPropertyShaderType::WorldMap2; break;
-					case 13: type = BSLightingShaderPropertyShaderType::SparkleSnow; break;
-					case 14: type = BSLightingShaderPropertyShaderType::WorldMap3; break;
-					case 15: type = BSLightingShaderPropertyShaderType::EyeEnvmap; break;
-					case 16: type = BSLightingShaderPropertyShaderType::Unknown17; break;
-					case 17: type = BSLightingShaderPropertyShaderType::WorldMap4; break;
-					case 18: type = BSLightingShaderPropertyShaderType::WorldLODMultitexture; break;
-				}
-
-				if (type != 0xFFFFFFFF)
-					shader->SetType(type);
+				shader->SetType(type);
 
 				shader->SetSpecularColor(specColor);
 				shader->SetSpecularStrength(specStrength);
@@ -438,7 +394,7 @@ void ShapeProperties::ApplyChanges() {
 				break;
 			}
 			case BSSHADERPPLIGHTINGPROPERTY: {
-				switch (typeSelection) {
+				switch (type) {
 					case 0: type = BSShaderType::SHADER_TALL_GRASS; break;
 					case 1: type = BSShaderType::SHADER_DEFAULT; break;
 					case 2: type = BSShaderType::SHADER_SKY; break;
@@ -449,8 +405,7 @@ void ShapeProperties::ApplyChanges() {
 					case 7: type = BSShaderType::SHADER_NOLIGHTING; break;
 				}
 
-				if (type != 0xFFFFFFFF)
-					shader->SetType(type);
+				shader->SetType(type);
 
 				NiMaterialProperty* material = nif->GetMaterialProperty(shape);
 				if (!material)
