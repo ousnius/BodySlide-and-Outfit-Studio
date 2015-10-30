@@ -110,6 +110,9 @@ void ShapeProperties::GetShaderType() {
 		switch (shader->blockType) {
 			case BSLIGHTINGSHADERPROPERTY:
 				type = shader->GetType();
+				if (type > BSLightingShaderPropertyShaderType::WorldLODMultitexture)
+					type = 0;
+
 				shaderType->Append("Default");
 				shaderType->Append("Environment Map");
 				shaderType->Append("Glow Shader");
@@ -155,6 +158,7 @@ void ShapeProperties::GetShaderType() {
 					case BSShaderType::SHADER_LIGHTING30: shaderType->SetSelection(5); break;
 					case BSShaderType::SHADER_TILE: shaderType->SetSelection(6); break;
 					case BSShaderType::SHADER_NOLIGHTING: shaderType->SetSelection(7); break;
+					default: shaderType->SetSelection(1);
 				}
 				break;
 		}
