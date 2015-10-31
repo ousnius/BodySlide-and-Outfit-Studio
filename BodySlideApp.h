@@ -30,6 +30,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "PresetSaveDialog.h"
 #include "GroupManager.h"
 #include "TriFile.h"
+#include "Log.h"
 
 #include <wx/wxprec.h>
 #include <wx/srchctrl.h>
@@ -60,6 +61,7 @@ class BodySlideApp : public wxApp {
 	SliderManager sliderManager;
 	DiffDataSets dataSets;
 	SliderSet activeSet;
+	Log* logger;
 
 	/* Data Items */
 	map<string, string> outfitNameSource;		// All currently defined outfits.

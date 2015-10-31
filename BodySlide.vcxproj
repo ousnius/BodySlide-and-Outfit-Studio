@@ -119,6 +119,7 @@
     <ClCompile Include="GLShader.cpp" />
     <ClCompile Include="GLSurface.cpp" />
     <ClCompile Include="GroupManager.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="Mesh.cpp" />
     <ClCompile Include="NifBlock.cpp" />
     <ClCompile Include="NifFile.cpp" />
@@ -156,6 +157,7 @@
     <ClInclude Include="GLSurface.h" />
     <ClInclude Include="GroupManager.h" />
     <ClInclude Include="KDMatcher.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="NifFile.h" />
     <ClInclude Include="Object3d.h" />

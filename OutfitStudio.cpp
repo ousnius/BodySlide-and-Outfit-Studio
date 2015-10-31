@@ -151,18 +151,26 @@ END_EVENT_TABLE()
 // ----------------------------------------------------------------------------
 
 OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
+	wxLogMessage(wxString::Format("Loading Outfit Studio at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight()));
+
 	wxXmlResource* resource = wxXmlResource::Get();
 	SetParent(parent);
 	progressVal = 0;
 
 	resource->InitAllHandlers();
 	bool loaded = resource->Load("res\\outfitStudio.xrc");
-	if (!loaded)
+	if (!loaded) {
+		wxMessageBox("Failed to load outfitStudio.xrc file!", "Error", wxICON_ERROR);
+		Close(true);
 		return;
+	}
 
 	loaded = resource->LoadFrame(this, GetParent(), "outfitStudio");
-	if (!loaded)
+	if (!loaded) {
+		wxMessageBox("Failed to load Outfit Studio frame!", "Error", wxICON_ERROR);
+		Close(true);
 		return;
+	}
 
 	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
 
@@ -279,17 +287,24 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	wxSplitterWindow* splitterRight = (wxSplitterWindow*)FindWindowByName("splitterRight");
 	if (splitterRight)
 		splitterRight->SetSashPosition(200);
+
+	wxLogMessage("Outfit Studio loaded.");
 }
 
 OutfitStudio::~OutfitStudio() {
-	delete project;
-	project = nullptr;
+	if (project) {
+		delete project;
+		project = nullptr;
+	}
 
 	for (auto &sd : sliderDisplays)
 		delete sd.second;
 
-	delete glView;
+	if (glView)
+		delete glView;
+
 	static_cast<BodySlideApp*>(wxApp::GetInstance())->CloseOutfitStudio();
+	wxLogMessage("Outfit Studio closed.");
 }
 
 void OutfitStudio::OnMoveWindow(wxMoveEvent& event) {

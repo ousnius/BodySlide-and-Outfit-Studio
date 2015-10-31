@@ -66,13 +66,20 @@ BodySlideApp::~BodySlideApp() {
 	delete previewBaseNif;
 	previewBaseNif = nullptr;
 
-	Config.SaveConfig("Config.xml");
 	FSManager::del();
+
+	delete logger;
 }
 
 bool BodySlideApp::OnInit() {
 	if (!wxApp::OnInit())
 		return false;
+
+	Config.LoadConfig();
+
+	logger = new Log();
+	wxLogMessage("Initializing BodySlide...");
+	wxLogMessage(wxString::Format("Working directory: %s", wxGetCwd()));
 
 	wxInitAllImageHandlers();
 
@@ -83,27 +90,29 @@ bool BodySlideApp::OnInit() {
 
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
 
-	/* Init CommonControls? */
-
-	Config.LoadConfig();
-	SetDefaultConfig();	
-	LoadAllCategories();
-
-	int w = Config.GetIntValue("BodySlideFrame.width");	
-	int h = Config.GetIntValue("BodySlideFrame.height");
-
-	sliderView = new BodySlideFrame(this, wxSize(w, h));
-	sliderView->SetPosition(wxPoint(Config.GetIntValue("BodySlideFrame.x"), Config.GetIntValue("BodySlideFrame.y")));
-	sliderView->Show(true);
-	SetTopWindow(sliderView);
+	SetDefaultConfig();
 
 	string activeOutfit = Config.GetCString("SelectedOutfit");
 	curOutfit = activeOutfit;
 
+	LoadAllCategories();
 	LoadAllGroups();
+
+	int x = Config.GetIntValue("BodySlideFrame.x");
+	int y = Config.GetIntValue("BodySlideFrame.y");
+	int w = Config.GetIntValue("BodySlideFrame.width");	
+	int h = Config.GetIntValue("BodySlideFrame.height");
+
+	wxLogMessage(wxString::Format("Loading BodySlide frame at X:%d Y:%d with W:%d H:%d...", x, y, w, h));
+	sliderView = new BodySlideFrame(this, wxSize(w, h));
+	sliderView->SetPosition(wxPoint(x, y));
+	sliderView->Show();
+	SetTopWindow(sliderView);
 
 	if (straightOutfitStudio)
 		LaunchOutfitStudio();
+
+	wxLogMessage("BodySlide initialized.");
 
 	// If WIP preview version
 	//wxMessageBox("WIP PREVIEW, DON'T SHARE THIS VERSION ANYWHERE! -ousnius", "Alert");
@@ -377,10 +386,12 @@ void BodySlideApp::LaunchOutfitStudio() {
 		outfitStudio->SetFocus();
 	}
 	else {
+		int x = Config.GetIntValue("OutfitStudioFrame.x");
+		int y = Config.GetIntValue("OutfitStudioFrame.y");
 		int w = Config.GetIntValue("OutfitStudioFrame.width");
 		int h = Config.GetIntValue("OutfitStudioFrame.height");
-		wxPoint loc(Config.GetIntValue("OutfitStudioFrame.x"), Config.GetIntValue("OutfitStudioFrame.y"));
-		outfitStudio = new OutfitStudio(sliderView, loc, wxSize(w, h), Config);
+
+		outfitStudio = new OutfitStudio(sliderView, wxPoint(x, y), wxSize(w, h), Config);
 		outfitStudio->Show();
 	}
 }
@@ -679,6 +690,7 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("ShapeDataPath", wxGetCwd().ToStdString() + "\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
 	Config.SetDefaultValue("BSATextureScan", "true");
+	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("SelectedOutfit", "");
 
@@ -733,6 +745,7 @@ void BodySlideApp::SetDefaultConfig() {
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
 				installPath.Append("Data\\");
 				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
+				wxLogMessage(wxString::Format("Registry game data path: %s"), installPath);
 			}
 			else if (Config["WarnMissingGamePath"] == "true")
 				wxMessageBox("Could not find both your game install path (registry key value) and GameDataPath in the configuration.", "Warning");
@@ -743,6 +756,7 @@ void BodySlideApp::SetDefaultConfig() {
 }
 
 void BodySlideApp::LoadAllCategories() {
+	wxLogMessage("Loading slider categories...");
 	cCollection.LoadCategories("SliderCategories");
 }
 
@@ -755,6 +769,7 @@ void BodySlideApp::SetPresetGroups(const string& setName) {
 }
 
 void BodySlideApp::LoadAllGroups() {
+	wxLogMessage("Loading slider groups...");
 	gCollection.LoadGroups("SliderGroups");
 
 	ungroupedOutfits.clear();
@@ -1382,16 +1397,25 @@ int BodySlideApp::SaveSliderPositions(const string& outputFile, const string& pr
 
 BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoad(this, DELAYLOAD_TIMER) {
 	this->app = app;
-	delayLoad.Start(100, true);
 	rowCount = 0;
 
 	wxXmlResource* rsrc = wxXmlResource::Get();
 	rsrc->InitAllHandlers();
 	bool loaded = rsrc->Load("res\\BodyslideFrame.xrc");
-	if (!loaded)
+	if (!loaded) {
+		wxMessageBox("Failed to load BodyslideFrame.xrc file!", "Error", wxICON_ERROR);
+		Close(true);
 		return;
+	}
 
 	rsrc->LoadFrame(this, GetParent(), "BodyslideFrame");
+	if (!loaded) {
+		wxMessageBox("Failed to load BodySlide frame!", "Error", wxICON_ERROR);
+		Close(true);
+		return;
+	}
+
+	delayLoad.Start(100, true);
 
 	SetDoubleBuffered(true);
 	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
@@ -1685,6 +1709,12 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	app->ClosePreview();
+
+	int ret = Config.SaveConfig("Config.xml");
+	if (ret)
+		wxLogWarning(wxString::Format("Failed to save configuration (%d)!", ret));
+
+	wxLogMessage("BodySlide closed.");
 	Destroy();
 }
 

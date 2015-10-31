@@ -438,11 +438,11 @@ class OutfitStudio : public wxFrame {
 public:
 	OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
 	~OutfitStudio();
-	wxGLPanel* glView;
 
 	int targetGame;
-	OutfitProject* project;		// Always assumed to exist. Blank one created in constructor, replaced on load/new
-	ShapeItemData* activeItem;
+	wxGLPanel* glView = nullptr;
+	OutfitProject* project = nullptr;
+	ShapeItemData* activeItem = nullptr;
 	vector<ShapeItemData*> selectedItems;
 	string activeSlider;
 	string activeBone;
