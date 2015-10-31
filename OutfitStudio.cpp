@@ -151,7 +151,7 @@ END_EVENT_TABLE()
 // ----------------------------------------------------------------------------
 
 OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
-	wxLogMessage(wxString::Format("Loading Outfit Studio at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight()));
+	wxLogMessage("Loading Outfit Studio at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
 	wxXmlResource* resource = wxXmlResource::Get();
 	SetParent(parent);

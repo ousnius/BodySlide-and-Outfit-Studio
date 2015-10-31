@@ -46,6 +46,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 }
 
 void PreviewWindow::OnShown() {
+	wxLogMessage("Initializing preview window...");
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
@@ -194,6 +195,7 @@ void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	canvas = nullptr;
 	delete context;
 	app->PreviewClosed();
+	wxLogMessage("Preview closed.");
 }
 
 BEGIN_EVENT_TABLE(PreviewWindow, wxFrame)

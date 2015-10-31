@@ -61,7 +61,7 @@ class BodySlideApp : public wxApp {
 	SliderManager sliderManager;
 	DiffDataSets dataSets;
 	SliderSet activeSet;
-	Log* logger;
+	Log logger;
 
 	/* Data Items */
 	map<string, string> outfitNameSource;		// All currently defined outfits.
@@ -90,6 +90,10 @@ public:
 	virtual bool OnInit();
 	virtual void OnInitCmdLine(wxCmdLineParser& parser);
 	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
+
+	virtual bool OnExceptionInMainLoop();
+	virtual void OnUnhandledException();
+	virtual void OnFatalException();
 	
 	SliderCategoryCollection cCollection;
 	int targetGame;

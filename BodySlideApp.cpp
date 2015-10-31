@@ -20,8 +20,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "XmlFinder.h"
 #include "FSManager.h"
 
-#include <sstream>
-
 ConfigurationManager Config;
 
 BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
@@ -67,8 +65,6 @@ BodySlideApp::~BodySlideApp() {
 	previewBaseNif = nullptr;
 
 	FSManager::del();
-
-	delete logger;
 }
 
 bool BodySlideApp::OnInit() {
@@ -77,9 +73,10 @@ bool BodySlideApp::OnInit() {
 
 	Config.LoadConfig();
 
-	logger = new Log();
+	logger.Initialize();
+	wxHandleFatalExceptions();
 	wxLogMessage("Initializing BodySlide...");
-	wxLogMessage(wxString::Format("Working directory: %s", wxGetCwd()));
+	wxLogMessage("Working directory: %s", wxGetCwd());
 
 	wxInitAllImageHandlers();
 
@@ -103,7 +100,7 @@ bool BodySlideApp::OnInit() {
 	int w = Config.GetIntValue("BodySlideFrame.width");	
 	int h = Config.GetIntValue("BodySlideFrame.height");
 
-	wxLogMessage(wxString::Format("Loading BodySlide frame at X:%d Y:%d with W:%d H:%d...", x, y, w, h));
+	wxLogMessage("Loading BodySlide frame at X:%d Y:%d with W:%d H:%d...", x, y, w, h);
 	sliderView = new BodySlideFrame(this, wxSize(w, h));
 	sliderView->SetPosition(wxPoint(x, y));
 	sliderView->Show();
@@ -113,10 +110,6 @@ bool BodySlideApp::OnInit() {
 		LaunchOutfitStudio();
 
 	wxLogMessage("BodySlide initialized.");
-
-	// If WIP preview version
-	//wxMessageBox("WIP PREVIEW, DON'T SHARE THIS VERSION ANYWHERE! -ousnius", "Alert");
-
 	return true;
 }
 
@@ -129,7 +122,50 @@ bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
 	return true;
 }
 
+bool BodySlideApp::OnExceptionInMainLoop() {
+	wxString error;
+	try {
+		throw;
+	}
+	catch (const exception& e) {
+		error = e.what();
+	}
+	catch (...) {
+		error = "unknown error";
+	}
+
+	logger.SetFormatter(false);
+	wxLogFatalError("Unexpected exception has occurred: %s, the program will terminate.", error);
+	wxMessageBox(wxString::Format("Unexpected exception has occurred: %s, the program will terminate.", error), "Unexpected exception", wxICON_ERROR);
+	return false;
+}
+
+void BodySlideApp::OnUnhandledException() {
+	wxString error;
+	try {
+		throw;
+	}
+	catch (const exception& e) {
+		error = e.what();
+	}
+	catch (...) {
+		error = "unknown error";
+	}
+
+	logger.SetFormatter(false);
+	wxLogFatalError("Unhandled exception has occurred: %s, the program will terminate.", error);
+	wxMessageBox(wxString::Format("Unhandled exception has occurred: %s, the program will terminate.", error), "Unhandled exception", wxICON_ERROR);
+}
+
+void BodySlideApp::OnFatalException() {
+	logger.SetFormatter(false);
+	wxLogFatalError("Fatal exception has occurred, the program will terminate.");
+	wxMessageBox("Fatal exception has occurred, the program will terminate.", "Fatal exception", wxICON_ERROR);
+}
+
+
 void BodySlideApp::LoadData() {
+	wxLogMessage("Loading initial data...");
 	sliderView->Freeze();
 	setupOutfit(curOutfit);
 	string activeOutfit = Config.GetCString("SelectedOutfit");
@@ -142,6 +178,7 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 	if (!sliderView)
 		return;
 
+	wxLogMessage("Setting up set '%s'...", outfitName);
 	sliderView->ClearOutfitList();
 	sliderView->ClearPresetList();
 	sliderView->ClearSliderGUI();
@@ -158,9 +195,11 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 	LoadPresets(activeOutfit);
 	PopulatePresetList(activePreset);
 	createSliders(outfitName);
+	wxLogMessage("Finished setting up set '%s'...", outfitName);
 }
 
 int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
+	wxLogMessage("Creating sliders...");
 	dataSets.Clear();
 	if (outfitNameSource.find(outfit) == outfitNameSource.end())
 		return 1;
@@ -179,14 +218,21 @@ int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
 			DisplayActiveSet();
 		}
 		else
-			return 2;
+			return 3;
 	}
+	else
+		return 2;
+
 	return 0;
 }
 
 int BodySlideApp::createSliders(const string& outfit, bool hideAll) {
 	LoadSliderSets();
-	createSetSliders(outfit, hideAll);
+
+	int error = createSetSliders(outfit, hideAll);
+	if (error)
+		wxLogError("Failed to load set '%s' from slider set list (%d).", outfit, error);
+
 	PopulateOutfitList(outfit);
 	string activePreset = Config.GetCString("SelectedPreset");
 	sliderManager.InitializeSliders(activePreset);
@@ -201,6 +247,7 @@ void BodySlideApp::RefreshOutfitList() {
 }
 
 int BodySlideApp::LoadSliderSets() {
+	wxLogMessage("Loading slider sets...");
 	dataSets.Clear();
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
@@ -233,6 +280,8 @@ int BodySlideApp::LoadSliderSets() {
 }
 
 void BodySlideApp::ActivateOutfit(const string& outfitName) {
+	wxLogMessage("Activating set '%s'...", outfitName);
+
 	Config.SetValue("SelectedOutfit", outfitName);
 	sliderView->Freeze();
 
@@ -247,7 +296,11 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	SetPresetGroups(outfitName);
 	LoadPresets(outfitName);
 	PopulatePresetList(activePreset);
-	createSetSliders(outfitName);
+	
+	int error = createSetSliders(outfitName);
+	if (error)
+		wxLogError("Failed to load set '%s' from slider set list (%d).", outfitName, error);
+
 	PopulateOutfitList(outfitName);
 
 	InitPreview();
@@ -255,6 +308,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 
 	sliderView->Thaw();
 	sliderView->Refresh();
+	wxLogMessage("Finished activating set '%s'...", outfitName);
 }
 
 void BodySlideApp::ActivatePreset(const string &presetName) {
@@ -476,6 +530,8 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 }
 
 void BodySlideApp::CopySliderValues(bool toHigh) {
+	wxLogMessage("Copying slider values to %s weight.", toHigh ? "high" : "low");
+
 	if (toHigh) {
 		for (int i = 0; i < sliderManager.slidersSmall.size(); i++) {
 			Slider* slider = &sliderManager.slidersSmall[i];
@@ -518,6 +574,7 @@ void BodySlideApp::InitPreview() {
 	if (!preview)
 		return;
 
+	wxLogMessage("Loading preview meshes...");
 	string inputFileName;
 	bool freshLoad = false;
 	inputFileName = activeSet.GetInputFileName();
@@ -745,7 +802,7 @@ void BodySlideApp::SetDefaultConfig() {
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
 				installPath.Append("Data\\");
 				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
-				wxLogMessage(wxString::Format("Registry game data path: %s"), installPath);
+				wxLogMessage("Registry game data path: %s", installPath);
 			}
 			else if (Config["WarnMissingGamePath"] == "true")
 				wxMessageBox("Could not find both your game install path (registry key value) and GameDataPath in the configuration.", "Warning");
@@ -753,6 +810,8 @@ void BodySlideApp::SetDefaultConfig() {
 		else if (Config["WarnMissingGamePath"] == "true")
 			wxMessageBox("Could not find both your game installation (registry key) and GameDataPath in the configuration.", "Warning");
 	}
+	else
+		wxLogMessage("Game data path in config: %s", Config["GameDataPath"]);
 }
 
 void BodySlideApp::LoadAllCategories() {
@@ -764,8 +823,10 @@ void BodySlideApp::SetPresetGroups(const string& setName) {
 	presetGroups.clear();
 	gCollection.GetOutfitGroups(setName, presetGroups);
 
-	if (presetGroups.empty())
+	if (presetGroups.empty()) {
 		Config.GetValueArray("DefaultGroups", "GroupName", presetGroups);
+		wxLogMessage("Using default groups for set '%s'.", setName);
+	}
 }
 
 void BodySlideApp::LoadAllGroups() {
@@ -925,8 +986,9 @@ void BodySlideApp::LoadPresets(const string& sliderSet) {
 	if (sliderSet.empty())
 		outfit = Config.GetCString("SelectedOutfit");
 
-	vector<string> groups_and_aliases;
+	wxLogMessage("Loading presets for '%s'...", outfit);
 
+	vector<string> groups_and_aliases;
 	for (auto &g : presetGroups) {
 		groups_and_aliases.push_back(g);
 		for (auto &ag : this->groupAlias)
@@ -945,6 +1007,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	string outFileNameSmall;
 	string outFileNameBig;
 
+	wxLogMessage("Building set '%s' with options: Local Path = %s, Cleaning = %s, TRI = %s, GenWeights = %s",
+		activeSet.GetName(), localPath ? "True" : "False", clean ? "True" : "False", tri ? "True" : "False", activeSet.GenWeights() ? "True" : "False");
+
 	if (localPath) {
 		outFileNameSmall = outFileNameBig = activeSet.GetOutputFile();
 	}
@@ -952,14 +1017,18 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		if (!Config.Exists("GameDataPath")) {
 			if (Config["WarnMissingGamePath"] == "true") {
 				int ret = wxMessageBox("WARNING: Game data path not configured. Would you like to show BodySlide where it is?", "Game not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
-				if (ret != wxYES)
+				if (ret != wxYES) {
+					wxLogMessage("Aborted build without data path.");
 					return 4;
+				}
 			}
 
 			wxString cwd = wxGetCwd();
 			wxString response = wxDirSelector("Please choose a directory to set as your Data path", cwd);
-			if (response.IsEmpty())
+			if (response.IsEmpty()) {
+				wxLogMessage("Aborted build without data path.");
 				return 4;
+			}
 
 			response.Append('\\');
 			Config.SetValue("GameDataPath", response.ToStdString());
@@ -974,8 +1043,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	// ALT key
 	if (clean && !localPath) {
 		int ret = wxMessageBox("WARNING: This will delete the output files from the output folder, potentially causing crashes.\n\nDo you want to continue?", "Clean Build", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
-		if (ret != wxYES)
+		if (ret != wxYES) {
+			wxLogMessage("Aborted cleaning build.");
 			return 4;
+		}
 
 		wxString removeHigh, removeLow;
 		wxString msg = "Removed the following files:\n";
@@ -993,6 +1064,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			msg.Append(removeHigh + " (no action)\n");
 
 		if (!genWeights) {
+			wxLogMessage("%s", msg);
 			wxMessageBox(msg, "Process Successful");
 			return 0;
 		}
@@ -1004,12 +1076,16 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		else
 			msg.Append(removeLow + " (no action)\n");
 
+		wxLogMessage("%s", msg);
 		wxMessageBox(msg, "Process Successful");
 		return 0;
 	}
 
-	if (nifSmall.Load(inputFileName))
+	int error = nifSmall.Load(inputFileName);
+	if (error) {
+		wxLogError("Failed to load '%s' (%d)!", inputFileName, error);
 		return 1;
+	}
 
 	if (nifBig.Load(inputFileName))
 		return 1;
@@ -1048,8 +1124,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 		triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll))
-			wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath), "Unable to process", wxOK | wxICON_ERROR);
+		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
+			wxLogError("Failed to write TRI file to '%s'!", triPath);
+			wxMessageBox(wxString().Format("Failed to write TRI file to the following location\n\n%s", triPath), "Unable to process", wxOK | wxICON_ERROR);
+		}
 
 		string triShapeLink;
 		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
@@ -1073,11 +1151,14 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		custName = outFileNameSmall;
 		savedLow = custName;
 		while (nifSmall.Save(custName.ToStdString())) {
-			wxMessageBox(wxString().Format("Unable to build bodies/outfits to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
+			wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
+			wxMessageBox(wxString().Format("Failed to build set to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
 
 			custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName);
-			if (custName.IsEmpty())
+			if (custName.IsEmpty()) {
+				wxLogMessage("Aborted build when choosing alternate file name.");
 				return 4;
+			}
 
 			useCustName = true;
 			savedLow = custName;
@@ -1099,11 +1180,14 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 	savedHigh = custName;
 	while (nifBig.Save(custName.ToStdString())) {
-		wxMessageBox(wxString().Format("Unable to build bodies/outfits to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
+		wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
+		wxMessageBox(wxString().Format("Failed to build set to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
 
 		custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName);
-		if (custName.IsEmpty())
+		if (custName.IsEmpty()) {
+			wxLogMessage("Aborted build when choosing alternate file name.");
 			return 4;
+		}
 
 		useCustName = true;
 		savedHigh = custName;
@@ -1116,6 +1200,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	if (!savedHigh.IsEmpty())
 		msg.Append(savedHigh);
 
+	wxLogMessage("%s", msg);
 	wxMessageBox(msg, "Process Successful");
 	return 0;
 }
@@ -1128,13 +1213,17 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 	NifFile nifBig;
 	SliderSet currentSet;
 	DiffDataSets currentDiffs;
-
 	wxProgressDialog* progWnd;
+
+	wxLogMessage("Started batch build with options: Custom Path = %s, Cleaning = %s, TRI = %s",
+		custPath.empty() ? "False" : custPath, clean ? "True" : "False", tri ? "True" : "False");
 
 	if (clean) {
 		int ret = wxMessageBox("WARNING: This will delete the output files from the output folders, potentially causing crashes.\n\nDo you want to continue?", "Clean Batch Build", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
-		if (ret != wxYES)
+		if (ret != wxYES) {
+			wxLogMessage("Aborted cleaning batch build.");
 			return 1;
+		}
 	}
 
 	string activePreset = Config["SelectedPreset"];
@@ -1142,13 +1231,16 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 	if (datapath.empty()) {
 		if (!Config.Exists("GameDataPath")) {
 			if (clean) {
+				wxLogError("Aborted batch clean with unconfigured data path. Files can't be removed that way.");
 				wxMessageBox("WARNING: Game data path not configured. Files can't be removed that way.", "Game not found", wxOK | wxICON_ERROR);
 				return 1;
 			}
 			if (Config["WarnMissingGamePath"] == "true") {
 				int ret = wxMessageBox("WARNING: Game data path not configured. Continue saving files to the working directory?", "Game not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
-				if (ret != wxYES)
+				if (ret != wxYES) {
+					wxLogError("Aborted batch build with unconfigured data path.");
 					return 1;
+				}
 			}
 
 			wxString cwd = wxGetCwd();
@@ -1159,15 +1251,13 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 	progWnd = new wxProgressDialog("Processing Outfits", "Starting...", 1000, nullptr, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
 	progWnd->SetSize(400, 150);
-	stringstream progmsg;
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
 	for (auto &outfit : outfitList) {
-		bool triEnd = tri;
-		progmsg.str("");
-		progmsg << "Processing '" << outfit << "' ( " << count << " of " << outfitList.size() << " )";
-		progWnd->Update((int)(count*progstep), progmsg.str());
+		wxString progMsg = wxString::Format("Processing '%s' (%d of %d)...", outfit, count, outfitList.size());
+		wxLogMessage(progMsg);
+		progWnd->Update((int)(count*progstep), progMsg);
 		count++;
 
 		/* Load set */
@@ -1217,13 +1307,11 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 
 		/* load iput nifs */
 		if (nifSmall.Load(currentSet.GetInputFileName())) {
-			failedOutfits[outfit] = "Unable to load small input nif: " + currentSet.GetInputFileName();
+			failedOutfits[outfit] = "Unable to load input nif: " + currentSet.GetInputFileName();
 			continue;
 		}
-		if (nifBig.Load(currentSet.GetInputFileName())) {
-			failedOutfits[outfit] = "Unable to load big input nif: " + currentSet.GetInputFileName();
+		if (nifBig.Load(currentSet.GetInputFileName()))
 			continue;
-		}
 
 		/* Shape the NIF files */
 		vector<Vector3> vertsLow;
@@ -1310,10 +1398,8 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		wxString dir = datapath + currentSet.GetOutputPath();
 		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
-		stringstream errss;
 		if (!success) {
-			errss << "Unable to create destination directory: " << dir.ToStdString();
-			failedOutfits[outfit] = errss.str();
+			failedOutfits[outfit] = "Unable to create destination directory: " + dir.ToStdString();
 			continue;
 		}
 
@@ -1321,14 +1407,17 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		outFileNameBig = outFileNameSmall;
 
 		/* Add RaceMenu TRI path for in-game morphs */
+		bool triEnd = tri;
 		if (triEnd) {
 			string triPath = currentSet.GetOutputFilePath() + ".tri";
 			string triPathTrimmed = triPath;
 			triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 			triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
-			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
-				wxMessageBox(wxString().Format("Error creating TRI file in the following location\n\n%s", triPath), "TRI File", wxOK | wxICON_ERROR);
+			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
+				wxLogError("Failed to create TRI file to '%s'!", triPath);
+				wxMessageBox(wxString().Format("Failed to create TRI file in the following location\n\n%s", triPath), "TRI File", wxOK | wxICON_ERROR);
+			}
 
 			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
 				string triShapeLink = it->second;
@@ -1345,25 +1434,21 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
 			if (nifBig.Save(outFileNameBig)) {
-				errss << "Unable to save nif file: " << outFileNameBig;
-				failedOutfits[outfit] = errss.str();
+				failedOutfits[outfit] = "Unable to save nif file: " + outFileNameBig;
 				continue;
 			}
 			if (nifSmall.Save(outFileNameSmall)) {
-				errss << "Unable to save nif file: " << outFileNameSmall;
-				failedOutfits[outfit] = errss.str();
+				failedOutfits[outfit] = "Unable to save nif file: " + outFileNameSmall;
 				continue;
 			}
 		}
 		else {
 			outFileNameBig += ".nif";
 			if (nifBig.Save(outFileNameBig)) {
-				errss << "Unable to save nif file: " << outFileNameBig;
-				failedOutfits[outfit] = errss.str();
+				failedOutfits[outfit] = "Unable to save nif file: " + outFileNameBig;
 				continue;
 			}
 		}
-
 	}
 
 	progWnd->Update(1000);
@@ -1712,7 +1797,7 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 	int ret = Config.SaveConfig("Config.xml");
 	if (ret)
-		wxLogWarning(wxString::Format("Failed to save configuration (%d)!", ret));
+		wxLogWarning("Failed to save configuration (%d)!", ret);
 
 	wxLogMessage("BodySlide closed.");
 	Destroy();
@@ -1862,6 +1947,8 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	}
 
 	string sliderName = sn.ToAscii().data();
+	wxLogMessage("Zap '%s' %s.", sliderName, event.IsChecked() ? "checked" : "unchecked");
+
 	if (event.IsChecked()) {
 		if (sliderDisplays[sliderName]->oneSize) {
 			app->SetSliderValue(sliderName, false, 1.0f);
@@ -2010,8 +2097,11 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	string presetName = psd.outPresetName;
 	groups.assign(psd.outGroups.begin(), psd.outGroups.end());
 
-	if (app->SaveSliderPositions(fname, presetName, groups))
-		wxMessageBox("Failed to save preset!", "Error");
+	int error = app->SaveSliderPositions(fname, presetName, groups);
+	if (error) {
+		wxLogError("Failed to save preset (%d)!", error);
+		wxMessageBox(wxString::Format("Failed to save preset (%d)!", error), "Error");
+	}
 
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
@@ -2138,14 +2228,17 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri);
 
 	if (ret == 0) {
-		wxMessageBox("All outfits processed successfully!", "Complete", wxICON_INFORMATION);
+		wxLogMessage("All sets processed successfully!");
+		wxMessageBox("All sets processed successfully!", "Complete", wxICON_INFORMATION);
 	}
 	else if (ret == 3) {
 		wxArrayString errlist;
-		for (auto &e : failedOutfits)
+		for (auto &e : failedOutfits) {
+			wxLogError("Failed to build '%s': %s", e.first, e.second);
 			errlist.Add(e.first + ":" + e.second);
+		}
 
-		wxSingleChoiceDialog errdisplay(this, "The following outfits failed", "Failed", errlist, (void**)0, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
+		wxSingleChoiceDialog errdisplay(this, "The following sets failed", "Failed", errlist, (void**)0, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
 		errdisplay.ShowModal();
 	}
 }

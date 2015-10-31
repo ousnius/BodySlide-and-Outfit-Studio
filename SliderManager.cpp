@@ -256,6 +256,8 @@ float SliderManager::GetSmallPresetValue(const string& presetName, const string&
 }
 
 void SliderManager::InitializeSliders(const string& presetName) {
+	wxLogMessage("Applying preset '%s' to sliders.", presetName);
+
 	float ps;
 	for (int i = 0; i < slidersBig.size(); i++) {
 		if (!presetCollection.GetBigPreset(presetName, slidersBig[i].name, ps))

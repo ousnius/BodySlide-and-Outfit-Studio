@@ -238,11 +238,18 @@ GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool bu
 	fragSrc = nullptr;
 	vertSrc = nullptr;
 
-	if (!initShaders())
-		wxMessageBox(errorstring, "Shader Error");
-	else
-		if (!LoadShaders(vertexSource, fragmentSource, build))
-			wxMessageBox(errorstring, "Shader Error");
+	if (!initShaders()) {
+		wxString error = wxString::Format("%s (state %d)", errorstring, errorstate);
+		wxLogError(error);
+		wxMessageBox(error, "OpenGL Error", wxICON_ERROR);
+	}
+	else {
+		if (!LoadShaders(vertexSource, fragmentSource, build)) {
+			wxString error = wxString::Format("%s (state %d)", errorstring, errorstate);
+			wxLogError(error);
+			wxMessageBox(error, "OpenGL Error", wxICON_ERROR);
+		}
+	}
 }
 
 bool GLShader::initShaders() {
@@ -264,7 +271,7 @@ bool GLShader::initShaders() {
 
 		if (!glCreateProgram || !glAttachShader || !glLinkProgram || !glUseProgram) {
 			errorstate = 1;
-			errorstring = "OpenGL: One or more shader program functions are not supported.";
+			errorstring = "OpenGL: One or more program functions are not supported.";
 			return false;
 		}
 

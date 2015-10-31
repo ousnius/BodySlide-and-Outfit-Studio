@@ -1,26 +1,31 @@
 #include "Log.h"
 #include "BodySlideApp.h"
 
-Log::Log(wxString fileName) {
+void Log::Initialize(wxString fileName) {
 	wxLog::EnableLogging(false);
 	int logLevel = Config.GetIntValue("LogLevel", -1);
 
 	if (logLevel >= 0) {
-		stream = new ofstream(fileName.ToStdString());
-		if (*stream) {
-			wxLog* log = new wxLogStream(stream);
+		stream.open(fileName.ToStdString());
+		if (stream) {
+			wxLog* log = new wxLogStream(&stream);
 			log->SetLogLevel(logLevel);
-
-			wxLogFormatter* oldFormatter = log->SetFormatter(new LogFormatter());
-			delete oldFormatter;
 
 			wxLog::SetActiveTarget(log);
 			wxLog::EnableLogging();
+			SetFormatter();
 		}
 	}
 }
 
-Log::~Log() {
-	if (stream)
-		delete stream;
+void Log::SetFormatter(bool withFile) {
+	wxLogFormatter* oldFormatter = nullptr;
+
+	if (withFile)
+		oldFormatter = wxLog::GetActiveTarget()->SetFormatter(new LogFormatter());
+	else
+		oldFormatter = wxLog::GetActiveTarget()->SetFormatter(new LogFormatterNoFile());
+
+	if (oldFormatter)
+		delete oldFormatter;
 }
