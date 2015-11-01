@@ -234,9 +234,6 @@ int BodySlideApp::createSliders(const string& outfit, bool hideAll) {
 		wxLogError("Failed to load set '%s' from slider set list (%d).", outfit, error);
 
 	PopulateOutfitList(outfit);
-	string activePreset = Config.GetCString("SelectedPreset");
-	sliderManager.InitializeSliders(activePreset);
-
 	return 0;
 }
 
