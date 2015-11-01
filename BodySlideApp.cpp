@@ -2312,7 +2312,6 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
-				gameDataDir.MakeRelativeTo();
 				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
 				FSManager::del();
 			}
@@ -2321,7 +2320,6 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
-			skeletonFile.MakeRelativeTo();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
 
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());

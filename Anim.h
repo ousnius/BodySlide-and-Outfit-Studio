@@ -155,7 +155,7 @@ public:
 		return instance;
 	}
 	bool isValid;
-	int LoadFromNif(const string& filename);
+	int LoadFromNif(const string& fileName);
 	AnimBone& AddBone(const string& boneName, bool bCustom = false);
 	string GenerateBoneName();
 

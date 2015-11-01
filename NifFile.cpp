@@ -1095,6 +1095,8 @@ void NifFile::RenameShape(const string& oldName, const string& newName) {
 	hdr.strings[strID].str = newName;
 	if (hdr.maxStringLen < newName.length())
 		hdr.maxStringLen = newName.length();
+
+	wxLogMessage("Renamed shape '%s' to '%s' in file '%s'.", oldName, newName, fileName);
 }
 
 void NifFile::RenameDuplicateShape(const string& dupedShape) {

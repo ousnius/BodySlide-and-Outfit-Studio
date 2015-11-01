@@ -8,8 +8,10 @@
 class LogFormatter : public wxLogFormatter {
 	virtual wxString Format(wxLogLevel level, const wxString& msg, const wxLogRecordInfo& info) const {
 		wxDateTime logTime(info.timestamp);
+		wxString fileName = info.filename;
+		fileName = fileName.AfterLast('\\');
 		return wxString::Format("[%02d:%02d:%02d][%d]\t%s(%d): %s",
-			logTime.GetHour(), logTime.GetMinute(), logTime.GetSecond(), level, info.filename, info.line, msg);
+			logTime.GetHour(), logTime.GetMinute(), logTime.GetSecond(), level, fileName, info.line, msg);
 	}
 };
 

@@ -359,7 +359,8 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	ObjFile obj;
 	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
 	if (obj.LoadForNif(fileName)) {
-		wxMessageBox("Could not load OBJ file.", "OBJ Error", wxICON_ERROR);
+		wxLogError("Could not load OBJ file '%s'!", fileName);
+		wxMessageBox(wxString::Format("Could not load OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
 		return 1;
 	}
 
@@ -367,7 +368,8 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	vector<Triangle> t;
 	vector<Vector2> uv;
 	if (!obj.CopyDataForIndex(0, &v, &t, &uv)) {
-		wxMessageBox("Could not copy data from OBJ file.", "OBJ Error", wxICON_ERROR);
+		wxLogError("Could not copy data from OBJ file '%s'!", fileName);
+		wxMessageBox(wxString::Format("Could not copy data from OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
 		return 3;
 	}
 
@@ -379,6 +381,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 		if (shapeVerts.size() == v.size()) {
 			int r = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
 			if (r == wxYES) {
+				wxLogMessage("Updated shape '%s' using '%s'.", mergeShape, fileName);
 				workNif.SetVertsForShape(mergeShape, v);
 				return 101;
 			}
@@ -391,6 +394,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 	NifFile blank;
 	blank.Load("res\\SkeletonBlank.nif");
 	if (!blank.IsValid()) {
+		wxLogError("Could not load 'SkeletonBlank.nif' for OBJ file.");
 		wxMessageBox("Could not load 'SkeletonBlank.nif' for OBJ file.", "OBJ Error", wxICON_ERROR);
 		return 2;
 	}
@@ -1348,6 +1352,7 @@ int OutfitProject::LoadReferenceTemplate(const string& templateName, bool clearR
 		}
 	}
 	if (srcFile.empty() || srcSet.empty()) {
+		wxLogError("Template source entries are invalid.");
 		wxMessageBox("Template source entries are invalid.", "Reference Error", wxICON_ERROR);
 		return 1;
 	}
@@ -1359,15 +1364,19 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	if (ClearRef)
 		ClearReference();
 
-	int ret = baseNif.Load(fileName);
-	if (ret) {
-		if (ret == 2) {
-			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
-				baseNif.GetFileName(), baseNif.hdr.verStr, baseNif.hdr.userVersion, baseNif.hdr.userVersion2), "Reference Error", wxICON_ERROR);
+	int error = baseNif.Load(fileName);
+	if (error) {
+		if (error == 2) {
+			wxString errorText = wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				baseNif.GetFileName(), baseNif.hdr.verStr, baseNif.hdr.userVersion, baseNif.hdr.userVersion2);
+
+			wxLogError(errorText);
+			wxMessageBox(errorText, "Reference Error", wxICON_ERROR);
 			return 3;
 		}
 
-		wxMessageBox("Could not load reference NIF.", "Reference Error", wxICON_ERROR);
+		wxLogError("Could not load reference NIF file '%s'!", fileName);
+		wxMessageBox(wxString::Format("Could not load reference NIF file '%s'!", fileName), "Reference Error", wxICON_ERROR);
 		return 2;
 	}
 
@@ -1388,6 +1397,7 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	activeSet.LoadSetDiffData(baseDiffData);
 	AutoOffset(baseNif);
 
+	wxLogMessage("Loaded reference NIF file '%s'.", fileName);
 	return 0;
 }
 
@@ -1401,7 +1411,8 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	int newVertCount;
 
 	if (sset.fail()) {
-		wxMessageBox("Could not load slider set XML file.", "Reference Error", wxICON_ERROR);
+		wxLogError("Could not load slider set file '%s'!", filename);
+		wxMessageBox(wxString::Format("Could not load slider set file '%s'!", filename), "Reference Error", wxICON_ERROR);
 		return 1;
 	}
 
@@ -1412,17 +1423,21 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	if (!ClearRef)
 		oldVertCount = GetVertexCount(baseShapeName, false);
 
-	int ret = baseNif.Load(inMeshFile);
-	if (ret) {
-		if (ret == 2) {
-			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
-				baseNif.GetFileName(), baseNif.hdr.verStr, baseNif.hdr.userVersion, baseNif.hdr.userVersion2), "Reference Error", wxICON_ERROR);
+	int error = baseNif.Load(inMeshFile);
+	if (error) {
+		if (error == 2) {
+			wxString errorText = wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				baseNif.GetFileName(), baseNif.hdr.verStr, baseNif.hdr.userVersion, baseNif.hdr.userVersion2);
+
+			wxLogError(errorText);
+			wxMessageBox(errorText, "Reference Error", wxICON_ERROR);
 			ClearReference();
 			return 5;
 		}
 
 		ClearReference();
-		wxMessageBox("Could not load reference NIF.", "Reference Error", wxICON_ERROR);
+		wxLogError("Could not load reference NIF file '%s'!", inMeshFile);
+		wxMessageBox(wxString::Format("Could not load reference NIF file '%s'!", inMeshFile), "Reference Error", wxICON_ERROR);
 		return 2;
 	}
 
@@ -1430,7 +1445,8 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	baseNif.GetShapeList(shapes);
 	if (shapes.empty()) {
 		ClearReference();
-		wxMessageBox("Reference NIF does not contain any shapes.", "Reference Error", wxICON_ERROR);
+		wxLogError("Reference NIF file '%s' does not contain any shapes.", baseNif.GetFileName());
+		wxMessageBox(wxString::Format("Reference NIF file '%s' does not contain any shapes.", baseNif.GetFileName()), "Reference Error", wxICON_ERROR);
 		return 3;
 	}
 
@@ -1463,7 +1479,8 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 	newVertCount = GetVertexCount(shape, false);
 	if (newVertCount == -1) {
 		ClearReference();
-		wxMessageBox("Shape not found in the reference NIF.", "Reference Error", wxICON_ERROR);
+		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, baseNif.GetFileName());
+		wxMessageBox(wxString::Format("Shape '%s' not found in reference NIF file '%s'!", shape, baseNif.GetFileName()), "Reference Error", wxICON_ERROR);
 		return 4;
 	}
 
@@ -1485,8 +1502,10 @@ int OutfitProject::LoadReference(const string& filename, const string& setName, 
 int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName) {
 	ClearOutfit();
 
-	if (filename.empty())
+	if (filename.empty()) {
+		wxLogMessage("No outfit selected.");
 		return 0;
+	}
 
 	outfitName = inOutfitName;
 	size_t fnpos = filename.rfind("\\");
@@ -1514,15 +1533,19 @@ int OutfitProject::LoadOutfit(const string& filename, const string& inOutfitName
 			mGamePath = "";
 	}
 
-	int ret = workNif.Load(filename);
-	if (ret) {
-		if (ret == 2) {
-			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
-				workNif.GetFileName(), workNif.hdr.verStr, workNif.hdr.userVersion, workNif.hdr.userVersion2), "Outfit Error", wxICON_ERROR);
+	int error = workNif.Load(filename);
+	if (error) {
+		if (error == 2) {
+			wxString errorText = wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				workNif.GetFileName(), workNif.hdr.verStr, workNif.hdr.userVersion, workNif.hdr.userVersion2);
+
+			wxLogError(errorText);
+			wxMessageBox(errorText, "Outfit Error", wxICON_ERROR);
 			return 3;
 		}
 
-		wxMessageBox("Could not load outfit NIF.", "Outfit Error", wxICON_ERROR);
+		wxLogError("Could not load outfit NIF file '%s'!", filename);
+		wxMessageBox(wxString::Format("Could not load outfit NIF file '%s'!", filename), "Outfit Error", wxICON_ERROR);
 		return 1;
 	}
 
@@ -1562,15 +1585,19 @@ int OutfitProject::AddNif(const string& filename) {
 		return 0;
 
 	NifFile nif;
-	int ret = nif.Load(filename);
-	if (ret) {
-		if (ret == 2) {
-			wxMessageBox(wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
-				nif.GetFileName(), nif.hdr.verStr, nif.hdr.userVersion, nif.hdr.userVersion2), "NIF Error", wxICON_ERROR);
+	int error = nif.Load(filename);
+	if (error) {
+		if (error == 2) {
+			wxString errorText = wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+				nif.GetFileName(), nif.hdr.verStr, nif.hdr.userVersion, nif.hdr.userVersion2);
+
+			wxLogError(errorText);
+			wxMessageBox(errorText, "NIF Error", wxICON_ERROR);
 			return 4;
 		}
 
-		wxMessageBox("Could not load NIF.", "NIF Error", wxICON_ERROR);
+		wxLogError("Could not load NIF file '%s'!", filename);
+		wxMessageBox(wxString::Format("Could not load NIF file '%s'!", filename), "NIF Error", wxICON_ERROR);
 		return 1;
 	}
 

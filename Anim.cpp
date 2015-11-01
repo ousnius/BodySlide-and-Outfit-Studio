@@ -80,8 +80,10 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
 	vector<int> BoneIndices;
 	string invalidBones = "";
 
-	if (!nif->GetShapeBoneList(shape, boneNames))
+	if (!nif->GetShapeBoneList(shape, boneNames)) {
+		wxLogWarning("No skinning found in shape '%s' of '%s'.", shape, nif->GetFileName());
 		return false;
+	}
 
 	int slot = 0;
 	for (auto &bn : boneNames) {
@@ -103,8 +105,10 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
 
 	shapeSkinning[shape] = AnimSkin(nif, shape, BoneIndices);
 
-	if (!invalidBones.empty())
-		wxMessageBox("Bones in shape '" + shape + "' not found in reference skeleton:\n\n" + invalidBones, "Invalid Bones");
+	if (!invalidBones.empty()) {
+		wxLogWarning("Bones in shape '%s' not found in reference skeleton:\n%s", shape, invalidBones);
+		wxMessageBox(wxString::Format("Bones in shape '%s' not found in reference skeleton:\n\n%s", shape, invalidBones), "Invalid Bones");
+	}
 
 	return true;
 }
@@ -286,22 +290,29 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 	return (*this);
 }
 
-int AnimSkeleton::LoadFromNif(const string& filename) {
+int AnimSkeleton::LoadFromNif(const string& fileName) {
 	NifFile nif;
-	nif.Load(filename);
-	if (!nif.IsValid())
+	int error = nif.Load(fileName);
+	if (error) {
+		wxLogError("Failed to load skeleton '%s'!", fileName);
+		wxMessageBox(wxString::Format("Failed to load skeleton '%s'!", fileName));
 		return 1;
+	}
 
 	rootBone = Config.GetCString("Anim/SkeletonRootName");
-	int nodeid = nif.GetNodeID(rootBone);
-	if (nodeid == -1)
+	int nodeID = nif.GetNodeID(rootBone);
+	if (nodeID == -1) {
+		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);
+		wxMessageBox(wxString::Format("Root '%s' not found in skeleton '%s'!", rootBone, fileName));
 		return 2;
+	}
 
 	if (isValid)
 		allBones.clear();
 
-	AddBone(rootBone).LoadFromNif(&nif, nodeid, nullptr);
+	AddBone(rootBone).LoadFromNif(&nif, nodeID, nullptr);
 	isValid = true;
+	wxLogMessage("Loaded skeleton '%s' with root '%s'.", fileName, rootBone);
 	return 0;
 }
 
