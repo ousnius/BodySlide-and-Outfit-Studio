@@ -971,7 +971,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
 		wxString refTemplate = XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
-		error = project->LoadReferenceTemplate(refTemplate.ToStdString());
+		error = project->LoadReferenceTemplate(refTemplate.ToStdString(), ClearRef);
 	}
 	else if (XRCCTRL(dlg, "npRefIsSliderset", wxRadioButton)->GetValue() == true) {
 		wxString fileName = XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
@@ -983,11 +983,11 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 				refShape, sliderSetName, fileName);
 
 			error = project->LoadReference(fileName.ToStdString(),
-				sliderSetName.ToStdString(), true, refShape.ToStdString());
+				sliderSetName.ToStdString(), ClearRef, refShape.ToStdString());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
-			error = project->LoadReferenceNif(fileName.ToStdString(), refShape.ToStdString());
+			error = project->LoadReferenceNif(fileName.ToStdString(), refShape.ToStdString(), ClearRef);
 		}
 	}
 	else
