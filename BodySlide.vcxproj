@@ -142,7 +142,6 @@
     <ClCompile Include="TriFile.cpp" />
     <ClCompile Include="TweakBrush.cpp" />
     <ClCompile Include="wxStateButton.cpp" />
-    <ClCompile Include="XmlFinder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Anim.h" />
@@ -179,7 +178,6 @@
     <ClInclude Include="TriFile.h" />
     <ClInclude Include="TweakBrush.h" />
     <ClInclude Include="wxStateButton.h" />
-    <ClInclude Include="XmlFinder.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="BodySlide.ico" />

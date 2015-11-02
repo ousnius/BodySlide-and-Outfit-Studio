@@ -5,27 +5,28 @@ See the included LICENSE file
 */
 
 #include "SliderCategories.h"
-#include "XmlFinder.h"
 
 int SliderCategoryCollection::LoadCategories(const string& basePath) {
 	categories.clear();
 
-	XmlFinder finder(basePath);
-	while (!finder.atEnd()) {
-		string fileName = finder.next();
-		SliderCategoryFile f(fileName);
-		vector<string> cNames;
-		f.GetCategoryNames(cNames);
-		for (auto &c : cNames) {
-			SliderCategory sc;
-			f.GetCategory(c, sc);
-			if (categories.find(c) != categories.end())
-				categories[c].MergeSliders(sc);
+	wxArrayString files;
+	wxDir::GetAllFiles(basePath, &files, "*.xml");
+
+	for (auto &file : files) {
+		SliderCategoryFile catFile(file.ToStdString());
+		vector<string> cats;
+		catFile.GetCategoryNames(cats);
+		for (auto &cat : cats) {
+			SliderCategory sliderCat;
+			catFile.GetCategory(cat, sliderCat);
+			if (categories.find(cat) != categories.end())
+				categories[cat].MergeSliders(sliderCat);
 			else
-				categories[c] = move(sc);
+				categories[cat] = move(sliderCat);
 		}
 	}
-	return finder.hadError() ? 1 : 0;
+
+	return 0;
 }
 
 int SliderCategoryCollection::GetAllCategories(vector<string>& outCategories) {

@@ -1396,8 +1396,6 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	baseAnim.LoadFromNif(&baseNif);
 	activeSet.LoadSetDiffData(baseDiffData);
 	AutoOffset(baseNif);
-
-	wxLogMessage("Loaded reference NIF file '%s'.", fileName);
 	return 0;
 }
 

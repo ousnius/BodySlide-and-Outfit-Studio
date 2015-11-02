@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
-#include "XmlFinder.h"
 #include "FSManager.h"
 
 ConfigurationManager Config;
@@ -195,7 +194,7 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 	LoadPresets(activeOutfit);
 	PopulatePresetList(activePreset);
 	createSliders(outfitName);
-	wxLogMessage("Finished setting up set '%s'...", outfitName);
+	wxLogMessage("Finished setting up '%s'...", outfitName);
 }
 
 int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
@@ -249,18 +248,19 @@ int BodySlideApp::LoadSliderSets() {
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
 
-	XmlFinder finder("SliderSets");
-	while (!finder.atEnd()) {
-		string filename = finder.next();
-		SliderSetFile sliderDoc;
-		sliderDoc.Open(filename);
+	wxArrayString files;
+	wxDir::GetAllFiles("SliderSets", &files, "*.xml");
 
+	for (auto &file : files) {
+		SliderSetFile sliderDoc;
+		sliderDoc.Open(file.ToStdString());
 		if (sliderDoc.fail())
 			continue;
+
 		vector<string> outfitNames;
 		sliderDoc.GetSetNamesUnsorted(outfitNames, false);
 		for (int i = 0; i < outfitNames.size(); i++) {
-			outfitNameSource[outfitNames[i]] = filename;
+			outfitNameSource[outfitNames[i]] = file.ToStdString();
 			outfitNameOrder.push_back(outfitNames[i]);
 		}
 	}

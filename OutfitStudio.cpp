@@ -1291,8 +1291,8 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 				return;
 		}
 
-		wxLogMessage("Saving project...");
-		StartProgress("Saving project...");
+		wxLogMessage("Saving project '%s'...", project->OutfitName());
+		StartProgress(wxString::Format("Saving project '%s'...", project->OutfitName()));
 		project->ClearBoneScale();
 
 		vector<string> shapes;
@@ -1449,8 +1449,8 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	copyRef = XRCCTRL(dlg, "sssAutoCopyRef", wxCheckBox)->GetValue();
 	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
 
-	wxLogMessage("Saving project...");
-	StartProgress("Saving project...");
+	wxLogMessage("Saving project '%s'...", strOutfitName);
+	StartProgress(wxString::Format("Saving project '%s'...", strOutfitName));
 	project->ClearBoneScale();
 
 	vector<string> shapes;
@@ -1503,7 +1503,9 @@ void OutfitStudio::OnBrushPane(wxCollapsiblePaneEvent& event) {
 }
 
 void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
+	wxLogMessage("Setting new base shape.");
 	project->ClearBoneScale();
+
 	vector<string> shapes;
 	project->OutfitShapes(shapes);
 	for (auto &s : shapes)
@@ -1537,6 +1539,7 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.empty())
 		return;
 
+	wxLogMessage("Exporting outfit to NIF file '%s'...", fileName);
 	project->ClearBoneScale();
 
 	vector<string> shapes;
@@ -1573,6 +1576,7 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
 	if (fileName.empty())
 		return;
 
+	wxLogMessage("Exporting outfit with reference to NIF file '%s'...", fileName);
 	project->ClearBoneScale();
 
 	vector<string> shapes;
@@ -1608,6 +1612,8 @@ void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	finalName = project->NameAbbreviate(finalName);
+	wxLogMessage("Creating new conversion slider '%s'...", finalName);
+
 	project->ClearBoneScale();
 	project->AddCombinedSlider(finalName);
 
@@ -2408,12 +2414,17 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 		if (XRCCTRL(dlg, "weightLo", wxRadioButton)->GetValue())
 			hi = false;
 
-		float v;
-		bool r;
+
 		if (choice == "Zero All") {
 			ZeroSliders();
+			wxLogMessage("Resetting sliders to zero.");
 			return;
 		}
+
+		wxLogMessage("Applying preset '%s' with option '%s'.", choice, hi ? "High" : "Low");
+
+		float v;
+		bool r;
 		for (int i = 0; i < project->SliderCount(); i++) {
 			if (!presets.GetSliderExists(choice, project->SliderName(i)))
 				continue;
@@ -2452,6 +2463,7 @@ void OutfitStudio::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.empty())
 		return;
 
+	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->shapeName, fn);
 	project->SetSliderFromBSD(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape);
 	ApplySliders();
 }
@@ -2470,8 +2482,10 @@ void OutfitStudio::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.empty())
 		return;
 
+	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->shapeName, fn);
 	if (!project->SetSliderFromOBJ(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape)) {
-		wxMessageBox("Vertex count of .obj file mesh does not match currently selected shape!");
+		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
+		wxMessageBox("Vertex count of .obj file mesh does not match currently selected shape!", "Error", wxICON_ERROR);
 		return;
 	}
 
@@ -2492,9 +2506,12 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (result != wxYES)
 		return;
 
+	wxLogMessage("Importing morphs from TRI file '%s'...", fn);
+
 	TriFile tri;
 	if (!tri.Read(fn)) {
-		wxMessageBox("TRI file could not be loaded!", "Error");
+		wxLogError("Failed to load TRI file '%s'!", fn);
+		wxMessageBox("Failed to load TRI file!", "Error", wxICON_ERROR);
 		return;
 	}
 
@@ -2560,7 +2577,8 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	sliderScroll->Thaw();
 	ApplySliders();
 
-	wxMessageBox("Added morphs for the following shapes:\n\n" + addedMorphs, "TRI Import");
+	wxLogMessage("Added morphs for the following shapes:\n%s", addedMorphs);
+	wxMessageBox(wxString::Format("Added morphs for the following shapes:\n\n%s", addedMorphs), "TRI Import");
 }
 
 void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
@@ -2578,14 +2596,18 @@ void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 		if (dir.empty())
 			return;
 
-		for (auto &i : selectedItems)
-			project->SaveSliderBSD(activeSlider, i->shapeName, dir + "\\" + i->shapeName + "_" + activeSlider + ".obj", i->bIsOutfitShape);
+		for (auto &i : selectedItems) {
+			string targetFile = dir + "\\" + i->shapeName + "_" + activeSlider + ".bsd";
+			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->shapeName, targetFile);
+			project->SaveSliderBSD(activeSlider, i->shapeName, targetFile, i->bIsOutfitShape);
+		}
 	}
 	else {
 		string fn = wxFileSelector("Export .bsd slider data", wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fn.empty())
 			return;
 
+		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->shapeName, fn);
 		project->SaveSliderBSD(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape);
 	}
 
@@ -2607,16 +2629,22 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		if (dir.empty())
 			return;
 
-		for (auto &i : selectedItems)
-			project->SaveSliderOBJ(activeSlider, i->shapeName, dir + "\\" + i->shapeName + "_" + activeSlider + ".obj", i->bIsOutfitShape);
+		for (auto &i : selectedItems) {
+			string targetFile = dir + "\\" + i->shapeName + "_" + activeSlider + ".obj";
+			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->shapeName, targetFile);
+			project->SaveSliderOBJ(activeSlider, i->shapeName, targetFile, i->bIsOutfitShape);
+		}
 	}
 	else {
 		string fn = wxFileSelector("Export .obj slider data", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fn.empty())
 			return;
 
-		if (project->SaveSliderOBJ(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape))
-			wxMessageBox("OBJ file could not be exported!", "Error", wxICON_ERROR);
+		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->shapeName, fn);
+		if (project->SaveSliderOBJ(activeSlider, activeItem->shapeName, fn, activeItem->bIsOutfitShape)) {
+			wxLogError("Failed to export OBJ file '%s'!", fn);
+			wxMessageBox("Failed to export OBJ file!", "Error", wxICON_ERROR);
+		}
 	}
 
 	ApplySliders();
@@ -2632,12 +2660,12 @@ void OutfitStudio::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.empty())
 		return;
 
+	wxLogMessage("Exporting TRI morphs to '%s'...", fn);
 	if (!project->WriteMorphTRI(fn)) {
-		wxMessageBox("TRI file could not be exported!", "Error");
+		wxLogError("Failed to export TRI file to '%s'!", fn);
+		wxMessageBox("Failed to export TRI file!", "Error", wxICON_ERROR);
 		return;
 	}
-
-	wxMessageBox("Successfully exported morphs.", "TRI Export");
 }
 
 void OutfitStudio::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
@@ -2663,6 +2691,11 @@ void OutfitStudio::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 	}
 	if (result != wxYES)
 		return;
+
+	if (selectedItems.size() > 1)
+		wxLogMessage("Clearing slider data of '%s' for the selected shapes.", activeSlider);
+	else
+		wxLogMessage("Clearing slider data of '%s' for the shape '%s'.", activeSlider, activeItem->shapeName);
 
 	unordered_map<ushort, float> mask;
 	for (auto &i : selectedItems) {
@@ -2691,6 +2724,8 @@ void OutfitStudio::OnNewSlider(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	finalName = project->NameAbbreviate(finalName);
+	wxLogMessage("Creating new slider '%s'.", finalName);
+
 	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
 	project->AddEmptySlider(finalName);
@@ -2717,6 +2752,8 @@ void OutfitStudio::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	finalName = project->NameAbbreviate(finalName);
+	wxLogMessage("Creating new zap '%s'.", finalName);
+
 	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
 	unordered_map<ushort, float> unmasked;
@@ -2744,6 +2781,8 @@ void OutfitStudio::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	finalName = project->NameAbbreviate(finalName);
+	wxLogMessage("Creating new combined slider '%s'.", finalName);
+
 	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
 	project->AddCombinedSlider(finalName);
@@ -2760,6 +2799,7 @@ void OutfitStudio::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	wxLogMessage("Negating slider for the selected shapes.");
 	for (auto &i : selectedItems)
 		project->NegateSlider(activeSlider, i->shapeName, i->bIsOutfitShape);
 }
@@ -2773,32 +2813,35 @@ void OutfitStudio::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	string prompt = "Are you sure you wish to delete the slider \"";
 	prompt += activeSlider + "\"? This cannot be undone.";
 	int result = wxMessageBox(prompt, "Confirm slider delete", wxYES_NO | wxICON_WARNING, this);
-	if (result == wxYES) {
-		SliderDisplay* sd = sliderDisplays[activeSlider];
-		sd->slider->SetValue(0);
-		SetSliderValue(activeSlider, 0);
-		ShowSliderEffect(activeSlider, true);
-		//sd->sliderStrokes.InvalidateHistoricalBVH();
-		sd->sliderStrokes.Clear();
-		sd->slider->SetFocus();
-		glView->SetStrokeManager(nullptr);
-		ExitSliderEdit();
+	if (result != wxYES)
+		return;
 
-		sd->btnSliderEdit->Destroy();
-		sd->slider->Destroy();
-		sd->sliderName->Destroy();
-		sd->sliderNameCheck->Destroy();
-		sd->sliderReadout->Destroy();
-		sd->sliderPane->Destroy();
+	wxLogMessage("Deleting slider '%s'.", activeSlider);
 
-		sliderScroll->FitInside();
-		delete sd;
-		sliderDisplays.erase(activeSlider);
-		project->DeleteSlider(activeSlider);
-		activeSlider = "";
+	SliderDisplay* sd = sliderDisplays[activeSlider];
+	sd->slider->SetValue(0);
+	SetSliderValue(activeSlider, 0);
+	ShowSliderEffect(activeSlider, true);
+	//sd->sliderStrokes.InvalidateHistoricalBVH();
+	sd->sliderStrokes.Clear();
+	sd->slider->SetFocus();
+	glView->SetStrokeManager(nullptr);
+	ExitSliderEdit();
 
-		ApplySliders();
-	}
+	sd->btnSliderEdit->Destroy();
+	sd->slider->Destroy();
+	sd->sliderName->Destroy();
+	sd->sliderNameCheck->Destroy();
+	sd->sliderReadout->Destroy();
+	sd->sliderPane->Destroy();
+
+	sliderScroll->FitInside();
+	delete sd;
+	sliderDisplays.erase(activeSlider);
+	project->DeleteSlider(activeSlider);
+	activeSlider = "";
+
+	ApplySliders();
 }
 
 void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
@@ -2872,6 +2915,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	if (!outfitShapes)
 		return;
 
+	wxLogMessage("Conforming all shapes...");
 	StartProgress("Conforming all shapes...");
 	float inc = 100.0f / shapes.size();
 	float pos = 0.0f;
@@ -2894,6 +2938,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	if (statusBar)
 		statusBar->SetStatusText("All shapes conformed.");
 
+	wxLogMessage("All shapes conformed.");
 	UpdateProgress(100.0f, "Finished");
 	EndProgress();
 }
@@ -2907,6 +2952,7 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->baseNif.IsValid())
 		return;
 
+	wxLogMessage("Conforming...");
 	StartProgress("Conforming...");
 	ZeroSliders();
 
@@ -2916,6 +2962,7 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 			continue;
 		}
 
+		wxLogMessage("Conforming '%s'...", i->shapeName);
 		UpdateProgress(1.0f, "Initializing data...");
 		project->InitConform();
 
@@ -2928,12 +2975,13 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 		project->morpher.CopyMeshMask(glView->GetMesh(i->shapeName), i->shapeName);
 		project->ConformShape(i->shapeName);
 
-		if (statusBar)
-			statusBar->SetStatusText("Shape(s) conformed.");
-
 		UpdateProgress(99.0f);
 	}
 
+	if (statusBar)
+		statusBar->SetStatusText("Shape(s) conformed.");
+
+	wxLogMessage("%d shape(s) conformed.", selectedItems.size());
 	UpdateProgress(100.0f, "Finished");
 	EndProgress();
 }
@@ -2942,6 +2990,8 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	string fn = wxFileSelector("Import .obj file for new shape", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
+
+	wxLogMessage("Importing shape from OBJ file '%s'...", fn);
 
 	int ret;
 	if (activeItem)
@@ -2957,6 +3007,8 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 	else if (ret)
 		return;
+
+	wxLogMessage("Imported shape.");
 
 	WorkingGUIFromProj();
 	outfitShapes->ExpandAll();
@@ -2975,15 +3027,21 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 			return;
 
 		project->ClearBoneScale();
-		for (auto &i : selectedItems)
-			project->ExportShapeObj(dir + "\\" + i->shapeName + ".obj", i->shapeName, i->bIsOutfitShape, Vector3(0.1f, 0.1f, 0.1f));
+		for (auto &i : selectedItems) {
+			string targetFile = dir + "\\" + i->shapeName + ".obj";
+			wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", i->shapeName, targetFile);
+			project->ExportShapeObj(targetFile, i->shapeName, i->bIsOutfitShape, Vector3(0.1f, 0.1f, 0.1f));
+		}
 	}
 	else {
 		string fileName = wxFileSelector("Export shape as an .obj file", wxEmptyString, wxString(activeItem->shapeName + ".obj"), "", "Obj Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (!fileName.empty()) {
+			wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->shapeName, fileName);
 			project->ClearBoneScale();
-			if (project->ExportShapeObj(fileName, activeItem->shapeName, activeItem->bIsOutfitShape, Vector3(0.1f, 0.1f, 0.1f)))
+			if (project->ExportShapeObj(fileName, activeItem->shapeName, activeItem->bIsOutfitShape, Vector3(0.1f, 0.1f, 0.1f))) {
+				wxLogError("Failed to export OBJ file '%s'!", fileName);
 				wxMessageBox("Failed to export OBJ file!", "Error", wxICON_ERROR);
+			}
 		}
 	}
 }
@@ -2997,14 +3055,17 @@ void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	string newShapeName;
 	do {
 		wxString result = wxGetTextFromUser("Please enter a new unique name for the shape.", "Rename Shape");
-		if (result.empty()) return;
+		if (result.empty())
+			return;
+
 		newShapeName = result;
-	} while ((project->IsValidShape(newShapeName)));
+	} while (project->IsValidShape(newShapeName));
 
 	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
 	for (uint i = 0; i < sizeof(chars); ++i)
 		replace(newShapeName.begin(), newShapeName.end(), chars[i], '_');
 
+	wxLogMessage("Renaming shape '%s' to '%s'.", activeItem->shapeName, newShapeName);
 	project->RenameShape(activeItem->shapeName, newShapeName, activeItem->bIsOutfitShape);
 	glView->RenameShape(activeItem->shapeName, newShapeName);
 
@@ -3376,9 +3437,15 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			wxString result = wxGetTextFromUser("Please enter a unique name for the duplicated shape.", "Duplicate Shape");
 			if (result.empty())
 				return;
+
 			newname = result;
 		} while (project->IsValidShape(newname));
 
+		char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
+		for (uint i = 0; i < sizeof(chars); ++i)
+			replace(newname.begin(), newname.end(), chars[i], '_');
+
+		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->shapeName, newname);
 		project->ClearBoneScale();
 		mesh* curshapemesh = glView->GetMesh(activeItem->shapeName);
 
@@ -3413,6 +3480,7 @@ void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 
 	for (auto &i : selected) {
 		if (i.bIsOutfitShape) {
+			wxLogMessage("Deleting shape '%s'.", i.shapeName);
 			project->DeleteOutfitShape(i.shapeName);
 			glView->DeleteMesh(i.shapeName);
 			wxTreeItemId item = i.GetId();
@@ -3454,10 +3522,11 @@ void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 		wxArrayTreeItemIds sel;
 		boneTree->GetSelections(sel);
 		for (int i = 0; i < sel.size(); i++) {
-			string t = boneTree->GetItemText(sel[i]);
+			string bone = boneTree->GetItemText(sel[i]);
+			wxLogMessage("Adding bone '%s' to project.", bone);
 
-			project->AddBoneRef(t);
-			outfitBones->AppendItem(bonesRoot, t);
+			project->AddBoneRef(bone);
+			outfitBones->AppendItem(bonesRoot, bone);
 			/* TODO: Insert bone into outfit */
 		}
 	}
@@ -3467,9 +3536,10 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
 	for (int i = 0; i < selItems.size(); i++) {
-		string bname = outfitBones->GetItemText(selItems[i]);
+		string bone = outfitBones->GetItemText(selItems[i]);
+		wxLogMessage("Deleting bone '%s' from project.", bone);
 
-		project->DeleteBone(bname);
+		project->DeleteBone(bone);
 		activeBone = "";
 
 		outfitBones->Delete(selItems[i]);
@@ -3495,6 +3565,7 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	unordered_map<ushort, float> mask;
 	for (int i = 0; i < selectedItems.size(); i++) {
 		if (selectedItems[i]->bIsOutfitShape) {
+			wxLogMessage("Copying bone weights to '%s'...", selectedItems[i]->shapeName);
 			mask.clear();
 			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
 			project->CopyBoneWeights(selectedItems[i]->shapeName, &mask);
@@ -3524,14 +3595,19 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (selItems.size() < 1)
 		return;
 
-	for (int i = 0; i < selItems.size(); i++)
-		selectedBones.push_back(string(outfitBones->GetItemText(selItems[i])));
+	string bonesString;
+	for (int i = 0; i < selItems.size(); i++) {
+		string boneName = outfitBones->GetItemText(selItems[i]).ToStdString();
+		bonesString += "'" + boneName + "' ";
+		selectedBones.push_back(boneName);
+	}
 
 	StartProgress("Copying selected bone weights...");
 
 	unordered_map<ushort, float> mask;
 	for (int i = 0; i < selectedItems.size(); i++) {
 		if (selectedItems[i]->bIsOutfitShape) {
+			wxLogMessage("Copying selected bone weights to '%s' for %s...", selectedItems[i]->shapeName, bonesString);
 			mask.clear();
 			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
 			project->CopyBoneWeights(selectedItems[i]->shapeName, &mask, &selectedBones);
@@ -3573,9 +3649,14 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (selItems.size() < 1)
 		return;
 
-	for (int i = 0; i < selItems.size(); i++)
-		selectedBones.push_back(string(outfitBones->GetItemText(selItems[i])));
+	string bonesString;
+	for (int i = 0; i < selItems.size(); i++) {
+		string boneName = outfitBones->GetItemText(selItems[i]).ToStdString();
+		bonesString += "'" + boneName + "' ";
+		selectedBones.push_back(boneName);
+	}
 
+	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->shapeName, bonesString);
 	StartProgress("Transferring bone weights...");
 
 	unordered_map<ushort, float> mask;
@@ -3621,8 +3702,10 @@ void OutfitStudio::OnBuildSkinPartitions(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	for (auto &i : selectedItems)
+	for (auto &i : selectedItems) {
+		wxLogMessage("Building skin partitions for '%s'.", i->shapeName);
 		project->BuildShapeSkinPartions(i->shapeName, i->bIsOutfitShape);
+	}
 }
 
 void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {

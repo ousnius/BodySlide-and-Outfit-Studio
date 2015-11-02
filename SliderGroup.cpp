@@ -5,27 +5,30 @@ See the included LICENSE file
 */
 
 #include "SliderGroup.h"
-#include "XmlFinder.h"
+
+#pragma warning (disable: 4018)
 
 int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 	groups.clear();
 
-	XmlFinder finder(basePath);
-	while (!finder.atEnd()) {
-		string fileName = finder.next();
-		SliderSetGroupFile f(fileName);
-		vector<string> gNames;
-		f.GetGroupNames(gNames);
-		for (auto &g : gNames) {
+	wxArrayString files;
+	wxDir::GetAllFiles(basePath, &files, "*.xml");
+
+	for (auto &file : files) {
+		SliderSetGroupFile groupFile(file.ToStdString());
+		vector<string> groupNames;
+		groupFile.GetGroupNames(groupNames);
+		for (auto &group : groupNames) {
 			SliderSetGroup ssg;
-			f.GetGroup(g, ssg);
-			if (groups.find(g) != groups.end())
-				groups[g].MergeMembers(ssg);
+			groupFile.GetGroup(group, ssg);
+			if (groups.find(group) != groups.end())
+				groups[group].MergeMembers(ssg);
 			else
-				groups[g] = move(ssg);
+				groups[group] = move(ssg);
 		}
 	}
-	return finder.hadError() ? 0 : 1;
+
+	return 0;
 }
 
 int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {

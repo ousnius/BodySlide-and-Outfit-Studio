@@ -8,6 +8,7 @@ See the included LICENSE file
 
 #include "tinyxml2.h"
 
+#include <wx/dir.h>
 #include <vector>
 #include <map>
 #include <set>

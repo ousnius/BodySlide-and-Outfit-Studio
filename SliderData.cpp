@@ -5,8 +5,6 @@ See the included LICENSE file
 */
 
 #include "SliderData.h"
-#include "XmlFinder.h"
-#include <sstream>
 
 SliderData::SliderData(const string& inName) {
 	name = inName;
@@ -531,10 +529,11 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 	string presetName, sliderName, applyTo;
 	float o, b, s;
 
-	XmlFinder finder(basePath);
-	while (!finder.atEnd()) {
-		string filename = finder.next();
-		if (doc.LoadFile(filename.c_str()) != XML_SUCCESS)
+	wxArrayString files;
+	wxDir::GetAllFiles(basePath, &files, "*.xml");
+
+	for (auto &file : files) {
+		if (doc.LoadFile(file) != XML_SUCCESS)
 			continue;
 
 		root = doc.FirstChildElement("SliderPresets");
@@ -582,7 +581,8 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 			element = element->NextSiblingElement("Preset");
 		}
 	}
-	return !finder.hadError();
+
+	return 0;
 }
 
 int PresetCollection::SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {
