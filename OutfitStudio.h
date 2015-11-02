@@ -570,7 +570,7 @@ public:
 	vector<pair<float, float>> progressStack;
 	int progressVal;
 
-	void StartProgress(const string& title) {
+	void StartProgress(const wxString& title) {
 		if (progressStack.empty()) {
 			progWnd = new wxProgressDialog(title, "Starting...", 10000, this, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
 			progWnd->SetSize(400, 150);
@@ -601,7 +601,7 @@ public:
 		}
 	}
 
-	void UpdateProgress(float val, const string& msg = "") {
+	void UpdateProgress(float val, const wxString& msg = "") {
 		if (progressStack.empty())
 			return;
 

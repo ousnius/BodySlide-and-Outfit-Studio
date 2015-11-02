@@ -205,8 +205,10 @@ bool ShapeProperties::AddShader() {
 	}
 
 	NiShader* shader = nif->GetShader(shape);
-	if (!shader)
-		wxMessageBox("Could not add successfully add shader.", "Error");
+	if (!shader) {
+		wxLogError("Could not successfully add shader.");
+		wxMessageBox("Could not add successfully add shader.", "Error", wxICON_ERROR);
+	}
 
 	BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->hdr);
 	shader->SetTextureSetRef(nif->AddBlock(nifTexSet, "BSShaderTextureSet"));
