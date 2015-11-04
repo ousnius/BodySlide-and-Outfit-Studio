@@ -170,6 +170,8 @@ void BodySlideApp::LoadData() {
 	string activeOutfit = Config.GetCString("SelectedOutfit");
 	string activePreset = Config.GetCString("SelectedPreset");
 	ActivatePreset(activePreset);
+	sliderView->Layout();
+	sliderView->Refresh();
 	sliderView->Thaw();
 }
 
@@ -302,9 +304,10 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 
 	InitPreview();
 	ActivatePreset(activePreset);
-
-	sliderView->Thaw();
+	
+	sliderView->Layout();
 	sliderView->Refresh();
+	sliderView->Thaw();
 	wxLogMessage("Finished activating set '%s'...", outfitName);
 }
 
@@ -1577,12 +1580,14 @@ void BodySlideFrame::ShowLowColumn(bool show) {
 		return;
 
 	if (show) {
-		XRCCTRL(*this, "lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(true);
+		XRCCTRL(*this, "lblLowWt", wxStaticText)->Show(true);
+		XRCCTRL(*this, "lblHighWt", wxStaticText)->Show(true);
 		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(false);
 		sliderLayout->SetCols(6);
 	}
 	else {
-		XRCCTRL(*this, "lblLowWt", wxStaticText)->GetContainingSizer()->ShowItems(false);
+		XRCCTRL(*this, "lblLowWt", wxStaticText)->Show(false);
+		XRCCTRL(*this, "lblHighWt", wxStaticText)->Show(false);
 		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(true);
 		sliderLayout->SetCols(3);
 	}

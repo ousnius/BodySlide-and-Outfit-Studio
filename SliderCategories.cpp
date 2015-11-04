@@ -6,6 +6,8 @@ See the included LICENSE file
 
 #include "SliderCategories.h"
 
+#pragma warning (disable: 4018)
+
 int SliderCategoryCollection::LoadCategories(const string& basePath) {
 	categories.clear();
 
