@@ -600,6 +600,8 @@ void BodySlideApp::InitPreview() {
 		freshLoad = true;
 		sliderManager.FlagReload(false);
 	}
+	
+	preview->ShowWeight(activeSet.GenWeights());
 
 	vector<Vector3> verts;
 	vector<Vector2> uvs;
