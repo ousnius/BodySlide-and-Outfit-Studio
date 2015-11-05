@@ -316,6 +316,22 @@ int NifFile::Load(const string& filename) {
 	return 0;
 }
 
+void NifFile::SwapBlocks(int blockIndexlo, int blockIndexHi) {
+	if (blockIndexHi == -1 || blockIndexlo == -1)
+		return;
+
+	// First swap data
+	iter_swap(hdr.blockIndex.begin() + blockIndexlo, hdr.blockIndex.begin() + blockIndexHi);
+	iter_swap(hdr.blockSizes.begin() + blockIndexlo, hdr.blockSizes.begin() + blockIndexHi);
+	iter_swap(blocks.begin() + blockIndexlo, blocks.begin() + blockIndexHi);
+	
+	// Next tell all the blocks that the swap happened
+	for (int i = 0; i < hdr.numBlocks; i++) {
+		blocks[i]->notifyBlockSwap(blockIndexlo, blockIndexHi);
+	}
+
+}
+
 void NifFile::DeleteBlock(int blockIndex) {
 	if (blockIndex == -1)
 		return;
