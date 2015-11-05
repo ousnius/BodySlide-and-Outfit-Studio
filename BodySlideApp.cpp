@@ -75,7 +75,6 @@ bool BodySlideApp::OnInit() {
 	logger.Initialize();
 	wxHandleFatalExceptions();
 	wxLogMessage("Initializing BodySlide...");
-	wxLogMessage("Working directory: %s", wxGetCwd());
 
 	wxInitAllImageHandlers();
 
@@ -87,6 +86,16 @@ bool BodySlideApp::OnInit() {
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
 
 	SetDefaultConfig();
+	wxLogMessage("Working directory: %s", wxGetCwd());
+
+	wxString gameName = "Target game: ";
+	switch (targetGame) {
+		case FO3: gameName.Append("Fallout 3"); break;
+		case FONV: gameName.Append("Fallout New Vegas"); break;
+		case SKYRIM: gameName.Append("Skyrim"); break;
+		default: gameName.Append("Invalid");
+	}
+	wxLogMessage(gameName);
 
 	string activeOutfit = Config.GetCString("SelectedOutfit");
 	curOutfit = activeOutfit;
@@ -196,7 +205,7 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 	LoadPresets(activeOutfit);
 	PopulatePresetList(activePreset);
 	createSliders(outfitName);
-	wxLogMessage("Finished setting up '%s'...", outfitName);
+	wxLogMessage("Finished setting up '%s'.", outfitName);
 }
 
 int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
@@ -245,7 +254,7 @@ void BodySlideApp::RefreshOutfitList() {
 }
 
 int BodySlideApp::LoadSliderSets() {
-	wxLogMessage("Loading slider sets...");
+	wxLogMessage("Loading all slider sets...");
 	dataSets.Clear();
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
@@ -308,7 +317,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	sliderView->Layout();
 	sliderView->Refresh();
 	sliderView->Thaw();
-	wxLogMessage("Finished activating set '%s'...", outfitName);
+	wxLogMessage("Finished activating set '%s'.", outfitName);
 }
 
 void BodySlideApp::ActivatePreset(const string &presetName) {
@@ -806,18 +815,24 @@ void BodySlideApp::SetDefaultConfig() {
 				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
 				wxLogMessage("Registry game data path: %s", installPath);
 			}
-			else if (Config["WarnMissingGamePath"] == "true")
-				wxMessageBox("Could not find both your game install path (registry key value) and GameDataPath in the configuration.", "Warning");
+			else if (Config["WarnMissingGamePath"] == "true") {
+				wxString warning = "Failed to find game install path registry value or GameDataPath in the config.";
+				wxLogWarning(warning);
+				wxMessageBox(warning, "Warning", wxICON_WARNING);
+			}
 		}
-		else if (Config["WarnMissingGamePath"] == "true")
-			wxMessageBox("Could not find both your game installation (registry key) and GameDataPath in the configuration.", "Warning");
+		else if (Config["WarnMissingGamePath"] == "true") {
+			wxString warning = "Failed to find game install path registry key or GameDataPath in the config.";
+			wxLogWarning(warning);
+			wxMessageBox(warning, "Warning", wxICON_WARNING);
+		}
 	}
 	else
 		wxLogMessage("Game data path in config: %s", Config["GameDataPath"]);
 }
 
 void BodySlideApp::LoadAllCategories() {
-	wxLogMessage("Loading slider categories...");
+	wxLogMessage("Loading all slider categories...");
 	cCollection.LoadCategories("SliderCategories");
 }
 
@@ -827,12 +842,27 @@ void BodySlideApp::SetPresetGroups(const string& setName) {
 
 	if (presetGroups.empty()) {
 		Config.GetValueArray("DefaultGroups", "GroupName", presetGroups);
-		wxLogMessage("Using default groups for set '%s'.", setName);
+		if (!presetGroups.empty()) {
+			wxString defaultGroups;
+			for (auto &group : presetGroups)
+				defaultGroups.Append("'" + group + "' ");
+
+			wxLogMessage("Using default group(s): %s", defaultGroups);
+		}
+		else
+			wxLogMessage("No group assigned for set '%s'.", setName);
+	}
+	else {
+		wxString groups;
+		for (auto &group : presetGroups)
+			groups.Append("'" + group + "' ");
+
+		wxLogMessage("Using group(s): %s", groups);
 	}
 }
 
 void BodySlideApp::LoadAllGroups() {
-	wxLogMessage("Loading slider groups...");
+	wxLogMessage("Loading all slider groups...");
 	gCollection.LoadGroups("SliderGroups");
 
 	ungroupedOutfits.clear();
@@ -988,7 +1018,7 @@ void BodySlideApp::LoadPresets(const string& sliderSet) {
 	if (sliderSet.empty())
 		outfit = Config.GetCString("SelectedOutfit");
 
-	wxLogMessage("Loading presets for '%s'...", outfit);
+	wxLogMessage("Loading assigned presets...");
 
 	vector<string> groups_and_aliases;
 	for (auto &g : presetGroups) {

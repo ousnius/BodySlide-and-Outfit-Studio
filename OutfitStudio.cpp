@@ -783,8 +783,8 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	if (activeItem)
 		selectedItems.push_back(activeItem);
 
-	wxLogMessage("Creating %d sliders...", project->SliderCount());
-	UpdateProgress(90.0f, wxString::Format("Creating %d sliders...", project->SliderCount()));
+	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
+	UpdateProgress(90.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
 	StartSubProgress(90.0f, 99.0f);
 	CreateSetSliders();
 
@@ -912,8 +912,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	if (outfitShapes)
 		outfitShapes->ExpandAll();
 
-	wxLogMessage("Creating %d sliders...", project->SliderCount());
-	UpdateProgress(90.0f, wxString::Format("Creating %d sliders...", project->SliderCount()));
+	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
+	UpdateProgress(90.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
 	StartSubProgress(90.0f, 99.0f);
 	CreateSetSliders();
 
@@ -1011,8 +1011,8 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (outfitShapes)
 		outfitShapes->ExpandAll();
 
-	wxLogMessage("Creating %d sliders...", project->SliderCount());
-	UpdateProgress(70.0f, wxString::Format("Creating %d sliders...", project->SliderCount()));
+	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
+	UpdateProgress(70.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
 	StartSubProgress(70.0f, 99.0f);
 	CreateSetSliders();
 
