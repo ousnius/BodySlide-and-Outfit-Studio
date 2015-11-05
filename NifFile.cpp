@@ -9,6 +9,7 @@ See the included LICENSE file
 
 NifFile::NifFile() {
 	isValid = false;
+	hasUnknown = false;
 }
 
 NifFile::NifFile(NifFile& other) {
@@ -121,6 +122,7 @@ void NifFile::CopyFrom(NifFile& other) {
 		Clear();
 
 	isValid = other.isValid;
+	hasUnknown = other.hasUnknown;
 	fileName = other.fileName;
 	hdr = other.hdr;
 
@@ -220,6 +222,7 @@ void NifFile::Clear() {
 	blocks.clear();
 	hdr.Clear();
 	isValid = false;
+	hasUnknown = false;
 }
 
 int NifFile::Load(const string& filename) {
@@ -299,8 +302,10 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new BSEffectShaderPropertyColorController(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSEffectShaderPropertyFloatController"))
 				block = (NiObject*) new BSEffectShaderPropertyFloatController(file, hdr);
-			else
+			else {
+				hasUnknown = true;
 				block = (NiObject*) new NiUnknown(file, hdr.blockSizes[i]);
+			}
 
 			if (block)
 				blocks.push_back(block);

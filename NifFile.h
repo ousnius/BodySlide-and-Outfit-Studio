@@ -1041,6 +1041,7 @@ class NifFile
 	string fileName;
 	vector<NiObject*> blocks;
 	bool isValid;
+	bool hasUnknown;
 
 	int shapeDataIdForName(const string& name, int& outBlockType);
 	int shapeIdForName(const string& name);
@@ -1072,6 +1073,7 @@ public:
 	string GetFileName() { return fileName; }
 
 	bool IsValid() { return isValid; }
+	bool HasUnknown() { return hasUnknown; }
 
 	void Clear();
 
