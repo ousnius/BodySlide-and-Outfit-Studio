@@ -34,6 +34,8 @@ public:
 	~PreviewWindow();
 
 	void OnShown();
+	void OnClose(wxCloseEvent& event);
+	void OnWeightSlider(wxScrollEvent& event);
 
 	void Cleanup() {
 		gls.Cleanup();
@@ -43,6 +45,15 @@ public:
 
 	int GetWeight() {
 		return weight;
+	}
+	
+	void ShowWeight(bool show = true) {
+		weight = 100;
+		wxSlider* weightSlider = (wxSlider*)FindWindowByName("weightSlider", this);
+		if (weightSlider) {
+			weightSlider->SetValue(weight);
+			weightSlider->Show(show);
+		}
 	}
 
 	void SetBaseDataPath(const string& path) {
@@ -143,9 +154,6 @@ public:
 			gls.EndEditMode();
 
 	}
-
-	void OnWeightSlider(wxScrollEvent& event);
-	void OnClose(wxCloseEvent& event);
 
 	void RightDrag(int dX, int dY);
 	void LeftDrag(int dX, int dY);

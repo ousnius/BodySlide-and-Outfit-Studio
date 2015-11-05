@@ -28,7 +28,8 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
 
 	wxPanel* uiPanel = new wxPanel(this);
-	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100, wxDefaultPosition, wxDefaultSize, wxSL_LABELS);
+	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100,
+		wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
 
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
