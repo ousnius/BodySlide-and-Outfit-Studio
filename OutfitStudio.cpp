@@ -1826,12 +1826,15 @@ void OutfitStudio::OnOutfitShapeContext(wxTreeEvent& event) {
 }
 
 void OutfitStudio::OnOutfitShapeDrag(wxTreeEvent& event) {
-	if (activeItem && activeItem->bIsOutfitShape)
+	if (activeItem && activeItem->bIsOutfitShape) {
+		outfitShapes->SetCursor(wxCURSOR_HAND);
 		event.Allow();
+	}
 }
 
 void OutfitStudio::OnOutfitShapeDrop(wxTreeEvent& event) {
 	wxTreeItemId dropItem = event.GetItem();
+	outfitShapes->SetCursor(wxNullCursor);
 
 	// Ignore reference root and shape
 	if (!dropItem.IsOk() || dropItem == refRoot || outfitShapes->GetItemParent(dropItem) == refRoot)
