@@ -456,7 +456,6 @@ public:
 	wxStatusBar* statusBar;
 	wxToolBar* toolBar;
 	wxTreeItemId shapesRoot;
-	wxTreeItemId refRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
 	wxImageList* visStateImages;
@@ -653,7 +652,6 @@ private:
 
 	void RefreshGUIFromProj();
 	void AnimationGUIFromProj();
-	void ReferenceGUIFromProj();
 	void WorkingGUIFromProj();
 
 	void OnMoveWindow(wxMoveEvent& event);

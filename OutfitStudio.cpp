@@ -742,8 +742,8 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxLogMessage("Creating reference...");
-	UpdateProgress(80.0f, "Creating reference...");
+	wxLogMessage("Creating outfit...");
+	UpdateProgress(80.0f, "Creating outfit...");
 
 	if (XRCCTRL(wiz, "npTexAuto", wxRadioButton)->GetValue() == true)
 		project->SetOutfitTextures("_AUTO_");
@@ -752,18 +752,12 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	else
 		project->SetOutfitTextures(string(XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->GetPath()));
 
-	ReferenceGUIFromProj();
-	wxLogMessage("Creating outfit...");
-	UpdateProgress(85.0f, "Creating outfit...");
-	WorkingGUIFromProj();
-	AnimationGUIFromProj();
+	RefreshGUIFromProj();
 
 	wxTreeItemId itemToSelect;
 	wxTreeItemIdValue cookie;
 	if (outfitRoot.IsOk())
 		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
-	else if (refRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(refRoot, cookie);
 
 	if (itemToSelect.IsOk()) {
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
@@ -878,21 +872,14 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	project->SetOutfitTextures("_AUTO_");
 
-	wxLogMessage("Creating reference...");
-	UpdateProgress(80, "Creating reference...");
-	ReferenceGUIFromProj();
-
 	wxLogMessage("Creating outfit...");
-	UpdateProgress(85, "Creating outfit...");
-	WorkingGUIFromProj();
-	AnimationGUIFromProj();
+	UpdateProgress(80, "Creating outfit...");
+	RefreshGUIFromProj();
 
 	wxTreeItemId itemToSelect;
 	wxTreeItemIdValue cookie;
 	if (outfitRoot.IsOk())
 		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
-	else if (refRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(refRoot, cookie);
 
 	if (itemToSelect.IsOk()) {
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
@@ -1007,8 +994,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Creating reference...");
 	UpdateProgress(60.0f, "Creating reference...");
-	ReferenceGUIFromProj();
-	AnimationGUIFromProj();
+	RefreshGUIFromProj();
 
 	if (outfitShapes)
 		outfitShapes->ExpandAll();
@@ -1027,8 +1013,6 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemIdValue cookie;
 	if (outfitRoot.IsOk())
 		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
-	else if (refRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(refRoot, cookie);
 
 	if (itemToSelect.IsOk()) {
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
@@ -1109,8 +1093,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(50.0f, "Creating outfit...");
-	WorkingGUIFromProj();
-	AnimationGUIFromProj();
+	RefreshGUIFromProj();
 
 	wxTreeItemId itemToSelect;
 	wxTreeItemIdValue cookie;
@@ -1171,7 +1154,6 @@ void OutfitStudio::RenameProject(const string& projectName) {
 }
 
 void OutfitStudio::RefreshGUIFromProj() {
-	ReferenceGUIFromProj();
 	WorkingGUIFromProj();
 	AnimationGUIFromProj();
 }
@@ -1189,37 +1171,6 @@ void OutfitStudio::AnimationGUIFromProj() {
 		outfitBones->AppendItem(bonesRoot, bone);
 }
 
-void OutfitStudio::ReferenceGUIFromProj() {
-	if (refRoot.IsOk()) {
-		outfitShapes->DeleteChildren(refRoot);
-		outfitShapes->Delete(refRoot);
-		refRoot.Unset();
-	}
-	if (!project->baseNif.IsValid())
-		return;
-
-	string ssname = project->SliderSetName();
-	string ssfname = project->SliderSetFileName();
-	activeItem = nullptr;
-	selectedItems.clear();
-
-	vector<string> refShapes;
-	project->RefShapes(refShapes);
-	if (outfitShapes && refShapes.size() > 0)
-		refRoot = outfitShapes->InsertItem(shapesRoot, 0, ssfname);
-
-	wxTreeItemId baseSubItem;
-	string shape = project->baseShapeName;
-
-	if (outfitShapes) {
-		baseSubItem = outfitShapes->AppendItem(refRoot, shape);
-		outfitShapes->SetItemState(baseSubItem, 0);
-		outfitShapes->SetItemData(baseSubItem, new ShapeItemData(false, &project->baseNif, project->baseShapeName));
-	}
-	glView->AddMeshFromNif(&project->baseNif, shape);
-	glView->SetMeshTexture(shape, project->RefTexture(shape), project->baseNif.IsShaderSkin(shape));
-}
-
 void OutfitStudio::WorkingGUIFromProj() {
 	if (outfitRoot.IsOk()) {
 		outfitShapes->DeleteChildren(outfitRoot);
@@ -1227,16 +1178,23 @@ void OutfitStudio::WorkingGUIFromProj() {
 		outfitRoot.Unset();
 	}
 
-	vector<string> workshapes;
+	vector<string> workShapes;
+	vector<string> refShapes;
+	project->OutfitShapes(workShapes);
+	project->RefShapes(refShapes);
+
 	wxTreeItemId subitem;
-	project->OutfitShapes(workshapes);
 	activeItem = nullptr;
 	selectedItems.clear();
 
-	if (outfitShapes && workshapes.size() > 0)
-		outfitRoot = outfitShapes->AppendItem(shapesRoot, project->OutfitName());
+	if (outfitShapes && (workShapes.size() > 0 || refShapes.size() > 0)) {
+		if (workShapes.empty())
+			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
+		else
+			outfitRoot = outfitShapes->AppendItem(shapesRoot, project->OutfitName());
+	}
 
-	for (auto &shape : workshapes) {
+	for (auto &shape : workShapes) {
 		glView->DeleteMesh(shape);
 
 		glView->AddMeshFromNif(&project->workNif, shape);
@@ -1247,6 +1205,22 @@ void OutfitStudio::WorkingGUIFromProj() {
 			outfitShapes->SetItemData(subitem, new ShapeItemData(true, &project->workNif, shape));
 		}
 	}
+
+	if (!project->baseNif.IsValid())
+		return;
+
+	wxTreeItemId baseSubItem;
+	string shape = project->baseShapeName;
+
+	if (outfitShapes) {
+		baseSubItem = outfitShapes->AppendItem(outfitRoot, shape);
+		outfitShapes->SetItemState(baseSubItem, 0);
+		outfitShapes->SetItemData(baseSubItem, new ShapeItemData(false, &project->baseNif, project->baseShapeName));
+		outfitShapes->SetItemBold(baseSubItem);
+		outfitShapes->SetItemTextColour(baseSubItem, wxColour(0, 255, 0));
+	}
+	glView->AddMeshFromNif(&project->baseNif, shape);
+	glView->SetMeshTexture(shape, project->RefTexture(shape), project->baseNif.IsShaderSkin(shape));
 }
 
 void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
@@ -1826,33 +1800,41 @@ void OutfitStudio::OnOutfitShapeContext(wxTreeEvent& event) {
 }
 
 void OutfitStudio::OnOutfitShapeDrag(wxTreeEvent& event) {
-	if (activeItem && activeItem->bIsOutfitShape) {
+	if (activeItem) {
 		outfitShapes->SetCursor(wxCURSOR_HAND);
 		event.Allow();
 	}
 }
 
 void OutfitStudio::OnOutfitShapeDrop(wxTreeEvent& event) {
-	wxTreeItemId dropItem = event.GetItem();
 	outfitShapes->SetCursor(wxNullCursor);
+	wxTreeItemId dropItem = event.GetItem();
 
-	// Ignore reference root and shape
-	if (!dropItem.IsOk() || dropItem == refRoot || outfitShapes->GetItemParent(dropItem) == refRoot)
+	if (!dropItem.IsOk())
 		return;
 
 	// Make first child
 	if (dropItem == outfitRoot)
 		dropItem = 0;
-
+	
 	// Duplicate item
-	wxTreeItemId movedItem = outfitShapes->InsertItem(outfitRoot, dropItem, activeItem->shapeName, -1, -1,
-		new ShapeItemData(activeItem->bIsOutfitShape, activeItem->refFile, activeItem->shapeName));
+	wxTreeItemId movedItem = outfitShapes->InsertItem(outfitRoot, dropItem, activeItem->shapeName);
+	if (!movedItem.IsOk())
+		return;
+
+	// Set data
+	ShapeItemData* dropData = new ShapeItemData(activeItem->bIsOutfitShape, activeItem->refFile, activeItem->shapeName);
+	outfitShapes->SetItemState(movedItem, 0);
+	outfitShapes->SetItemData(movedItem, dropData);
+	if (!dropData->bIsOutfitShape) {
+		outfitShapes->SetItemBold(movedItem);
+		outfitShapes->SetItemTextColour(movedItem, wxColour(0, 255, 0));
+	}
 	
 	// Delete old item
 	outfitShapes->Delete(activeItem->GetId());
 
-	// Set state and select new item
-	outfitShapes->SetItemState(movedItem, 0);
+	// Select new item
 	outfitShapes->UnselectAll();
 	outfitShapes->SelectItem(movedItem);
 }
@@ -3520,9 +3502,8 @@ void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 			wxTreeItemId item = i.GetId();
 			outfitShapes->Delete(item);
 		}
-		else {
-			wxMessageBox("You can't delete the reference shape! Skipping this shape.", "Warning", wxICON_WARNING);
-		}
+		else
+			wxMessageBox("You can't delete the reference shape!");
 	}
 
 	AnimationGUIFromProj();
