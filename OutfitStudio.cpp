@@ -524,6 +524,20 @@ void OutfitStudio::SelectShape(const string& shapeName) {
 	UpdateActiveShapeUI();
 }
 
+vector<string> OutfitStudio::GetShapeList() {
+	vector<string> shapes;
+	wxTreeItemIdValue cookie;
+
+	wxTreeItemId curItem = outfitShapes->GetFirstChild(outfitRoot, cookie);
+	while (curItem.IsOk()) {
+		wxString shapeName = outfitShapes->GetItemText(curItem);
+		shapes.push_back(shapeName.ToStdString());
+		curItem = outfitShapes->GetNextChild(outfitRoot, cookie);
+	}
+
+	return shapes;
+}
+
 void OutfitStudio::UpdateShapeSource(const string& shapeName, bool bIsOutfit) {
 	project->UpdateShapeFromMesh(shapeName, glView->GetMesh(shapeName), bIsOutfit);
 }

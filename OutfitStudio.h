@@ -473,6 +473,7 @@ public:
 	void ShowSliderEffect(const string& sliderName, bool show = true);
 
 	void SelectShape(const string& shapeName);
+	vector<string> GetShapeList();
 
 	void UpdateShapeSource(const string& shapeName, bool bIsOutfit);
 	int PromptUpdateBase();

@@ -322,7 +322,7 @@ public:
 	void Put(fstream& file);
 
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -414,7 +414,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -433,7 +433,7 @@ public:
 	void Put(fstream& file);
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void RecalcNormals();
 	void CalcTangentSpace();
@@ -447,7 +447,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -464,7 +464,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void StripsToTris(vector<Triangle>* outTris);
 	void RecalcNormals();
@@ -508,7 +508,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -615,7 +615,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -632,7 +632,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -647,7 +647,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -1077,8 +1077,11 @@ public:
 
 	void Clear();
 
-	// Swaps two block indexes, updating references in other blocks that may refer to their old indicies.
-	void SwapBlocks(int blockIndexLow, int blockIndexHi);
+	// Explicitly sets the order of shapes to a new one.
+	void SetShapeOrder(vector<string> order);
+
+	// Swaps two blocks, updating references in other blocks that may refer to their old indices.
+	void SwapBlocks(int blockIndexLo, int blockIndexHi);
 
 	void DeleteBlock(int blockIndex);
 	void DeleteBlockByType(string typeStr);

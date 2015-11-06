@@ -20,7 +20,6 @@ void NiObject::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 }
 
 void NiObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-
 }
 
 void NiObject::Get(fstream& file) {
@@ -283,19 +282,16 @@ void NiObjectNET::notifyBlockDelete(int blockID) {
 
 void NiObjectNET::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	for (int i = 0; i < numExtraData; i++) {
-			if (extraDataRef[i] == blockIndexLo) {
-				extraDataRef[i] = blockIndexHi;
-			}
-			if (extraDataRef[i] == blockIndexHi) {
-				extraDataRef[i] = blockIndexLo;
-			}
-		}
+		if (extraDataRef[i] == blockIndexLo)
+			extraDataRef[i] = blockIndexHi;
+		else if (extraDataRef[i] == blockIndexHi)
+			extraDataRef[i] = blockIndexLo;
+	}
 
 	if (controllerRef == blockIndexLo)
 		controllerRef = blockIndexHi;
-	if (controllerRef == blockIndexHi)
+	else if (controllerRef == blockIndexHi)
 		controllerRef = blockIndexLo;
-
 }
 
 int NiObjectNET::CalcBlockSize() {
@@ -429,22 +425,19 @@ void NiAVObject::notifyBlockDelete(int blockID) {
 	}
 }
 void NiAVObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObjectNET::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
 	if (collisionRef == blockIndexLo)
 		collisionRef = blockIndexHi;
-	if (collisionRef == blockIndexHi)
+	else if (collisionRef == blockIndexHi)
 		collisionRef = blockIndexLo;
 
 	for (int i = 0; i < numProperties; i++) {
-		if (propertiesRef[i] == blockIndexHi) {
+		if (propertiesRef[i] == blockIndexHi)
 			propertiesRef[i] = blockIndexLo;
-		}
-		if (propertiesRef[i] == blockIndexLo) {
+		else if (propertiesRef[i] == blockIndexLo)
 			propertiesRef[i] = blockIndexHi;
-		}
 	}
-
-		
 }
 
 int NiAVObject::CalcBlockSize() {
@@ -536,21 +529,19 @@ void NiNode::notifyBlockDelete(int blockID) {
 
 void NiNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiAVObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
 	for (int i = 0; i < numChildren; i++) {
-		if (children[i] == blockIndexLo) {
+		if (children[i] == blockIndexLo)
 			children[i] = blockIndexHi;
-		}
-		if (children[i] == blockIndexHi) {
+		else if (children[i] == blockIndexHi)
 			children[i] = blockIndexLo;
-		}
 	}
 	for (int i = 0; i < numEffects; i++) {
 		if (effects[i] == blockIndexLo)
 			effects[i] = blockIndexHi;
-		if (effects[i] == blockIndexHi)
+		else if (effects[i] == blockIndexHi)
 			effects[i] = blockIndexLo;
 	}
-
 }
 
 int NiNode::CalcBlockSize() {
@@ -639,25 +630,26 @@ void NiGeometry::notifyBlockDelete(int blockID) {
 }
 
 void NiGeometry::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	
+	NiAVObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
 	if (dataRef == blockIndexLo)
 		dataRef = blockIndexHi;
-	if (dataRef == blockIndexHi)
+	else if (dataRef == blockIndexHi)
 		dataRef = blockIndexLo;
 
 	if (skinInstanceRef == blockIndexLo)
 		skinInstanceRef = blockIndexHi;
-	if (skinInstanceRef == blockIndexHi)
+	else if (skinInstanceRef == blockIndexHi)
 		skinInstanceRef = blockIndexLo;
 
 	if (propertiesRef1 == blockIndexLo)
 		propertiesRef1 = blockIndexHi;
-	if (propertiesRef1 == blockIndexHi)
+	else if (propertiesRef1 == blockIndexHi)
 		propertiesRef1 = blockIndexLo;
 
 	if (propertiesRef2 == blockIndexLo)
 		propertiesRef2 = blockIndexHi;
-	if (propertiesRef2 == blockIndexHi)
+	else if (propertiesRef2 == blockIndexHi)
 		propertiesRef2 = blockIndexLo;
 }
 
@@ -903,9 +895,7 @@ void NiGeometryData::notifyBlockDelete(int blockID) {
 }
 
 void NiGeometryData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-
 	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 void NiGeometryData::RecalcNormals() {
@@ -1711,26 +1701,25 @@ void NiSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	
 	if (dataRef== blockIndexLo)
 		dataRef= blockIndexHi;
-	if (dataRef== blockIndexHi)
+	else if (dataRef== blockIndexHi)
 		dataRef= blockIndexLo;	
 
 	if (skinPartitionRef== blockIndexLo)
 		skinPartitionRef= blockIndexHi;
-	if (skinPartitionRef== blockIndexHi)
+	else if (skinPartitionRef== blockIndexHi)
 		skinPartitionRef= blockIndexLo;
 	
 	if (skeletonRootRef== blockIndexLo)
 		skeletonRootRef= blockIndexHi;
-	if (skeletonRootRef== blockIndexHi)
+	else if (skeletonRootRef== blockIndexHi)
 		skeletonRootRef= blockIndexLo;
 
 	for (int i = 0; i < numBones; i++) {
 		if (bones[i] == blockIndexLo)
 			bones[i] = blockIndexHi;
-		if (bones[i] == blockIndexHi)
+		else if (bones[i] == blockIndexHi)
 			bones[i] = blockIndexLo;
 	}
-
 }
 
 int NiSkinInstance::CalcBlockSize() {
@@ -2283,11 +2272,10 @@ void NiFloatInterpolator::notifyBlockDelete(int blockID) {
 void NiFloatInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiKeyBasedInterpolator::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (dataRef== blockIndexLo)
-		dataRef= blockIndexHi;
-	if (dataRef== blockIndexHi)
-		dataRef= blockIndexLo;
-
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
 }
 
 int NiFloatInterpolator::CalcBlockSize() {
@@ -2347,11 +2335,10 @@ void NiTransformInterpolator::notifyBlockDelete(int blockID) {
 void NiTransformInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiKeyBasedInterpolator::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (dataRef== blockIndexLo)
-		dataRef= blockIndexHi;
-	if (dataRef== blockIndexHi)
-		dataRef= blockIndexLo;
-
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
 }
 
 int NiTransformInterpolator::CalcBlockSize() {
@@ -2406,11 +2393,10 @@ void NiPoint3Interpolator::notifyBlockDelete(int blockID) {
 void NiPoint3Interpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiKeyBasedInterpolator::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (dataRef== blockIndexLo)
-		dataRef= blockIndexHi;
-	if (dataRef== blockIndexHi)
-		dataRef= blockIndexLo;
-
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
 }
 
 int NiPoint3Interpolator::CalcBlockSize() {
@@ -2475,16 +2461,15 @@ void NiTimeController::notifyBlockDelete(int blockID) {
 void NiTimeController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (nextControllerRef== blockIndexLo)
-		nextControllerRef= blockIndexHi;
-	if (nextControllerRef== blockIndexHi)
-		nextControllerRef= blockIndexLo;
+	if (nextControllerRef == blockIndexLo)
+		nextControllerRef = blockIndexHi;
+	else if (nextControllerRef == blockIndexHi)
+		nextControllerRef = blockIndexLo;
 
-	if (targetRef== blockIndexLo)
-		targetRef= blockIndexHi;
-	if (targetRef== blockIndexHi)
-		targetRef= blockIndexLo;
-
+	if (targetRef == blockIndexLo)
+		targetRef = blockIndexHi;
+	else if (targetRef == blockIndexHi)
+		targetRef = blockIndexLo;
 }
 
 int NiTimeController::CalcBlockSize() {
@@ -2551,11 +2536,10 @@ void NiSingleInterpController::notifyBlockDelete(int blockID) {
 void NiSingleInterpController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (interpolatorRef== blockIndexLo)
-		interpolatorRef= blockIndexHi;
-	if (interpolatorRef== blockIndexHi)
-		interpolatorRef= blockIndexLo;
-
+	if (interpolatorRef == blockIndexLo)
+		interpolatorRef = blockIndexHi;
+	else if (interpolatorRef == blockIndexHi)
+		interpolatorRef = blockIndexLo;
 }
 
 int NiSingleInterpController::CalcBlockSize() {
@@ -2585,7 +2569,6 @@ void NiFloatInterpController::notifyBlockDelete(int blockID) {
 
 void NiFloatInterpController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiSingleInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int NiFloatInterpController::CalcBlockSize() {
@@ -2629,7 +2612,6 @@ void BSLightingShaderPropertyColorController::notifyBlockDelete(int blockID) {
 
 void BSLightingShaderPropertyColorController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int BSLightingShaderPropertyColorController::CalcBlockSize() {
@@ -2676,7 +2658,6 @@ void BSLightingShaderPropertyFloatController::notifyBlockDelete(int blockID) {
 
 void BSLightingShaderPropertyFloatController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int BSLightingShaderPropertyFloatController::CalcBlockSize() {
@@ -2724,7 +2705,6 @@ void BSEffectShaderPropertyColorController::notifyBlockDelete(int blockID) {
 
 void BSEffectShaderPropertyColorController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int BSEffectShaderPropertyColorController::CalcBlockSize() {
@@ -2771,7 +2751,6 @@ void BSEffectShaderPropertyFloatController::notifyBlockDelete(int blockID) {
 
 void BSEffectShaderPropertyFloatController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int BSEffectShaderPropertyFloatController::CalcBlockSize() {
@@ -2793,7 +2772,6 @@ void NiShader::notifyBlockDelete(int blockID) {
 }
 
 void NiShader::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-
 }
 
 
@@ -3078,11 +3056,10 @@ void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
 void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (textureSetRef== blockIndexLo)
-		textureSetRef= blockIndexHi;
-	if (textureSetRef== blockIndexHi)
-		textureSetRef= blockIndexLo;
-
+	if (textureSetRef == blockIndexLo)
+		textureSetRef = blockIndexHi;
+	else if (textureSetRef == blockIndexHi)
+		textureSetRef = blockIndexLo;
 }
 
 bool BSLightingShaderProperty::IsSkin() {
@@ -3222,7 +3199,6 @@ void BSShaderProperty::notifyBlockDelete(int blockID) {
 
 void BSShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 uint BSShaderProperty::GetType() {
@@ -3480,6 +3456,8 @@ void BSShaderPPLightingProperty::Put(fstream& file) {
 }
 
 void BSShaderPPLightingProperty::notifyBlockDelete(int blockID) {
+	BSShaderLightingProperty::notifyBlockDelete(blockID);
+
 	if (textureSetRef == blockID)
 		textureSetRef = -1;
 	else if (textureSetRef > blockID)
@@ -3488,12 +3466,12 @@ void BSShaderPPLightingProperty::notifyBlockDelete(int blockID) {
 
 
 void BSShaderPPLightingProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	BSShaderLightingProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (textureSetRef== blockIndexLo)
-		textureSetRef= blockIndexHi;
-	if (textureSetRef== blockIndexHi)
-		textureSetRef= blockIndexLo;
-
+	if (textureSetRef == blockIndexLo)
+		textureSetRef = blockIndexHi;
+	else if (textureSetRef == blockIndexHi)
+		textureSetRef = blockIndexLo;
 }
 
 bool BSShaderPPLightingProperty::IsSkin() {
@@ -3615,7 +3593,6 @@ void NiAlphaProperty::notifyBlockDelete(int blockID) {
 
 void NiAlphaProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int NiAlphaProperty::CalcBlockSize() {
@@ -3688,7 +3665,6 @@ void NiMaterialProperty::notifyBlockDelete(int blockID) {
 
 void NiMaterialProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 Vector3 NiMaterialProperty::GetSpecularColor() {
@@ -3784,7 +3760,6 @@ void NiStencilProperty::notifyBlockDelete(int blockID) {
 
 void NiStencilProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int NiStencilProperty::CalcBlockSize() {

@@ -188,6 +188,7 @@ string OutfitProject::Save(const string& strFileName,
 		for (auto &s : outfitShapes)
 			clone.UpdateSkinPartitions(s);
 
+		clone.SetShapeOrder(owner->GetShapeList());
 		if (clone.Save(saveFileName)) {
 			errmsg = "Failed to write base .nif file: " + saveFileName;
 			return errmsg;
@@ -201,6 +202,7 @@ string OutfitProject::Save(const string& strFileName,
 		for (auto &rs : refShapes)
 			clone.UpdateSkinPartitions(rs);
 
+		clone.SetShapeOrder(owner->GetShapeList());
 		if (clone.Save(saveFileName)) {
 			errmsg = "Failed to write base .nif file: " + saveFileName;
 			return errmsg;
@@ -1873,6 +1875,7 @@ int OutfitProject::SaveOutfitNif(const string& filename, const vector<mesh*>& mo
 	for (auto &s : shapes)
 		clone.UpdateSkinPartitions(s);
 
+	clone.SetShapeOrder(owner->GetShapeList());
 	return clone.Save(filename);
 }
 
