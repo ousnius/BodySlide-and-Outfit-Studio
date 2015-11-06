@@ -697,6 +697,8 @@ private:
 	void OnOutfitShapeSelect(wxTreeEvent& event);
 	void OnOutfitBoneSelect(wxTreeEvent& event);
 	void OnOutfitShapeContext(wxTreeEvent& event);
+	void OnOutfitShapeDrag(wxTreeEvent& event);
+	void OnOutfitShapeDrop(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);

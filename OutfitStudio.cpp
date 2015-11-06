@@ -128,6 +128,8 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitShapes"), OutfitStudio::OnOutfitShapeSelect)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitBones"), OutfitStudio::OnOutfitBoneSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitShapes"), OutfitStudio::OnOutfitShapeContext)
+	EVT_TREE_BEGIN_DRAG(XRCID("outfitShapes"), OutfitStudio::OnOutfitShapeDrag)
+	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudio::OnOutfitShapeDrop)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudio::OnBoneContext)
 	
 	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudio::OnTabButtonClick)
@@ -1821,6 +1823,35 @@ void OutfitStudio::OnOutfitShapeContext(wxTreeEvent& event) {
 			delete menu;
 		}
 	}
+}
+
+void OutfitStudio::OnOutfitShapeDrag(wxTreeEvent& event) {
+	if (activeItem && activeItem->bIsOutfitShape)
+		event.Allow();
+}
+
+void OutfitStudio::OnOutfitShapeDrop(wxTreeEvent& event) {
+	wxTreeItemId dropItem = event.GetItem();
+
+	// Ignore reference root and shape
+	if (!dropItem.IsOk() || dropItem == refRoot || outfitShapes->GetItemParent(dropItem) == refRoot)
+		return;
+
+	// Make first child
+	if (dropItem == outfitRoot)
+		dropItem = 0;
+
+	// Duplicate item
+	wxTreeItemId movedItem = outfitShapes->InsertItem(outfitRoot, dropItem, activeItem->shapeName, -1, -1,
+		new ShapeItemData(activeItem->bIsOutfitShape, activeItem->refFile, activeItem->shapeName));
+	
+	// Delete old item
+	outfitShapes->Delete(activeItem->GetId());
+
+	// Set state and select new item
+	outfitShapes->SetItemState(movedItem, 0);
+	outfitShapes->UnselectAll();
+	outfitShapes->SelectItem(movedItem);
 }
 
 void OutfitStudio::OnBoneContext(wxTreeEvent& event) {
