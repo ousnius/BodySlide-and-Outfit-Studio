@@ -322,14 +322,57 @@ int NifFile::Load(const string& filename) {
 }
 
 void NifFile::SetShapeOrder(vector<string> order) {
-	vector<string> oldOrder;
-	GetShapeList(oldOrder);
 
-	if (order.size() != oldOrder.size())
-		return;
+	vector<int>delta;
+	bool hadoffset = false;
 
-	for (int i = 0; i < oldOrder.size(); i++)
-		SwapBlocks(shapeIdForName(oldOrder[i]), shapeIdForName(order[i]));
+	// Have to do this in multiple passes
+	do {			
+		vector<string> oldOrder;
+		GetShapeList(oldOrder);
+
+		vector<int> oldOrderIds;
+		for (auto s : oldOrder) {
+			oldOrderIds.push_back(shapeIdForName(s));
+		}
+
+
+		if (order.size() != oldOrder.size())
+			return;
+	
+		// Get movement offset for each item.  This is the difference between old and new position.
+		delta.clear();
+		delta.resize(order.size());
+		for (int p = 0; p < oldOrder.size(); p++) {
+			delta[p] = (std::find(order.begin(), order.end(), oldOrder[p]) - order.begin()) - p;
+		}
+
+		hadoffset = false;
+		//Positive offsets mean that the item has moved down the list.  By necessity, that means another item has moved up the list. 
+		// thus, we only need to move the "rising" items, the other blocks will naturally end up in the right place.  
+
+		// find first negative delta, and raise it in list.  The first item can't have a negative delta 
+		for (int i = 1; i< delta.size(); i++) {
+			// don't move positive or zero offset items.
+			if (delta[i] >= 0) {
+				continue;
+			}
+			hadoffset = true;
+			int c = 0 - delta[i];
+			int p = i;
+			while (c > 0) {
+				SwapBlocks(oldOrderIds[p], oldOrderIds[p-1]);
+				p--;
+				c--;
+			}
+			break;
+		}	
+	
+	} while(hadoffset);
+
+
+	//for (int i = 0; i < oldOrder.size(); i++)
+	//	SwapBlocks(shapeIdForName(oldOrder[i]), shapeIdForName(order[i]));
 }
 
 void NifFile::SwapBlocks(int blockIndexLo, int blockIndexHi) {
