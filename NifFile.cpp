@@ -9,6 +9,7 @@ See the included LICENSE file
 
 NifFile::NifFile() {
 	isValid = false;
+	hasUnknown = false;
 }
 
 NifFile::NifFile(NifFile& other) {
@@ -121,6 +122,7 @@ void NifFile::CopyFrom(NifFile& other) {
 		Clear();
 
 	isValid = other.isValid;
+	hasUnknown = other.hasUnknown;
 	fileName = other.fileName;
 	hdr = other.hdr;
 
@@ -220,6 +222,7 @@ void NifFile::Clear() {
 	blocks.clear();
 	hdr.Clear();
 	isValid = false;
+	hasUnknown = false;
 }
 
 int NifFile::Load(const string& filename) {
@@ -299,8 +302,10 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new BSEffectShaderPropertyColorController(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSEffectShaderPropertyFloatController"))
 				block = (NiObject*) new BSEffectShaderPropertyFloatController(file, hdr);
-			else
+			else {
+				hasUnknown = true;
 				block = (NiObject*) new NiUnknown(file, hdr.blockSizes[i]);
+			}
 
 			if (block)
 				blocks.push_back(block);
@@ -314,6 +319,97 @@ int NifFile::Load(const string& filename) {
 	TrimTexturePaths();
 	isValid = true;
 	return 0;
+}
+
+void NifFile::SetShapeOrder(vector<string> order) {
+
+	vector<int>delta;
+	bool hadoffset = false;
+
+	// Have to do this in multiple passes
+	do {			
+		vector<string> oldOrder;
+		GetShapeList(oldOrder);
+
+		vector<int> oldOrderIds;
+		for (auto s : oldOrder) {
+			oldOrderIds.push_back(shapeIdForName(s));
+		}
+
+
+		if (order.size() != oldOrder.size())
+			return;
+	
+		// Get movement offset for each item.  This is the difference between old and new position.
+		delta.clear();
+		delta.resize(order.size());
+		for (int p = 0; p < oldOrder.size(); p++) {
+			delta[p] = (std::find(order.begin(), order.end(), oldOrder[p]) - order.begin()) - p;
+		}
+
+		hadoffset = false;
+		//Positive offsets mean that the item has moved down the list.  By necessity, that means another item has moved up the list. 
+		// thus, we only need to move the "rising" items, the other blocks will naturally end up in the right place.  
+
+		// find first negative delta, and raise it in list.  The first item can't have a negative delta 
+		for (int i = 1; i< delta.size(); i++) {
+			// don't move positive or zero offset items.
+			if (delta[i] >= 0) {
+				continue;
+			}
+			hadoffset = true;
+			int c = 0 - delta[i];
+			int p = i;
+			while (c > 0) {
+				SwapBlocks(oldOrderIds[p], oldOrderIds[p-1]);
+				p--;
+				c--;
+			}
+			break;
+		}	
+	
+	} while(hadoffset);
+
+}
+
+void  NifFile::PrettySortBlocks() {
+	NiNode* root = (NiNode*)blocks[0];
+	vector<int> oldchildren(root->children.begin(), root->children.end());
+	root->children.clear();
+
+	for (int i = 0; i < blocks.size();i++) {
+		if (std::find(oldchildren.begin(), oldchildren.end(), i)!=oldchildren.end()) {
+			root->children.push_back(i);
+		}
+
+	}
+
+	auto bookmark = root->children.begin();
+	auto peek = root->children.begin();
+
+	for (int i = 0; peek < root->children.end(); i++) {
+		NiObject* block = GetBlock(root->children[i]);
+		if (block->blockType == BlockType::NITRISHAPE ||
+			block->blockType == BlockType::NITRISTRIPS) {
+			iter_swap(bookmark, peek);
+			bookmark++;
+		}	
+		peek++;
+	}
+}
+
+void NifFile::SwapBlocks(int blockIndexLo, int blockIndexHi) {
+	if (blockIndexLo == -1 || blockIndexHi == -1)
+		return;
+
+	// First swap data
+	iter_swap(hdr.blockIndex.begin() + blockIndexLo, hdr.blockIndex.begin() + blockIndexHi);
+	iter_swap(hdr.blockSizes.begin() + blockIndexLo, hdr.blockSizes.begin() + blockIndexHi);
+	iter_swap(blocks.begin() + blockIndexLo, blocks.begin() + blockIndexHi);
+
+	// Next tell all the blocks that the swap happened
+	for (int i = 0; i < hdr.numBlocks; i++)
+		blocks[i]->notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
 void NifFile::DeleteBlock(int blockIndex) {

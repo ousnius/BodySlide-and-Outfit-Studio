@@ -456,7 +456,6 @@ public:
 	wxStatusBar* statusBar;
 	wxToolBar* toolBar;
 	wxTreeItemId shapesRoot;
-	wxTreeItemId refRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
 	wxImageList* visStateImages;
@@ -474,6 +473,7 @@ public:
 	void ShowSliderEffect(const string& sliderName, bool show = true);
 
 	void SelectShape(const string& shapeName);
+	vector<string> GetShapeList();
 
 	void UpdateShapeSource(const string& shapeName, bool bIsOutfit);
 	int PromptUpdateBase();
@@ -653,7 +653,6 @@ private:
 
 	void RefreshGUIFromProj();
 	void AnimationGUIFromProj();
-	void ReferenceGUIFromProj();
 	void WorkingGUIFromProj();
 
 	void OnMoveWindow(wxMoveEvent& event);
@@ -697,6 +696,8 @@ private:
 	void OnOutfitShapeSelect(wxTreeEvent& event);
 	void OnOutfitBoneSelect(wxTreeEvent& event);
 	void OnOutfitShapeContext(wxTreeEvent& event);
+	void OnOutfitShapeDrag(wxTreeEvent& event);
+	void OnOutfitShapeDrop(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);

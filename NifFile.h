@@ -22,34 +22,34 @@ using namespace std;
 	#define EPSILON (1.0E-4)
 #endif
 
-
-#define NIHEADER 0
-#define NIUNKNOWN 1
-#define NITRISHAPE 2
-#define NITRISHAPEDATA 3
-#define NINODE 4
-#define BSDISMEMBERSKININSTANCE 5
-#define NISKINPARTITION 6
-#define BSLIGHTINGSHADERPROPERTY 7
-#define NIALPHAPROPERTY 8
-#define NISKINDATA 9
-#define BSSHADERTEXTURESET 10
-#define NITRISTRIPS 11
-#define NITRISTRIPSDATA 12
-#define NISKININSTANCE 13
-#define NISTRINGEXTRADATA 14
-#define BSSHADERPPLIGHTINGPROPERTY 15
-#define NIMATERIALPROPERTY 16
-#define NISTENCILPROPERTY 17
-#define BSEFFECTSHADERPROPERTY 18
-#define NIFLOATINTERPOLATOR 19
-#define NITRANSFORMINTERPOLATOR 20
-#define NIPOINT3INTERPOLATOR 21
-#define BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER 22
-#define BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER 23
-#define BSEFFECTSHADERPROPERTYCOLORCONTROLLER 24
-#define BSEFFECTSHADERPROPERTYFLOATCONTROLLER 25
-
+enum BlockType {
+	NIHEADER,
+	NIUNKNOWN,
+	NITRISHAPE,
+	NITRISHAPEDATA,
+	NINODE,
+	BSDISMEMBERSKININSTANCE,
+	NISKINPARTITION,
+	BSLIGHTINGSHADERPROPERTY,
+	NIALPHAPROPERTY,
+	NISKINDATA,
+	BSSHADERTEXTURESET,
+	NITRISTRIPS,
+	NITRISTRIPSDATA,
+	NISKININSTANCE,
+	NISTRINGEXTRADATA,
+	BSSHADERPPLIGHTINGPROPERTY,
+	NIMATERIALPROPERTY,
+	NISTENCILPROPERTY,
+	BSEFFECTSHADERPROPERTY,
+	NIFLOATINTERPOLATOR,
+	NITRANSFORMINTERPOLATOR,
+	NIPOINT3INTERPOLATOR,
+	BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER,
+	BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER,
+	BSEFFECTSHADERPROPERTYCOLORCONTROLLER,
+	BSEFFECTSHADERPROPERTYFLOATCONTROLLER
+};
 
 struct VertexWeight {
 	float w1;
@@ -204,6 +204,7 @@ public:
 	virtual void Init();
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
@@ -274,6 +275,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -292,6 +294,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -301,6 +304,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -318,6 +322,7 @@ public:
 	void Put(fstream& file);
 
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -337,6 +342,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -369,6 +375,7 @@ public:
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual void RecalcNormals();
 	virtual void CalcTangentSpace();
 	virtual int CalcBlockSize();
@@ -380,6 +387,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -393,6 +401,7 @@ public:
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual void RecalcNormals();
 	virtual void CalcTangentSpace();
 	virtual int CalcBlockSize();
@@ -405,6 +414,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -423,6 +433,7 @@ public:
 	void Put(fstream& file);
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void RecalcNormals();
 	void CalcTangentSpace();
@@ -436,6 +447,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -452,6 +464,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void StripsToTris(vector<Triangle>* outTris);
 	void RecalcNormals();
@@ -475,6 +488,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -494,6 +508,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -575,6 +590,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -584,6 +600,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -598,6 +615,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -614,6 +632,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -628,6 +647,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -645,6 +665,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -654,6 +675,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -665,6 +687,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -674,6 +697,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -687,6 +711,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -700,6 +725,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -713,6 +739,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -726,6 +753,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -734,6 +762,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual bool IsSkin();
 	virtual bool IsDoubleSided();
 	virtual uint GetType();
@@ -792,6 +821,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	bool IsSkin();
 	bool IsDoubleSided();
 	uint GetType();
@@ -823,6 +853,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual uint GetType();
 	virtual void SetType(uint type);
 	virtual int CalcBlockSize();
@@ -851,6 +882,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	bool IsSkin();
 	bool IsDoubleSided();
 	Color4 GetEmissiveColor();
@@ -868,6 +900,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 };
 
@@ -886,6 +919,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	bool IsSkin();
 	int GetTextureSetRef();
 	void SetTextureSetRef(int texSetRef);
@@ -916,6 +950,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -936,6 +971,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	Vector3 GetSpecularColor();
 	void SetSpecularColor(Vector3 color);
 	float GetGlossiness();
@@ -959,6 +995,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -1004,6 +1041,7 @@ class NifFile
 	string fileName;
 	vector<NiObject*> blocks;
 	bool isValid;
+	bool hasUnknown;
 
 	int shapeDataIdForName(const string& name, int& outBlockType);
 	int shapeIdForName(const string& name);
@@ -1035,8 +1073,18 @@ public:
 	string GetFileName() { return fileName; }
 
 	bool IsValid() { return isValid; }
+	bool HasUnknown() { return hasUnknown; }
 
 	void Clear();
+
+	// Explicitly sets the order of shapes to a new one.
+	void SetShapeOrder(vector<string> order);
+
+	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
+	void PrettySortBlocks();
+
+	// Swaps two blocks, updating references in other blocks that may refer to their old indices.
+	void SwapBlocks(int blockIndexLo, int blockIndexHi);
 
 	void DeleteBlock(int blockIndex);
 	void DeleteBlockByType(string typeStr);
