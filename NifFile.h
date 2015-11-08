@@ -1116,11 +1116,12 @@ public:
 	void ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(const string& shapeName, const Vector3& angle, unordered_map<ushort, float>* mask = nullptr);
 
-	void GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& outThreshold);
-	void SetAlphaForShape(const string& shapeName, ushort flags, ushort threshold);
+	bool GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& outThreshold);
+	void SetAlphaForShape(const string& shapeName, ushort flags = 4844, ushort threshold = 128);
 
 	void DeleteShape(const string& shapeName);
 	void DeleteShader(const string& shapeName);
+	void DeleteAlpha(const string& shapeName);
 	void DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
 
 	int CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);

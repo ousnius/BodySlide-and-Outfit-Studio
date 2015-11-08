@@ -1891,7 +1891,7 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 	}
 }
 
-void NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& outThreshold) {
+bool NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& outThreshold) {
 	int alphaRef = -1;
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
@@ -1909,14 +1909,15 @@ void NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& 
 	}
 
 	if (alphaRef == -1)
-		return;
+		return false;
 
 	NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(alphaRef));
 	if (!alpha)
-		return;
+		return false;
 
 	outFlags = alpha->flags;
 	outThreshold = alpha->threshold;
+	return true;
 }
 
 void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort threshold) {
@@ -1933,6 +1934,31 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 					break;
 				}
 			}
+		}
+
+		if (alphaRef == -1) {
+			NiShader* shader = GetShader(shapeName);
+			if (!shader)
+				return;
+
+			alphaRef = blocks.size();
+
+			NiAlphaProperty* alphaProp = new NiAlphaProperty(hdr);
+			if (shader->blockType == BSLIGHTINGSHADERPROPERTY)
+				geom->propertiesRef2 = alphaRef;
+			else if (shader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+				geom->propertiesRef.push_back(alphaRef);
+			else if (shader->blockType == BSEFFECTSHADERPROPERTY)
+				geom->propertiesRef2 = alphaRef;
+			else
+				return;
+
+			blocks.push_back(alphaProp);
+			hdr.numBlocks++;
+			hdr.blockSizes.push_back(alphaProp->CalcBlockSize());
+
+			ushort alphaBlockTypeId = AddOrFindBlockTypeId("NiAlphaProperty");
+			hdr.blockIndex.push_back(alphaBlockTypeId);
 		}
 	}
 
@@ -1999,10 +2025,17 @@ void NifFile::DeleteShader(const string& shapeName) {
 			if (shader) {
 				DeleteBlock(shader->GetTextureSetRef());
 				DeleteBlock(geom->propertiesRef1);
+				geom->propertiesRef1 = -1;
 			}
 		}
-		if (geom->propertiesRef2 != -1)
-			DeleteBlock(geom->propertiesRef2);
+
+		if (geom->propertiesRef2 != -1) {
+			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(geom->propertiesRef2));
+			if (alpha) {
+				DeleteBlock(geom->propertiesRef2);
+				geom->propertiesRef2 = -1;
+			}
+		}
 
 		for (int i = 0; i < geom->numProperties; i++) {
 			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef[i]));
@@ -2010,9 +2043,34 @@ void NifFile::DeleteShader(const string& shapeName) {
 				if (shader->blockType == BSSHADERPPLIGHTINGPROPERTY || shader->blockType == NIMATERIALPROPERTY) {
 					DeleteBlock(shader->GetTextureSetRef());
 					DeleteBlock(geom->propertiesRef[i]);
+					shader->SetTextureSetRef(-1);
+					geom->propertiesRef[i] = -1;
 					i--;
 					continue;
 				}
+			}
+		}
+	}
+}
+
+void NifFile::DeleteAlpha(const string& shapeName) {
+	NiTriBasedGeom* geom = geomForName(shapeName);
+	if (geom) {
+		if (geom->propertiesRef2 != -1) {
+			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(geom->propertiesRef2));
+			if (alpha) {
+				DeleteBlock(geom->propertiesRef2);
+				geom->propertiesRef2 = -1;
+			}
+		}
+
+		for (int i = 0; i < geom->numProperties; i++) {
+			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(geom->propertiesRef[i]));
+			if (alpha) {
+				DeleteBlock(geom->propertiesRef[i]);
+				geom->propertiesRef[i] = -1;
+				i--;
+				continue;
 			}
 		}
 	}

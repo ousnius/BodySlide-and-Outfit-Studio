@@ -26,7 +26,10 @@ private:
 	wxButton* btnAddShader = nullptr;
 	wxButton* btnRemoveShader = nullptr;
 	wxButton* btnSetTextures = nullptr;
-	wxButton* btnTransparency = nullptr;
+
+	wxTextCtrl* alphaThreshold = nullptr;
+	wxButton* btnAddTransparency = nullptr;
+	wxButton* btnRemoveTransparency = nullptr;
 
 	OutfitStudio* os = nullptr;
 	NifFile* nif = nullptr;
@@ -34,8 +37,12 @@ private:
 
 	void GetShader();
 	void GetShaderType();
-	bool AddShader();
+	void AddShader();
 	void RemoveShader();
+
+	void GetTransparency();
+	void AddTransparency();
+	void RemoveTransparency();
 
 	void AssignDefaultTexture();
 	void ApplyChanges();
@@ -44,7 +51,8 @@ private:
 	void OnRemoveShader(wxCommandEvent& event);
 	void OnSetTextures(wxCommandEvent& event);
 	void OnApplyDiffuse(wxCommandEvent& event);
-	void OnTransparency(wxCommandEvent& event);
+	void OnAddTransparency(wxCommandEvent& event);
+	void OnRemoveTransparency(wxCommandEvent& event);
 	void OnApply(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()

@@ -10,7 +10,8 @@ BEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnAddShader"), ShapeProperties::OnAddShader)
 	EVT_BUTTON(XRCID("btnRemoveShader"), ShapeProperties::OnRemoveShader)
 	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
-	EVT_BUTTON(XRCID("btnTransparency"), ShapeProperties::OnTransparency)
+	EVT_BUTTON(XRCID("btnAddTransparency"), ShapeProperties::OnAddTransparency)
+	EVT_BUTTON(XRCID("btnRemoveTransparency"), ShapeProperties::OnRemoveTransparency)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
 END_EVENT_TABLE();
 
@@ -18,7 +19,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	wxXmlResource * rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgShapeProp");
 
-	SetSize(620, 285);
+	SetSize(620, 390);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
@@ -35,9 +36,13 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	btnAddShader = XRCCTRL(*this, "btnAddShader", wxButton);
 	btnRemoveShader = XRCCTRL(*this, "btnRemoveShader", wxButton);
 	btnSetTextures = XRCCTRL(*this, "btnSetTextures", wxButton);
-	btnTransparency = XRCCTRL(*this, "btnTransparency", wxButton);
+
+	alphaThreshold = XRCCTRL(*this, "alphaThreshold", wxTextCtrl);
+	btnAddTransparency = XRCCTRL(*this, "btnAddTransparency", wxButton);
+	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
 
 	GetShader();
+	GetTransparency();
 }
 
 ShapeProperties::~ShapeProperties() {
@@ -166,8 +171,7 @@ void ShapeProperties::GetShaderType() {
 }
 
 void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
-	if (!AddShader())
-		return;
+	AddShader();
 
 	btnAddShader->Disable();
 	btnRemoveShader->Enable();
@@ -180,10 +184,10 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	emissiveMultiple->Enable();
 }
 
-bool ShapeProperties::AddShader() {
+void ShapeProperties::AddShader() {
 	NiTriBasedGeom* geom = nif->geomForName(shape);
 	if (!geom)
-		return false;
+		return;
 
 	switch (os->targetGame) {
 		case FO3:
@@ -205,38 +209,23 @@ bool ShapeProperties::AddShader() {
 	}
 
 	NiShader* shader = nif->GetShader(shape);
-	if (!shader) {
-		wxLogError("Could not successfully add shader.");
-		wxMessageBox("Could not add successfully add shader.", "Error", wxICON_ERROR);
+	if (shader) {
+		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->hdr);
+		shader->SetTextureSetRef(nif->AddBlock(nifTexSet, "BSShaderTextureSet"));
 	}
 
-	BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->hdr);
-	shader->SetTextureSetRef(nif->AddBlock(nifTexSet, "BSShaderTextureSet"));
 	AssignDefaultTexture();
-
-	GetShaderType();
-
-	return true;
+	GetShader();
 }
 
 void ShapeProperties::OnRemoveShader(wxCommandEvent& WXUNUSED(event)) {
 	RemoveShader();
-
-	btnAddShader->Enable();
-	btnRemoveShader->Disable();
-	btnSetTextures->Disable();
-	shaderType->Disable();
-	specularColor->Disable();
-	specularStrength->Disable();
-	specularPower->Disable();
-	emissiveColor->Disable();
-	emissiveMultiple->Disable();
 }
 
 void ShapeProperties::RemoveShader() {
 	nif->DeleteShader(shape);
 	AssignDefaultTexture();
-	GetShaderType();
+	GetShader();
 }
 
 void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
@@ -357,8 +346,39 @@ void ShapeProperties::AssignDefaultTexture() {
 	os->glView->Refresh();
 }
 
-void ShapeProperties::OnTransparency(wxCommandEvent& WXUNUSED(event)) {
+void ShapeProperties::GetTransparency() {
+	ushort flags;
+	byte threshold;
 
+	if (nif->GetAlphaForShape(shape, flags, threshold)) {
+		alphaThreshold->SetValue(wxString::Format("%d", threshold));
+		alphaThreshold->Enable();
+		btnAddTransparency->Disable();
+		btnRemoveTransparency->Enable();
+	}
+	else {
+		alphaThreshold->Disable();
+		btnAddTransparency->Enable();
+		btnRemoveTransparency->Disable();
+	}
+}
+
+void ShapeProperties::OnAddTransparency(wxCommandEvent& WXUNUSED(event)) {
+	AddTransparency();
+}
+
+void ShapeProperties::AddTransparency() {
+	nif->SetAlphaForShape(shape);
+	GetTransparency();
+}
+
+void ShapeProperties::OnRemoveTransparency(wxCommandEvent& WXUNUSED(event)) {
+	RemoveTransparency();
+}
+
+void ShapeProperties::RemoveTransparency() {
+	nif->DeleteAlpha(shape);
+	GetTransparency();
 }
 
 void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
@@ -425,5 +445,12 @@ void ShapeProperties::ApplyChanges() {
 				break;
 			}
 		}
+	}
+
+	ushort flags;
+	byte threshold;
+	if (nif->GetAlphaForShape(shape, flags, threshold)) {
+		threshold = atoi(alphaThreshold->GetValue().ToAscii().data());
+		nif->SetAlphaForShape(shape, flags, threshold);
 	}
 }

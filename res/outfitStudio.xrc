@@ -3209,7 +3209,7 @@
 	
 	<object class="wxDialog" name="dlgShapeProp">
 		<style>wxDEFAULT_DIALOG_STYLE</style>
-		<size>620,285</size>
+		<size>620,390</size>
 		<title>Shape Properties</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -3408,13 +3408,85 @@
 									<default>0</default>
 								</object>
 							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Transparency</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxFlexGridSizer">
+									<rows>0</rows>
+									<cols>2</cols>
+									<vgap>0</vgap>
+									<hgap>0</hgap>
+									<growablecols>1</growablecols>
+									<growablerows></growablerows>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="lbAlphaThreshold">
+											<label>Threshold</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALL|wxEXPAND</flag>
+										<border>5</border>
+										<object class="wxTextCtrl" name="alphaThreshold">
+											<style>wxTE_CENTRE</style>
+											<value>128</value>
+											<maxlength>3</maxlength>
+										</object>
+									</object>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,5</size>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>1</option>
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
-								<object class="wxButton" name="btnTransparency">
-									<hidden>1</hidden>
-									<label>Transparency...</label>
+								<object class="wxButton" name="btnAddTransparency">
+									<enabled>0</enabled>
+									<label>Add</label>
+									<default>0</default>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnRemoveTransparency">
+									<label>Remove</label>
 									<default>0</default>
 								</object>
 							</object>
