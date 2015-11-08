@@ -370,9 +370,32 @@ void NifFile::SetShapeOrder(vector<string> order) {
 	
 	} while(hadoffset);
 
+}
 
-	//for (int i = 0; i < oldOrder.size(); i++)
-	//	SwapBlocks(shapeIdForName(oldOrder[i]), shapeIdForName(order[i]));
+void  NifFile::PrettySortBlocks() {
+	NiNode* root = (NiNode*)blocks[0];
+	vector<int> oldchildren(root->children.begin(), root->children.end());
+	root->children.clear();
+
+	for (int i = 0; i < blocks.size();i++) {
+		if (std::find(oldchildren.begin(), oldchildren.end(), i)!=oldchildren.end()) {
+			root->children.push_back(i);
+		}
+
+	}
+
+	auto bookmark = root->children.begin();
+	auto peek = root->children.begin();
+
+	for (int i = 0; peek < root->children.end(); i++) {
+		NiObject* block = GetBlock(root->children[i]);
+		if (block->blockType == BlockType::NITRISHAPE ||
+			block->blockType == BlockType::NITRISTRIPS) {
+			iter_swap(bookmark, peek);
+			bookmark++;
+		}	
+		peek++;
+	}
 }
 
 void NifFile::SwapBlocks(int blockIndexLo, int blockIndexHi) {

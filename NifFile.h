@@ -1080,6 +1080,9 @@ public:
 	// Explicitly sets the order of shapes to a new one.
 	void SetShapeOrder(vector<string> order);
 
+	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
+	void PrettySortBlocks();
+
 	// Swaps two blocks, updating references in other blocks that may refer to their old indices.
 	void SwapBlocks(int blockIndexLo, int blockIndexHi);
 
