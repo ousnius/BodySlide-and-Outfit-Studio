@@ -4,7 +4,7 @@
 		<style>wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER|wxSYSTEM_MENU|wxTAB_TRAVERSAL|wxCLIP_CHILDREN</style>
 		<size>800,750</size>
 		<bg>#404040</bg>
-		<title>Caliente's BodySlide</title>
+		<title>BodySlide</title>
 		<centered>0</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
@@ -236,6 +236,7 @@
 										<flag>wxALIGN_CENTER|wxALL</flag>
 										<border>5</border>
 										<object class="wxCheckBox" name="cbRaceMenu">
+											<hidden>1</hidden>
 											<fg>#c8c8c8</fg>
 											<label>RaceMenu Morphs</label>
 											<tooltip>Builds a TRI file alongside the low and high weight meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>

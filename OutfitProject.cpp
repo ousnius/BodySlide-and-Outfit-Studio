@@ -415,6 +415,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 			nifShaderPP->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
 			break;
 		case SKYRIM:
+		case FO4:
 		default:
 			nifShader = new BSLightingShaderProperty(workNif.hdr);
 			shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");

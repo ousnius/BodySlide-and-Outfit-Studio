@@ -18,16 +18,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#ifndef FO3
-#define FO3 0
-#endif
-#ifndef FONV
-#define FONV 1
-#endif
-#ifndef SKYRIM
-#define SKYRIM 2
-#endif
-
 #include "stdafx.h"
 #include "wxStateButton.h"
 #include "GLSurface.h"
@@ -48,6 +38,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dataview.h>
 #include <wx/splitter.h>
 #include <wx/collpane.h>
+
+
+enum TargetGame {
+	FO3, FONV, SKYRIM, FO4
+};
 
 
 class ShapeItemData : public wxTreeItemData  {

@@ -93,6 +93,7 @@ bool BodySlideApp::OnInit() {
 		case FO3: gameName.Append("Fallout 3"); break;
 		case FONV: gameName.Append("Fallout New Vegas"); break;
 		case SKYRIM: gameName.Append("Skyrim"); break;
+		case FO4: gameName.Append("Fallout 4"); break;
 		default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
@@ -752,7 +753,7 @@ void BodySlideApp::RebuildPreviewMeshes() {
 }
 
 void BodySlideApp::SetDefaultConfig() {
-	Config.SetDefaultValue("TargetGame", 2);
+	Config.SetDefaultValue("TargetGame", 3);
 	targetGame = Config.GetIntValue("TargetGame");
 
 	Config.SetDefaultValue("ShapeDataPath", wxGetCwd().ToStdString() + "\\ShapeData");
@@ -781,6 +782,12 @@ void BodySlideApp::SetDefaultConfig() {
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
 		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
 		gameKey = "SOFTWARE\\Bethesda Softworks\\Skyrim";
+		gameValueKey = "Installed Path";
+		break;
+	case FO4:
+		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
+		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
+		gameKey = "SOFTWARE\\Bethesda Softworks\\Fallout4";
 		gameValueKey = "Installed Path";
 		break;
 	default:
@@ -2311,6 +2318,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			choiceSkeletonRoot->SetStringSelection("Bip01");
 			break;
 		case SKYRIM:
+		case FO4:
 		default:
 			choiceSkeletonRoot->SetStringSelection("NPC");
 			break;

@@ -1,141 +1,51 @@
 <BodySlideConfig>
     <!-- Game install path. Normally this is harvested from the windows registry, but if that's not working
     or you want to work with a different game, uncomment/change the below line. Notice the important trailing slash. -->
-    <!-- <GameDataPath>C:\Steam\SteamApps\common\Skyrim\Data\</GameDataPath> -->
-    <!-- 0 = Fallout 3, 1 = Fallout New Vegas, 2 = Skyrim -->
-    <TargetGame>2</TargetGame>
+    <!-- <GameDataPath>C:\Steam\SteamApps\common\Fallout 4\Data\</GameDataPath> -->
+    <!-- 0 = Fallout 3, 1 = Fallout New Vegas, 2 = Skyrim, 3 = Fallout 4 -->
+    <TargetGame>3</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
-	<BSATextureScan>true</BSATextureScan>
-	<LogLevel>3</LogLevel>
+    <BSATextureScan>true</BSATextureScan>
+    <LogLevel>3</LogLevel>
     <SelectedOutfit>CBBE Body</SelectedOutfit>
-    <SelectedPreset>CBBE Curvy</SelectedPreset>
+    <SelectedPreset>CBBE</SelectedPreset>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
 	This information is used by BodySlide for choosing what presets to display for outfits.
 	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
     <DefaultGroups includeInBuild="true">
-        <GroupName>CBAdvanced</GroupName>
-    </DefaultGroups>
+        <GroupName>CBBE</GroupName>
+	</DefaultGroups>
     <!-- Group aliases provide a way for presets saved under older group names to still apply when a group has been renamed -->
-    <GroupAliases>
-        <GroupAlias alias="CB++" group="CBAdvanced"></GroupAlias>
-        <GroupAlias alias="CBAdvanced" group="CB++"></GroupAlias>
-    </GroupAliases>
+    <GroupAliases></GroupAliases>
     <Input>
         <!-- Sets the minimum and maximum slider values for the BodySlide UI. There might be clipping outside of the 0-100 range! -->
         <SliderMinimum>0</SliderMinimum>
         <SliderMaximum>100</SliderMaximum>
         <!-- Set the left mouse button to pan the view when dragged on the canvas in Outfit Studio -->
         <LeftMousePan>false</LeftMousePan>
-    </Input>
+	</Input>
     <Editing>
         <!-- Center for move/rotate operations. Object = bounding box center, Origin = (0,0,0), Selected = unmasked vertex centroid -->
         <CenterMode>Object</CenterMode>
-    </Editing>
+	</Editing>
     <!--Light Settings-->
     <Lights>
         <Ambient>80</Ambient>
         <Brightness1>55</Brightness1>
         <Brightness2>45</Brightness2>
         <Brightness3>45</Brightness3>
-    </Lights>
+	</Lights>
     <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
     <ReferenceTemplates>
-        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body" shape="BaseShape">CBBE Body</Template>
-        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body BBP" shape="BaseShape">CBBE Body BBP</Template>
-        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body TBBP" shape="BaseShape">CBBE Body TBBP</Template>
-        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Body HDT" shape="BaseShape">CBBE Body HDT</Template>
-        <Template sourcefile="SliderSets\CalienteBody.xml" set="CBBE Feet" shape="Feet">CBBE Feet</Template>
-        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP" shape="UUNP">Unified UNP</Template>
-        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP HDT" shape="UUNP">Unified UNP HDT</Template>
-        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP HDT+" shape="UUNP">Unified UNP HDT+</Template>
-        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP Special" shape="UUNP">Unified UNP Special</Template>
-        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP Hands" shape="Hands">Unified UNP Hands</Template>
-        <Template sourcefile="SliderSets\UnifiedUNP.xml" set="Unified UNP Feet" shape="Feet">Unified UNP Feet</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="CBBE to Unified UNP" shape="Body">Convert: CBBE to UNP/7B/DG/CHSBHC and more</Template>
-        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2Skyrim" shape="BaseShape">Convert: CBBE to Vanilla</Template>
-        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2ADEC" shape="BaseShape">Convert: CBBE to ADEC</Template>
-        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBBE2CBPE" shape="BaseShape">Convert: CBBE to CBPE</Template>
-        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert Skyrim2CBBE" shape="BaseShape">Convert: Vanilla to CBBE</Template>
-        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert ADEC2CBBE" shape="BaseShape">Convert: ADEC to CBBE</Template>
-        <Template sourcefile="ConversionSets\CalConvert.xml" set="Body Convert CBPE2CBBE" shape="BaseShape">Convert: CBPE to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP Low to CBBE" shape="UNP_Low">Convert: UNP Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP High to CBBE" shape="UNP_High">Convert: UNP High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPB Low to CBBE" shape="UNPB_Low">Convert: UNPB Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPB High to CBBE" shape="UNPB_High">Convert: UNPB High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Low to CBBE" shape="7B_Low">Convert: 7B Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B High to CBBE" shape="7B_High">Convert: 7B High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Bombshell Low to CBBE" shape="7B_Bombshell_low">Convert: 7B Bombshell Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Bombshell High to CBBE" shape="7B_Bombshell_High">Convert: 7B Bombshell High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Cleavage Low to CBBE" shape="7B_Cleavage_Low">Convert: 7B Cleavage Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Cleavage High to CBBE" shape="7B_Cleavage_High">Convert: 7B Cleavage High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7BCH Low to CBBE" shape="7BCH_Low">Convert: 7BCH Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7BCH High to CBBE" shape="7BCH_High">Convert: 7BCH High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Bcup Low to CBBE" shape="7B_Bcup_Low">Convert: 7B BCup Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Bcup High to CBBE" shape="7B_BCup_High">Convert: 7B BCup High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7BUNP Low to CBBE" shape="7BUNP_Low">Convert: 7BUNP Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7BUNP High to CBBE" shape="7BUNP_High">Convert: 7BUNP High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Oppai Low to CBBE" shape="7B_Oppai_Low">Convert: 7B Oppai Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Oppai High to CBBE" shape="7B_Oppai_High">Convert: 7B Oppai High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Natural Low to CBBE" shape="7B_Natural_Low">Convert: 7B Natural Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="7B Natural High to CBBE" shape="7B_Natural_High">Convert: 7B Natural High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Demonfet Low to CBBE" shape="Demonfet_low">Convert: Demonfet Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Demonfet High to CBBE" shape="Demonfet_high">Convert: Demonfet High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Dream Girl Low to CBBE" shape="DreamGirl_low">Convert: Dream Girl Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Dream Girl High to CBBE" shape="DreamGirl_high">Convert: Dream Girl High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="TopModel Low to CBBE" shape="TopModel_Low">Convert: TopModel Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="TopModel High to CBBE" shape="TopModel_High">Convert: TopModel High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPetite Low to CBBE" shape="UNPetite_Low">Convert: UNPetite Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPetite High to CBBE" shape="UNPetite_High">Convert: UNPetite High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPB Oppai V1 to CBBE" shape="UNPB_Oppai_V1">Convert: UNPB Oppai V1 to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPB Oppai V3.2 Low to CBBE" shape="UNPB_Oppai_V3.2_Low">Convert: UNPB Oppai V3.2 Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPB Oppai V3.2 High to CBBE" shape="UNPB_Oppai_V3.2_High">Convert: UNPB Oppai V3.2 High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPC Low to CBBE" shape="UNPC_Low">Convert: UNPC Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPC High to CBBE" shape="UNPC_High">Convert: UNPC High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPCM Low to CBBE" shape="UNPCM_Low">Convert: UNPCM Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPCM High to CBBE" shape="UNPCM_High">Convert: UNPCM High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPSH Low to CBBE" shape="UNPSH_Low">Convert: UNPSH Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPSH High to CBBE" shape="UNPSH_High">Convert: UNPSH High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPK Low to CBBE" shape="UNPK_Low">Convert: UNPK Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPK High to CBBE" shape="UNPK_High">Convert: UNPK High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP Perky Low to CBBE" shape="UNP_Perky_Low">Convert: UNP Perky Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP Perky High to CBBE" shape="UNP_Perky_High">Convert: UNP Perky High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UN7B Low to CBBE" shape="UN7B_Low">Convert: UN7B Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UN7B High to CBBE" shape="UN7B_High">Convert: UN7B High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPBB Low to CBBE" shape="UNPBB_Low">Convert: UNPBB Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPBB High to CBBE" shape="UNPBB_High">Convert: UNPBB High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Leito Low to CBBE" shape="Leito_Low">Convert: Leito Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Leito High to CBBE" shape="Leito_High">Convert: Leito High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP Skinny Low to CBBE" shape="UNP_Skinny_Low">Convert: UNP Skinny Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP Skinny High to CBBE" shape="UNP_Skinny_High">Convert: UNP Skinny High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPF Low to CBBE" shape="UNPF_Low">Convert: UNPF Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPF High to CBBE" shape="UNPF_High">Convert: UNPF High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPFx Low to CBBE" shape="UNPFX_Low">Convert: UNPFx Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPFx High to CBBE" shape="UNPFX_High">Convert: UNPFx High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP Pushup Low to CBBE" shape="UNP_Pushup_Low">Convert: UNP Pushup Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNP Pushup High to CBBE" shape="UNP_Pushup_High">Convert: UNP Pushup High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="UNPB Chapi to CBBE" shape="UNPB Chapi">Convert: UNPB Chapi to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="CNHF Low to CBBE" shape="CNHF Low">Convert: CNHF Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="CNHF High to CBBE" shape="CNHF High">Convert: CNHF High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="CNHF Bonus Low to CBBE" shape="CNHF Bonus Low">Convert: CNHF Bonus Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="CNHF Bonus High to CBBE" shape="CNHF Bonus High">Convert: CNHF Bonus High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="MCBM Low to CBBE" shape="MCBM Low">Convert: MCBM Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="MCBM High to CBBE" shape="MCBM High">Convert: MCBM High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Venus Low to CBBE" shape="Venus Low">Convert: Venus Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Venus High to CBBE" shape="Venus High">Convert: Venus High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="ZGGB-R2 Low to CBBE" shape="ZGGB-R2 Low">Convert: ZGGB-R2 Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="ZGGB-R2 High to CBBE" shape="ZGGB-R2 High">Convert: ZGGB-R2 High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Manga Low to CBBE" shape="Manga Low">Convert: Manga Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="Manga High to CBBE" shape="Manga High">Convert: Manga High to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="CHSBHC Low to CBBE" shape="CHSBHC Low">Convert: CHSBHC Low to CBBE</Template>
-        <Template sourcefile="ConversionSets\UNPConvert.xml" set="CHSBHC High to CBBE" shape="CHSBHC High">Convert: CHSBHC High to CBBE</Template>
-    </ReferenceTemplates>
+        <Template sourcefile="SliderSets\CBBEBody.xml" set="CBBE Body" shape="CBBE">CBBE Body</Template>
+	</ReferenceTemplates>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
-        <DefaultSkeletonReference>res\skeleton_female_xpmse.nif</DefaultSkeletonReference>
+        <DefaultSkeletonReference>res\skeleton_fo4.nif</DefaultSkeletonReference>
         <SkeletonRootName>NPC</SkeletonRootName>
         <!-- <DefaultSkeletonReference>res\skeleton_fo3nv.nif</DefaultSkeletonReference> -->
         <!-- <SkeletonRootName>Bip01</SkeletonRootName> -->
-    </Anim>
+	</Anim>
     <!-- Window position/size and filter state parameters -->
     <BodySlideFrame width="800" height="600"></BodySlideFrame>
     <OutfitStudioFrame width="990" height="757"></OutfitStudioFrame>

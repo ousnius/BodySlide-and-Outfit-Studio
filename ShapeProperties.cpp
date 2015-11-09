@@ -202,6 +202,7 @@ void ShapeProperties::AddShader() {
 			break;
 		}
 		case SKYRIM:
+		case FO4:
 		default: {
 			BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->hdr);
 			geom->propertiesRef1 = nif->AddBlock(shader, "BSLightingShaderProperty");
