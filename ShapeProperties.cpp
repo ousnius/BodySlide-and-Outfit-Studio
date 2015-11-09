@@ -289,21 +289,15 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			stTexGrid->HideRow(8);
 		}
 
-		oDispPath = os->project->OutfitTexture(shape);
+		oDispPath = os->project->GetShapeTexture(shape);
 		XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->SetPath(oDispPath);
 		XRCCTRL(dlg, "btApplyDiffuse", wxButton)->Bind(wxEVT_BUTTON, &ShapeProperties::OnApplyDiffuse, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
 			nDispPath = XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->GetPath();
 			if (nDispPath != oDispPath) {
-				if (os->activeItem->bIsOutfitShape) {
-					os->project->SetOutfitTexture(shape, nDispPath);
-					os->glView->SetMeshTexture(shape, nDispPath, nif->IsShaderSkin(shape));
-				}
-				else {
-					os->project->SetRefTexture(shape, nDispPath);
-					os->glView->SetMeshTexture(shape, nDispPath, nif->IsShaderSkin(shape));
-				}
+				os->project->SetTexture(shape, nDispPath);
+				os->glView->SetMeshTexture(shape, nDispPath, nif->IsShaderSkin(shape));
 			}
 
 			for (int i = 0; i < 9; i++) {
@@ -335,14 +329,8 @@ void ShapeProperties::OnApplyDiffuse(wxCommandEvent& event) {
 
 void ShapeProperties::AssignDefaultTexture() {
 	string texNoImg = os->appConfig["GameDataPath"] + "noimg.dds";
-	if (os->activeItem->bIsOutfitShape) {
-		os->project->SetOutfitTexture(shape, "_AUTO_");
-		os->glView->SetMeshTexture(shape, texNoImg, nif->IsShaderSkin(shape));
-	}
-	else {
-		os->project->SetRefTexture(shape, "_AUTO_");
-		os->glView->SetMeshTexture(shape, texNoImg, nif->IsShaderSkin(shape));
-	}
+	os->project->SetTexture(shape, "_AUTO_");
+	os->glView->SetMeshTexture(shape, texNoImg, nif->IsShaderSkin(shape));
 	os->glView->Refresh();
 }
 

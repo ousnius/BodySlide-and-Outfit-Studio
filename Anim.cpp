@@ -75,10 +75,13 @@ bool AnimInfo::LoadFromNif(NifFile* nif) {
 	return true;
 }
 
-bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape) {
+bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape, bool newRefNif) {
 	vector<string> boneNames;
 	vector<int> BoneIndices;
 	string invalidBones = "";
+
+	if (newRefNif)
+		refNif = nif;
 
 	if (!nif->GetShapeBoneList(shape, boneNames)) {
 		wxLogWarning("No skinning found in shape '%s' of '%s'.", shape, nif->GetFileName());
@@ -190,9 +193,12 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 	}
 }
 
-void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs) {
+void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeException) {
 	if (synchBoneIDs) {
 		for (auto &bones : shapeBones) {
+			if (bones.first == shapeException)
+				continue;
+
 			vector<int> bids;
 			for (auto &bone : bones.second) {
 				int id = nif->GetNodeID(bone);

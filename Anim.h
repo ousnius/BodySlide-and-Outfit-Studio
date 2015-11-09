@@ -129,13 +129,13 @@ public:
 	// Loads the skinning information contained in the nif for all shapes.
 	// Returns false if there is no skinning information.
 	bool LoadFromNif(NifFile* nif);
-	bool LoadFromNif(NifFile* nif, const string& shape);
+	bool LoadFromNif(NifFile* nif, const string& shape, bool newRefNif = true);
 	int GetShapeBoneIndex(const string& shapeName, const string& boneName);
 	void GetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& outVertWeights);
 	void GetBoneXForm(const string& boneName, SkinTransform& stransform);
 	void SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights);
 	void SetShapeBoneXForm(const string& shape, const string& boneName, SkinTransform& stransform);
-	void WriteToNif(NifFile* nif, bool synchBoneIDs = true);
+	void WriteToNif(NifFile* nif, bool synchBoneIDs = true, const string& shapeException = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName);	
 };

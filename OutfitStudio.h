@@ -52,11 +52,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 class ShapeItemData : public wxTreeItemData  {
 public:
-	bool bIsOutfitShape;
 	NifFile* refFile;
 	string shapeName;
-	ShapeItemData(bool isOutfit = false, NifFile* inRefFile = nullptr, const string& inShapeName = "") {
-		bIsOutfitShape = isOutfit;
+	ShapeItemData(NifFile* inRefFile = nullptr, const string& inShapeName = "") {
 		refFile = inRefFile;
 		shapeName = inShapeName;
 	}
@@ -475,7 +473,7 @@ public:
 	void SelectShape(const string& shapeName);
 	vector<string> GetShapeList();
 
-	void UpdateShapeSource(const string& shapeName, bool bIsOutfit);
+	void UpdateShapeSource(const string& shapeName);
 	int PromptUpdateBase();
 
 	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
@@ -692,12 +690,12 @@ private:
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
 
-	void OnOutfitVisToggle(wxTreeEvent& event);
-	void OnOutfitShapeSelect(wxTreeEvent& event);
-	void OnOutfitBoneSelect(wxTreeEvent& event);
-	void OnOutfitShapeContext(wxTreeEvent& event);
-	void OnOutfitShapeDrag(wxTreeEvent& event);
-	void OnOutfitShapeDrop(wxTreeEvent& event);
+	void OnShapeVisToggle(wxTreeEvent& event);
+	void OnShapeSelect(wxTreeEvent& event);
+	void OnShapeContext(wxTreeEvent& event);
+	void OnShapeDrag(wxTreeEvent& event);
+	void OnShapeDrop(wxTreeEvent& event);
+	void OnBoneSelect(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);
