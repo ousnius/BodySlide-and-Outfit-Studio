@@ -74,6 +74,7 @@ public:
 	NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }
 	string GetBaseShape() { return baseShape; }
+	void SetBaseShape(const string& shapeName) { baseShape = shapeName; }
 
 	bool IsBaseShape(const string& shapeName) {
 		return shapeName == baseShape;

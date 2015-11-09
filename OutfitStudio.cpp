@@ -109,6 +109,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudio::OnScaleShape)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudio::OnRotateShape)
 	EVT_MENU(XRCID("renameShape"), OutfitStudio::OnRenameShape)
+	EVT_MENU(XRCID("setReference"), OutfitStudio::OnSetReference)
 	EVT_MENU(XRCID("copyShape"), OutfitStudio::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudio::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudio::OnAddBone)
@@ -767,9 +768,6 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	else
 		activeItem = nullptr;
 
-	if (outfitShapes)
-		outfitShapes->ExpandAll();
-
 	selectedItems.clear();
 	if (activeItem)
 		selectedItems.push_back(activeItem);
@@ -888,9 +886,6 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	if (activeItem)
 		selectedItems.push_back(activeItem);
 
-	if (outfitShapes)
-		outfitShapes->ExpandAll();
-
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
 	UpdateProgress(90.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
 	StartSubProgress(90.0f, 99.0f);
@@ -978,9 +973,6 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(60.0f, "Creating reference...");
 	RefreshGUIFromProj();
 
-	if (outfitShapes)
-		outfitShapes->ExpandAll();
-
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
 	UpdateProgress(70.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
 	StartSubProgress(70.0f, 99.0f);
@@ -1044,7 +1036,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> oldShapes;
 	project->GetShapes(oldShapes);
 	for (auto &s : oldShapes)
-		if (s != project->GetBaseShape())
+		if (!project->IsBaseShape(s))
 			glView->DeleteMesh(s);
 
 	UpdateProgress(1.0f, "Loading outfit...");
@@ -1099,9 +1091,6 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	selectedItems.clear();
 	if (activeItem)
 		selectedItems.push_back(activeItem);
-
-	if (outfitShapes)
-		outfitShapes->ExpandAll();
 
 	wxLogMessage("Outfit loaded.");
 	UpdateProgress(100.0f, "Finished");
@@ -1165,7 +1154,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 	selectedItems.clear();
 
 	if (outfitShapes && shapes.size() > 0) {
-		if (shapes.size() == 1 && shapes.front() == project->GetBaseShape())
+		if (shapes.size() == 1 && project->IsBaseShape(shapes.front()))
 			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
 		else
 			outfitRoot = outfitShapes->AppendItem(shapesRoot, project->OutfitName());
@@ -1181,12 +1170,15 @@ void OutfitStudio::WorkingGUIFromProj() {
 			outfitShapes->SetItemState(subItem, 0);
 			outfitShapes->SetItemData(subItem, new ShapeItemData(project->GetWorkNif(), shape));
 
-			if (shape == project->GetBaseShape()) {
+			if (project->IsBaseShape(shape)) {
 				outfitShapes->SetItemBold(subItem);
 				outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
 			}
 		}
 	}
+
+	if (outfitShapes)
+		outfitShapes->ExpandAll();
 }
 
 void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
@@ -1241,7 +1233,7 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 		vector<string> shapes;
 		project->GetShapes(shapes);
 		for (auto &s : shapes){
-			if (s == project->GetBaseShape()) {
+			if (project->IsBaseShape(s)) {
 				if (IsDirty(s))
 					UpdateShapeSource(s);
 			}
@@ -1401,7 +1393,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> shapes;
 	project->GetShapes(shapes);
 	for (auto &s : shapes){
-		if (s == project->GetBaseShape()) {
+		if (project->IsBaseShape(s)) {
 			if (IsDirty(s))
 				UpdateShapeSource(s);
 		}
@@ -1454,7 +1446,7 @@ void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> shapes;
 	project->GetShapes(shapes);
 	for (auto &s : shapes)
-		if (s != project->GetBaseShape())
+		if (!project->IsBaseShape(s))
 			UpdateShapeSource(s);
 
 	ZeroSliders();
@@ -1492,7 +1484,7 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> shapes;
 	project->GetShapes(shapes);
 	for (auto &s : shapes)
-		if (s != project->GetBaseShape())
+		if (!project->IsBaseShape(s))
 			shapeMeshes.push_back(glView->GetMesh(s));
 
 	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
@@ -1719,7 +1711,7 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 		// Selected Shape
 		activeBone = outfitBones->GetItemText(item);
 		unordered_map<ushort, float> boneWeights;
-		if (activeItem->shapeName != project->GetBaseShape()) {
+		if (!project->IsBaseShape(activeItem->shapeName)) {
 			project->GetWorkAnim()->GetWeights(activeItem->shapeName, activeBone, boneWeights);
 			mesh* workMesh = glView->GetMesh(activeItem->shapeName);
 			workMesh->ColorChannelFill(1, 0.0f);
@@ -1794,7 +1786,7 @@ void OutfitStudio::OnShapeDrop(wxTreeEvent& event) {
 	ShapeItemData* dropData = new ShapeItemData(activeItem->refFile, activeItem->shapeName);
 	outfitShapes->SetItemState(movedItem, 0);
 	outfitShapes->SetItemData(movedItem, dropData);
-	if (dropData->shapeName == project->GetBaseShape()) {
+	if (project->IsBaseShape(dropData->shapeName)) {
 		outfitShapes->SetItemBold(movedItem);
 		outfitShapes->SetItemTextColour(movedItem, wxColour(0, 255, 0));
 	}
@@ -2902,20 +2894,17 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 }
 
 void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+	StartProgress("Conforming...");
+	if (project->GetBaseShape().empty()) {
+		EndProgress();
 		return;
 	}
 
-	if (project->GetBaseShape().empty())
-		return;
-
 	wxLogMessage("Conforming...");
-	StartProgress("Conforming...");
 	ZeroSliders();
 
 	for (auto &i : selectedItems) {
-		if (i->shapeName == project->GetBaseShape())
+		if (project->IsBaseShape(i->shapeName))
 			continue;
 
 		wxLogMessage("Conforming '%s'...", i->shapeName);
@@ -2967,7 +2956,6 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Imported shape.");
 
 	WorkingGUIFromProj();
-	outfitShapes->ExpandAll();
 	glView->Refresh();
 }
 
@@ -3027,6 +3015,21 @@ void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 
 	activeItem->shapeName = newShapeName;
 	outfitShapes->SetItemText(activeItem->GetId(), newShapeName);
+}
+
+void OutfitStudio::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+
+	if (project->IsBaseShape(activeItem->shapeName)) {
+		wxMessageBox("The selected shape is the reference shape already.", "Error");
+		return;
+	}
+
+	project->SetBaseShape(activeItem->shapeName);
+	RefreshGUIFromProj();
 }
 
 void OutfitStudio::OnEnterClose(wxKeyEvent& event) {
@@ -3432,7 +3435,7 @@ void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 		selected.push_back(*i);
 
 	for (auto &i : selected) {
-		if (i.shapeName != project->GetBaseShape()) {
+		if (!project->IsBaseShape(i.shapeName)) {
 			wxLogMessage("Deleting shape '%s'.", i.shapeName);
 			project->DeleteShape(i.shapeName);
 			glView->DeleteMesh(i.shapeName);
@@ -3517,7 +3520,7 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 
 	unordered_map<ushort, float> mask;
 	for (int i = 0; i < selectedItems.size(); i++) {
-		if (selectedItems[i]->shapeName != project->GetBaseShape()) {
+		if (!project->IsBaseShape(selectedItems[i]->shapeName)) {
 			wxLogMessage("Copying bone weights to '%s'...", selectedItems[i]->shapeName);
 			mask.clear();
 			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
@@ -3560,7 +3563,7 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 	unordered_map<ushort, float> mask;
 	for (int i = 0; i < selectedItems.size(); i++) {
-		if (selectedItems[i]->shapeName != project->GetBaseShape()) {
+		if (!project->IsBaseShape(selectedItems[i]->shapeName)) {
 			wxLogMessage("Copying selected bone weights to '%s' for %s...", selectedItems[i]->shapeName, bonesString);
 			mask.clear();
 			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
@@ -3586,7 +3589,7 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (project->GetBaseShape().empty())
 		return;
 
-	if (activeItem->shapeName == project->GetBaseShape()) {
+	if (project->IsBaseShape(activeItem->shapeName)) {
 		wxMessageBox("Sorry, you can't copy weights from the reference shape to itself.", "Error");
 		return;
 	}

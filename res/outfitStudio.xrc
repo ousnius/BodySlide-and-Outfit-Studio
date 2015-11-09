@@ -819,6 +819,10 @@
 					<label>Rename Shape...\tF2</label>
 					<help>Change the name of the current shape.</help>
 				</object>
+				<object class="wxMenuItem" name="setReference">
+					<label>Set Reference</label>
+					<help>Turn the shape into the reference shape of the project.</help>
+				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="moveShape">
 					<label>Move Shape...</label>
@@ -2705,6 +2709,10 @@
 		<object class="wxMenuItem" name="renameShape">
 			<label>Rename Shape...\tF2</label>
 			<help>Change the name of the current shape.</help>
+		</object>
+		<object class="wxMenuItem" name="setReference">
+			<label>Set Reference</label>
+			<help>Turn the shape into the reference shape of the project.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="moveShape">
