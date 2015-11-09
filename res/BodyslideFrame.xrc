@@ -236,7 +236,6 @@
 										<flag>wxALIGN_CENTER|wxALL</flag>
 										<border>5</border>
 										<object class="wxCheckBox" name="cbRaceMenu">
-											<hidden>1</hidden>
 											<fg>#c8c8c8</fg>
 											<label>RaceMenu Morphs</label>
 											<tooltip>Builds a TRI file alongside the low and high weight meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>

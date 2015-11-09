@@ -1582,6 +1582,9 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	wxButton* btnAbout = (wxButton*)FindWindowByName("btnAbout");
 	if (btnAbout)
 		btnAbout->SetBitmap(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER, wxSize(15, 15)));
+
+	if (app->targetGame != SKYRIM)
+		XRCCTRL(*this, "cbRaceMenu", wxCheckBox)->Show(false);
 }
 
 void BodySlideFrame::OnLinkClicked(wxHtmlLinkEvent& link) {

@@ -96,6 +96,10 @@ void NiHeader::Get(fstream& file) {
 	creator.Get(file, 1);
 	exportInfo1.Get(file, 1);
 	exportInfo2.Get(file, 1);
+	
+	if (userVersion2 >= 130)
+		exportInfo3.Get(file, 1);
+
 	file.read((char*)&numBlockTypes, 2);
 	for (int i = 0; i < numBlockTypes; i++)
 		blockTypes.push_back(NiString(file, 4));

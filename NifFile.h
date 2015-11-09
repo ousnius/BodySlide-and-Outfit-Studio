@@ -224,7 +224,7 @@ public:
 	/* Maximum supported */
 	// Version:				20.2.0.7
 	// User Version:		12
-	// User Version 2:		83
+	// User Version 2:		130
 
 	char verStr[0x26];
 	byte version1;
@@ -240,6 +240,7 @@ public:
 	NiString creator;
 	NiString exportInfo1;
 	NiString exportInfo2;
+	NiString exportInfo3;
 	ushort numBlockTypes;
 	vector<NiString> blockTypes;
 	vector<ushort> blockIndex;
