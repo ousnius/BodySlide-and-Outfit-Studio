@@ -218,8 +218,9 @@ void DiffDataSets::GetDiffIndices(const string& set, const string& target, vecto
 			outIndices.push_back(resultIt->first);
 		}
 	}
-	std::sort(outIndices.begin(), outIndices.end());
-	std::unique(outIndices.begin(), outIndices.end());
+
+	sort(outIndices.begin(), outIndices.end());
+	outIndices.erase(unique(outIndices.begin(), outIndices.end()), outIndices.end());
 }
 
 void DiffDataSets::ClearSet(const string& name) {
