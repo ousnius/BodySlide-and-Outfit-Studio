@@ -1309,7 +1309,7 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	}
 	else {
 		workNif.CopyFrom(refNif);
-		workAnim.LoadFromNif(&refNif);
+		workAnim.LoadFromNif(&workNif);
 	}
 
 	activeSet.LoadSetDiffData(baseDiffData);
@@ -1406,7 +1406,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	}
 	else {
 		workNif.CopyFrom(refNif);
-		workAnim.LoadFromNif(&refNif);
+		workAnim.LoadFromNif(&workNif);
 	}
 
 	if (oldVertCount > 0 && oldVertCount == newVertCount) {
@@ -1530,12 +1530,12 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	if (workNif.IsValid()) {
 		for (auto &s : nifShapes) {
 			workNif.CopyGeometry(s, nif, s);
-			workAnim.LoadFromNif(&nif, s);
+			workAnim.LoadFromNif(&workNif, s);
 		}
 	}
 	else {
 		workNif.CopyFrom(nif);
-		workAnim.LoadFromNif(&nif);
+		workAnim.LoadFromNif(&workNif);
 	}
 
 	return 0;
