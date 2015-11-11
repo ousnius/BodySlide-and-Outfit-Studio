@@ -31,101 +31,21 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "FSBSA.h"
+#include "DDS.h"
+#include "zlib\zlib.h"
+
 #include <vector>
-#include <wx/zstream.h>
-#include <wx/mstream.h>
 
 #pragma warning (disable : 4389)
 
-/* Default header data */
-#define MW_BSAHEADER_FILEID  0x00000100 //!< Magic for Morrowind BSA
-#define OB_BSAHEADER_FILEID  0x00415342 //!< Magic for Oblivion BSA, the literal string "BSA\0".
-#define OB_BSAHEADER_VERSION 0x67 //!< Version number of an Oblivion BSA
-#define F3_BSAHEADER_VERSION 0x68 //!< Version number of a Fallout 3 BSA
-
-/* Archive flags */
-#define OB_BSAARCHIVE_PATHNAMES           0x0001 //!< Whether the BSA has names for paths
-#define OB_BSAARCHIVE_FILENAMES           0x0002 //!< Whether the BSA has names for files
-#define OB_BSAARCHIVE_COMPRESSFILES       0x0004 //!< Whether the files are compressed
-#define F3_BSAARCHIVE_PREFIXFULLFILENAMES 0x0100 //!< Whether the name is prefixed to the data?
-
-/* File flags */
-#define OB_BSAFILE_NIF  0x0001 //!< Set when the BSA contains NIF files
-#define OB_BSAFILE_DDS  0x0002 //!< Set when the BSA contains DDS files
-#define OB_BSAFILE_XML  0x0004 //!< Set when the BSA contains XML files
-#define OB_BSAFILE_WAV  0x0008 //!< Set when the BSA contains WAV files
-#define OB_BSAFILE_MP3  0x0010 //!< Set when the BSA contains MP3 files
-#define OB_BSAFILE_TXT  0x0020 //!< Set when the BSA contains TXT files
-#define OB_BSAFILE_HTML 0x0020 //!< Set when the BSA contains HTML files
-#define OB_BSAFILE_BAT  0x0020 //!< Set when the BSA contains BAT files
-#define OB_BSAFILE_SCC  0x0020 //!< Set when the BSA contains SCC files
-#define OB_BSAFILE_SPT  0x0040 //!< Set when the BSA contains SPT files
-#define OB_BSAFILE_TEX  0x0080 //!< Set when the BSA contains TEX files
-#define OB_BSAFILE_FNT  0x0080 //!< Set when the BSA contains FNT files
-#define OB_BSAFILE_CTL  0x0100 //!< Set when the BSA contains CTL files
-
-/* Bitmasks for the size field in the header */
-#define OB_BSAFILE_SIZEMASK 0x3fffffff //!< Bit mask with OBBSAFileInfo::sizeFlags to get the size of the file
-
-/* Record flags */
-#define OB_BSAFILE_FLAG_COMPRESS 0xC0000000 //!< Bit mask with OBBSAFileInfo::sizeFlags to get the compression status
-
-//! \file bsa.cpp OBBSAHeader / \link OBBSAFileInfo FileInfo\endlink / \link OBBSAFolderInfo FolderInfo\endlink; MWBSAHeader, MWBSAFileSizeOffset
-
-//! The header of an Oblivion BSA.
-/*!
- * Follows OB_BSAHEADER_FILEID and OB_BSAHEADER_VERSION.
- */
-struct OBBSAHeader {
-	wxUint32 FolderRecordOffset; //!< Offset of beginning of folder records
-	wxUint32 ArchiveFlags; //!< Archive flags
-	wxUint32 FolderCount; //!< Total number of folder records (OBBSAFolderInfo)
-	wxUint32 FileCount; //!< Total number of file records (OBBSAFileInfo)
-	wxUint32 FolderNameLength; //!< Total length of folder names
-	wxUint32 FileNameLength; //!< Total length of file names
-	wxUint32 FileFlags; //!< File flags
-
-	//friend QDebug operator<<(QDebug dbg, const OBBSAHeader & head)
-	//{
-	//	return dbg << "BSAHeader:"
-	//		<< "\n  folder offset" << head.FolderRecordOffset
-	//		<< "\n  archive flags" << head.ArchiveFlags
-	//		<< "\n  folder Count" << head.FolderCount
-	//		<< "\n  file Count" << head.FileCount
-	//		<< "\n  folder name length" << head.FolderNameLength
-	//		<< "\n  file name length" << head.FileNameLength
-	//		<< "\n  file flags" << head.FileFlags;
-	//}
-};
-
-//! Info for a file inside an Oblivion BSA
-struct OBBSAFileInfo {
-	wxUint64 hash; //!< Hash of the filename
-	wxUint32 sizeFlags; //!< Size of the data, possibly with OB_BSAFILE_FLAG_COMPRESS set
-	wxUint32 offset; //!< Offset to raw file data
-};
-
-//! Info for a folder inside an Oblivion BSA
-struct OBBSAFolderInfo {
-	wxUint64 hash; //!< Hash of the folder name
-	wxUint32 fileCount; //!< Number of files in folder
-	wxUint32 offset; //!< Offset to name of this folder
-};
-
-//! The header of a Morrowind BSA
-struct MWBSAHeader {
-	wxUint32 HashOffset; //!< Offset of hash table minus header size (12)
-	wxUint32 FileCount; //!< Number of files in the archive
-};
-
-//! The file size and offset of an entry in a Morrowind BSA
-struct MWBSAFileSizeOffset {
-	wxUint32 size; //!< The size of the file
-	wxUint32 offset; //!< The offset of the file
-};
 
 wxUint32 BSA::BSAFile::size() const {
-	return sizeFlags & OB_BSAFILE_SIZEMASK;
+	if (sizeFlags > 0) {
+		// Skyrim and earlier
+		return sizeFlags & OB_BSAFILE_SIZEMASK;
+	}
+
+	return (packedLength == 0) ? unpackedLength : packedLength;
 }
 
 bool BSA::BSAFile::compressed() const {
@@ -154,6 +74,58 @@ static bool BSAReadSizedString(wxFile &bsa, wxString &s) {
 	}
 }
 
+wxMemoryBuffer gUncompress(const wxMemoryBuffer &data) {
+	if (data.GetBufSize() <= 4) {
+		//qWarning("gUncompress: Input data is truncated");
+		return wxMemoryBuffer();
+	}
+
+	wxMemoryBuffer result;
+
+	int ret;
+	z_stream strm;
+	static const int CHUNK_SIZE = 1024;
+	char out[CHUNK_SIZE];
+
+	/* allocate inflate state */
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	strm.avail_in = data.GetBufSize();
+
+	char *dataPtr = static_cast<char*>(data.GetData());
+	strm.next_in = (Bytef*)(dataPtr + 4);
+
+	ret = inflateInit2(&strm, 15 + 32); // gzip decoding
+	if (ret != Z_OK)
+		return wxMemoryBuffer();
+
+	// run inflate()
+	do {
+		strm.avail_out = CHUNK_SIZE;
+		strm.next_out = (Bytef*)(out);
+
+		ret = inflate(&strm, Z_NO_FLUSH);
+		//Q_ASSERT(ret != Z_STREAM_ERROR);  // state not clobbered
+
+		switch (ret) {
+		case Z_NEED_DICT:
+			ret = Z_DATA_ERROR;     // and fall through
+		case Z_DATA_ERROR:
+		case Z_MEM_ERROR:
+			(void)inflateEnd(&strm);
+			return wxMemoryBuffer();
+		}
+
+		result.AppendData(out, CHUNK_SIZE - strm.avail_out);
+	} while (strm.avail_out == 0);
+
+	// clean up and return
+	inflateEnd(&strm);
+	return result;
+}
+
+
 BSA::BSA(const wxString &filename) : FSArchiveFile(), bsa(filename), bsaInfo(filename), status("initialized") {
 	bsaPath = bsaInfo.GetPathWithSep() + bsaInfo.GetFullName();
 	bsaBase = bsaInfo.GetPath();
@@ -173,7 +145,13 @@ bool BSA::canOpen(const wxString &fn) {
 			return false;
 
 		//qDebug() << "Magic:" << QString::number( magic, 16 );
-		if (magic == OB_BSAHEADER_FILEID) {
+		if (magic == F4_BSAHEADER_FILEID) {
+			if (f.Read((char *)&version, sizeof(version)) != 4)
+				return false;
+
+			return version == F4_BSAHEADER_VERSION;
+		}
+		else if (magic == OB_BSAHEADER_FILEID) {
 			if (f.Read((char *)& version, sizeof(version)) != 4)
 				return false;
 
@@ -198,8 +176,85 @@ bool BSA::open() {
 
 		bsa.Read((char*)&magic, sizeof(magic));
 
-		if (magic == OB_BSAHEADER_FILEID)
-		{
+		if (magic == F4_BSAHEADER_FILEID) {
+			bsa.Read((char*)&version, sizeof(version));
+
+			if (version != F4_BSAHEADER_VERSION)
+				throw wxString("file version");
+
+			F4BSAHeader header;
+			if (bsa.Read((char *)&header, sizeof(header)) != sizeof(header))
+				throw wxString("header size");
+
+			numFiles = header.numFiles;
+
+			std::vector<wxString> filepaths;
+			if (bsa.Seek(header.nameTableOffset)) {
+				for (wxUint32 i = 0; i < header.numFiles; i++) {
+					wxUint16 length;
+					bsa.Read((char*)&length, 2);
+
+					wxMemoryBuffer strdata(length);
+					bsa.Read(strdata.GetData(), length);
+
+					wxString filepath(strdata, strdata.GetBufSize());
+					filepaths.push_back(filepath);
+				}
+			}
+
+			
+			wxString h(header.type, 4);
+			if (h == "GNRL") {
+				// General BA2 Format
+				if (bsa.Seek(sizeof(header) + 8)) {
+					for (wxUint32 i = 0; i < header.numFiles; i++) {
+						F4GeneralInfo finfo;
+						bsa.Read((char*)&finfo, 36);
+
+						wxString fullpath = filepaths[i];
+						fullpath.Replace("\\", "/");
+
+						wxString filename = fullpath.AfterLast('/');
+						wxString folderName = fullpath.BeforeLast('/');
+
+						BSAFolder * folder = insertFolder(folderName);
+
+						insertFile(folder, filename, finfo.packedSize, finfo.unpackedSize, finfo.offset);
+					}
+				}
+			}
+			else if (h == "DX10") {
+				// Texture BA2 Format
+				if (bsa.Seek(sizeof(header) + 8)) {
+					for (wxUint32 i = 0; i < header.numFiles; i++) {
+						F4Tex tex;
+						bsa.Read((char*)&tex.header, 24);
+
+						std::vector<F4TexChunk> texChunks;
+						for (wxUint32 j = 0; j < tex.header.numChunks; j++) {
+							F4TexChunk texChunk;
+							bsa.Read((char*)&texChunk, 24);
+							texChunks.push_back(texChunk);
+						}
+
+						tex.chunks = texChunks;
+
+						wxString fullpath = filepaths[i];
+						fullpath.Replace("\\", "/");
+
+						wxString filename = fullpath.AfterLast('/');
+						wxString folderName = fullpath.BeforeLast('/');
+
+						BSAFolder * folder = insertFolder(folderName);
+
+						F4TexChunk chunk = tex.chunks[0];
+						insertFile(folder, filename, chunk.packedSize, chunk.unpackedSize, chunk.offset, tex);
+					}
+				}
+			}
+		}
+		// From NifSkope
+		else if (magic == OB_BSAHEADER_FILEID) {
 			bsa.Read((char*)&version, sizeof(version));
 
 			if (version != OB_BSAHEADER_VERSION && version != F3_BSAHEADER_VERSION)
@@ -210,6 +265,7 @@ bool BSA::open() {
 			if (bsa.Read((char *)& header, sizeof(header)) != sizeof(header))
 				throw wxString("header size");
 
+			numFiles = header.FileCount;
 			//qWarning() << bsaName << header;
 
 			if ((header.ArchiveFlags & OB_BSAARCHIVE_PATHNAMES) == 0 || (header.ArchiveFlags & OB_BSAARCHIVE_FILENAMES) == 0)
@@ -288,7 +344,7 @@ bool BSA::open() {
 			if (bsa.Read((char *)& header, sizeof(header)) != sizeof(header))
 				throw wxString("header");
 
-
+			numFiles = header.FileCount;
 			compressToggle = false;
 			namePrefix = false;
 
@@ -358,9 +414,20 @@ void BSA::close() {
 
 wxInt64 BSA::fileSize(const wxString & fn) const {
 	// note: lazy size count (not accurate for compressed files)
-	if (const BSAFile *file = getFile(fn))
-		return file->size();
+	if (const BSAFile * file = getFile(fn)) {
+		if (file->sizeFlags > 0)
+			return file->size();
 
+		wxUint64 size = file->unpackedLength;
+
+		if (file->tex.chunks.size()) {
+			for (int i = 1; i < file->tex.chunks.size(); i++) {
+				size += file->tex.chunks[i].unpackedSize;
+			}
+		}
+
+		return size;
+	}
 	return 0;
 }
 
@@ -379,29 +446,136 @@ bool BSA::fileContents(const wxString &fn, wxMemoryBuffer &content) {
 					ok = bsa.Seek(file->offset + 1 + len);
 			}
 
-			content.SetBufSize(filesz);
+			if (file->tex.chunks.size()) {
+				// Fill DDS Header for BA2
+				DDS_HEADER ddsHeader = { 0 };
 
-			if (ok != wxInvalidOffset && bsa.Read(content.GetData(), filesz) == filesz) {
-				char *dataPtr = static_cast<char*>(content.GetData());
+				ddsHeader.dwSize = sizeof(ddsHeader);
+				ddsHeader.dwHeaderFlags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_LINEARSIZE | DDS_HEADER_FLAGS_MIPMAP;
+				ddsHeader.dwHeight = file->tex.header.height;
+				ddsHeader.dwWidth = file->tex.header.width;
+				ddsHeader.dwMipMapCount = file->tex.header.numMips;
+				ddsHeader.ddspf.dwSize = sizeof(DDS_PIXELFORMAT);
+				ddsHeader.dwSurfaceFlags = DDS_SURFACE_FLAGS_TEXTURE | DDS_SURFACE_FLAGS_MIPMAP;
 
-				if (file->compressed() ^ compressToggle) {
-					wxMemoryInputStream memInStream(dataPtr + 4, filesz);
-					wxMemoryOutputStream memOutStream;
-					wxZlibInputStream* zOutput = new wxZlibInputStream(memInStream);
-					zOutput->Read(memOutStream);
-					delete zOutput;
+				bool ok = true;
 
-					size_t streamSize = memOutStream.GetSize();
-					content.SetBufSize(streamSize);
-					content.SetDataLen(streamSize);
-					size_t numCopied = memOutStream.CopyTo(content.GetData(), streamSize);
+				switch (file->tex.header.format) {
+				case DXGI_FORMAT_BC1_UNORM:
+					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
+					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('D', 'X', 'T', '1');
+					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height / 2;	// 4bpp
+					break;
 
-					if (numCopied != streamSize)
-						return false;
+				case DXGI_FORMAT_BC2_UNORM:
+					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
+					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('D', 'X', 'T', '3');
+					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					break;
+
+				case DXGI_FORMAT_BC3_UNORM:
+					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
+					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('D', 'X', 'T', '5');
+					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					break;
+
+				case DXGI_FORMAT_BC5_UNORM:
+					// Incorrect
+					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
+					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('A', 'T', 'I', '2');
+					//ddsHeader.ddspf.dwFourCC =		MAKEFOURCC('D', 'X', 'T', '5');
+					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					break;
+
+				case DXGI_FORMAT_BC7_UNORM:
+					// Incorrect
+					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
+					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('B', 'C', '7', '\0');
+					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					break;
+
+				case DXGI_FORMAT_B8G8R8A8_UNORM:
+					ddsHeader.ddspf.dwFlags = DDS_RGBA;
+					ddsHeader.ddspf.dwRGBBitCount = 32;
+					ddsHeader.ddspf.dwRBitMask = 0x00FF0000;
+					ddsHeader.ddspf.dwGBitMask = 0x0000FF00;
+					ddsHeader.ddspf.dwBBitMask = 0x000000FF;
+					ddsHeader.ddspf.dwABitMask = 0xFF000000;
+					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height * 4;	// 32bpp
+					break;
+
+				case DXGI_FORMAT_R8_UNORM:
+					ddsHeader.ddspf.dwFlags = DDS_RGB;
+					ddsHeader.ddspf.dwRGBBitCount = 8;
+					ddsHeader.ddspf.dwRBitMask = 0xFF;
+					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					break;
+
+				default:
+					ok = false;
+					break;
 				}
-				else
-					content.SetDataLen(filesz);
 
+				char buf[sizeof(ddsHeader)];
+				memcpy(buf, &ddsHeader, sizeof(ddsHeader));
+
+				// Append DDS Header
+				wxString dds = "DDS ";
+				content.SetBufSize(sizeof(ddsHeader) + 4);
+				content.AppendData(dds.data(), 4);
+				content.AppendData(buf, sizeof(ddsHeader));
+			}
+
+			wxMemoryBuffer firstChunk;
+			firstChunk.SetBufSize(filesz);
+			if (ok != wxInvalidOffset && bsa.Read(firstChunk.GetData(), filesz) == filesz) {
+				if (file->sizeFlags > 0) {
+					// BSA
+					if (file->compressed() ^ compressToggle) {
+						firstChunk = gUncompress(firstChunk);
+						content.AppendData(firstChunk, firstChunk.GetBufSize());
+					}
+				}
+				else if (file->packedLength > 0) {
+					// BA2
+					firstChunk = gUncompress(firstChunk);
+					content.AppendData(firstChunk, firstChunk.GetBufSize());
+				}
+
+				if (file->tex.chunks.size()) {
+					// Start at 2nd chunk for BA2
+					for (int i = 1; i < file->tex.chunks.size(); i++) {
+						F4TexChunk chunk = file->tex.chunks[i];
+						if (bsa.Seek(chunk.offset)) {
+							wxMemoryBuffer chunkData;
+
+							if (chunk.packedSize > 0) {
+								chunkData.SetBufSize(chunk.packedSize);
+								if (bsa.Read(chunkData.GetData(), chunk.packedSize) == chunk.packedSize)
+									chunkData = gUncompress(chunkData);
+
+								if (chunkData.GetBufSize() != chunk.unpackedSize) {
+									//qCritical() << "Size does not match at " << chunk.offset;
+									return false;
+								}
+
+							}
+							else {
+								chunkData.SetBufSize(chunk.unpackedSize);
+								if (!(bsa.Read(chunkData.GetData(), chunk.unpackedSize) == chunk.unpackedSize)) {
+									//qCritical() << "Size does not match at " << chunk.offset;
+									return false;
+								}
+							}
+							
+							content.AppendData(chunkData.GetData(), chunkData.GetBufSize());
+						}
+						else {
+							//qCritical() << "Seek error";
+							return false;
+						}
+					}
+				}
 				return true;
 			}
 		}
@@ -454,6 +628,19 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, wxString name, wxUint32 sizeFla
 	file->offset = offset;
 
 	folder->files[name.ToStdString()] = file;
+	return file;
+}
+
+BSA::BSAFile *BSA::insertFile(BSAFolder *folder, wxString name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex dds) {
+	name = name.Lower();
+
+	BSAFile * file = new BSAFile;
+	file->tex = dds;
+	file->packedLength = packed;
+	file->unpackedLength = unpacked;
+	file->offset = offset;
+	folder->files[name.ToStdString()] = file;
+
 	return file;
 }
 

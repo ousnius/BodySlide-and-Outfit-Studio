@@ -147,6 +147,7 @@
     <ClInclude Include="Anim.h" />
     <ClInclude Include="Automorph.h" />
     <ClInclude Include="BodySlideApp.h" />
+    <ClInclude Include="DDS.h" />
     <ClInclude Include="FSBSA.h" />
     <ClInclude Include="ConfigurationManager.h" />
     <ClInclude Include="DiffData.h" />

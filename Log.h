@@ -1,3 +1,9 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2015  Caliente & ousnius
+See the included LICENSE file
+*/
+
 #pragma once
 #include <wx/datetime.h>
 #include <wx/log.h>

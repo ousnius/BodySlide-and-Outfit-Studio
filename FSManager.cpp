@@ -88,10 +88,11 @@ wxArrayString FSManager::autodetectArchives() {
 	wxString path = Config["GameDataPath"];
 	if (!path.IsEmpty()) {
 		wxArrayString files;
-		wxDir::GetAllFiles(path, &files, "*.bsa", wxDIR_FILES);
+		wxDir::GetAllFiles(path, &files, wxEmptyString, wxDIR_FILES);
 
 		for (auto &file : files)
-			list.Add(file);
+			if (file.EndsWith(".bsa") || file.EndsWith(".ba2"))
+				list.Add(file);
 	}
 
 	return list;
