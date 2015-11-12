@@ -33,6 +33,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #pragma once
 
 #include <wx/arrstr.h>
+#include <vector>
 #include <map>
 #include <list>
 
@@ -59,5 +60,5 @@ protected:
 	std::map<std::string, FSArchiveHandler*> archives;
 
 	//! Builds a list of global BSAs on Windows platforms
-	static wxArrayString autodetectArchives();
+	static std::vector<std::string> autodetectArchives();
 };

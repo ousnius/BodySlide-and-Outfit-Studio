@@ -170,7 +170,7 @@ struct F4Tex {
 class BSA final : public FSArchiveFile {
 public:
 	//! Constructor; creates a %BSA from the given file path.
-	BSA(const wxString &filePath);
+	BSA(const std::string &filePath);
 	//! Destructor; closes the file.
 	~BSA();
 
@@ -180,19 +180,19 @@ public:
 	void close() override final;
 
 	//! Returns BSA::bsaPath.
-	wxString path() const override final { return bsaPath; }
+	std::string path() const override final { return bsaPath; }
 	//! Returns BSA::bsaBase.
-	wxString base() const override final { return bsaBase; }
+	std::string base() const override final { return bsaBase; }
 	//! Returns BSA::bsaName.
-	wxString name() const override final { return bsaName; }
+	std::string name() const override final { return bsaName; }
 
 	//! Whether the specified folder exists or not
-	bool hasFolder(const wxString&) const override final;
+	bool hasFolder(const std::string&) const override final;
 
 	//! Whether the specified file exists or not
-	bool hasFile(const wxString&) const override final;
+	bool hasFile(const std::string&) const override final;
 	//! Returns the size of the file per BSAFile::size().
-	wxInt64 fileSize(const wxString&) const override final;
+	wxInt64 fileSize(const std::string&) const override final;
 
 	//! Returns the contents of the specified file
 	/*!
@@ -200,18 +200,18 @@ public:
 	* \param content Reference to the byte array that holds the file contents
 	* \return True if successful
 	*/
-	bool fileContents(const wxString&, wxMemoryBuffer&) override final;
+	bool fileContents(const std::string&, wxMemoryBuffer&) override final;
 
 	//! See QFileInfo::created().
-	wxDateTime fileTime(const wxString&) const override final;
+	wxDateTime fileTime(const std::string&) const override final;
 	//! See QFileInfo::absoluteFilePath().
-	wxString absoluteFilePath(const wxString&) const override final;
+	std::string absoluteFilePath(const std::string&) const override final;
 
 	//! Whether the given file can be opened as a %BSA or not
-	static bool canOpen(const wxString&);
+	static bool canOpen(const std::string&);
 
 	//! Returns BSA::status.
-	wxString statusText() const { return status; }
+	std::string statusText() const { return status; }
 
 	//! Returns BSA::numFiles.
 	wxUint64 fileCount() const { return numFiles; }
@@ -260,15 +260,15 @@ protected:
 	};
 
 	//! Recursive function to generate the tree structure of folders inside a %BSA
-	BSAFolder *insertFolder(wxString name);
+	BSAFolder *insertFolder(std::string name);
 	//! Inserts a file into the structure of a %BSA
-	BSAFile *insertFile(BSAFolder *folder, wxString name, wxUint32 sizeFlags, wxUint32 offset);
-	BSAFile *insertFile(BSAFolder *folder, wxString name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex dds = F4Tex());
+	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 sizeFlags, wxUint32 offset);
+	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex dds = F4Tex());
 
 	//! Gets the specified folder, or the root folder if not found
-	const BSAFolder *getFolder(wxString fn) const;
+	const BSAFolder *getFolder(std::string fn) const;
 	//! Gets the specified file, or null if not found
-	const BSAFile *getFile(wxString fn) const;
+	const BSAFile *getFile(std::string fn) const;
 
 	//! The %BSA file
 	wxFile bsa;
@@ -279,11 +279,11 @@ protected:
 	wxMutex bsaMutex;
 
 	//! The absolute name of the file, e.g. "d:/temp/test.bsa"
-	wxString bsaPath;
+	std::string bsaPath;
 	//! The base path of the file, e.g. "d:/temp"
-	wxString bsaBase;
+	std::string bsaBase;
 	//! The name of the file, e.g. "test.bsa"
-	wxString bsaName;
+	std::string bsaName;
 
 	//! Map of folders inside a %BSA
 	std::unordered_map<std::string, BSAFolder*> folders;
@@ -291,7 +291,7 @@ protected:
 	BSAFolder root;
 
 	//! Error string for exception handling
-	wxString status;
+	std::string status;
 
 	//! Number of files
 	wxUint64 numFiles;

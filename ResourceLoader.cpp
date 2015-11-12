@@ -56,9 +56,9 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 		texFile.Replace("\\", "/");
 		for (FSArchiveFile *archive : FSManager::archiveList()) {
 			if (archive) {
-				if (archive->hasFile(texFile)) {
+				if (archive->hasFile(texFile.ToStdString())) {
 					wxMemoryBuffer outData;
-					archive->fileContents(texFile, outData);
+					archive->fileContents(texFile.ToStdString(), outData);
 
 					if (!outData.IsEmpty()) {
 						data = outData;

@@ -35,6 +35,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FSEngine.h"
 #include "FSBSA.h"
 #include "ConfigurationManager.h"
+
 #include <algorithm>
 
 
@@ -64,12 +65,12 @@ std::list<FSArchiveFile*> FSManager::archiveList() {
 }
 
 FSManager::FSManager() {
-	wxArrayString list;
+	std::vector<std::string> list;
 	list = autodetectArchives();
 
 	for (auto &an : list) {
 		if (FSArchiveHandler *a = FSArchiveHandler::openArchive(an))
-			archives[an.ToStdString()] = a;
+			archives[an] = a;
 	}
 }
 
@@ -80,19 +81,19 @@ FSManager::~FSManager() {
 	archives.clear();
 }
 
-wxArrayString FSManager::autodetectArchives() {
-	wxArrayString list;
+std::vector<std::string> FSManager::autodetectArchives() {
+	std::vector<std::string> list;
 	if (Config["GameDataPath"].empty())
 		return list;
 
-	wxString path = Config["GameDataPath"];
-	if (!path.IsEmpty()) {
+	std::string path = Config["GameDataPath"];
+	if (!path.empty()) {
 		wxArrayString files;
 		wxDir::GetAllFiles(path, &files, wxEmptyString, wxDIR_FILES);
 
 		for (auto &file : files)
 			if (file.EndsWith(".bsa") || file.EndsWith(".ba2"))
-				list.Add(file);
+				list.push_back(file.ToStdString());
 	}
 
 	return list;
