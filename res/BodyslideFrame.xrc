@@ -770,11 +770,12 @@
 								<border>5</border>
 								<object class="wxChoice" name="choiceTargetGame">
 									<tooltip>Choose the target game you want to use the program for here.</tooltip>
-									<selection>2</selection>
+									<selection>3</selection>
 									<content>
 										<item>Fallout 3</item>
 										<item>Fallout New Vegas</item>
 										<item>Skyrim</item>
+										<item>Fallout 4</item>
 									</content>
 								</object>
 							</object>
