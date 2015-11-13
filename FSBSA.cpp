@@ -75,9 +75,9 @@ static bool BSAReadSizedString(wxFile &bsa, std::string &s) {
 	}
 }
 
-wxMemoryBuffer gUncompress(const wxMemoryBuffer &data) {
+wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, int skip = 0) {
 	if (data.GetBufSize() <= 4) {
-		//qWarning("gUncompress: Input data is truncated");
+		// Input data is truncated
 		return wxMemoryBuffer();
 	}
 
@@ -94,8 +94,7 @@ wxMemoryBuffer gUncompress(const wxMemoryBuffer &data) {
 	strm.opaque = Z_NULL;
 	strm.avail_in = data.GetBufSize();
 
-	char *dataPtr = static_cast<char*>(data.GetData());
-	strm.next_in = (Bytef*)(dataPtr + 4);
+	strm.next_in = (Bytef*)(data + skip);
 
 	ret = inflateInit2(&strm, 15 + 32); // gzip decoding
 	if (ret != Z_OK)
@@ -118,6 +117,7 @@ wxMemoryBuffer gUncompress(const wxMemoryBuffer &data) {
 			return wxMemoryBuffer();
 		}
 
+		result.SetBufSize(result.GetBufSize() + CHUNK_SIZE - strm.avail_out);
 		result.AppendData(out, CHUNK_SIZE - strm.avail_out);
 	} while (strm.avail_out == 0);
 
@@ -145,7 +145,6 @@ bool BSA::canOpen(const std::string &fn) {
 		if (f.Read((char *)& magic, sizeof(magic)) != 4)
 			return false;
 
-		//qDebug() << "Magic:" << QString::number( magic, 16 );
 		if (magic == F4_BSAHEADER_FILEID) {
 			if (f.Read((char *)&version, sizeof(version)) != 4)
 				return false;
@@ -188,6 +187,7 @@ bool BSA::open() {
 				throw std::string("header size");
 
 			numFiles = header.numFiles;
+			namePrefix = false;
 
 			std::vector<std::string> filepaths;
 			if (bsa.Seek(header.nameTableOffset)) {
@@ -274,7 +274,6 @@ bool BSA::open() {
 				throw std::string("header size");
 
 			numFiles = header.FileCount;
-			//qWarning() << bsaName << header;
 
 			if ((header.ArchiveFlags & OB_BSAARCHIVE_PATHNAMES) == 0 || (header.ArchiveFlags & OB_BSAARCHIVE_FILENAMES) == 0)
 				throw std::string("header flags");
@@ -295,8 +294,6 @@ bool BSA::open() {
 
 			wxUint32 fileNameIndex = 0;
 
-			//qDebug() << bsa.pos() - header.FileNameLength << fileNames;
-
 			if (bsa.Seek(header.FolderRecordOffset) == wxInvalidOffset)
 				throw std::string("folder info seek");
 
@@ -316,12 +313,8 @@ bool BSA::open() {
 
 
 				std::string folderName;
-				if (!BSAReadSizedString(bsa, folderName) || folderName.empty()) {
-					//qDebug() << "folderName" << folderName;
+				if (!BSAReadSizedString(bsa, folderName) || folderName.empty())
 					throw std::string("folder name read");
-				}
-
-				// qDebug() << folderName;
 
 				BSAFolder *folder = insertFolder(folderName);
 
@@ -388,8 +381,6 @@ bool BSA::open() {
 					fname.erase(0, x + 1);
 				}
 
-				// qDebug() << "inserting" << dname << fname;
-
 				insertFile(insertFolder(dname), fname, sizeOffset[c].size, dataOffset + sizeOffset[c].offset);
 			}
 		}
@@ -440,7 +431,6 @@ wxInt64 BSA::fileSize(const std::string & fn) const {
 }
 
 bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
-	//qDebug() << "entering fileContents for" << fn;
 	if (const BSAFile *file = getFile(fn)) {
 		wxMutexLocker lock(bsaMutex);
 		if (bsa.Seek(file->offset)) {
@@ -540,13 +530,15 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				if (file->sizeFlags > 0) {
 					// BSA
 					if (file->compressed() ^ compressToggle) {
-						firstChunk = gUncompress(firstChunk);
+						firstChunk = gUncompress(firstChunk, 4);
+						content.SetBufSize(content.GetBufSize() + firstChunk.GetBufSize());
 						content.AppendData(firstChunk, firstChunk.GetBufSize());
 					}
 				}
 				else if (file->packedLength > 0) {
 					// BA2
 					firstChunk = gUncompress(firstChunk);
+					content.SetBufSize(content.GetBufSize() + firstChunk.GetBufSize());
 					content.AppendData(firstChunk, firstChunk.GetBufSize());
 				}
 
@@ -562,8 +554,8 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 								if (bsa.Read(chunkData.GetData(), chunk.packedSize) == chunk.packedSize)
 									chunkData = gUncompress(chunkData);
 
-								if (chunkData.GetBufSize() != chunk.unpackedSize) {
-									//qCritical() << "Size does not match at " << chunk.offset;
+								if (chunkData.GetDataLen() != chunk.unpackedSize) {
+									// Size does not match at chunk.offset
 									return false;
 								}
 
@@ -571,15 +563,16 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 							else {
 								chunkData.SetBufSize(chunk.unpackedSize);
 								if (!(bsa.Read(chunkData.GetData(), chunk.unpackedSize) == chunk.unpackedSize)) {
-									//qCritical() << "Size does not match at " << chunk.offset;
+									// Size does not match at chunk.offset
 									return false;
 								}
 							}
-							
+
+							content.SetBufSize(content.GetBufSize() + chunkData.GetBufSize());
 							content.AppendData(chunkData.GetData(), chunkData.GetBufSize());
 						}
 						else {
-							//qCritical() << "Seek error";
+							// Seek error
 							return false;
 						}
 					}
@@ -609,8 +602,6 @@ BSA::BSAFolder *BSA::insertFolder(std::string name) {
 
 	BSAFolder *folder = folders[name];
 	if (!folder) {
-		// qDebug() << "inserting" << name;
-
 		folder = new BSAFolder;
 		folders[name] = folder;
 
