@@ -36,6 +36,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <wx/string.h>
 #include <wx/datetime.h>
 #include <wx/atomic.h>
+#include <vector>
 
 
 //! Provides a way to register an FSArchiveEngine with the application.
@@ -76,7 +77,10 @@ public:
 	virtual bool hasFolder(const std::string&) const = 0;
 	virtual bool hasFile(const std::string&) const = 0;
 	virtual wxInt64 fileSize(const std::string&) const = 0;
+	virtual void addFilesOfFolders(const std::string&, std::vector<std::string>&) const = 0;
+	virtual void fileTree(std::vector<std::string>&) const = 0;
 	virtual bool fileContents(const std::string&, wxMemoryBuffer&) = 0;
+	virtual bool exportFile(const std::string&, const std::string&) = 0;
 	virtual std::string absoluteFilePath(const std::string&) const = 0;
 
 	virtual wxDateTime fileTime(const std::string&) const = 0;

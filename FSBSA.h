@@ -193,6 +193,10 @@ public:
 	bool hasFile(const std::string&) const override final;
 	//! Returns the size of the file per BSAFile::size().
 	wxInt64 fileSize(const std::string&) const override final;
+	//! Add all files of the folder to the map
+	void addFilesOfFolders(const std::string&, std::vector<std::string>&) const override final;
+	//! Returns the entire file tree of the BSA
+	void fileTree(std::vector<std::string>&) const override final;
 
 	//! Returns the contents of the specified file
 	/*!
@@ -201,6 +205,9 @@ public:
 	* \return True if successful
 	*/
 	bool fileContents(const std::string&, wxMemoryBuffer&) override final;
+
+	//! Writes the contents to the specified file
+	bool exportFile(const std::string&, const std::string&) override final;
 
 	//! See QFileInfo::created().
 	wxDateTime fileTime(const std::string&) const override final;

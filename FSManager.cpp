@@ -34,7 +34,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "FSManager.h"
 #include "FSEngine.h"
 #include "FSBSA.h"
-#include "ConfigurationManager.h"
 
 #include <algorithm>
 
@@ -46,6 +45,10 @@ FSManager* FSManager::get() {
 	if (!theFSManager)
 		theFSManager = new FSManager();
 	return theFSManager;
+}
+
+bool FSManager::exists() {
+	return theFSManager != nullptr;
 }
 
 void FSManager::del() {
@@ -64,14 +67,14 @@ std::list<FSArchiveFile*> FSManager::archiveList() {
 	return archives;
 }
 
-FSManager::FSManager() {
-	std::vector<std::string> list;
-	list = autodetectArchives();
-
-	for (auto &an : list) {
-		if (FSArchiveHandler *a = FSArchiveHandler::openArchive(an))
-			archives[an] = a;
+void FSManager::addArchives(const std::vector<std::string>& archiveList) {
+	for (auto &archive : archiveList) {
+		if (FSArchiveHandler *a = FSArchiveHandler::openArchive(archive))
+			get()->archives[archive] = a;
 	}
+}
+
+FSManager::FSManager() {
 }
 
 FSManager::~FSManager() {
@@ -79,22 +82,4 @@ FSManager::~FSManager() {
 		delete it.second;
 
 	archives.clear();
-}
-
-std::vector<std::string> FSManager::autodetectArchives() {
-	std::vector<std::string> list;
-	if (Config["GameDataPath"].empty())
-		return list;
-
-	std::string path = Config["GameDataPath"];
-	if (!path.empty()) {
-		wxArrayString files;
-		wxDir::GetAllFiles(path, &files, wxEmptyString, wxDIR_FILES);
-
-		for (auto &file : files)
-			if (file.EndsWith(".bsa") || file.EndsWith(".ba2"))
-				list.push_back(file.ToStdString());
-	}
-
-	return list;
 }

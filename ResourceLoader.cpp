@@ -17,6 +17,8 @@ See the included LICENSE file
 #pragma comment (lib, "SOIL.lib")
 #endif
 
+#include <wx/dir.h>
+
 using std::string;
 
 size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {
@@ -48,6 +50,19 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 		if (Config["GameDataPath"].empty()) {
 			wxLogWarning("Texture file '%s' not found.", textureFile);
 			return nullptr;
+		}
+
+		// Auto-detect archives
+		if (!FSManager::exists()) {
+			wxArrayString files;
+			wxDir::GetAllFiles(Config["GameDataPath"], &files, wxEmptyString, wxDIR_FILES);
+
+			vector<string> archives;
+			for (auto &file : files)
+				if (file.EndsWith(".bsa") || file.EndsWith(".ba2"))
+					archives.push_back(file.ToStdString());
+
+			FSManager::addArchives(archives);
 		}
 
 		wxMemoryBuffer data;

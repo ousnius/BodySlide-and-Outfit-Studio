@@ -32,7 +32,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FSBSA.h"
 #include "DDS.h"
-#include "zlib\zlib.h"
+#include "zlib/zlib.h"
 
 #include <vector>
 #include <algorithm>
@@ -117,7 +117,6 @@ wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, int skip = 0) {
 			return wxMemoryBuffer();
 		}
 
-		result.SetBufSize(result.GetBufSize() + CHUNK_SIZE - strm.avail_out);
 		result.AppendData(out, CHUNK_SIZE - strm.avail_out);
 	} while (strm.avail_out == 0);
 
@@ -430,6 +429,24 @@ wxInt64 BSA::fileSize(const std::string & fn) const {
 	return 0;
 }
 
+void BSA::addFilesOfFolders(const std::string &folderName, std::vector<std::string> &tree) const {
+	if (const BSAFolder *folder = getFolder(folderName)) {
+		tree.push_back(folderName);
+		for (auto &child : folder->children) {
+			addFilesOfFolders(folderName + "/" + child.first, tree);
+		}
+		for (auto &file : folder->files) {
+			tree.push_back(folderName + "/" + file.first);
+		}
+	}
+}
+
+void BSA::fileTree(std::vector<std::string> &tree) const {
+	tree.push_back(name());
+	for (auto &folder : root.children)
+		addFilesOfFolders(folder.first, tree);
+}
+
 bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 	if (const BSAFile *file = getFile(fn)) {
 		wxMutexLocker lock(bsaMutex);
@@ -519,7 +536,6 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 
 				// Append DDS Header
 				std::string dds = "DDS ";
-				content.SetBufSize(sizeof(ddsHeader) + 4);
 				content.AppendData(dds.data(), 4);
 				content.AppendData(buf, sizeof(ddsHeader));
 			}
@@ -531,15 +547,13 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					// BSA
 					if (file->compressed() ^ compressToggle) {
 						firstChunk = gUncompress(firstChunk, 4);
-						content.SetBufSize(content.GetBufSize() + firstChunk.GetBufSize());
-						content.AppendData(firstChunk, firstChunk.GetBufSize());
+						content.AppendData(firstChunk, firstChunk.GetDataLen());
 					}
 				}
 				else if (file->packedLength > 0) {
 					// BA2
 					firstChunk = gUncompress(firstChunk);
-					content.SetBufSize(content.GetBufSize() + firstChunk.GetBufSize());
-					content.AppendData(firstChunk, firstChunk.GetBufSize());
+					content.AppendData(firstChunk, firstChunk.GetDataLen());
 				}
 
 				if (file->tex.chunks.size()) {
@@ -568,8 +582,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 								}
 							}
 
-							content.SetBufSize(content.GetBufSize() + chunkData.GetBufSize());
-							content.AppendData(chunkData.GetData(), chunkData.GetBufSize());
+							content.AppendData(chunkData.GetData(), chunkData.GetDataLen());
 						}
 						else {
 							// Seek error
@@ -582,6 +595,25 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 		}
 	}
 	return false;
+}
+
+bool BSA::exportFile(const std::string &fn, const std::string &target) {
+	wxMemoryBuffer content;
+	if (!fileContents(fn, content))
+		return false;
+
+	if (content.IsEmpty())
+		return false;
+
+	wxFile file(target, wxFile::write);
+	if (file.Error())
+		return false;
+
+	if (file.Write(content.GetData(), content.GetDataLen()) != content.GetDataLen())
+		return false;
+
+	file.Close();
+	return true;
 }
 
 std::string BSA::absoluteFilePath(const std::string &fn) const {
