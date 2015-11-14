@@ -933,6 +933,7 @@
 									<tooltip>The root node name of the reference skeleton. Can differ from game to game.</tooltip>
 									<selection>0</selection>
 									<content>
+										<item>Root</item>
 										<item>NPC</item>
 										<item>Bip01</item>
 									</content>

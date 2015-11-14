@@ -42,9 +42,7 @@
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference>res\skeleton_fo4.nif</DefaultSkeletonReference>
-        <SkeletonRootName>NPC</SkeletonRootName>
-        <!-- <DefaultSkeletonReference>res\skeleton_fo3nv.nif</DefaultSkeletonReference> -->
-        <!-- <SkeletonRootName>Bip01</SkeletonRootName> -->
+        <SkeletonRootName>Root</SkeletonRootName>
 	</Anim>
     <!-- Window position/size and filter state parameters -->
     <BodySlideFrame width="800" height="600"></BodySlideFrame>

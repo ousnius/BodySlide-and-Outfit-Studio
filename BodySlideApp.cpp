@@ -786,13 +786,13 @@ void BodySlideApp::SetDefaultConfig() {
 		break;
 	case FO4:
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
-		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
+		Config.SetDefaultValue("Anim/SkeletonRootName", "Root");
 		gameKey = "SOFTWARE\\Bethesda Softworks\\Fallout4";
 		gameValueKey = "Installed Path";
 		break;
 	default:
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
-		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
+		Config.SetDefaultValue("Anim/SkeletonRootName", "Root");
 	}
 
 	Config.SetDefaultValue("ReferenceTemplates", "");
@@ -2321,9 +2321,11 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			choiceSkeletonRoot->SetStringSelection("Bip01");
 			break;
 		case SKYRIM:
+			choiceSkeletonRoot->SetStringSelection("NPC");
+			break;
 		case FO4:
 		default:
-			choiceSkeletonRoot->SetStringSelection("NPC");
+			choiceSkeletonRoot->SetStringSelection("Root");
 			break;
 	}
 }
