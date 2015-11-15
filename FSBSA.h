@@ -144,8 +144,8 @@ struct F4TexInfo {
 	wxUint8 unk0C; //!< 0C
 	wxUint8 numChunks; //!< 0D
 	wxUint16 chunkHeaderSize; //!< 0E - size of one chunk header
-	wxUint16 width; //!< 10
-	wxUint16 height; //!< 12
+	wxUint16 height; //!< 10
+	wxUint16 width; //!< 12
 	wxUint8 numMips; //!<  14
 	wxUint8 format; //!< 15 - DXGI_FORMAT
 	wxUint16 unk16; //!< 16 - 0800
