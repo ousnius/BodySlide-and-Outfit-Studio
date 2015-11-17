@@ -1667,6 +1667,7 @@ const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 		BSTriShape* siTriShape = static_cast<BSTriShape*>(blocks[dataRef]);
 		return siTriShape->GetRawVerts();
 	}
+	return nullptr;
 }
 
 bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris) {
