@@ -30,6 +30,79 @@ int ObjFile::AddGroup(const string& name, const vector<Vector3>& verts, const ve
 	return 0;
 }
 
+int ObjFile::LoadSimple(const string &inFn, const string& groupName){
+	fstream base(inFn.c_str(), ios_base::in | ios_base::binary);
+	if (base.fail())
+		return 1;
+
+	ObjData* di = new ObjData();
+
+	string dump;
+	Vector3 v;
+	Vector2 uv;
+	Triangle t;
+	string curgrp;
+	string facept1;
+	string facept2;
+	string facept3;
+	string facept4;
+	size_t pos;
+	int ft[4];
+	vector<Vector3> verts;
+	vector<Vector2> uvs;
+	vector<Triangle> tris;
+	bool readgroup = true;
+
+	while (!base.eof()) {
+		base >> dump;
+		if (dump.compare("v") == 0) {
+			base >> v.x >> v.y >> v.z;
+			di->verts.push_back(v);
+		}
+		else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
+			base >> curgrp;
+
+			if (di->name != "") {
+				data[di->name] = di;
+				di = new ObjData;
+			}
+
+			di->name = curgrp;
+			objGroups.push_back(curgrp);
+
+			if (groupName.length() > 0) {
+				if (curgrp.compare(groupName) == 0)
+					readgroup = true;
+				else
+					readgroup = false;
+			}
+		}
+		else if (dump.compare("vt") == 0) {
+			base >> uv.u >> uv.v;
+			uv.v = 1.0f - uv.v;
+			di->uvs.push_back(uv);
+		}
+		else if (dump.compare("f") == 0) {
+			base >> facept1 >> facept2 >> facept3;
+			pos = facept1.find('/');
+			t.p1 = atoi(facept1.c_str()) - 1;
+			ft[0] = atoi(facept1.substr(pos + 1).c_str()) - 1;
+			pos = facept2.find('/');
+			t.p1 = atoi(facept2.c_str()) - 1;
+			ft[1] = atoi(facept2.substr(pos + 1).c_str()) - 1;
+			pos = facept3.find('/');
+			t.p1 = atoi(facept3.c_str()) - 1;
+			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
+
+			di->tris.push_back(t);
+		}
+
+	}
+	data[di->name] = di;
+	base.close();
+	return 0;
+}
+
 int ObjFile::LoadForNif(const string &inFn, const string& groupName) {
 	fstream base(inFn.c_str(), ios_base::in | ios_base::binary);
 	if (base.fail())

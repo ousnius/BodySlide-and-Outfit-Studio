@@ -43,6 +43,7 @@ public:
 	void SetScale(const Vector3& inScale) { scale = inScale; }
 	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
 
+	int LoadSimple(const string& inFn, const string& groupName = "");
 	int LoadForNif(const string& inFn, const string& groupName = "");
 	int LoadForNif(fstream& base, const string& groupName = "");
 

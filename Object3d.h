@@ -28,6 +28,9 @@ typedef unsigned char byte;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
+float h2float(const unsigned short in);
+unsigned short float2h(const float in);
+
 struct Vertex;
 
 struct Vector2 {

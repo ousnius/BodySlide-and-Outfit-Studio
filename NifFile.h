@@ -48,7 +48,9 @@ enum BlockType {
 	BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER,
 	BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER,
 	BSEFFECTSHADERPROPERTYCOLORCONTROLLER,
-	BSEFFECTSHADERPROPERTYFLOATCONTROLLER
+	BSEFFECTSHADERPROPERTYFLOATCONTROLLER,
+	BSTRISHAPE,
+	BSSUBINDEXTRISHAPE
 };
 
 struct VertexWeight {
@@ -261,6 +263,7 @@ public:
 	void Put(fstream& file);
 };
 
+
 class NiObjectNET : public NiObject {
 public:
 	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
@@ -325,6 +328,76 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
+};
+
+// Fallout 4 trishape and trishape data for non-skinned meshes.  uses half floats for vertices.
+class BSTriShape : public NiAVObject{
+public:	
+	
+	class TSVertData {
+	public:
+		Vector3 vert;			// Stored half-float, convert!
+		float dotNormal;		// maybe the dotproduct of the vert normal and the z axis?
+		Vector2 uv;				// Stored as half-float, convert!
+		byte normalData[8];		// only if flags[6] & 0x1 is true?   some kind of packed normal data ?
+		//uint normals[2];
+		byte colorData[4];		// only if flags[6] & 0x2 is true
+		float weights[4];		// stored in half-float, convert!
+		byte weightBones[4];
+	};
+
+	uint unkProps[4];
+	uint skinInstanceRef;
+	uint shaderPropertyRef;
+	int unkRef;
+
+	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
+	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data
+	byte vertFlags[8];			
+	uint numTris;
+	ushort numverts;
+	uint datasize;
+	uint vertRecSize;				// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
+
+	vector<Vector3> rawverts;	// filled by GetRawVerts function and returned.
+	vector<Vector3> rawnorms;	// filled by GetNormalData function and returned.
+	vector<Vector3> rawtangents; // filled by GetTangentData function and returned.
+	vector<Vector2> rawuvs;		// filled by GetUVData function and returned.
+
+	vector<TSVertData> vertData;
+	vector<Triangle> triangles;
+
+	BSTriShape(fstream& file, NiHeader& hdr, int blockindex);
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual int CalcBlockSize();
+
+	const vector<Vector3>* GetRawVerts();
+	const vector<Vector3>* GetNormalData();
+	const vector<Vector3>* GetTangentData();
+	const vector<Vector2>* GetUVData();
+
+};
+
+
+// Fallout 4 trishape and trishape data for skinned meshes.  uses half floats for vertices.
+class BSSubIndexTriShape : public BSTriShape {
+public:
+
+
+	int szMysteryBlob;
+	char* MysteryBlob;
+
+	//Blockindex is a temporary measure to enable us to see the total size of the block during loading ... not all fields are known yet
+	BSSubIndexTriShape(fstream& file, NiHeader& hdr, int blockindex); 
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual int CalcBlockSize();
+
 };
 
 class NiGeometry : public NiAVObject {
@@ -793,6 +866,7 @@ public:
 
 	Vector3 emissiveColor;
 	float emissiveMultiple;
+	uint wetMaterialNameRef;
 	uint textureClampMode;
 	float alpha;
 	float refractionStrength;
@@ -800,11 +874,14 @@ public:
 	Vector3 specularColor;
 	float specularStrength;
 	float lightingEffect1;
-	float lightingEffect2;
+	float lightingEffect2;					// User version == 12, userversion2 < 130
+	uint unk1;								// user version == 12, userversion2 >= 130
+	uint unk2;								// user version == 12, userversion2 >= 130
+
 
 	float environmentMapScale;
-	Vector3 skinTintColor;
-	Vector3 hairTintColor;
+	Vector3 skinTintColor;					
+	Vector3 hairTintColor;					
 	float maxPasses;
 	float scale;
 	float parallaxInnerLayerThickness;
@@ -812,9 +889,12 @@ public:
 	Vector2 parallaxInnerLayerTextureScale;
 	float parallaxEnvmapStrength;
 	Color4 sparkleParameters;
-	float eyeCubemapScale;
-	Vector3 eyeLeftReflectionCenter;
-	Vector3 eyeRightReflectionCenter;
+	float eyeCubemapScale;					
+	Vector3 eyeLeftReflectionCenter;		
+	Vector3 eyeRightReflectionCenter;		
+
+	float unk[8];						// unkown shader float params in shadertype 5 for fallout4
+	byte  pad[16];						// up to 16 bytes of uknown padding.  clearly this isn't the right format.
 
 	BSLightingShaderProperty(NiHeader& hdr);
 	BSLightingShaderProperty(fstream& file, NiHeader& hdr);
@@ -868,7 +948,7 @@ public:
 	Vector2 uvScale;
 	NiString sourceTexture;
 	uint textureClampMode;
-	float falloffStartAngle;
+	float falloffStartAngle;				// userversion2 < 130
 	float falloffStopAngle;
 	float falloffStartOpacity;
 	float falloffStopOpacity;
@@ -876,6 +956,13 @@ public:
 	float emissiveMultiple;
 	float softFalloffDepth;
 	NiString greyscaleTexture;
+
+	//userversion2 >= 130
+	float unkdata[11];
+	NiString emissiveTex;
+	NiString normalTex;
+	NiString specularTex;
+	float unkdata2[3];
 
 	BSEffectShaderProperty(NiHeader& hdr);
 	BSEffectShaderProperty(fstream& file, NiHeader& hdr);
@@ -944,6 +1031,10 @@ class NiAlphaProperty : public NiProperty {
 public:
 	ushort flags;
 	byte threshold;
+
+	uint unkRef;
+	uint unk1;
+	uint unk2;
 
 	NiAlphaProperty(NiHeader& hdr);
 	NiAlphaProperty(fstream& file, NiHeader& hdr);
@@ -1096,8 +1187,11 @@ public:
 	int AddOrFindStringId(const string& str);
 
 	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
+	BSTriShape* geomForNameF4(const string& name, int dupIndex = 0);
+	NiAVObject* avObjectForName(const string& name, int dupIndex = 0);
 
 	NiShader* GetShader(const string& shapeName);
+	NiShader* GetShaderF4(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
 	NiMaterialProperty* GetMaterialProperty(const string& shapeName);
 
@@ -1109,6 +1203,7 @@ public:
 	void CopyShader(const string& shapeDest, int srcShaderRef, NifFile& srcNif, bool addAlpha, int propRef1, int propRef2);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 
+	int GetShapeType(const string& shapeName);
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
 	void RenameDuplicateShape(const string& dupedShape);

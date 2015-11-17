@@ -249,8 +249,9 @@ public:
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");
 	int AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name = "XRotateMesh");
 	int AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
-	int AddVisPoint(const Vector3& p, const string& name = "PointMesh");
+	int AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
 	int AddVisTri(const Vector3& p1, const Vector3& p2, const Vector3& p3, const string& name = "TriMesh");
+	int AddVisNorms(const mesh* src, const vector<Vector3>* normals = NULL, const string& name = "MeshNorms", const Vector3 color = { 1.0f, 0.0f, 1.0f });
 	int AddVisFacets(vector<int>& triIDs, const string& name = "TriMesh");
 	int AddVisFacetsInSphere(Vector3& origin, float radius, const string& name = "SphereFIntersect");
 
