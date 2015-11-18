@@ -1,14 +1,10 @@
 <BodySlideConfig>
-    <!-- Game install path. Normally this is harvested from the windows registry, but if that's not working
-    or you want to work with a different game, uncomment/change the below line. Notice the important trailing slash. -->
-    <!-- <GameDataPath>C:\Steam\SteamApps\common\Fallout 4\Data\</GameDataPath> -->
-    <!-- 0 = Fallout 3, 1 = Fallout New Vegas, 2 = Skyrim, 3 = Fallout 4 -->
     <TargetGame>3</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <BSATextureScan>true</BSATextureScan>
     <GameDataFiles>
-        <Fallout3></Fallout3>
-        <FalloutNewVegas></FalloutNewVegas>
+        <Fallout3>Fallout - Textures.bsa</Fallout3>
+        <FalloutNewVegas>Fallout - Textures.bsa; Fallout - Textures2.bsa</FalloutNewVegas>
         <Skyrim>Skyrim - Textures.bsa</Skyrim>
         <Fallout4>Fallout4 - Textures1.ba2; Fallout4 - Textures2.ba2; Fallout4 - Textures3.ba2; Fallout4 - Textures4.ba2; Fallout4 - Textures5.ba2; Fallout4 - Textures6.ba2; Fallout4 - Textures7.ba2; Fallout4 - Textures8.ba2; Fallout4 - Textures9.ba2</Fallout4></GameDataFiles>
     <GameDataPaths>
@@ -16,6 +12,9 @@
         <FalloutNewVegas></FalloutNewVegas>
         <Skyrim></Skyrim>
         <Fallout4></Fallout4></GameDataPaths>
+    <!-- <GameDataPath></GameDataPath> -->
+    <GameRegKey></GameRegKey>
+    <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
     <SelectedOutfit>CBBE Body</SelectedOutfit>
     <SelectedPreset>CBBE</SelectedPreset>
@@ -48,9 +47,6 @@
     <Anim>
         <DefaultSkeletonReference>res\skeleton_fo4.nif</DefaultSkeletonReference>
         <SkeletonRootName>Root</SkeletonRootName></Anim>
-    <!-- Window position/size and filter state parameters -->
     <LastGroupFilter></LastGroupFilter>
     <LastOutfitFilter></LastOutfitFilter>
-    <GameRegKey></GameRegKey>
-    <GameRegVal></GameRegVal>
 </BodySlideConfig>

@@ -762,16 +762,15 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("SelectedOutfit", "");
-		Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
-		Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
-		Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
-		Config.SetDefaultValue("GameRegVal/FalloutNewVegas", "Installed Path");
-		Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
-		Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
-		Config.SetDefaultValue("GameRegKey/Fallout4", "Software\\Bethesda Softworks\\Fallout4");
-		Config.SetDefaultValue("GameRegVal/Fallout4", "Installed Path");
-		Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
-		Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
+
+	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
+	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
+	Config.SetDefaultValue("GameRegVal/FalloutNewVegas", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
+	Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/Fallout4", "Software\\Bethesda Softworks\\Fallout4");
+	Config.SetDefaultValue("GameRegVal/Fallout4", "Installed Path");
 
 	wxString gameKey;
 	wxString gameValueKey;
@@ -779,26 +778,26 @@ void BodySlideApp::SetDefaultConfig() {
 	case FO3:
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
 		Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
-		gameKey = "SOFTWARE\\Bethesda Softworks\\Fallout3";
-		gameValueKey = "Installed Path";
+		gameKey = Config["GameRegKey/Fallout3"];
+		gameValueKey = Config["GameRegVal/Fallout3"];
 		break;
 	case FONV:
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
 		Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
-		gameKey = "SOFTWARE\\Bethesda Softworks\\FalloutNV";
-		gameValueKey = "Installed Path";
+		gameKey = Config["GameRegKey/FalloutNewVegas"];
+		gameValueKey = Config["GameRegVal/FalloutNewVegas"];
 		break;
 	case SKYRIM:
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
 		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
-		gameKey = "SOFTWARE\\Bethesda Softworks\\Skyrim";
-		gameValueKey = "Installed Path";
+		gameKey = Config["GameRegKey/Skyrim"];
+		gameValueKey = Config["GameRegVal/Skyrim"];
 		break;
 	case FO4:
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
 		Config.SetDefaultValue("Anim/SkeletonRootName", "Root");
-		gameKey = "SOFTWARE\\Bethesda Softworks\\Fallout4";
-		gameValueKey = "Installed Path";
+		gameKey = Config["GameRegKey/Fallout4"];
+		gameValueKey = Config["GameRegVal/Fallout4"];
 		break;
 	default:
 		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
@@ -823,7 +822,7 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("OutfitStudioFrame.x", 100);
 	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
 
-	if (!Config.Exists("GameDataPath")) {
+	if (Config["GameDataPath"].empty()) {
 		wxRegKey key(wxRegKey::HKLM, gameKey);
 		if (key.Exists()) {
 			wxString installPath;
@@ -870,8 +869,8 @@ wxString BodySlideApp::GetGameDataPath(TargetGame gameID) {
 	wxString gval = "GameRegVal/" + gamestr;
 	wxString cust = "GameDataPaths/" + gamestr;
 
-	if (Config.Exists(cust.ToStdString()) && Config[cust.ToStdString()].length() > 0) {
-		dataPath = Config[cust.ToStdString()];
+	if (!Config[cust].IsEmpty()) {
+		dataPath = Config[cust];
 	}
 	else {
 		wxRegKey key(wxRegKey::HKLM, Config[gkey]);
@@ -1099,7 +1098,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameSmall = outFileNameBig = activeSet.GetOutputFile();
 	}
 	else {
-		if (!Config.Exists("GameDataPath")) {
+		if (Config["GameDataPath"].empty()) {
 			if (Config["WarnMissingGamePath"] == "true") {
 				int ret = wxMessageBox("WARNING: Game data path not configured. Would you like to show BodySlide where it is?", "Game not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 				if (ret != wxYES) {
@@ -1314,7 +1313,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 	string activePreset = Config["SelectedPreset"];
 
 	if (datapath.empty()) {
-		if (!Config.Exists("GameDataPath")) {
+		if (Config["GameDataPath"].empty()) {
 			if (clean) {
 				wxLogError("Aborted batch clean with unconfigured data path. Files can't be removed that way.");
 				wxMessageBox("WARNING: Game data path not configured. Files can't be removed that way.", "Game not found", wxOK | wxICON_ERROR);
@@ -2389,7 +2388,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
 	dataFileList->Clear();
 
-	string cp = "GameDataFiles";
+	wxString cp = "GameDataFiles";
 
 	switch (targetGame) {
 		case FO3:
@@ -2404,14 +2403,12 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 		case FO4:
 			cp += "/Fallout4";
 			break;
-
 	}
 
-	wxString activatedFiles = Config.GetString(cp);
-
+	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
-	std::map<wxString, bool> fsearch;
+	map<wxString, bool> fsearch;
 	while (tokenizer.HasMoreTokens()) {
 		wxString val = tokenizer.GetNextToken().Trim(false);
 		val = val.Trim();
@@ -2420,8 +2417,8 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 	}
 
 	wxArrayString files;
-	wxDir::GetAllFiles(dataDir, &files, wxT("*.ba2"), wxDIR_FILES);
-	wxDir::GetAllFiles(dataDir, &files, wxT("*.bsa"), wxDIR_FILES);
+	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
+	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& f : files) {
 		f = f.AfterLast('\\');
 		dataFileList->Insert(f, dataFileList->GetCount());
@@ -2430,7 +2427,6 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 			dataFileList->Check(dataFileList->GetCount() - 1);
 		}
 	}
-
 }
 
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
@@ -2469,11 +2465,15 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			wxString TargetGames[4] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4" };
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
-				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
+
+				wxString currentPath = app->GetGameDataPath(targ);
+				if (currentPath != dpGameDataPath->GetPath())
+					Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
+
 				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToStdString());
 				FSManager::del();
-
 			}
+
 			wxArrayInt items;
 			wxString selectedfiles;
 			dataFileList->GetCheckedItems(items);

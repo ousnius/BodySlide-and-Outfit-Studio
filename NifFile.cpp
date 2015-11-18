@@ -1676,12 +1676,12 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	if (dataID == -1)
 		return false;
 
-	if (bType == NITRISHAPE) {
+	if (bType == NITRISHAPEDATA) {
 		NiTriShapeData* shapeData = static_cast<NiTriShapeData*>(blocks[dataID]);
 		*outTris = shapeData->triangles;
 		return true;
 	}
-	else if (bType == NITRISTRIPS) {
+	else if (bType == NITRISTRIPSDATA) {
 		NiTriStripsData* stripsData = static_cast<NiTriStripsData*>(blocks[dataID]);
 		stripsData->StripsToTris(outTris);
 		return true;

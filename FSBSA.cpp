@@ -37,7 +37,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <algorithm>
 
-#pragma warning (disable : 4389)
+#pragma warning (disable : 4389 4018)
 
 
 wxUint32 BSA::BSAFile::size() const {
