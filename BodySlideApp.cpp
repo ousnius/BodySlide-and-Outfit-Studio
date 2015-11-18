@@ -762,6 +762,16 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("SelectedOutfit", "");
+		Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
+		Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
+		Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
+		Config.SetDefaultValue("GameRegVal/FalloutNewVegas", "Installed Path");
+		Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
+		Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
+		Config.SetDefaultValue("GameRegKey/Fallout4", "Software\\Bethesda Softworks\\Fallout4");
+		Config.SetDefaultValue("GameRegVal/Fallout4", "Installed Path");
+		Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
+		Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
 
 	wxString gameKey;
 	wxString gameValueKey;
@@ -836,6 +846,42 @@ void BodySlideApp::SetDefaultConfig() {
 	}
 	else
 		wxLogMessage("Game data path in config: %s", Config["GameDataPath"]);
+}
+
+wxString BodySlideApp::GetGameDataPath(TargetGame gameID) {
+	wxString dataPath;
+	wxString gamestr;
+	switch (gameID) {
+		case FO3: 
+			gamestr = "Fallout3";
+			break;
+		case FONV: 
+			gamestr = "FalloutNewVegas";
+			break;
+		case SKYRIM:
+			gamestr = "Skyrim";
+			break;
+		case FO4:
+			gamestr = "Fallout4";
+			break;
+		default: break;
+	}
+	wxString gkey = "GameRegKey/" + gamestr;
+	wxString gval = "GameRegVal/" + gamestr;
+	wxString cust = "GameDataPaths/" + gamestr;
+
+	if (Config.Exists(cust.ToStdString()) && Config[cust.ToStdString()].length() > 0) {
+		dataPath = Config[cust.ToStdString()];
+	}
+	else {
+		wxRegKey key(wxRegKey::HKLM, Config[gkey]);
+		if (key.Exists()) {
+			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
+				dataPath.Append("Data\\");
+			}
+		}
+	}
+	return dataPath;
 }
 
 void BodySlideApp::LoadAllCategories() {
@@ -2315,7 +2361,8 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	wxChoice* choiceTargetGame = (wxChoice*)event.GetEventObject();
 	wxWindow* parent = choiceTargetGame->GetGrandParent();
 	wxChoice* choiceSkeletonRoot = XRCCTRL(*parent, "choiceSkeletonRoot", wxChoice);
-	switch (choiceTargetGame->GetSelection()) {
+	TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
+	switch (targ) {
 		case FO3:
 		case FONV:
 			choiceSkeletonRoot->SetStringSelection("Bip01");
@@ -2328,6 +2375,62 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			choiceSkeletonRoot->SetStringSelection("Root");
 			break;
 	}
+
+	wxCheckListBox* dataFileList = XRCCTRL(*parent, "DataFileList", wxCheckListBox);
+	wxString dataDir = app->GetGameDataPath(targ);
+
+	wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*parent, "dpGameDataPath", wxDirPickerCtrl);
+	dpGameDataPath->SetPath(dataDir);
+	
+	SettingsFillDataFiles(dataFileList, dataDir, targ);
+
+}
+
+void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
+	dataFileList->Clear();
+
+	string cp = "GameDataFiles";
+
+	switch (targetGame) {
+		case FO3:
+			cp += "/Fallout3";
+			break;
+		case FONV:
+			cp += "/FalloutNewVegas";
+			break;
+		case SKYRIM:
+			cp += "/Skyrim";
+			break;
+		case FO4:
+			cp += "/Fallout4";
+			break;
+
+	}
+
+	wxString activatedFiles = Config.GetString(cp);
+
+
+	wxStringTokenizer tokenizer(activatedFiles, ";");
+	std::map<wxString, bool> fsearch;
+	while (tokenizer.HasMoreTokens()) {
+		wxString val = tokenizer.GetNextToken().Trim(false);
+		val = val.Trim();
+		std::transform(val.begin(), val.end(), val.begin(), ::tolower);
+		fsearch[val] = true;
+	}
+
+	wxArrayString files;
+	wxDir::GetAllFiles(dataDir, &files, wxT("*.ba2"), wxDIR_FILES);
+	wxDir::GetAllFiles(dataDir, &files, wxT("*.bsa"), wxDIR_FILES);
+	for (auto& f : files) {
+		f = f.AfterLast('\\');
+		dataFileList->Insert(f, dataFileList->GetCount());
+		std::transform(f.begin(), f.end(), f.begin(), ::tolower);
+		if (fsearch.find(f) != fsearch.end()) {
+			dataFileList->Check(dataFileList->GetCount() - 1);
+		}
+	}
+
 }
 
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
@@ -2354,17 +2457,33 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		wxChoice* choiceSkeletonRoot = XRCCTRL(*settings, "choiceSkeletonRoot", wxChoice);
 		choiceSkeletonRoot->SetStringSelection(Config["Anim/SkeletonRootName"]);
-		
+
+		wxCheckListBox* dataFileList = XRCCTRL(*settings, "DataFileList", wxCheckListBox);
+		SettingsFillDataFiles(dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
+
 		settings->Bind(wxEVT_CHOICE, &BodySlideFrame::OnChooseTargetGame, this);
 
 		if (settings->ShowModal() == wxID_OK) {
-			Config.SetValue("TargetGame", choiceTargetGame->GetSelection());
-
+			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
+			Config.SetValue("TargetGame",targ);
+			wxString TargetGames[4] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4" };
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
 				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
+				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToStdString());
 				FSManager::del();
+
 			}
+			wxArrayInt items;
+			wxString selectedfiles;
+			dataFileList->GetCheckedItems(items);
+			for (auto i : items) {
+				selectedfiles += dataFileList->GetString(i) + "; ";				
+			}
+			selectedfiles = selectedfiles.BeforeLast(';');
+
+			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToStdString());
+
 
 			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
 			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");

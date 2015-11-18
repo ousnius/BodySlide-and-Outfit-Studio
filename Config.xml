@@ -6,6 +6,16 @@
     <TargetGame>3</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <BSATextureScan>true</BSATextureScan>
+    <GameDataFiles>
+        <Fallout3></Fallout3>
+        <FalloutNewVegas></FalloutNewVegas>
+        <Skyrim>Skyrim - Textures.bsa</Skyrim>
+        <Fallout4>Fallout4 - Textures1.ba2; Fallout4 - Textures2.ba2; Fallout4 - Textures3.ba2; Fallout4 - Textures4.ba2; Fallout4 - Textures5.ba2; Fallout4 - Textures6.ba2; Fallout4 - Textures7.ba2; Fallout4 - Textures8.ba2; Fallout4 - Textures9.ba2</Fallout4></GameDataFiles>
+    <GameDataPaths>
+        <Fallout3></Fallout3>
+        <FalloutNewVegas></FalloutNewVegas>
+        <Skyrim></Skyrim>
+        <Fallout4></Fallout4></GameDataPaths>
     <LogLevel>3</LogLevel>
     <SelectedOutfit>CBBE Body</SelectedOutfit>
     <SelectedPreset>CBBE</SelectedPreset>
@@ -13,8 +23,7 @@
 	This information is used by BodySlide for choosing what presets to display for outfits.
 	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
     <DefaultGroups includeInBuild="true">
-        <GroupName>CBBE</GroupName>
-	</DefaultGroups>
+        <GroupName>CBBE</GroupName></DefaultGroups>
     <!-- Group aliases provide a way for presets saved under older group names to still apply when a group has been renamed -->
     <GroupAliases></GroupAliases>
     <Input>
@@ -22,31 +31,26 @@
         <SliderMinimum>0</SliderMinimum>
         <SliderMaximum>100</SliderMaximum>
         <!-- Set the left mouse button to pan the view when dragged on the canvas in Outfit Studio -->
-        <LeftMousePan>false</LeftMousePan>
-	</Input>
+        <LeftMousePan>false</LeftMousePan></Input>
     <Editing>
         <!-- Center for move/rotate operations. Object = bounding box center, Origin = (0,0,0), Selected = unmasked vertex centroid -->
-        <CenterMode>Object</CenterMode>
-	</Editing>
+        <CenterMode>Object</CenterMode></Editing>
     <!--Light Settings-->
     <Lights>
         <Ambient>80</Ambient>
         <Brightness1>55</Brightness1>
         <Brightness2>45</Brightness2>
-        <Brightness3>45</Brightness3>
-	</Lights>
+        <Brightness3>45</Brightness3></Lights>
     <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
     <ReferenceTemplates>
-        <Template sourcefile="SliderSets\CBBEBody.xml" set="CBBE Body" shape="CBBE">CBBE Body</Template>
-	</ReferenceTemplates>
+        <Template sourcefile="SliderSets\CBBEBody.xml" set="CBBE Body" shape="CBBE">CBBE Body</Template></ReferenceTemplates>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference>res\skeleton_fo4.nif</DefaultSkeletonReference>
-        <SkeletonRootName>Root</SkeletonRootName>
-	</Anim>
+        <SkeletonRootName>Root</SkeletonRootName></Anim>
     <!-- Window position/size and filter state parameters -->
-    <BodySlideFrame width="800" height="600"></BodySlideFrame>
-    <OutfitStudioFrame width="990" height="757"></OutfitStudioFrame>
     <LastGroupFilter></LastGroupFilter>
     <LastOutfitFilter></LastOutfitFilter>
+    <GameRegKey></GameRegKey>
+    <GameRegVal></GameRegVal>
 </BodySlideConfig>

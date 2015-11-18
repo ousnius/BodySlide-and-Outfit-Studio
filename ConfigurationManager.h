@@ -10,6 +10,7 @@ See the included LICENSE file
 
 #include <vector>
 #include <unordered_map>
+#include <wx/string.h>
 
 using namespace std;
 using namespace tinyxml2;
@@ -108,8 +109,16 @@ public:
 	int GetValueArray(const string& containerName, const string& arrayName, vector<string>& outValues);
 	int GetValueAttributeArray(const string& containerName, const string& arrayName, const string& attributeName, vector<string>& outValues);
 
+	string operator [] (const char* inName)
+	{
+		return GetString(string(inName));
+	}
+
 	string operator [] (const string& inName) {
 		return GetString(inName);
+	}
+	wxString operator [] (const wxString& inName) {
+		return GetString(inName.ToStdString());
 	}
 };
 

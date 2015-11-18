@@ -735,8 +735,8 @@
 			</object>
 		</object>
 	</object>
-	<object class="wxDialog" name="dlgSettings">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
+ 	<object class="wxDialog" name="dlgSettings">
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<size>475,400</size>
 		<title>Settings</title>
 		<centered>1</centered>
@@ -756,10 +756,11 @@
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
-								<option>1</option>
+								<option>0</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="lbTargetGame">
+									<size>100,-1</size>
 									<label>Target Game</label>
 									<wrap>-1</wrap>
 								</object>
@@ -788,10 +789,11 @@
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
-								<option>1</option>
+								<option>0</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="lbGameDataPath">
+									<size>100,-1</size>
 									<label>Game Data Path</label>
 									<wrap>-1</wrap>
 								</object>
@@ -801,7 +803,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxDirPickerCtrl" name="dpGameDataPath">
-									<value></value>
+									<value>,90,90,-1,70,0</value>
 									<message>Select the data path of the game...</message>
 									<style>wxDIRP_DEFAULT_STYLE</style>
 									<tooltip>Data path to load textures from and build to.</tooltip>
@@ -812,62 +814,90 @@
 				</object>
 			</object>
 			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
+				<option>1</option>
+				<flag>wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStaticBoxSizer">
-					<orient>wxVERTICAL</orient>
-					<label>3D View</label>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALL|wxEXPAND</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
+						<border>2</border>
+						<object class="wxStaticBoxSizer">
+							<minsize>160,-1</minsize>
+							<orient>wxVERTICAL</orient>
+							<label>3D View</label>
 							<object class="sizeritem">
-								<option>1</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="lbBSATextures">
-									<label>BSA Textures</label>
-									<wrap>-1</wrap>
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>2</border>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_TOP|wxALL|wxBOTTOM</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="lbBSATextures">
+											<size>100,-1</size>
+											<label>BSA Textures</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_TOP|wxALL</flag>
+										<border>5</border>
+										<object class="wxCheckBox" name="cbBSATextures">
+											<tooltip>Enables/disables scanning BSAs in the game data folder for textures to load.</tooltip>
+											<label></label>
+											<checked>1</checked>
+										</object>
+									</object>
 								</object>
 							</object>
 							<object class="sizeritem">
-								<option>3</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-								<object class="wxCheckBox" name="cbBSATextures">
-									<tooltip>Enables/disables scanning BSAs in the game data folder for textures to load.</tooltip>
-									<label></label>
-									<checked>1</checked>
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>2</border>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+										<border>5</border>
+										<object class="wxStaticText" name="lbLeftMousePan">
+											<size>100,-1</size>
+											<label>Left Mouse Pan</label>
+											<wrap>-1</wrap>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+										<border>5</border>
+										<object class="wxCheckBox" name="cbLeftMousePan">
+											<tooltip>Enables/disables panning the camera with the left mouse button.</tooltip>
+											<label></label>
+											<checked>0</checked>
+										</object>
+									</object>
 								</object>
 							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
-						<option>0</option>
+						<option>3</option>
 						<flag>wxALL|wxEXPAND</flag>
-						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
+						<border>2</border>
+						<object class="wxStaticBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<label>Data Files</label>
 							<object class="sizeritem">
 								<option>1</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
-								<object class="wxStaticText" name="lbLeftMousePan">
-									<label>Left Mouse Pan</label>
-									<wrap>-1</wrap>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>3</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-								<object class="wxCheckBox" name="cbLeftMousePan">
-									<tooltip>Enables/disables panning the camera with the left mouse button.</tooltip>
-									<label></label>
-									<checked>0</checked>
+								<object class="wxCheckListBox" name="DataFileList">
+									<content />
 								</object>
 							</object>
 						</object>
@@ -888,10 +918,11 @@
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
-								<option>1</option>
+								<option>0</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="lbSkeletonFile">
+									<size>100,-1</size>
 									<label>File</label>
 									<wrap>-1</wrap>
 								</object>
@@ -901,7 +932,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="fpSkeletonFile">
-									<value></value>
+									<value>,90,90,-1,70,0</value>
 									<message>Select a reference skeleton .nif file...</message>
 									<wildcard>*.nif</wildcard>
 									<style>wxFLP_DEFAULT_STYLE</style>
@@ -917,10 +948,11 @@
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
-								<option>1</option>
+								<option>0</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="lbSkeletonRoot">
+									<size>100,-1</size>
 									<label>Root Node</label>
 									<wrap>-1</wrap>
 								</object>
@@ -944,14 +976,14 @@
 				</object>
 			</object>
 			<object class="spacer">
-				<option>1</option>
-				<flag>wxALL|wxEXPAND</flag>
+				<option>0</option>
+				<flag>wxEXPAND</flag>
 				<border>5</border>
-				<size>0,0</size>
+				<size>0,20</size>
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
+				<flag>wxALIGN_BOTTOM|wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">
 					<object class="button">

@@ -188,47 +188,69 @@ bool BSA::open() {
 			numFiles = header.numFiles;
 			namePrefix = false;
 
-			std::vector<std::string> filepaths;
+			char* superbuffer = new char[numFiles * (MAX_PATH + 2) + 1];
+			std::vector<size_t> path_sizes (numFiles*2);
+
 			if (bsa.Seek(header.nameTableOffset)) {
+				bsa.Read(superbuffer, numFiles*(MAX_PATH + 2));
+				size_t cursor=0;
+				size_t n = 0;
 				for (wxUint32 i = 0; i < header.numFiles; i++) {
-					wxUint16 length;
-					bsa.Read((char*)&length, 2);
+					if (cursor > numFiles*(MAX_PATH + 2) + 1) {
+						__debugbreak();
+					}
+					unsigned short len;
+					len = *(unsigned short*)&superbuffer[cursor];
+					cursor += 2;
+					path_sizes[n++] = cursor;
+					cursor += len;
+					path_sizes[n++] = cursor;
 
-					wxMemoryBuffer strdata(length);
-					bsa.Read(strdata.GetData(), length);
+					//wxUint16 length;
+					//bsa.Read((char*)&length, 2);
 
-					std::string filepath(strdata, strdata.GetBufSize());
-					filepaths.push_back(filepath);
+					//wxMemoryBuffer strdata(length);
+					//bsa.Read(strdata.GetData(), length);
+
+					//std::string filepath(strdata, strdata.GetBufSize());
+					//filepaths.push_back(filepath);
 				}
 			}
-
 			
+			std::replace(superbuffer, superbuffer + numFiles*(MAX_PATH + 2), '\\', '/');
 			std::string h(header.type, 4);
 			if (h == "GNRL") {
 				// General BA2 Format
 				if (bsa.Seek(sizeof(header) + 8)) {
+					F4GeneralInfo* finfo = new F4GeneralInfo[header.numFiles];
+					bsa.Read(finfo, 36 * numFiles);
+					size_t n = 0;
 					for (wxUint32 i = 0; i < header.numFiles; i++) {
-						F4GeneralInfo finfo;
-						bsa.Read((char*)&finfo, 36);
+						//F4GeneralInfo finfo;
+						//bsa.Read((char*)&finfo, 36);
+						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1]-path_sizes[n], finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
+						n += 2;
 
-						std::string fullpath = filepaths[i];
-						std::replace(fullpath.begin(), fullpath.end(), '\\', '/');
+						//std::string fullpath = filepaths[i];
+						//std::replace(fullpath.begin(), fullpath.end(), '\\', '/');
 
-						std::string folderName;
-						int p = fullpath.find_last_of('/');
-						if (p >= 0)
-							folderName = fullpath.substr(0, p);
+						//std::string folderName;
+						///int p = fullpath.find_last_of('/');
+						//if (p >= 0)
+						//	folderName = fullpath.substr(0, p);
 
-						std::string filename = fullpath.substr(p + 1);
+						//std::string filename = fullpath.substr(p + 1);
 
-						BSAFolder *folder = insertFolder(folderName);
-						insertFile(folder, filename, finfo.packedSize, finfo.unpackedSize, finfo.offset);
+						//BSAFolder *folder = insertFolder(folderName);
+						//insertFile(folder, filename, finfo.packedSize, finfo.unpackedSize, finfo.offset);
 					}
+					delete[]finfo;
 				}
 			}
 			else if (h == "DX10") {
 				// Texture BA2 Format
 				if (bsa.Seek(sizeof(header) + 8)) {
+					size_t n = 0;
 					for (wxUint32 i = 0; i < header.numFiles; i++) {
 						F4Tex tex;
 						bsa.Read((char*)&tex.header, 24);
@@ -242,23 +264,13 @@ bool BSA::open() {
 
 						tex.chunks = texChunks;
 
-						std::string fullpath = filepaths[i];
-						std::replace(fullpath.begin(), fullpath.end(), '\\', '/');
-
-						std::string folderName;
-						int p = fullpath.find_last_of('/');
-						if (p >= 0)
-							folderName = fullpath.substr(0, p);
-
-						std::string filename = fullpath.substr(p + 1);
-
-						BSAFolder *folder = insertFolder(folderName);
 
 						F4TexChunk chunk = tex.chunks[0];
-						insertFile(folder, filename, chunk.packedSize, chunk.unpackedSize, chunk.offset, tex);
+						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1]- path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
 					}
 				}
 			}
+			delete[]superbuffer;
 		}
 		// From NifSkope
 		else if (magic == OB_BSAHEADER_FILEID) {
@@ -651,6 +663,27 @@ BSA::BSAFolder *BSA::insertFolder(std::string name) {
 	return folder;
 }
 
+BSA::BSAFolder* BSA::insertFolder( char* folder, int szFn) {
+	auto loc = folders.find(std::string(folder, folder + szFn - 1));
+	if (loc != folders.end()) {
+		return loc->second;
+	}
+
+	BSAFolder* fldr = new BSAFolder();
+	folders[std::string(folder, folder + szFn)] = fldr;
+	
+	for (int p = szFn - 1; p >= 0; p--) {
+		if (folder[p] == '/') {
+			fldr->parent = insertFolder(folder, p);
+			fldr->parent->children[std::string(folder + p + 1,szFn-p-1)] = fldr;
+			return fldr;
+		}
+	}
+	fldr->parent = &root;
+	root.children[std::string(folder, folder + szFn)] = fldr;
+	return fldr;	
+}
+
 BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 sizeFlags, wxUint32 offset) {
 	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
 
@@ -673,6 +706,31 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 pack
 	folder->files[name] = file;
 
 	return file;
+}
+
+BSA::BSAFile* BSA::insertFile(char* filename, int szFn, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex* dds) {
+	std::transform(filename, filename+szFn-1, filename, ::tolower);
+	//int p;
+	//for (p = szFn - 1; p >= 0; p--) {
+	//	if (filename[p] == '/')
+	//		break;
+	//}
+	//BSAFolder* folder;
+	//if (p > -1)
+	//	folder = insertFolder(filename, p);
+	//else
+	//	folder = &root;
+
+	BSAFile *file = new BSAFile;
+	if (dds) {
+		file->tex = *dds;
+	}
+	file->packedLength = packed;
+	file->unpackedLength = unpacked;
+	file->offset = offset;
+	//folder->files[name] = file;
+	root.files.emplace(std::string(filename, filename + szFn), file);
+	return nullptr;
 }
 
 const BSA::BSAFolder *BSA::getFolder(std::string fn) const {

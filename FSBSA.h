@@ -268,9 +268,11 @@ protected:
 
 	//! Recursive function to generate the tree structure of folders inside a %BSA
 	BSAFolder *insertFolder(std::string name);
+	BSAFolder *insertFolder( char* folder, int szFn);
 	//! Inserts a file into the structure of a %BSA
 	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 sizeFlags, wxUint32 offset);
 	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex dds = F4Tex());
+	BSAFile *insertFile(char* filename, int szFn, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex* dds = nullptr);
 
 	//! Gets the specified folder, or the root folder if not found
 	const BSAFolder *getFolder(std::string fn) const;
