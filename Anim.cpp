@@ -224,6 +224,9 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 
 	SkinTransform xForm;
 	for (auto &shapeBoneList : shapeBones) {
+		int stype = nif->GetShapeType(shapeBoneList.first);
+		bool bIsFo4 = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE);
+		unordered_map<unsigned short, vertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
 			if (!AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
 				continue;
@@ -232,9 +235,21 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
+			if (bIsFo4) {
+				for (auto vw : bw.weights) {
+					vertWeights[vw.first].Add(bid, vw.second);
+				}
+			}
 			if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm)) {
 				nif->SetShapeBoneTransform(shapeBoneList.first, bid, xForm, bw.bSphereOffset, bw.bSphereRadius);
-				nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
+				if (!bIsFo4) {
+					nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
+				}
+			}
+		}
+		if (bIsFo4) {
+			for (auto vid : vertWeights) {
+				nif->SetShapeVertWeights(shapeBoneList.first, vid.first, vid.second.boneIds, vid.second.weights);
 			}
 		}
 	}

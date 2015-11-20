@@ -266,7 +266,8 @@ bool BSA::open() {
 
 
 						F4TexChunk chunk = tex.chunks[0];
-						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1]- path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
+						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
+						n += 2;
 					}
 				}
 			}
@@ -664,7 +665,7 @@ BSA::BSAFolder *BSA::insertFolder(std::string name) {
 }
 
 BSA::BSAFolder* BSA::insertFolder( char* folder, int szFn) {
-	auto loc = folders.find(std::string(folder, folder + szFn - 1));
+	auto loc = folders.find(std::string(folder, folder + szFn));
 	if (loc != folders.end()) {
 		return loc->second;
 	}
@@ -709,7 +710,7 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 pack
 }
 
 BSA::BSAFile* BSA::insertFile(char* filename, int szFn, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex* dds) {
-	std::transform(filename, filename+szFn-1, filename, ::tolower);
+	std::transform(filename, filename+szFn, filename, ::tolower);
 	//int p;
 	//for (p = szFn - 1; p >= 0; p--) {
 	//	if (filename[p] == '/')
@@ -753,6 +754,11 @@ const BSA::BSAFolder *BSA::getFolder(std::string fn) const {
 
 const BSA::BSAFile *BSA::getFile(std::string fn) const {
 	std::transform(fn.begin(), fn.end(), fn.begin(), ::tolower);
+
+	auto earlyfile = root.files.find(fn);
+	if (earlyfile != root.files.end()) {
+		return earlyfile->second;
+	}
 
 	std::string folderName;
 	int p = fn.find_last_of('/');

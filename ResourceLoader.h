@@ -8,6 +8,7 @@ See the included LICENSE file
 
 #include <memory>
 #include <string>
+#include <algorithm>
 #include <unordered_map>
 
 using namespace std;
@@ -19,9 +20,12 @@ public:
 	ResourceLoader();
 	virtual ~ResourceLoader();
 
+	void GetArchiveFiles(vector<string>& outList);
+
 	GLMaterial* AddMaterial(const string& textureFile,
 				const string& vShaderFile,
 				const string& fShaderFile);
+
 
 	void Cleanup();
 

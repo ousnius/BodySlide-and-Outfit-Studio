@@ -1035,21 +1035,27 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	vector<string> oldShapes;
 	project->GetShapes(oldShapes);
-	for (auto &s : oldShapes)
-		if (!project->IsBaseShape(s))
+	for (auto &s : oldShapes) {
+		if (!project->IsBaseShape(s)) {
 			glView->DeleteMesh(s);
+		}
+	}
 
 	UpdateProgress(1.0f, "Loading outfit...");
 
 	int ret = 0;
 	if (XRCCTRL(dlg, "npWorkNif", wxRadioButton)->GetValue() == true) {
-		if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked())
+		project->ClearOutfit();
+		if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked()) {
 			ret = project->AddNif(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath().ToStdString(), true, outfitName);
-		else
+		}
+		else {
 			ret = project->AddNif(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath().ToStdString(), false);
+		}
 	}
-	else if (XRCCTRL(dlg, "npWorkObj", wxRadioButton)->GetValue() == true)
+	else if (XRCCTRL(dlg, "npWorkObj", wxRadioButton)->GetValue() == true) {
 		ret = project->AddShapeFromObjFile(XRCCTRL(dlg, "npObjFilename", wxFilePickerCtrl)->GetPath().ToStdString(), outfitName);
+	}
 	else
 		project->ClearOutfit();
 
@@ -1059,13 +1065,14 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true)
-		project->SetTextures("_AUTO_");
-	else if (XRCCTRL(dlg, "npTexDefault", wxRadioButton)->GetValue() == true)
-		project->SetTexturesDefault(XRCCTRL(dlg, "npDefaultTexChoice", wxChoice)->GetStringSelection().ToStdString());
-	else
+	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true) {
+		project->SetTextures("_AUTO_");		
+	} else if (XRCCTRL(dlg, "npTexDefault", wxRadioButton)->GetValue() == true) {
+		project->SetTexturesDefault(XRCCTRL(dlg, "npDefaultTexChoice", wxChoice)->GetStringSelection().ToStdString());		
+	} else {
 		project->SetTextures(XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString());
-
+		
+	}
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(50.0f, "Creating outfit...");
 	RefreshGUIFromProj();
@@ -1714,7 +1721,7 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 		if (!project->IsBaseShape(activeItem->shapeName)) {
 			project->GetWorkAnim()->GetWeights(activeItem->shapeName, activeBone, boneWeights);
 			mesh* workMesh = glView->GetMesh(activeItem->shapeName);
-			workMesh->ColorChannelFill(1, 0.0f);
+			//workMesh->ColorChannelFill(1, 0.0f);
 
 			for (auto &bw : boneWeights)
 				workMesh->vcolors[bw.first].y = bw.second;

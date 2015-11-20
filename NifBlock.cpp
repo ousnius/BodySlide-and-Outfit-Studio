@@ -853,27 +853,91 @@ BSTriShape(file, hdr, blockindex)
 }
 
 void BSSubIndexTriShape::Get(fstream& file) {
-	vertRecSize = (datasize - (numTris * 6)) / numverts;
-	szMysteryBlob = blockSize - (vertRecSize * numverts + 6 * numTris + 118);
 
-	/// LETS LEAK SOME MEMORY!  temporary until we figure out the hunk of data at the end of this block
-	MysteryBlob = new char[szMysteryBlob];
-	file.read((char*)MysteryBlob, szMysteryBlob);
+
+	file.read((char*)&numtris2, 4);
+	file.read((char*)&numSubIndexRecordA, 4);
+	file.read((char*)&numSubIndexRecordB, 4);
+
+	subIndexRecordsA.resize(numSubIndexRecordB * 4);
+	for (int i = 0; i < numSubIndexRecordB * 4; i++) {		
+		file.read((char*)&subIndexRecordsA[i], 4);
+	}
+	
+	if (numSubIndexRecordB > numSubIndexRecordA) {
+		file.read((char*)&numSubIndexRecordA_2, 4);
+		file.read((char*)&numSubIndexRecordB_2, 4);
+
+		sequence.resize(numSubIndexRecordA);
+		for (int i = 0; i < numSubIndexRecordA; i++) {
+			file.read((char*)&sequence[i], 4);
+		}
+
+		subIndexRecordsB.resize(numSubIndexRecordB);
+		for (int i = 0; i < numSubIndexRecordB; i++) {
+			file.read((char*)&subIndexRecordsB[i].unk1, 4);
+			file.read((char*)&subIndexRecordsB[i].unk2, 4);
+			file.read((char*)&subIndexRecordsB[i].numExtra, 4);
+			subIndexRecordsB[i].extraData.resize(subIndexRecordsB[i].numExtra);
+			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++) {
+				file.read((char*)&subIndexRecordsB[i].extraData[j], 4);
+			}
+
+		}
+
+		ssfFile.Get(file, 2);
+	}
+
 }
 
 
 void BSSubIndexTriShape::Put(fstream& file) {
 	BSTriShape::Put(file);
 
-	file.write((char*)MysteryBlob, szMysteryBlob);
+	file.write((char*)&numtris2, 4);
+	file.write((char*)&numSubIndexRecordA, 4);
+	file.write((char*)&numSubIndexRecordB, 4);
 
+	for (int i = 0; i < numSubIndexRecordB * 4; i++) {
+		file.write((char*)&subIndexRecordsA[i], 4);
+	}
 
+	if (numSubIndexRecordB > numSubIndexRecordA) {
+		file.write((char*)&numSubIndexRecordA_2, 4);
+		file.write((char*)&numSubIndexRecordB_2, 4);
+
+		for (int i = 0; i < numSubIndexRecordA; i++) {
+			file.write((char*)&sequence[i], 4);
+		}
+
+		for (int i = 0; i < numSubIndexRecordB; i++) {
+			file.write((char*)&subIndexRecordsB[i].unk1, 4);
+			file.write((char*)&subIndexRecordsB[i].unk2, 4);
+			file.write((char*)&subIndexRecordsB[i].numExtra, 4);
+
+			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++) {
+				file.write((char*)&subIndexRecordsB[i].extraData[j], 4);
+			}
+
+		}
+
+		ssfFile.Put(file, 2);
+	}
 
 }
 
 void BSSubIndexTriShape::notifyBlockDelete(int blockID) {
 	NiObjectNET::notifyBlockDelete(blockID);
 
+	if (skinInstanceRef == blockID)
+		skinInstanceRef = -1;
+	else if (skinInstanceRef > blockID)
+		skinInstanceRef--;
+
+	if (shaderPropertyRef == blockID)
+		shaderPropertyRef = -1;
+	else if (shaderPropertyRef > blockID)
+		shaderPropertyRef--;
 
 }
 
@@ -884,7 +948,19 @@ void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
 int BSSubIndexTriShape::CalcBlockSize() {
-	blockSize = 118 + 6 * numTris + 32 * numverts + szMysteryBlob;
+	BSTriShape::CalcBlockSize();
+	blockSize += 12;									// tris and first record counts
+	blockSize += numSubIndexRecordB * 4 * 4;			// sub inex record arrayA
+
+	if (numSubIndexRecordB > numSubIndexRecordA) {		
+		blockSize += 8;									// second index accounts
+		blockSize += numSubIndexRecordA * 4;			// sequence array
+		for (int i = 0; i < numSubIndexRecordA; i++) {			// sub index recordsb
+			blockSize += 12;									// unknown data per record
+			blockSize += 4 * subIndexRecordsB[i].numExtra;		// extra data per record.
+		}
+	}
+
 
 	return blockSize;
 
@@ -2123,6 +2199,149 @@ int BSDismemberSkinInstance::CalcBlockSize() {
 	return blockSize;
 }
 
+
+
+BSSkinInstance::BSSkinInstance(NiHeader& hdr) {
+	Init();
+
+	header = &hdr;
+	blockType = BSSKININSTANCE;
+}
+
+BSSkinInstance::BSSkinInstance(fstream& file, NiHeader& hdr) {
+	Init();
+
+	header = &hdr;
+	blockType = BSSKININSTANCE;
+
+	Get(file);
+}
+
+void BSSkinInstance::Init() {
+	NiObject::Init();
+
+	numBones = 0;
+}
+
+void BSSkinInstance::Get(fstream& file) {
+	NiObject::Get(file);
+	uint intData;
+
+	file.read((char*)&unk, 4);
+	file.read((char*)&boneDataRef, 4);
+	file.read((char*)&numBones, 4);
+	for (int i=0; i < numBones; i++) {
+		file.read((char*)&intData, 4);
+		bones.push_back(intData);
+	}
+
+	file.read((char*)&numVertices, 4);
+	if (numVertices > 0)
+		__debugbreak;					// Found a skin instance with vertices figure out how much data goes here!
+	
+}
+
+void BSSkinInstance::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&unk, 4);
+	file.write((char*)&boneDataRef, 4);
+	file.write((char*)&numBones, 4);
+	for (int i = 0; i < numBones; i++)
+		file.write((char*)&bones[i], 4);
+	file.write((char*)&numVertices, 4);
+
+}
+
+void BSSkinInstance::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+
+	int boneIndex = -1;
+	if (boneDataRef == blockID)
+		boneDataRef = -1;
+	else if (boneDataRef > blockID)
+		boneDataRef--;
+
+	for (int i = 0; i < numBones; i++) {
+		if (bones[i] == blockID) {
+			bones.erase(bones.begin() + i);
+			boneIndex = i;
+			i--;
+			numBones--;
+		}
+		else if (bones[i] > blockID)
+			bones[i]--;
+	}
+}
+
+void BSSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (boneDataRef == blockIndexLo)
+		boneDataRef = blockIndexHi;
+	else if (boneDataRef == blockIndexHi)
+		boneDataRef = blockIndexLo;
+
+	for (int i = 0; i < numBones; i++) {
+		if (bones[i] == blockIndexLo)
+			bones[i] = blockIndexHi;
+		else if (bones[i] == blockIndexHi)
+			bones[i] = blockIndexLo;
+	}
+}
+
+BSSkinBoneData::BSSkinBoneData(NiHeader& hdr) {	
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSBONEDATA;
+}
+
+BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader& hdr) {	
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSBONEDATA;
+	Get(file);
+}
+
+void BSSkinBoneData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&nBones, 4);
+	
+	BoneData boneData;
+	for (int i = 0; i < nBones; i++) {
+
+		file.read((char*)&boneData.boundSphereOffset, 12);
+		file.read((char*)&boneData.boundSphereRadius, 4);
+		file.read((char*)&boneData.boneTransform, 52);
+
+		boneXforms.push_back(boneData);
+	}
+}
+
+void BSSkinBoneData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&nBones, 4);
+
+	for (int i = 0; i < nBones; i++) {
+
+		file.read((char*)&boneXforms[i].boundSphereOffset, 12);
+		file.read((char*)&boneXforms[i].boundSphereRadius, 4);
+		file.read((char*)&boneXforms[i].boneTransform, 52);
+	}
+}
+
+
+int BSSkinInstance::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 16;
+	blockSize += numBones * 4;
+	return blockSize;
+}
 
 NiSkinData::NiSkinData(NiHeader& hdr) {
 	NiObject::Init();

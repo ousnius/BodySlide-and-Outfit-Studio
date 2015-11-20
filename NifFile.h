@@ -37,6 +37,8 @@ enum BlockType {
 	NITRISTRIPS,
 	NITRISTRIPSDATA,
 	NISKININSTANCE,
+	BSSKININSTANCE,
+	BSBONEDATA,
 	NISTRINGEXTRADATA,
 	BSSHADERPPLIGHTINGPROPERTY,
 	NIMATERIALPROPERTY,
@@ -385,10 +387,28 @@ public:
 // Fallout 4 trishape and trishape data for skinned meshes.  uses half floats for vertices.
 class BSSubIndexTriShape : public BSTriShape {
 public:
+	uint numtris2;
+	uint numSubIndexRecordA;
+	uint numSubIndexRecordB;
 
+	vector<uint> subIndexRecordsA;
+	 
+	uint numSubIndexRecordA_2;
+	uint numSubIndexRecordB_2;
 
-	int szMysteryBlob;
-	char* MysteryBlob;
+	vector<uint> sequence;
+
+	class subIndexRecordB {
+	public:
+		uint unk1;
+		uint unk2;
+		uint numExtra;
+		vector <uint> extraData;
+	};
+
+	vector<subIndexRecordB> subIndexRecordsB;
+
+	NiString ssfFile;
 
 	//Blockindex is a temporary measure to enable us to see the total size of the block during loading ... not all fields are known yet
 	BSSubIndexTriShape(fstream& file, NiHeader& hdr, int blockindex); 
@@ -546,13 +566,17 @@ public:
 	int CalcBlockSize();
 };
 
-class NiSkinInstance : public NiObject {
+class NiBoneContainer : public NiObject {
+public:
+	uint numBones;
+	vector<int> bones;
+};
+
+class NiSkinInstance : public NiBoneContainer {
 public:
 	int dataRef;
 	int skinPartitionRef;
 	int skeletonRootRef;
-	uint numBones;
-	vector<int> bones;
 
 	NiSkinInstance() { };
 	NiSkinInstance(NiHeader& hdr);
@@ -584,6 +608,53 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
+};
+
+class BSSkinInstance : public NiBoneContainer  {
+public:
+	uint unk;
+	uint boneDataRef;
+	ushort numVertices;
+	vector<SkinWeight> vertexWeights;
+
+
+	BSSkinInstance() : unk(0), boneDataRef(0), numVertices(0) { numBones = 0; };
+	BSSkinInstance(NiHeader& hdr);
+	BSSkinInstance(fstream& file, NiHeader& hdr);
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual int CalcBlockSize();
+};
+
+class BSSkinBoneData  : public NiObject {
+public:
+	uint nBones;
+	class BoneData {
+	public:
+		Vector3 boundSphereOffset;
+		float boundSphereRadius;
+		SkinTransform boneTransform;
+
+		BoneData() {
+			boneTransform.scale = 1.0f;
+			boundSphereRadius = 0.0f;
+		}
+		int CalcSize() {
+			return (70);
+		}
+	};
+	vector<BoneData> boneXforms;
+
+	BSSkinBoneData() : nBones(0) { };
+	BSSkinBoneData(NiHeader& hdr);
+	BSSkinBoneData(fstream& file, NiHeader& hdr);
+
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
 };
 
 class NiSkinData : public NiObject {
@@ -1202,6 +1273,8 @@ public:
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
 	void CopyShader(const string& shapeDest, int srcShaderRef, NifFile& srcNif, bool addAlpha, int propRef1, int propRef2);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
+	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, NiTriBasedGeom* geom);
+	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, BSTriShape* geom);
 
 	int GetShapeType(const string& shapeName);
 	int GetShapeList(vector<string>& outList);
@@ -1226,6 +1299,7 @@ public:
 	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, Vector3& outSphereOffset, float& outSphereRadius);
 	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
+	void SetShapeVertWeights(const string& shapeName, int vertIndex, vector<unsigned char>& boneids, vector<float>& weights);
 
 	const vector<Vector3>* GetRawVertsForShape(const string& shapeName);
 	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);

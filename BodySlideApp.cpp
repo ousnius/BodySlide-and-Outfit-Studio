@@ -73,7 +73,7 @@ bool BodySlideApp::OnInit() {
 	Config.LoadConfig();
 
 	logger.Initialize();
-	wxHandleFatalExceptions();
+	//wxHandleFatalExceptions();
 	wxLogMessage("Initializing BodySlide...");
 
 	wxInitAllImageHandlers();
@@ -2423,7 +2423,7 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 		f = f.AfterLast('\\');
 		dataFileList->Insert(f, dataFileList->GetCount());
 		std::transform(f.begin(), f.end(), f.begin(), ::tolower);
-		if (fsearch.find(f) != fsearch.end()) {
+		if (fsearch.find(f) == fsearch.end()) {
 			dataFileList->Check(dataFileList->GetCount() - 1);
 		}
 	}
@@ -2465,20 +2465,17 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			wxString TargetGames[4] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4" };
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
-
-				wxString currentPath = app->GetGameDataPath(targ);
-				if (currentPath != dpGameDataPath->GetPath())
-					Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
-
+				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
 				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToStdString());
 				FSManager::del();
 			}
 
 			wxArrayInt items;
 			wxString selectedfiles;
-			dataFileList->GetCheckedItems(items);
-			for (auto i : items) {
-				selectedfiles += dataFileList->GetString(i) + "; ";				
+			for (int i = 0; i < dataFileList->GetCount(); i++) {
+				if (!dataFileList->IsChecked(i)) {
+					selectedfiles += dataFileList->GetString(i) + "; ";
+				}				
 			}
 			selectedfiles = selectedfiles.BeforeLast(';');
 
