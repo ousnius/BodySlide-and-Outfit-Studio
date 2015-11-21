@@ -1,21 +1,21 @@
 <BodySlideConfig>
-    <!-- Game install path. Normally this is harvested from the windows registry, but if that's not working
-    or you want to work with a different game, uncomment/change the below line. Notice the important trailing slash. -->
-    <!-- <GameDataPath>C:\Steam\SteamApps\common\Fallout 4\Data\</GameDataPath> -->
-    <!-- 0 = Fallout 3, 1 = Fallout New Vegas, 2 = Skyrim, 3 = Fallout 4 -->
-    <TargetGame>2</TargetGame>
+    <!-- 0 = FO3, 1 = FONV, 2 = Skyrim, 3 = FO4 -->
+    <TargetGame>3</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <BSATextureScan>true</BSATextureScan>
     <GameDataFiles>
         <Fallout3></Fallout3>
         <FalloutNewVegas></FalloutNewVegas>
-        <Skyrim>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices.bsa; Skyrim - VoicesExtra.bsa;</Skyrim>
+        <Skyrim>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices.bsa; Skyrim - VoicesExtra.bsa</Skyrim>
         <Fallout4>Fallout4 - Animations.ba2; Fallout4 - Interface.ba2; Fallout4 - Materials.ba2; Fallout4 - Meshes.ba2; Fallout4 - MeshesExtra.ba2; Fallout4 - Misc.ba2; Fallout4 - Shaders.ba2; Fallout4 - Sounds.ba2; Fallout4 - Startup.ba2; Fallout4 - Voices.ba2</Fallout4></GameDataFiles>
     <GameDataPaths>
         <Fallout3></Fallout3>
         <FalloutNewVegas></FalloutNewVegas>
         <Skyrim></Skyrim>
         <Fallout4></Fallout4></GameDataPaths>
+    <!-- <GameDataPath></GameDataPath> -->
+    <GameRegKey></GameRegKey>
+    <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
     <SelectedOutfit>CBBE Body</SelectedOutfit>
     <SelectedPreset>CBBE</SelectedPreset>
@@ -47,8 +47,7 @@
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference>res\skeleton_fo4.nif</DefaultSkeletonReference>
-        <SkeletonRootName>NPC</SkeletonRootName></Anim>
-    <!-- Window position/size and filter state parameters -->
+        <SkeletonRootName>Root</SkeletonRootName></Anim>
     <LastGroupFilter></LastGroupFilter>
     <LastOutfitFilter></LastOutfitFilter>
 </BodySlideConfig>

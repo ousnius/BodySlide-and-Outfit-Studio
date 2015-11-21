@@ -8,7 +8,6 @@ See the included LICENSE file
 
 #include <memory>
 #include <string>
-#include <algorithm>
 #include <unordered_map>
 
 using namespace std;

@@ -1783,7 +1783,7 @@ void NifFile::SetShapeBoneWeights(const string& shapeName, int boneIndex, unorde
 	if (geom)
 		skinRef = geom->skinInstanceRef;
 	else {
-		BSTriShape* siTriShape = geomForNameF4(shapeName);
+		// BSTriShape* siTriShape = geomForNameF4(shapeName);
 		// NOT Implemented.  use SetShapeVertWeights instead.
 	}
 
@@ -2595,23 +2595,29 @@ void NifFile::DeleteShape(const string& shapeName) {
 
 		for (int i = 0; i < geom->numExtraData; i++)
 			DeleteBlock(geom->extraDataRef[i]);
-		
+
 		int shapeID = shapeIdForName(shapeName);
 		DeleteBlock(shapeID);
 	}
 	else {
-		// Not IMplemented
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
+			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(siTriShape->shaderPropertyRef));
+			if (shader) {
+				DeleteBlock(shader->GetTextureSetRef());
+				DeleteBlock(siTriShape->shaderPropertyRef);
+			}
+
+			BSSkinInstance* bsSkinInst = dynamic_cast<BSSkinInstance*>(GetBlock(siTriShape->skinInstanceRef));
+			if (bsSkinInst) {
+				DeleteBlock(bsSkinInst->boneDataRef);
+				DeleteBlock(siTriShape->skinInstanceRef);
+			}
+
 			int shapeID = shapeIdForName(shapeName);
-			DeleteBlock(((BSLightingShaderProperty*)GetBlock(siTriShape->shaderPropertyRef))->textureSetRef);
-			DeleteBlock(siTriShape->shaderPropertyRef);
-			DeleteBlock(((BSSkinInstance*)GetBlock(siTriShape->skinInstanceRef))->boneDataRef);
-			DeleteBlock(siTriShape->skinInstanceRef);
 			DeleteBlock(shapeID);
 		}
 	}
-
 }
 
 void NifFile::DeleteShader(const string& shapeName) {

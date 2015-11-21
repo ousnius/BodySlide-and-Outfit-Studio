@@ -21,11 +21,9 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/tokenzr.h>
 
-using std::string;
-
 size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {
-	std::hash<std::string> strHash;
-	return (strHash(std::get<0>(key)) ^ strHash(std::get<1>(key)) ^ strHash(std::get<2>(key)));
+	hash<string> strHash;
+	return (strHash(get<0>(key)) ^ strHash(get<1>(key)) ^ strHash(get<2>(key)));
 }
 
 ResourceLoader::ResourceLoader() {
@@ -59,17 +57,16 @@ void ResourceLoader::GetArchiveFiles(vector<string>& outList) {
 	map<wxString, bool> fsearch;
 	while (tokenizer.HasMoreTokens()) {
 		wxString val = tokenizer.GetNextToken().Trim(false);
-		val = val.Trim();
-		std::transform(val.begin(), val.end(), val.begin(), ::tolower);
+		val = val.Trim().MakeLower();
 		fsearch[val] = true;
 	}
+
 	wxString dataDir = Config["GameDataPath"];
 	wxArrayString files;
 	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& f : files) {
-		f = f.AfterLast('\\');
-		std::transform(f.begin(), f.end(), f.begin(), ::tolower);
+		f = f.AfterLast('\\').MakeLower();
 		if (fsearch.find(f) == fsearch.end()) {
 			outList.push_back(dataDir.ToStdString() + f.ToStdString());
 		}

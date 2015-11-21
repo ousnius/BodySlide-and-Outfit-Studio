@@ -576,7 +576,6 @@ BSTriShape::BSTriShape(fstream& file, NiHeader& hdr, int blockindex) {
 }
 
 void BSTriShape::Get(fstream& file) {
-	int intData;
 	short shortData;
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
@@ -930,12 +929,12 @@ void BSSubIndexTriShape::notifyBlockDelete(int blockID) {
 	NiObjectNET::notifyBlockDelete(blockID);
 
 	if (skinInstanceRef == blockID)
-		skinInstanceRef = -1;
+		skinInstanceRef = 0xFFFFFFFF;
 	else if (skinInstanceRef > blockID)
 		skinInstanceRef--;
 
 	if (shaderPropertyRef == blockID)
-		shaderPropertyRef = -1;
+		shaderPropertyRef = 0xFFFFFFFF;
 	else if (shaderPropertyRef > blockID)
 		shaderPropertyRef--;
 
@@ -2258,7 +2257,7 @@ void BSSkinInstance::notifyBlockDelete(int blockID) {
 
 	int boneIndex = -1;
 	if (boneDataRef == blockID)
-		boneDataRef = -1;
+		boneDataRef = 0xFFFFFFFF;
 	else if (boneDataRef > blockID)
 		boneDataRef--;
 

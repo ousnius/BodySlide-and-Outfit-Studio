@@ -1721,10 +1721,11 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 		if (!project->IsBaseShape(activeItem->shapeName)) {
 			project->GetWorkAnim()->GetWeights(activeItem->shapeName, activeBone, boneWeights);
 			mesh* workMesh = glView->GetMesh(activeItem->shapeName);
-			//workMesh->ColorChannelFill(1, 0.0f);
-
-			for (auto &bw : boneWeights)
-				workMesh->vcolors[bw.first].y = bw.second;
+			if (workMesh) {
+				workMesh->ColorChannelFill(1, 0.0f);
+				for (auto &bw : boneWeights)
+					workMesh->vcolors[bw.first].y = bw.second;
+			}
 		}
 		boneWeights.clear();
 

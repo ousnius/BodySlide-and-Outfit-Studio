@@ -19,23 +19,21 @@ struct vertexBoneWeights {
 	vector<unsigned char> boneIds;
 	vector<float> weights;
 
-	vertexBoneWeights () {
+	vertexBoneWeights() {
 	}
 
-	void Add (int inboneid, float inweight) {
+	void Add(int inboneid, float inweight) {
 		if (inweight == 0) return;
 
-		for (int i; i < weights.size(); ++i) {
+		for (int i = 0; i < weights.size(); ++i) {
 			if (inweight < weights[i])
 				continue;
 			weights.insert(weights.begin() + i, inweight);
 			boneIds.insert(boneIds.begin() + i, inboneid);
 			return;
-		} 
+		}
 		weights.push_back(inweight);
 		boneIds.push_back(inboneid);
-
-		
 	}
 };
 
