@@ -1821,7 +1821,7 @@ void NifFile::SetShapeVertWeights(const string& shapeName, int vertIndex, vector
 	memset(trishape->vertData[vertIndex].weights, 0, sizeof(float)* 4);
 	memset(trishape->vertData[vertIndex].weightBones, 0, sizeof(unsigned char) * 4);
 
-	for (int i= 0; i <4; i++) {
+	for (int i= 0; i <weights.size(); i++) {
 		trishape->vertData[vertIndex].weightBones[i] = boneids[i];
 		trishape->vertData[vertIndex].weights[i] = weights[i];
 	}

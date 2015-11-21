@@ -341,7 +341,10 @@ public:
 		Vector3 vert;			// Stored half-float, convert!
 		float dotNormal;		// maybe the dotproduct of the vert normal and the z axis?
 		Vector2 uv;				// Stored as half-float, convert!
-		byte normalData[8];		// only if flags[6] & 0x1 is true?   some kind of packed normal data ?
+		byte normal[3];
+		byte unk1;
+		byte tangent[3];		// only if flags[6] & 0x1 is true?   some kind of packed normal data ?
+		byte unk2;
 		//uint normals[2];
 		byte colorData[4];		// only if flags[6] & 0x2 is true
 		float weights[4];		// stored in half-float, convert!
@@ -614,7 +617,7 @@ class BSSkinInstance : public NiBoneContainer  {
 public:
 	uint unk;
 	uint boneDataRef;
-	ushort numVertices;
+	uint numVertices;
 	vector<SkinWeight> vertexWeights;
 
 

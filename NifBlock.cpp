@@ -637,7 +637,16 @@ void BSTriShape::Get(fstream& file) {
 		vertData[i].uv.v = h2float(shortData);
 
 		if (vertFlags[6] & 0x1) {
-			file.read((char*)vertData[i].normalData, 8);
+			for (int j = 0; j < 3; j++) {
+				file.read((char*)&vertData[i].normal[j], 1);
+			}
+		
+			file.read((char*)&vertData[i].unk1, 1);
+
+			for (int j = 0; j < 3; j++) {
+				file.read((char*)&vertData[i].tangent[j], 1);
+			}
+			file.read((char*)&vertData[i].unk2, 1);
 		}
 
 		if (vertFlags[6] & 0x2) {
@@ -732,9 +741,17 @@ void BSTriShape::Put(fstream& file) {
 		file.write((char*)&shortData, 2);
 
 		if (vertFlags[6] & 0x1) {
-			file.write((char*)vertData[i].normalData, 8);
-		//	file.write((char*)&vertData[i].normals[0], 4);
-		//	file.write((char*)&vertData[i].normals[1], 4);
+			for (int j = 0; j < 3; j++) {
+				file.write((char*)&vertData[i].normal[j], 1);
+			}
+		
+			file.write((char*)&vertData[i].unk1, 1);
+
+			for (int j = 0; j < 3; j++) {
+				file.write((char*)&vertData[i].tangent[j], 1);
+			}
+
+			file.write((char*)&vertData[i].unk2, 1);
 		}
 
 		if (vertFlags[6] & 0x2) {
@@ -795,9 +812,9 @@ const vector<Vector3>* BSTriShape::GetNormalData() {
 	rawnorms.resize(numverts);
 	for (int i = 0; i < numverts; i++) {
 
-		float q1 = (((float)vertData[i].normalData[0])/255.0f) *2.0f - 1.0f;
-		float q2 = (((float)vertData[i].normalData[1])/255.0f) *2.0f - 1.0f;
-		float q3 = (((float)vertData[i].normalData[2])/255.0f) *2.0f - 1.0f;
+		float q1 = (((float)vertData[i].normal[0])/255.0f) *2.0f - 1.0f;
+		float q2 = (((float)vertData[i].normal[1])/255.0f) *2.0f - 1.0f;
+		float q3 = (((float)vertData[i].normal[2])/255.0f) *2.0f - 1.0f;
 
 		float x = q1;
 		float y = q2;
@@ -816,9 +833,9 @@ const vector<Vector3>* BSTriShape::GetTangentData() {
 	rawtangents.clear();
 	rawtangents.resize(numverts);
 	for (int i = 0; i < numverts; i++) {
-		float q6 = (((float)vertData[i].normalData[4]) / 255.0f) *2.0f - 1.0f;
-		float q7 = (((float)vertData[i].normalData[5]) / 255.0f) *2.0f - 1.0f;
-		float q8 = (((float)vertData[i].normalData[6]) / 255.0f) *2.0f - 1.0f;
+		float q6 = (((float)vertData[i].tangent[0]) / 255.0f) *2.0f - 1.0f;
+		float q7 = (((float)vertData[i].tangent[1]) / 255.0f) *2.0f - 1.0f;
+		float q8 = (((float)vertData[i].tangent[2]) / 255.0f) *2.0f - 1.0f;
 
 		float x = q6;
 		float y = q7;
@@ -2246,8 +2263,9 @@ void BSSkinInstance::Put(fstream& file) {
 	file.write((char*)&unk, 4);
 	file.write((char*)&boneDataRef, 4);
 	file.write((char*)&numBones, 4);
-	for (int i = 0; i < numBones; i++)
+	for (int i = 0; i < numBones; i++) {
 		file.write((char*)&bones[i], 4);
+	}
 	file.write((char*)&numVertices, 4);
 
 }
@@ -2327,9 +2345,9 @@ void BSSkinBoneData::Put(fstream& file) {
 
 	for (int i = 0; i < nBones; i++) {
 
-		file.read((char*)&boneXforms[i].boundSphereOffset, 12);
-		file.read((char*)&boneXforms[i].boundSphereRadius, 4);
-		file.read((char*)&boneXforms[i].boneTransform, 52);
+		file.write((char*)&boneXforms[i].boundSphereOffset, 12);
+		file.write((char*)&boneXforms[i].boundSphereRadius, 4);
+		file.write((char*)&boneXforms[i].boneTransform, 52);
 	}
 }
 
