@@ -214,8 +214,6 @@ public:
 	virtual void Put(fstream& file);
 
 	virtual int CalcBlockSize();
-
-	virtual bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 };
 
 class NiHeader : public NiObject {
@@ -260,6 +258,7 @@ public:
 	NiHeader();
 	void Clear();
 	void SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2);
+	bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 
 	void Get(fstream& file);
 	void Put(fstream& file);

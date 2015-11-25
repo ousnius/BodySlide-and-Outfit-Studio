@@ -33,19 +33,6 @@ int NiObject::CalcBlockSize() {
 	return blockSize;
 }
 
-bool NiObject::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
-	if (equal) {
-		if (header->version4 == v1 && header->version3 == v2 && header->version2 == v3 && header->version1 == v4)
-			return true;
-	}
-	else {
-		if (header->version4 >= v1 && header->version3 >= v2 && header->version2 >= v3 && header->version1 >= v4)
-			return true;
-	}
-
-	return false;
-}
-
 
 NiHeader::NiHeader() {
 	header = this;
@@ -77,6 +64,19 @@ void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const 
 	version1 = v4;
 	userVersion = userVer;
 	userVersion2 = userVer2;
+}
+
+bool NiHeader::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
+	if (equal) {
+		if (version4 == v1 && version3 == v2 && version2 == v3 && version1 == v4)
+			return true;
+	}
+	else {
+		if (version4 >= v1 && version3 >= v2 && version2 >= v3 && version1 >= v4)
+			return true;
+	}
+
+	return false;
 }
 
 void NiHeader::Get(fstream& file) {
@@ -492,7 +492,7 @@ void NiNode::Get(fstream& file) {
 		children.push_back(intData);
 	}
 
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		file.read((char*)&numEffects, 4);
 		for (int i = 0; i < numEffects; i++) {
 			file.read((char*)&intData, 4);
@@ -508,7 +508,7 @@ void NiNode::Put(fstream& file) {
 	for (int i = 0; i < numChildren; i++)
 		file.write((char*)&children[i], 4);
 
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		file.write((char*)&numEffects, 4);
 		for (int i = 0; i < numEffects; i++)
 			file.write((char*)&effects[i], 4);
@@ -560,7 +560,7 @@ int NiNode::CalcBlockSize() {
 
 	blockSize += 4;
 	blockSize += numChildren * 4;
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		blockSize += 4;
 		blockSize += numEffects * 4;
 	}
@@ -3507,11 +3507,11 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&specularStrength, 4);
 	file.read((char*)&lightingEffect1, 4);
 
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		file.read((char*)&lightingEffect2, 4);
 	}
 	else if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		file.read((char*)&unk1,4);
+		file.read((char*)&unk1, 4);
 		file.read((char*)&unk2, 4);
 	}
 
@@ -3560,11 +3560,12 @@ void BSLightingShaderProperty::Get(fstream& file) {
 			file.read((char*)&unk[i], 4);
 		}
 	}
-	if (skyrimShaderType==1 && header->userVersion2 >= 130) {
+	if (skyrimShaderType == 1 && header->userVersion2 >= 130) {
 		for (int i = 0; i < 2; i++) {
 			file.read((char*)&pad[i], 1);
 		}
-	}if (skyrimShaderType == 5 && header->userVersion2 >= 130) {
+	}
+	if (skyrimShaderType == 5 && header->userVersion2 >= 130) {
 		for (int i = 0; i < 16; i++) {
 			file.read((char*)&pad[i], 1);
 		}
@@ -3602,7 +3603,7 @@ void BSLightingShaderProperty::Put(fstream& file) {
 	file.write((char*)&specularStrength, 4);
 	file.write((char*)&lightingEffect1, 4);
 
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		file.write((char*)&lightingEffect2, 4);
 	}
 	else if (header->userVersion == 12 && header->userVersion2 >= 130) {
@@ -3660,12 +3661,12 @@ void BSLightingShaderProperty::Put(fstream& file) {
 		for (int i = 0; i < 2; i++) {
 			file.write((char*)&pad[i], 1);
 		}
-	}if (skyrimShaderType == 5 && header->userVersion2 >= 130) {
+	}
+	if (skyrimShaderType == 5 && header->userVersion2 >= 130) {
 		for (int i = 0; i < 16; i++) {
 			file.write((char*)&pad[i], 1);
 		}
 	}
-
 }
 
 void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
@@ -3767,9 +3768,9 @@ int BSLightingShaderProperty::CalcBlockSize() {
 
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
 		blockSize += 12;
-	}	
-	
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	}
+
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		blockSize += 4;
 	}
 
@@ -3783,13 +3784,17 @@ int BSLightingShaderProperty::CalcBlockSize() {
 	}
 	else if (skyrimShaderType == 6) {
 		blockSize += 12;
-	}else if (skyrimShaderType == 7){
+	}
+	else if (skyrimShaderType == 7){
 		blockSize += 8;
-	}else if (skyrimShaderType == 11){
+	}
+	else if (skyrimShaderType == 11){
 		blockSize += 20;
-	}else if (skyrimShaderType == 14){
+	}
+	else if (skyrimShaderType == 14){
 		blockSize += 16;
-	}else if (skyrimShaderType == 16){
+	}
+	else if (skyrimShaderType == 16){
 		blockSize += 28;
 	}
 
@@ -3916,7 +3921,7 @@ void BSEffectShaderProperty::Get(fstream& file) {
 	file.read((char*)&uvScale.v, 4);
 	sourceTexture = NiString(file, 4, false);
 	file.read((char*)&textureClampMode, 4);
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		file.read((char*)&falloffStartAngle, 4);
 		file.read((char*)&falloffStopAngle, 4);
 		file.read((char*)&falloffStartOpacity, 4);
@@ -3952,7 +3957,7 @@ void BSEffectShaderProperty::Put(fstream& file) {
 	sourceTexture.Put(file, 4);
 	file.write((char*)&textureClampMode, 4);
 
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		file.write((char*)&falloffStartAngle, 4);
 		file.write((char*)&falloffStopAngle, 4);
 		file.write((char*)&falloffStartOpacity, 4);
@@ -4248,7 +4253,7 @@ NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader& hdr) {
 }
 
 void NiAlphaProperty::Get(fstream& file) {
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		NiProperty::Get(file);
 	} 
 	
@@ -4266,7 +4271,7 @@ void NiAlphaProperty::Get(fstream& file) {
 }
 
 void NiAlphaProperty::Put(fstream& file) {
-	if (header->userVersion == 12 && header->userVersion2 < 130) {
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		NiProperty::Put(file);
 	} 
 
