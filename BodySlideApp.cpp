@@ -2457,7 +2457,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckListBox* dataFileList = XRCCTRL(*settings, "DataFileList", wxCheckListBox);
 		SettingsFillDataFiles(dataFileList, gameDataPath, Config.GetIntValue("TargetGame"));
 
-		settings->Bind(wxEVT_CHOICE, &BodySlideFrame::OnChooseTargetGame, this);
+		choiceTargetGame->Bind(wxEVT_CHOICE, &BodySlideFrame::OnChooseTargetGame, this);
 
 		if (settings->ShowModal() == wxID_OK) {
 			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
