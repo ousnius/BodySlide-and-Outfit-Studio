@@ -6,21 +6,10 @@ See the included LICENSE file
 
 #pragma once
 
-#include "stdafx.h"
-#include "NifFile.h"
-#include "DiffData.h"
-#include "SliderData.h"
-
-#include <fstream>
+#include "SliderSet.h"
+#include "SliderPresets.h"
 
 using namespace std;
-
-class SliderNotifyTrigger {
-public:
-	float triggerValue;
-	ushort triggerType;
-	string targetSlider;
-};
 
 class Slider {
 public:
@@ -33,14 +22,6 @@ public:
 	float defValue;
 	float value;
 	vector<string> linkedDataSets;
-	vector<SliderNotifyTrigger> triggers;
-
-	float Get() {
-		return value;
-	}
-	void Set(float val) {
-		value = val;
-	}
 };
 
 class SliderManager {
@@ -101,7 +82,6 @@ public:
 	void SetSliderDefaults(const string& slider, float bigVal, float smallVal);
 	void SetClampSlider(const string& slider);
 	void AddSliderLink(const string& slider, const string& dataSetName);
-	void AddSliderTrigger(const string& slider, const string& targetSlider, float triggerVal, uint triggerType);
 
 	float GetSlider(const string& slider, bool isSmall);
 	void SetSlider(const string& slider, bool isSmall, float val);
@@ -115,7 +95,10 @@ public:
 	void FlagReload(bool needReload) {
 		bNeedReload = needReload;
 	}
-	bool NeedReload() { return bNeedReload; }
+
+	bool NeedReload() {
+		return bNeedReload;
+	}
 
 	void GetSmallSliderList(vector<string>& names);
 	void GetBigSliderList(vector<string>& names);

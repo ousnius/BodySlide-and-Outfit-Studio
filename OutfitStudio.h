@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "wxStateButton.h"
 #include "GLSurface.h"
 #include "SliderData.h"
+#include "SliderPresets.h"
 #include "ObjFile.h"
 #include "TweakBrush.h"
 #include "Automorph.h"

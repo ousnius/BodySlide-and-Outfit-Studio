@@ -10,7 +10,7 @@ See the included LICENSE file
 #include "NifFile.h"
 #include "KDMatcher.h"
 #include "Mesh.h"
-#include "SliderData.h"
+#include "SliderSet.h"
 #include "DiffData.h"
 #include "ObjFile.h"
 
@@ -65,7 +65,6 @@ public:
 
 	void SetRef(NifFile& Ref, const string& refShape = "BaseShape");
 
-	int InitRefDiffData(const string& srcFileName, const string& dataSetName, const string& baseDataPath);
 	void LinkRefDiffData(DiffDataSets* diffData);
 	void UnlinkRefDiffData();
 

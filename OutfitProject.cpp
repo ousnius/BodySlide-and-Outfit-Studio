@@ -94,7 +94,7 @@ string OutfitProject::Save(const string& strFileName,
 	owner->UpdateProgress(prog);
 	for (int i = 0; i < activeSet.size(); i++) {
 		id = outSet.CopySlider(&activeSet[i]);
-		outSet[id].ClearDataFiles();
+		outSet[id].Clear();
 		if (copyRef && !baseShape.empty()) {
 			targ = ShapeToTarget(baseShape);
 			targSlider = activeSet[i].TargetDataName(targ);

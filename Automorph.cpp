@@ -111,21 +111,6 @@ void Automorph::SetRef(NifFile& ref, const string& refShape) {
 	refTree = new kd_tree(morphRef->verts, morphRef->nVerts);
 }
 
-int Automorph::InitRefDiffData(const string &srcFileName, const string &dataSetName, const string &baseDataPath) {
-	SliderSetFile srcSliderSetFile;
-	srcSliderSetFile.Open(srcFileName);
-
-	SliderSet srcSet;
-	if (srcSliderSetFile.GetSet(dataSetName, srcSet))
-		return 1;
-
-	srcSet.SetBaseDataPath(baseDataPath);
-	srcSet.LoadSetDiffData(__srcDiffData);
-	srcDiffData = &__srcDiffData;
-
-	return 0;
-}
-
 void Automorph::LinkRefDiffData(DiffDataSets* diffData) {
 	srcDiffData = diffData;
 }
