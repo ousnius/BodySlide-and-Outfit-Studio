@@ -14,6 +14,23 @@ See the included LICENSE file
 
 using namespace std;
 
+class OSDataFile {
+	uint header;
+	uint version;
+	uint dataCount;
+	map<string, unordered_map<ushort, Vector3>> dataDiffs;
+
+public:
+	OSDataFile();
+	~OSDataFile();
+
+	int Read(const string& fileName);
+	int Write(const string& fileName);
+
+	void GetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& outDataDiff);
+	void SetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& inDataDiff);
+};
+
 class DiffDataSets {
 	map<string, unordered_map<ushort, Vector3>> namedSet;
 	map<string, string> dataTargets;
@@ -22,7 +39,9 @@ public:
 	inline bool TargetMatch(const string& set, const string& target);
 	int LoadSet(const string& name, const string& target, unordered_map<ushort, Vector3>& inDiffData);
 	int LoadSet(const string& name, const string& target, const string& fromFile);
+	int LoadData(const map<string, map<string, string>>& osdNames);
 	int SaveSet(const string& name, const string& target, const string& toFile);
+	int SaveData(const map<string, map<string, string>>& osdNames);
 	void RenameSet(const string& oldName, const string& newName);
 	void DeepRename(const string& oldName, const string& newName);
 	void AddEmptySet(const string& name, const string& target);

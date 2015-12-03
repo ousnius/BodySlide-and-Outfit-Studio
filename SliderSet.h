@@ -111,14 +111,6 @@ public:
 		return "";
 	}
 
-	// Adds a shape target and also ensures that any diff data in the set knows about the shape target.
-	void LinkShapeTarget(const string& shapeName, const string& targetName) {
-		targetshapenames[targetName] = shapeName;
-		for (auto &&s : sliders)
-			for (auto &df : s.dataFiles)
-				df.targetName = targetName;
-	}
-
 	void ClearTargets(const string& oldTarget) {
 		targetshapenames.erase(oldTarget);
 		targetdatafolders.erase(oldTarget);
@@ -243,7 +235,6 @@ public:
 	bool HasSet(const string& querySetName);
 
 	void SetShapes(const string& set, vector<string>& outShapeNames);
-	void SetTargets(const string& set, vector<string>& outTargetNames);
 
 	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
 	int GetAllSets(vector<SliderSet>& outAppendSets);

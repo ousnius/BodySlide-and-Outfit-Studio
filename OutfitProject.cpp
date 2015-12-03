@@ -14,7 +14,10 @@ OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwn
 	LoadSkeletonReference(defSkelFile);
 
 	mCopyRef = true;
-	mGenWeights = true;
+	if (owner->targetGame == SKYRIM)
+		mGenWeights = true;
+	else
+		mGenWeights = false;
 }
 
 OutfitProject::~OutfitProject() {
@@ -85,9 +88,13 @@ string OutfitProject::Save(const string& strFileName,
 	int id;
 	string targ;
 	string targSlider;
-	string targSliderFile;
+	string targSliderData;
+
+	string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
 	string saveDataPath = "ShapeData\\" + strDataDir;
-	string saveFileName;
+
+	DiffDataSets osdDiffs;
+	map<string, map<string, string>> osdNames;
 
 	prog = 10.0f;
 	step = 50.0f / activeSet.size();
@@ -98,15 +105,19 @@ string OutfitProject::Save(const string& strFileName,
 		if (copyRef && !baseShape.empty()) {
 			targ = ShapeToTarget(baseShape);
 			targSlider = activeSet[i].TargetDataName(targ);
-			targSliderFile = activeSet[i].DataFileName(targSlider);
 			if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 				if (activeSet[i].IsLocalData(targSlider)) {
-					outSet[id].AddDataFile(targ, targSlider, targSliderFile);
-					saveFileName = saveDataPath + "\\" + targSliderFile;
-					baseDiffData.SaveSet(targSlider, targ, saveFileName);
+					targSliderData = osdFileName + "\\" + activeSet[i].DataFileName(targSlider);
+					outSet[id].AddDataFile(targ, targSlider, targSliderData);
+
+					unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
+					osdDiffs.LoadSet(targSlider, targ, *diff);
+					osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
 				}
-				else
-					outSet[id].AddDataFile(targ, targSlider, targSliderFile, false);
+				else {
+					targSliderData = activeSet[i].DataFileName(targSlider);
+					outSet[id].AddDataFile(targ, targSlider, targSliderData, false);
+				}
 			}
 		}
 
@@ -119,20 +130,28 @@ string OutfitProject::Save(const string& strFileName,
 			if (targSlider.empty())
 				targSlider = targ + outSet[i].name;
 
-			targSliderFile = targSlider + ".bsd";
 			if (morpher.GetResultDiffSize(s, activeSet[i].name) > 0) {
 				string shapeDataFolder = activeSet.ShapeToDataFolder(s);
 				if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
-					outSet[i].AddDataFile(targ, targSlider, targSliderFile);
-					saveFileName = saveDataPath + "\\" + targSliderFile;
-					morpher.SaveResultDiff(s, activeSet[i].name, saveFileName);
+					targSliderData = osdFileName + "\\" + targSlider;
+					outSet[i].AddDataFile(targ, targSlider, targSliderData);
+
+					unordered_map<ushort, Vector3> diff;
+					morpher.GetRawResultDiff(s, activeSet[i].name, diff);
+					osdDiffs.LoadSet(targSlider, targ, diff);
+					osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
 				}
-				else
-					outSet[i].AddDataFile(targ, targSlider, targSliderFile, false);
+				else {
+					targSliderData = activeSet[i].DataFileName(targSlider);
+					outSet[i].AddDataFile(targ, targSlider, targSliderData, false);
+				}
 			}
 		}
 		owner->UpdateProgress(prog += step, "Calculating slider data...");
 	}
+
+	osdDiffs.SaveData(osdNames);
+
 	prog = 60.0f;
 	owner->UpdateProgress(prog, "Creating slider set file...");
 
@@ -168,7 +187,7 @@ string OutfitProject::Save(const string& strFileName,
 
 	owner->UpdateProgress(70.0f, "Saving NIF file...");
 
-	saveFileName = saveDataPath + "\\" + baseFile;
+	string saveFileName = saveDataPath + "\\" + baseFile;
 
 	if (workNif.IsValid()) {
 		NifFile clone(workNif);
@@ -279,7 +298,7 @@ void OutfitProject::AddEmptySlider(const string& newName) {
 		string target = ShapeToTarget(baseShape);
 		string shapeAbbrev = NameAbbreviate(baseShape);
 		string shapeSlider = target + sliderAbbrev;
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(baseShape, target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 	}
@@ -302,7 +321,7 @@ void OutfitProject::AddZapSlider(const string& newName, unordered_map<ushort, fl
 	activeSet[sliderID].defSmallValue = 0.0f;
 
 	if (IsBaseShape(shapeName)) {
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(shapeName, target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 		for (auto &i : diffData)
@@ -333,7 +352,7 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 	if (!baseShape.empty()) {
 		string target = ShapeToTarget(baseShape);
 		string shapeSlider = target + sliderAbbrev;
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 		GetLiveVerts(baseShape, verts);
 		workNif.CalcShapeDiff(baseShape, &verts, diffData);
@@ -621,10 +640,10 @@ int OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeNa
 
 	if (IsBaseShape(shapeName)) {
 		string sliderData = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.SaveSet(sliderData, target, fileName);
+		baseDiffData.SaveSet(sliderData, target, fileName + ".bsd");
 	}
 	else
-		morpher.SaveResultDiff(target, sliderName, fileName);
+		morpher.SaveResultDiff(target, sliderName, fileName + ".bsd");
 
 	return 0;
 }
@@ -858,7 +877,7 @@ void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sli
 	string dataName = activeSet[sliderName].TargetDataName(target);
 	if (!vertUpdates.empty()) {
 		if (dataName.empty())
-			activeSet[sliderName].AddDataFile(target, target + sliderName, target + sliderName + ".bsd");
+			activeSet[sliderName].AddDataFile(target, target + sliderName, target + sliderName);
 		else
 			activeSet[sliderName].SetLocalData(dataName);
 	}

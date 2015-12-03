@@ -27,16 +27,6 @@ Automorph::~Automorph() {
 	ClearSourceShapes();
 }
 
-Automorph::Automorph(NifFile &ref, const string& refShape) {
-	morphRef = nullptr;
-	refTree = nullptr;
-	srcDiffData = nullptr;
-	bEnableMask = true;
-	proximity_radius = 10.0f;
-	max_prox_points = 5.0f;
-	SetRef(ref, refShape);
-}
-
 void Automorph::ClearSourceShapes() {
 	for (auto &shapes : sourceShapes) {
 		if (foreignShapes.find(shapes.first) != foreignShapes.end())

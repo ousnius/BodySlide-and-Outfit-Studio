@@ -25,15 +25,16 @@ SliderData::SliderData(const string& inName) {
 SliderData::~SliderData() {
 }
 
-SliderData::SliderData(XMLElement* element) {
-	LoadSliderData(element);
-}
-
-int SliderData::LoadSliderData(XMLElement* element) {
+int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	//Outfit Studio state values, not saved in XML.
 	curValue = 0;
 	bShow = false;
-	int numDatafiles = 0;
+	int numData = 0;
+
+	XMLElement *root = element->Parent()->Parent()->ToElement();
+	int version = root->IntAttribute("version");
+
+	string dataFileStr = version >= 1 ? "Data" : "datafile";
 
 	name = element->Attribute("name");
 	if (element->Attribute("invert"))
@@ -46,10 +47,17 @@ int SliderData::LoadSliderData(XMLElement* element) {
 	else
 		bUV = false;
 
-	float b = element->FloatAttribute("big");
-	float s = element->FloatAttribute("small");
-	defBigValue = b;
-	defSmallValue = s;
+	if (genWeights) {
+		float b = element->FloatAttribute("big");
+		float s = element->FloatAttribute("small");
+		defBigValue = b;
+		defSmallValue = s;
+	}
+	else {
+		float defValue = element->FloatAttribute("default");
+		defBigValue = defValue;
+		defSmallValue = defValue;
+	}
 
 	if (element->Attribute("hidden"))
 		bHidden = (_strnicmp(element->Attribute("hidden"), "true", 4) == 0);
@@ -66,9 +74,10 @@ int SliderData::LoadSliderData(XMLElement* element) {
 	else
 		bClamp = false;
 
-	DiffDataFile tmpDataFile;
-	XMLElement* datafile = element->FirstChildElement("datafile");
+	DiffInfo tmpDataFile;
+	XMLElement* datafile = element->FirstChildElement(dataFileStr.c_str());
 	while (datafile) {
+		datafile->SetName("Data");
 		tmpDataFile.targetName = datafile->Attribute("target");
 
 		if (datafile->Attribute("local"))
@@ -85,10 +94,10 @@ int SliderData::LoadSliderData(XMLElement* element) {
 
 		dataFiles.push_back(tmpDataFile);
 
-		datafile = datafile->NextSiblingElement("datafile");
-		numDatafiles++;
+		datafile = datafile->NextSiblingElement(dataFileStr.c_str());
+		numData++;
 	}
-	if (numDatafiles == 0)
+	if (numData == 0)
 		return 1;
 
 	return 0;

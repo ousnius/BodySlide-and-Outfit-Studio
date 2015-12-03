@@ -698,7 +698,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		wxString fileName = XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
 		wxString refShape = XRCCTRL(wiz, "npRefShapeName", wxChoice)->GetStringSelection();
 
-		if (fileName.EndsWith(".xml")) {
+		if (fileName.EndsWith(".osp") || fileName.EndsWith(".xml")) {
 			wxString sliderSetName = XRCCTRL(wiz, "npSliderSetName", wxChoice)->GetStringSelection();
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
@@ -790,7 +790,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog loadProjectDialog(this, "Select a slider set to load", "SliderSets", wxEmptyString, "Slider Set Files (*.xml)|*.xml", wxFD_FILE_MUST_EXIST);
+	wxFileDialog loadProjectDialog(this, "Select a slider set to load", "SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
 	if (loadProjectDialog.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -945,7 +945,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		wxString fileName = XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
 		wxString refShape = XRCCTRL(dlg, "npRefShapeName", wxChoice)->GetStringSelection();
 
-		if (fileName.EndsWith(".xml")) {
+		if (fileName.EndsWith(".osp") || fileName.EndsWith(".xml")) {
 			wxString sliderSetName = XRCCTRL(dlg, "npSliderSetName", wxChoice)->GetStringSelection();
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
@@ -1116,7 +1116,10 @@ void OutfitStudio::ClearProject() {
 	project->mBaseFile = "";
 	project->mGamePath = "";
 	project->mGameFile = "";
-	project->mGenWeights = true;
+	if (targetGame == SKYRIM)
+		project->mGenWeights = true;
+	else
+		project->mGenWeights = false;
 	project->mCopyRef = true;
 
 	glView->DestroyOverlays();
@@ -1193,7 +1196,7 @@ void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 
 	string copyStr = XRCCTRL(*win, "sssName", wxTextCtrl)->GetValue();
 	copyStr = project->NameAbbreviate(copyStr);
-	string defSliderSetFile = copyStr + ".xml";
+	string defSliderSetFile = copyStr + ".osp";
 	string defShapeDataDir = copyStr;
 	string defOutputFile = copyStr + ".nif";
 
@@ -1300,7 +1303,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		if (!project->mFileName.empty())
 			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(project->mFileName);
 		else
-			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(sssName + ".xml");
+			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(sssName + ".osp");
 
 		if (!project->mDataDir.empty())
 			XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->SetPath(project->mDataDir);
@@ -1351,8 +1354,8 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox("Invalid or no slider set file specified! Please try again.", "Error", wxOK | wxICON_ERROR);
 		return;
 	}
-	if (strFileName.substr(strFileName.length() - 4, strFileName.length()) != ".xml")
-		strFileName.append(".xml");
+	if (strFileName.substr(strFileName.length() - 4, strFileName.length()) != ".osp")
+		strFileName.append(".osp");
 
 	strOutfitName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue();
 	if (strOutfitName.empty()) {
@@ -3696,7 +3699,7 @@ void OutfitStudio::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {
 	setNameChoice->Clear();
 	refShapeChoice->Clear();
 
-	if (fn.rfind(".xml") != string::npos) {
+	if (fn.rfind(".osp") != string::npos || fn.rfind(".xml") != string::npos) {
 		SliderSetFile ssf(fn);
 		if (ssf.fail())
 			return;

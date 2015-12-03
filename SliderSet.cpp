@@ -7,15 +7,15 @@ See the included LICENSE file
 #include "SliderSet.h"
 
 SliderSet::SliderSet() {
-	genWeights = true;
+}
+
+SliderSet::~SliderSet() {
 }
 
 SliderSet::SliderSet(XMLElement* element) {
 	LoadSliderSet(element);
 }
 
-SliderSet::~SliderSet() {
-}
 
 void SliderSet::DeleteSlider(const string& setName) {
 	for (int i = 0; i < sliders.size(); i++) {
@@ -45,14 +45,24 @@ int SliderSet::CopySlider(SliderData* other) {
 }
 
 int SliderSet::LoadSliderSet(XMLElement* element) {
+	XMLElement *root = element->Parent()->ToElement();
+	int version = root->IntAttribute("version");
+
+	string shapeStr = version >= 1 ? "Shape" : "BaseShapeName";
+	string dataFolderStr = version >= 1 ? "DataFolder" : "SetFolder";
+
 	name = element->Attribute("name");
-	XMLElement* tmpElement;
-	tmpElement = element->FirstChildElement("SetFolder");
-	if (tmpElement)
+
+	XMLElement* tmpElement = element->FirstChildElement(dataFolderStr.c_str());
+	if (tmpElement) {
+		tmpElement->SetName("DataFolder");
 		datafolder = tmpElement->GetText();
+	}
+
 	tmpElement = element->FirstChildElement("SourceFile");
 	if (tmpElement)
 		inputfile = tmpElement->GetText();
+
 	tmpElement = element->FirstChildElement("OutputPath");
 	if (tmpElement)
 		outputpath = tmpElement->GetText();
@@ -69,22 +79,23 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 		}
 	}
 
-	XMLElement* shapeName = element->FirstChildElement("BaseShapeName");
+	XMLElement* shapeName = element->FirstChildElement(shapeStr.c_str());
 	while (shapeName) {
+		shapeName->SetName("Shape");
 		if (shapeName->Attribute("DataFolder"))
 			targetdatafolders[shapeName->Attribute("target")] = shapeName->Attribute("DataFolder");
 		else
 			targetdatafolders[shapeName->Attribute("target")] = datafolder;
 
 		targetshapenames[shapeName->Attribute("target")] = shapeName->GetText();
-		shapeName = shapeName->NextSiblingElement("BaseShapeName");
+		shapeName = shapeName->NextSiblingElement(shapeStr.c_str());
 	}
 
-	XMLElement* sliderEntry = element->FirstChildElement("Slider");
 	SliderData tmpSlider;
+	XMLElement* sliderEntry = element->FirstChildElement("Slider");
 	while (sliderEntry) {
 		tmpSlider.Clear();
-		if (tmpSlider.LoadSliderData(sliderEntry) == 0)
+		if (tmpSlider.LoadSliderData(sliderEntry, genWeights) == 0)
 			sliders.push_back(tmpSlider);
 
 		sliderEntry = sliderEntry->NextSiblingElement("Slider");
@@ -93,28 +104,47 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 }
 
 void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
-	string fullfilepath;
-	DiffDataFile f;
-	for (int i = 0; i < sliders.size(); i++) {
-		for (int j = 0; j < sliders[i].dataFiles.size(); j++) {
-			f = sliders[i].dataFiles[j];
-			fullfilepath = baseDataPath + "\\";
-			if (f.bLocal)
-				fullfilepath += datafolder + "\\";
-			else
-				fullfilepath += targetdatafolders[f.targetName] + "\\";
+	map<string, map<string, string>> osdNames;
 
-			fullfilepath += f.fileName;
-			inDataStorage.LoadSet(f.dataName, f.targetName, fullfilepath);
+	for (auto &slider : sliders) {
+		for (auto &ddf : slider.dataFiles) {
+			string fullFilePath = baseDataPath + "\\";
+			if (ddf.bLocal)
+				fullFilePath += datafolder + "\\";
+			else
+				fullFilePath += targetdatafolders[ddf.targetName] + "\\";
+
+			fullFilePath += ddf.fileName;
+
+			// BSD format
+			if (ddf.fileName.compare(ddf.fileName.size() - 4, ddf.fileName.size(), ".bsd") == 0) {
+				inDataStorage.LoadSet(ddf.dataName, ddf.targetName, fullFilePath);
+			}
+			// OSD format
+			else {
+				// Split file name to get file and data name in it
+				int split = fullFilePath.find_last_of('\\');
+				if (split < 0)
+					continue;
+
+				string dataName = fullFilePath.substr(split + 1);
+				string fileName = fullFilePath.substr(0, split);
+
+				// Cache data locations
+				osdNames[fileName][dataName] = ddf.targetName;
+			}
 		}
 	}
+
+	// Load from cached data locations at once
+	inDataStorage.LoadData(osdNames);
 }
 
 void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	sliderSetElement->DeleteChildren();
 	sliderSetElement->SetAttribute("name", name.c_str());
 
-	XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("SetFolder");
+	XMLElement* newElement = sliderSetElement->GetDocument()->NewElement("DataFolder");
 	XMLText* newText = sliderSetElement->GetDocument()->NewText(datafolder.c_str());
 	sliderSetElement->InsertEndChild(newElement)->ToElement()->InsertEndChild(newText);
 
@@ -129,8 +159,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	newElement = sliderSetElement->GetDocument()->NewElement("OutputFile");
 	XMLElement* outputFileElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 
-	if (!genWeights)
-		outputFileElement->SetAttribute("GenWeights", "false");
+	outputFileElement->SetAttribute("GenWeights", genWeights ? "true" : "false");
 
 	newText = sliderSetElement->GetDocument()->NewText(outputfile.c_str());
 	outputFileElement->InsertEndChild(newText);
@@ -140,7 +169,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	XMLElement* dataFileElement;
 
 	for (auto &tsn : targetshapenames) {
-		newElement = sliderSetElement->GetDocument()->NewElement("BaseShapeName");
+		newElement = sliderSetElement->GetDocument()->NewElement("Shape");
 		baseShapeElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 		baseShapeElement->SetAttribute("target", tsn.first.c_str());
 		if (targetdatafolders.find(tsn.first) != targetdatafolders.end())
@@ -157,9 +186,15 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		newElement = sliderSetElement->GetDocument()->NewElement("Slider");
 		sliderElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 		sliderElement->SetAttribute("name", slider.name.c_str());
-		sliderElement->SetAttribute("invert", (slider.bInvert) ? "true" : "false");
-		sliderElement->SetAttribute("small", (int)slider.defSmallValue);
-		sliderElement->SetAttribute("big", (int)slider.defBigValue);
+		sliderElement->SetAttribute("invert", slider.bInvert ? "true" : "false");
+
+		if (genWeights) {
+			sliderElement->SetAttribute("small", (int)slider.defSmallValue);
+			sliderElement->SetAttribute("big", (int)slider.defBigValue);
+		}
+		else
+			sliderElement->SetAttribute("default", (int)slider.defSmallValue);
+
 		if (slider.bHidden)
 			sliderElement->SetAttribute("hidden", "true");
 		if (slider.bClamp)
@@ -169,29 +204,14 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		if (slider.bUV)
 			sliderElement->SetAttribute("uv", "true");
 		for (auto &df : slider.dataFiles) {
-			newElement = sliderSetElement->GetDocument()->NewElement("datafile");
+			newElement = sliderSetElement->GetDocument()->NewElement("Data");
 			dataFileElement = sliderElement->InsertEndChild(newElement)->ToElement();
 			dataFileElement->SetAttribute("name", df.dataName.c_str());
 			dataFileElement->SetAttribute("target", df.targetName.c_str());
-			if (df.bLocal) {
+			if (df.bLocal)
 				dataFileElement->SetAttribute("local", "true");
-			}
 
-			// Hack! Force these clamp bsd's to use the new ones that don't include the CBBE offset.
-			// this is here in order to allow older slider sets to be opened by Outfit Studio and saved without
-			// telling the user about the offset. (OS clears out the offset naturally when loading the files, so everything lines up
-			// except for these old seam clamps.)
-			string fn = df.fileName;
-			if (fn == "LockSeamLo.bsd")
-				fn = "LockSeamLo2.bsd";
-			if (fn == "LockSeamHi.bsd")
-				fn = "LockSeamHi2.bsd";
-			if (fn == "NH_LockSeamLo.bsd")
-				fn = "NH_LockSeamLo2.bsd";
-			if (fn == "NH_LockSeamHi.bsd")
-				fn = "NH_LockSeamHi2.bsd";
-
-			newText = sliderSetElement->GetDocument()->NewText(fn.c_str());
+			newText = sliderSetElement->GetDocument()->NewText(df.fileName.c_str());
 			dataFileElement->InsertEndChild(newText);
 		}
 	}
@@ -229,7 +249,7 @@ void SliderSetFile::Open(const string& srcFileName) {
 		return;
 	}
 
-	version = root->IntAttribute("Version");
+	version = root->IntAttribute("version");
 
 	XMLElement* setElement;
 	string setname;
@@ -250,7 +270,7 @@ void SliderSetFile::New(const string& newFileName) {
 
 	XMLElement* rootElement = doc.NewElement("SliderSetInfo");
 	if (version > 0)
-		rootElement->SetAttribute("Version", version);
+		rootElement->SetAttribute("version", version);
 
 	doc.InsertEndChild(rootElement);
 	root = doc.FirstChildElement("SliderSetInfo");
@@ -286,22 +306,10 @@ void SliderSetFile::SetShapes(const string& set, vector<string>& outShapeNames) 
 		return;
 
 	XMLElement* setElement = setsInFile[set];
-	XMLElement* shapeElement = setElement->FirstChildElement("BaseShapeName");
+	XMLElement* shapeElement = setElement->FirstChildElement("Shape");
 	while (shapeElement) {
 		outShapeNames.push_back(shapeElement->GetText());
-		shapeElement = shapeElement->NextSiblingElement("BaseShapeName");
-	}
-}
-
-void SliderSetFile::SetTargets(const string& set, vector<string>& outTargetNames) {
-	if (!HasSet(set))
-		return;
-
-	XMLElement* setElement = setsInFile[set];
-	XMLElement* shapeElement = setElement->FirstChildElement("BaseShapeName");
-	while (shapeElement) {
-		outTargetNames.push_back(shapeElement->Attribute("target"));
-		shapeElement = shapeElement->NextSiblingElement("BaseShapeName");
+		shapeElement = shapeElement->NextSiblingElement("Shape");
 	}
 }
 

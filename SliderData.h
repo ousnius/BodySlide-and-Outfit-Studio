@@ -15,18 +15,17 @@ See the included LICENSE file
 using namespace std;
 using namespace tinyxml2;
 
-struct DiffDataFile {
+struct DiffInfo {
 	bool bLocal;			// Local files use the slider set's directory for path info. Otherwise, it uses the target's data path.
 	string dataName;		// Alias for the data.
 	string targetName;		// Shape affected by the data.
 	string fileName;		// File name not including path.
-	DiffDataFile(bool l = false, const string& dn = "", const string& tn = "", const string& fn = "")
+	DiffInfo(bool l = false, const string& dn = "", const string& tn = "", const string& fn = "")
 		: bLocal(l), dataName(dn), targetName(tn), fileName(fn) {
 	}
 };
 
-class SliderData
-{
+class SliderData {
 public:
 	string name;
 	bool bHidden;
@@ -41,7 +40,7 @@ public:
 	float curValue;		// Current slider value.
 	bool bShow;			// On to enable this slider when deforming verts.
 
-	vector<DiffDataFile> dataFiles;
+	vector<DiffInfo> dataFiles;
 
 	SliderData(const string& inName = "");
 	SliderData(XMLElement* element);
@@ -86,5 +85,6 @@ public:
 	void Clear() {
 		dataFiles.clear();
 	}
-	int LoadSliderData(XMLElement* srcdata);
+
+	int LoadSliderData(XMLElement* srcdata, bool genWeights);
 };
