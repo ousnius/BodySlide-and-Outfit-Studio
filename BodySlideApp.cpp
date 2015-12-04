@@ -261,6 +261,7 @@ int BodySlideApp::LoadSliderSets() {
 	outfitNameOrder.clear();
 
 	wxArrayString files;
+	wxDir::GetAllFiles("SliderSets", &files, "*.osp");
 	wxDir::GetAllFiles("SliderSets", &files, "*.xml");
 
 	for (auto &file : files) {

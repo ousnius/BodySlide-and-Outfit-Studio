@@ -421,7 +421,8 @@ int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 
 void GLSurface::InitGLExtensions() {
 	bUseAF = IsExtensionSupported("GL_EXT_texture_filter_anisotropic");
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
+	if (bUseAF)
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
 
 	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
 	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
