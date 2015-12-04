@@ -486,6 +486,9 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				ddsHeader.ddspf.dwSize = sizeof(DDS_PIXELFORMAT);
 				ddsHeader.dwSurfaceFlags = DDS_SURFACE_FLAGS_TEXTURE | DDS_SURFACE_FLAGS_MIPMAP;
 
+				if (file->tex.header.unk16 == 2049)
+					ddsHeader.dwCubemapFlags = DDS_CUBEMAP_ALLFACES;
+
 				bool ok = true;
 
 				switch (file->tex.header.format) {
