@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <map>
 #include <unordered_map>
 #include <fstream>
+#include <string>
 
 using namespace std;
 

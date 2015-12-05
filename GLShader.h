@@ -6,11 +6,13 @@ See the included LICENSE file
 
 #pragma once
 
+#include "stdafx.h"
 #include "Object3d.h"
 
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glext.h>
+#include <GL/wglext.h>
 #include <fstream>
 
 #define GLSHADER_PASSTHROUGH "__PASSTHRU__"		// Specifies the basic "do nothing" shader.

@@ -4,6 +4,7 @@ Copyright (C) 2015  Caliente & ousnius
 See the included LICENSE file
 */
 
+#include "stdafx.h"
 #include "Anim.h"
 
 bool AnimInfo::AddShapeBone(const string& shape, AnimBone& boneDataRef) {

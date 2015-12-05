@@ -1,10 +1,10 @@
-#include "object3d.h"
+#include "Object3d.h"
 
-float h2float(const unsigned short in) {
+float h2float(const ushort& in) {
 	float ret;
-	unsigned int t1;
-	unsigned int t2;
-	unsigned int t3;
+	uint t1;
+	uint t2;
+	uint t3;
 
 	t1 = in & 0x7fff;
 	t2 = in & 0x8000;
@@ -17,18 +17,16 @@ float h2float(const unsigned short in) {
 	t1 = (t3 == 0 ? 0 : t1);
 	t1 |= t2;
 
-	*((unsigned int*)&ret) = t1;
-
+	*((uint*)&ret) = t1;
 	return ret;
-
 }
 
-unsigned short float2h(const float in) {
-	unsigned short  ret;
+unsigned short float2h(const float& in) {
+	ushort ret;
 
-	unsigned int c = *((unsigned int*)&in);
+	uint c = *((uint*)&in);
 
-	unsigned int t1, t2, t3;
+	uint t1, t2, t3;
 	t1 = c & 0x7fffffff;
 	t2 = c & 0x80000000;
 	t3 = c & 0x7f800000;

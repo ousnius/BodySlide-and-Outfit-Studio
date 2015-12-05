@@ -2246,15 +2246,12 @@ void BSSkinInstance::Get(fstream& file) {
 	file.read((char*)&unk, 4);
 	file.read((char*)&boneDataRef, 4);
 	file.read((char*)&numBones, 4);
-	for (int i=0; i < numBones; i++) {
+	for (int i = 0; i < numBones; i++) {
 		file.read((char*)&intData, 4);
 		bones.push_back(intData);
 	}
 
 	file.read((char*)&numVertices, 4);
-	if (numVertices > 0)
-		__debugbreak;					// Found a skin instance with vertices figure out how much data goes here!
-	
 }
 
 void BSSkinInstance::Put(fstream& file) {
@@ -2267,7 +2264,6 @@ void BSSkinInstance::Put(fstream& file) {
 		file.write((char*)&bones[i], 4);
 	}
 	file.write((char*)&numVertices, 4);
-
 }
 
 void BSSkinInstance::notifyBlockDelete(int blockID) {

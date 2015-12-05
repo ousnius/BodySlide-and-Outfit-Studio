@@ -6,17 +6,13 @@ See the included LICENSE file
 
 #pragma once
 
-#include "stdafx.h"
-
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
-#include <GL/wglext.h>
 #include <vector>
 #include <set>
 #include <math.h>
 
 using namespace std;
+
+#pragma warning (disable : 4018 4244 4389)
 
 #ifndef EPSILON
 	#define EPSILON (1.0E-4)
@@ -28,8 +24,8 @@ typedef unsigned char byte;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
-float h2float(const unsigned short in);
-unsigned short float2h(const float in);
+float h2float(const ushort& in);
+ushort float2h(const float& in);
 
 struct Vertex;
 

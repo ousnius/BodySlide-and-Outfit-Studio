@@ -1710,6 +1710,8 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 		shapeDirty.erase(shapeName);
 		shapeDirty[newShapeName] = true;
 	}
+
+	wxLogMessage("Renamed shape '%s' to '%s'.", shapeName, newShapeName);
 }
 
 void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMeshes) {

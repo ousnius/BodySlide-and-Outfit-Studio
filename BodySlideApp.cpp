@@ -73,8 +73,11 @@ bool BodySlideApp::OnInit() {
 	Config.LoadConfig();
 
 	logger.Initialize();
-	//wxHandleFatalExceptions();
 	wxLogMessage("Initializing BodySlide...");
+
+#ifdef NDEBUG
+	wxHandleFatalExceptions();
+#endif
 
 	wxInitAllImageHandlers();
 
@@ -323,6 +326,8 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 }
 
 void BodySlideApp::ActivatePreset(const string &presetName) {
+	wxLogMessage("Applying preset '%s' to sliders.", presetName);
+
 	Config.SetValue("SelectedPreset", presetName);
 	sliderManager.InitializeSliders(presetName);
 	Slider* slider = nullptr;

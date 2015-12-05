@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include <windows.h>
+#include "stdafx.h"
 #include <dxgiformat.h>
 
 #pragma pack(push,1)
