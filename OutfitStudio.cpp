@@ -4633,11 +4633,15 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 }
 
 wxDragResult DnDSliderFile::OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult) {
+	targetSlider.clear();
 	lastResult = defResult;
+
+	if (defResult == wxDragCopy)
+		return lastResult;
 
 	if (owner) {
 		for (auto &child : owner->sliderDisplays) {
-			if (child.second->sliderPane->HitTest(x, y) == wxHT_WINDOW_INSIDE) {
+			if (child.second->sliderPane->GetRect().Contains(x, y)) {
 				targetSlider = child.first;
 				lastResult = wxDragMove;
 				break;
