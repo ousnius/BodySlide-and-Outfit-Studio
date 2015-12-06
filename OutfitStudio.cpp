@@ -836,12 +836,12 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	int error = project->OutfitFromSliderSet(file, outfit);
 	if (error) {
 		EndProgress();
-		wxLogError("Failed to create project (%d)!", outfit, file, error);
+		wxLogError("Failed to create project (%d)!", error);
 		wxMessageBox(wxString::Format("Failed to create project '%s' from file '%s' (%d)!", outfit, file, error), "Slider Set Error", wxICON_ERROR);
 		RefreshGUIFromProj();
 		return;
 	}
-	
+
 	string shape = project->GetBaseShape();
 	wxLogMessage("Loading reference shape '%s'...", shape);
 	UpdateProgress(50.0f, wxString::Format("Loading reference shape '%s'...", shape));
