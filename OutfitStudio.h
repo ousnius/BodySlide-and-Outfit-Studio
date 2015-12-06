@@ -456,7 +456,31 @@ public:
 
 	ConfigurationManager& appConfig;
 
+	class SliderDisplay {
+	public:
+		bool hilite;
+		wxPanel* sliderPane;
+		wxBoxSizer* paneSz;
+
+		int sliderNameCheckID;
+		int sliderID;
+
+		wxBitmapButton* btnSliderEdit;
+		wxButton* btnMinus;
+		wxButton* btnPlus;
+		wxCheckBox* sliderNameCheck;
+		wxStaticText* sliderName;
+		wxSlider* slider;
+		wxTextCtrl* sliderReadout;
+
+		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
+	};
+
+	map<string, SliderDisplay*> sliderDisplays;
+
 	void CreateSetSliders();
+
+	string NewSlider();
 
 	void SetSliderValue(int index, int val);
 	void SetSliderValue(const string& name, int val);
@@ -485,9 +509,10 @@ public:
 	bool IsDirty(const string& shapeName);
 	void SetClean(const string& shapeName);
 
-	// Slider edit states - enable/disable menu items
-	void EnterSliderEdit();
+	void EnterSliderEdit(const string& sliderName);
 	void ExitSliderEdit();
+	void MenuEnterSliderEdit();
+	void MenuExitSliderEdit();
 
 	void ToggleBrushPane() {
 		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
@@ -613,32 +638,10 @@ public:
 	}
 
 private:
-	class SliderDisplay {
-	public:
-		bool hilite;
-		wxPanel* sliderPane;
-		wxBoxSizer* paneSz;
-
-		int sliderNameCheckID;
-		int sliderID;
-
-		wxBitmapButton* btnSliderEdit;
-		wxButton* btnMinus;
-		wxButton* btnPlus;
-		wxCheckBox* sliderNameCheck;
-		wxStaticText* sliderName;
-		wxSlider* slider;
-		wxTextCtrl* sliderReadout;
-
-		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
-	};
-
 	bool previousMirror;
 	Vector3 previewMove;
 	float previewScale;
 	Vector3 previewRotation;
-
-	map<string, SliderDisplay*> sliderDisplays;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);
@@ -888,4 +891,17 @@ public:
 
 private:
 	OutfitStudio *owner;
+};
+
+class DnDSliderFile : public wxFileDropTarget {
+public:
+	DnDSliderFile(OutfitStudio *pOwner = nullptr) { owner = pOwner; }
+
+	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
+	virtual wxDragResult OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult);
+
+private:
+	OutfitStudio *owner;
+	wxDragResult lastResult;
+	string targetSlider;
 };

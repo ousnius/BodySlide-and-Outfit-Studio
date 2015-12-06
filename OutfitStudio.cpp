@@ -361,6 +361,9 @@ void OutfitStudio::CreateSetSliders() {
 		createSliderGUI(project->GetSliderName(i), i, sliderScroll, rootSz);
 	}
 
+	if (!sliderScroll->GetDropTarget())
+		sliderScroll->SetDropTarget(new DnDSliderFile(this));
+
 	sliderScroll->Thaw();
 	sliderScroll->FitInside();
 
@@ -428,6 +431,31 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 
 	ShowSliderEffect(id);
 	sliderDisplays[name] = d;
+}
+
+string OutfitStudio::NewSlider() {
+	string namebase = "NewSlider";
+	char thename[256];
+	_snprintf_s(thename, 256, 256, "%s", namebase.c_str());
+	int count = 1;
+
+	while (sliderDisplays.find(thename) != sliderDisplays.end())
+		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
+
+	string finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
+	if (finalName.empty())
+		return finalName;
+
+	finalName = project->NameAbbreviate(finalName);
+	wxLogMessage("Creating new slider '%s'.", finalName);
+
+	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+
+	project->AddEmptySlider(finalName);
+	ShowSliderEffect(finalName);
+	sliderScroll->FitInside();
+
+	return finalName;
 }
 
 void OutfitStudio::SetSliderValue(int index, int val) {
@@ -602,8 +630,70 @@ void OutfitStudio::SetClean(const string& shapeName) {
 	project->Clean(shapeName);
 }
 
-// Slider edit states - enable/disable menu items.
-void OutfitStudio::EnterSliderEdit() {
+void OutfitStudio::EnterSliderEdit(const string& sliderName) {
+	if (IsDirty(activeItem->shapeName)) {
+		int response = wxMessageBox("You have unsaved changes to the base mesh shape, do you wish to apply the changes? If you select NO, the changes will be lost.", wxMessageBoxCaptionStr, wxYES_NO | wxCANCEL, this);
+		if (response == wxCANCEL)
+			return;
+
+		if (response == wxYES) {
+			vector<string> shapes;
+			project->GetShapes(shapes);
+
+			for (auto &s : shapes) {
+				UpdateShapeSource(s);
+				project->RefreshMorphShape(s);
+			}
+		}
+		if (response == wxNO)
+			project->Clean();
+	}
+
+	bEditSlider = true;
+	activeSlider = sliderName;
+	SliderDisplay* d = sliderDisplays[activeSlider];
+	d->slider->SetValue(100);
+	SetSliderValue(activeSlider, 100);
+
+	if (d->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_UNCHECKED) {
+		d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+		ShowSliderEffect(d->sliderID - 2000, true);
+	}
+
+	d->sliderNameCheck->Enable(false);
+	d->slider->SetFocus();
+	d->btnMinus->Show();
+	d->btnPlus->Show();
+	d->sliderPane->Layout();
+	glView->GetStrokeManager()->PushBVH();
+	glView->SetStrokeManager(&d->sliderStrokes);
+	MenuEnterSliderEdit();
+
+	HighlightSlider(activeSlider);
+	ApplySliders();
+}
+
+void OutfitStudio::ExitSliderEdit() {
+	SliderDisplay* d = sliderDisplays[activeSlider];
+	d->sliderNameCheck->Enable(true);
+	d->slider->SetValue(0);
+	SetSliderValue(activeSlider, 0);
+	ShowSliderEffect(activeSlider, true);
+	d->slider->SetFocus();
+	d->btnMinus->Hide();
+	d->btnPlus->Hide();
+	d->sliderPane->Layout();
+	activeSlider.clear();
+	bEditSlider = false;
+	glView->GetStrokeManager()->PushBVH();
+	glView->SetStrokeManager(nullptr);
+	MenuExitSliderEdit();
+
+	HighlightSlider(activeSlider);
+	ApplySliders();
+}
+
+void OutfitStudio::MenuEnterSliderEdit() {
 	wxMenuBar* menu = GetMenuBar();
 	menu->Enable(XRCID("menuImportSlider"), true);
 	menu->Enable(XRCID("menuExportSlider"), true);
@@ -613,7 +703,7 @@ void OutfitStudio::EnterSliderEdit() {
 	menu->Enable(XRCID("sliderProperties"), true);
 }
 
-void OutfitStudio::ExitSliderEdit() {
+void OutfitStudio::MenuExitSliderEdit() {
 	wxMenuBar* menu = GetMenuBar();
 	menu->Enable(XRCID("menuImportSlider"), false);
 	menu->Enable(XRCID("menuExportSlider"), false);
@@ -1951,64 +2041,10 @@ void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
 		return;
 	}
 
-	bEditSlider = false;
-
-	if (activeSlider != clickedName) {
-		if (IsDirty(activeItem->shapeName)) {
-			int response = wxMessageBox("You have unsaved changes to the base mesh shape, do you wish to apply the changes? If you select NO, the changes will be lost.", wxMessageBoxCaptionStr, wxYES_NO | wxCANCEL, this);
-			if (response == wxCANCEL)
-				return;
-
-			if (response == wxYES) {
-				vector<string> shapes;
-				project->GetShapes(shapes);
-
-				for (auto &s : shapes) {
-					UpdateShapeSource(s);
-					project->RefreshMorphShape(s);
-				}
-			}
-			if (response == wxNO)
-				project->Clean();
-		}
-
-		bEditSlider = true;
-		activeSlider = clickedName;
-		SliderDisplay* d = sliderDisplays[activeSlider];
-		d->slider->SetValue(100);
-		SetSliderValue(activeSlider, 100);
-
-		if (d->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_UNCHECKED) {
-			d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-			ShowSliderEffect(d->sliderID - 2000, true);
-		}
-		d->sliderNameCheck->Enable(false);
-		d->slider->SetFocus();
-		d->btnMinus->Show();
-		d->btnPlus->Show();
-		d->sliderPane->Layout();
-		glView->GetStrokeManager()->PushBVH();
-		glView->SetStrokeManager(&d->sliderStrokes);
-		EnterSliderEdit();
-	}
-	else {
-		SliderDisplay* d = sliderDisplays[activeSlider];
-		d->sliderNameCheck->Enable(true);
-		d->slider->SetValue(0);
-		SetSliderValue(activeSlider, 0);
-		ShowSliderEffect(activeSlider, true);
-		d->slider->SetFocus();
-		d->btnMinus->Hide();
-		d->btnPlus->Hide();
-		d->sliderPane->Layout();
-		activeSlider = "";
-		glView->GetStrokeManager()->PushBVH();
-		glView->SetStrokeManager(nullptr);
+	if (activeSlider != clickedName)
+		EnterSliderEdit(clickedName);
+	else
 		ExitSliderEdit();
-	}
-
-	HighlightSlider(activeSlider);
-	ApplySliders();
 }
 
 void OutfitStudio::OnReadoutChange(wxCommandEvent& event){
@@ -2445,7 +2481,7 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		sliderDisplays.erase(e);
 
 	glView->SetStrokeManager(nullptr);
-	ExitSliderEdit();
+	MenuExitSliderEdit();
 	sliderScroll->FitInside();
 	activeSlider = "";
 
@@ -2610,26 +2646,7 @@ void OutfitStudio::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnNewSlider(wxCommandEvent& WXUNUSED(event)) {
-	string namebase = "NewSlider";
-	char thename[256];
-	_snprintf_s(thename, 256, 256, "%s", namebase.c_str());
-	int count = 1;
-
-	while (sliderDisplays.find(thename) != sliderDisplays.end())
-		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
-
-	string finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
-	if (finalName.empty())
-		return;
-
-	finalName = project->NameAbbreviate(finalName);
-	wxLogMessage("Creating new slider '%s'.", finalName);
-
-	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
-
-	project->AddEmptySlider(finalName);
-	ShowSliderEffect(finalName);
-	sliderScroll->FitInside();
+	NewSlider();
 }
 
 void OutfitStudio::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
@@ -2725,7 +2742,7 @@ void OutfitStudio::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	sd->sliderStrokes.Clear();
 	sd->slider->SetFocus();
 	glView->SetStrokeManager(nullptr);
-	ExitSliderEdit();
+	MenuExitSliderEdit();
 
 	sd->btnSliderEdit->Destroy();
 	sd->slider->Destroy();
@@ -4544,13 +4561,14 @@ void wxGLPanel::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 	rbuttonDown = false;
 }
 
+
 bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 	if (owner) {
 		wxString inputFile;
 		if (fileNames.GetCount() > 0)
 			inputFile = fileNames.Item(0);
 
-		if (!inputFile.IsEmpty() && inputFile.MakeLower().EndsWith(".nif")) {
+		if (inputFile.MakeLower().EndsWith(".nif")) {
 			owner->StartProgress("Adding NIF file...");
 			owner->UpdateProgress(1.0f, "Adding NIF file...");
 			owner->project->AddNif(inputFile.ToStdString(), false);
@@ -4568,6 +4586,74 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 
 	return true;
 }
+
+bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
+	if (owner) {
+		wxString inputFile;
+		if (fileNames.GetCount() > 0)
+			inputFile = fileNames.Item(0);
+		
+		bool isBSD = inputFile.MakeLower().EndsWith(".bsd");
+		bool isOBJ = inputFile.MakeLower().EndsWith(".obj");
+		if (isBSD || isOBJ) {
+			if (!owner->activeItem) {
+				wxMessageBox("There is no shape selected!", "Error");
+				return false;
+			}
+
+			if (lastResult == wxDragCopy)
+				targetSlider = owner->NewSlider();
+
+			if (targetSlider.empty())
+				return false;
+
+			owner->StartProgress("Loading slider file...");
+			owner->UpdateProgress(1.0f, "Loading slider file...");
+
+			if (isBSD)
+				owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+			else if (isOBJ)
+				owner->project->SetSliderFromOBJ(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+			else
+				return false;
+
+			if (owner->activeSlider != targetSlider)
+				owner->EnterSliderEdit(targetSlider);
+
+			targetSlider.clear();
+
+			owner->UpdateProgress(100.0f, "Finished.");
+			owner->EndProgress();
+		}
+	}
+	else
+		return false;
+
+	return true;
+}
+
+wxDragResult DnDSliderFile::OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult) {
+	lastResult = defResult;
+
+	if (owner) {
+		for (auto &child : owner->sliderDisplays) {
+			if (child.second->sliderPane->HitTest(x, y) == wxHT_WINDOW_INSIDE) {
+				targetSlider = child.first;
+				lastResult = wxDragMove;
+				break;
+			}
+		}
+
+		if (targetSlider.empty())
+			if (owner->sliderScroll->HitTest(x, y) == wxHT_WINDOW_INSIDE)
+				lastResult = wxDragCopy;
+	}
+	else
+		lastResult = wxDragCancel;
+
+	return lastResult;
+}
+
 
 void OutfitStudio::OnNewProject2FP_NIF(wxFileDirPickerEvent& event) {
 	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
