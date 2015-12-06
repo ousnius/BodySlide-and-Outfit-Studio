@@ -4617,9 +4617,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 			else
 				return false;
 
-			if (owner->activeSlider != targetSlider)
-				owner->EnterSliderEdit(targetSlider);
-
+			owner->EnterSliderEdit(targetSlider);
 			targetSlider.clear();
 
 			owner->UpdateProgress(100.0f, "Finished.");
