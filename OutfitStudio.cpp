@@ -296,6 +296,8 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	if (splitterRight)
 		splitterRight->SetSashPosition(200);
 
+	SetDropTarget(new DnDFile(this));
+
 	wxLogMessage("Outfit Studio loaded.");
 }
 
@@ -750,28 +752,6 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	RefreshGUIFromProj();
 
-	wxTreeItemId itemToSelect;
-	wxTreeItemIdValue cookie;
-	if (outfitRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
-
-	if (itemToSelect.IsOk()) {
-		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
-		if (activeItem)
-			glView->SetActiveShape(activeItem->shapeName);
-		else
-			glView->SetActiveShape("");
-
-		outfitShapes->UnselectAll();
-		outfitShapes->SelectItem(itemToSelect);
-	}
-	else
-		activeItem = nullptr;
-
-	selectedItems.clear();
-	if (activeItem)
-		selectedItems.push_back(activeItem);
-
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
 	UpdateProgress(90.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
 	StartSubProgress(90.0f, 99.0f);
@@ -863,28 +843,6 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(80, "Creating outfit...");
 	RefreshGUIFromProj();
-
-	wxTreeItemId itemToSelect;
-	wxTreeItemIdValue cookie;
-	if (outfitRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
-
-	if (itemToSelect.IsOk()) {
-		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
-		if (activeItem)
-			glView->SetActiveShape(activeItem->shapeName);
-		else
-			glView->SetActiveShape("");
-
-		outfitShapes->UnselectAll();
-		outfitShapes->SelectItem(itemToSelect);
-	}
-	else
-		activeItem = nullptr;
-
-	selectedItems.clear();
-	if (activeItem)
-		selectedItems.push_back(activeItem);
 
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
 	UpdateProgress(90.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
@@ -983,28 +941,6 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(99.0f, "Applying slider effects...");
 	ApplySliders();
 
-	wxTreeItemId itemToSelect;
-	wxTreeItemIdValue cookie;
-	if (outfitRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
-
-	if (itemToSelect.IsOk()) {
-		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
-		if (activeItem)
-			glView->SetActiveShape(activeItem->shapeName);
-		else
-			glView->SetActiveShape("");
-
-		outfitShapes->UnselectAll();
-		outfitShapes->SelectItem(itemToSelect);
-	}
-	else
-		activeItem = nullptr;
-
-	selectedItems.clear();
-	if (activeItem)
-		selectedItems.push_back(activeItem);
-
 	wxLogMessage("Reference loaded.");
 	UpdateProgress(100.0f, "Finished");
 	EndProgress();
@@ -1077,28 +1013,6 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(50.0f, "Creating outfit...");
 	RefreshGUIFromProj();
 
-	wxTreeItemId itemToSelect;
-	wxTreeItemIdValue cookie;
-	if (outfitRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
-
-	if (itemToSelect.IsOk()) {
-		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
-		if (activeItem)
-			glView->SetActiveShape(activeItem->shapeName);
-		else
-			glView->SetActiveShape("");
-
-		outfitShapes->UnselectAll();
-		outfitShapes->SelectItem(itemToSelect);
-	}
-	else
-		activeItem = nullptr;
-
-	selectedItems.clear();
-	if (activeItem)
-		selectedItems.push_back(activeItem);
-
 	wxLogMessage("Outfit loaded.");
 	UpdateProgress(100.0f, "Finished");
 	EndProgress();
@@ -1134,6 +1048,28 @@ void OutfitStudio::RenameProject(const string& projectName) {
 void OutfitStudio::RefreshGUIFromProj() {
 	WorkingGUIFromProj();
 	AnimationGUIFromProj();
+
+	wxTreeItemId itemToSelect;
+	wxTreeItemIdValue cookie;
+	if (outfitRoot.IsOk())
+		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
+
+	if (itemToSelect.IsOk()) {
+		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
+		if (activeItem)
+			glView->SetActiveShape(activeItem->shapeName);
+		else
+			glView->SetActiveShape("");
+
+		outfitShapes->UnselectAll();
+		outfitShapes->SelectItem(itemToSelect);
+	}
+	else
+		activeItem = nullptr;
+
+	selectedItems.clear();
+	if (activeItem)
+		selectedItems.push_back(activeItem);
 }
 
 void OutfitStudio::AnimationGUIFromProj() {
@@ -4606,6 +4542,31 @@ void wxGLPanel::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 	if (HasCapture())
 		ReleaseMouse();
 	rbuttonDown = false;
+}
+
+bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
+	if (owner) {
+		wxString inputFile;
+		if (fileNames.GetCount() > 0)
+			inputFile = fileNames.Item(0);
+
+		if (!inputFile.IsEmpty() && inputFile.MakeLower().EndsWith(".nif")) {
+			owner->StartProgress("Adding NIF file...");
+			owner->UpdateProgress(1.0f, "Adding NIF file...");
+			owner->project->AddNif(inputFile.ToStdString(), false);
+			owner->project->SetTextures("_AUTO_");
+
+			owner->UpdateProgress(60.0f, "Refreshing GUI...");
+			owner->RefreshGUIFromProj();
+
+			owner->UpdateProgress(100.0f, "Finished.");
+			owner->EndProgress();
+		}
+	}
+	else
+		return false;
+
+	return true;
 }
 
 void OutfitStudio::OnNewProject2FP_NIF(wxFileDirPickerEvent& event) {

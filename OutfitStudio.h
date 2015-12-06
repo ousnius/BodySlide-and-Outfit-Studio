@@ -475,6 +475,8 @@ public:
 	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
 
+	void RefreshGUIFromProj();
+
 	string GetActiveBone();
 
 	bool NotifyStrokeStarting();
@@ -645,7 +647,6 @@ private:
 	void ClearProject();
 	void RenameProject(const string& projectName);
 
-	void RefreshGUIFromProj();
 	void AnimationGUIFromProj();
 	void WorkingGUIFromProj();
 
@@ -877,4 +878,14 @@ private:
 	}
 
 	DECLARE_EVENT_TABLE()
+};
+
+class DnDFile : public wxFileDropTarget {
+public:
+	DnDFile(OutfitStudio *pOwner = nullptr) { owner = pOwner; }
+
+	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
+
+private:
+	OutfitStudio *owner;
 };

@@ -1460,6 +1460,8 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 
 	if (!inOutfitName.empty())
 		outfitName = inOutfitName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
 
 	if (clear) {
 		size_t fnpos = fileName.rfind("\\");
