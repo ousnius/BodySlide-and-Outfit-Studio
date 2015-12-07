@@ -10,11 +10,19 @@ See the included LICENSE file
 #include "FSManager.h"
 #include "FSEngine.h"
 
-#include "SOIL.h"
-#ifdef _DEBUG
-#pragma comment (lib, "SOIL_d.lib")
+#include "SOIL2.h"
+#ifdef NDEBUG
+	#ifdef _WIN32
+		#pragma comment (lib, "SOIL2.lib")
+	#elif _WIN64
+		#pragma comment (lib, "SOIL2_x64.lib")
+	#endif
 #else
-#pragma comment (lib, "SOIL.lib")
+	#ifdef _WIN32
+		#pragma comment (lib, "SOIL2_d.lib")
+	#elif _WIN64
+		#pragma comment (lib, "SOIL2_x64_d.lib")
+	#endif
 #endif
 
 #include <wx/dir.h>

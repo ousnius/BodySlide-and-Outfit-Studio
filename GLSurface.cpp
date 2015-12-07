@@ -10,13 +10,6 @@ See the included LICENSE file
 #include <set>
 #include <limits>
 
-#ifdef _DEBUG
-#pragma comment (lib, "SOIL_d.lib")
-#else
-#pragma comment (lib, "SOIL.lib")
-#endif
-#include "SOIL.h"
-
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;

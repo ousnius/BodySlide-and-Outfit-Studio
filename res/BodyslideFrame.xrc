@@ -1037,7 +1037,8 @@ along with this program.  If not, see <a href="http://www.gnu.org/licenses/">htt
 <b>wxWidgets</b><br><br><font size="2">wxWindows License<br><a href="http://www.wxwidgets.org/">http://www.wxwidgets.org/</a></font><br><br><br>
 
 <b>OpenGL</b><br><font size="2"><a href="http://www.opengl.org/">http://www.opengl.org/</a></font><br><br><br>
-<b>Simple OpenGL Image Libary (SOIL)</b><br><font size="2">Public Domain<br><a href="http://lonesock.net/soil.html">http://lonesock.net/soil.html</a></font><br><br><br>
+
+<b>Simple OpenGL Image Libary 2 (SOIL2)</b><br><font size="2">Public Domain<br><a href="https://bitbucket.org/SpartanJ/soil2">https://bitbucket.org/SpartanJ/soil2</a><br><a href="http://lonesock.net/soil.html">http://lonesock.net/soil.html</a></font><br><br><br>
 
 <b>TinyXML-2</b><br><br><font size="2">zlib License<br>Original code by Lee Thomason (<a href="http://www.grinninglizard.com">http://www.grinninglizard.com/</a>)<br><br>
 <i>This software is provided 'as-is', without any express or implied<br>warranty. In no event will the authors be held liable for any<br>damages arising from the use of this software.<br><br>
