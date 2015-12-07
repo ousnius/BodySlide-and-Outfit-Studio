@@ -12,7 +12,7 @@ See the included LICENSE file
 
 using namespace std;
 
-#pragma warning (disable : 4018 4244 4389)
+#pragma warning (disable : 4018 4244 4267 4389)
 
 #ifndef EPSILON
 	#define EPSILON (1.0E-4)
