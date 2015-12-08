@@ -1164,6 +1164,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 
 	const vector<Vector3>* nifNorms = nullptr;
 	const vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
+	nifNorms = nif->GetNormalsForShape(shapeName, false);
 
 	mesh* m = new mesh();
 
@@ -1178,7 +1179,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	}
 
 	m->shapeName = shapeName;
-	m->smoothSeamNormals = smoothNormalSeams;
+	m->smoothSeamNormals = false; // smoothNormalSeams;
 
 	m->nVerts = nifVerts.size();
 	m->verts = new Vertex[m->nVerts];
@@ -1193,9 +1194,9 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		m->verts[i].x = (nifVerts)[i].x / -10.0f;
 		m->verts[i].z = (nifVerts)[i].y / 10.0f;
 		m->verts[i].y = (nifVerts)[i].z / 10.0f;
-		//m->verts[i].x = (nifVerts)[i].x / 10.0f;
-		//m->verts[i].y = (nifVerts)[i].y / 10.0f;
-		//m->verts[i].z = (nifVerts)[i].z / 10.0f;
+		/*m->verts[i].x = (nifVerts)[i].x / 10.0f;
+		m->verts[i].y = (nifVerts)[i].y / 10.0f;
+		m->verts[i].z = (nifVerts)[i].z / 10.0f;*/
 		m->verts[i].indexRef = i;
 	}
 
@@ -1271,9 +1272,33 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			m->verts[i].nz = (*nifNorms)[i].y;
 			m->verts[i].ny = (*nifNorms)[i].z;
 		}
+
+		// virtually Weld verts across uv seams
+		kd_matcher matcher(m->verts, m->nVerts);
+		for (int i = 0; i < matcher.matches.size(); i++) {
+			Vertex* a = matcher.matches[i].first;
+			Vertex* b = matcher.matches[i].second;
+			m->weldVerts[a->indexRef].push_back(b->indexRef);
+			m->weldVerts[b->indexRef].push_back(a->indexRef);
+		}
 	}
 
 	//nifNorms = nif->GetNormalsForShape(shapeName);
+	//const vector<Vector3>* tans = nif->GetTangentsForShape(shapeName);
+	//const vector<Vector3>* bits = nif->GetBitangentsForShape(shapeName);
+	//AddVisNorms(m, nifNorms, "Norms", Vector3(0.0f, 0, 1.0f));
+	//AddVisNorms(m, tans, "tans", Vector3(0.0f, 1.0f, 0.0f));
+	//AddVisNorms(m, bits, "bits", Vector3(1.0f, 0.0f, 0.0f));
+	//
+	//vector <Vector3>* n;
+	//vector <Vector3>* b;
+	//vector <Vector3>* t;
+
+	//nif->CalcTangentsForShape(shapeName, &n, &t, &b);
+	//AddVisNorms(m, n, "Norms", Vector3(0.0f, 0, 1.0f));
+	//AddVisNorms(m, t, "tans", Vector3(0.0f, 1.0f, 0.0f));
+	//AddVisNorms(m, b, "bits2", Vector3(0.0f, 1.0f, 1.0f));
+
 	//m->ColorFill(Vector3(0, 0, 0));
 	//for (int i = 0; i < m->nVerts; i++) {
 

@@ -120,6 +120,9 @@
     <ClCompile Include="SliderSet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FBXWrangler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Automorph.h">
@@ -233,6 +236,9 @@
     <ClInclude Include="SliderSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FBXWrangler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="BodySlide.ico">
@@ -246,6 +252,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\BodyslideFrame.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\outfitStudio.xrc">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

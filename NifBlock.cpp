@@ -41,6 +41,9 @@ NiHeader::NiHeader() {
 	numStrings = 0;
 	blocks = nullptr;
 	blockType = NIHEADER;
+	exportInfo1.outputNull = true;
+	exportInfo2.outputNull = true;
+	exportInfo3.outputNull = true;
 }
 
 void NiHeader::Clear() {
@@ -86,7 +89,7 @@ void NiHeader::Get(fstream& file) {
 		return;
 	}
 
-	//file >> unk1;
+	//file >> bitangentY;
 	unk1 = 10;
 	file >> version1 >> version2 >> version3 >> version4;
 	file >> endian;
@@ -139,7 +142,7 @@ void NiHeader::Put(fstream& file) {
 	}
 	file.write((char*)&numBlockTypes, 2);
 	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes[i].Put(file, 4);
+		blockTypes[i].Put(file, 4,false);
 
 	for (int i = 0; i < numBlocks; i++)
 		file.write((char*)&blockIndex[i], 2);
@@ -150,7 +153,7 @@ void NiHeader::Put(fstream& file) {
 	file.write((char*)&numStrings, 4);
 	file.write((char*)&maxStringLen, 4);
 	for (int i = 0; i < numStrings; i++)
-		strings[i].Put(file, 4);
+		strings[i].Put(file, 4,false);
 
 	file.write((char*)&unkInt2, 4);
 }
@@ -165,28 +168,32 @@ NiString::NiString(fstream& file, int szSize, bool wantNullOutput) {
 	Get(file, szSize);
 }
 
-void NiString::Put(fstream& file, int szSize) {
+void NiString::Put(fstream& file, int szSize, bool wantNullOutput) {
 	if (szSize == 1) {
 		byte smSize = str.length();
-		if (!smSize && outputNull)
-			smSize = 1;
+		//if (!smSize && outputNull)
+		if (wantNullOutput)
+			smSize += 1;
 		file.write((char*)&smSize, 1);
 	}
 	else if (szSize == 2) {
 		ushort medSize = str.length();
-		if (!medSize && outputNull)
-			medSize = 1;
+		//if (!medSize && outputNull)
+		if (wantNullOutput)
+			medSize += 1;
 		file.write((char*)&medSize, 2);
 	}
 	else if (szSize == 4) {
 		uint bigSize = str.length();
-		if (!bigSize && outputNull)
-			bigSize = 1;
+		//if (!bigSize && outputNull)
+		if (wantNullOutput)
+			bigSize += 1;
 		file.write((char*)&bigSize, 4);
 	}
 
 	file.write(str.c_str(), str.length());
-	if (str.length() == 0 && outputNull)
+	//if (str.length() == 0 && outputNull)
+	if (wantNullOutput)
 		file.put(0);
 }
 
@@ -567,12 +574,40 @@ int NiNode::CalcBlockSize() {
 	return blockSize;
 }
 
-BSTriShape::BSTriShape(fstream& file, NiHeader& hdr, int blockindex) {
+BSTriShape::BSTriShape(NiHeader& hdr) {
 	NiAVObject::Init();
 	blockType = BSTRISHAPE;
 	header = &hdr;
-	blockSize = header->blockSizes[blockindex];
+
+	memset(unkProps, 0, sizeof(float)* 4);
+	skinInstanceRef = 0xFFFFFFFF;
+	shaderPropertyRef = 0xFFFFFFFF;
+	alphaPropertyRef = 0xFFFFFFFF;
+
+	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
+	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data	
+	vertFlags[0] = 0x5;
+	vertFlags[1] = 0x2;
+	vertFlags[2] = 0x43;
+	vertFlags[3] = 0x50;
+	vertFlags[4] = 0x0;
+	vertFlags[5] = 0xB0;
+	vertFlags[6] = 0x1;
+	vertFlags[7] = 0x0;
+	numTris = 0;
+	numverts = 0;
+	datasize = 0;
+	vertRecSize = 20;				// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
+
+	CalcBlockSize();
+}
+
+BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
+	NiAVObject::Init();
+	blockType = BSTRISHAPE;
+	header = &hdr;
 	Get(file);
+	CalcBlockSize();
 }
 
 void BSTriShape::Get(fstream& file) {
@@ -606,7 +641,7 @@ void BSTriShape::Get(fstream& file) {
 	file.read((char*)&skinInstanceRef, 4);
 	file.read((char*)&shaderPropertyRef, 4);
 
-	file.read((char*)&unkRef, 4);
+	file.read((char*)&alphaPropertyRef, 4);
 	for (int i = 0; i < 8; i++) {
 		file.read((char*)&vertFlags[i], 1);
 	}
@@ -629,7 +664,7 @@ void BSTriShape::Get(fstream& file) {
 		vertData[i].vert.z = h2float(shortData);
 
 		file.read((char*)&shortData, 2);
-		vertData[i].dotNormal = h2float(shortData);
+		vertData[i].bitangentX = h2float(shortData);
 
 		file.read((char*)&shortData, 2);
 		vertData[i].uv.u = h2float(shortData);
@@ -641,12 +676,12 @@ void BSTriShape::Get(fstream& file) {
 				file.read((char*)&vertData[i].normal[j], 1);
 			}
 		
-			file.read((char*)&vertData[i].unk1, 1);
+			file.read((char*)&vertData[i].bitangentY, 1);
 
 			for (int j = 0; j < 3; j++) {
 				file.read((char*)&vertData[i].tangent[j], 1);
 			}
-			file.read((char*)&vertData[i].unk2, 1);
+			file.read((char*)&vertData[i].bitangentZ, 1);
 		}
 
 		if (vertFlags[6] & 0x2) {
@@ -708,7 +743,7 @@ void BSTriShape::Put(fstream& file) {
 	file.write((char*)&skinInstanceRef, 4);
 	file.write((char*)&shaderPropertyRef, 4);
 
-	file.write((char*)&unkRef, 4);
+	file.write((char*)&alphaPropertyRef, 4);
 	for (int i = 0; i < 8; i++) {
 		file.write((char*)&vertFlags[i], 1);
 	}
@@ -730,7 +765,7 @@ void BSTriShape::Put(fstream& file) {
 		shortData = float2h(vertData[i].vert.z);
 		file.write((char*)&shortData, 2);
 
-		shortData = float2h(vertData[i].dotNormal);
+		shortData = float2h(vertData[i].bitangentX);
 		file.write((char*)&shortData, 2);
 		
 		shortData = float2h(vertData[i].uv.u);
@@ -745,13 +780,13 @@ void BSTriShape::Put(fstream& file) {
 				file.write((char*)&vertData[i].normal[j], 1);
 			}
 		
-			file.write((char*)&vertData[i].unk1, 1);
+			file.write((char*)&vertData[i].bitangentY, 1);
 
 			for (int j = 0; j < 3; j++) {
 				file.write((char*)&vertData[i].tangent[j], 1);
 			}
 
-			file.write((char*)&vertData[i].unk2, 1);
+			file.write((char*)&vertData[i].bitangentZ, 1);
 		}
 
 		if (vertFlags[6] & 0x2) {
@@ -779,24 +814,57 @@ void BSTriShape::Put(fstream& file) {
 void BSTriShape::notifyBlockDelete(int blockID) {
 	NiObjectNET::notifyBlockDelete(blockID);
 
+	if (skinInstanceRef == blockID)
+		skinInstanceRef = 0xFFFFFFFF;
+	else if (skinInstanceRef > blockID)
+		skinInstanceRef--;
+
+	if (shaderPropertyRef == blockID)
+		shaderPropertyRef = 0xFFFFFFFF;
+	else if (shaderPropertyRef > blockID)
+		shaderPropertyRef--;
+
 
 }
 
 void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 
 	NiObjectNET::notifyBlockSwap(blockIndexLo, blockIndexHi);
+	if (skinInstanceRef == blockIndexLo)
+		skinInstanceRef = blockIndexHi;
+	else if (skinInstanceRef == blockIndexHi)
+		skinInstanceRef = blockIndexLo;
 
+	if (shaderPropertyRef == blockIndexLo)
+		shaderPropertyRef = blockIndexHi;
+	else if (shaderPropertyRef == blockIndexHi)
+		shaderPropertyRef = blockIndexLo;
 }
 
 int BSTriShape::CalcBlockSize() {
-	blockSize = 118 + 6 * numTris + 32 * numverts;
+	blockSize = 118 + 6 * numTris;
+	
+	int vdataSize = 12;
+	if (vertFlags[6] & 0x1) {			//normals
+		vdataSize += 8;
+	}
+
+	if (vertFlags[6] & 0x2) {			//colors
+		vdataSize += 4;
+	}
+
+	if (vertFlags[6] & 0x4) {			//skinning
+		vdataSize += 12;
+
+	}
+	blockSize += vdataSize * numverts;
 
 	return blockSize;
 
 }
 
 
-const vector<Vector3>* BSTriShape::GetRawVerts() {
+const vector<Vector3>* BSTriShape::GetRawVerts(bool xform) {
 	rawverts.clear();
 	rawverts.resize(numverts);
 	for (int i = 0; i < numverts; i++) {
@@ -807,7 +875,7 @@ const vector<Vector3>* BSTriShape::GetRawVerts() {
 }
 
 
-const vector<Vector3>* BSTriShape::GetNormalData() {
+const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
 	rawnorms.clear();
 	rawnorms.resize(numverts);
 	for (int i = 0; i < numverts; i++) {
@@ -820,32 +888,68 @@ const vector<Vector3>* BSTriShape::GetNormalData() {
 		float y = q2;
 		float z = q3;
 
-		rawnorms[i].x = -x;
-		rawnorms[i].z = y;
-		rawnorms[i].y = z;
+		if (xform) {
+			rawnorms[i].x = -x;
+			rawnorms[i].z = y;
+			rawnorms[i].y = z;
+		}
+		else {
+			rawnorms[i].x = x;
+			rawnorms[i].z = z;
+			rawnorms[i].y = y;
+		}
 
 	}
 
 	return &rawnorms;
 }
 
-const vector<Vector3>* BSTriShape::GetTangentData() {
+const vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
 	rawtangents.clear();
 	rawtangents.resize(numverts);
 	for (int i = 0; i < numverts; i++) {
 		float q6 = (((float)vertData[i].tangent[0]) / 255.0f) *2.0f - 1.0f;
 		float q7 = (((float)vertData[i].tangent[1]) / 255.0f) *2.0f - 1.0f;
 		float q8 = (((float)vertData[i].tangent[2]) / 255.0f) *2.0f - 1.0f;
-
 		float x = q6;
 		float y = q7;
 		float z = q8;
 
-		rawtangents[i].x = -x;
-		rawtangents[i].z = y;
-		rawtangents[i].y = z;
+		if (xform) {
+			rawtangents[i].x = -x;
+			rawtangents[i].z = y;
+			rawtangents[i].y = z;
+		}
+		else {
+			rawtangents[i].x = x;
+			rawtangents[i].z = z;
+			rawtangents[i].y = y;
+		}
 	}
 	return &rawtangents;
+}
+
+const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
+	rawBitangents.clear();
+	rawBitangents.resize(numverts);
+	for (int i = 0; i < numverts; i++) {
+		float x = (vertData[i].bitangentX);
+		float y = (((float)vertData[i].bitangentY) / 255.0f) *2.0f - 1.0f;
+		float z = (((float)vertData[i].bitangentZ) / 255.0f) *2.0f - 1.0f;
+
+
+		if (xform) {
+			rawBitangents[i].x = -x;
+			rawBitangents[i].z = y;
+			rawBitangents[i].y = z;
+		}
+		else {
+			rawBitangents[i].x = x;
+			rawBitangents[i].z = z;
+			rawBitangents[i].y = y;
+		}
+	}
+	return &rawBitangents;
 }
 
 const vector<Vector2>* BSTriShape::GetUVData() {
@@ -859,13 +963,304 @@ const vector<Vector2>* BSTriShape::GetUVData() {
 
 }
 
+void BSTriShape::calcTangentSpace(vector<Vector3>** outNorms, vector<Vector3>** outTangents, vector<Vector3>** outBitangents, bool transform) {
+
+	GetNormalData(false);
+
+	vector<Vector3> tan1;
+	vector<Vector3> tan2;
+	tan1.resize(numverts);
+	tan2.resize(numverts);
 
 
-BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr, int blockindex) :
-BSTriShape(file, hdr, blockindex)
+	for (int i = 0; i < triangles.size(); i++) {
+		int i1 = triangles[i].p1;
+		int i2 = triangles[i].p2;
+		int i3 = triangles[i].p3;
+
+		Vector3 v1 = vertData[i1].vert;
+		Vector3 v2 = vertData[i2].vert;
+		Vector3 v3 = vertData[i3].vert;
+
+		Vector2 w1 = vertData[i1].uv;
+		Vector2 w2 = vertData[i2].uv;
+		Vector2 w3 = vertData[i3].uv;
+
+		float x1 = v2.x - v1.x;
+		float x2 = v3.x - v1.x;
+		float y1 = v2.y - v1.y;
+		float y2 = v3.y - v1.y;
+		float z1 = v2.z - v1.z;
+		float z2 = v3.z - v1.z;
+
+		float s1 = w2.u - w1.u;
+		float s2 = w3.u - w1.u;
+		float t1 = w2.v - w1.v;
+		float t2 = w3.v - w1.v;
+
+		float r =  (s1 * t2 - s2 * t1);
+		r = (r >= 0.0f ? +1.0f : -1.0f);
+
+		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+		tan1[i1] += tdir;
+		tan1[i2] += tdir;
+		tan1[i3] += tdir;
+
+		tan2[i1] += sdir;
+		tan2[i2] += sdir;
+		tan2[i3] += sdir;
+	}
+
+	rawBitangents.resize(numverts);
+	rawtangents.resize(numverts);
+
+	for (int i = 0; i < numverts; i++) {
+		Vector3 n = rawnorms[i];
+
+		rawtangents[i] = tan1[i];
+		rawBitangents[i] = tan2[i];
+
+		if (rawtangents[i].IsZero() || rawBitangents[i].IsZero()) {
+			rawtangents[i].x = rawnorms[i].y; rawtangents[i].y = rawnorms[i].z; rawtangents[i].z = rawnorms[i].x;
+			rawBitangents[i] = rawnorms[i].cross(rawtangents[i]);
+		}
+		else {
+			rawtangents[i].Normalize();
+			rawtangents[i] = (rawtangents[i] - rawnorms[i] * rawnorms[i].dot(rawtangents[i]));
+			rawtangents[i].Normalize();
+
+			rawBitangents[i].Normalize();
+
+			rawBitangents[i] = (rawBitangents[i] - rawnorms[i] * rawnorms[i].dot(rawBitangents[i]));
+			rawBitangents[i] = (rawBitangents[i] - rawtangents[i] * rawtangents[i].dot(rawBitangents[i]));
+
+			rawBitangents[i].Normalize();
+
+
+		}
+
+
+		//rawBitangents[i] = tan1[i] ;
+		//rawBitangents[i].Normalize();
+
+		//rawtangents[i] = rawBitangents[i].cross(rawnorms[i]);
+		//rawtangents[i].Normalize();
+
+
+
+		float tmp;
+		if (transform) {
+			rawnorms[i].x = -rawnorms[i].x;
+			tmp = rawnorms[i].y;
+			rawnorms[i].y = rawnorms[i].z;
+			rawnorms[i].z = tmp;
+		
+		
+			rawBitangents[i].x = -rawBitangents[i].x;
+			tmp = rawBitangents[i].y;
+			rawBitangents[i].y = rawBitangents[i].z;
+			rawBitangents[i].z = tmp;
+		
+			rawtangents[i].x = -rawtangents[i].x;
+			tmp = rawtangents[i].y;
+			rawtangents[i].y = rawtangents[i].z;
+			rawtangents[i].z = tmp;
+		}
+
+	}
+	if (outNorms)
+		*outNorms = &rawnorms;
+	if (outTangents)
+		*outTangents = &rawtangents;
+	if (outBitangents)
+		*outBitangents = &rawBitangents;
+
+
+
+}
+
+void BSTriShape::setNormals(const vector<Vector3>& inNorms) {
+	rawnorms.clear();
+	rawnorms.resize(numverts);
+	for (int i = 0;i < numverts; i++) {
+		rawnorms[i] = inNorms[i];
+		vertData[i].normal[0] = (unsigned char)round((((inNorms[i].x + 1.0f) /2.0f )*255.0f));
+		vertData[i].normal[1] = (unsigned char)round((((inNorms[i].y + 1.0f) / 2.0f)*255.0f));;
+		vertData[i].normal[2] = (unsigned char)round((((inNorms[i].z + 1.0f) / 2.0f)*255.0f));;
+
+	}
+
+}
+
+void BSTriShape::SetTangentData() {
+	if (rawnorms.empty()) {
+		GetNormalData(false);
+	}
+
+	vector<Vector3> tan1;
+	vector<Vector3> tan2;
+	tan1.resize(numverts);
+	tan2.resize(numverts);
+
+
+	for (int i = 0; i < triangles.size(); i++) {
+		int i1 = triangles[i].p1;
+		int i2 = triangles[i].p2;
+		int i3 = triangles[i].p3;
+
+		Vector3 v1 = vertData[i1].vert;
+		Vector3 v2 = vertData[i2].vert;
+		Vector3 v3 = vertData[i3].vert;
+
+		Vector2 w1 = vertData[i1].uv;
+		Vector2 w2 = vertData[i2].uv;
+		Vector2 w3 = vertData[i3].uv;
+		
+		float x1 = v2.x - v1.x;
+		float x2 = v3.x - v1.x;
+		float y1 = v2.y - v1.y;
+		float y2 = v3.y - v1.y;
+		float z1 = v2.z - v1.z;
+		float z2 = v3.z - v1.z;
+
+		float s1 = w2.u - w1.u;
+		float s2 = w3.u - w1.u;
+		float t1 = w2.v - w1.v;
+		float t2 = w3.v - w1.v;
+
+		float r =  (s1 * t2 - s2 * t1);
+		r = (r >= 0.0f ? +1.0f : -1.0f);
+
+		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+		sdir.Normalize();
+		tdir.Normalize();
+
+		tan1[i1] += tdir;
+		tan1[i2] += tdir;
+		tan1[i3] += tdir;
+
+		tan2[i1] += sdir;
+		tan2[i2] += sdir;
+		tan2[i3] += sdir;
+	}
+
+	rawBitangents.resize(numverts);
+	rawtangents.resize(numverts);
+
+	for (int i = 0; i < numverts; i++) {
+
+		rawtangents[i] = tan1[i];
+		rawBitangents[i] = tan2[i];
+
+		if (rawtangents[i].IsZero() || rawBitangents[i].IsZero()) {
+			rawtangents[i].x = rawnorms[i].y; rawtangents[i].y = rawnorms[i].z; rawtangents[i].z = rawnorms[i].x;
+			rawBitangents[i] = rawnorms[i].cross(rawtangents[i]);
+		}
+		else {
+			rawtangents[i].Normalize();
+			rawtangents[i] = (rawtangents[i] - rawnorms[i] * rawnorms[i].dot(rawtangents[i]));
+			rawtangents[i].Normalize();
+
+			rawBitangents[i].Normalize();
+
+			rawBitangents[i] = (rawBitangents[i] - rawnorms[i] * rawnorms[i].dot(rawBitangents[i]));
+			rawBitangents[i] = (rawBitangents[i] - rawtangents[i] * rawtangents[i].dot(rawBitangents[i]));
+
+			rawBitangents[i].Normalize();
+
+
+		}
+
+
+		///* Old wrong way */
+		//rawBitangents[i] = tan1[i];
+		//rawBitangents[i].Normalize();
+
+		//rawtangents[i] = rawBitangents[i].cross(rawnorms[i]);
+		//rawtangents[i].Normalize();
+
+
+
+		vertData[i].tangent[0] = (unsigned char)round((((rawtangents[i].x + 1.0f) / 2.0f)*255.0f));
+		vertData[i].tangent[1] = (unsigned char)round((((rawtangents[i].y + 1.0f) / 2.0f)*255.0f));;
+		vertData[i].tangent[2] = (unsigned char)round((((rawtangents[i].z + 1.0f) / 2.0f)*255.0f));;
+
+		vertData[i].bitangentX = rawBitangents[i].x;
+		vertData[i].bitangentY = (unsigned char)round((((rawBitangents[i].y + 1.0f) / 2.0f)*255.0f));
+		vertData[i].bitangentZ = (unsigned char)round((((rawBitangents[i].z + 1.0f) / 2.0f)*255.0f));
+
+	}
+
+
+
+
+}
+
+void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
+	unkShort1 = 0;						//from AVObject -- zero for these blocks.
+	numverts = verts->size();
+	numTris = tris->size();
+	vertData.resize(verts->size());
+	for (int i = 0; i < numverts; i++) {
+		vertData[i].vert = (*verts)[i];
+		vertData[i].uv = (*uvs)[i];
+
+		vertData[i].bitangentX = 0.0f;
+		vertData[i].bitangentY = 0;
+		vertData[i].bitangentZ = 0;
+		vertData[i].normal[0] = vertData[i].normal[1] = vertData[i].normal[2] = 0;
+		memset(vertData[i].colorData, 255, 4);
+		memset(vertData[i].weights, 0, sizeof(float)* 4);
+		memset(vertData[i].weightBones, 0, 4);
+
+	}
+	if (normals) {
+		setNormals((*normals));
+		calcTangentSpace(NULL, NULL, NULL);
+	}
+	vertRecSize = 12;
+	if (vertFlags[6] & 0x1) {			//normals
+		vertRecSize += 8;
+	}
+
+	if (vertFlags[6] & 0x2) {			//colors
+		vertRecSize += 4;
+	}
+
+	if (vertFlags[6] & 0x4) {			//skinning
+		vertRecSize += 12;
+	}
+	datasize = 6 * numTris + numverts * vertRecSize;
+
+	triangles.resize(numTris);
+	for (int i = 0; i < numTris; i++) {
+		triangles[i] = (*tris)[i];
+	}
+
+	CalcBlockSize();
+
+}
+
+BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
+	blockType = BSSUBINDEXTRISHAPE;
+	numtris2 = 0;
+	numSubIndexRecordA = 0;
+	numSubIndexRecordB = 0;
+	numSubIndexRecordA_2 = 0;
+	numSubIndexRecordB_2 = 0;
+	CalcBlockSize();
+}
+
+BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) :
+BSTriShape(file, hdr)
 {
 	blockType = BSSUBINDEXTRISHAPE;
 	Get(file);
+	CalcBlockSize();
 }
 
 void BSSubIndexTriShape::Get(fstream& file) {
@@ -937,29 +1332,21 @@ void BSSubIndexTriShape::Put(fstream& file) {
 
 		}
 
-		ssfFile.Put(file, 2);
+		ssfFile.Put(file, 2,false);
 	}
 
 }
 
 void BSSubIndexTriShape::notifyBlockDelete(int blockID) {
-	NiObjectNET::notifyBlockDelete(blockID);
+	BSTriShape::notifyBlockDelete(blockID);
 
-	if (skinInstanceRef == blockID)
-		skinInstanceRef = 0xFFFFFFFF;
-	else if (skinInstanceRef > blockID)
-		skinInstanceRef--;
 
-	if (shaderPropertyRef == blockID)
-		shaderPropertyRef = 0xFFFFFFFF;
-	else if (shaderPropertyRef > blockID)
-		shaderPropertyRef--;
 
 }
 
 void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 
-	NiObjectNET::notifyBlockSwap(blockIndexLo, blockIndexHi);
+	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
 }
 
@@ -971,17 +1358,50 @@ int BSSubIndexTriShape::CalcBlockSize() {
 	if (numSubIndexRecordB > numSubIndexRecordA) {		
 		blockSize += 8;									// second index accounts
 		blockSize += numSubIndexRecordA * 4;			// sequence array
-		for (int i = 0; i < numSubIndexRecordA; i++) {			// sub index recordsb
+		for (int i = 0; i < numSubIndexRecordB; i++) {			// sub index recordsb
 			blockSize += 12;									// unknown data per record
 			blockSize += 4 * subIndexRecordsB[i].numExtra;		// extra data per record.
 		}
-	}
+		blockSize += 2;
+		blockSize += ssfFile.str.length();
 
+	}
 
 	return blockSize;
 
 }
 
+void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
+	BSTriShape::Create(verts, tris, uvs, normals);
+
+	vertFlags[0] = 8;
+	vertFlags[6] = 5;
+
+	numtris2 = numTris;
+	numSubIndexRecordA = 0;
+	numSubIndexRecordB = 0;
+	numSubIndexRecordA_2 = 0;
+	numSubIndexRecordB_2 = 0;
+
+	numSubIndexRecordA = numSubIndexRecordB = 4;
+
+	subIndexRecordsA.resize(4 * 32);
+	int n = 0;
+	for (int i = 0; i < 3; i++) {
+		subIndexRecordsA[n++] = 0x0;
+		subIndexRecordsA[n++] = 0x0;
+		subIndexRecordsA[n++] = 0xFFFFFFFF;
+		subIndexRecordsA[n++] = 0x0;
+	}
+
+	subIndexRecordsA[n++] = 0x0;
+	subIndexRecordsA[n++] = numTris;
+	subIndexRecordsA[n++] = 0xFFFFFFFF;
+	subIndexRecordsA[n++] = 0x0;
+
+	CalcBlockSize();
+
+}
 
 void NiGeometry::Init() {
 	NiAVObject::Init();
@@ -2236,7 +2656,10 @@ BSSkinInstance::BSSkinInstance(fstream& file, NiHeader& hdr) {
 void BSSkinInstance::Init() {
 	NiObject::Init();
 
+	unk = 0;
+	boneDataRef = 0xFFFFFFFF;
 	numBones = 0;
+	numVertices = 0;
 }
 
 void BSSkinInstance::Get(fstream& file) {
@@ -2305,7 +2728,7 @@ void BSSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 
 BSSkinBoneData::BSSkinBoneData(NiHeader& hdr) {	
 	NiObject::Init();
-
+	nBones = 0;
 	header = &hdr;
 	blockType = BSBONEDATA;
 }
@@ -2313,6 +2736,7 @@ BSSkinBoneData::BSSkinBoneData(NiHeader& hdr) {
 BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader& hdr) {	
 	NiObject::Init();
 
+	nBones = 0;
 	header = &hdr;
 	blockType = BSBONEDATA;
 	Get(file);
@@ -2347,6 +2771,12 @@ void BSSkinBoneData::Put(fstream& file) {
 	}
 }
 
+int BSSkinBoneData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+	blockSize += 68 * nBones;
+	blockSize += 4;
+	return blockSize;
+}
 
 int BSSkinInstance::CalcBlockSize() {
 	NiObject::CalcBlockSize();
@@ -3413,19 +3843,30 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = BSLIGHTINGSHADERPROPERTY;
-	shaderFlags1 = 0x82400303;
-	shaderFlags2 = 0x8001;
+	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
+		shaderFlags1 = 0x80600203;
+		shaderFlags2 = 0x81;	
+	}
+	else {
+		shaderFlags1 = 0x82400303;
+		shaderFlags2 = 0x8001;
+	}
 	uvOffset.u = 0.0f;
 	uvOffset.v = 0.0f;
 	uvScale.u = 1.0f;
 	uvScale.v = 1.0f;
 	textureSetRef = -1;
 
+	emissiveColor.Zero();
 	emissiveMultiple = 1.0f;
 	textureClampMode = 3;
 	alpha = 1.0f;
 	refractionStrength = 0.0f;
-	glossiness = 20.0f;
+	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
+		glossiness = 1.0f;
+	} else {
+		glossiness = 20.0f;
+	}
 	specularColor = Vector3(1.0f, 1.0f, 1.0f);
 	specularStrength = 1.0f;
 	lightingEffect1 = 0.3f;
@@ -3444,6 +3885,21 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	sparkleParameters.b = 0.0f;
 	sparkleParameters.a = 0.0f;
 	eyeCubemapScale = 1.0f;
+
+	unk1 = 0x7F7FFFFF;
+	unk2 = 0x3D4CCCCD;
+
+	unk[0] = 1.0f;
+	unk[1] = 5.0f;
+	unk[2] = 0.6f;
+	unk[3] = 1.4f;
+	unk[4] = 0.2f;
+	unk[5] = 1.0f;
+	unk[6] = 1.6;
+	unk[7] = 0;
+
+	memset(pad, 0, 16);
+
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr) {
@@ -3685,7 +4141,7 @@ void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexH
 }
 
 bool BSLightingShaderProperty::IsSkin() {
-	return (shaderFlags1 & (1 << 21)) != 0;
+	return (header->userVersion2 < 130 && shaderFlags1 & (1 << 21)) != 0;
 }
 
 bool BSLightingShaderProperty::IsDoubleSided() {
@@ -4183,7 +4639,9 @@ BSShaderTextureSet::BSShaderTextureSet(NiHeader& hdr) {
 	header = &hdr;
 	blockType = BSSHADERTEXTURESET;
 
-	if (header->userVersion == 12)
+	if (header->userVersion == 12 && header->userVersion2 >= 130)
+		numTextures = 10;
+	else if (header->userVersion == 12)
 		numTextures = 9;
 	else
 		numTextures = 6;
@@ -4214,7 +4672,7 @@ void BSShaderTextureSet::Put(fstream& file) {
 
 	file.write((char*)&numTextures, 4);
 	for (int i = 0; i < numTextures; i++)
-		textures[i].Put(file, 4);
+		textures[i].Put(file, 4, false);
 }
 
 int BSShaderTextureSet::CalcBlockSize() {

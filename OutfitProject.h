@@ -15,6 +15,7 @@ See the included LICENSE file
 #include "OutfitStudio.h"
 #include "ConfigurationManager.h"
 #include "Anim.h"
+#include <fbxsdk.h>
 
 #include <map>
 #include <vector>
@@ -51,7 +52,6 @@ public:
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
 	OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner = nullptr);
 	~OutfitProject();
-
 	string mFileName;
 	string mOutfitName;
 	string mDataDir;
@@ -102,7 +102,10 @@ public:
 	void AddZapSlider(const string& newName, unordered_map<ushort, float>& verts, const string& shapeName);
 	void AddCombinedSlider(const string& newName);
 
-	int AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape = "");
+	// AddShapeFromObjFile - shapeName is modified during a successful import to reflect the name of the news hape.
+	int AddShapeFromObjFile(const string& fileName, string& shapeName, const string& mergeShape = ""); 
+
+	int CreateNifShapeFromData(const string& shapeName,  vector<Vector3>& v,  vector<Triangle>& t,  vector<Vector2>& uv, vector<Vector3>* norms = nullptr);
 
 	// Slider data can have a separate name from the shape target.
 	string SliderShapeDataName(int index, const string& shapeName);
@@ -122,6 +125,7 @@ public:
 
 	void SetSliderFromBSD(const string& sliderName, const string& shapeName, const string& fileName);
 	bool SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName);
+	bool SetSliderFromFBX(const string& sliderName, const string& shapeName, const string& fileName);
 	void SetSliderFromTRI(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff);
 	int SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName);
 	int SaveSliderOBJ(const string& sliderName, const string& shapeName, const string& fileName);
@@ -224,6 +228,8 @@ public:
 	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
 	int SaveOutfitNif(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 
+	int ImportShapeFBX(const string& fileName, const string& shapeName = "", const string& mergeShape = "");
+	int ExportShapeFBX(const string& fileName, const string& shapeName = "");
 	int ExportShapeObj(const string& fileName, const string& shapeName, Vector3 scale = Vector3(1.0f, 1.0f, 1.0f), Vector3 offset = Vector3());
 
 	/* Creates an abbreviated name for use in data file identifiers. Mostly removes spaces and other special characters. */

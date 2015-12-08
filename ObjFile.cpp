@@ -30,6 +30,21 @@ int ObjFile::AddGroup(const string& name, const vector<Vector3>& verts, const ve
 	return 0;
 }
 
+
+int  ObjFile::AddGroup(const string& name, const vector<Vector3>& verts, const vector<Face>& faces, const vector<Vector2>& uvs) {
+	if (name.empty() || verts.empty())
+		return 1;
+
+	ObjData* newData = new ObjData();
+	newData->name = name;
+	newData->verts = verts;
+	newData->faces = faces;
+	newData->uvs = uvs;
+
+	data[name] = newData;
+	return 0;
+}
+
 int ObjFile::LoadSimple(const string &inFn, const string& groupName){
 	fstream base(inFn.c_str(), ios_base::in | ios_base::binary);
 	if (base.fail())
@@ -53,8 +68,8 @@ int ObjFile::LoadSimple(const string &inFn, const string& groupName){
 	vector<Triangle> tris;
 	bool readgroup = true;
 
+	base >> dump;
 	while (!base.eof()) {
-		base >> dump;
 		if (dump.compare("v") == 0) {
 			base >> v.x >> v.y >> v.z;
 			di->verts.push_back(v);
@@ -88,14 +103,15 @@ int ObjFile::LoadSimple(const string &inFn, const string& groupName){
 			t.p1 = atoi(facept1.c_str()) - 1;
 			ft[0] = atoi(facept1.substr(pos + 1).c_str()) - 1;
 			pos = facept2.find('/');
-			t.p1 = atoi(facept2.c_str()) - 1;
+			t.p2 = atoi(facept2.c_str()) - 1;
 			ft[1] = atoi(facept2.substr(pos + 1).c_str()) - 1;
 			pos = facept3.find('/');
-			t.p1 = atoi(facept3.c_str()) - 1;
+			t.p3 = atoi(facept3.c_str()) - 1;
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
 
 			di->tris.push_back(t);
 		}
+		base >> dump;
 
 	}
 	data[di->name] = di;
@@ -152,7 +168,7 @@ int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 			base >> v.x >> v.y >> v.z;
 			verts.push_back(v);
 		}
-		else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
+		else if (dump.compare("g") == 0 || dump.compare("o") == 0 || dump.compare("s")==0) {
 			base >> curgrp;
 
 			if (di->name != "") {
@@ -266,6 +282,177 @@ int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 		}
 	}
 	data[di->name] = di;
+	return 0;
+}
+
+int ObjFile::LoadVertOrderMap(const string &inFn, map<int, int>& outMap, vector<Face>& origFaces, vector<Vector2>& origUVs, const string& groupName) {
+	fstream base(inFn.c_str(), ios_base::in | ios_base::binary);
+	if (base.fail())
+		return 1;
+
+	LoadVertOrderMap(base,outMap, origFaces, origUVs, groupName);
+	base.close();
+	return 0;
+}
+
+int ObjFile::LoadVertOrderMap(fstream &base, map<int, int>& outMap, vector<Face>& origFaces, vector<Vector2>& origUVs, const string& groupName) {
+	ObjData* di = new ObjData();
+
+	Vector3 v;
+	Vector2 uv;
+	Vector2 uv2;
+	Triangle t;
+
+	string dump;
+	string curgrp;
+	string facept1;
+	string facept2;
+	string facept3;
+	string facept4;
+	int f[4];
+	int ft[4];
+	int nPoints = 0;
+	int v_idx[4];
+
+	vector<Vector3> verts;
+	vector<Vector2> uvs;
+	vector<Triangle> tris;
+	size_t pos;
+	map<int, vector<VertUV>> vertMap;
+	map<int, vector<VertUV>>::iterator savedVert;
+
+	bool gotface = false;
+	bool readgroup = true;
+
+	while (!base.eof()) {
+		if (!gotface)
+			base >> dump;
+		else
+			gotface = false;
+
+		if (dump.compare("v") == 0) {
+			base >> v.x >> v.y >> v.z;
+			verts.push_back(v);
+		}
+		else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
+			base >> curgrp;
+
+			if (di->name != "") {
+				data[di->name] = di;
+				di = new ObjData;
+			}
+
+			di->name = curgrp;
+			objGroups.push_back(curgrp);
+
+			if (groupName.length() > 0) {
+				if (curgrp.compare(groupName) == 0)
+					readgroup = true;
+				else
+					readgroup = false;
+			}
+		}
+		else if (dump.compare("vt") == 0) {
+			base >> uv.u >> uv.v;
+			uv.v = 1.0f - uv.v;
+			uvs.push_back(uv);
+			origUVs.push_back(uv);
+		}
+		else if (dump.compare("f") == 0) {
+			base >> facept1 >> facept2 >> facept3;
+			pos = facept1.find('/');
+			f[0] = atoi(facept1.c_str()) - 1;
+			ft[0] = atoi(facept1.substr(pos + 1).c_str()) - 1;
+			pos = facept2.find('/');
+			f[1] = atoi(facept2.c_str()) - 1;
+			ft[1] = atoi(facept2.substr(pos + 1).c_str()) - 1;
+			pos = facept3.find('/');
+			f[2] = atoi(facept3.c_str()) - 1;
+			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
+			base >> facept4;
+
+			if (facept4 == "f") {
+				gotface = true;
+				dump = "f";
+				nPoints = 3;
+			}
+			else if (facept4 == "g") {
+				gotface = true;
+				dump = "g";
+				nPoints = 3;
+			}
+			else if (facept4 == "s") {
+				gotface = true;
+				dump = "s";
+				nPoints = 3;
+			}
+			else if (facept4.length() > 0) {
+				pos = facept4.find('/');
+				if (pos == string::npos) {
+					gotface = true;
+					dump = "f";
+					nPoints = 3;
+				}
+				else {
+					f[3] = atoi(facept4.c_str()) - 1;
+					ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
+					nPoints = 4;
+				}
+			}
+
+			if (f[0] == -1 || f[1] == -1 || f[2] == -1)
+				continue;
+
+			origFaces.emplace_back(nPoints, f, ft);
+
+			if (!readgroup)
+				continue;
+
+			for (int i = 0; i < nPoints; i++) {
+				v_idx[i] = di->verts.size();
+				if ((savedVert = vertMap.find(f[i])) != vertMap.end()) {
+					for (int j = 0; j < savedVert->second.size(); j++) {
+						if (savedVert->second[j].uv == ft[i])
+							v_idx[i] = savedVert->second[j].v;
+						else if (uvs.size() > 0) {
+							uv = uvs[ft[i]];
+							uv2 = uvs[savedVert->second[j].uv];
+							if (fabs(uv.u - uv2.u) > uvDupThreshold) {
+								v_idx[i] = v_idx[i];
+								continue;
+							}
+							else if (fabs(uv.v - uv2.v) > uvDupThreshold) {
+								v_idx[i] = v_idx[i];
+								continue;
+							}
+							v_idx[i] = savedVert->second[j].v;
+						}
+					}
+				}
+
+				if (v_idx[i] == di->verts.size()) {
+					vertMap[f[i]].push_back(VertUV(v_idx[i], ft[i]));
+					outMap[f[i]] = di->verts.size();
+					di->verts.push_back(verts[f[i]]);
+					if (uvs.size() > 0) {
+						di->uvs.push_back(uvs[ft[i]]);
+					}
+				}
+			}
+			t.p1 = v_idx[0];
+			t.p2 = v_idx[1];
+			t.p3 = v_idx[2];
+			di->tris.push_back(t);
+			if (nPoints == 4) {
+				t.p1 = v_idx[0];
+				t.p2 = v_idx[2];
+				t.p3 = v_idx[3];
+				di->tris.push_back(t);
+			}
+		}
+	}
+	//data[di->name] = di;
+	delete di;
 	return 0;
 }
 
@@ -482,11 +669,24 @@ int ObjFile::Save(const string &fileName) {
 			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << endl;
 		file << endl;
 
-		for (int i = 0; i < d.second->tris.size(); i++) {
-			file << "f " << d.second->tris[i].p1 + 1 << "/" << d.second->tris[i].p1 + 1 << " "
-				<< d.second->tris[i].p2 + 1 << "/" << d.second->tris[i].p2 + 1 << " "
-				<< d.second->tris[i].p3 + 1 << "/" << d.second->tris[i].p3 + 1
-				<< endl;
+		if (d.second->faces.size() > 0) {
+			for (int i = 0; i < d.second->faces.size(); i++) {
+				file << "f " << d.second->faces[i].p1 + 1 << "/" << d.second->faces[i].uv1 + 1 << " "
+					<< d.second->faces[i].p2 + 1 << "/" << d.second->faces[i].uv2 + 1 << " "
+					<< d.second->faces[i].p3 + 1 << "/" << d.second->faces[i].uv3 + 1;
+				if (d.second->faces[i].nPoints == 4) {
+					file << " " << d.second->faces[i].p4 + 1 << "/" << d.second->faces[i].uv4 + 1;
+				}
+				file << endl;
+			}
+		}
+		else {
+			for (int i = 0; i < d.second->tris.size(); i++) {
+				file << "f " << d.second->tris[i].p1 + 1 << "/" << d.second->tris[i].p1 + 1 << " "
+					<< d.second->tris[i].p2 + 1 << "/" << d.second->tris[i].p2 + 1 << " "
+					<< d.second->tris[i].p3 + 1 << "/" << d.second->tris[i].p3 + 1
+					<< endl;
+			}
 		}
 		file << endl;
 	}

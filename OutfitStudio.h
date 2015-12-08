@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ObjFile.h"
 #include "TweakBrush.h"
 #include "Automorph.h"
+#include "FBXWrangler.h"
 #include "OutfitProject.h"
 #include "ConfigurationManager.h"
 
@@ -39,7 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dataview.h>
 #include <wx/splitter.h>
 #include <wx/collpane.h>
-
 
 enum TargetGame {
 	FO3, FONV, SKYRIM, FO4
@@ -64,7 +64,7 @@ public:
 
 	void SetNotifyWindow(wxWindow* win);
 
-	void AddMeshFromNif(NifFile* nif, const string& shapeName);
+	void AddMeshFromNif(NifFile* nif, const string& shapeName, bool buildNormals);
 	void AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv = nullptr, const string& shapeName = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {
@@ -176,12 +176,15 @@ public:
 		m->SmoothNormals();
 	}
 
-	void RecalcNormals(const string& shape) {
+	void RecalcNormals(const string& shape, bool forceSmoothSeam = false) {
 		mesh* m = gls.GetMesh(shape);
 		if (!m)
 			return;
-
-		m->SmoothNormals();
+		if (forceSmoothSeam) {
+			m->smoothSeamNormals = true;
+			m->SmoothNormals();
+			m->smoothSeamNormals = false;
+		}
 	}
 	void ToggleAutoNormals() {
 		if (bAutoNormals)
@@ -480,7 +483,7 @@ public:
 
 	void CreateSetSliders();
 
-	string NewSlider();
+	string NewSlider(const string& suggestedName = "", bool skipPrompt = false);
 
 	void SetSliderValue(int index, int val);
 	void SetSliderValue(const string& name, int val);
@@ -637,11 +640,37 @@ public:
 		progWnd->Update(progressVal, msg);
 	}
 
+
+	bool shapeIsImporting(const string&  shapeName) {
+		auto ss = shapeStates.find(shapeName);
+		if (ss != shapeStates.end()) {
+			return ss->second.bIsImporting;
+		}
+		return false;
+	}
+	void setShapeImporting(const string& shapeName, bool isOn) {
+		shapeStates[shapeName].bIsImporting = isOn;
+	}
+	void finishImporting() {
+		for (auto &ss : shapeStates) {
+			ss.second.bIsImporting = false;
+		}
+	}
+
 private:
+	class ShapeState {						// metadata state of shapes by shape name
+	public:
+		TargetGame gameType;				// game type source (affects block types in nif)
+		bool bIsImporting;					// true if shape is currently in the process of being imported from .obj (lacking normals, textures, etc.)
+		ShapeState() : gameType(SKYRIM), bIsImporting(false) {}
+	};
+
 	bool previousMirror;
 	Vector3 previewMove;
 	float previewScale;
 	Vector3 previewRotation;
+
+	map<string, ShapeState> shapeStates;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);
@@ -714,6 +743,7 @@ private:
 	void OnSliderImportBSD(wxCommandEvent& event);
 	void OnSliderImportOBJ(wxCommandEvent& event);
 	void OnSliderImportTRI(wxCommandEvent& event);
+	void OnSliderImportFBX(wxCommandEvent& event);
 	void OnSliderExportBSD(wxCommandEvent& event);
 	void OnSliderExportOBJ(wxCommandEvent& event);
 	void OnSliderExportTRI(wxCommandEvent& event);
@@ -728,6 +758,8 @@ private:
 
 	void OnImportShape(wxCommandEvent& event);
 	void OnExportShape(wxCommandEvent& event);
+	void OnImportFBX(wxCommandEvent& event);
+	void OnExportFBX(wxCommandEvent& event);
 
 	void OnEnterClose(wxKeyEvent& event);
 	
@@ -759,6 +791,7 @@ private:
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnBuildSkinPartitions(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
+	void OnDropFiles(wxDropFilesEvent& event);
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);

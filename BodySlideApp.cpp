@@ -81,6 +81,7 @@ bool BodySlideApp::OnInit() {
 
 	wxInitAllImageHandlers();
 
+
 	preview = nullptr;
 	sliderView = nullptr;
 	previewBaseNif = nullptr;

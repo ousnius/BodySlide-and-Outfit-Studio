@@ -298,6 +298,10 @@ void mesh::SmoothNormals() {
 	Vector3 tn;
 	for (int v = 0; v < nVerts; v++) {
 		norm.x = norm.y = norm.z = 0.0f;
+		if (!smoothSeamNormals && weldVerts.find(v)!= weldVerts.end()) {
+			// if smooth seams is off, don't update seam normals to preserve continuity for normal mapping
+			continue;
+		}
 		for (auto &t : vertTris[v]) {
 			tris[t].trinormal(verts, &tn);
 			norm += tn;

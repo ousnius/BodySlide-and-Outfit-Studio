@@ -32,6 +32,13 @@ struct Vertex;
 struct Vector2 {
 	float u;
 	float v;
+	Vector2() {
+		u = v = 0.0f;
+	}
+	Vector2(float U, float V) {
+		u = U;
+		v = V;
+	}
 };
 
 struct Vector3 {
@@ -308,6 +315,13 @@ public:
 	}
 	Matrix4(vector<Vector3>& mat33) {
 		Set(mat33);
+	}
+
+	void Set(Vector3 mat33[3]) {
+		m[0] = mat33[0].x; m[1] = mat33[0].y; m[2] = mat33[0].z; m[3] = 0;
+		m[4] = mat33[1].x; m[5] = mat33[1].y; m[6] = mat33[1].z; m[7] = 0;
+		m[8] = mat33[2].x; m[9] = mat33[2].y; m[10] = mat33[2].z; m[11] = 0;
+		m[12] = 0;		   m[13] = 0;		  m[14] = 0;	      m[15] = 1;
 	}
 
 	void Set(vector<Vector3>& mat33) {
@@ -687,6 +701,30 @@ namespace std {
 		}
 	};
 }
+
+struct Face {
+	byte nPoints;
+	ushort p1;
+	ushort uv1;
+	ushort p2;
+	ushort uv2;
+	ushort p3;
+	ushort uv3;
+	ushort p4;
+	ushort uv4;
+
+	Face(int npts = 0, int* points=nullptr, int* tc = nullptr) {
+		nPoints = npts;
+		if (npts<3)
+			return;
+		p1 = points[0]; p2 = points[1];  p3 = points[2];
+		uv1 = tc[0]; uv2 = tc[1]; uv3 = tc[2];
+		if (npts == 4) {
+			p4 = points[3];
+			uv4 = tc[3];
+		}
+	}
+};
 
 struct IntersectResult;
 

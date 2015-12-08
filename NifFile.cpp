@@ -371,9 +371,9 @@ int NifFile::Load(const string& filename) {
 			else if (!thisBlockTypeStr.compare("BSEffectShaderPropertyFloatController"))
 				block = (NiObject*) new BSEffectShaderPropertyFloatController(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSSubIndexTriShape"))
-				block = (NiObject*) new BSSubIndexTriShape(file, hdr, i);
+				block = (NiObject*) new BSSubIndexTriShape(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSTriShape"))
-				block = (NiObject*) new BSTriShape(file, hdr, i);
+				block = (NiObject*) new BSTriShape(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSSkin::Instance"))
 				block = (NiObject*) new BSSkinInstance(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSSkin::BoneData"))
@@ -1316,6 +1316,13 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 			bsShader->textureSetRef = hdr.numBlocks;
 			hdr.numBlocks++;
 		}
+		if (bsShader->nameRef != -1) {
+			bsShader->name = srcNif.hdr.strings[bsShader->nameRef].str;
+			bsShader->nameRef = AddOrFindStringId(bsShader->name);
+		}
+		if (bsShader->wetMaterialNameRef != -1) {
+			bsShader->wetMaterialNameRef = AddOrFindStringId(srcNif.hdr.strings[bsShader->wetMaterialNameRef].str);
+		}
 
 	}
 
@@ -1429,7 +1436,9 @@ void NifFile::SetNodeName(int blockID, const string& newName) {
 	if (hdr.maxStringLen < newName.length())
 		hdr.maxStringLen = newName.length();
 }
-	
+
+
+
 int NifFile::GetNodeID(const string& nodeName) {
 	int id = -1;
 	for (auto& block : blocks) {
@@ -1545,7 +1554,7 @@ int NifFile::GetShapeBoneIDList(const string& shapeName, vector<int>& outList) {
 
 void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 	int skinRef = -1;
-
+	BSSkinBoneData* boneData = nullptr;
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom) {
 		skinRef = geom->skinInstanceRef;
@@ -1554,6 +1563,11 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
 			skinRef = siTriShape->skinInstanceRef;
+			BSSkinInstance * tmpskin = dynamic_cast<BSSkinInstance*>(blocks[skinRef]);
+			if (tmpskin) {
+				boneData = dynamic_cast<BSSkinBoneData*>(blocks[tmpskin->boneDataRef]);
+
+			}
 		}
 	}
 
@@ -1566,9 +1580,20 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 
 	boneCont->bones.clear();
 	boneCont->numBones = 0;
+	bool feedBoneData = false;
+	if (boneData && boneData->nBones != inList.size()) {						// bone data array,  clear it out if it doesn't match size
+		boneData->nBones = 0;
+		boneData->boneXforms.clear(); 
+		feedBoneData = true;
+	}
 	for (int i = 0; i < inList.size(); i++) {
 		boneCont->bones.push_back(inList[i]);
 		boneCont->numBones++;
+		if (boneData && feedBoneData) {
+			boneData->boneXforms.emplace_back();
+			boneData->nBones++;
+			boneData->CalcBlockSize();
+		}
 	}
 	hdr.blockSizes[skinRef] = boneCont->CalcBlockSize();
 
@@ -1652,6 +1677,16 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
 			skinRef = siTriShape->skinInstanceRef;
+			if (skinRef == -1) {
+				return false;
+			}
+			BSSkinInstance * tmpskin = dynamic_cast<BSSkinInstance*>(blocks[skinRef]);
+			if (tmpskin && boneIndex!=-1) {
+				BSSkinBoneData* bsskin = dynamic_cast<BSSkinBoneData*>(blocks[tmpskin->boneDataRef]);
+				bsskin->boneXforms[boneIndex].boundSphereOffset = inSphereOffset;
+				bsskin->boneXforms[boneIndex].boundSphereRadius = inSphereRadius;
+				bsskin->boneXforms[boneIndex].boneTransform = inXform;
+			}
 		}
 	}
 
@@ -1819,9 +1854,17 @@ void NifFile::SetShapeVertWeights(const string& shapeName, int vertIndex, vector
 	memset(trishape->vertData[vertIndex].weights, 0, sizeof(float)* 4);
 	memset(trishape->vertData[vertIndex].weightBones, 0, sizeof(unsigned char) * 4);
 
-	for (int i= 0; i <weights.size(); i++) {
+	// sum weights to normalize weight values
+	float sum = 0.0f;
+	for (int i = 0; i < weights.size(); i++) {
+		sum += weights[i];
+	}
+
+	int num = (weights.size() < 4 ? weights.size() : 4);
+
+	for (int i= 0; i <num; i++) {
 		trishape->vertData[vertIndex].weightBones[i] = boneids[i];
-		trishape->vertData[vertIndex].weights[i] = weights[i];
+		trishape->vertData[vertIndex].weights[i] = weights[i] / sum;
 	}
 
 }
@@ -1867,7 +1910,7 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	return false;
 }
 
-const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName) {
+const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool transform) {
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
 	if (dataID == -1)
@@ -1886,7 +1929,49 @@ const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName) {
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		// NOT IMPLEMENTED
 		BSTriShape* shapeData = (BSTriShape*)(blocks[dataID]);
-		return shapeData->GetNormalData();
+		return shapeData->GetNormalData(transform);
+
+	}
+	return nullptr;
+}
+
+const vector<Vector3>* NifFile::GetTangentsForShape(const string& shapeName, bool transform) {	
+	int bType;
+	int dataID = shapeDataIdForName(shapeName, bType);
+	if (dataID == -1)
+		return nullptr;
+
+	if (bType == NITRISHAPEDATA) {
+		return nullptr;
+	}
+	else if (bType == NITRISTRIPSDATA) {
+		return nullptr;
+	}
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+		// NOT IMPLEMENTED
+		BSTriShape* shapeData = (BSTriShape*)(blocks[dataID]);
+		return shapeData->GetTangentData(transform);
+
+	}
+	return nullptr;
+}
+
+const vector<Vector3>* NifFile::GetBitangentsForShape(const string& shapeName, bool transform) {
+	int bType;
+	int dataID = shapeDataIdForName(shapeName, bType);
+	if (dataID == -1)
+		return nullptr;
+
+	if (bType == NITRISHAPEDATA) {
+		return nullptr;
+	}
+	else if (bType == NITRISTRIPSDATA) {
+		return nullptr;
+	}
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+		// NOT IMPLEMENTED
+		BSTriShape* shapeData = (BSTriShape*)(blocks[dataID]);
+		return shapeData->GetBitangentData(transform);
 
 	}
 	return nullptr;
@@ -2108,7 +2193,8 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 		hdr.blockSizes[dataID] = stripsData->CalcBlockSize();
 	}
 	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
-		//// Fix later after discovering how fo4 stores normals
+		BSTriShape* shape = (BSTriShape*)blocks[dataID];
+		shape->setNormals(norms);
 	}
 }
 	
@@ -2129,9 +2215,28 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 		hdr.blockSizes[dataID] = stripsData->CalcBlockSize();
 	}
 	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
-		//// Fix later after discovering how fo4 stores tangents
+		BSTriShape* shape = (BSTriShape*)blocks[dataID];
+		shape->SetTangentData();
 	}
 }
+
+void NifFile::CalcTangentsForShape(const string& shapeName, vector<Vector3>** outNormals, vector<Vector3>** outTagents, vector<Vector3>** outBitangents, bool transform) {	
+	int bType;
+	int dataID = shapeDataIdForName(shapeName, bType);
+	if (dataID == -1)
+		return;
+
+	if (bType == NITRISHAPEDATA) {
+		return;
+	}
+	else if (bType == NITRISTRIPSDATA) {
+		return;
+	}
+	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+		BSTriShape* shape = (BSTriShape*)blocks[dataID];
+		shape->calcTangentSpace(outNormals, outTagents, outBitangents, transform);
+	}
+}	
 
 void NifFile::ClearShapeTransform(const string& shapeName) {
 	NiAVObject* avo = avObjectForName(shapeName);
@@ -2480,7 +2585,7 @@ bool NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& 
 	else {
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			//alphaRef = siTriShape->unkRef;
+			//alphaRef = siTriShape->alphaPropertyRef;
 		}
 	}
 
@@ -2540,7 +2645,7 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 	else {
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			//alphaRef = siTriShape->unkRef;
+			//alphaRef = siTriShape->alphaPropertyRef;
 		}
 	}
 
@@ -2688,7 +2793,7 @@ void NifFile::DeleteAlpha(const string& shapeName) {
 		// Not IMplemented
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			//alphaRef = siTriShape->unkRef;
+			//alphaRef = siTriShape->alphaPropertyRef;
 		}
 	}
 }
@@ -2722,7 +2827,7 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 		// Not IMplemented
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			//alphaRef = siTriShape->unkRef;
+			//alphaRef = siTriShape->alphaPropertyRef;
 		}
 	}
 
@@ -2791,7 +2896,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		// Not IMplemented
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			//alphaRef = siTriShape->unkRef;
+			//alphaRef = siTriShape->alphaPropertyRef;
 		}
 	}
 

@@ -190,7 +190,7 @@ public:
 	bool outputNull;
 	NiString(bool wantOutputNull = true);
 	NiString(fstream& file, int szSize, bool wantNullOutput = true);
-	void Put(fstream& file, int szSize);
+	void Put(fstream& file, int szSize, bool wantNullOutput = true);
 	void Get(fstream& file, int szSize);
 };
 
@@ -301,6 +301,36 @@ public:
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
+
+	bool rotToEulerDegrees(float &Y, float& P, float& R) {
+		float rx, ry, rz;
+		bool canRot = false;
+		if (rotation[0].z < 1.0)
+		{
+			if (rotation[0].z > -1.0)
+			{
+				rx = atan2(-rotation[1].z, rotation[2].z);
+				ry = asin(rotation[0].z);
+				rz = atan2(-rotation[0].y, rotation[0].x);
+				canRot = true;
+			}
+			else {
+				rx = -atan2(-rotation[1].x, rotation[1].y);
+				ry = -PI / 2;
+				rz = 0.0f;
+			}
+		}
+		else {
+			rx = atan2(rotation[1].x, rotation[1].y);
+			ry = PI / 2;
+			rz = 0.0f;
+		}
+
+		Y = rx * 180 / PI;
+		P = ry * 180 / PI;
+		R = rz * 180 / PI;
+		return canRot;
+	}
 };
 
 class NiProperty : public NiObjectNET {
@@ -338,13 +368,13 @@ public:
 	class TSVertData {
 	public:
 		Vector3 vert;			// Stored half-float, convert!
-		float dotNormal;		// maybe the dotproduct of the vert normal and the z axis?
+		float bitangentX;		// maybe the dotproduct of the vert normal and the z axis?
 		Vector2 uv;				// Stored as half-float, convert!
 		byte normal[3];
-		byte unk1;
+		byte bitangentY;
 		byte tangent[3];		// only if flags[6] & 0x1 is true?   some kind of packed normal data ?
-		byte unk2;
-		//uint normals[2];
+		byte bitangentZ;
+
 		byte colorData[4];		// only if flags[6] & 0x2 is true
 		float weights[4];		// stored in half-float, convert!
 		byte weightBones[4];
@@ -353,7 +383,7 @@ public:
 	uint unkProps[4];
 	uint skinInstanceRef;
 	uint shaderPropertyRef;
-	int unkRef;
+	uint alphaPropertyRef;
 
 	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
 	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data
@@ -365,24 +395,29 @@ public:
 
 	vector<Vector3> rawverts;	// filled by GetRawVerts function and returned.
 	vector<Vector3> rawnorms;	// filled by GetNormalData function and returned.
-	vector<Vector3> rawtangents; // filled by GetTangentData function and returned.
+	vector<Vector3> rawtangents; // filled by calcTangentSpace function and returned.
+	vector<Vector3> rawBitangents; // filled in calcTangentSpace
 	vector<Vector2> rawuvs;		// filled by GetUVData function and returned.
 
 	vector<TSVertData> vertData;
 	vector<Triangle> triangles;
-
-	BSTriShape(fstream& file, NiHeader& hdr, int blockindex);
+	BSTriShape(NiHeader& hdr);
+	BSTriShape(fstream& file, NiHeader& hdr);
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
 
-	const vector<Vector3>* GetRawVerts();
-	const vector<Vector3>* GetNormalData();
-	const vector<Vector3>* GetTangentData();
+	const vector<Vector3>* GetRawVerts(bool xform = true);
+	const vector<Vector3>* GetNormalData(bool xform = true);
+	const vector<Vector3>* GetTangentData(bool xform = true);
+	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
-
+	void calcTangentSpace(vector<Vector3>** outNorms = nullptr, vector<Vector3>** outTangents = nullptr, vector<Vector3>** outBitangents = nullptr, bool transform = true);
+	void setNormals(const vector<Vector3>& inNorms);
+	void SetTangentData();
+	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
 
@@ -412,14 +447,14 @@ public:
 
 	NiString ssfFile;
 
-	//Blockindex is a temporary measure to enable us to see the total size of the block during loading ... not all fields are known yet
-	BSSubIndexTriShape(fstream& file, NiHeader& hdr, int blockindex); 
+	BSSubIndexTriShape(NiHeader& hdr);
+	BSSubIndexTriShape(fstream& file, NiHeader& hdr); 
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
-
+	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals=nullptr);
 };
 
 class NiGeometry : public NiAVObject {
@@ -646,7 +681,7 @@ public:
 			boundSphereRadius = 0.0f;
 		}
 		int CalcSize() {
-			return (70);
+			return (68);
 		}
 	};
 	vector<BoneData> boneXforms;
@@ -657,6 +692,7 @@ public:
 
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
+	virtual int CalcBlockSize();
 };
 
 class NiSkinData : public NiObject {
@@ -969,6 +1005,8 @@ public:
 	float unk[8];						// unkown shader float params in shadertype 5 for fallout4
 	byte  pad[16];						// up to 16 bytes of uknown padding.  clearly this isn't the right format.
 
+
+
 	BSLightingShaderProperty(NiHeader& hdr);
 	BSLightingShaderProperty(fstream& file, NiHeader& hdr);
 
@@ -1220,7 +1258,6 @@ public:
 	NifFile();
 	NifFile(NifFile& other);
 	~NifFile();
-
 	NiHeader hdr;
 
 	void CopyFrom(NifFile& other);
@@ -1284,6 +1321,10 @@ public:
 	void RenameDuplicateShape(const string& dupedShape);
 	void SetNodeName(int blockID, const string& newName);
 
+	/// GetChildren of a node ... templatized to allow any particular type to be queried.   useful for walking a node tree
+	template <class T>
+	vector<T*> GetChildren(NiNode* parent);
+
 	int GetNodeID(const string& nodeName);
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
 	bool SetNodeTransform(const string& nodeName, SkinTransform& inXform);
@@ -1305,7 +1346,9 @@ public:
 
 	const vector<Vector3>* GetRawVertsForShape(const string& shapeName);
 	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);
-	const vector<Vector3>* GetNormalsForShape(const string& shapeName);
+	const vector<Vector3>* GetNormalsForShape(const string& shapeName, bool transform = true);
+	const vector<Vector3>* GetTangentsForShape(const string& shapeName, bool transform = true);
+	const vector<Vector3>* GetBitangentsForShape(const string& shapeName, bool transform = true);
 	const vector<Vector2>* GetUvsForShape(const string& shapeName);
 	bool GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs);
 	const vector<vector<int>>* GetSeamVertsForShape(const string& shapeName);
@@ -1315,6 +1358,7 @@ public:
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
 	void CalcTangentsForShape(const string& shapeName);
+	void CalcTangentsForShape(const string& shapeName, vector<Vector3>** outNormals, vector<Vector3>** outTagents, vector<Vector3>** outBitangents, bool transform = true);
 
 	void ClearShapeTransform(const string& shapeName);
 	void GetShapeTransform(const string& shapeName, Matrix4& outTransform);
@@ -1353,3 +1397,24 @@ public:
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
 };
+
+template <class T>
+vector<T*> NifFile::GetChildren(NiNode* parent) {
+	vector<T*> result;
+	T* n;
+	if (parent == nullptr) {
+		n = dynamic_cast<T*>(blocks[0]);
+		if (n)
+			result.push_back(n);
+		return result;
+	}
+
+	for (int i = 0; i < parent->children.size(); i++) {
+		n = dynamic_cast<T*>(blocks[parent->children[i]]);
+		if (n) {
+			result.push_back(n);
+		}
+	}
+
+	return result;
+}

@@ -57,6 +57,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudio::OnSliderConformAll)
 	EVT_MENU(XRCID("sliderImportBSD"), OutfitStudio::OnSliderImportBSD)
 	EVT_MENU(XRCID("sliderImportOBJ"), OutfitStudio::OnSliderImportOBJ)
+	EVT_MENU(XRCID("sliderImportFBX"), OutfitStudio::OnSliderImportFBX)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudio::OnSliderImportTRI)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudio::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudio::OnSliderExportOBJ)
@@ -105,6 +106,8 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 
 	EVT_MENU(XRCID("importShape"), OutfitStudio::OnImportShape)
 	EVT_MENU(XRCID("exportShape"), OutfitStudio::OnExportShape)
+	EVT_MENU(XRCID("importFBX"), OutfitStudio::OnImportFBX)
+	EVT_MENU(XRCID("exportFBX"), OutfitStudio::OnExportFBX)
 	EVT_MENU(XRCID("moveShape"), OutfitStudio::OnMoveShape)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudio::OnScaleShape)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudio::OnRotateShape)
@@ -142,12 +145,13 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_SLIDER(XRCID("lightBrightnessSlider2"), OutfitStudio::OnUpdateLights)
 	EVT_SLIDER(XRCID("lightBrightnessSlider3"), OutfitStudio::OnUpdateLights)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudio::OnResetLights)
+
+	EVT_DROP_FILES(OutfitStudio::OnDropFiles)
 	
 	EVT_MOVE_END(OutfitStudio::OnMoveWindow)
 	EVT_SIZE(OutfitStudio::OnSetSize)
 
 END_EVENT_TABLE()
-
 
 // ----------------------------------------------------------------------------
 // OutfitStudio frame
@@ -184,6 +188,19 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		statusBar->SetStatusWidths(3, statusWidths);
 		statusBar->SetStatusText("Ready!");
 	}
+
+/*
+	HWND h = this->GetHandle();
+	bool ret = ChangeWindowsMessageFilterEX(h, WM_DROPFILES, MSGFLT_ADD);
+	if (!ret) {
+		wxMessageBox("blargh");
+	}
+	ret = ChangeWindowMessageFilterEX(h,WM_COPYDATA, MSGFLT_ADD);
+	ret = ChangeWindowMessageFilterEX(h,WM_COPY, MSGFLT_ADD);
+	ret = ChangeWindowMessageFilterEX(h,WM_MOVE, MSGFLT_ADD);
+	ret = ChangeWindowMessageFilterEX(h,0x0049, MSGFLT_ADD);
+*/
+	this->DragAcceptFiles(true);
 	
 	toolBar = (wxToolBar*)FindWindowByName("toolbar");
 	if (toolBar) {
@@ -225,6 +242,10 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	if (outfitShapes) {
 		outfitShapes->AssignStateImageList(visStateImages);
 		shapesRoot = outfitShapes->AddRoot("Shapes");
+
+		outfitShapes->DragAcceptFiles(true);
+		outfitShapes->Bind(wxEVT_DROP_FILES, wxDropFilesEventHandler(OutfitStudio::OnDropFiles), this);
+
 	}
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
@@ -433,18 +454,27 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 	sliderDisplays[name] = d;
 }
 
-string OutfitStudio::NewSlider() {
+string OutfitStudio::NewSlider(const string& suggestedName, bool skipPrompt) {
 	string namebase = "NewSlider";
+	if (suggestedName != "")
+	{
+		namebase = suggestedName;
+	}
 	char thename[256];
 	_snprintf_s(thename, 256, 256, "%s", namebase.c_str());
 	int count = 1;
 
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
-
-	string finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
-	if (finalName.empty())
-		return finalName;
+	string finalName;
+	if (!skipPrompt) {
+		string finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
+		if (finalName.empty())
+			return finalName;
+	}
+	else {
+		finalName = thename;
+	}
 
 	finalName = project->NameAbbreviate(finalName);
 	wxLogMessage("Creating new slider '%s'.", finalName);
@@ -1199,7 +1229,12 @@ void OutfitStudio::WorkingGUIFromProj() {
 	for (auto &shape : shapes) {
 		glView->DeleteMesh(shape);
 
-		glView->AddMeshFromNif(project->GetWorkNif(), shape);
+		glView->AddMeshFromNif(project->GetWorkNif(), shape, shapeIsImporting(shape));
+		if (shapeIsImporting(shape)) {
+			vector<mesh*> updateshape;
+			updateshape.push_back(glView->GetMesh(shape));
+			project->UpdateNifNormals(project->GetWorkNif(), updateshape);
+		}
 		glView->SetMeshTexture(shape, project->GetShapeTexture(shape), project->GetWorkNif()->IsShaderSkin(shape));
 		if (outfitShapes) {
 			subItem = outfitShapes->AppendItem(outfitRoot, shape);
@@ -2516,6 +2551,30 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	wxMessageBox(wxString::Format("Added morphs for the following shapes:\n\n%s", addedMorphs), "TRI Import");
 }
 
+void OutfitStudio::OnSliderImportFBX(wxCommandEvent& event) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox("There is no slider in edit mode to import data to!", "Error");
+		return;
+	}
+
+	string fn = wxFileSelector("Import .fbx file for slider calculation", wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
+	if (fn.empty())
+		return;
+
+	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->shapeName, fn);
+	if (!project->SetSliderFromFBX(activeSlider, activeItem->shapeName, fn)) {
+		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
+		wxMessageBox("Vertex count of .obj file mesh does not match currently selected shape!", "Error", wxICON_ERROR);
+		return;
+	}
+
+	ApplySliders();
+}
+
 void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
@@ -2571,6 +2630,7 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
+		/*
 		string fn = wxFileSelector("Export .obj slider data", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fn.empty())
 			return;
@@ -2580,6 +2640,20 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 			wxLogError("Failed to export OBJ file '%s'!", fn);
 			wxMessageBox("Failed to export OBJ file!", "Error", wxICON_ERROR);
 		}
+		*/
+		// TEMPORARY bulk slider export
+		string dir = wxDirSelector("Export .obj slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		vector<string> sliderNames;
+		project->GetSliderList(sliderNames);
+
+		for (auto s : sliderNames) {
+			statusBar->SetStatusText("Exporting " + s);
+			string fn = dir;
+			fn += "\\" + s + ".obj";
+			project->SaveSliderOBJ(s, activeItem->shapeName, fn);
+
+		}
+		statusBar->SetStatusText("Ready!");
 	}
 
 	ApplySliders();
@@ -2902,11 +2976,13 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Importing shape from OBJ file '%s'...", fn);
 
+	string shapeName = "New Shape";
+
 	int ret;
 	if (activeItem)
-		ret = project->AddShapeFromObjFile(fn, "New Shape", activeItem->shapeName);
+		ret = project->AddShapeFromObjFile(fn, shapeName, activeItem->shapeName);
 	else
-		ret = project->AddShapeFromObjFile(fn, "New Shape");
+		ret = project->AddShapeFromObjFile(fn, shapeName);
 
 	if (ret == 101) {	// User chose to merge shapes
 		vector<Vector3> v;
@@ -2920,6 +2996,9 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Imported shape.");
 
 	WorkingGUIFromProj();
+
+	finishImporting();
+
 	glView->Refresh();
 }
 
@@ -2952,6 +3031,59 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 			}
 		}
 	}
+}
+
+void OutfitStudio::OnImportFBX(wxCommandEvent& event) {
+	string fn = wxFileSelector("Import .fbx file for new shape", wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
+	if (fn.empty())
+		return;
+		wxLogMessage("Importing shape from FBX file '%s'...", fn);
+
+	string shapeName = "New Shape";
+	
+	int ret;
+	if (activeItem) {
+		ret = project->ImportShapeFBX(fn, shapeName, activeItem->shapeName);
+	}
+	else {
+		ret = project->ImportShapeFBX(fn, shapeName);
+	}
+	if (ret == 101) {
+		vector<Vector3> v;
+		project->GetLiveVerts(activeItem->shapeName, v);
+		glView->UpdateMeshVertices(activeItem->shapeName, &v);
+		return;
+	}
+	if (ret)
+		return;
+
+	wxLogMessage("Imported shape.");
+
+	WorkingGUIFromProj();
+	AnimationGUIFromProj();
+
+	finishImporting();
+
+	glView->Refresh();
+}
+
+void OutfitStudio::OnExportFBX(wxCommandEvent& event) {
+	string defFile = "OutfitStudioShapes.fbx";
+	if (activeItem)
+		defFile = activeItem->shapeName + ".fbx";
+
+	string fn = wxFileSelector("Export .fbx file for new shape", wxEmptyString, defFile, "", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fn.empty())
+		return;
+
+	if (activeItem){
+		project->ExportShapeFBX(fn, activeItem->shapeName);
+	}
+	else {
+		project->ExportShapeFBX(fn, "");
+	}
+
+
 }
 
 void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3374,7 +3506,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		mesh* curshapemesh = glView->GetMesh(activeItem->shapeName);
 		project->DuplicateShape(activeItem->shapeName, newname, curshapemesh);
 
-		glView->AddMeshFromNif(project->GetWorkNif(), newname);
+		glView->AddMeshFromNif(project->GetWorkNif(), newname, false);
 		project->SetTexture(newname, "_AUTO_");
 
 		glView->SetMeshTexture(newname, project->GetShapeTexture(newname), project->GetWorkNif()->IsShaderSkin(newname));
@@ -3642,6 +3774,24 @@ void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 	prop.ShowModal();
 }
 
+void OutfitStudio::OnDropFiles(wxDropFilesEvent& event) {
+	if (event.GetNumberOfFiles() > 0) {
+		wxString* dropped = event.GetFiles();
+		wxArrayString files;
+		for (int i = 0; i < event.GetNumberOfFiles(); i++) {
+			wxString name = dropped[i];
+			if (wxFileExists(name)) {
+				if (name.EndsWith (".nif") || name.EndsWith(".obj"))
+					files.push_back(name);
+			}				
+		}
+		for (auto f : files) {
+			wxMessageBox(f, "flie dropped");
+		}
+	}
+
+}
+
 void OutfitStudio::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {
 	string fn = event.GetPath();
 	vector<string> shapes;
@@ -3812,7 +3962,7 @@ void wxGLPanel::SetNotifyWindow(wxWindow* win) {
 	notifyWindow = win;
 }
 
-void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName) {
+void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool buildNormals) {
 	vector<string> shapeList;
 	nif->GetShapeList(shapeList);
 
@@ -3827,7 +3977,11 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName) {
 		gls.GetMesh(shapeList[i])->BuildTriAdjacency();
 		gls.GetMesh(shapeList[i])->BuildEdgeList();
 		gls.GetMesh(shapeList[i])->ColorFill(Vector3());
-		RecalcNormals(shapeList[i]);
+
+		// Removed -- smoothing normals here breaks fallout 4 mesh normals.  meshes without normals have their normals calculated/smoothed during mesh load.
+		if (buildNormals) {
+			RecalcNormals(shapeList[i], true);
+		}
 	}
 }
 
@@ -4589,40 +4743,49 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 
 bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 	if (owner) {
-		wxString inputFile;
-		if (fileNames.GetCount() > 0)
-			inputFile = fileNames.Item(0);
-		
-		bool isBSD = inputFile.MakeLower().EndsWith(".bsd");
-		bool isOBJ = inputFile.MakeLower().EndsWith(".obj");
-		if (isBSD || isOBJ) {
-			if (!owner->activeItem) {
-				wxMessageBox("There is no shape selected!", "Error");
-				return false;
+		bool isMultiple = (fileNames.GetCount() > 1);
+		for (int i = 0; i<fileNames.GetCount(); i++)	{
+			wxString inputFile;
+			inputFile = fileNames.Item(i);
+
+			wxString dataName = inputFile.AfterLast('\\');
+			dataName = dataName.BeforeLast('.');
+
+			bool isBSD = inputFile.MakeLower().EndsWith(".bsd");
+			bool isOBJ = inputFile.MakeLower().EndsWith(".obj");
+			bool isFBX = inputFile.MakeLower().EndsWith(".fbx");
+			if (isBSD || isOBJ) {
+				if (!owner->activeItem) {
+					wxMessageBox("There is no shape selected!", "Error");
+					return false;
+				}
+
+				if (lastResult == wxDragCopy) {
+					targetSlider = owner->NewSlider(dataName.ToStdString(),isMultiple);
+				}
+
+				if (targetSlider.empty())
+					return false;
+
+				owner->StartProgress("Loading slider file...");
+				owner->UpdateProgress(1.0f, "Loading slider file...");
+
+				if (isBSD)
+					owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+				else if (isOBJ)
+					owner->project->SetSliderFromOBJ(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+				else if (isFBX)
+					owner->project->SetSliderFromFBX(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+				else
+					return false;
+
+
+				owner->UpdateProgress(100.0f, "Finished.");
+				owner->EndProgress();
 			}
-
-			if (lastResult == wxDragCopy)
-				targetSlider = owner->NewSlider();
-
-			if (targetSlider.empty())
-				return false;
-
-			owner->StartProgress("Loading slider file...");
-			owner->UpdateProgress(1.0f, "Loading slider file...");
-
-			if (isBSD)
-				owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
-			else if (isOBJ)
-				owner->project->SetSliderFromOBJ(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
-			else
-				return false;
-
-			owner->EnterSliderEdit(targetSlider);
-			targetSlider.clear();
-
-			owner->UpdateProgress(100.0f, "Finished.");
-			owner->EndProgress();
 		}
+		owner->EnterSliderEdit(targetSlider);
+		targetSlider.clear();
 	}
 	else
 		return false;
