@@ -9,21 +9,7 @@ See the included LICENSE file
 #include "ConfigurationManager.h"
 #include "FSManager.h"
 #include "FSEngine.h"
-
 #include "SOIL2.h"
-#ifdef NDEBUG
-	#ifdef _WIN32
-		#pragma comment (lib, "SOIL2.lib")
-	#elif _WIN64
-		#pragma comment (lib, "SOIL2_x64.lib")
-	#endif
-#else
-	#ifdef _WIN32
-		#pragma comment (lib, "SOIL2_d.lib")
-	#elif _WIN64
-		#pragma comment (lib, "SOIL2_x64_d.lib")
-	#endif
-#endif
 
 #include <wx/dir.h>
 #include <wx/filename.h>
