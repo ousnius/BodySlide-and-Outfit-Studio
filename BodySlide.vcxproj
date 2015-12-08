@@ -159,7 +159,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <PreventDllBinding>
       </PreventDllBinding>
-      <UACExecutionLevel>RequireAdministrator</UACExecutionLevel>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
