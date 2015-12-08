@@ -1,6 +1,4 @@
 #include "FBXWrangler.h"
-#include "NifFile.h"
-
 
 FBXWrangler::FBXWrangler(): pSdkManager(nullptr), pCurrentScene(nullptr) {
 	
@@ -388,20 +386,20 @@ bool FBXWrangler::LoadMeshes() {
 
 			for (int v = 0; v < meshData.numverts; v++) {
 				FbxVector4 vert = m->GetControlPointAt(v);
-				meshData.verts.emplace_back(vert.mData[0], vert.mData[1], vert.mData[2]);
+				meshData.verts.emplace_back((float)vert.mData[0], (float)vert.mData[1], (float)vert.mData[2]);
 				if (m->GetElementUVCount() && m->GetElementUV(0)->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
 					int uindex = v;
 					if (m->GetElementUV(0)->GetReferenceMode() == FbxLayerElement::eIndexToDirect) {
 						uindex = m->GetElementUV(0)->GetIndexArray().GetAt(v);
 					}
-					meshData.uvs.emplace_back(m->GetElementUV(0)->GetDirectArray().GetAt(uindex).mData[0],
-											  m->GetElementUV(0)->GetDirectArray().GetAt(uindex).mData[1]);
+					meshData.uvs.emplace_back((float)m->GetElementUV(0)->GetDirectArray().GetAt(uindex).mData[0],
+											  (float)m->GetElementUV(0)->GetDirectArray().GetAt(uindex).mData[1]);
 				}
 				
 				if (m->GetElementNormalCount() && m->GetElementNormal(0)->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
-					meshData.normals.emplace_back(m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[0],
-												  m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[1],
-												  m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[2]);
+					meshData.normals.emplace_back((float)m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[0],
+												  (float)m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[1],
+												  (float)m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[2]);
 				}
 			}
 

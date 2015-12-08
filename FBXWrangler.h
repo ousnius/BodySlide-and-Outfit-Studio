@@ -2,7 +2,7 @@
 
 #include <fbxsdk.h>
 #include <string>
-#include "mesh.h"	
+#include "Mesh.h"	
 #include "NifFile.h"
 #include "Anim.h"
 

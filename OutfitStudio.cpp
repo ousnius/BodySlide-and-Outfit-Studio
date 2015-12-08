@@ -2551,7 +2551,7 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	wxMessageBox(wxString::Format("Added morphs for the following shapes:\n\n%s", addedMorphs), "TRI Import");
 }
 
-void OutfitStudio::OnSliderImportFBX(wxCommandEvent& event) {
+void OutfitStudio::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
@@ -3033,7 +3033,7 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudio::OnImportFBX(wxCommandEvent& event) {
+void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	string fn = wxFileSelector("Import .fbx file for new shape", wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
@@ -3067,7 +3067,7 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& event) {
 	glView->Refresh();
 }
 
-void OutfitStudio::OnExportFBX(wxCommandEvent& event) {
+void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	string defFile = "OutfitStudioShapes.fbx";
 	if (activeItem)
 		defFile = activeItem->shapeName + ".fbx";

@@ -15,7 +15,6 @@ See the included LICENSE file
 #include "OutfitStudio.h"
 #include "ConfigurationManager.h"
 #include "Anim.h"
-#include <fbxsdk.h>
 
 #include <map>
 #include <vector>

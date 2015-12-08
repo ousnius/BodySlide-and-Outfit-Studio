@@ -6,6 +6,7 @@ See the included LICENSE file
 
 #include "OutfitProject.h"
 #include "TriFile.h"
+#include "FBXWrangler.h"
 
 OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner) : appConfig(inConfig) {
 	morpherInitialized = false;

@@ -26,7 +26,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ObjFile.h"
 #include "TweakBrush.h"
 #include "Automorph.h"
-#include "FBXWrangler.h"
 #include "OutfitProject.h"
 #include "ConfigurationManager.h"
 

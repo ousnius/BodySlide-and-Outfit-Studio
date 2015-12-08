@@ -3895,8 +3895,8 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	unk[3] = 1.4f;
 	unk[4] = 0.2f;
 	unk[5] = 1.0f;
-	unk[6] = 1.6;
-	unk[7] = 0;
+	unk[6] = 1.6f;
+	unk[7] = 0.0f;
 
 	memset(pad, 0, 16);
 

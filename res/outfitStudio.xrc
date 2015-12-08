@@ -815,10 +815,10 @@
 					<label>Import Shape from FBX</label>
 					<help>Import an FBX file as a new shape in the outfit.</help>
 				</object>
-        <object class="wxMenuItem" name="exportFBX">
-          <label>Export Shape to FBX</label>
-          <help>Export the current shape as an FBX file.</help>
-        </object>
+				<object class="wxMenuItem" name="exportFBX">
+				  <label>Export Shape to FBX</label>
+				  <help>Export the current shape as an FBX file.</help>
+				</object>
 				<object class="wxMenuItem" name="copyShape">
 					<label>Duplicate Shape...</label>
 					<help>Duplicate the current shape.</help>
@@ -934,10 +934,10 @@
 						<label>Import OBJ...</label>
 						<help>Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.</help>
 					</object>
-          <object class="wxMenuItem" name="sliderImportFBX">
-            <label>Import FBX...</label>
-            <help>Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.</help>
-          </object>
+					<object class="wxMenuItem" name="sliderImportFBX">
+						<label>Import FBX...</label>
+						<help>Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.</help>
+					</object>
 					<enabled>0</enabled>
 				</object>
 				<object class="wxMenu" name="menuExportSlider">
