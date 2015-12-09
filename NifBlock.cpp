@@ -4141,7 +4141,7 @@ void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexH
 }
 
 bool BSLightingShaderProperty::IsSkin() {
-	return (header->userVersion2 < 130 && shaderFlags1 & (1 << 21)) != 0;
+	return (shaderFlags1 & (1 << 21)) != 0;
 }
 
 bool BSLightingShaderProperty::IsDoubleSided() {

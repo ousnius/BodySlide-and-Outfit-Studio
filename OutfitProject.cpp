@@ -90,6 +90,7 @@ string OutfitProject::Save(const string& strFileName,
 	string targ;
 	string targSlider;
 	string targSliderData;
+	string targDataName;
 
 	string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
 	string saveDataPath = "ShapeData\\" + strDataDir;
@@ -108,7 +109,10 @@ string OutfitProject::Save(const string& strFileName,
 			targSlider = activeSet[i].TargetDataName(targ);
 			if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 				if (activeSet[i].IsLocalData(targSlider)) {
-					targSliderData = osdFileName + "\\" + activeSet[i].DataFileName(targSlider);
+					targDataName = activeSet[i].DataFileName(targSlider);
+					int lastIndex = targDataName.find_last_of('\\') + 1;
+
+					targSliderData = osdFileName + "\\" + targDataName.substr(lastIndex, targDataName.length() - lastIndex);
 					outSet[id].AddDataFile(targ, targSlider, targSliderData);
 
 					unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
@@ -1529,6 +1533,8 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 
 	sset.GetSet(setName, activeSet);
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
+	activeSet.SetAllReferenced();
+
 	string inMeshFile = activeSet.GetInputFileName();
 
 	if (!ClearRef)
