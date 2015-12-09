@@ -32,6 +32,7 @@ class GLSurface {
 	float mFov;
 	Vector3 camPos;
 	Vector3 camRot;		// Turntable camera emulation.
+	Vector3 camOffset;
 	uint vpW;
 	uint vpH;
 

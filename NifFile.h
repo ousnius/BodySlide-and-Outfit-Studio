@@ -381,9 +381,9 @@ public:
 	};
 
 	uint unkProps[4];
-	uint skinInstanceRef;
-	uint shaderPropertyRef;
-	uint alphaPropertyRef;
+	int skinInstanceRef;
+	int shaderPropertyRef;
+	int alphaPropertyRef;
 
 	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
 	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data
@@ -650,12 +650,12 @@ public:
 class BSSkinInstance : public NiBoneContainer  {
 public:
 	uint unk;
-	uint boneDataRef;
+	int boneDataRef;
 	uint numVertices;
 	vector<SkinWeight> vertexWeights;
 
 
-	BSSkinInstance() : unk(0), boneDataRef(0), numVertices(0) { numBones = 0; };
+	BSSkinInstance() : unk(0), boneDataRef(-1), numVertices(0) { numBones = 0; };
 	BSSkinInstance(NiHeader& hdr);
 	BSSkinInstance(fstream& file, NiHeader& hdr);
 

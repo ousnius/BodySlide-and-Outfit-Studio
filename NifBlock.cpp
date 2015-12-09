@@ -580,9 +580,9 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	header = &hdr;
 
 	memset(unkProps, 0, sizeof(float)* 4);
-	skinInstanceRef = 0xFFFFFFFF;
-	shaderPropertyRef = 0xFFFFFFFF;
-	alphaPropertyRef = 0xFFFFFFFF;
+	skinInstanceRef = -1;
+	shaderPropertyRef = -1;
+	alphaPropertyRef = -1;
 
 	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
 	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data	
@@ -815,16 +815,14 @@ void BSTriShape::notifyBlockDelete(int blockID) {
 	NiObjectNET::notifyBlockDelete(blockID);
 
 	if (skinInstanceRef == blockID)
-		skinInstanceRef = 0xFFFFFFFF;
+		skinInstanceRef = -1;
 	else if (skinInstanceRef > blockID)
 		skinInstanceRef--;
 
 	if (shaderPropertyRef == blockID)
-		shaderPropertyRef = 0xFFFFFFFF;
+		shaderPropertyRef = -1;
 	else if (shaderPropertyRef > blockID)
 		shaderPropertyRef--;
-
-
 }
 
 void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {

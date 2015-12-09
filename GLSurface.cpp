@@ -477,6 +477,7 @@ void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const ui
 	perspective = true;
 	camPos = pos;
 	camRot = rot;
+	camOffset.Zero();
 	vpW = vpWidth;
 	vpH = vpHeight;
 	mFov = fov;
@@ -867,7 +868,7 @@ void GLSurface::UpdateProjection() {
 	if (perspective)
 		gluPerspective(mFov, aspect, 0.1, 1000);
 	else
-		glOrtho(camPos.z / 2 * aspect, -camPos.z / 2 * aspect, camPos.z / 2, -camPos.z / 2, 0.1, 1000);
+		glOrtho((camPos.z + camOffset.z) / 2 * aspect, (-camPos.z + camOffset.z) / 2 * aspect, (camPos.z + camOffset.z) / 2, (-camPos.z + camOffset.z) / 2, 0.1, 1000);
 
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -884,6 +885,7 @@ void GLSurface::RenderOneFrame() {
 	glTranslatef(camPos.x, camPos.y, camPos.z);
 	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
 	glRotatef(camRot.y, 0.0f, 1.0f, 0.0f);
+	glTranslatef(camOffset.x, camOffset.y, camOffset.z);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1323,6 +1325,13 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			float c = 0.4f + ((0.6f / (meshes.size())) * i);
 			meshes[i]->color = Vector3(c, c, c);
 		}
+	}
+
+	// Offset camera for skinned FO4 shapes
+	if (nif->hdr.userVersion == 12 && nif->hdr.userVersion2 == 130) {
+		BSTriShape* geom = nif->geomForNameF4(shapeName);
+		if (geom && geom->skinInstanceRef != -1)
+			camOffset.y = 12.0f;
 	}
 }
 

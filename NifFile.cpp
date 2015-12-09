@@ -1012,11 +1012,10 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 		CopyGeometry(shapeDest, srcNif, srcShape, srcGeom);
 	}
 	else {
-		BSTriShape* srcGeom = srcNif.geomForNameF4(srcShape);
-		CopyGeometry(shapeDest, srcNif, srcShape, srcGeom);
+		BSTriShape* srcGeomF4 = srcNif.geomForNameF4(srcShape);
+		if (srcGeomF4)
+			CopyGeometry(shapeDest, srcNif, srcShape, srcGeomF4);
 	}
-
-	
 }
 
 void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, NiTriBasedGeom* srcGeom) {
@@ -1623,16 +1622,15 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 	else {
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-
 			for (int vid = 0; vid < siTriShape->numverts; vid++) {
-				for (int i = 0; i < 4; i++)
-				if (siTriShape->vertData[vid].weightBones[i] == boneIndex && siTriShape->vertData[vid].weights[i] != 0) {
-					outWeights[vid] = siTriShape->vertData[vid].weights[i];
+				for (int i = 0; i < 4; i++) {
+					if (siTriShape->vertData[vid].weightBones[i] == boneIndex && siTriShape->vertData[vid].weights[i] != 0) {
+						outWeights[vid] = siTriShape->vertData[vid].weights[i];
+					}
 				}
 			}
 			return outWeights.size();
 		}
-
 	}
 
 	if (skinRef == -1)
