@@ -830,7 +830,7 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
 
 	if (Config["GameDataPath"].empty()) {
-		wxRegKey key(wxRegKey::HKLM, gameKey);
+		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
 		if (key.Exists()) {
 			wxString installPath;
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
@@ -880,7 +880,7 @@ wxString BodySlideApp::GetGameDataPath(TargetGame gameID) {
 		dataPath = Config[cust];
 	}
 	else {
-		wxRegKey key(wxRegKey::HKLM, Config[gkey]);
+		wxRegKey key(wxRegKey::HKLM, Config[gkey], wxRegKey::WOW64ViewMode_32);
 		if (key.Exists()) {
 			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
 				dataPath.Append("Data\\");
