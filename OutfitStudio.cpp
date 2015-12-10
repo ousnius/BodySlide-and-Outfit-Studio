@@ -145,8 +145,6 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_SLIDER(XRCID("lightBrightnessSlider2"), OutfitStudio::OnUpdateLights)
 	EVT_SLIDER(XRCID("lightBrightnessSlider3"), OutfitStudio::OnUpdateLights)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudio::OnResetLights)
-
-	EVT_DROP_FILES(OutfitStudio::OnDropFiles)
 	
 	EVT_MOVE_END(OutfitStudio::OnMoveWindow)
 	EVT_SIZE(OutfitStudio::OnSetSize)
@@ -242,10 +240,6 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	if (outfitShapes) {
 		outfitShapes->AssignStateImageList(visStateImages);
 		shapesRoot = outfitShapes->AddRoot("Shapes");
-
-		outfitShapes->DragAcceptFiles(true);
-		outfitShapes->Bind(wxEVT_DROP_FILES, wxDropFilesEventHandler(OutfitStudio::OnDropFiles), this);
-
 	}
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
@@ -3774,24 +3768,6 @@ void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 	prop.ShowModal();
 }
 
-void OutfitStudio::OnDropFiles(wxDropFilesEvent& event) {
-	if (event.GetNumberOfFiles() > 0) {
-		wxString* dropped = event.GetFiles();
-		wxArrayString files;
-		for (int i = 0; i < event.GetNumberOfFiles(); i++) {
-			wxString name = dropped[i];
-			if (wxFileExists(name)) {
-				if (name.EndsWith (".nif") || name.EndsWith(".obj"))
-					files.push_back(name);
-			}				
-		}
-		for (auto f : files) {
-			wxMessageBox(f, "flie dropped");
-		}
-	}
-
-}
-
 void OutfitStudio::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {
 	string fn = event.GetPath();
 	vector<string> shapes;
@@ -4740,9 +4716,10 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 
 			owner->UpdateProgress(100.0f, "Finished.");
 			owner->EndProgress();
-		}	else	if (inputFile.MakeLower().EndsWith(".obj")) {
+		}
+		else if (inputFile.MakeLower().EndsWith(".obj")) {
 			owner->StartProgress("Adding OBJ file...");
-			owner->UpdateProgress(1.0f, "Adding NIF file...");
+			owner->UpdateProgress(1.0f, "Adding OBJ file...");
 			owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 			owner->project->SetTextures("_AUTO_");
 
@@ -4751,9 +4728,10 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 
 			owner->UpdateProgress(100.0f, "Finished.");
 			owner->EndProgress();
-		}	else	if (inputFile.MakeLower().EndsWith(".fbx")) {
+		}
+		else if (inputFile.MakeLower().EndsWith(".fbx")) {
 			owner->StartProgress("Adding FBX file...");
-			owner->UpdateProgress(1.0f, "Adding NIF file...");
+			owner->UpdateProgress(1.0f, "Adding FBX file...");
 			owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 			owner->project->SetTextures("_AUTO_");
 
@@ -4773,7 +4751,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 	if (owner) {
 		bool isMultiple = (fileNames.GetCount() > 1);
-		for (int i = 0; i<fileNames.GetCount(); i++)	{
+		for (int i = 0; i < fileNames.GetCount(); i++)	{
 			wxString inputFile;
 			inputFile = fileNames.Item(i);
 
@@ -4790,7 +4768,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 				}
 
 				if (lastResult == wxDragCopy) {
-					targetSlider = owner->NewSlider(dataName.ToStdString(),isMultiple);
+					targetSlider = owner->NewSlider(dataName.ToStdString(), isMultiple);
 				}
 
 				if (targetSlider.empty())

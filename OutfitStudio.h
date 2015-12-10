@@ -790,7 +790,6 @@ private:
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnBuildSkinPartitions(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
-	void OnDropFiles(wxDropFilesEvent& event);
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);
