@@ -468,7 +468,7 @@ string OutfitStudio::NewSlider(const string& suggestedName, bool skipPrompt) {
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 	string finalName;
 	if (!skipPrompt) {
-		string finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
+		finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
 		if (finalName.empty())
 			return finalName;
 	}
@@ -4722,10 +4722,39 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 		if (fileNames.GetCount() > 0)
 			inputFile = fileNames.Item(0);
 
+		string mergeShapeName = "";
+		if (owner->activeItem) {
+			mergeShapeName = owner->activeItem->shapeName;
+		}
+		wxString dataName = inputFile.AfterLast('\\');
+		dataName = dataName.BeforeLast('.');
+
 		if (inputFile.MakeLower().EndsWith(".nif")) {
 			owner->StartProgress("Adding NIF file...");
 			owner->UpdateProgress(1.0f, "Adding NIF file...");
 			owner->project->AddNif(inputFile.ToStdString(), false);
+			owner->project->SetTextures("_AUTO_");
+
+			owner->UpdateProgress(60.0f, "Refreshing GUI...");
+			owner->RefreshGUIFromProj();
+
+			owner->UpdateProgress(100.0f, "Finished.");
+			owner->EndProgress();
+		}	else	if (inputFile.MakeLower().EndsWith(".obj")) {
+			owner->StartProgress("Adding OBJ file...");
+			owner->UpdateProgress(1.0f, "Adding NIF file...");
+			owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
+			owner->project->SetTextures("_AUTO_");
+
+			owner->UpdateProgress(60.0f, "Refreshing GUI...");
+			owner->RefreshGUIFromProj();
+
+			owner->UpdateProgress(100.0f, "Finished.");
+			owner->EndProgress();
+		}	else	if (inputFile.MakeLower().EndsWith(".fbx")) {
+			owner->StartProgress("Adding FBX file...");
+			owner->UpdateProgress(1.0f, "Adding NIF file...");
+			owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 			owner->project->SetTextures("_AUTO_");
 
 			owner->UpdateProgress(60.0f, "Refreshing GUI...");
