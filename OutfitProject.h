@@ -101,9 +101,7 @@ public:
 	void AddZapSlider(const string& newName, unordered_map<ushort, float>& verts, const string& shapeName);
 	void AddCombinedSlider(const string& newName);
 
-	// AddShapeFromObjFile - shapeName is modified during a successful import to reflect the name of the news hape.
-	int AddShapeFromObjFile(const string& fileName, string& shapeName, const string& mergeShape = ""); 
-
+	int AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape = "");
 	int CreateNifShapeFromData(const string& shapeName,  vector<Vector3>& v,  vector<Triangle>& t,  vector<Vector2>& uv, vector<Vector3>* norms = nullptr);
 
 	// Slider data can have a separate name from the shape target.

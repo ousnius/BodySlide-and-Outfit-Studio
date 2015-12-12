@@ -366,12 +366,14 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 	}
 }
 
-int OutfitProject::AddShapeFromObjFile(const string& fileName, string& shapeName, const string& mergeShape) {
+int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape) {
 	ObjFile obj;
 	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
 
-	//Config.SetValue("StaticMeshMode", "True");
-	//obj.LoadSimple(fileName);
+	if (!shapeName.empty())
+		outfitName = shapeName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
 
 	if (obj.LoadForNif(fileName)) {
 		wxLogError("Could not load OBJ file '%s'!", fileName);
@@ -389,7 +391,8 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, string& shapeName
 			wxMessageBox(wxString::Format("Could not copy data from OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
 			return 3;
 		}
-		// skip zero size groups.  
+
+		// Skip zero size groups.  
 		if (v.size() == 0)
 			continue;
 
@@ -411,7 +414,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, string& shapeName
 				return 100;
 		}
 
-		int ret = CreateNifShapeFromData(useShapeName, v, t, uv);
+		CreateNifShapeFromData(useShapeName, v, t, uv);
 	}
 
 	return 0;
@@ -422,7 +425,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	if (norms == nullptr)
 		owner->setShapeImporting(shapeName, true);
 
-	bool staticMode = (Config.GetString("StaticMeshMode") == "True");
+	bool staticMode = Config["StaticMeshMode"] == "True";
 
 	string blankSkel = "res\\SkeletonBlank.nif";
 	string defaultName = "New Outfit";
@@ -430,9 +433,8 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		blankSkel = "res\\GameObjectBlank.nif";
 		defaultName = "New Object";
 	}
-	else if (owner->targetGame == FO4) {
+	else if (owner->targetGame == FO4)
 		blankSkel = "res\\SkeletonBlank_fo4.nif";
-	}
 
 
 	NifFile blank;
@@ -510,8 +512,8 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			blank.AddBlock((NiObject*)triShapeBase, "BSTriShape");
 			shaderName = "Materials\\Clothes\\Hats\\WigGO.BGSM";
 			wetShaderName = "";
-
-		} else {
+		}
+		else {
 			BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.hdr);
 			nifBSTriShape->Create(&v, &t, &uv, norms);
 			nifBSTriShape->ssfFile = "Meshes\\Actors\\Character\\CharacterAssets\\FemaleBody.ssf";
@@ -522,7 +524,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 
 			BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.hdr);
 			int boneID = blank.AddBlock((NiObject*)nifBoneData, "BSSkin::BoneData");
-			nifBSSkinInstance->boneDataRef = boneID;			
+			nifBSSkinInstance->boneDataRef = boneID;
 			nifBSTriShape->skinInstanceRef = skinID;
 			triShapeBase = nifBSTriShape;
 		}
@@ -546,7 +548,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	}
 
 	workNif.CopyGeometry(shapeName, blank, shapeName);
-	SetTexture(shapeName, "_AUTO_");	
+	SetTexture(shapeName, "_AUTO_");
 
 	return 0;
 }
@@ -744,7 +746,6 @@ int OutfitProject::SaveSliderOBJ(const string& sliderName, const string& shapeNa
 	vector<Triangle> tris;
 	const vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
 	workNif.GetTrisForShape(shapeName, &tris);
-	const vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
 
 	vector<Vector3> outVerts = *verts;
 
@@ -765,14 +766,14 @@ int OutfitProject::SaveSliderOBJ(const string& sliderName, const string& shapeNa
 	vector<Vector2> origUvs;
 	ObjFile orderFile;
 	orderFile.LoadVertOrderMap(mapfn, orderMap, origFaces, origUvs);
+
 	vector<Vector3> swizzleverts(orderMap.size());
-	for (int i = 0; i < orderMap.size(); i++) {
+	for (int i = 0; i < orderMap.size(); i++)
 		swizzleverts[i] = outVerts[orderMap[i]];
-	}
+
 	ObjFile obj;
 	obj.SetScale(Vector3(0.1f, 0.1f, 0.1f));
 	obj.AddGroup(shapeName, swizzleverts, origFaces, origUvs);
-	//obj.AddGroup(shapeName, outVerts, tris, *uvs);
 	if (obj.Save(fileName))
 		return 1;
 
@@ -840,27 +841,25 @@ bool OutfitProject::SetSliderFromOBJ(const string& sliderName, const string& sha
 
 bool OutfitProject::SetSliderFromFBX(const string& sliderName, const string& shapeName, const string& fileName) {
 	string target = ShapeToTarget(shapeName);
-	int type = workNif.GetShapeType(shapeName);
 
 	FBXWrangler fbxw;
 	string invalidBones;
 
 	bool result = fbxw.ImportScene(fileName);
 	if (!result)
-		return 1; 
+		return 1;
+
 	vector<string>shapes;
 	fbxw.GetShapeNames(shapes);
 	bool found = false;
-	for (auto s : shapes) {
-		if (s == shapeName) {
+	for (auto &s : shapes)
+		if (s == shapeName)
 			found = true;
-		}
-	}
-	if (!found) {
-		return false;
-	}
-	FBXShape* shape = fbxw.InShape(shapeName);
 
+	if (!found)
+		return false;
+
+	FBXShape* shape = fbxw.InShape(shapeName);
 
 	unordered_map<ushort, Vector3> diff;
 	if (IsBaseShape(shapeName)) {
@@ -876,8 +875,8 @@ bool OutfitProject::SetSliderFromFBX(const string& sliderName, const string& sha
 
 		morpher.SetResultDiff(target, sliderName, diff);
 	}
-	return true;
 
+	return true;
 }
 
 void OutfitProject::SetSliderFromTRI(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff) {
@@ -1958,34 +1957,39 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 	bool result = fbxw.ImportScene(fileName);
 	if (!result)
 		return 1;
+
+	if (!shapeName.empty())
+		outfitName = shapeName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
+
 	vector<string>shapes;
 	fbxw.GetShapeNames(shapes);
-	for (int i = 0; i < shapes.size(); i++) {
-		FBXShape* shape = fbxw.InShape(shapes[i]);
+	for (auto &s : shapes) {
+		FBXShape* shape = fbxw.InShape(s);
+		string useShapeName = s;
 
-		string useShapeName = shapes[i];
-
-		if (mergeShape != "") {
+		if (!mergeShape.empty()) {
 			vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == shape->numverts) {
-				int r = wxMessageBox("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
-				if (r == wxYES) {
-					r = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION);
-					if (r == wxYES) {
-						workNif.SetVertsForShape(mergeShape, shape->verts);					
-					}
-					r = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION);
-					if (r == wxYES) {
-						for (auto &bn : shape->boneNames) {
+				int ret = wxMessageBox("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
+				if (ret == wxYES) {
+					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION);
+					if (ret == wxYES)
+						workNif.SetVertsForShape(mergeShape, shape->verts);
+
+					ret = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION);
+					if (ret == wxYES)
+						for (auto &bn : shape->boneNames)
 							workAnim.SetWeights(mergeShape, bn, shape->boneSkin[bn].vertweights);
-						}
-					}
+
 					return 101;
 				}
 			}
+
 			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName);
-			if (useShapeName == "")
+			if (useShapeName.empty())
 				return 100;
 		}
 
@@ -2003,12 +2007,13 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 			workAnim.shapeBones[useShapeName].push_back(bn);
 			workAnim.shapeSkinning[useShapeName].boneNames[bn] = slot;
 			workAnim.SetWeights(useShapeName, bn, shape->boneSkin[bn].vertweights);
-		//	workAnim.shapeSkinning[useShapeName].boneWeights[slot].weights = shape->boneSkin[bn].vertweights;
+			//workAnim.shapeSkinning[useShapeName].boneWeights[slot].weights = shape->boneSkin[bn].vertweights;
 			slot++;
 		}
 
-		CreateNifShapeFromData(shapes[i], shape->verts, shape->tris, shape->uvs, &shape->normals);
+		CreateNifShapeFromData(s, shape->verts, shape->tris, shape->uvs, &shape->normals);
 	}
+
 	return 0;
 }
 

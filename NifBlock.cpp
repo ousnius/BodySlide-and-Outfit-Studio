@@ -615,7 +615,6 @@ BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
 }
 
 void BSTriShape::Get(fstream& file) {
-	short shortData;
 	half_float::half halfData;
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
@@ -717,7 +716,6 @@ void BSTriShape::Get(fstream& file) {
 
 
 void BSTriShape::Put(fstream& file) {
-	short shortData;
 	half_float::half halfData;
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.

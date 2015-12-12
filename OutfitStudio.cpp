@@ -2970,13 +2970,11 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Importing shape from OBJ file '%s'...", fn);
 
-	string shapeName = "New Shape";
-
 	int ret;
 	if (activeItem)
-		ret = project->AddShapeFromObjFile(fn, shapeName, activeItem->shapeName);
+		ret = project->AddShapeFromObjFile(fn, project->OutfitName(), activeItem->shapeName);
 	else
-		ret = project->AddShapeFromObjFile(fn, shapeName);
+		ret = project->AddShapeFromObjFile(fn, project->OutfitName());
 
 	if (ret == 101) {	// User chose to merge shapes
 		vector<Vector3> v;
@@ -3031,17 +3029,15 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	string fn = wxFileSelector("Import .fbx file for new shape", wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
-		wxLogMessage("Importing shape from FBX file '%s'...", fn);
 
-	string shapeName = "New Shape";
-	
+	wxLogMessage("Importing shape from FBX file '%s'...", fn);
+
 	int ret;
-	if (activeItem) {
-		ret = project->ImportShapeFBX(fn, shapeName, activeItem->shapeName);
-	}
-	else {
-		ret = project->ImportShapeFBX(fn, shapeName);
-	}
+	if (activeItem)
+		ret = project->ImportShapeFBX(fn, project->OutfitName(), activeItem->shapeName);
+	else
+		ret = project->ImportShapeFBX(fn, project->OutfitName());
+
 	if (ret == 101) {
 		vector<Vector3> v;
 		project->GetLiveVerts(activeItem->shapeName, v);
@@ -3070,14 +3066,10 @@ void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.empty())
 		return;
 
-	if (activeItem){
+	if (activeItem)
 		project->ExportShapeFBX(fn, activeItem->shapeName);
-	}
-	else {
+	else
 		project->ExportShapeFBX(fn, "");
-	}
-
-
 }
 
 void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
@@ -4699,9 +4691,9 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			inputFile = fileNames.Item(0);
 
 		string mergeShapeName = "";
-		if (owner->activeItem) {
+		if (owner->activeItem)
 			mergeShapeName = owner->activeItem->shapeName;
-		}
+
 		wxString dataName = inputFile.AfterLast('\\');
 		dataName = dataName.BeforeLast('.');
 

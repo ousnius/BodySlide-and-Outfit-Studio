@@ -1,3 +1,9 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2015  Caliente & ousnius
+See the included LICENSE file
+*/
+
 #include "FBXWrangler.h"
 
 FBXWrangler::FBXWrangler(): pSdkManager(nullptr), pCurrentScene(nullptr) {

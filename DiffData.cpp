@@ -281,7 +281,7 @@ void DiffDataSets::ApplyUVDiff(const string& set, const string& target, float pe
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
-			continue; // prevent crashes.
+			continue;
 
 		(*inOutResult)[resultIt->first].u += resultIt->second.x * percent;
 		(*inOutResult)[resultIt->first].v += resultIt->second.y * percent;
@@ -300,8 +300,8 @@ void DiffDataSets::ApplyDiff(const string& set, const string& target, float perc
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
-			continue; // prevent crashes.
-		ushort idx = resultIt->first;
+			continue;
+
 		(*inOutResult)[resultIt->first].x += resultIt->second.x * percent;
 		(*inOutResult)[resultIt->first].y += resultIt->second.y * percent;
 		(*inOutResult)[resultIt->first].z += resultIt->second.z * percent;
@@ -317,7 +317,7 @@ void DiffDataSets::ApplyClamp(const string& set, const string& target, vector<Ve
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
-			continue; // prevent crashes.
+			continue;
 
 		(*inOutResult)[resultIt->first].x = resultIt->second.x;
 		(*inOutResult)[resultIt->first].y = resultIt->second.y;

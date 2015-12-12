@@ -1040,12 +1040,38 @@ along with this program.  If not, see <a href="http://www.gnu.org/licenses/">htt
 
 <b>Simple OpenGL Image Libary 2 (SOIL2)</b><br><font size="2">Public Domain<br><a href="https://bitbucket.org/SpartanJ/soil2">https://bitbucket.org/SpartanJ/soil2</a><br><a href="http://lonesock.net/soil.html">http://lonesock.net/soil.html</a></font><br><br><br>
 
+<b>Autodesk® FBX®</b><br><font size="2">This software contains Autodesk® FBX® code developed by Autodesk, Inc.<br>
+Copyright 2014 Autodesk, Inc. All rights, reserved.<br><br>
+<i>Such code is provided “as is” and Autodesk, Inc. disclaims<br>
+any and all warranties, whether express or implied, including<br>
+without limitation the implied warranties of merchantability,<br>
+fitness for a particular purpose or non-infringement<br>
+of third party rights. In no event shall Autodesk, Inc.<br>
+be liable for any direct, indirect, incidental, special,<br>
+exemplary, or consequential damages (including,<br>
+but not limited to, procurement of substitute goods or services;<br>
+loss of use, data, or profits; or business interruption)<br>
+however caused and on any theory of liability, whether in contract,<br>
+strict liability, or tort (including negligence or otherwise)<br>
+arising in any way out of such code.</i></font><br><br><br>
+
 <b>TinyXML-2</b><br><br><font size="2">zlib License<br>Original code by Lee Thomason (<a href="http://www.grinninglizard.com">http://www.grinninglizard.com/</a>)<br><br>
 <i>This software is provided 'as-is', without any express or implied<br>warranty. In no event will the authors be held liable for any<br>damages arising from the use of this software.<br><br>
 Permission is granted to anyone to use this software for any<br>purpose, including commercial applications, and to alter it and<br>redistribute it freely, subject to the following restrictions:<br><br>
 1. The origin of this software must not be misrepresented; you must<br>not claim that you wrote the original software. If you use this<br>software in a product, an acknowledgment in the product documentation<br>
 would be appreciated but is not required.<br><br>2. Altered source versions must be plainly marked as such, and<br>must not be misrepresented as being the original software.<br><br>
 3. This notice may not be removed or altered from any source<br>distribution.</i></font><br><br><br>
+
+<b>half - IEEE 754-based half-precision floating point library</b><br><font size="2">Copyright (c) 2012-2013 Christian Rau (rauy@users.sourceforge.net)<br><br>
+<i>Permission is hereby granted, free of charge, to any person<br>obtaining a copy of this software and associated documentation
+files (the "Software"),<br> to deal in the Software without restriction,<br>including without limitation the rights to use, copy,<br>
+modify, merge, publish, distribute, sublicense,<br>and/or sell copies of the Software, and to permit persons to whom the<br>
+Software is furnished to do so, subject to the following conditions:<br><br>
+The above copyright notice and this permission notice shall be included<br>in all copies or substantial portions of the Software.<br><br>
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,<br>EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE<br>
+WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE<br>AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR<br>
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,<br>WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,<br>
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE<br>OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</i></font><br><br><br>
 
 <b>fsengine (BSA Library)</b><br><br><font size="2">BSD License<br>Copyright (c) 2005-2012, <a href="http://niftools.sourceforge.net/">NIF File Format Library and Tools</a><br>Modified by ousnius.<br>All rights reserved.<br><br>
 <i>Redistribution and use in source and binary forms, with or without<br>modification, are permitted provided that the following conditions are met:<br>

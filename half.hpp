@@ -22,6 +22,8 @@
 #ifndef HALF_HALF_HPP
 #define HALF_HALF_HPP
 
+#pragma warning (disable : 4244 4800)
+
 /// Combined gcc version number.
 #define HALF_GNUC_VERSION (__GNUC__*100+__GNUC_MINOR__)
 
