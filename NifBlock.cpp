@@ -843,6 +843,10 @@ void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		shaderPropertyRef = blockIndexLo;
 }
 
+void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	//Implement
+}
+
 int BSTriShape::CalcBlockSize() {
 	blockSize = 118 + 6 * numTris;
 	

@@ -2822,10 +2822,15 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 		}
 	}
 	else {
-		// Not IMplemented
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			//alphaRef = siTriShape->alphaPropertyRef;
+			siTriShape->notifyVerticesDelete(indices);
+			if (siTriShape->numverts == 0 || siTriShape->numTris == 0) {
+				// Deleted all verts or tris, remove shape and children
+				DeleteShape(shapeName);
+				return;
+			}
+			hdr.blockSizes[dataRef] = siTriShape->CalcBlockSize();
 		}
 	}
 

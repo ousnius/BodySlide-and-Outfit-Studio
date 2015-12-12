@@ -407,6 +407,7 @@ public:
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	virtual int CalcBlockSize();
 
 	const vector<Vector3>* GetRawVerts(bool xform = true);
