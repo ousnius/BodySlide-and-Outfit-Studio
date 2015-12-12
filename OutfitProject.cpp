@@ -1924,7 +1924,7 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 		clone.SetVertsForShape(m->shapeName, liveVerts);
 
 		if (writeNormals) {
-			if (clone.IsShaderSkin(m->shapeName))
+			if (clone.IsShaderSkin(m->shapeName) && owner->targetGame != FO4)
 				continue;
 
 			clone.SetNormalsForShape(m->shapeName, liveNorms);

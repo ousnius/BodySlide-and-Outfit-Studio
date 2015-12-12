@@ -44,6 +44,7 @@ int OSDataFile::Read(const string& fileName) {
 		for (int j = 0; j < diffSize; ++j) {
 			file.read((char*)&index, 2);
 			file.read((char*)&diff, sizeof(Vector3));
+			diff.clampEpsilon();
 			diffs[index] = diff;
 		}
 
@@ -122,6 +123,7 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 	for (int i = 0; i < sz; i++) {
 		inFile.read((char*)&idx, sizeof(int));
 		inFile.read((char*)&v, sizeof(Vector3));
+		v.clampEpsilon();
 		data.emplace(idx, v);
 	}
 	inFile.close();
@@ -299,7 +301,7 @@ void DiffDataSets::ApplyDiff(const string& set, const string& target, float perc
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
 			continue; // prevent crashes.
-
+		ushort idx = resultIt->first;
 		(*inOutResult)[resultIt->first].x += resultIt->second.x * percent;
 		(*inOutResult)[resultIt->first].y += resultIt->second.y * percent;
 		(*inOutResult)[resultIt->first].z += resultIt->second.z * percent;

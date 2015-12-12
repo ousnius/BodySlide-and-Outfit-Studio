@@ -9,6 +9,7 @@ See the included LICENSE file
 #include <vector>
 #include <set>
 #include <math.h>
+#include "half.hpp"
 
 using namespace std;
 
@@ -24,8 +25,10 @@ typedef unsigned char byte;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
+/*
 float h2float(const ushort& in);
 ushort float2h(const float& in);
+*/
 
 struct Vertex;
 
@@ -171,6 +174,16 @@ struct Vector3 {
 		A.Normalize();
 		B.Normalize();
 		return acosf(A.dot(B));
+	}
+
+	void clampEpsilon() {
+
+		if (fabs(x) < EPSILON)
+			x = 0.0f;
+		if (fabs(y) < EPSILON)
+			y = 0.0f; 
+		if (fabs(z) < EPSILON)
+			z = 0.0f;
 	}
 };
 

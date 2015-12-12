@@ -511,6 +511,10 @@ void NiNode::Get(fstream& file) {
 void NiNode::Put(fstream& file) {
 	NiAVObject::Put(file);
 
+	if (children.size() != numChildren) {	// error somewhere else with block management :(
+		return;
+	}
+
 	file.write((char*)&numChildren, 4);
 	for (int i = 0; i < numChildren; i++)
 		file.write((char*)&children[i], 4);
@@ -612,6 +616,7 @@ BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
 
 void BSTriShape::Get(fstream& file) {
 	short shortData;
+	half_float::half halfData;
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
 	NiObjectNET::Get(file);
@@ -656,20 +661,20 @@ void BSTriShape::Get(fstream& file) {
 
 	vertData.resize(numverts);
 	for (int i = 0; i < numverts; i++) {
-		file.read((char*)&shortData, 2);
-		vertData[i].vert.x = h2float(shortData);
-		file.read((char*)&shortData, 2);
-		vertData[i].vert.y = h2float(shortData);
-		file.read((char*)&shortData, 2);
-		vertData[i].vert.z = h2float(shortData);
+		file.read((char*)&halfData, 2);
+		vertData[i].vert.x = halfData;//h2float(shortData);
+		file.read((char*)&halfData, 2);
+		vertData[i].vert.y = halfData;//h2float(shortData);
+		file.read((char*)&halfData, 2);
+		vertData[i].vert.z = halfData;//h2float(shortData);
 
-		file.read((char*)&shortData, 2);
-		vertData[i].bitangentX = h2float(shortData);
+		file.read((char*)&halfData, 2);
+		vertData[i].bitangentX = halfData;//h2float(shortData);
 
-		file.read((char*)&shortData, 2);
-		vertData[i].uv.u = h2float(shortData);
-		file.read((char*)&shortData, 2);
-		vertData[i].uv.v = h2float(shortData);
+		file.read((char*)&halfData, 2);
+		vertData[i].uv.u = halfData;//h2float(shortData);
+		file.read((char*)&halfData, 2);
+		vertData[i].uv.v = halfData;//h2float(shortData);
 
 		if (vertFlags[6] & 0x1) {
 			for (int j = 0; j < 3; j++) {
@@ -690,8 +695,8 @@ void BSTriShape::Get(fstream& file) {
 
 		if (vertFlags[6] & 0x4) {
 			for (int j = 0; j < 4; j++) {
-				file.read((char*)&shortData, 2);
-				vertData[i].weights[j] = h2float(shortData);
+				file.read((char*)&halfData, 2);
+				vertData[i].weights[j] = halfData;//h2float(shortData);
 			}
 			for (int j = 0; j < 4; j++) {
 				file.read((char*)&vertData[i].weightBones[j], 1);
@@ -713,6 +718,7 @@ void BSTriShape::Get(fstream& file) {
 
 void BSTriShape::Put(fstream& file) {
 	short shortData;
+	half_float::half halfData;
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
 	NiObjectNET::Put(file);
@@ -755,25 +761,25 @@ void BSTriShape::Put(fstream& file) {
 
 	for (int i = 0; i < numverts; i++) {
 
-		shortData = float2h(vertData[i].vert.x);
-		file.write((char*)&shortData, 2);
+		halfData = vertData[i].vert.x;
+		file.write((char*)&halfData, 2);
 
-		shortData = float2h(vertData[i].vert.y);
-		file.write((char*)&shortData, 2);
+		halfData = vertData[i].vert.y;
+		file.write((char*)&halfData, 2);
 
 
-		shortData = float2h(vertData[i].vert.z);
-		file.write((char*)&shortData, 2);
+		halfData = vertData[i].vert.z;
+		file.write((char*)&halfData, 2);
 
-		shortData = float2h(vertData[i].bitangentX);
-		file.write((char*)&shortData, 2);
+		halfData = vertData[i].bitangentX;
+		file.write((char*)&halfData, 2);
 		
-		shortData = float2h(vertData[i].uv.u);
-		file.write((char*)&shortData, 2);
+		halfData = vertData[i].uv.u;
+		file.write((char*)&halfData, 2);
 
 
-		shortData = float2h(vertData[i].uv.v);
-		file.write((char*)&shortData, 2);
+		halfData = vertData[i].uv.v;
+		file.write((char*)&halfData, 2);
 
 		if (vertFlags[6] & 0x1) {
 			for (int j = 0; j < 3; j++) {
@@ -794,8 +800,8 @@ void BSTriShape::Put(fstream& file) {
 		}
 		if (vertFlags[6] & 0x4) {
 			for (int j = 0; j < 4; j++) {
-				shortData = float2h(vertData[i].weights[j]);
-				file.write((char*)&shortData, 2);
+				halfData = vertData[i].weights[j];
+				file.write((char*)&halfData, 2);
 			}
 			for (int j = 0; j < 4; j++) {
 				file.write((char*)&vertData[i].weightBones[j], 1);
@@ -1216,7 +1222,7 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		memset(vertData[i].weightBones, 0, 4);
 
 	}
-	if (normals) {
+	if (normals && normals->size() == numverts) {
 		setNormals((*normals));
 		calcTangentSpace(NULL, NULL, NULL);
 	}

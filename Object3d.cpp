@@ -1,5 +1,5 @@
 #include "Object3d.h"
-
+/*
 float h2float(const ushort& in) {
 	float ret;
 	uint t1;
@@ -42,3 +42,4 @@ unsigned short float2h(const float& in) {
 	ret = t1;
 	return ret;
 }
+*/
