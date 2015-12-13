@@ -816,7 +816,7 @@ void BSTriShape::Put(fstream& file) {
 }
 
 void BSTriShape::notifyBlockDelete(int blockID) {
-	NiObjectNET::notifyBlockDelete(blockID);
+	NiAVObject::notifyBlockDelete(blockID);
 
 	if (skinInstanceRef == blockID)
 		skinInstanceRef = -1;
@@ -827,11 +827,16 @@ void BSTriShape::notifyBlockDelete(int blockID) {
 		shaderPropertyRef = -1;
 	else if (shaderPropertyRef > blockID)
 		shaderPropertyRef--;
+
+	if (alphaPropertyRef == blockID)
+		alphaPropertyRef = -1;
+	else if (alphaPropertyRef > blockID)
+		alphaPropertyRef--;
 }
 
 void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiAVObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	NiObjectNET::notifyBlockSwap(blockIndexLo, blockIndexHi);
 	if (skinInstanceRef == blockIndexLo)
 		skinInstanceRef = blockIndexHi;
 	else if (skinInstanceRef == blockIndexHi)
@@ -841,6 +846,11 @@ void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		shaderPropertyRef = blockIndexHi;
 	else if (shaderPropertyRef == blockIndexHi)
 		shaderPropertyRef = blockIndexLo;
+
+	if (alphaPropertyRef == blockIndexLo)
+		alphaPropertyRef = blockIndexHi;
+	else if (alphaPropertyRef == blockIndexHi)
+		alphaPropertyRef = blockIndexLo;
 }
 
 void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
@@ -848,8 +858,10 @@ void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 }
 
 int BSTriShape::CalcBlockSize() {
-	blockSize = 118 + 6 * numTris;
-	
+	NiAVObject::CalcBlockSize();
+
+	blockSize += 46 + 6 * numTris;
+
 	int vdataSize = 12;
 	if (vertFlags[6] & 0x1) {			//normals
 		vdataSize += 8;
@@ -861,12 +873,11 @@ int BSTriShape::CalcBlockSize() {
 
 	if (vertFlags[6] & 0x4) {			//skinning
 		vdataSize += 12;
-
 	}
+
 	blockSize += vdataSize * numverts;
 
 	return blockSize;
-
 }
 
 
@@ -3837,6 +3848,13 @@ float NiShader::GetEmissiveMultiple() {
 void NiShader::SetEmissiveMultiple(float emissive) {
 }
 
+uint NiShader::GetWetMaterialNameRef() {
+	return 0xFFFFFFFF;
+}
+
+void NiShader::SetWetMaterialNameRef(uint matRef) {
+}
+
 int NiShader::CalcBlockSize() {
 	return blockSize;
 }
@@ -3865,6 +3883,7 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 
 	emissiveColor.Zero();
 	emissiveMultiple = 1.0f;
+	wetMaterialNameRef = 0xFFFFFFFF;
 	textureClampMode = 3;
 	alpha = 1.0f;
 	refractionStrength = 0.0f;
@@ -4214,6 +4233,14 @@ float BSLightingShaderProperty::GetEmissiveMultiple() {
 
 void BSLightingShaderProperty::SetEmissiveMultiple(float emissive) {
 	emissiveMultiple = emissive;
+}
+
+uint BSLightingShaderProperty::GetWetMaterialNameRef() {
+	return wetMaterialNameRef;
+}
+
+void BSLightingShaderProperty::SetWetMaterialNameRef(uint matRef) {
+	wetMaterialNameRef = matRef;
 }
 
 int BSLightingShaderProperty::CalcBlockSize() {
@@ -4713,39 +4740,17 @@ NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader& hdr) {
 }
 
 void NiAlphaProperty::Get(fstream& file) {
-	if (header->userVersion <= 12 && header->userVersion2 < 130) {
-		NiProperty::Get(file);
-	} 
-	
-	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		file.read((char*)&unkRef, 4);
-	} 
-	
+	NiProperty::Get(file);
 
 	file.read((char*)&flags, 2);
-	file.read((char*)&threshold, 1);	
-	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		file.read((char*)&unk1, 4);
-		file.read((char*)&unk2, 4);
-	} 
+	file.read((char*)&threshold, 1);
 }
 
 void NiAlphaProperty::Put(fstream& file) {
-	if (header->userVersion <= 12 && header->userVersion2 < 130) {
-		NiProperty::Put(file);
-	} 
-
-	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		file.write((char*)&unkRef, 4);
-	} 
-	
+	NiProperty::Put(file);
 
 	file.write((char*)&flags, 2);
 	file.write((char*)&threshold, 1);
-	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		file.write((char*)&unk1, 4);
-		file.write((char*)&unk2, 4);
-	} 
 }
 
 void NiAlphaProperty::notifyBlockDelete(int blockID) {

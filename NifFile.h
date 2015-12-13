@@ -963,6 +963,8 @@ public:
 	virtual void SetEmissiveColor(Color4 color);
 	virtual float GetEmissiveMultiple();
 	virtual void SetEmissiveMultiple(float emissive);
+	virtual uint GetWetMaterialNameRef();
+	virtual void SetWetMaterialNameRef(uint matRef);
 	virtual int CalcBlockSize();
 };
 
@@ -1031,6 +1033,8 @@ public:
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
+	uint GetWetMaterialNameRef();
+	void SetWetMaterialNameRef(uint matRef);
 	int CalcBlockSize();
 };
 
@@ -1143,10 +1147,6 @@ class NiAlphaProperty : public NiProperty {
 public:
 	ushort flags;
 	byte threshold;
-
-	uint unkRef;
-	uint unk1;
-	uint unk2;
 
 	NiAlphaProperty(NiHeader& hdr);
 	NiAlphaProperty(fstream& file, NiHeader& hdr);
