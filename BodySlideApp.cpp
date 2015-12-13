@@ -690,7 +690,8 @@ void BodySlideApp::UpdatePreview() {
 		vertsLow = verts;
 
 		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uv);
-		ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uv);
+		if (activeSet.GenWeights())
+			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uv);
 
 		// Calculate result of weight
 		for (int i = 0; i < verts.size(); i++)
@@ -738,7 +739,8 @@ void BodySlideApp::RebuildPreviewMeshes() {
 		vertsLow = verts;
 
 		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
-		ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
+		if (activeSet.GenWeights())
+			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
 		
 		// Calculate result of weight
 		for (int i = 0; i < verts.size(); i++)
@@ -1203,6 +1205,81 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		nifSmall.DeleteVertsForShape(it->second, zapIdx);
 
 		nifBig.SetVertsForShape(it->second, vertsHigh);
+		if (targetGame == FO4) {
+			// Temp Fix
+			vector<Triangle> tris;
+			nifBig.GetTrisForShape(it->second, &tris);
+
+			Vector3 norm;
+			float scale = 0.1f;
+			mesh* m = new mesh();
+
+			m->nVerts = vertsHigh.size();
+			m->verts = new Vertex[m->nVerts];
+
+			m->nTris = tris.size();
+			m->tris = new Triangle[m->nTris];
+
+			for (int i = 0; i < m->nVerts; i++) {
+				m->verts[i].x = vertsHigh[i].x * -scale;
+				m->verts[i].z = vertsHigh[i].y * scale;
+				m->verts[i].y = vertsHigh[i].z * scale;
+				m->verts[i].indexRef = i;
+			}
+
+			// Load tris. Also sum face normals here.
+			for (int j = 0; j < m->nTris; j++) {
+				Vector3 norm;
+				m->tris[j].p1 = tris[j].p1;
+				m->tris[j].p2 = tris[j].p2;
+				m->tris[j].p3 = tris[j].p3;
+				m->tris[j].trinormal(m->verts, &norm);
+				m->verts[m->tris[j].p1].nx += norm.x;
+				m->verts[m->tris[j].p1].ny += norm.y;
+				m->verts[m->tris[j].p1].nz += norm.z;
+				m->verts[m->tris[j].p2].nx += norm.x;
+				m->verts[m->tris[j].p2].ny += norm.y;
+				m->verts[m->tris[j].p2].nz += norm.z;
+				m->verts[m->tris[j].p3].nx += norm.x;
+				m->verts[m->tris[j].p3].ny += norm.y;
+				m->verts[m->tris[j].p3].nz += norm.z;
+			}
+
+			// Normalize all vertex normals to smooth them out.
+			for (int i = 0; i < m->nVerts; i++) {
+				Vector3* pn = (Vector3*)&m->verts[i].nx;
+				pn->Normalize();
+			}
+
+			kd_matcher matcher(m->verts, m->nVerts);
+			for (int i = 0; i < matcher.matches.size(); i++) {
+				Vertex* a = matcher.matches[i].first;
+				Vertex* b = matcher.matches[i].second;
+				m->weldVerts[a->indexRef].push_back(b->indexRef);
+				m->weldVerts[b->indexRef].push_back(a->indexRef);
+
+				if (m->smoothSeamNormals) {
+					float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
+					if (dot < 1.57079633f) {
+						a->nx = ((a->nx + b->nx) / 2.0f);
+						a->ny = ((a->ny + b->ny) / 2.0f);
+						a->nz = ((a->nz + b->nz) / 2.0f);
+						b->nx = a->nx;
+						b->ny = a->ny;
+						b->nz = a->nz;
+					}
+				}
+			}
+
+			m->SmoothNormals();
+
+			vector<Vector3> newNorms;
+			for (int i = 0; i < m->nVerts; i++)
+				newNorms.push_back(Vector3(-m->verts[i].nx, m->verts[i].nz, m->verts[i].ny));
+
+			nifBig.SetNormalsForShape(it->second, newNorms);
+			delete m;
+		}
 		nifBig.DeleteVertsForShape(it->second, zapIdx);
 
 		zapIdxAll[it->second] = zapIdx;

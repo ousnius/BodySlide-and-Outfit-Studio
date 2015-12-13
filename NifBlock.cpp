@@ -854,7 +854,45 @@ void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
 void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	//Implement
+	vector<int> indexCollapse(vertData.size(), 0);
+	vector<int> indexCollapseTris(vertData.size(), 0);
+
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			j++;
+		}
+	}
+
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapseTris.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapseTris[i] = -1;	// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapseTris[i] = remCount;
+	}
+
+	for (int i = vertData.size() - 1; i >= 0; i--) {
+		if (indexCollapse[i] == -1) {
+			vertData.erase(vertData.begin() + i);
+			numverts--;
+		}
+	}
+
+	for (int i = numTris - 1; i >= 0; i--) {
+		if (indexCollapseTris[triangles[i].p1] == -1 || indexCollapseTris[triangles[i].p2] == -1 || indexCollapseTris[triangles[i].p3] == -1) {
+			triangles.erase(triangles.begin() + i);
+			numTris--;
+		}
+		else {
+			triangles[i].p1 = triangles[i].p1 - indexCollapseTris[triangles[i].p1];
+			triangles[i].p2 = triangles[i].p2 - indexCollapseTris[triangles[i].p2];
+			triangles[i].p3 = triangles[i].p3 - indexCollapseTris[triangles[i].p3];
+		}
+	}
 }
 
 int BSTriShape::CalcBlockSize() {

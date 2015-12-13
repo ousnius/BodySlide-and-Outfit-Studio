@@ -2847,7 +2847,10 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 				DeleteShape(shapeName);
 				return;
 			}
-			hdr.blockSizes[dataRef] = siTriShape->CalcBlockSize();
+
+			int shapeID = shapeIdForName(shapeName);
+			if (shapeID != -1)
+				hdr.blockSizes[shapeID] = siTriShape->CalcBlockSize();
 		}
 	}
 
