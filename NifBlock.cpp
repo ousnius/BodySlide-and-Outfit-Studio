@@ -580,6 +580,7 @@ int NiNode::CalcBlockSize() {
 
 BSTriShape::BSTriShape(NiHeader& hdr) {
 	NiAVObject::Init();
+
 	blockType = BSTRISHAPE;
 	header = &hdr;
 
@@ -598,30 +599,27 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	vertFlags[5] = 0xB0;
 	vertFlags[6] = 0x1;
 	vertFlags[7] = 0x0;
-	numTris = 0;
-	numverts = 0;
-	datasize = 0;
-	vertRecSize = 20;				// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
-
-	CalcBlockSize();
+	numTriangles = 0;
+	numVertices = 0;
+	dataSize = 0;
+	vertRecSize = 20;	// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
 }
 
 BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
 	NiAVObject::Init();
+
 	blockType = BSTRISHAPE;
 	header = &hdr;
+
 	Get(file);
-	CalcBlockSize();
 }
 
 void BSTriShape::Get(fstream& file) {
-	half_float::half halfData;
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
 	NiObjectNET::Get(file);
 
 	file.read((char*)&flags, 2);
-
 	file.read((char*)&unkShort1, 2);
 
 	file.read((char*)&translation.x, 4);
@@ -635,95 +633,82 @@ void BSTriShape::Get(fstream& file) {
 	}
 
 	file.read((char*)&scale, 4);
-
 	file.read((char*)&collisionRef, 4);
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++)
 		file.read((char*)&unkProps[i], 4);
-	}
 
 	file.read((char*)&skinInstanceRef, 4);
 	file.read((char*)&shaderPropertyRef, 4);
 
 	file.read((char*)&alphaPropertyRef, 4);
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 8; i++)
 		file.read((char*)&vertFlags[i], 1);
-	}
 
+	file.read((char*)&numTriangles, 4);
+	file.read((char*)&numVertices, 2);
 
-	file.read((char*)&numTris, 4);
-	file.read((char*)&numverts, 2);
+	file.read((char*)&dataSize, 4);
+	vertRecSize = (dataSize - (numTriangles * 6)) / numVertices;
 
-	file.read((char*)&datasize, 4);
-	vertRecSize = (datasize - (numTris * 6)) / numverts;
-
-
-	vertData.resize(numverts);
-	for (int i = 0; i < numverts; i++) {
+	half_float::half halfData;
+	vertData.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
 		file.read((char*)&halfData, 2);
-		vertData[i].vert.x = halfData;//h2float(shortData);
+		vertData[i].vert.x = halfData;
 		file.read((char*)&halfData, 2);
-		vertData[i].vert.y = halfData;//h2float(shortData);
+		vertData[i].vert.y = halfData;
 		file.read((char*)&halfData, 2);
-		vertData[i].vert.z = halfData;//h2float(shortData);
+		vertData[i].vert.z = halfData;
 
 		file.read((char*)&halfData, 2);
-		vertData[i].bitangentX = halfData;//h2float(shortData);
+		vertData[i].bitangentX = halfData;
 
 		file.read((char*)&halfData, 2);
-		vertData[i].uv.u = halfData;//h2float(shortData);
+		vertData[i].uv.u = halfData;
 		file.read((char*)&halfData, 2);
-		vertData[i].uv.v = halfData;//h2float(shortData);
+		vertData[i].uv.v = halfData;
 
 		if (vertFlags[6] & 0x1) {
-			for (int j = 0; j < 3; j++) {
+			for (int j = 0; j < 3; j++)
 				file.read((char*)&vertData[i].normal[j], 1);
-			}
 		
 			file.read((char*)&vertData[i].bitangentY, 1);
 
-			for (int j = 0; j < 3; j++) {
+			for (int j = 0; j < 3; j++)
 				file.read((char*)&vertData[i].tangent[j], 1);
-			}
+
 			file.read((char*)&vertData[i].bitangentZ, 1);
 		}
 
-		if (vertFlags[6] & 0x2) {
+		if (vertFlags[6] & 0x2)
 			file.read((char*)&vertData[i].colorData, 4);
-		}
 
 		if (vertFlags[6] & 0x4) {
 			for (int j = 0; j < 4; j++) {
 				file.read((char*)&halfData, 2);
 				vertData[i].weights[j] = halfData;//h2float(shortData);
 			}
-			for (int j = 0; j < 4; j++) {
+
+			for (int j = 0; j < 4; j++)
 				file.read((char*)&vertData[i].weightBones[j], 1);
-			}
 		}
 	}
 
-
-	triangles.resize(numTris);
-	for (int i = 0; i < numTris; i++) {
+	triangles.resize(numTriangles);
+	for (int i = 0; i < numTriangles; i++) {
 		file.read((char*)&triangles[i].p1, 2);
 		file.read((char*)&triangles[i].p2, 2);
 		file.read((char*)&triangles[i].p3, 2);
 	}
-
-
 }
 
-
 void BSTriShape::Put(fstream& file) {
-	half_float::half halfData;
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
 	NiObjectNET::Put(file);
 
 	file.write((char*)&flags, 2);
-
-
 	file.write((char*)&unkShort1, 2);
 
 	file.write((char*)&translation.x, 4);
@@ -737,34 +722,30 @@ void BSTriShape::Put(fstream& file) {
 	}
 
 	file.write((char*)&scale, 4);
-
 	file.write((char*)&collisionRef, 4);
 
-	for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 4; i++)
 		file.write((char*)&unkProps[i], 4);
-	}
 
 	file.write((char*)&skinInstanceRef, 4);
 	file.write((char*)&shaderPropertyRef, 4);
 
 	file.write((char*)&alphaPropertyRef, 4);
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 8; i++)
 		file.write((char*)&vertFlags[i], 1);
-	}
 
-	file.write((char*)&numTris, 4);
-	file.write((char*)&numverts, 2);
+	file.write((char*)&numTriangles, 4);
+	file.write((char*)&numVertices, 2);
 
-	file.write((char*)&datasize, 4);
-
-	for (int i = 0; i < numverts; i++) {
-
+	file.write((char*)&dataSize, 4);
+	
+	half_float::half halfData;
+	for (int i = 0; i < numVertices; i++) {
 		halfData = vertData[i].vert.x;
 		file.write((char*)&halfData, 2);
 
 		halfData = vertData[i].vert.y;
 		file.write((char*)&halfData, 2);
-
 
 		halfData = vertData[i].vert.z;
 		file.write((char*)&halfData, 2);
@@ -775,44 +756,40 @@ void BSTriShape::Put(fstream& file) {
 		halfData = vertData[i].uv.u;
 		file.write((char*)&halfData, 2);
 
-
 		halfData = vertData[i].uv.v;
 		file.write((char*)&halfData, 2);
 
 		if (vertFlags[6] & 0x1) {
-			for (int j = 0; j < 3; j++) {
+			for (int j = 0; j < 3; j++)
 				file.write((char*)&vertData[i].normal[j], 1);
-			}
 		
 			file.write((char*)&vertData[i].bitangentY, 1);
 
-			for (int j = 0; j < 3; j++) {
+			for (int j = 0; j < 3; j++)
 				file.write((char*)&vertData[i].tangent[j], 1);
-			}
 
 			file.write((char*)&vertData[i].bitangentZ, 1);
 		}
 
-		if (vertFlags[6] & 0x2) {
+		if (vertFlags[6] & 0x2)
 			file.write((char*)&vertData[i].colorData, 4);
-		}
+
 		if (vertFlags[6] & 0x4) {
 			for (int j = 0; j < 4; j++) {
 				halfData = vertData[i].weights[j];
 				file.write((char*)&halfData, 2);
 			}
-			for (int j = 0; j < 4; j++) {
+
+			for (int j = 0; j < 4; j++)
 				file.write((char*)&vertData[i].weightBones[j], 1);
-			}
 		}
 	}
 
-	for (int i = 0; i < numTris; i++) {
+	for (int i = 0; i < numTriangles; i++) {
 		file.write((char*)&triangles[i].p1, 2);
 		file.write((char*)&triangles[i].p2, 2);
 		file.write((char*)&triangles[i].p3, 2);
 	}
-
 }
 
 void BSTriShape::notifyBlockDelete(int blockID) {
@@ -856,17 +833,11 @@ void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	vector<int> indexCollapse(vertData.size(), 0);
 	vector<int> indexCollapseTris(vertData.size(), 0);
-
+	
+	int remCount = 0;
 	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
 		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
 			indexCollapse[i] = -1;	// Flag delete
-			j++;
-		}
-	}
-
-	int remCount = 0;
-	for (int i = 0, j = 0; i < indexCollapseTris.size(); i++) {
-		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
 			indexCollapseTris[i] = -1;	// Flag delete
 			remCount++;
 			j++;
@@ -878,14 +849,14 @@ void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	for (int i = vertData.size() - 1; i >= 0; i--) {
 		if (indexCollapse[i] == -1) {
 			vertData.erase(vertData.begin() + i);
-			numverts--;
+			numVertices--;
 		}
 	}
 
-	for (int i = numTris - 1; i >= 0; i--) {
+	for (int i = numTriangles - 1; i >= 0; i--) {
 		if (indexCollapseTris[triangles[i].p1] == -1 || indexCollapseTris[triangles[i].p2] == -1 || indexCollapseTris[triangles[i].p3] == -1) {
 			triangles.erase(triangles.begin() + i);
-			numTris--;
+			numTriangles--;
 		}
 		else {
 			triangles[i].p1 = triangles[i].p1 - indexCollapseTris[triangles[i].p1];
@@ -898,99 +869,92 @@ void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 int BSTriShape::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
-	blockSize += 46 + 6 * numTris;
+	blockSize += 46 + 6 * numTriangles;
 
 	int vdataSize = 12;
-	if (vertFlags[6] & 0x1) {			//normals
+	if (vertFlags[6] & 0x1)		//normals
 		vdataSize += 8;
-	}
 
-	if (vertFlags[6] & 0x2) {			//colors
+	if (vertFlags[6] & 0x2)		//colors
 		vdataSize += 4;
-	}
 
-	if (vertFlags[6] & 0x4) {			//skinning
+	if (vertFlags[6] & 0x4)		//skinning
 		vdataSize += 12;
-	}
 
-	blockSize += vdataSize * numverts;
+	blockSize += vdataSize * numVertices;
 
 	return blockSize;
 }
 
-
 const vector<Vector3>* BSTriShape::GetRawVerts(bool xform) {
-	rawverts.clear();
-	rawverts.resize(numverts);
-	for (int i = 0; i < numverts; i++) {
-		rawverts[i] = vertData[i].vert;
-	}
+	rawVertices.clear();
+	rawVertices.resize(numVertices);
+	for (int i = 0; i < numVertices; i++)
+		rawVertices[i] = vertData[i].vert;
 
-	return &rawverts;
+	return &rawVertices;
 }
 
-
 const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
-	rawnorms.clear();
-	rawnorms.resize(numverts);
-	for (int i = 0; i < numverts; i++) {
-
-		float q1 = (((float)vertData[i].normal[0])/255.0f) *2.0f - 1.0f;
-		float q2 = (((float)vertData[i].normal[1])/255.0f) *2.0f - 1.0f;
-		float q3 = (((float)vertData[i].normal[2])/255.0f) *2.0f - 1.0f;
+	rawNormals.clear();
+	rawNormals.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		float q1 = (((float)vertData[i].normal[0])/255.0f) * 2.0f - 1.0f;
+		float q2 = (((float)vertData[i].normal[1])/255.0f) * 2.0f - 1.0f;
+		float q3 = (((float)vertData[i].normal[2])/255.0f) * 2.0f - 1.0f;
 
 		float x = q1;
 		float y = q2;
 		float z = q3;
 
 		if (xform) {
-			rawnorms[i].x = -x;
-			rawnorms[i].z = y;
-			rawnorms[i].y = z;
+			rawNormals[i].x = -x;
+			rawNormals[i].z = y;
+			rawNormals[i].y = z;
 		}
 		else {
-			rawnorms[i].x = x;
-			rawnorms[i].z = z;
-			rawnorms[i].y = y;
+			rawNormals[i].x = x;
+			rawNormals[i].z = z;
+			rawNormals[i].y = y;
 		}
-
 	}
 
-	return &rawnorms;
+	return &rawNormals;
 }
 
 const vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
-	rawtangents.clear();
-	rawtangents.resize(numverts);
-	for (int i = 0; i < numverts; i++) {
-		float q6 = (((float)vertData[i].tangent[0]) / 255.0f) *2.0f - 1.0f;
-		float q7 = (((float)vertData[i].tangent[1]) / 255.0f) *2.0f - 1.0f;
-		float q8 = (((float)vertData[i].tangent[2]) / 255.0f) *2.0f - 1.0f;
+	rawTangents.clear();
+	rawTangents.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		float q6 = (((float)vertData[i].tangent[0]) / 255.0f) * 2.0f - 1.0f;
+		float q7 = (((float)vertData[i].tangent[1]) / 255.0f) * 2.0f - 1.0f;
+		float q8 = (((float)vertData[i].tangent[2]) / 255.0f) * 2.0f - 1.0f;
 		float x = q6;
 		float y = q7;
 		float z = q8;
 
 		if (xform) {
-			rawtangents[i].x = -x;
-			rawtangents[i].z = y;
-			rawtangents[i].y = z;
+			rawTangents[i].x = -x;
+			rawTangents[i].z = y;
+			rawTangents[i].y = z;
 		}
 		else {
-			rawtangents[i].x = x;
-			rawtangents[i].z = z;
-			rawtangents[i].y = y;
+			rawTangents[i].x = x;
+			rawTangents[i].z = z;
+			rawTangents[i].y = y;
 		}
 	}
-	return &rawtangents;
+
+	return &rawTangents;
 }
 
 const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
 	rawBitangents.clear();
-	rawBitangents.resize(numverts);
-	for (int i = 0; i < numverts; i++) {
+	rawBitangents.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
 		float x = (vertData[i].bitangentX);
-		float y = (((float)vertData[i].bitangentY) / 255.0f) *2.0f - 1.0f;
-		float z = (((float)vertData[i].bitangentZ) / 255.0f) *2.0f - 1.0f;
+		float y = (((float)vertData[i].bitangentY) / 255.0f) * 2.0f - 1.0f;
+		float z = (((float)vertData[i].bitangentZ) / 255.0f) * 2.0f - 1.0f;
 
 
 		if (xform) {
@@ -1008,157 +972,155 @@ const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
 }
 
 const vector<Vector2>* BSTriShape::GetUVData() {
-	rawuvs.clear();
-	rawuvs.resize(numverts);
-	for (int i = 0; i < numverts; i++) {
-		rawuvs[i] = vertData[i].uv;
-	}
+	rawUvs.clear();
+	rawUvs.resize(numVertices);
+	for (int i = 0; i < numVertices; i++)
+		rawUvs[i] = vertData[i].uv;
 
-	return &rawuvs;
-
+	return &rawUvs;
 }
 
-void BSTriShape::calcTangentSpace(vector<Vector3>** outNorms, vector<Vector3>** outTangents, vector<Vector3>** outBitangents, bool transform) {
-
-	GetNormalData(false);
-
-	vector<Vector3> tan1;
-	vector<Vector3> tan2;
-	tan1.resize(numverts);
-	tan2.resize(numverts);
-
-
-	for (int i = 0; i < triangles.size(); i++) {
-		int i1 = triangles[i].p1;
-		int i2 = triangles[i].p2;
-		int i3 = triangles[i].p3;
-
-		Vector3 v1 = vertData[i1].vert;
-		Vector3 v2 = vertData[i2].vert;
-		Vector3 v3 = vertData[i3].vert;
-
-		Vector2 w1 = vertData[i1].uv;
-		Vector2 w2 = vertData[i2].uv;
-		Vector2 w3 = vertData[i3].uv;
-
-		float x1 = v2.x - v1.x;
-		float x2 = v3.x - v1.x;
-		float y1 = v2.y - v1.y;
-		float y2 = v3.y - v1.y;
-		float z1 = v2.z - v1.z;
-		float z2 = v3.z - v1.z;
-
-		float s1 = w2.u - w1.u;
-		float s2 = w3.u - w1.u;
-		float t1 = w2.v - w1.v;
-		float t2 = w3.v - w1.v;
-
-		float r =  (s1 * t2 - s2 * t1);
-		r = (r >= 0.0f ? +1.0f : -1.0f);
-
-		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
-		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
-
-		tan1[i1] += tdir;
-		tan1[i2] += tdir;
-		tan1[i3] += tdir;
-
-		tan2[i1] += sdir;
-		tan2[i2] += sdir;
-		tan2[i3] += sdir;
+void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
+	rawNormals.clear();
+	rawNormals.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		rawNormals[i] = inNorms[i];
+		vertData[i].normal[0] = (unsigned char)round((((inNorms[i].x + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[1] = (unsigned char)round((((inNorms[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[2] = (unsigned char)round((((inNorms[i].z + 1.0f) / 2.0f) * 255.0f));
 	}
-
-	rawBitangents.resize(numverts);
-	rawtangents.resize(numverts);
-
-	for (int i = 0; i < numverts; i++) {
-		Vector3 n = rawnorms[i];
-
-		rawtangents[i] = tan1[i];
-		rawBitangents[i] = tan2[i];
-
-		if (rawtangents[i].IsZero() || rawBitangents[i].IsZero()) {
-			rawtangents[i].x = rawnorms[i].y; rawtangents[i].y = rawnorms[i].z; rawtangents[i].z = rawnorms[i].x;
-			rawBitangents[i] = rawnorms[i].cross(rawtangents[i]);
-		}
-		else {
-			rawtangents[i].Normalize();
-			rawtangents[i] = (rawtangents[i] - rawnorms[i] * rawnorms[i].dot(rawtangents[i]));
-			rawtangents[i].Normalize();
-
-			rawBitangents[i].Normalize();
-
-			rawBitangents[i] = (rawBitangents[i] - rawnorms[i] * rawnorms[i].dot(rawBitangents[i]));
-			rawBitangents[i] = (rawBitangents[i] - rawtangents[i] * rawtangents[i].dot(rawBitangents[i]));
-
-			rawBitangents[i].Normalize();
-
-
-		}
-
-
-		//rawBitangents[i] = tan1[i] ;
-		//rawBitangents[i].Normalize();
-
-		//rawtangents[i] = rawBitangents[i].cross(rawnorms[i]);
-		//rawtangents[i].Normalize();
-
-
-
-		float tmp;
-		if (transform) {
-			rawnorms[i].x = -rawnorms[i].x;
-			tmp = rawnorms[i].y;
-			rawnorms[i].y = rawnorms[i].z;
-			rawnorms[i].z = tmp;
-		
-		
-			rawBitangents[i].x = -rawBitangents[i].x;
-			tmp = rawBitangents[i].y;
-			rawBitangents[i].y = rawBitangents[i].z;
-			rawBitangents[i].z = tmp;
-		
-			rawtangents[i].x = -rawtangents[i].x;
-			tmp = rawtangents[i].y;
-			rawtangents[i].y = rawtangents[i].z;
-			rawtangents[i].z = tmp;
-		}
-
-	}
-	if (outNorms)
-		*outNorms = &rawnorms;
-	if (outTangents)
-		*outTangents = &rawtangents;
-	if (outBitangents)
-		*outBitangents = &rawBitangents;
-
-
-
 }
 
-void BSTriShape::setNormals(const vector<Vector3>& inNorms) {
-	rawnorms.clear();
-	rawnorms.resize(numverts);
-	for (int i = 0;i < numverts; i++) {
-		rawnorms[i] = inNorms[i];
-		vertData[i].normal[0] = (unsigned char)round((((inNorms[i].x + 1.0f) /2.0f )*255.0f));
-		vertData[i].normal[1] = (unsigned char)round((((inNorms[i].y + 1.0f) / 2.0f)*255.0f));;
-		vertData[i].normal[2] = (unsigned char)round((((inNorms[i].z + 1.0f) / 2.0f)*255.0f));;
+void BSTriShape::SmoothNormals(const float& smoothThreshold) {
+	// WIP
 
+	// Find weld verts
+	/*
+	kd_matcher matcher(m->verts, m->nVerts);
+	for (i = 0; i < matcher.matches.size(); i++) {
+		Vertex* a = matcher.matches[i].first;
+		Vertex* b = matcher.matches[i].second;
+		m->weldVerts[a->indexRef].push_back(b->indexRef);
+		m->weldVerts[b->indexRef].push_back(a->indexRef);
+		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
+		if (dot < 1.57079633f) {
+			a->nx = ((a->nx + b->nx) / 2.0f);
+			a->ny = ((a->ny + b->ny) / 2.0f);
+			a->nz = ((a->nz + b->nz) / 2.0f);
+			b->nx = a->nx;
+			b->ny = a->ny;
+			b->nz = a->nz;
+		}
 	}
+	*/
 
+	// Smooth normals
+	/*
+	Vector3 norm;
+	Vector3 tn;
+	for (int v = 0; v < numVertices; v++) {
+		norm.x = norm.y = norm.z = 0.0f;
+		for (auto &t : vertTris[v]) {
+			tris[t].trinormal(verts, &tn);
+			norm += tn;
+		}
+
+		for (auto &wv : weldVerts[v]) {
+			bool first = true;
+			if (vertTris[wv].size() < 2)
+				continue;
+
+			for (auto &t : vertTris[wv]) {
+				tris[t].trinormal(verts, &tn);
+				if (!first) {
+					float angle = fabs(norm.angle(tn));
+					if (angle > smoothThreshold)
+						continue;
+				}
+				else
+					first = false;
+
+				norm += tn;
+			}
+		}
+		norm = norm / (float)vertTris[v].size();
+		norm.Normalize();
+		verts[v].nx = norm.x;
+		verts[v].ny = norm.y;
+		verts[v].nz = norm.z;
+	}
+	*/
 }
 
-void BSTriShape::SetTangentData() {
-	if (rawnorms.empty()) {
+void BSTriShape::RecalcNormals() {
+	GetRawVerts();
+
+	// Calc normal
+	Vector3 norm;
+	rawNormals.resize(numVertices);
+	for (int i = 0; i < numTriangles; i++) {
+		triangles[i].trinormal(rawVertices, &norm);
+		rawNormals[triangles[i].p1].x += norm.x;
+		rawNormals[triangles[i].p1].y += norm.y;
+		rawNormals[triangles[i].p1].z += norm.z;
+		rawNormals[triangles[i].p2].x += norm.x;
+		rawNormals[triangles[i].p2].y += norm.y;
+		rawNormals[triangles[i].p2].z += norm.z;
+		rawNormals[triangles[i].p3].x += norm.x;
+		rawNormals[triangles[i].p3].y += norm.y;
+		rawNormals[triangles[i].p3].z += norm.z;
+	}
+
+	// Normalize all vertex normals to smooth them out
+	for (int i = 0; i < numVertices; i++)
+		rawNormals[i].Normalize();
+
+	Vertex* matchVerts = new Vertex[numVertices];
+
+	for (int i = 0; i < numVertices; i++) {
+		matchVerts[i].x = rawVertices[i].x;
+		matchVerts[i].nx = rawNormals[i].x;
+		matchVerts[i].y = rawVertices[i].y;
+		matchVerts[i].ny = rawNormals[i].y;
+		matchVerts[i].z = rawVertices[i].z;
+		matchVerts[i].nz = rawNormals[i].z;
+	}
+
+	kd_matcher matcher(matchVerts, numVertices);
+	for (int i = 0; i < matcher.matches.size(); i++) {
+		Vertex* a = matcher.matches[i].first;
+		Vertex* b = matcher.matches[i].second;
+		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
+		if (dot < 1.57079633f) {
+			a->nx = ((a->nx + b->nx) / 2.0f);
+			a->ny = ((a->ny + b->ny) / 2.0f);
+			a->nz = ((a->nz + b->nz) / 2.0f);
+			b->nx = a->nx;
+			b->ny = a->ny;
+			b->nz = a->nz;
+		}
+	}
+
+	for (int i = 0; i < numVertices; i++) {
+		rawNormals[i].x = matchVerts[i].nx;
+		rawNormals[i].y = matchVerts[i].ny;
+		rawNormals[i].z = matchVerts[i].nz;
+		vertData[i].normal[0] = (unsigned char)round((((rawNormals[i].x + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[1] = (unsigned char)round((((rawNormals[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[2] = (unsigned char)round((((rawNormals[i].z + 1.0f) / 2.0f) * 255.0f));
+	}
+
+	delete[] matchVerts;
+}
+
+void BSTriShape::CalcTangentSpace() {
+	if (rawNormals.empty())
 		GetNormalData(false);
-	}
 
 	vector<Vector3> tan1;
 	vector<Vector3> tan2;
-	tan1.resize(numverts);
-	tan2.resize(numverts);
-
+	tan1.resize(numVertices);
+	tan2.resize(numVertices);
 
 	for (int i = 0; i < triangles.size(); i++) {
 		int i1 = triangles[i].p1;
@@ -1203,64 +1165,49 @@ void BSTriShape::SetTangentData() {
 		tan2[i3] += sdir;
 	}
 
-	rawBitangents.resize(numverts);
-	rawtangents.resize(numverts);
+	rawBitangents.resize(numVertices);
+	rawTangents.resize(numVertices);
 
-	for (int i = 0; i < numverts; i++) {
-
-		rawtangents[i] = tan1[i];
+	for (int i = 0; i < numVertices; i++) {
+		rawTangents[i] = tan1[i];
 		rawBitangents[i] = tan2[i];
 
-		if (rawtangents[i].IsZero() || rawBitangents[i].IsZero()) {
-			rawtangents[i].x = rawnorms[i].y; rawtangents[i].y = rawnorms[i].z; rawtangents[i].z = rawnorms[i].x;
-			rawBitangents[i] = rawnorms[i].cross(rawtangents[i]);
+		if (rawTangents[i].IsZero() || rawBitangents[i].IsZero()) {
+			rawTangents[i].x = rawNormals[i].y;
+			rawTangents[i].y = rawNormals[i].z;
+			rawTangents[i].z = rawNormals[i].x;
+			rawBitangents[i] = rawNormals[i].cross(rawTangents[i]);
 		}
 		else {
-			rawtangents[i].Normalize();
-			rawtangents[i] = (rawtangents[i] - rawnorms[i] * rawnorms[i].dot(rawtangents[i]));
-			rawtangents[i].Normalize();
+			rawTangents[i].Normalize();
+			rawTangents[i] = (rawTangents[i] - rawNormals[i] * rawNormals[i].dot(rawTangents[i]));
+			rawTangents[i].Normalize();
 
 			rawBitangents[i].Normalize();
 
-			rawBitangents[i] = (rawBitangents[i] - rawnorms[i] * rawnorms[i].dot(rawBitangents[i]));
-			rawBitangents[i] = (rawBitangents[i] - rawtangents[i] * rawtangents[i].dot(rawBitangents[i]));
+			rawBitangents[i] = (rawBitangents[i] - rawNormals[i] * rawNormals[i].dot(rawBitangents[i]));
+			rawBitangents[i] = (rawBitangents[i] - rawTangents[i] * rawTangents[i].dot(rawBitangents[i]));
 
 			rawBitangents[i].Normalize();
-
-
 		}
 
-
-		///* Old wrong way */
-		//rawBitangents[i] = tan1[i];
-		//rawBitangents[i].Normalize();
-
-		//rawtangents[i] = rawBitangents[i].cross(rawnorms[i]);
-		//rawtangents[i].Normalize();
-
-
-
-		vertData[i].tangent[0] = (unsigned char)round((((rawtangents[i].x + 1.0f) / 2.0f)*255.0f));
-		vertData[i].tangent[1] = (unsigned char)round((((rawtangents[i].y + 1.0f) / 2.0f)*255.0f));;
-		vertData[i].tangent[2] = (unsigned char)round((((rawtangents[i].z + 1.0f) / 2.0f)*255.0f));;
+		vertData[i].tangent[0] = (unsigned char)round((((rawTangents[i].x + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].tangent[1] = (unsigned char)round((((rawTangents[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].tangent[2] = (unsigned char)round((((rawTangents[i].z + 1.0f) / 2.0f) * 255.0f));
 
 		vertData[i].bitangentX = rawBitangents[i].x;
-		vertData[i].bitangentY = (unsigned char)round((((rawBitangents[i].y + 1.0f) / 2.0f)*255.0f));
-		vertData[i].bitangentZ = (unsigned char)round((((rawBitangents[i].z + 1.0f) / 2.0f)*255.0f));
-
+		vertData[i].bitangentY = (unsigned char)round((((rawBitangents[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].bitangentZ = (unsigned char)round((((rawBitangents[i].z + 1.0f) / 2.0f) * 255.0f));
 	}
-
-
-
-
 }
 
 void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
-	unkShort1 = 0;						//from AVObject -- zero for these blocks.
-	numverts = verts->size();
-	numTris = tris->size();
-	vertData.resize(verts->size());
-	for (int i = 0; i < numverts; i++) {
+	unkShort1 = 0; //from AVObject -- zero for these blocks.
+	numVertices = verts->size();
+	numTriangles = tris->size();
+
+	vertData.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
 		vertData[i].vert = (*verts)[i];
 		vertData[i].uv = (*uvs)[i];
 
@@ -1271,73 +1218,61 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		memset(vertData[i].colorData, 255, 4);
 		memset(vertData[i].weights, 0, sizeof(float)* 4);
 		memset(vertData[i].weightBones, 0, 4);
+	}
 
+	if (normals && normals->size() == numVertices) {
+		SetNormals((*normals));
+		CalcTangentSpace();
 	}
-	if (normals && normals->size() == numverts) {
-		setNormals((*normals));
-		calcTangentSpace(NULL, NULL, NULL);
-	}
+
 	vertRecSize = 12;
-	if (vertFlags[6] & 0x1) {			//normals
+	if (vertFlags[6] & 0x1)		//normals
 		vertRecSize += 8;
-	}
 
-	if (vertFlags[6] & 0x2) {			//colors
+	if (vertFlags[6] & 0x2)		//colors
 		vertRecSize += 4;
-	}
 
-	if (vertFlags[6] & 0x4) {			//skinning
+	if (vertFlags[6] & 0x4)		//skinning
 		vertRecSize += 12;
-	}
-	datasize = 6 * numTris + numverts * vertRecSize;
 
-	triangles.resize(numTris);
-	for (int i = 0; i < numTris; i++) {
+	dataSize = 6 * numTriangles + numVertices * vertRecSize;
+
+	triangles.resize(numTriangles);
+	for (int i = 0; i < numTriangles; i++)
 		triangles[i] = (*tris)[i];
-	}
-
-	CalcBlockSize();
-
 }
 
 BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
-	numtris2 = 0;
+
+	numTriangles2 = 0;
 	numSubIndexRecordA = 0;
 	numSubIndexRecordB = 0;
 	numSubIndexRecordA_2 = 0;
 	numSubIndexRecordB_2 = 0;
-	CalcBlockSize();
 }
 
-BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) :
-BSTriShape(file, hdr)
-{
+BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
 	Get(file);
-	CalcBlockSize();
 }
 
 void BSSubIndexTriShape::Get(fstream& file) {
-
-
-	file.read((char*)&numtris2, 4);
+	file.read((char*)&numTriangles2, 4);
 	file.read((char*)&numSubIndexRecordA, 4);
 	file.read((char*)&numSubIndexRecordB, 4);
 
 	subIndexRecordsA.resize(numSubIndexRecordB * 4);
-	for (int i = 0; i < numSubIndexRecordB * 4; i++) {		
+	for (int i = 0; i < numSubIndexRecordB * 4; i++)
 		file.read((char*)&subIndexRecordsA[i], 4);
-	}
 	
 	if (numSubIndexRecordB > numSubIndexRecordA) {
 		file.read((char*)&numSubIndexRecordA_2, 4);
 		file.read((char*)&numSubIndexRecordB_2, 4);
 
 		sequence.resize(numSubIndexRecordA);
-		for (int i = 0; i < numSubIndexRecordA; i++) {
+		for (int i = 0; i < numSubIndexRecordA; i++)
 			file.read((char*)&sequence[i], 4);
-		}
 
 		subIndexRecordsB.resize(numSubIndexRecordB);
 		for (int i = 0; i < numSubIndexRecordB; i++) {
@@ -1345,68 +1280,53 @@ void BSSubIndexTriShape::Get(fstream& file) {
 			file.read((char*)&subIndexRecordsB[i].unk2, 4);
 			file.read((char*)&subIndexRecordsB[i].numExtra, 4);
 			subIndexRecordsB[i].extraData.resize(subIndexRecordsB[i].numExtra);
-			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++) {
+			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++)
 				file.read((char*)&subIndexRecordsB[i].extraData[j], 4);
-			}
-
 		}
-
 		ssfFile.Get(file, 2);
 	}
-
 }
-
 
 void BSSubIndexTriShape::Put(fstream& file) {
 	BSTriShape::Put(file);
 
-	file.write((char*)&numtris2, 4);
+	file.write((char*)&numTriangles2, 4);
 	file.write((char*)&numSubIndexRecordA, 4);
 	file.write((char*)&numSubIndexRecordB, 4);
 
-	for (int i = 0; i < numSubIndexRecordB * 4; i++) {
+	for (int i = 0; i < numSubIndexRecordB * 4; i++)
 		file.write((char*)&subIndexRecordsA[i], 4);
-	}
 
 	if (numSubIndexRecordB > numSubIndexRecordA) {
 		file.write((char*)&numSubIndexRecordA_2, 4);
 		file.write((char*)&numSubIndexRecordB_2, 4);
 
-		for (int i = 0; i < numSubIndexRecordA; i++) {
+		for (int i = 0; i < numSubIndexRecordA; i++)
 			file.write((char*)&sequence[i], 4);
-		}
 
 		for (int i = 0; i < numSubIndexRecordB; i++) {
 			file.write((char*)&subIndexRecordsB[i].unk1, 4);
 			file.write((char*)&subIndexRecordsB[i].unk2, 4);
 			file.write((char*)&subIndexRecordsB[i].numExtra, 4);
 
-			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++) {
+			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++)
 				file.write((char*)&subIndexRecordsB[i].extraData[j], 4);
-			}
-
 		}
-
 		ssfFile.Put(file, 2,false);
 	}
-
 }
 
 void BSSubIndexTriShape::notifyBlockDelete(int blockID) {
 	BSTriShape::notifyBlockDelete(blockID);
-
-
-
 }
 
 void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-
 	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
-
 }
 
 int BSSubIndexTriShape::CalcBlockSize() {
 	BSTriShape::CalcBlockSize();
+
 	blockSize += 12;									// tris and first record counts
 	blockSize += numSubIndexRecordB * 4 * 4;			// sub inex record arrayA
 
@@ -1419,11 +1339,9 @@ int BSSubIndexTriShape::CalcBlockSize() {
 		}
 		blockSize += 2;
 		blockSize += ssfFile.str.length();
-
 	}
 
 	return blockSize;
-
 }
 
 void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
@@ -1432,7 +1350,7 @@ void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, 
 	vertFlags[0] = 8;
 	vertFlags[6] = 5;
 
-	numtris2 = numTris;
+	numTriangles2 = numTriangles;
 	numSubIndexRecordA = 0;
 	numSubIndexRecordB = 0;
 	numSubIndexRecordA_2 = 0;
@@ -1450,12 +1368,9 @@ void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, 
 	}
 
 	subIndexRecordsA[n++] = 0x0;
-	subIndexRecordsA[n++] = numTris;
+	subIndexRecordsA[n++] = numTriangles;
 	subIndexRecordsA[n++] = 0xFFFFFFFF;
 	subIndexRecordsA[n++] = 0x0;
-
-	CalcBlockSize();
-
 }
 
 void NiGeometry::Init() {

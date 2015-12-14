@@ -361,10 +361,9 @@ public:
 	int CalcBlockSize();
 };
 
-// Fallout 4 trishape and trishape data for non-skinned meshes.  uses half floats for vertices.
-class BSTriShape : public NiAVObject{
+// Fallout 4 geometry for non-skinned meshes. Mostly uses half floats for vertex data.
+class BSTriShape : public NiAVObject {
 public:	
-	
 	class TSVertData {
 	public:
 		Vector3 vert;			// Stored half-float, convert!
@@ -388,16 +387,16 @@ public:
 	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
 	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data
 	byte vertFlags[8];			
-	uint numTris;
-	ushort numverts;
-	uint datasize;
+	uint numTriangles;
+	ushort numVertices;
+	uint dataSize;
 	uint vertRecSize;				// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
 
-	vector<Vector3> rawverts;	// filled by GetRawVerts function and returned.
-	vector<Vector3> rawnorms;	// filled by GetNormalData function and returned.
-	vector<Vector3> rawtangents; // filled by calcTangentSpace function and returned.
-	vector<Vector3> rawBitangents; // filled in calcTangentSpace
-	vector<Vector2> rawuvs;		// filled by GetUVData function and returned.
+	vector<Vector3> rawVertices;	// filled by GetRawVerts function and returned.
+	vector<Vector3> rawNormals;		// filled by GetNormalData function and returned.
+	vector<Vector3> rawTangents;	// filled by calcTangentSpace function and returned.
+	vector<Vector3> rawBitangents;	// filled in calcTangentSpace
+	vector<Vector2> rawUvs;			// filled by GetUVData function and returned.
 
 	vector<TSVertData> vertData;
 	vector<Triangle> triangles;
@@ -415,17 +414,18 @@ public:
 	const vector<Vector3>* GetTangentData(bool xform = true);
 	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
-	void calcTangentSpace(vector<Vector3>** outNorms = nullptr, vector<Vector3>** outTangents = nullptr, vector<Vector3>** outBitangents = nullptr, bool transform = true);
-	void setNormals(const vector<Vector3>& inNorms);
-	void SetTangentData();
+
+	void SetNormals(const vector<Vector3>& inNorms);
+	void SmoothNormals(const float& smoothThreshold = 60.0f * DEG2RAD);
+	void RecalcNormals();
+	void CalcTangentSpace();
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
-
-// Fallout 4 trishape and trishape data for skinned meshes.  uses half floats for vertices.
+// Fallout 4 geometry for non-skinned meshes. Mostly uses half floats for vertex data.
 class BSSubIndexTriShape : public BSTriShape {
 public:
-	uint numtris2;
+	uint numTriangles2;
 	uint numSubIndexRecordA;
 	uint numSubIndexRecordB;
 
@@ -1358,8 +1358,9 @@ public:
 	void SetVertsForShape(const string& shapeName, const vector<Vector3>& verts);
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
+	void SmoothNormalsForShape(const string& shapeName);
+	void CalcNormalsForShape(const string& shapeName);
 	void CalcTangentsForShape(const string& shapeName);
-	void CalcTangentsForShape(const string& shapeName, vector<Vector3>** outNormals, vector<Vector3>** outTagents, vector<Vector3>** outBitangents, bool transform = true);
 
 	void ClearShapeTransform(const string& shapeName);
 	void GetShapeTransform(const string& shapeName, Matrix4& outTransform);

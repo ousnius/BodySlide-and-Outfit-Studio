@@ -1616,7 +1616,7 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 	else {
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			for (int vid = 0; vid < siTriShape->numverts; vid++) {
+			for (int vid = 0; vid < siTriShape->numVertices; vid++) {
 				for (int i = 0; i < 4; i++) {
 					if (siTriShape->vertData[vid].weightBones[i] == boneIndex && siTriShape->vertData[vid].weights[i] != 0) {
 						outWeights[vid] = siTriShape->vertData[vid].weights[i];
@@ -2058,7 +2058,6 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 		for (auto &v : siTriShape->vertData)
 			outVerts.push_back(v.vert);
 		return true;
-
 	}
 	return false;
 }
@@ -2081,8 +2080,7 @@ int NifFile::GetVertCountForShape(const string& shapeName) {
 	}
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* siTriShape = static_cast<BSTriShape*>(GetBlock(dataID));
-		return siTriShape->numverts;
-
+		return siTriShape->numVertices;
 	}
 	return -1;
 }
@@ -2111,13 +2109,11 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 	}
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* siTriShape = static_cast<BSTriShape*>(GetBlock(dataID));
-		if (verts.size() != siTriShape->numverts) {
+		if (verts.size() != siTriShape->numVertices)
 			return;
-		}
-		for (int i = 0; i < siTriShape->numverts; i++) {
-			siTriShape->vertData[i].vert = verts[i];
-		}
 
+		for (int i = 0; i < siTriShape->numVertices; i++)
+			siTriShape->vertData[i].vert = verts[i];
 	}
 }
 
@@ -2142,11 +2138,10 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 		stripsData->uvSets.assign(uvs.begin(), uvs.end());
 	} if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* siTriShape = static_cast<BSTriShape*>(GetBlock(dataID));
-		if (uvs.size() != siTriShape->numverts) {
+		if (uvs.size() != siTriShape->numVertices)
 			return;
-		}
 	
-		for (int i = 0; i < siTriShape->numverts; i++) {
+		for (int i = 0; i < siTriShape->numVertices; i++) {
 		//// VALIDATE LATER  for now don't touch the data.
 		//	siTriShape->vertData[i].uv = uvs[i];
 		}
@@ -2181,10 +2176,54 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 	}
 	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
-		shape->setNormals(norms);
+		shape->SetNormals(norms);
+		hdr.blockSizes[dataID] = shape->CalcBlockSize();
 	}
 }
-	
+
+void NifFile::SmoothNormalsForShape(const string& shapeName) {
+	int bType;
+	int dataID = shapeDataIdForName(shapeName, bType);
+	if (dataID == -1)
+		return;
+
+	if (bType == NITRISHAPEDATA) {
+		//NiTriShapeData* shapeData = (NiTriShapeData*)GetBlock(dataID);
+		//shapeData->SmoothNormals();
+	}
+	else if (bType == NITRISTRIPSDATA) {
+		//NiTriStripsData* stripsData = (NiTriStripsData*)GetBlock(dataID);
+		//stripsData->SmoothNormals();
+	}
+	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
+		shape->SmoothNormals();
+	}
+}
+
+void NifFile::CalcNormalsForShape(const string& shapeName) {
+	int bType;
+	int dataID = shapeDataIdForName(shapeName, bType);
+	if (dataID == -1)
+		return;
+
+	if (bType == NITRISHAPEDATA) {
+		NiTriShapeData* shapeData = (NiTriShapeData*)GetBlock(dataID);
+		shapeData->RecalcNormals();
+		hdr.blockSizes[dataID] = shapeData->CalcBlockSize();
+	}
+	else if (bType == NITRISTRIPSDATA) {
+		NiTriStripsData* stripsData = (NiTriStripsData*)GetBlock(dataID);
+		stripsData->RecalcNormals();
+		hdr.blockSizes[dataID] = stripsData->CalcBlockSize();
+	}
+	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
+		shape->RecalcNormals();
+		hdr.blockSizes[dataID] = shape->CalcBlockSize();
+	}
+}
+
 void NifFile::CalcTangentsForShape(const string& shapeName) {
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
@@ -2203,27 +2242,10 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 	}
 	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
-		shape->SetTangentData();
+		shape->CalcTangentSpace();
+		hdr.blockSizes[dataID] = shape->CalcBlockSize();
 	}
 }
-
-void NifFile::CalcTangentsForShape(const string& shapeName, vector<Vector3>** outNormals, vector<Vector3>** outTagents, vector<Vector3>** outBitangents, bool transform) {	
-	int bType;
-	int dataID = shapeDataIdForName(shapeName, bType);
-	if (dataID == -1)
-		return;
-
-	if (bType == NITRISHAPEDATA) {
-		return;
-	}
-	else if (bType == NITRISTRIPSDATA) {
-		return;
-	}
-	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
-		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
-		shape->calcTangentSpace(outNormals, outTagents, outBitangents, transform);
-	}
-}	
 
 void NifFile::ClearShapeTransform(const string& shapeName) {
 	NiAVObject* avo = avObjectForName(shapeName);
@@ -2357,7 +2379,7 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 		if (!geom)
 			return;
 		
-		for (int i = 0; i < geom->numverts; i++)
+		for (int i = 0; i < geom->numVertices; i++)
 			geom->vertData[i].vert += geom->translation + offset;
 
 		geom->translation = Vector3(0.0f, 0.0f, 0.0f);
@@ -2377,7 +2399,7 @@ void NifFile::MoveVertex(const string& shapeName, const Vector3& pos, const int&
 	}
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* geom = dynamic_cast<BSTriShape*>(GetBlock(dataRef));
-		if (geom && geom->numverts > id)
+		if (geom && geom->numVertices > id)
 			geom->vertData[id].vert = pos;
 	}
 }
@@ -2412,7 +2434,7 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 		if (!geomData)
 			return;
 
-		for (int i = 0; i < geomData->numverts; i++) {
+		for (int i = 0; i < geomData->numVertices; i++) {
 			if (mask) {
 				float maskFactor = 1.0f;
 				Vector3 diff = offset;
@@ -2465,7 +2487,7 @@ void NifFile::ScaleShape(const string& shapeName, const float& scale, unordered_
 			return;
 
 		unordered_map<ushort, Vector3> diff;
-		for (int i = 0; i < geomData->numverts; i++) {
+		for (int i = 0; i < geomData->numVertices; i++) {
 			Vector3 target = geomData->vertData[i].vert - root;
 			target *= scale;
 			diff[i] = geomData->vertData[i].vert - target;
@@ -2523,7 +2545,7 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 			return;
 
 		unordered_map<ushort, Vector3> diff;
-		for (int i = 0; i < geomData->numverts; i++) {
+		for (int i = 0; i < geomData->numVertices; i++) {
 			Vector3 target = geomData->vertData[i].vert - root;
 			Matrix4 mat;
 			mat.Rotate(angle.x * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
@@ -2842,7 +2864,7 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
 			siTriShape->notifyVerticesDelete(indices);
-			if (siTriShape->numverts == 0 || siTriShape->numTris == 0) {
+			if (siTriShape->numVertices == 0 || siTriShape->numTriangles == 0) {
 				// Deleted all verts or tris, remove shape and children
 				DeleteShape(shapeName);
 				return;

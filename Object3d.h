@@ -628,7 +628,7 @@ struct Triangle {
 
 	void trinormal(Vertex* vertref, Vector3* outNormal);
 
-	void trinormal(vector<Vector3>& vertref, Vector3* outNormal) {
+	void trinormal(const vector<Vector3>& vertref, Vector3* outNormal) {
 		Vertex va(vertref[p2].x - vertref[p1].x, vertref[p2].y - vertref[p1].y, vertref[p2].z - vertref[p1].z);
 		Vertex vb(vertref[p3].x - vertref[p1].x, vertref[p3].y - vertref[p1].y, vertref[p3].z - vertref[p1].z);
 
