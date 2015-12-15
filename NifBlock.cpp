@@ -991,126 +991,125 @@ void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
 	}
 }
 
-void BSTriShape::SmoothNormals(const float& smoothThreshold) {
-	// WIP
-
-	// Find weld verts
-	/*
-	kd_matcher matcher(m->verts, m->nVerts);
-	for (i = 0; i < matcher.matches.size(); i++) {
-		Vertex* a = matcher.matches[i].first;
-		Vertex* b = matcher.matches[i].second;
-		m->weldVerts[a->indexRef].push_back(b->indexRef);
-		m->weldVerts[b->indexRef].push_back(a->indexRef);
-		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if (dot < 1.57079633f) {
-			a->nx = ((a->nx + b->nx) / 2.0f);
-			a->ny = ((a->ny + b->ny) / 2.0f);
-			a->nz = ((a->nz + b->nz) / 2.0f);
-			b->nx = a->nx;
-			b->ny = a->ny;
-			b->nz = a->nz;
-		}
-	}
-	*/
-
-	// Smooth normals
-	/*
-	Vector3 norm;
-	Vector3 tn;
-	for (int v = 0; v < numVertices; v++) {
-		norm.x = norm.y = norm.z = 0.0f;
-		for (auto &t : vertTris[v]) {
-			tris[t].trinormal(verts, &tn);
-			norm += tn;
-		}
-
-		for (auto &wv : weldVerts[v]) {
-			bool first = true;
-			if (vertTris[wv].size() < 2)
-				continue;
-
-			for (auto &t : vertTris[wv]) {
-				tris[t].trinormal(verts, &tn);
-				if (!first) {
-					float angle = fabs(norm.angle(tn));
-					if (angle > smoothThreshold)
-						continue;
-				}
-				else
-					first = false;
-
-				norm += tn;
-			}
-		}
-		norm = norm / (float)vertTris[v].size();
-		norm.Normalize();
-		verts[v].nx = norm.x;
-		verts[v].ny = norm.y;
-		verts[v].nz = norm.z;
-	}
-	*/
-}
-
-void BSTriShape::RecalcNormals() {
+void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	GetRawVerts();
 
-	// Calc normal
-	Vector3 norm;
-	rawNormals.resize(numVertices);
-	for (int i = 0; i < numTriangles; i++) {
-		triangles[i].trinormal(rawVertices, &norm);
-		rawNormals[triangles[i].p1].x += norm.x;
-		rawNormals[triangles[i].p1].y += norm.y;
-		rawNormals[triangles[i].p1].z += norm.z;
-		rawNormals[triangles[i].p2].x += norm.x;
-		rawNormals[triangles[i].p2].y += norm.y;
-		rawNormals[triangles[i].p2].z += norm.z;
-		rawNormals[triangles[i].p3].x += norm.x;
-		rawNormals[triangles[i].p3].y += norm.y;
-		rawNormals[triangles[i].p3].z += norm.z;
-	}
-
-	// Normalize all vertex normals to smooth them out
-	for (int i = 0; i < numVertices; i++)
-		rawNormals[i].Normalize();
-
-	Vertex* matchVerts = new Vertex[numVertices];
+	Vertex* verts = new Vertex[numVertices];
+	Triangle* tris = new Triangle[numTriangles];
 
 	for (int i = 0; i < numVertices; i++) {
-		matchVerts[i].x = rawVertices[i].x;
-		matchVerts[i].nx = rawNormals[i].x;
-		matchVerts[i].y = rawVertices[i].y;
-		matchVerts[i].ny = rawNormals[i].y;
-		matchVerts[i].z = rawVertices[i].z;
-		matchVerts[i].nz = rawNormals[i].z;
+		verts[i].x = rawVertices[i].x * -0.1f;
+		verts[i].z = rawVertices[i].y * 0.1f;
+		verts[i].y = rawVertices[i].z * 0.1f;
+		verts[i].indexRef = i;
 	}
 
-	kd_matcher matcher(matchVerts, numVertices);
+	// Load tris. Also sum face normals here.
+	Vector3 norm;
+	for (int j = 0; j < numTriangles; j++) {
+		tris[j].p1 = triangles[j].p1;
+		tris[j].p2 = triangles[j].p2;
+		tris[j].p3 = triangles[j].p3;
+		tris[j].trinormal(verts, &norm);
+		verts[tris[j].p1].nx += norm.x;
+		verts[tris[j].p1].ny += norm.y;
+		verts[tris[j].p1].nz += norm.z;
+		verts[tris[j].p2].nx += norm.x;
+		verts[tris[j].p2].ny += norm.y;
+		verts[tris[j].p2].nz += norm.z;
+		verts[tris[j].p3].nx += norm.x;
+		verts[tris[j].p3].ny += norm.y;
+		verts[tris[j].p3].nz += norm.z;
+	}
+
+	// Normalize all vertex normals to smooth them out.
+	for (int i = 0; i < numVertices; i++) {
+		Vector3* pn = (Vector3*)&verts[i].nx;
+		pn->Normalize();
+	}
+
+	vector<int>* vertTris = new vector<int>[numVertices];
+	for (int t = 0; t < numTriangles; t++) {
+		vertTris[tris[t].p1].push_back(t);
+		vertTris[tris[t].p2].push_back(t);
+		vertTris[tris[t].p3].push_back(t);
+	}
+
+	unordered_map<int, vector<int>> weldVerts;
+	kd_matcher matcher(verts, numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		Vertex* a = matcher.matches[i].first;
 		Vertex* b = matcher.matches[i].second;
-		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if (dot < 1.57079633f) {
-			a->nx = ((a->nx + b->nx) / 2.0f);
-			a->ny = ((a->ny + b->ny) / 2.0f);
-			a->nz = ((a->nz + b->nz) / 2.0f);
-			b->nx = a->nx;
-			b->ny = a->ny;
-			b->nz = a->nz;
+		weldVerts[a->indexRef].push_back(b->indexRef);
+		weldVerts[b->indexRef].push_back(a->indexRef);
+
+		if (smooth) {
+			float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
+			if (dot < 1.57079633f) {
+				a->nx = ((a->nx + b->nx) / 2.0f);
+				a->ny = ((a->ny + b->ny) / 2.0f);
+				a->nz = ((a->nz + b->nz) / 2.0f);
+				b->nx = a->nx;
+				b->ny = a->ny;
+				b->nz = a->nz;
+			}
 		}
 	}
 
+	// Smooth normals
+	if (smooth) {
+		Vector3 tn;
+		for (int v = 0; v < numVertices; v++) {
+			norm.x = norm.y = norm.z = 0.0f;
+			if (weldVerts.find(v) != weldVerts.end())
+				continue;
+
+			for (auto &t : vertTris[v]) {
+				tris[t].trinormal(verts, &tn);
+				norm += tn;
+			}
+
+			for (auto &wv : weldVerts[v]) {
+				bool first = true;
+				if (vertTris[wv].size() < 2)
+					continue;
+
+				for (auto &t : vertTris[wv]) {
+					tris[t].trinormal(verts, &tn);
+					if (!first) {
+						float angle = fabs(norm.angle(tn));
+						if (angle > smoothThresh * DEG2RAD)
+							continue;
+					}
+					else
+						first = false;
+
+					norm += tn;
+				}
+			}
+
+			norm = norm / (float)vertTris[v].size();
+			norm.Normalize();
+			verts[v].nx = norm.x;
+			verts[v].ny = norm.y;
+			verts[v].nz = norm.z;
+		}
+	}
+
+	rawNormals.clear();
+	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
-		rawNormals[i].x = matchVerts[i].nx;
-		rawNormals[i].y = matchVerts[i].ny;
-		rawNormals[i].z = matchVerts[i].nz;
+		rawNormals[i].x = -verts[i].nx;
+		rawNormals[i].y = verts[i].nz;
+		rawNormals[i].z = verts[i].ny;
 		vertData[i].normal[0] = (unsigned char)round((((rawNormals[i].x + 1.0f) / 2.0f) * 255.0f));
 		vertData[i].normal[1] = (unsigned char)round((((rawNormals[i].y + 1.0f) / 2.0f) * 255.0f));
 		vertData[i].normal[2] = (unsigned char)round((((rawNormals[i].z + 1.0f) / 2.0f) * 255.0f));
 	}
 
-	delete[] matchVerts;
+	delete[] vertTris;
+	delete[] verts;
+	delete[] tris;
 }
 
 void BSTriShape::CalcTangentSpace() {

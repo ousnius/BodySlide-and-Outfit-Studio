@@ -1174,14 +1174,15 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		return 0;
 	}
 
-	int error = nifSmall.Load(inputFileName);
+	int error = nifBig.Load(inputFileName);
 	if (error) {
 		wxLogError("Failed to load '%s' (%d)!", inputFileName, error);
 		return 1;
 	}
 
-	if (nifBig.Load(inputFileName))
-		return 1;
+	if (activeSet.GenWeights())
+		if (nifSmall.Load(inputFileName))
+			return 1;
 
 	vector<Vector3> vertsLow;
 	vector<Vector3> vertsHigh;
@@ -1189,27 +1190,29 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	unordered_map<string, vector<ushort>> zapIdxAll;
 
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		if (!nifSmall.GetVertsForShape(it->second, vertsLow))
-			continue;
-
 		if (!nifBig.GetVertsForShape(it->second, vertsHigh))
 			continue;
 
+		if (activeSet.GenWeights())
+			if (!nifSmall.GetVertsForShape(it->second, vertsLow))
+				continue;
+
 		zapIdxAll.emplace(it->second, vector<ushort>());
 
-		ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
-		zapIdx.clear();
 		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
-
-		nifSmall.SetVertsForShape(it->second, vertsLow);
-		nifSmall.DeleteVertsForShape(it->second, zapIdx);
-
 		nifBig.SetVertsForShape(it->second, vertsHigh);
 		if (targetGame == FO4) {
-			nifBig.CalcNormalsForShape(it->second);
 			nifBig.SmoothNormalsForShape(it->second);
+			nifBig.CalcTangentsForShape(it->second);
 		}
 		nifBig.DeleteVertsForShape(it->second, zapIdx);
+
+		if (activeSet.GenWeights()) {
+			zapIdx.clear();
+			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
+			nifSmall.SetVertsForShape(it->second, vertsLow);
+			nifSmall.DeleteVertsForShape(it->second, zapIdx);
+		}
 
 		zapIdxAll[it->second] = zapIdx;
 	}
@@ -1230,8 +1233,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 			triShapeLink = it->second;
 			if (tri && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-				nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 				nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+				if (activeSet.GenWeights())
+					nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 				tri = false;
 			}
 		}
@@ -1403,12 +1407,14 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		}
 
 		/* load iput nifs */
-		if (nifSmall.Load(currentSet.GetInputFileName())) {
+		if (nifBig.Load(currentSet.GetInputFileName())) {
 			failedOutfits[outfit] = "Unable to load input nif: " + currentSet.GetInputFileName();
 			continue;
 		}
-		if (nifBig.Load(currentSet.GetInputFileName()))
-			continue;
+
+		if (currentSet.GenWeights())
+			if (nifSmall.Load(currentSet.GetInputFileName()))
+				continue;
 
 		/* Shape the NIF files */
 		vector<Vector3> vertsLow;
@@ -1417,13 +1423,15 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 		unordered_map<string, vector<ushort>> zapIdxAll;
 
 		for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-			if (!nifSmall.GetVertsForShape(it->second, vertsLow))
-				continue;
 			if (!nifBig.GetVertsForShape(it->second, vertsHigh))
 				continue;
 
-			float vsmall;
-			float vbig;
+			if (currentSet.GenWeights())
+				if (!nifSmall.GetVertsForShape(it->second, vertsLow))
+					continue;
+
+			float vbig = 0.0f;
+			float vsmall = 0.0f;
 			vector<int> clamps;
 			zapIdx.clear();
 			zapIdxAll.emplace(it->second, vector<ushort>());
@@ -1439,16 +1447,7 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 					continue;
 				}
 
-				vsmall = sliderManager.GetSmallPresetValue(activePreset, currentSet[s].name, currentSet[s].defSmallValue / 100.0f);
 				vbig = sliderManager.GetBigPresetValue(activePreset, currentSet[s].name, currentSet[s].defBigValue / 100.0f);
-
-				for (auto &sliderSmall : sliderManager.slidersSmall) {
-					if (sliderSmall.name == currentSet[s].name && sliderSmall.changed && !sliderSmall.clamp) {
-						vsmall = sliderSmall.value;
-						break;
-					}
-				}
-
 				for (auto &sliderBig : sliderManager.slidersBig) {
 					if (sliderBig.name == currentSet[s].name && sliderBig.changed && !sliderBig.clamp) {
 						vbig = sliderBig.value;
@@ -1456,9 +1455,20 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 					}
 				}
 
+				if (currentSet.GenWeights()) {
+					vsmall = sliderManager.GetSmallPresetValue(activePreset, currentSet[s].name, currentSet[s].defSmallValue / 100.0f);
+					for (auto &sliderSmall : sliderManager.slidersSmall) {
+						if (sliderSmall.name == currentSet[s].name && sliderSmall.changed && !sliderSmall.clamp) {
+							vsmall = sliderSmall.value;
+							break;
+						}
+					}
+				}
+
 				if (currentSet[s].bInvert) {
-					vsmall = 1.0f - vsmall;
 					vbig = 1.0f - vbig;
+					if (currentSet.GenWeights())
+						vsmall = 1.0f - vsmall;
 				}
 
 				if (currentSet[s].bZap) {
@@ -1469,26 +1479,35 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 					continue;
 				}
 
-				currentDiffs.ApplyDiff(dn, target, vsmall, &vertsLow);
 				currentDiffs.ApplyDiff(dn, target, vbig, &vertsHigh);
+				if (currentSet.GenWeights())
+					currentDiffs.ApplyDiff(dn, target, vsmall, &vertsLow);
 			}
 
 			if (!clamps.empty()) {
 				for (auto &c : clamps) {
 					string dn = currentSet[c].TargetDataName(it->first);
 					string target = it->first;
-					if (currentSet[c].defSmallValue > 0)
-						currentDiffs.ApplyClamp(dn, target, &vertsLow);
 					if (currentSet[c].defBigValue > 0)
 						currentDiffs.ApplyClamp(dn, target, &vertsHigh);
+
+					if (currentSet.GenWeights())
+						if (currentSet[c].defSmallValue > 0)
+							currentDiffs.ApplyClamp(dn, target, &vertsLow);
 				}
 			}
 
-			nifSmall.SetVertsForShape(it->second, vertsLow);
-			nifSmall.DeleteVertsForShape(it->second, zapIdx);
-
 			nifBig.SetVertsForShape(it->second, vertsHigh);
+			if (targetGame == FO4) {
+				nifBig.SmoothNormalsForShape(it->second);
+				nifBig.CalcTangentsForShape(it->second);
+			}
 			nifBig.DeleteVertsForShape(it->second, zapIdx);
+
+			if (currentSet.GenWeights()) {
+				nifSmall.SetVertsForShape(it->second, vertsLow);
+				nifSmall.DeleteVertsForShape(it->second, zapIdx);
+			}
 		}
 
 		/* Create directory for the outfit */
@@ -1519,8 +1538,9 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
 				string triShapeLink = it->second;
 				if (triEnd && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-					nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 					nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+					if (currentSet.GenWeights())
+						nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 					triEnd = false;
 				}
 			}

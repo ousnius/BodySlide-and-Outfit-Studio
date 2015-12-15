@@ -2197,7 +2197,7 @@ void NifFile::SmoothNormalsForShape(const string& shapeName) {
 	}
 	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
-		shape->SmoothNormals();
+		shape->RecalcNormals(true);
 	}
 }
 

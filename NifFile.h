@@ -416,8 +416,7 @@ public:
 	const vector<Vector2>* GetUVData();
 
 	void SetNormals(const vector<Vector3>& inNorms);
-	void SmoothNormals(const float& smoothThreshold = 60.0f * DEG2RAD);
-	void RecalcNormals();
+	void RecalcNormals(const bool& smooth = false, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
