@@ -1894,7 +1894,7 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMeshes) {
 	vector<Vector3> liveNorms;
 	for (auto &m : shapeMeshes) {
-		if (nif->IsShaderSkin(m->shapeName))
+		if (nif->IsShaderSkin(m->shapeName) && owner->targetGame != FO4)
 			continue;
 
 		liveNorms.clear();

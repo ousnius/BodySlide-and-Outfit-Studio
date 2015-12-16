@@ -3948,7 +3948,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool build
 
 		// Removed -- smoothing normals here breaks fallout 4 mesh normals.  meshes without normals have their normals calculated/smoothed during mesh load.
 		if (buildNormals) {
-			RecalcNormals(shapeList[i], true);
+			RecalcNormals(shapeList[i]);
 		}
 	}
 }

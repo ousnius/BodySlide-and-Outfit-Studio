@@ -1163,7 +1163,6 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	nif->GetVertsForShape(shapeName, nifVerts);
 	nif->GetTrisForShape(shapeName, &nifTris);
 
-
 	const vector<Vector3>* nifNorms = nullptr;
 	const vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
 	nifNorms = nif->GetNormalsForShape(shapeName, false);
@@ -1181,7 +1180,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	}
 
 	m->shapeName = shapeName;
-	m->smoothSeamNormals = false; // smoothNormalSeams;
+	m->smoothSeamNormals = smoothNormalSeams;
 
 	m->nVerts = nifVerts.size();
 	m->verts = new Vertex[m->nVerts];

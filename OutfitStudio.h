@@ -175,15 +175,12 @@ public:
 		m->SmoothNormals();
 	}
 
-	void RecalcNormals(const string& shape, bool forceSmoothSeam = false) {
+	void RecalcNormals(const string& shape) {
 		mesh* m = gls.GetMesh(shape);
 		if (!m)
 			return;
-		if (forceSmoothSeam) {
-			m->smoothSeamNormals = true;
-			m->SmoothNormals();
-			m->smoothSeamNormals = false;
-		}
+
+		m->SmoothNormals();
 	}
 	void ToggleAutoNormals() {
 		if (bAutoNormals)
