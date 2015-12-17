@@ -1223,12 +1223,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 	for (auto &shape : shapes) {
 		glView->DeleteMesh(shape);
 
-		glView->AddMeshFromNif(project->GetWorkNif(), shape, shapeIsImporting(shape));
-		if (shapeIsImporting(shape)) {
-			vector<mesh*> updateshape;
-			updateshape.push_back(glView->GetMesh(shape));
-			project->UpdateNifNormals(project->GetWorkNif(), updateshape);
-		}
+		glView->AddMeshFromNif(project->GetWorkNif(), shape, true);
 		glView->SetMeshTexture(shape, project->GetShapeTexture(shape), project->GetWorkNif()->IsShaderSkin(shape));
 		if (outfitShapes) {
 			subItem = outfitShapes->AppendItem(outfitRoot, shape);
@@ -2988,9 +2983,6 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Imported shape.");
 
 	WorkingGUIFromProj();
-
-	finishImporting();
-
 	glView->Refresh();
 }
 
@@ -3051,9 +3043,6 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 	WorkingGUIFromProj();
 	AnimationGUIFromProj();
-
-	finishImporting();
-
 	glView->Refresh();
 }
 
@@ -3946,10 +3935,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool build
 		gls.GetMesh(shapeList[i])->BuildEdgeList();
 		gls.GetMesh(shapeList[i])->ColorFill(Vector3());
 
-		// Removed -- smoothing normals here breaks fallout 4 mesh normals.  meshes without normals have their normals calculated/smoothed during mesh load.
-		if (buildNormals) {
+		if (buildNormals)
 			RecalcNormals(shapeList[i]);
-		}
 	}
 }
 

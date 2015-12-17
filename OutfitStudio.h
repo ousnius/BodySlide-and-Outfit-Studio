@@ -636,23 +636,6 @@ public:
 		progWnd->Update(progressVal, msg);
 	}
 
-
-	bool shapeIsImporting(const string&  shapeName) {
-		auto ss = shapeStates.find(shapeName);
-		if (ss != shapeStates.end()) {
-			return ss->second.bIsImporting;
-		}
-		return false;
-	}
-	void setShapeImporting(const string& shapeName, bool isOn) {
-		shapeStates[shapeName].bIsImporting = isOn;
-	}
-	void finishImporting() {
-		for (auto &ss : shapeStates) {
-			ss.second.bIsImporting = false;
-		}
-	}
-
 private:
 	class ShapeState {						// metadata state of shapes by shape name
 	public:

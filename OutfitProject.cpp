@@ -422,9 +422,6 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 
 
 int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector3>& v, vector<Triangle>& t, vector<Vector2>& uv, vector<Vector3>* norms) {
-	if (norms == nullptr)
-		owner->setShapeImporting(shapeName, true);
-
 	bool staticMode = Config["StaticMeshMode"] == "True";
 
 	string blankSkel = "res\\SkeletonBlank.nif";
@@ -435,7 +432,6 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	}
 	else if (owner->targetGame == FO4)
 		blankSkel = "res\\SkeletonBlank_fo4.nif";
-
 
 	NifFile blank;
 	blank.Load(blankSkel);

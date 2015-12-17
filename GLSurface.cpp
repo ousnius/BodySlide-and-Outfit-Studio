@@ -1124,7 +1124,7 @@ void GLSurface::AddMeshExplicit(vector<Vector3>* verts, vector<Triangle>* tris, 
 		m->weldVerts[a->indexRef].push_back(b->indexRef);
 		m->weldVerts[b->indexRef].push_back(a->indexRef);
 		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if (dot < 1.57079633f) {
+		if (dot < 90.0f * DEG2RAD) {
 			a->nx = ((a->nx + b->nx) / 2.0f);
 			a->ny = ((a->ny + b->ny) / 2.0f);
 			a->nz = ((a->nz + b->nz) / 2.0f);
@@ -1248,7 +1248,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 
 			if (smoothNormalSeams) {
 				float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
-				if (dot < 1.57079633f) {
+				if (dot < 90.0f * DEG2RAD) {
 					a->nx = ((a->nx + b->nx) / 2.0f);
 					a->ny = ((a->ny + b->ny) / 2.0f);
 					a->nz = ((a->nz + b->nz) / 2.0f);
