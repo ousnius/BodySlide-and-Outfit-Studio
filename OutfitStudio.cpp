@@ -2843,6 +2843,12 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 		tmpstr.sprintf("%d", hiVal);
 		XRCCTRL(dlg, "edValHi", wxTextCtrl)->SetValue(tmpstr);
 
+		if (!project->mGenWeights) {
+			XRCCTRL(dlg, "lbValLo", wxStaticText)->Hide();
+			XRCCTRL(dlg, "edValLo", wxTextCtrl)->Hide();
+			XRCCTRL(dlg, "lbValHi", wxStaticText)->SetLabel("Default");
+		}
+
 		if (project->SliderHidden(curSlider))
 			XRCCTRL(dlg, "chkHidden", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
 		if (project->SliderInvert(curSlider))

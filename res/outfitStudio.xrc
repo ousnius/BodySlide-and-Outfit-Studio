@@ -2864,7 +2864,7 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText241">
+						<object class="wxStaticText" name="lbValLo">
 							<label>Low</label>
 							<wrap>-1</wrap>
 						</object>
@@ -2887,7 +2887,7 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText27">
+						<object class="wxStaticText" name="lbValHi">
 							<label>High</label>
 							<wrap>-1</wrap>
 						</object>
