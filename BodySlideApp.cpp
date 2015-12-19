@@ -430,8 +430,10 @@ void BodySlideApp::DisplayActiveSet() {
 			}
 			iter++;
 		}
+
+		// Not in a category
 		if (regularSlider)
-			sliderView->AddSliderGUI(activeSet[i].name.c_str(), activeSet[i].bZap, !activeSet.GenWeights());
+			sliderView->AddSliderGUI(activeSet[i].name, activeSet[i].name, activeSet[i].bZap, !activeSet.GenWeights());
 	}
 
 	// Create category UI
@@ -440,12 +442,19 @@ void BodySlideApp::DisplayActiveSet() {
 		for (auto &cat : sliderCategories) {
 			string name = get<0>(cat);
 			bool show = get<2>(cat);
+			string displayName;
 
 			if (catSliders.size() > iter && catSliders[iter].size() > 0) {
 				sliderView->AddCategorySliderUI(name, show, !activeSet.GenWeights());
-				if (show)
-					for (auto &s : catSliders[iter])
-						sliderView->AddSliderGUI(activeSet[s].name.c_str(), activeSet[s].bZap, !activeSet.GenWeights());
+				if (show) {
+					for (auto &s : catSliders[iter]) {
+						displayName = cCollection.GetSliderDisplayName(name, activeSet[s].name);
+						if (displayName.empty())
+							displayName = activeSet[s].name;
+
+						sliderView->AddSliderGUI(activeSet[s].name, displayName, activeSet[s].bZap, !activeSet.GenWeights());
+					}
+				}
 			}
 			iter++;
 		}
@@ -1752,7 +1761,7 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 	scrollWindow->FitInside();
 }
 
-void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize) {
+void BodySlideFrame::AddSliderGUI(const wxString& name, const wxString& displayName, bool isZap, bool oneSize) {
 	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	if (!scrollWindow)
 		return;
@@ -1769,7 +1778,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 	int maxValue = Config.GetIntValue("Input/SliderMaximum");
 
 	if (!oneSize) {
-		sd->lblSliderLo = new wxStaticText(scrollWindow, wxID_ANY, name, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);
+		sd->lblSliderLo = new wxStaticText(scrollWindow, wxID_ANY, displayName, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);
 		sd->lblSliderLo->SetBackgroundColour(wxColor(0x40, 0x40, 0x40));
 		sd->lblSliderLo->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_SCROLLBAR));
 		sliderLayout->Add(sd->lblSliderLo, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT, 5);
@@ -1795,7 +1804,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, bool isZap, bool oneSize
 		}
 	}
 
-	sd->lblSliderHi = new wxStaticText(scrollWindow, wxID_ANY, name, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);
+	sd->lblSliderHi = new wxStaticText(scrollWindow, wxID_ANY, displayName, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);
 	sd->lblSliderHi->SetBackgroundColour(wxColor(0x40, 0x40, 0x40));
 	sd->lblSliderHi->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_SCROLLBAR));
 	sliderLayout->Add(sd->lblSliderHi, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT, 5);

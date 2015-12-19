@@ -20,6 +20,7 @@ using namespace tinyxml2;
 class SliderCategory {
 	string name;
 	vector<string> sliders;
+	map<string, string> displayNames;
 	vector<string> sourceFiles;
 	unordered_set<string> uniqueSourceFiles;
 	bool isValid;
@@ -49,6 +50,8 @@ public:
 	int AppendSliders(vector<string>& outSliders);
 	int AppendSliders(unordered_set<string>& outSliders);
 
+	string GetSliderDisplayName(const string& sliderName);
+
 	bool GetHidden();
 	void SetHidden(bool hide);
 
@@ -70,6 +73,7 @@ public:
 
 	int GetAllCategories(vector<string>& outCategories);
 	int GetSliderCategory(const string& sliderName, string& outCategory);
+	string GetSliderDisplayName(const string& categoryName, const string& sliderName);
 
 	bool GetCategoryHidden(const string& categoryName);
 	int SetCategoryHidden(const string& categoryName, bool hide);
