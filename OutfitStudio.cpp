@@ -1095,7 +1095,6 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	int ret = 0;
 	if (XRCCTRL(dlg, "npWorkNif", wxRadioButton)->GetValue() == true) {
-		project->ClearOutfit();
 		if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked()) {
 			ret = project->AddNif(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath().ToStdString(), true, outfitName);
 		}

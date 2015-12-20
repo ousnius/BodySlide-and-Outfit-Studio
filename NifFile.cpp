@@ -864,7 +864,8 @@ void NifFile::CopyShader(const string& shapeDest, int srcShaderRef, NifFile& src
 		return;
 
 	destShader->header = &hdr;
-	destShader->nameRef = 0xFFFFFFFF;
+	destShader->nameRef = AddOrFindStringId(srcShader->name);
+	destShader->name = srcShader->name;
 
 	// Add shader block to nif
 	int shaderId = blocks.size();
