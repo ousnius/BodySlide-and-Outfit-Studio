@@ -448,16 +448,15 @@ void NifFile::SetShapeOrder(vector<string> order) {
 
 }
 
-void  NifFile::PrettySortBlocks() {
+void NifFile::PrettySortBlocks() {
 	NiNode* root = (NiNode*)blocks[0];
 	vector<int> oldchildren(root->children.begin(), root->children.end());
 	root->children.clear();
 
-	for (int i = 0; i < blocks.size();i++) {
-		if (std::find(oldchildren.begin(), oldchildren.end(), i)!=oldchildren.end()) {
+	for (int i = 0; i < blocks.size(); i++) {
+		if (std::find(oldchildren.begin(), oldchildren.end(), i) != oldchildren.end()) {
 			root->children.push_back(i);
 		}
-
 	}
 
 	auto bookmark = root->children.begin();
@@ -465,11 +464,12 @@ void  NifFile::PrettySortBlocks() {
 
 	for (int i = 0; peek < root->children.end(); i++) {
 		NiObject* block = GetBlock(root->children[i]);
-		if (block->blockType == BlockType::NITRISHAPE ||
-			block->blockType == BlockType::NITRISTRIPS) {
+		if (block->blockType == NITRISHAPE ||
+			block->blockType == NITRISTRIPS ||
+			block->blockType == BSTRISHAPE || block->blockType == BSSUBINDEXTRISHAPE) {
 			iter_swap(bookmark, peek);
 			bookmark++;
-		}	
+		}
 		peek++;
 	}
 }

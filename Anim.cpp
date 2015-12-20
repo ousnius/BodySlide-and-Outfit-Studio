@@ -303,16 +303,17 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 		}
 	}
 
+	bool incomplete;
 	SkinTransform xForm;
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
 			continue;
+
 		int stype = nif->GetShapeType(shapeBoneList.first);
 		bool bIsFo4 = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE);
-		
-		if (shapeSkinning[shapeBoneList.first].bNeedsBoundsCalc) {
+
+		if (shapeSkinning[shapeBoneList.first].bNeedsBoundsCalc)
 			CalcShapeSkinBounds(shapeBoneList.first);
-		}
 
 		unordered_map<unsigned short, vertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
@@ -324,12 +325,12 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
 			if (bIsFo4) {
-				for (auto vw : bw.weights) {
+				for (auto vw : bw.weights)
 					vertWeights[vw.first].Add(bid, vw.second);
-				}
+
 				AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
-				if (!bptr->hasSkinXform) {
-					wxMessageBox("Warning: Bone information incomplete, exported data will not contain correct BSBoneData entries!  Be sure to Load a reference nif prior to export.", "Export warning");
+				if (!bptr || !bptr->hasSkinXform) {
+					incomplete = true;
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bSphereOffset, bw.bSphereRadius);
 				}
 				else {
@@ -338,23 +339,31 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 					st.rotation[1] = Vector3(bptr->skinRot[4], bptr->skinRot[5], bptr->skinRot[6]);
 					st.rotation[2] = Vector3(bptr->skinRot[8], bptr->skinRot[9], bptr->skinRot[10]);
 					st.translation = bptr->skinTrans;
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid,st, bw.bSphereOffset, bw.bSphereRadius);				
+					nif->SetShapeBoneTransform(shapeBoneList.first, bid, st, bw.bSphereOffset, bw.bSphereRadius);
 				}
 			}
 			else {
-				if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm)) {
+				AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
+				if (!bptr || !bptr->hasSkinXform) {
+					incomplete = true;
+					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bSphereOffset, bw.bSphereRadius);
+					nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
+				}
+				else if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm)) {
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, xForm, bw.bSphereOffset, bw.bSphereRadius);
 					nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
 				}
 			}
 		}
+
 		if (bIsFo4) {
-			for (auto vid : vertWeights) {
+			for (auto vid : vertWeights)
 				nif->SetShapeVertWeights(shapeBoneList.first, vid.first, vid.second.boneIds, vid.second.weights);
-			}
-			
 		}
 	}
+
+	if (incomplete)
+		wxMessageBox("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export.", "Export Warning", wxICON_WARNING);
 }
 
 void AnimInfo::RenameShape(const string& shapeName, const string& newShapeName) {

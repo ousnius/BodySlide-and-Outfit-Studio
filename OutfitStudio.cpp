@@ -3047,8 +3047,7 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Imported shape.");
 
-	WorkingGUIFromProj();
-	AnimationGUIFromProj();
+	RefreshGUIFromProj();
 	glView->Refresh();
 }
 

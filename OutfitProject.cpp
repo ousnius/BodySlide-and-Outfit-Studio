@@ -1989,25 +1989,32 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 				return 100;
 		}
 
+		CreateNifShapeFromData(s, shape->verts, shape->tris, shape->uvs, &shape->normals);
 
 		int slot = 0;
+		vector<int> boneIndices;
 		for (auto &bn : shape->boneNames) {
 			if (!AnimSkeleton::getInstance().RefBone(bn)) {
-				// no bone reference exist for this bone name. 
+				// Not found in reference skeleton, use default values
 				AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
 				if (!cstm.isValidBone)
 					invalidBones += bn + "\n";
-				// using default transformation data, needs to be set up later somehow....
+
 				AnimSkeleton::getInstance().RefBone(bn);
 			}
+
 			workAnim.shapeBones[useShapeName].push_back(bn);
 			workAnim.shapeSkinning[useShapeName].boneNames[bn] = slot;
 			workAnim.SetWeights(useShapeName, bn, shape->boneSkin[bn].vertweights);
-			//workAnim.shapeSkinning[useShapeName].boneWeights[slot].weights = shape->boneSkin[bn].vertweights;
-			slot++;
+			boneIndices.push_back(slot++);
 		}
 
-		CreateNifShapeFromData(s, shape->verts, shape->tris, shape->uvs, &shape->normals);
+		workNif.SetShapeBoneIDList(useShapeName, boneIndices);
+
+		if (!invalidBones.empty()) {
+			wxLogWarning("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, invalidBones);
+			wxMessageBox(wxString::Format("Bones in shape '%s' not found in reference skeleton:\n\n%s", useShapeName, invalidBones), "Invalid Bones");
+		}
 	}
 
 	return 0;
