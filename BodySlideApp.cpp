@@ -1224,6 +1224,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 
 		zapIdxAll[it->second] = zapIdx;
+		zapIdx.clear();
 	}
 
 	/* Add RaceMenu TRI path for in-game morphs */
@@ -1442,7 +1443,6 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			float vbig = 0.0f;
 			float vsmall = 0.0f;
 			vector<int> clamps;
-			zapIdx.clear();
 			zapIdxAll.emplace(it->second, vector<ushort>());
 
 			for (int s = 0; s < currentSet.size(); s++) {
@@ -1517,6 +1517,8 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 				nifSmall.SetVertsForShape(it->second, vertsLow);
 				nifSmall.DeleteVertsForShape(it->second, zapIdx);
 			}
+
+			zapIdx.clear();
 		}
 
 		/* Create directory for the outfit */
