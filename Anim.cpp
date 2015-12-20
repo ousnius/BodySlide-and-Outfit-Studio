@@ -303,7 +303,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 		}
 	}
 
-	bool incomplete;
+	bool incomplete = false;
 	SkinTransform xForm;
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
