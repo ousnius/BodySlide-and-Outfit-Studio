@@ -193,7 +193,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			sliderElement->SetAttribute("big", (int)slider.defBigValue);
 		}
 		else
-			sliderElement->SetAttribute("default", (int)slider.defSmallValue);
+			sliderElement->SetAttribute("default", (int)slider.defBigValue);
 
 		if (slider.bHidden)
 			sliderElement->SetAttribute("hidden", "true");
