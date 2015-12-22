@@ -43,7 +43,11 @@
         <Brightness3>45</Brightness3></Lights>
     <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
     <ReferenceTemplates>
-        <Template sourcefile="SliderSets\CBBE.osp" set="CBBE Body" shape="CBBE">CBBE Body</Template></ReferenceTemplates>
+        <Template sourcefile="SliderSets\CBBE.osp" set="CBBE Body" shape="CBBE">CBBE Body</Template>
+        <Template sourcefile="ConversionSets\References.osp" set="VanillaToCBBE" shape="CBBE">Convert: Vanilla To CBBE</Template>
+        <Template sourcefile="ConversionSets\References.osp" set="CBBEToVanilla" shape="CBBE">Convert: CBBE To Vanilla</Template>
+        <Template sourcefile="ConversionSets\References.osp" set="SkyrimCBBEToFO4CBBE" shape="CBBE">Convert: Skyrim CBBE To FO4 CBBE</Template>
+        <Template sourcefile="ConversionSets\References.osp" set="FO4CBBEToSkyrimCBBE" shape="CBBE">Convert: FO4 CBBE To Skyrim CBBE</Template></ReferenceTemplates>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference>res\skeleton_fo4.nif</DefaultSkeletonReference>
