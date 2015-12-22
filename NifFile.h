@@ -649,13 +649,12 @@ public:
 
 class BSSkinInstance : public NiBoneContainer  {
 public:
-	uint unk;
+	int targetRef;
 	int boneDataRef;
 	uint numVertices;
 	vector<SkinWeight> vertexWeights;
 
-
-	BSSkinInstance() : unk(0), boneDataRef(-1), numVertices(0) { numBones = 0; };
+	BSSkinInstance() : targetRef(-1), boneDataRef(-1), numVertices(0) { numBones = 0; };
 	BSSkinInstance(NiHeader& hdr);
 	BSSkinInstance(fstream& file, NiHeader& hdr);
 

@@ -2625,7 +2625,7 @@ BSSkinInstance::BSSkinInstance(fstream& file, NiHeader& hdr) {
 void BSSkinInstance::Init() {
 	NiObject::Init();
 
-	unk = 0;
+	targetRef = 0xFFFFFFFF;
 	boneDataRef = 0xFFFFFFFF;
 	numBones = 0;
 	numVertices = 0;
@@ -2635,7 +2635,7 @@ void BSSkinInstance::Get(fstream& file) {
 	NiObject::Get(file);
 	uint intData;
 
-	file.read((char*)&unk, 4);
+	file.read((char*)&targetRef, 4);
 	file.read((char*)&boneDataRef, 4);
 	file.read((char*)&numBones, 4);
 	for (int i = 0; i < numBones; i++) {
@@ -2649,7 +2649,7 @@ void BSSkinInstance::Get(fstream& file) {
 void BSSkinInstance::Put(fstream& file) {
 	NiObject::Put(file);
 
-	file.write((char*)&unk, 4);
+	file.write((char*)&targetRef, 4);
 	file.write((char*)&boneDataRef, 4);
 	file.write((char*)&numBones, 4);
 	for (int i = 0; i < numBones; i++) {
