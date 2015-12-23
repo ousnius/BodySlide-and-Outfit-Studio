@@ -1711,15 +1711,19 @@ void BodySlideFrame::ShowLowColumn(bool show) {
 		return;
 
 	if (show) {
-		XRCCTRL(*this, "lblLowWt", wxStaticText)->Show(true);
-		XRCCTRL(*this, "lblHighWt", wxStaticText)->Show(true);
-		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(false);
+		XRCCTRL(*this, "lblLowWt", wxStaticText)->Show();
+		XRCCTRL(*this, "lblHighWt", wxStaticText)->Show();
+		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Hide();
+		XRCCTRL(*this, "btnLowToHigh", wxButton)->Show();
+		XRCCTRL(*this, "btnHighToLow", wxButton)->Show();
 		sliderLayout->SetCols(6);
 	}
 	else {
-		XRCCTRL(*this, "lblLowWt", wxStaticText)->Show(false);
-		XRCCTRL(*this, "lblHighWt", wxStaticText)->Show(false);
-		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show(true);
+		XRCCTRL(*this, "lblLowWt", wxStaticText)->Hide();
+		XRCCTRL(*this, "lblHighWt", wxStaticText)->Hide();
+		XRCCTRL(*this, "lblSingleWt", wxStaticText)->Show();
+		XRCCTRL(*this, "btnLowToHigh", wxButton)->Hide();
+		XRCCTRL(*this, "btnHighToLow", wxButton)->Hide();
 		sliderLayout->SetCols(3);
 	}
 }
