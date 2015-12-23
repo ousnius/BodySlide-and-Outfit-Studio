@@ -227,7 +227,7 @@
 										<object class="wxButton" name="btnBuildBatch">
 											<size>128,-1</size>
 											<fg>#000000</fg>
-											<tooltip>Build multiple outfits using the currently selected preset.\nNote: You must save slider settings to a preset before you can batch build with them.\n\nHold CTRL = Build to custom folders\nHold ALT = Clean all files from folders</tooltip>
+											<tooltip>Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory</tooltip>
 											<label>Batch Build...</label>
 										</object>
 									</object>
@@ -238,7 +238,7 @@
 										<object class="wxCheckBox" name="cbRaceMenu">
 											<fg>#c8c8c8</fg>
 											<label>RaceMenu Morphs</label>
-											<tooltip>Builds a TRI file alongside the low and high weight meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
+											<tooltip>Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
 										</object>
 									</object>
 								</object>
@@ -276,7 +276,7 @@
 										<face>Andalus</face>
 									</font>
 									<fg>#000000</fg>
-									<tooltip>Create the low and high weight meshes for the currently selected outfit.\n\nHold CTRL = Build to custom folder\nHold ALT = Clean all files from folder</tooltip>
+									<tooltip>Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory</tooltip>
 									<label>Build</label>
 									<default>0</default>
 								</object>
