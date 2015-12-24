@@ -6,7 +6,6 @@ See the included LICENSE file
 
 #include "SliderManager.h"
 
-
 SliderManager::SliderManager() {
 	mSliderCount = 0;
 	bNeedReload = true;
@@ -37,9 +36,6 @@ void SliderManager::AddSlidersInSet(SliderSet& inSet, bool hideAll) {
 
 		for (int j = 0; j < inSet[i].dataFiles.size(); j++)
 			AddSliderLink(inSet[i].name, inSet[i].dataFiles[j].dataName);
-
-		for (auto &reqIter : inSet[i].requirements)
-			AddSliderTrigger(reqIter.first, inSet[i].name, reqIter.second, 0);
 	}
 }
 
@@ -49,8 +45,8 @@ void SliderManager::AddSlider(const string& name, bool invert, const string& dat
 	if (dataSetName.length() > 0)
 		s.linkedDataSets.push_back(dataSetName);
 
-	s.value = 0;
-	s.defValue = 0;
+	s.value = 0.0f;
+	s.defValue = 0.0f;
 	s.invert = invert;
 	s.zap = false;
 	s.clamp = false;
@@ -148,45 +144,16 @@ void SliderManager::AddSliderLink(const string& slider, const string& dataSetNam
 			slidersSmall[i].linkedDataSets.push_back(dataSetName);
 }
 
-void SliderManager::AddSliderTrigger(const string& slider, const string& targetSlider, float triggerVal, uint triggerType) {
-	int targetIdx = -1;
-	int sliderIdx = -1;
-	SliderNotifyTrigger trigger;
-	trigger.triggerValue = triggerVal;
-	trigger.triggerType = triggerType;
-	for (int i = 0; i < slidersBig.size(); i++) {
-		if (slidersBig[i].name == slider)
-			sliderIdx = i;
-		if (slidersBig[i].name == targetSlider)
-			targetIdx = i;
-	}
-	if (sliderIdx >= 0 && targetIdx >= 0) {
-		trigger.targetSlider = slidersBig[targetIdx].name;
-		slidersBig[sliderIdx].triggers.push_back(trigger);
-	}
-	sliderIdx = -1; targetIdx = -1;
-	for (int i = 0; i < slidersSmall.size(); i++) {
-		if (slidersSmall[i].name == slider)
-			sliderIdx = i;
-		if (slidersSmall[i].name == targetSlider)
-			targetIdx = i;
-	}
-	if (sliderIdx >= 0 && targetIdx >= 0){
-		trigger.targetSlider = slidersSmall[targetIdx].name;
-		slidersSmall[sliderIdx].triggers.push_back(trigger);
-	}
-}
-
 float SliderManager::GetSlider(const string& slider, bool isSmall) {
 	if (!isSmall) {
 		for (int i = 0; i < slidersBig.size(); i++)
 			if (slidersBig[i].name == slider)
-				return slidersBig[i].Get();
+				return slidersBig[i].value;
 	}
 	else {
 		for (int i = 0; i < slidersSmall.size(); i++)
 			if (slidersSmall[i].name == slider)
-				return slidersSmall[i].Get();
+				return slidersSmall[i].value;
 	}
 	return 0.0f;
 }
@@ -200,7 +167,7 @@ void SliderManager::SetSlider(const string& slider, bool isSmall, float val) {
 					if (val > 0.0f)
 						val = 1.0f;
 				}
-				slidersBig[i].Set(val);
+				slidersBig[i].value = val;
 				return;
 			}
 		}
@@ -213,7 +180,7 @@ void SliderManager::SetSlider(const string& slider, bool isSmall, float val) {
 					if (val > 0.0f)
 						val = 1.0f;
 				}
-				slidersSmall[i].Set(val);
+				slidersSmall[i].value = val;
 				return;
 			}
 		}
@@ -256,20 +223,18 @@ float SliderManager::GetSmallPresetValue(const string& presetName, const string&
 }
 
 void SliderManager::InitializeSliders(const string& presetName) {
-	wxLogMessage("Applying preset '%s' to sliders.", presetName);
-
 	float ps;
 	for (int i = 0; i < slidersBig.size(); i++) {
 		if (!presetCollection.GetBigPreset(presetName, slidersBig[i].name, ps))
 			ps = slidersBig[i].defValue;
 
-		slidersBig[i].Set(ps);
+		slidersBig[i].value = ps;
 	}
 	for (int i = 0; i < slidersSmall.size(); i++) {
 		if (!presetCollection.GetSmallPreset(presetName, slidersSmall[i].name, ps))
 			ps = slidersSmall[i].defValue;
 
-		slidersSmall[i].Set(ps);
+		slidersSmall[i].value = ps;
 	}
 }
 

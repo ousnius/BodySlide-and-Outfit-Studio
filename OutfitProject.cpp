@@ -6,6 +6,7 @@ See the included LICENSE file
 
 #include "OutfitProject.h"
 #include "TriFile.h"
+#include "FBXWrangler.h"
 
 OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner) : appConfig(inConfig) {
 	morpherInitialized = false;
@@ -14,7 +15,10 @@ OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwn
 	LoadSkeletonReference(defSkelFile);
 
 	mCopyRef = true;
-	mGenWeights = true;
+	if (owner->targetGame == SKYRIM)
+		mGenWeights = true;
+	else
+		mGenWeights = false;
 }
 
 OutfitProject::~OutfitProject() {
@@ -85,28 +89,40 @@ string OutfitProject::Save(const string& strFileName,
 	int id;
 	string targ;
 	string targSlider;
-	string targSliderFile;
+	string targSliderData;
+	string targDataName;
+
+	string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
 	string saveDataPath = "ShapeData\\" + strDataDir;
-	string saveFileName;
+
+	DiffDataSets osdDiffs;
+	map<string, map<string, string>> osdNames;
 
 	prog = 10.0f;
 	step = 50.0f / activeSet.size();
 	owner->UpdateProgress(prog);
 	for (int i = 0; i < activeSet.size(); i++) {
 		id = outSet.CopySlider(&activeSet[i]);
-		outSet[id].ClearDataFiles();
+		outSet[id].Clear();
 		if (copyRef && !baseShape.empty()) {
 			targ = ShapeToTarget(baseShape);
 			targSlider = activeSet[i].TargetDataName(targ);
-			targSliderFile = activeSet[i].DataFileName(targSlider);
 			if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 				if (activeSet[i].IsLocalData(targSlider)) {
-					outSet[id].AddDataFile(targ, targSlider, targSliderFile);
-					saveFileName = saveDataPath + "\\" + targSliderFile;
-					baseDiffData.SaveSet(targSlider, targ, saveFileName);
+					targDataName = activeSet[i].DataFileName(targSlider);
+					int lastIndex = targDataName.find_last_of('\\') + 1;
+
+					targSliderData = osdFileName + "\\" + targDataName.substr(lastIndex, targDataName.length() - lastIndex);
+					outSet[id].AddDataFile(targ, targSlider, targSliderData);
+
+					unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
+					osdDiffs.LoadSet(targSlider, targ, *diff);
+					osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
 				}
-				else
-					outSet[id].AddDataFile(targ, targSlider, targSliderFile, false);
+				else {
+					targSliderData = activeSet[i].DataFileName(targSlider);
+					outSet[id].AddDataFile(targ, targSlider, targSliderData, false);
+				}
 			}
 		}
 
@@ -119,20 +135,28 @@ string OutfitProject::Save(const string& strFileName,
 			if (targSlider.empty())
 				targSlider = targ + outSet[i].name;
 
-			targSliderFile = targSlider + ".bsd";
 			if (morpher.GetResultDiffSize(s, activeSet[i].name) > 0) {
 				string shapeDataFolder = activeSet.ShapeToDataFolder(s);
 				if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
-					outSet[i].AddDataFile(targ, targSlider, targSliderFile);
-					saveFileName = saveDataPath + "\\" + targSliderFile;
-					morpher.SaveResultDiff(s, activeSet[i].name, saveFileName);
+					targSliderData = osdFileName + "\\" + targSlider;
+					outSet[i].AddDataFile(targ, targSlider, targSliderData);
+
+					unordered_map<ushort, Vector3> diff;
+					morpher.GetRawResultDiff(s, activeSet[i].name, diff);
+					osdDiffs.LoadSet(targSlider, targ, diff);
+					osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
 				}
-				else
-					outSet[i].AddDataFile(targ, targSlider, targSliderFile, false);
+				else {
+					targSliderData = activeSet[i].DataFileName(targSlider);
+					outSet[i].AddDataFile(targ, targSlider, targSliderData, false);
+				}
 			}
 		}
 		owner->UpdateProgress(prog += step, "Calculating slider data...");
 	}
+
+	osdDiffs.SaveData(osdNames);
+
 	prog = 60.0f;
 	owner->UpdateProgress(prog, "Creating slider set file...");
 
@@ -168,7 +192,7 @@ string OutfitProject::Save(const string& strFileName,
 
 	owner->UpdateProgress(70.0f, "Saving NIF file...");
 
-	saveFileName = saveDataPath + "\\" + baseFile;
+	string saveFileName = saveDataPath + "\\" + baseFile;
 
 	if (workNif.IsValid()) {
 		NifFile clone(workNif);
@@ -279,7 +303,7 @@ void OutfitProject::AddEmptySlider(const string& newName) {
 		string target = ShapeToTarget(baseShape);
 		string shapeAbbrev = NameAbbreviate(baseShape);
 		string shapeSlider = target + sliderAbbrev;
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(baseShape, target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 	}
@@ -302,7 +326,7 @@ void OutfitProject::AddZapSlider(const string& newName, unordered_map<ushort, fl
 	activeSet[sliderID].defSmallValue = 0.0f;
 
 	if (IsBaseShape(shapeName)) {
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(shapeName, target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 		for (auto &i : diffData)
@@ -333,7 +357,7 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 	if (!baseShape.empty()) {
 		string target = ShapeToTarget(baseShape);
 		string shapeSlider = target + sliderAbbrev;
-		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider + ".bsd");
+		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 		GetLiveVerts(baseShape, verts);
 		workNif.CalcShapeDiff(baseShape, &verts, diffData);
@@ -345,69 +369,111 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape) {
 	ObjFile obj;
 	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
+
+	if (!shapeName.empty())
+		outfitName = shapeName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
+
 	if (obj.LoadForNif(fileName)) {
 		wxLogError("Could not load OBJ file '%s'!", fileName);
 		wxMessageBox(wxString::Format("Could not load OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
 		return 1;
 	}
-
-	vector<Vector3> v;
-	vector<Triangle> t;
-	vector<Vector2> uv;
-	if (!obj.CopyDataForIndex(0, &v, &t, &uv)) {
-		wxLogError("Could not copy data from OBJ file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Could not copy data from OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
-		return 3;
-	}
-
-	string useShapeName = shapeName;
-
-	if (mergeShape != "") {
-		vector<Vector3> shapeVerts;
-		workNif.GetVertsForShape(mergeShape, shapeVerts);
-		if (shapeVerts.size() == v.size()) {
-			int r = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
-			if (r == wxYES) {
-				wxLogMessage("Updated shape '%s' using '%s'.", mergeShape, fileName);
-				workNif.SetVertsForShape(mergeShape, v);
-				return 101;
-			}
+	vector<string> objGroupNames;
+	obj.GetGroupList(objGroupNames);
+	for (int i = 0; i < objGroupNames.size(); i++) {
+		vector<Vector3> v;
+		vector<Triangle> t;
+		vector<Vector2> uv;
+		if (!obj.CopyDataForIndex(i, &v, &t, &uv)) {
+			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
+			wxMessageBox(wxString::Format("Could not copy data from OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
+			return 3;
 		}
-		useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name");
-		if (useShapeName == "")
-			return 100;
+
+		// Skip zero size groups.  
+		if (v.size() == 0)
+			continue;
+
+		string useShapeName = objGroupNames[i];
+
+		if (mergeShape != "") {
+			vector<Vector3> shapeVerts;
+			workNif.GetVertsForShape(mergeShape, shapeVerts);
+			if (shapeVerts.size() == v.size()) {
+				int r = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
+				if (r == wxYES) {
+					wxLogMessage("Updated shape '%s' using '%s'.", mergeShape, fileName);
+					workNif.SetVertsForShape(mergeShape, v);
+					return 101;
+				}
+			}
+			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName);
+			if (useShapeName == "")
+				return 100;
+		}
+
+		CreateNifShapeFromData(useShapeName, v, t, uv);
 	}
+
+	return 0;
+}
+
+
+int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector3>& v, vector<Triangle>& t, vector<Vector2>& uv, vector<Vector3>* norms) {
+	bool staticMode = Config["StaticMeshMode"] == "True";
+
+	string blankSkel = "res\\SkeletonBlank.nif";
+	string defaultName = "New Outfit";
+	if (staticMode) {
+		blankSkel = "res\\GameObjectBlank.nif";
+		defaultName = "New Object";
+	}
+	else if (owner->targetGame == FO4)
+		blankSkel = "res\\SkeletonBlank_fo4.nif";
 
 	NifFile blank;
-	blank.Load("res\\SkeletonBlank.nif");
+	blank.Load(blankSkel);
 	if (!blank.IsValid()) {
-		wxLogError("Could not load 'SkeletonBlank.nif' for OBJ file.");
-		wxMessageBox("Could not load 'SkeletonBlank.nif' for OBJ file.", "OBJ Error", wxICON_ERROR);
+		wxLogError("Could not load 'SkeletonBlank.nif' for importing data file.");
+		wxMessageBox("Could not load 'SkeletonBlank.nif' for importing data file.", "import data Error", wxICON_ERROR);
 		return 2;
 	}
 
 	if (!workNif.IsValid())
-		AddNif("res\\SkeletonBlank.nif", true, "New Outfit");
+		AddNif(blankSkel, true, defaultName);
 
-	NiTriShapeData* nifShapeData = new NiTriShapeData(workNif.hdr);
-	nifShapeData->Create(&v, &t, &uv);
-	int shapeID = blank.AddBlock((NiObject*)nifShapeData, "NiTriShapeData");
+	if (owner->targetGame != FO4) {
+		NiTriShapeData* nifShapeData = new NiTriShapeData(workNif.hdr);
+		nifShapeData->Create(&v, &t, &uv);
+		if (norms) {
+			nifShapeData->normals = (*norms);
+			nifShapeData->hasNormals = true;
+		}
+		int shapeID = blank.AddBlock((NiObject*)nifShapeData, "NiTriShapeData");
 
-	NiSkinData* nifSkinData = new NiSkinData(workNif.hdr);
-	int skinID = blank.AddBlock((NiObject*)nifSkinData, "NiSkinData");
+		int dismemberID = -1;
+		if (!staticMode){
+			NiSkinData* nifSkinData = new NiSkinData(workNif.hdr);
+			int skinID = blank.AddBlock((NiObject*)nifSkinData, "NiSkinData");
 
-	NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.hdr);
-	int partID = blank.AddBlock((NiObject*)nifSkinPartition, "NiSkinPartition");
+			NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.hdr);
+			int partID = blank.AddBlock((NiObject*)nifSkinPartition, "NiSkinPartition");
 
-	BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.hdr);
-	int dismemberID = blank.AddBlock((NiObject*)nifDismemberInst, "BSDismemberSkinInstance");
+			BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.hdr);
+			dismemberID = blank.AddBlock((NiObject*)nifDismemberInst, "BSDismemberSkinInstance");
+			nifDismemberInst->dataRef = skinID;
+			nifDismemberInst->skinPartitionRef = partID;
+			nifDismemberInst->skeletonRootRef = 0;
+		}
 
-	BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.hdr);
+		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.hdr);
 
-	int shaderID;
-	BSLightingShaderProperty* nifShader = nullptr;
-	BSShaderPPLightingProperty* nifShaderPP = nullptr;
-	switch (owner->targetGame) {
+		int shaderID;
+		BSLightingShaderProperty* nifShader = nullptr;
+		BSShaderPPLightingProperty* nifShaderPP = nullptr;
+		switch (owner->targetGame) {
 		case FO3:
 		case FONV:
 			nifShaderPP = new BSShaderPPLightingProperty(workNif.hdr);
@@ -415,27 +481,70 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 			nifShaderPP->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
 			break;
 		case SKYRIM:
+		case FO4:
 		default:
 			nifShader = new BSLightingShaderProperty(workNif.hdr);
 			shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");
 			nifShader->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
+		}
+
+		NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
+		blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
+		nifTriShape->propertiesRef1 = shaderID;
+
+		int nameID = blank.AddOrFindStringId(shapeName);
+		nifTriShape->dataRef = shapeID;
+		nifTriShape->skinInstanceRef = dismemberID;
+		nifTriShape->nameRef = nameID;
+		nifTriShape->name = shapeName;
+	}
+	else {
+		BSTriShape* triShapeBase;
+		string shaderName = "Materials\\actors\\Character\\BaseHumanFemale\\basehumanFemaleskin.bgsm";
+		string wetShaderName = "template/SkinTemplate_Wet.bgsm";
+		if (staticMode) {
+			triShapeBase = new BSTriShape(workNif.hdr);
+			triShapeBase->Create(&v, &t, &uv, norms);
+			blank.AddBlock((NiObject*)triShapeBase, "BSTriShape");
+			shaderName = "Materials\\Clothes\\Hats\\WigGO.BGSM";
+			wetShaderName = "";
+		}
+		else {
+			BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.hdr);
+			nifBSTriShape->Create(&v, &t, &uv, norms);
+			nifBSTriShape->ssfFile = "Meshes\\Actors\\Character\\CharacterAssets\\FemaleBody.ssf";
+			blank.AddBlock((NiObject*)nifBSTriShape, "BSSubIndexTriShape");
+
+			BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.hdr);
+			int skinID = blank.AddBlock((NiObject*)nifBSSkinInstance, "BSSkin::Instance");
+
+			BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.hdr);
+			int boneID = blank.AddBlock((NiObject*)nifBoneData, "BSSkin::BoneData");
+			nifBSSkinInstance->boneDataRef = boneID;
+			nifBSTriShape->skinInstanceRef = skinID;
+			triShapeBase = nifBSTriShape;
+		}
+
+		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.hdr);
+
+		int shaderID;
+		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.hdr);
+		nifShader->nameRef = blank.AddOrFindStringId(shaderName);
+		nifShader->name = shaderName;
+		nifShader->wetMaterialNameRef = blank.AddOrFindStringId(wetShaderName);
+		shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");
+		nifShader->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
+
+		int nameID = blank.AddOrFindStringId(shapeName);
+		triShapeBase->shaderPropertyRef = shaderID;
+		triShapeBase->nameRef = nameID;
+		triShapeBase->name = shapeName;
+
+
 	}
 
-	NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
-	blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
-	nifDismemberInst->dataRef = skinID;
-	nifDismemberInst->skinPartitionRef = partID;
-	nifDismemberInst->skeletonRootRef = 0;
-	nifTriShape->propertiesRef1 = shaderID;
-
-	int nameID = blank.AddOrFindStringId(useShapeName);
-	nifTriShape->dataRef = shapeID;
-	nifTriShape->skinInstanceRef = dismemberID;
-	nifTriShape->nameRef = nameID;
-	nifTriShape->name = useShapeName;
-
-	workNif.CopyGeometry(useShapeName, blank, useShapeName);
-	SetTexture(useShapeName, "_AUTO_");
+	workNif.CopyGeometry(shapeName, blank, shapeName);
+	SetTexture(shapeName, "_AUTO_");
 
 	return 0;
 }
@@ -620,10 +729,10 @@ int OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeNa
 
 	if (IsBaseShape(shapeName)) {
 		string sliderData = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.SaveSet(sliderData, target, fileName);
+		baseDiffData.SaveSet(sliderData, target, fileName + ".bsd");
 	}
 	else
-		morpher.SaveResultDiff(target, sliderName, fileName);
+		morpher.SaveResultDiff(target, sliderName, fileName + ".bsd");
 
 	return 0;
 }
@@ -633,7 +742,6 @@ int OutfitProject::SaveSliderOBJ(const string& sliderName, const string& shapeNa
 	vector<Triangle> tris;
 	const vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
 	workNif.GetTrisForShape(shapeName, &tris);
-	const vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
 
 	vector<Vector3> outVerts = *verts;
 
@@ -644,9 +752,24 @@ int OutfitProject::SaveSliderOBJ(const string& sliderName, const string& shapeNa
 	else
 		morpher.ApplyResultToVerts(sliderName, target, &outVerts);
 
+
+	string mapfn = wxFileSelector("Choose vertex map source .obj", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_OPEN | wxFD_FILE_MUST_EXIST, owner);
+	if (mapfn.empty())
+		return 1;
+
+	map<int, int> orderMap;
+	vector<Face> origFaces;
+	vector<Vector2> origUvs;
+	ObjFile orderFile;
+	orderFile.LoadVertOrderMap(mapfn, orderMap, origFaces, origUvs);
+
+	vector<Vector3> swizzleverts(orderMap.size());
+	for (int i = 0; i < orderMap.size(); i++)
+		swizzleverts[i] = outVerts[orderMap[i]];
+
 	ObjFile obj;
 	obj.SetScale(Vector3(0.1f, 0.1f, 0.1f));
-	obj.AddGroup(shapeName, outVerts, tris, *uvs);
+	obj.AddGroup(shapeName, swizzleverts, origFaces, origUvs);
 	if (obj.Save(fileName))
 		return 1;
 
@@ -669,9 +792,16 @@ void OutfitProject::SetSliderFromBSD(const string& sliderName, const string& sha
 
 bool OutfitProject::SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName) {
 	string target = ShapeToTarget(shapeName);
-
+	int type= workNif.GetShapeType(shapeName);
 	ObjFile obj;
-	obj.LoadForNif(fileName);
+	if (type == BSSUBINDEXTRISHAPE) {
+		obj.LoadForNif(fileName);
+	//	obj.LoadSimple(fileName);
+	}
+	else {
+		obj.LoadForNif(fileName);
+
+	}
 	vector<string> groupNames;
 	obj.GetGroupList(groupNames);
 
@@ -702,6 +832,46 @@ bool OutfitProject::SetSliderFromOBJ(const string& sliderName, const string& sha
 
 		morpher.SetResultDiff(target, sliderName, diff);
 	}
+	return true;
+}
+
+bool OutfitProject::SetSliderFromFBX(const string& sliderName, const string& shapeName, const string& fileName) {
+	string target = ShapeToTarget(shapeName);
+
+	FBXWrangler fbxw;
+	string invalidBones;
+
+	bool result = fbxw.ImportScene(fileName);
+	if (!result)
+		return 1;
+
+	vector<string>shapes;
+	fbxw.GetShapeNames(shapes);
+	bool found = false;
+	for (auto &s : shapes)
+		if (s == shapeName)
+			found = true;
+
+	if (!found)
+		return false;
+
+	FBXShape* shape = fbxw.InShape(shapeName);
+
+	unordered_map<ushort, Vector3> diff;
+	if (IsBaseShape(shapeName)) {
+		if (workNif.CalcShapeDiff(shapeName, &shape->verts, diff, 1.0f))
+			return false;
+
+		string sliderData = activeSet[sliderName].TargetDataName(target);
+		baseDiffData.LoadSet(sliderData, target, diff);
+	}
+	else {
+		if (workNif.CalcShapeDiff(shapeName, &shape->verts, diff, 1.0f))
+			return false;
+
+		morpher.SetResultDiff(target, sliderName, diff);
+	}
+
 	return true;
 }
 
@@ -851,7 +1021,7 @@ void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sli
 	string dataName = activeSet[sliderName].TargetDataName(target);
 	if (!vertUpdates.empty()) {
 		if (dataName.empty())
-			activeSet[sliderName].AddDataFile(target, target + sliderName, target + sliderName + ".bsd");
+			activeSet[sliderName].AddDataFile(target, target + sliderName, target + sliderName);
 		else
 			activeSet[sliderName].SetLocalData(dataName);
 	}
@@ -933,8 +1103,8 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 	float prog = 40.0f;
 	owner->UpdateProgress(prog);
 
-	for (auto &bone : *boneList) {
-		string wtSet = bone + "_WT_";
+	for (auto &boneName : *boneList) {
+		string wtSet = boneName + "_WT_";
 		morpher.GenerateResultDiff(destShape, wtSet, wtSet);
 
 		unordered_map<ushort, Vector3> diffResult;
@@ -944,7 +1114,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 		if (mask) {
 			weights.clear();
 			oldWeights.clear();
-			workAnim.GetWeights(destShape, bone, oldWeights);
+			workAnim.GetWeights(destShape, boneName, oldWeights);
 		}
 
 		for (auto &dr : diffResult) {
@@ -960,15 +1130,27 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 
 		if (diffResult.size() > 0) {
 			AnimBone boneRef;
-			AnimSkeleton::getInstance().GetBone(bone, boneRef);
+			AnimSkeleton::getInstance().GetBone(boneName, boneRef);
 			if (workAnim.AddShapeBone(destShape, boneRef)) {
-				SkinTransform xForm;
-				workAnim.GetBoneXForm(bone, xForm);
-				workAnim.SetShapeBoneXForm(destShape, bone, xForm);
+				if (owner->targetGame == FO4) {
+					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.  
+					SkinTransform xForm;
+					Vector3 sphereOffset;
+					float sphereRadius;
+					workNif.GetShapeBoneTransform(baseShape, boneName, xForm, sphereOffset, sphereRadius);
+
+					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
+				}
+				else {
+					SkinTransform xForm;
+					workAnim.GetBoneXForm(boneName, xForm);
+					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
+
+				}
 			}
 		}
 
-		workAnim.SetWeights(destShape, bone, weights);
+		workAnim.SetWeights(destShape, boneName, weights);
 		owner->UpdateProgress(prog += step, "Copying bone weights...");
 	}
 
@@ -1019,9 +1201,21 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 		AnimBone boneRef;
 		AnimSkeleton::getInstance().GetBone(boneName, boneRef);
 		if (workAnim.AddShapeBone(destShape, boneRef)) {
-			SkinTransform xForm;
-			workAnim.GetBoneXForm(boneName, xForm);
-			workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
+			if (owner->targetGame == FO4) {
+				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.  
+				SkinTransform xForm;
+				Vector3 sphereOffset;
+				float sphereRadius;
+				workNif.GetShapeBoneTransform(baseShape, boneName, xForm, sphereOffset, sphereRadius);
+
+				workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
+			}
+			else {
+				SkinTransform xForm;
+				workAnim.GetBoneXForm(boneName, xForm);
+				workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
+
+			}
 		}
 
 		workAnim.SetWeights(destShape, boneName, weights);
@@ -1334,6 +1528,8 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 
 	sset.GetSet(setName, activeSet);
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
+	activeSet.SetAllReferenced();
+
 	string inMeshFile = activeSet.GetInputFileName();
 
 	if (!ClearRef)
@@ -1434,6 +1630,8 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 
 	if (!inOutfitName.empty())
 		outfitName = inOutfitName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
 
 	if (clear) {
 		size_t fnpos = fileName.rfind("\\");
@@ -1524,8 +1722,9 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	AutoOffset(nif);
 
 	nif.GetShapeList(nifShapes);
-	if (nifShapes.empty())
-		return 0;
+	// don't want to exit here -- this function is used to generate a blank nif when an outfit is loaded from an .obj
+	//if (nifShapes.empty())
+	//	return 0;
 
 	if (workNif.IsValid()) {
 		for (auto &s : nifShapes) {
@@ -1684,12 +1883,14 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 		shapeDirty.erase(shapeName);
 		shapeDirty[newShapeName] = true;
 	}
+
+	wxLogMessage("Renamed shape '%s' to '%s'.", shapeName, newShapeName);
 }
 
 void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMeshes) {
 	vector<Vector3> liveNorms;
 	for (auto &m : shapeMeshes) {
-		if (nif->IsShaderSkin(m->shapeName))
+		if (nif->IsShaderSkin(m->shapeName) && owner->targetGame != FO4)
 			continue;
 
 		liveNorms.clear();
@@ -1718,7 +1919,7 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 		clone.SetVertsForShape(m->shapeName, liveVerts);
 
 		if (writeNormals) {
-			if (clone.IsShaderSkin(m->shapeName))
+			if (clone.IsShaderSkin(m->shapeName) && owner->targetGame != FO4)
 				continue;
 
 			clone.SetNormalsForShape(m->shapeName, liveNorms);
@@ -1743,6 +1944,101 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 		clone.PrettySortBlocks();
 	}
 	return clone.Save(fileName);
+}
+
+int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeName, const string& mergeShape) {
+	FBXWrangler fbxw;
+	string invalidBones;
+
+	bool result = fbxw.ImportScene(fileName);
+	if (!result)
+		return 1;
+
+	if (!shapeName.empty())
+		outfitName = shapeName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
+
+	vector<string>shapes;
+	fbxw.GetShapeNames(shapes);
+	for (auto &s : shapes) {
+		FBXShape* shape = fbxw.InShape(s);
+		string useShapeName = s;
+
+		if (!mergeShape.empty()) {
+			vector<Vector3> shapeVerts;
+			workNif.GetVertsForShape(mergeShape, shapeVerts);
+			if (shapeVerts.size() == shape->numverts) {
+				int ret = wxMessageBox("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
+				if (ret == wxYES) {
+					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION);
+					if (ret == wxYES)
+						workNif.SetVertsForShape(mergeShape, shape->verts);
+
+					ret = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION);
+					if (ret == wxYES)
+						for (auto &bn : shape->boneNames)
+							workAnim.SetWeights(mergeShape, bn, shape->boneSkin[bn].vertweights);
+
+					return 101;
+				}
+			}
+
+			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName);
+			if (useShapeName.empty())
+				return 100;
+		}
+
+		CreateNifShapeFromData(s, shape->verts, shape->tris, shape->uvs, &shape->normals);
+
+		int slot = 0;
+		vector<int> boneIndices;
+		for (auto &bn : shape->boneNames) {
+			if (!AnimSkeleton::getInstance().RefBone(bn)) {
+				// Not found in reference skeleton, use default values
+				AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
+				if (!cstm.isValidBone)
+					invalidBones += bn + "\n";
+
+				AnimSkeleton::getInstance().RefBone(bn);
+			}
+
+			workAnim.shapeBones[useShapeName].push_back(bn);
+			workAnim.shapeSkinning[useShapeName].boneNames[bn] = slot;
+			workAnim.SetWeights(useShapeName, bn, shape->boneSkin[bn].vertweights);
+			boneIndices.push_back(slot++);
+		}
+
+		workNif.SetShapeBoneIDList(useShapeName, boneIndices);
+
+		if (!invalidBones.empty()) {
+			wxLogWarning("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, invalidBones);
+			wxMessageBox(wxString::Format("Bones in shape '%s' not found in reference skeleton:\n\n%s", useShapeName, invalidBones), "Invalid Bones");
+		}
+	}
+
+	return 0;
+}
+
+int OutfitProject::ExportShapeFBX(const string& fileName, const string& shapeName) {
+	FBXWrangler fbxw;
+	fbxw.NewScene();
+	/*if (shapeName != "") {	
+		vector<Triangle> tris;
+		workNif.GetTrisForShape(shapeName, &tris);
+		const vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
+		const vector<Vector3>* norms = workNif.GetNormalsForShape(shapeName);
+		const vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
+		fbxw.AddGeometry(shapeName, verts, norms, &tris, uvs);
+	}*/
+
+	fbxw.AddSkeleton(&AnimSkeleton::getInstance().refSkeletonNif);
+	fbxw.AddNif(&workNif, shapeName, false);
+	fbxw.AddSkinning(&workAnim, shapeName);
+	//fbxw.AddNif(&AnimSkeleton::getInstance().refSkeletonNif);
+	//fbxw.AddSkeleton();
+
+	return fbxw.ExportScene(fileName);
 }
 
 int OutfitProject::ExportShapeObj(const string& fileName, const string& shapeName, Vector3 scale, Vector3 offset) {

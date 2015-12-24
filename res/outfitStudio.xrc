@@ -811,6 +811,14 @@
 					<label>Export Shape to OBJ</label>
 					<help>Export the current shape as an OBJ file.</help>
 				</object>
+				<object class="wxMenuItem" name="importFBX">
+					<label>Import Shape from FBX</label>
+					<help>Import an FBX file as a new shape in the outfit.</help>
+				</object>
+				<object class="wxMenuItem" name="exportFBX">
+				  <label>Export Shape to FBX</label>
+				  <help>Export the current shape as an FBX file.</help>
+				</object>
 				<object class="wxMenuItem" name="copyShape">
 					<label>Duplicate Shape...</label>
 					<help>Duplicate the current shape.</help>
@@ -925,6 +933,10 @@
 					<object class="wxMenuItem" name="sliderImportOBJ">
 						<label>Import OBJ...</label>
 						<help>Import an OBJ file matching the current shape's vertex count, and calculate slider data from the difference.</help>
+					</object>
+					<object class="wxMenuItem" name="sliderImportFBX">
+						<label>Import FBX...</label>
+						<help>Import an FBX file matching the current shape's vertex count, and calculate slider data from the difference.</help>
 					</object>
 					<enabled>0</enabled>
 				</object>
@@ -1666,7 +1678,7 @@
 									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 									<border>5</border>
 									<object class="wxStaticText" name="m_staticText7">
-										<label>XML or NIF file:</label>
+										<label>Project or NIF file:</label>
 										<wrap>-1</wrap>
 									</object>
 								</object>
@@ -1676,8 +1688,8 @@
 									<border>5</border>
 									<object class="wxFilePickerCtrl" name="npSliderSetFile">
 										<value></value>
-										<message>Select a slider set XML file, or a Reference NIF file</message>
-										<wildcard>*.xml;*.nif</wildcard>
+										<message>Select a project file, or a reference NIF file</message>
+										<wildcard>*.osp;*.xml;*.nif</wildcard>
 										<style>wxFLP_DEFAULT_STYLE</style>
 									</object>
 								</object>
@@ -2277,7 +2289,7 @@
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
 								<object class="wxStaticText" name="m_staticText7">
-									<label>XML or NIF file:</label>
+									<label>Project or NIF file:</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -2287,8 +2299,8 @@
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="npSliderSetFile">
 									<value></value>
-									<message>Select a slider set XML file, or a Reference NIF file</message>
-									<wildcard>*.xml;*.nif</wildcard>
+									<message>Select a project file, or a reference NIF file</message>
+									<wildcard>*.osp;*.xml;*.nif</wildcard>
 									<style>wxFLP_DEFAULT_STYLE</style>
 								</object>
 							</object>
@@ -2852,7 +2864,7 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText241">
+						<object class="wxStaticText" name="lbValLo">
 							<label>Low</label>
 							<wrap>-1</wrap>
 						</object>
@@ -2875,7 +2887,7 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText27">
+						<object class="wxStaticText" name="lbValHi">
 							<label>High</label>
 							<wrap>-1</wrap>
 						</object>
@@ -3114,9 +3126,9 @@
 								<border>5</border>
 								<object class="wxFilePickerCtrl" name="sssSliderSetFile">
 									<value></value>
-									<tooltip>The slider set definition .XML file</tooltip>
-									<message>Select slider set XML file name</message>
-									<wildcard>*.xml</wildcard>
+									<tooltip>The .osp slider set project file</tooltip>
+									<message>Select slider set .osp file name</message>
+									<wildcard>*.osp</wildcard>
 									<style>wxFLP_SAVE|wxFLP_USE_TEXTCTRL</style>
 								</object>
 							</object>

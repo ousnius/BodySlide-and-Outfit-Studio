@@ -39,6 +39,14 @@ int SliderCategoryCollection::GetAllCategories(vector<string>& outCategories) {
 	return outCategories.size();
 }
 
+string SliderCategoryCollection::GetSliderDisplayName(const string& categoryName, const string& sliderName) {
+	auto git = categories.find(categoryName);
+	if (git == categories.end())
+		return "";
+
+	return git->second.GetSliderDisplayName(sliderName);
+}
+
 int SliderCategoryCollection::GetSliderCategory(const string& sliderName, string& outCategory) {
 	for (auto &c : categories)
 		if (c.second.HasSlider(sliderName)) {
@@ -105,11 +113,22 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 	name = srcCategoryElement->Attribute("name");
 	XMLElement* slider = srcCategoryElement->FirstChildElement("Slider");
 	while (slider) {
-		string tempC = "";
+		if (!slider->Attribute("name")) {
+			slider = slider->NextSiblingElement("Slider");
+			continue;
+		}
+
 		string sName = slider->Attribute("name");
 		sliders.push_back(sName);
+
+		if (slider->Attribute("displayname"))
+			displayNames[sName] = slider->Attribute("displayname");
+		else
+			displayNames[sName] = "";
+
 		sourceFiles.push_back(slider->GetDocument()->Value());
 		uniqueSourceFiles.insert(sourceFiles.back());
+
 		slider = slider->NextSiblingElement("Slider");
 	}
 	return 0;
@@ -121,6 +140,13 @@ bool SliderCategory::HasSlider(const string& search) {
 			return true;
 
 	return false;
+}
+
+string SliderCategory::GetSliderDisplayName(const string& sliderName) {
+	if (!HasSlider(sliderName))
+		return "";
+	
+	return displayNames[sliderName];
 }
 
 bool SliderCategory::GetHidden() {

@@ -18,20 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#ifndef FO3
-#define FO3 0
-#endif
-#ifndef FONV
-#define FONV 1
-#endif
-#ifndef SKYRIM
-#define SKYRIM 2
-#endif
-
 #include "stdafx.h"
 #include "wxStateButton.h"
 #include "GLSurface.h"
 #include "SliderData.h"
+#include "SliderPresets.h"
 #include "ObjFile.h"
 #include "TweakBrush.h"
 #include "Automorph.h"
@@ -48,6 +39,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dataview.h>
 #include <wx/splitter.h>
 #include <wx/collpane.h>
+
+enum TargetGame {
+	FO3, FONV, SKYRIM, FO4
+};
 
 
 class ShapeItemData : public wxTreeItemData  {
@@ -68,7 +63,7 @@ public:
 
 	void SetNotifyWindow(wxWindow* win);
 
-	void AddMeshFromNif(NifFile* nif, const string& shapeName);
+	void AddMeshFromNif(NifFile* nif, const string& shapeName, bool buildNormals);
 	void AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv = nullptr, const string& shapeName = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {
@@ -460,7 +455,31 @@ public:
 
 	ConfigurationManager& appConfig;
 
+	class SliderDisplay {
+	public:
+		bool hilite;
+		wxPanel* sliderPane;
+		wxBoxSizer* paneSz;
+
+		int sliderNameCheckID;
+		int sliderID;
+
+		wxBitmapButton* btnSliderEdit;
+		wxButton* btnMinus;
+		wxButton* btnPlus;
+		wxCheckBox* sliderNameCheck;
+		wxStaticText* sliderName;
+		wxSlider* slider;
+		wxTextCtrl* sliderReadout;
+
+		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
+	};
+
+	map<string, SliderDisplay*> sliderDisplays;
+
 	void CreateSetSliders();
+
+	string NewSlider(const string& suggestedName = "", bool skipPrompt = false);
 
 	void SetSliderValue(int index, int val);
 	void SetSliderValue(const string& name, int val);
@@ -479,6 +498,8 @@ public:
 	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
 
+	void RefreshGUIFromProj();
+
 	string GetActiveBone();
 
 	bool NotifyStrokeStarting();
@@ -487,9 +508,10 @@ public:
 	bool IsDirty(const string& shapeName);
 	void SetClean(const string& shapeName);
 
-	// Slider edit states - enable/disable menu items
-	void EnterSliderEdit();
+	void EnterSliderEdit(const string& sliderName);
 	void ExitSliderEdit();
+	void MenuEnterSliderEdit();
+	void MenuExitSliderEdit();
 
 	void ToggleBrushPane() {
 		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
@@ -615,24 +637,11 @@ public:
 	}
 
 private:
-	class SliderDisplay {
+	class ShapeState {						// metadata state of shapes by shape name
 	public:
-		bool hilite;
-		wxPanel* sliderPane;
-		wxBoxSizer* paneSz;
-
-		int sliderNameCheckID;
-		int sliderID;
-
-		wxBitmapButton* btnSliderEdit;
-		wxButton* btnMinus;
-		wxButton* btnPlus;
-		wxCheckBox* sliderNameCheck;
-		wxStaticText* sliderName;
-		wxSlider* slider;
-		wxTextCtrl* sliderReadout;
-
-		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
+		TargetGame gameType;				// game type source (affects block types in nif)
+		bool bIsImporting;					// true if shape is currently in the process of being imported from .obj (lacking normals, textures, etc.)
+		ShapeState() : gameType(SKYRIM), bIsImporting(false) {}
 	};
 
 	bool previousMirror;
@@ -640,7 +649,7 @@ private:
 	float previewScale;
 	Vector3 previewRotation;
 
-	map<string, SliderDisplay*> sliderDisplays;
+	map<string, ShapeState> shapeStates;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);
@@ -649,7 +658,6 @@ private:
 	void ClearProject();
 	void RenameProject(const string& projectName);
 
-	void RefreshGUIFromProj();
 	void AnimationGUIFromProj();
 	void WorkingGUIFromProj();
 
@@ -714,6 +722,7 @@ private:
 	void OnSliderImportBSD(wxCommandEvent& event);
 	void OnSliderImportOBJ(wxCommandEvent& event);
 	void OnSliderImportTRI(wxCommandEvent& event);
+	void OnSliderImportFBX(wxCommandEvent& event);
 	void OnSliderExportBSD(wxCommandEvent& event);
 	void OnSliderExportOBJ(wxCommandEvent& event);
 	void OnSliderExportTRI(wxCommandEvent& event);
@@ -728,6 +737,8 @@ private:
 
 	void OnImportShape(wxCommandEvent& event);
 	void OnExportShape(wxCommandEvent& event);
+	void OnImportFBX(wxCommandEvent& event);
+	void OnExportFBX(wxCommandEvent& event);
 
 	void OnEnterClose(wxKeyEvent& event);
 	
@@ -881,4 +892,27 @@ private:
 	}
 
 	DECLARE_EVENT_TABLE()
+};
+
+class DnDFile : public wxFileDropTarget {
+public:
+	DnDFile(OutfitStudio *pOwner = nullptr) { owner = pOwner; }
+
+	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
+
+private:
+	OutfitStudio *owner;
+};
+
+class DnDSliderFile : public wxFileDropTarget {
+public:
+	DnDSliderFile(OutfitStudio *pOwner = nullptr) { owner = pOwner; }
+
+	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
+	virtual wxDragResult OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult);
+
+private:
+	OutfitStudio *owner;
+	wxDragResult lastResult;
+	string targetSlider;
 };

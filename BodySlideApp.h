@@ -41,6 +41,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/tokenzr.h>
 #include <wx/cmdline.h>
 #include <wx/html/htmlwin.h>
+#include <wx/listctrl.h>
 #include <wx/dir.h>
 
 #include <vector>
@@ -100,6 +101,7 @@ public:
 	int targetGame;
 
 	void SetDefaultConfig();
+	wxString GetGameDataPath(TargetGame gameID);
 	void LoadData();
 	void CharHook(wxKeyEvent& event) {
 		wxWindow* w = (wxWindow*)event.GetEventObject();
@@ -245,7 +247,7 @@ public:
 
 	void ShowLowColumn(bool show);
 	void AddCategorySliderUI(const wxString& name, bool show, bool oneSize);
-	void AddSliderGUI(const wxString& name, bool isZap, bool oneSize = false);
+	void AddSliderGUI(const wxString& name, const wxString& displayName, bool isZap, bool oneSize = false);
 
 	BodySlideFrame::SliderDisplay* GetSliderDisplay(const string& name) {
 		if (sliderDisplays.find(name) != sliderDisplays.end())
@@ -308,6 +310,7 @@ private:
 	void OnBatchBuildContext(wxMouseEvent& event);
 	void OnBatchBuildSelect(wxCommandEvent& event);
 	void OnOutfitStudio(wxCommandEvent& event);
+	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);
 	void OnChooseTargetGame(wxCommandEvent& event);
 	void OnAbout(wxCommandEvent& event);

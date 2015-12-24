@@ -7,6 +7,3 @@
 
 #include <wx/wx.h>
 #include "resource.h"
-
-#define MSG_PREVIEWCLOSING WM_USER+42
-#define MSG_BIGPREVIEWCLOSING WM_USER+43

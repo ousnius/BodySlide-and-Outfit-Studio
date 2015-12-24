@@ -15,6 +15,30 @@ See the included LICENSE file
 
 using namespace std;
 
+struct vertexBoneWeights {
+	vector<unsigned char> boneIds;
+	vector<float> weights;
+
+	vertexBoneWeights () {
+	}
+
+	void Add (int inboneid, float inweight) {
+		if (inweight == 0) return;
+
+		for (int i=0; i < weights.size(); ++i) {
+			if (inweight < weights[i])
+				continue;
+			weights.insert(weights.begin() + i, inweight);
+			boneIds.insert(boneIds.begin() + i, inboneid);
+			return;
+		} 
+		weights.push_back(inweight);
+		boneIds.push_back(inboneid);
+
+		
+	}
+};
+
 class AnimBone {
 public:
 	string boneName;			// bone names are node names in the nif file
@@ -30,18 +54,24 @@ public:
 	Matrix4 localRot;				// rotation offset from parent bone.
 	Vector3 localTrans;			// offset from parent bone
 
+	bool hasSkinXform;
+	Matrix4 skinRot;			// skinning rotation transform   (NOT node transform
+	Vector3 skinTrans;			// skinning translation transform  (NOT node transform
+
 	int refCount;				// reference count of this bone
 	AnimBone() {
 		boneName = "bogus";
 		boneID = -1;
 		order = -1;
 		isValidBone = false;
+		hasSkinXform = false;
 	}
 
 	AnimBone(const string& bn, int bid, int ord) : boneName(bn), boneID(bid), order(ord) {
 		refCount = 0;
 		parent = nullptr;
 		isValidBone = true;
+		hasSkinXform = false;
 	}
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
 };
@@ -72,10 +102,18 @@ public:
 class AnimSkin {
 public:
 	unordered_map<int, AnimWeight> boneWeights;
-	AnimSkin() { }
-	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<int>& BoneIndices) {
-		for (auto &i : BoneIndices)
+	unordered_map<string, int> boneNames;
+	bool bNeedsBoundsCalc;
+	AnimSkin() : bNeedsBoundsCalc(true) { }
+	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<int>& BoneIndices) : bNeedsBoundsCalc(true) {
+		vector<int> idList;
+		loadFromFile->GetShapeBoneIDList(shape, idList);
+		for (auto &i : BoneIndices) {
 			boneWeights[i] = AnimWeight(loadFromFile, shape, i);
+			NiNode* node = (NiNode*)loadFromFile->GetBlock(idList[i]);
+			boneNames[node->name] = i;
+		}
+		bNeedsBoundsCalc = false;
 	}
 	void VertexBones(ushort queryvert, vector<int>& outbones, vector<float>& outWeights) {
 		float wresult;
@@ -135,6 +173,7 @@ public:
 	void GetBoneXForm(const string& boneName, SkinTransform& stransform);
 	void SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights);
 	void SetShapeBoneXForm(const string& shape, const string& boneName, SkinTransform& stransform);
+	bool CalcShapeSkinBounds(const string& shape);
 	void WriteToNif(NifFile* nif, bool synchBoneIDs = true, const string& shapeException = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName);	
@@ -150,6 +189,7 @@ class AnimSkeleton {
 	bool allowCustom;
 
 public:
+	NifFile refSkeletonNif;
 	static AnimSkeleton& getInstance() {
 		static AnimSkeleton instance;
 		return instance;

@@ -6,8 +6,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include <wx/wx.h>
-
+#include "stdafx.h"
 
 class wxStateButton : public wxButton {
 	bool m_bChecked;

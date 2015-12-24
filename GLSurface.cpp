@@ -10,13 +10,6 @@ See the included LICENSE file
 #include <set>
 #include <limits>
 
-#ifdef _DEBUG
-#pragma comment (lib, "SOIL_d.lib")
-#else
-#pragma comment (lib, "SOIL.lib")
-#endif
-#include "SOIL.h"
-
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
@@ -421,7 +414,8 @@ int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 
 void GLSurface::InitGLExtensions() {
 	bUseAF = IsExtensionSupported("GL_EXT_texture_filter_anisotropic");
-	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
+	if (bUseAF)
+		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
 
 	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
 	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
@@ -483,6 +477,7 @@ void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const ui
 	perspective = true;
 	camPos = pos;
 	camRot = rot;
+	camOffset.Zero();
 	vpW = vpWidth;
 	vpH = vpHeight;
 	mFov = fov;
@@ -873,7 +868,7 @@ void GLSurface::UpdateProjection() {
 	if (perspective)
 		gluPerspective(mFov, aspect, 0.1, 1000);
 	else
-		glOrtho(camPos.z / 2 * aspect, -camPos.z / 2 * aspect, camPos.z / 2, -camPos.z / 2, 0.1, 1000);
+		glOrtho((camPos.z + camOffset.z) / 2 * aspect, (-camPos.z + camOffset.z) / 2 * aspect, (camPos.z + camOffset.z) / 2, (-camPos.z + camOffset.z) / 2, 0.1, 1000);
 
 	glMatrixMode(GL_MODELVIEW);
 }
@@ -890,6 +885,7 @@ void GLSurface::RenderOneFrame() {
 	glTranslatef(camPos.x, camPos.y, camPos.z);
 	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
 	glRotatef(camRot.y, 0.0f, 1.0f, 0.0f);
+	glTranslatef(camOffset.x, camOffset.y, camOffset.z);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -1128,7 +1124,7 @@ void GLSurface::AddMeshExplicit(vector<Vector3>* verts, vector<Triangle>* tris, 
 		m->weldVerts[a->indexRef].push_back(b->indexRef);
 		m->weldVerts[b->indexRef].push_back(a->indexRef);
 		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if (dot < 1.57079633f) {
+		if (dot < 90.0f * DEG2RAD) {
 			a->nx = ((a->nx + b->nx) / 2.0f);
 			a->ny = ((a->ny + b->ny) / 2.0f);
 			a->nz = ((a->nz + b->nz) / 2.0f);
@@ -1169,6 +1165,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 
 	const vector<Vector3>* nifNorms = nullptr;
 	const vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
+	nifNorms = nif->GetNormalsForShape(shapeName, false);
 
 	mesh* m = new mesh();
 
@@ -1198,6 +1195,9 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		m->verts[i].x = (nifVerts)[i].x / -10.0f;
 		m->verts[i].z = (nifVerts)[i].y / 10.0f;
 		m->verts[i].y = (nifVerts)[i].z / 10.0f;
+		/*m->verts[i].x = (nifVerts)[i].x / 10.0f;
+		m->verts[i].y = (nifVerts)[i].y / 10.0f;
+		m->verts[i].z = (nifVerts)[i].z / 10.0f;*/
 		m->verts[i].indexRef = i;
 	}
 
@@ -1248,7 +1248,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 
 			if (smoothNormalSeams) {
 				float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
-				if (dot < 1.57079633f) {
+				if (dot < 90.0f * DEG2RAD) {
 					a->nx = ((a->nx + b->nx) / 2.0f);
 					a->ny = ((a->ny + b->ny) / 2.0f);
 					a->nz = ((a->nz + b->nz) / 2.0f);
@@ -1273,7 +1273,42 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			m->verts[i].nz = (*nifNorms)[i].y;
 			m->verts[i].ny = (*nifNorms)[i].z;
 		}
+
+		// virtually Weld verts across uv seams
+		kd_matcher matcher(m->verts, m->nVerts);
+		for (int i = 0; i < matcher.matches.size(); i++) {
+			Vertex* a = matcher.matches[i].first;
+			Vertex* b = matcher.matches[i].second;
+			m->weldVerts[a->indexRef].push_back(b->indexRef);
+			m->weldVerts[b->indexRef].push_back(a->indexRef);
+		}
 	}
+
+	//nifNorms = nif->GetNormalsForShape(shapeName);
+	//const vector<Vector3>* tans = nif->GetTangentsForShape(shapeName);
+	//const vector<Vector3>* bits = nif->GetBitangentsForShape(shapeName);
+	//AddVisNorms(m, nifNorms, "Norms", Vector3(0.0f, 0, 1.0f));
+	//AddVisNorms(m, tans, "tans", Vector3(0.0f, 1.0f, 0.0f));
+	//AddVisNorms(m, bits, "bits", Vector3(1.0f, 0.0f, 0.0f));
+	//
+	//vector <Vector3>* n;
+	//vector <Vector3>* b;
+	//vector <Vector3>* t;
+
+	//nif->CalcTangentsForShape(shapeName, &n, &t, &b);
+	//AddVisNorms(m, n, "Norms", Vector3(0.0f, 0, 1.0f));
+	//AddVisNorms(m, t, "tans", Vector3(0.0f, 1.0f, 0.0f));
+	//AddVisNorms(m, b, "bits2", Vector3(0.0f, 1.0f, 1.0f));
+
+	//m->ColorFill(Vector3(0, 0, 0));
+	//for (int i = 0; i < m->nVerts; i++) {
+
+	//	m->vcolors[i].y = m->verts[i].nx * m->verts[i].nz; //Vector3(m->verts[i].nx, m->verts[i].ny, m->verts[i].nz).dot(Vector3(0, 0, 1.0)); // 
+		//m->vcolors[i].y = (*nifNorms)[i].y;
+	//}
+
+	//AddVisNorms(m,nifNorms,"fileNorms",Vector3(1.0f,0,0));
+	//AddVisNorms(m, NULL, "CalcNorms", Vector3(0, 0, 1.0f));
 
 	m->CreateBVH();
 	m->CreateKDTree();
@@ -1289,6 +1324,13 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			float c = 0.4f + ((0.6f / (meshes.size())) * i);
 			meshes[i]->color = Vector3(c, c, c);
 		}
+	}
+
+	// Offset camera for skinned FO4 shapes
+	if (nif->hdr.userVersion == 12 && nif->hdr.userVersion2 == 130) {
+		BSTriShape* geom = nif->geomForNameF4(shapeName);
+		if (geom && geom->skinInstanceRef != -1)
+			camOffset.y = 12.0f;
 	}
 }
 
@@ -1465,15 +1507,68 @@ int GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 	}
 	return overlays.size() - 1;
 }
+int GLSurface::AddVisNorms(const mesh* src, const vector<Vector3>* normals, const string& name, const Vector3 color ) {
+	int visMesh = GetOverlayID(name);
+	if (visMesh >= 0) {
+		delete overlays[visMesh];
+		overlays.erase(overlays.begin() + visMesh);
+		visMesh = 0;
+	}
 
-int GLSurface::AddVisPoint(const Vector3& p, const string& name) {
+	mesh* mv = new mesh();
+	mv->nVerts = src->nVerts*2;
+	mv->nEdges = src->nVerts;
+
+	mv->verts = new Vertex[mv->nVerts];
+	mv->edges = new Edge[mv->nEdges];
+
+	int mvi = 0;
+
+	for (int i = 0; i < mv->nEdges; i++) {
+		mv->verts[mvi] = src->verts[i];
+		if (normals != NULL) {
+			mv->verts[mvi + 1].x = src->verts[i].x + (*normals)[i].x*.1;
+			mv->verts[mvi + 1].y = src->verts[i].y + (*normals)[i].y*.1;
+			mv->verts[mvi + 1].z = src->verts[i].z + (*normals)[i].z*.1;
+
+		}
+		else {
+			mv->verts[mvi + 1].x = src->verts[i].x + src->verts[i].nx*.1;
+			mv->verts[mvi + 1].y = src->verts[i].y + src->verts[i].ny*.1;
+			mv->verts[mvi + 1].z = src->verts[i].z + src->verts[i].nz*.1;
+
+		}
+		mv->edges[i].p1 = mvi;
+		mv->edges[i].p2 = mvi + 1;
+		mvi += 2;
+	}
+
+	mv->rendermode = RenderMode::UnlitWire;
+	mv->color = color; // Vector3(1.0, 0.0, 1.0f);
+
+	mv->shapeName = name;
+
+	namedOverlays[mv->shapeName] = overlays.size();
+	overlays.push_back(mv);
+	return overlays.size() - 1;
+
+}
+
+
+
+int GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3* color ) {
 	mesh* m;
 	int pmesh = GetOverlayID(name);
 	if (pmesh >= 0) {
 		m = overlays[pmesh];
 		m->verts[0] = p;
-
-		m->color = Vector3(0.0f, 1.0f, 1.0f);
+		if (color != nullptr) {
+			m->color = (*color);
+		}
+		else {
+			m->color = Vector3(0.0f, 1.0f, 1.0f);
+	
+		}
 		m->bVisible = true;
 		return pmesh;
 	}

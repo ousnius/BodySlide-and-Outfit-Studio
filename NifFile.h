@@ -37,6 +37,8 @@ enum BlockType {
 	NITRISTRIPS,
 	NITRISTRIPSDATA,
 	NISKININSTANCE,
+	BSSKININSTANCE,
+	BSBONEDATA,
 	NISTRINGEXTRADATA,
 	BSSHADERPPLIGHTINGPROPERTY,
 	NIMATERIALPROPERTY,
@@ -48,7 +50,9 @@ enum BlockType {
 	BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER,
 	BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER,
 	BSEFFECTSHADERPROPERTYCOLORCONTROLLER,
-	BSEFFECTSHADERPROPERTYFLOATCONTROLLER
+	BSEFFECTSHADERPROPERTYFLOATCONTROLLER,
+	BSTRISHAPE,
+	BSSUBINDEXTRISHAPE
 };
 
 struct VertexWeight {
@@ -186,7 +190,7 @@ public:
 	bool outputNull;
 	NiString(bool wantOutputNull = true);
 	NiString(fstream& file, int szSize, bool wantNullOutput = true);
-	void Put(fstream& file, int szSize);
+	void Put(fstream& file, int szSize, bool wantNullOutput = true);
 	void Get(fstream& file, int szSize);
 };
 
@@ -210,8 +214,6 @@ public:
 	virtual void Put(fstream& file);
 
 	virtual int CalcBlockSize();
-
-	virtual bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 };
 
 class NiHeader : public NiObject {
@@ -224,7 +226,7 @@ public:
 	/* Maximum supported */
 	// Version:				20.2.0.7
 	// User Version:		12
-	// User Version 2:		83
+	// User Version 2:		130
 
 	char verStr[0x26];
 	byte version1;
@@ -240,6 +242,7 @@ public:
 	NiString creator;
 	NiString exportInfo1;
 	NiString exportInfo2;
+	NiString exportInfo3;
 	ushort numBlockTypes;
 	vector<NiString> blockTypes;
 	vector<ushort> blockIndex;
@@ -255,10 +258,12 @@ public:
 	NiHeader();
 	void Clear();
 	void SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2);
+	bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
 };
+
 
 class NiObjectNET : public NiObject {
 public:
@@ -296,6 +301,36 @@ public:
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
+
+	bool rotToEulerDegrees(float &Y, float& P, float& R) {
+		float rx, ry, rz;
+		bool canRot = false;
+		if (rotation[0].z < 1.0)
+		{
+			if (rotation[0].z > -1.0)
+			{
+				rx = atan2(-rotation[1].z, rotation[2].z);
+				ry = asin(rotation[0].z);
+				rz = atan2(-rotation[0].y, rotation[0].x);
+				canRot = true;
+			}
+			else {
+				rx = -atan2(-rotation[1].x, rotation[1].y);
+				ry = -PI / 2;
+				rz = 0.0f;
+			}
+		}
+		else {
+			rx = atan2(rotation[1].x, rotation[1].y);
+			ry = PI / 2;
+			rz = 0.0f;
+		}
+
+		Y = rx * 180 / PI;
+		P = ry * 180 / PI;
+		R = rz * 180 / PI;
+		return canRot;
+	}
 };
 
 class NiProperty : public NiObjectNET {
@@ -324,6 +359,102 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
+};
+
+// Fallout 4 geometry for non-skinned meshes. Mostly uses half floats for vertex data.
+class BSTriShape : public NiAVObject {
+public:	
+	class TSVertData {
+	public:
+		Vector3 vert;			// Stored half-float, convert!
+		float bitangentX;		// maybe the dotproduct of the vert normal and the z axis?
+		Vector2 uv;				// Stored as half-float, convert!
+		byte normal[3];
+		byte bitangentY;
+		byte tangent[3];		// only if flags[6] & 0x1 is true?   some kind of packed normal data ?
+		byte bitangentZ;
+
+		byte colorData[4];		// only if flags[6] & 0x2 is true
+		float weights[4];		// stored in half-float, convert!
+		byte weightBones[4];
+	};
+
+	uint unkProps[4];
+	int skinInstanceRef;
+	int shaderPropertyRef;
+	int alphaPropertyRef;
+
+	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
+	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data
+	byte vertFlags[8];			
+	uint numTriangles;
+	ushort numVertices;
+	uint dataSize;
+	uint vertRecSize;				// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
+
+	vector<Vector3> rawVertices;	// filled by GetRawVerts function and returned.
+	vector<Vector3> rawNormals;		// filled by GetNormalData function and returned.
+	vector<Vector3> rawTangents;	// filled by calcTangentSpace function and returned.
+	vector<Vector3> rawBitangents;	// filled in calcTangentSpace
+	vector<Vector2> rawUvs;			// filled by GetUVData function and returned.
+
+	vector<TSVertData> vertData;
+	vector<Triangle> triangles;
+	BSTriShape(NiHeader& hdr);
+	BSTriShape(fstream& file, NiHeader& hdr);
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual int CalcBlockSize();
+
+	const vector<Vector3>* GetRawVerts(bool xform = true);
+	const vector<Vector3>* GetNormalData(bool xform = true);
+	const vector<Vector3>* GetTangentData(bool xform = true);
+	const vector<Vector3>* GetBitangentData(bool xform = true);
+	const vector<Vector2>* GetUVData();
+
+	void SetNormals(const vector<Vector3>& inNorms);
+	void RecalcNormals(const bool& smooth = false, const float& smoothThres = 60.0f);
+	void CalcTangentSpace();
+	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
+};
+
+// Fallout 4 geometry for non-skinned meshes. Mostly uses half floats for vertex data.
+class BSSubIndexTriShape : public BSTriShape {
+public:
+	uint numTriangles2;
+	uint numSubIndexRecordA;
+	uint numSubIndexRecordB;
+
+	vector<uint> subIndexRecordsA;
+	 
+	uint numSubIndexRecordA_2;
+	uint numSubIndexRecordB_2;
+
+	vector<uint> sequence;
+
+	class subIndexRecordB {
+	public:
+		uint unk1;
+		uint unk2;
+		uint numExtra;
+		vector <uint> extraData;
+	};
+
+	vector<subIndexRecordB> subIndexRecordsB;
+
+	NiString ssfFile;
+
+	BSSubIndexTriShape(NiHeader& hdr);
+	BSSubIndexTriShape(fstream& file, NiHeader& hdr); 
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual int CalcBlockSize();
+	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals=nullptr);
 };
 
 class NiGeometry : public NiAVObject {
@@ -472,13 +603,17 @@ public:
 	int CalcBlockSize();
 };
 
-class NiSkinInstance : public NiObject {
+class NiBoneContainer : public NiObject {
+public:
+	uint numBones;
+	vector<int> bones;
+};
+
+class NiSkinInstance : public NiBoneContainer {
 public:
 	int dataRef;
 	int skinPartitionRef;
 	int skeletonRootRef;
-	uint numBones;
-	vector<int> bones;
 
 	NiSkinInstance() { };
 	NiSkinInstance(NiHeader& hdr);
@@ -510,6 +645,53 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
+};
+
+class BSSkinInstance : public NiBoneContainer  {
+public:
+	int targetRef;
+	int boneDataRef;
+	uint numVertices;
+	vector<SkinWeight> vertexWeights;
+
+	BSSkinInstance() : targetRef(-1), boneDataRef(-1), numVertices(0) { numBones = 0; };
+	BSSkinInstance(NiHeader& hdr);
+	BSSkinInstance(fstream& file, NiHeader& hdr);
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual int CalcBlockSize();
+};
+
+class BSSkinBoneData  : public NiObject {
+public:
+	uint nBones;
+	class BoneData {
+	public:
+		Vector3 boundSphereOffset;
+		float boundSphereRadius;
+		SkinTransform boneTransform;
+
+		BoneData() {
+			boneTransform.scale = 1.0f;
+			boundSphereRadius = 0.0f;
+		}
+		int CalcSize() {
+			return (68);
+		}
+	};
+	vector<BoneData> boneXforms;
+
+	BSSkinBoneData() : nBones(0) { };
+	BSSkinBoneData(NiHeader& hdr);
+	BSSkinBoneData(fstream& file, NiHeader& hdr);
+
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual int CalcBlockSize();
 };
 
 class NiSkinData : public NiObject {
@@ -779,6 +961,8 @@ public:
 	virtual void SetEmissiveColor(Color4 color);
 	virtual float GetEmissiveMultiple();
 	virtual void SetEmissiveMultiple(float emissive);
+	virtual uint GetWetMaterialNameRef();
+	virtual void SetWetMaterialNameRef(uint matRef);
 	virtual int CalcBlockSize();
 };
 
@@ -792,6 +976,7 @@ public:
 
 	Vector3 emissiveColor;
 	float emissiveMultiple;
+	uint wetMaterialNameRef;
 	uint textureClampMode;
 	float alpha;
 	float refractionStrength;
@@ -799,11 +984,14 @@ public:
 	Vector3 specularColor;
 	float specularStrength;
 	float lightingEffect1;
-	float lightingEffect2;
+	float lightingEffect2;					// User version == 12, userversion2 < 130
+	uint unk1;								// user version == 12, userversion2 >= 130
+	uint unk2;								// user version == 12, userversion2 >= 130
+
 
 	float environmentMapScale;
-	Vector3 skinTintColor;
-	Vector3 hairTintColor;
+	Vector3 skinTintColor;					
+	Vector3 hairTintColor;					
 	float maxPasses;
 	float scale;
 	float parallaxInnerLayerThickness;
@@ -811,9 +999,14 @@ public:
 	Vector2 parallaxInnerLayerTextureScale;
 	float parallaxEnvmapStrength;
 	Color4 sparkleParameters;
-	float eyeCubemapScale;
-	Vector3 eyeLeftReflectionCenter;
-	Vector3 eyeRightReflectionCenter;
+	float eyeCubemapScale;					
+	Vector3 eyeLeftReflectionCenter;		
+	Vector3 eyeRightReflectionCenter;		
+
+	float unk[8];						// unkown shader float params in shadertype 5 for fallout4
+	byte  pad[16];						// up to 16 bytes of uknown padding.  clearly this isn't the right format.
+
+
 
 	BSLightingShaderProperty(NiHeader& hdr);
 	BSLightingShaderProperty(fstream& file, NiHeader& hdr);
@@ -838,6 +1031,8 @@ public:
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
+	uint GetWetMaterialNameRef();
+	void SetWetMaterialNameRef(uint matRef);
 	int CalcBlockSize();
 };
 
@@ -867,7 +1062,7 @@ public:
 	Vector2 uvScale;
 	NiString sourceTexture;
 	uint textureClampMode;
-	float falloffStartAngle;
+	float falloffStartAngle;				// userversion2 < 130
 	float falloffStopAngle;
 	float falloffStartOpacity;
 	float falloffStopOpacity;
@@ -875,6 +1070,13 @@ public:
 	float emissiveMultiple;
 	float softFalloffDepth;
 	NiString greyscaleTexture;
+
+	//userversion2 >= 130
+	float unkdata[11];
+	NiString emissiveTex;
+	NiString normalTex;
+	NiString specularTex;
+	float unkdata2[3];
 
 	BSEffectShaderProperty(NiHeader& hdr);
 	BSEffectShaderProperty(fstream& file, NiHeader& hdr);
@@ -1055,7 +1257,6 @@ public:
 	NifFile();
 	NifFile(NifFile& other);
 	~NifFile();
-
 	NiHeader hdr;
 
 	void CopyFrom(NifFile& other);
@@ -1095,8 +1296,11 @@ public:
 	int AddOrFindStringId(const string& str);
 
 	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
+	BSTriShape* geomForNameF4(const string& name, int dupIndex = 0);
+	NiAVObject* avObjectForName(const string& name, int dupIndex = 0);
 
 	NiShader* GetShader(const string& shapeName);
+	NiShader* GetShaderF4(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
 	NiMaterialProperty* GetMaterialProperty(const string& shapeName);
 
@@ -1107,11 +1311,18 @@ public:
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
 	void CopyShader(const string& shapeDest, int srcShaderRef, NifFile& srcNif, bool addAlpha, int propRef1, int propRef2);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
+	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, NiTriBasedGeom* geom);
+	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, BSTriShape* geom);
 
+	int GetShapeType(const string& shapeName);
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
 	void RenameDuplicateShape(const string& dupedShape);
 	void SetNodeName(int blockID, const string& newName);
+
+	/// GetChildren of a node ... templatized to allow any particular type to be queried.   useful for walking a node tree
+	template <class T>
+	vector<T*> GetChildren(NiNode* parent);
 
 	int GetNodeID(const string& nodeName);
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
@@ -1130,10 +1341,13 @@ public:
 	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, Vector3& outSphereOffset, float& outSphereRadius);
 	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
+	void SetShapeVertWeights(const string& shapeName, int vertIndex, vector<unsigned char>& boneids, vector<float>& weights);
 
 	const vector<Vector3>* GetRawVertsForShape(const string& shapeName);
 	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);
-	const vector<Vector3>* GetNormalsForShape(const string& shapeName);
+	const vector<Vector3>* GetNormalsForShape(const string& shapeName, bool transform = true);
+	const vector<Vector3>* GetTangentsForShape(const string& shapeName, bool transform = true);
+	const vector<Vector3>* GetBitangentsForShape(const string& shapeName, bool transform = true);
 	const vector<Vector2>* GetUvsForShape(const string& shapeName);
 	bool GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs);
 	const vector<vector<int>>* GetSeamVertsForShape(const string& shapeName);
@@ -1142,6 +1356,8 @@ public:
 	void SetVertsForShape(const string& shapeName, const vector<Vector3>& verts);
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
+	void SmoothNormalsForShape(const string& shapeName);
+	void CalcNormalsForShape(const string& shapeName);
 	void CalcTangentsForShape(const string& shapeName);
 
 	void ClearShapeTransform(const string& shapeName);
@@ -1181,3 +1397,24 @@ public:
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
 };
+
+template <class T>
+vector<T*> NifFile::GetChildren(NiNode* parent) {
+	vector<T*> result;
+	T* n;
+	if (parent == nullptr) {
+		n = dynamic_cast<T*>(blocks[0]);
+		if (n)
+			result.push_back(n);
+		return result;
+	}
+
+	for (int i = 0; i < parent->children.size(); i++) {
+		n = dynamic_cast<T*>(blocks[parent->children[i]]);
+		if (n) {
+			result.push_back(n);
+		}
+	}
+
+	return result;
+}

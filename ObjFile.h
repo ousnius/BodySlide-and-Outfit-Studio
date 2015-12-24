@@ -10,6 +10,7 @@ See the included LICENSE file
 #include <map>
 #include <unordered_map>
 #include <fstream>
+#include <string>
 
 using namespace std;
 
@@ -24,6 +25,7 @@ struct ObjData {
 	vector<Vector3> verts;
 	vector<Triangle> tris;
 	vector<Vector2> uvs;
+	vector<Face> faces;				// only for quad support during special output operations.
 };
 
 class ObjFile {
@@ -39,13 +41,17 @@ public:
 	~ObjFile();
 
 	int AddGroup(const string& name, const vector<Vector3>& verts, const vector<Triangle>& tris, const vector<Vector2>& uvs);
+	int AddGroup(const string& name, const vector<Vector3>& verts, const vector<Face>& faces, const vector<Vector2>& uvs);
 
 	void SetScale(const Vector3& inScale) { scale = inScale; }
 	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
 
+	int LoadSimple(const string& inFn, const string& groupName = "");
 	int LoadForNif(const string& inFn, const string& groupName = "");
 	int LoadForNif(fstream& base, const string& groupName = "");
 
+	int LoadVertOrderMap(const string& inFn, map<int, int>& outMap, vector<Face>& origFaces, vector<Vector2>& origUVs,  const string& groupName = "");
+	int LoadVertOrderMap(fstream& base, map<int, int>& outMap,  vector<Face>& origFaces, vector<Vector2>& origUVs, const string& groupName = "");
 	int Load(const string& inFn, const string& groupName = "");
 	int Load(ifstream& base, const string& groupName = "");
 

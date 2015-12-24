@@ -186,27 +186,40 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 
 void ShapeProperties::AddShader() {
 	NiTriBasedGeom* geom = nif->geomForName(shape);
-	if (!geom)
-		return;
+	if (geom) {
+		switch (os->targetGame) {
+			case FO3:
+			case FONV: {
+				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->hdr);
+				geom->propertiesRef.push_back(nif->AddBlock(shader, "BSShaderPPLightingProperty"));
+				geom->numProperties++;
 
-	switch (os->targetGame) {
-		case FO3:
-		case FONV: {
-			BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->hdr);
-			geom->propertiesRef.push_back(nif->AddBlock(shader, "BSShaderPPLightingProperty"));
-			geom->numProperties++;
-
-			NiMaterialProperty* material = new NiMaterialProperty(nif->hdr);
-			geom->propertiesRef.push_back(nif->AddBlock(material, "NiMaterialProperty"));
-			geom->numProperties++;
-			break;
-		}
-		case SKYRIM:
-		default: {
-			BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->hdr);
-			geom->propertiesRef1 = nif->AddBlock(shader, "BSLightingShaderProperty");
+				NiMaterialProperty* material = new NiMaterialProperty(nif->hdr);
+				geom->propertiesRef.push_back(nif->AddBlock(material, "NiMaterialProperty"));
+				geom->numProperties++;
+				break;
+			}
+			case SKYRIM:
+			default: {
+				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->hdr);
+				geom->propertiesRef1 = nif->AddBlock(shader, "BSLightingShaderProperty");
+			}
 		}
 	}
+	else {
+		BSTriShape* siTriShape = nif->geomForNameF4(shape);
+		if (!siTriShape)
+			return;
+
+		switch (os->targetGame) {
+			case FO4:
+			default: {
+				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->hdr);
+				siTriShape->shaderPropertyRef = nif->AddBlock(shader, "BSLightingShaderProperty");
+			}
+		}
+	}
+
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
@@ -226,6 +239,7 @@ void ShapeProperties::RemoveShader() {
 	nif->DeleteShader(shape);
 	AssignDefaultTexture();
 	GetShader();
+	GetTransparency();
 }
 
 void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {

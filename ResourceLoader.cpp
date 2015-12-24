@@ -9,25 +9,62 @@ See the included LICENSE file
 #include "ConfigurationManager.h"
 #include "FSManager.h"
 #include "FSEngine.h"
+#include "SOIL2.h"
 
-#include "SOIL.h"
-#ifdef _DEBUG
-#pragma comment (lib, "SOIL_d.lib")
-#else
-#pragma comment (lib, "SOIL.lib")
-#endif
-
-using std::string;
+#include <wx/dir.h>
+#include <wx/filename.h>
+#include <wx/tokenzr.h>
 
 size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {
-	std::hash<std::string> strHash;
-	return (strHash(std::get<0>(key)) ^ strHash(std::get<1>(key)) ^ strHash(std::get<2>(key)));
+	hash<string> strHash;
+	return (strHash(get<0>(key)) ^ strHash(get<1>(key)) ^ strHash(get<2>(key)));
 }
 
 ResourceLoader::ResourceLoader() {
 }
 
 ResourceLoader::~ResourceLoader() {
+}
+
+void ResourceLoader::GetArchiveFiles(vector<string>& outList) {
+	string cp = "GameDataFiles";
+	int targ = Config.GetIntValue("TargetGame");
+
+	switch (targ) {
+	case 0:
+		cp += "/Fallout3";
+		break;
+	case 1:
+		cp += "/FalloutNewVegas";
+		break;
+	case 2:
+		cp += "/Skyrim";
+		break;
+	case 3:
+		cp += "/Fallout4";
+		break;
+	}
+
+	wxString activatedFiles = Config[cp];
+
+	wxStringTokenizer tokenizer(activatedFiles, ";");
+	map<wxString, bool> fsearch;
+	while (tokenizer.HasMoreTokens()) {
+		wxString val = tokenizer.GetNextToken().Trim(false);
+		val = val.Trim().MakeLower();
+		fsearch[val] = true;
+	}
+
+	wxString dataDir = Config["GameDataPath"];
+	wxArrayString files;
+	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
+	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
+	for (auto& f : files) {
+		f = f.AfterLast('\\').MakeLower();
+		if (fsearch.find(f) == fsearch.end()) {
+			outList.push_back(dataDir.ToStdString() + f.ToStdString());
+		}
+	}
 }
 
 GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
@@ -50,15 +87,27 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 			return nullptr;
 		}
 
+		// Auto-detect archives
+		if (!FSManager::exists()) {
+			vector<string> fileList;
+			GetArchiveFiles(fileList);
+
+			vector<string> archives;
+			for (auto &file : fileList)
+					archives.push_back(file);
+
+			FSManager::addArchives(archives);
+		}
+
 		wxMemoryBuffer data;
 		wxString texFile = textureFile;
 		texFile.Replace(Config["GameDataPath"], "");
 		texFile.Replace("\\", "/");
 		for (FSArchiveFile *archive : FSManager::archiveList()) {
 			if (archive) {
-				if (archive->hasFile(texFile)) {
+				if (archive->hasFile(texFile.ToStdString())) {
 					wxMemoryBuffer outData;
-					archive->fileContents(texFile, outData);
+					archive->fileContents(texFile.ToStdString(), outData);
 
 					if (!outData.IsEmpty()) {
 						data = outData;

@@ -52,7 +52,8 @@ public:
 		wxSlider* weightSlider = (wxSlider*)FindWindowByName("weightSlider", this);
 		if (weightSlider) {
 			weightSlider->SetValue(weight);
-			weightSlider->Show(show);
+			weightSlider->GetParent()->Show(show);
+			Layout();
 		}
 	}
 

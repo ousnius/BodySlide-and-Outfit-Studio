@@ -22,7 +22,7 @@ mesh::mesh() {
 	rendermode = RenderMode::Normal;
 	doublesided = false;
 	smoothSeamNormals = true;
-	smoothThresh = 60.0f * DEG2RAD;
+	smoothThresh = 90.0f * DEG2RAD;
 	scale = 1.0f;
 }
 
@@ -298,12 +298,30 @@ void mesh::SmoothNormals() {
 	Vector3 tn;
 	for (int v = 0; v < nVerts; v++) {
 		norm.x = norm.y = norm.z = 0.0f;
+
 		for (auto &t : vertTris[v]) {
 			tris[t].trinormal(verts, &tn);
 			norm += tn;
 		}
 
-		if (smoothSeamNormals) {
+		if (weldVerts.find(v) == weldVerts.end()) {
+			bool first = true;
+			for (auto &t : vertTris[v]) {
+				tris[t].trinormal(verts, &tn);
+
+				if (!first) {
+					float angle = fabs(norm.angle(tn));
+					if (angle > smoothThresh)
+						continue;
+				}
+				else
+					first = false;
+
+				norm += tn;
+			}
+			norm = norm / (float)vertTris[v].size();
+		}
+		else if (smoothSeamNormals) {
 			for (auto &wv : weldVerts[v]) {
 				bool first = true;
 				if (vertTris[wv].size() < 2)
@@ -324,6 +342,7 @@ void mesh::SmoothNormals() {
 			}
 			norm = norm / (float)vertTris[v].size();
 		}
+
 		norm.Normalize();
 		verts[v].nx = norm.x;
 		verts[v].ny = norm.y;

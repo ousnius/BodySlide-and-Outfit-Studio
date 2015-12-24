@@ -33,19 +33,6 @@ int NiObject::CalcBlockSize() {
 	return blockSize;
 }
 
-bool NiObject::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
-	if (equal) {
-		if (header->version4 == v1 && header->version3 == v2 && header->version2 == v3 && header->version1 == v4)
-			return true;
-	}
-	else {
-		if (header->version4 >= v1 && header->version3 >= v2 && header->version2 >= v3 && header->version1 >= v4)
-			return true;
-	}
-
-	return false;
-}
-
 
 NiHeader::NiHeader() {
 	header = this;
@@ -54,6 +41,9 @@ NiHeader::NiHeader() {
 	numStrings = 0;
 	blocks = nullptr;
 	blockType = NIHEADER;
+	exportInfo1.outputNull = true;
+	exportInfo2.outputNull = true;
+	exportInfo3.outputNull = true;
 }
 
 void NiHeader::Clear() {
@@ -79,6 +69,19 @@ void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const 
 	userVersion2 = userVer2;
 }
 
+bool NiHeader::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
+	if (equal) {
+		if (version4 == v1 && version3 == v2 && version2 == v3 && version1 == v4)
+			return true;
+	}
+	else {
+		if (version4 >= v1 && version3 >= v2 && version2 >= v3 && version1 >= v4)
+			return true;
+	}
+
+	return false;
+}
+
 void NiHeader::Get(fstream& file) {
 	file.read(verStr, 38);
 	if (_strnicmp(verStr, "Gamebryo", 8) != 0) {
@@ -86,7 +89,7 @@ void NiHeader::Get(fstream& file) {
 		return;
 	}
 
-	//file >> unk1;
+	//file >> bitangentY;
 	unk1 = 10;
 	file >> version1 >> version2 >> version3 >> version4;
 	file >> endian;
@@ -96,6 +99,10 @@ void NiHeader::Get(fstream& file) {
 	creator.Get(file, 1);
 	exportInfo1.Get(file, 1);
 	exportInfo2.Get(file, 1);
+	
+	if (userVersion2 >= 130)
+		exportInfo3.Get(file, 1);
+
 	file.read((char*)&numBlockTypes, 2);
 	for (int i = 0; i < numBlockTypes; i++)
 		blockTypes.push_back(NiString(file, 4));
@@ -130,9 +137,12 @@ void NiHeader::Put(fstream& file) {
 	creator.Put(file, 1);
 	exportInfo1.Put(file, 1);
 	exportInfo2.Put(file, 1);
+	if (userVersion2 >= 130) {
+		exportInfo3.Put(file, 1);
+	}
 	file.write((char*)&numBlockTypes, 2);
 	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes[i].Put(file, 4);
+		blockTypes[i].Put(file, 4,false);
 
 	for (int i = 0; i < numBlocks; i++)
 		file.write((char*)&blockIndex[i], 2);
@@ -143,7 +153,7 @@ void NiHeader::Put(fstream& file) {
 	file.write((char*)&numStrings, 4);
 	file.write((char*)&maxStringLen, 4);
 	for (int i = 0; i < numStrings; i++)
-		strings[i].Put(file, 4);
+		strings[i].Put(file, 4,false);
 
 	file.write((char*)&unkInt2, 4);
 }
@@ -158,28 +168,32 @@ NiString::NiString(fstream& file, int szSize, bool wantNullOutput) {
 	Get(file, szSize);
 }
 
-void NiString::Put(fstream& file, int szSize) {
+void NiString::Put(fstream& file, int szSize, bool wantNullOutput) {
 	if (szSize == 1) {
 		byte smSize = str.length();
-		if (!smSize && outputNull)
-			smSize = 1;
+		//if (!smSize && outputNull)
+		if (wantNullOutput)
+			smSize += 1;
 		file.write((char*)&smSize, 1);
 	}
 	else if (szSize == 2) {
 		ushort medSize = str.length();
-		if (!medSize && outputNull)
-			medSize = 1;
+		//if (!medSize && outputNull)
+		if (wantNullOutput)
+			medSize += 1;
 		file.write((char*)&medSize, 2);
 	}
 	else if (szSize == 4) {
 		uint bigSize = str.length();
-		if (!bigSize && outputNull)
-			bigSize = 1;
+		//if (!bigSize && outputNull)
+		if (wantNullOutput)
+			bigSize += 1;
 		file.write((char*)&bigSize, 4);
 	}
 
 	file.write(str.c_str(), str.length());
-	if (str.length() == 0 && outputNull)
+	//if (str.length() == 0 && outputNull)
+	if (wantNullOutput)
 		file.put(0);
 }
 
@@ -485,23 +499,31 @@ void NiNode::Get(fstream& file) {
 		children.push_back(intData);
 	}
 
-	file.read((char*)&numEffects, 4);
-	for (int i = 0; i < numEffects; i++) {
-		file.read((char*)&intData, 4);
-		effects.push_back(intData);
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
+		file.read((char*)&numEffects, 4);
+		for (int i = 0; i < numEffects; i++) {
+			file.read((char*)&intData, 4);
+			effects.push_back(intData);
+		}
 	}
 }
 
 void NiNode::Put(fstream& file) {
 	NiAVObject::Put(file);
 
+	if (children.size() != numChildren) {	// error somewhere else with block management :(
+		return;
+	}
+
 	file.write((char*)&numChildren, 4);
 	for (int i = 0; i < numChildren; i++)
 		file.write((char*)&children[i], 4);
 
-	file.write((char*)&numEffects, 4);
-	for (int i = 0; i < numEffects; i++)
-		file.write((char*)&effects[i], 4);
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
+		file.write((char*)&numEffects, 4);
+		for (int i = 0; i < numEffects; i++)
+			file.write((char*)&effects[i], 4);
+	}
 }
 
 void NiNode::notifyBlockDelete(int blockID) {
@@ -547,12 +569,808 @@ void NiNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 int NiNode::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
-	blockSize += 8;
+	blockSize += 4;
 	blockSize += numChildren * 4;
-	blockSize += numEffects * 4;
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
+		blockSize += 4;
+		blockSize += numEffects * 4;
+	}
 	return blockSize;
 }
 
+BSTriShape::BSTriShape(NiHeader& hdr) {
+	NiAVObject::Init();
+
+	blockType = BSTRISHAPE;
+	header = &hdr;
+
+	memset(unkProps, 0, sizeof(float)* 4);
+	skinInstanceRef = -1;
+	shaderPropertyRef = -1;
+	alphaPropertyRef = -1;
+
+	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
+	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data	
+	vertFlags[0] = 0x5;
+	vertFlags[1] = 0x2;
+	vertFlags[2] = 0x43;
+	vertFlags[3] = 0x50;
+	vertFlags[4] = 0x0;
+	vertFlags[5] = 0xB0;
+	vertFlags[6] = 0x1;
+	vertFlags[7] = 0x0;
+	numTriangles = 0;
+	numVertices = 0;
+	dataSize = 0;
+	vertRecSize = 20;	// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
+}
+
+BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
+	NiAVObject::Init();
+
+	blockType = BSTRISHAPE;
+	header = &hdr;
+
+	Get(file);
+}
+
+void BSTriShape::Get(fstream& file) {
+	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
+	// that code is duplicated here and the super super get is called.
+	NiObjectNET::Get(file);
+
+	file.read((char*)&flags, 2);
+	file.read((char*)&unkShort1, 2);
+
+	file.read((char*)&translation.x, 4);
+	file.read((char*)&translation.y, 4);
+	file.read((char*)&translation.z, 4);
+
+	for (int i = 0; i < 3; i++) {
+		file.read((char*)&rotation[i].x, 4);
+		file.read((char*)&rotation[i].y, 4);
+		file.read((char*)&rotation[i].z, 4);
+	}
+
+	file.read((char*)&scale, 4);
+	file.read((char*)&collisionRef, 4);
+
+	for (int i = 0; i < 4; i++)
+		file.read((char*)&unkProps[i], 4);
+
+	file.read((char*)&skinInstanceRef, 4);
+	file.read((char*)&shaderPropertyRef, 4);
+
+	file.read((char*)&alphaPropertyRef, 4);
+	for (int i = 0; i < 8; i++)
+		file.read((char*)&vertFlags[i], 1);
+
+	file.read((char*)&numTriangles, 4);
+	file.read((char*)&numVertices, 2);
+
+	file.read((char*)&dataSize, 4);
+	vertRecSize = (dataSize - (numTriangles * 6)) / numVertices;
+
+	half_float::half halfData;
+	vertData.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		file.read((char*)&halfData, 2);
+		vertData[i].vert.x = halfData;
+		file.read((char*)&halfData, 2);
+		vertData[i].vert.y = halfData;
+		file.read((char*)&halfData, 2);
+		vertData[i].vert.z = halfData;
+
+		file.read((char*)&halfData, 2);
+		vertData[i].bitangentX = halfData;
+
+		file.read((char*)&halfData, 2);
+		vertData[i].uv.u = halfData;
+		file.read((char*)&halfData, 2);
+		vertData[i].uv.v = halfData;
+
+		if (vertFlags[6] & 0x1) {
+			for (int j = 0; j < 3; j++)
+				file.read((char*)&vertData[i].normal[j], 1);
+		
+			file.read((char*)&vertData[i].bitangentY, 1);
+
+			for (int j = 0; j < 3; j++)
+				file.read((char*)&vertData[i].tangent[j], 1);
+
+			file.read((char*)&vertData[i].bitangentZ, 1);
+		}
+
+		if (vertFlags[6] & 0x2)
+			file.read((char*)&vertData[i].colorData, 4);
+
+		if (vertFlags[6] & 0x4) {
+			for (int j = 0; j < 4; j++) {
+				file.read((char*)&halfData, 2);
+				vertData[i].weights[j] = halfData;//h2float(shortData);
+			}
+
+			for (int j = 0; j < 4; j++)
+				file.read((char*)&vertData[i].weightBones[j], 1);
+		}
+	}
+
+	triangles.resize(numTriangles);
+	for (int i = 0; i < numTriangles; i++) {
+		file.read((char*)&triangles[i].p1, 2);
+		file.read((char*)&triangles[i].p2, 2);
+		file.read((char*)&triangles[i].p3, 2);
+	}
+}
+
+void BSTriShape::Put(fstream& file) {
+	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
+	// that code is duplicated here and the super super get is called.
+	NiObjectNET::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&unkShort1, 2);
+
+	file.write((char*)&translation.x, 4);
+	file.write((char*)&translation.y, 4);
+	file.write((char*)&translation.z, 4);
+
+	for (int i = 0; i < 3; i++) {
+		file.write((char*)&rotation[i].x, 4);
+		file.write((char*)&rotation[i].y, 4);
+		file.write((char*)&rotation[i].z, 4);
+	}
+
+	file.write((char*)&scale, 4);
+	file.write((char*)&collisionRef, 4);
+
+	for (int i = 0; i < 4; i++)
+		file.write((char*)&unkProps[i], 4);
+
+	file.write((char*)&skinInstanceRef, 4);
+	file.write((char*)&shaderPropertyRef, 4);
+
+	file.write((char*)&alphaPropertyRef, 4);
+	for (int i = 0; i < 8; i++)
+		file.write((char*)&vertFlags[i], 1);
+
+	file.write((char*)&numTriangles, 4);
+	file.write((char*)&numVertices, 2);
+
+	file.write((char*)&dataSize, 4);
+	
+	half_float::half halfData;
+	for (int i = 0; i < numVertices; i++) {
+		halfData = vertData[i].vert.x;
+		file.write((char*)&halfData, 2);
+
+		halfData = vertData[i].vert.y;
+		file.write((char*)&halfData, 2);
+
+		halfData = vertData[i].vert.z;
+		file.write((char*)&halfData, 2);
+
+		halfData = vertData[i].bitangentX;
+		file.write((char*)&halfData, 2);
+		
+		halfData = vertData[i].uv.u;
+		file.write((char*)&halfData, 2);
+
+		halfData = vertData[i].uv.v;
+		file.write((char*)&halfData, 2);
+
+		if (vertFlags[6] & 0x1) {
+			for (int j = 0; j < 3; j++)
+				file.write((char*)&vertData[i].normal[j], 1);
+		
+			file.write((char*)&vertData[i].bitangentY, 1);
+
+			for (int j = 0; j < 3; j++)
+				file.write((char*)&vertData[i].tangent[j], 1);
+
+			file.write((char*)&vertData[i].bitangentZ, 1);
+		}
+
+		if (vertFlags[6] & 0x2)
+			file.write((char*)&vertData[i].colorData, 4);
+
+		if (vertFlags[6] & 0x4) {
+			for (int j = 0; j < 4; j++) {
+				halfData = vertData[i].weights[j];
+				file.write((char*)&halfData, 2);
+			}
+
+			for (int j = 0; j < 4; j++)
+				file.write((char*)&vertData[i].weightBones[j], 1);
+		}
+	}
+
+	for (int i = 0; i < numTriangles; i++) {
+		file.write((char*)&triangles[i].p1, 2);
+		file.write((char*)&triangles[i].p2, 2);
+		file.write((char*)&triangles[i].p3, 2);
+	}
+}
+
+void BSTriShape::notifyBlockDelete(int blockID) {
+	NiAVObject::notifyBlockDelete(blockID);
+
+	if (skinInstanceRef == blockID)
+		skinInstanceRef = -1;
+	else if (skinInstanceRef > blockID)
+		skinInstanceRef--;
+
+	if (shaderPropertyRef == blockID)
+		shaderPropertyRef = -1;
+	else if (shaderPropertyRef > blockID)
+		shaderPropertyRef--;
+
+	if (alphaPropertyRef == blockID)
+		alphaPropertyRef = -1;
+	else if (alphaPropertyRef > blockID)
+		alphaPropertyRef--;
+}
+
+void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiAVObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (skinInstanceRef == blockIndexLo)
+		skinInstanceRef = blockIndexHi;
+	else if (skinInstanceRef == blockIndexHi)
+		skinInstanceRef = blockIndexLo;
+
+	if (shaderPropertyRef == blockIndexLo)
+		shaderPropertyRef = blockIndexHi;
+	else if (shaderPropertyRef == blockIndexHi)
+		shaderPropertyRef = blockIndexLo;
+
+	if (alphaPropertyRef == blockIndexLo)
+		alphaPropertyRef = blockIndexHi;
+	else if (alphaPropertyRef == blockIndexHi)
+		alphaPropertyRef = blockIndexLo;
+}
+
+void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	vector<int> indexCollapse(vertData.size(), 0);
+	vector<int> indexCollapseTris(vertData.size(), 0);
+	
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			indexCollapseTris[i] = -1;	// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapseTris[i] = remCount;
+	}
+
+	for (int i = vertData.size() - 1; i >= 0; i--) {
+		if (indexCollapse[i] == -1) {
+			vertData.erase(vertData.begin() + i);
+			numVertices--;
+		}
+	}
+
+	for (int i = numTriangles - 1; i >= 0; i--) {
+		if (indexCollapseTris[triangles[i].p1] == -1 || indexCollapseTris[triangles[i].p2] == -1 || indexCollapseTris[triangles[i].p3] == -1) {
+			triangles.erase(triangles.begin() + i);
+			numTriangles--;
+		}
+		else {
+			triangles[i].p1 = triangles[i].p1 - indexCollapseTris[triangles[i].p1];
+			triangles[i].p2 = triangles[i].p2 - indexCollapseTris[triangles[i].p2];
+			triangles[i].p3 = triangles[i].p3 - indexCollapseTris[triangles[i].p3];
+		}
+	}
+}
+
+int BSTriShape::CalcBlockSize() {
+	NiAVObject::CalcBlockSize();
+
+	blockSize += 46 + 6 * numTriangles;
+
+	int vdataSize = 12;
+	if (vertFlags[6] & 0x1)		//normals
+		vdataSize += 8;
+
+	if (vertFlags[6] & 0x2)		//colors
+		vdataSize += 4;
+
+	if (vertFlags[6] & 0x4)		//skinning
+		vdataSize += 12;
+
+	blockSize += vdataSize * numVertices;
+
+	return blockSize;
+}
+
+const vector<Vector3>* BSTriShape::GetRawVerts(bool xform) {
+	rawVertices.clear();
+	rawVertices.resize(numVertices);
+	for (int i = 0; i < numVertices; i++)
+		rawVertices[i] = vertData[i].vert;
+
+	return &rawVertices;
+}
+
+const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
+	rawNormals.clear();
+	rawNormals.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		float q1 = (((float)vertData[i].normal[0])/255.0f) * 2.0f - 1.0f;
+		float q2 = (((float)vertData[i].normal[1])/255.0f) * 2.0f - 1.0f;
+		float q3 = (((float)vertData[i].normal[2])/255.0f) * 2.0f - 1.0f;
+
+		float x = q1;
+		float y = q2;
+		float z = q3;
+
+		if (xform) {
+			rawNormals[i].x = -x;
+			rawNormals[i].z = y;
+			rawNormals[i].y = z;
+		}
+		else {
+			rawNormals[i].x = x;
+			rawNormals[i].z = z;
+			rawNormals[i].y = y;
+		}
+	}
+
+	return &rawNormals;
+}
+
+const vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
+	rawTangents.clear();
+	rawTangents.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		float q6 = (((float)vertData[i].tangent[0]) / 255.0f) * 2.0f - 1.0f;
+		float q7 = (((float)vertData[i].tangent[1]) / 255.0f) * 2.0f - 1.0f;
+		float q8 = (((float)vertData[i].tangent[2]) / 255.0f) * 2.0f - 1.0f;
+		float x = q6;
+		float y = q7;
+		float z = q8;
+
+		if (xform) {
+			rawTangents[i].x = -x;
+			rawTangents[i].z = y;
+			rawTangents[i].y = z;
+		}
+		else {
+			rawTangents[i].x = x;
+			rawTangents[i].z = z;
+			rawTangents[i].y = y;
+		}
+	}
+
+	return &rawTangents;
+}
+
+const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
+	rawBitangents.clear();
+	rawBitangents.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		float x = (vertData[i].bitangentX);
+		float y = (((float)vertData[i].bitangentY) / 255.0f) * 2.0f - 1.0f;
+		float z = (((float)vertData[i].bitangentZ) / 255.0f) * 2.0f - 1.0f;
+
+
+		if (xform) {
+			rawBitangents[i].x = -x;
+			rawBitangents[i].z = y;
+			rawBitangents[i].y = z;
+		}
+		else {
+			rawBitangents[i].x = x;
+			rawBitangents[i].z = z;
+			rawBitangents[i].y = y;
+		}
+	}
+	return &rawBitangents;
+}
+
+const vector<Vector2>* BSTriShape::GetUVData() {
+	rawUvs.clear();
+	rawUvs.resize(numVertices);
+	for (int i = 0; i < numVertices; i++)
+		rawUvs[i] = vertData[i].uv;
+
+	return &rawUvs;
+}
+
+void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
+	rawNormals.clear();
+	rawNormals.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		rawNormals[i] = inNorms[i];
+		vertData[i].normal[0] = (unsigned char)round((((inNorms[i].x + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[1] = (unsigned char)round((((inNorms[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[2] = (unsigned char)round((((inNorms[i].z + 1.0f) / 2.0f) * 255.0f));
+	}
+}
+
+void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+	GetRawVerts();
+
+	Vertex* verts = new Vertex[numVertices];
+	Triangle* tris = new Triangle[numTriangles];
+
+	for (int i = 0; i < numVertices; i++) {
+		verts[i].x = rawVertices[i].x * -0.1f;
+		verts[i].z = rawVertices[i].y * 0.1f;
+		verts[i].y = rawVertices[i].z * 0.1f;
+		verts[i].indexRef = i;
+	}
+
+	// Load tris. Also sum face normals here.
+	Vector3 norm;
+	for (int j = 0; j < numTriangles; j++) {
+		tris[j].p1 = triangles[j].p1;
+		tris[j].p2 = triangles[j].p2;
+		tris[j].p3 = triangles[j].p3;
+		tris[j].trinormal(verts, &norm);
+		verts[tris[j].p1].nx += norm.x;
+		verts[tris[j].p1].ny += norm.y;
+		verts[tris[j].p1].nz += norm.z;
+		verts[tris[j].p2].nx += norm.x;
+		verts[tris[j].p2].ny += norm.y;
+		verts[tris[j].p2].nz += norm.z;
+		verts[tris[j].p3].nx += norm.x;
+		verts[tris[j].p3].ny += norm.y;
+		verts[tris[j].p3].nz += norm.z;
+	}
+
+	// Normalize all vertex normals to smooth them out.
+	for (int i = 0; i < numVertices; i++) {
+		Vector3* pn = (Vector3*)&verts[i].nx;
+		pn->Normalize();
+	}
+
+	vector<int>* vertTris = new vector<int>[numVertices];
+	for (int t = 0; t < numTriangles; t++) {
+		vertTris[tris[t].p1].push_back(t);
+		vertTris[tris[t].p2].push_back(t);
+		vertTris[tris[t].p3].push_back(t);
+	}
+
+	unordered_map<int, vector<int>> weldVerts;
+	kd_matcher matcher(verts, numVertices);
+	for (int i = 0; i < matcher.matches.size(); i++) {
+		Vertex* a = matcher.matches[i].first;
+		Vertex* b = matcher.matches[i].second;
+		weldVerts[a->indexRef].push_back(b->indexRef);
+		weldVerts[b->indexRef].push_back(a->indexRef);
+
+		if (smooth) {
+			float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
+			if (dot < 1.57079633f) {
+				a->nx = ((a->nx + b->nx) / 2.0f);
+				a->ny = ((a->ny + b->ny) / 2.0f);
+				a->nz = ((a->nz + b->nz) / 2.0f);
+				b->nx = a->nx;
+				b->ny = a->ny;
+				b->nz = a->nz;
+			}
+		}
+	}
+
+	// Smooth normals
+	if (smooth) {
+		Vector3 tn;
+		for (int v = 0; v < numVertices; v++) {
+			norm.x = norm.y = norm.z = 0.0f;
+			if (weldVerts.find(v) != weldVerts.end())
+				continue;
+
+			for (auto &t : vertTris[v]) {
+				tris[t].trinormal(verts, &tn);
+				norm += tn;
+			}
+
+			for (auto &wv : weldVerts[v]) {
+				bool first = true;
+				if (vertTris[wv].size() < 2)
+					continue;
+
+				for (auto &t : vertTris[wv]) {
+					tris[t].trinormal(verts, &tn);
+					if (!first) {
+						float angle = fabs(norm.angle(tn));
+						if (angle > smoothThresh * DEG2RAD)
+							continue;
+					}
+					else
+						first = false;
+
+					norm += tn;
+				}
+			}
+
+			norm = norm / (float)vertTris[v].size();
+			norm.Normalize();
+			verts[v].nx = norm.x;
+			verts[v].ny = norm.y;
+			verts[v].nz = norm.z;
+		}
+	}
+
+	rawNormals.clear();
+	rawNormals.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		rawNormals[i].x = -verts[i].nx;
+		rawNormals[i].y = verts[i].nz;
+		rawNormals[i].z = verts[i].ny;
+		vertData[i].normal[0] = (unsigned char)round((((rawNormals[i].x + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[1] = (unsigned char)round((((rawNormals[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].normal[2] = (unsigned char)round((((rawNormals[i].z + 1.0f) / 2.0f) * 255.0f));
+	}
+
+	delete[] vertTris;
+	delete[] verts;
+	delete[] tris;
+}
+
+void BSTriShape::CalcTangentSpace() {
+	if (rawNormals.empty())
+		GetNormalData(false);
+
+	vector<Vector3> tan1;
+	vector<Vector3> tan2;
+	tan1.resize(numVertices);
+	tan2.resize(numVertices);
+
+	for (int i = 0; i < triangles.size(); i++) {
+		int i1 = triangles[i].p1;
+		int i2 = triangles[i].p2;
+		int i3 = triangles[i].p3;
+
+		Vector3 v1 = vertData[i1].vert;
+		Vector3 v2 = vertData[i2].vert;
+		Vector3 v3 = vertData[i3].vert;
+
+		Vector2 w1 = vertData[i1].uv;
+		Vector2 w2 = vertData[i2].uv;
+		Vector2 w3 = vertData[i3].uv;
+		
+		float x1 = v2.x - v1.x;
+		float x2 = v3.x - v1.x;
+		float y1 = v2.y - v1.y;
+		float y2 = v3.y - v1.y;
+		float z1 = v2.z - v1.z;
+		float z2 = v3.z - v1.z;
+
+		float s1 = w2.u - w1.u;
+		float s2 = w3.u - w1.u;
+		float t1 = w2.v - w1.v;
+		float t2 = w3.v - w1.v;
+
+		float r =  (s1 * t2 - s2 * t1);
+		r = (r >= 0.0f ? +1.0f : -1.0f);
+
+		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+		sdir.Normalize();
+		tdir.Normalize();
+
+		tan1[i1] += tdir;
+		tan1[i2] += tdir;
+		tan1[i3] += tdir;
+
+		tan2[i1] += sdir;
+		tan2[i2] += sdir;
+		tan2[i3] += sdir;
+	}
+
+	rawBitangents.resize(numVertices);
+	rawTangents.resize(numVertices);
+
+	for (int i = 0; i < numVertices; i++) {
+		rawTangents[i] = tan1[i];
+		rawBitangents[i] = tan2[i];
+
+		if (rawTangents[i].IsZero() || rawBitangents[i].IsZero()) {
+			rawTangents[i].x = rawNormals[i].y;
+			rawTangents[i].y = rawNormals[i].z;
+			rawTangents[i].z = rawNormals[i].x;
+			rawBitangents[i] = rawNormals[i].cross(rawTangents[i]);
+		}
+		else {
+			rawTangents[i].Normalize();
+			rawTangents[i] = (rawTangents[i] - rawNormals[i] * rawNormals[i].dot(rawTangents[i]));
+			rawTangents[i].Normalize();
+
+			rawBitangents[i].Normalize();
+
+			rawBitangents[i] = (rawBitangents[i] - rawNormals[i] * rawNormals[i].dot(rawBitangents[i]));
+			rawBitangents[i] = (rawBitangents[i] - rawTangents[i] * rawTangents[i].dot(rawBitangents[i]));
+
+			rawBitangents[i].Normalize();
+		}
+
+		vertData[i].tangent[0] = (unsigned char)round((((rawTangents[i].x + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].tangent[1] = (unsigned char)round((((rawTangents[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].tangent[2] = (unsigned char)round((((rawTangents[i].z + 1.0f) / 2.0f) * 255.0f));
+
+		vertData[i].bitangentX = rawBitangents[i].x;
+		vertData[i].bitangentY = (unsigned char)round((((rawBitangents[i].y + 1.0f) / 2.0f) * 255.0f));
+		vertData[i].bitangentZ = (unsigned char)round((((rawBitangents[i].z + 1.0f) / 2.0f) * 255.0f));
+	}
+}
+
+void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
+	unkShort1 = 0; //from AVObject -- zero for these blocks.
+	numVertices = verts->size();
+	numTriangles = tris->size();
+
+	vertData.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		vertData[i].vert = (*verts)[i];
+		vertData[i].uv = (*uvs)[i];
+
+		vertData[i].bitangentX = 0.0f;
+		vertData[i].bitangentY = 0;
+		vertData[i].bitangentZ = 0;
+		vertData[i].normal[0] = vertData[i].normal[1] = vertData[i].normal[2] = 0;
+		memset(vertData[i].colorData, 255, 4);
+		memset(vertData[i].weights, 0, sizeof(float)* 4);
+		memset(vertData[i].weightBones, 0, 4);
+	}
+
+	if (normals && normals->size() == numVertices) {
+		SetNormals((*normals));
+		CalcTangentSpace();
+	}
+
+	vertRecSize = 12;
+	if (vertFlags[6] & 0x1)		//normals
+		vertRecSize += 8;
+
+	if (vertFlags[6] & 0x2)		//colors
+		vertRecSize += 4;
+
+	if (vertFlags[6] & 0x4)		//skinning
+		vertRecSize += 12;
+
+	dataSize = 6 * numTriangles + numVertices * vertRecSize;
+
+	triangles.resize(numTriangles);
+	for (int i = 0; i < numTriangles; i++)
+		triangles[i] = (*tris)[i];
+}
+
+BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
+	blockType = BSSUBINDEXTRISHAPE;
+
+	numTriangles2 = 0;
+	numSubIndexRecordA = 0;
+	numSubIndexRecordB = 0;
+	numSubIndexRecordA_2 = 0;
+	numSubIndexRecordB_2 = 0;
+}
+
+BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
+	blockType = BSSUBINDEXTRISHAPE;
+	Get(file);
+}
+
+void BSSubIndexTriShape::Get(fstream& file) {
+	file.read((char*)&numTriangles2, 4);
+	file.read((char*)&numSubIndexRecordA, 4);
+	file.read((char*)&numSubIndexRecordB, 4);
+
+	subIndexRecordsA.resize(numSubIndexRecordB * 4);
+	for (int i = 0; i < numSubIndexRecordB * 4; i++)
+		file.read((char*)&subIndexRecordsA[i], 4);
+	
+	if (numSubIndexRecordB > numSubIndexRecordA) {
+		file.read((char*)&numSubIndexRecordA_2, 4);
+		file.read((char*)&numSubIndexRecordB_2, 4);
+
+		sequence.resize(numSubIndexRecordA);
+		for (int i = 0; i < numSubIndexRecordA; i++)
+			file.read((char*)&sequence[i], 4);
+
+		subIndexRecordsB.resize(numSubIndexRecordB);
+		for (int i = 0; i < numSubIndexRecordB; i++) {
+			file.read((char*)&subIndexRecordsB[i].unk1, 4);
+			file.read((char*)&subIndexRecordsB[i].unk2, 4);
+			file.read((char*)&subIndexRecordsB[i].numExtra, 4);
+			subIndexRecordsB[i].extraData.resize(subIndexRecordsB[i].numExtra);
+			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++)
+				file.read((char*)&subIndexRecordsB[i].extraData[j], 4);
+		}
+		ssfFile.Get(file, 2);
+	}
+}
+
+void BSSubIndexTriShape::Put(fstream& file) {
+	BSTriShape::Put(file);
+
+	file.write((char*)&numTriangles2, 4);
+	file.write((char*)&numSubIndexRecordA, 4);
+	file.write((char*)&numSubIndexRecordB, 4);
+
+	for (int i = 0; i < numSubIndexRecordB * 4; i++)
+		file.write((char*)&subIndexRecordsA[i], 4);
+
+	if (numSubIndexRecordB > numSubIndexRecordA) {
+		file.write((char*)&numSubIndexRecordA_2, 4);
+		file.write((char*)&numSubIndexRecordB_2, 4);
+
+		for (int i = 0; i < numSubIndexRecordA; i++)
+			file.write((char*)&sequence[i], 4);
+
+		for (int i = 0; i < numSubIndexRecordB; i++) {
+			file.write((char*)&subIndexRecordsB[i].unk1, 4);
+			file.write((char*)&subIndexRecordsB[i].unk2, 4);
+			file.write((char*)&subIndexRecordsB[i].numExtra, 4);
+
+			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++)
+				file.write((char*)&subIndexRecordsB[i].extraData[j], 4);
+		}
+		ssfFile.Put(file, 2,false);
+	}
+}
+
+void BSSubIndexTriShape::notifyBlockDelete(int blockID) {
+	BSTriShape::notifyBlockDelete(blockID);
+}
+
+void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+int BSSubIndexTriShape::CalcBlockSize() {
+	BSTriShape::CalcBlockSize();
+
+	blockSize += 12;									// tris and first record counts
+	blockSize += numSubIndexRecordB * 4 * 4;			// sub inex record arrayA
+
+	if (numSubIndexRecordB > numSubIndexRecordA) {		
+		blockSize += 8;									// second index accounts
+		blockSize += numSubIndexRecordA * 4;			// sequence array
+		for (int i = 0; i < numSubIndexRecordB; i++) {			// sub index recordsb
+			blockSize += 12;									// unknown data per record
+			blockSize += 4 * subIndexRecordsB[i].numExtra;		// extra data per record.
+		}
+		blockSize += 2;
+		blockSize += ssfFile.str.length();
+	}
+
+	return blockSize;
+}
+
+void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
+	BSTriShape::Create(verts, tris, uvs, normals);
+
+	vertFlags[0] = 8;
+	vertFlags[6] = 5;
+
+	numTriangles2 = numTriangles;
+	numSubIndexRecordA = 0;
+	numSubIndexRecordB = 0;
+	numSubIndexRecordA_2 = 0;
+	numSubIndexRecordB_2 = 0;
+
+	numSubIndexRecordA = numSubIndexRecordB = 4;
+
+	subIndexRecordsA.resize(4 * 32);
+	int n = 0;
+	for (int i = 0; i < 3; i++) {
+		subIndexRecordsA[n++] = 0x0;
+		subIndexRecordsA[n++] = 0x0;
+		subIndexRecordsA[n++] = 0xFFFFFFFF;
+		subIndexRecordsA[n++] = 0x0;
+	}
+
+	subIndexRecordsA[n++] = 0x0;
+	subIndexRecordsA[n++] = numTriangles;
+	subIndexRecordsA[n++] = 0xFFFFFFFF;
+	subIndexRecordsA[n++] = 0x0;
+}
 
 void NiGeometry::Init() {
 	NiAVObject::Init();
@@ -1787,6 +2605,156 @@ int BSDismemberSkinInstance::CalcBlockSize() {
 }
 
 
+
+BSSkinInstance::BSSkinInstance(NiHeader& hdr) {
+	Init();
+
+	header = &hdr;
+	blockType = BSSKININSTANCE;
+}
+
+BSSkinInstance::BSSkinInstance(fstream& file, NiHeader& hdr) {
+	Init();
+
+	header = &hdr;
+	blockType = BSSKININSTANCE;
+
+	Get(file);
+}
+
+void BSSkinInstance::Init() {
+	NiObject::Init();
+
+	targetRef = 0xFFFFFFFF;
+	boneDataRef = 0xFFFFFFFF;
+	numBones = 0;
+	numVertices = 0;
+}
+
+void BSSkinInstance::Get(fstream& file) {
+	NiObject::Get(file);
+	uint intData;
+
+	file.read((char*)&targetRef, 4);
+	file.read((char*)&boneDataRef, 4);
+	file.read((char*)&numBones, 4);
+	for (int i = 0; i < numBones; i++) {
+		file.read((char*)&intData, 4);
+		bones.push_back(intData);
+	}
+
+	file.read((char*)&numVertices, 4);
+}
+
+void BSSkinInstance::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&targetRef, 4);
+	file.write((char*)&boneDataRef, 4);
+	file.write((char*)&numBones, 4);
+	for (int i = 0; i < numBones; i++) {
+		file.write((char*)&bones[i], 4);
+	}
+	file.write((char*)&numVertices, 4);
+}
+
+void BSSkinInstance::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+
+	int boneIndex = -1;
+	if (boneDataRef == blockID)
+		boneDataRef = 0xFFFFFFFF;
+	else if (boneDataRef > blockID)
+		boneDataRef--;
+
+	for (int i = 0; i < numBones; i++) {
+		if (bones[i] == blockID) {
+			bones.erase(bones.begin() + i);
+			boneIndex = i;
+			i--;
+			numBones--;
+		}
+		else if (bones[i] > blockID)
+			bones[i]--;
+	}
+}
+
+void BSSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (boneDataRef == blockIndexLo)
+		boneDataRef = blockIndexHi;
+	else if (boneDataRef == blockIndexHi)
+		boneDataRef = blockIndexLo;
+
+	for (int i = 0; i < numBones; i++) {
+		if (bones[i] == blockIndexLo)
+			bones[i] = blockIndexHi;
+		else if (bones[i] == blockIndexHi)
+			bones[i] = blockIndexLo;
+	}
+}
+
+BSSkinBoneData::BSSkinBoneData(NiHeader& hdr) {	
+	NiObject::Init();
+	nBones = 0;
+	header = &hdr;
+	blockType = BSBONEDATA;
+}
+
+BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader& hdr) {	
+	NiObject::Init();
+
+	nBones = 0;
+	header = &hdr;
+	blockType = BSBONEDATA;
+	Get(file);
+}
+
+void BSSkinBoneData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&nBones, 4);
+	
+	BoneData boneData;
+	for (int i = 0; i < nBones; i++) {
+
+		file.read((char*)&boneData.boundSphereOffset, 12);
+		file.read((char*)&boneData.boundSphereRadius, 4);
+		file.read((char*)&boneData.boneTransform, 52);
+
+		boneXforms.push_back(boneData);
+	}
+}
+
+void BSSkinBoneData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&nBones, 4);
+
+	for (int i = 0; i < nBones; i++) {
+
+		file.write((char*)&boneXforms[i].boundSphereOffset, 12);
+		file.write((char*)&boneXforms[i].boundSphereRadius, 4);
+		file.write((char*)&boneXforms[i].boneTransform, 52);
+	}
+}
+
+int BSSkinBoneData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+	blockSize += 68 * nBones;
+	blockSize += 4;
+	return blockSize;
+}
+
+int BSSkinInstance::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 16;
+	blockSize += numBones * 4;
+	return blockSize;
+}
+
 NiSkinData::NiSkinData(NiHeader& hdr) {
 	NiObject::Init();
 
@@ -2832,6 +3800,13 @@ float NiShader::GetEmissiveMultiple() {
 void NiShader::SetEmissiveMultiple(float emissive) {
 }
 
+uint NiShader::GetWetMaterialNameRef() {
+	return 0xFFFFFFFF;
+}
+
+void NiShader::SetWetMaterialNameRef(uint matRef) {
+}
+
 int NiShader::CalcBlockSize() {
 	return blockSize;
 }
@@ -2844,19 +3819,31 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = BSLIGHTINGSHADERPROPERTY;
-	shaderFlags1 = 0x82400303;
-	shaderFlags2 = 0x8001;
+	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
+		shaderFlags1 = 0x80600203;
+		shaderFlags2 = 0x81;	
+	}
+	else {
+		shaderFlags1 = 0x82400303;
+		shaderFlags2 = 0x8001;
+	}
 	uvOffset.u = 0.0f;
 	uvOffset.v = 0.0f;
 	uvScale.u = 1.0f;
 	uvScale.v = 1.0f;
 	textureSetRef = -1;
 
+	emissiveColor.Zero();
 	emissiveMultiple = 1.0f;
+	wetMaterialNameRef = 0xFFFFFFFF;
 	textureClampMode = 3;
 	alpha = 1.0f;
 	refractionStrength = 0.0f;
-	glossiness = 20.0f;
+	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
+		glossiness = 1.0f;
+	} else {
+		glossiness = 20.0f;
+	}
 	specularColor = Vector3(1.0f, 1.0f, 1.0f);
 	specularStrength = 1.0f;
 	lightingEffect1 = 0.3f;
@@ -2875,6 +3862,21 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	sparkleParameters.b = 0.0f;
 	sparkleParameters.a = 0.0f;
 	eyeCubemapScale = 1.0f;
+
+	unk1 = 0x7F7FFFFF;
+	unk2 = 0x3D4CCCCD;
+
+	unk[0] = 1.0f;
+	unk[1] = 5.0f;
+	unk[2] = 0.6f;
+	unk[3] = 1.4f;
+	unk[4] = 0.2f;
+	unk[5] = 1.0f;
+	unk[6] = 1.6f;
+	unk[7] = 0.0f;
+
+	memset(pad, 0, 16);
+
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr) {
@@ -2921,6 +3923,9 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&emissiveColor.y, 4);
 	file.read((char*)&emissiveColor.z, 4);
 	file.read((char*)&emissiveMultiple, 4);
+	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		file.read((char*)&wetMaterialNameRef, 4);
+	}
 	file.read((char*)&textureClampMode, 4);
 	file.read((char*)&alpha, 4);
 	file.read((char*)&refractionStrength, 4);
@@ -2930,12 +3935,19 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&specularColor.z, 4);
 	file.read((char*)&specularStrength, 4);
 	file.read((char*)&lightingEffect1, 4);
-	file.read((char*)&lightingEffect2, 4);
+
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
+		file.read((char*)&lightingEffect2, 4);
+	}
+	else if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		file.read((char*)&unk1, 4);
+		file.read((char*)&unk2, 4);
+	}
 
 	if (skyrimShaderType == 1) {
 		file.read((char*)&environmentMapScale, 4);
 	}
-	else if (skyrimShaderType == 5) {
+	else if (skyrimShaderType == 5 && header->userVersion2 < 130) {
 		file.read((char*)&skinTintColor.x, 4);
 		file.read((char*)&skinTintColor.y, 4);
 		file.read((char*)&skinTintColor.z, 4);
@@ -2971,6 +3983,22 @@ void BSLightingShaderProperty::Get(fstream& file) {
 		file.read((char*)&eyeRightReflectionCenter.y, 4);
 		file.read((char*)&eyeRightReflectionCenter.z, 4);
 	}
+
+	if (header->userVersion2 >= 130) {
+		for (int i = 0; i < 8; i++) {
+			file.read((char*)&unk[i], 4);
+		}
+	}
+	if (skyrimShaderType == 1 && header->userVersion2 >= 130) {
+		for (int i = 0; i < 2; i++) {
+			file.read((char*)&pad[i], 1);
+		}
+	}
+	if (skyrimShaderType == 5 && header->userVersion2 >= 130) {
+		for (int i = 0; i < 16; i++) {
+			file.read((char*)&pad[i], 1);
+		}
+	}
 }
 
 void BSLightingShaderProperty::Put(fstream& file) {
@@ -2991,6 +4019,9 @@ void BSLightingShaderProperty::Put(fstream& file) {
 	file.write((char*)&emissiveColor.y, 4);
 	file.write((char*)&emissiveColor.z, 4);
 	file.write((char*)&emissiveMultiple, 4);
+	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		file.write((char*)&wetMaterialNameRef, 4);
+	}
 	file.write((char*)&textureClampMode, 4);
 	file.write((char*)&alpha, 4);
 	file.write((char*)&refractionStrength, 4);
@@ -3000,12 +4031,19 @@ void BSLightingShaderProperty::Put(fstream& file) {
 	file.write((char*)&specularColor.z, 4);
 	file.write((char*)&specularStrength, 4);
 	file.write((char*)&lightingEffect1, 4);
-	file.write((char*)&lightingEffect2, 4);
+
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
+		file.write((char*)&lightingEffect2, 4);
+	}
+	else if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		file.write((char*)&unk1, 4);
+		file.write((char*)&unk2, 4);
+	}
 
 	if (skyrimShaderType == 1) {
 		file.write((char*)&environmentMapScale, 4);
 	}
-	else if (skyrimShaderType == 5) {
+	else if (skyrimShaderType == 5 && header->userVersion2 < 130) {
 		file.write((char*)&skinTintColor.x, 4);
 		file.write((char*)&skinTintColor.y, 4);
 		file.write((char*)&skinTintColor.z, 4);
@@ -3040,6 +4078,23 @@ void BSLightingShaderProperty::Put(fstream& file) {
 		file.write((char*)&eyeRightReflectionCenter.x, 4);
 		file.write((char*)&eyeRightReflectionCenter.y, 4);
 		file.write((char*)&eyeRightReflectionCenter.z, 4);
+	}
+
+
+	if (header->userVersion2 >= 130) {
+		for (int i = 0; i < 8; i++) {
+			file.write((char*)&unk[i], 4);
+		}
+	}
+	if (skyrimShaderType == 1 && header->userVersion2 >= 130) {
+		for (int i = 0; i < 2; i++) {
+			file.write((char*)&pad[i], 1);
+		}
+	}
+	if (skyrimShaderType == 5 && header->userVersion2 >= 130) {
+		for (int i = 0; i < 16; i++) {
+			file.write((char*)&pad[i], 1);
+		}
 	}
 }
 
@@ -3132,28 +4187,64 @@ void BSLightingShaderProperty::SetEmissiveMultiple(float emissive) {
 	emissiveMultiple = emissive;
 }
 
+uint BSLightingShaderProperty::GetWetMaterialNameRef() {
+	return wetMaterialNameRef;
+}
+
+void BSLightingShaderProperty::SetWetMaterialNameRef(uint matRef) {
+	wetMaterialNameRef = matRef;
+}
+
 int BSLightingShaderProperty::CalcBlockSize() {
 	NiProperty::CalcBlockSize();
 
 	if (header->userVersion == 12)
 		blockSize += 8;
 
-	blockSize += 76;
+	blockSize += 72;
 
-	if (skyrimShaderType == 1)
+	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		blockSize += 12;
+	}
+
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
 		blockSize += 4;
-	else if (skyrimShaderType == 5)
+	}
+
+	if (skyrimShaderType == 1) {
+		blockSize += 4;
+	}
+	else if (skyrimShaderType == 5) {
+		if (header->userVersion2 < 130) {
+			blockSize += 12;
+		}
+	}
+	else if (skyrimShaderType == 6) {
 		blockSize += 12;
-	else if (skyrimShaderType == 6)
-		blockSize += 12;
-	else if (skyrimShaderType == 7)
+	}
+	else if (skyrimShaderType == 7){
 		blockSize += 8;
-	else if (skyrimShaderType == 11)
+	}
+	else if (skyrimShaderType == 11){
 		blockSize += 20;
-	else if (skyrimShaderType == 14)
+	}
+	else if (skyrimShaderType == 14){
 		blockSize += 16;
-	else if (skyrimShaderType == 16)
+	}
+	else if (skyrimShaderType == 16){
 		blockSize += 28;
+	}
+
+	if (header->userVersion2 >= 130) {
+		blockSize += 32;
+	}
+
+	if (skyrimShaderType == 1 && header->userVersion2 >= 130) {
+		blockSize += 2;
+	}
+	if (skyrimShaderType == 5 && header->userVersion2 >= 130) {
+		blockSize += 16;
+	}
 
 	return blockSize;
 }
@@ -3267,15 +4358,28 @@ void BSEffectShaderProperty::Get(fstream& file) {
 	file.read((char*)&uvScale.v, 4);
 	sourceTexture = NiString(file, 4, false);
 	file.read((char*)&textureClampMode, 4);
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
+		file.read((char*)&falloffStartAngle, 4);
+		file.read((char*)&falloffStopAngle, 4);
+		file.read((char*)&falloffStartOpacity, 4);
+		file.read((char*)&falloffStopOpacity, 4);
+		file.read((char*)&emissiveColor, 16);
+		file.read((char*)&emissiveMultiple, 4);
+		file.read((char*)&softFalloffDepth, 4);
+		greyscaleTexture = NiString(file, 4, false);
+	} 
+	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		for (int i = 0; i < 11; i++) {
+			file.read((char*)&unkdata[i], 4);
+		}
+		emissiveTex = NiString(file, 4, false);
+		normalTex = NiString(file,4,false);
+		specularTex = NiString(file,4,false);	
+		for (int i = 0; i < 3; i++) {
+			file.read((char*)&unkdata2[i], 4);
+		}
+	}
 
-	file.read((char*)&falloffStartAngle, 4);
-	file.read((char*)&falloffStopAngle, 4);
-	file.read((char*)&falloffStartOpacity, 4);
-	file.read((char*)&falloffStopOpacity, 4);
-	file.read((char*)&emissiveColor, 16);
-	file.read((char*)&emissiveMultiple, 4);
-	file.read((char*)&softFalloffDepth, 4);
-	greyscaleTexture = NiString(file, 4, false);
 }
 
 void BSEffectShaderProperty::Put(fstream& file) {
@@ -3290,14 +4394,27 @@ void BSEffectShaderProperty::Put(fstream& file) {
 	sourceTexture.Put(file, 4);
 	file.write((char*)&textureClampMode, 4);
 
-	file.write((char*)&falloffStartAngle, 4);
-	file.write((char*)&falloffStopAngle, 4);
-	file.write((char*)&falloffStartOpacity, 4);
-	file.write((char*)&falloffStopOpacity, 4);
-	file.write((char*)&emissiveColor, 16);
-	file.write((char*)&emissiveMultiple, 4);
-	file.write((char*)&softFalloffDepth, 4);
-	greyscaleTexture.Put(file, 4);
+	if (header->userVersion <= 12 && header->userVersion2 < 130) {
+		file.write((char*)&falloffStartAngle, 4);
+		file.write((char*)&falloffStopAngle, 4);
+		file.write((char*)&falloffStartOpacity, 4);
+		file.write((char*)&falloffStopOpacity, 4);
+		file.write((char*)&emissiveColor, 16);
+		file.write((char*)&emissiveMultiple, 4);
+		file.write((char*)&softFalloffDepth, 4);
+		greyscaleTexture.Put(file, 4);
+	}	
+	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		for (int i = 0; i < 11; i++) {
+			file.write((char*)&unkdata[i], 4);
+		}
+		emissiveTex.Put(file, 4);
+		normalTex.Put(file, 4);
+		specularTex.Put(file, 4);
+		for (int i = 0; i < 3; i++) {
+			file.write((char*)&unkdata2[i], 4);
+		}
+	}
 }
 
 void BSEffectShaderProperty::notifyBlockDelete(int blockID) {
@@ -3507,7 +4624,9 @@ BSShaderTextureSet::BSShaderTextureSet(NiHeader& hdr) {
 	header = &hdr;
 	blockType = BSSHADERTEXTURESET;
 
-	if (header->userVersion == 12)
+	if (header->userVersion == 12 && header->userVersion2 >= 130)
+		numTextures = 10;
+	else if (header->userVersion == 12)
 		numTextures = 9;
 	else
 		numTextures = 6;
@@ -3538,7 +4657,7 @@ void BSShaderTextureSet::Put(fstream& file) {
 
 	file.write((char*)&numTextures, 4);
 	for (int i = 0; i < numTextures; i++)
-		textures[i].Put(file, 4);
+		textures[i].Put(file, 4, false);
 }
 
 int BSShaderTextureSet::CalcBlockSize() {

@@ -8,6 +8,97 @@ See the included LICENSE file
 
 #include <algorithm>
 
+OSDataFile::OSDataFile() {
+	header = 'OSD\0';
+	version = 1;
+	dataCount = 0;
+}
+
+OSDataFile::~OSDataFile() {
+}
+
+int OSDataFile::Read(const string& fileName) {
+	ifstream file(fileName, ios_base::binary);
+	if (!file)
+		return 1;
+
+	file.read((char*)&header, 4);
+	if (header != 'OSD\0')
+		return 2;
+
+	file.read((char*)&version, 4);
+	file.read((char*)&dataCount, 4);
+
+	byte nameLength;
+	string dataName;
+	ushort diffSize;
+	for (int i = 0; i < dataCount; ++i) {
+		file.read((char*)&nameLength, 1);
+		dataName.resize(nameLength, ' ');
+		file.read((char*)&dataName.front(), nameLength);
+
+		ushort index;
+		Vector3 diff;
+		unordered_map<ushort, Vector3> diffs;
+		file.read((char*)&diffSize, 2);
+		for (int j = 0; j < diffSize; ++j) {
+			file.read((char*)&index, 2);
+			file.read((char*)&diff, sizeof(Vector3));
+			diff.clampEpsilon();
+			diffs[index] = diff;
+		}
+
+		dataDiffs[dataName] = diffs;
+	}
+
+	return 0;
+}
+
+int OSDataFile::Write(const string& fileName) {
+	ofstream file(fileName, ios_base::binary);
+	if (!file)
+		return 1;
+
+	file.write((char*)&header, 4);
+	file.write((char*)&version, 4);
+	file.write((char*)&dataCount, 4);
+
+	byte nameLength;
+	ushort diffSize;
+	for (auto &diffs : dataDiffs) {
+		nameLength = diffs.first.length();
+		file.write((char*)&nameLength, 1);
+		file.write(diffs.first.c_str(), nameLength);
+
+		diffSize = diffs.second.size();
+		file.write((char*)&diffSize, 2);
+		for (auto &diff : diffs.second) {
+			file.write((char*)&diff.first, 2);
+			file.write((char*)&diff.second, sizeof(Vector3));
+		}
+	}
+
+	return 0;
+}
+
+void OSDataFile::GetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& outDataDiff) {
+	outDataDiff.clear();
+
+	auto it = dataDiffs.find(dataName);
+	if (it != dataDiffs.end())
+		outDataDiff = dataDiffs[dataName];
+}
+
+void OSDataFile::SetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& inDataDiff) {
+	auto it = dataDiffs.find(dataName);
+	if (it != dataDiffs.end())
+		dataDiffs.erase(dataName);
+
+	dataDiffs[dataName] = inDataDiff;
+	dataCount++;
+}
+
+
 int DiffDataSets::LoadSet(const string& name, const string& target, unordered_map<ushort, Vector3>& inDiffData) {
 	if (namedSet.find(name) != namedSet.end())
 		namedSet.erase(name);
@@ -19,8 +110,8 @@ int DiffDataSets::LoadSet(const string& name, const string& target, unordered_ma
 }
 
 int DiffDataSets::LoadSet(const string& name, const string& target, const string& fromFile) {
-	fstream inFile(fromFile.c_str(), ios_base::in | ios_base::binary);
-	if (!inFile.is_open())
+	ifstream inFile(fromFile, ios_base::binary);
+	if (!inFile)
 		return 1;
 
 	int sz;
@@ -32,6 +123,7 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 	for (int i = 0; i < sz; i++) {
 		inFile.read((char*)&idx, sizeof(int));
 		inFile.read((char*)&v, sizeof(Vector3));
+		v.clampEpsilon();
 		data.emplace(idx, v);
 	}
 	inFile.close();
@@ -44,14 +136,30 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 	return 0;
 }
 
+int DiffDataSets::LoadData(const map<string, map<string, string>>& osdNames) {
+	for (auto &osd : osdNames) {
+		OSDataFile osdFile;
+		if (osdFile.Read(osd.first))
+			continue;
+
+		for (auto &dataNames : osd.second) {
+			unordered_map<ushort, Vector3> diff;
+			osdFile.GetDataDiff(dataNames.first, diff);
+			LoadSet(dataNames.first, dataNames.second, diff);
+		}
+	}
+
+	return 0;
+}
+
 int DiffDataSets::SaveSet(const string& name, const string& target, const string& toFile) {
 	unordered_map<ushort, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
-		return 1;
-
-	fstream outFile(toFile.c_str(), ios_base::out | ios_base::binary);
-	if (!outFile.is_open())
 		return 2;
+
+	ofstream outFile(toFile, ios_base::binary);
+	if (!outFile)
+		return 1;
 
 	int sz = data->size();
 	outFile.write((char*)&sz, sizeof(int));
@@ -59,6 +167,24 @@ int DiffDataSets::SaveSet(const string& name, const string& target, const string
 		outFile.write((char*)&resultIt->first, sizeof(int));
 		outFile.write((char*)&resultIt->second, sizeof(Vector3));
 	}
+	return 0;
+}
+
+int DiffDataSets::SaveData(const map<string, map<string, string>>& osdNames) {
+	for (auto &osd : osdNames) {
+		OSDataFile osdFile;
+		for (auto &dataNames : osd.second) {
+			unordered_map<ushort, Vector3>* data = &namedSet[dataNames.first];
+			if (!TargetMatch(dataNames.first, dataNames.second))
+				continue;
+
+			osdFile.SetDataDiff(dataNames.first, *data);
+		}
+
+		if (!osdFile.Write(osd.first))
+			continue;
+	}
+
 	return 0;
 }
 
@@ -155,7 +281,7 @@ void DiffDataSets::ApplyUVDiff(const string& set, const string& target, float pe
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
-			continue; // prevent crashes.
+			continue;
 
 		(*inOutResult)[resultIt->first].u += resultIt->second.x * percent;
 		(*inOutResult)[resultIt->first].v += resultIt->second.y * percent;
@@ -174,7 +300,7 @@ void DiffDataSets::ApplyDiff(const string& set, const string& target, float perc
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
-			continue; // prevent crashes.
+			continue;
 
 		(*inOutResult)[resultIt->first].x += resultIt->second.x * percent;
 		(*inOutResult)[resultIt->first].y += resultIt->second.y * percent;
@@ -191,7 +317,7 @@ void DiffDataSets::ApplyClamp(const string& set, const string& target, vector<Ve
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
-			continue; // prevent crashes.
+			continue;
 
 		(*inOutResult)[resultIt->first].x = resultIt->second.x;
 		(*inOutResult)[resultIt->first].y = resultIt->second.y;

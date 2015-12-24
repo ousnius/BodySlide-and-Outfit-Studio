@@ -52,9 +52,6 @@ public:
 	shared_ptr<AABBTree> bvh;
 	kd_tree* kdtree;
 
-	GLuint VboBufName;
-	GLuint IboBufName;
-
 	bool bBuffersLoaded;
 	bool bVisible;
 	bool smoothSeamNormals;
