@@ -317,8 +317,8 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 
 	PopulateOutfitList(outfitName);
 
+	ActivatePreset(activePreset, false);
 	InitPreview();
-	ActivatePreset(activePreset);
 	
 	sliderView->Layout();
 	sliderView->Refresh();
@@ -326,7 +326,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	wxLogMessage("Finished activating set '%s'.", outfitName);
 }
 
-void BodySlideApp::ActivatePreset(const string &presetName) {
+void BodySlideApp::ActivatePreset(const string &presetName, const bool& updatePreview) {
 	wxLogMessage("Applying preset '%s' to sliders.", presetName);
 
 	Config.SetValue("SelectedPreset", presetName);
@@ -340,7 +340,7 @@ void BodySlideApp::ActivatePreset(const string &presetName) {
 		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
 	}
 
-	if (preview)
+	if (updatePreview && preview)
 		UpdatePreview();
 }
 
