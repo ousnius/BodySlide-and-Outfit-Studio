@@ -4105,8 +4105,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	v = v * -1;
 	tpi.view = v;
 
-	//activeStroke=strokeManager.CreateStroke(gls.GetActiveMesh(), &tweakBrush);
-	//tweakBrush.setMirror(true);
 	savedBrush = activeBrush;
 
 	if (wxGetKeyState(WXK_CONTROL)) {
@@ -4149,9 +4147,11 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		activeBrush = &smoothBrush;
 	}
 
-	if (activeBrush->Type() == TBT_WEIGHT && os->IsDirty())
-		if (os->PromptUpdateBase() == wxCANCEL)
-			return false;
+	if (activeBrush->Type() == TBT_WEIGHT && os->IsDirty()) {
+		os->PromptUpdateBase();
+		activeBrush = savedBrush;
+		return false;
+	}
 
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMesh(), activeBrush);
 	activeBrush->setConnected(bConnectedEdit);
