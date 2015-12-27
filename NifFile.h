@@ -52,7 +52,8 @@ enum BlockType {
 	BSEFFECTSHADERPROPERTYCOLORCONTROLLER,
 	BSEFFECTSHADERPROPERTYFLOATCONTROLLER,
 	BSTRISHAPE,
-	BSSUBINDEXTRISHAPE
+	BSSUBINDEXTRISHAPE,
+	BSCLOTHEXTRADATA
 };
 
 struct VertexWeight {
@@ -1225,6 +1226,29 @@ public:
 	int CalcBlockSize();
 };
 
+class BSExtraData : public NiObject {
+public:
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual int CalcBlockSize();
+};
+
+class BSClothExtraData : public BSExtraData {
+public:
+	uint numBytes;
+	vector<char> data;
+
+	BSClothExtraData();
+	BSClothExtraData(NiHeader& hdr, uint size = 0);
+	BSClothExtraData(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void Clone(BSClothExtraData* other);
+	int CalcBlockSize();
+};
+
 class NiUnknown : public NiObject {
 public:
 	vector<char> data;
@@ -1322,7 +1346,7 @@ public:
 
 	/// GetChildren of a node ... templatized to allow any particular type to be queried.   useful for walking a node tree
 	template <class T>
-	vector<T*> GetChildren(NiNode* parent);
+	vector<T*> GetChildren(NiNode* parent, bool searchExtraData = false);
 
 	int GetNodeID(const string& nodeName);
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
@@ -1399,7 +1423,7 @@ public:
 };
 
 template <class T>
-vector<T*> NifFile::GetChildren(NiNode* parent) {
+vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	vector<T*> result;
 	T* n;
 	if (parent == nullptr) {
@@ -1413,6 +1437,15 @@ vector<T*> NifFile::GetChildren(NiNode* parent) {
 		n = dynamic_cast<T*>(blocks[parent->children[i]]);
 		if (n) {
 			result.push_back(n);
+		}
+	}
+
+	if (searchExtraData) {
+		for (int i = 0; i < parent->extraDataRef.size(); i++) {
+			n = dynamic_cast<T*>(blocks[parent->extraDataRef[i]]);
+			if (n) {
+				result.push_back(n);
+			}
 		}
 	}
 

@@ -4965,6 +4965,91 @@ int NiStringExtraData::CalcBlockSize() {
 }
 
 
+void BSExtraData::Init() {
+	NiObject::Init();
+}
+
+void BSExtraData::Get(fstream& file) {
+	NiObject::Get(file);
+}
+
+void BSExtraData::Put(fstream& file) {
+	NiObject::Put(file);
+}
+
+int BSExtraData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+	return blockSize;
+}
+
+
+BSClothExtraData::BSClothExtraData() {
+	BSExtraData::Init();
+
+	blockType = BSCLOTHEXTRADATA;
+	numBytes = 0;
+	data.clear();
+}
+
+BSClothExtraData::BSClothExtraData(NiHeader& hdr, uint size) {
+	BSExtraData::Init();
+
+	header = &hdr;
+	blockType = BSCLOTHEXTRADATA;
+	numBytes = size;
+	data.resize(size);
+}
+
+BSClothExtraData::BSClothExtraData(fstream& file, NiHeader& hdr) {
+	BSExtraData::Init();
+
+	header = &hdr;
+	blockType = BSCLOTHEXTRADATA;
+
+	Get(file);
+}
+
+void BSClothExtraData::Get(fstream& file) {
+	BSExtraData::Get(file);
+
+	file.read((char*)&numBytes, 4);
+	data.resize(numBytes);
+	if (data.empty())
+		return;
+
+	file.read(&data[0], numBytes);
+}
+
+void BSClothExtraData::Put(fstream& file) {
+	BSExtraData::Put(file);
+
+	file.write((char*)&numBytes, 4);
+	if (data.empty())
+		return;
+
+	file.write(&data[0], numBytes);
+}
+
+void BSClothExtraData::Clone(BSClothExtraData* other) {
+	numBytes = other->numBytes;
+	data.resize(numBytes);
+	if (data.empty())
+		return;
+
+	for (int i = 0; i < numBytes; i++)
+		data[i] = other->data[i];
+}
+
+int BSClothExtraData::CalcBlockSize() {
+	BSExtraData::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += numBytes;
+
+	return blockSize;
+}
+
+
 NiUnknown::NiUnknown() {
 	NiObject::Init();
 

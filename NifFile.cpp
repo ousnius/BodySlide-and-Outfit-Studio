@@ -273,6 +273,10 @@ void NifFile::CopyFrom(NifFile& other) {
 		case BSBONEDATA:
 			blockCopy = new BSSkinBoneData(*(BSSkinBoneData*)other.blocks[i]);
 			break;
+		case BSCLOTHEXTRADATA:
+			blockCopy = new BSClothExtraData(hdr);
+			((BSClothExtraData*)blockCopy)->Clone((BSClothExtraData*)other.blocks[i]);
+			break;
 		}
 
 		if (blockCopy) {
@@ -378,6 +382,8 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new BSSkinInstance(file, hdr);
 			else if (!thisBlockTypeStr.compare("BSSkin::BoneData"))
 				block = (NiObject*) new BSSkinBoneData(file, hdr);
+			else if (!thisBlockTypeStr.compare("BSClothExtraData"))
+				block = (NiObject*) new BSClothExtraData(file, hdr);
 			else {
 				hasUnknown = true;
 				block = (NiObject*) new NiUnknown(file, hdr.blockSizes[i]);

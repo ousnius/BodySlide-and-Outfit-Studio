@@ -198,6 +198,8 @@ string OutfitProject::Save(const string& strFileName,
 		NifFile clone(workNif);
 		clone.SetNodeName(0, "Scene Root");
 
+		ChooseClothData(clone);
+
 		if (!copyRef && !baseShape.empty()) {
 			clone.DeleteShape(baseShape);
 			workAnim.WriteToNif(&clone, true, baseShape);
@@ -1721,11 +1723,14 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 
 	AutoOffset(nif);
 
-	nif.GetShapeList(nifShapes);
-	// don't want to exit here -- this function is used to generate a blank nif when an outfit is loaded from an .obj
-	//if (nifShapes.empty())
-	//	return 0;
+	// Add cloth data block of NIF to the list
+	vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>((NiNode*)nif.GetBlock(0), true);
+	for (auto &cloth : clothDataBlocks)
+		clothData[fileName] = *cloth;
 
+	nif.DeleteBlockByType("BSClothExtraData");
+
+	nif.GetShapeList(nifShapes);
 	if (workNif.IsValid()) {
 		for (auto &s : nifShapes) {
 			workNif.CopyGeometry(s, nif, s);
@@ -1904,8 +1909,9 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMes
 
 int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef) {
 	NifFile clone(workNif);
-
 	clone.SetNodeName(0, "Scene Root");
+
+	ChooseClothData(clone);
 
 	vector<Vector3> liveVerts;
 	vector<Vector3> liveNorms;
@@ -1944,6 +1950,35 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 		clone.PrettySortBlocks();
 	}
 	return clone.Save(fileName);
+}
+
+
+void OutfitProject::ChooseClothData(NifFile& nif) {
+	if (!clothData.empty()) {
+		wxArrayString clothFileNames;
+		clothFileNames.Add("None");
+		for (auto &cloth : clothData)
+			clothFileNames.Add(cloth.first);
+
+		wxSingleChoiceDialog clothDataChoice(owner, "There was cloth physics data loaded at some point (BSClothExtraData). Please choose which origin to use in the output.", "Choose cloth data", clothFileNames);
+		if (clothDataChoice.ShowModal() == wxID_CANCEL)
+			return;
+
+		string sel = clothDataChoice.GetStringSelection().ToStdString();
+		if (sel != "None") {
+			BSClothExtraData* clothBlock = new BSClothExtraData(nif.hdr);
+			clothBlock->Clone(&clothData[sel]);
+
+			int id = nif.AddBlock(clothBlock, "BSClothExtraData");
+			if (id != -1) {
+				NiNode* root = (NiNode*)nif.GetBlock(0);
+				if (root) {
+					root->numExtraData++;
+					root->extraDataRef.push_back(id);
+				}
+			}
+		}
+	}
 }
 
 int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeName, const string& mergeShape) {

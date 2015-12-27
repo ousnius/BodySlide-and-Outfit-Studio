@@ -34,6 +34,9 @@ class OutfitProject {
 	AnimInfo workAnim;
 	string baseShape;
 
+	// All cloth data blocks that have been loaded during work
+	unordered_map<string, BSClothExtraData> clothData;
+
 public:
 	string outfitName;
 	DiffDataSets baseDiffData;
@@ -224,6 +227,8 @@ public:
 
 	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
 	int SaveOutfitNif(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
+
+	void ChooseClothData(NifFile& nif);
 
 	int ImportShapeFBX(const string& fileName, const string& shapeName = "", const string& mergeShape = "");
 	int ExportShapeFBX(const string& fileName, const string& shapeName = "");
