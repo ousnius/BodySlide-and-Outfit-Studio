@@ -34,7 +34,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/wizard.h>
 #include <wx/filepicker.h>
 #include <wx/grid.h>
-#include <wx/progdlg.h>
 #include <wx/spinctrl.h>
 #include <wx/dataview.h>
 #include <wx/splitter.h>
@@ -586,70 +585,69 @@ public:
 			GetMenuBar()->Enable(XRCID("btnDecreaseStr"), true);
 	}
 
-	wxProgressDialog* progWnd;
-	vector<pair<float, float>> progressStack;
+	wxGauge* progressBar = nullptr;
+	vector<pair<int, int>> progressStack;
 	int progressVal;
 
-	void StartProgress(const wxString& title) {
+	void StartProgress(const wxString& msg = "Starting...") {
 		if (progressStack.empty()) {
-			progWnd = new wxProgressDialog(title, "Starting...", 10000, this, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
-			progWnd->SetSize(400, 150);
 			progressVal = 0;
-			progressStack.emplace_back(0.0f, 10000.0f);
+			progressStack.emplace_back(0, 10000);
+
+			wxRect rect;
+			statusBar->GetFieldRect(1, rect);
+
+			wxBeginBusyCursor();
+			progressBar = new wxGauge(statusBar, wxID_ANY, 10000, rect.GetPosition(), rect.GetSize());
+			statusBar->SetStatusText(msg);
 		}
 	}
 
-	void StartSubProgress(float min, float max) {
-		float range = progressStack.back().second - progressStack.front().first;
+	void StartSubProgress(int min, int max) {
+		int range = progressStack.back().second - progressStack.front().first;
 		float mindiv = min / 100.0f;
 		float maxdiv = max / 100.0f;
-		float minoff = mindiv * range;
-		float maxoff = maxdiv * range;
+		int minoff = mindiv * range + 1;
+		int maxoff = maxdiv * range + 1;
 		progressStack.emplace_back(progressStack.front().first + minoff, progressStack.front().first + maxoff);
 	}
 
-	void EndProgress() {
+	void EndProgress(const wxString& msg = "Ready!") {
 		if (progressStack.empty())
 			return;
 
-		progWnd->Update(progressStack.back().second);
+		progressBar->SetValue(progressStack.back().second);
 		progressStack.pop_back();
 
 		if (progressStack.empty()) {
-			delete progWnd;
-			progWnd = nullptr;
+			statusBar->SetStatusText(msg);
+			delete progressBar;
+			progressBar = nullptr;
+			wxEndBusyCursor();
 		}
 	}
 
-	void UpdateProgress(float val, const wxString& msg = "") {
+	void UpdateProgress(int val, const wxString& msg = "") {
 		if (progressStack.empty())
 			return;
 
-		float range = progressStack.back().second - progressStack.back().first;
+		int range = progressStack.back().second - progressStack.back().first;
 		float div = val / 100.0f;
-		float offset = range * div;
+		int offset = range * div + 1;
 
 		progressVal = progressStack.back().first + offset;
 		if (progressVal > 10000)
 			progressVal = 10000;
 
-		progWnd->Update(progressVal, msg);
+		statusBar->SetStatusText(msg);
+		progressBar->SetValue(progressVal);
 	}
 
 private:
-	class ShapeState {						// metadata state of shapes by shape name
-	public:
-		TargetGame gameType;				// game type source (affects block types in nif)
-		bool bIsImporting;					// true if shape is currently in the process of being imported from .obj (lacking normals, textures, etc.)
-		ShapeState() : gameType(SKYRIM), bIsImporting(false) {}
-	};
-
 	bool previousMirror;
 	Vector3 previewMove;
 	float previewScale;
 	Vector3 previewRotation;
-
-	map<string, ShapeState> shapeStates;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);

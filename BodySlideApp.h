@@ -43,6 +43,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/html/htmlwin.h>
 #include <wx/listctrl.h>
 #include <wx/dir.h>
+#include <wx/progdlg.h>
 
 #include <vector>
 #include <map>

@@ -351,13 +351,13 @@ void OutfitStudio::CreateSetSliders() {
 	if (!sliderScroll)
 		return;
 
-	float inc = 1.0f;
+	int inc = 1;
 	if (project->SliderCount()) {
-		inc = 90.0f / project->SliderCount();
+		inc = 90 / project->SliderCount();
 		StartProgress("Creating sliders...");
 	}
 
-	UpdateProgress(0.0f, "Clearing old sliders...");
+	UpdateProgress(0, "Clearing old sliders...");
 
 	sliderScroll->Freeze();
 	sliderScroll->DestroyChildren();
@@ -802,7 +802,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	delete project;
 	project = new OutfitProject(appConfig, this);
 
-	UpdateProgress(10.0f, "Loading reference...");
+	UpdateProgress(10, "Loading reference...");
 
 	int error = 0;
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -834,7 +834,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	UpdateProgress(40.0f, "Loading outfit...");
+	UpdateProgress(40, "Loading outfit...");
 
 	error = 0;
 	if (XRCCTRL(wiz, "npWorkNif", wxRadioButton)->GetValue() == true) {
@@ -855,7 +855,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	wxLogMessage("Creating outfit...");
-	UpdateProgress(80.0f, "Creating outfit...");
+	UpdateProgress(80, "Creating outfit...");
 
 	if (XRCCTRL(wiz, "npTexAuto", wxRadioButton)->GetValue() == true)
 		project->SetTextures("_AUTO_");
@@ -867,18 +867,18 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj();
 
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
-	StartSubProgress(90.0f, 99.0f);
+	UpdateProgress(90, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
+	StartSubProgress(90, 99);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 
 	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99.0f, "Applying slider effects...");
+	UpdateProgress(99, "Applying slider effects...");
 	ApplySliders();
 
 	wxLogMessage("Project created.");
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 
 	EndProgress();
 }
@@ -924,8 +924,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	project = new OutfitProject(appConfig, this);
 
 	wxLogMessage("Loading outfit data...");
-	UpdateProgress(10.0f, "Loading outfit data...");
-	StartSubProgress(10.0f, 40.0f);
+	UpdateProgress(10, "Loading outfit data...");
+	StartSubProgress(10, 40);
 
 	int error = project->OutfitFromSliderSet(file, outfit);
 	if (error) {
@@ -938,7 +938,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	string shape = project->GetBaseShape();
 	wxLogMessage("Loading reference shape '%s'...", shape);
-	UpdateProgress(50.0f, wxString::Format("Loading reference shape '%s'...", shape));
+	UpdateProgress(50, wxString::Format("Loading reference shape '%s'...", shape));
 
 	if (!shape.empty()) {
 		error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, false);
@@ -950,7 +950,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	wxLogMessage("Loading textures...");
-	UpdateProgress(60.0f, "Loading textures...");
+	UpdateProgress(60, "Loading textures...");
 
 	project->SetTextures("_AUTO_");
 
@@ -959,18 +959,18 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj();
 
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
-	StartSubProgress(90.0f, 99.0f);
+	UpdateProgress(90, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
+	StartSubProgress(90, 99);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 
 	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99.0f, "Applying slider effects...");
+	UpdateProgress(99, "Applying slider effects...");
 	ApplySliders();
 
 	wxLogMessage("Project loaded.");
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 	GetMenuBar()->Enable(XRCID("fileSave"), true);
 	EndProgress();
 }
@@ -1004,7 +1004,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	StartProgress("Loading reference...");
 	glView->DeleteMesh(project->GetBaseShape());
 
-	UpdateProgress(10.0f, "Loading reference set...");
+	UpdateProgress(10, "Loading reference set...");
 	bool ClearRef = !(XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
 
 	int error = 0;
@@ -1042,21 +1042,21 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	project->SetTexture(project->GetBaseShape(), "_AUTO_");
 
 	wxLogMessage("Creating reference...");
-	UpdateProgress(60.0f, "Creating reference...");
+	UpdateProgress(60, "Creating reference...");
 	RefreshGUIFromProj();
 
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(70.0f, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
-	StartSubProgress(70.0f, 99.0f);
+	UpdateProgress(70, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
+	StartSubProgress(70, 99);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99.0f, "Applying slider effects...");
+	UpdateProgress(99, "Applying slider effects...");
 	ApplySliders();
 
 	wxLogMessage("Reference loaded.");
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 	EndProgress();
 }
 
@@ -1091,7 +1091,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
-	UpdateProgress(1.0f, "Loading outfit...");
+	UpdateProgress(1, "Loading outfit...");
 
 	int ret = 0;
 	if (XRCCTRL(dlg, "npWorkNif", wxRadioButton)->GetValue() == true) {
@@ -1123,11 +1123,11 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		
 	}
 	wxLogMessage("Creating outfit...");
-	UpdateProgress(50.0f, "Creating outfit...");
+	UpdateProgress(50, "Creating outfit...");
 	RefreshGUIFromProj();
 
 	wxLogMessage("Outfit loaded.");
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 	EndProgress();
 }
 
@@ -2899,8 +2899,8 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 
 	wxLogMessage("Conforming all shapes...");
 	StartProgress("Conforming all shapes...");
-	float inc = 100.0f / shapes.size() - 1;
-	float pos = 0.0f;
+	int inc = 100 / shapes.size() - 1;
+	int pos = 0;
 
 	auto selectedItemsSave = selectedItems;
 
@@ -2921,7 +2921,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 		statusBar->SetStatusText("All shapes conformed.");
 
 	wxLogMessage("All shapes conformed.");
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 	EndProgress();
 }
 
@@ -2940,26 +2940,26 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 			continue;
 
 		wxLogMessage("Conforming '%s'...", i->shapeName);
-		UpdateProgress(1.0f, "Initializing data...");
+		UpdateProgress(1, "Initializing data...");
 		project->InitConform();
 
 		if (IsDirty(i->shapeName)) {
 			UpdateShapeSource(i->shapeName);
 			project->RefreshMorphShape(i->shapeName);
 		}
-		UpdateProgress(50.0f, "Conforming: " + i->shapeName);
+		UpdateProgress(50, "Conforming: " + i->shapeName);
 
 		project->morpher.CopyMeshMask(glView->GetMesh(i->shapeName), i->shapeName);
 		project->ConformShape(i->shapeName);
 
-		UpdateProgress(99.0f);
+		UpdateProgress(99);
 	}
 
 	if (statusBar)
 		statusBar->SetStatusText("Shape(s) conformed.");
 
 	wxLogMessage("%d shape(s) conformed.", selectedItems.size());
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 	EndProgress();
 }
 
@@ -3605,7 +3605,7 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 			wxMessageBox("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape.", "Can't copy weights", wxICON_WARNING);
 	}
 
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 	EndProgress();
 }
 
@@ -3648,7 +3648,7 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 			wxMessageBox("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape.", "Can't copy weights", wxICON_WARNING);
 	}
 
-	UpdateProgress(100.0f, "Finished");
+	UpdateProgress(100, "Finished");
 	EndProgress();
 }
 
@@ -4690,38 +4690,38 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 
 		if (inputFile.MakeLower().EndsWith(".nif")) {
 			owner->StartProgress("Adding NIF file...");
-			owner->UpdateProgress(1.0f, "Adding NIF file...");
+			owner->UpdateProgress(1, "Adding NIF file...");
 			owner->project->AddNif(inputFile.ToStdString(), false);
 			owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60.0f, "Refreshing GUI...");
+			owner->UpdateProgress(60, "Refreshing GUI...");
 			owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100.0f, "Finished.");
+			owner->UpdateProgress(100, "Finished.");
 			owner->EndProgress();
 		}
 		else if (inputFile.MakeLower().EndsWith(".obj")) {
 			owner->StartProgress("Adding OBJ file...");
-			owner->UpdateProgress(1.0f, "Adding OBJ file...");
+			owner->UpdateProgress(1, "Adding OBJ file...");
 			owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 			owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60.0f, "Refreshing GUI...");
+			owner->UpdateProgress(60, "Refreshing GUI...");
 			owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100.0f, "Finished.");
+			owner->UpdateProgress(100, "Finished.");
 			owner->EndProgress();
 		}
 		else if (inputFile.MakeLower().EndsWith(".fbx")) {
 			owner->StartProgress("Adding FBX file...");
-			owner->UpdateProgress(1.0f, "Adding FBX file...");
+			owner->UpdateProgress(1, "Adding FBX file...");
 			owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 			owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60.0f, "Refreshing GUI...");
+			owner->UpdateProgress(60, "Refreshing GUI...");
 			owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100.0f, "Finished.");
+			owner->UpdateProgress(100, "Finished.");
 			owner->EndProgress();
 		}
 	}
@@ -4758,7 +4758,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 					return false;
 
 				owner->StartProgress("Loading slider file...");
-				owner->UpdateProgress(1.0f, "Loading slider file...");
+				owner->UpdateProgress(1, "Loading slider file...");
 
 				if (isBSD)
 					owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
@@ -4770,7 +4770,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 					return false;
 
 
-				owner->UpdateProgress(100.0f, "Finished.");
+				owner->UpdateProgress(100, "Finished.");
 				owner->EndProgress();
 			}
 		}

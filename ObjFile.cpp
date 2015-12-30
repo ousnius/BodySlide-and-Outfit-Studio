@@ -168,7 +168,7 @@ int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 			base >> v.x >> v.y >> v.z;
 			verts.push_back(v);
 		}
-		else if (dump.compare("g") == 0 || dump.compare("o") == 0 || dump.compare("s")==0) {
+		else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
 			base >> curgrp;
 
 			if (di->name != "") {
@@ -204,19 +204,9 @@ int ObjFile::LoadForNif(fstream &base, const string& groupName) {
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
 			base >> facept4;
 
-			if (facept4 == "f") {
+			if (facept4 == "f" || facept4 == "g" || facept4 == "s") {
 				gotface = true;
-				dump = "f";
-				nPoints = 3;
-			}
-			else if (facept4 == "g") {
-				gotface = true;
-				dump = "g";
-				nPoints = 3;
-			}
-			else if (facept4 == "s") {
-				gotface = true;
-				dump = "s";
+				dump = facept4;
 				nPoints = 3;
 			}
 			else if (facept4.length() > 0) {
@@ -371,19 +361,9 @@ int ObjFile::LoadVertOrderMap(fstream &base, map<int, int>& outMap, vector<Face>
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
 			base >> facept4;
 
-			if (facept4 == "f") {
+			if (facept4 == "f" || facept4 == "g" || facept4 == "s") {
 				gotface = true;
-				dump = "f";
-				nPoints = 3;
-			}
-			else if (facept4 == "g") {
-				gotface = true;
-				dump = "g";
-				nPoints = 3;
-			}
-			else if (facept4 == "s") {
-				gotface = true;
-				dump = "s";
+				dump = facept4;
 				nPoints = 3;
 			}
 			else if (facept4.length() > 0) {
@@ -563,19 +543,9 @@ int ObjFile::Load(ifstream &base, const string& groupName) {
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
 			base >> facept4;
 
-			if (facept4 == "f") {
+			if (facept4 == "f" || facept4 == "g" || facept4 == "s") {
 				gotface = true;
-				dump = "f";
-				nPoints = 3;
-			}
-			else if (facept4 == "g") {
-				gotface = true;
-				dump = "g";
-				nPoints = 3;
-			}
-			else if (facept4 == "s"){
-				gotface = true;
-				dump = "s";
+				dump = facept4;
 				nPoints = 3;
 			}
 			else if (facept4.length() > 0) {
