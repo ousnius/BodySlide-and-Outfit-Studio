@@ -1476,6 +1476,8 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	if (error.empty()) {
 		GetMenuBar()->Enable(XRCID("fileSave"), true);
 		RenameProject(strOutfitName);
+
+		static_cast<BodySlideApp*>(wxApp::GetInstance())->RefreshOutfitList();
 	}
 	else {
 		wxLogError(error.c_str());
