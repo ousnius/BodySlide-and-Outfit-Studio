@@ -52,6 +52,19 @@ string OutfitProject::Save(const string& strFileName,
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
 
+	string ssFileName = strFileName;
+	if (ssFileName.find("SliderSets\\") == string::npos)
+		ssFileName = "SliderSets\\" + ssFileName;
+
+	mFileName = ssFileName;
+	mOutfitName = outfitName;
+	mDataDir = strDataDir;
+	mBaseFile = baseFile;
+	mGamePath = strGamePath;
+	mGameFile = gameFile;
+	mCopyRef = copyRef;
+	mGenWeights = genWeights;
+
 	vector<string> shapes;
 	GetShapes(shapes);
 
@@ -160,10 +173,6 @@ string OutfitProject::Save(const string& strFileName,
 	prog = 60;
 	owner->UpdateProgress(prog, "Creating slider set file...");
 
-	string ssFileName = strFileName;
-	if (ssFileName.find("SliderSets\\") == string::npos)
-		ssFileName = "SliderSets\\" + ssFileName;
-
 	SliderSetFile ssf(ssFileName);
 	if (ssf.fail()) {
 		ssf.New(ssFileName);
@@ -223,16 +232,6 @@ string OutfitProject::Save(const string& strFileName,
 	}
 
 	owner->UpdateProgress(100, "Finished");
-
-	mFileName = ssFileName;
-	mOutfitName = outfitName;
-	mDataDir = strDataDir;
-	mBaseFile = baseFile;
-	mGamePath = strGamePath;
-	mGameFile = gameFile;
-	mCopyRef = copyRef;
-	mGenWeights = genWeights;
-
 	return errmsg;
 }
 

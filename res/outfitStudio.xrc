@@ -3155,7 +3155,7 @@
 								<border>5</border>
 								<object class="wxDirPickerCtrl" name="sssShapeDataFolder">
 									<value></value>
-									<tooltip>The folder where all the slider data (*.BSD) files will go, as well as the base outfit NIF file.</tooltip>
+									<tooltip>The folder where all the slider data will go, as well as the base outfit NIF file.</tooltip>
 									<message>Select slider data folder</message>
 									<style>wxDIRP_DIR_MUST_EXIST|wxDIRP_USE_TEXTCTRL</style>
 								</object>
