@@ -1434,7 +1434,7 @@ vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	}
 
 	for (int i = 0; i < parent->children.size(); i++) {
-		n = dynamic_cast<T*>(blocks[parent->children[i]]);
+		n = dynamic_cast<T*>(GetBlock(parent->children[i]));
 		if (n) {
 			result.push_back(n);
 		}
@@ -1442,7 +1442,7 @@ vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 
 	if (searchExtraData) {
 		for (int i = 0; i < parent->extraDataRef.size(); i++) {
-			n = dynamic_cast<T*>(blocks[parent->extraDataRef[i]]);
+			n = dynamic_cast<T*>(GetBlock(parent->extraDataRef[i]));
 			if (n) {
 				result.push_back(n);
 			}
