@@ -1421,6 +1421,14 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
+	wxFileName relativeFolder(strDataDir);
+	if (!relativeFolder.IsRelative()) {
+		wxString curDir(wxGetCwd());
+		wxString dataFolder(wxString::Format("%s/%s", curDir, "ShapeData"));
+		relativeFolder.MakeRelativeTo(dataFolder);
+		strDataDir = relativeFolder.GetFullPath();
+	}
+
 	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
 	if (strBaseFile.empty() || strBaseFile.length() <= 4) {
 		wxMessageBox("An invalid or no base outfit .nif file name specified! Please try again.", "Error", wxOK | wxICON_ERROR);
