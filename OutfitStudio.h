@@ -668,11 +668,7 @@ private:
 	void OnLoadReference(wxCommandEvent &event);
 	void OnLoadOutfit(wxCommandEvent& event);
 
-	void OnNewProject2FP_NIF(wxFileDirPickerEvent& event);
-	void OnNewProject2FP_OBJ(wxFileDirPickerEvent& event);
-	void OnNewProject2FP_Texture(wxFileDirPickerEvent& event);
-	void OnLoadOutfitFP_NIF(wxFileDirPickerEvent& event);
-	void OnLoadOutfitFP_OBJ(wxFileDirPickerEvent& event);
+	void OnLoadOutfitFP_File(wxFileDirPickerEvent& event);
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
 
 	void OnSetBaseShape(wxCommandEvent &event);

@@ -771,17 +771,19 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		pg1 = (wxWizardPage*)XRCCTRL(wiz, "wizpgNewProj1", wxWizardPageSimple);
 		XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnNPWizChangeSliderSetFile, this);
 		XRCCTRL(wiz, "npSliderSetName", wxChoice)->Bind(wxEVT_CHOICE, &OutfitStudio::OnNPWizChangeSetNameChoice, this);
-		wiz.FitToPage(pg1);
 
 		pg2 = (wxWizardPage*)XRCCTRL(wiz, "wizpgNewProj2", wxWizardPageSimple);
-		XRCCTRL(wiz, "npNifFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnNewProject2FP_NIF, this);
-		XRCCTRL(wiz, "npObjFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnNewProject2FP_OBJ, this);
-		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnNewProject2FP_Texture, this);
+		XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnLoadOutfitFP_File, this);
+		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnLoadOutfitFP_Texture, this);
 
 		wxChoice* tmplChoice = XRCCTRL(wiz, "npTemplateChoice", wxChoice);
-		tmplChoice->Clear();
 		tmplChoice->Append(tmplNameArray);
 		tmplChoice->Select(0);
+
+		// For some reason, the center isn't the center for a wxWizard
+		wiz.FitToPage(pg1);
+		wiz.CenterOnParent();
+		wiz.SetPosition(wiz.GetPosition() - wxPoint(10, 65));
 
 		result = wiz.RunWizard(pg1);
 	}
@@ -837,15 +839,15 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(40, "Loading outfit...");
 
 	error = 0;
-	if (XRCCTRL(wiz, "npWorkNif", wxRadioButton)->GetValue() == true) {
-		wxString fileName = XRCCTRL(wiz, "npNifFilename", wxFilePickerCtrl)->GetPath();
+	if (XRCCTRL(wiz, "npWorkFile", wxRadioButton)->GetValue() == true) {
+		wxString fileName = XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->GetPath();
 		wxLogMessage("Loading outfit '%s' from '%s'...", outfitName, fileName);
-		error = project->AddNif(fileName.ToStdString(), true, outfitName);
-	}
-	else if (XRCCTRL(wiz, "npWorkObj", wxRadioButton)->GetValue() == true) {
-		wxString fileName = XRCCTRL(wiz, "npObjFilename", wxFilePickerCtrl)->GetPath();
-		wxLogMessage("Loading outfit '%s' from '%s'...", outfitName, fileName);
-		error = project->AddShapeFromObjFile(fileName.ToStdString(), outfitName);
+		if (fileName.Lower().EndsWith(".nif"))
+			error = project->AddNif(fileName.ToStdString(), true, outfitName);
+		else if (fileName.Lower().EndsWith(".obj"))
+			error = project->AddShapeFromObjFile(fileName.ToStdString(), outfitName);
+		else if (fileName.Lower().EndsWith(".fbx"))
+			error = project->ImportShapeFBX(fileName.ToStdString(), outfitName);
 	}
 
 	if (error) {
@@ -859,8 +861,6 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	if (XRCCTRL(wiz, "npTexAuto", wxRadioButton)->GetValue() == true)
 		project->SetTextures("_AUTO_");
-	else if (XRCCTRL(wiz, "npTexDefault", wxRadioButton)->GetValue() == true)
-		project->SetTexturesDefault(XRCCTRL(wiz, "npDefaultTexChoice", wxChoice)->GetStringSelection().ToStdString());
 	else
 		project->SetTextures(XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString());
 
@@ -993,9 +993,9 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "npSliderSetName", wxChoice)->Bind(wxEVT_CHOICE, &OutfitStudio::OnNPWizChangeSetNameChoice, this);
 
 		wxChoice* tmplChoice = XRCCTRL(dlg, "npTemplateChoice", wxChoice);
-		tmplChoice->Clear();
 		tmplChoice->Append(tmplNameArray);
 		tmplChoice->Select(0);
+
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -1065,8 +1065,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	int result = wxID_CANCEL;
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgLoadOutfit", "wxDialog")) {
-		XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnLoadOutfitFP_NIF, this);
-		XRCCTRL(dlg, "npObjFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnLoadOutfitFP_OBJ, this);
+		XRCCTRL(dlg, "npWorkFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnLoadOutfitFP_File, this);
 		XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnLoadOutfitFP_Texture, this);
 		if (project->GetWorkNif()->IsValid())
 			XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->Enable();
@@ -1094,16 +1093,18 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(1, "Loading outfit...");
 
 	int ret = 0;
-	if (XRCCTRL(dlg, "npWorkNif", wxRadioButton)->GetValue() == true) {
-		if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked()) {
-			ret = project->AddNif(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath().ToStdString(), true, outfitName);
+	if (XRCCTRL(dlg, "npWorkFile", wxRadioButton)->GetValue() == true) {
+		wxString fileName = XRCCTRL(dlg, "npWorkFilename", wxFilePickerCtrl)->GetPath();
+		if (fileName.Lower().EndsWith(".nif")) {
+			if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked())
+				ret = project->AddNif(fileName.ToStdString(), true, outfitName);
+			else
+				ret = project->AddNif(fileName.ToStdString(), false);
 		}
-		else {
-			ret = project->AddNif(XRCCTRL(dlg, "npNifFilename", wxFilePickerCtrl)->GetPath().ToStdString(), false);
-		}
-	}
-	else if (XRCCTRL(dlg, "npWorkObj", wxRadioButton)->GetValue() == true) {
-		ret = project->AddShapeFromObjFile(XRCCTRL(dlg, "npObjFilename", wxFilePickerCtrl)->GetPath().ToStdString(), outfitName);
+		else if (fileName.Lower().EndsWith(".obj"))
+			ret = project->AddShapeFromObjFile(fileName.ToStdString(), outfitName);
+		else if (fileName.Lower().EndsWith(".fbx"))
+			ret = project->ImportShapeFBX(fileName.ToStdString(), outfitName);
 	}
 	else
 		project->ClearOutfit();
@@ -1114,14 +1115,11 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true) {
-		project->SetTextures("_AUTO_");		
-	} else if (XRCCTRL(dlg, "npTexDefault", wxRadioButton)->GetValue() == true) {
-		project->SetTexturesDefault(XRCCTRL(dlg, "npDefaultTexChoice", wxChoice)->GetStringSelection().ToStdString());		
-	} else {
+	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true)
+		project->SetTextures("_AUTO_");
+	else
 		project->SetTextures(XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString());
-		
-	}
+
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(50, "Creating outfit...");
 	RefreshGUIFromProj();
@@ -4820,29 +4818,9 @@ wxDragResult DnDSliderFile::OnDragOver(wxCoord x, wxCoord y, wxDragResult defRes
 }
 
 
-void OutfitStudio::OnNewProject2FP_NIF(wxFileDirPickerEvent& event) {
+void OutfitStudio::OnLoadOutfitFP_File(wxFileDirPickerEvent& event) {
 	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
-	XRCCTRL((*win), "npWorkNif", wxRadioButton)->SetValue(true);
-}
-
-void OutfitStudio::OnNewProject2FP_OBJ(wxFileDirPickerEvent& event) {
-	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
-	XRCCTRL((*win), "npWorkObj", wxRadioButton)->SetValue(true);
-}
-
-void OutfitStudio::OnNewProject2FP_Texture(wxFileDirPickerEvent& event) {
-	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
-	XRCCTRL((*win), "npTexFile", wxRadioButton)->SetValue(true);
-}
-
-void OutfitStudio::OnLoadOutfitFP_NIF(wxFileDirPickerEvent& event) {
-	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
-	XRCCTRL((*win), "npWorkNif", wxRadioButton)->SetValue(true);
-}
-
-void OutfitStudio::OnLoadOutfitFP_OBJ(wxFileDirPickerEvent& event) {
-	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
-	XRCCTRL((*win), "npWorkObj", wxRadioButton)->SetValue(true);
+	XRCCTRL((*win), "npWorkFile", wxRadioButton)->SetValue(true);
 }
 
 void OutfitStudio::OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event) {

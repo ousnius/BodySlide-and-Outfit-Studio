@@ -955,17 +955,6 @@ string OutfitProject::GetShapeTexture(const string& shapeName) {
 		return defaultTexFile;
 }
 
-void OutfitProject::SetTexturesDefault(const string& defaultChoice) {
-	if (defaultChoice == "Grid, white background")
-		SetTextures("res\\whitegrid.png");
-	else if (defaultChoice == "Grid, light grey background")
-		SetTextures("res\\greygrid.png");
-	else if (defaultChoice == "Grid, dark grey background")
-		SetTextures("res\\greygrid_inv.png");
-	else
-		SetTextures(defaultTexFile);
-}
-
 void OutfitProject::SetTextures(const string& textureFile) {
 	vector<string> shapes;
 	GetShapes(shapes);

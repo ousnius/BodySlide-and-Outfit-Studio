@@ -147,7 +147,6 @@ public:
 
 	string GetShapeTexture(const string& shapeName);
 
-	void SetTexturesDefault(const string& defaultChoice);
 	void SetTextures(const string& textureFile);
 	void SetTexture(const string& shapeName, const string& textureFile);
 
