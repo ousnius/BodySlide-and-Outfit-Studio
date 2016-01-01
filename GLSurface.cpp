@@ -499,8 +499,12 @@ void GLSurface::PitchCamera(int dScreenY) {
 }
 
 void GLSurface::PanCamera(int dScreenX, int dScreenY) {
-	camPos.y -= ((float)dScreenY / vpH) * fabs(camPos.z);
-	camPos.x += ((float)dScreenX / vpW) * fabs(camPos.z);
+	float fabsZ = fabs(camPos.z);
+	if (fabsZ < 0.5f)
+		fabsZ = 0.5f;
+
+	camPos.y -= ((float)dScreenY / vpH) * fabsZ;
+	camPos.x += ((float)dScreenX / vpW) * fabsZ;
 }
 
 void GLSurface::DollyCamera(int dAmt) {
