@@ -772,7 +772,7 @@ void NifFile::TrimTexturePaths() {
 	GetShapeList(shapes);
 
 	for (auto &s : shapes) {
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < 10; i++) {
 			if (GetTextureForShape(s, tFile, i) && !tFile.empty()) {
 				tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
 				tFile = regex_replace(tFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front

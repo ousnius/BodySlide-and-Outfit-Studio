@@ -1995,7 +1995,7 @@
 				<border>5</border>
 				<object class="wxGrid" name="stTexGrid">
 					<style>wxALWAYS_SHOW_SB</style>
-					<size>446,236</size>
+					<size>446,260</size>
 				</object>
 			</object>
 			<object class="sizeritem">

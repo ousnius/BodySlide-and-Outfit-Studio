@@ -249,7 +249,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 	string nDispPath;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgShapeTextures")) {
 		wxGrid* stTexGrid = XRCCTRL(dlg, "stTexGrid", wxGrid);
-		stTexGrid->CreateGrid(9, 1);
+		stTexGrid->CreateGrid(10, 1);
 		stTexGrid->EnableEditing(true);
 		stTexGrid->EnableGridLines(true);
 		stTexGrid->EnableDragGridSize(false);
@@ -283,7 +283,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		stTexGrid->SetDefaultCellAlignment(wxALIGN_LEFT, wxALIGN_TOP);
 
 		int blockType = 0;
-		for (int i = 0; i < 9; i++) {
+		for (int i = 0; i < 10; i++) {
 			blockType = nif->GetTextureForShape(shape, texPath, i);
 			if (!blockType)
 				continue;
@@ -301,6 +301,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			stTexGrid->HideRow(6);
 			stTexGrid->HideRow(7);
 			stTexGrid->HideRow(8);
+			stTexGrid->HideRow(9);
 		}
 
 		oDispPath = os->project->GetShapeTexture(shape);
@@ -314,11 +315,12 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 				os->glView->SetMeshTexture(shape, nDispPath, nif->IsShaderSkin(shape));
 			}
 
-			for (int i = 0; i < 9; i++) {
+			for (int i = 0; i < 10; i++) {
 				texPath = stTexGrid->GetCellValue(i, 0);
 				nif->SetTextureForShape(shape, texPath, i);
-				nif->TrimTexturePaths();
 			}
+			nif->TrimTexturePaths();
+
 			os->glView->Refresh();
 		}
 	}
