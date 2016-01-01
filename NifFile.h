@@ -1063,7 +1063,7 @@ public:
 	Vector2 uvScale;
 	NiString sourceTexture;
 	uint textureClampMode;
-	float falloffStartAngle;				// userversion2 < 130
+	float falloffStartAngle;
 	float falloffStopAngle;
 	float falloffStartOpacity;
 	float falloffStopOpacity;
@@ -1072,12 +1072,10 @@ public:
 	float softFalloffDepth;
 	NiString greyscaleTexture;
 
-	//userversion2 >= 130
-	float unkdata[11];
-	NiString emissiveTex;
-	NiString normalTex;
-	NiString specularTex;
-	float unkdata2[3];
+	NiString envMapTexture;
+	NiString normalTexture;
+	NiString envMaskTexture;
+	float envMapScale;
 
 	BSEffectShaderProperty(NiHeader& hdr);
 	BSEffectShaderProperty(fstream& file, NiHeader& hdr);

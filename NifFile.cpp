@@ -358,8 +358,8 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new NiMaterialProperty(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiStencilProperty"))
 				block = (NiObject*) new NiStencilProperty(file, hdr);
-			//else if (!thisBlockTypeStr.compare("BSEffectShaderProperty"))
-			//	block = (NiObject*) new BSEffectShaderProperty(file, hdr);
+			else if (!thisBlockTypeStr.compare("BSEffectShaderProperty"))
+				block = (NiObject*) new BSEffectShaderProperty(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiFloatInterpolator"))
 				block = (NiObject*) new NiFloatInterpolator(file, hdr);
 			else if (!thisBlockTypeStr.compare("NiTransformInterpolator"))

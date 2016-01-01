@@ -4336,6 +4336,11 @@ BSEffectShaderProperty::BSEffectShaderProperty(NiHeader& hdr) {
 	emissiveMultiple = 0.0f;
 	softFalloffDepth = 0.0f;
 	greyscaleTexture = NiString(false);
+
+	envMapTexture = NiString(false);
+	normalTexture = NiString(false);
+	envMaskTexture = NiString(false);
+	envMapScale = 1.0f;
 }
 
 BSEffectShaderProperty::BSEffectShaderProperty(fstream& file, NiHeader& hdr) {
@@ -4358,28 +4363,22 @@ void BSEffectShaderProperty::Get(fstream& file) {
 	file.read((char*)&uvScale.v, 4);
 	sourceTexture = NiString(file, 4, false);
 	file.read((char*)&textureClampMode, 4);
-	if (header->userVersion <= 12 && header->userVersion2 < 130) {
-		file.read((char*)&falloffStartAngle, 4);
-		file.read((char*)&falloffStopAngle, 4);
-		file.read((char*)&falloffStartOpacity, 4);
-		file.read((char*)&falloffStopOpacity, 4);
-		file.read((char*)&emissiveColor, 16);
-		file.read((char*)&emissiveMultiple, 4);
-		file.read((char*)&softFalloffDepth, 4);
-		greyscaleTexture = NiString(file, 4, false);
-	} 
-	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		for (int i = 0; i < 11; i++) {
-			file.read((char*)&unkdata[i], 4);
-		}
-		emissiveTex = NiString(file, 4, false);
-		normalTex = NiString(file,4,false);
-		specularTex = NiString(file,4,false);	
-		for (int i = 0; i < 3; i++) {
-			file.read((char*)&unkdata2[i], 4);
-		}
-	}
 
+	file.read((char*)&falloffStartAngle, 4);
+	file.read((char*)&falloffStopAngle, 4);
+	file.read((char*)&falloffStartOpacity, 4);
+	file.read((char*)&falloffStopOpacity, 4);
+	file.read((char*)&emissiveColor, 16);
+	file.read((char*)&emissiveMultiple, 4);
+	file.read((char*)&softFalloffDepth, 4);
+	greyscaleTexture = NiString(file, 4, false);
+
+	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		envMapTexture = NiString(file, 4, false);
+		normalTexture = NiString(file, 4, false);
+		envMaskTexture = NiString(file, 4, false);
+		file.read((char*)&envMapScale, 4);
+	}
 }
 
 void BSEffectShaderProperty::Put(fstream& file) {
@@ -4394,26 +4393,20 @@ void BSEffectShaderProperty::Put(fstream& file) {
 	sourceTexture.Put(file, 4);
 	file.write((char*)&textureClampMode, 4);
 
-	if (header->userVersion <= 12 && header->userVersion2 < 130) {
-		file.write((char*)&falloffStartAngle, 4);
-		file.write((char*)&falloffStopAngle, 4);
-		file.write((char*)&falloffStartOpacity, 4);
-		file.write((char*)&falloffStopOpacity, 4);
-		file.write((char*)&emissiveColor, 16);
-		file.write((char*)&emissiveMultiple, 4);
-		file.write((char*)&softFalloffDepth, 4);
-		greyscaleTexture.Put(file, 4);
-	}	
+	file.write((char*)&falloffStartAngle, 4);
+	file.write((char*)&falloffStopAngle, 4);
+	file.write((char*)&falloffStartOpacity, 4);
+	file.write((char*)&falloffStopOpacity, 4);
+	file.write((char*)&emissiveColor, 16);
+	file.write((char*)&emissiveMultiple, 4);
+	file.write((char*)&softFalloffDepth, 4);
+	greyscaleTexture.Put(file, 4);
+
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		for (int i = 0; i < 11; i++) {
-			file.write((char*)&unkdata[i], 4);
-		}
-		emissiveTex.Put(file, 4);
-		normalTex.Put(file, 4);
-		specularTex.Put(file, 4);
-		for (int i = 0; i < 3; i++) {
-			file.write((char*)&unkdata2[i], 4);
-		}
+		envMapTexture.Put(file, 4);
+		normalTexture.Put(file, 4);
+		envMaskTexture.Put(file, 4);
+		file.write((char*)&envMapScale, 4);
 	}
 }
 
@@ -4455,6 +4448,13 @@ int BSEffectShaderProperty::CalcBlockSize() {
 	blockSize += 76;
 	blockSize += sourceTexture.str.length();
 	blockSize += greyscaleTexture.str.length();
+
+	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		blockSize += envMapTexture.str.length();
+		blockSize += normalTexture.str.length();
+		blockSize += envMaskTexture.str.length();
+		blockSize += 4;
+	}
 
 	return blockSize;
 }
