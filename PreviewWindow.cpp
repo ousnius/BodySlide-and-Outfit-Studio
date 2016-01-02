@@ -7,6 +7,8 @@ See the included LICENSE file
 #include "PreviewWindow.h"
 #include "BodySlideApp.h"
 
+#include <sstream>
+
 PreviewWindow::~PreviewWindow() {
 }
 
@@ -143,13 +145,65 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 }
 
 void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName) {
-	string texFile;
-	fromNif->GetTextureForShape(shapeName, texFile, 0);
-
 	bool isSkin = false;
+	bool hasMat = false;
+	wxString matFile;
+	string texFile;
+
 	NiShader* shader = fromNif->GetShader(shapeName);
-	if (shader && shader->IsSkin())
-		isSkin = true;
+	if (shader) {
+		if (shader->IsSkin())
+			isSkin = true;
+
+		// Find material file
+		if (shader->header->userVersion == 12 && shader->header->userVersion2 >= 130) {
+			matFile = shader->name;
+			if (!matFile.IsEmpty())
+				hasMat = true;
+		}
+	}
+
+	if (hasMat) {
+		matFile = matFile.Lower();
+		matFile.Replace("\\", "/");
+
+		wxMemoryBuffer data;
+		for (FSArchiveFile *archive : FSManager::archiveList()) {
+			if (archive) {
+				if (archive->hasFile(matFile.ToStdString())) {
+					wxMemoryBuffer outData;
+					archive->fileContents(matFile.ToStdString(), outData);
+
+					if (!outData.IsEmpty()) {
+						data = outData;
+						break;
+					}
+				}
+			}
+		}
+
+		if (!data.IsEmpty()) {
+			string content((char*)data.GetData(), data.GetDataLen());
+			istringstream contentStream(content);
+
+			MaterialFile mat(contentStream);
+			if (!mat.Failed()) {
+				if (mat.signature == MaterialFile::BGSM)
+					texFile = mat.diffuseTexture;
+				else if (mat.signature == MaterialFile::BGEM)
+					texFile = mat.baseTexture;
+
+				if (!texFile.empty()) {
+					texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
+					texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
+					texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
+					texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
+				}
+			}
+		}
+	}
+	else
+		fromNif->GetTextureForShape(shapeName, texFile, 0);
 
 	SetShapeTexture(shapeName, baseDataPath + texFile, isSkin);
 }

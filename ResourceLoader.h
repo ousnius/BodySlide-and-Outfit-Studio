@@ -19,12 +19,9 @@ public:
 	ResourceLoader();
 	virtual ~ResourceLoader();
 
-	void GetArchiveFiles(vector<string>& outList);
-
 	GLMaterial* AddMaterial(const string& textureFile,
 				const string& vShaderFile,
 				const string& fShaderFile);
-
 
 	void Cleanup();
 

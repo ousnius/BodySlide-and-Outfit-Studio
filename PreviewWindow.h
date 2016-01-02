@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "stdafx.h"
 #include "GLSurface.h"
 #include "NifFile.h"
+#include "MaterialFile.h"
 
 #include <wx/glcanvas.h>
 

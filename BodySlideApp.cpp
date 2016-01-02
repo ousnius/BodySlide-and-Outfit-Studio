@@ -17,7 +17,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
-#include "FSManager.h"
 
 ConfigurationManager Config;
 
@@ -119,6 +118,8 @@ bool BodySlideApp::OnInit() {
 	sliderView->Show();
 	SetTopWindow(sliderView);
 
+	InitArchives();
+
 	if (straightOutfitStudio)
 		LaunchOutfitStudio();
 
@@ -176,6 +177,57 @@ void BodySlideApp::OnFatalException() {
 	wxMessageBox("Fatal exception has occurred, the program will terminate.", "Fatal exception", wxICON_ERROR);
 }
 
+
+void BodySlideApp::InitArchives() {
+	// Auto-detect archives
+	if (!FSManager::exists()) {
+		vector<string> fileList;
+		GetArchiveFiles(fileList);
+
+		FSManager::addArchives(fileList);
+	}
+}
+
+void BodySlideApp::GetArchiveFiles(vector<string>& outList) {
+	string cp = "GameDataFiles";
+	int targ = Config.GetIntValue("TargetGame");
+
+	switch (targ) {
+		case 0:
+			cp += "/Fallout3";
+			break;
+		case 1:
+			cp += "/FalloutNewVegas";
+			break;
+		case 2:
+			cp += "/Skyrim";
+			break;
+		case 3:
+			cp += "/Fallout4";
+			break;
+	}
+
+	wxString activatedFiles = Config[cp];
+
+	wxStringTokenizer tokenizer(activatedFiles, ";");
+	map<wxString, bool> fsearch;
+	while (tokenizer.HasMoreTokens()) {
+		wxString val = tokenizer.GetNextToken().Trim(false);
+		val = val.Trim().MakeLower();
+		fsearch[val] = true;
+	}
+
+	wxString dataDir = Config["GameDataPath"];
+	wxArrayString files;
+	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
+	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
+	for (auto& f : files) {
+		f = f.AfterLast('\\').MakeLower();
+		if (fsearch.find(f) == fsearch.end()) {
+			outList.push_back(dataDir.ToStdString() + f.ToStdString());
+		}
+	}
+}
 
 void BodySlideApp::LoadData() {
 	wxLogMessage("Loading initial data...");

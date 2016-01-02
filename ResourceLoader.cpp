@@ -26,47 +26,6 @@ ResourceLoader::ResourceLoader() {
 ResourceLoader::~ResourceLoader() {
 }
 
-void ResourceLoader::GetArchiveFiles(vector<string>& outList) {
-	string cp = "GameDataFiles";
-	int targ = Config.GetIntValue("TargetGame");
-
-	switch (targ) {
-	case 0:
-		cp += "/Fallout3";
-		break;
-	case 1:
-		cp += "/FalloutNewVegas";
-		break;
-	case 2:
-		cp += "/Skyrim";
-		break;
-	case 3:
-		cp += "/Fallout4";
-		break;
-	}
-
-	wxString activatedFiles = Config[cp];
-
-	wxStringTokenizer tokenizer(activatedFiles, ";");
-	map<wxString, bool> fsearch;
-	while (tokenizer.HasMoreTokens()) {
-		wxString val = tokenizer.GetNextToken().Trim(false);
-		val = val.Trim().MakeLower();
-		fsearch[val] = true;
-	}
-
-	wxString dataDir = Config["GameDataPath"];
-	wxArrayString files;
-	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
-	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
-	for (auto& f : files) {
-		f = f.AfterLast('\\').MakeLower();
-		if (fsearch.find(f) == fsearch.end()) {
-			outList.push_back(dataDir.ToStdString() + f.ToStdString());
-		}
-	}
-}
-
 GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
 	MaterialKey key(textureFile, vShaderFile, fShaderFile);
 	auto it = materials.find(key);
@@ -85,18 +44,6 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 		if (Config["GameDataPath"].empty()) {
 			wxLogWarning("Texture file '%s' not found.", textureFile);
 			return nullptr;
-		}
-
-		// Auto-detect archives
-		if (!FSManager::exists()) {
-			vector<string> fileList;
-			GetArchiveFiles(fileList);
-
-			vector<string> archives;
-			for (auto &file : fileList)
-					archives.push_back(file);
-
-			FSManager::addArchives(archives);
 		}
 
 		wxMemoryBuffer data;

@@ -31,6 +31,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "GroupManager.h"
 #include "TriFile.h"
 #include "Log.h"
+#include "FSManager.h"
+#include "FSEngine.h"
 
 #include <wx/wxprec.h>
 #include <wx/srchctrl.h>
@@ -103,6 +105,10 @@ public:
 
 	void SetDefaultConfig();
 	wxString GetGameDataPath(TargetGame gameID);
+
+	void InitArchives();
+	void GetArchiveFiles(vector<string>& outList);
+
 	void LoadData();
 	void CharHook(wxKeyEvent& event) {
 		wxWindow* w = (wxWindow*)event.GetEventObject();

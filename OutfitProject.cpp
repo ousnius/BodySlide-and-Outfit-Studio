@@ -7,6 +7,11 @@ See the included LICENSE file
 #include "OutfitProject.h"
 #include "TriFile.h"
 #include "FBXWrangler.h"
+#include "MaterialFile.h"
+#include "FSManager.h"
+#include "FSEngine.h"
+
+#include <sstream>
 
 OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner) : appConfig(inConfig) {
 	morpherInitialized = false;
@@ -967,13 +972,67 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 		return;
 
 	if (textureFile == "_AUTO_") {
-		string nifTexFile;
-		workNif.GetTextureForShape(shapeName, nifTexFile);
-		if (nifTexFile.empty())
-			nifTexFile = "noimg.dds";
+		bool hasMat = false;
+		wxString matFile;
+		string texFile;
+
+		NiShader* shader = workNif.GetShader(shapeName);
+		if (shader) {
+			// Find material file
+			if (shader->header->userVersion == 12 && shader->header->userVersion2 >= 130) {
+				matFile = shader->name;
+				if (!matFile.IsEmpty())
+					hasMat = true;
+			}
+		}
+
+		if (hasMat) {
+			matFile = matFile.Lower();
+			matFile.Replace("\\", "/");
+
+			wxMemoryBuffer data;
+			for (FSArchiveFile *archive : FSManager::archiveList()) {
+				if (archive) {
+					if (archive->hasFile(matFile.ToStdString())) {
+						wxMemoryBuffer outData;
+						archive->fileContents(matFile.ToStdString(), outData);
+
+						if (!outData.IsEmpty()) {
+							data = outData;
+							break;
+						}
+					}
+				}
+			}
+
+			if (!data.IsEmpty()) {
+				string content((char*)data.GetData(), data.GetDataLen());
+				istringstream contentStream(content);
+
+				MaterialFile mat(contentStream);
+				if (!mat.Failed()) {
+					if (mat.signature == MaterialFile::BGSM)
+						texFile = mat.diffuseTexture;
+					else if (mat.signature == MaterialFile::BGEM)
+						texFile = mat.baseTexture;
+
+					if (!texFile.empty()) {
+						texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
+						texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
+						texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
+						texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
+					}
+				}
+			}
+		}
+		else
+			workNif.GetTextureForShape(shapeName, texFile);
+
+		if (texFile.empty())
+			texFile = "noimg.dds";
 
 		string texturesDir = appConfig["GameDataPath"];
-		wxString combinedTexFile = texturesDir + nifTexFile;
+		wxString combinedTexFile = texturesDir + texFile;
 		shapeTextures[shapeName] = combinedTexFile.ToStdString();
 	}
 	else
