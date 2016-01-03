@@ -1331,7 +1331,7 @@ public:
 	void TrimTexturePaths();
 
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
-	void CopyShader(const string& shapeDest, int srcShaderRef, NifFile& srcNif, bool addAlpha, int propRef1, int propRef2);
+	void CopyShader(const string& shapeDest, NifFile& srcNif);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, NiTriBasedGeom* geom);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, BSTriShape* geom);

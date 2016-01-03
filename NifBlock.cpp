@@ -3888,6 +3888,7 @@ BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr)
 	shaderFlags1 = 0x82400303;
 	shaderFlags2 = 0x8001;
 
+	wetMaterialNameRef = 0xFFFFFFFF;
 	environmentMapScale = 1.0f;
 	maxPasses = 1.0f;
 	scale = 1.0f;
