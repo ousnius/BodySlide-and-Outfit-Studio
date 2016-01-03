@@ -1024,6 +1024,8 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 					}
 				}
 			}
+			else
+				workNif.GetTextureForShape(shapeName, texFile);
 		}
 		else
 			workNif.GetTextureForShape(shapeName, texFile);
@@ -1032,11 +1034,11 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 			texFile = "noimg.dds";
 
 		string texturesDir = appConfig["GameDataPath"];
-		wxString combinedTexFile = texturesDir + texFile;
-		shapeTextures[shapeName] = combinedTexFile.ToStdString();
+		string combinedTexFile = texturesDir + texFile;
+		shapeTextures[shapeName] = combinedTexFile.c_str();
 	}
 	else
-		shapeTextures[shapeName] = textureFile;
+		shapeTextures[shapeName] = textureFile.c_str();
 }
 
 bool OutfitProject::IsValidShape(const string& shapeName) {

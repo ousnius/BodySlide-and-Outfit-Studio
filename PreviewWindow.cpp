@@ -201,11 +201,14 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 				}
 			}
 		}
+		else
+			fromNif->GetTextureForShape(shapeName, texFile);
 	}
 	else
-		fromNif->GetTextureForShape(shapeName, texFile, 0);
+		fromNif->GetTextureForShape(shapeName, texFile);
 
-	SetShapeTexture(shapeName, baseDataPath + texFile, isSkin);
+	string combinedTexFile = baseDataPath + texFile;
+	SetShapeTexture(shapeName, combinedTexFile.c_str(), isSkin);
 }
 
 void PreviewWindow::RightDrag(int dX, int dY) {
