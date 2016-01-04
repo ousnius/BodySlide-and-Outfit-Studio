@@ -10,7 +10,7 @@ See the included LICENSE file
 
 #include <wx/dir.h>
 #include <vector>
-#include <map>
+#include <unordered_map>
 #include <set>
 #include <unordered_set>
 
@@ -20,7 +20,7 @@ using namespace tinyxml2;
 class SliderCategory {
 	string name;
 	vector<string> sliders;
-	map<string, string> displayNames;
+	unordered_map<string, string> displayNames;
 	vector<string> sourceFiles;
 	unordered_set<string> uniqueSourceFiles;
 	bool isValid;
@@ -65,7 +65,7 @@ public:
 
 
 class SliderCategoryCollection {
-	map<string, SliderCategory> categories;
+	unordered_map<string, SliderCategory> categories;
 
 public:
 	// Loads all categories in the specified folder.
@@ -86,7 +86,7 @@ public:
 class SliderCategoryFile {
 	XMLDoc doc;
 	XMLElement* root;
-	map<string, XMLElement*> categoriesInFile;
+	unordered_map<string, XMLElement*> categoriesInFile;
 	int error;
 
 public:
