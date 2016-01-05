@@ -46,14 +46,11 @@ public:
 	void SetScale(const Vector3& inScale) { scale = inScale; }
 	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
 
-	int LoadSimple(const string& inFn, const string& groupName = "");
-	int LoadForNif(const string& inFn, const string& groupName = "");
-	int LoadForNif(fstream& base, const string& groupName = "");
+	int LoadForNif(const string& fileName);
+	int LoadForNif(fstream& base);
 
-	int LoadVertOrderMap(const string& inFn, map<int, int>& outMap, vector<Face>& origFaces, vector<Vector2>& origUVs,  const string& groupName = "");
-	int LoadVertOrderMap(fstream& base, map<int, int>& outMap,  vector<Face>& origFaces, vector<Vector2>& origUVs, const string& groupName = "");
-	int Load(const string& inFn, const string& groupName = "");
-	int Load(ifstream& base, const string& groupName = "");
+	int LoadVertOrderMap(const string& fileName, map<int, int>& outMap, vector<Face>& origFaces, vector<Vector2>& origUVs);
+	int LoadVertOrderMap(fstream& base, map<int, int>& outMap,  vector<Face>& origFaces, vector<Vector2>& origUVs);
 
 	int Save(const string& fileName);
 

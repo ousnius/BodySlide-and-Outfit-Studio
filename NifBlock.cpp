@@ -1208,7 +1208,9 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 	vertData.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		vertData[i].vert = (*verts)[i];
-		vertData[i].uv = (*uvs)[i];
+
+		if (uvs && uvs->size() == numVertices)
+			vertData[i].uv = (*uvs)[i];
 
 		vertData[i].bitangentX = 0.0f;
 		vertData[i].bitangentY = 0;

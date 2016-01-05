@@ -506,19 +506,16 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	}
 	else {
 		BSTriShape* triShapeBase;
-		string shaderName = "Materials\\actors\\Character\\BaseHumanFemale\\basehumanFemaleskin.bgsm";
-		string wetShaderName = "template/SkinTemplate_Wet.bgsm";
+		string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		if (staticMode) {
 			triShapeBase = new BSTriShape(workNif.hdr);
 			triShapeBase->Create(&v, &t, &uv, norms);
 			blank.AddBlock((NiObject*)triShapeBase, "BSTriShape");
-			shaderName = "Materials\\Clothes\\Hats\\WigGO.BGSM";
 			wetShaderName = "";
 		}
 		else {
 			BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.hdr);
 			nifBSTriShape->Create(&v, &t, &uv, norms);
-			nifBSTriShape->ssfFile = "Meshes\\Actors\\Character\\CharacterAssets\\FemaleBody.ssf";
 			blank.AddBlock((NiObject*)nifBSTriShape, "BSSubIndexTriShape");
 
 			BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.hdr);
@@ -535,18 +532,15 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 
 		int shaderID;
 		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.hdr);
-		nifShader->nameRef = blank.AddOrFindStringId(shaderName);
-		nifShader->name = shaderName;
-		nifShader->wetMaterialNameRef = blank.AddOrFindStringId(wetShaderName);
 		shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");
 		nifShader->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
+		nifShader->wetMaterialNameRef = blank.AddOrFindStringId(wetShaderName);
+		nifShader->nameRef = blank.AddOrFindStringId("");
 
 		int nameID = blank.AddOrFindStringId(shapeName);
 		triShapeBase->shaderPropertyRef = shaderID;
 		triShapeBase->nameRef = nameID;
 		triShapeBase->name = shapeName;
-
-
 	}
 
 	workNif.CopyGeometry(shapeName, blank, shapeName);
