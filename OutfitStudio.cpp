@@ -4150,11 +4150,13 @@ void wxGLPanel::EndBrushStroke() {
 		if (activeStroke->BrushType() != TBT_MASK) {
 			os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
 
-			vector<string> shapes;
-			os->project->GetShapes(shapes);
-			for (auto &s : shapes) {
-				os->UpdateShapeSource(s);
-				os->project->RefreshMorphShape(s);
+			if (!os->bEditSlider && activeStroke->BrushType() != TBT_WEIGHT) {
+				vector<string> shapes;
+				os->project->GetShapes(shapes);
+				for (auto &s : shapes) {
+					os->UpdateShapeSource(s);
+					os->project->RefreshMorphShape(s);
+				}
 			}
 		}
 
