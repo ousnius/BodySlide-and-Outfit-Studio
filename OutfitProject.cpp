@@ -256,22 +256,6 @@ string OutfitProject::OutfitName() {
 	return outfitName;
 }
 
-bool OutfitProject::IsDirty() {
-	return (shapeDirty.size() > 0);
-}
-
-void OutfitProject::Clean(const string& specificShape) {
-	shapeDirty.erase(specificShape);
-}
-
-void  OutfitProject::SetDirty(const string& specificShape) {
-	shapeDirty[specificShape] = true;
-}
-
-bool OutfitProject::IsDirty(const string& specificShape) {
-	return (shapeDirty.find(specificShape) != shapeDirty.end());
-}
-
 bool OutfitProject::ValidSlider(int index) {
 	if (index >= 0 && index < activeSet.size())
 		return true;
@@ -1045,7 +1029,6 @@ void OutfitProject::UpdateShapeFromMesh(const string& shapeName, const mesh* m) 
 		liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
 
 	workNif.SetVertsForShape(shapeName, liveVerts);
-	Clean(shapeName);
 }
 
 void OutfitProject::UpdateMorphResult(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& vertUpdates) {
@@ -1916,12 +1899,6 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 		morpher.RenameShape(shapeName, newShapeName);
 
 	activeSet.RenameShape(shapeName, newShapeName);
-
-	if (shapeDirty.find(shapeName) != shapeDirty.end()) {
-		shapeDirty.erase(shapeName);
-		shapeDirty[newShapeName] = true;
-	}
-
 	wxLogMessage("Renamed shape '%s' to '%s'.", shapeName, newShapeName);
 }
 

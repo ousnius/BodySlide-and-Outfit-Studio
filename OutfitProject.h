@@ -48,7 +48,6 @@ public:
 	map<string, vector<Vector3>> boneScaleVerts;
 	map<string, unordered_map<ushort, float>> workWeights;
 
-	map<string, bool> shapeDirty;
 	unordered_map<string, string> shapeTextures;
 
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
@@ -85,14 +84,6 @@ public:
 	string SliderSetName();
 	string SliderSetFileName();
 	string OutfitName();
-
-	bool IsDirty();
-	void Clean() {
-		shapeDirty.clear();
-	}
-	void Clean(const string& specificShape);
-	void SetDirty(const string& specificShape);
-	bool IsDirty(const string& specificShape);
 
 	bool ValidSlider(int index);
 	bool ValidSlider(const string& sliderName);

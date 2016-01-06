@@ -492,7 +492,6 @@ public:
 	vector<string> GetShapeList();
 
 	void UpdateShapeSource(const string& shapeName);
-	int PromptUpdateBase();
 
 	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
@@ -502,10 +501,6 @@ public:
 	string GetActiveBone();
 
 	bool NotifyStrokeStarting();
-
-	bool IsDirty();
-	bool IsDirty(const string& shapeName);
-	void SetClean(const string& shapeName);
 
 	void EnterSliderEdit(const string& sliderName);
 	void ExitSliderEdit();

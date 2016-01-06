@@ -633,8 +633,6 @@ void OutfitStudio::ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo, bool
 				project->workWeights.clear();
 			}
 		}
-		else
-			project->SetDirty(activeItem->shapeName);
 	}
 }
 
@@ -642,37 +640,7 @@ string OutfitStudio::GetActiveBone() {
 	return activeBone;
 }
 
-bool OutfitStudio::IsDirty() {
-	return project->IsDirty();
-}
-
-bool OutfitStudio::IsDirty(const string& shapeName) {
-	return project->IsDirty(shapeName);
-}
-
-void OutfitStudio::SetClean(const string& shapeName) {
-	project->Clean(shapeName);
-}
-
 void OutfitStudio::EnterSliderEdit(const string& sliderName) {
-	if (IsDirty(activeItem->shapeName)) {
-		int response = wxMessageBox("You have unsaved changes to the base mesh shape, do you wish to apply the changes? If you select NO, the changes will be lost.", wxMessageBoxCaptionStr, wxYES_NO | wxCANCEL, this);
-		if (response == wxCANCEL)
-			return;
-
-		if (response == wxYES) {
-			vector<string> shapes;
-			project->GetShapes(shapes);
-
-			for (auto &s : shapes) {
-				UpdateShapeSource(s);
-				project->RefreshMorphShape(s);
-			}
-		}
-		if (response == wxNO)
-			project->Clean();
-	}
-
 	bEditSlider = true;
 	activeSlider = sliderName;
 	SliderDisplay* d = sliderDisplays[activeSlider];
@@ -1294,19 +1262,9 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 		vector<mesh*> shapeMeshes;
 		vector<string> shapes;
 		project->GetShapes(shapes);
-		for (auto &s : shapes){
-			if (project->IsBaseShape(s)) {
-				if (IsDirty(s))
-					UpdateShapeSource(s);
-			}
-			else {
-				if (IsDirty(s)) {
-					UpdateShapeSource(s);
-					project->RefreshMorphShape(s);
-				}
+		for (auto &s : shapes)
+			if (!project->IsBaseShape(s))
 				shapeMeshes.push_back(glView->GetMesh(s));
-			}
-		}
 
 		bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
 
@@ -1467,19 +1425,9 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	vector<mesh*> shapeMeshes;
 	vector<string> shapes;
 	project->GetShapes(shapes);
-	for (auto &s : shapes){
-		if (project->IsBaseShape(s)) {
-			if (IsDirty(s))
-				UpdateShapeSource(s);
-		}
-		else {
-			if (IsDirty(s)) {
-				UpdateShapeSource(s);
-				project->RefreshMorphShape(s);
-			}
+	for (auto &s : shapes)
+		if (!project->IsBaseShape(s))
 			shapeMeshes.push_back(glView->GetMesh(s));
-		}
-	}
 
 	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
 
@@ -2285,43 +2233,7 @@ void OutfitStudio::ZeroSliders() {
 	}
 }
 
-int OutfitStudio::PromptUpdateBase() {
-	int response;
-	response = wxMessageBox("You have unsaved changes to the base mesh shape, do you wish to apply the changes?  If you select NO, the changes will be lost.", wxMessageBoxCaptionStr, wxYES_NO | wxCANCEL, this);
-
-	if (response == wxCANCEL)
-		return response;
-
-	if (response == wxYES) {
-		vector<string> shapes;
-		project->GetShapes(shapes);
-
-		for (auto &s : shapes) {
-			UpdateShapeSource(s);
-			project->RefreshMorphShape(s);
-		}
-
-		//OnSliderConform(wxCommandEvent());
-		//glView->GetStrokeManager()->InvalidateHistoricalBVH();
-		glView->GetStrokeManager()->Clear();
-	}
-
-	if (response == wxNO) {
-		project->Clean();
-		//glView->GetStrokeManager()->InvalidateHistoricalBVH();
-		glView->GetStrokeManager()->Clear();
-	}
-	return response;
-}
-
 void OutfitStudio::OnSlider(wxScrollEvent& event) {
-	int type = event.GetEventType();
-	static bool sentinel = false;
-
-	if (type == wxEVT_SCROLL_CHANGED)
-		if (sentinel)
-			return;
-
 	wxSlider* s = ((wxSlider*)event.GetEventObject());
 	if (!s)
 		return;
@@ -2334,13 +2246,6 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 		project->ClearBoneScale(false);
 		if (boneScale)
 			boneScale->SetValue(0);
-	}
-
-	if (IsDirty() && !bEditSlider) {
-		sentinel = true;
-		if (PromptUpdateBase() == wxCANCEL)
-			return;
-		sentinel = false;
 	}
 
 	if (outfitBones && sliderName == "boneScale") {
@@ -2372,10 +2277,6 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 
 	string choice;
 	bool hi = true;
-
-	if (IsDirty())
-		if (PromptUpdateBase() == wxCANCEL)
-			return;
 
 	presets.LoadPresets("SliderPresets", choice, names, true);
 	presets.GetPresetNames(names);
@@ -2961,10 +2862,6 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 		UpdateProgress(1, "Initializing data...");
 		project->InitConform();
 
-		if (IsDirty(i->shapeName)) {
-			UpdateShapeSource(i->shapeName);
-			project->RefreshMorphShape(i->shapeName);
-		}
 		UpdateProgress(50, "Conforming: " + i->shapeName);
 
 		project->morpher.CopyMeshMask(glView->GetMesh(i->shapeName), i->shapeName);
@@ -4165,12 +4062,6 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		activeBrush = &smoothBrush;
 	}
 
-	if (activeBrush->Type() == TBT_WEIGHT && os->IsDirty()) {
-		os->PromptUpdateBase();
-		activeBrush = savedBrush;
-		return false;
-	}
-
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMesh(), activeBrush);
 	activeBrush->setConnected(bConnectedEdit);
 	activeBrush->setMirror(bXMirror);
@@ -4256,8 +4147,16 @@ void wxGLPanel::EndBrushStroke() {
 			}
 		}
 
-		if (activeStroke->BrushType() != TBT_MASK)
+		if (activeStroke->BrushType() != TBT_MASK) {
 			os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
+
+			vector<string> shapes;
+			os->project->GetShapes(shapes);
+			for (auto &s : shapes) {
+				os->UpdateShapeSource(s);
+				os->project->RefreshMorphShape(s);
+			}
+		}
 
 		activeStroke = nullptr;
 		activeBrush = savedBrush;
