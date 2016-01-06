@@ -63,6 +63,8 @@ public:
 		boneName = "bogus";
 		boneID = -1;
 		order = -1;
+		refCount = 0;
+		parent = nullptr;
 		isValidBone = false;
 		hasSkinXform = false;
 	}
@@ -181,7 +183,7 @@ public:
 
 class AnimSkeleton {
 	AnimBone invBone;
-	AnimSkeleton() { unknownCount = 0; isValid = false; allowCustom = false; }
+	AnimSkeleton() { unknownCount = 0; isValid = false; allowCustom = true; }
 	map<string, AnimBone> allBones;
 	map<string, AnimBone> customBones;
 	string rootBone;

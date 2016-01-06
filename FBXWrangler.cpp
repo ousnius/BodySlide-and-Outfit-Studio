@@ -143,8 +143,10 @@ void FBXWrangler::AddSkeleton(NifFile* skeletonNif) {
 
 	float rx, ry, rz;
 
-	NiNode* root = (NiNode*)skeletonNif->GetBlock(skeletonNif->GetNodeID("Root"));
+	NiNode* root = (NiNode*)skeletonNif->GetBlock(skeletonNif->GetNodeID(Config["SkeletonRootName"]));
 	NiNode* COM = (NiNode*)skeletonNif->GetBlock(skeletonNif->GetNodeID("COM"));
+	if (!COM)
+		COM = (NiNode*)skeletonNif->GetBlock(skeletonNif->GetNodeID("NPC COM [COM ]"));
 
 	FbxNode* parentNode = skellynode;
 	if (root) {
@@ -253,19 +255,11 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const string& shapeName) {
 		return;
 
 	for (auto shapeskin : anim->shapeSkinning) {
-		if (shapeName != "" && shapeskin.first != shapeName) {
+		if (shapeName != "" && shapeskin.first != shapeName)
 			continue;
-		}
+
 		string curShape = shapeskin.first;
-		auto askin = shapeskin.second;
-
-		//	FbxPose* bindPose = FbxPose::Create(pCurrentScene, "BindPose");
-		//	bindPose->SetIsBindPose(true);
 		FbxNode* shapeNode = rootNode->FindChild(curShape.c_str());
-		if (shapeNode) {
-			//		bindPose->Add(shapeNode, shapeNode->EvaluateGlobalTransform());
-		}
-
 
 		FbxSkin* skin = FbxSkin::Create(pCurrentScene, string(curShape + "_sk").c_str());
 		unordered_map<ushort, float> outWeights;
@@ -276,21 +270,17 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const string& shapeName) {
 				FbxCluster* aCluster = FbxCluster::Create(pCurrentScene, string(bn + "_sk").c_str());
 				aCluster->SetLink(jointNode);
 				aCluster->SetLinkMode(FbxCluster::eTotalOne);
-				int bi = anim->GetShapeBoneIndex(curShape, bn);
 				anim->GetWeights(curShape, bn, outWeights);
-				//for (auto vw : askin.boneWeights[bi].weights) {
-				for (auto vw: outWeights) {
+				for (auto vw : outWeights)
 					aCluster->AddControlPointIndex(vw.first, vw.second);
-				}
+
 				FbxMatrix xforMat = jointNode->EvaluateGlobalTransform();
-				//			bindPose->Add(jointNode, xforMat);
 				skin->AddCluster(aCluster);
 			}
 		}
 
 		((FbxMesh*)shapeNode->GetNodeAttribute())->AddDeformer(skin);
 	}
-//	pCurrentScene->AddPose(bindPose);
 }
 
 bool FBXWrangler::ExportScene(const std::string& fileName) {

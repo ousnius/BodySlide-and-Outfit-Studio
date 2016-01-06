@@ -80,7 +80,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif) {
 bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape, bool newRefNif) {
 	vector<string> boneNames;
 	vector<int> BoneIndices;
-	string invalidBones = "";
+	string nonRefBones;
 
 	if (newRefNif)
 		refNif = nif;
@@ -95,7 +95,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape, bool newRefNif) {
 		if (!AnimSkeleton::getInstance().RefBone(bn)) {
 			AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
 			if (!cstm.isValidBone)
-				invalidBones += bn + "\n";
+				nonRefBones += bn + "\n";
 
 			vector<Vector3> r;
 			nif->GetNodeTransform(bn, r, cstm.trans, cstm.scale);
@@ -122,10 +122,8 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape, bool newRefNif) {
 
 	shapeSkinning[shape] = AnimSkin(nif, shape, BoneIndices);
 
-	if (!invalidBones.empty()) {
-		wxLogWarning("Bones in shape '%s' not found in reference skeleton:\n%s", shape, invalidBones);
-		wxMessageBox(wxString::Format("Bones in shape '%s' not found in reference skeleton:\n\n%s", shape, invalidBones), "Invalid Bones");
-	}
+	if (!nonRefBones.empty())
+		wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", shape, nonRefBones);
 
 	return true;
 }
@@ -317,10 +315,8 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 
 		unordered_map<unsigned short, vertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
-			if (!AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
-				continue;
-
-			nif->SetNodeTransform(boneName, xForm);
+			if (AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
+				nif->SetNodeTransform(boneName, xForm, true);
 
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
@@ -347,12 +343,11 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 				if (!bptr || !bptr->hasSkinXform) {
 					incomplete = true;
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bSphereOffset, bw.bSphereRadius);
-					nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
 				}
-				else if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm)) {
+				else if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm))
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, xForm, bw.bSphereOffset, bw.bSphereRadius);
-					nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
-				}
+
+				nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
 			}
 		}
 
@@ -434,8 +429,10 @@ int AnimSkeleton::LoadFromNif(const string& fileName) {
 		return 2;
 	}
 
-	if (isValid)
+	if (isValid) {
 		allBones.clear();
+		customBones.clear();
+	}
 
 	AddBone(rootBone).LoadFromNif(&refSkeletonNif, nodeID, nullptr);
 	isValid = true;
@@ -446,8 +443,11 @@ int AnimSkeleton::LoadFromNif(const string& fileName) {
 AnimBone& AnimSkeleton::AddBone(const string& boneName, bool bCustom) {
 	if (!bCustom)
 		return allBones[boneName];
-	else if (allowCustom)
-		return customBones[boneName];
+	else if (allowCustom) {
+		AnimBone* cb = &customBones[boneName];
+		cb->boneName = boneName;
+		return *cb;
+	}
 	else
 		return invBone;
 }
@@ -542,6 +542,15 @@ int AnimSkeleton::GetActiveBoneNames(vector<string>& outBoneNames) {
 		if (ab.second.refCount > 0) {
 			outBoneNames.push_back(ab.first);
 			c++;
+		}
+	}
+
+	if (allowCustom) {
+		for (auto &cb : customBones) {
+			if (cb.second.refCount > 0) {
+				outBoneNames.push_back(cb.first);
+				c++;
+			}
 		}
 	}
 	return c;

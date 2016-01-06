@@ -914,9 +914,13 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 		return;
 
 	destShader->header = &hdr;
-	if (!srcShader->name.empty()) {
+	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
 		destShader->nameRef = AddOrFindStringId(srcShader->name);
 		destShader->name = srcShader->name;
+	}
+	else {
+		destShader->nameRef = 0xFFFFFFFF;
+		destShader->name.clear();
 	}
 
 	// Add shader block to nif
@@ -1478,20 +1482,41 @@ bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, 
 	return false;
 }
 
-bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform) {
-	for (auto& block : blocks) {
-		if (block->blockType == NINODE) {
-			NiNode* node = (NiNode*)block;
-			if (!node->name.compare(nodeName)) {
-				node->rotation[0] = inXform.rotation[0];
-				node->rotation[1] = inXform.rotation[1];
-				node->rotation[2] = inXform.rotation[2];
-				node->translation = inXform.translation;
-				node->scale = inXform.scale;
-				return true;
+bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool& rootChildrenOnly) {
+	if (rootChildrenOnly) {
+		NiNode* root = dynamic_cast<NiNode*>(blocks[0]);
+		if (root) {
+			for (auto& child : root->children) {
+				NiNode* node = dynamic_cast<NiNode*>(GetBlock(child));
+				if (node) {
+					if (!node->name.compare(nodeName)) {
+						node->rotation[0] = inXform.rotation[0];
+						node->rotation[1] = inXform.rotation[1];
+						node->rotation[2] = inXform.rotation[2];
+						node->translation = inXform.translation;
+						node->scale = inXform.scale;
+						return true;
+					}
+				}
 			}
 		}
 	}
+	else {
+		for (auto& block : blocks) {
+			if (block->blockType == NINODE) {
+				NiNode* node = (NiNode*)block;
+				if (!node->name.compare(nodeName)) {
+					node->rotation[0] = inXform.rotation[0];
+					node->rotation[1] = inXform.rotation[1];
+					node->rotation[2] = inXform.rotation[2];
+					node->translation = inXform.translation;
+					node->scale = inXform.scale;
+					return true;
+				}
+			}
+		}
+	}
+
 	return false;
 }
 

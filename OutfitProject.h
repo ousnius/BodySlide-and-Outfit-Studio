@@ -143,7 +143,6 @@ public:
 	void GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts);
 	void GetShapes(vector<string>& outShapeNames);
 	void GetActiveBones(vector<string>& outBoneNames);
-	void GetBones(vector<string>& outBoneNames);
 
 	string GetShapeTexture(const string& shapeName);
 

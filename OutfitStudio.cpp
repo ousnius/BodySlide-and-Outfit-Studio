@@ -3713,21 +3713,21 @@ void OutfitStudio::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	vector<string> bones;
-	project->GetBones(bones);
 	unordered_map<ushort, float> boneWeights;
-
 	for (auto &i : selectedItems) {
 		mesh* m = glView->GetMesh(i->shapeName);
 		if (!m)
 			continue;
 
 		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
-		for (auto &b : bones) {
-			boneWeights.clear();
-			project->GetWorkAnim()->GetWeights(i->shapeName, b, boneWeights);
-			for (auto &bw : boneWeights)
-				m->vcolors[bw.first].x = 1.0f;
+		auto& bones = project->GetWorkAnim()->shapeBones;
+		if (bones.find(i->shapeName) != bones.end()) {
+			for (auto &b : bones[i->shapeName]) {
+				boneWeights.clear();
+				project->GetWorkAnim()->GetWeights(i->shapeName, b, boneWeights);
+				for (auto &bw : boneWeights)
+					m->vcolors[bw.first].x = 1.0f;
+			}
 		}
 	}
 

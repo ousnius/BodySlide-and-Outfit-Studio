@@ -1348,7 +1348,7 @@ public:
 
 	int GetNodeID(const string& nodeName);
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
-	bool SetNodeTransform(const string& nodeName, SkinTransform& inXform);
+	bool SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool& rootChildrenOnly = false);
 
 	int GetShapeBoneList(const string& shapeName, vector<string>& outList);
 	int GetShapeBoneIDList(const string& shapeName, vector<int>& outList);

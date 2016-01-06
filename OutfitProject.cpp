@@ -933,20 +933,6 @@ void OutfitProject::GetActiveBones(vector<string>& outBoneNames) {
 	AnimSkeleton::getInstance().GetActiveBoneNames(outBoneNames);
 }
 
-void OutfitProject::GetBones(vector<string>& outBoneNames) {
-	set<string> boneSet;
-
-	vector<string> shapes;
-	GetShapes(shapes);
-	for (auto &s : shapes) {
-		vector<string> curBones;
-		workNif.GetShapeBoneList(s, curBones);
-		boneSet.insert(curBones.begin(), curBones.end());
-	}
-
-	outBoneNames.assign(boneSet.begin(), boneSet.end());
-}
-
 string OutfitProject::GetShapeTexture(const string& shapeName) {
 	if (shapeTextures.find(shapeName) != shapeTextures.end())
 		return shapeTextures[shapeName];
@@ -1274,9 +1260,7 @@ bool OutfitProject::HasUnweighted() {
 	vector<string> shapes;
 	GetShapes(shapes);
 	for (auto &s : shapes) {
-		vector<string> bones;
 		vector<Vector3> verts;
-		GetBones(bones);
 		workNif.GetVertsForShape(s, verts);
 
 		unordered_map<int, int> influences;
@@ -1284,13 +1268,15 @@ bool OutfitProject::HasUnweighted() {
 			influences.emplace(i, 0);
 
 		unordered_map<ushort, float> boneWeights;
-		for (auto &b : bones) {
-			boneWeights.clear();
-			workAnim.GetWeights(s, b, boneWeights);
-			for (int i = 0; i < verts.size(); i++) {
-				auto id = boneWeights.find(i);
-				if (id != boneWeights.end())
-					influences.at(i)++;
+		if (workAnim.shapeBones.find(s) != workAnim.shapeBones.end()) {
+			for (auto &b : workAnim.shapeBones[s]) {
+				boneWeights.clear();
+				workAnim.GetWeights(s, b, boneWeights);
+				for (int i = 0; i < verts.size(); i++) {
+					auto id = boneWeights.find(i);
+					if (id != boneWeights.end())
+						influences.at(i)++;
+				}
 			}
 		}
 
@@ -1299,7 +1285,7 @@ bool OutfitProject::HasUnweighted() {
 		for (auto &i : influences) {
 			if (i.second == 0) {
 				if (!unweighted)
-					m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+					m->ColorChannelFill(0, 0.0f);
 				m->vcolors[i.first].x = 1.0f;
 				unweighted = true;
 			}
@@ -2026,7 +2012,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 
 int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeName, const string& mergeShape) {
 	FBXWrangler fbxw;
-	string invalidBones;
+	string nonRefBones;
 
 	bool result = fbxw.ImportScene(fileName);
 	if (!result)
@@ -2076,7 +2062,7 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 				// Not found in reference skeleton, use default values
 				AnimBone& cstm = AnimSkeleton::getInstance().AddBone(bn, true);
 				if (!cstm.isValidBone)
-					invalidBones += bn + "\n";
+					nonRefBones += bn + "\n";
 
 				AnimSkeleton::getInstance().RefBone(bn);
 			}
@@ -2089,10 +2075,8 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 
 		workNif.SetShapeBoneIDList(useShapeName, boneIndices);
 
-		if (!invalidBones.empty()) {
-			wxLogWarning("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, invalidBones);
-			wxMessageBox(wxString::Format("Bones in shape '%s' not found in reference skeleton:\n\n%s", useShapeName, invalidBones), "Invalid Bones");
-		}
+		if (!nonRefBones.empty())
+			wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", useShapeName, nonRefBones);
 	}
 
 	return 0;
