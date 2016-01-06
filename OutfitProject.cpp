@@ -103,77 +103,81 @@ string OutfitProject::Save(const string& strFileName,
 		owner->UpdateProgress(prog += step, "Adding outfit shapes...");
 	}
 
-	// Copy the reference slider info and add the outfit data to them.
-	int id;
-	string targ;
-	string targSlider;
-	string targSliderData;
-	string targDataName;
-
-	string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
 	string saveDataPath = "ShapeData\\" + strDataDir;
 
-	DiffDataSets osdDiffs;
-	map<string, map<string, string>> osdNames;
+	if (activeSet.size() > 0) {
+		// Copy the reference slider info and add the outfit data to them.
+		int id;
+		string targ;
+		string targSlider;
+		string targSliderData;
+		string targDataName;
 
-	prog = 10;
-	step = 50 / activeSet.size();
-	owner->UpdateProgress(prog);
-	for (int i = 0; i < activeSet.size(); i++) {
-		id = outSet.CopySlider(&activeSet[i]);
-		outSet[id].Clear();
-		if (copyRef && !baseShape.empty()) {
-			targ = ShapeToTarget(baseShape);
-			targSlider = activeSet[i].TargetDataName(targ);
-			if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
-				if (activeSet[i].IsLocalData(targSlider)) {
-					targDataName = activeSet[i].DataFileName(targSlider);
-					int lastIndex = targDataName.find_last_of('\\') + 1;
+		string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
 
-					targSliderData = osdFileName + "\\" + targDataName.substr(lastIndex, targDataName.length() - lastIndex);
-					outSet[id].AddDataFile(targ, targSlider, targSliderData);
+		DiffDataSets osdDiffs;
+		map<string, map<string, string>> osdNames;
 
-					unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
-					osdDiffs.LoadSet(targSlider, targ, *diff);
-					osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
-				}
-				else {
-					targSliderData = activeSet[i].DataFileName(targSlider);
-					outSet[id].AddDataFile(targ, targSlider, targSliderData, false);
-				}
-			}
-		}
+		prog = 10;
+		step = 50 / activeSet.size();
+		owner->UpdateProgress(prog);
 
-		for (auto &s : shapes) {
-			if (IsBaseShape(s))
-				continue;
+		for (int i = 0; i < activeSet.size(); i++) {
+			id = outSet.CopySlider(&activeSet[i]);
+			outSet[id].Clear();
+			if (copyRef && !baseShape.empty()) {
+				targ = ShapeToTarget(baseShape);
+				targSlider = activeSet[i].TargetDataName(targ);
+				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
+					if (activeSet[i].IsLocalData(targSlider)) {
+						targDataName = activeSet[i].DataFileName(targSlider);
+						int lastIndex = targDataName.find_last_of('\\') + 1;
 
-			targ = ShapeToTarget(s);
-			targSlider = activeSet[i].TargetDataName(targ);
-			if (targSlider.empty())
-				targSlider = targ + outSet[i].name;
+						targSliderData = osdFileName + "\\" + targDataName.substr(lastIndex, targDataName.length() - lastIndex);
+						outSet[id].AddDataFile(targ, targSlider, targSliderData);
 
-			if (morpher.GetResultDiffSize(s, activeSet[i].name) > 0) {
-				string shapeDataFolder = activeSet.ShapeToDataFolder(s);
-				if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
-					targSliderData = osdFileName + "\\" + targSlider;
-					outSet[i].AddDataFile(targ, targSlider, targSliderData);
-
-					unordered_map<ushort, Vector3> diff;
-					morpher.GetRawResultDiff(s, activeSet[i].name, diff);
-					osdDiffs.LoadSet(targSlider, targ, diff);
-					osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
-				}
-				else {
-					targSliderData = activeSet[i].DataFileName(targSlider);
-					outSet[i].AddDataFile(targ, targSlider, targSliderData, false);
+						unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
+						osdDiffs.LoadSet(targSlider, targ, *diff);
+						osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
+					}
+					else {
+						targSliderData = activeSet[i].DataFileName(targSlider);
+						outSet[id].AddDataFile(targ, targSlider, targSliderData, false);
+					}
 				}
 			}
+
+			for (auto &s : shapes) {
+				if (IsBaseShape(s))
+					continue;
+
+				targ = ShapeToTarget(s);
+				targSlider = activeSet[i].TargetDataName(targ);
+				if (targSlider.empty())
+					targSlider = targ + outSet[i].name;
+
+				if (morpher.GetResultDiffSize(s, activeSet[i].name) > 0) {
+					string shapeDataFolder = activeSet.ShapeToDataFolder(s);
+					if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
+						targSliderData = osdFileName + "\\" + targSlider;
+						outSet[i].AddDataFile(targ, targSlider, targSliderData);
+
+						unordered_map<ushort, Vector3> diff;
+						morpher.GetRawResultDiff(s, activeSet[i].name, diff);
+						osdDiffs.LoadSet(targSlider, targ, diff);
+						osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
+					}
+					else {
+						targSliderData = activeSet[i].DataFileName(targSlider);
+						outSet[i].AddDataFile(targ, targSlider, targSliderData, false);
+					}
+				}
+			}
+			owner->UpdateProgress(prog += step, "Calculating slider data...");
 		}
-		owner->UpdateProgress(prog += step, "Calculating slider data...");
+
+		osdDiffs.SaveData(osdNames);
 	}
-
-	osdDiffs.SaveData(osdNames);
 
 	prog = 60;
 	owner->UpdateProgress(prog, "Creating slider set file...");

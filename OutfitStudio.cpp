@@ -1275,6 +1275,11 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 		OnSaveSliderSetAs(event);
 	}
 	else {
+		if (!project->GetWorkNif()->IsValid()) {
+			wxMessageBox("There are no valid shapes loaded!", "Error");
+			return;
+		}
+
 		if (project->HasUnweighted()) {
 			wxLogWarning("Unweighted vertices found.");
 			int error = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
@@ -1323,6 +1328,11 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
 	int result = wxID_CANCEL;
+
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox("There are no valid shapes loaded!", "Error");
+		return;
+	}
 
 	if (project->HasUnweighted()) {
 		wxLogWarning("Unweighted vertices found.");
