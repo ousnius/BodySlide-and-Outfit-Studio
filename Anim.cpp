@@ -12,7 +12,8 @@ bool AnimInfo::AddShapeBone(const string& shape, AnimBone& boneDataRef) {
 		if (!bone.compare(boneDataRef.boneName))
 			return false;
 
-	shapeSkinning[shape].boneNames[boneDataRef.boneName] = shapeBones.size();
+	shapeSkinning[shape].boneNames[boneDataRef.boneName] = shapeBones[shape].size();
+	shapeSkinning[shape].bNeedsBoundsCalc = true;
 	shapeBones[shape].push_back(boneDataRef.boneName);
 	AnimSkeleton::getInstance().RefBone(boneDataRef.boneName);
 	return true;
@@ -165,7 +166,6 @@ void AnimInfo::SetShapeBoneXForm(const string& shape, const string& boneName, Sk
 		return;
 
 	shapeSkinning[shape].boneWeights[b].xform = stransform;
-
 }
 
 bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
@@ -203,24 +203,21 @@ bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
 			d = max(d, tot.DistanceTo(v));
 		}
 
-	   Matrix4 mat;
-	   Vector3 trans;
+		Matrix4 mat;
+		Vector3 trans;
 
-	   AnimBone* xformRef = 	AnimSkeleton::getInstance().GetBonePtr(bn.first);
-	   if (xformRef->hasSkinXform) {
-		   mat = xformRef->skinRot;
-		   trans = xformRef->skinTrans;
-	   }
-	   else {
-			// Just FYI, I have no idea if the transform here is even slightly appropriate.  
-		   mat = shapeSkinning[shape].boneWeights[bn.second].xform.ToMatrix();		   
-	   }
+		AnimBone* xformRef = AnimSkeleton::getInstance().GetBonePtr(bn.first);
+		if (xformRef->hasSkinXform) {
+			mat = xformRef->skinRot;
+			trans = xformRef->skinTrans;
+		}
+		else 
+			mat = shapeSkinning[shape].boneWeights[bn.second].xform.ToMatrix();
 
 		tot = mat * tot;
 		tot = tot + trans;
 		shapeSkinning[shape].boneWeights[bn.second].bSphereOffset = tot;
 		shapeSkinning[shape].boneWeights[bn.second].bSphereRadius = d;
-
 	}
 	return true;
 }

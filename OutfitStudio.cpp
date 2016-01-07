@@ -3472,7 +3472,6 @@ void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 
 			project->AddBoneRef(bone);
 			outfitBones->AppendItem(bonesRoot, bone);
-			/* TODO: Insert bone into outfit */
 		}
 	}
 }

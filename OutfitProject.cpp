@@ -1284,11 +1284,6 @@ bool OutfitProject::HasUnweighted() {
 }
 
 void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos, bool clear) {
-	vector<string> bones;
-	vector<Vector3> boneRot;
-	Vector3 boneTranslation;
-	float boneScale;
-
 	ClearBoneScale(false);
 
 	vector<string> shapes;
@@ -1310,20 +1305,21 @@ void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos, bool clear
 			boneScaleOffsets.emplace(s, vector<Vector3>(verts->size()));
 		it = boneScaleOffsets.find(s);
 
-		workNif.GetShapeBoneList(s, bones);
-		for (auto &b : bones) {
+		for (auto &b : workAnim.shapeBones[s]) {
 			if (b == bone) {
-				workNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
+				SkinTransform xForm;
+				workAnim.GetBoneXForm(b, xForm);
 				if (workWeights[s].empty())
 					workAnim.GetWeights(s, b, workWeights[s]);
 
 				for (auto &w : workWeights[s]) {
-					Vector3 dir = (*verts)[w.first] - boneTranslation;
+					Vector3 dir = (*verts)[w.first] - xForm.translation;
 					dir.Normalize();
 					Vector3 offset = dir * w.second * sliderPos / 5.0f;
 					(*verts)[w.first] += offset;
 					it->second[w.first] += offset;
 				}
+				break;
 			}
 		}
 
@@ -1366,21 +1362,22 @@ void OutfitProject::ClearBoneScale(bool clear) {
 }
 
 void OutfitProject::AddBoneRef(const string& boneName) {
-	AnimBone boneRef;
-	AnimSkeleton::getInstance().GetBone(boneName, boneRef);
+	AnimBone *boneRef = AnimSkeleton::getInstance().GetBonePtr(boneName);
+	if (!boneRef)
+		return;
+
+	SkinTransform xForm;
+	workAnim.GetBoneXForm(boneName, xForm);
+
+	boneRef->skinRot.Set(xForm.rotation);
+	boneRef->skinTrans = xForm.translation;
+	boneRef->hasSkinXform = true;
 
 	vector<string> shapes;
 	GetShapes(shapes);
-	for (auto &s : shapes) {
-		if (IsBaseShape(s))
-			continue;
-
-		if (workAnim.AddShapeBone(s, boneRef)) {
-			SkinTransform xForm;
-			workAnim.GetBoneXForm(boneName, xForm);
+	for (auto &s : shapes)
+		if (workAnim.AddShapeBone(s, *boneRef))
 			workAnim.SetShapeBoneXForm(s, boneName, xForm);
-		}
-	}
 }
 
 void OutfitProject::BuildShapeSkinPartions(const string& destShape) {
