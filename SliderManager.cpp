@@ -1,6 +1,6 @@
 /*
 BodySlide and Outfit Studio
-Copyright (C) 2015  Caliente & ousnius
+Copyright (C) 2016  Caliente & ousnius
 See the included LICENSE file
 */
 
