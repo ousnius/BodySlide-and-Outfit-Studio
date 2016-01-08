@@ -1098,6 +1098,11 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 	else
 		boneList = inBoneList;
 
+	if (boneList->size() <= 0) {
+		owner->UpdateProgress(90);
+		return;
+	}
+
 	DiffDataSets dds;
 	unordered_map<ushort, float> weights;
 	for (auto &bone : *boneList) {
@@ -1192,6 +1197,11 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 	}
 	else
 		boneList = inBoneList;
+
+	if (boneList->size() <= 0) {
+		owner->UpdateProgress(100, "Finished");
+		return;
+	}
 
 	int step = 50 / boneList->size();
 	int prog = 40;
