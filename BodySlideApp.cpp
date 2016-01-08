@@ -120,6 +120,13 @@ bool BodySlideApp::OnInit() {
 
 	InitArchives();
 
+	if (!Config["GameDataPath"].empty()) {
+		bool dirWritable = wxFileName::IsDirWritable(Config["GameDataPath"]);
+		bool dirReadable = wxFileName::IsDirReadable(Config["GameDataPath"]);
+		if (!dirWritable || !dirReadable)
+			wxMessageBox("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct.", "Warning", wxICON_WARNING);
+	}
+
 	if (straightOutfitStudio)
 		LaunchOutfitStudio();
 
