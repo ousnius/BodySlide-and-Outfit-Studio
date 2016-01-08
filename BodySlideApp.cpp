@@ -80,7 +80,6 @@ bool BodySlideApp::OnInit() {
 
 	wxInitAllImageHandlers();
 
-
 	preview = nullptr;
 	sliderView = nullptr;
 	previewBaseNif = nullptr;
@@ -154,9 +153,12 @@ bool BodySlideApp::OnExceptionInMainLoop() {
 	catch (...) {
 		error = "unknown error";
 	}
+	
+	if (sliderView)
+		sliderView->delayLoad.Stop();
 
 	logger.SetFormatter(false);
-	wxLogFatalError("Unexpected exception has occurred: %s, the program will terminate.", error);
+	wxLogError("Unexpected exception has occurred: %s, the program will terminate.", error);
 	wxMessageBox(wxString::Format("Unexpected exception has occurred: %s, the program will terminate.", error), "Unexpected exception", wxICON_ERROR);
 	return false;
 }
@@ -172,15 +174,21 @@ void BodySlideApp::OnUnhandledException() {
 	catch (...) {
 		error = "unknown error";
 	}
+	
+	if (sliderView)
+		sliderView->delayLoad.Stop();
 
 	logger.SetFormatter(false);
-	wxLogFatalError("Unhandled exception has occurred: %s, the program will terminate.", error);
+	wxLogError("Unhandled exception has occurred: %s, the program will terminate.", error);
 	wxMessageBox(wxString::Format("Unhandled exception has occurred: %s, the program will terminate.", error), "Unhandled exception", wxICON_ERROR);
 }
 
 void BodySlideApp::OnFatalException() {
+	if (sliderView)
+		sliderView->delayLoad.Stop();
+
 	logger.SetFormatter(false);
-	wxLogFatalError("Fatal exception has occurred, the program will terminate.");
+	wxLogError("Fatal exception has occurred, the program will terminate.");
 	wxMessageBox("Fatal exception has occurred, the program will terminate.", "Fatal exception", wxICON_ERROR);
 }
 
