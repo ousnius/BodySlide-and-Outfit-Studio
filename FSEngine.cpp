@@ -39,11 +39,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 FSArchiveHandler *FSArchiveHandler::openArchive(const std::string &fn) {
 	if (BSA::canOpen(fn)) {
 		BSA *bsa = new BSA(fn);
-		if (bsa->open()) {
-			//qDebug() << "BSA Open: " << fn;
+		if (bsa->open())
 			return new FSArchiveHandler(bsa);
-		}
-		//qDebug() << "fsengine error:" << fn << ":" << bsa->statusText();
+
 		delete bsa;
 	}
 	return 0;
