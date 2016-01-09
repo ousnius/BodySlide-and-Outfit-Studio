@@ -1024,6 +1024,16 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	if (srcAlphaProp) {
 		destAlphaProp = new NiAlphaProperty(*srcAlphaProp);
 		destAlphaProp->header = &hdr;
+
+		if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
+			destAlphaProp->nameRef = AddOrFindStringId(srcAlphaProp->name);
+			destAlphaProp->name = srcAlphaProp->name;
+		}
+		else {
+			destAlphaProp->nameRef = 0xFFFFFFFF;
+			destAlphaProp->name.clear();
+		}
+
 		if (geom) {
 			if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY)
 				geom->propertiesRef2 = blocks.size();
