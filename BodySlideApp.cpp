@@ -110,10 +110,14 @@ bool BodySlideApp::OnInit() {
 	int y = Config.GetIntValue("BodySlideFrame.y");
 	int w = Config.GetIntValue("BodySlideFrame.width");	
 	int h = Config.GetIntValue("BodySlideFrame.height");
+	string maximized = Config["BodySlideFrame.maximized"];
 
 	wxLogMessage("Loading BodySlide frame at X:%d Y:%d with W:%d H:%d...", x, y, w, h);
 	sliderView = new BodySlideFrame(this, wxSize(w, h));
 	sliderView->SetPosition(wxPoint(x, y));
+	if (maximized == "true")
+		sliderView->Maximize();
+
 	sliderView->Show();
 	SetTopWindow(sliderView);
 
@@ -549,8 +553,12 @@ void BodySlideApp::LaunchOutfitStudio() {
 		int y = Config.GetIntValue("OutfitStudioFrame.y");
 		int w = Config.GetIntValue("OutfitStudioFrame.width");
 		int h = Config.GetIntValue("OutfitStudioFrame.height");
+		string maximized = Config["OutfitStudioFrame.maximized"];
 
 		outfitStudio = new OutfitStudio(sliderView, wxPoint(x, y), wxSize(w, h), Config);
+		if (maximized == "true")
+			outfitStudio->Maximize();
+
 		outfitStudio->Show();
 	}
 }
@@ -2642,8 +2650,13 @@ void BodySlideFrame::OnMoveWindow(wxMoveEvent& event) {
 }
 
 void BodySlideFrame::OnSetSize(wxSizeEvent& event) {
-	wxSize p = event.GetSize();
-	Config.SetValue("BodySlideFrame.width", p.x);
-	Config.SetValue("BodySlideFrame.height", p.y);
+	bool maximized = IsMaximized();
+	if (!maximized) {
+		wxSize p = event.GetSize();
+		Config.SetValue("BodySlideFrame.width", p.x);
+		Config.SetValue("BodySlideFrame.height", p.y);
+	}
+
+	Config.SetValue("BodySlideFrame.maximized", maximized ? "true" : "false");
 	event.Skip();
 }

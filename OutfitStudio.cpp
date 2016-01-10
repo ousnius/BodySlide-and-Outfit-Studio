@@ -340,9 +340,14 @@ void OutfitStudio::OnMoveWindow(wxMoveEvent& event) {
 }
 
 void OutfitStudio::OnSetSize(wxSizeEvent& event) {
-	wxSize p = event.GetSize();
-	Config.SetValue("OutfitStudioFrame.width", p.x);
-	Config.SetValue("OutfitStudioFrame.height", p.y);
+	bool maximized = IsMaximized();
+	if (!maximized) {
+		wxSize p = event.GetSize();
+		Config.SetValue("OutfitStudioFrame.width", p.x);
+		Config.SetValue("OutfitStudioFrame.height", p.y);
+	}
+
+	Config.SetValue("OutfitStudioFrame.maximized", maximized ? "true" : "false");
 	event.Skip();
 }
 
