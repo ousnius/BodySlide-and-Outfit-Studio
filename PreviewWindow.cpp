@@ -76,11 +76,7 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			gls.AddMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeName);
 			m->BuildTriAdjacency();
-			if (m->smoothSeamNormals) {
-				NiShader* shader = nif->GetShader(shapeList[i]);
-				if (shader && !shader->IsSkin())
-					ToggleSmoothSeams(m);
-			}
+			m->SmoothNormals();
 		}
 		else if (shapeName) {
 			continue;
@@ -89,11 +85,7 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			gls.AddMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
-			if (m->smoothSeamNormals) {
-				NiShader* shader = nif->GetShader(shapeList[i]);
-				if (shader && !shader->IsSkin())
-					ToggleSmoothSeams(m);
-			}
+			m->SmoothNormals();
 		}
 	}
 }
@@ -110,11 +102,8 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			gls.ReloadMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeName);
 			m->BuildTriAdjacency();
-			if (m->smoothSeamNormals) {
-				NiShader* shader = nif->GetShader(shapeList[i]);
-				if (shader && !shader->IsSkin())
-					ToggleSmoothSeams(m);
-			}
+			m->SmoothNormals();
+
 			auto iter = shapeTextures.find(shapeName);
 			if (iter != shapeTextures.end())
 				m->material = iter->second;
@@ -129,11 +118,8 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			gls.ReloadMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
-			if (m->smoothSeamNormals) {
-				NiShader* shader = nif->GetShader(shapeList[i]);
-				if (shader && !shader->IsSkin())
-					ToggleSmoothSeams(m);
-			}
+			m->SmoothNormals();
+
 			auto iter = shapeTextures.find(shapeList[i]);
 			if (iter != shapeTextures.end())
 				m->material = iter->second;

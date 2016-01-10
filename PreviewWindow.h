@@ -62,13 +62,6 @@ public:
 		baseDataPath = path;
 	}
 
-	void Update(int shapeIndex, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
-		gls.Update(shapeIndex, verts, uvs);
-		string n = gls.GetMeshName(shapeIndex);
-		gls.GetMesh(n)->SmoothNormals();
-		Refresh();
-	}
-
 	void Refresh() {
 		Render();
 	}

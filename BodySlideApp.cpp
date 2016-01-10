@@ -398,17 +398,29 @@ void BodySlideApp::ActivatePreset(const string &presetName, const bool& updatePr
 
 	Config.SetValue("SelectedPreset", presetName);
 	sliderManager.InitializeSliders(presetName);
-	Slider* slider = nullptr;
-	for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
-		slider = &sliderManager.slidersBig[i];
-		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_HI);
 
-		slider = &sliderManager.slidersSmall[i];
-		sliderView->SetSliderPosition(slider->name.c_str(), slider->value, SLIDER_LO);
+	bool zapChanged = false;
+	Slider* sliderSmall = nullptr;
+	Slider* sliderBig = nullptr;
+	for (int i = 0; i < sliderManager.slidersBig.size(); i++) {
+		sliderSmall = &sliderManager.slidersSmall[i];
+		sliderBig = &sliderManager.slidersBig[i];
+
+		if (sliderBig->zap && !zapChanged) {
+			auto* sd = sliderView->GetSliderDisplay(sliderBig->name);
+			if (sd) {
+				float zapValueUI = sd->zapCheckHi->IsChecked() ? 1.0f : 0.0f;
+				if (sliderBig->value != zapValueUI)
+					zapChanged = true;
+			}
+		}
+
+		sliderView->SetSliderPosition(sliderSmall->name.c_str(), sliderSmall->value, SLIDER_LO);
+		sliderView->SetSliderPosition(sliderBig->name.c_str(), sliderBig->value, SLIDER_HI);
 	}
 
-	if (updatePreview && preview)
-		UpdatePreview();
+	if (preview && updatePreview)
+		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
 }
 
 void BodySlideApp::RefreshSliders() {
