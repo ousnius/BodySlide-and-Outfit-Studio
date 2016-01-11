@@ -777,6 +777,10 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 
+	activeSlider.clear();
+	bEditSlider = false;
+	MenuExitSliderEdit();
+
 	delete project;
 	project = new OutfitProject(appConfig, this);
 
@@ -898,6 +902,10 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
+
+	activeSlider.clear();
+	bEditSlider = false;
+	MenuExitSliderEdit();
 
 	delete project;
 	project = new OutfitProject(appConfig, this);
@@ -1170,6 +1178,7 @@ void OutfitStudio::AnimationGUIFromProj() {
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
 		outfitBones->DeleteChildren(bonesRoot);
 
+	activeBone.clear();
 	project->GetActiveBones(activeBones);
 	for (auto &bone : activeBones)
 		outfitBones->AppendItem(bonesRoot, bone);
