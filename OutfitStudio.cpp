@@ -1945,8 +1945,10 @@ void OutfitStudio::OnSetView(wxCommandEvent& event) {
 		glView->SetView('R');
 }
 
-void OutfitStudio::OnTogglePerspective(wxCommandEvent& WXUNUSED(event)) {
-	bool enabled = GetToolBar()->GetToolState(XRCID("btnViewPerspective"));
+void OutfitStudio::OnTogglePerspective(wxCommandEvent& event) {
+	bool enabled = event.IsChecked();
+	GetMenuBar()->Check(event.GetId(), enabled);
+	GetToolBar()->ToggleTool(event.GetId(), enabled);
 	glView->SetPerspective(enabled);
 }
 

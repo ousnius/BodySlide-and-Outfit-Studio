@@ -778,6 +778,26 @@
 					<help>Recalculate normals on active mesh</help>
 				</object>
 				<object class="separator" />
+				<object class="wxMenu" name="viewSelect">
+					<label>View</label>
+					<object class="wxMenuItem" name="btnViewFront">
+						<label>Front\tShift+1</label>
+					</object>
+					<object class="wxMenuItem" name="btnViewBack">
+						<label>Back\tShift+2</label>
+					</object>
+					<object class="wxMenuItem" name="btnViewLeft">
+						<label>Left\tShift+3</label>
+					</object>
+					<object class="wxMenuItem" name="btnViewRight">
+						<label>Right\tShift+4</label>
+					</object>
+					<object class="wxMenuItem" name="btnViewPerspective">
+						<label>Perspective\tShift+5</label>
+						<checkable>1</checkable>
+						<checked>1</checked>
+					</object>
+				</object>
 				<object class="wxMenuItem" name="btnGhostMode">
 					<label>Toggle Ghost Mode\tG</label>
 					<help>Show the active mesh in translucent mode.</help>
