@@ -81,6 +81,23 @@
 				<radio>1</radio>
 			</object>
 			<object class="separator" />
+			<object class="tool" name="btnXMirror">
+				<label>X Mirror</label>
+				<tooltip>Mirror edits across the X axis.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>XMirror.png</bitmap>
+				<toggle>1</toggle>
+				<checked>1</checked>
+			</object>
+			<object class="tool" name="btnConnected">
+				<label>Edit Connected Only\tC</label>
+				<tooltip>Edit only vertices that are connected to the ones under the brush within the brush radius.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>EditConnected.png</bitmap>
+				<toggle>1</toggle>
+				<checked>0</checked>
+			</object>
+			<object class="separator" />
 			<object class="tool" name="btnViewFront">
 				<label>View Front</label>
 				<tooltip>Change camera view to the front.</tooltip>

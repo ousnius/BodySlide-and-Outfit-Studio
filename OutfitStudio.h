@@ -124,23 +124,19 @@ public:
 			ShowTransformTool();
 		}
 	}
+
 	bool GetXMirror() {
 		return bXMirror;
 	}
 	void SetXMirror(bool on = true) {
 		bXMirror = on;
 	}
-	void ToggleXMirror() {
-		if (bXMirror)
-			bXMirror = false;
-		else
-			bXMirror = true;
+
+	bool GetConnectedEdit() {
+		return bConnectedEdit;
 	}
-	void ToggleConnectedEdit() {
-		if (bConnectedEdit)
-			bConnectedEdit = false;
-		else
-			bConnectedEdit = true;
+	void SetConnectedEdit(bool on = true) {
+		bConnectedEdit = on;
 	}
 
 	void SetShapeGhostMode(const string& shapeName, bool on = true) {
@@ -765,12 +761,18 @@ private:
 
 	void OnBrushSettingsSlider(wxScrollEvent& event);
 
-	void OnXMirror(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleXMirror();
+	void OnXMirror(wxCommandEvent& event) {
+		bool enabled = event.IsChecked();
+		GetMenuBar()->Check(event.GetId(), enabled);
+		GetToolBar()->ToggleTool(event.GetId(), enabled);
+		glView->SetXMirror(enabled);
 	}
 
-	void OnConnectedOnly(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleConnectedEdit();
+	void OnConnectedOnly(wxCommandEvent& event) {
+		bool enabled = event.IsChecked();
+		GetMenuBar()->Check(event.GetId(), enabled);
+		GetToolBar()->ToggleTool(event.GetId(), enabled);
+		glView->SetConnectedEdit(enabled);
 	}
 
 	void OnUndo(wxCommandEvent& WXUNUSED(event)) {
