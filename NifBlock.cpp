@@ -41,9 +41,6 @@ NiHeader::NiHeader() {
 	numStrings = 0;
 	blocks = nullptr;
 	blockType = NIHEADER;
-	exportInfo1.outputNull = true;
-	exportInfo2.outputNull = true;
-	exportInfo3.outputNull = true;
 }
 
 void NiHeader::Clear() {
@@ -137,12 +134,12 @@ void NiHeader::Put(fstream& file) {
 	creator.Put(file, 1);
 	exportInfo1.Put(file, 1);
 	exportInfo2.Put(file, 1);
-	if (userVersion2 >= 130) {
+	if (userVersion2 >= 130)
 		exportInfo3.Put(file, 1);
-	}
+
 	file.write((char*)&numBlockTypes, 2);
 	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes[i].Put(file, 4,false);
+		blockTypes[i].Put(file, 4, false);
 
 	for (int i = 0; i < numBlocks; i++)
 		file.write((char*)&blockIndex[i], 2);
@@ -153,46 +150,43 @@ void NiHeader::Put(fstream& file) {
 	file.write((char*)&numStrings, 4);
 	file.write((char*)&maxStringLen, 4);
 	for (int i = 0; i < numStrings; i++)
-		strings[i].Put(file, 4,false);
+		strings[i].Put(file, 4, false);
 
 	file.write((char*)&unkInt2, 4);
 }
 
 
-NiString::NiString(bool wantOutputNull) {
-	outputNull = wantOutputNull;
+NiString::NiString() {
 }
 
-NiString::NiString(fstream& file, int szSize, bool wantNullOutput) {
-	outputNull = wantNullOutput;
+NiString::NiString(fstream& file, int szSize) {
 	Get(file, szSize);
 }
 
 void NiString::Put(fstream& file, int szSize, bool wantNullOutput) {
 	if (szSize == 1) {
 		byte smSize = str.length();
-		//if (!smSize && outputNull)
 		if (wantNullOutput)
 			smSize += 1;
+
 		file.write((char*)&smSize, 1);
 	}
 	else if (szSize == 2) {
 		ushort medSize = str.length();
-		//if (!medSize && outputNull)
 		if (wantNullOutput)
 			medSize += 1;
+
 		file.write((char*)&medSize, 2);
 	}
 	else if (szSize == 4) {
 		uint bigSize = str.length();
-		//if (!bigSize && outputNull)
 		if (wantNullOutput)
 			bigSize += 1;
+
 		file.write((char*)&bigSize, 4);
 	}
 
 	file.write(str.c_str(), str.length());
-	//if (str.length() == 0 && outputNull)
 	if (wantNullOutput)
 		file.put(0);
 }
@@ -1313,7 +1307,7 @@ void BSSubIndexTriShape::Put(fstream& file) {
 			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++)
 				file.write((char*)&subIndexRecordsB[i].extraData[j], 4);
 		}
-		ssfFile.Put(file, 2,false);
+		ssfFile.Put(file, 2, false);
 	}
 }
 
@@ -4325,7 +4319,6 @@ BSEffectShaderProperty::BSEffectShaderProperty(NiHeader& hdr) {
 	uvOffset.v = 0.0f;
 	uvScale.u = 1.0f;
 	uvScale.v = 1.0f;
-	sourceTexture = NiString(false);
 	textureClampMode = 0;
 
 	falloffStartAngle = 1.0f;
@@ -4338,11 +4331,7 @@ BSEffectShaderProperty::BSEffectShaderProperty(NiHeader& hdr) {
 	emissiveColor.a = 0.0f;
 	emissiveMultiple = 0.0f;
 	softFalloffDepth = 0.0f;
-	greyscaleTexture = NiString(false);
 
-	envMapTexture = NiString(false);
-	normalTexture = NiString(false);
-	envMaskTexture = NiString(false);
 	envMapScale = 1.0f;
 }
 
@@ -4364,7 +4353,7 @@ void BSEffectShaderProperty::Get(fstream& file) {
 	file.read((char*)&uvOffset.v, 4);
 	file.read((char*)&uvScale.u, 4);
 	file.read((char*)&uvScale.v, 4);
-	sourceTexture = NiString(file, 4, false);
+	sourceTexture = NiString(file, 4);
 	file.read((char*)&textureClampMode, 4);
 
 	file.read((char*)&falloffStartAngle, 4);
@@ -4374,12 +4363,12 @@ void BSEffectShaderProperty::Get(fstream& file) {
 	file.read((char*)&emissiveColor, 16);
 	file.read((char*)&emissiveMultiple, 4);
 	file.read((char*)&softFalloffDepth, 4);
-	greyscaleTexture = NiString(file, 4, false);
+	greyscaleTexture = NiString(file, 4);
 
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		envMapTexture = NiString(file, 4, false);
-		normalTexture = NiString(file, 4, false);
-		envMaskTexture = NiString(file, 4, false);
+		envMapTexture = NiString(file, 4);
+		normalTexture = NiString(file, 4);
+		envMaskTexture = NiString(file, 4);
 		file.read((char*)&envMapScale, 4);
 	}
 }
@@ -4393,7 +4382,7 @@ void BSEffectShaderProperty::Put(fstream& file) {
 	file.write((char*)&uvOffset.v, 4);
 	file.write((char*)&uvScale.u, 4);
 	file.write((char*)&uvScale.v, 4);
-	sourceTexture.Put(file, 4);
+	sourceTexture.Put(file, 4, false);
 	file.write((char*)&textureClampMode, 4);
 
 	file.write((char*)&falloffStartAngle, 4);
@@ -4403,12 +4392,12 @@ void BSEffectShaderProperty::Put(fstream& file) {
 	file.write((char*)&emissiveColor, 16);
 	file.write((char*)&emissiveMultiple, 4);
 	file.write((char*)&softFalloffDepth, 4);
-	greyscaleTexture.Put(file, 4);
+	greyscaleTexture.Put(file, 4, false);
 
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
-		envMapTexture.Put(file, 4);
-		normalTexture.Put(file, 4);
-		envMaskTexture.Put(file, 4);
+		envMapTexture.Put(file, 4, false);
+		normalTexture.Put(file, 4, false);
+		envMaskTexture.Put(file, 4, false);
 		file.write((char*)&envMapScale, 4);
 	}
 }
@@ -4453,10 +4442,10 @@ int BSEffectShaderProperty::CalcBlockSize() {
 	blockSize += greyscaleTexture.str.length();
 
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
+		blockSize += 16;
 		blockSize += envMapTexture.str.length();
 		blockSize += normalTexture.str.length();
 		blockSize += envMaskTexture.str.length();
-		blockSize += 4;
 	}
 
 	return blockSize;
@@ -4635,7 +4624,7 @@ BSShaderTextureSet::BSShaderTextureSet(NiHeader& hdr) {
 		numTextures = 6;
 
 	for (int i = 0; i < numTextures; i++)
-		textures.push_back(NiString(false));
+		textures.push_back(NiString());
 }
 
 BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader& hdr) {
@@ -4652,7 +4641,7 @@ void BSShaderTextureSet::Get(fstream& file) {
 
 	file.read((char*)&numTextures, 4);
 	for (int i = 0; i < numTextures; i++)
-		textures.push_back(NiString(file, 4, false));
+		textures.push_back(NiString(file, 4));
 }
 	
 void BSShaderTextureSet::Put(fstream& file) {

@@ -188,9 +188,9 @@ enum BSLightingShaderPropertyShaderType : uint {
 class NiString {
 public:
 	string str;
-	bool outputNull;
-	NiString(bool wantOutputNull = true);
-	NiString(fstream& file, int szSize, bool wantNullOutput = true);
+
+	NiString();
+	NiString(fstream& file, int szSize);
 	void Put(fstream& file, int szSize, bool wantNullOutput = true);
 	void Get(fstream& file, int szSize);
 };

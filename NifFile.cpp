@@ -824,12 +824,12 @@ int NifFile::AddOrFindStringId(const string& str) {
 
 	int r = hdr.strings.size();
 	NiString ns;
-	ns.outputNull = true;
 	ns.str = str;
 	hdr.strings.push_back(ns);
 	hdr.numStrings++;
 	if (str.length() > hdr.maxStringLen)
 		hdr.maxStringLen = str.length();
+
 	return r;
 }
 
