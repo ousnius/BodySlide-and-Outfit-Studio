@@ -242,10 +242,12 @@ public:
 
 	void SetShapes(const string& set, vector<string>& outShapeNames);
 
-	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
-	int GetAllSets(vector<SliderSet>& outAppendSets);
 	// Gets a single slider set from the XML document based on the name.
 	int GetSet(const string& setName, SliderSet& outSliderSet);
+	// Adds all of the slider sets in the file to the supplied slider set vector. Does not clear the vector before doing so.
+	int GetAllSets(vector<SliderSet>& outAppendSets);
+	// Gets only the output file path for the set
+	void GetSetOutputFilePath(const string& setName, string& outFilePath);
 	// Updates a slider set in the xml document with the provided set's information.
 	// If the set does not already exist in the file (based on name) the set is added.
 	int UpdateSet(SliderSet& inSliderSet);

@@ -338,6 +338,24 @@ int SliderSetFile::GetAllSets(vector<SliderSet> &outAppendSets) {
 	return 0;
 }
 
+void SliderSetFile::GetSetOutputFilePath(const string &setName, string &outFilePath) {
+	outFilePath.clear();
+
+	if (!HasSet(setName))
+		return;
+
+	XMLElement* setPtr = setsInFile[setName];
+	XMLElement* tmpElement = setPtr->FirstChildElement("OutputPath");
+	if (tmpElement)
+		outFilePath += tmpElement->GetText();
+
+	tmpElement = setPtr->FirstChildElement("OutputFile");
+	if (tmpElement) {
+		outFilePath += "\\";
+		outFilePath += tmpElement->GetText();
+	}
+}
+
 int SliderSetFile::UpdateSet(SliderSet &inSliderSet) {
 	XMLElement* setPtr;
 	string setName;

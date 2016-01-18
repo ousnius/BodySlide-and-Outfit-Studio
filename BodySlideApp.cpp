@@ -334,6 +334,7 @@ int BodySlideApp::LoadSliderSets() {
 	dataSets.Clear();
 	outfitNameSource.clear();
 	outfitNameOrder.clear();
+	outFileCount.clear();
 
 	wxArrayString files;
 	wxDir::GetAllFiles("SliderSets", &files, "*.osp");
@@ -345,11 +346,18 @@ int BodySlideApp::LoadSliderSets() {
 		if (sliderDoc.fail())
 			continue;
 
+		string outFilePath;
 		vector<string> outfitNames;
 		sliderDoc.GetSetNamesUnsorted(outfitNames, false);
 		for (int i = 0; i < outfitNames.size(); i++) {
 			outfitNameSource[outfitNames[i]] = file.ToStdString();
 			outfitNameOrder.push_back(outfitNames[i]);
+
+			sliderDoc.GetSetOutputFilePath(outfitNames[i], outFilePath);
+			if (!outFilePath.empty()) {
+				std::transform(outFilePath.begin(), outFilePath.end(), outFilePath.begin(), ::tolower);
+				outFileCount[outFilePath].push_back(outfitNames[i]);
+			}
 		}
 	}
 
@@ -1403,7 +1411,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	return 0;
 }
 
-int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, string>& failedOutfits, bool clean, bool tri, const string& custPath) {
+int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string>& failedOutfits, bool clean, bool tri, const string& custPath) {
 	string datapath = custPath;
 	string outFileNameSmall;
 	string outFileNameBig;
@@ -1445,6 +1453,35 @@ int BodySlideApp::BuildListBodies(const vector<string>& outfitList, map<string, 
 			Config.SetValue("GameDataPath", cwd.ToStdString() + "\\");
 		}
 		datapath = Config["GameDataPath"];
+	}
+
+	for (auto &filePath : outFileCount) {
+		if (filePath.second.size() > 1) {
+			wxArrayString selFilePaths;
+			for (auto &file : filePath.second) {
+				// Only if it's going to be batch built
+				if (find(outfitList.begin(), outfitList.end(), file) != outfitList.end())
+					selFilePaths.Add(file);
+			}
+
+			// Same file would not be written more than once
+			if (selFilePaths.size() <= 1)
+				continue;
+
+			wxSingleChoiceDialog setChoice(sliderView, "The following sets will override the same files.\nPlease decide which one to use and select it in the list below.", "Choose output set", selFilePaths);
+			if (setChoice.ShowModal() == wxID_CANCEL) {
+				wxLogMessage("Aborted batch build by not choosing a file override.");
+				return 1;
+			}
+
+			// Remove others from the list of outfits to build
+			selFilePaths.Remove(setChoice.GetStringSelection());
+			for (auto &file : selFilePaths) {
+				auto result = find(outfitList.begin(), outfitList.end(), file);
+				if (result != outfitList.end())
+					outfitList.erase(result);
+			}
+		}
 	}
 
 	progWnd = new wxProgressDialog("Processing Outfits", "Starting...", 1000, nullptr, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);

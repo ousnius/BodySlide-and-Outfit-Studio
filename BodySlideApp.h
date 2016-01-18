@@ -79,6 +79,8 @@ class BodySlideApp : public wxApp {
 	vector<string> allGroups;
 	SliderSetGroupCollection gCollection;
 
+	map<string, vector<string>> outFileCount;	// Counts how many sets write to the same output file
+
 	string curOutfit;
 
 	string previewBaseName;
@@ -192,7 +194,7 @@ public:
 	void RebuildPreviewMeshes();
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
-	int BuildListBodies(const vector<string>& outfitList, map<string, string>& failedOutfits, bool remove = false, bool tri = false, const string& custPath = "");
+	int BuildListBodies(vector<string>& outfitList, map<string, string>& failedOutfits, bool remove = false, bool tri = false, const string& custPath = "");
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
