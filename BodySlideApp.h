@@ -199,6 +199,8 @@ public:
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
 	void SetSliderChanged(const wxString& sliderName, bool isLo);
+
+	int UpdateSliderPositions(const string& presetName);
 	int SaveSliderPositions(const string& outputFile, const string& presetName, vector<string>& groups);
 };
 
@@ -309,6 +311,7 @@ private:
 	void OnChoosePreset(wxCommandEvent& event);
 
 	void OnSavePreset(wxCommandEvent& event);
+	void OnSavePresetAs(wxCommandEvent& event);
 	void OnGroupManager(wxCommandEvent& event);
 
 	void OnPreview(wxCommandEvent& event);

@@ -13,6 +13,8 @@ using namespace tinyxml2;
 
 void PresetCollection::Clear() {
 	namedSliderPresets.clear();
+	presetFileNames.clear();
+	presetGroups.clear();
 }
 
 void PresetCollection::GetPresetNames(vector<string>& outNames) {
@@ -90,6 +92,22 @@ bool PresetCollection::GetSmallPreset(const string& set, const string& slider, f
 	return false;
 }
 
+string PresetCollection::GetPresetFileName(const string& set) {
+	auto result = presetFileNames.find(set);
+	if (result != presetFileNames.end())
+		return result->second;
+
+	return "";
+}
+
+void PresetCollection::GetPresetGroups(const string& set, vector<string>& outGroups) {
+	outGroups.clear();
+
+	auto result = presetGroups.find(set);
+	if (result != presetGroups.end())
+		outGroups = result->second;
+}
+
 bool PresetCollection::LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter, bool allPresets) {
 	XMLDoc doc;
 	XMLElement* root;
@@ -114,10 +132,15 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 		element = root->FirstChildElement("Preset");
 		while (element) {
 			bool skip = true;
+			vector<string> groups;
+
 			g = element->FirstChildElement("Group");
 			while (g) {
+				string groupName = g->Attribute("name");
+				groups.push_back(groupName);
+
 				for (auto &filter : groupFilter) {
-					if (g->Attribute("name") == filter) {
+					if (groupName == filter) {
 						skip = false;
 						break;
 					}
@@ -133,6 +156,9 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 			}
 
 			presetName = element->Attribute("name");
+			presetFileNames[presetName] = file;
+			presetGroups[presetName] = groups;
+
 			setSlider = element->FirstChildElement("SetSlider");
 			while (setSlider) {
 				sliderName = setSlider->Attribute("name");

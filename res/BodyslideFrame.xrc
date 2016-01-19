@@ -75,13 +75,30 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxEXPAND</flag>
 						<border>5</border>
-						<object class="wxButton" name="btnPresets">
-							<size>-1,20</size>
-							<fg>#000000</fg>
-							<tooltip>Save the current slider settings as a preset</tooltip>
-							<label>Save Preset...</label>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSavePreset">
+									<fg>#000000</fg>
+									<tooltip>Saves the new slider values to the currently selected preset</tooltip>
+									<label>Save Preset</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSavePresetAs">
+									<fg>#000000</fg>
+									<tooltip>Save the current slider settings as a new preset</tooltip>
+									<label>Save Preset As...</label>
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">

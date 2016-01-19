@@ -69,6 +69,14 @@ public:
 		presetCollection.GetPresetNames(outNames);
 	}
 
+	string GetPresetFileNames(const string& set) {
+		return presetCollection.GetPresetFileName(set);
+	}
+
+	void GetPresetGroups(const string& set, vector<string>& outGroups) {
+		presetCollection.GetPresetGroups(set, outGroups);
+	}
+
 	void ClearPresets() {
 		presetCollection.Clear();
 	}

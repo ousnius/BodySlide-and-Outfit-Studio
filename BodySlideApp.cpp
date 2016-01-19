@@ -41,7 +41,8 @@ BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnOutfitStudio"), BodySlideFrame::OnOutfitStudio)
 	EVT_BUTTON(XRCID("btnSettings"), BodySlideFrame::OnSettings)
 	EVT_BUTTON(XRCID("btnAbout"), BodySlideFrame::OnAbout)
-	EVT_BUTTON(XRCID("btnPresets"), BodySlideFrame::OnSavePreset)
+	EVT_BUTTON(XRCID("btnSavePreset"), BodySlideFrame::OnSavePreset)
+	EVT_BUTTON(XRCID("btnSavePresetAs"), BodySlideFrame::OnSavePresetAs)
 	EVT_BUTTON(XRCID("btnGroupManager"), BodySlideFrame::OnGroupManager)
 	EVT_BUTTON(XRCID("btnChooseGroups"), BodySlideFrame::OnChooseGroups)
 	EVT_BUTTON(XRCID("btnRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
@@ -1727,8 +1728,18 @@ void BodySlideApp::SetSliderChanged(const wxString& sliderName, bool isLo) {
 	sliderManager.SetChanged(sstr, isLo);
 }
 
+int BodySlideApp::UpdateSliderPositions(const string& presetName) {
+	string outfitName = Config["SelectedOutfit"];
+	vector<string> groups;
+
+	string outputFile = sliderManager.GetPresetFileNames(presetName);
+	sliderManager.GetPresetGroups(presetName, groups);
+
+	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
+}
+
 int BodySlideApp::SaveSliderPositions(const string& outputFile, const string& presetName, vector<string>& groups) {
-	string outfitName = Config.GetCString("SelectedOutfit");
+	string outfitName = Config["SelectedOutfit"];
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
@@ -2345,6 +2356,24 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
+	string presetName = Config["SelectedPreset"];
+	if (presetName.empty())
+		return;
+
+	int error = app->UpdateSliderPositions(presetName);
+	if (error) {
+		wxLogError("Failed to save preset (%d)!", error);
+		wxMessageBox(wxString::Format("Failed to save preset (%d)!", error), "Error");
+	}
+
+	app->LoadPresets("");
+	app->PopulatePresetList(presetName);
+}
+
+void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
+	if (OutfitIsEmpty())
+		return;
+
 	vector<string> groups;
 	PresetSaveDialog psd(this);
 
@@ -2360,8 +2389,8 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 
 	int error = app->SaveSliderPositions(fname, presetName, groups);
 	if (error) {
-		wxLogError("Failed to save preset (%d)!", error);
-		wxMessageBox(wxString::Format("Failed to save preset (%d)!", error), "Error");
+		wxLogError("Failed to save preset as '%s' (%d)!", fname, error);
+		wxMessageBox(wxString::Format("Failed to save preset as '%s' (%d)!", fname, error), "Error");
 	}
 
 	app->LoadPresets("");
