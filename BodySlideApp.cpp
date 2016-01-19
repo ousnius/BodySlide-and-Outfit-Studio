@@ -1733,6 +1733,9 @@ int BodySlideApp::UpdateSliderPositions(const string& presetName) {
 	vector<string> groups;
 
 	string outputFile = sliderManager.GetPresetFileNames(presetName);
+	if (outputFile.empty())
+		return -2;
+
 	sliderManager.GetPresetGroups(presetName, groups);
 
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
@@ -2395,6 +2398,7 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
+	Config.SetValue("SelectedPreset", presetName);
 }
 
 void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
