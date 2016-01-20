@@ -1621,6 +1621,13 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 		return 4;
 	}
 
+	// Add cloth data block of NIF to the list
+	vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>((NiNode*)refNif.GetBlock(0), true);
+	for (auto &cloth : clothDataBlocks)
+		clothData[inMeshFile] = *cloth;
+
+	refNif.DeleteBlockByType("BSClothExtraData");
+
 	if (workNif.IsValid()) {
 		workNif.CopyGeometry(shape, refNif, shape);
 		workAnim.LoadFromNif(&workNif, shape);
@@ -1973,25 +1980,27 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 void OutfitProject::ChooseClothData(NifFile& nif) {
 	if (!clothData.empty()) {
 		wxArrayString clothFileNames;
-		clothFileNames.Add("None");
 		for (auto &cloth : clothData)
 			clothFileNames.Add(cloth.first);
 
-		wxSingleChoiceDialog clothDataChoice(owner, "There was cloth physics data loaded at some point (BSClothExtraData). Please choose which origin to use in the output.", "Choose cloth data", clothFileNames);
+		wxMultiChoiceDialog clothDataChoice(owner, "There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output.", "Choose cloth data", clothFileNames);
 		if (clothDataChoice.ShowModal() == wxID_CANCEL)
 			return;
 
-		string sel = clothDataChoice.GetStringSelection().ToStdString();
-		if (sel != "None") {
-			BSClothExtraData* clothBlock = new BSClothExtraData(nif.hdr);
-			clothBlock->Clone(&clothData[sel]);
+		wxArrayInt sel = clothDataChoice.GetSelections();
+		for (int i = 0; i < sel.Count(); i++) {
+			string selString = clothFileNames[sel[i]].ToStdString();
+			if (!selString.empty()) {
+				BSClothExtraData* clothBlock = new BSClothExtraData(nif.hdr);
+				clothBlock->Clone(&clothData[selString]);
 
-			int id = nif.AddBlock(clothBlock, "BSClothExtraData");
-			if (id != -1) {
-				NiNode* root = (NiNode*)nif.GetBlock(0);
-				if (root) {
-					root->numExtraData++;
-					root->extraDataRef.push_back(id);
+				int id = nif.AddBlock(clothBlock, "BSClothExtraData");
+				if (id != -1) {
+					NiNode* root = (NiNode*)nif.GetBlock(0);
+					if (root) {
+						root->numExtraData++;
+						root->extraDataRef.push_back(id);
+					}
 				}
 			}
 		}

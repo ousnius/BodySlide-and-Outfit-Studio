@@ -84,6 +84,7 @@
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
 								<object class="wxButton" name="btnSavePreset">
+									<size>-1,20</size>
 									<fg>#000000</fg>
 									<tooltip>Saves the new slider values to the currently selected preset</tooltip>
 									<label>Save Preset</label>
@@ -94,6 +95,7 @@
 								<flag>wxALL|wxEXPAND</flag>
 								<border>5</border>
 								<object class="wxButton" name="btnSavePresetAs">
+									<size>-1,20</size>
 									<fg>#000000</fg>
 									<tooltip>Save the current slider settings as a new preset</tooltip>
 									<label>Save Preset As...</label>
