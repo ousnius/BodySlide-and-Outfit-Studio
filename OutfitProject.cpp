@@ -940,6 +940,7 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 		return;
 
 	if (textureFile == "_AUTO_") {
+		string texturesDir = appConfig["GameDataPath"];
 		bool hasMat = false;
 		wxString matFile;
 		string texFile;
@@ -973,24 +974,21 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 				}
 			}
 
+			MaterialFile mat(MaterialFile::BGSM);
 			if (!data.IsEmpty()) {
 				string content((char*)data.GetData(), data.GetDataLen());
 				istringstream contentStream(content);
 
-				MaterialFile mat(contentStream);
-				if (!mat.Failed()) {
-					if (mat.signature == MaterialFile::BGSM)
-						texFile = mat.diffuseTexture;
-					else if (mat.signature == MaterialFile::BGEM)
-						texFile = mat.baseTexture;
+				mat = MaterialFile(contentStream);
+			}
+			else
+				mat = MaterialFile(texturesDir + matFile.ToStdString());
 
-					if (!texFile.empty()) {
-						texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-						texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
-						texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
-						texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
-					}
-				}
+			if (!mat.Failed()) {
+				if (mat.signature == MaterialFile::BGSM)
+					texFile = mat.diffuseTexture;
+				else if (mat.signature == MaterialFile::BGEM)
+					texFile = mat.baseTexture;
 			}
 			else
 				workNif.GetTextureForShape(shapeName, texFile);
@@ -998,10 +996,16 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 		else
 			workNif.GetTextureForShape(shapeName, texFile);
 
-		if (texFile.empty())
+
+		if (!texFile.empty()) {
+			texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
+			texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
+			texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
+			texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
+		}
+		else
 			texFile = "noimg.dds";
 
-		string texturesDir = appConfig["GameDataPath"];
 		string combinedTexFile = texturesDir + texFile;
 		shapeTextures[shapeName] = combinedTexFile.c_str();
 	}

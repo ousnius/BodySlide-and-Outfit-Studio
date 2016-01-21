@@ -168,30 +168,34 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 			}
 		}
 
+		MaterialFile mat(MaterialFile::BGSM);
 		if (!data.IsEmpty()) {
 			string content((char*)data.GetData(), data.GetDataLen());
 			istringstream contentStream(content);
 
-			MaterialFile mat(contentStream);
-			if (!mat.Failed()) {
-				if (mat.signature == MaterialFile::BGSM)
-					texFile = mat.diffuseTexture;
-				else if (mat.signature == MaterialFile::BGEM)
-					texFile = mat.baseTexture;
+			mat = MaterialFile(contentStream);
+		}
+		else
+			mat = MaterialFile(baseDataPath + matFile.ToStdString());
 
-				if (!texFile.empty()) {
-					texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-					texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
-					texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
-					texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
-				}
-			}
+		if (!mat.Failed()) {
+			if (mat.signature == MaterialFile::BGSM)
+				texFile = mat.diffuseTexture;
+			else if (mat.signature == MaterialFile::BGEM)
+				texFile = mat.baseTexture;
 		}
 		else
 			fromNif->GetTextureForShape(shapeName, texFile);
 	}
 	else
 		fromNif->GetTextureForShape(shapeName, texFile);
+
+	if (!texFile.empty()) {
+		texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
+		texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
+		texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
+		texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
+	}
 
 	string combinedTexFile = baseDataPath + texFile;
 	SetShapeTexture(shapeName, combinedTexFile.c_str(), isSkin);
