@@ -294,17 +294,26 @@ void PreviewCanvas::OnMotion(wxMouseEvent& event) {
 	if (previewWindow->IsActive())
 		SetFocus();
 
+	auto delta = event.GetPosition() - lastMousePosition;
+
 	if (event.LeftIsDown()) {
-		auto delta = event.GetPosition() - lastMousePosition;
 		previewWindow->LeftDrag(delta.x, delta.y);
 	}
-	if (event.RightIsDown()) {
-		auto delta = event.GetPosition() - lastMousePosition;
-		previewWindow->RightDrag(delta.x, delta.y);
+	else if (event.MiddleIsDown()) {
+		if (wxGetKeyState(WXK_SHIFT))
+			previewWindow->MouseWheel(delta.y);
+		else
+			previewWindow->LeftDrag(delta.x, delta.y);
 	}
-	if (!event.LeftIsDown() && !event.RightIsDown()) {
+	else if (event.RightIsDown()) {
+		if (wxGetKeyState(WXK_SHIFT))
+			previewWindow->LeftDrag(delta.x, delta.y);
+		else
+			previewWindow->RightDrag(delta.x, delta.y);
+	}
+	else
 		previewWindow->TrackMouse(event.GetX(), event.GetY());
-	}
+
 	lastMousePosition = event.GetPosition();
 }
 
