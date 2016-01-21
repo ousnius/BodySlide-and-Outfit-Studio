@@ -214,7 +214,6 @@ string OutfitProject::Save(const string& strFileName,
 
 	if (workNif.IsValid()) {
 		NifFile clone(workNif);
-		clone.SetNodeName(0, "Scene Root");
 
 		ChooseClothData(clone);
 
@@ -508,6 +507,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 
 			BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.hdr);
 			int skinID = blank.AddBlock((NiObject*)nifBSSkinInstance, "BSSkin::Instance");
+			nifBSSkinInstance->targetRef = workNif.GetNodeID("Scene Root");
 
 			BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.hdr);
 			int boneID = blank.AddBlock((NiObject*)nifBoneData, "BSSkin::BoneData");
@@ -1708,6 +1708,8 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 		return 1;
 	}
 
+	nif.SetNodeName(0, "Scene Root");
+
 	vector<string> nifShapes;
 	nif.GetShapeList(nifShapes);
 	for (auto &s : nifShapes)
@@ -1933,7 +1935,6 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMes
 
 int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef) {
 	NifFile clone(workNif);
-	clone.SetNodeName(0, "Scene Root");
 
 	ChooseClothData(clone);
 
