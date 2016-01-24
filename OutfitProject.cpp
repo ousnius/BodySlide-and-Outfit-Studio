@@ -730,6 +730,7 @@ int OutfitProject::SaveSliderOBJ(const string& sliderName, const string& shapeNa
 	vector<Triangle> tris;
 	const vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
 	workNif.GetTrisForShape(shapeName, &tris);
+	const vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
 
 	vector<Vector3> outVerts = *verts;
 
@@ -740,24 +741,9 @@ int OutfitProject::SaveSliderOBJ(const string& sliderName, const string& shapeNa
 	else
 		morpher.ApplyResultToVerts(sliderName, target, &outVerts);
 
-
-	string mapfn = wxFileSelector("Choose vertex map source .obj", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_OPEN | wxFD_FILE_MUST_EXIST, owner);
-	if (mapfn.empty())
-		return 1;
-
-	map<int, int> orderMap;
-	vector<Face> origFaces;
-	vector<Vector2> origUvs;
-	ObjFile orderFile;
-	orderFile.LoadVertOrderMap(mapfn, orderMap, origFaces, origUvs);
-
-	vector<Vector3> swizzleverts(orderMap.size());
-	for (int i = 0; i < orderMap.size(); i++)
-		swizzleverts[i] = outVerts[orderMap[i]];
-
 	ObjFile obj;
 	obj.SetScale(Vector3(0.1f, 0.1f, 0.1f));
-	obj.AddGroup(shapeName, swizzleverts, origFaces, origUvs);
+	obj.AddGroup(shapeName, outVerts, tris, *uvs);
 	if (obj.Save(fileName))
 		return 1;
 

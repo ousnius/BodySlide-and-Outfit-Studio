@@ -2559,7 +2559,6 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
-		/*
 		string fn = wxFileSelector("Export .obj slider data", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fn.empty())
 			return;
@@ -2568,19 +2567,6 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		if (project->SaveSliderOBJ(activeSlider, activeItem->shapeName, fn)) {
 			wxLogError("Failed to export OBJ file '%s'!", fn);
 			wxMessageBox("Failed to export OBJ file!", "Error", wxICON_ERROR);
-		}
-		*/
-		// TEMPORARY bulk slider export
-		string dir = wxDirSelector("Export .obj slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
-		vector<string> sliderNames;
-		project->GetSliderList(sliderNames);
-
-		for (auto s : sliderNames) {
-			statusBar->SetStatusText("Exporting " + s);
-			string fn = dir;
-			fn += "\\" + s + ".obj";
-			project->SaveSliderOBJ(s, activeItem->shapeName, fn);
-
 		}
 		statusBar->SetStatusText("Ready!");
 	}

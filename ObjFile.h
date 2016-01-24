@@ -25,7 +25,6 @@ struct ObjData {
 	vector<Vector3> verts;
 	vector<Triangle> tris;
 	vector<Vector2> uvs;
-	vector<Face> faces;				// only for quad support during special output operations.
 };
 
 class ObjFile {
@@ -41,16 +40,12 @@ public:
 	~ObjFile();
 
 	int AddGroup(const string& name, const vector<Vector3>& verts, const vector<Triangle>& tris, const vector<Vector2>& uvs);
-	int AddGroup(const string& name, const vector<Vector3>& verts, const vector<Face>& faces, const vector<Vector2>& uvs);
 
 	void SetScale(const Vector3& inScale) { scale = inScale; }
 	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
 
 	int LoadForNif(const string& fileName);
 	int LoadForNif(fstream& base);
-
-	int LoadVertOrderMap(const string& fileName, map<int, int>& outMap, vector<Face>& origFaces, vector<Vector2>& origUVs);
-	int LoadVertOrderMap(fstream& base, map<int, int>& outMap,  vector<Face>& origFaces, vector<Vector2>& origUVs);
 
 	int Save(const string& fileName);
 
