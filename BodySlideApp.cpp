@@ -872,6 +872,7 @@ void BodySlideApp::SetDefaultConfig() {
 
 	Config.SetDefaultValue("ShapeDataPath", wxGetCwd().ToStdString() + "\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
+	Config.SetDefaultValue("WarnBatchBuildOverride", "true");
 	Config.SetDefaultValue("BSATextureScan", "true");
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("SelectedPreset", "");
@@ -1456,31 +1457,33 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		datapath = Config["GameDataPath"];
 	}
 
-	for (auto &filePath : outFileCount) {
-		if (filePath.second.size() > 1) {
-			wxArrayString selFilePaths;
-			for (auto &file : filePath.second) {
-				// Only if it's going to be batch built
-				if (find(outfitList.begin(), outfitList.end(), file) != outfitList.end())
-					selFilePaths.Add(file);
-			}
+	if (Config.MatchValue("WarnBatchBuildOverride", "true")) {
+		for (auto &filePath : outFileCount) {
+			if (filePath.second.size() > 1) {
+				wxArrayString selFilePaths;
+				for (auto &file : filePath.second) {
+					// Only if it's going to be batch built
+					if (find(outfitList.begin(), outfitList.end(), file) != outfitList.end())
+						selFilePaths.Add(file);
+				}
 
-			// Same file would not be written more than once
-			if (selFilePaths.size() <= 1)
-				continue;
+				// Same file would not be written more than once
+				if (selFilePaths.size() <= 1)
+					continue;
 
-			wxSingleChoiceDialog setChoice(sliderView, "The following sets will override the same files.\nPlease decide which one to use and select it in the list below.", "Choose output set", selFilePaths);
-			if (setChoice.ShowModal() == wxID_CANCEL) {
-				wxLogMessage("Aborted batch build by not choosing a file override.");
-				return 1;
-			}
+				wxSingleChoiceDialog setChoice(sliderView, "The following sets will override the same files.\nPlease decide which one to use and select it in the list below.", "Choose output set", selFilePaths);
+				if (setChoice.ShowModal() == wxID_CANCEL) {
+					wxLogMessage("Aborted batch build by not choosing a file override.");
+					return 1;
+				}
 
-			// Remove others from the list of outfits to build
-			selFilePaths.Remove(setChoice.GetStringSelection());
-			for (auto &file : selFilePaths) {
-				auto result = find(outfitList.begin(), outfitList.end(), file);
-				if (result != outfitList.end())
-					outfitList.erase(result);
+				// Remove others from the list of outfits to build
+				selFilePaths.Remove(setChoice.GetStringSelection());
+				for (auto &file : selFilePaths) {
+					auto result = find(outfitList.begin(), outfitList.end(), file);
+					if (result != outfitList.end())
+						outfitList.erase(result);
+				}
 			}
 		}
 	}
@@ -2637,15 +2640,18 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
-		settings->SetSize(wxSize(475, 400));
+		settings->SetSize(wxSize(525, 533));
 		settings->CenterOnParent();
 
 		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);
 		choiceTargetGame->Select(Config.GetIntValue("TargetGame"));
-		
+
 		wxDirPickerCtrl* dpGameDataPath = XRCCTRL(*settings, "dpGameDataPath", wxDirPickerCtrl);
 		wxString gameDataPath = Config["GameDataPath"];
 		dpGameDataPath->SetPath(gameDataPath);
+
+		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
+		cbBBOverrideWarn->SetValue(Config["WarnBatchBuildOverride"] != "false");
 
 		wxCheckBox* cbBSATextures = XRCCTRL(*settings, "cbBSATextures", wxCheckBox);
 		cbBSATextures->SetValue(Config["BSATextureScan"] != "false");
@@ -2666,7 +2672,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		if (settings->ShowModal() == wxID_OK) {
 			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
-			Config.SetValue("TargetGame",targ);
+			Config.SetValue("TargetGame", targ);
 			wxString TargetGames[4] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4" };
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
@@ -2680,12 +2686,13 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			for (int i = 0; i < dataFileList->GetCount(); i++) {
 				if (!dataFileList->IsChecked(i)) {
 					selectedfiles += dataFileList->GetString(i) + "; ";
-				}				
+				}
 			}
 			selectedfiles = selectedfiles.BeforeLast(';');
 
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToStdString());
 
+			Config.SetValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked() ? "true" : "false");
 
 			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
 			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
@@ -2695,6 +2702,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());
 		}
+
 		delete settings;
 	}
 }

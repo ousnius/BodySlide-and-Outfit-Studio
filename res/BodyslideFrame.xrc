@@ -756,7 +756,6 @@
 	</object>
  	<object class="wxDialog" name="dlgSettings">
 		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
-		<size>475,400</size>
 		<title>Settings</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -825,7 +824,62 @@
 									<value>,90,90,-1,70,0</value>
 									<message>Select the data path of the game...</message>
 									<style>wxDIRP_DEFAULT_STYLE</style>
-									<tooltip>Data path to load textures from and build to.</tooltip>
+									<tooltip>Data path to load textures from and build files to.</tooltip>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>General</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbBBOverrideWarn">
+									<tooltip>Enables/disables the dialog for choosing which set to build during a batch build if overrides happen.</tooltip>
+									<label>Override Warning</label>
+									<checked>1</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbBSATextures">
+									<tooltip>Enables/disables scanning BSAs in the game data folder for textures to load.</tooltip>
+									<label>BSA Textures</label>
+									<checked>1</checked>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbLeftMousePan">
+									<tooltip>Enables/disables panning the camera with the left mouse button in Outfit Studio.</tooltip>
+									<label>Left Mouse Pan</label>
+									<checked>0</checked>
 								</object>
 							</object>
 						</object>
@@ -836,89 +890,16 @@
 				<option>1</option>
 				<flag>wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
+				<object class="wxStaticBoxSizer">
+					<minsize>400,125</minsize>
+					<orient>wxVERTICAL</orient>
+					<label>Data Files</label>
 					<object class="sizeritem">
-						<option>0</option>
+						<option>1</option>
 						<flag>wxALL|wxEXPAND</flag>
-						<border>2</border>
-						<object class="wxStaticBoxSizer">
-							<minsize>160,-1</minsize>
-							<orient>wxVERTICAL</orient>
-							<label>3D View</label>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL|wxEXPAND</flag>
-								<border>2</border>
-								<object class="wxBoxSizer">
-									<orient>wxHORIZONTAL</orient>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_TOP|wxALL|wxBOTTOM</flag>
-										<border>5</border>
-										<object class="wxStaticText" name="lbBSATextures">
-											<size>100,-1</size>
-											<label>BSA Textures</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_TOP|wxALL</flag>
-										<border>5</border>
-										<object class="wxCheckBox" name="cbBSATextures">
-											<tooltip>Enables/disables scanning BSAs in the game data folder for textures to load.</tooltip>
-											<label></label>
-											<checked>1</checked>
-										</object>
-									</object>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL|wxEXPAND</flag>
-								<border>2</border>
-								<object class="wxBoxSizer">
-									<orient>wxHORIZONTAL</orient>
-									<object class="sizeritem">
-										<option>0</option>
-										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-										<border>5</border>
-										<object class="wxStaticText" name="lbLeftMousePan">
-											<size>100,-1</size>
-											<label>Left Mouse Pan</label>
-											<wrap>-1</wrap>
-										</object>
-									</object>
-									<object class="sizeritem">
-										<option>1</option>
-										<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-										<border>5</border>
-										<object class="wxCheckBox" name="cbLeftMousePan">
-											<tooltip>Enables/disables panning the camera with the left mouse button.</tooltip>
-											<label></label>
-											<checked>0</checked>
-										</object>
-									</object>
-								</object>
-							</object>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>3</option>
-						<flag>wxALL|wxEXPAND</flag>
-						<border>2</border>
-						<object class="wxStaticBoxSizer">
-							<orient>wxVERTICAL</orient>
-							<label>Data Files</label>
-							<object class="sizeritem">
-								<option>1</option>
-								<flag>wxALL|wxEXPAND</flag>
-								<border>5</border>
-								<object class="wxCheckListBox" name="DataFileList">
-									<content />
-								</object>
-							</object>
+						<border>5</border>
+						<object class="wxCheckListBox" name="DataFileList">
+							<content />
 						</object>
 					</object>
 				</object>
