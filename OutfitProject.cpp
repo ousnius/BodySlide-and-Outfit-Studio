@@ -717,10 +717,10 @@ int OutfitProject::SaveSliderBSD(const string& sliderName, const string& shapeNa
 
 	if (IsBaseShape(shapeName)) {
 		string sliderData = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.SaveSet(sliderData, target, fileName + ".bsd");
+		baseDiffData.SaveSet(sliderData, target, fileName);
 	}
 	else
-		morpher.SaveResultDiff(target, sliderName, fileName + ".bsd");
+		morpher.SaveResultDiff(target, sliderName, fileName);
 
 	return 0;
 }
