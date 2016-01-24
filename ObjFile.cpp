@@ -121,23 +121,16 @@ int ObjFile::LoadForNif(fstream &base) {
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
 			base >> facept4;
 
-			if (facept4 == "f" || facept4 == "g" || facept4 == "s") {
+			if (facept4 == "f" || facept4 == "g" || facept4 == "s" || facept4 == "#") {
 				gotface = true;
 				dump = facept4;
 				nPoints = 3;
 			}
 			else if (facept4.length() > 0) {
 				pos = facept4.find('/');
-				if (pos == string::npos) {
-					gotface = true;
-					dump = "f";
-					nPoints = 3;
-				}
-				else {
-					f[3] = atoi(facept4.c_str()) - 1;
-					ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
-					nPoints = 4;
-				}
+				f[3] = atoi(facept4.c_str()) - 1;
+				ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
+				nPoints = 4;
 			}
 
 			if (f[0] == -1 || f[1] == -1 || f[2] == -1)
@@ -272,23 +265,16 @@ int ObjFile::LoadVertOrderMap(fstream &base, map<int, int>& outMap, vector<Face>
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
 			base >> facept4;
 
-			if (facept4 == "f" || facept4 == "g" || facept4 == "s") {
+			if (facept4 == "f" || facept4 == "g" || facept4 == "s" || facept4 == "#") {
 				gotface = true;
 				dump = facept4;
 				nPoints = 3;
 			}
 			else if (facept4.length() > 0) {
 				pos = facept4.find('/');
-				if (pos == string::npos) {
-					gotface = true;
-					dump = "f";
-					nPoints = 3;
-				}
-				else {
-					f[3] = atoi(facept4.c_str()) - 1;
-					ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
-					nPoints = 4;
-				}
+				f[3] = atoi(facept4.c_str()) - 1;
+				ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
+				nPoints = 4;
 			}
 
 			if (f[0] == -1 || f[1] == -1 || f[2] == -1)
