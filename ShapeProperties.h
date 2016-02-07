@@ -31,6 +31,10 @@ private:
 	wxButton* btnAddTransparency = nullptr;
 	wxButton* btnRemoveTransparency = nullptr;
 
+	vector<int> extraDataIndices;
+	wxPanel* pgExtraData = nullptr;
+	wxFlexGridSizer* extraDataGrid = nullptr;
+
 	OutfitStudio* os = nullptr;
 	NifFile* nif = nullptr;
 	string shape;
@@ -44,6 +48,11 @@ private:
 	void AddTransparency();
 	void RemoveTransparency();
 
+	void GetExtraData();
+	void AddExtraData(const NiExtraData* extraData, bool uiOnly = false);
+	void ChangeExtraDataType(int index);
+	void RemoveExtraData(int index);
+
 	void AssignDefaultTexture();
 	void ApplyChanges();
 
@@ -53,6 +62,9 @@ private:
 	void OnApplyDiffuse(wxCommandEvent& event);
 	void OnAddTransparency(wxCommandEvent& event);
 	void OnRemoveTransparency(wxCommandEvent& event);
+	void OnAddExtraData(wxCommandEvent& event);
+	void OnChangeExtraDataType(wxCommandEvent& event);
+	void OnRemoveExtraData(wxCommandEvent& event);
 	void OnApply(wxCommandEvent& event);
 
 	DECLARE_EVENT_TABLE()

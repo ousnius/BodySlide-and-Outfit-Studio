@@ -610,8 +610,15 @@ int NifFile::AddStringExtraData(const string& shapeName, const string& name, con
 			geom->numExtraData++;
 			hdr.blockSizes[id] = geom->CalcBlockSize();
 		}
-		else
-			return -1;
+		else {
+			BSTriShape* siTriShape = geomForNameF4(shapeName);
+			if (!siTriShape)
+				return -1;
+
+			siTriShape->extraDataRef.push_back(strExtraDataId);
+			siTriShape->numExtraData++;
+			hdr.blockSizes[id] = siTriShape->CalcBlockSize();
+		}
 	}
 	return strExtraDataId;
 }

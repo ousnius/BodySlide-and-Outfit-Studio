@@ -12,6 +12,7 @@ BEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
 	EVT_BUTTON(XRCID("btnAddTransparency"), ShapeProperties::OnAddTransparency)
 	EVT_BUTTON(XRCID("btnRemoveTransparency"), ShapeProperties::OnRemoveTransparency)
+	EVT_BUTTON(XRCID("btnAddExtraData"), ShapeProperties::OnAddExtraData)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
 END_EVENT_TABLE();
 
@@ -19,7 +20,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	wxXmlResource * rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgShapeProp");
 
-	SetSize(620, 390);
+	SetSize(620, 400);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
@@ -41,8 +42,12 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	btnAddTransparency = XRCCTRL(*this, "btnAddTransparency", wxButton);
 	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
 
+	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
+	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
+
 	GetShader();
 	GetTransparency();
+	GetExtraData();
 }
 
 ShapeProperties::~ShapeProperties() {
@@ -385,6 +390,167 @@ void ShapeProperties::RemoveTransparency() {
 	GetTransparency();
 }
 
+
+void ShapeProperties::GetExtraData() {
+	for (int i = 0; i < extraDataIndices.size(); i++) {
+		wxButton* extraDataBtn = dynamic_cast<wxButton*>(FindWindowById(1000 + i, this));
+		wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + i, this));
+		wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
+		wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
+
+		if (extraDataBtn)
+			extraDataBtn->Destroy();
+		if (extraDataType)
+			extraDataType->Destroy();
+		if (extraDataName)
+			extraDataName->Destroy();
+		if (extraDataValue)
+			extraDataValue->Destroy();
+
+		pgExtraData->FitInside();
+		pgExtraData->Layout();
+	}
+
+	extraDataIndices.clear();
+
+	NiTriBasedGeom* geom = nif->geomForName(shape);
+	if (geom) {
+		for (int i = 0; i < geom->numExtraData; i++) {
+			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetBlock(geom->extraDataRef[i]));
+			if (extraData) {
+				extraDataIndices.push_back(geom->extraDataRef[i]);
+				AddExtraData(extraData, true);
+			}
+		}
+	}
+	else {
+		BSTriShape* siTriShape = nif->geomForNameF4(shape);
+		if (!siTriShape)
+			return;
+
+		for (int i = 0; i < siTriShape->numExtraData; i++) {
+			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetBlock(siTriShape->extraDataRef[i]));
+			if (extraData) {
+				extraDataIndices.push_back(siTriShape->extraDataRef[i]);
+				AddExtraData(extraData, true);
+			}
+		}
+	}
+}
+
+void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
+	NiStringExtraData extraDataTemp(nif->hdr);
+	AddExtraData(&extraDataTemp);
+}
+
+void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
+	if (!uiOnly) {
+		if (extraData->blockType == NISTRINGEXTRADATA) {
+			NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
+			int index = nif->AddStringExtraData(shape, stringExtraData->name, stringExtraData->stringData);
+			if (index != -1)
+				extraDataIndices.push_back(index);
+		}
+	}
+
+	if (extraDataIndices.empty())
+		return;
+
+	int id = extraDataIndices.size() - 1;
+
+	wxButton* extraDataBtn = new wxButton(pgExtraData, 1000 + id, "Remove");
+	extraDataBtn->Bind(wxEVT_BUTTON, &ShapeProperties::OnRemoveExtraData, this);
+
+	wxArrayString types;
+	types.Add("NiStringExtraData");
+	wxChoice* extraDataType = new wxChoice(pgExtraData, 2000 + id, wxDefaultPosition, wxDefaultSize, types);
+	extraDataType->SetSelection(0);
+	extraDataType->Bind(wxEVT_CHOICE, &ShapeProperties::OnChangeExtraDataType, this);
+
+	wxTextCtrl* extraDataName = new wxTextCtrl(pgExtraData, 3000 + id);
+	wxTextCtrl* extraDataValue = new wxTextCtrl(pgExtraData, 4000 + id);
+
+	if (uiOnly) {
+		if (extraData->blockType == NISTRINGEXTRADATA) {
+			NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
+			extraDataType->SetSelection(0);
+			extraDataName->SetValue(stringExtraData->name);
+			extraDataValue->SetValue(stringExtraData->stringData);
+		}
+		else {
+			extraDataBtn->Destroy();
+			extraDataType->Destroy();
+			extraDataName->Destroy();
+			extraDataValue->Destroy();
+			return;
+		}
+	}
+
+	extraDataGrid->Add(extraDataBtn, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
+	extraDataGrid->Add(extraDataType, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
+	extraDataGrid->Add(extraDataName, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
+	extraDataGrid->Add(extraDataValue, 0, wxALIGN_CENTER_VERTICAL | wxEXPAND | wxALL, 5);
+
+	pgExtraData->FitInside();
+	pgExtraData->Layout();
+}
+
+void ShapeProperties::OnChangeExtraDataType(wxCommandEvent& event) {
+	ChangeExtraDataType(event.GetId() - 2000);
+}
+
+void ShapeProperties::ChangeExtraDataType(int id) {
+	wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + id, this));
+	int selection = extraDataType->GetSelection();
+
+	int index = extraDataIndices[id];
+	nif->DeleteBlock(index);
+
+	for (int i = 0; i < extraDataIndices.size(); i++)
+		if (extraDataIndices[i] > index)
+			extraDataIndices[i]--;
+
+	extraDataIndices[id] = -1;
+
+	wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + id, this));
+	wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + id, this));
+	switch (selection) {
+	case 0:
+		int index = nif->AddStringExtraData(shape, extraDataName->GetValue().ToStdString(), extraDataValue->GetValue().ToStdString());
+		extraDataIndices[id] = index;
+		break;
+	}
+}
+
+void ShapeProperties::OnRemoveExtraData(wxCommandEvent& event) {
+	RemoveExtraData(event.GetId() - 1000);
+}
+
+void ShapeProperties::RemoveExtraData(int id) {
+	wxButton* extraDataBtn = dynamic_cast<wxButton*>(FindWindowById(1000 + id, this));
+	wxChoice* extraDataType = dynamic_cast<wxChoice*>(FindWindowById(2000 + id, this));
+	wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + id, this));
+	wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + id, this));
+
+	extraDataBtn->Destroy();
+	extraDataType->Destroy();
+	extraDataName->Destroy();
+	extraDataValue->Destroy();
+
+	int index = extraDataIndices[id];
+	nif->DeleteBlock(index);
+
+	for (int i = 0; i < extraDataIndices.size(); i++)
+		if (extraDataIndices[i] > index)
+			extraDataIndices[i]--;
+
+	extraDataIndices[id] = -1;
+
+	pgExtraData->FitInside();
+	pgExtraData->Layout();
+}
+
+
 void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 	ApplyChanges();
 	EndModal(wxID_OK);
@@ -456,5 +622,24 @@ void ShapeProperties::ApplyChanges() {
 	if (nif->GetAlphaForShape(shape, flags, threshold)) {
 		threshold = atoi(alphaThreshold->GetValue().ToAscii().data());
 		nif->SetAlphaForShape(shape, flags, threshold);
+	}
+
+	for (int i = 0; i < extraDataIndices.size(); i++) {
+		wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + i, this));
+		wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + i, this));
+		if (!extraDataName || !extraDataValue)
+			continue;
+
+		NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetBlock(extraDataIndices[i]));
+		if (extraData) {
+			extraData->name = extraDataName->GetValue();
+			extraData->nameRef = nif->AddOrFindStringId(extraData->name);
+
+			if (extraData->blockType == NISTRINGEXTRADATA) {
+				NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
+				stringExtraData->stringData = extraDataValue->GetValue();
+				stringExtraData->stringDataRef = nif->AddOrFindStringId(stringExtraData->stringData);
+			}
+		}
 	}
 }
