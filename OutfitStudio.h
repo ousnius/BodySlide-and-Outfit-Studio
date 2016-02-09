@@ -79,7 +79,7 @@ public:
 	void RecalculateMeshBVH(const string& shapeName);
 
 	void ShowShape(const string& shapeName, bool show = true);
-	void SetActiveShape(const string& shapeName);
+	void SetActiveShapes(const vector<string>& shapeNames);
 
 	TweakUndo* GetStrokeManager() {
 		return strokeManager;
@@ -148,26 +148,29 @@ public:
 			m->rendermode = RenderMode::Normal;
 	}
 	void ToggleGhostMode() {
-		mesh* m = gls.GetActiveMesh();
-		if (!m)
-			return;
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
 
-		if (m->rendermode == RenderMode::Normal)
-			m->rendermode = RenderMode::LitWire;
-		else if (m->rendermode == RenderMode::LitWire)
-			m->rendermode = RenderMode::Normal;
+		for (auto &m : meshesList) {
+			if (m->rendermode == RenderMode::Normal)
+				m->rendermode = RenderMode::LitWire;
+			else if (m->rendermode == RenderMode::LitWire)
+				m->rendermode = RenderMode::Normal;
+		}
 	}
 
 	void ToggleNormalSeamSmoothMode() {
-		mesh* m = gls.GetActiveMesh();
-		if (!m)
-			return;
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
 
-		if (m->smoothSeamNormals == true)
-			m->smoothSeamNormals = false;
-		else
-			m->smoothSeamNormals = true;
-		m->SmoothNormals();
+		for (auto &m : meshesList) {
+			if (m->smoothSeamNormals == true)
+				m->smoothSeamNormals = false;
+			else
+				m->smoothSeamNormals = true;
+
+			m->SmoothNormals();
+		}
 	}
 
 	void RecalcNormals(const string& shape) {
@@ -177,12 +180,14 @@ public:
 
 		m->SmoothNormals();
 	}
+
 	void ToggleAutoNormals() {
 		if (bAutoNormals)
 			bAutoNormals = false;
 		else
 			bAutoNormals = true;
 	}
+
 	float GetBrushSize() {
 		return brushSize / 3.0f;
 	}
@@ -204,6 +209,7 @@ public:
 		LimitBrushSize();
 		return brushSize;
 	}
+
 	void LimitBrushSize() {
 		if (brushSize < 0.000f) {
 			gls.SetCursorSize(0.000f);
@@ -237,32 +243,50 @@ public:
 	void ShowWireframe() {
 		gls.ToggleWireframe();
 	}
+
 	void ToggleLighting() {
 		gls.ToggleLighting();
 	}
+
 	void ToggleTextures() {
 		gls.ToggleTextures();
 	}
+
 	void ToggleMaskVisible() {
-		mesh* m = gls.GetActiveMesh();
-		if (!m->vcolors) {
-			m->vcolors = new Vector3[m->nVerts];
-			memset(m->vcolors, 0, 12 * m->nVerts);
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
+
+		for (auto &m : meshesList) {
+			if (!m->vcolors) {
+				m->vcolors = new Vector3[m->nVerts];
+				memset(m->vcolors, 0, 12 * m->nVerts);
+			}
 		}
 		gls.ToggleMask();
 	}
+
 	void SetWeightVisible(bool bVisible = true) {
 		gls.SetWeightColors(bVisible);
 	}
 
 	void ClearMask() {
-		mesh* m = gls.GetActiveMesh();
-		if (m->vcolors)
-			m->ColorChannelFill(0, 0.0f);
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
+
+		for (auto &m : meshesList) {
+			if (m->vcolors)
+				m->ColorChannelFill(0, 0.0f);
+		}
 	}
 
 	void GetActiveMask(unordered_map<ushort, float>& mask) {
-		mesh* m = gls.GetActiveMesh();
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
+
+		if (meshesList.empty())
+			return;
+
+		mesh* m = meshesList.back();
 		if (!m->vcolors)
 			return;
 
@@ -273,12 +297,19 @@ public:
 	}
 
 	void GetActiveUnmasked(unordered_map<ushort, float>& mask) {
-		mesh* m = gls.GetActiveMesh();
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
+
+		if (meshesList.empty())
+			return;
+
+		mesh* m = meshesList.back();
 		if (!m->vcolors) {
 			for (int i = 0; i < m->nVerts; i++)
 				mask[i] = 0.0f;
 			return;
 		}
+
 		for (int i = 0; i < m->nVerts; i++)
 			if (m->vcolors[i].x == 0.0f)
 				mask[i] = m->vcolors[i].x;
@@ -311,17 +342,22 @@ public:
 	}
 
 	void InvertMask() {
-		mesh* m = gls.GetActiveMesh();
-		if (!m->vcolors)
-			m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
-		for (int i = 0; i < m->nVerts; i++)
-			m->vcolors[i].x = 1 - m->vcolors[i].x;
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
+
+		for (auto &m : meshesList) {
+			if (!m->vcolors)
+				m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+			for (int i = 0; i < m->nVerts; i++)
+				m->vcolors[i].x = 1 - m->vcolors[i].x;
+		}
 	}
 
 	void DeleteMesh(const string& shape) {
 		gls.DeleteMesh(shape);
 		Refresh();
 	}
+
 	void DestroyOverlays() {
 		gls.DeleteOverlays();
 		Refresh();
@@ -489,7 +525,7 @@ public:
 
 	void UpdateShapeSource(const string& shapeName);
 
-	void ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
+	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
 
 	void RefreshGUIFromProj();
@@ -818,9 +854,6 @@ private:
 	}
 
 	void OnShowMask(wxCommandEvent& WXUNUSED(event)) {
-		if (!activeItem)
-			return;
-
 		glView->ToggleMaskVisible();
 		glView->Refresh();
 	}

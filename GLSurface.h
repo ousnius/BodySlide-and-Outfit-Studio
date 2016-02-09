@@ -25,8 +25,8 @@ See the included LICENSE file
 using namespace std;
 
 class GLSurface {
-	wxGLCanvas* canvas{nullptr};
-	wxGLContext* context{nullptr};
+	wxGLCanvas* canvas = nullptr;
+	wxGLContext* context = nullptr;
 
 	bool perspective;
 	float mFov;
@@ -53,8 +53,8 @@ class GLSurface {
 	float cursorSize;
 
 	ResourceLoader resLoader;
-	GLMaterial* noImage{nullptr};
-	GLMaterial* skinMaterial{nullptr};
+	GLMaterial* noImage = nullptr;
+	GLMaterial* skinMaterial = nullptr;
 
 	TweakUndo tweakUndo;
 
@@ -62,12 +62,13 @@ class GLSurface {
 	unordered_map<string, int> namedOverlays;
 	vector<mesh*> meshes;
 	vector<mesh*> overlays;
-	int activeMesh;
+	vector<int> activeMeshes;
 
-	void initLighting();
-	void initMaterial(Vector3 diffusecolor);
+	void InitLighting();
+	void InitMaterial(Vector3 diffuseColor);
 	void InitGLExtensions();
 	int InitGLSettings();
+
 	static int QueryMultisample(wxWindow* parent);
 	static int FindBestNumSamples(HDC hDC);
 
@@ -75,18 +76,26 @@ class GLSurface {
 		if (meshID < meshes.size()) {
 			delete meshes[meshID];
 			meshes.erase(meshes.begin() + meshID);
-			for (int i = meshID; i < meshes.size(); i++) { // Renumber meshes after the deleted one.
+
+			// Renumber meshes after the deleted one
+			for (int i = meshID; i < meshes.size(); i++)
 				namedMeshes[meshes[i]->shapeName] = i;
-			}
 		}
-		if (activeMesh >= meshID)
-			activeMesh--;
+
+		for (int i = 0; i < activeMeshes.size(); i++) {
+			if (activeMeshes[i] == meshID) {
+				activeMeshes.erase(activeMeshes.begin() + meshID);
+				i--;
+			}
+			else if (activeMeshes[i] > meshID)
+				activeMeshes[i]--;
+		}
 	}
 
 public:
 	bool bEditMode;
-	GLSurface(void);
-	~GLSurface(void);
+	GLSurface();
+	~GLSurface();
 
 	// Get the attributes to use for creating a wxGLCanvas
 	static const int* GetGLAttribs(wxWindow* parent);
@@ -97,7 +106,7 @@ public:
 
 		meshes.clear();
 		namedMeshes.clear();
-		activeMesh = 0;
+		activeMeshes.clear();
 	}
 
 	void DeleteMesh(const string& shapeName) {
@@ -109,9 +118,9 @@ public:
 	}
 
 	void DeleteOverlays() {
-		for (int i = 0; i < overlays.size(); i++) {
+		for (int i = 0; i < overlays.size(); i++)
 			delete overlays[i];
-		}
+
 		overlays.clear();
 		namedOverlays.clear();
 	}
@@ -144,55 +153,51 @@ public:
 
 	int GetOverlayID(const string& shapeName) {
 		unordered_map<string, int>::iterator it = namedOverlays.find(shapeName);
-		if (it != namedOverlays.end()) {
+		if (it != namedOverlays.end())
 			return it->second;
-		}
 
 		return -1;
 	}
-	mesh* GetActiveMesh() {
-		if (activeMesh >= 0 && activeMesh < meshes.size())
-			return meshes[activeMesh];
 
-		return nullptr;
+	void GetActiveMeshes(vector<mesh*>& meshesList) {
+		for (auto &m : activeMeshes)
+			meshesList.push_back(meshes[m]);
 	}
 
 	Vector3 GetActiveCenter(bool useMask = true) {
-		mesh* m = GetActiveMesh();
-		if (!m) return Vector3(0, 0, 0);
+		vector<mesh*> meshesList;
+		GetActiveMeshes(meshesList);
+		if (meshesList.empty())
+			return Vector3();
+
 		int count = 0;
 		Vector3 total;
-		for (int i = 0; i < m->nVerts; i++) {
-			if (!useMask || m->vcolors[i].x == 0.0f) {
-				total = total + m->verts[i];
-				count++;
+
+		for (auto &m : meshesList) {
+			for (int i = 0; i < m->nVerts; i++) {
+				if (!useMask || m->vcolors[i].x == 0.0f) {
+					total = total + m->verts[i];
+					count++;
+				}
 			}
 		}
+
 		total = total / count;
 		return total;
-	}
-
-	bool IsValidMesh(mesh* query) {
-		for (int i = 0; i < meshes.size(); i++) {
-			if (meshes[i] == query) {
-				return true;
-			}
-		}
-		return false;
 	}
 
 	mesh* GetMesh(const string& shapeName) {
 		int id = GetMeshID(shapeName);
 		if (id >= 0)
 			return meshes[id];
-		
+
 		return nullptr;
 	}
 
 	mesh* GetOverlay(int overlayID) {
 		if (overlayID >= 0)
 			return overlays[overlayID];
-		
+
 		return nullptr;
 	}
 
@@ -200,7 +205,7 @@ public:
 		int id = GetOverlayID(overlayName);
 		if (id >= 0)
 			return overlays[id];
-		
+
 		return nullptr;
 	}
 
@@ -235,14 +240,14 @@ public:
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
+	bool UpdateCursor(int ScreenX, int ScreenY, string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx = nullptr);
 	void ShowCursor(bool show = true);
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
-	bool CollideMesh(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
+	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh = nullptr, int* outFacet = nullptr, Vector3* inRayDir = nullptr, Vector3* inRayOrigin = nullptr);
 	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
 	int CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 
@@ -251,10 +256,6 @@ public:
 	int AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name = "XRotateMesh");
 	int AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
 	int AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
-	int AddVisTri(const Vector3& p1, const Vector3& p2, const Vector3& p3, const string& name = "TriMesh");
-	int AddVisNorms(const mesh* src, const vector<Vector3>* normals = NULL, const string& name = "MeshNorms", const Vector3 color = { 1.0f, 0.0f, 1.0f });
-	int AddVisFacets(vector<int>& triIDs, const string& name = "TriMesh");
-	int AddVisFacetsInSphere(Vector3& origin, float radius, const string& name = "SphereFIntersect");
 
 	void BeginEditMode();
 	void EditUndo();
@@ -273,8 +274,8 @@ public:
 	void SetMeshVisibility(const string& name, bool visible = true);
 	void SetMeshVisibility(int shapeIndex, bool visible = true);
 	void SetOverlayVisibility(const string& name, bool visible = true);
-	void SetActiveMesh(int shapeIndex);
-	void SetActiveMesh(const string& shapeName);
+	void SetActiveMeshes(const vector<int>& shapeIndices);
+	void SetActiveMeshes(const vector<string>& shapeNames);
 
 	RenderMode SetMeshRenderMode(const string& name, RenderMode mode);
 
@@ -290,7 +291,7 @@ public:
 			bTextured = true;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material && (activeMesh > -1))
+			if (meshes[i]->material)
 				meshes[i]->material->shader->ShowTexture(bTextured);
 	}
 
@@ -308,7 +309,7 @@ public:
 			bLighting = true;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material && (activeMesh > -1))
+			if (meshes[i]->material)
 				meshes[i]->material->shader->EnableVertexLighting(bLighting);
 	}
 
@@ -319,7 +320,7 @@ public:
 			bMaskVisible = true;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material && (activeMesh > -1))
+			if (meshes[i]->material)
 				meshes[i]->material->shader->ShowMask(bMaskVisible);
 	}
 
@@ -327,7 +328,7 @@ public:
 		bWeightColors = bVisible;
 
 		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material && (activeMesh > -1))
+			if (meshes[i]->material)
 				meshes[i]->material->shader->ShowWeight(bWeightColors);
 	}
 
@@ -337,7 +338,8 @@ public:
 		else
 			bWeightColors = true;
 
-		if (meshes.size() > 0 && (activeMesh > -1) && meshes[activeMesh]->material)
-			meshes[activeMesh]->material->shader->ShowWeight(bWeightColors);
+		for (auto &m : activeMeshes)
+			if (meshes[m]->material)
+				meshes[m]->material->shader->ShowWeight(bWeightColors);
 	}
 };

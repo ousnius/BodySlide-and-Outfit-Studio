@@ -592,51 +592,63 @@ void OutfitStudio::UpdateShapeSource(const string& shapeName) {
 	project->UpdateShapeFromMesh(shapeName, glView->GetMesh(shapeName));
 }
 
-void OutfitStudio::ActiveShapeUpdated(TweakStroke* refStroke, bool bIsUndo, bool setWeights) {
+void OutfitStudio::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo, bool setWeights) {
 	if (bEditSlider) {
 		unordered_map<ushort, Vector3> strokeDiff;
-		for (auto &p : refStroke->pointStartState) {
-			if (bIsUndo)
-				strokeDiff[p.first] = p.second - refStroke->pointEndState[p.first];
-			else
-				strokeDiff[p.first] = refStroke->pointEndState[p.first] - p.second;
+		vector<mesh*> refMeshes = refStroke->GetRefMeshes();
+
+		for (auto &m : refMeshes) {
+			if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
+				for (auto &p : refStroke->pointStartState[m]) {
+					if (bIsUndo)
+						strokeDiff[p.first] = p.second - refStroke->pointEndState[m][p.first];
+					else
+						strokeDiff[p.first] = refStroke->pointEndState[m][p.first] - p.second;
+				}
+				project->UpdateMorphResult(m->shapeName, activeSlider, strokeDiff);
+			}
 		}
-		project->UpdateMorphResult(activeItem->shapeName, activeSlider, strokeDiff);
 	}
 	else {
 		if (refStroke->BrushType() == TBT_WEIGHT) {
-			unordered_map<ushort, float>* weights = &project->workWeights[activeItem->shapeName];
-			if (bIsUndo) {
-				for (auto &p : refStroke->pointStartState) {
-					if (p.second.y == 0.0f)
-						weights->erase(p.first);
-					else
-						(*weights)[p.first] = p.second.y;
+			vector<mesh*> refMeshes = refStroke->GetRefMeshes();
+
+			for (auto &m : refMeshes) {
+				if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
+					unordered_map<ushort, float>* weights = &project->workWeights[m->shapeName];
+					if (bIsUndo) {
+						for (auto &p : refStroke->pointStartState[m]) {
+							if (p.second.y == 0.0f)
+								weights->erase(p.first);
+							else
+								(*weights)[p.first] = p.second.y;
+						}
+					}
+					else {
+						for (auto &p : refStroke->pointEndState[m]) {
+							if (p.second.y == 0.0f)
+								weights->erase(p.first);
+							else
+								(*weights)[p.first] = p.second.y;
+						}
+					}
+
+					if (setWeights) {
+						TweakBrush* br = refStroke->GetRefBrush();
+						string refBone;
+
+						if (br->Name() == "Weight Paint")
+							refBone = ((TB_Weight*)br)->refBone;
+						else if (br->Name() == "Weight Erase")
+							refBone = ((TB_Unweight*)br)->refBone;
+						else
+							refBone = ((TB_SmoothWeight*)br)->refBone;
+
+						project->GetWorkAnim()->SetWeights(m->shapeName, refBone, *weights);
+					}
 				}
 			}
-			else {
-				for (auto &p : refStroke->pointEndState) {
-					if (p.second.y == 0.0f)
-						weights->erase(p.first);
-					else
-						(*weights)[p.first] = p.second.y;
-				}
-			}
-
-			if (setWeights) {
-				TweakBrush* br = refStroke->GetRefBrush();
-				string refBone;
-
-				if (br->Name() == "Weight Paint")
-					refBone = ((TB_Weight*)br)->refBone;
-				else if (br->Name() == "Weight Erase")
-					refBone = ((TB_Unweight*)br)->refBone;
-				else
-					refBone = ((TB_SmoothWeight*)br)->refBone;
-
-				project->GetWorkAnim()->SetWeights(activeItem->shapeName, refBone, *weights);
-				project->workWeights.clear();
-			}
+			project->workWeights.clear();
 		}
 	}
 }
@@ -1154,11 +1166,6 @@ void OutfitStudio::RefreshGUIFromProj() {
 
 	if (itemToSelect.IsOk()) {
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
-		if (activeItem)
-			glView->SetActiveShape(activeItem->shapeName);
-		else
-			glView->SetActiveShape("");
-
 		outfitShapes->UnselectAll();
 		outfitShapes->SelectItem(itemToSelect);
 	}
@@ -1168,6 +1175,12 @@ void OutfitStudio::RefreshGUIFromProj() {
 	selectedItems.clear();
 	if (activeItem)
 		selectedItems.push_back(activeItem);
+
+	vector<string> shapeNames;
+	for (auto &s : selectedItems)
+		shapeNames.push_back(s->shapeName);
+
+	glView->SetActiveShapes(shapeNames);
 }
 
 void OutfitStudio::AnimationGUIFromProj() {
@@ -1699,37 +1712,37 @@ void OutfitStudio::OnShapeSelect(wxTreeEvent& event) {
 
 	if (outfitShapes->GetItemParent(item).IsOk()) {
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(item);
-		if (activeItem)
-			glView->SetActiveShape(activeItem->shapeName);
-		else
-			glView->SetActiveShape("");
 	}
 	else {
 		subitem = outfitShapes->GetFirstChild(item, cookie);
 		activeItem = (ShapeItemData*)outfitShapes->GetItemData(subitem);
-		if (activeItem)
-			glView->SetActiveShape(activeItem->shapeName);
-		else
-			glView->SetActiveShape("");
 	}
 
 	selectedItems.clear();
+
+	vector<string> shapeNames;
 	wxArrayTreeItemIds selected;
 	outfitShapes->GetSelections(selected);
+
 	for (auto &i : selected) {
 		if (outfitShapes->GetItemParent(i).IsOk()) {
 			ShapeItemData* data = (ShapeItemData*)outfitShapes->GetItemData(i);
-			if (data)
+			if (data) {
+				shapeNames.push_back(data->shapeName);
 				selectedItems.push_back(data);
+			}
 		}
 		else {
 			subitem = outfitShapes->GetFirstChild(i, cookie);
 			ShapeItemData* data = (ShapeItemData*)outfitShapes->GetItemData(subitem);
-			if (data)
+			if (data) {
+				shapeNames.push_back(data->shapeName);
 				selectedItems.push_back(data);
+			}
 		}
 	}
 
+	glView->SetActiveShapes(shapeNames);
 	UpdateActiveShapeUI();
 }
 
@@ -3910,8 +3923,8 @@ void wxGLPanel::ShowShape(const string& shapeName, bool show) {
 	Refresh();
 }
 
-void wxGLPanel::SetActiveShape(const string& shapeName) {
-	gls.SetActiveMesh(shapeName);
+void wxGLPanel::SetActiveShapes(const vector<string>& shapeNames) {
+	gls.SetActiveMeshes(shapeNames);
 }
 
 void wxGLPanel::SetActiveBrush(int brushID) {
@@ -4005,7 +4018,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	bool meshHit;
 
 	TweakPickInfo tpi;
-	meshHit = gls.CollideMesh(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);
+	meshHit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, &tpi.facet);
 	if (!meshHit)
 		return false;
 
@@ -4016,7 +4029,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		gls.GetPickRay(screenPos.x, screenPos.y, d, s);
 		d.x *= -1;
 		s.x *= -1;
-		if (!gls.CollideMesh(screenPos.x, screenPos.y, o, n, &tpi.facetM, &d, &s))
+		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, &tpi.facetM, &d, &s))
 			tpi.facetM = -1;
 	}
 
@@ -4069,7 +4082,10 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		activeBrush = &smoothBrush;
 	}
 
-	activeStroke = strokeManager->CreateStroke(gls.GetActiveMesh(), activeBrush);
+	vector<mesh*> meshesList;
+	gls.GetActiveMeshes(meshesList);
+
+	activeStroke = strokeManager->CreateStroke(meshesList, activeBrush);
 	activeBrush->setConnected(bConnectedEdit);
 	activeBrush->setMirror(bXMirror);
 	activeBrush->setRadius(brushSize);
@@ -4106,18 +4122,18 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 		}
 		else {
-			gls.CollideMesh(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);
+			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, &tpi.facet);
 			if (bXMirror) {
 				gls.GetPickRay(screenPos.x, screenPos.y, d, s);
 				d.x *= -1;
 				s.x *= -1;
-				if (!gls.CollideMesh(screenPos.x, screenPos.y, o, n, &tpi.facetM, &d, &s))
+				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, &tpi.facetM, &d, &s))
 					tpi.facetM = -1;
 			}
 			tpi.normal.Normalize();
 		}
 
-		v = v*-1;
+		v = v * -1;
 		tpi.view = v;
 		activeStroke->updateStroke(tpi);
 
@@ -4130,7 +4146,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 				if (os->boneScale) {
 					int boneScalePos = os->boneScale->GetValue();
 					os->project->ApplyBoneScale(selectedBone, boneScalePos);
-					os->ActiveShapeUpdated(strokeManager->GetCurStateStroke(), false, false);
+					os->ActiveShapesUpdated(strokeManager->GetCurStateStroke(), false, false);
 				}
 			}
 		}
@@ -4155,7 +4171,7 @@ void wxGLPanel::EndBrushStroke() {
 		}
 
 		if (activeStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
+			os->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
 
 			if (!os->bEditSlider && activeStroke->BrushType() != TBT_WEIGHT) {
 				vector<string> shapes;
@@ -4175,9 +4191,8 @@ void wxGLPanel::EndBrushStroke() {
 bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
 	int meshHit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);
-	if (meshHit == -1) {
+	if (meshHit == -1)
 		return false;
-	}
 
 	tpi.center = xformCenter;
 
@@ -4240,14 +4255,14 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		}
 	}
 
-	activeStroke = strokeManager->CreateStroke(gls.GetActiveMesh(), activeBrush);
+	vector<mesh*> meshesList;
+	gls.GetActiveMeshes(meshesList);
 
-	//gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin,tpi.normal,0.0f);
+	activeStroke = strokeManager->CreateStroke(meshesList, activeBrush);
 	activeStroke->beginStroke(tpi);
 	activeStroke->updateStroke(tpi);
 
 	ShowTransformTool(false, false);
-
 	return true;
 }
 
@@ -4268,15 +4283,16 @@ void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
 	ShowTransformTool(true, false);
-	((OutfitStudio*)notifyWindow)->ActiveShapeUpdated(strokeManager->GetCurStateStroke());
+	((OutfitStudio*)notifyWindow)->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
 }
 
 bool wxGLPanel::UndoStroke() {
+	vector<mesh*> meshesList;
+	gls.GetActiveMeshes(meshesList);
+
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	mesh* m = strokeManager->GetCurStateMesh();
-	bool skip = (!gls.IsValidMesh(m));
-	bool ret = strokeManager->backStroke(skip);
-	if (!skip && ret) {
+	bool ret = strokeManager->backStroke(meshesList);
+	if (ret) {
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (curStroke && curStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
 			wxArrayTreeItemIds selItems;
@@ -4291,7 +4307,7 @@ bool wxGLPanel::UndoStroke() {
 		}
 
 		if (curStroke && curStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapeUpdated(curStroke, true);
+			os->ActiveShapesUpdated(curStroke, true);
 			if (curStroke->BrushType() == TBT_XFORM)
 				ShowTransformTool(true, false);
 		}
@@ -4302,11 +4318,12 @@ bool wxGLPanel::UndoStroke() {
 }
 
 bool wxGLPanel::RedoStroke() {
-	mesh* m = strokeManager->GetNextStateMesh();
-	bool skip = (!gls.IsValidMesh(m));
-	bool ret = strokeManager->forwardStroke(skip);
+	vector<mesh*> meshesList;
+	gls.GetActiveMeshes(meshesList);
+
+	bool ret = strokeManager->forwardStroke(meshesList);
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	if (!skip && ret) {
+	if (ret) {
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (curStroke->BrushType() == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
@@ -4321,11 +4338,12 @@ bool wxGLPanel::RedoStroke() {
 		}
 
 		if (curStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapeUpdated(curStroke);
+			os->ActiveShapesUpdated(curStroke);
 			if (curStroke->BrushType() == TBT_XFORM)
 				ShowTransformTool(true, false);
 		}
 	}
+
 	Refresh();
 	return ret;
 }
@@ -4340,17 +4358,15 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 		saveBrush = activeBrush;
 
 	Vector3 o;
-	mesh* m = gls.GetActiveMesh();
-
-	if (m) {
-		string mode = Config.GetString("Editing/CenterMode");
-		if (mode == "Object") {
-			o = gls.GetActiveMesh()->bvh->Center();
-		}
-		else if (mode == "Selected") {
-			o = gls.GetActiveCenter();
-		}
+	string mode = Config.GetString("Editing/CenterMode");
+	if (mode == "Object") {
+		vector<mesh*> meshesList;
+		gls.GetActiveMeshes(meshesList);
+		if (!meshesList.empty())
+			o = meshesList.back()->bvh->Center();
 	}
+	else if (mode == "Selected")
+		o = gls.GetActiveCenter();
 
 	xformCenter = o;
 	if (show) {
@@ -4377,6 +4393,7 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 			if (!activeBrush)
 				editMode = false;
 		}
+
 		gls.SetOverlayVisibility("XMoveMesh", false);
 		gls.SetOverlayVisibility("YMoveMesh", false);
 		gls.SetOverlayVisibility("ZMoveMesh", false);
@@ -4486,8 +4503,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		Refresh();
 	}
 	if (!rbuttonDown && !lbuttonDown) {
+		string hitMeshName;
 		if (editMode && transformMode == 0) {
-			cursorExists = gls.UpdateCursor(x, y, &t, &w, &m);
+			cursorExists = gls.UpdateCursor(x, y, &hitMeshName, &t, &w, &m);
 		}
 		else {
 			cursorExists = false;
@@ -4501,10 +4519,11 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, w), 1);
 				else if (bMaskPaint)
 					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
-				else if (os->activeItem) {
+				else {
 					vector<Vector3> verts;
-					os->project->GetLiveVerts(os->activeItem->shapeName, verts);
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
+					os->project->GetLiveVerts(hitMeshName, verts);
+					if (verts.size() > t)
+						os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
 				}
 			}
 			else {
