@@ -65,6 +65,7 @@ class GLSurface {
 
 	vector<mesh*> activeMeshes;
 	vector<int> activeMeshesID;
+	mesh* selectedMesh = nullptr;
 
 	void InitLighting();
 	void InitMaterial(Vector3 diffuseColor);
@@ -241,14 +242,14 @@ public:
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
+	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx = nullptr);
 	void ShowCursor(bool show = true);
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
-	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh = nullptr, int* outFacet = nullptr, Vector3* inRayDir = nullptr, Vector3* inRayOrigin = nullptr);
+	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr, Vector3* inRayDir = nullptr, Vector3* inRayOrigin = nullptr);
 	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
 	int CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 
@@ -277,6 +278,7 @@ public:
 	void SetOverlayVisibility(const string& name, bool visible = true);
 	void SetActiveMeshesID(const vector<int>& shapeIndices);
 	void SetActiveMeshesID(const vector<string>& shapeNames);
+	void SetSelectedMesh(const string& shapeName);
 
 	RenderMode SetMeshRenderMode(const string& name, RenderMode mode);
 

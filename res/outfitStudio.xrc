@@ -97,6 +97,14 @@
 				<toggle>1</toggle>
 				<checked>0</checked>
 			</object>
+			<object class="tool" name="btnBrushCollision">
+				<label>Global Brush Collision\tC</label>
+				<tooltip>Allows for the brushes to collide with all currently selected meshes at the same time.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>BrushCollision.png</bitmap>
+				<toggle>1</toggle>
+				<checked>0</checked>
+			</object>
 			<object class="separator" />
 			<object class="tool" name="btnViewFront">
 				<label>View Front</label>
@@ -780,6 +788,12 @@
 				<object class="wxMenuItem" name="btnConnected">
 					<label>Edit Connected Only\tC</label>
 					<help>Edit only vertices that are connected to the ones under the brush within the brush radius</help>
+					<checkable>1</checkable>
+					<checked>0</checked>
+				</object>
+				<object class="wxMenuItem" name="btnBrushCollision">
+					<label>Global Brush Collision\tB</label>
+					<help>Allows for the brushes to collide with all currently selected meshes at the same time</help>
 					<checkable>1</checkable>
 					<checked>0</checked>
 				</object>

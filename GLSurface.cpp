@@ -462,6 +462,10 @@ void GLSurface::Cleanup() {
 	overlays.clear();
 	namedMeshes.clear();
 	namedOverlays.clear();
+	activeMeshesID.clear();
+	activeMeshes.clear();
+
+	selectedMesh = nullptr;
 	skinMaterial = nullptr;
 	noImage = nullptr;
 
@@ -617,7 +621,7 @@ int GLSurface::PickMesh(int ScreenX, int ScreenY) {
 	return result;
 }
 
-bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
+bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh, bool allMeshes, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
 	if (activeMeshes.empty())
 		return false;
 
@@ -633,6 +637,9 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 	}
 
 	for (auto &m : activeMeshes) {
+		if (!allMeshes && m != selectedMesh)
+			continue;
+
 		vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
@@ -720,7 +727,7 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, string* hitMeshName, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* hitMeshName, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
 	bool ret = false;
 	if (activeMeshes.empty())
 		return ret;
@@ -741,6 +748,9 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, string* hitMeshName, int*
 	GetPickRay(ScreenX, ScreenY, d, o);
 
 	for (auto &m : activeMeshes) {
+		if (!allMeshes && m != selectedMesh)
+			continue;
+
 		vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			ret = true;
@@ -1786,6 +1796,14 @@ void GLSurface::SetActiveMeshesID(const vector<string>& shapeNames) {
 			activeMeshes.push_back(meshes[id]);
 		}
 	}
+}
+
+void GLSurface::SetSelectedMesh(const string& shapeName) {
+	int id = GetMeshID(shapeName);
+	if (id != -1)
+		selectedMesh = meshes[id];
+	else
+		selectedMesh = nullptr;
 }
 
 RenderMode GLSurface::SetMeshRenderMode(const string& name, RenderMode mode) {

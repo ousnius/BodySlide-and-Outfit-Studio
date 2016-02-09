@@ -72,6 +72,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	
 	EVT_MENU(XRCID("btnXMirror"), OutfitStudio::OnXMirror)
 	EVT_MENU(XRCID("btnConnected"), OutfitStudio::OnConnectedOnly)
+	EVT_MENU(XRCID("btnBrushCollision"), OutfitStudio::OnGlobalBrushCollision)
 	
 	EVT_MENU(XRCID("btnSelect"), OutfitStudio::OnSelectBrush)
 	EVT_MENU(XRCID("btnMaskBrush"), OutfitStudio::OnSelectBrush)
@@ -1181,6 +1182,11 @@ void OutfitStudio::RefreshGUIFromProj() {
 		shapeNames.push_back(s->shapeName);
 
 	glView->SetActiveShapes(shapeNames);
+
+	if (activeItem)
+		glView->SetSelectedShape(activeItem->shapeName);
+	else
+		glView->SetSelectedShape("");
 }
 
 void OutfitStudio::AnimationGUIFromProj() {
@@ -1743,6 +1749,12 @@ void OutfitStudio::OnShapeSelect(wxTreeEvent& event) {
 	}
 
 	glView->SetActiveShapes(shapeNames);
+
+	if (activeItem)
+		glView->SetSelectedShape(activeItem->shapeName);
+	else
+		glView->SetSelectedShape("");
+
 	UpdateActiveShapeUI();
 }
 
@@ -3830,9 +3842,10 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs) :
 	bWeightPaint = false;
 	isPainting = false;
 	isTransforming = false;
-	bXMirror = true;
 	bAutoNormals = true;
+	bXMirror = true;
 	bConnectedEdit = false;
+	bGlobalBrushCollision = false;
 
 	strokeManager = &baseStrokes;
 }
@@ -3927,6 +3940,10 @@ void wxGLPanel::SetActiveShapes(const vector<string>& shapeNames) {
 	gls.SetActiveMeshesID(shapeNames);
 }
 
+void wxGLPanel::SetSelectedShape(const string& shapeName) {
+	gls.SetSelectedMesh(shapeName);
+}
+
 void wxGLPanel::SetActiveBrush(int brushID) {
 	bMaskPaint = false;
 	bWeightPaint = false;
@@ -4018,7 +4035,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	bool meshHit;
 
 	TweakPickInfo tpi;
-	meshHit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, &tpi.facet);
+	meshHit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, bGlobalBrushCollision, &tpi.facet);
 	if (!meshHit)
 		return false;
 
@@ -4029,7 +4046,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		gls.GetPickRay(screenPos.x, screenPos.y, d, s);
 		d.x *= -1;
 		s.x *= -1;
-		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, &tpi.facetM, &d, &s))
+		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, bGlobalBrushCollision, &tpi.facetM, &d, &s))
 			tpi.facetM = -1;
 	}
 
@@ -4083,6 +4100,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), activeBrush);
+
 	activeBrush->setConnected(bConnectedEdit);
 	activeBrush->setMirror(bXMirror);
 	activeBrush->setRadius(brushSize);
@@ -4109,7 +4127,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		int cy = r.GetHeight() / 2;
 		gls.GetPickRay(cx, cy, v, vo);
 
-		gls.UpdateCursor(screenPos.x, screenPos.y);
+		gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
 
 		if (activeBrush->Type() == TBT_MOVE)
 		{
@@ -4119,12 +4137,12 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 		}
 		else {
-			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, &tpi.facet);
+			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, bGlobalBrushCollision, &tpi.facet);
 			if (bXMirror) {
 				gls.GetPickRay(screenPos.x, screenPos.y, d, s);
 				d.x *= -1;
 				s.x *= -1;
-				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, &tpi.facetM, &d, &s))
+				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, bGlobalBrushCollision, &tpi.facetM, &d, &s))
 					tpi.facetM = -1;
 			}
 			tpi.normal.Normalize();
@@ -4253,6 +4271,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	}
 
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), activeBrush);
+
 	activeStroke->beginStroke(tpi);
 	activeStroke->updateStroke(tpi);
 
@@ -4427,7 +4446,8 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 			DecBrush();
 		else
 			IncBrush();
-		gls.UpdateCursor(p.x, p.y);
+
+		gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
 	}
 	else {
 		int delt = event.GetWheelRotation();
@@ -4491,7 +4511,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	if (!rbuttonDown && !lbuttonDown) {
 		string hitMeshName;
 		if (editMode && transformMode == 0) {
-			cursorExists = gls.UpdateCursor(x, y, &hitMeshName, &t, &w, &m);
+			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitMeshName, &t, &w, &m);
 		}
 		else {
 			cursorExists = false;

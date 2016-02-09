@@ -80,6 +80,7 @@ public:
 
 	void ShowShape(const string& shapeName, bool show = true);
 	void SetActiveShapes(const vector<string>& shapeNames);
+	void SetSelectedShape(const string& shapeName);
 
 	TweakUndo* GetStrokeManager() {
 		return strokeManager;
@@ -137,6 +138,13 @@ public:
 	}
 	void SetConnectedEdit(bool on = true) {
 		bConnectedEdit = on;
+	}
+
+	bool GetGlobalBrushCollision() {
+		return bGlobalBrushCollision;
+	}
+	void SetGlobalBrushCollision(bool on = true) {
+		bGlobalBrushCollision = on;
 	}
 
 	void SetShapeGhostMode(const string& shapeName, bool on = true) {
@@ -409,9 +417,10 @@ private:
 	bool bWeightPaint;
 	bool isPainting;
 	bool isTransforming;
-	bool bXMirror;
 	bool bAutoNormals;
+	bool bXMirror;
 	bool bConnectedEdit;
+	bool bGlobalBrushCollision;
 
 	TweakBrush* activeBrush;
 	TweakBrush* savedBrush;
@@ -788,6 +797,13 @@ private:
 		GetMenuBar()->Check(event.GetId(), enabled);
 		GetToolBar()->ToggleTool(event.GetId(), enabled);
 		glView->SetConnectedEdit(enabled);
+	}
+
+	void OnGlobalBrushCollision(wxCommandEvent& event) {
+		bool enabled = event.IsChecked();
+		GetMenuBar()->Check(event.GetId(), enabled);
+		GetToolBar()->ToggleTool(event.GetId(), enabled);
+		glView->SetGlobalBrushCollision(enabled);
 	}
 
 	void OnUndo(wxCommandEvent& WXUNUSED(event)) {
