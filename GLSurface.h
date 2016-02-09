@@ -62,7 +62,9 @@ class GLSurface {
 	unordered_map<string, int> namedOverlays;
 	vector<mesh*> meshes;
 	vector<mesh*> overlays;
-	vector<int> activeMeshes;
+
+	vector<mesh*> activeMeshes;
+	vector<int> activeMeshesID;
 
 	void InitLighting();
 	void InitMaterial(Vector3 diffuseColor);
@@ -82,13 +84,14 @@ class GLSurface {
 				namedMeshes[meshes[i]->shapeName] = i;
 		}
 
-		for (int i = 0; i < activeMeshes.size(); i++) {
-			if (activeMeshes[i] == meshID) {
+		for (int i = 0; i < activeMeshesID.size(); i++) {
+			if (activeMeshesID[i] == meshID) {
+				activeMeshesID.erase(activeMeshesID.begin() + meshID);
 				activeMeshes.erase(activeMeshes.begin() + meshID);
 				i--;
 			}
-			else if (activeMeshes[i] > meshID)
-				activeMeshes[i]--;
+			else if (activeMeshesID[i] > meshID)
+				activeMeshesID[i]--;
 		}
 	}
 
@@ -106,6 +109,7 @@ public:
 
 		meshes.clear();
 		namedMeshes.clear();
+		activeMeshesID.clear();
 		activeMeshes.clear();
 	}
 
@@ -159,21 +163,18 @@ public:
 		return -1;
 	}
 
-	void GetActiveMeshes(vector<mesh*>& meshesList) {
-		for (auto &m : activeMeshes)
-			meshesList.push_back(meshes[m]);
+	vector<mesh*> GetActiveMeshes() {
+		return activeMeshes;
 	}
 
 	Vector3 GetActiveCenter(bool useMask = true) {
-		vector<mesh*> meshesList;
-		GetActiveMeshes(meshesList);
-		if (meshesList.empty())
+		if (activeMeshes.empty())
 			return Vector3();
 
 		int count = 0;
 		Vector3 total;
 
-		for (auto &m : meshesList) {
+		for (auto &m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
 				if (!useMask || m->vcolors[i].x == 0.0f) {
 					total = total + m->verts[i];
@@ -274,8 +275,8 @@ public:
 	void SetMeshVisibility(const string& name, bool visible = true);
 	void SetMeshVisibility(int shapeIndex, bool visible = true);
 	void SetOverlayVisibility(const string& name, bool visible = true);
-	void SetActiveMeshes(const vector<int>& shapeIndices);
-	void SetActiveMeshes(const vector<string>& shapeNames);
+	void SetActiveMeshesID(const vector<int>& shapeIndices);
+	void SetActiveMeshesID(const vector<string>& shapeNames);
 
 	RenderMode SetMeshRenderMode(const string& name, RenderMode mode);
 
@@ -290,9 +291,9 @@ public:
 		else
 			bTextured = true;
 
-		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material)
-				meshes[i]->material->shader->ShowTexture(bTextured);
+		for (auto &m : meshes)
+			if (m->material)
+				m->material->shader->ShowTexture(bTextured);
 	}
 
 	void ToggleWireframe() {
@@ -308,9 +309,9 @@ public:
 		else
 			bLighting = true;
 
-		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material)
-				meshes[i]->material->shader->EnableVertexLighting(bLighting);
+		for (auto &m : meshes)
+			if (m->material)
+				m->material->shader->EnableVertexLighting(bLighting);
 	}
 
 	void ToggleMask() {
@@ -319,17 +320,17 @@ public:
 		else
 			bMaskVisible = true;
 
-		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material)
-				meshes[i]->material->shader->ShowMask(bMaskVisible);
+		for (auto &m : meshes)
+			if (m->material)
+				m->material->shader->ShowMask(bMaskVisible);
 	}
 
 	void SetWeightColors(bool bVisible = true) {
 		bWeightColors = bVisible;
 
-		for (int i = 0; i < meshes.size(); i++)
-			if (meshes[i]->material)
-				meshes[i]->material->shader->ShowWeight(bWeightColors);
+		for (auto &m : meshes)
+			if (m->material)
+				m->material->shader->ShowWeight(bWeightColors);
 	}
 
 	void ToggleWeightColors() {
@@ -339,7 +340,7 @@ public:
 			bWeightColors = true;
 
 		for (auto &m : activeMeshes)
-			if (meshes[m]->material)
-				meshes[m]->material->shader->ShowWeight(bWeightColors);
+			if (m->material)
+				m->material->shader->ShowWeight(bWeightColors);
 	}
 };

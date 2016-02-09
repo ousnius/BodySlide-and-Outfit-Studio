@@ -148,10 +148,7 @@ public:
 			m->rendermode = RenderMode::Normal;
 	}
 	void ToggleGhostMode() {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-
-		for (auto &m : meshesList) {
+		for (auto &m : gls.GetActiveMeshes()) {
 			if (m->rendermode == RenderMode::Normal)
 				m->rendermode = RenderMode::LitWire;
 			else if (m->rendermode == RenderMode::LitWire)
@@ -160,10 +157,7 @@ public:
 	}
 
 	void ToggleNormalSeamSmoothMode() {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-
-		for (auto &m : meshesList) {
+		for (auto &m : gls.GetActiveMeshes()) {
 			if (m->smoothSeamNormals == true)
 				m->smoothSeamNormals = false;
 			else
@@ -253,10 +247,7 @@ public:
 	}
 
 	void ToggleMaskVisible() {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-
-		for (auto &m : meshesList) {
+		for (auto &m : gls.GetActiveMeshes()) {
 			if (!m->vcolors) {
 				m->vcolors = new Vector3[m->nVerts];
 				memset(m->vcolors, 0, 12 * m->nVerts);
@@ -270,23 +261,17 @@ public:
 	}
 
 	void ClearMask() {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-
-		for (auto &m : meshesList) {
+		for (auto &m : gls.GetActiveMeshes()) {
 			if (m->vcolors)
 				m->ColorChannelFill(0, 0.0f);
 		}
 	}
 
 	void GetActiveMask(unordered_map<ushort, float>& mask) {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-
-		if (meshesList.empty())
+		if (gls.GetActiveMeshes().empty())
 			return;
 
-		mesh* m = meshesList.back();
+		mesh* m = gls.GetActiveMeshes().back();
 		if (!m->vcolors)
 			return;
 
@@ -297,13 +282,10 @@ public:
 	}
 
 	void GetActiveUnmasked(unordered_map<ushort, float>& mask) {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-
-		if (meshesList.empty())
+		if (gls.GetActiveMeshes().empty())
 			return;
 
-		mesh* m = meshesList.back();
+		mesh* m = gls.GetActiveMeshes().back();
 		if (!m->vcolors) {
 			for (int i = 0; i < m->nVerts; i++)
 				mask[i] = 0.0f;
@@ -342,10 +324,7 @@ public:
 	}
 
 	void InvertMask() {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-
-		for (auto &m : meshesList) {
+		for (auto &m : gls.GetActiveMeshes()) {
 			if (!m->vcolors)
 				m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 			for (int i = 0; i < m->nVerts; i++)

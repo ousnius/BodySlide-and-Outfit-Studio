@@ -3924,7 +3924,7 @@ void wxGLPanel::ShowShape(const string& shapeName, bool show) {
 }
 
 void wxGLPanel::SetActiveShapes(const vector<string>& shapeNames) {
-	gls.SetActiveMeshes(shapeNames);
+	gls.SetActiveMeshesID(shapeNames);
 }
 
 void wxGLPanel::SetActiveBrush(int brushID) {
@@ -4082,10 +4082,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		activeBrush = &smoothBrush;
 	}
 
-	vector<mesh*> meshesList;
-	gls.GetActiveMeshes(meshesList);
-
-	activeStroke = strokeManager->CreateStroke(meshesList, activeBrush);
+	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), activeBrush);
 	activeBrush->setConnected(bConnectedEdit);
 	activeBrush->setMirror(bXMirror);
 	activeBrush->setRadius(brushSize);
@@ -4255,10 +4252,7 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		}
 	}
 
-	vector<mesh*> meshesList;
-	gls.GetActiveMeshes(meshesList);
-
-	activeStroke = strokeManager->CreateStroke(meshesList, activeBrush);
+	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), activeBrush);
 	activeStroke->beginStroke(tpi);
 	activeStroke->updateStroke(tpi);
 
@@ -4287,11 +4281,8 @@ void wxGLPanel::EndTransform() {
 }
 
 bool wxGLPanel::UndoStroke() {
-	vector<mesh*> meshesList;
-	gls.GetActiveMeshes(meshesList);
-
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	bool ret = strokeManager->backStroke(meshesList);
+	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
 	if (ret) {
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (curStroke && curStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
@@ -4318,10 +4309,7 @@ bool wxGLPanel::UndoStroke() {
 }
 
 bool wxGLPanel::RedoStroke() {
-	vector<mesh*> meshesList;
-	gls.GetActiveMeshes(meshesList);
-
-	bool ret = strokeManager->forwardStroke(meshesList);
+	bool ret = strokeManager->forwardStroke(gls.GetActiveMeshes());
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 	if (ret) {
 		OutfitStudio* os = (OutfitStudio*)notifyWindow;
@@ -4360,10 +4348,8 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 	Vector3 o;
 	string mode = Config.GetString("Editing/CenterMode");
 	if (mode == "Object") {
-		vector<mesh*> meshesList;
-		gls.GetActiveMeshes(meshesList);
-		if (!meshesList.empty())
-			o = meshesList.back()->bvh->Center();
+		if (!gls.GetActiveMeshes().empty())
+			o = gls.GetActiveMeshes().back()->bvh->Center();
 	}
 	else if (mode == "Selected")
 		o = gls.GetActiveCenter();

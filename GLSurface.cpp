@@ -605,6 +605,7 @@ int GLSurface::PickMesh(int ScreenX, int ScreenY) {
 		results.clear();
 		if (!meshes[i]->bVisible || !meshes[i]->bvh)
 			continue;
+
 		if (meshes[i]->bvh->IntersectRay(o, d, &results)) {
 			if (results[0].HitDistance < curd) {
 				result = i;
@@ -612,13 +613,12 @@ int GLSurface::PickMesh(int ScreenX, int ScreenY) {
 			}
 		}
 	}
+
 	return result;
 }
 
 bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
-	vector<mesh*> meshesList;
-	GetActiveMeshes(meshesList);
-	if (meshesList.empty())
+	if (activeMeshes.empty())
 		return false;
 
 	Vector3 o;
@@ -632,7 +632,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 		o = (*inRayOrigin);
 	}
 
-	for (auto &m : meshesList) {
+	for (auto &m : activeMeshes) {
 		vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
@@ -722,10 +722,7 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 
 bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, string* hitMeshName, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
 	bool ret = false;
-
-	vector<mesh*> meshesList;
-	GetActiveMeshes(meshesList);
-	if (meshesList.empty())
+	if (activeMeshes.empty())
 		return ret;
 
 	Vector3 o;
@@ -743,7 +740,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, string* hitMeshName, int*
 
 	GetPickRay(ScreenX, ScreenY, d, o);
 
-	for (auto &m : meshesList) {
+	for (auto &m : activeMeshes) {
 		vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			ret = true;
@@ -811,9 +808,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, string* hitMeshName, int*
 }
 
 bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx) {
-	vector<mesh*> meshesList;
-	GetActiveMeshes(meshesList);
-	if (meshesList.empty())
+	if (activeMeshes.empty())
 		return false;
 
 	Vector3 o;
@@ -826,7 +821,7 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx) {
 
 	GetPickRay(ScreenX, ScreenY, d, o);
 
-	for (auto &m : meshesList) {
+	for (auto &m : activeMeshes) {
 		vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
@@ -1388,10 +1383,7 @@ int GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 	Vector3 o(start.x, start.y, start.z);
 	Vector3 d(direction.x, direction.y, direction.z);
 
-	vector<mesh*> meshesList;
-	GetActiveMeshes(meshesList);
-
-	for (auto &itMesh : meshesList) {
+	for (auto &itMesh : activeMeshes) {
 		vector<IntersectResult> results;
 		if (itMesh->bvh->IntersectRay(o, d, &results)) {
 			mesh* mv = new mesh();
@@ -1774,17 +1766,25 @@ void GLSurface::SetOverlayVisibility(const string& name, bool visible) {
 	m->bVisible = visible;
 }
 
-void GLSurface::SetActiveMeshes(const vector<int>& shapeIndices) {
+void GLSurface::SetActiveMeshesID(const vector<int>& shapeIndices) {
+	activeMeshesID.clear();
 	activeMeshes.clear();
-	activeMeshes = shapeIndices;
+
+	activeMeshesID = shapeIndices;
+	for (auto &id : activeMeshesID)
+		activeMeshes.push_back(meshes[id]);
 }
 
-void GLSurface::SetActiveMeshes(const vector<string>& shapeNames) {
+void GLSurface::SetActiveMeshesID(const vector<string>& shapeNames) {
+	activeMeshesID.clear();
 	activeMeshes.clear();
+
 	for (auto &s : shapeNames) {
 		int id = GetMeshID(s);
-		if (id != -1)
-			activeMeshes.push_back(id);
+		if (id != -1) {
+			activeMeshesID.push_back(id);
+			activeMeshes.push_back(meshes[id]);
+		}
 	}
 }
 
