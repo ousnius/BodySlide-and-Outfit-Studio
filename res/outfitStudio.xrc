@@ -103,7 +103,7 @@
 				<longhelp></longhelp>
 				<bitmap>BrushCollision.png</bitmap>
 				<toggle>1</toggle>
-				<checked>0</checked>
+				<checked>1</checked>
 			</object>
 			<object class="separator" />
 			<object class="tool" name="btnViewFront">
@@ -795,7 +795,7 @@
 					<label>Global Brush Collision\tB</label>
 					<help>Allows for the brushes to collide with all currently selected meshes at the same time</help>
 					<checkable>1</checkable>
-					<checked>0</checked>
+					<checked>1</checked>
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="btnAutoNormals">

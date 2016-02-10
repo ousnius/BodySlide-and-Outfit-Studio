@@ -134,13 +134,6 @@ void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
 }
 
 void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
-	vector<int> facets;
-	vector<int> facets2;
-	unordered_map<int, Vector3> movedpoints;
-
-	int nPts1 = 0;
-	int nPts2 = 0;
-
 	int brushType = refBrush->Type();
 
 	TweakPickInfo mirrorPick = pickInfo;
@@ -160,8 +153,12 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 		// most of the pick info values are ignored.
 
 		for (auto &m : refMeshes) {
+			vector<int> facets;
+			vector<int> facets2;
+			int nPts1 = 0;
+
 			if (!refBrush->queryPoints(m, pickInfo, nullptr, nPts1, facets, affectedNodes[m]))
-				return;
+				continue;
 
 			if (nPts1 > outPositionCount[m]) {
 				if (outPositions.find(m) != outPositions.end())
@@ -179,8 +176,13 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	}
 	else {
 		for (auto &m : refMeshes) {
+			vector<int> facets;
+			vector<int> facets2;
+			int nPts1 = 0;
+			int nPts2 = 0;
+
 			if (!refBrush->queryPoints(m, pickInfo, pts1[m], nPts1, facets, affectedNodes[m]))
-				return;
+				continue;
 
 			if (refBrush->isMirrored())
 				refBrush->queryPoints(m, mirrorPick, pts2[m], nPts2, facets2, affectedNodes[m]);
@@ -224,10 +226,11 @@ void TweakStroke::endStroke() {
 		TB_Move* br = dynamic_cast<TB_Move*>(refBrush);
 		if (br) {
 			for (auto &m : refMeshes) {
-				affectedNodes[m].swap(((TB_Move*)refBrush)->cachedNodes[m]);
-				affectedNodes[m].insert(((TB_Move*)refBrush)->cachedNodesM[m].begin(), ((TB_Move*)refBrush)->cachedNodesM[m].end());
-				((TB_Move*)refBrush)->cachedNodes[m].clear();
-				((TB_Move*)refBrush)->cachedNodesM[m].clear();
+				TweakBrushMeshCache* meshCache = refBrush->getCache(m);
+				affectedNodes[m].swap(meshCache->cachedNodes);
+				affectedNodes[m].insert(meshCache->cachedNodesM.begin(), meshCache->cachedNodesM.end());
+				meshCache->cachedNodes.clear();
+				meshCache->cachedNodesM.clear();
 			}
 		}
 	}
@@ -744,10 +747,6 @@ TB_Move::TB_Move() : TweakBrush() {
 }
 
 TB_Move::~TB_Move() {
-	for (auto &cache : cachedPoints)
-		free(cache.second);
-	for (auto &cache : cachedPointsM)
-		free(cache.second);
 }
 
 bool TB_Move::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
@@ -759,36 +758,28 @@ bool TB_Move::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
 	d = pick.origin.dot(pick.view);
 	md = mpick.origin.dot(mpick.view);
 
-	for (auto &cache : cachedPoints)
-		free(cache.second);
-	for (auto &cache : cachedPointsM)
-		free(cache.second);
-
-	cachedPoints.clear();
-	cachedPointsM.clear();
-	cachedFacets.clear();
-	cachedNodes.clear();
-	cachedPositions.clear();
+	cache.clear();
 
 	for (auto &m : refMeshes) {
-		nCachedPoints[m] = 0;
-		nCachedPointsM[m] = 0;
-		cachedPoints[m] = (int*)malloc(m->nVerts * sizeof(int));
+		TweakBrushMeshCache* meshCache = &cache[m];
+		meshCache->nCachedPoints = 0;
+		meshCache->nCachedPointsM = 0;
+		meshCache->cachedPoints = (int*)malloc(m->nVerts * sizeof(int));
 
-		if (!TweakBrush::queryPoints(m, pick, cachedPoints[m], nCachedPoints[m], cachedFacets[m], cachedNodes[m]))
-			return false;
+		if (!TweakBrush::queryPoints(m, pick, meshCache->cachedPoints, meshCache->nCachedPoints, meshCache->cachedFacets, meshCache->cachedNodes))
+			continue;
 
-		for (int i = 0; i < nCachedPoints[m]; i++)
-			cachedPositions[m][cachedPoints[m][i]] = m->verts[cachedPoints[m][i]];
+		for (int i = 0; i < meshCache->nCachedPoints; i++)
+			meshCache->cachedPositions[meshCache->cachedPoints[i]] = m->verts[meshCache->cachedPoints[i]];
 
 		if (bMirror) {
-			cachedPointsM[m] = (int*)malloc(m->nVerts * sizeof(int));
-			cachedFacetsM[m].clear();
-			cachedNodesM[m].clear();
-			TweakBrush::queryPoints(m, mpick, cachedPointsM[m], nCachedPointsM[m], cachedFacetsM[m], cachedNodesM[m]);
+			meshCache->cachedPointsM = (int*)malloc(m->nVerts * sizeof(int));
+			meshCache->cachedFacetsM.clear();
+			meshCache->cachedNodesM.clear();
+			TweakBrush::queryPoints(m, mpick, meshCache->cachedPointsM, meshCache->nCachedPointsM, meshCache->cachedFacetsM, meshCache->cachedNodesM);
 
-			for (int i = 0; i < nCachedPointsM[m]; i++)
-				cachedPositions[m][cachedPointsM[m][i]] = m->verts[cachedPointsM[m][i]];
+			for (int i = 0; i < meshCache->nCachedPointsM; i++)
+				meshCache->cachedPositions[meshCache->cachedPointsM[i]] = m->verts[meshCache->cachedPointsM[i]];
 		}
 	}
 
@@ -796,15 +787,16 @@ bool TB_Move::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
 }
 
 bool TB_Move::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
-	if (nCachedPoints[m] == 0)
+	TweakBrushMeshCache* meshCache = &cache[m];
+	if (meshCache->nCachedPoints == 0)
 		return false;
 
 	if (resultPoints) {
-		memcpy(resultPoints, cachedPoints[m], nCachedPoints[m] * sizeof(int));
-		memcpy(resultPoints + nCachedPoints[m], cachedPointsM[m], nCachedPointsM[m] * sizeof(int));
+		memcpy(resultPoints, meshCache->cachedPoints, meshCache->nCachedPoints * sizeof(int));
+		memcpy(resultPoints + meshCache->nCachedPoints, meshCache->cachedPointsM, meshCache->nCachedPointsM * sizeof(int));
 	}
 
-	outResultCount = nCachedPoints[m] + nCachedPointsM[m];
+	outResultCount = meshCache->nCachedPoints + meshCache->nCachedPointsM;
 
 	return true;
 }
@@ -820,6 +812,7 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 	Vector3 ve;
 	Vector3 vf;
 
+	TweakBrushMeshCache* meshCache = &cache[m];
 	if (bMirror) {
 		Vector3 lmo;
 		lmo.x = -pickInfo.origin.x;	lmo.y = pickInfo.origin.y; lmo.z = pickInfo.origin.z;
@@ -829,9 +822,9 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 		Matrix4 xformMirror;
 		xformMirror.Translate(dv*strength);
 
-		for (int p = 0; p < nCachedPointsM[m]; p++) {
-			int i = cachedPointsM[m][p];
-			vs = cachedPositions[m][i];
+		for (int p = 0; p < meshCache->nCachedPointsM; p++) {
+			int i = meshCache->cachedPointsM[p];
+			vs = meshCache->cachedPositions[i];
 			movedpoints[i] = vs;
 			ve = xformMirror * vs;
 			ve -= vs;
@@ -844,9 +837,9 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 		}
 	}
 
-	for (int p = 0; p < nCachedPoints[m]; p++) {
-		int i = cachedPoints[m][p];
-		vs = cachedPositions[m][i];
+	for (int p = 0; p < meshCache->nCachedPoints; p++) {
+		int i = meshCache->cachedPoints[p];
+		vs = meshCache->cachedPositions[i];
 		movedpoints[i] = vs;
 		ve = xform * vs;
 		ve -= vs;
@@ -870,6 +863,7 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 	Vector3 ve;
 	Vector3 vf;
 
+	TweakBrushMeshCache* meshCache = &cache[m];
 	if (bMirror) {
 		Vector3 lmo;
 		lmo.x = -pickInfo.origin.x;
@@ -881,10 +875,10 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 		Matrix4 xformMirror;
 		xformMirror.Translate(dv * strength);
 
-		for (int p = 0; p < nCachedPointsM[m]; p++) {
-			int i = cachedPointsM[m][p];
-			vs = cachedPositions[m][i];
-			movedpoints[p + nCachedPoints[m]] = vs;
+		for (int p = 0; p < meshCache->nCachedPointsM; p++) {
+			int i = meshCache->cachedPointsM[p];
+			vs = meshCache->cachedPositions[i];
+			movedpoints[p + meshCache->nCachedPoints] = vs;
 			ve = xformMirror * vs;
 			ve -= vs;
 			applyFalloff(ve, mpick.origin.DistanceTo(vs));
@@ -896,9 +890,9 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 		}
 	}
 
-	for (int p = 0; p < nCachedPoints[m]; p++) {
-		int i = cachedPoints[m][p];
-		vs = cachedPositions[m][i];
+	for (int p = 0; p < meshCache->nCachedPoints; p++) {
+		int i = meshCache->cachedPoints[p];
+		vs = meshCache->cachedPositions[i];
 		movedpoints[p] = vs;
 		ve = xform * vs;
 		ve -= vs;
@@ -927,8 +921,6 @@ TB_XForm::TB_XForm() {
 }
 
 TB_XForm::~TB_XForm() {
-	for (auto &cache : cachedPositions)
-		free(cache.second);
 }
 
 void TB_XForm::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
@@ -940,20 +932,20 @@ bool TB_XForm::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
 	pick = pickInfo;
 	d = pick.origin.dot(pick.normal);
 
-	for (auto &cache : cachedPositions)
-		free(cache.second);
+	cache.clear();
 
 	for (auto &m : refMeshes) {
-		cachedPositions[m] = (Vector3*)malloc(m->nVerts * sizeof(Vector3));
-		nCachedPoints[m] = m->nVerts;
-		for (int i = 0; i < nCachedPoints[m]; i++)
-			cachedPositions[m][i] = m->verts[i];
+		TweakBrushMeshCache* meshCache = &cache[m];
+		meshCache->nCachedPoints = m->nVerts;
+		for (int i = 0; i < meshCache->nCachedPoints; i++)
+			meshCache->cachedPositions[i] = m->verts[i];
 	}
 	return true;
 }
 
 bool TB_XForm::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
-	if (nCachedPoints[m] == 0)
+	TweakBrushMeshCache* meshCache = &cache[m];
+	if (meshCache->nCachedPoints == 0)
 		return false;
 
 	if (resultPoints) {
@@ -981,8 +973,9 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nP
 	Vector3 ve;
 	Vector3 vf;
 
-	for (int p = 0; p < nCachedPoints[m]; p++) {
-		vs = cachedPositions[m][p];
+	TweakBrushMeshCache* meshCache = &cache[m];
+	for (int p = 0; p < meshCache->nCachedPoints; p++) {
+		vs = meshCache->cachedPositions[p];
 		movedpoints[p] = vs;
 		ve = xform * vs;
 		ve -= vs;
@@ -1040,8 +1033,9 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nP
 	Vector3 ve;
 	Vector3 vf;
 
-	for (int p = 0; p < nCachedPoints[m]; p++) {
-		vs = cachedPositions[m][p];
+	TweakBrushMeshCache* meshCache = &cache[m];
+	for (int p = 0; p < meshCache->nCachedPoints; p++) {
+		vs = meshCache->cachedPositions[p];
 		movedpoints[p] = vs;
 		ve = xform * vs;
 		ve -= vs;

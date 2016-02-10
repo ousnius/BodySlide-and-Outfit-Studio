@@ -55,6 +55,8 @@ public:
 };
 
 
+class OutfitStudio;
+
 class wxGLPanel : public wxGLCanvas {
 public:
 	wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs);
@@ -408,7 +410,7 @@ private:
 
 	set<int> BVHUpdateQueue;
 
-	wxWindow* notifyWindow;
+	OutfitStudio* os;
 
 	float brushSize;
 	bool editMode;

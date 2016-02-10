@@ -92,6 +92,34 @@ public:
 	int facetM;				// Mirrored facet index touched (X-axis mirror).
 };
 
+class TweakBrushMeshCache {
+public:
+	int* cachedPoints;
+	int nCachedPoints;
+	vector<int> cachedFacets;
+	int* cachedPointsM;
+	int nCachedPointsM;
+	vector<int> cachedFacetsM;
+	unordered_map<int, Vector3> cachedPositions;
+	unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
+	unordered_set<AABBTree::AABBTreeNode*> cachedNodesM;
+
+	TweakBrushMeshCache() {
+		cachedPoints = nullptr;
+		cachedPointsM = nullptr;
+
+		nCachedPoints = 0;
+		nCachedPointsM = 0;
+	}
+
+	~TweakBrushMeshCache() {
+		if (cachedPoints)
+			delete[] cachedPoints;
+		if (cachedPointsM)
+			delete[] cachedPointsM;
+	}
+};
+
 
 class TweakBrush {
 protected:
@@ -108,6 +136,8 @@ protected:
 	bool bLiveNormals;		// Update mesh normals at each update instead of at stroke completion.
 	bool bConnected;		// Operate on connected vertices only.
 
+	unordered_map<mesh*, TweakBrushMeshCache> cache;
+
 public:
 	TweakBrush();
 	virtual ~TweakBrush();
@@ -117,6 +147,10 @@ public:
 	}
 	string Name() {
 		return brushName;
+	}
+
+	TweakBrushMeshCache* getCache(mesh* m) {
+		return &cache[m];
 	}
 
 	virtual float getRadius() {
@@ -289,18 +323,8 @@ class TB_Move : public TweakBrush {
 	TweakPickInfo mpick;
 	float d;				// Plane dist.
 	float md;
-	unordered_map<mesh*, int*> cachedPoints;
-	unordered_map<mesh*, int> nCachedPoints;
-	unordered_map<mesh*, vector<int>> cachedFacets;
-	unordered_map<mesh*, int*> cachedPointsM;
-	unordered_map<mesh*, int> nCachedPointsM;
-	unordered_map<mesh*, vector<int>> cachedFacetsM;
-	unordered_map<mesh*, unordered_map<int, Vector3>> cachedPositions;
 
 public:
-	unordered_map<mesh*, unordered_set<AABBTree::AABBTreeNode*>> cachedNodes;
-	unordered_map<mesh*, unordered_set<AABBTree::AABBTreeNode*>> cachedNodesM;
-
 	TB_Move();
 	virtual ~TB_Move();
 
@@ -314,23 +338,20 @@ public:
 
 	void GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist);
 	int CachedPointIndex(mesh* m, int query) {
-		if (query >= nCachedPoints[m])
-			return cachedPointsM[m][query - nCachedPoints[m]];
+		TweakBrushMeshCache* meshCache = &cache[m];
+		if (query >= meshCache->nCachedPoints)
+			return meshCache->cachedPointsM[query - meshCache->nCachedPoints];
 		else
-			return cachedPoints[m][query];
+			return meshCache->cachedPoints[query];
 	}
 };
 
 class TB_XForm : public TweakBrush {
 	TweakPickInfo pick;
 	float d;				// Plane dist,
-	unordered_map<mesh*, int> nCachedPoints;
-	unordered_map<mesh*, Vector3*> cachedPositions;
-	unordered_map<mesh*, vector<int>> cachedFacets;
 	int xformType;			// 0 = Move, 1 = Rotate, 2 = Scale
 
 public:
-	unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
 	TB_XForm();
 	virtual ~TB_XForm();
 

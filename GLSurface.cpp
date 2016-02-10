@@ -636,6 +636,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 		o = (*inRayOrigin);
 	}
 
+	unordered_map<mesh*, Vector3> allHitDistances;
 	for (auto &m : activeMeshes) {
 		if (!allMeshes && m != selectedMesh)
 			continue;
@@ -649,16 +650,29 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 					if (results[i].HitDistance < minDist)
 						min_i = i;
 
-				outOrigin = results[min_i].HitCoord;
-				if (outFacet)
-					(*outFacet) = results[min_i].HitFacet;
+				Vector3 origin = results[min_i].HitCoord;
 
-				m->tris[results[min_i].HitFacet].trinormal(m->verts, &outNormal);
+				bool closest = true;
+				float viewDistance = origin.DistanceTo(o);
 
-				if (hitMesh)
-					hitMesh = m;
+				for (auto &p : allHitDistances) {
+					if (viewDistance > p.second.DistanceTo(o))
+						closest = false;
+				}
 
-				return true;
+				if (closest) {
+					outOrigin = origin;
+
+					if (outFacet)
+						(*outFacet) = results[min_i].HitFacet;
+
+					m->tris[results[min_i].HitFacet].trinormal(m->verts, &outNormal);
+
+					if (hitMesh)
+						hitMesh = m;
+
+					return true;
+				}
 			}
 		}
 	}
@@ -736,7 +750,6 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 	Vector3 d;
 	Vector3 v;
 	Vector3 vo;
-	int ringID;
 
 	if (outHoverTri)
 		(*outHoverTri) = -1;
@@ -747,6 +760,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 
 	GetPickRay(ScreenX, ScreenY, d, o);
 
+	unordered_map<mesh*, Vector3> allHitDistances;
 	for (auto &m : activeMeshes) {
 		if (!allMeshes && m != selectedMesh)
 			continue;
@@ -762,16 +776,9 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 						min_i = i;
 
 				Vector3 origin = results[min_i].HitCoord;
-				Vector3 norm;
-				m->tris[results[min_i].HitFacet].trinormal(m->verts, &norm);
-				ringID = AddVisCircle(results[min_i].HitCoord, norm, cursorSize, "cursormesh");
-				overlays[ringID]->scale = 2.0f;
 
 				Triangle t;
-				Vertex v;
 				t = m->tris[results[min_i].HitFacet];
-				if (outHoverTri)
-					(*outHoverTri) = results[min_i].HitFacet;
 
 				Vertex v1 = (m->verts[t.p1]);
 				Vertex v2 = (m->verts[t.p2]);
@@ -797,18 +804,35 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 					pointid = t.p3;
 				}
 
-				int dec = 5;
-				if (outHoverTri)
-					(*outHoverTri) = pointid;
-				if (outHoverWeight)
-					(*outHoverWeight) = floor(m->vcolors[pointid].y * pow(10, dec) + 0.5f) / pow(10, dec);
-				if (outHoverMask)
-					(*outHoverMask) = floor(m->vcolors[pointid].x * pow(10, dec) + 0.5f) / pow(10, dec);
-				if (hitMeshName)
-					(*hitMeshName) = m->shapeName;
+				bool closest = true;
+				float viewDistance = hilitepoint.DistanceTo(o);
 
-				AddVisPoint(hilitepoint, "pointhilite");
-				overlays[AddVisPoint(origin, "cursorcenter")]->color = Vector3(1.0f, 0.0f, 0.0f);
+				for (auto &p : allHitDistances) {
+					if (viewDistance > p.second.DistanceTo(o))
+						closest = false;
+				}
+
+				if (closest) {
+					int dec = 5;
+					if (outHoverTri)
+						(*outHoverTri) = pointid;
+					if (outHoverWeight)
+						(*outHoverWeight) = floor(m->vcolors[pointid].y * pow(10, dec) + 0.5f) / pow(10, dec);
+					if (outHoverMask)
+						(*outHoverMask) = floor(m->vcolors[pointid].x * pow(10, dec) + 0.5f) / pow(10, dec);
+					if (hitMeshName)
+						(*hitMeshName) = m->shapeName;
+
+					Vector3 norm;
+					m->tris[results[min_i].HitFacet].trinormal(m->verts, &norm);
+					int ringID = AddVisCircle(results[min_i].HitCoord, norm, cursorSize, "cursormesh");
+					overlays[ringID]->scale = 2.0f;
+
+					AddVisPoint(hilitepoint, "pointhilite");
+					overlays[AddVisPoint(origin, "cursorcenter")]->color = Vector3(1.0f, 0.0f, 0.0f);
+				}
+
+				allHitDistances[m] = hilitepoint;
 			}
 		}
 	}

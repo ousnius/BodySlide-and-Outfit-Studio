@@ -3845,7 +3845,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs) :
 	bAutoNormals = true;
 	bXMirror = true;
 	bConnectedEdit = false;
-	bGlobalBrushCollision = false;
+	bGlobalBrushCollision = true;
 
 	strokeManager = &baseStrokes;
 }
@@ -3868,7 +3868,7 @@ void wxGLPanel::OnShown() {
 }
 
 void wxGLPanel::SetNotifyWindow(wxWindow* win) {
-	notifyWindow = win;
+	os = dynamic_cast<OutfitStudio*>(win);
 }
 
 void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool buildNormals) {
@@ -3978,7 +3978,6 @@ void wxGLPanel::SetActiveBrush(int brushID) {
 void wxGLPanel::OnKeys(wxKeyEvent& event) {
 	if (event.GetUnicodeKey() == 'V') {
 		wxDialog dlg;
-		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		wxPoint cursorPos(event.GetPosition());
 
 		unordered_map<ushort, Vector3> diff;
@@ -4017,15 +4016,13 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 			}
 		}
 	}
-	else if (event.GetKeyCode() == WXK_SPACE) {
-		OutfitStudio* os = (OutfitStudio*)notifyWindow;
+	else if (event.GetKeyCode() == WXK_SPACE)
 		os->ToggleBrushPane();
-	}
+
 	event.Skip();
 }
 
 bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
-	OutfitStudio* os = (OutfitStudio*)notifyWindow;
 	Vector3 o;
 	Vector3 n;
 	Vector3 v;
@@ -4152,7 +4149,6 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		tpi.view = v;
 		activeStroke->updateStroke(tpi);
 
-		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (activeBrush->Type() == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -4172,7 +4168,6 @@ void wxGLPanel::EndBrushStroke() {
 	if (activeStroke) {
 		activeStroke->endStroke();
 
-		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (activeStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -4296,14 +4291,13 @@ void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
 	ShowTransformTool(true, false);
-	((OutfitStudio*)notifyWindow)->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
+	os->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
 }
 
 bool wxGLPanel::UndoStroke() {
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
 	if (ret) {
-		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (curStroke && curStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -4318,6 +4312,11 @@ bool wxGLPanel::UndoStroke() {
 
 		if (curStroke && curStroke->BrushType() != TBT_MASK) {
 			os->ActiveShapesUpdated(curStroke, true);
+
+			vector<mesh*> refMeshes = curStroke->GetRefMeshes();
+			for (auto &m : refMeshes)
+				os->project->UpdateShapeFromMesh(m->shapeName, m);
+
 			if (curStroke->BrushType() == TBT_XFORM)
 				ShowTransformTool(true, false);
 		}
@@ -4331,7 +4330,6 @@ bool wxGLPanel::RedoStroke() {
 	bool ret = strokeManager->forwardStroke(gls.GetActiveMeshes());
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 	if (ret) {
-		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (curStroke->BrushType() == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -4346,6 +4344,11 @@ bool wxGLPanel::RedoStroke() {
 
 		if (curStroke->BrushType() != TBT_MASK) {
 			os->ActiveShapesUpdated(curStroke);
+
+			vector<mesh*> refMeshes = curStroke->GetRefMeshes();
+			for (auto &m : refMeshes)
+				os->project->UpdateShapeFromMesh(m->shapeName, m);
+
 			if (curStroke->BrushType() == TBT_XFORM)
 				ShowTransformTool(true, false);
 		}
@@ -4455,7 +4458,6 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		gls.UpdateProjection();
 	}
 	
-	OutfitStudio* os = (OutfitStudio*)notifyWindow;
 	os->CheckBrushBounds();
 	os->UpdateBrushPane();
 	Refresh();
@@ -4518,7 +4520,6 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.ShowCursor(false);
 		}
 
-		OutfitStudio* os = (OutfitStudio*)notifyWindow;
 		if (os->statusBar) {
 			if (cursorExists) {
 				if (bWeightPaint)
@@ -4588,7 +4589,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 
 		}
 		else {
-			((OutfitStudio*)notifyWindow)->SelectShape(gls.GetMeshName(meshID));
+			os->SelectShape(gls.GetMeshName(meshID));
 		}
 	}
 	if (isPainting){
