@@ -629,13 +629,11 @@ struct Triangle {
 	void trinormal(Vertex* vertref, Vector3* outNormal);
 
 	void trinormal(const vector<Vector3>& vertref, Vector3* outNormal) {
-		Vertex va(vertref[p2].x - vertref[p1].x, vertref[p2].y - vertref[p1].y, vertref[p2].z - vertref[p1].z);
-		Vertex vb(vertref[p3].x - vertref[p1].x, vertref[p3].y - vertref[p1].y, vertref[p3].z - vertref[p1].z);
-
-		outNormal->x = va.y*vb.z - va.z*vb.y;
-		outNormal->y = va.z*vb.x - va.x*vb.z;
-		outNormal->z = va.x*vb.y - va.y*vb.x;
+		outNormal->x = (vertref[p2].y - vertref[p1].y) * (vertref[p3].z - vertref[p1].z) - (vertref[p2].z - vertref[p1].z) * (vertref[p3].y - vertref[p1].y);
+		outNormal->y = (vertref[p2].z - vertref[p1].z) * (vertref[p3].x - vertref[p1].x) - (vertref[p2].x - vertref[p1].x) * (vertref[p3].z - vertref[p1].z);
+		outNormal->z = (vertref[p2].x - vertref[p1].x) * (vertref[p3].y - vertref[p1].y) - (vertref[p2].y - vertref[p1].y) * (vertref[p3].x - vertref[p1].x);
 	}
+
 	void midpoint(Vertex* vertref, Vector3& outPoint);
 	float AxisMidPointY(Vertex* vertref);
 	float AxisMidPointX(Vertex* vertref);

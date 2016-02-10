@@ -36,12 +36,9 @@ Triangle::Triangle(ushort P1, ushort P2, ushort P3) {
 }
 
 void Triangle::trinormal(Vertex* vertref, Vector3* outNormal) {
-	Vertex va(vertref[p2].x - vertref[p1].x, vertref[p2].y - vertref[p1].y, vertref[p2].z - vertref[p1].z);
-	Vertex vb(vertref[p3].x - vertref[p1].x, vertref[p3].y - vertref[p1].y, vertref[p3].z - vertref[p1].z);
-
-	outNormal->x = va.y * vb.z - va.z * vb.y;
-	outNormal->y = va.z * vb.x - va.x * vb.z;
-	outNormal->z = va.x * vb.y - va.y * vb.x;
+	outNormal->x = (vertref[p2].y - vertref[p1].y) * (vertref[p3].z - vertref[p1].z) - (vertref[p2].z - vertref[p1].z) * (vertref[p3].y - vertref[p1].y);
+	outNormal->y = (vertref[p2].z - vertref[p1].z) * (vertref[p3].x - vertref[p1].x) - (vertref[p2].x - vertref[p1].x) * (vertref[p3].z - vertref[p1].z);
+	outNormal->z = (vertref[p2].x - vertref[p1].x) * (vertref[p3].y - vertref[p1].y) - (vertref[p2].y - vertref[p1].y) * (vertref[p3].x - vertref[p1].x);
 }
 
 void Triangle::midpoint(Vertex* vertref, Vector3& outPoint) {

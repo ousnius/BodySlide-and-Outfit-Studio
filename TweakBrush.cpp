@@ -25,6 +25,7 @@ void TweakUndo::Clear()	{
 unordered_map<mesh*, Vector3*> TweakStroke::outPositions{};
 unordered_map<mesh*, int> TweakStroke::outPositionCount{};
 int TweakStroke::nStrokes = 0;
+vector<future<void>> TweakStroke::normalUpdates{};
 
 TweakStroke* TweakUndo::CreateStroke(vector<mesh*> refMeshes, TweakBrush* refBrush) {
 	TweakStroke* newStroke = new TweakStroke(refMeshes, refBrush);
@@ -210,9 +211,12 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 	lastPoint = pickInfo.origin;
 
-	if (refBrush->LiveNormals() && brushType != TBT_WEIGHT)
-		for (auto &m : refMeshes)
-			m->SmoothNormals();
+	if (refBrush->LiveNormals() && brushType != TBT_WEIGHT) {
+		for (auto &m : refMeshes) {
+			auto pending = async(launch::async, mesh::SmoothNormalsStatic, m);
+			normalUpdates.push_back(move(pending));
+		}
+	}
 
 	if (refBrush->LiveBVH() && brushType != TBT_WEIGHT) {
 		for (auto &m : refMeshes)
@@ -243,9 +247,12 @@ void TweakStroke::endStroke() {
 			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
 
-	if (!refBrush->LiveNormals() || refBrush->Type() == TBT_WEIGHT)
-		for (auto &m : refMeshes)
-			m->SmoothNormals();
+	if (!refBrush->LiveNormals() || refBrush->Type() == TBT_WEIGHT) {
+		for (auto &m : refMeshes) {
+			auto pending = async(launch::async, mesh::SmoothNormalsStatic, m);
+			normalUpdates.push_back(move(pending));
+		}
+	}
 
 	for (auto &m : refMeshes) {
 		if (pts1.find(m) != pts1.end())
@@ -254,6 +261,19 @@ void TweakStroke::endStroke() {
 			delete[] pts2[m];
 
 		endBVH[m] = m->bvh;
+	}
+
+	bool notReady = true;
+	while (notReady) {
+		notReady = false;
+		for (int i = 0; i < normalUpdates.size(); i++) {
+			if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
+				normalUpdates.erase(normalUpdates.begin() + i);
+				i--;
+			}
+			else
+				notReady = true;
+		}
 	}
 }
 

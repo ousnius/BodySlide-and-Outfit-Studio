@@ -79,6 +79,9 @@ public:
 	void SetSmoothThreshold(float degrees);
 	float GetSmoothThreshold();
 	void SmoothNormals();
+	static void SmoothNormalsStatic(mesh* m) {
+		m->SmoothNormals();
+	}
 	void FacetNormals();
 
 

@@ -65,6 +65,7 @@ See the included LICENSE file
 #include <set>
 #include <map>
 #include <unordered_map>
+#include <future>
 
 using namespace std;
 
@@ -454,6 +455,8 @@ class TweakStroke {
 	static unordered_map<mesh*, Vector3*> outPositions;
 	static unordered_map<mesh*, int> outPositionCount;
 	static int nStrokes;
+
+	static vector<future<void>> normalUpdates;
 
 	unordered_map<mesh*, int*> pts1;
 	unordered_map<mesh*, int*> pts2;
