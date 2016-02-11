@@ -84,16 +84,6 @@ class GLSurface {
 			for (int i = meshID; i < meshes.size(); i++)
 				namedMeshes[meshes[i]->shapeName] = i;
 		}
-
-		for (int i = 0; i < activeMeshesID.size(); i++) {
-			if (activeMeshesID[i] == meshID) {
-				activeMeshesID.erase(activeMeshesID.begin() + meshID);
-				activeMeshes.erase(activeMeshes.begin() + meshID);
-				i--;
-			}
-			else if (activeMeshesID[i] > meshID)
-				activeMeshesID[i]--;
-		}
 	}
 
 public:

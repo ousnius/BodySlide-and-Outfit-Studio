@@ -2935,7 +2935,7 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Imported shape.");
 
-	WorkingGUIFromProj();
+	RefreshGUIFromProj();
 	glView->Refresh();
 }
 

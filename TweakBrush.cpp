@@ -260,6 +260,9 @@ void TweakStroke::endStroke() {
 		if (pts2.find(m) != pts2.end())
 			delete[] pts2[m];
 
+		pts1.clear();
+		pts2.clear();
+
 		endBVH[m] = m->bvh;
 	}
 
