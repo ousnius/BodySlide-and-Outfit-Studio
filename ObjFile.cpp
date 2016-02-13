@@ -125,6 +125,7 @@ int ObjFile::LoadForNif(fstream &base) {
 				}
 			}
 
+			bool skipFace = false;
 			for (int i = 0; i < nPoints; i++) {
 				v_idx[i] = di->verts.size();
 				if ((savedVert = vertMap.find(f[i])) != vertMap.end()) {
@@ -148,13 +149,24 @@ int ObjFile::LoadForNif(fstream &base) {
 				}
 
 				if (v_idx[i] == di->verts.size()) {
-					vertMap[f[i]].push_back(VertUV(v_idx[i], ft[i]));
-					di->verts.push_back(verts[f[i]]);
-					if (uvs.size() > 0) {
-						di->uvs.push_back(uvs[ft[i]]);
+					if (verts.size() > f[i]) {
+						di->verts.push_back(verts[f[i]]);
+
+						if (uvs.size() > ft[i]) {
+							vertMap[f[i]].push_back(VertUV(v_idx[i], ft[i]));
+							di->uvs.push_back(uvs[ft[i]]);
+						}
+					}
+					else {
+						skipFace = true;
+						break;
 					}
 				}
 			}
+
+			if (skipFace)
+				continue;
+
 			t.p1 = v_idx[0];
 			t.p2 = v_idx[1];
 			t.p3 = v_idx[2];
