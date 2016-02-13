@@ -2973,8 +2973,16 @@ int NifFile::CalcShapeDiff(const string& shapeName, const vector<Vector3>* targe
 		v.y = (targetData->at(i).y * scale) - myData->at(i).y;
 		v.z = (targetData->at(i).z * scale) - myData->at(i).z;
 
-		if (!v.IsZero(true))
-			outDiffData[i] = v;
+		if (hdr.userVersion == 12 && hdr.userVersion2 >= 130) {
+			if (v.IsZero(true, true))
+				continue;
+		}
+		else {
+			if (v.IsZero(true))
+				continue;
+		}
+
+		outDiffData[i] = v;
 	}
 	return 0;
 }
@@ -2990,16 +2998,8 @@ int NifFile::ShapeDiff(const string& baseShapeName, const string& targetShape, u
 void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	int skinRef = -1;
 	NiTriBasedGeom* geom = geomForName(shapeName);
-	if (geom) {
+	if (geom)
 		skinRef = geom->skinInstanceRef;
-	}
-	else {
-		// Not IMplemented
-		BSTriShape* siTriShape = geomForNameF4(shapeName);
-		if (siTriShape) {
-			//alphaRef = siTriShape->alphaPropertyRef;
-		}
-	}
 
 	if (skinRef == -1)
 		return;
@@ -3115,10 +3115,8 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	if (dataRef == -1)
 		return;
 
-	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
-		// NOT IMPLEMENTED
+	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE)
 		return;
-	}
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (!geom)

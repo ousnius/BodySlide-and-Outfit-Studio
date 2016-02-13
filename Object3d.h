@@ -16,8 +16,12 @@ using namespace std;
 #pragma warning (disable : 4018 4244 4267 4389)
 
 #ifndef EPSILON
-	#define EPSILON (1.0E-4)
+	#define EPSILON (0.0001)
 #endif
+#ifndef EPSILON_LOW
+	#define EPSILON_LOW (0.0312)
+#endif
+
 #define PI			3.141592f
 #define DEG2RAD		(PI/180.0f)
 
@@ -57,10 +61,16 @@ struct Vector3 {
 		x = y = z = 0.0f;
 	}
 
-	bool IsZero(bool bUseEpsilon = false) {
+	bool IsZero(bool bUseEpsilon = false, bool bUseEpsilonLow = false) {
 		if (bUseEpsilon) {
-			if (fabs(x) < EPSILON && fabs(y) < EPSILON && fabs(z) < EPSILON)
-				return true;
+			if (bUseEpsilonLow) {
+				if (fabs(x) < EPSILON_LOW && fabs(y) < EPSILON_LOW && fabs(z) < EPSILON_LOW)
+					return true;
+			}
+			else {
+				if (fabs(x) < EPSILON && fabs(y) < EPSILON && fabs(z) < EPSILON)
+					return true;
+			}
 		}
 		else {
 			if (x == 0.0f && y == 0.0f && z == 0.0f)
@@ -172,11 +182,10 @@ struct Vector3 {
 	}
 
 	void clampEpsilon() {
-
 		if (fabs(x) < EPSILON)
 			x = 0.0f;
 		if (fabs(y) < EPSILON)
-			y = 0.0f; 
+			y = 0.0f;
 		if (fabs(z) < EPSILON)
 			z = 0.0f;
 	}

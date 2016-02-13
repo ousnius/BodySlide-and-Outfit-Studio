@@ -766,16 +766,10 @@ void OutfitProject::SetSliderFromBSD(const string& sliderName, const string& sha
 
 bool OutfitProject::SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName) {
 	string target = ShapeToTarget(shapeName);
-	int type= workNif.GetShapeType(shapeName);
-	ObjFile obj;
-	if (type == BSSUBINDEXTRISHAPE) {
-		obj.LoadForNif(fileName);
-	//	obj.LoadSimple(fileName);
-	}
-	else {
-		obj.LoadForNif(fileName);
 
-	}
+	ObjFile obj;
+	obj.LoadForNif(fileName);
+
 	vector<string> groupNames;
 	obj.GetGroupList(groupNames);
 
