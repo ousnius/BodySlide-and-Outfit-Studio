@@ -104,22 +104,26 @@ int ObjFile::LoadForNif(fstream &base) {
 			pos = facept3.find('/');
 			f[2] = atoi(facept3.c_str()) - 1;
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
-			base >> facept4;
-
-			if (facept4 == "f" || facept4 == "g" || facept4 == "s" || facept4 == "#") {
-				gotface = true;
-				dump = facept4;
-				nPoints = 3;
-			}
-			else if (facept4.length() > 0) {
-				pos = facept4.find('/');
-				f[3] = atoi(facept4.c_str()) - 1;
-				ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
-				nPoints = 4;
-			}
 
 			if (f[0] == -1 || f[1] == -1 || f[2] == -1)
 				continue;
+
+			base >> facept4;
+			dump = facept4;
+
+			nPoints = 3;
+			gotface = true;
+
+			if (facept4.length() > 0) {
+				f[3] = atoi(facept4.c_str()) - 1;
+
+				if (f[3] != -1) {
+					pos = facept4.find('/');
+					ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
+					nPoints = 4;
+					gotface = false;
+				}
+			}
 
 			for (int i = 0; i < nPoints; i++) {
 				v_idx[i] = di->verts.size();
