@@ -854,28 +854,34 @@
 			</object>
 			<object class="wxMenu" name="menuMesh">
 				<label>Shape</label>
-				<object class="wxMenuItem" name="importShape">
-					<label>Import Shape from OBJ</label>
-					<help>Import an OBJ file as a new shape in the outfit.</help>
+				<object class="wxMenu" name="menuImportMesh">
+					<label>Import</label>
+					<object class="wxMenuItem" name="importShape">
+						<label>From OBJ...</label>
+						<help>Import an OBJ file as a new shape in the outfit.</help>
+					</object>
+					<object class="wxMenuItem" name="importFBX">
+						<label>From FBX...</label>
+						<help>Import an FBX file as a new shape in the outfit.</help>
+					</object>
 				</object>
-				<object class="wxMenuItem" name="exportShape">
-					<label>Export Shape to OBJ</label>
-					<help>Export the current shape as an OBJ file.</help>
-				</object>
-				<object class="wxMenuItem" name="importFBX">
-					<label>Import Shape from FBX</label>
-					<help>Import an FBX file as a new shape in the outfit.</help>
-				</object>
-				<object class="wxMenuItem" name="exportFBX">
-				  <label>Export Shape to FBX</label>
-				  <help>Export the current shape as an FBX file.</help>
+				<object class="wxMenu" name="menuExportMesh">
+					<label>Export</label>
+					<object class="wxMenuItem" name="exportShape">
+						<label>To OBJ...</label>
+						<help>Export the current shape as an OBJ file.</help>
+					</object>
+					<object class="wxMenuItem" name="exportFBX">
+						<label>To FBX...</label>
+						<help>Export the current shape as an FBX file.</help>
+					</object>
 				</object>
 				<object class="wxMenuItem" name="copyShape">
-					<label>Duplicate Shape...</label>
+					<label>Duplicate...</label>
 					<help>Duplicate the current shape.</help>
 				</object>
 				<object class="wxMenuItem" name="renameShape">
-					<label>Rename Shape...\tF2</label>
+					<label>Rename...\tF2</label>
 					<help>Change the name of the current shape.</help>
 				</object>
 				<object class="wxMenuItem" name="setReference">
@@ -884,15 +890,15 @@
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="moveShape">
-					<label>Move Shape...</label>
+					<label>Move...</label>
 					<help>Apply an offset adjustment to the mesh vertices. This permanently moves vertices.</help>
 				</object>
 				<object class="wxMenuItem" name="scaleShape">
-					<label>Scale Shape...</label>
+					<label>Scale...</label>
 					<help>Apply a scale adjustment to the shape. This permanently moves vertices.</help>
 				</object>
 				<object class="wxMenuItem" name="rotateShape">
-					<label>Rotate Shape...</label>
+					<label>Rotate...</label>
 					<help>Apply a rotation to the mesh vertices. This permanently moves vertices.</help>
 				</object>
 				<object class="wxMenuItem" name="btnSmoothSeams">
@@ -924,7 +930,7 @@
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="deleteShape">
-					<label>Delete Shape\tDel</label>
+					<label>Delete\tDel</label>
 					<help>Removes the currently selected shape from the outfit.</help>
 				</object>
 				<object class="wxMenuItem" name="shapeProperties">
@@ -935,8 +941,8 @@
 			<object class="wxMenu" name="menuSlider">
 				<label>Slider</label>
 				<object class="wxMenuItem" name="sliderConform">
-					<label>Conform to Sliders\tCtrl+C</label>
-					<help>Conform active outfit shape to all checked sliders.</help>
+					<label>Conform Selected\tCtrl+C</label>
+					<help>Conform selected outfit shape to all checked sliders.</help>
 				</object>
 				<object class="wxMenuItem" name="sliderConformAll">
 					<label>Conform All\tCtrl+Shift+C</label>
@@ -2442,20 +2448,34 @@
 	</object>
 	<object class="wxMenu" name="menuMeshContext">
 		<label>Shape</label>
-		<object class="wxMenuItem" name="importShape">
-			<label>Import Shape from OBJ</label>
-			<help>Import an OBJ file as a new shape in the outfit.</help>
+		<object class="wxMenu" name="menuImportMesh">
+			<label>Import</label>
+			<object class="wxMenuItem" name="importShape">
+				<label>From OBJ...</label>
+				<help>Import an OBJ file as a new shape in the outfit.</help>
+			</object>
+			<object class="wxMenuItem" name="importFBX">
+				<label>From FBX...</label>
+				<help>Import an FBX file as a new shape in the outfit.</help>
+			</object>
 		</object>
-		<object class="wxMenuItem" name="exportShape">
-			<label>Export Shape to OBJ</label>
-			<help>Export the current shape as an OBJ file.</help>
+		<object class="wxMenu" name="menuExportMesh">
+			<label>Export</label>
+			<object class="wxMenuItem" name="exportShape">
+				<label>To OBJ...</label>
+				<help>Export the current shape as an OBJ file.</help>
+			</object>
+			<object class="wxMenuItem" name="exportFBX">
+				<label>To FBX...</label>
+				<help>Export the current shape as an FBX file.</help>
+			</object>
 		</object>
 		<object class="wxMenuItem" name="copyShape">
-			<label>Duplicate Shape...</label>
+			<label>Duplicate...</label>
 			<help>Duplicate the current shape.</help>
 		</object>
 		<object class="wxMenuItem" name="renameShape">
-			<label>Rename Shape...\tF2</label>
+			<label>Rename...\tF2</label>
 			<help>Change the name of the current shape.</help>
 		</object>
 		<object class="wxMenuItem" name="setReference">
@@ -2464,15 +2484,15 @@
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="moveShape">
-			<label>Move Shape...</label>
+			<label>Move...</label>
 			<help>Apply an offset adjustment to the mesh vertices. This permanently moves vertices.</help>
 		</object>
 		<object class="wxMenuItem" name="scaleShape">
-			<label>Scale Shape...</label>
+			<label>Scale...</label>
 			<help>Apply a scale adjustment to the shape. This permanently moves vertices.</help>
 		</object>
 		<object class="wxMenuItem" name="rotateShape">
-			<label>Rotate Shape...</label>
+			<label>Rotate...</label>
 			<help>Apply a rotation to the mesh vertices. This permanently moves vertices.</help>
 		</object>
 		<object class="separator" />
@@ -2498,7 +2518,7 @@
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">
-			<label>Delete Shape\tDel</label>
+			<label>Delete\tDel</label>
 			<help>Removes the currently selected shape from the outfit.</help>
 		</object>
 		<object class="wxMenuItem" name="shapeProperties">
