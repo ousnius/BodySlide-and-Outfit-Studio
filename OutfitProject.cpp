@@ -1794,9 +1794,20 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 	vector<string> refTargets;
 	activeSet.GetReferencedTargets(refTargets);
 	for (auto &target : refTargets) {
-		if (workNif.IsShaderSkin(target)) {
-			baseShape = activeSet.TargetToShape(target);
+		string shape = activeSet.TargetToShape(target);
+		if (workNif.IsShaderSkin(shape)) {
+			baseShape = shape;
 			break;
+		}
+	}
+
+	// No external target found, first skin shaded shape becomes reference
+	if (refTargets.empty()) {
+		for (auto shape = activeSet.TargetShapesBegin(); shape != activeSet.TargetShapesEnd(); ++shape) {
+			if (workNif.IsShaderSkin(shape->second)) {
+				baseShape = shape->second;
+				break;
+			}
 		}
 	}
 
