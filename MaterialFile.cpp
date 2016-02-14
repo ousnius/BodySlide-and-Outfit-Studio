@@ -11,7 +11,7 @@ MaterialFile::MaterialFile(const Type& signature) {
 }
 
 MaterialFile::MaterialFile(const string& fileName) {
-	ifstream input(fileName);
+	ifstream input(fileName, ifstream::binary);
 	if (!input) {
 		failed = true;
 		return;
@@ -78,7 +78,7 @@ int MaterialFile::Read(istream& input) {
 
 	input.read((char*)&grayscaleToPaletteColor, 1);
 
-	uint length;
+	uint length = 0;
 	if (signature == BGSM) {
 		input.read((char*)&length, 4);
 		diffuseTexture.resize(length);
@@ -259,7 +259,7 @@ int MaterialFile::Write(ostream& output) {
 
 	output.write((char*)&grayscaleToPaletteColor, 1);
 
-	uint length;
+	uint length = 0;
 	if (signature == BGSM) {
 		length = diffuseTexture.length();
 		output.write((char*)&length, 4);

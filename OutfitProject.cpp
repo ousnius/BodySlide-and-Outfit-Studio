@@ -957,7 +957,7 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 			MaterialFile mat(MaterialFile::BGSM);
 			if (!data.IsEmpty()) {
 				string content((char*)data.GetData(), data.GetDataLen());
-				istringstream contentStream(content);
+				istringstream contentStream(content, istringstream::binary);
 
 				mat = MaterialFile(contentStream);
 			}

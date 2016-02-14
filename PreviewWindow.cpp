@@ -171,7 +171,7 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 		MaterialFile mat(MaterialFile::BGSM);
 		if (!data.IsEmpty()) {
 			string content((char*)data.GetData(), data.GetDataLen());
-			istringstream contentStream(content);
+			istringstream contentStream(content, istringstream::binary);
 
 			mat = MaterialFile(contentStream);
 		}
