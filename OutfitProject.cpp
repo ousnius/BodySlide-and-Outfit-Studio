@@ -483,7 +483,12 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 
 		NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
 		blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
-		nifTriShape->propertiesRef1 = shaderID;
+		if (owner->targetGame < SKYRIM) {
+			nifTriShape->propertiesRef.push_back(shaderID);
+			nifTriShape->numProperties++;
+		}
+		else
+			nifTriShape->propertiesRef1 = shaderID;
 
 		int nameID = blank.AddOrFindStringId(shapeName);
 		nifTriShape->dataRef = shapeID;
