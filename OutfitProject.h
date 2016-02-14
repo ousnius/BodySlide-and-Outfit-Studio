@@ -53,22 +53,22 @@ public:
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
 	OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner = nullptr);
 	~OutfitProject();
-	string mFileName;
-	string mOutfitName;
-	string mDataDir;
-	string mBaseFile;
-	string mGamePath;
-	string mGameFile;
+	wxString mFileName;
+	wxString mOutfitName;
+	wxString mDataDir;
+	wxString mBaseFile;
+	wxString mGamePath;
+	wxString mGameFile;
 	bool mCopyRef;
 	bool mGenWeights;
 
 	// Returns a string error message or empty string on success.
-	string Save(const string& strFileName,
-		const string& strOutfitName,
-		const string& strDataDir,
-		const string& strBaseFile,
-		const string& strGamePath,
-		const string& strGameFile,
+	string Save(const wxString& strFileName,
+		const wxString& strOutfitName,
+		const wxString& strDataDir,
+		const wxString& strBaseFile,
+		const wxString& strGamePath,
+		const wxString& strGameFile,
 		bool genWeights,
 		bool copyRef);
 

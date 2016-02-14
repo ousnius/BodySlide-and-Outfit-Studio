@@ -29,18 +29,20 @@ OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwn
 OutfitProject::~OutfitProject() {
 }
 
-string OutfitProject::Save(const string& strFileName,
-	const string& strOutfitName,
-	const string& strDataDir,
-	const string& strBaseFile,
-	const string& strGamePath,
-	const string& strGameFile,
+string OutfitProject::Save(const wxString& strFileName,
+	const wxString& strOutfitName,
+	const wxString& strDataDir,
+	const wxString& strBaseFile,
+	const wxString& strGamePath,
+	const wxString& strGameFile,
 	bool genWeights,
 	bool copyRef) {
 
 	owner->UpdateProgress(1, "Checking destination...");
 	string errmsg = "";
-	string outfitName = strOutfitName, baseFile = strBaseFile, gameFile = strGameFile;
+	string outfitName = strOutfitName;
+	string baseFile = strBaseFile;
+	string gameFile = strGameFile;
 
 	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
 	for (uint i = 0; i < sizeof(chars); ++i) {
@@ -51,15 +53,15 @@ string OutfitProject::Save(const string& strFileName,
 
 	SliderSet outSet;
 	outSet.SetName(outfitName);
-	outSet.SetDataFolder(strDataDir);
+	outSet.SetDataFolder(strDataDir.ToStdString());
 	outSet.SetInputFile(baseFile);
-	outSet.SetOutputPath(strGamePath);
+	outSet.SetOutputPath(strGamePath.ToStdString());
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
 
-	string ssFileName = strFileName;
-	if (ssFileName.find("SliderSets\\") == string::npos)
-		ssFileName = "SliderSets\\" + ssFileName;
+	wxString ssFileName = strFileName;
+	if (ssFileName.Find("SliderSets\\") == wxString::npos)
+		ssFileName = ssFileName.Prepend("SliderSets\\");
 
 	mFileName = ssFileName;
 	mOutfitName = outfitName;
@@ -182,11 +184,11 @@ string OutfitProject::Save(const string& strFileName,
 	prog = 60;
 	owner->UpdateProgress(prog, "Creating slider set file...");
 
-	SliderSetFile ssf(ssFileName);
+	SliderSetFile ssf(ssFileName.ToStdString());
 	if (ssf.fail()) {
-		ssf.New(ssFileName);
+		ssf.New(ssFileName.ToStdString());
 		if (ssf.fail()) {
-			errmsg = "Failed to open or create slider set file: " + ssFileName;
+			errmsg = "Failed to open or create slider set file: " + ssFileName.ToStdString();
 			return errmsg;
 		}
 	}
@@ -204,7 +206,7 @@ string OutfitProject::Save(const string& strFileName,
 	owner->UpdateProgress(61, "Saving slider set file...");
 	ssf.UpdateSet(outSet);
 	if (!ssf.Save()) {
-		errmsg = "Failed to write to slider set file: " + ssFileName;
+		errmsg = "Failed to write to slider set file: " + ssFileName.ToStdString();
 		return errmsg;
 	}
 
@@ -1817,13 +1819,15 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 	owner->UpdateProgress(90, "Updating slider data...");
 	morpher.LoadResultDiffs(activeSet);
 
+	wxString rest;
 	mFileName = fileName;
+	if (mFileName.EndsWith(".xml", &rest))
+		mFileName = rest.Append(".osp");
+
 	mOutfitName = sliderSetName;
 	mDataDir = activeSet.GetDefaultDataFolder();
 	mBaseFile = activeSet.GetInputFileName();
-	size_t slashpos = mBaseFile.rfind("\\");
-	if (slashpos != string::npos)
-		mBaseFile = mBaseFile.substr(slashpos + 1);
+	mBaseFile = mBaseFile.AfterLast('\\');
 
 	mGamePath = activeSet.GetOutputPath();
 	mGameFile = activeSet.GetOutputFile();

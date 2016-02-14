@@ -1135,16 +1135,18 @@ void OutfitStudio::ClearProject() {
 	for (auto &s : oldShapes)
 		glView->DeleteMesh(s);
 
-	project->mFileName = "";
-	project->mOutfitName = "";
-	project->mDataDir = "";
-	project->mBaseFile = "";
-	project->mGamePath = "";
-	project->mGameFile = "";
+	project->mFileName.clear();
+	project->mOutfitName.clear();
+	project->mDataDir.clear();
+	project->mBaseFile.clear();
+	project->mGamePath.clear();
+	project->mGameFile.clear();
+
 	if (targetGame == SKYRIM)
 		project->mGenWeights = true;
 	else
 		project->mGenWeights = false;
+
 	project->mCopyRef = true;
 
 	glView->DestroyOverlays();
@@ -1342,7 +1344,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudio::OnSSSNameCopy, this);
 		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsTrue, this);
 		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsFalse, this);
-		string sssName;
+		wxString sssName;
 		if (!project->mOutfitName.empty())
 			sssName = project->mOutfitName;
 		else if (!project->OutfitName().empty())
@@ -1350,7 +1352,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		else
 			sssName = "New Outfit";
 
-		sssName = project->NameAbbreviate(sssName);
+		sssName = project->NameAbbreviate(sssName.ToStdString());
 		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
 		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory("SliderSets");
 
@@ -1399,17 +1401,23 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	if (result == wxID_CANCEL)
 		return;
 
-	string strFileName, strOutfitName, strDataDir, strBaseFile, strGamePath, strGameFile;
+	wxString strFileName;
+	wxString strOutfitName;
+	wxString strDataDir;
+	wxString strBaseFile;
+	wxString strGamePath;
+	wxString strGameFile;
 	bool copyRef;
 	bool genWeights;
 
 	strFileName = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName().GetFullName();
-	if (strFileName.empty() || strFileName.length() <= 4) {
+	if (strFileName.length() <= 4) {
 		wxMessageBox("Invalid or no slider set file specified! Please try again.", "Error", wxOK | wxICON_ERROR);
 		return;
 	}
-	if (strFileName.substr(strFileName.length() - 4, strFileName.length()) != ".osp")
-		strFileName.append(".osp");
+
+	if (!strFileName.EndsWith(".osp"))
+		strFileName = strFileName.Append(".osp");
 
 	strOutfitName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue();
 	if (strOutfitName.empty()) {
@@ -1435,12 +1443,13 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
-	if (strBaseFile.empty() || strBaseFile.length() <= 4) {
+	if (strBaseFile.length() <= 4) {
 		wxMessageBox("An invalid or no base outfit .nif file name specified! Please try again.", "Error", wxOK | wxICON_ERROR);
 		return;
 	}
-	if (strBaseFile.substr(strBaseFile.length() - 4, strBaseFile.length()) != ".nif")
-		strBaseFile.append(".nif");
+
+	if (!strBaseFile.EndsWith(".nif"))
+		strBaseFile = strBaseFile.Append(".nif");
 
 	strGamePath = XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->GetValue();
 	if (strGamePath.empty()) {
@@ -1478,7 +1487,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	if (error.empty()) {
 		GetMenuBar()->Enable(XRCID("fileSave"), true);
-		RenameProject(strOutfitName);
+		RenameProject(strOutfitName.ToStdString());
 
 		static_cast<BodySlideApp*>(wxApp::GetInstance())->RefreshOutfitList();
 	}
