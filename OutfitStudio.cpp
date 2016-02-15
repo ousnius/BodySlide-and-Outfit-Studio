@@ -595,10 +595,9 @@ void OutfitStudio::UpdateShapeSource(const string& shapeName) {
 
 void OutfitStudio::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo, bool setWeights) {
 	if (bEditSlider) {
-		unordered_map<ushort, Vector3> strokeDiff;
 		vector<mesh*> refMeshes = refStroke->GetRefMeshes();
-
 		for (auto &m : refMeshes) {
+			unordered_map<ushort, Vector3> strokeDiff;
 			if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
 				for (auto &p : refStroke->pointStartState[m]) {
 					if (bIsUndo)
