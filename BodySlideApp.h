@@ -84,6 +84,7 @@ class BodySlideApp : public wxApp {
 	string curOutfit;
 
 	string previewBaseName;
+	string previewSetName;
 	NifFile* previewBaseNif = nullptr;
 	NifFile PreviewMod;
 

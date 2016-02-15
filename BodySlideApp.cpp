@@ -422,7 +422,7 @@ void BodySlideApp::ActivatePreset(const string &presetName, const bool& updatePr
 		if (sliderBig->zap && !zapChanged) {
 			auto* sd = sliderView->GetSliderDisplay(sliderBig->name);
 			if (sd) {
-				float zapValueUI = sd->zapCheckHi->IsChecked() ? 1.0f : 0.0f;
+				float zapValueUI = sd->zapCheckHi->IsChecked() ? 0.01f : 0.0f;
 				if (sliderBig->value != zapValueUI)
 					zapChanged = true;
 			}
@@ -697,31 +697,32 @@ void BodySlideApp::InitPreview() {
 		return;
 
 	wxLogMessage("Loading preview meshes...");
-	string inputFileName;
+	string inputFileName = activeSet.GetInputFileName();
+	string inputSetName = activeSet.GetName();
 	bool freshLoad = false;
-	inputFileName = activeSet.GetInputFileName();
 
 	if (!previewBaseNif) {
 		previewBaseNif = new NifFile();
 		previewBaseNif->Load(inputFileName);
-		previewBaseName = inputFileName;
 		if (PreviewMod.Load(inputFileName))
 			return;
 
 		freshLoad = true;
 		sliderManager.FlagReload(false);
 	}
-	else if ((previewBaseName != inputFileName) || sliderManager.NeedReload()) {
+	else if (previewBaseName != inputFileName || previewSetName != inputSetName || sliderManager.NeedReload()) {
 		delete previewBaseNif;
 		previewBaseNif = new NifFile();
 		previewBaseNif->Load(inputFileName);
-		previewBaseName = inputFileName;
 		if (PreviewMod.Load(inputFileName) != 0)
 			return;
 
 		freshLoad = true;
 		sliderManager.FlagReload(false);
 	}
+
+	previewBaseName = inputFileName;
+	previewSetName = inputSetName;
 	
 	preview->ShowWeight(activeSet.GenWeights());
 
