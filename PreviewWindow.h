@@ -27,6 +27,8 @@ class PreviewWindow : public wxFrame
 	string baseDataPath;
 	int weight = 100;
 
+	vector<future<void>> normalUpdates;
+
 	DECLARE_EVENT_TABLE();
 	static wxSize GetDefaultSize();
 
@@ -39,6 +41,20 @@ public:
 	void OnWeightSlider(wxScrollEvent& event);
 
 	void Cleanup() {
+		// Wait for normal updating tasks to finish
+		bool notReady = true;
+		while (notReady) {
+			notReady = false;
+			for (int i = 0; i < normalUpdates.size(); i++) {
+				if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
+					normalUpdates.erase(normalUpdates.begin() + i);
+					i--;
+				}
+				else
+					notReady = true;
+			}
+		}
+
 		gls.Cleanup();
 		shapeTextures.clear();
 		Refresh();
@@ -73,10 +89,21 @@ public:
 
 	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs);
-		mesh* m = gls.GetMesh(shapeName);
-		if (m) {	// The mesh could be missing if a zap removes it
-			gls.GetMesh(shapeName)->SmoothNormals();
+
+		// Remove finished tasks from list
+		for (int i = 0; i < normalUpdates.size(); i++) {
+			if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
+				normalUpdates.erase(normalUpdates.begin() + i);
+				i--;
+			}
 		}
+
+		mesh* m = gls.GetMesh(shapeName);
+		if (m) {
+			auto pending = async(launch::async, mesh::SmoothNormalsStatic, m);
+			normalUpdates.push_back(move(pending));
+		}
+
 		Refresh();
 	}
 

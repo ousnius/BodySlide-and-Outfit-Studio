@@ -239,6 +239,7 @@ void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
 }
 
 void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
+	Cleanup();
 	Destroy();
 	canvas = nullptr;
 	delete context;
