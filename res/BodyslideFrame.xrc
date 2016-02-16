@@ -85,7 +85,7 @@
 								<border>5</border>
 								<object class="wxButton" name="btnSavePreset">
 									<size>-1,20</size>
-									<fg>#000000</fg>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Saves the new slider values to the currently selected preset</tooltip>
 									<label>Save Preset</label>
 								</object>
@@ -96,7 +96,7 @@
 								<border>5</border>
 								<object class="wxButton" name="btnSavePresetAs">
 									<size>-1,20</size>
-									<fg>#000000</fg>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Save the current slider settings as a new preset</tooltip>
 									<label>Save Preset As...</label>
 								</object>
@@ -109,7 +109,7 @@
 						<border>5</border>
 						<object class="wxButton" name="btnGroupManager">
 							<size>-1,20</size>
-							<fg>#000000</fg>
+							<fg>wxSYS_COLOUR_BTNTEXT</fg>
 							<tooltip>Opens the group manager where you can edit existing or create new groups</tooltip>
 							<label>Group Manager</label>
 						</object>
@@ -222,7 +222,7 @@
 								<border>5</border>
 								<object class="wxButton" name="btnLowToHigh">
 									<size>26,-1</size>
-									<fg>#000000</fg>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Copy the low weight slider values to the high weight section.</tooltip>
 									<label>&#8594;</label>
 								</object>
@@ -245,7 +245,7 @@
 										<border>5</border>
 										<object class="wxButton" name="btnBuildBatch">
 											<size>128,-1</size>
-											<fg>#000000</fg>
+											<fg>wxSYS_COLOUR_BTNTEXT</fg>
 											<tooltip>Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory</tooltip>
 											<label>Batch Build...</label>
 										</object>
@@ -276,7 +276,7 @@
 								<border>5</border>
 								<object class="wxButton" name="btnPreview">
 									<size>128,-1</size>
-									<fg>#000000</fg>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Show a preview window for this outfit.</tooltip>
 									<label>Preview</label>
 								</object>
@@ -294,7 +294,7 @@
 										<underlined>0</underlined>
 										<face>Andalus</face>
 									</font>
-									<fg>#000000</fg>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory</tooltip>
 									<label>Build</label>
 									<default>0</default>
@@ -314,7 +314,7 @@
 								<border>5</border>
 								<object class="wxButton" name="btnHighToLow">
 									<size>26,-1</size>
-									<fg>#000000</fg>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
 									<tooltip>Copy the high weight slider values to the low weight section.</tooltip>
 									<label>&#8592;</label>
 								</object>
@@ -346,7 +346,7 @@
 										<border>5</border>
 										<object class="wxButton" name="btnSettings">
 											<size>80,-1</size>
-											<fg>#000000</fg>
+											<fg>wxSYS_COLOUR_BTNTEXT</fg>
 											<tooltip>Open settings dialog.</tooltip>
 											<label>Settings</label>
 										</object>
@@ -357,7 +357,7 @@
 										<border>5</border>
 										<object class="wxButton" name="btnOutfitStudio">
 											<size>100,-1</size>
-											<fg>#000000</fg>
+											<fg>wxSYS_COLOUR_BTNTEXT</fg>
 											<tooltip>Open Outfit Studio, a full-featured tool for creating and converting outfits.</tooltip>
 											<label>Outfit Studio</label>
 										</object>

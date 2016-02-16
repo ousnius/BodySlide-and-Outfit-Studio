@@ -1801,7 +1801,6 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	if (scrollWindow) {
 		scrollWindow->SetScrollRate(5, 26);
 		scrollWindow->SetFocusIgnoringChildren();
-		scrollWindow->SetBackgroundColour(wxColor(0x40, 0x40, 0x40));
 		scrollWindow->Bind(wxEVT_ENTER_WINDOW, &BodySlideFrame::OnEnterSliderWindow, this);
 	}
 
@@ -1884,7 +1883,7 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 		sliderLayout->AddSpacer(0);
 
 		child = new wxPanel(scrollWindow);
-		child->SetBackgroundColour(wxColor(90, 90, 90));
+		child->SetBackgroundColour(wxColour(90, 90, 90));
 		sliderLayout->Add(child, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
 	}
 
@@ -1896,12 +1895,12 @@ void BodySlideFrame::AddCategorySliderUI(const wxString& name, bool show, bool o
 
 	child = new wxStaticText(scrollWindow, wxID_ANY, name);
 	child->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL, false, "Andalus"));
-	child->SetForegroundColour(wxColor(200, 200, 200));
+	child->SetForegroundColour(wxColour(200, 200, 200));
 	sliderLayout->Add(child, 0, wxLEFT | wxALIGN_LEFT | wxALIGN_CENTER_VERTICAL);
 
 	if (!oneSize) {
 		child = new wxPanel(scrollWindow);
-		child->SetBackgroundColour(wxColor(90, 90, 90));
+		child->SetBackgroundColour(wxColour(90, 90, 90));
 		sliderLayout->Add(child, 0, wxTOP | wxBOTTOM | wxEXPAND, 10);
 	}
 
@@ -1927,8 +1926,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, const wxString& displayN
 
 	if (!oneSize) {
 		sd->lblSliderLo = new wxStaticText(scrollWindow, wxID_ANY, displayName, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);
-		sd->lblSliderLo->SetBackgroundColour(wxColor(0x40, 0x40, 0x40));
-		sd->lblSliderLo->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_SCROLLBAR));
+		sd->lblSliderLo->SetForegroundColour(wxColour(200, 200, 200));
 		sliderLayout->Add(sd->lblSliderLo, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT, 5);
 
 		if (isZap) {
@@ -1953,8 +1951,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, const wxString& displayN
 	}
 
 	sd->lblSliderHi = new wxStaticText(scrollWindow, wxID_ANY, displayName, wxDefaultPosition, wxSize(-1, 22), wxALIGN_CENTER_HORIZONTAL);
-	sd->lblSliderHi->SetBackgroundColour(wxColor(0x40, 0x40, 0x40));
-	sd->lblSliderHi->SetForegroundColour(wxSystemSettings::GetColour(wxSYS_COLOUR_SCROLLBAR));
+	sd->lblSliderHi->SetForegroundColour(wxColour(200, 200, 200));
 	sliderLayout->Add(sd->lblSliderHi, 0, wxALIGN_CENTER_HORIZONTAL | wxLEFT, 5);
 
 	if (isZap) {
