@@ -33,28 +33,35 @@
 						<option>0</option>
 						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
-						<object class="wxChoice" name="outfitChoice">
-							<size>200,-1</size>
-							<tooltip>Select an outfit to modify</tooltip>
-							<selection>0</selection>
-							<content />
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER</flag>
+								<border>5</border>
+								<object class="wxChoice" name="outfitChoice">
+									<tooltip>Select an outfit to modify</tooltip>
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxALIGN_CENTER</flag>
+						<flag>wxALL|wxEXPAND|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="unknown" name="searchHolder" />
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxALIGN_CENTER</flag>
+						<flag>wxALL|wxEXPAND|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="unknown" name="outfitsearchHolder" />
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxALIGN_CENTER</flag>
+						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lblPresets">
 							<fg>#c8c8c8</fg>
@@ -64,51 +71,55 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
-						<border>5</border>
-						<object class="wxChoice" name="presetChoice">
-							<size>200,-1</size>
-							<tooltip>Choose from a list of slider settings presets</tooltip>
-							<selection>0</selection>
-							<content />
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL|wxEXPAND</flag>
+								<option>1</option>
+								<flag>wxALIGN_CENTER</flag>
 								<border>5</border>
-								<object class="wxButton" name="btnSavePreset">
-									<size>-1,20</size>
-									<fg>wxSYS_COLOUR_BTNTEXT</fg>
-									<tooltip>Saves the new slider values to the currently selected preset</tooltip>
-									<label>Save Preset</label>
-								</object>
-							</object>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALL|wxEXPAND</flag>
-								<border>5</border>
-								<object class="wxButton" name="btnSavePresetAs">
-									<size>-1,20</size>
-									<fg>wxSYS_COLOUR_BTNTEXT</fg>
-									<tooltip>Save the current slider settings as a new preset</tooltip>
-									<label>Save Preset As...</label>
+								<object class="wxChoice" name="presetChoice">
+									<tooltip>Choose from a list of slider settings presets</tooltip>
+									<selection>0</selection>
+									<content />
 								</object>
 							</object>
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxEXPAND|wxALIGN_CENTER</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSavePreset">
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Saves the new slider values to the currently selected preset</tooltip>
+									<label>Save</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSavePresetAs">
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Save the current slider settings as a new preset</tooltip>
+									<label>Save As...</label>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="wxButton" name="btnGroupManager">
-							<size>-1,20</size>
 							<fg>wxSYS_COLOUR_BTNTEXT</fg>
 							<tooltip>Opens the group manager where you can edit existing or create new groups</tooltip>
 							<label>Group Manager</label>
@@ -191,11 +202,10 @@
 						<border>10</border>
 						<object class="wxScrolledWindow" name="SliderScrollWindow">
 							<style>wxNO_BORDER|wxTAB_TRAVERSAL|wxVSCROLL</style>
-							<size>-1,-1</size>
 							<object class="wxFlexGridSizer">
 								<cols>6</cols>
 								<minsize>-1,90</minsize>
-								<vgap>4</vgap>
+								<vgap>0</vgap>
 								<hgap>0</hgap>
 								<growablecols>1,4</growablecols>
 								<growablerows></growablerows>
@@ -244,7 +254,6 @@
 										<flag>wxALIGN_CENTER|wxALL</flag>
 										<border>5</border>
 										<object class="wxButton" name="btnBuildBatch">
-											<size>128,-1</size>
 											<fg>wxSYS_COLOUR_BTNTEXT</fg>
 											<tooltip>Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory</tooltip>
 											<label>Batch Build...</label>
@@ -345,7 +354,6 @@
 										<flag>wxALIGN_CENTER|wxALL</flag>
 										<border>5</border>
 										<object class="wxButton" name="btnSettings">
-											<size>80,-1</size>
 											<fg>wxSYS_COLOUR_BTNTEXT</fg>
 											<tooltip>Open settings dialog.</tooltip>
 											<label>Settings</label>
@@ -356,7 +364,6 @@
 										<flag>wxALIGN_CENTER|wxALL</flag>
 										<border>5</border>
 										<object class="wxButton" name="btnOutfitStudio">
-											<size>100,-1</size>
 											<fg>wxSYS_COLOUR_BTNTEXT</fg>
 											<tooltip>Open Outfit Studio, a full-featured tool for creating and converting outfits.</tooltip>
 											<label>Outfit Studio</label>
