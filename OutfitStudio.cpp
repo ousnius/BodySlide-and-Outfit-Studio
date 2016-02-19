@@ -4321,9 +4321,11 @@ bool wxGLPanel::UndoStroke() {
 		if (curStroke && curStroke->BrushType() != TBT_MASK) {
 			os->ActiveShapesUpdated(curStroke, true);
 
-			vector<mesh*> refMeshes = curStroke->GetRefMeshes();
-			for (auto &m : refMeshes)
-				os->project->UpdateShapeFromMesh(m->shapeName, m);
+			if (!os->bEditSlider) {
+				vector<mesh*> refMeshes = curStroke->GetRefMeshes();
+				for (auto &m : refMeshes)
+					os->project->UpdateShapeFromMesh(m->shapeName, m);
+			}
 
 			if (curStroke->BrushType() == TBT_XFORM)
 				ShowTransformTool(true, false);
@@ -4353,9 +4355,11 @@ bool wxGLPanel::RedoStroke() {
 		if (curStroke->BrushType() != TBT_MASK) {
 			os->ActiveShapesUpdated(curStroke);
 
-			vector<mesh*> refMeshes = curStroke->GetRefMeshes();
-			for (auto &m : refMeshes)
-				os->project->UpdateShapeFromMesh(m->shapeName, m);
+			if (!os->bEditSlider) {
+				vector<mesh*> refMeshes = curStroke->GetRefMeshes();
+				for (auto &m : refMeshes)
+					os->project->UpdateShapeFromMesh(m->shapeName, m);
+			}
 
 			if (curStroke->BrushType() == TBT_XFORM)
 				ShowTransformTool(true, false);
