@@ -147,6 +147,8 @@ void FBXWrangler::AddSkeleton(NifFile* skeletonNif) {
 	NiNode* COM = (NiNode*)skeletonNif->GetBlock(skeletonNif->GetNodeID("COM"));
 	if (!COM)
 		COM = (NiNode*)skeletonNif->GetBlock(skeletonNif->GetNodeID("NPC COM [COM ]"));
+	if (!COM)
+		COM = (NiNode*)skeletonNif->GetBlock(skeletonNif->GetNodeID("Bip01 NonAccum"));
 
 	FbxNode* parentNode = skellynode;
 	if (root) {
