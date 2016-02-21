@@ -172,7 +172,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			refBrush->brushAction(m, pickInfo, nullptr, nPts1, outPositions[m]);
 
 			for (int i = 0; i < nPts1; i++)
-				addPoint(m, refBrush->CachedPointIndex(i), outPositions[m][i]);
+				addPoint(m, refBrush->CachedPointIndex(m, i), outPositions[m][i]);
 		}
 	}
 	else {

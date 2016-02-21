@@ -182,7 +182,7 @@ public:
 		bLiveNormals = newLiveNormals;
 	}
 
-	virtual int CachedPointIndex(int) {
+	virtual int CachedPointIndex(mesh*, int) {
 		return 0;
 	}
 
@@ -357,7 +357,7 @@ public:
 	virtual ~TB_XForm();
 
 	void GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist);
-	int CachedPointIndex(int query) {
+	int CachedPointIndex(mesh*, int query) {
 		return query;
 	}
 	void SetXFormType(int type) {
