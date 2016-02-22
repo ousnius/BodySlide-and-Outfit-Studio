@@ -78,11 +78,24 @@ public:
 
 	void SetSmoothThreshold(float degrees);
 	float GetSmoothThreshold();
-	void SmoothNormals();
+
+	void FacetNormals();
+	void SmoothNormals(vector<int> vertices = vector<int>());
 	static void SmoothNormalsStatic(mesh* m) {
 		m->SmoothNormals();
 	}
-	void FacetNormals();
+	static void SmoothNormalsStaticArray(mesh* m, int* vertices, int nVertices) {
+		vector<int> verts;
+		verts.assign(vertices, vertices + nVertices);
+		m->SmoothNormals(verts);
+	}
+	static void SmoothNormalsStaticMap(mesh* m, const unordered_map<int, Vector3>& vertices) {
+		vector<int> verts;
+		for (auto &v : vertices)
+			verts.push_back(v.first);
+
+		m->SmoothNormals(verts);
+	}
 
 
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).

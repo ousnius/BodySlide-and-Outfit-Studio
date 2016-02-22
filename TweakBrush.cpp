@@ -131,6 +131,14 @@ void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
 		pts1[m] = (int*)malloc(m->nVerts * sizeof(int));
 		if (refBrush->isMirrored())
 			pts2[m] = (int*)malloc(m->nVerts * sizeof(int));
+
+		if (m->nVerts > outPositionCount[m]) {
+			if (outPositions.find(m) != outPositions.end())
+				delete[] outPositions[m];
+
+			outPositions[m] = new Vector3[m->nVerts];
+			outPositionCount[m] = m->nVerts;
+		}
 	}
 }
 
@@ -155,24 +163,20 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 		for (auto &m : refMeshes) {
 			vector<int> facets;
-			vector<int> facets2;
 			int nPts1 = 0;
 
 			if (!refBrush->queryPoints(m, pickInfo, nullptr, nPts1, facets, affectedNodes[m]))
 				continue;
 
-			if (nPts1 > outPositionCount[m]) {
-				if (outPositions.find(m) != outPositions.end())
-					delete[] outPositions[m];
-
-				outPositions[m] = new Vector3[nPts1];
-				outPositionCount[m] = nPts1;
-			}
-
 			refBrush->brushAction(m, pickInfo, nullptr, nPts1, outPositions[m]);
 
 			for (int i = 0; i < nPts1; i++)
 				addPoint(m, refBrush->CachedPointIndex(m, i), outPositions[m][i]);
+
+			if (refBrush->LiveNormals() && brushType != TBT_WEIGHT) {
+				auto pending = async(launch::async, mesh::SmoothNormalsStaticMap, m, pointStartState[m]);
+				normalUpdates.push_back(move(pending));
+			}
 		}
 	}
 	else {
@@ -188,15 +192,6 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			if (refBrush->isMirrored())
 				refBrush->queryPoints(m, mirrorPick, pts2[m], nPts2, facets2, affectedNodes[m]);
 
-			int totalpoints = max(nPts1, nPts2);
-			if (totalpoints > outPositionCount[m]) {
-				if (outPositions.find(m) != outPositions.end())
-					delete[] outPositions[m];
-
-				outPositions[m] = new Vector3[totalpoints];
-				outPositionCount[m] = totalpoints;
-			}
-
 			refBrush->brushAction(m, pickInfo, pts1[m], nPts1, outPositions[m]);
 			for (int i = 0; i < nPts1; i++)
 				addPoint(m, pts1[m][i], outPositions[m][i]);
@@ -206,17 +201,18 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 				for (int i = 0; i < nPts2; i++)
 					addPoint(m, pts2[m][i], outPositions[m][i]);
 			}
+
+			if (refBrush->LiveNormals() && brushType != TBT_WEIGHT) {
+				auto pending1 = async(launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m], nPts1);
+				normalUpdates.push_back(move(pending1));
+
+				auto pending2 = async(launch::async, mesh::SmoothNormalsStaticArray, m, pts2[m], nPts2);
+				normalUpdates.push_back(move(pending2));
+			}
 		}
 	}
 
 	lastPoint = pickInfo.origin;
-
-	if (refBrush->LiveNormals() && brushType != TBT_WEIGHT) {
-		for (auto &m : refMeshes) {
-			auto pending = async(launch::async, mesh::SmoothNormalsStatic, m);
-			normalUpdates.push_back(move(pending));
-		}
-	}
 
 	if (refBrush->LiveBVH() && brushType != TBT_WEIGHT) {
 		for (auto &m : refMeshes)
@@ -254,18 +250,6 @@ void TweakStroke::endStroke() {
 		}
 	}
 
-	for (auto &m : refMeshes) {
-		if (pts1.find(m) != pts1.end())
-			delete[] pts1[m];
-		if (pts2.find(m) != pts2.end())
-			delete[] pts2[m];
-
-		pts1.clear();
-		pts2.clear();
-
-		endBVH[m] = m->bvh;
-	}
-
 	bool notReady = true;
 	while (notReady) {
 		notReady = false;
@@ -277,6 +261,18 @@ void TweakStroke::endStroke() {
 			else
 				notReady = true;
 		}
+	}
+
+	for (auto &m : refMeshes) {
+		if (pts1.find(m) != pts1.end())
+			delete[] pts1[m];
+		if (pts2.find(m) != pts2.end())
+			delete[] pts2[m];
+
+		pts1.clear();
+		pts2.clear();
+
+		endBVH[m] = m->bvh;
 	}
 }
 

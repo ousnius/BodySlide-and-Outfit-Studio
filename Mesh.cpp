@@ -290,23 +290,31 @@ void mesh::SetSmoothThreshold(float degrees) {
 	smoothThresh = degrees * DEG2RAD;
 }
 
-void mesh::SmoothNormals() {
+void mesh::SmoothNormals(vector<int> vertices) {
 	if (!vertTris)
 		return;
 
 	Vector3 norm;
 	Vector3 tn;
 	for (int v = 0; v < nVerts; v++) {
+		int index = v;
+		if (!vertices.empty()) {
+			if (vertices.size() - 1 >= index)
+				index = vertices[index];
+			else
+				continue;
+		}
+
 		norm.x = norm.y = norm.z = 0.0f;
 
-		for (auto &t : vertTris[v]) {
+		for (auto &t : vertTris[index]) {
 			tris[t].trinormal(verts, &tn);
 			norm += tn;
 		}
 
-		if (weldVerts.find(v) == weldVerts.end()) {
+		if (weldVerts.find(index) == weldVerts.end()) {
 			bool first = true;
-			for (auto &t : vertTris[v]) {
+			for (auto &t : vertTris[index]) {
 				tris[t].trinormal(verts, &tn);
 
 				if (!first) {
@@ -319,10 +327,10 @@ void mesh::SmoothNormals() {
 
 				norm += tn;
 			}
-			norm = norm / (float)vertTris[v].size();
+			norm = norm / (float)vertTris[index].size();
 		}
 		else if (smoothSeamNormals) {
-			for (auto &wv : weldVerts[v]) {
+			for (auto &wv : weldVerts[index]) {
 				bool first = true;
 				if (vertTris[wv].size() < 2)
 					continue;
@@ -340,13 +348,13 @@ void mesh::SmoothNormals() {
 					norm += tn;
 				}
 			}
-			norm = norm / (float)vertTris[v].size();
+			norm = norm / (float)vertTris[index].size();
 		}
 
 		norm.Normalize();
-		verts[v].nx = norm.x;
-		verts[v].ny = norm.y;
-		verts[v].nz = norm.z;
+		verts[index].nx = norm.x;
+		verts[index].ny = norm.y;
+		verts[index].nz = norm.z;
 	}
 }
 
