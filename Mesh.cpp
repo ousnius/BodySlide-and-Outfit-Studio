@@ -290,7 +290,7 @@ void mesh::SetSmoothThreshold(float degrees) {
 	smoothThresh = degrees * DEG2RAD;
 }
 
-void mesh::SmoothNormals(vector<int> vertices) {
+void mesh::SmoothNormals(const vector<int>& vertices) {
 	if (!vertTris)
 		return;
 

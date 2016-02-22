@@ -157,6 +157,14 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	else
 		newStroke = false;
 
+	// Remove finished tasks
+	for (int i = 0; i < normalUpdates.size(); i++) {
+		if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
+			normalUpdates.erase(normalUpdates.begin() + i);
+			i--;
+		}
+	}
+
 	if (brushType == TBT_MOVE || brushType == TBT_XFORM) {
 		// Move brush handles most operations differently than other brushes.  Mirroring, for instance, is done internally. 
 		// most of the pick info values are ignored.
@@ -223,15 +231,12 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 void TweakStroke::endStroke() {
 	if (refBrush->Type() == TBT_MOVE) {
-		TB_Move* br = dynamic_cast<TB_Move*>(refBrush);
-		if (br) {
-			for (auto &m : refMeshes) {
-				TweakBrushMeshCache* meshCache = refBrush->getCache(m);
-				affectedNodes[m].swap(meshCache->cachedNodes);
-				affectedNodes[m].insert(meshCache->cachedNodesM.begin(), meshCache->cachedNodesM.end());
-				meshCache->cachedNodes.clear();
-				meshCache->cachedNodesM.clear();
-			}
+		for (auto &m : refMeshes) {
+			TweakBrushMeshCache* meshCache = refBrush->getCache(m);
+			affectedNodes[m].swap(meshCache->cachedNodes);
+			affectedNodes[m].insert(meshCache->cachedNodesM.begin(), meshCache->cachedNodesM.end());
+			meshCache->cachedNodes.clear();
+			meshCache->cachedNodesM.clear();
 		}
 	}
 	else if (refBrush->Type() == TBT_XFORM)
@@ -277,8 +282,9 @@ void TweakStroke::endStroke() {
 }
 
 void TweakStroke::addPoint(mesh* m, int point, Vector3& newPos) {
-	if (pointStartState[m].find(point) == pointStartState[m].end())
-		pointStartState[m][point] = newPos;
+	auto& startState = pointStartState[m];
+	if (startState.find(point) == startState.end())
+		startState[point] = newPos;
 
 	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
 		pointEndState[m][point] = m->vcolors[point];

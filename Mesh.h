@@ -80,7 +80,7 @@ public:
 	float GetSmoothThreshold();
 
 	void FacetNormals();
-	void SmoothNormals(vector<int> vertices = vector<int>());
+	void SmoothNormals(const vector<int>& vertices = vector<int>());
 	static void SmoothNormalsStatic(mesh* m) {
 		m->SmoothNormals();
 	}
