@@ -3025,21 +3025,18 @@ void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnInvertUV(wxCommandEvent& event) {
-	wxMenuItem* uvInvertX = XRCCTRL(*this, "uvInvertX", wxMenuItem);
-	wxMenuItem* uvInvertY = XRCCTRL(*this, "uvInvertY", wxMenuItem);
-
-	bool invertX = event.GetEventObject()->IsSameAs(*uvInvertX);
-	bool invertY = event.GetEventObject()->IsSameAs(*uvInvertY);
-
 	if (!activeItem) {
 		wxMessageBox("There is no shape selected!", "Error");
 		return;
 	}
 
-	for (auto &i : selectedItems) {
-		//To-Do
-		//project->GetWorkNif()->InvertUV(i->shapeName, invertX, invertY);
-	}
+	bool invertX = (event.GetId() == XRCID("uvInvertX"));
+	bool invertY = (event.GetId() == XRCID("uvInvertY"));
+
+	for (auto &i : selectedItems)
+		project->GetWorkNif()->InvertUVsForShape(i->shapeName, invertX, invertY);
+
+	RefreshGUIFromProj();
 }
 
 void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {

@@ -1951,8 +1951,8 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 		BSTriShape* shapeData = static_cast<BSTriShape*>(GetBlock(dataID));
 		*outTris = shapeData->triangles;
 		return true;
-
 	}
+
 	return false;
 }
 
@@ -1975,12 +1975,12 @@ const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shapeData = (BSTriShape*)(GetBlock(dataID));
 		return shapeData->GetNormalData(transform);
-
 	}
+
 	return nullptr;
 }
 
-const vector<Vector3>* NifFile::GetTangentsForShape(const string& shapeName, bool transform) {	
+const vector<Vector3>* NifFile::GetTangentsForShape(const string& shapeName, bool transform) {
 	int bType;
 	int dataID = shapeDataIdForName(shapeName, bType);
 	if (dataID == -1)
@@ -1995,8 +1995,8 @@ const vector<Vector3>* NifFile::GetTangentsForShape(const string& shapeName, boo
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shapeData = (BSTriShape*)(GetBlock(dataID));
 		return shapeData->GetTangentData(transform);
-
 	}
+
 	return nullptr;
 }
 
@@ -2015,8 +2015,8 @@ const vector<Vector3>* NifFile::GetBitangentsForShape(const string& shapeName, b
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shapeData = (BSTriShape*)(GetBlock(dataID));
 		return shapeData->GetBitangentData(transform);
-
 	}
+
 	return nullptr;
 }
 
@@ -2039,8 +2039,8 @@ const vector<Vector2>* NifFile::GetUvsForShape(const string& shapeName) {
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shapeData = (BSTriShape*)(GetBlock(dataID));
 		return shapeData->GetUVData();
-
 	}
+
 	return nullptr;
 }
 
@@ -2064,8 +2064,8 @@ bool NifFile::GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs) {
 		const vector<Vector2>* uvdata = GetUvsForShape(shapeName);
 		outUvs.assign(uvdata->begin(), uvdata->end());
 		return true;
-
 	}
+
 	return false;
 }
 
@@ -2192,15 +2192,54 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 			return;
 
 		stripsData->uvSets.assign(uvs.begin(), uvs.end());
-	} if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+	}
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* siTriShape = static_cast<BSTriShape*>(GetBlock(dataID));
-		if (uvs.size() != siTriShape->numVertices)
+		if (uvs.size() != siTriShape->vertData.size())
 			return;
-	
+
 		for (int i = 0; i < siTriShape->numVertices; i++) {
-		//// VALIDATE LATER  for now don't touch the data.
-		//	siTriShape->vertData[i].uv = uvs[i];
+			//// VALIDATE LATER for now don't touch the data.
+			// siTriShape->vertData[i].uv = uvs[i];
 		}
+	}
+}
+
+void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool invertY) {
+	int bType;
+	int dataID = shapeDataIdForName(shapeName, bType);
+	if (dataID == -1)
+		return;
+
+	if (bType == NITRISHAPEDATA) {
+		NiTriShapeData* shapeData = static_cast<NiTriShapeData*>(GetBlock(dataID));
+		if (invertX)
+			for (int i = 0; i < shapeData->uvSets.size(); ++i)
+				shapeData->uvSets[i].u = 1.0f - shapeData->uvSets[i].u;
+
+		if (invertY)
+			for (int i = 0; i < shapeData->uvSets.size(); ++i)
+				shapeData->uvSets[i].v = 1.0f - shapeData->uvSets[i].v;
+	}
+	else if (bType == NITRISTRIPSDATA) {
+		NiTriStripsData* stripsData = static_cast<NiTriStripsData*>(GetBlock(dataID));
+		if (invertX)
+			for (int i = 0; i < stripsData->uvSets.size(); ++i)
+				stripsData->uvSets[i].u = 1.0f - stripsData->uvSets[i].u;
+
+		if (invertY)
+			for (int i = 0; i < stripsData->uvSets.size(); ++i)
+				stripsData->uvSets[i].v = 1.0f - stripsData->uvSets[i].v;
+	}
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+		BSTriShape* siTriShape = static_cast<BSTriShape*>(GetBlock(dataID));
+		if (invertX)
+			for (int i = 0; i < siTriShape->vertData.size(); ++i)
+				siTriShape->vertData[i].uv.u = 1.0f - siTriShape->vertData[i].uv.u;
+
+		if (invertY)
+			for (int i = 0; i < siTriShape->vertData.size(); ++i)
+				siTriShape->vertData[i].uv.v = 1.0f - siTriShape->vertData[i].uv.v;
 	}
 }
 
@@ -2230,7 +2269,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 		stripsData->numUVSets |= 1;
 		hdr.blockSizes[dataID] = stripsData->CalcBlockSize();
 	}
-	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
 		shape->SetNormals(norms);
 		hdr.blockSizes[dataID] = shape->CalcBlockSize();
@@ -2251,7 +2290,7 @@ void NifFile::SmoothNormalsForShape(const string& shapeName) {
 		//NiTriStripsData* stripsData = (NiTriStripsData*)GetBlock(dataID);
 		//stripsData->SmoothNormals();
 	}
-	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
 		shape->RecalcNormals(true);
 	}
@@ -2273,7 +2312,7 @@ void NifFile::CalcNormalsForShape(const string& shapeName) {
 		stripsData->RecalcNormals();
 		hdr.blockSizes[dataID] = stripsData->CalcBlockSize();
 	}
-	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
 		shape->RecalcNormals();
 		hdr.blockSizes[dataID] = shape->CalcBlockSize();
@@ -2296,7 +2335,7 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 		stripsData->CalcTangentSpace();
 		hdr.blockSizes[dataID] = stripsData->CalcBlockSize();
 	}
-	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE) {
 		BSTriShape* shape = (BSTriShape*)GetBlock(dataID);
 		shape->CalcTangentSpace();
 		hdr.blockSizes[dataID] = shape->CalcBlockSize();

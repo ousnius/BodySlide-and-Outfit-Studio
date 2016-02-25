@@ -1380,6 +1380,7 @@ public:
 	int GetVertCountForShape(const string& shapeName);
 	void SetVertsForShape(const string& shapeName, const vector<Vector3>& verts);
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
+	void InvertUVsForShape(const string& shapeName, bool invertX, bool invertY);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
 	void SmoothNormalsForShape(const string& shapeName);
 	void CalcNormalsForShape(const string& shapeName);
