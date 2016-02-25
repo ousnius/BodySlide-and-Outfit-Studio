@@ -372,7 +372,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 
 	if (obj.LoadForNif(fileName)) {
 		wxLogError("Could not load OBJ file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Could not load OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format("Could not load OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR, owner);
 		return 1;
 	}
 	vector<string> objGroupNames;
@@ -383,7 +383,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 		vector<Vector2> uv;
 		if (!obj.CopyDataForIndex(i, &v, &t, &uv)) {
 			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
-			wxMessageBox(wxString::Format("Could not copy data from OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR);
+			wxMessageBox(wxString::Format("Could not copy data from OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR, owner);
 			return 3;
 		}
 
@@ -397,14 +397,14 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 			vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == v.size()) {
-				int r = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
+				int r = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION, owner);
 				if (r == wxYES) {
 					wxLogMessage("Updated shape '%s' using '%s'.", mergeShape, fileName);
 					workNif.SetVertsForShape(mergeShape, v);
 					return 101;
 				}
 			}
-			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName);
+			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName, owner);
 			if (useShapeName == "")
 				return 100;
 		}
@@ -1690,12 +1690,12 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 				nif.GetFileName(), nif.hdr.verStr, nif.hdr.userVersion, nif.hdr.userVersion2);
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, "NIF Error", wxICON_ERROR);
+			wxMessageBox(errorText, "NIF Error", wxICON_ERROR, owner);
 			return 4;
 		}
 
 		wxLogError("Could not load NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Could not load NIF file '%s'!", fileName), "NIF Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format("Could not load NIF file '%s'!", fileName), "NIF Error", wxICON_ERROR, owner);
 		return 1;
 	}
 
@@ -2035,13 +2035,13 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 			vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == shape->numverts) {
-				int ret = wxMessageBox("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION);
+				int ret = wxMessageBox("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
-					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION);
+					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						workNif.SetVertsForShape(mergeShape, shape->verts);
 
-					ret = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION);
+					ret = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						for (auto &bn : shape->boneNames)
 							workAnim.SetWeights(mergeShape, bn, shape->boneSkin[bn].vertweights);
@@ -2050,7 +2050,7 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 				}
 			}
 
-			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName);
+			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName, owner);
 			if (useShapeName.empty())
 				return 100;
 		}
