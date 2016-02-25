@@ -109,6 +109,9 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("exportShape"), OutfitStudio::OnExportShape)
 	EVT_MENU(XRCID("importFBX"), OutfitStudio::OnImportFBX)
 	EVT_MENU(XRCID("exportFBX"), OutfitStudio::OnExportFBX)
+	EVT_MENU(XRCID("uvInvertX"), OutfitStudio::OnInvertUV)
+	EVT_MENU(XRCID("uvInvertY"), OutfitStudio::OnInvertUV)
+
 	EVT_MENU(XRCID("moveShape"), OutfitStudio::OnMoveShape)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudio::OnScaleShape)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudio::OnRotateShape)
@@ -3019,6 +3022,24 @@ void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 		project->ExportShapeFBX(fn, activeItem->shapeName);
 	else
 		project->ExportShapeFBX(fn, "");
+}
+
+void OutfitStudio::OnInvertUV(wxCommandEvent& event) {
+	wxMenuItem* uvInvertX = XRCCTRL(*this, "uvInvertX", wxMenuItem);
+	wxMenuItem* uvInvertY = XRCCTRL(*this, "uvInvertY", wxMenuItem);
+
+	bool invertX = event.GetEventObject()->IsSameAs(*uvInvertX);
+	bool invertY = event.GetEventObject()->IsSameAs(*uvInvertY);
+
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+
+	for (auto &i : selectedItems) {
+		//To-Do
+		//project->GetWorkNif()->InvertUV(i->shapeName, invertX, invertY);
+	}
 }
 
 void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {

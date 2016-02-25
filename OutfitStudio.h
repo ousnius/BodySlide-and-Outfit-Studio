@@ -751,6 +751,8 @@ private:
 	void OnImportFBX(wxCommandEvent& event);
 	void OnExportFBX(wxCommandEvent& event);
 
+	void OnInvertUV(wxCommandEvent& event);
+
 	void OnEnterClose(wxKeyEvent& event);
 	
 	void OnMoveShape(wxCommandEvent& event);

@@ -876,6 +876,17 @@
 						<help>Export the current shape as an FBX file.</help>
 					</object>
 				</object>
+				<object class="wxMenu" name="menuUV">
+					<label>UV</label>
+					<object class="wxMenuItem" name="uvInvertX">
+						<label>Invert X</label>
+						<help>Inverts the X-axis of the texture coordinates.</help>
+					</object>
+					<object class="wxMenuItem" name="uvInvertY">
+						<label>Invert Y</label>
+						<help>Inverts the Y-axis of the texture coordinates.</help>
+					</object>
+				</object>
 				<object class="wxMenuItem" name="copyShape">
 					<label>Duplicate...</label>
 					<help>Duplicate the current shape.</help>
@@ -2468,6 +2479,17 @@
 			<object class="wxMenuItem" name="exportFBX">
 				<label>To FBX...</label>
 				<help>Export the current shape as an FBX file.</help>
+			</object>
+		</object>
+		<object class="wxMenu" name="menuUV">
+			<label>UV</label>
+			<object class="wxMenuItem" name="uvInvertX">
+				<label>Invert X</label>
+				<help>Inverts the X-axis of the texture coordinates.</help>
+			</object>
+			<object class="wxMenuItem" name="uvInvertY">
+				<label>Invert Y</label>
+				<help>Inverts the Y-axis of the texture coordinates.</help>
 			</object>
 		</object>
 		<object class="wxMenuItem" name="copyShape">
