@@ -446,18 +446,18 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			nifShapeData->normals = (*norms);
 			nifShapeData->hasNormals = true;
 		}
-		int shapeID = blank.AddBlock((NiObject*)nifShapeData, "NiTriShapeData");
+		int shapeID = blank.AddBlock(nifShapeData, "NiTriShapeData");
 
 		int dismemberID = -1;
 		if (!staticMode){
 			NiSkinData* nifSkinData = new NiSkinData(workNif.hdr);
-			int skinID = blank.AddBlock((NiObject*)nifSkinData, "NiSkinData");
+			int skinID = blank.AddBlock(nifSkinData, "NiSkinData");
 
 			NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.hdr);
-			int partID = blank.AddBlock((NiObject*)nifSkinPartition, "NiSkinPartition");
+			int partID = blank.AddBlock(nifSkinPartition, "NiSkinPartition");
 
 			BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.hdr);
-			dismemberID = blank.AddBlock((NiObject*)nifDismemberInst, "BSDismemberSkinInstance");
+			dismemberID = blank.AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
 			nifDismemberInst->dataRef = skinID;
 			nifDismemberInst->skinPartitionRef = partID;
 			nifDismemberInst->skeletonRootRef = 0;
@@ -472,19 +472,19 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		case FO3:
 		case FONV:
 			nifShaderPP = new BSShaderPPLightingProperty(workNif.hdr);
-			shaderID = blank.AddBlock((NiObject*)nifShaderPP, "BSShaderPPLightingProperty");
-			nifShaderPP->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
+			shaderID = blank.AddBlock(nifShaderPP, "BSShaderPPLightingProperty");
+			nifShaderPP->textureSetRef = blank.AddBlock(nifTexset, "BSShaderTextureSet");
 			break;
 		case SKYRIM:
 		case FO4:
 		default:
 			nifShader = new BSLightingShaderProperty(workNif.hdr);
-			shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");
-			nifShader->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
+			shaderID = blank.AddBlock(nifShader, "BSLightingShaderProperty");
+			nifShader->textureSetRef = blank.AddBlock(nifTexset, "BSShaderTextureSet");
 		}
 
 		NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
-		blank.AddBlock((NiObject*)nifTriShape, "NiTriShape");
+		blank.AddBlock(nifTriShape, "NiTriShape");
 		if (owner->targetGame < SKYRIM) {
 			nifTriShape->propertiesRef.push_back(shaderID);
 			nifTriShape->numProperties++;
@@ -504,20 +504,20 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		if (staticMode) {
 			triShapeBase = new BSTriShape(workNif.hdr);
 			triShapeBase->Create(&v, &t, &uv, norms);
-			blank.AddBlock((NiObject*)triShapeBase, "BSTriShape");
+			blank.AddBlock(triShapeBase, "BSTriShape");
 			wetShaderName = "";
 		}
 		else {
 			BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.hdr);
 			nifBSTriShape->Create(&v, &t, &uv, norms);
-			blank.AddBlock((NiObject*)nifBSTriShape, "BSSubIndexTriShape");
+			blank.AddBlock(nifBSTriShape, "BSSubIndexTriShape");
 
 			BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.hdr);
-			int skinID = blank.AddBlock((NiObject*)nifBSSkinInstance, "BSSkin::Instance");
-			nifBSSkinInstance->targetRef = workNif.GetNodeID("Scene Root");
+			int skinID = blank.AddBlock(nifBSSkinInstance, "BSSkin::Instance");
+			nifBSSkinInstance->targetRef = workNif.GetRootNodeID();
 
 			BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.hdr);
-			int boneID = blank.AddBlock((NiObject*)nifBoneData, "BSSkin::BoneData");
+			int boneID = blank.AddBlock(nifBoneData, "BSSkin::BoneData");
 			nifBSSkinInstance->boneDataRef = boneID;
 			nifBSTriShape->skinInstanceRef = skinID;
 			triShapeBase = nifBSTriShape;
@@ -527,8 +527,8 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 
 		int shaderID;
 		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.hdr);
-		shaderID = blank.AddBlock((NiObject*)nifShader, "BSLightingShaderProperty");
-		nifShader->textureSetRef = blank.AddBlock((NiObject*)nifTexset, "BSShaderTextureSet");
+		shaderID = blank.AddBlock(nifShader, "BSLightingShaderProperty");
+		nifShader->textureSetRef = blank.AddBlock(nifTexset, "BSShaderTextureSet");
 		nifShader->wetMaterialNameRef = blank.AddOrFindStringId(wetShaderName);
 		nifShader->nameRef = blank.AddOrFindStringId("");
 

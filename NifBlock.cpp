@@ -3815,31 +3815,33 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = BSLIGHTINGSHADERPROPERTY;
+
 	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
-		shaderFlags1 = 0x80600203;
-		shaderFlags2 = 0x81;	
+		shaderFlags1 = 0x80400203;
+		shaderFlags2 = 0x00000081;
 	}
 	else {
 		shaderFlags1 = 0x82400303;
-		shaderFlags2 = 0x8001;
+		shaderFlags2 = 0x00008001;
 	}
+
 	uvOffset.u = 0.0f;
 	uvOffset.v = 0.0f;
 	uvScale.u = 1.0f;
 	uvScale.v = 1.0f;
 	textureSetRef = -1;
 
-	emissiveColor.Zero();
 	emissiveMultiple = 1.0f;
 	wetMaterialNameRef = 0xFFFFFFFF;
 	textureClampMode = 3;
 	alpha = 1.0f;
 	refractionStrength = 0.0f;
-	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
+
+	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120)
 		glossiness = 1.0f;
-	} else {
+	else
 		glossiness = 20.0f;
-	}
+
 	specularColor = Vector3(1.0f, 1.0f, 1.0f);
 	specularStrength = 1.0f;
 	lightingEffect1 = 0.3f;
@@ -3853,10 +3855,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	parallaxInnerLayerTextureScale.u = 1.0f;
 	parallaxInnerLayerTextureScale.v = 1.0f;
 	parallaxEnvmapStrength = 1.0f;
-	sparkleParameters.r = 0.0f;
-	sparkleParameters.g = 0.0f;
-	sparkleParameters.b = 0.0f;
-	sparkleParameters.a = 0.0f;
 	eyeCubemapScale = 1.0f;
 
 	unk1 = 0x7F7FFFFF;
@@ -3872,7 +3870,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	unk[7] = 0.0f;
 
 	memset(pad, 0, 16);
-
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr) {
@@ -3881,22 +3878,26 @@ BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr)
 
 	header = &hdr;
 	blockType = BSLIGHTINGSHADERPROPERTY;
-	shaderFlags1 = 0x82400303;
-	shaderFlags2 = 0x8001;
+
+	if (hdr.userVersion == 12 && hdr.userVersion2 >= 120) {
+		shaderFlags1 = 0x80400203;
+		shaderFlags2 = 0x00000081;
+	}
+	else {
+		shaderFlags1 = 0x82400303;
+		shaderFlags2 = 0x00008001;
+	}
 
 	wetMaterialNameRef = 0xFFFFFFFF;
 	environmentMapScale = 1.0f;
 	maxPasses = 1.0f;
 	scale = 1.0f;
+
 	parallaxInnerLayerThickness = 0.0f;
 	parallaxRefractionScale = 1.0f;
 	parallaxInnerLayerTextureScale.u = 1.0f;
 	parallaxInnerLayerTextureScale.v = 1.0f;
 	parallaxEnvmapStrength = 1.0f;
-	sparkleParameters.r = 0.0f;
-	sparkleParameters.g = 0.0f;
-	sparkleParameters.b = 0.0f;
-	sparkleParameters.a = 0.0f;
 	eyeCubemapScale = 1.0f;
 
 	Get(file);

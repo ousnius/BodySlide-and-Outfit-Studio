@@ -1350,6 +1350,7 @@ public:
 	vector<T*> GetChildren(NiNode* parent, bool searchExtraData = false);
 
 	int GetNodeID(const string& nodeName);
+	int GetRootNodeID();
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
 	bool SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool& rootChildrenOnly = false);
 

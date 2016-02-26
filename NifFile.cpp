@@ -1481,6 +1481,13 @@ int NifFile::GetNodeID(const string& nodeName) {
 	return -1;
 }
 
+int NifFile::GetRootNodeID() {
+	if (blocks.empty())
+		return -1;
+
+	return 0;
+}
+
 bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
 	for (auto& block : blocks) {
 		if (block->blockType == NINODE) {
