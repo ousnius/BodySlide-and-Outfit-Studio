@@ -191,6 +191,10 @@ public:
 		outfitStudio = nullptr;
 	}
 
+	bool IsOutfitStudioOpened() {
+		return outfitStudio != nullptr;
+	}
+
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
 

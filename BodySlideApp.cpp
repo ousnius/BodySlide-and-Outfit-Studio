@@ -200,12 +200,12 @@ void BodySlideApp::OnFatalException() {
 
 void BodySlideApp::InitArchives() {
 	// Auto-detect archives
-	if (!FSManager::exists()) {
-		vector<string> fileList;
-		GetArchiveFiles(fileList);
+	FSManager::del();
 
-		FSManager::addArchives(fileList);
-	}
+	vector<string> fileList;
+	GetArchiveFiles(fileList);
+
+	FSManager::addArchives(fileList);
 }
 
 void BodySlideApp::GetArchiveFiles(vector<string>& outList) {
@@ -2563,18 +2563,23 @@ void BodySlideFrame::OnOutfitStudio(wxCommandEvent& WXUNUSED(event)) {
 void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	wxChoice* choiceTargetGame = (wxChoice*)event.GetEventObject();
 	wxWindow* parent = choiceTargetGame->GetGrandParent();
+	wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*parent, "fpSkeletonFile", wxFilePickerCtrl);
 	wxChoice* choiceSkeletonRoot = XRCCTRL(*parent, "choiceSkeletonRoot", wxChoice);
+
 	TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
 	switch (targ) {
 		case FO3:
 		case FONV:
+			fpSkeletonFile->SetPath("res\\skeleton_fo3nv.nif");
 			choiceSkeletonRoot->SetStringSelection("Bip01");
 			break;
 		case SKYRIM:
+			fpSkeletonFile->SetPath("res\\skeleton_female_xpmse.nif");
 			choiceSkeletonRoot->SetStringSelection("NPC");
 			break;
 		case FO4:
 		default:
+			fpSkeletonFile->SetPath("res\\skeleton_fo4.nif");
 			choiceSkeletonRoot->SetStringSelection("Root");
 			break;
 	}
@@ -2586,7 +2591,6 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	dpGameDataPath->SetPath(dataDir);
 	
 	SettingsFillDataFiles(dataFileList, dataDir, targ);
-
 }
 
 void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
@@ -2634,6 +2638,11 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 }
 
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
+	if (app->IsOutfitStudioOpened()) {
+		wxMessageBox("You can't change the settings while Outfit Studio is opened up.", "Warning", wxICON_WARNING, this);
+		return;
+	}
+
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
 		settings->SetSize(wxSize(525, 533));
@@ -2669,34 +2678,32 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		if (settings->ShowModal() == wxID_OK) {
 			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
 			Config.SetValue("TargetGame", targ);
+
 			wxString TargetGames[4] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4" };
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
 				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
 				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToStdString());
-				FSManager::del();
 			}
 
 			wxArrayInt items;
 			wxString selectedfiles;
-			for (int i = 0; i < dataFileList->GetCount(); i++) {
-				if (!dataFileList->IsChecked(i)) {
+			for (int i = 0; i < dataFileList->GetCount(); i++)
+				if (!dataFileList->IsChecked(i))
 					selectedfiles += dataFileList->GetString(i) + "; ";
-				}
-			}
-			selectedfiles = selectedfiles.BeforeLast(';');
 
+			selectedfiles = selectedfiles.BeforeLast(';');
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToStdString());
 
 			Config.SetValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked() ? "true" : "false");
-
 			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
 			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
-
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());
+
+			app->InitArchives();
 		}
 
 		delete settings;
