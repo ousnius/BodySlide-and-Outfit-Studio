@@ -344,32 +344,36 @@ public:
 
 	void DeleteMesh(const string& shape) {
 		gls.DeleteMesh(shape);
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	void DestroyOverlays() {
 		gls.DeleteOverlays();
-		Refresh();
+		gls.RenderOneFrame();
+	}
+
+	void Cleanup() {
+		gls.Cleanup();
 	}
 
 	void SetView(const char& type) {
 		gls.SetView(type);
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	void SetPerspective(const bool& enabled) {
 		gls.SetPerspective(enabled);
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	void SetFieldOfView(const int& fieldOfView) {
 		gls.SetFieldOfView(fieldOfView);
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	void UpdateLights(const int& ambient = 50, const int& brightness1 = 50, const int& brightness2 = 50, const int& brightness3 = 50) {
 		gls.UpdateLights(ambient, brightness1, brightness2, brightness3);
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 

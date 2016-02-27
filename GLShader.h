@@ -102,46 +102,37 @@ public:
 };
 
 class GLMaterial {
-private:
-	void _init() {
-		memset(texRef, 0, sizeof(GLuint) * 8);
-		nTextures = 0;
-		shader = nullptr;
-	}
-
 public:
-	GLuint texRef[8];
-	short nTextures;
+	vector<GLuint> texRef;
 	GLShader* shader;
 
 	GLMaterial() {
-		_init();
+		texRef.resize(10, 0);
+		shader = nullptr;
 	}
 
 	~GLMaterial() {
-		glDeleteTextures(8, &texRef[0]);
+		glDeleteTextures(texRef.size(), texRef.data());
+
 		if (shader)
 			delete shader;
 	}
 
-	GLMaterial(GLuint texID, GLShader* inShader) {
-		_init();
+	GLMaterial(GLuint texID, GLShader* inShader) : GLMaterial() {
 		texRef[0] = texID;
 		shader = inShader;
 	}
 
-	GLMaterial(GLuint texID, const char* vertShaderProg, const char*  fragShaderProg) {
-		_init();
+	GLMaterial(GLuint texID, const char* vertShaderProg, const char*  fragShaderProg) : GLMaterial() {
 		texRef[0] = texID;
-		nTextures = 1;
 		shader = new GLShader(vertShaderProg, fragShaderProg);
 	}
 
-	GLMaterial(GLuint texID[], int texCount, const char* vertShaderProg, const char*  fragShaderProg) {
-		_init();
+	GLMaterial(GLuint texID[], int texCount, const char* vertShaderProg, const char* fragShaderProg) : GLMaterial() {
+		texRef.resize(texCount, 0);
 		for (int i = 0; i < texCount; i++)
 			texRef[i] = texID[i];
-		nTextures = texCount;
+
 		shader = new GLShader(vertShaderProg, fragShaderProg);
 	}
 

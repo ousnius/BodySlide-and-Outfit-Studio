@@ -789,6 +789,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearReference();
 	project->ClearOutfit();
 	
+	glView->Cleanup();
 	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 
@@ -915,6 +916,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearReference();
 	project->ClearOutfit();
 
+	glView->Cleanup();
 	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 

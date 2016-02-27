@@ -17,7 +17,9 @@ class GLMaterial;
 class ResourceLoader {
 public:
 	ResourceLoader();
-	virtual ~ResourceLoader();
+	~ResourceLoader();
+
+	static unsigned int currentTextureID;
 
 	GLMaterial* AddMaterial(const string& textureFile,
 				const string& vShaderFile,
