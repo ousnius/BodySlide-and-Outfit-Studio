@@ -3949,7 +3949,7 @@ void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* ver
 	if (recalcNormals)
 		RecalcNormals(shapeName);
 
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::RecalculateMeshBVH(const string& shapeName) {
@@ -3959,7 +3959,7 @@ void wxGLPanel::RecalculateMeshBVH(const string& shapeName) {
 void wxGLPanel::ShowShape(const string& shapeName, bool show) {
 	int id = gls.GetMeshID(shapeName);
 	gls.SetMeshVisibility(id, show);
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::SetActiveShapes(const vector<string>& shapeNames) {
@@ -4151,6 +4151,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		gls.GetPickRay(cx, cy, v, vo);
 
 		gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
+		gls.RenderOneFrame();
 
 		if (activeBrush->Type() == TBT_MOVE)
 		{
@@ -4350,7 +4351,7 @@ bool wxGLPanel::UndoStroke() {
 		}
 	}
 
-	Refresh();
+	gls.RenderOneFrame();
 	return ret;
 }
 
@@ -4384,7 +4385,7 @@ bool wxGLPanel::RedoStroke() {
 		}
 	}
 
-	Refresh();
+	gls.RenderOneFrame();
 	return ret;
 }
 
@@ -4440,7 +4441,7 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 		gls.SetOverlayVisibility("ZRotateMesh", false);
 	}
 
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
@@ -4468,7 +4469,7 @@ void wxGLPanel::OnPaint(wxPaintEvent& event) {
 void wxGLPanel::OnSize(wxSizeEvent& event) {
 	wxSize sz = event.GetSize();
 	gls.SetSize(sz.GetX(), sz.GetY());
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
@@ -4490,7 +4491,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 	
 	os->CheckBrushBounds();
 	os->UpdateBrushPane();
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
@@ -4512,7 +4513,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.DollyCamera(y - lastY);
 		else
 			gls.PanCamera(x - lastX, y - lastY);
-		Refresh();
+
+		gls.RenderOneFrame();
 	}
 
 	if (rbuttonDown) {
@@ -4524,8 +4526,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.TurnTableCamera(x - lastX);
 			gls.PitchCamera(y - lastY);
 		}
-		Refresh();
+
+		gls.RenderOneFrame();
 	}
+
 	if (lbuttonDown) {
 		isLDragging = true;
 		if (isPainting) {
@@ -4534,12 +4538,14 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else if (isTransforming) {
 			UpdateTransform(event.GetPosition());
 		}
-		else  {
+		else {
 			if (Config.MatchValue("Input/LeftMousePan", "true"))
 				gls.PanCamera(x - lastX, y - lastY);
 		}
-		Refresh();
+
+		gls.RenderOneFrame();
 	}
+
 	if (!rbuttonDown && !lbuttonDown) {
 		string hitMeshName;
 		if (editMode && transformMode == 0) {
@@ -4549,6 +4555,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			cursorExists = false;
 			gls.ShowCursor(false);
 		}
+
+		gls.RenderOneFrame();
 
 		if (os->statusBar) {
 			if (cursorExists) {
@@ -4567,9 +4575,8 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 				os->statusBar->SetStatusText("", 1);
 			}
 		}
-
-		Refresh();
 	}
+
 	lastX = x;
 	lastY = y;
 }
