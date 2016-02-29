@@ -1308,13 +1308,16 @@ void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos, bool clear
 
 		for (auto &b : workAnim.shapeBones[s]) {
 			if (b == bone) {
-				SkinTransform xForm;
-				workAnim.GetBoneXForm(b, xForm);
+				vector<Vector3> boneRot;
+				Vector3 boneTranslation;
+				float boneScale;
+
+				workNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
 				if (workWeights[s].empty())
 					workAnim.GetWeights(s, b, workWeights[s]);
 
 				for (auto &w : workWeights[s]) {
-					Vector3 dir = (*verts)[w.first] - xForm.translation;
+					Vector3 dir = (*verts)[w.first] - boneTranslation;
 					dir.Normalize();
 					Vector3 offset = dir * w.second * sliderPos / 5.0f;
 					(*verts)[w.first] += offset;
