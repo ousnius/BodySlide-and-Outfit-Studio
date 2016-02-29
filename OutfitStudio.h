@@ -720,6 +720,7 @@ private:
 	void OnShapeDrop(wxTreeEvent& event);
 	void OnBoneSelect(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
+	void OnBoneTreeContext(wxCommandEvent& event);
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);
 
@@ -780,7 +781,9 @@ private:
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
 	void OnAddBone(wxCommandEvent& event);
+	void OnAddCustomBone(wxCommandEvent& event);
 	void OnDeleteBone(wxCommandEvent& event);
+	void OnDeleteBoneFromSelected(wxCommandEvent& event);
 	void OnCopyBoneWeight(wxCommandEvent& event);
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);

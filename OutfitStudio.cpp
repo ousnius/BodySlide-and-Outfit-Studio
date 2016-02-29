@@ -120,7 +120,9 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("copyShape"), OutfitStudio::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudio::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudio::OnAddBone)
+	EVT_MENU(XRCID("addCustomBone"), OutfitStudio::OnAddCustomBone)
 	EVT_MENU(XRCID("deleteBone"), OutfitStudio::OnDeleteBone)
+	EVT_MENU(XRCID("deleteBoneSelected"), OutfitStudio::OnDeleteBoneFromSelected)
 	EVT_MENU(XRCID("copyBoneWeight"), OutfitStudio::OnCopyBoneWeight)	
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudio::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudio::OnTransferSelectedWeight)
@@ -139,6 +141,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudio::OnShapeDrop)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitBones"), OutfitStudio::OnBoneSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudio::OnBoneContext)
+	EVT_COMMAND_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudio::OnBoneTreeContext)
 	
 	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudio::OnTabButtonClick)
 	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudio::OnTabButtonClick)
@@ -1883,11 +1886,16 @@ void OutfitStudio::OnShapeDrop(wxTreeEvent& event) {
 	outfitShapes->SelectItem(movedItem);
 }
 
-void OutfitStudio::OnBoneContext(wxTreeEvent& event) {
-	wxTreeItemId item = event.GetItem();
-	outfitBones->SelectItem(item);
-
+void OutfitStudio::OnBoneContext(wxTreeEvent& WXUNUSED(event)) {
 	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneContext");
+	if (menu) {
+		PopupMenu(menu);
+		delete menu;
+	}
+}
+
+void OutfitStudio::OnBoneTreeContext(wxCommandEvent& WXUNUSED(event)) {
+	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuBoneTreeContext");
 	if (menu) {
 		PopupMenu(menu);
 		delete menu;
@@ -3506,6 +3514,7 @@ void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	dlg.SetSize(450, 470);
+	dlg.CenterOnParent();
 
 	wxTreeCtrl* boneTree = XRCCTRL(dlg, "boneTree", wxTreeCtrl);
 
@@ -3537,6 +3546,24 @@ void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+void OutfitStudio::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog dlg;
+	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
+		return;
+
+	//dlg.SetSize(450, 470);
+	dlg.CenterOnParent();
+
+	// To-Do
+	if (dlg.ShowModal() == wxID_OK) {
+		string bone = "";
+		wxLogMessage("Adding custom bone '%s' to project.", bone);
+
+		//project->AddCustomBoneRef(bone);
+		outfitBones->AppendItem(bonesRoot, bone);
+	}
+}
+
 void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	wxArrayTreeItemIds selItems;
 	outfitBones->GetSelections(selItems);
@@ -3554,6 +3581,20 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	if (selItems.size() > 0) {
 		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems[0]);
 		OnBoneSelect(treeEvent);
+	}
+}
+
+void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
+	wxArrayTreeItemIds selItems;
+	outfitBones->GetSelections(selItems);
+	for (int i = 0; i < selItems.size(); i++) {
+		string bone = outfitBones->GetItemText(selItems[i]);
+		wxLogMessage("Deleting weights of bone '%s' from selected shapes.", bone);
+
+		// To-Do
+		for (auto &s : selectedItems) {
+			//project->ClearWeights(s->shapeName, bone);
+		}
 	}
 }
 

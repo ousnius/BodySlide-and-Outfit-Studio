@@ -2550,14 +2550,41 @@
 	</object>
 	<object class="wxMenu" name="menuBoneContext">
 		<label>Bones</label>
-		<object class="wxMenuItem" name="addBone">
-			<label>Add Bone...</label>
-			<help>Add a new bone to the outfit</help>
+		<object class="wxMenu" name="menuAddBone">
+			<label>Add</label>
+			<object class="wxMenuItem" name="addBone">
+				<label>From Skeleton...</label>
+				<help>Choose a bone from the reference skeleton to add to the project.</help>
+			</object>
+			<object class="wxMenuItem" name="addCustomBone">
+				<label>Custom Bone...</label>
+				<help>Add a custom bone to the project.</help>
+			</object>
 		</object>
-		<object class="separator" />
-		<object class="wxMenuItem" name="deleteBone">
-			<label>Delete Bone</label>
-			<help>Delete this bone from the outfit</help>
+		<object class="wxMenu" name="menuDeleteBone">
+			<label>Delete</label>
+			<object class="wxMenuItem" name="deleteBone">
+				<label>From Project</label>
+				<help>Delete bone(s) from all shapes of the project.</help>
+			</object>
+			<object class="wxMenuItem" name="deleteBoneSelected">
+				<label>From Selected Shapes</label>
+				<help>Delete bone(s) from only the selected shapes.</help>
+			</object>
+		</object>
+	</object>
+	<object class="wxMenu" name="menuBoneTreeContext">
+		<label>Bones</label>
+		<object class="wxMenu" name="menuAddBone">
+			<label>Add</label>
+			<object class="wxMenuItem" name="addBone">
+				<label>From Skeleton...</label>
+				<help>Choose a bone from the reference skeleton to add to the project.</help>
+			</object>
+			<object class="wxMenuItem" name="addCustomBone">
+				<label>Custom Bone...</label>
+				<help>Add a custom bone to the project.</help>
+			</object>
 		</object>
 	</object>
 	<object class="wxDialog" name="dlgSkeletonBones">
