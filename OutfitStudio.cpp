@@ -3591,10 +3591,8 @@ void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 		string bone = outfitBones->GetItemText(selItems[i]);
 		wxLogMessage("Deleting weights of bone '%s' from selected shapes.", bone);
 
-		// To-Do
-		for (auto &s : selectedItems) {
-			//project->ClearWeights(s->shapeName, bone);
-		}
+		for (auto &s : selectedItems)
+			project->GetWorkAnim()->RemoveShapeBone(s->shapeName, bone);
 	}
 }
 

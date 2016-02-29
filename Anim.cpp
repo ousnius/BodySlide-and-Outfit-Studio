@@ -169,24 +169,24 @@ void AnimInfo::SetShapeBoneXForm(const string& shape, const string& boneName, Sk
 }
 
 bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
-	if (!refNif || !refNif->IsValid()) {						// check for existence of reference nif
+	if (!refNif || !refNif->IsValid())	// check for existence of reference nif
 		return false;
-	}
-	if (shapeSkinning.find(shape) == shapeSkinning.end()) {		// Check for shape in skinning data
+
+	if (shapeSkinning.find(shape) == shapeSkinning.end())	// Check for shape in skinning data
 		return false;
-	}
+
 	vector<Vector3> verts;
 	refNif->GetVertsForShape(shape, verts);
-	if (verts.size() == 0)										// check for empty shape
+	if (verts.size() == 0)	// check for empty shape
 		return false;
 
 	for (auto bn : shapeSkinning[shape].boneNames) {
 		Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
 		Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 		for (auto &w : shapeSkinning[shape].boneWeights[bn.second].weights) {
-			if (w.first > verts.size()) {		// incoming weights have a larger set of possible verts. 
+			if (w.first > verts.size())		// incoming weights have a larger set of possible verts.
 				return false;
-			}
+
 			Vector3 v = verts[w.first];
 			a.x = min(a.x, v.x);
 			a.y = min(a.y, v.y);
@@ -211,7 +211,7 @@ bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
 			mat = xformRef->skinRot;
 			trans = xformRef->skinTrans;
 		}
-		else 
+		else
 			mat = shapeSkinning[shape].boneWeights[bn.second].xform.ToMatrix();
 
 		tot = mat * tot;
@@ -219,6 +219,7 @@ bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
 		shapeSkinning[shape].boneWeights[bn.second].bSphereOffset = tot;
 		shapeSkinning[shape].boneWeights[bn.second].bSphereRadius = d;
 	}
+
 	return true;
 }
 
@@ -234,16 +235,15 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 		vector<Vector3> verts;
 		refNif->GetVertsForShape(shape, verts);
 
-		if (verts.size() == 0)	// early out for when the reference nif doesn't contain a matching shape for the incoming weights. 
+		if (verts.size() == 0)	// early out for when the reference nif doesn't contain a matching shape for the incoming weights.
 			return;
-
 
 		Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
 		Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
 		for (auto &w : inVertWeights) {
-			if (w.first > verts.size()) {		// incoming weights have a larger set of possible verts. 
+			if (w.first > verts.size())		// incoming weights have a larger set of possible verts.
 				return;
-			}
+
 			Vector3 v = verts[w.first];
 			a.x = min(a.x, v.x);
 			a.y = min(a.y, v.y);
@@ -265,6 +265,7 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 		shapeSkinning[shape].boneWeights[bid].bSphereOffset = tot;
 		shapeSkinning[shape].boneWeights[bid].bSphereRadius = d;
 	}
+
 	// Got all the way here, bounds calculation has been done.
 	shapeSkinning[shape].bNeedsBoundsCalc = false;
 }
