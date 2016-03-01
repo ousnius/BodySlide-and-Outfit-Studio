@@ -190,7 +190,7 @@ class PreviewCanvas : public wxGLCanvas {
 	wxPoint lastMousePosition;
 
 public:
-	PreviewCanvas(PreviewWindow* pw, const int* attribs);
+	PreviewCanvas(PreviewWindow* pw, const wxGLAttributes& attribs);
 
 	void OnPaint(wxPaintEvent& event);
 	void OnKeyUp(wxKeyEvent& event);

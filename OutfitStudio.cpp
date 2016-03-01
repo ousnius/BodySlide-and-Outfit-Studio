@@ -282,7 +282,7 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
-		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs(this));
+		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
 		glView->SetNotifyWindow(this);
 	}
 
@@ -3886,7 +3886,9 @@ wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
 	EVT_MOUSE_CAPTURE_LOST(wxGLPanel::OnCaptureLost)
 wxEND_EVENT_TABLE()
 
-wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs) : wxGLCanvas(parent, wxID_ANY, attribs, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
+wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs)
+	: wxGLCanvas(parent, attribs, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
+
 	context = new wxGLContext(this);
 	rbuttonDown = false;
 	lbuttonDown = false;
@@ -4623,7 +4625,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 }
 
 void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
-	CaptureMouse();
+	if (!HasCapture())
+		CaptureMouse();
+
 	lbuttonDown = true;
 	bool meshHit;
 
@@ -4642,22 +4646,24 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 }
 
 void wxGLPanel::OnMiddleDown(wxMouseEvent& WXUNUSED(event)) {
-	CaptureMouse();
+	if (!HasCapture())
+		CaptureMouse();
+
 	mbuttonDown = true;
 }
 
 void wxGLPanel::OnMiddleUp(wxMouseEvent& WXUNUSED(event)) {
-	if (GetCapture() == this) {
+	if (GetCapture() == this)
 		ReleaseMouse();
-	}
+
 	isMDragging = false;
 	mbuttonDown = false;
 }
 
 void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
-	if (GetCapture() == this) {
+	if (GetCapture() == this)
 		ReleaseMouse();
-	}
+
 	if (!isLDragging && (!isPainting)) {
 		int x, y;
 		event.GetPosition(&x, &y);
@@ -4695,12 +4701,14 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 void wxGLPanel::OnRightDown(wxMouseEvent& WXUNUSED(event)) {
 	if (!HasCapture())
 		CaptureMouse();
+
 	rbuttonDown = true;
 }
 
 void wxGLPanel::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 	if (HasCapture())
 		ReleaseMouse();
+
 	rbuttonDown = false;
 }
 

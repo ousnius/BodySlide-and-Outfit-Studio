@@ -40,7 +40,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
-	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs(this));
+	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
 	context = new wxGLContext(canvas);
 	
 	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
@@ -260,8 +260,8 @@ wxBEGIN_EVENT_TABLE(PreviewCanvas, wxGLCanvas)
 	EVT_SIZE(PreviewCanvas::OnResized)
 wxEND_EVENT_TABLE()
 
-PreviewCanvas::PreviewCanvas(PreviewWindow* pw, const int* attribs)
-	: wxGLCanvas(pw, wxID_ANY, attribs, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
+PreviewCanvas::PreviewCanvas(PreviewWindow* pw, const wxGLAttributes& attribs)
+	: wxGLCanvas(pw, attribs, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
 		previewWindow(pw) {
 }
 

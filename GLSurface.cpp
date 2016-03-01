@@ -16,8 +16,6 @@ PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
 PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringArb = nullptr;
 PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatArb = nullptr;
 
-bool GLSurface::multiSampleEnabled = { false };
-
 
 Vector3::Vector3(const Vertex& other) {
 	x = other.x;
@@ -235,124 +233,16 @@ bool GLSurface::IsExtensionSupported(char* szTargetExtension) {
 	}
 }
 
-bool GLSurface::IsWGLExtensionSupported(char* szTargetExtension) {
-	return wxGLCanvas::IsExtensionSupported(szTargetExtension);
-}
+const wxGLAttributes& GLSurface::GetGLAttribs() {
+	static bool attribsInitialized { false };
+	static wxGLAttributes attribs;
 
-const int* GLSurface::GetGLAttribs(wxWindow* parent) {
-	static bool initialized{false};
-	static int attribs[] = {
-		WX_GL_RGBA,
-		WX_GL_DOUBLEBUFFER,
-		WX_GL_MIN_RED, 8,
-		WX_GL_MIN_BLUE, 8,
-		WX_GL_MIN_GREEN, 8,
-		WX_GL_MIN_ALPHA, 8,
-		WX_GL_DEPTH_SIZE, 16,
-		WX_GL_LEVEL, 0,
-		WX_GL_SAMPLE_BUFFERS, 1,
-		WX_GL_SAMPLES, 8,
-		0,
-	};
-
-	if (initialized)
-		return attribs;
-
-	// The main thing we want to query support for is multisampling.
-	// Unfortunately, wxWidgets has rather crappy support for querying this
-	// on Windows.  On Windows, this can't be queried without creating a
-	// window first.  The normal wxGLCanvas::IsDisplaySupported() function
-	// doesn't support querying multisampling at all.
-	//
-	// Therefore we still use the Windows-specific QueryMultisample code
-	// here.
-	int numMultiSamples = QueryMultisample(parent);
-	if (numMultiSamples == 0) {
-		// Disable WX_GL_SAMPLE_BUFFERS and WX_GL_SAMPLES
-		attribs[14] = 0;
-		multiSampleEnabled = false;
-	} else {
-		attribs[17] = numMultiSamples;
-		multiSampleEnabled = true;
+	if (!attribsInitialized) {
+		attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(1).Samplers(8).EndList();
+		attribsInitialized = true;
 	}
 
-	initialized = true;
 	return attribs;
-}
-
-int GLSurface::QueryMultisample(wxWindow* parent) {
-	HWND queryWnd = CreateWindow(L"STATIC", L"Multisampletester", WS_CHILD | SS_OWNERDRAW | SS_NOTIFY, 0, 0, 768, 768, parent->GetHWND(), 0, GetModuleHandle(nullptr), nullptr);
-	HDC hDC = GetDC(queryWnd);
-
-	PIXELFORMATDESCRIPTOR pfd;
-	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-	memset(&pfd, 0, sizeof(PIXELFORMATDESCRIPTOR));
-	pfd.nVersion = 1;
-	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA;
-	pfd.iPixelType = PFD_TYPE_RGBA;
-	pfd.cColorBits = 24;
-	pfd.cDepthBits = 16;
-	pfd.cAlphaBits = 8;
-	pfd.iLayerType = PFD_MAIN_PLANE;
-
-	int format = ChoosePixelFormat(hDC, &pfd);
-	SetPixelFormat(hDC, format, &pfd);
-
-	HGLRC hRC = wglCreateContext(hDC);
-	wglMakeCurrent(hDC, hRC);
-
-	int numMultiSamples = FindBestNumSamples(hDC);
-
-	wglMakeCurrent(0, 0);
-	wglDeleteContext(hRC);
-	ReleaseDC(queryWnd, hDC);
-	DestroyWindow(queryWnd);
-	return numMultiSamples;
-}
-
-int GLSurface::FindBestNumSamples(HDC hDC) {
-	if (!IsWGLExtensionSupported("WGL_ARB_multisample"))
-		return 0;
-
-	wglChoosePixelFormatArb = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
-
-	// These Attributes Are The Bits We Want To Test For In Our Sample
-	// Everything Is Pretty Standard, The Only One We Want To
-	// Really Focus On Is The SAMPLE BUFFERS ARB And WGL SAMPLES
-	// These Two Are Going To Do The Main Testing For Whether Or Not
-	// We Support Multisampling On This Hardware
-	int iAttributes[] = { WGL_DRAW_TO_WINDOW_ARB, GL_TRUE,
-		WGL_SUPPORT_OPENGL_ARB, GL_TRUE,
-		WGL_ACCELERATION_ARB, WGL_FULL_ACCELERATION_ARB,
-		WGL_COLOR_BITS_ARB, 24,
-		WGL_ALPHA_BITS_ARB, 8,
-		WGL_DEPTH_BITS_ARB, 16,
-		WGL_STENCIL_BITS_ARB, 0,
-		WGL_DOUBLE_BUFFER_ARB, GL_TRUE,
-		WGL_SAMPLE_BUFFERS_ARB, GL_TRUE,
-		WGL_SAMPLES_ARB, 8,                        // Check For 8x Multisampling
-		0, 0 };
-
-	float fAttributes[] = { 0, 0 };
-	int pixelFormatMS = 0;
-	uint numFormats;
-	int valid = wglChoosePixelFormatArb(hDC, iAttributes, fAttributes, 1, &pixelFormatMS, &numFormats);
-	if (valid && numFormats >= 1)
-		return 8;
-
-	// no good, try 4x
-	iAttributes[16] = 4;
-	valid = wglChoosePixelFormatArb(hDC, iAttributes, fAttributes, 1, &pixelFormatMS, &numFormats);
-	if (valid && numFormats >= 1)
-		return 4;
-
-	// no good, try 2x
-	iAttributes[16] = 2;
-	valid = wglChoosePixelFormatArb(hDC, iAttributes, fAttributes, 1, &pixelFormatMS, &numFormats);
-	if (valid && numFormats >= 1)
-		return 2;
-
-	return 0;
 }
 
 void GLSurface::InitLighting() {
@@ -419,9 +309,6 @@ void GLSurface::InitGLExtensions() {
 }
 
 int GLSurface::InitGLSettings() {
-	if (multiSampleEnabled)
-		glEnable(GL_MULTISAMPLE_ARB);
-
 	glShadeModel(GL_SMOOTH);
 
 	glClearDepth(1.0f);

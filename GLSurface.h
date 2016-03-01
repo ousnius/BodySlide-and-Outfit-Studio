@@ -40,7 +40,6 @@ class GLSurface {
 	GLfloat largestAF;
 
 	bool bUseVBO;
-	static bool multiSampleEnabled;
 
 	bool bWireframe;
 	bool bLighting;
@@ -72,9 +71,6 @@ class GLSurface {
 	void InitGLExtensions();
 	int InitGLSettings();
 
-	static int QueryMultisample(wxWindow* parent);
-	static int FindBestNumSamples(HDC hDC);
-
 	void DeleteMesh(int meshID) {
 		if (meshID < meshes.size()) {
 			delete meshes[meshID];
@@ -92,7 +88,7 @@ public:
 	~GLSurface();
 
 	// Get the attributes to use for creating a wxGLCanvas
-	static const int* GetGLAttribs(wxWindow* parent);
+	static const wxGLAttributes& GetGLAttribs();
 
 	void DeleteAllMeshes() {
 		for (auto &m : meshes)
@@ -209,7 +205,6 @@ public:
 		cursorSize = newsize;
 	}
 
-	static bool IsWGLExtensionSupported(char* szTargetExtension);
 	static bool IsExtensionSupported(char* szTargetExtension);
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Begin();

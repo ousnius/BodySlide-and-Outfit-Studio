@@ -59,7 +59,7 @@ class OutfitStudio;
 
 class wxGLPanel : public wxGLCanvas {
 public:
-	wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs);
+	wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs);
 	~wxGLPanel();
 
 	void SetNotifyWindow(wxWindow* win);
