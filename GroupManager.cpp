@@ -6,7 +6,7 @@ See the included LICENSE file
 
 #include "GroupManager.h"
 
-BEGIN_EVENT_TABLE (GroupManager, wxDialog)
+wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)
 	EVT_BUTTON(XRCID("btAddGroup"), GroupManager::OnAddGroup)
@@ -15,7 +15,7 @@ BEGIN_EVENT_TABLE (GroupManager, wxDialog)
 	EVT_BUTTON(XRCID("btSaveAs"), GroupManager::OnSaveGroupAs)
 	EVT_BUTTON(XRCID("btRemoveMember"), GroupManager::OnRemoveMember)
 	EVT_BUTTON(XRCID("btAddMember"), GroupManager::OnAddMember)
-END_EVENT_TABLE();
+wxEND_EVENT_TABLE()
 
 GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
 	wxXmlResource * rsrc = wxXmlResource::Get();

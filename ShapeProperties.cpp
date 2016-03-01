@@ -6,7 +6,7 @@ See the included LICENSE file
 
 #include "ShapeProperties.h"
 
-BEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
+wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnAddShader"), ShapeProperties::OnAddShader)
 	EVT_BUTTON(XRCID("btnRemoveShader"), ShapeProperties::OnRemoveShader)
 	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
@@ -14,7 +14,7 @@ BEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnRemoveTransparency"), ShapeProperties::OnRemoveTransparency)
 	EVT_BUTTON(XRCID("btnAddExtraData"), ShapeProperties::OnAddExtraData)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
-END_EVENT_TABLE();
+wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string& shapeName) {
 	wxXmlResource * rsrc = wxXmlResource::Get();
@@ -293,7 +293,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			if (!blockType)
 				continue;
 
-			stTexGrid->SetCellValue(texPath, i, 0);
+			stTexGrid->SetCellValue(i, 0, texPath);
 		}
 
 		if (blockType == BSEFFECTSHADERPROPERTY) {

@@ -34,5 +34,5 @@ public:
 	void CheckGroup(wxCommandEvent& event);
 	void OnSave(wxCommandEvent& event);
 
-	DECLARE_EVENT_TABLE();
+	wxDECLARE_EVENT_TABLE();
 };

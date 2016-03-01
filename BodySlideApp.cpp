@@ -20,7 +20,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ConfigurationManager Config;
 
-BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
+wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(wxID_EXIT, BodySlideFrame::OnExit)
 	EVT_CLOSE(BodySlideFrame::OnClose)
 	EVT_ACTIVATE(BodySlideFrame::OnActivateFrame)
@@ -54,10 +54,9 @@ BEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	
 	EVT_MOVE_END(BodySlideFrame::OnMoveWindow)
 	EVT_SIZE(BodySlideFrame::OnSetSize)
+wxEND_EVENT_TABLE()
 
-END_EVENT_TABLE();
-
-IMPLEMENT_APP(BodySlideApp)
+wxIMPLEMENT_APP(BodySlideApp);
 
 BodySlideApp::~BodySlideApp() {
 	delete previewBaseNif;
@@ -1940,7 +1939,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, const wxString& displayN
 			sd->sliderLo->SetTickFreq(5);
 			sd->sliderLo->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
 			sd->sliderLo->SetName(name + "|LO");
-			sliderLayout->Add(sd->sliderLo, 1, wxEXPAND | wxALIGN_CENTER, 0);
+			sliderLayout->Add(sd->sliderLo, 1, wxEXPAND, 0);
 
 			sd->sliderReadoutLo = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 			sd->sliderReadoutLo->SetName(name + "|RLO");
@@ -1964,7 +1963,7 @@ void BodySlideFrame::AddSliderGUI(const wxString& name, const wxString& displayN
 		sd->sliderHi->SetTickFreq(5);
 		sd->sliderHi->Bind(wxEVT_ERASE_BACKGROUND, &BodySlideFrame::OnEraseBackground, this);
 		sd->sliderHi->SetName(name + "|HI");
-		sliderLayout->Add(sd->sliderHi, 1, wxEXPAND | wxALIGN_CENTER, 0);
+		sliderLayout->Add(sd->sliderHi, 1, wxEXPAND, 0);
 
 		sd->sliderReadoutHi = new wxTextCtrl(scrollWindow, wxID_ANY, "0%", wxDefaultPosition, wxSize(50, -1), wxTE_CENTRE | wxNO_BORDER | wxTE_PROCESS_ENTER);
 		sd->sliderReadoutHi->SetName(name + "|RHI");

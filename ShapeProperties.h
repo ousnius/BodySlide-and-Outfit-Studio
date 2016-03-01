@@ -67,5 +67,5 @@ private:
 	void OnRemoveExtraData(wxCommandEvent& event);
 	void OnApply(wxCommandEvent& event);
 
-	DECLARE_EVENT_TABLE()
+	wxDECLARE_EVENT_TABLE();
 };

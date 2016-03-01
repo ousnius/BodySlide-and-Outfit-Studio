@@ -16,8 +16,7 @@ See the included LICENSE file
 class BodySlideApp;
 class PreviewCanvas;
 
-class PreviewWindow : public wxFrame
-{
+class PreviewWindow : public wxFrame {
 	BodySlideApp* app = nullptr;
 	PreviewCanvas* canvas = nullptr; 
 	wxGLContext* context = nullptr;
@@ -29,7 +28,7 @@ class PreviewWindow : public wxFrame
 
 	vector<future<void>> normalUpdates;
 
-	DECLARE_EVENT_TABLE();
+	wxDECLARE_EVENT_TABLE();
 	static wxSize GetDefaultSize();
 
 public:
@@ -199,5 +198,5 @@ public:
 	void OnMouseWheel(wxMouseEvent& event);
 	void OnResized(wxSizeEvent& event);
 
-	DECLARE_EVENT_TABLE();
+	wxDECLARE_EVENT_TABLE();
 };

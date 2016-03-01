@@ -46,5 +46,5 @@ private:
 	void OnRemoveMember(wxCommandEvent&);
 	void OnAddMember(wxCommandEvent&);
 
-	DECLARE_EVENT_TABLE()
+	wxDECLARE_EVENT_TABLE();
 };

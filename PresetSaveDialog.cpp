@@ -6,12 +6,12 @@ See the included LICENSE file
 
 #include "PresetSaveDialog.h"
 
-BEGIN_EVENT_TABLE (PresetSaveDialog, wxDialog) 
+wxBEGIN_EVENT_TABLE(PresetSaveDialog, wxDialog) 
 	EVT_TEXT_ENTER(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
 	EVT_TEXT(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
 	EVT_CHECKLISTBOX(XRCID("spGroupDisplay"), PresetSaveDialog::CheckGroup)
 	EVT_BUTTON(wxID_SAVE, PresetSaveDialog::OnSave)
-END_EVENT_TABLE();
+wxEND_EVENT_TABLE()
 
 PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 	wxXmlResource* rsrc = wxXmlResource::Get();

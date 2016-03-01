@@ -25,7 +25,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
+wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("fileExit"), OutfitStudio::OnExit)
 	EVT_MENU(XRCID("btnNewProject"), OutfitStudio::OnNewProject)
 	EVT_MENU(XRCID("btnLoadProject"), OutfitStudio::OnLoadProject)
@@ -155,8 +155,7 @@ BEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	
 	EVT_MOVE_END(OutfitStudio::OnMoveWindow)
 	EVT_SIZE(OutfitStudio::OnSetSize)
-
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 // ----------------------------------------------------------------------------
 // OutfitStudio frame
@@ -437,7 +436,7 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 	d->slider->SetMinSize(wxSize(-1, 20));
 	d->slider->SetMaxSize(wxSize(-1, 20));
 
-	d->paneSz->Add(d->slider, 1, wxALIGN_CENTER_VERTICAL | wxLEFT | wxRIGHT | wxEXPAND, 5);
+	d->paneSz->Add(d->slider, 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
 
 	d->sliderReadout = new wxTextCtrl(d->sliderPane, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxWANTS_CHARS | wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, name + "|readout");
 	d->sliderReadout->SetMaxLength(0);
@@ -771,10 +770,8 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		tmplChoice->Append(tmplNameArray);
 		tmplChoice->Select(0);
 
-		// For some reason, the center isn't the center for a wxWizard
 		wiz.FitToPage(pg1);
 		wiz.CenterOnParent();
-		wiz.SetPosition(wiz.GetPosition() - wxPoint(10, 65));
 
 		result = wiz.RunWizard(pg1);
 	}
@@ -3286,8 +3283,8 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				mptr = &mask;
 
 			vector<Vector3> verts;
-			project->GetLiveVerts(i->shapeName, verts);
 			project->ScaleShape(i->shapeName, scale, mptr);
+			project->GetLiveVerts(i->shapeName, verts);
 			glView->UpdateMeshVertices(i->shapeName, &verts);
 		}
 
@@ -3872,7 +3869,7 @@ void OutfitStudio::OnBrushSettingsSlider(wxScrollEvent& WXUNUSED(event)) {
 // wxGLPanel
 // ---------------------------------------------------------------------------
 
-BEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
+wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
 	EVT_PAINT(wxGLPanel::OnPaint)
 	EVT_SIZE(wxGLPanel::OnSize)
 	EVT_MOUSEWHEEL(wxGLPanel::OnMouseWheel)
@@ -3887,7 +3884,7 @@ BEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
 	EVT_CHAR_HOOK(wxGLPanel::OnKeys)
 	EVT_IDLE(wxGLPanel::OnIdle)
 	EVT_MOUSE_CAPTURE_LOST(wxGLPanel::OnCaptureLost)
-END_EVENT_TABLE()
+wxEND_EVENT_TABLE()
 
 wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const int* attribs) : wxGLCanvas(parent, wxID_ANY, attribs, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
 	context = new wxGLContext(this);
@@ -3957,6 +3954,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool build
 		if (buildNormals)
 			RecalcNormals(shapeList[i]);
 	}
+	
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv, const string& shapeName) {
@@ -3979,6 +3978,7 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\skinshader.fs");
 
 	m->material = mat;
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH, bool recalcNormals) {

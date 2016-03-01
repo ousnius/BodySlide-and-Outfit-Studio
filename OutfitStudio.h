@@ -447,7 +447,7 @@ private:
 
 	Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
 
-	DECLARE_EVENT_TABLE()
+	wxDECLARE_EVENT_TABLE();
 };
 
 class OutfitProject;
@@ -921,7 +921,7 @@ private:
 		glView->Refresh();
 	}
 
-	DECLARE_EVENT_TABLE()
+	wxDECLARE_EVENT_TABLE();
 };
 
 class DnDFile : public wxFileDropTarget {

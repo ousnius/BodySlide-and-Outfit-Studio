@@ -8,12 +8,12 @@
 		<centered>1</centered>
 		<aui_managed>0</aui_managed>
 		<object class="wxToolBar" name="toolbar">
-			<style>wxTB_DOCKABLE|wxTB_FLAT|wxTB_HORIZONTAL</style>
+			<style>wxTB_DEFAULT_STYLE</style>
 			<bg>#707070</bg>
 			<fg>#ffffff</fg>
 			<bitmapsize></bitmapsize>
 			<margins></margins>
-			<packing>1</packing>
+			<packing>0</packing>
 			<separation>5</separation>
 			<object class="tool" name="btnNewProject">
 				<label>New Project</label>
@@ -166,7 +166,7 @@
 						<flag>wxALL|wxEXPAND</flag>
 						<border>0</border>
 						<object class="wxCollapsiblePane" name="brushPane">
-							<style>wxCP_NO_TLW_RESIZE</style>
+							<style>wxCP_DEFAULT_STYLE</style>
 							<collapsed>1</collapsed>
 							<label>Brush Settings</label>
 							<object class="panewindow">

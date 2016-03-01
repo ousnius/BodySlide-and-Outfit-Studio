@@ -9,6 +9,11 @@ See the included LICENSE file
 
 #include <sstream>
 
+wxBEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
+	EVT_CLOSE(PreviewWindow::OnClose)
+	EVT_COMMAND_SCROLL(wxID_ANY, PreviewWindow::OnWeightSlider)
+wxEND_EVENT_TABLE()
+
 PreviewWindow::~PreviewWindow() {
 }
 
@@ -247,10 +252,13 @@ void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	wxLogMessage("Preview closed.");
 }
 
-BEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
-	EVT_CLOSE(PreviewWindow::OnClose)
-	EVT_COMMAND_SCROLL(wxID_ANY, PreviewWindow::OnWeightSlider)
-END_EVENT_TABLE();
+wxBEGIN_EVENT_TABLE(PreviewCanvas, wxGLCanvas)
+	EVT_KEY_UP(PreviewCanvas::OnKeyUp)
+	EVT_MOTION(PreviewCanvas::OnMotion)
+	EVT_MOUSEWHEEL(PreviewCanvas::OnMouseWheel)
+	EVT_PAINT(PreviewCanvas::OnPaint)
+	EVT_SIZE(PreviewCanvas::OnResized)
+wxEND_EVENT_TABLE()
 
 PreviewCanvas::PreviewCanvas(PreviewWindow* pw, const int* attribs)
 	: wxGLCanvas(pw, wxID_ANY, attribs, wxDefaultPosition, wxDefaultSize, wxFULL_REPAINT_ON_RESIZE),
@@ -325,11 +333,3 @@ void PreviewCanvas::OnMouseWheel(wxMouseEvent& event) {
 void PreviewCanvas::OnResized(wxSizeEvent& event) {
 	previewWindow->Resized(event.GetSize().GetWidth(), event.GetSize().GetHeight());
 }
-
-BEGIN_EVENT_TABLE(PreviewCanvas, wxGLCanvas)
-	EVT_KEY_UP(PreviewCanvas::OnKeyUp)
-	EVT_MOTION(PreviewCanvas::OnMotion)
-	EVT_MOUSEWHEEL(PreviewCanvas::OnMouseWheel)
-	EVT_PAINT(PreviewCanvas::OnPaint)
-	EVT_SIZE(PreviewCanvas::OnResized)
-END_EVENT_TABLE();
