@@ -132,7 +132,8 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 				AddNifShapeTexture(nif, shapeList[i]);
 		}
 	}
-	Refresh();
+
+	gls.RenderOneFrame();
 }
 
 void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName) {
@@ -209,22 +210,22 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 void PreviewWindow::RightDrag(int dX, int dY) {
 	gls.TurnTableCamera(dX);
 	gls.PitchCamera(dY);
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void PreviewWindow::LeftDrag(int dX, int dY) {
 	gls.PanCamera(dX, dY);
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void PreviewWindow::TrackMouse(int X, int Y) {
 	gls.UpdateCursor(X, Y);
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void PreviewWindow::MouseWheel(int dW) {
 	gls.DollyCamera(dW);
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void PreviewWindow::Pick(int X, int Y) {
@@ -235,7 +236,7 @@ void PreviewWindow::Pick(int X, int Y) {
 	len = sqrt(camVec.x*camVec.x + camVec.y*camVec.y + camVec.z*camVec.z);
 
 	gls.AddVisRay(camVec, dirVec, len);
-	Refresh();
+	gls.RenderOneFrame();
 }
 
 void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {

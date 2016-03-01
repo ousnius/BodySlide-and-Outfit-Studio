@@ -26,8 +26,6 @@ class PreviewWindow : public wxFrame {
 	string baseDataPath;
 	int weight = 100;
 
-	vector<future<void>> normalUpdates;
-
 	wxDECLARE_EVENT_TABLE();
 	static wxSize GetDefaultSize();
 
@@ -40,23 +38,9 @@ public:
 	void OnWeightSlider(wxScrollEvent& event);
 
 	void Cleanup() {
-		// Wait for normal updating tasks to finish
-		bool notReady = true;
-		while (notReady) {
-			notReady = false;
-			for (int i = 0; i < normalUpdates.size(); i++) {
-				if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
-					normalUpdates.erase(normalUpdates.begin() + i);
-					i--;
-				}
-				else
-					notReady = true;
-			}
-		}
-
 		gls.Cleanup();
 		shapeTextures.clear();
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	int GetWeight() {
@@ -77,33 +61,18 @@ public:
 		baseDataPath = path;
 	}
 
-	void Refresh() {
-		Render();
-	}
-
 	void AddMeshDirect(mesh* m);
 	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void AddNifShapeTexture(NifFile* fromNif, const string& shapeName);
 
 	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
-		gls.Update(gls.GetMeshID(shapeName), verts, uvs);
-
-		// Remove finished tasks from list
-		for (int i = 0; i < normalUpdates.size(); i++) {
-			if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
-				normalUpdates.erase(normalUpdates.begin() + i);
-				i--;
-			}
-		}
+		vector<int> changed;
+		gls.Update(gls.GetMeshID(shapeName), verts, uvs, &changed);
 
 		mesh* m = gls.GetMesh(shapeName);
-		if (m) {
-			auto pending = async(launch::async, mesh::SmoothNormalsStatic, m);
-			normalUpdates.push_back(move(pending));
-		}
-
-		Refresh();
+		if (m)
+			m->SmoothNormals(changed);
 	}
 
 	void SetShapeTexture(const string& shapeName, const string& texturefile, bool isSkin = false) {
@@ -130,42 +99,33 @@ public:
 	}
 
 	void ToggleSmoothSeams() {
-		mesh* m;
 		for (auto &s : shapeTextures) {
-			m = gls.GetMesh(s.first);
+			mesh* m = gls.GetMesh(s.first);
 			if (m) {
 				if (m->smoothSeamNormals)
 					m->smoothSeamNormals = false;
 				else
 					m->smoothSeamNormals = true;
+
 				m->SmoothNormals();
 			}
 		}
-		Refresh();
-	}
-	void ToggleSmoothSeams(mesh* m) {
-		if (m) {
-			if (m->smoothSeamNormals)
-				m->smoothSeamNormals = false;
-			else
-				m->smoothSeamNormals = true;
-			m->SmoothNormals();
-		}
+		gls.RenderOneFrame();
 	}
 
 	void ToggleTextures() {
 		gls.ToggleTextures();
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	void ToggleWireframe() {
 		gls.ToggleWireframe();
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	void ToggleLighting(){
 		gls.ToggleLighting();
-		Refresh();
+		gls.RenderOneFrame();
 	}
 
 	void ToggleEditMode() {

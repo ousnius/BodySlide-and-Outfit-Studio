@@ -1616,14 +1616,15 @@ int GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, fl
 	return myMesh;
 }
 
-void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs) {
+void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs, vector<int>* changed) {
 	int id = GetMeshID(shapeName);
 	if (id < 0)
 		return;
-	Update(id, vertices, uvs);
+
+	Update(id, vertices, uvs, changed);
 }
 
-void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs) {
+void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs, vector<int>* changed) {
 	if (shapeIndex >= meshes.size())
 		return;
 
@@ -1631,13 +1632,20 @@ void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2
 	if (m->nVerts != vertices->size())
 		return;
 
+	Vector3 old;
 	for (int i = 0; i < m->nVerts; i++) {
+		if (changed)
+			old = m->verts[i];
+
 		m->verts[i].x = (*vertices)[i].x / -10.0f;
 		m->verts[i].z = (*vertices)[i].y / 10.0f;
 		m->verts[i].y = (*vertices)[i].z / 10.0f;
-		if (uvs) {
+
+		if (uvs)
 			m->texcoord[i] = (*uvs)[i];
-		}
+
+		if (changed && old != m->verts[i])
+			(*changed).push_back(i);
 	}
 	m->bBuffersLoaded = false;
 }

@@ -807,12 +807,15 @@ void BodySlideApp::UpdatePreview() {
 			for (int z = zapIdx.size() - 1; z >= 0; z--) {
 				if (zapIdx[z] >= verts.size())
 					continue;
+
 				verts.erase(verts.begin() + zapIdx[z]);
 				uv.erase(uv.begin() + zapIdx[z]);
 			}
 		}
 		preview->Update(it->second, &verts, &uv);
 	}
+
+	preview->Render();
 }
 
 void BodySlideApp::CleanupPreview() {
