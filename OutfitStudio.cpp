@@ -1791,27 +1791,30 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 			m->ColorChannelFill(1, 0.0f);
 		}
 
-		// Selected Shape
 		activeBone = outfitBones->GetItemText(item);
-		unordered_map<ushort, float> boneWeights;
-		if (!project->IsBaseShape(activeItem->shapeName)) {
-			project->GetWorkAnim()->GetWeights(activeItem->shapeName, activeBone, boneWeights);
-			mesh* workMesh = glView->GetMesh(activeItem->shapeName);
-			if (workMesh) {
-				workMesh->ColorChannelFill(1, 0.0f);
-				for (auto &bw : boneWeights)
-					workMesh->vcolors[bw.first].y = bw.second;
+
+		// Show weights of selected shapes without reference
+		for (auto &s : selectedItems) {
+			unordered_map<ushort, float> boneWeights;
+			if (!project->IsBaseShape(s->shapeName)) {
+				project->GetWorkAnim()->GetWeights(s->shapeName, activeBone, boneWeights);
+				mesh* m = glView->GetMesh(s->shapeName);
+				if (m) {
+					m->ColorChannelFill(1, 0.0f);
+					for (auto &bw : boneWeights)
+						m->vcolors[bw.first].y = bw.second;
+				}
 			}
 		}
-		boneWeights.clear();
 
-		// Reference Shape
+		// Always show weights of reference shape
+		unordered_map<ushort, float> boneWeights;
 		project->GetWorkAnim()->GetWeights(project->GetBaseShape(), activeBone, boneWeights);
-		mesh* baseMesh = glView->GetMesh(project->GetBaseShape());
-		if (baseMesh) {
-			baseMesh->ColorChannelFill(1, 0.0f);
+		mesh* m = glView->GetMesh(project->GetBaseShape());
+		if (m) {
+			m->ColorChannelFill(1, 0.0f);
 			for (auto &bw : boneWeights)
-				baseMesh->vcolors[bw.first].y = bw.second;
+				m->vcolors[bw.first].y = bw.second;
 		}
 
 		glView->Refresh();
@@ -3575,7 +3578,7 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	outfitBones->GetSelections(selItems);
-	if (selItems.size() > 0) {
+	if (!selItems.empty()) {
 		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems[0]);
 		OnBoneSelect(treeEvent);
 	}
@@ -3590,6 +3593,11 @@ void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 
 		for (auto &s : selectedItems)
 			project->GetWorkAnim()->RemoveShapeBone(s->shapeName, bone);
+	}
+
+	if (!selItems.empty()) {
+		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems[0]);
+		OnBoneSelect(treeEvent);
 	}
 }
 
@@ -4196,8 +4204,7 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
 		gls.RenderOneFrame();
 
-		if (activeBrush->Type() == TBT_MOVE)
-		{
+		if (activeBrush->Type() == TBT_MOVE) {
 			Vector3 pn;
 			float pd;
 			((TB_Move*)activeBrush)->GetWorkingPlane(pn, pd);
@@ -4220,11 +4227,9 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		activeStroke->updateStroke(tpi);
 
 		if (activeBrush->Type() == TBT_WEIGHT) {
-			wxArrayTreeItemIds selItems;
-			os->outfitBones->GetSelections(selItems);
-			if (selItems.size() > 0) {
-				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				if (os->boneScale) {
+			if (os->boneScale) {
+				string selectedBone = os->GetActiveBone();
+				if (!selectedBone.empty()) {
 					int boneScalePos = os->boneScale->GetValue();
 					os->project->ApplyBoneScale(selectedBone, boneScalePos);
 					os->ActiveShapesUpdated(strokeManager->GetCurStateStroke(), false, false);
@@ -4238,12 +4243,10 @@ void wxGLPanel::EndBrushStroke() {
 	if (activeStroke) {
 		activeStroke->endStroke();
 
-		if (activeStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
-			wxArrayTreeItemIds selItems;
-			os->outfitBones->GetSelections(selItems);
-			if (selItems.size() > 0) {
-				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				if (os->boneScale) {
+		if (activeStroke->BrushType() == TBT_WEIGHT) {
+			if (os->boneScale) {
+				string selectedBone = os->GetActiveBone();
+				if (!selectedBone.empty()) {
 					int boneScalePos = os->boneScale->GetValue();
 					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
 				}
