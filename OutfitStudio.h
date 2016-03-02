@@ -461,9 +461,7 @@ public:
 	wxGLPanel* glView = nullptr;
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
-	vector<ShapeItemData*> selectedItems;
 	string activeSlider;
-	string activeBone;
 	bool bEditSlider;
 
 	wxTreeCtrl* outfitShapes;
@@ -524,6 +522,7 @@ public:
 
 	void RefreshGUIFromProj();
 
+	vector<ShapeItemData*>& GetSelectedItems();
 	string GetActiveBone();
 
 	bool NotifyStrokeStarting();
@@ -669,6 +668,9 @@ private:
 	Vector3 previewMove;
 	float previewScale;
 	Vector3 previewRotation;
+
+	vector<ShapeItemData*> selectedItems;
+	string activeBone;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);

@@ -658,6 +658,10 @@ void OutfitStudio::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo, boo
 	}
 }
 
+vector<ShapeItemData*>& OutfitStudio::GetSelectedItems() {
+	return selectedItems;
+}
+
 string OutfitStudio::GetActiveBone() {
 	return activeBone;
 }
@@ -4171,6 +4175,14 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 	else if (activeBrush != &weightBrush && wxGetKeyState(WXK_SHIFT)) {
 		activeBrush = &smoothBrush;
+	}
+
+	if (activeBrush->Type() == TBT_WEIGHT) {
+		for (auto &s : os->GetSelectedItems()) {
+			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(s->shapeName, os->GetActiveBone());
+			if (boneIndex < 0)
+				os->project->AddBoneRef(os->GetActiveBone());
+		}
 	}
 
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), activeBrush);
