@@ -149,7 +149,7 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 
 		// Find material file
 		if (shader->header->userVersion == 12 && shader->header->userVersion2 >= 130) {
-			matFile = shader->name;
+			matFile = shader->GetName();
 			if (!matFile.IsEmpty())
 				hasMat = true;
 		}

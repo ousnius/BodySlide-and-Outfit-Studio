@@ -114,7 +114,7 @@ public:
 		for (auto &i : BoneIndices) {
 			boneWeights[i] = AnimWeight(loadFromFile, shape, i);
 			NiNode* node = (NiNode*)loadFromFile->GetBlock(idList[i]);
-			boneNames[node->name] = i;
+			boneNames[node->GetName()] = i;
 		}
 		bNeedsBoundsCalc = false;
 	}

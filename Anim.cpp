@@ -381,7 +381,7 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 		return (*this);
 
 	boneID = srcBlock;
-	boneName = node->name;
+	boneName = node->GetName();
 	order = -1;
 	refCount = 0;
 

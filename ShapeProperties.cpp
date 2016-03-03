@@ -20,7 +20,6 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	wxXmlResource * rsrc = wxXmlResource::Get();
 	rsrc->LoadDialog(this, parent, "dlgShapeProp");
 
-	SetSize(620, 400);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
@@ -28,6 +27,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	nif = refNif;
 	shape = shapeName;
 
+	shaderName = XRCCTRL(*this, "shaderName", wxTextCtrl);
 	shaderType = XRCCTRL(*this, "shaderType", wxChoice);
 	specularColor = XRCCTRL(*this, "specularColor", wxColourPickerCtrl);
 	specularStrength = XRCCTRL(*this, "specularStrength", wxTextCtrl);
@@ -45,6 +45,9 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
 
+	if (os->targetGame == FO4)
+		XRCCTRL(*this, "lbShaderName", wxStaticText)->SetLabel("Material");
+
 	GetShader();
 	GetTransparency();
 	GetExtraData();
@@ -60,6 +63,7 @@ void ShapeProperties::GetShader() {
 		btnAddShader->Enable();
 		btnRemoveShader->Disable();
 		btnSetTextures->Disable();
+		shaderName->Disable();
 		shaderType->Disable();
 		specularColor->Disable();
 		specularStrength->Disable();
@@ -68,6 +72,8 @@ void ShapeProperties::GetShader() {
 		emissiveMultiple->Disable();
 	}
 	else {
+		shaderName->SetValue(shader->GetName());
+
 		Color4 color;
 		Vector3 colorVec;
 		switch (shader->blockType) {
@@ -181,6 +187,7 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	btnAddShader->Disable();
 	btnRemoveShader->Enable();
 	btnSetTextures->Enable();
+	shaderName->Enable();
 	shaderType->Enable();
 	specularColor->Enable();
 	specularStrength->Enable();
@@ -447,7 +454,7 @@ void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
 		if (extraData->blockType == NISTRINGEXTRADATA) {
 			NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
-			int index = nif->AddStringExtraData(shape, stringExtraData->name, stringExtraData->stringData);
+			int index = nif->AddStringExtraData(shape, stringExtraData->GetName(), stringExtraData->GetStringData());
 			if (index != -1)
 				extraDataIndices.push_back(index);
 		}
@@ -474,8 +481,8 @@ void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
 		if (extraData->blockType == NISTRINGEXTRADATA) {
 			NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
 			extraDataType->SetSelection(0);
-			extraDataName->SetValue(stringExtraData->name);
-			extraDataValue->SetValue(stringExtraData->stringData);
+			extraDataName->SetValue(stringExtraData->GetName());
+			extraDataValue->SetValue(stringExtraData->GetStringData());
 		}
 		else {
 			extraDataBtn->Destroy();
@@ -560,6 +567,7 @@ void ShapeProperties::ApplyChanges() {
 	NiShader* shader = nif->GetShader(shape);
 
 	if (shader) {
+		string name = shaderName->GetValue();
 		uint type = shaderType->GetSelection();
 		wxColour color = specularColor->GetColour();
 		Vector3 specColor(color.Red(), color.Green(), color.Blue());
@@ -571,6 +579,8 @@ void ShapeProperties::ApplyChanges() {
 		Color4 emisColor(color.Red(), color.Green(), color.Blue(), color.Alpha());
 		emisColor /= 255.0f;
 		float emisMultiple = atof(emissiveMultiple->GetValue().ToAscii().data());
+
+		shader->SetName(name);
 
 		switch (shader->blockType) {
 			case BSEFFECTSHADERPROPERTY: {
@@ -632,13 +642,11 @@ void ShapeProperties::ApplyChanges() {
 
 		NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetBlock(extraDataIndices[i]));
 		if (extraData) {
-			extraData->name = extraDataName->GetValue();
-			extraData->nameRef = nif->AddOrFindStringId(extraData->name);
+			extraData->SetName(extraDataName->GetValue().ToStdString());
 
 			if (extraData->blockType == NISTRINGEXTRADATA) {
 				NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
-				stringExtraData->stringData = extraDataValue->GetValue();
-				stringExtraData->stringDataRef = nif->AddOrFindStringId(stringExtraData->stringData);
+				stringExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
 			}
 		}
 	}

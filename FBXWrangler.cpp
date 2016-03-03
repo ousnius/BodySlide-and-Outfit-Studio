@@ -152,10 +152,10 @@ void FBXWrangler::AddSkeleton(NifFile* skeletonNif) {
 
 	FbxNode* parentNode = skellynode;
 	if (root) {
-		FbxSkeleton* rootbone = FbxSkeleton::Create(pCurrentScene, root->name.c_str());
+		FbxSkeleton* rootbone = FbxSkeleton::Create(pCurrentScene, root->GetName().c_str());
 		rootbone->SetSkeletonType(FbxSkeleton::eLimbNode);
 		rootbone->Size.Set(1.0f);
-		FbxNode* rootboneNode = FbxNode::Create(pCurrentScene, root->name.c_str());
+		FbxNode* rootboneNode = FbxNode::Create(pCurrentScene, root->GetName().c_str());
 		rootboneNode->SetNodeAttribute(rootbone);
 		root->rotToEulerDegrees(rx, ry, rz);
 		rootboneNode->LclRotation.Set(FbxVector4(rx, ry, rz));
@@ -166,10 +166,10 @@ void FBXWrangler::AddSkeleton(NifFile* skeletonNif) {
 	}
 
 	if (COM) {
-		FbxSkeleton* COMBone = FbxSkeleton::Create(pCurrentScene, COM->name.c_str());
+		FbxSkeleton* COMBone = FbxSkeleton::Create(pCurrentScene, COM->GetName().c_str());
 		COMBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 		COMBone->Size.Set(1.0f);
-		FbxNode* COMBoneNode = FbxNode::Create(pCurrentScene, COM->name.c_str());
+		FbxNode* COMBoneNode = FbxNode::Create(pCurrentScene, COM->GetName().c_str());
 		COMBoneNode->SetNodeAttribute(COMBone);
 		COM->rotToEulerDegrees(rx, ry, rz);
 		COMBoneNode->LclRotation.Set(FbxVector4(rx, ry, rz));
@@ -200,18 +200,18 @@ FbxNode* FBXWrangler::AddLimb(NifFile* skeletonNif, NiNode* nifBone) {
 
 	float rx, ry, rz;
 	static map<string,int> boneNames;
-	if (boneNames.find(nifBone->name) == boneNames.end()) {		
-		boneNames[nifBone->name] = 1;
+	if (boneNames.find(nifBone->GetName()) == boneNames.end()) {
+		boneNames[nifBone->GetName()] = 1;
 	}
 	else {
-		boneNames[nifBone->name]++;
+		boneNames[nifBone->GetName()]++;
 	}
 
 	Vector3 myTranslation = nifBone->translation;
-	FbxSkeleton* myBone = FbxSkeleton::Create(pCurrentScene, nifBone->name.c_str());
+	FbxSkeleton* myBone = FbxSkeleton::Create(pCurrentScene, nifBone->GetName().c_str());
 	myBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 	myBone->Size.Set(1.0f);
-	FbxNode* myNode = FbxNode::Create(pCurrentScene, nifBone->name.c_str());
+	FbxNode* myNode = FbxNode::Create(pCurrentScene, nifBone->GetName().c_str());
 	myNode->SetNodeAttribute(myBone);
 	nifBone->rotToEulerDegrees(rx, ry, rz);
 	myNode->LclRotation.Set(FbxVector4(rx, ry, rz));

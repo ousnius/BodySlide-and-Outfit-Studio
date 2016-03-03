@@ -79,6 +79,60 @@ bool NiHeader::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
 	return false;
 }
 
+bool NiHeader::HasBlockType(const string& typeStr) {
+	for (int i = 0; i < blockTypes.size(); i++)
+		if (blockTypes[i].str == typeStr)
+			return true;
+
+	return false;
+}
+
+ushort NiHeader::AddOrFindBlockTypeId(const string& blockTypeName) {
+	NiString niStr;
+	ushort typeId = (ushort)blockTypes.size();
+	for (ushort i = 0; i < blockTypes.size(); i++) {
+		if (blockTypes[i].str == blockTypeName) {
+			typeId = i;
+			break;
+		}
+	}
+
+	// Shader block type not found, add it
+	if (typeId == blockTypes.size()) {
+		niStr.str = blockTypeName;
+		blockTypes.push_back(niStr);
+		numBlockTypes++;
+	}
+	return typeId;
+}
+
+int NiHeader::FindStringId(const string& str) {
+	for (int i = 0; i < strings.size(); i++)
+		if (strings[i].str.compare(str) == 0)
+			return i;
+
+	return -1;
+}
+
+int NiHeader::AddOrFindStringId(const string& str) {
+	if (str.empty())
+		return 0xFFFFFFFF;
+
+	for (int i = 0; i < strings.size(); i++)
+		if (strings[i].str.compare(str) == 0)
+			return i;
+
+	int r = strings.size();
+	NiString niStr;
+	niStr.str = str;
+	strings.push_back(niStr);
+	numStrings++;
+	if (str.length() > maxStringLen)
+		maxStringLen = str.length();
+
+	return r;
+}
+
 void NiHeader::Get(fstream& file) {
 	file.read(verStr, 38);
 	if (_strnicmp(verStr, "Gamebryo", 8) != 0) {
@@ -226,7 +280,7 @@ void NiObjectNET::Init() {
 
 	bBSLightingShaderProperty = false;
 	skyrimShaderType = 0;
-	name = "";
+	name.clear();
 	nameRef = 0xFFFFFFFF;
 	numExtraData = 0;
 	controllerRef = -1;
@@ -242,7 +296,7 @@ void NiObjectNET::Get(fstream& file) {
 	if (nameRef != -1)
 		name = header->strings[nameRef].str;
 	else
-		name = "";
+		name.clear();
 
 	int intData;
 	file.read((char*)&numExtraData, 4);
@@ -300,6 +354,27 @@ void NiObjectNET::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		controllerRef = blockIndexHi;
 	else if (controllerRef == blockIndexHi)
 		controllerRef = blockIndexLo;
+}
+
+string NiObjectNET::GetName() {
+	return name;
+}
+
+void NiObjectNET::SetName(const string& propertyName, bool renameExisting) {
+	if (renameExisting) {
+		header->strings[nameRef].str = propertyName;
+		if (header->maxStringLen < propertyName.length())
+			header->maxStringLen = propertyName.length();
+	}
+	else
+		nameRef = header->AddOrFindStringId(propertyName);
+
+	name = propertyName;
+}
+
+void NiObjectNET::ClearName() {
+	nameRef = 0xFFFFFFFF;
+	name.clear();
 }
 
 int NiObjectNET::CalcBlockSize() {
@@ -3796,11 +3871,11 @@ float NiShader::GetEmissiveMultiple() {
 void NiShader::SetEmissiveMultiple(float emissive) {
 }
 
-uint NiShader::GetWetMaterialNameRef() {
-	return 0xFFFFFFFF;
+string NiShader::GetWetMaterialName() {
+	return "";
 }
 
-void NiShader::SetWetMaterialNameRef(uint matRef) {
+void NiShader::SetWetMaterialName(const string& matName) {
 }
 
 int NiShader::CalcBlockSize() {
@@ -3923,6 +3998,10 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&emissiveMultiple, 4);
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
 		file.read((char*)&wetMaterialNameRef, 4);
+		if (wetMaterialNameRef != -1)
+			wetMaterialName = header->strings[wetMaterialNameRef].str;
+		else
+			wetMaterialName.clear();
 	}
 	file.read((char*)&textureClampMode, 4);
 	file.read((char*)&alpha, 4);
@@ -4185,12 +4264,13 @@ void BSLightingShaderProperty::SetEmissiveMultiple(float emissive) {
 	emissiveMultiple = emissive;
 }
 
-uint BSLightingShaderProperty::GetWetMaterialNameRef() {
-	return wetMaterialNameRef;
+string BSLightingShaderProperty::GetWetMaterialName() {
+	return wetMaterialName;
 }
 
-void BSLightingShaderProperty::SetWetMaterialNameRef(uint matRef) {
-	wetMaterialNameRef = matRef;
+void BSLightingShaderProperty::SetWetMaterialName(const string& matName) {
+	wetMaterialNameRef = header->AddOrFindStringId(matName);
+	wetMaterialName = matName;
 }
 
 int BSLightingShaderProperty::CalcBlockSize() {
@@ -4887,7 +4967,7 @@ void NiExtraData::Init() {
 	NiObject::Init();
 
 	nameRef = 0xFFFFFFFF;
-	name = "";
+	name.clear();
 }
 
 void NiExtraData::Get(fstream& file) {
@@ -4897,13 +4977,22 @@ void NiExtraData::Get(fstream& file) {
 	if (nameRef != -1)
 		name = header->strings[nameRef].str;
 	else
-		name = "";
+		name.clear();
 }
 
 void NiExtraData::Put(fstream& file) {
 	NiObject::Put(file);
 
 	file.write((char*)&nameRef, 4);
+}
+
+string NiExtraData::GetName() {
+	return name;
+}
+
+void NiExtraData::SetName(const string& extraDataName) {
+	nameRef = header->AddOrFindStringId(extraDataName);
+	name = extraDataName;
 }
 
 int NiExtraData::CalcBlockSize() {
@@ -4921,7 +5010,7 @@ NiStringExtraData::NiStringExtraData(NiHeader& hdr) {
 	header = &hdr;
 	blockType = NISTRINGEXTRADATA;
 	stringDataRef = 0xFFFFFFFF;
-	stringData = "";
+	stringData.clear();
 }
 
 NiStringExtraData::NiStringExtraData(fstream& file, NiHeader& hdr) {
@@ -4940,13 +5029,22 @@ void NiStringExtraData::Get(fstream& file) {
 	if (stringDataRef != -1)
 		stringData = header->strings[stringDataRef].str;
 	else
-		stringData = "";
+		stringData.clear();
 }
 
 void NiStringExtraData::Put(fstream& file) {
 	NiExtraData::Put(file);
 
 	file.write((char*)&stringDataRef, 4);
+}
+
+string NiStringExtraData::GetStringData() {
+	return stringData;
+}
+
+void NiStringExtraData::SetStringData(const string& str) {
+	stringDataRef = header->AddOrFindStringId(str);
+	stringData = str;
 }
 
 int NiStringExtraData::CalcBlockSize() {

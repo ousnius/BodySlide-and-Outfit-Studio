@@ -3165,12 +3165,12 @@
 	</object>
 	
 	<object class="wxDialog" name="dlgShapeProp">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
-		<size>620,400</size>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<title>Shape Properties</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
+			<minsize>620,400</minsize>
 			<object class="sizeritem">
 				<option>0</option>
 				<flag>wxALL|wxEXPAND</flag>
@@ -3181,6 +3181,37 @@
 						<object class="wxPanel" name="pgShader">
 							<object class="wxBoxSizer">
 								<orient>wxVERTICAL</orient>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxBoxSizer">
+										<orient>wxHORIZONTAL</orient>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxALIGN_CENTER_VERTICAL|wxTOP|wxLEFT|wxRIGHT</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="lbShaderName">
+												<label>Name</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="spacer">
+											<option>0</option>
+											<flag>wxEXPAND</flag>
+											<border>5</border>
+											<size>10,0</size>
+										</object>
+										<object class="sizeritem">
+											<option>1</option>
+											<flag>wxTOP|wxLEFT|wxEXPAND</flag>
+											<border>5</border>
+											<object class="wxTextCtrl" name="shaderName">
+												<value></value>
+											</object>
+										</object>
+									</object>
+								</object>
 								<object class="sizeritem">
 									<option>0</option>
 									<flag>wxEXPAND</flag>

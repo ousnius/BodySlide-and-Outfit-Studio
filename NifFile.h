@@ -264,16 +264,23 @@ public:
 	void SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2);
 	bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 
+	bool HasBlockType(const string& typeStr);
+	ushort AddOrFindBlockTypeId(const string& blockTypeName);
+	int FindStringId(const string& str);
+	int AddOrFindStringId(const string& str);
+
 	void Get(fstream& file);
 	void Put(fstream& file);
 };
 
 
 class NiObjectNET : public NiObject {
+private:
+	uint nameRef;
+	string name;
+
 public:
 	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
-	string name;
-	uint nameRef;
 	int numExtraData;
 	vector<int> extraDataRef;
 	int controllerRef;
@@ -285,6 +292,11 @@ public:
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+
+	string GetName();
+	void SetName(const string& propertyName, bool renameExisting = false);
+	void ClearName();
+
 	virtual int CalcBlockSize();
 };
 
@@ -965,12 +977,16 @@ public:
 	virtual void SetEmissiveColor(Color4 color);
 	virtual float GetEmissiveMultiple();
 	virtual void SetEmissiveMultiple(float emissive);
-	virtual uint GetWetMaterialNameRef();
-	virtual void SetWetMaterialNameRef(uint matRef);
+	virtual string GetWetMaterialName();
+	virtual void SetWetMaterialName(const string& matName);
 	virtual int CalcBlockSize();
 };
 
 class BSLightingShaderProperty : public NiShader {
+private:
+	uint wetMaterialNameRef;
+	string wetMaterialName;
+
 public:
 	uint shaderFlags1;						// User Version == 12
 	uint shaderFlags2;						// User Version == 12
@@ -980,7 +996,6 @@ public:
 
 	Vector3 emissiveColor;
 	float emissiveMultiple;
-	uint wetMaterialNameRef;
 	uint textureClampMode;
 	float alpha;
 	float refractionStrength;
@@ -1035,8 +1050,8 @@ public:
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
-	uint GetWetMaterialNameRef();
-	void SetWetMaterialNameRef(uint matRef);
+	string GetWetMaterialName();
+	void SetWetMaterialName(const string& matName);
 	int CalcBlockSize();
 };
 
@@ -1204,26 +1219,36 @@ public:
 };
 
 class NiExtraData : public NiObject {
-public:
+private:
 	uint nameRef;
 	string name;
 
+public:
 	virtual void Init();
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
+
+	string GetName();
+	void SetName(const string& extraDataName);
+
 	virtual int CalcBlockSize();
 };
 
 class NiStringExtraData : public NiExtraData {
-public:
+private:
 	uint stringDataRef;
 	string stringData;
 
+public:
 	NiStringExtraData(NiHeader& hdr);
 	NiStringExtraData(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
+
+	string GetStringData();
+	void SetStringData(const string& str);
+
 	int CalcBlockSize();
 };
 
@@ -1266,8 +1291,7 @@ public:
 	int CalcBlockSize();
 };
 
-class NifFile
-{
+class NifFile {
 	string fileName;
 	vector<NiObject*> blocks;
 	bool isValid;
@@ -1317,11 +1341,6 @@ public:
 
 	void DeleteBlock(int blockIndex);
 	void DeleteBlockByType(string typeStr);
-
-	bool HasBlockType(string typeStr);
-	ushort AddOrFindBlockTypeId(const string& blockTypeName);
-	int FindStringId(const string& str);
-	int AddOrFindStringId(const string& str);
 
 	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
 	BSTriShape* geomForNameF4(const string& name, int dupIndex = 0);

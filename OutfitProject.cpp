@@ -446,10 +446,11 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			nifShapeData->normals = (*norms);
 			nifShapeData->hasNormals = true;
 		}
-		int shapeID = blank.AddBlock(nifShapeData, "NiTriShapeData");
 
+		int shapeID = blank.AddBlock(nifShapeData, "NiTriShapeData");
 		int dismemberID = -1;
-		if (!staticMode){
+
+		if (!staticMode) {
 			NiSkinData* nifSkinData = new NiSkinData(workNif.hdr);
 			int skinID = blank.AddBlock(nifSkinData, "NiSkinData");
 
@@ -492,11 +493,9 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		else
 			nifTriShape->propertiesRef1 = shaderID;
 
-		int nameID = blank.AddOrFindStringId(shapeName);
+		nifTriShape->SetName(shapeName);
 		nifTriShape->dataRef = shapeID;
 		nifTriShape->skinInstanceRef = dismemberID;
-		nifTriShape->nameRef = nameID;
-		nifTriShape->name = shapeName;
 	}
 	else {
 		BSTriShape* triShapeBase;
@@ -505,7 +504,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			triShapeBase = new BSTriShape(workNif.hdr);
 			triShapeBase->Create(&v, &t, &uv, norms);
 			blank.AddBlock(triShapeBase, "BSTriShape");
-			wetShaderName = "";
+			wetShaderName.clear();
 		}
 		else {
 			BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.hdr);
@@ -529,13 +528,10 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.hdr);
 		shaderID = blank.AddBlock(nifShader, "BSLightingShaderProperty");
 		nifShader->textureSetRef = blank.AddBlock(nifTexset, "BSShaderTextureSet");
-		nifShader->wetMaterialNameRef = blank.AddOrFindStringId(wetShaderName);
-		nifShader->nameRef = blank.AddOrFindStringId("");
+		nifShader->SetWetMaterialName(wetShaderName);
 
-		int nameID = blank.AddOrFindStringId(shapeName);
+		triShapeBase->SetName(shapeName);
 		triShapeBase->shaderPropertyRef = shaderID;
-		triShapeBase->nameRef = nameID;
-		triShapeBase->name = shapeName;
 	}
 
 	workNif.CopyGeometry(shapeName, blank, shapeName);
@@ -936,7 +932,7 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 		if (shader) {
 			// Find material file
 			if (shader->header->userVersion == 12 && shader->header->userVersion2 >= 130) {
-				matFile = shader->name;
+				matFile = shader->GetName();
 				if (!matFile.IsEmpty())
 					hasMat = true;
 			}

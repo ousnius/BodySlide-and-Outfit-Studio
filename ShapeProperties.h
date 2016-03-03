@@ -17,6 +17,7 @@ public:
 	~ShapeProperties();
 
 private:
+	wxTextCtrl* shaderName = nullptr;
 	wxChoice* shaderType = nullptr;
 	wxColourPickerCtrl* specularColor = nullptr;
 	wxTextCtrl* specularStrength = nullptr;
