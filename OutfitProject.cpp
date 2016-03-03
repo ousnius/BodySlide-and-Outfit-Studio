@@ -1384,6 +1384,26 @@ void OutfitProject::AddBoneRef(const string& boneName) {
 			workAnim.SetShapeBoneXForm(s, boneName, xForm);
 }
 
+void OutfitProject::AddCustomBoneRef(const string& boneName, const Vector3& translation) {
+	AnimBone& customBone = AnimSkeleton::getInstance().AddBone(boneName, true);
+
+	SkinTransform xForm;
+	xForm.translation = translation;
+
+
+	customBone.trans = xForm.translation;
+	customBone.skinTrans = xForm.translation;
+	customBone.skinRot.Set(xForm.rotation);
+	customBone.scale = xForm.scale;
+	customBone.hasSkinXform = true;
+
+	vector<string> shapes;
+	GetShapes(shapes);
+	for (auto &s : shapes)
+		if (workAnim.AddShapeBone(s, customBone))
+			workAnim.SetShapeBoneXForm(s, boneName, xForm);
+}
+
 void OutfitProject::BuildShapeSkinPartions(const string& destShape) {
 	workAnim.WriteToNif(&workNif);
 	workNif.BuildSkinPartitions(destShape);

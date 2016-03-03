@@ -169,6 +169,7 @@ public:
 	void ClearBoneScale(bool clear = true);
 
 	void AddBoneRef(const string& boneName);
+	void AddCustomBoneRef(const string& boneName, const Vector3& translation);
 
 	// Rebuilds skin partitions in the nif.  Games use the skin partition (As opposed to the skindata) for animation,
 	// so fresh meshes need to have the partitions created. Note, when updating bone weights, rebuilding the skin partitions is not

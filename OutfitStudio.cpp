@@ -3552,19 +3552,35 @@ void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
-	if (!wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone"))
-		return;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCustomBone")) {
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
-	//dlg.SetSize(450, 470);
-	dlg.CenterOnParent();
+		if (dlg.ShowModal() == wxID_OK) {
+			wxString bone = XRCCTRL(dlg, "boneName", wxTextCtrl)->GetValue();
+			if (bone.empty()) {
+				wxMessageBox("No bone name was entered!", "Error", wxICON_INFORMATION, this);
+				return;
+			}
 
-	// To-Do
-	if (dlg.ShowModal() == wxID_OK) {
-		string bone = "";
-		wxLogMessage("Adding custom bone '%s' to project.", bone);
+			wxTreeItemIdValue cookie;
+			wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
+			while (item.IsOk()) {
+				if (outfitBones->GetItemText(item) == bone) {
+					wxMessageBox(wxString::Format("Bone '%s' already exists in the project!", bone), "Error", wxICON_INFORMATION, this);
+					return;
+				}
+				item = outfitBones->GetNextChild(bonesRoot, cookie);
+			}
 
-		//project->AddCustomBoneRef(bone);
-		outfitBones->AppendItem(bonesRoot, bone);
+			Vector3 translation;
+			translation.x = atof(XRCCTRL(dlg, "textX", wxTextCtrl)->GetValue().ToAscii().data());
+			translation.y = atof(XRCCTRL(dlg, "textY", wxTextCtrl)->GetValue().ToAscii().data());
+			translation.z = atof(XRCCTRL(dlg, "textZ", wxTextCtrl)->GetValue().ToAscii().data());
+
+			wxLogMessage("Adding custom bone '%s' to project.", bone);
+			project->AddCustomBoneRef(bone.ToStdString(), translation);
+			outfitBones->AppendItem(bonesRoot, bone);
+		}
 	}
 }
 
