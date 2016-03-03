@@ -1248,6 +1248,9 @@ public:
 	void Put(fstream& file);
 	void Clone(BSClothExtraData* other);
 	int CalcBlockSize();
+
+	bool ToHKX(const string& fileName);
+	bool FromHKX(const string& fileName);
 };
 
 class NiUnknown : public NiObject {

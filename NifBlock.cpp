@@ -5043,6 +5043,29 @@ int BSClothExtraData::CalcBlockSize() {
 }
 
 
+bool BSClothExtraData::ToHKX(const string& fileName) {
+	ofstream file(fileName, ios_base::binary);
+	if (!file)
+		return false;
+
+	file.write(data.data(), numBytes);
+	return true;
+}
+
+bool BSClothExtraData::FromHKX(const string& fileName) {
+	ifstream file(fileName, ios::binary | ios::ate);
+	if (!file)
+		return false;
+
+	numBytes = file.tellg();
+	file.seekg(0, ios::beg);
+
+	data.resize(numBytes);
+	file.read(data.data(), numBytes);
+	return true;
+}
+
+
 NiUnknown::NiUnknown() {
 	NiObject::Init();
 
