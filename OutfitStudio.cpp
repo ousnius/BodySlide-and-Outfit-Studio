@@ -136,6 +136,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_TREE_STATE_IMAGE_CLICK(wxID_ANY, OutfitStudio::OnShapeVisToggle)
 	EVT_TREE_SEL_CHANGING(XRCID("outfitShapes"), OutfitStudio::OnCheckTreeSel)
 	EVT_TREE_SEL_CHANGED(XRCID("outfitShapes"), OutfitStudio::OnShapeSelect)
+	EVT_TREE_ITEM_ACTIVATED(XRCID("outfitShapes"), OutfitStudio::OnShapeActivated)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitShapes"), OutfitStudio::OnShapeContext)
 	EVT_TREE_BEGIN_DRAG(XRCID("outfitShapes"), OutfitStudio::OnShapeDrag)
 	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudio::OnShapeDrop)
@@ -1773,6 +1774,11 @@ void OutfitStudio::OnShapeSelect(wxTreeEvent& event) {
 		glView->SetSelectedShape("");
 
 	UpdateActiveShapeUI();
+}
+
+void OutfitStudio::OnShapeActivated(wxTreeEvent& WXUNUSED(event)) {
+	wxCommandEvent evt;
+	OnShapeProperties(evt);
 }
 
 void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {

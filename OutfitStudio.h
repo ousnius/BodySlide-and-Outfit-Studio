@@ -717,6 +717,7 @@ private:
 
 	void OnShapeVisToggle(wxTreeEvent& event);
 	void OnShapeSelect(wxTreeEvent& event);
+	void OnShapeActivated(wxTreeEvent& event);
 	void OnShapeContext(wxTreeEvent& event);
 	void OnShapeDrag(wxTreeEvent& event);
 	void OnShapeDrop(wxTreeEvent& event);
