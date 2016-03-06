@@ -516,6 +516,8 @@ void OutfitStudio::ApplySliders(bool recalcBVH) {
 		project->GetLiveVerts(shape, verts);
 		glView->UpdateMeshVertices(shape, &verts, recalcBVH);
 	}
+
+	glView->Render();
 }
 
 void OutfitStudio::ShowSliderEffect(int sliderID, bool show) {
@@ -1250,6 +1252,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 				outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
 			}
 		}
+		glView->Render();
 	}
 
 	if (outfitShapes)
@@ -3990,8 +3993,6 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool build
 		if (buildNormals)
 			RecalcNormals(shapeList[i]);
 	}
-	
-	gls.RenderOneFrame();
 }
 
 void wxGLPanel::AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv, const string& shapeName) {
@@ -4014,7 +4015,6 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\skinshader.fs");
 
 	m->material = mat;
-	gls.RenderOneFrame();
 }
 
 void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH, bool recalcNormals) {

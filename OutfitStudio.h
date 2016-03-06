@@ -344,12 +344,10 @@ public:
 
 	void DeleteMesh(const string& shape) {
 		gls.DeleteMesh(shape);
-		gls.RenderOneFrame();
 	}
 
 	void DestroyOverlays() {
 		gls.DeleteOverlays();
-		gls.RenderOneFrame();
 	}
 
 	void Cleanup() {
@@ -373,6 +371,10 @@ public:
 
 	void UpdateLights(const int& ambient = 50, const int& brightness1 = 50, const int& brightness2 = 50, const int& brightness3 = 50) {
 		gls.UpdateLights(ambient, brightness1, brightness2, brightness3);
+		gls.RenderOneFrame();
+	}
+
+	void Render() {
 		gls.RenderOneFrame();
 	}
 
