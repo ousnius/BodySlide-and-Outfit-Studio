@@ -1711,15 +1711,15 @@ void OutfitStudio::OnShapeVisToggle(wxTreeEvent& event) {
 			if (shape == s)
 				continue;
 
-			glView->ShowShape(shape, bVis);
 			glView->SetShapeGhostMode(shape, bGhost);
+			glView->ShowShape(shape, bVis);
 		}
 		groupstate = state;
 	}
 	else {
 		outfitShapes->SetItemState(event.GetItem(), state);
-		glView->ShowShape(s, bVis);
 		glView->SetShapeGhostMode(s, bGhost);
+		glView->ShowShape(s, bVis);
 		groupstate = 0;
 	}
 
