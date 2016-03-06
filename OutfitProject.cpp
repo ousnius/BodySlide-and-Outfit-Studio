@@ -1676,29 +1676,15 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 		outfitName = "New Outfit";
 
 	if (clear) {
-		size_t fnpos = fileName.rfind("\\");
-		if (fnpos == string::npos) {
-			mGameFile = fileName;
-		}
-		else {
-			mGameFile = fileName.substr(fnpos + 1);
-			size_t pos;
-			pos = mGameFile.rfind("_1.nif");
-			if (pos == string::npos)
-				pos = mGameFile.rfind("_0.nif");
+		wxFileName file(fileName);
+		mGameFile = file.GetName();
+		mGamePath = file.GetPath();
 
-			if (pos == string::npos)
-				pos = mGameFile.rfind(".nif");
-
-			if (pos != string::npos)
-				mGameFile = mGameFile.substr(0, pos);
-
-			pos = fileName.find("meshes");
-			if (pos != string::npos)
-				mGamePath = fileName.substr(pos, fnpos - pos);
-			else
-				mGamePath = "";
-		}
+		int pos = mGamePath.Lower().Find("meshes");
+		if (pos != wxNOT_FOUND)
+			mGamePath = mGamePath.Mid(pos);
+		else
+			mGamePath.Clear();
 	}
 
 	NifFile nif;
