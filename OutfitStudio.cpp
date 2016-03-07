@@ -53,6 +53,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("makeConvRef"), OutfitStudio::OnMakeConvRef)
 	
 	EVT_MENU(XRCID("sliderLoadPreset"), OutfitStudio::OnLoadPreset)
+	EVT_MENU(XRCID("sliderSavePreset"), OutfitStudio::OnSavePreset)
 	EVT_MENU(XRCID("sliderConform"), OutfitStudio::OnSliderConform)
 	EVT_MENU(XRCID("sliderConformAll"), OutfitStudio::OnSliderConformAll)
 	EVT_MENU(XRCID("sliderImportBSD"), OutfitStudio::OnSliderImportBSD)
@@ -2409,6 +2410,67 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 			SetSliderValue(i, v);
 		}
 		ApplySliders();
+	}
+}
+
+void OutfitStudio::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
+	vector<string> sliders;
+	project->GetSliderList(sliders);
+	if (sliders.empty()) {
+		wxMessageBox("There are no sliders loaded!", "Error", wxICON_ERROR, this);
+		return;
+	}
+
+	SliderSetGroupCollection groupCollection;
+	groupCollection.LoadGroups("SliderGroups");
+
+	set<string> allGroups;
+	groupCollection.GetAllGroups(allGroups);
+
+	PresetSaveDialog psd(this);
+	psd.allGroupNames.assign(allGroups.begin(), allGroups.end());
+	psd.FilterGroups();
+
+	psd.ShowModal();
+	if (psd.outFileName.empty())
+		return;
+
+	string fileName = psd.outFileName;
+	string presetName = psd.outPresetName;
+
+	vector<string> groups;
+	groups.assign(psd.outGroups.begin(), psd.outGroups.end());
+
+	bool addedSlider = false;
+	PresetCollection presets;
+	for (auto &s : sliders) {
+		int index = project->SliderIndexFromName(s);
+		if (project->SliderZap(index) || project->SliderHidden(index))
+			continue;
+
+		float value = project->SliderValue(index);
+		if (project->SliderInvert(index))
+			value = 1.0f - value;
+
+		if (project->SliderDefault(index, true) == value)
+			continue;
+
+		presets.SetSliderPreset(presetName, s, value, -10000.0f);
+
+		if (!addedSlider)
+			addedSlider = true;
+	}
+
+	if (!addedSlider) {
+		wxLogMessage("No changes were made to the sliders, so no preset was saved!");
+		wxMessageBox("No changes were made to the sliders, so no preset was saved!", "Info", wxICON_INFORMATION, this);
+		return;
+	}
+
+	int error = presets.SavePreset(fileName, presetName, "OutfitStudio", groups);
+	if (error) {
+		wxLogError("Failed to save preset (%d)!", error);
+		wxMessageBox(wxString::Format("Failed to save preset (%d)!", error), "Error", wxICON_ERROR, this);
 	}
 }
 

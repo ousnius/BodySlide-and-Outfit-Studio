@@ -966,8 +966,12 @@
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="sliderLoadPreset">
-					<label>Load Slider Preset...</label>
-					<help>Load and preview a slider preset. Note: inverted sliders will have inverted values.</help>
+					<label>Load Preset...</label>
+					<help>Load and preview a slider preset. Inverted sliders will have inverted values.</help>
+				</object>
+				<object class="wxMenuItem" name="sliderSavePreset">
+					<label>Save Preset...</label>
+					<help>Save a slider preset with the current values. Inverted sliders will have inverted values.</help>
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="sliderNew">

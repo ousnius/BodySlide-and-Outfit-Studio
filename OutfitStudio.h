@@ -21,8 +21,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "stdafx.h"
 #include "wxStateButton.h"
 #include "GLSurface.h"
-#include "SliderData.h"
-#include "SliderPresets.h"
 #include "ObjFile.h"
 #include "TweakBrush.h"
 #include "Automorph.h"
@@ -738,6 +736,7 @@ private:
 	void OnResetLights(wxCommandEvent& event);
 
 	void OnLoadPreset(wxCommandEvent& event);
+	void OnSavePreset(wxCommandEvent& event);
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportBSD(wxCommandEvent& event);
