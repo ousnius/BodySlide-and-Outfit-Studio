@@ -8,7 +8,7 @@
 		<centered>1</centered>
 		<aui_managed>0</aui_managed>
 		<object class="wxToolBar" name="toolbar">
-			<style>wxTB_DEFAULT_STYLE</style>
+			<style>wxTB_HORIZONTAL|wxTB_FLAT</style>
 			<bg>#707070</bg>
 			<fg>#ffffff</fg>
 			<bitmapsize></bitmapsize>
@@ -623,7 +623,7 @@
 															</object>
 															<object class="sizeritem">
 																<option>1</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND</flag>
+																<flag>wxALL|wxEXPAND</flag>
 																<border>5</border>
 																<object class="wxSlider" name="slider">
 																	<style>wxSL_HORIZONTAL</style>
@@ -669,7 +669,7 @@
 															</object>
 															<object class="sizeritem">
 																<option>1</option>
-																<flag>wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND</flag>
+																<flag>wxALL|wxEXPAND</flag>
 																<border>5</border>
 																<object class="wxSlider" name="m_slider31">
 																	<style>wxSL_HORIZONTAL</style>
@@ -1147,7 +1147,7 @@
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -1192,7 +1192,7 @@
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -1237,7 +1237,7 @@
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -1322,7 +1322,7 @@
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -1398,7 +1398,7 @@
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -1443,7 +1443,7 @@
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -1488,7 +1488,7 @@
 					<orient>wxVERTICAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -2654,7 +2654,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL|wxEXPAND</flag>
+						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbBoneName">
 							<label>Name</label>
@@ -2679,7 +2679,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelX">
 							<label>X</label>
@@ -2704,7 +2704,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelY">
 							<label>Y</label>
@@ -2729,7 +2729,7 @@
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="labelZ">
 							<label>Z</label>
