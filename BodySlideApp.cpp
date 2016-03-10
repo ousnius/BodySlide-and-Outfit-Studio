@@ -939,6 +939,7 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("OutfitStudioFrame.height", 757);
 	Config.SetDefaultValue("OutfitStudioFrame.x", 100);
 	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
+	Config.SetDefaultValue("OutfitStudioFrame.sashpos", 850);
 
 	if (Config["GameDataPath"].empty()) {
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);

@@ -682,6 +682,7 @@ private:
 	void AnimationGUIFromProj();
 	void WorkingGUIFromProj();
 
+	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
 

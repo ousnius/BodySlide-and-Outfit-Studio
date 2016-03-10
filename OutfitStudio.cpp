@@ -155,6 +155,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_SLIDER(XRCID("lightBrightnessSlider3"), OutfitStudio::OnUpdateLights)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudio::OnResetLights)
 	
+	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitter"), OutfitStudio::OnSashPosChanged)
 	EVT_MOVE_END(OutfitStudio::OnMoveWindow)
 	EVT_SIZE(OutfitStudio::OnSetSize)
 wxEND_EVENT_TABLE()
@@ -195,19 +196,8 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		statusBar->SetStatusText("Ready!");
 	}
 
-/*
-	HWND h = this->GetHandle();
-	bool ret = ChangeWindowsMessageFilterEX(h, WM_DROPFILES, MSGFLT_ADD);
-	if (!ret) {
-		wxMessageBox("blargh");
-	}
-	ret = ChangeWindowMessageFilterEX(h,WM_COPYDATA, MSGFLT_ADD);
-	ret = ChangeWindowMessageFilterEX(h,WM_COPY, MSGFLT_ADD);
-	ret = ChangeWindowMessageFilterEX(h,WM_MOVE, MSGFLT_ADD);
-	ret = ChangeWindowMessageFilterEX(h,0x0049, MSGFLT_ADD);
-*/
 	this->DragAcceptFiles(true);
-	
+
 	toolBar = (wxToolBar*)FindWindowByName("toolbar");
 	if (toolBar) {
 		toolBar->ToggleTool(XRCID("btnSelect"), true);
@@ -222,11 +212,10 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		if (fovSlider)
 			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
 	}
-	
+
 	wxMenuBar* menu = GetMenuBar();
 	if (menu)
 		menu->Enable(XRCID("btnWeightBrush"), false);
-
 
 	visStateImages = new wxImageList(16, 16, false, 2);
 	wxBitmap visImg("res\\icoVisible.png", wxBITMAP_TYPE_PNG);
@@ -279,9 +268,9 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	}
 
 	boneScale = (wxSlider*)FindWindowByName("boneScale");
-	
+
 	targetGame = appConfig.GetIntValue("TargetGame");
-	
+
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel) {
 		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
@@ -308,16 +297,18 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	SetSize(size);
 	SetPosition(pos);
 
-	if (leftPanel)
-		leftPanel->Layout();
-
 	wxSplitterWindow* splitter = (wxSplitterWindow*)FindWindowByName("splitter");
-	if (splitter)
-		splitter->SetSashPosition(850);
+	if (splitter) {
+		int sashPos = appConfig.GetIntValue("OutfitStudioFrame.sashpos");
+		splitter->SetSashPosition(sashPos);
+	}
 
 	wxSplitterWindow* splitterRight = (wxSplitterWindow*)FindWindowByName("splitterRight");
 	if (splitterRight)
 		splitterRight->SetSashPosition(200);
+
+	if (leftPanel)
+		leftPanel->Layout();
 
 	SetDropTarget(new DnDFile(this));
 
@@ -338,6 +329,14 @@ OutfitStudio::~OutfitStudio() {
 
 	static_cast<BodySlideApp*>(wxApp::GetInstance())->CloseOutfitStudio();
 	wxLogMessage("Outfit Studio closed.");
+}
+
+void OutfitStudio::OnSashPosChanged(wxSplitterEvent& event) {
+	if (!IsVisible())
+		return;
+
+	int pos = event.GetSashPosition();
+	Config.SetValue("OutfitStudioFrame.sashpos", pos);
 }
 
 void OutfitStudio::OnMoveWindow(wxMoveEvent& event) {
