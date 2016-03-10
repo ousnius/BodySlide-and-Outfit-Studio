@@ -808,33 +808,37 @@ void GLSurface::UpdateProjection() {
 
 	double aspect = (double)vpW / (double)vpH;
 	if (perspective)
-		gluPerspective(mFov, aspect, 0.1, 1000);
+		gluPerspective(mFov, aspect, 0.1, 100);
 	else
-		glOrtho((camPos.z + camOffset.z) / 2 * aspect, (-camPos.z + camOffset.z) / 2 * aspect, (camPos.z + camOffset.z) / 2, (-camPos.z + camOffset.z) / 2, 0.1, 1000);
+		glOrtho((camPos.z + camOffset.z) / 2 * aspect, (-camPos.z + camOffset.z) / 2 * aspect, (camPos.z + camOffset.z) / 2, (-camPos.z + camOffset.z) / 2, 0.1, 100);
 
 	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 }
 
 void GLSurface::RenderOneFrame() {
 	if (!canvas)
 		return;
 
-	Begin();
 	mesh* m;
+	Begin();
 
 	glClearColor(0.81f, 0.82f, 0.82f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
 	glTranslatef(camPos.x, camPos.y, camPos.z);
 	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
 	glRotatef(camRot.y, 0.0f, 1.0f, 0.0f);
 	glTranslatef(camOffset.x, camOffset.y, camOffset.z);
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	for (int i = 0; i < meshes.size(); i++) {
 		m = meshes[i];
 		if (!m->bVisible || m->nTris == 0)
 			continue;
+
 		RenderMesh(m);
 	}
 
@@ -843,6 +847,7 @@ void GLSurface::RenderOneFrame() {
 		m = overlays[i];
 		if (!m->bVisible)
 			continue;
+
 		RenderMesh(m);
 	}
 
@@ -851,8 +856,8 @@ void GLSurface::RenderOneFrame() {
 }
 
 void GLSurface::RenderMesh(mesh* m) {
-	GLvoid* elemPtr;
-	glPolygonOffset(1.0f, 1.0f);
+	GLvoid* elemPtr = nullptr;
+
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	if (!m->doublesided)
 		glEnable(GL_CULL_FACE);
@@ -881,9 +886,8 @@ void GLSurface::RenderMesh(mesh* m) {
 					glEnableVertexAttribArray(maskAttrib);
 					glVertexAttribPointer(maskAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(Vector3), m->vcolors);
 				}
-				else {
+				else
 					glDisableVertexAttribArray(maskAttrib);
-				}
 			}
 
 			auto weightAttrib = m->material->shader->GetWeightAttribute();
@@ -914,6 +918,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			if (m->material)
 				m->material->DeactivateTextures();
 		}
+
 		elemPtr = &m->tris[0].p1;
 
 		if (m->rendermode == RenderMode::LitWire) {
@@ -921,6 +926,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			glDisable(GL_CULL_FACE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
+
 		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, elemPtr);
 		if (m->material)
 			m->material->shader->End();
@@ -928,31 +934,31 @@ void GLSurface::RenderMesh(mesh* m) {
 		if (bWireframe) {
 			glDisable(GL_LIGHTING);
 			glDisable(GL_TEXTURE_2D);
-			if (m->color.x >= 0.7f) {
+			if (m->color.x >= 0.7f)
 				glColor3f(0.3f, 0.3f, 0.3f);
-			}
-			else {
+			else
 				glColor3f(0.7f, 0.7f, 0.7f);
-			}
+
 			glLineWidth(defLineWidth);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 			glDrawElements(GL_TRIANGLES, (m->nTris) * 3, GL_UNSIGNED_SHORT, elemPtr);
 			glEnable(GL_LIGHTING);
-			if (m->textured && bTextured) {
-				glEnable(GL_TEXTURE_2D);
-			}
-		}
 
+			if (m->textured && bTextured)
+				glEnable(GL_TEXTURE_2D);
+		}
 	}
 	else if (m->rendermode == RenderMode::UnlitSolid) {
 		glDisable(GL_CULL_FACE);
 		if (bLighting)
 			glDisable(GL_LIGHTING);
+
 		glDisable(GL_TEXTURE_2D);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
 		elemPtr = &m->tris[0].p1;
 		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, elemPtr);
+
 		if (bLighting)
 			glEnable(GL_LIGHTING);
 
@@ -976,6 +982,7 @@ void GLSurface::RenderMesh(mesh* m) {
 
 		if (bLighting)
 			glEnable(GL_LIGHTING);
+
 		glEnable(GL_DEPTH_TEST);
 		glLineWidth(defLineWidth);
 
@@ -988,13 +995,15 @@ void GLSurface::RenderMesh(mesh* m) {
 			glDisable(GL_LIGHTING);
 
 		glColor3fv((GLfloat*)&m->color);
+
 		glBegin(GL_POINTS);
 		for (int pi = 0; pi < m->nVerts; pi++)
 			glVertex3f(m->verts[pi].x, m->verts[pi].y, m->verts[pi].z);
-
 		glEnd();
+
 		if (bLighting)
 			glEnable(GL_LIGHTING);
+
 		glEnable(GL_DEPTH_TEST);
 	}
 }
