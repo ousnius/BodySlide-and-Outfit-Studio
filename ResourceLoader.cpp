@@ -34,7 +34,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 	if (it != materials.end())
 		return it->second.get();
 
-	uint textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, ++currentTextureID, SOIL_FLAG_TEXTURE_REPEATS);
+	uint textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, ++currentTextureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 	if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
 		if (Config["GameDataPath"].empty()) {
 			wxLogWarning("Texture file '%s' not found.", textureFile);
@@ -61,7 +61,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 
 		if (!data.IsEmpty()) {
 			byte* texBuffer = static_cast<byte*>(data.GetData());
-			SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, ++currentTextureID, SOIL_FLAG_TEXTURE_REPEATS);
+			SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, ++currentTextureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 		}
 		else {
 			wxLogWarning("Texture file '%s' not found.", textureFile);
