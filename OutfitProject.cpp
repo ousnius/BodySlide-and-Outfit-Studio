@@ -826,7 +826,7 @@ bool OutfitProject::SetSliderFromFBX(const string& sliderName, const string& sha
 	if (!found)
 		return false;
 
-	FBXShape* shape = fbxw.InShape(shapeName);
+	FBXShape* shape = fbxw.GetShape(shapeName);
 
 	unordered_map<ushort, Vector3> diff;
 	if (IsBaseShape(shapeName)) {
@@ -2033,13 +2033,13 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 	vector<string>shapes;
 	fbxw.GetShapeNames(shapes);
 	for (auto &s : shapes) {
-		FBXShape* shape = fbxw.InShape(s);
+		FBXShape* shape = fbxw.GetShape(s);
 		string useShapeName = s;
 
 		if (!mergeShape.empty()) {
 			vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
-			if (shapeVerts.size() == shape->numverts) {
+			if (shapeVerts.size() == shape->verts.size()) {
 				int ret = wxMessageBox("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
 					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION, owner);
@@ -2049,7 +2049,7 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 					ret = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						for (auto &bn : shape->boneNames)
-							workAnim.SetWeights(mergeShape, bn, shape->boneSkin[bn].vertweights);
+							workAnim.SetWeights(mergeShape, bn, shape->boneSkin[bn].GetWeights());
 
 					return 101;
 				}
@@ -2076,7 +2076,7 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 
 			workAnim.shapeBones[useShapeName].push_back(bn);
 			workAnim.shapeSkinning[useShapeName].boneNames[bn] = slot;
-			workAnim.SetWeights(useShapeName, bn, shape->boneSkin[bn].vertweights);
+			workAnim.SetWeights(useShapeName, bn, shape->boneSkin[bn].GetWeights());
 			boneIndices.push_back(slot++);
 		}
 
@@ -2091,21 +2091,10 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 
 int OutfitProject::ExportShapeFBX(const string& fileName, const string& shapeName) {
 	FBXWrangler fbxw;
-	fbxw.NewScene();
-	/*if (shapeName != "") {	
-		vector<Triangle> tris;
-		workNif.GetTrisForShape(shapeName, &tris);
-		const vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
-		const vector<Vector3>* norms = workNif.GetNormalsForShape(shapeName);
-		const vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
-		fbxw.AddGeometry(shapeName, verts, norms, &tris, uvs);
-	}*/
 
 	fbxw.AddSkeleton(&AnimSkeleton::getInstance().refSkeletonNif);
-	fbxw.AddNif(&workNif, shapeName, false);
+	fbxw.AddNif(&workNif, shapeName);
 	fbxw.AddSkinning(&workAnim, shapeName);
-	//fbxw.AddNif(&AnimSkeleton::getInstance().refSkeletonNif);
-	//fbxw.AddSkeleton();
 
 	return fbxw.ExportScene(fileName);
 }
