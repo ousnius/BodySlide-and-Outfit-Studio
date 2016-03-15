@@ -32,8 +32,9 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FSBSA.h"
 #include "DDS.h"
-#include "zlib/zlib.h"
 
+#include <wx/mstream.h>
+#include <wx/zstream.h>
 #include <vector>
 #include <algorithm>
 
@@ -79,47 +80,15 @@ wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, int skip = 0) {
 		return wxMemoryBuffer();
 	}
 
-	wxMemoryBuffer result;
+	wxMemoryOutputStream output;
 
-	int ret;
-	z_stream strm;
-	static const int CHUNK_SIZE = 1024;
-	char out[CHUNK_SIZE];
+	wxMemoryInputStream input((char*)data.GetData() + skip, data.GetBufSize());
+	wxZlibInputStream zlibStream(input);
+	zlibStream.Read(output);
 
-	/* allocate inflate state */
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-	strm.avail_in = data.GetBufSize();
-
-	strm.next_in = (Bytef*)(data + skip);
-
-	ret = inflateInit2(&strm, 15 + 32); // gzip decoding
-	if (ret != Z_OK)
-		return wxMemoryBuffer();
-
-	// run inflate()
-	do {
-		strm.avail_out = CHUNK_SIZE;
-		strm.next_out = (Bytef*)(out);
-
-		ret = inflate(&strm, Z_NO_FLUSH);
-		//Q_ASSERT(ret != Z_STREAM_ERROR);  // state not clobbered
-
-		switch (ret) {
-		case Z_NEED_DICT:
-			ret = Z_DATA_ERROR;     // and fall through
-		case Z_DATA_ERROR:
-		case Z_MEM_ERROR:
-			(void)inflateEnd(&strm);
-			return wxMemoryBuffer();
-		}
-
-		result.AppendData(out, CHUNK_SIZE - strm.avail_out);
-	} while (strm.avail_out == 0);
-
-	// clean up and return
-	inflateEnd(&strm);
+	wxMemoryBuffer result(output.GetLength());
+	output.CopyTo(result.GetData(), output.GetLength());
+	result.SetDataLen(output.GetLength());
 	return result;
 }
 
