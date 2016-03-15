@@ -52,7 +52,7 @@ private:
 	FbxManager* sdkManager = nullptr;
 	FbxScene* scene = nullptr;
 
-	NiNode* com = nullptr;
+	string comName;
 	map<string, FBXShape> shapes;
 
 public:
@@ -75,10 +75,11 @@ public:
 
 	// Recursively add bones to the skeleton in a depth-first manner
 	FbxNode* AddLimb(NifFile* nif, NiNode* nifBone);
+	void AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone);
 
 	void AddNif(NifFile* meshNif, const string& shapeName = "");
 	void AddSkinning(AnimInfo* anim, const string& shapeName = "");
-	void AddGeometry(const string& shapeName, const vector<Vector3>& verts, const vector<Vector3>& norms, const vector<Triangle>& tris, const vector<Vector2>& uvs);
+	void AddGeometry(const string& shapeName, const vector<Vector3>* verts, const vector<Vector3>* norms, const vector<Triangle>* tris, const vector<Vector2>* uvs);
 
 	bool ExportScene(const string& fileName);
 	bool ImportScene(const string& fileName);

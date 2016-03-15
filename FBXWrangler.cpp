@@ -28,44 +28,57 @@ void FBXWrangler::NewScene() {
 	if (scene)
 		CloseScene();
 
-	com = nullptr;
 	scene = FbxScene::Create(sdkManager, "OutfitStudioScene");
 }
 
 void FBXWrangler::CloseScene() {
 	if (scene)
 		scene->Destroy();
-
+	
 	scene = nullptr;
+	comName.clear();
 }
 
-void FBXWrangler::AddGeometry(const string& shapeName, const vector<Vector3>& verts, const vector<Vector3>& norms, const vector<Triangle>& tris, const vector<Vector2>& uvs) {
+void FBXWrangler::AddGeometry(const string& shapeName, const vector<Vector3>* verts, const vector<Vector3>* norms, const vector<Triangle>* tris, const vector<Vector2>* uvs) {
+	if (!verts)
+		return;
+
 	FbxMesh* m = FbxMesh::Create(sdkManager, shapeName.c_str());
-
-	FbxGeometryElementNormal* normElement = m->CreateElementNormal();
-	normElement->SetMappingMode(FbxLayerElement::eByControlPoint);
-	normElement->SetReferenceMode(FbxLayerElement::eDirect);
-
-	string uvName = shapeName + "UV";
-	FbxGeometryElementUV* uvElement = m->CreateElementUV(uvName.c_str());
-	uvElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
-	uvElement->SetReferenceMode(FbxGeometryElement::eDirect);
-
-	m->InitControlPoints(verts.size());
-	FbxVector4* points = m->GetControlPoints();
-
-	for (int i = 0; i < verts.size(); i++) {
-		points[i] = FbxVector4(verts[i].x, verts[i].y, verts[i].z);
-		normElement->GetDirectArray().Add(FbxVector4(norms[i].x, norms[i].y, norms[i].z));
-		uvElement->GetDirectArray().Add(FbxVector2(uvs[i].u, uvs[i].v));
+	
+	FbxGeometryElementNormal* normElement = nullptr;
+	if (norms) {
+		normElement = m->CreateElementNormal();
+		normElement->SetMappingMode(FbxLayerElement::eByControlPoint);
+		normElement->SetReferenceMode(FbxLayerElement::eDirect);
+	}
+	
+	FbxGeometryElementUV* uvElement = nullptr;
+	if (uvs) {
+		string uvName = shapeName + "UV";
+		uvElement = m->CreateElementUV(uvName.c_str());
+		uvElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
+		uvElement->SetReferenceMode(FbxGeometryElement::eDirect);
 	}
 
-	for (auto &t : tris) {
-		m->BeginPolygon();
-		m->AddPolygon(t.p1);
-		m->AddPolygon(t.p2);
-		m->AddPolygon(t.p3);
-		m->EndPolygon();
+	m->InitControlPoints((*verts).size());
+	FbxVector4* points = m->GetControlPoints();
+
+	for (int i = 0; i < m->GetControlPointsCount(); i++) {
+		points[i] = FbxVector4((*verts)[i].x, (*verts)[i].y, (*verts)[i].z);
+		if (normElement)
+			normElement->GetDirectArray().Add(FbxVector4((*norms)[i].x, (*norms)[i].y, (*norms)[i].z));
+		if (uvElement)
+			uvElement->GetDirectArray().Add(FbxVector2((*uvs)[i].u, (*uvs)[i].v));
+	}
+
+	if (tris) {
+		for (auto &t : (*tris)) {
+			m->BeginPolygon();
+			m->AddPolygon(t.p1);
+			m->AddPolygon(t.p2);
+			m->AddPolygon(t.p3);
+			m->EndPolygon();
+		}
 	}
 
 	FbxNode* mNode = FbxNode::Create(sdkManager, shapeName.c_str());
@@ -83,8 +96,7 @@ void FBXWrangler::AddGeometry(const string& shapeName, const vector<Vector3>& ve
 void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 	NiNode* root = (NiNode*)nif->GetBlock(nif->GetNodeID(Config["Anim/SkeletonRootName"]));
 
-	if (!com)
-		com = (NiNode*)nif->GetBlock(nif->GetNodeID("COM"));
+	NiNode* com = (NiNode*)nif->GetBlock(nif->GetNodeID("COM"));
 	if (!com)
 		com = (NiNode*)nif->GetBlock(nif->GetNodeID("NPC COM [COM ]"));
 	if (!com)
@@ -96,14 +108,17 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 	if (!com)
 		return;
 
+	if (comName.empty())
+		comName = com->GetName();
+
 	// Check if skeleton already exists
 	string skelName = "NifSkeleton";
 	FbxNode* skelNode = scene->GetRootNode()->FindChild(skelName.c_str());
 	if (skelNode && onlyNonSkeleton) {
 		// Add non-skeleton nodes to the existing skeleton
-		FbxNode* comNode = skelNode->FindChild(com->GetName().c_str());
+		FbxNode* comNode = skelNode->FindChild(comName.c_str());
 		if (comNode) {
-			vector<NiNode*> boneNodes = nif->GetChildren<NiNode>((NiNode*)nif->GetBlock(0));
+			vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
 			for (auto &b : boneNodes)
 				comNode->AddChild(AddLimb(nif, b));
 		}
@@ -187,12 +202,20 @@ FbxNode* FBXWrangler::AddLimb(NifFile* nif, NiNode* nifBone) {
 		node->LclRotation.Set(FbxDouble3(rx, ry, rz));
 		//myNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
 	}
+	else {
+		// Bone already exists, but go through children and return nullptr
+		AddLimbChildren(node, nif, nifBone);
+		return nullptr;
+	}
 
+	AddLimbChildren(node, nif, nifBone);
+	return node;
+}
+
+void FBXWrangler::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) {
 	vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(nifBone);
 	for (auto &b : boneNodes)
 		node->AddChild(AddLimb(nif, b));
-
-	return node;
 }
 
 void FBXWrangler::AddNif(NifFile* nif, const string& shapeName) {
@@ -207,7 +230,7 @@ void FBXWrangler::AddNif(NifFile* nif, const string& shapeName) {
 				const vector<Vector3>* verts = nif->GetRawVertsForShape(s);
 				const vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
 				const vector<Vector2>* uvs = nif->GetUvsForShape(s);
-				AddGeometry(s, (*verts), (*norms), tris, (*uvs));
+				AddGeometry(s, verts, norms, &tris, uvs);
 			}
 		}
 	}
@@ -353,9 +376,13 @@ bool FBXWrangler::LoadMeshes() {
 						(float)m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[2]);
 				}
 			}
-
-			const char* uvName = m->GetElementUV(0)->GetName();
-			shape.uvs.resize(numVerts);
+			
+			const char* uvName = nullptr;
+			FbxGeometryElementUV* elementUV = m->GetElementUV(0);
+			if (elementUV) {
+				uvName = elementUV->GetName();
+				shape.uvs.resize(numVerts);
+			}
 
 			for (int t = 0; t < numTris; t++) {
 				if (m->GetPolygonSize(t) != 3)
@@ -366,18 +393,20 @@ bool FBXWrangler::LoadMeshes() {
 				int p3 = m->GetPolygonVertex(t, 2);
 				shape.tris.emplace_back(p1, p2, p3);
 
-				if (m->GetElementUVCount() && m->GetElementUV(0)->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-					FbxVector2 uv;
-					bool hasUV;
+				if (elementUV) {
+					if (m->GetElementUVCount() && elementUV->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+						FbxVector2 uv;
+						bool hasUV;
 
-					m->GetPolygonVertexUV(t, 0, uvName, uv, hasUV);
-					shape.uvs[p1] = Vector2(uv.mData[0], uv.mData[1]);
+						m->GetPolygonVertexUV(t, 0, uvName, uv, hasUV);
+						shape.uvs[p1] = Vector2(uv.mData[0], uv.mData[1]);
 
-					m->GetPolygonVertexUV(t, 1, uvName, uv, hasUV);
-					shape.uvs[p2] = Vector2(uv.mData[0], uv.mData[1]);
+						m->GetPolygonVertexUV(t, 1, uvName, uv, hasUV);
+						shape.uvs[p2] = Vector2(uv.mData[0], uv.mData[1]);
 
-					m->GetPolygonVertexUV(t, 2, uvName, uv, hasUV);
-					shape.uvs[p3] = Vector2(uv.mData[0], uv.mData[1]);
+						m->GetPolygonVertexUV(t, 2, uvName, uv, hasUV);
+						shape.uvs[p3] = Vector2(uv.mData[0], uv.mData[1]);
+					}
 				}
 			}
 
