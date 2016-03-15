@@ -1088,16 +1088,6 @@ used to endorse or promote products derived from this software<br>without specif
 IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES<br>OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.<br>IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,<br>
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT<br>NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,<br>DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY<br>
 THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT<br>(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF<br>THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.<i></font><br><br><br>
-
-<b>zlib</b><br><br><font size="2">Copyright (C) 1995-2013 Jean-loup Gailly and Mark Adler<br><br>
-<i>This software is provided 'as-is', without any express or implied<br>warranty. In no event will the authors be held liable for any<br>damages arising from the use of this software.<br><br>
-Permission is granted to anyone to use this software for any<br>purpose, including commercial applications, and to alter it and<br>redistribute it freely, subject to the following restrictions:<br><br>
-1. The origin of this software must not be misrepresented; you must<br>not claim that you wrote the original software. If you use this<br>software in a product, an acknowledgment in the product documentation<br>would be appreciated but is not required.<br><br>
-2. Altered source versions must be plainly marked as such, and<br>must not be misrepresented as being the original software.<br><br>
-3. This notice may not be removed or altered from any source<br>distribution.<br><br>
-Jean-loup Gailly        Mark Adler<br>
-jloup@gzip.org          madler@alumni.caltech.edu<br>
-The data format used by the zlib library is described by RFCs (Request for Comments)<br>1950 to 1952 in the files <a href="http://tools.ietf.org/html/rfc1950">http://tools.ietf.org/html/rfc1950</a> (zlib format),<br>rfc1951 (deflate format) and rfc1952 (gzip format).</i></font>
 </center>]]>
 					</htmlcode>
 				</object>
