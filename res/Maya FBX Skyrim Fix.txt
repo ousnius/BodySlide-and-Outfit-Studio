@@ -1,0 +1,36 @@
+//Title: Skyrim BoneFix MEL Script for Maya/Outfit Studio
+//Author: Nightasy
+{ 
+string $selected[] = `ls -type joint`; 
+for ($item in $selected) 
+{ 
+  string $temp = $item + ".rotateOrder"; 
+  setAttr $temp 5; 
+};
+select -r NPCFBXASC032COMFBXASC032FBXASC091COMFBXASC032FBXASC093; 
+rotate -r -os -90 0 0;
+
+
+select -r NifSkeleton;
+select -r bindPose1;
+doDelete;
+select -r NifSkeleton;
+dagPose -bp -s;
+
+//list all transform nodes
+string $transforms[] = `ls -tr`;
+//filter out non-polymesh nodes
+string $polyMeshes[] = `filterExpand -sm 12 $transforms`;
+
+for ($item in $polyMeshes)
+{
+	select -r $item;
+	doDetachSkin "2" { "2","1" };
+	setAttr ($item+".translateY") -120;
+	select -r $item;
+	select -add NifSkeleton;
+	SmoothBindSkin;
+	select -r $item;
+	removeUnusedInfluences;
+};
+}

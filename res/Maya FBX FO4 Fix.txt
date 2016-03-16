@@ -1,0 +1,50 @@
+//Title: Fallout 4 BoneFix MEL Script for Maya/Outfit Studio
+//Author: Nightasy
+{ 
+string $selected[] = `ls -type joint`; 
+for ($item in $selected) 
+{ 
+  string $temp = $item + ".rotateOrder"; 
+  setAttr $temp 5; 
+};
+select -r COM; 
+rotate -r -os 0 0 90;
+
+select `listRelatives -c`;
+select -d Pelvis;
+select -d SPINE1;
+$clothBones = `ls -sl`;
+for ($item in $clothBones)
+{
+    float $Xpos = getAttr($item + ".translateX");
+    float $Ypos = getAttr($item + ".translateY");
+    float $Zpos = getAttr($item + ".translateZ");
+    parent -w $item;
+    setAttr ($item+".translateX") $Xpos;
+    setAttr ($item+".translateY") $Zpos;
+    setAttr ($item+".translateZ") $Ypos;
+    parent $item COM ;
+}
+
+select -r NifSkeleton;
+select -r bindPose1;
+doDelete;
+select -r NifSkeleton;
+dagPose -bp -s;
+
+//list all transform nodes
+string $transforms[] = `ls -tr`;
+//filter out non-polymesh nodes
+string $polyMeshes[] = `filterExpand -sm 12 $transforms`;
+
+for ($item in $polyMeshes)
+{
+	select -r $item;
+	doDetachSkin "2" { "2","1" };
+	select -r $item;
+	select -add NifSkeleton;
+	SmoothBindSkin;
+	select -r $item;
+	removeUnusedInfluences;
+};
+}
