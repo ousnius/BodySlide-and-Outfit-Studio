@@ -74,6 +74,8 @@ public:
 
 	NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }
+	unordered_map<string, BSClothExtraData>& GetClothData() { return clothData; }
+
 	string GetBaseShape() { return baseShape; }
 	void SetBaseShape(const string& shapeName) { baseShape = shapeName; }
 

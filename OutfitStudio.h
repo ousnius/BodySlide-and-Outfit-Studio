@@ -698,6 +698,8 @@ private:
 	void OnSetBaseShape(wxCommandEvent &event);
 	void OnExportOutfitNif(wxCommandEvent &event);
 	void OnExportOutfitNifWithRef(wxCommandEvent &event);
+	void OnImportPhysicsData(wxCommandEvent &event);
+	void OnExportPhysicsData(wxCommandEvent &event);
 	void OnMakeConvRef(wxCommandEvent& event);
 
 	void OnSSSNameCopy(wxCommandEvent& event);

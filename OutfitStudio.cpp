@@ -50,6 +50,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSetBaseShape)
 	EVT_MENU(XRCID("exportOutfitNif"), OutfitStudio::OnExportOutfitNif)
 	EVT_MENU(XRCID("exportOutfitNifWithRef"), OutfitStudio::OnExportOutfitNifWithRef)
+	EVT_MENU(XRCID("importPhysicsData"), OutfitStudio::OnImportPhysicsData)
+	EVT_MENU(XRCID("exportPhysicsData"), OutfitStudio::OnExportPhysicsData)
 	EVT_MENU(XRCID("makeConvRef"), OutfitStudio::OnMakeConvRef)
 	
 	EVT_MENU(XRCID("sliderLoadPreset"), OutfitStudio::OnLoadPreset)
@@ -1614,6 +1616,51 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
 		wxMessageBox(wxString::Format("Failed to save NIF file '%s' with reference!", fileName), "Export Error", wxICON_ERROR);
+	}
+}
+
+void OutfitStudio::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
+	string fileName = wxFileSelector("Import physics data to project", wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_FILE_MUST_EXIST, this);
+	if (fileName.empty())
+		return;
+
+	BSClothExtraData physicsBlock;
+	if (!physicsBlock.FromHKX(fileName)) {
+		wxLogError("Failed to import physics data file '%s'!", fileName);
+		wxMessageBox(wxString::Format("Failed to import physics data file '%s'!", fileName), "Import Error", wxICON_ERROR);
+	}
+
+	auto& physicsData = project->GetClothData();
+	physicsData[fileName] = physicsBlock;
+}
+
+void OutfitStudio::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
+	auto& physicsData = project->GetClothData();
+	if (physicsData.empty()) {
+		wxMessageBox("There is no physics data loaded!", "Info", wxICON_INFORMATION);
+		return;
+	}
+
+	wxArrayString fileNames;
+	for (auto &data : physicsData)
+		fileNames.Add(data.first);
+
+	wxSingleChoiceDialog physicsDataChoice(this, "Please choose the physics data source you want to export.", "Choose physics data", fileNames);
+	if (physicsDataChoice.ShowModal() == wxID_CANCEL)
+		return;
+
+	int sel = physicsDataChoice.GetSelection();
+	string selString = fileNames[sel].ToStdString();
+
+	if (!selString.empty()) {
+		string fileName = wxFileSelector("Export physics data", wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.empty())
+			return;
+
+		if (!physicsData[selString].ToHKX(fileName)) {
+			wxLogError("Failed to save physics data file '%s'!", fileName);
+			wxMessageBox(wxString::Format("Failed to save physics data file '%s'!", fileName), "Export Error", wxICON_ERROR);
+		}
 	}
 }
 

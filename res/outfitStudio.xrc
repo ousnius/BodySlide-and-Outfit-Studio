@@ -747,6 +747,17 @@
 					<label>Save Project As...\tCtrl+Shift+S</label>
 					<help>Save the project under a new name.</help>
 				</object>
+				<object class="separator" />
+				<object class="wxMenu" name="menuImport">
+					<label>Import</label>
+					<object class="wxMenu" name="menuImportData">
+						<label>Import Data</label>
+						<object class="wxMenuItem" name="importPhysicsData">
+							<label>Import BSClothExtraData From HKX</label>
+							<help>Choose an HKX file to import as a BSClothExtraData block into the project.</help>
+						</object>
+					</object>
+				</object>
 				<object class="wxMenu" name="menuExport">
 					<label>Export</label>
 					<object class="wxMenuItem" name="exportOutfitNif">
@@ -756,6 +767,13 @@
 					<object class="wxMenuItem" name="exportOutfitNifWithRef">
 						<label>Export NIF With Reference</label>
 						<help>Save the current project as a NIF file (including reference)</help>
+					</object>
+					<object class="wxMenu" name="menuExportData">
+						<label>Export Data</label>
+						<object class="wxMenuItem" name="exportPhysicsData">
+							<label>Export BSClothExtraData As HKX</label>
+							<help>Save one of the currently loaded BSClothExtraData blocks to an HKX file.</help>
+						</object>
 					</object>
 				</object>
 				<object class="wxMenuItem" name="makeConvRef">
