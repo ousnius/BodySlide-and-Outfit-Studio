@@ -750,6 +750,10 @@
 				<object class="separator" />
 				<object class="wxMenu" name="menuImport">
 					<label>Import</label>
+					<object class="wxMenuItem" name="importOutfitNif">
+						<label>Import NIF</label>
+						<help>Choose a NIF file to import into the project.</help>
+					</object>
 					<object class="wxMenu" name="menuImportData">
 						<label>Import Data</label>
 						<object class="wxMenuItem" name="importPhysicsData">

@@ -696,6 +696,7 @@ private:
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
 
 	void OnSetBaseShape(wxCommandEvent &event);
+	void OnImportOutfitNif(wxCommandEvent &event);
 	void OnExportOutfitNif(wxCommandEvent &event);
 	void OnExportOutfitNifWithRef(wxCommandEvent &event);
 	void OnImportPhysicsData(wxCommandEvent &event);

@@ -48,6 +48,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_CHECKBOX(wxID_ANY, OutfitStudio::OnCheckBox)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSetBaseShape)
+	EVT_MENU(XRCID("importOutfitNif"), OutfitStudio::OnImportOutfitNif)
 	EVT_MENU(XRCID("exportOutfitNif"), OutfitStudio::OnExportOutfitNif)
 	EVT_MENU(XRCID("exportOutfitNifWithRef"), OutfitStudio::OnExportOutfitNifWithRef)
 	EVT_MENU(XRCID("importPhysicsData"), OutfitStudio::OnImportPhysicsData)
@@ -1547,6 +1548,23 @@ void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 		activeSlider = "";
 		glView->SetStrokeManager(nullptr);
 	}
+}
+
+void OutfitStudio::OnImportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
+	string fileName = wxFileSelector("Import NIF file", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_FILE_MUST_EXIST, this);
+	if (fileName.empty())
+		return;
+
+	StartProgress("Importing NIF file...");
+	UpdateProgress(1, "Importing NIF file...");
+	project->AddNif(fileName, false);
+	project->SetTextures("_AUTO_");
+
+	UpdateProgress(60, "Refreshing GUI...");
+	RefreshGUIFromProj();
+
+	UpdateProgress(100, "Finished.");
+	EndProgress();
 }
 
 void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
