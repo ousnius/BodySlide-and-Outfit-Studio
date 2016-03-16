@@ -10,9 +10,15 @@ See the included LICENSE file
 #include <string>
 #include <unordered_map>
 
+#pragma warning (push, 0)
+#include "gli/gli.hpp"
+#pragma warning (pop)
+
 using namespace std;
 
+typedef unsigned int GLuint;
 class GLMaterial;
+
 
 class ResourceLoader {
 public:
@@ -28,6 +34,14 @@ public:
 	void Cleanup();
 
 private:
+	bool glInitialized = false;
+	bool gliSupported = true;
+
+	void InitGL();
+	GLuint GLI_create_texture(gli::texture& texture);
+	GLuint GLI_load_texture(const string& fileName);
+	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size);
+
 	// If N3983 gets accepted into a future C++ standard then
 	// we wouldn't have to explicitly define our own hash here.
 	typedef tuple<string, string, string> MaterialKey;
