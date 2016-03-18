@@ -4554,7 +4554,17 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
+
 	os->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
+	if (!os->bEditSlider) {
+		vector<string> shapes;
+		os->project->GetShapes(shapes);
+		for (auto &s : shapes) {
+			os->UpdateShapeSource(s);
+			os->project->RefreshMorphShape(s);
+		}
+	}
+
 	ShowTransformTool(true, false);
 }
 
