@@ -56,7 +56,17 @@ enum BlockType {
 	BSEFFECTSHADERPROPERTYFLOATCONTROLLER,
 	BSTRISHAPE,
 	BSSUBINDEXTRISHAPE,
-	BSCLOTHEXTRADATA
+	BSMESHLODTRISHAPE,
+	BSCLOTHEXTRADATA,
+	NIINTEGEREXTRADATA,
+	BSXFLAGS,
+	BSCONNECTPOINTPARENTS,
+	BSCONNECTPOINTCHILDREN,
+	NICOLLISIONOBJECT,
+	BHKNICOLLISIONOBJECT,
+	BHKCOLLISIONOBJECT,
+	BHKNPCOLLISIONOBJECT,
+	BHKPHYSICSSYSTEM
 };
 
 struct VertexWeight {
@@ -418,6 +428,7 @@ public:
 	vector<Triangle> triangles;
 	BSTriShape(NiHeader& hdr);
 	BSTriShape(fstream& file, NiHeader& hdr);
+
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
@@ -464,6 +475,7 @@ public:
 
 	BSSubIndexTriShape(NiHeader& hdr);
 	BSSubIndexTriShape(fstream& file, NiHeader& hdr);
+
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
@@ -472,6 +484,25 @@ public:
 	int CalcBlockSize();
 
 	void SetDefaultSegments();
+	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
+};
+
+class BSMeshLODTriShape : public BSTriShape {
+public:
+	uint lodSize0;
+	uint lodSize1;
+	uint lodSize2;
+
+	BSMeshLODTriShape(NiHeader& hdr);
+	BSMeshLODTriShape(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	int CalcBlockSize();
+
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
@@ -1254,6 +1285,84 @@ public:
 	int CalcBlockSize();
 };
 
+class NiIntegerExtraData : public NiExtraData {
+private:
+	uint integerData;
+
+public:
+	NiIntegerExtraData(NiHeader& hdr);
+	NiIntegerExtraData(fstream& file, NiHeader& hdr);
+
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+
+	virtual uint GetIntegerData();
+	virtual void SetIntegerData(const uint& integerData);
+
+	virtual int CalcBlockSize();
+};
+
+class BSXFlags : public NiIntegerExtraData {
+public:
+	BSXFlags(NiHeader& hdr);
+	BSXFlags(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+
+	uint GetIntegerData();
+	void SetIntegerData(const uint& integerData);
+
+	int CalcBlockSize();
+};
+
+class BSConnectPoint {
+public:
+	NiString root;
+	NiString variableName;
+	Quaternion rotation;
+	Vector3 translation;
+	float scale;
+
+	BSConnectPoint();
+	BSConnectPoint(fstream& file);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
+};
+
+class BSConnectPointParents : public NiExtraData {
+private:
+	uint numConnectPoints;
+	vector<BSConnectPoint> connectPoints;
+
+public:
+	BSConnectPointParents(NiHeader& hdr);
+	BSConnectPointParents(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+
+	int CalcBlockSize();
+};
+
+class BSConnectPointChildren : public NiExtraData {
+private:
+	byte unkByte;
+	uint numTargets;
+	vector<NiString> targets;
+
+public:
+	BSConnectPointChildren(NiHeader& hdr);
+	BSConnectPointChildren(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+
+	int CalcBlockSize();
+};
+
 class BSExtraData : public NiObject {
 public:
 	virtual void Init();
@@ -1278,6 +1387,72 @@ public:
 
 	bool ToHKX(const string& fileName);
 	bool FromHKX(const string& fileName);
+};
+
+class NiCollisionObject : public NiObject {
+public:
+	int target;
+
+	NiCollisionObject(NiHeader& hdr);
+	NiCollisionObject(fstream& file, NiHeader& hdr);
+
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+
+	virtual int CalcBlockSize();
+};
+
+class bhkNiCollisionObject : public NiCollisionObject {
+public:
+	ushort flags;
+	int body;
+
+	bhkNiCollisionObject(NiHeader& hdr);
+	bhkNiCollisionObject(fstream& file, NiHeader& hdr);
+
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+
+	virtual int CalcBlockSize();
+};
+
+class bhkCollisionObject : public bhkNiCollisionObject {
+public:
+	bhkCollisionObject(NiHeader& hdr);
+	bhkCollisionObject(fstream& file, NiHeader& hdr);
+
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+
+	virtual int CalcBlockSize();
+};
+
+class bhkNPCollisionObject : public bhkCollisionObject {
+public:
+	uint unkInt;
+
+	bhkNPCollisionObject(NiHeader& hdr);
+	bhkNPCollisionObject(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+
+	int CalcBlockSize();
+};
+
+class bhkPhysicsSystem : public BSExtraData {
+public:
+	uint numBytes;
+	vector<char> data;
+
+	bhkPhysicsSystem();
+	bhkPhysicsSystem(NiHeader& hdr, uint size = 0);
+	bhkPhysicsSystem(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void Clone(bhkPhysicsSystem* other);
+	int CalcBlockSize();
 };
 
 class NiUnknown : public NiObject {

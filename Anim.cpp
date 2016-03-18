@@ -306,7 +306,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			continue;
 
 		int stype = nif->GetShapeType(shapeBoneList.first);
-		bool bIsFo4 = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE);
+		bool bIsFo4 = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE);
 
 		if (shapeSkinning[shapeBoneList.first].bNeedsBoundsCalc)
 			CalcShapeSkinBounds(shapeBoneList.first);

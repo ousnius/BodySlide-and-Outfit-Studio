@@ -1312,6 +1312,7 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		triangles[i] = (*tris)[i];
 }
 
+
 BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
 
@@ -1458,6 +1459,59 @@ void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, 
 
 	SetDefaultSegments();
 }
+
+
+BSMeshLODTriShape::BSMeshLODTriShape(NiHeader& hdr) : BSTriShape(hdr) {
+	blockType = BSMESHLODTRISHAPE;
+
+	lodSize0 = 0;
+	lodSize1 = 0;
+	lodSize2 = 0;
+}
+
+BSMeshLODTriShape::BSMeshLODTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
+	blockType = BSMESHLODTRISHAPE;
+	Get(file);
+}
+
+void BSMeshLODTriShape::Get(fstream& file) {
+	file.read((char*)&lodSize0, 4);
+	file.read((char*)&lodSize1, 4);
+	file.read((char*)&lodSize2, 4);
+}
+
+void BSMeshLODTriShape::Put(fstream& file) {
+	BSTriShape::Put(file);
+
+	file.write((char*)&lodSize0, 4);
+	file.write((char*)&lodSize1, 4);
+	file.write((char*)&lodSize2, 4);
+}
+
+void BSMeshLODTriShape::notifyBlockDelete(int blockID) {
+	BSTriShape::notifyBlockDelete(blockID);
+}
+
+void BSMeshLODTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void BSMeshLODTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	BSTriShape::notifyVerticesDelete(vertIndices);
+}
+
+int BSMeshLODTriShape::CalcBlockSize() {
+	BSTriShape::CalcBlockSize();
+
+	blockSize += 12;
+
+	return blockSize;
+}
+
+void BSMeshLODTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
+	BSTriShape::Create(verts, tris, uvs, normals);
+}
+
 
 void NiGeometry::Init() {
 	NiAVObject::Init();
@@ -5072,6 +5126,215 @@ int NiStringExtraData::CalcBlockSize() {
 }
 
 
+NiIntegerExtraData::NiIntegerExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIINTEGEREXTRADATA;
+	integerData = 0;
+}
+
+NiIntegerExtraData::NiIntegerExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIINTEGEREXTRADATA;
+
+	Get(file);
+}
+
+void NiIntegerExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&integerData, 4);
+}
+
+void NiIntegerExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&integerData, 4);
+}
+
+uint NiIntegerExtraData::GetIntegerData() {
+	return integerData;
+}
+
+void NiIntegerExtraData::SetIntegerData(const uint& integerData) {
+	this->integerData = integerData;
+}
+
+int NiIntegerExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSXFlags::BSXFlags(NiHeader& hdr) : NiIntegerExtraData(hdr) {
+	header = &hdr;
+	blockType = BSXFLAGS;
+}
+
+BSXFlags::BSXFlags(fstream& file, NiHeader& hdr) : NiIntegerExtraData(file, hdr) {
+	header = &hdr;
+	blockType = BSXFLAGS;
+
+	Get(file);
+}
+
+void BSXFlags::Get(fstream& file) {
+}
+
+void BSXFlags::Put(fstream& file) {
+	NiIntegerExtraData::Put(file);
+}
+
+uint BSXFlags::GetIntegerData() {
+	return NiIntegerExtraData::GetIntegerData();
+}
+
+void BSXFlags::SetIntegerData(const uint& integerData) {
+	NiIntegerExtraData::SetIntegerData(integerData);
+}
+
+int BSXFlags::CalcBlockSize() {
+	return NiIntegerExtraData::CalcBlockSize();
+}
+
+
+BSConnectPoint::BSConnectPoint() {
+	scale = 1.0f;
+}
+
+BSConnectPoint::BSConnectPoint(fstream& file) {
+	Get(file);
+}
+
+void BSConnectPoint::Get(fstream& file) {
+	root.Get(file, 4);
+	variableName.Get(file, 4);
+
+	file.read((char*)&rotation, 16);
+	file.read((char*)&translation, 12);
+	file.read((char*)&scale, 4);
+}
+
+void BSConnectPoint::Put(fstream& file) {
+	root.Put(file, 4);
+	variableName.Put(file, 4);
+
+	file.write((char*)&rotation, 16);
+	file.write((char*)&translation, 12);
+	file.write((char*)&scale, 4);
+}
+
+int BSConnectPoint::CalcBlockSize() {
+	int blockSize = 40;
+	blockSize += root.str.length();
+	blockSize += variableName.str.length();
+	return blockSize;
+}
+
+
+BSConnectPointParents::BSConnectPointParents(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSCONNECTPOINTPARENTS;
+	numConnectPoints = 0;
+}
+
+BSConnectPointParents::BSConnectPointParents(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSCONNECTPOINTPARENTS;
+
+	Get(file);
+}
+
+void BSConnectPointParents::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&numConnectPoints, 4);
+
+	for (int i = 0; i < numConnectPoints; i++)
+		connectPoints.push_back(BSConnectPoint(file));
+}
+
+void BSConnectPointParents::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&numConnectPoints, 4);
+
+	for (int i = 0; i < numConnectPoints; i++)
+		connectPoints[i].Put(file);
+}
+
+int BSConnectPointParents::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+
+	for (int i = 0; i < numConnectPoints; i++)
+		blockSize += connectPoints[i].CalcBlockSize();
+
+	return blockSize;
+}
+
+
+BSConnectPointChildren::BSConnectPointChildren(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSCONNECTPOINTCHILDREN;
+	unkByte = 1;
+	numTargets = 0;
+}
+
+BSConnectPointChildren::BSConnectPointChildren(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSCONNECTPOINTCHILDREN;
+
+	Get(file);
+}
+
+void BSConnectPointChildren::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&unkByte, 1);
+	file.read((char*)&numTargets, 4);
+
+	for (int i = 0; i < numTargets; i++)
+		targets.push_back(NiString(file, 4));
+}
+
+void BSConnectPointChildren::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&unkByte, 1);
+	file.write((char*)&numTargets, 4);
+
+	for (int i = 0; i < numTargets; i++)
+		targets[i].Put(file, 4);
+}
+
+int BSConnectPointChildren::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 5;
+
+	for (int i = 0; i < numTargets; i++)
+		blockSize += targets[i].str.length();
+
+	return blockSize;
+}
+
+
 void BSExtraData::Init() {
 	NiObject::Init();
 }
@@ -5177,6 +5440,196 @@ bool BSClothExtraData::FromHKX(const string& fileName) {
 	data.resize(numBytes);
 	file.read(data.data(), numBytes);
 	return true;
+}
+
+
+NiCollisionObject::NiCollisionObject(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NICOLLISIONOBJECT;
+	target = 0xFFFFFFFF;
+}
+
+NiCollisionObject::NiCollisionObject(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NICOLLISIONOBJECT;
+
+	Get(file);
+}
+
+void NiCollisionObject::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&target, 4);
+}
+
+void NiCollisionObject::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&target, 4);
+}
+
+int NiCollisionObject::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+bhkNiCollisionObject::bhkNiCollisionObject(NiHeader& hdr) : NiCollisionObject(hdr) {
+	blockType = BHKNICOLLISIONOBJECT;
+	flags = 1;
+	body = 0xFFFFFFFF;
+}
+
+bhkNiCollisionObject::bhkNiCollisionObject(fstream& file, NiHeader& hdr) : NiCollisionObject(file, hdr) {
+	blockType = BHKNICOLLISIONOBJECT;
+
+	Get(file);
+}
+
+void bhkNiCollisionObject::Get(fstream& file) {
+	file.read((char*)&flags, 2);
+	file.read((char*)&body, 4);
+}
+
+void bhkNiCollisionObject::Put(fstream& file) {
+	NiCollisionObject::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&body, 4);
+}
+
+int bhkNiCollisionObject::CalcBlockSize() {
+	NiCollisionObject::CalcBlockSize();
+
+	blockSize += 6;
+
+	return blockSize;
+}
+
+
+bhkCollisionObject::bhkCollisionObject(NiHeader& hdr) : bhkNiCollisionObject(hdr) {
+	blockType = BHKCOLLISIONOBJECT;
+}
+
+bhkCollisionObject::bhkCollisionObject(fstream& file, NiHeader& hdr) : bhkNiCollisionObject(file, hdr) {
+	blockType = BHKCOLLISIONOBJECT;
+
+	Get(file);
+}
+
+void bhkCollisionObject::Get(fstream& file) {
+}
+
+void bhkCollisionObject::Put(fstream& file) {
+	bhkNiCollisionObject::Put(file);
+}
+
+int bhkCollisionObject::CalcBlockSize() {
+	return bhkNiCollisionObject::CalcBlockSize();
+}
+
+
+bhkNPCollisionObject::bhkNPCollisionObject(NiHeader& hdr) : bhkCollisionObject(hdr) {
+	blockType = BHKNPCOLLISIONOBJECT;
+	unkInt = 0;
+}
+
+bhkNPCollisionObject::bhkNPCollisionObject(fstream& file, NiHeader& hdr) : bhkCollisionObject(file, hdr) {
+	blockType = BHKNPCOLLISIONOBJECT;
+
+	Get(file);
+}
+
+void bhkNPCollisionObject::Get(fstream& file) {
+	file.read((char*)&unkInt, 4);
+}
+
+void bhkNPCollisionObject::Put(fstream& file) {
+	bhkCollisionObject::Put(file);
+
+	file.write((char*)&unkInt, 4);
+}
+
+int bhkNPCollisionObject::CalcBlockSize() {
+	bhkCollisionObject::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+bhkPhysicsSystem::bhkPhysicsSystem() {
+	BSExtraData::Init();
+
+	blockType = BHKPHYSICSSYSTEM;
+	numBytes = 0;
+	data.clear();
+}
+
+bhkPhysicsSystem::bhkPhysicsSystem(NiHeader& hdr, uint size) {
+	BSExtraData::Init();
+
+	header = &hdr;
+	blockType = BHKPHYSICSSYSTEM;
+	numBytes = size;
+	data.resize(size);
+}
+
+bhkPhysicsSystem::bhkPhysicsSystem(fstream& file, NiHeader& hdr) {
+	BSExtraData::Init();
+
+	header = &hdr;
+	blockType = BHKPHYSICSSYSTEM;
+
+	Get(file);
+}
+
+void bhkPhysicsSystem::Get(fstream& file) {
+	BSExtraData::Get(file);
+
+	file.read((char*)&numBytes, 4);
+	data.resize(numBytes);
+	if (data.empty())
+		return;
+
+	file.read(&data[0], numBytes);
+}
+
+void bhkPhysicsSystem::Put(fstream& file) {
+	BSExtraData::Put(file);
+
+	file.write((char*)&numBytes, 4);
+	if (data.empty())
+		return;
+
+	file.write(&data[0], numBytes);
+}
+
+void bhkPhysicsSystem::Clone(bhkPhysicsSystem* other) {
+	numBytes = other->numBytes;
+	data.resize(numBytes);
+	if (data.empty())
+		return;
+
+	for (int i = 0; i < numBytes; i++)
+		data[i] = other->data[i];
+}
+
+int bhkPhysicsSystem::CalcBlockSize() {
+	BSExtraData::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += numBytes;
+
+	return blockSize;
 }
 
 
