@@ -73,6 +73,9 @@ void ShapeProperties::GetShader() {
 	}
 	else {
 		shaderName->SetValue(shader->GetName());
+		
+		if (os->targetGame == FO4)
+			currentMaterialPath = shader->GetName();
 
 		Color4 color;
 		Vector3 colorVec;
@@ -333,7 +336,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			}
 			nif->TrimTexturePaths();
 
-			os->glView->Refresh();
+			os->glView->Render();
 		}
 	}
 }
@@ -359,7 +362,7 @@ void ShapeProperties::AssignDefaultTexture() {
 	string texNoImg = os->appConfig["GameDataPath"] + "noimg.dds";
 	os->project->SetTexture(shape, "_AUTO_");
 	os->glView->SetMeshTexture(shape, texNoImg, nif->IsShaderSkin(shape));
-	os->glView->Refresh();
+	os->glView->Render();
 }
 
 void ShapeProperties::GetTransparency() {
@@ -624,6 +627,11 @@ void ShapeProperties::ApplyChanges() {
 				material->SetEmissiveMultiple(emisMultiple);
 				break;
 			}
+		}
+
+		if (os->targetGame == FO4 && currentMaterialPath != name) {
+			os->project->SetTexture(shape, "_AUTO_");
+			os->RefreshGUIFromProj();
 		}
 	}
 

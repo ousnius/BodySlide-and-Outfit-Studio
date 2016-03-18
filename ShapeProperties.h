@@ -40,6 +40,8 @@ private:
 	NifFile* nif = nullptr;
 	string shape;
 
+	string currentMaterialPath;
+
 	void GetShader();
 	void GetShaderType();
 	void AddShader();
