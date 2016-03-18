@@ -3516,6 +3516,11 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
+	if (bEditSlider) {
+		wxMessageBox("Rotating slider data is currently not possible using the Rotate Shape dialog.", "Rotate", wxICON_INFORMATION, this);
+		return;
+	}
+
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgRotateShape")) {
 		XRCCTRL(dlg, "rsSliderX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnRotateShapeSlider, this);
