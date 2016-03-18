@@ -78,13 +78,14 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("btnConnected"), OutfitStudio::OnConnectedOnly)
 	EVT_MENU(XRCID("btnBrushCollision"), OutfitStudio::OnGlobalBrushCollision)
 	
-	EVT_MENU(XRCID("btnSelect"), OutfitStudio::OnSelectBrush)
-	EVT_MENU(XRCID("btnMaskBrush"), OutfitStudio::OnSelectBrush)
-	EVT_MENU(XRCID("btnInflateBrush"), OutfitStudio::OnSelectBrush)
-	EVT_MENU(XRCID("btnDeflateBrush"), OutfitStudio::OnSelectBrush)
-	EVT_MENU(XRCID("btnMoveBrush"), OutfitStudio::OnSelectBrush)
-	EVT_MENU(XRCID("btnSmoothBrush"), OutfitStudio::OnSelectBrush)
-	EVT_MENU(XRCID("btnWeightBrush"), OutfitStudio::OnSelectBrush)
+	EVT_MENU(XRCID("btnSelect"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnTransform"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnMaskBrush"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnInflateBrush"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnDeflateBrush"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnMoveBrush"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnSmoothBrush"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnWeightBrush"), OutfitStudio::OnSelectTool)
 
 	EVT_MENU(XRCID("btnViewFront"), OutfitStudio::OnSetView)
 	EVT_MENU(XRCID("btnViewBack"), OutfitStudio::OnSetView)
@@ -205,6 +206,7 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 	if (toolBar) {
 		toolBar->ToggleTool(XRCID("btnSelect"), true);
 		toolBar->SetToolDisabledBitmap(XRCID("btnSelect"), wxBitmap("res\\SelectBrush_d.png", wxBITMAP_TYPE_PNG));
+		toolBar->SetToolDisabledBitmap(XRCID("btnTransform"), wxBitmap("res\\TransformTool_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnMaskBrush"), wxBitmap("res\\MaskBrush_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnInflateBrush"), wxBitmap("res\\InflateBrush_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnDeflateBrush"), wxBitmap("res\\DeflateBrush_d.png", wxBITMAP_TYPE_PNG));
@@ -520,7 +522,10 @@ void OutfitStudio::ApplySliders(bool recalcBVH) {
 		glView->UpdateMeshVertices(shape, &verts, recalcBVH);
 	}
 
-	glView->Render();
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool(true, false);
+	else
+		glView->Render();
 }
 
 void OutfitStudio::ShowSliderEffect(int sliderID, bool show) {
@@ -549,15 +554,21 @@ void OutfitStudio::ShowSliderEffect(const string& sliderName, bool show) {
 }
 
 void OutfitStudio::UpdateActiveShapeUI() {
-	if (!activeItem)
-		return;
+	if (!activeItem) {
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool(false, false);
+	}
+	else {
+		mesh* m = glView->GetMesh(activeItem->shapeName);
+		if (m) {
+			if (m->smoothSeamNormals)
+				GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
+			else
+				GetMenuBar()->Check(XRCID("btnSmoothSeams"), false);
+		}
 
-	mesh* m = glView->GetMesh(activeItem->shapeName);
-	if (m) {
-		if (m->smoothSeamNormals)
-			GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
-		else
-			GetMenuBar()->Check(XRCID("btnSmoothSeams"), false);
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool(true, false);
 	}
 }
 
@@ -1519,8 +1530,9 @@ void OutfitStudio::OnBrushPane(wxCollapsiblePaneEvent& event) {
 	if (!brushPane)
 		return;
 
-	if (!glView->GetActiveBrush())
-		brushPane->Collapse();
+	if (!brushPane->IsCollapsed())
+		if (!glView->GetEditMode() || glView->GetTransformMode())
+			brushPane->Collapse();
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	if (leftPanel)
@@ -1990,7 +2002,7 @@ void OutfitStudio::OnCheckBox(wxCommandEvent& event) {
 	ApplySliders();
 }
 
-void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
+void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 	int id = event.GetId();
 	wxWindow* w = FindFocus();
 	wxMenuBar* menuBar = GetMenuBar();
@@ -2007,19 +2019,15 @@ void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 		menuBar->Check(XRCID("btnXMirror"), previousMirror);
 	}
 
+	glView->SetTransformMode(false);
+
 	if (id == XRCID("btnSelect")) {
 		glView->SetEditMode(false);
 		glView->SetActiveBrush(-1);
 		menuBar->Check(XRCID("btnSelect"), true);
 		toolBar->ToggleTool(XRCID("btnSelect"), true);
-
-		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
-		if (brushPane) {
-			brushPane->Collapse();
-			wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
-			if (leftPanel)
-				leftPanel->Layout();
-		}
+		
+		ToggleBrushPane(true);
 		return;
 	}
 	if (id == XRCID("btnMaskBrush")) {
@@ -2055,10 +2063,22 @@ void OutfitStudio::OnSelectBrush(wxCommandEvent& event) {
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
 	}
-	else {
+	else if (id == XRCID("btnTransform")) {
 		glView->SetEditMode(false);
+		glView->SetTransformMode();
+		glView->SetActiveBrush(-1);
+		menuBar->Check(XRCID("btnTransform"), true);
+		toolBar->ToggleTool(XRCID("btnTransform"), true);
+
+		ToggleBrushPane(true);
 		return;
 	}
+	else {
+		glView->SetEditMode(false);
+		glView->SetTransformMode(false);
+		return;
+	}
+
 	glView->SetEditMode();
 
 	CheckBrushBounds();
@@ -2226,12 +2246,14 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		project->ClearBoneScale();
 
 		glView->SetXMirror(previousMirror);
+		glView->SetTransformMode(false);
 		glView->SetActiveBrush(1);
 		glView->SetWeightVisible(false);
 
 		if (menuBar) {
 			menuBar->Check(XRCID("btnXMirror"), previousMirror);
 			menuBar->Check(XRCID("btnInflateBrush"), true);
+			menuBar->Enable(XRCID("btnTransform"), true);
 			menuBar->Enable(XRCID("btnWeightBrush"), false);
 			menuBar->Enable(XRCID("btnInflateBrush"), true);
 			menuBar->Enable(XRCID("btnDeflateBrush"), true);
@@ -2242,6 +2264,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		if (toolBar) {
 			toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
 			toolBar->EnableTool(XRCID("btnWeightBrush"), false);
+			toolBar->EnableTool(XRCID("btnTransform"), true);
 			toolBar->EnableTool(XRCID("btnInflateBrush"), true);
 			toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
 			toolBar->EnableTool(XRCID("btnMoveBrush"), true);
@@ -2293,7 +2316,8 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
 		if (cbFixedWeight)
 			cbFixedWeight->Show();
-
+		
+		glView->SetTransformMode(false);
 		glView->SetActiveBrush(10);
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
@@ -2304,6 +2328,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 			menuBar->Check(XRCID("btnWeightBrush"), true);
 			menuBar->Check(XRCID("btnXMirror"), false);
 			menuBar->Enable(XRCID("btnWeightBrush"), true);
+			menuBar->Enable(XRCID("btnTransform"), false);
 			menuBar->Enable(XRCID("btnInflateBrush"), false);
 			menuBar->Enable(XRCID("btnDeflateBrush"), false);
 			menuBar->Enable(XRCID("btnMoveBrush"), false);
@@ -2313,6 +2338,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		if (toolBar) {
 			toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
 			toolBar->EnableTool(XRCID("btnWeightBrush"), true);
+			toolBar->EnableTool(XRCID("btnTransform"), false);
 			toolBar->EnableTool(XRCID("btnInflateBrush"), false);
 			toolBar->EnableTool(XRCID("btnDeflateBrush"), false);
 			toolBar->EnableTool(XRCID("btnMoveBrush"), false);
@@ -4066,7 +4092,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	brushSize = 0.45f;
 	activeBrush = nullptr;
 	editMode = false;
-	transformMode = 0;
+	transformMode = false;
 	bMaskPaint = false;
 	bWeightPaint = false;
 	isPainting = false;
@@ -4523,8 +4549,8 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 void wxGLPanel::EndTransform() {
 	activeStroke->endStroke();
 	activeStroke = nullptr;
-	ShowTransformTool(true, false);
 	os->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
+	ShowTransformTool(true, false);
 }
 
 bool wxGLPanel::UndoStroke() {
@@ -4596,39 +4622,36 @@ bool wxGLPanel::RedoStroke() {
 }
 
 void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
-	int xform_move = -1;
-	int yform_move = -1;
-	int zform_move = -1;
-
 	static TweakBrush* saveBrush = nullptr;
 	if (updateBrush)
 		saveBrush = activeBrush;
 
-	Vector3 o;
 	string mode = Config.GetString("Editing/CenterMode");
 	if (mode == "Object") {
 		if (!gls.GetActiveMeshes().empty())
-			o = gls.GetActiveMeshes().back()->bvh->Center();
+			xformCenter = gls.GetActiveMeshes().back()->CreateBVH()->Center();
 	}
 	else if (mode == "Selected")
-		o = gls.GetActiveCenter();
+		xformCenter = gls.GetActiveCenter();
+	else
+		xformCenter.Zero();
 
-	xformCenter = o;
 	if (show) {
 		if (updateBrush)
 			saveBrush = activeBrush;
 
-		xform_move = gls.AddVis3dArrow(o, Vector3(1.0f, 0.0f, 0.0f), 0.02f, 0.1f, 1.5f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
+		gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
 		gls.GetOverlay("XMoveMesh")->CreateBVH();
-		yform_move = gls.AddVis3dArrow(o, Vector3(0.0f, 1.0f, 0.0f), 0.02f, 0.1f, 1.5f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
+		gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
 		gls.GetOverlay("YMoveMesh")->CreateBVH();
-		zform_move = gls.AddVis3dArrow(o, Vector3(0.0f, 0.0f, 1.0f), 0.02f, 0.1f, 1.5f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
+		gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
 		gls.GetOverlay("ZMoveMesh")->CreateBVH();
-		gls.AddVis3dRing(o, Vector3(1.0f, 0.0f, 0.0f), 1.0f, 0.03f, Vector3(1.0f, 0.0f, 0.0f), "XRotateMesh");
+
+		gls.AddVis3dRing(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 1.25f, 0.04f, Vector3(1.0f, 0.0f, 0.0f), "XRotateMesh");
 		gls.GetOverlay("XRotateMesh")->CreateBVH();
-		gls.AddVis3dRing(o, Vector3(0.0f, 1.0f, 0.0f), 1.0f, 0.03f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
+		gls.AddVis3dRing(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 1.25f, 0.04f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
 		gls.GetOverlay("YRotateMesh")->CreateBVH();
-		gls.AddVis3dRing(o, Vector3(0.0f, 0.0f, 1.0f), 1.0f, 0.03f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
+		gls.AddVis3dRing(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 1.25f, 0.04f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
 		gls.GetOverlay("ZRotateMesh")->CreateBVH();
 	}
 
@@ -4754,7 +4777,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (!rbuttonDown && !lbuttonDown) {
 		string hitMeshName;
-		if (editMode && transformMode == 0) {
+		if (editMode && !transformMode) {
 			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitMeshName, &t, &w, &m);
 		}
 		else {
@@ -4796,15 +4819,13 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 
 	if (editMode) {
 		meshHit = StartBrushStroke(event.GetPosition());
-		if (meshHit) {
+		if (meshHit)
 			isPainting = true;
-		}
 	}
-	else if (transformMode != 0) {
+	else if (transformMode) {
 		meshHit = StartTransform(event.GetPosition());
-		if (meshHit) {
+		if (meshHit)
 			isTransforming = true;
-		}
 	}
 }
 
@@ -4827,22 +4848,21 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	if (GetCapture() == this)
 		ReleaseMouse();
 
-	if (!isLDragging && (!isPainting)) {
+	if (!isLDragging && !isPainting) {
 		int x, y;
 		event.GetPosition(&x, &y);
 		wxPoint p = event.GetPosition();
-		int meshID = gls.PickMesh(x, y);
-		if (meshID == -1) {
 
-		}
-		else {
+		int meshID = gls.PickMesh(x, y);
+		if (meshID > -1)
 			os->SelectShape(gls.GetMeshName(meshID));
-		}
 	}
-	if (isPainting){
+
+	if (isPainting) {
 		EndBrushStroke();
 		isPainting = false;
 	}
+
 	if (isTransforming) {
 		EndTransform();
 		isTransforming = false;

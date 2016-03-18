@@ -36,9 +36,16 @@
 				<bitmap>SelectBrush.png</bitmap>
 				<radio>1</radio>
 			</object>
+			<object class="tool" name="btnTransform">
+				<label>Transform</label>
+				<tooltip>Shows a transform tool to manipulate shapes.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>TransformTool.png</bitmap>
+				<radio>1</radio>
+			</object>
 			<object class="tool" name="btnMaskBrush">
 				<label>Mask</label>
-				<tooltip>Mask Vertices to prevent them from being transformed.</tooltip>
+				<tooltip>Mask vertices to prevent them from being transformed.</tooltip>
 				<longhelp></longhelp>
 				<bitmap>MaskBrush.png</bitmap>
 				<radio>1</radio>
@@ -1070,17 +1077,22 @@
 				</object>
 			</object>
 			<object class="wxMenu" name="menuBrush">
-				<label>Brush</label>
+				<label>Tool</label>
 				<object class="wxMenu" name="brushSelect">
-					<label>Current Brush</label>
+					<label>Current Tool</label>
 					<object class="wxMenuItem" name="btnSelect">
 						<label>Select\t0</label>
 						<help>Navigate and select meshes</help>
 						<radio>1</radio>
 					</object>
+					<object class="wxMenuItem" name="btnTransform">
+						<label>Transform</label>
+						<help>Shows a transform tool to manipulate shapes</help>
+						<radio>1</radio>
+					</object>
 					<object class="wxMenuItem" name="btnMaskBrush">
 						<label>Mask\t1</label>
-						<help>Mask Vertices to prevent them from being transformed</help>
+						<help>Mask vertices to prevent them from being transformed</help>
 						<radio>1</radio>
 					</object>
 					<object class="wxMenuItem" name="btnInflateBrush">

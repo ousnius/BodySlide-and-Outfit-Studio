@@ -164,11 +164,10 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			i--;
 		}
 	}
-
+	
+	// Move/transform handles most operations differently than other brushes.
+	// Mirroring is done internally, most of the pick info values are ignored.
 	if (brushType == TBT_MOVE || brushType == TBT_XFORM) {
-		// Move brush handles most operations differently than other brushes.  Mirroring, for instance, is done internally. 
-		// most of the pick info values are ignored.
-
 		for (auto &m : refMeshes) {
 			vector<int> facets;
 			int nPts1 = 0;
@@ -181,7 +180,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			for (int i = 0; i < nPts1; i++)
 				addPoint(m, refBrush->CachedPointIndex(m, i), outPositions[m][i]);
 
-			if (refBrush->LiveNormals() && brushType != TBT_WEIGHT) {
+			if (refBrush->LiveNormals()) {
 				auto pending = async(launch::async, mesh::SmoothNormalsStaticMap, m, pointStartState[m]);
 				normalUpdates.push_back(move(pending));
 			}
@@ -939,7 +938,6 @@ TB_XForm::TB_XForm() {
 	brushType = TBT_XFORM;
 	brushName = "Transform Brush";
 	bLiveBVH = false;
-	bLiveNormals = false;
 	focus = 1.0f;
 	strength = 1.0f;
 	xformType = 0;

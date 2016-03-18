@@ -109,21 +109,20 @@ public:
 	bool RedoStroke();
 
 	void ShowTransformTool(bool show = true, bool updateBrush = true);
-
+	
+	bool GetEditMode() {
+		return editMode;
+	}
 	void SetEditMode(bool on = true) {
 		editMode = on;
 	}
-	void ToggleEditMode() {
-		if (transformMode != 0) {
-			transformMode = 0;
-			editMode = true;
-			ShowTransformTool(false);
-		}
-		else {
-			editMode = false;
-			transformMode = 1;
-			ShowTransformTool();
-		}
+
+	bool GetTransformMode() {
+		return transformMode;
+	}
+	void SetTransformMode(bool on = true) {
+		transformMode = on;
+		ShowTransformTool(on);
 	}
 
 	bool GetXMirror() {
@@ -418,7 +417,7 @@ private:
 
 	float brushSize;
 	bool editMode;
-	bool transformMode;			// 0 = off, 1 = move, 2 = rotate, 3 = scale
+	bool transformMode;
 	bool bMaskPaint;
 	bool bWeightPaint;
 	bool isPainting;
@@ -532,12 +531,12 @@ public:
 	void MenuEnterSliderEdit();
 	void MenuExitSliderEdit();
 
-	void ToggleBrushPane() {
+	void ToggleBrushPane(bool forceCollapse = false) {
 		wxCollapsiblePane* brushPane = (wxCollapsiblePane*)FindWindowByName("brushPane");
 		if (!brushPane)
 			return;
 
-		brushPane->Collapse(!brushPane->IsCollapsed());
+		brushPane->Collapse(!brushPane->IsCollapsed() || forceCollapse);
 
 		wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 		if (leftPanel)
@@ -731,7 +730,7 @@ private:
 	void OnCheckTreeSel(wxTreeEvent& event);
 	void OnCheckBox(wxCommandEvent& event);
 
-	void OnSelectBrush(wxCommandEvent& event);
+	void OnSelectTool(wxCommandEvent& event);
 
 	void OnSetView(wxCommandEvent& event);
 	void OnTogglePerspective(wxCommandEvent& event);

@@ -34,7 +34,7 @@
         <LeftMousePan>false</LeftMousePan></Input>
     <Editing>
         <!-- Center for move/rotate operations. Object = bounding box center, Origin = (0,0,0), Selected = unmasked vertex centroid -->
-        <CenterMode>Object</CenterMode></Editing>
+        <CenterMode>Selected</CenterMode></Editing>
     <!--Light Settings-->
     <Lights>
         <Ambient>80</Ambient>
