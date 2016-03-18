@@ -379,7 +379,7 @@ public:
 
 // Fallout 4 geometry for non-skinned meshes. Mostly uses half floats for vertex data.
 class BSTriShape : public NiAVObject {
-public:	
+public:
 	class TSVertData {
 	public:
 		Vector3 vert;			// Stored half-float, convert!
@@ -402,7 +402,7 @@ public:
 
 	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
 	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data
-	byte vertFlags[8];			
+	byte vertFlags[8];
 	uint numTriangles;
 	ushort numVertices;
 	uint dataSize;
@@ -437,40 +437,42 @@ public:
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
-// Fallout 4 geometry for non-skinned meshes. Mostly uses half floats for vertex data.
 class BSSubIndexTriShape : public BSTriShape {
 public:
 	uint numTriangles2;
-	uint numSubIndexRecordA;
-	uint numSubIndexRecordB;
+	uint numSegments;
+	uint numSubIndexParts;
 
-	vector<uint> subIndexRecordsA;
-	 
-	uint numSubIndexRecordA_2;
-	uint numSubIndexRecordB_2;
+	vector<uint> segments;
 
-	vector<uint> sequence;
+	uint numSequences;
+	uint numSubIndexRecords;
 
-	class subIndexRecordB {
+	vector<uint> sequences;
+
+	class SubIndexRecord {
 	public:
 		uint unk1;
 		uint unk2;
 		uint numExtra;
-		vector <uint> extraData;
+		vector<uint> extraData;
 	};
 
-	vector<subIndexRecordB> subIndexRecordsB;
+	vector<SubIndexRecord> subIndexRecords;
 
 	NiString ssfFile;
 
 	BSSubIndexTriShape(NiHeader& hdr);
-	BSSubIndexTriShape(fstream& file, NiHeader& hdr); 
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
-	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals=nullptr);
+	BSSubIndexTriShape(fstream& file, NiHeader& hdr);
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	int CalcBlockSize();
+
+	void SetDefaultSegments();
+	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
 class NiGeometry : public NiAVObject {

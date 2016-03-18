@@ -1316,10 +1316,10 @@ BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
 
 	numTriangles2 = 0;
-	numSubIndexRecordA = 0;
-	numSubIndexRecordB = 0;
-	numSubIndexRecordA_2 = 0;
-	numSubIndexRecordB_2 = 0;
+	numSegments = 0;
+	numSubIndexParts = 0;
+	numSequences = 0;
+	numSubIndexRecords = 0;
 }
 
 BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
@@ -1329,30 +1329,32 @@ BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShap
 
 void BSSubIndexTriShape::Get(fstream& file) {
 	file.read((char*)&numTriangles2, 4);
-	file.read((char*)&numSubIndexRecordA, 4);
-	file.read((char*)&numSubIndexRecordB, 4);
+	file.read((char*)&numSegments, 4);
+	file.read((char*)&numSubIndexParts, 4);
 
-	subIndexRecordsA.resize(numSubIndexRecordB * 4);
-	for (int i = 0; i < numSubIndexRecordB * 4; i++)
-		file.read((char*)&subIndexRecordsA[i], 4);
-	
-	if (numSubIndexRecordB > numSubIndexRecordA) {
-		file.read((char*)&numSubIndexRecordA_2, 4);
-		file.read((char*)&numSubIndexRecordB_2, 4);
+	segments.resize(numSubIndexParts * 4);
+	for (int i = 0; i < numSubIndexParts * 4; i++)
+		file.read((char*)&segments[i], 4);
 
-		sequence.resize(numSubIndexRecordA);
-		for (int i = 0; i < numSubIndexRecordA; i++)
-			file.read((char*)&sequence[i], 4);
+	if (numSubIndexParts > numSegments) {
+		file.read((char*)&numSequences, 4);
+		file.read((char*)&numSubIndexRecords, 4);
 
-		subIndexRecordsB.resize(numSubIndexRecordB);
-		for (int i = 0; i < numSubIndexRecordB; i++) {
-			file.read((char*)&subIndexRecordsB[i].unk1, 4);
-			file.read((char*)&subIndexRecordsB[i].unk2, 4);
-			file.read((char*)&subIndexRecordsB[i].numExtra, 4);
-			subIndexRecordsB[i].extraData.resize(subIndexRecordsB[i].numExtra);
-			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++)
-				file.read((char*)&subIndexRecordsB[i].extraData[j], 4);
+		sequences.resize(numSegments);
+		for (int i = 0; i < numSegments; i++)
+			file.read((char*)&sequences[i], 4);
+
+		subIndexRecords.resize(numSubIndexParts);
+		for (int i = 0; i < numSubIndexParts; i++) {
+			file.read((char*)&subIndexRecords[i].unk1, 4);
+			file.read((char*)&subIndexRecords[i].unk2, 4);
+			file.read((char*)&subIndexRecords[i].numExtra, 4);
+
+			subIndexRecords[i].extraData.resize(subIndexRecords[i].numExtra);
+			for (int j = 0; j < subIndexRecords[i].numExtra; j++)
+				file.read((char*)&subIndexRecords[i].extraData[j], 4);
 		}
+
 		ssfFile.Get(file, 2);
 	}
 }
@@ -1361,27 +1363,28 @@ void BSSubIndexTriShape::Put(fstream& file) {
 	BSTriShape::Put(file);
 
 	file.write((char*)&numTriangles2, 4);
-	file.write((char*)&numSubIndexRecordA, 4);
-	file.write((char*)&numSubIndexRecordB, 4);
+	file.write((char*)&numSegments, 4);
+	file.write((char*)&numSubIndexParts, 4);
 
-	for (int i = 0; i < numSubIndexRecordB * 4; i++)
-		file.write((char*)&subIndexRecordsA[i], 4);
+	for (int i = 0; i < numSubIndexParts * 4; i++)
+		file.write((char*)&segments[i], 4);
 
-	if (numSubIndexRecordB > numSubIndexRecordA) {
-		file.write((char*)&numSubIndexRecordA_2, 4);
-		file.write((char*)&numSubIndexRecordB_2, 4);
+	if (numSubIndexParts > numSegments) {
+		file.write((char*)&numSequences, 4);
+		file.write((char*)&numSubIndexRecords, 4);
 
-		for (int i = 0; i < numSubIndexRecordA; i++)
-			file.write((char*)&sequence[i], 4);
+		for (int i = 0; i < numSegments; i++)
+			file.write((char*)&sequences[i], 4);
 
-		for (int i = 0; i < numSubIndexRecordB; i++) {
-			file.write((char*)&subIndexRecordsB[i].unk1, 4);
-			file.write((char*)&subIndexRecordsB[i].unk2, 4);
-			file.write((char*)&subIndexRecordsB[i].numExtra, 4);
+		for (int i = 0; i < numSubIndexParts; i++) {
+			file.write((char*)&subIndexRecords[i].unk1, 4);
+			file.write((char*)&subIndexRecords[i].unk2, 4);
+			file.write((char*)&subIndexRecords[i].numExtra, 4);
 
-			for (int j = 0; j < subIndexRecordsB[i].numExtra; j++)
-				file.write((char*)&subIndexRecordsB[i].extraData[j], 4);
+			for (int j = 0; j < subIndexRecords[i].numExtra; j++)
+				file.write((char*)&subIndexRecords[i].extraData[j], 4);
 		}
+
 		ssfFile.Put(file, 2, false);
 	}
 }
@@ -1394,19 +1397,26 @@ void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
+void BSSubIndexTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	BSTriShape::notifyVerticesDelete(vertIndices);
+
+	SetDefaultSegments();
+}
+
 int BSSubIndexTriShape::CalcBlockSize() {
 	BSTriShape::CalcBlockSize();
 
-	blockSize += 12;									// tris and first record counts
-	blockSize += numSubIndexRecordB * 4 * 4;			// sub inex record arrayA
+	blockSize += 12;										// tris and first record counts
+	blockSize += numSubIndexParts * 4 * 4;					// sub index record array A
 
-	if (numSubIndexRecordB > numSubIndexRecordA) {		
-		blockSize += 8;									// second index accounts
-		blockSize += numSubIndexRecordA * 4;			// sequence array
-		for (int i = 0; i < numSubIndexRecordB; i++) {			// sub index recordsb
-			blockSize += 12;									// unknown data per record
-			blockSize += 4 * subIndexRecordsB[i].numExtra;		// extra data per record.
+	if (numSubIndexParts > numSegments) {
+		blockSize += 8;										// second index accounts
+		blockSize += numSegments * 4;						// sequence array
+		for (int i = 0; i < numSubIndexParts; i++) {		// sub index records B
+			blockSize += 12;								// unknown data per record
+			blockSize += 4 * subIndexRecords[i].numExtra;	// extra data per record
 		}
+
 		blockSize += 2;
 		blockSize += ssfFile.str.length();
 	}
@@ -1414,33 +1424,39 @@ int BSSubIndexTriShape::CalcBlockSize() {
 	return blockSize;
 }
 
-void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
-	BSTriShape::Create(verts, tris, uvs, normals);
-
+void BSSubIndexTriShape::SetDefaultSegments() {
 	vertFlags[0] = 8;
 	vertFlags[6] = 5;
 
 	numTriangles2 = numTriangles;
-	numSubIndexRecordA = 0;
-	numSubIndexRecordB = 0;
-	numSubIndexRecordA_2 = 0;
-	numSubIndexRecordB_2 = 0;
+	numSegments = 4;
+	numSubIndexParts = 4;
+	numSequences = 0;
+	numSubIndexRecords = 0;
 
-	numSubIndexRecordA = numSubIndexRecordB = 4;
+	sequences.clear();
+	subIndexRecords.clear();
+	ssfFile.str.clear();
 
-	subIndexRecordsA.resize(4 * 32);
+	segments.resize(4 * 32);
 	int n = 0;
 	for (int i = 0; i < 3; i++) {
-		subIndexRecordsA[n++] = 0x0;
-		subIndexRecordsA[n++] = 0x0;
-		subIndexRecordsA[n++] = 0xFFFFFFFF;
-		subIndexRecordsA[n++] = 0x0;
+		segments[n++] = 0x0;
+		segments[n++] = 0x0;
+		segments[n++] = 0xFFFFFFFF;
+		segments[n++] = 0x0;
 	}
 
-	subIndexRecordsA[n++] = 0x0;
-	subIndexRecordsA[n++] = numTriangles;
-	subIndexRecordsA[n++] = 0xFFFFFFFF;
-	subIndexRecordsA[n++] = 0x0;
+	segments[n++] = 0x0;
+	segments[n++] = numTriangles;
+	segments[n++] = 0xFFFFFFFF;
+	segments[n++] = 0x0;
+}
+
+void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
+	BSTriShape::Create(verts, tris, uvs, normals);
+
+	SetDefaultSegments();
 }
 
 void NiGeometry::Init() {
