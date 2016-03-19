@@ -1856,7 +1856,13 @@ void OutfitStudio::OnShapeSelect(wxTreeEvent& event) {
 	UpdateActiveShapeUI();
 }
 
-void OutfitStudio::OnShapeActivated(wxTreeEvent& WXUNUSED(event)) {
+void OutfitStudio::OnShapeActivated(wxTreeEvent& event) {
+	int hitFlags;
+	outfitShapes->HitTest(event.GetPoint(), hitFlags);
+
+	if (hitFlags & wxTREE_HITTEST_ONITEMSTATEICON)
+		return;
+
 	wxCommandEvent evt;
 	OnShapeProperties(evt);
 }
