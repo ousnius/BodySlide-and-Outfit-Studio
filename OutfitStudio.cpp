@@ -3128,7 +3128,7 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Imported shape.");
 
 	RefreshGUIFromProj();
-	glView->Refresh();
+	glView->Render();
 }
 
 void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3187,7 +3187,7 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Imported shape.");
 
 	RefreshGUIFromProj();
-	glView->Refresh();
+	glView->Render();
 }
 
 void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
@@ -3337,6 +3337,9 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 		}
 		previewMove.Zero();
 	}
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool(true, false);
 }
 
 void OutfitStudio::OnMoveShapeOldOffset(wxCommandEvent& event) {
@@ -3424,7 +3427,11 @@ void OutfitStudio::PreviewMove(const Vector3& changed) {
 		project->GetLiveVerts(i->shapeName, verts);
 		glView->UpdateMeshVertices(i->shapeName, &verts);
 	}
+
 	previewMove = changed;
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool(true, false);
 }
 
 void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3463,6 +3470,9 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		previewScale = 1.0f;
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool(true, false);
 	}
 }
 
@@ -3514,6 +3524,9 @@ void OutfitStudio::PreviewScale(const float& scale) {
 	}
 
 	previewScale = scale;
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool(true, false);
 }
 
 void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3562,6 +3575,9 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		previewRotation.Zero();
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool(true, false);
 	}
 }
 
@@ -3615,7 +3631,11 @@ void OutfitStudio::PreviewRotation(const Vector3& changed) {
 		project->GetLiveVerts(i->shapeName, verts);
 		glView->UpdateMeshVertices(i->shapeName, &verts);
 	}
+
 	previewRotation = changed;
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool(true, false);
 }
 
 void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
@@ -4280,6 +4300,9 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				os->project->GetLiveVerts(os->activeItem->shapeName, verts);
 				UpdateMeshVertices(os->activeItem->shapeName, &verts);
 			}
+
+			if (transformMode)
+				ShowTransformTool(true, false);
 		}
 	}
 	else if (event.GetKeyCode() == WXK_SPACE)
@@ -4726,21 +4749,40 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 	if (wxGetKeyState(wxKeyCode('S')))  {
 		wxPoint p = event.GetPosition();
 		int delt = event.GetWheelRotation();
-		if (delt < 0)
-			DecBrush();
-		else
-			IncBrush();
 
-		gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
+		if (editMode) {
+			// Adjust brush size
+			if (delt < 0)
+				DecBrush();
+			else
+				IncBrush();
+
+			os->CheckBrushBounds();
+			os->UpdateBrushPane();
+			gls.UpdateCursor(p.x, p.y, bGlobalBrushCollision);
+		}
+		else if (transformMode) {
+			// Adjust scale of active shapes
+			float factor = delt < 0 ? 0.99f : 1.01f;
+			for (auto &m : gls.GetActiveMeshes()) {
+				unordered_map<ushort, float> mask;
+				vector<Vector3> verts;
+				GetShapeMask(mask, m->shapeName);
+
+				os->project->ScaleShape(m->shapeName, factor, &mask);
+				os->project->GetLiveVerts(m->shapeName, verts);
+				UpdateMeshVertices(m->shapeName, &verts);
+			}
+
+			ShowTransformTool(true, false);
+		}
 	}
 	else {
 		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
 		gls.UpdateProjection();
 	}
-	
-	os->CheckBrushBounds();
-	os->UpdateBrushPane();
+
 	gls.RenderOneFrame();
 }
 
