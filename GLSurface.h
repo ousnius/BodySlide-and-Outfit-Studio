@@ -234,9 +234,9 @@ public:
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
-	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr, Vector3* inRayDir = nullptr, Vector3* inRayOrigin = nullptr);
+	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr, Vector3* inRayDir = nullptr, Vector3* inRayOrigin = nullptr);
 	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
-	int CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
+	bool CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 
 	int AddVisRay(Vector3& start, Vector3& direction, float length);
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");

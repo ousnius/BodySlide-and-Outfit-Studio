@@ -505,7 +505,7 @@ int GLSurface::PickMesh(int ScreenX, int ScreenY) {
 	return result;
 }
 
-bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh* hitMesh, bool allMeshes, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
+bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh, bool allMeshes, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
 	if (activeMeshes.empty())
 		return false;
 
@@ -520,14 +520,20 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 		o = (*inRayOrigin);
 	}
 
-	unordered_map<mesh*, Vector3> allHitDistances;
+	bool collided = false;
+	unordered_map<mesh*, float> allHitDistances;
 	for (auto &m : activeMeshes) {
+		if (!m->bvh)
+			continue;
+
 		if (!allMeshes && m != selectedMesh)
 			continue;
 
 		vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
+				collided = true;
+
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
 				for (int i = 1; i < results.size(); i++)
@@ -539,10 +545,11 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 				bool closest = true;
 				float viewDistance = origin.DistanceTo(o);
 
-				for (auto &p : allHitDistances) {
-					if (viewDistance > p.second.DistanceTo(o))
+				for (auto &p : allHitDistances)
+					if (viewDistance > p.second)
 						closest = false;
-				}
+
+				allHitDistances[m] = viewDistance;
 
 				if (closest) {
 					outOrigin = origin;
@@ -553,58 +560,71 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 					m->tris[results[min_i].HitFacet].trinormal(m->verts, &outNormal);
 
 					if (hitMesh)
-						hitMesh = m;
+						(*hitMesh) = m;
 
-					return true;
+					if (!allMeshes)
+						return true;
 				}
 			}
 		}
 	}
 
-	return false;
+	return collided;
 }
 
-int GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
-	Vector3 origin;
+bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
+	Vector3 o;
 	Vector3 d;
 
 	if (!inRayDir) {
-		GetPickRay(ScreenX, ScreenY, d, origin);
+		GetPickRay(ScreenX, ScreenY, d, o);
 	}
 	else {
 		d = (*inRayDir);
-		origin = (*inRayOrigin);
+		o = (*inRayOrigin);
 	}
-	float nearestDist = FLT_MAX;
-	int collided = -1;
-	int oid = 0;
-	for (auto &o : overlays) {
+
+	bool collided = false;
+	unordered_map<mesh*, float> allHitDistances;
+	for (auto &ov : overlays) {
 		vector<IntersectResult> results;
-		if (!o->bvh) {
-			oid++;
+		if (!ov->bvh)
 			continue;
-		}
-		if (o->bvh->IntersectRay(origin, d, &results)) {
+
+		if (ov->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
 				collided = true;
+
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++) {
+				for (int i = 1; i < results.size(); i++)
 					if (results[i].HitDistance < minDist)
 						min_i = i;
-				}
-				if (minDist < nearestDist) {
-					nearestDist = minDist;
-					collided = oid;
-				}
 
-				outOrigin = results[min_i].HitCoord;
-				if (outFacet)
-					(*outFacet) = results[min_i].HitFacet;
-				o->tris[results[min_i].HitFacet].trinormal(o->verts, &outNormal);
+				Vector3 origin = results[min_i].HitCoord;
+
+				bool closest = true;
+				float viewDistance = origin.DistanceTo(o);
+
+				for (auto &p : allHitDistances)
+					if (viewDistance > p.second)
+						closest = false;
+
+				allHitDistances[ov] = viewDistance;
+
+				if (closest) {
+					outOrigin = origin;
+
+					if (hitMesh)
+						(*hitMesh) = ov;
+
+					if (outFacet)
+						(*outFacet) = results[min_i].HitFacet;
+
+					ov->tris[results[min_i].HitFacet].trinormal(ov->verts, &outNormal);
+				}
 			}
 		}
-		oid++;
 	}
 
 	return collided;

@@ -4289,11 +4289,10 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	Vector3 vo;
 	Vector3 d;
 	Vector3 s;
-	bool meshHit;
 
 	TweakPickInfo tpi;
-	meshHit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, bGlobalBrushCollision, &tpi.facet);
-	if (!meshHit)
+	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, bGlobalBrushCollision, &tpi.facet);
+	if (!hit)
 		return false;
 
 	if (!os->NotifyStrokeStarting())
@@ -4464,13 +4463,14 @@ void wxGLPanel::EndBrushStroke() {
 
 bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	TweakPickInfo tpi;
-	int meshHit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &tpi.facet);
-	if (meshHit == -1)
+	mesh* hitMesh;
+	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh, &tpi.facet);
+	if (!hit)
 		return false;
 
 	tpi.center = xformCenter;
 
-	string mname = gls.GetOverlay(meshHit)->shapeName;
+	string mname = hitMesh->shapeName;
 	if (mname.find("Move") != string::npos) {
 		translateBrush.SetXFormType(0);
 		activeBrush = &translateBrush;
