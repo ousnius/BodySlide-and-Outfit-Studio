@@ -20,7 +20,6 @@ PFNGLUSEPROGRAMPROC glUseProgram = nullptr;
 PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation = nullptr;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
 PFNGLUNIFORM1FPROC glUniform1f = nullptr;
-PFNGLPROGRAMUNIFORM1FPROC glProgramUniform1f = nullptr;
 
 PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
 PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = nullptr;
@@ -283,7 +282,6 @@ bool GLShader::initShaders() {
 		glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)wglGetProcAddress("glGetAttribLocation");
 		glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
 		glUniform1f = (PFNGLUNIFORM1FPROC)wglGetProcAddress("glUniform1f");
-		glProgramUniform1f = (PFNGLPROGRAMUNIFORM1FPROC)wglGetProcAddress("glProgramUniform1f");
 
 		initComplete = true;
 	}

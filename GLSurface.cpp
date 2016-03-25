@@ -13,8 +13,6 @@ See the included LICENSE file
 PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
 PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
 PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
-PFNWGLGETEXTENSIONSSTRINGARBPROC wglGetExtensionsStringArb = nullptr;
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatArb = nullptr;
 
 
 Vector3::Vector3(const Vertex& other) {
