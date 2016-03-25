@@ -22,11 +22,10 @@ for ($item in $clothBones)
     parent -w $item;
     setAttr ($item+".translateX") $Xpos;
     setAttr ($item+".translateY") $Zpos;
-    setAttr ($item+".translateZ") $Ypos;
+    setAttr ($item+".translateZ") ($Ypos * -1);
     parent $item COM ;
 }
 
-select -r NifSkeleton;
 select -r bindPose1;
 doDelete;
 select -r NifSkeleton;
