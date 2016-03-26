@@ -54,6 +54,15 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 }
 
 void PreviewWindow::OnShown() {
+	if (!context->IsOK()) {
+		Destroy();
+		canvas = nullptr;
+		delete context;
+		app->PreviewClosed();
+		wxLogError("Preview failed: OpenGL context is not OK.");
+		return;
+	}
+
 	wxLogMessage("Initializing preview window...");
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
