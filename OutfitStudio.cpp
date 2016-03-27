@@ -4109,7 +4109,7 @@ wxEND_EVENT_TABLE()
 wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs)
 	: wxGLCanvas(parent, attribs, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
 
-	context = new wxGLContext(this);
+	context = new wxGLContext(this, nullptr, &GLSurface::GetGLContextAttribs());
 	rbuttonDown = false;
 	lbuttonDown = false;
 	mbuttonDown = false;
@@ -4141,8 +4141,10 @@ wxGLPanel::~wxGLPanel() {
 }
 
 void wxGLPanel::OnShown() {
-	if (!context->IsOK())
+	if (!context->IsOK()) {
 		wxLogError("Outfit Studio: OpenGL context is not OK.");
+		wxMessageBox("Outfit Studio: OpenGL context is not OK.", "OpenGL Error", wxICON_ERROR, os);
+	}
 
 	gls.Initialize(this, context);
 	auto size = GetSize();

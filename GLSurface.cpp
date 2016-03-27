@@ -236,11 +236,49 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static wxGLAttributes attribs;
 
 	if (!attribsInitialized) {
-		attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(1).Samplers(8).EndList();
+		// 8x AA
+		attribs.PlatformDefaults().RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(1).Samplers(8).EndList();
+
+		bool displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
+		if (!displaySupported) {
+			wxLogWarning("OpenGL attributes not supported. Trying out different ones...");
+			attribs.Reset();
+
+			// 4x AA
+			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(1).Samplers(4).EndList();
+			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
+		}
+
+		if (!displaySupported) {
+			wxLogWarning("OpenGL attributes not supported. Trying out different ones...");
+			attribs.Reset();
+
+			// No AA
+			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(0).EndList();
+			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
+		}
+
+		if (!displaySupported)
+			wxLogWarning("No supported OpenGL attributes could be found!");
+		else
+			wxLogMessage("OpenGL attributes are supported.");
+
 		attribsInitialized = true;
 	}
 
 	return attribs;
+}
+
+const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
+	static bool ctxAttribsInitialized{ false };
+	static wxGLContextAttrs ctxAttribs;
+
+	if (!ctxAttribsInitialized) {
+		ctxAttribs.PlatformDefaults().CoreProfile().OGLVersion(3, 1).EndList();
+		ctxAttribsInitialized = true;
+	}
+
+	return ctxAttribs;
 }
 
 void GLSurface::InitLighting() {

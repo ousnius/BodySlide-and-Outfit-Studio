@@ -89,6 +89,7 @@ public:
 
 	// Get the attributes to use for creating a wxGLCanvas
 	static const wxGLAttributes& GetGLAttribs();
+	static const wxGLContextAttrs& GetGLContextAttribs();
 
 	void DeleteAllMeshes() {
 		for (auto &m : meshes)

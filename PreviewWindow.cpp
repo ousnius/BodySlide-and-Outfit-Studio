@@ -41,7 +41,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
-	context = new wxGLContext(canvas);
+	context = new wxGLContext(canvas, nullptr, &GLSurface::GetGLContextAttribs());
 	
 	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
 	uiPanel->SetSizer(sizerPanel);
@@ -60,6 +60,7 @@ void PreviewWindow::OnShown() {
 		delete context;
 		app->PreviewClosed();
 		wxLogError("Preview failed: OpenGL context is not OK.");
+		wxMessageBox("Preview failed: OpenGL context is not OK.", "OpenGL Error", wxICON_ERROR);
 		return;
 	}
 
