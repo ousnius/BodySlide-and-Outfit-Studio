@@ -387,21 +387,28 @@ public:
 	int CalcBlockSize();
 };
 
-// Fallout 4 geometry for non-skinned meshes. Mostly uses half floats for vertex data.
+
 class BSTriShape : public NiAVObject {
 public:
 	class TSVertData {
 	public:
-		Vector3 vert;			// Stored half-float, convert!
-		float bitangentX;		// maybe the dotproduct of the vert normal and the z axis?
-		Vector2 uv;				// Stored as half-float, convert!
+		// Single- or half-precision depending on vertFlags7 & 64 being true
+		Vector3 vert;
+		float bitangentX;	// Maybe the dot product of the vert normal and the z-axis?
+
+		Vector2 uv;
+
+		// Only if vertFlags7 & 0x1 is true
 		byte normal[3];
 		byte bitangentY;
-		byte tangent[3];		// only if flags[6] & 0x1 is true?   some kind of packed normal data ?
+		byte tangent[3];
 		byte bitangentZ;
 
-		byte colorData[4];		// only if flags[6] & 0x2 is true
-		float weights[4];		// stored in half-float, convert!
+		// Only if vertFlags7 & 0x2 is true
+		byte colorData[4];
+
+		// Only if vertFlags7 & 0x4 is true
+		float weights[4];
 		byte weightBones[4];
 	};
 
@@ -410,13 +417,20 @@ public:
 	int shaderPropertyRef;
 	int alphaPropertyRef;
 
-	// flags for vert data look to be stored in here.  byte 0 or byte 6 specifically look promising .  
-	//  using byte 6 currently, bit 3 indicating sub index data,  bit 2 indicating the presence of color data.  bit 1 indicating presence of normal data
-	byte vertFlags[8];
+	// Set in CalcBlockSize()
+	byte vertFlags1;	// Number of uint elements in vertex data
+	byte vertFlags2;	// 4 byte or 2 byte position data
+
+	byte vertFlags3;
+	byte vertFlags4;
+	byte vertFlags5;
+	byte vertFlags6;
+	byte vertFlags7;	// Normals, vertex colors, skinned, precision flags
+	byte vertFlags8;
+
 	uint numTriangles;
 	ushort numVertices;
 	uint dataSize;
-	uint vertRecSize;				// size of vertex structure calculated with (datasize - (numtris*6)) / numverts;
 
 	vector<Vector3> rawVertices;	// filled by GetRawVerts function and returned.
 	vector<Vector3> rawNormals;		// filled by GetNormalData function and returned.
@@ -441,6 +455,12 @@ public:
 	const vector<Vector3>* GetTangentData(bool xform = true);
 	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
+
+	void SetSkinned(bool enable);
+	bool IsSkinned();
+
+	void SetFullPrecision(bool enable);
+	bool IsFullPrecision();
 
 	void SetNormals(const vector<Vector3>& inNorms);
 	void RecalcNormals(const bool& smooth = false, const float& smoothThres = 60.0f);

@@ -3210,7 +3210,7 @@
 			<orient>wxVERTICAL</orient>
 			<minsize>620,400</minsize>
 			<object class="sizeritem">
-				<option>0</option>
+				<option>1</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxNotebook">
@@ -3525,6 +3525,72 @@
 						</object>
 					</object>
 					<object class="notebookpage">
+						<label>Geometry</label>
+						<object class="wxPanel" name="pgGeometry">
+							<object class="wxBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxALL|wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxFlexGridSizer">
+										<rows>0</rows>
+										<cols>2</cols>
+										<vgap>0</vgap>
+										<hgap>0</hgap>
+										<growablecols>1</growablecols>
+										<growablerows></growablerows>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+											<border>5</border>
+											<object class="wxStaticText" name="lbFullPrecision">
+												<label>Full Precision</label>
+												<wrap>-1</wrap>
+											</object>
+										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxALL|wxEXPAND</flag>
+											<border>5</border>
+											<object class="wxCheckBox" name="fullPrecision">
+												<checked>0</checked>
+												<enabled>0</enabled>
+											</object>
+										</object>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxEXPAND|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticLine" name="lineGeometry">
+										<style>wxLI_VERTICAL</style>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>1</option>
+									<flag>wxEXPAND</flag>
+									<border>5</border>
+									<object class="wxFlexGridSizer">
+										<rows>0</rows>
+										<cols>2</cols>
+										<vgap>0</vgap>
+										<hgap>0</hgap>
+										<growablecols>1</growablecols>
+										<growablerows></growablerows>
+										<object class="spacer">
+											<option>0</option>
+											<flag>wxEXPAND</flag>
+											<border>5</border>
+											<size>0,5</size>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="notebookpage">
 						<label>Extra Data</label>
 						<object class="wxPanel" name="pgExtraData">
 							<object class="wxBoxSizer">
@@ -3584,7 +3650,7 @@
 				</object>
 			</object>
 			<object class="spacer">
-				<option>1</option>
+				<option>0</option>
 				<flag>wxEXPAND</flag>
 				<border>5</border>
 				<size>0,5</size>

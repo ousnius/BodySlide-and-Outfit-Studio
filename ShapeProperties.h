@@ -32,6 +32,8 @@ private:
 	wxButton* btnAddTransparency = nullptr;
 	wxButton* btnRemoveTransparency = nullptr;
 
+	wxCheckBox* fullPrecision = nullptr;
+
 	vector<int> extraDataIndices;
 	wxPanel* pgExtraData = nullptr;
 	wxFlexGridSizer* extraDataGrid = nullptr;
@@ -50,6 +52,8 @@ private:
 	void GetTransparency();
 	void AddTransparency();
 	void RemoveTransparency();
+
+	void GetGeometry();
 
 	void GetExtraData();
 	void AddExtraData(const NiExtraData* extraData, bool uiOnly = false);
