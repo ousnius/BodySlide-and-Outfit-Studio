@@ -390,24 +390,21 @@ public:
 
 class BSTriShape : public NiAVObject {
 public:
-	class TSVertData {
+	class BSVertexData {
 	public:
-		// Single- or half-precision depending on vertFlags7 & 64 being true
+		// Single- or half-precision depending on IsFullPrecision() being true
 		Vector3 vert;
 		float bitangentX;	// Maybe the dot product of the vert normal and the z-axis?
 
 		Vector2 uv;
 
-		// Only if vertFlags7 & 0x1 is true
 		byte normal[3];
 		byte bitangentY;
 		byte tangent[3];
 		byte bitangentZ;
 
-		// Only if vertFlags7 & 0x2 is true
 		byte colorData[4];
 
-		// Only if vertFlags7 & 0x4 is true
 		float weights[4];
 		byte weightBones[4];
 	};
@@ -424,8 +421,8 @@ public:
 	byte vertFlags3;
 	byte vertFlags4;
 	byte vertFlags5;
-	byte vertFlags6;
-	byte vertFlags7;	// Normals, vertex colors, skinned, precision flags
+	byte vertFlags6;	// Vertex, UVs, Normals
+	byte vertFlags7;	// (Bi)Tangents, Vertex Colors, Skinning, Precision
 	byte vertFlags8;
 
 	uint numTriangles;
@@ -434,11 +431,11 @@ public:
 
 	vector<Vector3> rawVertices;	// filled by GetRawVerts function and returned.
 	vector<Vector3> rawNormals;		// filled by GetNormalData function and returned.
-	vector<Vector3> rawTangents;	// filled by calcTangentSpace function and returned.
-	vector<Vector3> rawBitangents;	// filled in calcTangentSpace
+	vector<Vector3> rawTangents;	// filled by CalcTangentSpace function and returned.
+	vector<Vector3> rawBitangents;	// filled in CalcTangentSpace
 	vector<Vector2> rawUvs;			// filled by GetUVData function and returned.
 
-	vector<TSVertData> vertData;
+	vector<BSVertexData> vertData;
 	vector<Triangle> triangles;
 	BSTriShape(NiHeader& hdr);
 	BSTriShape(fstream& file, NiHeader& hdr);
@@ -456,11 +453,38 @@ public:
 	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
 
+	bool HasVertices() {
+		return (vertFlags6 & (1 << 4)) != 0;
+	}
+
+	bool HasUVs() {
+		return (vertFlags6 & (1 << 5)) != 0;
+	}
+
+	void SetNormals(bool enable);
+	bool HasNormals() {
+		return (vertFlags6 & (1 << 7)) != 0;
+	}
+
+	void SetTangents(bool enable);
+	bool HasTangents() {
+		return (vertFlags7 & (1 << 0)) != 0;
+	}
+
+	void SetVertexColors(bool enable);
+	bool HasVertexColors() {
+		return (vertFlags7 & (1 << 1)) != 0;
+	}
+
 	void SetSkinned(bool enable);
-	bool IsSkinned();
+	bool IsSkinned() {
+		return (vertFlags7 & (1 << 2)) != 0;
+	}
 
 	void SetFullPrecision(bool enable);
-	bool IsFullPrecision();
+	bool IsFullPrecision() {
+		return (vertFlags7 & (1 << 6)) != 0;
+	}
 
 	void SetNormals(const vector<Vector3>& inNorms);
 	void RecalcNormals(const bool& smooth = false, const float& smoothThres = 60.0f);

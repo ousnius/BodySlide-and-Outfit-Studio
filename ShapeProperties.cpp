@@ -415,9 +415,7 @@ void ShapeProperties::GetGeometry() {
 			return;
 
 		fullPrecision->SetValue(bsGeom->IsFullPrecision());
-
-		// Currently disabled for skinned geometry
-		fullPrecision->Enable(!bsGeom->IsSkinned());
+		fullPrecision->Enable();
 	}
 }
 

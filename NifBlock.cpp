@@ -723,65 +723,75 @@ void BSTriShape::Get(fstream& file) {
 
 	vertData.resize(numVertices);
 
-	half_float::half halfData;
-	for (int i = 0; i < numVertices; i++) {
-		if (IsFullPrecision()) {
-			// Full precision
-			file.read((char*)&vertData[i].vert.x, 4);
-			file.read((char*)&vertData[i].vert.y, 4);
-			file.read((char*)&vertData[i].vert.z, 4);
+	if (HasVertices() && dataSize > 0) {
+		half_float::half halfData;
+		for (int i = 0; i < numVertices; i++) {
+			if (IsFullPrecision()) {
+				// Full precision
+				file.read((char*)&vertData[i].vert.x, 4);
+				file.read((char*)&vertData[i].vert.y, 4);
+				file.read((char*)&vertData[i].vert.z, 4);
 
-			file.read((char*)&vertData[i].bitangentX, 4);
-		}
-		else {
-			// Half precision
-			file.read((char*)&halfData, 2);
-			vertData[i].vert.x = halfData;
-			file.read((char*)&halfData, 2);
-			vertData[i].vert.y = halfData;
-			file.read((char*)&halfData, 2);
-			vertData[i].vert.z = halfData;
-
-			file.read((char*)&halfData, 2);
-			vertData[i].bitangentX = halfData;
-		}
-
-		file.read((char*)&halfData, 2);
-		vertData[i].uv.u = halfData;
-		file.read((char*)&halfData, 2);
-		vertData[i].uv.v = halfData;
-
-		if (vertFlags7 & 0x1) {
-			for (int j = 0; j < 3; j++)
-				file.read((char*)&vertData[i].normal[j], 1);
-
-			file.read((char*)&vertData[i].bitangentY, 1);
-
-			for (int j = 0; j < 3; j++)
-				file.read((char*)&vertData[i].tangent[j], 1);
-
-			file.read((char*)&vertData[i].bitangentZ, 1);
-		}
-
-		if (vertFlags7 & 0x2)
-			file.read((char*)&vertData[i].colorData, 4);
-
-		if (vertFlags7 & 0x4) {
-			for (int j = 0; j < 4; j++) {
+				file.read((char*)&vertData[i].bitangentX, 4);
+			}
+			else {
+				// Half precision
 				file.read((char*)&halfData, 2);
-				vertData[i].weights[j] = halfData;
+				vertData[i].vert.x = halfData;
+				file.read((char*)&halfData, 2);
+				vertData[i].vert.y = halfData;
+				file.read((char*)&halfData, 2);
+				vertData[i].vert.z = halfData;
+
+				file.read((char*)&halfData, 2);
+				vertData[i].bitangentX = halfData;
 			}
 
-			for (int j = 0; j < 4; j++)
-				file.read((char*)&vertData[i].weightBones[j], 1);
+			if (HasUVs()) {
+				file.read((char*)&halfData, 2);
+				vertData[i].uv.u = halfData;
+				file.read((char*)&halfData, 2);
+				vertData[i].uv.v = halfData;
+			}
+
+			if (HasNormals()) {
+				for (int j = 0; j < 3; j++)
+					file.read((char*)&vertData[i].normal[j], 1);
+
+				if (HasTangents()) {
+					file.read((char*)&vertData[i].bitangentY, 1);
+
+					for (int j = 0; j < 3; j++)
+						file.read((char*)&vertData[i].tangent[j], 1);
+
+					file.read((char*)&vertData[i].bitangentZ, 1);
+				}
+			}
+
+
+			if (HasVertexColors())
+				file.read((char*)&vertData[i].colorData, 4);
+
+			if (IsSkinned()) {
+				for (int j = 0; j < 4; j++) {
+					file.read((char*)&halfData, 2);
+					vertData[i].weights[j] = halfData;
+				}
+
+				for (int j = 0; j < 4; j++)
+					file.read((char*)&vertData[i].weightBones[j], 1);
+			}
 		}
 	}
 
 	triangles.resize(numTriangles);
-	for (int i = 0; i < numTriangles; i++) {
-		file.read((char*)&triangles[i].p1, 2);
-		file.read((char*)&triangles[i].p2, 2);
-		file.read((char*)&triangles[i].p3, 2);
+
+	if (dataSize > 0) {
+		for (int i = 0; i < numTriangles; i++) {
+			file.read((char*)&triangles[i].p1, 2);
+			file.read((char*)&triangles[i].p2, 2);
+			file.read((char*)&triangles[i].p3, 2);
+		}
 	}
 }
 
@@ -827,65 +837,73 @@ void BSTriShape::Put(fstream& file) {
 
 	file.write((char*)&dataSize, 4);
 
-	half_float::half halfData;
-	for (int i = 0; i < numVertices; i++) {
-		if (IsFullPrecision()) {
-			// Full precision
-			file.write((char*)&vertData[i].vert.x, 4);
-			file.write((char*)&vertData[i].vert.y, 4);
-			file.write((char*)&vertData[i].vert.z, 4);
+	if (HasVertices() && dataSize > 0) {
+		half_float::half halfData;
+		for (int i = 0; i < numVertices; i++) {
+			if (IsFullPrecision()) {
+				// Full precision
+				file.write((char*)&vertData[i].vert.x, 4);
+				file.write((char*)&vertData[i].vert.y, 4);
+				file.write((char*)&vertData[i].vert.z, 4);
 
-			file.write((char*)&vertData[i].bitangentX, 4);
-		}
-		else {
-			// Half precision
-			halfData = vertData[i].vert.x;
-			file.write((char*)&halfData, 2);
-			halfData = vertData[i].vert.y;
-			file.write((char*)&halfData, 2);
-			halfData = vertData[i].vert.z;
-			file.write((char*)&halfData, 2);
+				file.write((char*)&vertData[i].bitangentX, 4);
+			}
+			else {
+				// Half precision
+				halfData = vertData[i].vert.x;
+				file.write((char*)&halfData, 2);
+				halfData = vertData[i].vert.y;
+				file.write((char*)&halfData, 2);
+				halfData = vertData[i].vert.z;
+				file.write((char*)&halfData, 2);
 
-			halfData = vertData[i].bitangentX;
-			file.write((char*)&halfData, 2);
-		}
-
-		halfData = vertData[i].uv.u;
-		file.write((char*)&halfData, 2);
-
-		halfData = vertData[i].uv.v;
-		file.write((char*)&halfData, 2);
-
-		if (vertFlags7 & 0x1) {
-			for (int j = 0; j < 3; j++)
-				file.write((char*)&vertData[i].normal[j], 1);
-
-			file.write((char*)&vertData[i].bitangentY, 1);
-
-			for (int j = 0; j < 3; j++)
-				file.write((char*)&vertData[i].tangent[j], 1);
-
-			file.write((char*)&vertData[i].bitangentZ, 1);
-		}
-
-		if (vertFlags7 & 0x2)
-			file.write((char*)&vertData[i].colorData, 4);
-
-		if (IsSkinned()) {
-			for (int j = 0; j < 4; j++) {
-				halfData = vertData[i].weights[j];
+				halfData = vertData[i].bitangentX;
 				file.write((char*)&halfData, 2);
 			}
 
-			for (int j = 0; j < 4; j++)
-				file.write((char*)&vertData[i].weightBones[j], 1);
+			if (HasUVs()) {
+				halfData = vertData[i].uv.u;
+				file.write((char*)&halfData, 2);
+
+				halfData = vertData[i].uv.v;
+				file.write((char*)&halfData, 2);
+			}
+
+			if (HasNormals()) {
+				for (int j = 0; j < 3; j++)
+					file.write((char*)&vertData[i].normal[j], 1);
+
+				if (HasTangents()) {
+					file.write((char*)&vertData[i].bitangentY, 1);
+
+					for (int j = 0; j < 3; j++)
+						file.write((char*)&vertData[i].tangent[j], 1);
+
+					file.write((char*)&vertData[i].bitangentZ, 1);
+				}
+			}
+
+			if (HasVertexColors())
+				file.write((char*)&vertData[i].colorData, 4);
+
+			if (IsSkinned()) {
+				for (int j = 0; j < 4; j++) {
+					halfData = vertData[i].weights[j];
+					file.write((char*)&halfData, 2);
+				}
+
+				for (int j = 0; j < 4; j++)
+					file.write((char*)&vertData[i].weightBones[j], 1);
+			}
 		}
 	}
 
-	for (int i = 0; i < numTriangles; i++) {
-		file.write((char*)&triangles[i].p1, 2);
-		file.write((char*)&triangles[i].p2, 2);
-		file.write((char*)&triangles[i].p3, 2);
+	if (dataSize > 0) {
+		for (int i = 0; i < numTriangles; i++) {
+			file.write((char*)&triangles[i].p1, 2);
+			file.write((char*)&triangles[i].p2, 2);
+			file.write((char*)&triangles[i].p3, 2);
+		}
 	}
 }
 
@@ -978,12 +996,13 @@ int BSTriShape::CalcBlockSize() {
 		vertElements += 2;
 	}
 
-	vertElements += 1;			// UVs
+	if (HasUVs())
+		vertElements += 1;		// UVs
 
-	if (vertFlags7 & 0x1)		// Normals + Tangents + Bitangent Y + Bitangent Z
+	if (HasNormals())			// Normals + Tangents + Bitangent Y + Bitangent Z
 		vertElements += 2;
 
-	if (vertFlags7 & 0x2)		// Vertex Colors
+	if (HasVertexColors())		// Vertex Colors
 		vertElements += 1;
 
 	if (IsSkinned())			// Skinning
@@ -991,9 +1010,10 @@ int BSTriShape::CalcBlockSize() {
 
 	vertFlags1 = vertElements;
 
-	int vertDataSize = 4 * vertElements * numVertices;
-	int triDataSize = 6 * numTriangles;
-	dataSize = triDataSize + vertDataSize;
+	if (HasVertices())
+		dataSize = 4 * vertElements * numVertices + 6 * numTriangles;
+	else
+		dataSize = 0;
 
 	blockSize += dataSize;
 
@@ -1094,6 +1114,27 @@ const vector<Vector2>* BSTriShape::GetUVData() {
 	return &rawUvs;
 }
 
+void BSTriShape::SetNormals(bool enable) {
+	if (enable)
+		vertFlags6 |= 1 << 7;
+	else
+		vertFlags6 &= ~(1 << 7);
+}
+
+void BSTriShape::SetTangents(bool enable) {
+	if (enable)
+		vertFlags7 |= 1 << 0;
+	else
+		vertFlags7 &= ~(1 << 0);
+}
+
+void BSTriShape::SetVertexColors(bool enable) {
+	if (enable)
+		vertFlags7 |= 1 << 1;
+	else
+		vertFlags7 &= ~(1 << 1);
+}
+
 void BSTriShape::SetSkinned(bool enable) {
 	if (enable)
 		vertFlags7 |= 1 << 2;
@@ -1101,19 +1142,27 @@ void BSTriShape::SetSkinned(bool enable) {
 		vertFlags7 &= ~(1 << 2);
 }
 
-bool BSTriShape::IsSkinned() {
-	return (vertFlags7 & (1 << 2)) != 0;
-}
-
 void BSTriShape::SetFullPrecision(bool enable) {
-	if (enable)
-		vertFlags7 |= 1 << 6;
-	else
-		vertFlags7 &= ~(1 << 6);
-}
+	if (enable) {
+		vertFlags3 &= ~(1 << 1);
+		vertFlags3 |= 1 << 2;
+		vertFlags3 |= 1 << 5;
 
-bool BSTriShape::IsFullPrecision() {
-	return (vertFlags7 & (1 << 6)) != 0;
+		if (IsSkinned())
+			vertFlags4 |= 1 << 5;
+
+		vertFlags7 |= 1 << 6;
+	}
+	else {
+		vertFlags3 |= 1 << 1;
+		vertFlags3 &= ~(1 << 2);
+		vertFlags3 &= ~(1 << 5);
+		
+		if (IsSkinned())
+			vertFlags4 &= ~(1 << 5);
+
+		vertFlags7 &= ~(1 << 6);
+	}
 }
 
 void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
