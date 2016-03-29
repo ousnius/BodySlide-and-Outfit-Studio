@@ -2992,14 +2992,8 @@ int NifFile::CalcShapeDiff(const string& shapeName, const vector<Vector3>* targe
 		v.y = (targetData->at(i).y * scale) - myData->at(i).y;
 		v.z = (targetData->at(i).z * scale) - myData->at(i).z;
 
-		if (hdr.userVersion == 12 && hdr.userVersion2 >= 130) {
-			if (v.IsZero(true, true))
-				continue;
-		}
-		else {
-			if (v.IsZero(true))
-				continue;
-		}
+		if (v.IsZero(true))
+			continue;
 
 		outDiffData[i] = v;
 	}

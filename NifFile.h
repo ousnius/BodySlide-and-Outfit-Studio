@@ -21,9 +21,6 @@ using namespace std;
 #ifndef EPSILON
 	#define EPSILON (0.0001)
 #endif
-#ifndef EPSILON_LOW
-	#define EPSILON_LOW (0.0312)
-#endif
 
 enum BlockType {
 	NIHEADER,
