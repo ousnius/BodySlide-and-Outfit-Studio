@@ -482,6 +482,9 @@ public:
 	bool IsFullPrecision() {
 		return (vertFlags7 & (1 << 6)) != 0;
 	}
+	bool CanChangePrecision() {
+		return (HasVertices() && HasTangents() && HasNormals());
+	}
 
 	void SetNormals(const vector<Vector3>& inNorms);
 	void RecalcNormals(const bool& smooth = false, const float& smoothThres = 60.0f);

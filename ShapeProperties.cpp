@@ -415,7 +415,7 @@ void ShapeProperties::GetGeometry() {
 			return;
 
 		fullPrecision->SetValue(bsGeom->IsFullPrecision());
-		fullPrecision->Enable();
+		fullPrecision->Enable(bsGeom->CanChangePrecision());
 	}
 }
 

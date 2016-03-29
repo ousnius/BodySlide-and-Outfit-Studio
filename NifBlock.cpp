@@ -1143,13 +1143,22 @@ void BSTriShape::SetSkinned(bool enable) {
 }
 
 void BSTriShape::SetFullPrecision(bool enable) {
+	if (!CanChangePrecision())
+		return;
+
 	if (enable) {
 		vertFlags3 &= ~(1 << 1);
 		vertFlags3 |= 1 << 2;
 		vertFlags3 |= 1 << 5;
 
-		if (IsSkinned())
-			vertFlags4 |= 1 << 5;
+		if (IsSkinned() && HasVertexColors())
+			vertFlags4 = 135;
+		else if (IsSkinned())
+			vertFlags4 = 112;
+		else if (HasVertexColors())
+			vertFlags4 = 7;
+		else
+			vertFlags4 = 0;
 
 		vertFlags7 |= 1 << 6;
 	}
@@ -1157,9 +1166,15 @@ void BSTriShape::SetFullPrecision(bool enable) {
 		vertFlags3 |= 1 << 1;
 		vertFlags3 &= ~(1 << 2);
 		vertFlags3 &= ~(1 << 5);
-		
-		if (IsSkinned())
-			vertFlags4 &= ~(1 << 5);
+
+		if (IsSkinned() && HasVertexColors())
+			vertFlags4 = 101;
+		else if (IsSkinned())
+			vertFlags4 = 80;
+		else if (HasVertexColors())
+			vertFlags4 = 5;
+		else
+			vertFlags4 = 0;
 
 		vertFlags7 &= ~(1 << 6);
 	}
