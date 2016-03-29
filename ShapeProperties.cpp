@@ -480,6 +480,12 @@ void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
 			if (index != -1)
 				extraDataIndices.push_back(index);
 		}
+		else if (extraData->blockType == NIINTEGEREXTRADATA) {
+			NiIntegerExtraData* intExtraData = (NiIntegerExtraData*)extraData;
+			int index = nif->AddIntegerExtraData(shape, intExtraData->GetName(), intExtraData->GetIntegerData());
+			if (index != -1)
+				extraDataIndices.push_back(index);
+		}
 	}
 
 	if (extraDataIndices.empty())
@@ -492,6 +498,7 @@ void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
 
 	wxArrayString types;
 	types.Add("NiStringExtraData");
+	types.Add("NiIntegerExtraData");
 	wxChoice* extraDataType = new wxChoice(pgExtraData, 2000 + id, wxDefaultPosition, wxDefaultSize, types);
 	extraDataType->SetSelection(0);
 	extraDataType->Bind(wxEVT_CHOICE, &ShapeProperties::OnChangeExtraDataType, this);
@@ -505,6 +512,12 @@ void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
 			extraDataType->SetSelection(0);
 			extraDataName->SetValue(stringExtraData->GetName());
 			extraDataValue->SetValue(stringExtraData->GetStringData());
+		}
+		else if (extraData->blockType == NIINTEGEREXTRADATA) {
+			NiIntegerExtraData* intExtraData = (NiIntegerExtraData*)extraData;
+			extraDataType->SetSelection(1);
+			extraDataName->SetValue(intExtraData->GetName());
+			extraDataValue->SetValue(wxString::Format("%d", intExtraData->GetIntegerData()));
 		}
 		else {
 			extraDataBtn->Destroy();
@@ -543,10 +556,13 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 
 	wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + id, this));
 	wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + id, this));
+
 	switch (selection) {
 	case 0:
-		int index = nif->AddStringExtraData(shape, extraDataName->GetValue().ToStdString(), extraDataValue->GetValue().ToStdString());
-		extraDataIndices[id] = index;
+		extraDataIndices[id] = nif->AddStringExtraData(shape, extraDataName->GetValue().ToStdString(), extraDataValue->GetValue().ToStdString());
+		break;
+	case 1:
+		extraDataIndices[id] = nif->AddIntegerExtraData(shape, extraDataName->GetValue().ToStdString(), 0);
 		break;
 	}
 }
@@ -680,6 +696,12 @@ void ShapeProperties::ApplyChanges() {
 			if (extraData->blockType == NISTRINGEXTRADATA) {
 				NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
 				stringExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
+			}
+			else if (extraData->blockType == NIINTEGEREXTRADATA) {
+				NiIntegerExtraData* intExtraData = (NiIntegerExtraData*)extraData;
+				unsigned long val = 0;
+				if (extraDataValue->GetValue().ToULong(&val))
+					intExtraData->SetIntegerData(val);
 			}
 		}
 	}

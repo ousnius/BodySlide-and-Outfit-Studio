@@ -641,20 +641,15 @@ string NifFile::NodeName(int blockID) {
 	return n->GetName();
 }
 
-int NifFile::AddStringExtraData(const string& shapeName, const string& name, const string& stringData) {
-	NiStringExtraData* strExtraData = new NiStringExtraData(hdr);
-	strExtraData->SetName(name);
-	strExtraData->SetStringData(stringData);
-
-	int strExtraDataId = AddBlock(strExtraData, "NiStringExtraData");
-	if (strExtraDataId != -1) {
+int NifFile::AssignExtraData(const string& shapeName, const int& extraDataId) {
+	if (extraDataId != -1) {
 		int id = shapeIdForName(shapeName);
 		if (id == -1)
 			return -1;
 
 		NiTriBasedGeom* geom = geomForName(shapeName);
 		if (geom) {
-			geom->extraDataRef.push_back(strExtraDataId);
+			geom->extraDataRef.push_back(extraDataId);
 			geom->numExtraData++;
 			hdr.blockSizes[id] = geom->CalcBlockSize();
 		}
@@ -663,12 +658,28 @@ int NifFile::AddStringExtraData(const string& shapeName, const string& name, con
 			if (!siTriShape)
 				return -1;
 
-			siTriShape->extraDataRef.push_back(strExtraDataId);
+			siTriShape->extraDataRef.push_back(extraDataId);
 			siTriShape->numExtraData++;
 			hdr.blockSizes[id] = siTriShape->CalcBlockSize();
 		}
 	}
-	return strExtraDataId;
+	return extraDataId;
+}
+
+int NifFile::AddStringExtraData(const string& shapeName, const string& name, const string& stringData) {
+	NiStringExtraData* strExtraData = new NiStringExtraData(hdr);
+	strExtraData->SetName(name);
+	strExtraData->SetStringData(stringData);
+
+	return AssignExtraData(shapeName, AddBlock(strExtraData, "NiStringExtraData"));
+}
+
+int NifFile::AddIntegerExtraData(const string& shapeName, const string& name, const int& integerData) {
+	NiIntegerExtraData* intExtraData = new NiIntegerExtraData(hdr);
+	intExtraData->SetName(name);
+	intExtraData->SetIntegerData(integerData);
+
+	return AssignExtraData(shapeName, AddBlock(intExtraData, "NiIntegerExtraData"));
 }
 
 NiShader* NifFile::GetShaderF4(const string& shapeName) {

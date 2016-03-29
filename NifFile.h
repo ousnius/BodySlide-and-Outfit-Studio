@@ -1539,7 +1539,9 @@ public:
 	int AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale);
 	string NodeName(int blockID);
 
+	int AssignExtraData(const string& shapeName, const int& extraDataId);
 	int AddStringExtraData(const string& shapeName, const string& name, const string& stringData);
+	int AddIntegerExtraData(const string& shapeName, const string& name, const int& integerData);
 
 	int Load(const string& filename);
 	int Save(const string& filename);
