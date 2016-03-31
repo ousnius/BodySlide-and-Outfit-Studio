@@ -43,6 +43,13 @@
 				<bitmap>TransformTool.png</bitmap>
 				<radio>1</radio>
 			</object>
+			<object class="tool" name="btnVertexEdit">
+				<label>Vertex Edit</label>
+				<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</tooltip>
+				<longhelp></longhelp>
+				<bitmap>VertexEdit.png</bitmap>
+				<radio>1</radio>
+			</object>
 			<object class="tool" name="btnMaskBrush">
 				<label>Mask</label>
 				<tooltip>Mask vertices to prevent them from being transformed.</tooltip>
@@ -1082,17 +1089,23 @@
 					<label>Current Tool</label>
 					<object class="wxMenuItem" name="btnSelect">
 						<label>Select\t0</label>
-						<help>Navigate and select meshes</help>
+						<help>Navigate and select meshes.</help>
 						<radio>1</radio>
 					</object>
 					<object class="wxMenuItem" name="btnTransform">
 						<label>Transform</label>
-						<help>Shows a transform tool to manipulate shapes</help>
+						<help>Shows a transform tool to manipulate shapes.</help>
 						<radio>1</radio>
 					</object>
+					<object class="wxMenuItem" name="btnVertexEdit">
+						<label>Vertex Edit</label>
+						<help>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</help>
+						<radio>1</radio>
+					</object>
+					<object class="separator" />
 					<object class="wxMenuItem" name="btnMaskBrush">
 						<label>Mask\t1</label>
-						<help>Mask vertices to prevent them from being transformed</help>
+						<help>Mask vertices to prevent them from being transformed.</help>
 						<radio>1</radio>
 					</object>
 					<object class="wxMenuItem" name="btnInflateBrush">

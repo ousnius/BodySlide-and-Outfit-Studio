@@ -769,7 +769,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 					overlays[ringID]->scale = 2.0f;
 
 					AddVisPoint(hilitepoint, "pointhilite");
-					overlays[AddVisPoint(origin, "cursorcenter")]->color = Vector3(1.0f, 0.0f, 0.0f);
+					AddVisPoint(origin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
 				}
 
 				allHitDistances[m] = hilitepoint;
@@ -915,6 +915,7 @@ void GLSurface::RenderMesh(mesh* m) {
 	GLvoid* elemPtr = nullptr;
 
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
 	if (!m->doublesided)
 		glEnable(GL_CULL_FACE);
 	else
@@ -1061,6 +1062,25 @@ void GLSurface::RenderMesh(mesh* m) {
 			glEnable(GL_LIGHTING);
 
 		glEnable(GL_DEPTH_TEST);
+	}
+
+	if (m->bShowPoints && m->vcolors) {
+		glDisable(GL_LIGHTING);
+		glDisable(GL_CULL_FACE);
+		glDisable(GL_TEXTURE_2D);
+
+		glBegin(GL_POINTS);
+		for (int pi = 0; pi < m->nVerts; pi++) {
+			if (m->vcolors[pi].x > 0.0f)
+				glColor3fv((GLfloat*)&colorRed);
+			else
+				glColor3fv((GLfloat*)&colorGreen);
+
+			glVertex3f(m->verts[pi].x + m->verts[pi].nx / 250.0f,
+				m->verts[pi].y + m->verts[pi].ny / 250.0f,
+				m->verts[pi].z + m->verts[pi].nz / 250.0f);
+		}
+		glEnd();
 	}
 }
 
@@ -1414,21 +1434,17 @@ int GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
 	return overlays.size() - 1;
 }
 
-int GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3* color) {
-	mesh* m;
-	int pmesh = GetOverlayID(name);
-	if (pmesh >= 0) {
-		m = overlays[pmesh];
+mesh* GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3* color) {
+	mesh* m = GetOverlay(name);
+	if (m) {
 		m->verts[0] = p;
-		if (color != nullptr) {
+		if (color)
 			m->color = (*color);
-		}
-		else {
+		else
 			m->color = Vector3(0.0f, 1.0f, 1.0f);
 
-		}
 		m->bVisible = true;
-		return pmesh;
+		return m;
 	}
 
 	m = new mesh();
@@ -1445,7 +1461,7 @@ int GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3* 
 
 	namedOverlays[m->shapeName] = overlays.size();
 	overlays.push_back(m);
-	return overlays.size() - 1;
+	return m;
 }
 
 int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name) {

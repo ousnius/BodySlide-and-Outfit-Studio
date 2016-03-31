@@ -51,6 +51,9 @@ class GLSurface {
 	float defPointSize;
 	float cursorSize;
 
+	Vector3 colorRed = Vector3(1.0f, 0.25f, 0.25f);
+	Vector3 colorGreen = Vector3(0.25f, 1.0f, 0.25f);
+
 	ResourceLoader resLoader;
 	GLMaterial* noImage = nullptr;
 	GLMaterial* skinMaterial = nullptr;
@@ -243,7 +246,7 @@ public:
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");
 	int AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name = "XRotateMesh");
 	int AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
-	int AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
+	mesh* AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
 
 	void BeginEditMode();
 	void EditUndo();
@@ -302,15 +305,12 @@ public:
 				m->material->shader->EnableVertexLighting(bLighting);
 	}
 
-	void ToggleMask() {
-		if (bMaskVisible)
-			bMaskVisible = false;
-		else
-			bMaskVisible = true;
+	void SetMaskVisible(bool bVisible = true) {
+		bMaskVisible = bVisible;
 
 		for (auto &m : meshes)
 			if (m->material)
-				m->material->shader->ShowMask(bMaskVisible);
+				m->material->shader->ShowMask(bVisible);
 	}
 
 	void SetWeightColors(bool bVisible = true) {

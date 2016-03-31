@@ -80,6 +80,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	
 	EVT_MENU(XRCID("btnSelect"), OutfitStudio::OnSelectTool)
 	EVT_MENU(XRCID("btnTransform"), OutfitStudio::OnSelectTool)
+	EVT_MENU(XRCID("btnVertexEdit"), OutfitStudio::OnSelectTool)
+
 	EVT_MENU(XRCID("btnMaskBrush"), OutfitStudio::OnSelectTool)
 	EVT_MENU(XRCID("btnInflateBrush"), OutfitStudio::OnSelectTool)
 	EVT_MENU(XRCID("btnDeflateBrush"), OutfitStudio::OnSelectTool)
@@ -207,6 +209,7 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		toolBar->ToggleTool(XRCID("btnSelect"), true);
 		toolBar->SetToolDisabledBitmap(XRCID("btnSelect"), wxBitmap("res\\SelectBrush_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnTransform"), wxBitmap("res\\TransformTool_d.png", wxBITMAP_TYPE_PNG));
+		toolBar->SetToolDisabledBitmap(XRCID("btnVertexEdit"), wxBitmap("res\\VertexEdit_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnMaskBrush"), wxBitmap("res\\MaskBrush_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnInflateBrush"), wxBitmap("res\\InflateBrush_d.png", wxBITMAP_TYPE_PNG));
 		toolBar->SetToolDisabledBitmap(XRCID("btnDeflateBrush"), wxBitmap("res\\DeflateBrush_d.png", wxBITMAP_TYPE_PNG));
@@ -524,6 +527,8 @@ void OutfitStudio::ApplySliders(bool recalcBVH) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool(true, false);
+	else if (glView->GetVertexEdit())
+		glView->ShowVertexEdit(true, false);
 	else
 		glView->Render();
 }
@@ -557,6 +562,8 @@ void OutfitStudio::UpdateActiveShapeUI() {
 	if (!activeItem) {
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool(false, false);
+		else if (glView->GetVertexEdit())
+			glView->ShowVertexEdit(false, false);
 	}
 	else {
 		mesh* m = glView->GetMesh(activeItem->shapeName);
@@ -569,6 +576,8 @@ void OutfitStudio::UpdateActiveShapeUI() {
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool(true, false);
+		else if (glView->GetVertexEdit())
+			glView->ShowVertexEdit(true, false);
 	}
 }
 
@@ -1531,7 +1540,7 @@ void OutfitStudio::OnBrushPane(wxCollapsiblePaneEvent& event) {
 		return;
 
 	if (!brushPane->IsCollapsed())
-		if (!glView->GetEditMode() || glView->GetTransformMode())
+		if (!glView->GetEditMode() || glView->GetTransformMode() || glView->GetVertexEdit())
 			brushPane->Collapse();
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
@@ -2025,7 +2034,13 @@ void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 		menuBar->Check(XRCID("btnXMirror"), previousMirror);
 	}
 
-	glView->SetTransformMode(false);
+	menuBar->Enable(XRCID("btnShowMask"));
+	glView->SetMaskVisible(menuBar->IsChecked(XRCID("btnShowMask")));
+
+	if (glView->GetTransformMode())
+		glView->SetTransformMode(false);
+	else if (glView->GetVertexEdit())
+		glView->SetVertexEdit(false);
 
 	if (id == XRCID("btnSelect")) {
 		glView->SetEditMode(false);
@@ -2036,6 +2051,32 @@ void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 		ToggleBrushPane(true);
 		return;
 	}
+
+	if (id == XRCID("btnTransform")) {
+		glView->SetEditMode(false);
+		glView->SetTransformMode();
+		glView->SetActiveBrush(-1);
+		menuBar->Check(XRCID("btnTransform"), true);
+		toolBar->ToggleTool(XRCID("btnTransform"), true);
+
+		ToggleBrushPane(true);
+		return;
+	}
+
+	if (id == XRCID("btnVertexEdit")) {
+		menuBar->Enable(XRCID("btnShowMask"), false);
+		glView->SetMaskVisible(false);
+
+		glView->SetEditMode(false);
+		glView->SetVertexEdit();
+		glView->SetActiveBrush(-1);
+		menuBar->Check(XRCID("btnVertexEdit"), true);
+		toolBar->ToggleTool(XRCID("btnVertexEdit"), true);
+
+		ToggleBrushPane(true);
+		return;
+	}
+
 	if (id == XRCID("btnMaskBrush")) {
 		glView->SetActiveBrush(0);
 		menuBar->Check(XRCID("btnMaskBrush"), true);
@@ -2069,19 +2110,10 @@ void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
 	}
-	else if (id == XRCID("btnTransform")) {
-		glView->SetEditMode(false);
-		glView->SetTransformMode();
-		glView->SetActiveBrush(-1);
-		menuBar->Check(XRCID("btnTransform"), true);
-		toolBar->ToggleTool(XRCID("btnTransform"), true);
-
-		ToggleBrushPane(true);
-		return;
-	}
 	else {
 		glView->SetEditMode(false);
 		glView->SetTransformMode(false);
+		glView->SetVertexEdit(false);
 		return;
 	}
 
@@ -2253,6 +2285,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 
 		glView->SetXMirror(previousMirror);
 		glView->SetTransformMode(false);
+		glView->SetVertexEdit(false);
 		glView->SetActiveBrush(1);
 		glView->SetWeightVisible(false);
 
@@ -2260,6 +2293,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 			menuBar->Check(XRCID("btnXMirror"), previousMirror);
 			menuBar->Check(XRCID("btnInflateBrush"), true);
 			menuBar->Enable(XRCID("btnTransform"), true);
+			menuBar->Enable(XRCID("btnVertexEdit"), true);
 			menuBar->Enable(XRCID("btnWeightBrush"), false);
 			menuBar->Enable(XRCID("btnInflateBrush"), true);
 			menuBar->Enable(XRCID("btnDeflateBrush"), true);
@@ -2271,6 +2305,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 			toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
 			toolBar->EnableTool(XRCID("btnWeightBrush"), false);
 			toolBar->EnableTool(XRCID("btnTransform"), true);
+			toolBar->EnableTool(XRCID("btnVertexEdit"), true);
 			toolBar->EnableTool(XRCID("btnInflateBrush"), true);
 			toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
 			toolBar->EnableTool(XRCID("btnMoveBrush"), true);
@@ -2324,6 +2359,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 			cbFixedWeight->Show();
 		
 		glView->SetTransformMode(false);
+		glView->SetVertexEdit(false);
 		glView->SetActiveBrush(10);
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
@@ -2335,6 +2371,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 			menuBar->Check(XRCID("btnXMirror"), false);
 			menuBar->Enable(XRCID("btnWeightBrush"), true);
 			menuBar->Enable(XRCID("btnTransform"), false);
+			menuBar->Enable(XRCID("btnVertexEdit"), false);
 			menuBar->Enable(XRCID("btnInflateBrush"), false);
 			menuBar->Enable(XRCID("btnDeflateBrush"), false);
 			menuBar->Enable(XRCID("btnMoveBrush"), false);
@@ -2345,6 +2382,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 			toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
 			toolBar->EnableTool(XRCID("btnWeightBrush"), true);
 			toolBar->EnableTool(XRCID("btnTransform"), false);
+			toolBar->EnableTool(XRCID("btnVertexEdit"), false);
 			toolBar->EnableTool(XRCID("btnInflateBrush"), false);
 			toolBar->EnableTool(XRCID("btnDeflateBrush"), false);
 			toolBar->EnableTool(XRCID("btnMoveBrush"), false);
@@ -3340,6 +3378,8 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool(true, false);
+	else if (glView->GetVertexEdit())
+		glView->ShowVertexEdit(true, false);
 }
 
 void OutfitStudio::OnMoveShapeOldOffset(wxCommandEvent& event) {
@@ -3432,6 +3472,8 @@ void OutfitStudio::PreviewMove(const Vector3& changed) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool(true, false);
+	else if (glView->GetVertexEdit())
+		glView->ShowVertexEdit(true, false);
 }
 
 void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3473,6 +3515,8 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool(true, false);
+		else if (glView->GetVertexEdit())
+			glView->ShowVertexEdit(true, false);
 	}
 }
 
@@ -3527,6 +3571,8 @@ void OutfitStudio::PreviewScale(const float& scale) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool(true, false);
+	else if (glView->GetVertexEdit())
+		glView->ShowVertexEdit(true, false);
 }
 
 void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
@@ -3578,6 +3624,8 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool(true, false);
+		else if (glView->GetVertexEdit())
+			glView->ShowVertexEdit(true, false);
 	}
 }
 
@@ -3636,6 +3684,8 @@ void OutfitStudio::PreviewRotation(const Vector3& changed) {
 
 	if (glView->GetTransformMode())
 		glView->ShowTransformTool(true, false);
+	else if (glView->GetVertexEdit())
+		glView->ShowVertexEdit(true, false);
 }
 
 void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
@@ -4124,10 +4174,12 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	activeBrush = nullptr;
 	editMode = false;
 	transformMode = false;
+	vertexEdit = false;
 	bMaskPaint = false;
 	bWeightPaint = false;
 	isPainting = false;
 	isTransforming = false;
+	isSelecting = false;
 	bAutoNormals = true;
 	bXMirror = true;
 	bConnectedEdit = false;
@@ -4149,7 +4201,7 @@ void wxGLPanel::OnShown() {
 	gls.Initialize(this, context);
 	auto size = GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
-	gls.ToggleMask();
+	gls.SetMaskVisible();
 
 	int ambient = Config.GetIntValue("Lights/Ambient");
 	int brightness1 = Config.GetIntValue("Lights/Brightness1");
@@ -4308,6 +4360,8 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 
 			if (transformMode)
 				ShowTransformTool(true, false);
+			else if (vertexEdit)
+				ShowVertexEdit(true, false);
 		}
 	}
 	else if (event.GetKeyCode() == WXK_SPACE)
@@ -4602,6 +4656,24 @@ void wxGLPanel::EndTransform() {
 	ShowTransformTool(true, false);
 }
 
+bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
+	Vertex vert;
+	if (!gls.GetCursorVertex(screenPos.x, screenPos.y, &vert))
+		return false;
+
+	if (os->activeItem) {
+		mesh* m = GetMesh(os->activeItem->shapeName);
+		if (m) {
+			if (wxGetKeyState(WXK_SHIFT))
+				m->vcolors[vert.indexRef].x = 1.0f;
+			else
+				m->vcolors[vert.indexRef].x = 0.0f;
+		}
+	}
+
+	return true;
+}
+
 bool wxGLPanel::UndoStroke() {
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
@@ -4722,6 +4794,43 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 	gls.RenderOneFrame();
 }
 
+void wxGLPanel::ShowVertexEdit(bool show, bool updateBrush) {
+	static TweakBrush* saveBrush = nullptr;
+	if (updateBrush)
+		saveBrush = activeBrush;
+
+	if (show) {
+		if (updateBrush)
+			saveBrush = activeBrush;
+
+		if (os->activeItem) {
+			mesh* m = GetMesh(os->activeItem->shapeName);
+			if (m) {
+				if (!m->vcolors)
+					m->ColorFill(Vector3());
+
+				m->bShowPoints = true;
+			}
+		}
+	}
+
+	else {
+		if (updateBrush) {
+			activeBrush = saveBrush;
+			if (!activeBrush)
+				editMode = false;
+		}
+
+		if (os->activeItem) {
+			mesh* m = GetMesh(os->activeItem->shapeName);
+			if (m)
+				m->bShowPoints = false;
+		}
+	}
+
+	gls.RenderOneFrame();
+}
+
 void wxGLPanel::OnIdle(wxIdleEvent& WXUNUSED(event)) {
 	for (auto &it : BVHUpdateQueue) {
 		gls.RecalculateMeshBVH(it);
@@ -4835,6 +4944,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else if (isTransforming) {
 			UpdateTransform(event.GetPosition());
 		}
+		else if (isSelecting) {
+			SelectVertex(event.GetPosition());
+		}
 		else {
 			if (Config.MatchValue("Input/LeftMousePan", "true"))
 				gls.PanCamera(x - lastX, y - lastY);
@@ -4845,7 +4957,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (!rbuttonDown && !lbuttonDown) {
 		string hitMeshName;
-		if (editMode && !transformMode) {
+		if (editMode && !transformMode && !vertexEdit) {
 			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitMeshName, &t, &w, &m);
 		}
 		else {
@@ -4895,6 +5007,11 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		if (meshHit)
 			isTransforming = true;
 	}
+	else if (vertexEdit) {
+		meshHit = SelectVertex(event.GetPosition());
+		if (meshHit)
+			isSelecting = true;
+	}
 }
 
 void wxGLPanel::OnMiddleDown(wxMouseEvent& WXUNUSED(event)) {
@@ -4935,6 +5052,9 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		EndTransform();
 		isTransforming = false;
 	}
+
+	if (isSelecting)
+		isSelecting = false;
 
 	isLDragging = false;
 	lbuttonDown = false;

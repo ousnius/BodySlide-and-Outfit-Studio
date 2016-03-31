@@ -17,6 +17,7 @@ mesh::mesh() {
 	vertTris = nullptr;
 	vertEdges = nullptr;
 	bVisible = true;
+	bShowPoints = false;
 	textured = false;
 	bBuffersLoaded = false;
 	rendermode = RenderMode::Normal;
@@ -68,6 +69,7 @@ mesh::mesh(mesh* m) {
 	}
 
 	bVisible = true;
+	bShowPoints = false;
 	bBuffersLoaded = false;
 	smoothSeamNormals = m->smoothSeamNormals;
 	smoothThresh = m->smoothThresh;

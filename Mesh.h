@@ -54,6 +54,7 @@ public:
 
 	bool bBuffersLoaded;
 	bool bVisible;
+	bool bShowPoints;
 	bool smoothSeamNormals;
 
 	string shapeName;

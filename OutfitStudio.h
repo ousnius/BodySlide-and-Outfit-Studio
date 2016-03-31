@@ -105,16 +105,27 @@ public:
 	void UpdateTransform(const wxPoint& screenPos);
 	void EndTransform();
 
+	bool SelectVertex(const wxPoint& screenPos);
+
 	bool UndoStroke();
 	bool RedoStroke();
 
 	void ShowTransformTool(bool show = true, bool updateBrush = true);
+	void ShowVertexEdit(bool show = true, bool updateBrush = true);
 	
 	bool GetEditMode() {
 		return editMode;
 	}
 	void SetEditMode(bool on = true) {
 		editMode = on;
+	}
+
+	bool GetVertexEdit() {
+		return vertexEdit;
+	}
+	void SetVertexEdit(bool on = true) {
+		vertexEdit = on;
+		ShowVertexEdit(on);
 	}
 
 	bool GetTransformMode() {
@@ -253,14 +264,14 @@ public:
 		gls.ToggleTextures();
 	}
 
-	void ToggleMaskVisible() {
+	void SetMaskVisible(bool bVisible = true) {
 		for (auto &m : gls.GetActiveMeshes()) {
 			if (!m->vcolors) {
 				m->vcolors = new Vector3[m->nVerts];
 				memset(m->vcolors, 0, 12 * m->nVerts);
 			}
 		}
-		gls.ToggleMask();
+		gls.SetMaskVisible(bVisible);
 	}
 
 	void SetWeightVisible(bool bVisible = true) {
@@ -333,9 +344,10 @@ public:
 	void InvertMask() {
 		for (auto &m : gls.GetActiveMeshes()) {
 			if (!m->vcolors)
-				m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+				m->ColorFill(Vector3());
+
 			for (int i = 0; i < m->nVerts; i++)
-				m->vcolors[i].x = 1 - m->vcolors[i].x;
+				m->vcolors[i].x = 1.0f - m->vcolors[i].x;
 		}
 	}
 
@@ -416,12 +428,16 @@ private:
 	OutfitStudio* os;
 
 	float brushSize;
+
 	bool editMode;
 	bool transformMode;
+	bool vertexEdit;
+
 	bool bMaskPaint;
 	bool bWeightPaint;
 	bool isPainting;
 	bool isTransforming;
+	bool isSelecting;
 	bool bAutoNormals;
 	bool bXMirror;
 	bool bConnectedEdit;
@@ -833,42 +849,42 @@ private:
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
 		glView->RecalcNormals(activeItem->shapeName);
-		glView->Refresh();
+		glView->Render();
 	}
 
 	void OnAutoNormals(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleAutoNormals();
-		glView->Refresh();
+		glView->Render();
 	}
 
 	void OnSmoothNormalSeams(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleNormalSeamSmoothMode();
-		glView->Refresh();
+		glView->Render();
 	}
 
 	void OnGhostMesh(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleGhostMode();
-		glView->Refresh();
+		glView->Render();
 	}
 
 	void OnShowWireframe(wxCommandEvent& WXUNUSED(event)) {
 		glView->ShowWireframe();
-		glView->Refresh();
+		glView->Render();
 	}
 
 	void OnEnableLighting(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleLighting();
-		glView->Refresh();
+		glView->Render();
 	}
 
 	void OnEnableTextures(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleTextures();
-		glView->Refresh();
+		glView->Render();
 	}
 
-	void OnShowMask(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleMaskVisible();
-		glView->Refresh();
+	void OnShowMask(wxCommandEvent& event) {
+		glView->SetMaskVisible(event.IsChecked());
+		glView->Render();
 	}
 
 	void OnIncBrush(wxCommandEvent& WXUNUSED(event)) {
@@ -917,7 +933,7 @@ private:
 			return;
 
 		glView->ClearMask();
-		glView->Refresh();
+		glView->Render();
 	}
 
 	void OnInvertMask(wxCommandEvent& WXUNUSED(event)) {
@@ -925,7 +941,7 @@ private:
 			return;
 
 		glView->InvertMask();
-		glView->Refresh();
+		glView->Render();
 	}
 
 	wxDECLARE_EVENT_TABLE();
