@@ -941,12 +941,6 @@
 					<help>Shows a transform tool to manipulate shapes.</help>
 					<radio>1</radio>
 				</object>
-				<object class="wxMenuItem" name="btnVertexEdit">
-					<label>Vertex Edit</label>
-					<help>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</help>
-					<radio>1</radio>
-				</object>
-				<object class="separator" />
 				<object class="wxMenuItem" name="btnMaskBrush">
 					<label>Mask\t1</label>
 					<help>Mask vertices to prevent them from being transformed.</help>
@@ -978,6 +972,11 @@
 					<help>Apply animation weight values for the currently selected bone.</help>
 					<radio>1</radio>
 					<enabled>0</enabled>
+				</object>
+				<object class="wxMenuItem" name="btnVertexEdit">
+					<label>Vertex Edit</label>
+					<help>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</help>
+					<checkable>1</checkable>
 				</object>
 			</object>
 			<object class="wxMenuItem" name="btnIncreaseSize">
@@ -1046,13 +1045,6 @@
 			<bitmap2>TransformTool_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
-		<object class="tool" name="btnVertexEdit">
-			<label>Vertex Edit</label>
-			<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</tooltip>
-			<bitmap>VertexEdit.png</bitmap>
-			<bitmap2>VertexEdit_d.png</bitmap2>
-			<radio>1</radio>
-		</object>
 		<object class="tool" name="btnMaskBrush">
 			<label>Mask</label>
 			<tooltip>Mask vertices to prevent them from being transformed.</tooltip>
@@ -1097,6 +1089,13 @@
 			<disabled>1</disabled>
 		</object>
 		<object class="separator" />
+		<object class="tool" name="btnVertexEdit">
+			<label>Vertex Edit</label>
+			<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</tooltip>
+			<bitmap>VertexEdit.png</bitmap>
+			<bitmap2>VertexEdit_d.png</bitmap2>
+			<toggle>1</toggle>
+		</object>
 		<object class="tool" name="btnXMirror">
 			<label>X Mirror</label>
 			<tooltip>Mirror edits across the X axis.</tooltip>

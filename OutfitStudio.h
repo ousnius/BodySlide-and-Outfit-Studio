@@ -111,7 +111,7 @@ public:
 	bool RedoStroke();
 
 	void ShowTransformTool(bool show = true, bool updateBrush = true);
-	void ShowVertexEdit(bool show = true, bool updateBrush = true);
+	void ShowVertexEdit(bool show = true);
 	
 	bool GetEditMode() {
 		return editMode;
