@@ -1208,6 +1208,11 @@ void OutfitStudio::RefreshGUIFromProj() {
 		glView->SetSelectedShape(activeItem->shapeName);
 	else
 		glView->SetSelectedShape("");
+
+	if (glView->GetVertexEdit()) {
+		glView->ShowVertexEdit(true, false);
+		glView->SetMaskVisible(GetMenuBar()->IsChecked(XRCID("btnShowMask")));
+	}
 }
 
 void OutfitStudio::AnimationGUIFromProj() {
@@ -4734,9 +4739,6 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 		xformCenter.Zero();
 
 	if (show) {
-		if (updateBrush)
-			saveBrush = activeBrush;
-
 		gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
 		gls.GetOverlay("XMoveMesh")->CreateBVH();
 		gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
@@ -4775,10 +4777,11 @@ void wxGLPanel::ShowVertexEdit(bool show, bool updateBrush) {
 	if (updateBrush)
 		saveBrush = activeBrush;
 
-	if (show) {
-		if (updateBrush)
-			saveBrush = activeBrush;
+	for (auto &m : gls.GetMeshes())
+		if (m)
+			m->bShowPoints = false;
 
+	if (show) {
 		if (os->activeItem) {
 			mesh* m = GetMesh(os->activeItem->shapeName);
 			if (m) {
@@ -4795,12 +4798,6 @@ void wxGLPanel::ShowVertexEdit(bool show, bool updateBrush) {
 			activeBrush = saveBrush;
 			if (!activeBrush)
 				editMode = false;
-		}
-
-		if (os->activeItem) {
-			mesh* m = GetMesh(os->activeItem->shapeName);
-			if (m)
-				m->bShowPoints = false;
 		}
 	}
 

@@ -186,6 +186,10 @@ public:
 		return nullptr;
 	}
 
+	const vector<mesh*>& GetMeshes() {
+		return meshes;
+	}
+
 	mesh* GetOverlay(int overlayID) {
 		if (overlayID >= 0)
 			return overlays[overlayID];
