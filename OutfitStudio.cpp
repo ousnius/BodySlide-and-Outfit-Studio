@@ -173,19 +173,18 @@ wxEND_EVENT_TABLE()
 OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
 	wxLogMessage("Loading Outfit Studio at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
-	wxXmlResource* resource = wxXmlResource::Get();
 	SetParent(parent);
 	progressVal = 0;
 
-	resource->InitAllHandlers();
-	bool loaded = resource->Load("res\\outfitStudio.xrc");
+	wxXmlResource::Get()->InitAllHandlers();
+	bool loaded = wxXmlResource::Get()->Load("res\\outfitStudio.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load outfitStudio.xrc file!", "Error", wxICON_ERROR);
 		Close(true);
 		return;
 	}
 
-	loaded = resource->LoadFrame(this, GetParent(), "outfitStudio");
+	loaded = wxXmlResource::Get()->LoadFrame(this, GetParent(), "outfitStudio");
 	if (!loaded) {
 		wxMessageBox("Failed to load Outfit Studio frame!", "Error", wxICON_ERROR);
 		Close(true);
@@ -204,26 +203,12 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 
 	this->DragAcceptFiles(true);
 
-	toolBar = (wxToolBar*)FindWindowByName("toolbar");
-	if (toolBar) {
-		toolBar->ToggleTool(XRCID("btnSelect"), true);
-		toolBar->SetToolDisabledBitmap(XRCID("btnSelect"), wxBitmap("res\\SelectBrush_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnTransform"), wxBitmap("res\\TransformTool_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnVertexEdit"), wxBitmap("res\\VertexEdit_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnMaskBrush"), wxBitmap("res\\MaskBrush_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnInflateBrush"), wxBitmap("res\\InflateBrush_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnDeflateBrush"), wxBitmap("res\\DeflateBrush_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnMoveBrush"), wxBitmap("res\\MoveBrush_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnSmoothBrush"), wxBitmap("res\\SmoothBrush_d.png", wxBITMAP_TYPE_PNG));
-		toolBar->SetToolDisabledBitmap(XRCID("btnWeightBrush"), wxBitmap("res\\WeightBrush_d.png", wxBITMAP_TYPE_PNG));
-		wxSlider* fovSlider = (wxSlider*)toolBar->FindWindowByName("fovSlider");
-		if (fovSlider)
-			fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
-	}
+	wxXmlResource::Get()->LoadMenuBar(this, "menuBar");
+	wxXmlResource::Get()->LoadToolBar(this, "toolbar");
 
-	wxMenuBar* menu = GetMenuBar();
-	if (menu)
-		menu->Enable(XRCID("btnWeightBrush"), false);
+	wxSlider* fovSlider = (wxSlider*)GetToolBar()->FindWindowByName("fovSlider");
+	if (fovSlider)
+		fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
 
 	visStateImages = new wxImageList(16, 16, false, 2);
 	wxBitmap visImg("res\\icoVisible.png", wxBITMAP_TYPE_PNG);
@@ -290,7 +275,7 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		rightPanel->SetDoubleBuffered(true);
 
 	if (glView)
-		resource->AttachUnknownControl("mGLView", glView, this);
+		wxXmlResource::Get()->AttachUnknownControl("mGLView", glView, this);
 
 	project = new OutfitProject(appConfig, this);	// Create empty project
 	CreateSetSliders();
@@ -2267,7 +2252,6 @@ void OutfitStudio::OnReadoutChange(wxCommandEvent& event){
 
 void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
-	wxMenuBar* menuBar = GetMenuBar();
 
 	if (id != XRCID("boneTabButton")) {
 		if (boneScale)
@@ -2289,28 +2273,24 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetActiveBrush(1);
 		glView->SetWeightVisible(false);
 
-		if (menuBar) {
-			menuBar->Check(XRCID("btnXMirror"), previousMirror);
-			menuBar->Check(XRCID("btnInflateBrush"), true);
-			menuBar->Enable(XRCID("btnTransform"), true);
-			menuBar->Enable(XRCID("btnVertexEdit"), true);
-			menuBar->Enable(XRCID("btnWeightBrush"), false);
-			menuBar->Enable(XRCID("btnInflateBrush"), true);
-			menuBar->Enable(XRCID("btnDeflateBrush"), true);
-			menuBar->Enable(XRCID("btnMoveBrush"), true);
-			menuBar->Enable(XRCID("btnSmoothBrush"), true);
-		}
+		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
+		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnTransform"), true);
+		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
+		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
 
-		if (toolBar) {
-			toolBar->ToggleTool(XRCID("btnInflateBrush"), true);
-			toolBar->EnableTool(XRCID("btnWeightBrush"), false);
-			toolBar->EnableTool(XRCID("btnTransform"), true);
-			toolBar->EnableTool(XRCID("btnVertexEdit"), true);
-			toolBar->EnableTool(XRCID("btnInflateBrush"), true);
-			toolBar->EnableTool(XRCID("btnDeflateBrush"), true);
-			toolBar->EnableTool(XRCID("btnMoveBrush"), true);
-			toolBar->EnableTool(XRCID("btnSmoothBrush"), true);
-		}
+		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnTransform"), true);
+		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), true);
+		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
 	}
 
 	if (id == XRCID("meshTabButton")) {
@@ -2366,28 +2346,24 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetEditMode();
 		glView->SetWeightVisible(true);
 
-		if (menuBar) {
-			menuBar->Check(XRCID("btnWeightBrush"), true);
-			menuBar->Check(XRCID("btnXMirror"), false);
-			menuBar->Enable(XRCID("btnWeightBrush"), true);
-			menuBar->Enable(XRCID("btnTransform"), false);
-			menuBar->Enable(XRCID("btnVertexEdit"), false);
-			menuBar->Enable(XRCID("btnInflateBrush"), false);
-			menuBar->Enable(XRCID("btnDeflateBrush"), false);
-			menuBar->Enable(XRCID("btnMoveBrush"), false);
-			menuBar->Enable(XRCID("btnSmoothBrush"), false);
-		}
+		GetMenuBar()->Check(XRCID("btnWeightBrush"), true);
+		GetMenuBar()->Check(XRCID("btnXMirror"), false);
+		GetMenuBar()->Enable(XRCID("btnWeightBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnTransform"), false);
+		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
+		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
 
-		if (toolBar) {
-			toolBar->ToggleTool(XRCID("btnWeightBrush"), true);
-			toolBar->EnableTool(XRCID("btnWeightBrush"), true);
-			toolBar->EnableTool(XRCID("btnTransform"), false);
-			toolBar->EnableTool(XRCID("btnVertexEdit"), false);
-			toolBar->EnableTool(XRCID("btnInflateBrush"), false);
-			toolBar->EnableTool(XRCID("btnDeflateBrush"), false);
-			toolBar->EnableTool(XRCID("btnMoveBrush"), false);
-			toolBar->EnableTool(XRCID("btnSmoothBrush"), false);
-		}
+		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
+		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), false);
+		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 	}
 	else if (id == XRCID("lightsTabButton")) {
 		if (outfitShapes)

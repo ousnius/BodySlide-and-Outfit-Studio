@@ -485,7 +485,6 @@ public:
 	wxSlider* boneScale;
 	wxScrolledWindow* sliderScroll;
 	wxStatusBar* statusBar;
-	wxToolBar* toolBar;
 	wxTreeItemId shapesRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
