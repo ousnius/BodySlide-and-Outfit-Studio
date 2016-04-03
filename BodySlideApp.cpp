@@ -130,9 +130,6 @@ bool BodySlideApp::OnInit() {
 			wxMessageBox("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct.", "Warning", wxICON_WARNING);
 	}
 
-	if (straightOutfitStudio)
-		LaunchOutfitStudio();
-
 	wxLogMessage("BodySlide initialized.");
 	return true;
 }
@@ -142,7 +139,11 @@ void BodySlideApp::OnInitCmdLine(wxCmdLineParser& parser) {
 }
 
 bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
-	straightOutfitStudio = parser.Found("os");
+	cmdOutfitStudio = parser.Found("os");
+	parser.Found("gbuild", &cmdGroupBuild);
+	parser.Found("t", &cmdTargetDir);
+	parser.Found("p", &cmdPreset);
+	cmdTri = parser.Found("tri");
 	return true;
 }
 
@@ -258,6 +259,12 @@ void BodySlideApp::LoadData() {
 	sliderView->Layout();
 	sliderView->Refresh();
 	sliderView->Thaw();
+
+	if (!cmdGroupBuild.IsEmpty())
+		GroupBuild(cmdGroupBuild.ToStdString());
+
+	if (cmdOutfitStudio)
+		LaunchOutfitStudio();
 }
 
 void BodySlideApp::setupOutfit(const string& outfitName) {
@@ -1727,6 +1734,43 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		return 3;
 
 	return 0;
+}
+
+void BodySlideApp::GroupBuild(const string& group) {
+	vector<string> outfits;
+	for (auto &o : outfitNameSource) {
+		vector<string> groups;
+		gCollection.GetOutfitGroups(o.first, groups);
+		if (find(groups.begin(), groups.end(), group) != groups.end())
+			outfits.push_back(o.first);
+	}
+
+	string preset;
+	if (!cmdPreset.IsEmpty()) {
+		preset = Config["SelectedPreset"];
+		Config.SetValue("SelectedPreset", cmdPreset.ToStdString());
+	}
+
+	map<string, string> failedOutfits;
+	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, cmdTargetDir.ToStdString());
+
+	if (!cmdPreset.IsEmpty())
+		Config.SetValue("SelectedPreset", preset);
+
+	if (ret == 0) {
+		wxLogMessage("All group build sets processed successfully!");
+		wxMessageBox("All group build sets processed successfully!", "Complete", wxICON_INFORMATION);
+	}
+	else if (ret == 3) {
+		wxArrayString errlist;
+		for (auto &e : failedOutfits) {
+			wxLogError("Failed to build '%s': %s", e.first, e.second);
+			errlist.Add(e.first + ":" + e.second);
+		}
+
+		wxSingleChoiceDialog errdisplay(sliderView, "The following sets failed", "Failed", errlist, nullptr, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
+		errdisplay.ShowModal();
+	}
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {

@@ -60,7 +60,13 @@ class BodySlideApp : public wxApp {
 	BodySlideFrame* sliderView = nullptr;
 	PreviewWindow* preview = nullptr;
 	OutfitStudio* outfitStudio = nullptr;
-	bool straightOutfitStudio = false;
+
+	/* Command-Line Arguments */
+	bool cmdOutfitStudio = false;
+	wxString cmdGroupBuild;
+	wxString cmdTargetDir;
+	wxString cmdPreset;
+	bool cmdTri = false;
 
 	/* Data Managers */
 	SliderManager sliderManager;
@@ -203,6 +209,7 @@ public:
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
 	int BuildListBodies(vector<string>& outfitList, map<string, string>& failedOutfits, bool remove = false, bool tri = false, const string& custPath = "");
+	void GroupBuild(const string& group);
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
@@ -214,6 +221,10 @@ public:
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
 	{ wxCMD_LINE_SWITCH, "os", "outfitstudio", "launches straight into outfit studio" },
+	{ wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING },
+	{ wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING },
+	{ wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING },
+	{ wxCMD_LINE_SWITCH, "tri", "trimorphs", "enables tri morph output for the specified build" },
 	{ wxCMD_LINE_NONE }
 };
 
