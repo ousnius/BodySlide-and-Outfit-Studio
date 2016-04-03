@@ -554,7 +554,16 @@ void BodySlideApp::DisplayActiveSet() {
 
 void BodySlideApp::LaunchOutfitStudio() {
 	if (outfitStudio) {
-		outfitStudio->SetFocus();
+		if (outfitStudio->IsIconized()) {
+			if (outfitStudio->IsMaximized()) {
+				outfitStudio->Restore();
+				outfitStudio->Maximize();
+			}
+			else
+				outfitStudio->Restore();
+		}
+		else
+			outfitStudio->SetFocus();
 	}
 	else {
 		int x = Config.GetIntValue("OutfitStudioFrame.x");
@@ -563,7 +572,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 		int h = Config.GetIntValue("OutfitStudioFrame.height");
 		string maximized = Config["OutfitStudioFrame.maximized"];
 
-		outfitStudio = new OutfitStudio(sliderView, wxPoint(x, y), wxSize(w, h), Config);
+		outfitStudio = new OutfitStudio(wxPoint(x, y), wxSize(w, h), Config);
 		if (maximized == "true")
 			outfitStudio->Maximize();
 
@@ -2071,6 +2080,7 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	app->ClosePreview();
+	app->CloseOutfitStudio(true);
 
 	int ret = Config.SaveConfig("Config.xml");
 	if (ret)

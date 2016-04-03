@@ -170,11 +170,8 @@ wxEND_EVENT_TABLE()
 // OutfitStudio frame
 // ----------------------------------------------------------------------------
 
-OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
+OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
 	wxLogMessage("Loading Outfit Studio at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
-
-	SetParent(parent);
-	progressVal = 0;
 
 	wxXmlResource::Get()->InitAllHandlers();
 	bool loaded = wxXmlResource::Get()->Load("res\\outfitStudio.xrc");
@@ -184,7 +181,7 @@ OutfitStudio::OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& s
 		return;
 	}
 
-	loaded = wxXmlResource::Get()->LoadFrame(this, GetParent(), "outfitStudio");
+	loaded = wxXmlResource::Get()->LoadFrame(this, nullptr, "outfitStudio");
 	if (!loaded) {
 		wxMessageBox("Failed to load Outfit Studio frame!", "Error", wxICON_ERROR);
 		Close(true);
@@ -4915,8 +4912,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 }
 
 void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
-	wxFrame* parent = (wxFrame*)GetGrandParent()->GetGrandParent();
-	if (parent->IsActive())
+	if (os->IsActive())
 		SetFocus();
 
 	bool cursorExists = false;

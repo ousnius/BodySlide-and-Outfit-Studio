@@ -10,7 +10,7 @@
 		<object class="wxSplitterWindow" name="splitter">
 			<style>wxSP_3D|wxSP_LIVE_UPDATE</style>
 			<sashpos>850</sashpos>
-			<gravity>0</gravity>
+			<gravity>1</gravity>
 			<minsize>250</minsize>
 			<orientation>vertical</orientation>
 			<object class="wxPanel" name="leftSplitPanel">

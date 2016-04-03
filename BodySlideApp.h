@@ -187,7 +187,10 @@ public:
 		preview = nullptr;
 	}
 
-	void CloseOutfitStudio() {
+	void CloseOutfitStudio(bool force = false) {
+		if (force && outfitStudio)
+			outfitStudio->Close();
+
 		outfitStudio = nullptr;
 	}
 

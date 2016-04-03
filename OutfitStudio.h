@@ -488,7 +488,7 @@ class OutfitProject;
 
 class OutfitStudio : public wxFrame {
 public:
-	OutfitStudio(wxWindow* parent, const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
+	OutfitStudio(const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
 	~OutfitStudio();
 
 	int targetGame;
@@ -640,7 +640,7 @@ public:
 
 	wxGauge* progressBar = nullptr;
 	vector<pair<int, int>> progressStack;
-	int progressVal;
+	int progressVal = 0;
 
 	void StartProgress(const wxString& msg = "Starting...") {
 		if (progressStack.empty()) {
