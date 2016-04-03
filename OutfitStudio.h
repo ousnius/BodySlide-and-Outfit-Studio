@@ -110,7 +110,7 @@ public:
 	bool UndoStroke();
 	bool RedoStroke();
 
-	void ShowTransformTool(bool show = true);
+	void ShowTransformTool(bool show = true, bool keepVisibility = false);
 	void UpdateTransformTool();
 
 	void ShowVertexEdit(bool show = true);

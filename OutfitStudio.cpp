@@ -4539,7 +4539,6 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	string mname = hitMesh->shapeName;
 	if (mname.find("Move") != string::npos) {
 		translateBrush.SetXFormType(0);
-		activeBrush = &translateBrush;
 		switch (mname[0]) {
 		case 'X':
 			tpi.view = Vector3(1.0f, 0.0f, 0.0f);
@@ -4557,7 +4556,6 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	}
 	else if (mname.find("Rotate") != string::npos) {
 		translateBrush.SetXFormType(1);
-		activeBrush = &translateBrush;
 		switch (mname[0]) {
 		case 'X':
 			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(1.0f, 0.0f, 0.0f), -tpi.center.x);
@@ -4578,7 +4576,6 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	}
 	else if (mname.find("Scale") != string::npos) {
 		translateBrush.SetXFormType(2);
-		activeBrush = &translateBrush;
 		switch (mname[0]) {
 		case 'X':
 			tpi.view = Vector3(1.0f, 0.0f, 0.0f);
@@ -4595,12 +4592,18 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		}
 	}
 
-	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), activeBrush);
+	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), &translateBrush);
 
 	activeStroke->beginStroke(tpi);
 	activeStroke->updateStroke(tpi);
 
-	ShowTransformTool(false);
+	XMoveMesh->bVisible = false;
+	YMoveMesh->bVisible = false;
+	ZMoveMesh->bVisible = false;
+	XRotateMesh->bVisible = false;
+	YRotateMesh->bVisible = false;
+	ZRotateMesh->bVisible = false;
+	hitMesh->bVisible = true;
 	return true;
 }
 
@@ -4609,12 +4612,14 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 	Vector3 pn;
 	float pd;
 
-	((TB_XForm*)(activeBrush))->GetWorkingPlane(pn, pd);
+	translateBrush.GetWorkingPlane(pn, pd);
 	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, -pd);
 	if (tpi.origin.x < 0)
 		tpi.origin.x = tpi.origin.x;
 
 	activeStroke->updateStroke(tpi);
+
+	ShowTransformTool(true, true);
 }
 
 void wxGLPanel::EndTransform() {
@@ -4725,7 +4730,7 @@ bool wxGLPanel::RedoStroke() {
 	return ret;
 }
 
-void wxGLPanel::ShowTransformTool(bool show) {
+void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
 	string mode = Config.GetString("Editing/CenterMode");
 	if (mode == "Object") {
 		if (!gls.GetActiveMeshes().empty())
@@ -4737,6 +4742,22 @@ void wxGLPanel::ShowTransformTool(bool show) {
 		xformCenter.Zero();
 
 	if (show) {
+		bool XMoveVis = true;
+		bool YMoveVis = true;
+		bool ZMoveVis = true;
+		bool XRotateVis = true;
+		bool YRotateVis = true;
+		bool ZRotateVis = true;
+
+		if (keepVisibility && XMoveMesh && YMoveMesh && ZMoveMesh && XRotateMesh && YRotateMesh && ZRotateMesh) {
+			XMoveVis = XMoveMesh->bVisible;
+			YMoveVis = YMoveMesh->bVisible;
+			ZMoveVis = ZMoveMesh->bVisible;
+			XRotateVis = XRotateMesh->bVisible;
+			YRotateVis = YRotateMesh->bVisible;
+			ZRotateVis = ZRotateMesh->bVisible;
+		}
+
 		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
 		YMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
 		ZMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
@@ -4746,8 +4767,16 @@ void wxGLPanel::ShowTransformTool(bool show) {
 		ZRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 1.25f, 0.04f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
 
 		lastCenterDistance = 0.0f;
-	}
 
+		if (keepVisibility) {
+			XMoveMesh->bVisible = XMoveVis;
+			YMoveMesh->bVisible = YMoveVis;
+			ZMoveMesh->bVisible = ZMoveVis;
+			XRotateMesh->bVisible = XRotateVis;
+			YRotateMesh->bVisible = YRotateVis;
+			ZRotateMesh->bVisible = ZRotateVis;
+		}
+	}
 	else {
 		if (XMoveMesh && YMoveMesh && ZMoveMesh && XRotateMesh && YRotateMesh && ZRotateMesh) {
 			XMoveMesh->bVisible = false;
@@ -4965,9 +4994,12 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 				Vector3 outOrigin, outNormal;
 				mesh* hitMesh = nullptr;
-				if (gls.CollideOverlay(x, y, outOrigin, outNormal, &hitMesh))
-					if (hitMesh)
+				if (gls.CollideOverlay(x, y, outOrigin, outNormal, &hitMesh)) {
+					if (hitMesh) {
 						hitMesh->color = Vector3(1.0f, 1.0f, 0.0f);
+						gls.ShowCursor(false);
+					}
+				}
 			}
 		}
 
@@ -5005,13 +5037,8 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 
 	if (transformMode) {
 		meshHit = StartTransform(event.GetPosition());
-		if (meshHit) {
+		if (meshHit)
 			isTransforming = true;
-			if (editMode) {
-				gls.ShowCursor(false);
-				Render();
-			}
-		}
 	}
 
 	if (!meshHit) {
