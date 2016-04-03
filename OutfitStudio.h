@@ -110,7 +110,7 @@ public:
 	bool UndoStroke();
 	bool RedoStroke();
 
-	void ShowTransformTool(bool show = true, bool updateBrush = true);
+	void ShowTransformTool(bool show = true);
 	void UpdateTransformTool();
 
 	void ShowVertexEdit(bool show = true);
@@ -373,7 +373,11 @@ public:
 
 	void SetView(const char& type) {
 		gls.SetView(type);
-		gls.RenderOneFrame();
+
+		if (transformMode)
+			ShowTransformTool();
+		else
+			Render();
 	}
 
 	void SetPerspective(const bool& enabled) {
@@ -949,7 +953,7 @@ private:
 		glView->ClearMask();
 
 		if (glView->GetTransformMode())
-			glView->ShowTransformTool(true, false);
+			glView->ShowTransformTool();
 		else
 			glView->Render();
 	}
@@ -961,7 +965,7 @@ private:
 		glView->InvertMask();
 
 		if (glView->GetTransformMode())
-			glView->ShowTransformTool(true, false);
+			glView->ShowTransformTool();
 		else
 			glView->Render();
 	}
