@@ -163,6 +163,13 @@ void mesh::BuildEdgeList() {
 	}
 }
 
+void mesh::ScaleVertices(const Vector3& center, const float& factor) {
+	for (int i = 0; i < nVerts; i++)
+		verts[i] = center + (verts[i] - center) * factor;
+
+	CreateBVH();
+}
+
 void mesh::GetAdjacentPoints(int querypoint, set<int>& outPoints, bool sort) {
 	int tp1;
 	int tp2;

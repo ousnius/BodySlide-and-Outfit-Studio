@@ -2026,10 +2026,10 @@ void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 		menuBar->Check(XRCID("btnXMirror"), previousMirror);
 	}
 
-	if (glView->GetTransformMode())
-		glView->SetTransformMode(false);
-
 	if (id == XRCID("btnSelect")) {
+		if (glView->GetTransformMode())
+			glView->SetTransformMode(false);
+
 		glView->SetEditMode(false);
 		glView->SetActiveBrush(-1);
 		menuBar->Check(XRCID("btnSelect"), true);
@@ -2057,10 +2057,12 @@ void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 		glView->SetVertexEdit(checked);
 
 		if (checked) {
-			glView->SetEditMode(false);
-			glView->SetActiveBrush(-1);
-			menuBar->Check(XRCID("btnSelect"), checked);
-			toolBar->ToggleTool(XRCID("btnSelect"), checked);
+			if (!glView->GetTransformMode()) {
+				glView->SetEditMode(false);
+				glView->SetActiveBrush(-1);
+				menuBar->Check(XRCID("btnSelect"), checked);
+				toolBar->ToggleTool(XRCID("btnSelect"), checked);
+			}
 
 			ToggleBrushPane(checked);
 		}
@@ -2107,6 +2109,9 @@ void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 	}
 
 	// One of the brushes was activated
+	if (glView->GetTransformMode())
+		glView->SetTransformMode(false);
+
 	menuBar->Check(XRCID("btnVertexEdit"), false);
 	toolBar->ToggleTool(XRCID("btnVertexEdit"), false);
 	glView->SetVertexEdit(false);
@@ -4167,6 +4172,14 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	bConnectedEdit = false;
 	bGlobalBrushCollision = true;
 
+	XMoveMesh = nullptr;
+	YMoveMesh = nullptr;
+	ZMoveMesh = nullptr;
+	XRotateMesh = nullptr;
+	YRotateMesh = nullptr;
+	ZRotateMesh = nullptr;
+	lastCenterDistance = 0.0f;
+
 	strokeManager = &baseStrokes;
 }
 
@@ -4653,6 +4666,9 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 		}
 	}
 
+	if (transformMode)
+		ShowTransformTool(true, false);
+
 	return true;
 }
 
@@ -4740,19 +4756,23 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 		xformCenter.Zero();
 
 	if (show) {
-		gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
-		gls.GetOverlay("XMoveMesh")->CreateBVH();
-		gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
-		gls.GetOverlay("YMoveMesh")->CreateBVH();
-		gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
-		gls.GetOverlay("ZMoveMesh")->CreateBVH();
+		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
+		YMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
+		ZMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
 
-		gls.AddVis3dRing(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 1.25f, 0.04f, Vector3(1.0f, 0.0f, 0.0f), "XRotateMesh");
-		gls.GetOverlay("XRotateMesh")->CreateBVH();
-		gls.AddVis3dRing(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 1.25f, 0.04f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
-		gls.GetOverlay("YRotateMesh")->CreateBVH();
-		gls.AddVis3dRing(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 1.25f, 0.04f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
-		gls.GetOverlay("ZRotateMesh")->CreateBVH();
+		XRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 1.25f, 0.04f, Vector3(1.0f, 0.0f, 0.0f), "XRotateMesh");
+		YRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 1.25f, 0.04f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
+		ZRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 1.25f, 0.04f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
+
+		XMoveMesh->CreateBVH();
+		YMoveMesh->CreateBVH();
+		ZMoveMesh->CreateBVH();
+
+		XRotateMesh->CreateBVH();
+		YRotateMesh->CreateBVH();
+		ZRotateMesh->CreateBVH();
+
+		lastCenterDistance = 0.0f;
 	}
 
 	else {
@@ -4762,15 +4782,50 @@ void wxGLPanel::ShowTransformTool(bool show, bool updateBrush) {
 				editMode = false;
 		}
 
-		gls.SetOverlayVisibility("XMoveMesh", false);
-		gls.SetOverlayVisibility("YMoveMesh", false);
-		gls.SetOverlayVisibility("ZMoveMesh", false);
-		gls.SetOverlayVisibility("XRotateMesh", false);
-		gls.SetOverlayVisibility("YRotateMesh", false);
-		gls.SetOverlayVisibility("ZRotateMesh", false);
+		if (XMoveMesh && YMoveMesh && ZMoveMesh && XRotateMesh && YRotateMesh && ZRotateMesh) {
+			XMoveMesh->bVisible = false;
+			YMoveMesh->bVisible = false;
+			ZMoveMesh->bVisible = false;
+			XRotateMesh->bVisible = false;
+			YRotateMesh->bVisible = false;
+			ZRotateMesh->bVisible = false;
+		}
 	}
 
+	UpdateTransformTool();
 	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdateTransformTool() {
+	if (!transformMode)
+		return;
+
+	if (!XMoveMesh || !YMoveMesh || !ZMoveMesh || !XRotateMesh || !YRotateMesh || !ZRotateMesh)
+		return;
+
+	Vector3 unprojected;
+	gls.UnprojectCamera(unprojected);
+
+	if (lastCenterDistance != 0.0f) {
+		float factor = 1.0f / lastCenterDistance;
+		XMoveMesh->ScaleVertices(xformCenter, factor);
+		YMoveMesh->ScaleVertices(xformCenter, factor);
+		ZMoveMesh->ScaleVertices(xformCenter, factor);
+
+		XRotateMesh->ScaleVertices(xformCenter, factor);
+		YRotateMesh->ScaleVertices(xformCenter, factor);
+		ZRotateMesh->ScaleVertices(xformCenter, factor);
+	}
+
+	lastCenterDistance = unprojected.DistanceTo(xformCenter) / 15.0f;
+
+	XMoveMesh->ScaleVertices(xformCenter, lastCenterDistance);
+	YMoveMesh->ScaleVertices(xformCenter, lastCenterDistance);
+	ZMoveMesh->ScaleVertices(xformCenter, lastCenterDistance);
+
+	XRotateMesh->ScaleVertices(xformCenter, lastCenterDistance);
+	YRotateMesh->ScaleVertices(xformCenter, lastCenterDistance);
+	ZRotateMesh->ScaleVertices(xformCenter, lastCenterDistance);
 }
 
 void wxGLPanel::ShowVertexEdit(bool show) {
@@ -4857,6 +4912,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
 		gls.UpdateProjection();
+		UpdateTransformTool();
 	}
 
 	gls.RenderOneFrame();
@@ -4882,6 +4938,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else
 			gls.PanCamera(x - lastX, y - lastY);
 
+		UpdateTransformTool();
 		gls.RenderOneFrame();
 	}
 
@@ -4895,6 +4952,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.PitchCamera(y - lastY);
 		}
 
+		UpdateTransformTool();
 		gls.RenderOneFrame();
 	}
 
@@ -4910,8 +4968,10 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			SelectVertex(event.GetPosition());
 		}
 		else {
-			if (Config.MatchValue("Input/LeftMousePan", "true"))
+			if (Config.MatchValue("Input/LeftMousePan", "true")) {
 				gls.PanCamera(x - lastX, y - lastY);
+				UpdateTransformTool();
+			}
 		}
 
 		gls.RenderOneFrame();
@@ -4925,6 +4985,23 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		else {
 			cursorExists = false;
 			gls.ShowCursor(false);
+		}
+
+		if (transformMode && !isTransforming) {
+			if (XMoveMesh && YMoveMesh && ZMoveMesh && XRotateMesh && YRotateMesh && ZRotateMesh) {
+				XMoveMesh->color = Vector3(1.0f, 0.0f, 0.0f);
+				YMoveMesh->color = Vector3(0.0f, 1.0f, 0.0f);
+				ZMoveMesh->color = Vector3(0.0f, 0.0f, 1.0f);
+				XRotateMesh->color = Vector3(1.0f, 0.0f, 0.0f);
+				YRotateMesh->color = Vector3(0.0f, 1.0f, 0.0f);
+				ZRotateMesh->color = Vector3(0.0f, 0.0f, 1.0f);
+
+				Vector3 outOrigin, outNormal;
+				mesh* hitMesh = nullptr;
+				if (gls.CollideOverlay(x, y, outOrigin, outNormal, &hitMesh))
+					if (hitMesh)
+						hitMesh->color = Vector3(1.0f, 1.0f, 0.0f);
+			}
 		}
 
 		gls.RenderOneFrame();

@@ -111,6 +111,8 @@ public:
 	bool RedoStroke();
 
 	void ShowTransformTool(bool show = true, bool updateBrush = true);
+	void UpdateTransformTool();
+
 	void ShowVertexEdit(bool show = true);
 	
 	bool GetEditMode() {
@@ -360,6 +362,12 @@ public:
 	}
 
 	void Cleanup() {
+		XMoveMesh = nullptr;
+		YMoveMesh = nullptr;
+		ZMoveMesh = nullptr;
+		XRotateMesh = nullptr;
+		YRotateMesh = nullptr;
+		ZRotateMesh = nullptr;
 		gls.Cleanup();
 	}
 
@@ -460,7 +468,14 @@ private:
 	TweakUndo* strokeManager;
 	TweakUndo baseStrokes;
 
+	mesh* XMoveMesh;
+	mesh* YMoveMesh;
+	mesh* ZMoveMesh;
+	mesh* XRotateMesh;
+	mesh* YRotateMesh;
+	mesh* ZRotateMesh;
 	Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
+	float lastCenterDistance;
 
 	wxDECLARE_EVENT_TABLE();
 };
@@ -932,7 +947,11 @@ private:
 			return;
 
 		glView->ClearMask();
-		glView->Render();
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool(true, false);
+		else
+			glView->Render();
 	}
 
 	void OnInvertMask(wxCommandEvent& WXUNUSED(event)) {
@@ -940,7 +959,11 @@ private:
 			return;
 
 		glView->InvertMask();
-		glView->Render();
+
+		if (glView->GetTransformMode())
+			glView->ShowTransformTool(true, false);
+		else
+			glView->Render();
 	}
 
 	wxDECLARE_EVENT_TABLE();

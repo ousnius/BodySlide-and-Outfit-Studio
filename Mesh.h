@@ -77,6 +77,8 @@ public:
 	void BuildTriAdjacency();	// Triangle adjacency optional to reduce overhead when it's not needed.
 	void BuildEdgeList();		// Edge list optional to reduce overhead when it's not needed.
 
+	void ScaleVertices(const Vector3& center, const float& factor);
+
 	void SetSmoothThreshold(float degrees);
 	float GetSmoothThreshold();
 

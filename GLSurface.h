@@ -174,6 +174,9 @@ public:
 			}
 		}
 
+		if (count <= 0)
+			return Vector3();
+
 		total = total / count;
 		return total;
 	}
@@ -248,8 +251,8 @@ public:
 
 	int AddVisRay(Vector3& start, Vector3& direction, float length);
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");
-	int AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name = "XRotateMesh");
-	int AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
+	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name = "XRotateMesh");
+	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
 	mesh* AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
 
 	void BeginEditMode();

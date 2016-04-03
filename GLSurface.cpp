@@ -870,6 +870,11 @@ void GLSurface::UpdateProjection() {
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
+
+	glTranslatef(camPos.x, camPos.y, camPos.z);
+	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
+	glRotatef(camRot.y, 0.0f, 1.0f, 0.0f);
+	glTranslatef(camOffset.x, camOffset.y, camOffset.z);
 }
 
 void GLSurface::RenderOneFrame() {
@@ -1510,7 +1515,7 @@ int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float
 	return ringMesh;
 }
 
-int GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name) {
+mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name) {
 	int myMesh = GetOverlayID(name);
 	if (myMesh >= 0)
 		delete overlays[myMesh];
@@ -1606,11 +1611,11 @@ int GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float 
 		myMesh = overlays.size() - 1;
 	}
 
-	return myMesh;
+	return m;
 }
 
 
-int GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name) {
+mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name) {
 	Matrix4 rotMat;
 
 	int myMesh = GetOverlayID(name);
@@ -1694,7 +1699,7 @@ int GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, fl
 		overlays.push_back(m);
 		myMesh = overlays.size() - 1;
 	}
-	return myMesh;
+	return m;
 }
 
 void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs, vector<int>* changed) {
