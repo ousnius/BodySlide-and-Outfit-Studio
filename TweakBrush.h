@@ -226,7 +226,6 @@ public:
 
 	// Apply the brush effect to the mesh, modifying the points in the set provided.
 	// Overridden versions should return the original point positions in the movedpoints map.
-	//virtual void brushAction (mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 
 	// Version using a pre-allocated array of vectors matching the order of the points array.
@@ -246,7 +245,6 @@ public:
 		return true;
 	}
 
-	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
@@ -267,7 +265,6 @@ public:
 		return true;
 	}
 
-	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
@@ -308,7 +305,6 @@ public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
 
-	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
@@ -389,7 +385,6 @@ public:
 		return true;
 	}
 
-	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
@@ -409,7 +404,6 @@ public:
 		return true;
 	}
 
-	//virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, set<int>& points, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };

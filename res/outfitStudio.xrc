@@ -933,12 +933,12 @@
 				<label>Current Tool</label>
 				<object class="wxMenuItem" name="btnSelect">
 					<label>Select\t0</label>
-					<help>Navigate and select meshes.</help>
+					<help>Navigate and select meshes (or vertices in vertex mode).</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnMaskBrush">
 					<label>Mask\t1</label>
-					<help>Mask vertices to prevent them from being transformed.</help>
+					<help>Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.</help>
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnInflateBrush">
@@ -963,20 +963,20 @@
 					<radio>1</radio>
 				</object>
 				<object class="wxMenuItem" name="btnWeightBrush">
-					<label>Weight Paint</label>
-					<help>Apply animation weight values for the currently selected bone.</help>
+					<label>Weight Paint\t6</label>
+					<help>Apply animation weight values for the currently selected bone.\nHold down the ALT key to weaken the weighting.</help>
 					<radio>1</radio>
 					<enabled>0</enabled>
 				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="btnTransform">
-					<label>Transform</label>
-					<help>Shows a transform tool to manipulate shapes and vertices.</help>
+					<label>Transform\tF</label>
+					<help>Shows a transform tool to manipulate shapes and vertices with.</help>
 					<checkable>1</checkable>
 				</object>
 				<object class="wxMenuItem" name="btnVertexEdit">
-					<label>Vertex Edit</label>
-					<help>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</help>
+					<label>Vertex Edit\tQ</label>
+					<help>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</help>
 					<checkable>1</checkable>
 				</object>
 			</object>
@@ -1033,7 +1033,7 @@
 		<object class="separator" />
 		<object class="tool" name="btnSelect">
 			<label>Select</label>
-			<tooltip>Navigate and select meshes.</tooltip>
+			<tooltip>Navigate and select meshes (or vertices in vertex mode).</tooltip>
 			<bitmap>SelectBrush.png</bitmap>
 			<bitmap2>SelectBrush_d.png</bitmap2>
 			<radio>1</radio>
@@ -1041,7 +1041,7 @@
 		</object>
 		<object class="tool" name="btnMaskBrush">
 			<label>Mask</label>
-			<tooltip>Mask vertices to prevent them from being transformed.</tooltip>
+			<tooltip>Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.</tooltip>
 			<bitmap>MaskBrush.png</bitmap>
 			<bitmap2>MaskBrush_d.png</bitmap2>
 			<radio>1</radio>
@@ -1076,7 +1076,7 @@
 		</object>
 		<object class="tool" name="btnWeightBrush">
 			<label>Weight Paint</label>
-			<tooltip>Apply animation weight values for currently selected bone.</tooltip>
+			<tooltip>Apply animation weight values for currently selected bone.\nHold down the ALT key to weaken the weighting.</tooltip>
 			<bitmap>WeightBrush.png</bitmap>
 			<bitmap2>WeightBrush_d.png</bitmap2>
 			<radio>1</radio>
@@ -1085,14 +1085,14 @@
 		<object class="separator" />
 		<object class="tool" name="btnTransform">
 			<label>Transform</label>
-			<tooltip>Shows a transform tool to manipulate shapes and vertices.</tooltip>
+			<tooltip>Shows a transform tool to manipulate shapes and vertices with.</tooltip>
 			<bitmap>TransformTool.png</bitmap>
 			<bitmap2>TransformTool_d.png</bitmap2>
 			<toggle>1</toggle>
 		</object>
 		<object class="tool" name="btnVertexEdit">
 			<label>Vertex Edit</label>
-			<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select (unmask) it.\nHold down Shift to unselect (mask) a vertex.</tooltip>
+			<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</tooltip>
 			<bitmap>VertexEdit.png</bitmap>
 			<bitmap2>VertexEdit_d.png</bitmap2>
 			<toggle>1</toggle>

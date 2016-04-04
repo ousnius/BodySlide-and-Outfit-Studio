@@ -409,9 +409,12 @@ void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points
 		movedpoints[points[i]] = vs;
 		ve = xform * vs;
 		ve -= vs;
+
 		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+
 		if (refmesh->vcolors)
 			ve = ve * (1.0f - refmesh->vcolors[points[i]].x);
+
 		vf = vs + ve;
 		refmesh->verts[points[i]] = (vf);
 	}
@@ -429,9 +432,12 @@ void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points
 		movedpoints[i] = vs;
 		ve = xform * vs;
 		ve -= vs;
+
 		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+
 		if (refmesh->vcolors)
 			ve = ve * (1.0f - refmesh->vcolors[points[i]].x);
+
 		vf = vs + ve;
 		refmesh->verts[points[i]] = (vf);
 	}
@@ -453,20 +459,26 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 	Vector3 ve;
 	Vector3 vf;
 
-	for (int i = 0; i<nPoints; i++) {
-
+	for (int i = 0; i < nPoints; i++) {
 		vs = refmesh->verts[points[i]];
 		vc = refmesh->vcolors[points[i]];
 		movedpoints[points[i]] = vc;
 
 		ve = vc;
-		ve.x += strength;
+		if (strength < 0.1f)
+			ve.x += strength;
+		else
+			ve.x += 1.0f;
 		ve -= vc;
 
-		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (focus < 5.0f)
+			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+
 		vf = vc + ve;
-		if (vf.x > 1.0f) vf.x = 1.0f;
-		refmesh->vcolors[points[i]] = (vf);
+		if (vf.x > 1.0f)
+			vf.x = 1.0f;
+
+		refmesh->vcolors[points[i]] = vf;
 	}
 }
 	
@@ -476,20 +488,26 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 	Vector3 ve;
 	Vector3 vf;
 
-	for (int i = 0; i<nPoints; i++) {
-
+	for (int i = 0; i < nPoints; i++) {
 		vs = refmesh->verts[points[i]];
 		vc = refmesh->vcolors[points[i]];
 		movedpoints[i] = vc;
 
 		ve = vc;
-		ve.x += strength;
+		if (strength < 0.1f)
+			ve.x += strength;
+		else
+			ve.x += 1.0f;
 		ve -= vc;
 
-		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (focus < 5.0f)
+			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+
 		vf = vc + ve;
-		if (vf.x > 1.0f) vf.x = 1.0f;
-		refmesh->vcolors[points[i]] = (vf);
+		if (vf.x > 1.0f)
+			vf.x = 1.0f;
+
+		refmesh->vcolors[points[i]] = vf;
 	}
 }
 
@@ -510,19 +528,25 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 	Vector3 vf;
 
 	for (int i = 0; i < nPoints; i++) {
-
 		vs = refmesh->verts[points[i]];
 		vc = refmesh->vcolors[points[i]];
 		movedpoints[points[i]] = vc;
 
 		ve = vc;
-		ve.x += strength;
+		if (strength > -0.1f)
+			ve.x += strength;
+		else
+			ve.x -= 1.0f;
 		ve -= vc;
 
-		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (focus < 5.0f)
+			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+
 		vf = vc + ve;
-		if (vf.x < 0.0f) vf.x = 0.0f;
-		refmesh->vcolors[points[i]] = (vf);
+		if (vf.x < 0.0f)
+			vf.x = 0.0f;
+
+		refmesh->vcolors[points[i]] = vf;
 	}
 }
 
@@ -538,13 +562,20 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		movedpoints[i] = vc;
 
 		ve = vc;
-		ve.x += strength;
+		if (strength > -0.1f)
+			ve.x += strength;
+		else
+			ve.x -= 1.0f;
 		ve -= vc;
 
-		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (focus < 5.0f)
+			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+
 		vf = vc + ve;
-		if (vf.x < 0.0f) vf.x = 0.0f;
-		refmesh->vcolors[points[i]] = (vf);
+		if (vf.x < 0.0f)
+			vf.x = 0.0f;
+
+		refmesh->vcolors[points[i]] = vf;
 	}
 }
 	

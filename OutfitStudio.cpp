@@ -4644,7 +4644,7 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 	if (os->activeItem) {
 		mesh* m = GetMesh(os->activeItem->shapeName);
 		if (m) {
-			if (wxGetKeyState(WXK_SHIFT))
+			if (wxGetKeyState(WXK_CONTROL))
 				m->vcolors[vert.indexRef].x = 1.0f;
 			else
 				m->vcolors[vert.indexRef].x = 0.0f;
