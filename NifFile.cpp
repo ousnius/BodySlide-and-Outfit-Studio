@@ -2189,10 +2189,8 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 		if (uvs.size() != siTriShape->vertData.size())
 			return;
 
-		for (int i = 0; i < siTriShape->numVertices; i++) {
-			//// VALIDATE LATER for now don't touch the data.
-			// siTriShape->vertData[i].uv = uvs[i];
-		}
+		for (int i = 0; i < siTriShape->numVertices; i++)
+			siTriShape->vertData[i].uv = uvs[i];
 	}
 }
 

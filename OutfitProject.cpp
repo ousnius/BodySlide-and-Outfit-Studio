@@ -397,10 +397,16 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 			vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == v.size()) {
-				int r = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION, owner);
-				if (r == wxYES) {
-					wxLogMessage("Updated shape '%s' using '%s'.", mergeShape, fileName);
-					workNif.SetVertsForShape(mergeShape, v);
+				int ret = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION, owner);
+				if (ret == wxYES) {
+					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION, owner);
+					if (ret == wxYES)
+						workNif.SetVertsForShape(mergeShape, v);
+
+					ret = wxMessageBox("Update Texture Coordinates?", "UV Update", wxYES_NO | wxICON_QUESTION, owner);
+					if (ret == wxYES)
+						workNif.SetUvsForShape(mergeShape, uv);
+
 					return 101;
 				}
 			}
@@ -2045,6 +2051,10 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						workNif.SetVertsForShape(mergeShape, shape->verts);
+
+					ret = wxMessageBox("Update Texture Coordinates?", "UV Update", wxYES_NO | wxICON_QUESTION, owner);
+					if (ret == wxYES)
+						workNif.SetUvsForShape(mergeShape, shape->uvs);
 
 					ret = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)

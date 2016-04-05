@@ -3107,7 +3107,7 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.empty())
 		return;
 
-	wxLogMessage("Importing shape from OBJ file '%s'...", fn);
+	wxLogMessage("Importing shape(s) from OBJ file '%s'...", fn);
 
 	int ret;
 	if (activeItem)
@@ -3115,18 +3115,17 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	else
 		ret = project->AddShapeFromObjFile(fn, project->OutfitName());
 
-	if (ret == 101) {	// User chose to merge shapes
-		vector<Vector3> v;
-		project->GetLiveVerts(activeItem->shapeName, v);
-		glView->UpdateMeshVertices(activeItem->shapeName, &v);
+	if (ret == 101) {
+		RefreshGUIFromProj();
+		wxLogMessage("Updated shape '%s' from OBJ.", activeItem->shapeName);
+		glView->Render();
 		return;
 	}
 	else if (ret)
 		return;
 
-	wxLogMessage("Imported shape.");
-
 	RefreshGUIFromProj();
+	wxLogMessage("Imported shape(s) from OBJ.");
 	glView->Render();
 }
 
@@ -3166,7 +3165,7 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (fn.empty())
 		return;
 
-	wxLogMessage("Importing shape from FBX file '%s'...", fn);
+	wxLogMessage("Importing shape(s) from FBX file '%s'...", fn);
 
 	int ret;
 	if (activeItem)
@@ -3175,17 +3174,16 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 		ret = project->ImportShapeFBX(fn, project->OutfitName());
 
 	if (ret == 101) {
-		vector<Vector3> v;
-		project->GetLiveVerts(activeItem->shapeName, v);
-		glView->UpdateMeshVertices(activeItem->shapeName, &v);
+		RefreshGUIFromProj();
+		wxLogMessage("Updated shape '%s' from FBX.", activeItem->shapeName);
+		glView->Render();
 		return;
 	}
 	if (ret)
 		return;
 
-	wxLogMessage("Imported shape.");
-
 	RefreshGUIFromProj();
+	wxLogMessage("Imported shape(s) from FBX.");
 	glView->Render();
 }
 
