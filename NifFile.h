@@ -406,7 +406,9 @@ public:
 		byte weightBones[4];
 	};
 
-	uint unkProps[4];
+	Vector3 center;
+	float radius;
+
 	int skinInstanceRef;
 	int shaderPropertyRef;
 	int alphaPropertyRef;
@@ -1665,6 +1667,7 @@ public:
 	// Based on the skin partitioning spell from NifSkope's source. Uses a different enough algorithm that it generates
 	// different automatic partitions, but vert and tri order is comparable.
 	void BuildSkinPartitions(const string& shapeName, int maxBonesPerPartition = 24);
+	void UpdateBoundingSphere(const string& shapeName);
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);

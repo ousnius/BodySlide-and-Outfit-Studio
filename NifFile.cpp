@@ -3476,3 +3476,55 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	hdr.blockSizes[skinInst->skinPartitionRef] = skinPart->CalcBlockSize();
 	hdr.blockSizes[skinRef] = skinInst->CalcBlockSize();
 }
+
+void NifFile::UpdateBoundingSphere(const string& shapeName) {
+	int bType;
+	int dataRef = shapeDataIdForName(shapeName, bType);
+	if (dataRef == -1)
+		return;
+
+	if (bType == NITRISHAPEDATA || bType == NITRISTRIPSDATA) {
+		NiTriBasedGeom* geom = geomForName(shapeName);
+		if (!geom)
+			return;
+
+		NiTriBasedGeomData* geomData = dynamic_cast<NiTriBasedGeomData*>(GetBlock(dataRef));
+		if (!geomData)
+			return;
+
+		Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
+		Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		for (auto &v : geomData->vertices) {
+			a.x = min(a.x, v.x);
+			a.y = min(a.y, v.y);
+			a.z = min(a.z, v.z);
+			b.x = max(b.x, v.x);
+			b.y = max(b.y, v.y);
+			b.z = max(b.z, v.z);
+		}
+
+		geomData->center = (a + b) / 2.0f;
+		for (auto &v : geomData->vertices)
+			geomData->radius = max(geomData->radius, geomData->center.DistanceTo(v));
+	}
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE || bType == BSMESHLODTRISHAPE) {
+		BSTriShape* geom = dynamic_cast<BSTriShape*>(GetBlock(dataRef));
+		if (!geom)
+			return;
+
+		Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
+		Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+		for (int i = 0; i < geom->vertData.size(); i++) {
+			a.x = min(a.x, geom->vertData[i].vert.x);
+			a.y = min(a.y, geom->vertData[i].vert.y);
+			a.z = min(a.z, geom->vertData[i].vert.z);
+			b.x = max(b.x, geom->vertData[i].vert.x);
+			b.y = max(b.y, geom->vertData[i].vert.y);
+			b.z = max(b.z, geom->vertData[i].vert.z);
+		}
+
+		geom->center = (a + b) / 2.0f;
+		for (int i = 0; i < geom->vertData.size(); i++)
+			geom->radius = max(geom->radius, geom->center.DistanceTo(geom->vertData[i].vert));
+	}
+}

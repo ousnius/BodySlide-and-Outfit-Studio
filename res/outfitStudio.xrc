@@ -819,6 +819,10 @@
 				<label>Build Skin Partitions</label>
 				<help>Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken.</help>
 			</object>
+			<object class="wxMenuItem" name="updateBoundingSphere">
+				<label>Update Bounding Sphere</label>
+				<help>Updates the bounding sphere of the geometry with a new position and radius.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="deleteShape">
 				<label>Delete\tDel</label>
@@ -2578,6 +2582,10 @@
 		<object class="wxMenuItem" name="buildSkinPartitions">
 			<label>Build Skin Partitions</label>
 			<help>Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken.</help>
+		</object>
+		<object class="wxMenuItem" name="updateBoundingSphere">
+			<label>Update Bounding Sphere</label>
+			<help>Updates the bounding sphere of the geometry with a new position and radius.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">

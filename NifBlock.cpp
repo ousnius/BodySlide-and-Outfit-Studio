@@ -653,7 +653,8 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	blockType = BSTRISHAPE;
 	header = &hdr;
 
-	memset(unkProps, 0, sizeof(float)* 4);
+	radius = 0.0f;
+
 	skinInstanceRef = -1;
 	shaderPropertyRef = -1;
 	alphaPropertyRef = -1;
@@ -700,8 +701,10 @@ void BSTriShape::Get(fstream& file) {
 	file.read((char*)&scale, 4);
 	file.read((char*)&collisionRef, 4);
 
-	for (int i = 0; i < 4; i++)
-		file.read((char*)&unkProps[i], 4);
+	file.read((char*)&center.x, 4);
+	file.read((char*)&center.y, 4);
+	file.read((char*)&center.z, 4);
+	file.read((char*)&radius, 4);
 
 	file.read((char*)&skinInstanceRef, 4);
 	file.read((char*)&shaderPropertyRef, 4);
@@ -816,8 +819,10 @@ void BSTriShape::Put(fstream& file) {
 	file.write((char*)&scale, 4);
 	file.write((char*)&collisionRef, 4);
 
-	for (int i = 0; i < 4; i++)
-		file.write((char*)&unkProps[i], 4);
+	file.write((char*)&center.x, 4);
+	file.write((char*)&center.y, 4);
+	file.write((char*)&center.z, 4);
+	file.write((char*)&radius, 4);
 
 	file.write((char*)&skinInstanceRef, 4);
 	file.write((char*)&shaderPropertyRef, 4);
@@ -1421,6 +1426,21 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		memset(vertData[i].weightBones, 0, 4);
 	}
 
+	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
+	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	for (auto &v : (*verts)) {
+		a.x = min(a.x, v.x);
+		a.y = min(a.y, v.y);
+		a.z = min(a.z, v.z);
+		b.x = max(b.x, v.x);
+		b.y = max(b.y, v.y);
+		b.z = max(b.z, v.z);
+	}
+
+	center = (a + b) / 2.0f;
+	for (auto &v : (*verts))
+		radius = max(radius, center.DistanceTo(v));
+
 	if (normals && normals->size() == numVertices) {
 		SetNormals((*normals));
 		CalcTangentSpace();
@@ -1897,24 +1917,15 @@ void NiGeometryData::Put(fstream& file) {
 }
 
 void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
-	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
-	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-
 	unkInt = 0;
 	radius = 0.0f;
-	numVertices = verts->size();
 	keepFlags = 0;
 	compressFlags = 0;
+
 	hasVertices = true;
-	for (auto &v : *verts) {
+	numVertices = verts->size();
+	for (auto &v : (*verts))
 		vertices.push_back(v);
-		a.x = min(a.x, v.x);
-		a.y = min(a.y, v.y);
-		a.z = min(a.z, v.z);
-		b.x = max(b.x, v.x);
-		b.y = max(b.y, v.y);
-		b.z = max(b.z, v.z);
-	}
 
 	if (texcoords->size() > 0)
 		numUVSets = 4097;
@@ -1923,8 +1934,20 @@ void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 
 	unkInt2 = 0;
 	hasNormals = false;
+
+	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
+	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
+	for (auto &v : (*verts)) {
+		a.x = min(a.x, v.x);
+		a.y = min(a.y, v.y);
+		a.z = min(a.z, v.z);
+		b.x = max(b.x, v.x);
+		b.y = max(b.y, v.y);
+		b.z = max(b.z, v.z);
+	}
+
 	center = (a + b) / 2.0f;
-	for (auto &v : *verts)
+	for (auto &v : (*verts))
 		radius = max(radius, center.DistanceTo(v));
 
 	hasVertexColors = false;

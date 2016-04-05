@@ -135,6 +135,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudio::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudio::OnMaskWeighted)
 	EVT_MENU(XRCID("buildSkinPartitions"), OutfitStudio::OnBuildSkinPartitions)
+	EVT_MENU(XRCID("updateBoundingSphere"), OutfitStudio::OnUpdateBoundingSphere)
 	EVT_MENU(XRCID("shapeProperties"), OutfitStudio::OnShapeProperties)
 
 	EVT_MENU(XRCID("editUndo"), OutfitStudio::OnUndo)
@@ -3975,6 +3976,18 @@ void OutfitStudio::OnBuildSkinPartitions(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &i : selectedItems) {
 		wxLogMessage("Building skin partitions for '%s'.", i->shapeName);
 		project->BuildShapeSkinPartions(i->shapeName);
+	}
+}
+
+void OutfitStudio::OnUpdateBoundingSphere(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+
+	for (auto &i : selectedItems) {
+		wxLogMessage("Updating bounding sphere for '%s'.", i->shapeName);
+		project->GetWorkNif()->UpdateBoundingSphere(i->shapeName);
 	}
 }
 
