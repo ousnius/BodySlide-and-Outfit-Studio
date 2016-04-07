@@ -663,6 +663,32 @@ void OutfitProject::NegateSlider(const string& sliderName, const string& shapeNa
 		morpher.ScaleResultDiff(target, sliderName, -1.0f);
 }
 
+void OutfitProject::MaskAffected(const string& sliderName, const string& shapeName) {
+	mesh* m = owner->glView->GetMesh(shapeName);
+	if (!m)
+		return;
+
+	m->ColorChannelFill(0, 0.0f);
+
+	if (IsBaseShape(shapeName)) {
+		vector<ushort> outIndices;
+		string target = ShapeToTarget(shapeName);
+
+		string sliderData = activeSet[sliderName].TargetDataName(target);
+		baseDiffData.GetDiffIndices(sliderData, target, outIndices);
+
+		for (auto &i : outIndices)
+			m->vcolors[i].x = 1.0f;
+	}
+	else {
+		unordered_map<ushort, Vector3> outDiff;
+		morpher.GetRawResultDiff(shapeName, sliderName, outDiff);
+
+		for (auto &i : outDiff)
+			m->vcolors[i.first].x = 1.0f;
+	}
+}
+
 int OutfitProject::WriteMorphTRI(const string& triPath) {
 	vector<string> shapes;
 	GetShapes(shapes);

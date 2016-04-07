@@ -115,6 +115,7 @@ public:
 	void SetSliderName(int index, const string& newName);
 
 	void NegateSlider(const string& sliderName, const string& shapeName);
+	void MaskAffected(const string& sliderName, const string& shapeName);
 
 	void SetSliderFromBSD(const string& sliderName, const string& shapeName, const string& fileName);
 	bool SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName);

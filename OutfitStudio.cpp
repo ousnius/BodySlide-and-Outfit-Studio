@@ -70,6 +70,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudio::OnNewZapSlider)
 	EVT_MENU(XRCID("sliderNewCombined"), OutfitStudio::OnNewCombinedSlider)
 	EVT_MENU(XRCID("sliderNegate"), OutfitStudio::OnSliderNegate)
+	EVT_MENU(XRCID("sliderMask"), OutfitStudio::OnMaskAffected)
 	EVT_MENU(XRCID("sliderClear"), OutfitStudio::OnClearSlider)
 	EVT_MENU(XRCID("sliderDelete"), OutfitStudio::OnDeleteSlider)
 	EVT_MENU(XRCID("sliderProperties"), OutfitStudio::OnSliderProperties)
@@ -729,6 +730,7 @@ void OutfitStudio::MenuEnterSliderEdit() {
 	menu->Enable(XRCID("menuImportSlider"), true);
 	menu->Enable(XRCID("menuExportSlider"), true);
 	menu->Enable(XRCID("sliderNegate"), true);
+	menu->Enable(XRCID("sliderMask"), true);
 	menu->Enable(XRCID("sliderClear"), true);
 	menu->Enable(XRCID("sliderDelete"), true);
 	menu->Enable(XRCID("sliderProperties"), true);
@@ -739,6 +741,7 @@ void OutfitStudio::MenuExitSliderEdit() {
 	menu->Enable(XRCID("menuImportSlider"), false);
 	menu->Enable(XRCID("menuExportSlider"), false);
 	menu->Enable(XRCID("sliderNegate"), false);
+	menu->Enable(XRCID("sliderMask"), false);
 	menu->Enable(XRCID("sliderClear"), false);
 	menu->Enable(XRCID("sliderDelete"), false);
 	menu->Enable(XRCID("sliderProperties"), false);
@@ -2921,9 +2924,24 @@ void OutfitStudio::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxLogMessage("Negating slider for the selected shapes.");
+	wxLogMessage("Negating slider '%s' for the selected shapes.", activeSlider);
 	for (auto &i : selectedItems)
 		project->NegateSlider(activeSlider, i->shapeName);
+}
+
+void OutfitStudio::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox("There is no shape selected!", "Error");
+		return;
+	}
+	if (!bEditSlider) {
+		wxMessageBox("There is no slider in edit mode to create a mask from!", "Error");
+		return;
+	}
+
+	wxLogMessage("Creating mask for affected vertices of the slider '%s'.", activeSlider);
+	for (auto &i : selectedItems)
+		project->MaskAffected(activeSlider, i->shapeName);
 }
 
 void OutfitStudio::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {

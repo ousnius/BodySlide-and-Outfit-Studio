@@ -788,6 +788,7 @@ private:
 	void OnNewZapSlider(wxCommandEvent& event);
 	void OnNewCombinedSlider(wxCommandEvent& event);
 	void OnSliderNegate(wxCommandEvent& event);
+	void OnMaskAffected(wxCommandEvent& event);
 	void OnClearSlider(wxCommandEvent& event);
 	void OnDeleteSlider(wxCommandEvent& event);
 	void OnSliderProperties(wxCommandEvent& event);
