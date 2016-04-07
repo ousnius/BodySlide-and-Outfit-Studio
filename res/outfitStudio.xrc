@@ -910,9 +910,14 @@
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="sliderNegate">
-			<label>Negate Slider</label>
-			<help>Negates the current slider, reversing it's effect</help>
-			<enabled>0</enabled>
+				<label>Negate Slider</label>
+				<help>Negates the current slider, reversing it's effect</help>
+				<enabled>0</enabled>
+			</object>
+			<object class="wxMenuItem" name="sliderMask">
+				<label>Mask Affected Vertices</label>
+				<help>Masks the vertices the slider is affecting for all selected shapes.</help>
+				<enabled>0</enabled>
 			</object>
 			<object class="wxMenuItem" name="sliderClear">
 				<label>Clear Slider Data</label>
