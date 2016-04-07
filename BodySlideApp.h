@@ -46,6 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/listctrl.h>
 #include <wx/dir.h>
 #include <wx/progdlg.h>
+#include <wx/intl.h>
 
 #include <vector>
 #include <map>
@@ -67,6 +68,10 @@ class BodySlideApp : public wxApp {
 	wxString cmdTargetDir;
 	wxString cmdPreset;
 	bool cmdTri = false;
+
+	/* Localization */
+	wxLocale* locale = nullptr;
+	int language;
 
 	/* Data Managers */
 	SliderManager sliderManager;
@@ -114,6 +119,8 @@ public:
 
 	void SetDefaultConfig();
 	wxString GetGameDataPath(TargetGame gameID);
+
+	void InitLanguage();
 
 	void InitArchives();
 	void GetArchiveFiles(vector<string>& outList);

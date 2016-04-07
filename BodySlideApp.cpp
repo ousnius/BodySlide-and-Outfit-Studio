@@ -62,6 +62,9 @@ BodySlideApp::~BodySlideApp() {
 	delete previewBaseNif;
 	previewBaseNif = nullptr;
 
+	delete locale;
+	locale = nullptr;
+
 	FSManager::del();
 }
 
@@ -87,8 +90,10 @@ bool BodySlideApp::OnInit() {
 
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
 
-	SetDefaultConfig();
 	wxLogMessage("Working directory: %s", wxGetCwd());
+	SetDefaultConfig();
+
+	InitLanguage();
 
 	wxString gameName = "Target game: ";
 	switch (targetGame) {
@@ -894,6 +899,7 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("WarnBatchBuildOverride", "true");
 	Config.SetDefaultValue("BSATextureScan", "true");
 	Config.SetDefaultValue("LogLevel", "3");
+	Config.SetDefaultValue("UseSystemLanguage", "false");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("SelectedOutfit", "");
 
@@ -1016,6 +1022,41 @@ wxString BodySlideApp::GetGameDataPath(TargetGame gameID) {
 		}
 	}
 	return dataPath;
+}
+
+void BodySlideApp::InitLanguage() {
+	if (Config["UseSystemLanguage"] != "true")
+		return;
+
+	if (locale)
+		delete locale;
+
+	language = wxLocale::GetSystemLanguage();
+
+	// Load language if possible, fall back to English otherwise
+	if (wxLocale::IsAvailable(language)) {
+		locale = new wxLocale(language);
+		locale->AddCatalogLookupPathPrefix("lang");
+		locale->AddCatalog("BodySlide");
+
+		if (!locale->IsOk()) {
+			wxMessageBox(wxString::Format("System language '%d' is wrong.", language));
+			wxLogError("System language '%d' is wrong.", language);
+
+			delete locale;
+			locale = new wxLocale(wxLANGUAGE_ENGLISH);
+			language = wxLANGUAGE_ENGLISH;
+		}
+	}
+	else {
+		wxMessageBox(wxString::Format("The system language '%d' is not supported by your system. Try installing support for this language.", language));
+		wxLogError("The system language '%d' is not supported by your system. Try installing support for this language.", language);
+
+		locale = new wxLocale(wxLANGUAGE_ENGLISH);
+		language = wxLANGUAGE_ENGLISH;
+	}
+
+	wxLogMessage("Using language '%s'.", wxLocale::GetLanguageName(language));
 }
 
 void BodySlideApp::LoadAllCategories() {
@@ -2721,6 +2762,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
 		cbLeftMousePan->SetValue(Config["Input/LeftMousePan"] != "false");
 
+		wxCheckBox* cbLanguage = XRCCTRL(*settings, "cbLanguage", wxCheckBox);
+		cbLanguage->SetValue(Config["UseSystemLanguage"] != "false");
+
 		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
 		fpSkeletonFile->SetPath(Config["Anim/DefaultSkeletonReference"]);
 
@@ -2755,6 +2799,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked() ? "true" : "false");
 			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
 			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
+			Config.SetValue("UseSystemLanguage", cbLanguage->IsChecked() ? "true" : "false");
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());

@@ -889,6 +889,16 @@
 									<checked>0</checked>
 								</object>
 							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="cbLanguage">
+									<tooltip>Use the current system language for the program.</tooltip>
+									<label>Use System Language</label>
+									<checked>0</checked>
+								</object>
+							</object>
 						</object>
 					</object>
 				</object>
@@ -990,7 +1000,7 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxALIGN_BOTTOM|wxALL|wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">
 					<object class="button">

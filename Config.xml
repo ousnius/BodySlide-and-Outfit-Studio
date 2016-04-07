@@ -17,6 +17,7 @@
     <GameRegKey></GameRegKey>
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
+    <UseSystemLanguage>false</UseSystemLanguage>
     <SelectedOutfit>CBBE Body</SelectedOutfit>
     <SelectedPreset>CBBE</SelectedPreset>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
