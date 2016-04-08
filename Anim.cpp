@@ -356,7 +356,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 	}
 
 	if (incomplete)
-		wxMessageBox("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export.", "Export Warning", wxICON_WARNING);
+		wxMessageBox(_("Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export."), _("Export Warning"), wxICON_WARNING);
 }
 
 void AnimInfo::RenameShape(const string& shapeName, const string& newShapeName) {
@@ -415,7 +415,7 @@ int AnimSkeleton::LoadFromNif(const string& fileName) {
 	int error = refSkeletonNif.Load(fileName);
 	if (error) {
 		wxLogError("Failed to load skeleton '%s'!", fileName);
-		wxMessageBox(wxString::Format("Failed to load skeleton '%s'!", fileName));
+		wxMessageBox(wxString::Format(_("Failed to load skeleton '%s'!"), fileName));
 		return 1;
 	}
 
@@ -423,7 +423,7 @@ int AnimSkeleton::LoadFromNif(const string& fileName) {
 	int nodeID = refSkeletonNif.GetNodeID(rootBone);
 	if (nodeID == -1) {
 		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);
-		wxMessageBox(wxString::Format("Root '%s' not found in skeleton '%s'!", rootBone, fileName));
+		wxMessageBox(wxString::Format(_("Root '%s' not found in skeleton '%s'!"), rootBone, fileName));
 		return 2;
 	}
 

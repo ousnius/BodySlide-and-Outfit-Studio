@@ -132,7 +132,7 @@ bool BodySlideApp::OnInit() {
 		bool dirWritable = wxFileName::IsDirWritable(Config["GameDataPath"]);
 		bool dirReadable = wxFileName::IsDirReadable(Config["GameDataPath"]);
 		if (!dirWritable || !dirReadable)
-			wxMessageBox("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct.", "Warning", wxICON_WARNING);
+			wxMessageBox(_("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct."), _("Warning"), wxICON_WARNING);
 	}
 
 	wxLogMessage("BodySlide initialized.");
@@ -169,7 +169,7 @@ bool BodySlideApp::OnExceptionInMainLoop() {
 
 	logger.SetFormatter(false);
 	wxLogError("Unexpected exception has occurred: %s, the program will terminate.", error);
-	wxMessageBox(wxString::Format("Unexpected exception has occurred: %s, the program will terminate.", error), "Unexpected exception", wxICON_ERROR);
+	wxMessageBox(wxString::Format(_("Unexpected exception has occurred: %s, the program will terminate."), error), _("Unexpected exception"), wxICON_ERROR);
 	return false;
 }
 
@@ -190,7 +190,7 @@ void BodySlideApp::OnUnhandledException() {
 
 	logger.SetFormatter(false);
 	wxLogError("Unhandled exception has occurred: %s, the program will terminate.", error);
-	wxMessageBox(wxString::Format("Unhandled exception has occurred: %s, the program will terminate.", error), "Unhandled exception", wxICON_ERROR);
+	wxMessageBox(wxString::Format(_("Unhandled exception has occurred: %s, the program will terminate."), error), _("Unhandled exception"), wxICON_ERROR);
 }
 
 void BodySlideApp::OnFatalException() {
@@ -199,7 +199,7 @@ void BodySlideApp::OnFatalException() {
 
 	logger.SetFormatter(false);
 	wxLogError("Fatal exception has occurred, the program will terminate.");
-	wxMessageBox("Fatal exception has occurred, the program will terminate.", "Fatal exception", wxICON_ERROR);
+	wxMessageBox(_("Fatal exception has occurred, the program will terminate."), _("Fatal exception"), wxICON_ERROR);
 }
 
 
@@ -973,15 +973,13 @@ void BodySlideApp::SetDefaultConfig() {
 				wxLogMessage("Registry game data path: %s", installPath);
 			}
 			else if (Config["WarnMissingGamePath"] == "true") {
-				wxString warning = "Failed to find game install path registry value or GameDataPath in the config.";
-				wxLogWarning(warning);
-				wxMessageBox(warning, "Warning", wxICON_WARNING);
+				wxLogWarning("Failed to find game install path registry value or GameDataPath in the config.");
+				wxMessageBox(_("Failed to find game install path registry value or GameDataPath in the config."), _("Warning"), wxICON_WARNING);
 			}
 		}
 		else if (Config["WarnMissingGamePath"] == "true") {
-			wxString warning = "Failed to find game install path registry key or GameDataPath in the config.";
-			wxLogWarning(warning);
-			wxMessageBox(warning, "Warning", wxICON_WARNING);
+			wxLogWarning("Failed to find game install path registry key or GameDataPath in the config.");
+			wxMessageBox(_("Failed to find game install path registry key or GameDataPath in the config."), _("Warning"), wxICON_WARNING);
 		}
 	}
 	else
@@ -1040,8 +1038,8 @@ void BodySlideApp::InitLanguage() {
 		locale->AddCatalog("BodySlide");
 
 		if (!locale->IsOk()) {
-			wxMessageBox(wxString::Format("System language '%d' is wrong.", language));
 			wxLogError("System language '%d' is wrong.", language);
+			wxMessageBox(wxString::Format(_("System language '%d' is wrong."), language));
 
 			delete locale;
 			locale = new wxLocale(wxLANGUAGE_ENGLISH);
@@ -1049,8 +1047,8 @@ void BodySlideApp::InitLanguage() {
 		}
 	}
 	else {
-		wxMessageBox(wxString::Format("The system language '%d' is not supported by your system. Try installing support for this language.", language));
 		wxLogError("The system language '%d' is not supported by your system. Try installing support for this language.", language);
+		wxMessageBox(wxString::Format(_("The system language '%d' is not supported by your system. Try installing support for this language."), language));
 
 		locale = new wxLocale(wxLANGUAGE_ENGLISH);
 		language = wxLANGUAGE_ENGLISH;
@@ -1128,7 +1126,7 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 			outfile.New(fileName);
 
 		if (outfile.GetError() != 0) {
-			wxMessageBox("Failed to create group file", "Error", wxICON_ERROR);
+			wxMessageBox(_("Failed to create group file."), "Error", wxICON_ERROR);
 			return 5;
 		}
 	}
@@ -1142,7 +1140,7 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 		}
 	}
 	if (found) {
-		int ret = wxMessageBox("That group already exists in the specified file, do you wish to overwrite the group?", "Group exists", wxYES_NO | wxCANCEL);
+		int ret = wxMessageBox(_("That group already exists in the specified file, do you wish to overwrite the group?"), _("Group already exists"), wxYES_NO | wxCANCEL);
 		if (ret == wxNO)
 			return 2;
 		else if (ret == wxCANCEL)
@@ -1276,7 +1274,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	else {
 		if (Config["GameDataPath"].empty()) {
 			if (Config["WarnMissingGamePath"] == "true") {
-				int ret = wxMessageBox("WARNING: Game data path not configured. Would you like to show BodySlide where it is?", "Game not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
+				int ret = wxMessageBox(_("WARNING: Game data path not configured. Would you like to show BodySlide where it is?"), _("Game not found"), wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 				if (ret != wxYES) {
 					wxLogMessage("Aborted build without data path.");
 					return 4;
@@ -1284,7 +1282,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			}
 
 			wxString cwd = wxGetCwd();
-			wxString response = wxDirSelector("Please choose a directory to set as your Data path", cwd);
+			wxString response = wxDirSelector(_("Please choose a directory to set as your Data path"), cwd);
 			if (response.IsEmpty()) {
 				wxLogMessage("Aborted build without data path.");
 				return 4;
@@ -1302,14 +1300,14 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 	// ALT key
 	if (clean && !localPath) {
-		int ret = wxMessageBox("WARNING: This will delete the output files from the output folder, potentially causing crashes.\n\nDo you want to continue?", "Clean Build", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
+		int ret = wxMessageBox(_("WARNING: This will delete the output files from the output folder, potentially causing crashes.\n\nDo you want to continue?"), _("Clean Build"), wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 		if (ret != wxYES) {
 			wxLogMessage("Aborted cleaning build.");
 			return 4;
 		}
 
 		wxString removeHigh, removeLow;
-		wxString msg = "Removed the following files:\n";
+		wxString msg = _("Removed the following files:\n");
 		bool genWeights = activeSet.GenWeights();
 
 		if (genWeights)
@@ -1321,11 +1319,11 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		if (remHigh)
 			msg.Append(removeHigh + "\n");
 		else
-			msg.Append(removeHigh + " (no action)\n");
+			msg.Append(removeHigh + _(" (no action)\n"));
 
 		if (!genWeights) {
 			wxLogMessage("%s", msg);
-			wxMessageBox(msg, "Process Successful");
+			wxMessageBox(msg, _("Process Successful"));
 			return 0;
 		}
 
@@ -1334,10 +1332,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		if (remLow)
 			msg.Append(removeLow + "\n");
 		else
-			msg.Append(removeLow + " (no action)\n");
+			msg.Append(removeLow + _(" (no action)\n"));
 
 		wxLogMessage("%s", msg);
-		wxMessageBox(msg, "Process Successful");
+		wxMessageBox(msg, _("Process Successful"));
 		return 0;
 	}
 
@@ -1394,7 +1392,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
 			wxLogError("Failed to write TRI file to '%s'!", triPath);
-			wxMessageBox(wxString().Format("Failed to write TRI file to the following location\n\n%s", triPath), "Unable to process", wxOK | wxICON_ERROR);
+			wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
 		}
 
 		string triShapeLink;
@@ -1421,9 +1419,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		savedLow = custName;
 		while (nifSmall.Save(custName.ToStdString())) {
 			wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
-			wxMessageBox(wxString().Format("Failed to build set to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
+			wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
-			custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName);
+			custName = wxSaveFileSelector(_("Choose alternate file name"), "*.nif", custName);
 			if (custName.IsEmpty()) {
 				wxLogMessage("Aborted build when choosing alternate file name.");
 				return 4;
@@ -1450,9 +1448,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	savedHigh = custName;
 	while (nifBig.Save(custName.ToStdString())) {
 		wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
-		wxMessageBox(wxString().Format("Failed to build set to the following location\n\n%s", custName), "Unable to process", wxOK | wxICON_ERROR);
+		wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
-		custName = wxSaveFileSelector("Choose alternate file name", "*.nif", custName);
+		custName = wxSaveFileSelector(_("Choose alternate file name"), "*.nif", custName);
 		if (custName.IsEmpty()) {
 			wxLogMessage("Aborted build when choosing alternate file name.");
 			return 4;
@@ -1462,7 +1460,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		savedHigh = custName;
 	}
 
-	wxString msg = "Successfully processed the following files:\n";
+	wxString msg = _("Successfully processed the following files:\n");
 	if (!savedLow.IsEmpty())
 		msg.Append(savedLow += "\n");
 
@@ -1470,7 +1468,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		msg.Append(savedHigh);
 
 	wxLogMessage("%s", msg);
-	wxMessageBox(msg, "Process Successful");
+	wxMessageBox(msg, _("Process Successful"));
 	return 0;
 }
 
@@ -1488,7 +1486,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		custPath.empty() ? "False" : custPath, clean ? "True" : "False", tri ? "True" : "False");
 
 	if (clean) {
-		int ret = wxMessageBox("WARNING: This will delete the output files from the output folders, potentially causing crashes.\n\nDo you want to continue?", "Clean Batch Build", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
+		int ret = wxMessageBox(_("WARNING: This will delete the output files from the output folders, potentially causing crashes.\n\nDo you want to continue?"), _("Clean Batch Build"), wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 		if (ret != wxYES) {
 			wxLogMessage("Aborted cleaning batch build.");
 			return 1;
@@ -1501,11 +1499,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		if (Config["GameDataPath"].empty()) {
 			if (clean) {
 				wxLogError("Aborted batch clean with unconfigured data path. Files can't be removed that way.");
-				wxMessageBox("WARNING: Game data path not configured. Files can't be removed that way.", "Game not found", wxOK | wxICON_ERROR);
+				wxMessageBox(_("WARNING: Game data path not configured. Files can't be removed that way."), _("Game not found"), wxOK | wxICON_ERROR);
 				return 1;
 			}
 			if (Config["WarnMissingGamePath"] == "true") {
-				int ret = wxMessageBox("WARNING: Game data path not configured. Continue saving files to the working directory?", "Game not found", wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
+				int ret = wxMessageBox(_("WARNING: Game data path not configured. Continue saving files to the working directory?"), _("Game not found"), wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 				if (ret != wxYES) {
 					wxLogError("Aborted batch build with unconfigured data path.");
 					return 1;
@@ -1532,7 +1530,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				if (selFilePaths.size() <= 1)
 					continue;
 
-				wxSingleChoiceDialog setChoice(sliderView, "The following sets will override the same files.\nPlease decide which one to use and select it in the list below.", "Choose output set", selFilePaths);
+				wxSingleChoiceDialog setChoice(sliderView, _("The following sets will override the same files.\nPlease decide which one to use and select it in the list below."), _("Choose output set"), selFilePaths);
 				if (setChoice.ShowModal() == wxID_CANCEL) {
 					wxLogMessage("Aborted batch build by not choosing a file override.");
 					return 1;
@@ -1549,20 +1547,20 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		}
 	}
 
-	progWnd = new wxProgressDialog("Processing Outfits", "Starting...", 1000, nullptr, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
+	progWnd = new wxProgressDialog(_("Processing Outfits"), _("Starting..."), 1000, nullptr, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
 	progWnd->SetSize(400, 150);
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
 	for (auto &outfit : outfitList) {
-		wxString progMsg = wxString::Format("Processing '%s' (%d of %d)...", outfit, count, outfitList.size());
+		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, outfitList.size());
 		wxLogMessage(progMsg);
 		progWnd->Update((int)(count*progstep), progMsg);
 		count++;
 
 		/* Load set */
 		if (outfitNameSource.find(outfit) == outfitNameSource.end()) {
-			failedOutfits[outfit] = "No recorded outfit name source";
+			failedOutfits[outfit] = _("No recorded outfit name source");
 			continue;
 		}
 
@@ -1576,10 +1574,10 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				currentSet.LoadSetDiffData(currentDiffs);
 			}
 			else
-				failedOutfits[outfit] = "Unable to get slider set from file: " + outfitNameSource[outfit];
+				failedOutfits[outfit] = _("Unable to get slider set from file: ") + outfitNameSource[outfit];
 		}
 		else {
-			failedOutfits[outfit] = "Unable to open slider set file: " + outfitNameSource[outfit];
+			failedOutfits[outfit] = _("Unable to open slider set file: ") + outfitNameSource[outfit];
 			continue;
 		}
 
@@ -1607,7 +1605,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 		/* load iput nifs */
 		if (nifBig.Load(currentSet.GetInputFileName())) {
-			failedOutfits[outfit] = "Unable to load input nif: " + currentSet.GetInputFileName();
+			failedOutfits[outfit] = _("Unable to load input nif: ") + currentSet.GetInputFileName();
 			continue;
 		}
 
@@ -1715,7 +1713,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 		if (!success) {
-			failedOutfits[outfit] = "Unable to create destination directory: " + dir.ToStdString();
+			failedOutfits[outfit] = _("Unable to create destination directory: ") + dir.ToStdString();
 			continue;
 		}
 
@@ -1732,7 +1730,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
-				wxMessageBox(wxString().Format("Failed to create TRI file in the following location\n\n%s", triPath), "TRI File", wxOK | wxICON_ERROR);
+				wxMessageBox(wxString().Format(_("Failed to create TRI file in the following location\n\n%s"), triPath), "TRI File", wxOK | wxICON_ERROR);
 			}
 
 			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
@@ -1751,18 +1749,18 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
 			if (nifBig.Save(outFileNameBig)) {
-				failedOutfits[outfit] = "Unable to save nif file: " + outFileNameBig;
+				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				continue;
 			}
 			if (nifSmall.Save(outFileNameSmall)) {
-				failedOutfits[outfit] = "Unable to save nif file: " + outFileNameSmall;
+				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				continue;
 			}
 		}
 		else {
 			outFileNameBig += ".nif";
 			if (nifBig.Save(outFileNameBig)) {
-				failedOutfits[outfit] = "Unable to save nif file: " + outFileNameBig;
+				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				continue;
 			}
 		}
@@ -1800,7 +1798,7 @@ void BodySlideApp::GroupBuild(const string& group) {
 
 	if (ret == 0) {
 		wxLogMessage("All group build sets processed successfully!");
-		wxMessageBox("All group build sets processed successfully!", "Complete", wxICON_INFORMATION);
+		wxMessageBox(_("All group build sets processed successfully!"), _("Complete"), wxICON_INFORMATION);
 	}
 	else if (ret == 3) {
 		wxArrayString errlist;
@@ -1809,7 +1807,7 @@ void BodySlideApp::GroupBuild(const string& group) {
 			errlist.Add(e.first + ":" + e.second);
 		}
 
-		wxSingleChoiceDialog errdisplay(sliderView, "The following sets failed", "Failed", errlist, nullptr, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
+		wxSingleChoiceDialog errdisplay(sliderView, _("The following sets failed"), _("Failed"), errlist, nullptr, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
 		errdisplay.ShowModal();
 	}
 }
@@ -1855,14 +1853,14 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	rsrc->InitAllHandlers();
 	bool loaded = rsrc->Load("res\\BodyslideFrame.xrc");
 	if (!loaded) {
-		wxMessageBox("Failed to load BodyslideFrame.xrc file!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Failed to load BodyslideFrame.xrc file!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
 
 	rsrc->LoadFrame(this, GetParent(), "BodyslideFrame");
 	if (!loaded) {
-		wxMessageBox("Failed to load BodySlide frame!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Failed to load BodySlide frame!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
@@ -1880,15 +1878,15 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
 	search->ShowCancelButton(true);
-	search->SetDescriptiveText("Group Filter");
-	search->SetToolTip("Filter by group");
+	search->SetDescriptiveText(_("Group Filter"));
+	search->SetToolTip(_("Filter by group"));
 	search->SetMenu(srchMenu);
 
 	outfitsearch = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	outfitsearch->ShowSearchButton(true);
 	outfitsearch->ShowCancelButton(true);
-	outfitsearch->SetDescriptiveText("Outfit Filter");
-	outfitsearch->SetToolTip("Filter by outfit");
+	outfitsearch->SetDescriptiveText(_("Outfit Filter"));
+	outfitsearch->SetToolTip(_("Filter by outfit"));
 	outfitsearch->SetMenu(outfitsrchMenu);
 
 	rsrc->AttachUnknownControl("searchHolder", search, this);
@@ -2394,7 +2392,7 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 	}
 	grpChoices.Add("Unassigned");
 	wxString filter;
-	wxMultiChoiceDialog chooser(this, "Choose groups to filter outfit list", "Choose Groups", grpChoices);
+	wxMultiChoiceDialog chooser(this, _("Choose groups to filter outfit list"), _("Choose Groups"), grpChoices);
 	chooser.SetSelections(grpSelections);
 	if (chooser.ShowModal() == wxID_OK) {
 		wxArrayInt sel = chooser.GetSelections();
@@ -2411,7 +2409,7 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	wxFileDialog saveGroupDialog(this, "Choose or create group file", "SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog saveGroupDialog(this, _("Choose or create group file"), "SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
 	if (saveGroupDialog.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -2420,9 +2418,10 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 	int ret;
 
 	do {
-		gName = wxGetTextFromUser("What would you like the new group to be called?", "New Group Name");
+		gName = wxGetTextFromUser(_("What would you like the new group to be called?"), _("New Group Name"));
 		if (gName.empty())
 			return;
+
 		ret = app->SaveGroupList(fName, gName);
 	} while (ret == 2);
 
@@ -2463,7 +2462,7 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	int error = app->UpdateSliderPositions(presetName);
 	if (error) {
 		wxLogError("Failed to save preset (%d)!", error);
-		wxMessageBox(wxString::Format("Failed to save preset (%d)!", error), "Error");
+		wxMessageBox(wxString::Format(_("Failed to save preset (%d)!"), error), _("Error"));
 	}
 
 	app->LoadPresets("");
@@ -2490,7 +2489,7 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 	int error = app->SaveSliderPositions(fname, presetName, groups);
 	if (error) {
 		wxLogError("Failed to save preset as '%s' (%d)!", fname, error);
-		wxMessageBox(wxString::Format("Failed to save preset as '%s' (%d)!", fname, error), "Error");
+		wxMessageBox(wxString::Format(_("Failed to save preset as '%s' (%d)!"), fname, error), "Error");
 	}
 
 	app->LoadPresets("");
@@ -2607,7 +2606,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	map<string, string> failedOutfits;
 	int ret;
 	if (custpath) {
-		string path = wxDirSelector("Choose a folder to contain the saved files");
+		string path = wxDirSelector(_("Choose a folder to contain the saved files"));
 		if (path.empty())
 			return;
 
@@ -2620,7 +2619,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 
 	if (ret == 0) {
 		wxLogMessage("All sets processed successfully!");
-		wxMessageBox("All sets processed successfully!", "Complete", wxICON_INFORMATION);
+		wxMessageBox(_("All sets processed successfully!"), _("Complete"), wxICON_INFORMATION);
 	}
 	else if (ret == 3) {
 		wxArrayString errlist;
@@ -2629,7 +2628,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 			errlist.Add(e.first + ":" + e.second);
 		}
 
-		wxSingleChoiceDialog errdisplay(this, "The following sets failed", "Failed", errlist, (void**)0, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
+		wxSingleChoiceDialog errdisplay(this, _("The following sets failed"), _("Failed"), errlist, (void**)0, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
 		errdisplay.ShowModal();
 	}
 }
@@ -2695,7 +2694,6 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 	dataFileList->Clear();
 
 	wxString cp = "GameDataFiles";
-
 	switch (targetGame) {
 		case FO3:
 			cp += "/Fallout3";
@@ -2737,7 +2735,7 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 	if (app->IsOutfitStudioOpened()) {
-		wxMessageBox("You can't change the settings while Outfit Studio is opened up.", "Warning", wxICON_WARNING, this);
+		wxMessageBox(_("You can't change the settings while Outfit Studio is opened up."), _("Warning"), wxICON_WARNING, this);
 		return;
 	}
 

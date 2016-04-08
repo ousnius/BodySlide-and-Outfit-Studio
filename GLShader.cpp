@@ -224,10 +224,10 @@ GLShader::GLShader() {
 	vertSrc = nullptr;
 
 	if (!initShaders())
-		wxMessageBox(errorstring, "Shader Error");
+		wxMessageBox(errorstring, _("Shader Error"));
 	else
 		if (!LoadShaders(GLSHADER_PASSTHROUGH, GLSHADER_PASSTHROUGH, false))
-			wxMessageBox(errorstring, "Shader Error");
+			wxMessageBox(errorstring, _("Shader Error"));
 }
 
 GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool build) {
@@ -240,13 +240,13 @@ GLShader::GLShader(const char *vertexSource, const char *fragmentSource, bool bu
 	if (!initShaders()) {
 		wxString error = wxString::Format("%s (state %d)", errorstring, errorstate);
 		wxLogError(error);
-		wxMessageBox(error, "OpenGL Error", wxICON_ERROR);
+		wxMessageBox(error, _("OpenGL Error"), wxICON_ERROR);
 	}
 	else {
 		if (!LoadShaders(vertexSource, fragmentSource, build)) {
 			wxString error = wxString::Format("%s (state %d)", errorstring, errorstate);
 			wxLogError(error);
-			wxMessageBox(error, "OpenGL Error", wxICON_ERROR);
+			wxMessageBox(error, _("OpenGL Error"), wxICON_ERROR);
 		}
 	}
 }
@@ -259,7 +259,7 @@ bool GLShader::initShaders() {
 
 		if (!glCreateShader || !glShaderSource || !glCompileShader) {
 			errorstate = 1;
-			errorstring = "OpenGL: One or more shader functions are not supported.";
+			errorstring = _("OpenGL: One or more shader functions are not supported.");
 			return false;
 		}
 
@@ -270,7 +270,7 @@ bool GLShader::initShaders() {
 
 		if (!glCreateProgram || !glAttachShader || !glLinkProgram || !glUseProgram) {
 			errorstate = 1;
-			errorstring = "OpenGL: One or more program functions are not supported.";
+			errorstring = _("OpenGL: One or more program functions are not supported.");
 			return false;
 		}
 
@@ -343,7 +343,7 @@ bool GLShader::LoadShaders(const char *vertexSource, const char *fragmentSource,
 			bHasVertShader = false;
 			bHasFragShader = false;
 			errorstate = 2;
-			errorstring = "OpenGL: Failed to load vertex shader from file: ";
+			errorstring = _("OpenGL: Failed to load vertex shader from file: ");
 			errorstring += vertexSource;
 			return false;
 		}
@@ -362,7 +362,7 @@ bool GLShader::LoadShaders(const char *vertexSource, const char *fragmentSource,
 		if (!loadShaderFile(fragmentSource, &fragSrc, &fragSrcLength)) {
 			bHasFragShader = false;
 			errorstate = 3;
-			errorstring = "OpenGL: Failed to load fragment shader from file: ";
+			errorstring = _("OpenGL: Failed to load fragment shader from file: ");
 			errorstring += fragmentSource;
 			return false;
 		}
@@ -437,7 +437,7 @@ bool GLShader::BuildShaders() {
 			logdata = new char[loglength];
 			glGetShaderInfoLog(vertShadID, loglength, nullptr, logdata);
 			errorstate = 2;
-			errorstring = "OpenGL: Vertex shader compile failed: ";
+			errorstring = _("OpenGL: Vertex shader compile failed: ");
 			errorstring += logdata;
 			delete[] logdata;
 			return false;
@@ -453,7 +453,7 @@ bool GLShader::BuildShaders() {
 			logdata = new char[loglength];
 			glGetShaderInfoLog(fragShadID, loglength, nullptr, logdata);
 			errorstate = 3;
-			errorstring = "OpenGL: Fragment shader compile failed: ";
+			errorstring = _("OpenGL: Fragment shader compile failed: ");
 			errorstring += logdata;
 			delete[] logdata;
 			return false;
@@ -472,7 +472,7 @@ bool GLShader::BuildShaders() {
 		logdata = new char[loglength];
 		glGetProgramInfoLog(progID, loglength, nullptr, logdata);
 		errorstate = 4;
-		errorstring = "OpenGL: Shader program link failed: ";
+		errorstring = _("OpenGL: Shader program link failed: ");
 		errorstring += logdata;
 		delete[] logdata;
 		return false;
@@ -480,7 +480,7 @@ bool GLShader::BuildShaders() {
 	int nUniforms;
 	glGetProgramiv(progID, GL_ACTIVE_UNIFORMS, &nUniforms);
 	errorstate = 0;
-	errorstring = "OpenGL: Shader program ready.";
+	errorstring = _("OpenGL: Shader program ready.");
 
 	return true;
 }

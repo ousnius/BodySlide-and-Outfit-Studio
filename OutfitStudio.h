@@ -642,7 +642,7 @@ public:
 	vector<pair<int, int>> progressStack;
 	int progressVal = 0;
 
-	void StartProgress(const wxString& msg = "Starting...") {
+	void StartProgress(const wxString& msg = "") {
 		if (progressStack.empty()) {
 			progressVal = 0;
 			progressStack.emplace_back(0, 10000);
@@ -652,7 +652,11 @@ public:
 
 			wxBeginBusyCursor();
 			progressBar = new wxGauge(statusBar, wxID_ANY, 10000, rect.GetPosition(), rect.GetSize());
-			statusBar->SetStatusText(msg);
+
+			if (msg.IsEmpty())
+				statusBar->SetStatusText(_("Starting..."));
+			else
+				statusBar->SetStatusText(msg);
 		}
 	}
 
@@ -665,7 +669,7 @@ public:
 		progressStack.emplace_back(progressStack.front().first + minoff, progressStack.front().first + maxoff);
 	}
 
-	void EndProgress(const wxString& msg = "Ready!") {
+	void EndProgress(const wxString& msg = "") {
 		if (progressStack.empty())
 			return;
 
@@ -673,7 +677,11 @@ public:
 		progressStack.pop_back();
 
 		if (progressStack.empty()) {
-			statusBar->SetStatusText(msg);
+			if (msg.IsEmpty())
+				statusBar->SetStatusText(_("Ready!"));
+			else
+				statusBar->SetStatusText(msg);
+
 			delete progressBar;
 			progressBar = nullptr;
 			wxEndBusyCursor();

@@ -178,14 +178,14 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	wxXmlResource::Get()->InitAllHandlers();
 	bool loaded = wxXmlResource::Get()->Load("res\\outfitStudio.xrc");
 	if (!loaded) {
-		wxMessageBox("Failed to load outfitStudio.xrc file!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Failed to load outfitStudio.xrc file!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
 
 	loaded = wxXmlResource::Get()->LoadFrame(this, nullptr, "outfitStudio");
 	if (!loaded) {
-		wxMessageBox("Failed to load Outfit Studio frame!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Failed to load Outfit Studio frame!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
@@ -197,7 +197,7 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	if (statusBar) {
 		statusBar->SetFieldsCount(3);
 		statusBar->SetStatusWidths(3, statusWidths);
-		statusBar->SetStatusText("Ready!");
+		statusBar->SetStatusText(_("Ready!"));
 	}
 
 	this->DragAcceptFiles(true);
@@ -358,10 +358,10 @@ void OutfitStudio::CreateSetSliders() {
 	int inc = 1;
 	if (project->SliderCount()) {
 		inc = 90 / project->SliderCount();
-		StartProgress("Creating sliders...");
+		StartProgress(_("Creating sliders..."));
 	}
 
-	UpdateProgress(0, "Clearing old sliders...");
+	UpdateProgress(0, _("Clearing old sliders..."));
 
 	sliderScroll->Freeze();
 	sliderScroll->DestroyChildren();
@@ -373,7 +373,7 @@ void OutfitStudio::CreateSetSliders() {
 	wxSizer* rootSz = sliderScroll->GetSizer();
 
 	for (int i = 0; i < project->SliderCount(); i++)  {
-		UpdateProgress(inc, "Loading slider: " + project->GetSliderName(i));
+		UpdateProgress(inc, _("Loading slider: ") + project->GetSliderName(i));
 		if (project->SliderClamp(i))    // clamp sliders are a special case, usually an incorrect scale
 			continue;
 
@@ -400,17 +400,17 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 
 	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap("res\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
 	d->btnSliderEdit->SetBitmapDisabled(wxBitmap("res\\EditSmall_d.png", wxBITMAP_TYPE_ANY));
-	d->btnSliderEdit->SetToolTip("Turn on edit mode for this slider.");
+	d->btnSliderEdit->SetToolTip(_("Turn on edit mode for this slider."));
 	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	d->btnMinus = new wxButton(d->sliderPane, wxID_ANY, "-", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnMinus");
-	d->btnMinus->SetToolTip("Weaken slider data by 1%.");
+	d->btnMinus->SetToolTip(_("Weaken slider data by 1%."));
 	d->btnMinus->SetForegroundColour(wxTransparentColour);
 	d->btnMinus->Hide();
 	d->paneSz->Add(d->btnMinus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	d->btnPlus = new wxButton(d->sliderPane, wxID_ANY, "+", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnPlus");
-	d->btnPlus->SetToolTip("Strengthen slider data by 1%.");
+	d->btnPlus->SetToolTip(_("Strengthen slider data by 1%."));
 	d->btnPlus->SetForegroundColour(wxTransparentColour);
 	d->btnPlus->Hide();
 	d->paneSz->Add(d->btnPlus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
@@ -466,7 +466,7 @@ string OutfitStudio::NewSlider(const string& suggestedName, bool skipPrompt) {
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 	string finalName;
 	if (!skipPrompt) {
-		finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
+		finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this);
 		if (finalName.empty())
 			return finalName;
 	}
@@ -754,7 +754,7 @@ bool OutfitStudio::NotifyStrokeStarting() {
 	if (bEditSlider || project->AllSlidersZero())
 		return true;
 
-	int	response = wxMessageBox("You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph.",
+	int	response = wxMessageBox(_("You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."),
 		wxMessageBoxCaptionStr, wxYES_NO, this);
 
 	if (response == wxYES)
@@ -803,7 +803,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	string outfitName = XRCCTRL(wiz, "npOutfitName", wxTextCtrl)->GetValue();
 
 	wxLogMessage("Creating project '%s'...", outfitName);
-	StartProgress(wxString::Format("Creating project '%s'...", outfitName));
+	StartProgress(wxString::Format(_("Creating project '%s'..."), outfitName));
 
 	ClearProject();
 	project->ClearReference();
@@ -820,7 +820,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	delete project;
 	project = new OutfitProject(appConfig, this);
 
-	UpdateProgress(10, "Loading reference...");
+	UpdateProgress(10, _("Loading reference..."));
 
 	int error = 0;
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -852,7 +852,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	UpdateProgress(40, "Loading outfit...");
+	UpdateProgress(40, _("Loading outfit..."));
 
 	error = 0;
 	if (XRCCTRL(wiz, "npWorkFile", wxRadioButton)->GetValue() == true) {
@@ -873,7 +873,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	wxLogMessage("Creating outfit...");
-	UpdateProgress(80, "Creating outfit...");
+	UpdateProgress(80, _("Creating outfit..."));
 
 	if (XRCCTRL(wiz, "npTexAuto", wxRadioButton)->GetValue() == true)
 		project->SetTextures("_AUTO_");
@@ -883,24 +883,24 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	RefreshGUIFromProj();
 
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
+	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
 	StartSubProgress(90, 99);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 
 	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99, "Applying slider effects...");
+	UpdateProgress(99, _("Applying slider effects..."));
 	ApplySliders();
 
 	wxLogMessage("Project created.");
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 
 	EndProgress();
 }
 
 void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog loadProjectDialog(this, "Select a slider set to load", "SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
+	wxFileDialog loadProjectDialog(this, _("Select a slider set to load"), "SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
 	if (loadProjectDialog.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -909,7 +909,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	SliderSetFile InFile(file);
 	if (InFile.fail()) {
 		wxLogError("Failed to open '%s' as a slider set file!", file);
-		wxMessageBox(wxString::Format("Failed to open '%s' as a slider set file!", file), "Slider Set Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Failed to open '%s' as a slider set file!"), file), _("Slider Set Error"), wxICON_ERROR);
 		return;
 	}
 
@@ -920,7 +920,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	string outfit;
 	if (choices.GetCount() > 1) {
-		outfit = wxGetSingleChoice("Please choose an outfit to load", "Load a slider set", choices, 0, this);
+		outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this);
 		if (outfit.empty())
 			return;
 	}
@@ -930,7 +930,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	wxLogMessage("Loading project '%s' from file '%s'...", outfit, file);
-	StartProgress("Loading project...");
+	StartProgress(_("Loading project..."));
 
 	ClearProject();
 	project->ClearReference();
@@ -948,21 +948,21 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	project = new OutfitProject(appConfig, this);
 
 	wxLogMessage("Loading outfit data...");
-	UpdateProgress(10, "Loading outfit data...");
+	UpdateProgress(10, _("Loading outfit data..."));
 	StartSubProgress(10, 40);
 
 	int error = project->OutfitFromSliderSet(file, outfit);
 	if (error) {
 		EndProgress();
 		wxLogError("Failed to create project (%d)!", error);
-		wxMessageBox(wxString::Format("Failed to create project '%s' from file '%s' (%d)!", outfit, file, error), "Slider Set Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Failed to create project '%s' from file '%s' (%d)!"), outfit, file, error), _("Slider Set Error"), wxICON_ERROR);
 		RefreshGUIFromProj();
 		return;
 	}
 
 	string shape = project->GetBaseShape();
 	wxLogMessage("Loading reference shape '%s'...", shape);
-	UpdateProgress(50, wxString::Format("Loading reference shape '%s'...", shape));
+	UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shape));
 
 	if (!shape.empty()) {
 		error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, false);
@@ -974,34 +974,34 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	wxLogMessage("Loading textures...");
-	UpdateProgress(60, "Loading textures...");
+	UpdateProgress(60, _("Loading textures..."));
 
 	project->SetTextures("_AUTO_");
 
 	wxLogMessage("Creating outfit...");
-	UpdateProgress(80, "Creating outfit...");
+	UpdateProgress(80, _("Creating outfit..."));
 	RefreshGUIFromProj();
 
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
+	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
 	StartSubProgress(90, 99);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 
 	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99, "Applying slider effects...");
+	UpdateProgress(99, _("Applying slider effects..."));
 	ApplySliders();
 
 	wxLogMessage("Project loaded.");
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 	GetMenuBar()->Enable(XRCID("fileSave"), true);
 	EndProgress();
 }
 
 void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (bEditSlider) {
-		wxMessageBox("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again.");
+		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
 		return;
 	}
 
@@ -1025,10 +1025,10 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (result == wxID_CANCEL)
 		return;
 
-	StartProgress("Loading reference...");
+	StartProgress(_("Loading reference..."));
 	glView->DeleteMesh(project->GetBaseShape());
 
-	UpdateProgress(10, "Loading reference set...");
+	UpdateProgress(10, _("Loading reference set..."));
 	bool ClearRef = !(XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
 
 	int error = 0;
@@ -1066,21 +1066,21 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	project->SetTexture(project->GetBaseShape(), "_AUTO_");
 
 	wxLogMessage("Creating reference...");
-	UpdateProgress(60, "Creating reference...");
+	UpdateProgress(60, _("Creating reference..."));
 	RefreshGUIFromProj();
 
 	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(70, wxString::Format("Creating %d slider(s)...", project->SliderCount()));
+	UpdateProgress(70, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
 	StartSubProgress(70, 99);
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
 	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99, "Applying slider effects...");
+	UpdateProgress(99, _("Applying slider effects..."));
 	ApplySliders();
 
 	wxLogMessage("Reference loaded.");
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
@@ -1104,7 +1104,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	GetMenuBar()->Enable(XRCID("fileSave"), false);
 
 	wxLogMessage("Loading outfit...");
-	StartProgress("Loading outfit...");
+	StartProgress(_("Loading outfit..."));
 
 	vector<string> oldShapes;
 	project->GetShapes(oldShapes);
@@ -1114,7 +1114,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
-	UpdateProgress(1, "Loading outfit...");
+	UpdateProgress(1, _("Loading outfit..."));
 
 	int ret = 0;
 	if (XRCCTRL(dlg, "npWorkFile", wxRadioButton)->GetValue() == true) {
@@ -1145,11 +1145,11 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		project->SetTextures(XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString());
 
 	wxLogMessage("Creating outfit...");
-	UpdateProgress(50, "Creating outfit...");
+	UpdateProgress(50, _("Creating outfit..."));
 	RefreshGUIFromProj();
 
 	wxLogMessage("Outfit loaded.");
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
@@ -1313,19 +1313,19 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 	}
 	else {
 		if (!project->GetWorkNif()->IsValid()) {
-			wxMessageBox("There are no valid shapes loaded!", "Error");
+			wxMessageBox(_("There are no valid shapes loaded!"), "Error");
 			return;
 		}
 
 		if (project->HasUnweighted()) {
 			wxLogWarning("Unweighted vertices found.");
-			int error = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
+			int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
 			if (error != wxYES)
 				return;
 		}
 
 		wxLogMessage("Saving project '%s'...", project->OutfitName());
-		StartProgress(wxString::Format("Saving project '%s'...", project->OutfitName()));
+		StartProgress(wxString::Format(_("Saving project '%s'..."), project->OutfitName()));
 		project->ClearBoneScale();
 
 		vector<mesh*> shapeMeshes;
@@ -1345,7 +1345,7 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 
 		if (!error.empty()) {
 			wxLogError(error.c_str());
-			wxMessageBox(error, "Error", wxOK | wxICON_ERROR);
+			wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
 		}
 
 		EndProgress();
@@ -1357,13 +1357,13 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	int result = wxID_CANCEL;
 
 	if (!project->GetWorkNif()->IsValid()) {
-		wxMessageBox("There are no valid shapes loaded!", "Error");
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
 		return;
 	}
 
 	if (project->HasUnweighted()) {
 		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
+		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
 		if (error != wxYES)
 			return;
 	}
@@ -1440,7 +1440,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	strFileName = XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->GetFileName().GetFullName();
 	if (strFileName.length() <= 4) {
-		wxMessageBox("Invalid or no slider set file specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+		wxMessageBox(_("Invalid or no slider set file specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 		return;
 	}
 
@@ -1449,7 +1449,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	strOutfitName = XRCCTRL(dlg, "sssName", wxTextCtrl)->GetValue();
 	if (strOutfitName.empty()) {
-		wxMessageBox("No outfit name specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+		wxMessageBox(_("No outfit name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 		return;
 	}
 
@@ -1457,7 +1457,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	if (strDataDir.empty()) {
 		strDataDir = XRCCTRL(dlg, "sssShapeDataFolder", wxDirPickerCtrl)->GetPath();
 		if (strDataDir.empty()) {
-			wxMessageBox("No data folder specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+			wxMessageBox(_("No data folder specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 			return;
 		}
 	}
@@ -1472,7 +1472,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	strBaseFile = XRCCTRL(dlg, "sssShapeDataFile", wxFilePickerCtrl)->GetFileName().GetFullName();
 	if (strBaseFile.length() <= 4) {
-		wxMessageBox("An invalid or no base outfit .nif file name specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+		wxMessageBox(_("An invalid or no base outfit .nif file name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 		return;
 	}
 
@@ -1481,13 +1481,13 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	strGamePath = XRCCTRL(dlg, "sssOutputDataPath", wxTextCtrl)->GetValue();
 	if (strGamePath.empty()) {
-		wxMessageBox("No game file path specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+		wxMessageBox(_("No game file path specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 		return;
 	}
 
 	strGameFile = XRCCTRL(dlg, "sssOutputFileName", wxTextCtrl)->GetValue();
 	if (strGameFile.empty()) {
-		wxMessageBox("No game file name specified! Please try again.", "Error", wxOK | wxICON_ERROR);
+		wxMessageBox(_("No game file name specified! Please try again."), _("Error"), wxOK | wxICON_ERROR);
 		return;
 	}
 
@@ -1495,7 +1495,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	genWeights = XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->GetValue();
 
 	wxLogMessage("Saving project '%s'...", strOutfitName);
-	StartProgress(wxString::Format("Saving project '%s'...", strOutfitName));
+	StartProgress(wxString::Format(_("Saving project '%s'..."), strOutfitName));
 	project->ClearBoneScale();
 
 	vector<mesh*> shapeMeshes;
@@ -1521,7 +1521,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 	}
 	else {
 		wxLogError(error.c_str());
-		wxMessageBox(error, "Error", wxOK | wxICON_ERROR);
+		wxMessageBox(error, _("Error"), wxOK | wxICON_ERROR);
 	}
 
 	EndProgress();
@@ -1565,19 +1565,19 @@ void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnImportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
-	string fileName = wxFileSelector("Import NIF file", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_FILE_MUST_EXIST, this);
+	string fileName = wxFileSelector(_("Import NIF file"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_FILE_MUST_EXIST, this);
 	if (fileName.empty())
 		return;
 
-	StartProgress("Importing NIF file...");
-	UpdateProgress(1, "Importing NIF file...");
+	StartProgress(_("Importing NIF file..."));
+	UpdateProgress(1, _("Importing NIF file..."));
 	project->AddNif(fileName, false);
 	project->SetTextures("_AUTO_");
 
-	UpdateProgress(60, "Refreshing GUI...");
+	UpdateProgress(60, _("Refreshing GUI..."));
 	RefreshGUIFromProj();
 
-	UpdateProgress(100, "Finished.");
+	UpdateProgress(100, _("Finished."));
 	EndProgress();
 }
 
@@ -1587,12 +1587,12 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 
 	if (project->HasUnweighted()) {
 		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
+		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
 		if (error != wxYES)
 			return;
 	}
 
-	string fileName = wxFileSelector("Export outfit NIF", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	string fileName = wxFileSelector(_("Export outfit NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.empty())
 		return;
 
@@ -1610,7 +1610,7 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 	int error = project->SaveOutfitNif(fileName, shapeMeshes, updateNormals);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Failed to save NIF file '%s'!", fileName), "Export Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
 	}
 }
 
@@ -1625,12 +1625,12 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
 
 	if (project->HasUnweighted()) {
 		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?", "Unweighted Vertices", wxYES_NO | wxICON_WARNING, this);
+		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
 		if (error != wxYES)
 			return;
 	}
 
-	string fileName = wxFileSelector("Export project NIF", wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	string fileName = wxFileSelector(_("Export project NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.empty())
 		return;
 
@@ -1647,19 +1647,19 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
 	int error = project->SaveOutfitNif(fileName, shapeMeshes, updateNormals, true);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
-		wxMessageBox(wxString::Format("Failed to save NIF file '%s' with reference!", fileName), "Export Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s' with reference!"), fileName), _("Export Error"), wxICON_ERROR);
 	}
 }
 
 void OutfitStudio::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
-	string fileName = wxFileSelector("Import physics data to project", wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_FILE_MUST_EXIST, this);
+	string fileName = wxFileSelector(_("Import physics data to project"), wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_FILE_MUST_EXIST, this);
 	if (fileName.empty())
 		return;
 
 	BSClothExtraData physicsBlock;
 	if (!physicsBlock.FromHKX(fileName)) {
 		wxLogError("Failed to import physics data file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Failed to import physics data file '%s'!", fileName), "Import Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Failed to import physics data file '%s'!"), fileName), _("Import Error"), wxICON_ERROR);
 	}
 
 	auto& physicsData = project->GetClothData();
@@ -1669,7 +1669,7 @@ void OutfitStudio::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudio::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 	auto& physicsData = project->GetClothData();
 	if (physicsData.empty()) {
-		wxMessageBox("There is no physics data loaded!", "Info", wxICON_INFORMATION);
+		wxMessageBox(_("There is no physics data loaded!"), _("Info"), wxICON_INFORMATION);
 		return;
 	}
 
@@ -1677,7 +1677,7 @@ void OutfitStudio::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &data : physicsData)
 		fileNames.Add(data.first);
 
-	wxSingleChoiceDialog physicsDataChoice(this, "Please choose the physics data source you want to export.", "Choose physics data", fileNames);
+	wxSingleChoiceDialog physicsDataChoice(this, _("Please choose the physics data source you want to export."), _("Choose physics data"), fileNames);
 	if (physicsDataChoice.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -1685,20 +1685,20 @@ void OutfitStudio::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 	string selString = fileNames[sel].ToStdString();
 
 	if (!selString.empty()) {
-		string fileName = wxFileSelector("Export physics data", wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		string fileName = wxFileSelector(_("Export physics data"), wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fileName.empty())
 			return;
 
 		if (!physicsData[selString].ToHKX(fileName)) {
 			wxLogError("Failed to save physics data file '%s'!", fileName);
-			wxMessageBox(wxString::Format("Failed to save physics data file '%s'!", fileName), "Export Error", wxICON_ERROR);
+			wxMessageBox(wxString::Format(_("Failed to save physics data file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
 		}
 	}
 }
 
 void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	if (project->AllSlidersZero()) {
-		wxMessageBox("This function requires at least one slider position to be non-zero.");
+		wxMessageBox(_("This function requires at least one slider position to be non-zero."));
 		return;
 	}
 
@@ -1709,7 +1709,7 @@ void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 
-	string finalName = wxGetTextFromUser("Create a conversion slider for the current slider settings with the following name: ", "Create New Conversion Slider", thename, this);
+	string finalName = wxGetTextFromUser(_("Create a conversion slider for the current slider settings with the following name: "), _("Create New Conversion Slider"), thename, this);
 	if (finalName == "")
 		return;
 
@@ -2125,7 +2125,7 @@ void OutfitStudio::OnFieldOfViewSlider(wxCommandEvent& event) {
 		int fieldOfView = fovSlider->GetValue();
 		wxStaticText* fovLabel = (wxStaticText*)GetToolBar()->FindWindowByName("fovLabel");
 		if (fovLabel)
-			fovLabel->SetLabel(wxString::Format("Field of View: %d", fieldOfView));
+			fovLabel->SetLabel(wxString::Format(_("Field of View: %d"), fieldOfView));
 
 		glView->SetFieldOfView(fieldOfView);
 	}
@@ -2516,7 +2516,7 @@ void OutfitStudio::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> sliders;
 	project->GetSliderList(sliders);
 	if (sliders.empty()) {
-		wxMessageBox("There are no sliders loaded!", "Error", wxICON_ERROR, this);
+		wxMessageBox(_("There are no sliders loaded!"), _("Error"), wxICON_ERROR, this);
 		return;
 	}
 
@@ -2562,28 +2562,28 @@ void OutfitStudio::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 
 	if (!addedSlider) {
 		wxLogMessage("No changes were made to the sliders, so no preset was saved!");
-		wxMessageBox("No changes were made to the sliders, so no preset was saved!", "Info", wxICON_INFORMATION, this);
+		wxMessageBox(_("No changes were made to the sliders, so no preset was saved!"), _("Info"), wxICON_INFORMATION, this);
 		return;
 	}
 
 	int error = presets.SavePreset(fileName, presetName, "OutfitStudio", groups);
 	if (error) {
 		wxLogError("Failed to save preset (%d)!", error);
-		wxMessageBox(wxString::Format("Failed to save preset (%d)!", error), "Error", wxICON_ERROR, this);
+		wxMessageBox(wxString::Format(_("Failed to save preset (%d)!"), error), _("Error"), wxICON_ERROR, this);
 	}
 }
 
 void OutfitStudio::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to import data to!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
 	}
 
-	string fn = wxFileSelector("Import .bsd slider data", wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_FILE_MUST_EXIST, this);
+	string fn = wxFileSelector(_("Import .bsd slider data"), wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
 
@@ -2594,22 +2594,22 @@ void OutfitStudio::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to import data to!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
 	}
 
-	string fn = wxFileSelector("Import .obj file for slider calculation", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
+	string fn = wxFileSelector(_("Import .obj file for slider calculation"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
 
 	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->shapeName, fn);
 	if (!project->SetSliderFromOBJ(activeSlider, activeItem->shapeName, fn)) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
-		wxMessageBox("Vertex count of .obj file mesh does not match currently selected shape!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
 	}
 
@@ -2618,15 +2618,15 @@ void OutfitStudio::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid()) {
-		wxMessageBox("There are no valid shapes loaded!", "Error");
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
 		return;
 	}
 
-	string fn = wxFileSelector("Import .tri morphs", wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_FILE_MUST_EXIST, this);
+	string fn = wxFileSelector(_("Import .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
 
-	int result = wxMessageBox("This will delete all loaded sliders. Are you sure?", "TRI Import", wxYES_NO | wxCANCEL | wxICON_WARNING, this);
+	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
 	if (result != wxYES)
 		return;
 
@@ -2635,7 +2635,7 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	TriFile tri;
 	if (!tri.Read(fn)) {
 		wxLogError("Failed to load TRI file '%s'!", fn);
-		wxMessageBox("Failed to load TRI file!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Failed to load TRI file!"), _("Error"), wxICON_ERROR);
 		return;
 	}
 
@@ -2697,27 +2697,27 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 
 	wxLogMessage("Added morphs for the following shapes:\n%s", addedMorphs);
-	wxMessageBox(wxString::Format("Added morphs for the following shapes:\n\n%s", addedMorphs), "TRI Import");
+	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedMorphs), _("TRI Import"));
 }
 
 void OutfitStudio::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to import data to!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to import data to!"), _("Error"));
 		return;
 	}
 
-	string fn = wxFileSelector("Import .fbx file for slider calculation", wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
+	string fn = wxFileSelector(_("Import .fbx file for slider calculation"), wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
 
 	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->shapeName, fn);
 	if (!project->SetSliderFromFBX(activeSlider, activeItem->shapeName, fn)) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
-		wxMessageBox("Vertex count of .obj file mesh does not match currently selected shape!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
 	}
 
@@ -2726,16 +2726,16 @@ void OutfitStudio::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to export data from!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
 	}
 
 	if (selectedItems.size() > 1) {
-		string dir = wxDirSelector("Export .bsd slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		string dir = wxDirSelector(_("Export .bsd slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
 		if (dir.empty())
 			return;
 
@@ -2746,7 +2746,7 @@ void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
-		string fn = wxFileSelector("Export .bsd slider data", wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		string fn = wxFileSelector(_("Export .bsd slider data"), wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fn.empty())
 			return;
 
@@ -2759,16 +2759,16 @@ void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to export data from!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to export data from!"), _("Error"));
 		return;
 	}
 
 	if (selectedItems.size() > 1) {
-		string dir = wxDirSelector("Export .obj slider data to directory", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		string dir = wxDirSelector(_("Export .obj slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
 		if (dir.empty())
 			return;
 
@@ -2779,16 +2779,15 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
-		string fn = wxFileSelector("Export .obj slider data", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		string fn = wxFileSelector(_("Export .obj slider data"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (fn.empty())
 			return;
 
 		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->shapeName, fn);
 		if (project->SaveSliderOBJ(activeSlider, activeItem->shapeName, fn)) {
 			wxLogError("Failed to export OBJ file '%s'!", fn);
-			wxMessageBox("Failed to export OBJ file!", "Error", wxICON_ERROR);
+			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}
-		statusBar->SetStatusText("Ready!");
 	}
 
 	ApplySliders();
@@ -2796,42 +2795,42 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid()) {
-		wxMessageBox("There are no valid shapes loaded!", "Error");
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
 		return;
 	}
 
-	string fn = wxFileSelector("Export .tri morphs", wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	string fn = wxFileSelector(_("Export .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fn.empty())
 		return;
 
 	wxLogMessage("Exporting TRI morphs to '%s'...", fn);
 	if (!project->WriteMorphTRI(fn)) {
 		wxLogError("Failed to export TRI file to '%s'!", fn);
-		wxMessageBox("Failed to export TRI file!", "Error", wxICON_ERROR);
+		wxMessageBox(_("Failed to export TRI file!"), _("Error"), wxICON_ERROR);
 		return;
 	}
 }
 
 void OutfitStudio::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to clear data from!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to clear data from!"), _("Error"));
 		return;
 	}
 
 	int result;
 	if (selectedItems.size() > 1) {
-		string prompt = "Are you sure you wish to clear the unmasked slider data \"";
-		prompt += activeSlider + "\" for the selected shapes? This cannot be undone.";
-		result = wxMessageBox(prompt, "Confirm data erase", wxYES_NO | wxICON_WARNING, this);
+		string prompt = _("Are you sure you wish to clear the unmasked slider data \"");
+		prompt += activeSlider + _("\" for the selected shapes? This cannot be undone.");
+		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 	else {
-		string prompt = "Are you sure you wish to clear the unmasked slider data \"";
-		prompt += activeSlider + "\" for the shape \"" + activeItem->shapeName + "\" ? This cannot be undone.";
-		result = wxMessageBox(prompt, "Confirm data erase", wxYES_NO | wxICON_WARNING, this);
+		string prompt = _("Are you sure you wish to clear the unmasked slider data \"");
+		prompt += activeSlider + _("\" for the shape \"") + activeItem->shapeName + _("\"? This cannot be undone.");
+		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 	if (result != wxYES)
 		return;
@@ -2860,7 +2859,7 @@ void OutfitStudio::OnNewSlider(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -2872,7 +2871,7 @@ void OutfitStudio::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 
-	string finalName = wxGetTextFromUser("Enter a name for the new zap:", "Create New Zap", thename, this);
+	string finalName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), thename, this);
 	if (finalName.empty())
 		return;
 
@@ -2901,7 +2900,7 @@ void OutfitStudio::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 
-	string finalName = wxGetTextFromUser("Enter a name for the new slider:", "Create New Slider", thename, this);
+	string finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this);
 	if (finalName.empty())
 		return;
 
@@ -2916,11 +2915,11 @@ void OutfitStudio::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to negate!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to negate!"), _("Error"));
 		return;
 	}
 
@@ -2931,11 +2930,11 @@ void OutfitStudio::OnSliderNegate(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to create a mask from!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to create a mask from!"), _("Error"));
 		return;
 	}
 
@@ -2946,13 +2945,13 @@ void OutfitStudio::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to delete!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to delete!"), _("Error"));
 		return;
 	}
 
-	string prompt = "Are you sure you wish to delete the slider \"";
-	prompt += activeSlider + "\"? This cannot be undone.";
-	int result = wxMessageBox(prompt, "Confirm slider delete", wxYES_NO | wxICON_WARNING, this);
+	string prompt = _("Are you sure you wish to delete the slider \"");
+	prompt += activeSlider + _("\"? This cannot be undone.");
+	int result = wxMessageBox(prompt, _("Confirm slider delete"), wxYES_NO | wxICON_WARNING, this);
 	if (result != wxYES)
 		return;
 
@@ -2986,7 +2985,7 @@ void OutfitStudio::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 	if (!bEditSlider) {
-		wxMessageBox("There is no slider in edit mode to show properties for!", "Error");
+		wxMessageBox(_("There is no slider in edit mode to show properties for!"), _("Error"));
 		return;
 	}
 
@@ -3060,7 +3059,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 		return;
 
 	wxLogMessage("Conforming all shapes...");
-	StartProgress("Conforming all shapes...");
+	StartProgress(_("Conforming all shapes..."));
 	int inc = 100 / shapes.size() - 1;
 	int pos = 0;
 
@@ -3070,7 +3069,7 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	while (curItem.IsOk()) {
 		selectedItems.clear();
 		selectedItems.push_back((ShapeItemData*)outfitShapes->GetItemData(curItem));
-		UpdateProgress(pos * inc, "Conforming: " + selectedItems.front()->shapeName);
+		UpdateProgress(pos * inc, _("Conforming: ") + selectedItems.front()->shapeName);
 		StartSubProgress(pos * inc, pos * inc + inc);
 		OnSliderConform(event);
 		curItem = outfitShapes->GetNextChild(outfitRoot, cookie);
@@ -3080,15 +3079,15 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	selectedItems = selectedItemsSave;
 
 	if (statusBar)
-		statusBar->SetStatusText("All shapes conformed.");
+		statusBar->SetStatusText(_("All shapes conformed."));
 
 	wxLogMessage("All shapes conformed.");
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
 void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
-	StartProgress("Conforming...");
+	StartProgress(_("Conforming..."));
 	if (project->GetBaseShape().empty()) {
 		EndProgress();
 		return;
@@ -3102,10 +3101,10 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 			continue;
 
 		wxLogMessage("Conforming '%s'...", i->shapeName);
-		UpdateProgress(1, "Initializing data...");
+		UpdateProgress(1, _("Initializing data..."));
 		project->InitConform();
 
-		UpdateProgress(50, "Conforming: " + i->shapeName);
+		UpdateProgress(50, _("Conforming: ") + i->shapeName);
 
 		project->morpher.CopyMeshMask(glView->GetMesh(i->shapeName), i->shapeName);
 		project->ConformShape(i->shapeName);
@@ -3114,15 +3113,15 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (statusBar)
-		statusBar->SetStatusText("Shape(s) conformed.");
+		statusBar->SetStatusText(_("Shape(s) conformed."));
 
 	wxLogMessage("%d shape(s) conformed.", selectedItems.size());
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
 void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
-	string fn = wxFileSelector("Import .obj file for new shape", wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
+	string fn = wxFileSelector(_("Import .obj file for new shape"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
 
@@ -3150,12 +3149,12 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
 	if (selectedItems.size() > 1) {
-		string dir = wxDirSelector("Export selected shapes as .obj files", wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		string dir = wxDirSelector(_("Export selected shapes as .obj files"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
 		if (dir.empty())
 			return;
 
@@ -3167,20 +3166,20 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 	else {
-		string fileName = wxFileSelector("Export shape as an .obj file", wxEmptyString, wxString(activeItem->shapeName + ".obj"), "", "Obj Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		string fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->shapeName + ".obj"), "", "Obj Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 		if (!fileName.empty()) {
 			wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->shapeName, fileName);
 			project->ClearBoneScale();
 			if (project->ExportShapeObj(fileName, activeItem->shapeName, Vector3(0.1f, 0.1f, 0.1f))) {
 				wxLogError("Failed to export OBJ file '%s'!", fileName);
-				wxMessageBox("Failed to export OBJ file!", "Error", wxICON_ERROR);
+				wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 			}
 		}
 	}
 }
 
 void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
-	string fn = wxFileSelector("Import .fbx file for new shape", wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
+	string fn = wxFileSelector(_("Import .fbx file for new shape"), wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
 
@@ -3211,7 +3210,7 @@ void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (activeItem)
 		defFile = activeItem->shapeName + ".fbx";
 
-	string fn = wxFileSelector("Export .fbx file for new shape", wxEmptyString, defFile, "", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	string fn = wxFileSelector(_("Export .fbx file for new shape"), wxEmptyString, defFile, "", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fn.empty())
 		return;
 
@@ -3223,7 +3222,7 @@ void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnInvertUV(wxCommandEvent& event) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -3238,13 +3237,13 @@ void OutfitStudio::OnInvertUV(wxCommandEvent& event) {
 
 void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
 	string newShapeName;
 	do {
-		wxString result = wxGetTextFromUser("Please enter a new unique name for the shape.", "Rename Shape");
+		wxString result = wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"));
 		if (result.empty())
 			return;
 
@@ -3265,12 +3264,12 @@ void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
 	if (project->IsBaseShape(activeItem->shapeName)) {
-		wxMessageBox("The selected shape is the reference shape already.", "Error");
+		wxMessageBox(_("The selected shape is the reference shape already."), _("Error"));
 		return;
 	}
 
@@ -3295,7 +3294,7 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 	Vector3 offs;
 
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -3456,7 +3455,7 @@ void OutfitStudio::PreviewMove(const Vector3& changed) {
 
 void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -3555,12 +3554,12 @@ void OutfitStudio::PreviewScale(const float& scale) {
 
 void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
 	if (bEditSlider) {
-		wxMessageBox("Rotating slider data is currently not possible using the Rotate Shape dialog.", "Rotate", wxICON_INFORMATION, this);
+		wxMessageBox(_("Rotating slider data is currently not possible using the Rotate Shape dialog."), _("Rotate"), wxICON_INFORMATION, this);
 		return;
 	}
 
@@ -3671,12 +3670,12 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId subitem;
 	if (activeItem) {
 		if (!outfitRoot.IsOk()) {
-			wxMessageBox("You can only copy shapes into an outfit, and there is no outfit in the current project. Load one first!");
+			wxMessageBox(_("You can only copy shapes into an outfit, and there is no outfit in the current project. Load one first!"));
 			return;
 		}
 
 		do {
-			wxString result = wxGetTextFromUser("Please enter a unique name for the duplicated shape.", "Duplicate Shape");
+			wxString result = wxGetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape"));
 			if (result.empty())
 				return;
 
@@ -3706,11 +3705,11 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
-	if (wxMessageBox("Are you sure you wish to delete the selected shapes?  This action cannot be undone.", "Confirm Delete", wxYES_NO) == wxNO)
+	if (wxMessageBox(_("Are you sure you wish to delete the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
 		return;
 
 	vector<ShapeItemData> selected;
@@ -3726,7 +3725,7 @@ void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 			outfitShapes->Delete(item);
 		}
 		else
-			wxMessageBox("You can't delete the reference shape!");
+			wxMessageBox(_("You can't delete the reference shape!"));
 	}
 
 	AnimationGUIFromProj();
@@ -3778,7 +3777,7 @@ void OutfitStudio::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 		if (dlg.ShowModal() == wxID_OK) {
 			wxString bone = XRCCTRL(dlg, "boneName", wxTextCtrl)->GetValue();
 			if (bone.empty()) {
-				wxMessageBox("No bone name was entered!", "Error", wxICON_INFORMATION, this);
+				wxMessageBox(_("No bone name was entered!"), _("Error"), wxICON_INFORMATION, this);
 				return;
 			}
 
@@ -3786,7 +3785,7 @@ void OutfitStudio::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 			wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
 			while (item.IsOk()) {
 				if (outfitBones->GetItemText(item) == bone) {
-					wxMessageBox(wxString::Format("Bone '%s' already exists in the project!", bone), "Error", wxICON_INFORMATION, this);
+					wxMessageBox(wxString::Format(_("Bone '%s' already exists in the project!"), bone), _("Error"), wxICON_INFORMATION, this);
 					return;
 				}
 				item = outfitBones->GetNextChild(bonesRoot, cookie);
@@ -3843,14 +3842,14 @@ void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
 	if (project->GetBaseShape().empty())
 		return;
 
-	StartProgress("Copying bone weights...");
+	StartProgress(_("Copying bone weights..."));
 
 	unordered_map<ushort, float> mask;
 	for (int i = 0; i < selectedItems.size(); i++) {
@@ -3861,10 +3860,10 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 			project->CopyBoneWeights(selectedItems[i]->shapeName, &mask);
 		}
 		else
-			wxMessageBox("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape.", "Can't copy weights", wxICON_WARNING);
+			wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 	}
 
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
@@ -3873,7 +3872,7 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -3893,7 +3892,7 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		selectedBones.push_back(boneName);
 	}
 
-	StartProgress("Copying selected bone weights...");
+	StartProgress(_("Copying selected bone weights..."));
 
 	unordered_map<ushort, float> mask;
 	for (int i = 0; i < selectedItems.size(); i++) {
@@ -3904,10 +3903,10 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 			project->CopyBoneWeights(selectedItems[i]->shapeName, &mask, &selectedBones);
 		}
 		else
-			wxMessageBox("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape.", "Can't copy weights", wxICON_WARNING);
+			wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 	}
 
-	UpdateProgress(100, "Finished");
+	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 
@@ -3916,7 +3915,7 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -3924,14 +3923,14 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	if (project->IsBaseShape(activeItem->shapeName)) {
-		wxMessageBox("Sorry, you can't copy weights from the reference shape to itself.", "Error");
+		wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself."), _("Error"));
 		return;
 	}
 
 	int baseVertCount = project->GetVertexCount(project->GetBaseShape());
 	int workVertCount = project->GetVertexCount(activeItem->shapeName);
 	if (baseVertCount != workVertCount) {
-		wxMessageBox("The vertex count of the reference and chosen shape is not the same!", "Error");
+		wxMessageBox(_("The vertex count of the reference and chosen shape is not the same!"), _("Error"));
 		return;
 	}
 
@@ -3949,7 +3948,7 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	wxLogMessage("Transferring selected bone weights to '%s' for %s...", activeItem->shapeName, bonesString);
-	StartProgress("Transferring bone weights...");
+	StartProgress(_("Transferring bone weights..."));
 
 	unordered_map<ushort, float> mask;
 	glView->GetActiveMask(mask);
@@ -3960,7 +3959,7 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -3987,7 +3986,7 @@ void OutfitStudio::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnBuildSkinPartitions(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -3999,7 +3998,7 @@ void OutfitStudio::OnBuildSkinPartitions(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnUpdateBoundingSphere(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -4011,7 +4010,7 @@ void OutfitStudio::OnUpdateBoundingSphere(wxCommandEvent& WXUNUSED(event)) {
 
 void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
-		wxMessageBox("There is no shape selected!", "Error");
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
 
@@ -4193,7 +4192,7 @@ wxGLPanel::~wxGLPanel() {
 void wxGLPanel::OnShown() {
 	if (!context->IsOK()) {
 		wxLogError("Outfit Studio: OpenGL context is not OK.");
-		wxMessageBox("Outfit Studio: OpenGL context is not OK.", "OpenGL Error", wxICON_ERROR, os);
+		wxMessageBox(_("Outfit Studio: OpenGL context is not OK."), _("OpenGL Error"), wxICON_ERROR, os);
 	}
 
 	gls.Initialize(this, context);
@@ -5164,39 +5163,39 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 		dataName = dataName.BeforeLast('.');
 
 		if (inputFile.MakeLower().EndsWith(".nif")) {
-			owner->StartProgress("Adding NIF file...");
-			owner->UpdateProgress(1, "Adding NIF file...");
+			owner->StartProgress(_("Adding NIF file..."));
+			owner->UpdateProgress(1, _("Adding NIF file..."));
 			owner->project->AddNif(inputFile.ToStdString(), false);
 			owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60, "Refreshing GUI...");
+			owner->UpdateProgress(60, _("Refreshing GUI..."));
 			owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100, "Finished.");
+			owner->UpdateProgress(100, _("Finished"));
 			owner->EndProgress();
 		}
 		else if (inputFile.MakeLower().EndsWith(".obj")) {
 			owner->StartProgress("Adding OBJ file...");
-			owner->UpdateProgress(1, "Adding OBJ file...");
+			owner->UpdateProgress(1, _("Adding OBJ file..."));
 			owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 			owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60, "Refreshing GUI...");
+			owner->UpdateProgress(60, _("Refreshing GUI..."));
 			owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100, "Finished.");
+			owner->UpdateProgress(100, _("Finished"));
 			owner->EndProgress();
 		}
 		else if (inputFile.MakeLower().EndsWith(".fbx")) {
-			owner->StartProgress("Adding FBX file...");
-			owner->UpdateProgress(1, "Adding FBX file...");
+			owner->StartProgress(_("Adding FBX file..."));
+			owner->UpdateProgress(1, _("Adding FBX file..."));
 			owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 			owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60, "Refreshing GUI...");
+			owner->UpdateProgress(60, _("Refreshing GUI..."));
 			owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100, "Finished.");
+			owner->UpdateProgress(100, _("Finished"));
 			owner->EndProgress();
 		}
 	}
@@ -5221,7 +5220,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 			bool isFBX = inputFile.MakeLower().EndsWith(".fbx");
 			if (isBSD || isOBJ) {
 				if (!owner->activeItem) {
-					wxMessageBox("There is no shape selected!", "Error");
+					wxMessageBox(_("There is no shape selected!"), _("Error"));
 					return false;
 				}
 
@@ -5232,8 +5231,8 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 				if (targetSlider.empty())
 					return false;
 
-				owner->StartProgress("Loading slider file...");
-				owner->UpdateProgress(1, "Loading slider file...");
+				owner->StartProgress(_("Loading slider file..."));
+				owner->UpdateProgress(1, _("Loading slider file..."));
 
 				if (isBSD)
 					owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
@@ -5245,7 +5244,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 					return false;
 
 
-				owner->UpdateProgress(100, "Finished.");
+				owner->UpdateProgress(100, _("Finished"));
 				owner->EndProgress();
 			}
 		}

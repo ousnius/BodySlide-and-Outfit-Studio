@@ -60,7 +60,7 @@ void PreviewWindow::OnShown() {
 		delete context;
 		app->PreviewClosed();
 		wxLogError("Preview failed: OpenGL context is not OK.");
-		wxMessageBox("Preview failed: OpenGL context is not OK.", "OpenGL Error", wxICON_ERROR);
+		wxMessageBox(_("Preview failed: OpenGL context is not OK."), _("OpenGL Error"), wxICON_ERROR);
 		return;
 	}
 

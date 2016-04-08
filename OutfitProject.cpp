@@ -38,7 +38,7 @@ string OutfitProject::Save(const wxString& strFileName,
 	bool genWeights,
 	bool copyRef) {
 
-	owner->UpdateProgress(1, "Checking destination...");
+	owner->UpdateProgress(1, _("Checking destination..."));
 	string errmsg = "";
 	string outfitName = strOutfitName;
 	string baseFile = strBaseFile;
@@ -87,7 +87,7 @@ string OutfitProject::Save(const wxString& strFileName,
 		// Add all the reference shapes to the target list.
 		outSet.AddShapeTarget(baseShape, ShapeToTarget(baseShape));
 		outSet.AddTargetDataFolder(ShapeToTarget(baseShape), activeSet.ShapeToDataFolder(baseShape));
-		owner->UpdateProgress(prog += step, "Adding reference shapes...");
+		owner->UpdateProgress(prog += step, _("Adding reference shapes..."));
 	}
 
 	// Add all the outfit shapes to the target list.
@@ -102,7 +102,7 @@ string OutfitProject::Save(const wxString& strFileName,
 		if (shapeDataFolder != activeSet.GetDefaultDataFolder())
 			outSet.AddTargetDataFolder(ShapeToTarget(s), activeSet.ShapeToDataFolder(s));
 
-		owner->UpdateProgress(prog += step, "Adding outfit shapes...");
+		owner->UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
 
 	string saveDataPath = "ShapeData\\" + strDataDir;
@@ -175,20 +175,20 @@ string OutfitProject::Save(const wxString& strFileName,
 					}
 				}
 			}
-			owner->UpdateProgress(prog += step, "Calculating slider data...");
+			owner->UpdateProgress(prog += step, _("Calculating slider data..."));
 		}
 
 		osdDiffs.SaveData(osdNames);
 	}
 
 	prog = 60;
-	owner->UpdateProgress(prog, "Creating slider set file...");
+	owner->UpdateProgress(prog, _("Creating slider set file..."));
 
 	SliderSetFile ssf(ssFileName.ToStdString());
 	if (ssf.fail()) {
 		ssf.New(ssFileName.ToStdString());
 		if (ssf.fail()) {
-			errmsg = "Failed to open or create slider set file: " + ssFileName.ToStdString();
+			errmsg = _("Failed to open or create slider set file: ") + ssFileName.ToStdString();
 			return errmsg;
 		}
 	}
@@ -203,14 +203,14 @@ string OutfitProject::Save(const wxString& strFileName,
 		wxFileName::Mkdir(ssNewFolder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 
-	owner->UpdateProgress(61, "Saving slider set file...");
+	owner->UpdateProgress(61, _("Saving slider set file..."));
 	ssf.UpdateSet(outSet);
 	if (!ssf.Save()) {
-		errmsg = "Failed to write to slider set file: " + ssFileName.ToStdString();
+		errmsg = _("Failed to write to slider set file: ") + ssFileName.ToStdString();
 		return errmsg;
 	}
 
-	owner->UpdateProgress(70, "Saving NIF file...");
+	owner->UpdateProgress(70, _("Saving NIF file..."));
 
 	string saveFileName = saveDataPath + "\\" + baseFile;
 
@@ -236,12 +236,12 @@ string OutfitProject::Save(const wxString& strFileName,
 			clone.PrettySortBlocks();
 		}
 		if (clone.Save(saveFileName)) {
-			errmsg = "Failed to write base .nif file: " + saveFileName;
+			errmsg = _("Failed to write base .nif file: ") + saveFileName;
 			return errmsg;
 		}
 	}
 
-	owner->UpdateProgress(100, "Finished");
+	owner->UpdateProgress(100, _("Finished"));
 	return errmsg;
 }
 
@@ -372,7 +372,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 
 	if (obj.LoadForNif(fileName)) {
 		wxLogError("Could not load OBJ file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Could not load OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR, owner);
+		wxMessageBox(wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
 		return 1;
 	}
 	vector<string> objGroupNames;
@@ -383,7 +383,7 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 		vector<Vector2> uv;
 		if (!obj.CopyDataForIndex(i, &v, &t, &uv)) {
 			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
-			wxMessageBox(wxString::Format("Could not copy data from OBJ file '%s'!", fileName), "OBJ Error", wxICON_ERROR, owner);
+			wxMessageBox(wxString::Format(_("Could not copy data from OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
 			return 3;
 		}
 
@@ -397,20 +397,20 @@ int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& sha
 			vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == v.size()) {
-				int ret = wxMessageBox("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION, owner);
+				int ret = wxMessageBox(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
-					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION, owner);
+					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						workNif.SetVertsForShape(mergeShape, v);
 
-					ret = wxMessageBox("Update Texture Coordinates?", "UV Update", wxYES_NO | wxICON_QUESTION, owner);
+					ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						workNif.SetUvsForShape(mergeShape, uv);
 
 					return 101;
 				}
 			}
-			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName, owner);
+			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner);
 			if (useShapeName == "")
 				return 100;
 		}
@@ -438,7 +438,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	blank.Load(blankSkel);
 	if (!blank.IsValid()) {
 		wxLogError("Could not load 'SkeletonBlank.nif' for importing data file.");
-		wxMessageBox("Could not load 'SkeletonBlank.nif' for importing data file.", "import data Error", wxICON_ERROR);
+		wxMessageBox(_("Could not load 'SkeletonBlank.nif' for importing data file."), _("Import Data Error"), wxICON_ERROR);
 		return 2;
 	}
 
@@ -1106,7 +1106,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 	vector<string> lboneList;
 	vector<string>* boneList;
 
-	owner->UpdateProgress(1, "Gathering bones...");
+	owner->UpdateProgress(1, _("Gathering bones..."));
 
 	if (!inBoneList) {
 		for (auto &bn : workAnim.shapeBones[baseShape])
@@ -1135,7 +1135,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 		}
 	}
 
-	owner->UpdateProgress(10, "Initializing proximity data...");
+	owner->UpdateProgress(10, _("Initializing proximity data..."));
 
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
@@ -1193,7 +1193,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 		}
 
 		workAnim.SetWeights(destShape, boneName, weights);
-		owner->UpdateProgress(prog += step, "Copying bone weights...");
+		owner->UpdateProgress(prog += step, _("Copying bone weights..."));
 	}
 
 	morpher.UnlinkRefDiffData();
@@ -1204,7 +1204,7 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 	if (baseShape.empty())
 		return;
 
-	owner->UpdateProgress(10, "Gathering bones...");
+	owner->UpdateProgress(10, _("Gathering bones..."));
 
 	vector<string>* boneList;
 	if (!inBoneList) {
@@ -1218,13 +1218,13 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 		boneList = inBoneList;
 
 	if (boneList->size() <= 0) {
-		owner->UpdateProgress(100, "Finished");
+		owner->UpdateProgress(100, _("Finished"));
 		return;
 	}
 
 	int step = 50 / boneList->size();
 	int prog = 40;
-	owner->UpdateProgress(prog, "Transferring bone weights...");
+	owner->UpdateProgress(prog, _("Transferring bone weights..."));
 
 	unordered_map<ushort, float> weights;
 	unordered_map<ushort, float> oldWeights;
@@ -1269,7 +1269,7 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 		owner->UpdateProgress(prog += step, "");
 	}
 
-	owner->UpdateProgress(100, "Finished");
+	owner->UpdateProgress(100, _("Finished"));
 }
 
 bool OutfitProject::HasUnweighted() {
@@ -1523,7 +1523,7 @@ int OutfitProject::LoadReferenceTemplate(const string& templateName, bool clearR
 	}
 	if (srcFile.empty() || srcSet.empty()) {
 		wxLogError("Template source entries are invalid.");
-		wxMessageBox("Template source entries are invalid.", "Reference Error", wxICON_ERROR);
+		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR);
 		return 1;
 	}
 
@@ -1538,16 +1538,16 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	int error = refNif.Load(fileName);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i"),
 				refNif.GetFileName(), refNif.hdr.verStr, refNif.hdr.userVersion, refNif.hdr.userVersion2);
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, "Reference Error", wxICON_ERROR);
+			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
 			return 3;
 		}
 
 		wxLogError("Could not load reference NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Could not load reference NIF file '%s'!", fileName), "Reference Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR);
 		return 2;
 	}
 
@@ -1589,7 +1589,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 
 	if (sset.fail()) {
 		wxLogError("Could not load slider set file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Could not load slider set file '%s'!", fileName), "Reference Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Could not load slider set file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR);
 		return 1;
 	}
 
@@ -1606,18 +1606,18 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	int error = refNif.Load(inMeshFile);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i"),
 				refNif.GetFileName(), refNif.hdr.verStr, refNif.hdr.userVersion, refNif.hdr.userVersion2);
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, "Reference Error", wxICON_ERROR);
+			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
 			ClearReference();
 			return 5;
 		}
 
 		ClearReference();
 		wxLogError("Could not load reference NIF file '%s'!", inMeshFile);
-		wxMessageBox(wxString::Format("Could not load reference NIF file '%s'!", inMeshFile), "Reference Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), inMeshFile), _("Reference Error"), wxICON_ERROR);
 		return 2;
 	}
 
@@ -1626,7 +1626,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	if (shapes.empty()) {
 		ClearReference();
 		wxLogError("Reference NIF file '%s' does not contain any shapes.", refNif.GetFileName());
-		wxMessageBox(wxString::Format("Reference NIF file '%s' does not contain any shapes.", refNif.GetFileName()), "Reference Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Reference NIF file '%s' does not contain any shapes."), refNif.GetFileName()), _("Reference Error"), wxICON_ERROR);
 		return 3;
 	}
 
@@ -1659,7 +1659,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	if (newVertCount == -1) {
 		ClearReference();
 		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refNif.GetFileName());
-		wxMessageBox(wxString::Format("Shape '%s' not found in reference NIF file '%s'!", shape, refNif.GetFileName()), "Reference Error", wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refNif.GetFileName()), _("Reference Error"), wxICON_ERROR);
 		return 4;
 	}
 
@@ -1723,16 +1723,16 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	int error = nif.Load(fileName);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i",
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i"),
 				nif.GetFileName(), nif.hdr.verStr, nif.hdr.userVersion, nif.hdr.userVersion2);
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, "NIF Error", wxICON_ERROR, owner);
+			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
 			return 4;
 		}
 
 		wxLogError("Could not load NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format("Could not load NIF file '%s'!", fileName), "NIF Error", wxICON_ERROR, owner);
+		wxMessageBox(wxString::Format(_("Could not load NIF file '%s'!"), fileName), _("NIF Error"), wxICON_ERROR, owner);
 		return 1;
 	}
 
@@ -1806,14 +1806,14 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 }
 
 int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sliderSetName) {
-	owner->StartProgress("Loading slider set...");
+	owner->StartProgress(_("Loading slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
 		owner->EndProgress();
 		return 1;
 	}
 
-	owner->UpdateProgress(20, "Retrieving sliders...");
+	owner->UpdateProgress(20, _("Retrieving sliders..."));
 	if (InSS.GetSet(sliderSetName, activeSet)) {
 		owner->EndProgress();
 		return 3;
@@ -1822,7 +1822,7 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
 	string inputNif = activeSet.GetInputFileName();
 
-	owner->UpdateProgress(30, "Loading outfit shapes...");
+	owner->UpdateProgress(30, _("Loading outfit shapes..."));
 	if (AddNif(inputNif, true, sliderSetName)) {
 		owner->EndProgress();
 		return 4;
@@ -1853,7 +1853,7 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 	if (!baseShape.empty())
 		DeleteShape(baseShape);
 
-	owner->UpdateProgress(90, "Updating slider data...");
+	owner->UpdateProgress(90, _("Updating slider data..."));
 	morpher.LoadResultDiffs(activeSet);
 
 	wxString rest;
@@ -1871,7 +1871,7 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 	mCopyRef = true;
 	mGenWeights = activeSet.GenWeights();
 
-	owner->UpdateProgress(100, "Finished");
+	owner->UpdateProgress(100, _("Finished"));
 	owner->EndProgress();
 	return 0;
 }
@@ -2025,7 +2025,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 		for (auto &cloth : clothData)
 			clothFileNames.Add(cloth.first);
 
-		wxMultiChoiceDialog clothDataChoice(owner, "There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output.", "Choose cloth data", clothFileNames);
+		wxMultiChoiceDialog clothDataChoice(owner, _("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."), _("Choose cloth data"), clothFileNames);
 		if (clothDataChoice.ShowModal() == wxID_CANCEL)
 			return;
 
@@ -2072,17 +2072,17 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 			vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == shape->verts.size()) {
-				int ret = wxMessageBox("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)", "Merge or New", wxYES_NO | wxICON_QUESTION, owner);
+				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
-					ret = wxMessageBox("Update Vertex Positions?", "Vertex Position Update", wxYES_NO | wxICON_QUESTION, owner);
+					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						workNif.SetVertsForShape(mergeShape, shape->verts);
 
-					ret = wxMessageBox("Update Texture Coordinates?", "UV Update", wxYES_NO | wxICON_QUESTION, owner);
+					ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						workNif.SetUvsForShape(mergeShape, shape->uvs);
 
-					ret = wxMessageBox("Update Animation Weighting?", "Animation Weight Update", wxYES_NO | wxICON_QUESTION, owner);
+					ret = wxMessageBox(_("Update Animation Weighting?"), _("Animation Weight Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						for (auto &bn : shape->boneNames)
 							workAnim.SetWeights(mergeShape, bn, shape->boneSkin[bn].GetWeights());
@@ -2091,7 +2091,7 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 				}
 			}
 
-			useShapeName = wxGetTextFromUser("Please specify a name for the new shape", "New Shape Name", useShapeName, owner);
+			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner);
 			if (useShapeName.empty())
 				return 100;
 		}
