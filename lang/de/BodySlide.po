@@ -1,0 +1,2667 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: BodySlide\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.7\n"
+"X-Poedit-KeywordsList: _\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"Language: de\n"
+
+# XRC STRINGS START HERE
+msgid "Outfit/Body"
+msgstr "Outfit/Körper"
+
+msgid "Select an outfit to modify"
+msgstr "Wählen Sie das zu bearbeitende Outfit"
+
+msgid "Preset"
+msgstr "Preset"
+
+msgid "Choose from a list of slider settings presets"
+msgstr "Wählen Sie aus einer Liste von Presets"
+
+msgid "Saves the new slider values to the currently selected preset"
+msgstr "Speichert die neuen Sliderwerte in das derzeit gewählte Preset"
+
+msgid "Save"
+msgstr "Speichern"
+
+msgid "Save the current slider settings as a new preset"
+msgstr "Speichert die aktuellen Sliderwerte als ein neues Preset"
+
+msgid "Save As..."
+msgstr "Speichern unter..."
+
+msgid "Opens the group manager where you can edit existing or create new groups"
+msgstr "Öffnet den Gruppenmanager zum Bearbeiten oder Erstellen von Gruppen"
+
+msgid "Group Manager"
+msgstr "Gruppenmanager"
+
+msgid "Single Weight"
+msgstr "Einzelnes Gewicht"
+
+msgid "Low Weight"
+msgstr "Unteres Gewicht"
+
+msgid "High Weight"
+msgstr "Oberes Gewicht"
+
+msgid "Copy the low weight slider values to the high weight section."
+msgstr "Kopiert die unteren Sliderwerte in den oberen Bereich."
+
+msgid ""
+"Build multiple outfits using the currently active slider values.\n"
+"\n"
+"Hold CTRL = Build to custom directory\n"
+"Hold ALT = Delete from output directory"
+msgstr ""
+"Erstellt mehrere Outfits unter Verwendung der derzeit aktiven Sliderwerte.\n"
+"\n"
+"STRG gedrückt halten = Benutzerdefiniertes Verzeichnis auswählen\n"
+"ALT gedrückt halten = Aus dem Ausgabeverzeichnis löschen"
+
+msgid "Batch Build..."
+msgstr "Batch-Erstellung..."
+
+msgid "RaceMenu Morphs"
+msgstr "RaceMenu Morphs"
+
+msgid ""
+"Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. "
+"Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders."
+msgstr ""
+"Erstellt eine Morphdatei (.tri) neben den Meshes zum Verwenden der Slider innerhalb "
+"des Spiels. Benötigt den RaceMenu Mod und das passende Plugin für die Slider."
+
+msgid "Show a preview window for this outfit."
+msgstr "Zeigt eine Vorschau für dieses Outfit."
+
+msgid "Preview"
+msgstr "Vorschau"
+
+msgid ""
+"Creates the currently selected outfit/body.\n"
+"\n"
+"Hold CTRL = Build to working directory\n"
+"Hold ALT = Delete from output directory"
+msgstr ""
+"Erstellt das derzeit ausgewählte Outfit/den Körper.\n"
+"\n"
+"STRG gedrückt halten = Im Arbeitsverzeichnis erstellen\n"
+"ALT gedrückt halten = Vom Ausgabeverzeichnis entfernen"
+
+msgid "Build"
+msgstr "Erstellen"
+
+msgid "Copy the high weight slider values to the low weight section."
+msgstr "Kopiert die oberen Sliderwerte in den unteren Bereich."
+
+msgid "About"
+msgstr "Über"
+
+msgid "Open settings dialog."
+msgstr "Öffnet die Einstellungen."
+
+msgid "Settings"
+msgstr "Einstellungen"
+
+msgid "Open Outfit Studio, a full-featured tool for creating and converting outfits."
+msgstr ""
+"Öffnet Outfit Studio, ein mit vielen Funktionen ausgestattetes Werkzeug zum Erstellen "
+"und Konvertieren von Outfits."
+
+msgid "Filter Options"
+msgstr "Filter Optionen"
+
+msgid "Choose groups..."
+msgstr "Gruppen auswählen..."
+
+msgid "Choose groups to display in the Outfit menu"
+msgstr "Gruppen an Outfits zum Anzeigen in der Liste auswählen"
+
+msgid "Refresh Groups"
+msgstr "Gruppen aktualisieren"
+
+msgid "Refresh group information"
+msgstr "Gruppeninformationen werden neu geladen"
+
+msgid "Save Outfit list as group..."
+msgstr "Outfit-Liste als Gruppe speichern"
+
+msgid "Save the current filtered outfit list as a group"
+msgstr "Speichert die derzeit gefilterten Outfits als neue Gruppe"
+
+msgid "Refresh Outfits"
+msgstr "Outfits aktualisieren"
+
+msgid "Reloads outfit list"
+msgstr "Outfit-Liste wird neu geladen"
+
+msgid "Select None"
+msgstr "Nichts auswählen"
+
+msgid "Select All"
+msgstr "Alle auswählen"
+
+msgid "Enter preset name..."
+msgstr "Preset-Name eingeben..."
+
+msgid "Please enter a name for the new preset:"
+msgstr "Bitte geben Sie einen Namen für das neue Preset ein:"
+
+msgid "Select groups to assign to the new preset:"
+msgstr "Wählen Sie die erwünschten Gruppen aus:"
+
+msgid "&Save"
+msgstr "&Speichern"
+
+msgid "&OK"
+msgstr "&OK"
+
+msgid "&Cancel"
+msgstr "&Abbrechen"
+
+msgid "Choose a group and add or remove members by selecting them in the lists."
+msgstr "Wählen Sie eine Gruppe zum Hinzufügen oder Entfernen von Mitgliedern aus."
+
+msgid "Select a group XML file"
+msgstr "Wählen Sie eine Gruppen-Datei"
+
+msgid "Save As"
+msgstr "Speichern Unter"
+
+msgid "Groups"
+msgstr "Gruppen"
+
+msgid "Add Group"
+msgstr "Gruppe hinzufügen"
+
+msgid "Remove Group"
+msgstr "Gruppe entfernen"
+
+msgid "Members"
+msgstr "Mitglieder"
+
+msgid "Remove >>"
+msgstr "Entfernen >>"
+
+msgid "Outfits"
+msgstr "Outfits"
+
+msgid "<< Add"
+msgstr "<< Hinzufügen"
+
+msgid "Batch Build"
+msgstr "Batch-Erstellung"
+
+msgid ""
+"Select the slider sets for the batch build process. Use the group and outfit filters "
+"to show the outfits you want!"
+msgstr ""
+"Wählen Sie die Sets für den Batch-Erstellungsprozess. Mithilfe der Gruppen- und "
+"Outfitfilter können Sie die Auswahl eingrenzen."
+
+msgid "&Build"
+msgstr "&Erstellen"
+
+msgid "Game"
+msgstr "Spiel"
+
+msgid "Target Game"
+msgstr "Verwendetes Spiel"
+
+msgid "Choose the target game you want to use the program for here."
+msgstr "Wählen Sie das Spiel, für welches Sie dieses Programm verwenden möchten."
+
+msgid "Fallout 3"
+msgstr "Fallout 3"
+
+msgid "Fallout New Vegas"
+msgstr "Fallout New Vegas"
+
+msgid "Skyrim"
+msgstr "Skyrim"
+
+msgid "Fallout 4"
+msgstr "Fallout 4"
+
+msgid "Game Data Path"
+msgstr "Data Ordner"
+
+msgid "Select the data path of the game..."
+msgstr "Wählen Sie den Data Ordner des Spiels aus..."
+
+msgid "Data path to load textures from and build files to."
+msgstr ""
+"Verzeichnis, aus dem Texturen geladen werden und in dem Dateien erstellt werden sollen."
+
+msgid "General"
+msgstr "Allgemein"
+
+msgid ""
+"Enables/disables the dialog for choosing which set to build during a batch build if "
+"overrides happen."
+msgstr ""
+"Aktiviert/Deaktiviert den Auswahldialog der erscheint, wenn es zu Überschreibungen in "
+"der Batch-Erstellung kommt."
+
+msgid "Override Warning"
+msgstr "Überschreibungswarnung"
+
+msgid "Enables/disables scanning BSAs in the game data folder for textures to load."
+msgstr ""
+"Aktiviert/Deaktiviert das Scannen von BSAs im Data Ordner zum Laden von Texturen."
+
+msgid "BSA Textures"
+msgstr "BSA Texturen"
+
+msgid "Enables/disables panning the camera with the left mouse button in Outfit Studio."
+msgstr ""
+"Aktiviert/Deaktiviert das Verschieben der Kamera in Outfit Studio mit einem Linksklick."
+
+msgid "Left Mouse Pan"
+msgstr "Linksklick zum Verschieben"
+
+msgid "Use the current system language for the program."
+msgstr "Die aktuelle Betriebssystemsprache für dieses Programm verwenden."
+
+msgid "Use System Language"
+msgstr "Systemsprache verwenden"
+
+msgid "Data Files"
+msgstr "Datendateien"
+
+msgid "Reference Skeleton"
+msgstr "Referenzskelett"
+
+msgid "File"
+msgstr "Datei"
+
+msgid "Select a reference skeleton .nif file..."
+msgstr "Wählen Sie eine .nif-Datei als Referenzskelett aus..."
+
+msgid "The reference skeleton file for Outfit Studio."
+msgstr "Die Referenzskelett-Datei für Outfit Studio."
+
+msgid "Root Node"
+msgstr "Root Knoten"
+
+msgid "The root node name of the reference skeleton. Can differ from game to game."
+msgstr ""
+"Der Name des Root Knotens des Referenzskeletts. Kann von Spiel zu Spiel abweichen."
+
+msgid "Close"
+msgstr "Schließen"
+
+msgid "Brush Settings"
+msgstr "Pinseleinstellungen"
+
+msgid "Size"
+msgstr "Größe"
+
+msgid "Strength"
+msgstr "Stärke"
+
+msgid "Focus"
+msgstr "Fokus"
+
+msgid "Spacing"
+msgstr "Abstand"
+
+msgid "Meshes"
+msgstr "Modelle"
+
+msgid "Bones"
+msgstr "Bones"
+
+msgid "Lights"
+msgstr "Beleuchtung"
+
+msgid "Reset"
+msgstr "Zurücksetzen"
+
+msgid "Ambient"
+msgstr "Umgebung"
+
+msgid "Brightness 1"
+msgstr "Helligkeit 1"
+
+msgid "Brightness 2"
+msgstr "Helligkeit 2"
+
+msgid "Brightness 3"
+msgstr "Helligkeit 3"
+
+msgid "De-/Select Sliders"
+msgstr "Slider ab-/anwählen"
+
+msgid "Fixed Weight Brush"
+msgstr "Fixierte Pinselstärke"
+
+msgid "Preview Scaling"
+msgstr "Skalierungsvorschau"
+
+msgid "Menu"
+msgstr "Menü"
+
+msgid "New Project...\tCtrl+N"
+msgstr "Neues Projekt...\tCtrl+N"
+
+msgid "Create a new outfit project."
+msgstr "Erstellt ein neues Outfit Projekt."
+
+msgid "Load Project..\tCtrl+O"
+msgstr "Projekt laden..\tCtrl+O"
+
+msgid "Load a project."
+msgstr "Läd ein existierendes Projekt."
+
+msgid "Load Reference..."
+msgstr "Referenz laden..."
+
+msgid "Load a new reference slider set, replacing any current reference objects."
+msgstr "Läd ein neues Referenzset. Ersetzt alle aktuellen Referenzobjekte."
+
+msgid "Load Outfit..."
+msgstr "Outfit laden..."
+
+msgid "Load a NIF file as the working outfit, replacing any current outfit objects."
+msgstr "Läd eine NIF-Datei als Arbeitsoutfit. Ersetzt alle aktuellen Outfit Objekte."
+
+msgid "Apply Overall Skin Transform"
+msgstr "Skin-Transformierung anwenden"
+
+msgid ""
+"Disable for a different way of loading NIF files to see if that puts it into the right "
+"(or a better) spot."
+msgstr ""
+"Deaktivieren um auszuprobieren, ob eine NIF-Datei mit dieser Methode in eine bessere "
+"Position gerückt wird."
+
+msgid "Save Project\tCtrl+S"
+msgstr "Projekt speichern\tCtrl+S"
+
+msgid "Save the project."
+msgstr "Speichert das Projekt."
+
+msgid "Save Project As...\tCtrl+Shift+S"
+msgstr "Projekt speichern unter...\tCtrl+Shift+S"
+
+msgid "Save the project under a new name."
+msgstr "Speichert das Projekt unter einem neuen Namen."
+
+msgid "Import"
+msgstr "Import"
+
+msgid "Import NIF"
+msgstr "NIF importieren"
+
+msgid "Choose a NIF file to import into the project."
+msgstr "Wählen Sie eine NIF-Datei, die dem Projekt hinzugefügt werden soll."
+
+msgid "Import Data"
+msgstr "Daten importieren"
+
+msgid "Import BSClothExtraData From HKX"
+msgstr "BSClothExtraData aus HKX importieren"
+
+msgid "Choose an HKX file to import as a BSClothExtraData block into the project."
+msgstr "Wählen Sie eine HKX-Datei zum Importieren als BSClothExtraData-Block."
+
+msgid "Export"
+msgstr "Export"
+
+msgid "Export NIF"
+msgstr "NIF exportieren"
+
+msgid "Save the current outfit as a NIF file (without reference)"
+msgstr "Speichert das aktuelle Outfit als NIF-Datei (ohne Referenz)"
+
+msgid "Export NIF With Reference"
+msgstr "NIF mit Referenz exportieren"
+
+msgid "Save the current project as a NIF file (including reference)"
+msgstr "Speichert das aktuelle Projekt als NIF-Datei (inklusive Referenz)"
+
+msgid "Export Data"
+msgstr "Daten exportieren"
+
+msgid "Export BSClothExtraData As HKX"
+msgstr "BSClothExtraData als HKX exportieren"
+
+msgid "Save one of the currently loaded BSClothExtraData blocks to an HKX file."
+msgstr "Speichert einen der aktuell geladenen BSClothExtraData-Blocks als HKX-Datei."
+
+msgid "Make Conversion Reference"
+msgstr "Konvertierungsreferenz erstellen"
+
+msgid ""
+"Using the current slider settings for the reference shape, create a new reference that "
+"will morph from the current shape back to the base shape."
+msgstr ""
+"Mithilfe der aktuellen Sliderwerte wird eine neue Referenz erstellt, die sich von der "
+"aktuellen Form zurück zur Basisform bewegt."
+
+msgid "Exit\tAlt+F4"
+msgstr "Beenden\tAlt+F4"
+
+msgid "Exit Outfit Studio."
+msgstr "Outfit Studio beenden."
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Undo\tCtrl+Z"
+msgstr "Rückgängig\tCtrl+Z"
+
+msgid "Undo the previous action."
+msgstr "Macht die letzte Aktion rückgängig."
+
+msgid "Redo\tCtrl+Shift+Z"
+msgstr "Wiederherstellen\tCtrl+Shift+Z"
+
+msgid "Redo the next undone action."
+msgstr "Stellt die letzte Aktion wieder her."
+
+msgid "X Mirror\tX"
+msgstr "X-Spiegelung\tX"
+
+msgid "Mirror edits across the X axis."
+msgstr "Spiegelt die Änderungen auf der X-Achse."
+
+msgid "Edit Connected Only\tC"
+msgstr "Nur Verbundenes bearbeiten\tC"
+
+msgid ""
+"Edit only vertices that are connected to the ones under the brush within the brush "
+"radius"
+msgstr ""
+"Bearbeitet nur Vertices, die mit denen verbunden sind, die der Pinselradius erreicht"
+
+msgid "Global Brush Collision\tB"
+msgstr "Globale Pinselkollision\tB"
+
+msgid ""
+"Allows for the brushes to collide with all currently selected meshes at the same time"
+msgstr ""
+"Ermöglicht es den Pinseln mit allen derzeit ausgewählten Meshes auf einmal zu "
+"kollidieren"
+
+msgid "Auto Normals"
+msgstr "Auto Normals"
+
+msgid "Recalculate normals as you edit"
+msgstr "Berechnet die Normals automatisch während der Bearbeitung neu"
+
+msgid "Recalculate Normals\tR"
+msgstr "Normals neu berechnen\tR"
+
+msgid "Recalculate normals on active mesh"
+msgstr "Berechnet die Normals des aktiven Meshes neu"
+
+msgid "View"
+msgstr "Ansicht"
+
+msgid "Front\tShift+1"
+msgstr "Vorne\tShift+1"
+
+msgid "Back\tShift+2"
+msgstr "Hinten\tShift+2"
+
+msgid "Left\tShift+3"
+msgstr "Links\tShift+3"
+
+msgid "Right\tShift+4"
+msgstr "Rechts\tShift+4"
+
+msgid "Perspective\tShift+5"
+msgstr "Perspektive\tShift+5"
+
+msgid "Toggle Ghost Mode\tG"
+msgstr "Geistermodus\tG"
+
+msgid "Show the active mesh in translucent mode."
+msgstr "Zeigt das aktuelle Mesh in einem durchsichtigen Modus an."
+
+msgid "Show Wireframe\tW"
+msgstr "Gitternetz anzeigen\tW"
+
+msgid "Show wireframe on all models."
+msgstr "Gitternetz auf allen Modellen anzeigen."
+
+msgid "Enable Lighting\tL"
+msgstr "Beleuchtung aktivieren\tL"
+
+msgid "Turn on or off lighting."
+msgstr "Schaltet die Beleuchtung an oder aus."
+
+msgid "Enable Textures\tT"
+msgstr "Texturen aktivieren\tT"
+
+msgid "Display texture maps on models."
+msgstr "Zeigt Texturen der Modelle an."
+
+msgid "Shape"
+msgstr "Modell"
+
+msgid "From OBJ..."
+msgstr "Aus OBJ..."
+
+msgid "Import an OBJ file as a new shape in the outfit."
+msgstr "Importiert eine OBJ-Datei als neues Modell."
+
+msgid "From FBX..."
+msgstr "Aus FBX..."
+
+msgid "Import an FBX file as a new shape in the outfit."
+msgstr "Importiert eine FBX-Datei als neues Modell."
+
+msgid "To OBJ..."
+msgstr "Als OBJ..."
+
+msgid "Export the current shape as an OBJ file."
+msgstr "Exportiert das aktuelle Modell als OBJ-Datei."
+
+msgid "To FBX..."
+msgstr "Als FBX..."
+
+msgid "Export the current shape as an FBX file."
+msgstr "Exportiert das aktuelle Modell als FBX-Datei."
+
+msgid "UV"
+msgstr "UV"
+
+msgid "Invert X"
+msgstr "X umkehren"
+
+msgid "Inverts the X-axis of the texture coordinates."
+msgstr "Kehrt die X-Achse der Texturkoordinaten um."
+
+msgid "Invert Y"
+msgstr "Y umkehren"
+
+msgid "Inverts the Y-axis of the texture coordinates."
+msgstr "Kehrt die Y-Achse der Texturkoordinaten um."
+
+msgid "Duplicate..."
+msgstr "Duplizieren..."
+
+msgid "Duplicate the current shape."
+msgstr "Dupliziert das aktuelle Modell."
+
+msgid "Rename...\tF2"
+msgstr "Umbenennen...\tF2"
+
+msgid "Change the name of the current shape."
+msgstr "Ändert den Namen des aktuellen Modells."
+
+msgid "Set Reference"
+msgstr "Referenz setzen"
+
+msgid "Turn the shape into the reference shape of the project."
+msgstr "Wandelt das Modell in ein Referenzmodell des Projekts um."
+
+msgid "Move..."
+msgstr "Verschieben..."
+
+msgid "Apply an offset adjustment to the mesh vertices. This permanently moves vertices."
+msgstr "Verschiebt die Vertices des Modells permanent."
+
+msgid "Scale..."
+msgstr "Skalieren..."
+
+msgid "Apply a scale adjustment to the shape. This permanently moves vertices."
+msgstr "Skaliert die Vertices des Modells permanent."
+
+msgid "Rotate..."
+msgstr "Rotieren..."
+
+msgid "Apply a rotation to the mesh vertices. This permanently moves vertices."
+msgstr "Rotiert die Vertices des Modells permanent."
+
+msgid "Smooth Seam Normals"
+msgstr "Rand-Normals glätten"
+
+msgid ""
+"Smooths edges of seams (usually found at texture borders), disable if this causes odd "
+"normals on the shape."
+msgstr ""
+"Glättet Kanten von Rändern (normalerweise bei Texturgrenzen). Deaktivieren bei "
+"seltsamen Normals."
+
+msgid "Copy Bone Weights"
+msgstr "Bone Weighting kopieren"
+
+msgid "Copies all bone weights from the reference shape to the current shape."
+msgstr "Kopiert das Bone Weighting des Referenzmodells auf das aktuelle Modell."
+
+msgid "Copy Selected Weights"
+msgstr "Ausgewähltes Weighting kopieren"
+
+msgid "Copies selected bone weights from the reference shape to the current shape."
+msgstr "Kopiert das ausgewählte Weighting vom Referenzmodell auf das aktuelle Modell."
+
+msgid "Transfer Selected Weights"
+msgstr "Ausgewähltes Weighting transferieren"
+
+msgid ""
+"Transfers selected weights from the reference shape to the current shape. Requires "
+"same vertex count and order."
+msgstr ""
+"Transferiert das ausgewählte Weighting vom Referenzmodell auf das aktuelle Modell. "
+"Benötigt die selbe Anzahl und Reihenfolge an Vertices."
+
+msgid "Mask Weighted Vertices"
+msgstr "Gewichtete Vertices maskieren"
+
+msgid ""
+"Masks vertices with bone weights, so you can manually assign weights to unweighted "
+"vertices."
+msgstr "Maskiert Vertices mit Bone Weighting."
+
+msgid "Build Skin Partitions"
+msgstr "Skin-Partitionen erstellen"
+
+msgid ""
+"Creates or rebuilds skin partitions for the current shape. This is typically not "
+"needed, use only if skin partitions are broken."
+msgstr ""
+"Erstellt Skin-Partitionen für das aktuelle Modell. Dies wird normalerweise nicht "
+"benötigt, außer die existierenden Skin-Partitionen sind nicht funktionsfähig."
+
+msgid "Update Bounding Sphere"
+msgstr "Bounding Sphere aktualisieren"
+
+msgid "Updates the bounding sphere of the geometry with a new position and radius."
+msgstr ""
+"Aktualisiert die Bounding Sphere der Geometrie mit einer neuen Position und einem "
+"neuen Radius."
+
+msgid "Delete\tDel"
+msgstr "Entfernen\tDel"
+
+msgid "Removes the currently selected shape from the outfit."
+msgstr "Entfernt das derzeit ausgewählte Modell aus dem Outfit."
+
+msgid "Properties..."
+msgstr "Eigenschaften..."
+
+msgid ""
+"Opens the properties dialog for shader, texture and more settings of the selected "
+"shape."
+msgstr ""
+"Öffnet das Eigenschaftenfenster für Shader, Texturen und mehr des aktuellen Modells."
+
+msgid "Slider"
+msgstr "Slider"
+
+msgid "Conform Selected\tCtrl+C"
+msgstr "Ausgewählte übertragen\tCtrl+C"
+
+msgid "Conform selected outfit shape to all checked sliders."
+msgstr "Überträgt alle angehakten Slider auf die ausgewählten Modelle."
+
+msgid "Conform All\tCtrl+Shift+C"
+msgstr "Alle übertragen\tCtrl+Shift+C"
+
+msgid "Conform all outfit shapes to all checked sliders."
+msgstr "Überträgt alle angehakten Slider auf alle Modelle."
+
+msgid "Set Base Shape"
+msgstr "Grundform setzen"
+
+msgid "Set the current outfit shape as the base shape and clear slider data."
+msgstr "Setzt die aktuelle Form der Outfitmodelle als Grundform und löscht Sliderdaten."
+
+msgid "Load Preset..."
+msgstr "Preset laden..."
+
+msgid "Load and preview a slider preset. Inverted sliders will have inverted values."
+msgstr "Läd ein Preset zur Vorschau. Umgekehrte Slider bekommen umgekehrte Werte."
+
+msgid "Save Preset..."
+msgstr "Preset speichern..."
+
+msgid ""
+"Save a slider preset with the current values. Inverted sliders will have inverted "
+"values."
+msgstr ""
+"Speichert ein Preset mit den aktuellen Werten. Umgekehrte Slider bekommen umgekehrte "
+"Werte."
+
+msgid "New Slider"
+msgstr "Neuer Slider"
+
+msgid "Create a new shape transformation slider."
+msgstr "Erstellt einen neuen Slider zum Transformieren von Modellen."
+
+msgid "Coalesce sliders"
+msgstr "Slider zusammenfügen"
+
+msgid "Create a new shape transformation slider based on the current slider values"
+msgstr "Erstellt einen neuen Slider, der auf den aktuellen Sliderwerten basiert."
+
+msgid "New Zap Slider"
+msgstr "Neuer Zap Slider"
+
+msgid "Create a new Zap slider based on unmasked vertices"
+msgstr ""
+"Erstellt einen neuen Zap Slider, der auf allen nicht maskierten Vertices basiert."
+
+msgid "Import TRI Morphs..."
+msgstr "TRI Morphs importieren..."
+
+msgid ""
+"Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name."
+msgstr ""
+"Importiert TRI Morphs aus einer TRI-Datei und erstellt daraus Slider für Modelle mit "
+"passendem Namen."
+
+msgid "Export TRI Morphs..."
+msgstr "TRI Morphs exportieren..."
+
+msgid "Exports TRI morphs to a TRI file."
+msgstr "Exportiert TRI Morphs in eine TRI-Datei."
+
+msgid "Import Slider Data"
+msgstr "Sliderdaten importieren"
+
+msgid "Import BSD..."
+msgstr "BSD importieren..."
+
+msgid "Import a BodySlide BSD file and overwrites the current shape's slider data."
+msgstr ""
+"Importiert eine BodySlide BSD-Datei und überschreibt die Sliderdaten des aktuellen "
+"Modells."
+
+msgid "Import OBJ..."
+msgstr "OBJ importieren..."
+
+msgid ""
+"Import an OBJ file matching the current shape's vertex count, and calculate slider "
+"data from the difference."
+msgstr ""
+"Importiert eine OBJ-Datei, die mit der Vertex Anzahl des aktuellen Modells "
+"übereinstimmt, und berechnet Sliderdaten aus der Differenz."
+
+msgid "Import FBX..."
+msgstr "FBX importieren..."
+
+msgid ""
+"Import an FBX file matching the current shape's vertex count, and calculate slider "
+"data from the difference."
+msgstr ""
+"Importiert eine FBX-Datei, die mit der Vertex Anzahl des aktuellen Modells "
+"übereinstimmt, und berechnet Sliderdaten aus der Differenz."
+
+msgid "Export Slider Data"
+msgstr "Sliderdaten exportieren"
+
+msgid "Export BSD..."
+msgstr "BSD exportieren..."
+
+msgid "Exports the current slider's data as a BodySlide BSD file."
+msgstr "Exportiert die Daten des aktuellen Sliders als BodySlide BSD-Datei."
+
+msgid "Export OBJ..."
+msgstr "OBJ exportieren..."
+
+msgid "Exports the current slider's data as an OBJ file."
+msgstr "Exportiert die Daten des aktuellen Sliders als OBJ-Datei."
+
+msgid "Negate Slider"
+msgstr "Slider negieren"
+
+msgid "Negates the current slider, reversing it's effect"
+msgstr "Negiert den aktuellen Slider zum Umkehren seines Effektes"
+
+msgid "Mask Affected Vertices"
+msgstr "Beeinflusste Vertices maskieren"
+
+msgid "Masks the vertices the slider is affecting for all selected shapes."
+msgstr "Maskiert die Vertices aller ausgewählten Modelle, welche der Slider beeinflusst."
+
+msgid "Clear Slider Data"
+msgstr "Sliderdaten löschen"
+
+msgid "Erases the slider data without removing the slider itself. (Cannot be undone)"
+msgstr ""
+"Löscht die Sliderdaten, ohne den Slider selbst zu entfernen. (Kann nicht rückgängig "
+"gemacht werden)"
+
+msgid "Delete Slider"
+msgstr "Slider entfernen"
+
+msgid "Delete the active slider from the project. (Cannot be undone)"
+msgstr ""
+"Entfernt den aktiven Slider aus dem Projekt. (Kann nicht rückgängig gemacht werden)"
+
+msgid "Properties...\tTab"
+msgstr "Eigenschaften...\tTab"
+
+msgid "Display and edit the active slider's properties."
+msgstr "Zeigt die Eigenschaften des aktiven Sliders zur Bearbeitung an."
+
+msgid "Tool"
+msgstr "Werkzeug"
+
+msgid "Current Tool"
+msgstr "Aktuelles Werkzeug"
+
+msgid "Select\t0"
+msgstr "Auswählen\t0"
+
+msgid "Navigate and select meshes (or vertices in vertex mode)."
+msgstr "Navigiert durch Modelle und wählt sie aus (oder Vertices im Vertexmodus)."
+
+msgid "Mask\t1"
+msgstr "Maskieren\t1"
+
+msgid ""
+"Mask vertices to prevent them from being transformed.\n"
+"Hold down the ALT key to remove masking."
+msgstr ""
+"Maskiert Vertices, um zu verhindern, dass sie transformiert werden.\n"
+"ALT gedrückt halten, um Maskierungen zu entfernen."
+
+msgid "Inflate\t2"
+msgstr "Vergrößern\t2"
+
+msgid "Increase mesh volume in an area."
+msgstr "Vergrößert das Meshvolumen im Bereich."
+
+msgid "Deflate\t3"
+msgstr "Reduzieren\t3"
+
+msgid "Decrease mesh volume in an area."
+msgstr "Reduziert das Meshvolumen im Bereich."
+
+msgid "Move\t4"
+msgstr "Bewegen\t4"
+
+msgid "Move vertices over a plane parallel to the view."
+msgstr "Bewegt Vertices auf einer Ebene parallel zur Blickrichtung."
+
+msgid "Smooth\t5"
+msgstr "Glätten\t5"
+
+msgid "Smooth an area of a mesh."
+msgstr "Glättet einen Bereich eines Meshes."
+
+msgid "Weight Paint\t6"
+msgstr "Weight Farbe\t6"
+
+msgid ""
+"Apply animation weight values for the currently selected bone.\n"
+"Hold down the ALT key to weaken the weighting."
+msgstr ""
+"Wendet Animations-Weighting für den derzeit gewählten Bone an.\n"
+"ALT gedrückt halten, um das Weighting abzuschwächen."
+
+msgid "Transform\tF"
+msgstr "Transformieren\tF"
+
+msgid "Shows a transform tool to manipulate shapes and vertices with."
+msgstr ""
+"Zeigt an Transformierwerkzeug an, mit welchem Modelle und Vertices manipuliert werden "
+"können."
+
+msgid "Vertex Edit\tQ"
+msgstr "Vertex Bearbeitung\tQ"
+
+msgid ""
+"Lets you select vertices to add to or remove from the mask.\n"
+"Click on a vertex to select/unmask it.\n"
+"Hold down CTRL to unselect/mask it."
+msgstr ""
+"Ermöglicht es, Vertices auszuwählen, um sie so der Maske hinzuzufügen oder zu "
+"entfernen.\n"
+"Auf einen Vertex klicken, um ihn auszuwählen/zu demaskieren.\n"
+"CTRL gedrückt halten, um ihn abzuwählen/zu maskieren."
+
+msgid "Increase Brush Size\tShift++"
+msgstr "Pinselgröße erhöhen\tShift++"
+
+msgid "Increase brush diameter"
+msgstr "Erhöht den Durchmesser des Pinsels"
+
+msgid "Decrease Brush Size\tShift+-"
+msgstr "Pinselgröße verringern\tShift+-"
+
+msgid "Decrease brush diameter"
+msgstr "Verringert den Durchmesser des Pinsels"
+
+msgid "Increase Brush Strength\tCtrl++"
+msgstr "Pinselstärke erhöhen\tCtrl++"
+
+msgid "Increase brush strength"
+msgstr "Erhöht die Stärke des Pinsels"
+
+msgid "Decrease Brush Strength\tCtrl+-"
+msgstr "Pinselstärke verringern\tCtrl+-"
+
+msgid "Decrease brush strength"
+msgstr "Verringert die Stärke des Pinsels"
+
+msgid "Invert Mask\tCtrl+I"
+msgstr "Maske umkehren\tCtrl+I"
+
+msgid "Invert Mask"
+msgstr "Maske umkehren"
+
+msgid "Clear Mask\tCtrl+A"
+msgstr "Maske löschen\tCtrl+A"
+
+msgid "Clear Mask"
+msgstr "Maske entfernen"
+
+msgid "Show Mask\tM"
+msgstr "Maske anzeigen\tM"
+
+msgid "Shade meshes to indicate areas that are currently masked."
+msgstr "Verdunkelt Modelle, um aktuell maskierte Bereiche darzustellen."
+
+msgid "New Project"
+msgstr "Neues Projekte"
+
+msgid ""
+"Create a new project by selecting a reference body slider set, and outfit model files."
+msgstr ""
+"Erstellt ein neues Projekt durch auswählen einer Referenz und eines Outfit Modells."
+
+msgid "Load Project"
+msgstr "Projekt laden"
+
+msgid "Load a previously created slider set for editing."
+msgstr "Läd ein zuvor erstelltes Set zur Bearbeitung."
+
+msgid "Select"
+msgstr "Auswählen"
+
+msgid "Mask"
+msgstr "Maskieren"
+
+msgid "Inflate"
+msgstr "Vergrößern"
+
+msgid "Deflate"
+msgstr "Reduzieren"
+
+msgid "Move"
+msgstr "Bewegen"
+
+msgid "Smooth"
+msgstr "Glätten"
+
+msgid "Weight Paint"
+msgstr "Weight Pinsel"
+
+msgid ""
+"Apply animation weight values for currently selected bone.\n"
+"Hold down the ALT key to weaken the weighting."
+msgstr ""
+"Wendet Animations-Weighting für den derzeit gewählten Bone an.\n"
+"ALT gedrückt halten, um das Weighting abzuschwächen."
+
+msgid "Transform"
+msgstr "Transformieren"
+
+msgid "Vertex Edit"
+msgstr "Vertex Bearbeitung"
+
+msgid "X Mirror"
+msgstr "X-Spiegelung"
+
+msgid ""
+"Edit only vertices that are connected to the ones under the brush within the brush "
+"radius."
+msgstr ""
+"Bearbeitet nur Vertices, die mit denen verbunden sind, die der Pinselradius erreicht."
+
+msgid "Global Brush Collision\tC"
+msgstr "Globale Pinselkollision\tC"
+
+msgid ""
+"Allows for the brushes to collide with all currently selected meshes at the same time."
+msgstr ""
+"Ermöglicht es den Pinseln mit allen derzeit ausgewählten Meshes auf einmal zu "
+"kollidieren."
+
+msgid "View Front"
+msgstr "Vorderansicht"
+
+msgid "Change camera view to the front."
+msgstr "Ändert die Kameraansicht nach vorne."
+
+msgid "View Back"
+msgstr "Hinteransicht"
+
+msgid "Change camera view to the back."
+msgstr "Ändert die Kameraansicht nach hinten."
+
+msgid "View Left"
+msgstr "Linksansicht"
+
+msgid "Change camera view to the left."
+msgstr "Ändert die Kameraansicht nach links."
+
+msgid "View Right"
+msgstr "Rechtsansicht"
+
+msgid "Change camera view to the right."
+msgstr "Ändert die Kameraansicht nach rechts."
+
+msgid "Perspective View"
+msgstr "Perspektivische Ansicht"
+
+msgid "Toggle perspective view."
+msgstr "Perspektivische Ansicht umschalten."
+
+msgid "Field of View"
+msgstr "Sichtfeld"
+
+msgid "Field of View: 65"
+msgstr "Sichtfeld: 65"
+
+msgid "Move Shape"
+msgstr "Modell verschieben"
+
+msgid "CBBE to Vanilla (old)"
+msgstr "CBBE zu Vanilla (alt)"
+
+msgid "Scale Shape"
+msgstr "Modell skalieren"
+
+msgid "Scaling will adjust the size of a mesh. This permanently affects vertices."
+msgstr ""
+"Skalierung verändert die Größe eines Modells. Dies beeinflusst Vertices permanent."
+
+msgid "Scale"
+msgstr "Skalierung"
+
+msgid "Rotate Shape"
+msgstr "Modell rotieren"
+
+msgid "Apply a vertex position"
+msgstr "Setzt eine Vertex Position"
+
+msgid "This permanently moves a single vertex straight to the given location."
+msgstr "Dies bewegt einen einzelnen Vertex permanent zur angegebenen Position."
+
+msgid ""
+"Welcome to the New Project wizard!\n"
+"\n"
+"First, please choose a reference. Typically, this is a body (such as CBBE) or a "
+"conversion set (such as Vanilla To CBBE) and comes with its sliders."
+msgstr ""
+"Willkommen zum Assistenten für ein neues Projekt!\n"
+"\n"
+"Zuerst, wählen Sie bitte eine Referenz. Normalerweise ist dies ein Körper (wie z.B. "
+"CBBE) oder ein Konvertierungsset (wie z.B. Vanilla zu CBBE) und kommt mit seinen "
+"eigenen Slidern."
+
+msgid "Reference"
+msgstr "Referenz"
+
+msgid "From Template"
+msgstr "Aus Vorlage"
+
+msgid "From File"
+msgstr "Aus Datei"
+
+msgid "Select a project or NIF file"
+msgstr "Wählen Sie eine Projekt- oder NIF-Datei"
+
+msgid "Slider Set:"
+msgstr "Slider Set:"
+
+msgid "Shape:"
+msgstr "Modell:"
+
+msgid "Clear Reference"
+msgstr "Referenz entfernen"
+
+msgid "Next, select an outfit/mesh to work on and enter a display name for it."
+msgstr ""
+"Als nächstes, wählen Sie ein Outfit/Modell zum Bearbeiten und geben Sie einen "
+"Anzeigenamen dafür ein."
+
+msgid "Display Name"
+msgstr "Anzeigename"
+
+msgid "New Outfit"
+msgstr "New Outfit"
+
+msgid "Outfit/Mesh"
+msgstr "Outfit/Modell"
+
+msgid "Select a file to load as an outfit/mesh"
+msgstr "Wählen Sie eine Datei zum Laden als Outfit/Modell"
+
+msgid "Clear Outfit"
+msgstr "Outfit entfernen"
+
+msgid "Textures"
+msgstr "Texturen"
+
+msgid "Automatically search for textures"
+msgstr "Automatisch nach Texturen suchen"
+
+msgid "Select a texture file"
+msgstr "Wählen Sie eine Textur-Datei"
+
+msgid "Select a slider preset"
+msgstr "Wählen Sie ein Slider Preset"
+
+msgid "Choose a preset:"
+msgstr "Wählen Sie ein Preset:"
+
+msgid "Low weight"
+msgstr "Unteres Gewicht"
+
+msgid "High weight"
+msgstr "Oberes Gewicht"
+
+msgid "Set Shape Textures"
+msgstr "Modelltexturen setzen"
+
+msgid "Display Texture:"
+msgstr "Anzeigetextur:"
+
+msgid ""
+"Applies the current diffuse texture path to the Outfit Studio display texture path."
+msgstr ""
+"Wendet den aktuellen Diffuse Texturpfad auf den Outfit Studio Anzeigetexturpfad an."
+
+msgid "Apply Diffuse"
+msgstr "Diffuse anwenden"
+
+msgid "Load Reference"
+msgstr "Referenz laden"
+
+msgid ""
+"Please choose a reference. Typically, this is a body (such as CBBE) or a conversion "
+"set (such as Vanilla To CBBE) and comes with its sliders."
+msgstr ""
+"Wählen Sie bitte eine Referenz. Normalerweise ist dies ein Körper (wie z.B. CBBE) oder "
+"ein Konvertierungsset (wie z.B. Vanilla zu CBBE) und kommt mit seinen eigenen Slidern."
+
+msgid "Merge new sliders with existing sliders"
+msgstr "Neue Slider mit existierenden verschmelzen"
+
+msgid "Load Outfit"
+msgstr "Outfit laden"
+
+msgid "Please select an outfit/mesh to work on and enter a display name for it."
+msgstr ""
+"Wählen Sie ein Outfit/Modell zum Bearbeiten und geben Sie einen Anzeigenamen dafür ein."
+
+msgid "Keep other shapes"
+msgstr "Andere Modelle behalten"
+
+msgid "Add"
+msgstr "Hinzufügen"
+
+msgid "Delete"
+msgstr "Entfernen"
+
+msgid "From Project"
+msgstr "Aus Projekt"
+
+msgid "Delete bone(s) from all shapes of the project."
+msgstr "Bone(s) von allen Modellen des Projektes entfernen."
+
+msgid "From Selected Shapes"
+msgstr "Von ausgewählten Modellen"
+
+msgid "Delete bone(s) from only the selected shapes."
+msgstr "Bone(s) nur von ausgewählten Modellen entfernen."
+
+msgid "From Skeleton..."
+msgstr "Aus Skelett..."
+
+msgid "Choose a bone from the reference skeleton to add to the project."
+msgstr "Wählen Sie einen Bone aus dem Referenzskelett, um ihn dem Projekt hinzuzufügen."
+
+msgid "Custom Bone..."
+msgstr "Benutzerdefinierter Bone..."
+
+msgid "Add a custom bone to the project."
+msgstr "Fügt einen benutzerdefinierten Bone dem Projekt hinzu."
+
+msgid "Select a bone to add"
+msgstr "Wählen Sie einen hinzuzufügenden Bone"
+
+msgid "Bones in the current reference skeleton:"
+msgstr "Bones im aktuellen Referenzskelett:"
+
+msgid "Add Custom Bone"
+msgstr "Benutzerdefinierten Bone hinzufügen"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Slider Properties"
+msgstr "Slidereigenschaften"
+
+msgid "Slider Name"
+msgstr "Slidername"
+
+msgid "Default Values"
+msgstr "Standardwerte"
+
+msgid "Low"
+msgstr "Niedrig"
+
+msgid "High"
+msgstr "Hoch"
+
+msgid "Options"
+msgstr "Optionen"
+
+msgid "Invert Slider"
+msgstr "Slider umkehren"
+
+msgid "Hidden"
+msgstr "Versteckt"
+
+msgid "Zap"
+msgstr "Zap"
+
+msgid "Save Project As..."
+msgstr "Projekte speichern unter..."
+
+msgid "The name of the outfit and slider set, as it will appear in BodySlide."
+msgstr "Der Name des Outfits und Slidersets, wie er in BodySlide erscheinen wird."
+
+msgid "Copies the current display name to the project text fields below."
+msgstr "Kopiert den aktuellen Anzeigenamen in alle Projekt Textfelder unterhalb."
+
+msgid "To Project"
+msgstr "Zu Projekt"
+
+msgid "Output File Name"
+msgstr "Ausgabe Dateiname"
+
+msgid ""
+"The name of the outfit file that will end up in the game data path when BodySlide "
+"builds it. Should not include _1 or _0 in the name, e.g: lovelydress"
+msgstr ""
+"Der Name der Outfit-Datei, die im Data Ordner des Spiels von BodySlide erstellt wird. "
+"Sollte nicht _1 oder _0 enthalten, z.B. lovelydress"
+
+msgid "_0/_1.nif"
+msgstr "_0/_1.nif"
+
+msgid "Output Data Path"
+msgstr "Ausgabe Dateipfad"
+
+msgid ""
+"The location in the game's data path where BodySlide-built outfit files will be "
+"placed, e.g: meshes\\clothes\\lovelydress"
+msgstr ""
+"Der Ordner innerhalb der Spieldaten, in welchem BodySlide die Outfit-Dateien erstellen "
+"wird, z.B. meshes\\clothes\\lovelydress"
+
+msgid ""
+"If this is enabled, BodySlide creates a low and high weight model when it generates "
+"the final outfit."
+msgstr ""
+"Wenn dies aktiviert ist, wird BodySlide Dateien für ein unteres und oberes Gewicht "
+"erstellen."
+
+msgid "Low/High Weight Output"
+msgstr "Unteres/Oberes Gewicht"
+
+msgid ""
+"If this is enabled, only one output file will be created (useful for single-weighted "
+"things like hair)."
+msgstr "Wenn dies aktiviert ist, wird nur eine einzelne Datei ausgegeben."
+
+msgid "Single Weight Output"
+msgstr "Einzelnes Gewicht"
+
+msgid "Project"
+msgstr "Projekt"
+
+msgid "Slider Set File"
+msgstr "Slider Set Datei"
+
+msgid "The .osp slider set project file"
+msgstr "Die .osp Sliderset Projekt-Datei"
+
+msgid "Select slider set .osp file name"
+msgstr "Wählen Sie einen Slider Set .osp Dateinamen"
+
+msgid "Shape Data Folder"
+msgstr "Shape Data Ordner"
+
+msgid ""
+"The folder where all the slider data will go, as well as the base outfit NIF file."
+msgstr ""
+"Der Ordner, indem alle Sliderdaten und NIF-Dateien des Basisoutfits gespeichert werden."
+
+msgid "Select slider data folder"
+msgstr "Wählen Sie den Sliderdaten Ordner"
+
+msgid "Shape Data File"
+msgstr "Shape Data Datei"
+
+msgid "The name of the output's base NIF file."
+msgstr "Der Name der Ausgabe NIF-Datei."
+
+msgid "Select output NIF file name"
+msgstr "Wählen Sie einen Ausgabe NIF-Dateinamen"
+
+msgid ""
+"Outfits require the reference body to be a part of the output file. Disable this if "
+"you've already copied the reference over or you don't want it included."
+msgstr ""
+"Outfits benötigen den Referenzkörper innerhalb der Ausgabedatei. Deaktiviere dies, "
+"wenn du die Referenz bereits kopiert hast oder sie nicht in der Ausgabe benötigst."
+
+msgid "Copy reference shape into output"
+msgstr "Referenzmodell in die Ausgabe kopieren"
+
+msgid "Shape Properties"
+msgstr "Modelleigenschaften"
+
+msgid "Shader"
+msgstr "Shader"
+
+msgid "Type"
+msgstr "Typ"
+
+msgid "Specular Color"
+msgstr "Specular Farbe"
+
+msgid "Specular Strength"
+msgstr "Specular Stärke"
+
+msgid "Specular Power"
+msgstr "Specular Kraft"
+
+msgid "Emissive Color"
+msgstr "Emissive Farbe"
+
+msgid "Emissive Multiple"
+msgstr "Emissive Multiplikator"
+
+msgid "Remove"
+msgstr "Entfernen"
+
+msgid "Textures..."
+msgstr "Texturen..."
+
+msgid "Transparency"
+msgstr "Transparenz"
+
+msgid "Threshold"
+msgstr "Grenzwert"
+
+msgid "Geometry"
+msgstr "Geometrie"
+
+msgid "Full Precision"
+msgstr "Volle Präzision"
+
+msgid "Extra Data"
+msgstr "Extra Daten"
+
+# XRC STRINGS END HERE
+msgid "Value"
+msgstr "Wert"
+
+#: Anim.cpp:359
+msgid ""
+"Bone information incomplete. Exported data will not contain correct bone entries! Be "
+"sure to load a reference NIF prior to export."
+msgstr ""
+"Bone-Informationen sind unvollständig. Exportierte Daten werden keine korrekten Bone-"
+"Einträge besitzen! Stelle sicher, dass du eine Referenz vor dem Export geladen hast."
+
+#: Anim.cpp:359
+msgid "Export Warning"
+msgstr "Export Warnung"
+
+#: Anim.cpp:418
+#, c-format
+msgid "Failed to load skeleton '%s'!"
+msgstr "Konnte Skelett '%s' nicht laden!"
+
+#: Anim.cpp:426
+#, c-format
+msgid "Root '%s' not found in skeleton '%s'!"
+msgstr "Root '%s' konnte nicht im Skelett '%s' gefunden werden!"
+
+#: BodySlideApp.cpp:135
+msgid ""
+"No read/write permission for game data path!\n"
+"\n"
+"Please launch the program with admin elevation and make sure the game data path in the "
+"settings is correct."
+msgstr ""
+"Kein Schreib-/Lesezugriff auf den Spieldaten-Ordner!\n"
+"\n"
+"Bitte starten Sie das Programm mit Admin-Rechten und stellen Sie sicher, dass der "
+"Spieldaten-Pfad in den Einstellungen korrekt ist."
+
+#: BodySlideApp.cpp:135 BodySlideApp.cpp:977 BodySlideApp.cpp:982 BodySlideApp.cpp:2738
+msgid "Warning"
+msgstr "Warnung"
+
+#: BodySlideApp.cpp:172
+#, c-format
+msgid "Unexpected exception has occurred: %s, the program will terminate."
+msgstr "Unerwartete Ausnahme trat auf: %s, das Programm wird sich jetzt beenden."
+
+#: BodySlideApp.cpp:172
+msgid "Unexpected exception"
+msgstr "Unerwartete Ausnahme"
+
+#: BodySlideApp.cpp:193
+#, c-format
+msgid "Unhandled exception has occurred: %s, the program will terminate."
+msgstr "Unbehandelte Ausnahme trat auf: %s, das Programm wird sich jetzt beenden."
+
+#: BodySlideApp.cpp:193
+msgid "Unhandled exception"
+msgstr "Unbehandelte Ausnahme"
+
+#: BodySlideApp.cpp:202
+msgid "Fatal exception has occurred, the program will terminate."
+msgstr "Ein fataler Fehler trat auf, das Programm wird sich jetzt beenden."
+
+#: BodySlideApp.cpp:202
+msgid "Fatal exception"
+msgstr "Fataler Fehler"
+
+#: BodySlideApp.cpp:977
+msgid "Failed to find game install path registry value or GameDataPath in the config."
+msgstr ""
+"Konnte den Registry-Wert des Spielpfades oder den GameDataPath in der Konfiguration "
+"nicht finden."
+
+#: BodySlideApp.cpp:982
+msgid "Failed to find game install path registry key or GameDataPath in the config."
+msgstr ""
+"Konnte den Registry-Key des Spielpfades oder den GameDataPath in der Konfiguration "
+"nicht finden."
+
+#: BodySlideApp.cpp:1042
+#, c-format
+msgid "System language '%d' is wrong."
+msgstr "Systemsprache '%d' ist ungültig."
+
+#: BodySlideApp.cpp:1051
+#, c-format
+msgid ""
+"The system language '%d' is not supported by your system. Try installing support for "
+"this language."
+msgstr ""
+"Die Systemsprache '%d' wird nicht von Ihrem System unterstützt. Sie können versuchen, "
+"die Unterstützung der Sprache zu installieren."
+
+#: BodySlideApp.cpp:1129
+msgid "Failed to create group file."
+msgstr "Konnte Gruppen-Datei nicht erstellen."
+
+#: BodySlideApp.cpp:1143
+msgid ""
+"That group already exists in the specified file, do you wish to overwrite the group?"
+msgstr ""
+"Diese Gruppe existiert bereits in der angegebenen Datei, willst du sie überschreiben?"
+
+#: BodySlideApp.cpp:1143
+msgid "Group already exists"
+msgstr "Gruppe existiert bereits"
+
+#: BodySlideApp.cpp:1277
+msgid ""
+"WARNING: Game data path not configured. Would you like to show BodySlide where it is?"
+msgstr ""
+"WARNUNG: Spieldaten-Pfad nicht konfiguriert. Möchtest du BodySlide zeigen, wo dieser "
+"ist?"
+
+#: BodySlideApp.cpp:1277 BodySlideApp.cpp:1502 BodySlideApp.cpp:1506
+msgid "Game not found"
+msgstr "Spiel nicht gefunden"
+
+#: BodySlideApp.cpp:1285
+msgid "Please choose a directory to set as your Data path"
+msgstr "Bitte wählen Sie ein Verzeichnis für den Spieldaten-Pfad."
+
+#: BodySlideApp.cpp:1303
+msgid ""
+"WARNING: This will delete the output files from the output folder, potentially causing "
+"crashes.\n"
+"\n"
+"Do you want to continue?"
+msgstr ""
+"WARNUNG: Dies wird die Ausgabedateien vom Ausgabeordner löschen, was potenziell zu "
+"Problem führen kann.\n"
+"\n"
+"Willst du fortsetzen?"
+
+#: BodySlideApp.cpp:1303
+msgid "Clean Build"
+msgstr "Säuberungs-Erstellung"
+
+#: BodySlideApp.cpp:1310
+msgid "Removed the following files:\n"
+msgstr "Folgende Dateien wurden entfernt:\n"
+
+#: BodySlideApp.cpp:1322 BodySlideApp.cpp:1335
+msgid " (no action)\n"
+msgstr " (keine Aktion)\n"
+
+#: BodySlideApp.cpp:1326 BodySlideApp.cpp:1338 BodySlideApp.cpp:1471
+msgid "Process Successful"
+msgstr "Prozess erfolgreich"
+
+#: BodySlideApp.cpp:1395
+#, c-format
+msgid ""
+"Failed to write TRI file to the following location\n"
+"\n"
+"%s"
+msgstr ""
+"Konnte TRI-Datei nicht an die folgende Stelle schreiben\n"
+"\n"
+"%s"
+
+#: BodySlideApp.cpp:1395 BodySlideApp.cpp:1422 BodySlideApp.cpp:1451
+msgid "Unable to process"
+msgstr "Konnte nicht verarbeitet werden"
+
+#: BodySlideApp.cpp:1422 BodySlideApp.cpp:1451
+#, c-format
+msgid ""
+"Failed to build set to the following location\n"
+"\n"
+"%s"
+msgstr ""
+"Konnte das Set nicht an der folgenden Stelle erstellen\n"
+"\n"
+"%s"
+
+#: BodySlideApp.cpp:1424 BodySlideApp.cpp:1453
+msgid "Choose alternate file name"
+msgstr "Wählen Sie einen alternativen Dateinamen"
+
+#: BodySlideApp.cpp:1463
+msgid "Successfully processed the following files:\n"
+msgstr "Erfolgreich die folgenden Dateien verarbeitet:\n"
+
+#: BodySlideApp.cpp:1489
+msgid ""
+"WARNING: This will delete the output files from the output folders, potentially "
+"causing crashes.\n"
+"\n"
+"Do you want to continue?"
+msgstr ""
+"WARNUNG: Dies wird die Ausgabedateien aus den Ausgabeordnern löschen, was potenziell "
+"zu Problem führen kann.\n"
+"\n"
+"Willst du fortsetzen?"
+
+#: BodySlideApp.cpp:1489
+msgid "Clean Batch Build"
+msgstr "Säuberungs-Batch-Erstellung"
+
+#: BodySlideApp.cpp:1502
+msgid "WARNING: Game data path not configured. Files can't be removed that way."
+msgstr ""
+"WARNUNG: Spieldaten-Pfad ist nicht konfiguriert. Dateien können so nicht entfernt "
+"werden."
+
+#: BodySlideApp.cpp:1506
+msgid ""
+"WARNING: Game data path not configured. Continue saving files to the working directory?"
+msgstr ""
+"WARNUNG: Spieldaten-Pfad nicht konfiguriert. Dateien stattdessen in das "
+"Arbeitsverzeichnis speichern?"
+
+#: BodySlideApp.cpp:1533
+msgid ""
+"The following sets will override the same files.\n"
+"Please decide which one to use and select it in the list below."
+msgstr ""
+"Die folgenden Sets würde die selben Dateien überschreiben.\n"
+"Bitte entscheiden Sie, welche davon verwendet werden sollen."
+
+#: BodySlideApp.cpp:1533
+msgid "Choose output set"
+msgstr "Ausgabe-Set auswählen"
+
+#: BodySlideApp.cpp:1550
+msgid "Processing Outfits"
+msgstr "Verarbeite Outfits"
+
+#: BodySlideApp.cpp:1550 OutfitStudio.h:657
+msgid "Starting..."
+msgstr "Starten..."
+
+#: BodySlideApp.cpp:1556
+#, c-format
+msgid "Processing '%s' (%d of %d)..."
+msgstr "Verarbeite '%s' (%d von %d)..."
+
+#: BodySlideApp.cpp:1563
+msgid "No recorded outfit name source"
+msgstr "Keine aufgenommene Outfitnamen-Quelle"
+
+#: BodySlideApp.cpp:1577
+msgid "Unable to get slider set from file: "
+msgstr "Konnte Slider Set nicht aus Datei bekommen: "
+
+#: BodySlideApp.cpp:1580
+msgid "Unable to open slider set file: "
+msgstr "Konnte Slider Set Datei nicht öffnen: "
+
+#: BodySlideApp.cpp:1608
+msgid "Unable to load input nif: "
+msgstr "Konnte Eingabe NIF nicht lesen: "
+
+#: BodySlideApp.cpp:1716
+msgid "Unable to create destination directory: "
+msgstr "Konnte Ziel-Verzeichnis nicht erstellen: "
+
+#: BodySlideApp.cpp:1733
+#, c-format
+msgid ""
+"Failed to create TRI file in the following location\n"
+"\n"
+"%s"
+msgstr ""
+"Konnte TRI-Datei nicht an folgender Stelle erstellen\n"
+"\n"
+"%s"
+
+#: BodySlideApp.cpp:1752 BodySlideApp.cpp:1756 BodySlideApp.cpp:1763
+msgid "Unable to save nif file: "
+msgstr "Konnte NIF-Datei nicht speichern: "
+
+#: BodySlideApp.cpp:1801
+msgid "All group build sets processed successfully!"
+msgstr "Alle Gruppen-Erstellungs-Sets erfolgreich verarbeitet!"
+
+#: BodySlideApp.cpp:1801 BodySlideApp.cpp:2622
+msgid "Complete"
+msgstr "Abgeschlossen"
+
+#: BodySlideApp.cpp:1810 BodySlideApp.cpp:2631
+msgid "The following sets failed"
+msgstr "Die folgenden Sets sind fehlgeschlagen"
+
+#: BodySlideApp.cpp:1810 BodySlideApp.cpp:2631
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: BodySlideApp.cpp:1856
+msgid "Failed to load BodyslideFrame.xrc file!"
+msgstr "Konnte die BodyslideFrame.xrc Datei nicht laden!"
+
+#: BodySlideApp.cpp:1856 BodySlideApp.cpp:1863 BodySlideApp.cpp:2465 OutfitStudio.cpp:181
+#: OutfitStudio.cpp:188 OutfitStudio.cpp:1348 OutfitStudio.cpp:1360 OutfitStudio.cpp:1443
+#: OutfitStudio.cpp:1452 OutfitStudio.cpp:1460 OutfitStudio.cpp:1475
+#: OutfitStudio.cpp:1484 OutfitStudio.cpp:1490 OutfitStudio.cpp:1524
+#: OutfitStudio.cpp:2519 OutfitStudio.cpp:2572 OutfitStudio.cpp:2578
+#: OutfitStudio.cpp:2582 OutfitStudio.cpp:2597 OutfitStudio.cpp:2601
+#: OutfitStudio.cpp:2612 OutfitStudio.cpp:2621 OutfitStudio.cpp:2638
+#: OutfitStudio.cpp:2705 OutfitStudio.cpp:2709 OutfitStudio.cpp:2720
+#: OutfitStudio.cpp:2729 OutfitStudio.cpp:2733 OutfitStudio.cpp:2762
+#: OutfitStudio.cpp:2766 OutfitStudio.cpp:2789 OutfitStudio.cpp:2798
+#: OutfitStudio.cpp:2809 OutfitStudio.cpp:2816 OutfitStudio.cpp:2820
+#: OutfitStudio.cpp:2862 OutfitStudio.cpp:2918 OutfitStudio.cpp:2922
+#: OutfitStudio.cpp:2933 OutfitStudio.cpp:2937 OutfitStudio.cpp:2948
+#: OutfitStudio.cpp:2988 OutfitStudio.cpp:3152 OutfitStudio.cpp:3175
+#: OutfitStudio.cpp:3225 OutfitStudio.cpp:3240 OutfitStudio.cpp:3267
+#: OutfitStudio.cpp:3272 OutfitStudio.cpp:3297 OutfitStudio.cpp:3458
+#: OutfitStudio.cpp:3557 OutfitStudio.cpp:3708 OutfitStudio.cpp:3780
+#: OutfitStudio.cpp:3788 OutfitStudio.cpp:3845 OutfitStudio.cpp:3875
+#: OutfitStudio.cpp:3918 OutfitStudio.cpp:3926 OutfitStudio.cpp:3933
+#: OutfitStudio.cpp:3962 OutfitStudio.cpp:3989 OutfitStudio.cpp:4001
+#: OutfitStudio.cpp:4013 OutfitStudio.cpp:5223
+msgid "Error"
+msgstr "Fehler"
+
+#: BodySlideApp.cpp:1863
+msgid "Failed to load BodySlide frame!"
+msgstr "Konnte das BodySlide-Fenster nicht laden!"
+
+#: BodySlideApp.cpp:1881
+msgid "Group Filter"
+msgstr "Gruppenfilter"
+
+#: BodySlideApp.cpp:1882
+msgid "Filter by group"
+msgstr "Nach Gruppe filtern"
+
+#: BodySlideApp.cpp:1888
+msgid "Outfit Filter"
+msgstr "Outfitfilter"
+
+#: BodySlideApp.cpp:1889
+msgid "Filter by outfit"
+msgstr "Nach Outfit filtern"
+
+#: BodySlideApp.cpp:2395
+msgid "Choose groups to filter outfit list"
+msgstr "Wählen Sie Gruppen zum Filtern der Outfitliste"
+
+#: BodySlideApp.cpp:2395
+msgid "Choose Groups"
+msgstr "Gruppen auswählen"
+
+#: BodySlideApp.cpp:2412
+msgid "Choose or create group file"
+msgstr "Wählen Sie oder erstelle eine Gruppen-Datei"
+
+#: BodySlideApp.cpp:2421
+msgid "What would you like the new group to be called?"
+msgstr "Wie möchten Sie die neue Gruppe nennen?"
+
+#: BodySlideApp.cpp:2421
+msgid "New Group Name"
+msgstr "Neuer Gruppenname"
+
+#: BodySlideApp.cpp:2465 OutfitStudio.cpp:2572
+#, c-format
+msgid "Failed to save preset (%d)!"
+msgstr "Konnte Preset nicht speichern (%d)!"
+
+#: BodySlideApp.cpp:2492
+#, c-format
+msgid "Failed to save preset as '%s' (%d)!"
+msgstr "Konnte Preset nicht als '%s' speichern (%d)!"
+
+#: BodySlideApp.cpp:2609
+msgid "Choose a folder to contain the saved files"
+msgstr "Wählen Sie einen Ordner, der die gespeicherten Dateien beinhalten soll"
+
+#: BodySlideApp.cpp:2622
+msgid "All sets processed successfully!"
+msgstr "Alle Sets erfolgreich vearbeitet!"
+
+#: BodySlideApp.cpp:2738
+msgid "You can't change the settings while Outfit Studio is opened up."
+msgstr ""
+"Sie können die Einstellungen nicht verändern, während Outfit Studio geöffnet ist."
+
+#: GLShader.cpp:227 GLShader.cpp:230
+msgid "Shader Error"
+msgstr "Shader Fehler"
+
+#: GLShader.cpp:243 GLShader.cpp:249 OutfitStudio.cpp:4195 PreviewWindow.cpp:63
+msgid "OpenGL Error"
+msgstr "OpenGL Fehler"
+
+#: GLShader.cpp:262
+msgid "OpenGL: One or more shader functions are not supported."
+msgstr "OpenGL: Eine oder mehrere Shader-Funktionen werden nicht unterstützt."
+
+#: GLShader.cpp:273
+msgid "OpenGL: One or more program functions are not supported."
+msgstr "OpenGL: Eine oder mehrere Programm-Funktionen werden nicht unterstützt."
+
+#: GLShader.cpp:346
+msgid "OpenGL: Failed to load vertex shader from file: "
+msgstr "OpenGL: Konnte Vertex-Shader nicht von Datei laden: "
+
+#: GLShader.cpp:365
+msgid "OpenGL: Failed to load fragment shader from file: "
+msgstr "OpenGL: Konnte Fragment-Shader nicht von Datei laden: "
+
+#: GLShader.cpp:440
+msgid "OpenGL: Vertex shader compile failed: "
+msgstr "OpenGL: Vertex-Shader Kompilierung ist fehlgeschlagen: "
+
+#: GLShader.cpp:456
+msgid "OpenGL: Fragment shader compile failed: "
+msgstr "OpenGL: Fragment-Shader Kompilierung ist fehlgeschlagen: "
+
+#: GLShader.cpp:475
+msgid "OpenGL: Shader program link failed: "
+msgstr "OpenGL: Shader-Programm Verlinkung ist fehlgeschlagen: "
+
+#: GLShader.cpp:483
+msgid "OpenGL: Shader program ready."
+msgstr "OpenGL: Shader-Programm ist bereit."
+
+#: OutfitProject.cpp:41
+msgid "Checking destination..."
+msgstr "Überprüfe Ziel..."
+
+#: OutfitProject.cpp:90
+msgid "Adding reference shapes..."
+msgstr "Füge Referenzmodelle hinzu..."
+
+#: OutfitProject.cpp:105
+msgid "Adding outfit shapes..."
+msgstr "Füge Outfit-Modelle hinzu..."
+
+#: OutfitProject.cpp:178
+msgid "Calculating slider data..."
+msgstr "Berechne Sliderdaten..."
+
+#: OutfitProject.cpp:185
+msgid "Creating slider set file..."
+msgstr "Erstelle Slider Set Datei..."
+
+#: OutfitProject.cpp:191
+msgid "Failed to open or create slider set file: "
+msgstr "Konnte Slider Set Datei nicht öffnen oder erstellen: "
+
+#: OutfitProject.cpp:206
+msgid "Saving slider set file..."
+msgstr "Speichere Slider Set Datei..."
+
+#: OutfitProject.cpp:209
+msgid "Failed to write to slider set file: "
+msgstr "Konnte Slider Set Datei nicht schreiben: "
+
+#: OutfitProject.cpp:213
+msgid "Saving NIF file..."
+msgstr "Speichere NIF-Datei..."
+
+#: OutfitProject.cpp:239
+msgid "Failed to write base .nif file: "
+msgstr "Konnte Basis NIF-Datei nicht schreiben: "
+
+#: OutfitProject.cpp:244 OutfitProject.cpp:1221 OutfitProject.cpp:1272
+#: OutfitProject.cpp:1874 OutfitStudio.cpp:897 OutfitStudio.cpp:997 OutfitStudio.cpp:1083
+#: OutfitStudio.cpp:1152 OutfitStudio.cpp:3085 OutfitStudio.cpp:3119
+#: OutfitStudio.cpp:3866 OutfitStudio.cpp:3909 OutfitStudio.cpp:5174
+#: OutfitStudio.cpp:5186 OutfitStudio.cpp:5198 OutfitStudio.cpp:5247
+msgid "Finished"
+msgstr "Abgeschlossen"
+
+#: OutfitProject.cpp:375
+#, c-format
+msgid "Could not load OBJ file '%s'!"
+msgstr "Konnte OBJ-Datei '%s' nicht laden!"
+
+#: OutfitProject.cpp:375 OutfitProject.cpp:386
+msgid "OBJ Error"
+msgstr "OBJ Fehler"
+
+#: OutfitProject.cpp:386
+#, c-format
+msgid "Could not copy data from OBJ file '%s'!"
+msgstr "Konnte Daten nicht von OBJ-Datei '%s' kopieren!"
+
+#: OutfitProject.cpp:400
+msgid ""
+"The vertex count of the selected .obj file matches the currently selected outfit "
+"shape.  Do you wish to update the current shape?  (click No to create a new shape)"
+msgstr ""
+"Die Anzahl an Vertices der ausgewählten OBJ-Datei stimmt nicht mit der des derzeit "
+"ausgewählten Outfit-Modells überein. Möchten Sie das aktuelle Modell aktualisieren? "
+"('Nein' zum Erstellen eines neuen Modells)"
+
+#: OutfitProject.cpp:400 OutfitProject.cpp:2075
+msgid "Merge or New"
+msgstr "Verschmelzen oder neu"
+
+#: OutfitProject.cpp:402 OutfitProject.cpp:2077
+msgid "Update Vertex Positions?"
+msgstr "Vertex-Positionen aktualisieren?"
+
+#: OutfitProject.cpp:402 OutfitProject.cpp:2077
+msgid "Vertex Position Update"
+msgstr "Vertex-Positionen Aktualisierung"
+
+#: OutfitProject.cpp:406 OutfitProject.cpp:2081
+msgid "Update Texture Coordinates?"
+msgstr "Texturkoordinaten aktualisieren?"
+
+#: OutfitProject.cpp:406 OutfitProject.cpp:2081
+msgid "UV Update"
+msgstr "UV Aktualisierung"
+
+#: OutfitProject.cpp:413 OutfitProject.cpp:2094
+msgid "Please specify a name for the new shape"
+msgstr "Bitte geben Sie einen Namen für das neue Modell an"
+
+#: OutfitProject.cpp:413 OutfitProject.cpp:2094
+msgid "New Shape Name"
+msgstr "Neuer Modellname"
+
+#: OutfitProject.cpp:441
+msgid "Could not load 'SkeletonBlank.nif' for importing data file."
+msgstr "Konnte 'SkeletonBlank.nif' zum Importieren der Datei nicht laden."
+
+#: OutfitProject.cpp:441
+msgid "Import Data Error"
+msgstr "Import Daten Fehler"
+
+#: OutfitProject.cpp:1109 OutfitProject.cpp:1207
+msgid "Gathering bones..."
+msgstr "Sammle Bones..."
+
+#: OutfitProject.cpp:1138
+msgid "Initializing proximity data..."
+msgstr "Initialisiere Umgebungsdaten..."
+
+#: OutfitProject.cpp:1196 OutfitStudio.cpp:3852
+msgid "Copying bone weights..."
+msgstr "Kopiere Bone Weighting..."
+
+#: OutfitProject.cpp:1227 OutfitStudio.cpp:3951
+msgid "Transferring bone weights..."
+msgstr "Transferiere Bone Weighting..."
+
+#: OutfitProject.cpp:1526
+msgid "Template source entries are invalid."
+msgstr "Vorlagen Quelleinträge sind ungültig."
+
+#: OutfitProject.cpp:1526 OutfitProject.cpp:1545 OutfitProject.cpp:1550
+#: OutfitProject.cpp:1592 OutfitProject.cpp:1613 OutfitProject.cpp:1620
+#: OutfitProject.cpp:1629 OutfitProject.cpp:1662
+msgid "Reference Error"
+msgstr "Referenz Fehler"
+
+#: OutfitProject.cpp:1541 OutfitProject.cpp:1609 OutfitProject.cpp:1726
+#, c-format
+msgid ""
+"NIF version not supported!\n"
+"\n"
+"File: %s\n"
+"%s\n"
+"User Version: %i\n"
+"User Version 2: %i"
+msgstr ""
+"NIF-Version wird nicht unterstützt!\n"
+"\n"
+"Datei %s\n"
+"%s\n"
+"User Version: %i\n"
+"User Version 2: %i"
+
+#: OutfitProject.cpp:1550 OutfitProject.cpp:1620
+#, c-format
+msgid "Could not load reference NIF file '%s'!"
+msgstr "Konnte Referenz NIF-Datei '%s' nicht laden!"
+
+#: OutfitProject.cpp:1592
+#, c-format
+msgid "Could not load slider set file '%s'!"
+msgstr "Konnte Slider Set Datei '%s' nicht laden!"
+
+#: OutfitProject.cpp:1629
+#, c-format
+msgid "Reference NIF file '%s' does not contain any shapes."
+msgstr "Referenz NIF-Datei '%s' beinhaltet keine Modelle."
+
+#: OutfitProject.cpp:1662
+#, c-format
+msgid "Shape '%s' not found in reference NIF file '%s'!"
+msgstr "Modell '%s' konnte nicht in der Referenz NIF-Datei '%s' gefunden werden!"
+
+#: OutfitProject.cpp:1730 OutfitProject.cpp:1735
+msgid "NIF Error"
+msgstr "NIF Fehler"
+
+#: OutfitProject.cpp:1735
+#, c-format
+msgid "Could not load NIF file '%s'!"
+msgstr "Konnte NIF-Datei '%s' nicht laden!"
+
+#: OutfitProject.cpp:1809
+msgid "Loading slider set..."
+msgstr "Lade Slider Set..."
+
+#: OutfitProject.cpp:1816
+msgid "Retrieving sliders..."
+msgstr "Rufe Slider ab..."
+
+#: OutfitProject.cpp:1825
+msgid "Loading outfit shapes..."
+msgstr "Lade Outfit-Modelle..."
+
+#: OutfitProject.cpp:1856
+msgid "Updating slider data..."
+msgstr "Aktualisiere Sliderdaten..."
+
+#: OutfitProject.cpp:2028
+msgid ""
+"There was cloth physics data loaded at some point (BSClothExtraData). Please choose "
+"all the origins to use in the output."
+msgstr ""
+"Es wurden zu einem bestimmten Punkt Physikdaten geladen (BSClothExtraData). Bitte "
+"wählen Sie alle, die in der Ausgabe verwendet werden sollen."
+
+#: OutfitProject.cpp:2028
+msgid "Choose cloth data"
+msgstr "Physikdaten auswählen"
+
+#: OutfitProject.cpp:2075
+msgid ""
+"The vertex count of the selected .fbx file matches the currently selected outfit "
+"shape.  Do you wish to update the current shape?  (click No to create a new shape)"
+msgstr ""
+"Die Anzahl an Vertices der ausgewählten FBX-Datei stimmt nicht mit der des derzeit "
+"ausgewählten Outfit-Modells überein. Möchten Sie das aktuelle Modell aktualisieren? "
+"('Nein' zum Erstellen eines neuen Modells)"
+
+#: OutfitProject.cpp:2085
+msgid "Update Animation Weighting?"
+msgstr "Animationen-Weighting aktualisieren?"
+
+#: OutfitProject.cpp:2085
+msgid "Animation Weight Update"
+msgstr "Animationen-Weighting Aktualisierung"
+
+#: OutfitStudio.cpp:181
+msgid "Failed to load outfitStudio.xrc file!"
+msgstr "Konnte outfitStudio.xrc Datei nicht laden!"
+
+#: OutfitStudio.cpp:188
+msgid "Failed to load Outfit Studio frame!"
+msgstr "Konnte Outfit Studio Fenster nicht laden!"
+
+#: OutfitStudio.cpp:200 OutfitStudio.h:681
+msgid "Ready!"
+msgstr "Bereit!"
+
+#: OutfitStudio.cpp:361
+msgid "Creating sliders..."
+msgstr "Erstelle Slider..."
+
+#: OutfitStudio.cpp:364
+msgid "Clearing old sliders..."
+msgstr "Lösche alte Slider..."
+
+#: OutfitStudio.cpp:376
+msgid "Loading slider: "
+msgstr "Lade Slider: "
+
+#: OutfitStudio.cpp:403
+msgid "Turn on edit mode for this slider."
+msgstr "Schalte den Bearbeitungsmodus dieses Sliders an."
+
+#: OutfitStudio.cpp:407
+msgid "Weaken slider data by 1%."
+msgstr "Sliderdaten um 1% abschwächen."
+
+#: OutfitStudio.cpp:413
+msgid "Strengthen slider data by 1%."
+msgstr "Sliderdaten um 1% verstärken."
+
+#: OutfitStudio.cpp:469 OutfitStudio.cpp:2903
+msgid "Enter a name for the new slider:"
+msgstr "Geben Sie einen Namen für den neuen Slider ein:"
+
+#: OutfitStudio.cpp:469 OutfitStudio.cpp:2903
+msgid "Create New Slider"
+msgstr "Neuen Slider erstellen"
+
+#: OutfitStudio.cpp:757
+msgid ""
+"You can only edit the base shape when all sliders are zero. Do you wish to set all "
+"sliders to zero now?  Note, use the pencil button next to a slider to enable editing "
+"of that slider's morph."
+msgstr ""
+"Sie können das Basismodell nur bearbeiten, wenn alle Slider auf Null sind. Möchtest du "
+"jetzt alle Slider auf Null setzen? Der Pinsel-Knopf neben jedem Slider kann den "
+"Bearbeitungsmodus dieses aktivieren."
+
+#: OutfitStudio.cpp:806
+#, c-format
+msgid "Creating project '%s'..."
+msgstr "Erstelle Projekt '%s'..."
+
+#: OutfitStudio.cpp:823 OutfitStudio.cpp:1028
+msgid "Loading reference..."
+msgstr "Lade Referenz..."
+
+#: OutfitStudio.cpp:855 OutfitStudio.cpp:1107 OutfitStudio.cpp:1117
+msgid "Loading outfit..."
+msgstr "Lade Outfit..."
+
+#: OutfitStudio.cpp:876 OutfitStudio.cpp:982 OutfitStudio.cpp:1148
+msgid "Creating outfit..."
+msgstr "Erstelle Outfit..."
+
+#: OutfitStudio.cpp:886 OutfitStudio.cpp:986 OutfitStudio.cpp:1073
+#, c-format
+msgid "Creating %d slider(s)..."
+msgstr "Erstelle %d Slider..."
+
+#: OutfitStudio.cpp:893 OutfitStudio.cpp:993 OutfitStudio.cpp:1079
+msgid "Applying slider effects..."
+msgstr "Wende Slider-Auswirkungen an..."
+
+#: OutfitStudio.cpp:903
+msgid "Select a slider set to load"
+msgstr "Wählen Sie ein Slider Set zum Laden"
+
+#: OutfitStudio.cpp:912
+#, c-format
+msgid "Failed to open '%s' as a slider set file!"
+msgstr "Konnte '%s' nicht als Slider Set Datei öffnen!"
+
+#: OutfitStudio.cpp:912 OutfitStudio.cpp:958
+msgid "Slider Set Error"
+msgstr "Slider Set Fehler"
+
+#: OutfitStudio.cpp:923
+msgid "Please choose an outfit to load"
+msgstr "Wählen Sie bitte ein Outfit zum Laden"
+
+#: OutfitStudio.cpp:923
+msgid "Load a slider set"
+msgstr "Lade ein Slider Set"
+
+#: OutfitStudio.cpp:933
+msgid "Loading project..."
+msgstr "Lade Projekt..."
+
+#: OutfitStudio.cpp:951
+msgid "Loading outfit data..."
+msgstr "Lade Outfit-Daten..."
+
+#: OutfitStudio.cpp:958
+#, c-format
+msgid "Failed to create project '%s' from file '%s' (%d)!"
+msgstr "Konnte Projekt '%s' nicht aus Datei '%s' erstellen (%d)!"
+
+#: OutfitStudio.cpp:965
+#, c-format
+msgid "Loading reference shape '%s'..."
+msgstr "Lade Referenzmodell '%s'..."
+
+#: OutfitStudio.cpp:977
+msgid "Loading textures..."
+msgstr "Lade Texturen..."
+
+#: OutfitStudio.cpp:1004
+msgid ""
+"You're currently editing slider data, please exit the slider's edit mode (pencil "
+"button) and try again."
+msgstr ""
+"Sie bearbeiten im Moment Sliderdaten. Bitte verlassen Sie den Bearbeitungsmodus des "
+"Sliders (Pinsel-Knopf) und versuchen es erneut."
+
+#: OutfitStudio.cpp:1031
+msgid "Loading reference set..."
+msgstr "Lade Referenz-Set..."
+
+#: OutfitStudio.cpp:1069
+msgid "Creating reference..."
+msgstr "Erstelle Referenz..."
+
+#: OutfitStudio.cpp:1316 OutfitStudio.cpp:1360 OutfitStudio.cpp:2621
+#: OutfitStudio.cpp:2798
+msgid "There are no valid shapes loaded!"
+msgstr "Es sind keine gültigen Modelle geladen!"
+
+#: OutfitStudio.cpp:1322 OutfitStudio.cpp:1366 OutfitStudio.cpp:1590
+#: OutfitStudio.cpp:1628
+msgid ""
+"At least one vertex does not have any weighting assigned to it. This will cause issues "
+"and you should fix it using the weight brush. The affected vertices have been put "
+"under a mask. Do you want to save anyway?"
+msgstr ""
+"Mindestens einem Vertex wurde kein Weighting zugewiesen. Dies wird Probleme "
+"verursachen und Sie sollten es mithilfe des Weight-Pinsels beheben. Die betroffenen "
+"Vertices wurden unter eine Maske versetzt. Wollen Sie trotzdem speichern?"
+
+#: OutfitStudio.cpp:1322 OutfitStudio.cpp:1366 OutfitStudio.cpp:1590
+#: OutfitStudio.cpp:1628
+msgid "Unweighted Vertices"
+msgstr "Vertices ohne Weighting"
+
+#: OutfitStudio.cpp:1328 OutfitStudio.cpp:1498
+#, c-format
+msgid "Saving project '%s'..."
+msgstr "Speichere Projekt '%s'..."
+
+#: OutfitStudio.cpp:1443
+msgid "Invalid or no slider set file specified! Please try again."
+msgstr "Ungültige oder keine Slider Set Datei angegeben! Bitte versuche es erneut."
+
+#: OutfitStudio.cpp:1452
+msgid "No outfit name specified! Please try again."
+msgstr "Kein Outfitname angegeben! Bitte versuche es erneut."
+
+#: OutfitStudio.cpp:1460
+msgid "No data folder specified! Please try again."
+msgstr "Kein Daten-Ordner angegeben! Bitte versuche es erneut."
+
+#: OutfitStudio.cpp:1475
+msgid "An invalid or no base outfit .nif file name specified! Please try again."
+msgstr "Ungültige oder keine Basis Outfit NIF-Datei angegeben! Bitte versuche es erneut."
+
+#: OutfitStudio.cpp:1484
+msgid "No game file path specified! Please try again."
+msgstr "Kein Spiel Dateipfad angegeben! Bitte versuche es erneut."
+
+#: OutfitStudio.cpp:1490
+msgid "No game file name specified! Please try again."
+msgstr "Kein Spiel Dateinamen angegeben! Bitte versuche es erneut."
+
+#: OutfitStudio.cpp:1568
+msgid "Import NIF file"
+msgstr "NIF-Datei importieren"
+
+#: OutfitStudio.cpp:1572 OutfitStudio.cpp:1573
+msgid "Importing NIF file..."
+msgstr "Importiere NIF-Datei..."
+
+#: OutfitStudio.cpp:1577 OutfitStudio.cpp:5171 OutfitStudio.cpp:5183
+#: OutfitStudio.cpp:5195
+msgid "Refreshing GUI..."
+msgstr "Aktualisiere GUI..."
+
+#: OutfitStudio.cpp:1580
+msgid "Finished."
+msgstr "Abgeschlossen."
+
+#: OutfitStudio.cpp:1595
+msgid "Export outfit NIF"
+msgstr "Outfit NIF exportieren"
+
+#: OutfitStudio.cpp:1613
+#, c-format
+msgid "Failed to save NIF file '%s'!"
+msgstr "Konnte NIF-Datei '%s' nicht speichern!"
+
+#: OutfitStudio.cpp:1613 OutfitStudio.cpp:1650 OutfitStudio.cpp:1694
+msgid "Export Error"
+msgstr "Export Fehler"
+
+#: OutfitStudio.cpp:1633
+msgid "Export project NIF"
+msgstr "Projekt NIF exportieren"
+
+#: OutfitStudio.cpp:1650
+#, c-format
+msgid "Failed to save NIF file '%s' with reference!"
+msgstr "Konnte NIF-Datei '%s' mit Referenz nicht speichern!"
+
+#: OutfitStudio.cpp:1655
+msgid "Import physics data to project"
+msgstr "Physikdaten in Projekt importieren"
+
+#: OutfitStudio.cpp:1662
+#, c-format
+msgid "Failed to import physics data file '%s'!"
+msgstr "Konnte Physikdaten-Datei '%s' nicht importieren!"
+
+#: OutfitStudio.cpp:1662
+msgid "Import Error"
+msgstr "Import Fehler"
+
+#: OutfitStudio.cpp:1672
+msgid "There is no physics data loaded!"
+msgstr "Es sind keine Physikdaten geladen!"
+
+#: OutfitStudio.cpp:1672 OutfitStudio.cpp:2565
+msgid "Info"
+msgstr "Info"
+
+#: OutfitStudio.cpp:1680
+msgid "Please choose the physics data source you want to export."
+msgstr "Wählen Sie die Physikdaten-Quelle, die Sie exportieren möchten."
+
+#: OutfitStudio.cpp:1680
+msgid "Choose physics data"
+msgstr "Physikdaten wählen"
+
+#: OutfitStudio.cpp:1688
+msgid "Export physics data"
+msgstr "Physikdaten exportieren"
+
+#: OutfitStudio.cpp:1694
+#, c-format
+msgid "Failed to save physics data file '%s'!"
+msgstr "Konnte Physikdaten-Datei '%s' nicht speichern!"
+
+#: OutfitStudio.cpp:1701
+msgid "This function requires at least one slider position to be non-zero."
+msgstr "Diese Funktion benötigt mindestens einen Slider, der nicht auf Null steht."
+
+#: OutfitStudio.cpp:1712
+msgid ""
+"Create a conversion slider for the current slider settings with the following name: "
+msgstr ""
+"Einen Konvertierungs-Slider für die aktuellen Sliderwerte mit folgendem Namen "
+"erstellen: "
+
+#: OutfitStudio.cpp:1712
+msgid "Create New Conversion Slider"
+msgstr "Neuen Konvertierungs-Slider erstellen"
+
+#: OutfitStudio.cpp:2128
+#, c-format
+msgid "Field of View: %d"
+msgstr "Sichtfeld: %d"
+
+#: OutfitStudio.cpp:2519
+msgid "There are no sliders loaded!"
+msgstr "Es sind keine Slider geladen!"
+
+#: OutfitStudio.cpp:2565
+msgid "No changes were made to the sliders, so no preset was saved!"
+msgstr ""
+"Es wurden keine Veränderungen an Slidern vorgenommen, daher wurde auch kein Preset "
+"gespeichert!"
+
+#: OutfitStudio.cpp:2578 OutfitStudio.cpp:2597 OutfitStudio.cpp:2705
+#: OutfitStudio.cpp:2729 OutfitStudio.cpp:2762 OutfitStudio.cpp:2816
+#: OutfitStudio.cpp:2862 OutfitStudio.cpp:2918 OutfitStudio.cpp:2933
+#: OutfitStudio.cpp:3152 OutfitStudio.cpp:3225 OutfitStudio.cpp:3240
+#: OutfitStudio.cpp:3267 OutfitStudio.cpp:3297 OutfitStudio.cpp:3458
+#: OutfitStudio.cpp:3557 OutfitStudio.cpp:3708 OutfitStudio.cpp:3845
+#: OutfitStudio.cpp:3875 OutfitStudio.cpp:3918 OutfitStudio.cpp:3962
+#: OutfitStudio.cpp:3989 OutfitStudio.cpp:4001 OutfitStudio.cpp:4013
+#: OutfitStudio.cpp:5223
+msgid "There is no shape selected!"
+msgstr "Es ist kein Modell ausgewählt!"
+
+#: OutfitStudio.cpp:2582 OutfitStudio.cpp:2601 OutfitStudio.cpp:2709
+msgid "There is no slider in edit mode to import data to!"
+msgstr "Es ist kein Slider im Bearbeitungsmodus, für den man Daten importieren könnte!"
+
+#: OutfitStudio.cpp:2586
+msgid "Import .bsd slider data"
+msgstr "BSD Sliderdaten importieren"
+
+#: OutfitStudio.cpp:2605
+msgid "Import .obj file for slider calculation"
+msgstr "OBJ-Datei zur Sliderberechnung importieren"
+
+#: OutfitStudio.cpp:2612 OutfitStudio.cpp:2720
+msgid "Vertex count of .obj file mesh does not match currently selected shape!"
+msgstr ""
+"Anzahl an Vertices des Modells in der OBJ-Datei stimmt nicht mit dem derzeit "
+"ausgewählten Modell überein!"
+
+#: OutfitStudio.cpp:2625
+msgid "Import .tri morphs"
+msgstr "TRI-Morphs importieren"
+
+#: OutfitStudio.cpp:2629
+msgid "This will delete all loaded sliders. Are you sure?"
+msgstr "Dies löscht alle geladenen Slider. Sind Sie sich sicher?"
+
+#: OutfitStudio.cpp:2629 OutfitStudio.cpp:2700
+msgid "TRI Import"
+msgstr "TRI Import"
+
+#: OutfitStudio.cpp:2638
+msgid "Failed to load TRI file!"
+msgstr "Konnte TRI-Datei nicht importieren!"
+
+#: OutfitStudio.cpp:2700
+#, c-format
+msgid ""
+"Added morphs for the following shapes:\n"
+"\n"
+"%s"
+msgstr ""
+"Für die folgenden Modelle wurden Morphs hinzugefügt:\n"
+"\n"
+"%s"
+
+#: OutfitStudio.cpp:2713
+msgid "Import .fbx file for slider calculation"
+msgstr "FBX-Datei zur Sliderberechnung importieren"
+
+#: OutfitStudio.cpp:2733 OutfitStudio.cpp:2766
+msgid "There is no slider in edit mode to export data from!"
+msgstr "Es ist kein Slider im Bearbeitungsmodus, von dem man Daten exportieren könnte!"
+
+#: OutfitStudio.cpp:2738
+msgid "Export .bsd slider data to directory"
+msgstr "BSD Sliderdaten in Verzeichnis exportieren"
+
+#: OutfitStudio.cpp:2749
+msgid "Export .bsd slider data"
+msgstr "BSD Sliderdaten exportieren"
+
+#: OutfitStudio.cpp:2771
+msgid "Export .obj slider data to directory"
+msgstr "OBJ Sliderdaten in Verzeichnis exportieren"
+
+#: OutfitStudio.cpp:2782
+msgid "Export .obj slider data"
+msgstr "OBJ Sliderdaten exportieren"
+
+#: OutfitStudio.cpp:2789 OutfitStudio.cpp:3175
+msgid "Failed to export OBJ file!"
+msgstr "Konnte OBJ-Datei nicht exportieren!"
+
+#: OutfitStudio.cpp:2802
+msgid "Export .tri morphs"
+msgstr "TRI-Morphs exportieren"
+
+#: OutfitStudio.cpp:2809
+msgid "Failed to export TRI file!"
+msgstr "Konnte TRI-Datei nicht exportieren!"
+
+#: OutfitStudio.cpp:2820
+msgid "There is no slider in edit mode to clear data from!"
+msgstr ""
+"Es befindet sich kein Slider im Bearbeitungsmodus, von dem man Daten löschen könnte!"
+
+#: OutfitStudio.cpp:2826 OutfitStudio.cpp:2831
+msgid "Are you sure you wish to clear the unmasked slider data \""
+msgstr "Sind Sie sich sicher, dass Sie die unmaskierten Sliderdaten \""
+
+#: OutfitStudio.cpp:2827
+msgid "\" for the selected shapes? This cannot be undone."
+msgstr ""
+"\" für die ausgewählten Modelle löschen willst? Dies kann nicht rückgängig gemacht "
+"werden."
+
+#: OutfitStudio.cpp:2828 OutfitStudio.cpp:2833
+msgid "Confirm data erase"
+msgstr "Datenlöschung bestätigen"
+
+#: OutfitStudio.cpp:2832
+msgid "\" for the shape \""
+msgstr "\" für das Modell \""
+
+#: OutfitStudio.cpp:2874
+msgid "Enter a name for the new zap:"
+msgstr "Gib einen Namen für den neuen Zap ein:"
+
+#: OutfitStudio.cpp:2874
+msgid "Create New Zap"
+msgstr "Neuen Zap erstellen"
+
+#: OutfitStudio.cpp:2922
+msgid "There is no slider in edit mode to negate!"
+msgstr "Es befindet sich kein Slider im Bearbeitungsmodus, den man negieren könnte!"
+
+#: OutfitStudio.cpp:2937
+msgid "There is no slider in edit mode to create a mask from!"
+msgstr ""
+"Es befindet sich kein Slider im Bearbeitungsmodus, aus dem man eine Maske erstellen "
+"könnte!"
+
+#: OutfitStudio.cpp:2948
+msgid "There is no slider in edit mode to delete!"
+msgstr "Es befindet sich kein Slider im Bearbeitungsmodus, den man löschen könnte!"
+
+#: OutfitStudio.cpp:2952
+msgid "Are you sure you wish to delete the slider \""
+msgstr "Sind Sie sich sicher, dass Sie den Slider \""
+
+#: OutfitStudio.cpp:2953 OutfitStudio.cpp:2832
+msgid "\"? This cannot be undone."
+msgstr "\" löschen willst? Dies kann nicht rückgängig gemacht werden."
+
+#: OutfitStudio.cpp:2954
+msgid "Confirm slider delete"
+msgstr "Sliderlöschung bestätigen"
+
+#: OutfitStudio.cpp:2988
+msgid "There is no slider in edit mode to show properties for!"
+msgstr ""
+"Es befindet sich kein Slider im Bearbeitungsmodus, für den man Eigenschaften anzeigen "
+"könnte!"
+
+#: OutfitStudio.cpp:3062
+msgid "Conforming all shapes..."
+msgstr "Übertrage auf alle Modelle..."
+
+#: OutfitStudio.cpp:3072 OutfitStudio.cpp:3107
+msgid "Conforming: "
+msgstr "Übertrage: "
+
+#: OutfitStudio.cpp:3082
+msgid "All shapes conformed."
+msgstr "Auf alle Modelle übertragen."
+
+#: OutfitStudio.cpp:3090
+msgid "Conforming..."
+msgstr "Übertrage..."
+
+#: OutfitStudio.cpp:3104
+msgid "Initializing data..."
+msgstr "Initialisiere Daten..."
+
+#: OutfitStudio.cpp:3116
+msgid "Shape(s) conformed."
+msgstr "Modell(e) angepasst."
+
+#: OutfitStudio.cpp:3124
+msgid "Import .obj file for new shape"
+msgstr "OBJ-Datei mit neuem Modell importieren"
+
+#: OutfitStudio.cpp:3157
+msgid "Export selected shapes as .obj files"
+msgstr "Ausgewählte Modelle als OBJ-Dateien exportieren"
+
+#: OutfitStudio.cpp:3169
+msgid "Export shape as an .obj file"
+msgstr "Modell als OBJ-Datei exportieren"
+
+#: OutfitStudio.cpp:3182
+msgid "Import .fbx file for new shape"
+msgstr "FBX-Datei mit neuem Modell importieren"
+
+#: OutfitStudio.cpp:3213
+msgid "Export .fbx file for new shape"
+msgstr "Modell als FBX-Datei exportieren"
+
+#: OutfitStudio.cpp:3246
+msgid "Please enter a new unique name for the shape."
+msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für das Modell ein."
+
+#: OutfitStudio.cpp:3246
+msgid "Rename Shape"
+msgstr "Modell umbenennen"
+
+#: OutfitStudio.cpp:3272
+msgid "The selected shape is the reference shape already."
+msgstr "Das ausgewählte Modell ist bereits das Referenzmodell."
+
+#: OutfitStudio.cpp:3562
+msgid "Rotating slider data is currently not possible using the Rotate Shape dialog."
+msgstr ""
+"Mit dem \"Modell rotieren\"-Dialog ist es im Moment nicht möglich, Sliderdaten zu "
+"rotieren."
+
+#: OutfitStudio.cpp:3562
+msgid "Rotate"
+msgstr "Rotieren"
+
+#: OutfitStudio.cpp:3673
+msgid ""
+"You can only copy shapes into an outfit, and there is no outfit in the current "
+"project. Load one first!"
+msgstr ""
+"Sie können nur Modelle in ein Outfit kopieren, und im Moment ist keines im Projekte. "
+"Laden Sie zuerst eines!"
+
+#: OutfitStudio.cpp:3678
+msgid "Please enter a unique name for the duplicated shape."
+msgstr "Bitte geben Sie einen einzigartigen Namen für das duplizierte Modell ein."
+
+#: OutfitStudio.cpp:3678
+msgid "Duplicate Shape"
+msgstr "Modell duplizieren"
+
+#: OutfitStudio.cpp:3712
+msgid ""
+"Are you sure you wish to delete the selected shapes?  This action cannot be undone."
+msgstr ""
+"Sind Sie sich sicher, dass Sie die ausgewählten Modelle löschen wollen?  Dies kann "
+"nicht rückgängig gemacht werden."
+
+#: OutfitStudio.cpp:3712
+msgid "Confirm Delete"
+msgstr "Löschen bestätigen"
+
+#: OutfitStudio.cpp:3728
+msgid "You can't delete the reference shape!"
+msgstr "Sie können das Referenzmodell nicht löschen!"
+
+#: OutfitStudio.cpp:3780
+msgid "No bone name was entered!"
+msgstr "Es wurde kein Bone-Name eingegeben!"
+
+#: OutfitStudio.cpp:3788
+#, c-format
+msgid "Bone '%s' already exists in the project!"
+msgstr "Bone '%s' existiert bereits im Projekt!"
+
+#: OutfitStudio.cpp:3863 OutfitStudio.cpp:3906
+msgid ""
+"Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."
+msgstr ""
+"Sie können leider kein Weighting vom Referenzmodell auf es selbst kopieren. "
+"Überspringe dieses Modell."
+
+#: OutfitStudio.cpp:3863 OutfitStudio.cpp:3906
+msgid "Can't copy weights"
+msgstr "Weighting kann nicht kopiert werden"
+
+#: OutfitStudio.cpp:3895
+msgid "Copying selected bone weights..."
+msgstr "Kopieren ausgewähltes Bone-Weighting..."
+
+#: OutfitStudio.cpp:3926
+msgid "Sorry, you can't copy weights from the reference shape to itself."
+msgstr "Sie können leider kein Weighting vom Referenzmodell auf es selbst kopieren."
+
+#: OutfitStudio.cpp:3933
+msgid "The vertex count of the reference and chosen shape is not the same!"
+msgstr ""
+"Die Anzahl an Vertices in der Referenz und dem gewählten Modell stimmt nicht überein!"
+
+#: OutfitStudio.cpp:4195
+msgid "Outfit Studio: OpenGL context is not OK."
+msgstr "Outfit Studio: OpenGL-Kontext ist nicht OK."
+
+#: OutfitStudio.cpp:5166 OutfitStudio.cpp:5167
+msgid "Adding NIF file..."
+msgstr "Füge NIF-Datei hinzu..."
+
+#: OutfitStudio.cpp:5179
+msgid "Adding OBJ file..."
+msgstr "Füge OBJ-Datei hinzu..."
+
+#: OutfitStudio.cpp:5190 OutfitStudio.cpp:5191
+msgid "Adding FBX file..."
+msgstr "Füge FBX-Datei hinzu..."
+
+#: OutfitStudio.cpp:5234 OutfitStudio.cpp:5235
+msgid "Loading slider file..."
+msgstr "Lade Slider-Datei..."
+
+#: PreviewWindow.cpp:63
+msgid "Preview failed: OpenGL context is not OK."
+msgstr "Vorschau fehlgeschlagen: OpenGL-Kontext ist nicht OK."
