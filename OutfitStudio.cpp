@@ -560,12 +560,12 @@ void OutfitStudio::UpdateActiveShapeUI() {
 				GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
 			else
 				GetMenuBar()->Check(XRCID("btnSmoothSeams"), false);
-		}
 
-		if (glView->GetTransformMode())
-			glView->ShowTransformTool();
-		if (glView->GetVertexEdit())
-			glView->ShowVertexEdit();
+			if (glView->GetTransformMode())
+				glView->ShowTransformTool();
+			if (glView->GetVertexEdit())
+				glView->ShowVertexEdit();
+		}
 	}
 }
 
