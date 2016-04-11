@@ -1813,17 +1813,17 @@ void BodySlideApp::GroupBuild(const string& group) {
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
-	string sstr = sliderName.ToAscii().data();
+	string sstr = sliderName.ToStdString();
 	return sliderManager.GetSlider(sstr, isLo);
 }
 
 void BodySlideApp::SetSliderValue(const wxString& sliderName, bool isLo, float val) {
-	string sstr = sliderName.ToAscii().data();
+	string sstr = sliderName.ToStdString();
 	sliderManager.SetSlider(sstr, isLo, val);
 }
 
 void BodySlideApp::SetSliderChanged(const wxString& sliderName, bool isLo) {
-	string sstr = sliderName.ToAscii().data();
+	string sstr = sliderName.ToStdString();
 	sliderManager.SetChanged(sstr, isLo);
 }
 
@@ -2233,6 +2233,7 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 
 void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 	wxTextCtrl* w = (wxTextCtrl*)event.GetEventObject();
+	event.Skip();
 	if (!w)
 		return;
 
@@ -2248,9 +2249,12 @@ void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 		return;
 
 	double v;
-	w->GetValue().ToDouble(&v);
-	w->ChangeValue(wxString::Format("%0.0f%%", v));
+	wxString val = w->GetValue();
+	val.Replace("%", "");
+	if (!val.ToDouble(&v))
+		return;
 
+	w->ChangeValue(wxString::Format("%0.0f%%", v));
 	app->SetSliderValue(name, isLo, (float)v / 100.0f);
 
 	if (isLo)
@@ -2259,8 +2263,6 @@ void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 		sd->sliderHi->SetValue(v);
 
 	app->UpdatePreview();
-
-	event.Skip();
 }
 
 void BodySlideFrame::OnSearchChange(wxCommandEvent& WXUNUSED(event)) {
@@ -2316,7 +2318,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 		}
 	}
 
-	string sliderName = sn.ToAscii().data();
+	string sliderName = sn.ToStdString();
 	wxLogMessage("Zap '%s' %s.", sliderName, event.IsChecked() ? "checked" : "unchecked");
 
 	if (event.IsChecked()) {
@@ -2442,12 +2444,12 @@ void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
-	string sstr = event.GetString().ToAscii().data();
+	string sstr = event.GetString().ToStdString();
 	app->ActivateOutfit(sstr);
 }
 
 void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
-	string sstr = event.GetString().ToAscii().data();
+	string sstr = event.GetString().ToStdString();
 	app->ActivatePreset(sstr);
 }
 

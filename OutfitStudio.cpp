@@ -1757,7 +1757,7 @@ void OutfitStudio::OnShapeVisToggle(wxTreeEvent& event) {
 	bool bGhost;
 
 	int state = outfitShapes->GetItemState(event.GetItem());
-	string s = outfitShapes->GetItemText(event.GetItem()).ToAscii().data();
+	string s = outfitShapes->GetItemText(event.GetItem()).ToStdString();
 
 	if (wxGetKeyState(WXK_ALT)) {
 		notSelf = true;
@@ -2226,11 +2226,13 @@ void OutfitStudio::OnReadoutChange(wxCommandEvent& event){
 	if (!sn.EndsWith("|readout", &sn))
 		return;
 
-	string sliderName = sn.ToAscii().data();
+	string sliderName = sn.ToStdString();
 
 	double v;
-	w->GetValue().ToDouble(&v);
-	w->ChangeValue(wxString::Format("%0.0f%%", v));
+	wxString val = w->GetValue();
+	val.Replace("%", "");
+	if (!val.ToDouble(&v))
+		return;
 
 	SliderDisplay* d = sliderDisplays[sliderName];
 	d->slider->SetValue(v);
@@ -3027,7 +3029,7 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "edValHi", wxTextCtrl)->GetValue().ToLong(&hiVal);
 			project->SetSliderDefault(curSlider, hiVal, true);
 			tmpstr = XRCCTRL(dlg, "edSliderName", wxTextCtrl)->GetValue();
-			sstr = tmpstr.ToAscii().data();
+			sstr = tmpstr.ToStdString();
 
 			if (activeSlider != sstr) {
 				project->SetSliderName(curSlider, sstr);
@@ -3309,9 +3311,9 @@ void OutfitStudio::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
-			offs.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().ToAscii().data());
-			offs.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().ToAscii().data());
-			offs.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().ToAscii().data());
+			offs.x = atof(XRCCTRL(dlg, "msTextX", wxTextCtrl)->GetValue().c_str());
+			offs.y = atof(XRCCTRL(dlg, "msTextY", wxTextCtrl)->GetValue().c_str());
+			offs.z = atof(XRCCTRL(dlg, "msTextZ", wxTextCtrl)->GetValue().c_str());
 		}
 
 		unordered_map<ushort, float> mask;
@@ -3397,9 +3399,9 @@ void OutfitStudio::OnMoveShapeText(wxCommandEvent& event) {
 		return;
 	
 	Vector3 changed;
-	changed.x = atof(XRCCTRL(*parent, "msTextX", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.y = atof(XRCCTRL(*parent, "msTextY", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.z = atof(XRCCTRL(*parent, "msTextZ", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.x = atof(XRCCTRL(*parent, "msTextX", wxTextCtrl)->GetValue().c_str());
+	changed.y = atof(XRCCTRL(*parent, "msTextY", wxTextCtrl)->GetValue().c_str());
+	changed.z = atof(XRCCTRL(*parent, "msTextZ", wxTextCtrl)->GetValue().c_str());
 
 	XRCCTRL(*parent, "msSliderX", wxSlider)->SetValue(changed.x * 1000);
 	XRCCTRL(*parent, "msSliderY", wxSlider)->SetValue(changed.y * 1000);
@@ -3467,7 +3469,7 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 
 		float scale;
 		if (dlg.ShowModal() == wxID_OK)
-			scale = atof(XRCCTRL(dlg, "ssText", wxTextCtrl)->GetValue().ToAscii().data());
+			scale = atof(XRCCTRL(dlg, "ssText", wxTextCtrl)->GetValue().c_str());
 		else
 			scale = 1.0f;
 
@@ -3515,7 +3517,7 @@ void OutfitStudio::OnScaleShapeText(wxCommandEvent& event) {
 		return;
 
 	float scale;
-	scale = atof(XRCCTRL(*parent, "ssText", wxTextCtrl)->GetValue().ToAscii().data());
+	scale = atof(XRCCTRL(*parent, "ssText", wxTextCtrl)->GetValue().c_str());
 
 	if (scale < 0.01f) {
 		scale = 0.01f;
@@ -3575,9 +3577,9 @@ void OutfitStudio::OnRotateShape(wxCommandEvent& WXUNUSED(event)) {
 
 		Vector3 angle;
 		if (dlg.ShowModal() == wxID_OK) {
-			angle.x = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().ToAscii().data());
-			angle.y = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().ToAscii().data());
-			angle.z = atof(XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->GetValue().ToAscii().data());
+			angle.x = atof(XRCCTRL(dlg, "rsTextX", wxTextCtrl)->GetValue().c_str());
+			angle.y = atof(XRCCTRL(dlg, "rsTextY", wxTextCtrl)->GetValue().c_str());
+			angle.z = atof(XRCCTRL(dlg, "rsTextZ", wxTextCtrl)->GetValue().c_str());
 		}
 
 		angle -= previewRotation;
@@ -3629,9 +3631,9 @@ void OutfitStudio::OnRotateShapeText(wxCommandEvent& event) {
 		return;
 
 	Vector3 changed;
-	changed.x = atof(XRCCTRL(*parent, "rsTextX", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.y = atof(XRCCTRL(*parent, "rsTextY", wxTextCtrl)->GetValue().ToAscii().data());
-	changed.z = atof(XRCCTRL(*parent, "rsTextZ", wxTextCtrl)->GetValue().ToAscii().data());
+	changed.x = atof(XRCCTRL(*parent, "rsTextX", wxTextCtrl)->GetValue().c_str());
+	changed.y = atof(XRCCTRL(*parent, "rsTextY", wxTextCtrl)->GetValue().c_str());
+	changed.z = atof(XRCCTRL(*parent, "rsTextZ", wxTextCtrl)->GetValue().c_str());
 
 	XRCCTRL(*parent, "rsSliderX", wxSlider)->SetValue(changed.x * 100);
 	XRCCTRL(*parent, "rsSliderY", wxSlider)->SetValue(changed.y * 100);
@@ -3792,9 +3794,9 @@ void OutfitStudio::OnAddCustomBone(wxCommandEvent& WXUNUSED(event)) {
 			}
 
 			Vector3 translation;
-			translation.x = atof(XRCCTRL(dlg, "textX", wxTextCtrl)->GetValue().ToAscii().data());
-			translation.y = atof(XRCCTRL(dlg, "textY", wxTextCtrl)->GetValue().ToAscii().data());
-			translation.z = atof(XRCCTRL(dlg, "textZ", wxTextCtrl)->GetValue().ToAscii().data());
+			translation.x = atof(XRCCTRL(dlg, "textX", wxTextCtrl)->GetValue().c_str());
+			translation.y = atof(XRCCTRL(dlg, "textY", wxTextCtrl)->GetValue().c_str());
+			translation.z = atof(XRCCTRL(dlg, "textZ", wxTextCtrl)->GetValue().c_str());
 
 			wxLogMessage("Adding custom bone '%s' to project.", bone);
 			project->AddCustomBoneRef(bone.ToStdString(), translation);
@@ -4079,7 +4081,7 @@ void OutfitStudio::OnNPWizChangeSetNameChoice(wxCommandEvent& event) {
 
 	vector<string> shapes;
 	wxChoice* chooser = (wxChoice*)event.GetEventObject();
-	ssf.SetShapes(chooser->GetStringSelection().ToAscii().data(), shapes);
+	ssf.SetShapes(chooser->GetStringSelection().ToStdString(), shapes);
 	wxChoice* refShapeChoice = (wxChoice*)XRCCTRL((*npWiz), "npRefShapeName", wxChoice);
 	refShapeChoice->Clear();
 
@@ -4335,9 +4337,9 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[oldVertex.indexRef].z));
 
 			if (dlg.ShowModal() == wxID_OK) {
-				newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().ToAscii().data());
-				newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().ToAscii().data());
-				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().ToAscii().data());
+				newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
+				newPos.y = atof(XRCCTRL(dlg, "posY", wxTextCtrl)->GetValue().c_str());
+				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
 
 				if (os->bEditSlider) {
 					diff[oldVertex.indexRef] = newPos - verts[oldVertex.indexRef];

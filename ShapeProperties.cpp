@@ -610,13 +610,13 @@ void ShapeProperties::ApplyChanges() {
 		wxColour color = specularColor->GetColour();
 		Vector3 specColor(color.Red(), color.Green(), color.Blue());
 		specColor /= 255.0f;
-		float specStrength = atof(specularStrength->GetValue().ToAscii().data());
-		float specPower = atof(specularPower->GetValue().ToAscii().data());
+		float specStrength = atof(specularStrength->GetValue().c_str());
+		float specPower = atof(specularPower->GetValue().c_str());
 
 		color = emissiveColor->GetColour();
 		Color4 emisColor(color.Red(), color.Green(), color.Blue(), color.Alpha());
 		emisColor /= 255.0f;
-		float emisMultiple = atof(emissiveMultiple->GetValue().ToAscii().data());
+		float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
 
 		shader->SetName(name);
 
@@ -673,7 +673,7 @@ void ShapeProperties::ApplyChanges() {
 	ushort flags;
 	byte threshold;
 	if (nif->GetAlphaForShape(shape, flags, threshold)) {
-		threshold = atoi(alphaThreshold->GetValue().ToAscii().data());
+		threshold = atoi(alphaThreshold->GetValue().c_str());
 		nif->SetAlphaForShape(shape, flags, threshold);
 	}
 
