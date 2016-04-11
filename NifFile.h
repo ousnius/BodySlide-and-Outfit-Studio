@@ -494,30 +494,50 @@ public:
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
+
 class BSSubIndexTriShape : public BSTriShape {
 public:
-	uint numTriangles2;
-	uint numSegments;
-	uint numSubIndexParts;
-
-	vector<uint> segments;
-
-	uint numSequences;
-	uint numSubIndexRecords;
-
-	vector<uint> sequences;
-
-	class SubIndexRecord {
+	class BSSITSSubSegment {
 	public:
-		uint unk1;
-		uint unk2;
-		uint numExtra;
-		vector<uint> extraData;
+		uint startIndex;
+		uint numPrimitives;
+		uint arrayIndex;
+		uint unkInt1;
 	};
 
-	vector<SubIndexRecord> subIndexRecords;
+	class BSSITSSegment {
+	public:
+		uint startIndex;
+		uint numPrimitives;
+		uint parentArrayIndex;
+		uint numSubSegments;
+		vector<BSSITSSubSegment> subSegments;
+	};
 
-	NiString ssfFile;
+	class BSSITSSubSegmentDataRecord {
+	public:
+		uint segmentUser;
+		uint unkInt2;
+		uint numData;
+		vector<float> extraData;
+	};
+
+	class BSSITSSubSegmentData {
+	public:
+		uint numSegments;
+		uint numTotalSegments;
+		vector<uint> arrayIndices;
+		vector<BSSITSSubSegmentDataRecord> dataRecords;
+		NiString ssfFile;
+	};
+
+	uint numPrimitives;
+	uint numSegments;
+	uint numTotalSegments;
+	vector<BSSITSSegment> segments;
+	BSSITSSubSegmentData subSegmentData;
+
+	map<int, ushort> segmentTris;
 
 	BSSubIndexTriShape(NiHeader& hdr);
 	BSSubIndexTriShape(fstream& file, NiHeader& hdr);
@@ -530,6 +550,7 @@ public:
 	int CalcBlockSize();
 
 	void SetDefaultSegments();
+	void ApplySegmentation();
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 

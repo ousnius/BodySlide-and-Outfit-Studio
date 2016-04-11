@@ -1457,11 +1457,12 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
 
-	numTriangles2 = 0;
+	numPrimitives = 0;
 	numSegments = 0;
-	numSubIndexParts = 0;
-	numSequences = 0;
-	numSubIndexRecords = 0;
+	numTotalSegments = 0;
+
+	subSegmentData.numSegments = 0;
+	subSegmentData.numTotalSegments = 0;
 }
 
 BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
@@ -1470,64 +1471,93 @@ BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShap
 }
 
 void BSSubIndexTriShape::Get(fstream& file) {
-	file.read((char*)&numTriangles2, 4);
+	if (dataSize <= 0)
+		return;
+
+	file.read((char*)&numPrimitives, 4);
 	file.read((char*)&numSegments, 4);
-	file.read((char*)&numSubIndexParts, 4);
+	file.read((char*)&numTotalSegments, 4);
 
-	segments.resize(numSubIndexParts * 4);
-	for (int i = 0; i < numSubIndexParts * 4; i++)
-		file.read((char*)&segments[i], 4);
+	segments.resize(numSegments);
+	for (int i = 0; i < numSegments; i++) {
+		file.read((char*)&segments[i].startIndex, 4);
+		file.read((char*)&segments[i].numPrimitives, 4);
+		file.read((char*)&segments[i].parentArrayIndex, 4);
+		file.read((char*)&segments[i].numSubSegments, 4);
 
-	if (numSubIndexParts > numSegments) {
-		file.read((char*)&numSequences, 4);
-		file.read((char*)&numSubIndexRecords, 4);
+		segments[i].subSegments.resize(segments[i].numSubSegments);
+		for (int j = 0; j < segments[i].numSubSegments; j++) {
+			file.read((char*)&segments[i].subSegments[j].startIndex, 4);
+			file.read((char*)&segments[i].subSegments[j].numPrimitives, 4);
+			file.read((char*)&segments[i].subSegments[j].arrayIndex, 4);
+			file.read((char*)&segments[i].subSegments[j].unkInt1, 4);
+		}
+	}
 
-		sequences.resize(numSegments);
+	if (numSegments < numTotalSegments) {
+		file.read((char*)&subSegmentData.numSegments, 4);
+		file.read((char*)&subSegmentData.numTotalSegments, 4);
+
+		subSegmentData.arrayIndices.resize(numSegments);
 		for (int i = 0; i < numSegments; i++)
-			file.read((char*)&sequences[i], 4);
+			file.read((char*)&subSegmentData.arrayIndices[i], 4);
 
-		subIndexRecords.resize(numSubIndexParts);
-		for (int i = 0; i < numSubIndexParts; i++) {
-			file.read((char*)&subIndexRecords[i].unk1, 4);
-			file.read((char*)&subIndexRecords[i].unk2, 4);
-			file.read((char*)&subIndexRecords[i].numExtra, 4);
+		subSegmentData.dataRecords.resize(numTotalSegments);
+		for (int i = 0; i < numTotalSegments; i++) {
+			file.read((char*)&subSegmentData.dataRecords[i].segmentUser, 4);
+			file.read((char*)&subSegmentData.dataRecords[i].unkInt2, 4);
+			file.read((char*)&subSegmentData.dataRecords[i].numData, 4);
 
-			subIndexRecords[i].extraData.resize(subIndexRecords[i].numExtra);
-			for (int j = 0; j < subIndexRecords[i].numExtra; j++)
-				file.read((char*)&subIndexRecords[i].extraData[j], 4);
+			subSegmentData.dataRecords[i].extraData.resize(subSegmentData.dataRecords[i].numData);
+			for (int j = 0; j < subSegmentData.dataRecords[i].numData; j++)
+				file.read((char*)&subSegmentData.dataRecords[i].extraData[j], 4);
 		}
 
-		ssfFile.Get(file, 2);
+		subSegmentData.ssfFile.Get(file, 2);
 	}
 }
 
 void BSSubIndexTriShape::Put(fstream& file) {
 	BSTriShape::Put(file);
 
-	file.write((char*)&numTriangles2, 4);
+	if (dataSize <= 0)
+		return;
+
+	file.write((char*)&numPrimitives, 4);
 	file.write((char*)&numSegments, 4);
-	file.write((char*)&numSubIndexParts, 4);
+	file.write((char*)&numTotalSegments, 4);
 
-	for (int i = 0; i < numSubIndexParts * 4; i++)
-		file.write((char*)&segments[i], 4);
+	for (int i = 0; i < numSegments; i++) {
+		file.write((char*)&segments[i].startIndex, 4);
+		file.write((char*)&segments[i].numPrimitives, 4);
+		file.write((char*)&segments[i].parentArrayIndex, 4);
+		file.write((char*)&segments[i].numSubSegments, 4);
 
-	if (numSubIndexParts > numSegments) {
-		file.write((char*)&numSequences, 4);
-		file.write((char*)&numSubIndexRecords, 4);
+		for (int j = 0; j < segments[i].numSubSegments; j++) {
+			file.write((char*)&segments[i].subSegments[j].startIndex, 4);
+			file.write((char*)&segments[i].subSegments[j].numPrimitives, 4);
+			file.write((char*)&segments[i].subSegments[j].arrayIndex, 4);
+			file.write((char*)&segments[i].subSegments[j].unkInt1, 4);
+		}
+	}
+
+	if (numSegments < numTotalSegments) {
+		file.write((char*)&subSegmentData.numSegments, 4);
+		file.write((char*)&subSegmentData.numTotalSegments, 4);
 
 		for (int i = 0; i < numSegments; i++)
-			file.write((char*)&sequences[i], 4);
+			file.write((char*)&subSegmentData.arrayIndices[i], 4);
 
-		for (int i = 0; i < numSubIndexParts; i++) {
-			file.write((char*)&subIndexRecords[i].unk1, 4);
-			file.write((char*)&subIndexRecords[i].unk2, 4);
-			file.write((char*)&subIndexRecords[i].numExtra, 4);
+		for (int i = 0; i < numTotalSegments; i++) {
+			file.write((char*)&subSegmentData.dataRecords[i].segmentUser, 4);
+			file.write((char*)&subSegmentData.dataRecords[i].unkInt2, 4);
+			file.write((char*)&subSegmentData.dataRecords[i].numData, 4);
 
-			for (int j = 0; j < subIndexRecords[i].numExtra; j++)
-				file.write((char*)&subIndexRecords[i].extraData[j], 4);
+			for (int j = 0; j < subSegmentData.dataRecords[i].numData; j++)
+				file.write((char*)&subSegmentData.dataRecords[i].extraData[j], 4);
 		}
 
-		ssfFile.Put(file, 2, false);
+		subSegmentData.ssfFile.Put(file, 2, false);
 	}
 }
 
@@ -1548,19 +1578,26 @@ void BSSubIndexTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices)
 int BSSubIndexTriShape::CalcBlockSize() {
 	BSTriShape::CalcBlockSize();
 
-	blockSize += 12;										// tris and first record counts
-	blockSize += numSubIndexParts * 4 * 4;					// sub index record array A
+	// To-Do
+	//ApplySegmentation();
 
-	if (numSubIndexParts > numSegments) {
-		blockSize += 8;										// second index accounts
-		blockSize += numSegments * 4;						// sequence array
-		for (int i = 0; i < numSubIndexParts; i++) {		// sub index records B
-			blockSize += 12;								// unknown data per record
-			blockSize += 4 * subIndexRecords[i].numExtra;	// extra data per record
+	if (dataSize > 0) {
+		blockSize += 12;
+
+		blockSize += numSegments * 16;
+		for (int i = 0; i < numSegments; i++)
+			blockSize += segments[i].numSubSegments * 16;
+
+		if (numSegments < numTotalSegments) {
+			blockSize += 10;
+			blockSize += subSegmentData.numSegments * 4;
+			blockSize += subSegmentData.numTotalSegments * 12;
+
+			for (int i = 0; i < subSegmentData.numTotalSegments; i++)
+				blockSize += subSegmentData.dataRecords[i].numData * 4;
+
+			blockSize += subSegmentData.ssfFile.str.length();
 		}
-
-		blockSize += 2;
-		blockSize += ssfFile.str.length();
 	}
 
 	return blockSize;
@@ -1570,29 +1607,38 @@ void BSSubIndexTriShape::SetDefaultSegments() {
 	// Probably skinned
 	SetSkinned(true);
 
-	numTriangles2 = numTriangles;
+	numPrimitives = numTriangles;
 	numSegments = 4;
-	numSubIndexParts = 4;
-	numSequences = 0;
-	numSubIndexRecords = 0;
+	numTotalSegments = 4;
 
-	sequences.clear();
-	subIndexRecords.clear();
-	ssfFile.str.clear();
+	subSegmentData.numSegments = 0;
+	subSegmentData.numTotalSegments = 0;
 
-	segments.resize(4 * 32);
-	int n = 0;
+	subSegmentData.arrayIndices.clear();
+	subSegmentData.dataRecords.clear();
+	subSegmentData.ssfFile.str.clear();
+
+	segments.resize(4);
 	for (int i = 0; i < 3; i++) {
-		segments[n++] = 0x0;
-		segments[n++] = 0x0;
-		segments[n++] = 0xFFFFFFFF;
-		segments[n++] = 0x0;
+		segments[i].startIndex = 0;
+		segments[i].numPrimitives = 0;
+		segments[i].parentArrayIndex = 0xFFFFFFFF;
+		segments[i].numSubSegments = 0;
 	}
 
-	segments[n++] = 0x0;
-	segments[n++] = numTriangles;
-	segments[n++] = 0xFFFFFFFF;
-	segments[n++] = 0x0;
+	segments[4].startIndex = 0;
+	segments[4].numPrimitives = numTriangles;
+	segments[4].parentArrayIndex = 0xFFFFFFFF;
+	segments[4].numSubSegments = 0;
+}
+
+void BSSubIndexTriShape::ApplySegmentation() {
+	SetDefaultSegments();
+
+	numSegments = segmentTris.size();
+	numTotalSegments = numSegments;
+
+	// To-Do
 }
 
 void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
