@@ -4262,10 +4262,10 @@ void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* ver
 	if (updateBVH)
 		BVHUpdateQueue.insert(id);
 
-	if (recalcNormals)
+	if (recalcNormals) {
 		RecalcNormals(shapeName);
-
-	gls.RenderOneFrame();
+		gls.RenderOneFrame();
+	}
 }
 
 void wxGLPanel::RecalculateMeshBVH(const string& shapeName) {
