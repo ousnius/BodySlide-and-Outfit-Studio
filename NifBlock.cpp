@@ -1626,10 +1626,10 @@ void BSSubIndexTriShape::SetDefaultSegments() {
 		segments[i].numSubSegments = 0;
 	}
 
-	segments[4].startIndex = 0;
-	segments[4].numPrimitives = numTriangles;
-	segments[4].parentArrayIndex = 0xFFFFFFFF;
-	segments[4].numSubSegments = 0;
+	segments[3].startIndex = 0;
+	segments[3].numPrimitives = numTriangles;
+	segments[3].parentArrayIndex = 0xFFFFFFFF;
+	segments[3].numSubSegments = 0;
 }
 
 void BSSubIndexTriShape::ApplySegmentation() {
