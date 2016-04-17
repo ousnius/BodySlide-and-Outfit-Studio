@@ -2413,11 +2413,14 @@ void NiTriShapeData::CalcTangentSpace() {
 		float t1 = w2.v - w1.v;
 		float t2 = w3.v - w1.v;
 
-		float r = 1.0f / (s1 * t2 - s2 * t1);
-		r = (r >= 0 ? +1 : -1);
+		float r = (s1 * t2 - s2 * t1);
+		r = (r >= 0.0f ? +1.0f : -1.0f);
 
 		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
 		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+		sdir.Normalize();
+		tdir.Normalize();
 
 		tan1[i1] += sdir;
 		tan1[i2] += sdir;
@@ -2429,16 +2432,27 @@ void NiTriShapeData::CalcTangentSpace() {
 	}
 
 	for (int i = 0; i < numVertices; i++) {
-		Vector3 n = normals[i];
-		Vector3 t = tan1[i];
+		bitangents[i] = tan1[i];
+		tangents[i] = tan2[i];
 
-		bitangents[i].x = t.x;
-		bitangents[i].y = t.y;
-		bitangents[i].z = t.z;
-		bitangents[i].Normalize();
+		if (tangents[i].IsZero() || bitangents[i].IsZero()) {
+			tangents[i].x = normals[i].y;
+			tangents[i].y = normals[i].z;
+			tangents[i].z = normals[i].x;
+			bitangents[i] = normals[i].cross(tangents[i]);
+		}
+		else {
+			tangents[i].Normalize();
+			tangents[i] = (tangents[i] - normals[i] * normals[i].dot(tangents[i]));
+			tangents[i].Normalize();
 
-		tangents[i] = bitangents[i].cross(normals[i]);
-		tangents[i].Normalize();
+			bitangents[i].Normalize();
+
+			bitangents[i] = (bitangents[i] - normals[i] * normals[i].dot(bitangents[i]));
+			bitangents[i] = (bitangents[i] - tangents[i] * tangents[i].dot(bitangents[i]));
+
+			bitangents[i].Normalize();
+		}
 	}
 }
 
@@ -2710,11 +2724,14 @@ void NiTriStripsData::CalcTangentSpace() {
 		float t1 = w2.v - w1.v;
 		float t2 = w3.v - w1.v;
 
-		float r = 1.0f / (s1 * t2 - s2 * t1);
+		float r = (s1 * t2 - s2 * t1);
 		r = (r >= 0.0f ? +1.0f : -1.0f);
 
 		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
 		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+		sdir.Normalize();
+		tdir.Normalize();
 
 		tan1[i1] += sdir;
 		tan1[i2] += sdir;
@@ -2726,16 +2743,27 @@ void NiTriStripsData::CalcTangentSpace() {
 	}
 
 	for (int i = 0; i < numVertices; i++) {
-		Vector3 n = normals[i];
-		Vector3 t = tan1[i];
+		bitangents[i] = tan1[i];
+		tangents[i] = tan2[i];
 
-		bitangents[i].x = t.x;
-		bitangents[i].y = t.y;
-		bitangents[i].z = t.z;
-		bitangents[i].Normalize();
+		if (tangents[i].IsZero() || bitangents[i].IsZero()) {
+			tangents[i].x = normals[i].y;
+			tangents[i].y = normals[i].z;
+			tangents[i].z = normals[i].x;
+			bitangents[i] = normals[i].cross(tangents[i]);
+		}
+		else {
+			tangents[i].Normalize();
+			tangents[i] = (tangents[i] - normals[i] * normals[i].dot(tangents[i]));
+			tangents[i].Normalize();
 
-		tangents[i] = bitangents[i].cross(normals[i]);
-		tangents[i].Normalize();
+			bitangents[i].Normalize();
+
+			bitangents[i] = (bitangents[i] - normals[i] * normals[i].dot(bitangents[i]));
+			bitangents[i] = (bitangents[i] - tangents[i] * tangents[i].dot(bitangents[i]));
+
+			bitangents[i].Normalize();
+		}
 	}
 }
 
