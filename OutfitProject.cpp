@@ -1565,12 +1565,20 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	}
 
 	if (workNif.IsValid()) {
+		// Copy only reference shape
 		workNif.CopyGeometry(baseShape, refNif, baseShape);
 		workAnim.LoadFromNif(&workNif, baseShape);
 	}
 	else {
+		// Copy the full file
 		workNif.CopyFrom(refNif);
 		workAnim.LoadFromNif(&workNif);
+
+		// Delete all except for reference
+		GetShapes(shapes);
+		for (auto &s : shapes)
+			if (s != baseShape)
+				DeleteShape(s);
 	}
 
 	activeSet.LoadSetDiffData(baseDiffData);
@@ -1671,12 +1679,20 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	refNif.DeleteBlockByType("BSClothExtraData");
 
 	if (workNif.IsValid()) {
+		// Copy only reference shape
 		workNif.CopyGeometry(shape, refNif, shape);
 		workAnim.LoadFromNif(&workNif, shape);
 	}
 	else {
+		// Copy the full file
 		workNif.CopyFrom(refNif);
 		workAnim.LoadFromNif(&workNif);
+
+		// Delete all except for reference
+		GetShapes(shapes);
+		for (auto &s : shapes)
+			if (s != shape)
+				DeleteShape(s);
 	}
 
 	if (oldVertCount > 0 && oldVertCount == newVertCount) {
