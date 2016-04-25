@@ -553,6 +553,7 @@ public:
 	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
 
+	void AnimationGUIFromProj();
 	void RefreshGUIFromProj();
 
 	vector<ShapeItemData*>& GetSelectedItems();
@@ -720,7 +721,6 @@ private:
 	void ClearProject();
 	void RenameProject(const string& projectName);
 
-	void AnimationGUIFromProj();
 	void WorkingGUIFromProj();
 
 	void OnSashPosChanged(wxSplitterEvent& event);
