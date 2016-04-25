@@ -599,22 +599,32 @@ public:
 	ushort numVertices;
 	byte keepFlags;
 	byte compressFlags;
-	byte hasVertices;
+	bool hasVertices;
 	vector<Vector3> vertices;
 	ushort numUVSets;
 	//byte extraVectorsFlags;
 	uint unkInt2;							// Version >= 20.2.0.7 && User Version == 12
-	byte hasNormals;
+	bool hasNormals;
 	vector<Vector3> normals;
 	vector<Vector3> tangents;
 	vector<Vector3> bitangents;
 	Vector3 center;
 	float radius;
-	byte hasVertexColors;
+	bool hasVertexColors;
 	vector<Color4> vertexColors;
 	vector<Vector2> uvSets;
 	ushort consistencyFlags;
 	uint additionalData;
+
+	void SetUVs(bool enable);
+	bool HasUVs() {
+		return (numUVSets & (1 << 0)) != 0;
+	}
+
+	void SetTangents(bool enable);
+	bool HasTangents() {
+		return (numUVSets & (1 << 12)) != 0;
+	}
 
 	virtual void Init();
 	virtual void Get(fstream& file);
@@ -630,6 +640,10 @@ public:
 
 class NiTriBasedGeom : public NiGeometry {
 public:
+	bool IsSkinned() {
+		return skinInstanceRef != -1;
+	}
+
 	virtual void Init();
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
@@ -1061,7 +1075,9 @@ public:
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual bool IsSkin();
+	virtual bool IsSkinTint();
+	virtual bool IsSkinned();
+	virtual void SetSkinned(bool enable);
 	virtual bool IsDoubleSided();
 	virtual uint GetType();
 	virtual void SetType(uint type);
@@ -1134,7 +1150,9 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	bool IsSkin();
+	bool IsSkinTint();
+	bool IsSkinned();
+	void SetSkinned(bool enable);
 	bool IsDoubleSided();
 	uint GetType();
 	void SetType(uint type);
@@ -1202,7 +1220,9 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	bool IsSkin();
+	bool IsSkinTint();
+	bool IsSkinned();
+	void SetSkinned(bool enable);
 	bool IsDoubleSided();
 	Color4 GetEmissiveColor();
 	void SetEmissiveColor(Color4 color);
@@ -1239,7 +1259,9 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	bool IsSkin();
+	bool IsSkinTint();
+	bool IsSkinned();
+	void SetSkinned(bool enable);
 	int GetTextureSetRef();
 	void SetTextureSetRef(int texSetRef);
 	int CalcBlockSize();
@@ -1545,7 +1567,6 @@ class NifFile {
 	int shapeIdForName(const string& name);
 
 	NiNode* nodeForName(const string& name);
-	int nodeIdForName(const string& name);
 
 	int shapeBoneIndex(const string& shapeName, const string& boneName);
 
@@ -1560,6 +1581,7 @@ public:
 	int AddBlock(NiObject* newBlock, const string& blockTypeName);
 	NiObject* GetBlock(int blockId);
 	int AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale);
+	void DeleteNode(const string& nodeName);
 	string NodeName(int blockID);
 
 	int AssignExtraData(const string& shapeName, const int& extraDataId);
@@ -1678,9 +1700,12 @@ public:
 	bool GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& outThreshold);
 	void SetAlphaForShape(const string& shapeName, ushort flags = 4844, ushort threshold = 128);
 
+	bool IsShapeSkinned(const string& shapeName);
+
 	void DeleteShape(const string& shapeName);
 	void DeleteShader(const string& shapeName);
 	void DeleteAlpha(const string& shapeName);
+	void DeleteSkinning(const string& shapeName);
 	void DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
 
 	int CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);

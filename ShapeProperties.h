@@ -33,6 +33,7 @@ private:
 	wxButton* btnRemoveTransparency = nullptr;
 
 	wxCheckBox* fullPrecision = nullptr;
+	wxCheckBox* skinned = nullptr;
 
 	vector<int> extraDataIndices;
 	wxPanel* pgExtraData = nullptr;

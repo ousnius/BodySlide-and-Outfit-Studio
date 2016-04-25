@@ -125,19 +125,6 @@ NiNode* NifFile::nodeForName(const string& name) {
 	return nullptr;
 }
 
-int NifFile::nodeIdForName(const string& name) {
-	int id = -1;
-	for (auto& block : blocks) {
-		id++;
-		if (block->blockType == NINODE) {
-			NiNode* node = (NiNode*)block;
-			if (!name.compare(node->GetName()))
-				return id;
-		}
-	}
-	return -1;
-}
-
 int NifFile::shapeBoneIndex(const string& shapeName, const string& boneName) {
 	int skinRef = -1;
 
@@ -632,6 +619,10 @@ int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& tran
 	return newNodeId;
 }
 
+void NifFile::DeleteNode(const string& nodeName) {
+	DeleteBlock(GetNodeID(nodeName));
+}
+
 string NifFile::NodeName(int blockID) {
 	NiNode* n = dynamic_cast<NiNode*>(GetBlock(blockID));
 	if (!n)
@@ -747,7 +738,7 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 bool NifFile::IsShaderSkin(const string& shapeName) {
 	NiShader* shader = GetShader(shapeName);
 	if (shader)
-		return shader->IsSkin();
+		return shader->IsSkinTint();
 
 	return false;
 }
@@ -1011,7 +1002,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 		siTriShape->shaderPropertyRef = shaderId;
 
 	// Kill normals, set numUVSets to 1
-	if (srcDataRef != -1 && destShader->IsSkin() && hdr.userVersion >= 12) {
+	if (srcDataRef != -1 && destShader->IsSkinTint() && hdr.userVersion >= 12) {
 		NiTriBasedGeomData* geomData = dynamic_cast<NiTriBasedGeomData*>(GetBlock(srcDataRef));
 		if (geomData) {
 			geomData->hasNormals = 0;
@@ -1293,7 +1284,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	int bonePtr;
 	NiNode* rootNode = (NiNode*)blocks[0];
 	for (auto &boneName : srcBoneList) {
-		bonePtr = nodeIdForName(boneName);
+		bonePtr = GetNodeID(boneName);
 		if (bonePtr == -1) {
 			bonePtr = CopyNamedNode(boneName, srcNif);
 			rootNode->children.push_back(bonePtr);
@@ -1364,7 +1355,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 
 	int bonePtr;
 	for (auto &boneName : srcBoneList) {
-		bonePtr = nodeIdForName(boneName);
+		bonePtr = GetNodeID(boneName);
 		if (bonePtr == -1) {
 			bonePtr = CopyNamedNode(boneName, srcNif);
 			rootNode->children.push_back(bonePtr);
@@ -2761,40 +2752,30 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 	alpha->threshold = (byte)threshold;
 }
 
+bool NifFile::IsShapeSkinned(const string& shapeName) {
+	NiTriBasedGeom* geom = geomForName(shapeName);
+	if (geom) {
+		return geom->IsSkinned();
+	}
+	else {
+		BSTriShape* siTriShape = geomForNameF4(shapeName);
+		if (siTriShape)
+			return siTriShape->IsSkinned();
+	}
+
+	return false;
+}
+
 void NifFile::DeleteShape(const string& shapeName) {
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom) {
 		DeleteBlock(geom->dataRef);
-		if (geom->skinInstanceRef != -1) {
-			NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(GetBlock(geom->skinInstanceRef));
-			if (skinInst) {
-				DeleteBlock(skinInst->dataRef);
-				DeleteBlock(skinInst->skinPartitionRef);
-				DeleteBlock(geom->skinInstanceRef);
-			}
-		}
-
-		if (geom->propertiesRef1 != -1) {
-			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef1));
-			if (shader) {
-				DeleteBlock(shader->GetTextureSetRef());
-				DeleteBlock(geom->propertiesRef1);
-			}
-		}
-		if (geom->propertiesRef2 != -1)
-			DeleteBlock(geom->propertiesRef2);
+		DeleteShader(shapeName);
+		DeleteSkinning(shapeName);
 
 		for (int i = 0; i < geom->numProperties; i++) {
-			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef[i]));
-			if (shader) {
-				DeleteBlock(shader->GetTextureSetRef());
-				DeleteBlock(geom->propertiesRef[i]);
-				i--;
-			}
-			else {
-				DeleteBlock(geom->propertiesRef[i]);
-				i--;
-			}
+			DeleteBlock(geom->propertiesRef[i]);
+			i--;
 		}
 
 		for (int i = 0; i < geom->numExtraData; i++)
@@ -2806,20 +2787,8 @@ void NifFile::DeleteShape(const string& shapeName) {
 	else {
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
 		if (siTriShape) {
-			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(siTriShape->shaderPropertyRef));
-			if (shader) {
-				DeleteBlock(shader->GetTextureSetRef());
-				DeleteBlock(siTriShape->shaderPropertyRef);
-			}
-
-			if (siTriShape->alphaPropertyRef != -1)
-				DeleteBlock(siTriShape->alphaPropertyRef);
-
-			BSSkinInstance* bsSkinInst = dynamic_cast<BSSkinInstance*>(GetBlock(siTriShape->skinInstanceRef));
-			if (bsSkinInst) {
-				DeleteBlock(bsSkinInst->boneDataRef);
-				DeleteBlock(siTriShape->skinInstanceRef);
-			}
+			DeleteShader(shapeName);
+			DeleteSkinning(shapeName);
 
 			int shapeID = shapeIdForName(shapeName);
 			DeleteBlock(shapeID);
@@ -2917,6 +2886,40 @@ void NifFile::DeleteAlpha(const string& shapeName) {
 			}
 		}
 	}
+}
+
+void NifFile::DeleteSkinning(const string& shapeName) {
+	NiTriBasedGeom* geom = geomForName(shapeName);
+	if (geom) {
+		if (geom->skinInstanceRef != -1) {
+			BSDismemberSkinInstance* skinInst = dynamic_cast<BSDismemberSkinInstance*>(GetBlock(geom->skinInstanceRef));
+			if (skinInst) {
+				DeleteBlock(skinInst->dataRef);
+				DeleteBlock(skinInst->skinPartitionRef);
+				DeleteBlock(geom->skinInstanceRef);
+				geom->skinInstanceRef = -1;
+			}
+		}
+	}
+	else {
+		BSTriShape* siTriShape = geomForNameF4(shapeName);
+		if (siTriShape) {
+			if (siTriShape->skinInstanceRef != -1) {
+				BSSkinInstance* bsSkinInst = dynamic_cast<BSSkinInstance*>(GetBlock(siTriShape->skinInstanceRef));
+				if (bsSkinInst) {
+					DeleteBlock(bsSkinInst->boneDataRef);
+					DeleteBlock(siTriShape->skinInstanceRef);
+					siTriShape->skinInstanceRef = -1;
+				}
+			}
+
+			siTriShape->SetSkinned(false);
+		}
+	}
+
+	NiShader* shader = GetShader(shapeName);
+	if (shader)
+		shader->SetSkinned(false);
 }
 
 void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices) {
@@ -3137,17 +3140,17 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	if (dataRef == -1)
 		return;
 
-	if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE || bType == BSMESHLODTRISHAPE)
-		return;
-
-	NiTriBasedGeom* geom = geomForName(shapeName);
-	if (!geom)
-		return;
-
 	int skinRef = -1;
+	NiTriBasedGeom* geom = nullptr;
 	NiTriShapeData* shapeData = nullptr;
 	NiTriStripsData* stripsData = nullptr;
+	BSTriShape* bsGeom = nullptr;
+
 	if (bType == NITRISHAPEDATA) {
+		geom = geomForName(shapeName);
+		if (!geom)
+			return;
+
 		skinRef = geom->skinInstanceRef;
 		shapeData = (NiTriShapeData*)GetBlock(geom->dataRef);
 		if (skinRef == -1) {
@@ -3165,9 +3168,17 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 			nifDismemberInst->skeletonRootRef = 0;
 			geom->skinInstanceRef = dismemberID;
 			skinRef = dismemberID;
+
+			NiShader* shader = GetShader(shapeName);
+			if (shader)
+				shader->SetSkinned(true);
 		}
 	}
-	else {
+	else if (bType == NITRISTRIPSDATA) {
+		geom = geomForName(shapeName);
+		if (!geom)
+			return;
+
 		// TO-DO
 		return;
 
@@ -3189,6 +3200,32 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 			geom->skinInstanceRef = skinID;
 			skinRef = skinID;
 		}
+	}
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE || bType == BSMESHLODTRISHAPE) {
+		bsGeom = geomForNameF4(shapeName);
+		if (!bsGeom)
+			return;
+
+		skinRef = bsGeom->skinInstanceRef;
+		if (skinRef == -1) {
+			BSSkinInstance* newSkinInst = new BSSkinInstance(hdr);
+			newSkinInst->targetRef = GetRootNodeID();
+			skinRef = AddBlock(newSkinInst, "BSSkin::Instance");
+
+			BSSkinBoneData* newBoneData = new BSSkinBoneData(hdr);
+			int boneDataRef = AddBlock(newBoneData, "BSSkin::BoneData");
+
+			newSkinInst->boneDataRef = boneDataRef;
+			bsGeom->skinInstanceRef = skinRef;
+		}
+
+		bsGeom->SetSkinned(true);
+
+		NiShader* shader = GetShader(shapeName);
+		if (shader)
+			shader->SetSkinned(true);
+
+		return;
 	}
 
 	NiSkinData* skinData = nullptr;

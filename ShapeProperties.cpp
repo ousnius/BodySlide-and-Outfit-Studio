@@ -43,6 +43,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
 
 	fullPrecision = XRCCTRL(*this, "fullPrecision", wxCheckBox);
+	skinned = XRCCTRL(*this, "skinned", wxCheckBox);
 
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
@@ -407,7 +408,7 @@ void ShapeProperties::RemoveTransparency() {
 void ShapeProperties::GetGeometry() {
 	NiTriBasedGeom* geom = nif->geomForName(shape);
 	if (geom) {
-		// No properties yet
+		skinned->SetValue(geom->IsSkinned());
 	}
 	else {
 		BSTriShape* bsGeom = nif->geomForNameF4(shape);
@@ -416,6 +417,8 @@ void ShapeProperties::GetGeometry() {
 
 		fullPrecision->SetValue(bsGeom->IsFullPrecision());
 		fullPrecision->Enable(bsGeom->CanChangePrecision());
+
+		skinned->SetValue(bsGeom->IsSkinned());
 	}
 }
 
@@ -677,10 +680,23 @@ void ShapeProperties::ApplyChanges() {
 		nif->SetAlphaForShape(shape, flags, threshold);
 	}
 
-	if (os->targetGame == FO4) {
+	NiTriBasedGeom* geom = nif->geomForName(shape);
+	if (geom) {
+		// No properties yet
+	}
+	else {
 		BSTriShape* siTriShape = nif->geomForNameF4(shape);
-		if (siTriShape)
+		if (siTriShape) {
 			siTriShape->SetFullPrecision(fullPrecision->IsChecked());
+		}
+	}
+
+	if (skinned->IsChecked()) {
+		nif->BuildSkinPartitions(shape);
+	}
+	else {
+		nif->DeleteSkinning(shape);
+		os->project->GetWorkAnim()->ClearShape(shape);
 	}
 
 	for (int i = 0; i < extraDataIndices.size(); i++) {

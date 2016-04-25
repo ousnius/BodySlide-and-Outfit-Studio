@@ -154,7 +154,7 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 
 	NiShader* shader = fromNif->GetShader(shapeName);
 	if (shader) {
-		if (shader->IsSkin())
+		if (shader->IsSkinTint())
 			isSkin = true;
 
 		// Find material file

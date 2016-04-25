@@ -1962,6 +1962,20 @@ void NiGeometryData::Put(fstream& file) {
 	file.write((char*)&additionalData, 4);
 }
 
+void NiGeometryData::SetUVs(bool enable) {
+	if (enable)
+		numUVSets |= 1 << 0;
+	else
+		numUVSets &= ~(1 << 0);
+}
+
+void NiGeometryData::SetTangents(bool enable) {
+	if (enable)
+		numUVSets |= 1 << 12;
+	else
+		numUVSets &= ~(1 << 12);
+}
+
 void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
 	unkInt = 0;
 	radius = 0.0f;
@@ -4102,8 +4116,15 @@ void NiShader::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
 
-bool NiShader::IsSkin() {
+bool NiShader::IsSkinTint() {
 	return false;
+}
+
+bool NiShader::IsSkinned() {
+	return false;
+}
+
+void NiShader::SetSkinned(bool enable) {
 }
 
 bool NiShader::IsDoubleSided() {
@@ -4482,8 +4503,19 @@ void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexH
 		textureSetRef = blockIndexLo;
 }
 
-bool BSLightingShaderProperty::IsSkin() {
-	return (shaderFlags1 & (1 << 21)) != 0;
+bool BSLightingShaderProperty::IsSkinTint() {
+	return skyrimShaderType == 5;
+}
+
+bool BSLightingShaderProperty::IsSkinned() {
+	return (shaderFlags1 & (1 << 1)) != 0;
+}
+
+void BSLightingShaderProperty::SetSkinned(bool enable) {
+	if (enable)
+		shaderFlags1 |= 1 << 1;
+	else
+		shaderFlags1 &= ~(1 << 1);
 }
 
 bool BSLightingShaderProperty::IsDoubleSided() {
@@ -4779,8 +4811,19 @@ void BSEffectShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi)
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
-bool BSEffectShaderProperty::IsSkin() {
+bool BSEffectShaderProperty::IsSkinTint() {
 	return (shaderFlags1 & (1 << 21)) != 0;
+}
+
+bool BSEffectShaderProperty::IsSkinned() {
+	return (shaderFlags1 & (1 << 1)) != 0;
+}
+
+void BSEffectShaderProperty::SetSkinned(bool enable) {
+	if (enable)
+		shaderFlags1 |= 1 << 1;
+	else
+		shaderFlags1 &= ~(1 << 1);
 }
 
 bool BSEffectShaderProperty::IsDoubleSided() {
@@ -4952,8 +4995,19 @@ void BSShaderPPLightingProperty::notifyBlockSwap(int blockIndexLo, int blockInde
 		textureSetRef = blockIndexLo;
 }
 
-bool BSShaderPPLightingProperty::IsSkin() {
+bool BSShaderPPLightingProperty::IsSkinTint() {
 	return shaderType == 0x0000000e;
+}
+
+bool BSShaderPPLightingProperty::IsSkinned() {
+	return (shaderFlags & (1 << 1)) != 0;
+}
+
+void BSShaderPPLightingProperty::SetSkinned(bool enable) {
+	if (enable)
+		shaderFlags |= 1 << 1;
+	else
+		shaderFlags &= ~(1 << 1);
 }
 
 int BSShaderPPLightingProperty::GetTextureSetRef() {

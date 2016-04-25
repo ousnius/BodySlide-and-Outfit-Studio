@@ -1276,6 +1276,9 @@ bool OutfitProject::HasUnweighted() {
 	vector<string> shapes;
 	GetShapes(shapes);
 	for (auto &s : shapes) {
+		if (!workNif.IsShapeSkinned(s))
+			continue;
+
 		vector<Vector3> verts;
 		workNif.GetVertsForShape(s, verts);
 

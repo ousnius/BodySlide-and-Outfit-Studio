@@ -37,6 +37,9 @@ bool AnimInfo::RemoveShapeBone(const string& shape, const string& boneName) {
 	shapeSkinning[shape].RemoveBone(bidx);
 
 	AnimSkeleton::getInstance().ReleaseBone(boneName);
+	if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0)
+		refNif->DeleteNode(boneName);
+
 	return true;
 }
 
@@ -45,9 +48,13 @@ void AnimInfo::Clear() {
 		vector<string> shapes;
 		refNif->GetShapeList(shapes);
 
-		for (auto &shapeBoneList : shapeBones)
-			for (auto &boneName : shapeBoneList.second)
+		for (auto &shapeBoneList : shapeBones) {
+			for (auto &boneName : shapeBoneList.second) {
 				AnimSkeleton::getInstance().ReleaseBone(boneName);
+				if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0)
+					refNif->DeleteNode(boneName);
+			}
+		}
 
 		shapeSkinning.clear();
 		for (auto &s : shapes)
@@ -58,8 +65,11 @@ void AnimInfo::Clear() {
 }
 
 void AnimInfo::ClearShape(const string& shape) {
-	for (auto &boneName : shapeBones[shape])
+	for (auto &boneName : shapeBones[shape]) {
 		AnimSkeleton::getInstance().ReleaseBone(boneName);
+		if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0)
+			refNif->DeleteNode(boneName);
+	}
 
 	shapeBones.erase(shape);
 	shapeSkinning.erase(shape);
@@ -273,19 +283,20 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeException) {
 	if (synchBoneIDs) {
 		for (auto &bones : shapeBones) {
-			if (bones.first == shapeException)
-				continue;
-
 			vector<int> bids;
 			for (auto &bone : bones.second) {
+				AnimBone boneRef;
+				if (!AnimSkeleton::getInstance().GetBone(bone, boneRef))
+					continue;
+
+				if (bones.first == shapeException) {
+					if (boneRef.refCount <= 1)
+						nif->DeleteNode(bone);
+					continue;
+				}
+
 				int id = nif->GetNodeID(bone);
 				if (id == -1) {
-					AnimBone boneRef;
-					if (!AnimSkeleton::getInstance().GetBone(bone, boneRef))
-						continue;
-					if (boneRef.refCount == 0)
-						continue;
-
 					vector<Vector3> r(3);
 					boneRef.rot.GetRow(0, r[0]);
 					boneRef.rot.GetRow(1, r[1]);
@@ -293,8 +304,13 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 					boneRef.scale = 1.0f;				// Bone scaling is bad!
 					id = nif->AddNode(boneRef.boneName, r, boneRef.trans, boneRef.scale);
 				}
+
 				bids.push_back(id);
 			}
+
+			if (bones.first == shapeException)
+				continue;
+
 			nif->SetShapeBoneIDList(bones.first, bids);
 		}
 	}
@@ -316,13 +332,14 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			if (AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
 				nif->SetNodeTransform(boneName, xForm, true);
 
+			AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
+
 			if (bIsFo4) {
 				for (auto vw : bw.weights)
 					vertWeights[vw.first].Add(bid, vw.second);
 
-				AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
 				if (!bptr || !bptr->hasSkinXform) {
 					incomplete = true;
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bSphereOffset, bw.bSphereRadius);
@@ -337,7 +354,6 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 				}
 			}
 			else {
-				AnimBone* bptr = AnimSkeleton::getInstance().GetBonePtr(boneName);
 				if (!bptr || !bptr->hasSkinXform) {
 					incomplete = true;
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bSphereOffset, bw.bSphereRadius);
@@ -465,7 +481,7 @@ bool AnimSkeleton::RefBone(const string& boneName) {
 	}
 	return false;
 }
-	
+
 bool AnimSkeleton::ReleaseBone(const string& boneName) {
 	if (allBones.find(boneName) != allBones.end()) {
 		allBones[boneName].refCount--;
@@ -476,6 +492,16 @@ bool AnimSkeleton::ReleaseBone(const string& boneName) {
 		return true;
 	}
 	return false;
+}
+
+int AnimSkeleton::GetBoneRefCount(const string& boneName) {
+	if (allBones.find(boneName) != allBones.end())
+		return allBones[boneName].refCount;
+
+	if (allowCustom && customBones.find(boneName) != customBones.end())
+		return customBones[boneName].refCount;
+
+	return 0;
 }
 
 AnimBone* AnimSkeleton::GetBonePtr(const string& boneName) {

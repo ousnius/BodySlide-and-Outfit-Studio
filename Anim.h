@@ -204,6 +204,7 @@ public:
 
 	bool RefBone(const string& boneName);
 	bool ReleaseBone(const string& boneName);
+	int GetBoneRefCount(const string& boneName);
 
 	AnimBone* GetBonePtr(const string& boneName = "");
 	bool GetBone(const string& boneName, AnimBone& outBone);
