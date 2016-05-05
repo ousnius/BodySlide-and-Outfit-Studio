@@ -2803,24 +2803,20 @@ void NifFile::DeleteShader(const string& shapeName) {
 			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef1));
 			if (shader) {
 				DeleteBlock(shader->GetTextureSetRef());
+				DeleteBlock(shader->controllerRef);
 				DeleteBlock(geom->propertiesRef1);
 				geom->propertiesRef1 = -1;
 			}
 		}
 
-		if (geom->propertiesRef2 != -1) {
-			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(geom->propertiesRef2));
-			if (alpha) {
-				DeleteBlock(geom->propertiesRef2);
-				geom->propertiesRef2 = -1;
-			}
-		}
+		DeleteAlpha(shapeName);
 
 		for (int i = 0; i < geom->numProperties; i++) {
 			NiShader* shader = dynamic_cast<NiShader*>(GetBlock(geom->propertiesRef[i]));
 			if (shader) {
 				if (shader->blockType == BSSHADERPPLIGHTINGPROPERTY || shader->blockType == NIMATERIALPROPERTY) {
 					DeleteBlock(shader->GetTextureSetRef());
+					DeleteBlock(shader->controllerRef);
 					DeleteBlock(geom->propertiesRef[i]);
 					shader->SetTextureSetRef(-1);
 					geom->propertiesRef[i] = -1;
@@ -2837,17 +2833,12 @@ void NifFile::DeleteShader(const string& shapeName) {
 				NiShader* shader = dynamic_cast<NiShader*>(GetBlock(siTriShape->shaderPropertyRef));
 				if (shader) {
 					DeleteBlock(shader->GetTextureSetRef());
+					DeleteBlock(shader->controllerRef);
 					DeleteBlock(siTriShape->shaderPropertyRef);
 					siTriShape->shaderPropertyRef = -1;
 				}
 
-				if (siTriShape->alphaPropertyRef != -1) {
-					NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(GetBlock(siTriShape->alphaPropertyRef));
-					if (alpha) {
-						DeleteBlock(siTriShape->alphaPropertyRef);
-						siTriShape->alphaPropertyRef = -1;
-					}
-				}
+				DeleteAlpha(shapeName);
 			}
 		}
 	}
@@ -2892,7 +2883,7 @@ void NifFile::DeleteSkinning(const string& shapeName) {
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom) {
 		if (geom->skinInstanceRef != -1) {
-			BSDismemberSkinInstance* skinInst = dynamic_cast<BSDismemberSkinInstance*>(GetBlock(geom->skinInstanceRef));
+			NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(GetBlock(geom->skinInstanceRef));
 			if (skinInst) {
 				DeleteBlock(skinInst->dataRef);
 				DeleteBlock(skinInst->skinPartitionRef);
