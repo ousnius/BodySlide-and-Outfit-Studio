@@ -156,18 +156,15 @@ bool BSA::open() {
 			namePrefix = false;
 
 			char* superbuffer = new char[numFiles * (MAX_PATH + 2) + 1];
-			std::vector<size_t> path_sizes(numFiles * 2);
+			std::vector<wxUint32> path_sizes(numFiles * 2);
 
 			if (bsa.Seek(header.nameTableOffset)) {
 				bsa.Read(superbuffer, numFiles * (MAX_PATH + 2));
-				size_t cursor = 0;
-				size_t n = 0;
+				wxUint32 cursor = 0;
+				wxUint32 n = 0;
 				for (wxUint32 i = 0; i < header.numFiles; i++) {
-					//if (cursor > numFiles * (MAX_PATH + 2) + 1)
-					//	__debugbreak();
-
-					unsigned short len;
-					len = *(unsigned short*)&superbuffer[cursor];
+					wxUint16 len;
+					len = *(wxUint16*)&superbuffer[cursor];
 					cursor += 2;
 					path_sizes[n++] = cursor;
 					cursor += len;
@@ -183,7 +180,7 @@ bool BSA::open() {
 				if (bsa.Seek(sizeof(header) + 8)) {
 					F4GeneralInfo* finfo = new F4GeneralInfo[header.numFiles];
 					bsa.Read(finfo, 36 * numFiles);
-					size_t n = 0;
+					wxUint32 n = 0;
 					for (wxUint32 i = 0; i < header.numFiles; i++) {
 						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n], finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
 						n += 2;
@@ -194,7 +191,7 @@ bool BSA::open() {
 			else if (h == "DX10") {
 				// Texture BA2 Format
 				if (bsa.Seek(sizeof(header) + 8)) {
-					size_t n = 0;
+					wxUint32 n = 0;
 					for (wxUint32 i = 0; i < header.numFiles; i++) {
 						F4Tex tex;
 						bsa.Read((char*)&tex.header, 24);
@@ -448,7 +445,6 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					// Incorrect
 					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
 					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('A', 'T', 'I', '2');
-					//ddsHeader.ddspf.dwFourCC =		MAKEFOURCC('D', 'X', 'T', '5');
 					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
 					break;
 

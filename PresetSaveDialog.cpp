@@ -14,8 +14,9 @@ wxBEGIN_EVENT_TABLE(PresetSaveDialog, wxDialog)
 wxEND_EVENT_TABLE()
 
 PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
-	wxXmlResource* rsrc = wxXmlResource::Get();
-	rsrc->LoadDialog(this, parent, "dlgSavePreset");
+	wxXmlResource* xrc = wxXmlResource::Get();
+	xrc->Load("res\\xrc\\SavePreset.xrc");
+	xrc->LoadDialog(this, parent, "dlgSavePreset");
 
 	SetDoubleBuffered(true);
 	SetSize(460, 300);
@@ -27,12 +28,13 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 	search->SetDescriptiveText("Group Filter");
 	search->SetToolTip("Filter list by group name");
 
-	rsrc->AttachUnknownControl("spFilter", search, this);
+	xrc->AttachUnknownControl("spFilter", search, this);
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
 	chkbox->SetDoubleBuffered(true);
 }
 	
 PresetSaveDialog::~PresetSaveDialog() {
+	wxXmlResource::Get()->Unload("res\\xrc\\SavePreset.xrc");
 }
 
 void PresetSaveDialog::FilterGroups(const string& filter) {

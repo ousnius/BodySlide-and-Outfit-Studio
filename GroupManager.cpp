@@ -18,8 +18,9 @@ wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 wxEND_EVENT_TABLE()
 
 GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
-	wxXmlResource * rsrc = wxXmlResource::Get();
-	rsrc->LoadDialog(this, parent, "dlgGroupManager");
+	wxXmlResource *xrc = wxXmlResource::Get();
+	xrc->Load("res\\xrc\\GroupManager.xrc");
+	xrc->LoadDialog(this, parent, "dlgGroupManager");
 
 	SetSize(800, 500);
 	SetDoubleBuffered(true);
@@ -42,6 +43,7 @@ GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
 }
 
 GroupManager::~GroupManager() {
+	wxXmlResource::Get()->Unload("res\\xrc\\GroupManager.xrc");
 }
 
 void GroupManager::RefreshUI(const bool& clearGroups) {

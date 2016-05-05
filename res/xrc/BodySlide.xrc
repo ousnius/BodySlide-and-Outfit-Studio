@@ -1,0 +1,410 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxFrame" name="bodySlideFrame">
+		<style>wxCAPTION|wxCLOSE_BOX|wxMAXIMIZE_BOX|wxMINIMIZE_BOX|wxRESIZE_BORDER|wxSYSTEM_MENU|wxTAB_TRAVERSAL|wxCLIP_CHILDREN</style>
+		<size>800,750</size>
+		<bg>#404040</bg>
+		<title>BodySlide</title>
+		<centered>0</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxFlexGridSizer">
+					<rows>2</rows>
+					<cols>4</cols>
+					<vgap>0</vgap>
+					<hgap>0</hgap>
+					<growablecols>1</growablecols>
+					<growablerows></growablerows>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxALIGN_CENTER</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lblOutfits">
+							<fg>#c8c8c8</fg>
+							<label>Outfit/Body</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER</flag>
+								<border>5</border>
+								<object class="wxChoice" name="outfitChoice">
+									<tooltip>Select an outfit to modify</tooltip>
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="unknown" name="searchHolder" />
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="unknown" name="outfitsearchHolder" />
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxALIGN_CENTER</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lblPresets">
+							<fg>#c8c8c8</fg>
+							<label>Preset</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALIGN_CENTER</flag>
+								<border>5</border>
+								<object class="wxChoice" name="presetChoice">
+									<tooltip>Choose from a list of slider settings presets</tooltip>
+									<selection>0</selection>
+									<content />
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSavePreset">
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Saves the new slider values to the currently selected preset</tooltip>
+									<label>Save</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnSavePresetAs">
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Save the current slider settings as a new preset</tooltip>
+									<label>Save As...</label>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnGroupManager">
+							<fg>wxSYS_COLOUR_BTNTEXT</fg>
+							<tooltip>Opens the group manager where you can edit existing or create new groups</tooltip>
+							<label>Group Manager</label>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lblSingleWt">
+							<fg>#c8c8c8</fg>
+							<font>
+								<size>12</size>
+								<style>normal</style>
+								<weight>normal</weight>
+								<underlined>0</underlined>
+								<face>Andalus</face>
+							</font>
+							<label>Single Weight</label>
+							<wrap>-1</wrap>
+							<hidden>1</hidden>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxGridSizer">
+							<rows>1</rows>
+							<cols>2</cols>
+							<vgap>0</vgap>
+							<hgap>0</hgap>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lblLowWt">
+									<fg>#c8c8c8</fg>
+									<font>
+										<size>12</size>
+										<style>normal</style>
+										<weight>normal</weight>
+										<underlined>0</underlined>
+										<face>Andalus</face>
+									</font>
+									<label>Low Weight</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lblHighWt">
+									<fg>#c8c8c8</fg>
+									<font>
+										<size>12</size>
+										<style>normal</style>
+										<weight>normal</weight>
+										<underlined>0</underlined>
+										<face>Andalus</face>
+									</font>
+									<label>High Weight</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>10</border>
+						<object class="wxScrolledWindow" name="SliderScrollWindow">
+							<style>wxNO_BORDER|wxTAB_TRAVERSAL|wxVSCROLL</style>
+							<object class="wxFlexGridSizer">
+								<cols>6</cols>
+								<minsize>-1,90</minsize>
+								<vgap>0</vgap>
+								<hgap>0</hgap>
+								<growablecols>1,4</growablecols>
+								<growablerows></growablerows>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnLowToHigh">
+									<size>26,-1</size>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Copy the low weight slider values to the high weight section.</tooltip>
+									<label>&#8594;</label>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,15</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxButton" name="btnBuildBatch">
+											<fg>wxSYS_COLOUR_BTNTEXT</fg>
+											<tooltip>Build multiple outfits using the currently active slider values.\n\nHold CTRL = Build to custom directory\nHold ALT = Delete from output directory</tooltip>
+											<label>Batch Build...</label>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxCheckBox" name="cbRaceMenu">
+											<fg>#c8c8c8</fg>
+											<label>RaceMenu Morphs</label>
+											<tooltip>Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnPreview">
+									<size>128,-1</size>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Show a preview window for this outfit.</tooltip>
+									<label>Preview</label>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnBuild">
+									<size>128,45</size>
+									<font>
+										<size>12</size>
+										<style>normal</style>
+										<weight>normal</weight>
+										<underlined>0</underlined>
+										<face>Andalus</face>
+									</font>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Creates the currently selected outfit/body.\n\nHold CTRL = Build to working directory\nHold ALT = Delete from output directory</tooltip>
+									<label>Build</label>
+									<default>0</default>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxVERTICAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER|wxALL</flag>
+								<border>5</border>
+								<object class="wxButton" name="btnHighToLow">
+									<size>26,-1</size>
+									<fg>wxSYS_COLOUR_BTNTEXT</fg>
+									<tooltip>Copy the high weight slider values to the low weight section.</tooltip>
+									<label>&#8592;</label>
+								</object>
+							</object>
+							<object class="spacer">
+								<option>1</option>
+								<flag>wxEXPAND</flag>
+								<border>5</border>
+								<size>0,15</size>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_RIGHT|wxALL</flag>
+								<border>5</border>
+								<object class="wxBoxSizer">
+									<orient>wxHORIZONTAL</orient>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxButton" name="btnAbout">
+											<size>26,-1</size>
+											<tooltip>About</tooltip>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxButton" name="btnSettings">
+											<fg>wxSYS_COLOUR_BTNTEXT</fg>
+											<tooltip>Open settings dialog.</tooltip>
+											<label>Settings</label>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>0</option>
+										<flag>wxALIGN_CENTER|wxALL</flag>
+										<border>5</border>
+										<object class="wxButton" name="btnOutfitStudio">
+											<fg>wxSYS_COLOUR_BTNTEXT</fg>
+											<tooltip>Open Outfit Studio, a full-featured tool for creating and converting outfits.</tooltip>
+											<label>Outfit Studio</label>
+										</object>
+									</object>
+								</object>
+							</object>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxMenu" name="menuGroupContext">
+		<label>Filter Options</label>
+		<object class="wxMenuItem" name="menuChooseGroups">
+			<label>Choose groups...</label>
+			<help>Choose groups to display in the Outfit menu</help>
+		</object>
+		<object class="wxMenuItem" name="menuRefreshGroups">
+			<label>Refresh Groups</label>
+			<help>Refresh group information</help>
+		</object>
+	</object>
+	<object class="wxMenu" name="menuOutfitSrchContext">
+		<label>Filter Options</label>
+		<object class="wxMenuItem" name="menuSaveGroups">
+			<label>Save Outfit list as group...</label>
+			<help>Save the current filtered outfit list as a group</help>
+		</object>
+		<object class="wxMenuItem" name="menuRefreshOutfits">
+			<label>Refresh Outfits</label>
+			<help>Reloads outfit list</help>
+		</object>
+	</object>
+	<object class="wxMenu" name="batchBuildContext">
+		<object class="wxMenuItem" name="batchBuildNone">
+			<label>Select None</label>
+		</object>
+		<object class="wxMenuItem" name="batchBuildAll">
+			<label>Select All</label>
+		</object>
+	</object>
+</resource>

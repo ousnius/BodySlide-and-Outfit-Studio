@@ -1849,31 +1849,35 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	this->app = app;
 	rowCount = 0;
 
-	wxXmlResource* rsrc = wxXmlResource::Get();
-	rsrc->InitAllHandlers();
-	bool loaded = rsrc->Load("res\\BodyslideFrame.xrc");
+	wxXmlResource* xrc = wxXmlResource::Get();
+	xrc->InitAllHandlers();
+	bool loaded = xrc->Load("res\\xrc\\BodySlide.xrc");
 	if (!loaded) {
-		wxMessageBox(_("Failed to load BodyslideFrame.xrc file!"), _("Error"), wxICON_ERROR);
+		wxMessageBox(_("Failed to load BodySlide.xrc file!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
 
-	rsrc->LoadFrame(this, GetParent(), "BodyslideFrame");
+	xrc->LoadFrame(this, GetParent(), "bodySlideFrame");
 	if (!loaded) {
 		wxMessageBox(_("Failed to load BodySlide frame!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
 
+	xrc->Load("res\\xrc\\BatchBuild.xrc");
+	xrc->Load("res\\xrc\\Settings.xrc");
+	xrc->Load("res\\xrc\\About.xrc");
+
 	delayLoad.Start(100, true);
 
 	SetDoubleBuffered(true);
-	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 	SetSize(size);
 
 	batchBuildList = nullptr;
-	wxMenu* srchMenu = rsrc->LoadMenu("menuGroupContext");
-	wxMenu* outfitsrchMenu = rsrc->LoadMenu("menuOutfitSrchContext");
+	wxMenu* srchMenu = xrc->LoadMenu("menuGroupContext");
+	wxMenu* outfitsrchMenu = xrc->LoadMenu("menuOutfitSrchContext");
 
 	search = new wxSearchCtrl(this, wxID_ANY, wxEmptyString, wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
 	search->ShowSearchButton(true);
@@ -1889,8 +1893,8 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	outfitsearch->SetToolTip(_("Filter by outfit"));
 	outfitsearch->SetMenu(outfitsrchMenu);
 
-	rsrc->AttachUnknownControl("searchHolder", search, this);
-	rsrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
+	xrc->AttachUnknownControl("searchHolder", search, this);
+	xrc->AttachUnknownControl("outfitsearchHolder", outfitsearch, this);
 
 	wxScrolledWindow* scrollWindow = (wxScrolledWindow*)FindWindowByName("SliderScrollWindow", this);
 	if (scrollWindow) {
@@ -2500,11 +2504,6 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
-	wxXmlResource* rsrc = wxXmlResource::Get();
-	wxDialog* groupManager = rsrc->LoadDialog(this, "dlgGroupManager");
-	if (!groupManager)
-		return;
-
 	vector<string> outfits;
 	app->GetOutfits(outfits);
 

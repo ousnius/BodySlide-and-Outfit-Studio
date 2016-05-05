@@ -33,7 +33,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "FSManager.h"
 #include "FSEngine.h"
-#include "FSBSA.h"
 
 #include <algorithm>
 

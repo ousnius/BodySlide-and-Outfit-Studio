@@ -29,7 +29,7 @@ wxSize PreviewWindow::GetDefaultSize() {
 
 PreviewWindow::PreviewWindow(BodySlideApp* a)
 	: wxFrame(nullptr, wxID_ANY, "Preview", wxDefaultPosition, GetDefaultSize()), app(a) {
-	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);

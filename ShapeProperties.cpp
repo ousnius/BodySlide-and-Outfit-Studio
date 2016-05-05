@@ -17,8 +17,9 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string& shapeName) {
-	wxXmlResource * rsrc = wxXmlResource::Get();
-	rsrc->LoadDialog(this, parent, "dlgShapeProp");
+	wxXmlResource *xrc = wxXmlResource::Get();
+	xrc->Load("res\\xrc\\ShapeProperties.xrc");
+	xrc->LoadDialog(this, parent, "dlgShapeProp");
 
 	SetDoubleBuffered(true);
 	CenterOnParent();
@@ -58,6 +59,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 }
 
 ShapeProperties::~ShapeProperties() {
+	wxXmlResource::Get()->Unload("res\\xrc\\ShapeProperties.xrc");
 }
 
 void ShapeProperties::GetShader() {

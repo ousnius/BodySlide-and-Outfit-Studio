@@ -254,10 +254,40 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\BodyslideFrame.xrc">
+    <None Include="res\xrc\BodySlide.xrc">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="res\outfitStudio.xrc">
+    <None Include="res\xrc\GroupManager.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\OutfitStudio.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\Project.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\SavePreset.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\Settings.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\ShapeProperties.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\Skeleton.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\Slider.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\About.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\Actions.xrc">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="res\xrc\BatchBuild.xrc">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

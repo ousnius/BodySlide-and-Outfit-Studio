@@ -281,8 +281,18 @@
     <ResourceCompile Include="BodySlide.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="res\BodyslideFrame.xrc" />
-    <None Include="res\outfitStudio.xrc" />
+    <None Include="res\xrc\About.xrc" />
+    <None Include="res\xrc\Actions.xrc" />
+    <None Include="res\xrc\BatchBuild.xrc" />
+    <None Include="res\xrc\BodySlide.xrc" />
+    <None Include="res\xrc\GroupManager.xrc" />
+    <None Include="res\xrc\OutfitStudio.xrc" />
+    <None Include="res\xrc\Project.xrc" />
+    <None Include="res\xrc\SavePreset.xrc" />
+    <None Include="res\xrc\Settings.xrc" />
+    <None Include="res\xrc\ShapeProperties.xrc" />
+    <None Include="res\xrc\Skeleton.xrc" />
+    <None Include="res\xrc\Slider.xrc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

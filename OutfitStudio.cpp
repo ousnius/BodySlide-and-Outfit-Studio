@@ -175,22 +175,25 @@ wxEND_EVENT_TABLE()
 OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig) : appConfig(inConfig) {
 	wxLogMessage("Loading Outfit Studio at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
-	wxXmlResource::Get()->InitAllHandlers();
-	bool loaded = wxXmlResource::Get()->Load("res\\outfitStudio.xrc");
-	if (!loaded) {
-		wxMessageBox(_("Failed to load outfitStudio.xrc file!"), _("Error"), wxICON_ERROR);
+	wxXmlResource *xrc = wxXmlResource::Get();
+	if (!xrc->Load("res\\xrc\\OutfitStudio.xrc")) {
+		wxMessageBox(_("Failed to load OutfitStudio.xrc file!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
 
-	loaded = wxXmlResource::Get()->LoadFrame(this, nullptr, "outfitStudio");
-	if (!loaded) {
+	if (!xrc->LoadFrame(this, nullptr, "outfitStudio")) {
 		wxMessageBox(_("Failed to load Outfit Studio frame!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
 	}
 
-	SetIcon(wxIcon("res\\outfitstudio.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
+
+	xrc->Load("res\\xrc\\Project.xrc");
+	xrc->Load("res\\xrc\\Actions.xrc");
+	xrc->Load("res\\xrc\\Slider.xrc");
+	xrc->Load("res\\xrc\\Skeleton.xrc");
 
 	int statusWidths[] = { -1, 275, 100 };
 	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
@@ -202,17 +205,17 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 
 	this->DragAcceptFiles(true);
 
-	wxXmlResource::Get()->LoadMenuBar(this, "menuBar");
-	wxXmlResource::Get()->LoadToolBar(this, "toolbar");
+	xrc->LoadMenuBar(this, "menuBar");
+	xrc->LoadToolBar(this, "toolBar");
 
 	wxSlider* fovSlider = (wxSlider*)GetToolBar()->FindWindowByName("fovSlider");
 	if (fovSlider)
 		fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
 
 	visStateImages = new wxImageList(16, 16, false, 2);
-	wxBitmap visImg("res\\icoVisible.png", wxBITMAP_TYPE_PNG);
-	wxBitmap invImg("res\\icoInvisible.png", wxBITMAP_TYPE_PNG);
-	wxBitmap wfImg("res\\icoWireframe.png", wxBITMAP_TYPE_PNG);
+	wxBitmap visImg("res\\images\\icoVisible.png", wxBITMAP_TYPE_PNG);
+	wxBitmap invImg("res\\images\\icoInvisible.png", wxBITMAP_TYPE_PNG);
+	wxBitmap wfImg("res\\images\\icoWireframe.png", wxBITMAP_TYPE_PNG);
 
 	if (visImg.IsOk())
 		visStateImages->Add(visImg);
@@ -274,7 +277,7 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 		rightPanel->SetDoubleBuffered(true);
 
 	if (glView)
-		wxXmlResource::Get()->AttachUnknownControl("mGLView", glView, this);
+		xrc->AttachUnknownControl("mGLView", glView, this);
 
 	project = new OutfitProject(appConfig, this);	// Create empty project
 	CreateSetSliders();
@@ -320,6 +323,7 @@ OutfitStudio::~OutfitStudio() {
 		delete glView;
 
 	static_cast<BodySlideApp*>(wxApp::GetInstance())->CloseOutfitStudio();
+	wxXmlResource::Get()->Unload("res\\xrc\\OutfitStudio.xrc");
 	wxLogMessage("Outfit Studio closed.");
 }
 
@@ -398,8 +402,8 @@ void OutfitStudio::createSliderGUI(const string& name, int id, wxScrolledWindow*
 
 	d->paneSz = new wxBoxSizer(wxHORIZONTAL);
 
-	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap("res\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
-	d->btnSliderEdit->SetBitmapDisabled(wxBitmap("res\\EditSmall_d.png", wxBITMAP_TYPE_ANY));
+	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap("res\\images\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
+	d->btnSliderEdit->SetBitmapDisabled(wxBitmap("res\\images\\EditSmall_d.png", wxBITMAP_TYPE_ANY));
 	d->btnSliderEdit->SetToolTip(_("Turn on edit mode for this slider."));
 	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
@@ -4016,11 +4020,6 @@ void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxXmlResource* rsrc = wxXmlResource::Get();
-	wxDialog* shapeProperties = rsrc->LoadDialog(this, "dlgShapeProp");
-	if (!shapeProperties)
-		return;
-
 	ShapeProperties prop(this, project->GetWorkNif(), activeItem->shapeName);
 	prop.ShowModal();
 }
@@ -4249,9 +4248,9 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 
 	GLMaterial* mat;
 	if (!isSkin)
-		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\defshader.fs");
+		mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
 	else
-		mat = gls.AddMaterial(texturefile, "res\\maskvshader.vs", "res\\skinshader.fs");
+		mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\skin.frag");
 
 	m->material = mat;
 }
