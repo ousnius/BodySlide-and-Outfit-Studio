@@ -133,7 +133,8 @@ int NifFile::shapeBoneIndex(const string& shapeName, const string& boneName) {
 		NiBoneContainer* boneList = dynamic_cast<NiBoneContainer*>(GetBlock(bsTriShape->skinInstanceRef));
 		if (boneList) {
 			for (int i = 0; i < boneList->bones.size(); i++) {
-				if (boneList->bones[i] > -1 && ((NiNode*)GetBlock(boneList->bones[i]))->GetName() == boneName)
+				NiNode* node = dynamic_cast<NiNode*>(GetBlock(boneList->bones[i]));
+				if (node && node->GetName() == boneName)
 					return i;
 			}
 		}
@@ -149,12 +150,9 @@ int NifFile::shapeBoneIndex(const string& shapeName, const string& boneName) {
 	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(GetBlock(skinRef));
 	if (skinInst) {
 		for (int i = 0; i < skinInst->bones.size(); i++) {
-			int boneBlock = skinInst->bones[i];
-			if (boneBlock != -1) {
-				NiNode* node = (NiNode*)GetBlock(boneBlock);
-				if (node->GetName() == boneName)
-					return i;
-			}
+			NiNode* node = dynamic_cast<NiNode*>(GetBlock(skinInst->bones[i]));
+			if (node && node->GetName() == boneName)
+				return i;
 		}
 	}
 
