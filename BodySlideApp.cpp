@@ -2145,7 +2145,7 @@ void BodySlideFrame::SetSliderPosition(const wxString &name, float newValue, sho
 
 	if (HiLo == SLIDER_HI) {
 		if (!sd->isZap) {
-			sd->sliderReadoutHi->SetValue(wxString::Format("%d%%", intval));
+			sd->sliderReadoutHi->ChangeValue(wxString::Format("%d%%", intval));
 			sd->sliderHi->SetValue(intval);
 		}
 		else
@@ -2153,7 +2153,7 @@ void BodySlideFrame::SetSliderPosition(const wxString &name, float newValue, sho
 	}
 	else if (!sd->oneSize){
 		if (!sd->isZap) {
-			sd->sliderReadoutLo->SetValue(wxString::Format("%d%%", intval));
+			sd->sliderReadoutLo->ChangeValue(wxString::Format("%d%%", intval));
 			sd->sliderLo->SetValue(intval);
 		}
 		else
@@ -2228,9 +2228,9 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 	app->SetSliderValue(name, isLo, event.GetPosition() / 100.0f);
 	app->SetSliderChanged(name, isLo);
 	if (isLo)
-		sd->sliderReadoutLo->SetValue(wxString::Format("%d%%", event.GetPosition()));
+		sd->sliderReadoutLo->ChangeValue(wxString::Format("%d%%", event.GetPosition()));
 	else
-		sd->sliderReadoutHi->SetValue(wxString::Format("%d%%", event.GetPosition()));
+		sd->sliderReadoutHi->ChangeValue(wxString::Format("%d%%", event.GetPosition()));
 
 	app->UpdatePreview();
 }

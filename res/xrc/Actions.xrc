@@ -280,7 +280,7 @@
 	
 	<object class="wxDialog" name="dlgScaleShape">
 		<style>wxCAPTION|wxDEFAULT_DIALOG_STYLE</style>
-		<size>423,155</size>
+		<size>423,250</size>
 		<title>Scale Shape</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -310,8 +310,8 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxStaticText" name="ssLabel">
-									<label>Scale</label>
+								<object class="wxStaticText" name="ssLabelX">
+									<label>X</label>
 									<wrap>-1</wrap>
 								</object>
 							</object>
@@ -319,7 +319,7 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxSlider" name="ssSlider">
+								<object class="wxSlider" name="ssSliderX">
 									<value>1000</value>
 									<min>10</min>
 									<max>3000</max>
@@ -330,11 +330,94 @@
 								<option>0</option>
 								<flag>wxLEFT|wxRIGHT</flag>
 								<border>5</border>
-								<object class="wxTextCtrl" name="ssText">
+								<object class="wxTextCtrl" name="ssTextX">
 									<size>60,-1</size>
 									<value>1.00000</value>
 								</object>
 							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="ssLabelY">
+									<label>Y</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="ssSliderY">
+									<value>1000</value>
+									<min>10</min>
+									<max>3000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="ssTextY">
+									<size>60,-1</size>
+									<value>1.00000</value>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="ssLabelZ">
+									<label>Z</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxSlider" name="ssSliderZ">
+									<value>1000</value>
+									<min>10</min>
+									<max>3000</max>
+									<size>400,-1</size>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxLEFT|wxRIGHT</flag>
+								<border>5</border>
+								<object class="wxTextCtrl" name="ssTextZ">
+									<size>60,-1</size>
+									<value>1.00000</value>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="ssUniform">
+							<label>Uniform (XYZ)</label>
+							<checked>1</checked>
 						</object>
 					</object>
 				</object>

@@ -1091,7 +1091,7 @@ void OutfitProject::OffsetShape(const string& shapeName, const Vector3& xlate, u
 	workNif.OffsetShape(shapeName, xlate, mask);
 }
 
-void OutfitProject::ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask) {
+void OutfitProject::ScaleShape(const string& shapeName, const Vector3& scale, unordered_map<ushort, float>* mask) {
 	workNif.ScaleShape(shapeName, scale, mask);
 }
 

@@ -287,7 +287,7 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	selectedItems.clear();
 
 	previousMirror = true;
-	previewScale = 1.0f;
+	previewScale = Vector3(1.0f, 1.0f, 1.0f);
 
 	SetSize(size);
 	SetPosition(pos);
@@ -493,13 +493,13 @@ string OutfitStudio::NewSlider(const string& suggestedName, bool skipPrompt) {
 void OutfitStudio::SetSliderValue(int index, int val) {
 	string name = project->GetSliderName(index);
 	project->SliderValue(index) = val / 100.0f;
-	sliderDisplays[name]->sliderReadout->SetValue(wxString::Format("%d%%", val));
+	sliderDisplays[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
 	sliderDisplays[name]->slider->SetValue(val);
 }
 
 void OutfitStudio::SetSliderValue(const string& name, int val) {
 	project->SliderValue(name) = val / 100.0f;
-	sliderDisplays[name]->sliderReadout->SetValue(wxString::Format("%d%%", val));
+	sliderDisplays[name]->sliderReadout->ChangeValue(wxString::Format("%d%%", val));
 	sliderDisplays[name]->slider->SetValue(val);
 }
 
@@ -510,7 +510,7 @@ void OutfitStudio::ApplySliders(bool recalcBVH) {
 
 	for (auto &shape : shapes) {
 		project->GetLiveVerts(shape, verts);
-		glView->UpdateMeshVertices(shape, &verts, recalcBVH);
+		glView->UpdateMeshVertices(shape, &verts, recalcBVH, true, false);
 	}
 
 	bool tMode = glView->GetTransformMode();
@@ -3373,9 +3373,9 @@ void OutfitStudio::OnMoveShapeOldOffset(wxCommandEvent& event) {
 	XRCCTRL(*parent, "msSliderX", wxSlider)->SetValue(0);
 	XRCCTRL(*parent, "msSliderY", wxSlider)->SetValue(-2544);
 	XRCCTRL(*parent, "msSliderZ", wxSlider)->SetValue(3287);
-	XRCCTRL(*parent, "msTextX", wxTextCtrl)->SetValue("0.00000");
-	XRCCTRL(*parent, "msTextY", wxTextCtrl)->SetValue("-2.54431");
-	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->SetValue("3.28790");
+	XRCCTRL(*parent, "msTextX", wxTextCtrl)->ChangeValue("0.00000");
+	XRCCTRL(*parent, "msTextY", wxTextCtrl)->ChangeValue("-2.54431");
+	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->ChangeValue("3.28790");
 
 	PreviewMove(Vector3(0.00000f, -2.54431f, 3.28790f));
 }
@@ -3390,9 +3390,9 @@ void OutfitStudio::OnMoveShapeSlider(wxCommandEvent& event) {
 	slider.y = XRCCTRL(*parent, "msSliderY", wxSlider)->GetValue() / 1000.0f;
 	slider.z = XRCCTRL(*parent, "msSliderZ", wxSlider)->GetValue() / 1000.0f;
 
-	XRCCTRL(*parent, "msTextX", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.x));
-	XRCCTRL(*parent, "msTextY", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.y));
-	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->SetValue(wxString::Format("%0.5f", slider.z));
+	XRCCTRL(*parent, "msTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.x));
+	XRCCTRL(*parent, "msTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.y));
+	XRCCTRL(*parent, "msTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", slider.z));
 
 	PreviewMove(slider);
 }
@@ -3467,17 +3467,24 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgScaleShape")) {
-		XRCCTRL(dlg, "ssSlider", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnScaleShapeSlider, this);
-		XRCCTRL(dlg, "ssText", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnScaleShapeText, this);
+		XRCCTRL(dlg, "ssSliderX", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnScaleShapeSlider, this);
+		XRCCTRL(dlg, "ssSliderY", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnScaleShapeSlider, this);
+		XRCCTRL(dlg, "ssSliderZ", wxSlider)->Bind(wxEVT_SLIDER, &OutfitStudio::OnScaleShapeSlider, this);
+		XRCCTRL(dlg, "ssTextX", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnScaleShapeText, this);
+		XRCCTRL(dlg, "ssTextY", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnScaleShapeText, this);
+		XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->Bind(wxEVT_TEXT, &OutfitStudio::OnScaleShapeText, this);
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
 
-		float scale;
-		if (dlg.ShowModal() == wxID_OK)
-			scale = atof(XRCCTRL(dlg, "ssText", wxTextCtrl)->GetValue().c_str());
-		else
-			scale = 1.0f;
+		Vector3 scale(1.0f, 1.0f, 1.0f);
+		if (dlg.ShowModal() == wxID_OK) {
+			scale.x = atof(XRCCTRL(dlg, "ssTextX", wxTextCtrl)->GetValue().c_str());
+			scale.y = atof(XRCCTRL(dlg, "ssTextY", wxTextCtrl)->GetValue().c_str());
+			scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
+		}
 
-		scale *= 1.0f / previewScale;
+		scale.x *= 1.0f / previewScale.x;
+		scale.y *= 1.0f / previewScale.y;
+		scale.z *= 1.0f / previewScale.z;
 
 		unordered_map<ushort, float> mask;
 		unordered_map<ushort, float>* mptr = nullptr;
@@ -3494,7 +3501,7 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			glView->UpdateMeshVertices(i->shapeName, &verts);
 		}
 
-		previewScale = 1.0f;
+		previewScale = Vector3(1.0f, 1.0f, 1.0f);
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();
@@ -3508,9 +3515,26 @@ void OutfitStudio::OnScaleShapeSlider(wxCommandEvent& event) {
 	if (!parent)
 		return;
 
-	float scale = 1.0f;
-	scale = XRCCTRL(*parent, "ssSlider", wxSlider)->GetValue() / 1000.0f;
-	XRCCTRL(*parent, "ssText", wxTextCtrl)->SetValue(wxString::Format("%0.5f", scale));
+	Vector3 scale(1.0f, 1.0f, 1.0f);
+
+	bool uniform = XRCCTRL(*parent, "ssUniform", wxCheckBox)->IsChecked();
+	if (uniform) {
+		float uniformValue = ((wxSlider*)event.GetEventObject())->GetValue() / 1000.0f;
+		scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+		XRCCTRL(*parent, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
+		XRCCTRL(*parent, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
+		XRCCTRL(*parent, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
+	}
+	else {
+		scale.x = XRCCTRL(*parent, "ssSliderX", wxSlider)->GetValue() / 1000.0f;
+		scale.y = XRCCTRL(*parent, "ssSliderY", wxSlider)->GetValue() / 1000.0f;
+		scale.z = XRCCTRL(*parent, "ssSliderZ", wxSlider)->GetValue() / 1000.0f;
+	}
+
+	XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+	XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+	XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
 
 	PreviewScale(scale);
 }
@@ -3520,20 +3544,50 @@ void OutfitStudio::OnScaleShapeText(wxCommandEvent& event) {
 	if (!parent)
 		return;
 
-	float scale;
-	scale = atof(XRCCTRL(*parent, "ssText", wxTextCtrl)->GetValue().c_str());
+	Vector3 scale(1.0f, 1.0f, 1.0f);
 
-	if (scale < 0.01f) {
-		scale = 0.01f;
-		XRCCTRL(*parent, "ssText", wxTextCtrl)->SetValue(wxString::Format("%0.5f", scale));
+	bool uniform = XRCCTRL(*parent, "ssUniform", wxCheckBox)->IsChecked();
+	if (uniform) {
+		float uniformValue = atof(((wxTextCtrl*)event.GetEventObject())->GetValue().c_str());
+		scale = Vector3(uniformValue, uniformValue, uniformValue);
+
+		XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+		XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+		XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
 	}
-	XRCCTRL(*parent, "ssSlider", wxSlider)->SetValue(scale * 1000);
+	else {
+		scale.x = atof(XRCCTRL(*parent, "ssTextX", wxTextCtrl)->GetValue().c_str());
+		scale.y = atof(XRCCTRL(*parent, "ssTextY", wxTextCtrl)->GetValue().c_str());
+		scale.z = atof(XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->GetValue().c_str());
+	}
+
+	if (scale.x < 0.01f) {
+		scale.x = 0.01f;
+		XRCCTRL(*parent, "ssTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.x));
+	}
+
+	if (scale.y < 0.01f) {
+		scale.y = 0.01f;
+		XRCCTRL(*parent, "ssTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.y));
+	}
+
+	if (scale.z < 0.01f) {
+		scale.z = 0.01f;
+		XRCCTRL(*parent, "ssTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", scale.z));
+	}
+
+	XRCCTRL(*parent, "ssSliderX", wxSlider)->SetValue(scale.x * 1000);
+	XRCCTRL(*parent, "ssSliderY", wxSlider)->SetValue(scale.y * 1000);
+	XRCCTRL(*parent, "ssSliderZ", wxSlider)->SetValue(scale.z * 1000);
 
 	PreviewScale(scale);
 }
 
-void OutfitStudio::PreviewScale(const float& scale) {
-	float scaleNew = scale * 1.0f / previewScale;
+void OutfitStudio::PreviewScale(const Vector3& scale) {
+	Vector3 scaleNew = scale;
+	scaleNew.x *= 1.0f / previewScale.x;
+	scaleNew.y *= 1.0f / previewScale.y;
+	scaleNew.z *= 1.0f / previewScale.z;
 
 	unordered_map<ushort, float> mask;
 	unordered_map<ushort, float>* mptr = nullptr;
@@ -3622,9 +3676,9 @@ void OutfitStudio::OnRotateShapeSlider(wxCommandEvent& event) {
 	slider.y = XRCCTRL(*parent, "rsSliderY", wxSlider)->GetValue() / 100.0f;
 	slider.z = XRCCTRL(*parent, "rsSliderZ", wxSlider)->GetValue() / 100.0f;
 
-	XRCCTRL(*parent, "rsTextX", wxTextCtrl)->SetValue(wxString::Format("%0.4f", slider.x));
-	XRCCTRL(*parent, "rsTextY", wxTextCtrl)->SetValue(wxString::Format("%0.4f", slider.y));
-	XRCCTRL(*parent, "rsTextZ", wxTextCtrl)->SetValue(wxString::Format("%0.4f", slider.z));
+	XRCCTRL(*parent, "rsTextX", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", slider.x));
+	XRCCTRL(*parent, "rsTextY", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", slider.y));
+	XRCCTRL(*parent, "rsTextZ", wxTextCtrl)->ChangeValue(wxString::Format("%0.4f", slider.z));
 
 	PreviewRotation(slider);
 }
@@ -4255,16 +4309,17 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 	m->material = mat;
 }
 
-void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH, bool recalcNormals) {
+void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render) {
 	int id = gls.GetMeshID(shapeName);
 	gls.Update(id, verts);
 	if (updateBVH)
 		BVHUpdateQueue.insert(id);
 
-	if (recalcNormals) {
+	if (recalcNormals)
 		RecalcNormals(shapeName);
+
+	if (render)
 		gls.RenderOneFrame();
-	}
 }
 
 void wxGLPanel::RecalculateMeshBVH(const string& shapeName) {
@@ -4906,14 +4961,15 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		if (transformMode) {
 			// Adjust scale of active shapes
 			float factor = delt < 0 ? 0.99f : 1.01f;
+			Vector3 scale(factor, factor, factor);
 			for (auto &m : gls.GetActiveMeshes()) {
 				unordered_map<ushort, float> mask;
 				vector<Vector3> verts;
 				GetShapeMask(mask, m->shapeName);
 
-				os->project->ScaleShape(m->shapeName, factor, &mask);
+				os->project->ScaleShape(m->shapeName, scale, &mask);
 				os->project->GetLiveVerts(m->shapeName, verts);
-				UpdateMeshVertices(m->shapeName, &verts);
+				UpdateMeshVertices(m->shapeName, &verts, true, false);
 			}
 
 			ShowTransformTool();

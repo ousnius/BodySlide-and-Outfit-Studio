@@ -75,7 +75,7 @@ public:
 		return gls.GetMesh(shapeName);
 	}
 
-	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true);
+	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true);
 	void RecalculateMeshBVH(const string& shapeName);
 
 	void ShowShape(const string& shapeName, bool show = true);
@@ -708,7 +708,7 @@ public:
 private:
 	bool previousMirror;
 	Vector3 previewMove;
-	float previewScale;
+	Vector3 previewScale;
 	Vector3 previewRotation;
 
 	vector<ShapeItemData*> selectedItems;
@@ -819,7 +819,7 @@ private:
 	void OnScaleShape(wxCommandEvent& event);
 	void OnScaleShapeSlider(wxCommandEvent& event);
 	void OnScaleShapeText(wxCommandEvent& event);
-	void PreviewScale(const float& scale);
+	void PreviewScale(const Vector3& scale);
 
 	void OnRotateShape(wxCommandEvent& event);
 	void OnRotateShapeSlider(wxCommandEvent& event);

@@ -2523,7 +2523,7 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 	}
 }
 
-void NifFile::ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask) {
+void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordered_map<ushort, float>* mask) {
 	int bType;
 	int dataRef = shapeDataIdForName(shapeName, bType);
 	if (dataRef == -1)
@@ -2540,7 +2540,9 @@ void NifFile::ScaleShape(const string& shapeName, const float& scale, unordered_
 		unordered_map<ushort, Vector3> diff;
 		for (int i = 0; i < geomData->vertices.size(); i++) {
 			Vector3 target = geomData->vertices[i] - root;
-			target *= scale;
+			target.x *= scale.x;
+			target.y *= scale.y;
+			target.z *= scale.z;
 			diff[i] = geomData->vertices[i] - target;
 
 			if (mask) {
@@ -2562,7 +2564,9 @@ void NifFile::ScaleShape(const string& shapeName, const float& scale, unordered_
 		unordered_map<ushort, Vector3> diff;
 		for (int i = 0; i < geomData->numVertices; i++) {
 			Vector3 target = geomData->vertData[i].vert - root;
-			target *= scale;
+			target.x *= scale.x;
+			target.y *= scale.y;
+			target.z *= scale.z;
 			diff[i] = geomData->vertData[i].vert - target;
 
 			if (mask) {

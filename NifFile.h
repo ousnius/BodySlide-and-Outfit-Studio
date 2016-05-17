@@ -1694,7 +1694,7 @@ public:
 
 	void MoveVertex(const string& shapeName, const Vector3& pos, const int& id);
 	void OffsetShape(const string& shapeName, const Vector3& offset, unordered_map<ushort, float>* mask = nullptr);
-	void ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask = nullptr);
+	void ScaleShape(const string& shapeName, const Vector3& scale, unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(const string& shapeName, const Vector3& angle, unordered_map<ushort, float>* mask = nullptr);
 
 	bool GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& outThreshold);

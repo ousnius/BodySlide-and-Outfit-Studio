@@ -154,7 +154,7 @@ public:
 	void ScaleMorphResult(const string& shapeName, const string& sliderName, float scaleValue);
 	void MoveVertex(const string& shapeName, const Vector3& pos, const int& id);
 	void OffsetShape(const string& shapeName, const Vector3& xlate, unordered_map<ushort, float>* mask = nullptr);
-	void ScaleShape(const string& shapeName, const float& scale, unordered_map<ushort, float>* mask = nullptr);
+	void ScaleShape(const string& shapeName, const Vector3& scale, unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(const string& shapeName, const Vector3& angle, unordered_map<ushort, float>* mask = nullptr);
 
 	void AutoOffset(NifFile& nif);
