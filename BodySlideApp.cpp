@@ -1798,7 +1798,6 @@ void BodySlideApp::GroupBuild(const string& group) {
 
 	if (ret == 0) {
 		wxLogMessage("All group build sets processed successfully!");
-		wxMessageBox(_("All group build sets processed successfully!"), _("Complete"), wxICON_INFORMATION);
 	}
 	else if (ret == 3) {
 		wxArrayString errlist;
@@ -1810,6 +1809,8 @@ void BodySlideApp::GroupBuild(const string& group) {
 		wxSingleChoiceDialog errdisplay(sliderView, _("The following sets failed"), _("Failed"), errlist, nullptr, wxDEFAULT_DIALOG_STYLE | wxOK | wxRESIZE_BORDER);
 		errdisplay.ShowModal();
 	}
+
+	sliderView->Close(true);
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
