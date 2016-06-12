@@ -1279,8 +1279,17 @@ msgstr ""
 msgid "Extra Data"
 msgstr ""
 
-# XRC STRINGS END HERE
 msgid "Value"
+msgstr ""
+
+msgid "Segments"
+msgstr ""
+
+msgid "Apply"
+msgstr ""
+
+# XRC STRINGS END HERE
+msgid "SSF File"
 msgstr ""
 
 #: Anim.cpp:359

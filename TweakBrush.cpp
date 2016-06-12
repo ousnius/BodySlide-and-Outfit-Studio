@@ -446,7 +446,7 @@ void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points
 TB_Mask::TB_Mask() :TweakBrush() {
 	brushType = TBT_MASK;
 	strength = 0.1f;
-	focus = 5.0f;
+	focus = 4.75f;
 	brushName = "Mask Brush";
 }
 
@@ -514,7 +514,7 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 TB_Unmask::TB_Unmask() :TweakBrush() {
 	brushType = TBT_MASK;
 	strength = -0.1f;
-	focus = 5.0f;
+	focus = 4.75f;
 	brushName = "Unmask Brush";
 }
 

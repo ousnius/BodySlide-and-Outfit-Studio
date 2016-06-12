@@ -196,6 +196,7 @@ GLSurface::GLSurface() {
 	bLighting = true;
 	bMaskVisible = false;
 	bWeightColors = false;
+	bSegmentColors = false;
 	cursorSize = 0.5f;
 }
 
@@ -283,7 +284,7 @@ const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
 
 void GLSurface::InitLighting() {
 	glEnable(GL_LIGHTING);
-	float amb[] = { 0.8f, 0.2288f, 0.0f, 1.0f };
+	float amb[] = { 0.20f, 0.2288f, 0.0f, 1.0f };
 	float diff[] = { 0.55f, 0.55f, 0.55f, 1.0f };
 	float spec[] = { 0.4f, 0.4f, 0.4f, 1.0f };
 	float lightpos[] = { 1.0f, 0.2f, 0.5f, 0.0f };
@@ -954,12 +955,22 @@ void GLSurface::RenderMesh(mesh* m) {
 
 			auto weightAttrib = m->material->shader->GetWeightAttribute();
 			if (weightAttrib != -1) {
-				if (m->vcolors && bWeightColors) {
+				if (m->vcolors && (bWeightColors || bSegmentColors)) {
 					glEnableVertexAttribArray(weightAttrib);
 					glVertexAttribPointer(weightAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(Vector3), &m->vcolors[0].y);
 				}
 				else
 					glDisableVertexAttribArray(weightAttrib);
+			}
+
+			auto segmentAttrib = m->material->shader->GetSegmentAttribute();
+			if (segmentAttrib != -1) {
+				if (m->vcolors && bSegmentColors) {
+					glEnableVertexAttribArray(segmentAttrib);
+					glVertexAttribPointer(segmentAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(Vector3), &m->vcolors[0].z);
+				}
+				else
+					glDisableVertexAttribArray(segmentAttrib);
 			}
 		}
 

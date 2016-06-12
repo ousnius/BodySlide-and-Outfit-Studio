@@ -1895,6 +1895,23 @@ void NifFile::SetShapeVertWeights(const string& shapeName, int vertIndex, vector
 	}
 }
 
+bool NifFile::GetShapeSegments(const string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+	BSSubIndexTriShape* siTriShape = dynamic_cast<BSSubIndexTriShape*>(geomForNameF4(shapeName));
+	if (!siTriShape)
+		return false;
+
+	segmentation = siTriShape->segmentation;
+	return true;
+}
+
+void NifFile::SetShapeSegments(const string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+	BSSubIndexTriShape* siTriShape = dynamic_cast<BSSubIndexTriShape*>(geomForNameF4(shapeName));
+	if (!siTriShape)
+		return;
+
+	siTriShape->segmentation = segmentation;
+}
+
 const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 	int bType;
 	int dataRef = shapeDataIdForName(shapeName, bType);
@@ -1934,6 +1951,48 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	}
 
 	return false;
+}
+
+bool NifFile::ReorderTriangles(const string& shapeName, const vector<ushort>& triangleIndices) {
+	int bType;
+	int dataID = shapeDataIdForName(shapeName, bType);
+	if (dataID == -1)
+		return false;
+
+	vector<Triangle> triangles;
+	if (bType == NITRISHAPEDATA) {
+		NiTriShapeData* shapeData = static_cast<NiTriShapeData*>(GetBlock(dataID));
+		if (triangleIndices.size() != shapeData->numTriangles)
+			return false;
+
+		for (auto &id : triangleIndices)
+			if (shapeData->triangles.size() >= id)
+				triangles.push_back(shapeData->triangles[id]);
+
+		if (triangles.size() != shapeData->numTriangles)
+			return false;
+
+		shapeData->triangles = triangles;
+	}
+	else if (bType == NITRISTRIPSDATA) {
+		return false;
+	}
+	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE || bType == BSMESHLODTRISHAPE) {
+		BSTriShape* shapeData = static_cast<BSTriShape*>(GetBlock(dataID));
+		if (triangleIndices.size() != shapeData->numTriangles)
+			return false;
+
+		for (auto &id : triangleIndices)
+			if (shapeData->triangles.size() >= id)
+				triangles.push_back(shapeData->triangles[id]);
+
+		if (triangles.size() != shapeData->numTriangles)
+			return false;
+
+		shapeData->triangles = triangles;
+	}
+
+	return true;
 }
 
 const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool transform) {

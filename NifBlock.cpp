@@ -1456,13 +1456,6 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 
 BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
-
-	numPrimitives = 0;
-	numSegments = 0;
-	numTotalSegments = 0;
-
-	subSegmentData.numSegments = 0;
-	subSegmentData.numTotalSegments = 0;
 }
 
 BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
@@ -1474,46 +1467,46 @@ void BSSubIndexTriShape::Get(fstream& file) {
 	if (dataSize <= 0)
 		return;
 
-	file.read((char*)&numPrimitives, 4);
-	file.read((char*)&numSegments, 4);
-	file.read((char*)&numTotalSegments, 4);
+	file.read((char*)&segmentation.numPrimitives, 4);
+	file.read((char*)&segmentation.numSegments, 4);
+	file.read((char*)&segmentation.numTotalSegments, 4);
 
-	segments.resize(numSegments);
-	for (int i = 0; i < numSegments; i++) {
-		file.read((char*)&segments[i].startIndex, 4);
-		file.read((char*)&segments[i].numPrimitives, 4);
-		file.read((char*)&segments[i].parentArrayIndex, 4);
-		file.read((char*)&segments[i].numSubSegments, 4);
+	segmentation.segments.resize(segmentation.numSegments);
+	for (auto &segment : segmentation.segments) {
+		file.read((char*)&segment.startIndex, 4);
+		file.read((char*)&segment.numPrimitives, 4);
+		file.read((char*)&segment.parentArrayIndex, 4);
+		file.read((char*)&segment.numSubSegments, 4);
 
-		segments[i].subSegments.resize(segments[i].numSubSegments);
-		for (int j = 0; j < segments[i].numSubSegments; j++) {
-			file.read((char*)&segments[i].subSegments[j].startIndex, 4);
-			file.read((char*)&segments[i].subSegments[j].numPrimitives, 4);
-			file.read((char*)&segments[i].subSegments[j].arrayIndex, 4);
-			file.read((char*)&segments[i].subSegments[j].unkInt1, 4);
+		segment.subSegments.resize(segment.numSubSegments);
+		for (auto &subSegment : segment.subSegments) {
+			file.read((char*)&subSegment.startIndex, 4);
+			file.read((char*)&subSegment.numPrimitives, 4);
+			file.read((char*)&subSegment.arrayIndex, 4);
+			file.read((char*)&subSegment.unkInt1, 4);
 		}
 	}
 
-	if (numSegments < numTotalSegments) {
-		file.read((char*)&subSegmentData.numSegments, 4);
-		file.read((char*)&subSegmentData.numTotalSegments, 4);
+	if (segmentation.numSegments < segmentation.numTotalSegments) {
+		file.read((char*)&segmentation.subSegmentData.numSegments, 4);
+		file.read((char*)&segmentation.subSegmentData.numTotalSegments, 4);
 
-		subSegmentData.arrayIndices.resize(numSegments);
-		for (int i = 0; i < numSegments; i++)
-			file.read((char*)&subSegmentData.arrayIndices[i], 4);
+		segmentation.subSegmentData.arrayIndices.resize(segmentation.numSegments);
+		for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
+			file.read((char*)&arrayIndex, 4);
 
-		subSegmentData.dataRecords.resize(numTotalSegments);
-		for (int i = 0; i < numTotalSegments; i++) {
-			file.read((char*)&subSegmentData.dataRecords[i].segmentUser, 4);
-			file.read((char*)&subSegmentData.dataRecords[i].unkInt2, 4);
-			file.read((char*)&subSegmentData.dataRecords[i].numData, 4);
+		segmentation.subSegmentData.dataRecords.resize(segmentation.numTotalSegments);
+		for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
+			file.read((char*)&dataRecord.segmentUser, 4);
+			file.read((char*)&dataRecord.unkInt2, 4);
+			file.read((char*)&dataRecord.numData, 4);
 
-			subSegmentData.dataRecords[i].extraData.resize(subSegmentData.dataRecords[i].numData);
-			for (int j = 0; j < subSegmentData.dataRecords[i].numData; j++)
-				file.read((char*)&subSegmentData.dataRecords[i].extraData[j], 4);
+			dataRecord.extraData.resize(dataRecord.numData);
+			for (auto &data : dataRecord.extraData)
+				file.read((char*)&data, 4);
 		}
 
-		subSegmentData.ssfFile.Get(file, 2);
+		segmentation.subSegmentData.ssfFile.Get(file, 2);
 	}
 }
 
@@ -1523,41 +1516,41 @@ void BSSubIndexTriShape::Put(fstream& file) {
 	if (dataSize <= 0)
 		return;
 
-	file.write((char*)&numPrimitives, 4);
-	file.write((char*)&numSegments, 4);
-	file.write((char*)&numTotalSegments, 4);
+	file.write((char*)&segmentation.numPrimitives, 4);
+	file.write((char*)&segmentation.numSegments, 4);
+	file.write((char*)&segmentation.numTotalSegments, 4);
 
-	for (int i = 0; i < numSegments; i++) {
-		file.write((char*)&segments[i].startIndex, 4);
-		file.write((char*)&segments[i].numPrimitives, 4);
-		file.write((char*)&segments[i].parentArrayIndex, 4);
-		file.write((char*)&segments[i].numSubSegments, 4);
+	for (auto &segment : segmentation.segments) {
+		file.write((char*)&segment.startIndex, 4);
+		file.write((char*)&segment.numPrimitives, 4);
+		file.write((char*)&segment.parentArrayIndex, 4);
+		file.write((char*)&segment.numSubSegments, 4);
 
-		for (int j = 0; j < segments[i].numSubSegments; j++) {
-			file.write((char*)&segments[i].subSegments[j].startIndex, 4);
-			file.write((char*)&segments[i].subSegments[j].numPrimitives, 4);
-			file.write((char*)&segments[i].subSegments[j].arrayIndex, 4);
-			file.write((char*)&segments[i].subSegments[j].unkInt1, 4);
+		for (auto &subSegment : segment.subSegments) {
+			file.write((char*)&subSegment.startIndex, 4);
+			file.write((char*)&subSegment.numPrimitives, 4);
+			file.write((char*)&subSegment.arrayIndex, 4);
+			file.write((char*)&subSegment.unkInt1, 4);
 		}
 	}
 
-	if (numSegments < numTotalSegments) {
-		file.write((char*)&subSegmentData.numSegments, 4);
-		file.write((char*)&subSegmentData.numTotalSegments, 4);
+	if (segmentation.numSegments < segmentation.numTotalSegments) {
+		file.write((char*)&segmentation.subSegmentData.numSegments, 4);
+		file.write((char*)&segmentation.subSegmentData.numTotalSegments, 4);
 
-		for (int i = 0; i < numSegments; i++)
-			file.write((char*)&subSegmentData.arrayIndices[i], 4);
+		for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
+			file.write((char*)&arrayIndex, 4);
 
-		for (int i = 0; i < numTotalSegments; i++) {
-			file.write((char*)&subSegmentData.dataRecords[i].segmentUser, 4);
-			file.write((char*)&subSegmentData.dataRecords[i].unkInt2, 4);
-			file.write((char*)&subSegmentData.dataRecords[i].numData, 4);
+		for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
+			file.write((char*)&dataRecord.segmentUser, 4);
+			file.write((char*)&dataRecord.unkInt2, 4);
+			file.write((char*)&dataRecord.numData, 4);
 
-			for (int j = 0; j < subSegmentData.dataRecords[i].numData; j++)
-				file.write((char*)&subSegmentData.dataRecords[i].extraData[j], 4);
+			for (auto &data : dataRecord.extraData)
+				file.write((char*)&data, 4);
 		}
 
-		subSegmentData.ssfFile.Put(file, 2, false);
+		segmentation.subSegmentData.ssfFile.Put(file, 2, false);
 	}
 }
 
@@ -1578,25 +1571,22 @@ void BSSubIndexTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices)
 int BSSubIndexTriShape::CalcBlockSize() {
 	BSTriShape::CalcBlockSize();
 
-	// To-Do
-	//ApplySegmentation();
-
 	if (dataSize > 0) {
 		blockSize += 12;
 
-		blockSize += numSegments * 16;
-		for (int i = 0; i < numSegments; i++)
-			blockSize += segments[i].numSubSegments * 16;
+		blockSize += segmentation.numSegments * 16;
+		for (auto &segment : segmentation.segments)
+			blockSize += segment.numSubSegments * 16;
 
-		if (numSegments < numTotalSegments) {
+		if (segmentation.numSegments < segmentation.numTotalSegments) {
 			blockSize += 10;
-			blockSize += subSegmentData.numSegments * 4;
-			blockSize += subSegmentData.numTotalSegments * 12;
+			blockSize += segmentation.subSegmentData.numSegments * 4;
+			blockSize += segmentation.subSegmentData.numTotalSegments * 12;
 
-			for (int i = 0; i < subSegmentData.numTotalSegments; i++)
-				blockSize += subSegmentData.dataRecords[i].numData * 4;
+			for (auto &dataRecord : segmentation.subSegmentData.dataRecords)
+				blockSize += dataRecord.numData * 4;
 
-			blockSize += subSegmentData.ssfFile.str.length();
+			blockSize += segmentation.subSegmentData.ssfFile.str.length();
 		}
 	}
 
@@ -1604,46 +1594,36 @@ int BSSubIndexTriShape::CalcBlockSize() {
 }
 
 void BSSubIndexTriShape::SetDefaultSegments() {
-	// Probably skinned
-	SetSkinned(true);
+	segmentation.numPrimitives = numTriangles;
+	segmentation.numSegments = 4;
+	segmentation.numTotalSegments = 4;
 
-	numPrimitives = numTriangles;
-	numSegments = 4;
-	numTotalSegments = 4;
+	segmentation.subSegmentData.numSegments = 0;
+	segmentation.subSegmentData.numTotalSegments = 0;
 
-	subSegmentData.numSegments = 0;
-	subSegmentData.numTotalSegments = 0;
+	segmentation.subSegmentData.arrayIndices.clear();
+	segmentation.subSegmentData.dataRecords.clear();
+	segmentation.subSegmentData.ssfFile.str.clear();
 
-	subSegmentData.arrayIndices.clear();
-	subSegmentData.dataRecords.clear();
-	subSegmentData.ssfFile.str.clear();
-
-	segments.resize(4);
+	segmentation.segments.resize(4);
 	for (int i = 0; i < 3; i++) {
-		segments[i].startIndex = 0;
-		segments[i].numPrimitives = 0;
-		segments[i].parentArrayIndex = 0xFFFFFFFF;
-		segments[i].numSubSegments = 0;
+		segmentation.segments[i].startIndex = 0;
+		segmentation.segments[i].numPrimitives = 0;
+		segmentation.segments[i].parentArrayIndex = 0xFFFFFFFF;
+		segmentation.segments[i].numSubSegments = 0;
 	}
 
-	segments[3].startIndex = 0;
-	segments[3].numPrimitives = numTriangles;
-	segments[3].parentArrayIndex = 0xFFFFFFFF;
-	segments[3].numSubSegments = 0;
-}
-
-void BSSubIndexTriShape::ApplySegmentation() {
-	SetDefaultSegments();
-
-	numSegments = segmentTris.size();
-	numTotalSegments = numSegments;
-
-	// To-Do
+	segmentation.segments[3].startIndex = 0;
+	segmentation.segments[3].numPrimitives = numTriangles;
+	segmentation.segments[3].parentArrayIndex = 0xFFFFFFFF;
+	segmentation.segments[3].numSubSegments = 0;
 }
 
 void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
 	BSTriShape::Create(verts, tris, uvs, normals);
 
+	// Skinned most of the time
+	SetSkinned(true);
 	SetDefaultSegments();
 }
 

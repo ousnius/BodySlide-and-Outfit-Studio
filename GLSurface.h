@@ -46,6 +46,7 @@ class GLSurface {
 	bool bTextured;
 	bool bMaskVisible;
 	bool bWeightColors;
+	bool bSegmentColors;
 
 	float defLineWidth;
 	float defPointSize;
@@ -326,6 +327,14 @@ public:
 		for (auto &m : meshes)
 			if (m->material)
 				m->material->shader->ShowWeight(bWeightColors);
+	}
+
+	void SetSegmentColors(bool bVisible = true) {
+		bSegmentColors = bVisible;
+
+		for (auto &m : meshes)
+			if (m->material)
+				m->material->shader->ShowSegments(bSegmentColors);
 	}
 
 	void ToggleWeightColors() {

@@ -406,6 +406,16 @@ void GLShader::ShowWeight(bool bShow) {
 	}
 }
 
+void GLShader::ShowSegments(bool bShow) {
+	GLint loc = glGetUniformLocation(progID, "bShowSegments");
+
+	if (loc >= 0) {
+		glUseProgram(progID);
+		glUniform1f(loc, (bShow) ? 1.0f : 0.0f);
+		glUseProgram(0);
+	}
+}
+
 void  GLShader::ShowTexture(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowTexture");
 	if (loc >= 0) {
@@ -421,6 +431,10 @@ GLint GLShader::GetMaskAttribute() {
 
 GLint GLShader::GetWeightAttribute() {
 	return glGetAttribLocation(progID, "weightValue");
+}
+
+GLint GLShader::GetSegmentAttribute() {
+	return glGetAttribLocation(progID, "segmentValue");
 }
 
 bool GLShader::BuildShaders() {

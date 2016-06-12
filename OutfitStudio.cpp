@@ -149,12 +149,25 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitShapes"), OutfitStudio::OnShapeContext)
 	EVT_TREE_BEGIN_DRAG(XRCID("outfitShapes"), OutfitStudio::OnShapeDrag)
 	EVT_TREE_END_DRAG(XRCID("outfitShapes"), OutfitStudio::OnShapeDrop)
+
 	EVT_TREE_SEL_CHANGED(XRCID("outfitBones"), OutfitStudio::OnBoneSelect)
 	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudio::OnBoneContext)
 	EVT_COMMAND_RIGHT_CLICK(XRCID("outfitBones"), OutfitStudio::OnBoneTreeContext)
+
+	EVT_TREE_SEL_CHANGED(XRCID("segmentTree"), OutfitStudio::OnSegmentSelect)
+	EVT_TREE_ITEM_RIGHT_CLICK(XRCID("segmentTree"), OutfitStudio::OnSegmentContext)
+	EVT_COMMAND_RIGHT_CLICK(XRCID("segmentTree"), OutfitStudio::OnSegmentTreeContext)
+	EVT_MENU(XRCID("addSegment"), OutfitStudio::OnAddSegment)
+	EVT_MENU(XRCID("addSubSegment"), OutfitStudio::OnAddSubSegment)
+	EVT_MENU(XRCID("deleteSegment"), OutfitStudio::OnDeleteSegment)
+	EVT_MENU(XRCID("deleteSubSegment"), OutfitStudio::OnDeleteSubSegment)
+	EVT_CHOICE(XRCID("segmentType"), OutfitStudio::OnSegmentTypeChanged)
+	EVT_BUTTON(XRCID("segmentApply"), OutfitStudio::OnSegmentApply)
+	EVT_BUTTON(XRCID("segmentReset"), OutfitStudio::OnSegmentReset)
 	
 	EVT_BUTTON(XRCID("meshTabButton"), OutfitStudio::OnTabButtonClick)
 	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudio::OnTabButtonClick)
+	EVT_BUTTON(XRCID("segmentTabButton"), OutfitStudio::OnTabButtonClick)
 	EVT_BUTTON(XRCID("lightsTabButton"), OutfitStudio::OnTabButtonClick)
 
 	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudio::OnUpdateLights)
@@ -197,11 +210,9 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 
 	int statusWidths[] = { -1, 275, 100 };
 	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
-	if (statusBar) {
-		statusBar->SetFieldsCount(3);
-		statusBar->SetStatusWidths(3, statusWidths);
-		statusBar->SetStatusText(_("Ready!"));
-	}
+	statusBar->SetFieldsCount(3);
+	statusBar->SetStatusWidths(3, statusWidths);
+	statusBar->SetStatusText(_("Ready!"));
 
 	this->DragAcceptFiles(true);
 
@@ -209,8 +220,7 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	xrc->LoadToolBar(this, "toolBar");
 
 	wxSlider* fovSlider = (wxSlider*)GetToolBar()->FindWindowByName("fovSlider");
-	if (fovSlider)
-		fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
+	fovSlider->Bind(wxEVT_SLIDER, &OutfitStudio::OnFieldOfViewSlider, this);
 
 	visStateImages = new wxImageList(16, 16, false, 2);
 	wxBitmap visImg("res\\images\\icoVisible.png", wxBITMAP_TYPE_PNG);
@@ -225,18 +235,20 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 		visStateImages->Add(wfImg);
 
 	wxStateButton* meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
-	if (meshTab)
-		meshTab->SetCheck();
+	meshTab->SetCheck();
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
-	if (outfitShapes) {
-		outfitShapes->AssignStateImageList(visStateImages);
-		shapesRoot = outfitShapes->AddRoot("Shapes");
-	}
+	outfitShapes->AssignStateImageList(visStateImages);
+	shapesRoot = outfitShapes->AddRoot("Shapes");
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
-	if (outfitBones)
-		bonesRoot = outfitBones->AddRoot("Bones");
+	bonesRoot = outfitBones->AddRoot("Bones");
+
+	segmentTree = (wxTreeCtrl*)FindWindowByName("segmentTree");
+	segmentRoot = segmentTree->AddRoot("Segments");
+
+	wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
+	segmentType->Show(false);
 
 	int ambient = appConfig.GetIntValue("Lights/Ambient");
 	int brightness1 = appConfig.GetIntValue("Lights/Brightness1");
@@ -244,40 +256,30 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	int brightness3 = appConfig.GetIntValue("Lights/Brightness3");
 
 	lightSettings = (wxPanel*)FindWindowByName("lightSettings");
-	if (lightSettings) {
-		wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
-		if (lightAmbientSlider)
-			lightAmbientSlider->SetValue(ambient);
+	wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
+	lightAmbientSlider->SetValue(ambient);
 
-		wxSlider* lightBrightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
-		if (lightBrightnessSlider1)
-			lightBrightnessSlider1->SetValue(brightness1);
+	wxSlider* lightBrightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
+	lightBrightnessSlider1->SetValue(brightness1);
 
-		wxSlider* lightBrightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
-		if (lightBrightnessSlider2)
-			lightBrightnessSlider2->SetValue(brightness2);
+	wxSlider* lightBrightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
+	lightBrightnessSlider2->SetValue(brightness2);
 
-		wxSlider* lightBrightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
-		if (lightBrightnessSlider3)
-			lightBrightnessSlider3->SetValue(brightness3);
-	}
+	wxSlider* lightBrightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
+	lightBrightnessSlider3->SetValue(brightness3);
 
 	boneScale = (wxSlider*)FindWindowByName("boneScale");
 
 	targetGame = appConfig.GetIntValue("TargetGame");
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
-	if (leftPanel) {
-		glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
-		glView->SetNotifyWindow(this);
-	}
+	glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
+	glView->SetNotifyWindow(this);
 
 	wxWindow* rightPanel = FindWindowByName("rightSplitPanel");
-	if (rightPanel)
-		rightPanel->SetDoubleBuffered(true);
+	rightPanel->SetDoubleBuffered(true);
 
-	if (glView)
-		xrc->AttachUnknownControl("mGLView", glView, this);
+	xrc->AttachUnknownControl("mGLView", glView, this);
 
 	project = new OutfitProject(appConfig, this);	// Create empty project
 	CreateSetSliders();
@@ -293,17 +295,13 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	SetPosition(pos);
 
 	wxSplitterWindow* splitter = (wxSplitterWindow*)FindWindowByName("splitter");
-	if (splitter) {
-		int sashPos = appConfig.GetIntValue("OutfitStudioFrame.sashpos");
-		splitter->SetSashPosition(sashPos);
-	}
+	int sashPos = appConfig.GetIntValue("OutfitStudioFrame.sashpos");
+	splitter->SetSashPosition(sashPos);
 
 	wxSplitterWindow* splitterRight = (wxSplitterWindow*)FindWindowByName("splitterRight");
-	if (splitterRight)
-		splitterRight->SetSashPosition(200);
+	splitterRight->SetSashPosition(200);
 
-	if (leftPanel)
-		leftPanel->Layout();
+	leftPanel->Layout();
 
 	SetDropTarget(new DnDFile(this));
 
@@ -556,6 +554,8 @@ void OutfitStudio::UpdateActiveShapeUI() {
 			glView->ShowTransformTool(false);
 		if (glView->GetVertexEdit())
 			glView->ShowVertexEdit(false);
+
+		CreateSegmentTree();
 	}
 	else {
 		mesh* m = glView->GetMesh(activeItem->shapeName);
@@ -570,13 +570,12 @@ void OutfitStudio::UpdateActiveShapeUI() {
 			if (glView->GetVertexEdit())
 				glView->ShowVertexEdit();
 		}
+
+		CreateSegmentTree(activeItem->shapeName);
 	}
 }
 
 void OutfitStudio::SelectShape(const string& shapeName) {
-	if (!outfitShapes)
-		return;
-
 	wxTreeItemId item;
 	wxTreeItemId subitem;
 	wxTreeItemIdValue cookie;
@@ -1182,7 +1181,7 @@ void OutfitStudio::ClearProject() {
 
 void OutfitStudio::RenameProject(const string& projectName) {
 	project->outfitName = projectName;
-	if (outfitRoot.IsOk() && outfitShapes)
+	if (outfitRoot.IsOk())
 		outfitShapes->SetItemText(outfitRoot, projectName);
 }
 
@@ -1223,9 +1222,6 @@ void OutfitStudio::RefreshGUIFromProj() {
 }
 
 void OutfitStudio::AnimationGUIFromProj() {
-	if (!outfitBones)
-		return;
-
 	vector<string> activeBones;
 	if (outfitBones->GetChildrenCount(bonesRoot) > 0)
 		outfitBones->DeleteChildren(bonesRoot);
@@ -1250,7 +1246,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 	activeItem = nullptr;
 	selectedItems.clear();
 
-	if (outfitShapes && shapes.size() > 0) {
+	if (shapes.size() > 0) {
 		if (shapes.size() == 1 && project->IsBaseShape(shapes.front()))
 			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
 		else
@@ -1262,21 +1258,19 @@ void OutfitStudio::WorkingGUIFromProj() {
 
 		glView->AddMeshFromNif(project->GetWorkNif(), shape, true);
 		glView->SetMeshTexture(shape, project->GetShapeTexture(shape), project->GetWorkNif()->IsShaderSkin(shape));
-		if (outfitShapes) {
-			subItem = outfitShapes->AppendItem(outfitRoot, shape);
-			outfitShapes->SetItemState(subItem, 0);
-			outfitShapes->SetItemData(subItem, new ShapeItemData(project->GetWorkNif(), shape));
 
-			if (project->IsBaseShape(shape)) {
-				outfitShapes->SetItemBold(subItem);
-				outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
-			}
+		subItem = outfitShapes->AppendItem(outfitRoot, shape);
+		outfitShapes->SetItemState(subItem, 0);
+		outfitShapes->SetItemData(subItem, new ShapeItemData(shape));
+
+		if (project->IsBaseShape(shape)) {
+			outfitShapes->SetItemBold(subItem);
+			outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
 		}
 		glView->Render();
 	}
 
-	if (outfitShapes)
-		outfitShapes->ExpandAll();
+	outfitShapes->ExpandAll();
 }
 
 void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
@@ -1289,16 +1283,13 @@ void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 	string defOutputFile = copyStr + ".nif";
 
 	wxFilePickerCtrl* fp = (wxFilePickerCtrl*)win->FindWindowByName("sssSliderSetFile");
-	if (fp)
-		fp->SetPath(defSliderSetFile);
+	fp->SetPath(defSliderSetFile);
 
 	wxDirPickerCtrl* dp = (wxDirPickerCtrl*)win->FindWindowByName("sssShapeDataFolder");
-	if (dp)
-		dp->SetPath(defShapeDataDir);
+	dp->SetPath(defShapeDataDir);
 
 	fp = (wxFilePickerCtrl*)win->FindWindowByName("sssShapeDataFile");
-	if (fp)
-		fp->SetPath(defOutputFile);
+	fp->SetPath(defOutputFile);
 }
 
 void OutfitStudio::OnSSSGenWeightsTrue(wxCommandEvent& event) {
@@ -1541,8 +1532,7 @@ void OutfitStudio::OnBrushPane(wxCollapsiblePaneEvent& event) {
 			brushPane->Collapse();
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
-	if (leftPanel)
-		leftPanel->Layout();
+	leftPanel->Layout();
 }
 
 void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
@@ -1878,8 +1868,7 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 	wxTreeItemId subitem;
 
 	project->ClearBoneScale();
-	if (boneScale)
-		boneScale->SetValue(0);
+	boneScale->SetValue(0);
 
 	if (!activeItem)
 		return;
@@ -1972,7 +1961,7 @@ void OutfitStudio::OnShapeDrop(wxTreeEvent& event) {
 		return;
 
 	// Set data
-	ShapeItemData* dropData = new ShapeItemData(activeItem->refFile, activeItem->shapeName);
+	ShapeItemData* dropData = new ShapeItemData(activeItem->shapeName);
 	outfitShapes->SetItemState(movedItem, 0);
 	outfitShapes->SetItemData(movedItem, dropData);
 	if (project->IsBaseShape(dropData->shapeName)) {
@@ -2001,6 +1990,591 @@ void OutfitStudio::OnBoneTreeContext(wxCommandEvent& WXUNUSED(event)) {
 	if (menu) {
 		PopupMenu(menu);
 		delete menu;
+	}
+}
+
+void OutfitStudio::OnSegmentSelect(wxTreeEvent& event) {
+	ShowSegment(event.GetItem());
+
+	wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
+	segmentApply->Enable();
+
+	wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
+	segmentReset->Enable();
+}
+
+void OutfitStudio::OnSegmentContext(wxTreeEvent& event) {
+	if (!event.GetItem().IsOk())
+		return;
+
+	segmentTree->SelectItem(event.GetItem());
+
+	wxMenu* menu = nullptr;
+	SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(event.GetItem()));
+	if (subSegmentData)
+		menu = wxXmlResource::Get()->LoadMenu("menuSubSegmentContext");
+	else
+		menu = wxXmlResource::Get()->LoadMenu("menuSegmentContext");
+
+	if (menu) {
+		PopupMenu(menu);
+		delete menu;
+	}
+}
+
+void OutfitStudio::OnSegmentTreeContext(wxCommandEvent& WXUNUSED(event)) {
+	wxMenu* menu = wxXmlResource::Get()->LoadMenu("menuSegmentTreeContext");
+	if (menu) {
+		PopupMenu(menu);
+		delete menu;
+	}
+}
+
+void OutfitStudio::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
+	wxTreeItemId newItem;
+	if (!activeSegment.IsOk() || segmentTree->GetChildrenCount(segmentRoot) <= 0) {
+		vector<Triangle> shapeTris;
+		project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &shapeTris);
+
+		vector<ushort> tris(shapeTris.size());
+		for (int id = 0; id < tris.size(); id++)
+			tris[id] = id;
+
+		newItem = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(tris));
+	}
+	else
+		newItem = segmentTree->InsertItem(segmentRoot, activeSegment, "Segment", -1, -1, new SegmentItemData(vector<ushort>()));
+
+	if (newItem.IsOk()) {
+		segmentTree->UnselectAll();
+		segmentTree->SelectItem(newItem);
+	}
+
+	UpdateSegmentNames();
+}
+
+void OutfitStudio::OnAddSubSegment(wxCommandEvent& WXUNUSED(event)) {
+	wxTreeItemId newItem;
+	wxTreeItemId parent = segmentTree->GetItemParent(activeSegment);
+	if (parent == segmentRoot) {
+		vector<ushort> tris;
+		if (segmentTree->GetChildrenCount(activeSegment) <= 0) {
+			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
+			if (segmentData)
+				tris = segmentData->tris;
+		}
+
+		newItem = segmentTree->PrependItem(activeSegment, "Sub Segment", -1, -1, new SubSegmentItemData(tris, 0xFFFFFFFF));
+	}
+	else
+		newItem = segmentTree->InsertItem(parent, activeSegment, "Sub Segment", -1, -1, new SubSegmentItemData(vector<ushort>(), 0xFFFFFFFF));
+
+	if (newItem.IsOk()) {
+		segmentTree->UnselectAll();
+		segmentTree->SelectItem(newItem);
+	}
+
+	UpdateSegmentNames();
+}
+
+void OutfitStudio::OnDeleteSegment(wxCommandEvent& WXUNUSED(event)) {
+	SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
+	if (segmentData) {
+		vector<ushort> tris = segmentData->tris;
+		wxTreeItemId sibling = segmentTree->GetPrevSibling(activeSegment);
+		if (!sibling.IsOk())
+			sibling = segmentTree->GetNextSibling(activeSegment);
+
+		if (sibling.IsOk()) {
+			SegmentItemData* siblingData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(sibling));
+			if (siblingData) {
+				for (auto &id : tris)
+					siblingData->tris.push_back(id);
+
+				wxTreeItemIdValue cookie;
+				wxTreeItemId child = segmentTree->GetFirstChild(sibling, cookie);
+				if (child.IsOk()) {
+					SubSegmentItemData* childData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(child));
+					if (childData) {
+						for (auto &id : tris)
+							childData->tris.push_back(id);
+					}
+				}
+			}
+
+			segmentTree->UnselectAll();
+			segmentTree->Delete(activeSegment);
+			segmentTree->SelectItem(sibling);
+		}
+		else {
+			segmentTree->Delete(activeSegment);
+			activeSegment.Unset();
+		}
+	}
+
+	UpdateSegmentNames();
+}
+
+void OutfitStudio::OnDeleteSubSegment(wxCommandEvent& WXUNUSED(event)) {
+	SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
+	if (subSegmentData) {
+		vector<ushort> tris = subSegmentData->tris;
+		wxTreeItemId sibling = segmentTree->GetPrevSibling(activeSegment);
+		if (!sibling.IsOk())
+			sibling = segmentTree->GetNextSibling(activeSegment);
+
+		if (sibling.IsOk()) {
+			SubSegmentItemData* siblingData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(sibling));
+			if (siblingData)
+				for (auto &id : tris)
+					siblingData->tris.push_back(id);
+
+			segmentTree->UnselectAll();
+			segmentTree->Delete(activeSegment);
+			segmentTree->SelectItem(sibling);
+		}
+		else {
+			wxTreeItemId parent = segmentTree->GetItemParent(activeSegment);
+			segmentTree->UnselectAll();
+			segmentTree->Delete(activeSegment);
+			segmentTree->SelectItem(parent);
+		}
+	}
+
+	UpdateSegmentNames();
+}
+
+void OutfitStudio::OnSegmentTypeChanged(wxCommandEvent& event) {
+	wxChoice* segmentType = (wxChoice*)event.GetEventObject();
+
+	if (activeSegment.IsOk() && segmentTree->GetItemParent(activeSegment).IsOk()) {
+		SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
+		if (subSegmentData) {
+			unsigned long type = 0xFFFFFFFF;
+			segmentType->GetStringSelection().Prepend("0x").ToULong(&type, 16);
+			subSegmentData->type = type;
+		}
+	}
+}
+
+void OutfitStudio::OnSegmentApply(wxCommandEvent& event) {
+	((wxButton*)event.GetEventObject())->Enable(false);
+
+	BSSubIndexTriShape::BSSITSSegmentation segmentation;
+
+	uint parentArrayIndex = 0;
+	uint segmentIndex = 0;
+	uint triangleOffset = 0;
+
+	vector<ushort> triangles;
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
+
+	while (child.IsOk()) {
+		SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(child));
+		if (segmentData) {
+			// Create new segment
+			BSSubIndexTriShape::BSSITSSegment segment;
+			segment.numPrimitives = segmentData->tris.size();
+			segment.startIndex = triangleOffset;
+
+			size_t childCount = segmentTree->GetChildrenCount(child);
+			segment.numSubSegments = childCount;
+
+			// Create new segment data record
+			BSSubIndexTriShape::BSSITSSubSegmentDataRecord segmentDataRecord;
+			segmentDataRecord.segmentUser = segmentIndex;
+
+			segmentation.subSegmentData.arrayIndices.push_back(parentArrayIndex);
+			segmentation.subSegmentData.dataRecords.push_back(segmentDataRecord);
+
+			if (childCount > 0) {
+				// Add all triangles from the subsegments of the segment
+				uint subSegmentNumber = 1;
+				wxTreeItemIdValue subCookie;
+				wxTreeItemId subChild = segmentTree->GetFirstChild(child, subCookie);
+				while (subChild.IsOk()) {
+					SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
+					if (subSegmentData) {
+						// Create new subsegment
+						BSSubIndexTriShape::BSSITSSubSegment subSegment;
+						subSegment.arrayIndex = parentArrayIndex;
+						subSegment.numPrimitives = subSegmentData->tris.size();
+						subSegment.startIndex = triangleOffset;
+
+						sort(subSegmentData->tris.begin(), subSegmentData->tris.end());
+						triangleOffset += subSegmentData->tris.size() * 3;
+						for (auto &id : subSegmentData->tris)
+							triangles.push_back(id);
+
+						segment.subSegments.push_back(subSegment);
+
+						// Create new subsegment data record
+						BSSubIndexTriShape::BSSITSSubSegmentDataRecord subSegmentDataRecord;
+						subSegmentDataRecord.segmentUser = subSegmentNumber;
+						subSegmentDataRecord.unkInt2 = subSegmentData->type;
+						subSegmentDataRecord.numData = subSegmentData->extraData.size();
+						subSegmentDataRecord.extraData = subSegmentData->extraData;
+
+						segmentation.subSegmentData.dataRecords.push_back(subSegmentDataRecord);
+						subSegmentNumber++;
+					}
+
+					subChild = segmentTree->GetNextChild(activeSegment, subCookie);
+				}
+			}
+			else {
+				// No subsegments, add the triangles of the segment itself
+				sort(segmentData->tris.begin(), segmentData->tris.end());
+				triangleOffset += segmentData->tris.size() * 3;
+				for (auto &id : segmentData->tris)
+					triangles.push_back(id);
+			}
+
+			segmentation.segments.push_back(segment);
+
+			parentArrayIndex += childCount + 1;
+			segmentIndex++;
+		}
+
+		child = segmentTree->GetNextChild(segmentRoot, cookie);
+	}
+
+	if (!project->GetWorkNif()->ReorderTriangles(activeItem->shapeName, triangles))
+		return;
+
+	segmentation.numPrimitives = triangles.size();
+	segmentation.numSegments = segmentIndex;
+	segmentation.numTotalSegments = parentArrayIndex;
+
+	segmentation.subSegmentData.numSegments = segmentIndex;
+	segmentation.subSegmentData.numTotalSegments = parentArrayIndex;
+
+	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+	segmentation.subSegmentData.ssfFile.str = segmentSSF->GetValue().ToStdString();
+
+	project->GetWorkNif()->SetShapeSegments(activeItem->shapeName, segmentation);
+	CreateSegmentTree(activeItem->shapeName);
+}
+
+void OutfitStudio::OnSegmentReset(wxCommandEvent& event) {
+	((wxButton*)event.GetEventObject())->Enable(false);
+	CreateSegmentTree(activeItem->shapeName);
+}
+
+void OutfitStudio::CreateSegmentTree(const string& shapeName) {
+	if (segmentTree->GetChildrenCount(segmentRoot) > 0)
+		segmentTree->DeleteChildren(segmentRoot);
+
+	int arrayIndex = 0;
+	BSSubIndexTriShape::BSSITSSegmentation segmentation;
+
+	if (project->GetWorkNif()->GetShapeSegments(shapeName, segmentation)) {
+		for (int i = 0; i < segmentation.segments.size(); i++) {
+			uint startIndex = segmentation.segments[i].startIndex / 3;
+			vector<ushort> tris(segmentation.segments[i].numPrimitives);
+			for (int id = startIndex; id < startIndex + segmentation.segments[i].numPrimitives; id++)
+				tris[id - startIndex] = id;
+
+			wxTreeItemId segID = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(tris));
+			if (segID.IsOk()) {
+				for (int j = 0; j < segmentation.segments[i].subSegments.size(); j++) {
+					startIndex = segmentation.segments[i].subSegments[j].startIndex / 3;
+					vector<ushort> subTris(segmentation.segments[i].subSegments[j].numPrimitives);
+					for (int id = startIndex; id < startIndex + segmentation.segments[i].subSegments[j].numPrimitives; id++)
+						subTris[id - startIndex] = id;
+
+					arrayIndex++;
+					segmentTree->AppendItem(segID, "Sub Segment", -1, -1,
+						new SubSegmentItemData(subTris, segmentation.subSegmentData.dataRecords[arrayIndex].unkInt2, segmentation.subSegmentData.dataRecords[arrayIndex].extraData));
+				}
+			}
+			arrayIndex++;
+		}
+	}
+
+	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+	segmentSSF->ChangeValue(segmentation.subSegmentData.ssfFile.str);
+
+	UpdateSegmentNames();
+	segmentTree->ExpandAll();
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
+	if (child.IsOk())
+		segmentTree->SelectItem(child);
+}
+
+void OutfitStudio::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
+	unordered_map<ushort, float> mask;
+	wxChoice* segmentType = nullptr;
+	if (!updateFromMask) {
+		segmentType = (wxChoice*)FindWindowByName("segmentType");
+		segmentType->Disable();
+		segmentType->SetSelection(0);
+	}
+	else
+		glView->GetActiveMask(mask);
+
+	if (item.IsOk())
+		activeSegment = item;
+
+	if (!activeSegment.IsOk() || !segmentTree->GetItemParent(activeSegment).IsOk())
+		return;
+
+	// Get all triangles of the active shape
+	vector<Triangle> tris;
+	project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
+
+	wxTreeItemId parent;
+	SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
+	if (subSegmentData) {
+		// Active segment is a subsegment
+		parent = segmentTree->GetItemParent(activeSegment);
+
+		if (updateFromMask) {
+			subSegmentData->tris.clear();
+
+			// Add triangles from mask (1 or more out of 3 vertices have to be masked)
+			for (int t = 0; t < tris.size(); t++) {
+				if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end())
+					subSegmentData->tris.push_back(t);
+			}
+
+			// Remove new triangles from all other subsegments of the parent segment
+			wxTreeItemIdValue cookie;
+			wxTreeItemId child = segmentTree->GetFirstChild(parent, cookie);
+			while (child.IsOk()) {
+				SubSegmentItemData* childSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(child));
+				if (childSubSegmentData && childSubSegmentData != subSegmentData) {
+					for (int i = 0; i < subSegmentData->tris.size(); i++) {
+						for (int j = childSubSegmentData->tris.size() - 1; j >= 0; --j) {
+							if (childSubSegmentData->tris[j] == subSegmentData->tris[i]) {
+								childSubSegmentData->tris.erase(childSubSegmentData->tris.begin() + j);
+								j--;
+							}
+						}
+					}
+				}
+
+				child = segmentTree->GetNextChild(parent, cookie);
+			}
+
+			// Add new triangles to the parent segment as well
+			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(parent));
+			if (segmentData) {
+				for (int i = 0; i < subSegmentData->tris.size(); i++)
+					if (find(segmentData->tris.begin(), segmentData->tris.end(), subSegmentData->tris[i]) == segmentData->tris.end())
+						segmentData->tris.push_back(subSegmentData->tris[i]);
+			}
+
+			// Remove new triangles from all other segments and their subsegments
+			wxTreeItemIdValue segCookie;
+			wxTreeItemId segChild = segmentTree->GetFirstChild(segmentRoot, segCookie);
+			while (segChild.IsOk()) {
+				SegmentItemData* childSegmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(segChild));
+				if (childSegmentData && childSegmentData != segmentData) {
+					for (int i = 0; i < segmentData->tris.size(); i++) {
+						for (int j = childSegmentData->tris.size() - 1; j >= 0; --j) {
+							if (childSegmentData->tris[j] == segmentData->tris[i]) {
+								wxTreeItemIdValue subCookie;
+								wxTreeItemId subChild = segmentTree->GetFirstChild(segChild, subCookie);
+								while (subChild.IsOk()) {
+									SubSegmentItemData* childSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
+									if (childSubSegmentData) {
+										auto foundTri = find(childSubSegmentData->tris.begin(), childSubSegmentData->tris.end(), childSegmentData->tris[j]);
+										if (foundTri != childSubSegmentData->tris.end())
+											childSubSegmentData->tris.erase(foundTri);
+									}
+
+									subChild = segmentTree->GetNextChild(segChild, subCookie);
+								}
+
+								childSegmentData->tris.erase(childSegmentData->tris.begin() + j);
+								j--;
+							}
+						}
+					}
+				}
+
+				segChild = segmentTree->GetNextChild(segmentRoot, segCookie);
+			}
+		}
+		else {
+			segmentType->Enable();
+			segmentType->SetStringSelection(wxString::Format("%x", subSegmentData->type));
+		}
+	}
+	else {
+		SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(activeSegment));
+		if (segmentData) {
+			// Active segment is a normal segment
+			parent = activeSegment;
+
+			if (updateFromMask) {
+				segmentData->tris.clear();
+
+				// Add triangles from mask (1 or more out of 3 vertices have to be masked)
+				for (int t = 0; t < tris.size(); t++) {
+					if (mask.find(tris[t].p1) != mask.end() && mask.find(tris[t].p2) != mask.end() && mask.find(tris[t].p3) != mask.end())
+						segmentData->tris.push_back(t);
+				}
+
+				// Remove new triangles from all other segments and their subsegments
+				wxTreeItemIdValue cookie;
+				wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
+				while (child.IsOk()) {
+					SegmentItemData* childSegmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(child));
+					if (childSegmentData && childSegmentData != segmentData) {
+						for (int i = 0; i < segmentData->tris.size(); i++) {
+							for (int j = childSegmentData->tris.size() - 1; j >= 0; --j) {
+								if (childSegmentData->tris[j] == segmentData->tris[i]) {
+									wxTreeItemIdValue subCookie;
+									wxTreeItemId subChild = segmentTree->GetFirstChild(child, subCookie);
+									while (subChild.IsOk()) {
+										SubSegmentItemData* childSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
+										if (childSubSegmentData) {
+											auto foundTri = find(childSubSegmentData->tris.begin(), childSubSegmentData->tris.end(), childSegmentData->tris[j]);
+											if (foundTri != childSubSegmentData->tris.end())
+												childSubSegmentData->tris.erase(foundTri);
+										}
+
+										subChild = segmentTree->GetNextChild(child, subCookie);
+									}
+
+									childSegmentData->tris.erase(childSegmentData->tris.begin() + j);
+									j--;
+								}
+							}
+						}
+					}
+
+					child = segmentTree->GetNextChild(segmentRoot, cookie);
+				}
+
+				// Check if all triangles of the segment are assigned to any subsegment
+				for (int t = 0; t < segmentData->tris.size(); t++) {
+					bool found = false;
+					wxTreeItemIdValue subCookie;
+					wxTreeItemId subChild = segmentTree->GetFirstChild(activeSegment, subCookie);
+					while (subChild.IsOk()) {
+						SubSegmentItemData* childSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
+						if (childSubSegmentData)
+							if (find(childSubSegmentData->tris.begin(), childSubSegmentData->tris.end(), segmentData->tris[t]) != childSubSegmentData->tris.end())
+								found = true;
+
+						if (found)
+							break;
+
+						subChild = segmentTree->GetNextChild(activeSegment, subCookie);
+					}
+
+					// If not, add it to the last subsegment
+					if (!found) {
+						wxTreeItemId last = segmentTree->GetLastChild(activeSegment);
+						if (last.IsOk()) {
+							SubSegmentItemData* lastSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(last));
+							if (lastSubSegmentData)
+								lastSubSegmentData->tris.push_back(segmentData->tris[t]);
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Display segmentation colors depending on what is selected
+	mesh* m = glView->GetMesh(activeItem->shapeName);
+	if (m) {
+		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+
+		if (parent.IsOk()) {
+			SegmentItemData* segmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(parent));
+			if (segmentData) {
+				size_t childCount = segmentTree->GetChildrenCount(parent);
+				if (childCount > 0) {
+					// Apply dynamic color to all subsegments of the segment
+					float color = 0.0f;
+					wxTreeItemIdValue cookie;
+					wxTreeItemId child = segmentTree->GetFirstChild(parent, cookie);
+					while (child.IsOk()) {
+						SubSegmentItemData* childSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(child));
+						if (childSubSegmentData) {
+							color += 1.0f / childCount;
+
+							if (childSubSegmentData != subSegmentData) {
+								for (auto &id : childSubSegmentData->tris) {
+									if (tris.size() <= id)
+										continue;
+
+									m->vcolors[tris[id].p1].y = color;
+									m->vcolors[tris[id].p2].y = color;
+									m->vcolors[tris[id].p3].y = color;
+								}
+							}
+							else {
+								for (auto &id : childSubSegmentData->tris) {
+									if (tris.size() <= id)
+										continue;
+
+									m->vcolors[tris[id].p1].x = 1.0f;
+									m->vcolors[tris[id].p2].x = 1.0f;
+									m->vcolors[tris[id].p3].x = 1.0f;
+									m->vcolors[tris[id].p1].z = color;
+									m->vcolors[tris[id].p2].z = color;
+									m->vcolors[tris[id].p3].z = color;
+								}
+							}
+						}
+
+						child = segmentTree->GetNextChild(activeSegment, cookie);
+					}
+				}
+				else {
+					// No subsegments, apply fixed color to segment
+					for (auto &id : segmentData->tris) {
+						if (tris.size() <= id)
+							continue;
+
+						m->vcolors[tris[id].p1].x = 1.0f;
+						m->vcolors[tris[id].p2].x = 1.0f;
+						m->vcolors[tris[id].p3].x = 1.0f;
+						m->vcolors[tris[id].p1].z = 1.0f;
+						m->vcolors[tris[id].p2].z = 1.0f;
+						m->vcolors[tris[id].p3].z = 1.0f;
+					}
+				}
+			}
+		}
+	}
+
+	glView->Render();
+}
+
+void OutfitStudio::UpdateSegmentNames() {
+	int segmentIndex = 0;
+	int arrayIndex = 0;
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
+
+	while (child.IsOk()) {
+		segmentTree->SetItemText(child, wxString::Format("Segment #%d, Array #%d", segmentIndex, arrayIndex));
+
+		int subSegmentIndex = 0;
+		wxTreeItemIdValue subCookie;
+		wxTreeItemId subChild = segmentTree->GetFirstChild(child, subCookie);
+
+		while (subChild.IsOk()) {
+			segmentTree->SetItemText(subChild, wxString::Format("Sub Segment #%d, Array #%d", subSegmentIndex, arrayIndex));
+
+			subChild = segmentTree->GetNextChild(child, subCookie);
+			subSegmentIndex++;
+			arrayIndex++;
+		}
+
+		child = segmentTree->GetNextChild(segmentRoot, cookie);
+		segmentIndex++;
+		arrayIndex++;
 	}
 }
 
@@ -2098,6 +2672,7 @@ void OutfitStudio::OnSelectTool(wxCommandEvent& event) {
 
 	// One of the brushes was activated
 	glView->SetEditMode();
+	glView->SetBrushSize(glView->GetBrushSize());
 
 	CheckBrushBounds();
 	UpdateBrushPane();
@@ -2125,14 +2700,12 @@ void OutfitStudio::OnTogglePerspective(wxCommandEvent& event) {
 
 void OutfitStudio::OnFieldOfViewSlider(wxCommandEvent& event) {
 	wxSlider* fovSlider = (wxSlider*)event.GetEventObject();
-	if (fovSlider) {
-		int fieldOfView = fovSlider->GetValue();
-		wxStaticText* fovLabel = (wxStaticText*)GetToolBar()->FindWindowByName("fovLabel");
-		if (fovLabel)
-			fovLabel->SetLabel(wxString::Format(_("Field of View: %d"), fieldOfView));
+	int fieldOfView = fovSlider->GetValue();
 
-		glView->SetFieldOfView(fieldOfView);
-	}
+	wxStaticText* fovLabel = (wxStaticText*)GetToolBar()->FindWindowByName("fovLabel");
+	fovLabel->SetLabel(wxString::Format(_("Field of View: %d"), fieldOfView));
+
+	glView->SetFieldOfView(fieldOfView);
 }
 
 void OutfitStudio::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
@@ -2140,9 +2713,6 @@ void OutfitStudio::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
 	wxSlider* brightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
 	wxSlider* brightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
 	wxSlider* brightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
-
-	if (!ambientSlider || !brightnessSlider1 || !brightnessSlider2 || !brightnessSlider3)
-		return;
 
 	int ambient = ambientSlider->GetValue();
 	int brightness1 = brightnessSlider1->GetValue();
@@ -2157,7 +2727,7 @@ void OutfitStudio::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
-	int ambient = 80;
+	int ambient = 20;
 	int brightness1 = 55;
 	int brightness2 = 45;
 	int brightness3 = 45;
@@ -2165,20 +2735,16 @@ void OutfitStudio::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
 	glView->UpdateLights(ambient, brightness1, brightness2, brightness3);
 
 	wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
-	if (lightAmbientSlider)
-		lightAmbientSlider->SetValue(ambient);
+	lightAmbientSlider->SetValue(ambient);
 
 	wxSlider* lightBrightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
-	if (lightBrightnessSlider1)
-		lightBrightnessSlider1->SetValue(brightness1);
+	lightBrightnessSlider1->SetValue(brightness1);
 
 	wxSlider* lightBrightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
-	if (lightBrightnessSlider2)
-		lightBrightnessSlider2->SetValue(brightness2);
+	lightBrightnessSlider2->SetValue(brightness2);
 
 	wxSlider* lightBrightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
-	if (lightBrightnessSlider3)
-		lightBrightnessSlider3->SetValue(brightness3);
+	lightBrightnessSlider3->SetValue(brightness3);
 
 	Config.SetValue("Lights/Ambient", ambient);
 	Config.SetValue("Lights/Brightness1", brightness1);
@@ -2250,23 +2816,57 @@ void OutfitStudio::OnReadoutChange(wxCommandEvent& event){
 void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 	int id = event.GetId();
 
+	if (id != XRCID("segmentTabButton")) {
+		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
+		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
+		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
+		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
+
+		segmentTypeLabel->Show(false);
+		segmentType->Show(false);
+		segmentSSFLabel->Show(false);
+		segmentSSF->Show(false);
+		segmentApply->Show(false);
+		segmentReset->Show(false);
+
+		if (glView->GetSegmentMode())
+			glView->ClearMask();
+
+		glView->SetSegmentMode(false);
+		glView->SetSegmentsVisible(false);
+		glView->SetMaskVisible();
+		glView->SetGlobalBrushCollision();
+
+		GetMenuBar()->Check(XRCID("btnBrushCollision"), true);
+		GetMenuBar()->Check(XRCID("btnShowMask"), true);
+		GetMenuBar()->Enable(XRCID("btnBrushCollision"), true);
+		GetMenuBar()->Enable(XRCID("btnSelect"), true);
+		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
+		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
+		GetMenuBar()->Enable(XRCID("btnShowMask"), true);
+
+		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), true);
+		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), true);
+		GetToolBar()->EnableTool(XRCID("btnSelect"), true);
+	}
+
 	if (id != XRCID("boneTabButton")) {
-		if (boneScale)
-			boneScale->Show(false);
+		boneScale->Show(false);
 
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
-		if (boneScaleLabel)
-			boneScaleLabel->Show(false);
-
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
-		if (cbFixedWeight)
-			cbFixedWeight->Show(false);
+
+		boneScaleLabel->Show(false);
+		cbFixedWeight->Show(false);
 
 		project->ClearBoneScale();
 
 		glView->SetXMirror(previousMirror);
 		glView->SetTransformMode(false);
 		glView->SetActiveBrush(1);
+		glView->SetEditMode();
 		glView->SetWeightVisible(false);
 
 		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
@@ -2290,56 +2890,48 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 	}
 
 	if (id == XRCID("meshTabButton")) {
-		if (outfitBones)
-			outfitBones->Hide();
-		if (lightSettings)
-			lightSettings->Hide();
-		if (outfitShapes)
-			outfitShapes->Show();
+		outfitBones->Hide();
+		segmentTree->Hide();
+		lightSettings->Hide();
+		outfitShapes->Show();
 
 		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		if (boneTabButton)
-			boneTabButton->SetCheck(false);
-
+		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
-		if (lightsTabButton)
-			lightsTabButton->SetCheck(false);
+
+		boneTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
 	}
 	else if (id == XRCID("boneTabButton")) {
-		if (outfitShapes)
-			outfitShapes->Hide();
-		if (lightSettings)
-			lightSettings->Hide();
-		if (outfitBones)
-			outfitBones->Show();
+		outfitShapes->Hide();
+		segmentTree->Hide();
+		lightSettings->Hide();
+		outfitBones->Show();
 
 		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		if (meshTabButton)
-			meshTabButton->SetCheck(false);
-
+		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
-		if (lightsTabButton)
-			lightsTabButton->SetCheck(false);
 
-		if (boneScale) {
-			boneScale->SetValue(0);
-			boneScale->Show();
-		}
+		meshTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		boneScale->SetValue(0);
+		boneScale->Show();
 		
 		wxStaticText* boneScaleLabel = (wxStaticText*)FindWindowByName("boneScaleLabel");
-		if (boneScaleLabel)
-			boneScaleLabel->Show();
-
 		wxCheckBox* cbFixedWeight = (wxCheckBox*)FindWindowByName("cbFixedWeight");
-		if (cbFixedWeight)
-			cbFixedWeight->Show();
+
+		boneScaleLabel->Show();
+		cbFixedWeight->Show();
 		
 		glView->SetTransformMode(false);
 		glView->SetActiveBrush(10);
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		glView->SetEditMode();
-		glView->SetWeightVisible(true);
+		glView->SetWeightVisible();
 
 		GetMenuBar()->Check(XRCID("btnWeightBrush"), true);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
@@ -2360,33 +2952,95 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
 	}
-	else if (id == XRCID("lightsTabButton")) {
-		if (outfitShapes)
-			outfitShapes->Hide();
-		if (outfitBones)
-			outfitBones->Hide();
-		if (lightSettings)
-			lightSettings->Show();
+	else if (id == XRCID("segmentTabButton")) {
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		lightSettings->Hide();
+		segmentTree->Show();
 
 		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
-		if (meshTabButton)
-			meshTabButton->SetCheck(false);
-
 		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
-		if (boneTabButton)
-			boneTabButton->SetCheck(false);
+		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+
+		meshTabButton->SetCheck(false);
+		boneTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		wxStaticText* segmentTypeLabel = (wxStaticText*)FindWindowByName("segmentTypeLabel");
+		wxChoice* segmentType = (wxChoice*)FindWindowByName("segmentType");
+		wxStaticText* segmentSSFLabel = (wxStaticText*)FindWindowByName("segmentSSFLabel");
+		wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
+		wxButton* segmentApply = (wxButton*)FindWindowByName("segmentApply");
+		wxButton* segmentReset = (wxButton*)FindWindowByName("segmentReset");
+
+		segmentTypeLabel->Show();
+		segmentType->Show();
+		segmentSSFLabel->Show();
+		segmentSSF->Show();
+		segmentApply->Show();
+		segmentReset->Show();
+
+		glView->SetActiveBrush(0);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		glView->SetSegmentMode();
+		glView->SetEditMode();
+		glView->SetSegmentsVisible();
+		glView->SetMaskVisible(false);
+		glView->SetGlobalBrushCollision(false);
+
+		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
+		GetMenuBar()->Check(XRCID("btnXMirror"), false);
+		GetMenuBar()->Check(XRCID("btnBrushCollision"), false);
+		GetMenuBar()->Check(XRCID("btnShowMask"), false);
+		GetMenuBar()->Enable(XRCID("btnSelect"), false);
+		GetMenuBar()->Enable(XRCID("btnTransform"), false);
+		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
+		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnBrushCollision"), false);
+		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
+		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
+		GetMenuBar()->Enable(XRCID("btnShowMask"), false);
+
+		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
+		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), false);
+		GetToolBar()->EnableTool(XRCID("btnSelect"), false);
+		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
+		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), false);
+		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), false);
+
+		ShowSegment();
+	}
+	else if (id == XRCID("lightsTabButton")) {
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		segmentTree->Hide();
+		lightSettings->Show();
+
+		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
+		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
+
+		meshTabButton->SetCheck(false);
+		boneTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
 	}
 
 	CheckBrushBounds();
 	UpdateBrushPane();
 
 	wxPanel* topSplitPanel = (wxPanel*)FindWindowByName("topSplitPanel");
-	if (topSplitPanel)
-		topSplitPanel->Layout();
-
 	wxPanel* bottomSplitPanel = (wxPanel*)FindWindowByName("bottomSplitPanel");
-	if (bottomSplitPanel)
-		bottomSplitPanel->Layout();
+
+	topSplitPanel->Layout();
+	bottomSplitPanel->Layout();
 
 	Refresh();
 }
@@ -2435,7 +3089,7 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 			boneScale->SetValue(0);
 	}
 
-	if (outfitBones && sliderName == "boneScale") {
+	if (sliderName == "boneScale") {
 		wxArrayTreeItemIds selItems;
 		outfitBones->GetSelections(selItems);
 		if (selItems.size() > 0) {
@@ -3059,9 +3713,6 @@ void OutfitStudio::OnSliderConformAll(wxCommandEvent& event) {
 	wxTreeItemIdValue cookie;
 	project->GetShapes(shapes);
 	if (shapes.size() - 1 == 0 || project->GetBaseShape().empty())
-		return;
-
-	if (!outfitShapes)
 		return;
 
 	wxLogMessage("Conforming all shapes...");
@@ -3759,7 +4410,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 		subitem = outfitShapes->AppendItem(outfitRoot, newname);
 		outfitShapes->SetItemState(subitem, 0);
-		outfitShapes->SetItemData(subitem, new ShapeItemData(project->GetWorkNif(), newname));
+		outfitShapes->SetItemData(subitem, new ShapeItemData(newname));
 	}
 }
 
@@ -3928,9 +4579,6 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
-	if (!outfitBones)
-		return;
-
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
@@ -3971,9 +4619,6 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
-	if (!outfitBones)
-		return;
-
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
@@ -4219,6 +4864,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	editMode = false;
 	transformMode = false;
 	vertexEdit = false;
+	segmentMode = false;
 	bMaskPaint = false;
 	bWeightPaint = false;
 	isPainting = false;
@@ -4457,7 +5103,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	savedBrush = activeBrush;
 
 	if (wxGetKeyState(WXK_CONTROL)) {
-		if (wxGetKeyState(WXK_ALT)) {
+		if (wxGetKeyState(WXK_ALT) && !segmentMode) {
 			UnMaskBrush.setStrength(-maskBrush.getStrength());
 			activeBrush = &UnMaskBrush;
 		}
@@ -4480,7 +5126,7 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			weightBrush.refBone = os->GetActiveBone();
 		}
 	}
-	else if (wxGetKeyState(WXK_ALT)) {
+	else if (wxGetKeyState(WXK_ALT) && !segmentMode) {
 		if (activeBrush == &standardBrush) {
 			activeBrush = &deflateBrush;
 		}
@@ -4532,8 +5178,11 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		int cy = r.GetHeight() / 2;
 		gls.GetPickRay(cx, cy, v, vo);
 
-		gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
+		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
 		gls.RenderOneFrame();
+
+		if (!hit)
+			return;
 
 		if (activeBrush->Type() == TBT_MOVE) {
 			Vector3 pn;
@@ -4570,6 +5219,9 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 
 		if (transformMode)
 			ShowTransformTool();
+
+		if (segmentMode)
+			os->ShowSegment(nullptr, true);
 	}
 }
 
@@ -4605,6 +5257,9 @@ void wxGLPanel::EndBrushStroke() {
 
 		if (transformMode)
 			ShowTransformTool();
+
+		if (segmentMode)
+			os->ShowSegment(nullptr, true);
 	}
 }
 
@@ -4730,7 +5385,7 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 		if (m) {
 			if (wxGetKeyState(WXK_CONTROL))
 				m->vcolors[vert.indexRef].x = 1.0f;
-			else
+			else if (!segmentMode)
 				m->vcolors[vert.indexRef].x = 0.0f;
 		}
 	}

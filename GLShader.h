@@ -89,9 +89,11 @@ public:
 
 	void ShowMask(bool bShow = true);
 	void ShowWeight(bool bShow = true);
+	void ShowSegments(bool bShow = true);
 	void ShowTexture(bool bShow = true);
 	GLint GetMaskAttribute();
 	GLint GetWeightAttribute();
+	GLint GetSegmentAttribute();
 
 	// Activates the stored program for subsequent GL rendering calls.
 	// Compiles and links the program if it has not yet been done.

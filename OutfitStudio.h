@@ -44,11 +44,31 @@ enum TargetGame {
 
 class ShapeItemData : public wxTreeItemData  {
 public:
-	NifFile* refFile;
 	string shapeName;
-	ShapeItemData(NifFile* inRefFile = nullptr, const string& inShapeName = "") {
-		refFile = inRefFile;
+	ShapeItemData(const string& inShapeName = "") {
 		shapeName = inShapeName;
+	}
+};
+
+class SegmentItemData : public wxTreeItemData  {
+public:
+	vector<ushort> tris;
+
+	SegmentItemData(const vector<ushort>& inTriangles) {
+		tris = inTriangles;
+	}
+};
+
+class SubSegmentItemData : public wxTreeItemData  {
+public:
+	vector<ushort> tris;
+	uint type;
+	vector<float> extraData;
+
+	SubSegmentItemData(const vector<ushort>& inTriangles, const uint& inType, const vector<float>& inExtraData = vector<float>()) {
+		tris = inTriangles;
+		type = inType;
+		extraData = inExtraData;
 	}
 };
 
@@ -136,6 +156,13 @@ public:
 	void SetTransformMode(bool on = true) {
 		transformMode = on;
 		ShowTransformTool(on);
+	}
+
+	bool GetSegmentMode() {
+		return segmentMode;
+	}
+	void SetSegmentMode(bool on = true) {
+		segmentMode = on;
 	}
 
 	bool GetXMirror() {
@@ -278,6 +305,10 @@ public:
 
 	void SetWeightVisible(bool bVisible = true) {
 		gls.SetWeightColors(bVisible);
+	}
+
+	void SetSegmentsVisible(bool bVisible = true) {
+		gls.SetSegmentColors(bVisible);
 	}
 
 	void ClearMask() {
@@ -444,6 +475,7 @@ private:
 	bool editMode;
 	bool transformMode;
 	bool vertexEdit;
+	bool segmentMode;
 
 	bool bMaskPaint;
 	bool bWeightPaint;
@@ -500,6 +532,7 @@ public:
 
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
+	wxTreeCtrl* segmentTree;
 	wxPanel* lightSettings;
 	wxSlider* boneScale;
 	wxScrolledWindow* sliderScroll;
@@ -507,6 +540,7 @@ public:
 	wxTreeItemId shapesRoot;
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
+	wxTreeItemId segmentRoot;
 	wxImageList* visStateImages;
 
 	ConfigurationManager& appConfig;
@@ -552,6 +586,9 @@ public:
 
 	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
+
+	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
+	void UpdateSegmentNames();
 
 	void AnimationGUIFromProj();
 	void RefreshGUIFromProj();
@@ -713,6 +750,7 @@ private:
 
 	vector<ShapeItemData*> selectedItems;
 	string activeBone;
+	wxTreeItemId activeSegment;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);
@@ -755,6 +793,7 @@ private:
 	void OnSlider(wxScrollEvent& event);
 	void OnClickSliderButton(wxCommandEvent &event);
 	void OnReadoutChange(wxCommandEvent& event);
+	void OnCheckBox(wxCommandEvent& event);
 
 	void OnTabButtonClick(wxCommandEvent& event);
 	void OnFixedWeight(wxCommandEvent& event);
@@ -766,11 +805,24 @@ private:
 	void OnShapeContext(wxTreeEvent& event);
 	void OnShapeDrag(wxTreeEvent& event);
 	void OnShapeDrop(wxTreeEvent& event);
+	void OnCheckTreeSel(wxTreeEvent& event);
+
 	void OnBoneSelect(wxTreeEvent& event);
 	void OnBoneContext(wxTreeEvent& event);
 	void OnBoneTreeContext(wxCommandEvent& event);
-	void OnCheckTreeSel(wxTreeEvent& event);
-	void OnCheckBox(wxCommandEvent& event);
+
+	void OnSegmentSelect(wxTreeEvent& event);
+	void OnSegmentContext(wxTreeEvent& event);
+	void OnSegmentTreeContext(wxCommandEvent& event);
+	void OnAddSegment(wxCommandEvent& event);
+	void OnAddSubSegment(wxCommandEvent& event);
+	void OnDeleteSegment(wxCommandEvent& event);
+	void OnDeleteSubSegment(wxCommandEvent& event);
+	void OnSegmentTypeChanged(wxCommandEvent& event);
+	void OnSegmentApply(wxCommandEvent& event);
+	void OnSegmentReset(wxCommandEvent& event);
+
+	void CreateSegmentTree(const string& shapeName = "");
 
 	void OnSelectTool(wxCommandEvent& event);
 

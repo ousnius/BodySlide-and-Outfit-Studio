@@ -38,7 +38,7 @@
         <CenterMode>Selected</CenterMode></Editing>
     <!--Light Settings-->
     <Lights>
-        <Ambient>80</Ambient>
+        <Ambient>20</Ambient>
         <Brightness1>55</Brightness1>
         <Brightness2>45</Brightness2>
         <Brightness3>45</Brightness3></Lights>

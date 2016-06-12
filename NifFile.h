@@ -499,45 +499,48 @@ class BSSubIndexTriShape : public BSTriShape {
 public:
 	class BSSITSSubSegment {
 	public:
-		uint startIndex;
-		uint numPrimitives;
-		uint arrayIndex;
-		uint unkInt1;
+		uint startIndex = 0;
+		uint numPrimitives = 0;
+		uint arrayIndex = 0;
+		uint unkInt1 = 0;
 	};
 
 	class BSSITSSegment {
 	public:
-		uint startIndex;
-		uint numPrimitives;
-		uint parentArrayIndex;
-		uint numSubSegments;
+		uint startIndex = 0;
+		uint numPrimitives = 0;
+		uint parentArrayIndex = 0xFFFFFFFF;
+		uint numSubSegments = 0;
 		vector<BSSITSSubSegment> subSegments;
 	};
 
 	class BSSITSSubSegmentDataRecord {
 	public:
-		uint segmentUser;
-		uint unkInt2;
-		uint numData;
+		uint segmentUser = 0;
+		uint unkInt2 = 0xFFFFFFFF;
+		uint numData = 0;
 		vector<float> extraData;
 	};
 
 	class BSSITSSubSegmentData {
 	public:
-		uint numSegments;
-		uint numTotalSegments;
+		uint numSegments = 0;
+		uint numTotalSegments = 0;
 		vector<uint> arrayIndices;
 		vector<BSSITSSubSegmentDataRecord> dataRecords;
 		NiString ssfFile;
 	};
 
-	uint numPrimitives;
-	uint numSegments;
-	uint numTotalSegments;
-	vector<BSSITSSegment> segments;
-	BSSITSSubSegmentData subSegmentData;
+	class BSSITSSegmentation {
+	public:
+		uint numPrimitives = 0;
+		uint numSegments = 0;
+		uint numTotalSegments = 0;
+		vector<BSSITSSegment> segments;
+		BSSITSSubSegmentData subSegmentData;
+	};
 
-	map<int, ushort> segmentTris;
+	BSSITSSegmentation segmentation;
 
 	BSSubIndexTriShape(NiHeader& hdr);
 	BSSubIndexTriShape(fstream& file, NiHeader& hdr);
@@ -550,7 +553,6 @@ public:
 	int CalcBlockSize();
 
 	void SetDefaultSegments();
-	void ApplySegmentation();
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
@@ -1659,8 +1661,12 @@ public:
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
 	void SetShapeVertWeights(const string& shapeName, int vertIndex, vector<unsigned char>& boneids, vector<float>& weights);
 
+	bool GetShapeSegments(const string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
+	void SetShapeSegments(const string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);
+
 	const vector<Vector3>* GetRawVertsForShape(const string& shapeName);
 	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);
+	bool ReorderTriangles(const string& shapeName, const vector<ushort>& triangleIndices);
 	const vector<Vector3>* GetNormalsForShape(const string& shapeName, bool transform = true);
 	const vector<Vector3>* GetTangentsForShape(const string& shapeName, bool transform = true);
 	const vector<Vector3>* GetBitangentsForShape(const string& shapeName, bool transform = true);
