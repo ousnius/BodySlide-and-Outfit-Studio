@@ -1,13 +1,13 @@
 #version 120
 uniform sampler2D texUnit0;
 uniform bool bShowTexture = true;
-uniform bool bShowMask = true;
-uniform bool bShowWeight = true;
-uniform bool bShowSegments = true;
+uniform bool bShowMask;
+uniform bool bShowWeight;
+uniform bool bShowSegments;
 
-in float maskFactor;
-in vec4 weightColor;
-in vec4 segmentColor;
+varying float maskFactor;
+varying vec4 weightColor;
+varying vec4 segmentColor;
 
 void main(void)
 {
@@ -36,15 +36,12 @@ void main(void)
 			segmentColor.rb != normalize(segmentColor.rb) &&
 			segmentColor.gb != normalize(segmentColor.gb))
 		{
-			segmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+			color *= weightColor;
 		}
 		else
 		{
-			weightColor = vec4(1.0, 1.0, 1.0, 1.0);
+			color *= segmentColor;
 		}
-		
-		color *= weightColor;
-		color *= segmentColor;
 	}
 	
 	color = clamp(color, 0.0, 1.0);

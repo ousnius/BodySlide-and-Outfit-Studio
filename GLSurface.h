@@ -57,7 +57,6 @@ class GLSurface {
 
 	ResourceLoader resLoader;
 	GLMaterial* noImage = nullptr;
-	GLMaterial* skinMaterial = nullptr;
 
 	TweakUndo tweakUndo;
 
@@ -262,8 +261,6 @@ public:
 	void EndEditMode();
 
 	void AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
-	void AddMeshExplicit(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs = nullptr, const string& name = "", float scale = 1.0f);
-	void AddMeshDirect(mesh* m);
 	void Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, vector<int>* changed = nullptr);
 	void Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, vector<int>* changed = nullptr);
 	void ReloadMeshFromNif(NifFile* nif, string shapeName);

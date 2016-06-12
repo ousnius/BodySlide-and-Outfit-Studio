@@ -974,30 +974,34 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 			matFile = matFile.Lower();
 			matFile.Replace("\\", "/");
 
-			wxMemoryBuffer data;
-			for (FSArchiveFile *archive : FSManager::archiveList()) {
-				if (archive) {
-					if (archive->hasFile(matFile.ToStdString())) {
-						wxMemoryBuffer outData;
-						archive->fileContents(matFile.ToStdString(), outData);
+			// Attempt to read loose material file
+			MaterialFile mat(MaterialFile::BGSM);
+			mat = MaterialFile(texturesDir + matFile.ToStdString());
 
-						if (!outData.IsEmpty()) {
-							data = outData;
-							break;
+			if (mat.Failed()) {
+				// Search for material file in archives
+				wxMemoryBuffer data;
+				for (FSArchiveFile *archive : FSManager::archiveList()) {
+					if (archive) {
+						if (archive->hasFile(matFile.ToStdString())) {
+							wxMemoryBuffer outData;
+							archive->fileContents(matFile.ToStdString(), outData);
+
+							if (!outData.IsEmpty()) {
+								data = outData;
+								break;
+							}
 						}
 					}
 				}
-			}
 
-			MaterialFile mat(MaterialFile::BGSM);
-			if (!data.IsEmpty()) {
-				string content((char*)data.GetData(), data.GetDataLen());
-				istringstream contentStream(content, istringstream::binary);
+				if (!data.IsEmpty()) {
+					string content((char*)data.GetData(), data.GetDataLen());
+					istringstream contentStream(content, istringstream::binary);
 
-				mat = MaterialFile(contentStream);
+					mat = MaterialFile(contentStream);
+				}
 			}
-			else
-				mat = MaterialFile(texturesDir + matFile.ToStdString());
 
 			if (!mat.Failed()) {
 				if (mat.signature == MaterialFile::BGSM)

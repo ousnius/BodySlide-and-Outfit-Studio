@@ -2832,7 +2832,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		segmentReset->Show(false);
 
 		if (glView->GetSegmentMode())
-			glView->ClearMask();
+			glView->ClearColorChannels();
 
 		glView->SetSegmentMode(false);
 		glView->SetSegmentsVisible(false);
@@ -4931,14 +4931,6 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool build
 		if (buildNormals)
 			RecalcNormals(shapeList[i]);
 	}
-}
-
-void wxGLPanel::AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv, const string& shapeName) {
-	gls.AddMeshExplicit(v, t, uv, shapeName);
-	gls.GetMesh(shapeName)->BuildTriAdjacency();
-	gls.GetMesh(shapeName)->BuildEdgeList();
-	gls.GetMesh(shapeName)->ColorFill(Vector3());
-	RecalcNormals(shapeName);
 }
 
 void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefile, bool isSkin) {

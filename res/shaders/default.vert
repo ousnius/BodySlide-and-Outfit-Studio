@@ -3,6 +3,9 @@ vec4 Ambient;
 vec4 Diffuse;
 vec4 Specular;
 uniform bool bLightEnabled = true;
+uniform bool bShowMask = false;
+uniform bool bShowWeight = false;
+uniform bool bShowSegments = false;
 
 void directionalLight(in int i, in vec3 normal)
 {

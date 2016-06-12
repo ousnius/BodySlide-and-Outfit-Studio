@@ -387,7 +387,6 @@ void GLSurface::Cleanup() {
 	activeMeshes.clear();
 
 	selectedMesh = nullptr;
-	skinMaterial = nullptr;
 	noImage = nullptr;
 
 	resLoader.Cleanup();
@@ -1100,101 +1099,6 @@ void GLSurface::RenderMesh(mesh* m) {
 	}
 }
 
-void GLSurface::AddMeshExplicit(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, const string& name, float scale) {
-	int i, j;
-	Vector3 norm;
-	mesh* m = new mesh();
-
-	m->shapeName = name;
-
-	scale *= 0.1f;
-
-	m->nVerts = verts->size();
-	m->verts = new Vertex[m->nVerts];
-
-	m->nTris = tris->size();
-	m->tris = new Triangle[m->nTris];
-
-	// Load verts. nif verts are scaled  up by approx. 10 and rotated on the x axis (Z up, Y forward).  
-	// Scale down by 10 and rotate on x axis by flipping y and z components. To face the camera, this also mirrors
-	// on X and Y (180 degree y axis rotation.)
-	for (i = 0; i < m->nVerts; i++) {
-		m->verts[i].x = (*verts)[i].x * -scale;
-		m->verts[i].z = (*verts)[i].y * scale;
-		m->verts[i].y = (*verts)[i].z * scale;
-		m->verts[i].indexRef = i;
-
-	}
-
-	if (uvs) {
-		m->texcoord = new Vector2[m->nVerts];
-		for (i = 0; i < m->nVerts; i++) {
-			m->texcoord[i].u = (*uvs)[i].u;
-			m->texcoord[i].v = (*uvs)[i].v;
-		}
-		m->textured = true;
-		m->material = skinMaterial;
-	}
-
-	// Load tris. Also sum face normals here.
-	for (j = 0; j < m->nTris; j++) {
-		m->tris[j].p1 = (*tris)[j].p1;
-		m->tris[j].p2 = (*tris)[j].p2;
-		m->tris[j].p3 = (*tris)[j].p3;
-		m->tris[j].trinormal(m->verts, &norm);
-		m->verts[m->tris[j].p1].nx += norm.x;
-		m->verts[m->tris[j].p1].ny += norm.y;
-		m->verts[m->tris[j].p1].nz += norm.z;
-		m->verts[m->tris[j].p2].nx += norm.x;
-		m->verts[m->tris[j].p2].ny += norm.y;
-		m->verts[m->tris[j].p2].nz += norm.z;
-		m->verts[m->tris[j].p3].nx += norm.x;
-		m->verts[m->tris[j].p3].ny += norm.y;
-		m->verts[m->tris[j].p3].nz += norm.z;
-	}
-
-	// Normalize all vertex normals to smooth them out.
-	Vector3* pn;
-	for (i = 0; i < m->nVerts; i++) {
-		pn = (Vector3*)&m->verts[i].nx;
-		pn->Normalize();
-	}
-
-	kd_matcher matcher(m->verts, m->nVerts);
-	for (i = 0; i < matcher.matches.size(); i++) {
-		Vertex* a = matcher.matches[i].first;
-		Vertex* b = matcher.matches[i].second;
-		m->weldVerts[a->indexRef].push_back(b->indexRef);
-		m->weldVerts[b->indexRef].push_back(a->indexRef);
-		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if (dot < 90.0f * DEG2RAD) {
-			a->nx = ((a->nx + b->nx) / 2.0f);
-			a->ny = ((a->ny + b->ny) / 2.0f);
-			a->nz = ((a->nz + b->nz) / 2.0f);
-			b->nx = a->nx;
-			b->ny = a->ny;
-			b->nz = a->nz;
-		}
-	}
-
-	m->CreateBVH();
-
-	namedMeshes[m->shapeName] = meshes.size();
-	meshes.push_back(m);
-
-	float c;
-	for (i = 0; i < meshes.size(); i++) {
-		c = 0.2f + ((0.6f / (meshes.size())) * i);
-		meshes[i]->color = Vector3(c, c, c);
-	}
-}
-
-void GLSurface::AddMeshDirect(mesh* m) {
-	mesh* nm = new mesh(m);
-	namedMeshes[m->shapeName] = meshes.size();
-	meshes.push_back(nm);
-}
-
 void  GLSurface::ReloadMeshFromNif(NifFile* nif, string shapeName) {
 	DeleteMesh(shapeName);
 	AddMeshFromNif(nif, shapeName);
@@ -1251,10 +1155,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			m->texcoord[i].v = (*nifUvs)[i].v;
 		}
 		m->textured = true;
-		if (isSkin)
-			m->material = skinMaterial;
-		else
-			m->material = noImage;
+		m->material = noImage;
 	}
 
 	if (!nifNorms) {
@@ -1835,13 +1736,9 @@ GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vSha
 		// Use noImage material if loader failed
 		if (!noImage)
 			noImage = resLoader.AddMaterial("res\\images\\NoImg.png", "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
+
 		mat = noImage;
 	}
-
-	// Assume the first loaded material is always the skin material.
-	// (This seems like a hack, but matches the behavior of the old code.)
-	if (!skinMaterial)
-		skinMaterial = mat;
 
 	return mat;
 }

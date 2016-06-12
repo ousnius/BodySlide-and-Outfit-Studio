@@ -83,7 +83,6 @@ public:
 	void SetNotifyWindow(wxWindow* win);
 
 	void AddMeshFromNif(NifFile* nif, const string& shapeName, bool buildNormals);
-	void AddExplicitMesh(vector<Vector3>* v, vector<Triangle>* t, vector<Vector2>* uv = nullptr, const string& shapeName = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName) {
 		gls.RenameMesh(shapeName, newShapeName);
@@ -315,6 +314,13 @@ public:
 		for (auto &m : gls.GetActiveMeshes()) {
 			if (m->vcolors)
 				m->ColorChannelFill(0, 0.0f);
+		}
+	}
+	
+	void ClearColorChannels() {
+		for (auto &m : gls.GetActiveMeshes()) {
+			if (m->vcolors)
+				m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 		}
 	}
 

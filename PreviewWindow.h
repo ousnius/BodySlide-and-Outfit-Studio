@@ -61,7 +61,6 @@ public:
 		baseDataPath = path;
 	}
 
-	void AddMeshDirect(mesh* m);
 	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void AddNifShapeTexture(NifFile* fromNif, const string& shapeName);

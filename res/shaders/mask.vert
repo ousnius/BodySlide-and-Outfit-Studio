@@ -10,9 +10,9 @@ attribute float maskValue;
 attribute float weightValue;
 attribute float segmentValue;
 
-varying out float maskFactor;
-varying out vec4 weightColor;
-varying out vec4 segmentColor;
+varying float maskFactor;
+varying vec4 weightColor;
+varying vec4 segmentColor;
 
 void directionalLight(in int i, in vec3 normal)
 {
