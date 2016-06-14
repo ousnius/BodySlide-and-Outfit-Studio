@@ -5173,9 +5173,6 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
 		gls.RenderOneFrame();
 
-		if (!hit)
-			return;
-
 		if (activeBrush->Type() == TBT_MOVE) {
 			Vector3 pn;
 			float pd;
@@ -5183,6 +5180,9 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, pd);
 		}
 		else {
+			if (!hit)
+				return;
+
 			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, bGlobalBrushCollision, &tpi.facet);
 			if (bXMirror) {
 				gls.GetPickRay(screenPos.x, screenPos.y, d, s);
