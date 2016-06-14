@@ -15,7 +15,6 @@ void main(void)
 	
 	if (bShowTexture)
 	{
-		color.rgb += vec3(0.25, 0.25, 0.25);
 		color *= texture2D(texUnit0, gl_TexCoord[0].xy);
 		color.rgb *= 2.0;
 	}
