@@ -1363,9 +1363,9 @@ void OutfitProject::ApplyBoneScale(const string& bone, int sliderPos, bool clear
 		}
 
 		if (clear)
-			owner->glView->UpdateMeshVertices(s, verts);
+			owner->glView->UpdateMeshVertices(s, verts, true, true, false);
 		else
-			owner->glView->UpdateMeshVertices(s, verts, false, false);
+			owner->glView->UpdateMeshVertices(s, verts, true, false, false);
 	}
 }
 
@@ -1387,11 +1387,11 @@ void OutfitProject::ClearBoneScale(bool clear) {
 					(*verts)[i] -= it->second[i];
 
 				if (clear) {
-					owner->glView->UpdateMeshVertices(s, verts);
+					owner->glView->UpdateMeshVertices(s, verts, true, true, false);
 					workWeights.clear();
 				}
 				else
-					owner->glView->UpdateMeshVertices(s, verts, false, false);
+					owner->glView->UpdateMeshVertices(s, verts, false, false, false);
 			}
 		}
 	}

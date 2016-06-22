@@ -670,7 +670,9 @@ void OutfitStudio::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo, boo
 					}
 				}
 			}
-			project->workWeights.clear();
+
+			if (setWeights)
+				project->workWeights.clear();
 		}
 	}
 }
@@ -3085,19 +3087,17 @@ void OutfitStudio::OnSlider(wxScrollEvent& event) {
 
 	if (sliderName != "boneScale") {
 		project->ClearBoneScale(false);
-		if (boneScale)
-			boneScale->SetValue(0);
+		boneScale->SetValue(0);
 	}
 
 	if (sliderName == "boneScale") {
-		wxArrayTreeItemIds selItems;
-		outfitBones->GetSelections(selItems);
-		if (selItems.size() > 0) {
-			string selectedBone = outfitBones->GetItemText(selItems.front());
-			project->ApplyBoneScale(selectedBone, event.GetPosition(), true);
-		}
+		if (!activeBone.empty())
+			project->ApplyBoneScale(activeBone, event.GetPosition(), true);
+
+		glView->Render();
 		return;
 	}
+
 	sliderName = s->GetName().BeforeLast('|');
 	if (sliderName.empty())
 		return;
@@ -5199,12 +5199,12 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		activeStroke->updateStroke(tpi);
 
 		if (activeBrush->Type() == TBT_WEIGHT) {
-			if (os->boneScale) {
-				string selectedBone = os->GetActiveBone();
-				if (!selectedBone.empty()) {
-					int boneScalePos = os->boneScale->GetValue();
-					os->project->ApplyBoneScale(selectedBone, boneScalePos);
+			string selectedBone = os->GetActiveBone();
+			if (!selectedBone.empty()) {
+				int boneScalePos = os->boneScale->GetValue();
+				if (boneScalePos != 0) {
 					os->ActiveShapesUpdated(strokeManager->GetCurStateStroke(), false, false);
+					os->project->ApplyBoneScale(selectedBone, boneScalePos);
 				}
 			}
 		}
@@ -5221,18 +5221,16 @@ void wxGLPanel::EndBrushStroke() {
 	if (activeStroke) {
 		activeStroke->endStroke();
 
-		if (activeStroke->BrushType() == TBT_WEIGHT) {
-			if (os->boneScale) {
+		if (activeStroke->BrushType() != TBT_MASK) {
+			os->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
+
+			if (activeStroke->BrushType() == TBT_WEIGHT) {
 				string selectedBone = os->GetActiveBone();
 				if (!selectedBone.empty()) {
 					int boneScalePos = os->boneScale->GetValue();
 					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
 				}
 			}
-		}
-
-		if (activeStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
 
 			if (!os->bEditSlider && activeStroke->BrushType() != TBT_WEIGHT) {
 				vector<string> shapes;
@@ -5397,10 +5395,8 @@ bool wxGLPanel::UndoStroke() {
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				if (os->boneScale) {
-					int boneScalePos = os->boneScale->GetValue();
-					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-				}
+				int boneScalePos = os->boneScale->GetValue();
+				os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
 			}
 		}
 
@@ -5432,10 +5428,8 @@ bool wxGLPanel::RedoStroke() {
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
-				if (os->boneScale) {
-					int boneScalePos = os->boneScale->GetValue();
-					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-				}
+				int boneScalePos = os->boneScale->GetValue();
+				os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
 			}
 		}
 
@@ -5827,6 +5821,8 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 
 	isLDragging = false;
 	lbuttonDown = false;
+
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
@@ -5834,8 +5830,24 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 		EndBrushStroke();
 		isPainting = false;
 	}
+
+	if (isTransforming) {
+		EndTransform();
+		isTransforming = false;
+	}
+
+	if (isSelecting)
+		isSelecting = false;
+
 	isLDragging = false;
 	lbuttonDown = false;
+
+	isMDragging = false;
+	mbuttonDown = false;
+
+	rbuttonDown = false;
+
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnRightDown(wxMouseEvent& WXUNUSED(event)) {
