@@ -413,7 +413,6 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				ddsHeader.dwHeight = file->tex.header.height;
 				ddsHeader.dwWidth = file->tex.header.width;
 				ddsHeader.dwMipMapCount = file->tex.header.numMips;
-				ddsHeader.ddspf.dwSize = sizeof(DDS_PIXELFORMAT);
 				ddsHeader.dwCaps = DDS_SURFACE_FLAGS_TEXTURE | DDS_SURFACE_FLAGS_MIPMAP;
 				ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
 				
