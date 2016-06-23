@@ -405,71 +405,61 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					ok = bsa.Seek(file->offset + 1 + len);
 			}
 
-			if (file->tex.chunks.size()) {
+			if (file->tex.chunks.size() > 0) {
 				// Fill DDS Header for BA2
-				DDS_HEADER ddsHeader = { 0 };
-
+				DDS_HEADER ddsHeader = {};
 				ddsHeader.dwSize = sizeof(ddsHeader);
-				ddsHeader.dwHeaderFlags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_LINEARSIZE | DDS_HEADER_FLAGS_MIPMAP;
+				ddsHeader.dwFlags = DDS_HEADER_FLAGS_TEXTURE | DDS_HEADER_FLAGS_LINEARSIZE | DDS_HEADER_FLAGS_MIPMAP;
 				ddsHeader.dwHeight = file->tex.header.height;
 				ddsHeader.dwWidth = file->tex.header.width;
 				ddsHeader.dwMipMapCount = file->tex.header.numMips;
 				ddsHeader.ddspf.dwSize = sizeof(DDS_PIXELFORMAT);
-				ddsHeader.dwSurfaceFlags = DDS_SURFACE_FLAGS_TEXTURE | DDS_SURFACE_FLAGS_MIPMAP;
+				ddsHeader.dwCaps = DDS_SURFACE_FLAGS_TEXTURE | DDS_SURFACE_FLAGS_MIPMAP;
+				ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+				
+				DDS_HEADER_DXT10 ddsHeader10 = {};
+				ddsHeader10.resourceDimension = DDS_DIMENSION_TEXTURE2D;
+				ddsHeader10.arraySize = 1;
 
-				if (file->tex.header.unk16 == 2049)
-					ddsHeader.dwCubemapFlags = DDS_CUBEMAP_ALLFACES;
+				if (file->tex.header.unk16 == 2049) {
+					ddsHeader.dwCaps2 = DDS_CUBEMAP_ALLFACES;
+					ddsHeader10.miscFlag = DDS_RESOURCE_MISC_TEXTURECUBE;
+					ddsHeader10.arraySize *= 6;
+				}
 
 				bool ok = true;
 
 				switch (file->tex.header.format) {
 				case DXGI_FORMAT_BC1_UNORM:
-					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
-					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('D', 'X', 'T', '1');
-					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height / 2;	// 4bpp
+					ddsHeader.ddspf = DDSPF_DXT1;
+					ddsHeader.dwPitchOrLinearSize /= 2;	// 4bpp
 					break;
 
 				case DXGI_FORMAT_BC2_UNORM:
-					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
-					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('D', 'X', 'T', '3');
-					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					ddsHeader.ddspf = DDSPF_DXT3;
 					break;
 
 				case DXGI_FORMAT_BC3_UNORM:
-					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
-					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('D', 'X', 'T', '5');
-					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					ddsHeader.ddspf = DDSPF_DXT5;
 					break;
 
 				case DXGI_FORMAT_BC5_UNORM:
-					// Incorrect
-					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
-					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('A', 'T', 'I', '2');
-					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					ddsHeader.ddspf = DDSPF_DX10;
+					ddsHeader10.dxgiFormat = DXGI_FORMAT_BC5_UNORM;
 					break;
 
 				case DXGI_FORMAT_BC7_UNORM:
-					// Incorrect
-					ddsHeader.ddspf.dwFlags = DDS_FOURCC;
-					ddsHeader.ddspf.dwFourCC = MAKEFOURCC('B', 'C', '7', '\0');
-					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					ddsHeader.ddspf = DDSPF_DX10;
+					ddsHeader10.dxgiFormat = DXGI_FORMAT_BC7_UNORM;
 					break;
 
 				case DXGI_FORMAT_B8G8R8A8_UNORM:
-					ddsHeader.ddspf.dwFlags = DDS_RGBA;
-					ddsHeader.ddspf.dwRGBBitCount = 32;
-					ddsHeader.ddspf.dwRBitMask = 0x00FF0000;
-					ddsHeader.ddspf.dwGBitMask = 0x0000FF00;
-					ddsHeader.ddspf.dwBBitMask = 0x000000FF;
-					ddsHeader.ddspf.dwABitMask = 0xFF000000;
-					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height * 4;	// 32bpp
+					ddsHeader.ddspf = DDSPF_A8R8G8B8;
+					ddsHeader.dwPitchOrLinearSize *= 4;	// 32bpp
 					break;
 
 				case DXGI_FORMAT_R8_UNORM:
-					ddsHeader.ddspf.dwFlags = DDS_RGB;
-					ddsHeader.ddspf.dwRGBBitCount = 8;
-					ddsHeader.ddspf.dwRBitMask = 0xFF;
-					ddsHeader.dwPitchOrLinearSize = file->tex.header.width * file->tex.header.height;	// 8bpp
+					ddsHeader.ddspf = DDSPF_L8;
 					break;
 
 				default:
@@ -477,13 +467,14 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					break;
 				}
 
-				char buf[sizeof(ddsHeader)];
-				memcpy(buf, &ddsHeader, sizeof(ddsHeader));
+				if (!ok)
+					return false;
 
 				// Append DDS Header
-				std::string dds = "DDS ";
-				content.AppendData(dds.data(), 4);
-				content.AppendData(buf, sizeof(ddsHeader));
+				content.AppendData(&DDS_MAGIC, 4);
+				content.AppendData(&ddsHeader, sizeof(ddsHeader));
+				if (ddsHeader10.dxgiFormat != DXGI_FORMAT_UNKNOWN)
+					content.AppendData(&ddsHeader10, sizeof(ddsHeader10));
 			}
 
 			wxMemoryBuffer firstChunk;
@@ -502,7 +493,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					content.AppendData(firstChunk, firstChunk.GetDataLen());
 				}
 
-				if (file->tex.chunks.size()) {
+				if (file->tex.chunks.size() > 0) {
 					// Start at 2nd chunk for BA2
 					for (int i = 1; i < file->tex.chunks.size(); i++) {
 						F4TexChunk chunk = file->tex.chunks[i];
