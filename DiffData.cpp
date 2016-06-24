@@ -17,14 +17,14 @@ OSDataFile::OSDataFile() {
 OSDataFile::~OSDataFile() {
 }
 
-int OSDataFile::Read(const string& fileName) {
+bool OSDataFile::Read(const string& fileName) {
 	ifstream file(fileName, ios_base::binary);
 	if (!file)
-		return 1;
+		return false;
 
 	file.read((char*)&header, 4);
 	if (header != 'OSD\0')
-		return 2;
+		return false;
 
 	file.read((char*)&version, 4);
 	file.read((char*)&dataCount, 4);
@@ -51,13 +51,13 @@ int OSDataFile::Read(const string& fileName) {
 		dataDiffs[dataName] = diffs;
 	}
 
-	return 0;
+	return true;
 }
 
-int OSDataFile::Write(const string& fileName) {
+bool OSDataFile::Write(const string& fileName) {
 	ofstream file(fileName, ios_base::binary);
 	if (!file)
-		return 1;
+		return false;
 
 	file.write((char*)&header, 4);
 	file.write((char*)&version, 4);
@@ -78,7 +78,7 @@ int OSDataFile::Write(const string& fileName) {
 		}
 	}
 
-	return 0;
+	return true;
 }
 
 void OSDataFile::GetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& outDataDiff) {
@@ -136,11 +136,11 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 	return 0;
 }
 
-int DiffDataSets::LoadData(const map<string, map<string, string>>& osdNames) {
+bool DiffDataSets::LoadData(const map<string, map<string, string>>& osdNames) {
 	for (auto &osd : osdNames) {
 		OSDataFile osdFile;
-		if (osdFile.Read(osd.first))
-			continue;
+		if (!osdFile.Read(osd.first))
+			return false;
 
 		for (auto &dataNames : osd.second) {
 			unordered_map<ushort, Vector3> diff;
@@ -149,7 +149,7 @@ int DiffDataSets::LoadData(const map<string, map<string, string>>& osdNames) {
 		}
 	}
 
-	return 0;
+	return true;
 }
 
 int DiffDataSets::SaveSet(const string& name, const string& target, const string& toFile) {
@@ -170,7 +170,7 @@ int DiffDataSets::SaveSet(const string& name, const string& target, const string
 	return 0;
 }
 
-int DiffDataSets::SaveData(const map<string, map<string, string>>& osdNames) {
+bool DiffDataSets::SaveData(const map<string, map<string, string>>& osdNames) {
 	for (auto &osd : osdNames) {
 		OSDataFile osdFile;
 		for (auto &dataNames : osd.second) {
@@ -182,10 +182,10 @@ int DiffDataSets::SaveData(const map<string, map<string, string>>& osdNames) {
 		}
 
 		if (!osdFile.Write(osd.first))
-			continue;
+			return false;
 	}
 
-	return 0;
+	return true;
 }
 
 void DiffDataSets::RenameSet(const string& oldName, const string& newName) {

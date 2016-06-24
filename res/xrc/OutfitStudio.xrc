@@ -1032,6 +1032,10 @@
 				<help>Create a new Zap slider based on unmasked vertices</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="sliderExportOSD">
+				<label>Export OSD...</label>
+				<help>Exports all currently loaded slider data to an OSD file.</help>
+			</object>
 			<object class="wxMenuItem" name="sliderImportTRI">
 				<label>Import TRI Morphs...</label>
 				<help>Imports TRI morphs from a TRI file and creates sliders for shapes with a matching name.</help>

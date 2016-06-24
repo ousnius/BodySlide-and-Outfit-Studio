@@ -72,6 +72,8 @@ public:
 		bool genWeights,
 		bool copyRef);
 
+	bool SaveSliderData(const wxString& fileName, bool copyRef = true);
+
 	NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }
 	unordered_map<string, BSClothExtraData>& GetClothData() { return clothData; }

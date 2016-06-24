@@ -65,6 +65,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudio::OnSliderImportTRI)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudio::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudio::OnSliderExportOBJ)
+	EVT_MENU(XRCID("sliderExportOSD"), OutfitStudio::OnSliderExportOSD)
 	EVT_MENU(XRCID("sliderExportTRI"), OutfitStudio::OnSliderExportTRI)
 	EVT_MENU(XRCID("sliderNew"), OutfitStudio::OnNewSlider)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudio::OnNewZapSlider)
@@ -3451,6 +3452,24 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	ApplySliders();
+}
+
+void OutfitStudio::OnSliderExportOSD(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return;
+	}
+
+	string fn = wxFileSelector(_("Export .osd file"), wxEmptyString, wxEmptyString, ".osd", "*.osd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fn.empty())
+		return;
+
+	wxLogMessage("Exporting OSD file to '%s'...", fn);
+	if (!project->SaveSliderData(fn)) {
+		wxLogError("Failed to export OSD file to '%s'!", fn);
+		wxMessageBox(_("Failed to export OSD file!"), _("Error"), wxICON_ERROR);
+		return;
+	}
 }
 
 void OutfitStudio::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {

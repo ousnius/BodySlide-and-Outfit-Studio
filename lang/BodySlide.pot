@@ -691,6 +691,12 @@ msgstr ""
 msgid "Create a new Zap slider based on unmasked vertices"
 msgstr ""
 
+msgid "Export OSD..."
+msgstr ""
+
+msgid "Exports all currently loaded slider data to an OSD file."
+msgstr ""
+
 msgid "Import TRI Morphs..."
 msgstr ""
 
@@ -2197,6 +2203,12 @@ msgstr ""
 
 #: OutfitStudio.cpp:2789 OutfitStudio.cpp:3175
 msgid "Failed to export OBJ file!"
+msgstr ""
+
+msgid "Export .osd file"
+msgstr ""
+
+msgid "Failed to export OSD file!"
 msgstr ""
 
 #: OutfitStudio.cpp:2802

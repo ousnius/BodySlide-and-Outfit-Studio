@@ -104,8 +104,8 @@ string OutfitProject::Save(const wxString& strFileName,
 
 		owner->UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
-
-	string saveDataPath = "ShapeData\\" + strDataDir;
+	
+	string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
 
 	if (activeSet.size() > 0) {
 		// Copy the reference slider info and add the outfit data to them.
@@ -115,13 +115,8 @@ string OutfitProject::Save(const wxString& strFileName,
 		string targSliderData;
 		string targDataName;
 
-		string osdFileName = baseFile.substr(0, baseFile.find_last_of('.')) + ".osd";
-
-		DiffDataSets osdDiffs;
-		map<string, map<string, string>> osdNames;
-
 		prog = 10;
-		step = 50 / activeSet.size();
+		step = 20 / activeSet.size();
 		owner->UpdateProgress(prog);
 
 		for (int i = 0; i < activeSet.size(); i++) {
@@ -137,10 +132,6 @@ string OutfitProject::Save(const wxString& strFileName,
 
 						targSliderData = osdFileName + "\\" + targDataName.substr(lastIndex, targDataName.length() - lastIndex);
 						outSet[id].AddDataFile(targ, targSlider, targSliderData);
-
-						unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
-						osdDiffs.LoadSet(targSlider, targ, *diff);
-						osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
 					}
 					else {
 						targSliderData = activeSet[i].DataFileName(targSlider);
@@ -163,11 +154,6 @@ string OutfitProject::Save(const wxString& strFileName,
 					if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
 						targSliderData = osdFileName + "\\" + targSlider;
 						outSet[i].AddDataFile(targ, targSlider, targSliderData);
-
-						unordered_map<ushort, Vector3> diff;
-						morpher.GetRawResultDiff(s, activeSet[i].name, diff);
-						osdDiffs.LoadSet(targSlider, targ, diff);
-						osdNames[saveDataPath + "\\" + osdFileName][targSlider] = targ;
 					}
 					else {
 						targSliderData = activeSet[i].DataFileName(targSlider);
@@ -177,10 +163,11 @@ string OutfitProject::Save(const wxString& strFileName,
 			}
 			owner->UpdateProgress(prog += step, _("Calculating slider data..."));
 		}
-
-		osdDiffs.SaveData(osdNames);
 	}
 
+	string saveDataPath = "ShapeData\\" + strDataDir;
+	SaveSliderData(saveDataPath + "\\" + osdFileName, copyRef);
+	
 	prog = 60;
 	owner->UpdateProgress(prog, _("Creating slider set file..."));
 
@@ -243,6 +230,59 @@ string OutfitProject::Save(const wxString& strFileName,
 
 	owner->UpdateProgress(100, _("Finished"));
 	return errmsg;
+}
+
+bool OutfitProject::SaveSliderData(const wxString& fileName, bool copyRef) {
+	vector<string> shapes;
+	GetShapes(shapes);
+	
+	if (activeSet.size() > 0) {
+		string targ;
+		string targSlider;
+
+		DiffDataSets osdDiffs;
+		map<string, map<string, string>> osdNames;
+		
+		// Copy the changed reference slider data and add the outfit data to them.
+		for (int i = 0; i < activeSet.size(); i++) {
+			if (copyRef && !baseShape.empty()) {
+				targ = ShapeToTarget(baseShape);
+				targSlider = activeSet[i].TargetDataName(targ);
+				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
+					if (activeSet[i].IsLocalData(targSlider)) {
+						unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
+						osdDiffs.LoadSet(targSlider, targ, *diff);
+						osdNames[fileName.ToStdString()][targSlider] = targ;
+					}
+				}
+			}
+
+			for (auto &s : shapes) {
+				if (IsBaseShape(s))
+					continue;
+
+				targ = ShapeToTarget(s);
+				targSlider = activeSet[i].TargetDataName(targ);
+				if (targSlider.empty())
+					targSlider = targ + activeSet[i].name;
+
+				if (morpher.GetResultDiffSize(s, activeSet[i].name) > 0) {
+					string shapeDataFolder = activeSet.ShapeToDataFolder(s);
+					if (shapeDataFolder == activeSet.GetDefaultDataFolder() || activeSet[i].IsLocalData(targSlider)) {
+						unordered_map<ushort, Vector3> diff;
+						morpher.GetRawResultDiff(s, activeSet[i].name, diff);
+						osdDiffs.LoadSet(targSlider, targ, diff);
+						osdNames[fileName.ToStdString()][targSlider] = targ;
+					}
+				}
+			}
+		}
+
+		if (!osdDiffs.SaveData(osdNames))
+			return false;
+	}
+
+	return true;
 }
 
 string OutfitProject::SliderSetName() {
