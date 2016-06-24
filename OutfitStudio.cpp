@@ -668,12 +668,10 @@ void OutfitStudio::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo, boo
 							refBone = ((TB_SmoothWeight*)br)->refBone;
 
 						project->GetWorkAnim()->SetWeights(m->shapeName, refBone, *weights);
+						project->workWeights[m->shapeName].clear();
 					}
 				}
 			}
-
-			if (setWeights)
-				project->workWeights.clear();
 		}
 	}
 }
@@ -1892,6 +1890,8 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 			unordered_map<ushort, float> boneWeights;
 			if (!project->IsBaseShape(s->shapeName)) {
 				project->GetWorkAnim()->GetWeights(s->shapeName, activeBone, boneWeights);
+				project->workWeights[s->shapeName] = boneWeights;
+
 				mesh* m = glView->GetMesh(s->shapeName);
 				if (m) {
 					m->ColorChannelFill(1, 0.0f);
@@ -1904,6 +1904,8 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 		// Always show weights of reference shape
 		unordered_map<ushort, float> boneWeights;
 		project->GetWorkAnim()->GetWeights(project->GetBaseShape(), activeBone, boneWeights);
+		project->workWeights[project->GetBaseShape()] = boneWeights;
+
 		mesh* m = glView->GetMesh(project->GetBaseShape());
 		if (m) {
 			m->ColorChannelFill(1, 0.0f);
@@ -2865,6 +2867,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		cbFixedWeight->Show(false);
 
 		project->ClearBoneScale();
+		project->workWeights.clear();
 
 		glView->SetXMirror(previousMirror);
 		glView->SetTransformMode(false);
@@ -5220,11 +5223,11 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 		if (activeBrush->Type() == TBT_WEIGHT) {
 			string selectedBone = os->GetActiveBone();
 			if (!selectedBone.empty()) {
+				os->ActiveShapesUpdated(strokeManager->GetCurStateStroke(), false, false);
+
 				int boneScalePos = os->boneScale->GetValue();
-				if (boneScalePos != 0) {
-					os->ActiveShapesUpdated(strokeManager->GetCurStateStroke(), false, false);
+				if (boneScalePos != 0)
 					os->project->ApplyBoneScale(selectedBone, boneScalePos);
-				}
 			}
 		}
 
@@ -5406,26 +5409,27 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 }
 
 bool wxGLPanel::UndoStroke() {
-	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
-	if (ret) {
-		if (curStroke && curStroke->BrushType() == TBT_WEIGHT && os->outfitBones) {
+	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
+
+	if (ret && curStroke) {
+		if (curStroke && curStroke->BrushType() != TBT_MASK) {
+			os->ActiveShapesUpdated(curStroke, true);
+
+			if (!os->bEditSlider && curStroke->BrushType() != TBT_WEIGHT) {
+				vector<mesh*> refMeshes = curStroke->GetRefMeshes();
+				for (auto &m : refMeshes)
+					os->project->UpdateShapeFromMesh(m->shapeName, m);
+			}
+		}
+
+		if (curStroke->BrushType() == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
 				int boneScalePos = os->boneScale->GetValue();
 				os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-			}
-		}
-
-		if (curStroke && curStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapesUpdated(curStroke, true);
-
-			if (!os->bEditSlider) {
-				vector<mesh*> refMeshes = curStroke->GetRefMeshes();
-				for (auto &m : refMeshes)
-					os->project->UpdateShapeFromMesh(m->shapeName, m);
 			}
 		}
 	}
@@ -5441,7 +5445,18 @@ bool wxGLPanel::UndoStroke() {
 bool wxGLPanel::RedoStroke() {
 	bool ret = strokeManager->forwardStroke(gls.GetActiveMeshes());
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
-	if (ret) {
+
+	if (ret && curStroke) {
+		if (curStroke->BrushType() != TBT_MASK) {
+			os->ActiveShapesUpdated(curStroke);
+
+			if (!os->bEditSlider && curStroke->BrushType() != TBT_WEIGHT) {
+				vector<mesh*> refMeshes = curStroke->GetRefMeshes();
+				for (auto &m : refMeshes)
+					os->project->UpdateShapeFromMesh(m->shapeName, m);
+			}
+		}
+
 		if (curStroke->BrushType() == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
@@ -5449,16 +5464,6 @@ bool wxGLPanel::RedoStroke() {
 				string selectedBone = os->outfitBones->GetItemText(selItems.front());
 				int boneScalePos = os->boneScale->GetValue();
 				os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
-			}
-		}
-
-		if (curStroke->BrushType() != TBT_MASK) {
-			os->ActiveShapesUpdated(curStroke);
-
-			if (!os->bEditSlider) {
-				vector<mesh*> refMeshes = curStroke->GetRefMeshes();
-				for (auto &m : refMeshes)
-					os->project->UpdateShapeFromMesh(m->shapeName, m);
 			}
 		}
 	}

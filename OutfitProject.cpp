@@ -1426,10 +1426,8 @@ void OutfitProject::ClearBoneScale(bool clear) {
 				for (int i = 0; i < verts->size(); i++)
 					(*verts)[i] -= it->second[i];
 
-				if (clear) {
+				if (clear)
 					owner->glView->UpdateMeshVertices(s, verts, true, true, false);
-					workWeights.clear();
-				}
 				else
 					owner->glView->UpdateMeshVertices(s, verts, false, false, false);
 			}
