@@ -62,6 +62,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("sliderImportBSD"), OutfitStudio::OnSliderImportBSD)
 	EVT_MENU(XRCID("sliderImportOBJ"), OutfitStudio::OnSliderImportOBJ)
 	EVT_MENU(XRCID("sliderImportFBX"), OutfitStudio::OnSliderImportFBX)
+	EVT_MENU(XRCID("sliderImportOSD"), OutfitStudio::OnSliderImportOSD)
 	EVT_MENU(XRCID("sliderImportTRI"), OutfitStudio::OnSliderImportTRI)
 	EVT_MENU(XRCID("sliderExportBSD"), OutfitStudio::OnSliderExportBSD)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudio::OnSliderExportOBJ)
@@ -3280,6 +3281,96 @@ void OutfitStudio::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 }
 
+void OutfitStudio::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return;
+	}
+
+	string fn = wxFileSelector(_("Import .osd file"), wxEmptyString, wxEmptyString, ".osd", "*.osd", wxFD_FILE_MUST_EXIST, this);
+	if (fn.empty())
+		return;
+
+	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
+	if (result != wxYES)
+		return;
+
+	wxLogMessage("Importing morphs from OSD file '%s'...", fn);
+
+	OSDataFile osd;
+	if (!osd.Read(fn)) {
+		wxLogError("Failed to import OSD file '%s'!", fn);
+		wxMessageBox(_("Failed to import OSD file!"), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	// Deleting sliders
+	sliderScroll->Freeze();
+	vector<string> erase;
+	for (auto &sd : sliderDisplays) {
+		sd.second->slider->SetValue(0);
+		SetSliderValue(sd.first, 0);
+		ShowSliderEffect(sd.first, true);
+		sd.second->sliderStrokes.Clear();
+		sd.second->slider->SetFocus();
+
+		sd.second->btnSliderEdit->Destroy();
+		sd.second->slider->Destroy();
+		sd.second->sliderName->Destroy();
+		sd.second->sliderNameCheck->Destroy();
+		sd.second->sliderReadout->Destroy();
+		sd.second->sliderPane->Destroy();
+		delete sd.second;
+
+		erase.push_back(sd.first);
+		project->DeleteSlider(sd.first);
+	}
+
+	for (auto &e : erase)
+		sliderDisplays.erase(e);
+
+	glView->SetStrokeManager(nullptr);
+	MenuExitSliderEdit();
+	sliderScroll->FitInside();
+	activeSlider = "";
+
+	vector<string> shapes;
+	project->GetShapes(shapes);
+
+	wxString addedDiffs;
+	auto diffs = osd.GetDataDiffs();
+
+	for (auto &s : shapes) {
+		bool added = false;
+		for (auto &diff : diffs) {
+			// Diff name is supposed to begin with matching shape name
+			if (diff.first.substr(0, s.size()) != s)
+				continue;
+
+			string diffName = diff.first.substr(s.length(), diff.first.length() - s.length() + 1);
+			string finalName = project->NameAbbreviate(diffName);
+			if (!project->ValidSlider(finalName)) {
+				createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+				project->AddEmptySlider(finalName);
+				ShowSliderEffect(finalName);
+			}
+
+			project->SetSliderFromDiff(finalName, s, diff.second);
+			added = true;
+		}
+
+		if (added)
+			addedDiffs += s + "\n";
+	}
+
+	sliderScroll->FitInside();
+	sliderScroll->Thaw();
+	ApplySliders();
+
+	wxLogMessage("Added morphs for the following shapes:\n%s", addedDiffs);
+	wxMessageBox(wxString::Format(_("Added morphs for the following shapes:\n\n%s"), addedDiffs), _("OSD Import"));
+}
+
 void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid()) {
 		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
@@ -3352,7 +3443,7 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 			}
 
 			unordered_map<ushort, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
-			project->SetSliderFromTRI(morphData->name, morph.first, diff);
+			project->SetSliderFromDiff(morphData->name, morph.first, diff);
 		}
 	}
 

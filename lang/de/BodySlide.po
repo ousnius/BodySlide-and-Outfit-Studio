@@ -793,6 +793,20 @@ msgstr ""
 "Erstellt einen neuen Zap Slider, der auf allen nicht maskierten Vertices "
 "basiert."
 
+msgid "Import OSD..."
+msgstr "OSD importieren..."
+
+msgid "Imports OSD file and creates sliders for shapes with a matching name."
+msgstr ""
+"Importiert eine OSD-Datei und erstellt daraus Slider für Modelle mit "
+"passendem Namen."
+
+msgid "Export OSD..."
+msgstr "OSD exportieren..."
+
+msgid "Exports all currently loaded slider data to an OSD file."
+msgstr "Exportiert alle derzeit geladenen Sliderdaten in eine OSD-Datei."
+
 msgid "Import TRI Morphs..."
 msgstr "TRI Morphs importieren..."
 
@@ -2544,6 +2558,21 @@ msgstr "OBJ Sliderdaten exportieren"
 #: OutfitStudio.cpp:2789 OutfitStudio.cpp:3175
 msgid "Failed to export OBJ file!"
 msgstr "Konnte OBJ-Datei nicht exportieren!"
+
+msgid "OSD Import"
+msgstr "OSD Import"
+
+msgid "Import .osd file"
+msgstr "OSD-Datei importieren"
+
+msgid "Failed to import OSD file!"
+msgstr "Konnte OSD-Datei nicht importieren!"
+
+msgid "Export .osd file"
+msgstr "OSD-Datei exportieren"
+
+msgid "Failed to export OSD file!"
+msgstr "Konnte OSD-Datei nicht exportieren!"
 
 #: OutfitStudio.cpp:2802
 msgid "Export .tri morphs"

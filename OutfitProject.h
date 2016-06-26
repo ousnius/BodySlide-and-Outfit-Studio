@@ -122,7 +122,7 @@ public:
 	void SetSliderFromBSD(const string& sliderName, const string& shapeName, const string& fileName);
 	bool SetSliderFromOBJ(const string& sliderName, const string& shapeName, const string& fileName);
 	bool SetSliderFromFBX(const string& sliderName, const string& shapeName, const string& fileName);
-	void SetSliderFromTRI(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff);
+	void SetSliderFromDiff(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff);
 	int SaveSliderBSD(const string& sliderName, const string& shapeName, const string& fileName);
 	int SaveSliderOBJ(const string& sliderName, const string& shapeName, const string& fileName);
 	int WriteMorphTRI(const string& triPath);

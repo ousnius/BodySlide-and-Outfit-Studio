@@ -81,6 +81,10 @@ bool OSDataFile::Write(const string& fileName) {
 	return true;
 }
 
+map<string, unordered_map<ushort, Vector3>> OSDataFile::GetDataDiffs() {
+	return dataDiffs;
+}
+
 void OSDataFile::GetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& outDataDiff) {
 	outDataDiff.clear();
 

@@ -918,7 +918,7 @@ bool OutfitProject::SetSliderFromFBX(const string& sliderName, const string& sha
 	return true;
 }
 
-void OutfitProject::SetSliderFromTRI(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff) {
+void OutfitProject::SetSliderFromDiff(const string& sliderName, const string& shapeName, unordered_map<ushort, Vector3>& diff) {
 	string target = ShapeToTarget(shapeName);
 	if (IsBaseShape(shapeName)) {
 		string sliderData = activeSet[sliderName].TargetDataName(target);

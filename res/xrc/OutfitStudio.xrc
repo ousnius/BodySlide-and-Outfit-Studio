@@ -1032,6 +1032,10 @@
 				<help>Create a new Zap slider based on unmasked vertices</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="sliderImportOSD">
+				<label>Import OSD...</label>
+				<help>Imports OSD file and creates sliders for shapes with a matching name.</help>
+			</object>
 			<object class="wxMenuItem" name="sliderExportOSD">
 				<label>Export OSD...</label>
 				<help>Exports all currently loaded slider data to an OSD file.</help>

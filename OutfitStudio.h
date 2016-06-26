@@ -844,6 +844,7 @@ private:
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportBSD(wxCommandEvent& event);
 	void OnSliderImportOBJ(wxCommandEvent& event);
+	void OnSliderImportOSD(wxCommandEvent& event);
 	void OnSliderImportTRI(wxCommandEvent& event);
 	void OnSliderImportFBX(wxCommandEvent& event);
 	void OnSliderExportBSD(wxCommandEvent& event);
