@@ -46,6 +46,17 @@
 												<value></value>
 											</object>
 										</object>
+										<object class="sizeritem">
+											<option>0</option>
+											<flag>wxTOP|wxLEFT|wxEXPAND</flag>
+											<border>5</border>
+											<object class="wxButton" name="btnMaterialChooser">
+												<hidden>1</hidden>
+												<label>...</label>
+												<size>50,18</size>
+												<default>0</default>
+											</object>
+										</object>
 									</object>
 								</object>
 								<object class="sizeritem">

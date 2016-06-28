@@ -1249,6 +1249,12 @@ msgstr ""
 msgid "Shape Properties"
 msgstr ""
 
+msgid "Material"
+msgstr ""
+
+msgid "Choose material file"
+msgstr ""
+
 msgid "Shader"
 msgstr ""
 

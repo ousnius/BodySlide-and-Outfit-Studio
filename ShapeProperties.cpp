@@ -7,6 +7,7 @@ See the included LICENSE file
 #include "ShapeProperties.h"
 
 wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
+	EVT_BUTTON(XRCID("btnMaterialChooser"), ShapeProperties::OnChooseMaterial)
 	EVT_BUTTON(XRCID("btnAddShader"), ShapeProperties::OnAddShader)
 	EVT_BUTTON(XRCID("btnRemoveShader"), ShapeProperties::OnRemoveShader)
 	EVT_BUTTON(XRCID("btnSetTextures"), ShapeProperties::OnSetTextures)
@@ -28,7 +29,10 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	nif = refNif;
 	shape = shapeName;
 
+	pgShader = XRCCTRL(*this, "pgShader", wxPanel);
+	lbShaderName = XRCCTRL(*this, "lbShaderName", wxStaticText);
 	shaderName = XRCCTRL(*this, "shaderName", wxTextCtrl);
+	btnMaterialChooser = XRCCTRL(*this, "btnMaterialChooser", wxButton);
 	shaderType = XRCCTRL(*this, "shaderType", wxChoice);
 	specularColor = XRCCTRL(*this, "specularColor", wxColourPickerCtrl);
 	specularStrength = XRCCTRL(*this, "specularStrength", wxTextCtrl);
@@ -49,8 +53,11 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
 
-	if (os->targetGame == FO4)
-		XRCCTRL(*this, "lbShaderName", wxStaticText)->SetLabel("Material");
+	if (os->targetGame == FO4) {
+		lbShaderName->SetLabel(_("Material"));
+		btnMaterialChooser->Show();
+		pgShader->Layout();
+	}
 
 	GetShader();
 	GetTransparency();
@@ -68,6 +75,7 @@ void ShapeProperties::GetShader() {
 	if (!shader) {
 		btnAddShader->Enable();
 		btnRemoveShader->Disable();
+		btnMaterialChooser->Disable();
 		btnSetTextures->Disable();
 		shaderName->Disable();
 		shaderType->Disable();
@@ -190,11 +198,24 @@ void ShapeProperties::GetShaderType() {
 	}
 }
 
+void ShapeProperties::OnChooseMaterial(wxCommandEvent& WXUNUSED(event)) {
+	wxString fileName = wxFileSelector(_("Choose material file"), wxEmptyString, wxEmptyString, ".bgsm", "Material files (*.bgsm;*.bgem)|*.bgsm;*.bgem", wxFD_FILE_MUST_EXIST, this);
+	if (fileName.empty())
+		return;
+
+	int index = fileName.Lower().Find("\\materials\\");
+	if (index != wxNOT_FOUND && fileName.length() - 1 > index + 1)
+		fileName = fileName.Mid(index + 1);
+
+	shaderName->SetValue(fileName);
+}
+
 void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	AddShader();
 
 	btnAddShader->Disable();
 	btnRemoveShader->Enable();
+	btnMaterialChooser->Enable();
 	btnSetTextures->Enable();
 	shaderName->Enable();
 	shaderType->Enable();

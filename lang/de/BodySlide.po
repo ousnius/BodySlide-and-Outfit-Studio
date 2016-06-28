@@ -1452,6 +1452,12 @@ msgstr "Referenzmodell in die Ausgabe kopieren"
 msgid "Shape Properties"
 msgstr "Modelleigenschaften"
 
+msgid "Material"
+msgstr "Material"
+
+msgid "Choose material file"
+msgstr "Material-Datei auswählen"
+
 msgid "Shader"
 msgstr "Shader"
 

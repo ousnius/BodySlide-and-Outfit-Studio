@@ -17,7 +17,10 @@ public:
 	~ShapeProperties();
 
 private:
+	wxPanel* pgShader = nullptr;
+	wxStaticText* lbShaderName = nullptr;
 	wxTextCtrl* shaderName = nullptr;
+	wxButton* btnMaterialChooser = nullptr;
 	wxChoice* shaderType = nullptr;
 	wxColourPickerCtrl* specularColor = nullptr;
 	wxTextCtrl* specularStrength = nullptr;
@@ -64,6 +67,7 @@ private:
 	void AssignDefaultTexture();
 	void ApplyChanges();
 
+	void OnChooseMaterial(wxCommandEvent& event);
 	void OnAddShader(wxCommandEvent& event);
 	void OnRemoveShader(wxCommandEvent& event);
 	void OnSetTextures(wxCommandEvent& event);
