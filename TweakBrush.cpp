@@ -177,8 +177,11 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 			refBrush->brushAction(m, pickInfo, nullptr, nPts1, outPositions[m]);
 
-			for (int i = 0; i < nPts1; i++)
-				addPoint(m, refBrush->CachedPointIndex(m, i), outPositions[m][i]);
+			int cachedPointIndex = 0;
+			for (int i = 0; i < nPts1; i++) {
+				cachedPointIndex = refBrush->CachedPointIndex(m, i);
+				addPoint(m, cachedPointIndex, outPositions[m][cachedPointIndex]);
+			}
 
 			if (refBrush->LiveNormals()) {
 				auto pending = async(launch::async, mesh::SmoothNormalsStaticMap, m, pointStartState[m]);
@@ -933,7 +936,7 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 		for (int p = 0; p < meshCache->nCachedPointsM; p++) {
 			int i = meshCache->cachedPointsM[p];
 			vs = meshCache->cachedPositions[i];
-			movedpoints[p + meshCache->nCachedPoints] = vs;
+			movedpoints[i] = vs;
 			ve = xformMirror * vs;
 			ve -= vs;
 			applyFalloff(ve, mpick.origin.DistanceTo(vs));
@@ -948,7 +951,7 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 	for (int p = 0; p < meshCache->nCachedPoints; p++) {
 		int i = meshCache->cachedPoints[p];
 		vs = meshCache->cachedPositions[i];
-		movedpoints[p] = vs;
+		movedpoints[i] = vs;
 		ve = xform * vs;
 		ve -= vs;
 		applyFalloff(ve, pick.origin.DistanceTo(vs));
