@@ -44,10 +44,63 @@
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">
 					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<flag>wxALIGN_CENTRE_HORIZONTAL|wxALL</flag>
 						<border>5</border>
 						<object class="wxButton" name="wxID_OK">
 							<label>&amp;Build</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTRE_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxDialog" name="dlgBuildOverride">
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxCLIP_CHILDREN</style>
+		<size>650,400</size>
+		<title>Choose output set</title>
+		<centered>1</centered>
+		<bg>wxSYS_COLOUR_WINDOW</bg>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxALIGN_CENTRE_HORIZONTAL</flag>
+				<border>5</border>
+				<object class="wxStaticText" name="lbBuildOverride">
+					<style>wxALIGN_CENTRE_HORIZONTAL</style>
+					<label>The following sets will override the same files.\nPlease decide which one to use and select it in the list below.</label>
+					<wrap>625</wrap>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</flag>
+				<border>5</border>
+				<object class="wxScrolledWindow" name="scrollOverrides">
+					<style>wxVSCROLL</style>
+					<scrollrate>5,10</scrollrate>
+					<object class="wxBoxSizer">
+						<orient>wxVERTICAL</orient>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
 						</object>
 					</object>
 					<object class="button">

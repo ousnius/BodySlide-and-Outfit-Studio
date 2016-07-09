@@ -1517,6 +1517,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	}
 
 	if (Config.MatchValue("WarnBatchBuildOverride", "true")) {
+		vector<wxArrayString> choicesList;
 		for (auto &filePath : outFileCount) {
 			if (filePath.second.size() > 1) {
 				wxArrayString selFilePaths;
@@ -1530,20 +1531,50 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				if (selFilePaths.size() <= 1)
 					continue;
 
-				wxSingleChoiceDialog setChoice(sliderView, _("The following sets will override the same files.\nPlease decide which one to use and select it in the list below."), _("Choose output set"), selFilePaths);
-				if (setChoice.ShowModal() == wxID_CANCEL) {
-					wxLogMessage("Aborted batch build by not choosing a file override.");
-					return 1;
-				}
+				choicesList.push_back(selFilePaths);
+			}
+		}
 
+		if (!choicesList.empty()) {
+			wxXmlResource* rsrc = wxXmlResource::Get();
+			wxDialog* dlgBuildOverride = rsrc->LoadDialog(sliderView, "dlgBuildOverride");
+			dlgBuildOverride->SetSize(wxSize(650, 400));
+			dlgBuildOverride->SetSizeHints(wxSize(650, 400), wxSize(650, -1));
+			dlgBuildOverride->CenterOnParent();
+
+			wxScrolledWindow* scrollOverrides = XRCCTRL(*dlgBuildOverride, "scrollOverrides", wxScrolledWindow);
+			wxBoxSizer* choicesSizer = (wxBoxSizer*)scrollOverrides->GetSizer();
+
+			int nChoice = 1;
+			vector<wxRadioBox*> choiceBoxes;
+			for (auto &choices : choicesList) {
+				wxRadioBox* choiceBox = new wxRadioBox(scrollOverrides, wxID_ANY, _("Choose output set") + wxString::Format(" #%d", nChoice), wxDefaultPosition, wxDefaultSize, choices, 1, wxRA_SPECIFY_COLS);
+				choicesSizer->Add(choiceBox, 0, wxALL | wxEXPAND, 5);
+
+				choiceBoxes.push_back(choiceBox);
+				nChoice++;
+			}
+
+			scrollOverrides->FitInside();
+
+			if (dlgBuildOverride->ShowModal() == wxID_CANCEL) {
+				wxLogMessage("Aborted batch build by not choosing a file override.");
+				delete dlgBuildOverride;
+				return 1;
+			}
+
+			for (int i = 0; i < choicesList.size(); i++) {
 				// Remove others from the list of outfits to build
-				selFilePaths.Remove(setChoice.GetStringSelection());
-				for (auto &file : selFilePaths) {
+				choicesList[i].Remove(choiceBoxes[i]->GetStringSelection());
+
+				for (auto &file : choicesList[i]) {
 					auto result = find(outfitList.begin(), outfitList.end(), file);
 					if (result != outfitList.end())
 						outfitList.erase(result);
 				}
 			}
+
+			delete dlgBuildOverride;
 		}
 	}
 
