@@ -1538,13 +1538,10 @@ int NifFile::GetShapeBoneList(const string& shapeName, vector<string>& outList) 
 	if (!skinInst)
 		return 0;
 
-	int boneBlock;
 	for (int i = 0; i < skinInst->bones.size(); i++) {
-		boneBlock = skinInst->bones[i];
-		if (boneBlock != -1) {
-			NiNode* node = (NiNode*)GetBlock(boneBlock);
+		NiNode* node = dynamic_cast<NiNode*>(GetBlock(skinInst->bones[i]));
+		if (node)
 			outList.push_back(node->GetName());
-		}
 	}
 	return outList.size();
 }
@@ -1559,9 +1556,8 @@ int NifFile::GetShapeBoneIDList(const string& shapeName, vector<int>& outList) {
 	}
 	else {
 		BSTriShape* siTriShape = geomForNameF4(shapeName);
-		if (siTriShape) {
+		if (siTriShape)
 			skinRef = siTriShape->skinInstanceRef;
-		}
 	}
 
 
@@ -1572,11 +1568,9 @@ int NifFile::GetShapeBoneIDList(const string& shapeName, vector<int>& outList) {
 	if (!skinInst)
 		return 0;
 
-	int boneBlock;
-	for (int i = 0; i < skinInst->bones.size(); i++) {
-		boneBlock = skinInst->bones[i];
-		outList.push_back(boneBlock);
-	}
+	for (int i = 0; i < skinInst->bones.size(); i++)
+		outList.push_back(skinInst->bones[i]);
+
 	return outList.size();
 }
 
@@ -1613,8 +1607,8 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 		feedBoneData = true;
 	}
 
-	for (int i = 0; i < inList.size(); i++) {
-		boneCont->bones.push_back(inList[i]);
+	for (auto &i : inList) {
+		boneCont->bones.push_back(i);
 		boneCont->numBones++;
 		if (boneData && feedBoneData) {
 			boneData->boneXforms.emplace_back();
@@ -1622,19 +1616,22 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 			boneData->CalcBlockSize();
 		}
 	}
+
 	hdr.blockSizes[skinRef] = boneCont->CalcBlockSize();
 
 	NiSkinInstance* skinInst = dynamic_cast<NiSkinInstance*>(boneCont);
 	if (skinInst) {
-		NiSkinData* skinData = (NiSkinData*)GetBlock(skinInst->dataRef);
-		int nBonesToAdd = skinInst->bones.size() - skinData->numBones;
-		if (nBonesToAdd > 0) {
-			for (int i = 0; i < nBonesToAdd; i++) {
-				skinData->bones.emplace_back();
-				skinData->bones.back().numVertices = 0;
-				skinData->numBones++;
+		NiSkinData* skinData = dynamic_cast<NiSkinData*>(GetBlock(skinInst->dataRef));
+		if (skinData) {
+			int nBonesToAdd = skinInst->bones.size() - skinData->numBones;
+			if (nBonesToAdd > 0) {
+				for (int i = 0; i < nBonesToAdd; i++) {
+					skinData->bones.emplace_back();
+					skinData->bones.back().numVertices = 0;
+					skinData->numBones++;
+				}
+				hdr.blockSizes[skinInst->dataRef] = skinData->CalcBlockSize();
 			}
-			hdr.blockSizes[skinInst->dataRef] = skinData->CalcBlockSize();
 		}
 	}
 }
@@ -1706,7 +1703,7 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 			if (skinRef == -1)
 				return false;
 
-			BSSkinInstance * skinForBoneRef = dynamic_cast<BSSkinInstance*>(GetBlock(skinRef));
+			BSSkinInstance* skinForBoneRef = dynamic_cast<BSSkinInstance*>(GetBlock(skinRef));
 			if (skinForBoneRef && boneIndex != -1) {
 				BSSkinBoneData* bsSkin = dynamic_cast<BSSkinBoneData*>(GetBlock(skinForBoneRef->boneDataRef));
 				bsSkin->boneXforms[boneIndex].boundSphereOffset = inSphereOffset;
@@ -1872,14 +1869,13 @@ void NifFile::SetShapeBoneWeights(const string& shapeName, int boneIndex, unorde
 	hdr.blockSizes[skinInst->dataRef] = skinData->CalcBlockSize();
 }
 
-void NifFile::SetShapeVertWeights(const string& shapeName, int vertIndex, vector<unsigned char>& boneids, vector<float>& weights) {
+void NifFile::SetShapeVertWeights(const string& shapeName, int vertIndex, vector<byte>& boneids, vector<float>& weights) {
 	BSTriShape* siTriShape = geomForNameF4(shapeName);
-	if (!siTriShape) {
+	if (!siTriShape)
 		return;
-	}
 
 	memset(siTriShape->vertData[vertIndex].weights, 0, sizeof(float) * 4);
-	memset(siTriShape->vertData[vertIndex].weightBones, 0, sizeof(unsigned char) * 4);
+	memset(siTriShape->vertData[vertIndex].weightBones, 0, sizeof(byte) * 4);
 
 	// sum weights to normalize weight values
 	float sum = 0.0f;

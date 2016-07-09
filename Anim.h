@@ -15,14 +15,14 @@ See the included LICENSE file
 
 using namespace std;
 
-struct vertexBoneWeights {
-	vector<unsigned char> boneIds;
+struct VertexBoneWeights {
+	vector<byte> boneIds;
 	vector<float> weights;
 
-	vertexBoneWeights() {
+	VertexBoneWeights() {
 	}
 
-	void Add(int inboneid, float inweight) {
+	void Add(byte inboneid, float inweight) {
 		if (inweight == 0)
 			return;
 
@@ -45,14 +45,14 @@ public:
 	string boneName;			// bone names are node names in the nif file
 	int boneID;					// block id from the original nif file
 	int order;					// order of appearance in nif file
-	Matrix4 rot;					// original node rotation value (total rotation, including parents)
+	Matrix4 rot;				// original node rotation value (total rotation, including parents)
 	Vector3 trans;				// original node translation value (total translation, including parents)
 	float scale;				// original node scale value
 
 	bool isValidBone;
 	AnimBone* parent;
 	vector<AnimBone*> children;
-	Matrix4 localRot;				// rotation offset from parent bone.
+	Matrix4 localRot;			// rotation offset from parent bone.
 	Vector3 localTrans;			// offset from parent bone
 
 	bool hasSkinXform;
@@ -60,6 +60,7 @@ public:
 	Vector3 skinTrans;			// skinning translation transform  (NOT node transform
 
 	int refCount;				// reference count of this bone
+
 	AnimBone() {
 		boneName = "bogus";
 		boneID = -1;
@@ -76,22 +77,24 @@ public:
 		isValidBone = true;
 		hasSkinXform = false;
 	}
+
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
 };
 
 // Vertex to weight value association. Also keeps track of skin transform and bounding sphere.
 class AnimWeight {
 public:
-	//int boneNum;				// Numeric index into the AnimSkin bone list.
 	unordered_map<ushort, float> weights;
 	SkinTransform xform;
 	Vector3 bSphereOffset;
 	float bSphereRadius;
+
 	AnimWeight() {}
 	AnimWeight(NifFile* loadFromFile, const string& shape, int index) {
 		loadFromFile->GetShapeBoneWeights(shape, index, weights);
 		loadFromFile->GetShapeBoneTransform(shape, index, xform, bSphereOffset, bSphereRadius);
 	}
+
 	bool VertWeight(ushort queryVert, float& weight) {
 		if (weights.find(queryVert) != weights.end()) {
 			weight = weights[queryVert];
@@ -107,17 +110,25 @@ public:
 	unordered_map<int, AnimWeight> boneWeights;
 	unordered_map<string, int> boneNames;
 	bool bNeedsBoundsCalc;
+
 	AnimSkin() : bNeedsBoundsCalc(true) { }
-	AnimSkin(NifFile* loadFromFile, const string& shape, const vector<int>& BoneIndices) : bNeedsBoundsCalc(true) {
+	AnimSkin(NifFile* loadFromFile, const string& shape) : bNeedsBoundsCalc(true) {
 		vector<int> idList;
 		loadFromFile->GetShapeBoneIDList(shape, idList);
-		for (auto &i : BoneIndices) {
-			boneWeights[i] = AnimWeight(loadFromFile, shape, i);
-			NiNode* node = (NiNode*)loadFromFile->GetBlock(idList[i]);
-			boneNames[node->GetName()] = i;
+
+		int newID = 0;
+		for (auto &id : idList) {
+			NiNode* node = dynamic_cast<NiNode*>(loadFromFile->GetBlock(id));
+			if (node) {
+				boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
+				boneNames[node->GetName()] = newID;
+				newID++;
+			}
 		}
+
 		bNeedsBoundsCalc = false;
 	}
+
 	void VertexBones(ushort queryvert, vector<int>& outbones, vector<float>& outWeights) {
 		float wresult;
 		for (auto &bw : boneWeights) {
@@ -127,6 +138,7 @@ public:
 			}
 		}
 	}
+
 	void RemoveBone(int boneOrder) {
 		unordered_map<int, AnimWeight> bwtemp;
 		for (auto &bw : boneWeights) {
@@ -144,7 +156,7 @@ public:
 class AnimPartition {
 public:
 	int bodypart;						// Body part number (from BSDismembermentSkinInstance/partiitons).
-	vector<Triangle> tris;					// Points are indices to the verts list for this partition. (eg. starting at 0).
+	vector<Triangle> tris;				// Points are indices to the verts list for this partition. (eg. starting at 0).
 	vector<int> verts;					// All referenced verts in this partition.
 	vector<int> bones;					// All referenced bones in this partition.
 	vector<vector<float>> vertWeights;	// Vert order list of weights per vertex.
@@ -157,6 +169,7 @@ public:
 	map<string, vector<string>> shapeBones;
 	unordered_map<string, AnimSkin> shapeSkinning;			// Shape to skin association.
 	NifFile* refNif;
+
 	AnimInfo() { refNif = nullptr; }
 
 	// Returns true if a new bone is added, false if the bone already exists.
@@ -179,25 +192,28 @@ public:
 	bool CalcShapeSkinBounds(const string& shape);
 	void WriteToNif(NifFile* nif, bool synchBoneIDs = true, const string& shapeException = "");
 
-	void RenameShape(const string& shapeName, const string& newShapeName);	
+	void RenameShape(const string& shapeName, const string& newShapeName);
 };
 
 class AnimSkeleton {
 	AnimBone invBone;
-	AnimSkeleton() { unknownCount = 0; isValid = false; allowCustom = true; }
 	map<string, AnimBone> allBones;
 	map<string, AnimBone> customBones;
 	string rootBone;
 	int unknownCount;
 	bool allowCustom;
 
+	AnimSkeleton() { unknownCount = 0; isValid = false; allowCustom = true; }
+
 public:
-	NifFile refSkeletonNif;
 	static AnimSkeleton& getInstance() {
 		static AnimSkeleton instance;
 		return instance;
 	}
+
+	NifFile refSkeletonNif;
 	bool isValid;
+
 	int LoadFromNif(const string& fileName);
 	AnimBone& AddBone(const string& boneName, bool bCustom = false);
 	string GenerateBoneName();
