@@ -406,8 +406,7 @@ public:
 		byte weightBones[4];
 	};
 
-	Vector3 center;
-	float radius;
+	BoundingSphere bounds;
 
 	int skinInstanceRef;
 	int shaderPropertyRef;
@@ -446,7 +445,7 @@ public:
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	virtual int CalcBlockSize();
 
-	const vector<Vector3>* GetRawVerts(bool xform = true);
+	const vector<Vector3>* GetRawVerts();
 	const vector<Vector3>* GetNormalData(bool xform = true);
 	const vector<Vector3>* GetTangentData(bool xform = true);
 	const vector<Vector3>* GetBitangentData(bool xform = true);
@@ -610,8 +609,7 @@ public:
 	vector<Vector3> normals;
 	vector<Vector3> tangents;
 	vector<Vector3> bitangents;
-	Vector3 center;
-	float radius;
+	BoundingSphere bounds;
 	bool hasVertexColors;
 	vector<Color4> vertexColors;
 	vector<Vector2> uvSets;
@@ -798,23 +796,23 @@ public:
 	virtual int CalcBlockSize();
 };
 
-class BSSkinBoneData  : public NiObject {
+class BSSkinBoneData : public NiObject {
 public:
 	uint nBones;
+
 	class BoneData {
 	public:
-		Vector3 boundSphereOffset;
-		float boundSphereRadius;
+		BoundingSphere bounds;
 		SkinTransform boneTransform;
 
 		BoneData() {
 			boneTransform.scale = 1.0f;
-			boundSphereRadius = 0.0f;
 		}
 		int CalcSize() {
 			return (68);
 		}
 	};
+
 	vector<BoneData> boneXforms;
 
 	BSSkinBoneData() : nBones(0) { };
@@ -831,14 +829,12 @@ public:
 	class BoneData {
 	public:
 		SkinTransform boneTransform;
-		Vector3 boundSphereOffset;
-		float boundSphereRadius;
+		BoundingSphere bounds;
 		ushort numVertices;
 		vector<SkinWeight> vertexWeights;
 
 		BoneData() {
 			boneTransform.scale = 1.0f;
-			boundSphereRadius = 0.0f;
 			numVertices = 0;
 		}
 		int CalcSize() {
@@ -1652,11 +1648,11 @@ public:
 	int GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& outWeights);
 
 	// Empty string for the bone name returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform, Vector3& outSphereOffset, float& outSphereRadius);
+	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform, BoundingSphere& outBounds);
 	// -1 for the bone index sets the overall skin transform for the shape.
-	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform, Vector3& inSphereOffset, float inSphereRadius);
+	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform, BoundingSphere& inBounds);
 	// -1 on the bone index returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, Vector3& outSphereOffset, float& outSphereRadius);
+	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, BoundingSphere& outBounds);
 	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
 	void SetShapeVertWeights(const string& shapeName, int vertIndex, vector<byte>& boneids, vector<float>& weights);

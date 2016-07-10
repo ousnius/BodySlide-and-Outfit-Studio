@@ -592,6 +592,25 @@ public:
 };
 
 
+struct BoundingSphere {
+	Vector3 center;
+	float radius;
+
+	BoundingSphere() {
+		center.Zero();
+		radius = 0.0f;
+	}
+
+	BoundingSphere(const Vector3& center, const float& radius) {
+		this->center = center;
+		this->radius = radius;
+	}
+
+	// Miniball algorithm
+	BoundingSphere(const vector<Vector3>& vertices);
+};
+
+
 struct Quaternion {
 	float w;
 	float x;

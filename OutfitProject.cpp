@@ -1219,19 +1219,16 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 			AnimSkeleton::getInstance().GetBone(boneName, boneRef);
 			if (workAnim.AddShapeBone(destShape, boneRef)) {
 				if (owner->targetGame == FO4) {
-					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.  
+					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 					SkinTransform xForm;
-					Vector3 sphereOffset;
-					float sphereRadius;
-					workNif.GetShapeBoneTransform(baseShape, boneName, xForm, sphereOffset, sphereRadius);
-
+					BoundingSphere bounds;
+					workNif.GetShapeBoneTransform(baseShape, boneName, xForm, bounds);
 					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 				}
 				else {
 					SkinTransform xForm;
 					workAnim.GetBoneXForm(boneName, xForm);
 					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
-
 				}
 			}
 		}
@@ -1293,19 +1290,16 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 		AnimSkeleton::getInstance().GetBone(boneName, boneRef);
 		if (workAnim.AddShapeBone(destShape, boneRef)) {
 			if (owner->targetGame == FO4) {
-				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.  
+				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 				SkinTransform xForm;
-				Vector3 sphereOffset;
-				float sphereRadius;
-				workNif.GetShapeBoneTransform(baseShape, boneName, xForm, sphereOffset, sphereRadius);
-
+				BoundingSphere bounds;
+				workNif.GetShapeBoneTransform(baseShape, boneName, xForm, bounds);
 				workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 			}
 			else {
 				SkinTransform xForm;
 				workAnim.GetBoneXForm(boneName, xForm);
 				workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
-
 			}
 		}
 
@@ -1950,10 +1944,9 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 		Matrix4 localGeom;
 		nif.GetShapeTransform(s, localGeom);
 
-		Vector3 dummyVec3;
-		float dummyFloat;
+		BoundingSphere bounds;
 		SkinTransform xFormSkinAll;
-		nif.GetShapeBoneTransform(s, -1, xFormSkinAll, dummyVec3, dummyFloat);
+		nif.GetShapeBoneTransform(s, -1, xFormSkinAll, bounds);
 
 		Matrix4 skinAllInv = xFormSkinAll.ToMatrix().Inverse();
 
@@ -1968,7 +1961,7 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 		nif.SetVertsForShape(s, verts);
 
 		SkinTransform defXForm;
-		nif.SetShapeBoneTransform(s, -1, defXForm, dummyVec3, dummyFloat);
+		nif.SetShapeBoneTransform(s, -1, defXForm, bounds);
 		nif.ClearShapeTransform(s);
 	}
 

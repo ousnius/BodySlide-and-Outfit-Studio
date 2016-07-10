@@ -653,8 +653,6 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	blockType = BSTRISHAPE;
 	header = &hdr;
 
-	radius = 0.0f;
-
 	skinInstanceRef = -1;
 	shaderPropertyRef = -1;
 	alphaPropertyRef = -1;
@@ -701,10 +699,7 @@ void BSTriShape::Get(fstream& file) {
 	file.read((char*)&scale, 4);
 	file.read((char*)&collisionRef, 4);
 
-	file.read((char*)&center.x, 4);
-	file.read((char*)&center.y, 4);
-	file.read((char*)&center.z, 4);
-	file.read((char*)&radius, 4);
+	file.read((char*)&bounds, 16);
 
 	file.read((char*)&skinInstanceRef, 4);
 	file.read((char*)&shaderPropertyRef, 4);
@@ -819,10 +814,7 @@ void BSTriShape::Put(fstream& file) {
 	file.write((char*)&scale, 4);
 	file.write((char*)&collisionRef, 4);
 
-	file.write((char*)&center.x, 4);
-	file.write((char*)&center.y, 4);
-	file.write((char*)&center.z, 4);
-	file.write((char*)&radius, 4);
+	file.write((char*)&bounds, 16);
 
 	file.write((char*)&skinInstanceRef, 4);
 	file.write((char*)&shaderPropertyRef, 4);
@@ -1025,7 +1017,7 @@ int BSTriShape::CalcBlockSize() {
 	return blockSize;
 }
 
-const vector<Vector3>* BSTriShape::GetRawVerts(bool xform) {
+const vector<Vector3>* BSTriShape::GetRawVerts() {
 	rawVertices.clear();
 	rawVertices.resize(numVertices);
 	for (int i = 0; i < numVertices; i++)
@@ -1426,20 +1418,7 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		memset(vertData[i].weightBones, 0, 4);
 	}
 
-	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
-	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-	for (auto &v : (*verts)) {
-		a.x = min(a.x, v.x);
-		a.y = min(a.y, v.y);
-		a.z = min(a.z, v.z);
-		b.x = max(b.x, v.x);
-		b.y = max(b.y, v.y);
-		b.z = max(b.z, v.z);
-	}
-
-	center = (a + b) / 2.0f;
-	for (auto &v : (*verts))
-		radius = max(radius, center.DistanceTo(v));
+	bounds = BoundingSphere(*verts);
 
 	if (normals && normals->size() == numVertices) {
 		SetNormals((*normals));
@@ -1804,7 +1783,6 @@ void NiGeometryData::Init() {
 	//extraVectorsFlags = 0;
 	unkInt2 = 0;
 	hasNormals = false;
-	radius = 0.0f;
 	hasVertexColors = false;
 	consistencyFlags = 0;
 	additionalData = 0xFFFFFFFF;
@@ -1856,10 +1834,7 @@ void NiGeometryData::Get(fstream& file) {
 		}
 	}
 
-	file.read((char*)&center.x, 4);
-	file.read((char*)&center.y, 4);
-	file.read((char*)&center.z, 4);
-	file.read((char*)&radius, 4);
+	file.read((char*)&bounds, 16);
 
 	file.read((char*)&hasVertexColors, 1);
 	if (hasVertexColors == 1) {
@@ -1922,10 +1897,7 @@ void NiGeometryData::Put(fstream& file) {
 			}
 		}
 	}
-	file.write((char*)&center.x, 4);
-	file.write((char*)&center.y, 4);
-	file.write((char*)&center.z, 4);
-	file.write((char*)&radius, 4);
+	file.write((char*)&bounds, 16);
 
 	file.write((char*)&hasVertexColors, 1);
 	if (hasVertexColors == 1) {
@@ -1958,7 +1930,6 @@ void NiGeometryData::SetTangents(bool enable) {
 
 void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
 	unkInt = 0;
-	radius = 0.0f;
 	keepFlags = 0;
 	compressFlags = 0;
 
@@ -1974,23 +1945,9 @@ void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 
 	unkInt2 = 0;
 	hasNormals = false;
-
-	Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
-	Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-	for (auto &v : (*verts)) {
-		a.x = min(a.x, v.x);
-		a.y = min(a.y, v.y);
-		a.z = min(a.z, v.z);
-		b.x = max(b.x, v.x);
-		b.y = max(b.y, v.y);
-		b.z = max(b.z, v.z);
-	}
-
-	center = (a + b) / 2.0f;
-	for (auto &v : (*verts))
-		radius = max(radius, center.DistanceTo(v));
-
 	hasVertexColors = false;
+
+	bounds = BoundingSphere(*verts);
 
 	for (auto &uv : *texcoords)
 		uvSets.push_back(uv);
@@ -3068,12 +3025,10 @@ void BSSkinBoneData::Get(fstream& file) {
 	NiObject::Get(file);
 
 	file.read((char*)&nBones, 4);
-	
+
 	BoneData boneData;
 	for (int i = 0; i < nBones; i++) {
-
-		file.read((char*)&boneData.boundSphereOffset, 12);
-		file.read((char*)&boneData.boundSphereRadius, 4);
+		file.read((char*)&boneData.bounds, 16);
 		file.read((char*)&boneData.boneTransform, 52);
 
 		boneXforms.push_back(boneData);
@@ -3086,9 +3041,7 @@ void BSSkinBoneData::Put(fstream& file) {
 	file.write((char*)&nBones, 4);
 
 	for (int i = 0; i < nBones; i++) {
-
-		file.write((char*)&boneXforms[i].boundSphereOffset, 12);
-		file.write((char*)&boneXforms[i].boundSphereRadius, 4);
+		file.write((char*)&boneXforms[i].bounds, 16);
 		file.write((char*)&boneXforms[i].boneTransform, 52);
 	}
 }
@@ -3143,8 +3096,7 @@ void NiSkinData::Get(fstream& file) {
 		boneData.vertexWeights.clear();
 
 		file.read((char*)&boneData.boneTransform, 52);
-		file.read((char*)&boneData.boundSphereOffset, 12);
-		file.read((char*)&boneData.boundSphereRadius, 4);
+		file.read((char*)&boneData.bounds, 16);
 		file.read((char*)&boneData.numVertices, 2);
 
 		for (int j = 0; j < boneData.numVertices; j++) {
@@ -3167,8 +3119,7 @@ void NiSkinData::Put(fstream& file) {
 
 	for (int i = 0; i < numBones; i++) {
 		file.write((char*)&bones[i].boneTransform, 52);
-		file.write((char*)&bones[i].boundSphereOffset, 12);
-		file.write((char*)&bones[i].boundSphereRadius, 4);
+		file.write((char*)&bones[i].bounds, 16);
 		file.write((char*)&bones[i].numVertices, 2);
 
 		for (int j = 0; j < bones[i].numVertices; j++) {

@@ -1681,15 +1681,15 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 	return outWeights.size();
 }
 
-bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform, Vector3& outSphereOffset, float& outSphereRadius) {
+bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform, BoundingSphere& outBounds) {
 	int boneIndex = shapeBoneIndex(shapeName, boneName);
 	if (boneName.empty())
 		boneIndex = -1;
 
-	return GetShapeBoneTransform(shapeName, boneIndex, outXform, outSphereOffset, outSphereRadius);
+	return GetShapeBoneTransform(shapeName, boneIndex, outXform, outBounds);
 }
 
-bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform, Vector3& inSphereOffset, float inSphereRadius) {
+bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform, BoundingSphere& inBounds) {
 	int skinRef = -1;
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
@@ -1706,8 +1706,7 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 			BSSkinInstance* skinForBoneRef = dynamic_cast<BSSkinInstance*>(GetBlock(skinRef));
 			if (skinForBoneRef && boneIndex != -1) {
 				BSSkinBoneData* bsSkin = dynamic_cast<BSSkinBoneData*>(GetBlock(skinForBoneRef->boneDataRef));
-				bsSkin->boneXforms[boneIndex].boundSphereOffset = inSphereOffset;
-				bsSkin->boneXforms[boneIndex].boundSphereRadius = inSphereRadius;
+				bsSkin->boneXforms[boneIndex].bounds = inBounds;
 				bsSkin->boneXforms[boneIndex].boneTransform = inXform;
 			}
 		}
@@ -1734,12 +1733,11 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	bone->boneTransform = inXform;
-	bone->boundSphereOffset = inSphereOffset;
-	bone->boundSphereRadius = inSphereRadius;
+	bone->bounds = inBounds;
 	return true;
 }
 
-bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, Vector3& outSphereOffset, float& outSphereRadius) {
+bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, BoundingSphere& outBounds) {
 	int skinRef = -1;
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
@@ -1762,8 +1760,7 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 
 						BSSkinBoneData* boneData = dynamic_cast<BSSkinBoneData*>(GetBlock(boneDataRef));
 						outXform = boneData->boneXforms[boneIndex].boneTransform;
-						outSphereOffset = boneData->boneXforms[boneIndex].boundSphereOffset;
-						outSphereRadius = boneData->boneXforms[boneIndex].boundSphereRadius;
+						outBounds = boneData->boneXforms[boneIndex].bounds;
 						return true;
 					}
 				}
@@ -1785,8 +1782,7 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 	if (boneIndex == -1) {
 		// Want the overall skin transform
 		outXform = skinData->skinTransform;
-		outSphereOffset = Vector3(0.0f, 0.0f, 0.0f);
-		outSphereRadius = 0.0f;
+		outBounds = BoundingSphere();
 		return true;
 	}
 
@@ -1795,8 +1791,7 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	outXform = bone->boneTransform;
-	outSphereOffset = bone->boundSphereOffset;
-	outSphereRadius = bone->boundSphereRadius;
+	outBounds = bone->bounds;
 	return true;
 }
 
@@ -3577,39 +3572,14 @@ void NifFile::UpdateBoundingSphere(const string& shapeName) {
 		if (!geomData)
 			return;
 
-		Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
-		Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-		for (auto &v : geomData->vertices) {
-			a.x = min(a.x, v.x);
-			a.y = min(a.y, v.y);
-			a.z = min(a.z, v.z);
-			b.x = max(b.x, v.x);
-			b.y = max(b.y, v.y);
-			b.z = max(b.z, v.z);
-		}
-
-		geomData->center = (a + b) / 2.0f;
-		for (auto &v : geomData->vertices)
-			geomData->radius = max(geomData->radius, geomData->center.DistanceTo(v));
+		geomData->bounds = BoundingSphere(geomData->vertices);
 	}
 	else if (bType == BSSUBINDEXTRISHAPE || bType == BSTRISHAPE || bType == BSMESHLODTRISHAPE) {
 		BSTriShape* geom = dynamic_cast<BSTriShape*>(GetBlock(dataRef));
 		if (!geom)
 			return;
 
-		Vector3 a(FLT_MAX, FLT_MAX, FLT_MAX);
-		Vector3 b(-FLT_MAX, -FLT_MAX, -FLT_MAX);
-		for (int i = 0; i < geom->vertData.size(); i++) {
-			a.x = min(a.x, geom->vertData[i].vert.x);
-			a.y = min(a.y, geom->vertData[i].vert.y);
-			a.z = min(a.z, geom->vertData[i].vert.z);
-			b.x = max(b.x, geom->vertData[i].vert.x);
-			b.y = max(b.y, geom->vertData[i].vert.y);
-			b.z = max(b.z, geom->vertData[i].vert.z);
-		}
-
-		geom->center = (a + b) / 2.0f;
-		for (int i = 0; i < geom->vertData.size(); i++)
-			geom->radius = max(geom->radius, geom->center.DistanceTo(geom->vertData[i].vert));
+		const vector<Vector3>* vertices = geom->GetRawVerts();
+		geom->bounds = BoundingSphere(*vertices);
 	}
 }

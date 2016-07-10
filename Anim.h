@@ -86,13 +86,12 @@ class AnimWeight {
 public:
 	unordered_map<ushort, float> weights;
 	SkinTransform xform;
-	Vector3 bSphereOffset;
-	float bSphereRadius;
+	BoundingSphere bounds;
 
 	AnimWeight() {}
 	AnimWeight(NifFile* loadFromFile, const string& shape, int index) {
 		loadFromFile->GetShapeBoneWeights(shape, index, weights);
-		loadFromFile->GetShapeBoneTransform(shape, index, xform, bSphereOffset, bSphereRadius);
+		loadFromFile->GetShapeBoneTransform(shape, index, xform, bounds);
 	}
 
 	bool VertWeight(ushort queryVert, float& weight) {
