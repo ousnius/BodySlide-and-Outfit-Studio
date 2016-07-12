@@ -263,10 +263,10 @@
 										<option>0</option>
 										<flag>wxALIGN_CENTER|wxALL</flag>
 										<border>5</border>
-										<object class="wxCheckBox" name="cbRaceMenu">
+										<object class="wxCheckBox" name="cbMorphs">
 											<fg>#c8c8c8</fg>
-											<label>RaceMenu Morphs</label>
-											<tooltip>Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders.</tooltip>
+											<label>Build Morphs</label>
+											<tooltip>Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data.</tooltip>
 										</object>
 									</object>
 								</object>

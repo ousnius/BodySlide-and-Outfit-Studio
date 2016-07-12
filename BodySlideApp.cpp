@@ -1383,7 +1383,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		zapIdx.clear();
 	}
 
-	/* Add RaceMenu TRI path for in-game morphs */
+	/* Add TRI path for in-game morphs */
 	if (tri) {
 		string triPath = activeSet.GetOutputFilePath() + ".tri";
 		string triPathTrimmed = triPath;
@@ -1751,7 +1751,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		outFileNameSmall = datapath + currentSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
 
-		/* Add RaceMenu TRI path for in-game morphs */
+		/* Add TRI path for in-game morphs */
 		bool triEnd = tri;
 		if (triEnd) {
 			string triPath = currentSet.GetOutputFilePath() + ".tri";
@@ -1944,8 +1944,8 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	if (btnAbout)
 		btnAbout->SetBitmap(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER, wxSize(15, 15)));
 
-	if (app->targetGame != SKYRIM)
-		XRCCTRL(*this, "cbRaceMenu", wxCheckBox)->Show(false);
+	if (app->targetGame != SKYRIM && app->targetGame != FO4)
+		XRCCTRL(*this, "cbMorphs", wxCheckBox)->Show(false);
 }
 
 void BodySlideFrame::OnLinkClicked(wxHtmlLinkEvent& link) {
@@ -2563,10 +2563,10 @@ void BodySlideFrame::OnBuildBodies(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	wxCheckBox* cbRaceMenu = (wxCheckBox*)FindWindowByName("cbRaceMenu");
+	wxCheckBox* cbMorphs = (wxCheckBox*)FindWindowByName("cbMorphs");
 	bool tri = false;
-	if (cbRaceMenu)
-		tri = cbRaceMenu->IsChecked();
+	if (cbMorphs)
+		tri = cbMorphs->IsChecked();
 
 	if (wxGetKeyState(WXK_CONTROL))
 		app->BuildBodies(true, false, tri);
@@ -2585,12 +2585,12 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 	vector<string> outfitChoices;
 	vector<string> toBuild;
 
-	wxCheckBox* cbRaceMenu = (wxCheckBox*)FindWindowByName("cbRaceMenu");
+	wxCheckBox* cbMorphs = (wxCheckBox*)FindWindowByName("cbMorphs");
 	bool custpath = false;
 	bool clean = false;
 	bool tri = false;
-	if (cbRaceMenu)
-		tri = cbRaceMenu->IsChecked();
+	if (cbMorphs)
+		tri = cbMorphs->IsChecked();
 
 	if (wxGetKeyState(WXK_CONTROL))
 		custpath = true;

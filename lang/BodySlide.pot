@@ -66,10 +66,10 @@ msgstr ""
 msgid "Batch Build..."
 msgstr ""
 
-msgid "RaceMenu Morphs"
+msgid "Build Morphs"
 msgstr ""
 
-msgid "Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires the RaceMenu mod and matching plugin/scripts for the collection of sliders."
+msgid "Builds a morphs (.tri) file alongside the meshes for accessing the sliders in-game. Requires other mods to make use of the morph data."
 msgstr ""
 
 msgid "Show a preview window for this outfit."
