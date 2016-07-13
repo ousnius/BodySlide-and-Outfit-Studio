@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
+#include <ppl.h>
 
 ConfigurationManager Config;
 
@@ -619,7 +620,7 @@ void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& slide
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
 
-int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>> zapIndices) {
+int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>>& zapIndices) {
 	DiffDataSets currentDiffs;
 	sliderSet.LoadSetDiffData(currentDiffs);
 
@@ -637,9 +638,11 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 				MorphDataPtr morph = make_shared<MorphData>();
 				morph->name = sliderSet[s].name;
 
+				const vector<ushort>& shapeZapIndices = zapIndices[shape->second];
+
 				vector<Vector3> verts;
 				int shapeVertCount = nif.GetVertCountForShape(shape->second);
-				shapeVertCount += zapIndices[shape->second].size();
+				shapeVertCount += shapeZapIndices.size();
 				if (shapeVertCount > 0)
 					verts.resize(shapeVertCount);
 				else
@@ -647,10 +650,11 @@ int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, Nif
 
 				currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
 
-				if (zapIndices[shape->second].size() > 0)
-					for (int i = verts.size() - 1; i >= 0; i--)
-						if (find(zapIndices[shape->second].begin(), zapIndices[shape->second].end(), i) != zapIndices[shape->second].end())
-							verts.erase(verts.begin() + i);
+				if (shapeZapIndices.size() > 0 && shapeZapIndices.back() >= verts.size())
+					continue;
+
+				for (int i = shapeZapIndices.size() - 1; i >= 0; i--)
+					verts.erase(verts.begin() + shapeZapIndices[i]);
 				
 				int i = 0;
 				for (auto &v : verts) {
@@ -1474,12 +1478,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string>& failedOutfits, bool clean, bool tri, const string& custPath) {
 	string datapath = custPath;
-	string outFileNameSmall;
-	string outFileNameBig;
-	NifFile nifSmall;
-	NifFile nifBig;
-	SliderSet currentSet;
-	DiffDataSets currentDiffs;
 	wxProgressDialog* progWnd;
 
 	wxLogMessage("Started batch build with options: Custom Path = %s, Cleaning = %s, TRI = %s",
@@ -1583,33 +1581,45 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
-	for (auto &outfit : outfitList) {
+	wxMutex mtx;
+	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const string& outfit)
+	{
+		mtx.Lock();
 		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, outfitList.size());
 		wxLogMessage(progMsg);
-		progWnd->Update((int)(count*progstep), progMsg);
+		progWnd->Update((int)(count * progstep) - 1, progMsg);
 		count++;
+		mtx.Unlock();
 
 		/* Load set */
 		if (outfitNameSource.find(outfit) == outfitNameSource.end()) {
+			mtx.Lock();
 			failedOutfits[outfit] = _("No recorded outfit name source");
-			continue;
+			mtx.Unlock();
+			return;
 		}
+
+		SliderSet currentSet;
+		DiffDataSets currentDiffs;
 
 		SliderSetFile sliderDoc;
 		sliderDoc.Open(outfitNameSource[outfit]);
 		if (!sliderDoc.fail()) {
-			currentSet.Clear();
-			currentDiffs.Clear();
 			if (!sliderDoc.GetSet(outfit, currentSet)) {
 				currentSet.SetBaseDataPath(Config["ShapeDataPath"]);
 				currentSet.LoadSetDiffData(currentDiffs);
 			}
-			else
+			else {
+				mtx.Lock();
 				failedOutfits[outfit] = _("Unable to get slider set from file: ") + outfitNameSource[outfit];
+				mtx.Unlock();
+			}
 		}
 		else {
+			mtx.Lock();
 			failedOutfits[outfit] = _("Unable to open slider set file: ") + outfitNameSource[outfit];
-			continue;
+			mtx.Unlock();
+			return;
 		}
 
 		// ALT key
@@ -1620,29 +1630,33 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			string removeHigh = removePath + ".nif";
 			if (genWeights)
 				removeHigh = removePath + "_1.nif";
-			
+
 			if (wxFileName::FileExists(removeHigh))
 				wxRemoveFile(removeHigh);
 
 			if (!genWeights)
-				continue;
+				return;
 
 			string removeLow = removePath + "_0.nif";
 			if (wxFileName::FileExists(removeLow))
 				wxRemoveFile(removeLow);
 
-			continue;
+			return;
 		}
 
-		/* load iput nifs */
+		/* Load input NIFs */
+		NifFile nifBig;
+		NifFile nifSmall;
 		if (nifBig.Load(currentSet.GetInputFileName())) {
+			mtx.Lock();
 			failedOutfits[outfit] = _("Unable to load input nif: ") + currentSet.GetInputFileName();
-			continue;
+			mtx.Unlock();
+			return;
 		}
 
 		if (currentSet.GenWeights())
 			if (nifSmall.Load(currentSet.GetInputFileName()))
-				continue;
+				return;
 
 		/* Shape the NIF files */
 		vector<Vector3> vertsLow;
@@ -1744,12 +1758,14 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 		if (!success) {
+			mtx.Lock();
 			failedOutfits[outfit] = _("Unable to create destination directory: ") + dir.ToStdString();
-			continue;
+			mtx.Unlock();
+			return;
 		}
 
-		outFileNameSmall = datapath + currentSet.GetOutputFilePath();
-		outFileNameBig = outFileNameSmall;
+		string outFileNameSmall = datapath + currentSet.GetOutputFilePath();
+		string outFileNameBig = outFileNameSmall;
 
 		/* Add TRI path for in-game morphs */
 		bool triEnd = tri;
@@ -1760,8 +1776,9 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
+				mtx.Lock();
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
-				wxMessageBox(wxString().Format(_("Failed to create TRI file in the following location\n\n%s"), triPath), "TRI File", wxOK | wxICON_ERROR);
+				mtx.Unlock();
 			}
 
 			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
@@ -1780,22 +1797,28 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
 			if (nifBig.Save(outFileNameBig)) {
+				mtx.Lock();
 				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameBig;
-				continue;
+				mtx.Unlock();
+				return;
 			}
 			if (nifSmall.Save(outFileNameSmall)) {
+				mtx.Lock();
 				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
-				continue;
+				mtx.Unlock();
+				return;
 			}
 		}
 		else {
 			outFileNameBig += ".nif";
 			if (nifBig.Save(outFileNameBig)) {
+				mtx.Lock();
 				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameBig;
-				continue;
+				mtx.Unlock();
+				return;
 			}
 		}
-	}
+	});
 
 	progWnd->Update(1000);
 	delete progWnd;

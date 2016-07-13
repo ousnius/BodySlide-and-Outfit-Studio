@@ -184,7 +184,7 @@ public:
 	void LaunchOutfitStudio();
 
 	void ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& zapidx, vector<Vector2>* uvs = nullptr);
-	int WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>> zapIndices);
+	int WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();

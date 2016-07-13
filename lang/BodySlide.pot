@@ -1520,14 +1520,6 @@ msgstr ""
 msgid "Unable to create destination directory: "
 msgstr ""
 
-#: BodySlideApp.cpp:1733
-#, c-format
-msgid ""
-"Failed to create TRI file in the following location\n"
-"\n"
-"%s"
-msgstr ""
-
 #: BodySlideApp.cpp:1752 BodySlideApp.cpp:1756 BodySlideApp.cpp:1763
 msgid "Unable to save nif file: "
 msgstr ""

@@ -40,15 +40,17 @@ bool OSDataFile::Read(const string& fileName) {
 		ushort index;
 		Vector3 diff;
 		unordered_map<ushort, Vector3> diffs;
+
 		file.read((char*)&diffSize, 2);
+		diffs.reserve(diffSize);
 		for (int j = 0; j < diffSize; ++j) {
 			file.read((char*)&index, 2);
 			file.read((char*)&diff, sizeof(Vector3));
 			diff.clampEpsilon();
-			diffs[index] = diff;
+			diffs[index] = move(diff);
 		}
 
-		dataDiffs[dataName] = diffs;
+		dataDiffs[dataName] = move(diffs);
 	}
 
 	return true;

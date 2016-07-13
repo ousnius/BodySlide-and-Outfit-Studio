@@ -1672,17 +1672,6 @@ msgstr "无法加载输入nif："
 msgid "Unable to create destination directory: "
 msgstr "无法创建目标目录："
 
-#: BodySlideApp.cpp:1733
-#, c-format
-msgid ""
-"Failed to create TRI file in the following location\n"
-"\n"
-"%s"
-msgstr ""
-"未能创建TRI文件到以下位置\n"
-"\n"
-"%s"
-
 #: BodySlideApp.cpp:1752 BodySlideApp.cpp:1756 BodySlideApp.cpp:1763
 msgid "Unable to save nif file: "
 msgstr "无法保存nif文件："
@@ -2656,6 +2645,15 @@ msgstr "载入滑块文件..."
 #: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "装备工作室：OpenGL环境不正常。"
+
+#~ msgid ""
+#~ "Failed to create TRI file in the following location\n"
+#~ "\n"
+#~ "%s"
+#~ msgstr ""
+#~ "未能创建TRI文件到以下位置\n"
+#~ "\n"
+#~ "%s"
 
 #~ msgid "RaceMenu Morphs"
 #~ msgstr "RaceMenu变化"

@@ -1778,17 +1778,6 @@ msgstr "Konnte Eingabe NIF nicht lesen: "
 msgid "Unable to create destination directory: "
 msgstr "Konnte Ziel-Verzeichnis nicht erstellen: "
 
-#: BodySlideApp.cpp:1733
-#, c-format
-msgid ""
-"Failed to create TRI file in the following location\n"
-"\n"
-"%s"
-msgstr ""
-"Konnte TRI-Datei nicht an folgender Stelle erstellen\n"
-"\n"
-"%s"
-
 #: BodySlideApp.cpp:1752 BodySlideApp.cpp:1756 BodySlideApp.cpp:1763
 msgid "Unable to save nif file: "
 msgstr "Konnte NIF-Datei nicht speichern: "
@@ -2811,6 +2800,15 @@ msgstr "Lade Slider-Datei..."
 #: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "Vorschau fehlgeschlagen: OpenGL-Kontext ist nicht OK."
+
+#~ msgid ""
+#~ "Failed to create TRI file in the following location\n"
+#~ "\n"
+#~ "%s"
+#~ msgstr ""
+#~ "Konnte TRI-Datei nicht an folgender Stelle erstellen\n"
+#~ "\n"
+#~ "%s"
 
 #~ msgid "RaceMenu Morphs"
 #~ msgstr "RaceMenu Morphs"
