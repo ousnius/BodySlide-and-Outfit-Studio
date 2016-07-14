@@ -1399,15 +1399,22 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
 		}
 
-		string triShapeLink;
-		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-			triShapeLink = it->second;
-			if (tri && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-				nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
-				if (activeSet.GenWeights())
-					nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
-				tri = false;
+		if (targetGame < FO4) {
+			string triShapeLink;
+			for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+				triShapeLink = it->second;
+				if (tri && nifBig.GetVertCountForShape(triShapeLink) > 0) {
+					nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+					if (activeSet.GenWeights())
+						nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+					tri = false;
+				}
 			}
+		}
+		else {
+			nifBig.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+			if (activeSet.GenWeights())
+				nifSmall.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 		}
 	}
 
@@ -1781,14 +1788,21 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				mtx.Unlock();
 			}
 
-			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-				string triShapeLink = it->second;
-				if (triEnd && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-					nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
-					if (currentSet.GenWeights())
-						nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
-					triEnd = false;
+			if (targetGame < FO4) {
+				for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
+					string triShapeLink = it->second;
+					if (triEnd && nifBig.GetVertCountForShape(triShapeLink) > 0) {
+						nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+						if (currentSet.GenWeights())
+							nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+						triEnd = false;
+					}
 				}
+			}
+			else {
+				nifBig.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+				if (activeSet.GenWeights())
+					nifSmall.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 			}
 		}
 

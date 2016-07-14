@@ -630,45 +630,44 @@ string NifFile::NodeName(int blockID) {
 	return n->GetName();
 }
 
-int NifFile::AssignExtraData(const string& shapeName, const int& extraDataId) {
+int NifFile::AssignExtraData(const string& blockName, const int& extraDataId, bool isNode) {
 	if (extraDataId != -1) {
-		int id = shapeIdForName(shapeName);
-		if (id == -1)
-			return -1;
-
-		NiTriBasedGeom* geom = geomForName(shapeName);
-		if (geom) {
-			geom->extraDataRef.push_back(extraDataId);
-			geom->numExtraData++;
-			hdr.blockSizes[id] = geom->CalcBlockSize();
-		}
-		else {
-			BSTriShape* siTriShape = geomForNameF4(shapeName);
-			if (!siTriShape)
+		if (isNode) {
+			// Assign to node
+			NiNode* node = nodeForName(blockName);
+			if (!node)
 				return -1;
 
-			siTriShape->extraDataRef.push_back(extraDataId);
-			siTriShape->numExtraData++;
-			hdr.blockSizes[id] = siTriShape->CalcBlockSize();
+			node->extraDataRef.push_back(extraDataId);
+			node->numExtraData++;
+		}
+		else {
+			// Assign to geometry
+			NiAVObject* geom = avObjectForName(blockName);
+			if (!geom)
+				return -1;
+
+			geom->extraDataRef.push_back(extraDataId);
+			geom->numExtraData++;
 		}
 	}
 	return extraDataId;
 }
 
-int NifFile::AddStringExtraData(const string& shapeName, const string& name, const string& stringData) {
+int NifFile::AddStringExtraData(const string& blockName, const string& name, const string& stringData, bool isNode) {
 	NiStringExtraData* strExtraData = new NiStringExtraData(hdr);
 	strExtraData->SetName(name);
 	strExtraData->SetStringData(stringData);
 
-	return AssignExtraData(shapeName, AddBlock(strExtraData, "NiStringExtraData"));
+	return AssignExtraData(blockName, AddBlock(strExtraData, "NiStringExtraData"), isNode);
 }
 
-int NifFile::AddIntegerExtraData(const string& shapeName, const string& name, const int& integerData) {
+int NifFile::AddIntegerExtraData(const string& blockName, const string& name, const int& integerData, bool isNode) {
 	NiIntegerExtraData* intExtraData = new NiIntegerExtraData(hdr);
 	intExtraData->SetName(name);
 	intExtraData->SetIntegerData(integerData);
 
-	return AssignExtraData(shapeName, AddBlock(intExtraData, "NiIntegerExtraData"));
+	return AssignExtraData(blockName, AddBlock(intExtraData, "NiIntegerExtraData"), isNode);
 }
 
 NiShader* NifFile::GetShaderF4(const string& shapeName) {

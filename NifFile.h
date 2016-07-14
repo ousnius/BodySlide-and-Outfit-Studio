@@ -1582,9 +1582,9 @@ public:
 	void DeleteNode(const string& nodeName);
 	string NodeName(int blockID);
 
-	int AssignExtraData(const string& shapeName, const int& extraDataId);
-	int AddStringExtraData(const string& shapeName, const string& name, const string& stringData);
-	int AddIntegerExtraData(const string& shapeName, const string& name, const int& integerData);
+	int AssignExtraData(const string& blockName, const int& extraDataId, bool isNode);
+	int AddStringExtraData(const string& blockName, const string& name, const string& stringData, bool isNode = false);
+	int AddIntegerExtraData(const string& blockName, const string& name, const int& integerData, bool isNode = false);
 
 	int Load(const string& filename);
 	int Save(const string& filename);
