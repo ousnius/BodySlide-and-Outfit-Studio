@@ -433,6 +433,8 @@ public:
 	vector<Vector3> rawBitangents;	// filled in CalcTangentSpace
 	vector<Vector2> rawUvs;			// filled by GetUVData function and returned.
 
+	vector<uint> deletedTris;		// temporary storage for BSSubIndexTriShape
+
 	vector<BSVertexData> vertData;
 	vector<Triangle> triangles;
 	BSTriShape(NiHeader& hdr);

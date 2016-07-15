@@ -945,6 +945,8 @@ void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	vector<int> indexCollapse(vertData.size(), 0);
 	vector<int> indexCollapseTris(vertData.size(), 0);
+
+	deletedTris.clear();
 	
 	int remCount = 0;
 	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
@@ -967,6 +969,7 @@ void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 
 	for (int i = numTriangles - 1; i >= 0; i--) {
 		if (indexCollapseTris[triangles[i].p1] == -1 || indexCollapseTris[triangles[i].p2] == -1 || indexCollapseTris[triangles[i].p3] == -1) {
+			deletedTris.push_back(i);
 			triangles.erase(triangles.begin() + i);
 			numTriangles--;
 		}
@@ -1544,7 +1547,46 @@ void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void BSSubIndexTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	BSTriShape::notifyVerticesDelete(vertIndices);
 
-	SetDefaultSegments();
+	//Remove triangles from segments and re-fit lists
+	segmentation.numPrimitives -= deletedTris.size();
+	for (auto &segment : segmentation.segments) {
+		// Delete primitives
+		for (auto &id : deletedTris)
+			if (segment.numPrimitives > 0 && id >= segment.startIndex / 3 && id < segment.startIndex / 3 + segment.numPrimitives)
+				segment.numPrimitives--;
+
+		// Align sub segments
+		for (auto &subSegment : segment.subSegments)
+			for (auto &id : deletedTris)
+				if (subSegment.numPrimitives > 0 && id >= subSegment.startIndex / 3 && id < subSegment.startIndex / 3 + subSegment.numPrimitives)
+					subSegment.numPrimitives--;
+	}
+
+	// Align segments
+	int i = 0;
+	for (auto &segment : segmentation.segments) {
+		// Align sub segments
+		int j = 0;
+		for (auto &subSegment : segment.subSegments) {
+			if (j == 0)
+				subSegment.startIndex = segment.startIndex;
+
+			if (j + 1 >= segment.numSubSegments)
+				continue;
+
+			BSSITSSubSegment& nextSubSegment = segment.subSegments[j + 1];
+			nextSubSegment.startIndex = subSegment.startIndex + subSegment.numPrimitives * 3;
+			j++;
+		}
+
+		if (i + 1 >= segmentation.numSegments)
+			continue;
+
+		BSSITSSegment& nextSegment = segmentation.segments[i + 1];
+		nextSegment.startIndex = segment.startIndex + segment.numPrimitives * 3;
+
+		i++;
+	}
 }
 
 int BSSubIndexTriShape::CalcBlockSize() {
