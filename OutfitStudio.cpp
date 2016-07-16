@@ -236,8 +236,15 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	if (wfImg.IsOk())
 		visStateImages->Add(wfImg);
 
+	targetGame = appConfig.GetIntValue("TargetGame");
+
 	wxStateButton* meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
 	meshTab->SetCheck();
+
+	if (targetGame != FO4) {
+		wxStateButton* segmentTab = (wxStateButton*)FindWindowByName("segmentTabButton");
+		segmentTab->Show(false);
+	}
 
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
 	outfitShapes->AssignStateImageList(visStateImages);
@@ -271,8 +278,6 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	lightBrightnessSlider3->SetValue(brightness3);
 
 	boneScale = (wxSlider*)FindWindowByName("boneScale");
-
-	targetGame = appConfig.GetIntValue("TargetGame");
 
 	wxWindow* leftPanel = FindWindowByName("leftSplitPanel");
 	glView = new wxGLPanel(leftPanel, wxDefaultSize, GLSurface::GetGLAttribs());
