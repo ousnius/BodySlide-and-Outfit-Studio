@@ -18,10 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "stdafx.h"
 #include "wxStateButton.h"
 #include "GLSurface.h"
-#include "ObjFile.h"
 #include "TweakBrush.h"
 #include "Automorph.h"
 #include "OutfitProject.h"

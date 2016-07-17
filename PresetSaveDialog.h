@@ -6,13 +6,11 @@ See the included LICENSE file
 
 #pragma once
 
-#include "stdafx.h"
-
+#include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/srchctrl.h>
 #include <regex>
 #include <set>
-#include <vector>
 
 using namespace std;
 

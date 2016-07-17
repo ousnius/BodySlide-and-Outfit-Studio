@@ -9,10 +9,6 @@ See the included LICENSE file
 #include "NifFile.h"
 #include "ConfigurationManager.h"
 
-#include <map>
-#include <unordered_map>
-#include <vector>
-
 using namespace std;
 
 struct VertexBoneWeights {

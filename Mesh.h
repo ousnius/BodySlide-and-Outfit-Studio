@@ -6,11 +6,12 @@ See the included LICENSE file
 
 #pragma once
 
-#include "Object3d.h"
 #include "KDMatcher.h"
+#include "AABBTree.h"
 
 #include <unordered_map>
 #include <unordered_set>
+#include <set>
 #include <memory>
 
 enum RenderMode {

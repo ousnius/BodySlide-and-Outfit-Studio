@@ -6,11 +6,10 @@ See the included LICENSE file
 
 #pragma once
 
-#include "NifFile.h"
+#include "Object3d.h"
 
 #include <map>
 #include <unordered_map>
-#include <vector>
 
 using namespace std;
 

@@ -9,9 +9,6 @@ See the included LICENSE file
 #include "tinyxml2.h"
 #include "DiffData.h"
 
-#include <vector>
-#include <map>
-
 using namespace std;
 using namespace tinyxml2;
 

@@ -4,13 +4,13 @@ Copyright (C) 2016  Caliente & ousnius
 See the included LICENSE file
 */
 
-#include "GLSurface.h"
-
+#include "AABBTree.h"
 
 AABB::AABB() {
-	min = Vector3(0,0,0);
-	max = Vector3(0,0,0);
+	min = Vector3(0, 0, 0);
+	max = Vector3(0, 0, 0);
 }
+
 AABB::AABB(const Vector3 newMin, const Vector3 newMax) {
 	min = newMin;
 	max = newMax;
@@ -34,7 +34,7 @@ AABB::AABB(Vector3* points, int nPoints) {
 		if (points[i].z > max.z)
 			max.z = points[i].z;
 	}
-}	
+}
 
 AABB::AABB(Vertex* points, int nPoints) {
 	min = points[0];
@@ -335,9 +335,9 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int e
 		nFacets = end - start + 1;
 		mIFacets = new int[nFacets];
 		int p = 0;
-		for (int f = start; f <= end; f++) {
+		for (int f = start; f <= end; f++)
 			mIFacets[p++] = facetIndices[f];
-		}
+
 		return;
 	}
 
@@ -348,10 +348,10 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int e
 	if (diag.y > curmax) {
 		axis = 1;
 		curmax = diag.y;
-	} if (diag.z > curmax) {
-		axis = 2;
 	}
 
+	if (diag.z > curmax)
+		axis = 2;
 
 	int l = start;
 	float lval;
@@ -379,6 +379,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int e
 			rval = treeRef->triRef[facetIndices[--r]].AxisMidPointX(treeRef->vertexRef);
 		}
 		break;
+
 	case 1:
 		lval = treeRef->triRef[facetIndices[l]].AxisMidPointY(treeRef->vertexRef);
 		rval = treeRef->triRef[facetIndices[r]].AxisMidPointY(treeRef->vertexRef);
@@ -398,6 +399,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int e
 			rval = treeRef->triRef[facetIndices[--r]].AxisMidPointY(treeRef->vertexRef);
 		}
 		break;
+
 	case 2:
 		lval = treeRef->triRef[facetIndices[l]].AxisMidPointZ(treeRef->vertexRef);
 		rval = treeRef->triRef[facetIndices[r]].AxisMidPointZ(treeRef->vertexRef);
@@ -419,9 +421,8 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int e
 		break;
 	}
 
-	if (moreStart == start) {
+	if (moreStart == start)
 		moreStart = (end + start) / 2;
-	}
 
 	P = new AABBTreeNode(facetIndices, moreStart, end, treeRef, this, depth + 1);
 	N = new AABBTreeNode(facetIndices, start, moreStart - 1, treeRef, this, depth + 1);
@@ -435,15 +436,14 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRe
 	tree = treeRef;
 	this->parent = parent;
 
-
 	// Force a leaf if the facet count gets below a certain threshold or the depth becomes too large.
 	if (facetIndices.size() <= treeRef->MinFacets() || depth > treeRef->MaxDepth()) {
 		treeRef->CalcAABBandGeoAvg(facetIndices, mBB, axis_avg);
 		nFacets = facetIndices.size();
 		mIFacets = new int[nFacets];
-		for (int f = 0; f < facetIndices.size(); f++) {
+		for (int f = 0; f < facetIndices.size(); f++)
 			mIFacets[f] = facetIndices[f];
-		}
+
 		return;
 	}
 
@@ -461,9 +461,10 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRe
 	if (diag.y > curmax) {
 		axis = 1;
 		curmax = diag.y;
-	} if (diag.z > curmax) {
-		axis = 2;
 	}
+
+	if (diag.z > curmax)
+		axis = 2;
 
 	int facetnum;
 	switch (axis) {
@@ -478,6 +479,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRe
 		}
 
 		break;
+
 	case 1:
 		for (int i = 0; i < facetIndices.size(); i++) {
 			facetnum = facetIndices[i];
@@ -488,6 +490,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRe
 				more.push_back(facetnum);
 		}
 		break;
+
 	case 2:
 		for (int i = 0; i < facetIndices.size(); i++) {
 			facetnum = facetIndices[i];
@@ -520,8 +523,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRe
 	N = new AABBTreeNode(less, treeRef, this, depth + 1);
 }
 
-
-Vector3 AABBTree::AABBTreeNode::Center(){
+Vector3 AABBTree::AABBTreeNode::Center() {
 	return ((mBB.max + mBB.min) / 2);
 }
 
@@ -536,9 +538,8 @@ void AABBTree::AABBTreeNode::AddDebugFrames(vector<Vertex>& verts, vector<Edge>&
 
 void AABBTree::AABBTreeNode::AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vertex>& verts, vector<Edge>& edges) {
 	bool collision = mBB.IntersectRay(origin, direction, nullptr);
-	if (collision) {
+	if (collision)
 		mBB.AddBoxToMesh(verts, edges);
-	}
 	else
 		return;
 
@@ -568,12 +569,11 @@ bool AABBTree::AABBTreeNode::IntersectRay(Vector3& origin, Vector3& direction, v
 
 	bool Pcollide = false;
 	bool Ncollide = false;
-	if (P) {
+	if (P)
 		Pcollide = P->IntersectRay(origin, direction, results);
-	}
-	if (N) {
+
+	if (N)
 		Ncollide = N->IntersectRay(origin, direction, results);
-	}
 
 	return Pcollide || Ncollide;
 }
@@ -581,7 +581,9 @@ bool AABBTree::AABBTreeNode::IntersectRay(Vector3& origin, Vector3& direction, v
 bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, float radius, std::vector<IntersectResult> *results) {
 	IntersectResult r;
 	bool collision = mBB.IntersectSphere(origin, radius);
-	if (!collision) return false;
+	if (!collision)
+		return false;
+
 	if (!P && !N) {
 		bool found = false;
 		for (int i = 0; i < nFacets; i++) {
@@ -600,6 +602,7 @@ bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, float radius, std:
 		}
 		return found;
 	}
+
 	bool Pcollide = false;
 	bool Ncollide = false;
 	if (P)
@@ -615,9 +618,9 @@ void AABBTree::AABBTreeNode::UpdateAABB(AABB* childBB) {
 		Vector3 bogus;
 		tree->CalcAABBandGeoAvg(mIFacets, 0, nFacets - 1, mBB, bogus);
 	}
-	else {
+	else
 		mBB.Merge((*childBB));
-	}
+
 	if (parent)
 		parent->UpdateAABB(&mBB);
 }
@@ -639,10 +642,8 @@ AABBTree::AABBTree(Vertex* vertices, Triangle* facets, int nFacets, int maxDepth
 	sentinel = 0;
 
 	vector<int> facetIndices(nFacets, 0);
-
-	for (int i = 0; i < nFacets; i++) {
+	for (int i = 0; i < nFacets; i++)
 		facetIndices[i] = i;
-	}
 
 	//root = new AABBTreeNode(facetIndices, this, nullptr, 0);
 	root = new AABBTreeNode(facetIndices, 0, nFacets - 1, this, nullptr, 0);
@@ -656,11 +657,9 @@ AABBTree::~AABBTree() {
 int AABBTree::MinFacets() { return min_facets; }
 int AABBTree::MaxDepth() { return max_depth; }
 
-
 Vector3 AABBTree::Center() {
 	return root->Center();
 }
-
 
 void AABBTree::CalcAABBandGeoAvg(vector<int>& forFacets, AABB& outBB, Vector3& outAxisAvg) {
 	Vector3 mid;

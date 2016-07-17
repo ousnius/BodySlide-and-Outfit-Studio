@@ -5,6 +5,8 @@ See the included LICENSE file
 */
 
 #include "NifFile.h"
+
+#include <set>
 #include <queue>
 
 NifFile::NifFile() {

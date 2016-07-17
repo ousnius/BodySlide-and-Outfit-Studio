@@ -8,18 +8,9 @@ See the included LICENSE file
 
 #include "GLShader.h"
 #include "NifFile.h"
-#include "Object3d.h"
-#include "KDMatcher.h"
-#include "Mesh.h"
 #include "ResourceLoader.h"
-#include "TweakBrush.h"
+#include "Mesh.h"
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
-#include <GL/wglext.h>
-
-#include <vector>
 #include <wx/glcanvas.h>
 
 using namespace std;
@@ -57,8 +48,6 @@ class GLSurface {
 
 	ResourceLoader resLoader;
 	GLMaterial* noImage = nullptr;
-
-	TweakUndo tweakUndo;
 
 	unordered_map<string, int> namedMeshes;
 	unordered_map<string, int> namedOverlays;

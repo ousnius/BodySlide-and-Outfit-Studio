@@ -58,28 +58,21 @@ See the included LICENSE file
 
 #pragma once
 
-#include "Object3d.h"
 #include "Mesh.h"
 
-#include <vector>
-#include <set>
-#include <map>
-#include <unordered_map>
 #include <future>
 
 using namespace std;
 
-#define TB_MAX_UNDO   40
+const int TB_MAX_UNDO = 40;
 
-#define TBT_STANDARD  1
-#define TBT_MOVE	  2
-#define TBT_MASK	  3
-#define TBT_WEIGHT	  4
-#define TBT_XFORM	  5
-
-#define TBS_STANDARD  1		// Standard stroke, applies effect cumulatively.
-#define TBS_MOVE	  2		// Move stroke, maintains original positions and changes modification.
-#define TBS_LAYER	  3		// Caps offset per stroke.
+enum TweakBrushType {
+	TBT_STANDARD = 1,
+	TBT_MOVE,
+	TBT_MASK,
+	TBT_WEIGHT,
+	TBT_XFORM
+};
 
 
 // Collecton of information that identifies the position and attributes where a brush stroke is taking place.
@@ -124,8 +117,7 @@ public:
 
 class TweakBrush {
 protected:
-	int brushType;
-	int strokeType;
+	TweakBrushType brushType;
 	string brushName;
 	float radius;
 	float focus;			// Focus between 1 and 5.

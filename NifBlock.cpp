@@ -5,6 +5,8 @@ See the included LICENSE file
 */
 
 #include "NifFile.h"
+#include "half.hpp"
+
 #pragma warning (disable : 4100)
 
 NiObject::~NiObject() {

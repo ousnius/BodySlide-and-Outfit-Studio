@@ -6,16 +6,10 @@ See the included LICENSE file
 
 #pragma once
 
-#include "Object3d.h"
 #include "NifFile.h"
-#include "KDMatcher.h"
 #include "Mesh.h"
 #include "SliderSet.h"
-#include "DiffData.h"
 #include "ObjFile.h"
-
-#include <vector>
-#include <map>
 
 #pragma warning (disable: 4018)
 using namespace std;

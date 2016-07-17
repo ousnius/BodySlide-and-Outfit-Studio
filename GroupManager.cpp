@@ -6,6 +6,8 @@ See the included LICENSE file
 
 #include "GroupManager.h"
 
+#pragma warning (disable: 4018)
+
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)

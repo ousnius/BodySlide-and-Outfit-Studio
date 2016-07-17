@@ -6,19 +6,10 @@ See the included LICENSE file
 
 #pragma once
 
-#include "NifFile.h"
-#include "ObjFile.h"
-#include "DiffData.h"
-#include "SliderData.h"
 #include "Automorph.h"
 #include "Mesh.h"
 #include "OutfitStudio.h"
-#include "ConfigurationManager.h"
 #include "Anim.h"
-
-#include <map>
-#include <vector>
-
 
 #pragma warning (disable: 4018)
 using namespace std;

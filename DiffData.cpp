@@ -7,6 +7,7 @@ See the included LICENSE file
 #include "DiffData.h"
 
 #include <algorithm>
+#include <fstream>
 
 OSDataFile::OSDataFile() {
 	header = 'OSD\0';

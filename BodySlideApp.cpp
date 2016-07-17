@@ -2784,22 +2784,20 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 	wxStringTokenizer tokenizer(activatedFiles, ";");
 	map<wxString, bool> fsearch;
 	while (tokenizer.HasMoreTokens()) {
-		wxString val = tokenizer.GetNextToken().Trim(false);
-		val = val.Trim();
-		std::transform(val.begin(), val.end(), val.begin(), ::tolower);
+		wxString val = tokenizer.GetNextToken().Trim(false).Trim();
+		val.MakeLower();
 		fsearch[val] = true;
 	}
 
 	wxArrayString files;
 	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
-	for (auto& f : files) {
-		f = f.AfterLast('\\');
-		dataFileList->Insert(f, dataFileList->GetCount());
-		std::transform(f.begin(), f.end(), f.begin(), ::tolower);
-		if (fsearch.find(f) == fsearch.end()) {
+	for (auto& file : files) {
+		file = file.AfterLast('\\');
+		dataFileList->Insert(file, dataFileList->GetCount());
+
+		if (fsearch.find(file.Lower()) == fsearch.end())
 			dataFileList->Check(dataFileList->GetCount() - 1);
-		}
 	}
 }
 

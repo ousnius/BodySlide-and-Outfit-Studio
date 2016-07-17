@@ -6,9 +6,9 @@ See the included LICENSE file
 
 #pragma once
 
-#include "stdafx.h"
 #include "SliderGroup.h"
 
+#include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/filepicker.h>
 

@@ -6,9 +6,9 @@ See the included LICENSE file
 
 #pragma once
 
-#include "stdafx.h"
 #include "Object3d.h"
 
+#include <wx/wx.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
 #include <GL/glext.h>

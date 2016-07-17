@@ -7,20 +7,15 @@ See the included LICENSE file
 #pragma once
 
 #include <vector>
-#include <set>
-#include <math.h>
-#include "half.hpp"
 
 using namespace std;
 
 #pragma warning (disable : 4018 4244 4267 4389)
 
-#ifndef EPSILON
-	#define EPSILON (0.0001)
-#endif
+const double EPSILON = 0.0001;
 
-#define PI			3.141592f
-#define DEG2RAD		(PI/180.0f)
+const float PI = 3.141592f;
+const float DEG2RAD = PI / 180.0f;
 
 typedef unsigned char byte;
 typedef unsigned short ushort;
@@ -31,6 +26,7 @@ struct Vertex;
 struct Vector2 {
 	float u;
 	float v;
+
 	Vector2() {
 		u = v = 0.0f;
 	}
@@ -44,6 +40,7 @@ struct Vector3 {
 	float x;
 	float y;
 	float z;
+
 	Vector3() {
 		x = y = z = 0.0f;
 	}
@@ -75,10 +72,12 @@ struct Vector3 {
 		float d = sqrt(x*x + y*y + z*z);
 		if (d == 0)
 			d = 1.0f;
+
 		x /= d;
 		y /= d;
 		z /= d;
 	}
+
 	uint hash() {
 		uint *h = (uint*) this;
 		uint f = (h[0] + h[1] * 11 - h[2] * 17) & 0x7fffffff;
@@ -87,6 +86,7 @@ struct Vector3 {
 
 	inline Vector3& operator = (const Vertex& other);
 	inline Vector3& operator += (const Vertex& other);
+
 
 	bool operator == (const Vector3& other) {
 		if (x == other.x && y == other.y && z == other.z)
@@ -308,6 +308,20 @@ struct Vertex {
 	}
 };
 
+Vector3& Vector3::operator = (const Vertex& other) {
+	x = other.x;
+	y = other.y;
+	z = other.z;
+	return (*this);
+}
+
+Vector3& Vector3::operator += (const Vertex& other) {
+	x += other.x;
+	y += other.y;
+	z += other.z;
+	return (*this);
+}
+
 
 // 4D Matrix class for calculating and applying transformations.
 class Matrix4 {
@@ -320,9 +334,10 @@ public:
 	Matrix4(const Matrix4& other) {
 		memcpy(m, other.m, sizeof(float) * 16);
 	}
-	Matrix4(vector<Vector3>& mat33) {
+	Matrix4(const vector<Vector3>& mat33) {
 		Set(mat33);
 	}
+	~Matrix4() {}
 
 	void Set(Vector3 mat33[3]) {
 		m[0] = mat33[0].x; m[1] = mat33[0].y; m[2] = mat33[0].z; m[3] = 0;
@@ -331,7 +346,7 @@ public:
 		m[12] = 0;		   m[13] = 0;		  m[14] = 0;	      m[15] = 1;
 	}
 
-	void Set(vector<Vector3>& mat33) {
+	void Set(const vector<Vector3>& mat33) {
 		m[0] = mat33[0].x; m[1] = mat33[0].y; m[2] = mat33[0].z; m[3] = 0;
 		m[4] = mat33[1].x; m[5] = mat33[1].y; m[6] = mat33[1].z; m[7] = 0;
 		m[8] = mat33[2].x; m[9] = mat33[2].y; m[10] = mat33[2].z; m[11] = 0;
@@ -343,9 +358,6 @@ public:
 		m[row * 4 + 1] = inVec.y;
 		m[row * 4 + 2] = inVec.z;
 	}
-
-
-	~Matrix4()	{}
 
 	float& operator[] (int index) {
 		return m[index];
@@ -379,7 +391,7 @@ public:
 		Matrix4 c;
 		float det = Det();
 		if (det == 0) {
-			c[0] = FLT_MAX;
+			c[0] = std::numeric_limits<float>::max();
 			return c;
 		}
 		return(Adjoint()*(1.0f / det));
@@ -681,6 +693,7 @@ struct Triangle {
 struct Edge {
 	ushort p1;
 	ushort p2;
+
 	Edge() {
 		p1 = p2 = 0;
 	}
@@ -737,10 +750,11 @@ struct Face {
 	ushort p4;
 	ushort uv4;
 
-	Face(int npts = 0, int* points=nullptr, int* tc = nullptr) {
+	Face(int npts = 0, int* points = nullptr, int* tc = nullptr) {
 		nPoints = npts;
-		if (npts<3)
+		if (npts < 3)
 			return;
+
 		p1 = points[0]; p2 = points[1];  p3 = points[2];
 		uv1 = tc[0]; uv2 = tc[1]; uv3 = tc[2];
 		if (npts == 4) {
@@ -749,127 +763,3 @@ struct Face {
 		}
 	}
 };
-
-struct IntersectResult;
-
-struct AABB {
-	Vector3 min;
-	Vector3 max;
-
-	AABB();
-	AABB(const Vector3 newMin, const Vector3 newMax);
-
-	AABB(Vector3* points, int nPoints);
-
-	AABB(Vertex* points, int nPoints);
-
-	AABB(Vertex* points, ushort* indices, int nPoints);
-
-	void AddBoxToMesh(vector<Vertex>& verts, vector<Edge>& edges);
-
-	void Merge(Vertex* points, ushort* indices, int nPoints);
-	void Merge(AABB& other);
-
-	bool IntersectAABB(AABB& other);
-
-	bool IntersectRay(Vector3& Origin, Vector3& Direction, Vector3* outCoord);
-
-	bool IntersectSphere(Vector3& Origin, float radius);
-};
-
-
-class AABBTree {
-	int max_depth;
-	int min_facets;
-	Vertex* vertexRef;
-	Triangle* triRef;
-
-public:
-	bool bFlag;
-	int depthCounter;
-	int sentinel;
-	class AABBTreeNode {
-		AABBTreeNode* N;
-		AABBTreeNode* P;
-		AABBTreeNode* parent;
-		AABB mBB;
-		AABBTree* tree;
-		int* mIFacets;
-		int nFacets;
-		int id;
-	public:
-		AABBTreeNode();
-		~AABBTreeNode();
-
-		// Recursively generates AABB Tree nodes using the referenced data.
-		AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parent, int depth);
-
-		// As above, but facetIndices is modified with in-place sorting rather than using vector::push_back to generate sub lists.
-		// Sorting swaps from front of list to end when pos midpoints are found at the beginning of the list.
-		AABBTreeNode(vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parent, int depth);
-
-		Vector3 Center();
-
-		void AddDebugFrames(vector<Vertex>& verts, vector<Edge>& edges, int maxdepth = 0, int curdepth = 0);
-
-		void AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vertex>& verts, vector<Edge>& edges);
-
-		bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results);
-
-		bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results);
-
-		void UpdateAABB(AABB* childBB = nullptr);
-	};
-
-	AABBTreeNode* root;
-
-
-public:
-	AABBTree();
-
-	AABBTree(Vertex* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets);
-
-	~AABBTree();
-
-	int MinFacets();
-	int MaxDepth();
-
-	Vector3 Center();
-
-	// Calculate bounding box and geometric average.
-	void CalcAABBandGeoAvg(vector<int>& forFacets, AABB& outBB, Vector3& outAxisAvg);
-
-	// Calculate bounding box and geometric average for sub list.
-	void CalcAABBandGeoAvg(vector<int>& forFacets, int start, int end, AABB& outBB, Vector3& outAxisAvg);
-
-	void CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outBB, Vector3& outAxisAvg);
-
-	void BuildDebugFrames(Vertex** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
-
-	void BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vertex** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
-
-	bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results = nullptr);
-
-	bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results = nullptr);
-};
-
-struct IntersectResult {
-	int HitFacet;
-	float HitDistance;
-	Vector3 HitCoord;
-	AABBTree::AABBTreeNode* bvhNode;
-};
-
-Vector3& Vector3::operator =(const Vertex& other) {
-	x = other.x;
-	y = other.y;
-	z = other.z;
-	return (*this);
-}
-
-Vector3& Vector3::operator += (const Vertex& other) {
-	x += other.x;
-	y += other.y;
-	z += other.z;
-	return (*this);
-}

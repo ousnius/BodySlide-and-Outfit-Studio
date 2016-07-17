@@ -51,9 +51,6 @@
     <ClCompile Include="SliderManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="stdafx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="TweakBrush.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -167,12 +164,6 @@
     <ClInclude Include="SliderManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="stdafx.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TweakBrush.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -243,6 +234,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="MaterialFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="AABBTree.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

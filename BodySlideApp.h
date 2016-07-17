@@ -18,15 +18,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #pragma once
 
-#include "stdafx.h"
 #include "PreviewWindow.h"
-#include "DiffData.h"
 #include "SliderData.h"
 #include "OutfitStudio.h"
 #include "SliderManager.h"
 #include "SliderGroup.h"
 #include "SliderCategories.h"
-#include "ConfigurationManager.h"
 #include "PresetSaveDialog.h"
 #include "GroupManager.h"
 #include "TriFile.h"
@@ -47,11 +44,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dir.h>
 #include <wx/progdlg.h>
 #include <wx/intl.h>
-
-#include <vector>
-#include <map>
-#include <tuple>
-#include <regex>
 
 
 class BodySlideFrame;

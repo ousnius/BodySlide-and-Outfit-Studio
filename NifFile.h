@@ -9,18 +9,12 @@ See the included LICENSE file
 #include "KDMatcher.h"
 
 #include <fstream>
-#include <vector>
-#include <map>
 #include <unordered_map>
 #include <regex>
 
 using namespace std;
 
 #pragma warning (disable: 4018)
-
-#ifndef EPSILON
-	#define EPSILON (0.0001)
-#endif
 
 enum BlockType {
 	NIHEADER,
