@@ -219,7 +219,4 @@ public:
 	int ImportShapeFBX(const string& fileName, const string& shapeName = "", const string& mergeShape = "");
 	int ExportShapeFBX(const string& fileName, const string& shapeName = "");
 	int ExportShapeObj(const string& fileName, const string& shapeName, Vector3 scale = Vector3(1.0f, 1.0f, 1.0f), Vector3 offset = Vector3());
-
-	/* Creates an abbreviated name for use in data file identifiers. Mostly removes spaces and other special characters. */
-	string NameAbbreviate(const string& inputName);
 };

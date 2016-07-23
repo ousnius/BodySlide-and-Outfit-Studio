@@ -330,14 +330,12 @@ string OutfitProject::GetSliderName(int index) {
 }
 
 void OutfitProject::AddEmptySlider(const string& newName) {
-	string sliderAbbrev = NameAbbreviate(newName);
 	int sliderID = activeSet.CreateSlider(newName);
 	activeSet[sliderID].bShow = true;
 
 	if (!baseShape.empty()) {
 		string target = ShapeToTarget(baseShape);
-		string shapeAbbrev = NameAbbreviate(baseShape);
-		string shapeSlider = target + sliderAbbrev;
+		string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		activeSet.AddShapeTarget(baseShape, target);
 		baseDiffData.AddEmptySet(shapeSlider, target);
@@ -345,15 +343,13 @@ void OutfitProject::AddEmptySlider(const string& newName) {
 }
 
 void OutfitProject::AddZapSlider(const string& newName, unordered_map<ushort, float>& verts, const string& shapeName) {
-	string sliderAbbrev = NameAbbreviate(newName);
 	unordered_map<ushort, Vector3> diffData;
 	Vector3 moveVec(0.0f, 1.0f, 0.0f);
 	for (auto &v : verts)
 		diffData[v.first] = moveVec;
 
 	string target = ShapeToTarget(shapeName);
-	string shapeAbbrev = NameAbbreviate(shapeName);
-	string shapeSlider = target + sliderAbbrev;
+	string shapeSlider = target + newName;
 
 	int sliderID = activeSet.CreateSlider(newName);
 	activeSet[sliderID].bZap = true;
@@ -372,7 +368,6 @@ void OutfitProject::AddZapSlider(const string& newName, unordered_map<ushort, fl
 }
 
 void OutfitProject::AddCombinedSlider(const string& newName) {
-	string sliderAbbrev = NameAbbreviate(newName);
 	vector<Vector3> verts;
 	unordered_map<ushort, Vector3> diffData;
 
@@ -391,7 +386,7 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 	int sliderID = activeSet.CreateSlider(newName);
 	if (!baseShape.empty()) {
 		string target = ShapeToTarget(baseShape);
-		string shapeSlider = target + sliderAbbrev;
+		string shapeSlider = target + newName;
 		activeSet[sliderID].AddDataFile(target, shapeSlider, shapeSlider);
 		baseDiffData.AddEmptySet(shapeSlider, target);
 		GetLiveVerts(baseShape, verts);
@@ -2208,17 +2203,4 @@ int OutfitProject::ExportShapeObj(const string& fileName, const string& shapeNam
 		return 1;
 
 	return 0;
-}
-
-string OutfitProject::NameAbbreviate(const string& inputName) {
-	string o;
-	string stripChars = "\\/?:*><|\"";
-	//string stripChars = "\"'\t\n\\/";
-	for (auto &c : inputName) {
-		if (stripChars.find(c) != string::npos)
-			continue;
-
-		o += c;
-	}
-	return o;
 }

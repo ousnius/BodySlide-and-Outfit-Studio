@@ -483,7 +483,6 @@ string OutfitStudio::NewSlider(const string& suggestedName, bool skipPrompt) {
 		finalName = thename;
 	}
 
-	finalName = project->NameAbbreviate(finalName);
 	wxLogMessage("Creating new slider '%s'.", finalName);
 
 	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
@@ -1282,9 +1281,13 @@ void OutfitStudio::WorkingGUIFromProj() {
 
 void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 	wxWindow* win = ((wxButton*)event.GetEventObject())->GetParent();
-
 	string copyStr = XRCCTRL(*win, "sssName", wxTextCtrl)->GetValue();
-	copyStr = project->NameAbbreviate(copyStr);
+
+	const string forbiddenChars = "\\/:?\"<>|";
+	std::transform(copyStr.begin(), copyStr.end(), copyStr.begin(), [&forbiddenChars](char c) {
+		return forbiddenChars.find(c) != string::npos ? ' ' : c;
+	});
+
 	string defSliderSetFile = copyStr + ".osp";
 	string defShapeDataDir = copyStr;
 	string defOutputFile = copyStr + ".nif";
@@ -1382,7 +1385,11 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		else
 			sssName = "New Outfit";
 
-		sssName = project->NameAbbreviate(sssName.ToStdString());
+		const string forbiddenChars = "\\/:?\"<>|";
+		std::transform(sssName.begin(), sssName.end(), sssName.begin(), [&forbiddenChars](char c) {
+			return forbiddenChars.find(c) != string::npos ? ' ' : c;
+		});
+
 		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
 		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory("SliderSets");
 
@@ -1714,7 +1721,6 @@ void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	if (finalName == "")
 		return;
 
-	finalName = project->NameAbbreviate(finalName);
 	wxLogMessage("Creating new conversion slider '%s'...", finalName);
 
 	project->ClearBoneScale();
@@ -3353,14 +3359,13 @@ void OutfitStudio::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 				continue;
 
 			string diffName = diff.first.substr(s.length(), diff.first.length() - s.length() + 1);
-			string finalName = project->NameAbbreviate(diffName);
-			if (!project->ValidSlider(finalName)) {
-				createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
-				project->AddEmptySlider(finalName);
-				ShowSliderEffect(finalName);
+			if (!project->ValidSlider(diffName)) {
+				createSliderGUI(diffName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+				project->AddEmptySlider(diffName);
+				ShowSliderEffect(diffName);
 			}
 
-			project->SetSliderFromDiff(finalName, s, diff.second);
+			project->SetSliderFromDiff(diffName, s, diff.second);
 			added = true;
 		}
 
@@ -3440,11 +3445,10 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 		addedMorphs += morph.first + "\n";
 		for (auto &morphData : morph.second) {
-			string finalName = project->NameAbbreviate(morphData->name);
-			if (!project->ValidSlider(finalName)) {
-				createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
-				project->AddEmptySlider(finalName);
-				ShowSliderEffect(finalName);
+			if (!project->ValidSlider(morphData->name)) {
+				createSliderGUI(morphData->name, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+				project->AddEmptySlider(morphData->name);
+				ShowSliderEffect(morphData->name);
 			}
 
 			unordered_map<ushort, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
@@ -3653,9 +3657,7 @@ void OutfitStudio::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (finalName.empty())
 		return;
 
-	finalName = project->NameAbbreviate(finalName);
 	wxLogMessage("Creating new zap '%s'.", finalName);
-
 	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
 	unordered_map<ushort, float> unmasked;
@@ -3682,9 +3684,7 @@ void OutfitStudio::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 	if (finalName.empty())
 		return;
 
-	finalName = project->NameAbbreviate(finalName);
 	wxLogMessage("Creating new combined slider '%s'.", finalName);
-
 	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
 	project->AddCombinedSlider(finalName);
