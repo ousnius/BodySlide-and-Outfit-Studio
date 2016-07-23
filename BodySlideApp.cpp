@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "BodySlideApp.h"
 #include <ppl.h>
+#include <concurrent_unordered_map.h>
 
 ConfigurationManager Config;
 
@@ -1589,20 +1590,21 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	int count = 1;
 
 	wxMutex mtx;
+	concurrency::concurrent_unordered_map<string, string> failedOutfitsCon;
 	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const string& outfit)
 	{
 		mtx.Lock();
 		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, outfitList.size());
-		wxLogMessage(progMsg);
 		progWnd->Update((int)(count * progstep) - 1, progMsg);
 		count++;
 		mtx.Unlock();
 
+		wxLogMessage(progMsg);
+		wxLog::FlushActive();
+
 		/* Load set */
 		if (outfitNameSource.find(outfit) == outfitNameSource.end()) {
-			mtx.Lock();
-			failedOutfits[outfit] = _("No recorded outfit name source");
-			mtx.Unlock();
+			failedOutfitsCon[outfit] = _("No recorded outfit name source");
 			return;
 		}
 
@@ -1616,16 +1618,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				currentSet.SetBaseDataPath(Config["ShapeDataPath"]);
 				currentSet.LoadSetDiffData(currentDiffs);
 			}
-			else {
-				mtx.Lock();
-				failedOutfits[outfit] = _("Unable to get slider set from file: ") + outfitNameSource[outfit];
-				mtx.Unlock();
-			}
+			else
+				failedOutfitsCon[outfit] = _("Unable to get slider set from file: ") + outfitNameSource[outfit];
 		}
 		else {
-			mtx.Lock();
-			failedOutfits[outfit] = _("Unable to open slider set file: ") + outfitNameSource[outfit];
-			mtx.Unlock();
+			failedOutfitsCon[outfit] = _("Unable to open slider set file: ") + outfitNameSource[outfit];
 			return;
 		}
 
@@ -1655,9 +1652,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		NifFile nifBig;
 		NifFile nifSmall;
 		if (nifBig.Load(currentSet.GetInputFileName())) {
-			mtx.Lock();
-			failedOutfits[outfit] = _("Unable to load input nif: ") + currentSet.GetInputFileName();
-			mtx.Unlock();
+			failedOutfitsCon[outfit] = _("Unable to load input nif: ") + currentSet.GetInputFileName();
 			return;
 		}
 
@@ -1765,9 +1760,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 		if (!success) {
-			mtx.Lock();
-			failedOutfits[outfit] = _("Unable to create destination directory: ") + dir.ToStdString();
-			mtx.Unlock();
+			failedOutfitsCon[outfit] = _("Unable to create destination directory: ") + dir.ToStdString();
 			return;
 		}
 
@@ -1783,9 +1776,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
 
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
-				mtx.Lock();
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
-				mtx.Unlock();
+				wxLog::FlushActive();
 			}
 
 			if (targetGame < FO4) {
@@ -1811,24 +1803,18 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
 			if (nifBig.Save(outFileNameBig)) {
-				mtx.Lock();
-				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameBig;
-				mtx.Unlock();
+				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
 			if (nifSmall.Save(outFileNameSmall)) {
-				mtx.Lock();
-				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
-				mtx.Unlock();
+				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				return;
 			}
 		}
 		else {
 			outFileNameBig += ".nif";
 			if (nifBig.Save(outFileNameBig)) {
-				mtx.Lock();
-				failedOutfits[outfit] = _("Unable to save nif file: ") + outFileNameBig;
-				mtx.Unlock();
+				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
 		}
@@ -1836,6 +1822,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 	progWnd->Update(1000);
 	delete progWnd;
+
+	failedOutfits.insert(failedOutfitsCon.begin(), failedOutfitsCon.end());
 
 	if (failedOutfits.size() > 0)
 		return 3;
@@ -1863,6 +1851,8 @@ void BodySlideApp::GroupBuild(const string& group) {
 
 	if (!cmdPreset.IsEmpty())
 		Config.SetValue("SelectedPreset", preset);
+
+	wxLog::FlushActive();
 
 	if (ret == 0) {
 		wxLogMessage("All group build sets processed successfully!");
@@ -2686,6 +2676,8 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		ret = app->BuildListBodies(toBuild, failedOutfits, true, tri);
 	else
 		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri);
+
+	wxLog::FlushActive();
 
 	if (ret == 0) {
 		wxLogMessage("All sets processed successfully!");
