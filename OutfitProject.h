@@ -80,6 +80,8 @@ public:
 	string SliderSetFileName();
 	string OutfitName();
 
+	string& ReplaceForbidden(string& str, const char& replacer = ' ');
+
 	bool ValidSlider(int index);
 	bool ValidSlider(const string& sliderName);
 	bool AllSlidersZero();

@@ -1283,10 +1283,7 @@ void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 	wxWindow* win = ((wxButton*)event.GetEventObject())->GetParent();
 	string copyStr = XRCCTRL(*win, "sssName", wxTextCtrl)->GetValue();
 
-	const string forbiddenChars = "\\/:?\"<>|";
-	std::transform(copyStr.begin(), copyStr.end(), copyStr.begin(), [&forbiddenChars](char c) {
-		return forbiddenChars.find(c) != string::npos ? ' ' : c;
-	});
+	project->ReplaceForbidden(copyStr);
 
 	string defSliderSetFile = copyStr + ".osp";
 	string defShapeDataDir = copyStr;
@@ -1385,10 +1382,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		else
 			sssName = "New Outfit";
 
-		const string forbiddenChars = "\\/:?\"<>|";
-		std::transform(sssName.begin(), sssName.end(), sssName.begin(), [&forbiddenChars](char c) {
-			return forbiddenChars.find(c) != string::npos ? ' ' : c;
-		});
+		sssName = project->ReplaceForbidden(sssName.ToStdString());
 
 		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
 		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory("SliderSets");

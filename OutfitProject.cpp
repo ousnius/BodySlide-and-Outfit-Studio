@@ -44,12 +44,9 @@ string OutfitProject::Save(const wxString& strFileName,
 	string baseFile = strBaseFile;
 	string gameFile = strGameFile;
 
-	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
-	for (uint i = 0; i < sizeof(chars); ++i) {
-		replace(outfitName.begin(), outfitName.end(), chars[i], '_');
-		replace(baseFile.begin(), baseFile.end(), chars[i], '_');
-		replace(gameFile.begin(), gameFile.end(), chars[i], '_');
-	}
+	ReplaceForbidden(outfitName);
+	ReplaceForbidden(baseFile);
+	ReplaceForbidden(gameFile);
 
 	SliderSet outSet;
 	outSet.SetName(outfitName);
@@ -295,6 +292,16 @@ string OutfitProject::SliderSetFileName() {
 
 string OutfitProject::OutfitName() {
 	return outfitName;
+}
+
+string& OutfitProject::ReplaceForbidden(string& str, const char& replacer) {
+	const string forbiddenChars = "\\/:*?\"<>|";
+
+	std::transform(str.begin(), str.end(), str.begin(), [&forbiddenChars, &replacer](char c) {
+		return forbiddenChars.find(c) != string::npos ? replacer : c;
+	});
+
+	return str;
 }
 
 bool OutfitProject::ValidSlider(int index) {
