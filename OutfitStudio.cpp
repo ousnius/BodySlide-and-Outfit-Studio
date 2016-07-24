@@ -1374,7 +1374,8 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudio::OnSSSNameCopy, this);
 		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsTrue, this);
 		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsFalse, this);
-		wxString sssName;
+
+		string sssName;
 		if (!project->mOutfitName.empty())
 			sssName = project->mOutfitName;
 		else if (!project->OutfitName().empty())
@@ -1382,7 +1383,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		else
 			sssName = "New Outfit";
 
-		sssName = project->ReplaceForbidden(sssName.ToStdString());
+		project->ReplaceForbidden(sssName);
 
 		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
 		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory("SliderSets");

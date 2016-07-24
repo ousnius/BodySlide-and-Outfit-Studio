@@ -294,14 +294,12 @@ string OutfitProject::OutfitName() {
 	return outfitName;
 }
 
-string& OutfitProject::ReplaceForbidden(string& str, const char& replacer) {
+void OutfitProject::ReplaceForbidden(string& str, const char& replacer) {
 	const string forbiddenChars = "\\/:*?\"<>|";
 
 	std::transform(str.begin(), str.end(), str.begin(), [&forbiddenChars, &replacer](char c) {
 		return forbiddenChars.find(c) != string::npos ? replacer : c;
 	});
-
-	return str;
 }
 
 bool OutfitProject::ValidSlider(int index) {
