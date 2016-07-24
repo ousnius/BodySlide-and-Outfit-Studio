@@ -4,12 +4,76 @@ Copyright (C) 2016  Caliente & ousnius
 See the included LICENSE file
 */
 
-#include "NifFile.h"
+#include "NifBlock.h"
 #include "half.hpp"
 
 #pragma warning (disable : 4100)
 
-NiObject::~NiObject() {
+
+NiString::NiString(fstream& file, const int& szSize) {
+	Get(file, szSize);
+}
+
+void NiString::Put(fstream& file, const int& szSize, const bool& wantNullOutput) {
+	if (szSize == 1) {
+		byte smSize = str.length();
+		if (wantNullOutput)
+			smSize += 1;
+
+		file.write((char*)&smSize, 1);
+	}
+	else if (szSize == 2) {
+		ushort medSize = str.length();
+		if (wantNullOutput)
+			medSize += 1;
+
+		file.write((char*)&medSize, 2);
+	}
+	else if (szSize == 4) {
+		uint bigSize = str.length();
+		if (wantNullOutput)
+			bigSize += 1;
+
+		file.write((char*)&bigSize, 4);
+	}
+
+	file.write(str.c_str(), str.length());
+	if (wantNullOutput)
+		file.put(0);
+}
+
+void NiString::Get(fstream& file, const int& szSize) {
+	char buf[1025];
+
+	if (szSize == 1) {
+		byte smSize;
+		file.read((char*)&smSize, 1);
+		file.read(buf, smSize);
+		buf[smSize] = 0;
+	}
+	else if (szSize == 2) {
+		ushort medSize;
+		file.read((char*)&medSize, 2);
+		if (medSize < 1025)
+			file.read(buf, medSize);
+		buf[medSize] = 0;
+	}
+	else if (szSize == 4) {
+		uint bigSize;
+		file.read((char*)&bigSize, 4);
+		if (bigSize < 1025)
+			file.read(buf, bigSize);
+		buf[bigSize] = 0;
+	}
+	else
+		return;
+
+	str = buf;
+}
+
+
+NiObject::NiObject() {
+	blockSize = 0;
 }
 
 void NiObject::Init() {
@@ -37,12 +101,14 @@ int NiObject::CalcBlockSize() {
 
 
 NiHeader::NiHeader() {
+	valid = false;
+
 	header = this;
-	blockSize = 0;
+	blockType = NIHEADER;
+
 	numBlocks = 0;
 	numStrings = 0;
 	blocks = nullptr;
-	blockType = NIHEADER;
 }
 
 void NiHeader::Clear() {
@@ -54,6 +120,12 @@ void NiHeader::Clear() {
 	blockIndex.clear();
 	blockSizes.clear();
 	strings.clear();
+}
+
+string NiHeader::GetVersionInfo() {
+	return string(verStr, 0x26) +
+		"\nUser Version: " + to_string(userVersion) +
+		"\nUser Version 2: " + to_string(userVersion2);
 }
 
 void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2) {
@@ -81,19 +153,11 @@ bool NiHeader::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
 	return false;
 }
 
-bool NiHeader::HasBlockType(const string& typeStr) {
-	for (int i = 0; i < blockTypes.size(); i++)
-		if (blockTypes[i].str == typeStr)
-			return true;
-
-	return false;
-}
-
 ushort NiHeader::AddOrFindBlockTypeId(const string& blockTypeName) {
 	NiString niStr;
 	ushort typeId = (ushort)blockTypes.size();
 	for (ushort i = 0; i < blockTypes.size(); i++) {
-		if (blockTypes[i].str == blockTypeName) {
+		if (blockTypes[i].GetString() == blockTypeName) {
 			typeId = i;
 			break;
 		}
@@ -101,16 +165,20 @@ ushort NiHeader::AddOrFindBlockTypeId(const string& blockTypeName) {
 
 	// Shader block type not found, add it
 	if (typeId == blockTypes.size()) {
-		niStr.str = blockTypeName;
+		niStr.SetString(blockTypeName);
 		blockTypes.push_back(niStr);
 		numBlockTypes++;
 	}
 	return typeId;
 }
 
+string NiHeader::GetBlockTypeById(const int& id) {
+	return blockTypes[blockIndex[id]].GetString();
+}
+
 int NiHeader::FindStringId(const string& str) {
 	for (int i = 0; i < strings.size(); i++)
-		if (strings[i].str.compare(str) == 0)
+		if (strings[i].GetString().compare(str) == 0)
 			return i;
 
 	return -1;
@@ -121,26 +189,41 @@ int NiHeader::AddOrFindStringId(const string& str) {
 		return 0xFFFFFFFF;
 
 	for (int i = 0; i < strings.size(); i++)
-		if (strings[i].str.compare(str) == 0)
+		if (strings[i].GetString().compare(str) == 0)
 			return i;
 
 	int r = strings.size();
+
 	NiString niStr;
-	niStr.str = str;
+	niStr.SetString(str);
 	strings.push_back(niStr);
 	numStrings++;
+
 	if (str.length() > maxStringLen)
 		maxStringLen = str.length();
 
 	return r;
 }
 
+string NiHeader::GetStringById(const int& id) {
+	if (id >= 0 && id < numStrings)
+		return strings[id].GetString();
+
+	return string();
+}
+
+void NiHeader::SetStringById(const int& id, const string& str) {
+	if (id >= 0 && id < numStrings) {
+		strings[id].SetString(str);
+		if (maxStringLen < str.length())
+			maxStringLen = str.length();
+	}
+}
+
 void NiHeader::Get(fstream& file) {
 	file.read(verStr, 38);
-	if (_strnicmp(verStr, "Gamebryo", 8) != 0) {
-		verStr[0] = 0;
+	if (_strnicmp(verStr, "Gamebryo", 8) != 0)
 		return;
-	}
 
 	//file >> bitangentY;
 	unk1 = 10;
@@ -152,7 +235,7 @@ void NiHeader::Get(fstream& file) {
 	creator.Get(file, 1);
 	exportInfo1.Get(file, 1);
 	exportInfo2.Get(file, 1);
-	
+
 	if (userVersion2 >= 130)
 		exportInfo3.Get(file, 1);
 
@@ -177,6 +260,7 @@ void NiHeader::Get(fstream& file) {
 		strings.push_back(NiString(file, 4));
 
 	file.read((char*)&unkInt2, 4);
+	valid = true;
 }
 
 void NiHeader::Put(fstream& file) {
@@ -212,71 +296,6 @@ void NiHeader::Put(fstream& file) {
 }
 
 
-NiString::NiString() {
-}
-
-NiString::NiString(fstream& file, int szSize) {
-	Get(file, szSize);
-}
-
-void NiString::Put(fstream& file, int szSize, bool wantNullOutput) {
-	if (szSize == 1) {
-		byte smSize = str.length();
-		if (wantNullOutput)
-			smSize += 1;
-
-		file.write((char*)&smSize, 1);
-	}
-	else if (szSize == 2) {
-		ushort medSize = str.length();
-		if (wantNullOutput)
-			medSize += 1;
-
-		file.write((char*)&medSize, 2);
-	}
-	else if (szSize == 4) {
-		uint bigSize = str.length();
-		if (wantNullOutput)
-			bigSize += 1;
-
-		file.write((char*)&bigSize, 4);
-	}
-
-	file.write(str.c_str(), str.length());
-	if (wantNullOutput)
-		file.put(0);
-}
-
-void NiString::Get(fstream& file, int szSize) {
-	char buf[1025];
-
-	if (szSize == 1) {
-		byte smSize;
-		file.read((char*)&smSize, 1);
-		file.read(buf, smSize);
-		buf[smSize] = 0;
-	}
-	else if (szSize == 2) {
-		ushort medSize;
-		file.read((char*)&medSize, 2);
-		if (medSize < 1025)
-			file.read(buf, medSize);
-		buf[medSize] = 0;
-	}
-	else if (szSize == 4) {
-		uint bigSize;
-		file.read((char*)&bigSize, 4);
-		if (bigSize < 1025)
-			file.read(buf, bigSize);
-		buf[bigSize] = 0;
-	}
-	else
-		return;
-
-	str = buf;
-}
-
-
 void NiObjectNET::Init() {
 	NiObject::Init();
 
@@ -296,7 +315,7 @@ void NiObjectNET::Get(fstream& file) {
 
 	file.read((char*)&nameRef, 4);
 	if (nameRef != -1)
-		name = header->strings[nameRef].str;
+		name = header->GetStringById(nameRef);
 	else
 		name.clear();
 
@@ -363,11 +382,8 @@ string NiObjectNET::GetName() {
 }
 
 void NiObjectNET::SetName(const string& propertyName, bool renameExisting) {
-	if (renameExisting) {
-		header->strings[nameRef].str = propertyName;
-		if (header->maxStringLen < propertyName.length())
-			header->maxStringLen = propertyName.length();
-	}
+	if (renameExisting)
+		header->SetStringById(nameRef, propertyName);
 	else
 		nameRef = header->AddOrFindStringId(propertyName);
 
@@ -1609,7 +1625,7 @@ int BSSubIndexTriShape::CalcBlockSize() {
 			for (auto &dataRecord : segmentation.subSegmentData.dataRecords)
 				blockSize += dataRecord.numData * 4;
 
-			blockSize += segmentation.subSegmentData.ssfFile.str.length();
+			blockSize += segmentation.subSegmentData.ssfFile.GetLength();
 		}
 	}
 
@@ -1626,7 +1642,7 @@ void BSSubIndexTriShape::SetDefaultSegments() {
 
 	segmentation.subSegmentData.arrayIndices.clear();
 	segmentation.subSegmentData.dataRecords.clear();
-	segmentation.subSegmentData.ssfFile.str.clear();
+	segmentation.subSegmentData.ssfFile.Clear();
 
 	segmentation.segments.resize(4);
 	for (int i = 0; i < 3; i++) {
@@ -4283,7 +4299,7 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
 		file.read((char*)&wetMaterialNameRef, 4);
 		if (wetMaterialNameRef != -1)
-			wetMaterialName = header->strings[wetMaterialNameRef].str;
+			wetMaterialName = header->GetStringById(wetMaterialNameRef);
 		else
 			wetMaterialName.clear();
 	}
@@ -4825,14 +4841,14 @@ int BSEffectShaderProperty::CalcBlockSize() {
 	NiProperty::CalcBlockSize();
 
 	blockSize += 76;
-	blockSize += sourceTexture.str.length();
-	blockSize += greyscaleTexture.str.length();
+	blockSize += sourceTexture.GetLength();
+	blockSize += greyscaleTexture.GetLength();
 
 	if (header->userVersion == 12 && header->userVersion2 >= 130) {
 		blockSize += 16;
-		blockSize += envMapTexture.str.length();
-		blockSize += normalTexture.str.length();
-		blockSize += envMaskTexture.str.length();
+		blockSize += envMapTexture.GetLength();
+		blockSize += normalTexture.GetLength();
+		blockSize += envMaskTexture.GetLength();
 	}
 
 	return blockSize;
@@ -5056,7 +5072,7 @@ int BSShaderTextureSet::CalcBlockSize() {
 	blockSize += 4;
 	for (auto &tex : textures) {
 		blockSize += 4;
-		blockSize += tex.str.length();
+		blockSize += tex.GetLength();
 	}
 
 	return blockSize;
@@ -5292,7 +5308,7 @@ void NiExtraData::Get(fstream& file) {
 
 	file.read((char*)&nameRef, 4);
 	if (nameRef != -1)
-		name = header->strings[nameRef].str;
+		name = header->GetStringById(nameRef);
 	else
 		name.clear();
 }
@@ -5344,7 +5360,7 @@ void NiStringExtraData::Get(fstream& file) {
 
 	file.read((char*)&stringDataRef, 4);
 	if (stringDataRef != -1)
-		stringData = header->strings[stringDataRef].str;
+		stringData = header->GetStringById(stringDataRef);
 	else
 		stringData.clear();
 }
@@ -5479,8 +5495,8 @@ void BSConnectPoint::Put(fstream& file) {
 
 int BSConnectPoint::CalcBlockSize() {
 	int blockSize = 40;
-	blockSize += root.str.length();
-	blockSize += variableName.str.length();
+	blockSize += root.GetLength();
+	blockSize += variableName.GetLength();
 	return blockSize;
 }
 
@@ -5576,7 +5592,7 @@ int BSConnectPointChildren::CalcBlockSize() {
 	blockSize += 5;
 
 	for (int i = 0; i < numTargets; i++)
-		blockSize += targets[i].str.length();
+		blockSize += targets[i].GetLength();
 
 	return blockSize;
 }

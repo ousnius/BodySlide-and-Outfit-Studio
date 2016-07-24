@@ -12,6 +12,7 @@ See the included LICENSE file
 #include "FSEngine.h"
 
 #include <sstream>
+#include <regex>
 
 OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner) : appConfig(inConfig) {
 	morpherInitialized = false;
@@ -1577,8 +1578,8 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	int error = refNif.Load(fileName);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i"),
-				refNif.GetFileName(), refNif.hdr.verStr, refNif.hdr.userVersion, refNif.hdr.userVersion2);
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
+				refNif.GetFileName(), refNif.hdr.GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
@@ -1653,8 +1654,8 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	int error = refNif.Load(inMeshFile);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i"),
-				refNif.GetFileName(), refNif.hdr.verStr, refNif.hdr.userVersion, refNif.hdr.userVersion2);
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
+				refNif.GetFileName(), refNif.hdr.GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
@@ -1778,8 +1779,8 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	int error = nif.Load(fileName);
 	if (error) {
 		if (error == 2) {
-			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s\nUser Version: %i\nUser Version 2: %i"),
-				nif.GetFileName(), nif.hdr.verStr, nif.hdr.userVersion, nif.hdr.userVersion2);
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
+				nif.GetFileName(), nif.hdr.GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);

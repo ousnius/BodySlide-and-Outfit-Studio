@@ -247,6 +247,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="MaterialFile.h" />
     <ClInclude Include="Mesh.h" />
+    <ClInclude Include="NifBlock.h" />
     <ClInclude Include="NifFile.h" />
     <ClInclude Include="Object3d.h" />
     <ClInclude Include="ObjFile.h" />

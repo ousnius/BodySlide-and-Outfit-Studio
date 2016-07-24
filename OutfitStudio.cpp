@@ -2263,7 +2263,7 @@ void OutfitStudio::OnSegmentApply(wxCommandEvent& event) {
 	segmentation.subSegmentData.numTotalSegments = parentArrayIndex;
 
 	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
-	segmentation.subSegmentData.ssfFile.str = segmentSSF->GetValue().ToStdString();
+	segmentation.subSegmentData.ssfFile.SetString(segmentSSF->GetValue().ToStdString());
 
 	project->GetWorkNif()->SetShapeSegments(activeItem->shapeName, segmentation);
 	CreateSegmentTree(activeItem->shapeName);
@@ -2306,7 +2306,7 @@ void OutfitStudio::CreateSegmentTree(const string& shapeName) {
 	}
 
 	wxTextCtrl* segmentSSF = (wxTextCtrl*)FindWindowByName("segmentSSF");
-	segmentSSF->ChangeValue(segmentation.subSegmentData.ssfFile.str);
+	segmentSSF->ChangeValue(segmentation.subSegmentData.ssfFile.GetString());
 
 	UpdateSegmentNames();
 	segmentTree->ExpandAll();
