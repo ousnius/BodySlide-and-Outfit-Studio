@@ -360,7 +360,7 @@ void AnimInfo::RenameShape(const string& shapeName, const string& newShapeName) 
 AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* inParent)  {
 	parent = inParent;
 	isValidBone = false;
-	NiNode* node = dynamic_cast<NiNode*>(skeletonNif->GetBlock(srcBlock));
+	NiNode* node = dynamic_cast<NiNode*>(skeletonNif->GetHeader().GetBlock(srcBlock));
 	if (node)
 		isValidBone = true;
 	else

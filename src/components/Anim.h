@@ -113,7 +113,7 @@ public:
 
 		int newID = 0;
 		for (auto &id : idList) {
-			NiNode* node = dynamic_cast<NiNode*>(loadFromFile->GetBlock(id));
+			NiNode* node = dynamic_cast<NiNode*>(loadFromFile->GetHeader().GetBlock(id));
 			if (node) {
 				boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
 				boneNames[node->GetName()] = newID;

@@ -264,32 +264,33 @@ private:
 	byte version2;
 	byte version3;
 	byte version4;
-
-	uint numStrings;
-	uint maxStringLen;
-	vector<NiString> strings;
-
-public:
 	uint userVersion;
 	uint userVersion2;
 
 	byte unk1;
 	byte endian;
+
 	NiString creator;
 	NiString exportInfo1;
 	NiString exportInfo2;
 	NiString exportInfo3;
-	uint unkInt2;
-
-	uint numBlocks;
-	ushort numBlockTypes;
-	vector<NiString> blockTypes;
-	vector<ushort> blockIndex;
-	vector<uint> blockSizes;
 
 	// Foreign reference to the blocks list in NifFile.
 	vector<NiObject*>* blocks;
 
+	uint numBlocks;
+	ushort numBlockTypes;
+	vector<NiString> blockTypes;
+	vector<ushort> blockTypeIndices;
+	vector<uint> blockSizes;
+
+	uint numStrings;
+	uint maxStringLen;
+	vector<NiString> strings;
+
+	uint unkInt2;
+
+public:
 	NiHeader();
 
 	void Clear();
@@ -299,8 +300,32 @@ public:
 	void SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2);
 	bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
 
+	uint GetUserVersion() { return userVersion; };
+	uint GetUserVersion2() { return userVersion2; };
+
+	string GetCreatorInfo();
+	void SetCreatorInfo(const string& creatorInfo);
+
+	string GetExportInfo();
+	void SetExportInfo(const string& exportInfo);
+
+	void SetBlockReference(vector<NiObject*>* blocks) { this->blocks = blocks; };
+	uint GetNumBlocks() { return numBlocks; }
+	NiObject* GetBlock(const uint& blockId);
+
+	void DeleteBlock(int blockId);
+	void DeleteBlockByType(const string& blockTypeStr);
+	int AddBlock(NiObject* newBlock, const string& blockTypeStr);
+
+	// Swaps two blocks, updating references in other blocks that may refer to their old indices
+	void SwapBlocks(const int& blockIndexLo, const int& blockIndexHi);
+
 	ushort AddOrFindBlockTypeId(const string& blockTypeName);
-	string GetBlockTypeById(const int& id);
+	string GetBlockTypeStringById(const int& id);
+	ushort GetBlockTypeIndex(const int& id);
+
+	uint GetBlockSize(const uint& blockId) { return blockSizes[blockId]; }
+	void CalcAllBlockSizes();
 
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);

@@ -11,29 +11,27 @@ See the included LICENSE file
 #pragma warning (disable: 4018)
 
 class NifFile {
+private:
 	string fileName;
 	vector<NiObject*> blocks;
 	bool isValid;
 	bool hasUnknown;
 
+	NiHeader hdr;
+
 	int shapeDataIdForName(const string& name, int& outBlockType);
 	int shapeIdForName(const string& name);
-
-	NiNode* nodeForName(const string& name);
-
 	int shapeBoneIndex(const string& shapeName, const string& boneName);
+	NiNode* nodeForName(const string& name);
 
 public:
 	NifFile();
 	NifFile(NifFile& other);
 	~NifFile();
 
-	NiHeader hdr;
-
 	void CopyFrom(NifFile& other);
+	NiHeader& GetHeader() { return hdr; }
 
-	int AddBlock(NiObject* newBlock, const string& blockTypeName);
-	NiObject* GetBlock(int blockId);
 	int AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale);
 	void DeleteNode(const string& nodeName);
 	string NodeName(int blockID);
@@ -53,16 +51,10 @@ public:
 	void Clear();
 
 	// Explicitly sets the order of shapes to a new one.
-	void SetShapeOrder(vector<string> order);
+	void SetShapeOrder(const vector<string>& order);
 
 	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
 	void PrettySortBlocks();
-
-	// Swaps two blocks, updating references in other blocks that may refer to their old indices.
-	void SwapBlocks(int blockIndexLo, int blockIndexHi);
-
-	void DeleteBlock(int blockIndex);
-	void DeleteBlockByType(string typeStr);
 
 	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
 	BSTriShape* geomForNameF4(const string& name, int dupIndex = 0);
@@ -181,26 +173,26 @@ template <class T>
 vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	vector<T*> result;
 	T* n;
+
 	if (parent == nullptr) {
 		n = dynamic_cast<T*>(blocks[0]);
 		if (n)
 			result.push_back(n);
+
 		return result;
 	}
 
 	for (int i = 0; i < parent->children.size(); i++) {
-		n = dynamic_cast<T*>(GetBlock(parent->children[i]));
-		if (n) {
+		n = dynamic_cast<T*>(hdr.GetBlock(parent->children[i]));
+		if (n)
 			result.push_back(n);
-		}
 	}
 
 	if (searchExtraData) {
 		for (int i = 0; i < parent->extraDataRef.size(); i++) {
-			n = dynamic_cast<T*>(GetBlock(parent->extraDataRef[i]));
-			if (n) {
+			n = dynamic_cast<T*>(hdr.GetBlock(parent->extraDataRef[i]));
+			if (n)
 				result.push_back(n);
-			}
 		}
 	}
 

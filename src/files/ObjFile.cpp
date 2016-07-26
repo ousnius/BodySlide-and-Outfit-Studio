@@ -195,7 +195,8 @@ int ObjFile::Save(const string &fileName) {
 	if (file.fail())
 		return 1;
 
-	file << "# BodySlide OBJ export" << endl << endl;
+	file << "# Outfit Studio - OBJ Export" << endl;
+	file << "# https://github.com/ousnius/BodySlide-and-Outfit-Studio" << endl << endl;
 
 	for (auto& d : data) {
 		file << "g " << d.first << endl;

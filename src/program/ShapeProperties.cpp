@@ -232,19 +232,19 @@ void ShapeProperties::AddShader() {
 		switch (os->targetGame) {
 			case FO3:
 			case FONV: {
-				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->hdr);
-				geom->propertiesRef.push_back(nif->AddBlock(shader, "BSShaderPPLightingProperty"));
+				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->GetHeader());
+				geom->propertiesRef.push_back(nif->GetHeader().AddBlock(shader, "BSShaderPPLightingProperty"));
 				geom->numProperties++;
 
-				NiMaterialProperty* material = new NiMaterialProperty(nif->hdr);
-				geom->propertiesRef.push_back(nif->AddBlock(material, "NiMaterialProperty"));
+				NiMaterialProperty* material = new NiMaterialProperty(nif->GetHeader());
+				geom->propertiesRef.push_back(nif->GetHeader().AddBlock(material, "NiMaterialProperty"));
 				geom->numProperties++;
 				break;
 			}
 			case SKYRIM:
 			default: {
-				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->hdr);
-				geom->propertiesRef1 = nif->AddBlock(shader, "BSLightingShaderProperty");
+				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
+				geom->propertiesRef1 = nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty");
 			}
 		}
 	}
@@ -256,8 +256,8 @@ void ShapeProperties::AddShader() {
 		switch (os->targetGame) {
 			case FO4:
 			default: {
-				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->hdr);
-				siTriShape->shaderPropertyRef = nif->AddBlock(shader, "BSLightingShaderProperty");
+				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
+				siTriShape->shaderPropertyRef = nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty");
 			}
 		}
 	}
@@ -265,8 +265,8 @@ void ShapeProperties::AddShader() {
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
-		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->hdr);
-		shader->SetTextureSetRef(nif->AddBlock(nifTexSet, "BSShaderTextureSet"));
+		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader());
+		shader->SetTextureSetRef(nif->GetHeader().AddBlock(nifTexSet, "BSShaderTextureSet"));
 	}
 
 	AssignDefaultTexture();
@@ -471,7 +471,7 @@ void ShapeProperties::GetExtraData() {
 	NiTriBasedGeom* geom = nif->geomForName(shape);
 	if (geom) {
 		for (int i = 0; i < geom->numExtraData; i++) {
-			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetBlock(geom->extraDataRef[i]));
+			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(geom->extraDataRef[i]));
 			if (extraData) {
 				extraDataIndices.push_back(geom->extraDataRef[i]);
 				AddExtraData(extraData, true);
@@ -484,7 +484,7 @@ void ShapeProperties::GetExtraData() {
 			return;
 
 		for (int i = 0; i < siTriShape->numExtraData; i++) {
-			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetBlock(siTriShape->extraDataRef[i]));
+			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(siTriShape->extraDataRef[i]));
 			if (extraData) {
 				extraDataIndices.push_back(siTriShape->extraDataRef[i]);
 				AddExtraData(extraData, true);
@@ -494,7 +494,7 @@ void ShapeProperties::GetExtraData() {
 }
 
 void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
-	NiStringExtraData extraDataTemp(nif->hdr);
+	NiStringExtraData extraDataTemp(nif->GetHeader());
 	AddExtraData(&extraDataTemp);
 }
 
@@ -572,7 +572,7 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 	int selection = extraDataType->GetSelection();
 
 	int index = extraDataIndices[id];
-	nif->DeleteBlock(index);
+	nif->GetHeader().DeleteBlock(index);
 
 	for (int i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
@@ -609,7 +609,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 	extraDataValue->Destroy();
 
 	int index = extraDataIndices[id];
-	nif->DeleteBlock(index);
+	nif->GetHeader().DeleteBlock(index);
 
 	for (int i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
@@ -729,7 +729,7 @@ void ShapeProperties::ApplyChanges() {
 		if (!extraDataName || !extraDataValue)
 			continue;
 
-		NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetBlock(extraDataIndices[i]));
+		NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(extraDataIndices[i]));
 		if (extraData) {
 			extraData->SetName(extraDataName->GetValue().ToStdString());
 

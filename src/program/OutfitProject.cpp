@@ -488,31 +488,31 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		AddNif(blankSkel, true, defaultName);
 
 	if (owner->targetGame != FO4) {
-		NiTriShapeData* nifShapeData = new NiTriShapeData(workNif.hdr);
+		NiTriShapeData* nifShapeData = new NiTriShapeData(workNif.GetHeader());
 		nifShapeData->Create(&v, &t, &uv);
 		if (norms) {
 			nifShapeData->normals = (*norms);
 			nifShapeData->hasNormals = true;
 		}
 
-		int shapeID = blank.AddBlock(nifShapeData, "NiTriShapeData");
+		int shapeID = blank.GetHeader().AddBlock(nifShapeData, "NiTriShapeData");
 		int dismemberID = -1;
 
 		if (!staticMode) {
-			NiSkinData* nifSkinData = new NiSkinData(workNif.hdr);
-			int skinID = blank.AddBlock(nifSkinData, "NiSkinData");
+			NiSkinData* nifSkinData = new NiSkinData(workNif.GetHeader());
+			int skinID = blank.GetHeader().AddBlock(nifSkinData, "NiSkinData");
 
-			NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.hdr);
-			int partID = blank.AddBlock(nifSkinPartition, "NiSkinPartition");
+			NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.GetHeader());
+			int partID = blank.GetHeader().AddBlock(nifSkinPartition, "NiSkinPartition");
 
-			BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.hdr);
-			dismemberID = blank.AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
+			BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.GetHeader());
+			dismemberID = blank.GetHeader().AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
 			nifDismemberInst->dataRef = skinID;
 			nifDismemberInst->skinPartitionRef = partID;
 			nifDismemberInst->skeletonRootRef = 0;
 		}
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.hdr);
+		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.GetHeader());
 
 		int shaderID;
 		BSLightingShaderProperty* nifShader = nullptr;
@@ -520,20 +520,20 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		switch (owner->targetGame) {
 		case FO3:
 		case FONV:
-			nifShaderPP = new BSShaderPPLightingProperty(workNif.hdr);
-			shaderID = blank.AddBlock(nifShaderPP, "BSShaderPPLightingProperty");
-			nifShaderPP->textureSetRef = blank.AddBlock(nifTexset, "BSShaderTextureSet");
+			nifShaderPP = new BSShaderPPLightingProperty(workNif.GetHeader());
+			shaderID = blank.GetHeader().AddBlock(nifShaderPP, "BSShaderPPLightingProperty");
+			nifShaderPP->textureSetRef = blank.GetHeader().AddBlock(nifTexset, "BSShaderTextureSet");
 			break;
 		case SKYRIM:
 		case FO4:
 		default:
-			nifShader = new BSLightingShaderProperty(workNif.hdr);
-			shaderID = blank.AddBlock(nifShader, "BSLightingShaderProperty");
-			nifShader->textureSetRef = blank.AddBlock(nifTexset, "BSShaderTextureSet");
+			nifShader = new BSLightingShaderProperty(workNif.GetHeader());
+			shaderID = blank.GetHeader().AddBlock(nifShader, "BSLightingShaderProperty");
+			nifShader->textureSetRef = blank.GetHeader().AddBlock(nifTexset, "BSShaderTextureSet");
 		}
 
-		NiTriShape* nifTriShape = new NiTriShape(workNif.hdr);
-		blank.AddBlock(nifTriShape, "NiTriShape");
+		NiTriShape* nifTriShape = new NiTriShape(workNif.GetHeader());
+		blank.GetHeader().AddBlock(nifTriShape, "NiTriShape");
 		if (owner->targetGame < SKYRIM) {
 			nifTriShape->propertiesRef.push_back(shaderID);
 			nifTriShape->numProperties++;
@@ -549,33 +549,33 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		BSTriShape* triShapeBase;
 		string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		if (staticMode) {
-			triShapeBase = new BSTriShape(workNif.hdr);
+			triShapeBase = new BSTriShape(workNif.GetHeader());
 			triShapeBase->Create(&v, &t, &uv, norms);
-			blank.AddBlock(triShapeBase, "BSTriShape");
+			blank.GetHeader().AddBlock(triShapeBase, "BSTriShape");
 			wetShaderName.clear();
 		}
 		else {
-			BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.hdr);
+			BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.GetHeader());
 			nifBSTriShape->Create(&v, &t, &uv, norms);
-			blank.AddBlock(nifBSTriShape, "BSSubIndexTriShape");
+			blank.GetHeader().AddBlock(nifBSTriShape, "BSSubIndexTriShape");
 
-			BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.hdr);
-			int skinID = blank.AddBlock(nifBSSkinInstance, "BSSkin::Instance");
+			BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.GetHeader());
+			int skinID = blank.GetHeader().AddBlock(nifBSSkinInstance, "BSSkin::Instance");
 			nifBSSkinInstance->targetRef = workNif.GetRootNodeID();
 
-			BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.hdr);
-			int boneID = blank.AddBlock(nifBoneData, "BSSkin::BoneData");
+			BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.GetHeader());
+			int boneID = blank.GetHeader().AddBlock(nifBoneData, "BSSkin::BoneData");
 			nifBSSkinInstance->boneDataRef = boneID;
 			nifBSTriShape->skinInstanceRef = skinID;
 			triShapeBase = nifBSTriShape;
 		}
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.hdr);
+		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.GetHeader());
 
 		int shaderID;
-		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.hdr);
-		shaderID = blank.AddBlock(nifShader, "BSLightingShaderProperty");
-		nifShader->textureSetRef = blank.AddBlock(nifTexset, "BSShaderTextureSet");
+		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.GetHeader());
+		shaderID = blank.GetHeader().AddBlock(nifShader, "BSLightingShaderProperty");
+		nifShader->textureSetRef = blank.GetHeader().AddBlock(nifTexset, "BSShaderTextureSet");
 		nifShader->SetWetMaterialName(wetShaderName);
 
 		triShapeBase->SetName(shapeName);
@@ -1005,7 +1005,7 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 		NiShader* shader = workNif.GetShader(shapeName);
 		if (shader) {
 			// Find material file
-			if (shader->header->userVersion == 12 && shader->header->userVersion2 >= 130) {
+			if (shader->header->GetUserVersion() == 12 && shader->header->GetUserVersion2() >= 130) {
 				matFile = shader->GetName();
 				if (!matFile.IsEmpty())
 					hasMat = true;
@@ -1580,7 +1580,7 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				refNif.GetFileName(), refNif.hdr.GetVersionInfo());
+				refNif.GetFileName(), refNif.GetHeader().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
@@ -1656,7 +1656,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				refNif.GetFileName(), refNif.hdr.GetVersionInfo());
+				refNif.GetFileName(), refNif.GetHeader().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
@@ -1713,11 +1713,11 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	}
 
 	// Add cloth data block of NIF to the list
-	vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>((NiNode*)refNif.GetBlock(0), true);
+	vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>((NiNode*)refNif.GetHeader().GetBlock(0), true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[inMeshFile] = *cloth;
 
-	refNif.DeleteBlockByType("BSClothExtraData");
+	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	if (workNif.IsValid()) {
 		// Copy only reference shape
@@ -1781,7 +1781,7 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				nif.GetFileName(), nif.hdr.GetVersionInfo());
+				nif.GetFileName(), nif.GetHeader().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
@@ -1803,19 +1803,11 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	if (!baseShape.empty())
 		nif.RenameShape(baseShape, baseShape + "_outfit");
 
-	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
 	vector<string> shapes;
 	GetShapes(shapes);
 
 	nif.GetShapeList(nifShapes);
 	for (auto &s : nifShapes) {
-		string oldName = s;
-		for (uint i = 0; i < sizeof(chars); ++i)
-			replace(s.begin(), s.end(), chars[i], '_');
-
-		if (oldName != s)
-			nif.RenameShape(oldName, s);
-
 		vector<string> uniqueShapes;
 		nif.GetShapeList(uniqueShapes);
 		uniqueShapes.insert(uniqueShapes.end(), shapes.begin(), shapes.end());
@@ -1841,11 +1833,11 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	AutoOffset(nif);
 
 	// Add cloth data block of NIF to the list
-	vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>((NiNode*)nif.GetBlock(0), true);
+	vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>((NiNode*)nif.GetHeader().GetBlock(0), true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[fileName] = *cloth;
 
-	nif.DeleteBlockByType("BSClothExtraData");
+	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	nif.GetShapeList(nifShapes);
 	if (workNif.IsValid()) {
@@ -2089,12 +2081,12 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 		for (int i = 0; i < sel.Count(); i++) {
 			string selString = clothFileNames[sel[i]].ToStdString();
 			if (!selString.empty()) {
-				BSClothExtraData* clothBlock = new BSClothExtraData(nif.hdr);
+				BSClothExtraData* clothBlock = new BSClothExtraData(nif.GetHeader());
 				clothBlock->Clone(&clothData[selString]);
 
-				int id = nif.AddBlock(clothBlock, "BSClothExtraData");
+				int id = nif.GetHeader().AddBlock(clothBlock, "BSClothExtraData");
 				if (id != -1) {
-					NiNode* root = (NiNode*)nif.GetBlock(0);
+					NiNode* root = (NiNode*)nif.GetHeader().GetBlock(0);
 					if (root) {
 						root->numExtraData++;
 						root->extraDataRef.push_back(id);
