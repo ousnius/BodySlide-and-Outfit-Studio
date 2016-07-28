@@ -207,7 +207,7 @@ NiObject* NiHeader::GetBlock(const uint& blockId) {
 }
 
 void NiHeader::DeleteBlock(int blockId) {
-	if (blockId == -1)
+	if (blockId == 0xFFFFFFFF)
 		return;
 
 	ushort blockTypeId = blockTypeIndices[blockId];
@@ -262,7 +262,7 @@ int NiHeader::AddBlock(NiObject* newBlock, const string& blockTypeStr) {
 }
 
 void NiHeader::SwapBlocks(const int& blockIndexLo, const int& blockIndexHi) {
-	if (blockIndexLo == -1 || blockIndexHi == -1)
+	if (blockIndexLo == 0xFFFFFFFF || blockIndexHi == 0xFFFFFFFF)
 		return;
 
 	// First swap data
@@ -312,7 +312,7 @@ int NiHeader::FindStringId(const string& str) {
 		if (strings[i].GetString().compare(str) == 0)
 			return i;
 
-	return -1;
+	return 0xFFFFFFFF;
 }
 
 int NiHeader::AddOrFindStringId(const string& str) {
@@ -435,7 +435,7 @@ void NiObjectNET::Init() {
 	name.clear();
 	nameRef = 0xFFFFFFFF;
 	numExtraData = 0;
-	controllerRef = -1;
+	controllerRef = 0xFFFFFFFF;
 }
 
 void NiObjectNET::Get(fstream& file) {
@@ -445,7 +445,7 @@ void NiObjectNET::Get(fstream& file) {
 		file.read((char*)&skyrimShaderType, 4);
 
 	file.read((char*)&nameRef, 4);
-	if (nameRef != -1)
+	if (nameRef != 0xFFFFFFFF)
 		name = header->GetStringById(nameRef);
 	else
 		name.clear();
@@ -489,7 +489,7 @@ void NiObjectNET::notifyBlockDelete(int blockID) {
 	}
 
 	if (controllerRef == blockID)
-		controllerRef = -1;
+		controllerRef = 0xFFFFFFFF;
 	else if (controllerRef > blockID)
 		controllerRef--;
 }
@@ -524,6 +524,18 @@ void NiObjectNET::SetName(const string& propertyName, bool renameExisting) {
 void NiObjectNET::ClearName() {
 	nameRef = 0xFFFFFFFF;
 	name.clear();
+}
+
+int NiObjectNET::GetExtraDataRef(int id) {
+	if (id >= 0 && id < numExtraData)
+		return extraDataRef[id];
+
+	return 0xFFFFFFFF;
+}
+
+void NiObjectNET::AddExtraDataRef(int id) {
+	extraDataRef.push_back(id);
+	numExtraData++;
 }
 
 int NiObjectNET::CalcBlockSize() {
@@ -574,7 +586,7 @@ void NiAVObject::Init() {
 	rotation[2].z = 1.0f;
 	scale = 1.0f;
 	numProperties = 0;
-	collisionRef = -1;
+	collisionRef = 0xFFFFFFFF;
 }
 
 void NiAVObject::Get(fstream& file) {
@@ -642,7 +654,7 @@ void NiAVObject::notifyBlockDelete(int blockID) {
 	NiObjectNET::notifyBlockDelete(blockID);
 
 	if (collisionRef == blockID)
-		collisionRef = -1;
+		collisionRef = 0xFFFFFFFF;
 	else if (collisionRef > blockID)
 		collisionRef--;
 
@@ -796,6 +808,35 @@ int NiNode::CalcBlockSize() {
 	return blockSize;
 }
 
+int NiNode::GetChildRef(int id) {
+	if (id >= 0 && id < numChildren)
+		return children[id];
+
+	return 0xFFFFFFFF;
+}
+
+void NiNode::AddChildRef(int id) {
+	children.push_back(id);
+	numChildren++;
+}
+
+void NiNode::ClearChildren() {
+	children.clear();
+	numChildren = 0;
+}
+
+int NiNode::GetEffectRef(int id) {
+	if (id >= 0 && id < numEffects)
+		return effects[id];
+
+	return 0xFFFFFFFF;
+}
+
+void NiNode::AddEffectRef(int id) {
+	effects.push_back(id);
+	numEffects++;
+}
+
 
 void NiShape::Get(fstream& file) {
 }
@@ -813,6 +854,15 @@ int NiShape::CalcBlockSize() {
 	return blockSize;
 }
 
+int NiShape::GetSkinInstanceRef() { return 0xFFFFFFFF; }
+void NiShape::SetSkinInstanceRef(int skinInstanceRef) { }
+
+int NiShape::GetShaderPropertyRef() { return 0xFFFFFFFF; }
+void NiShape::SetShaderPropertyRef(int shaderPropertyRef) { }
+
+int NiShape::GetAlphaPropertyRef() { return 0xFFFFFFFF; }
+void NiShape::SetAlphaPropertyRef(int alphaPropertyRef) { }
+
 
 BSTriShape::BSTriShape(NiHeader& hdr) {
 	NiAVObject::Init();
@@ -820,9 +870,9 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	blockType = BSTRISHAPE;
 	header = &hdr;
 
-	skinInstanceRef = -1;
-	shaderPropertyRef = -1;
-	alphaPropertyRef = -1;
+	skinInstanceRef = 0xFFFFFFFF;
+	shaderPropertyRef = 0xFFFFFFFF;
+	alphaPropertyRef = 0xFFFFFFFF;
 
 	vertFlags3 = 0x43;
 	vertFlags4 = 0x50;
@@ -1075,17 +1125,17 @@ void BSTriShape::notifyBlockDelete(int blockID) {
 	NiAVObject::notifyBlockDelete(blockID);
 
 	if (skinInstanceRef == blockID)
-		skinInstanceRef = -1;
+		skinInstanceRef = 0xFFFFFFFF;
 	else if (skinInstanceRef > blockID)
 		skinInstanceRef--;
 
 	if (shaderPropertyRef == blockID)
-		shaderPropertyRef = -1;
+		shaderPropertyRef = 0xFFFFFFFF;
 	else if (shaderPropertyRef > blockID)
 		shaderPropertyRef--;
 
 	if (alphaPropertyRef == blockID)
-		alphaPropertyRef = -1;
+		alphaPropertyRef = 0xFFFFFFFF;
 	else if (alphaPropertyRef > blockID)
 		alphaPropertyRef--;
 }
@@ -1188,7 +1238,6 @@ int BSTriShape::CalcBlockSize() {
 }
 
 const vector<Vector3>* BSTriShape::GetRawVerts() {
-	rawVertices.clear();
 	rawVertices.resize(numVertices);
 	for (int i = 0; i < numVertices; i++)
 		rawVertices[i] = vertData[i].vert;
@@ -1197,7 +1246,6 @@ const vector<Vector3>* BSTriShape::GetRawVerts() {
 }
 
 const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
-	rawNormals.clear();
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		float q1 = (((float)vertData[i].normal[0])/255.0f) * 2.0f - 1.0f;
@@ -1224,7 +1272,6 @@ const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
 }
 
 const vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
-	rawTangents.clear();
 	rawTangents.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		float q6 = (((float)vertData[i].tangent[0]) / 255.0f) * 2.0f - 1.0f;
@@ -1250,7 +1297,6 @@ const vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
 }
 
 const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
-	rawBitangents.clear();
 	rawBitangents.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		float x = (vertData[i].bitangentX);
@@ -1273,7 +1319,6 @@ const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
 }
 
 const vector<Vector2>* BSTriShape::GetUVData() {
-	rawUvs.clear();
 	rawUvs.resize(numVertices);
 	for (int i = 0; i < numVertices; i++)
 		rawUvs[i] = vertData[i].uv;
@@ -1348,7 +1393,8 @@ void BSTriShape::SetFullPrecision(bool enable) {
 }
 
 void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
-	rawNormals.clear();
+	SetNormals(true);
+
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		rawNormals[i] = inNorms[i];
@@ -1463,7 +1509,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 		}
 	}
 
-	rawNormals.clear();
+	SetNormals(true);
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		rawNormals[i].x = -verts[i].nx;
@@ -1530,6 +1576,8 @@ void BSTriShape::CalcTangentSpace() {
 		tan2[i2] += sdir;
 		tan2[i3] += sdir;
 	}
+
+	SetTangents(true);
 
 	rawBitangents.resize(numVertices);
 	rawTangents.resize(numVertices);
@@ -1869,10 +1917,10 @@ void BSMeshLODTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, v
 void NiGeometry::Init() {
 	NiAVObject::Init();
 
-	shaderPropertyRef = -1;
-	alphaPropertyRef = -1;
-	dataRef = -1;
-	skinInstanceRef = -1;
+	shaderPropertyRef = 0xFFFFFFFF;
+	alphaPropertyRef = 0xFFFFFFFF;
+	dataRef = 0xFFFFFFFF;
+	skinInstanceRef = 0xFFFFFFFF;
 	numMaterials = 0;
 	activeMaterial = 0;
 	dirty = 0;
@@ -1926,12 +1974,12 @@ void NiGeometry::notifyBlockDelete(int blockID) {
 	NiAVObject::notifyBlockDelete(blockID);
 
 	if (dataRef == blockID)
-		dataRef = -1;
+		dataRef = 0xFFFFFFFF;
 	else if (dataRef > blockID)
 		dataRef--;
 
 	if (skinInstanceRef == blockID)
-		skinInstanceRef = -1;
+		skinInstanceRef = 0xFFFFFFFF;
 	else if (skinInstanceRef > blockID)
 		skinInstanceRef--;
 
@@ -2121,18 +2169,38 @@ void NiGeometryData::Put(fstream& file) {
 	file.write((char*)&additionalData, 4);
 }
 
-void NiGeometryData::SetUVs(bool enable) {
+void NiGeometryData::SetNormals(bool enable) {
+	hasNormals = enable;
 	if (enable)
-		numUVSets |= 1 << 0;
+		normals.resize(numVertices);
 	else
+		normals.clear();
+
+	SetTangents(enable);
+}
+
+void NiGeometryData::SetUVs(bool enable) {
+	if (enable) {
+		numUVSets |= 1 << 0;
+		uvSets.resize(numVertices);
+	}
+	else {
 		numUVSets &= ~(1 << 0);
+		uvSets.clear();
+	}
 }
 
 void NiGeometryData::SetTangents(bool enable) {
-	if (enable)
+	if (enable) {
 		numUVSets |= 1 << 12;
-	else
+		tangents.resize(numVertices);
+		bitangents.resize(numVertices);
+	}
+	else {
 		numUVSets &= ~(1 << 12);
+		tangents.clear();
+		bitangents.clear();
+	}
 }
 
 void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {
@@ -2379,7 +2447,7 @@ void NiTriShapeData::Get(fstream& file) {
 
 	file.read((char*)&numTrianglePoints, 4);
 	file.read((char*)&hasTriangles, 1);
-	if (hasTriangles == 1) {
+	if (hasTriangles) {
 		Triangle triangle;
 		for (int i = 0; i < numTriangles; i++) {
 			file.read((char*)&triangle.p1, 2);
@@ -2412,7 +2480,7 @@ void NiTriShapeData::Put(fstream& file) {
 
 	file.write((char*)&numTrianglePoints, 4);
 	file.write((char*)&hasTriangles, 1);
-	if (hasTriangles == 1) {
+	if (hasTriangles) {
 		for (int i = 0; i < numTriangles; i++) {
 			file.write((char*)&triangles[i].p1, 2);
 			file.write((char*)&triangles[i].p2, 2);
@@ -2476,7 +2544,7 @@ void NiTriShapeData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
 void NiTriShapeData::RecalcNormals() {
-	if (!hasNormals)
+	if (!HasNormals())
 		return;
 
 	NiTriBasedGeomData::RecalcNormals();
@@ -2536,7 +2604,7 @@ void NiTriShapeData::RecalcNormals() {
 }
 
 void NiTriShapeData::CalcTangentSpace() {
-	if (!hasNormals)
+	if (!HasNormals())
 		return;
 
 	NiTriBasedGeomData::CalcTangentSpace();
@@ -2781,7 +2849,7 @@ void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 }
  
 void NiTriStripsData::RecalcNormals() {
-	if (!hasNormals)
+	if (!HasNormals())
 		return;
 
 	NiTriBasedGeomData::RecalcNormals();
@@ -2844,7 +2912,7 @@ void NiTriStripsData::RecalcNormals() {
 }
 
 void NiTriStripsData::CalcTangentSpace() {
-	if (!hasNormals)
+	if (!HasNormals())
 		return;
 
 	NiTriBasedGeomData::CalcTangentSpace();
@@ -2957,9 +3025,9 @@ NiSkinInstance::NiSkinInstance(fstream& file, NiHeader& hdr) {
 void NiSkinInstance::Init() {
 	NiObject::Init();
 
-	dataRef = -1;
-	skinPartitionRef = -1;
-	skeletonRootRef = -1;
+	dataRef = 0xFFFFFFFF;
+	skinPartitionRef = 0xFFFFFFFF;
+	skeletonRootRef = 0xFFFFFFFF;
 	numBones = 0;
 }
 
@@ -2992,19 +3060,19 @@ void NiSkinInstance::Put(fstream& file) {
 void NiSkinInstance::notifyBlockDelete(int blockID) {
 	NiObject::notifyBlockDelete(blockID);
 
-	int boneIndex = -1;
+	int boneIndex = 0xFFFFFFFF;
 	if (dataRef == blockID)
-		dataRef = -1;
+		dataRef = 0xFFFFFFFF;
 	else if (dataRef > blockID)
 		dataRef--;
 
 	if (skinPartitionRef == blockID)
-		skinPartitionRef = -1;
+		skinPartitionRef = 0xFFFFFFFF;
 	else if (skinPartitionRef > blockID)
 		skinPartitionRef--;
 
 	if (skeletonRootRef == blockID)
-		skeletonRootRef = -1;
+		skeletonRootRef = 0xFFFFFFFF;
 	else if (skeletonRootRef > blockID)
 		skeletonRootRef--;
 
@@ -3018,7 +3086,7 @@ void NiSkinInstance::notifyBlockDelete(int blockID) {
 		else if (bones[i] > blockID)
 			bones[i]--;
 	}
-	if (boneIndex >= 0 && dataRef != -1) { // Bone was removed, clear out the skinning data for it.
+	if (boneIndex >= 0 && dataRef != 0xFFFFFFFF) { // Bone was removed, clear out the skinning data for it.
 		NiSkinData* skinData = dynamic_cast<NiSkinData*>(header->GetBlock(dataRef));
 		if (!skinData)
 			return;
@@ -3140,7 +3208,7 @@ void BSSkinInstance::Init() {
 	NiObject::Init();
 
 	targetRef = 0xFFFFFFFF;
-	boneDataRef = 0xFFFFFFFF;
+	dataRef = 0xFFFFFFFF;
 	numBones = 0;
 	numVertices = 0;
 }
@@ -3150,7 +3218,7 @@ void BSSkinInstance::Get(fstream& file) {
 	uint intData;
 
 	file.read((char*)&targetRef, 4);
-	file.read((char*)&boneDataRef, 4);
+	file.read((char*)&dataRef, 4);
 	file.read((char*)&numBones, 4);
 	for (int i = 0; i < numBones; i++) {
 		file.read((char*)&intData, 4);
@@ -3164,7 +3232,7 @@ void BSSkinInstance::Put(fstream& file) {
 	NiObject::Put(file);
 
 	file.write((char*)&targetRef, 4);
-	file.write((char*)&boneDataRef, 4);
+	file.write((char*)&dataRef, 4);
 	file.write((char*)&numBones, 4);
 	for (int i = 0; i < numBones; i++) {
 		file.write((char*)&bones[i], 4);
@@ -3175,11 +3243,11 @@ void BSSkinInstance::Put(fstream& file) {
 void BSSkinInstance::notifyBlockDelete(int blockID) {
 	NiObject::notifyBlockDelete(blockID);
 
-	int boneIndex = -1;
-	if (boneDataRef == blockID)
-		boneDataRef = 0xFFFFFFFF;
-	else if (boneDataRef > blockID)
-		boneDataRef--;
+	int boneIndex = 0xFFFFFFFF;
+	if (dataRef == blockID)
+		dataRef = 0xFFFFFFFF;
+	else if (dataRef > blockID)
+		dataRef--;
 
 	for (int i = 0; i < numBones; i++) {
 		if (bones[i] == blockID) {
@@ -3196,10 +3264,10 @@ void BSSkinInstance::notifyBlockDelete(int blockID) {
 void BSSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
-	if (boneDataRef == blockIndexLo)
-		boneDataRef = blockIndexHi;
-	else if (boneDataRef == blockIndexHi)
-		boneDataRef = blockIndexLo;
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
 
 	for (int i = 0; i < numBones; i++) {
 		if (bones[i] == blockIndexLo)
@@ -3371,8 +3439,8 @@ int NiSkinData::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
 	blockSize += 57;
-	for (auto & b : bones)
-		blockSize += b.CalcSize();
+	for (auto &b : bones)
+		blockSize += 70 + b.numVertices * 6;
 
 	return blockSize;
 }
@@ -3711,7 +3779,7 @@ NiFloatInterpolator::NiFloatInterpolator(NiHeader& hdr) {
 	header = &hdr;
 	blockType = NIFLOATINTERPOLATOR;
 	floatValue = 0.0f;
-	dataRef = -1;
+	dataRef = 0xFFFFFFFF;
 }
 
 NiFloatInterpolator::NiFloatInterpolator(fstream& file, NiHeader& hdr) {
@@ -3741,7 +3809,7 @@ void NiFloatInterpolator::notifyBlockDelete(int blockID) {
 	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
 
 	if (dataRef == blockID)
-		dataRef = -1;
+		dataRef = 0xFFFFFFFF;
 	else if (dataRef > blockID)
 		dataRef--;
 }
@@ -3769,7 +3837,7 @@ NiTransformInterpolator::NiTransformInterpolator(NiHeader& hdr) {
 	header = &hdr;
 	blockType = NITRANSFORMINTERPOLATOR;
 	scale = 0.0f;
-	dataRef = -1;
+	dataRef = 0xFFFFFFFF;
 }
 
 NiTransformInterpolator::NiTransformInterpolator(fstream& file, NiHeader& hdr) {
@@ -3803,7 +3871,7 @@ void NiTransformInterpolator::notifyBlockDelete(int blockID) {
 	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
 
 	if (dataRef == blockID)
-		dataRef = -1;
+		dataRef = 0xFFFFFFFF;
 	else if (dataRef > blockID)
 		dataRef--;
 }
@@ -3831,7 +3899,7 @@ NiPoint3Interpolator::NiPoint3Interpolator(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NIPOINT3INTERPOLATOR;
-	dataRef = -1;
+	dataRef = 0xFFFFFFFF;
 }
 
 NiPoint3Interpolator::NiPoint3Interpolator(fstream& file, NiHeader& hdr) {
@@ -3861,7 +3929,7 @@ void NiPoint3Interpolator::notifyBlockDelete(int blockID) {
 	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
 
 	if (dataRef == blockID)
-		dataRef = -1;
+		dataRef = 0xFFFFFFFF;
 	else if (dataRef > blockID)
 		dataRef--;
 }
@@ -3887,13 +3955,13 @@ int NiPoint3Interpolator::CalcBlockSize() {
 void NiTimeController::Init() {
 	NiObject::Init();
 
-	nextControllerRef = -1;
+	nextControllerRef = 0xFFFFFFFF;
 	flags = 0x000C;
 	frequency = 1.0f;
 	phase = 0.0f;
 	startTime = 0.0f;
 	stopTime = 0.0f;
-	targetRef = -1;
+	targetRef = 0xFFFFFFFF;
 }
 
 void NiTimeController::Get(fstream& file) {
@@ -3924,12 +3992,12 @@ void NiTimeController::notifyBlockDelete(int blockID) {
 	NiObject::notifyBlockDelete(blockID);
 
 	if (nextControllerRef == blockID)
-		nextControllerRef = -1;
+		nextControllerRef = 0xFFFFFFFF;
 	else if (nextControllerRef > blockID)
 		nextControllerRef--;
 
 	if (targetRef == blockID)
-		targetRef = -1;
+		targetRef = 0xFFFFFFFF;
 	else if (targetRef > blockID)
 		targetRef--;
 }
@@ -3985,7 +4053,7 @@ int NiInterpController::CalcBlockSize() {
 void NiSingleInterpController::Init() {
 	NiInterpController::Init();
 
-	interpolatorRef = -1;
+	interpolatorRef = 0xFFFFFFFF;
 }
 
 void NiSingleInterpController::Get(fstream& file) {
@@ -4004,7 +4072,7 @@ void NiSingleInterpController::notifyBlockDelete(int blockID) {
 	NiInterpController::notifyBlockDelete(blockID);
 
 	if (interpolatorRef == blockID)
-		interpolatorRef = -1;
+		interpolatorRef = 0xFFFFFFFF;
 	else if (interpolatorRef > blockID)
 		interpolatorRef--;
 }
@@ -4295,7 +4363,7 @@ void NiShader::SetGlossiness(float gloss) {
 }
 
 int NiShader::GetTextureSetRef() {
-	return -1;
+	return 0xFFFFFFFF;
 }
 
 void NiShader::SetTextureSetRef(int texSetRef) {
@@ -4348,7 +4416,7 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	uvOffset.v = 0.0f;
 	uvScale.u = 1.0f;
 	uvScale.v = 1.0f;
-	textureSetRef = -1;
+	textureSetRef = 0xFFFFFFFF;
 
 	emissiveMultiple = 1.0f;
 	wetMaterialNameRef = 0xFFFFFFFF;
@@ -4623,7 +4691,7 @@ void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
 	NiProperty::notifyBlockDelete(blockID);
 
 	if (textureSetRef == blockID)
-		textureSetRef = -1;
+		textureSetRef = 0xFFFFFFFF;
 	else if (textureSetRef > blockID)
 		textureSetRef--;
 }
@@ -5043,7 +5111,7 @@ BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = BSSHADERPPLIGHTINGPROPERTY;
-	textureSetRef = -1;
+	textureSetRef = 0xFFFFFFFF;
 	refractionStrength = 0.0;
 	refractionFirePeriod = 0;
 	unkFloat4 = 4.0f;
@@ -5115,7 +5183,7 @@ void BSShaderPPLightingProperty::notifyBlockDelete(int blockID) {
 	BSShaderLightingProperty::notifyBlockDelete(blockID);
 
 	if (textureSetRef == blockID)
-		textureSetRef = -1;
+		textureSetRef = 0xFFFFFFFF;
 	else if (textureSetRef > blockID)
 		textureSetRef--;
 }
@@ -5451,7 +5519,7 @@ void NiExtraData::Get(fstream& file) {
 	NiObject::Get(file);
 
 	file.read((char*)&nameRef, 4);
-	if (nameRef != -1)
+	if (nameRef != 0xFFFFFFFF)
 		name = header->GetStringById(nameRef);
 	else
 		name.clear();
@@ -5503,7 +5571,7 @@ void NiStringExtraData::Get(fstream& file) {
 	NiExtraData::Get(file);
 
 	file.read((char*)&stringDataRef, 4);
-	if (stringDataRef != -1)
+	if (stringDataRef != 0xFFFFFFFF)
 		stringData = header->GetStringById(stringDataRef);
 	else
 		stringData.clear();

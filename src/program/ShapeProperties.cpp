@@ -244,7 +244,7 @@ void ShapeProperties::AddShader() {
 			case SKYRIM:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
-				geom->shaderPropertyRef = nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty");
+				geom->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));
 			}
 		}
 	}
@@ -257,7 +257,7 @@ void ShapeProperties::AddShader() {
 			case FO4:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
-				siTriShape->shaderPropertyRef = nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty");
+				siTriShape->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));
 			}
 		}
 	}
@@ -470,10 +470,10 @@ void ShapeProperties::GetExtraData() {
 
 	NiTriBasedGeom* geom = nif->geomForName(shape);
 	if (geom) {
-		for (int i = 0; i < geom->numExtraData; i++) {
-			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(geom->extraDataRef[i]));
+		for (int i = 0; i < geom->GetNumExtaData(); i++) {
+			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(geom->GetExtraDataRef(i)));
 			if (extraData) {
-				extraDataIndices.push_back(geom->extraDataRef[i]);
+				extraDataIndices.push_back(geom->GetExtraDataRef(i));
 				AddExtraData(extraData, true);
 			}
 		}
@@ -483,10 +483,10 @@ void ShapeProperties::GetExtraData() {
 		if (!siTriShape)
 			return;
 
-		for (int i = 0; i < siTriShape->numExtraData; i++) {
-			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(siTriShape->extraDataRef[i]));
+		for (int i = 0; i < siTriShape->GetNumExtaData(); i++) {
+			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(siTriShape->GetExtraDataRef(i)));
 			if (extraData) {
-				extraDataIndices.push_back(siTriShape->extraDataRef[i]);
+				extraDataIndices.push_back(siTriShape->GetExtraDataRef(i));
 				AddExtraData(extraData, true);
 			}
 		}
@@ -503,13 +503,13 @@ void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
 		if (extraData->blockType == NISTRINGEXTRADATA) {
 			NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
 			int index = nif->AddStringExtraData(shape, stringExtraData->GetName(), stringExtraData->GetStringData());
-			if (index != -1)
+			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
 		else if (extraData->blockType == NIINTEGEREXTRADATA) {
 			NiIntegerExtraData* intExtraData = (NiIntegerExtraData*)extraData;
 			int index = nif->AddIntegerExtraData(shape, intExtraData->GetName(), intExtraData->GetIntegerData());
-			if (index != -1)
+			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
 	}
@@ -578,7 +578,7 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 		if (extraDataIndices[i] > index)
 			extraDataIndices[i]--;
 
-	extraDataIndices[id] = -1;
+	extraDataIndices[id] = 0xFFFFFFFF;
 
 	wxTextCtrl* extraDataName = dynamic_cast<wxTextCtrl*>(FindWindowById(3000 + id, this));
 	wxTextCtrl* extraDataValue = dynamic_cast<wxTextCtrl*>(FindWindowById(4000 + id, this));
@@ -615,7 +615,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 		if (extraDataIndices[i] > index)
 			extraDataIndices[i]--;
 
-	extraDataIndices[id] = -1;
+	extraDataIndices[id] = 0xFFFFFFFF;
 
 	pgExtraData->FitInside();
 	pgExtraData->Layout();

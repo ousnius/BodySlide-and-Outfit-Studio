@@ -40,7 +40,6 @@ class AnimBone {
 public:
 	string boneName;			// bone names are node names in the nif file
 	int boneID;					// block id from the original nif file
-	int order;					// order of appearance in nif file
 	Matrix4 rot;				// original node rotation value (total rotation, including parents)
 	Vector3 trans;				// original node translation value (total translation, including parents)
 	float scale;				// original node scale value
@@ -60,17 +59,9 @@ public:
 	AnimBone() {
 		boneName = "bogus";
 		boneID = -1;
-		order = -1;
 		refCount = 0;
 		parent = nullptr;
 		isValidBone = false;
-		hasSkinXform = false;
-	}
-
-	AnimBone(const string& bn, int bid, int ord) : boneName(bn), boneID(bid), order(ord) {
-		refCount = 0;
-		parent = nullptr;
-		isValidBone = true;
 		hasSkinXform = false;
 	}
 

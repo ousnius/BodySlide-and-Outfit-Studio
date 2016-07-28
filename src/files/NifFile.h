@@ -97,9 +97,9 @@ public:
 
 	// Empty string for the bone name returns the overall skin transform for the shape.
 	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform, BoundingSphere& outBounds);
-	// -1 for the bone index sets the overall skin transform for the shape.
+	// 0xFFFFFFFF for the bone index sets the overall skin transform for the shape.
 	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform, BoundingSphere& inBounds);
-	// -1 on the bone index returns the overall skin transform for the shape.
+	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
 	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, BoundingSphere& outBounds);
 	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
@@ -182,15 +182,15 @@ vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 		return result;
 	}
 
-	for (int i = 0; i < parent->children.size(); i++) {
-		n = dynamic_cast<T*>(hdr.GetBlock(parent->children[i]));
+	for (int i = 0; i < parent->GetNumChildren(); i++) {
+		n = dynamic_cast<T*>(hdr.GetBlock(parent->GetChildRef(i)));
 		if (n)
 			result.push_back(n);
 	}
 
 	if (searchExtraData) {
-		for (int i = 0; i < parent->extraDataRef.size(); i++) {
-			n = dynamic_cast<T*>(hdr.GetBlock(parent->extraDataRef[i]));
+		for (int i = 0; i < parent->GetNumExtaData(); i++) {
+			n = dynamic_cast<T*>(hdr.GetBlock(parent->GetExtraDataRef(i)));
 			if (n)
 				result.push_back(n);
 		}

@@ -149,7 +149,7 @@ void AnimInfo::GetBoneXForm(const string& boneName, SkinTransform& stransform) {
 }
 
 int AnimInfo::GetShapeBoneIndex(const string& shapeName, const string& boneName) {
-	int b = -1;
+	int b = 0xFFFFFFFF;
 	for (int i = 0; i < shapeBones[shapeName].size(); i++) {
 		if (shapeBones[shapeName][i] == boneName) {
 			b = i;
@@ -219,7 +219,7 @@ bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
 
 void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights) {
 	int bid = GetShapeBoneIndex(shape, boneName);
-	if (bid == -1)
+	if (bid == 0xFFFFFFFF)
 		return;
 
 	shapeSkinning[shape].boneWeights[bid].weights.clear();
@@ -266,7 +266,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 				}
 
 				int id = nif->GetNodeID(bone);
-				if (id == -1) {
+				if (id == 0xFFFFFFFF) {
 					vector<Vector3> r(3);
 					boneRef.rot.GetRow(0, r[0]);
 					boneRef.rot.GetRow(1, r[1]);
@@ -368,7 +368,6 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 
 	boneID = srcBlock;
 	boneName = node->GetName();
-	order = -1;
 	refCount = 0;
 
 	localRot.Set(node->rotation);
@@ -384,16 +383,17 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 		rot = localRot;
 	}
 
-	for (auto &c : node->children) {
-		string name = skeletonNif->NodeName(c);
-		if (!name.empty()){
+	for (int i = 0; i < node->GetNumChildren(); i++) {
+		string name = skeletonNif->NodeName(node->GetChildRef(i));
+		if (!name.empty()) {
 			if (name == "_unnamed_")
 				name = AnimSkeleton::getInstance().GenerateBoneName();
 
-			AnimBone& bone = AnimSkeleton::getInstance().AddBone(name).LoadFromNif(skeletonNif, c, this);
+			AnimBone& bone = AnimSkeleton::getInstance().AddBone(name).LoadFromNif(skeletonNif, node->GetChildRef(i), this);
 			children.push_back(&bone);
 		}
 	}
+
 	return (*this);
 }
 
@@ -407,7 +407,7 @@ int AnimSkeleton::LoadFromNif(const string& fileName) {
 
 	rootBone = Config.GetCString("Anim/SkeletonRootName");
 	int nodeID = refSkeletonNif.GetNodeID(rootBone);
-	if (nodeID == -1) {
+	if (nodeID == 0xFFFFFFFF) {
 		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);
 		wxMessageBox(wxString::Format(_("Root '%s' not found in skeleton '%s'!"), rootBone, fileName));
 		return 2;

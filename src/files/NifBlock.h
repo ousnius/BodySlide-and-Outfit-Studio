@@ -342,13 +342,12 @@ class NiObjectNET : public NiObject {
 private:
 	uint nameRef;
 	string name;
+	int controllerRef;
+	int numExtraData;
+	vector<int> extraDataRef;
 
 public:
 	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
-	int numExtraData;
-	vector<int> extraDataRef;
-	int controllerRef;
-
 	bool bBSLightingShaderProperty;
 
 	virtual void Init();
@@ -360,6 +359,13 @@ public:
 	string GetName();
 	void SetName(const string& propertyName, bool renameExisting = false);
 	void ClearName();
+
+	int GetControllerRef() { return controllerRef; }
+	void SetControllerRef(int controllerRef) { this->controllerRef = controllerRef; }
+
+	int GetNumExtaData() { return numExtraData; }
+	int GetExtraDataRef(int id);
+	void AddExtraDataRef(int id);
 
 	virtual int CalcBlockSize();
 };
@@ -385,10 +391,9 @@ public:
 	bool rotToEulerDegrees(float &Y, float& P, float& R) {
 		float rx, ry, rz;
 		bool canRot = false;
-		if (rotation[0].z < 1.0)
-		{
-			if (rotation[0].z > -1.0)
-			{
+
+		if (rotation[0].z < 1.0) {
+			if (rotation[0].z > -1.0) {
 				rx = atan2(-rotation[1].z, rotation[2].z);
 				ry = asin(rotation[0].z);
 				rz = atan2(-rotation[0].y, rotation[0].x);
@@ -424,12 +429,13 @@ public:
 };
 
 class NiNode : public NiAVObject {
-public:
+private:
 	uint numChildren;
 	vector<int> children;
 	uint numEffects;
 	vector<int> effects;
 
+public:
 	NiNode(NiHeader& hdr);
 	NiNode(fstream& file, NiHeader& hdr);
 
@@ -439,6 +445,17 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
+
+	int GetNumChildren() { return numChildren; }
+	int GetChildRef(int id);
+	void AddChildRef(int id);
+	void ClearChildren();
+	vector<int>::iterator ChildrenBegin() { return children.begin(); }
+	vector<int>::iterator ChildrenEnd() { return children.end(); }
+
+	int GetNumEffects() { return numEffects; }
+	int GetEffectRef(int id);
+	void AddEffectRef(int id);
 };
 
 
@@ -449,10 +466,24 @@ public:
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
+
+	virtual int GetSkinInstanceRef();
+	virtual void SetSkinInstanceRef(int skinInstanceRef);
+
+	virtual int GetShaderPropertyRef();
+	virtual void SetShaderPropertyRef(int shaderPropertyRef);
+
+	virtual int GetAlphaPropertyRef();
+	virtual void SetAlphaPropertyRef(int alphaPropertyRef);
 };
 
 
 class BSTriShape : public NiShape {
+private:
+	int skinInstanceRef;
+	int shaderPropertyRef;
+	int alphaPropertyRef;
+
 public:
 	class BSVertexData {
 	public:
@@ -474,10 +505,6 @@ public:
 	};
 
 	BoundingSphere bounds;
-
-	int skinInstanceRef;
-	int shaderPropertyRef;
-	int alphaPropertyRef;
 
 	// Set in CalcBlockSize()
 	byte vertFlags1;	// Number of uint elements in vertex data
@@ -514,47 +541,40 @@ public:
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	virtual int CalcBlockSize();
 
+	int GetSkinInstanceRef() { return skinInstanceRef; }
+	void SetSkinInstanceRef(int skinInstanceRef) { this->skinInstanceRef = skinInstanceRef; }
+
+	int GetShaderPropertyRef() { return shaderPropertyRef; }
+	void SetShaderPropertyRef(int shaderPropertyRef) { this->shaderPropertyRef = shaderPropertyRef; }
+
+	int GetAlphaPropertyRef() { return alphaPropertyRef; }
+	void SetAlphaPropertyRef(int alphaPropertyRef) { this->alphaPropertyRef = alphaPropertyRef; }
+
 	const vector<Vector3>* GetRawVerts();
 	const vector<Vector3>* GetNormalData(bool xform = true);
 	const vector<Vector3>* GetTangentData(bool xform = true);
 	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
 
-	bool HasVertices() {
-		return (vertFlags6 & (1 << 4)) != 0;
-	}
+	bool HasVertices() { return (vertFlags6 & (1 << 4)) != 0; }
 
-	bool HasUVs() {
-		return (vertFlags6 & (1 << 5)) != 0;
-	}
+	bool HasUVs() { return (vertFlags6 & (1 << 5)) != 0; }
 
 	void SetNormals(bool enable);
-	bool HasNormals() {
-		return (vertFlags6 & (1 << 7)) != 0;
-	}
+	bool HasNormals() { return (vertFlags6 & (1 << 7)) != 0; }
 
 	void SetTangents(bool enable);
-	bool HasTangents() {
-		return (vertFlags7 & (1 << 0)) != 0;
-	}
+	bool HasTangents() { return (vertFlags7 & (1 << 0)) != 0; }
 
 	void SetVertexColors(bool enable);
-	bool HasVertexColors() {
-		return (vertFlags7 & (1 << 1)) != 0;
-	}
+	bool HasVertexColors() { return (vertFlags7 & (1 << 1)) != 0; }
 
 	void SetSkinned(bool enable);
-	bool IsSkinned() {
-		return (vertFlags7 & (1 << 2)) != 0;
-	}
+	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 
 	void SetFullPrecision(bool enable);
-	bool IsFullPrecision() {
-		return (vertFlags7 & (1 << 6)) != 0;
-	}
-	bool CanChangePrecision() {
-		return (HasVertices() && HasTangents() && HasNormals());
-	}
+	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0; }
+	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals()); }
 
 	void SetNormals(const vector<Vector3>& inNorms);
 	void RecalcNormals(const bool& smooth = false, const float& smoothThres = 60.0f);
@@ -608,8 +628,10 @@ public:
 		BSSITSSubSegmentData subSegmentData;
 	};
 
+private:
 	BSSITSSegmentation segmentation;
 
+public:
 	BSSubIndexTriShape(NiHeader& hdr);
 	BSSubIndexTriShape(fstream& file, NiHeader& hdr);
 
@@ -619,6 +641,9 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
+
+	BSSITSSegmentation GetSegmentation() { return segmentation; }
+	void SetSegmentation(const BSSITSSegmentation& segmentation) { this->segmentation = segmentation; }
 
 	void SetDefaultSegments();
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
@@ -644,56 +669,79 @@ public:
 };
 
 class NiGeometry : public NiShape {
-public:
+private:
 	int dataRef;
 	int skinInstanceRef;
+	int shaderPropertyRef;					// Version >= 20.2.0.7 && User Version == 12
+	int alphaPropertyRef;					// Version >= 20.2.0.7 && User Version == 12
+
 	uint numMaterials;
 	vector<NiString> materialNames;
 	vector<int> materialExtra;
 	int activeMaterial;
 	byte dirty;
-	int shaderPropertyRef;					// Version >= 20.2.0.7 && User Version == 12
-	int alphaPropertyRef;					// Version >= 20.2.0.7 && User Version == 12
 
+public:
 	virtual void Init();
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
+
+	bool IsSkinned() { return skinInstanceRef != 0xFFFFFFFF; }
+
+	int GetDataRef() { return dataRef; }
+	void SetDataRef(int dataRef) { this->dataRef = dataRef; }
+
+	int GetSkinInstanceRef() { return skinInstanceRef; }
+	void SetSkinInstanceRef(int skinInstanceRef) { this->skinInstanceRef = skinInstanceRef; }
+
+	int GetShaderPropertyRef() { return shaderPropertyRef; }
+	void SetShaderPropertyRef(int shaderPropertyRef) { this->shaderPropertyRef = shaderPropertyRef; }
+
+	int GetAlphaPropertyRef() { return alphaPropertyRef; }
+	void SetAlphaPropertyRef(int alphaPropertyRef) { this->alphaPropertyRef = alphaPropertyRef; }
 };
 
 class NiGeometryData : public NiObject {
-public:
+private:
 	int unkInt;
-	ushort numVertices;
 	byte keepFlags;
 	byte compressFlags;
 	bool hasVertices;
-	vector<Vector3> vertices;
-	ushort numUVSets;
 	//byte extraVectorsFlags;
 	uint unkInt2;							// Version >= 20.2.0.7 && User Version == 12
 	bool hasNormals;
-	vector<Vector3> normals;
-	vector<Vector3> tangents;
-	vector<Vector3> bitangents;
-	BoundingSphere bounds;
 	bool hasVertexColors;
 	vector<Color4> vertexColors;
-	vector<Vector2> uvSets;
 	ushort consistencyFlags;
 	uint additionalData;
 
+public:
+	ushort numVertices;
+	vector<Vector3> vertices;
+	vector<Vector3> normals;
+	vector<Vector3> tangents;
+	vector<Vector3> bitangents;
+
+	ushort numUVSets;
+	vector<Vector2> uvSets;
+
+	BoundingSphere bounds;
+
+	bool HasVertices() { return hasVertices; }
+
+	void SetNormals(bool enable);
+	bool HasNormals() { return hasNormals; }
+
+	bool HasVertexColors() { return hasVertexColors; }
+
 	void SetUVs(bool enable);
-	bool HasUVs() {
-		return (numUVSets & (1 << 0)) != 0;
-	}
+	bool HasUVs() { return (numUVSets & (1 << 0)) != 0; }
 
 	void SetTangents(bool enable);
-	bool HasTangents() {
-		return (numUVSets & (1 << 12)) != 0;
-	}
+	bool HasTangents() { return (numUVSets & (1 << 12)) != 0; }
 
 	virtual void Init();
 	virtual void Get(fstream& file);
@@ -709,10 +757,6 @@ public:
 
 class NiTriBasedGeom : public NiGeometry {
 public:
-	bool IsSkinned() {
-		return skinInstanceRef != -1;
-	}
-
 	virtual void Init();
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
@@ -741,6 +785,7 @@ class NiTriShape : public NiTriBasedGeom {
 public:
 	NiTriShape(NiHeader& hdr);
 	NiTriShape(fstream& file, NiHeader& hdr);
+
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
@@ -749,12 +794,14 @@ public:
 };
 
 class NiTriShapeData : public NiTriBasedGeomData {
-public:
+private:
+	bool hasTriangles;
 	uint numTrianglePoints;
-	byte hasTriangles;
-	vector<Triangle> triangles;
 	ushort numMatchGroups;
 	vector<MatchGroup> matchGroups;
+
+public:
+	vector<Triangle> triangles;
 
 	NiTriShapeData(NiHeader& hdr);
 	NiTriShapeData(fstream& file, NiHeader& hdr);
@@ -774,6 +821,7 @@ class NiTriStrips : public NiTriBasedGeom {
 public:
 	NiTriStrips(NiHeader& hdr);
 	NiTriStrips(fstream& file, NiHeader& hdr);
+
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
@@ -782,12 +830,13 @@ public:
 };
 
 class NiTriStripsData : public NiTriBasedGeomData {
-public:
+private:
 	ushort numStrips;
 	vector<ushort> stripLengths;
 	byte hasPoints;
 	vector<vector<ushort>> points;
 
+public:
 	NiTriStripsData(NiHeader& hdr);
 	NiTriStripsData(fstream& file, NiHeader& hdr);
 
@@ -809,11 +858,12 @@ public:
 };
 
 class NiSkinInstance : public NiBoneContainer {
-public:
+private:
 	int dataRef;
 	int skinPartitionRef;
 	int skeletonRootRef;
 
+public:
 	NiSkinInstance() { };
 	NiSkinInstance(NiHeader& hdr);
 	NiSkinInstance(fstream& file, NiHeader& hdr);
@@ -824,6 +874,15 @@ public:
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
+
+	int GetDataRef() { return dataRef; }
+	void SetDataRef(int dataRef) { this->dataRef = dataRef; }
+
+	int GetSkinPartitionRef() { return skinPartitionRef; }
+	void SetSkinPartitionRef(int skinPartitionRef) { this->skinPartitionRef = skinPartitionRef; }
+
+	int GetSkeletonRootRef() { return skeletonRootRef; }
+	void SetSkeletonRootRef(int skeletonRootRef) { this->skeletonRootRef = skeletonRootRef; }
 };
 
 class BSDismemberSkinInstance : public NiSkinInstance {
@@ -847,13 +906,15 @@ public:
 };
 
 class BSSkinInstance : public NiBoneContainer  {
-public:
+private:
 	int targetRef;
-	int boneDataRef;
+	int dataRef;
+
+public:
 	uint numVertices;
 	vector<SkinWeight> vertexWeights;
 
-	BSSkinInstance() : targetRef(-1), boneDataRef(-1), numVertices(0) { numBones = 0; };
+	BSSkinInstance() : targetRef(0xFFFFFFFF), dataRef(0xFFFFFFFF), numVertices(0) { numBones = 0; };
 	BSSkinInstance(NiHeader& hdr);
 	BSSkinInstance(fstream& file, NiHeader& hdr);
 
@@ -863,6 +924,12 @@ public:
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
+
+	int GetTargetRef() { return targetRef; }
+	void SetTargetRef(int targetRef) { this->dataRef = targetRef; }
+
+	int GetDataRef() { return dataRef; }
+	void SetDataRef(int dataRef) { this->dataRef = dataRef; }
 };
 
 class BSSkinBoneData : public NiObject {
@@ -876,9 +943,6 @@ public:
 
 		BoneData() {
 			boneTransform.scale = 1.0f;
-		}
-		int CalcSize() {
-			return (68);
 		}
 	};
 
@@ -905,9 +969,6 @@ public:
 		BoneData() {
 			boneTransform.scale = 1.0f;
 			numVertices = 0;
-		}
-		int CalcSize() {
-			return (70 + numVertices * 6);
 		}
 	};
 

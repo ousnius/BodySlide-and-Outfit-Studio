@@ -492,11 +492,11 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		nifShapeData->Create(&v, &t, &uv);
 		if (norms) {
 			nifShapeData->normals = (*norms);
-			nifShapeData->hasNormals = true;
+			nifShapeData->SetNormals(true);
 		}
 
 		int shapeID = blank.GetHeader().AddBlock(nifShapeData, "NiTriShapeData");
-		int dismemberID = -1;
+		int dismemberID = 0xFFFFFFFF;
 
 		if (!staticMode) {
 			NiSkinData* nifSkinData = new NiSkinData(workNif.GetHeader());
@@ -507,9 +507,9 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 
 			BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.GetHeader());
 			dismemberID = blank.GetHeader().AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
-			nifDismemberInst->dataRef = skinID;
-			nifDismemberInst->skinPartitionRef = partID;
-			nifDismemberInst->skeletonRootRef = 0;
+			nifDismemberInst->SetDataRef(skinID);
+			nifDismemberInst->SetSkinPartitionRef(partID);
+			nifDismemberInst->SetSkeletonRootRef(0);
 		}
 
 		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.GetHeader());
@@ -539,11 +539,11 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			nifTriShape->numProperties++;
 		}
 		else
-			nifTriShape->shaderPropertyRef = shaderID;
+			nifTriShape->SetShaderPropertyRef(shaderID);
 
 		nifTriShape->SetName(shapeName);
-		nifTriShape->dataRef = shapeID;
-		nifTriShape->skinInstanceRef = dismemberID;
+		nifTriShape->SetDataRef(shapeID);
+		nifTriShape->SetSkinInstanceRef(dismemberID);
 	}
 	else {
 		BSTriShape* triShapeBase;
@@ -561,12 +561,12 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 
 			BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.GetHeader());
 			int skinID = blank.GetHeader().AddBlock(nifBSSkinInstance, "BSSkin::Instance");
-			nifBSSkinInstance->targetRef = workNif.GetRootNodeID();
+			nifBSSkinInstance->SetTargetRef(workNif.GetRootNodeID());
 
 			BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.GetHeader());
 			int boneID = blank.GetHeader().AddBlock(nifBoneData, "BSSkin::BoneData");
-			nifBSSkinInstance->boneDataRef = boneID;
-			nifBSTriShape->skinInstanceRef = skinID;
+			nifBSSkinInstance->SetDataRef(boneID);
+			nifBSTriShape->SetSkinInstanceRef(skinID);
 			triShapeBase = nifBSTriShape;
 		}
 
@@ -579,7 +579,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		nifShader->SetWetMaterialName(wetShaderName);
 
 		triShapeBase->SetName(shapeName);
-		triShapeBase->shaderPropertyRef = shaderID;
+		triShapeBase->SetShaderPropertyRef(shaderID);
 	}
 
 	workNif.CopyGeometry(shapeName, blank, shapeName);
@@ -1940,7 +1940,7 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 
 		BoundingSphere bounds;
 		SkinTransform xFormSkinAll;
-		nif.GetShapeBoneTransform(s, -1, xFormSkinAll, bounds);
+		nif.GetShapeBoneTransform(s, 0xFFFFFFFF, xFormSkinAll, bounds);
 
 		Matrix4 skinAllInv = xFormSkinAll.ToMatrix().Inverse();
 
@@ -1955,7 +1955,7 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 		nif.SetVertsForShape(s, verts);
 
 		SkinTransform defXForm;
-		nif.SetShapeBoneTransform(s, -1, defXForm, bounds);
+		nif.SetShapeBoneTransform(s, 0xFFFFFFFF, defXForm, bounds);
 		nif.ClearShapeTransform(s);
 	}
 
@@ -2085,12 +2085,10 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 				clothBlock->Clone(&clothData[selString]);
 
 				int id = nif.GetHeader().AddBlock(clothBlock, "BSClothExtraData");
-				if (id != -1) {
+				if (id != 0xFFFFFFFF) {
 					NiNode* root = (NiNode*)nif.GetHeader().GetBlock(0);
-					if (root) {
-						root->numExtraData++;
-						root->extraDataRef.push_back(id);
-					}
+					if (root)
+						root->AddExtraDataRef(id);
 				}
 			}
 		}
