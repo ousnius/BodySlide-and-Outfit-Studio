@@ -76,6 +76,9 @@ NiObject::NiObject() {
 	blockSize = 0;
 }
 
+NiObject::~NiObject() {
+}
+
 void NiObject::Init() {
 }
 

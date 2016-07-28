@@ -21,10 +21,7 @@ NifFile::NifFile(NifFile& other) {
 }
 
 NifFile::~NifFile() {
-	for (int i = 0; i < blocks.size(); i++)
-		delete blocks[i];
-
-	blocks.clear();
+	Clear();
 }
 
 NiTriBasedGeom* NifFile::geomForName(const string& name, int dupIndex) {

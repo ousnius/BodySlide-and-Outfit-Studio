@@ -231,6 +231,7 @@ public:
 	BlockType blockType;
 
 	NiObject();
+	virtual ~NiObject();
 
 	virtual void Init();
 	virtual void notifyBlockDelete(int blockID);
