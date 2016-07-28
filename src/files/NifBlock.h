@@ -442,7 +442,17 @@ public:
 };
 
 
-class BSTriShape : public NiAVObject {
+class NiShape : public NiAVObject {
+public:
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual int CalcBlockSize();
+};
+
+
+class BSTriShape : public NiShape {
 public:
 	class BSVertexData {
 	public:
@@ -633,7 +643,7 @@ public:
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
-class NiGeometry : public NiAVObject {
+class NiGeometry : public NiShape {
 public:
 	int dataRef;
 	int skinInstanceRef;
@@ -642,8 +652,8 @@ public:
 	vector<int> materialExtra;
 	int activeMaterial;
 	byte dirty;
-	int propertiesRef1;						// Version >= 20.2.0.7 && User Version == 12
-	int propertiesRef2;						// Version >= 20.2.0.7 && User Version == 12
+	int shaderPropertyRef;					// Version >= 20.2.0.7 && User Version == 12
+	int alphaPropertyRef;					// Version >= 20.2.0.7 && User Version == 12
 
 	virtual void Init();
 	virtual void Get(fstream& file);

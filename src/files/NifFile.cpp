@@ -617,7 +617,7 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom)
-		prop1 = geom->propertiesRef1;
+		prop1 = geom->shaderPropertyRef;
 	else
 		return GetShaderF4(shapeName);
 
@@ -770,7 +770,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	if (geom) {
 		srcDataRef = geom->dataRef;
 
-		srcShader = dynamic_cast<NiShader*>(srcNif.hdr.GetBlock(geom->propertiesRef1));
+		srcShader = dynamic_cast<NiShader*>(srcNif.hdr.GetBlock(geom->shaderPropertyRef));
 		if (!srcShader) {
 			// No shader found, look in other properties
 			for (int i = 0; i < geom->numProperties; i++) {
@@ -787,9 +787,9 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 				return;
 		}
 		else
-			srcShaderRef = geom->propertiesRef1;
+			srcShaderRef = geom->shaderPropertyRef;
 
-		srcAlphaProp = dynamic_cast<NiAlphaProperty*>(srcNif.hdr.GetBlock(geom->propertiesRef2));
+		srcAlphaProp = dynamic_cast<NiAlphaProperty*>(srcNif.hdr.GetBlock(geom->alphaPropertyRef));
 		if (!srcAlphaProp) {
 			// No alpha found, look in other properties
 			for (int i = 0; i < geom->numProperties; i++) {
@@ -900,11 +900,11 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 
 	if (geom) {
 		if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY)
-			geom->propertiesRef1 = shaderId;
+			geom->shaderPropertyRef = shaderId;
 		else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
 			geom->propertiesRef[propRef1] = shaderId;
 		else if (srcShader->blockType == BSEFFECTSHADERPROPERTY)
-			geom->propertiesRef1 = shaderId;
+			geom->shaderPropertyRef = shaderId;
 	}
 	else
 		siTriShape->shaderPropertyRef = shaderId;
@@ -935,11 +935,11 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 		int alphaPropId = hdr.AddBlock(destAlphaProp, "NiAlphaProperty");
 		if (geom) {
 			if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY)
-				geom->propertiesRef2 = alphaPropId;
+				geom->alphaPropertyRef = alphaPropId;
 			else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
 				geom->propertiesRef[propRef2] = alphaPropId;
 			else if (srcShader->blockType == BSEFFECTSHADERPROPERTY)
-				geom->propertiesRef2 = alphaPropId;
+				geom->alphaPropertyRef = alphaPropId;
 		}
 		else
 			siTriShape->alphaPropertyRef = alphaPropId;
@@ -2499,7 +2499,7 @@ bool NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& 
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom) {
-		alphaRef = geom->propertiesRef2;
+		alphaRef = geom->alphaPropertyRef;
 		if (alphaRef == -1) {
 			for (int i = 0; i < geom->numProperties; i++) {
 				NiAlphaProperty* alphaProp = dynamic_cast<NiAlphaProperty*>(hdr.GetBlock(geom->propertiesRef[i]));
@@ -2533,7 +2533,7 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom) {
-		alphaRef = geom->propertiesRef2;
+		alphaRef = geom->alphaPropertyRef;
 		if (alphaRef == -1) {
 			for (int i = 0; i < geom->numProperties; i++) {
 				NiAlphaProperty* alphaProp = dynamic_cast<NiAlphaProperty*>(hdr.GetBlock(geom->propertiesRef[i]));
@@ -2553,11 +2553,11 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 			alphaRef = hdr.AddBlock(alphaProp, "NiAlphaProperty");
 
 			if (shader->blockType == BSLIGHTINGSHADERPROPERTY)
-				geom->propertiesRef2 = alphaRef;
+				geom->alphaPropertyRef = alphaRef;
 			else if (shader->blockType == BSSHADERPPLIGHTINGPROPERTY)
 				geom->propertiesRef.push_back(alphaRef);
 			else if (shader->blockType == BSEFFECTSHADERPROPERTY)
-				geom->propertiesRef2 = alphaRef;
+				geom->alphaPropertyRef = alphaRef;
 			else
 				return;
 		}
@@ -2637,13 +2637,13 @@ void NifFile::DeleteShape(const string& shapeName) {
 void NifFile::DeleteShader(const string& shapeName) {
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom) {
-		if (geom->propertiesRef1 != -1) {
-			NiShader* shader = dynamic_cast<NiShader*>(hdr.GetBlock(geom->propertiesRef1));
+		if (geom->shaderPropertyRef != -1) {
+			NiShader* shader = dynamic_cast<NiShader*>(hdr.GetBlock(geom->shaderPropertyRef));
 			if (shader) {
 				hdr.DeleteBlock(shader->GetTextureSetRef());
 				hdr.DeleteBlock(shader->controllerRef);
-				hdr.DeleteBlock(geom->propertiesRef1);
-				geom->propertiesRef1 = -1;
+				hdr.DeleteBlock(geom->shaderPropertyRef);
+				geom->shaderPropertyRef = -1;
 			}
 		}
 
@@ -2685,11 +2685,11 @@ void NifFile::DeleteShader(const string& shapeName) {
 void NifFile::DeleteAlpha(const string& shapeName) {
 	NiTriBasedGeom* geom = geomForName(shapeName);
 	if (geom) {
-		if (geom->propertiesRef2 != -1) {
-			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(hdr.GetBlock(geom->propertiesRef2));
+		if (geom->alphaPropertyRef != -1) {
+			NiAlphaProperty* alpha = dynamic_cast<NiAlphaProperty*>(hdr.GetBlock(geom->alphaPropertyRef));
 			if (alpha) {
-				hdr.DeleteBlock(geom->propertiesRef2);
-				geom->propertiesRef2 = -1;
+				hdr.DeleteBlock(geom->alphaPropertyRef);
+				geom->alphaPropertyRef = -1;
 			}
 		}
 

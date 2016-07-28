@@ -796,6 +796,24 @@ int NiNode::CalcBlockSize() {
 	return blockSize;
 }
 
+
+void NiShape::Get(fstream& file) {
+}
+
+void NiShape::Put(fstream& file) {
+}
+
+void NiShape::notifyBlockDelete(int blockID) {
+}
+
+void NiShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+}
+
+int NiShape::CalcBlockSize() {
+	return blockSize;
+}
+
+
 BSTriShape::BSTriShape(NiHeader& hdr) {
 	NiAVObject::Init();
 
@@ -1851,8 +1869,8 @@ void BSMeshLODTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, v
 void NiGeometry::Init() {
 	NiAVObject::Init();
 
-	propertiesRef1 = -1;
-	propertiesRef2 = -1;
+	shaderPropertyRef = -1;
+	alphaPropertyRef = -1;
 	dataRef = -1;
 	skinInstanceRef = -1;
 	numMaterials = 0;
@@ -1878,8 +1896,8 @@ void NiGeometry::Get(fstream& file) {
 	file.read((char*)&dirty, 1);
 
 	if (header->GetUserVersion() == 12) {
-		file.read((char*)&propertiesRef1, 4);
-		file.read((char*)&propertiesRef2, 4);
+		file.read((char*)&shaderPropertyRef, 4);
+		file.read((char*)&alphaPropertyRef, 4);
 	}
 }
 
@@ -1899,8 +1917,8 @@ void NiGeometry::Put(fstream& file) {
 	file.write((char*)&dirty, 1);
 
 	if (header->GetUserVersion() > 11) {
-		file.write((char*)&propertiesRef1, 4);
-		file.write((char*)&propertiesRef2, 4);
+		file.write((char*)&shaderPropertyRef, 4);
+		file.write((char*)&alphaPropertyRef, 4);
 	}
 }
 
@@ -1917,10 +1935,10 @@ void NiGeometry::notifyBlockDelete(int blockID) {
 	else if (skinInstanceRef > blockID)
 		skinInstanceRef--;
 
-	if (propertiesRef1 >= blockID)
-		propertiesRef1--;
-	if (propertiesRef2 >= blockID)
-		propertiesRef2--;
+	if (shaderPropertyRef >= blockID)
+		shaderPropertyRef--;
+	if (alphaPropertyRef >= blockID)
+		alphaPropertyRef--;
 }
 
 void NiGeometry::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
@@ -1936,15 +1954,15 @@ void NiGeometry::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	else if (skinInstanceRef == blockIndexHi)
 		skinInstanceRef = blockIndexLo;
 
-	if (propertiesRef1 == blockIndexLo)
-		propertiesRef1 = blockIndexHi;
-	else if (propertiesRef1 == blockIndexHi)
-		propertiesRef1 = blockIndexLo;
+	if (shaderPropertyRef == blockIndexLo)
+		shaderPropertyRef = blockIndexHi;
+	else if (shaderPropertyRef == blockIndexHi)
+		shaderPropertyRef = blockIndexLo;
 
-	if (propertiesRef2 == blockIndexLo)
-		propertiesRef2 = blockIndexHi;
-	else if (propertiesRef2 == blockIndexHi)
-		propertiesRef2 = blockIndexLo;
+	if (alphaPropertyRef == blockIndexLo)
+		alphaPropertyRef = blockIndexHi;
+	else if (alphaPropertyRef == blockIndexHi)
+		alphaPropertyRef = blockIndexLo;
 }
 
 int NiGeometry::CalcBlockSize() {

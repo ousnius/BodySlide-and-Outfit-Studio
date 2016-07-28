@@ -539,7 +539,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			nifTriShape->numProperties++;
 		}
 		else
-			nifTriShape->propertiesRef1 = shaderID;
+			nifTriShape->shaderPropertyRef = shaderID;
 
 		nifTriShape->SetName(shapeName);
 		nifTriShape->dataRef = shapeID;

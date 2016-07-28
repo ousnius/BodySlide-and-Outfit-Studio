@@ -244,7 +244,7 @@ void ShapeProperties::AddShader() {
 			case SKYRIM:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
-				geom->propertiesRef1 = nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty");
+				geom->shaderPropertyRef = nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty");
 			}
 		}
 	}
