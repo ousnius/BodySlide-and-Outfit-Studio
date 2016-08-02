@@ -314,7 +314,7 @@ public:
 	uint GetNumBlocks() { return numBlocks; }
 
 	template <class T>
-	T* GetBlock(const uint& blockId);
+	T* GetBlock(const int& blockId);
 
 	void DeleteBlock(int blockId);
 	void DeleteBlockByType(const string& blockTypeStr);
@@ -365,7 +365,7 @@ public:
 	int GetControllerRef() { return controllerRef; }
 	void SetControllerRef(int controllerRef) { this->controllerRef = controllerRef; }
 
-	int GetNumExtaData() { return numExtraData; }
+	int GetNumExtraData() { return numExtraData; }
 	int GetExtraDataRef(int id);
 	void AddExtraDataRef(int id);
 
@@ -473,6 +473,7 @@ private:
 	vector<Color4> vertexColors;
 	ushort consistencyFlags;
 	uint additionalData;
+	BoundingSphere bounds;
 
 public:
 	ushort numVertices;
@@ -484,8 +485,7 @@ public:
 	ushort numUVSets;
 	vector<Vector2> uvSets;
 
-	BoundingSphere bounds;
-
+	void SetVertices(bool enable);
 	bool HasVertices() { return hasVertices; }
 
 	void SetNormals(bool enable);
@@ -499,6 +499,10 @@ public:
 
 	void SetTangents(bool enable);
 	bool HasTangents() { return (numUVSets & (1 << 12)) != 0; }
+
+	void SetBounds(const BoundingSphere& bounds) { this->bounds = bounds; }
+	BoundingSphere GetBounds() { return bounds; }
+	void UpdateBounds();
 
 	virtual void Init();
 	virtual void Get(fstream& file);
@@ -514,7 +518,7 @@ public:
 
 class NiShape : public NiAVObject {
 private:
-	NiGeometryData* GetGeomData() { return dynamic_cast<NiGeometryData*>(header->GetBlock(GetDataRef())); }
+	NiGeometryData* GetGeomData() { return header->GetBlock<NiGeometryData>(GetDataRef()); }
 
 public:
 	virtual void Get(fstream& file);
@@ -535,6 +539,7 @@ public:
 	virtual int GetAlphaPropertyRef();
 	virtual void SetAlphaPropertyRef(int alphaPropertyRef);
 
+	virtual void SetVertices(bool enable);
 	virtual bool HasVertices();
 
 	virtual void SetUVs(bool enable);
@@ -551,6 +556,10 @@ public:
 
 	virtual void SetSkinned(bool enable);
 	virtual bool IsSkinned();
+
+	virtual void SetBounds(const BoundingSphere& bounds);
+	virtual BoundingSphere GetBounds();
+	virtual void UpdateBounds();
 };
 
 
@@ -559,6 +568,8 @@ private:
 	int skinInstanceRef;
 	int shaderPropertyRef;
 	int alphaPropertyRef;
+
+	BoundingSphere bounds;
 
 public:
 	class BSVertexData {
@@ -579,8 +590,6 @@ public:
 		float weights[4];
 		byte weightBones[4];
 	};
-
-	BoundingSphere bounds;
 
 	// Set in CalcBlockSize()
 	byte vertFlags1;	// Number of uint elements in vertex data
@@ -632,8 +641,10 @@ public:
 	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
 
+	void SetVertices(bool enable);
 	bool HasVertices() { return (vertFlags6 & (1 << 4)) != 0; }
 
+	void SetUVs(bool enable);
 	bool HasUVs() { return (vertFlags6 & (1 << 5)) != 0; }
 
 	void SetNormals(bool enable);
@@ -651,6 +662,10 @@ public:
 	void SetFullPrecision(bool enable);
 	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0; }
 	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals()); }
+
+	void SetBounds(const BoundingSphere& bounds) { this->bounds = bounds; }
+	BoundingSphere GetBounds() { return bounds; }
+	void UpdateBounds();
 
 	void SetNormals(const vector<Vector3>& inNorms);
 	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
@@ -1709,3 +1724,11 @@ public:
 	void Clone(NiUnknown* other);
 	int CalcBlockSize();
 };
+
+template <class T>
+T* NiHeader::GetBlock(const int& blockId) {
+	if (blockId >= 0 && blockId < numBlocks)
+		return dynamic_cast<T*>((*blocks)[blockId]);
+
+	return nullptr;
+}

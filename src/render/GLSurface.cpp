@@ -1246,8 +1246,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 
 	// Offset camera for skinned FO4 shapes
 	if (nif->GetHeader().GetUserVersion() == 12 && nif->GetHeader().GetUserVersion2() == 130) {
-		BSTriShape* geom = nif->geomForNameF4(shapeName);
-		if (geom && geom->IsSkinned())
+		NiShape* shape = nif->shapeForName(shapeName);
+		if (shape && shape->IsSkinned())
 			camOffset.y = 12.0f;
 	}
 }

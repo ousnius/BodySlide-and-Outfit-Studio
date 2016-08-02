@@ -1713,7 +1713,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	}
 
 	// Add cloth data block of NIF to the list
-	vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>((NiNode*)refNif.GetHeader().GetBlock(0), true);
+	vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(refNif.GetHeader().GetBlock<NiNode>(0), true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[inMeshFile] = *cloth;
 
@@ -1833,7 +1833,7 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 	AutoOffset(nif);
 
 	// Add cloth data block of NIF to the list
-	vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>((NiNode*)nif.GetHeader().GetBlock(0), true);
+	vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nif.GetHeader().GetBlock<NiNode>(0), true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[fileName] = *cloth;
 
@@ -2082,12 +2082,12 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 		for (int i = 0; i < sel.Count(); i++) {
 			string selString = clothFileNames[sel[i]].ToStdString();
 			if (!selString.empty()) {
-				BSClothExtraData* clothBlock = new BSClothExtraData(nif.GetHeader());
+				auto clothBlock = new BSClothExtraData(nif.GetHeader());
 				clothBlock->Clone(&clothData[selString]);
 
 				int id = nif.GetHeader().AddBlock(clothBlock, "BSClothExtraData");
 				if (id != 0xFFFFFFFF) {
-					NiNode* root = (NiNode*)nif.GetHeader().GetBlock(0);
+					NiNode* root = nif.GetHeader().GetBlock<NiNode>(0);
 					if (root)
 						root->AddExtraDataRef(id);
 				}

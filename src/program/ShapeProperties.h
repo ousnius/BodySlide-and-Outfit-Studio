@@ -60,7 +60,7 @@ private:
 	void GetGeometry();
 
 	void GetExtraData();
-	void AddExtraData(const NiExtraData* extraData, bool uiOnly = false);
+	void AddExtraData(NiExtraData* extraData, bool uiOnly = false);
 	void ChangeExtraDataType(int index);
 	void RemoveExtraData(int index);
 

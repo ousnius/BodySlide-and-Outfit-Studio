@@ -19,7 +19,6 @@ private:
 
 	NiHeader hdr;
 
-	int shapeDataIdForName(const string& name, BlockType& outBlockType);
 	int shapeIdForName(const string& name);
 	int shapeBoneIndex(const string& shapeName, const string& boneName);
 	NiNode* nodeForName(const string& name);
@@ -57,8 +56,6 @@ public:
 	void PrettySortBlocks();
 
 	NiShape* shapeForName(const string& name, int dupIndex = 0);
-	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
-	BSTriShape* geomForNameF4(const string& name, int dupIndex = 0);
 	NiAVObject* avObjectForName(const string& name, int dupIndex = 0);
 
 	NiShader* GetShader(const string& shapeName);
@@ -177,14 +174,14 @@ vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	}
 
 	for (int i = 0; i < parent->GetNumChildren(); i++) {
-		n = dynamic_cast<T*>(hdr.GetBlock(parent->GetChildRef(i)));
+		n = hdr.GetBlock<T>(parent->GetChildRef(i));
 		if (n)
 			result.push_back(n);
 	}
 
 	if (searchExtraData) {
-		for (int i = 0; i < parent->GetNumExtaData(); i++) {
-			n = dynamic_cast<T*>(hdr.GetBlock(parent->GetExtraDataRef(i)));
+		for (int i = 0; i < parent->GetNumExtraData(); i++) {
+			n = hdr.GetBlock<T>(parent->GetExtraDataRef(i));
 			if (n)
 				result.push_back(n);
 		}

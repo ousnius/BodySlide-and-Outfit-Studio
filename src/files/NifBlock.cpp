@@ -199,14 +199,6 @@ void NiHeader::SetExportInfo(const string& exportInfo) {
 	}
 }
 
-template <class T>
-T* NiHeader::GetBlock(const uint& blockId) {
-	if (blockId >= 0 && blockId < numBlocks)
-		return dynamic_cast<T*>((*blocks)[blockId]);
-
-	return nullptr;
-}
-
 void NiHeader::DeleteBlock(int blockId) {
 	if (blockId == 0xFFFFFFFF)
 		return;
@@ -867,6 +859,12 @@ void NiShape::SetAlphaPropertyRef(int alphaPropertyRef) { }
 int NiShape::GetDataRef() { return 0xFFFFFFFF; }
 void NiShape::SetDataRef(int dataRef) { }
 
+void NiShape::SetVertices(bool enable) {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		geomData->SetVertices(enable);
+};
+
 bool NiShape::HasVertices() {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
@@ -903,7 +901,6 @@ bool NiShape::HasNormals() {
 	return false;
 };
 
-
 void NiShape::SetTangents(bool enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
@@ -934,6 +931,26 @@ bool NiShape::HasVertexColors() {
 
 void NiShape::SetSkinned(bool enable) { };
 bool NiShape::IsSkinned() { return false; };
+
+void NiShape::SetBounds(const BoundingSphere& bounds) {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		geomData->SetBounds(bounds);
+}
+
+BoundingSphere NiShape::GetBounds() {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		return geomData->GetBounds();
+
+	return BoundingSphere();
+}
+
+void NiShape::UpdateBounds() {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		geomData->UpdateBounds();
+}
 
 
 BSTriShape::BSTriShape(NiHeader& hdr) {
@@ -1413,6 +1430,31 @@ const vector<Vector2>* BSTriShape::GetUVData() {
 	return &rawUvs;
 }
 
+void BSTriShape::SetVertices(bool enable) {
+	if (enable) {
+		vertFlags6 |= 1 << 4;
+		vertData.resize(numVertices);
+	}
+	else {
+		vertFlags6 &= ~(1 << 4);
+		vertData.clear();
+		numVertices = 0;
+
+		SetUVs(false);
+		SetNormals(false);
+		SetTangents(false);
+		SetVertexColors(false);
+		SetSkinned(false);
+	}
+}
+
+void BSTriShape::SetUVs(bool enable) {
+	if (enable)
+		vertFlags6 |= 1 << 5;
+	else
+		vertFlags6 &= ~(1 << 5);
+}
+
 void BSTriShape::SetNormals(bool enable) {
 	if (enable)
 		vertFlags6 |= 1 << 7;
@@ -1477,6 +1519,14 @@ void BSTriShape::SetFullPrecision(bool enable) {
 
 		vertFlags7 &= ~(1 << 6);
 	}
+}
+
+void BSTriShape::UpdateBounds() {
+	const vector<Vector3>* vertices = GetRawVerts();
+	if (vertices)
+		bounds = BoundingSphere(*vertices);
+	else
+		bounds = BoundingSphere();
 }
 
 void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
@@ -2252,6 +2302,22 @@ void NiGeometryData::Put(fstream& file) {
 	file.write((char*)&additionalData, 4);
 }
 
+void NiGeometryData::SetVertices(bool enable) {
+	hasVertices = enable;
+	if (enable) {
+		vertices.resize(numVertices);
+	}
+	else {
+		vertices.clear();
+		numVertices = 0;
+
+		SetNormals(false);
+		SetVertexColors(false);
+		SetUVs(false);
+		SetTangents(false);
+	}
+}
+
 void NiGeometryData::SetNormals(bool enable) {
 	hasNormals = enable;
 	if (enable)
@@ -2290,6 +2356,10 @@ void NiGeometryData::SetTangents(bool enable) {
 		tangents.clear();
 		bitangents.clear();
 	}
+}
+
+void NiGeometryData::UpdateBounds() {
+	bounds = BoundingSphere(vertices);
 }
 
 void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, vector<Vector2>* texcoords) {

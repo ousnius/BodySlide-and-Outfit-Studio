@@ -227,7 +227,7 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::AddShader() {
-	NiTriBasedGeom* geom = nif->geomForName(shape);
+	NiShape* geom = nif->shapeForName(shape);
 	if (geom) {
 		switch (os->targetGame) {
 			case FO3:
@@ -242,26 +242,13 @@ void ShapeProperties::AddShader() {
 				break;
 			}
 			case SKYRIM:
+			case FO4:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
 				geom->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));
 			}
 		}
 	}
-	else {
-		BSTriShape* siTriShape = nif->geomForNameF4(shape);
-		if (!siTriShape)
-			return;
-
-		switch (os->targetGame) {
-			case FO4:
-			default: {
-				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
-				siTriShape->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));
-			}
-		}
-	}
-
 
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
@@ -429,19 +416,15 @@ void ShapeProperties::RemoveTransparency() {
 
 
 void ShapeProperties::GetGeometry() {
-	NiTriBasedGeom* geom = nif->geomForName(shape);
+	NiShape* geom = nif->shapeForName(shape);
 	if (geom) {
 		skinned->SetValue(geom->IsSkinned());
-	}
-	else {
-		BSTriShape* bsGeom = nif->geomForNameF4(shape);
-		if (!bsGeom)
-			return;
 
-		fullPrecision->SetValue(bsGeom->IsFullPrecision());
-		fullPrecision->Enable(bsGeom->CanChangePrecision());
-
-		skinned->SetValue(bsGeom->IsSkinned());
+		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(geom);
+		if (bsTriShape) {
+			fullPrecision->SetValue(bsTriShape->IsFullPrecision());
+			fullPrecision->Enable(bsTriShape->CanChangePrecision());
+		}
 	}
 }
 
@@ -468,27 +451,15 @@ void ShapeProperties::GetExtraData() {
 
 	extraDataIndices.clear();
 
-	NiTriBasedGeom* geom = nif->geomForName(shape);
-	if (geom) {
-		for (int i = 0; i < geom->GetNumExtaData(); i++) {
-			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(geom->GetExtraDataRef(i)));
-			if (extraData) {
-				extraDataIndices.push_back(geom->GetExtraDataRef(i));
-				AddExtraData(extraData, true);
-			}
-		}
-	}
-	else {
-		BSTriShape* siTriShape = nif->geomForNameF4(shape);
-		if (!siTriShape)
-			return;
+	NiShape* geom = nif->shapeForName(shape);
+	if (!geom)
+		return;
 
-		for (int i = 0; i < siTriShape->GetNumExtaData(); i++) {
-			NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(siTriShape->GetExtraDataRef(i)));
-			if (extraData) {
-				extraDataIndices.push_back(siTriShape->GetExtraDataRef(i));
-				AddExtraData(extraData, true);
-			}
+	for (int i = 0; i < geom->GetNumExtraData(); i++) {
+		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(geom->GetExtraDataRef(i));
+		if (extraData) {
+			extraDataIndices.push_back(geom->GetExtraDataRef(i));
+			AddExtraData(extraData, true);
 		}
 	}
 }
@@ -498,16 +469,16 @@ void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
 	AddExtraData(&extraDataTemp);
 }
 
-void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
+void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
 		if (extraData->blockType == NISTRINGEXTRADATA) {
-			NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
+			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 			int index = nif->AddStringExtraData(shape, stringExtraData->GetName(), stringExtraData->GetStringData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
 		else if (extraData->blockType == NIINTEGEREXTRADATA) {
-			NiIntegerExtraData* intExtraData = (NiIntegerExtraData*)extraData;
+			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 			int index = nif->AddIntegerExtraData(shape, intExtraData->GetName(), intExtraData->GetIntegerData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
@@ -534,13 +505,13 @@ void ShapeProperties::AddExtraData(const NiExtraData* extraData, bool uiOnly) {
 
 	if (uiOnly) {
 		if (extraData->blockType == NISTRINGEXTRADATA) {
-			NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
+			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 			extraDataType->SetSelection(0);
 			extraDataName->SetValue(stringExtraData->GetName());
 			extraDataValue->SetValue(stringExtraData->GetStringData());
 		}
 		else if (extraData->blockType == NIINTEGEREXTRADATA) {
-			NiIntegerExtraData* intExtraData = (NiIntegerExtraData*)extraData;
+			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 			extraDataType->SetSelection(1);
 			extraDataName->SetValue(intExtraData->GetName());
 			extraDataValue->SetValue(wxString::Format("%d", intExtraData->GetIntegerData()));
@@ -703,15 +674,11 @@ void ShapeProperties::ApplyChanges() {
 		nif->SetAlphaForShape(shape, flags, threshold);
 	}
 
-	NiTriBasedGeom* geom = nif->geomForName(shape);
+	NiShape* geom = nif->shapeForName(shape);
 	if (geom) {
-		// No properties yet
-	}
-	else {
-		BSTriShape* siTriShape = nif->geomForNameF4(shape);
-		if (siTriShape) {
-			siTriShape->SetFullPrecision(fullPrecision->IsChecked());
-		}
+		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(geom);
+		if (bsTriShape)
+			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 	}
 
 	if (skinned->IsChecked()) {
@@ -729,16 +696,16 @@ void ShapeProperties::ApplyChanges() {
 		if (!extraDataName || !extraDataValue)
 			continue;
 
-		NiExtraData* extraData = dynamic_cast<NiExtraData*>(nif->GetHeader().GetBlock(extraDataIndices[i]));
+		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndices[i]);
 		if (extraData) {
 			extraData->SetName(extraDataName->GetValue().ToStdString());
 
 			if (extraData->blockType == NISTRINGEXTRADATA) {
-				NiStringExtraData* stringExtraData = (NiStringExtraData*)extraData;
+				auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 				stringExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
 			}
 			else if (extraData->blockType == NIINTEGEREXTRADATA) {
-				NiIntegerExtraData* intExtraData = (NiIntegerExtraData*)extraData;
+				auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 				unsigned long val = 0;
 				if (extraDataValue->GetValue().ToULong(&val))
 					intExtraData->SetIntegerData(val);

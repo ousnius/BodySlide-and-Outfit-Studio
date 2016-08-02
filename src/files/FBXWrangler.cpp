@@ -94,17 +94,17 @@ void FBXWrangler::AddGeometry(const string& shapeName, const vector<Vector3>* ve
 }
 
 void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
-	NiNode* root = (NiNode*)nif->GetHeader().GetBlock(nif->GetNodeID(Config["Anim/SkeletonRootName"]));
+	auto root = nif->GetHeader().GetBlock<NiNode>(nif->GetNodeID(Config["Anim/SkeletonRootName"]));
 
-	NiNode* com = (NiNode*)nif->GetHeader().GetBlock(nif->GetNodeID("COM"));
+	auto com = nif->GetHeader().GetBlock<NiNode>(nif->GetNodeID("COM"));
 	if (!com)
-		com = (NiNode*)nif->GetHeader().GetBlock(nif->GetNodeID("NPC COM [COM ]"));
+		com = nif->GetHeader().GetBlock<NiNode>(nif->GetNodeID("NPC COM [COM ]"));
 	if (!com)
-		com = (NiNode*)nif->GetHeader().GetBlock(nif->GetNodeID("Bip01 NonAccum"));
+		com = nif->GetHeader().GetBlock<NiNode>(nif->GetNodeID("Bip01 NonAccum"));
 
 	// Likely a NIF with non-hierarchical nodes
 	if (!com)
-		com = (NiNode*)nif->GetHeader().GetBlock(0);
+		com = nif->GetHeader().GetBlock<NiNode>(0);
 	if (!com)
 		return;
 
