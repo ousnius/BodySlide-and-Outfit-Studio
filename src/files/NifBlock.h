@@ -312,7 +312,9 @@ public:
 
 	void SetBlockReference(vector<NiObject*>* blocks) { this->blocks = blocks; };
 	uint GetNumBlocks() { return numBlocks; }
-	NiObject* GetBlock(const uint& blockId);
+
+	template <class T>
+	T* GetBlock(const uint& blockId);
 
 	void DeleteBlock(int blockId);
 	void DeleteBlockByType(const string& blockTypeStr);

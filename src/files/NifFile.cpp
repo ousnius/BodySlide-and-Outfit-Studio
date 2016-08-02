@@ -29,7 +29,7 @@ NiShape* NifFile::shapeForName(const string& name, int dupIndex) {
 	for (auto& block : blocks) {
 		BlockType type = block->blockType;
 		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE) {
-			NiShape* geom = dynamic_cast<NiShape*>(block);
+			auto geom = dynamic_cast<NiShape*>(block);
 			if (geom && !name.compare(geom->GetName())) {
 				if (numFound >= dupIndex)
 					return geom;
@@ -45,7 +45,7 @@ NiTriBasedGeom* NifFile::geomForName(const string& name, int dupIndex) {
 	for (auto& block : blocks) {
 		BlockType type = block->blockType;
 		if (type == NITRISHAPE || type == NITRISTRIPS) {
-			NiTriBasedGeom* geom = dynamic_cast<NiTriBasedGeom*>(block);
+			auto geom = dynamic_cast<NiTriBasedGeom*>(block);
 			if (geom && !name.compare(geom->GetName())) {
 				if (numFound >= dupIndex)
 					return geom;
@@ -60,7 +60,7 @@ BSTriShape* NifFile::geomForNameF4(const string& name, int dupIndex) {
 	for (auto& block : blocks) {
 		BlockType type = block->blockType;
 		if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE) {
-			BSTriShape* geom = dynamic_cast<BSTriShape*>(block);
+			auto geom = dynamic_cast<BSTriShape*>(block);
 			if (geom && !name.compare(geom->GetName())) {
 				if (numFound >= dupIndex)
 					return geom;
@@ -76,7 +76,7 @@ NiAVObject* NifFile::avObjectForName(const string& name, int dupIndex) {
 	for (auto& block : blocks) {
 		BlockType type = block->blockType;
 		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE) {
-			NiAVObject* avo = dynamic_cast<NiAVObject*>(block);
+			auto avo = dynamic_cast<NiAVObject*>(block);
 			if (avo && !name.compare(avo->GetName())) {
 				if (numFound >= dupIndex)
 					return avo;
@@ -92,15 +92,15 @@ int NifFile::shapeDataIdForName(const string& name, BlockType& outBlockType) {
 	for (auto& block : blocks) {
 		BlockType type = block->blockType;
 		if (type == NITRISHAPE || type == NITRISTRIPS) {
-			NiTriBasedGeom* geom = dynamic_cast<NiTriBasedGeom*>(block);
+			auto geom = dynamic_cast<NiTriBasedGeom*>(block);
 			if (geom && !name.compare(geom->GetName())) {
-				NiTriBasedGeomData* geomData = dynamic_cast<NiTriBasedGeomData*>(hdr.GetBlock(geom->GetDataRef()));
+				auto geomData = hdr.GetBlock<NiTriBasedGeomData>(geom->GetDataRef());
 				outBlockType = geomData->blockType;
 				return geom->GetDataRef();
 			}
 		}
 		else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE) {
-			BSTriShape* geom = dynamic_cast<BSTriShape*>(block);
+			auto geom = dynamic_cast<BSTriShape*>(block);
 			outBlockType = type;
 			if (geom && !name.compare(geom->GetName()))
 				return i;
@@ -115,7 +115,7 @@ int NifFile::shapeIdForName(const string& name) {
 	for (auto& block : blocks) {
 		BlockType type = block->blockType;
 		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE) {
-			NiShape* geom = dynamic_cast<NiShape*>(block);
+			auto geom = dynamic_cast<NiShape*>(block);
 			if (geom && !name.compare(geom->GetName()))
 				return id;
 		}
@@ -127,10 +127,10 @@ int NifFile::shapeIdForName(const string& name) {
 int NifFile::shapeBoneIndex(const string& shapeName, const string& boneName) {
 	NiShape* shape = shapeForName(shapeName);
 	if (shape) {
-		NiBoneContainer* boneCont = dynamic_cast<NiBoneContainer*>(hdr.GetBlock(shape->GetSkinInstanceRef()));
+		auto boneCont = hdr.GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
 		if (boneCont) {
 			for (int i = 0; i < boneCont->numBones; i++) {
-				NiNode* node = dynamic_cast<NiNode*>(hdr.GetBlock(boneCont->bones[i]));
+				auto node = hdr.GetBlock<NiNode>(boneCont->bones[i]);
 				if (node && node->GetName() == boneName)
 					return i;
 			}
@@ -481,7 +481,7 @@ void NifFile::SetShapeOrder(const vector<string>& order) {
 }
 
 void NifFile::PrettySortBlocks() {
-	NiNode* root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0]);
 	if (!root)
 		return;
 
@@ -496,7 +496,7 @@ void NifFile::PrettySortBlocks() {
 	auto peek = root->ChildrenBegin();
 
 	for (int i = 0; peek < root->ChildrenEnd(); i++) {
-		NiObject* block = hdr.GetBlock(root->GetChildRef(i));
+		auto block = hdr.GetBlock<NiObject>(root->GetChildRef(i));
 		if (block) {
 			if (block->blockType == NITRISHAPE || block->blockType == NITRISTRIPS ||
 				block->blockType == BSTRISHAPE || block->blockType == BSSUBINDEXTRISHAPE || block->blockType == BSMESHLODTRISHAPE) {
@@ -509,7 +509,7 @@ void NifFile::PrettySortBlocks() {
 }
 
 int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale) {
-	NiNode* root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0]);
 	if (!root)
 		return 0xFFFFFFFF;
 
@@ -535,7 +535,7 @@ void NifFile::DeleteNode(const string& nodeName) {
 string NifFile::NodeName(int blockID) {
 	string name;
 
-	NiNode* n = dynamic_cast<NiNode*>(hdr.GetBlock(blockID));
+	auto n = hdr.GetBlock<NiNode>(blockID);
 	if (n) {
 		name = n->GetName();
 		if (name.empty())
@@ -591,7 +591,7 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 		prop1 = shape->GetShaderPropertyRef();
 
 	if (prop1 != 0xFFFFFFFF) {
-		NiShader* shader = dynamic_cast<NiShader*>(hdr.GetBlock(prop1));
+		auto shader = hdr.GetBlock<NiShader>(prop1);
 		if (shader) {
 			ushort type = shader->blockType;
 			if (type == BSLIGHTINGSHADERPROPERTY ||
@@ -606,7 +606,7 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 			return nullptr;
 
 		for (int i = 0; i < props.size(); i++) {
-			NiShader* shader = dynamic_cast<NiShader*>(hdr.GetBlock(props[i]));
+			auto shader = hdr.GetBlock<NiShader>(props[i]);
 			if (shader) {
 				ushort type = shader->blockType;
 				if (type == BSLIGHTINGSHADERPROPERTY ||
@@ -638,7 +638,7 @@ NiMaterialProperty* NifFile::GetMaterialProperty(const string& shapeName) {
 		return nullptr;
 
 	for (int i = 0; i < props.size(); i++) {
-		NiMaterialProperty* material = dynamic_cast<NiMaterialProperty*>(hdr.GetBlock(props[i]));
+		auto material = hdr.GetBlock<NiMaterialProperty>(props[i]);
 		if (material)
 			return material;
 	}

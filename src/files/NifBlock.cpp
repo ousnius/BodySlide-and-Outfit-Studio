@@ -199,9 +199,10 @@ void NiHeader::SetExportInfo(const string& exportInfo) {
 	}
 }
 
-NiObject* NiHeader::GetBlock(const uint& blockId) {
+template <class T>
+T* NiHeader::GetBlock(const uint& blockId) {
 	if (blockId >= 0 && blockId < numBlocks)
-		return (*blocks)[blockId];
+		return dynamic_cast<T*>((*blocks)[blockId]);
 
 	return nullptr;
 }
@@ -3156,7 +3157,7 @@ void NiSkinInstance::notifyBlockDelete(int blockID) {
 			bones[i]--;
 	}
 	if (boneIndex >= 0 && dataRef != 0xFFFFFFFF) { // Bone was removed, clear out the skinning data for it.
-		NiSkinData* skinData = dynamic_cast<NiSkinData*>(header->GetBlock(dataRef));
+		auto skinData = header->GetBlock<NiSkinData>(dataRef);
 		if (!skinData)
 			return;
 
