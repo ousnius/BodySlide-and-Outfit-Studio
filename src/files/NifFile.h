@@ -19,7 +19,7 @@ private:
 
 	NiHeader hdr;
 
-	int shapeDataIdForName(const string& name, int& outBlockType);
+	int shapeDataIdForName(const string& name, BlockType& outBlockType);
 	int shapeIdForName(const string& name);
 	int shapeBoneIndex(const string& shapeName, const string& boneName);
 	NiNode* nodeForName(const string& name);
@@ -56,12 +56,12 @@ public:
 	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
 	void PrettySortBlocks();
 
+	NiShape* shapeForName(const string& name, int dupIndex = 0);
 	NiTriBasedGeom* geomForName(const string& name, int dupIndex = 0);
 	BSTriShape* geomForNameF4(const string& name, int dupIndex = 0);
 	NiAVObject* avObjectForName(const string& name, int dupIndex = 0);
 
 	NiShader* GetShader(const string& shapeName);
-	NiShader* GetShaderF4(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
 	NiMaterialProperty* GetMaterialProperty(const string& shapeName);
 
@@ -72,10 +72,8 @@ public:
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
 	void CopyShader(const string& shapeDest, NifFile& srcNif);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
-	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, NiTriBasedGeom* geom);
-	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape, BSTriShape* geom);
 
-	int GetShapeType(const string& shapeName);
+	BlockType GetShapeType(const string& shapeName);
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
 	void RenameDuplicateShape(const string& dupedShape);
@@ -112,19 +110,15 @@ public:
 	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);
 	bool ReorderTriangles(const string& shapeName, const vector<ushort>& triangleIndices);
 	const vector<Vector3>* GetNormalsForShape(const string& shapeName, bool transform = true);
-	const vector<Vector3>* GetTangentsForShape(const string& shapeName, bool transform = true);
-	const vector<Vector3>* GetBitangentsForShape(const string& shapeName, bool transform = true);
 	const vector<Vector2>* GetUvsForShape(const string& shapeName);
 	bool GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs);
-	const vector<vector<int>>* GetSeamVertsForShape(const string& shapeName);
 	bool GetVertsForShape(const string& shapeName, vector<Vector3>& outVerts);
 	int GetVertCountForShape(const string& shapeName);
 	void SetVertsForShape(const string& shapeName, const vector<Vector3>& verts);
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
 	void InvertUVsForShape(const string& shapeName, bool invertX, bool invertY);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
-	void SmoothNormalsForShape(const string& shapeName);
-	void CalcNormalsForShape(const string& shapeName);
+	void CalcNormalsForShape(const string& shapeName, const bool& smooth = true, const float& smoothThresh = 60.0f);
 	void CalcTangentsForShape(const string& shapeName);
 
 	void ClearShapeTransform(const string& shapeName);

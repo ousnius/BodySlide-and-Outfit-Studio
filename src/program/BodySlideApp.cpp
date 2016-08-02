@@ -1372,7 +1372,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
 		nifBig.SetVertsForShape(it->second, vertsHigh);
 		if (targetGame == FO4) {
-			nifBig.SmoothNormalsForShape(it->second);
+			nifBig.CalcNormalsForShape(it->second);
 			nifBig.CalcTangentsForShape(it->second);
 		}
 		nifBig.DeleteVertsForShape(it->second, zapIdx);
@@ -1742,7 +1742,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 			nifBig.SetVertsForShape(it->second, vertsHigh);
 			if (targetGame == FO4) {
-				nifBig.SmoothNormalsForShape(it->second);
+				nifBig.CalcNormalsForShape(it->second);
 				nifBig.CalcTangentsForShape(it->second);
 			}
 			nifBig.DeleteVertsForShape(it->second, zapIdx);

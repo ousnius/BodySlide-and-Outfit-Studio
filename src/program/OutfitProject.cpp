@@ -1985,12 +1985,13 @@ void OutfitProject::DuplicateShape(const string& sourceShape, const string& dest
 	workAnim.WriteToNif(&clone);
 
 	vector<Vector3> liveVerts;
-	//vector<Vector3> liveNorms;
+	vector<Vector3> liveNorms;
 	for (int i = 0; i < m->nVerts; i++) {
 		liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
-		//liveNorms.emplace_back(move(Vector3(m->verts[i].nx* -1, m->verts[i].nz, m->verts[i].ny)));
+		liveNorms.emplace_back(move(Vector3(m->verts[i].nx* -1, m->verts[i].nz, m->verts[i].ny)));
 	}
 	clone.SetVertsForShape(m->shapeName, liveVerts);
+	clone.SetNormalsForShape(m->shapeName, liveNorms);
 
 	workNif.CopyGeometry(destShape, clone, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);

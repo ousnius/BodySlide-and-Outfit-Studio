@@ -4020,10 +4020,6 @@ void OutfitStudio::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 		newShapeName = result;
 	} while (project->IsValidShape(newShapeName));
 
-	char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
-	for (uint i = 0; i < sizeof(chars); ++i)
-		replace(newShapeName.begin(), newShapeName.end(), chars[i], '_');
-
 	wxLogMessage("Renaming shape '%s' to '%s'.", activeItem->shapeName, newShapeName);
 	project->RenameShape(activeItem->shapeName, newShapeName);
 	glView->RenameShape(activeItem->shapeName, newShapeName);
@@ -4490,7 +4486,7 @@ void OutfitStudio::PreviewRotation(const Vector3& changed) {
 }
 
 void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
-	string newname;
+	string newName;
 	wxTreeItemId subitem;
 	if (activeItem) {
 		if (!outfitRoot.IsOk()) {
@@ -4503,27 +4499,23 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			if (result.empty())
 				return;
 
-			newname = result;
-		} while (project->IsValidShape(newname));
+			newName = result;
+		} while (project->IsValidShape(newName));
 
-		char chars[] = { '\\', '/', '?', ':', '*', '>', '<', '|', '"' };
-		for (uint i = 0; i < sizeof(chars); ++i)
-			replace(newname.begin(), newname.end(), chars[i], '_');
-
-		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->shapeName, newname);
+		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->shapeName, newName);
 		project->ClearBoneScale();
 
 		mesh* curshapemesh = glView->GetMesh(activeItem->shapeName);
-		project->DuplicateShape(activeItem->shapeName, newname, curshapemesh);
+		project->DuplicateShape(activeItem->shapeName, newName, curshapemesh);
 
-		glView->AddMeshFromNif(project->GetWorkNif(), newname, false);
-		project->SetTexture(newname, "_AUTO_");
+		glView->AddMeshFromNif(project->GetWorkNif(), newName, false);
+		project->SetTexture(newName, "_AUTO_");
 
-		glView->SetMeshTexture(newname, project->GetShapeTexture(newname), project->GetWorkNif()->IsShaderSkin(newname));
+		glView->SetMeshTexture(newName, project->GetShapeTexture(newName), project->GetWorkNif()->IsShaderSkin(newName));
 
-		subitem = outfitShapes->AppendItem(outfitRoot, newname);
+		subitem = outfitShapes->AppendItem(outfitRoot, newName);
 		outfitShapes->SetItemState(subitem, 0);
-		outfitShapes->SetItemData(subitem, new ShapeItemData(newname));
+		outfitShapes->SetItemData(subitem, new ShapeItemData(newName));
 	}
 }
 

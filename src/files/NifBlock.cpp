@@ -863,6 +863,77 @@ void NiShape::SetShaderPropertyRef(int shaderPropertyRef) { }
 int NiShape::GetAlphaPropertyRef() { return 0xFFFFFFFF; }
 void NiShape::SetAlphaPropertyRef(int alphaPropertyRef) { }
 
+int NiShape::GetDataRef() { return 0xFFFFFFFF; }
+void NiShape::SetDataRef(int dataRef) { }
+
+bool NiShape::HasVertices() {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		return geomData->HasVertices();
+
+	return false;
+};
+
+void NiShape::SetUVs(bool enable) {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		geomData->SetUVs(enable);
+};
+
+bool NiShape::HasUVs() {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		return geomData->HasUVs();
+
+	return false;
+};
+
+void NiShape::SetNormals(bool enable) {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		geomData->SetNormals(enable);
+};
+
+bool NiShape::HasNormals() {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		return geomData->HasNormals();
+
+	return false;
+};
+
+
+void NiShape::SetTangents(bool enable) {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		geomData->SetTangents(enable);
+};
+
+bool NiShape::HasTangents() {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		return geomData->HasTangents();
+
+	return false;
+};
+
+void NiShape::SetVertexColors(bool enable) {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		geomData->SetVertexColors(enable);
+};
+
+bool NiShape::HasVertexColors() {
+	NiGeometryData* geomData = GetGeomData();
+	if (geomData)
+		return geomData->HasVertexColors();
+
+	return false;
+};
+
+void NiShape::SetSkinned(bool enable) { };
+bool NiShape::IsSkinned() { return false; };
+
 
 BSTriShape::BSTriShape(NiHeader& hdr) {
 	NiAVObject::Init();
@@ -1238,6 +1309,9 @@ int BSTriShape::CalcBlockSize() {
 }
 
 const vector<Vector3>* BSTriShape::GetRawVerts() {
+	if (!HasVertices())
+		return nullptr;
+
 	rawVertices.resize(numVertices);
 	for (int i = 0; i < numVertices; i++)
 		rawVertices[i] = vertData[i].vert;
@@ -1246,6 +1320,9 @@ const vector<Vector3>* BSTriShape::GetRawVerts() {
 }
 
 const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
+	if (!HasNormals())
+		return nullptr;
+
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		float q1 = (((float)vertData[i].normal[0])/255.0f) * 2.0f - 1.0f;
@@ -1272,6 +1349,9 @@ const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
 }
 
 const vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
+	if (!HasTangents())
+		return nullptr;
+
 	rawTangents.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		float q6 = (((float)vertData[i].tangent[0]) / 255.0f) * 2.0f - 1.0f;
@@ -1297,6 +1377,9 @@ const vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
 }
 
 const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
+	if (!HasTangents())
+		return nullptr;
+
 	rawBitangents.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		float x = (vertData[i].bitangentX);
@@ -1319,6 +1402,9 @@ const vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
 }
 
 const vector<Vector2>* BSTriShape::GetUVData() {
+	if (!HasUVs())
+		return nullptr;
+
 	rawUvs.resize(numVertices);
 	for (int i = 0; i < numVertices; i++)
 		rawUvs[i] = vertData[i].uv;
@@ -1406,10 +1492,10 @@ void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
 
 void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	GetRawVerts();
+	SetNormals(true);
 
-	Vertex* verts = new Vertex[numVertices];
-	Triangle* tris = new Triangle[numTriangles];
-
+	vector<Vertex> verts(numVertices);
+	vector<Triangle> tris(numTriangles);
 	for (int i = 0; i < numVertices; i++) {
 		verts[i].x = rawVertices[i].x * -0.1f;
 		verts[i].z = rawVertices[i].y * 0.1f;
@@ -1423,7 +1509,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 		tris[j].p1 = triangles[j].p1;
 		tris[j].p2 = triangles[j].p2;
 		tris[j].p3 = triangles[j].p3;
-		tris[j].trinormal(verts, &norm);
+		tris[j].trinormal(verts.data(), &norm);
 		verts[tris[j].p1].nx += norm.x;
 		verts[tris[j].p1].ny += norm.y;
 		verts[tris[j].p1].nz += norm.z;
@@ -1441,7 +1527,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 		pn->Normalize();
 	}
 
-	vector<int>* vertTris = new vector<int>[numVertices];
+	vector<vector<int>> vertTris(numVertices);
 	for (int t = 0; t < numTriangles; t++) {
 		vertTris[tris[t].p1].push_back(t);
 		vertTris[tris[t].p2].push_back(t);
@@ -1449,7 +1535,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	}
 
 	unordered_map<int, vector<int>> weldVerts;
-	kd_matcher matcher(verts, numVertices);
+	kd_matcher matcher(verts.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		Vertex* a = matcher.matches[i].first;
 		Vertex* b = matcher.matches[i].second;
@@ -1478,7 +1564,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 				continue;
 
 			for (auto &t : vertTris[v]) {
-				tris[t].trinormal(verts, &tn);
+				tris[t].trinormal(verts.data(), &tn);
 				norm += tn;
 			}
 
@@ -1488,7 +1574,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 					continue;
 
 				for (auto &t : vertTris[wv]) {
-					tris[t].trinormal(verts, &tn);
+					tris[t].trinormal(verts.data(), &tn);
 					if (!first) {
 						float angle = fabs(norm.angle(tn));
 						if (angle > smoothThresh * DEG2RAD)
@@ -1509,7 +1595,6 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 		}
 	}
 
-	SetNormals(true);
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		rawNormals[i].x = -verts[i].nx;
@@ -1519,15 +1604,14 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 		vertData[i].normal[1] = (unsigned char)round((((rawNormals[i].y + 1.0f) / 2.0f) * 255.0f));
 		vertData[i].normal[2] = (unsigned char)round((((rawNormals[i].z + 1.0f) / 2.0f) * 255.0f));
 	}
-
-	delete[] vertTris;
-	delete[] verts;
-	delete[] tris;
 }
 
 void BSTriShape::CalcTangentSpace() {
-	if (rawNormals.empty())
-		GetNormalData(false);
+	if (!HasNormals())
+		return;
+
+	GetNormalData(false);
+	SetTangents(true);
 
 	vector<Vector3> tan1;
 	vector<Vector3> tan2;
@@ -1576,8 +1660,6 @@ void BSTriShape::CalcTangentSpace() {
 		tan2[i2] += sdir;
 		tan2[i3] += sdir;
 	}
-
-	SetTangents(true);
 
 	rawBitangents.resize(numVertices);
 	rawTangents.resize(numVertices);
@@ -1639,7 +1721,7 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 	bounds = BoundingSphere(*verts);
 
 	if (normals && normals->size() == numVertices) {
-		SetNormals((*normals));
+		SetNormals(*normals);
 		CalcTangentSpace();
 	}
 
@@ -2066,7 +2148,7 @@ void NiGeometryData::Get(fstream& file) {
 		file.read((char*)&unkInt2, 4);
 
 	file.read((char*)&hasNormals, 1);
-	if (hasNormals == 1) {
+	if (hasNormals) {
 		for (int i = 0; i < numVertices; i++) {
 			file.read((char*)&v.x, 4);
 			file.read((char*)&v.y, 4);
@@ -2092,7 +2174,7 @@ void NiGeometryData::Get(fstream& file) {
 	file.read((char*)&bounds, 16);
 
 	file.read((char*)&hasVertexColors, 1);
-	if (hasVertexColors == 1) {
+	if (hasVertexColors) {
 		Color4 c;
 		for (int i = 0; i < numVertices; i++) {
 			file.read((char*)&c, 16);
@@ -2133,7 +2215,7 @@ void NiGeometryData::Put(fstream& file) {
 		file.write((char*)&unkInt2, 4);
 
 	file.write((char*)&hasNormals, 1);
-	if (hasNormals == 1) {
+	if (hasNormals) {
 		for (int i = 0; i < numVertices; i++) {
 			file.write((char*)&normals[i].x, 4);
 			file.write((char*)&normals[i].y, 4);
@@ -2155,7 +2237,7 @@ void NiGeometryData::Put(fstream& file) {
 	file.write((char*)&bounds, 16);
 
 	file.write((char*)&hasVertexColors, 1);
-	if (hasVertexColors == 1) {
+	if (hasVertexColors) {
 		for (int i = 0; i < numVertices; i++)
 			file.write((char*)&vertexColors[i], 16);
 	}
@@ -2175,8 +2257,14 @@ void NiGeometryData::SetNormals(bool enable) {
 		normals.resize(numVertices);
 	else
 		normals.clear();
+}
 
-	SetTangents(enable);
+void NiGeometryData::SetVertexColors(bool enable) {
+	hasVertexColors = enable;
+	if (enable)
+		vertexColors.resize(numVertices);
+	else
+		vertexColors.clear();
 }
 
 void NiGeometryData::SetUVs(bool enable) {
@@ -2273,19 +2361,12 @@ void NiGeometryData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
-void NiGeometryData::RecalcNormals() {
-	for (int i = 0; i < numVertices; i++) {
-		normals[i].x = 0;
-		normals[i].y = 0;
-		normals[i].z = 0;
-	}
+void NiGeometryData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+	SetNormals(true);
 }
 
 void NiGeometryData::CalcTangentSpace() {
-	numUVSets |= 4096;
-
-	tangents.resize(numVertices);
-	bitangents.resize(numVertices);
+	SetTangents(true);
 }
 
 int NiGeometryData::CalcBlockSize() {
@@ -2367,8 +2448,8 @@ void NiTriBasedGeomData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiGeometryData::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
-void NiTriBasedGeomData::RecalcNormals() {
-	NiGeometryData::RecalcNormals();
+void NiTriBasedGeomData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+	NiGeometryData::RecalcNormals(smooth, smoothThresh);
 }
 
 void NiTriBasedGeomData::CalcTangentSpace() {
@@ -2543,13 +2624,10 @@ void NiTriShapeData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiTriBasedGeomData::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
-void NiTriShapeData::RecalcNormals() {
-	if (!HasNormals())
-		return;
-
+void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	NiTriBasedGeomData::RecalcNormals();
 
-	// Calc normal
+	// Calculate normals from triangles
 	Vector3 norm;
 	for (int i = 0; i < numTriangles; i++) {
 		triangles[i].trinormal(vertices, &norm);
@@ -2568,8 +2646,7 @@ void NiTriShapeData::RecalcNormals() {
 	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
-	Vertex* matchVerts = new Vertex[numVertices];
-
+	vector<Vertex> matchVerts(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		matchVerts[i].x = vertices[i].x;
 		matchVerts[i].nx = normals[i].x;
@@ -2579,7 +2656,7 @@ void NiTriShapeData::RecalcNormals() {
 		matchVerts[i].nz = normals[i].z;
 	}
 
-	kd_matcher matcher(matchVerts, numVertices);
+	kd_matcher matcher(matchVerts.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		Vertex* a = matcher.matches[i].first;
 		Vertex* b = matcher.matches[i].second;
@@ -2599,8 +2676,6 @@ void NiTriShapeData::RecalcNormals() {
 		normals[i].y = matchVerts[i].ny;
 		normals[i].z = matchVerts[i].nz;
 	}
-
-	delete[] matchVerts;
 }
 
 void NiTriShapeData::CalcTangentSpace() {
@@ -2848,16 +2923,13 @@ void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 	}
 }
  
-void NiTriStripsData::RecalcNormals() {
-	if (!HasNormals())
-		return;
-
+void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	NiTriBasedGeomData::RecalcNormals();
 
 	vector<Triangle> tris;
 	StripsToTris(&tris);
 
-	// Calc normal
+	// Calculate normals from triangles
 	Vector3 norm;
 	for (int i = 0; i < tris.size(); i++) {
 		tris[i].trinormal(vertices, &norm);
@@ -2876,8 +2948,7 @@ void NiTriStripsData::RecalcNormals() {
 	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
-	Vertex* matchVerts = new Vertex[numVertices];
-
+	vector<Vertex> matchVerts(numVertices);
 	for (int i = 0; i < numVertices; i++) {
 		matchVerts[i].x = vertices[i].x;
 		matchVerts[i].nx = normals[i].x;
@@ -2887,7 +2958,7 @@ void NiTriStripsData::RecalcNormals() {
 		matchVerts[i].nz = normals[i].z;
 	}
 
-	kd_matcher matcher(matchVerts, numVertices);
+	kd_matcher matcher(matchVerts.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		Vertex* a = matcher.matches[i].first;
 		Vertex* b = matcher.matches[i].second;
@@ -2907,8 +2978,6 @@ void NiTriStripsData::RecalcNormals() {
 		normals[i].y = matchVerts[i].ny;
 		normals[i].z = matchVerts[i].nz;
 	}
-
-	delete[] matchVerts;
 }
 
 void NiTriStripsData::CalcTangentSpace() {

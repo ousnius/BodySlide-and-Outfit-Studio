@@ -201,11 +201,18 @@ struct Vertex {
 		nx = ny = nz = 0;
 		indexRef = -1;
 	}
-	Vertex(float X, float Y, float Z) : x(X), y(Y), z(Z) {
+	Vertex(float X, float Y, float Z) {
+		x = X;
+		y = Y;
+		z = Z;
 		indexRef = -1;
 	}
 
-	Vertex(float X, float Y, float Z, int refIndex) : x(X), y(Y), z(Z), indexRef(refIndex) {
+	Vertex(float X, float Y, float Z, int refIndex) {
+		x = X;
+		y = Y;
+		z = Z;
+		indexRef = refIndex;
 	}
 
 	float DistanceTo(Vertex* target) {

@@ -458,14 +458,71 @@ public:
 	void AddEffectRef(int id);
 };
 
+class NiGeometryData : public NiObject {
+private:
+	int unkInt;
+	byte keepFlags;
+	byte compressFlags;
+	bool hasVertices;
+	//byte extraVectorsFlags;
+	uint unkInt2;							// Version >= 20.2.0.7 && User Version == 12
+	bool hasNormals;
+	bool hasVertexColors;
+	vector<Color4> vertexColors;
+	ushort consistencyFlags;
+	uint additionalData;
+
+public:
+	ushort numVertices;
+	vector<Vector3> vertices;
+	vector<Vector3> normals;
+	vector<Vector3> tangents;
+	vector<Vector3> bitangents;
+
+	ushort numUVSets;
+	vector<Vector2> uvSets;
+
+	BoundingSphere bounds;
+
+	bool HasVertices() { return hasVertices; }
+
+	void SetNormals(bool enable);
+	bool HasNormals() { return hasNormals; }
+
+	void SetVertexColors(bool enable);
+	bool HasVertexColors() { return hasVertexColors; }
+
+	void SetUVs(bool enable);
+	bool HasUVs() { return (numUVSets & (1 << 0)) != 0; }
+
+	void SetTangents(bool enable);
+	bool HasTangents() { return (numUVSets & (1 << 12)) != 0; }
+
+	virtual void Init();
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
+	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
+	virtual void CalcTangentSpace();
+	virtual int CalcBlockSize();
+};
 
 class NiShape : public NiAVObject {
+private:
+	NiGeometryData* GetGeomData() { return dynamic_cast<NiGeometryData*>(header->GetBlock(GetDataRef())); }
+
 public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual int CalcBlockSize();
+
+	virtual int GetDataRef();
+	virtual void SetDataRef(int dataRef);
 
 	virtual int GetSkinInstanceRef();
 	virtual void SetSkinInstanceRef(int skinInstanceRef);
@@ -475,6 +532,23 @@ public:
 
 	virtual int GetAlphaPropertyRef();
 	virtual void SetAlphaPropertyRef(int alphaPropertyRef);
+
+	virtual bool HasVertices();
+
+	virtual void SetUVs(bool enable);
+	virtual bool HasUVs();
+
+	virtual void SetNormals(bool enable);
+	virtual bool HasNormals();
+
+	virtual void SetTangents(bool enable);
+	virtual bool HasTangents();
+
+	virtual void SetVertexColors(bool enable);
+	virtual bool HasVertexColors();
+
+	virtual void SetSkinned(bool enable);
+	virtual bool IsSkinned();
 };
 
 
@@ -577,7 +651,7 @@ public:
 	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals()); }
 
 	void SetNormals(const vector<Vector3>& inNorms);
-	void RecalcNormals(const bool& smooth = false, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
@@ -704,57 +778,6 @@ public:
 	void SetAlphaPropertyRef(int alphaPropertyRef) { this->alphaPropertyRef = alphaPropertyRef; }
 };
 
-class NiGeometryData : public NiObject {
-private:
-	int unkInt;
-	byte keepFlags;
-	byte compressFlags;
-	bool hasVertices;
-	//byte extraVectorsFlags;
-	uint unkInt2;							// Version >= 20.2.0.7 && User Version == 12
-	bool hasNormals;
-	bool hasVertexColors;
-	vector<Color4> vertexColors;
-	ushort consistencyFlags;
-	uint additionalData;
-
-public:
-	ushort numVertices;
-	vector<Vector3> vertices;
-	vector<Vector3> normals;
-	vector<Vector3> tangents;
-	vector<Vector3> bitangents;
-
-	ushort numUVSets;
-	vector<Vector2> uvSets;
-
-	BoundingSphere bounds;
-
-	bool HasVertices() { return hasVertices; }
-
-	void SetNormals(bool enable);
-	bool HasNormals() { return hasNormals; }
-
-	bool HasVertexColors() { return hasVertexColors; }
-
-	void SetUVs(bool enable);
-	bool HasUVs() { return (numUVSets & (1 << 0)) != 0; }
-
-	void SetTangents(bool enable);
-	bool HasTangents() { return (numUVSets & (1 << 12)) != 0; }
-
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
-	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual void RecalcNormals();
-	virtual void CalcTangentSpace();
-	virtual int CalcBlockSize();
-};
-
 class NiTriBasedGeom : public NiGeometry {
 public:
 	virtual void Init();
@@ -776,7 +799,7 @@ public:
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual void RecalcNormals();
+	virtual void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	virtual void CalcTangentSpace();
 	virtual int CalcBlockSize();
 };
@@ -812,7 +835,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	void RecalcNormals();
+	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 };
@@ -846,7 +869,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void StripsToTris(vector<Triangle>* outTris);
-	void RecalcNormals();
+	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 };
