@@ -703,15 +703,6 @@ msgstr ""
 "nicht benötigt, außer die existierenden Skin-Partitionen sind nicht "
 "funktionsfähig."
 
-msgid "Update Bounding Sphere"
-msgstr "Bounding Sphere aktualisieren"
-
-msgid ""
-"Updates the bounding sphere of the geometry with a new position and radius."
-msgstr ""
-"Aktualisiert die Bounding Sphere der Geometrie mit einer neuen Position und "
-"einem neuen Radius."
-
 msgid "Delete\tDel"
 msgstr "Entfernen\tDel"
 
@@ -2800,6 +2791,16 @@ msgstr "Lade Slider-Datei..."
 #: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "Vorschau fehlgeschlagen: OpenGL-Kontext ist nicht OK."
+
+#~ msgid "Update Bounding Sphere"
+#~ msgstr "Bounding Sphere aktualisieren"
+
+#~ msgid ""
+#~ "Updates the bounding sphere of the geometry with a new position and "
+#~ "radius."
+#~ msgstr ""
+#~ "Aktualisiert die Bounding Sphere der Geometrie mit einer neuen Position "
+#~ "und einem neuen Radius."
 
 #~ msgid ""
 #~ "Failed to create TRI file in the following location\n"

@@ -40,7 +40,8 @@ public:
 	int AddIntegerExtraData(const string& blockName, const string& name, const int& integerData, bool isNode = false);
 
 	int Load(const string& filename);
-	int Save(const string& filename);
+	int Save(const string& filename, bool optimize = true);
+	void Optimize();
 
 	string GetFileName() { return fileName; }
 

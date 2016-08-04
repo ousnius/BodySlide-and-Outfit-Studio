@@ -1429,7 +1429,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameBig += "_1.nif";
 		custName = outFileNameSmall;
 		savedLow = custName;
-		while (nifSmall.Save(custName.ToStdString())) {
+		while (nifSmall.Save(custName.ToStdString(), false)) {
 			wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
 			wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
@@ -1458,7 +1458,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameBig = custName;
 
 	savedHigh = custName;
-	while (nifBig.Save(custName.ToStdString())) {
+	while (nifBig.Save(custName.ToStdString(), false)) {
 		wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
 		wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
@@ -1802,18 +1802,18 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		if (currentSet.GenWeights()) {
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
-			if (nifBig.Save(outFileNameBig)) {
+			if (nifBig.Save(outFileNameBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
-			if (nifSmall.Save(outFileNameSmall)) {
+			if (nifSmall.Save(outFileNameSmall, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				return;
 			}
 		}
 		else {
 			outFileNameBig += ".nif";
-			if (nifBig.Save(outFileNameBig)) {
+			if (nifBig.Save(outFileNameBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}

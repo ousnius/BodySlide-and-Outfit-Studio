@@ -380,6 +380,9 @@ int NifFile::Load(const string& filename) {
 }
 
 void NifFile::SetShapeOrder(const vector<string>& order) {
+	if (hasUnknown)
+		return;
+
 	vector<int> delta;
 	bool hadoffset = false;
 
@@ -427,6 +430,9 @@ void NifFile::SetShapeOrder(const vector<string>& order) {
 }
 
 void NifFile::PrettySortBlocks() {
+	if (hasUnknown)
+		return;
+
 	auto root = dynamic_cast<NiNode*>(blocks[0]);
 	if (!root)
 		return;
@@ -459,7 +465,7 @@ int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& tran
 	if (!root)
 		return 0xFFFFFFFF;
 
-	NiNode* newNode = new NiNode(hdr);
+	auto newNode = new NiNode(hdr);
 	newNode->rotation[0] = rot[0];
 	newNode->rotation[1] = rot[1];
 	newNode->rotation[2] = rot[2];
@@ -1009,9 +1015,12 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	}
 }
 
-int NifFile::Save(const string& filename) {
+int NifFile::Save(const string& filename, bool optimize) {
 	fstream file(filename.c_str(), ios_base::out | ios_base::binary);
 	if (file.is_open()) {
+		if (optimize)
+			Optimize();
+
 		hdr.CalcAllBlockSizes();
 		hdr.Put(file);
 
@@ -1028,6 +1037,16 @@ int NifFile::Save(const string& filename) {
 		return 1;
 
 	return 0;
+}
+
+void NifFile::Optimize() {
+	PrettySortBlocks();
+
+	vector<string> shapes;
+	GetShapeList(shapes);
+
+	for (auto &s : shapes)
+		UpdateBoundingSphere(s);
 }
 
 

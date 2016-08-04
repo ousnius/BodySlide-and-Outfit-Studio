@@ -897,7 +897,6 @@ private:
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnBuildSkinPartitions(wxCommandEvent& event);
-	void OnUpdateBoundingSphere(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);

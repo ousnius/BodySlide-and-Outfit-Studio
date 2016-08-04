@@ -671,13 +671,6 @@ msgid ""
 msgstr ""
 "创建或者重建当前模型的皮肤分区。此操作一般不用做，仅在皮肤分区损坏时使用。"
 
-msgid "Update Bounding Sphere"
-msgstr "更新边界范围"
-
-msgid ""
-"Updates the bounding sphere of the geometry with a new position and radius."
-msgstr "以一个新的位置和半径更新几何边界范围。"
-
 msgid "Delete\tDel"
 msgstr "删除\tDel"
 
@@ -2645,6 +2638,14 @@ msgstr "载入滑块文件..."
 #: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "装备工作室：OpenGL环境不正常。"
+
+#~ msgid "Update Bounding Sphere"
+#~ msgstr "更新边界范围"
+
+#~ msgid ""
+#~ "Updates the bounding sphere of the geometry with a new position and "
+#~ "radius."
+#~ msgstr "以一个新的位置和半径更新几何边界范围。"
 
 #~ msgid ""
 #~ "Failed to create TRI file in the following location\n"

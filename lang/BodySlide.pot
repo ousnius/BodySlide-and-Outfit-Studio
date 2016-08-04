@@ -622,12 +622,6 @@ msgstr ""
 msgid "Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken."
 msgstr ""
 
-msgid "Update Bounding Sphere"
-msgstr ""
-
-msgid "Updates the bounding sphere of the geometry with a new position and radius."
-msgstr ""
-
 msgid "Delete\tDel"
 msgstr ""
 
