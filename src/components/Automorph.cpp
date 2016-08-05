@@ -266,7 +266,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 	}
 
 	Vector3 norm;
-	if (!nifNorms) {
+	if (!nifNorms || nifNorms->empty()) {
 		// Load tris. Also sum face normals here.
 		for (int j = 0; j < m->nTris; j++) {
 			m->tris[j].p1 = nifTris[j].p1;

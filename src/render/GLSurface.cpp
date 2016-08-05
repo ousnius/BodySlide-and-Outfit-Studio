@@ -1110,9 +1110,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	nif->GetVertsForShape(shapeName, nifVerts);
 	nif->GetTrisForShape(shapeName, &nifTris);
 
-	const vector<Vector3>* nifNorms = nullptr;
+	const vector<Vector3>* nifNorms = nif->GetNormalsForShape(shapeName, false);
 	const vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
-	nifNorms = nif->GetNormalsForShape(shapeName, false);
 
 	mesh* m = new mesh();
 
@@ -1148,7 +1147,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		m->verts[i].indexRef = i;
 	}
 
-	if (nifUvs) {
+	if (nifUvs && !nifUvs->empty()) {
 		m->texcoord = new Vector2[m->nVerts];
 		for (int i = 0; i < m->nVerts; i++) {
 			m->texcoord[i].u = (*nifUvs)[i].u;
@@ -1158,7 +1157,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		m->material = noImage;
 	}
 
-	if (!nifNorms) {
+	if (!nifNorms || nifNorms->empty()) {
 		// Load tris. Also sum face normals here.
 		for (int j = 0; j < m->nTris; j++) {
 			Vector3 norm;

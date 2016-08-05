@@ -40,20 +40,20 @@ void FBXWrangler::CloseScene() {
 }
 
 void FBXWrangler::AddGeometry(const string& shapeName, const vector<Vector3>* verts, const vector<Vector3>* norms, const vector<Triangle>* tris, const vector<Vector2>* uvs) {
-	if (!verts)
+	if (!verts || verts->empty())
 		return;
 
 	FbxMesh* m = FbxMesh::Create(sdkManager, shapeName.c_str());
 	
 	FbxGeometryElementNormal* normElement = nullptr;
-	if (norms) {
+	if (norms && !norms->empty()) {
 		normElement = m->CreateElementNormal();
 		normElement->SetMappingMode(FbxLayerElement::eByControlPoint);
 		normElement->SetReferenceMode(FbxLayerElement::eDirect);
 	}
 	
 	FbxGeometryElementUV* uvElement = nullptr;
-	if (uvs) {
+	if (uvs && !uvs->empty()) {
 		string uvName = shapeName + "UV";
 		uvElement = m->CreateElementUV(uvName.c_str());
 		uvElement->SetMappingMode(FbxGeometryElement::eByControlPoint);

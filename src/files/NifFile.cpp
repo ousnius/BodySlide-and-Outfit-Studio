@@ -802,7 +802,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 
 	// Kill normals and tangents
 	if (destShader->IsSkinTint() && hdr.GetUserVersion() >= 12) {
-		if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+		if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 			shape->SetNormals(false);
 			shape->SetTangents(false);
 		}
@@ -902,7 +902,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
-		if (destGeom->blockType == NITRISHAPEDATA || destGeom->blockType == NITRISTRIPSDATA) {
+		if (destGeom->blockType == NITRISHAPE || destGeom->blockType == NITRISTRIPS) {
 			auto srcSkinInst = srcNif.hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcSkinInst) {
 				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
@@ -1491,7 +1491,7 @@ const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 	if (!shape)
 		return nullptr;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->vertices;
@@ -1510,14 +1510,14 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	if (!shape)
 		return false;
 
-	if (shape->blockType == NITRISHAPEDATA) {
+	if (shape->blockType == NITRISHAPE) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (shapeData) {
 			*outTris = shapeData->triangles;
 			return true;
 		}
 	}
-	else if (shape->blockType == NITRISTRIPSDATA) {
+	else if (shape->blockType == NITRISTRIPS) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (stripsData) {
 			stripsData->StripsToTris(outTris);
@@ -1541,7 +1541,7 @@ bool NifFile::ReorderTriangles(const string& shapeName, const vector<ushort>& tr
 		return false;
 
 	vector<Triangle> triangles;
-	if (shape->blockType == NITRISHAPEDATA) {
+	if (shape->blockType == NITRISHAPE) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return false;
@@ -1558,7 +1558,7 @@ bool NifFile::ReorderTriangles(const string& shapeName, const vector<ushort>& tr
 
 		shapeData->triangles = triangles;
 	}
-	else if (shape->blockType == NITRISTRIPSDATA) {
+	else if (shape->blockType == NITRISTRIPS) {
 		return false;
 	}
 	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE) {
@@ -1587,7 +1587,7 @@ const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool
 	if (!shape)
 		return nullptr;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->normals;
@@ -1606,7 +1606,7 @@ const vector<Vector2>* NifFile::GetUvsForShape(const string& shapeName) {
 	if (!shape)
 		return nullptr;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->uvSets;
@@ -1637,7 +1637,7 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 		return false;
 	}
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			outVerts.resize(geomData->numVertices);
@@ -1669,7 +1669,7 @@ int NifFile::GetVertCountForShape(const string& shapeName) {
 	if (!shape)
 		return 0xFFFFFFFF;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return geomData->numVertices;
@@ -1688,7 +1688,7 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (verts.size() != geomData->vertices.size())
@@ -1715,7 +1715,7 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (uvs.size() != geomData->vertices.size())
@@ -1741,7 +1741,7 @@ void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool inve
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (invertX)
@@ -1772,7 +1772,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			geomData->SetNormals(true);
@@ -1793,7 +1793,7 @@ void NifFile::CalcNormalsForShape(const string& shapeName, const bool& smooth, c
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->RecalcNormals(smooth, smoothThresh);
@@ -1810,7 +1810,7 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->CalcTangentSpace();
@@ -1934,7 +1934,7 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geom = dynamic_cast<NiGeometry*>(shape);
 		if (!geom)
 			return;
@@ -1963,7 +1963,7 @@ void NifFile::MoveVertex(const string& shapeName, const Vector3& pos, const int&
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData && geomData->numVertices > id)
 			geomData->vertices[id] = pos;
@@ -1980,7 +1980,7 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			for (int i = 0; i < geomData->vertices.size(); i++) {
@@ -2026,7 +2026,7 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 	Vector3 root;
 	GetRootTranslation(root);
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
@@ -2084,7 +2084,7 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 	Vector3 root;
 	GetRootTranslation(root);
 
-	if (shape->blockType == NITRISHAPEDATA || shape->blockType == NITRISTRIPSDATA) {
+	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
@@ -2510,7 +2510,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPEDATA) {
+	if (shape->blockType == NITRISHAPE) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			auto nifSkinData = new NiSkinData(hdr);
 			int skinDataID = hdr.AddBlock(nifSkinData, "NiSkinData");
@@ -2532,7 +2532,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 				shader->SetSkinned(true);
 		}
 	}
-	else if (shape->blockType == NITRISTRIPSDATA) {
+	else if (shape->blockType == NITRISTRIPS) {
 		// TO-DO
 		return;
 
@@ -2590,7 +2590,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 	vector<Triangle> tris;
 	ushort numTriangles;
 	ushort numVerts;
-	if (shape->blockType == NITRISHAPEDATA) {
+	if (shape->blockType == NITRISHAPE) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
@@ -2599,7 +2599,7 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 		numTriangles = shapeData->numTriangles;
 		numVerts = shapeData->numVertices;
 	}
-	else if (shape->blockType == NITRISTRIPSDATA) {
+	else if (shape->blockType == NITRISTRIPS) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (!stripsData)
 			return;
