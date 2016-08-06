@@ -236,6 +236,7 @@ public:
 	virtual void Init();
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual void notifyStringDelete(int stringID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 
 	virtual void Get(fstream& file);
@@ -288,6 +289,7 @@ private:
 	uint numStrings;
 	uint maxStringLen;
 	vector<NiString> strings;
+	vector<int> stringRefCount;
 
 	uint unkInt2;
 
@@ -335,6 +337,10 @@ public:
 	string GetStringById(const int& id);
 	void SetStringById(const int& id, const string& str);
 
+	void AddStringRef(const int& id);
+	void RemoveStringRef(const int& id);
+	void RemoveUnusedStrings();
+
 	void Get(fstream& file);
 	void Put(fstream& file);
 };
@@ -352,11 +358,14 @@ public:
 	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
 	bool bBSLightingShaderProperty;
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	~NiObjectNET();
+
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyStringDelete(int stringID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 
 	string GetName();
 	void SetName(const string& propertyName, bool renameExisting = false);
@@ -369,7 +378,7 @@ public:
 	int GetExtraDataRef(int id);
 	void AddExtraDataRef(int id);
 
-	virtual int CalcBlockSize();
+	int CalcBlockSize();
 };
 
 class NiAVObject : public NiObjectNET {
@@ -383,12 +392,12 @@ public:
 	vector<int> propertiesRef;
 	int collisionRef;
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 
 	bool rotToEulerDegrees(float &Y, float& P, float& R) {
 		float rx, ry, rz;
@@ -422,12 +431,13 @@ public:
 
 class NiProperty : public NiObjectNET {
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyStringDelete(int stringID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class NiNode : public NiAVObject {
@@ -485,6 +495,14 @@ public:
 	ushort numUVSets;
 	vector<Vector2> uvSets;
 
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
 	void SetVertices(bool enable);
 	bool HasVertices() { return hasVertices; }
 
@@ -504,16 +522,9 @@ public:
 	BoundingSphere GetBounds() { return bounds; }
 	void UpdateBounds();
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
-	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	virtual void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	virtual void CalcTangentSpace();
-	virtual int CalcBlockSize();
 };
 
 class NiShape : public NiAVObject {
@@ -521,11 +532,11 @@ private:
 	NiGeometryData* GetGeomData() { return header->GetBlock<NiGeometryData>(GetDataRef()); }
 
 public:
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 
 	virtual int GetDataRef();
 	virtual void SetDataRef(int dataRef);
@@ -619,12 +630,12 @@ public:
 	BSTriShape(NiHeader& hdr);
 	BSTriShape(fstream& file, NiHeader& hdr);
 
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	virtual int CalcBlockSize();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	int CalcBlockSize();
 
 	int GetSkinInstanceRef() { return skinInstanceRef; }
 	void SetSkinInstanceRef(int skinInstanceRef) { this->skinInstanceRef = skinInstanceRef; }
@@ -670,6 +681,7 @@ public:
 	void SetNormals(const vector<Vector3>& inNorms);
 	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
+
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
 
@@ -773,12 +785,12 @@ private:
 	byte dirty;
 
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 
 	bool IsSkinned() { return skinInstanceRef != 0xFFFFFFFF; }
 
@@ -797,28 +809,29 @@ public:
 
 class NiTriBasedGeom : public NiGeometry {
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class NiTriBasedGeomData : public NiGeometryData {
 public:
 	ushort numTriangles;
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
-	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
-	virtual void CalcTangentSpace();
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
+	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
+	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
+	void CalcTangentSpace();
 };
 
 class NiTriShape : public NiTriBasedGeom {
@@ -908,12 +921,12 @@ public:
 	NiSkinInstance(NiHeader& hdr);
 	NiSkinInstance(fstream& file, NiHeader& hdr);
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 
 	int GetDataRef() { return dataRef; }
 	void SetDataRef(int dataRef) { this->dataRef = dataRef; }
@@ -958,12 +971,12 @@ public:
 	BSSkinInstance(NiHeader& hdr);
 	BSSkinInstance(fstream& file, NiHeader& hdr);
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 
 	int GetTargetRef() { return targetRef; }
 	void SetTargetRef(int targetRef) { this->dataRef = targetRef; }
@@ -992,9 +1005,9 @@ public:
 	BSSkinBoneData(NiHeader& hdr);
 	BSSkinBoneData(fstream& file, NiHeader& hdr);
 
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual int CalcBlockSize();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
 };
 
 class NiSkinData : public NiObject {
@@ -1066,22 +1079,22 @@ public:
 
 class NiInterpolator : public NiObject {
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class NiKeyBasedInterpolator : public NiInterpolator {
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class NiFloatInterpolator : public NiKeyBasedInterpolator {
@@ -1141,44 +1154,44 @@ public:
 	float stopTime;
 	int targetRef;
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class NiInterpController : public NiTimeController {
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class NiSingleInterpController : public NiInterpController {
 public:
 	int interpolatorRef;
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class NiFloatInterpController : public NiSingleInterpController {
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class BSLightingShaderPropertyColorController : public NiFloatInterpController {
@@ -1191,7 +1204,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -1205,7 +1218,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -1219,7 +1232,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -1233,16 +1246,19 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
 class NiShader : public NiProperty {
 public:
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyStringDelete(int stringID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
 	virtual bool IsSkinTint();
 	virtual bool IsSkinned();
 	virtual void SetSkinned(bool enable);
@@ -1263,7 +1279,6 @@ public:
 	virtual void SetEmissiveMultiple(float emissive);
 	virtual string GetWetMaterialName();
 	virtual void SetWetMaterialName(const string& matName);
-	virtual int CalcBlockSize();
 };
 
 class BSLightingShaderProperty : public NiShader {
@@ -1291,7 +1306,6 @@ public:
 	uint unk1;								// user version == 12, userversion2 >= 130
 	uint unk2;								// user version == 12, userversion2 >= 130
 
-
 	float environmentMapScale;
 	Vector3 skinTintColor;
 	Vector3 hairTintColor;
@@ -1310,14 +1324,17 @@ public:
 	byte  pad[16];						// up to 16 bytes of uknown padding.  clearly this isn't the right format.
 
 
-
 	BSLightingShaderProperty(NiHeader& hdr);
 	BSLightingShaderProperty(fstream& file, NiHeader& hdr);
+	~BSLightingShaderProperty();
 
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
 	bool IsSkinTint();
 	bool IsSkinned();
 	void SetSkinned(bool enable);
@@ -1338,7 +1355,6 @@ public:
 	void SetEmissiveMultiple(float emissive);
 	string GetWetMaterialName();
 	void SetWetMaterialName(const string& matName);
-	int CalcBlockSize();
 };
 
 class BSShaderProperty : public NiShader {
@@ -1349,14 +1365,15 @@ public:
 	uint shaderFlags2;
 	float environmentMapScale;				// User Version == 11
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual uint GetType();
-	virtual void SetType(uint type);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
+	uint GetType();
+	void SetType(uint type);
 };
 
 class BSEffectShaderProperty : public NiShader {
@@ -1387,7 +1404,9 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
 	bool IsSkinTint();
 	bool IsSkinned();
 	void SetSkinned(bool enable);
@@ -1396,19 +1415,18 @@ public:
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
-	int CalcBlockSize();
 };
 
 class BSShaderLightingProperty : public BSShaderProperty {
 public:
 	uint textureClampMode;					// User Version <= 11
 
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
 };
 
 class BSShaderPPLightingProperty : public BSShaderLightingProperty {
@@ -1426,13 +1444,14 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
 	bool IsSkinTint();
 	bool IsSkinned();
 	void SetSkinned(bool enable);
 	int GetTextureSetRef();
 	void SetTextureSetRef(int texSetRef);
-	int CalcBlockSize();
 };
 
 class BSShaderTextureSet : public NiObject {
@@ -1459,7 +1478,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -1480,7 +1499,9 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	int CalcBlockSize();
+
 	Vector3 GetSpecularColor();
 	void SetSpecularColor(Vector3 color);
 	float GetGlossiness();
@@ -1489,7 +1510,6 @@ public:
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
-	int CalcBlockSize();
 };
 
 class NiStencilProperty : public NiProperty {
@@ -1504,7 +1524,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
 };
 
@@ -1514,14 +1534,16 @@ private:
 	string name;
 
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
+	~NiExtraData();
+
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyStringDelete(int stringID);
+	int CalcBlockSize();
 
 	string GetName();
 	void SetName(const string& extraDataName);
-
-	virtual int CalcBlockSize();
 };
 
 class NiStringExtraData : public NiExtraData {
@@ -1532,14 +1554,15 @@ private:
 public:
 	NiStringExtraData(NiHeader& hdr);
 	NiStringExtraData(fstream& file, NiHeader& hdr);
+	~NiStringExtraData();
 
 	void Get(fstream& file);
 	void Put(fstream& file);
+	void notifyStringDelete(int stringID);
+	int CalcBlockSize();
 
 	string GetStringData();
 	void SetStringData(const string& str);
-
-	int CalcBlockSize();
 };
 
 class NiIntegerExtraData : public NiExtraData {
@@ -1550,13 +1573,12 @@ public:
 	NiIntegerExtraData(NiHeader& hdr);
 	NiIntegerExtraData(fstream& file, NiHeader& hdr);
 
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
 
-	virtual uint GetIntegerData();
-	virtual void SetIntegerData(const uint& integerData);
-
-	virtual int CalcBlockSize();
+	uint GetIntegerData();
+	void SetIntegerData(const uint& integerData);
 };
 
 class BSXFlags : public NiIntegerExtraData {
@@ -1566,10 +1588,6 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
-
-	uint GetIntegerData();
-	void SetIntegerData(const uint& integerData);
-
 	int CalcBlockSize();
 };
 
@@ -1600,7 +1618,6 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
-
 	int CalcBlockSize();
 };
 
@@ -1616,16 +1633,15 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
-
 	int CalcBlockSize();
 };
 
 class BSExtraData : public NiObject {
 public:
-	virtual void Init();
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-	virtual int CalcBlockSize();
+	void Init();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
 };
 
 class BSClothExtraData : public BSExtraData {
@@ -1653,10 +1669,9 @@ public:
 	NiCollisionObject(NiHeader& hdr);
 	NiCollisionObject(fstream& file, NiHeader& hdr);
 
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-
-	virtual int CalcBlockSize();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
 };
 
 class bhkNiCollisionObject : public NiCollisionObject {
@@ -1667,10 +1682,9 @@ public:
 	bhkNiCollisionObject(NiHeader& hdr);
 	bhkNiCollisionObject(fstream& file, NiHeader& hdr);
 
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-
-	virtual int CalcBlockSize();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
 };
 
 class bhkCollisionObject : public bhkNiCollisionObject {
@@ -1678,10 +1692,9 @@ public:
 	bhkCollisionObject(NiHeader& hdr);
 	bhkCollisionObject(fstream& file, NiHeader& hdr);
 
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-
-	virtual int CalcBlockSize();
+	void Get(fstream& file);
+	void Put(fstream& file);
+	int CalcBlockSize();
 };
 
 class bhkNPCollisionObject : public bhkCollisionObject {
@@ -1693,7 +1706,6 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
-
 	int CalcBlockSize();
 };
 
@@ -1708,8 +1720,9 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
-	void Clone(bhkPhysicsSystem* other);
 	int CalcBlockSize();
+
+	void Clone(bhkPhysicsSystem* other);
 };
 
 class NiUnknown : public NiObject {
@@ -1719,10 +1732,12 @@ public:
 	NiUnknown();
 	NiUnknown(fstream& file, uint size);
 	NiUnknown(uint size);
+
 	void Get(fstream& file);
 	void Put(fstream& file);
-	void Clone(NiUnknown* other);
 	int CalcBlockSize();
+
+	void Clone(NiUnknown* other);
 };
 
 template <class T>

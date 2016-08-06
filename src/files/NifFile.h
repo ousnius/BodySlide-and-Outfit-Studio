@@ -55,6 +55,7 @@ public:
 
 	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
 	void PrettySortBlocks();
+	void RemoveUnusedStrings();
 
 	NiShape* shapeForName(const string& name, int dupIndex = 0);
 	NiAVObject* avObjectForName(const string& name, int dupIndex = 0);

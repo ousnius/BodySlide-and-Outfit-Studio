@@ -460,6 +460,13 @@ void NifFile::PrettySortBlocks() {
 	}
 }
 
+void NifFile::RemoveUnusedStrings() {
+	if (hasUnknown)
+		return;
+
+	hdr.RemoveUnusedStrings();
+}
+
 int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale) {
 	auto root = dynamic_cast<NiNode*>(blocks[0]);
 	if (!root)
@@ -1047,6 +1054,8 @@ void NifFile::Optimize() {
 
 	for (auto &s : shapes)
 		UpdateBoundingSphere(s);
+
+	RemoveUnusedStrings();
 }
 
 

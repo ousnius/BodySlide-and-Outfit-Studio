@@ -88,6 +88,9 @@ void NiObject::notifyBlockDelete(int blockID) {
 void NiObject::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 }
 
+void NiObject::notifyStringDelete(int stringID) {
+}
+
 void NiObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
@@ -123,6 +126,7 @@ void NiHeader::Clear() {
 	blockTypeIndices.clear();
 	blockSizes.clear();
 	strings.clear();
+	stringRefCount.clear();
 }
 
 string NiHeader::GetVersionInfo() {
@@ -185,13 +189,13 @@ void NiHeader::SetExportInfo(const string& exportInfo) {
 	exportInfo2.Clear();
 	exportInfo3.Clear();
 
-	vector<NiString*> strings(3);
-	strings[0] = &exportInfo1;
-	strings[1] = &exportInfo2;
-	strings[2] = &exportInfo3;
+	vector<NiString*> exportStrings(3);
+	exportStrings[0] = &exportInfo1;
+	exportStrings[1] = &exportInfo2;
+	exportStrings[2] = &exportInfo3;
 
-	auto it = strings.begin();
-	for (size_t i = 0; i < exportInfo.length() && it < strings.end(); i += 256, it++) {
+	auto it = exportStrings.begin();
+	for (size_t i = 0; i < exportInfo.length() && it < exportStrings.end(); i += 256, it++) {
 		if (i + 256 <= exportInfo.length())
 			(*it)->SetString(exportInfo.substr(i, 256));
 		else
@@ -312,9 +316,12 @@ int NiHeader::AddOrFindStringId(const string& str) {
 	if (str.empty())
 		return 0xFFFFFFFF;
 
-	for (int i = 0; i < strings.size(); i++)
-		if (strings[i].GetString().compare(str) == 0)
+	for (int i = 0; i < strings.size(); i++) {
+		if (strings[i].GetString().compare(str) == 0) {
+			stringRefCount[i]++;
 			return i;
+		}
+	}
 
 	int r = strings.size();
 
@@ -323,7 +330,10 @@ int NiHeader::AddOrFindStringId(const string& str) {
 	strings.push_back(niStr);
 	numStrings++;
 
-	if (str.length() > maxStringLen)
+	stringRefCount.resize(numStrings);
+	stringRefCount[numStrings - 1]++;
+
+	if (maxStringLen < str.length())
 		maxStringLen = str.length();
 
 	return r;
@@ -344,12 +354,41 @@ void NiHeader::SetStringById(const int& id, const string& str) {
 	}
 }
 
+void NiHeader::AddStringRef(const int& id) {
+	if (id >= 0 && id < numStrings)
+		stringRefCount[id]++;
+}
+
+void NiHeader::RemoveStringRef(const int& id) {
+	if (id >= 0 && id < numStrings && stringRefCount[id] > 0)
+		stringRefCount[id]--;
+}
+
+void NiHeader::RemoveUnusedStrings() {
+	for (int i = 0; i < stringRefCount.size(); i++) {
+		if (stringRefCount[i] <= 0) {
+			strings.erase(strings.begin() + i);
+			stringRefCount.erase(stringRefCount.begin() + i);
+			numStrings--;
+
+			for (auto &block : (*blocks))
+				block->notifyStringDelete(i);
+
+			i--;
+		}
+	}
+
+	maxStringLen = 0;
+	for (auto &s : strings)
+		if (maxStringLen < s.GetLength())
+			maxStringLen = s.GetLength();
+}
+
 void NiHeader::Get(fstream& file) {
 	file.read(verStr, 38);
 	if (_strnicmp(verStr, "Gamebryo", 8) != 0)
 		return;
 
-	//file >> bitangentY;
 	unk1 = 10;
 	file >> version1 >> version2 >> version3 >> version4;
 	file >> endian;
@@ -380,8 +419,11 @@ void NiHeader::Get(fstream& file) {
 
 	file.read((char*)&numStrings, 4);
 	file.read((char*)&maxStringLen, 4);
+
+	strings.resize(numStrings);
+	stringRefCount.resize(numStrings);
 	for (int i = 0; i < numStrings; i++)
-		strings.push_back(NiString(file, 4));
+		strings[i] = NiString(file, 4);
 
 	file.read((char*)&unkInt2, 4);
 	valid = true;
@@ -420,6 +462,10 @@ void NiHeader::Put(fstream& file) {
 }
 
 
+NiObjectNET::~NiObjectNET() {
+	header->RemoveStringRef(nameRef);
+}
+
 void NiObjectNET::Init() {
 	NiObject::Init();
 
@@ -438,8 +484,10 @@ void NiObjectNET::Get(fstream& file) {
 		file.read((char*)&skyrimShaderType, 4);
 
 	file.read((char*)&nameRef, 4);
-	if (nameRef != 0xFFFFFFFF)
+	if (nameRef != 0xFFFFFFFF) {
 		name = header->GetStringById(nameRef);
+		header->AddStringRef(nameRef);
+	}
 	else
 		name.clear();
 
@@ -485,6 +533,13 @@ void NiObjectNET::notifyBlockDelete(int blockID) {
 		controllerRef = 0xFFFFFFFF;
 	else if (controllerRef > blockID)
 		controllerRef--;
+}
+
+void NiObjectNET::notifyStringDelete(int stringID) {
+	NiObject::notifyStringDelete(stringID);
+
+	if (nameRef > stringID)
+		nameRef--;
 }
 
 void NiObjectNET::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
@@ -562,6 +617,10 @@ void NiProperty::notifyBlockDelete(int blockID) {
 
 void NiProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiObjectNET::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void NiProperty::notifyStringDelete(int stringID) {
+	NiObjectNET::notifyStringDelete(stringID);
 }
 
 int NiProperty::CalcBlockSize() {
@@ -4455,6 +4514,9 @@ void NiShader::Put(fstream& file) {
 void NiShader::notifyBlockDelete(int blockID) {
 }
 
+void NiShader::notifyStringDelete(int stringID) {
+}
+
 void NiShader::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
@@ -4535,6 +4597,9 @@ int NiShader::CalcBlockSize() {
 }
 
 
+BSLightingShaderProperty::~BSLightingShaderProperty() {
+	header->RemoveStringRef(wetMaterialNameRef);
+}
 
 BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	NiProperty::Init();
@@ -4650,8 +4715,10 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&emissiveMultiple, 4);
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
 		file.read((char*)&wetMaterialNameRef, 4);
-		if (wetMaterialNameRef != -1)
+		if (wetMaterialNameRef != -1) {
 			wetMaterialName = header->GetStringById(wetMaterialNameRef);
+			header->AddStringRef(wetMaterialNameRef);
+		}
 		else
 			wetMaterialName.clear();
 	}
@@ -4836,6 +4903,12 @@ void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
 		textureSetRef--;
 }
 
+void BSLightingShaderProperty::notifyStringDelete(int stringID) {
+	NiProperty::notifyStringDelete(stringID);
+
+	if (wetMaterialNameRef > stringID)
+		wetMaterialNameRef--;
+}
 
 void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
@@ -5648,6 +5721,10 @@ int NiStencilProperty::CalcBlockSize() {
 }
 
 
+NiExtraData::~NiExtraData() {
+	header->RemoveStringRef(nameRef);
+}
+
 void NiExtraData::Init() {
 	NiObject::Init();
 
@@ -5659,8 +5736,10 @@ void NiExtraData::Get(fstream& file) {
 	NiObject::Get(file);
 
 	file.read((char*)&nameRef, 4);
-	if (nameRef != 0xFFFFFFFF)
+	if (nameRef != 0xFFFFFFFF) {
 		name = header->GetStringById(nameRef);
+		header->AddStringRef(nameRef);
+	}
 	else
 		name.clear();
 }
@@ -5669,6 +5748,13 @@ void NiExtraData::Put(fstream& file) {
 	NiObject::Put(file);
 
 	file.write((char*)&nameRef, 4);
+}
+
+void NiExtraData::notifyStringDelete(int stringID) {
+	NiObject::notifyStringDelete(stringID);
+
+	if (nameRef > stringID)
+		nameRef--;
 }
 
 string NiExtraData::GetName() {
@@ -5688,6 +5774,10 @@ int NiExtraData::CalcBlockSize() {
 	return blockSize;
 }
 
+
+NiStringExtraData::~NiStringExtraData() {
+	header->RemoveStringRef(stringDataRef);
+}
 
 NiStringExtraData::NiStringExtraData(NiHeader& hdr) {
 	NiExtraData::Init();
@@ -5711,8 +5801,10 @@ void NiStringExtraData::Get(fstream& file) {
 	NiExtraData::Get(file);
 
 	file.read((char*)&stringDataRef, 4);
-	if (stringDataRef != 0xFFFFFFFF)
+	if (stringDataRef != 0xFFFFFFFF) {
 		stringData = header->GetStringById(stringDataRef);
+		header->AddStringRef(stringDataRef);
+	}
 	else
 		stringData.clear();
 }
@@ -5721,6 +5813,13 @@ void NiStringExtraData::Put(fstream& file) {
 	NiExtraData::Put(file);
 
 	file.write((char*)&stringDataRef, 4);
+}
+
+void NiStringExtraData::notifyStringDelete(int stringID) {
+	NiExtraData::notifyStringDelete(stringID);
+
+	if (stringDataRef > stringID)
+		stringDataRef--;
 }
 
 string NiStringExtraData::GetStringData() {
@@ -5804,14 +5903,6 @@ void BSXFlags::Get(fstream& file) {
 
 void BSXFlags::Put(fstream& file) {
 	NiIntegerExtraData::Put(file);
-}
-
-uint BSXFlags::GetIntegerData() {
-	return NiIntegerExtraData::GetIntegerData();
-}
-
-void BSXFlags::SetIntegerData(const uint& integerData) {
-	NiIntegerExtraData::SetIntegerData(integerData);
 }
 
 int BSXFlags::CalcBlockSize() {
