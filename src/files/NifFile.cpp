@@ -1265,9 +1265,8 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 		outWeights.reserve(bsTriShape->numVertices);
 		for (int vid = 0; vid < bsTriShape->numVertices; vid++) {
 			for (int i = 0; i < 4; i++) {
-				if (bsTriShape->vertData[vid].weightBones[i] == boneIndex && bsTriShape->vertData[vid].weights[i] != 0) {
-					outWeights[vid] = bsTriShape->vertData[vid].weights[i];
-				}
+				if (bsTriShape->vertData[vid].weightBones[i] == boneIndex && bsTriShape->vertData[vid].weights[i] != 0)
+					outWeights.emplace(vid, bsTriShape->vertData[vid].weights[i]);
 			}
 		}
 
@@ -1284,9 +1283,10 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	for (auto &sw : bone->vertexWeights) {
-		outWeights[sw.index] = sw.weight;
-		if (sw.weight < 0.0001f)
-			outWeights[sw.index] = 0.0f;
+		if (sw.weight >= 0.0001f)
+			outWeights.emplace(sw.index, sw.weight);
+		else
+			outWeights.emplace(sw.index, 0.0f);
 	}
 
 	return outWeights.size();
