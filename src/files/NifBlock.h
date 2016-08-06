@@ -571,6 +571,8 @@ public:
 	virtual void SetBounds(const BoundingSphere& bounds);
 	virtual BoundingSphere GetBounds();
 	virtual void UpdateBounds();
+
+	int GetBoneID(const string& boneName);
 };
 
 

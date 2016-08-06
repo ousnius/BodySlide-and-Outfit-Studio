@@ -138,18 +138,20 @@ void mesh::MakeEdges() {
 	if (edges)
 		return;
 
-	unordered_set<Edge> eset;
-	for (int t = 0; t < nTris; t++) {
-		eset.emplace(min(tris[t].p1, tris[t].p2), max(tris[t].p1, tris[t].p2));
-		eset.emplace(min(tris[t].p2, tris[t].p3), max(tris[t].p2, tris[t].p3));
-		eset.emplace(min(tris[t].p3, tris[t].p1), max(tris[t].p3, tris[t].p1));
-	}
-	nEdges = eset.size();
+	nEdges = nTris * 3;
 	edges = new Edge[nEdges];
 
-	int i = 0;
-	for (auto &e : eset)
-		edges[i++] = e;
+	for (int i = 0; i < nEdges; i++) {
+		// Find correct points for edge
+		ushort* points = &tris[i / 3].p1;
+		int pA = i % 3;
+		int pB = i % 3 + 1;
+		if (pB >= 3)
+			pB = 0;
+
+		// Create edge from points
+		edges[i] = Edge(min(points[pA], points[pB]), max(points[pA], points[pB]));
+	}
 }
 
 void mesh::BuildEdgeList() {

@@ -44,7 +44,7 @@ private:
 
 	OutfitStudio* os = nullptr;
 	NifFile* nif = nullptr;
-	string shape;
+	string shapeName;
 
 	string currentMaterialPath;
 

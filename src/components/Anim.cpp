@@ -265,7 +265,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 					continue;
 				}
 
-				int id = nif->GetNodeID(bone);
+				int id = nif->GetBlockID(nif->FindNodeByName(bone));
 				if (id == 0xFFFFFFFF) {
 					vector<Vector3> r(3);
 					boneRef.rot.GetRow(0, r[0]);
@@ -384,7 +384,7 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 	}
 
 	for (int i = 0; i < node->GetNumChildren(); i++) {
-		string name = skeletonNif->NodeName(node->GetChildRef(i));
+		string name = skeletonNif->GetNodeName(node->GetChildRef(i));
 		if (!name.empty()) {
 			if (name == "_unnamed_")
 				name = AnimSkeleton::getInstance().GenerateBoneName();
@@ -406,7 +406,7 @@ int AnimSkeleton::LoadFromNif(const string& fileName) {
 	}
 
 	rootBone = Config.GetCString("Anim/SkeletonRootName");
-	int nodeID = refSkeletonNif.GetNodeID(rootBone);
+	int nodeID = refSkeletonNif.GetBlockID(refSkeletonNif.FindNodeByName(rootBone));
 	if (nodeID == 0xFFFFFFFF) {
 		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);
 		wxMessageBox(wxString::Format(_("Root '%s' not found in skeleton '%s'!"), rootBone, fileName));

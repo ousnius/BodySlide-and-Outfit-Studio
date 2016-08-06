@@ -178,8 +178,11 @@ bool BSA::open() {
 			if (h == "GNRL") {
 				// General BA2 Format
 				if (bsa.Seek(sizeof(header) + 8)) {
+					root.files.reserve(header.numFiles);
+
 					F4GeneralInfo* finfo = new F4GeneralInfo[header.numFiles];
 					bsa.Read(finfo, 36 * numFiles);
+
 					wxUint32 n = 0;
 					for (wxUint32 i = 0; i < header.numFiles; i++) {
 						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n], finfo[i].packedSize, finfo[i].unpackedSize, finfo[i].offset);
@@ -191,17 +194,16 @@ bool BSA::open() {
 			else if (h == "DX10") {
 				// Texture BA2 Format
 				if (bsa.Seek(sizeof(header) + 8)) {
+					root.files.reserve(header.numFiles);
+
 					wxUint32 n = 0;
 					for (wxUint32 i = 0; i < header.numFiles; i++) {
 						F4Tex tex;
 						bsa.Read((char*)&tex.header, 24);
 
-						std::vector<F4TexChunk> texChunks;
-						for (wxUint32 j = 0; j < tex.header.numChunks; j++) {
-							F4TexChunk texChunk;
-							bsa.Read((char*)&texChunk, 24);
-							texChunks.push_back(texChunk);
-						}
+						std::vector<F4TexChunk> texChunks(tex.header.numChunks);
+						for (wxUint32 j = 0; j < tex.header.numChunks; j++)
+							bsa.Read((char*)&texChunks[j], 24);
 
 						tex.chunks = texChunks;
 
@@ -653,7 +655,7 @@ BSA::BSAFile* BSA::insertFile(char* filename, int szFn, wxUint32 packed, wxUint3
 	file->unpackedLength = unpacked;
 	file->offset = offset;
 	//folder->files[name] = file;
-	root.files.emplace(std::string(filename, filename + szFn), file);
+	root.files.emplace(std::string(filename, szFn), file);
 	return nullptr;
 }
 

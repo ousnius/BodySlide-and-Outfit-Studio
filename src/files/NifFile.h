@@ -19,10 +19,6 @@ private:
 
 	NiHeader hdr;
 
-	int shapeIdForName(const string& name);
-	int shapeBoneIndex(const string& shapeName, const string& boneName);
-	NiNode* nodeForName(const string& name);
-
 public:
 	NifFile();
 	NifFile(NifFile& other);
@@ -33,7 +29,8 @@ public:
 
 	int AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale);
 	void DeleteNode(const string& nodeName);
-	string NodeName(int blockID);
+	string GetNodeName(int blockID);
+	void SetNodeName(int blockID, const string& newName);
 
 	int AssignExtraData(const string& blockName, const int& extraDataId, bool isNode);
 	int AddStringExtraData(const string& blockName, const string& name, const string& stringData, bool isNode = false);
@@ -57,8 +54,10 @@ public:
 	void PrettySortBlocks();
 	void RemoveUnusedStrings();
 
-	NiShape* shapeForName(const string& name, int dupIndex = 0);
-	NiAVObject* avObjectForName(const string& name, int dupIndex = 0);
+	NiShape* FindShapeByName(const string& name, int dupIndex = 0);
+	NiAVObject* FindAVObjectByName(const string& name, int dupIndex = 0);
+	NiNode* FindNodeByName(const string& name);
+	int GetBlockID(NiObject* block);
 
 	NiShader* GetShader(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
@@ -76,13 +75,11 @@ public:
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
 	void RenameDuplicateShape(const string& dupedShape);
-	void SetNodeName(int blockID, const string& newName);
 
 	/// GetChildren of a node ... templatized to allow any particular type to be queried.   useful for walking a node tree
 	template <class T>
 	vector<T*> GetChildren(NiNode* parent, bool searchExtraData = false);
 
-	int GetNodeID(const string& nodeName);
 	int GetRootNodeID();
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
 	bool SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool& rootChildrenOnly = false);

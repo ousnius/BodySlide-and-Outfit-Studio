@@ -1011,6 +1011,19 @@ void NiShape::UpdateBounds() {
 		geomData->UpdateBounds();
 }
 
+int NiShape::GetBoneID(const string& boneName) {
+	auto boneCont = header->GetBlock<NiBoneContainer>(GetSkinInstanceRef());
+	if (boneCont) {
+		for (int i = 0; i < boneCont->numBones; i++) {
+			auto node = header->GetBlock<NiNode>(boneCont->bones[i]);
+			if (node && node->GetName() == boneName)
+				return i;
+		}
+	}
+
+	return 0xFFFFFFFF;
+}
+
 
 BSTriShape::BSTriShape(NiHeader& hdr) {
 	NiAVObject::Init();

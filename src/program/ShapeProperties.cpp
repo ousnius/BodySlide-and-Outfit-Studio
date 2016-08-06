@@ -17,7 +17,7 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
 wxEND_EVENT_TABLE()
 
-ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string& shapeName) {
+ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string& shape) {
 	wxXmlResource *xrc = wxXmlResource::Get();
 	xrc->Load("res\\xrc\\ShapeProperties.xrc");
 	xrc->LoadDialog(this, parent, "dlgShapeProp");
@@ -27,7 +27,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 
 	os = (OutfitStudio*)parent;
 	nif = refNif;
-	shape = shapeName;
+	shapeName = shape;
 
 	pgShader = XRCCTRL(*this, "pgShader", wxPanel);
 	lbShaderName = XRCCTRL(*this, "lbShaderName", wxStaticText);
@@ -70,7 +70,7 @@ ShapeProperties::~ShapeProperties() {
 }
 
 void ShapeProperties::GetShader() {
-	NiShader* shader = nif->GetShader(shape);
+	NiShader* shader = nif->GetShader(shapeName);
 
 	if (!shader) {
 		btnAddShader->Enable();
@@ -114,7 +114,7 @@ void ShapeProperties::GetShader() {
 				emissiveMultiple->SetValue(wxString::Format("%.4f", shader->GetEmissiveMultiple()));
 				break;
 			case BSSHADERPPLIGHTINGPROPERTY:
-				NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+				NiMaterialProperty* material = nif->GetMaterialProperty(shapeName);
 				if (!material)
 					break;
 				
@@ -138,7 +138,7 @@ void ShapeProperties::GetShaderType() {
 	shaderType->Clear();
 
 	uint type;
-	NiShader* shader = nif->GetShader(shape);
+	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
 		switch (shader->blockType) {
 			case BSLIGHTINGSHADERPROPERTY:
@@ -227,30 +227,30 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::AddShader() {
-	NiShape* geom = nif->shapeForName(shape);
-	if (geom) {
+	NiShape* shape = nif->FindShapeByName(shapeName);
+	if (shape) {
 		switch (os->targetGame) {
 			case FO3:
 			case FONV: {
 				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->GetHeader());
-				geom->propertiesRef.push_back(nif->GetHeader().AddBlock(shader, "BSShaderPPLightingProperty"));
-				geom->numProperties++;
+				shape->propertiesRef.push_back(nif->GetHeader().AddBlock(shader, "BSShaderPPLightingProperty"));
+				shape->numProperties++;
 
 				NiMaterialProperty* material = new NiMaterialProperty(nif->GetHeader());
-				geom->propertiesRef.push_back(nif->GetHeader().AddBlock(material, "NiMaterialProperty"));
-				geom->numProperties++;
+				shape->propertiesRef.push_back(nif->GetHeader().AddBlock(material, "NiMaterialProperty"));
+				shape->numProperties++;
 				break;
 			}
 			case SKYRIM:
 			case FO4:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
-				geom->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));
+				shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));
 			}
 		}
 	}
 
-	NiShader* shader = nif->GetShader(shape);
+	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
 		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader());
 		shader->SetTextureSetRef(nif->GetHeader().AddBlock(nifTexSet, "BSShaderTextureSet"));
@@ -265,7 +265,7 @@ void ShapeProperties::OnRemoveShader(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::RemoveShader() {
-	nif->DeleteShader(shape);
+	nif->DeleteShader(shapeName);
 	AssignDefaultTexture();
 	GetShader();
 	GetTransparency();
@@ -313,7 +313,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 		int blockType = 0;
 		for (int i = 0; i < 10; i++) {
-			blockType = nif->GetTextureForShape(shape, texPath, i);
+			blockType = nif->GetTextureForShape(shapeName, texPath, i);
 			if (!blockType)
 				continue;
 
@@ -333,20 +333,20 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			stTexGrid->HideRow(9);
 		}
 
-		oDispPath = os->project->GetShapeTexture(shape);
+		oDispPath = os->project->GetShapeTexture(shapeName);
 		XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->SetPath(oDispPath);
 		XRCCTRL(dlg, "btApplyDiffuse", wxButton)->Bind(wxEVT_BUTTON, &ShapeProperties::OnApplyDiffuse, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
 			nDispPath = XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->GetPath();
 			if (nDispPath != oDispPath) {
-				os->project->SetTexture(shape, nDispPath);
-				os->glView->SetMeshTexture(shape, nDispPath, nif->IsShaderSkin(shape));
+				os->project->SetTexture(shapeName, nDispPath);
+				os->glView->SetMeshTexture(shapeName, nDispPath, nif->IsShaderSkin(shapeName));
 			}
 
 			for (int i = 0; i < 10; i++) {
 				texPath = stTexGrid->GetCellValue(i, 0);
-				nif->SetTextureForShape(shape, texPath, i);
+				nif->SetTextureForShape(shapeName, texPath, i);
 			}
 			nif->TrimTexturePaths();
 
@@ -374,8 +374,8 @@ void ShapeProperties::OnApplyDiffuse(wxCommandEvent& event) {
 
 void ShapeProperties::AssignDefaultTexture() {
 	string texNoImg = os->appConfig["GameDataPath"] + "noimg.dds";
-	os->project->SetTexture(shape, "_AUTO_");
-	os->glView->SetMeshTexture(shape, texNoImg, nif->IsShaderSkin(shape));
+	os->project->SetTexture(shapeName, "_AUTO_");
+	os->glView->SetMeshTexture(shapeName, texNoImg, nif->IsShaderSkin(shapeName));
 	os->glView->Render();
 }
 
@@ -383,7 +383,7 @@ void ShapeProperties::GetTransparency() {
 	ushort flags;
 	byte threshold;
 
-	if (nif->GetAlphaForShape(shape, flags, threshold)) {
+	if (nif->GetAlphaForShape(shapeName, flags, threshold)) {
 		alphaThreshold->SetValue(wxString::Format("%d", threshold));
 		alphaThreshold->Enable();
 		btnAddTransparency->Disable();
@@ -401,7 +401,7 @@ void ShapeProperties::OnAddTransparency(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::AddTransparency() {
-	nif->SetAlphaForShape(shape);
+	nif->SetAlphaForShape(shapeName);
 	GetTransparency();
 }
 
@@ -410,17 +410,17 @@ void ShapeProperties::OnRemoveTransparency(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::RemoveTransparency() {
-	nif->DeleteAlpha(shape);
+	nif->DeleteAlpha(shapeName);
 	GetTransparency();
 }
 
 
 void ShapeProperties::GetGeometry() {
-	NiShape* geom = nif->shapeForName(shape);
-	if (geom) {
-		skinned->SetValue(geom->IsSkinned());
+	NiShape* shape = nif->FindShapeByName(shapeName);
+	if (shape) {
+		skinned->SetValue(shape->IsSkinned());
 
-		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(geom);
+		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			fullPrecision->SetValue(bsTriShape->IsFullPrecision());
 			fullPrecision->Enable(bsTriShape->CanChangePrecision());
@@ -451,14 +451,14 @@ void ShapeProperties::GetExtraData() {
 
 	extraDataIndices.clear();
 
-	NiShape* geom = nif->shapeForName(shape);
-	if (!geom)
+	NiShape* shape = nif->FindShapeByName(shapeName);
+	if (!shape)
 		return;
 
-	for (int i = 0; i < geom->GetNumExtraData(); i++) {
-		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(geom->GetExtraDataRef(i));
+	for (int i = 0; i < shape->GetNumExtraData(); i++) {
+		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(shape->GetExtraDataRef(i));
 		if (extraData) {
-			extraDataIndices.push_back(geom->GetExtraDataRef(i));
+			extraDataIndices.push_back(shape->GetExtraDataRef(i));
 			AddExtraData(extraData, true);
 		}
 	}
@@ -473,13 +473,13 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
 		if (extraData->blockType == NISTRINGEXTRADATA) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-			int index = nif->AddStringExtraData(shape, stringExtraData->GetName(), stringExtraData->GetStringData());
+			int index = nif->AddStringExtraData(shapeName, stringExtraData->GetName(), stringExtraData->GetStringData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
 		else if (extraData->blockType == NIINTEGEREXTRADATA) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
-			int index = nif->AddIntegerExtraData(shape, intExtraData->GetName(), intExtraData->GetIntegerData());
+			int index = nif->AddIntegerExtraData(shapeName, intExtraData->GetName(), intExtraData->GetIntegerData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
@@ -556,10 +556,10 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 
 	switch (selection) {
 	case 0:
-		extraDataIndices[id] = nif->AddStringExtraData(shape, extraDataName->GetValue().ToStdString(), extraDataValue->GetValue().ToStdString());
+		extraDataIndices[id] = nif->AddStringExtraData(shapeName, extraDataName->GetValue().ToStdString(), extraDataValue->GetValue().ToStdString());
 		break;
 	case 1:
-		extraDataIndices[id] = nif->AddIntegerExtraData(shape, extraDataName->GetValue().ToStdString(), 0);
+		extraDataIndices[id] = nif->AddIntegerExtraData(shapeName, extraDataName->GetValue().ToStdString(), 0);
 		break;
 	}
 }
@@ -599,7 +599,7 @@ void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::ApplyChanges() {
-	NiShader* shader = nif->GetShader(shape);
+	NiShader* shader = nif->GetShader(shapeName);
 
 	if (shader) {
 		string name = shaderName->GetValue();
@@ -648,7 +648,7 @@ void ShapeProperties::ApplyChanges() {
 
 				shader->SetType(type);
 
-				NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+				NiMaterialProperty* material = nif->GetMaterialProperty(shapeName);
 				if (!material)
 					break;
 
@@ -662,31 +662,31 @@ void ShapeProperties::ApplyChanges() {
 		}
 
 		if (os->targetGame == FO4 && currentMaterialPath != name) {
-			os->project->SetTexture(shape, "_AUTO_");
+			os->project->SetTexture(shapeName, "_AUTO_");
 			os->RefreshGUIFromProj();
 		}
 	}
 
 	ushort flags;
 	byte threshold;
-	if (nif->GetAlphaForShape(shape, flags, threshold)) {
+	if (nif->GetAlphaForShape(shapeName, flags, threshold)) {
 		threshold = atoi(alphaThreshold->GetValue().c_str());
-		nif->SetAlphaForShape(shape, flags, threshold);
+		nif->SetAlphaForShape(shapeName, flags, threshold);
 	}
 
-	NiShape* geom = nif->shapeForName(shape);
-	if (geom) {
-		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(geom);
+	NiShape* shape = nif->FindShapeByName(shapeName);
+	if (shape) {
+		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 	}
 
 	if (skinned->IsChecked()) {
-		nif->BuildSkinPartitions(shape);
+		nif->BuildSkinPartitions(shapeName);
 	}
 	else {
-		nif->DeleteSkinning(shape);
-		os->project->GetWorkAnim()->ClearShape(shape);
+		nif->DeleteSkinning(shapeName);
+		os->project->GetWorkAnim()->ClearShape(shapeName);
 		os->AnimationGUIFromProj();
 	}
 

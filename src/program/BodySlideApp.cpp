@@ -1413,9 +1413,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			}
 		}
 		else {
-			nifBig.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+			nifBig.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 			if (activeSet.GenWeights())
-				nifSmall.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+				nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 		}
 	}
 
@@ -1792,9 +1792,9 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				}
 			}
 			else {
-				nifBig.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+				nifBig.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 				if (activeSet.GenWeights())
-					nifSmall.AddStringExtraData(nifBig.NodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+					nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 			}
 		}
 
