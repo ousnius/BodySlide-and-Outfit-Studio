@@ -330,6 +330,11 @@ int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 	context = ctx;
 
 	canvas->SetCurrent(*context);
+	
+	wxLogMessage("OpenGL Context Info:");
+	wxLogMessage(wxString::Format("-> Vendor:   '%s'", wxString(glGetString(GL_VENDOR))));
+	wxLogMessage(wxString::Format("-> Renderer: '%s'", wxString(glGetString(GL_RENDERER))));
+	wxLogMessage(wxString::Format("-> Version:  '%s'", wxString(glGetString(GL_VERSION))));
 
 	InitGLExtensions();
 	return InitGLSettings();
