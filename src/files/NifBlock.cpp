@@ -538,7 +538,7 @@ void NiObjectNET::notifyBlockDelete(int blockID) {
 void NiObjectNET::notifyStringDelete(int stringID) {
 	NiObject::notifyStringDelete(stringID);
 
-	if (nameRef > stringID)
+	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
 		nameRef--;
 }
 
@@ -4919,7 +4919,7 @@ void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
 void BSLightingShaderProperty::notifyStringDelete(int stringID) {
 	NiProperty::notifyStringDelete(stringID);
 
-	if (wetMaterialNameRef > stringID)
+	if (wetMaterialNameRef != 0xFFFFFFFF && wetMaterialNameRef > stringID)
 		wetMaterialNameRef--;
 }
 
@@ -5766,7 +5766,7 @@ void NiExtraData::Put(fstream& file) {
 void NiExtraData::notifyStringDelete(int stringID) {
 	NiObject::notifyStringDelete(stringID);
 
-	if (nameRef > stringID)
+	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
 		nameRef--;
 }
 
@@ -5831,7 +5831,7 @@ void NiStringExtraData::Put(fstream& file) {
 void NiStringExtraData::notifyStringDelete(int stringID) {
 	NiExtraData::notifyStringDelete(stringID);
 
-	if (stringDataRef > stringID)
+	if (stringDataRef != 0xFFFFFFFF && stringDataRef > stringID)
 		stringDataRef--;
 }
 
