@@ -1589,15 +1589,15 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
-	wxMutex mtx;
+	concurrency::critical_section critical;
 	concurrency::concurrent_unordered_map<string, string> failedOutfitsCon;
 	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const string& outfit)
 	{
-		mtx.Lock();
+		critical.lock();
 		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, outfitList.size());
 		progWnd->Update((int)(count * progstep) - 1, progMsg);
 		count++;
-		mtx.Unlock();
+		critical.unlock();
 
 		wxLogMessage(progMsg);
 		wxLog::FlushActive();
@@ -1793,7 +1793,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			}
 			else {
 				nifBig.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
-				if (activeSet.GenWeights())
+				if (currentSet.GenWeights())
 					nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 			}
 		}
