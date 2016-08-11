@@ -1589,6 +1589,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
+#ifdef WIN32
+	// Force a maximum of 2 concurrencies due to memory limits of 32-bit builds
+	concurrency::CurrentScheduler::Create(concurrency::SchedulerPolicy(2, concurrency::MinConcurrency, 1, concurrency::MaxConcurrency, 2));
+#endif
+
 	concurrency::critical_section critical;
 	concurrency::concurrent_unordered_map<string, string> failedOutfitsCon;
 	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const string& outfit)
@@ -1614,17 +1619,17 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		SliderSetFile sliderDoc;
 		sliderDoc.Open(outfitNameSource[outfit]);
 		if (!sliderDoc.fail()) {
-			if (!sliderDoc.GetSet(outfit, currentSet)) {
-				currentSet.SetBaseDataPath(Config["ShapeDataPath"]);
-				currentSet.LoadSetDiffData(currentDiffs);
-			}
-			else
+			if (sliderDoc.GetSet(outfit, currentSet)) {
 				failedOutfitsCon[outfit] = _("Unable to get slider set from file: ") + outfitNameSource[outfit];
+				return;
+			}
 		}
 		else {
 			failedOutfitsCon[outfit] = _("Unable to open slider set file: ") + outfitNameSource[outfit];
 			return;
 		}
+
+		currentSet.SetBaseDataPath(Config["ShapeDataPath"]);
 
 		// ALT key
 		if (clean && custPath.empty()) {
@@ -1659,6 +1664,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		if (currentSet.GenWeights())
 			if (nifSmall.Load(currentSet.GetInputFileName()))
 				return;
+
+		currentSet.LoadSetDiffData(currentDiffs);
 
 		/* Shape the NIF files */
 		vector<Vector3> vertsLow;
@@ -1755,6 +1762,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			zapIdx.clear();
 		}
 
+		currentDiffs.Clear();
+
 		/* Create directory for the outfit */
 		wxString dir = datapath + currentSet.GetOutputPath();
 		bool success = wxFileName::Mkdir(dir, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
@@ -1818,6 +1827,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				return;
 			}
 		}
+
+		return;
 	});
 
 	progWnd->Update(1000);

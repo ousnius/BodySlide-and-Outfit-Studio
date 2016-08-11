@@ -48,7 +48,7 @@ bool OSDataFile::Read(const string& fileName) {
 			file.read((char*)&index, 2);
 			file.read((char*)&diff, sizeof(Vector3));
 			diff.clampEpsilon();
-			diffs[index] = move(diff);
+			diffs.emplace(index, diff);
 		}
 
 		dataDiffs[dataName] = move(diffs);
@@ -88,12 +88,12 @@ map<string, unordered_map<ushort, Vector3>> OSDataFile::GetDataDiffs() {
 	return dataDiffs;
 }
 
-void OSDataFile::GetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& outDataDiff) {
-	outDataDiff.clear();
-
+unordered_map<ushort, Vector3>* OSDataFile::GetDataDiff(const string& dataName) {
 	auto it = dataDiffs.find(dataName);
 	if (it != dataDiffs.end())
-		outDataDiff = dataDiffs[dataName];
+		return &dataDiffs[dataName];
+
+	return nullptr;
 }
 
 void OSDataFile::SetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& inDataDiff) {
@@ -124,7 +124,9 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 	int sz;
 	inFile.read((char*)&sz, 4);
 
-	unordered_map<ushort, Vector3> data(sz);
+	unordered_map<ushort, Vector3> data;
+	data.reserve(sz);
+
 	int idx;
 	Vector3 v;
 	for (int i = 0; i < sz; i++) {
@@ -133,7 +135,9 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 		v.clampEpsilon();
 		data.emplace(idx, v);
 	}
+
 	inFile.close();
+
 	if (namedSet.find(name) != namedSet.end())
 		namedSet.erase(name);
 
@@ -150,9 +154,9 @@ bool DiffDataSets::LoadData(const map<string, map<string, string>>& osdNames) {
 			return false;
 
 		for (auto &dataNames : osd.second) {
-			unordered_map<ushort, Vector3> diff;
-			osdFile.GetDataDiff(dataNames.first, diff);
-			LoadSet(dataNames.first, dataNames.second, diff);
+			auto diff = osdFile.GetDataDiff(dataNames.first);
+			if (diff)
+				LoadSet(dataNames.first, dataNames.second, *diff);
 		}
 	}
 

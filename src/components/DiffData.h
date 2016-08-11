@@ -27,7 +27,7 @@ public:
 	bool Write(const string& fileName);
 
 	map<string, unordered_map<ushort, Vector3>> GetDataDiffs();
-	void GetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& outDataDiff);
+	unordered_map<ushort, Vector3>* GetDataDiff(const string& dataName);
 	void SetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& inDataDiff);
 };
 
