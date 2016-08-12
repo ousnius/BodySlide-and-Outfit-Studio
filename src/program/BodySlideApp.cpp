@@ -2868,7 +2868,13 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked() ? "true" : "false");
 			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
 			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
-			Config.SetValue("UseSystemLanguage", cbLanguage->IsChecked() ? "true" : "false");
+			
+			string oldLang = Config["UseSystemLanguage"];
+			string newLang = cbLanguage->IsChecked() ? "true" : "false";
+			if (oldLang != newLang) {
+				Config.SetValue("UseSystemLanguage", newLang);
+				app->InitLanguage();
+			}
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
