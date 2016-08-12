@@ -1730,7 +1730,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 }
 
 void BSTriShape::CalcTangentSpace() {
-	if (!HasNormals())
+	if (!HasNormals() || !HasUVs())
 		return;
 
 	GetNormalData(false);
@@ -2822,7 +2822,7 @@ void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh
 }
 
 void NiTriShapeData::CalcTangentSpace() {
-	if (!HasNormals())
+	if (!HasNormals() || !HasUVs())
 		return;
 
 	NiTriBasedGeomData::CalcTangentSpace();
@@ -3124,7 +3124,7 @@ void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThres
 }
 
 void NiTriStripsData::CalcTangentSpace() {
-	if (!HasNormals())
+	if (!HasNormals() || !HasUVs())
 		return;
 
 	NiTriBasedGeomData::CalcTangentSpace();
