@@ -561,6 +561,7 @@ void OutfitStudio::UpdateActiveShapeUI() {
 			glView->ShowVertexEdit(false);
 
 		CreateSegmentTree();
+		outfitBones->UnselectAll();
 	}
 	else {
 		mesh* m = glView->GetMesh(activeItem->shapeName);
@@ -577,6 +578,13 @@ void OutfitStudio::UpdateActiveShapeUI() {
 		}
 
 		CreateSegmentTree(activeItem->shapeName);
+
+		wxArrayTreeItemIds selItems;
+		outfitBones->GetSelections(selItems);
+		if (!selItems.empty()) {
+			wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems.front());
+			OnBoneSelect(treeEvent);
+		}
 	}
 }
 
@@ -599,7 +607,6 @@ void OutfitStudio::SelectShape(const string& shapeName) {
 		}
 		item = outfitShapes->GetNextSibling(item);
 	}
-	UpdateActiveShapeUI();
 }
 
 vector<string> OutfitStudio::GetShapeList() {
@@ -4633,7 +4640,7 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 
 	outfitBones->GetSelections(selItems);
 	if (!selItems.empty()) {
-		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems[0]);
+		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems.front());
 		OnBoneSelect(treeEvent);
 	}
 }
@@ -4650,7 +4657,7 @@ void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (!selItems.empty()) {
-		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems[0]);
+		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems.front());
 		OnBoneSelect(treeEvent);
 	}
 }
@@ -4836,9 +4843,9 @@ void OutfitStudio::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {
 		for (auto &sn : setNames)
 			setNameChoice->AppendString(sn);
 
-		if (setNames.size() > 0) {
+		if (!setNames.empty()) {
 			setNameChoice->SetSelection(0);
-			ssf.SetShapes(setNames[0], shapes);
+			ssf.SetShapes(setNames.front(), shapes);
 			for (auto &rsn : shapes)
 				refShapeChoice->AppendString(rsn);
 
@@ -5890,7 +5897,7 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 	if (GetCapture() == this)
 		ReleaseMouse();
 
-	if (!isLDragging && !isPainting) {
+	if (!isLDragging && !isPainting && !activeBrush) {
 		int x, y;
 		event.GetPosition(&x, &y);
 		wxPoint p = event.GetPosition();
