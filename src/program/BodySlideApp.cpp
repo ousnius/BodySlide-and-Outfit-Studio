@@ -1418,6 +1418,11 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 				nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 		}
 	}
+	else {
+		string triPath = outFileNameBig + ".tri";
+		if (wxFileName::FileExists(triPath))
+			wxRemoveFile(triPath);
+	}
 
 	wxString savedLow;
 	wxString savedHigh;
@@ -1805,6 +1810,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				if (currentSet.GenWeights())
 					nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 			}
+		}
+		else {
+			string triPath = outFileNameBig + ".tri";
+			if (wxFileName::FileExists(triPath))
+				wxRemoveFile(triPath);
 		}
 
 		/* Set filenames for the outfit */
