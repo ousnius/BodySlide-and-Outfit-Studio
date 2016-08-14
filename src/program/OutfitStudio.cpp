@@ -1893,7 +1893,8 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 		project->GetShapes(shapes);
 		for (auto &s : shapes) {
 			mesh* m = glView->GetMesh(s);
-			m->ColorChannelFill(1, 0.0f);
+			if (m)
+				m->ColorChannelFill(1, 0.0f);
 		}
 
 		activeBone = outfitBones->GetItemText(item);
