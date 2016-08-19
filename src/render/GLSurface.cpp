@@ -357,19 +357,38 @@ int GLSurface::InitGLSettings() {
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-	glEnable(GL_POLYGON_OFFSET_FILL);
 
-	// Store supported line width range
-	GLfloat sizes[2];
-	glGetFloatv(GL_LINE_WIDTH_RANGE, sizes);
+	// Offset lines forward to avoid clipping issues
+	glEnable(GL_POLYGON_OFFSET_LINE);
+	glPolygonOffset(-0.03f, -0.03f);
 
-	defLineWidth = sizes[0];
-	defPointSize = 5.0f;
-	cursorSize = 0.5f;
+	// Get supported line width range
+	GLfloat lineRange[2];
+	glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE, lineRange);
+
+	if (lineRange[0] > 1.0f)
+		defLineWidth = lineRange[0];
+	else if (lineRange[1] < 1.0f)
+		defLineWidth = lineRange[1];
+	else
+		defLineWidth = 1.0f;
+
+	// Get supported point size range
+	GLfloat pointRange[2];
+	glGetFloatv(GL_SMOOTH_POINT_SIZE_RANGE, pointRange);
+
+	if (pointRange[0] > 5.0f)
+		defPointSize = pointRange[0];
+	else if (pointRange[1] < 5.0f)
+		defPointSize = pointRange[1];
+	else
+		defPointSize = 5.0f;
 
 	glLineWidth(defLineWidth);
-
 	glPointSize(defPointSize);
+
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
 
 	InitLighting();
 	InitMaterial(Vector3(0.8f, 0.8f, 0.8f));
@@ -979,10 +998,6 @@ void GLSurface::RenderMesh(mesh* m) {
 		}
 
 		if (m->textured && bTextured) {
-			// Alpha
-			glEnable(GL_BLEND);
-			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
 			if (m->material) {
 				if (bUseAF)
 					m->material->ActivateTextures(m->texcoord, largestAF);
@@ -991,7 +1006,6 @@ void GLSurface::RenderMesh(mesh* m) {
 			}
 		}
 		else {
-			glDisable(GL_BLEND);
 			if (m->material)
 				m->material->DeactivateTextures();
 		}
