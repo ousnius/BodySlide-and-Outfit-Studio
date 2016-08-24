@@ -4770,9 +4770,10 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 			scale.z = atof(XRCCTRL(dlg, "ssTextZ", wxTextCtrl)->GetValue().c_str());
 		}
 
-		scale.x *= 1.0f / previewScale.x;
-		scale.y *= 1.0f / previewScale.y;
-		scale.z *= 1.0f / previewScale.z;
+		Vector3 scaleNew = scale;
+		scaleNew.x *= 1.0f / previewScale.x;
+		scaleNew.y *= 1.0f / previewScale.y;
+		scaleNew.z *= 1.0f / previewScale.z;
 
 		unordered_map<ushort, float> mask;
 		unordered_map<ushort, float>* mptr = nullptr;
@@ -4784,12 +4785,42 @@ void OutfitStudio::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 				mptr = &mask;
 
 			vector<Vector3> verts;
-			project->ScaleShape(i->shapeName, scale, mptr);
+			if (bEditSlider) {
+				auto& diff = previewDiff[i->shapeName];
+				for (auto &d : diff)
+					d.second *= -1.0f;
+
+				project->UpdateMorphResult(i->shapeName, activeSlider, diff);
+				project->GetLiveVerts(i->shapeName, verts);
+				diff.clear();
+
+				Vector3 d;
+				float diffX, diffY, diffZ;
+				int vertexCount = project->GetVertexCount(i->shapeName);
+				for (int j = 0; j < vertexCount; j++) {
+					d.x = verts[j].x * scale.x - verts[j].x;
+					d.y = verts[j].y * scale.y - verts[j].y;
+					d.z = verts[j].z * scale.z - verts[j].z;
+					d *= 1.0f - mask[j];
+					diff[j] = d;
+					diffX = diff[j].x / -10.0f;
+					diffY = diff[j].y / 10.0f;
+					diffZ = diff[j].z / 10.0f;
+					diff[j].z = diffY;
+					diff[j].y = diffZ;
+					diff[j].x = diffX;
+				}
+				project->UpdateMorphResult(i->shapeName, activeSlider, diff);
+			}
+			else
+				project->ScaleShape(i->shapeName, scaleNew, mptr);
+
 			project->GetLiveVerts(i->shapeName, verts);
 			glView->UpdateMeshVertices(i->shapeName, &verts);
 		}
 
 		previewScale = Vector3(1.0f, 1.0f, 1.0f);
+		previewDiff.clear();
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();
@@ -4887,7 +4918,36 @@ void OutfitStudio::PreviewScale(const Vector3& scale) {
 			mptr = &mask;
 
 		vector<Vector3> verts;
-		project->ScaleShape(i->shapeName, scaleNew, mptr);
+		if (bEditSlider) {
+			auto& diff = previewDiff[i->shapeName];
+			for (auto &d : diff)
+				d.second *= -1.0f;
+
+			project->UpdateMorphResult(i->shapeName, activeSlider, diff);
+			project->GetLiveVerts(i->shapeName, verts);
+			diff.clear();
+
+			Vector3 d;
+			float diffX, diffY, diffZ;
+			int vertexCount = project->GetVertexCount(i->shapeName);
+			for (int j = 0; j < vertexCount; j++) {
+				d.x = verts[j].x * scale.x - verts[j].x;
+				d.y = verts[j].y * scale.y - verts[j].y;
+				d.z = verts[j].z * scale.z - verts[j].z;
+				d *= 1.0f - mask[j];
+				diff[j] = d;
+				diffX = diff[j].x / -10.0f;
+				diffY = diff[j].y / 10.0f;
+				diffZ = diff[j].z / 10.0f;
+				diff[j].z = diffY;
+				diff[j].y = diffZ;
+				diff[j].x = diffX;
+			}
+			project->UpdateMorphResult(i->shapeName, activeSlider, diff);
+		}
+		else
+			project->ScaleShape(i->shapeName, scaleNew, mptr);
+
 		project->GetLiveVerts(i->shapeName, verts);
 		glView->UpdateMeshVertices(i->shapeName, &verts);
 	}

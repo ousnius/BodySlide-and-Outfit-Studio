@@ -769,6 +769,7 @@ private:
 	Vector3 previewMove;
 	Vector3 previewScale;
 	Vector3 previewRotation;
+	unordered_map<string, unordered_map<ushort, Vector3>> previewDiff;
 
 	vector<ShapeItemData*> selectedItems;
 	string activeBone;
