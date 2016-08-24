@@ -225,6 +225,7 @@ string OutfitProject::Save(const wxString& strFileName,
 		}
 	}
 
+	owner->ShowPartition();
 	owner->UpdateProgress(100, _("Finished"));
 	return errmsg;
 }
@@ -1469,11 +1470,6 @@ void OutfitProject::AddCustomBoneRef(const string& boneName, const Vector3& tran
 	for (auto &s : shapes)
 		if (workAnim.AddShapeBone(s, customBone))
 			workAnim.SetShapeBoneXForm(s, boneName, xForm);
-}
-
-void OutfitProject::BuildShapeSkinPartions(const string& destShape) {
-	workAnim.WriteToNif(&workNif);
-	workNif.BuildSkinPartitions(destShape);
 }
 
 void OutfitProject::ClearWorkSliders() {

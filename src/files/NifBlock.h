@@ -236,8 +236,8 @@ public:
 	virtual void Init();
 	virtual void notifyBlockDelete(int blockID);
 	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	virtual void notifyStringDelete(int stringID);
 	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual void notifyStringDelete(int stringID);
 
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
@@ -364,8 +364,8 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	void notifyStringDelete(int stringID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 
 	string GetName();
 	void SetName(const string& propertyName, bool renameExisting = false);
@@ -397,6 +397,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	bool rotToEulerDegrees(float &Y, float& P, float& R) {
@@ -435,8 +436,8 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	void notifyStringDelete(int stringID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 
@@ -456,6 +457,7 @@ public:
 
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	int GetNumChildren() { return numChildren; }
@@ -498,9 +500,9 @@ public:
 	void Init();
 	void Get(fstream& file);
 	void Put(fstream& file);
-	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 
 	void SetVertices(bool enable);
@@ -536,6 +538,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	virtual int GetDataRef();
@@ -636,6 +639,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 
@@ -744,6 +748,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 
@@ -767,6 +772,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 
@@ -792,6 +798,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	bool IsSkinned() { return skinInstanceRef != 0xFFFFFFFF; }
@@ -816,6 +823,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 
@@ -845,6 +853,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 
@@ -881,6 +890,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 
@@ -942,14 +952,16 @@ public:
 
 class BSDismemberSkinInstance : public NiSkinInstance {
 public:
-	struct Partition {
-		short flags;
-		short partID;
+	struct PartitionInfo {
+		ushort flags;
+		ushort partID;
 	};
 
+private:
 	int numPartitions;
-	vector<Partition> partitions;
+	vector<PartitionInfo> partitions;
 
+public:
 	BSDismemberSkinInstance(NiHeader& hdr);
 	BSDismemberSkinInstance(fstream& file, NiHeader& hdr);
 
@@ -958,6 +970,18 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
+
+	int GetNumPartitions() { return numPartitions; }
+	vector<PartitionInfo> GetPartitions() { return partitions; }
+
+	void AddPartition(const PartitionInfo& partition);
+	void RemovePartition(const int& id);
+	void ClearPartitions();
+
+	void SetPartitions(const vector<PartitionInfo>& partitions) {
+		this->partitions = partitions;
+		this->numPartitions = partitions.size();
+	}
 };
 
 class BSSkinInstance : public NiBoneContainer  {
@@ -1045,29 +1069,27 @@ class NiSkinPartition : public NiObject {
 public:
 	class PartitionBlock {
 	public:
-		ushort numVertices;
-		ushort numTriangles;
-		ushort numBones;
-		ushort numStrips;
-		ushort numWeightsPerVertex;
+		ushort numVertices = 0;
+		ushort numTriangles = 0;
+		ushort numBones = 0;
+		ushort numStrips = 0;
+		ushort numWeightsPerVertex = 0;
 		vector<ushort> bones;
-		byte hasVertexMap;
+		bool hasVertexMap = false;
 		vector<ushort> vertexMap;
-		byte hasVertexWeights;
+		bool hasVertexWeights = false;
 		vector<VertexWeight> vertexWeights;
 		vector<ushort> stripLengths;
-		byte hasFaces;
+		bool hasFaces = false;
 		vector<vector<ushort>> strips;
 		vector<Triangle> triangles;
-		byte hasBoneIndices;
+		bool hasBoneIndices = false;
 		vector<BoneIndices> boneIndices;
-		ushort unkShort;					// User Version >= 12
+		ushort unkShort = 0;				// User Version >= 12
 	};
 
 	uint numPartitions;
 	vector<PartitionBlock> partitions;
-
-	bool needsBuild;
 
 	NiSkinPartition(NiHeader& hdr);
 	NiSkinPartition(fstream& file, NiHeader& hdr);
@@ -1257,8 +1279,8 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	void notifyStringDelete(int stringID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	virtual bool IsSkinTint();
@@ -1333,8 +1355,8 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
-	void notifyStringDelete(int stringID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	bool IsSkinTint();
@@ -1372,6 +1394,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	uint GetType();
@@ -1407,6 +1430,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	bool IsSkinTint();
@@ -1428,6 +1452,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 
@@ -1447,6 +1472,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	bool IsSkinTint();
@@ -1481,6 +1507,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 
@@ -1502,6 +1529,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	Vector3 GetSpecularColor();
@@ -1527,6 +1555,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 
@@ -1577,6 +1606,7 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 
 	uint GetIntegerData();
@@ -1590,6 +1620,7 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
+	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
 };
 

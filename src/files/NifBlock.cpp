@@ -88,10 +88,10 @@ void NiObject::notifyBlockDelete(int blockID) {
 void NiObject::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 }
 
-void NiObject::notifyStringDelete(int stringID) {
+void NiObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
-void NiObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+void NiObject::notifyStringDelete(int stringID) {
 }
 
 void NiObject::Get(fstream& file) {
@@ -535,13 +535,6 @@ void NiObjectNET::notifyBlockDelete(int blockID) {
 		controllerRef--;
 }
 
-void NiObjectNET::notifyStringDelete(int stringID) {
-	NiObject::notifyStringDelete(stringID);
-
-	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
-		nameRef--;
-}
-
 void NiObjectNET::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	for (int i = 0; i < numExtraData; i++) {
 		if (extraDataRef[i] == blockIndexLo)
@@ -554,6 +547,13 @@ void NiObjectNET::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		controllerRef = blockIndexHi;
 	else if (controllerRef == blockIndexHi)
 		controllerRef = blockIndexLo;
+}
+
+void NiObjectNET::notifyStringDelete(int stringID) {
+	NiObject::notifyStringDelete(stringID);
+
+	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
+		nameRef--;
 }
 
 string NiObjectNET::GetName() {
@@ -736,6 +736,10 @@ void NiAVObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void NiAVObject::notifyStringDelete(int stringID) {
+	NiObjectNET::notifyStringDelete(stringID);
+}
+
 int NiAVObject::CalcBlockSize() {
 	NiObjectNET::CalcBlockSize();
 
@@ -848,6 +852,10 @@ void NiNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void NiNode::notifyStringDelete(int stringID) {
+	NiAVObject::notifyStringDelete(stringID);
+}
+
 int NiNode::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
@@ -900,6 +908,9 @@ void NiShape::notifyBlockDelete(int blockID) {
 }
 
 void NiShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+}
+
+void NiShape::notifyStringDelete(int stringID) {
 }
 
 int NiShape::CalcBlockSize() {
@@ -1318,6 +1329,10 @@ void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		alphaPropertyRef = blockIndexHi;
 	else if (alphaPropertyRef == blockIndexHi)
 		alphaPropertyRef = blockIndexLo;
+}
+
+void BSTriShape::notifyStringDelete(int stringID) {
+	NiAVObject::notifyStringDelete(stringID);
 }
 
 void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
@@ -1962,6 +1977,10 @@ void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
+void BSSubIndexTriShape::notifyStringDelete(int stringID) {
+	BSTriShape::notifyStringDelete(stringID);
+}
+
 void BSSubIndexTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	BSTriShape::notifyVerticesDelete(vertIndices);
 
@@ -2102,6 +2121,10 @@ void BSMeshLODTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
+void BSMeshLODTriShape::notifyStringDelete(int stringID) {
+	BSTriShape::notifyStringDelete(stringID);
+}
+
 void BSMeshLODTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	BSTriShape::notifyVerticesDelete(vertIndices);
 }
@@ -2216,6 +2239,10 @@ void NiGeometry::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		alphaPropertyRef = blockIndexHi;
 	else if (alphaPropertyRef == blockIndexHi)
 		alphaPropertyRef = blockIndexLo;
+}
+
+void NiGeometry::notifyStringDelete(int stringID) {
+	NiAVObject::notifyStringDelete(stringID);
 }
 
 int NiGeometry::CalcBlockSize() {
@@ -2550,6 +2577,10 @@ void NiTriBasedGeom::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiGeometry::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
+void NiTriBasedGeom::notifyStringDelete(int stringID) {
+	NiGeometry::notifyStringDelete(stringID);
+}
+
 int NiTriBasedGeom::CalcBlockSize() {
 	return NiGeometry::CalcBlockSize();
 }
@@ -2637,6 +2668,10 @@ void NiTriShape::notifyBlockDelete(int blockID) {
 
 void NiTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiTriBasedGeom::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void NiTriShape::notifyStringDelete(int stringID) {
+	NiTriBasedGeom::notifyStringDelete(stringID);
 }
 
 int NiTriShape::CalcBlockSize() {
@@ -2944,6 +2979,10 @@ void NiTriStrips::notifyBlockDelete(int blockID) {
 
 void NiTriStrips::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiTriBasedGeom::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void NiTriStrips::notifyStringDelete(int stringID) {
+	NiTriBasedGeom::notifyStringDelete(stringID);
 }
 
 int NiTriStrips::CalcBlockSize() {
@@ -3363,12 +3402,14 @@ BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader& hdr) {
 void BSDismemberSkinInstance::Get(fstream& file) {
 	NiSkinInstance::Get(file);
 
-	Partition part;
 	file.read((char*)&numPartitions, 4);
+	partitions.resize(numPartitions);
+
 	for (int i = 0; i < numPartitions; i++) {
+		PartitionInfo part;
 		file.read((char*)&part.flags, 2);
 		file.read((char*)&part.partID, 2);
-		partitions.push_back(part);
+		partitions[i] = part;
 	}
 }
 
@@ -3398,6 +3439,22 @@ int BSDismemberSkinInstance::CalcBlockSize() {
 	return blockSize;
 }
 
+void BSDismemberSkinInstance::AddPartition(const BSDismemberSkinInstance::PartitionInfo& part) {
+	partitions.push_back(part);
+	numPartitions++;
+}
+
+void BSDismemberSkinInstance::RemovePartition(const int& id) {
+	if (id >= 0 && id < numPartitions) {
+		partitions.erase(partitions.begin() + id);
+		numPartitions--;
+	}
+}
+
+void BSDismemberSkinInstance::ClearPartitions() {
+	partitions.clear();
+	numPartitions = 0;
+}
 
 
 BSSkinInstance::BSSkinInstance(NiHeader& hdr) {
@@ -3664,7 +3721,6 @@ NiSkinPartition::NiSkinPartition(NiHeader& hdr) {
 	header = &hdr;
 	blockType = NISKINPARTITION;
 	numPartitions = 0;
-	needsBuild = true;
 }
 
 NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
@@ -3673,7 +3729,6 @@ NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
 	header = &hdr;
 	blockType = NISKINPARTITION;
 	numPartitions = 0;
-	needsBuild = false;
 
 	Get(file);
 }
@@ -3681,84 +3736,65 @@ NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
 void NiSkinPartition::Get(fstream& file) {
 	NiObject::Get(file);
 
-	PartitionBlock partition;
-	ushort uShort;
-	VertexWeight weights;
-	BoneIndices indices;
-	Triangle triangle;
-
 	file.read((char*)&numPartitions, 4);
+	partitions.resize(numPartitions);
 	for (int p = 0; p < numPartitions; p++) {
-		partition.bones.clear();
-		partition.vertexMap.clear();
-		partition.vertexWeights.clear();
-		partition.stripLengths.clear();
-		partition.strips.clear();
-		partition.triangles.clear();
-		partition.boneIndices.clear();
-
+		PartitionBlock partition;
 		file.read((char*)&partition.numVertices, 2);
 		file.read((char*)&partition.numTriangles, 2);
 		file.read((char*)&partition.numBones, 2);
 		file.read((char*)&partition.numStrips, 2);
 		file.read((char*)&partition.numWeightsPerVertex, 2);
 
-		for (int i = 0; i < partition.numBones; i++) {
-			file.read((char*)&uShort, 2);
-			partition.bones.push_back(uShort);
-		}
+		partition.bones.resize(partition.numBones);
+		for (int i = 0; i < partition.numBones; i++)
+			file.read((char*)&partition.bones[i], 2);
 
 		file.read((char*)&partition.hasVertexMap, 1);
-		for (int i = 0; (i < partition.numVertices) && partition.hasVertexMap; i++) {
-			file.read((char*)&uShort, 2);
-			partition.vertexMap.push_back(uShort);
+		if (partition.hasVertexMap) {
+			partition.vertexMap.resize(partition.numVertices);
+			for (int i = 0; i < partition.numVertices; i++)
+				file.read((char*)&partition.vertexMap[i], 2);
 		}
 
 		file.read((char*)&partition.hasVertexWeights, 1);
-		for (int i = 0; (i < partition.numVertices) && partition.hasVertexWeights; i++) {
-			file.read((char*)&weights.w1, 4);
-			file.read((char*)&weights.w2, 4);
-			file.read((char*)&weights.w3, 4);
-			file.read((char*)&weights.w4, 4);
-			partition.vertexWeights.push_back(weights);
+		if (partition.hasVertexWeights) {
+			partition.vertexWeights.resize(partition.numVertices);
+			for (int i = 0; i < partition.numVertices; i++)
+				file.read((char*)&partition.vertexWeights[i], 16);
 		}
 
-		for (int i = 0; i < partition.numStrips; i++) {
-			file.read((char*)&uShort, 2);
-			partition.stripLengths.push_back(uShort);
-		}
+		partition.stripLengths.resize(partition.numStrips);
+		for (int i = 0; i < partition.numStrips; i++)
+			file.read((char*)&partition.stripLengths[i], 2);
 
 		file.read((char*)&partition.hasFaces, 1);
-		for (int i = 0; (i < partition.numStrips) && partition.hasFaces; i++) {
-			partition.strips.push_back(vector<ushort>());
-			for (int j = 0; j < partition.stripLengths[i]; j++) {
-				file.read((char*)&uShort, 2);
-				partition.strips[i].push_back(uShort);
+		if (partition.hasFaces) {
+			partition.strips.resize(partition.numStrips);
+			for (int i = 0; i < partition.numStrips; i++) {
+				partition.strips[i].resize(partition.stripLengths[i]);
+				for (int j = 0; j < partition.stripLengths[i]; j++)
+					file.read((char*)&partition.strips[i][j], 2);
 			}
 		}
 
-		if (partition.numStrips == 0) {
-			for (int i = 0; (i < partition.numTriangles) && partition.hasFaces; i++) {
-				file.read((char*)&triangle.p1, 2);
-				file.read((char*)&triangle.p2, 2);
-				file.read((char*)&triangle.p3, 2);
-				partition.triangles.push_back(triangle);
-			}
+		if (partition.numStrips == 0 && partition.hasFaces) {
+			partition.triangles.resize(partition.numTriangles);
+			for (int i = 0; i < partition.numTriangles; i++)
+				file.read((char*)&partition.triangles[i], 6);
 		}
 
 		file.read((char*)&partition.hasBoneIndices, 1);
-		for (int i = 0; i < partition.numVertices && partition.hasBoneIndices; i++) {
-			file.read((char*)&indices.i1, 1);
-			file.read((char*)&indices.i2, 1);
-			file.read((char*)&indices.i3, 1);
-			file.read((char*)&indices.i4, 1);
-			partition.boneIndices.push_back(indices);
+		if (partition.hasBoneIndices) {
+			partition.boneIndices.resize(partition.numVertices);
+			for (int i = 0; i < partition.numVertices; i++)
+				file.read((char*)&partition.boneIndices[i], 4);
 		}
 
 		if (header->GetUserVersion() >= 12)
 			file.read((char*)&partition.unkShort, 2);
 
-		partitions.push_back(partition);
+		partitions[p] = partition;
 	}
 }
 
@@ -3772,33 +3808,37 @@ void NiSkinPartition::Put(fstream& file) {
 		file.write((char*)&partitions[p].numBones, 2);
 		file.write((char*)&partitions[p].numStrips, 2);
 		file.write((char*)&partitions[p].numWeightsPerVertex, 2);
+
 		for (int i = 0; i < partitions[p].numBones; i++)
 			file.write((char*)&partitions[p].bones[i], 2);
 
 		file.write((char*)&partitions[p].hasVertexMap, 1);
-		for (int i = 0; (i < partitions[p].numVertices) && partitions[p].hasVertexMap; i++)
-			file.write((char*)&partitions[p].vertexMap[i], 2);
+		if (partitions[p].hasVertexMap)
+			for (int i = 0; i < partitions[p].numVertices; i++)
+				file.write((char*)&partitions[p].vertexMap[i], 2);
 
 		file.write((char*)&partitions[p].hasVertexWeights, 1);
-		for (int i = 0; (i < partitions[p].numVertices) && partitions[p].hasVertexWeights; i++)
-			file.write((char*)&partitions[p].vertexWeights[i], 16);
+		if (partitions[p].hasVertexWeights)
+			for (int i = 0; i < partitions[p].numVertices; i++)
+				file.write((char*)&partitions[p].vertexWeights[i], 16);
 
 		for (int i = 0; i < partitions[p].numStrips; i++)
 			file.write((char*)&partitions[p].stripLengths[i], 2);
 
 		file.write((char*)&partitions[p].hasFaces, 1);
-		for (int i = 0; (i < partitions[p].numStrips) && partitions[p].hasFaces; i++)
-			for (int j = 0; j < partitions[p].stripLengths[i]; j++)
-				file.write((char*)&partitions[p].strips[i][j], 2);
+		if (partitions[p].hasFaces)
+			for (int i = 0; i < partitions[p].numStrips; i++)
+				for (int j = 0; j < partitions[p].stripLengths[i]; j++)
+					file.write((char*)&partitions[p].strips[i][j], 2);
 
-		if (partitions[p].numStrips == 0) {
-			for (int i = 0; (i < partitions[p].numTriangles) && partitions[p].hasFaces; i++)
+		if (partitions[p].numStrips == 0 && partitions[p].hasFaces)
+			for (int i = 0; i < partitions[p].numTriangles; i++)
 				file.write((char*)&partitions[p].triangles[i].p1, 6);
-		}
 
 		file.write((char*)&partitions[p].hasBoneIndices, 1);
-		for (int i = 0; i < partitions[p].numVertices && partitions[p].hasBoneIndices; i++)
-			file.write((char*)&partitions[p].boneIndices[i], 4);
+		if (partitions[p].hasBoneIndices)
+			for (int i = 0; i < partitions[p].numVertices; i++)
+				file.write((char*)&partitions[p].boneIndices[i], 4);
 
 		if (header->GetUserVersion() >= 12)
 			file.write((char*)&partitions[p].unkShort, 2);
@@ -4527,10 +4567,10 @@ void NiShader::Put(fstream& file) {
 void NiShader::notifyBlockDelete(int blockID) {
 }
 
-void NiShader::notifyStringDelete(int stringID) {
+void NiShader::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
-void NiShader::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+void NiShader::notifyStringDelete(int stringID) {
 }
 
 
@@ -4916,13 +4956,6 @@ void BSLightingShaderProperty::notifyBlockDelete(int blockID) {
 		textureSetRef--;
 }
 
-void BSLightingShaderProperty::notifyStringDelete(int stringID) {
-	NiProperty::notifyStringDelete(stringID);
-
-	if (wetMaterialNameRef != 0xFFFFFFFF && wetMaterialNameRef > stringID)
-		wetMaterialNameRef--;
-}
-
 void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
@@ -4930,6 +4963,13 @@ void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexH
 		textureSetRef = blockIndexHi;
 	else if (textureSetRef == blockIndexHi)
 		textureSetRef = blockIndexLo;
+}
+
+void BSLightingShaderProperty::notifyStringDelete(int stringID) {
+	NiProperty::notifyStringDelete(stringID);
+
+	if (wetMaterialNameRef != 0xFFFFFFFF && wetMaterialNameRef > stringID)
+		wetMaterialNameRef--;
 }
 
 bool BSLightingShaderProperty::IsSkinTint() {
@@ -5119,6 +5159,10 @@ void BSShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
+void BSShaderProperty::notifyStringDelete(int stringID) {
+	NiProperty::notifyStringDelete(stringID);
+}
+
 uint BSShaderProperty::GetType() {
 	return shaderType;
 }
@@ -5240,6 +5284,10 @@ void BSEffectShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi)
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
+void BSEffectShaderProperty::notifyStringDelete(int stringID) {
+	NiProperty::notifyStringDelete(stringID);
+}
+
 bool BSEffectShaderProperty::IsSkinTint() {
 	return (shaderFlags1 & (1 << 21)) != 0;
 }
@@ -5317,9 +5365,12 @@ void BSShaderLightingProperty::notifyBlockDelete(int blockID) {
 	BSShaderProperty::notifyBlockDelete(blockID);
 }
 
-
 void BSShaderLightingProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	BSShaderProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void BSShaderLightingProperty::notifyStringDelete(int stringID) {
+	BSShaderProperty::notifyStringDelete(stringID);
 }
 
 int BSShaderLightingProperty::CalcBlockSize() {
@@ -5414,7 +5465,6 @@ void BSShaderPPLightingProperty::notifyBlockDelete(int blockID) {
 		textureSetRef--;
 }
 
-
 void BSShaderPPLightingProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	BSShaderLightingProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
@@ -5422,6 +5472,10 @@ void BSShaderPPLightingProperty::notifyBlockSwap(int blockIndexLo, int blockInde
 		textureSetRef = blockIndexHi;
 	else if (textureSetRef == blockIndexHi)
 		textureSetRef = blockIndexLo;
+}
+
+void BSShaderPPLightingProperty::notifyStringDelete(int stringID) {
+	BSShaderLightingProperty::notifyStringDelete(stringID);
 }
 
 bool BSShaderPPLightingProperty::IsSkinTint() {
@@ -5553,9 +5607,12 @@ void NiAlphaProperty::notifyBlockDelete(int blockID) {
 	NiProperty::notifyBlockDelete(blockID);
 }
 
-
 void NiAlphaProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void NiAlphaProperty::notifyStringDelete(int stringID) {
+	NiProperty::notifyStringDelete(stringID);
 }
 
 int NiAlphaProperty::CalcBlockSize() {
@@ -5625,9 +5682,12 @@ void NiMaterialProperty::notifyBlockDelete(int blockID) {
 	NiProperty::notifyBlockDelete(blockID);
 }
 
-
 void NiMaterialProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void NiMaterialProperty::notifyStringDelete(int stringID) {
+	NiProperty::notifyStringDelete(stringID);
 }
 
 Vector3 NiMaterialProperty::GetSpecularColor() {
@@ -5723,6 +5783,10 @@ void NiStencilProperty::notifyBlockDelete(int blockID) {
 
 void NiStencilProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void NiStencilProperty::notifyStringDelete(int stringID) {
+	NiProperty::notifyStringDelete(stringID);
 }
 
 int NiStencilProperty::CalcBlockSize() {
@@ -5882,6 +5946,10 @@ void NiIntegerExtraData::Put(fstream& file) {
 	file.write((char*)&integerData, 4);
 }
 
+void NiIntegerExtraData::notifyStringDelete(int stringID) {
+	NiExtraData::notifyStringDelete(stringID);
+}
+
 uint NiIntegerExtraData::GetIntegerData() {
 	return integerData;
 }
@@ -5916,6 +5984,10 @@ void BSXFlags::Get(fstream& file) {
 
 void BSXFlags::Put(fstream& file) {
 	NiIntegerExtraData::Put(file);
+}
+
+void BSXFlags::notifyStringDelete(int stringID) {
+	NiIntegerExtraData::notifyStringDelete(stringID);
 }
 
 int BSXFlags::CalcBlockSize() {

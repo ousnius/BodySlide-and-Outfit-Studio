@@ -102,9 +102,12 @@ public:
 	bool GetShapeSegments(const string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 	void SetShapeSegments(const string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 
+	bool GetShapePartitions(const string& shapeName, vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, vector<vector<ushort>>& verts, vector<vector<Triangle>>& tris);
+	void SetShapePartitions(const string& shapeName, const vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const vector<vector<ushort>>& verts, const vector<vector<Triangle>>& tris);
+
 	const vector<Vector3>* GetRawVertsForShape(const string& shapeName);
 	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);
-	bool ReorderTriangles(const string& shapeName, const vector<ushort>& triangleIndices);
+	bool ReorderTriangles(const string& shapeName, const vector<uint>& triangleIndices);
 	const vector<Vector3>* GetNormalsForShape(const string& shapeName, bool transform = true);
 	const vector<Vector2>* GetUvsForShape(const string& shapeName);
 	bool GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs);
@@ -150,9 +153,8 @@ public:
 
 	int CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
 	int ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<ushort, Vector3>& outDiffData);
-	// Based on the skin partitioning spell from NifSkope's source. Uses a different enough algorithm that it generates
-	// different automatic partitions, but vert and tri order is comparable.
-	void BuildSkinPartitions(const string& shapeName, int maxBonesPerPartition = 24);
+
+	void CreateSkinning(const string& shapeName);
 	void UpdateBoundingSphere(const string& shapeName);
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values

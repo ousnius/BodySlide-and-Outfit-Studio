@@ -1472,6 +1472,65 @@ void NifFile::SetShapeSegments(const string& shapeName, const BSSubIndexTriShape
 	siTriShape->SetSegmentation(segmentation);
 }
 
+bool NifFile::GetShapePartitions(const string& shapeName, vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, vector<vector<ushort>>& verts, vector<vector<Triangle>>& tris) {
+	NiShape* shape = FindShapeByName(shapeName);
+	if (!shape)
+		return false;
+
+	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	if (bsdSkinInst)
+		partitionInfo = bsdSkinInst->GetPartitions();
+	else
+		partitionInfo.clear();
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return false;
+
+	auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+	if (!skinPart)
+		return false;
+
+	for (auto &part : skinPart->partitions) {
+		verts.push_back(part.vertexMap);
+		tris.push_back(part.triangles);
+	}
+
+	return true;
+}
+
+void NifFile::SetShapePartitions(const string& shapeName, const vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const vector<vector<ushort>>& verts, const vector<vector<Triangle>>& tris) {
+	NiShape* shape = FindShapeByName(shapeName);
+	if (!shape)
+		return;
+
+	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	if (bsdSkinInst)
+		bsdSkinInst->SetPartitions(partitionInfo);
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return;
+
+	auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+	if (!skinPart)
+		return;
+
+	skinPart->numPartitions = verts.size();
+	skinPart->partitions.resize(verts.size());
+	for (int i = 0; i < skinPart->numPartitions; i++) {
+		skinPart->partitions[i].numVertices = verts[i].size();
+		if (!verts[i].empty()) {
+			skinPart->partitions[i].hasVertexMap = true;
+			skinPart->partitions[i].vertexMap = verts[i];
+		}
+
+		skinPart->partitions[i].numTriangles = tris[i].size();
+		if (!tris[i].empty())
+			skinPart->partitions[i].triangles = tris[i];
+	}
+}
+
 const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
@@ -1521,7 +1580,7 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	return false;
 }
 
-bool NifFile::ReorderTriangles(const string& shapeName, const vector<ushort>& triangleIndices) {
+bool NifFile::ReorderTriangles(const string& shapeName, const vector<uint>& triangleIndices) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -2345,9 +2404,8 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
 				if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
-					bsdSkinInst->numPartitions -= emptyIndices.size();
 					for (int i = emptyIndices.size() - 1; i >= 0; i--)
-						bsdSkinInst->partitions.erase(bsdSkinInst->partitions.begin() + i);
+						bsdSkinInst->RemovePartition(i);
 				}
 			}
 		}
@@ -2392,108 +2450,349 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	if (skinInst) {
 		skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
 		skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-		
+
 		if (!skinData || !skinPart)
 			return;
 	}
 	else
 		return;
 
-	if (skinPart->needsBuild) {
-		BuildSkinPartitions(shapeName);
-		return;
-	}
+	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
 
-	//Make maps of new bone weights
-	map<ushort, vector<int>> vertBones;
-	map<ushort, vector<float>> vertWeights;
-	int b = 0;
+	vector<Triangle> tris;
+	ushort numTriangles;
+	ushort numVerts;
+	if (shape->blockType == NITRISHAPE) {
+		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+		if (!shapeData)
+			return;
+
+		tris = shapeData->triangles;
+		numTriangles = shapeData->numTriangles;
+		numVerts = shapeData->numVertices;
+	}
+	else if (shape->blockType == NITRISTRIPS) {
+		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
+		if (!stripsData)
+			return;
+
+		stripsData->StripsToTris(&tris);
+		numTriangles = stripsData->numTriangles;
+		numVerts = stripsData->numVertices;
+	}
+	else
+		return;
+
+	// Align triangles for comparisons
+	for (auto &t : tris)
+		t.rot();
+
+	// Make maps of vertices to bones and weights
+	unordered_map<ushort, vector<int>> vertBones;
+	unordered_map<ushort, vector<float>> vertWeights;
+
+	int boneIndex = 0;
 	for (auto &bone : skinData->bones) {
 		for (auto &bw : bone.vertexWeights) {
-			int i = 0;
+			int weightIndex = 0;
 			for (auto &w : vertWeights[bw.index]) {
 				if (bw.weight > w)
 					break;
-				i++;
+				weightIndex++;
 			}
-			vertBones[bw.index].insert(vertBones[bw.index].begin() + i, b);
-			vertWeights[bw.index].insert(vertWeights[bw.index].begin() + i, bw.weight);
+			vertBones[bw.index].insert(vertBones[bw.index].begin() + weightIndex, boneIndex);
+			vertWeights[bw.index].insert(vertWeights[bw.index].begin() + weightIndex, bw.weight);
 		}
-		b++;
+		boneIndex++;
 	}
 
-	//Erase influences over 4
-	for (auto &bones : vertBones) {
-		for (int bi = 0; bi < bones.second.size(); bi++) {
-			if (bi == 4) {
-				vertBones[bones.first].erase(vertBones[bones.first].begin() + 4, vertBones[bones.first].end());
-				vertWeights[bones.first].erase(vertWeights[bones.first].begin() + 4, vertWeights[bones.first].end());
+	// Enforce maximum vertex bone weight count
+	int maxBonesPerVertex = 4;
+
+	for (auto &vb : vertBones)
+		if (vb.second.size() > maxBonesPerVertex)
+			vb.second.erase(vb.second.begin() + maxBonesPerVertex);
+
+	for (auto &vw : vertWeights)
+		if (vw.second.size() > maxBonesPerVertex)
+			vw.second.erase(vw.second.begin() + maxBonesPerVertex);
+
+	unordered_map<int, vector<int>> vertTris;
+	for (int t = 0; t < tris.size(); t++) {
+		vertTris[tris[t].p1].push_back(t);
+		vertTris[tris[t].p2].push_back(t);
+		vertTris[tris[t].p3].push_back(t);
+	}
+
+	// Lambda for finding bones that have the tri assigned
+	set<int> triBones;
+	auto fTriBones = [&triBones, &tris, &vertBones](const int& tri) {
+		triBones.clear();
+
+		if (tri >= 0 && tris.size() > tri) {
+			ushort* p = &tris[tri].p1;
+			for (int i = 0; i < 3; i++, p++)
+				for (auto &tb : vertBones[*p])
+					triBones.insert(tb);
+		}
+	};
+
+	unordered_map<int, int> triParts;
+	triParts.reserve(numTriangles);
+	for (int i = 0; i < numTriangles; i++)
+		triParts.emplace(i, -1);
+
+	vector<bool> usedTris;
+	usedTris.resize(numTriangles);
+
+	vector<bool> usedVerts;
+	usedVerts.resize(numVerts);
+
+	// 24 for SK or newer, 18 for rest
+	int maxBonesPerPartition = hdr.GetUserVersion() >= 12 ? 24 : 18;
+	unordered_map<int, set<int>> partBones;
+
+	vector<NiSkinPartition::PartitionBlock> partitions;
+	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
+		fill(usedVerts.begin(), usedVerts.end(), false);
+
+		ushort numTrisInPart = 0;
+		for (int it = 0; it < skinPart->partitions[partID].numTriangles;) {
+			// Find the actual tri index from the partition tri index
+			Triangle tri;
+			tri.p1 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p1];
+			tri.p2 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p2];
+			tri.p3 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p3];
+			tri.rot();
+
+			// Find current tri in full list
+			auto realTri = find(tris.begin(), tris.end(), tri);
+			if (realTri == tris.end()) {
+				it++;
+				continue;
+			}
+
+			int triIndex = realTri - tris.begin();
+
+			// Conditional increment in loop
+			if (usedTris[triIndex]) {
+				it++;
+				continue;
+			}
+
+			// Get associated bones for the current tri
+			fTriBones(triIndex);
+
+			if (triBones.size() > maxBonesPerPartition) {
+				// TODO: get rid of some bone influences on this tri before trying to put it anywhere
+			}
+
+			// How many new bones are in the tri's bone list?
+			int newBoneCount = 0;
+			for (auto &tb : triBones)
+				if (partBones[partID].find(tb) == partBones[partID].end())
+					newBoneCount++;
+
+			if (partBones[partID].size() + newBoneCount > maxBonesPerPartition) {
+				// Too many bones for this partition, make a new partition starting with this triangle
+				NiSkinPartition::PartitionBlock tempPart;
+				tempPart.triangles.assign(skinPart->partitions[partID].triangles.begin() + numTrisInPart, skinPart->partitions[partID].triangles.end());
+				tempPart.numTriangles = tempPart.triangles.size();
+
+				tempPart.vertexMap = skinPart->partitions[partID].vertexMap;
+				tempPart.numVertices = tempPart.vertexMap.size();
+
+				skinPart->partitions.insert(skinPart->partitions.begin() + partID + 1, tempPart);
+				skinPart->numPartitions++;
+
+				if (bsdSkinInst) {
+					auto partInfo = bsdSkinInst->GetPartitions();
+
+					BSDismemberSkinInstance::PartitionInfo info;
+					info.flags = 1;
+					info.partID = partInfo[partID].partID;
+					partInfo.insert(partInfo.begin() + partID, info);
+
+					bsdSkinInst->SetPartitions(partInfo);
+				}
+
+				// Partition will be recreated and filled later
 				break;
 			}
-		}
-	}
 
-	for (auto& part : skinPart->partitions) {
-		//Make list of new bones
-		set<int> bones;
-		for (auto &v : part.vertexMap) {
-			for (int bi = 0; bi < vertBones[v].size(); bi++) {
-				int bid = vertBones[v][bi];
-				bones.insert(bid);
+			partBones[partID].insert(triBones.begin(), triBones.end());
+			triParts[triIndex] = partID;
+			usedTris[triIndex] = true;
+			usedVerts[tri.p1] = true;
+			usedVerts[tri.p2] = true;
+			usedVerts[tri.p3] = true;
+			numTrisInPart++;
+
+			queue<int> vertQueue;
+			auto fSelectVerts = [&usedVerts, &tris, &vertQueue](const int& tri) {
+				if (!usedVerts[tris[tri].p1]) {
+					usedVerts[tris[tri].p1] = true;
+					vertQueue.push(tris[tri].p1);
+				}
+				if (!usedVerts[tris[tri].p2]) {
+					usedVerts[tris[tri].p2] = true;
+					vertQueue.push(tris[tri].p2);
+				}
+				if (!usedVerts[tris[tri].p3]) {
+					usedVerts[tris[tri].p3] = true;
+					vertQueue.push(tris[tri].p3);
+				}
+			};
+			
+			// Select the tri's unvisited verts for adjacency examination
+			fSelectVerts(triIndex);
+			
+			while (!vertQueue.empty()) {
+				int adjVert = vertQueue.front();
+				vertQueue.pop();
+			
+				for (auto &adjTri : vertTris[adjVert]) {
+					// Skip triangles we've already assigned
+					if (usedTris[adjTri])
+						continue;
+			
+					// Get associated bones for the current tri
+					fTriBones(adjTri);
+			
+					if (triBones.size() > maxBonesPerPartition) {
+						// TODO: get rid of some bone influences on this tri before trying to put it anywhere
+					}
+			
+					// How many new bones are in the tri's bonelist?
+					int newBoneCount = 0;
+					for (auto &tb : triBones)
+						if (partBones[partID].find(tb) == partBones[partID].end())
+							newBoneCount++;
+			
+					// Too many bones for this partition, ignore this tri, it's catched in the outer loop later
+					if (partBones[partID].size() + newBoneCount > maxBonesPerPartition)
+						continue;
+			
+					// Save the next set of adjacent verts
+					fSelectVerts(adjTri);
+			
+					partBones[partID].insert(triBones.begin(), triBones.end());
+					triParts[adjTri] = partID;
+					usedTris[adjTri] = true;
+					numTrisInPart++;
+				}
 			}
+
+			// Next outer triangle
+			it++;
 		}
 
-		//Clear old data
-		part.bones.clear();
-		part.boneIndices.clear();
-		part.vertexWeights.clear();
+		NiSkinPartition::PartitionBlock part;
+		part.hasBoneIndices = true;
+		part.hasFaces = true;
+		part.hasVertexMap = true;
+		part.hasVertexWeights = true;
+		part.numWeightsPerVertex = maxBonesPerVertex;
 
-		//Add new bones to partition
+		unordered_map<int, int> vertMap;
+		for (int triID = 0; triID < tris.size(); triID++) {
+			if (triParts[triID] != partID)
+				continue;
+
+			Triangle tri = tris[triID];
+			if (vertMap.find(tri.p1) == vertMap.end()) {
+				vertMap[tri.p1] = part.numVertices;
+				part.vertexMap.push_back(tri.p1);
+				tri.p1 = part.numVertices++;
+			}
+			else
+				tri.p1 = vertMap[tri.p1];
+
+			if (vertMap.find(tri.p2) == vertMap.end()) {
+				vertMap[tri.p2] = part.numVertices;
+				part.vertexMap.push_back(tri.p2);
+				tri.p2 = part.numVertices++;
+			}
+			else
+				tri.p2 = vertMap[tri.p2];
+
+			if (vertMap.find(tri.p3) == vertMap.end()) {
+				vertMap[tri.p3] = part.numVertices;
+				part.vertexMap.push_back(tri.p3);
+				tri.p3 = part.numVertices++;
+			}
+			else
+				tri.p3 = vertMap[tri.p3];
+
+			tri.rot();
+			part.triangles.push_back(tri);
+		}
+
+		part.numTriangles = part.triangles.size();
+
 		unordered_map<int, int> boneLookup;
-		for (auto &b : bones) {
+		boneLookup.reserve(partBones[partID].size());
+		part.numBones = partBones[partID].size();
+		part.bones.reserve(part.numBones);
+
+		for (auto &b : partBones[partID]) {
 			part.bones.push_back(b);
 			boneLookup[b] = part.bones.size() - 1;
 		}
 
 		for (auto &v : part.vertexMap) {
 			BoneIndices b;
-			VertexWeight vw;
 			b.i1 = b.i2 = b.i3 = b.i4 = 0;
-			vw.w1 = vw.w2 = vw.w3 = vw.w4 = 0;
 
-			//Normalize weights
-			byte* pb = (byte*)&b.i1;
-			float* pw = (float*)&vw.w1;
+			VertexWeight vw;
+			vw.w1 = vw.w2 = vw.w3 = vw.w4 = 0.0f;
+
+			byte* pb = &b.i1;
+			float* pw = &vw.w1;
+
 			float tot = 0.0f;
 			for (int bi = 0; bi < vertBones[v].size(); bi++) {
+				if (bi == 4)
+					break;
+
 				pb[bi] = boneLookup[vertBones[v][bi]];
 				pw[bi] = vertWeights[v][bi];
 				tot += pw[bi];
 			}
+
 			for (int bi = 0; bi < 4; bi++)
 				pw[bi] /= tot;
 
-			//Add new bone indices and weights to partition
 			part.boneIndices.push_back(b);
 			part.vertexWeights.push_back(vw);
 		}
-		part.numBones = part.bones.size();
+
+		partitions.push_back(move(part));
 	}
 
-	if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
-		auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
-		unordered_map<int, int> partIDCount;
-		for (int i = 0; i < bsdSkinInst->numPartitions; i++) {
-			auto pidc = partIDCount.find(bsdSkinInst->partitions[i].partID);
-			if (pidc == partIDCount.end())
-				partIDCount[bsdSkinInst->partitions[i].partID] = 1;
+	skinPart->numPartitions = partitions.size();
+	skinPart->partitions = move(partitions);
+
+	// Update bone set flags
+	if (bsdSkinInst) {
+		auto partInfo = bsdSkinInst->GetPartitions();
+		for (int i = 0; i < partInfo.size(); i++) {
+			if (i != 0) {
+				// Start a new set if the previous bones are different
+				if (partBones[i] != partBones[i - 1])
+					partInfo[i].flags = 257;
+				else
+					partInfo[i].flags = 1;
+			}
 			else
-				partIDCount[bsdSkinInst->partitions[i].partID]++;
+				partInfo[i].flags = 257;
 		}
+
+		bsdSkinInst->SetPartitions(partInfo);
 	}
 }
 
-void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartition) {
+void NifFile::CreateSkinning(const string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -2557,306 +2856,6 @@ void NifFile::BuildSkinPartitions(const string& shapeName, int maxBonesPerPartit
 			NiShader* shader = GetShader(shapeName);
 			if (shader)
 				shader->SetSkinned(true);
-		}
-
-		return;
-	}
-
-	NiSkinData* skinData = nullptr;
-	NiSkinPartition* skinPart = nullptr;
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-	if (skinInst) {
-		skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
-		skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-
-		if (!skinData || !skinPart)
-			return;
-	}
-	else
-		return;
-
-	vector<Triangle> tris;
-	ushort numTriangles;
-	ushort numVerts;
-	if (shape->blockType == NITRISHAPE) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
-		if (!shapeData)
-			return;
-
-		tris = shapeData->triangles;
-		numTriangles = shapeData->numTriangles;
-		numVerts = shapeData->numVertices;
-	}
-	else if (shape->blockType == NITRISTRIPS) {
-		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
-		if (!stripsData)
-			return;
-
-		stripsData->StripsToTris(&tris);
-		numTriangles = stripsData->numTriangles;
-		numVerts = stripsData->numVertices;
-	}
-	else
-		return;
-
-	int maxBonesPerVertex = 4;
-
-	unordered_map<int, vector<int>> vertTris;
-	for (int t = 0; t < tris.size(); t++) {
-		vertTris[tris[t].p1].push_back(t);
-		vertTris[tris[t].p2].push_back(t);
-		vertTris[tris[t].p3].push_back(t);
-	}
-
-	unordered_map<ushort, vector<int>> vertBones;
-	unordered_map<ushort, vector<float>> vertWeights;
-	int b = 0;
-
-	for (auto &bone : skinData->bones) {
-		for (auto &bw : bone.vertexWeights) {
-			int i = 0;
-			for (auto &w : vertWeights[bw.index]) {
-				if (bw.weight > w)
-					break;
-				i++;
-			}
-			vertBones[bw.index].insert(vertBones[bw.index].begin() + i, b);
-			vertWeights[bw.index].insert(vertWeights[bw.index].begin() + i, bw.weight);
-		}
-		b++;
-	}
-
-	// Enforce vertex bone weight maximum count
-	for (auto &vb : vertBones) {
-		if (vb.second.size() > maxBonesPerVertex) {
-			vb.second.erase(vb.second.begin() + maxBonesPerVertex);
-		}
-	}
-	for (auto &vw : vertWeights) {
-		if (vw.second.size() > maxBonesPerVertex) {
-			vw.second.erase(vw.second.begin() + maxBonesPerVertex);
-		}
-	}
-
-	set<int> testBones;
-	auto fTriBones = [&](int x) {
-		testBones.clear();
-		int p[3];
-		p[0] = tris[x].p1;
-		p[1] = tris[x].p2;
-		p[2] = tris[x].p3;
-		for (auto &ip : p) {
-			//if (ip == 516)
-			//int a = 4;
-			for (auto &tb : vertBones[ip])
-				testBones.insert(tb);
-		}
-	};
-
-	int partID = 0;
-	unordered_map<int, int> triParts;
-	unordered_map<int, set<int>> partBones;
-
-	bool* triAssign;
-	triAssign = (bool*)calloc(numTriangles, sizeof(bool));
-	bool* usedVerts;
-	usedVerts = (bool*)calloc(numVerts, sizeof(bool));
-
-	for (int it = 0; it < numTriangles;) { /* conditional increment in loop */
-		if (triAssign[it]) {
-			it++;
-			continue;
-		}
-
-		// Get associated bones for the current tri.
-		fTriBones(it);
-
-		if (testBones.size() > maxBonesPerPartition) {
-			// TODO: get rid of some bone influences on this tri before trying to put it anywhere.  
-		}
-
-		// How many new bones are in the tri's bonelist?
-		int newBoneCount = 0;
-		for (auto &tb : testBones) {
-			if (partBones[partID].find(tb) == partBones[partID].end()) {
-				newBoneCount++;
-			}
-		}
-		if (partBones[partID].size() + newBoneCount > maxBonesPerPartition) {
-			// too many bones for this partition, start on the next partition with this tri.
-			partID++;
-			continue;
-		}
-
-
-		partBones[partID].insert(testBones.begin(), testBones.end());
-		//partTris[partID].push_back(it);
-		triParts[it] = partID;
-		triAssign[it] = true;
-
-		memset(usedVerts, 0, sizeof(bool) * numVerts);
-		queue<int> vertQueue;
-
-		auto fSelectVerts = [&](int triID) {
-			if (!usedVerts[tris[triID].p1]) {
-				usedVerts[tris[triID].p1] = true;
-				vertQueue.push(tris[triID].p1);
-			}
-			if (!usedVerts[tris[triID].p2]) {
-				usedVerts[tris[triID].p2] = true;
-				vertQueue.push(tris[triID].p2);
-			}
-			if (!usedVerts[tris[triID].p3]) {
-				usedVerts[tris[triID].p3] = true;
-				vertQueue.push(tris[triID].p3);
-			}
-		};
-
-		// Select the tri's un-visited verts for adjancency examination.
-		fSelectVerts(it);
-
-		while (!vertQueue.empty()) {
-			int adjVert = vertQueue.front();
-			vertQueue.pop();
-
-			for (auto &adjTri : vertTris[adjVert]) {
-				if (triAssign[adjTri])			// skip triangles we've already assigned
-					continue;
-
-				// Get associated bones for the current tri.
-				fTriBones(adjTri);
-
-				if (testBones.size() > maxBonesPerPartition) {
-					// TODO: get rid of some bone influences on this tri before trying to put it anywhere.  
-				}
-
-				// How many new bones are in the tri's bonelist?
-				int newBoneCount = 0;
-				for (auto &tb : testBones) {
-					if (partBones[partID].find(tb) == partBones[partID].end()) {
-						newBoneCount++;
-					}
-				}
-				if (partBones[partID].size() + newBoneCount > maxBonesPerPartition) {
-					// too many bones for this partition, ignore this tri, we'll catch it in the outer loop later
-					continue;
-				}
-
-				fSelectVerts(adjTri);			// save the next set of adjacent verts
-
-				partBones[partID].insert(testBones.begin(), testBones.end());
-				//	partTris[partID].push_back(adjTri);
-				triParts[adjTri] = partID;
-				triAssign[adjTri] = true;
-			}
-		}
-		// next outer tri
-		it++;
-	}
-
-	skinPart->partitions.clear();
-	skinPart->numPartitions = partID + 1;
-
-	for (int pID = 0; pID <= partID; pID++) {
-		NiSkinPartition::PartitionBlock pblock;
-		pblock.hasBoneIndices = true;
-		pblock.hasFaces = true;
-		pblock.hasVertexMap = true;
-		pblock.hasVertexWeights = true;
-		pblock.numStrips = 0;
-		pblock.numWeightsPerVertex = maxBonesPerVertex;
-		pblock.numVertices = 0;
-		pblock.unkShort = 0;
-
-		//pblock.numTriangles = partTris[pID].size();
-		unordered_map<int, int> vertMap;
-
-		//for (auto &triID : partTris[pID]) {
-		for (int triID = 0; triID < tris.size(); triID++) {
-			if (triParts[triID] != pID)
-				continue;
-			Triangle t = tris[triID];
-			t.rot();
-			if (vertMap.find(t.p1) == vertMap.end()) {
-				vertMap[t.p1] = pblock.numVertices;
-				pblock.vertexMap.push_back(t.p1);
-				t.p1 = pblock.numVertices++;
-			}
-			else {
-				t.p1 = vertMap[t.p1];
-			}
-			if (vertMap.find(t.p2) == vertMap.end()) {
-				vertMap[t.p2] = pblock.numVertices;
-				pblock.vertexMap.push_back(t.p2);
-				t.p2 = pblock.numVertices++;
-			}
-			else {
-				t.p2 = vertMap[t.p2];
-			}
-			if (vertMap.find(t.p3) == vertMap.end()) {
-				vertMap[t.p3] = pblock.numVertices;
-				pblock.vertexMap.push_back(t.p3);
-				t.p3 = pblock.numVertices++;
-			}
-			else {
-				t.p3 = vertMap[t.p3];
-			}
-			pblock.triangles.push_back(t);
-		}
-
-		pblock.numTriangles = pblock.triangles.size();
-		pblock.numBones = partBones[pID].size();
-		unordered_map<int, int> bonelookup;
-		for (auto &b : partBones[pID]) {
-			pblock.bones.push_back(b);
-			bonelookup[b] = pblock.bones.size() - 1;
-		}
-
-		for (auto &v : pblock.vertexMap) {
-			BoneIndices b;
-			VertexWeight vw;
-			b.i1 = b.i2 = b.i3 = b.i4 = 0;
-			vw.w1 = vw.w2 = vw.w3 = vw.w4 = 0;
-			byte* pb = (byte*)&b.i1;
-			float* pw = (float*)&vw.w1;
-			float tot = 0.0f;
-			for (int bi = 0; bi < vertBones[v].size(); bi++) {
-				if (bi == 4) {
-					break;
-				}
-
-				pb[bi] = bonelookup[vertBones[v][bi]];
-				pw[bi] = vertWeights[v][bi];
-				tot += pw[bi];
-			}
-			for (int bi = 0; bi < 4; bi++) {
-				pw[bi] /= tot;
-			}
-			pblock.boneIndices.push_back(b);
-			pblock.vertexWeights.push_back(vw);
-		}
-
-		skinPart->partitions.push_back(move(pblock));
-
-	}
-
-	if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
-		BSDismemberSkinInstance* bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
-		bsdSkinInst->numPartitions = skinPart->numPartitions;
-		bsdSkinInst->partitions.resize(bsdSkinInst->numPartitions);
-		for (int i = 0; i < bsdSkinInst->numPartitions; i++) {
-			BSDismemberSkinInstance::Partition p;
-			if (hdr.VerCheck(20, 2, 0, 7) && hdr.GetUserVersion() == 11)
-				p.partID = 0;
-			else
-				p.partID = 32;
-
-			if (i == 0)
-				p.flags = 257;
-			else
-				p.flags = 257;
-
-			bsdSkinInst->partitions[i] = p;
 		}
 	}
 }

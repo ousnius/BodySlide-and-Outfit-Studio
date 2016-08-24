@@ -687,6 +687,11 @@ struct Triangle {
 		if (d == 0) d = p3 - other.p3;
 		return d < 0;
 	}
+
+	bool operator == (const Triangle& other) const {
+		return (p1 == other.p1 && p2 == other.p2 && p3 == other.p3);
+	}
+
 	void rot() {
 		if (p2 < p1 && p2 < p3) {
 			set(p2, p3, p1);

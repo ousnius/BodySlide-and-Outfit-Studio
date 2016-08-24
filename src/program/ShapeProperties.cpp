@@ -682,7 +682,7 @@ void ShapeProperties::ApplyChanges() {
 	}
 
 	if (skinned->IsChecked()) {
-		nif->BuildSkinPartitions(shapeName);
+		nif->CreateSkinning(shapeName);
 	}
 	else {
 		nif->DeleteSkinning(shapeName);

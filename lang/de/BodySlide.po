@@ -692,17 +692,6 @@ msgid ""
 "unweighted vertices."
 msgstr "Maskiert Vertices mit Bone Weighting."
 
-msgid "Build Skin Partitions"
-msgstr "Skin-Partitionen erstellen"
-
-msgid ""
-"Creates or rebuilds skin partitions for the current shape. This is typically "
-"not needed, use only if skin partitions are broken."
-msgstr ""
-"Erstellt Skin-Partitionen für das aktuelle Modell. Dies wird normalerweise "
-"nicht benötigt, außer die existierenden Skin-Partitionen sind nicht "
-"funktionsfähig."
-
 msgid "Delete\tDel"
 msgstr "Entfernen\tDel"
 
@@ -1498,9 +1487,24 @@ msgstr "Segmente"
 msgid "Apply"
 msgstr "Anwenden"
 
-# XRC STRINGS END HERE
 msgid "SSF File"
 msgstr "SSF-Datei"
+
+msgid "Partitions"
+msgstr "Partitionen"
+
+msgid "Add Partition..."
+msgstr "Partition hinzufügen..."
+
+msgid "Adds a new partition to the shape."
+msgstr "Fügt dem Modell eine neue Partition hinzu."
+
+msgid "Delete Partition..."
+msgstr "Partition entfernen..."
+
+# XRC STRINGS END HERE
+msgid "Deletes the partition from the shape."
+msgstr "Entfernt die Partition vom Modell."
 
 #: Anim.cpp:359
 msgid ""
@@ -2791,6 +2795,17 @@ msgstr "Lade Slider-Datei..."
 #: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "Vorschau fehlgeschlagen: OpenGL-Kontext ist nicht OK."
+
+#~ msgid "Build Skin Partitions"
+#~ msgstr "Skin-Partitionen erstellen"
+
+#~ msgid ""
+#~ "Creates or rebuilds skin partitions for the current shape. This is "
+#~ "typically not needed, use only if skin partitions are broken."
+#~ msgstr ""
+#~ "Erstellt Skin-Partitionen für das aktuelle Modell. Dies wird "
+#~ "normalerweise nicht benötigt, außer die existierenden Skin-Partitionen "
+#~ "sind nicht funktionsfähig."
 
 #~ msgid "Update Bounding Sphere"
 #~ msgstr "Bounding Sphere aktualisieren"

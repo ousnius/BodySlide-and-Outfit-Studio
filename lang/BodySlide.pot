@@ -616,12 +616,6 @@ msgstr ""
 msgid "Masks vertices with bone weights, so you can manually assign weights to unweighted vertices."
 msgstr ""
 
-msgid "Build Skin Partitions"
-msgstr ""
-
-msgid "Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken."
-msgstr ""
-
 msgid "Delete\tDel"
 msgstr ""
 
@@ -1300,8 +1294,23 @@ msgstr ""
 msgid "Apply"
 msgstr ""
 
-# XRC STRINGS END HERE
 msgid "SSF File"
+msgstr ""
+
+msgid "Partitions"
+msgstr ""
+
+msgid "Add Partition..."
+msgstr ""
+
+msgid "Adds a new partition to the shape."
+msgstr ""
+
+msgid "Delete Partition..."
+msgstr ""
+
+# XRC STRINGS END HERE
+msgid "Deletes the partition from the shape."
 msgstr ""
 
 #: Anim.cpp:359

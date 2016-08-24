@@ -50,23 +50,36 @@ public:
 
 class SegmentItemData : public wxTreeItemData  {
 public:
-	vector<ushort> tris;
+	vector<uint> tris;
 
-	SegmentItemData(const vector<ushort>& inTriangles) {
+	SegmentItemData(const vector<uint>& inTriangles) {
 		tris = inTriangles;
 	}
 };
 
 class SubSegmentItemData : public wxTreeItemData  {
 public:
-	vector<ushort> tris;
+	vector<uint> tris;
 	uint type;
 	vector<float> extraData;
 
-	SubSegmentItemData(const vector<ushort>& inTriangles, const uint& inType, const vector<float>& inExtraData = vector<float>()) {
+	SubSegmentItemData(const vector<uint>& inTriangles, const uint& inType, const vector<float>& inExtraData = vector<float>()) {
 		tris = inTriangles;
 		type = inType;
 		extraData = inExtraData;
+	}
+};
+
+class PartitionItemData : public wxTreeItemData  {
+public:
+	vector<ushort> verts;
+	vector<Triangle> tris;
+	ushort type;
+
+	PartitionItemData(const vector<ushort>& inVerts, const vector<Triangle>& inTris, const ushort& inType) {
+		verts = inVerts;
+		tris = inTris;
+		type = inType;
 	}
 };
 
@@ -537,6 +550,7 @@ public:
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
 	wxTreeCtrl* segmentTree;
+	wxTreeCtrl* partitionTree;
 	wxPanel* lightSettings;
 	wxSlider* boneScale;
 	wxScrolledWindow* sliderScroll;
@@ -545,6 +559,7 @@ public:
 	wxTreeItemId outfitRoot;
 	wxTreeItemId bonesRoot;
 	wxTreeItemId segmentRoot;
+	wxTreeItemId partitionRoot;
 	wxImageList* visStateImages;
 
 	ConfigurationManager& appConfig;
@@ -593,6 +608,9 @@ public:
 
 	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdateSegmentNames();
+
+	void ShowPartition(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
+	void UpdatePartitionNames();
 
 	void AnimationGUIFromProj();
 	void RefreshGUIFromProj();
@@ -755,6 +773,7 @@ private:
 	vector<ShapeItemData*> selectedItems;
 	string activeBone;
 	wxTreeItemId activeSegment;
+	wxTreeItemId activePartition;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);
@@ -826,7 +845,17 @@ private:
 	void OnSegmentApply(wxCommandEvent& event);
 	void OnSegmentReset(wxCommandEvent& event);
 
+	void OnPartitionSelect(wxTreeEvent& event);
+	void OnPartitionContext(wxTreeEvent& event);
+	void OnPartitionTreeContext(wxCommandEvent& event);
+	void OnAddPartition(wxCommandEvent& event);
+	void OnDeletePartition(wxCommandEvent& event);
+	void OnPartitionTypeChanged(wxCommandEvent& event);
+	void OnPartitionApply(wxCommandEvent& event);
+	void OnPartitionReset(wxCommandEvent& event);
+
 	void CreateSegmentTree(const string& shapeName = "");
+	void CreatePartitionTree(const string& shapeName = "");
 
 	void OnSelectTool(wxCommandEvent& event);
 
@@ -896,7 +925,6 @@ private:
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
-	void OnBuildSkinPartitions(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
@@ -926,9 +954,15 @@ private:
 	}
 
 	void OnUndo(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetSegmentMode())
+			return;
+
 		glView->UndoStroke();
 	}
 	void OnRedo(wxCommandEvent& WXUNUSED(event)) {
+		if (glView->GetSegmentMode())
+			return;
+
 		glView->RedoStroke();
 	}
 

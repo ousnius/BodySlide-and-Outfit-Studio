@@ -238,6 +238,18 @@
 												<option>0</option>
 												<flag>wxALL</flag>
 												<border>0</border>
+												<object class="wxButton" name="partitionTabButton" subclass="wxStateButton">
+													<size>-1,20</size>
+													<style>wxNO_BORDER</style>
+													<label>Partitions</label>
+													<bg>#646464</bg>
+													<default>0</default>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL</flag>
+												<border>0</border>
 												<object class="wxButton" name="lightsTabButton" subclass="wxStateButton">
 													<size>-1,20</size>
 													<style>wxNO_BORDER</style>
@@ -274,6 +286,17 @@
 										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
 										<border>2</border>
 										<object class="wxTreeCtrl" name="segmentTree">
+											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS</style>
+											<bg>#404040</bg>
+											<fg>#ffffff</fg>
+											<hidden>1</hidden>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+										<border>2</border>
+										<object class="wxTreeCtrl" name="partitionTree">
 											<style>wxTR_LINES_AT_ROOT|wxTR_HIDE_ROOT|wxTR_NO_LINES|wxTR_HAS_BUTTONS</style>
 											<bg>#404040</bg>
 											<fg>#ffffff</fg>
@@ -550,6 +573,107 @@
 															<flag>wxALL|wxEXPAND</flag>
 															<border>5</border>
 															<object class="wxButton" name="segmentReset">
+																<size>-1,25</size>
+																<label>Reset</label>
+																<hidden>1</hidden>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>0</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+															<border>5</border>
+															<object class="wxStaticText" name="partitionTypeLabel">
+																<fg>#ffffff</fg>
+																<label>Type</label>
+																<hidden>1</hidden>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<border>5</border>
+															<object class="wxChoice" name="partitionType">
+																<selection>0</selection>
+																<content>
+																	<item>0 BP_TORSO</item><item>1 BP_HEAD</item><item>2 BP_HEAD2</item>
+																	<item>3 BP_LEFTARM</item><item>4 BP_LEFTARM2</item>
+																	<item>5 BP_RIGHTARM</item><item>6 BP_RIGHTARM2</item>
+																	<item>7 BP_LEFTLEG</item><item>8 BP_LEFTLEG2</item><item>9 BP_LEFTLEG3</item>
+																	<item>10 BP_RIGHTLEG</item><item>11 BP_RIGHTLEG2</item><item>12 BP_RIGHTLEG3</item>
+																	<item>13 BP_BRAIN</item>
+																	<item>30 SBP_30_HEAD</item><item>31 SBP_31_HAIR</item>
+																	<item>32 SBP_32_BODY</item><item>33 SBP_33_HANDS</item><item>34 SBP_34_FOREARMS</item>
+																	<item>35 SBP_35_AMULET</item><item>36 SBP_36_RING</item>
+																	<item>37 SBP_37_FEET</item><item>38 SBP_38_CALVES</item>
+																	<item>39 SBP_39_SHIELD</item>
+																	<item>40 SBP_40_TAIL</item><item>41 SBP_41_LONGHAIR</item>
+																	<item>42 SBP_42_CIRCLET</item><item>43 SBP_43_EARS</item>
+																	<item>44 SBP_44_DRAGON_BLOODHEAD_OR_MOD_MOUTH</item><item>45 SBP_45_DRAGON_BLOODWINGL_OR_MOD_NECK</item>
+																	<item>46 SBP_46_DRAGON_BLOODWINGR_OR_MOD_CHEST_PRIMARY</item><item>47 SBP_47_DRAGON_BLOODTAIL_OR_MOD_BACK</item>
+																	<item>48 SBP_48_MOD_MISC1</item><item>49 SBP_49_MOD_PELVIS_PRIMARY</item>
+																	<item>50 SBP_50_DECAPITATEDHEAD</item><item>51 SBP_51_DECAPITATE</item>
+																	<item>52 SBP_52_MOD_PELVIS_SECONDARY</item><item>53 SBP_53_MOD_LEG_RIGHT</item><item>54 SBP_54_MOD_LEG_LEFT</item>
+																	<item>55 SBP_55_MOD_FACE_JEWELRY</item><item>56 SBP_56_MOD_CHEST_SECONDARY</item>
+																	<item>57 SBP_57_MOD_SHOULDER</item><item>58 SBP_58_MOD_ARM_LEFT</item><item>59 SBP_59_MOD_ARM_RIGHT</item>
+																	<item>60 SBP_60_MOD_MISC2</item><item>61 SBP_61_FX01</item>
+																	<item>101 BP_SECTIONCAP_HEAD</item><item>102 BP_SECTIONCAP_HEAD2</item>
+																	<item>103 BP_SECTIONCAP_LEFTARM</item><item>104 BP_SECTIONCAP_LEFTARM2</item>
+																	<item>105 BP_SECTIONCAP_RIGHTARM</item><item>106 BP_SECTIONCAP_RIGHTARM2</item>
+																	<item>107 BP_SECTIONCAP_LEFTLEG</item><item>108 BP_SECTIONCAP_LEFTLEG2</item><item>109 BP_SECTIONCAP_LEFTLEG3</item>
+																	<item>110 BP_SECTIONCAP_RIGHTLEG</item><item>111 BP_SECTIONCAP_RIGHTLEG2</item><item>112 BP_SECTIONCAP_RIGHTLEG3</item>
+																	<item>113 BP_SECTIONCAP_BRAIN</item>
+																	<item>130 SBP_130_HEAD</item><item>131 SBP_131_HAIR</item><item>141 SBP_141_LONGHAIR</item>
+																	<item>142 SBP_142_CIRCLET</item><item>143 SBP_143_EARS</item>
+																	<item>150 SBP_150_DECAPITATEDHEAD</item>
+																	<item>201 BP_TORSOCAP_HEAD</item><item>202 BP_TORSOCAP_HEAD2</item>
+																	<item>203 BP_TORSOCAP_LEFTARM</item><item>204 BP_TORSOCAP_LEFTARM2</item>
+																	<item>205 BP_TORSOCAP_RIGHTARM</item><item>206 BP_TORSOCAP_RIGHTARM2</item>
+																	<item>207 BP_TORSOCAP_LEFTLEG</item><item>208 BP_TORSOCAP_LEFTLEG2</item><item>209 BP_TORSOCAP_LEFTLEG3</item>
+																	<item>210 BP_TORSOCAP_RIGHTLEG</item><item>211 BP_TORSOCAP_RIGHTLEG2</item><item>212 BP_TORSOCAP_RIGHTLEG3</item>
+																	<item>213 BP_TORSOCAP_BRAIN</item>
+																	<item>230 SBP_230_HEAD</item>
+																	<item>1000 BP_TORSOSECTION_HEAD</item><item>2000 BP_TORSOSECTION_HEAD2</item>
+																	<item>3000 BP_TORSOSECTION_LEFTARM</item><item>4000 BP_TORSOSECTION_LEFTARM2</item>
+																	<item>5000 BP_TORSOSECTION_RIGHTARM</item><item>6000 BP_TORSOSECTION_RIGHTARM2</item>
+																	<item>7000 BP_TORSOSECTION_LEFTLEG</item><item>8000 BP_TORSOSECTION_LEFTLEG2</item><item>9000 BP_TORSOSECTION_LEFTLEG3</item>
+																	<item>10000 BP_TORSOSECTION_RIGHTLEG</item><item>11000 BP_TORSOSECTION_RIGHTLEG2</item><item>12000 BP_TORSOSECTION_RIGHTLEG3</item>
+																	<item>13000 BP_TORSOSECTION_BRAIN</item>
+																</content>
+																<hidden>1</hidden>
+																<enabled>0</enabled>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>0</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<border>5</border>
+															<object class="wxButton" name="partitionApply">
+																<size>-1,25</size>
+																<label>Apply</label>
+																<hidden>1</hidden>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<border>5</border>
+															<object class="wxButton" name="partitionReset">
 																<size>-1,25</size>
 																<label>Reset</label>
 																<hidden>1</hidden>
@@ -1496,6 +1620,24 @@
 		<object class="wxMenuItem" name="addSegment">
 			<label>Add Segment...</label>
 			<help>Choose a segment to add to the shape.</help>
+		</object>
+	</object>
+	<object class="wxMenu" name="menuPartitionContext">
+		<label>Partitions</label>
+		<object class="wxMenuItem" name="addPartition">
+			<label>Add Partition...</label>
+			<help>Adds a new partition to the shape.</help>
+		</object>
+		<object class="wxMenuItem" name="deletePartition">
+			<label>Delete Partition...</label>
+			<help>Deletes the partition from the shape.</help>
+		</object>
+	</object>
+	<object class="wxMenu" name="menuPartitionTreeContext">
+		<label>Partitions</label>
+		<object class="wxMenuItem" name="addPartition">
+			<label>Add Partition...</label>
+			<help>Adds a new partition to the shape.</help>
 		</object>
 	</object>
 </resource>

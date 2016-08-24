@@ -3,15 +3,15 @@ msgstr ""
 "Project-Id-Version: BodySlide\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
+"Last-Translator: S猫 <silent.haven@gmail.com>\n"
 "Language-Team: \n"
+"Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Poedit 1.8.8\n"
 "X-Poedit-KeywordsList: _\n"
-"Last-Translator: S猫 <silent.haven@gmail.com>\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"Language: zh_CN\n"
 
 # XRC STRINGS START HERE
 msgid "Outfit/Body"
@@ -659,15 +659,6 @@ msgid ""
 "Masks vertices with bone weights, so you can manually assign weights to "
 "unweighted vertices."
 msgstr "遮蔽有骨骼权重的顶点，方便手动处理无权重的顶点"
-
-msgid "Build Skin Partitions"
-msgstr "建立皮肤分区"
-
-msgid ""
-"Creates or rebuilds skin partitions for the current shape. This is typically "
-"not needed, use only if skin partitions are broken."
-msgstr ""
-"创建或者重建当前模型的皮肤分区。此操作一般不用做，仅在皮肤分区损坏时使用。"
 
 msgid "Delete\tDel"
 msgstr "删除\tDel"
@@ -1412,9 +1403,24 @@ msgstr "段数"
 msgid "Apply"
 msgstr "应用"
 
-# XRC STRINGS END HERE
 msgid "SSF File"
 msgstr "SSF文件"
+
+msgid "Partitions"
+msgstr "Partitions"
+
+msgid "Add Partition..."
+msgstr "Add Partition..."
+
+msgid "Adds a new partition to the shape."
+msgstr "Adds a new partition to the shape."
+
+msgid "Delete Partition..."
+msgstr "Delete Partition..."
+
+# XRC STRINGS END HERE
+msgid "Deletes the partition from the shape."
+msgstr "Deletes the partition from the shape."
 
 #: Anim.cpp:359
 msgid ""
@@ -2636,3 +2642,12 @@ msgstr "载入滑块文件..."
 #: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "装备工作室：OpenGL环境不正常。"
+
+#~ msgid "Build Skin Partitions"
+#~ msgstr "建立皮肤分区"
+
+#~ msgid ""
+#~ "Creates or rebuilds skin partitions for the current shape. This is "
+#~ "typically not needed, use only if skin partitions are broken."
+#~ msgstr ""
+#~ "创建或者重建当前模型的皮肤分区。此操作一般不用做，仅在皮肤分区损坏时使用。"
