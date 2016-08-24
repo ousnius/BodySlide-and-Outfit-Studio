@@ -1100,10 +1100,6 @@
 				<label>Mask Weighted Vertices</label>
 				<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
 			</object>
-			<object class="wxMenuItem" name="buildSkinPartitions">
-				<label>Build Skin Partitions</label>
-				<help>Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken.</help>
-			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="deleteShape">
 				<label>Delete\tDel</label>
@@ -1535,10 +1531,6 @@
 		<object class="wxMenuItem" name="maskWeightedVerts">
 			<label>Mask Weighted Vertices</label>
 			<help>Masks vertices with bone weights, so you can manually assign weights to unweighted vertices.</help>
-		</object>
-		<object class="wxMenuItem" name="buildSkinPartitions">
-			<label>Build Skin Partitions</label>
-			<help>Creates or rebuilds skin partitions for the current shape. This is typically not needed, use only if skin partitions are broken.</help>
 		</object>
 		<object class="separator" />
 		<object class="wxMenuItem" name="deleteShape">
