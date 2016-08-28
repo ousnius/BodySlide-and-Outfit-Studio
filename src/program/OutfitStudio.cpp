@@ -6060,11 +6060,11 @@ bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
 }
 
 bool wxGLPanel::UndoStroke() {
-	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
+	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
 
 	if (ret && curStroke) {
-		if (curStroke && curStroke->BrushType() != TBT_MASK) {
+		if (curStroke->BrushType() != TBT_MASK) {
 			os->ActiveShapesUpdated(curStroke, true);
 
 			if (!os->bEditSlider && curStroke->BrushType() != TBT_WEIGHT) {

@@ -940,7 +940,7 @@
 				<help>Undo the previous action.</help>
 			</object>
 			<object class="wxMenuItem" name="editRedo">
-				<label>Redo\tCtrl+Shift+Z</label>
+				<label>Redo\tCtrl+Y</label>
 				<help>Redo the next undone action.</help>
 			</object>
 			<object class="separator" />

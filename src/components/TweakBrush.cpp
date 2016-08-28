@@ -68,12 +68,12 @@ bool TweakUndo::backStroke(const vector<mesh*>& validMeshes) {
 bool TweakUndo::forwardStroke(const vector<mesh*>& validMeshes) {
 	int maxState = strokes.size() - 1;
 	if (curState < maxState) {
-		curState++;
 		for (auto &m : GetNextStateMeshes()) {
 			if (find(validMeshes.begin(), validMeshes.end(), m) != validMeshes.end()) {
-				strokes[curState]->RestoreEndState(m);
+				strokes[curState + 1]->RestoreEndState(m);
 			}
 		}
+		curState++;
 		return true;
 	}
 	return false;
