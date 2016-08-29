@@ -308,7 +308,7 @@ bool FBXWrangler::ExportScene(const string& fileName) {
 	return status;
 }
 
-bool FBXWrangler::ImportScene(const string& fileName) {
+bool FBXWrangler::ImportScene(const string& fileName, const FBXImportOptions& options) {
 	FbxIOSettings* ios = sdkManager->GetIOSettings();
 	ios->SetBoolProp(IMP_FBX_MATERIAL, true);
 	ios->SetBoolProp(IMP_FBX_TEXTURE, true);
@@ -332,10 +332,10 @@ bool FBXWrangler::ImportScene(const string& fileName) {
 	if (!status)
 		return false;
 
-	return LoadMeshes();
+	return LoadMeshes(options);
 }
 
-bool FBXWrangler::LoadMeshes() {
+bool FBXWrangler::LoadMeshes(const FBXImportOptions& options) {
 	if (!scene)
 		return false;
 
@@ -353,6 +353,9 @@ bool FBXWrangler::LoadMeshes() {
 				m = (FbxMesh*)converter.Triangulate((FbxNodeAttribute*)m, true);
 			}
 
+			FbxGeometryElementUV* uv = m->GetElementUV(0);
+			FbxGeometryElementNormal* normal = m->GetElementNormal(0);
+
 			shape.name = child->GetName();
 			int numVerts = m->GetControlPointsCount();
 			int numTris = m->GetPolygonCount();
@@ -360,26 +363,25 @@ bool FBXWrangler::LoadMeshes() {
 			for (int v = 0; v < numVerts; v++) {
 				FbxVector4 vert = m->GetControlPointAt(v);
 				shape.verts.emplace_back((float)vert.mData[0], (float)vert.mData[1], (float)vert.mData[2]);
-				if (m->GetElementUVCount() && m->GetElementUV(0)->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
+				if (uv && uv->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
 					int uIndex = v;
-					if (m->GetElementUV(0)->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
-						uIndex = m->GetElementUV(0)->GetIndexArray().GetAt(v);
+					if (uv->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
+						uIndex = uv->GetIndexArray().GetAt(v);
 
-					shape.uvs.emplace_back((float)m->GetElementUV(0)->GetDirectArray().GetAt(uIndex).mData[0],
-						(float)m->GetElementUV(0)->GetDirectArray().GetAt(uIndex).mData[1]);
+					shape.uvs.emplace_back((float)uv->GetDirectArray().GetAt(uIndex).mData[0],
+						(float)uv->GetDirectArray().GetAt(uIndex).mData[1]);
 				}
 
-				if (m->GetElementNormalCount() && m->GetElementNormal(0)->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
-					shape.normals.emplace_back((float)m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[0],
-						(float)m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[1],
-						(float)m->GetElementNormal(0)->GetDirectArray().GetAt(v).mData[2]);
+				if (normal && normal->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
+					shape.normals.emplace_back((float)normal->GetDirectArray().GetAt(v).mData[0],
+						(float)normal->GetDirectArray().GetAt(v).mData[1],
+						(float)normal->GetDirectArray().GetAt(v).mData[2]);
 				}
 			}
-			
+
 			const char* uvName = nullptr;
-			FbxGeometryElementUV* elementUV = m->GetElementUV(0);
-			if (elementUV) {
-				uvName = elementUV->GetName();
+			if (uv) {
+				uvName = uv->GetName();
 				shape.uvs.resize(numVerts);
 			}
 
@@ -392,20 +394,18 @@ bool FBXWrangler::LoadMeshes() {
 				int p3 = m->GetPolygonVertex(t, 2);
 				shape.tris.emplace_back(p1, p2, p3);
 
-				if (elementUV) {
-					if (m->GetElementUVCount() && elementUV->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-						FbxVector2 uv;
-						bool hasUV;
+				if (uv && uv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+					FbxVector2 uv;
+					bool isUnmapped;
 
-						m->GetPolygonVertexUV(t, 0, uvName, uv, hasUV);
+					if (m->GetPolygonVertexUV(t, 0, uvName, uv, isUnmapped))
 						shape.uvs[p1] = Vector2(uv.mData[0], uv.mData[1]);
 
-						m->GetPolygonVertexUV(t, 1, uvName, uv, hasUV);
+					if (m->GetPolygonVertexUV(t, 1, uvName, uv, isUnmapped))
 						shape.uvs[p2] = Vector2(uv.mData[0], uv.mData[1]);
 
-						m->GetPolygonVertexUV(t, 2, uvName, uv, hasUV);
+					if (m->GetPolygonVertexUV(t, 2, uvName, uv, isUnmapped))
 						shape.uvs[p3] = Vector2(uv.mData[0], uv.mData[1]);
-					}
 				}
 			}
 
@@ -426,6 +426,14 @@ bool FBXWrangler::LoadMeshes() {
 					}
 				}
 			}
+
+			if (options.InvertU)
+				for (auto &u : shape.uvs)
+					u.u = 1.0f - u.u;
+
+			if (options.InvertV)
+				for (auto &v : shape.uvs)
+					v.v = 1.0f - v.v;
 
 			shapes[shape.name] = shape;
 		}

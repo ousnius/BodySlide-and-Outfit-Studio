@@ -592,6 +592,8 @@
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\program\BodySlideApp.h" />
+    <ClInclude Include="src\program\FBXImportDialog.h" />
+    <ClInclude Include="src\program\FBXImportOptions.h" />
     <ClInclude Include="src\program\GroupManager.h" />
     <ClInclude Include="src\program\OutfitProject.h" />
     <ClInclude Include="src\program\OutfitStudio.h" />
@@ -633,6 +635,7 @@
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\program\BodySlideApp.cpp" />
+    <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />
     <ClCompile Include="src\program\OutfitProject.cpp" />
     <ClCompile Include="src\program\OutfitStudio.cpp" />

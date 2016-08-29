@@ -1291,6 +1291,12 @@
     <ClInclude Include="src\components\Anim.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\FBXImportDialog.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\program\FBXImportOptions.h">
+      <Filter>Program</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1406,6 +1412,9 @@
     </ClCompile>
     <ClCompile Include="src\components\Anim.cpp">
       <Filter>Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\FBXImportDialog.cpp">
+      <Filter>Program</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -8,6 +8,7 @@ See the included LICENSE file
 
 #include "../components/Mesh.h"	
 #include "../components/Anim.h"
+#include "../program/FBXImportOptions.h"
 #include "NifFile.h"
 
 #include <fbxsdk.h>
@@ -82,7 +83,7 @@ public:
 	void AddGeometry(const string& shapeName, const vector<Vector3>* verts, const vector<Vector3>* norms, const vector<Triangle>* tris, const vector<Vector2>* uvs);
 
 	bool ExportScene(const string& fileName);
-	bool ImportScene(const string& fileName);
+	bool ImportScene(const string& fileName, const FBXImportOptions& options = FBXImportOptions());
 
-	bool LoadMeshes();
+	bool LoadMeshes(const FBXImportOptions& options);
 };

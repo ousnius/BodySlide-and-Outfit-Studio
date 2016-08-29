@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "../files/TriFile.h"
 #include "../files/FBXWrangler.h"
 #include "../files/MaterialFile.h"
+#include "../program/FBXImportDialog.h"
 
 #include "FSEngine/FSManager.h"
 #include "FSEngine/FSEngine.h"
@@ -2091,9 +2092,13 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 	FBXWrangler fbxw;
 	string nonRefBones;
 
-	bool result = fbxw.ImportScene(fileName);
-	if (!result)
+	FBXImportDialog import(owner);
+	if (import.ShowModal() != wxID_OK)
 		return 1;
+
+	bool result = fbxw.ImportScene(fileName, import.GetOptions());
+	if (!result)
+		return 2;
 
 	if (!shapeName.empty())
 		outfitName = shapeName;
@@ -2107,9 +2112,8 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 		string useShapeName = s;
 
 		if (!mergeShape.empty()) {
-			vector<Vector3> shapeVerts;
-			workNif.GetVertsForShape(mergeShape, shapeVerts);
-			if (shapeVerts.size() == shape->verts.size()) {
+			int vertCount = workNif.GetVertCountForShape(mergeShape);
+			if (vertCount == shape->verts.size()) {
 				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
 					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
