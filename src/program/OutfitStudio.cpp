@@ -1910,6 +1910,9 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 		return;
 
 	if (outfitBones->GetItemParent(item).IsOk()) {
+		// Clear history
+		glView->GetStrokeManager()->Clear();
+
 		// Clear vcolors of all shapes
 		vector<string> shapes;
 		project->GetShapes(shapes);
