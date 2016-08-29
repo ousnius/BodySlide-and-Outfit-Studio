@@ -1309,8 +1309,17 @@ msgstr ""
 msgid "Delete Partition..."
 msgstr ""
 
-# XRC STRINGS END HERE
 msgid "Deletes the partition from the shape."
+msgstr ""
+
+msgid "FBX Import Options..."
+msgstr ""
+
+msgid "Invert U"
+msgstr ""
+
+# XRC STRINGS END HERE
+msgid "Invert V"
 msgstr ""
 
 #: Anim.cpp:359

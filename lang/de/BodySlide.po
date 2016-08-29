@@ -1502,9 +1502,18 @@ msgstr "Fügt dem Modell eine neue Partition hinzu."
 msgid "Delete Partition..."
 msgstr "Partition entfernen..."
 
-# XRC STRINGS END HERE
 msgid "Deletes the partition from the shape."
 msgstr "Entfernt die Partition vom Modell."
+
+msgid "FBX Import Options..."
+msgstr "FBX Import Optionen..."
+
+msgid "Invert U"
+msgstr "U invertieren"
+
+# XRC STRINGS END HERE
+msgid "Invert V"
+msgstr "V invertieren"
 
 #: Anim.cpp:359
 msgid ""
