@@ -219,6 +219,7 @@ string OutfitProject::Save(const wxString& strFileName,
 			clone.UpdateSkinPartitions(s);
 
 		clone.SetShapeOrder(owner->GetShapeList());
+		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
 		if (clone.Save(saveFileName)) {
 			errmsg = _("Failed to write base .nif file: ") + saveFileName;
@@ -2056,6 +2057,7 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 		clone.UpdateSkinPartitions(s);
 
 	clone.SetShapeOrder(owner->GetShapeList());
+	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 	return clone.Save(fileName);
 }
 
