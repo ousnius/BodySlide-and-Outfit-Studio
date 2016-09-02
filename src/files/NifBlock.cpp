@@ -3671,7 +3671,7 @@ void NiSkinData::Put(fstream& file) {
 }
 
 void NiSkinData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	ushort highestRemoved = vertIndices[vertIndices.size() - 1];
+	ushort highestRemoved = vertIndices.back();
 	vector<int> indexCollapse(highestRemoved + 1, 0);
 
 	NiObject::notifyVerticesDelete(vertIndices);

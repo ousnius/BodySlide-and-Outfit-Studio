@@ -159,6 +159,8 @@ public:
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
+	// Update bone set flags
+	void UpdatePartitionFlags(const string& shapeName);
 };
 
 template <class T>

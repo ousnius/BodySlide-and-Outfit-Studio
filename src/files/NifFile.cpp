@@ -2406,6 +2406,8 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
 					for (int i = emptyIndices.size() - 1; i >= 0; i--)
 						bsdSkinInst->RemovePartition(i);
+
+					UpdatePartitionFlags(shapeName);
 				}
 			}
 		}
@@ -2773,23 +2775,36 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	skinPart->numPartitions = partitions.size();
 	skinPart->partitions = move(partitions);
 
-	// Update bone set flags
-	if (bsdSkinInst) {
-		auto partInfo = bsdSkinInst->GetPartitions();
-		for (int i = 0; i < partInfo.size(); i++) {
-			if (i != 0) {
-				// Start a new set if the previous bones are different
-				if (partBones[i] != partBones[i - 1])
-					partInfo[i].flags = 257;
-				else
-					partInfo[i].flags = 1;
-			}
-			else
-				partInfo[i].flags = 257;
-		}
+	UpdatePartitionFlags(shapeName);
+}
 
-		bsdSkinInst->SetPartitions(partInfo);
+void NifFile::UpdatePartitionFlags(const string& shapeName) {
+	NiShape* shape = FindShapeByName(shapeName);
+	if (!shape)
+		return;
+
+	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	if (!bsdSkinInst)
+		return;
+
+	auto skinPart = hdr.GetBlock<NiSkinPartition>(bsdSkinInst->GetSkinPartitionRef());
+	if (!skinPart)
+		return;
+
+	auto partInfo = bsdSkinInst->GetPartitions();
+	for (int i = 0; i < partInfo.size(); i++) {
+		if (i != 0) {
+			// Start a new set if the previous bones are different
+			if (skinPart->partitions[i].bones != skinPart->partitions[i - 1].bones)
+				partInfo[i].flags = 257;
+			else
+				partInfo[i].flags = 1;
+		}
+		else
+			partInfo[i].flags = 257;
 	}
+
+	bsdSkinInst->SetPartitions(partInfo);
 }
 
 void NifFile::CreateSkinning(const string& shapeName) {
