@@ -1251,8 +1251,8 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 	owner->UpdateProgress(10, _("Gathering bones..."));
 
 	vector<string>* boneList;
+	vector<string> allBoneList;
 	if (!inBoneList) {
-		vector<string> allBoneList;
 		for (auto &boneName : workAnim.shapeBones[baseShape])
 			allBoneList.push_back(boneName);
 
