@@ -2550,8 +2550,8 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	vector<bool> usedVerts;
 	usedVerts.resize(numVerts);
 
-	// 24 for SK or newer, 18 for rest
-	int maxBonesPerPartition = hdr.GetUserVersion() >= 12 ? 24 : 18;
+	// 18 for pre-SK
+	int maxBonesPerPartition = hdr.GetUserVersion() >= 12 ? numeric_limits<int>::max() : 18;
 	unordered_map<int, set<int>> partBones;
 
 	vector<NiSkinPartition::PartitionBlock> partitions;
