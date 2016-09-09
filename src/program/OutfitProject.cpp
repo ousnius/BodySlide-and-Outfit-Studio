@@ -1972,7 +1972,7 @@ void OutfitProject::ConformShape(const string& shapeName) {
 
 	string refTarget = ShapeToTarget(baseShape);
 	for (int i = 0; i < activeSet.size(); i++)
-		if (SliderShow(i))
+		if (SliderShow(i) && !SliderZap(i))
 			morpher.GenerateResultDiff(shapeName, activeSet[i].name, activeSet[i].TargetDataName(refTarget));
 }
 
