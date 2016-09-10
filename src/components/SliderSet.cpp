@@ -40,6 +40,7 @@ int SliderSet::CopySlider(SliderData* other) {
 	ms->bZap = other->bZap;
 	ms->defBigValue = other->defBigValue;
 	ms->defSmallValue = other->defSmallValue;
+	ms->zapToggles = other->zapToggles;
 	ms->dataFiles = other->dataFiles;
 	return sliders.size() - 1;
 }
@@ -91,12 +92,11 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 		shapeName = shapeName->NextSiblingElement(shapeStr.c_str());
 	}
 
-	SliderData tmpSlider;
 	XMLElement* sliderEntry = element->FirstChildElement("Slider");
 	while (sliderEntry) {
-		tmpSlider.Clear();
+		SliderData tmpSlider;
 		if (tmpSlider.LoadSliderData(sliderEntry, genWeights) == 0)
-			sliders.push_back(tmpSlider);
+			sliders.push_back(move(tmpSlider));
 
 		sliderEntry = sliderEntry->NextSiblingElement("Slider");
 	}
@@ -199,10 +199,23 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			sliderElement->SetAttribute("hidden", "true");
 		if (slider.bClamp)
 			sliderElement->SetAttribute("clamp", "true");
-		if (slider.bZap)
+
+		if (slider.bZap) {
 			sliderElement->SetAttribute("zap", "true");
+
+			string zapToggles;
+			for (auto &toggle : slider.zapToggles) {
+				zapToggles.append(toggle);
+				zapToggles.append(";");
+			}
+
+			if (!zapToggles.empty())
+				sliderElement->SetAttribute("zaptoggles", zapToggles.c_str());
+		}
+
 		if (slider.bUV)
 			sliderElement->SetAttribute("uv", "true");
+
 		for (auto &df : slider.dataFiles) {
 			newElement = sliderSetElement->GetDocument()->NewElement("Data");
 			dataFileElement = sliderElement->InsertEndChild(newElement)->ToElement();

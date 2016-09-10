@@ -11,6 +11,8 @@ See the included LICENSE file
 #include "../components/Anim.h"
 #include "OutfitStudio.h"
 
+#include <wx/arrstr.h>
+
 #pragma warning (disable: 4018)
 using namespace std;
 
@@ -99,11 +101,13 @@ public:
 	string SliderShapeDataName(int index, const string& shapeName);
 	bool SliderClamp(int index);
 	bool SliderZap(int index);
+	wxArrayString SliderZapToggles(int index);
 	bool SliderInvert(int index);
 	bool SliderHidden(int index);
 	int SliderIndexFromName(const string& sliderName);
 
 	void SetSliderZap(int index, bool zap);
+	void SetSliderZapToggles(int index, const wxArrayString& toggles);
 	void SetSliderInvert(int index, bool inv);
 	void SetSliderHidden(int index, bool hidden);
 	void SetSliderDefault(int index, int val, bool isHi);

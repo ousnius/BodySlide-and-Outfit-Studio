@@ -75,7 +75,7 @@
 		</object>
 	</object>
 	<object class="wxDialog" name="dlgSliderProp">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
 		<size>287,210</size>
 		<title>Slider Properties</title>
 		<centered>1</centered>
@@ -83,7 +83,7 @@
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStaticBoxSizer">
 					<orient>wxHORIZONTAL</orient>
@@ -100,14 +100,14 @@
 			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStaticBoxSizer">
 					<orient>wxHORIZONTAL</orient>
 					<label>Default Values</label>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbValLo">
 							<label>Low</label>
@@ -122,15 +122,9 @@
 							<value>0</value>
 						</object>
 					</object>
-					<object class="spacer">
-						<option>1</option>
-						<flag>wxEXPAND</flag>
-						<border>5</border>
-						<size>0,0</size>
-					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lbValHi">
 							<label>High</label>
@@ -148,61 +142,85 @@
 				</object>
 			</object>
 			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND</flag>
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStaticBoxSizer">
-					<orient>wxHORIZONTAL</orient>
+					<orient>wxVERTICAL</orient>
 					<label>Options</label>
 					<object class="sizeritem">
-						<option>1</option>
+						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxCheckBox" name="chkInvert">
-							<label>Invert Slider</label>
-							<checked>0</checked>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkInvert">
+									<label>Invert Slider</label>
+									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkHidden">
+									<label>Hidden</label>
+									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkZap">
+									<label>Zap</label>
+									<checked>0</checked>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="zapToggleLabel">
+							<label>Toggle Zaps:</label>
+							<wrap>-1</wrap>
 						</object>
 					</object>
 					<object class="sizeritem">
 						<option>1</option>
-						<flag>wxALL</flag>
+						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
-						<object class="wxCheckBox" name="chkHidden">
-							<label>Hidden</label>
-							<checked>0</checked>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxCheckBox" name="chkZap">
-							<label>Zap</label>
-							<checked>0</checked>
+						<minsize>-1,72</minsize>
+						<object class="wxCheckListBox" name="zapToggleList">
+							<style>wxLB_HSCROLL|wxLB_NEEDED_SB</style>
+							<enabled>0</enabled>
 						</object>
 					</object>
 				</object>
 			</object>
-			<object class="spacer">
-				<option>1</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<size>0,0</size>
-			</object>
 			<object class="sizeritem">
 				<option>0</option>
-				<flag>wxEXPAND|wxALL</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxStdDialogButtonSizer">
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxButton" name="wxID_OK">
 							<label>&amp;OK</label>
 						</object>
 					</object>
-					<object class="button">
-						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+					<object class="sizeritem">
+						<option>1</option>
+						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxButton" name="wxID_CANCEL">
 							<label>&amp;Cancel</label>

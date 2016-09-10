@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.8\n"
+"X-Generator: Poedit 1.8.9\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -1511,9 +1511,12 @@ msgstr "FBX Import Optionen..."
 msgid "Invert U"
 msgstr "U invertieren"
 
-# XRC STRINGS END HERE
 msgid "Invert V"
 msgstr "V invertieren"
+
+# XRC STRINGS END HERE
+msgid "Toggle Zaps:"
+msgstr "Zaps umschalten:"
 
 #: Anim.cpp:359
 msgid ""

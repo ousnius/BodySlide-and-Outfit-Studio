@@ -32,6 +32,7 @@ public:
 	bool bUV;			// UV Sliders!? Wat!
 	float defSmallValue;
 	float defBigValue;
+	vector<string> zapToggles;
 
 	// Outfit Studio values
 	float curValue;		// Current slider value.

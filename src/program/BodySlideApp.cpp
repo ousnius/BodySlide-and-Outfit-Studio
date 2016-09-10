@@ -1897,6 +1897,10 @@ float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
 	return sliderManager.GetSlider(sstr, isLo);
 }
 
+vector<string> BodySlideApp::GetSliderZapToggles(const wxString& sliderName) {
+	return sliderManager.GetSliderZapToggles(sliderName.ToStdString());
+}
+
 void BodySlideApp::SetSliderValue(const wxString& sliderName, bool isLo, float val) {
 	string sstr = sliderName.ToStdString();
 	sliderManager.SetSlider(sstr, isLo, val);
@@ -2431,7 +2435,24 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 				sliderDisplays[sliderName]->zapCheckLo->SetValue(false);
 		}
 	}
+
 	app->SetSliderChanged(sliderName, isLo);
+
+	vector<string> zapToggles = app->GetSliderZapToggles(sliderName);
+	for (auto &toggle : zapToggles) {
+		wxLogMessage("Zap '%s' toggled.", sliderName);
+
+		app->SetSliderValue(toggle, isLo, 1.0f - app->GetSliderValue(toggle, isLo));
+		app->SetSliderChanged(toggle, isLo);
+
+		BodySlideFrame::SliderDisplay* slider = GetSliderDisplay(toggle);
+		if (slider) {
+			if (slider->zapCheckHi)
+				slider->zapCheckHi->SetValue(!slider->zapCheckHi->GetValue());
+			if (slider->zapCheckLo)
+				slider->zapCheckLo->SetValue(!slider->zapCheckLo->GetValue());
+		}
+	}
 
 	wxBeginBusyCursor();
 	app->RebuildPreviewMeshes();

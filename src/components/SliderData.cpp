@@ -7,6 +7,7 @@ See the included LICENSE file
 #include "SliderData.h"
 
 #include <wx/dir.h>
+#include <wx/tokenzr.h>
 
 SliderData::SliderData(const string& inName) {
 	name = inName;
@@ -73,6 +74,12 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 		bClamp = (_strnicmp(element->Attribute("clamp"), "true", 4) == 0);
 	else
 		bClamp = false;
+
+	if (bZap) {
+		wxStringTokenizer tokenizer(element->Attribute("zaptoggles"), ";");
+		while (tokenizer.HasMoreTokens())
+			zapToggles.push_back(tokenizer.GetNextToken().ToStdString());
+	}
 
 	DiffInfo tmpDataFile;
 	XMLElement* datafile = element->FirstChildElement(dataFileStr.c_str());

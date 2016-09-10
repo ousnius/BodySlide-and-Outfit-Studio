@@ -212,6 +212,7 @@ public:
 	void GroupBuild(const string& group);
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
+	vector<string> GetSliderZapToggles(const wxString& sliderName);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
 	void SetSliderChanged(const wxString& sliderName, bool isLo);
 

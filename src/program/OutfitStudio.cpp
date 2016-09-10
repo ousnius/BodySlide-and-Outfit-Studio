@@ -4294,18 +4294,13 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	wxDialog dlg;
-	wxString tmpstr;
-
-	string sstr;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSliderProp")) {
 		int curSlider = project->SliderIndexFromName(activeSlider);
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
 		XRCCTRL(dlg, "edSliderName", wxTextCtrl)->SetLabel(activeSlider);
-		tmpstr.sprintf("%d", loVal);
-		XRCCTRL(dlg, "edValLo", wxTextCtrl)->SetValue(tmpstr);
-		tmpstr.sprintf("%d", hiVal);
-		XRCCTRL(dlg, "edValHi", wxTextCtrl)->SetValue(tmpstr);
+		XRCCTRL(dlg, "edValLo", wxTextCtrl)->SetValue(wxString::Format("%d", loVal));
+		XRCCTRL(dlg, "edValHi", wxTextCtrl)->SetValue(wxString::Format("%d", hiVal));
 
 		if (!project->mGenWeights) {
 			XRCCTRL(dlg, "lbValLo", wxStaticText)->Hide();
@@ -4313,38 +4308,71 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "lbValHi", wxStaticText)->SetLabel("Default");
 		}
 
+		wxCheckBox* chkHidden = XRCCTRL(dlg, "chkHidden", wxCheckBox);
+		wxCheckBox* chkInvert = XRCCTRL(dlg, "chkInvert", wxCheckBox);
+		wxCheckBox* chkZap = XRCCTRL(dlg, "chkZap", wxCheckBox);
+
+		wxCheckListBox* zapToggleList = XRCCTRL(dlg, "zapToggleList", wxCheckListBox);
+		chkZap->Bind(wxEVT_CHECKBOX, [&zapToggleList](wxCommandEvent& event) {
+			zapToggleList->Enable(event.IsChecked());
+		});
+
 		if (project->SliderHidden(curSlider))
-			XRCCTRL(dlg, "chkHidden", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+			chkHidden->SetValue(true);
+
 		if (project->SliderInvert(curSlider))
-			XRCCTRL(dlg, "chkInvert", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-		if (project->SliderZap(curSlider))
-			XRCCTRL(dlg, "chkZap", wxCheckBox)->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+			chkInvert->SetValue(true);
+
+		if (project->SliderZap(curSlider)) {
+			chkZap->SetValue(true);
+			zapToggleList->Enable();
+
+			for (int i = 0; i < project->SliderCount(); i++)
+				if (i != curSlider && project->SliderZap(i))
+					zapToggleList->Append(project->GetSliderName(i));
+
+			for (auto &s : project->SliderZapToggles(curSlider)) {
+				int stringId = zapToggleList->FindString(s, true);
+				if (stringId != wxNOT_FOUND)
+					zapToggleList->Check(stringId);
+			}
+		}
 
 		XRCCTRL(dlg, "wxID_CANCEL", wxButton)->SetFocus();
 
 		if (dlg.ShowModal() == wxID_OK) {
-			project->SetSliderZap(curSlider, XRCCTRL(dlg, "chkZap", wxCheckBox)->GetValue());
-			project->SetSliderInvert(curSlider, XRCCTRL(dlg, "chkInvert", wxCheckBox)->GetValue());
-			project->SetSliderHidden(curSlider, XRCCTRL(dlg, "chkHidden", wxCheckBox)->GetValue());
+			if (chkZap->IsChecked()) {
+				project->SetSliderZap(curSlider, chkZap->GetValue());
+
+				wxArrayString zapToggles;
+				wxArrayInt toggled;
+				zapToggleList->GetCheckedItems(toggled);
+				for (auto &i : toggled)
+					zapToggles.Add(zapToggleList->GetString(i));
+
+				project->SetSliderZapToggles(curSlider, zapToggles);
+			}
+
+			project->SetSliderInvert(curSlider, chkInvert->GetValue());
+			project->SetSliderHidden(curSlider, chkHidden->GetValue());
 			XRCCTRL(dlg, "edValLo", wxTextCtrl)->GetValue().ToLong(&loVal);
 			project->SetSliderDefault(curSlider, loVal, false);
 			XRCCTRL(dlg, "edValHi", wxTextCtrl)->GetValue().ToLong(&hiVal);
 			project->SetSliderDefault(curSlider, hiVal, true);
-			tmpstr = XRCCTRL(dlg, "edSliderName", wxTextCtrl)->GetValue();
-			sstr = tmpstr.ToStdString();
 
-			if (activeSlider != sstr) {
-				project->SetSliderName(curSlider, sstr);
+			string sliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl)->GetValue().ToStdString();
+			if (activeSlider != sliderName) {
+				project->SetSliderName(curSlider, sliderName);
 				SliderDisplay* d = sliderDisplays[activeSlider];
-				sliderDisplays[sstr] = d;
+				sliderDisplays[sliderName] = d;
 				sliderDisplays.erase(activeSlider);
-				d->slider->SetName(sstr + "|slider");
-				d->sliderName->SetName(sstr + "|lbl");
-				d->btnSliderEdit->SetName(sstr + "|btn");
-				d->sliderNameCheck->SetName(sstr + "|check");
-				d->sliderReadout->SetName(sstr + "|readout");
-				d->sliderName->SetLabel(tmpstr);
-				activeSlider = sstr;
+				d->slider->SetName(sliderName + "|slider");
+				d->sliderName->SetName(sliderName + "|lbl");
+				d->btnSliderEdit->SetName(sliderName + "|btn");
+				d->sliderNameCheck->SetName(sliderName + "|check");
+				d->sliderReadout->SetName(sliderName + "|readout");
+				d->sliderName->SetLabel(sliderName);
+				activeSlider = sliderName;
 			}
 		}
 	}

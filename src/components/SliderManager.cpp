@@ -23,7 +23,7 @@ void SliderManager::AddSlidersInSet(SliderSet& inSet, bool hideAll) {
 		}
 		else {
 			if (inSet[i].bZap)
-				AddZapSlider(inSet[i].name);
+				AddZapSlider(inSet[i].name, inSet[i].zapToggles);
 			else if (inSet[i].bUV)
 				AddUVSlider(inSet[i].name, inSet[i].bInvert);
 			else
@@ -77,7 +77,7 @@ void SliderManager::AddUVSlider(const string& name, bool invert, const string& d
 	mSliderCount++;
 }
 
-void SliderManager::AddZapSlider(const string& name, const string& dataSetName) {
+void SliderManager::AddZapSlider(const string& name, const vector<string>& zapToggles, const string& dataSetName) {
 	Slider s;
 	s.name = name;
 	if (dataSetName.length() > 0)
@@ -89,6 +89,7 @@ void SliderManager::AddZapSlider(const string& name, const string& dataSetName) 
 	s.zap = true;
 	s.clamp = false;
 	s.uv = false;
+	s.zapToggles = zapToggles;
 	s.changed = false;
 
 	slidersSmall.push_back(s);
@@ -156,6 +157,14 @@ float SliderManager::GetSlider(const string& slider, bool isSmall) {
 				return slidersSmall[i].value;
 	}
 	return 0.0f;
+}
+
+vector<string> SliderManager::GetSliderZapToggles(const string& slider) {
+	for (int i = 0; i < slidersBig.size(); i++)
+		if (slidersBig[i].name == slider)
+			return slidersBig[i].zapToggles;
+
+	return vector<string>();
 }
 
 void SliderManager::SetSlider(const string& slider, bool isSmall, float val) {

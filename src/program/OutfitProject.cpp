@@ -607,6 +607,15 @@ bool OutfitProject::SliderZap(int index) {
 	return activeSet[index].bZap;
 }
 
+wxArrayString OutfitProject::SliderZapToggles(int index) {
+	wxArrayString toggles;
+	if (ValidSlider(index))
+		for (auto &toggle : activeSet[index].zapToggles)
+			toggles.Add(toggle);
+
+	return toggles;
+}
+
 bool OutfitProject::SliderInvert(int index) {
 	if (!ValidSlider(index))
 		return false;
@@ -619,25 +628,36 @@ bool OutfitProject::SliderHidden(int index) {
 	return activeSet[index].bHidden;
 }
 
-void  OutfitProject::SetSliderZap(int index, bool zap) {
+void OutfitProject::SetSliderZap(int index, bool zap) {
 	if (!ValidSlider(index))
 		return;
 	activeSet[index].bZap = zap;
 }
 
-void  OutfitProject::SetSliderInvert(int index, bool inv) {
+void OutfitProject::SetSliderZapToggles(int index, const wxArrayString& toggles) {
+	if (!ValidSlider(index))
+		return;
+
+	vector<string> zapToggles;
+	for (auto &s : toggles)
+		zapToggles.push_back(s.ToStdString());
+
+	activeSet[index].zapToggles = zapToggles;
+}
+
+void OutfitProject::SetSliderInvert(int index, bool inv) {
 	if (!ValidSlider(index))
 		return;
 	activeSet[index].bInvert = inv;
 }
 
-void  OutfitProject::SetSliderHidden(int index, bool hidden) {
+void OutfitProject::SetSliderHidden(int index, bool hidden) {
 	if (!ValidSlider(index))
 		return;
 	activeSet[index].bHidden = hidden;
 }
 
-void  OutfitProject::SetSliderDefault(int index, int val, bool isHi) {
+void OutfitProject::SetSliderDefault(int index, int val, bool isHi) {
 	if (!ValidSlider(index))
 		return;
 
