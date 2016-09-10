@@ -594,6 +594,11 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 			if (results.size() > 0) {
 				collided = true;
 
+				if (!m->bVisible) {
+					collided = false;
+					continue;
+				}
+
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
 				for (int i = 1; i < results.size(); i++)
@@ -733,6 +738,9 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			ret = true;
 			if (results.size() > 0) {
+				if (!m->bVisible)
+					continue;
+
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
 				for (int i = 1; i < results.size(); i++)
