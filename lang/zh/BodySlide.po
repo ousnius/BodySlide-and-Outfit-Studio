@@ -724,10 +724,10 @@ msgid ""
 msgstr "创建一个基于当前滑块值的新模型转换滑块"
 
 msgid "New Zap Slider"
-msgstr "新建活动滑块"
+msgstr "新建修正滑块"
 
 msgid "Create a new Zap slider based on unmasked vertices"
-msgstr "创建一个基于未遮蔽顶点的新活动滑块。"
+msgstr "创建一个基于未遮蔽顶点的新修正滑块。"
 
 msgid "Import OSD..."
 msgstr "导入OSD..."
@@ -1243,7 +1243,7 @@ msgid "Hidden"
 msgstr "隐藏"
 
 msgid "Zap"
-msgstr "活动"
+msgstr "修正"
 
 msgid "Save Project As..."
 msgstr "保存项目为..."
@@ -1407,32 +1407,32 @@ msgid "SSF File"
 msgstr "SSF文件"
 
 msgid "Partitions"
-msgstr "Partitions"
+msgstr "分区"
 
 msgid "Add Partition..."
-msgstr "Add Partition..."
+msgstr "添加分区..."
 
 msgid "Adds a new partition to the shape."
-msgstr "Adds a new partition to the shape."
+msgstr "添加新分区到模型。"
 
 msgid "Delete Partition..."
-msgstr "Delete Partition..."
+msgstr "删除分区..."
 
 msgid "Deletes the partition from the shape."
-msgstr "Deletes the partition from the shape."
+msgstr "从模型中删除分区。"
 
 msgid "FBX Import Options..."
-msgstr "FBX Import Options..."
+msgstr "FBX导入选项..."
 
 msgid "Invert U"
-msgstr "Invert U"
+msgstr "反转U轴"
 
 msgid "Invert V"
-msgstr "Invert V"
+msgstr "反转V轴"
 
 # XRC STRINGS END HERE
 msgid "Toggle Zaps:"
-msgstr "Toggle Zaps:"
+msgstr "切换修正:"
 
 #: Anim.cpp:359
 msgid ""
@@ -2473,11 +2473,11 @@ msgstr "\"从模型\""
 
 #: OutfitStudio.cpp:2874
 msgid "Enter a name for the new zap:"
-msgstr "为新zap输入一个名称："
+msgstr "为新修正输入一个名称："
 
 #: OutfitStudio.cpp:2874
 msgid "Create New Zap"
-msgstr "创建新Zap"
+msgstr "创建新修正"
 
 #: OutfitStudio.cpp:2922
 msgid "There is no slider in edit mode to negate!"
