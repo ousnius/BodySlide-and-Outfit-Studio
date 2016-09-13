@@ -2404,7 +2404,7 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
 				if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
-					for (int i = emptyIndices.size() - 1; i >= 0; i--)
+					for (auto &i : emptyIndices)
 						bsdSkinInst->RemovePartition(i);
 
 					UpdatePartitionFlags(shapeName);

@@ -3943,7 +3943,7 @@ int NiSkinPartition::RemoveEmptyPartitions(vector<int>& outDeletedIndices) {
 	outDeletedIndices.clear();
 	for (int i = partitions.size() - 1; i >= 0; i--) {
 		if (partitions[i].numVertices == 0) {
-			outDeletedIndices.insert(outDeletedIndices.begin(), i);
+			outDeletedIndices.push_back(i);
 			partitions.erase(partitions.begin() + i);
 			numPartitions--;
 		}
