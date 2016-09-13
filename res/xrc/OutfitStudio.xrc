@@ -25,6 +25,7 @@
 							<style>wxCP_DEFAULT_STYLE</style>
 							<collapsed>1</collapsed>
 							<label>Brush Settings</label>
+							<bg>wxSYS_COLOUR_MENU</bg>
 							<object class="panewindow">
 								<object class="wxFlexGridSizer">
 									<rows>0</rows>
