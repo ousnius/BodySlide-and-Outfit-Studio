@@ -350,11 +350,6 @@ namespace gli
 		gli::format find(internal_format InternalFormat, external_format ExternalFormat, type_format Type);
 
 	private:
-		bool has_swizzle(profile Profile) const
-		{
-			return Profile == PROFILE_ES30 || Profile == PROFILE_GL33;
-		}
-
 		struct format_desc
 		{
 			internal_format Internal;
@@ -362,6 +357,13 @@ namespace gli
 			type_format Type;
 			unsigned int Properties;
 		};
+
+		bool has_swizzle(profile Profile) const
+		{
+			return Profile == PROFILE_ES30 || Profile == PROFILE_GL33;
+		}
+
+		gl::swizzles compute_swizzle(format_desc const& FormatDesc, gli::swizzles const& Swizzle) const;
 
 		std::array<format_desc, FORMAT_COUNT> FormatDesc;
 		profile Profile;

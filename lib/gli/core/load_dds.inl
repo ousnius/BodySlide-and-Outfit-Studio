@@ -1,4 +1,5 @@
 #include "../dx.hpp"
+#include "../file.hpp"
 #include <cstdio>
 #include <cassert>
 
@@ -152,7 +153,7 @@ namespace detail
 		case dx::D3DFMT_BC4S:
 			return dx::D3DFMT_AT1N;
 		case dx::D3DFMT_BC5U:
-			return dx::D3DFMT_ATI2;
+			return dx::D3DFMT_A2XY;
 		case dx::D3DFMT_BC5S:
 			return dx::D3DFMT_AT2N;
 		}
@@ -268,10 +269,10 @@ namespace detail
 		else if((Header.Format.flags & dx::DDPF_FOURCC) && (Header.Format.fourCC != dx::D3DFMT_DX10) && (Header.Format.fourCC != dx::D3DFMT_GLI1) && (Format == static_cast<format>(gli::FORMAT_INVALID)))
 		{
 			dx::d3dfmt const FourCC = detail::remap_four_cc(Header.Format.fourCC);
-			Format = DX.find(FourCC, Header.Format.flags);
+			Format = DX.find(FourCC);
 		}
 		else if(Header.Format.fourCC == dx::D3DFMT_DX10 || Header.Format.fourCC == dx::D3DFMT_GLI1)
-			Format = DX.find(Header.Format.fourCC, Header10.Format, Header.Format.flags);
+			Format = DX.find(Header.Format.fourCC, Header10.Format);
 
 		GLI_ASSERT(Format != static_cast<format>(gli::FORMAT_INVALID));
 
@@ -299,7 +300,7 @@ namespace detail
 
 	inline texture load_dds(char const * Filename)
 	{
-		FILE* File = std::fopen(Filename, "rb");
+		FILE* File = detail::open_file(Filename, "rb");
 		if(!File)
 			return texture();
 

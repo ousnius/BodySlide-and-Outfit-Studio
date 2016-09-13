@@ -10,7 +10,7 @@ namespace gli
 	/// Compute the number of mipmaps levels necessary to create a mipmap complete texture
 	/// 
 	/// @param Extent Extent of the texture base level mipmap
-	/// @tparam vecType Vector type used to express the dimentions of a texture of any kind.
+	/// @tparam vecType Vector type used to express the dimensions of a texture of any kind.
 	/// @code
 	/// #include <gli/texture2d.hpp>
 	/// #include <gli/levels.hpp>
@@ -19,7 +19,7 @@ namespace gli
 	/// gli::texture2d Texture(gli::levels(Extent));
 	/// @endcode
 	template <typename T, precision P, template <typename, precision> class vecType>
-	T levels(vecType<T, P> const & Extent);
+	T levels(vecType<T, P> const& Extent);
 /*
 	/// Compute the number of mipmaps levels necessary to create a mipmap complete texture
 	/// 

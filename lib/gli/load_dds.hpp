@@ -15,7 +15,7 @@ namespace gli
 	/// Loads a texture storage_linear from DDS file. Returns an empty storage_linear in case of failure.
 	///
 	/// @param Path Path of the file to open including filaname and filename extension
-	texture load_dds(std::string const & Path);
+	texture load_dds(std::string const& Path);
 
 	/// Loads a texture storage_linear from DDS memory. Returns an empty storage_linear in case of failure.
 	///

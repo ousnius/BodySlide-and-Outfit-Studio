@@ -170,7 +170,7 @@ namespace gli
 			{DDPF_FOURCC, D3DFMT_DX10, DXGI_FORMAT_BC3_UNORM_SRGB, glm::u32vec4(0)},				//FORMAT_RGBA_DXT5_SRGB_BLOCK16,
 			{DDPF_FOURCC, D3DFMT_ATI1, DXGI_FORMAT_BC4_UNORM, glm::u32vec4(0)},						//FORMAT_R_ATI1N_UNORM_BLOCK8,
 			{DDPF_FOURCC, D3DFMT_AT1N, DXGI_FORMAT_BC4_SNORM, glm::u32vec4(0)},						//FORMAT_R_ATI1N_SNORM_BLOCK8,
-			{DDPF_FOURCC, D3DFMT_ATI2, DXGI_FORMAT_BC5_UNORM, glm::u32vec4(0)},						//FORMAT_RG_ATI2N_UNORM_BLOCK16,
+			{DDPF_FOURCC, D3DFMT_A2XY, DXGI_FORMAT_BC5_UNORM, glm::u32vec4(0)},						//FORMAT_RG_ATI2N_UNORM_BLOCK16,
 			{DDPF_FOURCC, D3DFMT_AT2N, DXGI_FORMAT_BC5_SNORM, glm::u32vec4(0)},						//FORMAT_RG_ATI2N_SNORM_BLOCK16,
 			{DDPF_FOURCC, D3DFMT_DX10, DXGI_FORMAT_BC6H_UF16, glm::u32vec4(0)},						//FORMAT_RGB_BP_UFLOAT_BLOCK16,
 			{DDPF_FOURCC, D3DFMT_DX10, DXGI_FORMAT_BC6H_SF16, glm::u32vec4(0)},						//FORMAT_RGB_BP_SFLOAT_BLOCK16,
@@ -252,13 +252,13 @@ namespace gli
 		std::copy(&Table[0], &Table[0] + FORMAT_COUNT, this->Translation.begin());
 	}
 
-	inline dx::format const & dx::translate(gli::format const & Format) const
+	inline dx::format const& dx::translate(gli::format Format) const
 	{
 		GLI_ASSERT(Format >= FORMAT_FIRST && Format <= FORMAT_LAST);
 		return Translation[Format - FORMAT_FIRST];
 	}
 
-	inline gli::format dx::find(dx::d3dfmt FourCC, ddpf PixelFormat) const
+	inline gli::format dx::find(dx::d3dfmt FourCC) const
 	{
 		gli::format FormatResult = static_cast<gli::format>(FORMAT_INVALID);
 		for(int FormatIndex = FORMAT_FIRST; FormatIndex <= FORMAT_LAST; ++FormatIndex)
@@ -272,7 +272,7 @@ namespace gli
 		return FormatResult;
 	}
 
-	inline gli::format dx::find(dx::d3dfmt FourCC, dx::dxgiFormat Format, ddpf PixelFormat) const
+	inline gli::format dx::find(dx::d3dfmt FourCC, dx::dxgiFormat Format) const
 	{
 		GLI_ASSERT(FourCC == D3DFMT_DX10 || FourCC == D3DFMT_GLI1);
 		

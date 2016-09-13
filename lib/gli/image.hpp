@@ -25,17 +25,13 @@ namespace gli
 		image();
 
 		/// Create an image object and allocate an image storoge for it.
-		explicit image(
-			format_type Format,
-			extent_type const& Extent);
+		explicit image(format_type Format, extent_type const& Extent);
 
 		/// Create an image object by sharing an existing image storage_linear from another image instance.
 		/// This image object is effectively an image view where format can be reinterpreted
 		/// with a different compatible image format.
 		/// For formats to be compatible, the block size of source and destination must match.
-		explicit image(
-			image const& Image,
-			format_type Format);
+		explicit image(image const& Image, format_type Format);
 
 		/// Return whether the image instance is empty, no storage_linear or description have been assigned to the instance.
 		bool empty() const;

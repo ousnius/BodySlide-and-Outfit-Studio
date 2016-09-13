@@ -297,6 +297,11 @@ namespace detail
 		return detail::get_format_info(Format).Flags & detail::CAP_COMPRESSED_BIT ? true : false;
 	}
 
+	inline bool is_s3tc_compressed(format Format)
+	{
+		return Format >= FORMAT_RGB_DXT1_UNORM_BLOCK8 && Format <= FORMAT_RGBA_DXT5_SRGB_BLOCK16;
+	}
+
 	inline bool is_srgb(format Format)
 	{
 		return detail::get_format_info(Format).Flags & detail::CAP_COLORSPACE_SRGB_BIT ? true : false;
@@ -315,5 +320,57 @@ namespace detail
 	inline size_t component_count(format Format)
 	{
 		return detail::get_format_info(Format).Component;
+	}
+
+	inline bool is_unsigned(format Format)
+	{
+		return detail::get_format_info(Format).Flags & detail::CAP_UNSIGNED_BIT ? true : false;
+	}
+
+	inline bool is_signed(format Format)
+	{
+		return detail::get_format_info(Format).Flags & detail::CAP_SIGNED_BIT ? true : false;
+	}
+
+	inline bool is_integer(format Format)
+	{
+		return detail::get_format_info(Format).Flags & detail::CAP_INTEGER_BIT ? true : false;
+	}
+
+	inline bool is_signed_integer(format Format)
+	{
+		return is_integer(Format) && is_signed(Format);
+	}
+
+	inline bool is_unsigned_integer(format Format)
+	{
+		return is_integer(Format) && is_unsigned(Format);
+	}
+
+	inline bool is_float(format Format)
+	{
+		return detail::get_format_info(Format).Flags & detail::CAP_FLOAT_BIT ? true : false;
+	}
+
+	inline bool is_normalized(format Format)
+	{
+		return detail::get_format_info(Format).Flags & detail::CAP_NORMALIZED_BIT ? true : false;
+	}
+
+	inline bool is_unorm(format Format)
+	{
+		return is_normalized(Format) && is_unsigned(Format);
+	}
+
+	inline bool is_snorm(format Format)
+	{
+		return is_normalized(Format) && is_signed(Format);
+	}
+
+	inline bool is_packed(format Format)
+	{
+		uint16_t flags = detail::get_format_info(Format).Flags;
+		
+		return (flags & detail::CAP_PACKED8_BIT) != 0 || (flags & detail::CAP_PACKED16_BIT) != 0 || (flags & detail::CAP_PACKED32_BIT) != 0;
 	}
 }//namespace gli

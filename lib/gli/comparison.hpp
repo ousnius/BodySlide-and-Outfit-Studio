@@ -15,16 +15,16 @@
 namespace gli
 {
 	/// Compare two images. Two images are equal when the date is the same.
-	bool operator==(image const & ImageA, image const & ImageB);
+	bool operator==(image const& ImageA, image const& ImageB);
 
 	/// Compare two images. Two images are equal when the date is the same.
-	bool operator!=(image const & ImageA, image const & ImageB);
+	bool operator!=(image const& ImageA, image const& ImageB);
 
 	/// Compare two textures. Two textures are the same when the data, the format and the targets are the same.
-	bool operator==(texture const & A, texture const & B);
+	bool operator==(texture const& A, texture const& B);
 
 	/// Compare two textures. Two textures are the same when the data, the format and the targets are the same.
-	bool operator!=(texture const & A, texture const & B);
+	bool operator!=(texture const& A, texture const& B);
 }//namespace gli
 
 #include "./core/comparison.inl"
