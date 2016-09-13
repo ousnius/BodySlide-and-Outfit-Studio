@@ -2558,6 +2558,41 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
 		fill(usedVerts.begin(), usedVerts.end(), false);
 
+		// Triangulate partition if stripified
+		if (skinPart->partitions[partID].numStrips > 0) {
+			vector<Triangle> stripTris;
+			for (auto &strip : skinPart->partitions[partID].strips) {
+				if (strip.size() < 3)
+					continue;
+
+				ushort a;
+				ushort b = strip[0];
+				ushort c = strip[1];
+				bool flip = false;
+
+				for (int s = 2; s < strip.size(); s++) {
+					a = b;
+					b = c;
+					c = strip[s];
+
+					if (a != b && b != c && c != a) {
+						if (!flip)
+							stripTris.push_back(Triangle(a, b, c));
+						else
+							stripTris.push_back(Triangle(a, c, b));
+					}
+
+					flip = !flip;
+				}
+			}
+
+			skinPart->partitions[partID].numTriangles = stripTris.size();
+			skinPart->partitions[partID].triangles = move(stripTris);
+			skinPart->partitions[partID].numStrips = 0;
+			skinPart->partitions[partID].strips.clear();
+			skinPart->partitions[partID].stripLengths.clear();
+		}
+
 		ushort numTrisInPart = 0;
 		for (int it = 0; it < skinPart->partitions[partID].numTriangles;) {
 			// Find the actual tri index from the partition tri index
