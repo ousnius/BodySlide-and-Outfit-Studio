@@ -75,7 +75,6 @@ void SliderSetGroup::MergeMembers(const SliderSetGroup& sourceGroup) {
 	for (int i = 0; i < sourceGroup.members.size(); i++) {
 		members.push_back(sourceGroup.members[i]);
 		sourceFiles.push_back(sourceGroup.sourceFiles[i]);
-		uniqueSourceFiles.insert(sourceGroup.sourceFiles[i]);
 	}
 }
 
@@ -88,8 +87,9 @@ int SliderSetGroup::LoadGroup(XMLElement* srcGroupElement) {
 	while (member) {
 		string mName = member->Attribute("name");
 		members.push_back(mName);
-		sourceFiles.push_back(member->GetDocument()->Value());
-		uniqueSourceFiles.insert(sourceFiles.back());
+		
+		string* fileName = static_cast<string*>(member->GetDocument()->GetUserData());
+		sourceFiles.push_back(*fileName);
 		member = member->NextSiblingElement("Member");
 	}
 	return 0;
@@ -141,10 +141,6 @@ void SliderSetGroup::WriteGroup(XMLElement* groupElement, bool append) {
 	}
 }
 
-void SliderSetGroup::AddSourceFile(const string& fileName) {
-	uniqueSourceFiles.insert(fileName);
-}
-
 SliderSetGroupFile::SliderSetGroupFile(const string& srcFileName) {
 	root = nullptr;
 	error = 0;
@@ -155,6 +151,7 @@ SliderSetGroupFile::SliderSetGroupFile(const string& srcFileName) {
 void SliderSetGroupFile::Open(const string& srcFileName) {
 	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
 		fileName = srcFileName;
+		doc.SetUserData(&fileName);
 		root = doc.FirstChildElement("SliderGroups");
 		if (!root) {
 			error = 2;
@@ -188,7 +185,9 @@ void SliderSetGroupFile::New(const string& newFileName) {
 
 	XMLElement* newElement = doc.NewElement("SliderGroups");
 	root = doc.InsertEndChild(newElement)->ToElement();
+
 	fileName = newFileName;
+	doc.SetUserData(&fileName);
 
 	error = 0;
 }

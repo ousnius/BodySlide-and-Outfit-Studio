@@ -21,7 +21,6 @@ class SliderSetGroup {
 	string name;
 	vector<string> members;
 	vector<string> sourceFiles;
-	unordered_set<string> uniqueSourceFiles;
 	bool isValid;
 
 public:
@@ -51,7 +50,6 @@ public:
 
 	int LoadGroup(XMLElement* srcGroupElement);
 	void WriteGroup(XMLElement* groupElement, bool append = false);
-	void AddSourceFile(const string& fileName);
 };
 
 

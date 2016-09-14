@@ -100,7 +100,6 @@ void SliderCategory::MergeSliders(const SliderCategory& sourceCategory) {
 	for (int i = 0; i < sourceCategory.sliders.size(); i++) {
 		sliders.push_back(sourceCategory.sliders[i]);
 		sourceFiles.push_back(sourceCategory.sourceFiles[i]);
-		uniqueSourceFiles.insert(sourceCategory.sourceFiles[i]);
 	}
 }
 
@@ -126,8 +125,8 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 		else
 			displayNames[sName] = "";
 
-		sourceFiles.push_back(slider->GetDocument()->Value());
-		uniqueSourceFiles.insert(sourceFiles.back());
+		string* fileName = static_cast<string*>(slider->GetDocument()->GetUserData());
+		sourceFiles.push_back(*fileName);
 
 		slider = slider->NextSiblingElement("Slider");
 	}
@@ -194,10 +193,6 @@ void SliderCategory::WriteCategory(XMLElement* categoryElement, bool append) {
 	}
 }
 
-void SliderCategory::AddSourceFile(const string& fileName) {
-	uniqueSourceFiles.insert(fileName);
-}
-
 SliderCategoryFile::SliderCategoryFile(const string& srcFileName) {
 	root = nullptr;
 	error = 0;
@@ -207,6 +202,7 @@ SliderCategoryFile::SliderCategoryFile(const string& srcFileName) {
 void SliderCategoryFile::Open(const string& srcFileName) {
 	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
 		fileName = srcFileName;
+		doc.SetUserData(&fileName);
 		root = doc.FirstChildElement("SliderCategories");
 		if (!root) {
 			error = 2;
@@ -242,8 +238,10 @@ void SliderCategoryFile::New(const string& newFileName) {
 	else {
 		XMLElement* newElement = doc.NewElement("SliderCategories");
 		root = doc.InsertEndChild(newElement)->ToElement();
-		fileName = newFileName;
 	}
+
+	fileName = newFileName;
+	doc.SetUserData(&fileName);
 	error = 0;
 }
 

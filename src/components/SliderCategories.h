@@ -22,7 +22,6 @@ class SliderCategory {
 	vector<string> sliders;
 	unordered_map<string, string> displayNames;
 	vector<string> sourceFiles;
-	unordered_set<string> uniqueSourceFiles;
 	bool isValid;
 	bool isHidden;
 
@@ -60,7 +59,6 @@ public:
 
 	int LoadCategory(XMLElement* srcCategoryElement);
 	void WriteCategory(XMLElement* categoryElement, bool append = false);
-	void AddSourceFile(const string& fileName);
 };
 
 
