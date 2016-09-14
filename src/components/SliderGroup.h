@@ -71,7 +71,7 @@ public:
 
 
 class SliderSetGroupFile {
-	XMLDoc doc;
+	XMLDocument doc;
 	XMLElement* root;
 	map<string, XMLElement*> groupsInFile;
 	int error;

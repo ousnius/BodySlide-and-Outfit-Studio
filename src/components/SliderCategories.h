@@ -84,7 +84,7 @@ public:
 
 
 class SliderCategoryFile {
-	XMLDoc doc;
+	XMLDocument doc;
 	XMLElement* root;
 	unordered_map<string, XMLElement*> categoriesInFile;
 	int error;

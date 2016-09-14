@@ -109,7 +109,7 @@ void PresetCollection::GetPresetGroups(const string& set, vector<string>& outGro
 }
 
 bool PresetCollection::LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter, bool allPresets) {
-	XMLDoc doc;
+	XMLDocument doc;
 	XMLElement* root;
 	XMLElement* element;
 	XMLElement* g;
@@ -187,7 +187,7 @@ int PresetCollection::SavePreset(const string& filePath, const string& presetNam
 		return -1;
 
 	XMLElement* newElement = nullptr;
-	XMLDoc outDoc;
+	XMLDocument outDoc;
 	XMLNode* slidersNode;
 	XMLElement* presetElem;
 	if (outDoc.LoadFile(filePath.c_str()) == XML_SUCCESS) {

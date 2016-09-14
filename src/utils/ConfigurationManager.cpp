@@ -255,7 +255,7 @@ void ConfigurationManager::Clear() {
 }
 
 int ConfigurationManager::LoadConfig(const string& pathToFile, const string& rootElement) {
-	XMLDoc configXML;
+	XMLDocument configXML;
 	configXML.LoadFile(pathToFile.c_str());
 
 	if (configXML.Error())
@@ -497,7 +497,7 @@ int ConfigurationManager::SaveConfig(const string& pathToFile, const string& roo
 	if (rootElementName.empty())
 		return 1;
 
-	XMLDoc doc;
+	XMLDocument doc;
 	if (doc.LoadFile(pathToFile.c_str()) != XML_SUCCESS)
 		return 2;
 
