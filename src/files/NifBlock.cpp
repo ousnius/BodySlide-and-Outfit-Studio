@@ -2485,7 +2485,6 @@ void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 	for (auto &uv : *texcoords)
 		uvSets.push_back(uv);
 
-	consistencyFlags = 16384;
 	additionalData = 0xFFFFFFFF;
 }
 
