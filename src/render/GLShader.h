@@ -8,30 +8,20 @@ See the included LICENSE file
 
 #include "../utils/Object3d.h"
 
-#include <wx/wx.h>
-#include <GL/gl.h>
+#include <wx/glcanvas.h>
 #include <GL/glu.h>
 #include <GL/glext.h>
-#include <GL/wglext.h>
-#include <fstream>
-
-#define GLSHADER_PASSTHROUGH "__PASSTHRU__"		// Specifies the basic "do nothing" shader.
-#define GLSHADER_DEFAULT	 "__DEFAULT__"		// Specifies default shaders that emulate the OGL fixed pipeline.
-#define GLSHADER_NONE        "__NONE__"			// Specifies no shader - fall back to OGL fixed pipeline.
 
 class GLShader {
 	static bool initComplete;
-	char* vertSrc;			// Source text for vertex shader
-	GLint vertSrcLength;
-	char* fragSrc;			// Source text for fragment shader
-	GLint fragSrcLength;
-
-	bool bHasVertShader;	// Does the program have a vertex shader, or fall back to the default?
-	bool bHasFragShader;	// Does the program have a fragment shader, or fall back to the default?
+	string vertSrc;			// Source text for vertex shader
+	string fragSrc;			// Source text for fragment shader
 
 	// Compiled shader IDs after compile.
 	GLuint vertShadID;
 	GLuint fragShadID;
+	GLint vertShadLength;
+	GLint fragShadLength;
 
 	// Linked Program ID after program creation.
 	GLuint progID;
@@ -49,36 +39,22 @@ class GLShader {
 	int errorstate;
 	string errorstring;
 
-	// Pass thru shader generators.
-	void generatePassThruVert();
-	void generatePassThruFrag();
-
-	// Default shader generators.
-	void generateDefaultVert();
-	void generateDefaultFrag();
-
-	bool initShaders();
-
-	bool loadShaderFile(const char* filename, char** buffer, int* outLength);
+	bool InitShaders();
+	bool LoadShaderFile(const string& fileName, string& text);
 
 public:
-	// Arguments for use when generating default shaders.
-	int nLights;		// default 3
-	int nTextures;		// default 1
-
-	// Default constructor generates passthrough shaders, but does not build them (run BuildShaders);
 	GLShader();
-	~GLShader();
 
-	// Creates the shader object, and runs LoadShaders (and optionally, BuildShaders).
-	GLShader(const char* vertexSource, const char* fragmentSource, bool build = true);
+	// Creates the shader object and runs LoadShaders followed by BuildShaders.
+	GLShader(const string& vertexSource, const string& fragmentSource);
+	~GLShader();
 
 	// Attempts to load the specified source files (in text format).
 	// If the passthrough or default shader type is specified for either, the appropriate shader is generated.
 	// If GLSHADER_NONE is specified for either, then the fixed pipeline is used for it.
 	// Set build to false to defer shader compile and link until a call to BuildShaders
 	// (useful to allow time to modify generation parameters such as number of lights).
-	bool LoadShaders(const char* vertexSource, const char* fragmentSource, bool build = true);
+	bool LoadShaders(const string& vertexSource, const string& fragmentSource);
 
 	// Compiles and links the loaded shaders, generating a program that can be activated.
 	bool BuildShaders();
@@ -96,51 +72,44 @@ public:
 	GLint GetSegmentAttribute();
 
 	// Activates the stored program for subsequent GL rendering calls.
-	// Compiles and links the program if it has not yet been done.
-	void Begin();
+	int Begin();
 
 	// Turns off the stored program.
 	void End();
 };
 
 class GLMaterial {
-public:
+private:
 	vector<GLuint> texRef;
-	GLShader* shader;
+	GLShader shader;
 
-	GLMaterial() {
-		texRef.resize(10, 0);
-		shader = nullptr;
-	}
-
+public:
+	GLMaterial();
 	~GLMaterial() {
 		glDeleteTextures(texRef.size(), texRef.data());
-
-		if (shader)
-			delete shader;
 	}
 
-	GLMaterial(GLuint texID, GLShader* inShader) : GLMaterial() {
-		texRef[0] = texID;
-		shader = inShader;
+	GLMaterial(GLuint texID, const string& vertShaderProg, const string& fragShaderProg) {
+		texRef.clear();
+		texRef.push_back(texID);
+		shader = GLShader(vertShaderProg, fragShaderProg);
 	}
 
-	GLMaterial(GLuint texID, const char* vertShaderProg, const char*  fragShaderProg) : GLMaterial() {
-		texRef[0] = texID;
-		shader = new GLShader(vertShaderProg, fragShaderProg);
-	}
-
-	GLMaterial(GLuint texID[], int texCount, const char* vertShaderProg, const char* fragShaderProg) : GLMaterial() {
+	GLMaterial(GLuint texID[], int texCount, const string& vertShaderProg, const string& fragShaderProg) {
 		texRef.resize(texCount, 0);
 		for (int i = 0; i < texCount; i++)
 			texRef[i] = texID[i];
 
-		shader = new GLShader(vertShaderProg, fragShaderProg);
+		shader = GLShader(vertShaderProg, fragShaderProg);
+	}
+
+	GLShader& GetShader() {
+		return shader;
 	}
 
 	void ActivateTextures(Vector2* pTexCoord, GLfloat largestAF = 0) {
 		glEnable(GL_TEXTURE_2D);
-		glBindTexture(GL_TEXTURE_2D, texRef[0]);
+		glBindTexture(GL_TEXTURE_2D, texRef.front());
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, sizeof(Vector2), pTexCoord);
 		if (largestAF)

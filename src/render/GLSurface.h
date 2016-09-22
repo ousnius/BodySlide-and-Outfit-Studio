@@ -11,8 +11,6 @@ See the included LICENSE file
 #include "../files/ResourceLoader.h"
 #include "../components/Mesh.h"
 
-#include <wx/glcanvas.h>
-
 using namespace std;
 
 class GLSurface {
@@ -278,7 +276,7 @@ public:
 
 		for (auto &m : meshes)
 			if (m->material)
-				m->material->shader->ShowTexture(bTextured);
+				m->material->GetShader().ShowTexture(bTextured);
 	}
 
 	void ToggleWireframe() {
@@ -296,7 +294,7 @@ public:
 
 		for (auto &m : meshes)
 			if (m->material)
-				m->material->shader->EnableVertexLighting(bLighting);
+				m->material->GetShader().EnableVertexLighting(bLighting);
 	}
 
 	void SetMaskVisible(bool bVisible = true) {
@@ -304,7 +302,7 @@ public:
 
 		for (auto &m : meshes)
 			if (m->material)
-				m->material->shader->ShowMask(bVisible);
+				m->material->GetShader().ShowMask(bVisible);
 	}
 
 	void SetWeightColors(bool bVisible = true) {
@@ -312,7 +310,7 @@ public:
 
 		for (auto &m : meshes)
 			if (m->material)
-				m->material->shader->ShowWeight(bWeightColors);
+				m->material->GetShader().ShowWeight(bWeightColors);
 	}
 
 	void SetSegmentColors(bool bVisible = true) {
@@ -320,7 +318,7 @@ public:
 
 		for (auto &m : meshes)
 			if (m->material)
-				m->material->shader->ShowSegments(bSegmentColors);
+				m->material->GetShader().ShowSegments(bSegmentColors);
 	}
 
 	void ToggleWeightColors() {
@@ -331,6 +329,6 @@ public:
 
 		for (auto &m : activeMeshes)
 			if (m->material)
-				m->material->shader->ShowWeight(bWeightColors);
+				m->material->GetShader().ShowWeight(bWeightColors);
 	}
 };

@@ -949,8 +949,6 @@ void GLSurface::RenderOneFrame() {
 }
 
 void GLSurface::RenderMesh(mesh* m) {
-	GLvoid* elemPtr = nullptr;
-
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 	if (!m->doublesided)
@@ -965,16 +963,13 @@ void GLSurface::RenderMesh(mesh* m) {
 		glEnable(GL_LIGHTING);
 
 	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire) {
-		if (m->material)
-			m->material->shader->Begin();
+		if (m->material && m->material->GetShader().Begin()) {
+			glEnableClientState(GL_VERTEX_ARRAY);
+			glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
+			glEnableClientState(GL_NORMAL_ARRAY);
+			glNormalPointer(GL_FLOAT, sizeof(Vertex), &m->verts[0].nx);
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, sizeof(Vertex), &m->verts[0].nx);
-
-		if (m->material) {
-			auto maskAttrib = m->material->shader->GetMaskAttribute();
+			auto maskAttrib = m->material->GetShader().GetMaskAttribute();
 			if (maskAttrib != -1) {
 				if (m->vcolors && bMaskVisible) {
 					glEnableVertexAttribArray(maskAttrib);
@@ -984,7 +979,7 @@ void GLSurface::RenderMesh(mesh* m) {
 					glDisableVertexAttribArray(maskAttrib);
 			}
 
-			auto weightAttrib = m->material->shader->GetWeightAttribute();
+			auto weightAttrib = m->material->GetShader().GetWeightAttribute();
 			if (weightAttrib != -1) {
 				if (m->vcolors && (bWeightColors || bSegmentColors)) {
 					glEnableVertexAttribArray(weightAttrib);
@@ -994,7 +989,7 @@ void GLSurface::RenderMesh(mesh* m) {
 					glDisableVertexAttribArray(weightAttrib);
 			}
 
-			auto segmentAttrib = m->material->shader->GetSegmentAttribute();
+			auto segmentAttrib = m->material->GetShader().GetSegmentAttribute();
 			if (segmentAttrib != -1) {
 				if (m->vcolors && bSegmentColors) {
 					glEnableVertexAttribArray(segmentAttrib);
@@ -1003,36 +998,30 @@ void GLSurface::RenderMesh(mesh* m) {
 				else
 					glDisableVertexAttribArray(segmentAttrib);
 			}
-		}
 
-		if (m->textured && bTextured) {
-			if (m->material) {
+			if (m->textured && bTextured) {
 				if (bUseAF)
 					m->material->ActivateTextures(m->texcoord, largestAF);
 				else
 					m->material->ActivateTextures(m->texcoord);
 			}
-		}
-		else {
-			if (m->material)
+
+			if (m->rendermode == RenderMode::LitWire) {
+				glLineWidth(1.5f);
+				glDisable(GL_CULL_FACE);
+				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+			}
+
+			glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, &m->tris[0].p1);
+
+			if (m->textured && bTextured)
 				m->material->DeactivateTextures();
+
+			m->material->GetShader().End();
 		}
-
-		elemPtr = &m->tris[0].p1;
-
-		if (m->rendermode == RenderMode::LitWire) {
-			glLineWidth(1.5f);
-			glDisable(GL_CULL_FACE);
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
-
-		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, elemPtr);
-		if (m->material)
-			m->material->shader->End();
 
 		if (bWireframe) {
 			glDisable(GL_LIGHTING);
-			glDisable(GL_TEXTURE_2D);
 			if (m->color.x >= 0.7f)
 				glColor3f(0.3f, 0.3f, 0.3f);
 			else
@@ -1040,11 +1029,8 @@ void GLSurface::RenderMesh(mesh* m) {
 
 			glLineWidth(defLineWidth);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glDrawElements(GL_TRIANGLES, (m->nTris) * 3, GL_UNSIGNED_SHORT, elemPtr);
+			glDrawElements(GL_TRIANGLES, (m->nTris) * 3, GL_UNSIGNED_SHORT, &m->tris[0].p1);
 			glEnable(GL_LIGHTING);
-
-			if (m->textured && bTextured)
-				glEnable(GL_TEXTURE_2D);
 		}
 	}
 	else if (m->rendermode == RenderMode::UnlitSolid) {
@@ -1052,11 +1038,9 @@ void GLSurface::RenderMesh(mesh* m) {
 		if (bLighting)
 			glDisable(GL_LIGHTING);
 
-		glDisable(GL_TEXTURE_2D);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
-		elemPtr = &m->tris[0].p1;
-		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, elemPtr);
+		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, &m->tris[0].p1);
 
 		if (bLighting)
 			glEnable(GL_LIGHTING);
@@ -1066,9 +1050,7 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDisable(GL_CULL_FACE);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
-		elemPtr = &m->edges[0].p1;
 
-		glDisable(GL_TEXTURE_2D);
 		glDisable(GL_DEPTH_TEST);
 		if (bLighting)
 			glDisable(GL_LIGHTING);
@@ -1077,7 +1059,7 @@ void GLSurface::RenderMesh(mesh* m) {
 
 		glColor3fv((GLfloat*)&m->color);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDrawElements(GL_LINES, (m->nEdges) * 2, GL_UNSIGNED_SHORT, elemPtr);
+		glDrawElements(GL_LINES, (m->nEdges) * 2, GL_UNSIGNED_SHORT, &m->edges[0].p1);
 
 		if (bLighting)
 			glEnable(GL_LIGHTING);
@@ -1109,7 +1091,6 @@ void GLSurface::RenderMesh(mesh* m) {
 	if (m->bShowPoints && m->vcolors) {
 		glDisable(GL_LIGHTING);
 		glDisable(GL_CULL_FACE);
-		glDisable(GL_TEXTURE_2D);
 
 		glBegin(GL_POINTS);
 		for (int pi = 0; pi < m->nVerts; pi++) {

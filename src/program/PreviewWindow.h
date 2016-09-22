@@ -6,6 +6,7 @@ See the included LICENSE file
 
 #pragma once
 
+#include <wx/wx.h>
 #include "../render/GLSurface.h"
 #include "../files/MaterialFile.h"
 
