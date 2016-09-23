@@ -964,12 +964,12 @@ void GLSurface::RenderMesh(mesh* m) {
 		glEnable(GL_LIGHTING);
 
 	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire) {
-		if (m->material && m->material->GetShader().Begin()) {
-			glEnableClientState(GL_VERTEX_ARRAY);
-			glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
-			glEnableClientState(GL_NORMAL_ARRAY);
-			glNormalPointer(GL_FLOAT, sizeof(Vertex), &m->verts[0].nx);
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
+		glEnableClientState(GL_NORMAL_ARRAY);
+		glNormalPointer(GL_FLOAT, sizeof(Vertex), &m->verts[0].nx);
 
+		if (m->material && m->material->GetShader().Begin()) {
 			auto maskAttrib = m->material->GetShader().GetMaskAttribute();
 			if (maskAttrib != -1) {
 				if (m->vcolors && bMaskVisible) {
@@ -999,18 +999,20 @@ void GLSurface::RenderMesh(mesh* m) {
 				else
 					glDisableVertexAttribArray(segmentAttrib);
 			}
+		}
 
-			if (m->textured && bTextured)
-				m->material->ActivateTextures(m->texcoord, largestAF);
+		if (m->material && m->textured && bTextured)
+			m->material->ActivateTextures(m->texcoord, largestAF);
 
-			if (m->rendermode == RenderMode::LitWire) {
-				glLineWidth(1.5f);
-				glDisable(GL_CULL_FACE);
-				glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			}
+		if (m->rendermode == RenderMode::LitWire) {
+			glLineWidth(1.5f);
+			glDisable(GL_CULL_FACE);
+			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		}
 
-			glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, &m->tris[0].p1);
+		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, &m->tris[0].p1);
 
+		if (m->material) {
 			if (m->textured && bTextured)
 				m->material->DeactivateTextures();
 
