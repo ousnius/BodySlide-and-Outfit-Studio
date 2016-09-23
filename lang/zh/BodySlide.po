@@ -1434,7 +1434,6 @@ msgstr "反转V轴"
 msgid "Toggle Zaps:"
 msgstr "切换修正:"
 
-#: Anim.cpp:359
 msgid ""
 "Bone information incomplete. Exported data will not contain correct bone "
 "entries! Be sure to load a reference NIF prior to export."
@@ -1442,21 +1441,15 @@ msgstr ""
 "骨骼信息不完整。导出数据不包含正确的骨骼条目！请确保在导出之前加载一个参照"
 "NIF。"
 
-#: Anim.cpp:359
 msgid "Export Warning"
 msgstr "导出警告"
 
-#: Anim.cpp:418
-#, c-format
 msgid "Failed to load skeleton '%s'!"
 msgstr "未能加载骨架'%s'！"
 
-#: Anim.cpp:426
-#, c-format
 msgid "Root '%s' not found in skeleton '%s'!"
 msgstr "根'%s'未在骨架'%s'中找到！"
 
-#: BodySlideApp.cpp:135
 msgid ""
 "No read/write permission for game data path!\n"
 "\n"
@@ -1467,89 +1460,66 @@ msgstr ""
 "\n"
 "请使用管理员权限启动程序，并确保游戏数据路径的设置是正确的"
 
-#: BodySlideApp.cpp:135 BodySlideApp.cpp:977 BodySlideApp.cpp:982
-#: BodySlideApp.cpp:2738
 msgid "Warning"
 msgstr "警告"
 
-#: BodySlideApp.cpp:172
-#, c-format
 msgid "Unexpected exception has occurred: %s, the program will terminate."
 msgstr "发生了意外的异常：%s，程序将终止。"
 
-#: BodySlideApp.cpp:172
 msgid "Unexpected exception"
 msgstr "意外的异常"
 
-#: BodySlideApp.cpp:193
-#, c-format
 msgid "Unhandled exception has occurred: %s, the program will terminate."
 msgstr "发生了未处理的异常：%s，程序将终止。"
 
-#: BodySlideApp.cpp:193
 msgid "Unhandled exception"
 msgstr "未处理的异常"
 
-#: BodySlideApp.cpp:202
 msgid "Fatal exception has occurred, the program will terminate."
 msgstr "发生了致命的异常，程序将终止。"
 
-#: BodySlideApp.cpp:202
 msgid "Fatal exception"
 msgstr "致命异常"
 
-#: BodySlideApp.cpp:977
 msgid ""
 "Failed to find game install path registry value or GameDataPath in the "
 "config."
 msgstr "没有找到游戏安装路径的注册表值或配置中的游戏数据路径。"
 
-#: BodySlideApp.cpp:982
 msgid ""
 "Failed to find game install path registry key or GameDataPath in the config."
 msgstr "没有找到游戏安装路径的注册表键或配置中的游戏数据路径。"
 
-#: BodySlideApp.cpp:1042
-#, c-format
 msgid "System language '%d' is wrong."
 msgstr "系统语言'%d'是错误的。"
 
-#: BodySlideApp.cpp:1051
-#, c-format
 msgid ""
 "The system language '%d' is not supported by your system. Try installing "
 "support for this language."
 msgstr "系统语言'%d'不支持你的系统。试着安装这种语言的支持。"
 
-#: BodySlideApp.cpp:1129
 msgid "Failed to create group file."
 msgstr "创建组文件失败。"
 
-#: BodySlideApp.cpp:1143
 msgid ""
 "That group already exists in the specified file, do you wish to overwrite "
 "the group?"
 msgstr "该组在指定的文件中已经存在，你想覆盖这个组吗？"
 
-#: BodySlideApp.cpp:1143
 msgid "Group already exists"
 msgstr "组已存在"
 
-#: BodySlideApp.cpp:1277
 msgid ""
 "WARNING: Game data path not configured. Would you like to show BodySlide "
 "where it is?"
 msgstr "警告：游戏数据路径未配置。你想告诉BodySlide它在哪儿吗？"
 
-#: BodySlideApp.cpp:1277 BodySlideApp.cpp:1502 BodySlideApp.cpp:1506
 msgid "Game not found"
 msgstr "未发现游戏"
 
-#: BodySlideApp.cpp:1285
 msgid "Please choose a directory to set as your Data path"
 msgstr "请选择一个目录来设置你的数据路径"
 
-#: BodySlideApp.cpp:1303
 msgid ""
 "WARNING: This will delete the output files from the output folder, "
 "potentially causing crashes.\n"
@@ -1560,24 +1530,18 @@ msgstr ""
 "\n"
 "你想要继续吗？"
 
-#: BodySlideApp.cpp:1303
 msgid "Clean Build"
 msgstr "清除建立"
 
-#: BodySlideApp.cpp:1310
 msgid "Removed the following files:\n"
 msgstr "删除以下文件：\n"
 
-#: BodySlideApp.cpp:1322 BodySlideApp.cpp:1335
 msgid " (no action)\n"
 msgstr "（无操作）\n"
 
-#: BodySlideApp.cpp:1326 BodySlideApp.cpp:1338 BodySlideApp.cpp:1471
 msgid "Process Successful"
 msgstr "处理成功"
 
-#: BodySlideApp.cpp:1395
-#, c-format
 msgid ""
 "Failed to write TRI file to the following location\n"
 "\n"
@@ -1587,12 +1551,9 @@ msgstr ""
 "\n"
 "%s"
 
-#: BodySlideApp.cpp:1395 BodySlideApp.cpp:1422 BodySlideApp.cpp:1451
 msgid "Unable to process"
 msgstr "无法处理"
 
-#: BodySlideApp.cpp:1422 BodySlideApp.cpp:1451
-#, c-format
 msgid ""
 "Failed to build set to the following location\n"
 "\n"
@@ -1602,15 +1563,12 @@ msgstr ""
 "\n"
 "%s"
 
-#: BodySlideApp.cpp:1424 BodySlideApp.cpp:1453
 msgid "Choose alternate file name"
 msgstr "选择替换的文件名"
 
-#: BodySlideApp.cpp:1463
 msgid "Successfully processed the following files:\n"
 msgstr "成功处理以下文件：\n"
 
-#: BodySlideApp.cpp:1489
 msgid ""
 "WARNING: This will delete the output files from the output folders, "
 "potentially causing crashes.\n"
@@ -1621,22 +1579,18 @@ msgstr ""
 "\n"
 "你想要继续吗？"
 
-#: BodySlideApp.cpp:1489
 msgid "Clean Batch Build"
 msgstr "清除批量建立"
 
-#: BodySlideApp.cpp:1502
 msgid ""
 "WARNING: Game data path not configured. Files can't be removed that way."
 msgstr "警告：游戏数据路径未配置。文件不能被删除。"
 
-#: BodySlideApp.cpp:1506
 msgid ""
 "WARNING: Game data path not configured. Continue saving files to the working "
 "directory?"
 msgstr "警告：游戏数据路径未配置。继续保存文件到工作目录吗？"
 
-#: BodySlideApp.cpp:1533
 msgid ""
 "The following sets will override the same files.\n"
 "Please decide which one to use and select it in the list below."
@@ -1644,258 +1598,144 @@ msgstr ""
 "以下设置将覆盖相同的文件。\n"
 "请决定使用哪一个，并在下面的列表中选择它。"
 
-#: BodySlideApp.cpp:1533
 msgid "Choose output set"
 msgstr "选择输出设置"
 
-#: BodySlideApp.cpp:1550
 msgid "Processing Outfits"
 msgstr "处理装备"
 
-#: BodySlideApp.cpp:1550 OutfitStudio.h:657
 msgid "Starting..."
 msgstr "开始..."
 
-#: BodySlideApp.cpp:1556
-#, c-format
 msgid "Processing '%s' (%d of %d)..."
 msgstr "正在处理'%s'（%d的%d）..."
 
-#: BodySlideApp.cpp:1563
 msgid "No recorded outfit name source"
 msgstr "没有记录装备的名称来源"
 
-#: BodySlideApp.cpp:1577
 msgid "Unable to get slider set from file: "
 msgstr "无法从文件得到滑块设置："
 
-#: BodySlideApp.cpp:1580
 msgid "Unable to open slider set file: "
 msgstr "无法打开滑块设置文件："
 
-#: BodySlideApp.cpp:1608
 msgid "Unable to load input nif: "
 msgstr "无法加载输入nif："
 
-#: BodySlideApp.cpp:1716
 msgid "Unable to create destination directory: "
 msgstr "无法创建目标目录："
 
-#: BodySlideApp.cpp:1752 BodySlideApp.cpp:1756 BodySlideApp.cpp:1763
 msgid "Unable to save nif file: "
 msgstr "无法保存nif文件："
 
-#: BodySlideApp.cpp:1801
 msgid "All group build sets processed successfully!"
 msgstr "所有组建立设置处理成功！"
 
-#: BodySlideApp.cpp:1801 BodySlideApp.cpp:2622
 msgid "Complete"
 msgstr "完成"
 
-#: BodySlideApp.cpp:1810 BodySlideApp.cpp:2631
 msgid "The following sets failed"
 msgstr "以下设置失败"
 
-#: BodySlideApp.cpp:1810 BodySlideApp.cpp:2631
 msgid "Failed"
 msgstr "失败"
 
-#: BodySlideApp.cpp:1856
 msgid "Failed to load BodyslideFrame.xrc file!"
 msgstr "加载BodyslideFrame.xrc文件失败！"
 
-#: BodySlideApp.cpp:1856 BodySlideApp.cpp:1863 BodySlideApp.cpp:2465
-#: OutfitStudio.cpp:181 OutfitStudio.cpp:188 OutfitStudio.cpp:1348
-#: OutfitStudio.cpp:1360 OutfitStudio.cpp:1443 OutfitStudio.cpp:1452
-#: OutfitStudio.cpp:1460 OutfitStudio.cpp:1475 OutfitStudio.cpp:1484
-#: OutfitStudio.cpp:1490 OutfitStudio.cpp:1524 OutfitStudio.cpp:2519
-#: OutfitStudio.cpp:2572 OutfitStudio.cpp:2578 OutfitStudio.cpp:2582
-#: OutfitStudio.cpp:2597 OutfitStudio.cpp:2601 OutfitStudio.cpp:2612
-#: OutfitStudio.cpp:2621 OutfitStudio.cpp:2638 OutfitStudio.cpp:2705
-#: OutfitStudio.cpp:2709 OutfitStudio.cpp:2720 OutfitStudio.cpp:2729
-#: OutfitStudio.cpp:2733 OutfitStudio.cpp:2762 OutfitStudio.cpp:2766
-#: OutfitStudio.cpp:2789 OutfitStudio.cpp:2798 OutfitStudio.cpp:2809
-#: OutfitStudio.cpp:2816 OutfitStudio.cpp:2820 OutfitStudio.cpp:2862
-#: OutfitStudio.cpp:2918 OutfitStudio.cpp:2922 OutfitStudio.cpp:2933
-#: OutfitStudio.cpp:2937 OutfitStudio.cpp:2948 OutfitStudio.cpp:2988
-#: OutfitStudio.cpp:3152 OutfitStudio.cpp:3175 OutfitStudio.cpp:3225
-#: OutfitStudio.cpp:3240 OutfitStudio.cpp:3267 OutfitStudio.cpp:3272
-#: OutfitStudio.cpp:3297 OutfitStudio.cpp:3458 OutfitStudio.cpp:3557
-#: OutfitStudio.cpp:3708 OutfitStudio.cpp:3780 OutfitStudio.cpp:3788
-#: OutfitStudio.cpp:3845 OutfitStudio.cpp:3875 OutfitStudio.cpp:3918
-#: OutfitStudio.cpp:3926 OutfitStudio.cpp:3933 OutfitStudio.cpp:3962
-#: OutfitStudio.cpp:3989 OutfitStudio.cpp:4001 OutfitStudio.cpp:4013
-#: OutfitStudio.cpp:5223
 msgid "Error"
 msgstr "错误"
 
-#: BodySlideApp.cpp:1863
 msgid "Failed to load BodySlide frame!"
 msgstr "加载BodySlide框架失败！"
 
-#: BodySlideApp.cpp:1881
 msgid "Group Filter"
 msgstr "组过滤器"
 
-#: BodySlideApp.cpp:1882
 msgid "Filter by group"
 msgstr "通过组来过滤"
 
-#: BodySlideApp.cpp:1888
 msgid "Outfit Filter"
 msgstr "装备过滤器"
 
-#: BodySlideApp.cpp:1889
 msgid "Filter by outfit"
 msgstr "通过组来过滤"
 
-#: BodySlideApp.cpp:2395
 msgid "Choose groups to filter outfit list"
 msgstr "选择组来过滤装备列表"
 
-#: BodySlideApp.cpp:2395
 msgid "Choose Groups"
 msgstr "选择组"
 
-#: BodySlideApp.cpp:2412
 msgid "Choose or create group file"
 msgstr "选择或创建组文件"
 
-#: BodySlideApp.cpp:2421
 msgid "What would you like the new group to be called?"
 msgstr "你想要给新组取什么名称？"
 
-#: BodySlideApp.cpp:2421
 msgid "New Group Name"
 msgstr "新组名"
 
-#: BodySlideApp.cpp:2465 OutfitStudio.cpp:2572
-#, c-format
 msgid "Failed to save preset (%d)!"
 msgstr "保存预置(%d)失败！"
 
-#: BodySlideApp.cpp:2492
-#, c-format
 msgid "Failed to save preset as '%s' (%d)!"
 msgstr "保存预设为'%s' (%d)失败！"
 
-#: BodySlideApp.cpp:2609
 msgid "Choose a folder to contain the saved files"
 msgstr "选择一个目录保存文件"
 
-#: BodySlideApp.cpp:2622
 msgid "All sets processed successfully!"
 msgstr "所有设置处理成功！"
 
-#: BodySlideApp.cpp:2738
 msgid "You can't change the settings while Outfit Studio is opened up."
 msgstr "当装备工作室开启的时候你无法改变设置。"
 
-#: GLShader.cpp:227 GLShader.cpp:230
-msgid "Shader Error"
-msgstr "着色器错误"
-
-#: GLShader.cpp:243 GLShader.cpp:249 OutfitStudio.cpp:4195 PreviewWindow.cpp:63
 msgid "OpenGL Error"
 msgstr "OpenGL错误"
 
-#: GLShader.cpp:262
-msgid "OpenGL: One or more shader functions are not supported."
-msgstr "OpenGL：一个或多个着色器功能不支持。"
-
-#: GLShader.cpp:273
-msgid "OpenGL: One or more program functions are not supported."
-msgstr "OpenGL：一个或多个程序功能不支持。"
-
-#: GLShader.cpp:346
-msgid "OpenGL: Failed to load vertex shader from file: "
-msgstr "OpenGL：从文件加载顶点着色器失败："
-
-#: GLShader.cpp:365
-msgid "OpenGL: Failed to load fragment shader from file: "
-msgstr "OpenGL：从文件加载片段着色器失败："
-
-#: GLShader.cpp:440
-msgid "OpenGL: Vertex shader compile failed: "
-msgstr "OpenGL：顶点着色器编译失败："
-
-#: GLShader.cpp:456
-msgid "OpenGL: Fragment shader compile failed: "
-msgstr "OpenGL：部分着色器编译失败："
-
-#: GLShader.cpp:475
-msgid "OpenGL: Shader program link failed: "
-msgstr "OpenGL：着色器程序链接失败："
-
-#: GLShader.cpp:483
-msgid "OpenGL: Shader program ready."
-msgstr "OpenGL：着色器程序待命。"
-
-#: OutfitProject.cpp:41
 msgid "Checking destination..."
 msgstr "检查目标..."
 
-#: OutfitProject.cpp:90
 msgid "Adding reference shapes..."
 msgstr "添加参照模型..."
 
-#: OutfitProject.cpp:105
 msgid "Adding outfit shapes..."
 msgstr "添加装备模型..."
 
-#: OutfitProject.cpp:178
 msgid "Calculating slider data..."
 msgstr "计算滑块数据..."
 
-#: OutfitProject.cpp:185
 msgid "Creating slider set file..."
 msgstr "创建滑块设置文件..."
 
-#: OutfitProject.cpp:191
 msgid "Failed to open or create slider set file: "
 msgstr "未能打开或创建滑块设置文件："
 
-#: OutfitProject.cpp:206
 msgid "Saving slider set file..."
 msgstr "保存滑块设置文件..."
 
-#: OutfitProject.cpp:209
 msgid "Failed to write to slider set file: "
 msgstr "未能写入滑块设置文件："
 
-#: OutfitProject.cpp:213
 msgid "Saving NIF file..."
 msgstr "保存NIF文件..."
 
-#: OutfitProject.cpp:239
 msgid "Failed to write base .nif file: "
 msgstr "写入基础.nif文件失败："
 
-#: OutfitProject.cpp:244 OutfitProject.cpp:1221 OutfitProject.cpp:1272
-#: OutfitProject.cpp:1874 OutfitStudio.cpp:897 OutfitStudio.cpp:997
-#: OutfitStudio.cpp:1083 OutfitStudio.cpp:1152 OutfitStudio.cpp:3085
-#: OutfitStudio.cpp:3119 OutfitStudio.cpp:3866 OutfitStudio.cpp:3909
-#: OutfitStudio.cpp:5174 OutfitStudio.cpp:5186 OutfitStudio.cpp:5198
-#: OutfitStudio.cpp:5247
 msgid "Finished"
 msgstr "完成"
 
-#: OutfitProject.cpp:375
-#, c-format
 msgid "Could not load OBJ file '%s'!"
 msgstr "无法加载OBJ文件'%s'！"
 
-#: OutfitProject.cpp:375 OutfitProject.cpp:386
 msgid "OBJ Error"
 msgstr "OBJ错误"
 
-#: OutfitProject.cpp:386
-#, c-format
 msgid "Could not copy data from OBJ file '%s'!"
 msgstr "无法从OBJ文件'%s'复制数据！"
 
-#: OutfitProject.cpp:400
 msgid ""
 "The vertex count of the selected .obj file matches the currently selected "
 "outfit shape.  Do you wish to update the current shape?  (click No to create "
@@ -1904,70 +1744,51 @@ msgstr ""
 "所选.obj文件的顶点数与当前所选装模型相匹配。您想更新当前模型吗？（点击否将创"
 "建一个新模型）"
 
-#: OutfitProject.cpp:400 OutfitProject.cpp:2075
 msgid "Merge or New"
 msgstr "合并或新建"
 
-#: OutfitProject.cpp:402 OutfitProject.cpp:2077
 msgid "Update Vertex Positions?"
 msgstr "更新顶点位置？"
 
-#: OutfitProject.cpp:402 OutfitProject.cpp:2077
 msgid "Vertex Position Update"
 msgstr "顶点位置更新"
 
-#: OutfitProject.cpp:406 OutfitProject.cpp:2081
 msgid "Update Texture Coordinates?"
 msgstr "更新材质坐标？"
 
-#: OutfitProject.cpp:406 OutfitProject.cpp:2081
 msgid "UV Update"
 msgstr "UV更新"
 
-#: OutfitProject.cpp:413 OutfitProject.cpp:2094
 msgid "Please specify a name for the new shape"
 msgstr "请为新模型指定一个名字"
 
-#: OutfitProject.cpp:413 OutfitProject.cpp:2094
 msgid "New Shape Name"
 msgstr "新模型名称"
 
-#: OutfitProject.cpp:441
 msgid "Could not load 'SkeletonBlank.nif' for importing data file."
 msgstr "无法加载'SkeletonBlank.nif'来导入数据文件。"
 
-#: OutfitProject.cpp:441
 msgid "Import Data Error"
 msgstr "导入数据错误"
 
-#: OutfitProject.cpp:1109 OutfitProject.cpp:1207
 msgid "Gathering bones..."
 msgstr "正在聚集骨骼..."
 
-#: OutfitProject.cpp:1138
 msgid "Initializing proximity data..."
 msgstr "正在初始化邻近数据..."
 
-#: OutfitProject.cpp:1196 OutfitStudio.cpp:3852
 msgid "Copying bone weights..."
 msgstr "复制骨骼权重..."
 
-#: OutfitProject.cpp:1227 OutfitStudio.cpp:3951
 msgid "Transferring bone weights..."
 msgstr "转移骨骼权重..."
 
-#: OutfitProject.cpp:1526
 msgid "Template source entries are invalid."
 msgstr "模板源条目无效。"
 
-#: OutfitProject.cpp:1526 OutfitProject.cpp:1545 OutfitProject.cpp:1550
-#: OutfitProject.cpp:1592 OutfitProject.cpp:1613 OutfitProject.cpp:1620
-#: OutfitProject.cpp:1629 OutfitProject.cpp:1662
 msgid "Reference Error"
 msgstr "参照错误"
 
-#: OutfitProject.cpp:1541 OutfitProject.cpp:1609 OutfitProject.cpp:1726
-#, c-format
 msgid ""
 "NIF version not supported!\n"
 "\n"
@@ -1983,62 +1804,44 @@ msgstr ""
 "用户版本：%i\n"
 "用户版本2：%i"
 
-#: OutfitProject.cpp:1550 OutfitProject.cpp:1620
-#, c-format
 msgid "Could not load reference NIF file '%s'!"
 msgstr "无法加载参照NIF文件'%s'！"
 
-#: OutfitProject.cpp:1592
-#, c-format
 msgid "Could not load slider set file '%s'!"
 msgstr "无法加载滑块设置文件'%s'！"
 
-#: OutfitProject.cpp:1629
-#, c-format
 msgid "Reference NIF file '%s' does not contain any shapes."
 msgstr "参照NIF文件'%s'没有包含任何模型。"
 
-#: OutfitProject.cpp:1662
-#, c-format
 msgid "Shape '%s' not found in reference NIF file '%s'!"
 msgstr "参照NIF文件'%s'中未找到模型'%s'！"
 
-#: OutfitProject.cpp:1730 OutfitProject.cpp:1735
 msgid "NIF Error"
 msgstr "NIF错误"
 
-#: OutfitProject.cpp:1735
-#, c-format
 msgid "Could not load NIF file '%s'!"
 msgstr "无法加载NIF文件'%s'！"
 
-#: OutfitProject.cpp:1809
 msgid "Loading slider set..."
 msgstr "载入滑块设置..."
 
-#: OutfitProject.cpp:1816
 msgid "Retrieving sliders..."
 msgstr "检索滑块..."
 
-#: OutfitProject.cpp:1825
 msgid "Loading outfit shapes..."
 msgstr "载入装备模型..."
 
-#: OutfitProject.cpp:1856
 msgid "Updating slider data..."
 msgstr "更新滑块数据..."
 
-#: OutfitProject.cpp:2028
 msgid ""
 "There was cloth physics data loaded at some point (BSClothExtraData). Please "
 "choose all the origins to use in the output."
 msgstr "布料物理数据已载入（BSClothExtraData）。 请选择所有输出时要用到的源。"
 
-#: OutfitProject.cpp:2028
 msgid "Choose cloth data"
 msgstr "选择布料数据"
 
-#: OutfitProject.cpp:2075
 msgid ""
 "The vertex count of the selected .fbx file matches the currently selected "
 "outfit shape.  Do you wish to update the current shape?  (click No to create "
@@ -2047,59 +1850,45 @@ msgstr ""
 "所选.fbx文件的顶点数与当前所选装模型相匹配。您想更新当前模型吗？（点击否将创"
 "建一个新模型）"
 
-#: OutfitProject.cpp:2085
 msgid "Update Animation Weighting?"
 msgstr "更新动画权重吗？"
 
-#: OutfitProject.cpp:2085
 msgid "Animation Weight Update"
 msgstr "动画权重更新"
 
-#: OutfitStudio.cpp:181
 msgid "Failed to load outfitStudio.xrc file!"
 msgstr "加载outfitStudio.xrc文件失败"
 
-#: OutfitStudio.cpp:188
 msgid "Failed to load Outfit Studio frame!"
 msgstr "加载装备工作室框架失败！"
 
-#: OutfitStudio.cpp:200 OutfitStudio.h:681
 msgid "Ready!"
 msgstr "准备！"
 
-#: OutfitStudio.cpp:361
 msgid "Creating sliders..."
 msgstr "创建滑块..."
 
-#: OutfitStudio.cpp:364
 msgid "Clearing old sliders..."
 msgstr "清除旧滑块..."
 
-#: OutfitStudio.cpp:376
 msgid "Loading slider: "
 msgstr "载入滑块："
 
-#: OutfitStudio.cpp:403
 msgid "Turn on edit mode for this slider."
 msgstr "打开这个滑块的编辑模式。"
 
-#: OutfitStudio.cpp:407
 msgid "Weaken slider data by 1%."
 msgstr "减弱滑块数据1%。"
 
-#: OutfitStudio.cpp:413
 msgid "Strengthen slider data by 1%."
 msgstr "增强滑块数据1%。"
 
-#: OutfitStudio.cpp:469 OutfitStudio.cpp:2903
 msgid "Enter a name for the new slider:"
 msgstr "为新滑块输入一个名称："
 
-#: OutfitStudio.cpp:469 OutfitStudio.cpp:2903
 msgid "Create New Slider"
 msgstr "创建新滑块"
 
-#: OutfitStudio.cpp:757
 msgid ""
 "You can only edit the base shape when all sliders are zero. Do you wish to "
 "set all sliders to zero now?  Note, use the pencil button next to a slider "
@@ -2108,96 +1897,68 @@ msgstr ""
 "当所有滑块为零时你只能编辑基础模型。你希望现在设置所有滑块为零吗？注意，使用"
 "滑块旁边的铅笔按钮来开启滑块变形编辑。"
 
-#: OutfitStudio.cpp:806
-#, c-format
 msgid "Creating project '%s'..."
 msgstr "创建项目'%s'..."
 
-#: OutfitStudio.cpp:823 OutfitStudio.cpp:1028
 msgid "Loading reference..."
 msgstr "载入参照..."
 
-#: OutfitStudio.cpp:855 OutfitStudio.cpp:1107 OutfitStudio.cpp:1117
 msgid "Loading outfit..."
 msgstr "载入装备..."
 
-#: OutfitStudio.cpp:876 OutfitStudio.cpp:982 OutfitStudio.cpp:1148
 msgid "Creating outfit..."
 msgstr "创建装备..."
 
-#: OutfitStudio.cpp:886 OutfitStudio.cpp:986 OutfitStudio.cpp:1073
-#, c-format
 msgid "Creating %d slider(s)..."
 msgstr "创建%d滑块..."
 
-#: OutfitStudio.cpp:893 OutfitStudio.cpp:993 OutfitStudio.cpp:1079
 msgid "Applying slider effects..."
 msgstr "应用滑块效果..."
 
-#: OutfitStudio.cpp:903
 msgid "Select a slider set to load"
 msgstr "选择加载一个滑块设置"
 
-#: OutfitStudio.cpp:912
-#, c-format
 msgid "Failed to open '%s' as a slider set file!"
 msgstr "打开'%s'作为滑块设置文件失败！"
 
-#: OutfitStudio.cpp:912 OutfitStudio.cpp:958
 msgid "Slider Set Error"
 msgstr "滑块设置错误"
 
-#: OutfitStudio.cpp:923
 msgid "Please choose an outfit to load"
 msgstr "请选择一个装备来加载"
 
-#: OutfitStudio.cpp:923
 msgid "Load a slider set"
 msgstr "加载一个滑块设置"
 
-#: OutfitStudio.cpp:933
 msgid "Loading project..."
 msgstr "载入项目..."
 
-#: OutfitStudio.cpp:951
 msgid "Loading outfit data..."
 msgstr "载入装备数据..."
 
-#: OutfitStudio.cpp:958
-#, c-format
 msgid "Failed to create project '%s' from file '%s' (%d)!"
 msgstr "未能创建项目'%s'为文件'%s' (%d)！"
 
-#: OutfitStudio.cpp:965
-#, c-format
 msgid "Loading reference shape '%s'..."
 msgstr "载入参照模型'%s'..."
 
-#: OutfitStudio.cpp:977
 msgid "Loading textures..."
 msgstr "载入材质..."
 
-#: OutfitStudio.cpp:1004
 msgid ""
 "You're currently editing slider data, please exit the slider's edit mode "
 "(pencil button) and try again."
 msgstr "你当前正在编辑滑块数据，请退出滑块编辑模式（铅笔按钮）后再试。"
 
-#: OutfitStudio.cpp:1031
 msgid "Loading reference set..."
 msgstr "载入参照设置..."
 
-#: OutfitStudio.cpp:1069
 msgid "Creating reference..."
 msgstr "生成参照..."
 
-#: OutfitStudio.cpp:1316 OutfitStudio.cpp:1360 OutfitStudio.cpp:2621
-#: OutfitStudio.cpp:2798
 msgid "There are no valid shapes loaded!"
 msgstr "无有效模型被载入！"
 
-#: OutfitStudio.cpp:1322 OutfitStudio.cpp:1366 OutfitStudio.cpp:1590
-#: OutfitStudio.cpp:1628
 msgid ""
 "At least one vertex does not have any weighting assigned to it. This will "
 "cause issues and you should fix it using the weight brush. The affected "
@@ -2206,191 +1967,132 @@ msgstr ""
 "至少有一个顶点没有分配任何权重。这会造成问题，你需要使用权重笔刷来修复。受影"
 "响的顶点已被放入一个遮罩中。你依然想保存吗？"
 
-#: OutfitStudio.cpp:1322 OutfitStudio.cpp:1366 OutfitStudio.cpp:1590
-#: OutfitStudio.cpp:1628
 msgid "Unweighted Vertices"
 msgstr "移除顶点权重"
 
-#: OutfitStudio.cpp:1328 OutfitStudio.cpp:1498
-#, c-format
 msgid "Saving project '%s'..."
 msgstr "保存项目'%s'..."
 
-#: OutfitStudio.cpp:1443
 msgid "Invalid or no slider set file specified! Please try again."
 msgstr "无效或没有指定滑块设置文件！请重试。"
 
-#: OutfitStudio.cpp:1452
 msgid "No outfit name specified! Please try again."
 msgstr "没有指定装备名！请重试。"
 
-#: OutfitStudio.cpp:1460
 msgid "No data folder specified! Please try again."
 msgstr "没有指定数据目录！请重试。"
 
-#: OutfitStudio.cpp:1475
 msgid ""
 "An invalid or no base outfit .nif file name specified! Please try again."
 msgstr "无效的或基础装备.nif文件名没有指定！请重试。"
 
-#: OutfitStudio.cpp:1484
 msgid "No game file path specified! Please try again."
 msgstr "没有指定游戏文件路径！请重试。"
 
-#: OutfitStudio.cpp:1490
 msgid "No game file name specified! Please try again."
 msgstr "没有指定游戏文件名！请重试。"
 
-#: OutfitStudio.cpp:1568
 msgid "Import NIF file"
 msgstr "导入NIF文件"
 
-#: OutfitStudio.cpp:1572 OutfitStudio.cpp:1573
 msgid "Importing NIF file..."
 msgstr "导入NIF文件..."
 
-#: OutfitStudio.cpp:1577 OutfitStudio.cpp:5171 OutfitStudio.cpp:5183
-#: OutfitStudio.cpp:5195
 msgid "Refreshing GUI..."
 msgstr "刷新界面..."
 
-#: OutfitStudio.cpp:1580
 msgid "Finished."
 msgstr "完成。"
 
-#: OutfitStudio.cpp:1595
 msgid "Export outfit NIF"
 msgstr "导出装备NIF"
 
-#: OutfitStudio.cpp:1613
-#, c-format
 msgid "Failed to save NIF file '%s'!"
 msgstr "保存NIF文件'%s'失败！"
 
-#: OutfitStudio.cpp:1613 OutfitStudio.cpp:1650 OutfitStudio.cpp:1694
 msgid "Export Error"
 msgstr "导出错误"
 
-#: OutfitStudio.cpp:1633
 msgid "Export project NIF"
 msgstr "导出项目NIF"
 
-#: OutfitStudio.cpp:1650
-#, c-format
 msgid "Failed to save NIF file '%s' with reference!"
 msgstr "保存带参照的NIF文件'%s'失败！"
 
-#: OutfitStudio.cpp:1655
 msgid "Import physics data to project"
 msgstr "导入物理数据到项目"
 
-#: OutfitStudio.cpp:1662
-#, c-format
 msgid "Failed to import physics data file '%s'!"
 msgstr "导入物理数据文件'%s'失败！"
 
-#: OutfitStudio.cpp:1662
 msgid "Import Error"
 msgstr "导入错误"
 
-#: OutfitStudio.cpp:1672
 msgid "There is no physics data loaded!"
 msgstr "没有物理数据被载入！"
 
-#: OutfitStudio.cpp:1672 OutfitStudio.cpp:2565
 msgid "Info"
 msgstr "信息"
 
-#: OutfitStudio.cpp:1680
 msgid "Please choose the physics data source you want to export."
 msgstr "请选择你想导出的物理数据源。"
 
-#: OutfitStudio.cpp:1680
 msgid "Choose physics data"
 msgstr "选择物理数据"
 
-#: OutfitStudio.cpp:1688
 msgid "Export physics data"
 msgstr "导出物理数据"
 
-#: OutfitStudio.cpp:1694
-#, c-format
 msgid "Failed to save physics data file '%s'!"
 msgstr "保存物理数据'%s'失败！"
 
-#: OutfitStudio.cpp:1701
 msgid "This function requires at least one slider position to be non-zero."
 msgstr "这个功能需要至少一个滑块不为零。"
 
-#: OutfitStudio.cpp:1712
 msgid ""
 "Create a conversion slider for the current slider settings with the "
 "following name: "
 msgstr "使用以下名称为当前滑块设置创建一个转换滑块："
 
-#: OutfitStudio.cpp:1712
 msgid "Create New Conversion Slider"
 msgstr "创建新的转换滑块"
 
-#: OutfitStudio.cpp:2128
-#, c-format
 msgid "Field of View: %d"
 msgstr "视野：%d"
 
-#: OutfitStudio.cpp:2519
 msgid "There are no sliders loaded!"
 msgstr "没有滑块被载入！"
 
-#: OutfitStudio.cpp:2565
 msgid "No changes were made to the sliders, so no preset was saved!"
 msgstr "滑块没有改变，所以预设没有被保存！"
 
-#: OutfitStudio.cpp:2578 OutfitStudio.cpp:2597 OutfitStudio.cpp:2705
-#: OutfitStudio.cpp:2729 OutfitStudio.cpp:2762 OutfitStudio.cpp:2816
-#: OutfitStudio.cpp:2862 OutfitStudio.cpp:2918 OutfitStudio.cpp:2933
-#: OutfitStudio.cpp:3152 OutfitStudio.cpp:3225 OutfitStudio.cpp:3240
-#: OutfitStudio.cpp:3267 OutfitStudio.cpp:3297 OutfitStudio.cpp:3458
-#: OutfitStudio.cpp:3557 OutfitStudio.cpp:3708 OutfitStudio.cpp:3845
-#: OutfitStudio.cpp:3875 OutfitStudio.cpp:3918 OutfitStudio.cpp:3962
-#: OutfitStudio.cpp:3989 OutfitStudio.cpp:4001 OutfitStudio.cpp:4013
-#: OutfitStudio.cpp:5223
 msgid "There is no shape selected!"
 msgstr "没有模型被选中！"
 
-#: OutfitStudio.cpp:2582 OutfitStudio.cpp:2601 OutfitStudio.cpp:2709
 msgid "There is no slider in edit mode to import data to!"
 msgstr "编辑模式中没有滑块可导入数据！"
 
-#: OutfitStudio.cpp:2586
 msgid "Import .bsd slider data"
 msgstr "导入.bsd滑块数据"
 
-#: OutfitStudio.cpp:2605
 msgid "Import .obj file for slider calculation"
 msgstr "导入.obj文件进行滑块计算"
 
-#: OutfitStudio.cpp:2612 OutfitStudio.cpp:2720
 msgid "Vertex count of .obj file mesh does not match currently selected shape!"
 msgstr ".obj 文件网格的顶点数量与当前已选的模型不匹配！"
 
-#: OutfitStudio.cpp:2625
 msgid "Import .tri morphs"
 msgstr "导入.tri变形"
 
-#: OutfitStudio.cpp:2629
 msgid "This will delete all loaded sliders. Are you sure?"
 msgstr "这会删除所有已载入的滑块。你确定吗？"
 
-#: OutfitStudio.cpp:2629 OutfitStudio.cpp:2700
 msgid "TRI Import"
 msgstr "TRI导入"
 
-#: OutfitStudio.cpp:2638
 msgid "Failed to load TRI file!"
 msgstr "未能加载TRI文件！"
 
-#: OutfitStudio.cpp:2700
-#, c-format
 msgid ""
 "Added morphs for the following shapes:\n"
 "\n"
@@ -2400,31 +2102,24 @@ msgstr ""
 "\n"
 "%s"
 
-#: OutfitStudio.cpp:2713
 msgid "Import .fbx file for slider calculation"
 msgstr "为滑块计算导入.fbx文件"
 
-#: OutfitStudio.cpp:2733 OutfitStudio.cpp:2766
 msgid "There is no slider in edit mode to export data from!"
 msgstr "编辑模式中没有滑块可导出数据！"
 
-#: OutfitStudio.cpp:2738
 msgid "Export .bsd slider data to directory"
 msgstr "导出.bsd滑块数据到目录"
 
-#: OutfitStudio.cpp:2749
 msgid "Export .bsd slider data"
 msgstr "导出.bsd滑块数据"
 
-#: OutfitStudio.cpp:2771
 msgid "Export .obj slider data to directory"
 msgstr "导出.obj滑块数据到目录"
 
-#: OutfitStudio.cpp:2782
 msgid "Export .obj slider data"
 msgstr "导出.obj滑块数据"
 
-#: OutfitStudio.cpp:2789 OutfitStudio.cpp:3175
 msgid "Failed to export OBJ file!"
 msgstr "未能导出OBJ文件！"
 
@@ -2443,223 +2138,162 @@ msgstr "导出.osd文件"
 msgid "Failed to export OSD file!"
 msgstr "导出OSD文件失败！"
 
-#: OutfitStudio.cpp:2802
 msgid "Export .tri morphs"
 msgstr "导出.tri变形"
 
-#: OutfitStudio.cpp:2809
 msgid "Failed to export TRI file!"
 msgstr "未能导出TRI文件！"
 
-#: OutfitStudio.cpp:2820
 msgid "There is no slider in edit mode to clear data from!"
 msgstr "编辑模式中没有滑块可清除数据！"
 
-#: OutfitStudio.cpp:2826 OutfitStudio.cpp:2831
 msgid "Are you sure you wish to clear the unmasked slider data \""
 msgstr "你是否真的想要清除未遮蔽的滑块数据\""
 
-#: OutfitStudio.cpp:2827
 msgid "\" for the selected shapes? This cannot be undone."
 msgstr "\"从已选模型？这无法撤销。"
 
-#: OutfitStudio.cpp:2828 OutfitStudio.cpp:2833
 msgid "Confirm data erase"
 msgstr "确认数据清除"
 
-#: OutfitStudio.cpp:2832
 msgid "\" for the shape \""
 msgstr "\"从模型\""
 
-#: OutfitStudio.cpp:2874
 msgid "Enter a name for the new zap:"
 msgstr "为新修正输入一个名称："
 
-#: OutfitStudio.cpp:2874
 msgid "Create New Zap"
 msgstr "创建新修正"
 
-#: OutfitStudio.cpp:2922
 msgid "There is no slider in edit mode to negate!"
 msgstr "编辑模式中没有滑块可取消！"
 
-#: OutfitStudio.cpp:2937
 msgid "There is no slider in edit mode to create a mask from!"
 msgstr "编辑模式中没有滑块可创建遮罩！"
 
-#: OutfitStudio.cpp:2948
 msgid "There is no slider in edit mode to delete!"
 msgstr "编辑模式中没有滑块可删除！"
 
-#: OutfitStudio.cpp:2952
 msgid "Are you sure you wish to delete the slider \""
 msgstr "你确定要删除这个滑块\""
 
-#: OutfitStudio.cpp:2953 OutfitStudio.cpp:2832
 msgid "\"? This cannot be undone."
 msgstr "\"吗？这无法撤销。"
 
-#: OutfitStudio.cpp:2954
 msgid "Confirm slider delete"
 msgstr "确认滑块删除"
 
-#: OutfitStudio.cpp:2988
 msgid "There is no slider in edit mode to show properties for!"
 msgstr "编辑模式中没有滑块可显示属性！"
 
-#: OutfitStudio.cpp:3062
 msgid "Conforming all shapes..."
 msgstr "正在整合所有模型..."
 
-#: OutfitStudio.cpp:3072 OutfitStudio.cpp:3107
 msgid "Conforming: "
 msgstr "正在整合："
 
-#: OutfitStudio.cpp:3082
 msgid "All shapes conformed."
 msgstr "所有模型已整合。"
 
-#: OutfitStudio.cpp:3090
 msgid "Conforming..."
 msgstr "整合中..."
 
-#: OutfitStudio.cpp:3104
 msgid "Initializing data..."
 msgstr "初始化数据..."
 
-#: OutfitStudio.cpp:3116
 msgid "Shape(s) conformed."
 msgstr "模型已整合。"
 
-#: OutfitStudio.cpp:3124
 msgid "Import .obj file for new shape"
 msgstr "为新模型导入.obj文件"
 
-#: OutfitStudio.cpp:3157
 msgid "Export selected shapes as .obj files"
 msgstr "导出已选模型为.obj文件"
 
-#: OutfitStudio.cpp:3169
 msgid "Export shape as an .obj file"
 msgstr "导出模型为一个.obj文件"
 
-#: OutfitStudio.cpp:3182
 msgid "Import .fbx file for new shape"
 msgstr "为新模型导入.fbx文件"
 
-#: OutfitStudio.cpp:3213
 msgid "Export .fbx file for new shape"
 msgstr "为新模型导出.fbx文件"
 
-#: OutfitStudio.cpp:3246
 msgid "Please enter a new unique name for the shape."
 msgstr "请为模型输入一个唯一的新名称："
 
-#: OutfitStudio.cpp:3246
 msgid "Rename Shape"
 msgstr "重命名模型"
 
-#: OutfitStudio.cpp:3272
 msgid "The selected shape is the reference shape already."
 msgstr "选中的模型已是参照模型。"
 
-#: OutfitStudio.cpp:3562
 msgid ""
 "Rotating slider data is currently not possible using the Rotate Shape dialog."
 msgstr "旋转滑块数据目前无法使用旋转模型对话框。"
 
-#: OutfitStudio.cpp:3562
 msgid "Rotate"
 msgstr "旋转"
 
-#: OutfitStudio.cpp:3673
 msgid ""
 "You can only copy shapes into an outfit, and there is no outfit in the "
 "current project. Load one first!"
 msgstr "你只能将模型复制进装备，当前项目中没有装备。请先打开一个！"
 
-#: OutfitStudio.cpp:3678
 msgid "Please enter a unique name for the duplicated shape."
 msgstr "请为复制的模型输入一个唯一的名称。"
 
-#: OutfitStudio.cpp:3678
 msgid "Duplicate Shape"
 msgstr "复制模型"
 
-#: OutfitStudio.cpp:3712
 msgid ""
 "Are you sure you wish to delete the selected shapes?  This action cannot be "
 "undone."
 msgstr "你确定要删除选定的模型吗？这个操作无法撤销。"
 
-#: OutfitStudio.cpp:3712
 msgid "Confirm Delete"
 msgstr "确认删除"
 
-#: OutfitStudio.cpp:3728
 msgid "You can't delete the reference shape!"
 msgstr "你无法删除参照模型！"
 
-#: OutfitStudio.cpp:3780
 msgid "No bone name was entered!"
 msgstr "没有输入骨骼名称！"
 
-#: OutfitStudio.cpp:3788
-#, c-format
 msgid "Bone '%s' already exists in the project!"
 msgstr "骨骼'%s'已经存在于项目中！"
 
-#: OutfitStudio.cpp:3863 OutfitStudio.cpp:3906
 msgid ""
 "Sorry, you can't copy weights from the reference shape to itself. Skipping "
 "this shape."
 msgstr "很抱歉，你无法从参照模型复制选权重到它本身。跳过这个模型。"
 
-#: OutfitStudio.cpp:3863 OutfitStudio.cpp:3906
 msgid "Can't copy weights"
 msgstr "无法复制权重"
 
-#: OutfitStudio.cpp:3895
 msgid "Copying selected bone weights..."
 msgstr "复制已选骨骼权重..."
 
-#: OutfitStudio.cpp:3926
 msgid "Sorry, you can't copy weights from the reference shape to itself."
 msgstr "很抱歉，你无法从参照模型复制选权重到它本身。 "
 
-#: OutfitStudio.cpp:3933
 msgid "The vertex count of the reference and chosen shape is not the same!"
 msgstr "参照的顶点数和选择的模型不同！"
 
-#: OutfitStudio.cpp:4195
 msgid "Outfit Studio: OpenGL context is not OK."
 msgstr "装备工作室：OpenGL环境不正常。"
 
-#: OutfitStudio.cpp:5166 OutfitStudio.cpp:5167
 msgid "Adding NIF file..."
 msgstr "添加NIF文件..."
 
-#: OutfitStudio.cpp:5179
 msgid "Adding OBJ file..."
 msgstr "添加OBJ文件..."
 
-#: OutfitStudio.cpp:5190 OutfitStudio.cpp:5191
 msgid "Adding FBX file..."
 msgstr "添加FBX文件..."
 
-#: OutfitStudio.cpp:5234 OutfitStudio.cpp:5235
 msgid "Loading slider file..."
 msgstr "载入滑块文件..."
 
-#: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "装备工作室：OpenGL环境不正常。"
-
-#~ msgid "Build Skin Partitions"
-#~ msgstr "建立皮肤分区"
-
-#~ msgid ""
-#~ "Creates or rebuilds skin partitions for the current shape. This is "
-#~ "typically not needed, use only if skin partitions are broken."
-#~ msgstr ""
-#~ "创建或者重建当前模型的皮肤分区。此操作一般不用做，仅在皮肤分区损坏时使用。"

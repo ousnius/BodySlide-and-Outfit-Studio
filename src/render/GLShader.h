@@ -8,7 +8,7 @@ See the included LICENSE file
 
 #include "../utils/Object3d.h"
 
-#include <wx/glcanvas.h>
+#include <Windows.h>
 #include <GL/glu.h>
 #include <GL/glext.h>
 
@@ -36,11 +36,17 @@ class GLShader {
 		3 = fragment shader compile failed,
 		4 = program link failed.
 		*/
-	int errorstate;
-	string errorstring;
+	int errorState;
+	string errorString;
 
 	bool InitShaders();
 	bool LoadShaderFile(const string& fileName, string& text);
+
+	// Attempts to load the specified source files (in text format).
+	bool LoadShaders(const string& vertexSource, const string& fragmentSource);
+
+	// Compiles and links the loaded shaders, generating a program that can be activated.
+	bool BuildShaders();
 
 public:
 	GLShader();
@@ -49,20 +55,7 @@ public:
 	GLShader(const string& vertexSource, const string& fragmentSource);
 	~GLShader();
 
-	// Attempts to load the specified source files (in text format).
-	// If the passthrough or default shader type is specified for either, the appropriate shader is generated.
-	// If GLSHADER_NONE is specified for either, then the fixed pipeline is used for it.
-	// Set build to false to defer shader compile and link until a call to BuildShaders
-	// (useful to allow time to modify generation parameters such as number of lights).
-	bool LoadShaders(const string& vertexSource, const string& fragmentSource);
-
-	// Compiles and links the loaded shaders, generating a program that can be activated.
-	bool BuildShaders();
-
-	// Enables lighting calculations in the vertex shader. This looks for the bLightEnabled uniform in the vertex
-	// shader. If that value isn't present, nothing happens.
-	void EnableVertexLighting(bool bEnable = true);
-
+	void ShowLighting(bool bShow = true);
 	void ShowMask(bool bShow = true);
 	void ShowWeight(bool bShow = true);
 	void ShowSegments(bool bShow = true);
@@ -70,6 +63,8 @@ public:
 	GLint GetMaskAttribute();
 	GLint GetWeightAttribute();
 	GLint GetSegmentAttribute();
+
+	bool GetError(string* errorStr = nullptr);
 
 	// Activates the stored program for subsequent GL rendering calls.
 	int Begin();
@@ -107,7 +102,7 @@ public:
 		return shader;
 	}
 
-	void ActivateTextures(Vector2* pTexCoord, GLfloat largestAF = 0) {
+	void ActivateTextures(Vector2* pTexCoord, GLfloat largestAF) {
 		glEnable(GL_TEXTURE_2D);
 		glBindTexture(GL_TEXTURE_2D, texRef.front());
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);

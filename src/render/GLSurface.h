@@ -11,6 +11,8 @@ See the included LICENSE file
 #include "../files/ResourceLoader.h"
 #include "../components/Mesh.h"
 
+#include <wx/glcanvas.h>
+
 using namespace std;
 
 class GLSurface {
@@ -25,10 +27,7 @@ class GLSurface {
 	uint vpW;
 	uint vpH;
 
-	bool bUseAF;
-	GLfloat largestAF;
-
-	bool bUseVBO;
+	GLfloat largestAF = 0;
 
 	bool bWireframe;
 	bool bLighting;
@@ -73,7 +72,6 @@ class GLSurface {
 	}
 
 public:
-	bool bEditMode;
 	GLSurface();
 	~GLSurface();
 
@@ -242,11 +240,6 @@ public:
 	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
 	mesh* AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
 
-	void BeginEditMode();
-	void EditUndo();
-	void EditRedo();
-	void EndEditMode();
-
 	void AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
 	void Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, vector<int>* changed = nullptr);
 	void Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, vector<int>* changed = nullptr);
@@ -294,7 +287,7 @@ public:
 
 		for (auto &m : meshes)
 			if (m->material)
-				m->material->GetShader().EnableVertexLighting(bLighting);
+				m->material->GetShader().ShowLighting(bLighting);
 	}
 
 	void SetMaskVisible(bool bVisible = true) {

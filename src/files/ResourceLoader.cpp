@@ -12,9 +12,8 @@ See the included LICENSE file
 #include "FSEngine/FSEngine.h"
 #include "SOIL2/SOIL2.h"
 
-#include <wx/dir.h>
 #include <wx/filename.h>
-#include <wx/tokenzr.h>
+#include <wx/log.h>
 
 unsigned int ResourceLoader::currentTextureID = 0;
 

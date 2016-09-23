@@ -6,6 +6,9 @@ See the included LICENSE file
 
 #include "GLSurface.h"
 
+#include <wx/msgdlg.h>
+#include <wx/log.h>
+
 #include <algorithm>
 #include <set>
 #include <limits>
@@ -190,7 +193,6 @@ bool Triangle::IntersectSphere(Vertex *vertref, Vector3 &origin, float radius) {
 
 GLSurface::GLSurface() {
 	mFov = 90.0f;
-	bEditMode = false;
 	bTextured = true;
 	bWireframe = false;
 	bLighting = true;
@@ -341,8 +343,7 @@ int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 }
 
 void GLSurface::InitGLExtensions() {
-	bUseAF = IsExtensionSupported("GL_EXT_texture_filter_anisotropic");
-	if (bUseAF)
+	if (IsExtensionSupported("GL_EXT_texture_filter_anisotropic"))
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
 
 	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
@@ -999,12 +1000,8 @@ void GLSurface::RenderMesh(mesh* m) {
 					glDisableVertexAttribArray(segmentAttrib);
 			}
 
-			if (m->textured && bTextured) {
-				if (bUseAF)
-					m->material->ActivateTextures(m->texcoord, largestAF);
-				else
-					m->material->ActivateTextures(m->texcoord);
-			}
+			if (m->textured && bTextured)
+				m->material->ActivateTextures(m->texcoord, largestAF);
 
 			if (m->rendermode == RenderMode::LitWire) {
 				glLineWidth(1.5f);
@@ -1747,21 +1744,13 @@ GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vSha
 		mat = noImage;
 	}
 
+	if (mat) {
+		string shaderError;
+		if (mat->GetShader().GetError(&shaderError)) {
+			wxLogError(wxString(shaderError));
+			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		}
+	}
+
 	return mat;
-}
-
-void GLSurface::BeginEditMode() {
-	bEditMode = true;
-}
-
-void GLSurface::EndEditMode() {
-	bEditMode = false;
-}
-
-void GLSurface::EditUndo() {
-
-}
-
-void GLSurface::EditRedo() {
-
 }

@@ -304,9 +304,6 @@ void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
 	case 'L':
 		previewWindow->ToggleLighting();
 		break;
-	case 'Q':
-		previewWindow->ToggleEditMode();
-		break;
 	}
 }
 

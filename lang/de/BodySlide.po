@@ -1518,7 +1518,6 @@ msgstr "V invertieren"
 msgid "Toggle Zaps:"
 msgstr "Zaps umschalten:"
 
-#: Anim.cpp:359
 msgid ""
 "Bone information incomplete. Exported data will not contain correct bone "
 "entries! Be sure to load a reference NIF prior to export."
@@ -1527,21 +1526,15 @@ msgstr ""
 "korrekten Bone-Einträge besitzen! Stelle sicher, dass du eine Referenz vor "
 "dem Export geladen hast."
 
-#: Anim.cpp:359
 msgid "Export Warning"
 msgstr "Export Warnung"
 
-#: Anim.cpp:418
-#, c-format
 msgid "Failed to load skeleton '%s'!"
 msgstr "Konnte Skelett '%s' nicht laden!"
 
-#: Anim.cpp:426
-#, c-format
 msgid "Root '%s' not found in skeleton '%s'!"
 msgstr "Root '%s' konnte nicht im Skelett '%s' gefunden werden!"
 
-#: BodySlideApp.cpp:135
 msgid ""
 "No read/write permission for game data path!\n"
 "\n"
@@ -1553,40 +1546,29 @@ msgstr ""
 "Bitte starten Sie das Programm mit Admin-Rechten und stellen Sie sicher, "
 "dass der Spieldaten-Pfad in den Einstellungen korrekt ist."
 
-#: BodySlideApp.cpp:135 BodySlideApp.cpp:977 BodySlideApp.cpp:982
-#: BodySlideApp.cpp:2738
 msgid "Warning"
 msgstr "Warnung"
 
-#: BodySlideApp.cpp:172
-#, c-format
 msgid "Unexpected exception has occurred: %s, the program will terminate."
 msgstr ""
 "Unerwartete Ausnahme trat auf: %s, das Programm wird sich jetzt beenden."
 
-#: BodySlideApp.cpp:172
 msgid "Unexpected exception"
 msgstr "Unerwartete Ausnahme"
 
-#: BodySlideApp.cpp:193
-#, c-format
 msgid "Unhandled exception has occurred: %s, the program will terminate."
 msgstr ""
 "Unbehandelte Ausnahme trat auf: %s, das Programm wird sich jetzt beenden."
 
-#: BodySlideApp.cpp:193
 msgid "Unhandled exception"
 msgstr "Unbehandelte Ausnahme"
 
-#: BodySlideApp.cpp:202
 msgid "Fatal exception has occurred, the program will terminate."
 msgstr "Ein fataler Fehler trat auf, das Programm wird sich jetzt beenden."
 
-#: BodySlideApp.cpp:202
 msgid "Fatal exception"
 msgstr "Fataler Fehler"
 
-#: BodySlideApp.cpp:977
 msgid ""
 "Failed to find game install path registry value or GameDataPath in the "
 "config."
@@ -1594,20 +1576,15 @@ msgstr ""
 "Konnte den Registry-Wert des Spielpfades oder den GameDataPath in der "
 "Konfiguration nicht finden."
 
-#: BodySlideApp.cpp:982
 msgid ""
 "Failed to find game install path registry key or GameDataPath in the config."
 msgstr ""
 "Konnte den Registry-Key des Spielpfades oder den GameDataPath in der "
 "Konfiguration nicht finden."
 
-#: BodySlideApp.cpp:1042
-#, c-format
 msgid "System language '%d' is wrong."
 msgstr "Systemsprache '%d' ist ungültig."
 
-#: BodySlideApp.cpp:1051
-#, c-format
 msgid ""
 "The system language '%d' is not supported by your system. Try installing "
 "support for this language."
@@ -1615,11 +1592,9 @@ msgstr ""
 "Die Systemsprache '%d' wird nicht von Ihrem System unterstützt. Sie können "
 "versuchen, die Unterstützung der Sprache zu installieren."
 
-#: BodySlideApp.cpp:1129
 msgid "Failed to create group file."
 msgstr "Konnte Gruppen-Datei nicht erstellen."
 
-#: BodySlideApp.cpp:1143
 msgid ""
 "That group already exists in the specified file, do you wish to overwrite "
 "the group?"
@@ -1627,11 +1602,9 @@ msgstr ""
 "Diese Gruppe existiert bereits in der angegebenen Datei, willst du sie "
 "überschreiben?"
 
-#: BodySlideApp.cpp:1143
 msgid "Group already exists"
 msgstr "Gruppe existiert bereits"
 
-#: BodySlideApp.cpp:1277
 msgid ""
 "WARNING: Game data path not configured. Would you like to show BodySlide "
 "where it is?"
@@ -1639,15 +1612,12 @@ msgstr ""
 "WARNUNG: Spieldaten-Pfad nicht konfiguriert. Möchtest du BodySlide zeigen, "
 "wo dieser ist?"
 
-#: BodySlideApp.cpp:1277 BodySlideApp.cpp:1502 BodySlideApp.cpp:1506
 msgid "Game not found"
 msgstr "Spiel nicht gefunden"
 
-#: BodySlideApp.cpp:1285
 msgid "Please choose a directory to set as your Data path"
 msgstr "Bitte wählen Sie ein Verzeichnis für den Spieldaten-Pfad."
 
-#: BodySlideApp.cpp:1303
 msgid ""
 "WARNING: This will delete the output files from the output folder, "
 "potentially causing crashes.\n"
@@ -1659,24 +1629,18 @@ msgstr ""
 "\n"
 "Willst du fortsetzen?"
 
-#: BodySlideApp.cpp:1303
 msgid "Clean Build"
 msgstr "Säuberungs-Erstellung"
 
-#: BodySlideApp.cpp:1310
 msgid "Removed the following files:\n"
 msgstr "Folgende Dateien wurden entfernt:\n"
 
-#: BodySlideApp.cpp:1322 BodySlideApp.cpp:1335
 msgid " (no action)\n"
 msgstr " (keine Aktion)\n"
 
-#: BodySlideApp.cpp:1326 BodySlideApp.cpp:1338 BodySlideApp.cpp:1471
 msgid "Process Successful"
 msgstr "Prozess erfolgreich"
 
-#: BodySlideApp.cpp:1395
-#, c-format
 msgid ""
 "Failed to write TRI file to the following location\n"
 "\n"
@@ -1686,12 +1650,9 @@ msgstr ""
 "\n"
 "%s"
 
-#: BodySlideApp.cpp:1395 BodySlideApp.cpp:1422 BodySlideApp.cpp:1451
 msgid "Unable to process"
 msgstr "Konnte nicht verarbeitet werden"
 
-#: BodySlideApp.cpp:1422 BodySlideApp.cpp:1451
-#, c-format
 msgid ""
 "Failed to build set to the following location\n"
 "\n"
@@ -1701,15 +1662,12 @@ msgstr ""
 "\n"
 "%s"
 
-#: BodySlideApp.cpp:1424 BodySlideApp.cpp:1453
 msgid "Choose alternate file name"
 msgstr "Wählen Sie einen alternativen Dateinamen"
 
-#: BodySlideApp.cpp:1463
 msgid "Successfully processed the following files:\n"
 msgstr "Erfolgreich die folgenden Dateien verarbeitet:\n"
 
-#: BodySlideApp.cpp:1489
 msgid ""
 "WARNING: This will delete the output files from the output folders, "
 "potentially causing crashes.\n"
@@ -1721,18 +1679,15 @@ msgstr ""
 "\n"
 "Willst du fortsetzen?"
 
-#: BodySlideApp.cpp:1489
 msgid "Clean Batch Build"
 msgstr "Säuberungs-Batch-Erstellung"
 
-#: BodySlideApp.cpp:1502
 msgid ""
 "WARNING: Game data path not configured. Files can't be removed that way."
 msgstr ""
 "WARNUNG: Spieldaten-Pfad ist nicht konfiguriert. Dateien können so nicht "
 "entfernt werden."
 
-#: BodySlideApp.cpp:1506
 msgid ""
 "WARNING: Game data path not configured. Continue saving files to the working "
 "directory?"
@@ -1740,7 +1695,6 @@ msgstr ""
 "WARNUNG: Spieldaten-Pfad nicht konfiguriert. Dateien stattdessen in das "
 "Arbeitsverzeichnis speichern?"
 
-#: BodySlideApp.cpp:1533
 msgid ""
 "The following sets will override the same files.\n"
 "Please decide which one to use and select it in the list below."
@@ -1748,261 +1702,146 @@ msgstr ""
 "Die folgenden Sets würde die selben Dateien überschreiben.\n"
 "Bitte entscheiden Sie, welche davon verwendet werden sollen."
 
-#: BodySlideApp.cpp:1533
 msgid "Choose output set"
 msgstr "Ausgabe-Set auswählen"
 
-#: BodySlideApp.cpp:1550
 msgid "Processing Outfits"
 msgstr "Verarbeite Outfits"
 
-#: BodySlideApp.cpp:1550 OutfitStudio.h:657
 msgid "Starting..."
 msgstr "Starten..."
 
-#: BodySlideApp.cpp:1556
-#, c-format
 msgid "Processing '%s' (%d of %d)..."
 msgstr "Verarbeite '%s' (%d von %d)..."
 
-#: BodySlideApp.cpp:1563
 msgid "No recorded outfit name source"
 msgstr "Keine aufgenommene Outfitnamen-Quelle"
 
-#: BodySlideApp.cpp:1577
 msgid "Unable to get slider set from file: "
 msgstr "Konnte Slider Set nicht aus Datei bekommen: "
 
-#: BodySlideApp.cpp:1580
 msgid "Unable to open slider set file: "
 msgstr "Konnte Slider Set Datei nicht öffnen: "
 
-#: BodySlideApp.cpp:1608
 msgid "Unable to load input nif: "
 msgstr "Konnte Eingabe NIF nicht lesen: "
 
-#: BodySlideApp.cpp:1716
 msgid "Unable to create destination directory: "
 msgstr "Konnte Ziel-Verzeichnis nicht erstellen: "
 
-#: BodySlideApp.cpp:1752 BodySlideApp.cpp:1756 BodySlideApp.cpp:1763
 msgid "Unable to save nif file: "
 msgstr "Konnte NIF-Datei nicht speichern: "
 
-#: BodySlideApp.cpp:1801
 msgid "All group build sets processed successfully!"
 msgstr "Alle Gruppen-Erstellungs-Sets erfolgreich verarbeitet!"
 
-#: BodySlideApp.cpp:1801 BodySlideApp.cpp:2622
 msgid "Complete"
 msgstr "Abgeschlossen"
 
-#: BodySlideApp.cpp:1810 BodySlideApp.cpp:2631
 msgid "The following sets failed"
 msgstr "Die folgenden Sets sind fehlgeschlagen"
 
-#: BodySlideApp.cpp:1810 BodySlideApp.cpp:2631
 msgid "Failed"
 msgstr "Fehlgeschlagen"
 
-#: BodySlideApp.cpp:1856
 msgid "Failed to load BodyslideFrame.xrc file!"
 msgstr "Konnte die BodyslideFrame.xrc Datei nicht laden!"
 
-#: BodySlideApp.cpp:1856 BodySlideApp.cpp:1863 BodySlideApp.cpp:2465
-#: OutfitStudio.cpp:181 OutfitStudio.cpp:188 OutfitStudio.cpp:1348
-#: OutfitStudio.cpp:1360 OutfitStudio.cpp:1443 OutfitStudio.cpp:1452
-#: OutfitStudio.cpp:1460 OutfitStudio.cpp:1475 OutfitStudio.cpp:1484
-#: OutfitStudio.cpp:1490 OutfitStudio.cpp:1524 OutfitStudio.cpp:2519
-#: OutfitStudio.cpp:2572 OutfitStudio.cpp:2578 OutfitStudio.cpp:2582
-#: OutfitStudio.cpp:2597 OutfitStudio.cpp:2601 OutfitStudio.cpp:2612
-#: OutfitStudio.cpp:2621 OutfitStudio.cpp:2638 OutfitStudio.cpp:2705
-#: OutfitStudio.cpp:2709 OutfitStudio.cpp:2720 OutfitStudio.cpp:2729
-#: OutfitStudio.cpp:2733 OutfitStudio.cpp:2762 OutfitStudio.cpp:2766
-#: OutfitStudio.cpp:2789 OutfitStudio.cpp:2798 OutfitStudio.cpp:2809
-#: OutfitStudio.cpp:2816 OutfitStudio.cpp:2820 OutfitStudio.cpp:2862
-#: OutfitStudio.cpp:2918 OutfitStudio.cpp:2922 OutfitStudio.cpp:2933
-#: OutfitStudio.cpp:2937 OutfitStudio.cpp:2948 OutfitStudio.cpp:2988
-#: OutfitStudio.cpp:3152 OutfitStudio.cpp:3175 OutfitStudio.cpp:3225
-#: OutfitStudio.cpp:3240 OutfitStudio.cpp:3267 OutfitStudio.cpp:3272
-#: OutfitStudio.cpp:3297 OutfitStudio.cpp:3458 OutfitStudio.cpp:3557
-#: OutfitStudio.cpp:3708 OutfitStudio.cpp:3780 OutfitStudio.cpp:3788
-#: OutfitStudio.cpp:3845 OutfitStudio.cpp:3875 OutfitStudio.cpp:3918
-#: OutfitStudio.cpp:3926 OutfitStudio.cpp:3933 OutfitStudio.cpp:3962
-#: OutfitStudio.cpp:3989 OutfitStudio.cpp:4001 OutfitStudio.cpp:4013
-#: OutfitStudio.cpp:5223
 msgid "Error"
 msgstr "Fehler"
 
-#: BodySlideApp.cpp:1863
 msgid "Failed to load BodySlide frame!"
 msgstr "Konnte das BodySlide-Fenster nicht laden!"
 
-#: BodySlideApp.cpp:1881
 msgid "Group Filter"
 msgstr "Gruppenfilter"
 
-#: BodySlideApp.cpp:1882
 msgid "Filter by group"
 msgstr "Nach Gruppe filtern"
 
-#: BodySlideApp.cpp:1888
 msgid "Outfit Filter"
 msgstr "Outfitfilter"
 
-#: BodySlideApp.cpp:1889
 msgid "Filter by outfit"
 msgstr "Nach Outfit filtern"
 
-#: BodySlideApp.cpp:2395
 msgid "Choose groups to filter outfit list"
 msgstr "Wählen Sie Gruppen zum Filtern der Outfitliste"
 
-#: BodySlideApp.cpp:2395
 msgid "Choose Groups"
 msgstr "Gruppen auswählen"
 
-#: BodySlideApp.cpp:2412
 msgid "Choose or create group file"
 msgstr "Wählen Sie oder erstelle eine Gruppen-Datei"
 
-#: BodySlideApp.cpp:2421
 msgid "What would you like the new group to be called?"
 msgstr "Wie möchten Sie die neue Gruppe nennen?"
 
-#: BodySlideApp.cpp:2421
 msgid "New Group Name"
 msgstr "Neuer Gruppenname"
 
-#: BodySlideApp.cpp:2465 OutfitStudio.cpp:2572
-#, c-format
 msgid "Failed to save preset (%d)!"
 msgstr "Konnte Preset nicht speichern (%d)!"
 
-#: BodySlideApp.cpp:2492
-#, c-format
 msgid "Failed to save preset as '%s' (%d)!"
 msgstr "Konnte Preset nicht als '%s' speichern (%d)!"
 
-#: BodySlideApp.cpp:2609
 msgid "Choose a folder to contain the saved files"
 msgstr "Wählen Sie einen Ordner, der die gespeicherten Dateien beinhalten soll"
 
-#: BodySlideApp.cpp:2622
 msgid "All sets processed successfully!"
 msgstr "Alle Sets erfolgreich vearbeitet!"
 
-#: BodySlideApp.cpp:2738
 msgid "You can't change the settings while Outfit Studio is opened up."
 msgstr ""
 "Sie können die Einstellungen nicht verändern, während Outfit Studio geöffnet "
 "ist."
 
-#: GLShader.cpp:227 GLShader.cpp:230
-msgid "Shader Error"
-msgstr "Shader Fehler"
-
-#: GLShader.cpp:243 GLShader.cpp:249 OutfitStudio.cpp:4195 PreviewWindow.cpp:63
 msgid "OpenGL Error"
 msgstr "OpenGL Fehler"
 
-#: GLShader.cpp:262
-msgid "OpenGL: One or more shader functions are not supported."
-msgstr "OpenGL: Eine oder mehrere Shader-Funktionen werden nicht unterstützt."
-
-#: GLShader.cpp:273
-msgid "OpenGL: One or more program functions are not supported."
-msgstr ""
-"OpenGL: Eine oder mehrere Programm-Funktionen werden nicht unterstützt."
-
-#: GLShader.cpp:346
-msgid "OpenGL: Failed to load vertex shader from file: "
-msgstr "OpenGL: Konnte Vertex-Shader nicht von Datei laden: "
-
-#: GLShader.cpp:365
-msgid "OpenGL: Failed to load fragment shader from file: "
-msgstr "OpenGL: Konnte Fragment-Shader nicht von Datei laden: "
-
-#: GLShader.cpp:440
-msgid "OpenGL: Vertex shader compile failed: "
-msgstr "OpenGL: Vertex-Shader Kompilierung ist fehlgeschlagen: "
-
-#: GLShader.cpp:456
-msgid "OpenGL: Fragment shader compile failed: "
-msgstr "OpenGL: Fragment-Shader Kompilierung ist fehlgeschlagen: "
-
-#: GLShader.cpp:475
-msgid "OpenGL: Shader program link failed: "
-msgstr "OpenGL: Shader-Programm Verlinkung ist fehlgeschlagen: "
-
-#: GLShader.cpp:483
-msgid "OpenGL: Shader program ready."
-msgstr "OpenGL: Shader-Programm ist bereit."
-
-#: OutfitProject.cpp:41
 msgid "Checking destination..."
 msgstr "Überprüfe Ziel..."
 
-#: OutfitProject.cpp:90
 msgid "Adding reference shapes..."
 msgstr "Füge Referenzmodelle hinzu..."
 
-#: OutfitProject.cpp:105
 msgid "Adding outfit shapes..."
 msgstr "Füge Outfit-Modelle hinzu..."
 
-#: OutfitProject.cpp:178
 msgid "Calculating slider data..."
 msgstr "Berechne Sliderdaten..."
 
-#: OutfitProject.cpp:185
 msgid "Creating slider set file..."
 msgstr "Erstelle Slider Set Datei..."
 
-#: OutfitProject.cpp:191
 msgid "Failed to open or create slider set file: "
 msgstr "Konnte Slider Set Datei nicht öffnen oder erstellen: "
 
-#: OutfitProject.cpp:206
 msgid "Saving slider set file..."
 msgstr "Speichere Slider Set Datei..."
 
-#: OutfitProject.cpp:209
 msgid "Failed to write to slider set file: "
 msgstr "Konnte Slider Set Datei nicht schreiben: "
 
-#: OutfitProject.cpp:213
 msgid "Saving NIF file..."
 msgstr "Speichere NIF-Datei..."
 
-#: OutfitProject.cpp:239
 msgid "Failed to write base .nif file: "
 msgstr "Konnte Basis NIF-Datei nicht schreiben: "
 
-#: OutfitProject.cpp:244 OutfitProject.cpp:1221 OutfitProject.cpp:1272
-#: OutfitProject.cpp:1874 OutfitStudio.cpp:897 OutfitStudio.cpp:997
-#: OutfitStudio.cpp:1083 OutfitStudio.cpp:1152 OutfitStudio.cpp:3085
-#: OutfitStudio.cpp:3119 OutfitStudio.cpp:3866 OutfitStudio.cpp:3909
-#: OutfitStudio.cpp:5174 OutfitStudio.cpp:5186 OutfitStudio.cpp:5198
-#: OutfitStudio.cpp:5247
 msgid "Finished"
 msgstr "Abgeschlossen"
 
-#: OutfitProject.cpp:375
-#, c-format
 msgid "Could not load OBJ file '%s'!"
 msgstr "Konnte OBJ-Datei '%s' nicht laden!"
 
-#: OutfitProject.cpp:375 OutfitProject.cpp:386
 msgid "OBJ Error"
 msgstr "OBJ Fehler"
 
-#: OutfitProject.cpp:386
-#, c-format
 msgid "Could not copy data from OBJ file '%s'!"
 msgstr "Konnte Daten nicht von OBJ-Datei '%s' kopieren!"
 
-#: OutfitProject.cpp:400
 msgid ""
 "The vertex count of the selected .obj file matches the currently selected "
 "outfit shape.  Do you wish to update the current shape?  (click No to create "
@@ -2012,70 +1851,51 @@ msgstr ""
 "derzeit ausgewählten Outfit-Modells überein. Möchten Sie das aktuelle Modell "
 "aktualisieren? ('Nein' zum Erstellen eines neuen Modells)"
 
-#: OutfitProject.cpp:400 OutfitProject.cpp:2075
 msgid "Merge or New"
 msgstr "Verschmelzen oder neu"
 
-#: OutfitProject.cpp:402 OutfitProject.cpp:2077
 msgid "Update Vertex Positions?"
 msgstr "Vertex-Positionen aktualisieren?"
 
-#: OutfitProject.cpp:402 OutfitProject.cpp:2077
 msgid "Vertex Position Update"
 msgstr "Vertex-Positionen Aktualisierung"
 
-#: OutfitProject.cpp:406 OutfitProject.cpp:2081
 msgid "Update Texture Coordinates?"
 msgstr "Texturkoordinaten aktualisieren?"
 
-#: OutfitProject.cpp:406 OutfitProject.cpp:2081
 msgid "UV Update"
 msgstr "UV Aktualisierung"
 
-#: OutfitProject.cpp:413 OutfitProject.cpp:2094
 msgid "Please specify a name for the new shape"
 msgstr "Bitte geben Sie einen Namen für das neue Modell an"
 
-#: OutfitProject.cpp:413 OutfitProject.cpp:2094
 msgid "New Shape Name"
 msgstr "Neuer Modellname"
 
-#: OutfitProject.cpp:441
 msgid "Could not load 'SkeletonBlank.nif' for importing data file."
 msgstr "Konnte 'SkeletonBlank.nif' zum Importieren der Datei nicht laden."
 
-#: OutfitProject.cpp:441
 msgid "Import Data Error"
 msgstr "Import Daten Fehler"
 
-#: OutfitProject.cpp:1109 OutfitProject.cpp:1207
 msgid "Gathering bones..."
 msgstr "Sammle Bones..."
 
-#: OutfitProject.cpp:1138
 msgid "Initializing proximity data..."
 msgstr "Initialisiere Umgebungsdaten..."
 
-#: OutfitProject.cpp:1196 OutfitStudio.cpp:3852
 msgid "Copying bone weights..."
 msgstr "Kopiere Bone Weighting..."
 
-#: OutfitProject.cpp:1227 OutfitStudio.cpp:3951
 msgid "Transferring bone weights..."
 msgstr "Transferiere Bone Weighting..."
 
-#: OutfitProject.cpp:1526
 msgid "Template source entries are invalid."
 msgstr "Vorlagen Quelleinträge sind ungültig."
 
-#: OutfitProject.cpp:1526 OutfitProject.cpp:1545 OutfitProject.cpp:1550
-#: OutfitProject.cpp:1592 OutfitProject.cpp:1613 OutfitProject.cpp:1620
-#: OutfitProject.cpp:1629 OutfitProject.cpp:1662
 msgid "Reference Error"
 msgstr "Referenz Fehler"
 
-#: OutfitProject.cpp:1541 OutfitProject.cpp:1609 OutfitProject.cpp:1726
-#, c-format
 msgid ""
 "NIF version not supported!\n"
 "\n"
@@ -2091,53 +1911,37 @@ msgstr ""
 "User Version: %i\n"
 "User Version 2: %i"
 
-#: OutfitProject.cpp:1550 OutfitProject.cpp:1620
-#, c-format
 msgid "Could not load reference NIF file '%s'!"
 msgstr "Konnte Referenz NIF-Datei '%s' nicht laden!"
 
-#: OutfitProject.cpp:1592
-#, c-format
 msgid "Could not load slider set file '%s'!"
 msgstr "Konnte Slider Set Datei '%s' nicht laden!"
 
-#: OutfitProject.cpp:1629
-#, c-format
 msgid "Reference NIF file '%s' does not contain any shapes."
 msgstr "Referenz NIF-Datei '%s' beinhaltet keine Modelle."
 
-#: OutfitProject.cpp:1662
-#, c-format
 msgid "Shape '%s' not found in reference NIF file '%s'!"
 msgstr ""
 "Modell '%s' konnte nicht in der Referenz NIF-Datei '%s' gefunden werden!"
 
-#: OutfitProject.cpp:1730 OutfitProject.cpp:1735
 msgid "NIF Error"
 msgstr "NIF Fehler"
 
-#: OutfitProject.cpp:1735
-#, c-format
 msgid "Could not load NIF file '%s'!"
 msgstr "Konnte NIF-Datei '%s' nicht laden!"
 
-#: OutfitProject.cpp:1809
 msgid "Loading slider set..."
 msgstr "Lade Slider Set..."
 
-#: OutfitProject.cpp:1816
 msgid "Retrieving sliders..."
 msgstr "Rufe Slider ab..."
 
-#: OutfitProject.cpp:1825
 msgid "Loading outfit shapes..."
 msgstr "Lade Outfit-Modelle..."
 
-#: OutfitProject.cpp:1856
 msgid "Updating slider data..."
 msgstr "Aktualisiere Sliderdaten..."
 
-#: OutfitProject.cpp:2028
 msgid ""
 "There was cloth physics data loaded at some point (BSClothExtraData). Please "
 "choose all the origins to use in the output."
@@ -2145,11 +1949,9 @@ msgstr ""
 "Es wurden zu einem bestimmten Punkt Physikdaten geladen (BSClothExtraData). "
 "Bitte wählen Sie alle, die in der Ausgabe verwendet werden sollen."
 
-#: OutfitProject.cpp:2028
 msgid "Choose cloth data"
 msgstr "Physikdaten auswählen"
 
-#: OutfitProject.cpp:2075
 msgid ""
 "The vertex count of the selected .fbx file matches the currently selected "
 "outfit shape.  Do you wish to update the current shape?  (click No to create "
@@ -2159,59 +1961,45 @@ msgstr ""
 "derzeit ausgewählten Outfit-Modells überein. Möchten Sie das aktuelle Modell "
 "aktualisieren? ('Nein' zum Erstellen eines neuen Modells)"
 
-#: OutfitProject.cpp:2085
 msgid "Update Animation Weighting?"
 msgstr "Animationen-Weighting aktualisieren?"
 
-#: OutfitProject.cpp:2085
 msgid "Animation Weight Update"
 msgstr "Animationen-Weighting Aktualisierung"
 
-#: OutfitStudio.cpp:181
 msgid "Failed to load outfitStudio.xrc file!"
 msgstr "Konnte outfitStudio.xrc Datei nicht laden!"
 
-#: OutfitStudio.cpp:188
 msgid "Failed to load Outfit Studio frame!"
 msgstr "Konnte Outfit Studio Fenster nicht laden!"
 
-#: OutfitStudio.cpp:200 OutfitStudio.h:681
 msgid "Ready!"
 msgstr "Bereit!"
 
-#: OutfitStudio.cpp:361
 msgid "Creating sliders..."
 msgstr "Erstelle Slider..."
 
-#: OutfitStudio.cpp:364
 msgid "Clearing old sliders..."
 msgstr "Lösche alte Slider..."
 
-#: OutfitStudio.cpp:376
 msgid "Loading slider: "
 msgstr "Lade Slider: "
 
-#: OutfitStudio.cpp:403
 msgid "Turn on edit mode for this slider."
 msgstr "Schalte den Bearbeitungsmodus dieses Sliders an."
 
-#: OutfitStudio.cpp:407
 msgid "Weaken slider data by 1%."
 msgstr "Sliderdaten um 1% abschwächen."
 
-#: OutfitStudio.cpp:413
 msgid "Strengthen slider data by 1%."
 msgstr "Sliderdaten um 1% verstärken."
 
-#: OutfitStudio.cpp:469 OutfitStudio.cpp:2903
 msgid "Enter a name for the new slider:"
 msgstr "Geben Sie einen Namen für den neuen Slider ein:"
 
-#: OutfitStudio.cpp:469 OutfitStudio.cpp:2903
 msgid "Create New Slider"
 msgstr "Neuen Slider erstellen"
 
-#: OutfitStudio.cpp:757
 msgid ""
 "You can only edit the base shape when all sliders are zero. Do you wish to "
 "set all sliders to zero now?  Note, use the pencil button next to a slider "
@@ -2221,76 +2009,54 @@ msgstr ""
 "Möchtest du jetzt alle Slider auf Null setzen? Der Pinsel-Knopf neben jedem "
 "Slider kann den Bearbeitungsmodus dieses aktivieren."
 
-#: OutfitStudio.cpp:806
-#, c-format
 msgid "Creating project '%s'..."
 msgstr "Erstelle Projekt '%s'..."
 
-#: OutfitStudio.cpp:823 OutfitStudio.cpp:1028
 msgid "Loading reference..."
 msgstr "Lade Referenz..."
 
-#: OutfitStudio.cpp:855 OutfitStudio.cpp:1107 OutfitStudio.cpp:1117
 msgid "Loading outfit..."
 msgstr "Lade Outfit..."
 
-#: OutfitStudio.cpp:876 OutfitStudio.cpp:982 OutfitStudio.cpp:1148
 msgid "Creating outfit..."
 msgstr "Erstelle Outfit..."
 
-#: OutfitStudio.cpp:886 OutfitStudio.cpp:986 OutfitStudio.cpp:1073
-#, c-format
 msgid "Creating %d slider(s)..."
 msgstr "Erstelle %d Slider..."
 
-#: OutfitStudio.cpp:893 OutfitStudio.cpp:993 OutfitStudio.cpp:1079
 msgid "Applying slider effects..."
 msgstr "Wende Slider-Auswirkungen an..."
 
-#: OutfitStudio.cpp:903
 msgid "Select a slider set to load"
 msgstr "Wählen Sie ein Slider Set zum Laden"
 
-#: OutfitStudio.cpp:912
-#, c-format
 msgid "Failed to open '%s' as a slider set file!"
 msgstr "Konnte '%s' nicht als Slider Set Datei öffnen!"
 
-#: OutfitStudio.cpp:912 OutfitStudio.cpp:958
 msgid "Slider Set Error"
 msgstr "Slider Set Fehler"
 
-#: OutfitStudio.cpp:923
 msgid "Please choose an outfit to load"
 msgstr "Wählen Sie bitte ein Outfit zum Laden"
 
-#: OutfitStudio.cpp:923
 msgid "Load a slider set"
 msgstr "Lade ein Slider Set"
 
-#: OutfitStudio.cpp:933
 msgid "Loading project..."
 msgstr "Lade Projekt..."
 
-#: OutfitStudio.cpp:951
 msgid "Loading outfit data..."
 msgstr "Lade Outfit-Daten..."
 
-#: OutfitStudio.cpp:958
-#, c-format
 msgid "Failed to create project '%s' from file '%s' (%d)!"
 msgstr "Konnte Projekt '%s' nicht aus Datei '%s' erstellen (%d)!"
 
-#: OutfitStudio.cpp:965
-#, c-format
 msgid "Loading reference shape '%s'..."
 msgstr "Lade Referenzmodell '%s'..."
 
-#: OutfitStudio.cpp:977
 msgid "Loading textures..."
 msgstr "Lade Texturen..."
 
-#: OutfitStudio.cpp:1004
 msgid ""
 "You're currently editing slider data, please exit the slider's edit mode "
 "(pencil button) and try again."
@@ -2298,21 +2064,15 @@ msgstr ""
 "Sie bearbeiten im Moment Sliderdaten. Bitte verlassen Sie den "
 "Bearbeitungsmodus des Sliders (Pinsel-Knopf) und versuchen es erneut."
 
-#: OutfitStudio.cpp:1031
 msgid "Loading reference set..."
 msgstr "Lade Referenz-Set..."
 
-#: OutfitStudio.cpp:1069
 msgid "Creating reference..."
 msgstr "Erstelle Referenz..."
 
-#: OutfitStudio.cpp:1316 OutfitStudio.cpp:1360 OutfitStudio.cpp:2621
-#: OutfitStudio.cpp:2798
 msgid "There are no valid shapes loaded!"
 msgstr "Es sind keine gültigen Modelle geladen!"
 
-#: OutfitStudio.cpp:1322 OutfitStudio.cpp:1366 OutfitStudio.cpp:1590
-#: OutfitStudio.cpp:1628
 msgid ""
 "At least one vertex does not have any weighting assigned to it. This will "
 "cause issues and you should fix it using the weight brush. The affected "
@@ -2323,127 +2083,92 @@ msgstr ""
 "betroffenen Vertices wurden unter eine Maske versetzt. Wollen Sie trotzdem "
 "speichern?"
 
-#: OutfitStudio.cpp:1322 OutfitStudio.cpp:1366 OutfitStudio.cpp:1590
-#: OutfitStudio.cpp:1628
 msgid "Unweighted Vertices"
 msgstr "Vertices ohne Weighting"
 
-#: OutfitStudio.cpp:1328 OutfitStudio.cpp:1498
-#, c-format
 msgid "Saving project '%s'..."
 msgstr "Speichere Projekt '%s'..."
 
-#: OutfitStudio.cpp:1443
 msgid "Invalid or no slider set file specified! Please try again."
 msgstr ""
 "Ungültige oder keine Slider Set Datei angegeben! Bitte versuche es erneut."
 
-#: OutfitStudio.cpp:1452
 msgid "No outfit name specified! Please try again."
 msgstr "Kein Outfitname angegeben! Bitte versuche es erneut."
 
-#: OutfitStudio.cpp:1460
 msgid "No data folder specified! Please try again."
 msgstr "Kein Daten-Ordner angegeben! Bitte versuche es erneut."
 
-#: OutfitStudio.cpp:1475
 msgid ""
 "An invalid or no base outfit .nif file name specified! Please try again."
 msgstr ""
 "Ungültige oder keine Basis Outfit NIF-Datei angegeben! Bitte versuche es "
 "erneut."
 
-#: OutfitStudio.cpp:1484
 msgid "No game file path specified! Please try again."
 msgstr "Kein Spiel Dateipfad angegeben! Bitte versuche es erneut."
 
-#: OutfitStudio.cpp:1490
 msgid "No game file name specified! Please try again."
 msgstr "Kein Spiel Dateinamen angegeben! Bitte versuche es erneut."
 
-#: OutfitStudio.cpp:1568
 msgid "Import NIF file"
 msgstr "NIF-Datei importieren"
 
-#: OutfitStudio.cpp:1572 OutfitStudio.cpp:1573
 msgid "Importing NIF file..."
 msgstr "Importiere NIF-Datei..."
 
-#: OutfitStudio.cpp:1577 OutfitStudio.cpp:5171 OutfitStudio.cpp:5183
-#: OutfitStudio.cpp:5195
 msgid "Refreshing GUI..."
 msgstr "Aktualisiere GUI..."
 
-#: OutfitStudio.cpp:1580
 msgid "Finished."
 msgstr "Abgeschlossen."
 
-#: OutfitStudio.cpp:1595
 msgid "Export outfit NIF"
 msgstr "Outfit NIF exportieren"
 
-#: OutfitStudio.cpp:1613
-#, c-format
 msgid "Failed to save NIF file '%s'!"
 msgstr "Konnte NIF-Datei '%s' nicht speichern!"
 
-#: OutfitStudio.cpp:1613 OutfitStudio.cpp:1650 OutfitStudio.cpp:1694
 msgid "Export Error"
 msgstr "Export Fehler"
 
-#: OutfitStudio.cpp:1633
 msgid "Export project NIF"
 msgstr "Projekt NIF exportieren"
 
-#: OutfitStudio.cpp:1650
-#, c-format
 msgid "Failed to save NIF file '%s' with reference!"
 msgstr "Konnte NIF-Datei '%s' mit Referenz nicht speichern!"
 
-#: OutfitStudio.cpp:1655
 msgid "Import physics data to project"
 msgstr "Physikdaten in Projekt importieren"
 
-#: OutfitStudio.cpp:1662
-#, c-format
 msgid "Failed to import physics data file '%s'!"
 msgstr "Konnte Physikdaten-Datei '%s' nicht importieren!"
 
-#: OutfitStudio.cpp:1662
 msgid "Import Error"
 msgstr "Import Fehler"
 
-#: OutfitStudio.cpp:1672
 msgid "There is no physics data loaded!"
 msgstr "Es sind keine Physikdaten geladen!"
 
-#: OutfitStudio.cpp:1672 OutfitStudio.cpp:2565
 msgid "Info"
 msgstr "Info"
 
-#: OutfitStudio.cpp:1680
 msgid "Please choose the physics data source you want to export."
 msgstr "Wählen Sie die Physikdaten-Quelle, die Sie exportieren möchten."
 
-#: OutfitStudio.cpp:1680
 msgid "Choose physics data"
 msgstr "Physikdaten wählen"
 
-#: OutfitStudio.cpp:1688
 msgid "Export physics data"
 msgstr "Physikdaten exportieren"
 
-#: OutfitStudio.cpp:1694
-#, c-format
 msgid "Failed to save physics data file '%s'!"
 msgstr "Konnte Physikdaten-Datei '%s' nicht speichern!"
 
-#: OutfitStudio.cpp:1701
 msgid "This function requires at least one slider position to be non-zero."
 msgstr ""
 "Diese Funktion benötigt mindestens einen Slider, der nicht auf Null steht."
 
-#: OutfitStudio.cpp:1712
 msgid ""
 "Create a conversion slider for the current slider settings with the "
 "following name: "
@@ -2451,75 +2176,51 @@ msgstr ""
 "Einen Konvertierungs-Slider für die aktuellen Sliderwerte mit folgendem "
 "Namen erstellen: "
 
-#: OutfitStudio.cpp:1712
 msgid "Create New Conversion Slider"
 msgstr "Neuen Konvertierungs-Slider erstellen"
 
-#: OutfitStudio.cpp:2128
-#, c-format
 msgid "Field of View: %d"
 msgstr "Sichtfeld: %d"
 
-#: OutfitStudio.cpp:2519
 msgid "There are no sliders loaded!"
 msgstr "Es sind keine Slider geladen!"
 
-#: OutfitStudio.cpp:2565
 msgid "No changes were made to the sliders, so no preset was saved!"
 msgstr ""
 "Es wurden keine Veränderungen an Slidern vorgenommen, daher wurde auch kein "
 "Preset gespeichert!"
 
-#: OutfitStudio.cpp:2578 OutfitStudio.cpp:2597 OutfitStudio.cpp:2705
-#: OutfitStudio.cpp:2729 OutfitStudio.cpp:2762 OutfitStudio.cpp:2816
-#: OutfitStudio.cpp:2862 OutfitStudio.cpp:2918 OutfitStudio.cpp:2933
-#: OutfitStudio.cpp:3152 OutfitStudio.cpp:3225 OutfitStudio.cpp:3240
-#: OutfitStudio.cpp:3267 OutfitStudio.cpp:3297 OutfitStudio.cpp:3458
-#: OutfitStudio.cpp:3557 OutfitStudio.cpp:3708 OutfitStudio.cpp:3845
-#: OutfitStudio.cpp:3875 OutfitStudio.cpp:3918 OutfitStudio.cpp:3962
-#: OutfitStudio.cpp:3989 OutfitStudio.cpp:4001 OutfitStudio.cpp:4013
-#: OutfitStudio.cpp:5223
 msgid "There is no shape selected!"
 msgstr "Es ist kein Modell ausgewählt!"
 
-#: OutfitStudio.cpp:2582 OutfitStudio.cpp:2601 OutfitStudio.cpp:2709
 msgid "There is no slider in edit mode to import data to!"
 msgstr ""
 "Es ist kein Slider im Bearbeitungsmodus, für den man Daten importieren "
 "könnte!"
 
-#: OutfitStudio.cpp:2586
 msgid "Import .bsd slider data"
 msgstr "BSD Sliderdaten importieren"
 
-#: OutfitStudio.cpp:2605
 msgid "Import .obj file for slider calculation"
 msgstr "OBJ-Datei zur Sliderberechnung importieren"
 
-#: OutfitStudio.cpp:2612 OutfitStudio.cpp:2720
 msgid "Vertex count of .obj file mesh does not match currently selected shape!"
 msgstr ""
 "Anzahl an Vertices des Modells in der OBJ-Datei stimmt nicht mit dem derzeit "
 "ausgewählten Modell überein!"
 
-#: OutfitStudio.cpp:2625
 msgid "Import .tri morphs"
 msgstr "TRI-Morphs importieren"
 
-#: OutfitStudio.cpp:2629
 msgid "This will delete all loaded sliders. Are you sure?"
 msgstr "Dies löscht alle geladenen Slider. Sind Sie sich sicher?"
 
-#: OutfitStudio.cpp:2629 OutfitStudio.cpp:2700
 msgid "TRI Import"
 msgstr "TRI Import"
 
-#: OutfitStudio.cpp:2638
 msgid "Failed to load TRI file!"
 msgstr "Konnte TRI-Datei nicht importieren!"
 
-#: OutfitStudio.cpp:2700
-#, c-format
 msgid ""
 "Added morphs for the following shapes:\n"
 "\n"
@@ -2529,33 +2230,26 @@ msgstr ""
 "\n"
 "%s"
 
-#: OutfitStudio.cpp:2713
 msgid "Import .fbx file for slider calculation"
 msgstr "FBX-Datei zur Sliderberechnung importieren"
 
-#: OutfitStudio.cpp:2733 OutfitStudio.cpp:2766
 msgid "There is no slider in edit mode to export data from!"
 msgstr ""
 "Es ist kein Slider im Bearbeitungsmodus, von dem man Daten exportieren "
 "könnte!"
 
-#: OutfitStudio.cpp:2738
 msgid "Export .bsd slider data to directory"
 msgstr "BSD Sliderdaten in Verzeichnis exportieren"
 
-#: OutfitStudio.cpp:2749
 msgid "Export .bsd slider data"
 msgstr "BSD Sliderdaten exportieren"
 
-#: OutfitStudio.cpp:2771
 msgid "Export .obj slider data to directory"
 msgstr "OBJ Sliderdaten in Verzeichnis exportieren"
 
-#: OutfitStudio.cpp:2782
 msgid "Export .obj slider data"
 msgstr "OBJ Sliderdaten exportieren"
 
-#: OutfitStudio.cpp:2789 OutfitStudio.cpp:3175
 msgid "Failed to export OBJ file!"
 msgstr "Konnte OBJ-Datei nicht exportieren!"
 
@@ -2574,148 +2268,115 @@ msgstr "OSD-Datei exportieren"
 msgid "Failed to export OSD file!"
 msgstr "Konnte OSD-Datei nicht exportieren!"
 
-#: OutfitStudio.cpp:2802
 msgid "Export .tri morphs"
 msgstr "TRI-Morphs exportieren"
 
-#: OutfitStudio.cpp:2809
 msgid "Failed to export TRI file!"
 msgstr "Konnte TRI-Datei nicht exportieren!"
 
-#: OutfitStudio.cpp:2820
 msgid "There is no slider in edit mode to clear data from!"
 msgstr ""
 "Es befindet sich kein Slider im Bearbeitungsmodus, von dem man Daten löschen "
 "könnte!"
 
-#: OutfitStudio.cpp:2826 OutfitStudio.cpp:2831
 msgid "Are you sure you wish to clear the unmasked slider data \""
 msgstr "Sind Sie sich sicher, dass Sie die unmaskierten Sliderdaten \""
 
-#: OutfitStudio.cpp:2827
 msgid "\" for the selected shapes? This cannot be undone."
 msgstr ""
 "\" für die ausgewählten Modelle löschen willst? Dies kann nicht rückgängig "
 "gemacht werden."
 
-#: OutfitStudio.cpp:2828 OutfitStudio.cpp:2833
 msgid "Confirm data erase"
 msgstr "Datenlöschung bestätigen"
 
-#: OutfitStudio.cpp:2832
 msgid "\" for the shape \""
 msgstr "\" für das Modell \""
 
-#: OutfitStudio.cpp:2874
 msgid "Enter a name for the new zap:"
 msgstr "Gib einen Namen für den neuen Zap ein:"
 
-#: OutfitStudio.cpp:2874
 msgid "Create New Zap"
 msgstr "Neuen Zap erstellen"
 
-#: OutfitStudio.cpp:2922
 msgid "There is no slider in edit mode to negate!"
 msgstr ""
 "Es befindet sich kein Slider im Bearbeitungsmodus, den man negieren könnte!"
 
-#: OutfitStudio.cpp:2937
 msgid "There is no slider in edit mode to create a mask from!"
 msgstr ""
 "Es befindet sich kein Slider im Bearbeitungsmodus, aus dem man eine Maske "
 "erstellen könnte!"
 
-#: OutfitStudio.cpp:2948
 msgid "There is no slider in edit mode to delete!"
 msgstr ""
 "Es befindet sich kein Slider im Bearbeitungsmodus, den man löschen könnte!"
 
-#: OutfitStudio.cpp:2952
 msgid "Are you sure you wish to delete the slider \""
 msgstr "Sind Sie sich sicher, dass Sie den Slider \""
 
-#: OutfitStudio.cpp:2953 OutfitStudio.cpp:2832
 msgid "\"? This cannot be undone."
 msgstr "\" löschen willst? Dies kann nicht rückgängig gemacht werden."
 
-#: OutfitStudio.cpp:2954
 msgid "Confirm slider delete"
 msgstr "Sliderlöschung bestätigen"
 
-#: OutfitStudio.cpp:2988
 msgid "There is no slider in edit mode to show properties for!"
 msgstr ""
 "Es befindet sich kein Slider im Bearbeitungsmodus, für den man Eigenschaften "
 "anzeigen könnte!"
 
-#: OutfitStudio.cpp:3062
 msgid "Conforming all shapes..."
 msgstr "Übertrage auf alle Modelle..."
 
-#: OutfitStudio.cpp:3072 OutfitStudio.cpp:3107
 msgid "Conforming: "
 msgstr "Übertrage: "
 
-#: OutfitStudio.cpp:3082
 msgid "All shapes conformed."
 msgstr "Auf alle Modelle übertragen."
 
-#: OutfitStudio.cpp:3090
 msgid "Conforming..."
 msgstr "Übertrage..."
 
-#: OutfitStudio.cpp:3104
 msgid "Initializing data..."
 msgstr "Initialisiere Daten..."
 
-#: OutfitStudio.cpp:3116
 msgid "Shape(s) conformed."
 msgstr "Modell(e) angepasst."
 
-#: OutfitStudio.cpp:3124
 msgid "Import .obj file for new shape"
 msgstr "OBJ-Datei mit neuem Modell importieren"
 
-#: OutfitStudio.cpp:3157
 msgid "Export selected shapes as .obj files"
 msgstr "Ausgewählte Modelle als OBJ-Dateien exportieren"
 
-#: OutfitStudio.cpp:3169
 msgid "Export shape as an .obj file"
 msgstr "Modell als OBJ-Datei exportieren"
 
-#: OutfitStudio.cpp:3182
 msgid "Import .fbx file for new shape"
 msgstr "FBX-Datei mit neuem Modell importieren"
 
-#: OutfitStudio.cpp:3213
 msgid "Export .fbx file for new shape"
 msgstr "Modell als FBX-Datei exportieren"
 
-#: OutfitStudio.cpp:3246
 msgid "Please enter a new unique name for the shape."
 msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für das Modell ein."
 
-#: OutfitStudio.cpp:3246
 msgid "Rename Shape"
 msgstr "Modell umbenennen"
 
-#: OutfitStudio.cpp:3272
 msgid "The selected shape is the reference shape already."
 msgstr "Das ausgewählte Modell ist bereits das Referenzmodell."
 
-#: OutfitStudio.cpp:3562
 msgid ""
 "Rotating slider data is currently not possible using the Rotate Shape dialog."
 msgstr ""
 "Mit dem \"Modell rotieren\"-Dialog ist es im Moment nicht möglich, "
 "Sliderdaten zu rotieren."
 
-#: OutfitStudio.cpp:3562
 msgid "Rotate"
 msgstr "Rotieren"
 
-#: OutfitStudio.cpp:3673
 msgid ""
 "You can only copy shapes into an outfit, and there is no outfit in the "
 "current project. Load one first!"
@@ -2723,16 +2384,13 @@ msgstr ""
 "Sie können nur Modelle in ein Outfit kopieren, und im Moment ist keines im "
 "Projekte. Laden Sie zuerst eines!"
 
-#: OutfitStudio.cpp:3678
 msgid "Please enter a unique name for the duplicated shape."
 msgstr ""
 "Bitte geben Sie einen einzigartigen Namen für das duplizierte Modell ein."
 
-#: OutfitStudio.cpp:3678
 msgid "Duplicate Shape"
 msgstr "Modell duplizieren"
 
-#: OutfitStudio.cpp:3712
 msgid ""
 "Are you sure you wish to delete the selected shapes?  This action cannot be "
 "undone."
@@ -2740,24 +2398,18 @@ msgstr ""
 "Sind Sie sich sicher, dass Sie die ausgewählten Modelle löschen wollen?  "
 "Dies kann nicht rückgängig gemacht werden."
 
-#: OutfitStudio.cpp:3712
 msgid "Confirm Delete"
 msgstr "Löschen bestätigen"
 
-#: OutfitStudio.cpp:3728
 msgid "You can't delete the reference shape!"
 msgstr "Sie können das Referenzmodell nicht löschen!"
 
-#: OutfitStudio.cpp:3780
 msgid "No bone name was entered!"
 msgstr "Es wurde kein Bone-Name eingegeben!"
 
-#: OutfitStudio.cpp:3788
-#, c-format
 msgid "Bone '%s' already exists in the project!"
 msgstr "Bone '%s' existiert bereits im Projekt!"
 
-#: OutfitStudio.cpp:3863 OutfitStudio.cpp:3906
 msgid ""
 "Sorry, you can't copy weights from the reference shape to itself. Skipping "
 "this shape."
@@ -2765,87 +2417,35 @@ msgstr ""
 "Sie können leider kein Weighting vom Referenzmodell auf es selbst kopieren. "
 "Überspringe dieses Modell."
 
-#: OutfitStudio.cpp:3863 OutfitStudio.cpp:3906
 msgid "Can't copy weights"
 msgstr "Weighting kann nicht kopiert werden"
 
-#: OutfitStudio.cpp:3895
 msgid "Copying selected bone weights..."
 msgstr "Kopieren ausgewähltes Bone-Weighting..."
 
-#: OutfitStudio.cpp:3926
 msgid "Sorry, you can't copy weights from the reference shape to itself."
 msgstr ""
 "Sie können leider kein Weighting vom Referenzmodell auf es selbst kopieren."
 
-#: OutfitStudio.cpp:3933
 msgid "The vertex count of the reference and chosen shape is not the same!"
 msgstr ""
 "Die Anzahl an Vertices in der Referenz und dem gewählten Modell stimmt nicht "
 "überein!"
 
-#: OutfitStudio.cpp:4195
 msgid "Outfit Studio: OpenGL context is not OK."
 msgstr "Outfit Studio: OpenGL-Kontext ist nicht OK."
 
-#: OutfitStudio.cpp:5166 OutfitStudio.cpp:5167
 msgid "Adding NIF file..."
 msgstr "Füge NIF-Datei hinzu..."
 
-#: OutfitStudio.cpp:5179
 msgid "Adding OBJ file..."
 msgstr "Füge OBJ-Datei hinzu..."
 
-#: OutfitStudio.cpp:5190 OutfitStudio.cpp:5191
 msgid "Adding FBX file..."
 msgstr "Füge FBX-Datei hinzu..."
 
-#: OutfitStudio.cpp:5234 OutfitStudio.cpp:5235
 msgid "Loading slider file..."
 msgstr "Lade Slider-Datei..."
 
-#: PreviewWindow.cpp:63
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "Vorschau fehlgeschlagen: OpenGL-Kontext ist nicht OK."
-
-#~ msgid "Build Skin Partitions"
-#~ msgstr "Skin-Partitionen erstellen"
-
-#~ msgid ""
-#~ "Creates or rebuilds skin partitions for the current shape. This is "
-#~ "typically not needed, use only if skin partitions are broken."
-#~ msgstr ""
-#~ "Erstellt Skin-Partitionen für das aktuelle Modell. Dies wird "
-#~ "normalerweise nicht benötigt, außer die existierenden Skin-Partitionen "
-#~ "sind nicht funktionsfähig."
-
-#~ msgid "Update Bounding Sphere"
-#~ msgstr "Bounding Sphere aktualisieren"
-
-#~ msgid ""
-#~ "Updates the bounding sphere of the geometry with a new position and "
-#~ "radius."
-#~ msgstr ""
-#~ "Aktualisiert die Bounding Sphere der Geometrie mit einer neuen Position "
-#~ "und einem neuen Radius."
-
-#~ msgid ""
-#~ "Failed to create TRI file in the following location\n"
-#~ "\n"
-#~ "%s"
-#~ msgstr ""
-#~ "Konnte TRI-Datei nicht an folgender Stelle erstellen\n"
-#~ "\n"
-#~ "%s"
-
-#~ msgid "RaceMenu Morphs"
-#~ msgstr "RaceMenu Morphs"
-
-#~ msgid ""
-#~ "Builds a morphs (.tri) file alongside the meshes for accessing the "
-#~ "sliders in-game. Requires the RaceMenu mod and matching plugin/scripts "
-#~ "for the collection of sliders."
-#~ msgstr ""
-#~ "Erstellt eine Morphdatei (.tri) neben den Meshes zum Verwenden der Slider "
-#~ "innerhalb des Spiels. Benötigt den RaceMenu Mod und das passende Plugin "
-#~ "für die Slider."

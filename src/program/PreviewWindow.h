@@ -124,14 +124,6 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void ToggleEditMode() {
-		if (gls.bEditMode == false)
-			gls.BeginEditMode();
-		else
-			gls.EndEditMode();
-
-	}
-
 	void RightDrag(int dX, int dY);
 	void LeftDrag(int dX, int dY);
 	void MouseWheel(int dW);
