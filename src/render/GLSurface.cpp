@@ -245,7 +245,7 @@ const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
 	static wxGLContextAttrs ctxAttribs;
 
 	if (!ctxAttribsInitialized) {
-		ctxAttribs.PlatformDefaults().CoreProfile().OGLVersion(5, 1).EndList();
+		ctxAttribs.PlatformDefaults().CoreProfile().OGLVersion(3, 1).EndList();
 		ctxAttribsInitialized = true;
 	}
 
