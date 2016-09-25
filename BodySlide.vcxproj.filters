@@ -1297,6 +1297,9 @@
     <ClInclude Include="src\program\FBXImportOptions.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\GLExtensions.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1415,6 +1418,9 @@
     </ClCompile>
     <ClCompile Include="src\program\FBXImportDialog.cpp">
       <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLExtensions.cpp">
+      <Filter>Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

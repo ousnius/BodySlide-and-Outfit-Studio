@@ -17,8 +17,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
-#include <ppl.h>
-#include <concurrent_unordered_map.h>
+
+#ifdef _WIN32
+	#include <ppl.h>
+	#include <concurrent_unordered_map.h>
+#endif
 
 ConfigurationManager Config;
 
@@ -1594,20 +1597,30 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
-#ifdef WIN32
-	// Force a maximum of 2 concurrencies due to memory limits of 32-bit builds
-	concurrency::CurrentScheduler::Create(concurrency::SchedulerPolicy(2, concurrency::MinConcurrency, 1, concurrency::MaxConcurrency, 2));
-#endif
-
+#ifdef _PPL_H
+	#ifdef WIN32
+		// Force a maximum of 2 concurrencies due to memory limits of 32-bit builds
+		concurrency::CurrentScheduler::Create(concurrency::SchedulerPolicy(2, concurrency::MinConcurrency, 1, concurrency::MaxConcurrency, 2));
+	#endif
 	concurrency::critical_section critical;
 	concurrency::concurrent_unordered_map<string, string> failedOutfitsCon;
 	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const string& outfit)
+#else
+	unordered_map<string, string> failedOutfitsCon;
+	for (auto &outfit : outfitList)
+#endif
 	{
+#ifdef _PPL_H
 		critical.lock();
+#endif
+
 		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, outfitList.size());
 		progWnd->Update((int)(count * progstep) - 1, progMsg);
 		count++;
+
+#ifdef _PPL_H
 		critical.unlock();
+#endif
 
 		wxLogMessage(progMsg);
 		wxLog::FlushActive();
@@ -1839,7 +1852,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		}
 
 		return;
+#ifdef _PPL_H
 	});
+#else
+	};
+#endif
 
 	progWnd->Update(1000);
 	delete progWnd;

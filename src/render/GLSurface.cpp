@@ -13,10 +13,6 @@ See the included LICENSE file
 #include <set>
 #include <limits>
 
-PFNGLENABLEVERTEXATTRIBARRAYPROC glEnableVertexAttribArray = nullptr;
-PFNGLDISABLEVERTEXATTRIBARRAYPROC glDisableVertexAttribArray = nullptr;
-PFNGLVERTEXATTRIBPOINTERPROC glVertexAttribPointer = nullptr;
-
 
 Vector3::Vector3(const Vertex& other) {
 	x = other.x;
@@ -206,34 +202,6 @@ GLSurface::~GLSurface() {
 	Cleanup();
 }
 
-bool GLSurface::IsExtensionSupported(char* szTargetExtension) {
-	const byte *pszExtensions = nullptr;
-	const byte *pszStart = nullptr;
-	byte *pszWhere = nullptr;
-	byte *pszTerminator = nullptr;
-
-	// Get Extensions String
-	pszExtensions = glGetString(GL_EXTENSIONS);
-	if (!pszExtensions) {
-		GLint numExtensions = 0;
-		glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-		return numExtensions < 0 ? true : false;
-	}
-
-	// Search The Extensions String For An Exact Copy
-	pszStart = pszExtensions;
-	for (;;) {
-		pszWhere = (byte*)strstr((const char*)pszStart, szTargetExtension);
-		if (!pszWhere)
-			return false;
-		pszTerminator = pszWhere + strlen(szTargetExtension);
-		if (pszWhere == pszStart || *(pszWhere - 1) == ' ')
-			if (*pszTerminator == ' ' || *pszTerminator == '\0')
-				return true;
-		pszStart = pszTerminator;
-	}
-}
-
 const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static bool attribsInitialized { false };
 	static wxGLAttributes attribs;
@@ -277,7 +245,7 @@ const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
 	static wxGLContextAttrs ctxAttribs;
 
 	if (!ctxAttribsInitialized) {
-		ctxAttribs.PlatformDefaults().CoreProfile().OGLVersion(3, 1).EndList();
+		ctxAttribs.PlatformDefaults().CoreProfile().OGLVersion(5, 1).EndList();
 		ctxAttribsInitialized = true;
 	}
 
@@ -343,12 +311,9 @@ int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
 }
 
 void GLSurface::InitGLExtensions() {
+	InitExtensions();
 	if (IsExtensionSupported("GL_EXT_texture_filter_anisotropic"))
 		glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &largestAF);
-
-	glEnableVertexAttribArray = (PFNGLENABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glEnableVertexAttribArray");
-	glVertexAttribPointer = (PFNGLVERTEXATTRIBPOINTERPROC)wglGetProcAddress("glVertexAttribPointer");
-	glDisableVertexAttribArray = (PFNGLDISABLEVERTEXATTRIBARRAYPROC)wglGetProcAddress("glDisableVertexAttribArray");
 }
 
 int GLSurface::InitGLSettings() {

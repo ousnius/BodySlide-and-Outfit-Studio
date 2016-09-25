@@ -17,52 +17,23 @@ See the included LICENSE file
 
 unsigned int ResourceLoader::currentTextureID = 0;
 
-// OpenGL 4.2
-PFNGLTEXSTORAGE1DPROC glTexStorage1D = nullptr;
-PFNGLTEXSTORAGE2DPROC glTexStorage2D = nullptr;
-PFNGLTEXSTORAGE3DPROC glTexStorage3D = nullptr;
-
-// OpenGL 1.3
-PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC glCompressedTexSubImage1D = nullptr;
-PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC glCompressedTexSubImage2D = nullptr;
-PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC glCompressedTexSubImage3D = nullptr;
-
-// OpenGL 1.2
-PFNGLTEXSUBIMAGE3DPROC glTexSubImage3D = nullptr;
-
-
 ResourceLoader::ResourceLoader() {
 }
 
 ResourceLoader::~ResourceLoader() {
 }
 
-void ResourceLoader::InitGL() {
-	glTexStorage1D = (PFNGLTEXSTORAGE1DPROC)wglGetProcAddress("glTexStorage1D");
-	glTexStorage2D = (PFNGLTEXSTORAGE2DPROC)wglGetProcAddress("glTexStorage2D");
-	glTexStorage3D = (PFNGLTEXSTORAGE3DPROC)wglGetProcAddress("glTexStorage3D");
-	glCompressedTexSubImage1D = (PFNGLCOMPRESSEDTEXSUBIMAGE1DPROC)wglGetProcAddress("glCompressedTexSubImage1D");
-	glCompressedTexSubImage2D = (PFNGLCOMPRESSEDTEXSUBIMAGE2DPROC)wglGetProcAddress("glCompressedTexSubImage2D");
-	glCompressedTexSubImage3D = (PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC)wglGetProcAddress("glCompressedTexSubImage3D");
-	glTexSubImage3D = (PFNGLTEXSUBIMAGE3DPROC)wglGetProcAddress("glTexSubImage3D");
-
-	if (!glTexStorage1D || !glTexStorage2D || !glTexStorage3D || !glTexSubImage3D
-		|| !glCompressedTexSubImage1D || !glCompressedTexSubImage2D || !glCompressedTexSubImage3D) {
-
-		gliSupported = false;
-		wxLogWarning("OpenGL features required for GLI_create_texture to work aren't there!");
-	}
-
-	glInitialized = true;
-}
+bool ResourceLoader::extChecked = false;
 
 // File extension can be KTX or DDS
 GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
-	if (!glInitialized)
-		InitGL();
-
-	if (!gliSupported)
+	if (!extGLISupported) {
+		if (!extChecked) {
+			wxLogWarning("OpenGL features required for GLI_create_texture to work aren't there!");
+			extChecked = true;
+		}
 		return 0;
+	}
 
 	gli::gl glProfile(gli::gl::PROFILE_GL33);
 	gli::gl::format const format = glProfile.translate(texture.format(), texture.swizzles());

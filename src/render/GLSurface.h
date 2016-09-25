@@ -201,7 +201,6 @@ public:
 		cursorSize = newsize;
 	}
 
-	static bool IsExtensionSupported(char* szTargetExtension);
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
 	void Begin();
 	void Cleanup();

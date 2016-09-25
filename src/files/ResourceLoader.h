@@ -34,10 +34,7 @@ public:
 	void Cleanup();
 
 private:
-	bool glInitialized = false;
-	bool gliSupported = true;
-
-	void InitGL();
+	static bool extChecked;
 	GLuint GLI_create_texture(gli::texture& texture);
 	GLuint GLI_load_texture(const string& fileName);
 	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size);

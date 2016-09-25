@@ -10,73 +10,31 @@ See the included LICENSE file
 
 #pragma warning (disable : 4130)
 
-bool GLShader::initComplete = false;
-
-PFNGLCREATESHADERPROC glCreateShader = nullptr;
-PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
-PFNGLCOMPILESHADERPROC glCompileShader = nullptr;
-PFNGLCREATEPROGRAMPROC glCreateProgram = nullptr;
-PFNGLATTACHSHADERPROC glAttachShader = nullptr;
-PFNGLLINKPROGRAMPROC glLinkProgram = nullptr;
-PFNGLUSEPROGRAMPROC glUseProgram = nullptr;
-
-PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation = nullptr;
-PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
-PFNGLUNIFORM1FPROC glUniform1f = nullptr;
-
-PFNGLGETSHADERIVPROC glGetShaderiv = nullptr;
-PFNGLGETSHADERINFOLOGPROC glGetShaderInfoLog = nullptr;
-PFNGLGETPROGRAMIVPROC glGetProgramiv = nullptr;
-PFNGLGETPROGRAMINFOLOGPROC glGetProgramInfoLog = nullptr;
-
-
 GLShader::GLShader() {
 	errorState = -1;
 }
 
 GLShader::GLShader(const string& vertexSource, const string& fragmentSource) : GLShader() {
-	if (InitShaders())
+	if (CheckExtensions())
 		LoadShaders(vertexSource, fragmentSource);
 }
 
 GLShader::~GLShader() {
 }
 
-bool GLShader::InitShaders() {
-	if (!initComplete) {
-		glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
-		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");
-		glCompileShader = (PFNGLCOMPILESHADERPROC)wglGetProcAddress("glCompileShader");
+bool GLShader::extChecked = false;
 
-		if (!glCreateShader || !glShaderSource || !glCompileShader) {
+bool GLShader::CheckExtensions() {
+	if (!extChecked) {
+		if (!extSupported) {
 			errorState = 1;
-			errorString = "OpenGL: One or more shader functions are not supported.";
-			return false;
+			errorString = "OpenGL: One or more extensions are not supported.";
 		}
 
-		glCreateProgram = (PFNGLCREATEPROGRAMPROC)wglGetProcAddress("glCreateProgram");
-		glAttachShader = (PFNGLATTACHSHADERPROC)wglGetProcAddress("glAttachShader");
-		glLinkProgram = (PFNGLLINKPROGRAMPROC)wglGetProcAddress("glLinkProgram");
-		glUseProgram = (PFNGLUSEPROGRAMPROC)wglGetProcAddress("glUseProgram");
-
-		if (!glCreateProgram || !glAttachShader || !glLinkProgram || !glUseProgram) {
-			errorState = 1;
-			errorString = "OpenGL: One or more program functions are not supported.";
-			return false;
-		}
-
-		glGetShaderiv = (PFNGLGETSHADERIVPROC)wglGetProcAddress("glGetShaderiv");
-		glGetShaderInfoLog = (PFNGLGETSHADERINFOLOGPROC)wglGetProcAddress("glGetShaderInfoLog");
-		glGetProgramiv = (PFNGLGETPROGRAMIVPROC)wglGetProcAddress("glGetProgramiv");
-		glGetProgramInfoLog = (PFNGLGETPROGRAMINFOLOGPROC)wglGetProcAddress("glGetProgramInfoLog");
-
-		glGetAttribLocation = (PFNGLGETATTRIBLOCATIONPROC)wglGetProcAddress("glGetAttribLocation");
-		glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
-		glUniform1f = (PFNGLUNIFORM1FPROC)wglGetProcAddress("glUniform1f");
-
-		initComplete = true;
+		extChecked = true;
 	}
-	return true;
+
+	return extSupported;
 }
 
 bool GLShader::LoadShaderFile(const string& fileName, string& text) {
@@ -151,7 +109,7 @@ void GLShader::ShowSegments(bool bShow) {
 	}
 }
 
-void  GLShader::ShowTexture(bool bShow) {
+void GLShader::ShowTexture(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowTexture");
 	if (loc >= 0) {
 		glUseProgram(progID);

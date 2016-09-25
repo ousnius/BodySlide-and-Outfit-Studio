@@ -7,15 +7,14 @@ See the included LICENSE file
 #pragma once
 
 #include "../utils/Object3d.h"
-
-#include <Windows.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
+#include "GLExtensions.h"
 
 class GLShader {
-	static bool initComplete;
-	string vertSrc;			// Source text for vertex shader
-	string fragSrc;			// Source text for fragment shader
+	static bool extChecked;
+
+	// Source text for shaders
+	string vertSrc;
+	string fragSrc;
 
 	// Compiled shader IDs after compile.
 	GLuint vertShadID;
@@ -39,7 +38,7 @@ class GLShader {
 	int errorState;
 	string errorString;
 
-	bool InitShaders();
+	bool CheckExtensions();
 	bool LoadShaderFile(const string& fileName, string& text);
 
 	// Attempts to load the specified source files (in text format).
