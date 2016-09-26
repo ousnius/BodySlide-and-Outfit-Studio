@@ -1005,7 +1005,7 @@ public:
 	int CalcBlockSize();
 
 	int GetTargetRef() { return targetRef; }
-	void SetTargetRef(int targetRef) { this->dataRef = targetRef; }
+	void SetTargetRef(int targetRef) { this->targetRef = targetRef; }
 
 	int GetDataRef() { return dataRef; }
 	void SetDataRef(int dataRef) { this->dataRef = dataRef; }
