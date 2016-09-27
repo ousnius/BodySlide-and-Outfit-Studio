@@ -7,7 +7,7 @@
         <Fallout3></Fallout3>
         <FalloutNewVegas></FalloutNewVegas>
         <Skyrim>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices.bsa; Skyrim - VoicesExtra.bsa</Skyrim>
-        <Fallout4>DLCCoast - Voices_de.ba2; DLCRobot - Voices_de.ba2; Fallout4 - Animations.ba2; Fallout4 - Interface.ba2; Fallout4 - Meshes.ba2; Fallout4 - MeshesExtra.ba2; Fallout4 - Misc.ba2; Fallout4 - Shaders.ba2; Fallout4 - Sounds.ba2; Fallout4 - Startup.ba2; Fallout4 - Voices.ba2</Fallout4></GameDataFiles>
+        <Fallout4>DLCCoast - Voices_de.ba2; DLCNukaWorld - Voices_de.ba2; DLCRobot - Voices_de.ba2; DLCworkshop03 - Voices_de.ba2; Fallout4 - Animations.ba2; Fallout4 - Interface.ba2; Fallout4 - Meshes.ba2; Fallout4 - MeshesExtra.ba2; Fallout4 - Misc.ba2; Fallout4 - Nvflex.ba2; Fallout4 - Shaders.ba2; Fallout4 - Sounds.ba2; Fallout4 - Startup.ba2; Fallout4 - Voices_de.ba2</Fallout4></GameDataFiles>
     <GameDataPaths>
         <Fallout3></Fallout3>
         <FalloutNewVegas></FalloutNewVegas>
@@ -18,13 +18,12 @@
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
     <UseSystemLanguage>false</UseSystemLanguage>
-    <SelectedOutfit>CBBE Body</SelectedOutfit>
-    <SelectedPreset>CBBE</SelectedPreset>
+    <SelectedOutfit></SelectedOutfit>
+    <SelectedPreset></SelectedPreset>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
 	This information is used by BodySlide for choosing what presets to display for outfits.
 	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
-    <DefaultGroups includeInBuild="true">
-        <GroupName>CBBE</GroupName></DefaultGroups>
+    <DefaultGroups includeInBuild="true"></DefaultGroups>
     <!-- Group aliases provide a way for presets saved under older group names to still apply when a group has been renamed -->
     <GroupAliases></GroupAliases>
     <Input>
@@ -43,12 +42,7 @@
         <Brightness2>45</Brightness2>
         <Brightness3>45</Brightness3></Lights>
     <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
-    <ReferenceTemplates>
-        <Template sourcefile="SliderSets\CBBE.osp" set="CBBE Body" shape="CBBE">CBBE Body</Template>
-        <Template sourcefile="ConversionSets\References.osp" set="VanillaToCBBE" shape="CBBE">Convert: Vanilla To CBBE</Template>
-        <Template sourcefile="ConversionSets\References.osp" set="CBBEToVanilla" shape="CBBE">Convert: CBBE To Vanilla</Template>
-        <Template sourcefile="ConversionSets\References.osp" set="SkyrimCBBEToFO4CBBE" shape="CBBE">Convert: Skyrim CBBE To FO4 CBBE</Template>
-        <Template sourcefile="ConversionSets\References.osp" set="FO4CBBEToSkyrimCBBE" shape="CBBE">Convert: FO4 CBBE To Skyrim CBBE</Template></ReferenceTemplates>
+    <ReferenceTemplates></ReferenceTemplates>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference>res\skeleton_fo4.nif</DefaultSkeletonReference>
