@@ -55,7 +55,8 @@ enum BlockType : ushort {
 	BHKNICOLLISIONOBJECT,
 	BHKCOLLISIONOBJECT,
 	BHKNPCOLLISIONOBJECT,
-	BHKPHYSICSSYSTEM
+	BHKPHYSICSSYSTEM,
+	BSFADENODE
 };
 
 struct VertexWeight {
@@ -449,9 +450,11 @@ private:
 	vector<int> effects;
 
 public:
+	NiNode() { };
 	NiNode(NiHeader& hdr);
 	NiNode(fstream& file, NiHeader& hdr);
 
+	void Init();
 	void Get(fstream& file);
 	void Put(fstream& file);
 
@@ -470,6 +473,20 @@ public:
 	int GetNumEffects() { return numEffects; }
 	int GetEffectRef(int id);
 	void AddEffectRef(int id);
+};
+
+class BSFadeNode : public NiNode {
+public:
+	BSFadeNode(NiHeader& hdr);
+	BSFadeNode(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
+	int CalcBlockSize();
 };
 
 class NiGeometryData : public NiObject {

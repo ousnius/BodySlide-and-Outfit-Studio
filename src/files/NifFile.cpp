@@ -214,6 +214,9 @@ void NifFile::CopyFrom(NifFile& other) {
 			blockCopy = new bhkPhysicsSystem(hdr);
 			((bhkPhysicsSystem*)blockCopy)->Clone((bhkPhysicsSystem*)other.blocks[i]);
 			break;
+		case BSFADENODE:
+			blockCopy = new BSFadeNode((*(BSFadeNode*)other.blocks[i]));
+			break;
 		}
 
 		if (blockCopy) {
@@ -340,6 +343,8 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new bhkNPCollisionObject(file, hdr);
 			else if (!blockTypeStr.compare("bhkPhysicsSystem"))
 				block = (NiObject*) new bhkPhysicsSystem(file, hdr);
+			else if (!blockTypeStr.compare("BSFadeNode"))
+				block = (NiObject*) new BSFadeNode(file, hdr);
 			else {
 				hasUnknown = true;
 				block = (NiObject*) new NiUnknown(file, hdr.GetBlockSize(i));
@@ -1013,6 +1018,9 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 
 		rootNode->AddChildRef(destId);
 	}
+
+	if (destBoneCont)
+		destBoneCont->numBones = destBoneCont->bones.size();
 }
 
 int NifFile::Save(const string& filename, bool optimize) {

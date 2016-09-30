@@ -756,23 +756,26 @@ int NiAVObject::CalcBlockSize() {
 
 
 NiNode::NiNode(NiHeader& hdr) {
-	NiAVObject::Init();
+	Init();
 
 	header = &hdr;
 	blockType = NINODE;
-	numChildren = 0;
-	numEffects = 0;
 }
 
 NiNode::NiNode(fstream& file, NiHeader& hdr) {
-	NiAVObject::Init();
+	Init();
 
 	header = &hdr;
 	blockType = NINODE;
-	numChildren = 0;
-	numEffects = 0;
 
 	Get(file);
+}
+
+void NiNode::Init() {
+	NiAVObject::Init();
+
+	numChildren = 0;
+	numEffects = 0;
 }
 
 void NiNode::Get(fstream& file) {
@@ -895,6 +898,47 @@ int NiNode::GetEffectRef(int id) {
 void NiNode::AddEffectRef(int id) {
 	effects.push_back(id);
 	numEffects++;
+}
+
+
+BSFadeNode::BSFadeNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSFADENODE;
+}
+
+BSFadeNode::BSFadeNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSFADENODE;
+
+	Get(file);
+}
+
+void BSFadeNode::Get(fstream& file) {
+	NiNode::Get(file);
+}
+
+void BSFadeNode::Put(fstream& file) {
+	NiNode::Put(file);
+}
+
+void BSFadeNode::notifyBlockDelete(int blockID) {
+	NiNode::notifyBlockDelete(blockID);
+}
+
+void BSFadeNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiNode::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void BSFadeNode::notifyStringDelete(int stringID) {
+	NiNode::notifyStringDelete(stringID);
+}
+
+int BSFadeNode::CalcBlockSize() {
+	return NiNode::CalcBlockSize();
 }
 
 
