@@ -104,9 +104,6 @@
     <None Include="res\xrc\BatchBuild.xrc">
       <Filter>Resources</Filter>
     </None>
-    <None Include="res\shaders\default.vert">
-      <Filter>Shaders</Filter>
-    </None>
     <None Include="res\shaders\mask.vert">
       <Filter>Shaders</Filter>
     </None>
@@ -580,6 +577,12 @@
     </None>
     <None Include="lib\gli\core\view.inl">
       <Filter>Libraries\gli\core</Filter>
+    </None>
+    <None Include="res\shaders\primitive.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="res\shaders\primitive.vert">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
   <ItemGroup>

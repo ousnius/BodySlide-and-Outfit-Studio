@@ -8,6 +8,7 @@ See the included LICENSE file
 
 #include "../utils/KDMatcher.h"
 #include "../utils/AABBTree.h"
+#include "../render/GLExtensions.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -25,15 +26,36 @@ enum RenderMode {
 class GLMaterial;
 
 class mesh {
+private:
+	vector<bool> queueUpdate;
+
 public:
-	Vertex* verts;
+	enum UpdateType {
+		Position,
+		Normals,
+		VertexColors,
+		TextureCoordinates,
+		Indices
+	};
+
 	int nVerts;
+	Vector3* verts;
+	Vector3* norms;
+	Vector3* vcolors;
+	Vector2* texcoord;
 
 	Triangle* tris;
 	int nTris;
 
 	Edge* edges;
 	int nEdges;
+
+	bool genBuffers = false;
+	GLuint vao = 0;
+	vector<GLuint> vbo;
+	GLuint ibo = 0;
+
+	GLMaterial* material = nullptr;
 
 	float scale;				// Information only, does not cause verts to be scaled during render (except point/lines).
 	float smoothThresh;			// Smoothing threshold for generating smooth normals.
@@ -45,38 +67,29 @@ public:
 	RenderMode rendermode;		// 0 = normal mesh render, 1 = line based visualizer render, 2 = point based vis render.
 	bool doublesided;
 	bool textured;
-	Vector2* texcoord;
-	GLMaterial* material{nullptr};
-
-	Vector3* vcolors;				// Vertex colors.
 
 	shared_ptr<AABBTree> bvh;
-	kd_tree* kdtree;
 
-	bool bBuffersLoaded;
 	bool bVisible;
 	bool bShowPoints;
 	bool smoothSeamNormals;
 
 	string shapeName;
-
 	Vector3 color;
 
-	Matrix4 Transform;				// Transformation matrix for OpenGL display.
-
 	mesh();
-	mesh(mesh* m);				// Copy from existing mesh.
 
 	// Creates a new bvh tree for the mesh.
 	shared_ptr<AABBTree> CreateBVH();
-
-
-	void CreateKDTree();
 
 	void MakeEdges();			// Creates the list of edges from the list of triangles.
 
 	void BuildTriAdjacency();	// Triangle adjacency optional to reduce overhead when it's not needed.
 	void BuildEdgeList();		// Edge list optional to reduce overhead when it's not needed.
+
+	void CreateBuffers();
+	void UpdateBuffers();
+	void QueueUpdate(const UpdateType& type);
 
 	void ScaleVertices(const Vector3& center, const float& factor);
 

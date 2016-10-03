@@ -36,27 +36,7 @@ AABB::AABB(Vector3* points, int nPoints) {
 	}
 }
 
-AABB::AABB(Vertex* points, int nPoints) {
-	min = points[0];
-	max = points[0];
-	for (int i = 1; i < nPoints; i++) {
-		if (points[i].x < min.x)
-			min.x = points[i].x;
-		if (points[i].y < min.y)
-			min.y = points[i].y;
-		if (points[i].z < min.z)
-			min.z = points[i].z;
-
-		if (points[i].x > max.x)
-			max.x = points[i].x;
-		if (points[i].y > max.y)
-			max.y = points[i].y;
-		if (points[i].z > max.z)
-			max.z = points[i].z;
-	}
-}
-
-AABB::AABB(Vertex* points, ushort* indices, int nPoints) {
+AABB::AABB(Vector3* points, ushort* indices, int nPoints) {
 	min = points[indices[0]];
 	max = points[indices[0]];
 	int idx;
@@ -78,8 +58,8 @@ AABB::AABB(Vertex* points, ushort* indices, int nPoints) {
 	}
 }
 
-void AABB::AddBoxToMesh(vector<Vertex>& verts, vector<Edge>& edges) {
-	Vertex v;
+void AABB::AddBoxToMesh(vector<Vector3>& verts, vector<Edge>& edges) {
+	Vector3 v;
 	Edge e;
 	int s = verts.size();
 
@@ -141,7 +121,7 @@ void AABB::AddBoxToMesh(vector<Vertex>& verts, vector<Edge>& edges) {
 	edges.push_back(e);
 }
 
-void AABB::Merge(Vertex* points, ushort* indices, int nPoints) {
+void AABB::Merge(Vector3* points, ushort* indices, int nPoints) {
 	int idx;
 	for (int i = 0; i < nPoints; i++) {
 		idx = indices[i];
@@ -527,7 +507,7 @@ Vector3 AABBTree::AABBTreeNode::Center() {
 	return ((mBB.max + mBB.min) / 2);
 }
 
-void AABBTree::AABBTreeNode::AddDebugFrames(vector<Vertex>& verts, vector<Edge>& edges, int maxdepth, int curdepth) {
+void AABBTree::AABBTreeNode::AddDebugFrames(vector<Vector3>& verts, vector<Edge>& edges, int maxdepth, int curdepth) {
 	if (curdepth <= maxdepth) {
 		mBB.AddBoxToMesh(verts, edges);
 	} // else return;
@@ -536,7 +516,7 @@ void AABBTree::AABBTreeNode::AddDebugFrames(vector<Vertex>& verts, vector<Edge>&
 	if (N) N->AddDebugFrames(verts, edges, maxdepth, curdepth + 1);
 }
 
-void AABBTree::AABBTreeNode::AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vertex>& verts, vector<Edge>& edges) {
+void AABBTree::AABBTreeNode::AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vector3>& verts, vector<Edge>& edges) {
 	bool collision = mBB.IntersectRay(origin, direction, nullptr);
 	if (collision)
 		mBB.AddBoxToMesh(verts, edges);
@@ -632,7 +612,7 @@ AABBTree::AABBTree() {
 	root = nullptr;
 }
 
-AABBTree::AABBTree(Vertex* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets) {
+AABBTree::AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets) {
 	triRef = facets;
 	vertexRef = vertices;
 	max_depth = maxDepth;
@@ -711,8 +691,8 @@ void AABBTree::CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outB
 	outBB = tmpBB;
 }
 
-void AABBTree::BuildDebugFrames(Vertex** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges) {
-	vector<Vertex> v;
+void AABBTree::BuildDebugFrames(Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges) {
+	vector<Vector3> v;
 	vector<Edge> e;
 
 	root->AddDebugFrames(v, e, 8);
@@ -720,14 +700,14 @@ void AABBTree::BuildDebugFrames(Vertex** outVerts, int* outNumVerts, Edge** outE
 	//	m->rendermode = 1;
 	//	m->color = Vector3(0,.2,0);
 	//	m->nVerts =  v.size();
-	//	m->verts = new Vertex[m->nVerts];
+	//	m->verts = new Vector3[m->nVerts];
 
 	//	m->nEdges = e.size();
 	//	m->edges = new Edge[m->nEdges];
 
 	int vc = v.size();
 	(*outNumVerts) = vc;
-	(*outVerts) = new Vertex[vc];
+	(*outVerts) = new Vector3[vc];
 
 	int ec = e.size();
 	(*outNumEdges) = ec;
@@ -745,8 +725,8 @@ void AABBTree::BuildDebugFrames(Vertex** outVerts, int* outNumVerts, Edge** outE
 	}
 }
 
-void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vertex** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges) {
-	vector<Vertex> v;
+void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges) {
+	vector<Vector3> v;
 	vector<Edge> e;
 	bFlag = false;
 	root->AddRayIntersectFrames(origin, direction, v, e);
@@ -755,7 +735,7 @@ void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vert
 	//m->color = Vector3(.8,.8,0);
 	//
 	//m->nVerts =  v.size();
-	//m->verts = new Vertex[m->nVerts];
+	//m->verts = new Vector3[m->nVerts];
 
 	//m->nEdges = e.size();
 	//m->edges = new Edge[m->nEdges];
@@ -770,7 +750,7 @@ void AABBTree::BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vert
 
 	int vc = v.size();
 	(*outNumVerts) = vc;
-	(*outVerts) = new Vertex[vc];
+	(*outVerts) = new Vector3[vc];
 
 	int ec = e.size();
 	(*outNumEdges) = ec;

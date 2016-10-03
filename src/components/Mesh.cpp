@@ -7,19 +7,21 @@ See the included LICENSE file
 #include "Mesh.h"
 
 mesh::mesh() {
+	vbo.resize(4, 0);
+	queueUpdate.resize(vbo.size() + 1, false);
+
 	verts = nullptr;
+	norms = nullptr;
 	vcolors = nullptr;
+	texcoord = nullptr;
 	tris = nullptr;
 	edges = nullptr;
 	bvh = nullptr;
-	kdtree = nullptr;
-	texcoord = nullptr;
 	vertTris = nullptr;
 	vertEdges = nullptr;
 	bVisible = true;
 	bShowPoints = false;
 	textured = false;
-	bBuffersLoaded = false;
 	rendermode = RenderMode::Normal;
 	doublesided = false;
 	smoothSeamNormals = true;
@@ -27,67 +29,25 @@ mesh::mesh() {
 	scale = 1.0f;
 }
 
-mesh::mesh(mesh* m) {
-	verts = nullptr;
-	tris = nullptr;
-	edges = nullptr;
-	vcolors = nullptr;
-	vertTris = nullptr;
-	vertEdges = nullptr;
-	if (m->verts) {
-		nVerts = m->nVerts;
-		verts = new Vertex[nVerts];
-		for (int i = 0; i < nVerts; i++) {
-			verts[i] = m->verts[i];
-		}
-	}
-	if (m->tris) {
-		nTris = m->nTris;
-		tris = new Triangle[nTris];
-		for (int i = 0; i < nTris; i++) {
-			tris[i] = m->tris[i];
-		}
-	}
-	if (m->edges) {
-		nEdges = m->nEdges;
-		edges = new Edge[nEdges];
-		for (int i = 0; i < nEdges; i++) {
-			edges[i] = m->edges[i];
-		}
-	}
-	if (m->vcolors) {
-		vcolors = new Vector3[nVerts];
-		for (int i = 0; i < nVerts; i++) {
-			vcolors[i] = m->vcolors[i];
-		}
-	}
-	if (m->vertTris) {
-		BuildTriAdjacency();
-	}
-	if (m->vertEdges) {
-		BuildEdgeList();
-	}
-
-	bVisible = true;
-	bShowPoints = false;
-	bBuffersLoaded = false;
-	smoothSeamNormals = m->smoothSeamNormals;
-	smoothThresh = m->smoothThresh;
-	rendermode = m->rendermode;
-	doublesided = m->doublesided;
-	this->color = m->color;
-	this->shapeName = m->shapeName;
-	scale = m->scale;
-
-	if (m->bvh)
-		CreateBVH();
-	if (m->kdtree)
-		CreateKDTree();
-}
-
 mesh::~mesh() {
+	if (genBuffers) {
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindVertexArray(0);
+
+		glDeleteBuffers(vbo.size(), vbo.data());
+		glDeleteBuffers(1, &ibo);
+		glDeleteVertexArrays(1, &vao);
+	}
+
 	if (verts)
 		delete[] verts;
+	if (norms)
+		delete[] norms;
+	if (vcolors)
+		delete[] vcolors;
+	if (texcoord)
+		delete[] texcoord;
 	if (tris)
 		delete[] tris;
 	if (vertTris)
@@ -96,28 +56,20 @@ mesh::~mesh() {
 		delete[] vertEdges;
 	if (edges)
 		delete[] edges;
-	if (texcoord)
-		delete[] texcoord;
-	if (vcolors)
-		delete[] vcolors;
-	if (kdtree)
-		delete kdtree;
 
-	verts = 0;
-	tris = 0;
-	edges = 0;
+	verts = nullptr;
+	norms = nullptr;
+	vcolors = nullptr;
+	texcoord = nullptr;
+	tris = nullptr;
+	edges = nullptr;
+	vertTris = nullptr;
+	vertEdges = nullptr;
 }
 
 shared_ptr<AABBTree> mesh::CreateBVH() {
-	bvh = make_shared<AABBTree>(verts, tris, nTris, 100, 2); // new AABBTree(verts, tris, nTris, 100, 2);
+	bvh = make_shared<AABBTree>(verts, tris, nTris, 100, 2);
 	return bvh;
-}
-
-void mesh::CreateKDTree() {
-	if (kdtree)
-		delete kdtree;
-
-	kdtree = new kd_tree(this->verts, this->nVerts);
 }
 
 void mesh::BuildTriAdjacency() {
@@ -165,11 +117,110 @@ void mesh::BuildEdgeList() {
 	}
 }
 
+void mesh::CreateBuffers() {
+	if (!genBuffers) {
+		glGenVertexArrays(1, &vao);
+		glGenBuffers(vbo.size(), vbo.data());
+		glGenBuffers(1, &ibo);
+	}
+
+	// NumVertices * (Position + Normal + Colors + Texture Coordinates)
+	glBindVertexArray(vao);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+	glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts, GL_DYNAMIC_DRAW);
+
+	if (norms) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), norms, GL_DYNAMIC_DRAW);
+	}
+
+	if (vcolors) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), vcolors, GL_DYNAMIC_DRAW);
+	}
+
+	if (texcoord) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord, GL_DYNAMIC_DRAW);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+	// Element index array
+	if (tris) {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), tris, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+	else if (edges) {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nEdges * sizeof(Edge), edges, GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+	glBindVertexArray(0);
+	genBuffers = true;
+}
+
+void mesh::UpdateBuffers() {
+	if (genBuffers) {
+		glBindVertexArray(vao);
+
+		if (queueUpdate[UpdateType::Position]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Position]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), verts);
+			queueUpdate[UpdateType::Position] = false;
+		}
+
+		if (norms && queueUpdate[UpdateType::Normals]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Normals]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), norms);
+			queueUpdate[UpdateType::Normals] = false;
+		}
+
+		if (vcolors && queueUpdate[UpdateType::VertexColors]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::VertexColors]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), vcolors);
+			queueUpdate[UpdateType::VertexColors] = false;
+		}
+
+		if (texcoord && queueUpdate[UpdateType::TextureCoordinates]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::TextureCoordinates]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector2), texcoord);
+			queueUpdate[UpdateType::TextureCoordinates] = false;
+		}
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		if (queueUpdate[UpdateType::Indices]) {
+			if (tris) {
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nTris * sizeof(Triangle), tris);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			}
+			else if (edges) {
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nEdges * sizeof(Edge), edges);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+			}
+			queueUpdate[UpdateType::Indices] = false;
+		}
+
+		glBindVertexArray(0);
+	}
+}
+
+void mesh::QueueUpdate(const UpdateType& type) {
+	queueUpdate[type] = true;
+}
+
 void mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	for (int i = 0; i < nVerts; i++)
 		verts[i] = center + (verts[i] - center) * factor;
 
 	CreateBVH();
+	queueUpdate[UpdateType::Position] = true;
 }
 
 void mesh::GetAdjacentPoints(int querypoint, set<int>& outPoints, bool sort) {
@@ -363,10 +414,12 @@ void mesh::SmoothNormals(const vector<int>& vertices) {
 		}
 
 		norm.Normalize();
-		verts[index].nx = norm.x;
-		verts[index].ny = norm.y;
-		verts[index].nz = norm.z;
+		norms[index].x = norm.x;
+		norms[index].y = norm.y;
+		norms[index].z = norm.z;
 	}
+
+	queueUpdate[UpdateType::Normals] = true;
 }
 
 void mesh::FacetNormals() {
@@ -376,30 +429,28 @@ void mesh::FacetNormals() {
 		norm.x = norm.y = norm.z = 0.0f;
 		tris[t].trinormal(verts, &tn);
 		tn.Normalize();
-		verts[tris[t].p1].nx = tn.x;
-		verts[tris[t].p1].ny = tn.y;
-		verts[tris[t].p1].nz = tn.z;
-		verts[tris[t].p2].nx = tn.x;
-		verts[tris[t].p2].ny = tn.y;
-		verts[tris[t].p2].nz = tn.z;
-		verts[tris[t].p3].nx = tn.x;
-		verts[tris[t].p3].ny = tn.y;
-		verts[tris[t].p3].nz = tn.z;
+		norms[tris[t].p1].x = tn.x;
+		norms[tris[t].p1].y = tn.y;
+		norms[tris[t].p1].z = tn.z;
+		norms[tris[t].p2].x = tn.x;
+		norms[tris[t].p2].y = tn.y;
+		norms[tris[t].p2].z = tn.z;
+		norms[tris[t].p3].x = tn.x;
+		norms[tris[t].p3].y = tn.y;
+		norms[tris[t].p3].z = tn.z;
 	}
+
+	queueUpdate[UpdateType::Normals] = true;
 }
 
 void mesh::ColorFill(const Vector3& color) {
-	if (!vcolors)
-		vcolors = new Vector3[nVerts];
-
 	for (int i = 0; i < nVerts; i++)
 		vcolors[i] = color;
+
+	queueUpdate[UpdateType::VertexColors] = true;
 }
 
 void mesh::ColorChannelFill(int channel, float value) {
-	if (!vcolors)
-		vcolors = new Vector3[nVerts];
-
 	for (int i = 0; i < nVerts; i++) {
 		if (channel == 0)
 			vcolors[i].x = value;
@@ -408,6 +459,8 @@ void mesh::ColorChannelFill(int channel, float value) {
 		else if (channel == 2)
 			vcolors[i].z = value;
 	}
+
+	queueUpdate[UpdateType::VertexColors] = true;
 }
 
 bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets) {
@@ -418,15 +471,10 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 	if (startTri < 0)
 		return false;
 
-	Vertex v;
-	v.x = center.x;
-	v.y = center.y;
-	v.z = center.z;
-
 	outFacets.push_back(startTri);
 	trivisit[startTri] = true;
 
-	if (verts[tris[startTri].p1].DistanceSquaredTo(&v) <= sqradius) {
+	if (verts[tris[startTri].p1].DistanceSquaredTo(center) <= sqradius) {
 		outPoints[nOutPoints++] = tris[startTri].p1;
 		pointvisit[tris[startTri].p1] = true;
 		auto wv = weldVerts.find(tris[startTri].p1);
@@ -440,7 +488,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 		}
 	}
 
-	if (verts[tris[startTri].p2].DistanceSquaredTo(&v) <= sqradius) {
+	if (verts[tris[startTri].p2].DistanceSquaredTo(center) <= sqradius) {
 		outPoints[nOutPoints++] = tris[startTri].p2;
 		pointvisit[tris[startTri].p2] = true;
 		auto wv = weldVerts.find(tris[startTri].p2);
@@ -454,7 +502,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 		}
 	}
 
-	if (verts[tris[startTri].p3].DistanceSquaredTo(&v) <= sqradius) {
+	if (verts[tris[startTri].p3].DistanceSquaredTo(center) <= sqradius) {
 		outPoints[nOutPoints++] = tris[startTri].p3;
 		pointvisit[tris[startTri].p3] = true;
 		auto wv = weldVerts.find(tris[startTri].p3);
@@ -474,7 +522,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 		int tp = outPoints[adjCursor++];
 		int n = GetAdjacentPoints(tp, pointBuf, 100);
 		for (int i = 0; i < n; i++) {
-			if (!pointvisit[pointBuf[i]] && verts[pointBuf[i]].DistanceSquaredTo(&v) <= sqradius) {
+			if (!pointvisit[pointBuf[i]] && verts[pointBuf[i]].DistanceSquaredTo(center) <= sqradius) {
 				pointvisit[pointBuf[i]] = true;
 				outPoints[nOutPoints++] = pointBuf[i];
 			}
@@ -489,15 +537,10 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 	if (startTri < 0)
 		return false;
 
-	Vertex v;
-	v.x = center.x;
-	v.y = center.y;
-	v.z = center.z;
-
 	outFacets.push_back(startTri);
 	trivisit[startTri] = true;
 
-	if (verts[tris[startTri].p1].DistanceSquaredTo(&v) <= sqradius) {
+	if (verts[tris[startTri].p1].DistanceSquaredTo(center) <= sqradius) {
 		if (!pointvisit[tris[startTri].p1]) {
 			pointvisit[tris[startTri].p1] = true;
 			outPoints[nOutPoints++] = tris[startTri].p1;
@@ -519,7 +562,7 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 		}
 	}
 
-	if (verts[tris[startTri].p2].DistanceSquaredTo(&v) <= sqradius) {
+	if (verts[tris[startTri].p2].DistanceSquaredTo(center) <= sqradius) {
 		if (!pointvisit[tris[startTri].p2]) {
 			pointvisit[tris[startTri].p2] = true;
 			outPoints[nOutPoints++] = tris[startTri].p2;
@@ -540,7 +583,7 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 			}
 		}
 	}
-	if (verts[tris[startTri].p3].DistanceSquaredTo(&v) <= sqradius) {
+	if (verts[tris[startTri].p3].DistanceSquaredTo(center) <= sqradius) {
 		if (!pointvisit[tris[startTri].p3]) {
 			pointvisit[tris[startTri].p3] = true;
 			outPoints[nOutPoints++] = tris[startTri].p3;

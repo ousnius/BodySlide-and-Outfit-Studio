@@ -19,6 +19,8 @@ class GLSurface {
 	wxGLCanvas* canvas = nullptr;
 	wxGLContext* context = nullptr;
 
+	glm::mat4x4 projection;
+	glm::mat4x4 modelView;
 	bool perspective;
 	float mFov;
 	Vector3 camPos;
@@ -40,11 +42,17 @@ class GLSurface {
 	float defPointSize;
 	float cursorSize;
 
+	GLShader::LightSource light0;
+	GLShader::LightSource light1;
+	GLShader::LightSource light2;
+	GLShader::Material material;
+
 	Vector3 colorRed = Vector3(1.0f, 0.25f, 0.25f);
 	Vector3 colorGreen = Vector3(0.25f, 1.0f, 0.25f);
 
 	ResourceLoader resLoader;
-	GLMaterial* noImage = nullptr;
+	GLMaterial* noImageMat = nullptr;
+	GLMaterial* primitiveMat = nullptr;
 
 	unordered_map<string, int> namedMeshes;
 	unordered_map<string, int> namedOverlays;
@@ -56,7 +64,7 @@ class GLSurface {
 	mesh* selectedMesh = nullptr;
 
 	void InitLighting();
-	void InitMaterial(Vector3 diffuseColor);
+	void InitMaterial(const Vector3& diffuseColor);
 	void InitGLExtensions();
 	int InitGLSettings();
 
@@ -202,7 +210,6 @@ public:
 	}
 
 	int Initialize(wxGLCanvas* canvas, wxGLContext* context);
-	void Begin();
 	void Cleanup();
 
 	void SetStartingView(const Vector3& camPos, const Vector3& camRot, const uint& vpWidth, const uint& vpHeight, const float& fov = 65.0f);
@@ -223,7 +230,7 @@ public:
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
-	bool GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx = nullptr);
+	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr);
 	void ShowCursor(bool show = true);
 
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
@@ -233,7 +240,6 @@ public:
 	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
 	bool CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 
-	int AddVisRay(Vector3& start, Vector3& direction, float length);
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");
 	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name = "XRotateMesh");
 	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
@@ -256,6 +262,7 @@ public:
 	RenderMode SetMeshRenderMode(const string& name, RenderMode mode);
 
 	GLMaterial* AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile);
+	GLMaterial* GetPrimitiveMaterial();
 
 	void RenderOneFrame();
 	void RenderMesh(mesh* m);

@@ -14,179 +14,6 @@ See the included LICENSE file
 #include <limits>
 
 
-Vector3::Vector3(const Vertex& other) {
-	x = other.x;
-	y = other.y;
-	z = other.z;
-}
-
-Triangle::Triangle() {
-	p1 = p2 = p3 = 0.0f;
-}
-
-Triangle::Triangle(ushort P1, ushort P2, ushort P3) {
-	p1 = P1;
-	p2 = P2;
-	p3 = P3;
-}
-
-void Triangle::trinormal(Vertex* vertref, Vector3* outNormal) {
-	outNormal->x = (vertref[p2].y - vertref[p1].y) * (vertref[p3].z - vertref[p1].z) - (vertref[p2].z - vertref[p1].z) * (vertref[p3].y - vertref[p1].y);
-	outNormal->y = (vertref[p2].z - vertref[p1].z) * (vertref[p3].x - vertref[p1].x) - (vertref[p2].x - vertref[p1].x) * (vertref[p3].z - vertref[p1].z);
-	outNormal->z = (vertref[p2].x - vertref[p1].x) * (vertref[p3].y - vertref[p1].y) - (vertref[p2].y - vertref[p1].y) * (vertref[p3].x - vertref[p1].x);
-}
-
-void Triangle::midpoint(Vertex* vertref, Vector3& outPoint) {
-	outPoint = vertref[p1];
-	outPoint += vertref[p2];
-	outPoint += vertref[p3];
-	outPoint /= 3;
-}
-
-float Triangle::AxisMidPointY(Vertex* vertref) {
-	return (vertref[p1].y + vertref[p2].y + vertref[p3].y) / 3.0f;
-}
-
-float Triangle::AxisMidPointX(Vertex* vertref) {
-	return (vertref[p1].x + vertref[p2].x + vertref[p3].x) / 3.0f;
-}
-
-float Triangle::AxisMidPointZ(Vertex* vertref) {
-	return (vertref[p1].z + vertref[p2].z + vertref[p3].z) / 3.0f;
-}
-
-bool Triangle::IntersectRay(Vertex* vertref, Vector3& origin, Vector3& direction, float* outDistance, Vector3* worldPos) {
-	Vector3 c0(vertref[p1].x, vertref[p1].y, vertref[p1].z);
-	Vector3 c1(vertref[p2].x, vertref[p2].y, vertref[p2].z);
-	Vector3 c2(vertref[p3].x, vertref[p3].y, vertref[p3].z);
-
-	Vector3 e1 = c1 - c0;
-	Vector3 e2 = c2 - c0;
-	float u, v;
-
-	Vector3 pvec = direction.cross(e2);
-	float det = e1.dot(pvec);
-
-	if (det < 0.000001f)
-		return false;
-
-	Vector3 tvec = origin - c0;
-	u = tvec.dot(pvec);
-	if (u < 0 || u > det) return false;
-
-	Vector3 qvec = tvec.cross(e1);
-	v = direction.dot(qvec);
-	if (v < 0 || u + v > det) return false;
-	float dist = e2.dot(qvec);
-	if (dist < 0)
-		return false;
-	dist *= (1.0f / det);
-
-	if (outDistance) (*outDistance) = dist;
-	if (worldPos) (*worldPos) = origin + (direction * dist);
-
-	return true;
-}
-
-// Triangle/Sphere collision psuedocode by Christer Ericson: http://realtimecollisiondetection.net/blog/?p=103
-//   separating axis test on seven features --  3 points, 3 edges, and the tri plane.  For a sphere, this
-//   involves finding the minimum distance to each feature from the sphere origin and comparing it to the sphere radius.
-bool Triangle::IntersectSphere(Vertex *vertref, Vector3 &origin, float radius) {
-	//A = A - P
-	//B = B - P
-	//C = C - P
-
-	// Triangle points A,B,C.  translate them so the sphere's origin is their origin
-	Vector3 A(vertref[p1].x, vertref[p1].y, vertref[p1].z);
-	A = A - origin;
-	Vector3 B(vertref[p2].x, vertref[p2].y, vertref[p2].z);
-	B = B - origin;
-	Vector3 C(vertref[p3].x, vertref[p3].y, vertref[p3].z);
-	C = C - origin;
-
-	//rr = r * r
-	// Squared radius to avoid sqrts.
-	float rr = radius * radius;
-	//V = cross(B - A, C - A)
-
-	// first test: tri plane.  Calculate the normal V
-	Vector3 AB = B - A;
-	Vector3 AC = C - A;
-	Vector3 V = AB.cross(AC);
-	//d = dot(A, V)
-	//e = dot(V, V)
-	// optimized distance test of the plane to the sphere -- removing sqrts and divides
-	float d = A.dot(V);
-	float e = V.dot(V);		// e = squared normal vector length -- the normalization factor
-	//sep1 = d * d > rr * e
-	if (d*d > rr * e)
-		return false;
-	//aa = dot(A, A)
-	//ab = dot(A, B)
-	//ac = dot(A, C)
-	//bb = dot(B, B)
-	//bc = dot(B, C)
-	//cc = dot(C, C)
-
-	// second test: tri points.  A sparating axis exists if a point lies outside the sphere, and the other tri points aren't on the other side of the sphere.
-	float aa = A.dot(A);	// dist to point A
-	float ab = A.dot(B);
-	float ac = A.dot(C);
-	float bb = B.dot(B);	// dist to point B
-	float bc = B.dot(C);
-	float cc = C.dot(C);	// dist to point C
-	bool sep2 = (aa > rr) && (ab > aa) && (ac > aa);
-	bool sep3 = (bb > rr) && (ab > bb) && (bc > bb);
-	bool sep4 = (cc > rr) && (ac > cc) && (bc > cc);
-
-	if (sep2 | sep3 | sep4) {
-		return false;
-	}
-
-	//AB = B - A
-	Vector3 BC = C - B;
-	Vector3 CA = A - C;
-
-	float d1 = ab - aa;
-	d1 = A.dot(AB);
-	float d2 = bc - bb;
-	d2 = B.dot(BC);
-	float d3 = ac - cc;
-	d3 = C.dot(CA);
-
-	//e1 = dot(AB, AB)
-	//e2 = dot(BC, BC)
-	//e3 = dot(CA, CA)
-	float e1 = AB.dot(AB);
-	float e2 = BC.dot(BC);
-	float e3 = CA.dot(CA);
-
-	//Q1 = A * e1 - d1 * AB
-	//Q2 = B * e2 - d2 * BC
-	//Q3 = C * e3 - d3 * CA
-	//QC = C * e1 - Q1
-	//QA = A * e2 - Q2
-	//QB = B * e3 - Q3
-	Vector3 Q1 = (A * e1) - (AB * d1);
-	Vector3 Q2 = (B * e2) - (BC * d2);
-	Vector3 Q3 = (C * e3) - (CA * d3);
-	Vector3 QC = (C * e1) - Q1;
-	Vector3 QA = (A * e2) - Q2;
-	Vector3 QB = (B * e3) - Q3;
-
-	//sep5 = [dot(Q1, Q1) > rr * e1 * e1] & [dot(Q1, QC) > 0]
-	//sep6 = [dot(Q2, Q2) > rr * e2 * e2] & [dot(Q2, QA) > 0]
-	//sep7 = [dot(Q3, Q3) > rr * e3 * e3] & [dot(Q3, QB) > 0]
-
-	bool sep5 = (Q1.dot(Q1) > (rr * e1 * e1)) && (Q1.dot(QC) > 0);
-	bool sep6 = (Q2.dot(Q2) > (rr * e2 * e2)) && (Q2.dot(QA) > 0);
-	bool sep7 = (Q3.dot(Q3) > (rr * e3 * e3)) && (Q3.dot(QB) > 0);
-	//separated = sep1 | sep2 | sep3 | sep4 | sep5 | sep6 | sep7
-	if (sep5 | sep6 | sep7)
-		return false;
-	return true;
-}
-
 GLSurface::GLSurface() {
 	mFov = 90.0f;
 	bTextured = true;
@@ -208,7 +35,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 
 	if (!attribsInitialized) {
 		// 8x AA
-		attribs.PlatformDefaults().RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(1).Samplers(8).EndList();
+		attribs.PlatformDefaults().RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(8).EndList();
 
 		bool displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		if (!displaySupported) {
@@ -216,7 +43,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 			attribs.Reset();
 
 			// 4x AA
-			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(1).Samplers(4).EndList();
+			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(4).EndList();
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
@@ -225,7 +52,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 			attribs.Reset();
 
 			// No AA
-			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(16).Level(0).SampleBuffers(0).EndList();
+			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(0).EndList();
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
@@ -245,7 +72,7 @@ const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
 	static wxGLContextAttrs ctxAttribs;
 
 	if (!ctxAttribsInitialized) {
-		ctxAttribs.PlatformDefaults().CoreProfile().OGLVersion(3, 1).EndList();
+		ctxAttribs.PlatformDefaults().CoreProfile().OGLVersion(3, 3).EndList();
 		ctxAttribsInitialized = true;
 	}
 
@@ -253,46 +80,24 @@ const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
 }
 
 void GLSurface::InitLighting() {
-	glEnable(GL_LIGHTING);
-	float amb[] = { 0.20f, 0.2288f, 0.0f, 1.0f };
-	float diff[] = { 0.55f, 0.55f, 0.55f, 1.0f };
-	float spec[] = { 0.4f, 0.4f, 0.4f, 1.0f };
-	float lightpos[] = { 1.0f, 0.2f, 0.5f, 0.0f };
-	glEnable(GL_LIGHT0);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diff);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
-	glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
+	light0.ambient = Vector3(0.20f, 0.2288f, 0.0f);
+	light0.diffuse = Vector3(0.55f, 0.55f, 0.55f);
+	light0.specular = Vector3(0.4f, 0.4f, 0.4f);
+	light0.position = Vector3(1.0f, 0.2f, 0.5f);
 
-	float lightpos2[] = { -1.0f, -1.0f, 1.0f, 0.0f };
-	float diff2[] = { 0.45f, 0.45f, 0.45f, 1.0f };
-	float rimspec[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	glEnable(GL_LIGHT1);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, diff2);
-	glLightfv(GL_LIGHT1, GL_SPECULAR, rimspec);
-	glLightfv(GL_LIGHT1, GL_POSITION, lightpos2);
+	light1.diffuse = Vector3(0.45f, 0.45f, 0.45f);
+	light1.position = Vector3(-1.0f, -1.0f, 1.0f);
 
-	float lightpos3[] = { -2.0f, 2.0f, 1.0f, 0.0f };
-	float diff3[] = { 0.45f, 0.45f, 0.45f, 1.0f };
-	glEnable(GL_LIGHT2);
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, diff3);
-	glLightfv(GL_LIGHT2, GL_SPECULAR, spec);
-	glLightfv(GL_LIGHT2, GL_POSITION, lightpos3);
+	light2.diffuse = Vector3(0.45f, 0.45f, 0.45f);
+	light2.specular = Vector3(0.4f, 0.4f, 0.4f);
+	light2.position = Vector3(-2.0f, 2.0f, 1.0f);
 }
 
-void GLSurface::InitMaterial(Vector3 diffuseColor) {
-	float spec[] = { 0.4f, 0.4f, 0.4f, 1.0f };
-	float amb[] = { 0.2f, 0.2f, 0.2f, 1.0f };
-	float matcolor[4];
-	matcolor[0] = diffuseColor.x;
-	matcolor[1] = diffuseColor.x;
-	matcolor[2] = diffuseColor.x;
-	matcolor[3] = 1.0f;
-	float shiny[] = { 10.0f };
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, matcolor);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-	glMaterialfv(GL_FRONT, GL_SHININESS, shiny);
+void GLSurface::InitMaterial(const Vector3& diffuseColor) {
+	material.ambient = Vector3(0.2f, 0.2f, 0.2f);
+	material.diffuse = diffuseColor;
+	material.specular = Vector3(0.4f, 0.4f, 0.4f);
+	material.shininess = 10.0f;
 }
 
 int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
@@ -322,11 +127,6 @@ int GLSurface::InitGLSettings() {
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
-	// Offset lines forward to avoid clipping issues
-	glEnable(GL_POLYGON_OFFSET_LINE);
-	glPolygonOffset(-0.03f, -0.03f);
 
 	// Get supported line width range
 	GLfloat lineRange[2];
@@ -377,13 +177,14 @@ void GLSurface::Cleanup() {
 	activeMeshes.clear();
 
 	selectedMesh = nullptr;
-	noImage = nullptr;
+	noImageMat = nullptr;
+
+	if (primitiveMat) {
+		delete primitiveMat;
+		primitiveMat = nullptr;
+	}
 
 	resLoader.Cleanup();
-}
-
-void GLSurface::Begin() {
-	canvas->SetCurrent(*context);
 }
 
 void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const uint& vpWidth, const uint& vpHeight, const float& fov) {
@@ -425,17 +226,13 @@ void GLSurface::DollyCamera(int dAmt) {
 }
 
 void GLSurface::UnprojectCamera(Vector3& result) {
-	GLint vp[4];
-	GLdouble proj[16];
-	GLdouble model[16];
-	double dx, dy, dz;
-	glGetIntegerv(GL_VIEWPORT, vp);
-	glGetDoublev(GL_PROJECTION_MATRIX, proj);
-	glGetDoublev(GL_MODELVIEW_MATRIX, model);
-	gluUnProject(vp[2] / 2.0f, vp[3] / 2.0f, 0.0f, model, proj, vp, &dx, &dy, &dz);
-	result.x = dx;
-	result.y = dy;
-	result.z = dz;
+	glm::vec4 vp(0.0f, 0.0f, (float)vpW, (float)vpH);
+	glm::vec3 win(vp[2] / 2.0f, vp[3] / 2.0f, 0.0f);
+	glm::vec3 res = glm::unProject(win, modelView, projection, vp);
+
+	result.x = res.x;
+	result.y = res.y;
+	result.z = res.z;
 }
 
 void GLSurface::SetView(const char& type) {
@@ -455,53 +252,39 @@ void GLSurface::SetView(const char& type) {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
 		camRot = Vector3(0.0f, 90.0f, 0.0f);
 	}
-	UpdateProjection();
 }
 
 void GLSurface::SetPerspective(const bool& enabled) {
 	perspective = enabled;
-	UpdateProjection();
 }
 
 void GLSurface::SetFieldOfView(const int& fieldOfView) {
 	mFov = fieldOfView;
-	UpdateProjection();
 }
 
 void GLSurface::UpdateLights(const int& ambient, const int& brightness1, const int& brightness2, const int& brightness3) {
-	float amb[] = { 0.01f * ambient, 0.00286f * ambient, 0.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_AMBIENT, amb);
-
-	float diff1[] = { 0.01f * brightness1, 0.01f * brightness1, 0.01f * brightness1, 1.0f };
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diff1);
-
-	float diff2[] = { 0.01f * brightness2, 0.01f * brightness2, 0.01f * brightness2, 1.0f };
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, diff2);
-
-	float diff3[] = { 0.01f * brightness3, 0.01f * brightness3, 0.01f * brightness3, 1.0f };
-	glLightfv(GL_LIGHT2, GL_DIFFUSE, diff3);
+	light0.ambient = Vector3(0.01f * ambient, 0.00286f * ambient, 0.0f);
+	light0.diffuse = Vector3(0.01f * brightness1, 0.01f * brightness1, 0.01f * brightness1);
+	light1.diffuse = Vector3(0.01f * brightness2, 0.01f * brightness2, 0.01f * brightness2);
+	light2.diffuse = Vector3(0.01f * brightness3, 0.01f * brightness3, 0.01f * brightness3);
 }
 
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos) {
-	GLint vp[4];
-	GLdouble proj[16];
-	GLdouble model[16];
-	double sx, sy, sz;
-	double dx, dy, dz;
-	glGetIntegerv(GL_VIEWPORT, vp);
-	glGetDoublev(GL_PROJECTION_MATRIX, proj);
-	glGetDoublev(GL_MODELVIEW_MATRIX, model);
+	glm::vec4 vp(0.0f, 0.0f, (float)vpW, (float)vpH);
 
-	gluUnProject(ScreenX, vp[3] - ScreenY, 0.0f, model, proj, vp, &sx, &sy, &sz);
-	gluUnProject(ScreenX, vp[3] - ScreenY, 1.0f, model, proj, vp, &dx, &dy, &dz);
+	glm::vec3 winS(ScreenX, vp[3] - ScreenY, 0.0f);
+	glm::vec3 resS = glm::unProject(winS, modelView, projection, vp);
 
-	dirVect.x = dx - sx;
-	dirVect.y = dy - sy;
-	dirVect.z = dz - sz;
+	glm::vec3 winD(ScreenX, vp[3] - ScreenY, 1.0f);
+	glm::vec3 resD = glm::unProject(winD, modelView, projection, vp);
 
-	outNearPos.x = sx;
-	outNearPos.y = sy;
-	outNearPos.z = sz;
+	dirVect.x = resD.x - resS.x;
+	dirVect.y = resD.y - resS.y;
+	dirVect.z = resD.z - resS.z;
+
+	outNearPos.x = resS.x;
+	outNearPos.y = resS.y;
+	outNearPos.z = resS.z;
 
 	dirVect.Normalize();
 }
@@ -718,27 +501,19 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 				Triangle t;
 				t = m->tris[results[min_i].HitFacet];
 
-				Vertex v1 = (m->verts[t.p1]);
-				Vertex v2 = (m->verts[t.p2]);
-				Vertex v3 = (m->verts[t.p3]);
-
-				Vector3 p1(v1.x, v1.y, v1.z);
-				Vector3 p2(v2.x, v2.y, v2.z);
-				Vector3 p3(v3.x, v3.y, v3.z);
-
-				Vector3 hilitepoint = p1;
-				float closestdist = fabs(p1.DistanceTo(origin));
-				float nextdist = fabs(p2.DistanceTo(origin));
+				Vector3 hilitepoint = m->verts[t.p1];
+				float closestdist = fabs(m->verts[t.p1].DistanceTo(origin));
+				float nextdist = fabs(m->verts[t.p2].DistanceTo(origin));
 				int pointid = t.p1;
 
 				if (nextdist < closestdist) {
 					closestdist = nextdist;
-					hilitepoint = p2;
+					hilitepoint = m->verts[t.p2];
 					pointid = t.p2;
 				}
-				nextdist = fabs(p3.DistanceTo(origin));
+				nextdist = fabs(m->verts[t.p3].DistanceTo(origin));
 				if (nextdist < closestdist) {
-					hilitepoint = p3;
+					hilitepoint = m->verts[t.p3];
 					pointid = t.p3;
 				}
 
@@ -779,7 +554,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 	return ret;
 }
 
-bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx) {
+bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 	if (activeMeshes.empty())
 		return false;
 
@@ -788,8 +563,8 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx) {
 	Vector3 v;
 	Vector3 vo;
 
-	if (outHoverVtx)
-		(*outHoverVtx) = Vertex();
+	if (outIndex)
+		(*outIndex) = -1;
 
 	GetPickRay(ScreenX, ScreenY, d, o);
 
@@ -808,33 +583,27 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, Vertex* outHoverVtx) {
 				Triangle t;
 				t = m->tris[results[min_i].HitFacet];
 
-				Vertex v1 = m->verts[t.p1];
-				Vertex v2 = m->verts[t.p2];
-				Vertex v3 = m->verts[t.p3];
-
-				Vector3 p1(v1.x, v1.y, v1.z);
-				Vector3 p2(v2.x, v2.y, v2.z);
-				Vector3 p3(v3.x, v3.y, v3.z);
-
-				Vector3 hilitepoint = p1;
-				float closestdist = fabs(p1.DistanceTo(origin));
-				float nextdist = fabs(p2.DistanceTo(origin));
+				Vector3 hilitepoint = m->verts[t.p1];
+				float closestdist = fabs(m->verts[t.p1].DistanceTo(origin));
+				float nextdist = fabs(m->verts[t.p2].DistanceTo(origin));
 				int pointid = t.p1;
 
 				if (nextdist < closestdist) {
 					closestdist = nextdist;
-					hilitepoint = p2;
+					hilitepoint = m->verts[t.p2];
 					pointid = t.p2;
 				}
 
-				nextdist = fabs(p3.DistanceTo(origin));
+				nextdist = fabs(m->verts[t.p3].DistanceTo(origin));
 
 				if (nextdist < closestdist) {
-					hilitepoint = p3;
+					hilitepoint = m->verts[t.p3];
 					pointid = t.p3;
 				}
 
-				(*outHoverVtx) = m->verts[pointid];
+				if (*outIndex)
+					(*outIndex) = pointid;
+
 				return true;
 			}
 		}
@@ -853,46 +622,33 @@ void GLSurface::SetSize(uint w, uint h) {
 	glViewport(0, 0, w, h);
 	vpW = w;
 	vpH = h;
-	UpdateProjection();
 }
 
 void GLSurface::UpdateProjection() {
-	glMatrixMode(GL_PROJECTION);
-	glLoadIdentity();
-
-	double aspect = (double)vpW / (double)vpH;
+	float aspect = (float)vpW / (float)vpH;
 	if (perspective)
-		gluPerspective(mFov, aspect, 0.1, 100);
+		projection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 100.0f);
 	else
-		glOrtho((camPos.z + camOffset.z) / 2 * aspect, (-camPos.z + camOffset.z) / 2 * aspect, (camPos.z + camOffset.z) / 2, (-camPos.z + camOffset.z) / 2, 0.1, 100);
+		projection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 100.0f);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-
-	glTranslatef(camPos.x, camPos.y, camPos.z);
-	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
-	glRotatef(camRot.y, 0.0f, 1.0f, 0.0f);
-	glTranslatef(camOffset.x, camOffset.y, camOffset.z);
+	modelView = glm::translate(glm::mat4x4(), glm::vec3(camPos.x, camPos.y, camPos.z));
+	modelView = glm::rotate(modelView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	modelView = glm::rotate(modelView, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	modelView = glm::translate(modelView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
 }
 
 void GLSurface::RenderOneFrame() {
 	if (!canvas)
 		return;
 
-	mesh* m;
-	Begin();
+	canvas->SetCurrent(*context);
 
 	glClearColor(0.81f, 0.82f, 0.82f, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
+	UpdateProjection();
 
-	glTranslatef(camPos.x, camPos.y, camPos.z);
-	glRotatef(camRot.x, 1.0f, 0.0f, 0.0f);
-	glRotatef(camRot.y, 0.0f, 1.0f, 0.0f);
-	glTranslatef(camOffset.x, camOffset.y, camOffset.z);
-
+	mesh* m;
 	for (int i = 0; i < meshes.size(); i++) {
 		m = meshes[i];
 		if (!m->bVisible || m->nTris == 0)
@@ -922,153 +678,138 @@ void GLSurface::RenderMesh(mesh* m) {
 	else
 		glDisable(GL_CULL_FACE);
 
-	glColor3fv((GLfloat*)&m->color);
-	if (!bLighting)
-		glDisable(GL_LIGHTING);
-	else
-		glEnable(GL_LIGHTING);
+	m->UpdateBuffers();
 
-	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire) {
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
-		glEnableClientState(GL_NORMAL_ARRAY);
-		glNormalPointer(GL_FLOAT, sizeof(Vertex), &m->verts[0].nx);
+	if (!m->genBuffers || !m->material)
+		return;
 
-		if (m->material && m->material->GetShader().Begin()) {
-			auto maskAttrib = m->material->GetShader().GetMaskAttribute();
-			if (maskAttrib != -1) {
-				if (m->vcolors && bMaskVisible) {
-					glEnableVertexAttribArray(maskAttrib);
-					glVertexAttribPointer(maskAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(Vector3), m->vcolors);
-				}
-				else
-					glDisableVertexAttribArray(maskAttrib);
-			}
+	GLShader& shader = m->material->GetShader();
+	if (!shader.Begin())
+		return;
 
-			auto weightAttrib = m->material->GetShader().GetWeightAttribute();
-			if (weightAttrib != -1) {
-				if (m->vcolors && (bWeightColors || bSegmentColors)) {
-					glEnableVertexAttribArray(weightAttrib);
-					glVertexAttribPointer(weightAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(Vector3), &m->vcolors[0].y);
-				}
-				else
-					glDisableVertexAttribArray(weightAttrib);
-			}
+	shader.SetMatrixProjection(projection);
+	shader.SetMatrixModelView(modelView);
+	shader.SetColor(m->color);
+	shader.SetLightingEnabled(bLighting);
+	shader.SetWireframeEnabled(false);
+	shader.SetPointsEnabled(false);
 
-			auto segmentAttrib = m->material->GetShader().GetSegmentAttribute();
-			if (segmentAttrib != -1) {
-				if (m->vcolors && bSegmentColors) {
-					glEnableVertexAttribArray(segmentAttrib);
-					glVertexAttribPointer(segmentAttrib, 1, GL_FLOAT, GL_FALSE, sizeof(Vector3), &m->vcolors[0].z);
-				}
-				else
-					glDisableVertexAttribArray(segmentAttrib);
-			}
-		}
+	glBindVertexArray(m->vao);
 
-		if (m->material && m->textured && bTextured)
-			m->material->ActivateTextures(m->texcoord, largestAF);
+	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire || m->rendermode == RenderMode::UnlitSolid) {
+		shader.SetLight(0, light0);
+		shader.SetLight(1, light1);
+		shader.SetLight(2, light2);
+		shader.SetMaterial(material);
 
 		if (m->rendermode == RenderMode::LitWire) {
-			glLineWidth(1.5f);
 			glDisable(GL_CULL_FACE);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		}
 
-		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, &m->tris[0].p1);
-
-		if (m->material) {
-			if (m->textured && bTextured)
-				m->material->DeactivateTextures();
-
-			m->material->GetShader().End();
+		if (m->rendermode == RenderMode::UnlitSolid) {
+			glDisable(GL_CULL_FACE);
+			shader.SetLightingEnabled(false);
 		}
 
-		if (bWireframe) {
-			glDisable(GL_LIGHTING);
-			if (m->color.x >= 0.7f)
-				glColor3f(0.3f, 0.3f, 0.3f);
-			else
-				glColor3f(0.7f, 0.7f, 0.7f);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 
-			glLineWidth(defLineWidth);
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);			// Positions
+		glEnableVertexAttribArray(0);
+
+		if (m->norms) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[1]);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Normals
+			glEnableVertexAttribArray(1);
+		}
+
+		if (m->vcolors) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Colors
+			glEnableVertexAttribArray(2);
+		}
+
+		if (bTextured && m->textured && m->texcoord) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
+			glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
+			glEnableVertexAttribArray(3);
+
+			m->material->BindTextures(largestAF);
+		}
+
+		// Offset triangles so that points can be visible
+		if (m->bShowPoints) {
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(4.0f, 4.0f);
+		}
+
+		// Render mesh
+		glDrawElements(GL_TRIANGLES, m->nTris * 3, GL_UNSIGNED_SHORT, (GLvoid*)0);
+
+		if (m->bShowPoints)
+			glDisable(GL_POLYGON_OFFSET_FILL);
+
+		// Render wireframe
+		if (bWireframe && m->rendermode == RenderMode::Normal) {
+			shader.SetWireframeEnabled(true);
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-			glDrawElements(GL_TRIANGLES, (m->nTris) * 3, GL_UNSIGNED_SHORT, &m->tris[0].p1);
-			glEnable(GL_LIGHTING);
+			glDrawElements(GL_TRIANGLES, m->nTris * 3, GL_UNSIGNED_SHORT, (GLvoid*)0);
 		}
-	}
-	else if (m->rendermode == RenderMode::UnlitSolid) {
-		glDisable(GL_CULL_FACE);
-		if (bLighting)
-			glDisable(GL_LIGHTING);
 
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
-		glDrawElements(GL_TRIANGLES, (m->nTris * 3), GL_UNSIGNED_SHORT, &m->tris[0].p1);
+		if (bTextured && m->textured && m->texcoord) {
+			glBindTexture(GL_TEXTURE_2D, 0);
+			glDisableVertexAttribArray(3);
+		}
 
-		if (bLighting)
-			glEnable(GL_LIGHTING);
+		// Render points
+		if (m->bShowPoints && m->vcolors) {
+			glDisable(GL_CULL_FACE);
+			shader.SetLightingEnabled(false);
 
+			shader.SetPointsEnabled(true);
+			glDrawArrays(GL_POINTS, 0, m->nVerts);
+		}
+
+		glDisableVertexAttribArray(0);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(2);
 	}
 	else if (m->rendermode == RenderMode::UnlitWire) {
 		glDisable(GL_CULL_FACE);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glVertexPointer(3, GL_FLOAT, sizeof(Vertex), &m->verts[0].x);
-
 		glDisable(GL_DEPTH_TEST);
-		if (bLighting)
-			glDisable(GL_LIGHTING);
 
-		glLineWidth(m->scale);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+		glEnableVertexAttribArray(0);
 
-		glColor3fv((GLfloat*)&m->color);
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		glDrawElements(GL_LINES, (m->nEdges) * 2, GL_UNSIGNED_SHORT, &m->edges[0].p1);
+		glDrawElements(GL_LINES, m->nEdges * 2, GL_UNSIGNED_SHORT, (GLvoid*)0);
 
-		if (bLighting)
-			glEnable(GL_LIGHTING);
-
+		glDisableVertexAttribArray(0);
 		glEnable(GL_DEPTH_TEST);
-		glLineWidth(defLineWidth);
-
 	}
 	else if (m->rendermode == RenderMode::UnlitPoints) {
 		glDisable(GL_CULL_FACE);
-
 		glDisable(GL_DEPTH_TEST);
-		if (bLighting)
-			glDisable(GL_LIGHTING);
 
-		glColor3fv((GLfloat*)&m->color);
+		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
+		glEnableVertexAttribArray(0);
 
-		glBegin(GL_POINTS);
-		for (int pi = 0; pi < m->nVerts; pi++)
-			glVertex3f(m->verts[pi].x, m->verts[pi].y, m->verts[pi].z);
-		glEnd();
+		shader.SetPointsEnabled(true);
+		glDrawArrays(GL_POINTS, 0, m->nVerts);
 
-		if (bLighting)
-			glEnable(GL_LIGHTING);
-
+		glDisableVertexAttribArray(0);
 		glEnable(GL_DEPTH_TEST);
 	}
 
-	if (m->bShowPoints && m->vcolors) {
-		glDisable(GL_LIGHTING);
-		glDisable(GL_CULL_FACE);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
-		glBegin(GL_POINTS);
-		for (int pi = 0; pi < m->nVerts; pi++) {
-			if (m->vcolors[pi].x > 0.0f)
-				glColor3fv((GLfloat*)&colorRed);
-			else
-				glColor3fv((GLfloat*)&colorGreen);
-
-			glVertex3f(m->verts[pi].x + m->verts[pi].nx / 250.0f,
-				m->verts[pi].y + m->verts[pi].ny / 250.0f,
-				m->verts[pi].z + m->verts[pi].nz / 250.0f);
-		}
-		glEnd();
-	}
+	shader.End();
 }
 
 void  GLSurface::ReloadMeshFromNif(NifFile* nif, string shapeName) {
@@ -1097,14 +838,17 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		m->doublesided = shader->IsDoubleSided();
 	}
 
+	m->nVerts = nifVerts.size();
+	m->nTris = nifTris.size();
+
+	m->verts = new Vector3[m->nVerts];
+	m->norms = new Vector3[m->nVerts];
+	m->vcolors = new Vector3[m->nVerts];
+	m->texcoord = new Vector2[m->nVerts];
+	m->tris = new Triangle[m->nTris];
+
 	m->shapeName = shapeName;
 	m->smoothSeamNormals = smoothNormalSeams;
-
-	m->nVerts = nifVerts.size();
-	m->verts = new Vertex[m->nVerts];
-
-	m->nTris = nifTris.size();
-	m->tris = new Triangle[m->nTris];
 
 	// Load verts. NIF verts are scaled up by approx. 10 and rotated on the x axis (Z up, Y forward).  
 	// Scale down by 10 and rotate on x axis by flipping y and z components. To face the camera, this also mirrors
@@ -1113,20 +857,15 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		m->verts[i].x = (nifVerts)[i].x / -10.0f;
 		m->verts[i].z = (nifVerts)[i].y / 10.0f;
 		m->verts[i].y = (nifVerts)[i].z / 10.0f;
-		/*m->verts[i].x = (nifVerts)[i].x / 10.0f;
-		m->verts[i].y = (nifVerts)[i].y / 10.0f;
-		m->verts[i].z = (nifVerts)[i].z / 10.0f;*/
-		m->verts[i].indexRef = i;
 	}
 
 	if (nifUvs && !nifUvs->empty()) {
-		m->texcoord = new Vector2[m->nVerts];
 		for (int i = 0; i < m->nVerts; i++) {
 			m->texcoord[i].u = (*nifUvs)[i].u;
 			m->texcoord[i].v = (*nifUvs)[i].v;
 		}
 		m->textured = true;
-		m->material = noImage;
+		m->material = noImageMat;
 	}
 
 	if (!nifNorms || nifNorms->empty()) {
@@ -1137,39 +876,41 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			m->tris[j].p2 = nifTris[j].p2;
 			m->tris[j].p3 = nifTris[j].p3;
 			m->tris[j].trinormal(m->verts, &norm);
-			m->verts[m->tris[j].p1].nx += norm.x;
-			m->verts[m->tris[j].p1].ny += norm.y;
-			m->verts[m->tris[j].p1].nz += norm.z;
-			m->verts[m->tris[j].p2].nx += norm.x;
-			m->verts[m->tris[j].p2].ny += norm.y;
-			m->verts[m->tris[j].p2].nz += norm.z;
-			m->verts[m->tris[j].p3].nx += norm.x;
-			m->verts[m->tris[j].p3].ny += norm.y;
-			m->verts[m->tris[j].p3].nz += norm.z;
+			m->norms[m->tris[j].p1].x += norm.x;
+			m->norms[m->tris[j].p1].y += norm.y;
+			m->norms[m->tris[j].p1].z += norm.z;
+			m->norms[m->tris[j].p2].x += norm.x;
+			m->norms[m->tris[j].p2].y += norm.y;
+			m->norms[m->tris[j].p2].z += norm.z;
+			m->norms[m->tris[j].p3].x += norm.x;
+			m->norms[m->tris[j].p3].y += norm.y;
+			m->norms[m->tris[j].p3].z += norm.z;
 		}
 
 		// Normalize all vertex normals to smooth them out.
 		for (int i = 0; i < m->nVerts; i++) {
-			Vector3* pn = (Vector3*)&m->verts[i].nx;
+			Vector3* pn = (Vector3*)&m->norms[i].x;
 			pn->Normalize();
 		}
 
 		kd_matcher matcher(m->verts, m->nVerts);
 		for (int i = 0; i < matcher.matches.size(); i++) {
-			Vertex* a = matcher.matches[i].first;
-			Vertex* b = matcher.matches[i].second;
-			m->weldVerts[a->indexRef].push_back(b->indexRef);
-			m->weldVerts[b->indexRef].push_back(a->indexRef);
+			pair<Vector3*, int>& a = matcher.matches[i].first;
+			pair<Vector3*, int>& b = matcher.matches[i].second;
+			m->weldVerts[a.second].push_back(b.second);
+			m->weldVerts[b.second].push_back(a.second);
 
 			if (smoothNormalSeams) {
-				float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
+				Vector3& an = m->norms[a.second];
+				Vector3& bn = m->norms[b.second];
+				float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
 				if (dot < 90.0f * DEG2RAD) {
-					a->nx = ((a->nx + b->nx) / 2.0f);
-					a->ny = ((a->ny + b->ny) / 2.0f);
-					a->nz = ((a->nz + b->nz) / 2.0f);
-					b->nx = a->nx;
-					b->ny = a->ny;
-					b->nz = a->nz;
+					an.x = ((an.x + bn.x) / 2.0f);
+					an.y = ((an.y + bn.y) / 2.0f);
+					an.z = ((an.z + bn.z) / 2.0f);
+					bn.x = an.x;
+					bn.y = an.y;
+					bn.z = an.z;
 				}
 			}
 		}
@@ -1184,23 +925,22 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		}
 		// Copy normals. Note, normals are transformed the same way the vertices are.
 		for (int i = 0; i < m->nVerts; i++) {
-			m->verts[i].nx = -(*nifNorms)[i].x;
-			m->verts[i].nz = (*nifNorms)[i].y;
-			m->verts[i].ny = (*nifNorms)[i].z;
+			m->norms[i].x = -(*nifNorms)[i].x;
+			m->norms[i].z = (*nifNorms)[i].y;
+			m->norms[i].y = (*nifNorms)[i].z;
 		}
 
 		// virtually Weld verts across uv seams
 		kd_matcher matcher(m->verts, m->nVerts);
 		for (int i = 0; i < matcher.matches.size(); i++) {
-			Vertex* a = matcher.matches[i].first;
-			Vertex* b = matcher.matches[i].second;
-			m->weldVerts[a->indexRef].push_back(b->indexRef);
-			m->weldVerts[b->indexRef].push_back(a->indexRef);
+			pair<Vector3*, int>& a = matcher.matches[i].first;
+			pair<Vector3*, int>& b = matcher.matches[i].second;
+			m->weldVerts[a.second].push_back(b.second);
+			m->weldVerts[b.second].push_back(a.second);
 		}
 	}
 
 	m->CreateBVH();
-	m->CreateKDTree();
 
 	if (color)
 		m->color = (*color);
@@ -1223,105 +963,6 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	}
 }
 
-int GLSurface::AddVisRay(Vector3& start, Vector3& direction, float length) {
-	int rayMesh = GetOverlayID("RayMesh");
-	int boxMesh = GetOverlayID("BoxMesh");
-
-	Matrix4 rotMat;
-
-	if (boxMesh >= 0) {
-		delete overlays[boxMesh];
-		overlays.erase(overlays.begin() + boxMesh);
-		boxMesh = 0;
-	}
-	boxMesh = GetOverlayID("TriMesh");
-	if (boxMesh >= 0) {
-		delete overlays[boxMesh];
-		overlays.erase(overlays.begin() + boxMesh);
-		boxMesh = 0;
-	}
-	if (rayMesh >= 0) {
-		delete overlays[rayMesh];
-		overlays.erase(overlays.begin() + rayMesh);
-		rayMesh = 0;
-	}
-
-	mesh* m = new mesh();
-	m->rendermode = RenderMode::UnlitWire;
-	m->color = Vector3(0.0f, 0.0f, 1.0f);
-	m->nVerts = 2;
-	m->verts = new Vertex[2];
-
-	m->verts[0].x = start.x;
-	m->verts[0].y = start.y;
-	m->verts[0].z = start.z;
-
-	m->verts[1] = m->verts[0];
-	m->verts[1].x += (direction.x * length);
-	m->verts[1].y += (direction.y * length);
-	m->verts[1].z += (direction.z * length);
-
-	m->nEdges = 1;
-	m->edges = new Edge[1];
-
-	m->edges[0].p1 = 0;
-	m->edges[0].p2 = 1;
-
-	m->shapeName = "RayMesh";
-	namedOverlays[m->shapeName] = overlays.size();
-	overlays.push_back(m);
-
-	Vector3 o(start.x, start.y, start.z);
-	Vector3 d(direction.x, direction.y, direction.z);
-
-	for (auto &itMesh : activeMeshes) {
-		vector<IntersectResult> results;
-		if (itMesh->bvh->IntersectRay(o, d, &results)) {
-			mesh* mv = new mesh();
-			itMesh->bvh->BuildRayIntersectFrames(o, d, &mv->verts, &mv->nVerts, &mv->edges, &mv->nEdges);
-			mv->shapeName = "BoxMesh";
-			mv->rendermode = RenderMode::UnlitWire;
-			namedOverlays[mv->shapeName] = overlays.size();
-			overlays.push_back(mv);
-			if (results.size() > 900) {
-				int min_i = 0;
-				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++) {
-					if (results[i].HitDistance < minDist)
-						min_i = i;
-				}
-
-				Vector3 origin;
-				origin = results[min_i].HitCoord;
-				Vector3 norm;
-				meshes[0]->tris[results[min_i].HitFacet].trinormal(meshes[0]->verts, &norm);
-
-				/* KD Nearest Neighbor search */
-
-				Vertex querypoint;
-				querypoint = origin;
-
-				meshes[0]->kdtree->kd_nn(&querypoint, .40f);
-				mesh* mv = new mesh();
-				mv->nVerts = meshes[0]->kdtree->queryResult.size() + 1;
-				mv->verts = new Vertex[mv->nVerts];
-				mv->rendermode = RenderMode::UnlitPoints;
-				mv->color = Vector3(0.0f, 1.0f, 1.0f);
-				mv->shapeName = "TriMesh";
-				int i = 0;
-				for (auto &kd_result_it : meshes[0]->kdtree->queryResult)
-					mv->verts[i++] = (*kd_result_it.v);
-
-				mv->verts[i] = origin;
-				namedOverlays[mv->shapeName] = overlays.size();
-				overlays.push_back(mv);
-			}
-		}
-	}
-
-	return overlays.size() - 1;
-}
-
 mesh* GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3* color) {
 	mesh* m = GetOverlay(name);
 	if (m) {
@@ -1332,27 +973,30 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3
 			m->color = Vector3(0.0f, 1.0f, 1.0f);
 
 		m->bVisible = true;
+		m->QueueUpdate(mesh::UpdateType::Position);
 		return m;
 	}
 
 	m = new mesh();
 
 	m->nVerts = 1;
-	m->verts = new Vertex[1];
-	m->rendermode = RenderMode::UnlitPoints;
-	m->nEdges = 0;
-
+	m->verts = new Vector3[1];
 	m->verts[0] = p;
+	m->nEdges = 0;
+	m->nTris = 0;
 
+	m->rendermode = RenderMode::UnlitPoints;
 	m->shapeName = name;
 	m->color = Vector3(0.0f, 1.0f, 1.0f);
+	m->material = GetPrimitiveMaterial();
+	m->CreateBuffers();
 
 	namedOverlays[m->shapeName] = overlays.size();
 	overlays.push_back(m);
 	return m;
 }
 
-int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name) {
+int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name) {
 	Matrix4 rotMat;
 	int ringMesh = GetOverlayID(name);
 	if (ringMesh >= 0)
@@ -1363,10 +1007,15 @@ int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float
 	mesh* m = new mesh();
 
 	m->nVerts = 360 / 5;
-	m->verts = new Vertex[m->nVerts];
-	m->rendermode = RenderMode::UnlitWire;
 	m->nEdges = m->nVerts;
+
+	m->verts = new Vector3[m->nVerts];
 	m->edges = new Edge[m->nEdges];
+
+	m->shapeName = name;
+	m->color = Vector3(1.0f, 0.0f, 0.0f);
+	m->rendermode = RenderMode::UnlitWire;
+	m->material = GetPrimitiveMaterial();
 
 	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), normal);
 	rotMat.Translate(center);
@@ -1380,12 +1029,11 @@ int  GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float
 		m->edges[j].p1 = j;
 		m->edges[j].p2 = j + 1;
 		i += rStep;
-		m->verts[j].pos(rotMat * m->verts[j]);
+		m->verts[j] = rotMat * m->verts[j];
 	}
 
 	m->edges[m->nEdges - 1].p2 = 0;
-	m->shapeName = name;
-	m->color = Vector3(1.0f, 0.0f, 0.0f);
+	m->CreateBuffers();
 
 	if (ringMesh >= 0) {
 		overlays[ringMesh] = m;
@@ -1411,12 +1059,17 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 
 	m->nVerts = (nRingSegments)* nRingSteps;
 	m->nTris = m->nVerts * 2;
-	m->verts = new Vertex[m->nVerts];
-	m->tris = new Triangle[m->nTris];
-	m->rendermode = RenderMode::UnlitSolid;
-	m->color = color;
+	m->nEdges = 0;
 
-	Vertex* loftVerts = new Vertex[nRingSteps];
+	m->verts = new Vector3[m->nVerts];
+	m->tris = new Triangle[m->nTris];
+
+	m->shapeName = name;
+	m->color = color;
+	m->rendermode = RenderMode::UnlitSolid;
+	m->material = GetPrimitiveMaterial();
+
+	Vector3* loftVerts = new Vector3[nRingSteps];
 
 	Matrix4 xf1;
 	xf1.Align(Vector3(0.0f, 0.0f, 1.0f), Vector3(1.0f, 0.0f, 0.0f));
@@ -1480,10 +1133,7 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 		m->tris[ctri++] = Triangle(p3, p2, p4);
 	}
 
-
-	m->nEdges = 0;
-	m->edges = nullptr;
-	m->shapeName = name;
+	m->CreateBuffers();
 
 	if (myMesh >= 0) {
 		overlays[myMesh] = m;
@@ -1510,12 +1160,15 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 	mesh* m = new mesh();
 
 	int nRingVerts = 36;
-
 	m->nVerts = nRingVerts * 3 + 1; // base ring, inner point ring, outer point ring, and the tip
 	m->nTris = nRingVerts * 5;
-	m->verts = new Vertex[m->nVerts];
-	m->rendermode = RenderMode::UnlitSolid;
+	m->nEdges = 0;
+
+	m->verts = new Vector3[m->nVerts];
 	m->color = color;
+	m->shapeName = name;
+	m->rendermode = RenderMode::UnlitSolid;
+	m->material = GetPrimitiveMaterial();
 
 	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), direction);
 	rotMat.Translate(origin);
@@ -1536,14 +1189,16 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 		m->verts[j + nRingVerts].z = stemlen;
 		m->verts[j + (nRingVerts * 2)].z = stemlen;
 		i += rStep;
-		m->verts[j].pos(rotMat * m->verts[j]);
-		m->verts[j + nRingVerts].pos(rotMat * m->verts[j + nRingVerts]);
-		m->verts[j + (nRingVerts * 2)].pos(rotMat * m->verts[j + (nRingVerts * 2)]);
+		m->verts[j] = rotMat * m->verts[j];
+		m->verts[j + nRingVerts] = rotMat * m->verts[j + nRingVerts];
+		m->verts[j + (nRingVerts * 2)] = rotMat * m->verts[j + (nRingVerts * 2)];
 	}
+
 	m->verts[m->nVerts - 1].x = 0;
 	m->verts[m->nVerts - 1].y = 0;
 	m->verts[m->nVerts - 1].z = length;
-	m->verts[m->nVerts - 1].pos(rotMat * m->verts[m->nVerts - 1]);
+	m->verts[m->nVerts - 1] = rotMat * m->verts[m->nVerts - 1];
+
 	int p1, p2, p3, p4, p5, p6, p7;
 	p7 = m->nVerts - 1;
 	m->tris = new Triangle[m->nTris];
@@ -1570,9 +1225,7 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 		t += 5;
 	}
 
-	m->nEdges = 0;
-	m->edges = nullptr;
-	m->shapeName = name;
+	m->CreateBuffers();
 
 	if (myMesh >= 0) {
 		overlays[myMesh] = m;
@@ -1616,7 +1269,10 @@ void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2
 		if (changed && old != m->verts[i])
 			(*changed).push_back(i);
 	}
-	m->bBuffersLoaded = false;
+
+	m->QueueUpdate(mesh::UpdateType::Position);
+	if (uvs)
+		m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
 }
 
 void GLSurface::RecalculateMeshBVH(const string& shapeName) {
@@ -1705,10 +1361,10 @@ GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vSha
 	GLMaterial* mat = resLoader.AddMaterial(textureFile, vShaderFile, fShaderFile);
 	if (!mat) {
 		// Use noImage material if loader failed
-		if (!noImage)
-			noImage = resLoader.AddMaterial("res\\images\\NoImg.png", "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
+		if (!noImageMat)
+			noImageMat = resLoader.AddMaterial("res\\images\\NoImg.png", "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
 
-		mat = noImage;
+		mat = noImageMat;
 	}
 
 	if (mat) {
@@ -1720,4 +1376,18 @@ GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vSha
 	}
 
 	return mat;
+}
+
+GLMaterial* GLSurface::GetPrimitiveMaterial() {
+	if (!primitiveMat) {
+		primitiveMat = new GLMaterial("res\\shaders\\primitive.vert", "res\\shaders\\primitive.frag");
+
+		string shaderError;
+		if (primitiveMat->GetShader().GetError(&shaderError)) {
+			wxLogError(wxString(shaderError));
+			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
+		}
+	}
+
+	return primitiveMat;
 }

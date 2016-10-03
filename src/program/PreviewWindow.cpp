@@ -86,8 +86,11 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 		if (shapeName && (shapeList[i] == shapeName)) {
 			gls.AddMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeName);
-			m->BuildTriAdjacency();
-			m->SmoothNormals();
+			if (m) {
+				m->BuildTriAdjacency();
+				m->SmoothNormals();
+				m->CreateBuffers();
+			}
 		}
 		else if (shapeName) {
 			continue;
@@ -95,8 +98,11 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 		else {
 			gls.AddMeshFromNif(nif, shapeList[i]);
 			m = gls.GetMesh(shapeList[i]);
-			m->BuildTriAdjacency();
-			m->SmoothNormals();
+			if (m) {
+				m->BuildTriAdjacency();
+				m->SmoothNormals();
+				m->CreateBuffers();
+			}
 		}
 	}
 }
@@ -114,6 +120,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			m = gls.GetMesh(shapeName);
 			m->BuildTriAdjacency();
 			m->SmoothNormals();
+			m->CreateBuffers();
 
 			auto iter = shapeTextures.find(shapeName);
 			if (iter != shapeTextures.end())
@@ -130,6 +137,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			m = gls.GetMesh(shapeList[i]);
 			m->BuildTriAdjacency();
 			m->SmoothNormals();
+			m->CreateBuffers();
 
 			auto iter = shapeTextures.find(shapeList[i]);
 			if (iter != shapeTextures.end())
@@ -235,17 +243,6 @@ void PreviewWindow::TrackMouse(int X, int Y) {
 
 void PreviewWindow::MouseWheel(int dW) {
 	gls.DollyCamera(dW);
-	gls.RenderOneFrame();
-}
-
-void PreviewWindow::Pick(int X, int Y) {
-	Vector3 camVec;
-	Vector3 dirVec;
-	float len;
-	gls.GetPickRay(X, Y, dirVec, camVec);
-	len = sqrt(camVec.x*camVec.x + camVec.y*camVec.y + camVec.z*camVec.z);
-
-	gls.AddVisRay(camVec, dirVec, len);
 	gls.RenderOneFrame();
 }
 

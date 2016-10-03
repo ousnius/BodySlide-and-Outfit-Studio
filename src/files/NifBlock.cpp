@@ -1676,13 +1676,13 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	GetRawVerts();
 	SetNormals(true);
 
-	vector<Vertex> verts(numVertices);
+	vector<Vector3> verts(numVertices);
+	vector<Vector3> norms(numVertices);
 	vector<Triangle> tris(numTriangles);
 	for (int i = 0; i < numVertices; i++) {
 		verts[i].x = rawVertices[i].x * -0.1f;
 		verts[i].z = rawVertices[i].y * 0.1f;
 		verts[i].y = rawVertices[i].z * 0.1f;
-		verts[i].indexRef = i;
 	}
 
 	// Load tris. Also sum face normals here.
@@ -1692,20 +1692,20 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 		tris[j].p2 = triangles[j].p2;
 		tris[j].p3 = triangles[j].p3;
 		tris[j].trinormal(verts.data(), &norm);
-		verts[tris[j].p1].nx += norm.x;
-		verts[tris[j].p1].ny += norm.y;
-		verts[tris[j].p1].nz += norm.z;
-		verts[tris[j].p2].nx += norm.x;
-		verts[tris[j].p2].ny += norm.y;
-		verts[tris[j].p2].nz += norm.z;
-		verts[tris[j].p3].nx += norm.x;
-		verts[tris[j].p3].ny += norm.y;
-		verts[tris[j].p3].nz += norm.z;
+		norms[tris[j].p1].x += norm.x;
+		norms[tris[j].p1].y += norm.y;
+		norms[tris[j].p1].z += norm.z;
+		norms[tris[j].p2].x += norm.x;
+		norms[tris[j].p2].y += norm.y;
+		norms[tris[j].p2].z += norm.z;
+		norms[tris[j].p3].x += norm.x;
+		norms[tris[j].p3].y += norm.y;
+		norms[tris[j].p3].z += norm.z;
 	}
 
 	// Normalize all vertex normals to smooth them out.
 	for (int i = 0; i < numVertices; i++) {
-		Vector3* pn = (Vector3*)&verts[i].nx;
+		Vector3* pn = (Vector3*)&norms[i].x;
 		pn->Normalize();
 	}
 
@@ -1719,20 +1719,22 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	unordered_map<int, vector<int>> weldVerts;
 	kd_matcher matcher(verts.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
-		Vertex* a = matcher.matches[i].first;
-		Vertex* b = matcher.matches[i].second;
-		weldVerts[a->indexRef].push_back(b->indexRef);
-		weldVerts[b->indexRef].push_back(a->indexRef);
+		pair<Vector3*, int>& a = matcher.matches[i].first;
+		pair<Vector3*, int>& b = matcher.matches[i].second;
+		weldVerts[a.second].push_back(b.second);
+		weldVerts[b.second].push_back(a.second);
 
 		if (smooth) {
-			float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
+			Vector3& an = norms[a.second];
+			Vector3& bn = norms[b.second];
+			float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
 			if (dot < 1.57079633f) {
-				a->nx = ((a->nx + b->nx) / 2.0f);
-				a->ny = ((a->ny + b->ny) / 2.0f);
-				a->nz = ((a->nz + b->nz) / 2.0f);
-				b->nx = a->nx;
-				b->ny = a->ny;
-				b->nz = a->nz;
+				an.x = ((an.x + bn.x) / 2.0f);
+				an.y = ((an.y + bn.y) / 2.0f);
+				an.z = ((an.z + bn.z) / 2.0f);
+				bn.x = an.x;
+				bn.y = an.y;
+				bn.z = an.z;
 			}
 		}
 	}
@@ -1771,17 +1773,17 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 
 			norm = norm / (float)vertTris[v].size();
 			norm.Normalize();
-			verts[v].nx = norm.x;
-			verts[v].ny = norm.y;
-			verts[v].nz = norm.z;
+			norms[v].x = norm.x;
+			norms[v].y = norm.y;
+			norms[v].z = norm.z;
 		}
 	}
 
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
-		rawNormals[i].x = -verts[i].nx;
-		rawNormals[i].y = verts[i].nz;
-		rawNormals[i].z = verts[i].ny;
+		rawNormals[i].x = -norms[i].x;
+		rawNormals[i].y = norms[i].z;
+		rawNormals[i].z = norms[i].y;
 		vertData[i].normal[0] = (unsigned char)round((((rawNormals[i].x + 1.0f) / 2.0f) * 255.0f));
 		vertData[i].normal[1] = (unsigned char)round((((rawNormals[i].y + 1.0f) / 2.0f) * 255.0f));
 		vertData[i].normal[2] = (unsigned char)round((((rawNormals[i].z + 1.0f) / 2.0f) * 255.0f));
@@ -2867,35 +2869,22 @@ void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh
 	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
-	vector<Vertex> matchVerts(numVertices);
-	for (int i = 0; i < numVertices; i++) {
-		matchVerts[i].x = vertices[i].x;
-		matchVerts[i].nx = normals[i].x;
-		matchVerts[i].y = vertices[i].y;
-		matchVerts[i].ny = normals[i].y;
-		matchVerts[i].z = vertices[i].z;
-		matchVerts[i].nz = normals[i].z;
-	}
-
-	kd_matcher matcher(matchVerts.data(), numVertices);
+	kd_matcher matcher(vertices.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
-		Vertex* a = matcher.matches[i].first;
-		Vertex* b = matcher.matches[i].second;
-		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if (dot < 1.57079633f) {
-			a->nx = ((a->nx + b->nx) / 2.0f);
-			a->ny = ((a->ny + b->ny) / 2.0f);
-			a->nz = ((a->nz + b->nz) / 2.0f);
-			b->nx = a->nx;
-			b->ny = a->ny;
-			b->nz = a->nz;
-		}
-	}
+		pair<Vector3*, int>& a = matcher.matches[i].first;
+		pair<Vector3*, int>& b = matcher.matches[i].second;
+		Vector3& an = normals[a.second];
+		Vector3& bn = normals[b.second];
 
-	for (int i = 0; i < numVertices; i++) {
-		normals[i].x = matchVerts[i].nx;
-		normals[i].y = matchVerts[i].ny;
-		normals[i].z = matchVerts[i].nz;
+		float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
+		if (dot < 1.57079633f) {
+			an.x = ((an.x + bn.x) / 2.0f);
+			an.y = ((an.y + bn.y) / 2.0f);
+			an.z = ((an.z + bn.z) / 2.0f);
+			bn.x = an.x;
+			bn.y = an.y;
+			bn.z = an.z;
+		}
 	}
 }
 
@@ -3173,35 +3162,22 @@ void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThres
 	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
-	vector<Vertex> matchVerts(numVertices);
-	for (int i = 0; i < numVertices; i++) {
-		matchVerts[i].x = vertices[i].x;
-		matchVerts[i].nx = normals[i].x;
-		matchVerts[i].y = vertices[i].y;
-		matchVerts[i].ny = normals[i].y;
-		matchVerts[i].z = vertices[i].z;
-		matchVerts[i].nz = normals[i].z;
-	}
-
-	kd_matcher matcher(matchVerts.data(), numVertices);
+	kd_matcher matcher(vertices.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
-		Vertex* a = matcher.matches[i].first;
-		Vertex* b = matcher.matches[i].second;
-		float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-		if (dot < 1.57079633f) {
-			a->nx = ((a->nx + b->nx) / 2.0f);
-			a->ny = ((a->ny + b->ny) / 2.0f);
-			a->nz = ((a->nz + b->nz) / 2.0f);
-			b->nx = a->nx;
-			b->ny = a->ny;
-			b->nz = a->nz;
-		}
-	}
+		pair<Vector3*, int>& a = matcher.matches[i].first;
+		pair<Vector3*, int>& b = matcher.matches[i].second;
+		Vector3& an = normals[a.second];
+		Vector3& bn = normals[b.second];
 
-	for (int i = 0; i < numVertices; i++) {
-		normals[i].x = matchVerts[i].nx;
-		normals[i].y = matchVerts[i].ny;
-		normals[i].z = matchVerts[i].nz;
+		float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
+		if (dot < 1.57079633f) {
+			an.x = ((an.x + bn.x) / 2.0f);
+			an.y = ((an.y + bn.y) / 2.0f);
+			an.z = ((an.z + bn.z) / 2.0f);
+			bn.x = an.x;
+			bn.y = an.y;
+			bn.z = an.z;
+		}
 	}
 }
 

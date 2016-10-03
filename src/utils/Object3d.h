@@ -21,8 +21,6 @@ typedef unsigned char byte;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
-struct Vertex;
-
 struct Vector2 {
 	float u;
 	float v;
@@ -49,7 +47,6 @@ struct Vector3 {
 		y = Y;
 		z = Z;
 	}
-	Vector3(const Vertex& other);
 
 	void Zero() {
 		x = y = z = 0.0f;
@@ -83,10 +80,6 @@ struct Vector3 {
 		uint f = (h[0] + h[1] * 11 - h[2] * 17) & 0x7fffffff;
 		return (f >> 22) ^ (f >> 12) ^ (f);
 	}
-
-	inline Vector3& operator = (const Vertex& other);
-	inline Vector3& operator += (const Vertex& other);
-
 
 	bool operator == (const Vector3& other) {
 		if (x == other.x && y == other.y && z == other.z)
@@ -156,11 +149,18 @@ struct Vector3 {
 		return x*other.x + y*other.y + z*other.z;
 	}
 
-	float DistanceTo(Vector3 target) {
+	float DistanceTo(const Vector3& target) {
 		float dx = target.x - x;
 		float dy = target.y - y;
 		float dz = target.z - z;
 		return (float)sqrt(dx*dx + dy*dy + dz*dz);
+	}
+
+	float DistanceSquaredTo(const Vector3& target) {
+		float dx = target.x - x;
+		float dy = target.y - y;
+		float dz = target.z - z;
+		return (float)dx*dx + dy*dy + dz*dz;
 	}
 
 	float angle(const Vector3& other) const {
@@ -180,154 +180,6 @@ struct Vector3 {
 			z = 0.0f;
 	}
 };
-
-/* Vertex structure. This contains information about a mesh vertex, including position, normal, and index
-   numbering.  In order to allow the data to be dropped directly to the graphics card, the values are split
-   into floats and not Vector3's. This means that various vector operations that are already implemented for
-   vec3s are re-implemented here, so various math tasks can be done directly on the vertex position vectors
-   instead of creating temporary Vector3 values for the purpose.
-*/
-struct Vertex {
-	float x;
-	float y;
-	float z;
-	float nx;
-	float ny;
-	float nz;
-	int indexRef;		// Original index reference storage for use in K-d tree NN searches.
-
-	Vertex() {
-		x = y = z = 0;
-		nx = ny = nz = 0;
-		indexRef = -1;
-	}
-	Vertex(float X, float Y, float Z) {
-		x = X;
-		y = Y;
-		z = Z;
-		indexRef = -1;
-	}
-
-	Vertex(float X, float Y, float Z, int refIndex) {
-		x = X;
-		y = Y;
-		z = Z;
-		indexRef = refIndex;
-	}
-
-	float DistanceTo(Vertex* target) {
-		float dx = target->x - x;
-		float dy = target->y - y;
-		float dz = target->z - z;
-		return (float)sqrt(dx*dx + dy*dy + dz*dz);
-	}
-
-	float DistanceSquaredTo(Vertex* target) {
-		float dx = target->x - x;
-		float dy = target->y - y;
-		float dz = target->z - z;
-		return (float)dx*dx + dy*dy + dz*dz;
-	}
-
-	uint hash() {
-		uint *h = (uint*) this;
-		uint f = (h[0] + h[1] * 11 - h[2] * 17) & 0x7fffffff;
-		return (f >> 22) ^ (f >> 12) ^ (f);
-	}
-
-	Vertex& operator =(const Vector3& inVec) {
-		x = inVec.x;
-		y = inVec.y;
-		z = inVec.z;
-		return (*this);
-	};
-	void pos(const Vertex& invtx) {
-		x = invtx.x;
-		y = invtx.y;
-		z = invtx.z;
-	}
-
-	Vertex& operator -= (const Vertex& other) {
-		x -= other.x;
-		y -= other.y;
-		z -= other.z;
-		return (*this);
-	}
-	Vertex& operator -= (const Vector3& other) {
-		x -= other.x;
-		y -= other.y;
-		z -= other.z;
-		return (*this);
-	}
-	Vertex operator - (const Vertex& other) {
-		Vertex tmp = (*this);
-		tmp -= other;
-		return tmp;
-	}
-	Vertex operator - (const Vector3& other) {
-		Vertex tmp = (*this);
-		tmp -= other;
-		return tmp;
-	}
-	Vertex& operator += (const Vertex& other) {
-		x += other.x;
-		y += other.y;
-		z += other.z;
-		return (*this);
-	}
-	Vertex& operator += (const Vector3& other) {
-		x += other.x;
-		y += other.y;
-		z += other.z;
-		return (*this);
-	}
-	Vertex operator + (const Vertex& other) {
-		Vertex tmp = (*this);
-		tmp += other;
-		return tmp;
-	}
-	Vertex operator + (const Vector3& other) {
-		Vertex tmp = (*this);
-		tmp += other;
-		return tmp;
-	}
-	Vertex& operator *= (float val) {
-		x *= val;
-		y *= val;
-		z *= val;
-		return(*this);
-	}
-	Vertex operator * (float val) {
-		Vertex tmp = (*this);
-		tmp *= val;
-		return tmp;
-	}
-	Vertex& operator /= (float val) {
-		x /= val;
-		y /= val;
-		z /= val;
-		return (*this);
-	}
-	Vertex operator / (float val) {
-		Vertex tmp = (*this);
-		tmp /= val;
-		return tmp;
-	}
-};
-
-Vector3& Vector3::operator = (const Vertex& other) {
-	x = other.x;
-	y = other.y;
-	z = other.z;
-	return (*this);
-}
-
-Vector3& Vector3::operator += (const Vertex& other) {
-	x += other.x;
-	y += other.y;
-	z += other.z;
-	return (*this);
-}
 
 
 // 4D Matrix class for calculating and applying transformations.
@@ -492,12 +344,6 @@ public:
 			m[4] * v.x + m[5] * v.y + m[6] * v.z + m[7],
 			m[8] * v.x + m[9] * v.y + m[10] * v.z + m[11]);
 	}
-	Vertex operator*(const Vertex& v) const {
-		return Vertex
-			(m[0] * v.x + m[1] * v.y + m[2] * v.z + m[3],
-			m[4] * v.x + m[5] * v.y + m[6] * v.z + m[7],
-			m[8] * v.x + m[9] * v.y + m[10] * v.z + m[11]);
-	}
 
 	Matrix4& operator*=(const Matrix4& r) {
 		float v1, v2, v3, v4;
@@ -531,7 +377,6 @@ public:
 
 	Matrix4& Translate(const Vector3& byVec) {
 		return Translate(byVec.x, byVec.y, byVec.z);
-
 	}
 	Matrix4& Translate(float x, float y, float z) {
 		m[3] += x;
@@ -545,7 +390,6 @@ public:
 		tmp.Scale(x, y, z);
 		(*this) *= tmp;
 	}
-
 
 	Matrix4& Scale(float x, float y, float z) {
 		m[0] *= x;   m[1] *= x;  m[2] *= x;  m[3] *= x;
@@ -581,19 +425,19 @@ public:
 		t.m[0] = xx * ic + c;
 		t.m[1] = xy * ic - z * s;
 		t.m[2] = xz * ic + y * s;
-		t.m[3] = 0;
+		t.m[3] = 0.0f;
 
 		t.m[4] = xy * ic + z * s;
 		t.m[5] = yy * ic + c;
 		t.m[6] = yz * ic - x * s;
-		t.m[7] = 0;
+		t.m[7] = 0.0f;
 
 		t.m[8] = xz * ic - y * s;
 		t.m[9] = yz * ic + x * s;
 		t.m[10] = zz * ic + c;
 
-		t.m[11] = t.m[12] = t.m[13] = t.m[14] = 0;
-		t.m[15] = 1;
+		t.m[11] = t.m[12] = t.m[13] = t.m[14] = 0.0f;
+		t.m[15] = 1.0f;
 
 		*this = t * (*this);
 
@@ -657,13 +501,24 @@ struct Triangle {
 	ushort p2;
 	ushort p3;
 
-	Triangle();
-	Triangle(ushort P1, ushort P2, ushort P3);
-	void set(ushort P1, ushort P2, ushort P3)	{
+	Triangle() {
+		p1 = p2 = p3 = 0.0f;
+	}
+	Triangle(ushort P1, ushort P2, ushort P3) {
+		p1 = P1;
+		p2 = P2;
+		p3 = P3;
+	}
+
+	void set(ushort P1, ushort P2, ushort P3) {
 		p1 = P1; p2 = P2; p3 = P3;
 	}
 
-	void trinormal(Vertex* vertref, Vector3* outNormal);
+	void trinormal(Vector3* vertref, Vector3* outNormal) {
+		outNormal->x = (vertref[p2].y - vertref[p1].y) * (vertref[p3].z - vertref[p1].z) - (vertref[p2].z - vertref[p1].z) * (vertref[p3].y - vertref[p1].y);
+		outNormal->y = (vertref[p2].z - vertref[p1].z) * (vertref[p3].x - vertref[p1].x) - (vertref[p2].x - vertref[p1].x) * (vertref[p3].z - vertref[p1].z);
+		outNormal->z = (vertref[p2].x - vertref[p1].x) * (vertref[p3].y - vertref[p1].y) - (vertref[p2].y - vertref[p1].y) * (vertref[p3].x - vertref[p1].x);
+	}
 
 	void trinormal(const vector<Vector3>& vertref, Vector3* outNormal) {
 		outNormal->x = (vertref[p2].y - vertref[p1].y) * (vertref[p3].z - vertref[p1].z) - (vertref[p2].z - vertref[p1].z) * (vertref[p3].y - vertref[p1].y);
@@ -671,14 +526,161 @@ struct Triangle {
 		outNormal->z = (vertref[p2].x - vertref[p1].x) * (vertref[p3].y - vertref[p1].y) - (vertref[p2].y - vertref[p1].y) * (vertref[p3].x - vertref[p1].x);
 	}
 
-	void midpoint(Vertex* vertref, Vector3& outPoint);
-	float AxisMidPointY(Vertex* vertref);
-	float AxisMidPointX(Vertex* vertref);
-	float AxisMidPointZ(Vertex* vertref);
+	void midpoint(Vector3* vertref, Vector3& outPoint) {
+		outPoint = vertref[p1];
+		outPoint += vertref[p2];
+		outPoint += vertref[p3];
+		outPoint /= 3;
+	}
 
-	bool IntersectRay(Vertex* vertref, Vector3& origin, Vector3& direction, float* outDistance = nullptr, Vector3* worldPos = nullptr);
+	float AxisMidPointY(Vector3* vertref) {
+		return (vertref[p1].y + vertref[p2].y + vertref[p3].y) / 3.0f;
+	}
 
-	bool IntersectSphere(Vertex* vertref, Vector3& origin, float radius);
+	float AxisMidPointX(Vector3* vertref) {
+		return (vertref[p1].x + vertref[p2].x + vertref[p3].x) / 3.0f;
+	}
+
+	float AxisMidPointZ(Vector3* vertref) {
+		return (vertref[p1].z + vertref[p2].z + vertref[p3].z) / 3.0f;
+	}
+
+	bool IntersectRay(Vector3* vertref, Vector3& origin, Vector3& direction, float* outDistance = nullptr, Vector3* worldPos = nullptr) {
+		Vector3 c0(vertref[p1].x, vertref[p1].y, vertref[p1].z);
+		Vector3 c1(vertref[p2].x, vertref[p2].y, vertref[p2].z);
+		Vector3 c2(vertref[p3].x, vertref[p3].y, vertref[p3].z);
+
+		Vector3 e1 = c1 - c0;
+		Vector3 e2 = c2 - c0;
+		float u, v;
+
+		Vector3 pvec = direction.cross(e2);
+		float det = e1.dot(pvec);
+
+		if (det < 0.000001f)
+			return false;
+
+		Vector3 tvec = origin - c0;
+		u = tvec.dot(pvec);
+		if (u < 0 || u > det)
+			return false;
+
+		Vector3 qvec = tvec.cross(e1);
+		v = direction.dot(qvec);
+		if (v < 0 || u + v > det)
+			return false;
+
+		float dist = e2.dot(qvec);
+		if (dist < 0)
+			return false;
+
+		dist *= (1.0f / det);
+
+		if (outDistance) (*outDistance) = dist;
+		if (worldPos) (*worldPos) = origin + (direction * dist);
+
+		return true;
+	}
+
+	// Triangle/Sphere collision psuedocode by Christer Ericson: http://realtimecollisiondetection.net/blog/?p=103
+	//   separating axis test on seven features --  3 points, 3 edges, and the tri plane.  For a sphere, this
+	//   involves finding the minimum distance to each feature from the sphere origin and comparing it to the sphere radius.
+	bool IntersectSphere(Vector3 *vertref, Vector3 &origin, float radius) {
+		//A = A - P
+		//B = B - P
+		//C = C - P
+
+		// Triangle points A,B,C.  translate them so the sphere's origin is their origin
+		Vector3 A(vertref[p1].x, vertref[p1].y, vertref[p1].z);
+		A = A - origin;
+		Vector3 B(vertref[p2].x, vertref[p2].y, vertref[p2].z);
+		B = B - origin;
+		Vector3 C(vertref[p3].x, vertref[p3].y, vertref[p3].z);
+		C = C - origin;
+
+		//rr = r * r
+		// Squared radius to avoid sqrts.
+		float rr = radius * radius;
+		//V = cross(B - A, C - A)
+
+		// first test: tri plane.  Calculate the normal V
+		Vector3 AB = B - A;
+		Vector3 AC = C - A;
+		Vector3 V = AB.cross(AC);
+		//d = dot(A, V)
+		//e = dot(V, V)
+		// optimized distance test of the plane to the sphere -- removing sqrts and divides
+		float d = A.dot(V);
+		float e = V.dot(V);		// e = squared normal vector length -- the normalization factor
+		//sep1 = d * d > rr * e
+		if (d*d > rr * e)
+			return false;
+
+		//aa = dot(A, A)
+		//ab = dot(A, B)
+		//ac = dot(A, C)
+		//bb = dot(B, B)
+		//bc = dot(B, C)
+		//cc = dot(C, C)
+
+		// second test: tri points.  A sparating axis exists if a point lies outside the sphere, and the other tri points aren't on the other side of the sphere.
+		float aa = A.dot(A);	// dist to point A
+		float ab = A.dot(B);
+		float ac = A.dot(C);
+		float bb = B.dot(B);	// dist to point B
+		float bc = B.dot(C);
+		float cc = C.dot(C);	// dist to point C
+		bool sep2 = (aa > rr) && (ab > aa) && (ac > aa);
+		bool sep3 = (bb > rr) && (ab > bb) && (bc > bb);
+		bool sep4 = (cc > rr) && (ac > cc) && (bc > cc);
+
+		if (sep2 | sep3 | sep4)
+			return false;
+
+		//AB = B - A
+		Vector3 BC = C - B;
+		Vector3 CA = A - C;
+
+		float d1 = ab - aa;
+		d1 = A.dot(AB);
+		float d2 = bc - bb;
+		d2 = B.dot(BC);
+		float d3 = ac - cc;
+		d3 = C.dot(CA);
+
+		//e1 = dot(AB, AB)
+		//e2 = dot(BC, BC)
+		//e3 = dot(CA, CA)
+		float e1 = AB.dot(AB);
+		float e2 = BC.dot(BC);
+		float e3 = CA.dot(CA);
+
+		//Q1 = A * e1 - d1 * AB
+		//Q2 = B * e2 - d2 * BC
+		//Q3 = C * e3 - d3 * CA
+		//QC = C * e1 - Q1
+		//QA = A * e2 - Q2
+		//QB = B * e3 - Q3
+		Vector3 Q1 = (A * e1) - (AB * d1);
+		Vector3 Q2 = (B * e2) - (BC * d2);
+		Vector3 Q3 = (C * e3) - (CA * d3);
+		Vector3 QC = (C * e1) - Q1;
+		Vector3 QA = (A * e2) - Q2;
+		Vector3 QB = (B * e3) - Q3;
+
+		//sep5 = [dot(Q1, Q1) > rr * e1 * e1] & [dot(Q1, QC) > 0]
+		//sep6 = [dot(Q2, Q2) > rr * e2 * e2] & [dot(Q2, QA) > 0]
+		//sep7 = [dot(Q3, Q3) > rr * e3 * e3] & [dot(Q3, QB) > 0]
+
+		bool sep5 = (Q1.dot(Q1) > (rr * e1 * e1)) && (Q1.dot(QC) > 0);
+		bool sep6 = (Q2.dot(Q2) > (rr * e2 * e2)) && (Q2.dot(QA) > 0);
+		bool sep7 = (Q3.dot(Q3) > (rr * e3 * e3)) && (Q3.dot(QB) > 0);
+		//separated = sep1 | sep2 | sep3 | sep4 | sep5 | sep6 | sep7
+		if (sep5 | sep6 | sep7)
+			return false;
+
+		return true;
+	}
 
 	bool operator < (const Triangle& other) const {
 		int d = 0;

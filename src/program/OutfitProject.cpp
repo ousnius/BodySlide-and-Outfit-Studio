@@ -750,6 +750,8 @@ void OutfitProject::MaskAffected(const string& sliderName, const string& shapeNa
 		for (auto &i : outDiff)
 			m->vcolors[i.first].x = 1.0f;
 	}
+
+	m->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 int OutfitProject::WriteMorphTRI(const string& triPath) {
@@ -1370,6 +1372,9 @@ bool OutfitProject::HasUnweighted() {
 				unweighted = true;
 			}
 		}
+
+		m->QueueUpdate(mesh::UpdateType::VertexColors);
+
 		if (unweighted)
 			return true;
 	}
@@ -2004,7 +2009,7 @@ void OutfitProject::DuplicateShape(const string& sourceShape, const string& dest
 	vector<Vector3> liveNorms;
 	for (int i = 0; i < m->nVerts; i++) {
 		liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
-		liveNorms.emplace_back(move(Vector3(m->verts[i].nx* -1, m->verts[i].nz, m->verts[i].ny)));
+		liveNorms.emplace_back(move(Vector3(m->norms[i].x* -1, m->norms[i].z, m->norms[i].y)));
 	}
 	clone.SetVertsForShape(m->shapeName, liveVerts);
 	clone.SetNormalsForShape(m->shapeName, liveNorms);
@@ -2032,7 +2037,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMes
 
 		liveNorms.clear();
 		for (int i = 0; i < m->nVerts; i++)
-			liveNorms.emplace_back(move(Vector3(m->verts[i].nx* -1, m->verts[i].nz, m->verts[i].ny)));
+			liveNorms.emplace_back(move(Vector3(m->norms[i].x* -1, m->norms[i].z, m->norms[i].y)));
 
 		nif->SetNormalsForShape(m->shapeName, liveNorms);
 		nif->CalcTangentsForShape(m->shapeName);
@@ -2051,7 +2056,7 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 		liveNorms.clear();
 		for (int i = 0; i < m->nVerts; i++) {
 			liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
-			liveNorms.emplace_back(move(Vector3(m->verts[i].nx * -1, m->verts[i].nz, m->verts[i].ny)));
+			liveNorms.emplace_back(move(Vector3(m->norms[i].x * -1, m->norms[i].z, m->norms[i].y)));
 		}
 		clone.SetVertsForShape(m->shapeName, liveVerts);
 

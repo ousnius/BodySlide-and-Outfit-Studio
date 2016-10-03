@@ -78,9 +78,9 @@ public:
 
 		GLMaterial* mat;
 		if (!isSkin)
-			mat = gls.AddMaterial(texturefile, "res\\shaders\\default.vert", "res\\shaders\\default.frag");
+			mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
 		else
-			mat = gls.AddMaterial(texturefile, "res\\shaders\\default.vert", "res\\shaders\\skin.frag");
+			mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\skin.frag");
 
 		m->material = mat;
 		shapeTextures[shapeName] = mat;
@@ -128,8 +128,6 @@ public:
 	void LeftDrag(int dX, int dY);
 	void MouseWheel(int dW);
 	void TrackMouse(int X, int Y);
-
-	void Pick(int X, int Y);
 };
 
 class PreviewCanvas : public wxGLCanvas {

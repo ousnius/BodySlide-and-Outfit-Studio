@@ -2957,8 +2957,8 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 	mesh* m = glView->GetMesh(activeItem->shapeName);
 	if (m) {
 		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
-		float color = 0.0f;
 
+		float color = 0.0f;
 		wxTreeItemIdValue cookie;
 		wxTreeItemId child = partitionTree->GetFirstChild(partitionRoot, cookie);
 		size_t childCount = partitionTree->GetChildrenCount(partitionRoot) + 1;
@@ -5399,6 +5399,7 @@ void OutfitStudio::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 			continue;
 
 		m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+
 		auto& bones = project->GetWorkAnim()->shapeBones;
 		if (bones.find(i->shapeName) != bones.end()) {
 			for (auto &b : bones[i->shapeName]) {
@@ -5624,12 +5625,18 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool build
 		else
 			gls.AddMeshFromNif(nif, shapeList[i]);
 
-		gls.GetMesh(shapeList[i])->BuildTriAdjacency();
-		gls.GetMesh(shapeList[i])->BuildEdgeList();
-		gls.GetMesh(shapeList[i])->ColorFill(Vector3());
+		mesh* m = gls.GetMesh(shapeList[i]);
+		if (m) {
+			m->BuildTriAdjacency();
+			m->BuildEdgeList();
+			m->ColorFill(Vector3());
+		}
 
 		if (buildNormals)
 			RecalcNormals(shapeList[i]);
+
+		if (m)
+			m->CreateBuffers();
 	}
 }
 
@@ -5717,16 +5724,16 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 		unordered_map<ushort, Vector3> diff;
 		vector<Vector3> verts;
 		Vector3 newPos;
-		Vertex oldVertex;
+		int vertIndex;
 
-		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &oldVertex))
+		if (!gls.GetCursorVertex(cursorPos.x, cursorPos.y, &vertIndex))
 			return;
 
 		if (wxXmlResource::Get()->LoadDialog(&dlg, os, "dlgMoveVertex")) {
 			os->project->GetLiveVerts(os->activeItem->shapeName, verts);
-			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[oldVertex.indexRef].x));
-			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[oldVertex.indexRef].y));
-			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[oldVertex.indexRef].z));
+			XRCCTRL(dlg, "posX", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].x));
+			XRCCTRL(dlg, "posY", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].y));
+			XRCCTRL(dlg, "posZ", wxTextCtrl)->SetLabel(wxString::Format("%0.5f", verts[vertIndex].z));
 
 			if (dlg.ShowModal() == wxID_OK) {
 				newPos.x = atof(XRCCTRL(dlg, "posX", wxTextCtrl)->GetValue().c_str());
@@ -5734,16 +5741,16 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 				newPos.z = atof(XRCCTRL(dlg, "posZ", wxTextCtrl)->GetValue().c_str());
 
 				if (os->bEditSlider) {
-					diff[oldVertex.indexRef] = newPos - verts[oldVertex.indexRef];
-					float diffY = diff[oldVertex.indexRef].y / 10.0f;
-					float diffZ = diff[oldVertex.indexRef].z / 10.0f;
-					diff[oldVertex.indexRef].z = diffY;
-					diff[oldVertex.indexRef].y = diffZ;
-					verts[oldVertex.indexRef] = newPos;
+					diff[vertIndex] = newPos - verts[vertIndex];
+					float diffY = diff[vertIndex].y / 10.0f;
+					float diffZ = diff[vertIndex].z / 10.0f;
+					diff[vertIndex].z = diffY;
+					diff[vertIndex].y = diffZ;
+					verts[vertIndex] = newPos;
 					os->project->UpdateMorphResult(os->activeItem->shapeName, os->activeSlider, diff);
 				}
 				else {
-					os->project->MoveVertex(os->activeItem->shapeName, newPos, oldVertex.indexRef);
+					os->project->MoveVertex(os->activeItem->shapeName, newPos, vertIndex);
 				}
 				os->project->GetLiveVerts(os->activeItem->shapeName, verts);
 				UpdateMeshVertices(os->activeItem->shapeName, &verts);
@@ -6070,17 +6077,19 @@ void wxGLPanel::EndTransform() {
 }
 
 bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
-	Vertex vert;
-	if (!gls.GetCursorVertex(screenPos.x, screenPos.y, &vert))
+	int vertIndex;
+	if (!gls.GetCursorVertex(screenPos.x, screenPos.y, &vertIndex))
 		return false;
 
 	if (os->activeItem) {
 		mesh* m = GetMesh(os->activeItem->shapeName);
 		if (m) {
 			if (wxGetKeyState(WXK_CONTROL))
-				m->vcolors[vert.indexRef].x = 1.0f;
+				m->vcolors[vertIndex].x = 1.0f;
 			else if (!segmentMode)
-				m->vcolors[vert.indexRef].x = 0.0f;
+				m->vcolors[vertIndex].x = 0.0f;
+
+			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
 	}
 
@@ -6261,10 +6270,8 @@ void wxGLPanel::ShowVertexEdit(bool show) {
 		if (os->activeItem) {
 			mesh* m = GetMesh(os->activeItem->shapeName);
 			if (m) {
-				if (!m->vcolors)
-					m->ColorFill(Vector3());
-
 				m->bShowPoints = true;
+				m->QueueUpdate(mesh::UpdateType::VertexColors);
 			}
 		}
 	}
@@ -6336,7 +6343,6 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 	else {
 		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
-		gls.UpdateProjection();
 		UpdateTransformTool();
 	}
 

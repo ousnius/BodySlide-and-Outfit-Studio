@@ -1,40 +1,72 @@
-#version 120
+#version 330
 vec4 Ambient;
 vec4 Diffuse;
 vec4 Specular;
-uniform bool bLightEnabled = true;
-uniform bool bShowMask = true;
-uniform bool bShowWeight = true;
-uniform bool bShowSegments = true;
-attribute float maskValue;
-attribute float weightValue;
-attribute float segmentValue;
 
-varying float maskFactor;
-varying vec4 weightColor;
-varying vec4 segmentColor;
+uniform mat4 matProjection;
+uniform mat4 matModelView;
+uniform vec3 color = vec3(1.0);
 
-void directionalLight(in int i, in vec3 normal)
+struct LightSource
 {
-	float nDotVP;         // normal . light direction
-	float nDotHV;         // normal . light half vector
-	float pf;             // power factor
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	vec3 position;
+};
+uniform LightSource lightSource0;
+uniform LightSource lightSource1;
+uniform LightSource lightSource2;
 
-	nDotVP = max(0.0, dot(normal, normalize(vec3 (gl_LightSource[i].position))));
-	nDotHV = max(0.0, dot(normal, vec3 (gl_LightSource[i].halfVector)));
+struct Material
+{
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+	float shininess;
+};
+uniform Material material;
 
-	if (nDotVP == 0.0)
+uniform bool bLightEnabled = true;
+uniform bool bShowTexture = true;
+uniform bool bShowMask = true;
+uniform bool bShowWeight = false;
+uniform bool bShowSegments = false;
+
+uniform bool bWireframe;
+uniform bool bPoints;
+uniform bool bLighting;
+
+layout(location = 0) in vec3 vertexPosition;
+layout(location = 1) in vec3 vertexNormal;
+layout(location = 2) in vec3 vertexColors;
+layout(location = 3) in vec2 vertexUV;
+
+out vec4 vertexColor;
+
+out float maskFactor;
+out vec4 weightColor;
+out vec4 segmentColor;
+out vec2 UV;
+
+void directionalLight(in LightSource light, in vec3 normal)
+{
+	// Normal dot light direction
+	float nDotVP = max(0.0, dot(normal, normalize(light.position)));
+
+	// Normal dot light half vector
+	float nDotHV = max(0.0, dot(normal, normalize(light.position + vec3(0.0, 0.0, 1.0))));
+	
+	// Power factor
+	float pf = 0.0;
+	if (nDotVP != 0.0)
 	{
-		pf = 0.0;
+		pf = pow(nDotHV, material.shininess);
 	}
-	else
-	{
-		pf = pow(nDotHV, gl_FrontMaterial.shininess);
-	}
-
-	Ambient  += gl_LightSource[i].ambient;
-	Diffuse  += gl_LightSource[i].diffuse * nDotVP;
-	Specular += gl_LightSource[i].specular * pf;
+	
+	Ambient += vec4(light.ambient, 1.0);
+	Diffuse += vec4(light.diffuse, 1.0) * nDotVP;
+	Specular += vec4(light.specular, 1.0) * pf;
 }
 
 vec4 colorRamp(in float value)
@@ -75,52 +107,39 @@ vec4 colorRamp(in float value)
 	return vec4(r, g, b, 1.0);
 }
 
-void flight(in vec3 normal, in vec4 ecPosition)
+void flight(in vec3 normal, in vec4 pos)
 {
-	vec4 color;
-	vec3 ecPosition3;
-	vec3 eye;
+	vec4 vcolor = vec4(color, 1.0);
 
-	ecPosition3 = vec3(ecPosition) / ecPosition.w;
-	eye = vec3(0.0, 0.0, 1.0);
+	if (bShowTexture && !bWireframe)
+	{
+		vcolor = vec4(1.0);
+	}
 
-	if (bLightEnabled)
+	if (bLightEnabled && bLighting)
 	{
 		Ambient = vec4(0.0);
 		Diffuse = vec4(0.0);
 		Specular = vec4(0.0);
 
-		directionalLight(0, normal);
-		directionalLight(1, normal);
-		directionalLight(2, normal);
+		directionalLight(lightSource0, normal);
+		directionalLight(lightSource1, normal);
+		directionalLight(lightSource2, normal);
 
-		color =  gl_FrontLightModelProduct.sceneColor +
-			Ambient  * gl_FrontMaterial.ambient +
-			Diffuse  * gl_FrontMaterial.diffuse +
-			Specular * gl_FrontMaterial.specular;
-	}
-	else
-	{
-		color = gl_Color;
-	}
+		vcolor = Ambient * vec4(material.ambient, 1.0) +
+			Diffuse * vec4(material.diffuse, 1.0) +
+			Specular * vec4(material.specular, 1.0);
 
-	if (bShowMask)
-	{
-		maskFactor = 1.0 - maskValue / 1.5;
+		if (!bShowTexture)
+		{
+			vcolor *= vec4(color, 1.0);
+		}
+
+		vcolor += vec4(vec3(0.2), 0.0);
 	}
 
-	if (bShowWeight)
-	{
-		weightColor = colorRamp(weightValue);
-	}
-	else if (bShowSegments)
-	{
-		weightColor = colorRamp(weightValue);
-		segmentColor = colorRamp(segmentValue);
-	}
-
-	color = clamp(color, 0.0, 1.0);
-	gl_FrontColor = color;
+	vcolor = clamp(vcolor, 0.0, 1.0);
+	vertexColor = vcolor;
 }
 
 void main(void)
@@ -129,15 +148,46 @@ void main(void)
 	maskFactor = 1.0;
 	weightColor = vec4(1.0, 1.0, 1.0, 1.0);
 	segmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+	UV = vertexUV;
 
-	// Eye-coordinate position of vertex, needed in various calculations
-	vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
+	// Eye-coordinate position of vertex
+	vec4 pos = matProjection * matModelView * vec4(vertexPosition.x, vertexPosition.y, vertexPosition.z, 1.0);
 
-	// Transform and Light
-	gl_Position = ftransform();
-	vec3 transformedNormal = normalize(gl_NormalMatrix * gl_Normal);
-	flight(transformedNormal, ecPosition);
+	if (!bPoints)
+	{
+		// Transform and Light
+		mat4 normalMatrix = transpose(inverse(matModelView));
+		vec3 transformedNormal = normalize(mat3(normalMatrix) * vertexNormal);
+		flight(transformedNormal, pos);
+	}
+	else
+	{
+		if (vertexColors.x > 0.0)
+		{
+			vertexColor = vec4(1.0, 0.0, 0.0, 1.0);
+		}
+		else
+		{
+			vertexColor = vec4(0.0, 1.0, 0.0, 1.0);
+		}
+	}
 
-	// Gen Texture Coordinates
-	gl_TexCoord[0] = gl_MultiTexCoord0;
+	if (bShowSegments)
+	{
+		weightColor = colorRamp(vertexColors.g);
+		segmentColor = colorRamp(vertexColors.b);
+	}
+	else
+	{
+		if (bShowMask)
+		{
+			maskFactor = 1.0 - vertexColors.r / 1.5;
+		}
+		if (bShowWeight)
+		{
+			weightColor = colorRamp(vertexColors.g);
+		}
+	}
+
+	gl_Position = pos;
 }

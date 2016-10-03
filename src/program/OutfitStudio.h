@@ -304,12 +304,6 @@ public:
 	}
 
 	void SetMaskVisible(bool bVisible = true) {
-		for (auto &m : gls.GetActiveMeshes()) {
-			if (!m->vcolors) {
-				m->vcolors = new Vector3[m->nVerts];
-				memset(m->vcolors, 0, 12 * m->nVerts);
-			}
-		}
 		gls.SetMaskVisible(bVisible);
 	}
 
@@ -322,17 +316,13 @@ public:
 	}
 
 	void ClearMask() {
-		for (auto &m : gls.GetActiveMeshes()) {
-			if (m->vcolors)
-				m->ColorChannelFill(0, 0.0f);
-		}
+		for (auto &m : gls.GetActiveMeshes())
+			m->ColorChannelFill(0, 0.0f);
 	}
 	
 	void ClearColorChannels() {
-		for (auto &m : gls.GetActiveMeshes()) {
-			if (m->vcolors)
-				m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
-		}
+		for (auto &m : gls.GetActiveMeshes())
+			m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 	}
 
 	void GetActiveMask(unordered_map<ushort, float>& mask) {
@@ -340,8 +330,6 @@ public:
 			return;
 
 		mesh* m = gls.GetActiveMeshes().back();
-		if (!m->vcolors)
-			return;
 
 		for (int i = 0; i < m->nVerts; i++) {
 			if (m->vcolors[i].x != 0.0f)
@@ -354,11 +342,6 @@ public:
 			return;
 
 		mesh* m = gls.GetActiveMeshes().back();
-		if (!m->vcolors) {
-			for (int i = 0; i < m->nVerts; i++)
-				mask[i] = 0.0f;
-			return;
-		}
 
 		for (int i = 0; i < m->nVerts; i++)
 			if (m->vcolors[i].x == 0.0f)
@@ -367,7 +350,7 @@ public:
 
 	void GetShapeMask(unordered_map<ushort, float>& mask, const string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
-		if (!m || !m->vcolors)
+		if (!m)
 			return;
 
 		for (int i = 0; i < m->nVerts; i++) {
@@ -381,11 +364,6 @@ public:
 		if (!m)
 			return;
 
-		if (!m->vcolors) {
-			for (int i = 0; i < m->nVerts; i++)
-				mask[i] = 0.0f;
-			return;
-		}
 		for (int i = 0; i < m->nVerts; i++)
 			if (m->vcolors[i].x == 0.0f)
 				mask[i] = m->vcolors[i].x;
@@ -393,11 +371,10 @@ public:
 
 	void InvertMask() {
 		for (auto &m : gls.GetActiveMeshes()) {
-			if (!m->vcolors)
-				m->ColorFill(Vector3());
-
 			for (int i = 0; i < m->nVerts; i++)
 				m->vcolors[i].x = 1.0f - m->vcolors[i].x;
+
+			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
 	}
 

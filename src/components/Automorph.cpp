@@ -187,7 +187,7 @@ void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName)
 	//m->color = Vector3(c, c, c);
 
 	m->nVerts = objVerts.size();
-	m->verts = new Vertex[m->nVerts];
+	m->verts = new Vector3[m->nVerts];
 
 	m->nTris = objTris.size();
 	m->tris = new Triangle[m->nTris];
@@ -196,44 +196,11 @@ void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName)
 	for (int i = 0; i < m->nVerts; i++)
 		m->verts[i] = objVerts[i];
 
-	Vector3 norm;
-	// Load tris. Also sum face normals here.
+	// Load triangles
 	for (int j = 0; j < m->nTris; j++) {
 		m->tris[j].p1 = objTris[j].p1;
 		m->tris[j].p2 = objTris[j].p2;
 		m->tris[j].p3 = objTris[j].p3;
-		// calc normal
-		m->tris[j].trinormal(m->verts, &norm);
-		m->verts[m->tris[j].p1].nx += norm.x;
-		m->verts[m->tris[j].p1].ny += norm.y;
-		m->verts[m->tris[j].p1].nz += norm.z;
-		m->verts[m->tris[j].p2].nx += norm.x;
-		m->verts[m->tris[j].p2].ny += norm.y;
-		m->verts[m->tris[j].p2].nz += norm.z;
-		m->verts[m->tris[j].p3].nx += norm.x;
-		m->verts[m->tris[j].p3].ny += norm.y;
-		m->verts[m->tris[j].p3].nz += norm.z;
-	}
-
-	// Normalize all vertex normals to smooth them out.
-	for (int i = 0; i < m->nVerts; i++) {
-		Vector3* pn = (Vector3*)&m->verts[i].nx;
-		pn->Normalize();
-	}
-
-	kd_matcher matcher(m->verts, m->nVerts);
-	for (int i = 0; i < matcher.matches.size(); i++) {
-		Vertex* a = matcher.matches[i].first;
-		Vertex* b = matcher.matches[i].second;
-		float dot = (a->nx * b->nx + a->ny * b->ny + a->nz * b->nz);
-		if (dot < 1.57079633f) {
-			a->nx = ((a->nx + b->nx) / 2.0f);
-			a->ny = ((a->ny + b->ny) / 2.0f);
-			a->nz = ((a->nz + b->nz) / 2.0f);
-			b->nx = a->nx;
-			b->ny = a->ny;
-			b->nz = a->nz;
-		}
 	}
 }
 
@@ -243,82 +210,24 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 	ref.GetVertsForShape(shapeName, nifVerts);
 	ref.GetTrisForShape(shapeName, &nifTris);
 
-	const vector<Vector3>* nifNorms = ref.GetNormalsForShape(shapeName);
-
 	m->shapeName = shapeName;
 
 	//float c = 0.4f + (meshes.size()*0.3f);
 	//m->color = Vector3(c,c,c);
 
 	m->nVerts = nifVerts.size();
-	m->verts = new Vertex[m->nVerts];
+	m->verts = new Vector3[m->nVerts];
 
 	m->nTris = nifTris.size();
 	m->tris = new Triangle[m->nTris];
 
 	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
-	for (int i = 0; i < m->nVerts; i++) {
+	for (int i = 0; i < m->nVerts; i++)
 		m->verts[i] = (nifVerts)[i];
 
-		//m->verts[i].x = (*nif_verts)[i].x / -10.0f;
-		//m->verts[i].z = (*nif_verts)[i].y / 10.0f;
-		//m->verts[i].y = (*nif_verts)[i].z / 10.0f;
-	}
-
-	Vector3 norm;
-	if (!nifNorms || nifNorms->empty()) {
-		// Load tris. Also sum face normals here.
-		for (int j = 0; j < m->nTris; j++) {
-			m->tris[j].p1 = nifTris[j].p1;
-			m->tris[j].p2 = nifTris[j].p2;
-			m->tris[j].p3 = nifTris[j].p3;
-			m->tris[j].trinormal(m->verts, &norm);
-			m->verts[m->tris[j].p1].nx += norm.x;
-			m->verts[m->tris[j].p1].ny += norm.y;
-			m->verts[m->tris[j].p1].nz += norm.z;
-			m->verts[m->tris[j].p2].nx += norm.x;
-			m->verts[m->tris[j].p2].ny += norm.y;
-			m->verts[m->tris[j].p2].nz += norm.z;
-			m->verts[m->tris[j].p3].nx += norm.x;
-			m->verts[m->tris[j].p3].ny += norm.y;
-			m->verts[m->tris[j].p3].nz += norm.z;
-		}
-
-		// Normalize all vertex normals to smooth them out.
-		Vector3* pn;
-		for (int i = 0; i < m->nVerts; i++) {
-			pn = (Vector3*)&m->verts[i].nx;
-			pn->Normalize();
-		}
-
-		kd_matcher matcher(m->verts, m->nVerts);
-		for (int i = 0; i < matcher.matches.size(); i++) {
-			Vertex* a = matcher.matches[i].first;
-			Vertex* b = matcher.matches[i].second;
-			float dot = (a->nx * b->nx + a->ny*b->ny + a->nz*b->nz);
-			if (dot < 1.57079633f) {
-				a->nx = ((a->nx + b->nx) / 2.0f);
-				a->ny = ((a->ny + b->ny) / 2.0f);
-				a->nz = ((a->nz + b->nz) / 2.0f);
-				b->nx = a->nx;
-				b->ny = a->ny;
-				b->nz = a->nz;
-			}
-		}
-
-	}
-	else {
-		// Already have normals, just copy the data over.
-		for (int j = 0; j < m->nTris; j++)
-			m->tris[j] = nifTris[j];
-
-		// Copy normals. No transformation is done on the normals.
-		for (int i = 0; i < m->nVerts; i++) {
-			m->verts[i].nx = (*nifNorms)[i].x;
-			m->verts[i].nz = (*nifNorms)[i].z;
-			m->verts[i].ny = (*nifNorms)[i].y;
-		}
-	}
+	// Load triangles
+	for (int j = 0; j < m->nTris; j++)
+		m->tris[j] = nifTris[j];
 }
 
 void Automorph::BuildProximityCache(const string &shapeName) {
@@ -327,16 +236,15 @@ void Automorph::BuildProximityCache(const string &shapeName) {
 	maxCount = 0;
 	minCount = 60000;
 	proximity_radius = 10.0f;
-	for (int i = 0; i < m->nVerts; i++) {
-		Vertex* v = &m->verts[i];
 
+	for (int i = 0; i < m->nVerts; i++) {
 		int resultCount;
 		if (foreignShapes.find(shapeName) != foreignShapes.end()) {
-			Vertex vtmp(v->x * -10.0f, v->z * 10.0f, v->y * 10.0f);
+			Vector3 vtmp(m->verts[i].x * -10.0f, m->verts[i].z * 10.0f, m->verts[i].y * 10.0f);
 			resultCount = refTree->kd_nn(&vtmp, proximity_radius);
 		}
 		else
-			resultCount = refTree->kd_nn(v, proximity_radius);
+			resultCount = refTree->kd_nn(&m->verts[i], proximity_radius);
 
 		if (resultCount < minCount)
 			minCount = resultCount;

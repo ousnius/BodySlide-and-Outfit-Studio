@@ -81,45 +81,53 @@ bool TweakUndo::forwardStroke(const vector<mesh*>& validMeshes) {
 
 void TweakStroke::RestoreStartState(mesh* m) {
 	for (auto &stateIt : pointStartState[m]) {
-		if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT) {
+		if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
 			m->vcolors[stateIt.first] = stateIt.second;
-		}
-		else {
+		else
 			m->verts[stateIt.first] = stateIt.second;
-		}
 	}
+
 	if (refBrush->Type() != TBT_MASK && refBrush->Type() != TBT_WEIGHT) {
 		m->SmoothNormals();
+
 		if (startBVH[m] == endBVH[m]) {
-			for (auto &bvhNode : affectedNodes[m]) {
+			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
-			}
 		}
 		else
 			m->bvh = startBVH[m];
 	}
+
+	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
+		m->QueueUpdate(mesh::UpdateType::VertexColors);
+	else
+		m->QueueUpdate(mesh::UpdateType::Position);
+
 }
 
 void TweakStroke::RestoreEndState(mesh* m) {
 	for (auto &stateIt : pointEndState[m]) {
-		if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT) {
+		if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
 			m->vcolors[stateIt.first] = stateIt.second;
-		}
-		else {
+		else
 			m->verts[stateIt.first] = stateIt.second;
-		}
 	}
 
 	if (refBrush->Type() != TBT_MASK && refBrush->Type() != TBT_WEIGHT) {
 		m->SmoothNormals();
+
 		if (startBVH[m] == endBVH[m]) {
-			for (auto &bvhNode : affectedNodes[m]) {
+			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
-			}
 		}
 		else
 			m->bvh = endBVH[m];
 	}
+
+	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
+		m->QueueUpdate(mesh::UpdateType::VertexColors);
+	else
+		m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 void TweakStroke::beginStroke(TweakPickInfo& pickInfo) {
@@ -415,12 +423,13 @@ void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points
 
 		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
 
-		if (refmesh->vcolors)
-			ve = ve * (1.0f - refmesh->vcolors[points[i]].x);
-
+		ve = ve * (1.0f - refmesh->vcolors[points[i]].x);
 		vf = vs + ve;
+
 		refmesh->verts[points[i]] = (vf);
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::Position);
 }
 
 void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
@@ -438,12 +447,13 @@ void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points
 
 		applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
 
-		if (refmesh->vcolors)
-			ve = ve * (1.0f - refmesh->vcolors[points[i]].x);
-
+		ve = ve * (1.0f - refmesh->vcolors[points[i]].x);
 		vf = vs + ve;
+
 		refmesh->verts[points[i]] = (vf);
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::Position);
 }
 
 TB_Mask::TB_Mask() :TweakBrush() {
@@ -483,6 +493,8 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 	
 void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
@@ -512,6 +524,8 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 TB_Unmask::TB_Unmask() :TweakBrush() {
@@ -551,6 +565,8 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
@@ -580,6 +596,8 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 	
 TB_Deflate::TB_Deflate() :TweakBrush() {
@@ -756,10 +774,11 @@ void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 			delta *= strength;
 			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
 
-			if (refmesh->vcolors)
-				delta = delta * (1.0f - refmesh->vcolors[i].x);
+			delta = delta * (1.0f - refmesh->vcolors[i].x);
 			refmesh->verts[i] += delta;
 		}
+
+		refmesh->QueueUpdate(mesh::UpdateType::Position);
 	}
 }
 
@@ -789,10 +808,11 @@ void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 			delta *= strength;
 			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
 
-			if (refmesh->vcolors)
-				delta = delta * (1.0f - refmesh->vcolors[i].x);
+			delta = delta * (1.0f - refmesh->vcolors[i].x);
 			refmesh->verts[i] += delta;
 		}
+
+		refmesh->QueueUpdate(mesh::UpdateType::Position);
 	}
 }
 
@@ -887,10 +907,10 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 			ve = xformMirror * vs;
 			ve -= vs;
 			applyFalloff(ve, mpick.origin.DistanceTo(vs));
-			if (m->vcolors)
-				ve = ve * (1.0f - m->vcolors[i].x);
 
+			ve = ve * (1.0f - m->vcolors[i].x);
 			vf = vs + ve;
+
 			m->verts[i] = (vf);
 		}
 	}
@@ -902,12 +922,14 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 		ve = xform * vs;
 		ve -= vs;
 		applyFalloff(ve, pick.origin.DistanceTo(vs));
-		if (m->vcolors)
-			ve = ve * (1.0f - m->vcolors[i].x);
 
+		ve = ve * (1.0f - m->vcolors[i].x);
 		vf = vs + ve;
+
 		m->verts[i] = (vf);
 	}
+
+	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
@@ -940,10 +962,10 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 			ve = xformMirror * vs;
 			ve -= vs;
 			applyFalloff(ve, mpick.origin.DistanceTo(vs));
-			if (m->vcolors)
-				ve = ve * (1.0f - m->vcolors[i].x);
 
+			ve = ve * (1.0f - m->vcolors[i].x);
 			vf = vs + ve;
+
 			m->verts[i] = (vf);
 		}
 	}
@@ -955,12 +977,14 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 		ve = xform * vs;
 		ve -= vs;
 		applyFalloff(ve, pick.origin.DistanceTo(vs));
-		if (m->vcolors)
-			ve = ve * (1.0f - m->vcolors[i].x);
 
+		ve = ve * (1.0f - m->vcolors[i].x);
 		vf = vs + ve;
+
 		m->verts[i] = (vf);
 	}
+
+	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 void TB_Move::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
@@ -1036,12 +1060,14 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nP
 		movedpoints[p] = vs;
 		ve = xform * vs;
 		ve -= vs;
-		if (m->vcolors)
-			ve = ve * (1.0f - m->vcolors[p].x);
 
+		ve = ve * (1.0f - m->vcolors[p].x);
 		vf = vs + ve;
+
 		m->verts[p] = (vf);
 	}
+
+	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
@@ -1096,12 +1122,14 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nP
 		movedpoints[p] = vs;
 		ve = xform * vs;
 		ve -= vs;
-		if (m->vcolors)
-			ve = ve * (1.0f - m->vcolors[p].x);
 
+		ve = ve * (1.0f - m->vcolors[p].x);
 		vf = vs + ve;
+
 		m->verts[p] = (vf);
 	}
+
+	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
 TB_Weight::TB_Weight() :TweakBrush() {
@@ -1135,6 +1163,8 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		if (vf.y > 1.0f) vf.y = 1.0f;
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
@@ -1158,6 +1188,8 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		if (vf.y > 1.0f) vf.y = 1.0f;
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 TB_Unweight::TB_Unweight() :TweakBrush() {
@@ -1190,6 +1222,8 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* point
 		if (vf.y < 0.0f) vf.y = 0.0f;
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
@@ -1213,6 +1247,8 @@ void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* point
 		if (vf.y < 0.0f) vf.y = 0.0f;
 		refmesh->vcolors[points[i]] = vf;
 	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
 TB_SmoothWeight::TB_SmoothWeight() :TweakBrush() {
@@ -1373,15 +1409,15 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* p
 
 			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
 
-			if (refmesh->vcolors)
-				delta.y *= 1.0f - refmesh->vcolors[i].x;
-
+			delta.y *= 1.0f - refmesh->vcolors[i].x;
 			vc.y += delta.y;
 
 			if (vc.y < EPSILON) vc.y = 0.0f;
 			if (vc.y > 1.0f) vc.y = 1.0f;
 			refmesh->vcolors[i].y = vc.y;
 		}
+
+		refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 	}
 }
 
@@ -1413,14 +1449,14 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* p
 
 			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
 
-			if (refmesh->vcolors)
-				delta.y *= 1.0f - refmesh->vcolors[i].x;
-
+			delta.y *= 1.0f - refmesh->vcolors[i].x;
 			vc.y += delta.y;
 
 			if (vc.y < EPSILON) vc.y = 0.0f;
 			if (vc.y > 1.0f) vc.y = 1.0f;
 			refmesh->vcolors[i].y = vc.y;
 		}
+
+		refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 	}
 }

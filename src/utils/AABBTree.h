@@ -12,14 +12,11 @@ struct AABB {
 	AABB(const Vector3 newMin, const Vector3 newMax);
 
 	AABB(Vector3* points, int nPoints);
+	AABB(Vector3* points, ushort* indices, int nPoints);
 
-	AABB(Vertex* points, int nPoints);
+	void AddBoxToMesh(vector<Vector3>& verts, vector<Edge>& edges);
 
-	AABB(Vertex* points, ushort* indices, int nPoints);
-
-	void AddBoxToMesh(vector<Vertex>& verts, vector<Edge>& edges);
-
-	void Merge(Vertex* points, ushort* indices, int nPoints);
+	void Merge(Vector3* points, ushort* indices, int nPoints);
 	void Merge(AABB& other);
 
 	bool IntersectAABB(AABB& other);
@@ -32,7 +29,7 @@ struct AABB {
 class AABBTree {
 	int max_depth;
 	int min_facets;
-	Vertex* vertexRef;
+	Vector3* vertexRef;
 	Triangle* triRef;
 
 public:
@@ -63,8 +60,8 @@ public:
 
 		Vector3 Center();
 
-		void AddDebugFrames(vector<Vertex>& verts, vector<Edge>& edges, int maxdepth = 0, int curdepth = 0);
-		void AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vertex>& verts, vector<Edge>& edges);
+		void AddDebugFrames(vector<Vector3>& verts, vector<Edge>& edges, int maxdepth = 0, int curdepth = 0);
+		void AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vector3>& verts, vector<Edge>& edges);
 		bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results);
 		bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results);
 		void UpdateAABB(AABB* childBB = nullptr);
@@ -74,7 +71,7 @@ public:
 
 public:
 	AABBTree();
-	AABBTree(Vertex* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets);
+	AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets);
 	~AABBTree();
 
 	int MinFacets();
@@ -88,8 +85,8 @@ public:
 	// Calculate bounding box and geometric average for sub list.
 	void CalcAABBandGeoAvg(vector<int>& forFacets, int start, int end, AABB& outBB, Vector3& outAxisAvg);
 	void CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outBB, Vector3& outAxisAvg);
-	void BuildDebugFrames(Vertex** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
-	void BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vertex** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
+	void BuildDebugFrames(Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
+	void BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
 	bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results = nullptr);
 	bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results = nullptr);
 };

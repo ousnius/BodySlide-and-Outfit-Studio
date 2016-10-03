@@ -230,10 +230,6 @@ public:
 	virtual ~TB_Mask();
 
 	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
-		for (auto &m : refMeshes)
-			if (!m->vcolors)
-				m->ColorFill(Vector3());
-
 		return true;
 	}
 
@@ -250,10 +246,6 @@ public:
 	virtual ~TB_Unmask();
 
 	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
-		for (auto &m : refMeshes)
-			if (!m->vcolors)
-				m->ColorFill(Vector3());
-
 		return true;
 	}
 
@@ -370,10 +362,6 @@ public:
 	virtual ~TB_Weight();
 
 	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
-		for (auto &m : refMeshes)
-			if (!m->vcolors)
-				m->ColorFill(Vector3());
-
 		return true;
 	}
 
@@ -389,10 +377,6 @@ public:
 	virtual ~TB_Unweight();
 
 	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
-		for (auto &m : refMeshes)
-			if (!m->vcolors)
-				m->ColorFill(Vector3());
-
 		return true;
 	}
 
@@ -418,10 +402,6 @@ public:
 	virtual ~TB_SmoothWeight();
 
 	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
-		for (auto &m : refMeshes)
-			if (!m->vcolors)
-				m->ColorFill(Vector3());
-
 		return true;
 	}
 

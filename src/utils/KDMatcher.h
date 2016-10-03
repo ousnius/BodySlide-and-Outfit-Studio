@@ -18,13 +18,18 @@ class kd_matcher {
 public:
 	class kd_node {
 	public:
-		Vertex* p = nullptr;
-		kd_node* less = nullptr;
-		kd_node* more = nullptr;
+		pair<Vector3*, int> p;
+		kd_node* less;
+		kd_node* more;
 
 		kd_node() {
 			less = more = nullptr;
-			p = nullptr;
+			p = pair<Vector3*, int>(nullptr, -1);
+		}
+
+		kd_node(const pair<Vector3*, int>& point) {
+			less = more = nullptr;
+			p = point;
 		}
 
 		~kd_node() {
@@ -35,19 +40,14 @@ public:
 			less = more = nullptr;
 		}
 
-		kd_node(Vertex* point) {
-			less = more = nullptr;
-			p = point;
-		}
-
-		Vertex* add(Vertex* point, int depth) {
+		pair<Vector3*, int> add(const pair<Vector3*, int>& point, int depth) {
 			int axis = depth % 3;
 			bool domore = false;
-			float dx = p->x - point->x;
-			float dy = p->y - point->y;
-			float dz = p->z - point->z;
+			float dx = p.first->x - point.first->x;
+			float dy = p.first->y - point.first->y;
+			float dz = p.first->z - point.first->z;
 
-			if (fabs(dx) < .00001 && fabs(dy) < .00001 && fabs(dz) < .00001)
+			if (fabs(dx) < 0.00001f && fabs(dy) < 0.00001f && fabs(dz) < 0.00001f)
 				return p;
 			switch (axis) {
 			case 0:
@@ -67,16 +67,15 @@ public:
 			else {
 				if (less) return less->add(point, depth + 1);
 				else less = new kd_node(point);
-
 			}
-			return 0;
+			return pair<Vector3*, int>(nullptr, -1);
 		}
 	};
 
 	kd_node* root = nullptr;
-	Vertex* points = nullptr;
+	Vector3* points = nullptr;
 	int count;
-	vector<pair<Vertex*, Vertex*>> matches;
+	vector<pair<pair<Vector3*, int>, pair<Vector3*, int>>> matches;
 
 	~kd_matcher() {
 		if (root)
@@ -85,29 +84,29 @@ public:
 		root = nullptr;
 	}
 
-	kd_matcher(Vertex* points, int count) {
+	kd_matcher(Vector3* points, int count) {
 		if (count <= 0)
 			return;
 
-		Vertex* pong;
-		root = new kd_node(&points[0]);
+		pair<Vector3*, int> pong;
+		root = new kd_node(pair<Vector3*, int>(&points[0], 0));
 		for (int i = 1; i < count; i++) {
-			pong = root->add(&points[i], 0);
-			if (pong)
-				matches.push_back(pair<Vertex*, Vertex*>(&points[i], pong));
+			pair<Vector3*, int> point(&points[i], i);
+			pong = root->add(point, 0);
+			if (pong.first)
+				matches.push_back(pair<pair<Vector3*, int>, pair<Vector3*, int>>(point, pong));
 		}
 	}
 };
 
 class kd_query_result {
 public:
-	Vertex* v;
+	Vector3* v;
 	ushort vertex_index;
 	float distance;
 	bool operator < (const kd_query_result& other) const {
 		return distance < other.distance;
 	}
-	//static bool distLess(kd_query_result r1, kd_query_result r2) { return r1.distance < r2.distance; }
 };
 
 // More general purpose KD tree that assembles a tree from input points and allows nearest neighbor and radius searches on the data.
@@ -115,7 +114,7 @@ class kd_tree {
 public:
 	class kd_node {
 	public:
-		Vertex* p;
+		Vector3* p;
 		int p_i;
 		kd_node* less;
 		kd_node* more;
@@ -134,13 +133,13 @@ public:
 			less = more = nullptr;
 		}
 
-		kd_node(Vertex* point, int point_index) {
+		kd_node(Vector3* point, int point_index) {
 			less = more = nullptr;
 			p = point;
 			p_i = point_index;
 		}
 
-		void add(Vertex* point, int point_index, int depth) {
+		void add(Vector3* point, int point_index, int depth) {
 			int axis = depth % 3;
 			bool domore = false;
 			float dx = p->x - point->x;
@@ -170,7 +169,7 @@ public:
 
 		// Finds the closest point(s) to "querypoint" within the provided radius. If radius is 0, only the single closest point is found.
 		// On first call, "mindist" should be set to FLT_MAX and depth set to 0.
-		void find_closest(Vertex* querypoint, vector<kd_query_result>& queryResult, float radius, float& mindist, int depth = 0) {
+		void find_closest(Vector3* querypoint, vector<kd_query_result>& queryResult, float radius, float& mindist, int depth = 0) {
 			kd_query_result kdqr;
 			int axis = depth % 3;				// Which separating axis to use based on depth
 			float dx = p->x - querypoint->x;	// Axis sides
@@ -211,7 +210,7 @@ public:
 
 			// On the way back out check current point to see if it's the closest
 			// Fix? Might want to use squared distance instead... probably unnecessary.
-			pointdist = querypoint->DistanceTo(p);
+			pointdist = querypoint->DistanceTo(*p);
 
 			// No opposites
 			bool notOpp = true;
@@ -250,7 +249,6 @@ public:
 	};
 
 	kd_node* root;
-	Vertex* points;
 	vector<kd_query_result> queryResult;
 
 	~kd_tree() {
@@ -260,7 +258,7 @@ public:
 		root = nullptr;
 	}
 
-	kd_tree(Vertex* points, int count) {
+	kd_tree(Vector3* points, int count) {
 		if (count <= 0)
 			return;
 
@@ -269,7 +267,7 @@ public:
 			root->add(&points[i], i, 0);
 	}
 
-	int kd_nn(Vertex* querypoint, float radius) {
+	int kd_nn(Vector3* querypoint, float radius) {
 		float mindist = FLT_MAX;
 		if (radius != 0.0f)
 			mindist = radius;
