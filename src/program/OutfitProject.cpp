@@ -1550,8 +1550,19 @@ void OutfitProject::ClearUnmaskedDiff(const string& shapeName, const string& sli
 }
 
 void OutfitProject::DeleteSlider(const string& sliderName) {
-	baseDiffData.ClearSet(sliderName);
-	morpher.ClearResultSet(sliderName);
+	vector<string> shapes;
+	GetShapes(shapes);
+
+	for (auto &s : shapes) {
+		string target = ShapeToTarget(s);
+		string data = activeSet[sliderName].TargetDataName(target);
+
+		if (IsBaseShape(s))
+			baseDiffData.ClearSet(data);
+		else
+			morpher.ClearResultSet(data);
+	}
+
 	activeSet.DeleteSlider(sliderName);
 }
 
