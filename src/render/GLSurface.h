@@ -47,6 +47,7 @@ class GLSurface {
 	GLShader::LightSource light2;
 	GLShader::Material material;
 
+	Vector3 colorBackground = Vector3(0.82f, 0.82f, 0.82f);
 	Vector3 colorRed = Vector3(1.0f, 0.25f, 0.25f);
 	Vector3 colorGreen = Vector3(0.25f, 1.0f, 0.25f);
 

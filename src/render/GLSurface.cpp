@@ -643,7 +643,7 @@ void GLSurface::RenderOneFrame() {
 
 	canvas->SetCurrent(*context);
 
-	glClearColor(0.81f, 0.82f, 0.82f, 1.0f);
+	glClearColor(colorBackground.x, colorBackground.y, colorBackground.z, 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	UpdateProjection();
@@ -672,6 +672,7 @@ void GLSurface::RenderOneFrame() {
 
 void GLSurface::RenderMesh(mesh* m) {
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glEnable(GL_DEPTH_TEST);
 
 	if (!m->doublesided)
 		glEnable(GL_CULL_FACE);
@@ -788,7 +789,6 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDrawElements(GL_LINES, m->nEdges * 2, GL_UNSIGNED_SHORT, (GLvoid*)0);
 
 		glDisableVertexAttribArray(0);
-		glEnable(GL_DEPTH_TEST);
 	}
 	else if (m->rendermode == RenderMode::UnlitPoints) {
 		glDisable(GL_CULL_FACE);
@@ -802,7 +802,6 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDrawArrays(GL_POINTS, 0, m->nVerts);
 
 		glDisableVertexAttribArray(0);
-		glEnable(GL_DEPTH_TEST);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
