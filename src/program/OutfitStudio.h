@@ -50,20 +50,20 @@ public:
 
 class SegmentItemData : public wxTreeItemData  {
 public:
-	vector<uint> tris;
+	set<uint> tris;
 
-	SegmentItemData(const vector<uint>& inTriangles) {
+	SegmentItemData(const set<uint>& inTriangles) {
 		tris = inTriangles;
 	}
 };
 
 class SubSegmentItemData : public wxTreeItemData  {
 public:
-	vector<uint> tris;
+	set<uint> tris;
 	uint type;
 	vector<float> extraData;
 
-	SubSegmentItemData(const vector<uint>& inTriangles, const uint& inType, const vector<float>& inExtraData = vector<float>()) {
+	SubSegmentItemData(const set<uint>& inTriangles, const uint& inType, const vector<float>& inExtraData = vector<float>()) {
 		tris = inTriangles;
 		type = inType;
 		extraData = inExtraData;

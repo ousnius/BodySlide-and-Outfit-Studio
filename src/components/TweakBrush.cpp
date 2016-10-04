@@ -220,7 +220,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 					addPoint(m, pts2[m][i], outPositions[m][i]);
 			}
 
-			if (refBrush->LiveNormals() && brushType != TBT_WEIGHT) {
+			if (refBrush->LiveNormals() && brushType != TBT_WEIGHT && brushType != TBT_MASK) {
 				auto pending1 = async(launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m], nPts1);
 				normalUpdates.push_back(move(pending1));
 
@@ -232,7 +232,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 	lastPoint = pickInfo.origin;
 
-	if (refBrush->LiveBVH() && brushType != TBT_WEIGHT) {
+	if (refBrush->LiveBVH() && brushType != TBT_WEIGHT && brushType != TBT_MASK) {
 		for (auto &m : refMeshes)
 			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
