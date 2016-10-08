@@ -740,16 +740,15 @@ void GLSurface::RenderMesh(mesh* m) {
 		}
 
 		// Offset triangles so that points can be visible
-		if (m->bShowPoints) {
-			glEnable(GL_POLYGON_OFFSET_FILL);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		if (m->bShowPoints)
 			glPolygonOffset(4.0f, 4.0f);
-		}
+		else
+			glPolygonOffset(0.03f, 0.03f);
 
 		// Render mesh
 		glDrawElements(GL_TRIANGLES, m->nTris * 3, GL_UNSIGNED_SHORT, (GLvoid*)0);
-
-		if (m->bShowPoints)
-			glDisable(GL_POLYGON_OFFSET_FILL);
+		glDisable(GL_POLYGON_OFFSET_FILL);
 
 		// Render wireframe
 		if (bWireframe && m->rendermode == RenderMode::Normal) {
