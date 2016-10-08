@@ -6323,23 +6323,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		wxPoint p = event.GetPosition();
 		int delt = event.GetWheelRotation();
 
-		if (transformMode) {
-			// Adjust scale of active shapes
-			float factor = delt < 0 ? 0.99f : 1.01f;
-			Vector3 scale(factor, factor, factor);
-			for (auto &m : gls.GetActiveMeshes()) {
-				unordered_map<ushort, float> mask;
-				vector<Vector3> verts;
-				GetShapeMask(mask, m->shapeName);
-
-				os->project->ScaleShape(m->shapeName, scale, &mask);
-				os->project->GetLiveVerts(m->shapeName, verts);
-				UpdateMeshVertices(m->shapeName, &verts, true, false);
-			}
-
-			ShowTransformTool();
-		}
-		else if (editMode) {
+		if (editMode) {
 			// Adjust brush size
 			if (delt < 0)
 				DecBrush();
