@@ -1079,17 +1079,6 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nP
 	dv.z *= pick.view.z;
 
 	Matrix4 xform;
-	float dist = 0.0f;
-	if (fabs(dv.x) > EPSILON) {
-		dist = dv.x;
-	}
-	else if (fabs(dv.y) > EPSILON) {
-		dist = dv.y;
-	}
-	else if (fabs(dv.z) > EPSILON) {
-		dist = dv.z;
-	}
-
 
 	if (xformType == 0) {
 		xform.Translate(dv * strength);
@@ -1108,8 +1097,28 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nP
 		xform.PushTranslate(pick.center * -1.0f);
 	}
 	else if (xformType == 2) {
-		dist = fabs(1.0f + dist / 10.0f);
-		xform.Scale(dist, dist, dist);
+		Vector3 dist(1.0f, 1.0f, 1.0f);
+		if (fabs(dv.x) > EPSILON)
+			dist.x = fabs(1.0f + dv.x / 10.0f);
+		else if (fabs(dv.y) > EPSILON)
+			dist.y = fabs(1.0f + dv.y / 10.0f);
+		else if (fabs(dv.z) > EPSILON)
+			dist.z = fabs(1.0f + dv.z / 10.0f);
+
+		xform.Scale(dist.x, dist.y, dist.z);
+	}
+	else if (xformType == 3) {
+		xform.PushTranslate(pick.center);
+		Vector3 a = pick.origin - pick.center;
+		Vector3 b = pickInfo.origin - pick.center;
+		Vector3 dist = a + b;
+
+		float scale = (dist.x + dist.y) / 2.0f;
+		scale = fabs(1.0f + scale / 10.0f);
+		if (scale > EPSILON)
+			xform.PushScale(scale, scale, scale);
+
+		xform.PushTranslate(pick.center * -1.0f);
 	}
 
 	Vector3 vs;

@@ -393,6 +393,10 @@ public:
 		XRotateMesh = nullptr;
 		YRotateMesh = nullptr;
 		ZRotateMesh = nullptr;
+		XScaleMesh = nullptr;
+		YScaleMesh = nullptr;
+		ZScaleMesh = nullptr;
+		ScaleUniformMesh = nullptr;
 		gls.Cleanup();
 	}
 
@@ -498,12 +502,16 @@ private:
 	TweakUndo* strokeManager;
 	TweakUndo baseStrokes;
 
-	mesh* XMoveMesh;
-	mesh* YMoveMesh;
-	mesh* ZMoveMesh;
-	mesh* XRotateMesh;
-	mesh* YRotateMesh;
-	mesh* ZRotateMesh;
+	mesh* XMoveMesh = nullptr;
+	mesh* YMoveMesh = nullptr;
+	mesh* ZMoveMesh = nullptr;
+	mesh* XRotateMesh = nullptr;
+	mesh* YRotateMesh = nullptr;
+	mesh* ZRotateMesh = nullptr;
+	mesh* XScaleMesh = nullptr;
+	mesh* YScaleMesh = nullptr;
+	mesh* ZScaleMesh = nullptr;
+	mesh* ScaleUniformMesh = nullptr;
 	Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
 	float lastCenterDistance;
 

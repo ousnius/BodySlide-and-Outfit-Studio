@@ -5555,12 +5555,6 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	bConnectedEdit = false;
 	bGlobalBrushCollision = true;
 
-	XMoveMesh = nullptr;
-	YMoveMesh = nullptr;
-	ZMoveMesh = nullptr;
-	XRotateMesh = nullptr;
-	YRotateMesh = nullptr;
-	ZRotateMesh = nullptr;
 	lastCenterDistance = 0.0f;
 
 	strokeManager = &baseStrokes;
@@ -5991,20 +5985,29 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 		}
 	}
 	else if (mname.find("Scale") != string::npos) {
-		translateBrush.SetXFormType(2);
-		switch (mname[0]) {
-		case 'X':
-			tpi.view = Vector3(1.0f, 0.0f, 0.0f);
+		if (mname.find("Uniform") == string::npos) {
+			translateBrush.SetXFormType(2);
+			switch (mname[0]) {
+			case 'X':
+				tpi.view = Vector3(1.0f, 0.0f, 0.0f);
+				tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
+				break;
+			case 'Y':
+				tpi.view = Vector3(0.0f, 1.0f, 0.0f);
+				tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
+				break;
+			case 'Z':
+				tpi.view = Vector3(0.0f, 0.0f, 1.0f);
+				tpi.normal = Vector3(1.0f, 0.0f, 0.0f);
+				break;
+			}
+		}
+		else {
+			translateBrush.SetXFormType(3);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(1.0f, 0.0f, 0.0f), -tpi.center.x);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 1.0f, 0.0f), -tpi.center.y);
+			gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, Vector3(0.0f, 0.0f, 1.0f), -tpi.center.z);
 			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
-			break;
-		case 'Y':
-			tpi.view = Vector3(0.0f, 1.0f, 0.0f);
-			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
-			break;
-		case 'Z':
-			tpi.view = Vector3(0.0f, 0.0f, 1.0f);
-			tpi.normal = Vector3(1.0f, 0.0f, 0.0f);
-			break;
 		}
 	}
 
@@ -6019,6 +6022,10 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	XRotateMesh->bVisible = false;
 	YRotateMesh->bVisible = false;
 	ZRotateMesh->bVisible = false;
+	XScaleMesh->bVisible = false;
+	YScaleMesh->bVisible = false;
+	ZScaleMesh->bVisible = false;
+	ScaleUniformMesh->bVisible = false;
 	hitMesh->bVisible = true;
 	return true;
 }
@@ -6158,20 +6165,22 @@ void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
 		xformCenter.Zero();
 
 	if (show) {
-		bool XMoveVis = true;
-		bool YMoveVis = true;
-		bool ZMoveVis = true;
-		bool XRotateVis = true;
-		bool YRotateVis = true;
-		bool ZRotateVis = true;
+		bool XMoveVis = true, YMoveVis = true, ZMoveVis = true;
+		bool XRotateVis = true, YRotateVis = true, ZRotateVis = true;
+		bool XScaleVis = true, YScaleVis = true, ZScaleVis = true;
+		bool ScaleUniformVis = true;
 
-		if (keepVisibility && XMoveMesh && YMoveMesh && ZMoveMesh && XRotateMesh && YRotateMesh && ZRotateMesh) {
+		if (keepVisibility && XMoveMesh) {
 			XMoveVis = XMoveMesh->bVisible;
 			YMoveVis = YMoveMesh->bVisible;
 			ZMoveVis = ZMoveMesh->bVisible;
 			XRotateVis = XRotateMesh->bVisible;
 			YRotateVis = YRotateMesh->bVisible;
 			ZRotateVis = ZRotateMesh->bVisible;
+			XScaleVis = XScaleMesh->bVisible;
+			YScaleVis = YScaleMesh->bVisible;
+			ZScaleVis = ZScaleMesh->bVisible;
+			ScaleUniformVis = ScaleUniformMesh->bVisible;
 		}
 
 		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
@@ -6182,6 +6191,11 @@ void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
 		YRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 1.25f, 0.04f, Vector3(0.0f, 1.0f, 0.0f), "YRotateMesh");
 		ZRotateMesh = gls.AddVis3dRing(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 1.25f, 0.04f, Vector3(0.0f, 0.0f, 1.0f), "ZRotateMesh");
 
+		XScaleMesh = gls.AddVis3dCube(xformCenter + Vector3(0.75f, 0.0f, 0.0f), Vector3(1.0f, 0.0f, 0.0f), 0.12f, Vector3(1.0f, 0.0f, 0.0f), "XScaleMesh");
+		YScaleMesh = gls.AddVis3dCube(xformCenter + Vector3(0.0f, 0.75f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), 0.12f, Vector3(0.0f, 1.0f, 0.0f), "YScaleMesh");
+		ZScaleMesh = gls.AddVis3dCube(xformCenter + Vector3(0.0f, 0.0f, 0.75f), Vector3(0.0f, 0.0f, 1.0f), 0.12f, Vector3(0.0f, 0.0f, 1.0f), "ZScaleMesh");
+		ScaleUniformMesh = gls.AddVis3dCube(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.15f, Vector3(0.0f, 0.0f, 0.0f), "ScaleUniformMesh");
+
 		lastCenterDistance = 0.0f;
 
 		if (keepVisibility) {
@@ -6191,16 +6205,24 @@ void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
 			XRotateMesh->bVisible = XRotateVis;
 			YRotateMesh->bVisible = YRotateVis;
 			ZRotateMesh->bVisible = ZRotateVis;
+			XScaleMesh->bVisible = XScaleVis;
+			YScaleMesh->bVisible = YScaleVis;
+			ZScaleMesh->bVisible = ZScaleVis;
+			ScaleUniformMesh->bVisible = ScaleUniformVis;
 		}
 	}
 	else {
-		if (XMoveMesh && YMoveMesh && ZMoveMesh && XRotateMesh && YRotateMesh && ZRotateMesh) {
+		if (XMoveMesh) {
 			XMoveMesh->bVisible = false;
 			YMoveMesh->bVisible = false;
 			ZMoveMesh->bVisible = false;
 			XRotateMesh->bVisible = false;
 			YRotateMesh->bVisible = false;
 			ZRotateMesh->bVisible = false;
+			XScaleMesh->bVisible = false;
+			YScaleMesh->bVisible = false;
+			ZScaleMesh->bVisible = false;
+			ScaleUniformMesh->bVisible = false;
 		}
 	}
 
@@ -6212,7 +6234,7 @@ void wxGLPanel::UpdateTransformTool() {
 	if (!transformMode)
 		return;
 
-	if (!XMoveMesh || !YMoveMesh || !ZMoveMesh || !XRotateMesh || !YRotateMesh || !ZRotateMesh)
+	if (!XMoveMesh)
 		return;
 
 	Vector3 unprojected;
@@ -6227,6 +6249,11 @@ void wxGLPanel::UpdateTransformTool() {
 		XRotateMesh->ScaleVertices(xformCenter, factor);
 		YRotateMesh->ScaleVertices(xformCenter, factor);
 		ZRotateMesh->ScaleVertices(xformCenter, factor);
+
+		XScaleMesh->ScaleVertices(xformCenter, factor);
+		YScaleMesh->ScaleVertices(xformCenter, factor);
+		ZScaleMesh->ScaleVertices(xformCenter, factor);
+		ScaleUniformMesh->ScaleVertices(xformCenter, factor);
 	}
 
 	lastCenterDistance = unprojected.DistanceTo(xformCenter) / 15.0f;
@@ -6238,6 +6265,11 @@ void wxGLPanel::UpdateTransformTool() {
 	XRotateMesh->ScaleVertices(xformCenter, lastCenterDistance);
 	YRotateMesh->ScaleVertices(xformCenter, lastCenterDistance);
 	ZRotateMesh->ScaleVertices(xformCenter, lastCenterDistance);
+
+	XScaleMesh->ScaleVertices(xformCenter, lastCenterDistance);
+	YScaleMesh->ScaleVertices(xformCenter, lastCenterDistance);
+	ZScaleMesh->ScaleVertices(xformCenter, lastCenterDistance);
+	ScaleUniformMesh->ScaleVertices(xformCenter, lastCenterDistance);
 }
 
 void wxGLPanel::ShowVertexEdit(bool show) {
@@ -6397,13 +6429,17 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		}
 
 		if (transformMode && !isTransforming) {
-			if (XMoveMesh && YMoveMesh && ZMoveMesh && XRotateMesh && YRotateMesh && ZRotateMesh) {
+			if (XMoveMesh) {
 				XMoveMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 				YMoveMesh->color = Vector3(0.0f, 1.0f, 0.0f);
 				ZMoveMesh->color = Vector3(0.0f, 0.0f, 1.0f);
 				XRotateMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 				YRotateMesh->color = Vector3(0.0f, 1.0f, 0.0f);
 				ZRotateMesh->color = Vector3(0.0f, 0.0f, 1.0f);
+				XScaleMesh->color = Vector3(1.0f, 0.0f, 0.0f);
+				YScaleMesh->color = Vector3(0.0f, 1.0f, 0.0f);
+				ZScaleMesh->color = Vector3(0.0f, 0.0f, 1.0f);
+				ScaleUniformMesh->color = Vector3(0.0f, 0.0f, 0.0f);
 
 				Vector3 outOrigin, outNormal;
 				mesh* hitMesh = nullptr;

@@ -1237,6 +1237,68 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 	return m;
 }
 
+mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const string& name) {
+	int meshID = GetOverlayID(name);
+	if (meshID >= 0)
+		delete overlays[meshID];
+	else
+		meshID = -1;
+
+	mesh* m = new mesh();
+
+	int nCubeVerts = 8;
+	int nCubeTris = 12;
+	m->nVerts = nCubeVerts;
+	m->nTris = nCubeTris;
+	m->nEdges = 0;
+
+	m->verts = new Vector3[m->nVerts];
+	m->tris = new Triangle[m->nTris];
+	m->color = color;
+	m->shapeName = name;
+	m->rendermode = RenderMode::UnlitSolid;
+	m->material = GetPrimitiveMaterial();
+
+	Matrix4 mat;
+	mat.Align(Vector3(0.0f, 0.0f, 1.0f), normal);
+	mat.Scale(radius, radius, radius);
+	mat.Translate(center);
+
+	m->verts[0] = mat * Vector3(-1.0f, -1.0f, 1.0f);
+	m->verts[1] = mat * Vector3(1.0f, -1.0f, 1.0f);
+	m->verts[2] = mat * Vector3(1.0f, 1.0f, 1.0f);
+	m->verts[3] = mat * Vector3(-1.0f, 1.0f, 1.0f);
+	m->verts[4] = mat * Vector3(-1.0f, -1.0f, -1.0f);
+	m->verts[5] = mat * Vector3(1.0f, -1.0f, -1.0f);
+	m->verts[6] = mat * Vector3(1.0f, 1.0f, -1.0f);
+	m->verts[7] = mat * Vector3(-1.0f, 1.0f, -1.0f);
+
+	m->tris[0] = Triangle(0, 1, 2);
+	m->tris[1] = Triangle(2, 3, 0);
+	m->tris[2] = Triangle(1, 5, 6);
+	m->tris[3] = Triangle(6, 2, 1);
+	m->tris[4] = Triangle(7, 6, 5);
+	m->tris[5] = Triangle(5, 4, 7);
+	m->tris[6] = Triangle(4, 0, 3);
+	m->tris[7] = Triangle(3, 7, 4);
+	m->tris[8] = Triangle(4, 5, 1);
+	m->tris[9] = Triangle(1, 0, 4);
+	m->tris[10] = Triangle(3, 2, 6);
+	m->tris[11] = Triangle(6, 7, 3);
+
+	m->CreateBuffers();
+
+	if (meshID >= 0) {
+		overlays[meshID] = m;
+	}
+	else {
+		namedOverlays[m->shapeName] = overlays.size();
+		overlays.push_back(m);
+		meshID = overlays.size() - 1;
+	}
+	return m;
+}
+
 void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs, vector<int>* changed) {
 	int id = GetMeshID(shapeName);
 	if (id < 0)

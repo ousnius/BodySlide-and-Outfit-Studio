@@ -242,8 +242,9 @@ public:
 	bool CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");
-	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name = "XRotateMesh");
-	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name = "XMoveMesh");
+	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name);
+	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name);
+	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const string& name);
 	mesh* AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
 
 	void AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
