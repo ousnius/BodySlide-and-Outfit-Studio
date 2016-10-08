@@ -18,9 +18,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #include "BodySlideApp.h"
 
-#ifdef _WIN32
+#ifdef WIN64
 	#include <ppl.h>
 	#include <concurrent_unordered_map.h>
+#else
+	#undef _PPL_H
 #endif
 
 ConfigurationManager Config;
@@ -1597,15 +1599,13 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
+	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
 #ifdef _PPL_H
-	#ifdef WIN32
-		// Force a maximum of 2 concurrencies due to memory limits of 32-bit builds
-		concurrency::CurrentScheduler::Create(concurrency::SchedulerPolicy(2, concurrency::MinConcurrency, 1, concurrency::MaxConcurrency, 2));
-	#endif
 	concurrency::critical_section critical;
 	concurrency::concurrent_unordered_map<string, string> failedOutfitsCon;
 	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const string& outfit)
 #else
+	#define return continue
 	unordered_map<string, string> failedOutfitsCon;
 	for (auto &outfit : outfitList)
 #endif
@@ -1855,7 +1855,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 #ifdef _PPL_H
 	});
 #else
-	};
+	}
+#undef return
 #endif
 
 	progWnd->Update(1000);
