@@ -11,8 +11,6 @@ Automorph::Automorph() {
 	refTree = nullptr;
 	srcDiffData = nullptr;
 	bEnableMask = true;
-	proximity_radius = 10.0f;
-	max_prox_points = 5.0f;
 }
 
 Automorph::~Automorph() {
@@ -230,34 +228,35 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 		m->tris[j] = nifTris[j];
 }
 
-void Automorph::BuildProximityCache(const string &shapeName) {
+void Automorph::ClearProximityCache() {
+	prox_cache.clear();
+}
+
+void Automorph::BuildProximityCache(const string &shapeName, const float& proximityRadius) {
 	mesh* m = sourceShapes[shapeName];
-	totalCount = 0;
-	maxCount = 0;
-	minCount = 60000;
-	proximity_radius = 10.0f;
+	int maxCount = 0;
+	int minCount = 60000;
 
 	for (int i = 0; i < m->nVerts; i++) {
 		int resultCount;
 		if (foreignShapes.find(shapeName) != foreignShapes.end()) {
 			Vector3 vtmp(m->verts[i].x * -10.0f, m->verts[i].z * 10.0f, m->verts[i].y * 10.0f);
-			resultCount = refTree->kd_nn(&vtmp, proximity_radius);
+			resultCount = refTree->kd_nn(&vtmp, proximityRadius);
 		}
 		else
-			resultCount = refTree->kd_nn(&m->verts[i], proximity_radius);
+			resultCount = refTree->kd_nn(&m->verts[i], proximityRadius);
 
 		if (resultCount < minCount)
 			minCount = resultCount;
 		if (resultCount > maxCount)
 			maxCount = resultCount;
 
-		totalCount += resultCount;
 		vector<kd_query_result> indexResults;
-		for (int j = 0; j < resultCount; j++)
-			indexResults.push_back(refTree->queryResult[j] /*.vertex_index*/);
+		for (int id = 0; id < resultCount; id++)
+			indexResults.push_back(refTree->queryResult[id]);
+
 		prox_cache[i] = indexResults;
 	}
-	avgCount = (float)totalCount / (float)m->nVerts;
 }
 
 void Automorph::GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& outDiff) {
@@ -360,7 +359,7 @@ string Automorph::ResultDataName(const string& shapeName, const string& sliderNa
 	return f->second;
 }
 
-void Automorph::GenerateResultDiff(const string& shapeName, const string &sliderName, const string& refDataName) {
+void Automorph::GenerateResultDiff(const string& shapeName, const string &sliderName, const string& refDataName, const int& maxResults) {
 	unordered_map<ushort, Vector3>* diffData = srcDiffData->GetDiffSet(refDataName);
 	if (!diffData)
 		return;
@@ -375,58 +374,55 @@ void Automorph::GenerateResultDiff(const string& shapeName, const string &slider
 
 	resultDiffData.AddEmptySet(shapeName + sliderName, shapeName);
 
-	ushort index = 0xFFFF;
 	for (int i = 0; i < m->nVerts; i++) {
-		index++;
 		vector<kd_query_result>* vertProx = &prox_cache[i];
 		int nValues = vertProx->size();
-		if (nValues > 10)
-			nValues = 10;
+		if (nValues > maxResults)
+			nValues = maxResults;
+
 		int nearMoves = 0;
-		double invDistTotal = 0.0f;
+		double invDistTotal = 0.0;
 
 		double weight;
-		double invDist[40];
-		Vector3 effectVector[40];
 		Vector3 totalMove;
+		vector<double> invDist(nValues);
+		vector<Vector3> effectVector(nValues);
 		for (int j = 0; j < nValues; j++) {
 			ushort vi = (*vertProx)[j].vertex_index;
 			auto diffItem = diffData->find(vi);
 			if (diffItem != diffData->end()) {
 				weight = (*vertProx)[j].distance;	// "weight" is just a placeholder here...
-				if (weight == 0)
-					invDist[nearMoves] = 1000;		// Exact match, choose big nearness weight.
+				if (weight == 0.0)
+					invDist[nearMoves] = 1000.0;	// Exact match, choose big nearness weight.
 				else
-					invDist[nearMoves] = 1 / weight;
+					invDist[nearMoves] = 1.0 / weight;
+
 				invDistTotal += invDist[nearMoves];
 				effectVector[nearMoves] = diffItem->second;
 				nearMoves++;
 			}
-			else if (j == 0) {						// Closest proximity vert has zero movement.
-				//	nearmoves=0;
-				//	break;
+			else if (j == 0) {
+				// Closest proximity vert has zero movement
+				nearMoves = 0;
+				break;
 			}
-
 		}
+
 		if (nearMoves == 0)
 			continue;
 
-		totalMove.x = 0;
-		totalMove.y = 0;
-		totalMove.z = 0;
+		totalMove.Zero();
 		for (int j = 0; j < nearMoves; j++) {
 			weight = invDist[j] / invDistTotal;
 			totalMove += (effectVector[j] * (float)weight);
-			//totalmove.x += ( weight ) *  effectVector[j].x;
-			//totalmove.y += ( weight ) *  effectVector[j].y;
-			//totalmove.z += ( weight ) *  effectVector[j].z;
 		}
 
 		if (m->vcolors && bEnableMask)
 			totalMove = totalMove * (1.0f - m->vcolors[i].x);
+
 		if (totalMove.DistanceTo(Vector3(0.0f, 0.0f, 0.0f)) < EPSILON)
 			continue;
 
-		resultDiffData.UpdateDiff(shapeName + sliderName, shapeName, index, totalMove);
+		resultDiffData.UpdateDiff(shapeName + sliderName, shapeName, i, totalMove);
 	}
 }

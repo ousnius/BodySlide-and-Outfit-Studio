@@ -4420,6 +4420,8 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 		UpdateProgress(99);
 	}
 
+	project->morpher.ClearProximityCache();
+
 	if (statusBar)
 		statusBar->SetStatusText(_("Shape(s) conformed."));
 
@@ -5254,6 +5256,49 @@ void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
+bool OutfitStudio::ShowWeightCopy(WeightCopyOptions& options) {
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyWeights")) {
+		XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
+			float changed = XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->GetValue() / 1000.0f;
+			changed = min(changed, 15.0f);
+			changed = max(changed, 0.0f);
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", changed));
+		});
+
+		XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->Bind(wxEVT_TEXT, [&dlg](wxCommandEvent&) {
+			float changed = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
+			changed = min(changed, 15.0f);
+			changed = max(changed, 0.0f);
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(changed * 1000);
+		});
+
+		XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
+			int changed = XRCCTRL(dlg, "maxResultsSlider", wxSlider)->GetValue();
+			changed = min(changed, 12);
+			changed = max(changed, 0);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue(wxString::Format("%d", changed));
+		});
+
+		XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Bind(wxEVT_TEXT, [&dlg](wxCommandEvent&) {
+			int changed = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
+			changed = min(changed, 12);
+			changed = max(changed, 0);
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->SetValue(changed);
+		});
+
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudio::OnEnterClose, this);
+
+		if (dlg.ShowModal() == wxID_OK) {
+			options.proximityRadius = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
+			options.maxResults = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
+			return true;
+		}
+	}
+
+	return false;
+}
+
 void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
@@ -5263,22 +5308,27 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (project->GetBaseShape().empty())
 		return;
 
-	StartProgress(_("Copying bone weights..."));
+	WeightCopyOptions options;
+	if (ShowWeightCopy(options)) {
+		StartProgress(_("Copying bone weights..."));
 
-	unordered_map<ushort, float> mask;
-	for (int i = 0; i < selectedItems.size(); i++) {
-		if (!project->IsBaseShape(selectedItems[i]->shapeName)) {
-			wxLogMessage("Copying bone weights to '%s'...", selectedItems[i]->shapeName);
-			mask.clear();
-			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
-			project->CopyBoneWeights(selectedItems[i]->shapeName, &mask);
+		unordered_map<ushort, float> mask;
+		for (int i = 0; i < selectedItems.size(); i++) {
+			if (!project->IsBaseShape(selectedItems[i]->shapeName)) {
+				wxLogMessage("Copying bone weights to '%s'...", selectedItems[i]->shapeName);
+				mask.clear();
+				glView->GetShapeMask(mask, selectedItems[i]->shapeName);
+				project->CopyBoneWeights(selectedItems[i]->shapeName, options.proximityRadius, options.maxResults, &mask);
+			}
+			else
+				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 		}
-		else
-			wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
-	}
 
-	UpdateProgress(100, _("Finished"));
-	EndProgress();
+		project->morpher.ClearProximityCache();
+
+		UpdateProgress(100, _("Finished"));
+		EndProgress();
+	}
 }
 
 void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
@@ -5303,22 +5353,27 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		selectedBones.push_back(boneName);
 	}
 
-	StartProgress(_("Copying selected bone weights..."));
+	WeightCopyOptions options;
+	if (ShowWeightCopy(options)) {
+		StartProgress(_("Copying selected bone weights..."));
 
-	unordered_map<ushort, float> mask;
-	for (int i = 0; i < selectedItems.size(); i++) {
-		if (!project->IsBaseShape(selectedItems[i]->shapeName)) {
-			wxLogMessage("Copying selected bone weights to '%s' for %s...", selectedItems[i]->shapeName, bonesString);
-			mask.clear();
-			glView->GetShapeMask(mask, selectedItems[i]->shapeName);
-			project->CopyBoneWeights(selectedItems[i]->shapeName, &mask, &selectedBones);
+		unordered_map<ushort, float> mask;
+		for (int i = 0; i < selectedItems.size(); i++) {
+			if (!project->IsBaseShape(selectedItems[i]->shapeName)) {
+				wxLogMessage("Copying selected bone weights to '%s' for %s...", selectedItems[i]->shapeName, bonesString);
+				mask.clear();
+				glView->GetShapeMask(mask, selectedItems[i]->shapeName);
+				project->CopyBoneWeights(selectedItems[i]->shapeName, options.proximityRadius, options.maxResults, &mask, &selectedBones);
+			}
+			else
+				wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
 		}
-		else
-			wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself. Skipping this shape."), _("Can't copy weights"), wxICON_WARNING);
-	}
 
-	UpdateProgress(100, _("Finished"));
-	EndProgress();
+		project->morpher.ClearProximityCache();
+
+		UpdateProgress(100, _("Finished"));
+		EndProgress();
+	}
 }
 
 void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {

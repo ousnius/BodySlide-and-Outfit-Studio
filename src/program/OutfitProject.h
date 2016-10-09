@@ -162,7 +162,7 @@ public:
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(const string& destShape, unordered_map<ushort, float>* mask = nullptr, vector<string>* inBoneList = nullptr);
+	void CopyBoneWeights(const string& destShape, const float& proximityRadius, const int& maxResults, unordered_map<ushort, float>* mask = nullptr, vector<string>* inBoneList = nullptr);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(const string& destShape, unordered_map<ushort, float>* mask = nullptr, vector<string>* inBoneList = nullptr);
 	bool HasUnweighted();

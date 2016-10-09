@@ -24,9 +24,6 @@ class Automorph {
 	DiffDataSets* srcDiffData;			// Either __srcDiffData or an external linked data set.
 	DiffDataSets resultDiffData;		// Diffs calculated by AutoMorph.
 
-	float proximity_radius;
-	float max_prox_points;
-
 	bool bEnableMask;					// Use red component of mesh vertex color as a mask for morphing.
 
 	// A translation between shapetarget + slidername and the data name for the result diff data set.
@@ -36,10 +33,6 @@ class Automorph {
 
 public:
 	mesh* morphRef;
-	int totalCount;
-	float avgCount;
-	int maxCount;
-	int minCount;
 
 	Automorph();
 	~Automorph();
@@ -73,11 +66,12 @@ public:
 	void MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName);
 	void MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName);
 
-	void BuildProximityCache(const string& shapeName);
+	void ClearProximityCache();
+	void BuildProximityCache(const string& shapeName, const float& proximityRadius = 10.0f);
 
 	// shapeName = name of the mesh to morph (eg "IronArmor") also known as target name.
 	// sliderName = name of the morph to apply (eg "BreastsSH").
-	void GenerateResultDiff(const string& shapeName, const string& sliderName, const string& refDataName);
+	void GenerateResultDiff(const string& shapeName, const string& sliderName, const string& refDataName, const int& maxResults = 10);
 
 	void SetResultDataName(const string& shapeName, const string& sliderName, const string& dataName);
 	string ResultDataName(const string& shapeName, const string& sliderName);

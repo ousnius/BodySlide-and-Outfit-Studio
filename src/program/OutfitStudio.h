@@ -83,6 +83,11 @@ public:
 	}
 };
 
+struct WeightCopyOptions {
+	float proximityRadius;
+	int maxResults;
+};
+
 
 class OutfitStudio;
 
@@ -769,6 +774,8 @@ private:
 	void RenameProject(const string& projectName);
 
 	void WorkingGUIFromProj();
+
+	bool ShowWeightCopy(WeightCopyOptions& options);
 
 	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);

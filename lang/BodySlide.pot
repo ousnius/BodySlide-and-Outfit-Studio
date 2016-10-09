@@ -1321,8 +1321,17 @@ msgstr ""
 msgid "Invert V"
 msgstr ""
 
-# XRC STRINGS END HERE
 msgid "Toggle Zaps:"
+msgstr ""
+
+msgid "Search Radius"
+msgstr ""
+
+msgid "Max Vertex Targets"
+msgstr ""
+
+# XRC STRINGS END HERE
+msgid "Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient."
 msgstr ""
 
 msgid "Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export."
@@ -1726,9 +1735,7 @@ msgstr ""
 msgid "Create New Slider"
 msgstr ""
 
-msgid ""
-"You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of "
-"that slider's morph."
+msgid "You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."
 msgstr ""
 
 msgid "Creating project '%s'..."
@@ -1791,9 +1798,7 @@ msgstr ""
 msgid "There are no valid shapes loaded!"
 msgstr ""
 
-msgid ""
-"At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under "
-"a mask. Do you want to save anyway?"
+msgid "At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"
 msgstr ""
 
 msgid "Unweighted Vertices"

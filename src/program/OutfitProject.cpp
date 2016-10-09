@@ -1168,7 +1168,7 @@ void OutfitProject::RotateShape(const string& shapeName, const Vector3& angle, u
 	workNif.RotateShape(shapeName, angle, mask);
 }
 
-void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushort, float>* mask, vector<string>* inBoneList) {
+void OutfitProject::CopyBoneWeights(const string& destShape, const float& proximityRadius, const int& maxResults, unordered_map<ushort, float>* mask, vector<string>* inBoneList) {
 	if (baseShape.empty())
 		return;
 
@@ -1208,7 +1208,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 
 	InitConform();
 	morpher.LinkRefDiffData(&dds);
-	morpher.BuildProximityCache(destShape);
+	morpher.BuildProximityCache(destShape, proximityRadius);
 
 	int step = 40 / boneList->size();
 	int prog = 40;
@@ -1216,7 +1216,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, unordered_map<ushor
 
 	for (auto &boneName : *boneList) {
 		string wtSet = boneName + "_WT_";
-		morpher.GenerateResultDiff(destShape, wtSet, wtSet);
+		morpher.GenerateResultDiff(destShape, wtSet, wtSet, maxResults);
 
 		unordered_map<ushort, Vector3> diffResult;
 		morpher.GetRawResultDiff(destShape, wtSet, diffResult);
