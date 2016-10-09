@@ -742,7 +742,7 @@ void GLSurface::RenderMesh(mesh* m) {
 		// Offset triangles so that points can be visible
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		if (m->bShowPoints)
-			glPolygonOffset(4.0f, 4.0f);
+			glPolygonOffset(1.0f, 1.0f);
 		else
 			glPolygonOffset(0.03f, 0.03f);
 
