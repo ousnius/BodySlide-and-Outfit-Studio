@@ -545,6 +545,8 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		nifTriShape->SetName(shapeName);
 		nifTriShape->SetDataRef(shapeID);
 		nifTriShape->SetSkinInstanceRef(dismemberID);
+
+		blank.SetDefaultPartition(shapeName);
 	}
 	else {
 		BSTriShape* triShapeBase;

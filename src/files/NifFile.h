@@ -104,6 +104,7 @@ public:
 
 	bool GetShapePartitions(const string& shapeName, vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, vector<vector<ushort>>& verts, vector<vector<Triangle>>& tris);
 	void SetShapePartitions(const string& shapeName, const vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const vector<vector<ushort>>& verts, const vector<vector<Triangle>>& tris);
+	void SetDefaultPartition(const string& shapeName);
 
 	const vector<Vector3>* GetRawVertsForShape(const string& shapeName);
 	bool GetTrisForShape(const string& shapeName, vector<Triangle>* outTris);

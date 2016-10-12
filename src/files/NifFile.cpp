@@ -1539,6 +1539,69 @@ void NifFile::SetShapePartitions(const string& shapeName, const vector<BSDismemb
 	}
 }
 
+void NifFile::SetDefaultPartition(const string& shapeName) {
+	NiShape* shape = FindShapeByName(shapeName);
+	if (!shape)
+		return;
+
+	vector<Vector3> verts;
+	vector<Triangle> tris;
+	if (shape->blockType == NITRISHAPE) {
+		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+		if (!shapeData)
+			return;
+
+		verts = shapeData->vertices;
+		tris = shapeData->triangles;
+	}
+	else if (shape->blockType == NITRISTRIPS) {
+		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
+		if (!stripsData)
+			return;
+
+		verts = stripsData->vertices;
+		stripsData->StripsToTris(&tris);
+	}
+
+	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	if (bsdSkinInst) {
+		BSDismemberSkinInstance::PartitionInfo partInfo;
+		partInfo.flags = 1;
+		partInfo.partID = hdr.GetUserVersion() >= 12 ? 32 : 0;
+
+		bsdSkinInst->ClearPartitions();
+		bsdSkinInst->AddPartition(partInfo);
+	}
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return;
+
+	auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+	if (skinPart) {
+		NiSkinPartition::PartitionBlock part;
+		if (!verts.empty()) {
+			part.hasVertexMap = true;
+			part.numVertices = verts.size();
+
+			vector<ushort> vertIndices(part.numVertices);
+			for (int i = 0; i < vertIndices.size(); i++)
+				vertIndices[i] = i;
+
+			part.vertexMap = vertIndices;
+		}
+
+		if (!tris.empty()) {
+			part.numTriangles = tris.size();
+			part.triangles = tris;
+		}
+
+		skinPart->partitions.clear();
+		skinPart->partitions.push_back(part);
+		skinPart->numPartitions = 1;
+	}
+}
+
 const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
