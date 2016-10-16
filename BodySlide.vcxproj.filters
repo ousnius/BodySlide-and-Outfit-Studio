@@ -584,6 +584,9 @@
     <None Include="res\shaders\primitive.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="res\xrc\Setup.xrc">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -1439,5 +1442,10 @@
     <Library Include="lib\SOIL2\SOIL2_x64.lib">
       <Filter>Libraries\SOIL2</Filter>
     </Library>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Config.xml">
+      <Filter>Resources</Filter>
+    </Xml>
   </ItemGroup>
 </Project>

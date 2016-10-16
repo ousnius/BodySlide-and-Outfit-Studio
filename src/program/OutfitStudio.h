@@ -36,7 +36,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/collpane.h>
 
 enum TargetGame {
-	FO3, FONV, SKYRIM, FO4
+	FO3, FONV, SKYRIM, FO4, SKYRIMSE
 };
 
 
@@ -530,7 +530,7 @@ public:
 	OutfitStudio(const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
 	~OutfitStudio();
 
-	int targetGame;
+	TargetGame targetGame;
 	wxGLPanel* glView = nullptr;
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;

@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ConfigurationManager Config;
+const wxString TargetGames[5] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition" };
 
 wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(wxID_EXIT, BodySlideFrame::OnExit)
@@ -88,6 +89,8 @@ bool BodySlideApp::OnInit() {
 	wxHandleFatalExceptions();
 #endif
 
+	wxXmlResource* xrc = wxXmlResource::Get();
+	xrc->InitAllHandlers();
 	wxInitAllImageHandlers();
 
 	preview = nullptr;
@@ -98,7 +101,8 @@ bool BodySlideApp::OnInit() {
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
 
 	wxLogMessage("Working directory: %s", wxGetCwd());
-	SetDefaultConfig();
+	if (!SetDefaultConfig())
+		return false;
 
 	InitLanguage();
 
@@ -108,15 +112,10 @@ bool BodySlideApp::OnInit() {
 		case FONV: gameName.Append("Fallout New Vegas"); break;
 		case SKYRIM: gameName.Append("Skyrim"); break;
 		case FO4: gameName.Append("Fallout 4"); break;
+		case SKYRIMSE: gameName.Append("Skyrim Special Edition"); break;
 		default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
-
-	string activeOutfit = Config.GetCString("SelectedOutfit");
-	curOutfit = activeOutfit;
-
-	LoadAllCategories();
-	LoadAllGroups();
 
 	int x = Config.GetIntValue("BodySlideFrame.x");
 	int y = Config.GetIntValue("BodySlideFrame.y");
@@ -221,24 +220,8 @@ void BodySlideApp::InitArchives() {
 }
 
 void BodySlideApp::GetArchiveFiles(vector<string>& outList) {
-	string cp = "GameDataFiles";
-	int targ = Config.GetIntValue("TargetGame");
-
-	switch (targ) {
-		case 0:
-			cp += "/Fallout3";
-			break;
-		case 1:
-			cp += "/FalloutNewVegas";
-			break;
-		case 2:
-			cp += "/Skyrim";
-			break;
-		case 3:
-			cp += "/Fallout4";
-			break;
-	}
-
+	TargetGame targ = (TargetGame)Config.GetIntValue("TargetGame");
+	string cp = "GameDataFiles/" + TargetGames[targ];
 	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
@@ -262,28 +245,21 @@ void BodySlideApp::GetArchiveFiles(vector<string>& outList) {
 }
 
 void BodySlideApp::LoadData() {
-	wxLogMessage("Loading initial data...");
-	sliderView->Freeze();
-	setupOutfit(curOutfit);
-	string activeOutfit = Config.GetCString("SelectedOutfit");
-	string activePreset = Config.GetCString("SelectedPreset");
-	ActivatePreset(activePreset);
-	sliderView->Layout();
-	sliderView->Refresh();
-	sliderView->Thaw();
-
-	if (!cmdGroupBuild.IsEmpty())
-		GroupBuild(cmdGroupBuild.ToStdString());
-
-	if (cmdOutfitStudio)
-		LaunchOutfitStudio();
-}
-
-void BodySlideApp::setupOutfit(const string& outfitName) {
 	if (!sliderView)
 		return;
 
-	wxLogMessage("Setting up set '%s'...", outfitName);
+	wxLogMessage("Loading initial data...");
+	LoadAllCategories();
+	LoadAllGroups();
+	LoadSliderSets();
+
+	string activeOutfit = Config["SelectedOutfit"];
+	if (activeOutfit.empty() && !outfitNameOrder.empty()) {
+		activeOutfit = outfitNameOrder.front();
+		Config.SetValue("SelectedOutfit", activeOutfit);
+	}
+
+	sliderView->Freeze();
 	sliderView->ClearOutfitList();
 	sliderView->ClearPresetList();
 	sliderView->ClearSliderGUI();
@@ -293,17 +269,37 @@ void BodySlideApp::setupOutfit(const string& outfitName) {
 
 	sliderManager.ClearSliders();
 	sliderManager.ClearPresets();
-	SetPresetGroups(outfitName);
 
-	string activeOutfit = Config.GetCString("SelectedOutfit");
-	string activePreset = Config.GetCString("SelectedPreset");
-	LoadPresets(activeOutfit);
-	PopulatePresetList(activePreset);
-	createSliders(outfitName);
-	wxLogMessage("Finished setting up '%s'.", outfitName);
+	if (!activeOutfit.empty()) {
+		wxLogMessage("Setting up set '%s'...", activeOutfit);
+
+		int error = CreateSetSliders(activeOutfit);
+		if (error)
+			wxLogError("Failed to load set '%s' from slider set list (%d).", activeOutfit, error);
+
+		SetPresetGroups(activeOutfit);
+		LoadPresets(activeOutfit);
+
+		string activePreset = Config["SelectedPreset"];
+		PopulatePresetList(activePreset);
+		ActivatePreset(activePreset);
+
+		wxLogMessage("Finished setting up '%s'.", activeOutfit);
+	}
+
+	PopulateOutfitList(activeOutfit);
+
+	sliderView->Thaw();
+	sliderView->Layout();
+
+	if (!cmdGroupBuild.IsEmpty())
+		GroupBuild(cmdGroupBuild.ToStdString());
+
+	if (cmdOutfitStudio)
+		LaunchOutfitStudio();
 }
 
-int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
+int BodySlideApp::CreateSetSliders(const string& outfit) {
 	wxLogMessage("Creating sliders...");
 	dataSets.Clear();
 	if (outfitNameSource.find(outfit) == outfitNameSource.end())
@@ -315,11 +311,10 @@ int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
 		activeSet.Clear();
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
-			curOutfit = outfit;
 			activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
 			activeSet.LoadSetDiffData(dataSets);
 
-			sliderManager.AddSlidersInSet(activeSet, hideAll);
+			sliderManager.AddSlidersInSet(activeSet);
 			DisplayActiveSet();
 		}
 		else
@@ -331,20 +326,9 @@ int BodySlideApp::createSetSliders(const string& outfit, bool hideAll) {
 	return 0;
 }
 
-int BodySlideApp::createSliders(const string& outfit, bool hideAll) {
-	LoadSliderSets();
-
-	int error = createSetSliders(outfit, hideAll);
-	if (error)
-		wxLogError("Failed to load set '%s' from slider set list (%d).", outfit, error);
-
-	PopulateOutfitList(outfit);
-	return 0;
-}
-
 void BodySlideApp::RefreshOutfitList() {
 	LoadSliderSets();
-	string activeOutfit = Config.GetCString("SelectedOutfit");
+	string activeOutfit = Config["SelectedOutfit"];
 	PopulateOutfitList(activeOutfit);
 }
 
@@ -402,14 +386,14 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	
 	CleanupPreview();
 
-	string activePreset = Config.GetCString("SelectedPreset");
+	string activePreset = Config["SelectedPreset"];
 
 	sliderManager.ClearPresets();
 	SetPresetGroups(outfitName);
 	LoadPresets(outfitName);
 	PopulatePresetList(activePreset);
 	
-	int error = createSetSliders(outfitName);
+	int error = CreateSetSliders(outfitName);
 	if (error)
 		wxLogError("Failed to load set '%s' from slider set list (%d).", outfitName, error);
 
@@ -480,7 +464,7 @@ void BodySlideApp::PopulatePresetList(const string& select) {
 }
 
 void BodySlideApp::PopulateOutfitList(const string& select) {
-	string myselect = curOutfit;
+	string myselect = Config["SelectedOutfit"];
 	if (!select.empty())
 		myselect = select;
 
@@ -900,9 +884,10 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	preview->RefreshMeshFromNif(&PreviewMod);
 }
 
-void BodySlideApp::SetDefaultConfig() {
-	Config.SetDefaultValue("TargetGame", 3);
-	targetGame = Config.GetIntValue("TargetGame");
+bool BodySlideApp::SetDefaultConfig() {
+	int currentTarget = -1;
+	Config.SetDefaultValue("TargetGame", currentTarget);
+	currentTarget = Config.GetIntValue("TargetGame");
 
 	Config.SetDefaultValue("ShapeDataPath", wxGetCwd().ToStdString() + "\\ShapeData");
 	Config.SetDefaultValue("WarnMissingGamePath", "true");
@@ -911,55 +896,13 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("UseSystemLanguage", "false");
 	Config.SetDefaultValue("SelectedPreset", "");
-	Config.SetDefaultValue("SelectedOutfit", "");
-
-	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
-	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
-	Config.SetDefaultValue("GameRegVal/FalloutNewVegas", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
-	Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
-	Config.SetDefaultValue("GameRegKey/Fallout4", "Software\\Bethesda Softworks\\Fallout4");
-	Config.SetDefaultValue("GameRegVal/Fallout4", "Installed Path");
-
-	wxString gameKey;
-	wxString gameValueKey;
-	switch (targetGame) {
-	case FO3:
-		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
-		Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
-		gameKey = Config["GameRegKey/Fallout3"];
-		gameValueKey = Config["GameRegVal/Fallout3"];
-		break;
-	case FONV:
-		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
-		Config.SetDefaultValue("Anim/SkeletonRootName", "Bip");
-		gameKey = Config["GameRegKey/FalloutNewVegas"];
-		gameValueKey = Config["GameRegVal/FalloutNewVegas"];
-		break;
-	case SKYRIM:
-		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
-		Config.SetDefaultValue("Anim/SkeletonRootName", "NPC");
-		gameKey = Config["GameRegKey/Skyrim"];
-		gameValueKey = Config["GameRegVal/Skyrim"];
-		break;
-	case FO4:
-		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
-		Config.SetDefaultValue("Anim/SkeletonRootName", "Root");
-		gameKey = Config["GameRegKey/Fallout4"];
-		gameValueKey = Config["GameRegVal/Fallout4"];
-		break;
-	default:
-		Config.SetDefaultValue("Anim/DefaultSkeletonReference", "res\\skeleton_female.nif");
-		Config.SetDefaultValue("Anim/SkeletonRootName", "Root");
-	}
 
 	Config.SetDefaultValue("ReferenceTemplates", "");
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultValue("Input/LeftMousePan", "false");
-	Config.SetDefaultValue("Editing/CenterMode", "Object");
-	Config.SetDefaultValue("Lights/Ambient", 80);
+	Config.SetDefaultValue("Editing/CenterMode", "Selected");
+	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Brightness1", 55);
 	Config.SetDefaultValue("Lights/Brightness2", 45);
 	Config.SetDefaultValue("Lights/Brightness3", 45);
@@ -972,6 +915,28 @@ void BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("OutfitStudioFrame.x", 100);
 	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
 	Config.SetDefaultValue("OutfitStudioFrame.sashpos", 850);
+	Config.SetDefaultValue("SelectedOutfit", "");
+
+	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
+	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/FalloutNewVegas", "Software\\Bethesda Softworks\\FalloutNV");
+	Config.SetDefaultValue("GameRegVal/FalloutNewVegas", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/Skyrim", "Software\\Bethesda Softworks\\Skyrim");
+	Config.SetDefaultValue("GameRegVal/Skyrim", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/Fallout4", "Software\\Bethesda Softworks\\Fallout4");
+	Config.SetDefaultValue("GameRegVal/Fallout4", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/SkyrimSpecialEdition", "Software\\Bethesda Softworks\\Skyrim Special Edition");
+	Config.SetDefaultValue("GameRegVal/SkyrimSpecialEdition", "Installed Path");
+
+	// Target game not set, show setup dialog
+	if (currentTarget == -1)
+		if (!ShowSetup())
+			return false;
+
+	targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+
+	wxString gameKey = Config["GameRegKey/" + TargetGames[targetGame]];
+	wxString gameValueKey = Config["GameRegVal/" + TargetGames[targetGame]];
 
 	if (Config["GameDataPath"].empty()) {
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
@@ -994,26 +959,133 @@ void BodySlideApp::SetDefaultConfig() {
 	}
 	else
 		wxLogMessage("Game data path in config: %s", Config["GameDataPath"]);
+
+	return true;
 }
 
-wxString BodySlideApp::GetGameDataPath(TargetGame gameID) {
-	wxString dataPath;
-	wxString gamestr;
-	switch (gameID) {
-		case FO3: 
-			gamestr = "Fallout3";
-			break;
-		case FONV: 
-			gamestr = "FalloutNewVegas";
-			break;
-		case SKYRIM:
-			gamestr = "Skyrim";
-			break;
-		case FO4:
-			gamestr = "Fallout4";
-			break;
-		default: break;
+bool BodySlideApp::ShowSetup() {
+	wxXmlResource* xrc = wxXmlResource::Get();
+	bool loaded = xrc->Load("res\\xrc\\Setup.xrc");
+	if (!loaded) {
+		wxMessageBox("Failed to load Setup.xrc file!", "Error", wxICON_ERROR);
+		return false;
 	}
+
+	wxDialog* setup = xrc->LoadDialog(nullptr, "dlgSetup");
+	if (setup) {
+		setup->SetSize(wxSize(700, -1));
+		setup->CenterOnScreen();
+
+		wxButton* btFallout3 = XRCCTRL(*setup, "btFallout3", wxButton);
+		btFallout3->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(0); });
+
+		wxButton* btFalloutNV = XRCCTRL(*setup, "btFalloutNV", wxButton);
+		btFalloutNV->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(1); });
+
+		wxButton* btSkyrim = XRCCTRL(*setup, "btSkyrim", wxButton);
+		btSkyrim->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(2); });
+
+		wxButton* btFallout4 = XRCCTRL(*setup, "btFallout4", wxButton);
+		btFallout4->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(3); });
+
+		wxButton* btSkyrimSE = XRCCTRL(*setup, "btSkyrimSE", wxButton);
+		btSkyrimSE->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(4); });
+
+		wxDirPickerCtrl* dirFallout3 = XRCCTRL(*setup, "dirFallout3", wxDirPickerCtrl);
+		dirFallout3->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout3, &btFallout3](wxFileDirPickerEvent&) { btFallout3->Enable(dirFallout3->GetDirName().DirExists()); });
+
+		wxDirPickerCtrl* dirFalloutNV = XRCCTRL(*setup, "dirFalloutNV", wxDirPickerCtrl);
+		dirFalloutNV->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFalloutNV, &btFalloutNV](wxFileDirPickerEvent&) { btFalloutNV->Enable(dirFalloutNV->GetDirName().DirExists()); });
+
+		wxDirPickerCtrl* dirSkyrim = XRCCTRL(*setup, "dirSkyrim", wxDirPickerCtrl);
+		dirSkyrim->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrim, &btSkyrim](wxFileDirPickerEvent&) { btSkyrim->Enable(dirSkyrim->GetDirName().DirExists()); });
+
+		wxDirPickerCtrl* dirFallout4 = XRCCTRL(*setup, "dirFallout4", wxDirPickerCtrl);
+		dirFallout4->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout4, &btFallout4](wxFileDirPickerEvent&) { btFallout4->Enable(dirFallout4->GetDirName().DirExists()); });
+
+		wxDirPickerCtrl* dirSkyrimSE = XRCCTRL(*setup, "dirSkyrimSE", wxDirPickerCtrl);
+		dirSkyrimSE->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimSE, &btSkyrimSE](wxFileDirPickerEvent&) { btSkyrimSE->Enable(dirSkyrimSE->GetDirName().DirExists()); });
+
+		wxFileName dir = GetGameDataPath(FO3);
+		if (dir.DirExists()) {
+			dirFallout3->SetDirName(dir);
+			btFallout3->Enable();
+		}
+
+		dir = GetGameDataPath(FONV);
+		if (dir.DirExists()) {
+			dirFalloutNV->SetDirName(dir);
+			btFalloutNV->Enable();
+		}
+
+		dir = GetGameDataPath(SKYRIM);
+		if (dir.DirExists()) {
+			dirSkyrim->SetDirName(dir);
+			btSkyrim->Enable();
+		}
+
+		dir = GetGameDataPath(FO4);
+		if (dir.DirExists()) {
+			dirFallout4->SetDirName(dir);
+			btFallout4->Enable();
+		}
+
+		dir = GetGameDataPath(SKYRIMSE);
+		if (dir.DirExists()) {
+			dirSkyrimSE->SetDirName(dir);
+			btSkyrimSE->Enable();
+		}
+
+		if (setup->ShowModal() != wxID_CANCEL) {
+			int targ = setup->GetReturnCode();
+			Config.SetValue("TargetGame", targ);
+
+			wxFileName dataDir;
+			switch (targ) {
+			case FO3:
+				dataDir = dirFallout3->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
+				Config.SetValue("Anim/SkeletonRootName", "Bip");
+				break;
+			case FONV:
+				dataDir = dirFalloutNV->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_fo3nv.nif");
+				Config.SetValue("Anim/SkeletonRootName", "Bip");
+				break;
+			case SKYRIM:
+				dataDir = dirSkyrim->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
+				Config.SetValue("Anim/SkeletonRootName", "NPC");
+				break;
+			case FO4:
+				dataDir = dirFallout4->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
+				Config.SetValue("Anim/SkeletonRootName", "Root");
+				break;
+			case SKYRIMSE:
+				dataDir = dirSkyrimSE->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
+				Config.SetValue("Anim/SkeletonRootName", "NPC");
+				break;
+			}
+
+			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToStdString());
+			Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToStdString());
+
+			delete setup;
+		}
+		else {
+			delete setup;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
+	wxString dataPath;
+	wxString gamestr = TargetGames[targ];
 	wxString gkey = "GameRegKey/" + gamestr;
 	wxString gval = "GameRegVal/" + gamestr;
 	wxString cust = "GameDataPaths/" + gamestr;
@@ -1252,7 +1324,7 @@ int BodySlideApp::GetFilteredOutfits(vector<string>& outList) {
 void BodySlideApp::LoadPresets(const string& sliderSet) {
 	string outfit = sliderSet;
 	if (sliderSet.empty())
-		outfit = Config.GetCString("SelectedOutfit");
+		outfit = Config["SelectedOutfit"];
 
 	wxLogMessage("Loading assigned presets...");
 
@@ -1376,10 +1448,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
 		nifBig.SetVertsForShape(it->second, vertsHigh);
-		if (targetGame == FO4) {
-			nifBig.CalcNormalsForShape(it->second);
-			nifBig.CalcTangentsForShape(it->second);
-		}
+		nifBig.CalcNormalsForShape(it->second);
+		nifBig.CalcTangentsForShape(it->second);
 		nifBig.DeleteVertsForShape(it->second, zapIdx);
 
 		if (activeSet.GenWeights()) {
@@ -1766,10 +1836,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			}
 
 			nifBig.SetVertsForShape(it->second, vertsHigh);
-			if (targetGame == FO4) {
-				nifBig.CalcNormalsForShape(it->second);
-				nifBig.CalcTangentsForShape(it->second);
-			}
+			nifBig.CalcNormalsForShape(it->second);
+			nifBig.CalcTangentsForShape(it->second);
 			nifBig.DeleteVertsForShape(it->second, zapIdx);
 
 			if (currentSet.GenWeights()) {
@@ -1952,7 +2020,6 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 	rowCount = 0;
 
 	wxXmlResource* xrc = wxXmlResource::Get();
-	xrc->InitAllHandlers();
 	bool loaded = xrc->Load("res\\xrc\\BodySlide.xrc");
 	if (!loaded) {
 		wxMessageBox(_("Failed to load BodySlide.xrc file!"), _("Error"), wxICON_ERROR);
@@ -2005,9 +2072,9 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoa
 		scrollWindow->Bind(wxEVT_ENTER_WINDOW, &BodySlideFrame::OnEnterSliderWindow, this);
 	}
 
-	wxString val = Config.GetCString("LastGroupFilter");
+	wxString val = Config["LastGroupFilter"];
 	search->ChangeValue(val);
-	val = Config.GetCString("LastOutfitFilter");
+	val = Config["LastOutfitFilter"];
 	outfitsearch->ChangeValue(val);
 
 	wxButton* btnAbout = (wxButton*)FindWindowByName("btnAbout");
@@ -2793,6 +2860,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			choiceSkeletonRoot->SetStringSelection("Bip01");
 			break;
 		case SKYRIM:
+		case SKYRIMSE:
 			fpSkeletonFile->SetPath("res\\skeleton_female_xpmse.nif");
 			choiceSkeletonRoot->SetStringSelection("NPC");
 			break;
@@ -2815,22 +2883,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame) {
 	dataFileList->Clear();
 
-	wxString cp = "GameDataFiles";
-	switch (targetGame) {
-		case FO3:
-			cp += "/Fallout3";
-			break;
-		case FONV:
-			cp += "/FalloutNewVegas";
-			break;
-		case SKYRIM:
-			cp += "/Skyrim";
-			break;
-		case FO4:
-			cp += "/Fallout4";
-			break;
-	}
-
+	wxString cp = "GameDataFiles/" + TargetGames[targetGame];
 	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
@@ -2898,7 +2951,6 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			TargetGame targ = (TargetGame)choiceTargetGame->GetSelection();
 			Config.SetValue("TargetGame", targ);
 
-			wxString TargetGames[4] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4" };
 			if (!dpGameDataPath->GetPath().IsEmpty()) {
 				wxFileName gameDataDir = dpGameDataPath->GetDirName();
 				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());

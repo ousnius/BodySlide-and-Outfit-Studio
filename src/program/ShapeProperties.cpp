@@ -243,6 +243,7 @@ void ShapeProperties::AddShader() {
 			}
 			case SKYRIM:
 			case FO4:
+			case SKYRIMSE:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
 				shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));

@@ -35,13 +35,14 @@
 								<border>5</border>
 								<object class="wxChoice" name="choiceTargetGame">
 									<tooltip>Choose the target game you want to use the program for here.</tooltip>
-									<selection>3</selection>
+									<selection>0</selection>
 									<content>
-										<item>Fallout 3</item>
-										<item>Fallout New Vegas</item>
-										<item>Skyrim</item>
-										<item>Fallout 4</item>
-									</content>
+                    <item>Fallout 3</item>
+                    <item>Fallout New Vegas</item>
+                    <item>Skyrim</item>
+                    <item>Fallout 4</item>
+                    <item>Skyrim Special Edition</item>
+                  </content>
 								</object>
 							</object>
 						</object>

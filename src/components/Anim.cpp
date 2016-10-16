@@ -405,7 +405,7 @@ int AnimSkeleton::LoadFromNif(const string& fileName) {
 		return 1;
 	}
 
-	rootBone = Config.GetCString("Anim/SkeletonRootName");
+	rootBone = Config["Anim/SkeletonRootName"];
 	int nodeID = refSkeletonNif.GetBlockID(refSkeletonNif.FindNodeByName(rootBone));
 	if (nodeID == 0xFFFFFFFF) {
 		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);

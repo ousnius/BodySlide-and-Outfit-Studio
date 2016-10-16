@@ -14,11 +14,11 @@ SliderManager::SliderManager() {
 SliderManager::~SliderManager() {
 }
 
-void SliderManager::AddSlidersInSet(SliderSet& inSet, bool hideAll) {
+void SliderManager::AddSlidersInSet(SliderSet& inSet) {
 	int sz = inSet.size();
 
 	for (int i = 0; i < sz; i++) {
-		if (inSet[i].bHidden || hideAll) {
+		if (inSet[i].bHidden) {
 			AddHiddenSlider(inSet[i].name, inSet[i].bInvert, inSet[i].bZap, inSet[i].bUV);
 		}
 		else {

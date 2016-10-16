@@ -341,14 +341,6 @@ ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
 	return found;
 }
 
-const char* ConfigurationManager::GetCString(const string& inName, const string& def) {
-	ConfigurationItem* itemFound = FindCI(inName);
-	if (itemFound)
-		return itemFound->value.c_str();
-
-	return def.c_str();
-}
-
 int ConfigurationManager::GetIntValue(const string& inName, int def) {
 	int res = def;
 

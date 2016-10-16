@@ -85,17 +85,12 @@ class BodySlideApp : public wxApp {
 
 	map<string, vector<string>> outFileCount;	// Counts how many sets write to the same output file
 
-	string curOutfit;
-
 	string previewBaseName;
 	string previewSetName;
 	NifFile* previewBaseNif = nullptr;
 	NifFile PreviewMod;
 
-	/* Data Load/Setup */
-	void setupOutfit(const string& outfitName);
-	int createSliders(const string& outfit, bool hideAll = false);
-	int createSetSliders(const string& outfit, bool hideAll = false);
+	int CreateSetSliders(const string& outfit);
 
 public:
 	virtual ~BodySlideApp();
@@ -108,10 +103,11 @@ public:
 	virtual void OnFatalException();
 	
 	SliderCategoryCollection cCollection;
-	int targetGame;
+	TargetGame targetGame;
 
-	void SetDefaultConfig();
-	wxString GetGameDataPath(TargetGame gameID);
+	bool SetDefaultConfig();
+	bool ShowSetup();
+	wxString GetGameDataPath(TargetGame targ);
 
 	void InitLanguage();
 

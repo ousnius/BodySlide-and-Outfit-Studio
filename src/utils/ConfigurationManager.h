@@ -88,8 +88,6 @@ public:
 
 	bool Exists(const string& inName);
 
-	const char* GetCString(const string& inName, const string& def = "");
-
 	string GetString(const string& inName);
 
 	int GetIntValue(const string& inName, int def = 0);

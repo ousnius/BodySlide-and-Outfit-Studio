@@ -19,11 +19,11 @@ See the included LICENSE file
 OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner) : appConfig(inConfig) {
 	morpherInitialized = false;
 	owner = inOwner;
-	string defSkelFile = Config.GetCString("Anim/DefaultSkeletonReference");
+	string defSkelFile = Config["Anim/DefaultSkeletonReference"];
 	LoadSkeletonReference(defSkelFile);
 
 	mCopyRef = true;
-	if (owner->targetGame == SKYRIM)
+	if (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE)
 		mGenWeights = true;
 	else
 		mGenWeights = false;
@@ -526,7 +526,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			nifShaderPP->textureSetRef = blank.GetHeader().AddBlock(nifTexset, "BSShaderTextureSet");
 			break;
 		case SKYRIM:
-		case FO4:
+		case SKYRIMSE:
 		default:
 			nifShader = new BSLightingShaderProperty(workNif.GetHeader());
 			shaderID = blank.GetHeader().AddBlock(nifShader, "BSLightingShaderProperty");
@@ -2045,7 +2045,7 @@ void OutfitProject::RenameShape(const string& shapeName, const string& newShapeN
 void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMeshes) {
 	vector<Vector3> liveNorms;
 	for (auto &m : shapeMeshes) {
-		if (nif->IsShaderSkin(m->shapeName) && owner->targetGame != FO4)
+		if (nif->IsShaderSkin(m->shapeName) && (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE))
 			continue;
 
 		liveNorms.clear();
@@ -2074,7 +2074,7 @@ int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& mo
 		clone.SetVertsForShape(m->shapeName, liveVerts);
 
 		if (writeNormals) {
-			if (clone.IsShaderSkin(m->shapeName) && owner->targetGame != FO4)
+			if (clone.IsShaderSkin(m->shapeName) && (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE))
 				continue;
 
 			clone.SetNormalsForShape(m->shapeName, liveNorms);

@@ -82,7 +82,7 @@ public:
 		presetCollection.Clear();
 	}
 
-	void AddSlidersInSet(SliderSet& inSet, bool hideAll = false);
+	void AddSlidersInSet(SliderSet& inSet);
 
 	void AddSlider(const string& name, bool invert = false, const string& dataSetName = "");
 	void AddHiddenSlider(const string& name, bool invert = false, bool isZap = false, bool isUV = false, const string& dataSetName = "");

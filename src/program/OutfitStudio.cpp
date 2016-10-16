@@ -244,7 +244,7 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	if (wfImg.IsOk())
 		visStateImages->Add(wfImg);
 
-	targetGame = appConfig.GetIntValue("TargetGame");
+	targetGame = (TargetGame)appConfig.GetIntValue("TargetGame");
 
 	wxStateButton* meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
 	meshTab->SetCheck();
@@ -253,8 +253,7 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 		wxStateButton* segmentTab = (wxStateButton*)FindWindowByName("segmentTabButton");
 		segmentTab->Show(false);
 	}
-
-	if (targetGame != FO3 && targetGame != FONV && targetGame != SKYRIM) {
+	else {
 		wxStateButton* partitionTab = (wxStateButton*)FindWindowByName("partitionTabButton");
 		partitionTab->Show(false);
 	}
@@ -1203,7 +1202,7 @@ void OutfitStudio::ClearProject() {
 	project->mGamePath.clear();
 	project->mGameFile.clear();
 
-	if (targetGame == SKYRIM)
+	if (targetGame == SKYRIM || targetGame == SKYRIMSE)
 		project->mGenWeights = true;
 	else
 		project->mGenWeights = false;
@@ -2650,11 +2649,11 @@ void OutfitStudio::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 			vector<Triangle> tris;
 			project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
 
-			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(verts, tris, targetGame == SKYRIM ? 32 : 0));
+			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(verts, tris, targetGame == SKYRIM || targetGame == SKYRIMSE ? 32 : 0));
 		}
 	}
 	else
-		newItem = partitionTree->InsertItem(partitionRoot, activePartition, "Partition", -1, -1, new PartitionItemData(vector<ushort>(), vector<Triangle>(), targetGame == SKYRIM ? 32 : 0));
+		newItem = partitionTree->InsertItem(partitionRoot, activePartition, "Partition", -1, -1, new PartitionItemData(vector<ushort>(), vector<Triangle>(), targetGame == SKYRIM || targetGame == SKYRIMSE ? 32 : 0));
 
 	if (newItem.IsOk()) {
 		partitionTree->UnselectAll();

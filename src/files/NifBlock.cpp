@@ -2210,14 +2210,15 @@ void NiGeometry::Get(fstream& file) {
 		materialNames.push_back(NiString(file, 2));
 
 	int intData;
-	for (int i = 0; i < numMaterials; i++){
+	for (int i = 0; i < numMaterials; i++) {
 		file.read((char*)&intData, 4);
 		materialExtra.push_back(intData);
 	}
+
 	file.read((char*)&activeMaterial, 4);
 	file.read((char*)&dirty, 1);
 
-	if (header->GetUserVersion() == 12) {
+	if (header->GetUserVersion() > 11) {
 		file.read((char*)&shaderPropertyRef, 4);
 		file.read((char*)&alphaPropertyRef, 4);
 	}
@@ -2848,6 +2849,9 @@ void NiTriShapeData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 }
 
 void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+	if (!HasNormals())
+		return;
+
 	NiTriBasedGeomData::RecalcNormals();
 
 	// Calculate normals from triangles
@@ -3138,6 +3142,9 @@ void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 }
  
 void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+	if (!HasNormals())
+		return;
+
 	NiTriBasedGeomData::RecalcNormals();
 
 	vector<Triangle> tris;

@@ -366,6 +366,7 @@
     <None Include="res\xrc\Project.xrc" />
     <None Include="res\xrc\SavePreset.xrc" />
     <None Include="res\xrc\Settings.xrc" />
+    <None Include="res\xrc\Setup.xrc" />
     <None Include="res\xrc\ShapeProperties.xrc" />
     <None Include="res\xrc\Skeleton.xrc" />
     <None Include="res\xrc\Slider.xrc" />
@@ -658,6 +659,9 @@
     <Library Include="lib\SOIL2\SOIL2_d.lib" />
     <Library Include="lib\SOIL2\SOIL2_x64.lib" />
     <Library Include="lib\SOIL2\SOIL2_x64_d.lib" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Config.xml" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
