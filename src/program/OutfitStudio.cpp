@@ -2803,6 +2803,8 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 			vector<Triangle> tris;
 			project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
 
+			BlockType shapeType = project->GetWorkNif()->GetShapeType(activeItem->shapeName);
+
 			// Add vertices and triangles from mask
 			set<Triangle> realTris;
 			partitionData->verts.clear();
@@ -2835,6 +2837,9 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					else
 						partTri.p3 = p3Find - partitionData->verts.begin();
 
+					if (shapeType == BSTRISHAPE)
+						partTri = tri;
+
 					partTri.rot();
 					partitionData->tris.push_back(partTri);
 
@@ -2845,10 +2850,19 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 
 			// Vertex indices that are assigned
 			set<ushort> vertsToCheck;
-			for (auto &tri : partitionData->tris) {
-				vertsToCheck.insert(partitionData->verts[tri.p1]);
-				vertsToCheck.insert(partitionData->verts[tri.p2]);
-				vertsToCheck.insert(partitionData->verts[tri.p3]);
+			if (shapeType != BSTRISHAPE) {
+				for (auto &tri : partitionData->tris) {
+					vertsToCheck.insert(partitionData->verts[tri.p1]);
+					vertsToCheck.insert(partitionData->verts[tri.p2]);
+					vertsToCheck.insert(partitionData->verts[tri.p3]);
+				}
+			}
+			else {
+				for (auto &tri : partitionData->tris) {
+					vertsToCheck.insert(tri.p1);
+					vertsToCheck.insert(tri.p2);
+					vertsToCheck.insert(tri.p3);
+				}
 			}
 
 			// Remove assigned verts/tris from all other partitions
@@ -2858,15 +2872,26 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 				PartitionItemData* childPartition = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 				if (childPartition && childPartition != partitionData) {
 					// Move triangles that match to the end
-					auto removeTriEnd = partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri1) {
-						Triangle t(childPartition->verts[tri1.p1], childPartition->verts[tri1.p2], childPartition->verts[tri1.p3]);
-						t.rot();
+					auto removeTriEnd = childPartition->tris.end();
+					if (shapeType != BSTRISHAPE) {
+						removeTriEnd = partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
+							Triangle t(childPartition->verts[tri.p1], childPartition->verts[tri.p2], childPartition->verts[tri.p3]);
+							t.rot();
 
-						if (realTris.find(t) != realTris.end())
-							return true;
+							if (realTris.find(t) != realTris.end())
+								return true;
 
-						return false;
-					});
+							return false;
+						});
+					}
+					else {
+						removeTriEnd = partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
+							if (realTris.find(tri) != realTris.end())
+								return true;
+
+							return false;
+						});
+					}
 
 					// Find vertices that need to be removed
 					set<ushort> vertsToRemove;
@@ -2876,11 +2901,19 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 						bool removeVert = true;
 						for (tri = removeTriEnd; tri < triEnd; ++tri) {
 							const Triangle& t = (*tri);
-							if (v == childPartition->verts[t.p1] ||
-								v == childPartition->verts[t.p2] ||
-								v == childPartition->verts[t.p3]) {
-								removeVert = false;
-								break;
+							if (shapeType != BSTRISHAPE) {
+								if (v == childPartition->verts[t.p1] ||
+									v == childPartition->verts[t.p2] ||
+									v == childPartition->verts[t.p3]) {
+									removeVert = false;
+									break;
+								}
+							}
+							else {
+								if (v == t.p1 || v == t.p2 || v == t.p3) {
+									removeVert = false;
+									break;
+								}
 							}
 						}
 					
@@ -2893,12 +2926,22 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					for (auto &v : vertsToRemove) {
 						for (auto itTri = childPartition->tris.begin(); itTri < removeTriEnd; ++itTri) {
 							const Triangle& tri = (*itTri);
-							if (v == childPartition->verts[tri.p1])
-								vertsToDecrement.insert(tri.p1);
-							else if (v == childPartition->verts[tri.p2])
-								vertsToDecrement.insert(tri.p2);
-							else if (v == childPartition->verts[tri.p3])
-								vertsToDecrement.insert(tri.p3);
+							if (shapeType != BSTRISHAPE) {
+								if (v == childPartition->verts[tri.p1])
+									vertsToDecrement.insert(tri.p1);
+								else if (v == childPartition->verts[tri.p2])
+									vertsToDecrement.insert(tri.p2);
+								else if (v == childPartition->verts[tri.p3])
+									vertsToDecrement.insert(tri.p3);
+							}
+							else {
+								if (v == tri.p1)
+									vertsToDecrement.insert(tri.p1);
+								else if (v == tri.p2)
+									vertsToDecrement.insert(tri.p2);
+								else if (v == tri.p3)
+									vertsToDecrement.insert(tri.p3);
+							}
 						}
 					}
 

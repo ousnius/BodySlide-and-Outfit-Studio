@@ -1100,6 +1100,8 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	numTriangles = 0;
 	numVertices = 0;
 	dataSize = 0;
+	vertexSize = 0;
+	someDataSize = 0;
 }
 
 BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
@@ -1107,6 +1109,9 @@ BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
 
 	blockType = BSTRISHAPE;
 	header = &hdr;
+
+	vertexSize = 0;
+	someDataSize = 0;
 
 	Get(file);
 }
@@ -1147,9 +1152,15 @@ void BSTriShape::Get(fstream& file) {
 	file.read((char*)&vertFlags7, 1);
 	file.read((char*)&vertFlags8, 1);
 
-	file.read((char*)&numTriangles, 4);
-	file.read((char*)&numVertices, 2);
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130) {
+		ushort num = 0;
+		file.read((char*)&num, 2);
+		numTriangles = num;
+	}
+	else
+		file.read((char*)&numTriangles, 4);
 
+	file.read((char*)&numVertices, 2);
 	file.read((char*)&dataSize, 4);
 
 	vertData.resize(numVertices);
@@ -1224,6 +1235,27 @@ void BSTriShape::Get(fstream& file) {
 			file.read((char*)&triangles[i].p3, 2);
 		}
 	}
+
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
+		file.read((char*)&someDataSize, 4);
+
+		if (someDataSize > 0) {
+			someVerts.resize(numVertices);
+			someTris.resize(numTriangles);
+
+			for (int i = 0; i < numVertices; i++) {
+				file.read((char*)&someVerts[i].x, 4);
+				file.read((char*)&someVerts[i].y, 4);
+				file.read((char*)&someVerts[i].z, 4);
+			}
+
+			for (int i = 0; i < numTriangles; i++) {
+				file.read((char*)&someTris[i].p1, 2);
+				file.read((char*)&someTris[i].p2, 2);
+				file.read((char*)&someTris[i].p3, 2);
+			}
+		}
+	}
 }
 
 void BSTriShape::Put(fstream& file) {
@@ -1262,77 +1294,110 @@ void BSTriShape::Put(fstream& file) {
 	file.write((char*)&vertFlags7, 1);
 	file.write((char*)&vertFlags8, 1);
 
-	file.write((char*)&numTriangles, 4);
-	file.write((char*)&numVertices, 2);
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130 && IsSkinned()) {
+		// Triangle and vertex data is in partition instead
+		ushort numUShort = 0;
+		uint numUInt = 0;
+		file.write((char*)&numUShort, 2);
+		file.write((char*)&numUShort, 2);
+		file.write((char*)&numUInt, 4);
+	}
+	else {
+		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130) {
+			ushort numUShort = numTriangles;
+			file.write((char*)&numUShort, 2);
+		}
+		else
+			file.write((char*)&numTriangles, 4);
 
-	file.write((char*)&dataSize, 4);
+		file.write((char*)&numVertices, 2);
+		file.write((char*)&dataSize, 4);
 
-	if (HasVertices() && dataSize > 0) {
-		half_float::half halfData;
-		for (int i = 0; i < numVertices; i++) {
-			if (IsFullPrecision()) {
-				// Full precision
-				file.write((char*)&vertData[i].vert.x, 4);
-				file.write((char*)&vertData[i].vert.y, 4);
-				file.write((char*)&vertData[i].vert.z, 4);
+		if (HasVertices() && dataSize > 0) {
+			half_float::half halfData;
+			for (int i = 0; i < numVertices; i++) {
+				if (IsFullPrecision()) {
+					// Full precision
+					file.write((char*)&vertData[i].vert.x, 4);
+					file.write((char*)&vertData[i].vert.y, 4);
+					file.write((char*)&vertData[i].vert.z, 4);
 
-				file.write((char*)&vertData[i].bitangentX, 4);
-			}
-			else {
-				// Half precision
-				halfData = vertData[i].vert.x;
-				file.write((char*)&halfData, 2);
-				halfData = vertData[i].vert.y;
-				file.write((char*)&halfData, 2);
-				halfData = vertData[i].vert.z;
-				file.write((char*)&halfData, 2);
-
-				halfData = vertData[i].bitangentX;
-				file.write((char*)&halfData, 2);
-			}
-
-			if (HasUVs()) {
-				halfData = vertData[i].uv.u;
-				file.write((char*)&halfData, 2);
-
-				halfData = vertData[i].uv.v;
-				file.write((char*)&halfData, 2);
-			}
-
-			if (HasNormals()) {
-				for (int j = 0; j < 3; j++)
-					file.write((char*)&vertData[i].normal[j], 1);
-
-				if (HasTangents()) {
-					file.write((char*)&vertData[i].bitangentY, 1);
-
-					for (int j = 0; j < 3; j++)
-						file.write((char*)&vertData[i].tangent[j], 1);
-
-					file.write((char*)&vertData[i].bitangentZ, 1);
+					file.write((char*)&vertData[i].bitangentX, 4);
 				}
-			}
+				else {
+					// Half precision
+					halfData = vertData[i].vert.x;
+					file.write((char*)&halfData, 2);
+					halfData = vertData[i].vert.y;
+					file.write((char*)&halfData, 2);
+					halfData = vertData[i].vert.z;
+					file.write((char*)&halfData, 2);
 
-			if (HasVertexColors())
-				file.write((char*)&vertData[i].colorData, 4);
-
-			if (IsSkinned()) {
-				for (int j = 0; j < 4; j++) {
-					halfData = vertData[i].weights[j];
+					halfData = vertData[i].bitangentX;
 					file.write((char*)&halfData, 2);
 				}
 
-				for (int j = 0; j < 4; j++)
-					file.write((char*)&vertData[i].weightBones[j], 1);
+				if (HasUVs()) {
+					halfData = vertData[i].uv.u;
+					file.write((char*)&halfData, 2);
+
+					halfData = vertData[i].uv.v;
+					file.write((char*)&halfData, 2);
+				}
+
+				if (HasNormals()) {
+					for (int j = 0; j < 3; j++)
+						file.write((char*)&vertData[i].normal[j], 1);
+
+					if (HasTangents()) {
+						file.write((char*)&vertData[i].bitangentY, 1);
+
+						for (int j = 0; j < 3; j++)
+							file.write((char*)&vertData[i].tangent[j], 1);
+
+						file.write((char*)&vertData[i].bitangentZ, 1);
+					}
+				}
+
+				if (HasVertexColors())
+					file.write((char*)&vertData[i].colorData, 4);
+
+				if (IsSkinned()) {
+					for (int j = 0; j < 4; j++) {
+						halfData = vertData[i].weights[j];
+						file.write((char*)&halfData, 2);
+					}
+
+					for (int j = 0; j < 4; j++)
+						file.write((char*)&vertData[i].weightBones[j], 1);
+				}
+			}
+		}
+
+		if (dataSize > 0) {
+			for (int i = 0; i < numTriangles; i++) {
+				file.write((char*)&triangles[i].p1, 2);
+				file.write((char*)&triangles[i].p2, 2);
+				file.write((char*)&triangles[i].p3, 2);
 			}
 		}
 	}
 
-	if (dataSize > 0) {
-		for (int i = 0; i < numTriangles; i++) {
-			file.write((char*)&triangles[i].p1, 2);
-			file.write((char*)&triangles[i].p2, 2);
-			file.write((char*)&triangles[i].p3, 2);
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
+		file.write((char*)&someDataSize, 4);
+
+		if (someDataSize > 0) {
+			for (int i = 0; i < numVertices; i++) {
+				file.write((char*)&someVerts[i].x, 4);
+				file.write((char*)&someVerts[i].y, 4);
+				file.write((char*)&someVerts[i].z, 4);
+			}
+
+			for (int i = 0; i < numTriangles; i++) {
+				file.write((char*)&someTris[i].p1, 2);
+				file.write((char*)&someTris[i].p2, 2);
+				file.write((char*)&someTris[i].p3, 2);
+			}
 		}
 	}
 }
@@ -1421,38 +1486,50 @@ void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 int BSTriShape::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
-	blockSize += 46;
+	blockSize += 42;
 
-	int vertElements = 0;
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130)
+		blockSize += 2;
+	else
+		blockSize += 4;
+
+	vertexSize = 0;
 	if (IsFullPrecision()) {	// Position + Bitangent X
 		vertFlags2 = 4;
-		vertElements += 4;
+		vertexSize += 4;
 	}
 	else {
 		vertFlags2 = 2;
-		vertElements += 2;
+		vertexSize += 2;
 	}
 
 	if (HasUVs())
-		vertElements += 1;		// UVs
+		vertexSize += 1;		// UVs
 
 	if (HasNormals())			// Normals + Tangents + Bitangent Y + Bitangent Z
-		vertElements += 2;
+		vertexSize += 2;
 
 	if (HasVertexColors())		// Vertex Colors
-		vertElements += 1;
+		vertexSize += 1;
 
 	if (IsSkinned())			// Skinning
-		vertElements += 3;
+		vertexSize += 3;
 
-	vertFlags1 = vertElements;
+	vertFlags1 = vertexSize;
+	vertexSize *= 4;
 
 	if (HasVertices())
-		dataSize = 4 * vertElements * numVertices + 6 * numTriangles;
+		dataSize = vertexSize * numVertices + 6 * numTriangles;
 	else
 		dataSize = 0;
 
 	blockSize += dataSize;
+
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
+		blockSize += 4;
+		blockSize += 12 * numVertices;
+		blockSize += 6 * numTriangles;
+	}
 
 	return blockSize;
 }
@@ -3746,7 +3823,19 @@ NiSkinPartition::NiSkinPartition(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NISKINPARTITION;
+
 	numPartitions = 0;
+	dataSize = 0;
+	vertexSize = 0;
+	vertFlags1 = 0;
+	vertFlags2 = 0;
+	vertFlags3 = 0;
+	vertFlags4 = 0;
+	vertFlags5 = 0;
+	vertFlags6 = 0;
+	vertFlags7 = 0;
+	vertFlags8 = 0;
+	numVertices = 0;
 }
 
 NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
@@ -3754,7 +3843,18 @@ NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NISKINPARTITION;
-	numPartitions = 0;
+
+	dataSize = 0;
+	vertexSize = 0;
+	vertFlags1 = 0;
+	vertFlags2 = 0;
+	vertFlags3 = 0;
+	vertFlags4 = 0;
+	vertFlags5 = 0;
+	vertFlags6 = 0;
+	vertFlags7 = 0;
+	vertFlags8 = 0;
+	numVertices = 0;
 
 	Get(file);
 }
@@ -3764,6 +3864,85 @@ void NiSkinPartition::Get(fstream& file) {
 
 	file.read((char*)&numPartitions, 4);
 	partitions.resize(numPartitions);
+
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+		file.read((char*)&dataSize, 4);
+		file.read((char*)&vertexSize, 4);
+		file.read((char*)&vertFlags1, 1);
+		file.read((char*)&vertFlags2, 1);
+		file.read((char*)&vertFlags3, 1);
+		file.read((char*)&vertFlags4, 1);
+		file.read((char*)&vertFlags5, 1);
+		file.read((char*)&vertFlags6, 1);
+		file.read((char*)&vertFlags7, 1);
+		file.read((char*)&vertFlags8, 1);
+
+		if (dataSize > 0) {
+			numVertices = dataSize / vertexSize;
+			vertData.resize(numVertices);
+
+			if (HasVertices()) {
+				half_float::half halfData;
+				for (int i = 0; i < numVertices; i++) {
+					if (IsFullPrecision()) {
+						// Full precision
+						file.read((char*)&vertData[i].vert.x, 4);
+						file.read((char*)&vertData[i].vert.y, 4);
+						file.read((char*)&vertData[i].vert.z, 4);
+
+						file.read((char*)&vertData[i].bitangentX, 4);
+					}
+					else {
+						// Half precision
+						file.read((char*)&halfData, 2);
+						vertData[i].vert.x = halfData;
+						file.read((char*)&halfData, 2);
+						vertData[i].vert.y = halfData;
+						file.read((char*)&halfData, 2);
+						vertData[i].vert.z = halfData;
+
+						file.read((char*)&halfData, 2);
+						vertData[i].bitangentX = halfData;
+					}
+
+					if (HasUVs()) {
+						file.read((char*)&halfData, 2);
+						vertData[i].uv.u = halfData;
+						file.read((char*)&halfData, 2);
+						vertData[i].uv.v = halfData;
+					}
+
+					if (HasNormals()) {
+						for (int j = 0; j < 3; j++)
+							file.read((char*)&vertData[i].normal[j], 1);
+
+						if (HasTangents()) {
+							file.read((char*)&vertData[i].bitangentY, 1);
+
+							for (int j = 0; j < 3; j++)
+								file.read((char*)&vertData[i].tangent[j], 1);
+
+							file.read((char*)&vertData[i].bitangentZ, 1);
+						}
+					}
+
+					if (HasVertexColors())
+						file.read((char*)&vertData[i].colorData, 4);
+
+					if (IsSkinned()) {
+						for (int j = 0; j < 4; j++) {
+							file.read((char*)&halfData, 2);
+							vertData[i].weights[j] = halfData;
+						}
+
+						for (int j = 0; j < 4; j++)
+							file.read((char*)&vertData[i].weightBones[j], 1);
+					}
+				}
+			}
+		}
+	}
+
 	for (int p = 0; p < numPartitions; p++) {
 		PartitionBlock partition;
 		file.read((char*)&partition.numVertices, 2);
@@ -3820,6 +3999,24 @@ void NiSkinPartition::Get(fstream& file) {
 		if (header->GetUserVersion() >= 12)
 			file.read((char*)&partition.unkShort, 2);
 
+		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+			file.read((char*)&partition.vertFlags1, 1);
+			file.read((char*)&partition.vertFlags2, 1);
+			file.read((char*)&partition.vertFlags3, 1);
+			file.read((char*)&partition.vertFlags4, 1);
+			file.read((char*)&partition.vertFlags5, 1);
+			file.read((char*)&partition.vertFlags6, 1);
+			file.read((char*)&partition.vertFlags7, 1);
+			file.read((char*)&partition.vertFlags8, 1);
+
+			partition.trueTriangles.resize(partition.numTriangles);
+			for (int i = 0; i < partition.numTriangles; i++) {
+				file.read((char*)&partition.trueTriangles[i].p1, 2);
+				file.read((char*)&partition.trueTriangles[i].p2, 2);
+				file.read((char*)&partition.trueTriangles[i].p3, 2);
+			}
+		}
+
 		partitions[p] = partition;
 	}
 }
@@ -3828,6 +4025,82 @@ void NiSkinPartition::Put(fstream& file) {
 	NiObject::Put(file);
 
 	file.write((char*)&numPartitions, 4);
+
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+		file.write((char*)&dataSize, 4);
+		file.write((char*)&vertexSize, 4);
+		file.write((char*)&vertFlags1, 1);
+		file.write((char*)&vertFlags2, 1);
+		file.write((char*)&vertFlags3, 1);
+		file.write((char*)&vertFlags4, 1);
+		file.write((char*)&vertFlags5, 1);
+		file.write((char*)&vertFlags6, 1);
+		file.write((char*)&vertFlags7, 1);
+		file.write((char*)&vertFlags8, 1);
+
+		if (dataSize > 0) {
+			if (HasVertices()) {
+				half_float::half halfData;
+				for (int i = 0; i < numVertices; i++) {
+					if (IsFullPrecision()) {
+						// Full precision
+						file.write((char*)&vertData[i].vert.x, 4);
+						file.write((char*)&vertData[i].vert.y, 4);
+						file.write((char*)&vertData[i].vert.z, 4);
+
+						file.write((char*)&vertData[i].bitangentX, 4);
+					}
+					else {
+						// Half precision
+						halfData = vertData[i].vert.x;
+						file.write((char*)&halfData, 2);
+						halfData = vertData[i].vert.y;
+						file.write((char*)&halfData, 2);
+						halfData = vertData[i].vert.z;
+						file.write((char*)&halfData, 2);
+
+						halfData = vertData[i].bitangentX;
+						file.write((char*)&halfData, 2);
+					}
+
+					if (HasUVs()) {
+						halfData = vertData[i].uv.u;
+						file.write((char*)&halfData, 2);
+						halfData = vertData[i].uv.v;
+						file.write((char*)&halfData, 2);
+					}
+
+					if (HasNormals()) {
+						for (int j = 0; j < 3; j++)
+							file.write((char*)&vertData[i].normal[j], 1);
+
+						if (HasTangents()) {
+							file.write((char*)&vertData[i].bitangentY, 1);
+
+							for (int j = 0; j < 3; j++)
+								file.write((char*)&vertData[i].tangent[j], 1);
+
+							file.write((char*)&vertData[i].bitangentZ, 1);
+						}
+					}
+
+					if (HasVertexColors())
+						file.write((char*)&vertData[i].colorData, 4);
+
+					if (IsSkinned()) {
+						for (int j = 0; j < 4; j++) {
+							halfData = vertData[i].weights[j];
+							file.write((char*)&halfData, 2);
+						}
+
+						for (int j = 0; j < 4; j++)
+							file.write((char*)&vertData[i].weightBones[j], 1);
+					}
+				}
+			}
+		}
+	}
+
 	for (int p = 0; p < numPartitions; p++) {
 		file.write((char*)&partitions[p].numVertices, 2);
 		file.write((char*)&partitions[p].numTriangles, 2);
@@ -3868,6 +4141,23 @@ void NiSkinPartition::Put(fstream& file) {
 
 		if (header->GetUserVersion() >= 12)
 			file.write((char*)&partitions[p].unkShort, 2);
+
+		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+			file.write((char*)&partitions[p].vertFlags1, 1);
+			file.write((char*)&partitions[p].vertFlags2, 1);
+			file.write((char*)&partitions[p].vertFlags3, 1);
+			file.write((char*)&partitions[p].vertFlags4, 1);
+			file.write((char*)&partitions[p].vertFlags5, 1);
+			file.write((char*)&partitions[p].vertFlags6, 1);
+			file.write((char*)&partitions[p].vertFlags7, 1);
+			file.write((char*)&partitions[p].vertFlags8, 1);
+
+			for (int i = 0; i < partitions[p].numTriangles; i++) {
+				file.write((char*)&partitions[p].trueTriangles[i].p1, 2);
+				file.write((char*)&partitions[p].trueTriangles[i].p2, 2);
+				file.write((char*)&partitions[p].trueTriangles[i].p3, 2);
+			}
+		}
 	}
 }
 
@@ -3962,6 +4252,30 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 			else
 				p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
 		}
+
+		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+			// Move triangles that match to the end
+			auto removeTriEnd = partition(p.trueTriangles.begin(), p.trueTriangles.end(), [&vertIndices](const Triangle& tri) {
+				if (find(vertIndices.begin(), vertIndices.end(), tri.p1) != vertIndices.end())
+					return true;
+				if (find(vertIndices.begin(), vertIndices.end(), tri.p2) != vertIndices.end())
+					return true;
+				if (find(vertIndices.begin(), vertIndices.end(), tri.p3) != vertIndices.end())
+					return true;
+
+				return false;
+			});
+
+			p.trueTriangles.erase(p.trueTriangles.begin(), removeTriEnd);
+		}
+	}
+
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+		for (int i = vertData.size() - 1; i >= 0; i--)
+			if (find(vertIndices.begin(), vertIndices.end(), i) != vertIndices.end())
+				vertData.erase(vertData.begin() + i);
+
+		numVertices = vertData.size();
 	}
 }
 
@@ -3981,6 +4295,14 @@ int NiSkinPartition::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
 	blockSize += 4;
+
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+		blockSize += 16;
+
+		dataSize = vertexSize * numVertices;
+		blockSize += dataSize;
+	}
+
 	for (auto &p : partitions) {
 		if (header->GetUserVersion() >= 12)				// Plain data size
 			blockSize += 16;
@@ -3997,6 +4319,11 @@ int NiSkinPartition::CalcBlockSize() {
 
 		if (p.numStrips == 0)
 			blockSize += 6 * p.numTriangles;		// Triangle list size
+
+		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+			blockSize += 8;
+			blockSize += p.numTriangles * 6;
+		}
 	}
 
 	return blockSize;
@@ -4718,7 +5045,21 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	lightingEffect1 = 0.3f;
 	lightingEffect2 = 2.0f;
 
+	subsurfaceRolloff = 0.0f;
+	unkFloat1 = numeric_limits<float>::max();
+	backlightPower = 0.0f;
+	grayscaleToPaletteScale = 1.0f;
+	fresnelPower = 5.0f;
+	wetnessSpecScale = 0.6f;
+	wetnessSpecPower = 1.4f;
+	wetnessMinVar = 0.2f;
+	wetnessEnvmapScale = 1.0f;
+	wetnessFresnelPower = 1.6f;
+	wetnessMetalness = 0.0f;
+
 	environmentMapScale = 1.0f;
+	unkEnvmap = 0;
+	unkSkinTint = 0;
 	maxPasses = 1.0f;
 	scale = 1.0f;
 	parallaxInnerLayerThickness = 0.0f;
@@ -4727,20 +5068,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	parallaxInnerLayerTextureScale.v = 1.0f;
 	parallaxEnvmapStrength = 1.0f;
 	eyeCubemapScale = 1.0f;
-
-	unk1 = 0x7F7FFFFF;
-	unk2 = 0x3D4CCCCD;
-
-	unk[0] = 1.0f;
-	unk[1] = 5.0f;
-	unk[2] = 0.6f;
-	unk[3] = 1.4f;
-	unk[4] = 0.2f;
-	unk[5] = 1.0f;
-	unk[6] = 1.6f;
-	unk[7] = 0.0f;
-
-	memset(pad, 0, 16);
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr) {
@@ -4760,10 +5087,26 @@ BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr)
 	}
 
 	wetMaterialNameRef = 0xFFFFFFFF;
+	lightingEffect1 = 0.3f;
+	lightingEffect2 = 2.0f;
+
+	subsurfaceRolloff = 0.0f;
+	unkFloat1 = numeric_limits<float>::max();
+	backlightPower = 0.0f;
+	grayscaleToPaletteScale = 1.0f;
+	fresnelPower = 5.0f;
+	wetnessSpecScale = 0.6f;
+	wetnessSpecPower = 1.4f;
+	wetnessMinVar = 0.2f;
+	wetnessEnvmapScale = 1.0f;
+	wetnessFresnelPower = 1.6f;
+	wetnessMetalness = 0.0f;
+
 	environmentMapScale = 1.0f;
+	unkEnvmap = 0;
+	unkSkinTint = 0;
 	maxPasses = 1.0f;
 	scale = 1.0f;
-
 	parallaxInnerLayerThickness = 0.0f;
 	parallaxRefractionScale = 1.0f;
 	parallaxInnerLayerTextureScale.u = 1.0f;
@@ -4792,6 +5135,7 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&emissiveColor.y, 4);
 	file.read((char*)&emissiveColor.z, 4);
 	file.read((char*)&emissiveMultiple, 4);
+
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
 		file.read((char*)&wetMaterialNameRef, 4);
 		if (wetMaterialNameRef != -1) {
@@ -4801,6 +5145,7 @@ void BSLightingShaderProperty::Get(fstream& file) {
 		else
 			wetMaterialName.clear();
 	}
+
 	file.read((char*)&textureClampMode, 4);
 	file.read((char*)&alpha, 4);
 	file.read((char*)&refractionStrength, 4);
@@ -4809,47 +5154,63 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&specularColor.y, 4);
 	file.read((char*)&specularColor.z, 4);
 	file.read((char*)&specularStrength, 4);
-	file.read((char*)&lightingEffect1, 4);
 
 	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130) {
+		file.read((char*)&lightingEffect1, 4);
 		file.read((char*)&lightingEffect2, 4);
 	}
-	else if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		file.read((char*)&unk1, 4);
-		file.read((char*)&unk2, 4);
+
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
+		file.read((char*)&subsurfaceRolloff, 4);
+		file.read((char*)&unkFloat1, 4);
+		file.read((char*)&backlightPower, 4);
+		file.read((char*)&grayscaleToPaletteScale, 4);
+		file.read((char*)&fresnelPower, 4);
+		file.read((char*)&wetnessSpecScale, 4);
+		file.read((char*)&wetnessSpecPower, 4);
+		file.read((char*)&wetnessMinVar, 4);
+		file.read((char*)&wetnessEnvmapScale, 4);
+		file.read((char*)&wetnessFresnelPower, 4);
+		file.read((char*)&wetnessMetalness, 4);
 	}
 
-	if (skyrimShaderType == 1) {
+	switch (skyrimShaderType) {
+	case 1:
 		file.read((char*)&environmentMapScale, 4);
-	}
-	else if (skyrimShaderType == 5 && header->GetUserVersion2() < 130) {
+		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+			file.read((char*)&unkEnvmap, 2);
+		break;
+	case 5:
+		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+			file.read((char*)&unkSkinTint, 4);
+
 		file.read((char*)&skinTintColor.x, 4);
 		file.read((char*)&skinTintColor.y, 4);
 		file.read((char*)&skinTintColor.z, 4);
-	}
-	else if (skyrimShaderType == 6) {
+		break;
+	case 6:
 		file.read((char*)&hairTintColor.x, 4);
 		file.read((char*)&hairTintColor.y, 4);
 		file.read((char*)&hairTintColor.z, 4);
-	}
-	else if (skyrimShaderType == 7) {
+		break;
+	case 7:
 		file.read((char*)&maxPasses, 4);
 		file.read((char*)&scale, 4);
-	}
-	else if (skyrimShaderType == 11) {
+		break;
+	case 11:
 		file.read((char*)&parallaxInnerLayerThickness, 4);
 		file.read((char*)&parallaxRefractionScale, 4);
 		file.read((char*)&parallaxInnerLayerTextureScale.u, 4);
 		file.read((char*)&parallaxInnerLayerTextureScale.v, 4);
 		file.read((char*)&parallaxEnvmapStrength, 4);
-	}
-	else if (skyrimShaderType == 14) {
+		break;
+	case 14:
 		file.read((char*)&sparkleParameters.r, 4);
 		file.read((char*)&sparkleParameters.g, 4);
 		file.read((char*)&sparkleParameters.b, 4);
 		file.read((char*)&sparkleParameters.a, 4);
-	}
-	else if (skyrimShaderType == 16) {
+		break;
+	case 16:
 		file.read((char*)&eyeCubemapScale, 4);
 		file.read((char*)&eyeLeftReflectionCenter.x, 4);
 		file.read((char*)&eyeLeftReflectionCenter.y, 4);
@@ -4857,22 +5218,7 @@ void BSLightingShaderProperty::Get(fstream& file) {
 		file.read((char*)&eyeRightReflectionCenter.x, 4);
 		file.read((char*)&eyeRightReflectionCenter.y, 4);
 		file.read((char*)&eyeRightReflectionCenter.z, 4);
-	}
-
-	if (header->GetUserVersion2() >= 130) {
-		for (int i = 0; i < 8; i++) {
-			file.read((char*)&unk[i], 4);
-		}
-	}
-	if (skyrimShaderType == 1 && header->GetUserVersion2() >= 130) {
-		for (int i = 0; i < 2; i++) {
-			file.read((char*)&pad[i], 1);
-		}
-	}
-	if (skyrimShaderType == 5 && header->GetUserVersion2() >= 130) {
-		for (int i = 0; i < 16; i++) {
-			file.read((char*)&pad[i], 1);
-		}
+		break;
 	}
 }
 
@@ -4894,9 +5240,10 @@ void BSLightingShaderProperty::Put(fstream& file) {
 	file.write((char*)&emissiveColor.y, 4);
 	file.write((char*)&emissiveColor.z, 4);
 	file.write((char*)&emissiveMultiple, 4);
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
+
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
 		file.write((char*)&wetMaterialNameRef, 4);
-	}
+
 	file.write((char*)&textureClampMode, 4);
 	file.write((char*)&alpha, 4);
 	file.write((char*)&refractionStrength, 4);
@@ -4905,47 +5252,63 @@ void BSLightingShaderProperty::Put(fstream& file) {
 	file.write((char*)&specularColor.y, 4);
 	file.write((char*)&specularColor.z, 4);
 	file.write((char*)&specularStrength, 4);
-	file.write((char*)&lightingEffect1, 4);
 
 	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130) {
+		file.write((char*)&lightingEffect1, 4);
 		file.write((char*)&lightingEffect2, 4);
 	}
-	else if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		file.write((char*)&unk1, 4);
-		file.write((char*)&unk2, 4);
+
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
+		file.write((char*)&subsurfaceRolloff, 4);
+		file.write((char*)&unkFloat1, 4);
+		file.write((char*)&backlightPower, 4);
+		file.write((char*)&grayscaleToPaletteScale, 4);
+		file.write((char*)&fresnelPower, 4);
+		file.write((char*)&wetnessSpecScale, 4);
+		file.write((char*)&wetnessSpecPower, 4);
+		file.write((char*)&wetnessMinVar, 4);
+		file.write((char*)&wetnessEnvmapScale, 4);
+		file.write((char*)&wetnessFresnelPower, 4);
+		file.write((char*)&wetnessMetalness, 4);
 	}
 
-	if (skyrimShaderType == 1) {
+	switch (skyrimShaderType) {
+	case 1:
 		file.write((char*)&environmentMapScale, 4);
-	}
-	else if (skyrimShaderType == 5 && header->GetUserVersion2() < 130) {
+		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+			file.write((char*)&unkEnvmap, 2);
+		break;
+	case 5:
+		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+			file.write((char*)&unkSkinTint, 4);
+
 		file.write((char*)&skinTintColor.x, 4);
 		file.write((char*)&skinTintColor.y, 4);
 		file.write((char*)&skinTintColor.z, 4);
-	}
-	else if (skyrimShaderType == 6) {
+		break;
+	case 6:
 		file.write((char*)&hairTintColor.x, 4);
 		file.write((char*)&hairTintColor.y, 4);
 		file.write((char*)&hairTintColor.z, 4);
-	}
-	else if (skyrimShaderType == 7) {
+		break;
+	case 7:
 		file.write((char*)&maxPasses, 4);
 		file.write((char*)&scale, 4);
-	}
-	else if (skyrimShaderType == 11) {
+		break;
+	case 11:
 		file.write((char*)&parallaxInnerLayerThickness, 4);
 		file.write((char*)&parallaxRefractionScale, 4);
 		file.write((char*)&parallaxInnerLayerTextureScale.u, 4);
 		file.write((char*)&parallaxInnerLayerTextureScale.v, 4);
 		file.write((char*)&parallaxEnvmapStrength, 4);
-	}
-	else if (skyrimShaderType == 14) {
+		break;
+	case 14:
 		file.write((char*)&sparkleParameters.r, 4);
 		file.write((char*)&sparkleParameters.g, 4);
 		file.write((char*)&sparkleParameters.b, 4);
 		file.write((char*)&sparkleParameters.a, 4);
-	}
-	else if (skyrimShaderType == 16) {
+		break;
+	case 16:
 		file.write((char*)&eyeCubemapScale, 4);
 		file.write((char*)&eyeLeftReflectionCenter.x, 4);
 		file.write((char*)&eyeLeftReflectionCenter.y, 4);
@@ -4953,23 +5316,7 @@ void BSLightingShaderProperty::Put(fstream& file) {
 		file.write((char*)&eyeRightReflectionCenter.x, 4);
 		file.write((char*)&eyeRightReflectionCenter.y, 4);
 		file.write((char*)&eyeRightReflectionCenter.z, 4);
-	}
-
-
-	if (header->GetUserVersion2() >= 130) {
-		for (int i = 0; i < 8; i++) {
-			file.write((char*)&unk[i], 4);
-		}
-	}
-	if (skyrimShaderType == 1 && header->GetUserVersion2() >= 130) {
-		for (int i = 0; i < 2; i++) {
-			file.write((char*)&pad[i], 1);
-		}
-	}
-	if (skyrimShaderType == 5 && header->GetUserVersion2() >= 130) {
-		for (int i = 0; i < 16; i++) {
-			file.write((char*)&pad[i], 1);
-		}
+		break;
 	}
 }
 
@@ -5094,49 +5441,46 @@ int BSLightingShaderProperty::CalcBlockSize() {
 	if (header->GetUserVersion() == 12)
 		blockSize += 8;
 
-	blockSize += 72;
+	blockSize += 36;
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		blockSize += 12;
-	}
-
-	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130) {
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
 		blockSize += 4;
-	}
 
-	if (skyrimShaderType == 1) {
-		blockSize += 4;
-	}
-	else if (skyrimShaderType == 5) {
-		if (header->GetUserVersion2() < 130) {
-			blockSize += 12;
-		}
-	}
-	else if (skyrimShaderType == 6) {
-		blockSize += 12;
-	}
-	else if (skyrimShaderType == 7){
+	blockSize += 32;
+
+	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130)
 		blockSize += 8;
-	}
-	else if (skyrimShaderType == 11){
+
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+		blockSize += 44;
+
+	switch (skyrimShaderType) {
+	case 1:
+		blockSize += 4;
+		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+			blockSize += 2;
+		break;
+	case 5:
+		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+			blockSize += 4;
+
+		blockSize += 12;
+		break;
+	case 6:
+		blockSize += 12;
+		break;
+	case 7:
+		blockSize += 8;
+		break;
+	case 11:
 		blockSize += 20;
-	}
-	else if (skyrimShaderType == 14){
+		break;
+	case 14:
 		blockSize += 16;
-	}
-	else if (skyrimShaderType == 16){
+		break;
+	case 16:
 		blockSize += 28;
-	}
-
-	if (header->GetUserVersion2() >= 130) {
-		blockSize += 32;
-	}
-
-	if (skyrimShaderType == 1 && header->GetUserVersion2() >= 130) {
-		blockSize += 2;
-	}
-	if (skyrimShaderType == 5 && header->GetUserVersion2() >= 130) {
-		blockSize += 16;
+		break;
 	}
 
 	return blockSize;

@@ -596,6 +596,26 @@ public:
 };
 
 
+class BSVertexData {
+public:
+	// Single- or half-precision depending on IsFullPrecision() being true
+	Vector3 vert;
+	float bitangentX;	// Maybe the dot product of the vert normal and the z-axis?
+
+	Vector2 uv;
+
+	byte normal[3];
+	byte bitangentY;
+	byte tangent[3];
+	byte bitangentZ;
+
+	byte colorData[4];
+
+	float weights[4];
+	byte weightBones[4];
+};
+
+
 class BSTriShape : public NiShape {
 private:
 	int skinInstanceRef;
@@ -605,25 +625,6 @@ private:
 	BoundingSphere bounds;
 
 public:
-	class BSVertexData {
-	public:
-		// Single- or half-precision depending on IsFullPrecision() being true
-		Vector3 vert;
-		float bitangentX;	// Maybe the dot product of the vert normal and the z-axis?
-
-		Vector2 uv;
-
-		byte normal[3];
-		byte bitangentY;
-		byte tangent[3];
-		byte bitangentZ;
-
-		byte colorData[4];
-
-		float weights[4];
-		byte weightBones[4];
-	};
-
 	// Set in CalcBlockSize()
 	byte vertFlags1;	// Number of uint elements in vertex data
 	byte vertFlags2;	// 4 byte or 2 byte position data
@@ -638,6 +639,11 @@ public:
 	uint numTriangles;
 	ushort numVertices;
 	uint dataSize;
+	uint vertexSize;	// Not in file
+
+	uint someDataSize;
+	vector<Vector3> someVerts;
+	vector<Triangle> someTris;
 
 	vector<Vector3> rawVertices;	// filled by GetRawVerts function and returned.
 	vector<Vector3> rawNormals;		// filled by GetNormalData function and returned.
@@ -694,8 +700,8 @@ public:
 	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 
 	void SetFullPrecision(bool enable);
-	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0; }
-	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals()); }
+	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0 || header->GetUserVersion2() == 100; }
+	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals() && header->GetUserVersion2() != 100); }
 
 	void SetBounds(const BoundingSphere& bounds) { this->bounds = bounds; }
 	BoundingSphere GetBounds() { return bounds; }
@@ -1102,11 +1108,41 @@ public:
 		vector<Triangle> triangles;
 		bool hasBoneIndices = false;
 		vector<BoneIndices> boneIndices;
+
 		ushort unkShort = 0;				// User Version >= 12
+		byte vertFlags1 = 0;				// User Version >= 12, User Version 2 == 100, Number of uint elements in vertex data
+		byte vertFlags2 = 0;				// User Version >= 12, User Version 2 == 100, 4 byte or 2 byte position data
+		byte vertFlags3 = 0;				// User Version >= 12, User Version 2 == 100
+		byte vertFlags4 = 0;				// User Version >= 12, User Version 2 == 100
+		byte vertFlags5 = 0;				// User Version >= 12, User Version 2 == 100
+		byte vertFlags6 = 0;				// User Version >= 12, User Version 2 == 100, Vertex, UVs, Normals
+		byte vertFlags7 = 0;				// User Version >= 12, User Version 2 == 100, (Bi)Tangents, Vertex Colors, Skinning, Precision
+		byte vertFlags8 = 0;				// User Version >= 12, User Version 2 == 100
+		vector<Triangle> trueTriangles;		// User Version >= 12, User Version 2 == 100
 	};
 
 	uint numPartitions;
+	uint dataSize;							// User Version >= 12, User Version 2 == 100
+	uint vertexSize;						// User Version >= 12, User Version 2 == 100
+	byte vertFlags1;						// User Version >= 12, User Version 2 == 100, Number of uint elements in vertex data
+	byte vertFlags2;						// User Version >= 12, User Version 2 == 100, 4 byte or 2 byte position data
+	byte vertFlags3;						// User Version >= 12, User Version 2 == 100
+	byte vertFlags4;						// User Version >= 12, User Version 2 == 100
+	byte vertFlags5;						// User Version >= 12, User Version 2 == 100
+	byte vertFlags6;						// User Version >= 12, User Version 2 == 100, Vertex, UVs, Normals
+	byte vertFlags7;						// User Version >= 12, User Version 2 == 100, (Bi)Tangents, Vertex Colors, Skinning, Precision
+	byte vertFlags8;						// User Version >= 12, User Version 2 == 100
+	uint numVertices;						// Not in file
+	vector<BSVertexData> vertData;			// User Version >= 12, User Version 2 == 100
 	vector<PartitionBlock> partitions;
+
+	bool HasVertices() { return (vertFlags6 & (1 << 4)) != 0; }
+	bool HasUVs() { return (vertFlags6 & (1 << 5)) != 0; }
+	bool HasNormals() { return (vertFlags6 & (1 << 7)) != 0; }
+	bool HasTangents() { return (vertFlags7 & (1 << 0)) != 0; }
+	bool HasVertexColors() { return (vertFlags7 & (1 << 1)) != 0; }
+	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
+	bool IsFullPrecision() { return true; }
 
 	NiSkinPartition(NiHeader& hdr);
 	NiSkinPartition(fstream& file, NiHeader& hdr);
@@ -1342,27 +1378,36 @@ public:
 	float glossiness;
 	Vector3 specularColor;
 	float specularStrength;
-	float lightingEffect1;
-	float lightingEffect2;					// User version == 12, userversion2 < 130
-	uint unk1;								// user version == 12, userversion2 >= 130
-	uint unk2;								// user version == 12, userversion2 >= 130
+	float lightingEffect1;					// User Version <= 12, User Version 2 < 130
+	float lightingEffect2;					// User Version <= 12, User Version 2 < 130
 
-	float environmentMapScale;
-	Vector3 skinTintColor;
-	Vector3 hairTintColor;
-	float maxPasses;
-	float scale;
-	float parallaxInnerLayerThickness;
-	float parallaxRefractionScale;
-	Vector2 parallaxInnerLayerTextureScale;
-	float parallaxEnvmapStrength;
-	Color4 sparkleParameters;
-	float eyeCubemapScale;
-	Vector3 eyeLeftReflectionCenter;
-	Vector3 eyeRightReflectionCenter;
+	float subsurfaceRolloff;				// User Version == 12, User Version 2 >= 130
+	float unkFloat1;						// User Version == 12, User Version 2 >= 130
+	float backlightPower;					// User Version == 12, User Version 2 >= 130
+	float grayscaleToPaletteScale;			// User Version == 12, User Version 2 >= 130
+	float fresnelPower;						// User Version == 12, User Version 2 >= 130
+	float wetnessSpecScale;					// User Version == 12, User Version 2 >= 130
+	float wetnessSpecPower;					// User Version == 12, User Version 2 >= 130
+	float wetnessMinVar;					// User Version == 12, User Version 2 >= 130
+	float wetnessEnvmapScale;				// User Version == 12, User Version 2 >= 130
+	float wetnessFresnelPower;				// User Version == 12, User Version 2 >= 130
+	float wetnessMetalness;					// User Version == 12, User Version 2 >= 130
 
-	float unk[8];						// unkown shader float params in shadertype 5 for fallout4
-	byte  pad[16];						// up to 16 bytes of uknown padding.  clearly this isn't the right format.
+	float environmentMapScale;				// Shader Type == 1
+	ushort unkEnvmap;						// Shader Type == 1, User Version == 12, User Version 2 >= 130
+	Vector3 skinTintColor;					// Shader Type == 5
+	uint unkSkinTint;						// Shader Type == 5, User Version == 12, User Version 2 >= 130
+	Vector3 hairTintColor;					// Shader Type == 6
+	float maxPasses;						// Shader Type == 7
+	float scale;							// Shader Type == 7
+	float parallaxInnerLayerThickness;		// Shader Type == 11
+	float parallaxRefractionScale;			// Shader Type == 11
+	Vector2 parallaxInnerLayerTextureScale;	// Shader Type == 11
+	float parallaxEnvmapStrength;			// Shader Type == 11
+	Color4 sparkleParameters;				// Shader Type == 14
+	float eyeCubemapScale;					// Shader Type == 16
+	Vector3 eyeLeftReflectionCenter;		// Shader Type == 16
+	Vector3 eyeRightReflectionCenter;		// Shader Type == 16
 
 
 	BSLightingShaderProperty(NiHeader& hdr);

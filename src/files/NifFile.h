@@ -39,6 +39,7 @@ public:
 	int Load(const string& filename);
 	int Save(const string& filename, bool optimize = true);
 	void Optimize();
+	void PrepareData();
 
 	string GetFileName() { return fileName; }
 

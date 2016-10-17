@@ -361,6 +361,7 @@ int NifFile::Load(const string& filename) {
 	}
 
 	TrimTexturePaths();
+	PrepareData();
 	isValid = true;
 
 	return 0;
@@ -1057,6 +1058,42 @@ void NifFile::Optimize() {
 		UpdateBoundingSphere(s);
 
 	RemoveUnusedStrings();
+}
+
+void NifFile::PrepareData() {
+	vector<string> shapes;
+	GetShapeList(shapes);
+
+	for (auto &s : shapes) {
+		// Move triangle and vertex data from partition to shape
+		if (hdr.GetUserVersion() >= 12 && hdr.GetUserVersion2() == 100) {
+			NiShape* shape = FindShapeByName(s);
+			if (shape && shape->blockType == BSTRISHAPE) {
+				BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+				if (!bsTriShape)
+					continue;
+
+				auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+				if (!skinInst)
+					continue;
+
+				auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+				if (!skinPart)
+					continue;
+
+				bsTriShape->vertData = skinPart->vertData;
+				bsTriShape->numVertices = skinPart->dataSize / skinPart->vertexSize;
+				bsTriShape->numTriangles = 0;
+				bsTriShape->triangles.clear();
+
+				for (auto &part : skinPart->partitions)
+					for (auto &tri : part.trueTriangles)
+							bsTriShape->triangles.push_back(tri);
+
+				bsTriShape->numTriangles = bsTriShape->triangles.size();
+			}
+		}
+	}
 }
 
 
@@ -2530,6 +2567,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	else
 		return;
 
+	BSTriShape* bsTriShape = nullptr;
 	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
 
 	vector<Triangle> tris;
@@ -2552,6 +2590,15 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		stripsData->StripsToTris(&tris);
 		numTriangles = stripsData->numTriangles;
 		numVerts = stripsData->numVertices;
+	}
+	else if (shape->blockType == BSTRISHAPE) {
+		bsTriShape = dynamic_cast<BSTriShape*>(shape);
+		if (!bsTriShape)
+			return;
+
+		tris = bsTriShape->triangles;
+		numTriangles = bsTriShape->numTriangles;
+		numVerts = bsTriShape->numVertices;
 	}
 	else
 		return;
@@ -2668,9 +2715,14 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		for (int it = 0; it < skinPart->partitions[partID].numTriangles;) {
 			// Find the actual tri index from the partition tri index
 			Triangle tri;
-			tri.p1 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p1];
-			tri.p2 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p2];
-			tri.p3 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p3];
+			if (bsTriShape) {
+				tri = skinPart->partitions[partID].triangles[it];
+			}
+			else {
+				tri.p1 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p1];
+				tri.p2 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p2];
+				tri.p3 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p3];
+			}
 			tri.rot();
 
 			// Find current tri in full list
@@ -2833,10 +2885,28 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 				tri.p3 = vertMap[tri.p3];
 
 			tri.rot();
-			part.triangles.push_back(tri);
+
+			if (bsTriShape) {
+				part.triangles.push_back(tris[triID]);
+				part.trueTriangles.push_back(tris[triID]);
+			}
+			else
+				part.triangles.push_back(tri);
 		}
 
 		part.numTriangles = part.triangles.size();
+
+		// Copy relevant data from shape to partition
+		if (bsTriShape) {
+			part.vertFlags1 = bsTriShape->vertFlags1;
+			part.vertFlags2 = bsTriShape->vertFlags2;
+			part.vertFlags3 = bsTriShape->vertFlags3;
+			part.vertFlags4 = bsTriShape->vertFlags4;
+			part.vertFlags5 = bsTriShape->vertFlags5;
+			part.vertFlags6 = bsTriShape->vertFlags6;
+			part.vertFlags7 = bsTriShape->vertFlags7;
+			part.vertFlags8 = bsTriShape->vertFlags8;
+		}
 
 		unordered_map<int, int> boneLookup;
 		boneLookup.reserve(partBones[partID].size());
@@ -2880,6 +2950,14 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 
 	skinPart->numPartitions = partitions.size();
 	skinPart->partitions = move(partitions);
+
+	if (bsTriShape) {
+		bsTriShape->CalcBlockSize();
+		skinPart->numVertices = bsTriShape->numVertices;
+		skinPart->dataSize = bsTriShape->dataSize;
+		skinPart->vertexSize = bsTriShape->vertexSize;
+		skinPart->vertData = bsTriShape->vertData;
+	}
 
 	UpdatePartitionFlags(shapeName);
 }
