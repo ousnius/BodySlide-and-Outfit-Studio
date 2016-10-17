@@ -86,6 +86,13 @@ struct SkinTransform {
 		rotation[2] = Vector3(0.0f, 0.0f, 1.0f);
 	}
 
+	bool IsIdentity() {
+		return (translation.IsZero() && scale == 1.0f &&
+			rotation[0] == Vector3(1.0f, 0.0f, 0.0f) &&
+			rotation[1] == Vector3(0.0f, 1.0f, 0.0f) &&
+			rotation[2] == Vector3(0.0f, 0.0f, 1.0f));
+	}
+
 	Matrix4 ToMatrix() {
 		Matrix4 m;
 		m[0] = rotation[0].x * scale;

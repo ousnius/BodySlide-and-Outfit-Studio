@@ -197,6 +197,7 @@
     <ResourceCompile Include="BodySlide.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="lang\BodySlide.pot" />
     <None Include="lib\gli\core\clear.inl" />
     <None Include="lib\gli\core\comparison.inl" />
     <None Include="lib\gli\core\convert.inl" />

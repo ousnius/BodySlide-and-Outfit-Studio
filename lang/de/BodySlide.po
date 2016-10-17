@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.9\n"
+"X-Generator: Poedit 1.8.10\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -391,8 +391,16 @@ msgid ""
 msgstr ""
 "Läd eine NIF-Datei als Arbeitsoutfit. Ersetzt alle aktuellen Outfit Objekte."
 
-msgid "Apply Overall Skin Transform"
+msgid "Apply Skin Transforms"
 msgstr "Skin-Transformierung anwenden"
+
+msgid ""
+"There are skin transforms in the shapes that could cause misalignment.\n"
+"Do you want to apply them to the geometry?"
+msgstr ""
+"Es gibt Skin-Transformierungen in den Modellen, welche zu Fehlausrichtungen "
+"führen könnten.\n"
+"Sollen diese in die Geometrie übernommen werden?"
 
 msgid ""
 "Disable for a different way of loading NIF files to see if that puts it into "
@@ -1514,9 +1522,26 @@ msgstr "U invertieren"
 msgid "Invert V"
 msgstr "V invertieren"
 
-# XRC STRINGS END HERE
 msgid "Toggle Zaps:"
 msgstr "Zaps umschalten:"
+
+msgid "Search Radius"
+msgstr "Suchradius"
+
+msgid "Max Vertex Targets"
+msgstr "Max Vertex Ziele"
+
+# XRC STRINGS END HERE
+msgid ""
+"Each vertex of the reference will copy its weights to the nearest collection "
+"of vertices within the given radius. Bear in mind that some geometry will "
+"always require manual tweaking to become weighted and work well. Often, the "
+"default values are sufficient."
+msgstr ""
+"Jeder Vertex der Referenz wird sein Weighting auf die nächste Sammlung an "
+"Vertices innerhalb des gegebenen Radius kopieren. Allerdings müssen manche "
+"Modelle trotzdem noch manuell bearbeitet werden, um Weighting abzubekommen "
+"oder gut zu funktionieren. Meistens genügen die Standardwerte."
 
 msgid ""
 "Bone information incomplete. Exported data will not contain correct bone "
@@ -2449,3 +2474,6 @@ msgstr "Lade Slider-Datei..."
 
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "Vorschau fehlgeschlagen: OpenGL-Kontext ist nicht OK."
+
+#~ msgid "Apply Overall Skin Transform"
+#~ msgstr "Skin-Transformierung anwenden"

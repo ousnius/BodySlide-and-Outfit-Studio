@@ -587,6 +587,9 @@
     <None Include="res\xrc\Setup.xrc">
       <Filter>Resources</Filter>
     </None>
+    <None Include="lang\BodySlide.pot">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">

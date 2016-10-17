@@ -1963,10 +1963,8 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 	vector<string> shapes;
 	nif.GetShapeList(shapes);
 
+	bool selection = false;
 	bool applyOverallSkin = true;
-	wxMenuBar* menu = (wxMenuBar*)owner->GetMenuBar();
-	if (menu)
-		applyOverallSkin = menu->IsChecked(XRCID("applyOverallSkin"));
 
 	for (auto &s : shapes) {
 		Matrix4 localGeom;
@@ -1975,6 +1973,12 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 		BoundingSphere bounds;
 		SkinTransform xFormSkinAll;
 		nif.GetShapeBoneTransform(s, 0xFFFFFFFF, xFormSkinAll, bounds);
+
+		if (!selection && !xFormSkinAll.IsIdentity()) {
+			int ret = wxMessageBox(_("There are skin transforms in the shapes that could cause misalignment.\nDo you want to apply them to the geometry?"), _("Apply Skin Transforms"), wxYES_NO | wxICON_INFORMATION, owner);
+			applyOverallSkin = (ret == wxYES);
+			selection = true;
+		}
 
 		Matrix4 skinAllInv = xFormSkinAll.ToMatrix().Inverse();
 
