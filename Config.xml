@@ -43,8 +43,6 @@
         <Brightness1>55</Brightness1>
         <Brightness2>45</Brightness2>
         <Brightness3>45</Brightness3></Lights>
-    <!-- Reference templates are short cuts to loading a slider set as a reference in Outfit Studio -->
-    <ReferenceTemplates></ReferenceTemplates>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference></DefaultSkeletonReference>

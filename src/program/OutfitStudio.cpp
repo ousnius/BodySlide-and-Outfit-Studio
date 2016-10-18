@@ -808,10 +808,8 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	wxWizardPage* pg1;
 	wxWizardPage* pg2;
 	bool result = false;
-	vector<string> templateNames;
-	wxArrayString tmplNameArray;
-	Config.GetValueArray("ReferenceTemplates", "Template", templateNames);
-	tmplNameArray.assign(templateNames.begin(), templateNames.end());
+
+	UpdateReferenceTemplates();
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&wiz, this, "wizNewProject", "wxWizard")) {
 		pg1 = (wxWizardPage*)XRCCTRL(wiz, "wizpgNewProj1", wxWizardPageSimple);
@@ -823,7 +821,9 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnLoadOutfitFP_Texture, this);
 
 		wxChoice* tmplChoice = XRCCTRL(wiz, "npTemplateChoice", wxChoice);
-		tmplChoice->Append(tmplNameArray);
+		for (auto &tmpl : refTemplates)
+			tmplChoice->Append(tmpl.first);
+
 		tmplChoice->Select(0);
 
 		wiz.FitToPage(pg1);
@@ -862,7 +862,9 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(wiz, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
 		wxString refTemplate = XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
-		error = project->LoadReferenceTemplate(refTemplate.ToStdString());
+
+		const ReferenceTemplate& tmpl = refTemplates[refTemplate.ToStdString()];
+		error = project->LoadReferenceTemplate(tmpl.sourceFile, tmpl.set, tmpl.shape);
 	}
 	else if (XRCCTRL(wiz, "npRefIsSliderset", wxRadioButton)->GetValue() == true) {
 		wxString fileName = XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
@@ -1041,21 +1043,19 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	wxDialog dlg;
-	vector<string> templateNames;
-	wxArrayString tmplNameArray;
-	Config.GetValueArray("ReferenceTemplates", "Template", templateNames);
-	tmplNameArray.assign(templateNames.begin(), templateNames.end());
+	UpdateReferenceTemplates();
 
+	wxDialog dlg;
 	int result = wxID_CANCEL;
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgLoadRef", "wxDialog")) {
 		XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->Bind(wxEVT_FILEPICKER_CHANGED, &OutfitStudio::OnNPWizChangeSliderSetFile, this);
 		XRCCTRL(dlg, "npSliderSetName", wxChoice)->Bind(wxEVT_CHOICE, &OutfitStudio::OnNPWizChangeSetNameChoice, this);
 
 		wxChoice* tmplChoice = XRCCTRL(dlg, "npTemplateChoice", wxChoice);
-		tmplChoice->Append(tmplNameArray);
-		tmplChoice->Select(0);
+		for (auto &tmpl : refTemplates)
+			tmplChoice->Append(tmpl.first);
 
+		tmplChoice->Select(0);
 		result = dlg.ShowModal();
 	}
 	if (result == wxID_CANCEL)
@@ -1071,7 +1071,9 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
 		wxString refTemplate = XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
-		error = project->LoadReferenceTemplate(refTemplate.ToStdString(), ClearRef);
+
+		const ReferenceTemplate& tmpl = refTemplates[refTemplate.ToStdString()];
+		error = project->LoadReferenceTemplate(tmpl.sourceFile, tmpl.set, tmpl.shape, ClearRef);
 	}
 	else if (XRCCTRL(dlg, "npRefIsSliderset", wxRadioButton)->GetValue() == true) {
 		wxString fileName = XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
@@ -1187,6 +1189,32 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Outfit loaded.");
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
+}
+
+void OutfitStudio::UpdateReferenceTemplates() {
+	refTemplates.clear();
+
+	string fileName = "RefTemplates.xml";
+	if (!wxFileName::IsFileReadable(fileName))
+		return;
+
+	XMLDocument doc;
+	XMLElement* root;
+	if (doc.LoadFile(fileName.c_str()) == XML_SUCCESS) {
+		root = doc.FirstChildElement("RefTemplates");
+		if (!root)
+			return;
+
+		XMLElement* element = root->FirstChildElement("Template");
+		while (element) {
+			ReferenceTemplate refTemplate;
+			refTemplate.sourceFile = element->Attribute("sourcefile");
+			refTemplate.set = element->Attribute("set");
+			refTemplate.shape = element->Attribute("shape");
+			refTemplates[element->GetText()] = refTemplate;
+			element = element->NextSiblingElement("Template");
+		}
+	}
 }
 
 void OutfitStudio::ClearProject() {

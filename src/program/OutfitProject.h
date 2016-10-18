@@ -181,7 +181,7 @@ public:
 	void DeleteSlider(const string& sliderName);
 
 	int LoadSkeletonReference(const string& skeletonFileName);
-	int LoadReferenceTemplate(const string& templateName, bool clearRef = true);
+	int LoadReferenceTemplate(const string& sourceFile, const string& set, const string& shape, bool clearRef = true);
 	int LoadReferenceNif(const string& fileName, const string& shapeName, bool ClearRef = true);
 	int LoadReference(const string& fileName, const string& setName, bool ClearRef = true, const string& shapeName = "");
 	int AddNif(const string& fileName, bool clear = true, const string& inOutfitName = "");

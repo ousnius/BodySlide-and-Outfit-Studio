@@ -897,7 +897,6 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("UseSystemLanguage", "false");
 	Config.SetDefaultValue("SelectedPreset", "");
 
-	Config.SetDefaultValue("ReferenceTemplates", "");
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultValue("Input/LeftMousePan", "false");

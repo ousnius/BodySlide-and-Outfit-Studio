@@ -88,6 +88,12 @@ struct WeightCopyOptions {
 	int maxResults;
 };
 
+struct ReferenceTemplate {
+	string sourceFile;
+	string set;
+	string shape;
+};
+
 
 class OutfitStudio;
 
@@ -766,9 +772,13 @@ private:
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
 
+	map<string, ReferenceTemplate> refTemplates;
+
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);
 	void ZeroSliders();
+
+	void UpdateReferenceTemplates();
 
 	void ClearProject();
 	void RenameProject(const string& projectName);
