@@ -717,6 +717,7 @@ public:
 	void SetNormals(const vector<Vector3>& inNorms);
 	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
+	int CalcDataSizes();
 
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };

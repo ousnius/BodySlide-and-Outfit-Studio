@@ -1493,42 +1493,18 @@ int BSTriShape::CalcBlockSize() {
 	else
 		blockSize += 4;
 
-	vertexSize = 0;
-	if (IsFullPrecision()) {	// Position + Bitangent X
-		vertFlags2 = 4;
-		vertexSize += 4;
-	}
-	else {
-		vertFlags2 = 2;
-		vertexSize += 2;
-	}
-
-	if (HasUVs())
-		vertexSize += 1;		// UVs
-
-	if (HasNormals())			// Normals + Tangents + Bitangent Y + Bitangent Z
-		vertexSize += 2;
-
-	if (HasVertexColors())		// Vertex Colors
-		vertexSize += 1;
-
-	if (IsSkinned())			// Skinning
-		vertexSize += 3;
-
-	vertFlags1 = vertexSize;
-	vertexSize *= 4;
-
-	if (HasVertices())
-		dataSize = vertexSize * numVertices + 6 * numTriangles;
+	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130 && IsSkinned())
+		CalcDataSizes();
 	else
-		dataSize = 0;
-
-	blockSize += dataSize;
+		blockSize += CalcDataSizes();
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
 		blockSize += 4;
-		blockSize += 12 * numVertices;
-		blockSize += 6 * numTriangles;
+
+		if (someDataSize > 0) {
+			blockSize += 12 * numVertices;
+			blockSize += 6 * numTriangles;
+		}
 	}
 
 	return blockSize;
@@ -1956,6 +1932,40 @@ void BSTriShape::CalcTangentSpace() {
 		vertData[i].bitangentY = (unsigned char)round((((rawBitangents[i].y + 1.0f) / 2.0f) * 255.0f));
 		vertData[i].bitangentZ = (unsigned char)round((((rawBitangents[i].z + 1.0f) / 2.0f) * 255.0f));
 	}
+}
+
+int BSTriShape::CalcDataSizes() {
+	vertexSize = 0;
+	dataSize = 0;
+
+	if (IsFullPrecision()) {	// Position + Bitangent X
+		vertexSize += 4;
+		vertFlags1 = 4;
+	}
+	else {
+		vertexSize += 2;
+		vertFlags1 = 2;
+	}
+
+	if (HasUVs())
+		vertexSize += 1;		// UVs
+
+	if (HasNormals())			// Normals + Tangents + Bitangent Y + Bitangent Z
+		vertexSize += 2;
+
+	if (HasVertexColors())		// Vertex Colors
+		vertexSize += 1;
+
+	if (IsSkinned())			// Skinning
+		vertexSize += 3;
+
+	vertFlags2 = vertexSize;
+	vertexSize *= 4;
+
+	if (HasVertices())
+		dataSize = vertexSize * numVertices + 6 * numTriangles;
+
+	return dataSize;
 }
 
 void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {

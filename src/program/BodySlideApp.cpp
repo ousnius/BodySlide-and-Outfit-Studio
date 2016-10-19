@@ -1063,7 +1063,7 @@ bool BodySlideApp::ShowSetup() {
 				break;
 			case SKYRIMSE:
 				dataDir = dirSkyrimSE->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_sse.nif");
 				Config.SetValue("Anim/SkeletonRootName", "NPC");
 				break;
 			}
@@ -2859,8 +2859,11 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			choiceSkeletonRoot->SetStringSelection("Bip01");
 			break;
 		case SKYRIM:
-		case SKYRIMSE:
 			fpSkeletonFile->SetPath("res\\skeleton_female_xpmse.nif");
+			choiceSkeletonRoot->SetStringSelection("NPC");
+			break;
+		case SKYRIMSE:
+			fpSkeletonFile->SetPath("res\\skeleton_female_sse.nif");
 			choiceSkeletonRoot->SetStringSelection("NPC");
 			break;
 		case FO4:

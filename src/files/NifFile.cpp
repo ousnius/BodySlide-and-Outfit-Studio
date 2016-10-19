@@ -908,7 +908,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
-		if (destGeom->blockType == NITRISHAPE || destGeom->blockType == NITRISTRIPS) {
+		if (destGeom->blockType == NITRISHAPE || destGeom->blockType == NITRISTRIPS || (destGeom->blockType == BSTRISHAPE && hdr.GetUserVersion2() == 100)) {
 			auto srcSkinInst = srcNif.hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcSkinInst) {
 				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
@@ -1598,6 +1598,17 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 
 		verts = stripsData->vertices;
 		stripsData->StripsToTris(&tris);
+	}
+	else if (shape->blockType == BSTRISHAPE) {
+		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+		if (!bsTriShape)
+			return;
+
+		auto rawVerts = bsTriShape->GetRawVerts();
+		if (rawVerts)
+			verts = (*rawVerts);
+
+		tris = bsTriShape->triangles;
 	}
 
 	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
@@ -2599,6 +2610,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		tris = bsTriShape->triangles;
 		numTriangles = bsTriShape->numTriangles;
 		numVerts = bsTriShape->numVertices;
+		bsTriShape->CalcDataSizes();
 	}
 	else
 		return;
@@ -2952,11 +2964,18 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	skinPart->partitions = move(partitions);
 
 	if (bsTriShape) {
-		bsTriShape->CalcBlockSize();
 		skinPart->numVertices = bsTriShape->numVertices;
 		skinPart->dataSize = bsTriShape->dataSize;
 		skinPart->vertexSize = bsTriShape->vertexSize;
 		skinPart->vertData = bsTriShape->vertData;
+		skinPart->vertFlags1 = bsTriShape->vertFlags1;
+		skinPart->vertFlags2 = bsTriShape->vertFlags2;
+		skinPart->vertFlags3 = bsTriShape->vertFlags3;
+		skinPart->vertFlags4 = bsTriShape->vertFlags4;
+		skinPart->vertFlags5 = bsTriShape->vertFlags5;
+		skinPart->vertFlags6 = bsTriShape->vertFlags6;
+		skinPart->vertFlags7 = bsTriShape->vertFlags7;
+		skinPart->vertFlags8 = bsTriShape->vertFlags8;
 	}
 
 	UpdatePartitionFlags(shapeName);
@@ -3041,14 +3060,32 @@ void NifFile::CreateSkinning(const string& shapeName) {
 	}
 	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
-			auto newSkinInst = new BSSkinInstance(hdr);
-			int skinInstID = hdr.AddBlock(newSkinInst, "BSSkin::Instance");
+			int skinInstID;
+			if (shape->blockType == BSTRISHAPE && hdr.GetUserVersion2() == 100) {
+				auto nifSkinData = new NiSkinData(hdr);
+				int skinDataID = hdr.AddBlock(nifSkinData, "NiSkinData");
 
-			auto newBoneData = new BSSkinBoneData(hdr);
-			int boneDataRef = hdr.AddBlock(newBoneData, "BSSkin::BoneData");
+				auto nifSkinPartition = new NiSkinPartition(hdr);
+				int partID = hdr.AddBlock(nifSkinPartition, "NiSkinPartition");
 
-			newSkinInst->SetTargetRef(GetRootNodeID());
-			newSkinInst->SetDataRef(boneDataRef);
+				auto nifDismemberInst = new BSDismemberSkinInstance(hdr);
+				skinInstID = hdr.AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
+
+				nifDismemberInst->SetDataRef(skinDataID);
+				nifDismemberInst->SetSkinPartitionRef(partID);
+				nifDismemberInst->SetSkeletonRootRef(0);
+			}
+			else {
+				auto newSkinInst = new BSSkinInstance(hdr);
+				skinInstID = hdr.AddBlock(newSkinInst, "BSSkin::Instance");
+
+				auto newBoneData = new BSSkinBoneData(hdr);
+				int boneDataRef = hdr.AddBlock(newBoneData, "BSSkin::BoneData");
+
+				newSkinInst->SetTargetRef(GetRootNodeID());
+				newSkinInst->SetDataRef(boneDataRef);
+			}
+
 			shape->SetSkinInstanceRef(skinInstID);
 			shape->SetSkinned(true);
 

@@ -292,7 +292,8 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			continue;
 
 		int stype = nif->GetShapeType(shapeBoneList.first);
-		bool bIsFo4 = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE);
+		bool isBSShape = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE);
+		bool isFO4 = (nif->GetHeader().GetUserVersion() >= 12 && nif->GetHeader().GetUserVersion2() == 130);
 
 		if (shapeSkinning[shapeBoneList.first].bNeedsBoundsCalc)
 			CalcShapeSkinBounds(shapeBoneList.first);
@@ -306,10 +307,11 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			int bid = GetShapeBoneIndex(shapeBoneList.first, boneName);
 			AnimWeight& bw = shapeSkinning[shapeBoneList.first].boneWeights[bid];
 
-			if (bIsFo4) {
+			if (isBSShape)
 				for (auto vw : bw.weights)
 					vertWeights[vw.first].Add(bid, vw.second);
 
+			if (isFO4) {
 				if (!bptr || !bptr->hasSkinXform) {
 					incomplete = true;
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bounds);
@@ -335,10 +337,9 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			}
 		}
 
-		if (bIsFo4) {
+		if (isBSShape)
 			for (auto vid : vertWeights)
 				nif->SetShapeVertWeights(shapeBoneList.first, vid.first, vid.second.boneIds, vid.second.weights);
-		}
 	}
 
 	if (incomplete)
