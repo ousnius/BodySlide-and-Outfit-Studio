@@ -599,13 +599,7 @@ void OutfitStudio::UpdateActiveShapeUI() {
 
 		CreateSegmentTree(activeItem->shapeName);
 		CreatePartitionTree(activeItem->shapeName);
-
-		wxArrayTreeItemIds selItems;
-		outfitBones->GetSelections(selItems);
-		if (!selItems.empty()) {
-			wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems.front());
-			OnBoneSelect(treeEvent);
-		}
+		ReselectBone();
 	}
 }
 
@@ -5302,11 +5296,7 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 		outfitBones->Delete(selItems[i]);
 	}
 
-	outfitBones->GetSelections(selItems);
-	if (!selItems.empty()) {
-		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems.front());
-		OnBoneSelect(treeEvent);
-	}
+	ReselectBone();
 }
 
 void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
@@ -5320,10 +5310,7 @@ void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 			project->GetWorkAnim()->RemoveShapeBone(s->shapeName, bone);
 	}
 
-	if (!selItems.empty()) {
-		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems.front());
-		OnBoneSelect(treeEvent);
-	}
+	ReselectBone();
 }
 
 bool OutfitStudio::ShowWeightCopy(WeightCopyOptions& options) {
@@ -5369,6 +5356,15 @@ bool OutfitStudio::ShowWeightCopy(WeightCopyOptions& options) {
 	return false;
 }
 
+void OutfitStudio::ReselectBone() {
+	wxArrayTreeItemIds selItems;
+	outfitBones->GetSelections(selItems);
+	if (!selItems.empty()) {
+		wxTreeEvent treeEvent(wxEVT_TREE_SEL_CHANGED, outfitBones, selItems.front());
+		OnBoneSelect(treeEvent);
+	}
+}
+
 void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
@@ -5395,6 +5391,7 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		project->morpher.ClearProximityCache();
+		ReselectBone();
 
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
@@ -5440,6 +5437,7 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		project->morpher.ClearProximityCache();
+		ReselectBone();
 
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
@@ -5486,7 +5484,9 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 	unordered_map<ushort, float> mask;
 	glView->GetActiveMask(mask);
 	project->TransferSelectedWeights(activeItem->shapeName, &mask, &selectedBones);
+	ReselectBone();
 
+	UpdateProgress(100, _("Finished"));
 	EndProgress();
 }
 

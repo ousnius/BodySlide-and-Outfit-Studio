@@ -786,6 +786,7 @@ private:
 	void WorkingGUIFromProj();
 
 	bool ShowWeightCopy(WeightCopyOptions& options);
+	void ReselectBone();
 
 	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);

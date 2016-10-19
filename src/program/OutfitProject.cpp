@@ -1268,18 +1268,22 @@ void OutfitProject::CopyBoneWeights(const string& destShape, const float& proxim
 		if (mask) {
 			weights.clear();
 			oldWeights.clear();
+
 			workAnim.GetWeights(destShape, boneName, oldWeights);
 		}
 
 		for (auto &dr : diffResult) {
-			if (mask) {
-				if (1.0f - (*mask)[dr.first] > 0.0f)
-					weights[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
-				else
-					weights[dr.first] = oldWeights[dr.first];
-			}
+			if (mask)
+				weights[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
 			else
 				weights[dr.first] = dr.second.y;
+		}
+
+		// Restore old weights from mask
+		if (mask) {
+			for (auto &w : oldWeights)
+				if ((*mask)[w.first] > 0.0f)
+					weights[w.first] = w.second;
 		}
 
 		if (diffResult.size() > 0) {
