@@ -38,6 +38,8 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <vector>
 #include <algorithm>
 
+#include "../lib/LZ4F/lz4frame.h"
+
 #pragma warning (disable : 4389 4018)
 
 
@@ -92,11 +94,35 @@ wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, int skip = 0) {
 	return result;
 }
 
+wxMemoryBuffer lz4fUncompress(const wxMemoryBuffer &data) {
+	if (data.GetBufSize() <= 4) {
+		// Input data is truncated
+		return wxMemoryBuffer();
+	}
+
+	size_t srcSize = data.GetBufSize() - 4;
+	size_t dstSize = ((unsigned int*)data.GetData())[0];
+
+	wxMemoryBuffer result(dstSize);
+
+	LZ4F_decompressionContext_t dCtx = nullptr;
+	LZ4F_createDecompressionContext(&dCtx, LZ4F_VERSION);
+
+	LZ4F_decompressOptions_t options = { 0 };
+
+	LZ4F_decompress(dCtx, result.GetData(), &dstSize, (char*)data.GetData() + 4, &srcSize, &options);
+	LZ4F_freeDecompressionContext(dCtx);
+
+	result.SetDataLen(dstSize);
+	return result;
+}
+
 
 BSA::BSA(const std::string &filename) : FSArchiveFile(), bsa(filename), bsaInfo(filename), status("initialized") {
 	bsaPath = bsaInfo.GetPathWithSep() + bsaInfo.GetFullName();
 	bsaBase = bsaInfo.GetPath();
 	bsaName = bsaInfo.GetFullName();
+	headerVersion = 0;
 }
 
 BSA::~BSA() {
@@ -121,7 +147,7 @@ bool BSA::canOpen(const std::string &fn) {
 			if (f.Read((char *)& version, sizeof(version)) != 4)
 				return false;
 
-			return (version == OB_BSAHEADER_VERSION || version == F3_BSAHEADER_VERSION);
+			return (version == OB_BSAHEADER_VERSION || version == F3_BSAHEADER_VERSION || version == SSE_BSAHEADER_VERSION);
 		}
 		else
 			return magic == MW_BSAHEADER_FILEID;
@@ -147,6 +173,8 @@ bool BSA::open() {
 
 			if (version != F4_BSAHEADER_VERSION)
 				throw std::string("file version");
+
+			headerVersion = version;
 
 			F4BSAHeader header;
 			if (bsa.Read((char *)&header, sizeof(header)) != sizeof(header))
@@ -219,8 +247,10 @@ bool BSA::open() {
 		else if (magic == OB_BSAHEADER_FILEID) {
 			bsa.Read((char*)&version, sizeof(version));
 
-			if (version != OB_BSAHEADER_VERSION && version != F3_BSAHEADER_VERSION)
+			if (version != OB_BSAHEADER_VERSION && version != F3_BSAHEADER_VERSION && version != SSE_BSAHEADER_VERSION)
 				throw std::string("file version");
+
+			headerVersion = version;
 
 			OBBSAHeader header;
 
@@ -234,12 +264,18 @@ bool BSA::open() {
 
 			compressToggle = (header.ArchiveFlags & OB_BSAARCHIVE_COMPRESSFILES) != 0;
 
-			if (version == F3_BSAHEADER_VERSION)
+			if (version == F3_BSAHEADER_VERSION || version == SSE_BSAHEADER_VERSION)
 				namePrefix = (header.ArchiveFlags & F3_BSAARCHIVE_PREFIXFULLFILENAMES) != 0;
 			else
 				namePrefix = false;
 
-			if (bsa.Seek(header.FolderRecordOffset + header.FolderNameLength + header.FolderCount * (1 + sizeof(OBBSAFolderInfo)) + header.FileCount * sizeof(OBBSAFileInfo)) == wxInvalidOffset)
+			wxUint32 folderSize = 0;
+			if (version != SSE_BSAHEADER_VERSION)
+				folderSize = sizeof(OBBSAFolderInfo);
+			else
+				folderSize = sizeof(SSEBSAFolderInfo);
+
+			if (bsa.Seek(header.FolderRecordOffset + header.FolderNameLength + header.FolderCount * (1 + folderSize) + header.FileCount * sizeof(OBBSAFileInfo)) == wxInvalidOffset)
 				throw std::string("file name seek");
 
 			wxMemoryBuffer fileNames(header.FileNameLength);
@@ -251,13 +287,27 @@ bool BSA::open() {
 			if (bsa.Seek(header.FolderRecordOffset) == wxInvalidOffset)
 				throw std::string("folder info seek");
 
-			std::vector<OBBSAFolderInfo> folderInfos(header.FolderCount);
-			if (bsa.Read((char *)folderInfos.data(), header.FolderCount * sizeof(OBBSAFolderInfo)) != header.FolderCount * sizeof(OBBSAFolderInfo))
-				throw std::string("folder info read");
+			BSAFolderInfo initInfo{ 0 };
+			std::vector<BSAFolderInfo> folderInfos(header.FolderCount, initInfo);
+			if (version != SSE_BSAHEADER_VERSION) {
+				bool ok = true;
+				for (int i = 0; i < header.FolderCount; i++) {
+					ok &= bsa.Read((char *)&folderInfos[i], 8) == 8;		// Hash
+					ok &= bsa.Read((char *)&folderInfos[i] + 8, 4) == 4;	// File size
+					ok &= bsa.Read((char *)&folderInfos[i] + 16, 4) == 4;	// Offset: this is reading a uint32 into a uint64 whose memory must be zeroed
+
+					if (!ok)
+						throw std::string("folder info read");
+				}
+			}
+			else {
+				if (bsa.Read((char *)folderInfos.data(), header.FolderCount * folderSize) != header.FolderCount * folderSize)
+					throw std::string("folder info read");
+			}
 
 			wxUint32 totalFileCount = 0;
 
-			for (const OBBSAFolderInfo folderInfo : folderInfos) {
+			for (const BSAFolderInfo folderInfo : folderInfos) {
 				std::string folderName;
 				if (!BSAReadSizedString(bsa, folderName))
 					throw std::string("folder name read");
@@ -484,8 +534,18 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				if (file->sizeFlags > 0) {
 					// BSA
 					if (file->compressed() ^ compressToggle) {
-						firstChunk = gUncompress(firstChunk, 4);
-						content.AppendData(firstChunk, firstChunk.GetDataLen());
+						if (headerVersion == SSE_BSAHEADER_VERSION) {
+							firstChunk = lz4fUncompress(firstChunk);
+							content.AppendData(firstChunk, firstChunk.GetDataLen());
+						}
+						else {
+							firstChunk = gUncompress(firstChunk, 4);
+							content.AppendData(firstChunk, firstChunk.GetDataLen());
+						}
+					}
+					else {
+						firstChunk.SetDataLen(filesz);
+						content.AppendData(firstChunk.GetData(), firstChunk.GetDataLen());
 					}
 				}
 				else if (file->packedLength > 0) {
@@ -618,19 +678,6 @@ BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 size
 	file->offset = offset;
 
 	folder->files[name] = file;
-	return file;
-}
-
-BSA::BSAFile *BSA::insertFile(BSAFolder *folder, std::string name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex dds) {
-	std::transform(name.begin(), name.end(), name.begin(), ::tolower);
-
-	BSAFile *file = new BSAFile;
-	file->tex = dds;
-	file->packedLength = packed;
-	file->unpackedLength = unpacked;
-	file->offset = offset;
-	folder->files[name] = file;
-
 	return file;
 }
 

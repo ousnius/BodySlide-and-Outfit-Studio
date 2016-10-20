@@ -56,6 +56,9 @@
     <Filter Include="Utilities">
       <UniqueIdentifier>{575c3247-33ba-4a9b-8af4-649cb8b54d10}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Libraries\LZ4F">
+      <UniqueIdentifier>{1dd6227a-2c07-441b-a703-df5e11788296}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="BodySlide.ico">
@@ -1309,6 +1312,12 @@
     <ClInclude Include="src\render\GLExtensions.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4frame.h">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\xxhash.h">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1430,6 +1439,12 @@
     </ClCompile>
     <ClCompile Include="src\render\GLExtensions.cpp">
       <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\xxhash.c">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\lz4frame.c">
+      <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

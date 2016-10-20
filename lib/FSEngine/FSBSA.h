@@ -47,6 +47,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #define F4_BSAHEADER_FILEID  0x58445442	//!< Magic for Fallout 4 BA2, the literal string "BTDX".
 #define OB_BSAHEADER_VERSION 0x67 //!< Version number of an Oblivion BSA
 #define F3_BSAHEADER_VERSION 0x68 //!< Version number of a Fallout 3 BSA
+#define SSE_BSAHEADER_VERSION 0x69 //!< Version number of a Skyrim SE BSA
 #define F4_BSAHEADER_VERSION 0x01 //!< Version number of a Fallout 4 BA2
 
 /* Archive flags */
@@ -83,7 +84,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 struct OBBSAHeader {
 	wxUint32 FolderRecordOffset; //!< Offset of beginning of folder records
 	wxUint32 ArchiveFlags; //!< Archive flags
-	wxUint32 FolderCount; //!< Total number of folder records (OBBSAFolderInfo)
+	wxUint32 FolderCount; //!< Total number of folder records ((OB/SSE)BSAFolderInfo)
 	wxUint32 FileCount; //!< Total number of file records (OBBSAFileInfo)
 	wxUint32 FolderNameLength; //!< Total length of folder names
 	wxUint32 FileNameLength; //!< Total length of file names
@@ -97,12 +98,23 @@ struct OBBSAFileInfo {
 	wxUint32 offset; //!< Offset to raw file data
 };
 
+//! Info for a folder inside a Skyrim SE BSA
+struct SSEBSAFolderInfo {
+	wxUint64 hash; //!< Hash of the folder name
+	wxUint32 fileCount; //!< Number of files in folder
+	wxUint32 unknown; //!< Unknown
+	wxUint64 offset; //!< Offset to name of this folder
+};
+
 //! Info for a folder inside an Oblivion BSA
 struct OBBSAFolderInfo {
 	wxUint64 hash; //!< Hash of the folder name
 	wxUint32 fileCount; //!< Number of files in folder
 	wxUint32 offset; //!< Offset to name of this folder
 };
+
+//! Define as general folder info
+typedef SSEBSAFolderInfo BSAFolderInfo;
 
 //! The header of a Morrowind BSA
 struct MWBSAHeader {
@@ -268,10 +280,9 @@ protected:
 
 	//! Recursive function to generate the tree structure of folders inside a %BSA
 	BSAFolder *insertFolder(std::string name);
-	BSAFolder *insertFolder( char* folder, int szFn);
+	BSAFolder *insertFolder(char* folder, int szFn);
 	//! Inserts a file into the structure of a %BSA
 	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 sizeFlags, wxUint32 offset);
-	BSAFile *insertFile(BSAFolder *folder, std::string name, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex dds = F4Tex());
 	BSAFile *insertFile(char* filename, int szFn, wxUint32 packed, wxUint32 unpacked, wxUint64 offset, F4Tex* dds = nullptr);
 
 	//! Gets the specified folder, or the root folder if not found
@@ -301,6 +312,9 @@ protected:
 
 	//! Error string for exception handling
 	std::string status;
+
+	//! Version number from the header
+	wxUint32 headerVersion;
 
 	//! Number of files
 	wxUint64 numFiles;

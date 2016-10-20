@@ -17,6 +17,7 @@ BodySlide and Outfit Studio, a tool to convert, create, and customize outfits an
 * FSEngine (BSA/BA2 library)
 * Autodesk FBX SDK
 * Miniball
+* LZ4(F)
 * wxWidgets
 
 https://github.com/ousnius/BodySlide-and-Outfit-Studio/wiki

@@ -96,7 +96,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -117,7 +117,7 @@
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
@@ -139,7 +139,7 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
       </FunctionLevelLinking>
@@ -167,7 +167,7 @@
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
       </FunctionLevelLinking>
@@ -572,6 +572,8 @@
     <ClInclude Include="lib\gli\type.hpp" />
     <ClInclude Include="lib\gli\view.hpp" />
     <ClInclude Include="lib\half.hpp" />
+    <ClInclude Include="lib\LZ4F\lz4frame.h" />
+    <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\Miniball.hpp" />
     <ClInclude Include="lib\SOIL2\SOIL2.h" />
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
@@ -619,6 +621,8 @@
     <ClCompile Include="lib\FSEngine\FSManager.cpp" />
     <ClCompile Include="lib\gli\glm\detail\dummy.cpp" />
     <ClCompile Include="lib\gli\glm\detail\glm.cpp" />
+    <ClCompile Include="lib\LZ4F\lz4frame.c" />
+    <ClCompile Include="lib\LZ4F\xxhash.c" />
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp" />
     <ClCompile Include="src\components\Anim.cpp" />
     <ClCompile Include="src\components\Automorph.cpp" />
