@@ -489,7 +489,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	blank.Load(blankSkel);
 	if (!blank.IsValid()) {
 		wxLogError("Could not load 'SkeletonBlank.nif' for importing data file.");
-		wxMessageBox(_("Could not load 'SkeletonBlank.nif' for importing data file."), _("Import Data Error"), wxICON_ERROR);
+		wxMessageBox(_("Could not load 'SkeletonBlank.nif' for importing data file."), _("Import Data Error"), wxICON_ERROR, owner);
 		return 2;
 	}
 
@@ -1620,7 +1620,7 @@ int OutfitProject::LoadSkeletonReference(const string& skeletonFileName) {
 int OutfitProject::LoadReferenceTemplate(const string& sourceFile, const string& set, const string& shape, bool clearRef) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
-		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR);
+		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
 		return 1;
 	}
 
@@ -1639,14 +1639,16 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 				refNif.GetFileName(), refNif.GetHeader().GetVersionInfo());
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
+			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
 			return 3;
 		}
 
 		wxLogError("Could not load reference NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR, owner);
 		return 2;
 	}
+
+	CheckNIFTarget(refNif);
 
 	baseShape = shapeName;
 
@@ -1694,7 +1696,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 
 	if (sset.fail()) {
 		wxLogError("Could not load slider set file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load slider set file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Could not load slider set file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR, owner);
 		return 1;
 	}
 
@@ -1715,23 +1717,25 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 				refNif.GetFileName(), refNif.GetHeader().GetVersionInfo());
 
 			wxLogError(errorText);
-			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR);
+			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
 			ClearReference();
 			return 5;
 		}
 
 		ClearReference();
 		wxLogError("Could not load reference NIF file '%s'!", inMeshFile);
-		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), inMeshFile), _("Reference Error"), wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), inMeshFile), _("Reference Error"), wxICON_ERROR, owner);
 		return 2;
 	}
+
+	CheckNIFTarget(refNif);
 
 	vector<string> shapes;
 	refNif.GetShapeList(shapes);
 	if (shapes.empty()) {
 		ClearReference();
 		wxLogError("Reference NIF file '%s' does not contain any shapes.", refNif.GetFileName());
-		wxMessageBox(wxString::Format(_("Reference NIF file '%s' does not contain any shapes."), refNif.GetFileName()), _("Reference Error"), wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Reference NIF file '%s' does not contain any shapes."), refNif.GetFileName()), _("Reference Error"), wxICON_ERROR, owner);
 		return 3;
 	}
 
@@ -1764,7 +1768,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	if (newVertCount == -1) {
 		ClearReference();
 		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refNif.GetFileName());
-		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refNif.GetFileName()), _("Reference Error"), wxICON_ERROR);
+		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refNif.GetFileName()), _("Reference Error"), wxICON_ERROR, owner);
 		return 4;
 	}
 
@@ -1848,6 +1852,8 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 		wxMessageBox(wxString::Format(_("Could not load NIF file '%s'!"), fileName), _("NIF Error"), wxICON_ERROR, owner);
 		return 1;
 	}
+
+	CheckNIFTarget(nif);
 
 	nif.SetNodeName(0, "Scene Root");
 
@@ -2262,4 +2268,31 @@ int OutfitProject::ExportShapeObj(const string& fileName, const string& shapeNam
 		return 1;
 
 	return 0;
+}
+
+
+void OutfitProject::CheckNIFTarget(NifFile& nif) {
+	bool match = false;
+
+	switch (owner->targetGame) {
+	case FO3:
+	case FONV:
+		match = (nif.GetHeader().GetUserVersion2() == 34);
+		break;
+	case SKYRIM:
+		match = (nif.GetHeader().GetUserVersion2() == 83);
+		break;
+	case FO4:
+		match = (nif.GetHeader().GetUserVersion2() == 130);
+		break;
+	case SKYRIMSE:
+		match = (nif.GetHeader().GetUserVersion2() == 100);
+		break;
+	}
+
+	if (!match) {
+		wxLogWarning("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.", nif.GetFileName());
+		wxMessageBox(wxString::Format(_("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again."),
+			nif.GetFileName()), _("Version"), wxICON_WARNING, owner);
+	}
 }

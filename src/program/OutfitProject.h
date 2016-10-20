@@ -30,6 +30,8 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	unordered_map<string, BSClothExtraData> clothData;
 
+	void CheckNIFTarget(NifFile& nif);
+
 public:
 	string outfitName;
 	DiffDataSets baseDiffData;
