@@ -1940,11 +1940,11 @@ int BSTriShape::CalcDataSizes() {
 
 	if (IsFullPrecision()) {	// Position + Bitangent X
 		vertexSize += 4;
-		vertFlags1 = 4;
+		vertFlags2 = 4;
 	}
 	else {
 		vertexSize += 2;
-		vertFlags1 = 2;
+		vertFlags2 = 2;
 	}
 
 	if (HasUVs())
@@ -1959,7 +1959,7 @@ int BSTriShape::CalcDataSizes() {
 	if (IsSkinned())			// Skinning
 		vertexSize += 3;
 
-	vertFlags2 = vertexSize;
+	vertFlags1 = vertexSize;
 	vertexSize *= 4;
 
 	if (HasVertices())
