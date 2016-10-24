@@ -181,6 +181,23 @@ struct Vector3 {
 	}
 };
 
+struct Vector4 {
+	float x;
+	float y;
+	float z;
+	float w;
+
+	Vector4() {
+		x = y = z = w = 0.0f;
+	}
+	Vector4(float X, float Y, float Z, float W) {
+		x = X;
+		y = Y;
+		z = Z;
+		w = W;
+	}
+};
+
 
 // 4D Matrix class for calculating and applying transformations.
 class Matrix4 {

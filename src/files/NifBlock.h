@@ -46,6 +46,7 @@ enum BlockType : ushort {
 	BSTRISHAPE,
 	BSSUBINDEXTRISHAPE,
 	BSMESHLODTRISHAPE,
+	BSDYNAMICTRISHAPE,
 	BSCLOTHEXTRADATA,
 	NIINTEGEREXTRADATA,
 	BSXFLAGS,
@@ -798,6 +799,25 @@ public:
 
 	BSMeshLODTriShape(NiHeader& hdr);
 	BSMeshLODTriShape(fstream& file, NiHeader& hdr);
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+	void notifyBlockDelete(int blockID);
+	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void notifyStringDelete(int stringID);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	int CalcBlockSize();
+
+	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
+};
+
+class BSDynamicTriShape : public BSTriShape {
+public:
+	uint dynamicDataSize;
+	vector<Vector4> dynamicData;
+
+	BSDynamicTriShape(NiHeader& hdr);
+	BSDynamicTriShape(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);

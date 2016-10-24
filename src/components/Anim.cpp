@@ -292,7 +292,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			continue;
 
 		int stype = nif->GetShapeType(shapeBoneList.first);
-		bool isBSShape = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE);
+		bool isBSShape = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE || stype == BSDYNAMICTRISHAPE);
 		bool isFO4 = (nif->GetHeader().GetUserVersion() >= 12 && nif->GetHeader().GetUserVersion2() == 130);
 
 		if (shapeSkinning[shapeBoneList.first].bNeedsBoundsCalc)

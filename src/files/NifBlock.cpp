@@ -1165,28 +1165,30 @@ void BSTriShape::Get(fstream& file) {
 
 	vertData.resize(numVertices);
 
-	if (HasVertices() && dataSize > 0) {
+	if (dataSize > 0) {
 		half_float::half halfData;
 		for (int i = 0; i < numVertices; i++) {
-			if (IsFullPrecision()) {
-				// Full precision
-				file.read((char*)&vertData[i].vert.x, 4);
-				file.read((char*)&vertData[i].vert.y, 4);
-				file.read((char*)&vertData[i].vert.z, 4);
+			if (HasVertices()) {
+				if (IsFullPrecision()) {
+					// Full precision
+					file.read((char*)&vertData[i].vert.x, 4);
+					file.read((char*)&vertData[i].vert.y, 4);
+					file.read((char*)&vertData[i].vert.z, 4);
 
-				file.read((char*)&vertData[i].bitangentX, 4);
-			}
-			else {
-				// Half precision
-				file.read((char*)&halfData, 2);
-				vertData[i].vert.x = halfData;
-				file.read((char*)&halfData, 2);
-				vertData[i].vert.y = halfData;
-				file.read((char*)&halfData, 2);
-				vertData[i].vert.z = halfData;
+					file.read((char*)&vertData[i].bitangentX, 4);
+				}
+				else {
+					// Half precision
+					file.read((char*)&halfData, 2);
+					vertData[i].vert.x = halfData;
+					file.read((char*)&halfData, 2);
+					vertData[i].vert.y = halfData;
+					file.read((char*)&halfData, 2);
+					vertData[i].vert.z = halfData;
 
-				file.read((char*)&halfData, 2);
-				vertData[i].bitangentX = halfData;
+					file.read((char*)&halfData, 2);
+					vertData[i].bitangentX = halfData;
+				}
 			}
 
 			if (HasUVs()) {
@@ -1299,7 +1301,12 @@ void BSTriShape::Put(fstream& file) {
 		ushort numUShort = 0;
 		uint numUInt = 0;
 		file.write((char*)&numUShort, 2);
-		file.write((char*)&numUShort, 2);
+
+		if (blockType == BSDYNAMICTRISHAPE)
+			file.write((char*)&numVertices, 2);
+		else
+			file.write((char*)&numUShort, 2);
+
 		file.write((char*)&numUInt, 4);
 	}
 	else {
@@ -1313,28 +1320,30 @@ void BSTriShape::Put(fstream& file) {
 		file.write((char*)&numVertices, 2);
 		file.write((char*)&dataSize, 4);
 
-		if (HasVertices() && dataSize > 0) {
+		if (dataSize > 0) {
 			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
-				if (IsFullPrecision()) {
-					// Full precision
-					file.write((char*)&vertData[i].vert.x, 4);
-					file.write((char*)&vertData[i].vert.y, 4);
-					file.write((char*)&vertData[i].vert.z, 4);
+				if (HasVertices()) {
+					if (IsFullPrecision()) {
+						// Full precision
+						file.write((char*)&vertData[i].vert.x, 4);
+						file.write((char*)&vertData[i].vert.y, 4);
+						file.write((char*)&vertData[i].vert.z, 4);
 
-					file.write((char*)&vertData[i].bitangentX, 4);
-				}
-				else {
-					// Half precision
-					halfData = vertData[i].vert.x;
-					file.write((char*)&halfData, 2);
-					halfData = vertData[i].vert.y;
-					file.write((char*)&halfData, 2);
-					halfData = vertData[i].vert.z;
-					file.write((char*)&halfData, 2);
+						file.write((char*)&vertData[i].bitangentX, 4);
+					}
+					else {
+						// Half precision
+						halfData = vertData[i].vert.x;
+						file.write((char*)&halfData, 2);
+						halfData = vertData[i].vert.y;
+						file.write((char*)&halfData, 2);
+						halfData = vertData[i].vert.z;
+						file.write((char*)&halfData, 2);
 
-					halfData = vertData[i].bitangentX;
-					file.write((char*)&halfData, 2);
+						halfData = vertData[i].bitangentX;
+						file.write((char*)&halfData, 2);
+					}
 				}
 
 				if (HasUVs()) {
@@ -1938,14 +1947,18 @@ int BSTriShape::CalcDataSizes() {
 	vertexSize = 0;
 	dataSize = 0;
 
-	if (IsFullPrecision()) {	// Position + Bitangent X
-		vertexSize += 4;
-		vertFlags2 = 4;
+	if (HasVertices()) {
+		if (IsFullPrecision()) {	// Position + Bitangent X
+			vertexSize += 4;
+			vertFlags2 = 4;
+		}
+		else {
+			vertexSize += 2;
+			vertFlags2 = 2;
+		}
 	}
-	else {
-		vertexSize += 2;
-		vertFlags2 = 2;
-	}
+	else
+		vertFlags2 = 0;
 
 	if (HasUVs())
 		vertexSize += 1;		// UVs
@@ -1960,10 +1973,12 @@ int BSTriShape::CalcDataSizes() {
 		vertexSize += 3;
 
 	vertFlags1 = vertexSize;
-	vertexSize *= 4;
 
-	if (HasVertices())
-		dataSize = vertexSize * numVertices + 6 * numTriangles;
+	if (blockType == BSDYNAMICTRISHAPE)
+		vertFlags1 = (vertFlags1 & 0xF) | 0x40;
+
+	vertexSize *= 4;
+	dataSize = vertexSize * numVertices + 6 * numTriangles;
 
 	return dataSize;
 }
@@ -2272,6 +2287,106 @@ int BSMeshLODTriShape::CalcBlockSize() {
 
 void BSMeshLODTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
 	BSTriShape::Create(verts, tris, uvs, normals);
+}
+
+
+BSDynamicTriShape::BSDynamicTriShape(NiHeader& hdr) : BSTriShape(hdr) {
+	blockType = BSDYNAMICTRISHAPE;
+
+	dynamicDataSize = 0;
+}
+
+BSDynamicTriShape::BSDynamicTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
+	blockType = BSDYNAMICTRISHAPE;
+	Get(file);
+}
+
+void BSDynamicTriShape::Get(fstream& file) {
+	file.read((char*)&dynamicDataSize, 4);
+
+	dynamicData.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		file.read((char*)&dynamicData[i].x, 4);
+		file.read((char*)&dynamicData[i].y, 4);
+		file.read((char*)&dynamicData[i].z, 4);
+		file.read((char*)&dynamicData[i].w, 4);
+	}
+}
+
+void BSDynamicTriShape::Put(fstream& file) {
+	BSTriShape::Put(file);
+
+	file.write((char*)&dynamicDataSize, 4);
+
+	for (int i = 0; i < numVertices; i++) {
+		file.write((char*)&dynamicData[i].x, 4);
+		file.write((char*)&dynamicData[i].y, 4);
+		file.write((char*)&dynamicData[i].z, 4);
+		file.write((char*)&dynamicData[i].w, 4);
+	}
+}
+
+void BSDynamicTriShape::notifyBlockDelete(int blockID) {
+	BSTriShape::notifyBlockDelete(blockID);
+}
+
+void BSDynamicTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void BSDynamicTriShape::notifyStringDelete(int stringID) {
+	BSTriShape::notifyStringDelete(stringID);
+}
+
+void BSDynamicTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	BSTriShape::notifyVerticesDelete(vertIndices);
+
+	vector<int> indexCollapse(dynamicData.size(), 0);
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {
+			indexCollapse[i] = -1;
+			j++;
+		}
+	}
+
+	for (int i = dynamicData.size() - 1; i >= 0; i--) {
+		if (indexCollapse[i] == -1) {
+			dynamicData.erase(dynamicData.begin() + i);
+			dynamicDataSize--;
+		}
+	}
+}
+
+int BSDynamicTriShape::CalcBlockSize() {
+	BSTriShape::CalcBlockSize();
+
+	dynamicDataSize = numVertices * 16;
+
+	dynamicData.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		dynamicData[i].x = vertData[i].vert.x;
+		dynamicData[i].y = vertData[i].vert.y;
+		dynamicData[i].z = vertData[i].vert.z;
+	}
+
+	blockSize += 4;
+	blockSize += dynamicDataSize;
+
+	return blockSize;
+}
+
+void BSDynamicTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
+	BSTriShape::Create(verts, tris, uvs, normals);
+
+	dynamicDataSize = verts->size();
+
+	dynamicData.resize(dynamicDataSize);
+	for (int i = 0; i < dynamicDataSize; i++) {
+		dynamicData[i].x = (*verts)[i].x;
+		dynamicData[i].y = (*verts)[i].y;
+		dynamicData[i].z = (*verts)[i].z;
+		dynamicData[i].w = 0.0f;
+	}
 }
 
 
@@ -3891,9 +4006,9 @@ void NiSkinPartition::Get(fstream& file) {
 			numVertices = dataSize / vertexSize;
 			vertData.resize(numVertices);
 
-			if (HasVertices()) {
-				half_float::half halfData;
-				for (int i = 0; i < numVertices; i++) {
+			half_float::half halfData;
+			for (int i = 0; i < numVertices; i++) {
+				if (HasVertices()) {
 					if (IsFullPrecision()) {
 						// Full precision
 						file.read((char*)&vertData[i].vert.x, 4);
@@ -3914,40 +4029,40 @@ void NiSkinPartition::Get(fstream& file) {
 						file.read((char*)&halfData, 2);
 						vertData[i].bitangentX = halfData;
 					}
+				}
 
-					if (HasUVs()) {
-						file.read((char*)&halfData, 2);
-						vertData[i].uv.u = halfData;
-						file.read((char*)&halfData, 2);
-						vertData[i].uv.v = halfData;
-					}
+				if (HasUVs()) {
+					file.read((char*)&halfData, 2);
+					vertData[i].uv.u = halfData;
+					file.read((char*)&halfData, 2);
+					vertData[i].uv.v = halfData;
+				}
 
-					if (HasNormals()) {
+				if (HasNormals()) {
+					for (int j = 0; j < 3; j++)
+						file.read((char*)&vertData[i].normal[j], 1);
+
+					if (HasTangents()) {
+						file.read((char*)&vertData[i].bitangentY, 1);
+
 						for (int j = 0; j < 3; j++)
-							file.read((char*)&vertData[i].normal[j], 1);
+							file.read((char*)&vertData[i].tangent[j], 1);
 
-						if (HasTangents()) {
-							file.read((char*)&vertData[i].bitangentY, 1);
+						file.read((char*)&vertData[i].bitangentZ, 1);
+					}
+				}
 
-							for (int j = 0; j < 3; j++)
-								file.read((char*)&vertData[i].tangent[j], 1);
+				if (HasVertexColors())
+					file.read((char*)&vertData[i].colorData, 4);
 
-							file.read((char*)&vertData[i].bitangentZ, 1);
-						}
+				if (IsSkinned()) {
+					for (int j = 0; j < 4; j++) {
+						file.read((char*)&halfData, 2);
+						vertData[i].weights[j] = halfData;
 					}
 
-					if (HasVertexColors())
-						file.read((char*)&vertData[i].colorData, 4);
-
-					if (IsSkinned()) {
-						for (int j = 0; j < 4; j++) {
-							file.read((char*)&halfData, 2);
-							vertData[i].weights[j] = halfData;
-						}
-
-						for (int j = 0; j < 4; j++)
-							file.read((char*)&vertData[i].weightBones[j], 1);
-					}
+					for (int j = 0; j < 4; j++)
+						file.read((char*)&vertData[i].weightBones[j], 1);
 				}
 			}
 		}
@@ -4049,9 +4164,9 @@ void NiSkinPartition::Put(fstream& file) {
 		file.write((char*)&vertFlags8, 1);
 
 		if (dataSize > 0) {
-			if (HasVertices()) {
-				half_float::half halfData;
-				for (int i = 0; i < numVertices; i++) {
+			half_float::half halfData;
+			for (int i = 0; i < numVertices; i++) {
+				if (HasVertices()) {
 					if (IsFullPrecision()) {
 						// Full precision
 						file.write((char*)&vertData[i].vert.x, 4);
@@ -4072,40 +4187,40 @@ void NiSkinPartition::Put(fstream& file) {
 						halfData = vertData[i].bitangentX;
 						file.write((char*)&halfData, 2);
 					}
+				}
 
-					if (HasUVs()) {
-						halfData = vertData[i].uv.u;
-						file.write((char*)&halfData, 2);
-						halfData = vertData[i].uv.v;
-						file.write((char*)&halfData, 2);
-					}
+				if (HasUVs()) {
+					halfData = vertData[i].uv.u;
+					file.write((char*)&halfData, 2);
+					halfData = vertData[i].uv.v;
+					file.write((char*)&halfData, 2);
+				}
 
-					if (HasNormals()) {
+				if (HasNormals()) {
+					for (int j = 0; j < 3; j++)
+						file.write((char*)&vertData[i].normal[j], 1);
+
+					if (HasTangents()) {
+						file.write((char*)&vertData[i].bitangentY, 1);
+
 						for (int j = 0; j < 3; j++)
-							file.write((char*)&vertData[i].normal[j], 1);
+							file.write((char*)&vertData[i].tangent[j], 1);
 
-						if (HasTangents()) {
-							file.write((char*)&vertData[i].bitangentY, 1);
+						file.write((char*)&vertData[i].bitangentZ, 1);
+					}
+				}
 
-							for (int j = 0; j < 3; j++)
-								file.write((char*)&vertData[i].tangent[j], 1);
+				if (HasVertexColors())
+					file.write((char*)&vertData[i].colorData, 4);
 
-							file.write((char*)&vertData[i].bitangentZ, 1);
-						}
+				if (IsSkinned()) {
+					for (int j = 0; j < 4; j++) {
+						halfData = vertData[i].weights[j];
+						file.write((char*)&halfData, 2);
 					}
 
-					if (HasVertexColors())
-						file.write((char*)&vertData[i].colorData, 4);
-
-					if (IsSkinned()) {
-						for (int j = 0; j < 4; j++) {
-							halfData = vertData[i].weights[j];
-							file.write((char*)&halfData, 2);
-						}
-
-						for (int j = 0; j < 4; j++)
-							file.write((char*)&vertData[i].weightBones[j], 1);
-					}
+					for (int j = 0; j < 4; j++)
+						file.write((char*)&vertData[i].weightBones[j], 1);
 				}
 			}
 		}
