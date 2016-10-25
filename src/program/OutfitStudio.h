@@ -89,6 +89,7 @@ struct WeightCopyOptions {
 };
 
 struct ReferenceTemplate {
+	string name;
 	string sourceFile;
 	string set;
 	string shape;
@@ -772,7 +773,7 @@ private:
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
 
-	map<string, ReferenceTemplate> refTemplates;
+	vector<ReferenceTemplate> refTemplates;
 
 	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const string& name);

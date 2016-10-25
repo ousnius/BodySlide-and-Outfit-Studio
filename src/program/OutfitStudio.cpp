@@ -816,7 +816,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 		wxChoice* tmplChoice = XRCCTRL(wiz, "npTemplateChoice", wxChoice);
 		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.first);
+			tmplChoice->Append(tmpl.name);
 
 		tmplChoice->Select(0);
 
@@ -857,8 +857,12 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		wxString refTemplate = XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		const ReferenceTemplate& tmpl = refTemplates[refTemplate.ToStdString()];
-		error = project->LoadReferenceTemplate(tmpl.sourceFile, tmpl.set, tmpl.shape);
+		string tmplName = refTemplate.ToStdString();
+		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
+		if (tmpl != refTemplates.end())
+			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape);
+		else
+			error = 1;
 	}
 	else if (XRCCTRL(wiz, "npRefIsSliderset", wxRadioButton)->GetValue() == true) {
 		wxString fileName = XRCCTRL(wiz, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
@@ -1047,7 +1051,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 		wxChoice* tmplChoice = XRCCTRL(dlg, "npTemplateChoice", wxChoice);
 		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.first);
+			tmplChoice->Append(tmpl.name);
 
 		tmplChoice->Select(0);
 		result = dlg.ShowModal();
@@ -1066,8 +1070,12 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		wxString refTemplate = XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		const ReferenceTemplate& tmpl = refTemplates[refTemplate.ToStdString()];
-		error = project->LoadReferenceTemplate(tmpl.sourceFile, tmpl.set, tmpl.shape, ClearRef);
+		string tmplName = refTemplate.ToStdString();
+		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
+		if (tmpl != refTemplates.end())
+			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape, ClearRef);
+		else
+			error = 1;
 	}
 	else if (XRCCTRL(dlg, "npRefIsSliderset", wxRadioButton)->GetValue() == true) {
 		wxString fileName = XRCCTRL(dlg, "npSliderSetFile", wxFilePickerCtrl)->GetPath();
@@ -1202,10 +1210,11 @@ void OutfitStudio::UpdateReferenceTemplates() {
 		XMLElement* element = root->FirstChildElement("Template");
 		while (element) {
 			ReferenceTemplate refTemplate;
+			refTemplate.name = element->GetText();
 			refTemplate.sourceFile = element->Attribute("sourcefile");
 			refTemplate.set = element->Attribute("set");
 			refTemplate.shape = element->Attribute("shape");
-			refTemplates[element->GetText()] = refTemplate;
+			refTemplates.push_back(refTemplate);
 			element = element->NextSiblingElement("Template");
 		}
 	}
