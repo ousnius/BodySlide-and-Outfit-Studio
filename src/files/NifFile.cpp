@@ -95,6 +95,12 @@ void NifFile::CopyFrom(NifFile& other) {
 			blockCopy = new NiUnknown(other.blocks[i]->CalcBlockSize());
 			((NiUnknown*)blockCopy)->Clone((NiUnknown*)other.blocks[i]);
 			break;
+		case NINODE:
+			blockCopy = new NiNode((*(NiNode*)other.blocks[i]));
+			break;
+		case BSFADENODE:
+			blockCopy = new BSFadeNode((*(BSFadeNode*)other.blocks[i]));
+			break;
 		case NITRISHAPE:
 			blockCopy = new NiTriShape((*(NiTriShape*)other.blocks[i]));
 			break;
@@ -106,66 +112,6 @@ void NifFile::CopyFrom(NifFile& other) {
 			break;
 		case NITRISTRIPSDATA:
 			blockCopy = new NiTriStripsData((*(NiTriStripsData*)other.blocks[i]));
-			break;
-		case NINODE:
-			blockCopy = new NiNode((*(NiNode*)other.blocks[i]));
-			break;
-		case BSDISMEMBERSKININSTANCE:
-			blockCopy = new BSDismemberSkinInstance((*(BSDismemberSkinInstance*)other.blocks[i]));
-			break;
-		case NISKINPARTITION:
-			blockCopy = new NiSkinPartition((*(NiSkinPartition*)other.blocks[i]));
-			break;
-		case NISKININSTANCE:
-			blockCopy = new NiSkinInstance((*(NiSkinInstance*)other.blocks[i]));
-			break;
-		case BSLIGHTINGSHADERPROPERTY:
-			blockCopy = new BSLightingShaderProperty((*(BSLightingShaderProperty*)other.blocks[i]));
-			break;
-		case NIALPHAPROPERTY:
-			blockCopy = new NiAlphaProperty((*(NiAlphaProperty*)other.blocks[i]));
-			break;
-		case NISKINDATA:
-			blockCopy = new NiSkinData((*(NiSkinData*)other.blocks[i]));
-			break;
-		case BSSHADERTEXTURESET:
-			blockCopy = new BSShaderTextureSet((*(BSShaderTextureSet*)other.blocks[i]));
-			break;
-		case NISTRINGEXTRADATA:
-			blockCopy = new NiStringExtraData((*(NiStringExtraData*)other.blocks[i]));
-			break;
-		case BSSHADERPPLIGHTINGPROPERTY:
-			blockCopy = new BSShaderPPLightingProperty((*(BSShaderPPLightingProperty*)other.blocks[i]));
-			break;
-		case NIMATERIALPROPERTY:
-			blockCopy = new NiMaterialProperty((*(NiMaterialProperty*)other.blocks[i]));
-			break;
-		case NISTENCILPROPERTY:
-			blockCopy = new NiStencilProperty((*(NiStencilProperty*)other.blocks[i]));
-			break;
-		case BSEFFECTSHADERPROPERTY:
-			blockCopy = new BSEffectShaderProperty((*(BSEffectShaderProperty*)other.blocks[i]));
-			break;
-		case NIFLOATINTERPOLATOR:
-			blockCopy = new NiFloatInterpolator((*(NiFloatInterpolator*)other.blocks[i]));
-			break;
-		case NITRANSFORMINTERPOLATOR:
-			blockCopy = new NiTransformInterpolator((*(NiTransformInterpolator*)other.blocks[i]));
-			break;
-		case NIPOINT3INTERPOLATOR:
-			blockCopy = new NiPoint3Interpolator((*(NiPoint3Interpolator*)other.blocks[i]));
-			break;
-		case BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER:
-			blockCopy = new BSLightingShaderPropertyColorController((*(BSLightingShaderPropertyColorController*)other.blocks[i]));
-			break;
-		case BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER:
-			blockCopy = new BSLightingShaderPropertyFloatController((*(BSLightingShaderPropertyFloatController*)other.blocks[i]));
-			break;
-		case BSEFFECTSHADERPROPERTYCOLORCONTROLLER:
-			blockCopy = new BSEffectShaderPropertyColorController((*(BSEffectShaderPropertyColorController*)other.blocks[i]));
-			break;
-		case BSEFFECTSHADERPROPERTYFLOATCONTROLLER:
-			blockCopy = new BSEffectShaderPropertyFloatController((*(BSEffectShaderPropertyFloatController*)other.blocks[i]));
 			break;
 		case BSTRISHAPE:
 			blockCopy = new BSTriShape((*(BSTriShape*)other.blocks[i]));
@@ -179,21 +125,81 @@ void NifFile::CopyFrom(NifFile& other) {
 		case BSDYNAMICTRISHAPE:
 			blockCopy = new BSDynamicTriShape(*(BSDynamicTriShape*)other.blocks[i]);
 			break;
+		case NISKININSTANCE:
+			blockCopy = new NiSkinInstance((*(NiSkinInstance*)other.blocks[i]));
+			break;
+		case BSDISMEMBERSKININSTANCE:
+			blockCopy = new BSDismemberSkinInstance((*(BSDismemberSkinInstance*)other.blocks[i]));
+			break;
+		case NISKINDATA:
+			blockCopy = new NiSkinData((*(NiSkinData*)other.blocks[i]));
+			break;
+		case NISKINPARTITION:
+			blockCopy = new NiSkinPartition((*(NiSkinPartition*)other.blocks[i]));
+			break;
 		case BSSKININSTANCE:
 			blockCopy = new BSSkinInstance(*(BSSkinInstance*)other.blocks[i]);
 			break;
 		case BSBONEDATA:
 			blockCopy = new BSSkinBoneData(*(BSSkinBoneData*)other.blocks[i]);
 			break;
-		case BSCLOTHEXTRADATA:
-			blockCopy = new BSClothExtraData(hdr);
-			((BSClothExtraData*)blockCopy)->Clone((BSClothExtraData*)other.blocks[i]);
+		case BSSHADERPPLIGHTINGPROPERTY:
+			blockCopy = new BSShaderPPLightingProperty((*(BSShaderPPLightingProperty*)other.blocks[i]));
+			break;
+		case BSLIGHTINGSHADERPROPERTY:
+			blockCopy = new BSLightingShaderProperty((*(BSLightingShaderProperty*)other.blocks[i]));
+			break;
+		case BSEFFECTSHADERPROPERTY:
+			blockCopy = new BSEffectShaderProperty((*(BSEffectShaderProperty*)other.blocks[i]));
+			break;
+		case NIALPHAPROPERTY:
+			blockCopy = new NiAlphaProperty((*(NiAlphaProperty*)other.blocks[i]));
+			break;
+		case NIMATERIALPROPERTY:
+			blockCopy = new NiMaterialProperty((*(NiMaterialProperty*)other.blocks[i]));
+			break;
+		case NISTENCILPROPERTY:
+			blockCopy = new NiStencilProperty((*(NiStencilProperty*)other.blocks[i]));
+			break;
+		case BSSHADERTEXTURESET:
+			blockCopy = new BSShaderTextureSet((*(BSShaderTextureSet*)other.blocks[i]));
+			break;
+		case BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER:
+			blockCopy = new BSLightingShaderPropertyColorController((*(BSLightingShaderPropertyColorController*)other.blocks[i]));
+			break;
+		case BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER:
+			blockCopy = new BSLightingShaderPropertyFloatController((*(BSLightingShaderPropertyFloatController*)other.blocks[i]));
+			break;
+		case BSEFFECTSHADERPROPERTYCOLORCONTROLLER:
+			blockCopy = new BSEffectShaderPropertyColorController((*(BSEffectShaderPropertyColorController*)other.blocks[i]));
+			break;
+		case BSEFFECTSHADERPROPERTYFLOATCONTROLLER:
+			blockCopy = new BSEffectShaderPropertyFloatController((*(BSEffectShaderPropertyFloatController*)other.blocks[i]));
+			break;
+		case NIFLOATINTERPOLATOR:
+			blockCopy = new NiFloatInterpolator((*(NiFloatInterpolator*)other.blocks[i]));
+			break;
+		case NITRANSFORMINTERPOLATOR:
+			blockCopy = new NiTransformInterpolator((*(NiTransformInterpolator*)other.blocks[i]));
+			break;
+		case NIPOINT3INTERPOLATOR:
+			blockCopy = new NiPoint3Interpolator((*(NiPoint3Interpolator*)other.blocks[i]));
+			break;
+		case NISTRINGEXTRADATA:
+			blockCopy = new NiStringExtraData((*(NiStringExtraData*)other.blocks[i]));
 			break;
 		case NIINTEGEREXTRADATA:
 			blockCopy = new NiIntegerExtraData(*(NiIntegerExtraData*)other.blocks[i]);
 			break;
 		case BSXFLAGS:
 			blockCopy = new BSXFlags(*(BSXFlags*)other.blocks[i]);
+			break;
+		case BSDECALPLACEMENTVECTOREXTRADATA:
+			blockCopy = new BSDecalPlacementVectorExtraData(*(BSDecalPlacementVectorExtraData*)other.blocks[i]);
+			break;
+		case BSCLOTHEXTRADATA:
+			blockCopy = new BSClothExtraData(hdr);
+			((BSClothExtraData*)blockCopy)->Clone((BSClothExtraData*)other.blocks[i]);
 			break;
 		case BSCONNECTPOINTPARENTS:
 			blockCopy = new BSConnectPointParents(*(BSConnectPointParents*)other.blocks[i]);
@@ -216,9 +222,6 @@ void NifFile::CopyFrom(NifFile& other) {
 		case BHKPHYSICSSYSTEM:
 			blockCopy = new bhkPhysicsSystem(hdr);
 			((bhkPhysicsSystem*)blockCopy)->Clone((bhkPhysicsSystem*)other.blocks[i]);
-			break;
-		case BSFADENODE:
-			blockCopy = new BSFadeNode((*(BSFadeNode*)other.blocks[i]));
 			break;
 		}
 
@@ -268,46 +271,52 @@ int NifFile::Load(const string& filename) {
 		for (int i = 0; i < hdr.GetNumBlocks(); i++) {
 			NiObject* block = nullptr;
 			blockTypeStr = hdr.GetBlockTypeStringById(i);
-			if (!blockTypeStr.compare("NiTriShapeData"))
-				block = (NiObject*) new NiTriShapeData(file, hdr);
+			if (!blockTypeStr.compare("NiNode"))
+				block = (NiObject*) new NiNode(file, hdr);
+			else if (!blockTypeStr.compare("BSFadeNode"))
+				block = (NiObject*) new BSFadeNode(file, hdr);
 			else if (!blockTypeStr.compare("NiTriShape"))
 				block = (NiObject*) new NiTriShape(file, hdr);
+			else if (!blockTypeStr.compare("NiTriShapeData"))
+				block = (NiObject*) new NiTriShapeData(file, hdr);
 			else if (!blockTypeStr.compare("NiTriStrips"))
 				block = (NiObject*) new NiTriStrips(file, hdr);
 			else if (!blockTypeStr.compare("NiTriStripsData"))
 				block = (NiObject*) new NiTriStripsData(file, hdr);
+			else if (!blockTypeStr.compare("BSTriShape"))
+				block = (NiObject*) new BSTriShape(file, hdr);
+			else if (!blockTypeStr.compare("BSSubIndexTriShape"))
+				block = (NiObject*) new BSSubIndexTriShape(file, hdr);
+			else if (!blockTypeStr.compare("BSMeshLODTriShape"))
+				block = (NiObject*) new BSMeshLODTriShape(file, hdr);
+			else if (!blockTypeStr.compare("BSDynamicTriShape"))
+				block = (NiObject*) new BSDynamicTriShape(file, hdr);
+			else if (!blockTypeStr.compare("NiSkinInstance"))
+				block = (NiObject*) new NiSkinInstance(file, hdr);
 			else if (!blockTypeStr.compare("BSDismemberSkinInstance"))
 				block = (NiObject*) new BSDismemberSkinInstance(file, hdr);
-			else if (!blockTypeStr.compare("NiNode"))
-				block = (NiObject*) new NiNode(file, hdr);
 			else if (!blockTypeStr.compare("NiSkinData"))
 				block = (NiObject*) new NiSkinData(file, hdr);
 			else if (!blockTypeStr.compare("NiSkinPartition"))
 				block = (NiObject*) new NiSkinPartition(file, hdr);
-			else if (!blockTypeStr.compare("NiSkinInstance"))
-				block = (NiObject*) new NiSkinInstance(file, hdr);
-			else if (!blockTypeStr.compare("BSLightingShaderProperty"))
-				block = (NiObject*) new BSLightingShaderProperty(file, hdr);
-			else if (!blockTypeStr.compare("BSShaderTextureSet"))
-				block = (NiObject*) new BSShaderTextureSet(file, hdr);
-			else if (!blockTypeStr.compare("NiAlphaProperty"))
-				block = (NiObject*) new NiAlphaProperty(file, hdr);
-			else if (!blockTypeStr.compare("NiStringExtraData"))
-				block = (NiObject*) new NiStringExtraData(file, hdr);
+			else if (!blockTypeStr.compare("BSSkin::Instance"))
+				block = (NiObject*) new BSSkinInstance(file, hdr);
+			else if (!blockTypeStr.compare("BSSkin::BoneData"))
+				block = (NiObject*) new BSSkinBoneData(file, hdr);
 			else if (!blockTypeStr.compare("BSShaderPPLightingProperty"))
 				block = (NiObject*) new BSShaderPPLightingProperty(file, hdr);
+			else if (!blockTypeStr.compare("BSLightingShaderProperty"))
+				block = (NiObject*) new BSLightingShaderProperty(file, hdr);
+			else if (!blockTypeStr.compare("BSEffectShaderProperty"))
+				block = (NiObject*) new BSEffectShaderProperty(file, hdr);
+			else if (!blockTypeStr.compare("NiAlphaProperty"))
+				block = (NiObject*) new NiAlphaProperty(file, hdr);
 			else if (!blockTypeStr.compare("NiMaterialProperty"))
 				block = (NiObject*) new NiMaterialProperty(file, hdr);
 			else if (!blockTypeStr.compare("NiStencilProperty"))
 				block = (NiObject*) new NiStencilProperty(file, hdr);
-			else if (!blockTypeStr.compare("BSEffectShaderProperty"))
-				block = (NiObject*) new BSEffectShaderProperty(file, hdr);
-			else if (!blockTypeStr.compare("NiFloatInterpolator"))
-				block = (NiObject*) new NiFloatInterpolator(file, hdr);
-			else if (!blockTypeStr.compare("NiTransformInterpolator"))
-				block = (NiObject*) new NiTransformInterpolator(file, hdr);
-			else if (!blockTypeStr.compare("NiPoint3Interpolator"))
-				block = (NiObject*) new NiPoint3Interpolator(file, hdr);
+			else if (!blockTypeStr.compare("BSShaderTextureSet"))
+				block = (NiObject*) new BSShaderTextureSet(file, hdr);
 			else if (!blockTypeStr.compare("BSLightingShaderPropertyColorController"))
 				block = (NiObject*) new BSLightingShaderPropertyColorController(file, hdr);
 			else if (!blockTypeStr.compare("BSLightingShaderPropertyFloatController"))
@@ -316,24 +325,22 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new BSEffectShaderPropertyColorController(file, hdr);
 			else if (!blockTypeStr.compare("BSEffectShaderPropertyFloatController"))
 				block = (NiObject*) new BSEffectShaderPropertyFloatController(file, hdr);
-			else if (!blockTypeStr.compare("BSSubIndexTriShape"))
-				block = (NiObject*) new BSSubIndexTriShape(file, hdr);
-			else if (!blockTypeStr.compare("BSMeshLODTriShape"))
-				block = (NiObject*) new BSMeshLODTriShape(file, hdr);
-			else if (!blockTypeStr.compare("BSDynamicTriShape"))
-				block = (NiObject*) new BSDynamicTriShape(file, hdr);
-			else if (!blockTypeStr.compare("BSTriShape"))
-				block = (NiObject*) new BSTriShape(file, hdr);
-			else if (!blockTypeStr.compare("BSSkin::Instance"))
-				block = (NiObject*) new BSSkinInstance(file, hdr);
-			else if (!blockTypeStr.compare("BSSkin::BoneData"))
-				block = (NiObject*) new BSSkinBoneData(file, hdr);
-			else if (!blockTypeStr.compare("BSClothExtraData"))
-				block = (NiObject*) new BSClothExtraData(file, hdr);
+			else if (!blockTypeStr.compare("NiFloatInterpolator"))
+				block = (NiObject*) new NiFloatInterpolator(file, hdr);
+			else if (!blockTypeStr.compare("NiTransformInterpolator"))
+				block = (NiObject*) new NiTransformInterpolator(file, hdr);
+			else if (!blockTypeStr.compare("NiPoint3Interpolator"))
+				block = (NiObject*) new NiPoint3Interpolator(file, hdr);
+			else if (!blockTypeStr.compare("NiStringExtraData"))
+				block = (NiObject*) new NiStringExtraData(file, hdr);
 			else if (!blockTypeStr.compare("NiIntegerExtraData"))
 				block = (NiObject*) new NiIntegerExtraData(file, hdr);
 			else if (!blockTypeStr.compare("BSXFlags"))
 				block = (NiObject*) new BSXFlags(file, hdr);
+			else if (!blockTypeStr.compare("BSDecalPlacementVectorExtraData"))
+				block = (NiObject*) new BSDecalPlacementVectorExtraData(file, hdr);
+			else if (!blockTypeStr.compare("BSClothExtraData"))
+				block = (NiObject*) new BSClothExtraData(file, hdr);
 			else if (!blockTypeStr.compare("BSConnectPointParents"))
 				block = (NiObject*) new BSConnectPointParents(file, hdr);
 			else if (!blockTypeStr.compare("BSConnectPointChildren"))
@@ -348,8 +355,6 @@ int NifFile::Load(const string& filename) {
 				block = (NiObject*) new bhkNPCollisionObject(file, hdr);
 			else if (!blockTypeStr.compare("bhkPhysicsSystem"))
 				block = (NiObject*) new bhkPhysicsSystem(file, hdr);
-			else if (!blockTypeStr.compare("BSFadeNode"))
-				block = (NiObject*) new BSFadeNode(file, hdr);
 			else {
 				hasUnknown = true;
 				block = (NiObject*) new NiUnknown(file, hdr.GetBlockSize(i));

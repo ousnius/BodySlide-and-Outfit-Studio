@@ -6490,6 +6490,76 @@ int BSXFlags::CalcBlockSize() {
 }
 
 
+BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSDECALPLACEMENTVECTOREXTRADATA;
+	unkFloat1 = 0.0f;
+	numVectorBlocks = 0;
+}
+
+BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSDECALPLACEMENTVECTOREXTRADATA;
+
+	Get(file);
+}
+
+void BSDecalPlacementVectorExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&unkFloat1, 4);
+	file.read((char*)&numVectorBlocks, 2);
+	decalVectorBlocks.resize(numVectorBlocks);
+
+	for (int i = 0; i < numVectorBlocks; i++) {
+		file.read((char*)&decalVectorBlocks[i].numVectors, 2);
+
+		decalVectorBlocks[i].points.resize(decalVectorBlocks[i].numVectors);
+		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
+			file.read((char*)&decalVectorBlocks[i].points[j], 12);
+
+		decalVectorBlocks[i].normals.resize(decalVectorBlocks[i].numVectors);
+		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
+			file.read((char*)&decalVectorBlocks[i].normals[j], 12);
+	}
+}
+
+void BSDecalPlacementVectorExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&unkFloat1, 4);
+	file.write((char*)&numVectorBlocks, 2);
+
+	for (int i = 0; i < numVectorBlocks; i++) {
+		file.write((char*)&decalVectorBlocks[i].numVectors, 2);
+
+		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
+			file.write((char*)&decalVectorBlocks[i].points[j], 12);
+
+		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
+			file.write((char*)&decalVectorBlocks[i].normals[j], 12);
+	}
+}
+
+void BSDecalPlacementVectorExtraData::notifyStringDelete(int stringID) {
+	NiExtraData::notifyStringDelete(stringID);
+}
+
+int BSDecalPlacementVectorExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 6;
+	for (int i = 0; i < numVectorBlocks; i++)
+		blockSize += 2 + decalVectorBlocks[i].numVectors * 24;
+
+	return blockSize;
+}
+
+
 BSConnectPoint::BSConnectPoint() {
 	scale = 1.0f;
 }
