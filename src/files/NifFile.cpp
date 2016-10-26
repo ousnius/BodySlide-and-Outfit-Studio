@@ -1333,7 +1333,7 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 		return 0;
 
 	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-	if (bsTriShape) {
+	if (bsTriShape && hdr.GetUserVersion2() != 100) {
 		outWeights.reserve(bsTriShape->numVertices);
 		for (int vid = 0; vid < bsTriShape->numVertices; vid++) {
 			for (int i = 0; i < 4; i++) {
@@ -1355,7 +1355,7 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	for (auto &sw : bone->vertexWeights) {
-		if (sw.weight >= 0.0001f)
+		if (sw.weight >= EPSILON)
 			outWeights.emplace(sw.index, sw.weight);
 		else
 			outWeights.emplace(sw.index, 0.0f);
@@ -1364,7 +1364,7 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unorder
 	return outWeights.size();
 }
 
-bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform, BoundingSphere& outBounds) {
+bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1373,10 +1373,10 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneN
 	if (boneName.empty())
 		boneIndex = 0xFFFFFFFF;
 
-	return GetShapeBoneTransform(shapeName, boneIndex, outXform, outBounds);
+	return GetShapeBoneTransform(shapeName, boneIndex, outXform);
 }
 
-bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform, BoundingSphere& inBounds) {
+bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1387,7 +1387,6 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 		if (!bsSkin)
 			return false;
 
-		bsSkin->boneXforms[boneIndex].bounds = inBounds;
 		bsSkin->boneXforms[boneIndex].boneTransform = inXform;
 		return true;
 	}
@@ -1411,11 +1410,41 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	bone->boneTransform = inXform;
+	return true;
+}
+
+bool NifFile::SetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& inBounds) {
+	NiShape* shape = FindShapeByName(shapeName);
+	if (!shape)
+		return false;
+
+	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	if (skinForBoneRef && boneIndex != 0xFFFFFFFF) {
+		auto bsSkin = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		if (!bsSkin)
+			return false;
+
+		bsSkin->boneXforms[boneIndex].bounds = inBounds;
+		return true;
+	}
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return false;
+
+	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	if (!skinData)
+		return false;
+
+	if (boneIndex > skinData->numBones)
+		return false;
+
+	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	bone->bounds = inBounds;
 	return true;
 }
 
-bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, BoundingSphere& outBounds) {
+bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1430,7 +1459,6 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 			}
 
 			outXform = boneData->boneXforms[boneIndex].boneTransform;
-			outBounds = boneData->boneXforms[boneIndex].bounds;
 			return true;
 		}
 	}
@@ -1446,7 +1474,6 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 	if (boneIndex == 0xFFFFFFFF) {
 		// Want the overall skin transform
 		outXform = skinData->skinTransform;
-		outBounds = BoundingSphere();
 		return true;
 	}
 
@@ -1455,6 +1482,35 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	outXform = bone->boneTransform;
+	return true;
+}
+
+bool NifFile::GetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& outBounds) {
+	NiShape* shape = FindShapeByName(shapeName);
+	if (!shape)
+		return false;
+
+	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	if (skinForBoneRef) {
+		auto boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		if (boneData) {
+			outBounds = boneData->boneXforms[boneIndex].bounds;
+			return true;
+		}
+	}
+
+	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	if (!skinInst)
+		return false;
+
+	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	if (!skinData)
+		return false;
+
+	if (boneIndex > skinData->numBones)
+		return 0;
+
+	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
 	outBounds = bone->bounds;
 	return true;
 }

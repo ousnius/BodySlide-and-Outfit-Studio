@@ -239,7 +239,15 @@ public:
 		return m[index];
 	}
 
-	Matrix4& Identity(){
+	bool operator==(const Matrix4& other) {
+		return (equal(m, m + sizeof m / sizeof *m, other.m));
+	}
+
+	bool IsIdentity() {
+		return *this == Matrix4();
+	}
+
+	Matrix4& Identity() {
 		memset(m, 0, sizeof(float) * 16);
 		m[0] = m[5] = m[10] = m[15] = 1.0f;
 		return *this;

@@ -349,14 +349,6 @@ msgstr ""
 msgid "Load a NIF file as the working outfit, replacing any current outfit objects."
 msgstr ""
 
-msgid "Apply Skin Transforms"
-msgstr ""
-
-msgid ""
-"There are skin transforms in the shapes that could cause misalignment.\n"
-"Do you want to apply them to the geometry?"
-msgstr ""
-
 msgid "Disable for a different way of loading NIF files to see if that puts it into the right (or a better) spot."
 msgstr ""
 

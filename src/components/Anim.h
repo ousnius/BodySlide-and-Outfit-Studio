@@ -78,7 +78,8 @@ public:
 	AnimWeight() {}
 	AnimWeight(NifFile* loadFromFile, const string& shape, int index) {
 		loadFromFile->GetShapeBoneWeights(shape, index, weights);
-		loadFromFile->GetShapeBoneTransform(shape, index, xform, bounds);
+		loadFromFile->GetShapeBoneTransform(shape, index, xform);
+		loadFromFile->GetShapeBoneBounds(shape, index, bounds);
 	}
 
 	bool VertWeight(ushort queryVert, float& weight) {
@@ -95,10 +96,9 @@ class AnimSkin {
 public:
 	unordered_map<int, AnimWeight> boneWeights;
 	unordered_map<string, int> boneNames;
-	bool bNeedsBoundsCalc;
 
-	AnimSkin() : bNeedsBoundsCalc(true) { }
-	AnimSkin(NifFile* loadFromFile, const string& shape) : bNeedsBoundsCalc(true) {
+	AnimSkin() { }
+	AnimSkin(NifFile* loadFromFile, const string& shape) {
 		vector<int> idList;
 		loadFromFile->GetShapeBoneIDList(shape, idList);
 
@@ -111,8 +111,6 @@ public:
 				newID++;
 			}
 		}
-
-		bNeedsBoundsCalc = false;
 	}
 
 	void VertexBones(ushort queryvert, vector<int>& outbones, vector<float>& outWeights) {
@@ -175,7 +173,7 @@ public:
 	void GetBoneXForm(const string& boneName, SkinTransform& stransform);
 	void SetWeights(const string& shape, const string& boneName, unordered_map<ushort, float>& inVertWeights);
 	void SetShapeBoneXForm(const string& shape, const string& boneName, SkinTransform& stransform);
-	bool CalcShapeSkinBounds(const string& shape);
+	bool CalcShapeSkinBounds(const string& shape, const int& boneIndex);
 	void WriteToNif(NifFile* nif, bool synchBoneIDs = true, const string& shapeException = "");
 
 	void RenameShape(const string& shapeName, const string& newShapeName);
@@ -210,7 +208,7 @@ public:
 
 	AnimBone* GetBonePtr(const string& boneName = "");
 	bool GetBone(const string& boneName, AnimBone& outBone);
-	bool GetSkinTransform(const string &boneName, SkinTransform& xform);
+	bool GetSkinTransform(const string &boneName, const SkinTransform& skinning, SkinTransform& xform);
 	bool GetBoneTransform(const string &boneName, SkinTransform& xform);
 
 	int GetActiveBoneNames(vector<string>& outBoneNames);

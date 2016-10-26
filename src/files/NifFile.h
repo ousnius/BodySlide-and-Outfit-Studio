@@ -91,11 +91,13 @@ public:
 	int GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& outWeights);
 
 	// Empty string for the bone name returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform, BoundingSphere& outBounds);
+	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform);
 	// 0xFFFFFFFF for the bone index sets the overall skin transform for the shape.
-	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform, BoundingSphere& inBounds);
+	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform);
+	bool SetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& inBounds);
 	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform, BoundingSphere& outBounds);
+	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform);
+	bool GetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& outBounds);
 	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
 	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
 	void SetShapeVertWeights(const string& shapeName, int vertIndex, vector<byte>& boneids, vector<float>& weights);

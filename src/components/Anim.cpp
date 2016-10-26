@@ -14,7 +14,6 @@ bool AnimInfo::AddShapeBone(const string& shape, AnimBone& boneDataRef) {
 			return false;
 
 	shapeSkinning[shape].boneNames[boneDataRef.boneName] = shapeBones[shape].size();
-	shapeSkinning[shape].bNeedsBoundsCalc = true;
 	shapeBones[shape].push_back(boneDataRef.boneName);
 	AnimSkeleton::getInstance().RefBone(boneDataRef.boneName);
 	return true;
@@ -119,8 +118,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const string& shape, bool newRefNif) {
 		AnimBone* bonePtr = AnimSkeleton::getInstance().GetBonePtr(bn);
 		if (bonePtr && !bonePtr->hasSkinXform) {
 			SkinTransform shapeskinxform;
-			BoundingSphere bounds;
-			if (nif->GetShapeBoneTransform(shape, bn, shapeskinxform, bounds)) {
+			if (nif->GetShapeBoneTransform(shape, bn, shapeskinxform)) {
 				bonePtr->skinRot.Set(shapeskinxform.rotation);
 				bonePtr->skinTrans = shapeskinxform.translation;
 				bonePtr->hasSkinXform = true;
@@ -176,7 +174,7 @@ void AnimInfo::SetShapeBoneXForm(const string& shape, const string& boneName, Sk
 	shapeSkinning[shape].boneWeights[b].xform = stransform;
 }
 
-bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
+bool AnimInfo::CalcShapeSkinBounds(const string& shape, const int& boneIndex) {
 	if (!refNif || !refNif->IsValid())	// Check for existence of reference nif
 		return false;
 
@@ -188,32 +186,23 @@ bool AnimInfo::CalcShapeSkinBounds(const string& shape) {
 	if (verts.size() == 0)	// Check for empty shape
 		return false;
 
-	for (auto bn : shapeSkinning[shape].boneNames) {
-		vector<Vector3> boundVerts;
-		for (auto &w : shapeSkinning[shape].boneWeights[bn.second].weights) {
-			if (w.first > verts.size())		// Incoming weights have a larger set of possible verts.
-				return false;
+	vector<Vector3> boundVerts;
+	for (auto &w : shapeSkinning[shape].boneWeights[boneIndex].weights) {
+		if (w.first > verts.size())		// Incoming weights have a larger set of possible verts.
+			return false;
 
-			boundVerts.push_back(verts[w.first]);
-		}
-
-		Matrix4 mat;
-		Vector3 trans;
-		BoundingSphere bounds(boundVerts);
-
-		AnimBone* xformRef = AnimSkeleton::getInstance().GetBonePtr(bn.first);
-		if (xformRef->hasSkinXform) {
-			mat = xformRef->skinRot;
-			trans = xformRef->skinTrans;
-		}
-		else
-			mat = shapeSkinning[shape].boneWeights[bn.second].xform.ToMatrix();
-
-		bounds.center = mat * bounds.center;
-		bounds.center = bounds.center + trans;
-		shapeSkinning[shape].boneWeights[bn.second].bounds = bounds;
+		boundVerts.push_back(verts[w.first]);
 	}
 
+	Matrix4 mat;
+	Vector3 trans;
+	BoundingSphere bounds(boundVerts);
+
+	mat = shapeSkinning[shape].boneWeights[boneIndex].xform.ToMatrix();
+
+	bounds.center = mat * bounds.center;
+	bounds.center = bounds.center + trans;
+	shapeSkinning[shape].boneWeights[boneIndex].bounds = bounds;
 	return true;
 }
 
@@ -224,30 +213,6 @@ void AnimInfo::SetWeights(const string& shape, const string& boneName, unordered
 
 	shapeSkinning[shape].boneWeights[bid].weights.clear();
 	shapeSkinning[shape].boneWeights[bid].weights = inVertWeights;
-
-	if (refNif && refNif->IsValid()) {
-		vector<Vector3> verts;
-		refNif->GetVertsForShape(shape, verts);
-
-		if (verts.size() == 0)	// Early out for when the reference nif doesn't contain a matching shape for the incoming weights.
-			return;
-
-		vector<Vector3> boundVerts;
-		for (auto &w : inVertWeights) {
-			if (w.first > verts.size())		// Incoming weights have a larger set of possible verts.
-				return;
-
-			boundVerts.push_back(verts[w.first]);
-		}
-
-		Matrix4 mat(shapeSkinning[shape].boneWeights[bid].xform.ToMatrix());
-		BoundingSphere bounds(boundVerts);
-
-		bounds.center = mat * bounds.center;
-		shapeSkinning[shape].boneWeights[bid].bounds = bounds;
-	}
-
-	shapeSkinning[shape].bNeedsBoundsCalc = false;
 }
 
 void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeException) {
@@ -295,9 +260,6 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 		bool isBSShape = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE || stype == BSDYNAMICTRISHAPE);
 		bool isFO4 = (nif->GetHeader().GetUserVersion() >= 12 && nif->GetHeader().GetUserVersion2() == 130);
 
-		if (shapeSkinning[shapeBoneList.first].bNeedsBoundsCalc)
-			CalcShapeSkinBounds(shapeBoneList.first);
-
 		unordered_map<ushort, VertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
 			if (AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
@@ -314,7 +276,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 			if (isFO4) {
 				if (!bptr || !bptr->hasSkinXform) {
 					incomplete = true;
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bounds);
+					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
 				}
 				else {
 					SkinTransform st;
@@ -322,19 +284,30 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 					st.rotation[1] = Vector3(bptr->skinRot[4], bptr->skinRot[5], bptr->skinRot[6]);
 					st.rotation[2] = Vector3(bptr->skinRot[8], bptr->skinRot[9], bptr->skinRot[10]);
 					st.translation = bptr->skinTrans;
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, st, bw.bounds);
+					nif->SetShapeBoneTransform(shapeBoneList.first, bid, st);
+					bw.xform = st;
 				}
 			}
 			else {
 				if (!bptr || !bptr->hasSkinXform) {
 					incomplete = true;
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform, bw.bounds);
+					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
 				}
-				else if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm))
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, xForm, bw.bounds);
+				else {
+					SkinTransform xFormSkin;
+					if (nif->GetShapeBoneTransform(shapeBoneList.first, 0xFFFFFFFF, xFormSkin)) {
+						if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xFormSkin, xForm)) {
+							nif->SetShapeBoneTransform(shapeBoneList.first, bid, xForm);
+							bw.xform = xForm;
+						}
+					}
+				}
 
 				nif->SetShapeBoneWeights(shapeBoneList.first, bid, bw.weights);
 			}
+
+			if (CalcShapeSkinBounds(shapeBoneList.first, bid))
+				nif->SetShapeBoneBounds(shapeBoneList.first, bid, bw.bounds);
 		}
 
 		if (isBSShape)
@@ -516,7 +489,7 @@ bool AnimSkeleton::GetBoneTransform(const string &boneName, SkinTransform& xform
 	return true;
 }
 
-bool AnimSkeleton::GetSkinTransform(const string &boneName, SkinTransform& xform) {
+bool AnimSkeleton::GetSkinTransform(const string &boneName, const SkinTransform& skinning, SkinTransform& xform) {
 	if (allBones.find(boneName) == allBones.end())
 		return false;
 
@@ -526,8 +499,7 @@ bool AnimSkeleton::GetSkinTransform(const string &boneName, SkinTransform& xform
 	rot.GetRow(1, xform.rotation[1]);
 	rot.GetRow(2, xform.rotation[2]);
 	xform.scale = 1.0f;	//cB->scale					// Scale should be ignored?
-	xform.translation = cB->trans * -1.0f;
-	xform.translation = rot * xform.translation;
+	xform.translation = rot * (cB->trans * -1.0f + skinning.translation * -1.0f);
 	return true;
 }
 

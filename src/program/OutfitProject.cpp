@@ -1293,8 +1293,7 @@ void OutfitProject::CopyBoneWeights(const string& destShape, const float& proxim
 				if (owner->targetGame == FO4) {
 					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 					SkinTransform xForm;
-					BoundingSphere bounds;
-					workNif.GetShapeBoneTransform(baseShape, boneName, xForm, bounds);
+					workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
 					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 				}
 				else {
@@ -1364,8 +1363,7 @@ void OutfitProject::TransferSelectedWeights(const string& destShape, unordered_m
 			if (owner->targetGame == FO4) {
 				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 				SkinTransform xForm;
-				BoundingSphere bounds;
-				workNif.GetShapeBoneTransform(baseShape, boneName, xForm, bounds);
+				workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
 				workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 			}
 			else {
@@ -1991,38 +1989,24 @@ void OutfitProject::AutoOffset(NifFile& nif) {
 	vector<string> shapes;
 	nif.GetShapeList(shapes);
 
-	bool selection = false;
-	bool applyOverallSkin = true;
-
 	for (auto &s : shapes) {
-		Matrix4 localGeom;
-		nif.GetShapeTransform(s, localGeom);
+		SkinTransform xFormSkin;
+		if (!nif.GetShapeBoneTransform(s, 0xFFFFFFFF, xFormSkin))
+			continue;
 
-		BoundingSphere bounds;
-		SkinTransform xFormSkinAll;
-		nif.GetShapeBoneTransform(s, 0xFFFFFFFF, xFormSkinAll, bounds);
-
-		if (!selection && !xFormSkinAll.IsIdentity()) {
-			int ret = wxMessageBox(_("There are skin transforms in the shapes that could cause misalignment.\nDo you want to apply them to the geometry?"), _("Apply Skin Transforms"), wxYES_NO | wxICON_INFORMATION, owner);
-			applyOverallSkin = (ret == wxYES);
-			selection = true;
-		}
-
-		Matrix4 skinAllInv = xFormSkinAll.ToMatrix().Inverse();
+		Matrix4 matSkinInv = xFormSkin.ToMatrix().Inverse();
 
 		vector<Vector3> verts;
 		nif.GetVertsForShape(s, verts);
-		for (auto &v : verts) {
-			if (applyOverallSkin)
-				v = (localGeom * skinAllInv) * v;
-			else
-				v = localGeom * v;
-		}
-		nif.SetVertsForShape(s, verts);
 
-		SkinTransform defXForm;
-		nif.SetShapeBoneTransform(s, 0xFFFFFFFF, defXForm, bounds);
+		for (auto &v : verts)
+			v = matSkinInv * v;
+
+		SkinTransform xForm;
+		nif.SetShapeBoneTransform(s, 0xFFFFFFFF, xForm);
 		nif.ClearShapeTransform(s);
+
+		nif.SetVertsForShape(s, verts);
 	}
 
 	nif.ClearRootTransform();
