@@ -1054,7 +1054,7 @@ bool BodySlideApp::ShowSetup() {
 			case SKYRIM:
 				dataDir = dirSkyrim->GetDirName();
 				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_xpmse.nif");
-				Config.SetValue("Anim/SkeletonRootName", "NPC");
+				Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
 				break;
 			case FO4:
 				dataDir = dirFallout4->GetDirName();
@@ -1064,7 +1064,7 @@ bool BodySlideApp::ShowSetup() {
 			case SKYRIMSE:
 				dataDir = dirSkyrimSE->GetDirName();
 				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_sse.nif");
-				Config.SetValue("Anim/SkeletonRootName", "NPC");
+				Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
 				break;
 			}
 
@@ -2860,11 +2860,11 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			break;
 		case SKYRIM:
 			fpSkeletonFile->SetPath("res\\skeleton_female_xpmse.nif");
-			choiceSkeletonRoot->SetStringSelection("NPC");
+			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 			break;
 		case SKYRIMSE:
 			fpSkeletonFile->SetPath("res\\skeleton_female_sse.nif");
-			choiceSkeletonRoot->SetStringSelection("NPC");
+			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 			break;
 		case FO4:
 		default:
