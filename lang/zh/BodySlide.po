@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.9\n"
+"X-Generator: Poedit 1.8.11\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
@@ -371,9 +371,6 @@ msgstr "载入装备..."
 msgid ""
 "Load a NIF file as the working outfit, replacing any current outfit objects."
 msgstr "载入一个NIF文件来修改，取代任何当前的装备物体。"
-
-msgid "Apply Overall Skin Transform"
-msgstr "应用整体皮肤改变"
 
 msgid ""
 "Disable for a different way of loading NIF files to see if that puts it into "
@@ -1434,6 +1431,22 @@ msgstr "反转V轴"
 msgid "Toggle Zaps:"
 msgstr "切换修正:"
 
+msgid "Search Radius"
+msgstr "搜索半径"
+
+msgid "Max Vertex Targets"
+msgstr "最大顶点目标"
+
+# XRC STRINGS END HERE
+msgid ""
+"Each vertex of the reference will copy its weights to the nearest collection "
+"of vertices within the given radius. Bear in mind that some geometry will "
+"always require manual tweaking to become weighted and work well. Often, the "
+"default values are sufficient."
+msgstr ""
+"参照中的每个顶点将会复制它的权重到给定范围最近的顶点集合。要牢记一些结构将总"
+"是需要手动调整权重来更好的工作。通常情况下，默认值是足够的。"
+
 msgid ""
 "Bone information incomplete. Exported data will not contain correct bone "
 "entries! Be sure to load a reference NIF prior to export."
@@ -2297,3 +2310,16 @@ msgstr "载入滑块文件..."
 
 msgid "Preview failed: OpenGL context is not OK."
 msgstr "装备工作室：OpenGL环境不正常。"
+
+msgid "Version"
+msgstr "版本"
+
+msgid ""
+"Version of NIF file '%s' doesn't match current target game. To use the "
+"meshes for the target game, export to OBJ/FBX and reload them again."
+msgstr ""
+"NIF文件'%s'的版本不匹配当前目标游戏。若要使用这个模型到目标游戏，导出到OBJ/"
+"FBX并再次重新加载它们。"
+
+#~ msgid "Apply Overall Skin Transform"
+#~ msgstr "应用整体皮肤改变"
