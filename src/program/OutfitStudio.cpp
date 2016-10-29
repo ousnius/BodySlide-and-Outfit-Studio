@@ -6712,52 +6712,50 @@ void wxGLPanel::OnRightUp(wxMouseEvent& WXUNUSED(event)) {
 
 bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 	if (owner) {
-		wxString inputFile;
-		if (fileNames.GetCount() > 0)
-			inputFile = fileNames.Item(0);
-
 		string mergeShapeName = "";
-		if (owner->activeItem)
+		if (owner->activeItem && fileNames.GetCount() == 1)
 			mergeShapeName = owner->activeItem->shapeName;
 
-		wxString dataName = inputFile.AfterLast('\\');
-		dataName = dataName.BeforeLast('.');
+		for (auto &inputFile : fileNames) {
+			wxString dataName = inputFile.AfterLast('\\');
+			dataName = dataName.BeforeLast('.');
 
-		if (inputFile.MakeLower().EndsWith(".nif")) {
-			owner->StartProgress(_("Adding NIF file..."));
-			owner->UpdateProgress(1, _("Adding NIF file..."));
-			owner->project->AddNif(inputFile.ToStdString(), false);
-			owner->project->SetTextures("_AUTO_");
+			if (inputFile.Lower().EndsWith(".nif")) {
+				owner->StartProgress(_("Adding NIF file..."));
+				owner->UpdateProgress(1, _("Adding NIF file..."));
+				owner->project->AddNif(inputFile.ToStdString(), false);
+				owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60, _("Refreshing GUI..."));
-			owner->RefreshGUIFromProj();
+				owner->UpdateProgress(60, _("Refreshing GUI..."));
+				owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100, _("Finished"));
-			owner->EndProgress();
-		}
-		else if (inputFile.MakeLower().EndsWith(".obj")) {
-			owner->StartProgress("Adding OBJ file...");
-			owner->UpdateProgress(1, _("Adding OBJ file..."));
-			owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
-			owner->project->SetTextures("_AUTO_");
+				owner->UpdateProgress(100, _("Finished"));
+				owner->EndProgress();
+			}
+			else if (inputFile.Lower().EndsWith(".obj")) {
+				owner->StartProgress("Adding OBJ file...");
+				owner->UpdateProgress(1, _("Adding OBJ file..."));
+				owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
+				owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60, _("Refreshing GUI..."));
-			owner->RefreshGUIFromProj();
+				owner->UpdateProgress(60, _("Refreshing GUI..."));
+				owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100, _("Finished"));
-			owner->EndProgress();
-		}
-		else if (inputFile.MakeLower().EndsWith(".fbx")) {
-			owner->StartProgress(_("Adding FBX file..."));
-			owner->UpdateProgress(1, _("Adding FBX file..."));
-			owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
-			owner->project->SetTextures("_AUTO_");
+				owner->UpdateProgress(100, _("Finished"));
+				owner->EndProgress();
+			}
+			else if (inputFile.Lower().EndsWith(".fbx")) {
+				owner->StartProgress(_("Adding FBX file..."));
+				owner->UpdateProgress(1, _("Adding FBX file..."));
+				owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
+				owner->project->SetTextures("_AUTO_");
 
-			owner->UpdateProgress(60, _("Refreshing GUI..."));
-			owner->RefreshGUIFromProj();
+				owner->UpdateProgress(60, _("Refreshing GUI..."));
+				owner->RefreshGUIFromProj();
 
-			owner->UpdateProgress(100, _("Finished"));
-			owner->EndProgress();
+				owner->UpdateProgress(100, _("Finished"));
+				owner->EndProgress();
+			}
 		}
 	}
 	else
