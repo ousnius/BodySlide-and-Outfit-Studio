@@ -1832,6 +1832,12 @@ int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOu
 			mGamePath = mGamePath.Mid(pos);
 		else
 			mGamePath.Clear();
+
+		if (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE) {
+			wxString fileRest;
+			if (mGameFile.EndsWith("_0", &fileRest) || mGameFile.EndsWith("_1", &fileRest))
+				mGameFile = fileRest;
+		}
 	}
 
 	NifFile nif;
