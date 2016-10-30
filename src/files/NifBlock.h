@@ -311,7 +311,7 @@ public:
 
 	string GetVersionInfo();
 	void SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2);
-	bool VerCheck(int v1, int v2, int v3, int v4, bool equal = false);
+	bool VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool& equal = false);
 
 	uint GetUserVersion() { return userVersion; };
 	uint GetUserVersion2() { return userVersion2; };
@@ -378,15 +378,15 @@ public:
 	void notifyStringDelete(int stringID);
 
 	string GetName();
-	void SetName(const string& propertyName, bool renameExisting = false);
+	void SetName(const string& propertyName, const bool& renameExisting = false);
 	void ClearName();
 
 	int GetControllerRef() { return controllerRef; }
 	void SetControllerRef(int controllerRef) { this->controllerRef = controllerRef; }
 
 	int GetNumExtraData() { return numExtraData; }
-	int GetExtraDataRef(int id);
-	void AddExtraDataRef(int id);
+	int GetExtraDataRef(const int& id);
+	void AddExtraDataRef(const int& id);
 
 	int CalcBlockSize();
 };
@@ -473,15 +473,15 @@ public:
 	int CalcBlockSize();
 
 	int GetNumChildren() { return numChildren; }
-	int GetChildRef(int id);
-	void AddChildRef(int id);
+	int GetChildRef(const int& id);
+	void AddChildRef(const int& id);
 	void ClearChildren();
 	vector<int>::iterator ChildrenBegin() { return children.begin(); }
 	vector<int>::iterator ChildrenEnd() { return children.end(); }
 
 	int GetNumEffects() { return numEffects; }
-	int GetEffectRef(int id);
-	void AddEffectRef(int id);
+	int GetEffectRef(const int& id);
+	void AddEffectRef(const int& id);
 };
 
 class BSFadeNode : public NiNode {
@@ -531,19 +531,19 @@ public:
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 
-	void SetVertices(bool enable);
+	void SetVertices(const bool& enable);
 	bool HasVertices() { return hasVertices; }
 
-	void SetNormals(bool enable);
+	void SetNormals(const bool& enable);
 	bool HasNormals() { return hasNormals; }
 
-	void SetVertexColors(bool enable);
+	void SetVertexColors(const bool& enable);
 	bool HasVertexColors() { return hasVertexColors; }
 
-	void SetUVs(bool enable);
+	void SetUVs(const bool& enable);
 	bool HasUVs() { return (numUVSets & (1 << 0)) != 0; }
 
-	void SetTangents(bool enable);
+	void SetTangents(const bool& enable);
 	bool HasTangents() { return (numUVSets & (1 << 12)) != 0; }
 
 	void SetBounds(const BoundingSphere& bounds) { this->bounds = bounds; }
@@ -579,22 +579,22 @@ public:
 	virtual int GetAlphaPropertyRef();
 	virtual void SetAlphaPropertyRef(int alphaPropertyRef);
 
-	virtual void SetVertices(bool enable);
+	virtual void SetVertices(const bool& enable);
 	virtual bool HasVertices();
 
-	virtual void SetUVs(bool enable);
+	virtual void SetUVs(const bool& enable);
 	virtual bool HasUVs();
 
-	virtual void SetNormals(bool enable);
+	virtual void SetNormals(const bool& enable);
 	virtual bool HasNormals();
 
-	virtual void SetTangents(bool enable);
+	virtual void SetTangents(const bool& enable);
 	virtual bool HasTangents();
 
-	virtual void SetVertexColors(bool enable);
+	virtual void SetVertexColors(const bool& enable);
 	virtual bool HasVertexColors();
 
-	virtual void SetSkinned(bool enable);
+	virtual void SetSkinned(const bool& enable);
 	virtual bool IsSkinned();
 
 	virtual void SetBounds(const BoundingSphere& bounds);
@@ -690,25 +690,25 @@ public:
 	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
 
-	void SetVertices(bool enable);
+	void SetVertices(const bool& enable);
 	bool HasVertices() { return (vertFlags6 & (1 << 4)) != 0; }
 
-	void SetUVs(bool enable);
+	void SetUVs(const bool& enable);
 	bool HasUVs() { return (vertFlags6 & (1 << 5)) != 0; }
 
-	void SetNormals(bool enable);
+	void SetNormals(const bool& enable);
 	bool HasNormals() { return (vertFlags6 & (1 << 7)) != 0; }
 
-	void SetTangents(bool enable);
+	void SetTangents(const bool& enable);
 	bool HasTangents() { return (vertFlags7 & (1 << 0)) != 0; }
 
-	void SetVertexColors(bool enable);
+	void SetVertexColors(const bool& enable);
 	bool HasVertexColors() { return (vertFlags7 & (1 << 1)) != 0; }
 
-	void SetSkinned(bool enable);
+	void SetSkinned(const bool& enable);
 	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 
-	void SetFullPrecision(bool enable);
+	void SetFullPrecision(const bool& enable);
 	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0 || header->GetUserVersion2() == 100; }
 	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals() && header->GetUserVersion2() != 100); }
 
@@ -993,13 +993,13 @@ public:
 	int CalcBlockSize();
 
 	int GetDataRef() { return dataRef; }
-	void SetDataRef(int dataRef) { this->dataRef = dataRef; }
+	void SetDataRef(const int& dataRef) { this->dataRef = dataRef; }
 
 	int GetSkinPartitionRef() { return skinPartitionRef; }
-	void SetSkinPartitionRef(int skinPartitionRef) { this->skinPartitionRef = skinPartitionRef; }
+	void SetSkinPartitionRef(const int& skinPartitionRef) { this->skinPartitionRef = skinPartitionRef; }
 
 	int GetSkeletonRootRef() { return skeletonRootRef; }
-	void SetSkeletonRootRef(int skeletonRootRef) { this->skeletonRootRef = skeletonRootRef; }
+	void SetSkeletonRootRef(const int& skeletonRootRef) { this->skeletonRootRef = skeletonRootRef; }
 };
 
 class BSDismemberSkinInstance : public NiSkinInstance {
@@ -1057,10 +1057,10 @@ public:
 	int CalcBlockSize();
 
 	int GetTargetRef() { return targetRef; }
-	void SetTargetRef(int targetRef) { this->targetRef = targetRef; }
+	void SetTargetRef(const int& targetRef) { this->targetRef = targetRef; }
 
 	int GetDataRef() { return dataRef; }
-	void SetDataRef(int dataRef) { this->dataRef = dataRef; }
+	void SetDataRef(const int& dataRef) { this->dataRef = dataRef; }
 };
 
 class BSSkinBoneData : public NiObject {
@@ -1367,7 +1367,7 @@ public:
 
 	virtual bool IsSkinTint();
 	virtual bool IsSkinned();
-	virtual void SetSkinned(bool enable);
+	virtual void SetSkinned(const bool& enable);
 	virtual bool IsDoubleSided();
 	virtual uint GetType();
 	virtual void SetType(uint type);
@@ -1378,7 +1378,7 @@ public:
 	virtual float GetGlossiness();
 	virtual void SetGlossiness(float gloss);
 	virtual int GetTextureSetRef();
-	virtual void SetTextureSetRef(int texSetRef);
+	virtual void SetTextureSetRef(const int& texSetRef);
 	virtual Color4 GetEmissiveColor();
 	virtual void SetEmissiveColor(Color4 color);
 	virtual float GetEmissiveMultiple();
@@ -1452,7 +1452,7 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(bool enable);
+	void SetSkinned(const bool& enable);
 	bool IsDoubleSided();
 	uint GetType();
 	void SetType(uint type);
@@ -1463,7 +1463,7 @@ public:
 	float GetGlossiness();
 	void SetGlossiness(float gloss);
 	int GetTextureSetRef();
-	void SetTextureSetRef(int texSetRef);
+	void SetTextureSetRef(const int& texSetRef);
 	Color4 GetEmissiveColor();
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
@@ -1526,7 +1526,7 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(bool enable);
+	void SetSkinned(const bool& enable);
 	bool IsDoubleSided();
 	Color4 GetEmissiveColor();
 	void SetEmissiveColor(Color4 color);
@@ -1568,9 +1568,9 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(bool enable);
+	void SetSkinned(const bool& enable);
 	int GetTextureSetRef();
-	void SetTextureSetRef(int texSetRef);
+	void SetTextureSetRef(const int& texSetRef);
 };
 
 class BSShaderTextureSet : public NiObject {
@@ -1797,7 +1797,7 @@ public:
 	vector<char> data;
 
 	BSClothExtraData();
-	BSClothExtraData(NiHeader& hdr, uint size = 0);
+	BSClothExtraData(NiHeader& hdr, const uint& size = 0);
 	BSClothExtraData(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
@@ -1862,7 +1862,7 @@ public:
 	vector<char> data;
 
 	bhkPhysicsSystem();
-	bhkPhysicsSystem(NiHeader& hdr, uint size = 0);
+	bhkPhysicsSystem(NiHeader& hdr, const uint& size = 0);
 	bhkPhysicsSystem(fstream& file, NiHeader& hdr);
 
 	void Get(fstream& file);
@@ -1877,8 +1877,8 @@ public:
 	vector<char> data;
 
 	NiUnknown();
-	NiUnknown(fstream& file, uint size);
-	NiUnknown(uint size);
+	NiUnknown(fstream& file, const uint& size);
+	NiUnknown(const uint& size);
 
 	void Get(fstream& file);
 	void Put(fstream& file);

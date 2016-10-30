@@ -251,17 +251,21 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 	}
 
 	bool incomplete = false;
-	SkinTransform xForm;
+	bool isFO4 = (nif->GetHeader().GetUserVersion() >= 12 && nif->GetHeader().GetUserVersion2() == 130);
+
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
 			continue;
 
 		int stype = nif->GetShapeType(shapeBoneList.first);
+		if (stype == NIUNKNOWN)
+			continue;
+
 		bool isBSShape = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE || stype == BSDYNAMICTRISHAPE);
-		bool isFO4 = (nif->GetHeader().GetUserVersion() >= 12 && nif->GetHeader().GetUserVersion2() == 130);
 
 		unordered_map<ushort, VertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {
+			SkinTransform xForm;
 			if (AnimSkeleton::getInstance().GetBoneTransform(boneName, xForm))
 				nif->SetNodeTransform(boneName, xForm, true);
 
@@ -311,7 +315,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 		}
 
 		if (isBSShape)
-			for (auto vid : vertWeights)
+			for (auto &vid : vertWeights)
 				nif->SetShapeVertWeights(shapeBoneList.first, vid.first, vid.second.boneIds, vid.second.weights);
 	}
 

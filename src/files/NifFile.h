@@ -29,8 +29,8 @@ public:
 
 	int AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale);
 	void DeleteNode(const string& nodeName);
-	string GetNodeName(int blockID);
-	void SetNodeName(int blockID, const string& newName);
+	string GetNodeName(const int& blockID);
+	void SetNodeName(const int& blockID, const string& newName);
 
 	int AssignExtraData(const string& blockName, const int& extraDataId, bool isNode);
 	int AddStringExtraData(const string& blockName, const string& name, const string& stringData, bool isNode = false);
@@ -88,19 +88,19 @@ public:
 	int GetShapeBoneList(const string& shapeName, vector<string>& outList);
 	int GetShapeBoneIDList(const string& shapeName, vector<int>& outList);
 	void SetShapeBoneIDList(const string& shapeName, vector<int>& inList);
-	int GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& outWeights);
+	int GetShapeBoneWeights(const string& shapeName, const int& boneIndex, unordered_map<ushort, float>& outWeights);
 
 	// Empty string for the bone name returns the overall skin transform for the shape.
 	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform);
 	// 0xFFFFFFFF for the bone index sets the overall skin transform for the shape.
-	bool SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform);
-	bool SetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& inBounds);
+	bool SetShapeBoneTransform(const string& shapeName, const int& boneIndex, SkinTransform& inXform);
+	bool SetShapeBoneBounds(const string& shapeName, const int& boneIndex, BoundingSphere& inBounds);
 	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform);
-	bool GetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& outBounds);
-	void UpdateShapeBoneID(const string& shapeName, int oldID, int newID);
-	void SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights);
-	void SetShapeVertWeights(const string& shapeName, int vertIndex, vector<byte>& boneids, vector<float>& weights);
+	bool GetShapeBoneTransform(const string& shapeName, const int& boneIndex, SkinTransform& outXform);
+	bool GetShapeBoneBounds(const string& shapeName, const int& boneIndex, BoundingSphere& outBounds);
+	void UpdateShapeBoneID(const string& shapeName, const int& oldID, const int& newID);
+	void SetShapeBoneWeights(const string& shapeName, const int& boneIndex, unordered_map<ushort, float>& inWeights);
+	void SetShapeVertWeights(const string& shapeName, const int& vertIndex, vector<byte>& boneids, vector<float>& weights);
 
 	bool GetShapeSegments(const string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 	void SetShapeSegments(const string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);

@@ -492,7 +492,7 @@ void NifFile::DeleteNode(const string& nodeName) {
 	hdr.DeleteBlock(GetBlockID(FindNodeByName(nodeName)));
 }
 
-string NifFile::GetNodeName(int blockID) {
+string NifFile::GetNodeName(const int& blockID) {
 	string name;
 
 	auto n = hdr.GetBlock<NiNode>(blockID);
@@ -505,7 +505,7 @@ string NifFile::GetNodeName(int blockID) {
 	return name;
 }
 
-void NifFile::SetNodeName(int blockID, const string& newName) {
+void NifFile::SetNodeName(const int& blockID, const string& newName) {
 	auto node = hdr.GetBlock<NiNode>(blockID);
 	if (!node)
 		return;
@@ -1325,7 +1325,7 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 	}
 }
 
-int NifFile::GetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& outWeights) {
+int NifFile::GetShapeBoneWeights(const string& shapeName, const int& boneIndex, unordered_map<ushort, float>& outWeights) {
 	outWeights.clear();
 
 	NiShape* shape = FindShapeByName(shapeName);
@@ -1376,7 +1376,7 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneN
 	return GetShapeBoneTransform(shapeName, boneIndex, outXform);
 }
 
-bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& inXform) {
+bool NifFile::SetShapeBoneTransform(const string& shapeName, const int& boneIndex, SkinTransform& inXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1413,7 +1413,7 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 	return true;
 }
 
-bool NifFile::SetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& inBounds) {
+bool NifFile::SetShapeBoneBounds(const string& shapeName, const int& boneIndex, BoundingSphere& inBounds) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1444,7 +1444,7 @@ bool NifFile::SetShapeBoneBounds(const string& shapeName, int boneIndex, Boundin
 	return true;
 }
 
-bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, SkinTransform& outXform) {
+bool NifFile::GetShapeBoneTransform(const string& shapeName, const int& boneIndex, SkinTransform& outXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1485,7 +1485,7 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, int boneIndex, Skin
 	return true;
 }
 
-bool NifFile::GetShapeBoneBounds(const string& shapeName, int boneIndex, BoundingSphere& outBounds) {
+bool NifFile::GetShapeBoneBounds(const string& shapeName, const int& boneIndex, BoundingSphere& outBounds) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1515,7 +1515,7 @@ bool NifFile::GetShapeBoneBounds(const string& shapeName, int boneIndex, Boundin
 	return true;
 }
 
-void NifFile::UpdateShapeBoneID(const string& shapeName, int oldID, int newID) {
+void NifFile::UpdateShapeBoneID(const string& shapeName, const int& oldID, const int& newID) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -1533,7 +1533,7 @@ void NifFile::UpdateShapeBoneID(const string& shapeName, int oldID, int newID) {
 }
 
 // Not implemented for BSTriShape, use SetShapeVertWeights instead
-void NifFile::SetShapeBoneWeights(const string& shapeName, int boneIndex, unordered_map<ushort, float>& inWeights) {
+void NifFile::SetShapeBoneWeights(const string& shapeName, const int& boneIndex, unordered_map<ushort, float>& inWeights) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -1558,7 +1558,7 @@ void NifFile::SetShapeBoneWeights(const string& shapeName, int boneIndex, unorde
 	bone->numVertices = (ushort)bone->vertexWeights.size();
 }
 
-void NifFile::SetShapeVertWeights(const string& shapeName, int vertIndex, vector<byte>& boneids, vector<float>& weights) {
+void NifFile::SetShapeVertWeights(const string& shapeName, const int& vertIndex, vector<byte>& boneids, vector<float>& weights) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;

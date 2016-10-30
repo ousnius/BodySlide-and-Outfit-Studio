@@ -15,24 +15,23 @@ struct VertexBoneWeights {
 	vector<byte> boneIds;
 	vector<float> weights;
 
-	VertexBoneWeights() {
-	}
+	VertexBoneWeights() { }
 
-	void Add(byte inboneid, float inweight) {
-		if (inweight == 0)
+	void Add(const byte& inBoneId, const float& inWeight) {
+		if (inWeight == 0.0f)
 			return;
 
 		for (int i = 0; i < weights.size(); ++i) {
-			if (inweight < weights[i])
+			if (inWeight < weights[i])
 				continue;
 
-			weights.insert(weights.begin() + i, inweight);
-			boneIds.insert(boneIds.begin() + i, inboneid);
+			weights.insert(weights.begin() + i, inWeight);
+			boneIds.insert(boneIds.begin() + i, inBoneId);
 			return;
 		}
 
-		weights.push_back(inweight);
-		boneIds.push_back(inboneid);
+		weights.push_back(inWeight);
+		boneIds.push_back(inBoneId);
 	}
 };
 
@@ -76,18 +75,10 @@ public:
 	BoundingSphere bounds;
 
 	AnimWeight() {}
-	AnimWeight(NifFile* loadFromFile, const string& shape, int index) {
+	AnimWeight(NifFile* loadFromFile, const string& shape, const int& index) {
 		loadFromFile->GetShapeBoneWeights(shape, index, weights);
 		loadFromFile->GetShapeBoneTransform(shape, index, xform);
 		loadFromFile->GetShapeBoneBounds(shape, index, bounds);
-	}
-
-	bool VertWeight(ushort queryVert, float& weight) {
-		if (weights.find(queryVert) != weights.end()) {
-			weight = weights[queryVert];
-			return true;
-		}
-		return false;
 	}
 };
 
@@ -113,26 +104,18 @@ public:
 		}
 	}
 
-	void VertexBones(ushort queryvert, vector<int>& outbones, vector<float>& outWeights) {
-		float wresult;
-		for (auto &bw : boneWeights) {
-			if (bw.second.VertWeight(queryvert, wresult)) {
-				outbones.push_back(bw.first);
-				outWeights.push_back(wresult);
-			}
-		}
-	}
-
-	void RemoveBone(int boneOrder) {
-		unordered_map<int, AnimWeight> bwtemp;
+	void RemoveBone(const int& boneOrder) {
+		unordered_map<int, AnimWeight> bwTemp;
 		for (auto &bw : boneWeights) {
 			if (bw.first > boneOrder)
-				bwtemp[bw.first - 1] = move(bw.second);
+				bwTemp[bw.first - 1] = move(bw.second);
 			else if (bw.first < boneOrder)
-				bwtemp[bw.first] = move(bw.second);
+				bwTemp[bw.first] = move(bw.second);
 		}
+
 		boneWeights.clear();
-		for (auto &bw : bwtemp)
+
+		for (auto &bw : bwTemp)
 			boneWeights[bw.first] = move(bw.second);
 	}
 };

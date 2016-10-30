@@ -147,7 +147,7 @@ void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const 
 	userVersion2 = userVer2;
 }
 
-bool NiHeader::VerCheck(int v1, int v2, int v3, int v4, bool equal) {
+bool NiHeader::VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool& equal) {
 	if (equal) {
 		if (version4 == v1 && version3 == v2 && version2 == v3 && version1 == v4)
 			return true;
@@ -560,7 +560,7 @@ string NiObjectNET::GetName() {
 	return name;
 }
 
-void NiObjectNET::SetName(const string& propertyName, bool renameExisting) {
+void NiObjectNET::SetName(const string& propertyName, const bool& renameExisting) {
 	if (renameExisting)
 		header->SetStringById(nameRef, propertyName);
 	else
@@ -574,14 +574,14 @@ void NiObjectNET::ClearName() {
 	name.clear();
 }
 
-int NiObjectNET::GetExtraDataRef(int id) {
+int NiObjectNET::GetExtraDataRef(const int& id) {
 	if (id >= 0 && id < numExtraData)
 		return extraDataRef[id];
 
 	return 0xFFFFFFFF;
 }
 
-void NiObjectNET::AddExtraDataRef(int id) {
+void NiObjectNET::AddExtraDataRef(const int& id) {
 	extraDataRef.push_back(id);
 	numExtraData++;
 }
@@ -871,14 +871,14 @@ int NiNode::CalcBlockSize() {
 	return blockSize;
 }
 
-int NiNode::GetChildRef(int id) {
+int NiNode::GetChildRef(const int& id) {
 	if (id >= 0 && id < numChildren)
 		return children[id];
 
 	return 0xFFFFFFFF;
 }
 
-void NiNode::AddChildRef(int id) {
+void NiNode::AddChildRef(const int& id) {
 	children.push_back(id);
 	numChildren++;
 }
@@ -888,14 +888,14 @@ void NiNode::ClearChildren() {
 	numChildren = 0;
 }
 
-int NiNode::GetEffectRef(int id) {
+int NiNode::GetEffectRef(const int& id) {
 	if (id >= 0 && id < numEffects)
 		return effects[id];
 
 	return 0xFFFFFFFF;
 }
 
-void NiNode::AddEffectRef(int id) {
+void NiNode::AddEffectRef(const int& id) {
 	effects.push_back(id);
 	numEffects++;
 }
@@ -973,7 +973,7 @@ void NiShape::SetAlphaPropertyRef(int alphaPropertyRef) { }
 int NiShape::GetDataRef() { return 0xFFFFFFFF; }
 void NiShape::SetDataRef(int dataRef) { }
 
-void NiShape::SetVertices(bool enable) {
+void NiShape::SetVertices(const bool& enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertices(enable);
@@ -987,7 +987,7 @@ bool NiShape::HasVertices() {
 	return false;
 };
 
-void NiShape::SetUVs(bool enable) {
+void NiShape::SetUVs(const bool& enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetUVs(enable);
@@ -1001,7 +1001,7 @@ bool NiShape::HasUVs() {
 	return false;
 };
 
-void NiShape::SetNormals(bool enable) {
+void NiShape::SetNormals(const bool& enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetNormals(enable);
@@ -1015,7 +1015,7 @@ bool NiShape::HasNormals() {
 	return false;
 };
 
-void NiShape::SetTangents(bool enable) {
+void NiShape::SetTangents(const bool& enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetTangents(enable);
@@ -1029,7 +1029,7 @@ bool NiShape::HasTangents() {
 	return false;
 };
 
-void NiShape::SetVertexColors(bool enable) {
+void NiShape::SetVertexColors(const bool& enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertexColors(enable);
@@ -1043,7 +1043,7 @@ bool NiShape::HasVertexColors() {
 	return false;
 };
 
-void NiShape::SetSkinned(bool enable) { };
+void NiShape::SetSkinned(const bool& enable) { };
 bool NiShape::IsSkinned() { return false; };
 
 void NiShape::SetBounds(const BoundingSphere& bounds) {
@@ -1623,7 +1623,7 @@ const vector<Vector2>* BSTriShape::GetUVData() {
 	return &rawUvs;
 }
 
-void BSTriShape::SetVertices(bool enable) {
+void BSTriShape::SetVertices(const bool& enable) {
 	if (enable) {
 		vertFlags6 |= 1 << 4;
 		vertData.resize(numVertices);
@@ -1641,42 +1641,42 @@ void BSTriShape::SetVertices(bool enable) {
 	}
 }
 
-void BSTriShape::SetUVs(bool enable) {
+void BSTriShape::SetUVs(const bool& enable) {
 	if (enable)
 		vertFlags6 |= 1 << 5;
 	else
 		vertFlags6 &= ~(1 << 5);
 }
 
-void BSTriShape::SetNormals(bool enable) {
+void BSTriShape::SetNormals(const bool& enable) {
 	if (enable)
 		vertFlags6 |= 1 << 7;
 	else
 		vertFlags6 &= ~(1 << 7);
 }
 
-void BSTriShape::SetTangents(bool enable) {
+void BSTriShape::SetTangents(const bool& enable) {
 	if (enable)
 		vertFlags7 |= 1 << 0;
 	else
 		vertFlags7 &= ~(1 << 0);
 }
 
-void BSTriShape::SetVertexColors(bool enable) {
+void BSTriShape::SetVertexColors(const bool& enable) {
 	if (enable)
 		vertFlags7 |= 1 << 1;
 	else
 		vertFlags7 &= ~(1 << 1);
 }
 
-void BSTriShape::SetSkinned(bool enable) {
+void BSTriShape::SetSkinned(const bool& enable) {
 	if (enable)
 		vertFlags7 |= 1 << 2;
 	else
 		vertFlags7 &= ~(1 << 2);
 }
 
-void BSTriShape::SetFullPrecision(bool enable) {
+void BSTriShape::SetFullPrecision(const bool& enable) {
 	if (!CanChangePrecision())
 		return;
 
@@ -2650,7 +2650,7 @@ void NiGeometryData::Put(fstream& file) {
 	file.write((char*)&additionalData, 4);
 }
 
-void NiGeometryData::SetVertices(bool enable) {
+void NiGeometryData::SetVertices(const bool& enable) {
 	hasVertices = enable;
 	if (enable) {
 		vertices.resize(numVertices);
@@ -2666,7 +2666,7 @@ void NiGeometryData::SetVertices(bool enable) {
 	}
 }
 
-void NiGeometryData::SetNormals(bool enable) {
+void NiGeometryData::SetNormals(const bool& enable) {
 	hasNormals = enable;
 	if (enable)
 		normals.resize(numVertices);
@@ -2674,7 +2674,7 @@ void NiGeometryData::SetNormals(bool enable) {
 		normals.clear();
 }
 
-void NiGeometryData::SetVertexColors(bool enable) {
+void NiGeometryData::SetVertexColors(const bool& enable) {
 	hasVertexColors = enable;
 	if (enable)
 		vertexColors.resize(numVertices);
@@ -2682,7 +2682,7 @@ void NiGeometryData::SetVertexColors(bool enable) {
 		vertexColors.clear();
 }
 
-void NiGeometryData::SetUVs(bool enable) {
+void NiGeometryData::SetUVs(const bool& enable) {
 	if (enable) {
 		numUVSets |= 1 << 0;
 		uvSets.resize(numVertices);
@@ -2693,7 +2693,7 @@ void NiGeometryData::SetUVs(bool enable) {
 	}
 }
 
-void NiGeometryData::SetTangents(bool enable) {
+void NiGeometryData::SetTangents(const bool& enable) {
 	if (enable) {
 		numUVSets |= 1 << 12;
 		tangents.resize(numVertices);
@@ -5060,7 +5060,7 @@ bool NiShader::IsSkinned() {
 	return false;
 }
 
-void NiShader::SetSkinned(bool enable) {
+void NiShader::SetSkinned(const bool& enable) {
 }
 
 bool NiShader::IsDoubleSided() {
@@ -5099,7 +5099,7 @@ int NiShader::GetTextureSetRef() {
 	return 0xFFFFFFFF;
 }
 
-void NiShader::SetTextureSetRef(int texSetRef) {
+void NiShader::SetTextureSetRef(const int& texSetRef) {
 }
 
 Color4 NiShader::GetEmissiveColor() {
@@ -5478,7 +5478,7 @@ bool BSLightingShaderProperty::IsSkinned() {
 	return (shaderFlags1 & (1 << 1)) != 0;
 }
 
-void BSLightingShaderProperty::SetSkinned(bool enable) {
+void BSLightingShaderProperty::SetSkinned(const bool& enable) {
 	if (enable)
 		shaderFlags1 |= 1 << 1;
 	else
@@ -5525,7 +5525,7 @@ int BSLightingShaderProperty::GetTextureSetRef() {
 	return textureSetRef;
 }
 
-void BSLightingShaderProperty::SetTextureSetRef(int texSetRef) {
+void BSLightingShaderProperty::SetTextureSetRef(const int& texSetRef) {
 	textureSetRef = texSetRef;
 }
 
@@ -5791,7 +5791,7 @@ bool BSEffectShaderProperty::IsSkinned() {
 	return (shaderFlags1 & (1 << 1)) != 0;
 }
 
-void BSEffectShaderProperty::SetSkinned(bool enable) {
+void BSEffectShaderProperty::SetSkinned(const bool& enable) {
 	if (enable)
 		shaderFlags1 |= 1 << 1;
 	else
@@ -5981,7 +5981,7 @@ bool BSShaderPPLightingProperty::IsSkinned() {
 	return (shaderFlags & (1 << 1)) != 0;
 }
 
-void BSShaderPPLightingProperty::SetSkinned(bool enable) {
+void BSShaderPPLightingProperty::SetSkinned(const bool& enable) {
 	if (enable)
 		shaderFlags |= 1 << 1;
 	else
@@ -5992,7 +5992,7 @@ int BSShaderPPLightingProperty::GetTextureSetRef() {
 	return textureSetRef;
 }
 
-void BSShaderPPLightingProperty::SetTextureSetRef(int texSetRef) {
+void BSShaderPPLightingProperty::SetTextureSetRef(const int& texSetRef) {
 	textureSetRef = texSetRef;
 }
 
@@ -6717,7 +6717,7 @@ BSClothExtraData::BSClothExtraData() {
 	data.clear();
 }
 
-BSClothExtraData::BSClothExtraData(NiHeader& hdr, uint size) {
+BSClothExtraData::BSClothExtraData(NiHeader& hdr, const uint& size) {
 	BSExtraData::Init();
 
 	header = &hdr;
@@ -6930,7 +6930,7 @@ bhkPhysicsSystem::bhkPhysicsSystem() {
 	data.clear();
 }
 
-bhkPhysicsSystem::bhkPhysicsSystem(NiHeader& hdr, uint size) {
+bhkPhysicsSystem::bhkPhysicsSystem(NiHeader& hdr, const uint& size) {
 	BSExtraData::Init();
 
 	header = &hdr;
@@ -6995,7 +6995,7 @@ NiUnknown::NiUnknown() {
 	blockType = NIUNKNOWN;
 }
 
-NiUnknown::NiUnknown(fstream& file, uint size) {
+NiUnknown::NiUnknown(fstream& file, const uint& size) {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
@@ -7005,7 +7005,7 @@ NiUnknown::NiUnknown(fstream& file, uint size) {
 	Get(file);
 }
 
-NiUnknown::NiUnknown(uint size) {
+NiUnknown::NiUnknown(const uint& size) {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
