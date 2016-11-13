@@ -1871,7 +1871,7 @@ int NifFile::OptimizeForSSE() {
 					bsShape->SetVertices(false);
 
 				int dataId = shape->GetDataRef();
-				parentNode->AddChildRef(hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape"));
+				hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape");
 				hdr.DeleteBlock(dataId);
 
 				CalcTangentsForShape(s);
