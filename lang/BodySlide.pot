@@ -2121,3 +2121,6 @@ msgstr ""
 
 msgid "Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again."
 msgstr ""
+
+msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
+msgstr ""

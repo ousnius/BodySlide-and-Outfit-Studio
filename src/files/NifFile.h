@@ -37,8 +37,9 @@ public:
 	int AddIntegerExtraData(const string& blockName, const string& name, const int& integerData, bool isNode = false);
 
 	int Load(const string& filename);
-	int Save(const string& filename, bool optimize = true);
+	int Save(const string& filename, bool optimize = true, bool sortBlocks = true);
 	void Optimize();
+	int OptimizeForSSE();
 	void PrepareData();
 
 	string GetFileName() { return fileName; }
@@ -59,6 +60,7 @@ public:
 	NiAVObject* FindAVObjectByName(const string& name, int dupIndex = 0);
 	NiNode* FindNodeByName(const string& name);
 	int GetBlockID(NiObject* block);
+	NiNode* GetParentNode(NiObject* block);
 
 	NiShader* GetShader(const string& shapeName);
 	bool IsShaderSkin(const string& shapeName);
@@ -163,6 +165,7 @@ public:
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
+	void TriangulatePartitions(const string& shapeName);
 	// Update bone set flags
 	void UpdatePartitionFlags(const string& shapeName);
 };

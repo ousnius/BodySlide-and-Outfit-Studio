@@ -10,6 +10,211 @@ See the included LICENSE file
 #pragma warning (disable : 4100)
 
 
+template<typename T>
+KeyGroup<T>::KeyGroup() {
+	numKeys = 0;
+}
+
+template<typename T>
+KeyGroup<T>::KeyGroup(fstream& file) {
+	Get(file);
+}
+
+template<typename T>
+void KeyGroup<T>::Get(fstream& file) {
+	file.read((char*)&numKeys, 4);
+	keys.resize(numKeys);
+
+	if (numKeys > 0) {
+		file.read((char*)&interpolation, 4);
+
+		for (int i = 0; i < numKeys; i++) {
+			Key<T> key;
+			file.read((char*)&key.time, 4);
+			file.read((char*)&key.value, sizeof(T));
+
+			switch (interpolation) {
+			case 2:
+				file.read((char*)&key.forward, sizeof(T));
+				file.read((char*)&key.backward, sizeof(T));
+				break;
+			case 3:
+				file.read((char*)&key.tbc, 12);
+				break;
+			}
+
+			keys[i] = move(key);
+		}
+	}
+}
+
+template<typename T>
+void KeyGroup<T>::Put(fstream& file) {
+	file.write((char*)&numKeys, 4);
+
+	if (numKeys > 0) {
+		file.write((char*)&interpolation, 4);
+
+		for (int i = 0; i < numKeys; i++) {
+			file.write((char*)&keys[i].time, 4);
+			file.write((char*)&keys[i].value, sizeof(T));
+
+			switch (interpolation) {
+			case 2:
+				file.write((char*)&keys[i].forward, sizeof(T));
+				file.write((char*)&keys[i].backward, sizeof(T));
+				break;
+			case 3:
+				file.write((char*)&keys[i].tbc, 12);
+				break;
+			}
+		}
+	}
+}
+
+template<typename T>
+int KeyGroup<T>::CalcGroupSize() {
+	int groupSize = 4;
+
+	if (numKeys > 0) {
+		groupSize += 4;
+		groupSize += 4 * numKeys;
+		groupSize += sizeof(T) * numKeys;
+
+		switch (interpolation) {
+		case 2:
+			groupSize += sizeof(T) * numKeys * 2;
+			break;
+		case 3:
+			groupSize += 12 * numKeys;
+			break;
+		}
+	}
+
+	return groupSize;
+}
+
+SubConstraintDesc::SubConstraintDesc() {
+	numEntities = 0;
+}
+
+SubConstraintDesc::SubConstraintDesc(fstream& file) {
+	Get(file);
+}
+
+void SubConstraintDesc::Get(fstream& file) {
+	file.read((char*)&type, 4);
+
+	file.read((char*)&numEntities, 4);
+	entities.resize(numEntities);
+	for (int i = 0; i < numEntities; i++)
+		file.read((char*)&entities[i], 4);
+
+	file.read((char*)&priority, 4);
+
+	switch (type) {
+	case BallAndSocket:
+		file.read((char*)&desc1, 32);
+		break;
+	case Hinge:
+		file.read((char*)&desc2, 128);
+		break;
+	case LimitedHinge:
+		file.read((char*)&desc3, 166);
+		break;
+	case Prismatic:
+		file.read((char*)&desc4, 141);
+		break;
+	case Ragdoll:
+		file.read((char*)&desc5, 178);
+		break;
+	case StiffSpring:
+		file.read((char*)&desc6, 36);
+		break;
+	}
+}
+
+void SubConstraintDesc::Put(fstream& file) {
+	file.write((char*)&type, 4);
+
+	file.write((char*)&numEntities, 4);
+	for (int i = 0; i < numEntities; i++)
+		file.write((char*)&entities[i], 4);
+
+	file.write((char*)&priority, 4);
+
+	switch (type) {
+	case BallAndSocket:
+		file.write((char*)&desc1, 32);
+		break;
+	case Hinge:
+		file.write((char*)&desc2, 128);
+		break;
+	case LimitedHinge:
+		file.write((char*)&desc3, 166);
+		break;
+	case Prismatic:
+		file.write((char*)&desc4, 141);
+		break;
+	case Ragdoll:
+		file.write((char*)&desc5, 178);
+		break;
+	case StiffSpring:
+		file.write((char*)&desc6, 36);
+		break;
+	}
+}
+
+void SubConstraintDesc::notifyBlockDelete(int blockID) {
+	for (int i = 0; i < numEntities; i++) {
+		if (entities[i] == blockID) {
+			entities.erase(entities.begin() + i);
+			i--;
+			numEntities--;
+		}
+		else if (entities[i] > blockID)
+			entities[i]--;
+	}
+}
+
+void SubConstraintDesc::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	for (int i = 0; i < numEntities; i++) {
+		if (entities[i] == blockIndexLo)
+			entities[i] = blockIndexHi;
+		else if (entities[i] == blockIndexHi)
+			entities[i] = blockIndexLo;
+	}
+}
+
+int SubConstraintDesc::CalcDescSize() {
+	int descSize = 12;
+	descSize += numEntities * 4;
+
+	switch (type) {
+	case BallAndSocket:
+		descSize += 32;
+		break;
+	case Hinge:
+		descSize += 128;
+		break;
+	case LimitedHinge:
+		descSize += 166;
+		break;
+	case Prismatic:
+		descSize += 141;
+		break;
+	case Ragdoll:
+		descSize += 178;
+		break;
+	case StiffSpring:
+		descSize += 36;
+		break;
+	}
+
+	return descSize;
+}
+
+
 NiString::NiString(fstream& file, const int& szSize) {
 	Get(file, szSize);
 }
@@ -256,6 +461,33 @@ int NiHeader::AddBlock(NiObject* newBlock, const string& blockTypeStr) {
 	(*blocks).push_back(newBlock);
 	numBlocks = (*blocks).size();
 	return numBlocks - 1;
+}
+
+int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock, const string& blockTypeStr) {
+	if (oldBlockId == 0xFFFFFFFF)
+		return 0xFFFFFFFF;
+
+	ushort blockTypeId = blockTypeIndices[oldBlockId];
+	int blockTypeRefCount = 0;
+	for (int i = 0; i < blockTypeIndices.size(); i++)
+		if (blockTypeIndices[i] == blockTypeId)
+			blockTypeRefCount++;
+
+	if (blockTypeRefCount < 2) {
+		blockTypes.erase(blockTypes.begin() + blockTypeId);
+		numBlockTypes--;
+		for (int i = 0; i < blockTypeIndices.size(); i++)
+			if (blockTypeIndices[i] > blockTypeId)
+				blockTypeIndices[i]--;
+	}
+
+	delete (*blocks)[oldBlockId];
+
+	ushort btID = AddOrFindBlockTypeId(blockTypeStr);
+	blockTypeIndices[oldBlockId] = btID;
+	blockSizes[oldBlockId] = newBlock->CalcBlockSize();
+	(*blocks)[oldBlockId] = newBlock;
+	return oldBlockId;
 }
 
 void NiHeader::SwapBlocks(const int& blockIndexLo, const int& blockIndexHi) {
@@ -536,6 +768,8 @@ void NiObjectNET::notifyBlockDelete(int blockID) {
 }
 
 void NiObjectNET::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
 	for (int i = 0; i < numExtraData; i++) {
 		if (extraDataRef[i] == blockIndexLo)
 			extraDataRef[i] = blockIndexHi;
@@ -599,40 +833,10 @@ int NiObjectNET::CalcBlockSize() {
 }
 
 
-void NiProperty::Init() {
-	NiObjectNET::Init();
-}
-
-void NiProperty::Get(fstream& file) {
-	NiObjectNET::Get(file);
-}
-
-void NiProperty::Put(fstream& file) {
-	NiObjectNET::Put(file);
-}
-
-void NiProperty::notifyBlockDelete(int blockID) {
-	NiObjectNET::notifyBlockDelete(blockID);
-}
-
-void NiProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiObjectNET::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiProperty::notifyStringDelete(int stringID) {
-	NiObjectNET::notifyStringDelete(stringID);
-}
-
-int NiProperty::CalcBlockSize() {
-	return NiObjectNET::CalcBlockSize();
-}
-
-
 void NiAVObject::Init() {
 	NiObjectNET::Init();
 
-	flags = 14;
-	unkShort1 = 8;
+	flags = 524302;
 	rotation[0].x = 1.0f;
 	rotation[1].y = 1.0f;
 	rotation[2].z = 1.0f;
@@ -644,10 +848,11 @@ void NiAVObject::Init() {
 void NiAVObject::Get(fstream& file) {
 	NiObjectNET::Get(file);
 
-	file.read((char*)&flags, 2);
-
-	if (header->GetUserVersion() >= 11 && header->GetUserVersion2() > 26)
-		file.read((char*)&unkShort1, 2);
+	flags = 0;
+	if (header->GetUserVersion2() < 34)
+		file.read((char*)&flags, 2);
+	else
+		file.read((char*)&flags, 4);
 
 	file.read((char*)&translation.x, 4);
 	file.read((char*)&translation.y, 4);
@@ -676,10 +881,10 @@ void NiAVObject::Get(fstream& file) {
 void NiAVObject::Put(fstream& file) {
 	NiObjectNET::Put(file);
 
-	file.write((char*)&flags, 2);
-
-	if (header->GetUserVersion() >= 11 && header->GetUserVersion2() > 26)
-		file.write((char*)&unkShort1, 2);
+	if (header->GetUserVersion2() < 34)
+		file.write((char*)&flags, 2);
+	else
+		file.write((char*)&flags, 4);
 
 	file.write((char*)&translation.x, 4);
 	file.write((char*)&translation.y, 4);
@@ -729,15 +934,11 @@ void NiAVObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		collisionRef = blockIndexLo;
 
 	for (int i = 0; i < numProperties; i++) {
-		if (propertiesRef[i] == blockIndexHi)
-			propertiesRef[i] = blockIndexLo;
-		else if (propertiesRef[i] == blockIndexLo)
+		if (propertiesRef[i] == blockIndexLo)
 			propertiesRef[i] = blockIndexHi;
+		else if (propertiesRef[i] == blockIndexHi)
+			propertiesRef[i] = blockIndexLo;
 	}
-}
-
-void NiAVObject::notifyStringDelete(int stringID) {
-	NiObjectNET::notifyStringDelete(stringID);
 }
 
 int NiAVObject::CalcBlockSize() {
@@ -855,10 +1056,6 @@ void NiNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
-void NiNode::notifyStringDelete(int stringID) {
-	NiAVObject::notifyStringDelete(stringID);
-}
-
 int NiNode::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
@@ -917,49 +1114,462 @@ BSFadeNode::BSFadeNode(fstream& file, NiHeader& hdr) {
 	Get(file);
 }
 
-void BSFadeNode::Get(fstream& file) {
+
+BSValueNode::BSValueNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSVALUENODE;
+}
+
+BSValueNode::BSValueNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSVALUENODE;
+
+	Get(file);
+}
+
+void BSValueNode::Get(fstream& file) {
 	NiNode::Get(file);
+
+	file.read((char*)&value, 4);
+	file.read((char*)&unkByte, 1);
 }
 
-void BSFadeNode::Put(fstream& file) {
+void BSValueNode::Put(fstream& file) {
 	NiNode::Put(file);
+
+	file.write((char*)&value, 4);
+	file.write((char*)&unkByte, 1);
 }
 
-void BSFadeNode::notifyBlockDelete(int blockID) {
-	NiNode::notifyBlockDelete(blockID);
-}
+int BSValueNode::CalcBlockSize() {
+	NiNode::CalcBlockSize();
 
-void BSFadeNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiNode::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
+	blockSize += 5;
 
-void BSFadeNode::notifyStringDelete(int stringID) {
-	NiNode::notifyStringDelete(stringID);
-}
-
-int BSFadeNode::CalcBlockSize() {
-	return NiNode::CalcBlockSize();
-}
-
-
-void NiShape::Get(fstream& file) {
-}
-
-void NiShape::Put(fstream& file) {
-}
-
-void NiShape::notifyBlockDelete(int blockID) {
-}
-
-void NiShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-}
-
-void NiShape::notifyStringDelete(int stringID) {
-}
-
-int NiShape::CalcBlockSize() {
 	return blockSize;
 }
+
+
+BSLeafAnimNode::BSLeafAnimNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSLEAFANIMNODE;
+}
+
+BSLeafAnimNode::BSLeafAnimNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSLEAFANIMNODE;
+
+	Get(file);
+}
+
+
+BSTreeNode::BSTreeNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSTREENODE;
+
+	numBones1 = 0;
+	numBones2 = 0;
+}
+
+BSTreeNode::BSTreeNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSTREENODE;
+
+	Get(file);
+}
+
+void BSTreeNode::Get(fstream& file) {
+	NiNode::Get(file);
+
+	file.read((char*)&numBones1, 4);
+	bones1.resize(numBones1);
+	for (int i = 0; i < numBones1; i++)
+		file.read((char*)&bones1[i], 4);
+
+	file.read((char*)&numBones2, 4);
+	bones2.resize(numBones2);
+	for (int i = 0; i < numBones2; i++)
+		file.read((char*)&bones2[i], 4);
+}
+
+void BSTreeNode::Put(fstream& file) {
+	NiNode::Put(file);
+
+	file.write((char*)&numBones1, 4);
+	for (int i = 0; i < numBones1; i++)
+		file.write((char*)&bones1[i], 4);
+
+	file.write((char*)&numBones2, 4);
+	for (int i = 0; i < numBones2; i++)
+		file.write((char*)&bones2[i], 4);
+}
+
+void BSTreeNode::notifyBlockDelete(int blockID) {
+	NiNode::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numBones1; i++) {
+		if (bones1[i] == blockID) {
+			bones1.erase(bones1.begin() + i);
+			i--;
+			numBones1--;
+		}
+		else if (bones1[i] > blockID)
+			bones1[i]--;
+	}
+
+	for (int i = 0; i < numBones2; i++) {
+		if (bones2[i] == blockID) {
+			bones2.erase(bones2.begin() + i);
+			i--;
+			numBones2--;
+		}
+		else if (bones2[i] > blockID)
+			bones2[i]--;
+	}
+}
+
+void BSTreeNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiNode::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numBones1; i++) {
+		if (bones1[i] == blockIndexLo)
+			bones1[i] = blockIndexHi;
+		else if (bones1[i] == blockIndexHi)
+			bones1[i] = blockIndexLo;
+	}
+
+	for (int i = 0; i < numBones2; i++) {
+		if (bones2[i] == blockIndexLo)
+			bones2[i] = blockIndexHi;
+		else if (bones2[i] == blockIndexHi)
+			bones2[i] = blockIndexLo;
+	}
+}
+
+int BSTreeNode::CalcBlockSize() {
+	NiNode::CalcBlockSize();
+
+	blockSize += 8;
+	blockSize += numBones1 * 4;
+	blockSize += numBones2 * 4;
+
+	return blockSize;
+}
+
+
+BSOrderedNode::BSOrderedNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSORDEREDNODE;
+}
+
+BSOrderedNode::BSOrderedNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSORDEREDNODE;
+
+	Get(file);
+}
+
+void BSOrderedNode::Get(fstream& file) {
+	NiNode::Get(file);
+
+	file.read((char*)&alphaSortBound, 16);
+	file.read((char*)&isStaticBound, 1);
+}
+
+void BSOrderedNode::Put(fstream& file) {
+	NiNode::Put(file);
+
+	file.write((char*)&alphaSortBound, 16);
+	file.write((char*)&isStaticBound, 1);
+}
+
+int BSOrderedNode::CalcBlockSize() {
+	NiNode::CalcBlockSize();
+
+	blockSize += 17;
+
+	return blockSize;
+}
+
+
+BSMultiBoundNode::BSMultiBoundNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUNDNODE;
+}
+
+BSMultiBoundNode::BSMultiBoundNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUNDNODE;
+
+	Get(file);
+}
+
+void BSMultiBoundNode::Get(fstream& file) {
+	NiNode::Get(file);
+
+	file.read((char*)&multiBoundRef, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.read((char*)&cullingMode, 4);
+}
+
+void BSMultiBoundNode::Put(fstream& file) {
+	NiNode::Put(file);
+
+	file.write((char*)&multiBoundRef, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.write((char*)&cullingMode, 4);
+}
+
+void BSMultiBoundNode::notifyBlockDelete(int blockID) {
+	NiNode::notifyBlockDelete(blockID);
+
+	if (multiBoundRef == blockID)
+		multiBoundRef = 0xFFFFFFFF;
+	else if (multiBoundRef > blockID)
+		multiBoundRef--;
+}
+
+void BSMultiBoundNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiNode::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (multiBoundRef == blockIndexLo)
+		multiBoundRef = blockIndexHi;
+	else if (multiBoundRef == blockIndexHi)
+		multiBoundRef = blockIndexLo;
+}
+
+int BSMultiBoundNode::CalcBlockSize() {
+	NiNode::CalcBlockSize();
+
+	blockSize += 4;
+	if (header->GetUserVersion() >= 12)
+		blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSBlastNode::BSBlastNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSBLASTNODE;
+}
+
+BSBlastNode::BSBlastNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSBLASTNODE;
+
+	Get(file);
+}
+
+void BSBlastNode::Get(fstream& file) {
+	NiNode::Get(file);
+
+	file.read((char*)&min, 1);
+	file.read((char*)&max, 1);
+	file.read((char*)&current, 1);
+}
+
+void BSBlastNode::Put(fstream& file) {
+	NiNode::Put(file);
+
+	file.write((char*)&min, 1);
+	file.write((char*)&max, 1);
+	file.write((char*)&current, 1);
+}
+
+int BSBlastNode::CalcBlockSize() {
+	NiNode::CalcBlockSize();
+
+	blockSize += 3;
+
+	return blockSize;
+}
+
+
+BSDamageStage::BSDamageStage(NiHeader& hdr) : BSBlastNode(hdr) {
+	blockType = BSDAMAGESTAGE;
+}
+
+BSDamageStage::BSDamageStage(fstream& file, NiHeader& hdr) : BSBlastNode(file, hdr) {
+	blockType = BSDAMAGESTAGE;
+}
+
+
+BSMasterParticleSystem::BSMasterParticleSystem(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSMASTERPARTICLESYSTEM;
+
+	numParticleSys = 0;
+}
+
+BSMasterParticleSystem::BSMasterParticleSystem(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = BSMASTERPARTICLESYSTEM;
+
+	Get(file);
+}
+
+void BSMasterParticleSystem::Get(fstream& file) {
+	NiNode::Get(file);
+
+	file.read((char*)&maxEmitterObjs, 2);
+
+	file.read((char*)&numParticleSys, 4);
+	particleSysRefs.resize(numParticleSys);
+	for (int i = 0; i < numParticleSys; i++)
+		file.read((char*)&particleSysRefs[i], 4);
+}
+
+void BSMasterParticleSystem::Put(fstream& file) {
+	NiNode::Put(file);
+
+	file.write((char*)&maxEmitterObjs, 2);
+
+	file.write((char*)&numParticleSys, 4);
+	for (int i = 0; i < numParticleSys; i++)
+		file.write((char*)&particleSysRefs[i], 4);
+}
+
+void BSMasterParticleSystem::notifyBlockDelete(int blockID) {
+	NiNode::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numParticleSys; i++) {
+		if (particleSysRefs[i] == blockID) {
+			particleSysRefs.erase(particleSysRefs.begin() + i);
+			i--;
+			numParticleSys--;
+		}
+		else if (particleSysRefs[i] > blockID)
+			particleSysRefs[i]--;
+	}
+}
+
+void BSMasterParticleSystem::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiNode::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numParticleSys; i++) {
+		if (particleSysRefs[i] == blockIndexLo)
+			particleSysRefs[i] = blockIndexHi;
+		else if (particleSysRefs[i] == blockIndexHi)
+			particleSysRefs[i] = blockIndexLo;
+	}
+}
+
+int BSMasterParticleSystem::CalcBlockSize() {
+	NiNode::CalcBlockSize();
+
+	blockSize += 6;
+	blockSize += numParticleSys * 4;
+
+	return blockSize;
+}
+
+
+NiBillboardNode::NiBillboardNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = NIBILLBOARDNODE;
+}
+
+NiBillboardNode::NiBillboardNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = NIBILLBOARDNODE;
+
+	Get(file);
+}
+
+void NiBillboardNode::Get(fstream& file) {
+	NiNode::Get(file);
+
+	file.read((char*)&billboardMode, 2);
+}
+
+void NiBillboardNode::Put(fstream& file) {
+	NiNode::Put(file);
+
+	file.write((char*)&billboardMode, 2);
+}
+
+int NiBillboardNode::CalcBlockSize() {
+	NiNode::CalcBlockSize();
+
+	blockSize += 2;
+
+	return blockSize;
+}
+
+
+NiSwitchNode::NiSwitchNode(NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = NISWITCHNODE;
+}
+
+NiSwitchNode::NiSwitchNode(fstream& file, NiHeader& hdr) {
+	NiNode::Init();
+
+	header = &hdr;
+	blockType = NISWITCHNODE;
+
+	Get(file);
+}
+
+void NiSwitchNode::Get(fstream& file) {
+	NiNode::Get(file);
+
+	file.read((char*)&flags, 2);
+	file.read((char*)&index, 4);
+}
+
+void NiSwitchNode::Put(fstream& file) {
+	NiNode::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&index, 4);
+}
+
+int NiSwitchNode::CalcBlockSize() {
+	NiNode::CalcBlockSize();
+
+	blockSize += 6;
+
+	return blockSize;
+}
+
 
 int NiShape::GetSkinInstanceRef() { return 0xFFFFFFFF; }
 void NiShape::SetSkinInstanceRef(int skinInstanceRef) { }
@@ -1121,8 +1731,7 @@ void BSTriShape::Get(fstream& file) {
 	// that code is duplicated here and the super super get is called.
 	NiObjectNET::Get(file);
 
-	file.read((char*)&flags, 2);
-	file.read((char*)&unkShort1, 2);
+	file.read((char*)&flags, 4);
 
 	file.read((char*)&translation.x, 4);
 	file.read((char*)&translation.y, 4);
@@ -1202,9 +1811,9 @@ void BSTriShape::Get(fstream& file) {
 				for (int j = 0; j < 3; j++)
 					file.read((char*)&vertData[i].normal[j], 1);
 
-				if (HasTangents()) {
-					file.read((char*)&vertData[i].bitangentY, 1);
+				file.read((char*)&vertData[i].bitangentY, 1);
 
+				if (HasTangents()) {
 					for (int j = 0; j < 3; j++)
 						file.read((char*)&vertData[i].tangent[j], 1);
 
@@ -1225,6 +1834,9 @@ void BSTriShape::Get(fstream& file) {
 				for (int j = 0; j < 4; j++)
 					file.read((char*)&vertData[i].weightBones[j], 1);
 			}
+
+			if ((vertFlags7 & (1 << 4)) != 0)
+				file.read((char*)&vertData[i].eyeData, 4);
 		}
 	}
 
@@ -1265,8 +1877,7 @@ void BSTriShape::Put(fstream& file) {
 	// that code is duplicated here and the super super get is called.
 	NiObjectNET::Put(file);
 
-	file.write((char*)&flags, 2);
-	file.write((char*)&unkShort1, 2);
+	file.write((char*)&flags, 4);
 
 	file.write((char*)&translation.x, 4);
 	file.write((char*)&translation.y, 4);
@@ -1358,9 +1969,9 @@ void BSTriShape::Put(fstream& file) {
 					for (int j = 0; j < 3; j++)
 						file.write((char*)&vertData[i].normal[j], 1);
 
-					if (HasTangents()) {
-						file.write((char*)&vertData[i].bitangentY, 1);
+					file.write((char*)&vertData[i].bitangentY, 1);
 
+					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
 							file.write((char*)&vertData[i].tangent[j], 1);
 
@@ -1380,6 +1991,9 @@ void BSTriShape::Put(fstream& file) {
 					for (int j = 0; j < 4; j++)
 						file.write((char*)&vertData[i].weightBones[j], 1);
 				}
+
+				if ((vertFlags7 & (1 << 4)) != 0)
+					file.write((char*)&vertData[i].eyeData, 4);
 			}
 		}
 
@@ -1449,16 +2063,12 @@ void BSTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		alphaPropertyRef = blockIndexLo;
 }
 
-void BSTriShape::notifyStringDelete(int stringID) {
-	NiAVObject::notifyStringDelete(stringID);
-}
-
 void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	vector<int> indexCollapse(vertData.size(), 0);
 	vector<int> indexCollapseTris(vertData.size(), 0);
 
 	deletedTris.clear();
-	
+
 	int remCount = 0;
 	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
 		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
@@ -1520,9 +2130,6 @@ int BSTriShape::CalcBlockSize() {
 }
 
 const vector<Vector3>* BSTriShape::GetRawVerts() {
-	if (!HasVertices())
-		return nullptr;
-
 	rawVertices.resize(numVertices);
 	for (int i = 0; i < numVertices; i++)
 		rawVertices[i] = vertData[i].vert;
@@ -1536,9 +2143,9 @@ const vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
 
 	rawNormals.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
-		float q1 = (((float)vertData[i].normal[0])/255.0f) * 2.0f - 1.0f;
-		float q2 = (((float)vertData[i].normal[1])/255.0f) * 2.0f - 1.0f;
-		float q3 = (((float)vertData[i].normal[2])/255.0f) * 2.0f - 1.0f;
+		float q1 = (((float)vertData[i].normal[0]) / 255.0f) * 2.0f - 1.0f;
+		float q2 = (((float)vertData[i].normal[1]) / 255.0f) * 2.0f - 1.0f;
+		float q3 = (((float)vertData[i].normal[2]) / 255.0f) * 2.0f - 1.0f;
 
 		float x = q1;
 		float y = q2;
@@ -1680,38 +2287,10 @@ void BSTriShape::SetFullPrecision(const bool& enable) {
 	if (!CanChangePrecision())
 		return;
 
-	if (enable) {
-		vertFlags3 &= ~(1 << 1);
-		vertFlags3 |= 1 << 2;
-		vertFlags3 |= 1 << 5;
-
-		if (IsSkinned() && HasVertexColors())
-			vertFlags4 = 135;
-		else if (IsSkinned())
-			vertFlags4 = 112;
-		else if (HasVertexColors())
-			vertFlags4 = 7;
-		else
-			vertFlags4 = 0;
-
+	if (enable)
 		vertFlags7 |= 1 << 6;
-	}
-	else {
-		vertFlags3 |= 1 << 1;
-		vertFlags3 &= ~(1 << 2);
-		vertFlags3 &= ~(1 << 5);
-
-		if (IsSkinned() && HasVertexColors())
-			vertFlags4 = 101;
-		else if (IsSkinned())
-			vertFlags4 = 80;
-		else if (HasVertexColors())
-			vertFlags4 = 5;
-		else
-			vertFlags4 = 0;
-
+	else
 		vertFlags7 &= ~(1 << 6);
-	}
 }
 
 void BSTriShape::UpdateBounds() {
@@ -1876,7 +2455,7 @@ void BSTriShape::CalcTangentSpace() {
 		Vector2 w1 = vertData[i1].uv;
 		Vector2 w2 = vertData[i2].uv;
 		Vector2 w3 = vertData[i3].uv;
-		
+
 		float x1 = v2.x - v1.x;
 		float x2 = v3.x - v1.x;
 		float y1 = v2.y - v1.y;
@@ -1889,7 +2468,7 @@ void BSTriShape::CalcTangentSpace() {
 		float t1 = w2.v - w1.v;
 		float t2 = w3.v - w1.v;
 
-		float r =  (s1 * t2 - s2 * t1);
+		float r = (s1 * t2 - s2 * t1);
 		r = (r >= 0.0f ? +1.0f : -1.0f);
 
 		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
@@ -1943,6 +2522,71 @@ void BSTriShape::CalcTangentSpace() {
 	}
 }
 
+void BSTriShape::UpdateFlags() {
+	if (IsFullPrecision()) {
+		if (HasNormals()) {
+			vertFlags3 = 4;
+
+			if (HasTangents())
+				vertFlags3 = 101;
+		}
+		else
+			vertFlags3 = 0;
+
+		if (HasTangents()) {
+			if (IsSkinned() && HasVertexColors())
+				vertFlags4 = 135;
+			else if (IsSkinned())
+				vertFlags4 = 112;
+			else if (HasVertexColors())
+				vertFlags4 = 7;
+			else
+				vertFlags4 = 0;
+		}
+		else {
+			if (IsSkinned() && HasVertexColors())
+				vertFlags4 = 101;
+			else if (IsSkinned())
+				vertFlags4 = 80;
+			else if (HasVertexColors())
+				vertFlags4 = 5;
+			else
+				vertFlags4 = 0;
+		}
+	}
+	else {
+		if (HasNormals()) {
+			vertFlags3 = 2;
+
+			if (HasTangents())
+				vertFlags3 = 67;
+		}
+		else
+			vertFlags3 = 0;
+
+		if (HasTangents()) {
+			if (IsSkinned() && HasVertexColors())
+				vertFlags4 = 101;
+			else if (IsSkinned())
+				vertFlags4 = 80;
+			else if (HasVertexColors())
+				vertFlags4 = 5;
+			else
+				vertFlags4 = 0;
+		}
+		else {
+			if (IsSkinned() && HasVertexColors())
+				vertFlags4 = 67;
+			else if (IsSkinned())
+				vertFlags4 = 48;
+			else if (HasVertexColors())
+				vertFlags4 = 3;
+			else
+				vertFlags4 = 0;
+		}
+	}
+}
+
 int BSTriShape::CalcDataSizes() {
 	vertexSize = 0;
 	dataSize = 0;
@@ -1963,14 +2607,21 @@ int BSTriShape::CalcDataSizes() {
 	if (HasUVs())
 		vertexSize += 1;		// UVs
 
-	if (HasNormals())			// Normals + Tangents + Bitangent Y + Bitangent Z
-		vertexSize += 2;
+	if (HasNormals()) {			// Normals + Bitangent Y
+		vertexSize += 1;
+
+		if (HasTangents())		// Tangents + Bitangent Z
+			vertexSize += 1;
+	}
 
 	if (HasVertexColors())		// Vertex Colors
 		vertexSize += 1;
 
 	if (IsSkinned())			// Skinning
 		vertexSize += 3;
+
+	if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
+		vertexSize += 1;
 
 	vertFlags1 = vertexSize;
 
@@ -1980,11 +2631,13 @@ int BSTriShape::CalcDataSizes() {
 	vertexSize *= 4;
 	dataSize = vertexSize * numVertices + 6 * numTriangles;
 
+	UpdateFlags();
+
 	return dataSize;
 }
 
 void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
-	unkShort1 = 0; //from AVObject -- zero for these blocks.
+	flags = 14;
 	numVertices = verts->size();
 	numTriangles = tris->size();
 
@@ -2000,7 +2653,7 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		vertData[i].bitangentZ = 0;
 		vertData[i].normal[0] = vertData[i].normal[1] = vertData[i].normal[2] = 0;
 		memset(vertData[i].colorData, 255, 4);
-		memset(vertData[i].weights, 0, sizeof(float)* 4);
+		memset(vertData[i].weights, 0, sizeof(float) * 4);
 		memset(vertData[i].weightBones, 0, 4);
 	}
 
@@ -2009,6 +2662,10 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 	if (normals && normals->size() == numVertices) {
 		SetNormals(*normals);
 		CalcTangentSpace();
+	}
+	else {
+		SetNormals(false);
+		SetTangents(false);
 	}
 
 	triangles.resize(numTriangles);
@@ -2115,18 +2772,6 @@ void BSSubIndexTriShape::Put(fstream& file) {
 
 		segmentation.subSegmentData.ssfFile.Put(file, 2, false);
 	}
-}
-
-void BSSubIndexTriShape::notifyBlockDelete(int blockID) {
-	BSTriShape::notifyBlockDelete(blockID);
-}
-
-void BSSubIndexTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void BSSubIndexTriShape::notifyStringDelete(int stringID) {
-	BSTriShape::notifyStringDelete(stringID);
 }
 
 void BSSubIndexTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
@@ -2261,32 +2906,12 @@ void BSMeshLODTriShape::Put(fstream& file) {
 	file.write((char*)&lodSize2, 4);
 }
 
-void BSMeshLODTriShape::notifyBlockDelete(int blockID) {
-	BSTriShape::notifyBlockDelete(blockID);
-}
-
-void BSMeshLODTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void BSMeshLODTriShape::notifyStringDelete(int stringID) {
-	BSTriShape::notifyStringDelete(stringID);
-}
-
-void BSMeshLODTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	BSTriShape::notifyVerticesDelete(vertIndices);
-}
-
 int BSMeshLODTriShape::CalcBlockSize() {
 	BSTriShape::CalcBlockSize();
 
 	blockSize += 12;
 
 	return blockSize;
-}
-
-void BSMeshLODTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals) {
-	BSTriShape::Create(verts, tris, uvs, normals);
 }
 
 
@@ -2298,6 +2923,7 @@ BSDynamicTriShape::BSDynamicTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 
 BSDynamicTriShape::BSDynamicTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
 	blockType = BSDYNAMICTRISHAPE;
+
 	Get(file);
 }
 
@@ -2324,18 +2950,6 @@ void BSDynamicTriShape::Put(fstream& file) {
 		file.write((char*)&dynamicData[i].z, 4);
 		file.write((char*)&dynamicData[i].w, 4);
 	}
-}
-
-void BSDynamicTriShape::notifyBlockDelete(int blockID) {
-	BSTriShape::notifyBlockDelete(blockID);
-}
-
-void BSDynamicTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	BSTriShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void BSDynamicTriShape::notifyStringDelete(int stringID) {
-	BSTriShape::notifyStringDelete(stringID);
 }
 
 void BSDynamicTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
@@ -2460,9 +3074,14 @@ void NiGeometry::notifyBlockDelete(int blockID) {
 	else if (skinInstanceRef > blockID)
 		skinInstanceRef--;
 
-	if (shaderPropertyRef >= blockID)
+	if (shaderPropertyRef == blockID)
+		shaderPropertyRef = 0xFFFFFFFF;
+	else if (shaderPropertyRef > blockID)
 		shaderPropertyRef--;
-	if (alphaPropertyRef >= blockID)
+
+	if (alphaPropertyRef == blockID)
+		alphaPropertyRef = 0xFFFFFFFF;
+	else if (alphaPropertyRef > blockID)
 		alphaPropertyRef--;
 }
 
@@ -2488,10 +3107,6 @@ void NiGeometry::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		alphaPropertyRef = blockIndexHi;
 	else if (alphaPropertyRef == blockIndexHi)
 		alphaPropertyRef = blockIndexLo;
-}
-
-void NiGeometry::notifyStringDelete(int stringID) {
-	NiAVObject::notifyStringDelete(stringID);
 }
 
 int NiGeometry::CalcBlockSize() {
@@ -2533,60 +3148,48 @@ void NiGeometryData::Get(fstream& file) {
 	file.read((char*)&compressFlags, 1);
 	file.read((char*)&hasVertices, 1);
 
-	Vector3 v;
-	for (int i = 0; i < numVertices; i++) {
-		file.read((char*)&v.x, 4);
-		file.read((char*)&v.y, 4);
-		file.read((char*)&v.z, 4);
-		vertices.push_back(v);
+	if (hasVertices && !isPSys) {
+		vertices.resize(numVertices);
+		for (int i = 0; i < numVertices; i++)
+			file.read((char*)&vertices[i], 12);
 	}
 
 	file.read((char*)&numUVSets, 2);
-	//file.read((char*)&extraVectorsFlags, 1);
 	if (header->GetUserVersion() == 12)
 		file.read((char*)&unkInt2, 4);
 
 	file.read((char*)&hasNormals, 1);
-	if (hasNormals) {
-		for (int i = 0; i < numVertices; i++) {
-			file.read((char*)&v.x, 4);
-			file.read((char*)&v.y, 4);
-			file.read((char*)&v.z, 4);
-			normals.push_back(v);
-		}
+	if (hasNormals && !isPSys) {
+		normals.resize(numVertices);
+
+		for (int i = 0; i < numVertices; i++)
+			file.read((char*)&normals[i], 12);
+
 		if (numUVSets & 0xF000) {
-			for (int i = 0; i < numVertices; i++) {
-				file.read((char*)&v.x, 4);
-				file.read((char*)&v.y, 4);
-				file.read((char*)&v.z, 4);
-				tangents.push_back(v);
-			}
-			for (int i = 0; i < numVertices; i++) {
-				file.read((char*)&v.x, 4);
-				file.read((char*)&v.y, 4);
-				file.read((char*)&v.z, 4);
-				bitangents.push_back(v);
-			}
+			tangents.resize(numVertices);
+			bitangents.resize(numVertices);
+
+			for (int i = 0; i < numVertices; i++)
+				file.read((char*)&tangents[i], 12);
+
+			for (int i = 0; i < numVertices; i++)
+				file.read((char*)&bitangents[i], 12);
 		}
 	}
 
 	file.read((char*)&bounds, 16);
 
 	file.read((char*)&hasVertexColors, 1);
-	if (hasVertexColors) {
-		Color4 c;
-		for (int i = 0; i < numVertices; i++) {
-			file.read((char*)&c, 16);
-			vertexColors.push_back(c);
-		}
+	if (hasVertexColors && !isPSys) {
+		vertexColors.resize(numVertices);
+		for (int i = 0; i < numVertices; i++)
+			file.read((char*)&vertexColors[i], 16);
 	}
-	if (numUVSets >= 1) {
-		Vector2 uv;
-		for (int i = 0; i < numVertices; i++) {
-			file.read((char*)&uv.u, 4);
-			file.read((char*)&uv.v, 4);
-			uvSets.push_back(uv);
-		}
+
+	if (numUVSets > 0 && !isPSys) {
+		uvSets.resize(numVertices);
+		for (int i = 0; i < numVertices; i++)
+			file.read((char*)&uvSets[i], 8);
 	}
 
 	file.read((char*)&consistencyFlags, 2);
@@ -2602,50 +3205,43 @@ void NiGeometryData::Put(fstream& file) {
 	file.write((char*)&compressFlags, 1);
 
 	file.write((char*)&hasVertices, 1);
-	for (int i = 0; i < numVertices; i++) {
-		file.write((char*)&vertices[i].x, 4);
-		file.write((char*)&vertices[i].y, 4);
-		file.write((char*)&vertices[i].z, 4);
+
+	if (hasVertices && !isPSys) {
+		for (int i = 0; i < numVertices; i++)
+			file.write((char*)&vertices[i], 12);
 	}
 
 	file.write((char*)&numUVSets, 2);
-	//file.write((char*)&extraVectorsFlags, 1);
 	if (header->GetUserVersion() == 12)
 		file.write((char*)&unkInt2, 4);
 
 	file.write((char*)&hasNormals, 1);
-	if (hasNormals) {
-		for (int i = 0; i < numVertices; i++) {
-			file.write((char*)&normals[i].x, 4);
-			file.write((char*)&normals[i].y, 4);
-			file.write((char*)&normals[i].z, 4);
-		}
+	if (hasNormals && !isPSys) {
+		for (int i = 0; i < numVertices; i++)
+			file.write((char*)&normals[i], 12);
+
 		if (numUVSets & 0xF000) {
-			for (int i = 0; i < numVertices; i++) {
-				file.write((char*)&tangents[i].x, 4);
-				file.write((char*)&tangents[i].y, 4);
-				file.write((char*)&tangents[i].z, 4);
-			}
-			for (int i = 0; i < numVertices; i++) {
-				file.write((char*)&bitangents[i].x, 4);
-				file.write((char*)&bitangents[i].y, 4);
-				file.write((char*)&bitangents[i].z, 4);
-			}
+			for (int i = 0; i < numVertices; i++)
+				file.write((char*)&tangents[i], 12);
+
+			for (int i = 0; i < numVertices; i++)
+				file.write((char*)&bitangents[i], 12);
 		}
 	}
+
 	file.write((char*)&bounds, 16);
 
 	file.write((char*)&hasVertexColors, 1);
-	if (hasVertexColors) {
+	if (hasVertexColors && !isPSys) {
 		for (int i = 0; i < numVertices; i++)
 			file.write((char*)&vertexColors[i], 16);
 	}
-	if (numUVSets >= 1) {
-		for (int i = 0; i < numVertices; i++) {
-			file.write((char*)&uvSets[i].u, 4);
-			file.write((char*)&uvSets[i].v, 4);
-		}
+
+	if (numUVSets > 0 && !isPSys) {
+		for (int i = 0; i < numVertices; i++)
+			file.write((char*)&uvSets[i], 8);
 	}
+
 	file.write((char*)&consistencyFlags, 2);
 	file.write((char*)&additionalData, 4);
 }
@@ -2771,14 +3367,6 @@ void NiGeometryData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 }
 
-void NiGeometryData::notifyBlockDelete(int blockID) {
-	NiObject::notifyBlockDelete(blockID);
-}
-
-void NiGeometryData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
 void NiGeometryData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	SetNormals(true);
 }
@@ -2794,43 +3382,16 @@ int NiGeometryData::CalcBlockSize() {
 	if (header->GetUserVersion() == 12)
 		blockSize += 4;
 
-	blockSize += numVertices * 12;			// Verts
-	blockSize += normals.size() * 12;		// Normals
-	blockSize += tangents.size() * 12;		// Tangents
-	blockSize += bitangents.size() * 12;	// Bitangents
-	blockSize += vertexColors.size() * 16;	// Vertex Colors
-	blockSize += uvSets.size() * 8;			// UVs 
+	if (!isPSys) {
+		blockSize += numVertices * 12;			// Verts
+		blockSize += normals.size() * 12;		// Normals
+		blockSize += tangents.size() * 12;		// Tangents
+		blockSize += bitangents.size() * 12;	// Bitangents
+		blockSize += vertexColors.size() * 16;	// Vertex Colors
+		blockSize += uvSets.size() * 8;			// UVs 
+	}
 
 	return blockSize;
-}
-
-
-void NiTriBasedGeom::Init() {
-	NiGeometry::Init();
-}
-
-void NiTriBasedGeom::Get(fstream& file) {
-	NiGeometry::Get(file);
-}
-
-void NiTriBasedGeom::Put(fstream& file) {
-	NiGeometry::Put(file);
-}
-
-void NiTriBasedGeom::notifyBlockDelete(int blockID) {
-	NiGeometry::notifyBlockDelete(blockID);
-}
-
-void NiTriBasedGeom::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiGeometry::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiTriBasedGeom::notifyStringDelete(int stringID) {
-	NiGeometry::notifyStringDelete(stringID);
-}
-
-int NiTriBasedGeom::CalcBlockSize() {
-	return NiGeometry::CalcBlockSize();
 }
 
 
@@ -2858,26 +3419,6 @@ void NiTriBasedGeomData::Create(vector<Vector3>* verts, vector<Triangle>* inTris
 	numTriangles = inTris->size();
 }
 
-void NiTriBasedGeomData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
-	NiGeometryData::notifyVerticesDelete(vertIndices);
-}
-
-void NiTriBasedGeomData::notifyBlockDelete(int blockID) {
-	NiGeometryData::notifyBlockDelete(blockID);
-}
-
-void NiTriBasedGeomData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiGeometryData::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiTriBasedGeomData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
-	NiGeometryData::RecalcNormals(smooth, smoothThresh);
-}
-
-void NiTriBasedGeomData::CalcTangentSpace() {
-	NiGeometryData::CalcTangentSpace();
-}
-
 int NiTriBasedGeomData::CalcBlockSize() {
 	NiGeometryData::CalcBlockSize();
 
@@ -2900,30 +3441,6 @@ NiTriShape::NiTriShape(fstream& file, NiHeader& hdr) {
 	blockType = NITRISHAPE;
 
 	Get(file);
-}
-
-void NiTriShape::Get(fstream& file) {
-	NiTriBasedGeom::Get(file);
-}
-
-void NiTriShape::Put(fstream& file) {
-	NiTriBasedGeom::Put(file);
-}
-
-void NiTriShape::notifyBlockDelete(int blockID) {
-	NiTriBasedGeom::notifyBlockDelete(blockID);
-}
-
-void NiTriShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiTriBasedGeom::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiTriShape::notifyStringDelete(int stringID) {
-	NiTriBasedGeom::notifyStringDelete(stringID);
-}
-
-int NiTriShape::CalcBlockSize() {
-	return NiTriBasedGeom::CalcBlockSize();
 }
 
 
@@ -3040,14 +3557,6 @@ void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 			triangles[i].p3 = triangles[i].p3 - indexCollapse[triangles[i].p3];
 		}
 	}
-}
-
-void NiTriShapeData::notifyBlockDelete(int blockID) {
-	NiTriBasedGeomData::notifyBlockDelete(blockID);
-}
-
-void NiTriShapeData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiTriBasedGeomData::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
 void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
@@ -3203,30 +3712,6 @@ NiTriStrips::NiTriStrips(fstream& file, NiHeader& hdr) {
 	Get(file);
 }
 
-void NiTriStrips::Get(fstream& file) {
-	NiTriBasedGeom::Get(file);
-}
-
-void NiTriStrips::Put(fstream& file) {
-	NiTriBasedGeom::Put(file);
-}
-
-void NiTriStrips::notifyBlockDelete(int blockID) {
-	NiTriBasedGeom::notifyBlockDelete(blockID);
-}
-
-void NiTriStrips::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiTriBasedGeom::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiTriStrips::notifyStringDelete(int stringID) {
-	NiTriBasedGeom::notifyStringDelete(stringID);
-}
-
-int NiTriStrips::CalcBlockSize() {
-	return NiTriBasedGeom::CalcBlockSize();
-}
-
 
 NiTriStripsData::NiTriStripsData(NiHeader& hdr) {
 	NiTriBasedGeomData::Init();
@@ -3286,14 +3771,6 @@ void NiTriStripsData::Put(fstream& file) {
 	}
 }
 
-void NiTriStripsData::notifyBlockDelete(int blockID) {
-	NiTriBasedGeomData::notifyBlockDelete(blockID);
-}
-
-void NiTriStripsData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiTriBasedGeomData::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
 void NiTriStripsData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	vector<int> indexCollapse(vertices.size(), 0);
 	int remCount = 0;
@@ -3342,7 +3819,7 @@ void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 		}
 	}
 }
- 
+
 void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	if (!HasNormals())
 		return;
@@ -3485,6 +3962,47 @@ int NiTriStripsData::CalcBlockSize() {
 }
 
 
+BSLODTriShape::BSLODTriShape(NiHeader& hdr) {
+	NiTriBasedGeom::Init();
+
+	header = &hdr;
+	blockType = BSLODTRISHAPE;
+}
+
+BSLODTriShape::BSLODTriShape(fstream& file, NiHeader& hdr) {
+	NiTriBasedGeom::Init();
+
+	header = &hdr;
+	blockType = BSLODTRISHAPE;
+
+	Get(file);
+}
+
+void BSLODTriShape::Get(fstream& file) {
+	NiTriBasedGeom::Get(file);
+
+	file.read((char*)&level0, 4);
+	file.read((char*)&level1, 4);
+	file.read((char*)&level2, 4);
+}
+
+void BSLODTriShape::Put(fstream& file) {
+	NiTriBasedGeom::Put(file);
+
+	file.write((char*)&level0, 4);
+	file.write((char*)&level1, 4);
+	file.write((char*)&level2, 4);
+}
+
+int BSLODTriShape::CalcBlockSize() {
+	NiTriBasedGeom::CalcBlockSize();
+
+	blockSize += 12;
+
+	return blockSize;
+}
+
+
 NiSkinInstance::NiSkinInstance(NiHeader& hdr) {
 	Init();
 
@@ -3577,21 +4095,21 @@ void NiSkinInstance::notifyBlockDelete(int blockID) {
 
 void NiSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
-	
-	if (dataRef== blockIndexLo)
-		dataRef= blockIndexHi;
-	else if (dataRef== blockIndexHi)
-		dataRef= blockIndexLo;	
 
-	if (skinPartitionRef== blockIndexLo)
-		skinPartitionRef= blockIndexHi;
-	else if (skinPartitionRef== blockIndexHi)
-		skinPartitionRef= blockIndexLo;
-	
-	if (skeletonRootRef== blockIndexLo)
-		skeletonRootRef= blockIndexHi;
-	else if (skeletonRootRef== blockIndexHi)
-		skeletonRootRef= blockIndexLo;
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
+
+	if (skinPartitionRef == blockIndexLo)
+		skinPartitionRef = blockIndexHi;
+	else if (skinPartitionRef == blockIndexHi)
+		skinPartitionRef = blockIndexLo;
+
+	if (skeletonRootRef == blockIndexLo)
+		skeletonRootRef = blockIndexHi;
+	else if (skeletonRootRef == blockIndexHi)
+		skeletonRootRef = blockIndexLo;
 
 	for (int i = 0; i < numBones; i++) {
 		if (bones[i] == blockIndexLo)
@@ -3651,14 +4169,6 @@ void BSDismemberSkinInstance::Put(fstream& file) {
 	}
 }
 
-void BSDismemberSkinInstance::notifyBlockDelete(int blockID) {
-	NiSkinInstance::notifyBlockDelete(blockID);
-}
-
-void BSDismemberSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiSkinInstance::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
 int BSDismemberSkinInstance::CalcBlockSize() {
 	NiSkinInstance::CalcBlockSize();
 
@@ -3707,22 +4217,24 @@ void BSSkinInstance::Init() {
 	targetRef = 0xFFFFFFFF;
 	dataRef = 0xFFFFFFFF;
 	numBones = 0;
-	numVertices = 0;
+	numUnk = 0;
 }
 
 void BSSkinInstance::Get(fstream& file) {
 	NiObject::Get(file);
-	uint intData;
 
 	file.read((char*)&targetRef, 4);
 	file.read((char*)&dataRef, 4);
-	file.read((char*)&numBones, 4);
-	for (int i = 0; i < numBones; i++) {
-		file.read((char*)&intData, 4);
-		bones.push_back(intData);
-	}
 
-	file.read((char*)&numVertices, 4);
+	file.read((char*)&numBones, 4);
+	bones.resize(numBones);
+	for (int i = 0; i < numBones; i++)
+		file.read((char*)&bones[i], 4);
+
+	file.read((char*)&numUnk, 4);
+	unk.resize(numUnk);
+	for (int i = 0; i < numUnk; i++)
+		file.read((char*)&unk[i], 12);
 }
 
 void BSSkinInstance::Put(fstream& file) {
@@ -3731,10 +4243,12 @@ void BSSkinInstance::Put(fstream& file) {
 	file.write((char*)&targetRef, 4);
 	file.write((char*)&dataRef, 4);
 	file.write((char*)&numBones, 4);
-	for (int i = 0; i < numBones; i++) {
+	for (int i = 0; i < numBones; i++)
 		file.write((char*)&bones[i], 4);
-	}
-	file.write((char*)&numVertices, 4);
+
+	file.write((char*)&numUnk, 4);
+	for (int i = 0; i < numUnk; i++)
+		file.write((char*)&unk[i], 12);
 }
 
 void BSSkinInstance::notifyBlockDelete(int blockID) {
@@ -3774,19 +4288,31 @@ void BSSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
-BSSkinBoneData::BSSkinBoneData(NiHeader& hdr) {	
-	NiObject::Init();
-	nBones = 0;
-	header = &hdr;
-	blockType = BSBONEDATA;
+int BSSkinInstance::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 16;
+	blockSize += numBones * 4;
+	blockSize += numUnk * 12;
+
+	return blockSize;
 }
 
-BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader& hdr) {	
+BSSkinBoneData::BSSkinBoneData(NiHeader& hdr) {
 	NiObject::Init();
 
-	nBones = 0;
 	header = &hdr;
 	blockType = BSBONEDATA;
+
+	nBones = 0;
+}
+
+BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSBONEDATA;
+
 	Get(file);
 }
 
@@ -3794,13 +4320,10 @@ void BSSkinBoneData::Get(fstream& file) {
 	NiObject::Get(file);
 
 	file.read((char*)&nBones, 4);
-
-	BoneData boneData;
+	boneXforms.resize(nBones);
 	for (int i = 0; i < nBones; i++) {
-		file.read((char*)&boneData.bounds, 16);
-		file.read((char*)&boneData.boneTransform, 52);
-
-		boneXforms.push_back(boneData);
+		file.read((char*)&boneXforms[i].bounds, 16);
+		file.read((char*)&boneXforms[i].boneTransform, 52);
 	}
 }
 
@@ -3817,16 +4340,10 @@ void BSSkinBoneData::Put(fstream& file) {
 
 int BSSkinBoneData::CalcBlockSize() {
 	NiObject::CalcBlockSize();
-	blockSize += 68 * nBones;
+
 	blockSize += 4;
-	return blockSize;
-}
+	blockSize += 68 * nBones;
 
-int BSSkinInstance::CalcBlockSize() {
-	NiObject::CalcBlockSize();
-
-	blockSize += 16;
-	blockSize += numBones * 4;
 	return blockSize;
 }
 
@@ -3835,6 +4352,7 @@ NiSkinData::NiSkinData(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NISKINDATA;
+
 	skinTransform.scale = 1.0f;
 	numBones = 0;
 	hasVertWeights = 1;
@@ -3845,9 +4363,6 @@ NiSkinData::NiSkinData(fstream& file, NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NISKINDATA;
-	skinTransform.scale = 1.0f;
-	numBones = 0;
-	hasVertWeights = 1;
 
 	Get(file);
 }
@@ -3931,7 +4446,7 @@ void NiSkinData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 		}
 	}
 }
-	
+
 int NiSkinData::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
@@ -4042,9 +4557,9 @@ void NiSkinPartition::Get(fstream& file) {
 					for (int j = 0; j < 3; j++)
 						file.read((char*)&vertData[i].normal[j], 1);
 
-					if (HasTangents()) {
-						file.read((char*)&vertData[i].bitangentY, 1);
+					file.read((char*)&vertData[i].bitangentY, 1);
 
+					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
 							file.read((char*)&vertData[i].tangent[j], 1);
 
@@ -4064,6 +4579,9 @@ void NiSkinPartition::Get(fstream& file) {
 					for (int j = 0; j < 4; j++)
 						file.read((char*)&vertData[i].weightBones[j], 1);
 				}
+
+				if ((vertFlags7 & (1 << 4)) != 0)
+					file.read((char*)&vertData[i].eyeData, 4);
 			}
 		}
 	}
@@ -4200,9 +4718,9 @@ void NiSkinPartition::Put(fstream& file) {
 					for (int j = 0; j < 3; j++)
 						file.write((char*)&vertData[i].normal[j], 1);
 
-					if (HasTangents()) {
-						file.write((char*)&vertData[i].bitangentY, 1);
+					file.write((char*)&vertData[i].bitangentY, 1);
 
+					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
 							file.write((char*)&vertData[i].tangent[j], 1);
 
@@ -4222,6 +4740,9 @@ void NiSkinPartition::Put(fstream& file) {
 					for (int j = 0; j < 4; j++)
 						file.write((char*)&vertData[i].weightBones[j], 1);
 				}
+
+				if ((vertFlags7 & (1 << 4)) != 0)
+					file.write((char*)&vertData[i].eyeData, 4);
 			}
 		}
 	}
@@ -4455,51 +4976,2287 @@ int NiSkinPartition::CalcBlockSize() {
 }
 
 
-void NiInterpolator::Init() {
+NiParticleSystem::NiParticleSystem(NiHeader& hdr) {
+	NiAVObject::Init();
+
+	header = &hdr;
+	blockType = NIPARTICLESYSTEM;
+
+	dataRef = 0xFFFFFFFF;
+	skinInstanceRef = 0xFFFFFFFF;
+	shaderPropertyRef = 0xFFFFFFFF;
+	alphaPropertyRef = 0xFFFFFFFF;
+	numMaterials = 0;
+
+	psysDataRef = 0xFFFFFFFF;
+	numModifiers = 0;
+}
+
+NiParticleSystem::NiParticleSystem(fstream& file, NiHeader& hdr) {
+	NiAVObject::Init();
+
+	header = &hdr;
+	blockType = NIPARTICLESYSTEM;
+
+	Get(file);
+}
+
+void NiParticleSystem::Get(fstream& file) {
+	NiAVObject::Get(file);
+
+	if (header->GetUserVersion2() >= 100) {
+		file.read((char*)&bounds, 16);
+		file.read((char*)&skinInstanceRef, 4);
+		file.read((char*)&shaderPropertyRef, 4);
+		file.read((char*)&alphaPropertyRef, 4);
+		file.read((char*)&vertFlags1, 1);
+		file.read((char*)&vertFlags2, 1);
+		file.read((char*)&vertFlags3, 1);
+		file.read((char*)&vertFlags4, 1);
+		file.read((char*)&vertFlags5, 1);
+		file.read((char*)&vertFlags6, 1);
+		file.read((char*)&vertFlags7, 1);
+		file.read((char*)&vertFlags8, 1);
+	}
+	else {
+		file.read((char*)&dataRef, 4);
+		psysDataRef = dataRef;
+		file.read((char*)&skinInstanceRef, 4);
+		file.read((char*)&numMaterials, 4);
+
+		if (numMaterials > 0) {
+			file.read((char*)&materialString, 4);
+			materials.resize(numMaterials);
+			for (int i = 0; i < numMaterials; i++)
+				file.read((char*)&materials[i], 4);
+		}
+
+		file.read((char*)&activeMaterial, 4);
+		file.read((char*)&defaultMatNeedsUpdate, 1);
+
+		if (header->GetUserVersion() >= 12) {
+			file.read((char*)&shaderPropertyRef, 4);
+			file.read((char*)&alphaPropertyRef, 4);
+		}
+	}
+
+	if (header->GetUserVersion() >= 12) {
+		file.read((char*)&farBegin, 2);
+		file.read((char*)&farEnd, 2);
+		file.read((char*)&nearBegin, 2);
+		file.read((char*)&nearEnd, 2);
+
+		if (header->GetUserVersion2() >= 100)
+			file.read((char*)&psysDataRef, 4);
+	}
+
+	file.read((char*)&isWorldSpace, 1);
+
+	file.read((char*)&numModifiers, 4);
+	modifiers.resize(numModifiers);
+	for (int i = 0; i < numModifiers; i++)
+		file.read((char*)&modifiers[i], 4);
+}
+
+void NiParticleSystem::Put(fstream& file) {
+	NiAVObject::Put(file);
+
+	if (header->GetUserVersion2() >= 100) {
+		file.write((char*)&bounds, 16);
+		file.write((char*)&skinInstanceRef, 4);
+		file.write((char*)&shaderPropertyRef, 4);
+		file.write((char*)&alphaPropertyRef, 4);
+		file.write((char*)&vertFlags1, 1);
+		file.write((char*)&vertFlags2, 1);
+		file.write((char*)&vertFlags3, 1);
+		file.write((char*)&vertFlags4, 1);
+		file.write((char*)&vertFlags5, 1);
+		file.write((char*)&vertFlags6, 1);
+		file.write((char*)&vertFlags7, 1);
+		file.write((char*)&vertFlags8, 1);
+	}
+	else {
+		file.write((char*)&dataRef, 4);
+		file.write((char*)&skinInstanceRef, 4);
+		file.write((char*)&numMaterials, 4);
+
+		if (numMaterials > 0) {
+			file.write((char*)&materialString, 4);
+			for (int i = 0; i < numMaterials; i++)
+				file.write((char*)&materials[i], 4);
+		}
+
+		file.write((char*)&activeMaterial, 4);
+		file.write((char*)&defaultMatNeedsUpdate, 1);
+
+		if (header->GetUserVersion() >= 12) {
+			file.write((char*)&shaderPropertyRef, 4);
+			file.write((char*)&alphaPropertyRef, 4);
+		}
+	}
+
+	if (header->GetUserVersion() >= 12) {
+		file.write((char*)&farBegin, 2);
+		file.write((char*)&farEnd, 2);
+		file.write((char*)&nearBegin, 2);
+		file.write((char*)&nearEnd, 2);
+
+		if (header->GetUserVersion2() >= 100)
+			file.write((char*)&psysDataRef, 4);
+	}
+
+	file.write((char*)&isWorldSpace, 1);
+
+	file.write((char*)&numModifiers, 4);
+	for (int i = 0; i < numModifiers; i++)
+		file.write((char*)&modifiers[i], 4);
+}
+
+void NiParticleSystem::notifyBlockDelete(int blockID) {
+	NiAVObject::notifyBlockDelete(blockID);
+
+	if (dataRef == blockID)
+		dataRef = 0xFFFFFFFF;
+	else if (dataRef > blockID)
+		dataRef--;
+
+	if (skinInstanceRef == blockID)
+		skinInstanceRef = 0xFFFFFFFF;
+	else if (skinInstanceRef > blockID)
+		skinInstanceRef--;
+
+	if (shaderPropertyRef == blockID)
+		shaderPropertyRef = 0xFFFFFFFF;
+	else if (shaderPropertyRef > blockID)
+		shaderPropertyRef--;
+
+	if (alphaPropertyRef == blockID)
+		alphaPropertyRef = 0xFFFFFFFF;
+	else if (alphaPropertyRef > blockID)
+		alphaPropertyRef--;
+
+	if (psysDataRef == blockID)
+		psysDataRef = 0xFFFFFFFF;
+	else if (psysDataRef > blockID)
+		psysDataRef--;
+
+	for (int i = 0; i < numModifiers; i++) {
+		if (modifiers[i] == blockID) {
+			modifiers.erase(modifiers.begin() + i);
+			i--;
+			numModifiers--;
+		}
+		else if (modifiers[i] > blockID)
+			modifiers[i]--;
+	}
+}
+
+void NiParticleSystem::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiAVObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
+
+	if (skinInstanceRef == blockIndexLo)
+		skinInstanceRef = blockIndexHi;
+	else if (skinInstanceRef == blockIndexHi)
+		skinInstanceRef = blockIndexLo;
+
+	if (shaderPropertyRef == blockIndexLo)
+		shaderPropertyRef = blockIndexHi;
+	else if (shaderPropertyRef == blockIndexHi)
+		shaderPropertyRef = blockIndexLo;
+
+	if (alphaPropertyRef == blockIndexLo)
+		alphaPropertyRef = blockIndexHi;
+	else if (alphaPropertyRef == blockIndexHi)
+		alphaPropertyRef = blockIndexLo;
+
+	if (psysDataRef == blockIndexLo)
+		psysDataRef = blockIndexHi;
+	else if (psysDataRef == blockIndexHi)
+		psysDataRef = blockIndexLo;
+
+	for (int i = 0; i < numModifiers; i++) {
+		if (modifiers[i] == blockIndexLo)
+			modifiers[i] = blockIndexHi;
+		else if (modifiers[i] == blockIndexHi)
+			modifiers[i] = blockIndexLo;
+	}
+}
+
+int NiParticleSystem::CalcBlockSize() {
+	NiAVObject::CalcBlockSize();
+
+	blockSize += 5;
+	blockSize += numModifiers * 4;
+
+	if (header->GetUserVersion2() >= 100) {
+		blockSize += 36;
+	}
+	else {
+		blockSize += 17;
+
+		if (numMaterials > 0) {
+			blockSize += 4;
+			blockSize += numMaterials * 4;
+		}
+
+		if (header->GetUserVersion() >= 12)
+			blockSize += 8;
+	}
+
+	if (header->GetUserVersion() >= 12) {
+		blockSize += 8;
+
+		if (header->GetUserVersion2() >= 100)
+			blockSize += 4;
+	}
+
+	return blockSize;
+}
+
+
+NiMeshParticleSystem::NiMeshParticleSystem(NiHeader& hdr) : NiParticleSystem(hdr) {
+	blockType = NIMESHPARTICLESYSTEM;
+}
+
+NiMeshParticleSystem::NiMeshParticleSystem(fstream& file, NiHeader& hdr) : NiParticleSystem(file, hdr) {
+	blockType = NIMESHPARTICLESYSTEM;
+}
+
+
+BSStripParticleSystem::BSStripParticleSystem(NiHeader& hdr) : NiParticleSystem(hdr) {
+	blockType = BSSTRIPPARTICLESYSTEM;
+}
+
+BSStripParticleSystem::BSStripParticleSystem(fstream& file, NiHeader& hdr) : NiParticleSystem(file, hdr) {
+	blockType = BSSTRIPPARTICLESYSTEM;
+}
+
+
+NiParticlesData::NiParticlesData(NiHeader& hdr) {
+	NiGeometryData::Init();
+	NiGeometryData::isPSys = true;
+
+	header = &hdr;
+	blockType = NIPARTICLESDATA;
+
+	hasRadii = false;
+	numActive = 0;
+	hasSizes = false;
+	hasRotations = false;
+	hasRotationAngles = false;
+	hasRotationAxes = false;
+	hasTextureIndices = false;
+	numSubtexOffsets = 0;
+}
+
+NiParticlesData::NiParticlesData(fstream& file, NiHeader& hdr) {
+	NiGeometryData::Init();
+	NiGeometryData::isPSys = true;
+
+	header = &hdr;
+	blockType = NIPARTICLESDATA;
+
+	Get(file);
+}
+
+void NiParticlesData::Get(fstream& file) {
+	NiGeometryData::Get(file);
+
+	file.read((char*)&hasRadii, 1);
+	file.read((char*)&numActive, 2);
+	file.read((char*)&hasSizes, 1);
+	file.read((char*)&hasRotations, 1);
+	file.read((char*)&hasRotationAngles, 1);
+	file.read((char*)&hasRotationAxes, 1);
+	file.read((char*)&hasTextureIndices, 1);
+
+	if (header->GetUserVersion() >= 12) {
+		file.read((char*)&numSubtexOffsets, 4);
+	}
+	else {
+		byte numOffsets = 0;
+		file.read((char*)&numOffsets, 1);
+		numSubtexOffsets = numOffsets;
+	}
+
+	subtexOffsets.resize(numSubtexOffsets);
+	for (int i = 0; i < numSubtexOffsets; i++)
+		file.read((char*)&subtexOffsets[i], 16);
+
+	if (header->GetUserVersion() >= 12) {
+		file.read((char*)&aspectRatio, 4);
+		file.read((char*)&aspectFlags, 2);
+		file.read((char*)&speedToAspectAspect2, 4);
+		file.read((char*)&speedToAspectSpeed1, 4);
+		file.read((char*)&speedToAspectSpeed2, 4);
+	}
+}
+
+void NiParticlesData::Put(fstream& file) {
+	NiGeometryData::Put(file);
+
+	file.write((char*)&hasRadii, 1);
+	file.write((char*)&numActive, 2);
+	file.write((char*)&hasSizes, 1);
+	file.write((char*)&hasRotations, 1);
+	file.write((char*)&hasRotationAngles, 1);
+	file.write((char*)&hasRotationAxes, 1);
+	file.write((char*)&hasTextureIndices, 1);
+
+	if (header->GetUserVersion() >= 12) {
+		file.write((char*)&numSubtexOffsets, 4);
+	}
+	else {
+		byte numOffsets = numSubtexOffsets > 255 ? 255 : numSubtexOffsets;
+		file.write((char*)&numOffsets, 1);
+	}
+
+	for (int i = 0; i < numSubtexOffsets; i++)
+		file.write((char*)&subtexOffsets[i], 16);
+
+	if (header->GetUserVersion() >= 12) {
+		file.write((char*)&aspectRatio, 4);
+		file.write((char*)&aspectFlags, 2);
+		file.write((char*)&speedToAspectAspect2, 4);
+		file.write((char*)&speedToAspectSpeed1, 4);
+		file.write((char*)&speedToAspectSpeed2, 4);
+	}
+}
+
+int NiParticlesData::CalcBlockSize() {
+	NiGeometryData::CalcBlockSize();
+
+	blockSize += 8;
+
+	if (header->GetUserVersion() >= 12)
+		blockSize += 22;
+	else
+		blockSize += 1;
+
+	blockSize += numSubtexOffsets * 16;
+
+	return blockSize;
+}
+
+
+NiRotatingParticlesData::NiRotatingParticlesData(NiHeader& hdr) : NiParticlesData(hdr) {
+	blockType = NIROTATINGPARTICLESDATA;
+}
+
+NiRotatingParticlesData::NiRotatingParticlesData(fstream& file, NiHeader& hdr) : NiParticlesData(file, hdr) {
+	blockType = NIROTATINGPARTICLESDATA;
+}
+
+
+NiPSysData::NiPSysData(NiHeader& hdr) : NiRotatingParticlesData(hdr) {
+	blockType = NIPSYSDATA;
+	hasRotationSpeeds = false;
+}
+
+NiPSysData::NiPSysData(fstream& file, NiHeader& hdr) : NiRotatingParticlesData(file, hdr) {
+	blockType = NIPSYSDATA;
+
+	Get(file);
+}
+
+void NiPSysData::Get(fstream& file) {
+	file.read((char*)&hasRotationSpeeds, 1);
+}
+
+void NiPSysData::Put(fstream& file) {
+	NiRotatingParticlesData::Put(file);
+
+	file.write((char*)&hasRotationSpeeds, 1);
+}
+
+int NiPSysData::CalcBlockSize() {
+	NiRotatingParticlesData::CalcBlockSize();
+
+	blockSize += 1;
+
+	return blockSize;
+}
+
+
+NiMeshPSysData::NiMeshPSysData(NiHeader& hdr) : NiPSysData(hdr) {
+	header = &hdr;
+	blockType = NIMESHPSYSDATA;
+
+	nodeRef = 0xFFFFFFFF;
+}
+
+NiMeshPSysData::NiMeshPSysData(fstream& file, NiHeader& hdr) : NiPSysData(file, hdr) {
+	header = &hdr;
+	blockType = NIMESHPSYSDATA;
+
+	Get(file);
+}
+
+void NiMeshPSysData::Get(fstream& file) {
+	file.read((char*)&defaultPoolSize, 4);
+	file.read((char*)&fillPoolsOnLoad, 1);
+
+	file.read((char*)&numGenerations, 4);
+	generationPoolSize.resize(numGenerations);
+	for (int i = 0; i < numGenerations; i++)
+		file.read((char*)&generationPoolSize[i], 4);
+
+	file.read((char*)&nodeRef, 4);
+}
+
+void NiMeshPSysData::Put(fstream& file) {
+	NiPSysData::Put(file);
+
+	file.write((char*)&defaultPoolSize, 4);
+	file.write((char*)&fillPoolsOnLoad, 1);
+
+	file.write((char*)&numGenerations, 4);
+	for (int i = 0; i < numGenerations; i++)
+		file.write((char*)&generationPoolSize[i], 4);
+
+	file.write((char*)&nodeRef, 4);
+}
+
+void NiMeshPSysData::notifyBlockDelete(int blockID) {
+	NiPSysData::notifyBlockDelete(blockID);
+
+	if (nodeRef == blockID)
+		nodeRef = 0xFFFFFFFF;
+	else if (nodeRef > blockID)
+		nodeRef--;
+}
+
+void NiMeshPSysData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysData::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (nodeRef == blockIndexLo)
+		nodeRef = blockIndexHi;
+	else if (nodeRef == blockIndexHi)
+		nodeRef = blockIndexLo;
+}
+
+int NiMeshPSysData::CalcBlockSize() {
+	NiPSysData::CalcBlockSize();
+
+	blockSize += 9;
+	blockSize += numGenerations * 4;
+
+	return blockSize;
+}
+
+
+BSStripPSysData::BSStripPSysData(NiHeader& hdr) : NiPSysData(hdr) {
+	blockType = BSSTRIPPSYSDATA;
+}
+
+BSStripPSysData::BSStripPSysData(fstream& file, NiHeader& hdr) : NiPSysData(file, hdr) {
+	blockType = BSSTRIPPSYSDATA;
+
+	Get(file);
+}
+
+void BSStripPSysData::Get(fstream& file) {
+	file.read((char*)&maxPointCount, 2);
+	file.read((char*)&startCapSize, 4);
+	file.read((char*)&endCapSize, 4);
+	file.read((char*)&doZPrepass, 1);
+}
+
+void BSStripPSysData::Put(fstream& file) {
+	NiPSysData::Put(file);
+
+	file.write((char*)&maxPointCount, 2);
+	file.write((char*)&startCapSize, 4);
+	file.write((char*)&endCapSize, 4);
+	file.write((char*)&doZPrepass, 1);
+}
+
+int BSStripPSysData::CalcBlockSize() {
+	NiPSysData::CalcBlockSize();
+
+	blockSize += 11;
+
+	return blockSize;
+}
+
+
+NiCamera::NiCamera(NiHeader& hdr) {
+	NiAVObject::Init();
+
+	header = &hdr;
+	blockType = NICAMERA;
+
+	sceneRef = 0xFFFFFFFF;
+	screenPolygonsRef = 0xFFFFFFFF;
+	screenTexturesRef = 0xFFFFFFFF;
+}
+
+NiCamera::NiCamera(fstream& file, NiHeader& hdr) {
+	NiAVObject::Init();
+
+	header = &hdr;
+	blockType = NICAMERA;
+
+	Get(file);
+}
+
+void NiCamera::Get(fstream& file) {
+	NiAVObject::Get(file);
+
+	file.read((char*)&obsoleteFlags, 2);
+	file.read((char*)&frustumLeft, 4);
+	file.read((char*)&frustumRight, 4);
+	file.read((char*)&frustumTop, 4);
+	file.read((char*)&frustomBottom, 4);
+	file.read((char*)&frustumNear, 4);
+	file.read((char*)&frustumFar, 4);
+	file.read((char*)&useOrtho, 1);
+	file.read((char*)&viewportLeft, 4);
+	file.read((char*)&viewportRight, 4);
+	file.read((char*)&viewportTop, 4);
+	file.read((char*)&viewportBottom, 4);
+	file.read((char*)&lodAdjust, 4);
+
+	file.read((char*)&sceneRef, 4);
+	file.read((char*)&screenPolygonsRef, 4);
+	file.read((char*)&screenTexturesRef, 4);
+}
+
+void NiCamera::Put(fstream& file) {
+	NiAVObject::Put(file);
+
+	file.write((char*)&obsoleteFlags, 2);
+	file.write((char*)&frustumLeft, 4);
+	file.write((char*)&frustumRight, 4);
+	file.write((char*)&frustumTop, 4);
+	file.write((char*)&frustomBottom, 4);
+	file.write((char*)&frustumNear, 4);
+	file.write((char*)&frustumFar, 4);
+	file.write((char*)&useOrtho, 1);
+	file.write((char*)&viewportLeft, 4);
+	file.write((char*)&viewportRight, 4);
+	file.write((char*)&viewportTop, 4);
+	file.write((char*)&viewportBottom, 4);
+	file.write((char*)&lodAdjust, 4);
+
+	file.write((char*)&sceneRef, 4);
+	file.write((char*)&screenPolygonsRef, 4);
+	file.write((char*)&screenTexturesRef, 4);
+}
+
+void NiCamera::notifyBlockDelete(int blockID) {
+	NiAVObject::notifyBlockDelete(blockID);
+
+	if (sceneRef == blockID)
+		sceneRef = 0xFFFFFFFF;
+	else if (sceneRef > blockID)
+		sceneRef--;
+
+	if (screenPolygonsRef == blockID)
+		screenPolygonsRef = 0xFFFFFFFF;
+	else if (screenPolygonsRef > blockID)
+		screenPolygonsRef--;
+
+	if (screenTexturesRef == blockID)
+		screenTexturesRef = 0xFFFFFFFF;
+	else if (screenTexturesRef > blockID)
+		screenTexturesRef--;
+}
+
+void NiCamera::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiAVObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (sceneRef == blockIndexLo)
+		sceneRef = blockIndexHi;
+	else if (sceneRef == blockIndexHi)
+		sceneRef = blockIndexLo;
+
+	if (screenPolygonsRef == blockIndexLo)
+		screenPolygonsRef = blockIndexHi;
+	else if (screenPolygonsRef == blockIndexHi)
+		screenPolygonsRef = blockIndexLo;
+
+	if (screenTexturesRef == blockIndexLo)
+		screenTexturesRef = blockIndexHi;
+	else if (screenTexturesRef == blockIndexHi)
+		screenTexturesRef = blockIndexLo;
+}
+
+int NiCamera::CalcBlockSize() {
+	NiAVObject::CalcBlockSize();
+
+	blockSize += 59;
+
+	return blockSize;
+}
+
+
+NiPSysModifier::~NiPSysModifier() {
+	header->RemoveStringRef(nameRef);
+}
+
+void NiPSysModifier::Init() {
 	NiObject::Init();
+
+	nameRef = 0xFFFFFFFF;
+	targetRef = 0xFFFFFFFF;
 }
 
-void NiInterpolator::Get(fstream& file) {
+void NiPSysModifier::Get(fstream& file) {
 	NiObject::Get(file);
+
+	file.read((char*)&nameRef, 4);
+	if (nameRef != 0xFFFFFFFF) {
+		name = header->GetStringById(nameRef);
+		header->AddStringRef(nameRef);
+	}
+
+	file.read((char*)&order, 4);
+	file.read((char*)&targetRef, 4);
+	file.read((char*)&isActive, 1);
 }
 
-void NiInterpolator::Put(fstream& file) {
+void NiPSysModifier::Put(fstream& file) {
 	NiObject::Put(file);
+
+	file.write((char*)&nameRef, 4);
+	file.write((char*)&order, 4);
+	file.write((char*)&targetRef, 4);
+	file.write((char*)&isActive, 1);
 }
 
-void NiInterpolator::notifyBlockDelete(int blockID) {
+void NiPSysModifier::notifyBlockDelete(int blockID) {
 	NiObject::notifyBlockDelete(blockID);
+
+	if (targetRef == blockID)
+		targetRef = 0xFFFFFFFF;
+	else if (targetRef > blockID)
+		targetRef--;
 }
-void NiInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+
+void NiPSysModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (targetRef == blockIndexLo)
+		targetRef = blockIndexHi;
+	else if (targetRef == blockIndexHi)
+		targetRef = blockIndexLo;
 }
 
-int NiInterpolator::CalcBlockSize() {
-	return NiObject::CalcBlockSize();
+void NiPSysModifier::notifyStringDelete(int stringID) {
+	NiObject::notifyStringDelete(stringID);
+
+	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
+		nameRef--;
+}
+
+int NiPSysModifier::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 13;
+
+	return blockSize;
 }
 
 
-void NiKeyBasedInterpolator::Init() {
-	NiInterpolator::Init();
+BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSTRIPUPDATEMODIFIER;
 }
 
-void NiKeyBasedInterpolator::Get(fstream& file) {
+BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSTRIPUPDATEMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysStripUpdateModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&updateDeltaTime, 4);
+}
+
+void BSPSysStripUpdateModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&updateDeltaTime, 4);
+}
+
+int BSPSysStripUpdateModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSAGEDEATHMODIFIER;
+}
+
+NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSAGEDEATHMODIFIER;
+
+	Get(file);
+}
+
+void NiPSysAgeDeathModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&spawnOnDeath, 1);
+	file.read((char*)&spawnModifierRef, 4);
+}
+
+void NiPSysAgeDeathModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&spawnOnDeath, 1);
+	file.write((char*)&spawnModifierRef, 4);
+}
+
+void NiPSysAgeDeathModifier::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (spawnModifierRef == blockID)
+		spawnModifierRef = 0xFFFFFFFF;
+	else if (spawnModifierRef > blockID)
+		spawnModifierRef--;
+}
+
+void NiPSysAgeDeathModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (spawnModifierRef == blockIndexLo)
+		spawnModifierRef = blockIndexHi;
+	else if (spawnModifierRef == blockIndexHi)
+		spawnModifierRef = blockIndexLo;
+}
+
+int NiPSysAgeDeathModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 5;
+
+	return blockSize;
+}
+
+
+BSPSysLODModifier::BSPSysLODModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSLODMODIFIER;
+}
+
+BSPSysLODModifier::BSPSysLODModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSLODMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysLODModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&unkVector, 16);
+}
+
+void BSPSysLODModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&unkVector, 16);
+}
+
+int BSPSysLODModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 16;
+
+	return blockSize;
+}
+
+
+NiPSysSpawnModifier::NiPSysSpawnModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSSPAWNMODIFIER;
+
+	numSpawnGenerations = 0;
+}
+
+NiPSysSpawnModifier::NiPSysSpawnModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSSPAWNMODIFIER;
+
+	Get(file);
+}
+
+void NiPSysSpawnModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&numSpawnGenerations, 2);
+	file.read((char*)&percentSpawned, 4);
+	file.read((char*)&minSpawned, 2);
+	file.read((char*)&maxSpawned, 2);
+	file.read((char*)&spawnSpeedVariation, 4);
+	file.read((char*)&spawnDirVariation, 4);
+	file.read((char*)&lifeSpan, 4);
+	file.read((char*)&lifeSpanVariation, 4);
+}
+
+void NiPSysSpawnModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&numSpawnGenerations, 2);
+	file.write((char*)&percentSpawned, 4);
+	file.write((char*)&minSpawned, 2);
+	file.write((char*)&maxSpawned, 2);
+	file.write((char*)&spawnSpeedVariation, 4);
+	file.write((char*)&spawnDirVariation, 4);
+	file.write((char*)&lifeSpan, 4);
+	file.write((char*)&lifeSpanVariation, 4);
+}
+
+int NiPSysSpawnModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 26;
+
+	return blockSize;
+}
+
+
+BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSIMPLECOLORMODIFIER;
+}
+
+BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSIMPLECOLORMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysSimpleColorModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&fadeInPercent, 4);
+	file.read((char*)&fadeOutPercent, 4);
+	file.read((char*)&color1EndPercent, 4);
+	file.read((char*)&color2StartPercent, 4);
+	file.read((char*)&color2EndPercent, 4);
+	file.read((char*)&color3StartPercent, 4);
+	file.read((char*)&color1, 16);
+	file.read((char*)&color2, 16);
+	file.read((char*)&color3, 16);
+}
+
+void BSPSysSimpleColorModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&fadeInPercent, 4);
+	file.write((char*)&fadeOutPercent, 4);
+	file.write((char*)&color1EndPercent, 4);
+	file.write((char*)&color2StartPercent, 4);
+	file.write((char*)&color2EndPercent, 4);
+	file.write((char*)&color3StartPercent, 4);
+	file.write((char*)&color1, 16);
+	file.write((char*)&color2, 16);
+	file.write((char*)&color3, 16);
+}
+
+int BSPSysSimpleColorModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 72;
+
+	return blockSize;
+}
+
+
+NiPSysRotationModifier::NiPSysRotationModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSROTATIONMODIFIER;
+}
+
+NiPSysRotationModifier::NiPSysRotationModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSROTATIONMODIFIER;
+
+	Get(file);
+}
+
+void NiPSysRotationModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&initialSpeed, 4);
+	file.read((char*)&initialSpeedVariation, 4);
+	file.read((char*)&initialAngle, 4);
+	file.read((char*)&initialAngleVariation, 4);
+	file.read((char*)&randomSpeedSign, 1);
+	file.read((char*)&randomInitialAxis, 1);
+	file.read((char*)&initialAxis, 12);
+}
+
+void NiPSysRotationModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&initialSpeed, 4);
+	file.write((char*)&initialSpeedVariation, 4);
+	file.write((char*)&initialAngle, 4);
+	file.write((char*)&initialAngleVariation, 4);
+	file.write((char*)&randomSpeedSign, 1);
+	file.write((char*)&randomInitialAxis, 1);
+	file.write((char*)&initialAxis, 12);
+}
+
+int NiPSysRotationModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 30;
+
+	return blockSize;
+}
+
+
+BSPSysScaleModifier::BSPSysScaleModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSCALEMODIFIER;
+
+	numFloats = 0;
+}
+
+BSPSysScaleModifier::BSPSysScaleModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSCALEMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysScaleModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&numFloats, 4);
+	floats.resize(numFloats);
+	for (int i = 0; i < numFloats; i++)
+		file.read((char*)&floats[i], 4);
+}
+
+void BSPSysScaleModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&numFloats, 4);
+	for (int i = 0; i < numFloats; i++)
+		file.write((char*)&floats[i], 4);
+}
+
+int BSPSysScaleModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += numFloats * 4;
+
+	return blockSize;
+}
+
+
+NiPSysGravityModifier::NiPSysGravityModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSGRAVITYMODIFIER;
+
+	gravityObjRef = 0xFFFFFFFF;
+}
+
+NiPSysGravityModifier::NiPSysGravityModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSGRAVITYMODIFIER;
+
+	Get(file);
+}
+
+void NiPSysGravityModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&gravityObjRef, 4);
+	file.read((char*)&gravityAxis, 12);
+	file.read((char*)&decay, 4);
+	file.read((char*)&strength, 4);
+	file.read((char*)&forceType, 4);
+	file.read((char*)&turbulence, 4);
+	file.read((char*)&turbulenceScale, 4);
+	file.read((char*)&worldAligned, 1);
+}
+
+void NiPSysGravityModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&gravityObjRef, 4);
+	file.write((char*)&gravityAxis, 12);
+	file.write((char*)&decay, 4);
+	file.write((char*)&strength, 4);
+	file.write((char*)&forceType, 4);
+	file.write((char*)&turbulence, 4);
+	file.write((char*)&turbulenceScale, 4);
+	file.write((char*)&worldAligned, 1);
+}
+
+void NiPSysGravityModifier::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (gravityObjRef == blockID)
+		gravityObjRef = 0xFFFFFFFF;
+	else if (gravityObjRef > blockID)
+		gravityObjRef--;
+}
+
+void NiPSysGravityModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (gravityObjRef == blockIndexLo)
+		gravityObjRef = blockIndexHi;
+	else if (gravityObjRef == blockIndexHi)
+		gravityObjRef = blockIndexLo;
+}
+
+int NiPSysGravityModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 37;
+
+	return blockSize;
+}
+
+
+NiPSysPositionModifier::NiPSysPositionModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSPOSITIONMODIFIER;
+}
+
+NiPSysPositionModifier::NiPSysPositionModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSPOSITIONMODIFIER;
+
+	Get(file);
+}
+
+
+NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSBOUNDUPDATEMODIFIER;
+}
+
+NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSBOUNDUPDATEMODIFIER;
+
+	Get(file);
+}
+
+void NiPSysBoundUpdateModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&updateSkip, 2);
+}
+
+void NiPSysBoundUpdateModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&updateSkip, 2);
+}
+
+int NiPSysBoundUpdateModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 2;
+
+	return blockSize;
+}
+
+
+NiPSysDragModifier::NiPSysDragModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSDRAGMODIFIER;
+
+	parentRef = 0xFFFFFFFF;
+}
+
+NiPSysDragModifier::NiPSysDragModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSDRAGMODIFIER;
+
+	Get(file);
+}
+
+void NiPSysDragModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&parentRef, 4);
+	file.read((char*)&dragAxis, 12);
+	file.read((char*)&percentage, 4);
+	file.read((char*)&range, 4);
+	file.read((char*)&rangeFalloff, 4);
+}
+
+void NiPSysDragModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&parentRef, 4);
+	file.write((char*)&dragAxis, 12);
+	file.write((char*)&percentage, 4);
+	file.write((char*)&range, 4);
+	file.write((char*)&rangeFalloff, 4);
+}
+
+void NiPSysDragModifier::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (parentRef == blockID)
+		parentRef = 0xFFFFFFFF;
+	else if (parentRef > blockID)
+		parentRef--;
+}
+
+void NiPSysDragModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (parentRef == blockIndexLo)
+		parentRef = blockIndexHi;
+	else if (parentRef == blockIndexHi)
+		parentRef = blockIndexLo;
+}
+
+int NiPSysDragModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 28;
+
+	return blockSize;
+}
+
+
+BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSINHERITVELOCITYMODIFIER;
+
+	targetNodeRef = 0xFFFFFFFF;
+}
+
+BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSINHERITVELOCITYMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysInheritVelocityModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&targetNodeRef, 4);
+	file.read((char*)&changeToInherit, 4);
+	file.read((char*)&velocityMult, 4);
+	file.read((char*)&velocityVar, 4);
+}
+
+void BSPSysInheritVelocityModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&targetNodeRef, 4);
+	file.write((char*)&changeToInherit, 4);
+	file.write((char*)&velocityMult, 4);
+	file.write((char*)&velocityVar, 4);
+}
+
+void BSPSysInheritVelocityModifier::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (targetNodeRef == blockID)
+		targetNodeRef = 0xFFFFFFFF;
+	else if (targetNodeRef > blockID)
+		targetNodeRef--;
+}
+
+void BSPSysInheritVelocityModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (targetNodeRef == blockIndexLo)
+		targetNodeRef = blockIndexHi;
+	else if (targetNodeRef == blockIndexHi)
+		targetNodeRef = blockIndexLo;
+}
+
+int BSPSysInheritVelocityModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 16;
+
+	return blockSize;
+}
+
+
+BSPSysSubTexModifier::BSPSysSubTexModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSUBTEXMODIFIER;
+}
+
+BSPSysSubTexModifier::BSPSysSubTexModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSSUBTEXMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysSubTexModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&startFrame, 4);
+	file.read((char*)&startFrameVariation, 4);
+	file.read((char*)&endFrame, 4);
+	file.read((char*)&loopStartFrame, 4);
+	file.read((char*)&loopStartFrameVariation, 4);
+	file.read((char*)&frameCount, 4);
+	file.read((char*)&frameCountVariation, 4);
+}
+
+void BSPSysSubTexModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&startFrame, 4);
+	file.write((char*)&startFrameVariation, 4);
+	file.write((char*)&endFrame, 4);
+	file.write((char*)&loopStartFrame, 4);
+	file.write((char*)&loopStartFrameVariation, 4);
+	file.write((char*)&frameCount, 4);
+	file.write((char*)&frameCountVariation, 4);
+}
+
+int BSPSysSubTexModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 28;
+
+	return blockSize;
+}
+
+
+NiPSysBombModifier::NiPSysBombModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSBOMBMODIFIER;
+
+	bombNodeRef = 0xFFFFFFFF;
+}
+
+NiPSysBombModifier::NiPSysBombModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSBOMBMODIFIER;
+
+	Get(file);
+}
+
+void NiPSysBombModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&bombNodeRef, 4);
+	file.read((char*)&bombAxis, 12);
+	file.read((char*)&decay, 4);
+	file.read((char*)&deltaV, 4);
+	file.read((char*)&decayType, 4);
+	file.read((char*)&symmetryType, 4);
+}
+
+void NiPSysBombModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&bombNodeRef, 4);
+	file.write((char*)&bombAxis, 12);
+	file.write((char*)&decay, 4);
+	file.write((char*)&deltaV, 4);
+	file.write((char*)&decayType, 4);
+	file.write((char*)&symmetryType, 4);
+}
+
+void NiPSysBombModifier::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (bombNodeRef == blockID)
+		bombNodeRef = 0xFFFFFFFF;
+	else if (bombNodeRef > blockID)
+		bombNodeRef--;
+}
+
+void NiPSysBombModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (bombNodeRef == blockIndexLo)
+		bombNodeRef = blockIndexHi;
+	else if (bombNodeRef == blockIndexHi)
+		bombNodeRef = blockIndexLo;
+}
+
+int NiPSysBombModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 32;
+
+	return blockSize;
+}
+
+
+BSWindModifier::BSWindModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSWINDMODIFIER;
+}
+
+BSWindModifier::BSWindModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSWINDMODIFIER;
+
+	Get(file);
+}
+
+void BSWindModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&strength, 4);
+}
+
+void BSWindModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&strength, 4);
+}
+
+int BSWindModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSRECYCLEBOUNDMODIFIER;
+
+	targetNodeRef = 0xFFFFFFFF;
+}
+
+BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSRECYCLEBOUNDMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysRecycleBoundModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&boundOffset, 12);
+	file.read((char*)&boundExtent, 12);
+	file.read((char*)&targetNodeRef, 4);
+}
+
+void BSPSysRecycleBoundModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&boundOffset, 12);
+	file.write((char*)&boundExtent, 12);
+	file.write((char*)&targetNodeRef, 4);
+}
+
+void BSPSysRecycleBoundModifier::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (targetNodeRef == blockID)
+		targetNodeRef = 0xFFFFFFFF;
+	else if (targetNodeRef > blockID)
+		targetNodeRef--;
+}
+
+void BSPSysRecycleBoundModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (targetNodeRef == blockIndexLo)
+		targetNodeRef = blockIndexHi;
+	else if (targetNodeRef == blockIndexHi)
+		targetNodeRef = blockIndexLo;
+}
+
+int BSPSysRecycleBoundModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 28;
+
+	return blockSize;
+}
+
+
+BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSHAVOKUPDATEMODIFIER;
+
+	modifierRef = 0xFFFFFFFF;
+}
+
+BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = BSPSYSHAVOKUPDATEMODIFIER;
+
+	Get(file);
+}
+
+void BSPSysHavokUpdateModifier::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&numNodes, 4);
+	nodeRefs.resize(numNodes);
+	for (int i = 0; i < numNodes; i++)
+		file.read((char*)&nodeRefs[i], 4);
+
+	file.read((char*)&modifierRef, 4);
+}
+
+void BSPSysHavokUpdateModifier::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&numNodes, 4);
+	for (int i = 0; i < numNodes; i++)
+		file.write((char*)&nodeRefs[i], 4);
+
+	file.write((char*)&modifierRef, 4);
+}
+
+void BSPSysHavokUpdateModifier::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (modifierRef == blockID)
+		modifierRef = 0xFFFFFFFF;
+	else if (modifierRef > blockID)
+		modifierRef--;
+
+	for (int i = 0; i < numNodes; i++) {
+		if (nodeRefs[i] == blockID) {
+			nodeRefs.erase(nodeRefs.begin() + i);
+			i--;
+			numNodes--;
+		}
+		else if (nodeRefs[i] > blockID)
+			nodeRefs[i]--;
+	}
+}
+
+void BSPSysHavokUpdateModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (modifierRef == blockIndexLo)
+		modifierRef = blockIndexHi;
+	else if (modifierRef == blockIndexHi)
+		modifierRef = blockIndexLo;
+
+	for (int i = 0; i < numNodes; i++) {
+		if (nodeRefs[i] == blockIndexLo)
+			nodeRefs[i] = blockIndexHi;
+		else if (nodeRefs[i] == blockIndexHi)
+			nodeRefs[i] = blockIndexLo;
+	}
+}
+
+int BSPSysHavokUpdateModifier::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 8;
+	blockSize += numNodes * 4;
+
+	return blockSize;
+}
+
+
+void NiPSysCollider::Init() {
+	NiObject::Init();
+
+	spawnModifierRef = 0xFFFFFFFF;
+	managerRef = 0xFFFFFFFF;
+	nextColliderRef = 0xFFFFFFFF;
+	colliderNodeRef = 0xFFFFFFFF;
+}
+
+void NiPSysCollider::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&bounce, 4);
+	file.read((char*)&spawnOnCollide, 1);
+	file.read((char*)&dieOnCollide, 1);
+	file.read((char*)&spawnModifierRef, 4);
+	file.read((char*)&managerRef, 4);
+	file.read((char*)&nextColliderRef, 4);
+	file.read((char*)&colliderNodeRef, 4);
+}
+
+void NiPSysCollider::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&bounce, 4);
+	file.write((char*)&spawnOnCollide, 1);
+	file.write((char*)&dieOnCollide, 1);
+	file.write((char*)&spawnModifierRef, 4);
+	file.write((char*)&managerRef, 4);
+	file.write((char*)&nextColliderRef, 4);
+	file.write((char*)&colliderNodeRef, 4);
+}
+
+void NiPSysCollider::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+
+	if (spawnModifierRef == blockID)
+		spawnModifierRef = 0xFFFFFFFF;
+	else if (spawnModifierRef > blockID)
+		spawnModifierRef--;
+
+	if (managerRef == blockID)
+		managerRef = 0xFFFFFFFF;
+	else if (managerRef > blockID)
+		managerRef--;
+
+	if (nextColliderRef == blockID)
+		nextColliderRef = 0xFFFFFFFF;
+	else if (nextColliderRef > blockID)
+		nextColliderRef--;
+
+	if (colliderNodeRef == blockID)
+		colliderNodeRef = 0xFFFFFFFF;
+	else if (colliderNodeRef > blockID)
+		colliderNodeRef--;
+}
+
+void NiPSysCollider::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (spawnModifierRef == blockIndexLo)
+		spawnModifierRef = blockIndexHi;
+	else if (spawnModifierRef == blockIndexHi)
+		spawnModifierRef = blockIndexLo;
+
+	if (managerRef == blockIndexLo)
+		managerRef = blockIndexHi;
+	else if (managerRef == blockIndexHi)
+		managerRef = blockIndexLo;
+
+	if (nextColliderRef == blockIndexLo)
+		nextColliderRef = blockIndexHi;
+	else if (nextColliderRef == blockIndexHi)
+		nextColliderRef = blockIndexLo;
+
+	if (colliderNodeRef == blockIndexLo)
+		colliderNodeRef = blockIndexHi;
+	else if (colliderNodeRef == blockIndexHi)
+		colliderNodeRef = blockIndexLo;
+}
+
+int NiPSysCollider::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 22;
+
+	return blockSize;
+}
+
+
+NiPSysSphericalCollider::NiPSysSphericalCollider(NiHeader& hdr) {
+	NiPSysCollider::Init();
+
+	header = &hdr;
+	blockType = NIPSYSSPHERICALCOLLIDER;
+}
+
+NiPSysSphericalCollider::NiPSysSphericalCollider(fstream& file, NiHeader& hdr) {
+	NiPSysCollider::Init();
+
+	header = &hdr;
+	blockType = NIPSYSSPHERICALCOLLIDER;
+
+	Get(file);
+}
+
+void NiPSysSphericalCollider::Get(fstream& file) {
+	NiPSysCollider::Get(file);
+
+	file.read((char*)&radius, 4);
+}
+
+void NiPSysSphericalCollider::Put(fstream& file) {
+	NiPSysCollider::Put(file);
+
+	file.write((char*)&radius, 4);
+}
+
+int NiPSysSphericalCollider::CalcBlockSize() {
+	NiPSysCollider::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiPSysPlanarCollider::NiPSysPlanarCollider(NiHeader& hdr) {
+	NiPSysCollider::Init();
+
+	header = &hdr;
+	blockType = NIPSYSPLANARCOLLIDER;
+}
+
+NiPSysPlanarCollider::NiPSysPlanarCollider(fstream& file, NiHeader& hdr) {
+	NiPSysCollider::Init();
+
+	header = &hdr;
+	blockType = NIPSYSPLANARCOLLIDER;
+
+	Get(file);
+}
+
+void NiPSysPlanarCollider::Get(fstream& file) {
+	NiPSysCollider::Get(file);
+
+	file.read((char*)&width, 4);
+	file.read((char*)&height, 4);
+	file.read((char*)&xAxis, 12);
+	file.read((char*)&yAxis, 12);
+}
+
+void NiPSysPlanarCollider::Put(fstream& file) {
+	NiPSysCollider::Put(file);
+
+	file.write((char*)&width, 4);
+	file.write((char*)&height, 4);
+	file.write((char*)&xAxis, 12);
+	file.write((char*)&yAxis, 12);
+}
+
+int NiPSysPlanarCollider::CalcBlockSize() {
+	NiPSysCollider::CalcBlockSize();
+
+	blockSize += 32;
+
+	return blockSize;
+}
+
+
+NiPSysColliderManager::NiPSysColliderManager(NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSCOLLIDERMANAGER;
+
+	colliderRef = 0xFFFFFFFF;
+}
+
+NiPSysColliderManager::NiPSysColliderManager(fstream& file, NiHeader& hdr) {
+	NiPSysModifier::Init();
+
+	header = &hdr;
+	blockType = NIPSYSCOLLIDERMANAGER;
+
+	Get(file);
+}
+
+void NiPSysColliderManager::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&colliderRef, 4);
+}
+
+void NiPSysColliderManager::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&colliderRef, 4);
+}
+
+void NiPSysColliderManager::notifyBlockDelete(int blockID) {
+	NiPSysModifier::notifyBlockDelete(blockID);
+
+	if (colliderRef == blockID)
+		colliderRef = 0xFFFFFFFF;
+	else if (colliderRef > blockID)
+		colliderRef--;
+}
+
+void NiPSysColliderManager::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifier::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (colliderRef == blockIndexLo)
+		colliderRef = blockIndexHi;
+	else if (colliderRef == blockIndexHi)
+		colliderRef = blockIndexLo;
+}
+
+int NiPSysColliderManager::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+void NiPSysEmitter::Get(fstream& file) {
+	NiPSysModifier::Get(file);
+
+	file.read((char*)&speed, 4);
+	file.read((char*)&speedVariation, 4);
+	file.read((char*)&declination, 4);
+	file.read((char*)&declinationVariation, 4);
+	file.read((char*)&planarAngle, 4);
+	file.read((char*)&planarAngleVariation, 4);
+	file.read((char*)&color, 16);
+	file.read((char*)&radius, 4);
+	file.read((char*)&radiusVariation, 4);
+	file.read((char*)&lifeSpan, 4);
+	file.read((char*)&lifeSpanVariation, 4);
+}
+
+void NiPSysEmitter::Put(fstream& file) {
+	NiPSysModifier::Put(file);
+
+	file.write((char*)&speed, 4);
+	file.write((char*)&speedVariation, 4);
+	file.write((char*)&declination, 4);
+	file.write((char*)&declinationVariation, 4);
+	file.write((char*)&planarAngle, 4);
+	file.write((char*)&planarAngleVariation, 4);
+	file.write((char*)&color, 16);
+	file.write((char*)&radius, 4);
+	file.write((char*)&radiusVariation, 4);
+	file.write((char*)&lifeSpan, 4);
+	file.write((char*)&lifeSpanVariation, 4);
+}
+
+int NiPSysEmitter::CalcBlockSize() {
+	NiPSysModifier::CalcBlockSize();
+
+	blockSize += 56;
+
+	return blockSize;
+}
+
+
+void NiPSysVolumeEmitter::Init() {
+	NiPSysEmitter::Init();
+
+	emitterNodeRef = 0xFFFFFFFF;
+}
+
+void NiPSysVolumeEmitter::Get(fstream& file) {
+	NiPSysEmitter::Get(file);
+
+	file.read((char*)&emitterNodeRef, 4);
+}
+
+void NiPSysVolumeEmitter::Put(fstream& file) {
+	NiPSysEmitter::Put(file);
+
+	file.write((char*)&emitterNodeRef, 4);
+}
+
+void NiPSysVolumeEmitter::notifyBlockDelete(int blockID) {
+	NiPSysEmitter::notifyBlockDelete(blockID);
+
+	if (emitterNodeRef == blockID)
+		emitterNodeRef = 0xFFFFFFFF;
+	else if (emitterNodeRef > blockID)
+		emitterNodeRef--;
+}
+
+void NiPSysVolumeEmitter::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysEmitter::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (emitterNodeRef == blockIndexLo)
+		emitterNodeRef = blockIndexHi;
+	else if (emitterNodeRef == blockIndexHi)
+		emitterNodeRef = blockIndexLo;
+}
+
+int NiPSysVolumeEmitter::CalcBlockSize() {
+	NiPSysEmitter::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiPSysSphereEmitter::NiPSysSphereEmitter(NiHeader& hdr) {
+	NiPSysVolumeEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSSPHEREEMITTER;
+}
+
+NiPSysSphereEmitter::NiPSysSphereEmitter(fstream& file, NiHeader& hdr) {
+	NiPSysVolumeEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSSPHEREEMITTER;
+
+	Get(file);
+}
+
+void NiPSysSphereEmitter::Get(fstream& file) {
+	NiPSysVolumeEmitter::Get(file);
+
+	file.read((char*)&radius, 4);
+}
+
+void NiPSysSphereEmitter::Put(fstream& file) {
+	NiPSysVolumeEmitter::Put(file);
+
+	file.write((char*)&radius, 4);
+}
+
+int NiPSysSphereEmitter::CalcBlockSize() {
+	NiPSysVolumeEmitter::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiHeader& hdr) {
+	NiPSysVolumeEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSCYLINDEREMITTER;
+}
+
+NiPSysCylinderEmitter::NiPSysCylinderEmitter(fstream& file, NiHeader& hdr) {
+	NiPSysVolumeEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSCYLINDEREMITTER;
+
+	Get(file);
+}
+
+void NiPSysCylinderEmitter::Get(fstream& file) {
+	NiPSysVolumeEmitter::Get(file);
+
+	file.read((char*)&radius, 4);
+	file.read((char*)&height, 4);
+}
+
+void NiPSysCylinderEmitter::Put(fstream& file) {
+	NiPSysVolumeEmitter::Put(file);
+
+	file.write((char*)&radius, 4);
+	file.write((char*)&height, 4);
+}
+
+int NiPSysCylinderEmitter::CalcBlockSize() {
+	NiPSysVolumeEmitter::CalcBlockSize();
+
+	blockSize += 8;
+
+	return blockSize;
+}
+
+
+NiPSysBoxEmitter::NiPSysBoxEmitter(NiHeader& hdr) {
+	NiPSysVolumeEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSBOXEMITTER;
+}
+
+NiPSysBoxEmitter::NiPSysBoxEmitter(fstream& file, NiHeader& hdr) {
+	NiPSysVolumeEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSBOXEMITTER;
+
+	Get(file);
+}
+
+void NiPSysBoxEmitter::Get(fstream& file) {
+	NiPSysVolumeEmitter::Get(file);
+
+	file.read((char*)&width, 4);
+	file.read((char*)&height, 4);
+	file.read((char*)&depth, 4);
+}
+
+void NiPSysBoxEmitter::Put(fstream& file) {
+	NiPSysVolumeEmitter::Put(file);
+
+	file.write((char*)&width, 4);
+	file.write((char*)&height, 4);
+	file.write((char*)&depth, 4);
+}
+
+int NiPSysBoxEmitter::CalcBlockSize() {
+	NiPSysVolumeEmitter::CalcBlockSize();
+
+	blockSize += 12;
+
+	return blockSize;
+}
+
+
+NiPSysMeshEmitter::NiPSysMeshEmitter(NiHeader& hdr) {
+	NiPSysEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSMESHEMITTER;
+
+	numMeshes = 0;
+}
+
+NiPSysMeshEmitter::NiPSysMeshEmitter(fstream& file, NiHeader& hdr) {
+	NiPSysEmitter::Init();
+
+	header = &hdr;
+	blockType = NIPSYSMESHEMITTER;
+
+	Get(file);
+}
+
+void NiPSysMeshEmitter::Get(fstream& file) {
+	NiPSysEmitter::Get(file);
+
+	file.read((char*)&numMeshes, 4);
+	meshRefs.resize(numMeshes);
+	for (int i = 0; i < numMeshes; i++)
+		file.read((char*)&meshRefs[i], 4);
+
+	file.read((char*)&velocityType, 4);
+	file.read((char*)&emissionType, 4);
+	file.read((char*)&emissionAxis, 12);
+}
+
+void NiPSysMeshEmitter::Put(fstream& file) {
+	NiPSysEmitter::Put(file);
+
+	file.write((char*)&numMeshes, 4);
+	for (int i = 0; i < numMeshes; i++)
+		file.write((char*)&meshRefs[i], 4);
+
+	file.write((char*)&velocityType, 4);
+	file.write((char*)&emissionType, 4);
+	file.write((char*)&emissionAxis, 12);
+}
+
+void NiPSysMeshEmitter::notifyBlockDelete(int blockID) {
+	NiPSysEmitter::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numMeshes; i++) {
+		if (meshRefs[i] == blockID) {
+			meshRefs.erase(meshRefs.begin() + i);
+			i--;
+			numMeshes--;
+		}
+		else if (meshRefs[i] > blockID)
+			meshRefs[i]--;
+	}
+}
+
+void NiPSysMeshEmitter::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysEmitter::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numMeshes; i++) {
+		if (meshRefs[i] == blockIndexLo)
+			meshRefs[i] = blockIndexHi;
+		else if (meshRefs[i] == blockIndexHi)
+			meshRefs[i] = blockIndexLo;
+	}
+}
+
+int NiPSysMeshEmitter::CalcBlockSize() {
+	NiPSysEmitter::CalcBlockSize();
+
+	blockSize += 24;
+	blockSize += numMeshes * 4;
+
+	return blockSize;
+}
+
+
+void NiBlendInterpolator::Get(fstream& file) {
 	NiInterpolator::Get(file);
+
+	file.read((char*)&flags, 2);
+	file.read((char*)&unkInt, 4);
 }
 
-void NiKeyBasedInterpolator::Put(fstream& file) {
+void NiBlendInterpolator::Put(fstream& file) {
 	NiInterpolator::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&unkInt, 4);
 }
 
-void NiKeyBasedInterpolator::notifyBlockDelete(int blockID) {
-	NiInterpolator::notifyBlockDelete(blockID);
-}
-void NiKeyBasedInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiInterpolator::notifyBlockSwap(blockIndexLo, blockIndexHi);
+int NiBlendInterpolator::CalcBlockSize() {
+	NiInterpolator::CalcBlockSize();
+
+	blockSize += 6;
+
+	return blockSize;
 }
 
-int NiKeyBasedInterpolator::CalcBlockSize() {
-	return NiInterpolator::CalcBlockSize();
+
+NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiHeader& hdr) {
+	NiBlendInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBLENDBOOLINTERPOLATOR;
+
+	value = false;
+}
+
+NiBlendBoolInterpolator::NiBlendBoolInterpolator(fstream& file, NiHeader& hdr) {
+	NiBlendInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBLENDBOOLINTERPOLATOR;
+
+	Get(file);
+}
+
+void NiBlendBoolInterpolator::Get(fstream& file) {
+	NiBlendInterpolator::Get(file);
+
+	file.read((char*)&value, 1);
+}
+
+void NiBlendBoolInterpolator::Put(fstream& file) {
+	NiBlendInterpolator::Put(file);
+
+	file.write((char*)&value, 1);
+}
+
+int NiBlendBoolInterpolator::CalcBlockSize() {
+	NiBlendInterpolator::CalcBlockSize();
+
+	blockSize += 1;
+
+	return blockSize;
+}
+
+
+NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiHeader& hdr) {
+	NiBlendInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBLENDFLOATINTERPOLATOR;
+
+	value = 0.0f;
+}
+
+NiBlendFloatInterpolator::NiBlendFloatInterpolator(fstream& file, NiHeader& hdr) {
+	NiBlendInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBLENDFLOATINTERPOLATOR;
+
+	Get(file);
+}
+
+void NiBlendFloatInterpolator::Get(fstream& file) {
+	NiBlendInterpolator::Get(file);
+
+	file.read((char*)&value, 4);
+}
+
+void NiBlendFloatInterpolator::Put(fstream& file) {
+	NiBlendInterpolator::Put(file);
+
+	file.write((char*)&value, 4);
+}
+
+int NiBlendFloatInterpolator::CalcBlockSize() {
+	NiBlendInterpolator::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiHeader& hdr) {
+	NiBlendInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBLENDPOINT3INTERPOLATOR;
+}
+
+NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(fstream& file, NiHeader& hdr) {
+	NiBlendInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBLENDPOINT3INTERPOLATOR;
+
+	Get(file);
+}
+
+void NiBlendPoint3Interpolator::Get(fstream& file) {
+	NiBlendInterpolator::Get(file);
+
+	file.read((char*)&point, 12);
+}
+
+void NiBlendPoint3Interpolator::Put(fstream& file) {
+	NiBlendInterpolator::Put(file);
+
+	file.write((char*)&point, 12);
+}
+
+int NiBlendPoint3Interpolator::CalcBlockSize() {
+	NiBlendInterpolator::CalcBlockSize();
+
+	blockSize += 12;
+
+	return blockSize;
+}
+
+
+NiBoolInterpolator::NiBoolInterpolator(NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBOOLINTERPOLATOR;
+
+	boolValue = 0;
+	dataRef = 0xFFFFFFFF;
+}
+
+NiBoolInterpolator::NiBoolInterpolator(fstream& file, NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIBOOLINTERPOLATOR;
+
+	Get(file);
+}
+
+void NiBoolInterpolator::Get(fstream& file) {
+	NiKeyBasedInterpolator::Get(file);
+
+	file.read((char*)&boolValue, 1);
+	file.read((char*)&dataRef, 4);
+}
+
+void NiBoolInterpolator::Put(fstream& file) {
+	NiKeyBasedInterpolator::Put(file);
+
+	file.write((char*)&boolValue, 1);
+	file.write((char*)&dataRef, 4);
+}
+
+void NiBoolInterpolator::notifyBlockDelete(int blockID) {
+	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
+
+	if (dataRef == blockID)
+		dataRef = 0xFFFFFFFF;
+	else if (dataRef > blockID)
+		dataRef--;
+}
+void NiBoolInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiKeyBasedInterpolator::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
+}
+
+int NiBoolInterpolator::CalcBlockSize() {
+	NiKeyBasedInterpolator::CalcBlockSize();
+
+	blockSize += 5;
+
+	return blockSize;
+}
+
+
+NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiHeader& hdr) : NiBoolInterpolator(hdr) {
+	blockType = NIBOOLTIMELINEINTERPOLATOR;
+}
+
+NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(fstream& file, NiHeader& hdr) : NiBoolInterpolator(file, hdr) {
+	blockType = NIBOOLTIMELINEINTERPOLATOR;
 }
 
 
@@ -4508,6 +7265,7 @@ NiFloatInterpolator::NiFloatInterpolator(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NIFLOATINTERPOLATOR;
+
 	floatValue = 0.0f;
 	dataRef = 0xFFFFFFFF;
 }
@@ -4566,6 +7324,7 @@ NiTransformInterpolator::NiTransformInterpolator(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NITRANSFORMINTERPOLATOR;
+
 	scale = 0.0f;
 	dataRef = 0xFFFFFFFF;
 }
@@ -4629,6 +7388,7 @@ NiPoint3Interpolator::NiPoint3Interpolator(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NIPOINT3INTERPOLATOR;
+
 	dataRef = 0xFFFFFFFF;
 }
 
@@ -4677,6 +7437,423 @@ int NiPoint3Interpolator::CalcBlockSize() {
 	NiKeyBasedInterpolator::CalcBlockSize();
 
 	blockSize += 16;
+
+	return blockSize;
+}
+
+
+NiPathInterpolator::NiPathInterpolator(NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIPATHINTERPOLATOR;
+
+	pathDataRef = 0xFFFFFFFF;
+	percentDataRef = 0xFFFFFFFF;
+}
+
+NiPathInterpolator::NiPathInterpolator(fstream& file, NiHeader& hdr) {
+	NiKeyBasedInterpolator::Init();
+
+	header = &hdr;
+	blockType = NIPATHINTERPOLATOR;
+
+	Get(file);
+}
+
+void NiPathInterpolator::Get(fstream& file) {
+	NiKeyBasedInterpolator::Get(file);
+
+	file.read((char*)&flags, 2);
+	file.read((char*)&bankDir, 4);
+	file.read((char*)&maxBankAngle, 4);
+	file.read((char*)&smoothing, 4);
+	file.read((char*)&followAxis, 2);
+	file.read((char*)&pathDataRef, 4);
+	file.read((char*)&percentDataRef, 4);
+}
+
+void NiPathInterpolator::Put(fstream& file) {
+	NiKeyBasedInterpolator::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&bankDir, 4);
+	file.write((char*)&maxBankAngle, 4);
+	file.write((char*)&smoothing, 4);
+	file.write((char*)&followAxis, 2);
+	file.write((char*)&pathDataRef, 4);
+	file.write((char*)&percentDataRef, 4);
+}
+
+void NiPathInterpolator::notifyBlockDelete(int blockID) {
+	NiKeyBasedInterpolator::notifyBlockDelete(blockID);
+
+	if (pathDataRef == blockID)
+		pathDataRef = 0xFFFFFFFF;
+	else if (pathDataRef > blockID)
+		pathDataRef--;
+
+	if (percentDataRef == blockID)
+		percentDataRef = 0xFFFFFFFF;
+	else if (percentDataRef > blockID)
+		percentDataRef--;
+}
+
+void NiPathInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiKeyBasedInterpolator::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (pathDataRef == blockIndexLo)
+		pathDataRef = blockIndexHi;
+	else if (pathDataRef == blockIndexHi)
+		pathDataRef = blockIndexLo;
+
+	if (percentDataRef == blockIndexLo)
+		percentDataRef = blockIndexHi;
+	else if (percentDataRef == blockIndexHi)
+		percentDataRef = blockIndexLo;
+}
+
+int NiPathInterpolator::CalcBlockSize() {
+	NiKeyBasedInterpolator::CalcBlockSize();
+
+	blockSize += 24;
+
+	return blockSize;
+}
+
+
+NiLookAtInterpolator::NiLookAtInterpolator(NiHeader& hdr) {
+	NiInterpolator::Init();
+
+	blockType = NILOOKATINTERPOLATOR;
+
+	lookAtNameRef = 0xFFFFFFFF;
+}
+
+NiLookAtInterpolator::NiLookAtInterpolator(fstream& file, NiHeader& hdr) {
+	NiInterpolator::Init();
+
+	blockType = NILOOKATINTERPOLATOR;
+	Get(file);
+}
+
+NiLookAtInterpolator::~NiLookAtInterpolator() {
+	header->RemoveStringRef(lookAtNameRef);
+}
+
+void NiLookAtInterpolator::Get(fstream& file) {
+	NiInterpolator::Get(file);
+
+	file.read((char*)&flags, 2);
+	file.read((char*)&lookAtRef, 4);
+
+	file.read((char*)&lookAtNameRef, 4);
+	if (lookAtNameRef != 0xFFFFFFFF) {
+		lookAtName = header->GetStringById(lookAtNameRef);
+		header->AddStringRef(lookAtNameRef);
+	}
+
+	file.read((char*)&transform, 32);
+	file.read((char*)&translateInterpRef, 4);
+	file.read((char*)&rollInterpRef, 4);
+	file.read((char*)&scaleInterpRef, 4);
+}
+
+void NiLookAtInterpolator::Put(fstream& file) {
+	NiInterpolator::Put(file);
+
+	file.write((char*)&flags, 2);
+	file.write((char*)&lookAtRef, 4);
+	file.write((char*)&lookAtNameRef, 4);
+	file.write((char*)&transform, 32);
+	file.write((char*)&translateInterpRef, 4);
+	file.write((char*)&rollInterpRef, 4);
+	file.write((char*)&scaleInterpRef, 4);
+}
+
+void NiLookAtInterpolator::notifyBlockDelete(int blockID) {
+	NiInterpolator::notifyBlockDelete(blockID);
+
+	if (lookAtRef == blockID)
+		lookAtRef = 0xFFFFFFFF;
+	else if (lookAtRef > blockID)
+		lookAtRef--;
+
+	if (translateInterpRef == blockID)
+		translateInterpRef = 0xFFFFFFFF;
+	else if (translateInterpRef > blockID)
+		translateInterpRef--;
+
+	if (rollInterpRef == blockID)
+		rollInterpRef = 0xFFFFFFFF;
+	else if (rollInterpRef > blockID)
+		rollInterpRef--;
+
+	if (scaleInterpRef == blockID)
+		scaleInterpRef = 0xFFFFFFFF;
+	else if (scaleInterpRef > blockID)
+		scaleInterpRef--;
+}
+
+void NiLookAtInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiInterpolator::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (lookAtRef == blockIndexLo)
+		lookAtRef = blockIndexHi;
+	else if (lookAtRef == blockIndexHi)
+		lookAtRef = blockIndexLo;
+
+	if (translateInterpRef == blockIndexLo)
+		translateInterpRef = blockIndexHi;
+	else if (translateInterpRef == blockIndexHi)
+		translateInterpRef = blockIndexLo;
+
+	if (rollInterpRef == blockIndexLo)
+		rollInterpRef = blockIndexHi;
+	else if (rollInterpRef == blockIndexHi)
+		rollInterpRef = blockIndexLo;
+
+	if (scaleInterpRef == blockIndexLo)
+		scaleInterpRef = blockIndexHi;
+	else if (scaleInterpRef == blockIndexHi)
+		scaleInterpRef = blockIndexLo;
+}
+
+void NiLookAtInterpolator::notifyStringDelete(int stringID) {
+	NiInterpolator::notifyStringDelete(stringID);
+
+	if (lookAtNameRef != 0xFFFFFFFF && lookAtNameRef > stringID)
+		lookAtNameRef--;
+}
+
+int NiLookAtInterpolator::CalcBlockSize() {
+	NiInterpolator::CalcBlockSize();
+
+	blockSize += 54;
+
+	return blockSize;
+}
+
+
+NiKeyframeData::NiKeyframeData(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIKEYFRAMEDATA;
+
+	numRotationKeys = 0;
+}
+
+NiKeyframeData::NiKeyframeData(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIKEYFRAMEDATA;
+
+	Get(file);
+}
+
+void NiKeyframeData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&numRotationKeys, 4);
+
+	if (numRotationKeys > 0) {
+		file.read((char*)&rotationType, 4);
+
+		if (rotationType != 4) {
+			quaternionKeys.resize(numRotationKeys);
+
+			for (int i = 0; i < numRotationKeys; i++) {
+				file.read((char*)&quaternionKeys[i].time, 4);
+				file.read((char*)&quaternionKeys[i].value, 16);
+
+				if (rotationType == 3)
+					file.read((char*)&quaternionKeys[i].tbc, 12);
+			}
+		}
+		else {
+			xRotations.Get(file);
+			yRotations.Get(file);
+			zRotations.Get(file);
+		}
+	}
+
+	translations.Get(file);
+	scales.Get(file);
+}
+
+void NiKeyframeData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&numRotationKeys, 4);
+
+	if (numRotationKeys > 0) {
+		file.write((char*)&rotationType, 4);
+
+		if (rotationType != 4) {
+			for (int i = 0; i < numRotationKeys; i++) {
+				file.write((char*)&quaternionKeys[i].time, 4);
+				file.write((char*)&quaternionKeys[i].value, 16);
+
+				if (rotationType == 3)
+					file.write((char*)&quaternionKeys[i].tbc, 12);
+			}
+		}
+		else {
+			xRotations.Put(file);
+			yRotations.Put(file);
+			zRotations.Put(file);
+		}
+	}
+
+	translations.Put(file);
+	scales.Put(file);
+}
+
+int NiKeyframeData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 4;
+
+	if (numRotationKeys > 0) {
+		blockSize += 4;
+
+		if (rotationType != 4) {
+			blockSize += 20 * numRotationKeys;
+
+			if (rotationType == 3)
+				blockSize += 12 * numRotationKeys;
+		}
+		else {
+			blockSize += xRotations.CalcGroupSize();
+			blockSize += yRotations.CalcGroupSize();
+			blockSize += zRotations.CalcGroupSize();
+		}
+	}
+
+	blockSize += translations.CalcGroupSize();
+	blockSize += scales.CalcGroupSize();
+
+	return blockSize;
+}
+
+
+NiTransformData::NiTransformData(NiHeader& hdr) : NiKeyframeData(hdr) {
+	blockType = NITRANSFORMDATA;
+}
+
+NiTransformData::NiTransformData(fstream& file, NiHeader& hdr) : NiKeyframeData(file, hdr) {
+	blockType = NITRANSFORMDATA;
+}
+
+
+NiPosData::NiPosData(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIPOSDATA;
+}
+
+NiPosData::NiPosData(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIPOSDATA;
+
+	Get(file);
+}
+
+void NiPosData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	data.Get(file);
+}
+
+void NiPosData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	data.Put(file);
+}
+
+int NiPosData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += data.CalcGroupSize();
+
+	return blockSize;
+}
+
+
+NiBoolData::NiBoolData(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIBOOLDATA;
+}
+
+NiBoolData::NiBoolData(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIBOOLDATA;
+
+	Get(file);
+}
+
+void NiBoolData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	data.Get(file);
+}
+
+void NiBoolData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	data.Put(file);
+}
+
+int NiBoolData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += data.CalcGroupSize();
+
+	return blockSize;
+}
+
+
+NiFloatData::NiFloatData(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIFLOATDATA;
+}
+
+NiFloatData::NiFloatData(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NIFLOATDATA;
+
+	Get(file);
+}
+
+void NiFloatData::Get(fstream& file) {
+	NiObject::Get(file);
+
+	data.Get(file);
+}
+
+void NiFloatData::Put(fstream& file) {
+	NiObject::Put(file);
+
+	data.Put(file);
+}
+
+int NiFloatData::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += data.CalcGroupSize();
 
 	return blockSize;
 }
@@ -4755,28 +7932,390 @@ int NiTimeController::CalcBlockSize() {
 }
 
 
-void NiInterpController::Init() {
+BSFrustumFOVController::BSFrustumFOVController(NiHeader& hdr) {
 	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = BSFRUSTUMFOVCONTROLLER;
+
+	interpolatorRef = 0xFFFFFFFF;
 }
 
-void NiInterpController::Get(fstream& file) {
+BSFrustumFOVController::BSFrustumFOVController(fstream& file, NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = BSFRUSTUMFOVCONTROLLER;
+
+	Get(file);
+}
+
+void BSFrustumFOVController::Get(fstream& file) {
 	NiTimeController::Get(file);
+
+	file.read((char*)&interpolatorRef, 4);
 }
 
-void NiInterpController::Put(fstream& file) {
+void BSFrustumFOVController::Put(fstream& file) {
 	NiTimeController::Put(file);
+
+	file.write((char*)&interpolatorRef, 4);
 }
 
-void NiInterpController::notifyBlockDelete(int blockID) {
+void BSFrustumFOVController::notifyBlockDelete(int blockID) {
 	NiTimeController::notifyBlockDelete(blockID);
+
+	if (interpolatorRef == blockID)
+		interpolatorRef = 0xFFFFFFFF;
+	else if (interpolatorRef > blockID)
+		interpolatorRef--;
 }
 
-void NiInterpController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+void BSFrustumFOVController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	NiTimeController::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (interpolatorRef == blockIndexLo)
+		interpolatorRef = blockIndexHi;
+	else if (interpolatorRef == blockIndexHi)
+		interpolatorRef = blockIndexLo;
 }
 
-int NiInterpController::CalcBlockSize() {
-	return NiTimeController::CalcBlockSize();
+int BSFrustumFOVController::CalcBlockSize() {
+	NiTimeController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSLagBoneController::BSLagBoneController(NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = BSLAGBONECONTROLLER;
+}
+
+BSLagBoneController::BSLagBoneController(fstream& file, NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = BSLAGBONECONTROLLER;
+
+	Get(file);
+}
+
+void BSLagBoneController::Get(fstream& file) {
+	NiTimeController::Get(file);
+
+	file.read((char*)&linearVelocity, 4);
+	file.read((char*)&linearRotation, 4);
+	file.read((char*)&maxDistance, 4);
+}
+
+void BSLagBoneController::Put(fstream& file) {
+	NiTimeController::Put(file);
+
+	file.write((char*)&linearVelocity, 4);
+	file.write((char*)&linearRotation, 4);
+	file.write((char*)&maxDistance, 4);
+}
+
+int BSLagBoneController::CalcBlockSize() {
+	NiTimeController::CalcBlockSize();
+
+	blockSize += 12;
+
+	return blockSize;
+}
+
+
+BSProceduralLightningController::BSProceduralLightningController(NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = BSPROCEDURALLIGHTNINGCONTROLLER;
+}
+
+BSProceduralLightningController::BSProceduralLightningController(fstream& file, NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = BSPROCEDURALLIGHTNINGCONTROLLER;
+
+	Get(file);
+}
+
+void BSProceduralLightningController::Get(fstream& file) {
+	NiTimeController::Get(file);
+
+	file.read((char*)&generationInterpRef, 4);
+	file.read((char*)&mutationInterpRef, 4);
+	file.read((char*)&subdivisionInterpRef, 4);
+	file.read((char*)&numBranchesInterpRef, 4);
+	file.read((char*)&numBranchesVarInterpRef, 4);
+	file.read((char*)&lengthInterpRef, 4);
+	file.read((char*)&lengthVarInterpRef, 4);
+	file.read((char*)&widthInterpRef, 4);
+	file.read((char*)&arcOffsetInterpRef, 4);
+
+	file.read((char*)&subdivisions, 2);
+	file.read((char*)&numBranches, 2);
+	file.read((char*)&numBranchesPerVariation, 2);
+
+	file.read((char*)&length, 4);
+	file.read((char*)&lengthVariation, 4);
+	file.read((char*)&width, 4);
+	file.read((char*)&childWidthMult, 4);
+	file.read((char*)&arcOffset, 4);
+
+	file.read((char*)&fadeMainBolt, 1);
+	file.read((char*)&fadeChildBolts, 1);
+	file.read((char*)&animateArcOffset, 1);
+
+	file.read((char*)&shaderPropertyRef, 4);
+}
+
+void BSProceduralLightningController::Put(fstream& file) {
+	NiTimeController::Put(file);
+
+	file.write((char*)&generationInterpRef, 4);
+	file.write((char*)&mutationInterpRef, 4);
+	file.write((char*)&subdivisionInterpRef, 4);
+	file.write((char*)&numBranchesInterpRef, 4);
+	file.write((char*)&numBranchesVarInterpRef, 4);
+	file.write((char*)&lengthInterpRef, 4);
+	file.write((char*)&lengthVarInterpRef, 4);
+	file.write((char*)&widthInterpRef, 4);
+	file.write((char*)&arcOffsetInterpRef, 4);
+
+	file.write((char*)&subdivisions, 2);
+	file.write((char*)&numBranches, 2);
+	file.write((char*)&numBranchesPerVariation, 2);
+
+	file.write((char*)&length, 4);
+	file.write((char*)&lengthVariation, 4);
+	file.write((char*)&width, 4);
+	file.write((char*)&childWidthMult, 4);
+	file.write((char*)&arcOffset, 4);
+
+	file.write((char*)&fadeMainBolt, 1);
+	file.write((char*)&fadeChildBolts, 1);
+	file.write((char*)&animateArcOffset, 1);
+
+	file.write((char*)&shaderPropertyRef, 4);
+}
+
+void BSProceduralLightningController::notifyBlockDelete(int blockID) {
+	NiTimeController::notifyBlockDelete(blockID);
+
+	if (generationInterpRef == blockID)
+		generationInterpRef = 0xFFFFFFFF;
+	else if (generationInterpRef > blockID)
+		generationInterpRef--;
+
+	if (mutationInterpRef == blockID)
+		mutationInterpRef = 0xFFFFFFFF;
+	else if (mutationInterpRef > blockID)
+		mutationInterpRef--;
+
+	if (subdivisionInterpRef == blockID)
+		subdivisionInterpRef = 0xFFFFFFFF;
+	else if (subdivisionInterpRef > blockID)
+		subdivisionInterpRef--;
+
+	if (numBranchesInterpRef == blockID)
+		numBranchesInterpRef = 0xFFFFFFFF;
+	else if (numBranchesInterpRef > blockID)
+		numBranchesInterpRef--;
+
+	if (numBranchesVarInterpRef == blockID)
+		numBranchesVarInterpRef = 0xFFFFFFFF;
+	else if (numBranchesVarInterpRef > blockID)
+		numBranchesVarInterpRef--;
+
+	if (lengthInterpRef == blockID)
+		lengthInterpRef = 0xFFFFFFFF;
+	else if (lengthInterpRef > blockID)
+		lengthInterpRef--;
+
+	if (lengthVarInterpRef == blockID)
+		lengthVarInterpRef = 0xFFFFFFFF;
+	else if (lengthVarInterpRef > blockID)
+		lengthVarInterpRef--;
+
+	if (widthInterpRef == blockID)
+		widthInterpRef = 0xFFFFFFFF;
+	else if (widthInterpRef > blockID)
+		widthInterpRef--;
+
+	if (arcOffsetInterpRef == blockID)
+		arcOffsetInterpRef = 0xFFFFFFFF;
+	else if (arcOffsetInterpRef > blockID)
+		arcOffsetInterpRef--;
+
+	if (shaderPropertyRef == blockID)
+		shaderPropertyRef = 0xFFFFFFFF;
+	else if (shaderPropertyRef > blockID)
+		shaderPropertyRef--;
+}
+
+void BSProceduralLightningController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiTimeController::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (generationInterpRef == blockIndexLo)
+		generationInterpRef = blockIndexHi;
+	else if (generationInterpRef == blockIndexHi)
+		generationInterpRef = blockIndexLo;
+
+	if (mutationInterpRef == blockIndexLo)
+		mutationInterpRef = blockIndexHi;
+	else if (mutationInterpRef == blockIndexHi)
+		mutationInterpRef = blockIndexLo;
+
+	if (subdivisionInterpRef == blockIndexLo)
+		subdivisionInterpRef = blockIndexHi;
+	else if (subdivisionInterpRef == blockIndexHi)
+		subdivisionInterpRef = blockIndexLo;
+
+	if (numBranchesInterpRef == blockIndexLo)
+		numBranchesInterpRef = blockIndexHi;
+	else if (numBranchesInterpRef == blockIndexHi)
+		numBranchesInterpRef = blockIndexLo;
+
+	if (numBranchesVarInterpRef == blockIndexLo)
+		numBranchesVarInterpRef = blockIndexHi;
+	else if (numBranchesVarInterpRef == blockIndexHi)
+		numBranchesVarInterpRef = blockIndexLo;
+
+	if (lengthInterpRef == blockIndexLo)
+		lengthInterpRef = blockIndexHi;
+	else if (lengthInterpRef == blockIndexHi)
+		lengthInterpRef = blockIndexLo;
+
+	if (lengthVarInterpRef == blockIndexLo)
+		lengthVarInterpRef = blockIndexHi;
+	else if (lengthVarInterpRef == blockIndexHi)
+		lengthVarInterpRef = blockIndexLo;
+
+	if (widthInterpRef == blockIndexLo)
+		widthInterpRef = blockIndexHi;
+	else if (widthInterpRef == blockIndexHi)
+		widthInterpRef = blockIndexLo;
+
+	if (arcOffsetInterpRef == blockIndexLo)
+		arcOffsetInterpRef = blockIndexHi;
+	else if (arcOffsetInterpRef == blockIndexHi)
+		arcOffsetInterpRef = blockIndexLo;
+
+	if (shaderPropertyRef == blockIndexLo)
+		shaderPropertyRef = blockIndexHi;
+	else if (shaderPropertyRef == blockIndexHi)
+		shaderPropertyRef = blockIndexLo;
+}
+
+int BSProceduralLightningController::CalcBlockSize() {
+	NiTimeController::CalcBlockSize();
+
+	blockSize += 69;
+
+	return blockSize;
+}
+
+
+NiBoneLODController::NiBoneLODController(NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = NIBONELODCONTROLLER;
+
+	numLODs = 0;
+	boneArraysSize = 0;
+}
+
+NiBoneLODController::NiBoneLODController(fstream& file, NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = NIBONELODCONTROLLER;
+
+	Get(file);
+}
+
+void NiBoneLODController::Get(fstream& file) {
+	NiTimeController::Get(file);
+
+	file.read((char*)&lod, 4);
+	file.read((char*)&numLODs, 4);
+
+	file.read((char*)&boneArraysSize, 4);
+	boneArrays.resize(boneArraysSize);
+	for (int i = 0; i < boneArraysSize; i++) {
+		file.read((char*)&boneArrays[i].nodeSetSize, 4);
+		boneArrays[i].nodeRefs.resize(boneArrays[i].nodeSetSize);
+		for (int j = 0; j < boneArrays[i].nodeSetSize; j++)
+			file.read((char*)&boneArrays[i].nodeRefs[j], 4);
+	}
+}
+
+void NiBoneLODController::Put(fstream& file) {
+	NiTimeController::Put(file);
+
+	file.write((char*)&lod, 4);
+	file.write((char*)&numLODs, 4);
+
+	file.write((char*)&boneArraysSize, 4);
+	for (int i = 0; i < boneArraysSize; i++) {
+		file.write((char*)&boneArrays[i].nodeSetSize, 4);
+		for (int j = 0; j < boneArrays[i].nodeSetSize; j++)
+			file.write((char*)&boneArrays[i].nodeRefs[j], 4);
+	}
+}
+
+void NiBoneLODController::notifyBlockDelete(int blockID) {
+	NiTimeController::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < boneArraysSize; i++) {
+		for (int j = 0; j < boneArrays[i].nodeSetSize; j++) {
+			if (boneArrays[i].nodeRefs[j] == blockID) {
+				boneArrays[i].nodeRefs.erase(boneArrays[i].nodeRefs.begin() + j);
+				j--;
+				boneArrays[i].nodeSetSize--;
+			}
+			else if (boneArrays[i].nodeRefs[j] > blockID)
+				boneArrays[i].nodeRefs[j]--;
+		}
+
+		if (boneArrays[i].nodeSetSize == 0) {
+			boneArrays.erase(boneArrays.begin() + i);
+			i--;
+			boneArraysSize--;
+		}
+	}
+}
+
+void NiBoneLODController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiTimeController::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < boneArraysSize; i++) {
+		for (int j = 0; j < boneArrays[i].nodeSetSize; j++) {
+			if (boneArrays[i].nodeRefs[j] == blockIndexLo)
+				boneArrays[i].nodeRefs[j] = blockIndexHi;
+			else if (boneArrays[i].nodeRefs[j] == blockIndexHi)
+				boneArrays[i].nodeRefs[j] = blockIndexLo;
+		}
+	}
+}
+
+int NiBoneLODController::CalcBlockSize() {
+	NiTimeController::CalcBlockSize();
+
+	blockSize += 12;
+	blockSize += boneArraysSize * 4;
+	for (int i = 0; i < boneArraysSize; i++)
+		blockSize += boneArrays[i].nodeSetSize * 4;
+
+	return blockSize;
 }
 
 
@@ -4825,28 +8364,143 @@ int NiSingleInterpController::CalcBlockSize() {
 }
 
 
-void NiFloatInterpController::Init() {
+NiFloatExtraDataController::NiFloatExtraDataController(NiHeader& hdr) {
+	NiExtraDataController::Init();
+
+	header = &hdr;
+	blockType = NIFLOATEXTRADATACONTROLLER;
+
+	extraDataRef = 0xFFFFFFFF;
+}
+
+NiFloatExtraDataController::NiFloatExtraDataController(fstream &file, NiHeader& hdr) {
+	NiExtraDataController::Init();
+
+	header = &hdr;
+	blockType = NIFLOATEXTRADATACONTROLLER;
+
+	Get(file);
+}
+
+NiFloatExtraDataController::~NiFloatExtraDataController() {
+	header->RemoveStringRef(extraDataRef);
+}
+
+void NiFloatExtraDataController::Get(fstream& file) {
+	NiExtraDataController::Get(file);
+
+	file.read((char*)&extraDataRef, 4);
+	if (extraDataRef != 0xFFFFFFFF) {
+		extraData = header->GetStringById(extraDataRef);
+		header->AddStringRef(extraDataRef);
+	}
+}
+
+void NiFloatExtraDataController::Put(fstream& file) {
+	NiExtraDataController::Put(file);
+
+	file.write((char*)&extraDataRef, 4);
+}
+
+void NiFloatExtraDataController::notifyStringDelete(int stringID) {
+	NiExtraDataController::notifyStringDelete(stringID);
+
+	if (extraDataRef != 0xFFFFFFFF && extraDataRef > stringID)
+		extraDataRef--;
+}
+
+int NiFloatExtraDataController::CalcBlockSize() {
+	NiExtraDataController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiVisController::NiVisController(NiHeader& hdr) {
+	NiBoolInterpController::Init();
+
+	header = &hdr;
+	blockType = NIVISCONTROLLER;
+}
+
+NiVisController::NiVisController(fstream &file, NiHeader& hdr) {
+	NiBoolInterpController::Init();
+
+	header = &hdr;
+	blockType = NIVISCONTROLLER;
+
+	Get(file);
+}
+
+
+NiAlphaController::NiAlphaController(NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = NIALPHACONTROLLER;
+}
+
+NiAlphaController::NiAlphaController(fstream &file, NiHeader& hdr) {
+	NiFloatInterpController::Init();
+
+	header = &hdr;
+	blockType = NIALPHACONTROLLER;
+
+	Get(file);
+}
+
+
+NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = NIPSYSUPDATECTLR;
+}
+
+NiPSysUpdateCtlr::NiPSysUpdateCtlr(fstream& file, NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = NIPSYSUPDATECTLR;
+
+	Get(file);
+}
+
+
+BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiHeader& hdr) : NiAlphaController(hdr) {
+	blockType = BSNIALPHAPROPERTYTESTREFCONTROLLER;
+}
+
+BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(fstream &file, NiHeader& hdr) : NiAlphaController(file, hdr) {
+	blockType = BSNIALPHAPROPERTYTESTREFCONTROLLER;
+}
+
+
+NiKeyframeController::NiKeyframeController(NiHeader& hdr) {
 	NiSingleInterpController::Init();
+
+	header = &hdr;
+	blockType = NIKEYFRAMECONTROLLER;
 }
 
-void NiFloatInterpController::Get(fstream& file) {
-	NiSingleInterpController::Get(file);
+NiKeyframeController::NiKeyframeController(fstream &file, NiHeader& hdr) {
+	NiSingleInterpController::Init();
+
+	header = &hdr;
+	blockType = NIKEYFRAMECONTROLLER;
+
+	Get(file);
 }
 
-void NiFloatInterpController::Put(fstream& file) {
-	NiSingleInterpController::Put(file);
+
+NiTransformController::NiTransformController(NiHeader& hdr) : NiKeyframeController(hdr) {
+	blockType = NITRANSFORMCONTROLLER;
 }
 
-void NiFloatInterpController::notifyBlockDelete(int blockID) {
-	NiSingleInterpController::notifyBlockDelete(blockID);
-}
-
-void NiFloatInterpController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiSingleInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-int NiFloatInterpController::CalcBlockSize() {
-	return NiSingleInterpController::CalcBlockSize();
+NiTransformController::NiTransformController(fstream &file, NiHeader& hdr) : NiKeyframeController(file, hdr) {
+	blockType = NITRANSFORMCONTROLLER;
 }
 
 
@@ -4880,14 +8534,6 @@ void BSLightingShaderPropertyColorController::Put(fstream& file) {
 	file.write((char*)&typeOfControlledColor, 4);
 }
 
-void BSLightingShaderPropertyColorController::notifyBlockDelete(int blockID) {
-	NiFloatInterpController::notifyBlockDelete(blockID);
-}
-
-void BSLightingShaderPropertyColorController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
 int BSLightingShaderPropertyColorController::CalcBlockSize() {
 	NiFloatInterpController::CalcBlockSize();
 
@@ -4902,6 +8548,7 @@ BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController
 
 	header = &hdr;
 	blockType = BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER;
+
 	typeOfControlledVariable = 0;
 }
 
@@ -4924,14 +8571,6 @@ void BSLightingShaderPropertyFloatController::Put(fstream& file) {
 	NiFloatInterpController::Put(file);
 
 	file.write((char*)&typeOfControlledVariable, 4);
-}
-
-void BSLightingShaderPropertyFloatController::notifyBlockDelete(int blockID) {
-	NiFloatInterpController::notifyBlockDelete(blockID);
-}
-
-void BSLightingShaderPropertyFloatController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
 int BSLightingShaderPropertyFloatController::CalcBlockSize() {
@@ -4973,14 +8612,6 @@ void BSEffectShaderPropertyColorController::Put(fstream& file) {
 	file.write((char*)&typeOfControlledColor, 4);
 }
 
-void BSEffectShaderPropertyColorController::notifyBlockDelete(int blockID) {
-	NiFloatInterpController::notifyBlockDelete(blockID);
-}
-
-void BSEffectShaderPropertyColorController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
 int BSEffectShaderPropertyColorController::CalcBlockSize() {
 	NiFloatInterpController::CalcBlockSize();
 
@@ -4995,6 +8626,7 @@ BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiH
 
 	header = &hdr;
 	blockType = BSEFFECTSHADERPROPERTYFLOATCONTROLLER;
+
 	typeOfControlledVariable = 0;
 }
 
@@ -5019,14 +8651,6 @@ void BSEffectShaderPropertyFloatController::Put(fstream& file) {
 	file.write((char*)&typeOfControlledVariable, 4);
 }
 
-void BSEffectShaderPropertyFloatController::notifyBlockDelete(int blockID) {
-	NiFloatInterpController::notifyBlockDelete(blockID);
-}
-
-void BSEffectShaderPropertyFloatController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiFloatInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
 int BSEffectShaderPropertyFloatController::CalcBlockSize() {
 	NiFloatInterpController::CalcBlockSize();
 
@@ -5036,19 +8660,806 @@ int BSEffectShaderPropertyFloatController::CalcBlockSize() {
 }
 
 
-void NiShader::Get(fstream& file) {
+NiMultiTargetTransformController::NiMultiTargetTransformController(NiHeader& hdr) {
+	NiInterpController::Init();
+
+	header = &hdr;
+	blockType = NIMULTITARGETTRANSFORMCONTROLLER;
+
+	numTargets = 0;
 }
 
-void NiShader::Put(fstream& file) {
+NiMultiTargetTransformController::NiMultiTargetTransformController(fstream& file, NiHeader& hdr) {
+	NiInterpController::Init();
+
+	header = &hdr;
+	blockType = NIMULTITARGETTRANSFORMCONTROLLER;
+
+	Get(file);
 }
 
-void NiShader::notifyBlockDelete(int blockID) {
+void NiMultiTargetTransformController::Get(fstream& file) {
+	NiInterpController::Get(file);
+
+	file.read((char*)&numTargets, 2);
+	targets.resize(numTargets);
+	for (int i = 0; i < numTargets; i++)
+		file.read((char*)&targets[i], 4);
 }
 
-void NiShader::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+void NiMultiTargetTransformController::Put(fstream& file) {
+	NiInterpController::Put(file);
+
+	file.write((char*)&numTargets, 2);
+	for (int i = 0; i < numTargets; i++)
+		file.write((char*)&targets[i], 4);
 }
 
-void NiShader::notifyStringDelete(int stringID) {
+void NiMultiTargetTransformController::notifyBlockDelete(int blockID) {
+	NiInterpController::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numTargets; i++) {
+		if (targets[i] == blockID) {
+			targets.erase(targets.begin() + i);
+			i--;
+			numTargets--;
+		}
+		else if (targets[i] > blockID)
+			targets[i]--;
+	}
+}
+
+void NiMultiTargetTransformController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiInterpController::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numTargets; i++) {
+		if (targets[i] == blockIndexLo)
+			targets[i] = blockIndexHi;
+		else if (targets[i] == blockIndexHi)
+			targets[i] = blockIndexLo;
+	}
+}
+
+int NiMultiTargetTransformController::CalcBlockSize() {
+	NiInterpController::CalcBlockSize();
+
+	blockSize += 2;
+	blockSize += numTargets * 4;
+
+	return blockSize;
+}
+
+
+NiPSysModifierCtlr::~NiPSysModifierCtlr() {
+	header->RemoveStringRef(modifierNameRef);
+}
+
+void NiPSysModifierCtlr::Init() {
+	NiSingleInterpController::Init();
+
+	modifierNameRef = 0xFFFFFFFF;
+	modifierName.clear();
+}
+
+void NiPSysModifierCtlr::Get(fstream& file) {
+	NiSingleInterpController::Get(file);
+
+	file.read((char*)&modifierNameRef, 4);
+	if (modifierNameRef != 0xFFFFFFFF) {
+		modifierName = header->GetStringById(modifierNameRef);
+		header->AddStringRef(modifierNameRef);
+	}
+	else
+		modifierName.clear();
+}
+
+void NiPSysModifierCtlr::Put(fstream& file) {
+	NiSingleInterpController::Put(file);
+
+	file.write((char*)&modifierNameRef, 4);
+}
+
+void NiPSysModifierCtlr::notifyStringDelete(int stringID) {
+	NiSingleInterpController::notifyStringDelete(stringID);
+
+	if (modifierNameRef != 0xFFFFFFFF && modifierNameRef > stringID)
+		modifierNameRef--;
+}
+
+int NiPSysModifierCtlr::CalcBlockSize() {
+	NiSingleInterpController::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSMODIFIERACTIVECTLR;
+}
+
+NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSMODIFIERACTIVECTLR;
+
+	Get(file);
+}
+
+
+NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERLIFESPANCTLR;
+}
+
+NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERLIFESPANCTLR;
+
+	Get(file);
+}
+
+
+NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERSPEEDCTLR;
+}
+
+NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERSPEEDCTLR;
+
+	Get(file);
+}
+
+
+NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERINITIALRADIUSCTLR;
+}
+
+NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERINITIALRADIUSCTLR;
+
+	Get(file);
+}
+
+
+NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERPLANARANGLECTLR;
+}
+
+NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERPLANARANGLECTLR;
+
+	Get(file);
+}
+
+
+NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERDECLINATIONCTLR;
+}
+
+NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERDECLINATIONCTLR;
+
+	Get(file);
+}
+
+
+NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSGRAVITYSTRENGTHCTLR;
+}
+
+NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSGRAVITYSTRENGTHCTLR;
+
+	Get(file);
+}
+
+
+NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSINITIALROTSPEEDCTLR;
+}
+
+NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSINITIALROTSPEEDCTLR;
+
+	Get(file);
+}
+
+
+NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERCTLR;
+
+	visInterpolatorRef = 0xFFFFFFFF;
+}
+
+NiPSysEmitterCtlr::NiPSysEmitterCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSEMITTERCTLR;
+
+	Get(file);
+}
+
+void NiPSysEmitterCtlr::Get(fstream& file) {
+	NiPSysModifierCtlr::Get(file);
+
+	file.read((char*)&visInterpolatorRef, 4);
+}
+
+void NiPSysEmitterCtlr::Put(fstream& file) {
+	NiPSysModifierCtlr::Put(file);
+
+	file.write((char*)&visInterpolatorRef, 4);
+}
+
+void NiPSysEmitterCtlr::notifyBlockDelete(int blockID) {
+	NiPSysModifierCtlr::notifyBlockDelete(blockID);
+
+	if (visInterpolatorRef == blockID)
+		visInterpolatorRef = 0xFFFFFFFF;
+	else if (visInterpolatorRef > blockID)
+		visInterpolatorRef--;
+}
+
+void NiPSysEmitterCtlr::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifierCtlr::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (visInterpolatorRef == blockIndexLo)
+		visInterpolatorRef = blockIndexHi;
+	else if (visInterpolatorRef == blockIndexHi)
+		visInterpolatorRef = blockIndexLo;
+}
+
+int NiPSysEmitterCtlr::CalcBlockSize() {
+	NiPSysModifierCtlr::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSMULTITARGETEMITTERCTLR;
+
+	masterParticleSystemRef = 0xFFFFFFFF;
+}
+
+NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(fstream& file, NiHeader& hdr) {
+	NiPSysModifierCtlr::Init();
+
+	header = &hdr;
+	blockType = NIPSYSMULTITARGETEMITTERCTLR;
+
+	Get(file);
+}
+
+void NiPSysMultiTargetEmitterCtlr::Get(fstream& file) {
+	NiPSysModifierCtlr::Get(file);
+
+	file.read((char*)&maxEmitters, 2);
+	file.read((char*)&masterParticleSystemRef, 4);
+}
+
+void NiPSysMultiTargetEmitterCtlr::Put(fstream& file) {
+	NiPSysModifierCtlr::Put(file);
+
+	file.write((char*)&maxEmitters, 2);
+	file.write((char*)&masterParticleSystemRef, 4);
+}
+
+void NiPSysMultiTargetEmitterCtlr::notifyBlockDelete(int blockID) {
+	NiPSysModifierCtlr::notifyBlockDelete(blockID);
+
+	if (masterParticleSystemRef == blockID)
+		masterParticleSystemRef = 0xFFFFFFFF;
+	else if (masterParticleSystemRef > blockID)
+		masterParticleSystemRef--;
+}
+
+void NiPSysMultiTargetEmitterCtlr::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiPSysModifierCtlr::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (masterParticleSystemRef == blockIndexLo)
+		masterParticleSystemRef = blockIndexHi;
+	else if (masterParticleSystemRef == blockIndexHi)
+		masterParticleSystemRef = blockIndexLo;
+}
+
+int NiPSysMultiTargetEmitterCtlr::CalcBlockSize() {
+	NiPSysModifierCtlr::CalcBlockSize();
+
+	blockSize += 6;
+
+	return blockSize;
+}
+
+
+NiControllerManager::NiControllerManager(NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = NICONTROLLERMANAGER;
+
+	numControllerSequences = 0;
+	objectPaletteRef = 0xFFFFFFFF;
+}
+
+NiControllerManager::NiControllerManager(fstream& file, NiHeader& hdr) {
+	NiTimeController::Init();
+
+	header = &hdr;
+	blockType = NICONTROLLERMANAGER;
+
+	Get(file);
+}
+
+void NiControllerManager::Get(fstream& file) {
+	NiTimeController::Get(file);
+
+	file.read((char*)&cumulative, 1);
+
+	file.read((char*)&numControllerSequences, 4);
+	controllerSequenceRefs.resize(numControllerSequences);
+	for (int i = 0; i < numControllerSequences; i++)
+		file.read((char*)&controllerSequenceRefs[i], 4);
+
+	file.read((char*)&objectPaletteRef, 4);
+}
+
+void NiControllerManager::Put(fstream& file) {
+	NiTimeController::Put(file);
+
+	file.write((char*)&cumulative, 1);
+
+	file.write((char*)&numControllerSequences, 4);
+	for (int i = 0; i < numControllerSequences; i++)
+		file.write((char*)&controllerSequenceRefs[i], 4);
+
+	file.write((char*)&objectPaletteRef, 4);
+}
+
+void NiControllerManager::notifyBlockDelete(int blockID) {
+	NiTimeController::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numControllerSequences; i++) {
+		if (controllerSequenceRefs[i] == blockID) {
+			controllerSequenceRefs.erase(controllerSequenceRefs.begin() + i);
+			i--;
+			numControllerSequences--;
+		}
+		else if (controllerSequenceRefs[i] > blockID)
+			controllerSequenceRefs[i]--;
+	}
+
+	if (objectPaletteRef == blockID)
+		objectPaletteRef = 0xFFFFFFFF;
+	else if (objectPaletteRef > blockID)
+		objectPaletteRef--;
+}
+
+void NiControllerManager::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiTimeController::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numControllerSequences; i++) {
+		if (controllerSequenceRefs[i] == blockIndexLo)
+			controllerSequenceRefs[i] = blockIndexHi;
+		else if (controllerSequenceRefs[i] == blockIndexHi)
+			controllerSequenceRefs[i] = blockIndexLo;
+	}
+
+	if (objectPaletteRef == blockIndexLo)
+		objectPaletteRef = blockIndexHi;
+	else if (objectPaletteRef == blockIndexHi)
+		objectPaletteRef = blockIndexLo;
+}
+
+int NiControllerManager::CalcBlockSize() {
+	NiTimeController::CalcBlockSize();
+
+	blockSize += 9;
+	blockSize += numControllerSequences * 4;
+
+	return blockSize;
+}
+
+
+NiSequence::NiSequence(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NISEQUENCE;
+
+	nameRef = 0xFFFFFFFF;
+	numControlledBlocks = 0;
+}
+
+NiSequence::NiSequence(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = NISEQUENCE;
+
+	Get(file);
+}
+
+NiSequence::~NiSequence() {
+	header->RemoveStringRef(nameRef);
+	for (int i = 0; i < numControlledBlocks; i++) {
+		header->RemoveStringRef(controlledBlocks[i].nodeNameRef);
+		header->RemoveStringRef(controlledBlocks[i].propTypeRef);
+		header->RemoveStringRef(controlledBlocks[i].ctrlTypeRef);
+		header->RemoveStringRef(controlledBlocks[i].ctrlIDRef);
+		header->RemoveStringRef(controlledBlocks[i].interpIDRef);
+	}
+}
+
+void NiSequence::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&nameRef, 4);
+	if (nameRef != 0xFFFFFFFF) {
+		name = header->GetStringById(nameRef);
+		header->AddStringRef(nameRef);
+	}
+
+	file.read((char*)&numControlledBlocks, 4);
+	file.read((char*)&unkInt1, 4);
+
+	controlledBlocks.resize(numControlledBlocks);
+	for (int i = 0; i < numControlledBlocks; i++) {
+		file.read((char*)&controlledBlocks[i].interpolatorRef, 4);
+		file.read((char*)&controlledBlocks[i].controllerRef, 4);
+		file.read((char*)&controlledBlocks[i].priority, 1);
+
+		file.read((char*)&controlledBlocks[i].nodeNameRef, 4);
+		if (controlledBlocks[i].nodeNameRef != 0xFFFFFFFF) {
+			controlledBlocks[i].nodeName = header->GetStringById(controlledBlocks[i].nodeNameRef);
+			header->AddStringRef(controlledBlocks[i].nodeNameRef);
+		}
+
+		file.read((char*)&controlledBlocks[i].propTypeRef, 4);
+		if (controlledBlocks[i].propTypeRef != 0xFFFFFFFF) {
+			controlledBlocks[i].propType = header->GetStringById(controlledBlocks[i].propTypeRef);
+			header->AddStringRef(controlledBlocks[i].propTypeRef);
+		}
+
+		file.read((char*)&controlledBlocks[i].ctrlTypeRef, 4);
+		if (controlledBlocks[i].ctrlTypeRef != 0xFFFFFFFF) {
+			controlledBlocks[i].ctrlType = header->GetStringById(controlledBlocks[i].ctrlTypeRef);
+			header->AddStringRef(controlledBlocks[i].ctrlTypeRef);
+		}
+
+		file.read((char*)&controlledBlocks[i].ctrlIDRef, 4);
+		if (controlledBlocks[i].ctrlIDRef != 0xFFFFFFFF) {
+			controlledBlocks[i].ctrlID = header->GetStringById(controlledBlocks[i].ctrlIDRef);
+			header->AddStringRef(controlledBlocks[i].ctrlIDRef);
+		}
+
+		file.read((char*)&controlledBlocks[i].interpIDRef, 4);
+		if (controlledBlocks[i].interpIDRef != 0xFFFFFFFF) {
+			controlledBlocks[i].interpID = header->GetStringById(controlledBlocks[i].interpIDRef);
+			header->AddStringRef(controlledBlocks[i].interpIDRef);
+		}
+	}
+}
+
+void NiSequence::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&nameRef, 4);
+	file.write((char*)&numControlledBlocks, 4);
+	file.write((char*)&unkInt1, 4);
+
+	for (int i = 0; i < numControlledBlocks; i++) {
+		file.write((char*)&controlledBlocks[i].interpolatorRef, 4);
+		file.write((char*)&controlledBlocks[i].controllerRef, 4);
+		file.write((char*)&controlledBlocks[i].priority, 1);
+		file.write((char*)&controlledBlocks[i].nodeNameRef, 4);
+		file.write((char*)&controlledBlocks[i].propTypeRef, 4);
+		file.write((char*)&controlledBlocks[i].ctrlTypeRef, 4);
+		file.write((char*)&controlledBlocks[i].ctrlIDRef, 4);
+		file.write((char*)&controlledBlocks[i].interpIDRef, 4);
+	}
+}
+
+void NiSequence::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numControlledBlocks; i++) {
+		if (controlledBlocks[i].interpolatorRef == blockID)
+			controlledBlocks[i].interpolatorRef = 0xFFFFFFFF;
+		else if (controlledBlocks[i].interpolatorRef > blockID)
+			controlledBlocks[i].interpolatorRef--;
+
+		if (controlledBlocks[i].controllerRef == blockID)
+			controlledBlocks[i].controllerRef = 0xFFFFFFFF;
+		else if (controlledBlocks[i].controllerRef > blockID)
+			controlledBlocks[i].controllerRef--;
+	}
+}
+
+void NiSequence::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numControlledBlocks; i++) {
+		if (controlledBlocks[i].interpolatorRef == blockIndexLo)
+			controlledBlocks[i].interpolatorRef = blockIndexHi;
+		else if (controlledBlocks[i].interpolatorRef == blockIndexHi)
+			controlledBlocks[i].interpolatorRef = blockIndexLo;
+
+		if (controlledBlocks[i].controllerRef == blockIndexLo)
+			controlledBlocks[i].controllerRef = blockIndexHi;
+		else if (controlledBlocks[i].controllerRef == blockIndexHi)
+			controlledBlocks[i].controllerRef = blockIndexLo;
+	}
+}
+
+void NiSequence::notifyStringDelete(int stringID) {
+	NiObject::notifyStringDelete(stringID);
+
+	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
+		nameRef--;
+
+	for (int i = 0; i < numControlledBlocks; i++) {
+		if (controlledBlocks[i].nodeNameRef != 0xFFFFFFFF && controlledBlocks[i].nodeNameRef > stringID)
+			controlledBlocks[i].nodeNameRef--;
+
+		if (controlledBlocks[i].propTypeRef != 0xFFFFFFFF && controlledBlocks[i].propTypeRef > stringID)
+			controlledBlocks[i].propTypeRef--;
+
+		if (controlledBlocks[i].ctrlTypeRef != 0xFFFFFFFF && controlledBlocks[i].ctrlTypeRef > stringID)
+			controlledBlocks[i].ctrlTypeRef--;
+
+		if (controlledBlocks[i].ctrlIDRef != 0xFFFFFFFF && controlledBlocks[i].ctrlIDRef > stringID)
+			controlledBlocks[i].ctrlIDRef--;
+
+		if (controlledBlocks[i].interpIDRef != 0xFFFFFFFF && controlledBlocks[i].interpIDRef > stringID)
+			controlledBlocks[i].interpIDRef--;
+	}
+}
+
+int NiSequence::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 12;
+	blockSize += numControlledBlocks * 29;
+
+	return blockSize;
+}
+
+
+NiControllerSequence::NiControllerSequence(NiHeader& hdr) : NiSequence(hdr) {
+	blockType = NICONTROLLERSEQUENCE;
+
+	textKeyRef = 0xFFFFFFFF;
+	managerRef = 0xFFFFFFFF;
+	accumRootNameRef = 0xFFFFFFFF;
+}
+
+NiControllerSequence::NiControllerSequence(fstream& file, NiHeader& hdr) : NiSequence(file, hdr) {
+	blockType = NICONTROLLERSEQUENCE;
+	Get(file);
+}
+
+NiControllerSequence::~NiControllerSequence() {
+	header->RemoveStringRef(accumRootNameRef);
+}
+
+void NiControllerSequence::Get(fstream& file) {
+	file.read((char*)&weight, 4);
+	file.read((char*)&textKeyRef, 4);
+	file.read((char*)&cycleType, 4);
+	file.read((char*)&frequency, 4);
+	file.read((char*)&startTime, 4);
+	file.read((char*)&stopTime, 4);
+	file.read((char*)&managerRef, 4);
+
+	file.read((char*)&accumRootNameRef, 4);
+	if (accumRootNameRef != 0xFFFFFFFF) {
+		accumRootName = header->GetStringById(accumRootNameRef);
+		header->AddStringRef(accumRootNameRef);
+	}
+
+	file.read((char*)&flags, 2);
+}
+
+void NiControllerSequence::Put(fstream& file) {
+	NiSequence::Put(file);
+
+	file.write((char*)&weight, 4);
+	file.write((char*)&textKeyRef, 4);
+	file.write((char*)&cycleType, 4);
+	file.write((char*)&frequency, 4);
+	file.write((char*)&startTime, 4);
+	file.write((char*)&stopTime, 4);
+	file.write((char*)&managerRef, 4);
+	file.write((char*)&accumRootNameRef, 4);
+	file.write((char*)&flags, 2);
+}
+
+void NiControllerSequence::notifyBlockDelete(int blockID) {
+	NiSequence::notifyBlockDelete(blockID);
+
+	if (textKeyRef == blockID)
+		textKeyRef = 0xFFFFFFFF;
+	else if (textKeyRef > blockID)
+		textKeyRef--;
+
+	if (managerRef == blockID)
+		managerRef = 0xFFFFFFFF;
+	else if (managerRef > blockID)
+		managerRef--;
+}
+
+void NiControllerSequence::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiSequence::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (textKeyRef == blockIndexLo)
+		textKeyRef = blockIndexHi;
+	else if (textKeyRef == blockIndexHi)
+		textKeyRef = blockIndexLo;
+
+	if (managerRef == blockIndexLo)
+		managerRef = blockIndexHi;
+	else if (managerRef == blockIndexHi)
+		managerRef = blockIndexLo;
+}
+
+void NiControllerSequence::notifyStringDelete(int stringID) {
+	NiSequence::notifyStringDelete(stringID);
+
+	if (accumRootNameRef != 0xFFFFFFFF && accumRootNameRef > stringID)
+		accumRootNameRef--;
+}
+
+int NiControllerSequence::CalcBlockSize() {
+	NiSequence::CalcBlockSize();
+
+	blockSize += 34;
+
+	return blockSize;
+}
+
+
+NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiHeader& hdr) {
+	NiAVObjectPalette::Init();
+
+	header = &hdr;
+	blockType = NIDEFAULTAVOBJECTPALETTE;
+
+	sceneRef = 0xFFFFFFFF;
+	numObjects = 0;
+}
+
+NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(fstream& file, NiHeader& hdr) {
+	NiAVObjectPalette::Init();
+
+	header = &hdr;
+	blockType = NIDEFAULTAVOBJECTPALETTE;
+
+	Get(file);
+}
+
+void NiDefaultAVObjectPalette::Get(fstream& file) {
+	NiAVObjectPalette::Get(file);
+
+	file.read((char*)&sceneRef, 4);
+
+	file.read((char*)&numObjects, 4);
+	objects.resize(numObjects);
+	for (int i = 0; i < numObjects; i++) {
+		objects[i].name.Get(file, 4);
+		file.read((char*)&objects[i].objectRef, 4);
+	}
+}
+
+void NiDefaultAVObjectPalette::Put(fstream& file) {
+	NiAVObjectPalette::Put(file);
+
+	file.write((char*)&sceneRef, 4);
+
+	file.write((char*)&numObjects, 4);
+	for (int i = 0; i < numObjects; i++) {
+		objects[i].name.Put(file, 4, false);
+		file.write((char*)&objects[i].objectRef, 4);
+	}
+}
+
+void NiDefaultAVObjectPalette::notifyBlockDelete(int blockID) {
+	NiAVObjectPalette::notifyBlockDelete(blockID);
+
+	if (sceneRef == blockID)
+		sceneRef = 0xFFFFFFFF;
+	else if (sceneRef > blockID)
+		sceneRef--;
+
+	for (int i = 0; i < numObjects; i++) {
+		if (objects[i].objectRef == blockID)
+			objects[i].objectRef = 0xFFFFFFFF;
+		else if (objects[i].objectRef > blockID)
+			objects[i].objectRef--;
+	}
+}
+
+void NiDefaultAVObjectPalette::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiAVObjectPalette::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (sceneRef == blockIndexLo)
+		sceneRef = blockIndexHi;
+	else if (sceneRef == blockIndexHi)
+		sceneRef = blockIndexLo;
+
+	for (int i = 0; i < numObjects; i++) {
+		if (objects[i].objectRef == blockIndexLo)
+			objects[i].objectRef = blockIndexHi;
+		else if (objects[i].objectRef == blockIndexHi)
+			objects[i].objectRef = blockIndexLo;
+	}
+}
+
+int NiDefaultAVObjectPalette::CalcBlockSize() {
+	NiAVObjectPalette::CalcBlockSize();
+
+	blockSize += 8;
+	blockSize += numObjects * 8;
+
+	for (int i = 0; i < numObjects; i++)
+		blockSize += objects[i].name.GetLength();
+
+	return blockSize;
 }
 
 
@@ -5121,10 +9532,6 @@ string NiShader::GetWetMaterialName() {
 }
 
 void NiShader::SetWetMaterialName(const string& matName) {
-}
-
-int NiShader::CalcBlockSize() {
-	return blockSize;
 }
 
 
@@ -5646,18 +10053,6 @@ void BSShaderProperty::Put(fstream& file) {
 		file.write((char*)&environmentMapScale, 4);
 }
 
-void BSShaderProperty::notifyBlockDelete(int blockID) {
-	NiProperty::notifyBlockDelete(blockID);
-}
-
-void BSShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void BSShaderProperty::notifyStringDelete(int stringID) {
-	NiProperty::notifyStringDelete(stringID);
-}
-
 uint BSShaderProperty::GetType() {
 	return shaderType;
 }
@@ -5771,18 +10166,6 @@ void BSEffectShaderProperty::Put(fstream& file) {
 	}
 }
 
-void BSEffectShaderProperty::notifyBlockDelete(int blockID) {
-	NiProperty::notifyBlockDelete(blockID);
-}
-
-void BSEffectShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void BSEffectShaderProperty::notifyStringDelete(int stringID) {
-	NiProperty::notifyStringDelete(stringID);
-}
-
 bool BSEffectShaderProperty::IsSkinTint() {
 	return (shaderFlags1 & (1 << 21)) != 0;
 }
@@ -5836,6 +10219,161 @@ int BSEffectShaderProperty::CalcBlockSize() {
 }
 
 
+BSWaterShaderProperty::BSWaterShaderProperty(NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = BSWATERSHADERPROPERTY;
+
+	shaderFlags1 = 0;
+	shaderFlags2 = 0;
+	uvOffset.u = 0.0f;
+	uvOffset.v = 0.0f;
+	uvScale.u = 1.0f;
+	uvScale.v = 1.0f;
+	waterFlags = 0;
+}
+
+BSWaterShaderProperty::BSWaterShaderProperty(fstream& file, NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = BSWATERSHADERPROPERTY;
+
+	Get(file);
+}
+
+void BSWaterShaderProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	file.read((char*)&shaderFlags1, 4);
+	file.read((char*)&shaderFlags2, 4);
+	file.read((char*)&uvOffset.u, 4);
+	file.read((char*)&uvOffset.v, 4);
+	file.read((char*)&uvScale.u, 4);
+	file.read((char*)&uvScale.v, 4);
+	file.read((char*)&waterFlags, 4);
+}
+
+void BSWaterShaderProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	file.write((char*)&shaderFlags1, 4);
+	file.write((char*)&shaderFlags2, 4);
+	file.write((char*)&uvOffset.u, 4);
+	file.write((char*)&uvOffset.v, 4);
+	file.write((char*)&uvScale.u, 4);
+	file.write((char*)&uvScale.v, 4);
+	file.write((char*)&waterFlags, 4);
+}
+
+bool BSWaterShaderProperty::IsSkinTint() {
+	return (shaderFlags1 & (1 << 21)) != 0;
+}
+
+bool BSWaterShaderProperty::IsSkinned() {
+	return (shaderFlags1 & (1 << 1)) != 0;
+}
+
+void BSWaterShaderProperty::SetSkinned(const bool& enable) {
+	if (enable)
+		shaderFlags1 |= 1 << 1;
+	else
+		shaderFlags1 &= ~(1 << 1);
+}
+
+bool BSWaterShaderProperty::IsDoubleSided() {
+	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+int BSWaterShaderProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	blockSize += 28;
+
+	return blockSize;
+}
+
+
+BSSkyShaderProperty::BSSkyShaderProperty(NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = BSSKYSHADERPROPERTY;
+
+	shaderFlags1 = 0;
+	shaderFlags2 = 0;
+	uvOffset.u = 0.0f;
+	uvOffset.v = 0.0f;
+	uvScale.u = 1.0f;
+	uvScale.v = 1.0f;
+	skyFlags = 0;
+}
+
+BSSkyShaderProperty::BSSkyShaderProperty(fstream& file, NiHeader& hdr) {
+	NiProperty::Init();
+
+	header = &hdr;
+	blockType = BSSKYSHADERPROPERTY;
+
+	Get(file);
+}
+
+void BSSkyShaderProperty::Get(fstream& file) {
+	NiProperty::Get(file);
+
+	file.read((char*)&shaderFlags1, 4);
+	file.read((char*)&shaderFlags2, 4);
+	file.read((char*)&uvOffset.u, 4);
+	file.read((char*)&uvOffset.v, 4);
+	file.read((char*)&uvScale.u, 4);
+	file.read((char*)&uvScale.v, 4);
+	baseTexture.Get(file, 4);
+	file.read((char*)&skyFlags, 4);
+}
+
+void BSSkyShaderProperty::Put(fstream& file) {
+	NiProperty::Put(file);
+
+	file.write((char*)&shaderFlags1, 4);
+	file.write((char*)&shaderFlags2, 4);
+	file.write((char*)&uvOffset.u, 4);
+	file.write((char*)&uvOffset.v, 4);
+	file.write((char*)&uvScale.u, 4);
+	file.write((char*)&uvScale.v, 4);
+	baseTexture.Put(file, 4, false);
+	file.write((char*)&skyFlags, 4);
+}
+
+bool BSSkyShaderProperty::IsSkinTint() {
+	return (shaderFlags1 & (1 << 21)) != 0;
+}
+
+bool BSSkyShaderProperty::IsSkinned() {
+	return (shaderFlags1 & (1 << 1)) != 0;
+}
+
+void BSSkyShaderProperty::SetSkinned(const bool& enable) {
+	if (enable)
+		shaderFlags1 |= 1 << 1;
+	else
+		shaderFlags1 &= ~(1 << 1);
+}
+
+bool BSSkyShaderProperty::IsDoubleSided() {
+	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+int BSSkyShaderProperty::CalcBlockSize() {
+	NiProperty::CalcBlockSize();
+
+	blockSize += 32;
+	blockSize += baseTexture.GetLength();
+
+	return blockSize;
+}
+
+
 void BSShaderLightingProperty::Init() {
 	BSShaderProperty::Init();
 
@@ -5854,18 +10392,6 @@ void BSShaderLightingProperty::Put(fstream& file) {
 
 	if (header->GetUserVersion() <= 11)
 		file.write((char*)&textureClampMode, 4);
-}
-
-void BSShaderLightingProperty::notifyBlockDelete(int blockID) {
-	BSShaderProperty::notifyBlockDelete(blockID);
-}
-
-void BSShaderLightingProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	BSShaderProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void BSShaderLightingProperty::notifyStringDelete(int stringID) {
-	BSShaderProperty::notifyStringDelete(stringID);
 }
 
 int BSShaderLightingProperty::CalcBlockSize() {
@@ -5915,7 +10441,7 @@ void BSShaderPPLightingProperty::Get(fstream& file) {
 	BSShaderLightingProperty::Get(file);
 
 	file.read((char*)&textureSetRef, 4);
-	
+
 	if (header->GetUserVersion() == 11) {
 		file.read((char*)&refractionStrength, 4);
 		file.read((char*)&refractionFirePeriod, 4);
@@ -5967,10 +10493,6 @@ void BSShaderPPLightingProperty::notifyBlockSwap(int blockIndexLo, int blockInde
 		textureSetRef = blockIndexHi;
 	else if (textureSetRef == blockIndexHi)
 		textureSetRef = blockIndexLo;
-}
-
-void BSShaderPPLightingProperty::notifyStringDelete(int stringID) {
-	BSShaderLightingProperty::notifyStringDelete(stringID);
 }
 
 bool BSShaderPPLightingProperty::IsSkinTint() {
@@ -6036,7 +10558,7 @@ BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader& hdr) {
 
 	Get(file);
 }
-	
+
 void BSShaderTextureSet::Get(fstream& file) {
 	NiObject::Get(file);
 
@@ -6044,7 +10566,7 @@ void BSShaderTextureSet::Get(fstream& file) {
 	for (int i = 0; i < numTextures; i++)
 		textures.push_back(NiString(file, 4));
 }
-	
+
 void BSShaderTextureSet::Put(fstream& file) {
 	NiObject::Put(file);
 
@@ -6096,18 +10618,6 @@ void NiAlphaProperty::Put(fstream& file) {
 
 	file.write((char*)&flags, 2);
 	file.write((char*)&threshold, 1);
-}
-
-void NiAlphaProperty::notifyBlockDelete(int blockID) {
-	NiProperty::notifyBlockDelete(blockID);
-}
-
-void NiAlphaProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiAlphaProperty::notifyStringDelete(int stringID) {
-	NiProperty::notifyStringDelete(stringID);
 }
 
 int NiAlphaProperty::CalcBlockSize() {
@@ -6171,18 +10681,6 @@ void NiMaterialProperty::Put(fstream& file) {
 
 	if (header->VerCheck(20, 2, 0, 7, true) && header->GetUserVersion() >= 11 && header->GetUserVersion2() > 21)
 		file.write((char*)&emitMulti, 4);
-}
-
-void NiMaterialProperty::notifyBlockDelete(int blockID) {
-	NiProperty::notifyBlockDelete(blockID);
-}
-
-void NiMaterialProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiMaterialProperty::notifyStringDelete(int stringID) {
-	NiProperty::notifyStringDelete(stringID);
 }
 
 Vector3 NiMaterialProperty::GetSpecularColor() {
@@ -6272,18 +10770,6 @@ void NiStencilProperty::Put(fstream& file) {
 	file.write((char*)&stencilMask, 4);
 }
 
-void NiStencilProperty::notifyBlockDelete(int blockID) {
-	NiProperty::notifyBlockDelete(blockID);
-}
-
-void NiStencilProperty::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
-	NiProperty::notifyBlockSwap(blockIndexLo, blockIndexHi);
-}
-
-void NiStencilProperty::notifyStringDelete(int stringID) {
-	NiProperty::notifyStringDelete(stringID);
-}
-
 int NiStencilProperty::CalcBlockSize() {
 	NiProperty::CalcBlockSize();
 
@@ -6347,6 +10833,138 @@ int NiExtraData::CalcBlockSize() {
 }
 
 
+NiBinaryExtraData::NiBinaryExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIBINARYEXTRADATA;
+
+	size = 0;
+}
+
+NiBinaryExtraData::NiBinaryExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIBINARYEXTRADATA;
+
+	Get(file);
+}
+
+void NiBinaryExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&size, 4);
+	data.resize(size);
+	for (int i = 0; i < size; i++)
+		file.read((char*)&data[i], 1);
+}
+
+void NiBinaryExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&size, 4);
+	for (int i = 0; i < size; i++)
+		file.write((char*)&data[i], 1);
+}
+
+int NiBinaryExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += size;
+
+	return blockSize;
+}
+
+
+NiFloatExtraData::NiFloatExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIFLOATEXTRADATA;
+
+	floatData = 0.0f;
+}
+
+NiFloatExtraData::NiFloatExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIFLOATEXTRADATA;
+
+	Get(file);
+}
+
+void NiFloatExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&floatData, 4);
+}
+
+void NiFloatExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&floatData, 4);
+}
+
+int NiFloatExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiStringsExtraData::NiStringsExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NISTRINGSEXTRADATA;
+
+	numStrings = 0;
+}
+
+NiStringsExtraData::NiStringsExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NISTRINGSEXTRADATA;
+
+	Get(file);
+}
+
+void NiStringsExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&numStrings, 4);
+	stringsData.resize(numStrings);
+	for (int i = 0; i < numStrings; i++)
+		stringsData[i].Get(file, 4);
+}
+
+void NiStringsExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&numStrings, 4);
+	for (int i = 0; i < numStrings; i++)
+		stringsData[i].Put(file, 4, false);
+}
+
+int NiStringsExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += numStrings * 4;
+
+	for (int i = 0; i < numStrings; i++)
+		blockSize += stringsData[i].GetLength();
+
+	return blockSize;
+}
+
+
 NiStringExtraData::~NiStringExtraData() {
 	header->RemoveStringRef(stringDataRef);
 }
@@ -6356,8 +10974,8 @@ NiStringExtraData::NiStringExtraData(NiHeader& hdr) {
 
 	header = &hdr;
 	blockType = NISTRINGEXTRADATA;
+
 	stringDataRef = 0xFFFFFFFF;
-	stringData.clear();
 }
 
 NiStringExtraData::NiStringExtraData(fstream& file, NiHeader& hdr) {
@@ -6377,8 +10995,6 @@ void NiStringExtraData::Get(fstream& file) {
 		stringData = header->GetStringById(stringDataRef);
 		header->AddStringRef(stringDataRef);
 	}
-	else
-		stringData.clear();
 }
 
 void NiStringExtraData::Put(fstream& file) {
@@ -6407,6 +11023,53 @@ int NiStringExtraData::CalcBlockSize() {
 	NiExtraData::CalcBlockSize();
 
 	blockSize += 4;
+
+	return blockSize;
+}
+
+
+NiBooleanExtraData::NiBooleanExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIBOOLEANEXTRADATA;
+
+	booleanData = false;
+}
+
+NiBooleanExtraData::NiBooleanExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NIBOOLEANEXTRADATA;
+
+	Get(file);
+}
+
+void NiBooleanExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&booleanData, 1);
+}
+
+void NiBooleanExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&booleanData, 1);
+}
+
+bool NiBooleanExtraData::GetBooleanData() {
+	return booleanData;
+}
+
+void NiBooleanExtraData::SetBooleanData(const bool& booleanData) {
+	this->booleanData = booleanData;
+}
+
+int NiBooleanExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 1;
 
 	return blockSize;
 }
@@ -6441,10 +11104,6 @@ void NiIntegerExtraData::Put(fstream& file) {
 	file.write((char*)&integerData, 4);
 }
 
-void NiIntegerExtraData::notifyStringDelete(int stringID) {
-	NiExtraData::notifyStringDelete(stringID);
-}
-
 uint NiIntegerExtraData::GetIntegerData() {
 	return integerData;
 }
@@ -6470,23 +11129,134 @@ BSXFlags::BSXFlags(NiHeader& hdr) : NiIntegerExtraData(hdr) {
 BSXFlags::BSXFlags(fstream& file, NiHeader& hdr) : NiIntegerExtraData(file, hdr) {
 	header = &hdr;
 	blockType = BSXFLAGS;
+}
+
+
+BSInvMarker::BSInvMarker(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSINVMARKER;
+}
+
+BSInvMarker::BSInvMarker(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSINVMARKER;
 
 	Get(file);
 }
 
-void BSXFlags::Get(fstream& file) {
+void BSInvMarker::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&rotationX, 2);
+	file.read((char*)&rotationY, 2);
+	file.read((char*)&rotationZ, 2);
+	file.read((char*)&zoom, 4);
 }
 
-void BSXFlags::Put(fstream& file) {
-	NiIntegerExtraData::Put(file);
+void BSInvMarker::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&rotationX, 2);
+	file.write((char*)&rotationY, 2);
+	file.write((char*)&rotationZ, 2);
+	file.write((char*)&zoom, 4);
 }
 
-void BSXFlags::notifyStringDelete(int stringID) {
-	NiIntegerExtraData::notifyStringDelete(stringID);
+int BSInvMarker::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 10;
+
+	return blockSize;
 }
 
-int BSXFlags::CalcBlockSize() {
-	return NiIntegerExtraData::CalcBlockSize();
+
+BSFurnitureMarker::BSFurnitureMarker(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	numPositions = 0;
+}
+
+BSFurnitureMarker::BSFurnitureMarker(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+
+	Get(file);
+}
+
+void BSFurnitureMarker::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&numPositions, 4);
+	positions.resize(numPositions);
+
+	for (int i = 0; i < numPositions; i++) {
+		file.read((char*)&positions[i].offset, 12);
+
+		if (header->GetUserVersion() <= 11) {
+			file.read((char*)&positions[i].orientation, 2);
+			file.read((char*)&positions[i].posRef1, 1);
+			file.read((char*)&positions[i].posRef2, 1);
+		}
+
+		if (header->GetUserVersion() >= 12) {
+			file.read((char*)&positions[i].heading, 4);
+			file.read((char*)&positions[i].animationType, 2);
+			file.read((char*)&positions[i].entryPoints, 2);
+		}
+	}
+}
+
+void BSFurnitureMarker::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&numPositions, 4);
+
+	for (int i = 0; i < numPositions; i++) {
+		file.write((char*)&positions[i].offset, 12);
+
+		if (header->GetUserVersion() <= 11) {
+			file.write((char*)&positions[i].orientation, 2);
+			file.write((char*)&positions[i].posRef1, 1);
+			file.write((char*)&positions[i].posRef2, 1);
+		}
+
+		if (header->GetUserVersion() >= 12) {
+			file.write((char*)&positions[i].heading, 4);
+			file.write((char*)&positions[i].animationType, 2);
+			file.write((char*)&positions[i].entryPoints, 2);
+		}
+	}
+}
+
+int BSFurnitureMarker::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += 12 * numPositions;
+
+	if (header->GetUserVersion() <= 11)
+		blockSize += 4 * numPositions;
+
+	if (header->GetUserVersion() >= 12)
+		blockSize += 8 * numPositions;
+
+	return blockSize;
+}
+
+
+BSFurnitureMarkerNode::BSFurnitureMarkerNode(NiHeader& hdr) : BSFurnitureMarker(hdr) {
+	blockType = BSFURNITUREMARKERNODE;
+}
+
+BSFurnitureMarkerNode::BSFurnitureMarkerNode(fstream& file, NiHeader& hdr) : BSFurnitureMarker(file, hdr) {
+	blockType = BSFURNITUREMARKERNODE;
 }
 
 
@@ -6545,16 +11315,238 @@ void BSDecalPlacementVectorExtraData::Put(fstream& file) {
 	}
 }
 
-void BSDecalPlacementVectorExtraData::notifyStringDelete(int stringID) {
-	NiExtraData::notifyStringDelete(stringID);
-}
-
 int BSDecalPlacementVectorExtraData::CalcBlockSize() {
 	NiExtraData::CalcBlockSize();
 
 	blockSize += 6;
 	for (int i = 0; i < numVectorBlocks; i++)
 		blockSize += 2 + decalVectorBlocks[i].numVectors * 24;
+
+	return blockSize;
+}
+
+
+BSBehaviorGraphExtraData::~BSBehaviorGraphExtraData() {
+	header->RemoveStringRef(behaviorGraphFileRef);
+}
+
+BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSBEHAVIORGRAPHEXTRADATA;
+
+	behaviorGraphFileRef = 0xFFFFFFFF;
+}
+
+BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSBEHAVIORGRAPHEXTRADATA;
+
+	Get(file);
+}
+
+void BSBehaviorGraphExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&behaviorGraphFileRef, 4);
+	if (behaviorGraphFileRef != 0xFFFFFFFF) {
+		behaviorGraphFile = header->GetStringById(behaviorGraphFileRef);
+		header->AddStringRef(behaviorGraphFileRef);
+	}
+
+	file.read((char*)&controlsBaseSkel, 1);
+}
+
+void BSBehaviorGraphExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&behaviorGraphFileRef, 4);
+	file.write((char*)&controlsBaseSkel, 1);
+}
+
+void BSBehaviorGraphExtraData::notifyStringDelete(int stringID) {
+	NiExtraData::notifyStringDelete(stringID);
+
+	if (behaviorGraphFileRef != 0xFFFFFFFF && behaviorGraphFileRef > stringID)
+		behaviorGraphFileRef--;
+}
+
+int BSBehaviorGraphExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 5;
+
+	return blockSize;
+}
+
+
+BSBound::BSBound(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSBOUND;
+}
+
+BSBound::BSBound(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSBOUND;
+
+	Get(file);
+}
+
+void BSBound::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&center, 12);
+	file.read((char*)&halfExtents, 12);
+}
+
+void BSBound::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&center, 12);
+	file.write((char*)&halfExtents, 12);
+}
+
+int BSBound::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 24;
+
+	return blockSize;
+}
+
+
+BSBoneLODExtraData::BSBoneLODExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSBONELODEXTRADATA;
+
+	numBoneLODs = 0;
+}
+
+BSBoneLODExtraData::BSBoneLODExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = BSBONELODEXTRADATA;
+
+	Get(file);
+}
+
+BSBoneLODExtraData::~BSBoneLODExtraData() {
+	for (int i = 0; i < numBoneLODs; i++)
+		header->RemoveStringRef(boneLODs[i].boneNameRef);
+}
+
+void BSBoneLODExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&numBoneLODs, 4);
+	boneLODs.resize(numBoneLODs);
+	for (int i = 0; i < numBoneLODs; i++) {
+		file.read((char*)&boneLODs[i].distance, 4);
+		file.read((char*)&boneLODs[i].boneNameRef, 4);
+		if (boneLODs[i].boneNameRef != 0xFFFFFFFF) {
+			boneLODs[i].boneName = header->GetStringById(boneLODs[i].boneNameRef);
+			header->AddStringRef(boneLODs[i].boneNameRef);
+		}
+	}
+}
+
+void BSBoneLODExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&numBoneLODs, 4);
+	for (int i = 0; i < numBoneLODs; i++) {
+		file.write((char*)&boneLODs[i].distance, 4);
+		file.write((char*)&boneLODs[i].boneNameRef, 4);
+	}
+}
+
+void BSBoneLODExtraData::notifyStringDelete(int stringID) {
+	NiExtraData::notifyStringDelete(stringID);
+
+	for (int i = 0; i < numBoneLODs; i++) {
+		if (boneLODs[i].boneNameRef != 0xFFFFFFFF && boneLODs[i].boneNameRef > stringID)
+			boneLODs[i].boneNameRef--;
+	}
+}
+
+int BSBoneLODExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += numBoneLODs * 4;
+
+	return blockSize;
+}
+
+
+NiTextKeyExtraData::NiTextKeyExtraData(NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NITEXTKEYEXTRADATA;
+
+	numTextKeys = 0;
+}
+
+NiTextKeyExtraData::NiTextKeyExtraData(fstream& file, NiHeader& hdr) {
+	NiExtraData::Init();
+
+	header = &hdr;
+	blockType = NITEXTKEYEXTRADATA;
+
+	Get(file);
+}
+
+NiTextKeyExtraData::~NiTextKeyExtraData() {
+	for (int i = 0; i < numTextKeys; i++)
+		header->RemoveStringRef(textKeys[i].value);
+}
+
+void NiTextKeyExtraData::Get(fstream& file) {
+	NiExtraData::Get(file);
+
+	file.read((char*)&numTextKeys, 4);
+	textKeys.resize(numTextKeys);
+	for (int i = 0; i < numTextKeys; i++) {
+		file.read((char*)&textKeys[i].time, 4);
+		file.read((char*)&textKeys[i].value, 4);
+	}
+}
+
+void NiTextKeyExtraData::Put(fstream& file) {
+	NiExtraData::Put(file);
+
+	file.write((char*)&numTextKeys, 4);
+	for (int i = 0; i < numTextKeys; i++) {
+		file.write((char*)&textKeys[i].time, 4);
+		file.write((char*)&textKeys[i].value, 4);
+	}
+}
+
+void NiTextKeyExtraData::notifyStringDelete(int stringID) {
+	NiExtraData::notifyStringDelete(stringID);
+
+	for (int i = 0; i < numTextKeys; i++) {
+		if (textKeys[i].value != 0xFFFFFFFF && textKeys[i].value > stringID)
+			textKeys[i].value--;
+	}
+}
+
+int NiTextKeyExtraData::CalcBlockSize() {
+	NiExtraData::CalcBlockSize();
+
+	blockSize += 4;
+	blockSize += numTextKeys * 8;
 
 	return blockSize;
 }
@@ -6691,24 +11683,6 @@ int BSConnectPointChildren::CalcBlockSize() {
 }
 
 
-void BSExtraData::Init() {
-	NiObject::Init();
-}
-
-void BSExtraData::Get(fstream& file) {
-	NiObject::Get(file);
-}
-
-void BSExtraData::Put(fstream& file) {
-	NiObject::Put(file);
-}
-
-int BSExtraData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
-	return blockSize;
-}
-
-
 BSClothExtraData::BSClothExtraData() {
 	BSExtraData::Init();
 
@@ -6756,16 +11730,6 @@ void BSClothExtraData::Put(fstream& file) {
 	file.write(&data[0], numBytes);
 }
 
-void BSClothExtraData::Clone(BSClothExtraData* other) {
-	numBytes = other->numBytes;
-	data.resize(numBytes);
-	if (data.empty())
-		return;
-
-	for (int i = 0; i < numBytes; i++)
-		data[i] = other->data[i];
-}
-
 int BSClothExtraData::CalcBlockSize() {
 	BSExtraData::CalcBlockSize();
 
@@ -6799,12 +11763,150 @@ bool BSClothExtraData::FromHKX(const string& fileName) {
 }
 
 
+BSMultiBound::BSMultiBound(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUND;
+
+	dataRef = 0xFFFFFFFF;
+}
+
+BSMultiBound::BSMultiBound(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUND;
+
+	Get(file);
+}
+
+void BSMultiBound::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&dataRef, 4);
+}
+
+void BSMultiBound::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&dataRef, 4);
+}
+
+void BSMultiBound::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+
+	if (dataRef == blockID)
+		dataRef = 0xFFFFFFFF;
+	else if (dataRef > blockID)
+		dataRef--;
+}
+
+void BSMultiBound::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
+}
+
+int BSMultiBound::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 4;
+
+	return blockSize;
+}
+
+
+BSMultiBoundOBB::BSMultiBoundOBB(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUNDOBB;
+}
+
+BSMultiBoundOBB::BSMultiBoundOBB(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUNDOBB;
+
+	Get(file);
+}
+
+void BSMultiBoundOBB::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&center, 12);
+	file.read((char*)&size, 12);
+	file.read((char*)rotation, 36);
+}
+
+void BSMultiBoundOBB::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&center, 12);
+	file.write((char*)&size, 12);
+	file.write((char*)rotation, 36);
+}
+
+int BSMultiBoundOBB::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 60;
+
+	return blockSize;
+}
+
+
+BSMultiBoundAABB::BSMultiBoundAABB(NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUNDAABB;
+}
+
+BSMultiBoundAABB::BSMultiBoundAABB(fstream& file, NiHeader& hdr) {
+	NiObject::Init();
+
+	header = &hdr;
+	blockType = BSMULTIBOUNDAABB;
+
+	Get(file);
+}
+
+void BSMultiBoundAABB::Get(fstream& file) {
+	NiObject::Get(file);
+
+	file.read((char*)&center, 12);
+	file.read((char*)&halfExtent, 12);
+}
+
+void BSMultiBoundAABB::Put(fstream& file) {
+	NiObject::Put(file);
+
+	file.write((char*)&center, 12);
+	file.write((char*)&halfExtent, 12);
+}
+
+int BSMultiBoundAABB::CalcBlockSize() {
+	NiObject::CalcBlockSize();
+
+	blockSize += 24;
+
+	return blockSize;
+}
+
+
 NiCollisionObject::NiCollisionObject(NiHeader& hdr) {
 	NiObject::Init();
 
 	header = &hdr;
 	blockType = NICOLLISIONOBJECT;
-	target = 0xFFFFFFFF;
+
+	targetRef = 0xFFFFFFFF;
 }
 
 NiCollisionObject::NiCollisionObject(fstream& file, NiHeader& hdr) {
@@ -6819,13 +11921,31 @@ NiCollisionObject::NiCollisionObject(fstream& file, NiHeader& hdr) {
 void NiCollisionObject::Get(fstream& file) {
 	NiObject::Get(file);
 
-	file.read((char*)&target, 4);
+	file.read((char*)&targetRef, 4);
 }
 
 void NiCollisionObject::Put(fstream& file) {
 	NiObject::Put(file);
 
-	file.write((char*)&target, 4);
+	file.write((char*)&targetRef, 4);
+}
+
+void NiCollisionObject::notifyBlockDelete(int blockID) {
+	NiObject::notifyBlockDelete(blockID);
+
+	if (targetRef == blockID)
+		targetRef = 0xFFFFFFFF;
+	else if (targetRef > blockID)
+		targetRef--;
+}
+
+void NiCollisionObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (targetRef == blockIndexLo)
+		targetRef = blockIndexHi;
+	else if (targetRef == blockIndexHi)
+		targetRef = blockIndexLo;
 }
 
 int NiCollisionObject::CalcBlockSize() {
@@ -6838,27 +11958,42 @@ int NiCollisionObject::CalcBlockSize() {
 
 
 bhkNiCollisionObject::bhkNiCollisionObject(NiHeader& hdr) : NiCollisionObject(hdr) {
-	blockType = BHKNICOLLISIONOBJECT;
 	flags = 1;
-	body = 0xFFFFFFFF;
+	bodyRef = 0xFFFFFFFF;
 }
 
 bhkNiCollisionObject::bhkNiCollisionObject(fstream& file, NiHeader& hdr) : NiCollisionObject(file, hdr) {
-	blockType = BHKNICOLLISIONOBJECT;
-
 	Get(file);
 }
 
 void bhkNiCollisionObject::Get(fstream& file) {
 	file.read((char*)&flags, 2);
-	file.read((char*)&body, 4);
+	file.read((char*)&bodyRef, 4);
 }
 
 void bhkNiCollisionObject::Put(fstream& file) {
 	NiCollisionObject::Put(file);
 
 	file.write((char*)&flags, 2);
-	file.write((char*)&body, 4);
+	file.write((char*)&bodyRef, 4);
+}
+
+void bhkNiCollisionObject::notifyBlockDelete(int blockID) {
+	NiCollisionObject::notifyBlockDelete(blockID);
+
+	if (bodyRef == blockID)
+		bodyRef = 0xFFFFFFFF;
+	else if (bodyRef > blockID)
+		bodyRef--;
+}
+
+void bhkNiCollisionObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	NiCollisionObject::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (bodyRef == blockIndexLo)
+		bodyRef = blockIndexHi;
+	else if (bodyRef == blockIndexHi)
+		bodyRef = blockIndexLo;
 }
 
 int bhkNiCollisionObject::CalcBlockSize() {
@@ -6876,19 +12011,6 @@ bhkCollisionObject::bhkCollisionObject(NiHeader& hdr) : bhkNiCollisionObject(hdr
 
 bhkCollisionObject::bhkCollisionObject(fstream& file, NiHeader& hdr) : bhkNiCollisionObject(file, hdr) {
 	blockType = BHKCOLLISIONOBJECT;
-
-	Get(file);
-}
-
-void bhkCollisionObject::Get(fstream& file) {
-}
-
-void bhkCollisionObject::Put(fstream& file) {
-	bhkNiCollisionObject::Put(file);
-}
-
-int bhkCollisionObject::CalcBlockSize() {
-	return bhkNiCollisionObject::CalcBlockSize();
 }
 
 
@@ -6917,6 +12039,55 @@ int bhkNPCollisionObject::CalcBlockSize() {
 	bhkCollisionObject::CalcBlockSize();
 
 	blockSize += 4;
+
+	return blockSize;
+}
+
+
+bhkPCollisionObject::bhkPCollisionObject(NiHeader& hdr) : bhkNiCollisionObject(hdr) {
+	blockType = BHKPCOLLISIONOBJECT;
+}
+
+bhkPCollisionObject::bhkPCollisionObject(fstream& file, NiHeader& hdr) : bhkNiCollisionObject(file, hdr) {
+	blockType = BHKPCOLLISIONOBJECT;
+}
+
+
+bhkSPCollisionObject::bhkSPCollisionObject(NiHeader& hdr) : bhkPCollisionObject(hdr) {
+	blockType = BHKSPCOLLISIONOBJECT;
+}
+
+bhkSPCollisionObject::bhkSPCollisionObject(fstream& file, NiHeader& hdr) : bhkPCollisionObject(file, hdr) {
+	blockType = BHKSPCOLLISIONOBJECT;
+}
+
+
+bhkBlendCollisionObject::bhkBlendCollisionObject(NiHeader& hdr) : bhkCollisionObject(hdr) {
+	blockType = BHKBLENDCOLLISIONOBJECT;
+}
+
+bhkBlendCollisionObject::bhkBlendCollisionObject(fstream& file, NiHeader& hdr) : bhkCollisionObject(file, hdr) {
+	blockType = BHKBLENDCOLLISIONOBJECT;
+
+	Get(file);
+}
+
+void bhkBlendCollisionObject::Get(fstream& file) {
+	file.read((char*)&heirGain, 4);
+	file.read((char*)&velGain, 4);
+}
+
+void bhkBlendCollisionObject::Put(fstream& file) {
+	bhkCollisionObject::Put(file);
+
+	file.write((char*)&heirGain, 4);
+	file.write((char*)&velGain, 4);
+}
+
+int bhkBlendCollisionObject::CalcBlockSize() {
+	bhkCollisionObject::CalcBlockSize();
+
+	blockSize += 8;
 
 	return blockSize;
 }
@@ -6969,21 +12140,1654 @@ void bhkPhysicsSystem::Put(fstream& file) {
 	file.write(&data[0], numBytes);
 }
 
-void bhkPhysicsSystem::Clone(bhkPhysicsSystem* other) {
-	numBytes = other->numBytes;
-	data.resize(numBytes);
-	if (data.empty())
-		return;
-
-	for (int i = 0; i < numBytes; i++)
-		data[i] = other->data[i];
-}
-
 int bhkPhysicsSystem::CalcBlockSize() {
 	BSExtraData::CalcBlockSize();
 
 	blockSize += 4;
 	blockSize += numBytes;
+
+	return blockSize;
+}
+
+
+bhkPlaneShape::bhkPlaneShape(NiHeader& hdr) {
+	bhkHeightFieldShape::Init();
+
+	header = &hdr;
+	blockType = BHKPLANESHAPE;
+}
+
+bhkPlaneShape::bhkPlaneShape(fstream& file, NiHeader& hdr) {
+	bhkHeightFieldShape::Init();
+
+	header = &hdr;
+	blockType = BHKPLANESHAPE;
+
+	Get(file);
+}
+
+void bhkPlaneShape::Get(fstream& file) {
+	bhkHeightFieldShape::Get(file);
+
+	file.read((char*)&material, 4);
+	file.read((char*)&unkVec, 12);
+	file.read((char*)&direction, 12);
+	file.read((char*)&constant, 4);
+	file.read((char*)&halfExtents, 16);
+	file.read((char*)&center, 16);
+}
+
+void bhkPlaneShape::Put(fstream& file) {
+	bhkHeightFieldShape::Put(file);
+
+	file.write((char*)&material, 4);
+	file.write((char*)&unkVec, 12);
+	file.write((char*)&direction, 12);
+	file.write((char*)&constant, 4);
+	file.write((char*)&halfExtents, 16);
+	file.write((char*)&center, 16);
+}
+
+int bhkPlaneShape::CalcBlockSize() {
+	bhkHeightFieldShape::CalcBlockSize();
+
+	blockSize += 64;
+
+	return blockSize;
+}
+
+
+void bhkSphereRepShape::Get(fstream& file) {
+	bhkShape::Get(file);
+
+	file.read((char*)&material, 4);
+	file.read((char*)&radius, 4);
+}
+
+void bhkSphereRepShape::Put(fstream& file) {
+	bhkShape::Put(file);
+
+	file.write((char*)&material, 4);
+	file.write((char*)&radius, 4);
+}
+
+int bhkSphereRepShape::CalcBlockSize() {
+	bhkShape::CalcBlockSize();
+
+	blockSize += 8;
+
+	return blockSize;
+}
+
+
+bhkConvexVerticesShape::bhkConvexVerticesShape(NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKCONVEXVERTICESSHAPE;
+
+	numVerts = 0;
+	numNormals = 0;
+}
+
+bhkConvexVerticesShape::bhkConvexVerticesShape(fstream& file, NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKCONVEXVERTICESSHAPE;
+
+	Get(file);
+}
+
+void bhkConvexVerticesShape::Get(fstream& file) {
+	bhkConvexShape::Get(file);
+
+	file.read((char*)&vertsProp, 12);
+	file.read((char*)&normalsProp, 12);
+
+	file.read((char*)&numVerts, 4);
+	verts.resize(numVerts);
+	for (int i = 0; i < numVerts; i++)
+		file.read((char*)&verts[i], 16);
+
+	file.read((char*)&numNormals, 4);
+	normals.resize(numNormals);
+	for (int i = 0; i < numNormals; i++)
+		file.read((char*)&normals[i], 16);
+}
+
+void bhkConvexVerticesShape::Put(fstream& file) {
+	bhkConvexShape::Put(file);
+
+	file.write((char*)&vertsProp, 12);
+	file.write((char*)&normalsProp, 12);
+
+	file.write((char*)&numVerts, 4);
+	for (int i = 0; i < numVerts; i++)
+		file.write((char*)&verts[i], 16);
+
+	file.write((char*)&numNormals, 4);
+	for (int i = 0; i < numNormals; i++)
+		file.write((char*)&normals[i], 16);
+}
+
+int bhkConvexVerticesShape::CalcBlockSize() {
+	bhkConvexShape::CalcBlockSize();
+
+	blockSize += 32;
+	blockSize += numVerts * 16;
+	blockSize += numNormals * 16;
+
+	return blockSize;
+}
+
+
+bhkBoxShape::bhkBoxShape(NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKBOXSHAPE;
+}
+
+bhkBoxShape::bhkBoxShape(fstream& file, NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKBOXSHAPE;
+
+	Get(file);
+}
+
+void bhkBoxShape::Get(fstream& file) {
+	bhkConvexShape::Get(file);
+
+	file.read((char*)&unkInt1, 4);
+	file.read((char*)&unkInt2, 4);
+	file.read((char*)&dimensions, 12);
+	file.read((char*)&radius2, 4);
+}
+
+void bhkBoxShape::Put(fstream& file) {
+	bhkConvexShape::Put(file);
+
+	file.write((char*)&unkInt1, 4);
+	file.write((char*)&unkInt2, 4);
+	file.write((char*)&dimensions, 12);
+	file.write((char*)&radius2, 4);
+}
+
+int bhkBoxShape::CalcBlockSize() {
+	bhkConvexShape::CalcBlockSize();
+
+	blockSize += 24;
+
+	return blockSize;
+}
+
+
+bhkSphereShape::bhkSphereShape(NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKSPHERESHAPE;
+}
+
+bhkSphereShape::bhkSphereShape(fstream& file, NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKSPHERESHAPE;
+
+	Get(file);
+}
+
+
+bhkTransformShape::bhkTransformShape(NiHeader& hdr) {
+	bhkShape::Init();
+
+	header = &hdr;
+	blockType = BHKTRANSFORMSHAPE;
+
+	shapeRef = 0xFFFFFFFF;
+}
+
+bhkTransformShape::bhkTransformShape(fstream& file, NiHeader& hdr) {
+	bhkShape::Init();
+
+	header = &hdr;
+	blockType = BHKTRANSFORMSHAPE;
+
+	Get(file);
+}
+
+void bhkTransformShape::Get(fstream& file) {
+	bhkShape::Get(file);
+
+	file.read((char*)&shapeRef, 4);
+	file.read((char*)&material, 4);
+	file.read((char*)&unkFloat, 4);
+	file.read((char*)unkBytes, 8);
+	file.read((char*)&xform, 64);
+}
+
+void bhkTransformShape::Put(fstream& file) {
+	bhkShape::Put(file);
+
+	file.write((char*)&shapeRef, 4);
+	file.write((char*)&material, 4);
+	file.write((char*)&unkFloat, 4);
+	file.write((char*)unkBytes, 8);
+	file.write((char*)&xform, 64);
+}
+
+void bhkTransformShape::notifyBlockDelete(int blockID) {
+	bhkShape::notifyBlockDelete(blockID);
+
+	if (shapeRef == blockID)
+		shapeRef = 0xFFFFFFFF;
+	else if (shapeRef > blockID)
+		shapeRef--;
+}
+
+void bhkTransformShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (shapeRef == blockIndexLo)
+		shapeRef = blockIndexHi;
+	else if (shapeRef == blockIndexHi)
+		shapeRef = blockIndexLo;
+}
+
+int bhkTransformShape::CalcBlockSize() {
+	bhkShape::CalcBlockSize();
+
+	blockSize += 84;
+
+	return blockSize;
+}
+
+
+bhkConvexTransformShape::bhkConvexTransformShape(NiHeader& hdr) : bhkTransformShape(hdr) {
+	blockType = BHKCONVEXTRANSFORMSHAPE;
+}
+
+bhkConvexTransformShape::bhkConvexTransformShape(fstream& file, NiHeader& hdr) : bhkTransformShape(file, hdr) {
+	blockType = BHKCONVEXTRANSFORMSHAPE;
+}
+
+
+bhkCapsuleShape::bhkCapsuleShape(NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKCAPSULESHAPE;
+}
+
+bhkCapsuleShape::bhkCapsuleShape(fstream& file, NiHeader& hdr) {
+	bhkConvexShape::Init();
+
+	header = &hdr;
+	blockType = BHKCAPSULESHAPE;
+
+	Get(file);
+}
+
+void bhkCapsuleShape::Get(fstream& file) {
+	bhkConvexShape::Get(file);
+
+	file.read((char*)&padding1, 4);
+	file.read((char*)&padding2, 4);
+	file.read((char*)&point1, 12);
+	file.read((char*)&radius1, 4);
+	file.read((char*)&point2, 12);
+	file.read((char*)&radius2, 4);
+}
+
+void bhkCapsuleShape::Put(fstream& file) {
+	bhkConvexShape::Put(file);
+
+	file.write((char*)&padding1, 4);
+	file.write((char*)&padding2, 4);
+	file.write((char*)&point1, 12);
+	file.write((char*)&radius1, 4);
+	file.write((char*)&point2, 12);
+	file.write((char*)&radius2, 4);
+}
+
+int bhkCapsuleShape::CalcBlockSize() {
+	bhkConvexShape::CalcBlockSize();
+
+	blockSize += 40;
+
+	return blockSize;
+}
+
+
+bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiHeader& hdr) {
+	bhkBvTreeShape::Init();
+
+	header = &hdr;
+	blockType = BHKMOPPBVTREESHAPE;
+
+	shapeRef = 0xFFFFFFFF;
+	dataSize = 0;
+}
+
+bhkMoppBvTreeShape::bhkMoppBvTreeShape(fstream& file, NiHeader& hdr) {
+	bhkBvTreeShape::Init();
+
+	header = &hdr;
+	blockType = BHKMOPPBVTREESHAPE;
+
+	Get(file);
+}
+
+void bhkMoppBvTreeShape::Get(fstream& file) {
+	bhkBvTreeShape::Get(file);
+
+	file.read((char*)&shapeRef, 4);
+	file.read((char*)&userData, 4);
+	file.read((char*)&shapeCollection, 4);
+	file.read((char*)&code, 4);
+	file.read((char*)&scale, 4);
+	file.read((char*)&dataSize, 4);
+	file.read((char*)&offset, 16);
+
+	if (header->GetUserVersion() >= 12)
+		file.read((char*)&buildType, 1);
+
+	data.resize(dataSize);
+	for (int i = 0; i < dataSize; i++)
+		file.read((char*)&data[i], 1);
+}
+
+void bhkMoppBvTreeShape::Put(fstream& file) {
+	bhkBvTreeShape::Put(file);
+
+	file.write((char*)&shapeRef, 4);
+	file.write((char*)&userData, 4);
+	file.write((char*)&shapeCollection, 4);
+	file.write((char*)&code, 4);
+	file.write((char*)&scale, 4);
+	file.write((char*)&dataSize, 4);
+	file.write((char*)&offset, 16);
+
+	if (header->GetUserVersion() >= 12)
+		file.write((char*)&buildType, 1);
+
+	for (int i = 0; i < dataSize; i++)
+		file.write((char*)&data[i], 1);
+}
+
+void bhkMoppBvTreeShape::notifyBlockDelete(int blockID) {
+	bhkBvTreeShape::notifyBlockDelete(blockID);
+
+	if (shapeRef == blockID)
+		shapeRef = 0xFFFFFFFF;
+	else if (shapeRef > blockID)
+		shapeRef--;
+}
+
+void bhkMoppBvTreeShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkBvTreeShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (shapeRef == blockIndexLo)
+		shapeRef = blockIndexHi;
+	else if (shapeRef == blockIndexHi)
+		shapeRef = blockIndexLo;
+}
+
+int bhkMoppBvTreeShape::CalcBlockSize() {
+	bhkBvTreeShape::CalcBlockSize();
+
+	blockSize += 40;
+
+	if (header->GetUserVersion() >= 12)
+		blockSize += 1;
+
+	blockSize += dataSize;
+
+	return blockSize;
+}
+
+
+bhkNiTriStripsShape::bhkNiTriStripsShape(NiHeader& hdr) {
+	bhkShape::Init();
+
+	header = &hdr;
+	blockType = BHKNITRISTRIPSSHAPE;
+
+	numParts = 0;
+	numFilters = 0;
+}
+
+bhkNiTriStripsShape::bhkNiTriStripsShape(fstream& file, NiHeader& hdr) {
+	bhkShape::Init();
+
+	header = &hdr;
+	blockType = BHKNITRISTRIPSSHAPE;
+
+	Get(file);
+}
+
+void bhkNiTriStripsShape::Get(fstream& file) {
+	bhkShape::Get(file);
+
+	file.read((char*)&material, 4);
+	file.read((char*)&radius, 4);
+	file.read((char*)&unused1, 4);
+	file.read((char*)&unused2, 4);
+	file.read((char*)&unused3, 4);
+	file.read((char*)&unused4, 4);
+	file.read((char*)&unused5, 4);
+	file.read((char*)&growBy, 4);
+	file.read((char*)&scale, 16);
+
+	file.read((char*)&numParts, 4);
+	parts.resize(numParts);
+	for (int i = 0; i < numParts; i++)
+		file.read((char*)&parts[i], 4);
+
+	file.read((char*)&numFilters, 4);
+	filters.resize(numFilters);
+	for (int i = 0; i < numFilters; i++)
+		file.read((char*)&filters[i], 4);
+}
+
+void bhkNiTriStripsShape::Put(fstream& file) {
+	bhkShape::Put(file);
+
+	file.write((char*)&material, 4);
+	file.write((char*)&radius, 4);
+	file.write((char*)&unused1, 4);
+	file.write((char*)&unused2, 4);
+	file.write((char*)&unused3, 4);
+	file.write((char*)&unused4, 4);
+	file.write((char*)&unused5, 4);
+	file.write((char*)&growBy, 4);
+	file.write((char*)&scale, 16);
+
+	file.write((char*)&numParts, 4);
+	for (int i = 0; i < numParts; i++)
+		file.write((char*)&parts[i], 4);
+
+	file.write((char*)&numFilters, 4);
+	for (int i = 0; i < numFilters; i++)
+		file.write((char*)&filters[i], 4);
+}
+
+void bhkNiTriStripsShape::notifyBlockDelete(int blockID) {
+	bhkShape::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numParts; i++) {
+		if (parts[i] == blockID) {
+			parts.erase(parts.begin() + i);
+			i--;
+			numParts--;
+		}
+		else if (parts[i] > blockID)
+			parts[i]--;
+	}
+}
+
+void bhkNiTriStripsShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numParts; i++) {
+		if (parts[i] == blockIndexLo)
+			parts[i] = blockIndexHi;
+		else if (parts[i] == blockIndexHi)
+			parts[i] = blockIndexLo;
+	}
+}
+
+int bhkNiTriStripsShape::CalcBlockSize() {
+	bhkShape::CalcBlockSize();
+
+	blockSize += 56;
+	blockSize += numParts * 4;
+	blockSize += numFilters * 4;
+
+	return blockSize;
+}
+
+
+bhkListShape::bhkListShape(NiHeader& hdr) {
+	bhkShapeCollection::Init();
+
+	header = &hdr;
+	blockType = BHKLISTSHAPE;
+
+	numSubShapes = 0;
+	numUnkInts = 0;
+}
+
+bhkListShape::bhkListShape(fstream& file, NiHeader& hdr) {
+	bhkShapeCollection::Init();
+
+	header = &hdr;
+	blockType = BHKLISTSHAPE;
+
+	Get(file);
+}
+
+void bhkListShape::Get(fstream& file) {
+	bhkShapeCollection::Get(file);
+
+	file.read((char*)&numSubShapes, 4);
+	subShapeRef.resize(numSubShapes);
+
+	for (int i = 0; i < numSubShapes; i++)
+		file.read((char*)&subShapeRef[i], 4);
+
+	file.read((char*)&material, 4);
+	file.read((char*)unkFloats, 24);
+
+	file.read((char*)&numUnkInts, 4);
+	unkInts.resize(numUnkInts);
+
+	for (int i = 0; i < numUnkInts; i++)
+		file.read((char*)&unkInts[i], 4);
+}
+
+void bhkListShape::Put(fstream& file) {
+	bhkShapeCollection::Put(file);
+
+	file.write((char*)&numSubShapes, 4);
+	for (int i = 0; i < numSubShapes; i++)
+		file.write((char*)&subShapeRef[i], 4);
+
+	file.write((char*)&material, 4);
+	file.write((char*)unkFloats, 24);
+
+	file.write((char*)&numUnkInts, 4);
+	for (int i = 0; i < numUnkInts; i++)
+		file.write((char*)&unkInts[i], 4);
+}
+
+void bhkListShape::notifyBlockDelete(int blockID) {
+	bhkShapeCollection::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numSubShapes; i++) {
+		if (subShapeRef[i] == blockID) {
+			subShapeRef.erase(subShapeRef.begin() + i);
+			i--;
+			numSubShapes--;
+		}
+		else if (subShapeRef[i] > blockID)
+			subShapeRef[i]--;
+	}
+}
+
+void bhkListShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkShapeCollection::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numSubShapes; i++) {
+		if (subShapeRef[i] == blockIndexLo)
+			subShapeRef[i] = blockIndexHi;
+		else if (subShapeRef[i] == blockIndexHi)
+			subShapeRef[i] = blockIndexLo;
+	}
+}
+
+int bhkListShape::CalcBlockSize() {
+	bhkShapeCollection::CalcBlockSize();
+
+	blockSize += 36;
+	blockSize += 4 * numSubShapes;
+	blockSize += 4 * numUnkInts;
+
+	return blockSize;
+}
+
+
+void bhkWorldObject::Init() {
+	bhkSerializable::Init();
+
+	shapeRef = 0xFFFFFFFF;
+}
+
+void bhkWorldObject::Get(fstream& file) {
+	bhkSerializable::Get(file);
+
+	file.read((char*)&shapeRef, 4);
+	file.read((char*)&collisionFilter, 4);
+	file.read((char*)&unkInt1, 4);
+	file.read((char*)&broadPhaseType, 1);
+	file.read((char*)unkBytes, 3);
+	file.read((char*)&prop, 12);
+}
+
+void bhkWorldObject::Put(fstream& file) {
+	bhkSerializable::Put(file);
+
+	file.write((char*)&shapeRef, 4);
+	file.write((char*)&collisionFilter, 4);
+	file.write((char*)&unkInt1, 4);
+	file.write((char*)&broadPhaseType, 1);
+	file.write((char*)unkBytes, 3);
+	file.write((char*)&prop, 12);
+}
+
+void bhkWorldObject::notifyBlockDelete(int blockID) {
+	bhkSerializable::notifyBlockDelete(blockID);
+
+	if (shapeRef == blockID)
+		shapeRef = 0xFFFFFFFF;
+	else if (shapeRef > blockID)
+		shapeRef--;
+}
+
+void bhkWorldObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkSerializable::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (shapeRef == blockIndexLo)
+		shapeRef = blockIndexHi;
+	else if (shapeRef == blockIndexHi)
+		shapeRef = blockIndexLo;
+}
+
+int bhkWorldObject::CalcBlockSize() {
+	bhkSerializable::CalcBlockSize();
+
+	blockSize += 28;
+
+	return blockSize;
+}
+
+
+bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiHeader& hdr) {
+	bhkShapePhantom::Init();
+
+	header = &hdr;
+	blockType = BHKSIMPLESHAPEPHANTOM;
+}
+
+bhkSimpleShapePhantom::bhkSimpleShapePhantom(fstream& file, NiHeader& hdr) {
+	bhkShapePhantom::Init();
+
+	header = &hdr;
+	blockType = BHKSIMPLESHAPEPHANTOM;
+
+	Get(file);
+}
+
+void bhkSimpleShapePhantom::Get(fstream& file) {
+	bhkShapePhantom::Get(file);
+
+	file.read((char*)&padding1, 4);
+	file.read((char*)&padding2, 4);
+	file.read((char*)&transform, 64);
+}
+
+void bhkSimpleShapePhantom::Put(fstream& file) {
+	bhkShapePhantom::Put(file);
+
+	file.write((char*)&padding1, 4);
+	file.write((char*)&padding2, 4);
+	file.write((char*)&transform, 64);
+}
+
+int bhkSimpleShapePhantom::CalcBlockSize() {
+	bhkShapePhantom::CalcBlockSize();
+
+	blockSize += 72;
+
+	return blockSize;
+}
+
+
+void bhkConstraint::Init() {
+	bhkSerializable::Init();
+
+	numEntities = 0;
+}
+
+void bhkConstraint::Get(fstream& file) {
+	bhkSerializable::Get(file);
+
+	file.read((char*)&numEntities, 4);
+	entities.resize(numEntities);
+	for (int i = 0; i < numEntities; i++)
+		file.read((char*)&entities[i], 4);
+
+	file.read((char*)&priority, 4);
+}
+
+void bhkConstraint::Put(fstream& file) {
+	bhkSerializable::Put(file);
+
+	file.write((char*)&numEntities, 4);
+	for (int i = 0; i < numEntities; i++)
+		file.write((char*)&entities[i], 4);
+
+	file.write((char*)&priority, 4);
+}
+
+void bhkConstraint::notifyBlockDelete(int blockID) {
+	bhkSerializable::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numEntities; i++) {
+		if (entities[i] == blockID) {
+			entities.erase(entities.begin() + i);
+			i--;
+			numEntities--;
+		}
+		else if (entities[i] > blockID)
+			entities[i]--;
+	}
+}
+
+void bhkConstraint::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkSerializable::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numEntities; i++) {
+		if (entities[i] == blockIndexLo)
+			entities[i] = blockIndexHi;
+		else if (entities[i] == blockIndexHi)
+			entities[i] = blockIndexLo;
+	}
+}
+
+int bhkConstraint::CalcBlockSize() {
+	bhkSerializable::CalcBlockSize();
+
+	blockSize += 8;
+	blockSize += numEntities * 4;
+
+	return blockSize;
+}
+
+
+bhkHingeConstraint::bhkHingeConstraint(NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKHINGECONSTRAINT;
+}
+
+bhkHingeConstraint::bhkHingeConstraint(fstream& file, NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKHINGECONSTRAINT;
+
+	Get(file);
+}
+
+void bhkHingeConstraint::Get(fstream& file) {
+	bhkConstraint::Get(file);
+
+	file.read((char*)&hinge, 128);
+}
+
+void bhkHingeConstraint::Put(fstream& file) {
+	bhkConstraint::Put(file);
+
+	file.write((char*)&hinge, 128);
+}
+
+int bhkHingeConstraint::CalcBlockSize() {
+	bhkConstraint::CalcBlockSize();
+
+	blockSize += 128;
+
+	return blockSize;
+}
+
+
+bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKLIMITEDHINGECONSTRAINT;
+}
+
+bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(fstream& file, NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKLIMITEDHINGECONSTRAINT;
+
+	Get(file);
+}
+
+void bhkLimitedHingeConstraint::Get(fstream& file) {
+	bhkConstraint::Get(file);
+
+	file.read((char*)&limitedHinge.hinge, 128);
+	file.read((char*)&limitedHinge.minAngle, 4);
+	file.read((char*)&limitedHinge.maxAngle, 4);
+	file.read((char*)&limitedHinge.maxFriction, 4);
+	file.read((char*)&limitedHinge.enableMotor, 1);
+
+	if (limitedHinge.enableMotor)
+		file.read((char*)&limitedHinge.motor, 25);
+}
+
+void bhkLimitedHingeConstraint::Put(fstream& file) {
+	bhkConstraint::Put(file);
+
+	file.write((char*)&limitedHinge.hinge, 128);
+	file.write((char*)&limitedHinge.minAngle, 4);
+	file.write((char*)&limitedHinge.maxAngle, 4);
+	file.write((char*)&limitedHinge.maxFriction, 4);
+	file.write((char*)&limitedHinge.enableMotor, 1);
+
+	if (limitedHinge.enableMotor)
+		file.write((char*)&limitedHinge.motor, 25);
+}
+
+int bhkLimitedHingeConstraint::CalcBlockSize() {
+	bhkConstraint::CalcBlockSize();
+
+	blockSize += 141;
+	if (limitedHinge.enableMotor)
+		blockSize += 25;
+
+	return blockSize;
+}
+
+
+bhkBreakableConstraint::bhkBreakableConstraint(NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKBREAKABLECONSTRAINT;
+}
+
+bhkBreakableConstraint::bhkBreakableConstraint(fstream& file, NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKBREAKABLECONSTRAINT;
+
+	Get(file);
+}
+
+void bhkBreakableConstraint::Get(fstream& file) {
+	bhkConstraint::Get(file);
+
+	subConstraint.Get(file);
+	file.read((char*)&threshold, 4);
+	file.read((char*)&removeIfBroken, 1);
+}
+
+void bhkBreakableConstraint::Put(fstream& file) {
+	bhkConstraint::Put(file);
+
+	subConstraint.Put(file);
+	file.write((char*)&threshold, 4);
+	file.write((char*)&removeIfBroken, 1);
+}
+
+void bhkBreakableConstraint::notifyBlockDelete(int blockID) {
+	bhkConstraint::notifyBlockDelete(blockID);
+
+	subConstraint.notifyBlockDelete(blockID);
+}
+
+void bhkBreakableConstraint::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkConstraint::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	subConstraint.notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+int bhkBreakableConstraint::CalcBlockSize() {
+	bhkConstraint::CalcBlockSize();
+
+	blockSize += 5;
+	blockSize += subConstraint.CalcDescSize();
+
+	return blockSize;
+}
+
+
+bhkRagdollConstraint::bhkRagdollConstraint(NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKRAGDOLLCONSTRAINT;
+}
+
+bhkRagdollConstraint::bhkRagdollConstraint(fstream& file, NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKRAGDOLLCONSTRAINT;
+
+	Get(file);
+}
+
+void bhkRagdollConstraint::Get(fstream& file) {
+	bhkConstraint::Get(file);
+
+	file.read((char*)&ragdoll.twistA, 16);
+	file.read((char*)&ragdoll.planeA, 16);
+	file.read((char*)&ragdoll.motorA, 16);
+	file.read((char*)&ragdoll.pivotA, 16);
+	file.read((char*)&ragdoll.twistB, 16);
+	file.read((char*)&ragdoll.planeB, 16);
+	file.read((char*)&ragdoll.motorB, 16);
+	file.read((char*)&ragdoll.pivotB, 16);
+	file.read((char*)&ragdoll.coneMaxAngle, 4);
+	file.read((char*)&ragdoll.planeMinAngle, 4);
+	file.read((char*)&ragdoll.planeMaxAngle, 4);
+	file.read((char*)&ragdoll.twistMinAngle, 4);
+	file.read((char*)&ragdoll.twistMaxAngle, 4);
+	file.read((char*)&ragdoll.maxFriction, 4);
+	file.read((char*)&ragdoll.enableMotor, 1);
+
+	if (ragdoll.enableMotor)
+		file.read((char*)&ragdoll.motor, 25);
+}
+
+void bhkRagdollConstraint::Put(fstream& file) {
+	bhkConstraint::Put(file);
+
+	file.write((char*)&ragdoll.twistA, 16);
+	file.write((char*)&ragdoll.planeA, 16);
+	file.write((char*)&ragdoll.motorA, 16);
+	file.write((char*)&ragdoll.pivotA, 16);
+	file.write((char*)&ragdoll.twistB, 16);
+	file.write((char*)&ragdoll.planeB, 16);
+	file.write((char*)&ragdoll.motorB, 16);
+	file.write((char*)&ragdoll.pivotB, 16);
+	file.write((char*)&ragdoll.coneMaxAngle, 4);
+	file.write((char*)&ragdoll.planeMinAngle, 4);
+	file.write((char*)&ragdoll.planeMaxAngle, 4);
+	file.write((char*)&ragdoll.twistMinAngle, 4);
+	file.write((char*)&ragdoll.twistMaxAngle, 4);
+	file.write((char*)&ragdoll.maxFriction, 4);
+	file.write((char*)&ragdoll.enableMotor, 1);
+
+	if (ragdoll.enableMotor)
+		file.write((char*)&ragdoll.motor, 25);
+}
+
+int bhkRagdollConstraint::CalcBlockSize() {
+	bhkConstraint::CalcBlockSize();
+
+	blockSize += 153;
+	if (ragdoll.enableMotor)
+		blockSize += 25;
+
+	return blockSize;
+}
+
+
+bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKSTIFFSPRINGCONSTRAINT;
+}
+
+bhkStiffSpringConstraint::bhkStiffSpringConstraint(fstream& file, NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKSTIFFSPRINGCONSTRAINT;
+
+	Get(file);
+}
+
+void bhkStiffSpringConstraint::Get(fstream& file) {
+	bhkConstraint::Get(file);
+
+	file.read((char*)&stiffSpring.pivotA, 16);
+	file.read((char*)&stiffSpring.pivotB, 16);
+	file.read((char*)&stiffSpring.length, 4);
+}
+
+void bhkStiffSpringConstraint::Put(fstream& file) {
+	bhkConstraint::Put(file);
+
+	file.write((char*)&stiffSpring.pivotA, 16);
+	file.write((char*)&stiffSpring.pivotB, 16);
+	file.write((char*)&stiffSpring.length, 4);
+}
+
+int bhkStiffSpringConstraint::CalcBlockSize() {
+	bhkConstraint::CalcBlockSize();
+
+	blockSize += 36;
+
+	return blockSize;
+}
+
+
+bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKBALLANDSOCKETCONSTRAINT;
+}
+
+bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(fstream& file, NiHeader& hdr) {
+	bhkConstraint::Init();
+
+	header = &hdr;
+	blockType = BHKBALLANDSOCKETCONSTRAINT;
+
+	Get(file);
+}
+
+void bhkBallAndSocketConstraint::Get(fstream& file) {
+	bhkConstraint::Get(file);
+
+	file.read((char*)&ballAndSocket.translationA, 16);
+	file.read((char*)&ballAndSocket.translationB, 16);
+}
+
+void bhkBallAndSocketConstraint::Put(fstream& file) {
+	bhkConstraint::Put(file);
+
+	file.write((char*)&ballAndSocket.translationA, 16);
+	file.write((char*)&ballAndSocket.translationB, 16);
+}
+
+int bhkBallAndSocketConstraint::CalcBlockSize() {
+	bhkConstraint::CalcBlockSize();
+
+	blockSize += 32;
+
+	return blockSize;
+}
+
+
+bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiHeader& hdr) {
+	bhkSerializable::Init();
+
+	header = &hdr;
+	blockType = BHKBALLSOCKETCONSTRAINTCHAIN;
+
+	numPivots = 0;
+	numEntitiesA = 0;
+	numEntities = 0;
+	entityARef = 0xFFFFFFFF;
+	entityBRef = 0xFFFFFFFF;
+}
+
+bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(fstream& file, NiHeader& hdr) {
+	bhkSerializable::Init();
+
+	header = &hdr;
+	blockType = BHKBALLSOCKETCONSTRAINTCHAIN;
+
+	Get(file);
+}
+
+void bhkBallSocketConstraintChain::Get(fstream& file) {
+	bhkSerializable::Get(file);
+
+	file.read((char*)&numPivots, 4);
+	pivots.resize(numPivots);
+	for (int i = 0; i < numPivots; i++)
+		file.read((char*)&pivots[i], 16);
+
+	file.read((char*)&tau, 4);
+	file.read((char*)&damping, 4);
+	file.read((char*)&cfm, 4);
+	file.read((char*)&maxErrorDistance, 4);
+
+	file.read((char*)&numEntitiesA, 4);
+	entityARefs.resize(numEntitiesA);
+	for (int i = 0; i < numEntitiesA; i++)
+		file.read((char*)&entityARefs[i], 4);
+
+	file.read((char*)&numEntities, 4);
+	file.read((char*)&entityARef, 4);
+	file.read((char*)&entityBRef, 4);
+	file.read((char*)&priority, 4);
+}
+
+void bhkBallSocketConstraintChain::Put(fstream& file) {
+	bhkSerializable::Put(file);
+
+	file.write((char*)&numPivots, 4);
+	for (int i = 0; i < numPivots; i++)
+		file.write((char*)&pivots[i], 16);
+
+	file.write((char*)&tau, 4);
+	file.write((char*)&damping, 4);
+	file.write((char*)&cfm, 4);
+	file.write((char*)&maxErrorDistance, 4);
+
+	file.write((char*)&numEntitiesA, 4);
+	for (int i = 0; i < numEntitiesA; i++)
+		file.write((char*)&entityARefs[i], 4);
+
+	file.write((char*)&numEntities, 4);
+	file.write((char*)&entityARef, 4);
+	file.write((char*)&entityBRef, 4);
+	file.write((char*)&priority, 4);
+}
+
+void bhkBallSocketConstraintChain::notifyBlockDelete(int blockID) {
+	bhkSerializable::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numEntitiesA; i++) {
+		if (entityARefs[i] == blockID) {
+			entityARefs.erase(entityARefs.begin() + i);
+			i--;
+			numEntitiesA--;
+		}
+		else if (entityARefs[i] > blockID)
+			entityARefs[i]--;
+	}
+
+	if (entityARef == blockID)
+		entityARef = 0xFFFFFFFF;
+	else if (entityARef > blockID)
+		entityARef--;
+
+	if (entityBRef == blockID)
+		entityBRef = 0xFFFFFFFF;
+	else if (entityBRef > blockID)
+		entityBRef--;
+}
+
+void bhkBallSocketConstraintChain::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkSerializable::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numEntitiesA; i++) {
+		if (entityARefs[i] == blockIndexLo)
+			entityARefs[i] = blockIndexHi;
+		else if (entityARefs[i] == blockIndexHi)
+			entityARefs[i] = blockIndexLo;
+	}
+
+	if (entityARef == blockIndexLo)
+		entityARef = blockIndexHi;
+	else if (entityARef == blockIndexHi)
+		entityARef = blockIndexLo;
+
+	if (entityBRef == blockIndexLo)
+		entityBRef = blockIndexHi;
+	else if (entityBRef == blockIndexHi)
+		entityBRef = blockIndexLo;
+}
+
+int bhkBallSocketConstraintChain::CalcBlockSize() {
+	bhkSerializable::CalcBlockSize();
+
+	blockSize += 40;
+	blockSize += numPivots * 16;
+	blockSize += numEntitiesA * 4;
+
+	return blockSize;
+}
+
+
+bhkRigidBody::bhkRigidBody(NiHeader& hdr) {
+	bhkEntity::Init();
+
+	header = &hdr;
+	blockType = BHKRIGIDBODY;
+
+	numConstraints = 0;
+}
+
+bhkRigidBody::bhkRigidBody(fstream& file, NiHeader& hdr) {
+	bhkEntity::Init();
+
+	header = &hdr;
+	blockType = BHKRIGIDBODY;
+
+	Get(file);
+}
+
+void bhkRigidBody::Get(fstream& file) {
+	bhkEntity::Get(file);
+
+	file.read((char*)&responseType, 1);
+	file.read((char*)&unkByte, 1);
+	file.read((char*)&processContactCallbackDelay, 2);
+	file.read((char*)unkShorts, 4);
+	file.read((char*)&collisionFilterCopy, 4);
+	file.read((char*)unkShorts2, 12);
+	file.read((char*)&translation, 16);
+	file.read((char*)&rotation, 16);
+	file.read((char*)&linearVelocity, 16);
+	file.read((char*)&angularVelocity, 16);
+	file.read((char*)inertiaMatrix, 48);
+	file.read((char*)&center, 16);
+	file.read((char*)&mass, 4);
+	file.read((char*)&linearDamping, 4);
+	file.read((char*)&angularDamping, 4);
+
+	if (header->GetUserVersion() >= 12) {
+		file.read((char*)&timeFactor, 4);
+		file.read((char*)&gravityFactor, 4);
+	}
+
+	file.read((char*)&friction, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.read((char*)&rollingFrictionMult, 4);
+
+	file.read((char*)&restitution, 4);
+	file.read((char*)&maxLinearVelocity, 4);
+	file.read((char*)&maxAngularVelocity, 4);
+	file.read((char*)&penetrationDepth, 4);
+	file.read((char*)&motionSystem, 1);
+	file.read((char*)&deactivatorType, 1);
+	file.read((char*)&solverDeactivation, 1);
+	file.read((char*)&qualityType, 1);
+	file.read((char*)&autoRemoveLevel, 1);
+	file.read((char*)&responseModifierFlag, 1);
+	file.read((char*)&numShapeKeysInContactPointProps, 1);
+	file.read((char*)&forceCollideOntoPpu, 1);
+	file.read((char*)&unkInt2, 4);
+	file.read((char*)&unkInt3, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.read((char*)&unkInt4, 4);
+
+	file.read((char*)&numConstraints, 4);
+	constraints.resize(numConstraints);
+
+	for (int i = 0; i < numConstraints; i++)
+		file.read((char*)&constraints[i], 4);
+
+	if (header->GetUserVersion() <= 11)
+		file.read((char*)&unkInt5, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.read((char*)&unkShort3, 2);
+}
+
+void bhkRigidBody::Put(fstream& file) {
+	bhkEntity::Put(file);
+
+	file.write((char*)&responseType, 1);
+	file.write((char*)&unkByte, 1);
+	file.write((char*)&processContactCallbackDelay, 2);
+	file.write((char*)unkShorts, 4);
+	file.write((char*)&collisionFilterCopy, 4);
+	file.write((char*)unkShorts2, 12);
+	file.write((char*)&translation, 16);
+	file.write((char*)&rotation, 16);
+	file.write((char*)&linearVelocity, 16);
+	file.write((char*)&angularVelocity, 16);
+	file.write((char*)inertiaMatrix, 48);
+	file.write((char*)&center, 16);
+	file.write((char*)&mass, 4);
+	file.write((char*)&linearDamping, 4);
+	file.write((char*)&angularDamping, 4);
+
+	if (header->GetUserVersion() >= 12) {
+		file.write((char*)&timeFactor, 4);
+		file.write((char*)&gravityFactor, 4);
+	}
+
+	file.write((char*)&friction, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.write((char*)&rollingFrictionMult, 4);
+
+	file.write((char*)&restitution, 4);
+	file.write((char*)&maxLinearVelocity, 4);
+	file.write((char*)&maxAngularVelocity, 4);
+	file.write((char*)&penetrationDepth, 4);
+	file.write((char*)&motionSystem, 1);
+	file.write((char*)&deactivatorType, 1);
+	file.write((char*)&solverDeactivation, 1);
+	file.write((char*)&qualityType, 1);
+	file.write((char*)&autoRemoveLevel, 1);
+	file.write((char*)&responseModifierFlag, 1);
+	file.write((char*)&numShapeKeysInContactPointProps, 1);
+	file.write((char*)&forceCollideOntoPpu, 1);
+	file.write((char*)&unkInt2, 4);
+	file.write((char*)&unkInt3, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.write((char*)&unkInt4, 4);
+
+	file.write((char*)&numConstraints, 4);
+	constraints.resize(numConstraints);
+
+	for (int i = 0; i < numConstraints; i++)
+		file.write((char*)&constraints[i], 4);
+
+	if (header->GetUserVersion() <= 11)
+		file.write((char*)&unkInt5, 4);
+
+	if (header->GetUserVersion() >= 12)
+		file.write((char*)&unkShort3, 2);
+}
+
+void bhkRigidBody::notifyBlockDelete(int blockID) {
+	bhkEntity::notifyBlockDelete(blockID);
+
+	for (int i = 0; i < numConstraints; i++) {
+		if (constraints[i] == blockID) {
+			constraints.erase(constraints.begin() + i);
+			i--;
+			numConstraints--;
+		}
+		else if (constraints[i] > blockID)
+			constraints[i]--;
+	}
+}
+
+void bhkRigidBody::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkEntity::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	for (int i = 0; i < numConstraints; i++) {
+		if (constraints[i] == blockIndexLo)
+			constraints[i] = blockIndexHi;
+		else if (constraints[i] == blockIndexHi)
+			constraints[i] = blockIndexLo;
+	}
+}
+
+int bhkRigidBody::CalcBlockSize() {
+	bhkEntity::CalcBlockSize();
+
+	blockSize += 204;
+	blockSize += 4 * numConstraints;
+
+	if (header->GetUserVersion() <= 11)
+		blockSize += 4;
+
+	if (header->GetUserVersion() >= 12)
+		blockSize += 18;
+
+	return blockSize;
+}
+
+
+bhkRigidBodyT::bhkRigidBodyT(NiHeader& hdr) : bhkRigidBody(hdr) {
+	blockType = BHKRIGIDBODYT;
+}
+
+bhkRigidBodyT::bhkRigidBodyT(fstream& file, NiHeader& hdr) : bhkRigidBody(file, hdr) {
+	blockType = BHKRIGIDBODYT;
+}
+
+
+bhkCompressedMeshShape::bhkCompressedMeshShape(NiHeader& hdr) {
+	bhkShape::Init();
+
+	header = &hdr;
+	blockType = BHKCOMPRESSEDMESHSHAPE;
+
+	targetRef = 0xFFFFFFFF;
+	dataRef = 0xFFFFFFFF;
+}
+
+bhkCompressedMeshShape::bhkCompressedMeshShape(fstream& file, NiHeader& hdr) {
+	bhkShape::Init();
+
+	header = &hdr;
+	blockType = BHKCOMPRESSEDMESHSHAPE;
+
+	Get(file);
+}
+
+void bhkCompressedMeshShape::Get(fstream& file) {
+	bhkShape::Get(file);
+
+	file.read((char*)&targetRef, 4);
+	file.read((char*)&userData, 4);
+	file.read((char*)&radius, 4);
+	file.read((char*)&unkFloat, 4);
+	file.read((char*)&scaling, 16);
+	file.read((char*)&radius2, 4);
+	file.read((char*)&scaling2, 16);
+	file.read((char*)&dataRef, 4);
+}
+
+void bhkCompressedMeshShape::Put(fstream& file) {
+	bhkShape::Put(file);
+
+	file.write((char*)&targetRef, 4);
+	file.write((char*)&userData, 4);
+	file.write((char*)&radius, 4);
+	file.write((char*)&unkFloat, 4);
+	file.write((char*)&scaling, 16);
+	file.write((char*)&radius2, 4);
+	file.write((char*)&scaling2, 16);
+	file.write((char*)&dataRef, 4);
+}
+
+void bhkCompressedMeshShape::notifyBlockDelete(int blockID) {
+	bhkShape::notifyBlockDelete(blockID);
+
+	if (targetRef == blockID)
+		targetRef = 0xFFFFFFFF;
+	else if (targetRef > blockID)
+		targetRef--;
+
+	if (dataRef == blockID)
+		dataRef = 0xFFFFFFFF;
+	else if (dataRef > blockID)
+		dataRef--;
+}
+
+void bhkCompressedMeshShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
+	bhkShape::notifyBlockSwap(blockIndexLo, blockIndexHi);
+
+	if (targetRef == blockIndexLo)
+		targetRef = blockIndexHi;
+	else if (targetRef == blockIndexHi)
+		targetRef = blockIndexLo;
+
+	if (dataRef == blockIndexLo)
+		dataRef = blockIndexHi;
+	else if (dataRef == blockIndexHi)
+		dataRef = blockIndexLo;
+}
+
+int bhkCompressedMeshShape::CalcBlockSize() {
+	bhkShape::CalcBlockSize();
+
+	blockSize += 56;
+
+	return blockSize;
+}
+
+
+bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiHeader& hdr) {
+	bhkRefObject::Init();
+
+	header = &hdr;
+	blockType = BHKCOMPRESSEDMESHSHAPEDATA;
+
+	numMat32 = 0;
+	numMat16 = 0;
+	numMat8 = 0;
+	numMaterials = 0;
+	numNamedMat = 0;
+	numTransforms = 0;
+	numBigVerts = 0;
+	numBigTris = 0;
+	numChunks = 0;
+	numConvexPieceA = 0;
+}
+
+bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(fstream& file, NiHeader& hdr) {
+	bhkRefObject::Init();
+
+	header = &hdr;
+	blockType = BHKCOMPRESSEDMESHSHAPEDATA;
+
+	Get(file);
+}
+
+void bhkCompressedMeshShapeData::Get(fstream& file) {
+	bhkRefObject::Get(file);
+
+	file.read((char*)&bitsPerIndex, 4);
+	file.read((char*)&bitsPerWIndex, 4);
+	file.read((char*)&maskWIndex, 4);
+	file.read((char*)&maskIndex, 4);
+	file.read((char*)&error, 4);
+	file.read((char*)&aabbBoundMin, 16);
+	file.read((char*)&aabbBoundMax, 16);
+	file.read((char*)&weldingType, 1);
+	file.read((char*)&materialType, 1);
+
+	file.read((char*)&numMat32, 4);
+	mat32.resize(numMat32);
+	for (int i = 0; i < numMat32; i++)
+		file.read((char*)&mat32[i], 4);
+
+	file.read((char*)&numMat16, 4);
+	mat16.resize(numMat16);
+	for (int i = 0; i < numMat16; i++)
+		file.read((char*)&mat16[i], 4);
+
+	file.read((char*)&numMat8, 4);
+	mat8.resize(numMat8);
+	for (int i = 0; i < numMat8; i++)
+		file.read((char*)&mat8[i], 4);
+
+	file.read((char*)&numMaterials, 4);
+	materials.resize(numMaterials);
+	for (int i = 0; i < numMaterials; i++)
+		file.read((char*)&materials[i], 8);
+
+	file.read((char*)&numNamedMat, 4);
+
+	file.read((char*)&numTransforms, 4);
+	transforms.resize(numTransforms);
+	for (int i = 0; i < numTransforms; i++)
+		file.read((char*)&transforms[i], 32);
+
+	file.read((char*)&numBigVerts, 4);
+	bigVerts.resize(numBigVerts);
+	for (int i = 0; i < numBigVerts; i++)
+		file.read((char*)&bigVerts[i], 16);
+
+	file.read((char*)&numBigTris, 4);
+	bigTris.resize(numBigTris);
+	for (int i = 0; i < numBigTris; i++)
+		file.read((char*)&bigTris[i], 12);
+
+	file.read((char*)&numChunks, 4);
+	chunks.resize(numChunks);
+	for (int i = 0; i < numChunks; i++) {
+		file.read((char*)&chunks[i].translation, 16);
+		file.read((char*)&chunks[i].matIndex, 4);
+		file.read((char*)&chunks[i].reference, 2);
+		file.read((char*)&chunks[i].transformIndex, 2);
+
+		file.read((char*)&chunks[i].numVerts, 4);
+		chunks[i].verts.resize(chunks[i].numVerts);
+		for (int j = 0; j < chunks[i].numVerts; j++)
+			file.read((char*)&chunks[i].verts[j], 2);
+
+		file.read((char*)&chunks[i].numIndices, 4);
+		chunks[i].indices.resize(chunks[i].numIndices);
+		for (int j = 0; j < chunks[i].numIndices; j++)
+			file.read((char*)&chunks[i].indices[j], 2);
+
+		file.read((char*)&chunks[i].numStrips, 4);
+		chunks[i].strips.resize(chunks[i].numStrips);
+		for (int j = 0; j < chunks[i].numStrips; j++)
+			file.read((char*)&chunks[i].strips[j], 2);
+
+		file.read((char*)&chunks[i].numWeldingInfo, 4);
+		chunks[i].weldingInfo.resize(chunks[i].numWeldingInfo);
+		for (int j = 0; j < chunks[i].numWeldingInfo; j++)
+			file.read((char*)&chunks[i].weldingInfo[j], 2);
+	}
+
+	file.read((char*)&numConvexPieceA, 4);
+}
+
+void bhkCompressedMeshShapeData::Put(fstream& file) {
+	bhkRefObject::Put(file);
+
+	file.write((char*)&bitsPerIndex, 4);
+	file.write((char*)&bitsPerWIndex, 4);
+	file.write((char*)&maskWIndex, 4);
+	file.write((char*)&maskIndex, 4);
+	file.write((char*)&error, 4);
+	file.write((char*)&aabbBoundMin, 16);
+	file.write((char*)&aabbBoundMax, 16);
+	file.write((char*)&weldingType, 1);
+	file.write((char*)&materialType, 1);
+
+	file.write((char*)&numMat32, 4);
+	for (int i = 0; i < numMat32; i++)
+		file.write((char*)&mat32[i], 4);
+
+	file.write((char*)&numMat16, 4);
+	for (int i = 0; i < numMat16; i++)
+		file.write((char*)&mat16[i], 4);
+
+	file.write((char*)&numMat8, 4);
+	for (int i = 0; i < numMat8; i++)
+		file.write((char*)&mat8[i], 4);
+
+	file.write((char*)&numMaterials, 4);
+	for (int i = 0; i < numMaterials; i++)
+		file.write((char*)&materials[i], 8);
+
+	file.write((char*)&numNamedMat, 4);
+
+	file.write((char*)&numTransforms, 4);
+	for (int i = 0; i < numTransforms; i++)
+		file.write((char*)&transforms[i], 32);
+
+	file.write((char*)&numBigVerts, 4);
+	for (int i = 0; i < numBigVerts; i++)
+		file.write((char*)&bigVerts[i], 16);
+
+	file.write((char*)&numBigTris, 4);
+	for (int i = 0; i < numBigTris; i++)
+		file.write((char*)&bigTris[i], 12);
+
+	file.write((char*)&numChunks, 4);
+	for (int i = 0; i < numChunks; i++) {
+		file.write((char*)&chunks[i].translation, 16);
+		file.write((char*)&chunks[i].matIndex, 4);
+		file.write((char*)&chunks[i].reference, 2);
+		file.write((char*)&chunks[i].transformIndex, 2);
+
+		file.write((char*)&chunks[i].numVerts, 4);
+		for (int j = 0; j < chunks[i].numVerts; j++)
+			file.write((char*)&chunks[i].verts[j], 2);
+
+		file.write((char*)&chunks[i].numIndices, 4);
+		for (int j = 0; j < chunks[i].numIndices; j++)
+			file.write((char*)&chunks[i].indices[j], 2);
+
+		file.write((char*)&chunks[i].numStrips, 4);
+		for (int j = 0; j < chunks[i].numStrips; j++)
+			file.write((char*)&chunks[i].strips[j], 2);
+
+		file.write((char*)&chunks[i].numWeldingInfo, 4);
+		for (int j = 0; j < chunks[i].numWeldingInfo; j++)
+			file.write((char*)&chunks[i].weldingInfo[j], 2);
+	}
+
+	file.write((char*)&numConvexPieceA, 4);
+}
+
+int bhkCompressedMeshShapeData::CalcBlockSize() {
+	bhkRefObject::CalcBlockSize();
+
+	blockSize += 94;
+	blockSize += numMat32 * 4;
+	blockSize += numMat16 * 4;
+	blockSize += numMat8 * 4;
+	blockSize += numMaterials * 8;
+	blockSize += numTransforms * 32;
+	blockSize += numBigVerts * 16;
+	blockSize += numBigTris * 12;
+
+	blockSize += numChunks * 40;
+	for (int i = 0; i < numChunks; i++) {
+		blockSize += chunks[i].numVerts * 2;
+		blockSize += chunks[i].numIndices * 2;
+		blockSize += chunks[i].numStrips * 2;
+		blockSize += chunks[i].numWeldingInfo * 2;
+	}
 
 	return blockSize;
 }

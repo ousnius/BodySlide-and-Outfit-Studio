@@ -2474,3 +2474,6 @@ msgstr ""
 "Version der NIF-Datei '%s' passt nicht zum aktuell verwendeten Spiel. Um die "
 "Modelle für das Spiel zu benutzen, müssen sie in OBJ/FBX exportiert und "
 "erneut geladen werden."
+
+msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
+msgstr "Sollen Skyrim NIFs während dieser Session für SSE optimiert werden?"

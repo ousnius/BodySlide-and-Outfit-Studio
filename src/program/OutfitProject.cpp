@@ -2112,9 +2112,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 		for (int i = 0; i < sel.Count(); i++) {
 			string selString = clothFileNames[sel[i]].ToStdString();
 			if (!selString.empty()) {
-				auto clothBlock = new BSClothExtraData(nif.GetHeader());
-				clothBlock->Clone(&clothData[selString]);
-
+				auto clothBlock = new BSClothExtraData(clothData[selString]);
 				int id = nif.GetHeader().AddBlock(clothBlock, "BSClothExtraData");
 				if (id != 0xFFFFFFFF) {
 					NiNode* root = nif.GetHeader().GetBlock<NiNode>(0);
@@ -2257,8 +2255,22 @@ void OutfitProject::CheckNIFTarget(NifFile& nif) {
 	}
 
 	if (!match) {
-		wxLogWarning("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.", nif.GetFileName());
-		wxMessageBox(wxString::Format(_("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again."),
-			nif.GetFileName()), _("Version"), wxICON_WARNING, owner);
+		if (owner->targetGame == SKYRIMSE && nif.GetHeader().GetUserVersion2() == 83) {
+			if (!Config.Exists("OptimizeForSSE")) {
+				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
+				if (res == wxYES)
+					Config.SetDefaultValue("OptimizeForSSE", "true");
+				else
+					Config.SetDefaultValue("OptimizeForSSE", "false");
+			}
+
+			if (Config["OptimizeForSSE"] == "true")
+				nif.OptimizeForSSE();
+		}
+		else {
+			wxLogWarning("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.", nif.GetFileName());
+			wxMessageBox(wxString::Format(_("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again."),
+				nif.GetFileName()), _("Version"), wxICON_WARNING, owner);
+		}
 	}
 }

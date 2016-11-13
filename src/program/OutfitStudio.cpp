@@ -2835,6 +2835,7 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 			project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
 
 			BlockType shapeType = project->GetWorkNif()->GetShapeType(activeItem->shapeName);
+			bool isBSTri = (shapeType == BSTRISHAPE || shapeType == BSDYNAMICTRISHAPE);
 
 			// Add vertices and triangles from mask
 			set<Triangle> realTris;
@@ -2868,20 +2869,21 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					else
 						partTri.p3 = p3Find - partitionData->verts.begin();
 
-					if (shapeType == BSTRISHAPE)
-						partTri = tri;
-
-					partTri.rot();
-					partitionData->tris.push_back(partTri);
-
 					tri.rot();
+					partTri.rot();
+
+					if (isBSTri)
+						partitionData->tris.push_back(tri);
+					else
+						partitionData->tris.push_back(partTri);
+
 					realTris.insert(tri);
 				}
 			}
 
 			// Vertex indices that are assigned
 			set<ushort> vertsToCheck;
-			if (shapeType != BSTRISHAPE) {
+			if (!isBSTri) {
 				for (auto &tri : partitionData->tris) {
 					vertsToCheck.insert(partitionData->verts[tri.p1]);
 					vertsToCheck.insert(partitionData->verts[tri.p2]);
@@ -2904,7 +2906,7 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 				if (childPartition && childPartition != partitionData) {
 					// Move triangles that match to the end
 					auto removeTriEnd = childPartition->tris.end();
-					if (shapeType != BSTRISHAPE) {
+					if (!isBSTri) {
 						removeTriEnd = partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
 							Triangle t(childPartition->verts[tri.p1], childPartition->verts[tri.p2], childPartition->verts[tri.p3]);
 							t.rot();
@@ -2917,7 +2919,10 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					}
 					else {
 						removeTriEnd = partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
-							if (realTris.find(tri) != realTris.end())
+							Triangle t = tri;
+							t.rot();
+
+							if (realTris.find(t) != realTris.end())
 								return true;
 
 							return false;
@@ -2928,11 +2933,12 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					set<ushort> vertsToRemove;
 					auto tri = removeTriEnd;
 					auto triEnd = childPartition->tris.end();
+					bool removeVert;
 					for (auto &v : vertsToCheck) {
-						bool removeVert = true;
+						removeVert = true;
 						for (tri = removeTriEnd; tri < triEnd; ++tri) {
 							const Triangle& t = (*tri);
-							if (shapeType != BSTRISHAPE) {
+							if (!isBSTri) {
 								if (v == childPartition->verts[t.p1] ||
 									v == childPartition->verts[t.p2] ||
 									v == childPartition->verts[t.p3]) {
@@ -2947,30 +2953,22 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 								}
 							}
 						}
-					
+
 						if (removeVert)
 							vertsToRemove.insert(v);
 					}
 
 					// Find vertices that need to be decremented before erasing tris
 					set<ushort> vertsToDecrement;
-					for (auto &v : vertsToRemove) {
-						for (auto itTri = childPartition->tris.begin(); itTri < removeTriEnd; ++itTri) {
-							const Triangle& tri = (*itTri);
-							if (shapeType != BSTRISHAPE) {
+					if (!isBSTri) {
+						for (auto &v : vertsToRemove) {
+							for (auto itTri = childPartition->tris.begin(); itTri < removeTriEnd; ++itTri) {
+								const Triangle& tri = (*itTri);
 								if (v == childPartition->verts[tri.p1])
 									vertsToDecrement.insert(tri.p1);
 								else if (v == childPartition->verts[tri.p2])
 									vertsToDecrement.insert(tri.p2);
 								else if (v == childPartition->verts[tri.p3])
-									vertsToDecrement.insert(tri.p3);
-							}
-							else {
-								if (v == tri.p1)
-									vertsToDecrement.insert(tri.p1);
-								else if (v == tri.p2)
-									vertsToDecrement.insert(tri.p2);
-								else if (v == tri.p3)
 									vertsToDecrement.insert(tri.p3);
 							}
 						}
@@ -2980,15 +2978,17 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					childPartition->tris.erase(childPartition->tris.begin(), removeTriEnd);
 
 					// Decrement vertex indices in tris
-					for (auto &t : childPartition->tris) {
-						ushort* p = &t.p1;
-						for (int i = 0; i < 3; i++) {
-							int pRem = 0;
-							for (auto &remPos : vertsToDecrement)
-								if (p[i] > remPos)
-									pRem++;
-					
-							p[i] -= pRem;
+					if (!isBSTri) {
+						for (auto &t : childPartition->tris) {
+							ushort* p = &t.p1;
+							for (int i = 0; i < 3; i++) {
+								int pRem = 0;
+								for (auto &remPos : vertsToDecrement)
+									if (p[i] > remPos)
+										pRem++;
+
+								p[i] -= pRem;
+							}
 						}
 					}
 
