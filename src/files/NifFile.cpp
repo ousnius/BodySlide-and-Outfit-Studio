@@ -1827,25 +1827,29 @@ int NifFile::OptimizeForSSE() {
 
 						auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 						if (skinInst) {
-							auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
-							if (skinData) {
-								for (int b = 0; b < skinData->numBones; b++) {
-									for (auto &weight : skinData->bones[b].vertexWeights) {
-										for (int i = 0; i < 4; i++) {
-											if (bsShape->vertData[weight.index].weights[i] == 0.0f) {
-												bsShape->vertData[weight.index].weights[i] = weight.weight;
-												bsShape->vertData[weight.index].weightBones[i] = b;
-												break;
-											}
-										}
-									}
-								}
-							}
-
 							auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 							if (skinPart) {
 								TriangulatePartitions(s);
+
 								for (int partID = 0; partID < skinPart->numPartitions; partID++) {
+									for (int i = 0; i < skinPart->partitions[partID].numVertices; i++) {
+										const ushort& v = skinPart->partitions[partID].vertexMap[i];
+
+										if (skinPart->partitions[partID].hasVertexWeights) {
+											bsShape->vertData[v].weights[0] = skinPart->partitions[partID].vertexWeights[i].w1;
+											bsShape->vertData[v].weights[1] = skinPart->partitions[partID].vertexWeights[i].w2;
+											bsShape->vertData[v].weights[2] = skinPart->partitions[partID].vertexWeights[i].w3;
+											bsShape->vertData[v].weights[3] = skinPart->partitions[partID].vertexWeights[i].w4;
+										}
+
+										if (skinPart->partitions[partID].hasBoneIndices) {
+											bsShape->vertData[v].weightBones[0] = skinPart->partitions[partID].boneIndices[i].i1;
+											bsShape->vertData[v].weightBones[1] = skinPart->partitions[partID].boneIndices[i].i2;
+											bsShape->vertData[v].weightBones[2] = skinPart->partitions[partID].boneIndices[i].i3;
+											bsShape->vertData[v].weightBones[3] = skinPart->partitions[partID].boneIndices[i].i4;
+										}
+									}
+
 									vector<Triangle> realTris(skinPart->partitions[partID].numTriangles);
 									for (int i = 0; i < skinPart->partitions[partID].numTriangles; i++) {
 										// Find the actual tri index from the partition tri index
@@ -3512,34 +3516,26 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		t.rot();
 
 	// Make maps of vertices to bones and weights
-	unordered_map<ushort, vector<int>> vertBones;
-	unordered_map<ushort, vector<float>> vertWeights;
+	unordered_map<ushort, vector<SkinWeight>> vertBoneWeights;
 
 	int boneIndex = 0;
 	for (auto &bone : skinData->bones) {
-		for (auto &bw : bone.vertexWeights) {
-			int weightIndex = 0;
-			for (auto &w : vertWeights[bw.index]) {
-				if (bw.weight > w)
-					break;
-				weightIndex++;
-			}
-			vertBones[bw.index].insert(vertBones[bw.index].begin() + weightIndex, boneIndex);
-			vertWeights[bw.index].insert(vertWeights[bw.index].begin() + weightIndex, bw.weight);
-		}
+		for (auto &bw : bone.vertexWeights)
+			vertBoneWeights[bw.index].push_back(SkinWeight(boneIndex, bw.weight));
+
 		boneIndex++;
 	}
+
+	// Sort weights and corresponding bones
+	for (auto &bw : vertBoneWeights)
+		sort(bw.second.begin(), bw.second.end(), BoneWeightsSort());
 
 	// Enforce maximum vertex bone weight count
 	int maxBonesPerVertex = 4;
 
-	for (auto &vb : vertBones)
-		if (vb.second.size() > maxBonesPerVertex)
-			vb.second.erase(vb.second.begin() + maxBonesPerVertex);
-
-	for (auto &vw : vertWeights)
-		if (vw.second.size() > maxBonesPerVertex)
-			vw.second.erase(vw.second.begin() + maxBonesPerVertex);
+	for (auto &bw : vertBoneWeights)
+		if (bw.second.size() > maxBonesPerVertex)
+			bw.second.erase(bw.second.begin() + maxBonesPerVertex, bw.second.end());
 
 	unordered_map<int, vector<int>> vertTris;
 	for (int t = 0; t < tris.size(); t++) {
@@ -3550,14 +3546,14 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 
 	// Lambda for finding bones that have the tri assigned
 	set<int> triBones;
-	auto fTriBones = [&triBones, &tris, &vertBones](const int& tri) {
+	auto fTriBones = [&triBones, &tris, &vertBoneWeights](const int& tri) {
 		triBones.clear();
 
 		if (tri >= 0 && tris.size() > tri) {
 			ushort* p = &tris[tri].p1;
 			for (int i = 0; i < 3; i++, p++)
-				for (auto &tb : vertBones[*p])
-					triBones.insert(tb);
+				for (auto &tb : vertBoneWeights[*p])
+					triBones.insert(tb.index);
 		}
 	};
 
@@ -3799,12 +3795,12 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 			float* pw = &vw.w1;
 
 			float tot = 0.0f;
-			for (int bi = 0; bi < vertBones[v].size(); bi++) {
+			for (int bi = 0; bi < vertBoneWeights[v].size(); bi++) {
 				if (bi == 4)
 					break;
 
-				pb[bi] = boneLookup[vertBones[v][bi]];
-				pw[bi] = vertWeights[v][bi];
+				pb[bi] = boneLookup[vertBoneWeights[v][bi].index];
+				pw[bi] = vertBoneWeights[v][bi].weight;
 				tot += pw[bi];
 			}
 
