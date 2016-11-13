@@ -4798,6 +4798,9 @@ void NiSkinPartition::Put(fstream& file) {
 			file.write((char*)&partitions[p].vertFlags7, 1);
 			file.write((char*)&partitions[p].vertFlags8, 1);
 
+			if (partitions[p].trueTriangles.size() != partitions[p].numTriangles)
+				partitions[p].trueTriangles = partitions[p].triangles;
+
 			for (int i = 0; i < partitions[p].numTriangles; i++) {
 				file.write((char*)&partitions[p].trueTriangles[i].p1, 2);
 				file.write((char*)&partitions[p].trueTriangles[i].p2, 2);
