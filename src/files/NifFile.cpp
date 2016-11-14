@@ -1832,38 +1832,40 @@ int NifFile::OptimizeForSSE() {
 								TriangulatePartitions(s);
 
 								for (int partID = 0; partID < skinPart->numPartitions; partID++) {
-									for (int i = 0; i < skinPart->partitions[partID].numVertices; i++) {
-										const ushort& v = skinPart->partitions[partID].vertexMap[i];
+									NiSkinPartition::PartitionBlock& part = skinPart->partitions[partID];
 
-										if (skinPart->partitions[partID].hasVertexWeights) {
-											bsShape->vertData[v].weights[0] = skinPart->partitions[partID].vertexWeights[i].w1;
-											bsShape->vertData[v].weights[1] = skinPart->partitions[partID].vertexWeights[i].w2;
-											bsShape->vertData[v].weights[2] = skinPart->partitions[partID].vertexWeights[i].w3;
-											bsShape->vertData[v].weights[3] = skinPart->partitions[partID].vertexWeights[i].w4;
+									for (int i = 0; i < part.numVertices; i++) {
+										const ushort& v = part.vertexMap[i];
+
+										if (part.hasVertexWeights) {
+											bsShape->vertData[v].weights[0] = part.vertexWeights[i].w1;
+											bsShape->vertData[v].weights[1] = part.vertexWeights[i].w2;
+											bsShape->vertData[v].weights[2] = part.vertexWeights[i].w3;
+											bsShape->vertData[v].weights[3] = part.vertexWeights[i].w4;
 										}
 
-										if (skinPart->partitions[partID].hasBoneIndices) {
-											bsShape->vertData[v].weightBones[0] = skinPart->partitions[partID].boneIndices[i].i1;
-											bsShape->vertData[v].weightBones[1] = skinPart->partitions[partID].boneIndices[i].i2;
-											bsShape->vertData[v].weightBones[2] = skinPart->partitions[partID].boneIndices[i].i3;
-											bsShape->vertData[v].weightBones[3] = skinPart->partitions[partID].boneIndices[i].i4;
+										if (part.hasBoneIndices) {
+											bsShape->vertData[v].weightBones[0] = part.bones[part.boneIndices[i].i1];
+											bsShape->vertData[v].weightBones[1] = part.bones[part.boneIndices[i].i2];
+											bsShape->vertData[v].weightBones[2] = part.bones[part.boneIndices[i].i3];
+											bsShape->vertData[v].weightBones[3] = part.bones[part.boneIndices[i].i4];
 										}
 									}
 
-									vector<Triangle> realTris(skinPart->partitions[partID].numTriangles);
-									for (int i = 0; i < skinPart->partitions[partID].numTriangles; i++) {
+									vector<Triangle> realTris(part.numTriangles);
+									for (int i = 0; i < part.numTriangles; i++) {
 										// Find the actual tri index from the partition tri index
 										Triangle tri;
-										tri.p1 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[i].p1];
-										tri.p2 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[i].p2];
-										tri.p3 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[i].p3];
+										tri.p1 = part.vertexMap[part.triangles[i].p1];
+										tri.p2 = part.vertexMap[part.triangles[i].p2];
+										tri.p3 = part.vertexMap[part.triangles[i].p3];
 
 										tri.rot();
 										realTris[i] = tri;
 									}
 
-									skinPart->partitions[partID].triangles = realTris;
-									skinPart->partitions[partID].trueTriangles = realTris;
+									part.triangles = realTris;
+									part.trueTriangles = realTris;
 								}
 							}
 						}
