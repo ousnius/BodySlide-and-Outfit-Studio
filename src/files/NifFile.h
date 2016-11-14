@@ -41,6 +41,7 @@ public:
 	void Optimize();
 	int OptimizeForSSE();
 	void PrepareData();
+	void FinalizeData();
 
 	string GetFileName() { return fileName; }
 

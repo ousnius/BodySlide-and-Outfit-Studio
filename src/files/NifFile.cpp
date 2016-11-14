@@ -1934,6 +1934,45 @@ void NifFile::PrepareData() {
 	}
 }
 
+void NifFile::FinalizeData() {
+	vector<string> shapes;
+	GetShapeList(shapes);
+
+	for (auto &s : shapes) {
+		// Move triangle and vertex data from shape to partition
+		if (hdr.GetUserVersion() >= 12 && hdr.GetUserVersion2() == 100) {
+			NiShape* shape = FindShapeByName(s);
+			if (shape) {
+				BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
+				if (!bsTriShape)
+					continue;
+
+				auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+				if (!skinInst)
+					continue;
+
+				auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+				if (!skinPart)
+					continue;
+
+				bsTriShape->CalcDataSizes();
+
+				skinPart->numVertices = bsTriShape->numVertices;
+				skinPart->dataSize = bsTriShape->dataSize;
+				skinPart->vertexSize = bsTriShape->vertexSize;
+				skinPart->vertData = bsTriShape->vertData;
+				skinPart->vertFlags1 = bsTriShape->vertFlags1;
+				skinPart->vertFlags2 = bsTriShape->vertFlags2;
+				skinPart->vertFlags3 = bsTriShape->vertFlags3;
+				skinPart->vertFlags4 = bsTriShape->vertFlags4;
+				skinPart->vertFlags5 = bsTriShape->vertFlags5;
+				skinPart->vertFlags6 = bsTriShape->vertFlags6;
+				skinPart->vertFlags7 = bsTriShape->vertFlags7;
+				skinPart->vertFlags8 = bsTriShape->vertFlags8;
+			}
+		}
+	}
+}
 
 BlockType NifFile::GetShapeType(const string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
@@ -2850,6 +2889,12 @@ void NifFile::CalcNormalsForShape(const string& shapeName, const bool& smooth, c
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
+
+	if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() <= 100) {
+		NiShader* shader = GetShader(shapeName);
+		if (shader && shader->IsSkinTint())
+			return;
+	}
 
 	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());

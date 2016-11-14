@@ -1455,6 +1455,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			zapIdx.clear();
 			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
 			nifSmall.SetVertsForShape(it->second, vertsLow);
+			nifSmall.CalcNormalsForShape(it->second);
+			nifSmall.CalcTangentsForShape(it->second);
 			nifSmall.DeleteVertsForShape(it->second, zapIdx);
 		}
 
@@ -1504,6 +1506,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	bool useCustName = false;
 
 	if (activeSet.GenWeights()) {
+		nifSmall.FinalizeData();
+
 		outFileNameSmall += "_0.nif";
 		outFileNameBig += "_1.nif";
 		custName = outFileNameSmall;
@@ -1535,6 +1539,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 	if (!useCustName)
 		outFileNameBig = custName;
+
+	nifBig.FinalizeData();
 
 	savedHigh = custName;
 	while (nifBig.Save(custName.ToStdString(), false)) {
@@ -1841,6 +1847,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 			if (currentSet.GenWeights()) {
 				nifSmall.SetVertsForShape(it->second, vertsLow);
+				nifSmall.CalcNormalsForShape(it->second);
+				nifSmall.CalcTangentsForShape(it->second);
 				nifSmall.DeleteVertsForShape(it->second, zapIdx);
 			}
 
@@ -1901,10 +1909,14 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		if (currentSet.GenWeights()) {
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
+
+			nifBig.FinalizeData();
 			if (nifBig.Save(outFileNameBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
+
+			nifSmall.FinalizeData();
 			if (nifSmall.Save(outFileNameSmall, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				return;
@@ -1912,6 +1924,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		}
 		else {
 			outFileNameBig += ".nif";
+
+			nifBig.FinalizeData();
 			if (nifBig.Save(outFileNameBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
