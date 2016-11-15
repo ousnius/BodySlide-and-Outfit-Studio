@@ -1147,7 +1147,7 @@ msgstr ""
 msgid "Options"
 msgstr ""
 
-msgid "Invert Slider"
+msgid "Invert"
 msgstr ""
 
 msgid "Hidden"

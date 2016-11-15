@@ -527,12 +527,13 @@ void OutfitStudio::SetSliderValue(const string& name, int val) {
 
 void OutfitStudio::ApplySliders(bool recalcBVH) {
 	vector<Vector3> verts;
+	vector<Vector2> uvs;
 	vector<string> shapes;
 	project->GetShapes(shapes);
 
 	for (auto &shape : shapes) {
-		project->GetLiveVerts(shape, verts);
-		glView->UpdateMeshVertices(shape, &verts, recalcBVH, true, false);
+		project->GetLiveVerts(shape, verts, &uvs);
+		glView->UpdateMeshVertices(shape, &verts, recalcBVH, true, false, &uvs);
 	}
 
 	bool tMode = glView->GetTransformMode();
@@ -4363,6 +4364,7 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* chkHidden = XRCCTRL(dlg, "chkHidden", wxCheckBox);
 		wxCheckBox* chkInvert = XRCCTRL(dlg, "chkInvert", wxCheckBox);
 		wxCheckBox* chkZap = XRCCTRL(dlg, "chkZap", wxCheckBox);
+		wxCheckBox* chkUV = XRCCTRL(dlg, "chkUV", wxCheckBox);
 
 		wxCheckListBox* zapToggleList = XRCCTRL(dlg, "zapToggleList", wxCheckListBox);
 		chkZap->Bind(wxEVT_CHECKBOX, [&zapToggleList](wxCommandEvent& event) {
@@ -4374,6 +4376,9 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 
 		if (project->SliderInvert(curSlider))
 			chkInvert->SetValue(true);
+
+		if (project->SliderUV(curSlider))
+			chkUV->SetValue(true);
 
 		if (project->SliderZap(curSlider)) {
 			chkZap->SetValue(true);
@@ -4407,6 +4412,7 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 
 			project->SetSliderInvert(curSlider, chkInvert->GetValue());
 			project->SetSliderHidden(curSlider, chkHidden->GetValue());
+			project->SetSliderUV(curSlider, chkUV->GetValue());
 			XRCCTRL(dlg, "edValLo", wxTextCtrl)->GetValue().ToLong(&loVal);
 			project->SetSliderDefault(curSlider, loVal, false);
 			XRCCTRL(dlg, "edValHi", wxTextCtrl)->GetValue().ToLong(&hiVal);
@@ -5761,9 +5767,10 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 	m->material = mat;
 }
 
-void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render) {
+void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render, vector<Vector2>* uvs) {
 	int id = gls.GetMeshID(shapeName);
-	gls.Update(id, verts);
+	gls.Update(id, verts, uvs);
+
 	if (updateBVH)
 		BVHUpdateQueue.insert(id);
 

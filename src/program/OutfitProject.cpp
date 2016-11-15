@@ -626,6 +626,12 @@ bool OutfitProject::SliderZap(int index) {
 	return activeSet[index].bZap;
 }
 
+bool OutfitProject::SliderUV(int index) {
+	if (!ValidSlider(index))
+		return false;
+	return activeSet[index].bUV;
+}
+
 wxArrayString OutfitProject::SliderZapToggles(int index) {
 	wxArrayString toggles;
 	if (ValidSlider(index))
@@ -668,6 +674,12 @@ void OutfitProject::SetSliderInvert(int index, bool inv) {
 	if (!ValidSlider(index))
 		return;
 	activeSet[index].bInvert = inv;
+}
+
+void OutfitProject::SetSliderUV(int index, bool uv) {
+	if (!ValidSlider(index))
+		return;
+	activeSet[index].bUV = uv;
 }
 
 void OutfitProject::SetSliderHidden(int index, bool hidden) {
@@ -903,22 +915,26 @@ bool OutfitProject::SetSliderFromOBJ(const string& sliderName, const string& sha
 	}
 
 	vector<Vector3> objVerts;
-	obj.CopyDataForIndex(index, &objVerts, nullptr, nullptr);
+	vector<Vector2> objUVs;
+	obj.CopyDataForIndex(index, &objVerts, nullptr, &objUVs);
 
 	unordered_map<ushort, Vector3> diff;
-	if (IsBaseShape(shapeName)) {
-		if (workNif.CalcShapeDiff(shapeName, &objVerts, diff, 10.0f))
+	if (activeSet[sliderName].bUV) {
+		if (workNif.CalcUVDiff(shapeName, &objUVs, diff))
 			return false;
-
-		string sliderData = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.LoadSet(sliderData, target, diff);
 	}
 	else {
 		if (workNif.CalcShapeDiff(shapeName, &objVerts, diff, 10.0f))
 			return false;
-
-		morpher.SetResultDiff(target, sliderName, diff);
 	}
+
+	if (IsBaseShape(shapeName)) {
+		string sliderData = activeSet[sliderName].TargetDataName(target);
+		baseDiffData.LoadSet(sliderData, target, diff);
+	}
+	else
+		morpher.SetResultDiff(target, sliderName, diff);
+
 	return true;
 }
 
@@ -981,26 +997,39 @@ int OutfitProject::GetVertexCount(const string& shapeName) {
 	return -1;
 }
 
-void OutfitProject::GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts) {
+void OutfitProject::GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts, vector<Vector2>* outUVs) {
+	workNif.GetVertsForShape(shapeName, outVerts);
+	if (outUVs)
+		workNif.GetUvsForShape(shapeName, *outUVs);
+
 	string target = ShapeToTarget(shapeName);
 	if (IsBaseShape(shapeName)) {
-		string targetData;
-		workNif.GetVertsForShape(shapeName, outVerts);
 		for (int i = 0; i < activeSet.size(); i++) {
 			if (activeSet[i].bShow && activeSet[i].curValue != 0.0f) {
-				targetData = activeSet.ShapeToDataName(i, shapeName);
+				string targetData = activeSet.ShapeToDataName(i, shapeName);
 				if (targetData == "")
 					continue;
 
-				baseDiffData.ApplyDiff(targetData, target, activeSet[i].curValue, &outVerts);
+				if (activeSet[i].bUV) {
+					if (outUVs)
+						baseDiffData.ApplyUVDiff(targetData, target, activeSet[i].curValue, outUVs);
+				}
+				else
+					baseDiffData.ApplyDiff(targetData, target, activeSet[i].curValue, &outVerts);
 			}
 		}
 	}
 	else {
-		workNif.GetVertsForShape(shapeName, outVerts);
-		for (int i = 0; i < activeSet.size(); i++)
-			if (activeSet[i].bShow && activeSet[i].curValue != 0.0f)
-				morpher.ApplyResultToVerts(activeSet[i].name, target, &outVerts, activeSet[i].curValue);
+		for (int i = 0; i < activeSet.size(); i++) {
+			if (activeSet[i].bShow && activeSet[i].curValue != 0.0f) {
+				if (activeSet[i].bUV) {
+					if (outUVs)
+						morpher.ApplyResultToUVs(activeSet[i].name, target, outUVs, activeSet[i].curValue);
+				}
+				else
+					morpher.ApplyResultToVerts(activeSet[i].name, target, &outVerts, activeSet[i].curValue);
+			}
+		}
 	}
 }
 
@@ -2008,7 +2037,7 @@ void OutfitProject::ConformShape(const string& shapeName) {
 
 	string refTarget = ShapeToTarget(baseShape);
 	for (int i = 0; i < activeSet.size(); i++)
-		if (SliderShow(i) && !SliderZap(i))
+		if (SliderShow(i) && !SliderZap(i) && !SliderUV(i))
 			morpher.GenerateResultDiff(shapeName, activeSet[i].name, activeSet[i].TargetDataName(refTarget));
 }
 

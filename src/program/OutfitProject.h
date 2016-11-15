@@ -103,6 +103,7 @@ public:
 	string SliderShapeDataName(int index, const string& shapeName);
 	bool SliderClamp(int index);
 	bool SliderZap(int index);
+	bool SliderUV(int index);
 	wxArrayString SliderZapToggles(int index);
 	bool SliderInvert(int index);
 	bool SliderHidden(int index);
@@ -111,6 +112,7 @@ public:
 	void SetSliderZap(int index, bool zap);
 	void SetSliderZapToggles(int index, const wxArrayString& toggles);
 	void SetSliderInvert(int index, bool inv);
+	void SetSliderUV(int index, bool uv);
 	void SetSliderHidden(int index, bool hidden);
 	void SetSliderDefault(int index, int val, bool isHi);
 	void SetSliderName(int index, const string& newName);
@@ -135,7 +137,7 @@ public:
 
 	const string& ShapeToTarget(const string& shapeName);
 	int GetVertexCount(const string& shapeName);
-	void GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts);
+	void GetLiveVerts(const string& shapeName, vector<Vector3>& outVerts, vector<Vector2>* outUVs = nullptr);
 	void GetShapes(vector<string>& outShapeNames);
 	void GetActiveBones(vector<string>& outBoneNames);
 

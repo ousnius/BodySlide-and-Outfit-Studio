@@ -87,7 +87,7 @@ public:
 	void AddSlider(const string& name, bool invert = false, const string& dataSetName = "");
 	void AddHiddenSlider(const string& name, bool invert = false, bool isZap = false, bool isUV = false, const string& dataSetName = "");
 	void AddZapSlider(const string& name, const vector<string>& zapToggles, const string& dataSetName = "");
-	void AddUVSlider(const string& name, bool invert = false, const string& dataSetName = "");
+	void AddUVSlider(const string& name, bool invert = false, bool isZap = false, const string& dataSetName = "");
 	void SetSliderDefaults(const string& slider, float bigVal, float smallVal);
 	void SetClampSlider(const string& slider);
 	void AddSliderLink(const string& slider, const string& dataSetName);

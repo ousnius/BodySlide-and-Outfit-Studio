@@ -117,7 +117,7 @@ public:
 		return gls.GetMesh(shapeName);
 	}
 
-	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true);
+	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true, vector<Vector2>* uvs = nullptr);
 	void RecalculateMeshBVH(const string& shapeName);
 
 	void ShowShape(const string& shapeName, bool show = true);

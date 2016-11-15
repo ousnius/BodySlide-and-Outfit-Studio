@@ -56,6 +56,7 @@ public:
 
 	void ApplyDiffToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength = 1.0f);
 	void ApplyResultToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength = 1.0f);
+	void ApplyResultToUVs(const string& sliderName, const string& shapeTargetName, vector<Vector2>* inOutResult, float strength = 1.0f);
 
 	void SourceShapesFromNif(NifFile& baseNif);
 	void SourceShapesFromObj(ObjFile& baseObj);

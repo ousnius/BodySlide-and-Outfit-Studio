@@ -421,7 +421,7 @@ void BodySlideApp::ActivatePreset(const string &presetName, const bool& updatePr
 		sliderSmall = &sliderManager.slidersSmall[i];
 		sliderBig = &sliderManager.slidersBig[i];
 
-		if (sliderBig->zap && !zapChanged) {
+		if (sliderBig->zap && !sliderBig->uv && !zapChanged) {
 			auto* sd = sliderView->GetSliderDisplay(sliderBig->name);
 			if (sd) {
 				float zapValueUI = sd->zapCheckHi->IsChecked() ? 0.01f : 0.0f;
@@ -586,7 +586,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& ZapIdx, vector<Vector2>* uvs) {
 	for (auto &slider : sliderSet) {
 		float val = slider.value;
-		if (slider.zap) {
+		if (slider.zap && !slider.uv) {
 			if (val > 0)
 				for (int j = 0; j < slider.linkedDataSets.size(); j++)
 					dataSets.GetDiffIndices(slider.linkedDataSets[j], targetShape, ZapIdx);
@@ -596,8 +596,10 @@ void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& slide
 				val = 1.0f - val;
 
 			for (int j = 0; j < slider.linkedDataSets.size(); j++) {
-				if (slider.uv)
-					dataSets.ApplyUVDiff(slider.linkedDataSets[j], targetShape, val, uvs);
+				if (slider.uv) {
+					if (uvs)
+						dataSets.ApplyUVDiff(slider.linkedDataSets[j], targetShape, val, uvs);
+				}
 				else
 					dataSets.ApplyDiff(slider.linkedDataSets[j], targetShape, val, &verts);
 			}
@@ -798,24 +800,28 @@ void BodySlideApp::UpdatePreview() {
 	
 	int weight = preview->GetWeight();
 	vector<Vector3> verts, vertsLow, vertsHigh;
-	vector<Vector2> uv;
+	vector<Vector2> uvs, uvsLow, uvsHigh;
 	vector<ushort> zapIdx;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		zapIdx.clear();
 		if (!previewBaseNif->GetVertsForShape(it->second, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(it->second, uv);
+		previewBaseNif->GetUvsForShape(it->second, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
+		uvsHigh = uvs;
+		uvsLow = uvs;
 
-		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uv);
+		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		if (activeSet.GenWeights())
-			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uv);
+			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 
 		// Calculate result of weight
-		for (int i = 0; i < verts.size(); i++)
+		for (int i = 0; i < verts.size(); i++) {
 			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
+			uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
+		}
 
 		// Zap deleted verts before applying to the shape
 		if (zapIdx.size() > 0) {
@@ -824,10 +830,10 @@ void BodySlideApp::UpdatePreview() {
 					continue;
 
 				verts.erase(verts.begin() + zapIdx[z]);
-				uv.erase(uv.begin() + zapIdx[z]);
+				uvs.erase(uvs.begin() + zapIdx[z]);
 			}
 		}
-		preview->Update(it->second, &verts, &uv);
+		preview->Update(it->second, &verts, &uvs);
 	}
 
 	preview->Render();
@@ -851,33 +857,39 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	PreviewMod.CopyFrom((*previewBaseNif));
 	
 	vector<Vector3> verts, vertsLow, vertsHigh;
+	vector<Vector2> uvs, uvsLow, uvsHigh;
 	vector<ushort> zapIdx;
 	Vector3 v;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		zapIdx.clear();
 		if (!previewBaseNif->GetVertsForShape(it->second, verts))
 			continue;
-		
+
+		previewBaseNif->GetUvsForShape(it->second, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
 
-		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
+		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		if (activeSet.GenWeights())
-			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
+			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 		
 		// Calculate result of weight
-		for (int i = 0; i < verts.size(); i++)
+		for (int i = 0; i < verts.size(); i++) {
 			verts[i] = (vertsHigh[i] / 100.0f * weight) + (vertsLow[i] / 100.0f * (100.0f - weight));
+			uvs[i] = (uvsHigh[i] / 100.0f * weight) + (uvsLow[i] / 100.0f * (100.0f - weight));
+		}
 
 		// Zap deleted verts before preview
 		if (zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
 			PreviewMod.SetVertsForShape(it->second, verts);
+			PreviewMod.SetUvsForShape(it->second, uvs);
 			PreviewMod.DeleteVertsForShape(it->second, zapIdx);
 		}
 		else {
 			// No zapping needed - just show all the verts.
 			PreviewMod.SetVertsForShape(it->second, verts);
+			PreviewMod.SetUvsForShape(it->second, uvs);
 		}
 	}
 
@@ -1432,6 +1444,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 	vector<Vector3> vertsLow;
 	vector<Vector3> vertsHigh;
+	vector<Vector2> uvsLow;
+	vector<Vector2> uvsHigh;
 	vector<ushort> zapIdx;
 	unordered_map<string, vector<ushort>> zapIdxAll;
 
@@ -1439,22 +1453,29 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		if (!nifBig.GetVertsForShape(it->second, vertsHigh))
 			continue;
 
-		if (activeSet.GenWeights())
+		nifBig.GetUvsForShape(it->second, uvsHigh);
+
+		if (activeSet.GenWeights()) {
 			if (!nifSmall.GetVertsForShape(it->second, vertsLow))
 				continue;
 
+			nifSmall.GetUvsForShape(it->second, uvsLow);
+		}
+
 		zapIdxAll.emplace(it->second, vector<ushort>());
 
-		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx);
+		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		nifBig.SetVertsForShape(it->second, vertsHigh);
+		nifBig.SetUvsForShape(it->second, uvsHigh);
 		nifBig.CalcNormalsForShape(it->second);
 		nifBig.CalcTangentsForShape(it->second);
 		nifBig.DeleteVertsForShape(it->second, zapIdx);
 
 		if (activeSet.GenWeights()) {
 			zapIdx.clear();
-			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx);
+			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 			nifSmall.SetVertsForShape(it->second, vertsLow);
+			nifSmall.SetUvsForShape(it->second, uvsLow);
 			nifSmall.CalcNormalsForShape(it->second);
 			nifSmall.CalcTangentsForShape(it->second);
 			nifSmall.DeleteVertsForShape(it->second, zapIdx);
@@ -1763,6 +1784,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		/* Shape the NIF files */
 		vector<Vector3> vertsLow;
 		vector<Vector3> vertsHigh;
+		vector<Vector2> uvsLow;
+		vector<Vector2> uvsHigh;
 		vector<ushort> zapIdx;
 		unordered_map<string, vector<ushort>> zapIdxAll;
 
@@ -1770,9 +1793,14 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			if (!nifBig.GetVertsForShape(it->second, vertsHigh))
 				continue;
 
-			if (currentSet.GenWeights())
+			nifBig.GetUvsForShape(it->second, uvsHigh);
+
+			if (currentSet.GenWeights()) {
 				if (!nifSmall.GetVertsForShape(it->second, vertsLow))
 					continue;
+
+				nifSmall.GetUvsForShape(it->second, uvsLow);
+			}
 
 			float vbig = 0.0f;
 			float vsmall = 0.0f;
@@ -1814,7 +1842,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 						vsmall = 1.0f - vsmall;
 				}
 
-				if (currentSet[s].bZap) {
+				if (currentSet[s].bZap && !currentSet[s].bUV) {
 					if (vbig > 0.0f) {
 						currentDiffs.GetDiffIndices(dn, target, zapIdx);
 						zapIdxAll[it->second] = zapIdx;
@@ -1823,8 +1851,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				}
 
 				currentDiffs.ApplyDiff(dn, target, vbig, &vertsHigh);
-				if (currentSet.GenWeights())
+				currentDiffs.ApplyUVDiff(dn, target, vbig, &uvsHigh);
+				if (currentSet.GenWeights()) {
 					currentDiffs.ApplyDiff(dn, target, vsmall, &vertsLow);
+					currentDiffs.ApplyUVDiff(dn, target, vsmall, &uvsLow);
+				}
 			}
 
 			if (!clamps.empty()) {
@@ -1841,12 +1872,14 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			}
 
 			nifBig.SetVertsForShape(it->second, vertsHigh);
+			nifBig.SetUvsForShape(it->second, uvsHigh);
 			nifBig.CalcNormalsForShape(it->second);
 			nifBig.CalcTangentsForShape(it->second);
 			nifBig.DeleteVertsForShape(it->second, zapIdx);
 
 			if (currentSet.GenWeights()) {
 				nifSmall.SetVertsForShape(it->second, vertsLow);
+				nifSmall.SetUvsForShape(it->second, uvsLow);
 				nifSmall.CalcNormalsForShape(it->second);
 				nifSmall.CalcTangentsForShape(it->second);
 				nifSmall.DeleteVertsForShape(it->second, zapIdx);
@@ -1994,6 +2027,11 @@ void BodySlideApp::GroupBuild(const string& group) {
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
 	string sstr = sliderName.ToStdString();
 	return sliderManager.GetSlider(sstr, isLo);
+}
+
+bool BodySlideApp::IsUVSlider(const wxString& sliderName) {
+	string sstr = sliderName.ToStdString();
+	return activeSet[sstr].bUV;
 }
 
 vector<string> BodySlideApp::GetSliderZapToggles(const wxString& sliderName) {
@@ -2553,7 +2591,10 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	}
 
 	wxBeginBusyCursor();
-	app->RebuildPreviewMeshes();
+	if (app->IsUVSlider(sliderName))
+		app->UpdatePreview();
+	else
+		app->RebuildPreviewMeshes();
 	wxEndBusyCursor();
 }
 

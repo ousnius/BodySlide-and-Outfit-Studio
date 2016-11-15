@@ -159,7 +159,7 @@
 								<flag>wxALL</flag>
 								<border>5</border>
 								<object class="wxCheckBox" name="chkInvert">
-									<label>Invert Slider</label>
+									<label>Invert</label>
 									<checked>0</checked>
 								</object>
 							</object>
@@ -178,6 +178,15 @@
 								<border>5</border>
 								<object class="wxCheckBox" name="chkZap">
 									<label>Zap</label>
+									<checked>0</checked>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>1</option>
+								<flag>wxALL</flag>
+								<border>5</border>
+								<object class="wxCheckBox" name="chkUV">
+									<label>UV</label>
 									<checked>0</checked>
 								</object>
 							</object>

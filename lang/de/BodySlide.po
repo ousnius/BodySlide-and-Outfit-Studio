@@ -1313,8 +1313,8 @@ msgstr "Hoch"
 msgid "Options"
 msgstr "Optionen"
 
-msgid "Invert Slider"
-msgstr "Slider umkehren"
+msgid "Invert"
+msgstr "Invertieren"
 
 msgid "Hidden"
 msgstr "Versteckt"

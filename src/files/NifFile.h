@@ -159,6 +159,7 @@ public:
 	void DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
 
 	int CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
+	int CalcUVDiff(const string& shapeName, const vector<Vector2>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
 	int ShapeDiff(const string& baseShapeName, const string& targetShape, unordered_map<ushort, Vector3>& outDiffData);
 
 	void CreateSkinning(const string& shapeName);

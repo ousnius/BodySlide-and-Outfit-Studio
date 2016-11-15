@@ -117,6 +117,12 @@ void Automorph::ApplyResultToVerts(const string& sliderName, const string& shape
 	resultDiffData.ApplyDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
+void Automorph::ApplyResultToUVs(const string& sliderName, const string& shapeTargetName, vector<Vector2>* inOutResult, float strength) {
+	string setname = ResultDataName(shapeTargetName, sliderName);
+
+	resultDiffData.ApplyUVDiff(setname, shapeTargetName, strength, inOutResult);
+}
+
 void Automorph::SourceShapesFromNif(NifFile &baseNif) {
 	ClearSourceShapes();
 	vector<string> shapes;

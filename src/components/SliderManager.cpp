@@ -22,7 +22,9 @@ void SliderManager::AddSlidersInSet(SliderSet& inSet) {
 			AddHiddenSlider(inSet[i].name, inSet[i].bInvert, inSet[i].bZap, inSet[i].bUV);
 		}
 		else {
-			if (inSet[i].bZap)
+			if (inSet[i].bZap && inSet[i].bUV)
+				AddUVSlider(inSet[i].name, inSet[i].bInvert, true);
+			else if (inSet[i].bZap)
 				AddZapSlider(inSet[i].name, inSet[i].zapToggles);
 			else if (inSet[i].bUV)
 				AddUVSlider(inSet[i].name, inSet[i].bInvert);
@@ -58,7 +60,7 @@ void SliderManager::AddSlider(const string& name, bool invert, const string& dat
 	mSliderCount++;
 }
 
-void SliderManager::AddUVSlider(const string& name, bool invert, const string& dataSetName) {
+void SliderManager::AddUVSlider(const string& name, bool invert, bool isZap, const string& dataSetName) {
 	Slider s;
 	s.name = name;
 	if (dataSetName.length() > 0)
@@ -67,7 +69,7 @@ void SliderManager::AddUVSlider(const string& name, bool invert, const string& d
 	s.value = 0;
 	s.defValue = 0;
 	s.invert = invert;
-	s.zap = false;
+	s.zap = isZap;
 	s.clamp = false;
 	s.uv = true;
 	s.changed = false;

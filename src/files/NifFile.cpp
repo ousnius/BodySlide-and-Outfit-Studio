@@ -3501,6 +3501,32 @@ int NifFile::CalcShapeDiff(const string& shapeName, const vector<Vector3>* targe
 	return 0;
 }
 
+int NifFile::CalcUVDiff(const string& shapeName, const vector<Vector2>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale) {
+	outDiffData.clear();
+	const vector<Vector2>* myData = GetUvsForShape(shapeName);
+	if (!myData)
+		return 1;
+
+	if (!targetData)
+		return 2;
+
+	if (myData->size() != targetData->size())
+		return 3;
+
+	for (int i = 0; i < myData->size(); i++) {
+		Vector3 v;
+		v.x = (targetData->at(i).u - myData->at(i).u) * scale;
+		v.y = (targetData->at(i).v - myData->at(i).v) * scale;
+
+		if (v.IsZero(true))
+			continue;
+
+		outDiffData[i] = v;
+	}
+
+	return 0;
+}
+
 void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)

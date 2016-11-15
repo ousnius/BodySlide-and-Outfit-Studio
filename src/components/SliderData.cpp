@@ -70,6 +70,11 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	else
 		bZap = false;
 
+	if (element->Attribute("uv"))
+		bUV = (_strnicmp(element->Attribute("uv"), "true", 4) == 0);
+	else
+		bUV = false;
+
 	if (element->Attribute("clamp"))
 		bClamp = (_strnicmp(element->Attribute("clamp"), "true", 4) == 0);
 	else

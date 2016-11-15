@@ -32,6 +32,61 @@ struct Vector2 {
 		u = U;
 		v = V;
 	}
+
+	bool operator == (const Vector2& other) {
+		if (u == other.u && v == other.v)
+			return true;
+		return false;
+	}
+	bool operator != (const Vector2& other) {
+		if (u != other.u && v != other.v)
+			return true;
+		return false;
+	}
+
+	Vector2& operator -= (const Vector2& other) {
+		u -= other.u;
+		v -= other.v;
+		return (*this);
+	}
+	Vector2 operator - (const Vector2& other) const {
+		Vector2 tmp = (*this);
+		tmp -= other;
+		return tmp;
+	}
+
+	Vector2& operator += (const Vector2& other) {
+		u += other.u;
+		v += other.v;
+		return (*this);
+	}
+	Vector2 operator + (const Vector2& other) const {
+		Vector2 tmp = (*this);
+		tmp += other;
+		return tmp;
+	}
+
+	Vector2& operator *= (float val) {
+		u *= val;
+		v *= val;
+		return(*this);
+	}
+	Vector2 operator * (float val) const {
+		Vector2 tmp = (*this);
+		tmp *= val;
+		return tmp;
+	}
+
+	Vector2& operator /= (float val) {
+		u /= val;
+		v /= val;
+		return (*this);
+	}
+	Vector2 operator / (float val) const {
+		Vector2 tmp = (*this);
+		tmp /= val;
+		return tmp;
+	}
 };
 
 struct Vector3 {

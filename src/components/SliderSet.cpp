@@ -38,6 +38,7 @@ int SliderSet::CopySlider(SliderData* other) {
 	ms->bHidden = other->bHidden;
 	ms->bInvert = other->bInvert;
 	ms->bZap = other->bZap;
+	ms->bUV = other->bUV;
 	ms->defBigValue = other->defBigValue;
 	ms->defSmallValue = other->defSmallValue;
 	ms->zapToggles = other->zapToggles;
