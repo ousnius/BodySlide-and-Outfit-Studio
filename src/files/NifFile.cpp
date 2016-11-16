@@ -1705,7 +1705,7 @@ void NifFile::Optimize() {
 }
 
 int NifFile::OptimizeForSSE() {
-	if (hdr.GetUserVersion() != 12 && hdr.GetUserVersion2() != 83)
+	if (!(hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() == 83))
 		return 1;
 
 	vector<string> shapes;

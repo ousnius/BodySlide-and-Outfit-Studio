@@ -2642,6 +2642,10 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 	numTriangles = tris->size();
 
 	vertData.resize(numVertices);
+
+	if (uvs && uvs->size() != numVertices)
+		SetUVs(false);
+
 	for (int i = 0; i < numVertices; i++) {
 		vertData[i].vert = (*verts)[i];
 
@@ -3132,7 +3136,7 @@ void NiGeometryData::Init() {
 	hasVertices = true;
 	numUVSets = 0;
 	//extraVectorsFlags = 0;
-	unkInt2 = 0;
+	materialCRC = 0;
 	hasNormals = false;
 	hasVertexColors = false;
 	consistencyFlags = 0;
@@ -3155,8 +3159,14 @@ void NiGeometryData::Get(fstream& file) {
 	}
 
 	file.read((char*)&numUVSets, 2);
+
+	ushort nbtMethod = numUVSets & 0xF000;
+	byte numTextureSets = numUVSets & 0x3F;
+	if (header->GetUserVersion2() >= 83)
+		numTextureSets = numUVSets & 0x1;
+
 	if (header->GetUserVersion() == 12)
-		file.read((char*)&unkInt2, 4);
+		file.read((char*)&materialCRC, 4);
 
 	file.read((char*)&hasNormals, 1);
 	if (hasNormals && !isPSys) {
@@ -3165,7 +3175,7 @@ void NiGeometryData::Get(fstream& file) {
 		for (int i = 0; i < numVertices; i++)
 			file.read((char*)&normals[i], 12);
 
-		if (numUVSets & 0xF000) {
+		if (nbtMethod) {
 			tangents.resize(numVertices);
 			bitangents.resize(numVertices);
 
@@ -3186,7 +3196,7 @@ void NiGeometryData::Get(fstream& file) {
 			file.read((char*)&vertexColors[i], 16);
 	}
 
-	if (numUVSets > 0 && !isPSys) {
+	if (numTextureSets > 0 && !isPSys) {
 		uvSets.resize(numVertices);
 		for (int i = 0; i < numVertices; i++)
 			file.read((char*)&uvSets[i], 8);
@@ -3212,15 +3222,21 @@ void NiGeometryData::Put(fstream& file) {
 	}
 
 	file.write((char*)&numUVSets, 2);
+
+	ushort nbtMethod = numUVSets & 0xF000;
+	byte numTextureSets = numUVSets & 0x3F;
+	if (header->GetUserVersion2() >= 83)
+		numTextureSets = numUVSets & 0x1;
+
 	if (header->GetUserVersion() == 12)
-		file.write((char*)&unkInt2, 4);
+		file.write((char*)&materialCRC, 4);
 
 	file.write((char*)&hasNormals, 1);
 	if (hasNormals && !isPSys) {
 		for (int i = 0; i < numVertices; i++)
 			file.write((char*)&normals[i], 12);
 
-		if (numUVSets & 0xF000) {
+		if (nbtMethod) {
 			for (int i = 0; i < numVertices; i++)
 				file.write((char*)&tangents[i], 12);
 
@@ -3237,7 +3253,7 @@ void NiGeometryData::Put(fstream& file) {
 			file.write((char*)&vertexColors[i], 16);
 	}
 
-	if (numUVSets > 0 && !isPSys) {
+	if (numTextureSets > 0 && !isPSys) {
 		for (int i = 0; i < numVertices; i++)
 			file.write((char*)&uvSets[i], 8);
 	}
@@ -3321,7 +3337,7 @@ void NiGeometryData::Create(vector<Vector3>* verts, vector<Triangle>* inTris, ve
 	else
 		numUVSets = 0;
 
-	unkInt2 = 0;
+	materialCRC = 0;
 	hasNormals = false;
 	hasVertexColors = false;
 
@@ -3382,13 +3398,28 @@ int NiGeometryData::CalcBlockSize() {
 	if (header->GetUserVersion() == 12)
 		blockSize += 4;
 
-	if (!isPSys) {
-		blockSize += numVertices * 12;			// Verts
-		blockSize += normals.size() * 12;		// Normals
-		blockSize += tangents.size() * 12;		// Tangents
-		blockSize += bitangents.size() * 12;	// Bitangents
-		blockSize += vertexColors.size() * 16;	// Vertex Colors
-		blockSize += uvSets.size() * 8;			// UVs 
+	if (hasVertices && !isPSys) {
+		ushort nbtMethod = numUVSets & 0xF000;
+		byte numTextureSets = numUVSets & 0x3F;
+		if (header->GetUserVersion2() >= 83)
+			numTextureSets = numUVSets & 0x1;
+
+		blockSize += numVertices * 12;
+
+		if (hasNormals) {
+			blockSize += normals.size() * 12;
+
+			if (nbtMethod) {
+				blockSize += tangents.size() * 12;
+				blockSize += bitangents.size() * 12;
+			}
+		}
+
+		if (hasVertexColors)
+			blockSize += vertexColors.size() * 16;
+
+		if (numTextureSets > 0)
+			blockSize += uvSets.size() * 8;
 	}
 
 	return blockSize;

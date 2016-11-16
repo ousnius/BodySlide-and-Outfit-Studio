@@ -989,7 +989,7 @@ private:
 	int unkInt;
 	byte compressFlags;
 	bool hasVertices;
-	uint unkInt2;							// Version >= 20.2.0.7 && User Version == 12
+	uint materialCRC;						// Version >= 20.2.0.7 && User Version == 12
 	bool hasNormals;
 	bool hasVertexColors;
 	ushort consistencyFlags;
