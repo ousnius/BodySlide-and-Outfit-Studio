@@ -186,6 +186,10 @@ void SubConstraintDesc::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void SubConstraintDesc::GetChildRefs(set<int>& refs) {
+	refs.insert(entities.begin(), entities.end());
+}
+
 int SubConstraintDesc::CalcDescSize() {
 	int descSize = 12;
 	descSize += numEntities * 4;
@@ -303,6 +307,9 @@ void NiObject::Get(fstream& file) {
 }
 
 void NiObject::Put(fstream& file) {
+}
+
+void NiObject::GetChildRefs(set<int>& refs) {
 }
 
 int NiObject::CalcBlockSize() {
@@ -502,6 +509,35 @@ void NiHeader::SwapBlocks(const int& blockIndexLo, const int& blockIndexHi) {
 	// Next tell all the blocks that the swap happened
 	for (int i = 0; i < numBlocks; i++)
 		(*blocks)[i]->notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+bool NiHeader::IsBlockReferenced(const int& blockId) {
+	if (blockId == 0xFFFFFFFF)
+		return false;
+
+	for (auto &block : (*blocks)) {
+		set<int> refs;
+		block->GetChildRefs(refs);
+
+		if (refs.find(blockId) != refs.end())
+			return true;
+	}
+
+	return false;
+}
+
+bool NiHeader::DeleteUnreferencedBlocks() {
+	for (int i = 1; i < numBlocks; i++) {
+		if (!IsBlockReferenced(i)) {
+			DeleteBlock(i);
+
+			// Deleting a block can cause others to become unreferenced
+			DeleteUnreferencedBlocks();
+			return true;
+		}
+	}
+
+	return false;
 }
 
 ushort NiHeader::AddOrFindBlockTypeId(const string& blockTypeName) {
@@ -820,6 +856,13 @@ void NiObjectNET::AddExtraDataRef(const int& id) {
 	numExtraData++;
 }
 
+void NiObjectNET::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(extraDataRef.begin(), extraDataRef.end());
+	refs.insert(controllerRef);
+}
+
 int NiObjectNET::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
@@ -941,6 +984,13 @@ void NiAVObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void NiAVObject::GetChildRefs(set<int>& refs) {
+	NiObjectNET::GetChildRefs(refs);
+
+	refs.insert(propertiesRef.begin(), propertiesRef.end());
+	refs.insert(collisionRef);
+}
+
 int NiAVObject::CalcBlockSize() {
 	NiObjectNET::CalcBlockSize();
 
@@ -1054,6 +1104,13 @@ void NiNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		else if (effects[i] == blockIndexHi)
 			effects[i] = blockIndexLo;
 	}
+}
+
+void NiNode::GetChildRefs(set<int>& refs) {
+	NiAVObject::GetChildRefs(refs);
+
+	refs.insert(children.begin(), children.end());
+	refs.insert(effects.begin(), effects.end());
 }
 
 int NiNode::CalcBlockSize() {
@@ -1258,6 +1315,13 @@ void BSTreeNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void BSTreeNode::GetChildRefs(set<int>& refs) {
+	NiNode::GetChildRefs(refs);
+
+	refs.insert(bones1.begin(), bones1.end());
+	refs.insert(bones2.begin(), bones2.end());
+}
+
 int BSTreeNode::CalcBlockSize() {
 	NiNode::CalcBlockSize();
 
@@ -1358,6 +1422,12 @@ void BSMultiBoundNode::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		multiBoundRef = blockIndexHi;
 	else if (multiBoundRef == blockIndexHi)
 		multiBoundRef = blockIndexLo;
+}
+
+void BSMultiBoundNode::GetChildRefs(set<int>& refs) {
+	NiNode::GetChildRefs(refs);
+
+	refs.insert(multiBoundRef);
 }
 
 int BSMultiBoundNode::CalcBlockSize() {
@@ -1483,6 +1553,12 @@ void BSMasterParticleSystem::notifyBlockSwap(int blockIndexLo, int blockIndexHi)
 		else if (particleSysRefs[i] == blockIndexHi)
 			particleSysRefs[i] = blockIndexLo;
 	}
+}
+
+void BSMasterParticleSystem::GetChildRefs(set<int>& refs) {
+	NiNode::GetChildRefs(refs);
+
+	refs.insert(particleSysRefs.begin(), particleSysRefs.end());
 }
 
 int BSMasterParticleSystem::CalcBlockSize() {
@@ -2100,6 +2176,14 @@ void BSTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 			triangles[i].p3 = triangles[i].p3 - indexCollapseTris[triangles[i].p3];
 		}
 	}
+}
+
+void BSTriShape::GetChildRefs(set<int>& refs) {
+	NiAVObject::GetChildRefs(refs);
+
+	refs.insert(skinInstanceRef);
+	refs.insert(shaderPropertyRef);
+	refs.insert(alphaPropertyRef);
 }
 
 int BSTriShape::CalcBlockSize() {
@@ -3111,6 +3195,15 @@ void NiGeometry::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		alphaPropertyRef = blockIndexHi;
 	else if (alphaPropertyRef == blockIndexHi)
 		alphaPropertyRef = blockIndexLo;
+}
+
+void NiGeometry::GetChildRefs(set<int>& refs) {
+	NiAVObject::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+	refs.insert(skinInstanceRef);
+	refs.insert(shaderPropertyRef);
+	refs.insert(alphaPropertyRef);
 }
 
 int NiGeometry::CalcBlockSize() {
@@ -4150,6 +4243,15 @@ void NiSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void NiSkinInstance::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+	refs.insert(skinPartitionRef);
+	refs.insert(skeletonRootRef);
+	refs.insert(bones.begin(), bones.end());
+}
+
 int NiSkinInstance::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
@@ -4317,6 +4419,13 @@ void BSSkinInstance::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		else if (bones[i] == blockIndexHi)
 			bones[i] = blockIndexLo;
 	}
+}
+
+void BSSkinInstance::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+	refs.insert(bones.begin(), bones.end());
 }
 
 int BSSkinInstance::CalcBlockSize() {
@@ -5221,6 +5330,17 @@ void NiParticleSystem::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void NiParticleSystem::GetChildRefs(set<int>& refs) {
+	NiAVObject::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+	refs.insert(skinInstanceRef);
+	refs.insert(shaderPropertyRef);
+	refs.insert(alphaPropertyRef);
+	refs.insert(psysDataRef);
+	refs.insert(modifiers.begin(), modifiers.end());
+}
+
 int NiParticleSystem::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
@@ -5474,6 +5594,12 @@ void NiMeshPSysData::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		nodeRef = blockIndexLo;
 }
 
+void NiMeshPSysData::GetChildRefs(set<int>& refs) {
+	NiPSysData::GetChildRefs(refs);
+
+	refs.insert(nodeRef);
+}
+
 int NiMeshPSysData::CalcBlockSize() {
 	NiPSysData::CalcBlockSize();
 
@@ -5621,6 +5747,14 @@ void NiCamera::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		screenTexturesRef = blockIndexLo;
 }
 
+void NiCamera::GetChildRefs(set<int>& refs) {
+	NiAVObject::GetChildRefs(refs);
+
+	refs.insert(sceneRef);
+	refs.insert(screenPolygonsRef);
+	refs.insert(screenTexturesRef);
+}
+
 int NiCamera::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
@@ -5687,6 +5821,12 @@ void NiPSysModifier::notifyStringDelete(int stringID) {
 
 	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
 		nameRef--;
+}
+
+void NiPSysModifier::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(targetRef);
 }
 
 int NiPSysModifier::CalcBlockSize() {
@@ -5781,6 +5921,12 @@ void NiPSysAgeDeathModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi)
 		spawnModifierRef = blockIndexHi;
 	else if (spawnModifierRef == blockIndexHi)
 		spawnModifierRef = blockIndexLo;
+}
+
+void NiPSysAgeDeathModifier::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(spawnModifierRef);
 }
 
 int NiPSysAgeDeathModifier::CalcBlockSize() {
@@ -6091,6 +6237,12 @@ void NiPSysGravityModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) 
 		gravityObjRef = blockIndexLo;
 }
 
+void NiPSysGravityModifier::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(gravityObjRef);
+}
+
 int NiPSysGravityModifier::CalcBlockSize() {
 	NiPSysModifier::CalcBlockSize();
 
@@ -6210,6 +6362,12 @@ void NiPSysDragModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		parentRef = blockIndexLo;
 }
 
+void NiPSysDragModifier::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(parentRef);
+}
+
 int NiPSysDragModifier::CalcBlockSize() {
 	NiPSysModifier::CalcBlockSize();
 
@@ -6271,6 +6429,12 @@ void BSPSysInheritVelocityModifier::notifyBlockSwap(int blockIndexLo, int blockI
 		targetNodeRef = blockIndexHi;
 	else if (targetNodeRef == blockIndexHi)
 		targetNodeRef = blockIndexLo;
+}
+
+void BSPSysInheritVelocityModifier::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(targetNodeRef);
 }
 
 int BSPSysInheritVelocityModifier::CalcBlockSize() {
@@ -6389,6 +6553,12 @@ void NiPSysBombModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		bombNodeRef = blockIndexLo;
 }
 
+void NiPSysBombModifier::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(bombNodeRef);
+}
+
 int NiPSysBombModifier::CalcBlockSize() {
 	NiPSysModifier::CalcBlockSize();
 
@@ -6487,6 +6657,12 @@ void BSPSysRecycleBoundModifier::notifyBlockSwap(int blockIndexLo, int blockInde
 		targetNodeRef = blockIndexLo;
 }
 
+void BSPSysRecycleBoundModifier::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(targetNodeRef);
+}
+
 int BSPSysRecycleBoundModifier::CalcBlockSize() {
 	NiPSysModifier::CalcBlockSize();
 
@@ -6568,6 +6744,13 @@ void BSPSysHavokUpdateModifier::notifyBlockSwap(int blockIndexLo, int blockIndex
 		else if (nodeRefs[i] == blockIndexHi)
 			nodeRefs[i] = blockIndexLo;
 	}
+}
+
+void BSPSysHavokUpdateModifier::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(modifierRef);
+	refs.insert(nodeRefs.begin(), nodeRefs.end());
 }
 
 int BSPSysHavokUpdateModifier::CalcBlockSize() {
@@ -6659,6 +6842,15 @@ void NiPSysCollider::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		colliderNodeRef = blockIndexHi;
 	else if (colliderNodeRef == blockIndexHi)
 		colliderNodeRef = blockIndexLo;
+}
+
+void NiPSysCollider::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(spawnModifierRef);
+	refs.insert(managerRef);
+	refs.insert(nextColliderRef);
+	refs.insert(colliderNodeRef);
 }
 
 int NiPSysCollider::CalcBlockSize() {
@@ -6798,6 +6990,12 @@ void NiPSysColliderManager::notifyBlockSwap(int blockIndexLo, int blockIndexHi) 
 		colliderRef = blockIndexLo;
 }
 
+void NiPSysColliderManager::GetChildRefs(set<int>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(colliderRef);
+}
+
 int NiPSysColliderManager::CalcBlockSize() {
 	NiPSysModifier::CalcBlockSize();
 
@@ -6882,6 +7080,12 @@ void NiPSysVolumeEmitter::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		emitterNodeRef = blockIndexHi;
 	else if (emitterNodeRef == blockIndexHi)
 		emitterNodeRef = blockIndexLo;
+}
+
+void NiPSysVolumeEmitter::GetChildRefs(set<int>& refs) {
+	NiPSysEmitter::GetChildRefs(refs);
+
+	refs.insert(emitterNodeRef);
 }
 
 int NiPSysVolumeEmitter::CalcBlockSize() {
@@ -7076,6 +7280,12 @@ void NiPSysMeshEmitter::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		else if (meshRefs[i] == blockIndexHi)
 			meshRefs[i] = blockIndexLo;
 	}
+}
+
+void NiPSysMeshEmitter::GetChildRefs(set<int>& refs) {
+	NiPSysEmitter::GetChildRefs(refs);
+
+	refs.insert(meshRefs.begin(), meshRefs.end());
 }
 
 int NiPSysMeshEmitter::CalcBlockSize() {
@@ -7276,6 +7486,12 @@ void NiBoolInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		dataRef = blockIndexLo;
 }
 
+void NiBoolInterpolator::GetChildRefs(set<int>& refs) {
+	NiKeyBasedInterpolator::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+}
+
 int NiBoolInterpolator::CalcBlockSize() {
 	NiKeyBasedInterpolator::CalcBlockSize();
 
@@ -7344,6 +7560,12 @@ void NiFloatInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		dataRef = blockIndexLo;
 }
 
+void NiFloatInterpolator::GetChildRefs(set<int>& refs) {
+	NiKeyBasedInterpolator::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+}
+
 int NiFloatInterpolator::CalcBlockSize() {
 	NiKeyBasedInterpolator::CalcBlockSize();
 
@@ -7408,6 +7630,12 @@ void NiTransformInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi
 		dataRef = blockIndexLo;
 }
 
+void NiTransformInterpolator::GetChildRefs(set<int>& refs) {
+	NiKeyBasedInterpolator::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+}
+
 int NiTransformInterpolator::CalcBlockSize() {
 	NiKeyBasedInterpolator::CalcBlockSize();
 
@@ -7465,6 +7693,12 @@ void NiPoint3Interpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		dataRef = blockIndexHi;
 	else if (dataRef == blockIndexHi)
 		dataRef = blockIndexLo;
+}
+
+void NiPoint3Interpolator::GetChildRefs(set<int>& refs) {
+	NiKeyBasedInterpolator::GetChildRefs(refs);
+
+	refs.insert(dataRef);
 }
 
 int NiPoint3Interpolator::CalcBlockSize() {
@@ -7545,6 +7779,13 @@ void NiPathInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		percentDataRef = blockIndexHi;
 	else if (percentDataRef == blockIndexHi)
 		percentDataRef = blockIndexLo;
+}
+
+void NiPathInterpolator::GetChildRefs(set<int>& refs) {
+	NiKeyBasedInterpolator::GetChildRefs(refs);
+
+	refs.insert(pathDataRef);
+	refs.insert(percentDataRef);
 }
 
 int NiPathInterpolator::CalcBlockSize() {
@@ -7658,6 +7899,15 @@ void NiLookAtInterpolator::notifyStringDelete(int stringID) {
 
 	if (lookAtNameRef != 0xFFFFFFFF && lookAtNameRef > stringID)
 		lookAtNameRef--;
+}
+
+void NiLookAtInterpolator::GetChildRefs(set<int>& refs) {
+	NiInterpolator::GetChildRefs(refs);
+
+	refs.insert(lookAtRef);
+	refs.insert(translateInterpRef);
+	refs.insert(rollInterpRef);
+	refs.insert(scaleInterpRef);
 }
 
 int NiLookAtInterpolator::CalcBlockSize() {
@@ -7957,6 +8207,13 @@ void NiTimeController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		targetRef = blockIndexLo;
 }
 
+void NiTimeController::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(nextControllerRef);
+	refs.insert(targetRef);
+}
+
 int NiTimeController::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
@@ -8012,6 +8269,12 @@ void BSFrustumFOVController::notifyBlockSwap(int blockIndexLo, int blockIndexHi)
 		interpolatorRef = blockIndexHi;
 	else if (interpolatorRef == blockIndexHi)
 		interpolatorRef = blockIndexLo;
+}
+
+void BSFrustumFOVController::GetChildRefs(set<int>& refs) {
+	NiTimeController::GetChildRefs(refs);
+
+	refs.insert(interpolatorRef);
 }
 
 int BSFrustumFOVController::CalcBlockSize() {
@@ -8248,6 +8511,21 @@ void BSProceduralLightningController::notifyBlockSwap(int blockIndexLo, int bloc
 		shaderPropertyRef = blockIndexLo;
 }
 
+void BSProceduralLightningController::GetChildRefs(set<int>& refs) {
+	NiTimeController::GetChildRefs(refs);
+
+	refs.insert(generationInterpRef);
+	refs.insert(mutationInterpRef);
+	refs.insert(subdivisionInterpRef);
+	refs.insert(numBranchesInterpRef);
+	refs.insert(numBranchesVarInterpRef);
+	refs.insert(lengthInterpRef);
+	refs.insert(lengthVarInterpRef);
+	refs.insert(widthInterpRef);
+	refs.insert(arcOffsetInterpRef);
+	refs.insert(shaderPropertyRef);
+}
+
 int BSProceduralLightningController::CalcBlockSize() {
 	NiTimeController::CalcBlockSize();
 
@@ -8341,6 +8619,13 @@ void NiBoneLODController::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void NiBoneLODController::GetChildRefs(set<int>& refs) {
+	NiTimeController::GetChildRefs(refs);
+
+	for (int i = 0; i < boneArraysSize; i++)
+		refs.insert(boneArrays[i].nodeRefs.begin(), boneArrays[i].nodeRefs.end());
+}
+
 int NiBoneLODController::CalcBlockSize() {
 	NiTimeController::CalcBlockSize();
 
@@ -8387,6 +8672,12 @@ void NiSingleInterpController::notifyBlockSwap(int blockIndexLo, int blockIndexH
 		interpolatorRef = blockIndexHi;
 	else if (interpolatorRef == blockIndexHi)
 		interpolatorRef = blockIndexLo;
+}
+
+void NiSingleInterpController::GetChildRefs(set<int>& refs) {
+	NiInterpController::GetChildRefs(refs);
+
+	refs.insert(interpolatorRef);
 }
 
 int NiSingleInterpController::CalcBlockSize() {
@@ -8754,6 +9045,12 @@ void NiMultiTargetTransformController::notifyBlockSwap(int blockIndexLo, int blo
 	}
 }
 
+void NiMultiTargetTransformController::GetChildRefs(set<int>& refs) {
+	NiInterpController::GetChildRefs(refs);
+
+	refs.insert(targets.begin(), targets.end());
+}
+
 int NiMultiTargetTransformController::CalcBlockSize() {
 	NiInterpController::CalcBlockSize();
 
@@ -8993,6 +9290,12 @@ void NiPSysEmitterCtlr::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		visInterpolatorRef = blockIndexLo;
 }
 
+void NiPSysEmitterCtlr::GetChildRefs(set<int>& refs) {
+	NiPSysModifierCtlr::GetChildRefs(refs);
+
+	refs.insert(visInterpolatorRef);
+}
+
 int NiPSysEmitterCtlr::CalcBlockSize() {
 	NiPSysModifierCtlr::CalcBlockSize();
 
@@ -9050,6 +9353,12 @@ void NiPSysMultiTargetEmitterCtlr::notifyBlockSwap(int blockIndexLo, int blockIn
 		masterParticleSystemRef = blockIndexHi;
 	else if (masterParticleSystemRef == blockIndexHi)
 		masterParticleSystemRef = blockIndexLo;
+}
+
+void NiPSysMultiTargetEmitterCtlr::GetChildRefs(set<int>& refs) {
+	NiPSysModifierCtlr::GetChildRefs(refs);
+
+	refs.insert(masterParticleSystemRef);
 }
 
 int NiPSysMultiTargetEmitterCtlr::CalcBlockSize() {
@@ -9138,6 +9447,13 @@ void NiControllerManager::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		objectPaletteRef = blockIndexHi;
 	else if (objectPaletteRef == blockIndexHi)
 		objectPaletteRef = blockIndexLo;
+}
+
+void NiControllerManager::GetChildRefs(set<int>& refs) {
+	NiTimeController::GetChildRefs(refs);
+
+	refs.insert(controllerSequenceRefs.begin(), controllerSequenceRefs.end());
+	refs.insert(objectPaletteRef);
 }
 
 int NiControllerManager::CalcBlockSize() {
@@ -9305,6 +9621,15 @@ void NiSequence::notifyStringDelete(int stringID) {
 	}
 }
 
+void NiSequence::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	for (int i = 0; i < numControlledBlocks; i++) {
+		refs.insert(controlledBlocks[i].interpolatorRef);
+		refs.insert(controlledBlocks[i].controllerRef);
+	}
+}
+
 int NiSequence::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
@@ -9399,6 +9724,13 @@ void NiControllerSequence::notifyStringDelete(int stringID) {
 		accumRootNameRef--;
 }
 
+void NiControllerSequence::GetChildRefs(set<int>& refs) {
+	NiSequence::GetChildRefs(refs);
+
+	refs.insert(textKeyRef);
+	refs.insert(managerRef);
+}
+
 int NiControllerSequence::CalcBlockSize() {
 	NiSequence::CalcBlockSize();
 
@@ -9482,6 +9814,15 @@ void NiDefaultAVObjectPalette::notifyBlockSwap(int blockIndexLo, int blockIndexH
 		else if (objects[i].objectRef == blockIndexHi)
 			objects[i].objectRef = blockIndexLo;
 	}
+}
+
+void NiDefaultAVObjectPalette::GetChildRefs(set<int>& refs) {
+	NiAVObjectPalette::GetChildRefs(refs);
+
+	refs.insert(sceneRef);
+
+	for (int i = 0; i < numObjects; i++)
+		refs.insert(objects[i].objectRef);
 }
 
 int NiDefaultAVObjectPalette::CalcBlockSize() {
@@ -9909,6 +10250,12 @@ void BSLightingShaderProperty::notifyStringDelete(int stringID) {
 
 	if (wetMaterialNameRef != 0xFFFFFFFF && wetMaterialNameRef > stringID)
 		wetMaterialNameRef--;
+}
+
+void BSLightingShaderProperty::GetChildRefs(set<int>& refs) {
+	NiProperty::GetChildRefs(refs);
+
+	refs.insert(textureSetRef);
 }
 
 bool BSLightingShaderProperty::IsSkinTint() {
@@ -10527,6 +10874,12 @@ void BSShaderPPLightingProperty::notifyBlockSwap(int blockIndexLo, int blockInde
 		textureSetRef = blockIndexHi;
 	else if (textureSetRef == blockIndexHi)
 		textureSetRef = blockIndexLo;
+}
+
+void BSShaderPPLightingProperty::GetChildRefs(set<int>& refs) {
+	BSShaderLightingProperty::GetChildRefs(refs);
+
+	refs.insert(textureSetRef);
 }
 
 bool BSShaderPPLightingProperty::IsSkinTint() {
@@ -11517,7 +11870,7 @@ int BSBoneLODExtraData::CalcBlockSize() {
 	NiExtraData::CalcBlockSize();
 
 	blockSize += 4;
-	blockSize += numBoneLODs * 4;
+	blockSize += numBoneLODs * 8;
 
 	return blockSize;
 }
@@ -11554,6 +11907,7 @@ void NiTextKeyExtraData::Get(fstream& file) {
 	for (int i = 0; i < numTextKeys; i++) {
 		file.read((char*)&textKeys[i].time, 4);
 		file.read((char*)&textKeys[i].value, 4);
+		header->AddStringRef(textKeys[i].value);
 	}
 }
 
@@ -11845,6 +12199,12 @@ void BSMultiBound::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		dataRef = blockIndexLo;
 }
 
+void BSMultiBound::GetChildRefs(set<int>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(dataRef);
+}
+
 int BSMultiBound::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
@@ -12028,6 +12388,12 @@ void bhkNiCollisionObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		bodyRef = blockIndexHi;
 	else if (bodyRef == blockIndexHi)
 		bodyRef = blockIndexLo;
+}
+
+void bhkNiCollisionObject::GetChildRefs(set<int>& refs) {
+	NiCollisionObject::GetChildRefs(refs);
+
+	refs.insert(bodyRef);
 }
 
 int bhkNiCollisionObject::CalcBlockSize() {
@@ -12432,6 +12798,12 @@ void bhkTransformShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		shapeRef = blockIndexLo;
 }
 
+void bhkTransformShape::GetChildRefs(set<int>& refs) {
+	bhkShape::GetChildRefs(refs);
+
+	refs.insert(shapeRef);
+}
+
 int bhkTransformShape::CalcBlockSize() {
 	bhkShape::CalcBlockSize();
 
@@ -12571,6 +12943,12 @@ void bhkMoppBvTreeShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		shapeRef = blockIndexLo;
 }
 
+void bhkMoppBvTreeShape::GetChildRefs(set<int>& refs) {
+	bhkBvTreeShape::GetChildRefs(refs);
+
+	refs.insert(shapeRef);
+}
+
 int bhkMoppBvTreeShape::CalcBlockSize() {
 	bhkBvTreeShape::CalcBlockSize();
 
@@ -12675,6 +13053,12 @@ void bhkNiTriStripsShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void bhkNiTriStripsShape::GetChildRefs(set<int>& refs) {
+	bhkShape::GetChildRefs(refs);
+
+	refs.insert(parts.begin(), parts.end());
+}
+
 int bhkNiTriStripsShape::CalcBlockSize() {
 	bhkShape::CalcBlockSize();
 
@@ -12764,6 +13148,12 @@ void bhkListShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void bhkListShape::GetChildRefs(set<int>& refs) {
+	bhkShapeCollection::GetChildRefs(refs);
+
+	refs.insert(subShapeRef.begin(), subShapeRef.end());
+}
+
 int bhkListShape::CalcBlockSize() {
 	bhkShapeCollection::CalcBlockSize();
 
@@ -12819,6 +13209,12 @@ void bhkWorldObject::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		shapeRef = blockIndexHi;
 	else if (shapeRef == blockIndexHi)
 		shapeRef = blockIndexLo;
+}
+
+void bhkWorldObject::GetChildRefs(set<int>& refs) {
+	bhkSerializable::GetChildRefs(refs);
+
+	refs.insert(shapeRef);
 }
 
 int bhkWorldObject::CalcBlockSize() {
@@ -12921,6 +13317,12 @@ void bhkConstraint::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 		else if (entities[i] == blockIndexHi)
 			entities[i] = blockIndexLo;
 	}
+}
+
+void bhkConstraint::GetChildRefs(set<int>& refs) {
+	bhkSerializable::GetChildRefs(refs);
+
+	refs.insert(entities.begin(), entities.end());
 }
 
 int bhkConstraint::CalcBlockSize() {
@@ -13065,6 +13467,12 @@ void bhkBreakableConstraint::notifyBlockSwap(int blockIndexLo, int blockIndexHi)
 	bhkConstraint::notifyBlockSwap(blockIndexLo, blockIndexHi);
 
 	subConstraint.notifyBlockSwap(blockIndexLo, blockIndexHi);
+}
+
+void bhkBreakableConstraint::GetChildRefs(set<int>& refs) {
+	bhkConstraint::GetChildRefs(refs);
+
+	subConstraint.GetChildRefs(refs);
 }
 
 int bhkBreakableConstraint::CalcBlockSize() {
@@ -13343,6 +13751,14 @@ void bhkBallSocketConstraintChain::notifyBlockSwap(int blockIndexLo, int blockIn
 		entityBRef = blockIndexLo;
 }
 
+void bhkBallSocketConstraintChain::GetChildRefs(set<int>& refs) {
+	bhkSerializable::GetChildRefs(refs);
+
+	refs.insert(entityARefs.begin(), entityARefs.end());
+	refs.insert(entityARef);
+	refs.insert(entityBRef);
+}
+
 int bhkBallSocketConstraintChain::CalcBlockSize() {
 	bhkSerializable::CalcBlockSize();
 
@@ -13517,6 +13933,12 @@ void bhkRigidBody::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 	}
 }
 
+void bhkRigidBody::GetChildRefs(set<int>& refs) {
+	bhkEntity::GetChildRefs(refs);
+
+	refs.insert(constraints.begin(), constraints.end());
+}
+
 int bhkRigidBody::CalcBlockSize() {
 	bhkEntity::CalcBlockSize();
 
@@ -13613,6 +14035,13 @@ void bhkCompressedMeshShape::notifyBlockSwap(int blockIndexLo, int blockIndexHi)
 		dataRef = blockIndexHi;
 	else if (dataRef == blockIndexHi)
 		dataRef = blockIndexLo;
+}
+
+void bhkCompressedMeshShape::GetChildRefs(set<int>& refs) {
+	bhkShape::GetChildRefs(refs);
+
+	refs.insert(targetRef);
+	refs.insert(dataRef);
 }
 
 int bhkCompressedMeshShape::CalcBlockSize() {

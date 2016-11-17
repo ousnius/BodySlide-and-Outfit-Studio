@@ -10,6 +10,7 @@ See the included LICENSE file
 
 #include <fstream>
 #include <unordered_map>
+#include <set>
 #include <string>
 
 using namespace std;
@@ -507,6 +508,7 @@ public:
 	void Get(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcDescSize();
 };
 
@@ -613,6 +615,7 @@ public:
 	virtual void Get(fstream& file);
 	virtual void Put(fstream& file);
 
+	virtual void GetChildRefs(set<int>& refs);
 	virtual int CalcBlockSize();
 };
 
@@ -696,6 +699,8 @@ public:
 
 	// Swaps two blocks, updating references in other blocks that may refer to their old indices
 	void SwapBlocks(const int& blockIndexLo, const int& blockIndexHi);
+	bool IsBlockReferenced(const int& blockId);
+	bool DeleteUnreferencedBlocks();
 
 	ushort AddOrFindBlockTypeId(const string& blockTypeName);
 	string GetBlockTypeStringById(const int& id);
@@ -750,6 +755,7 @@ public:
 	int GetExtraDataRef(const int& id);
 	void AddExtraDataRef(const int& id);
 
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -768,6 +774,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	bool rotToEulerDegrees(float &Y, float& P, float& R) {
@@ -818,6 +825,7 @@ public:
 
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	int GetNumChildren() { return numChildren; }
@@ -876,6 +884,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -908,6 +917,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -949,6 +959,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -1150,6 +1161,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	int GetSkinInstanceRef() { return skinInstanceRef; }
@@ -1316,6 +1328,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	bool IsSkinned() { return skinInstanceRef != 0xFFFFFFFF; }
@@ -1439,6 +1452,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	int GetDataRef() { return dataRef; }
@@ -1503,6 +1517,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	int GetTargetRef() { return targetRef; }
@@ -1675,6 +1690,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -1755,6 +1771,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -1802,6 +1819,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -1822,6 +1840,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyStringDelete(int stringID);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -1851,6 +1870,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -1960,6 +1980,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -1998,6 +2019,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2016,6 +2038,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2055,6 +2078,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2085,6 +2109,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2103,6 +2128,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2122,6 +2148,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2166,6 +2193,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2199,6 +2227,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2260,6 +2289,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2332,6 +2362,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2354,6 +2385,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2372,6 +2404,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2388,6 +2421,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2410,6 +2444,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2436,6 +2471,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyStringDelete(int stringID);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2521,6 +2557,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2536,6 +2573,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2589,6 +2627,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2613,6 +2652,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2628,6 +2668,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2757,6 +2798,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2841,6 +2883,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2857,6 +2900,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2875,6 +2919,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2896,6 +2941,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyStringDelete(int stringID);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2924,6 +2970,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyStringDelete(int stringID);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -2944,6 +2991,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3035,6 +3083,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void notifyStringDelete(int stringID);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	bool IsSkinTint();
@@ -3187,6 +3236,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 
 	bool IsSkinTint();
@@ -3579,6 +3629,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3642,6 +3693,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3809,6 +3861,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3859,6 +3912,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3888,6 +3942,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3911,6 +3966,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3929,6 +3985,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -3968,6 +4025,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -4011,6 +4069,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -4079,6 +4138,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -4131,6 +4191,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
@@ -4159,6 +4220,7 @@ public:
 	void Put(fstream& file);
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
 };
 
