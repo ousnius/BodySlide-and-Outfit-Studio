@@ -1083,11 +1083,11 @@ void NifFile::PrettySortBlocks() {
 	}
 }
 
-void NifFile::RemoveUnusedStrings() {
+int NifFile::RemoveUnusedStrings() {
 	if (hasUnknown)
-		return;
+		return 0;
 
-	hdr.RemoveUnusedStrings();
+	return hdr.RemoveUnusedStrings();
 }
 
 int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale) {
@@ -1704,14 +1704,20 @@ void NifFile::Optimize() {
 	RemoveUnusedStrings();
 }
 
-int NifFile::OptimizeForSSE() {
-	if (!(hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() == 83))
-		return 1;
+OptResultSSE NifFile::OptimizeForSSE() {
+	OptResultSSE result;
+	if (!(hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() == 83)) {
+		result.versionMismatch = true;
+		return result;
+	}
 
 	vector<string> shapes;
 	GetShapeList(shapes);
-	for (auto &s : shapes)
-		RenameDuplicateShape(s);
+	for (auto &s : shapes) {
+		bool renamed = RenameDuplicateShape(s);
+		if (renamed)
+			result.shapesRenamed.push_back(s);
+	}
 
 	GetShapeList(shapes);
 
@@ -1722,8 +1728,10 @@ int NifFile::OptimizeForSSE() {
 			auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 			if (geomData) {
 				// Can't optimize face geom or particles
-				if (geomData->keepFlags & 51)
-					return 2;
+				if (geomData->keepFlags & 51) {
+					result.unsupported = true;
+					return result;
+				}
 			}
 		}
 	}
@@ -1768,13 +1776,20 @@ int NifFile::OptimizeForSSE() {
 					}
 				}
 
+				if (removeVertexColors)
+					result.shapesVColorsRemoved.push_back(s);
+
 				NiShader* shader = GetShader(s);
 				if (shader) {
 					auto bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
 					if (bslsp) {
 						// No normals and tangents with model space maps
-						if ((bslsp->shaderFlags1 & (1 << 12)) != 0)
+						if ((bslsp->shaderFlags1 & (1 << 12)) != 0) {
+							if (!normals->empty())
+								result.shapesNormalsRemoved.push_back(s);
+
 							normals = nullptr;
+						}
 
 						// Disable flag if vertex colors were removed
 						if (removeVertexColors)
@@ -1829,7 +1844,9 @@ int NifFile::OptimizeForSSE() {
 						if (skinInst) {
 							auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 							if (skinPart) {
-								TriangulatePartitions(s);
+								bool triangulated = TriangulatePartitions(s);
+								if (triangulated)
+									result.shapesPartTriangulated.push_back(s);
 
 								for (int partID = 0; partID < skinPart->numPartitions; partID++) {
 									NiSkinPartition::PartitionBlock& part = skinPart->partitions[partID];
@@ -1880,13 +1897,17 @@ int NifFile::OptimizeForSSE() {
 				hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape");
 				hdr.DeleteBlock(dataId);
 
+				bool hasTangents = bsShape->HasTangents();
 				CalcTangentsForShape(s);
+				if (!hasTangents && bsShape->HasTangents())
+					result.shapesTangentsAdded.push_back(s);
+
 				UpdateSkinPartitions(s);
 			}
 		}
 	}
 
-	return 0;
+	return result;
 }
 
 void NifFile::PrepareData() {
@@ -2003,7 +2024,7 @@ void NifFile::RenameShape(const string& oldName, const string& newName) {
 		geom->SetName(newName, true);
 }
 
-void NifFile::RenameDuplicateShape(const string& dupedShape) {
+bool NifFile::RenameDuplicateShape(const string& dupedShape) {
 	int dupCount = 1;
 	char buf[10];
 
@@ -2020,6 +2041,8 @@ void NifFile::RenameDuplicateShape(const string& dupedShape) {
 			dupCount++;
 		}
 	}
+
+	return (dupCount > 1);
 }
 
 int NifFile::GetRootNodeID() {
@@ -3908,10 +3931,10 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	UpdatePartitionFlags(shapeName);
 }
 
-void NifFile::TriangulatePartitions(const string& shapeName) {
+bool NifFile::TriangulatePartitions(const string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
-		return;
+		return false;
 
 	NiSkinData* skinData = nullptr;
 	NiSkinPartition* skinPart = nullptr;
@@ -3921,11 +3944,12 @@ void NifFile::TriangulatePartitions(const string& shapeName) {
 		skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 
 		if (!skinData || !skinPart)
-			return;
+			return false;
 	}
 	else
-		return;
+		return false;
 
+	bool triangulated = false;
 	vector<NiSkinPartition::PartitionBlock> partitions;
 	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
 		// Triangulate partition if stripified
@@ -3961,8 +3985,11 @@ void NifFile::TriangulatePartitions(const string& shapeName) {
 			skinPart->partitions[partID].numStrips = 0;
 			skinPart->partitions[partID].strips.clear();
 			skinPart->partitions[partID].stripLengths.clear();
+			triangulated = true;
 		}
 	}
+
+	return triangulated;
 }
 
 void NifFile::UpdatePartitionFlags(const string& shapeName) {

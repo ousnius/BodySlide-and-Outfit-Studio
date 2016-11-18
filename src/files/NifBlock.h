@@ -709,6 +709,10 @@ public:
 	uint GetBlockSize(const uint& blockId) { return blockSizes[blockId]; }
 	void CalcAllBlockSizes();
 
+	int GetStringCount() {
+		return strings.size();
+	}
+
 	int FindStringId(const string& str);
 	int AddOrFindStringId(const string& str);
 	string GetStringById(const int& id);
@@ -716,7 +720,7 @@ public:
 
 	void AddStringRef(const int& id);
 	void RemoveStringRef(const int& id);
-	void RemoveUnusedStrings();
+	int RemoveUnusedStrings();
 
 	void Get(fstream& file);
 	void Put(fstream& file);

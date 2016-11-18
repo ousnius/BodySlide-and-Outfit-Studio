@@ -10,6 +10,17 @@ See the included LICENSE file
 
 #pragma warning (disable: 4018)
 
+struct OptResultSSE {
+	bool versionMismatch = false;
+	bool unsupported = false;
+
+	vector<string> shapesRenamed;
+	vector<string> shapesVColorsRemoved;
+	vector<string> shapesNormalsRemoved;
+	vector<string> shapesPartTriangulated;
+	vector<string> shapesTangentsAdded;
+};
+
 class NifFile {
 private:
 	string fileName;
@@ -39,7 +50,7 @@ public:
 	int Load(const string& filename);
 	int Save(const string& filename, bool optimize = true, bool sortBlocks = true);
 	void Optimize();
-	int OptimizeForSSE();
+	OptResultSSE OptimizeForSSE();
 	void PrepareData();
 	void FinalizeData();
 
@@ -55,7 +66,7 @@ public:
 
 	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
 	void PrettySortBlocks();
-	void RemoveUnusedStrings();
+	int RemoveUnusedStrings();
 
 	NiShape* FindShapeByName(const string& name, int dupIndex = 0);
 	NiAVObject* FindAVObjectByName(const string& name, int dupIndex = 0);
@@ -78,7 +89,7 @@ public:
 	BlockType GetShapeType(const string& shapeName);
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
-	void RenameDuplicateShape(const string& dupedShape);
+	bool RenameDuplicateShape(const string& dupedShape);
 
 	/// GetChildren of a node ... templatized to allow any particular type to be queried.   useful for walking a node tree
 	template <class T>
@@ -177,7 +188,7 @@ public:
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
-	void TriangulatePartitions(const string& shapeName);
+	bool TriangulatePartitions(const string& shapeName);
 	// Update bone set flags
 	void UpdatePartitionFlags(const string& shapeName);
 };

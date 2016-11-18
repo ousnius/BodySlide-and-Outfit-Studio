@@ -632,7 +632,9 @@ void NiHeader::RemoveStringRef(const int& id) {
 		stringRefCount[id]--;
 }
 
-void NiHeader::RemoveUnusedStrings() {
+int NiHeader::RemoveUnusedStrings() {
+	int count = 0;
+
 	for (int i = 0; i < stringRefCount.size(); i++) {
 		if (stringRefCount[i] <= 0) {
 			strings.erase(strings.begin() + i);
@@ -643,6 +645,7 @@ void NiHeader::RemoveUnusedStrings() {
 				block->notifyStringDelete(i);
 
 			i--;
+			count++;
 		}
 	}
 
@@ -650,6 +653,8 @@ void NiHeader::RemoveUnusedStrings() {
 	for (auto &s : strings)
 		if (maxStringLen < s.GetLength())
 			maxStringLen = s.GetLength();
+
+	return count;
 }
 
 void NiHeader::Get(fstream& file) {
