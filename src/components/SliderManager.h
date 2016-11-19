@@ -43,8 +43,8 @@ public:
 		mSliderCount = 0;
 	}
 
-	bool LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilters) {
-		return presetCollection.LoadPresets(basePath, sliderSet, groupFilters);
+	bool LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilters, const bool& allPresets = false) {
+		return presetCollection.LoadPresets(basePath, sliderSet, groupFilters, allPresets);
 	}
 
 	int SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {

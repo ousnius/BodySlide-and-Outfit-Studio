@@ -1347,7 +1347,7 @@ void BodySlideApp::LoadPresets(const string& sliderSet) {
 				groups_and_aliases.push_back(ag.first);
 	}
 
-	sliderManager.LoadPresets("SliderPresets", outfit, groups_and_aliases);
+	sliderManager.LoadPresets("SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
 }
 
 int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
