@@ -1705,7 +1705,6 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 
 	sset.GetSet(setName, activeSet);
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
-	activeSet.SetAllReferenced();
 
 	string inMeshFile = activeSet.GetInputFileName();
 
@@ -1808,6 +1807,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	baseShape = shape;
 
 	activeSet.LoadSetDiffData(baseDiffData);
+	activeSet.SetAllReferenced();
 	AutoOffset(workNif);
 
 	return 0;
