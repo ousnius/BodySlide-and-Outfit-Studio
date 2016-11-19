@@ -1748,6 +1748,7 @@ OptResultSSE NifFile::OptimizeForSSE() {
 			auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 			if (geomData) {
 				bool removeVertexColors = true;
+				bool hasTangents = geomData->HasTangents();
 				vector<Vector3>* vertices = &geomData->vertices;
 				vector<Vector3>* normals = &geomData->normals;
 				vector<Vector2>* uvs = &geomData->uvSets;
@@ -1794,6 +1795,13 @@ OptResultSSE NifFile::OptimizeForSSE() {
 						// Disable flag if vertex colors were removed
 						if (removeVertexColors)
 							bslsp->shaderFlags2 &= ~(1 << 5);
+					}
+
+					auto bsesp = dynamic_cast<BSEffectShaderProperty*>(shader);
+					if (bsesp) {
+						// Disable flag if vertex colors were removed
+						if (removeVertexColors)
+							bsesp->shaderFlags2 &= ~(1 << 5);
 					}
 				}
 
@@ -1893,14 +1901,12 @@ OptResultSSE NifFile::OptimizeForSSE() {
 				else
 					bsShape->SetVertices(false);
 
+				if (!hasTangents && bsShape->HasTangents())
+					result.shapesTangentsAdded.push_back(s);
+
 				int dataId = shape->GetDataRef();
 				hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape");
 				hdr.DeleteBlock(dataId);
-
-				bool hasTangents = bsShape->HasTangents();
-				CalcTangentsForShape(s);
-				if (!hasTangents && bsShape->HasTangents())
-					result.shapesTangentsAdded.push_back(s);
 
 				UpdateSkinPartitions(s);
 			}

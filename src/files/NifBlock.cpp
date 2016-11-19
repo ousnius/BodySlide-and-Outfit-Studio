@@ -526,18 +526,18 @@ bool NiHeader::IsBlockReferenced(const int& blockId) {
 	return false;
 }
 
-bool NiHeader::DeleteUnreferencedBlocks() {
+void NiHeader::DeleteUnreferencedBlocks(bool* hadDeletions) {
 	for (int i = 1; i < numBlocks; i++) {
 		if (!IsBlockReferenced(i)) {
 			DeleteBlock(i);
 
 			// Deleting a block can cause others to become unreferenced
-			DeleteUnreferencedBlocks();
-			return true;
+			if (hadDeletions)
+				(*hadDeletions) = true;
+
+			return DeleteUnreferencedBlocks();
 		}
 	}
-
-	return false;
 }
 
 ushort NiHeader::AddOrFindBlockTypeId(const string& blockTypeName) {

@@ -700,7 +700,7 @@ public:
 	// Swaps two blocks, updating references in other blocks that may refer to their old indices
 	void SwapBlocks(const int& blockIndexLo, const int& blockIndexHi);
 	bool IsBlockReferenced(const int& blockId);
-	bool DeleteUnreferencedBlocks();
+	void DeleteUnreferencedBlocks(bool* hadDeletions = nullptr);
 
 	ushort AddOrFindBlockTypeId(const string& blockTypeName);
 	string GetBlockTypeStringById(const int& id);
