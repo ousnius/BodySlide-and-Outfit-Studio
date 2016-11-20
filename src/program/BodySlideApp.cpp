@@ -868,6 +868,8 @@ void BodySlideApp::RebuildPreviewMeshes() {
 		previewBaseNif->GetUvsForShape(it->second, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
+		uvsHigh = uvs;
+		uvsLow = uvs;
 
 		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		if (activeSet.GenWeights())
@@ -1850,11 +1852,16 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 					continue;
 				}
 
-				currentDiffs.ApplyDiff(dn, target, vbig, &vertsHigh);
-				currentDiffs.ApplyUVDiff(dn, target, vbig, &uvsHigh);
+				if (currentSet[s].bUV)
+					currentDiffs.ApplyUVDiff(dn, target, vbig, &uvsHigh);
+				else
+					currentDiffs.ApplyDiff(dn, target, vbig, &vertsHigh);
+
 				if (currentSet.GenWeights()) {
-					currentDiffs.ApplyDiff(dn, target, vsmall, &vertsLow);
-					currentDiffs.ApplyUVDiff(dn, target, vsmall, &uvsLow);
+					if (currentSet[s].bUV)
+						currentDiffs.ApplyUVDiff(dn, target, vsmall, &uvsLow);
+					else
+						currentDiffs.ApplyDiff(dn, target, vsmall, &vertsLow);
 				}
 			}
 
