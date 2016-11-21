@@ -2750,6 +2750,10 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		memset(vertData[i].weightBones, 0, 4);
 	}
 
+	triangles.resize(numTriangles);
+	for (int i = 0; i < numTriangles; i++)
+		triangles[i] = (*tris)[i];
+
 	bounds = BoundingSphere(*verts);
 
 	if (normals && normals->size() == numVertices) {
@@ -2760,10 +2764,6 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		SetNormals(false);
 		SetTangents(false);
 	}
-
-	triangles.resize(numTriangles);
-	for (int i = 0; i < numTriangles; i++)
-		triangles[i] = (*tris)[i];
 }
 
 

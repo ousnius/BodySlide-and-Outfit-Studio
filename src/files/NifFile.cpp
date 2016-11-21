@@ -1827,6 +1827,9 @@ OptResultSSE NifFile::OptimizeForSSE() {
 				bsShape->Create(vertices, &triangles, uvs, normals);
 				bsShape->flags = shape->flags;
 
+				if (!shape->IsSkinned())
+					bsShape->SetBounds(geomData->GetBounds());
+
 				if (bsShape->numVertices > 0) {
 					if (!removeVertexColors && colors.size() > 0) {
 						bsShape->SetVertexColors(true);
