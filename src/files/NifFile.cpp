@@ -1301,10 +1301,10 @@ void NifFile::TrimTexturePaths() {
 	for (auto &s : shapes) {
 		for (int i = 0; i < 10; i++) {
 			if (GetTextureForShape(s, tFile, i) && !tFile.empty()) {
-				tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-				tFile = regex_replace(tFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
-				tFile = regex_replace(tFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
-				tFile = regex_replace(tFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
+				tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\");												// Replace multiple slashes or forward slashes with one backslash
+				tFile = regex_replace(tFile, regex("^(.*?)\\\\textures\\\\", regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
+				tFile = regex_replace(tFile, regex("^\\\\+"), "");													// Remove all backslashes from the front
+				tFile = regex_replace(tFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\");	// If the path doesn't start with "textures\", add it to the front
 				SetTextureForShape(s, tFile, i);
 			}
 		}
