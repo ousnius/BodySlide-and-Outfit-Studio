@@ -2458,7 +2458,7 @@ void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 			Vector3& an = norms[a.second];
 			Vector3& bn = norms[b.second];
 			float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
-			if (dot < 1.57079633f) {
+			if (dot < smoothThresh * DEG2RAD) {
 				an.x = ((an.x + bn.x) / 2.0f);
 				an.y = ((an.y + bn.y) / 2.0f);
 				an.z = ((an.z + bn.z) / 2.0f);
@@ -3696,6 +3696,7 @@ void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh
 
 	// Calculate normals from triangles
 	Vector3 norm;
+	vector<vector<int>> vertTris(numVertices);
 	for (int i = 0; i < numTriangles; i++) {
 		triangles[i].trinormal(vertices, &norm);
 		normals[triangles[i].p1].x += norm.x;
@@ -3707,27 +3708,73 @@ void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh
 		normals[triangles[i].p3].x += norm.x;
 		normals[triangles[i].p3].y += norm.y;
 		normals[triangles[i].p3].z += norm.z;
+		vertTris[triangles[i].p1].push_back(i);
+		vertTris[triangles[i].p2].push_back(i);
+		vertTris[triangles[i].p3].push_back(i);
 	}
 
 	// Normalize all vertex normals to smooth them out
 	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
+	unordered_map<int, vector<int>> weldVerts;
 	kd_matcher matcher(vertices.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		pair<Vector3*, int>& a = matcher.matches[i].first;
 		pair<Vector3*, int>& b = matcher.matches[i].second;
-		Vector3& an = normals[a.second];
-		Vector3& bn = normals[b.second];
+		weldVerts[a.second].push_back(b.second);
+		weldVerts[b.second].push_back(a.second);
 
-		float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
-		if (dot < 1.57079633f) {
-			an.x = ((an.x + bn.x) / 2.0f);
-			an.y = ((an.y + bn.y) / 2.0f);
-			an.z = ((an.z + bn.z) / 2.0f);
-			bn.x = an.x;
-			bn.y = an.y;
-			bn.z = an.z;
+		if (smooth) {
+			Vector3& an = normals[a.second];
+			Vector3& bn = normals[b.second];
+			float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
+			if (dot < smoothThresh * DEG2RAD) {
+				an.x = ((an.x + bn.x) / 2.0f);
+				an.y = ((an.y + bn.y) / 2.0f);
+				an.z = ((an.z + bn.z) / 2.0f);
+				bn.x = an.x;
+				bn.y = an.y;
+				bn.z = an.z;
+			}
+		}
+	}
+
+	// Smooth normals
+	if (smooth) {
+		Vector3 tn;
+		for (int v = 0; v < numVertices; v++) {
+			norm.Zero();
+			if (weldVerts.find(v) != weldVerts.end())
+				continue;
+
+			for (auto &t : vertTris[v]) {
+				triangles[t].trinormal(vertices.data(), &tn);
+				norm += tn;
+			}
+
+			for (auto &wv : weldVerts[v]) {
+				bool first = true;
+				if (vertTris[wv].size() < 2)
+					continue;
+
+				for (auto &t : vertTris[wv]) {
+					triangles[t].trinormal(vertices.data(), &tn);
+					if (!first) {
+						float angle = fabs(norm.angle(tn));
+						if (angle > smoothThresh * DEG2RAD)
+							continue;
+					}
+					else
+						first = false;
+
+					norm += tn;
+				}
+			}
+
+			norm = norm / (float)vertTris[v].size();
+			norm.Normalize();
+			normals[v] = norm;
 		}
 	}
 }
@@ -3960,7 +4007,8 @@ void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThres
 
 	// Calculate normals from triangles
 	Vector3 norm;
-	for (int i = 0; i < tris.size(); i++) {
+	vector<vector<int>> vertTris(numVertices);
+	for (int i = 0; i < numTriangles; i++) {
 		tris[i].trinormal(vertices, &norm);
 		normals[tris[i].p1].x += norm.x;
 		normals[tris[i].p1].y += norm.y;
@@ -3971,27 +4019,73 @@ void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThres
 		normals[tris[i].p3].x += norm.x;
 		normals[tris[i].p3].y += norm.y;
 		normals[tris[i].p3].z += norm.z;
+		vertTris[tris[i].p1].push_back(i);
+		vertTris[tris[i].p2].push_back(i);
+		vertTris[tris[i].p3].push_back(i);
 	}
 
 	// Normalize all vertex normals to smooth them out
 	for (int i = 0; i < numVertices; i++)
 		normals[i].Normalize();
 
+	unordered_map<int, vector<int>> weldVerts;
 	kd_matcher matcher(vertices.data(), numVertices);
 	for (int i = 0; i < matcher.matches.size(); i++) {
 		pair<Vector3*, int>& a = matcher.matches[i].first;
 		pair<Vector3*, int>& b = matcher.matches[i].second;
-		Vector3& an = normals[a.second];
-		Vector3& bn = normals[b.second];
+		weldVerts[a.second].push_back(b.second);
+		weldVerts[b.second].push_back(a.second);
 
-		float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
-		if (dot < 1.57079633f) {
-			an.x = ((an.x + bn.x) / 2.0f);
-			an.y = ((an.y + bn.y) / 2.0f);
-			an.z = ((an.z + bn.z) / 2.0f);
-			bn.x = an.x;
-			bn.y = an.y;
-			bn.z = an.z;
+		if (smooth) {
+			Vector3& an = normals[a.second];
+			Vector3& bn = normals[b.second];
+			float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
+			if (dot < smoothThresh * DEG2RAD) {
+				an.x = ((an.x + bn.x) / 2.0f);
+				an.y = ((an.y + bn.y) / 2.0f);
+				an.z = ((an.z + bn.z) / 2.0f);
+				bn.x = an.x;
+				bn.y = an.y;
+				bn.z = an.z;
+			}
+		}
+	}
+
+	// Smooth normals
+	if (smooth) {
+		Vector3 tn;
+		for (int v = 0; v < numVertices; v++) {
+			norm.Zero();
+			if (weldVerts.find(v) != weldVerts.end())
+				continue;
+
+			for (auto &t : vertTris[v]) {
+				tris[t].trinormal(vertices.data(), &tn);
+				norm += tn;
+			}
+
+			for (auto &wv : weldVerts[v]) {
+				bool first = true;
+				if (vertTris[wv].size() < 2)
+					continue;
+
+				for (auto &t : vertTris[wv]) {
+					tris[t].trinormal(vertices.data(), &tn);
+					if (!first) {
+						float angle = fabs(norm.angle(tn));
+						if (angle > smoothThresh * DEG2RAD)
+							continue;
+					}
+					else
+						first = false;
+
+					norm += tn;
+				}
+			}
+
+			norm = norm / (float)vertTris[v].size();
+			norm.Normalize();
+			normals[v] = norm;
 		}
 	}
 }
