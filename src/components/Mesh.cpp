@@ -356,7 +356,6 @@ void mesh::SmoothNormals(const vector<int>& vertices) {
 	if (!vertTris)
 		return;
 
-	Vector3 norm;
 	Vector3 tn;
 	for (int v = 0; v < nVerts; v++) {
 		int index = v;
@@ -367,8 +366,7 @@ void mesh::SmoothNormals(const vector<int>& vertices) {
 				continue;
 		}
 
-		norm.x = norm.y = norm.z = 0.0f;
-
+		Vector3 norm;
 		for (auto &t : vertTris[index]) {
 			tris[t].trinormal(verts, &tn);
 			norm += tn;
@@ -414,9 +412,7 @@ void mesh::SmoothNormals(const vector<int>& vertices) {
 		}
 
 		norm.Normalize();
-		norms[index].x = norm.x;
-		norms[index].y = norm.y;
-		norms[index].z = norm.z;
+		norms[index] = norm;
 	}
 
 	queueUpdate[UpdateType::Normals] = true;

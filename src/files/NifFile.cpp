@@ -2919,7 +2919,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 	}
 }
 
-void NifFile::CalcNormalsForShape(const string& shapeName, const bool& smooth, const float& smoothThresh) {
+void NifFile::CalcNormalsForShape(const string& shapeName, const bool& smoothSeams, const float& smoothThresh) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -2933,12 +2933,12 @@ void NifFile::CalcNormalsForShape(const string& shapeName, const bool& smooth, c
 	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
-			geomData->RecalcNormals(smooth, smoothThresh);
+			geomData->RecalcNormals(smoothSeams, smoothThresh);
 	}
 	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
-			bsTriShape->RecalcNormals(smooth, smoothThresh);
+			bsTriShape->RecalcNormals(smoothSeams, smoothThresh);
 	}
 }
 

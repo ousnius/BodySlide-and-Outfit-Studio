@@ -135,7 +135,7 @@ public:
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
 	void InvertUVsForShape(const string& shapeName, bool invertX, bool invertY);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
-	void CalcNormalsForShape(const string& shapeName, const bool& smooth = true, const float& smoothThresh = 60.0f);
+	void CalcNormalsForShape(const string& shapeName, const bool& smoothSeams = true, const float& smoothThresh = 60.0f);
 	void CalcTangentsForShape(const string& shapeName);
 
 	void ClearShapeTransform(const string& shapeName);
