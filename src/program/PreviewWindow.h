@@ -63,7 +63,7 @@ public:
 	void AddNifShapeTexture(NifFile* fromNif, const string& shapeName);
 
 	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
-		vector<int> changed;
+		set<int> changed;
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs, &changed);
 
 		mesh* m = gls.GetMesh(shapeName);

@@ -1049,7 +1049,7 @@ public:
 	void UpdateBounds();
 
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
-	virtual void RecalcNormals(const bool& smoothSeams = true, const float& smoothThres = 60.0f);
+	virtual void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	virtual void CalcTangentSpace();
 };
 
@@ -1210,7 +1210,7 @@ public:
 	void UpdateBounds();
 
 	void SetNormals(const vector<Vector3>& inNorms);
-	void RecalcNormals(const bool& smoothSeams = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	void UpdateFlags();
 	int CalcDataSizes();
@@ -1388,7 +1388,7 @@ public:
 	void Put(fstream& file);
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	void RecalcNormals(const bool& smoothSeams = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 };
@@ -1414,7 +1414,7 @@ public:
 	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void StripsToTris(vector<Triangle>* outTris);
-	void RecalcNormals(const bool& smoothSeams = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 };

@@ -97,19 +97,21 @@ public:
 	float GetSmoothThreshold();
 
 	void FacetNormals();
-	void SmoothNormals(const vector<int>& vertices = vector<int>());
+	void SmoothNormals(const set<int>& vertices = set<int>());
 	static void SmoothNormalsStatic(mesh* m) {
 		m->SmoothNormals();
 	}
 	static void SmoothNormalsStaticArray(mesh* m, int* vertices, int nVertices) {
-		vector<int> verts;
-		verts.assign(vertices, vertices + nVertices);
+		set<int> verts;
+		for (int i = 0; i < nVertices; i++)
+			verts.insert(vertices[i]);
+
 		m->SmoothNormals(verts);
 	}
 	static void SmoothNormalsStaticMap(mesh* m, const unordered_map<int, Vector3>& vertices) {
-		vector<int> verts;
+		set<int> verts;
 		for (auto &v : vertices)
-			verts.push_back(v.first);
+			verts.insert(v.first);
 
 		m->SmoothNormals(verts);
 	}

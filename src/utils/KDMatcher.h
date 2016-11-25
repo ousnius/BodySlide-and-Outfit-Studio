@@ -47,7 +47,7 @@ public:
 			float dy = p.first->y - point.first->y;
 			float dz = p.first->z - point.first->z;
 
-			if (fabs(dx) < 0.00001f && fabs(dy) < 0.00001f && fabs(dz) < 0.00001f)
+			if (fabs(dx) < EPSILON && fabs(dy) < EPSILON && fabs(dz) < EPSILON)
 				return p;
 			switch (axis) {
 			case 0:

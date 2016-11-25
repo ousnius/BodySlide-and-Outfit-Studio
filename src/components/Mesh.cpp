@@ -352,88 +352,97 @@ void mesh::SetSmoothThreshold(float degrees) {
 	smoothThresh = degrees * DEG2RAD;
 }
 
-void mesh::SmoothNormals(const vector<int>& vertices) {
-	if (!vertTris)
-		return;
+void mesh::SmoothNormals(const set<int>& vertices) {
+	// Zero old normals
+	for (int i = 0; i < nVerts; i++) {
+		if (!vertices.empty() && vertices.find(i) == vertices.end())
+			continue;
 
+		Vector3& pn = norms[i];
+		pn.Zero();
+	}
+
+	// Face normals
 	Vector3 tn;
-	for (int v = 0; v < nVerts; v++) {
-		int index = v;
-		if (!vertices.empty()) {
-			if (vertices.size() - 1 >= index)
-				index = vertices[index];
-			else
-				continue;
-		}
+	for (int t = 0; t < nTris; t++) {
+		bool bn1 = (vertices.empty() || vertices.find(tris[t].p1) != vertices.end());
+		bool bn2 = (vertices.empty() || vertices.find(tris[t].p2) != vertices.end());
+		bool bn3 = (vertices.empty() || vertices.find(tris[t].p3) != vertices.end());
 
-		Vector3 norm;
-		for (auto &t : vertTris[index]) {
-			tris[t].trinormal(verts, &tn);
-			norm += tn;
-		}
+		// None of the three normals should change
+		if (!bn1 && !bn2 && !bn3)
+			continue;
 
-		if (weldVerts.find(index) == weldVerts.end()) {
-			bool first = true;
-			for (auto &t : vertTris[index]) {
-				tris[t].trinormal(verts, &tn);
+		tris[t].trinormal(verts, &tn);
+		Vector3& pn1 = norms[tris[t].p1];
+		Vector3& pn2 = norms[tris[t].p2];
+		Vector3& pn3 = norms[tris[t].p3];
 
-				if (!first) {
-					float angle = fabs(norm.angle(tn));
-					if (angle > smoothThresh)
-						continue;
-				}
-				else
-					first = false;
+		if (bn1)
+			pn1 += tn;
+		if (bn2)
+			pn2 += tn;
+		if (bn3)
+			pn3 += tn;
+	}
 
-				norm += tn;
-			}
-			norm = norm / (float)vertTris[index].size();
-		}
-		else if (smoothSeamNormals) {
-			for (auto &wv : weldVerts[index]) {
-				bool first = true;
-				if (vertTris[wv].size() < 2)
+	for (int i = 0; i < nVerts; i++) {
+		Vector3& pn = norms[i];
+		pn.Normalize();
+	}
+
+	// Smooth normals
+	if (smoothSeamNormals) {
+		kd_matcher matcher(verts, nVerts);
+		for (int i = 0; i < matcher.matches.size(); i++) {
+			pair<Vector3*, int>& a = matcher.matches[i].first;
+			pair<Vector3*, int>& b = matcher.matches[i].second;
+
+			if (!vertices.empty()) {
+				if (vertices.find(a.second) == vertices.end() ||
+					vertices.find(b.second) == vertices.end())
 					continue;
-
-				for (auto &t : vertTris[wv]) {
-					tris[t].trinormal(verts, &tn);
-					if (!first) {
-						float angle = fabs(norm.angle(tn));
-						if (angle > smoothThresh)
-							continue;
-					}
-					else
-						first = false;
-
-					norm += tn;
-				}
 			}
-			norm = norm / (float)vertTris[index].size();
+
+			Vector3& an = norms[a.second];
+			Vector3& bn = norms[b.second];
+			if (an.angle(bn) < smoothThresh) {
+				Vector3 anT = an;
+				an += bn;
+				bn += anT;
+			}
 		}
 
-		norm.Normalize();
-		norms[index] = norm;
+		for (int i = 0; i < nVerts; i++) {
+			Vector3& pn = norms[i];
+			pn.Normalize();
+		}
 	}
 
 	queueUpdate[UpdateType::Normals] = true;
 }
 
 void mesh::FacetNormals() {
-	Vector3 norm;
+	// Zero old normals
+	for (int i = 0; i < nVerts; i++) {
+		Vector3& pn = norms[i];
+		pn.Zero();
+	}
+
 	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
-		norm.x = norm.y = norm.z = 0.0f;
 		tris[t].trinormal(verts, &tn);
-		tn.Normalize();
-		norms[tris[t].p1].x = tn.x;
-		norms[tris[t].p1].y = tn.y;
-		norms[tris[t].p1].z = tn.z;
-		norms[tris[t].p2].x = tn.x;
-		norms[tris[t].p2].y = tn.y;
-		norms[tris[t].p2].z = tn.z;
-		norms[tris[t].p3].x = tn.x;
-		norms[tris[t].p3].y = tn.y;
-		norms[tris[t].p3].z = tn.z;
+		Vector3& pn1 = norms[tris[t].p1];
+		Vector3& pn2 = norms[tris[t].p2];
+		Vector3& pn3 = norms[tris[t].p3];
+		pn1 += tn;
+		pn2 += tn;
+		pn3 += tn;
+	}
+
+	for (int i = 0; i < nVerts; i++) {
+		Vector3& pn = norms[i];
+		pn.Normalize();
 	}
 
 	queueUpdate[UpdateType::Normals] = true;

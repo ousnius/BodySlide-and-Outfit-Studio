@@ -223,7 +223,16 @@ struct Vector3 {
 		Vector3 B(other.x, other.y, other.z);
 		A.Normalize();
 		B.Normalize();
-		return acosf(A.dot(B));
+
+		float dot = A.dot(B);
+		if (dot > 1.0)
+			return 0.0f;
+		else if (dot < -1.0f)
+			return PI;
+		else if (dot == 0.0f)
+			return PI / 2.0f;
+
+		return acosf(dot);
 	}
 
 	void clampEpsilon() {

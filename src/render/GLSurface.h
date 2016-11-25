@@ -248,8 +248,8 @@ public:
 	mesh* AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
 
 	void AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
-	void Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, vector<int>* changed = nullptr);
-	void Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, vector<int>* changed = nullptr);
+	void Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, set<int>* changed = nullptr);
+	void Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, set<int>* changed = nullptr);
 	void ReloadMeshFromNif(NifFile* nif, string shapeName);
 	void RecalculateMeshBVH(const string& shapeName);
 	void RecalculateMeshBVH(int shapeIndex);

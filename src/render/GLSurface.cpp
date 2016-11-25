@@ -867,52 +867,36 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	}
 
 	if (!nifNorms || nifNorms->empty()) {
-		// Load tris. Also sum face normals here.
-		for (int j = 0; j < m->nTris; j++) {
-			Vector3 norm;
-			m->tris[j].p1 = nifTris[j].p1;
-			m->tris[j].p2 = nifTris[j].p2;
-			m->tris[j].p3 = nifTris[j].p3;
-			m->tris[j].trinormal(m->verts, &norm);
-			m->norms[m->tris[j].p1].x += norm.x;
-			m->norms[m->tris[j].p1].y += norm.y;
-			m->norms[m->tris[j].p1].z += norm.z;
-			m->norms[m->tris[j].p2].x += norm.x;
-			m->norms[m->tris[j].p2].y += norm.y;
-			m->norms[m->tris[j].p2].z += norm.z;
-			m->norms[m->tris[j].p3].x += norm.x;
-			m->norms[m->tris[j].p3].y += norm.y;
-			m->norms[m->tris[j].p3].z += norm.z;
-		}
+		// Copy triangles
+		for (int t = 0; t < m->nTris; t++)
+			m->tris[t] = nifTris[t];
 
-		// Normalize all vertex normals to smooth them out.
-		for (int i = 0; i < m->nVerts; i++) {
-			Vector3* pn = (Vector3*)&m->norms[i].x;
-			pn->Normalize();
-		}
+		// Face normals
+		m->FacetNormals();
 
-		kd_matcher matcher(m->verts, m->nVerts);
-		for (int i = 0; i < matcher.matches.size(); i++) {
-			pair<Vector3*, int>& a = matcher.matches[i].first;
-			pair<Vector3*, int>& b = matcher.matches[i].second;
-			m->weldVerts[a.second].push_back(b.second);
-			m->weldVerts[b.second].push_back(a.second);
+		// Smooth normals
+		if (smoothNormalSeams) {
+			kd_matcher matcher(m->verts, m->nVerts);
+			for (int i = 0; i < matcher.matches.size(); i++) {
+				pair<Vector3*, int>& a = matcher.matches[i].first;
+				pair<Vector3*, int>& b = matcher.matches[i].second;
+				m->weldVerts[a.second].push_back(b.second);
+				m->weldVerts[b.second].push_back(a.second);
 
-			if (smoothNormalSeams) {
 				Vector3& an = m->norms[a.second];
 				Vector3& bn = m->norms[b.second];
-				float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
-				if (dot < 90.0f * DEG2RAD) {
-					an.x = ((an.x + bn.x) / 2.0f);
-					an.y = ((an.y + bn.y) / 2.0f);
-					an.z = ((an.z + bn.z) / 2.0f);
-					bn.x = an.x;
-					bn.y = an.y;
-					bn.z = an.z;
+				if (an.angle(bn) < 60.0f * DEG2RAD) {
+					Vector3 anT = an;
+					an += bn;
+					bn += anT;
 				}
 			}
-		}
 
+			for (int i = 0; i < m->nVerts; i++) {
+				Vector3& pn = m->norms[i];
+				pn.Normalize();
+			}
+		}
 	}
 	else {
 		// Already have normals, just copy the data over.
@@ -928,7 +912,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			m->norms[i].y = (*nifNorms)[i].z;
 		}
 
-		// virtually Weld verts across uv seams
+		// Virtually weld verts across UV seams
 		kd_matcher matcher(m->verts, m->nVerts);
 		for (int i = 0; i < matcher.matches.size(); i++) {
 			pair<Vector3*, int>& a = matcher.matches[i].first;
@@ -1298,7 +1282,7 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 	return m;
 }
 
-void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs, vector<int>* changed) {
+void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs, set<int>* changed) {
 	int id = GetMeshID(shapeName);
 	if (id < 0)
 		return;
@@ -1306,7 +1290,7 @@ void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vecto
 	Update(id, vertices, uvs, changed);
 }
 
-void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs, vector<int>* changed) {
+void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs, set<int>* changed) {
 	if (shapeIndex >= meshes.size())
 		return;
 
@@ -1327,7 +1311,7 @@ void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2
 			m->texcoord[i] = (*uvs)[i];
 
 		if (changed && old != m->verts[i])
-			(*changed).push_back(i);
+			(*changed).insert(i);
 	}
 
 	m->QueueUpdate(mesh::UpdateType::Position);

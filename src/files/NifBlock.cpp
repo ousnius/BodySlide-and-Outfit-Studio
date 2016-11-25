@@ -2402,7 +2402,7 @@ void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
 	}
 }
 
-void BSTriShape::RecalcNormals(const bool& smoothSeams, const float& smoothThresh) {
+void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	GetRawVerts();
 	SetNormals(true);
 
@@ -2414,41 +2414,20 @@ void BSTriShape::RecalcNormals(const bool& smoothSeams, const float& smoothThres
 		verts[i].y = rawVertices[i].z * 0.1f;
 	}
 
-	// Map triangles to vertices
-	vector<vector<int>> vertTris(numVertices);
-	for (int i = 0; i < numTriangles; i++) {
-		vertTris[triangles[i].p1].push_back(i);
-		vertTris[triangles[i].p2].push_back(i);
-		vertTris[triangles[i].p3].push_back(i);
+	// Face normals
+	Vector3 tn;
+	for (int t = 0; t < numTriangles; t++) {
+		triangles[t].trinormal(verts, &tn);
+		norms[triangles[t].p1] += tn;
+		norms[triangles[t].p2] += tn;
+		norms[triangles[t].p3] += tn;
 	}
+
+	for (auto &n : norms)
+		n.Normalize();
 
 	// Smooth normals
-	Vector3 tn;
-	for (int v = 0; v < numVertices; v++) {
-		bool first = true;
-		Vector3 norm;
-
-		for (auto &t : vertTris[v]) {
-			triangles[t].trinormal(verts, &tn);
-
-			if (!first) {
-				float angle = fabs(norm.angle(tn));
-				if (angle > smoothThresh * DEG2RAD)
-					continue;
-			}
-			else
-				first = false;
-
-			norm += tn;
-		}
-
-		norm = norm / (float)vertTris[v].size();
-		norm.Normalize();
-		norms[v] = norm;
-	}
-
-	// Smooth the seams to be identical
-	if (smoothSeams) {
+	if (smooth) {
 		kd_matcher matcher(verts.data(), numVertices);
 		for (int i = 0; i < matcher.matches.size(); i++) {
 			pair<Vector3*, int>& a = matcher.matches[i].first;
@@ -2456,16 +2435,15 @@ void BSTriShape::RecalcNormals(const bool& smoothSeams, const float& smoothThres
 
 			Vector3& an = norms[a.second];
 			Vector3& bn = norms[b.second];
-			float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
-			if (dot < 90.0f * DEG2RAD) {
-				an.x = ((an.x + bn.x) / 2.0f);
-				an.y = ((an.y + bn.y) / 2.0f);
-				an.z = ((an.z + bn.z) / 2.0f);
-				bn.x = an.x;
-				bn.y = an.y;
-				bn.z = an.z;
+			if (an.angle(bn) < smoothThresh * DEG2RAD) {
+				Vector3 anT = an;
+				an += bn;
+				bn += anT;
 			}
 		}
+
+		for (auto &n : norms)
+			n.Normalize();
 	}
 
 	rawNormals.resize(numVertices);
@@ -3440,7 +3418,7 @@ void NiGeometryData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 }
 
-void NiGeometryData::RecalcNormals(const bool& smoothSeams, const float& smoothThresh) {
+void NiGeometryData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	SetNormals(true);
 }
 
@@ -3647,7 +3625,7 @@ void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 }
 
-void NiTriShapeData::RecalcNormals(const bool& smoothSeams, const float& smoothThresh) {
+void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	if (!HasNormals())
 		return;
 
@@ -3657,41 +3635,20 @@ void NiTriShapeData::RecalcNormals(const bool& smoothSeams, const float& smoothT
 	for (auto &n : normals)
 		n.Zero();
 
-	// Map triangles to vertices
-	vector<vector<int>> vertTris(numVertices);
-	for (int i = 0; i < numTriangles; i++) {
-		vertTris[triangles[i].p1].push_back(i);
-		vertTris[triangles[i].p2].push_back(i);
-		vertTris[triangles[i].p3].push_back(i);
+	// Face normals
+	Vector3 tn;
+	for (int t = 0; t < numTriangles; t++) {
+		triangles[t].trinormal(vertices, &tn);
+		normals[triangles[t].p1] += tn;
+		normals[triangles[t].p2] += tn;
+		normals[triangles[t].p3] += tn;
 	}
+
+	for (auto &n : normals)
+		n.Normalize();
 
 	// Smooth normals
-	Vector3 tn;
-	for (int v = 0; v < numVertices; v++) {
-		bool first = true;
-		Vector3 norm;
-
-		for (auto &t : vertTris[v]) {
-			triangles[t].trinormal(vertices, &tn);
-
-			if (!first) {
-				float angle = fabs(norm.angle(tn));
-				if (angle > smoothThresh * DEG2RAD)
-					continue;
-			}
-			else
-				first = false;
-
-			norm += tn;
-		}
-
-		norm = norm / (float)vertTris[v].size();
-		norm.Normalize();
-		normals[v] = norm;
-	}
-
-	// Smooth the seams to be identical
-	if (smoothSeams) {
+	if (smooth) {
 		kd_matcher matcher(vertices.data(), numVertices);
 		for (int i = 0; i < matcher.matches.size(); i++) {
 			pair<Vector3*, int>& a = matcher.matches[i].first;
@@ -3699,16 +3656,15 @@ void NiTriShapeData::RecalcNormals(const bool& smoothSeams, const float& smoothT
 
 			Vector3& an = normals[a.second];
 			Vector3& bn = normals[b.second];
-			float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
-			if (dot < 90.0f * DEG2RAD) {
-				an.x = ((an.x + bn.x) / 2.0f);
-				an.y = ((an.y + bn.y) / 2.0f);
-				an.z = ((an.z + bn.z) / 2.0f);
-				bn.x = an.x;
-				bn.y = an.y;
-				bn.z = an.z;
+			if (an.angle(bn) < smoothThresh * DEG2RAD) {
+				Vector3 anT = an;
+				an += bn;
+				bn += anT;
 			}
 		}
+
+		for (auto &n : normals)
+			n.Normalize();
 	}
 }
 
@@ -3929,7 +3885,7 @@ void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 	}
 }
 
-void NiTriStripsData::RecalcNormals(const bool& smoothSeams, const float& smoothThresh) {
+void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
 	if (!HasNormals())
 		return;
 
@@ -3942,41 +3898,20 @@ void NiTriStripsData::RecalcNormals(const bool& smoothSeams, const float& smooth
 	for (auto &n : normals)
 		n.Zero();
 
-	// Map triangles to vertices
-	vector<vector<int>> vertTris(numVertices);
-	for (int i = 0; i < numTriangles; i++) {
-		vertTris[tris[i].p1].push_back(i);
-		vertTris[tris[i].p2].push_back(i);
-		vertTris[tris[i].p3].push_back(i);
+	// Face normals
+	Vector3 tn;
+	for (int t = 0; t < numTriangles; t++) {
+		tris[t].trinormal(vertices, &tn);
+		normals[tris[t].p1] += tn;
+		normals[tris[t].p2] += tn;
+		normals[tris[t].p3] += tn;
 	}
+
+	for (auto &n : normals)
+		n.Normalize();
 
 	// Smooth normals
-	Vector3 tn;
-	for (int v = 0; v < numVertices; v++) {
-		bool first = true;
-		Vector3 norm;
-
-		for (auto &t : vertTris[v]) {
-			tris[t].trinormal(vertices, &tn);
-
-			if (!first) {
-				float angle = fabs(norm.angle(tn));
-				if (angle > smoothThresh * DEG2RAD)
-					continue;
-			}
-			else
-				first = false;
-
-			norm += tn;
-		}
-
-		norm = norm / (float)vertTris[v].size();
-		norm.Normalize();
-		normals[v] = norm;
-	}
-
-	// Smooth the seams to be identical
-	if (smoothSeams) {
+	if (smooth) {
 		kd_matcher matcher(vertices.data(), numVertices);
 		for (int i = 0; i < matcher.matches.size(); i++) {
 			pair<Vector3*, int>& a = matcher.matches[i].first;
@@ -3984,16 +3919,15 @@ void NiTriStripsData::RecalcNormals(const bool& smoothSeams, const float& smooth
 
 			Vector3& an = normals[a.second];
 			Vector3& bn = normals[b.second];
-			float dot = (an.x * bn.x + an.y * bn.y + an.z * bn.z);
-			if (dot < 90.0f * DEG2RAD) {
-				an.x = ((an.x + bn.x) / 2.0f);
-				an.y = ((an.y + bn.y) / 2.0f);
-				an.z = ((an.z + bn.z) / 2.0f);
-				bn.x = an.x;
-				bn.y = an.y;
-				bn.z = an.z;
+			if (an.angle(bn) < smoothThresh * DEG2RAD) {
+				Vector3 anT = an;
+				an += bn;
+				bn += anT;
 			}
 		}
+
+		for (auto &n : normals)
+			n.Normalize();
 	}
 }
 
