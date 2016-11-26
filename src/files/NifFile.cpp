@@ -1777,7 +1777,7 @@ OptResultSSE NifFile::OptimizeForSSE() {
 					}
 				}
 
-				if (removeVertexColors)
+				if (!colors.empty() && removeVertexColors)
 					result.shapesVColorsRemoved.push_back(s);
 
 				NiShader* shader = GetShader(s);
@@ -1907,15 +1907,15 @@ OptResultSSE NifFile::OptimizeForSSE() {
 				if (!hasTangents && bsShape->HasTangents())
 					result.shapesTangentsAdded.push_back(s);
 
-				int dataId = shape->GetDataRef();
 				hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape");
-				hdr.DeleteBlock(dataId);
 
 				UpdateSkinPartitions(s);
 			}
 		}
 	}
 
+	hdr.DeleteUnreferencedBlocks(NITRISHAPEDATA);
+	hdr.DeleteUnreferencedBlocks(NITRISTRIPSDATA);
 	return result;
 }
 
@@ -4051,16 +4051,9 @@ void NifFile::CreateSkinning(const string& shapeName) {
 			nifDismemberInst->SetSkeletonRootRef(0);
 			shape->SetSkinInstanceRef(dismemberID);
 			shape->SetSkinned(true);
-
-			NiShader* shader = GetShader(shapeName);
-			if (shader)
-				shader->SetSkinned(true);
 		}
 	}
 	else if (shape->blockType == NITRISTRIPS) {
-		// TO-DO
-		return;
-
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			auto nifSkinData = new NiSkinData(hdr);
 			int skinDataID = hdr.AddBlock(nifSkinData, "NiSkinData");
@@ -4108,12 +4101,12 @@ void NifFile::CreateSkinning(const string& shapeName) {
 
 			shape->SetSkinInstanceRef(skinInstID);
 			shape->SetSkinned(true);
-
-			NiShader* shader = GetShader(shapeName);
-			if (shader)
-				shader->SetSkinned(true);
 		}
 	}
+
+	NiShader* shader = GetShader(shapeName);
+	if (shader)
+		shader->SetSkinned(true);
 }
 
 void NifFile::UpdateBoundingSphere(const string& shapeName) {

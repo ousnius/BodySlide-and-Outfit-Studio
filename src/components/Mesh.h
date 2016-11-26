@@ -127,7 +127,7 @@ public:
 
 	// Convenience function to gather connected points, taking into account "welded" vertices.
 	// Optionally sorts the results by distance. Does not clear the output set.
-	void GetAdjacentPoints(int querypoint, set<int>& outPoints, bool sort = false);
+	void GetAdjacentPoints(int querypoint, set<int>& outPoints);
 
 	// More optimized adjacency fetch, using edge adjacency and storing the output in a static array.
 	// Requires that BuildEdgeList() be called prior to use.

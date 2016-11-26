@@ -526,8 +526,11 @@ bool NiHeader::IsBlockReferenced(const int& blockId) {
 	return false;
 }
 
-void NiHeader::DeleteUnreferencedBlocks(bool* hadDeletions) {
+void NiHeader::DeleteUnreferencedBlocks(BlockType type, bool* hadDeletions) {
 	for (int i = 1; i < numBlocks; i++) {
+		if (type != NIUNKNOWN && (*blocks)[i]->blockType != type)
+			continue;
+
 		if (!IsBlockReferenced(i)) {
 			DeleteBlock(i);
 

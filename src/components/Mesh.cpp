@@ -223,7 +223,7 @@ void mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	queueUpdate[UpdateType::Position] = true;
 }
 
-void mesh::GetAdjacentPoints(int querypoint, set<int>& outPoints, bool sort) {
+void mesh::GetAdjacentPoints(int querypoint, set<int>& outPoints) {
 	int tp1;
 	int tp2;
 	int tp3;
