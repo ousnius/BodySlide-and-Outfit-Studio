@@ -67,7 +67,8 @@ void GroupManager::RefreshUI(const bool& clearGroups) {
 	}
 
 	// Add members of selected group to list
-	if (!selectedGroup.empty())
+	bool groupSelected = !selectedGroup.empty();
+	if (groupSelected)
 		for (auto &member : groupMembers[selectedGroup])
 			listMembers->Append(member);
 
@@ -75,6 +76,12 @@ void GroupManager::RefreshUI(const bool& clearGroups) {
 	for (auto &outfit : allOutfits)
 		if (listMembers->FindString(outfit) == wxNOT_FOUND)
 			listOutfits->Append(outfit);
+
+	listMembers->Enable(groupSelected);
+	listOutfits->Enable(groupSelected);
+
+	btRemoveMember->Enable(groupSelected);
+	btAddMember->Enable(groupSelected);
 }
 
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
