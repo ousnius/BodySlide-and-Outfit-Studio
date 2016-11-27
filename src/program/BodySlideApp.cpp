@@ -1529,8 +1529,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	bool useCustName = false;
 
 	if (activeSet.GenWeights()) {
-		nifSmall.FinalizeData();
-
 		outFileNameSmall += "_0.nif";
 		outFileNameBig += "_1.nif";
 		custName = outFileNameSmall;
@@ -1562,8 +1560,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 	if (!useCustName)
 		outFileNameBig = custName;
-
-	nifBig.FinalizeData();
 
 	savedHigh = custName;
 	while (nifBig.Save(custName.ToStdString(), false)) {
@@ -1950,13 +1946,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
 
-			nifBig.FinalizeData();
 			if (nifBig.Save(outFileNameBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
 
-			nifSmall.FinalizeData();
 			if (nifSmall.Save(outFileNameSmall, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				return;
@@ -1965,7 +1959,6 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		else {
 			outFileNameBig += ".nif";
 
-			nifBig.FinalizeData();
 			if (nifBig.Save(outFileNameBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;

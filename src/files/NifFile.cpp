@@ -1670,6 +1670,8 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 int NifFile::Save(const string& filename, bool optimize, bool sortBlocks) {
 	fstream file(filename.c_str(), ios_base::out | ios_base::binary);
 	if (file.is_open()) {
+		FinalizeData();
+
 		if (optimize)
 			Optimize();
 
@@ -2217,7 +2219,7 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, const int& boneIndex, 
 		return 0;
 
 	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-	if (bsTriShape && hdr.GetUserVersion2() != 100) {
+	if (bsTriShape) {
 		outWeights.reserve(bsTriShape->numVertices);
 		for (int vid = 0; vid < bsTriShape->numVertices; vid++) {
 			for (int i = 0; i < 4; i++) {

@@ -263,6 +263,16 @@ struct SkinWeight {
 	}
 };
 
+// Sort bone weights with indices
+struct BoneWeightsSort {
+	bool operator()(const SkinWeight& lhs, const SkinWeight& rhs) {
+		if (lhs.weight == rhs.weight)
+			return false;
+
+		return rhs.weight < lhs.weight;
+	}
+};
+
 struct NiQuatTransform {
 	Vector3 translation;
 	Quaternion rotation;

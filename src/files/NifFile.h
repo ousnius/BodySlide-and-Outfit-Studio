@@ -176,16 +176,6 @@ public:
 	void CreateSkinning(const string& shapeName);
 	void UpdateBoundingSphere(const string& shapeName);
 
-	// Sort bone weights with indices
-	struct BoneWeightsSort {
-		bool operator()(const SkinWeight& lhs, const SkinWeight& rhs) {
-			if (lhs.weight == rhs.weight)
-				return false;
-
-			return rhs.weight < lhs.weight;
-		}
-	};
-
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
 	bool TriangulatePartitions(const string& shapeName);
