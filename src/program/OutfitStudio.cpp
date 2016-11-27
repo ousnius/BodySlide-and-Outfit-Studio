@@ -5183,9 +5183,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->shapeName, newName);
 		project->ClearBoneScale();
-
-		mesh* curshapemesh = glView->GetMesh(activeItem->shapeName);
-		project->DuplicateShape(activeItem->shapeName, newName, curshapemesh);
+		project->DuplicateShape(activeItem->shapeName, newName);
 
 		glView->AddMeshFromNif(project->GetWorkNif(), newName, false);
 		project->SetTexture(newName, "_AUTO_");

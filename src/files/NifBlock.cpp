@@ -14238,12 +14238,6 @@ void NiUnknown::Put(fstream& file) {
 	file.write(&data[0], blockSize);
 }
 
-void NiUnknown::Clone(NiUnknown* other) {
-	if (blockSize == other->blockSize)
-		for (int i = 0; i < blockSize; i++)
-			data[i] = other->data[i];
-}
-
 int NiUnknown::CalcBlockSize() {
 	return blockSize;
 }

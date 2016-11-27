@@ -2041,20 +2041,8 @@ void OutfitProject::ConformShape(const string& shapeName) {
 			morpher.GenerateResultDiff(shapeName, activeSet[i].name, activeSet[i].TargetDataName(refTarget));
 }
 
-void OutfitProject::DuplicateShape(const string& sourceShape, const string& destShape, const mesh* m) {
-	NifFile clone(workNif);
-	workAnim.WriteToNif(&clone);
-
-	vector<Vector3> liveVerts;
-	vector<Vector3> liveNorms;
-	for (int i = 0; i < m->nVerts; i++) {
-		liveVerts.emplace_back(move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
-		liveNorms.emplace_back(move(Vector3(m->norms[i].x* -1, m->norms[i].z, m->norms[i].y)));
-	}
-	clone.SetVertsForShape(m->shapeName, liveVerts);
-	clone.SetNormalsForShape(m->shapeName, liveNorms);
-
-	workNif.CopyGeometry(destShape, clone, sourceShape);
+void OutfitProject::DuplicateShape(const string& sourceShape, const string& destShape) {
+	workNif.CopyGeometry(destShape, workNif, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);
 }
 

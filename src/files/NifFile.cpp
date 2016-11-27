@@ -106,503 +106,7 @@ void NifFile::CopyFrom(NifFile& other) {
 	hdr = other.hdr;
 
 	for (int i = 0; i < other.blocks.size(); i++) {
-		NiObject* blockCopy = nullptr;
-		switch (other.blocks[i]->blockType) {
-		case NIUNKNOWN:
-			blockCopy = new NiUnknown(other.blocks[i]->CalcBlockSize());
-			((NiUnknown*)blockCopy)->Clone((NiUnknown*)other.blocks[i]);
-			break;
-		case NINODE:
-			blockCopy = new NiNode((*(NiNode*)other.blocks[i]));
-			break;
-		case BSFADENODE:
-			blockCopy = new BSFadeNode((*(BSFadeNode*)other.blocks[i]));
-			break;
-		case BSVALUENODE:
-			blockCopy = new BSValueNode((*(BSValueNode*)other.blocks[i]));
-			break;
-		case BSLEAFANIMNODE:
-			blockCopy = new BSLeafAnimNode((*(BSLeafAnimNode*)other.blocks[i]));
-			break;
-		case BSTREENODE:
-			blockCopy = new BSTreeNode((*(BSTreeNode*)other.blocks[i]));
-			break;
-		case BSORDEREDNODE:
-			blockCopy = new BSOrderedNode((*(BSOrderedNode*)other.blocks[i]));
-			break;
-		case BSMULTIBOUNDNODE:
-			blockCopy = new BSMultiBoundNode((*(BSMultiBoundNode*)other.blocks[i]));
-			break;
-		case BSBLASTNODE:
-			blockCopy = new BSBlastNode((*(BSBlastNode*)other.blocks[i]));
-			break;
-		case BSDAMAGESTAGE:
-			blockCopy = new BSDamageStage((*(BSDamageStage*)other.blocks[i]));
-			break;
-		case BSMASTERPARTICLESYSTEM:
-			blockCopy = new BSMasterParticleSystem((*(BSMasterParticleSystem*)other.blocks[i]));
-			break;
-		case NIBILLBOARDNODE:
-			blockCopy = new NiBillboardNode((*(NiBillboardNode*)other.blocks[i]));
-			break;
-		case NISWITCHNODE:
-			blockCopy = new NiSwitchNode((*(NiSwitchNode*)other.blocks[i]));
-			break;
-		case NITRISHAPE:
-			blockCopy = new NiTriShape((*(NiTriShape*)other.blocks[i]));
-			break;
-		case NITRISHAPEDATA:
-			blockCopy = new NiTriShapeData((*(NiTriShapeData*)other.blocks[i]));
-			break;
-		case NITRISTRIPS:
-			blockCopy = new NiTriStrips((*(NiTriStrips*)other.blocks[i]));
-			break;
-		case NITRISTRIPSDATA:
-			blockCopy = new NiTriStripsData((*(NiTriStripsData*)other.blocks[i]));
-			break;
-		case BSLODTRISHAPE:
-			blockCopy = new BSLODTriShape((*(BSLODTriShape*)other.blocks[i]));
-			break;
-		case BSTRISHAPE:
-			blockCopy = new BSTriShape((*(BSTriShape*)other.blocks[i]));
-			break;
-		case BSSUBINDEXTRISHAPE:
-			blockCopy = new BSSubIndexTriShape((*(BSSubIndexTriShape*)other.blocks[i]));
-			break;
-		case BSMESHLODTRISHAPE:
-			blockCopy = new BSMeshLODTriShape(*(BSMeshLODTriShape*)other.blocks[i]);
-			break;
-		case BSDYNAMICTRISHAPE:
-			blockCopy = new BSDynamicTriShape(*(BSDynamicTriShape*)other.blocks[i]);
-			break;
-		case NISKININSTANCE:
-			blockCopy = new NiSkinInstance((*(NiSkinInstance*)other.blocks[i]));
-			break;
-		case BSDISMEMBERSKININSTANCE:
-			blockCopy = new BSDismemberSkinInstance((*(BSDismemberSkinInstance*)other.blocks[i]));
-			break;
-		case NISKINDATA:
-			blockCopy = new NiSkinData((*(NiSkinData*)other.blocks[i]));
-			break;
-		case NISKINPARTITION:
-			blockCopy = new NiSkinPartition((*(NiSkinPartition*)other.blocks[i]));
-			break;
-		case BSSKININSTANCE:
-			blockCopy = new BSSkinInstance(*(BSSkinInstance*)other.blocks[i]);
-			break;
-		case BSBONEDATA:
-			blockCopy = new BSSkinBoneData(*(BSSkinBoneData*)other.blocks[i]);
-			break;
-		case BSSHADERPPLIGHTINGPROPERTY:
-			blockCopy = new BSShaderPPLightingProperty((*(BSShaderPPLightingProperty*)other.blocks[i]));
-			break;
-		case BSLIGHTINGSHADERPROPERTY:
-			blockCopy = new BSLightingShaderProperty((*(BSLightingShaderProperty*)other.blocks[i]));
-			break;
-		case BSEFFECTSHADERPROPERTY:
-			blockCopy = new BSEffectShaderProperty((*(BSEffectShaderProperty*)other.blocks[i]));
-			break;
-		case BSWATERSHADERPROPERTY:
-			blockCopy = new BSWaterShaderProperty((*(BSWaterShaderProperty*)other.blocks[i]));
-			break;
-		case BSSKYSHADERPROPERTY:
-			blockCopy = new BSSkyShaderProperty((*(BSSkyShaderProperty*)other.blocks[i]));
-			break;
-		case NIALPHAPROPERTY:
-			blockCopy = new NiAlphaProperty((*(NiAlphaProperty*)other.blocks[i]));
-			break;
-		case NIMATERIALPROPERTY:
-			blockCopy = new NiMaterialProperty((*(NiMaterialProperty*)other.blocks[i]));
-			break;
-		case NISTENCILPROPERTY:
-			blockCopy = new NiStencilProperty((*(NiStencilProperty*)other.blocks[i]));
-			break;
-		case BSSHADERTEXTURESET:
-			blockCopy = new BSShaderTextureSet((*(BSShaderTextureSet*)other.blocks[i]));
-			break;
-		case NIPARTICLESYSTEM:
-			blockCopy = new NiParticleSystem((*(NiParticleSystem*)other.blocks[i]));
-			break;
-		case NIMESHPARTICLESYSTEM:
-			blockCopy = new NiMeshParticleSystem((*(NiMeshParticleSystem*)other.blocks[i]));
-			break;
-		case BSSTRIPPARTICLESYSTEM:
-			blockCopy = new BSStripParticleSystem((*(BSStripParticleSystem*)other.blocks[i]));
-			break;
-		case NIPARTICLESDATA:
-			blockCopy = new NiParticlesData((*(NiParticlesData*)other.blocks[i]));
-			break;
-		case NIROTATINGPARTICLESDATA:
-			blockCopy = new NiRotatingParticlesData((*(NiRotatingParticlesData*)other.blocks[i]));
-			break;
-		case NIPSYSDATA:
-			blockCopy = new NiPSysData((*(NiPSysData*)other.blocks[i]));
-			break;
-		case NIMESHPSYSDATA:
-			blockCopy = new NiMeshPSysData((*(NiMeshPSysData*)other.blocks[i]));
-			break;
-		case BSSTRIPPSYSDATA:
-			blockCopy = new BSStripPSysData((*(BSStripPSysData*)other.blocks[i]));
-			break;
-		case NICAMERA:
-			blockCopy = new NiCamera((*(NiCamera*)other.blocks[i]));
-			break;
-		case BSPSYSSTRIPUPDATEMODIFIER:
-			blockCopy = new BSPSysStripUpdateModifier((*(BSPSysStripUpdateModifier*)other.blocks[i]));
-			break;
-		case NIPSYSAGEDEATHMODIFIER:
-			blockCopy = new NiPSysAgeDeathModifier((*(NiPSysAgeDeathModifier*)other.blocks[i]));
-			break;
-		case BSPSYSLODMODIFIER:
-			blockCopy = new BSPSysLODModifier((*(BSPSysLODModifier*)other.blocks[i]));
-			break;
-		case NIPSYSSPAWNMODIFIER:
-			blockCopy = new NiPSysSpawnModifier((*(NiPSysSpawnModifier*)other.blocks[i]));
-			break;
-		case BSPSYSSIMPLECOLORMODIFIER:
-			blockCopy = new BSPSysSimpleColorModifier((*(BSPSysSimpleColorModifier*)other.blocks[i]));
-			break;
-		case NIPSYSROTATIONMODIFIER:
-			blockCopy = new NiPSysRotationModifier((*(NiPSysRotationModifier*)other.blocks[i]));
-			break;
-		case BSPSYSSCALEMODIFIER:
-			blockCopy = new BSPSysScaleModifier((*(BSPSysScaleModifier*)other.blocks[i]));
-			break;
-		case NIPSYSGRAVITYMODIFIER:
-			blockCopy = new NiPSysGravityModifier((*(NiPSysGravityModifier*)other.blocks[i]));
-			break;
-		case NIPSYSPOSITIONMODIFIER:
-			blockCopy = new NiPSysPositionModifier((*(NiPSysPositionModifier*)other.blocks[i]));
-			break;
-		case NIPSYSBOUNDUPDATEMODIFIER:
-			blockCopy = new NiPSysBoundUpdateModifier((*(NiPSysBoundUpdateModifier*)other.blocks[i]));
-			break;
-		case NIPSYSDRAGMODIFIER:
-			blockCopy = new NiPSysDragModifier((*(NiPSysDragModifier*)other.blocks[i]));
-			break;
-		case BSPSYSINHERITVELOCITYMODIFIER:
-			blockCopy = new BSPSysInheritVelocityModifier((*(BSPSysInheritVelocityModifier*)other.blocks[i]));
-			break;
-		case BSPSYSSUBTEXMODIFIER:
-			blockCopy = new BSPSysSubTexModifier((*(BSPSysSubTexModifier*)other.blocks[i]));
-			break;
-		case NIPSYSBOMBMODIFIER:
-			blockCopy = new NiPSysBombModifier((*(NiPSysBombModifier*)other.blocks[i]));
-			break;
-		case BSWINDMODIFIER:
-			blockCopy = new BSWindModifier((*(BSWindModifier*)other.blocks[i]));
-			break;
-		case BSPSYSRECYCLEBOUNDMODIFIER:
-			blockCopy = new BSPSysRecycleBoundModifier((*(BSPSysRecycleBoundModifier*)other.blocks[i]));
-			break;
-		case BSPSYSHAVOKUPDATEMODIFIER:
-			blockCopy = new BSPSysHavokUpdateModifier((*(BSPSysHavokUpdateModifier*)other.blocks[i]));
-			break;
-		case NIPSYSSPHERICALCOLLIDER:
-			blockCopy = new NiPSysSphericalCollider((*(NiPSysSphericalCollider*)other.blocks[i]));
-			break;
-		case NIPSYSPLANARCOLLIDER:
-			blockCopy = new NiPSysPlanarCollider((*(NiPSysPlanarCollider*)other.blocks[i]));
-			break;
-		case NIPSYSCOLLIDERMANAGER:
-			blockCopy = new NiPSysColliderManager((*(NiPSysColliderManager*)other.blocks[i]));
-			break;
-		case NIPSYSSPHEREEMITTER:
-			blockCopy = new NiPSysSphereEmitter((*(NiPSysSphereEmitter*)other.blocks[i]));
-			break;
-		case NIPSYSCYLINDEREMITTER:
-			blockCopy = new NiPSysCylinderEmitter((*(NiPSysCylinderEmitter*)other.blocks[i]));
-			break;
-		case NIPSYSBOXEMITTER:
-			blockCopy = new NiPSysBoxEmitter((*(NiPSysBoxEmitter*)other.blocks[i]));
-			break;
-		case NIPSYSMESHEMITTER:
-			blockCopy = new NiPSysMeshEmitter((*(NiPSysMeshEmitter*)other.blocks[i]));
-			break;
-		case BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER:
-			blockCopy = new BSLightingShaderPropertyColorController((*(BSLightingShaderPropertyColorController*)other.blocks[i]));
-			break;
-		case BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER:
-			blockCopy = new BSLightingShaderPropertyFloatController((*(BSLightingShaderPropertyFloatController*)other.blocks[i]));
-			break;
-		case BSEFFECTSHADERPROPERTYCOLORCONTROLLER:
-			blockCopy = new BSEffectShaderPropertyColorController((*(BSEffectShaderPropertyColorController*)other.blocks[i]));
-			break;
-		case BSEFFECTSHADERPROPERTYFLOATCONTROLLER:
-			blockCopy = new BSEffectShaderPropertyFloatController((*(BSEffectShaderPropertyFloatController*)other.blocks[i]));
-			break;
-		case BSFRUSTUMFOVCONTROLLER:
-			blockCopy = new BSFrustumFOVController((*(BSFrustumFOVController*)other.blocks[i]));
-			break;
-		case BSLAGBONECONTROLLER:
-			blockCopy = new BSLagBoneController((*(BSLagBoneController*)other.blocks[i]));
-			break;
-		case BSPROCEDURALLIGHTNINGCONTROLLER:
-			blockCopy = new BSProceduralLightningController((*(BSProceduralLightningController*)other.blocks[i]));
-			break;
-		case NIBONELODCONTROLLER:
-			blockCopy = new NiBoneLODController((*(NiBoneLODController*)other.blocks[i]));
-			break;
-		case NIFLOATEXTRADATACONTROLLER:
-			blockCopy = new NiFloatExtraDataController((*(NiFloatExtraDataController*)other.blocks[i]));
-			break;
-		case NIVISCONTROLLER:
-			blockCopy = new NiVisController((*(NiVisController*)other.blocks[i]));
-			break;
-		case NIALPHACONTROLLER:
-			blockCopy = new NiAlphaController((*(NiAlphaController*)other.blocks[i]));
-			break;
-		case BSNIALPHAPROPERTYTESTREFCONTROLLER:
-			blockCopy = new BSNiAlphaPropertyTestRefController((*(BSNiAlphaPropertyTestRefController*)other.blocks[i]));
-			break;
-		case NIKEYFRAMECONTROLLER:
-			blockCopy = new NiKeyframeController((*(NiKeyframeController*)other.blocks[i]));
-			break;
-		case NITRANSFORMCONTROLLER:
-			blockCopy = new NiTransformController((*(NiTransformController*)other.blocks[i]));
-			break;
-		case NIMULTITARGETTRANSFORMCONTROLLER:
-			blockCopy = new NiMultiTargetTransformController((*(NiMultiTargetTransformController*)other.blocks[i]));
-			break;
-		case NIPSYSMODIFIERACTIVECTLR:
-			blockCopy = new NiPSysModifierActiveCtlr((*(NiPSysModifierActiveCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSEMITTERLIFESPANCTLR:
-			blockCopy = new NiPSysEmitterLifeSpanCtlr((*(NiPSysEmitterLifeSpanCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSEMITTERSPEEDCTLR:
-			blockCopy = new NiPSysEmitterSpeedCtlr((*(NiPSysEmitterSpeedCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSEMITTERINITIALRADIUSCTLR:
-			blockCopy = new NiPSysEmitterInitialRadiusCtlr((*(NiPSysEmitterInitialRadiusCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSEMITTERPLANARANGLECTLR:
-			blockCopy = new NiPSysEmitterPlanarAngleCtlr((*(NiPSysEmitterPlanarAngleCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSEMITTERDECLINATIONCTLR:
-			blockCopy = new NiPSysEmitterDeclinationCtlr((*(NiPSysEmitterDeclinationCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSGRAVITYSTRENGTHCTLR:
-			blockCopy = new NiPSysGravityStrengthCtlr((*(NiPSysGravityStrengthCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSINITIALROTSPEEDCTLR:
-			blockCopy = new NiPSysInitialRotSpeedCtlr((*(NiPSysInitialRotSpeedCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSEMITTERCTLR:
-			blockCopy = new NiPSysEmitterCtlr((*(NiPSysEmitterCtlr*)other.blocks[i]));
-			break;
-		case NIPSYSMULTITARGETEMITTERCTLR:
-			blockCopy = new NiPSysMultiTargetEmitterCtlr((*(NiPSysMultiTargetEmitterCtlr*)other.blocks[i]));
-			break;
-		case NICONTROLLERMANAGER:
-			blockCopy = new NiControllerManager((*(NiControllerManager*)other.blocks[i]));
-			break;
-		case NISEQUENCE:
-			blockCopy = new NiSequence((*(NiSequence*)other.blocks[i]));
-			break;
-		case NICONTROLLERSEQUENCE:
-			blockCopy = new NiControllerSequence((*(NiControllerSequence*)other.blocks[i]));
-			break;
-		case NIDEFAULTAVOBJECTPALETTE:
-			blockCopy = new NiDefaultAVObjectPalette((*(NiDefaultAVObjectPalette*)other.blocks[i]));
-			break;
-		case NIBLENDBOOLINTERPOLATOR:
-			blockCopy = new NiBlendBoolInterpolator((*(NiBlendBoolInterpolator*)other.blocks[i]));
-			break;
-		case NIBLENDFLOATINTERPOLATOR:
-			blockCopy = new NiBlendFloatInterpolator((*(NiBlendFloatInterpolator*)other.blocks[i]));
-			break;
-		case NIBLENDPOINT3INTERPOLATOR:
-			blockCopy = new NiBlendPoint3Interpolator((*(NiBlendPoint3Interpolator*)other.blocks[i]));
-			break;
-		case NIBOOLINTERPOLATOR:
-			blockCopy = new NiBoolInterpolator((*(NiBoolInterpolator*)other.blocks[i]));
-			break;
-		case NIBOOLTIMELINEINTERPOLATOR:
-			blockCopy = new NiBoolTimelineInterpolator((*(NiBoolTimelineInterpolator*)other.blocks[i]));
-			break;
-		case NIFLOATINTERPOLATOR:
-			blockCopy = new NiFloatInterpolator((*(NiFloatInterpolator*)other.blocks[i]));
-			break;
-		case NITRANSFORMINTERPOLATOR:
-			blockCopy = new NiTransformInterpolator((*(NiTransformInterpolator*)other.blocks[i]));
-			break;
-		case NIPOINT3INTERPOLATOR:
-			blockCopy = new NiPoint3Interpolator((*(NiPoint3Interpolator*)other.blocks[i]));
-			break;
-		case NIPATHINTERPOLATOR:
-			blockCopy = new NiPathInterpolator((*(NiPathInterpolator*)other.blocks[i]));
-			break;
-		case NILOOKATINTERPOLATOR:
-			blockCopy = new NiLookAtInterpolator((*(NiLookAtInterpolator*)other.blocks[i]));
-			break;
-		case NIPSYSUPDATECTLR:
-			blockCopy = new NiPSysUpdateCtlr((*(NiPSysUpdateCtlr*)other.blocks[i]));
-			break;
-		case NIKEYFRAMEDATA:
-			blockCopy = new NiKeyframeData((*(NiKeyframeData*)other.blocks[i]));
-			break;
-		case NITRANSFORMDATA:
-			blockCopy = new NiTransformData((*(NiTransformData*)other.blocks[i]));
-			break;
-		case NIPOSDATA:
-			blockCopy = new NiPosData((*(NiPosData*)other.blocks[i]));
-			break;
-		case NIBOOLDATA:
-			blockCopy = new NiBoolData((*(NiBoolData*)other.blocks[i]));
-			break;
-		case NIFLOATDATA:
-			blockCopy = new NiFloatData((*(NiFloatData*)other.blocks[i]));
-			break;
-		case NIBINARYEXTRADATA:
-			blockCopy = new NiBinaryExtraData((*(NiBinaryExtraData*)other.blocks[i]));
-			break;
-		case NIFLOATEXTRADATA:
-			blockCopy = new NiFloatExtraData((*(NiFloatExtraData*)other.blocks[i]));
-			break;
-		case NISTRINGEXTRADATA:
-			blockCopy = new NiStringExtraData((*(NiStringExtraData*)other.blocks[i]));
-			break;
-		case NISTRINGSEXTRADATA:
-			blockCopy = new NiStringsExtraData((*(NiStringsExtraData*)other.blocks[i]));
-			break;
-		case NIBOOLEANEXTRADATA:
-			blockCopy = new NiBooleanExtraData((*(NiBooleanExtraData*)other.blocks[i]));
-			break;
-		case NIINTEGEREXTRADATA:
-			blockCopy = new NiIntegerExtraData(*(NiIntegerExtraData*)other.blocks[i]);
-			break;
-		case BSXFLAGS:
-			blockCopy = new BSXFlags(*(BSXFlags*)other.blocks[i]);
-			break;
-		case BSINVMARKER:
-			blockCopy = new BSInvMarker((*(BSInvMarker*)other.blocks[i]));
-			break;
-		case BSFURNITUREMARKERNODE:
-			blockCopy = new BSFurnitureMarkerNode((*(BSFurnitureMarkerNode*)other.blocks[i]));
-			break;
-		case BSDECALPLACEMENTVECTOREXTRADATA:
-			blockCopy = new BSDecalPlacementVectorExtraData(*(BSDecalPlacementVectorExtraData*)other.blocks[i]);
-			break;
-		case BSBEHAVIORGRAPHEXTRADATA:
-			blockCopy = new BSBehaviorGraphExtraData((*(BSBehaviorGraphExtraData*)other.blocks[i]));
-			break;
-		case BSBOUND:
-			blockCopy = new BSBound((*(BSBound*)other.blocks[i]));
-			break;
-		case BSBONELODEXTRADATA:
-			blockCopy = new BSBoneLODExtraData((*(BSBoneLODExtraData*)other.blocks[i]));
-			break;
-		case NITEXTKEYEXTRADATA:
-			blockCopy = new NiTextKeyExtraData((*(NiTextKeyExtraData*)other.blocks[i]));
-			break;
-		case BSCLOTHEXTRADATA:
-			blockCopy = new BSClothExtraData(*(BSClothExtraData*)other.blocks[i]);
-			break;
-		case BSCONNECTPOINTPARENTS:
-			blockCopy = new BSConnectPointParents(*(BSConnectPointParents*)other.blocks[i]);
-			break;
-		case BSCONNECTPOINTCHILDREN:
-			blockCopy = new BSConnectPointChildren(*(BSConnectPointChildren*)other.blocks[i]);
-			break;
-		case BSMULTIBOUND:
-			blockCopy = new BSMultiBound((*(BSMultiBound*)other.blocks[i]));
-			break;
-		case BSMULTIBOUNDOBB:
-			blockCopy = new BSMultiBoundOBB((*(BSMultiBoundOBB*)other.blocks[i]));
-			break;
-		case BSMULTIBOUNDAABB:
-			blockCopy = new BSMultiBoundAABB((*(BSMultiBoundAABB*)other.blocks[i]));
-			break;
-		case NICOLLISIONOBJECT:
-			blockCopy = new NiCollisionObject(*(NiCollisionObject*)other.blocks[i]);
-			break;
-		case BHKCOLLISIONOBJECT:
-			blockCopy = new bhkCollisionObject(*(bhkCollisionObject*)other.blocks[i]);
-			break;
-		case BHKNPCOLLISIONOBJECT:
-			blockCopy = new bhkNPCollisionObject(*(bhkNPCollisionObject*)other.blocks[i]);
-			break;
-		case BHKPCOLLISIONOBJECT:
-			blockCopy = new bhkPCollisionObject((*(bhkPCollisionObject*)other.blocks[i]));
-			break;
-		case BHKSPCOLLISIONOBJECT:
-			blockCopy = new bhkSPCollisionObject((*(bhkSPCollisionObject*)other.blocks[i]));
-			break;
-		case BHKBLENDCOLLISIONOBJECT:
-			blockCopy = new bhkBlendCollisionObject((*(bhkBlendCollisionObject*)other.blocks[i]));
-			break;
-		case BHKPHYSICSSYSTEM:
-			blockCopy = new bhkPhysicsSystem(*(bhkPhysicsSystem*)other.blocks[i]);
-			break;
-		case BHKPLANESHAPE:
-			blockCopy = new bhkPlaneShape((*(bhkPlaneShape*)other.blocks[i]));
-			break;
-		case BHKCONVEXVERTICESSHAPE:
-			blockCopy = new bhkConvexVerticesShape((*(bhkConvexVerticesShape*)other.blocks[i]));
-			break;
-		case BHKBOXSHAPE:
-			blockCopy = new bhkBoxShape((*(bhkBoxShape*)other.blocks[i]));
-			break;
-		case BHKSPHERESHAPE:
-			blockCopy = new bhkSphereShape((*(bhkSphereShape*)other.blocks[i]));
-			break;
-		case BHKTRANSFORMSHAPE:
-			blockCopy = new bhkTransformShape((*(bhkTransformShape*)other.blocks[i]));
-			break;
-		case BHKCONVEXTRANSFORMSHAPE:
-			blockCopy = new bhkConvexTransformShape((*(bhkConvexTransformShape*)other.blocks[i]));
-			break;
-		case BHKCAPSULESHAPE:
-			blockCopy = new bhkCapsuleShape((*(bhkCapsuleShape*)other.blocks[i]));
-			break;
-		case BHKNITRISTRIPSSHAPE:
-			blockCopy = new bhkNiTriStripsShape((*(bhkNiTriStripsShape*)other.blocks[i]));
-			break;
-		case BHKLISTSHAPE:
-			blockCopy = new bhkListShape((*(bhkListShape*)other.blocks[i]));
-			break;
-		case BHKSIMPLESHAPEPHANTOM:
-			blockCopy = new bhkSimpleShapePhantom((*(bhkSimpleShapePhantom*)other.blocks[i]));
-			break;
-		case BHKHINGECONSTRAINT:
-			blockCopy = new bhkHingeConstraint((*(bhkHingeConstraint*)other.blocks[i]));
-			break;
-		case BHKLIMITEDHINGECONSTRAINT:
-			blockCopy = new bhkLimitedHingeConstraint((*(bhkLimitedHingeConstraint*)other.blocks[i]));
-			break;
-		case BHKRAGDOLLCONSTRAINT:
-			blockCopy = new bhkRagdollConstraint((*(bhkRagdollConstraint*)other.blocks[i]));
-			break;
-		case BHKBREAKABLECONSTRAINT:
-			blockCopy = new bhkBreakableConstraint((*(bhkBreakableConstraint*)other.blocks[i]));
-			break;
-		case BHKSTIFFSPRINGCONSTRAINT:
-			blockCopy = new bhkStiffSpringConstraint((*(bhkStiffSpringConstraint*)other.blocks[i]));
-			break;
-		case BHKBALLANDSOCKETCONSTRAINT:
-			blockCopy = new bhkBallAndSocketConstraint((*(bhkBallAndSocketConstraint*)other.blocks[i]));
-			break;
-		case BHKBALLSOCKETCONSTRAINTCHAIN:
-			blockCopy = new bhkBallSocketConstraintChain((*(bhkBallSocketConstraintChain*)other.blocks[i]));
-			break;
-		case BHKRIGIDBODY:
-			blockCopy = new bhkRigidBody((*(bhkRigidBody*)other.blocks[i]));
-			break;
-		case BHKRIGIDBODYT:
-			blockCopy = new bhkRigidBodyT((*(bhkRigidBodyT*)other.blocks[i]));
-			break;
-		case BHKCOMPRESSEDMESHSHAPE:
-			blockCopy = new bhkCompressedMeshShape((*(bhkCompressedMeshShape*)other.blocks[i]));
-			break;
-		case BHKCOMPRESSEDMESHSHAPEDATA:
-			blockCopy = new bhkCompressedMeshShapeData((*(bhkCompressedMeshShapeData*)other.blocks[i]));
-			break;
-		case BHKMOPPBVTREESHAPE:
-			blockCopy = new bhkMoppBvTreeShape((*(bhkMoppBvTreeShape*)other.blocks[i]));
-			break;
-		}
-
+		NiObject* blockCopy = other.blocks[i]->Clone();
 		if (blockCopy) {
 			blockCopy->header = &hdr;
 			blocks.push_back(blockCopy);
@@ -1351,27 +855,8 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 		}
 	}
 
-	// Create destination shader and copy
-	NiShader* destShader = nullptr;
-	if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY) {
-		auto shader = static_cast<BSLightingShaderProperty*>(srcShader);
-		BSLightingShaderProperty* copyShader = new BSLightingShaderProperty(*shader);
-		destShader = static_cast<NiShader*>(copyShader);
-	}
-	else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY) {
-		auto shader = static_cast<BSShaderPPLightingProperty*>(srcShader);
-		BSShaderPPLightingProperty* copyShader = new BSShaderPPLightingProperty(*shader);
-		destShader = static_cast<NiShader*>(copyShader);
-	}
-	else if (srcShader->blockType == BSEFFECTSHADERPROPERTY) {
-		auto shader = static_cast<BSEffectShaderProperty*>(srcShader);
-		BSEffectShaderProperty* copyShader = new BSEffectShaderProperty(*shader);
-		destShader = static_cast<NiShader*>(copyShader);
-	}
-
-	if (!destShader)
-		return;
-
+	// Clone shader from source
+	NiShader* destShader = static_cast<NiShader*>(srcShader->Clone());
 	destShader->header = &hdr;
 	if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() >= 120)
 		destShader->SetName(srcShader->GetName());
@@ -1384,7 +869,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	auto srcTexSet = srcNif.hdr.GetBlock<BSShaderTextureSet>(srcShader->GetTextureSetRef());
 	if (srcTexSet) {
 		// Create texture set block and copy
-		auto destTexSet = new BSShaderTextureSet(*srcTexSet);
+		auto destTexSet = srcTexSet->Clone();
 		destTexSet->header = &hdr;
 
 		// Add texture block to nif
@@ -1402,35 +887,10 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	// Controller
 	auto srcController = srcNif.hdr.GetBlock<NiTimeController>(srcShader->GetControllerRef());
 	if (srcController) {
-		NiTimeController* destController = nullptr;
-		if (srcController->blockType == BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER) {
-			auto controller = static_cast<BSLightingShaderPropertyColorController*>(srcController);
-			BSLightingShaderPropertyColorController* controllerCopy = new BSLightingShaderPropertyColorController(*controller);
-			destController = static_cast<NiTimeController*>(controllerCopy);
-		}
-		else if (srcController->blockType == BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER) {
-			auto controller = static_cast<BSLightingShaderPropertyFloatController*>(srcController);
-			BSLightingShaderPropertyFloatController* controllerCopy = new BSLightingShaderPropertyFloatController(*controller);
-			destController = static_cast<NiTimeController*>(controllerCopy);
-		}
-		else if (srcController->blockType == BSEFFECTSHADERPROPERTYCOLORCONTROLLER) {
-			auto controller = static_cast<BSEffectShaderPropertyColorController*>(srcController);
-			BSEffectShaderPropertyColorController* controllerCopy = new BSEffectShaderPropertyColorController(*controller);
-			destController = static_cast<NiTimeController*>(controllerCopy);
-		}
-		else if (srcController->blockType == BSEFFECTSHADERPROPERTYFLOATCONTROLLER) {
-			auto controller = static_cast<BSEffectShaderPropertyFloatController*>(srcController);
-			BSEffectShaderPropertyFloatController* controllerCopy = new BSEffectShaderPropertyFloatController(*controller);
-			destController = static_cast<NiTimeController*>(controllerCopy);
-		}
-		else
-			destShader->SetControllerRef(0xFFFFFFFF);
-
-		if (destController) {
-			int controllerId = hdr.AddBlock(destController, srcNif.hdr.GetBlockTypeStringById(srcShader->GetControllerRef()));
-			destController->targetRef = shaderId;
-			destShader->SetControllerRef(controllerId);
-		}
+		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
+		int controllerId = hdr.AddBlock(destController, srcNif.hdr.GetBlockTypeStringById(srcShader->GetControllerRef()));
+		destController->targetRef = shaderId;
+		destShader->SetControllerRef(controllerId);
 	}
 
 	if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY || srcShader->blockType == BSEFFECTSHADERPROPERTY)
@@ -1448,7 +908,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 
 	// Create alpha property and copy
 	if (srcAlphaProp) {
-		auto destAlphaProp = new NiAlphaProperty(*srcAlphaProp);
+		auto destAlphaProp = srcAlphaProp->Clone();
 		destAlphaProp->header = &hdr;
 
 		if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() >= 120)
@@ -1469,7 +929,7 @@ int NifFile::CopyNamedNode(string& nodeName, NifFile& srcNif) {
 	if (!srcNode)
 		return 0xFFFFFFFF;
 
-	auto destNode = new NiNode(*srcNode);
+	auto destNode = srcNode->Clone();
 	destNode->header = &hdr;
 	destNode->SetName(nodeName);
 
@@ -1481,46 +941,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	if (!srcGeom)
 		return;
 
-	NiShape* destGeom = nullptr;
-	if (srcGeom->blockType == NITRISHAPE) {
-		auto shape = static_cast<NiTriShape*>(srcGeom);
-		auto destShape = new NiTriShape(*shape);
-		destGeom = static_cast<NiShape*>(destShape);
-	}
-	else if (srcGeom->blockType == NITRISTRIPS) {
-		auto strips = static_cast<NiTriStrips*>(srcGeom);
-		auto destStrips = new NiTriStrips(*strips);
-		destGeom = static_cast<NiShape*>(destStrips);
-	}
-	else if (srcGeom->blockType == BSLODTRISHAPE) {
-		auto shape = static_cast<BSLODTriShape*>(srcGeom);
-		auto destShape = new BSLODTriShape(*shape);
-		destGeom = static_cast<NiShape*>(destShape);
-	}
-	if (srcGeom->blockType == BSSUBINDEXTRISHAPE) {
-		auto shape = static_cast<BSSubIndexTriShape*>(srcGeom);
-		auto destShape = new BSSubIndexTriShape(*shape);
-		destGeom = static_cast<NiShape*>(destShape);
-	}
-	else if (srcGeom->blockType == BSMESHLODTRISHAPE) {
-		auto shape = static_cast<BSMeshLODTriShape*>(srcGeom);
-		auto destShape = new BSMeshLODTriShape(*shape);
-		destGeom = static_cast<NiShape*>(destShape);
-	}
-	else if (srcGeom->blockType == BSDYNAMICTRISHAPE) {
-		auto shape = static_cast<BSDynamicTriShape*>(srcGeom);
-		auto destShape = new BSDynamicTriShape(*shape);
-		destGeom = static_cast<NiShape*>(destShape);
-	}
-	else if (srcGeom->blockType == BSTRISHAPE) {
-		auto shape = static_cast<BSTriShape*>(srcGeom);
-		auto destShape = new BSTriShape(*shape);
-		destGeom = static_cast<NiShape*>(destShape);
-	}
-
-	if (!destGeom)
-		return;
-
+	NiShape* destGeom = static_cast<NiShape*>(srcGeom->Clone());
 	destGeom->header = &hdr;
 	destGeom->SetName(shapeDest);
 
@@ -1528,24 +949,11 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 
 	auto srcGeomData = srcNif.hdr.GetBlock<NiTriBasedGeomData>(srcGeom->GetDataRef());
 	if (srcGeomData) {
-		NiTriBasedGeomData* destGeomData = nullptr;
-		if (srcGeomData->blockType == NITRISHAPEDATA) {
-			auto shapeData = static_cast<NiTriShapeData*>(srcGeomData);
-			NiTriShapeData* destShapeData = new NiTriShapeData(*shapeData);
-			destGeomData = static_cast<NiTriBasedGeomData*>(destShapeData);
-		}
-		else if (srcGeomData->blockType == NITRISTRIPSDATA) {
-			auto stripsData = static_cast<NiTriStripsData*>(srcGeomData);
-			NiTriStripsData* destStripsData = new NiTriStripsData(*stripsData);
-			destGeomData = static_cast<NiTriBasedGeomData*>(destStripsData);
-		}
+		NiTriBasedGeomData* destGeomData = static_cast<NiTriBasedGeomData*>(srcGeomData->Clone());
+		destGeomData->header = &hdr;
 
-		if (destGeomData) {
-			destGeomData->header = &hdr;
-
-			int destDataId = hdr.AddBlock(destGeomData, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetDataRef()));
-			destGeom->SetDataRef(destDataId);
-		}
+		int destDataId = hdr.AddBlock(destGeomData, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetDataRef()));
+		destGeom->SetDataRef(destDataId);
 	}
 
 	NiBoneContainer* destBoneCont = nullptr;
@@ -1557,48 +965,37 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
 				auto srcSkinPart = srcNif.hdr.GetBlock<NiSkinPartition>(srcSkinInst->GetSkinPartitionRef());
 
-				NiSkinInstance* destSkinInst = nullptr;
-				if (srcSkinInst->blockType == NISKININSTANCE) {
-					destSkinInst = new NiSkinInstance(*srcSkinInst);
-				}
-				else if (srcSkinInst->blockType == BSDISMEMBERSKININSTANCE) {
-					auto srcBsdSkinInst = static_cast<BSDismemberSkinInstance*>(srcSkinInst);
-					auto destBsdSkinInst = new BSDismemberSkinInstance(*srcBsdSkinInst);
-					destSkinInst = static_cast<NiSkinInstance*>(destBsdSkinInst);
-				}
+				NiSkinInstance* destSkinInst = srcSkinInst->Clone();
+				destSkinInst->header = &hdr;
 
-				if (destSkinInst) {
-					destSkinInst->header = &hdr;
+				// Treat skinning and partition info as blobs of anonymous data.
+				auto destSkinData = srcSkinData->Clone();
+				destSkinData->header = &hdr;
+				auto destSkinPart = srcSkinPart->Clone();
+				destSkinPart->header = &hdr;
 
-					// Treat skinning and partition info as blobs of anonymous data.
-					auto destSkinData = new NiSkinData(*srcSkinData);
-					destSkinData->header = &hdr;
-					auto destSkinPart = new NiSkinPartition(*srcSkinPart);
-					destSkinPart->header = &hdr;
+				int destSkinId = hdr.AddBlock(destSkinInst, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetSkinInstanceRef()));
+				int destSkinDataId = hdr.AddBlock(destSkinData, srcNif.hdr.GetBlockTypeStringById(srcSkinInst->GetDataRef()));
+				int destSkinPartId = hdr.AddBlock(destSkinPart, srcNif.hdr.GetBlockTypeStringById(srcSkinInst->GetSkinPartitionRef()));
 
-					int destSkinId = hdr.AddBlock(destSkinInst, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetSkinInstanceRef()));
-					int destSkinDataId = hdr.AddBlock(destSkinData, srcNif.hdr.GetBlockTypeStringById(srcSkinInst->GetDataRef()));
-					int destSkinPartId = hdr.AddBlock(destSkinPart, srcNif.hdr.GetBlockTypeStringById(srcSkinInst->GetSkinPartitionRef()));
+				destGeom->SetSkinInstanceRef(destSkinId);
+				destSkinInst->SetDataRef(destSkinDataId);
+				destSkinInst->SetSkinPartitionRef(destSkinPartId);
 
-					destGeom->SetSkinInstanceRef(destSkinId);
-					destSkinInst->SetDataRef(destSkinDataId);
-					destSkinInst->SetSkinPartitionRef(destSkinPartId);
-
-					destBoneCont = static_cast<NiBoneContainer*>(destSkinInst);
-				}
+				destBoneCont = static_cast<NiBoneContainer*>(destSkinInst);
 			}
 		}
 		else if (destGeom->blockType == BSTRISHAPE || destGeom->blockType == BSSUBINDEXTRISHAPE || destGeom->blockType == BSMESHLODTRISHAPE) {
 			auto srcBSSkinInst = srcNif.hdr.GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcBSSkinInst) {
-				auto destBSSkinInst = new BSSkinInstance(*srcBSSkinInst);
+				auto destBSSkinInst = srcBSSkinInst->Clone();
 
 				int destSkinInstId = hdr.AddBlock(destBSSkinInst, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetSkinInstanceRef()));
 				destGeom->SetSkinInstanceRef(destSkinInstId);
 
 				auto srcBoneData = srcNif.hdr.GetBlock<BSSkinBoneData>(srcBSSkinInst->GetDataRef());
 				if (srcBoneData) {
-					auto destBoneData = new BSSkinBoneData(*srcBoneData);
+					auto destBoneData = srcBoneData->Clone();
 
 					int destBoneDataId = hdr.AddBlock(destBoneData, srcNif.hdr.GetBlockTypeStringById(srcBSSkinInst->GetDataRef()));
 					destBSSkinInst->SetDataRef(destBoneDataId);
@@ -1614,7 +1011,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	for (int i = 0; i < srcGeom->numProperties; i++) {
 		auto material = srcNif.hdr.GetBlock<NiMaterialProperty>(srcGeom->propertiesRef[i]);
 		if (material) {
-			auto destMaterial = new NiMaterialProperty(*material);
+			auto destMaterial = material->Clone();
 			destMaterial->header = &hdr;
 
 			int materialId = hdr.AddBlock(destMaterial, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
@@ -1624,7 +1021,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 
 		auto stencil = srcNif.hdr.GetBlock<NiStencilProperty>(srcGeom->propertiesRef[i]);
 		if (stencil) {
-			auto destStencil = new NiStencilProperty(*stencil);
+			auto destStencil = stencil->Clone();
 			destStencil->header = &hdr;
 
 			int stencilId = hdr.AddBlock(destStencil, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
@@ -1634,9 +1031,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 
 		auto srcUnknown = srcNif.hdr.GetBlock<NiUnknown>(srcGeom->propertiesRef[i]);
 		if (srcUnknown) {
-			auto destUnknown = new NiUnknown(srcUnknown->CalcBlockSize());
-			destUnknown->Clone(srcUnknown);
-
+			auto destUnknown = srcUnknown->Clone();
 			int unknownId = hdr.AddBlock(destUnknown, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
 			destGeom->propertiesRef[i] = unknownId;
 		}

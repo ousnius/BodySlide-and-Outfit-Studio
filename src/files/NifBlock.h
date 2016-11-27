@@ -627,6 +627,7 @@ public:
 
 	virtual void GetChildRefs(set<int>& refs);
 	virtual int CalcBlockSize();
+	virtual NiObject* Clone() { return new NiObject(*this); }
 };
 
 class NiHeader : public NiObject {
@@ -841,6 +842,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiNode* Clone() { return new NiNode(*this); }
 
 	int GetNumChildren() { return numChildren; }
 	int GetChildRef(const int& id);
@@ -873,6 +875,7 @@ public:
 	void Put(fstream& file);
 
 	int CalcBlockSize();
+	BSValueNode* Clone() { return new BSValueNode(*this); }
 };
 
 class BSLeafAnimNode : public NiNode {
@@ -900,6 +903,7 @@ public:
 
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSTreeNode* Clone() { return new BSTreeNode(*this); }
 };
 
 class BSOrderedNode : public NiNode {
@@ -915,6 +919,7 @@ public:
 	void Put(fstream& file);
 
 	int CalcBlockSize();
+	BSOrderedNode* Clone() { return new BSOrderedNode(*this); }
 };
 
 class BSMultiBoundNode : public NiNode {
@@ -933,6 +938,7 @@ public:
 
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSMultiBoundNode* Clone() { return new BSMultiBoundNode(*this); }
 };
 
 class BSBlastNode : public NiNode {
@@ -949,6 +955,7 @@ public:
 	void Put(fstream& file);
 
 	int CalcBlockSize();
+	BSBlastNode* Clone() { return new BSBlastNode(*this); }
 };
 
 class BSDamageStage : public BSBlastNode {
@@ -975,6 +982,7 @@ public:
 
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSMasterParticleSystem* Clone() { return new BSMasterParticleSystem(*this); }
 };
 
 class NiBillboardNode : public NiNode {
@@ -989,6 +997,7 @@ public:
 	void Put(fstream& file);
 
 	int CalcBlockSize();
+	NiBillboardNode* Clone() { return new NiBillboardNode(*this); }
 };
 
 class NiSwitchNode : public NiNode {
@@ -1004,6 +1013,7 @@ public:
 	void Put(fstream& file);
 
 	int CalcBlockSize();
+	NiSwitchNode* Clone() { return new NiSwitchNode(*this); }
 };
 
 class NiGeometryData : public NiObject {
@@ -1177,6 +1187,7 @@ public:
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSTriShape* Clone() { return new BSTriShape(*this); }
 
 	int GetSkinInstanceRef() { return skinInstanceRef; }
 	void SetSkinInstanceRef(int skinInstanceRef) { this->skinInstanceRef = skinInstanceRef; }
@@ -1285,6 +1296,7 @@ public:
 	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
+	BSSubIndexTriShape* Clone() { return new BSSubIndexTriShape(*this); }
 
 	BSSITSSegmentation GetSegmentation() { return segmentation; }
 	void SetSegmentation(const BSSITSSegmentation& segmentation) { this->segmentation = segmentation; }
@@ -1305,6 +1317,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSMeshLODTriShape* Clone() { return new BSMeshLODTriShape(*this); }
 };
 
 class BSDynamicTriShape : public BSTriShape {
@@ -1319,6 +1332,7 @@ public:
 	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
+	BSDynamicTriShape* Clone() { return new BSDynamicTriShape(*this); }
 
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs, vector<Vector3>* normals = nullptr);
 };
@@ -1379,6 +1393,8 @@ class NiTriShape : public NiTriBasedGeom {
 public:
 	NiTriShape(NiHeader& hdr);
 	NiTriShape(fstream& file, NiHeader& hdr);
+
+	NiTriShape* Clone() { return new NiTriShape(*this); }
 };
 
 class NiTriShapeData : public NiTriBasedGeomData {
@@ -1401,12 +1417,15 @@ public:
 	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
+	NiTriShapeData* Clone() { return new NiTriShapeData(*this); }
 };
 
 class NiTriStrips : public NiTriBasedGeom {
 public:
 	NiTriStrips(NiHeader& hdr);
 	NiTriStrips(fstream& file, NiHeader& hdr);
+
+	NiTriStrips* Clone() { return new NiTriStrips(*this); }
 };
 
 class NiTriStripsData : public NiTriBasedGeomData {
@@ -1427,6 +1446,7 @@ public:
 	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
+	NiTriStripsData* Clone() { return new NiTriStripsData(*this); }
 };
 
 class BSLODTriShape : public NiTriBasedGeom {
@@ -1442,6 +1462,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSLODTriShape* Clone() { return new BSLODTriShape(*this); }
 };
 
 class NiBoneContainer : public NiObject {
@@ -1468,6 +1489,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiSkinInstance* Clone() { return new NiSkinInstance(*this); }
 
 	int GetDataRef() { return dataRef; }
 	void SetDataRef(const int& dataRef) { this->dataRef = dataRef; }
@@ -1497,6 +1519,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSDismemberSkinInstance* Clone() { return new BSDismemberSkinInstance(*this); }
 
 	int GetNumPartitions() { return numPartitions; }
 	vector<PartitionInfo> GetPartitions() { return partitions; }
@@ -1533,6 +1556,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSSkinInstance* Clone() { return new BSSkinInstance(*this); }
 
 	int GetTargetRef() { return targetRef; }
 	void SetTargetRef(const int& targetRef) { this->targetRef = targetRef; }
@@ -1564,6 +1588,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSSkinBoneData* Clone() { return new BSSkinBoneData(*this); }
 };
 
 class NiSkinData : public NiObject {
@@ -1593,6 +1618,7 @@ public:
 	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
+	NiSkinData* Clone() { return new NiSkinData(*this); }
 };
 
 class NiSkinPartition : public NiObject {
@@ -1659,6 +1685,7 @@ public:
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(vector<int>& outDeletedIndices);
 	int CalcBlockSize();
+	NiSkinPartition* Clone() { return new NiSkinPartition(*this); }
 };
 
 class NiParticleSystem : public NiAVObject {
@@ -1706,18 +1733,23 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiParticleSystem* Clone() { return new NiParticleSystem(*this); }
 };
 
 class NiMeshParticleSystem : public NiParticleSystem {
 public:
 	NiMeshParticleSystem(NiHeader& hdr);
 	NiMeshParticleSystem(fstream& file, NiHeader& hdr);
+
+	NiMeshParticleSystem* Clone() { return new NiMeshParticleSystem(*this); }
 };
 
 class BSStripParticleSystem : public NiParticleSystem {
 public:
 	BSStripParticleSystem(NiHeader& hdr);
 	BSStripParticleSystem(fstream& file, NiHeader& hdr);
+
+	BSStripParticleSystem* Clone() { return new BSStripParticleSystem(*this); }
 };
 
 class NiParticlesData : public NiGeometryData {
@@ -1746,12 +1778,15 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiParticlesData* Clone() { return new NiParticlesData(*this); }
 };
 
 class NiRotatingParticlesData : public NiParticlesData {
 public:
 	NiRotatingParticlesData(NiHeader& hdr);
 	NiRotatingParticlesData(fstream& file, NiHeader& hdr);
+
+	NiRotatingParticlesData* Clone() { return new NiRotatingParticlesData(*this); }
 };
 
 class NiPSysData : public NiRotatingParticlesData {
@@ -1765,6 +1800,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysData* Clone() { return new NiPSysData(*this); }
 };
 
 class NiMeshPSysData : public NiPSysData {
@@ -1787,6 +1823,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiMeshPSysData* Clone() { return new NiMeshPSysData(*this); }
 };
 
 class BSStripPSysData : public NiPSysData {
@@ -1803,6 +1840,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSStripPSysData* Clone() { return new BSStripPSysData(*this); }
 };
 
 class NiCamera : public NiAVObject {
@@ -1835,6 +1873,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiCamera* Clone() { return new NiCamera(*this); }
 };
 
 class NiPSysModifier : public NiObject {
@@ -1869,6 +1908,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSPSysStripUpdateModifier* Clone() { return new BSPSysStripUpdateModifier(*this); }
 };
 
 class NiPSysAgeDeathModifier : public NiPSysModifier {
@@ -1886,6 +1926,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysAgeDeathModifier* Clone() { return new NiPSysAgeDeathModifier(*this); }
 };
 
 class BSPSysLODModifier : public NiPSysModifier {
@@ -1899,6 +1940,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSPSysLODModifier* Clone() { return new BSPSysLODModifier(*this); }
 };
 
 class NiPSysSpawnModifier : public NiPSysModifier {
@@ -1919,6 +1961,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysSpawnModifier* Clone() { return new NiPSysSpawnModifier(*this); }
 };
 
 class BSPSysSimpleColorModifier : public NiPSysModifier {
@@ -1940,6 +1983,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSPSysSimpleColorModifier* Clone() { return new BSPSysSimpleColorModifier(*this); }
 };
 
 class NiPSysRotationModifier : public NiPSysModifier {
@@ -1959,6 +2003,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysRotationModifier* Clone() { return new NiPSysRotationModifier(*this); }
 };
 
 class BSPSysScaleModifier : public NiPSysModifier {
@@ -1973,6 +2018,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSPSysScaleModifier* Clone() { return new BSPSysScaleModifier(*this); }
 };
 
 class NiPSysGravityModifier : public NiPSysModifier {
@@ -1996,12 +2042,15 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysGravityModifier* Clone() { return new NiPSysGravityModifier(*this); }
 };
 
 class NiPSysPositionModifier : public NiPSysModifier {
 public:
 	NiPSysPositionModifier(NiHeader& hdr);
 	NiPSysPositionModifier(fstream& file, NiHeader& hdr);
+
+	NiPSysPositionModifier* Clone() { return new NiPSysPositionModifier(*this); }
 };
 
 class NiPSysBoundUpdateModifier : public NiPSysModifier {
@@ -2015,6 +2064,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysBoundUpdateModifier* Clone() { return new NiPSysBoundUpdateModifier(*this); }
 };
 
 class NiPSysDragModifier : public NiPSysModifier {
@@ -2035,6 +2085,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysDragModifier* Clone() { return new NiPSysDragModifier(*this); }
 };
 
 class BSPSysInheritVelocityModifier : public NiPSysModifier {
@@ -2054,6 +2105,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSPSysInheritVelocityModifier* Clone() { return new BSPSysInheritVelocityModifier(*this); }
 };
 
 class BSPSysSubTexModifier : public NiPSysModifier {
@@ -2073,6 +2125,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSPSysSubTexModifier* Clone() { return new BSPSysSubTexModifier(*this); }
 };
 
 class NiPSysBombModifier : public NiPSysModifier {
@@ -2094,6 +2147,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysBombModifier* Clone() { return new NiPSysBombModifier(*this); }
 };
 
 class BSWindModifier : public NiPSysModifier {
@@ -2107,6 +2161,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSWindModifier* Clone() { return new BSWindModifier(*this); }
 };
 
 class BSPSysRecycleBoundModifier : public NiPSysModifier {
@@ -2125,6 +2180,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSPSysRecycleBoundModifier* Clone() { return new BSPSysRecycleBoundModifier(*this); }
 };
 
 class BSPSysHavokUpdateModifier : public NiPSysModifier {
@@ -2144,6 +2200,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSPSysHavokUpdateModifier* Clone() { return new BSPSysHavokUpdateModifier(*this); }
 };
 
 class NiPSysCollider : public NiObject {
@@ -2177,6 +2234,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysSphericalCollider* Clone() { return new NiPSysSphericalCollider(*this); }
 };
 
 class NiPSysPlanarCollider : public NiPSysCollider {
@@ -2193,6 +2251,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysPlanarCollider* Clone() { return new NiPSysPlanarCollider(*this); }
 };
 
 class NiPSysColliderManager : public NiPSysModifier {
@@ -2209,6 +2268,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysColliderManager* Clone() { return new NiPSysColliderManager(*this); }
 };
 
 class NiPSysEmitter : public NiPSysModifier {
@@ -2256,6 +2316,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysSphereEmitter* Clone() { return new NiPSysSphereEmitter(*this); }
 };
 
 class NiPSysCylinderEmitter : public NiPSysVolumeEmitter {
@@ -2270,6 +2331,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysCylinderEmitter* Clone() { return new NiPSysCylinderEmitter(*this); }
 };
 
 class NiPSysBoxEmitter : public NiPSysVolumeEmitter {
@@ -2285,6 +2347,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPSysBoxEmitter* Clone() { return new NiPSysBoxEmitter(*this); }
 };
 
 class NiPSysMeshEmitter : public NiPSysEmitter {
@@ -2305,6 +2368,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysMeshEmitter* Clone() { return new NiPSysMeshEmitter(*this); }
 };
 
 class NiInterpolator : public NiObject {
@@ -2332,6 +2396,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiBlendBoolInterpolator* Clone() { return new NiBlendBoolInterpolator(*this); }
 };
 
 class NiBlendFloatInterpolator : public NiBlendInterpolator {
@@ -2345,6 +2410,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiBlendFloatInterpolator* Clone() { return new NiBlendFloatInterpolator(*this); }
 };
 
 class NiBlendPoint3Interpolator : public NiBlendInterpolator {
@@ -2358,6 +2424,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiBlendPoint3Interpolator* Clone() { return new NiBlendPoint3Interpolator(*this); }
 };
 
 class NiKeyBasedInterpolator : public NiInterpolator {
@@ -2378,12 +2445,15 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiBoolInterpolator* Clone() { return new NiBoolInterpolator(*this); }
 };
 
 class NiBoolTimelineInterpolator : public NiBoolInterpolator {
 public:
 	NiBoolTimelineInterpolator(NiHeader& hdr);
 	NiBoolTimelineInterpolator(fstream& file, NiHeader& hdr);
+
+	NiBoolTimelineInterpolator* Clone() { return new NiBoolTimelineInterpolator(*this); }
 };
 
 class NiFloatInterpolator : public NiKeyBasedInterpolator {
@@ -2401,6 +2471,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiFloatInterpolator* Clone() { return new NiFloatInterpolator(*this); }
 };
 
 class NiTransformInterpolator : public NiKeyBasedInterpolator {
@@ -2420,6 +2491,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiTransformInterpolator* Clone() { return new NiTransformInterpolator(*this); }
 };
 
 class NiPoint3Interpolator : public NiKeyBasedInterpolator {
@@ -2437,6 +2509,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPoint3Interpolator* Clone() { return new NiPoint3Interpolator(*this); }
 };
 
 class NiPathInterpolator : public NiKeyBasedInterpolator {
@@ -2460,6 +2533,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPathInterpolator* Clone() { return new NiPathInterpolator(*this); }
 };
 
 class NiLookAtInterpolator : public NiInterpolator {
@@ -2487,6 +2561,7 @@ public:
 	void notifyStringDelete(int stringID);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiLookAtInterpolator* Clone() { return new NiLookAtInterpolator(*this); }
 };
 
 class NiKeyframeData : public NiObject {
@@ -2507,12 +2582,15 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiKeyframeData* Clone() { return new NiKeyframeData(*this); }
 };
 
 class NiTransformData : public NiKeyframeData {
 public:
 	NiTransformData(NiHeader& hdr);
 	NiTransformData(fstream& file, NiHeader& hdr);
+
+	NiTransformData* Clone() { return new NiTransformData(*this); }
 };
 
 class NiPosData : public NiObject {
@@ -2526,6 +2604,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiPosData* Clone() { return new NiPosData(*this); }
 };
 
 class NiBoolData : public NiObject {
@@ -2539,6 +2618,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiBoolData* Clone() { return new NiBoolData(*this); }
 };
 
 class NiFloatData : public NiObject {
@@ -2552,6 +2632,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiFloatData* Clone() { return new NiFloatData(*this); }
 };
 
 class NiTimeController : public NiObject {
@@ -2589,6 +2670,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSFrustumFOVController* Clone() { return new BSFrustumFOVController(*this); }
 };
 
 class BSLagBoneController : public NiTimeController {
@@ -2604,6 +2686,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSLagBoneController* Clone() { return new BSLagBoneController(*this); }
 };
 
 class BSProceduralLightningController : public NiTimeController {
@@ -2643,6 +2726,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSProceduralLightningController* Clone() { return new BSProceduralLightningController(*this); }
 };
 
 class NiBoneLODController : public NiTimeController {
@@ -2668,6 +2752,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiBoneLODController* Clone() { return new NiBoneLODController(*this); }
 };
 
 class NiInterpController : public NiTimeController {
@@ -2703,6 +2788,7 @@ public:
 	void Put(fstream& file);
 	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
+	NiFloatExtraDataController* Clone() { return new NiFloatExtraDataController(*this); }
 };
 
 class NiBoolInterpController : public NiSingleInterpController {
@@ -2712,6 +2798,8 @@ class NiVisController : public NiBoolInterpController {
 public:
 	NiVisController(NiHeader& hdr);
 	NiVisController(fstream& file, NiHeader& hdr);
+
+	NiVisController* Clone() { return new NiVisController(*this); }
 };
 
 class NiFloatInterpController : public NiSingleInterpController {
@@ -2721,30 +2809,40 @@ class NiAlphaController : public NiFloatInterpController {
 public:
 	NiAlphaController(NiHeader& hdr);
 	NiAlphaController(fstream& file, NiHeader& hdr);
+
+	NiAlphaController* Clone() { return new NiAlphaController(*this); }
 };
 
 class NiPSysUpdateCtlr : public NiTimeController {
 public:
 	NiPSysUpdateCtlr(NiHeader& hdr);
 	NiPSysUpdateCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysUpdateCtlr* Clone() { return new NiPSysUpdateCtlr(*this); }
 };
 
 class BSNiAlphaPropertyTestRefController : public NiAlphaController {
 public:
 	BSNiAlphaPropertyTestRefController(NiHeader& hdr);
 	BSNiAlphaPropertyTestRefController(fstream& file, NiHeader& hdr);
+
+	BSNiAlphaPropertyTestRefController* Clone() { return new BSNiAlphaPropertyTestRefController(*this); }
 };
 
 class NiKeyframeController : public NiSingleInterpController {
 public:
 	NiKeyframeController(NiHeader& hdr);
 	NiKeyframeController(fstream& file, NiHeader& hdr);
+
+	NiKeyframeController* Clone() { return new NiKeyframeController(*this); }
 };
 
 class NiTransformController : public NiKeyframeController {
 public:
 	NiTransformController(NiHeader& hdr);
 	NiTransformController(fstream& file, NiHeader& hdr);
+
+	NiTransformController* Clone() { return new NiTransformController(*this); }
 };
 
 class BSLightingShaderPropertyColorController : public NiFloatInterpController {
@@ -2758,6 +2856,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSLightingShaderPropertyColorController* Clone() { return new BSLightingShaderPropertyColorController(*this); }
 };
 
 class BSLightingShaderPropertyFloatController : public NiFloatInterpController {
@@ -2771,6 +2870,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSLightingShaderPropertyFloatController* Clone() { return new BSLightingShaderPropertyFloatController(*this); }
 };
 
 class BSEffectShaderPropertyColorController : public NiFloatInterpController {
@@ -2784,6 +2884,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSEffectShaderPropertyColorController* Clone() { return new BSEffectShaderPropertyColorController(*this); }
 };
 
 class BSEffectShaderPropertyFloatController : public NiFloatInterpController {
@@ -2797,6 +2898,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSEffectShaderPropertyFloatController* Clone() { return new BSEffectShaderPropertyFloatController(*this); }
 };
 
 class NiMultiTargetTransformController : public NiInterpController {
@@ -2814,6 +2916,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiMultiTargetTransformController* Clone() { return new NiMultiTargetTransformController(*this); }
 };
 
 class NiPSysModifierCtlr : public NiSingleInterpController {
@@ -2838,6 +2941,8 @@ class NiPSysModifierActiveCtlr : public NiPSysModifierBoolCtlr {
 public:
 	NiPSysModifierActiveCtlr(NiHeader& hdr);
 	NiPSysModifierActiveCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysModifierActiveCtlr* Clone() { return new NiPSysModifierActiveCtlr(*this); }
 };
 
 class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr {
@@ -2847,42 +2952,56 @@ class NiPSysEmitterLifeSpanCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysEmitterLifeSpanCtlr(NiHeader& hdr);
 	NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysEmitterLifeSpanCtlr* Clone() { return new NiPSysEmitterLifeSpanCtlr(*this); }
 };
 
 class NiPSysEmitterSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysEmitterSpeedCtlr(NiHeader& hdr);
 	NiPSysEmitterSpeedCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysEmitterSpeedCtlr* Clone() { return new NiPSysEmitterSpeedCtlr(*this); }
 };
 
 class NiPSysEmitterInitialRadiusCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysEmitterInitialRadiusCtlr(NiHeader& hdr);
 	NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysEmitterInitialRadiusCtlr* Clone() { return new NiPSysEmitterInitialRadiusCtlr(*this); }
 };
 
 class NiPSysEmitterPlanarAngleCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysEmitterPlanarAngleCtlr(NiHeader& hdr);
 	NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysEmitterPlanarAngleCtlr* Clone() { return new NiPSysEmitterPlanarAngleCtlr(*this); }
 };
 
 class NiPSysEmitterDeclinationCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysEmitterDeclinationCtlr(NiHeader& hdr);
 	NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysEmitterDeclinationCtlr* Clone() { return new NiPSysEmitterDeclinationCtlr(*this); }
 };
 
 class NiPSysGravityStrengthCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysGravityStrengthCtlr(NiHeader& hdr);
 	NiPSysGravityStrengthCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysGravityStrengthCtlr* Clone() { return new NiPSysGravityStrengthCtlr(*this); }
 };
 
 class NiPSysInitialRotSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysInitialRotSpeedCtlr(NiHeader& hdr);
 	NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader& hdr);
+
+	NiPSysInitialRotSpeedCtlr* Clone() { return new NiPSysInitialRotSpeedCtlr(*this); }
 };
 
 class NiPSysEmitterCtlr : public NiPSysModifierCtlr {
@@ -2899,6 +3018,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysEmitterCtlr* Clone() { return new NiPSysEmitterCtlr(*this); }
 };
 
 class NiPSysMultiTargetEmitterCtlr : public NiPSysModifierCtlr {
@@ -2916,6 +3036,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiPSysMultiTargetEmitterCtlr* Clone() { return new NiPSysMultiTargetEmitterCtlr(*this); }
 };
 
 class NiControllerManager : public NiTimeController {
@@ -2935,6 +3056,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiControllerManager* Clone() { return new NiControllerManager(*this); }
 };
 
 class NiSequence : public NiObject {
@@ -2957,6 +3079,7 @@ public:
 	void notifyStringDelete(int stringID);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiSequence* Clone() { return new NiSequence(*this); }
 };
 
 class NiControllerSequence : public NiSequence {
@@ -2986,6 +3109,7 @@ public:
 	void notifyStringDelete(int stringID);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiControllerSequence* Clone() { return new NiControllerSequence(*this); }
 };
 
 class NiAVObjectPalette : public NiObject {
@@ -3007,6 +3131,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	NiDefaultAVObjectPalette* Clone() { return new NiDefaultAVObjectPalette(*this); }
 };
 
 class NiProperty : public NiObjectNET {
@@ -3099,6 +3224,7 @@ public:
 	void notifyStringDelete(int stringID);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
 
 	bool IsSkinTint();
 	bool IsSkinned();
@@ -3167,6 +3293,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSEffectShaderProperty* Clone() { return new BSEffectShaderProperty(*this); }
 
 	bool IsSkinTint();
 	bool IsSkinned();
@@ -3193,6 +3320,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSWaterShaderProperty* Clone() { return new BSWaterShaderProperty(*this); }
 
 	bool IsSkinTint();
 	bool IsSkinned();
@@ -3217,6 +3345,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSSkyShaderProperty* Clone() { return new BSSkyShaderProperty(*this); }
 
 	bool IsSkinTint();
 	bool IsSkinned();
@@ -3252,6 +3381,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSShaderPPLightingProperty* Clone() { return new BSShaderPPLightingProperty(*this); }
 
 	bool IsSkinTint();
 	bool IsSkinned();
@@ -3271,6 +3401,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSShaderTextureSet* Clone() { return new BSShaderTextureSet(*this); }
 };
 
 class NiAlphaProperty : public NiProperty {
@@ -3284,6 +3415,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiAlphaProperty* Clone() { return new NiAlphaProperty(*this); }
 };
 
 
@@ -3303,6 +3435,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiMaterialProperty* Clone() { return new NiMaterialProperty(*this); }
 
 	Vector3 GetSpecularColor();
 	void SetSpecularColor(Vector3 color);
@@ -3326,6 +3459,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiStencilProperty* Clone() { return new NiStencilProperty(*this); }
 };
 
 class NiExtraData : public NiObject {
@@ -3358,6 +3492,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiBinaryExtraData* Clone() { return new NiBinaryExtraData(*this); }
 };
 
 class NiFloatExtraData : public NiExtraData {
@@ -3371,6 +3506,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiFloatExtraData* Clone() { return new NiFloatExtraData(*this); }
 };
 
 class NiStringExtraData : public NiExtraData {
@@ -3387,6 +3523,7 @@ public:
 	void Put(fstream& file);
 	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
+	NiStringExtraData* Clone() { return new NiStringExtraData(*this); }
 
 	string GetStringData();
 	void SetStringData(const string& str);
@@ -3404,6 +3541,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiStringsExtraData* Clone() { return new NiStringsExtraData(*this); }
 };
 
 class NiBooleanExtraData : public NiExtraData {
@@ -3417,6 +3555,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiBooleanExtraData* Clone() { return new NiBooleanExtraData(*this); }
 
 	bool GetBooleanData();
 	void SetBooleanData(const bool& booleanData);
@@ -3433,6 +3572,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	NiIntegerExtraData* Clone() { return new NiIntegerExtraData(*this); }
 
 	uint GetIntegerData();
 	void SetIntegerData(const uint& integerData);
@@ -3442,6 +3582,8 @@ class BSXFlags : public NiIntegerExtraData {
 public:
 	BSXFlags(NiHeader& hdr);
 	BSXFlags(fstream& file, NiHeader& hdr);
+
+	BSXFlags* Clone() { return new BSXFlags(*this); }
 };
 
 class BSInvMarker : public NiExtraData {
@@ -3458,6 +3600,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSInvMarker* Clone() { return new BSInvMarker(*this); }
 };
 
 class BSFurnitureMarker : public NiExtraData {
@@ -3472,12 +3615,15 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSFurnitureMarker* Clone() { return new BSFurnitureMarker(*this); }
 };
 
 class BSFurnitureMarkerNode : public BSFurnitureMarker {
 public:
 	BSFurnitureMarkerNode(NiHeader& hdr);
 	BSFurnitureMarkerNode(fstream& file, NiHeader& hdr);
+
+	BSFurnitureMarkerNode* Clone() { return new BSFurnitureMarkerNode(*this); }
 };
 
 class BSDecalPlacementVectorExtraData : public NiExtraData {
@@ -3500,6 +3646,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSDecalPlacementVectorExtraData* Clone() { return new BSDecalPlacementVectorExtraData(*this); }
 };
 
 class BSBehaviorGraphExtraData : public NiExtraData {
@@ -3517,6 +3664,7 @@ public:
 	void Put(fstream& file);
 	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
+	BSBehaviorGraphExtraData* Clone() { return new BSBehaviorGraphExtraData(*this); }
 };
 
 class BSBound : public NiExtraData {
@@ -3531,6 +3679,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSBound* Clone() { return new BSBound(*this); }
 };
 
 class BSBoneLODExtraData : public NiExtraData {
@@ -3547,6 +3696,7 @@ public:
 	void Put(fstream& file);
 	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
+	BSBoneLODExtraData* Clone() { return new BSBoneLODExtraData(*this); }
 };
 
 class NiTextKeyExtraData : public NiExtraData {
@@ -3563,6 +3713,7 @@ public:
 	void Put(fstream& file);
 	void notifyStringDelete(int stringID);
 	int CalcBlockSize();
+	NiTextKeyExtraData* Clone() { return new NiTextKeyExtraData(*this); }
 };
 
 class BSConnectPoint {
@@ -3579,6 +3730,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSConnectPoint* Clone() { return new BSConnectPoint(*this); }
 };
 
 class BSConnectPointParents : public NiExtraData {
@@ -3593,6 +3745,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSConnectPointParents* Clone() { return new BSConnectPointParents(*this); }
 };
 
 class BSConnectPointChildren : public NiExtraData {
@@ -3608,6 +3761,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSConnectPointChildren* Clone() { return new BSConnectPointChildren(*this); }
 };
 
 class BSExtraData : public NiObject {
@@ -3626,6 +3780,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSClothExtraData* Clone() { return new BSClothExtraData(*this); }
 
 	bool ToHKX(const string& fileName);
 	bool FromHKX(const string& fileName);
@@ -3645,6 +3800,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	BSMultiBound* Clone() { return new BSMultiBound(*this); }
 };
 
 class BSMultiBoundData : public NiObject {
@@ -3663,6 +3819,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSMultiBoundOBB* Clone() { return new BSMultiBoundOBB(*this); }
 };
 
 class BSMultiBoundAABB : public BSMultiBoundData {
@@ -3677,6 +3834,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	BSMultiBoundAABB* Clone() { return new BSMultiBoundAABB(*this); }
 };
 
 class NiCollisionObject : public NiObject {
@@ -3692,6 +3850,7 @@ public:
 	void notifyBlockDelete(int blockID);
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	int CalcBlockSize();
+	NiCollisionObject* Clone() { return new NiCollisionObject(*this); }
 };
 
 class bhkNiCollisionObject : public NiCollisionObject {
@@ -3709,12 +3868,15 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkNiCollisionObject* Clone() { return new bhkNiCollisionObject(*this); }
 };
 
 class bhkCollisionObject : public bhkNiCollisionObject {
 public:
 	bhkCollisionObject(NiHeader& hdr);
 	bhkCollisionObject(fstream& file, NiHeader& hdr);
+
+	bhkCollisionObject* Clone() { return new bhkCollisionObject(*this); }
 };
 
 class bhkNPCollisionObject : public bhkCollisionObject {
@@ -3728,18 +3890,23 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkNPCollisionObject* Clone() { return new bhkNPCollisionObject(*this); }
 };
 
 class bhkPCollisionObject : public bhkNiCollisionObject {
 public:
 	bhkPCollisionObject(NiHeader& hdr);
 	bhkPCollisionObject(fstream& file, NiHeader& hdr);
+
+	bhkPCollisionObject* Clone() { return new bhkPCollisionObject(*this); }
 };
 
 class bhkSPCollisionObject : public bhkPCollisionObject {
 public:
 	bhkSPCollisionObject(NiHeader& hdr);
 	bhkSPCollisionObject(fstream& file, NiHeader& hdr);
+
+	bhkSPCollisionObject* Clone() { return new bhkSPCollisionObject(*this); }
 };
 
 class bhkBlendCollisionObject : public bhkCollisionObject {
@@ -3754,6 +3921,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkBlendCollisionObject* Clone() { return new bhkBlendCollisionObject(*this); }
 };
 
 class bhkPhysicsSystem : public BSExtraData {
@@ -3769,6 +3937,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkPhysicsSystem* Clone() { return new bhkPhysicsSystem(*this); }
 };
 
 class bhkRefObject : public NiObject {
@@ -3799,6 +3968,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkPlaneShape* Clone() { return new bhkPlaneShape(*this); }
 };
 
 class bhkSphereRepShape : public bhkShape {
@@ -3835,6 +4005,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkConvexVerticesShape* Clone() { return new bhkConvexVerticesShape(*this); }
 };
 
 class bhkBoxShape : public bhkConvexShape {
@@ -3851,12 +4022,15 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkBoxShape* Clone() { return new bhkBoxShape(*this); }
 };
 
 class bhkSphereShape : public bhkConvexShape {
 public:
 	bhkSphereShape(NiHeader& hdr);
 	bhkSphereShape(fstream& file, NiHeader& hdr);
+
+	bhkSphereShape* Clone() { return new bhkSphereShape(*this); }
 };
 
 class bhkTransformShape : public bhkShape {
@@ -3877,12 +4051,15 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkTransformShape* Clone() { return new bhkTransformShape(*this); }
 };
 
 class bhkConvexTransformShape : public bhkTransformShape {
 public:
 	bhkConvexTransformShape(NiHeader& hdr);
 	bhkConvexTransformShape(fstream& file, NiHeader& hdr);
+
+	bhkConvexTransformShape* Clone() { return new bhkConvexTransformShape(*this); }
 };
 
 class bhkCapsuleShape : public bhkConvexShape {
@@ -3901,6 +4078,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkCapsuleShape* Clone() { return new bhkCapsuleShape(*this); }
 };
 
 class bhkBvTreeShape : public bhkShape {
@@ -3928,6 +4106,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkMoppBvTreeShape* Clone() { return new bhkMoppBvTreeShape(*this); }
 };
 
 class bhkNiTriStripsShape : public bhkShape {
@@ -3958,6 +4137,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkNiTriStripsShape* Clone() { return new bhkNiTriStripsShape(*this); }
 };
 
 class bhkShapeCollection : public bhkShape {
@@ -3982,6 +4162,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkListShape* Clone() { return new bhkListShape(*this); }
 };
 
 class bhkWorldObject : public bhkSerializable {
@@ -4001,6 +4182,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkWorldObject* Clone() { return new bhkWorldObject(*this); }
 };
 
 class bhkPhantom : public bhkWorldObject {
@@ -4022,6 +4204,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkSimpleShapePhantom* Clone() { return new bhkSimpleShapePhantom(*this); }
 };
 
 class bhkEntity : public bhkWorldObject {
@@ -4054,6 +4237,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkHingeConstraint* Clone() { return new bhkHingeConstraint(*this); }
 };
 
 class bhkLimitedHingeConstraint : public bhkConstraint {
@@ -4067,6 +4251,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkLimitedHingeConstraint* Clone() { return new bhkLimitedHingeConstraint(*this); }
 };
 
 class bhkBreakableConstraint : public bhkConstraint {
@@ -4085,6 +4270,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkBreakableConstraint* Clone() { return new bhkBreakableConstraint(*this); }
 };
 
 class bhkRagdollConstraint : public bhkConstraint {
@@ -4098,6 +4284,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkRagdollConstraint* Clone() { return new bhkRagdollConstraint(*this); }
 };
 
 class bhkStiffSpringConstraint : public bhkConstraint {
@@ -4111,6 +4298,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkStiffSpringConstraint* Clone() { return new bhkStiffSpringConstraint(*this); }
 };
 
 class bhkBallAndSocketConstraint : public bhkConstraint {
@@ -4124,6 +4312,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkBallAndSocketConstraint* Clone() { return new bhkBallAndSocketConstraint(*this); }
 };
 
 class bhkBallSocketConstraintChain : public bhkSerializable {
@@ -4154,6 +4343,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkBallSocketConstraintChain* Clone() { return new bhkBallSocketConstraintChain(*this); }
 };
 
 class bhkRigidBody : public bhkEntity {
@@ -4207,12 +4397,15 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkRigidBody* Clone() { return new bhkRigidBody(*this); }
 };
 
 class bhkRigidBodyT : public bhkRigidBody {
 public:
 	bhkRigidBodyT(NiHeader& hdr);
 	bhkRigidBodyT(fstream& file, NiHeader& hdr);
+
+	bhkRigidBodyT* Clone() { return new bhkRigidBodyT(*this); }
 };
 
 class bhkCompressedMeshShape : public bhkShape {
@@ -4236,6 +4429,7 @@ public:
 	void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
+	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
 };
 
 class bhkCompressedMeshShapeData : public bhkRefObject {
@@ -4283,6 +4477,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
+	bhkCompressedMeshShapeData* Clone() { return new bhkCompressedMeshShapeData(*this); }
 };
 
 class NiUnknown : public NiObject {
@@ -4296,8 +4491,7 @@ public:
 	void Get(fstream& file);
 	void Put(fstream& file);
 	int CalcBlockSize();
-
-	void Clone(NiUnknown* other);
+	NiUnknown* Clone() { return new NiUnknown(*this); }
 };
 
 template <class T>

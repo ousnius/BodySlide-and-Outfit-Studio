@@ -192,9 +192,7 @@ public:
 
 	int OutfitFromSliderSet(const string& fileName, const string& setName);
 
-	/* Shape duplication - resulting shape ends up in workNif. */
-	void DuplicateShape(const string& sourceShape, const string& destShape, const mesh* curMesh);
-
+	void DuplicateShape(const string& sourceShape, const string& destShape);
 	void DeleteShape(const string& shapeName) {
 		workAnim.ClearShape(shapeName);
 		workNif.DeleteShape(shapeName);
