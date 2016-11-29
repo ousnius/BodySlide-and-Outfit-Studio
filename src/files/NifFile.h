@@ -10,10 +10,12 @@ See the included LICENSE file
 
 #pragma warning (disable: 4018)
 
+struct OptOptionsSSE {
+	bool headParts = false;
+};
+
 struct OptResultSSE {
 	bool versionMismatch = false;
-	bool unsupported = false;
-
 	vector<string> shapesRenamed;
 	vector<string> shapesVColorsRemoved;
 	vector<string> shapesNormalsRemoved;
@@ -50,7 +52,7 @@ public:
 	int Load(const string& filename);
 	int Save(const string& filename, bool optimize = true, bool sortBlocks = true);
 	void Optimize();
-	OptResultSSE OptimizeForSSE();
+	OptResultSSE OptimizeForSSE(const OptOptionsSSE& options = OptOptionsSSE());
 	void PrepareData();
 	void FinalizeData();
 

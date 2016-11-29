@@ -1101,7 +1101,7 @@ void NifFile::Optimize() {
 	RemoveUnusedStrings();
 }
 
-OptResultSSE NifFile::OptimizeForSSE() {
+OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	OptResultSSE result;
 	if (!(hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() == 83)) {
 		result.versionMismatch = true;
@@ -1116,25 +1116,9 @@ OptResultSSE NifFile::OptimizeForSSE() {
 			result.shapesRenamed.push_back(s);
 	}
 
-	GetShapeList(shapes);
-
-	// Check for compatibility first
-	for (auto &s : shapes) {
-		NiShape* shape = FindShapeByName(s);
-		if (shape) {
-			auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
-			if (geomData) {
-				// Can't optimize face geom or particles
-				if (geomData->keepFlags & 51) {
-					result.unsupported = true;
-					return result;
-				}
-			}
-		}
-	}
-
 	hdr.SetVersion(20, 2, 0, 7, 12, 100);
 
+	GetShapeList(shapes);
 	for (auto &s : shapes) {
 		NiShape* shape = FindShapeByName(s);
 		if (shape) {
@@ -1177,10 +1161,15 @@ OptResultSSE NifFile::OptimizeForSSE() {
 				if (!colors.empty() && removeVertexColors)
 					result.shapesVColorsRemoved.push_back(s);
 
+				bool headPartEyes = false;
 				NiShader* shader = GetShader(s);
 				if (shader) {
 					auto bslsp = dynamic_cast<BSLightingShaderProperty*>(shader);
 					if (bslsp) {
+						// Remember eyes flag for later
+						if ((bslsp->shaderFlags1 & (1 << 17)) != 0)
+							headPartEyes = true;
+
 						// No normals and tangents with model space maps
 						if ((bslsp->shaderFlags1 & (1 << 12)) != 0) {
 							if (!normals->empty())
@@ -1196,13 +1185,22 @@ OptResultSSE NifFile::OptimizeForSSE() {
 
 					auto bsesp = dynamic_cast<BSEffectShaderProperty*>(shader);
 					if (bsesp) {
+						// Remember eyes flag for later
+						if ((bsesp->shaderFlags1 & (1 << 17)) != 0)
+							headPartEyes = true;
+
 						// Disable flag if vertex colors were removed
 						if (removeVertexColors)
 							bsesp->shaderFlags2 &= ~(1 << 5);
 					}
 				}
 
-				auto bsShape = new BSTriShape(hdr);
+				BSTriShape* bsShape = nullptr;
+				if (options.headParts)
+					bsShape = new BSDynamicTriShape(hdr);
+				else
+					bsShape = new BSTriShape(hdr);
+
 				bsShape->SetName(shape->GetName());
 				bsShape->SetControllerRef(shape->GetControllerRef());
 				bsShape->SetSkinInstanceRef(shape->GetSkinInstanceRef());
@@ -1304,7 +1302,14 @@ OptResultSSE NifFile::OptimizeForSSE() {
 				if (!hasTangents && bsShape->HasTangents())
 					result.shapesTangentsAdded.push_back(s);
 
-				hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape");
+				if (options.headParts) {
+					if (headPartEyes)
+						bsShape->vertFlags7 |= 1 << 4;
+
+					hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSDynamicTriShape");
+				}
+				else
+					hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape");
 
 				UpdateSkinPartitions(s);
 			}

@@ -2552,15 +2552,46 @@ void BSTriShape::CalcTangentSpace() {
 }
 
 void BSTriShape::UpdateFlags() {
-	if (IsFullPrecision()) {
+	vertFlags3 = 0;
+	vertFlags4 = 0;
+	vertFlags5 = 0;
+	vertFlags8 = 0;
+
+	if (blockType == BSDYNAMICTRISHAPE) {
+		if (HasNormals()) {
+			vertFlags3 = 1;
+
+			if (HasTangents())
+				vertFlags3 = 33;
+		}
+
+		if (HasTangents()) {
+			if (IsSkinned() && HasVertexColors())
+				vertFlags4 = 67;
+			else if (IsSkinned())
+				vertFlags4 = 48;
+			else if (HasVertexColors())
+				vertFlags4 = 3;
+		}
+		else {
+			if (IsSkinned() && HasVertexColors())
+				vertFlags4 = 33;
+			else if (IsSkinned())
+				vertFlags4 = 16;
+			else if (HasVertexColors())
+				vertFlags4 = 1;
+		}
+
+		if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
+			vertFlags5 = 96;
+	}
+	else if (IsFullPrecision()) {
 		if (HasNormals()) {
 			vertFlags3 = 4;
 
 			if (HasTangents())
 				vertFlags3 = 101;
 		}
-		else
-			vertFlags3 = 0;
 
 		if (HasTangents()) {
 			if (IsSkinned() && HasVertexColors())
@@ -2569,8 +2600,6 @@ void BSTriShape::UpdateFlags() {
 				vertFlags4 = 112;
 			else if (HasVertexColors())
 				vertFlags4 = 7;
-			else
-				vertFlags4 = 0;
 		}
 		else {
 			if (IsSkinned() && HasVertexColors())
@@ -2579,9 +2608,10 @@ void BSTriShape::UpdateFlags() {
 				vertFlags4 = 80;
 			else if (HasVertexColors())
 				vertFlags4 = 5;
-			else
-				vertFlags4 = 0;
 		}
+
+		if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
+			vertFlags5 = 144;
 	}
 	else {
 		if (HasNormals()) {
@@ -2590,8 +2620,6 @@ void BSTriShape::UpdateFlags() {
 			if (HasTangents())
 				vertFlags3 = 67;
 		}
-		else
-			vertFlags3 = 0;
 
 		if (HasTangents()) {
 			if (IsSkinned() && HasVertexColors())
@@ -2600,8 +2628,6 @@ void BSTriShape::UpdateFlags() {
 				vertFlags4 = 80;
 			else if (HasVertexColors())
 				vertFlags4 = 5;
-			else
-				vertFlags4 = 0;
 		}
 		else {
 			if (IsSkinned() && HasVertexColors())
@@ -2610,9 +2636,10 @@ void BSTriShape::UpdateFlags() {
 				vertFlags4 = 48;
 			else if (HasVertexColors())
 				vertFlags4 = 3;
-			else
-				vertFlags4 = 0;
 		}
+
+		if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
+			vertFlags5 = 144;
 	}
 }
 
@@ -2688,6 +2715,7 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 		memset(vertData[i].colorData, 255, 4);
 		memset(vertData[i].weights, 0, sizeof(float) * 4);
 		memset(vertData[i].weightBones, 0, 4);
+		vertData[i].eyeData = 0.0f;
 	}
 
 	triangles.resize(numTriangles);
@@ -2951,6 +2979,9 @@ int BSMeshLODTriShape::CalcBlockSize() {
 BSDynamicTriShape::BSDynamicTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	blockType = BSDYNAMICTRISHAPE;
 
+	vertFlags6 &= ~(1 << 4);
+	vertFlags7 |= 1 << 6;
+
 	dynamicDataSize = 0;
 }
 
@@ -3014,6 +3045,12 @@ int BSDynamicTriShape::CalcBlockSize() {
 		dynamicData[i].x = vertData[i].vert.x;
 		dynamicData[i].y = vertData[i].vert.y;
 		dynamicData[i].z = vertData[i].vert.z;
+		dynamicData[i].w = vertData[i].bitangentX;
+
+		if (dynamicData[i].x > 0.0f)
+			vertData[i].eyeData = 1.0f;
+		else
+			vertData[i].eyeData = 0.0f;
 	}
 
 	blockSize += 4;

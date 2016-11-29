@@ -1134,7 +1134,7 @@ public:
 	float weights[4];
 	byte weightBones[4];
 
-	uint eyeData;
+	float eyeData;
 };
 
 
