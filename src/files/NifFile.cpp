@@ -866,6 +866,35 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	// Add shader block to nif
 	int shaderId = hdr.AddBlock(destShader, srcNif.hdr.GetBlockTypeStringById(srcShaderRef));
 
+	// Extra Data
+	for (int i = 0; i < srcShader->GetNumExtraData(); i++) {
+		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcShader->GetExtraDataRef(i));
+		if (srcExtraData) {
+			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
+			destExtraData->header = &hdr;
+			destExtraData->SetName(srcExtraData->GetName());
+
+			int extraDataId = hdr.AddBlock(destExtraData, srcNif.hdr.GetBlockTypeStringById(srcShader->GetExtraDataRef(i)));
+			destShader->SetExtraDataRef(i, extraDataId);
+
+			if (destExtraData->blockType == NISTRINGEXTRADATA) {
+				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
+				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
+				if (strSrcExtraData && strDestExtraData)
+					strDestExtraData->SetStringData(strSrcExtraData->GetStringData());
+			}
+		}
+	}
+
+	// Controller
+	auto srcController = srcNif.hdr.GetBlock<NiTimeController>(srcShader->GetControllerRef());
+	if (srcController) {
+		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
+		int controllerId = hdr.AddBlock(destController, srcNif.hdr.GetBlockTypeStringById(srcShader->GetControllerRef()));
+		destController->targetRef = shaderId;
+		destShader->SetControllerRef(controllerId);
+	}
+
 	auto srcTexSet = srcNif.hdr.GetBlock<BSShaderTextureSet>(srcShader->GetTextureSetRef());
 	if (srcTexSet) {
 		// Create texture set block and copy
@@ -884,19 +913,10 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	if (!srcWetMaterialName.empty())
 		destShader->SetWetMaterialName(srcWetMaterialName);
 
-	// Controller
-	auto srcController = srcNif.hdr.GetBlock<NiTimeController>(srcShader->GetControllerRef());
-	if (srcController) {
-		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
-		int controllerId = hdr.AddBlock(destController, srcNif.hdr.GetBlockTypeStringById(srcShader->GetControllerRef()));
-		destController->targetRef = shaderId;
-		destShader->SetControllerRef(controllerId);
-	}
-
-	if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY || srcShader->blockType == BSEFFECTSHADERPROPERTY)
-		shape->SetShaderPropertyRef(shaderId);
-	else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+	if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
 		shape->propertiesRef[propRef1] = shaderId;
+	else
+		shape->SetShaderPropertyRef(shaderId);
 
 	// Kill normals and tangents
 	if (destShader->IsSkinTint() && hdr.GetUserVersion() >= 12) {
@@ -917,10 +937,10 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 			destAlphaProp->ClearName();
 
 		int alphaPropId = hdr.AddBlock(destAlphaProp, "NiAlphaProperty");
-		if (srcShader->blockType == BSLIGHTINGSHADERPROPERTY || srcShader->blockType == BSEFFECTSHADERPROPERTY)
-			shape->SetAlphaPropertyRef(alphaPropId);
-		else if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+		if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
 			shape->propertiesRef[propRef2] = alphaPropId;
+		else
+			shape->SetAlphaPropertyRef(alphaPropId);
 	}
 }
 
@@ -941,12 +961,44 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	if (!srcGeom)
 		return;
 
+	// Shape
 	NiShape* destGeom = static_cast<NiShape*>(srcGeom->Clone());
 	destGeom->header = &hdr;
 	destGeom->SetName(shapeDest);
 
 	int destId = hdr.AddBlock(destGeom, srcNif.hdr.GetBlockTypeStringById(srcNif.GetBlockID(srcGeom)));
 
+	// Extra Data
+	for (int i = 0; i < srcGeom->GetNumExtraData(); i++) {
+		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcGeom->GetExtraDataRef(i));
+		if (srcExtraData) {
+			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
+			destExtraData->header = &hdr;
+			destExtraData->SetName(srcExtraData->GetName());
+
+			int extraDataId = hdr.AddBlock(destExtraData, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetExtraDataRef(i)));
+			destGeom->SetExtraDataRef(i, extraDataId);
+
+			if (destExtraData->blockType == NISTRINGEXTRADATA) {
+				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
+				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
+				if (strSrcExtraData && strDestExtraData)
+					strDestExtraData->SetStringData(strSrcExtraData->GetStringData());
+			}
+		}
+	}
+
+	// Collision Object
+	auto srcCollisionObj = srcNif.hdr.GetBlock<NiCollisionObject>(srcGeom->collisionRef);
+	if (srcCollisionObj) {
+		auto destCollisionObj = srcCollisionObj->Clone();
+		destCollisionObj->header = &hdr;
+
+		int collisionId = hdr.AddBlock(destCollisionObj, srcNif.hdr.GetBlockTypeStringById(srcGeom->collisionRef));
+		destGeom->collisionRef = collisionId;
+	}
+
+	// Geometry Data
 	auto srcGeomData = srcNif.hdr.GetBlock<NiTriBasedGeomData>(srcGeom->GetDataRef());
 	if (srcGeomData) {
 		NiTriBasedGeomData* destGeomData = static_cast<NiTriBasedGeomData*>(srcGeomData->Clone());
@@ -956,6 +1008,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 		destGeom->SetDataRef(destDataId);
 	}
 
+	// Skinning
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
 		if (destGeom->blockType == NITRISHAPE || destGeom->blockType == NITRISTRIPS || destGeom->blockType == BSLODTRISHAPE ||
@@ -1006,34 +1059,18 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 		}
 	}
 
+	// Shader
 	CopyShader(shapeDest, srcNif);
 
+	// Properties
 	for (int i = 0; i < srcGeom->numProperties; i++) {
-		auto material = srcNif.hdr.GetBlock<NiMaterialProperty>(srcGeom->propertiesRef[i]);
-		if (material) {
-			auto destMaterial = material->Clone();
-			destMaterial->header = &hdr;
+		auto srcProp = srcNif.hdr.GetBlock<NiProperty>(srcGeom->propertiesRef[i]);
+		if (srcProp) {
+			auto destProp = srcProp->Clone();
+			destProp->header = &hdr;
 
-			int materialId = hdr.AddBlock(destMaterial, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
-			destGeom->propertiesRef[i] = materialId;
-			continue;
-		}
-
-		auto stencil = srcNif.hdr.GetBlock<NiStencilProperty>(srcGeom->propertiesRef[i]);
-		if (stencil) {
-			auto destStencil = stencil->Clone();
-			destStencil->header = &hdr;
-
-			int stencilId = hdr.AddBlock(destStencil, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
-			destGeom->propertiesRef[i] = stencilId;
-			continue;
-		}
-
-		auto srcUnknown = srcNif.hdr.GetBlock<NiUnknown>(srcGeom->propertiesRef[i]);
-		if (srcUnknown) {
-			auto destUnknown = srcUnknown->Clone();
-			int unknownId = hdr.AddBlock(destUnknown, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
-			destGeom->propertiesRef[i] = unknownId;
+			int propId = hdr.AddBlock(destProp, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
+			destGeom->propertiesRef[i] = propId;
 		}
 	}
 
@@ -1042,6 +1079,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	if (destBoneCont)
 		destBoneCont->bones.clear();
 
+	// Bones
 	auto rootNode = dynamic_cast<NiNode*>(blocks[0]);
 	if (rootNode) {
 		for (auto &boneName : srcBoneList) {

@@ -852,6 +852,11 @@ void NiObjectNET::ClearName() {
 	name.clear();
 }
 
+void NiObjectNET::SetExtraDataRef(const int& id, const int& blockId) {
+	if (id >= 0 && id < numExtraData)
+		extraDataRef[id] = blockId;
+}
+
 int NiObjectNET::GetExtraDataRef(const int& id) {
 	if (id >= 0 && id < numExtraData)
 		return extraDataRef[id];

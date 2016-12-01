@@ -767,6 +767,7 @@ public:
 	void SetControllerRef(int controllerRef) { this->controllerRef = controllerRef; }
 
 	int GetNumExtraData() { return numExtraData; }
+	void SetExtraDataRef(const int& id, const int& blockId);
 	int GetExtraDataRef(const int& id);
 	void AddExtraDataRef(const int& id);
 
