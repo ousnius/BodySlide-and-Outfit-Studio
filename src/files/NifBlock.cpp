@@ -3940,7 +3940,7 @@ void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThres
 
 	// Face normals
 	Vector3 tn;
-	for (int t = 0; t < numTriangles; t++) {
+	for (int t = 0; t < tris.size(); t++) {
 		tris[t].trinormal(vertices, &tn);
 		normals[tris[t].p1] += tn;
 		normals[tris[t].p2] += tn;
