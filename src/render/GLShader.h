@@ -85,6 +85,7 @@ public:
 	void ShowWeight(bool bShow = true);
 	void ShowSegments(bool bShow = true);
 	void ShowTexture(bool bShow = true);
+	void ShowSkinColor(bool bShow = true);
 
 	void BindTexture(const GLint& index, const GLuint& texture, const string& samplerName);
 

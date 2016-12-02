@@ -1406,7 +1406,7 @@ GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vSha
 	if (!mat) {
 		// Use noImage material if loader failed
 		if (!noImageMat)
-			noImageMat = resLoader.AddMaterial("res\\images\\NoImg.png", "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
+			noImageMat = resLoader.AddMaterial("res\\images\\NoImg.png", "res\\shaders\\default.vert", "res\\shaders\\default.frag");
 
 		mat = noImageMat;
 	}

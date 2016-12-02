@@ -6,6 +6,7 @@ uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
 uniform bool bShowSegments;
+uniform bool bShowSkinColor;
 uniform bool bWireframe;
 uniform bool bPoints;
 
@@ -30,8 +31,15 @@ void main(void)
 			{
 				color *= texture(texDiffuse, UV);
 				if (bLightEnabled)
-				{
-					color *= vec4(2.0, 2.0, 2.0, 1.0);
+				{					
+					if (!bShowSkinColor)
+					{
+						color *= vec4(2.0, 2.0, 2.0, 1.0);
+					}
+					else
+					{
+						color *= vec4(2.6, 2.6, 2.6, 1.0);
+					}
 				}
 			}
 
@@ -66,12 +74,14 @@ void main(void)
 		{
 			color.rgb = vec3(1.0) - color.rgb;
 		}
+		
+		color = clamp(color, 0.0, 1.0);
 	}
 	else
 	{
 		// Calculate normal from coord
 		vec2 norm;
-		norm = gl_PointCoord* 2.0 - vec2(1.0); 
+		norm = gl_PointCoord * 2.0 - vec2(1.0); 
 		float mag = dot(norm, norm);
 		if (mag > 1.0) 
 			discard; // Kill pixels outside point

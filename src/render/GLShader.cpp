@@ -15,8 +15,18 @@ GLShader::GLShader() {
 }
 
 GLShader::GLShader(const string& vertexSource, const string& fragmentSource) : GLShader() {
-	if (CheckExtensions())
-		LoadShaders(vertexSource, fragmentSource);
+	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
+		ShowLighting();
+		ShowTexture();
+		ShowMask();
+		ShowWeight(false);
+		ShowSegments(false);
+		ShowSkinColor(false);
+
+		SetWireframeEnabled(false);
+		SetPointsEnabled(false);
+		SetLightingEnabled(true);
+	}
 }
 
 GLShader::~GLShader() {
@@ -78,19 +88,19 @@ void GLShader::SetColor(const Vector3& color) {
 void GLShader::SetWireframeEnabled(const bool& enable) {
 	GLint loc = glGetUniformLocation(progID, "bWireframe");
 	if (loc >= 0)
-		glUniform1f(loc, enable ? 1.0f : 0.0f);
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
 void GLShader::SetPointsEnabled(const bool& enable) {
 	GLint loc = glGetUniformLocation(progID, "bPoints");
 	if (loc >= 0)
-		glUniform1f(loc, enable ? 1.0f : 0.0f);
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
 void GLShader::SetLightingEnabled(const bool& enable) {
 	GLint loc = glGetUniformLocation(progID, "bLighting");
 	if (loc >= 0)
-		glUniform1f(loc, enable ? 1.0f : 0.0f);
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
 void GLShader::SetMatrixProjection(const glm::mat4x4& mat) {
@@ -152,7 +162,7 @@ void GLShader::ShowLighting(bool bShow) {
 
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, bShow ? 1.0f : 0.0f);
+		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
 		glUseProgram(0);
 	}
 }
@@ -162,7 +172,7 @@ void GLShader::ShowMask(bool bShow) {
 
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, bShow ? 1.0f : 0.0f);
+		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
 		glUseProgram(0);
 	}
 }
@@ -172,7 +182,7 @@ void GLShader::ShowWeight(bool bShow) {
 
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, bShow ? 1.0f : 0.0f);
+		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
 		glUseProgram(0);
 	}
 }
@@ -182,7 +192,7 @@ void GLShader::ShowSegments(bool bShow) {
 
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, bShow ? 1.0f : 0.0f);
+		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
 		glUseProgram(0);
 	}
 }
@@ -191,7 +201,16 @@ void GLShader::ShowTexture(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowTexture");
 	if (loc >= 0) {
 		glUseProgram(progID);
-		glUniform1f(loc, bShow ? 1.0f : 0.0f);
+		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
+		glUseProgram(0);
+	}
+}
+
+void GLShader::ShowSkinColor(bool bShow) {
+	GLint loc = glGetUniformLocation(progID, "bShowSkinColor");
+	if (loc >= 0) {
+		glUseProgram(progID);
+		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
 		glUseProgram(0);
 	}
 }

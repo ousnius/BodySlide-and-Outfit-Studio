@@ -5756,13 +5756,12 @@ void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefil
 	if (!m)
 		return;
 
-	GLMaterial* mat;
-	if (!isSkin)
-		mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
-	else
-		mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\skin.frag");
+	GLMaterial* mat = gls.AddMaterial(texturefile, "res\\shaders\\default.vert", "res\\shaders\\default.frag");
+	if (mat) {
+		mat->GetShader().ShowSkinColor(isSkin);
 
-	m->material = mat;
+		m->material = mat;
+	}
 }
 
 void wxGLPanel::UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render, vector<Vector2>* uvs) {

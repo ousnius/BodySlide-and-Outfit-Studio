@@ -122,8 +122,8 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			m->SmoothNormals();
 			m->CreateBuffers();
 
-			auto iter = shapeTextures.find(shapeName);
-			if (iter != shapeTextures.end())
+			auto iter = shapeMaterials.find(shapeName);
+			if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
 				AddNifShapeTexture(nif, string(shapeName));
@@ -139,8 +139,8 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			m->SmoothNormals();
 			m->CreateBuffers();
 
-			auto iter = shapeTextures.find(shapeList[i]);
-			if (iter != shapeTextures.end())
+			auto iter = shapeMaterials.find(shapeList[i]);
+			if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
 				AddNifShapeTexture(nif, shapeList[i]);

@@ -27,14 +27,15 @@ struct Material
 };
 uniform Material material;
 
-uniform bool bLightEnabled = true;
-uniform bool bShowTexture = true;
-uniform bool bShowMask = true;
-uniform bool bShowWeight = false;
-uniform bool bShowSegments = false;
+uniform bool bLightEnabled;
+uniform bool bShowTexture;
+uniform bool bShowMask;
+uniform bool bShowWeight;
+uniform bool bShowSegments;
 
 uniform bool bWireframe;
 uniform bool bPoints;
+uniform bool bShowSkinColor;
 uniform bool bLighting;
 
 layout(location = 0) in vec3 vertexPosition;

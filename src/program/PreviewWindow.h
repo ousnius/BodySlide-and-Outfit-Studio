@@ -19,7 +19,7 @@ class PreviewWindow : public wxFrame {
 	wxGLContext* context = nullptr;
 
 	GLSurface gls;
-	unordered_map<string, GLMaterial*> shapeTextures;
+	unordered_map<string, GLMaterial*> shapeMaterials;
 	string baseDataPath;
 	int weight = 100;
 
@@ -36,7 +36,7 @@ public:
 
 	void Cleanup() {
 		gls.Cleanup();
-		shapeTextures.clear();
+		shapeMaterials.clear();
 		gls.RenderOneFrame();
 	}
 
@@ -76,14 +76,13 @@ public:
 		if (!m)
 			return;
 
-		GLMaterial* mat;
-		if (!isSkin)
-			mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\default.frag");
-		else
-			mat = gls.AddMaterial(texturefile, "res\\shaders\\mask.vert", "res\\shaders\\skin.frag");
+		GLMaterial* mat = gls.AddMaterial(texturefile, "res\\shaders\\default.vert", "res\\shaders\\default.frag");
+		if (mat) {
+			mat->GetShader().ShowSkinColor(isSkin);
 
-		m->material = mat;
-		shapeTextures[shapeName] = mat;
+			m->material = mat;
+			shapeMaterials[shapeName] = mat;
+		}
 	}
 
 	void Render() {
@@ -95,7 +94,7 @@ public:
 	}
 
 	void ToggleSmoothSeams() {
-		for (auto &s : shapeTextures) {
+		for (auto &s : shapeMaterials) {
 			mesh* m = gls.GetMesh(s.first);
 			if (m) {
 				if (m->smoothSeamNormals)

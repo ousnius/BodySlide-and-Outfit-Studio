@@ -15,8 +15,6 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/log.h>
 
-unsigned int ResourceLoader::currentTextureID = 0;
-
 ResourceLoader::ResourceLoader() {
 }
 
@@ -39,9 +37,9 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 	gli::gl::format const format = glProfile.translate(texture.format(), texture.swizzles());
 	GLenum target = glProfile.translate(texture.target());
 
-	++currentTextureID;
-	glGenTextures(1, &currentTextureID);
-	glBindTexture(target, currentTextureID);
+	GLuint textureID = 0;
+	glGenTextures(1, &textureID);
+	glBindTexture(target, textureID);
 	glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(texture.levels() - 1));
 	glTexParameteri(target, GL_TEXTURE_SWIZZLE_R, format.Swizzles[0]);
@@ -153,7 +151,7 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 		}
 	}
 
-	return currentTextureID;
+	return textureID;
 }
 
 GLuint ResourceLoader::GLI_load_texture(const string& fileName) {
@@ -185,7 +183,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 		textureID = GLI_load_texture(textureFile);
 
 	if (!textureID)
-		textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, ++currentTextureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+		textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 
 	if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
 		if (Config["GameDataPath"].empty()) {
@@ -217,7 +215,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetBufSize());
 			
 			if (!textureID)
-				textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, ++currentTextureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+				textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 		}
 		else {
 			wxLogWarning("Texture file '%s' not found.", textureFile);
@@ -230,7 +228,7 @@ GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string&
 	}
 
 	auto& entry = materials[key];
-	entry.reset(new GLMaterial(currentTextureID, vShaderFile.c_str(), fShaderFile.c_str()));
+	entry.reset(new GLMaterial(textureID, vShaderFile.c_str(), fShaderFile.c_str()));
 	return entry.get();
 }
 
