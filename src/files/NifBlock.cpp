@@ -905,7 +905,7 @@ void NiAVObject::Get(fstream& file) {
 	NiObjectNET::Get(file);
 
 	flags = 0;
-	if (header->GetUserVersion2() < 34)
+	if (header->GetUserVersion2() <= 26)
 		file.read((char*)&flags, 2);
 	else
 		file.read((char*)&flags, 4);
@@ -937,7 +937,7 @@ void NiAVObject::Get(fstream& file) {
 void NiAVObject::Put(fstream& file) {
 	NiObjectNET::Put(file);
 
-	if (header->GetUserVersion2() < 34)
+	if (header->GetUserVersion2() <= 26)
 		file.write((char*)&flags, 2);
 	else
 		file.write((char*)&flags, 4);
@@ -1008,11 +1008,13 @@ int NiAVObject::CalcBlockSize() {
 	NiObjectNET::CalcBlockSize();
 
 	blockSize += 58;
+
 	if (header->GetUserVersion() <= 11) {
 		blockSize += 4;
 		blockSize += numProperties * 4;
 	}
-	if (header->GetUserVersion() >= 11 && header->GetUserVersion2() > 26)
+
+	if (header->GetUserVersion2() > 26)
 		blockSize += 2;
 
 	return blockSize;
