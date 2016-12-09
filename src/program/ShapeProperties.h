@@ -71,7 +71,6 @@ private:
 	void OnAddShader(wxCommandEvent& event);
 	void OnRemoveShader(wxCommandEvent& event);
 	void OnSetTextures(wxCommandEvent& event);
-	void OnApplyDiffuse(wxCommandEvent& event);
 	void OnAddTransparency(wxCommandEvent& event);
 	void OnRemoveTransparency(wxCommandEvent& event);
 	void OnAddExtraData(wxCommandEvent& event);

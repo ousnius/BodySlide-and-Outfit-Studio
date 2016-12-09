@@ -181,9 +181,10 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_BUTTON(XRCID("lightsTabButton"), OutfitStudio::OnTabButtonClick)
 
 	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudio::OnUpdateLights)
-	EVT_SLIDER(XRCID("lightBrightnessSlider1"), OutfitStudio::OnUpdateLights)
-	EVT_SLIDER(XRCID("lightBrightnessSlider2"), OutfitStudio::OnUpdateLights)
-	EVT_SLIDER(XRCID("lightBrightnessSlider3"), OutfitStudio::OnUpdateLights)
+	EVT_SLIDER(XRCID("lightFrontalSlider"), OutfitStudio::OnUpdateLights)
+	EVT_SLIDER(XRCID("lightDirectional0Slider"), OutfitStudio::OnUpdateLights)
+	EVT_SLIDER(XRCID("lightDirectional1Slider"), OutfitStudio::OnUpdateLights)
+	EVT_SLIDER(XRCID("lightDirectional2Slider"), OutfitStudio::OnUpdateLights)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudio::OnResetLights)
 	
 	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitter"), OutfitStudio::OnSashPosChanged)
@@ -278,22 +279,26 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	partitionType->Show(false);
 
 	int ambient = appConfig.GetIntValue("Lights/Ambient");
-	int brightness1 = appConfig.GetIntValue("Lights/Brightness1");
-	int brightness2 = appConfig.GetIntValue("Lights/Brightness2");
-	int brightness3 = appConfig.GetIntValue("Lights/Brightness3");
+	int frontal = appConfig.GetIntValue("Lights/Frontal");
+	int directional0 = appConfig.GetIntValue("Lights/Directional0");
+	int directional1 = appConfig.GetIntValue("Lights/Directional1");
+	int directional2 = appConfig.GetIntValue("Lights/Directional2");
 
 	lightSettings = (wxPanel*)FindWindowByName("lightSettings");
 	wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
 	lightAmbientSlider->SetValue(ambient);
 
-	wxSlider* lightBrightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
-	lightBrightnessSlider1->SetValue(brightness1);
+	wxSlider* lightFrontalSlider = (wxSlider*)lightSettings->FindWindowByName("lightFrontalSlider");
+	lightFrontalSlider->SetValue(frontal);
 
-	wxSlider* lightBrightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
-	lightBrightnessSlider2->SetValue(brightness2);
+	wxSlider* lightDirectional0Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional0Slider");
+	lightDirectional0Slider->SetValue(directional0);
 
-	wxSlider* lightBrightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
-	lightBrightnessSlider3->SetValue(brightness3);
+	wxSlider* lightDirectional1Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional1Slider");
+	lightDirectional1Slider->SetValue(directional1);
+
+	wxSlider* lightDirectional2Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional2Slider");
+	lightDirectional2Slider->SetValue(directional2);
 
 	boneScale = (wxSlider*)FindWindowByName("boneScale");
 
@@ -913,7 +918,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(80, _("Creating outfit..."));
 
 	if (XRCCTRL(wiz, "npTexAuto", wxRadioButton)->GetValue() == true)
-		project->SetTextures("_AUTO_");
+		project->SetTextures();
 	else
 		project->SetTextures(XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString());
 
@@ -1013,7 +1018,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Loading textures...");
 	UpdateProgress(60, _("Loading textures..."));
 
-	project->SetTextures("_AUTO_");
+	project->SetTextures();
 
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(80, _("Creating outfit..."));
@@ -1104,7 +1109,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	project->SetTexture(project->GetBaseShape(), "_AUTO_");
+	project->SetTextures(project->GetBaseShape());
 
 	wxLogMessage("Creating reference...");
 	UpdateProgress(60, _("Creating reference..."));
@@ -1181,7 +1186,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true)
-		project->SetTextures("_AUTO_");
+		project->SetTextures();
 	else
 		project->SetTextures(XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString());
 
@@ -1322,7 +1327,10 @@ void OutfitStudio::WorkingGUIFromProj() {
 		glView->DeleteMesh(shape);
 
 		glView->AddMeshFromNif(project->GetWorkNif(), shape, true);
-		glView->SetMeshTexture(shape, project->GetShapeTexture(shape), project->GetWorkNif()->IsShaderSkin(shape));
+
+		MaterialFile matFile;
+		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
+		glView->SetMeshTextures(shape, project->GetShapeTextures(shape), hasMatFile, matFile);
 
 		subItem = outfitShapes->AppendItem(outfitRoot, shape);
 		outfitShapes->SetItemState(subItem, 0);
@@ -1634,7 +1642,7 @@ void OutfitStudio::OnImportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 	StartProgress(_("Importing NIF file..."));
 	UpdateProgress(1, _("Importing NIF file..."));
 	project->AddNif(fileName, false);
-	project->SetTextures("_AUTO_");
+	project->SetTextures();
 
 	UpdateProgress(60, _("Refreshing GUI..."));
 	RefreshGUIFromProj();
@@ -3197,46 +3205,54 @@ void OutfitStudio::OnFieldOfViewSlider(wxCommandEvent& event) {
 
 void OutfitStudio::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
 	wxSlider* ambientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
-	wxSlider* brightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
-	wxSlider* brightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
-	wxSlider* brightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
+	wxSlider* frontalSlider = (wxSlider*)lightSettings->FindWindowByName("lightFrontalSlider");
+	wxSlider* directional0Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional0Slider");
+	wxSlider* directional1Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional1Slider");
+	wxSlider* directional2Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional2Slider");
 
 	int ambient = ambientSlider->GetValue();
-	int brightness1 = brightnessSlider1->GetValue();
-	int brightness2 = brightnessSlider2->GetValue();
-	int brightness3 = brightnessSlider3->GetValue();
-	glView->UpdateLights(ambient, brightness1, brightness2, brightness3);
+	int frontal = frontalSlider->GetValue();
+	int directional0 = directional0Slider->GetValue();
+	int directional1 = directional1Slider->GetValue();
+	int directional2 = directional2Slider->GetValue();
+	glView->UpdateLights(ambient, frontal, directional0, directional1, directional2);
 
 	Config.SetValue("Lights/Ambient", ambient);
-	Config.SetValue("Lights/Brightness1", brightness1);
-	Config.SetValue("Lights/Brightness2", brightness2);
-	Config.SetValue("Lights/Brightness3", brightness3);
+	Config.SetValue("Lights/Frontal", frontal);
+	Config.SetValue("Lights/Directional0", directional0);
+	Config.SetValue("Lights/Directional1", directional1);
+	Config.SetValue("Lights/Directional2", directional2);
 }
 
 void OutfitStudio::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
-	int ambient = 20;
-	int brightness1 = 55;
-	int brightness2 = 45;
-	int brightness3 = 45;
+	int ambient = 10;
+	int frontal = 20;
+	int directional0 = 60;
+	int directional1 = 60;
+	int directional2 = 85;
 
-	glView->UpdateLights(ambient, brightness1, brightness2, brightness3);
+	glView->UpdateLights(ambient, frontal, directional0, directional1, directional2);
 
 	wxSlider* lightAmbientSlider = (wxSlider*)lightSettings->FindWindowByName("lightAmbientSlider");
 	lightAmbientSlider->SetValue(ambient);
 
-	wxSlider* lightBrightnessSlider1 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider1");
-	lightBrightnessSlider1->SetValue(brightness1);
+	wxSlider* lightFrontalSlider = (wxSlider*)lightSettings->FindWindowByName("lightFrontalSlider");
+	lightFrontalSlider->SetValue(frontal);
 
-	wxSlider* lightBrightnessSlider2 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider2");
-	lightBrightnessSlider2->SetValue(brightness2);
+	wxSlider* lightDirectional0Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional0Slider");
+	lightDirectional0Slider->SetValue(directional0);
 
-	wxSlider* lightBrightnessSlider3 = (wxSlider*)lightSettings->FindWindowByName("lightBrightnessSlider3");
-	lightBrightnessSlider3->SetValue(brightness3);
+	wxSlider* lightDirectional1Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional1Slider");
+	lightDirectional1Slider->SetValue(directional1);
+
+	wxSlider* lightDirectional2Slider = (wxSlider*)lightSettings->FindWindowByName("lightDirectional2Slider");
+	lightDirectional2Slider->SetValue(directional2);
 
 	Config.SetValue("Lights/Ambient", ambient);
-	Config.SetValue("Lights/Brightness1", brightness1);
-	Config.SetValue("Lights/Brightness2", brightness2);
-	Config.SetValue("Lights/Brightness3", brightness3);
+	Config.SetValue("Lights/Frontal", frontal);
+	Config.SetValue("Lights/Directional0", directional0);
+	Config.SetValue("Lights/Directional1", directional1);
+	Config.SetValue("Lights/Directional2", directional2);
 }
 
 void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
@@ -5186,9 +5202,11 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		project->DuplicateShape(activeItem->shapeName, newName);
 
 		glView->AddMeshFromNif(project->GetWorkNif(), newName, false);
-		project->SetTexture(newName, "_AUTO_");
+		project->SetTextures(newName);
 
-		glView->SetMeshTexture(newName, project->GetShapeTexture(newName), project->GetWorkNif()->IsShaderSkin(newName));
+		MaterialFile matFile;
+		bool hasMatFile = project->GetShapeMaterialFile(newName, matFile);
+		glView->SetMeshTextures(newName, project->GetShapeTextures(newName), hasMatFile, matFile);
 
 		subitem = outfitShapes->AppendItem(outfitRoot, newName);
 		outfitShapes->SetItemState(subitem, 0);
@@ -5714,10 +5732,28 @@ void wxGLPanel::OnShown() {
 	gls.SetMaskVisible();
 
 	int ambient = Config.GetIntValue("Lights/Ambient");
-	int brightness1 = Config.GetIntValue("Lights/Brightness1");
-	int brightness2 = Config.GetIntValue("Lights/Brightness2");
-	int brightness3 = Config.GetIntValue("Lights/Brightness3");
-	UpdateLights(ambient, brightness1, brightness2, brightness3);
+	int frontal = Config.GetIntValue("Lights/Frontal");
+
+	int directional0 = Config.GetIntValue("Lights/Directional0");
+	int directional0X = Config.GetIntValue("Lights/Directional0.x");
+	int directional0Y = Config.GetIntValue("Lights/Directional0.y");
+	int directional0Z = Config.GetIntValue("Lights/Directional0.z");
+
+	int directional1 = Config.GetIntValue("Lights/Directional1");
+	int directional1X = Config.GetIntValue("Lights/Directional1.x");
+	int directional1Y = Config.GetIntValue("Lights/Directional1.y");
+	int directional1Z = Config.GetIntValue("Lights/Directional1.z");
+
+	int directional2 = Config.GetIntValue("Lights/Directional2");
+	int directional2X = Config.GetIntValue("Lights/Directional2.x");
+	int directional2Y = Config.GetIntValue("Lights/Directional2.y");
+	int directional2Z = Config.GetIntValue("Lights/Directional2.z");
+
+	Vector3 directional0Dir = Vector3(directional0X / 100.0f, directional0Y / 100.0f, directional0Z / 100.0f);
+	Vector3 directional1Dir = Vector3(directional1X / 100.0f, directional1Y / 100.0f, directional1Z / 100.0f);
+	Vector3 directional2Dir = Vector3(directional2X / 100.0f, directional2Y / 100.0f, directional2Z / 100.0f);
+
+	UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directional2Dir);
 }
 
 void wxGLPanel::SetNotifyWindow(wxWindow* win) {
@@ -5751,16 +5787,26 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const string& shapeName, bool build
 	}
 }
 
-void wxGLPanel::SetMeshTexture(const string& shapeName, const string& texturefile, bool isSkin) {
+void wxGLPanel::SetMeshTextures(const string& shapeName, const vector<string>& textureFiles, const bool hasMatFile, const MaterialFile& matFile) {
 	mesh* m = gls.GetMesh(shapeName);
 	if (!m)
 		return;
+	
+	string vShader = "res\\shaders\\default.vert";
+	string fShader = "res\\shaders\\default.frag";
 
-	GLMaterial* mat = gls.AddMaterial(texturefile, "res\\shaders\\default.vert", "res\\shaders\\default.frag");
+	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == FO4) {
+		vShader = "res\\shaders\\fo4_default.vert";
+		fShader = "res\\shaders\\fo4_default.frag";
+	}
+
+	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader);
 	if (mat) {
-		mat->GetShader().ShowSkinColor(isSkin);
-
 		m->material = mat;
+		
+		if (hasMatFile)
+			m->UpdateFromMaterialFile(matFile);
 	}
 }
 
@@ -6728,7 +6774,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 				owner->StartProgress(_("Adding NIF file..."));
 				owner->UpdateProgress(1, _("Adding NIF file..."));
 				owner->project->AddNif(inputFile.ToStdString(), false);
-				owner->project->SetTextures("_AUTO_");
+				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
 				owner->RefreshGUIFromProj();
@@ -6740,7 +6786,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 				owner->StartProgress("Adding OBJ file...");
 				owner->UpdateProgress(1, _("Adding OBJ file..."));
 				owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
-				owner->project->SetTextures("_AUTO_");
+				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
 				owner->RefreshGUIFromProj();
@@ -6752,7 +6798,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 				owner->StartProgress(_("Adding FBX file..."));
 				owner->UpdateProgress(1, _("Adding FBX file..."));
 				owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
-				owner->project->SetTextures("_AUTO_");
+				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
 				owner->RefreshGUIFromProj();

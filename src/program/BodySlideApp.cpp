@@ -786,7 +786,7 @@ void BodySlideApp::InitPreview() {
 	vector<string> shapeNames;
 	PreviewMod.GetShapeList(shapeNames);
 	for (auto &s : shapeNames)
-		preview->AddNifShapeTexture(&PreviewMod, s);
+		preview->AddNifShapeTextures(&PreviewMod, s);
 
 	preview->Refresh();
 }
@@ -910,15 +910,24 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("UseSystemLanguage", "false");
 	Config.SetDefaultValue("SelectedPreset", "");
-
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultValue("Input/LeftMousePan", "false");
 	Config.SetDefaultValue("Editing/CenterMode", "Selected");
-	Config.SetDefaultValue("Lights/Ambient", 20);
-	Config.SetDefaultValue("Lights/Brightness1", 55);
-	Config.SetDefaultValue("Lights/Brightness2", 45);
-	Config.SetDefaultValue("Lights/Brightness3", 45);
+	Config.SetDefaultValue("Lights/Ambient", 10);
+	Config.SetDefaultValue("Lights/Frontal", 20);
+	Config.SetDefaultValue("Lights/Directional0", 60);
+	Config.SetDefaultValue("Lights/Directional0.x", -90);
+	Config.SetDefaultValue("Lights/Directional0.y", 10);
+	Config.SetDefaultValue("Lights/Directional0.z", 100);
+	Config.SetDefaultValue("Lights/Directional1", 60);
+	Config.SetDefaultValue("Lights/Directional1.x", 70);
+	Config.SetDefaultValue("Lights/Directional1.y", 10);
+	Config.SetDefaultValue("Lights/Directional1.z", 100);
+	Config.SetDefaultValue("Lights/Directional2", 85);
+	Config.SetDefaultValue("Lights/Directional2.x", 30);
+	Config.SetDefaultValue("Lights/Directional2.y", 20);
+	Config.SetDefaultValue("Lights/Directional2.z", -100);
 	Config.SetDefaultValue("BodySlideFrame.width", 800);
 	Config.SetDefaultValue("BodySlideFrame.height", 600);
 	Config.SetDefaultValue("BodySlideFrame.x", 100);

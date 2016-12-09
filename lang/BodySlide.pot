@@ -304,13 +304,16 @@ msgstr ""
 msgid "Ambient"
 msgstr ""
 
-msgid "Brightness 1"
+msgid "Frontal"
 msgstr ""
 
-msgid "Brightness 2"
+msgid "Directional 1"
 msgstr ""
 
-msgid "Brightness 3"
+msgid "Directional 2"
+msgstr ""
+
+msgid "Directional 3"
 msgstr ""
 
 msgid "De-/Select Sliders"

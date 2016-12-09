@@ -7,7 +7,6 @@ See the included LICENSE file
 #include "OutfitProject.h"
 #include "../files/TriFile.h"
 #include "../files/FBXWrangler.h"
-#include "../files/MaterialFile.h"
 #include "../program/FBXImportDialog.h"
 
 #include "FSEngine/FSManager.h"
@@ -603,7 +602,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	}
 
 	workNif.CopyGeometry(shapeName, blank, shapeName);
-	SetTexture(shapeName, "_AUTO_");
+	SetTextures(shapeName);
 
 	return 0;
 }
@@ -1049,29 +1048,40 @@ void OutfitProject::GetActiveBones(vector<string>& outBoneNames) {
 	AnimSkeleton::getInstance().GetActiveBoneNames(outBoneNames);
 }
 
-string OutfitProject::GetShapeTexture(const string& shapeName) {
+vector<string> OutfitProject::GetShapeTextures(const string& shapeName) {
 	if (shapeTextures.find(shapeName) != shapeTextures.end())
 		return shapeTextures[shapeName];
-	else
-		return defaultTexFile;
+
+	return vector<string>();
 }
 
-void OutfitProject::SetTextures(const string& textureFile) {
+bool OutfitProject::GetShapeMaterialFile(const string& shapeName, MaterialFile& outMatFile) {
+	if (shapeMaterialFiles.find(shapeName) != shapeMaterialFiles.end()) {
+		outMatFile = shapeMaterialFiles[shapeName];
+		return true;
+	}
+
+	return false;
+}
+
+void OutfitProject::SetTextures() {
 	vector<string> shapes;
 	GetShapes(shapes);
 	for (auto &s : shapes)
-		SetTexture(s, textureFile);
+		SetTextures(s);
 }
 
-void OutfitProject::SetTexture(const string& shapeName, const string& textureFile) {
+void OutfitProject::SetTextures(const string& shapeName, const vector<string>& textureFiles) {
 	if (shapeName.empty())
 		return;
 
-	if (textureFile == "_AUTO_") {
+	if (textureFiles.empty()) {
 		string texturesDir = appConfig["GameDataPath"];
 		bool hasMat = false;
 		wxString matFile;
-		string texFile;
+
+		const byte MAX_TEXTURE_PATHS = 10;
+		vector<string> texFiles(MAX_TEXTURE_PATHS);
 
 		NiShader* shader = workNif.GetShader(shapeName);
 		if (shader) {
@@ -1083,12 +1093,12 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 			}
 		}
 
+		MaterialFile mat(MaterialFile::BGSM);
 		if (hasMat) {
 			matFile = matFile.Lower();
 			matFile.Replace("\\", "/");
 
 			// Attempt to read loose material file
-			MaterialFile mat(MaterialFile::BGSM);
 			mat = MaterialFile(texturesDir + matFile.ToStdString());
 
 			if (mat.Failed()) {
@@ -1117,32 +1127,47 @@ void OutfitProject::SetTexture(const string& shapeName, const string& textureFil
 			}
 
 			if (!mat.Failed()) {
-				if (mat.signature == MaterialFile::BGSM)
-					texFile = mat.diffuseTexture;
-				else if (mat.signature == MaterialFile::BGEM)
-					texFile = mat.baseTexture;
+				if (mat.signature == MaterialFile::BGSM) {
+					texFiles[0] = mat.diffuseTexture.c_str();
+					texFiles[1] = mat.normalTexture.c_str();
+					texFiles[4] = mat.envmapTexture.c_str();
+					texFiles[5] = mat.glowTexture.c_str();
+					texFiles[7] = mat.smoothSpecTexture.c_str();
+				}
+				else if (mat.signature == MaterialFile::BGEM) {
+					texFiles[0] = mat.baseTexture.c_str();
+					texFiles[1] = mat.fxNormalTexture.c_str();
+					texFiles[4] = mat.fxEnvmapTexture.c_str();
+					texFiles[5] = mat.envmapMaskTexture.c_str();
+				}
+
+				shapeMaterialFiles[shapeName] = move(mat);
 			}
-			else
-				workNif.GetTextureForShape(shapeName, texFile);
+			else {
+				for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+					workNif.GetTextureForShape(shapeName, texFiles[i], i);
+			}
 		}
-		else
-			workNif.GetTextureForShape(shapeName, texFile);
-
-
-		if (!texFile.empty()) {
-			texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-			texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
-			texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
-			texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
+		else {
+			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+				workNif.GetTextureForShape(shapeName, texFiles[i], i);
 		}
-		else
-			texFile = "noimg.dds";
 
-		string combinedTexFile = texturesDir + texFile;
-		shapeTextures[shapeName] = combinedTexFile.c_str();
+		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
+			if (!texFiles[i].empty()) {
+				texFiles[i] = regex_replace(texFiles[i], regex("/+|\\\\+"), "\\");												// Replace multiple slashes or forward slashes with one backslash
+				texFiles[i] = regex_replace(texFiles[i], regex("^(.*?)\\\\textures\\\\", regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
+				texFiles[i] = regex_replace(texFiles[i], regex("^\\\\+"), "");													// Remove all backslashes from the front
+				texFiles[i] = regex_replace(texFiles[i], regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\");	// If the path doesn't start with "textures\", add it to the front
+
+				texFiles[i] = texturesDir + texFiles[i];
+			}
+		}
+
+		shapeTextures[shapeName] = texFiles;
 	}
 	else
-		shapeTextures[shapeName] = textureFile.c_str();
+		shapeTextures[shapeName] = textureFiles;
 }
 
 bool OutfitProject::IsValidShape(const string& shapeName) {

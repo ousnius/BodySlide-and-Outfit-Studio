@@ -274,9 +274,6 @@ void ShapeProperties::RemoveShader() {
 
 void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog dlg;
-	string texPath;
-	string oDispPath;
-	string nDispPath;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgShapeTextures")) {
 		wxGrid* stTexGrid = XRCCTRL(dlg, "stTexGrid", wxGrid);
 		stTexGrid->CreateGrid(10, 1);
@@ -314,6 +311,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 		int blockType = 0;
 		for (int i = 0; i < 10; i++) {
+			string texPath;
 			blockType = nif->GetTextureForShape(shapeName, texPath, i);
 			if (!blockType)
 				continue;
@@ -323,60 +321,36 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 		if (blockType == BSEFFECTSHADERPROPERTY) {
 			stTexGrid->SetRowLabelValue(0, "Source");
-			stTexGrid->SetRowLabelValue(1, "Greyscale");
+			stTexGrid->SetRowLabelValue(1, "Normal");
 			stTexGrid->HideRow(2);
-			stTexGrid->HideRow(3);
-			stTexGrid->HideRow(4);
-			stTexGrid->HideRow(5);
+			stTexGrid->SetRowLabelValue(3, "Greyscale");
+			stTexGrid->SetRowLabelValue(4, "Environment");
+			stTexGrid->SetRowLabelValue(5, "Env Mask");
 			stTexGrid->HideRow(6);
 			stTexGrid->HideRow(7);
 			stTexGrid->HideRow(8);
 			stTexGrid->HideRow(9);
 		}
 
-		oDispPath = os->project->GetShapeTexture(shapeName);
-		XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->SetPath(oDispPath);
-		XRCCTRL(dlg, "btApplyDiffuse", wxButton)->Bind(wxEVT_BUTTON, &ShapeProperties::OnApplyDiffuse, this);
-
 		if (dlg.ShowModal() == wxID_OK) {
-			nDispPath = XRCCTRL(dlg, "stDisplayTexture", wxFilePickerCtrl)->GetPath();
-			if (nDispPath != oDispPath) {
-				os->project->SetTexture(shapeName, nDispPath);
-				os->glView->SetMeshTexture(shapeName, nDispPath, nif->IsShaderSkin(shapeName));
+			vector<string> texFiles(10);
+			for (int i = 0; i < 10; i++) {
+				string texPath = stTexGrid->GetCellValue(i, 0);
+				nif->SetTextureForShape(shapeName, texPath, i);
+				texFiles[i] = texPath;
 			}
 
-			for (int i = 0; i < 10; i++) {
-				texPath = stTexGrid->GetCellValue(i, 0);
-				nif->SetTextureForShape(shapeName, texPath, i);
-			}
 			nif->TrimTexturePaths();
 
+			os->project->SetTextures(shapeName, texFiles);
+			os->glView->SetMeshTextures(shapeName, texFiles);
 			os->glView->Render();
 		}
 	}
 }
 
-void ShapeProperties::OnApplyDiffuse(wxCommandEvent& event) {
-	wxDialog* dlg = (wxDialog*)((wxWindow*)event.GetEventObject())->GetParent();
-	if (!dlg)
-		return;
-
-	wxFilePickerCtrl* dispPath = (wxFilePickerCtrl*)dlg->FindWindow("stDisplayTexture");
-	wxGrid* texGrid = (wxGrid*)dlg->FindWindow("stTexGrid");
-	if (!dispPath || !texGrid)
-		return;
-
-	string tex = texGrid->GetCellValue(0, 0);
-	if (!tex.empty()) {
-		string newTex = os->appConfig["GameDataPath"] + tex;
-		dispPath->SetPath(newTex);
-	}
-}
-
 void ShapeProperties::AssignDefaultTexture() {
-	string texNoImg = os->appConfig["GameDataPath"] + "noimg.dds";
-	os->project->SetTexture(shapeName, "_AUTO_");
-	os->glView->SetMeshTexture(shapeName, texNoImg, nif->IsShaderSkin(shapeName));
+	os->project->SetTextures(shapeName);
 	os->glView->Render();
 }
 
@@ -663,7 +637,7 @@ void ShapeProperties::ApplyChanges() {
 		}
 
 		if (os->targetGame == FO4 && currentMaterialPath != name) {
-			os->project->SetTexture(shapeName, "_AUTO_");
+			os->project->SetTextures(shapeName);
 			os->RefreshGUIFromProj();
 		}
 	}

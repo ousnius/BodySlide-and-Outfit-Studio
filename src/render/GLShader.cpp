@@ -21,8 +21,9 @@ GLShader::GLShader(const string& vertexSource, const string& fragmentSource) : G
 		ShowMask();
 		ShowWeight(false);
 		ShowSegments(false);
-		ShowSkinColor(false);
 
+		SetColor(Vector3(1.0f, 1.0f, 1.0f));
+		SetModelSpace(false);
 		SetWireframeEnabled(false);
 		SetPointsEnabled(false);
 		SetLightingEnabled(true);
@@ -85,19 +86,31 @@ void GLShader::SetColor(const Vector3& color) {
 		glUniform3f(loc, color.x, color.y, color.z);
 }
 
-void GLShader::SetWireframeEnabled(const bool& enable) {
+void GLShader::SetModelSpace(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bModelSpace");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetEmissive(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bEmissive");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetWireframeEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bWireframe");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
-void GLShader::SetPointsEnabled(const bool& enable) {
+void GLShader::SetPointsEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bPoints");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
-void GLShader::SetLightingEnabled(const bool& enable) {
+void GLShader::SetLightingEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bLighting");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
@@ -115,46 +128,68 @@ void GLShader::SetMatrixModelView(const glm::mat4x4& mat) {
 		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&mat);
 }
 
-void GLShader::SetLight(const uint& index, const LightSource& lightSource) {
-	string light = "lightSource" + to_string(index);
-	string lightAmbient = light + ".ambient";
-	string lightDiffuse = light + ".diffuse";
-	string lightSpecular = light + ".specular";
-	string lightPosition = light + ".position";
-
-	GLint loc = glGetUniformLocation(progID, lightAmbient.c_str());
+void GLShader::SetFrontalLight(const FrontalLight& light) {
+	GLint loc = glGetUniformLocation(progID, "frontal.diffuse");
 	if (loc >= 0)
-		glUniform3f(loc, lightSource.ambient.x, lightSource.ambient.y, lightSource.ambient.z);
-
-	loc = glGetUniformLocation(progID, lightDiffuse.c_str());
-	if (loc >= 0)
-		glUniform3f(loc, lightSource.diffuse.x, lightSource.diffuse.y, lightSource.diffuse.z);
-
-	loc = glGetUniformLocation(progID, lightSpecular.c_str());
-	if (loc >= 0)
-		glUniform3f(loc, lightSource.specular.x, lightSource.specular.y, lightSource.specular.z);
-
-	loc = glGetUniformLocation(progID, lightPosition.c_str());
-	if (loc >= 0)
-		glUniform3f(loc, lightSource.position.x, lightSource.position.y, lightSource.position.z);
+		glUniform3f(loc, light.diffuse.x, light.diffuse.y, light.diffuse.z);
 }
 
-void GLShader::SetMaterial(const Material& material) {
-	GLint loc = glGetUniformLocation(progID, "material.ambient");
-	if (loc >= 0)
-		glUniform3f(loc, material.ambient.x, material.ambient.y, material.ambient.z);
+void GLShader::SetDirectionalLight(const DirectionalLight& light, const int index) {
+	string lightName = "directional" + to_string(index);
+	string lightDiffuse = lightName + ".diffuse";
+	string lightDirection = lightName + ".direction";
 
-	loc = glGetUniformLocation(progID, "material.diffuse");
+	GLint loc = glGetUniformLocation(progID, lightDiffuse.c_str());
 	if (loc >= 0)
-		glUniform3f(loc, material.diffuse.x, material.diffuse.y, material.diffuse.z);
+		glUniform3f(loc, light.diffuse.x, light.diffuse.y, light.diffuse.z);
 
-	loc = glGetUniformLocation(progID, "material.specular");
+	loc = glGetUniformLocation(progID, lightDirection.c_str());
 	if (loc >= 0)
-		glUniform3f(loc, material.specular.x, material.specular.y, material.specular.z);
+		glUniform3f(loc, light.direction.x, light.direction.y, light.direction.z);
+}
 
-	loc = glGetUniformLocation(progID, "material.shininess");
+void GLShader::SetAmbientLight(const float light) {
+	GLint loc = glGetUniformLocation(progID, "ambient");
 	if (loc >= 0)
-		glUniform1f(loc, material.shininess);
+		glUniform1f(loc, light);
+}
+
+void GLShader::SetProperties(const mesh::ShaderProperties& prop) {
+	GLint loc = glGetUniformLocation(progID, "prop.uvOffset");
+	if (loc >= 0)
+		glUniform2f(loc, prop.uvOffset.u, prop.uvOffset.v);
+
+	loc = glGetUniformLocation(progID, "prop.uvScale");
+	if (loc >= 0)
+		glUniform2f(loc, prop.uvScale.u, prop.uvScale.v);
+
+	loc = glGetUniformLocation(progID, "prop.specularColor");
+	if (loc >= 0)
+		glUniform3f(loc, prop.specularColor.x, prop.specularColor.y, prop.specularColor.z);
+
+	loc = glGetUniformLocation(progID, "prop.specularStrength");
+	if (loc >= 0)
+		glUniform1f(loc, prop.specularStrength);
+
+	loc = glGetUniformLocation(progID, "prop.shininess");
+	if (loc >= 0)
+		glUniform1f(loc, prop.shininess);
+
+	loc = glGetUniformLocation(progID, "prop.envReflection");
+	if (loc >= 0)
+		glUniform1f(loc, prop.envReflection);
+
+	loc = glGetUniformLocation(progID, "prop.emissiveColor");
+	if (loc >= 0)
+		glUniform3f(loc, prop.emissiveColor.x, prop.emissiveColor.y, prop.emissiveColor.z);
+
+	loc = glGetUniformLocation(progID, "prop.emissiveMultiple");
+	if (loc >= 0)
+		glUniform1f(loc, prop.emissiveMultiple);
+
+	loc = glGetUniformLocation(progID, "prop.alpha");
+	if (loc >= 0)
+		glUniform1f(loc, prop.alpha);
 }
 
 void GLShader::ShowLighting(bool bShow) {
@@ -206,13 +241,34 @@ void GLShader::ShowTexture(bool bShow) {
 	}
 }
 
-void GLShader::ShowSkinColor(bool bShow) {
-	GLint loc = glGetUniformLocation(progID, "bShowSkinColor");
-	if (loc >= 0) {
-		glUseProgram(progID);
-		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
-		glUseProgram(0);
-	}
+void GLShader::SetNormalMapEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bNormalMap");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetCubemapEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bCubemap");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetEnvMaskEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bEnvMask");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetSpecularEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bSpecular");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetBacklightEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bBacklight");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
 void GLShader::BindTexture(const GLint& index, const GLuint& texture, const string& samplerName) {
@@ -220,7 +276,23 @@ void GLShader::BindTexture(const GLint& index, const GLuint& texture, const stri
 	if (texLoc >= 0) {
 		glUniform1i(texLoc, index);
 		glActiveTexture(GL_TEXTURE0 + index);
+
+		glDisable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
 		glBindTexture(GL_TEXTURE_2D, texture);
+	}
+}
+
+void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const string& samplerName) {
+	GLint texLoc = glGetUniformLocation(progID, samplerName.c_str());
+	if (texLoc >= 0) {
+		glUniform1i(texLoc, index);
+		glActiveTexture(GL_TEXTURE0 + index);
+		
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+		glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 	}
 }
 

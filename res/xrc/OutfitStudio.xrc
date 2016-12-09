@@ -343,7 +343,7 @@
 															<flag>wxALL|wxEXPAND</flag>
 															<object class="wxSlider" name="lightAmbientSlider">
 																<size>-1,25</size>
-																<value>50</value>
+																<value>0</value>
 																<min>0</min>
 																<max>100</max>
 															</object>
@@ -358,17 +358,17 @@
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">
 															<option>0</option>
-															<object class="wxStaticText" name="lightBrightnessLabel1">
+															<object class="wxStaticText" name="lightFrontalLabel">
 																<size>75,25</size>
-																<label>Brightness 1</label>
+																<label>Frontal</label>
 															</object>
 														</object>
 														<object class="sizeritem">
 															<option>1</option>
 															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightBrightnessSlider1">
+															<object class="wxSlider" name="lightFrontalSlider">
 																<size>-1,25</size>
-																<value>50</value>
+																<value>0</value>
 																<min>0</min>
 																<max>100</max>
 															</object>
@@ -383,17 +383,17 @@
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">
 															<option>0</option>
-															<object class="wxStaticText" name="lightBrightnessLabel2">
+															<object class="wxStaticText" name="lightDirectional0Label">
 																<size>75,25</size>
-																<label>Brightness 2</label>
+																<label>Directional 1</label>
 															</object>
 														</object>
 														<object class="sizeritem">
 															<option>1</option>
 															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightBrightnessSlider2">
+															<object class="wxSlider" name="lightDirectional0Slider">
 																<size>-1,25</size>
-																<value>50</value>
+																<value>0</value>
 																<min>0</min>
 																<max>100</max>
 															</object>
@@ -408,17 +408,42 @@
 														<orient>wxHORIZONTAL</orient>
 														<object class="sizeritem">
 															<option>0</option>
-															<object class="wxStaticText" name="lightBrightnessLabel3">
+															<object class="wxStaticText" name="lightDirectional1Label">
 																<size>75,25</size>
-																<label>Brightness 3</label>
+																<label>Directional 2</label>
 															</object>
 														</object>
 														<object class="sizeritem">
 															<option>1</option>
 															<flag>wxALL|wxEXPAND</flag>
-															<object class="wxSlider" name="lightBrightnessSlider3">
+															<object class="wxSlider" name="lightDirectional1Slider">
 																<size>-1,25</size>
-																<value>50</value>
+																<value>0</value>
+																<min>0</min>
+																<max>100</max>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>0</option>
+															<object class="wxStaticText" name="lightDirectional2Label">
+																<size>75,25</size>
+																<label>Directional 3</label>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<object class="wxSlider" name="lightDirectional2Slider">
+																<size>-1,25</size>
+																<value>0</value>
 																<min>0</min>
 																<max>100</max>
 															</object>

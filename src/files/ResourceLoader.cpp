@@ -170,65 +170,106 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 	return GLI_create_texture(texture);
 }
 
-GLMaterial* ResourceLoader::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
-	MaterialKey key(textureFile, vShaderFile, fShaderFile);
+GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile) {
+	MaterialKey key(textureFiles, vShaderFile, fShaderFile);
 	auto it = materials.find(key);
 	if (it != materials.end())
 		return it->second.get();
 
-	GLuint textureID = 0;
-	wxFileName fileName(textureFile);
-	wxString fileExt = fileName.GetExt().Lower();
-	if (fileExt == "dds" || fileExt == "ktx")
-		textureID = GLI_load_texture(textureFile);
+	vector<GLuint> texRefs(textureFiles.size(), 0);
+	for (int i = 0; i < textureFiles.size(); i++) {
+		if (textureFiles[i].empty())
+			continue;
 
-	if (!textureID)
-		textureID = SOIL_load_OGL_texture(textureFile.c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+		GLuint textureID = 0;
+		wxFileName fileName(textureFiles[i]);
+		wxString fileExt = fileName.GetExt().Lower();
+		string fileExtStr = string(fileExt.c_str());
 
-	if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
-		if (Config["GameDataPath"].empty()) {
-			wxLogWarning("Texture file '%s' not found.", textureFile);
-			return nullptr;
-		}
+		// Cubemap
+		if (!textureID && i == 4)
+			textureID = SOIL_load_OGL_single_cubemap(textureFiles[i].c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS);
 
-		wxMemoryBuffer data;
-		wxString texFile = textureFile;
-		texFile.Replace(Config["GameDataPath"], "");
-		texFile.Replace("\\", "/");
-		for (FSArchiveFile *archive : FSManager::archiveList()) {
-			if (archive) {
-				if (archive->hasFile(texFile.ToStdString())) {
-					wxMemoryBuffer outData;
-					archive->fileContents(texFile.ToStdString(), outData);
+		// Normal texture (GLI)
+		if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
+			textureID = GLI_load_texture(textureFiles[i]);
 
-					if (!outData.IsEmpty()) {
-						data = outData;
-						break;
+		// Normal texture and image (SOIL fallback)
+		if (!textureID)
+			textureID = SOIL_load_OGL_texture(textureFiles[i].c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+
+		if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
+			if (Config["GameDataPath"].empty()) {
+				wxLogWarning("Texture file '%s' not found.", textureFiles[i]);
+				continue;
+			}
+
+			wxMemoryBuffer data;
+			wxString texFile = textureFiles[i];
+			texFile.Replace(Config["GameDataPath"], "");
+			texFile.Replace("\\", "/");
+			for (FSArchiveFile *archive : FSManager::archiveList()) {
+				if (archive) {
+					if (archive->hasFile(texFile.ToStdString())) {
+						wxMemoryBuffer outData;
+						archive->fileContents(texFile.ToStdString(), outData);
+
+						if (!outData.IsEmpty()) {
+							data = outData;
+							break;
+						}
 					}
 				}
 			}
+
+			if (!data.IsEmpty()) {
+				byte* texBuffer = static_cast<byte*>(data.GetData());
+
+				// Cubemap
+				if (!textureID && i == 4)
+					textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetBufSize(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS);
+
+				// Normal texture (GLI)
+				if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
+					textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetBufSize());
+
+				// Normal texture and image (SOIL fallback)
+				if (!textureID)
+					textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+			}
+			else {
+				wxLogWarning("Texture file '%s' not found.", textureFiles[i]);
+				continue;
+			}
+		}
+		else if (!textureID) {
+			wxLogWarning("Texture file '%s' not found.", textureFiles[i]);
+			continue;
 		}
 
-		if (!data.IsEmpty()) {
-			byte* texBuffer = static_cast<byte*>(data.GetData());
-			if (fileExt == "dds" || fileExt == "ktx")
-				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetBufSize());
-			
-			if (!textureID)
-				textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
-		}
-		else {
-			wxLogWarning("Texture file '%s' not found.", textureFile);
-			return nullptr;
-		}
+		texRefs[i] = textureID;
 	}
-	else if (!textureID) {
-		wxLogWarning("Texture file '%s' not found.", textureFile);
-		return nullptr;
+
+	// No diffuse found
+	if (texRefs.empty() || texRefs[0] == 0) {
+		// Set default material key
+		vector<string> defaultTex = { "res\\images\\NoImg.png" };
+		key = MaterialKey(defaultTex, vShaderFile, fShaderFile);
+
+		// Return existing no image material
+		auto it = materials.find(key);
+		if (it != materials.end())
+			return it->second.get();
+
+		// Reset texture indices
+		texRefs.resize(1, 0);
+
+		// Load default image
+		texRefs[0] = SOIL_load_OGL_texture(defaultTex[0].c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 	}
 
 	auto& entry = materials[key];
-	entry.reset(new GLMaterial(textureID, vShaderFile.c_str(), fShaderFile.c_str()));
+	entry.reset(new GLMaterial(texRefs.data(), texRefs.size(), vShaderFile, fShaderFile));
 	return entry.get();
 }
 
@@ -238,5 +279,10 @@ void ResourceLoader::Cleanup() {
 
 size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {
 	hash<string> strHash;
-	return (strHash(get<0>(key)) ^ strHash(get<1>(key)) ^ strHash(get<2>(key)));
+	size_t resHash = strHash(get<1>(key)) ^ strHash(get<2>(key));
+
+	for (int i = 0; i < get<0>(key).size(); i++)
+		resHash ^= strHash(get<0>(key)[i]);
+
+	return resHash;
 }

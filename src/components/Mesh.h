@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../utils/KDMatcher.h"
 #include "../utils/AABBTree.h"
 #include "../render/GLExtensions.h"
+#include "../files/MaterialFile.h"
 
 #include <unordered_map>
 #include <unordered_set>
@@ -38,41 +39,57 @@ public:
 		Indices
 	};
 
-	int nVerts;
-	Vector3* verts;
-	Vector3* norms;
-	Vector3* vcolors;
-	Vector2* texcoord;
+	struct ShaderProperties {
+		Vector2 uvOffset;
+		Vector2 uvScale = Vector2(1.0f, 1.0f);
+		Vector3 specularColor = Vector3(1.0f, 1.0f, 1.0f);
+		float specularStrength = 1.0f;
+		float shininess = 30.0f;
+		float envReflection = 1.0f;
+		Vector3 emissiveColor = Vector3(1.0f, 1.0f, 1.0f);
+		float emissiveMultiple = 1.0f;
+		float alpha = 1.0f;
+	};
 
-	Triangle* tris;
-	int nTris;
+	int nVerts = 0;
+	Vector3* verts = nullptr;
+	Vector3* norms = nullptr;
+	Vector3* vcolors = nullptr;
+	Vector2* texcoord = nullptr;
 
-	Edge* edges;
-	int nEdges;
+	Triangle* tris = nullptr;
+	int nTris = 0;
+
+	Edge* edges = nullptr;
+	int nEdges = 0;
 
 	bool genBuffers = false;
 	GLuint vao = 0;
 	vector<GLuint> vbo;
 	GLuint ibo = 0;
 
+	ShaderProperties prop;
 	GLMaterial* material = nullptr;
 
-	float scale;				// Information only, does not cause verts to be scaled during render (except point/lines).
-	float smoothThresh;			// Smoothing threshold for generating smooth normals.
+	float scale = 1.0f;								// Information only, does not cause verts to be scaled during render (except point/lines).
+	float smoothThresh = 60.0f * DEG2RAD;			// Smoothing threshold for generating smooth normals.
 
-	vector<int>* vertTris;		// Map of triangles for which each vert is a member.
-	vector<int>* vertEdges;		// Map of edges for which each vert is a member.
-	unordered_map <int, vector<int>> weldVerts; // Verts that are duplicated for UVs but are in the same position.
+	vector<int>* vertTris = nullptr;				// Map of triangles for which each vert is a member.
+	vector<int>* vertEdges = nullptr;				// Map of edges for which each vert is a member.
+	unordered_map <int, vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
 
-	RenderMode rendermode;		// 0 = normal mesh render, 1 = line based visualizer render, 2 = point based vis render.
-	bool doublesided;
-	bool textured;
+	RenderMode rendermode = RenderMode::Normal;
+	bool modelSpace = false;
+	bool emissive = false;
+	bool backlight = false;
+	bool doublesided = false;
+	bool textured = false;
 
-	shared_ptr<AABBTree> bvh;
+	shared_ptr<AABBTree> bvh = nullptr;
 
-	bool bVisible;
-	bool bShowPoints;
-	bool smoothSeamNormals;
+	bool bVisible = true;
+	bool bShowPoints = false;
+	bool smoothSeamNormals = true;
 
 	string shapeName;
 	Vector3 color;
@@ -90,6 +107,7 @@ public:
 	void CreateBuffers();
 	void UpdateBuffers();
 	void QueueUpdate(const UpdateType& type);
+	void UpdateFromMaterialFile(const MaterialFile& matFile);
 
 	void ScaleVertices(const Vector3& center, const float& factor);
 

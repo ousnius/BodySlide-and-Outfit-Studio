@@ -8,7 +8,6 @@ See the included LICENSE file
 
 #include <wx/wx.h>
 #include "../render/GLSurface.h"
-#include "../files/MaterialFile.h"
 
 class BodySlideApp;
 class PreviewCanvas;
@@ -60,7 +59,7 @@ public:
 
 	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
-	void AddNifShapeTexture(NifFile* fromNif, const string& shapeName);
+	void AddNifShapeTextures(NifFile* fromNif, const string& shapeName);
 
 	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
 		set<int> changed;
@@ -71,17 +70,18 @@ public:
 			m->SmoothNormals(changed);
 	}
 
-	void SetShapeTexture(const string& shapeName, const string& texturefile, bool isSkin = false) {
+	void SetShapeTextures(const string& shapeName, const vector<string>& textureFiles, const string& vShader, const string& fShader, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile()) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		GLMaterial* mat = gls.AddMaterial(texturefile, "res\\shaders\\default.vert", "res\\shaders\\default.frag");
+		GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader);
 		if (mat) {
-			mat->GetShader().ShowSkinColor(isSkin);
-
 			m->material = mat;
 			shapeMaterials[shapeName] = mat;
+
+			if (hasMatFile)
+				m->UpdateFromMaterialFile(matFile);
 		}
 	}
 

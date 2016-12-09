@@ -9,7 +9,6 @@ See the included LICENSE file
 #include "GLShader.h"
 #include "../files/NifFile.h"
 #include "../files/ResourceLoader.h"
-#include "../components/Mesh.h"
 
 #include <wx/glcanvas.h>
 
@@ -42,17 +41,17 @@ class GLSurface {
 	float defPointSize;
 	float cursorSize;
 
-	GLShader::LightSource light0;
-	GLShader::LightSource light1;
-	GLShader::LightSource light2;
-	GLShader::Material material;
+	GLShader::FrontalLight frontalLight;
+	GLShader::DirectionalLight directionalLight0;
+	GLShader::DirectionalLight directionalLight1;
+	GLShader::DirectionalLight directionalLight2;
+	float ambientLight;
 
 	Vector3 colorBackground = Vector3(0.82f, 0.82f, 0.82f);
 	Vector3 colorRed = Vector3(1.0f, 0.25f, 0.25f);
 	Vector3 colorGreen = Vector3(0.25f, 1.0f, 0.25f);
 
 	ResourceLoader resLoader;
-	GLMaterial* noImageMat = nullptr;
 	GLMaterial* primitiveMat = nullptr;
 
 	unordered_map<string, int> namedMeshes;
@@ -65,7 +64,6 @@ class GLSurface {
 	mesh* selectedMesh = nullptr;
 
 	void InitLighting();
-	void InitMaterial(const Vector3& diffuseColor);
 	void InitGLExtensions();
 	int InitGLSettings();
 
@@ -223,10 +221,11 @@ public:
 	void DollyCamera(int dAmount);
 	void UnprojectCamera(Vector3& result);
 
-	void SetView(const char& type);
-	void SetPerspective(const bool& enabled);
-	void SetFieldOfView(const int& fieldOfView);
-	void UpdateLights(const int& ambient = 50, const int& brightness1 = 50, const int& brightness2 = 50, const int& brightness3 = 50);
+	void SetView(const char type);
+	void SetPerspective(const bool enabled);
+	void SetFieldOfView(const int fieldOfView);
+	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
+		const Vector3 directional0Dir, const Vector3 directional1Dir, const Vector3 directional2Dir);
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
@@ -263,7 +262,7 @@ public:
 
 	RenderMode SetMeshRenderMode(const string& name, RenderMode mode);
 
-	GLMaterial* AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile);
+	GLMaterial* AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile);
 	GLMaterial* GetPrimitiveMaterial();
 
 	void RenderOneFrame();

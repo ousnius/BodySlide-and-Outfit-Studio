@@ -111,7 +111,7 @@ public:
 		gls.RenameMesh(shapeName, newShapeName);
 	}
 
-	void SetMeshTexture(const string& shapeName, const string& texturefile, bool isSkin = false);
+	void SetMeshTextures(const string& shapeName, const vector<string>& textureFiles, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile());
 
 	mesh* GetMesh(const string& shapeName) {
 		return gls.GetMesh(shapeName);
@@ -412,7 +412,7 @@ public:
 		gls.Cleanup();
 	}
 
-	void SetView(const char& type) {
+	void SetView(const char type) {
 		gls.SetView(type);
 
 		if (transformMode)
@@ -421,18 +421,20 @@ public:
 			Render();
 	}
 
-	void SetPerspective(const bool& enabled) {
+	void SetPerspective(const bool enabled) {
 		gls.SetPerspective(enabled);
 		gls.RenderOneFrame();
 	}
 
-	void SetFieldOfView(const int& fieldOfView) {
+	void SetFieldOfView(const int fieldOfView) {
 		gls.SetFieldOfView(fieldOfView);
 		gls.RenderOneFrame();
 	}
 
-	void UpdateLights(const int& ambient = 50, const int& brightness1 = 50, const int& brightness2 = 50, const int& brightness3 = 50) {
-		gls.UpdateLights(ambient, brightness1, brightness2, brightness3);
+	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
+		const Vector3 directional0Dir = Vector3(), const Vector3 directional1Dir = Vector3(), const Vector3 directonal2Dir = Vector3())
+	{
+		gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directonal2Dir);
 		gls.RenderOneFrame();
 	}
 

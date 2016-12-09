@@ -80,24 +80,21 @@ const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
 }
 
 void GLSurface::InitLighting() {
-	light0.ambient = Vector3(0.20f, 0.2288f, 0.0f);
-	light0.diffuse = Vector3(0.55f, 0.55f, 0.55f);
-	light0.specular = Vector3(0.4f, 0.4f, 0.4f);
-	light0.position = Vector3(1.0f, 0.2f, 0.5f);
+	ambientLight = 0.10f;
 
-	light1.diffuse = Vector3(0.45f, 0.45f, 0.45f);
-	light1.position = Vector3(-1.0f, -1.0f, 1.0f);
+	frontalLight.diffuse = Vector3(0.2f, 0.2f, 0.2f);
 
-	light2.diffuse = Vector3(0.45f, 0.45f, 0.45f);
-	light2.specular = Vector3(0.4f, 0.4f, 0.4f);
-	light2.position = Vector3(-2.0f, 2.0f, 1.0f);
-}
+	directionalLight0.diffuse = Vector3(0.6f, 0.6f, 0.6f);
+	directionalLight0.direction = Vector3(-0.90f, 0.1f, 1.0f);
+	directionalLight0.direction.Normalize();
 
-void GLSurface::InitMaterial(const Vector3& diffuseColor) {
-	material.ambient = Vector3(0.2f, 0.2f, 0.2f);
-	material.diffuse = diffuseColor;
-	material.specular = Vector3(0.4f, 0.4f, 0.4f);
-	material.shininess = 10.0f;
+	directionalLight1.diffuse = Vector3(0.6f, 0.6f, 0.6f);
+	directionalLight1.direction = Vector3(0.70f, 0.1f, 1.0f);
+	directionalLight1.direction.Normalize();
+
+	directionalLight2.diffuse = Vector3(0.85f, 0.85f, 0.85f);
+	directionalLight2.direction = Vector3(0.3f, 0.2f, -1.0f);
+	directionalLight2.direction.Normalize();
 }
 
 int GLSurface::Initialize(wxGLCanvas* can, wxGLContext* ctx) {
@@ -157,7 +154,6 @@ int GLSurface::InitGLSettings() {
 	glEnable(GL_BLEND);
 
 	InitLighting();
-	InitMaterial(Vector3(0.8f, 0.8f, 0.8f));
 
 	return 0;
 }
@@ -177,7 +173,6 @@ void GLSurface::Cleanup() {
 	activeMeshes.clear();
 
 	selectedMesh = nullptr;
-	noImageMat = nullptr;
 
 	if (primitiveMat) {
 		delete primitiveMat;
@@ -235,7 +230,7 @@ void GLSurface::UnprojectCamera(Vector3& result) {
 	result.z = res.z;
 }
 
-void GLSurface::SetView(const char& type) {
+void GLSurface::SetView(const char type) {
 	if (type == 'F') {
 		camPos = Vector3(0.0f, -5.0f, -15.0f);
 		camRot = Vector3();
@@ -254,19 +249,33 @@ void GLSurface::SetView(const char& type) {
 	}
 }
 
-void GLSurface::SetPerspective(const bool& enabled) {
+void GLSurface::SetPerspective(const bool enabled) {
 	perspective = enabled;
 }
 
-void GLSurface::SetFieldOfView(const int& fieldOfView) {
+void GLSurface::SetFieldOfView(const int fieldOfView) {
 	mFov = fieldOfView;
 }
 
-void GLSurface::UpdateLights(const int& ambient, const int& brightness1, const int& brightness2, const int& brightness3) {
-	light0.ambient = Vector3(0.01f * ambient, 0.00286f * ambient, 0.0f);
-	light0.diffuse = Vector3(0.01f * brightness1, 0.01f * brightness1, 0.01f * brightness1);
-	light1.diffuse = Vector3(0.01f * brightness2, 0.01f * brightness2, 0.01f * brightness2);
-	light2.diffuse = Vector3(0.01f * brightness3, 0.01f * brightness3, 0.01f * brightness3);
+void GLSurface::UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
+	const Vector3 directional0Dir, const Vector3 directional1Dir, const Vector3 directional2Dir)
+{
+	ambientLight = 0.01f * ambient;
+	frontalLight.diffuse = Vector3(0.01f * frontal, 0.01f * frontal, 0.01f * frontal);
+	directionalLight0.diffuse = Vector3(0.01f * directional0, 0.01f * directional0, 0.01f * directional0);
+	directionalLight1.diffuse = Vector3(0.01f * directional1, 0.01f * directional1, 0.01f * directional1);
+	directionalLight2.diffuse = Vector3(0.01f * directional2, 0.01f * directional2, 0.01f * directional2);
+
+	if (Vector3() != directional0Dir)
+		directionalLight0.direction = directional0Dir;
+	if (Vector3() != directional1Dir)
+		directionalLight1.direction = directional1Dir;
+	if (Vector3() != directional2Dir)
+		directionalLight2.direction = directional2Dir;
+
+	directionalLight0.direction.Normalize();
+	directionalLight1.direction.Normalize();
+	directionalLight2.direction.Normalize();
 }
 
 void GLSurface::GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos) {
@@ -691,6 +700,8 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetMatrixProjection(projection);
 	shader.SetMatrixModelView(modelView);
 	shader.SetColor(m->color);
+	shader.SetModelSpace(m->modelSpace);
+	shader.SetEmissive(m->emissive);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
 	shader.SetPointsEnabled(false);
@@ -698,10 +709,12 @@ void GLSurface::RenderMesh(mesh* m) {
 	glBindVertexArray(m->vao);
 
 	if (m->rendermode == RenderMode::Normal || m->rendermode == RenderMode::LitWire || m->rendermode == RenderMode::UnlitSolid) {
-		shader.SetLight(0, light0);
-		shader.SetLight(1, light1);
-		shader.SetLight(2, light2);
-		shader.SetMaterial(material);
+		shader.SetFrontalLight(frontalLight);
+		shader.SetDirectionalLight(directionalLight0, 0);
+		shader.SetDirectionalLight(directionalLight1, 1);
+		shader.SetDirectionalLight(directionalLight2, 2);
+		shader.SetAmbientLight(ambientLight);
+		shader.SetProperties(m->prop);
 
 		if (m->rendermode == RenderMode::LitWire) {
 			glDisable(GL_CULL_FACE);
@@ -736,7 +749,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
 			glEnableVertexAttribArray(3);
 
-			m->material->BindTextures(largestAF);
+			m->material->BindTextures(largestAF, m->backlight);
 		}
 
 		// Offset triangles so that points can be visible
@@ -759,6 +772,7 @@ void GLSurface::RenderMesh(mesh* m) {
 
 		if (bTextured && m->textured && m->texcoord) {
 			glBindTexture(GL_TEXTURE_2D, 0);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 			glDisableVertexAttribArray(3);
 		}
 
@@ -826,14 +840,39 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 
 	mesh* m = new mesh();
 
-	// Check skin and double sided shader flags
-	bool isSkin = false;
-	m->doublesided = false;
-
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
-		isSkin = shader->IsSkinTint();
+		m->modelSpace = shader->IsModelSpace();
+		m->emissive = shader->IsEmissive();
+		m->backlight = shader->HasBacklight();
 		m->doublesided = shader->IsDoubleSided();
+
+		m->prop.uvOffset = shader->GetUVOffset();
+		m->prop.uvScale = shader->GetUVScale();
+		m->prop.specularColor = shader->GetSpecularColor();
+		m->prop.specularStrength = shader->GetSpecularStrength();
+		m->prop.shininess = shader->GetGlossiness();
+		m->prop.envReflection = shader->GetEnvironmentMapScale();
+
+		Color4 emissiveColor = shader->GetEmissiveColor();
+		m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
+		m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
+
+		m->prop.alpha = shader->GetAlpha();
+
+		NiMaterialProperty* material = nif->GetMaterialProperty(shapeName);
+		if (material) {
+			m->emissive = material->IsEmissive();
+
+			m->prop.specularColor = material->GetSpecularColor();
+			m->prop.shininess = material->GetGlossiness();
+
+			emissiveColor = material->GetEmissiveColor();
+			m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
+			m->prop.emissiveMultiple = material->GetEmissiveMultiple();
+
+			m->prop.alpha = material->GetAlpha();
+		}
 	}
 
 	m->nVerts = nifVerts.size();
@@ -863,7 +902,6 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 			m->texcoord[i].v = (*nifUvs)[i].v;
 		}
 		m->textured = true;
-		m->material = noImageMat;
 	}
 
 	if (!nifNorms || nifNorms->empty()) {
@@ -1401,16 +1439,8 @@ RenderMode GLSurface::SetMeshRenderMode(const string& name, RenderMode mode) {
 	return r;
 }
 
-GLMaterial* GLSurface::AddMaterial(const string& textureFile, const string& vShaderFile, const string& fShaderFile) {
-	GLMaterial* mat = resLoader.AddMaterial(textureFile, vShaderFile, fShaderFile);
-	if (!mat) {
-		// Use noImage material if loader failed
-		if (!noImageMat)
-			noImageMat = resLoader.AddMaterial("res\\images\\NoImg.png", "res\\shaders\\default.vert", "res\\shaders\\default.frag");
-
-		mat = noImageMat;
-	}
-
+GLMaterial* GLSurface::AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile) {
+	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile);
 	if (mat) {
 		string shaderError;
 		if (mat->GetShader().GetError(&shaderError)) {

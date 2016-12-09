@@ -35,6 +35,7 @@ PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation = nullptr;
 PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation = nullptr;
 PFNGLUNIFORM1FPROC glUniform1f = nullptr;
 PFNGLUNIFORM1IPROC glUniform1i = nullptr;
+PFNGLUNIFORM2FPROC glUniform2f = nullptr;
 PFNGLUNIFORM3FPROC glUniform3f = nullptr;
 PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv = nullptr;
 
@@ -106,6 +107,7 @@ void InitExtensions() {
 		glGetUniformLocation = (PFNGLGETUNIFORMLOCATIONPROC)wglGetProcAddress("glGetUniformLocation");
 		glUniform1f = (PFNGLUNIFORM1FPROC)wglGetProcAddress("glUniform1f");
 		glUniform1i = (PFNGLUNIFORM1IPROC)wglGetProcAddress("glUniform1i");
+		glUniform2f = (PFNGLUNIFORM2FPROC)wglGetProcAddress("glUniform2f");
 		glUniform3f = (PFNGLUNIFORM3FPROC)wglGetProcAddress("glUniform3f");
 		glUniformMatrix4fv = (PFNGLUNIFORMMATRIX4FVPROC)wglGetProcAddress("glUniformMatrix4fv");
 
@@ -124,7 +126,7 @@ void InitExtensions() {
 			!glDisableVertexAttribArray || !glEnableVertexAttribArray || !glVertexAttribPointer ||
 			!glGenBuffers || !glDeleteBuffers || !glBindBuffer || !glBufferData || !glBufferSubData ||
 			!glGetAttribLocation || !glGetUniformLocation ||
-			!glUniform1f || !glUniform1i || !glUniform3f || !glUniformMatrix4fv ||
+			!glUniform1f || !glUniform1i || !glUniform2f || !glUniform3f || !glUniformMatrix4fv ||
 			!glActiveTexture)
 		{
 			extSupported = false;

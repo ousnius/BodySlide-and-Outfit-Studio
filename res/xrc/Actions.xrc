@@ -619,57 +619,12 @@
 		<object class="wxBoxSizer">
 			<orient>wxVERTICAL</orient>
 			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
-					<object class="sizeritem">
-						<option>0</option>
-						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-						<border>5</border>
-						<object class="wxStaticText" name="m_staticText13">
-							<label>Display Texture:</label>
-							<wrap>-1</wrap>
-						</object>
-					</object>
-					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALL</flag>
-						<border>5</border>
-						<object class="wxFilePickerCtrl" name="stDisplayTexture">
-							<value></value>
-							<message>Select a texture file</message>
-							<wildcard>*.png; *.dds; *.jpg</wildcard>
-							<style>wxFLP_DEFAULT_STYLE</style>
-						</object>
-					</object>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxEXPAND | wxALL</flag>
-				<border>5</border>
-				<object class="wxStaticLine" name="m_staticline1">
-					<style>wxLI_HORIZONTAL</style>
-				</object>
-			</object>
-			<object class="sizeritem">
 				<option>1</option>
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxGrid" name="stTexGrid">
 					<style>wxALWAYS_SHOW_SB</style>
 					<size>446,260</size>
-				</object>
-			</object>
-			<object class="sizeritem">
-				<option>0</option>
-				<flag>wxALL|wxEXPAND</flag>
-				<border>5</border>
-				<object class="wxButton" name="btApplyDiffuse">
-					<tooltip>Applies the current diffuse texture path to the Outfit Studio display texture path.</tooltip>						
-					<label>Apply Diffuse</label>
 				</object>
 			</object>
 			<object class="sizeritem">

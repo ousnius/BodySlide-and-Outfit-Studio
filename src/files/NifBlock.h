@@ -279,56 +279,6 @@ struct NiQuatTransform {
 	float scale;
 };
 
-struct Color4 {
-	float r;
-	float g;
-	float b;
-	float a;
-
-	Color4() {
-		r = g = b = a = 0.0f;
-	}
-	Color4(const float& r, const float& g, const float& b, const float& a) {
-		this->r = r;
-		this->g = g;
-		this->b = b;
-		this->a = a;
-	}
-
-	bool operator == (const Color4& other) {
-		return (r == other.r && g == other.g && b == other.b && a == other.a);
-	}
-	bool operator != (const Color4& other) {
-		return !(*this == other);
-	}
-
-	Color4& operator *= (const float& val) {
-		r *= val;
-		g *= val;
-		b *= val;
-		a *= val;
-		return *this;
-	}
-	Color4 operator * (const float& val) const {
-		Color4 tmp = *this;
-		tmp *= val;
-		return tmp;
-	}
-
-	Color4& operator /= (const float& val) {
-		r /= val;
-		g /= val;
-		b /= val;
-		a /= val;
-		return *this;
-	}
-	Color4 operator / (const float& val) const {
-		Color4 tmp = *this;
-		tmp /= val;
-		return tmp;
-	}
-};
-
 struct MatchGroup {
 	ushort count;
 	vector<ushort> matches;
@@ -3144,20 +3094,27 @@ public:
 	virtual bool IsSkinned();
 	virtual void SetSkinned(const bool& enable);
 	virtual bool IsDoubleSided();
+	virtual bool IsModelSpace();
+	virtual bool IsEmissive();
+	virtual bool HasBacklight();
 	virtual uint GetType();
 	virtual void SetType(uint type);
+	virtual Vector2 GetUVOffset();
+	virtual Vector2 GetUVScale();
 	virtual Vector3 GetSpecularColor();
 	virtual void SetSpecularColor(Vector3 color);
 	virtual float GetSpecularStrength();
 	virtual void SetSpecularStrength(float strength);
 	virtual float GetGlossiness();
 	virtual void SetGlossiness(float gloss);
+	virtual float GetEnvironmentMapScale();
 	virtual int GetTextureSetRef();
 	virtual void SetTextureSetRef(const int& texSetRef);
 	virtual Color4 GetEmissiveColor();
 	virtual void SetEmissiveColor(Color4 color);
 	virtual float GetEmissiveMultiple();
 	virtual void SetEmissiveMultiple(float emissive);
+	virtual float GetAlpha();
 	virtual string GetWetMaterialName();
 	virtual void SetWetMaterialName(const string& matName);
 };
@@ -3231,20 +3188,27 @@ public:
 	bool IsSkinned();
 	void SetSkinned(const bool& enable);
 	bool IsDoubleSided();
+	bool IsModelSpace();
+	bool IsEmissive();
+	bool HasBacklight();
 	uint GetType();
 	void SetType(uint type);
+	Vector2 GetUVOffset();
+	Vector2 GetUVScale();
 	Vector3 GetSpecularColor();
 	void SetSpecularColor(Vector3 color);
 	float GetSpecularStrength();
 	void SetSpecularStrength(float strength);
 	float GetGlossiness();
 	void SetGlossiness(float gloss);
+	float GetEnvironmentMapScale();
 	int GetTextureSetRef();
 	void SetTextureSetRef(const int& texSetRef);
 	Color4 GetEmissiveColor();
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
+	float GetAlpha();
 	string GetWetMaterialName();
 	void SetWetMaterialName(const string& matName);
 };
@@ -3264,6 +3228,7 @@ public:
 
 	uint GetType();
 	void SetType(uint type);
+	float GetEnvironmentMapScale();
 };
 
 class BSEffectShaderProperty : public NiShader {
@@ -3300,6 +3265,12 @@ public:
 	bool IsSkinned();
 	void SetSkinned(const bool& enable);
 	bool IsDoubleSided();
+	bool IsModelSpace();
+	bool IsEmissive();
+	bool HasBacklight();
+	Vector2 GetUVOffset();
+	Vector2 GetUVScale();
+	float GetEnvironmentMapScale();
 	Color4 GetEmissiveColor();
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
@@ -3327,6 +3298,11 @@ public:
 	bool IsSkinned();
 	void SetSkinned(const bool& enable);
 	bool IsDoubleSided();
+	bool IsModelSpace();
+	bool IsEmissive();
+	bool HasBacklight();
+	Vector2 GetUVOffset();
+	Vector2 GetUVScale();
 };
 
 class BSSkyShaderProperty : public NiShader {
@@ -3352,6 +3328,11 @@ public:
 	bool IsSkinned();
 	void SetSkinned(const bool& enable);
 	bool IsDoubleSided();
+	bool IsModelSpace();
+	bool IsEmissive();
+	bool HasBacklight();
+	Vector2 GetUVOffset();
+	Vector2 GetUVScale();
 };
 
 class BSShaderLightingProperty : public BSShaderProperty {
@@ -3421,14 +3402,16 @@ public:
 
 
 class NiMaterialProperty : public NiProperty {
-public:
-	Vector3 colorAmbient;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
-	Vector3 colorDiffuse;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
+private:
 	Vector3 colorSpecular;
 	Vector3 colorEmissive;
 	float glossiness;
 	float alpha;
 	float emitMulti;						// Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21
+
+public:
+	Vector3 colorAmbient;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
+	Vector3 colorDiffuse;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 
 	NiMaterialProperty(NiHeader& hdr);
 	NiMaterialProperty(fstream& file, NiHeader& hdr);
@@ -3438,6 +3421,7 @@ public:
 	int CalcBlockSize();
 	NiMaterialProperty* Clone() { return new NiMaterialProperty(*this); }
 
+	bool IsEmissive();
 	Vector3 GetSpecularColor();
 	void SetSpecularColor(Vector3 color);
 	float GetGlossiness();
@@ -3446,6 +3430,7 @@ public:
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
+	float GetAlpha();
 };
 
 class NiStencilProperty : public NiProperty {

@@ -9,24 +9,6 @@ See the included LICENSE file
 mesh::mesh() {
 	vbo.resize(4, 0);
 	queueUpdate.resize(vbo.size() + 1, false);
-
-	verts = nullptr;
-	norms = nullptr;
-	vcolors = nullptr;
-	texcoord = nullptr;
-	tris = nullptr;
-	edges = nullptr;
-	bvh = nullptr;
-	vertTris = nullptr;
-	vertEdges = nullptr;
-	bVisible = true;
-	bShowPoints = false;
-	textured = false;
-	rendermode = RenderMode::Normal;
-	doublesided = false;
-	smoothSeamNormals = true;
-	smoothThresh = 90.0f * DEG2RAD;
-	scale = 1.0f;
 }
 
 mesh::~mesh() {
@@ -213,6 +195,23 @@ void mesh::UpdateBuffers() {
 
 void mesh::QueueUpdate(const UpdateType& type) {
 	queueUpdate[type] = true;
+}
+
+void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
+	emissive = matFile.emitEnabled;
+	doublesided = matFile.twoSided;
+	//backlight = matFile.backLighting;
+	modelSpace = matFile.modelSpaceNormals;
+
+	prop.alpha = matFile.alpha;
+	prop.uvOffset = matFile.uvOffset;
+	prop.uvScale = matFile.uvScale;
+	prop.specularColor = matFile.specularColor;
+	prop.specularStrength = matFile.specularMult;
+	prop.shininess = matFile.smoothness;
+	prop.emissiveColor = matFile.emittanceColor;
+	prop.emissiveMultiple = matFile.emittanceMult;
+	prop.envReflection = matFile.environmentMappingMaskScale;
 }
 
 void mesh::ScaleVertices(const Vector3& center, const float& factor) {

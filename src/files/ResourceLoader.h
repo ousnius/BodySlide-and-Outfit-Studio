@@ -25,7 +25,7 @@ public:
 	ResourceLoader();
 	~ResourceLoader();
 
-	GLMaterial* AddMaterial(const string& textureFile,
+	GLMaterial* AddMaterial(const vector<string>& textureFiles,
 				const string& vShaderFile,
 				const string& fShaderFile);
 
@@ -39,7 +39,7 @@ private:
 
 	// If N3983 gets accepted into a future C++ standard then
 	// we wouldn't have to explicitly define our own hash here.
-	typedef tuple<string, string, string> MaterialKey;
+	typedef tuple<vector<string>, string, string> MaterialKey;
 	struct MatKeyHash {
 		size_t operator()(const MaterialKey& key) const;
 	};

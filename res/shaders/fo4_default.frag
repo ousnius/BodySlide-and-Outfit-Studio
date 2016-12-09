@@ -137,20 +137,21 @@ void directionalLight(in DirectionalLight light, in vec3 inNormal, inout vec3 di
 		{
 			if (bModelSpace)
 			{
-				// Model Space Normal Map
-				normal = normalize(normalMap.rgb * 2.0 - 1.0);
-				normal.r = -normal.r;
+				// No proper FO4 model space map rendering yet
+				//normal = normalize(normalMap.rgb * 2.0 - 1.0);
+				//normal.r = -normal.r;
 				
 				if (bSpecular)
 				{
-					specFactor = specMap.r;
+					// No proper FO4 specular map rendering yet
+					//specFactor = specMap.r;
 				}
 			}
 			else
 			{
-				// Tangent Space Normal Map
-				normal = normalMatrix * perturb_normal(inverse(normalMatrix) * normal, vPos);
-				specFactor = normalMap.a;
+				// No proper FO4 tangent space map rendering yet
+				//normal = normalMatrix * perturb_normal(inverse(normalMatrix) * normal, vPos);
+				//specFactor = normalMap.a;
 			}
 		}
 	}
@@ -159,7 +160,8 @@ void directionalLight(in DirectionalLight light, in vec3 inNormal, inout vec3 di
 	float NdotNegL = max(0.0, dot(normal, -lightDir));
 	float NdotH = max(0.0, dot(normal * inverse(normalMatrix), normalize(lightDir - vPos)));
 	
-	spec += clamp(prop.specularColor * prop.specularStrength * specFactor * pow(NdotH, prop.shininess), 0.0, 1.0) * light.diffuse * NdotL;
+	// No proper FO4 specular yet
+	//spec += clamp(prop.specularColor * prop.specularStrength * specFactor * pow(NdotH, prop.shininess), 0.0, 1.0) * light.diffuse * NdotL;
 	diffuse += NdotL * light.diffuse;
 	
 	if (bBacklight)
@@ -263,10 +265,10 @@ void main(void)
 				outDiffuse += ambient;
 				albedo += outCube;
 				
-				if (bShowTexture && bModelSpace)
+				if (bShowTexture)
 				{
-					// Hack for making Skyrim bodies brighter
-					albedo *= vec3(1.75, 1.65, 1.65);
+					// Hack for FO4 brightness
+					albedo *= vec3(1.4, 1.4, 1.4);
 				}
 				
 				if (bEmissive)

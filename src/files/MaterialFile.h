@@ -133,6 +133,10 @@ public:
 	byte envmapMinLOD = 0;
 	float softDepth = 100.0f;
 
+	MaterialFile() {
+		signature = BGSM;
+	}
+
 	MaterialFile(const Type&);
 	MaterialFile(const string&);
 	MaterialFile(istream&);

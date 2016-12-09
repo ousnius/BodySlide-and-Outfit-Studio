@@ -343,14 +343,17 @@ msgstr "Zurücksetzen"
 msgid "Ambient"
 msgstr "Umgebung"
 
-msgid "Brightness 1"
-msgstr "Helligkeit 1"
+msgid "Frontal"
+msgstr "Frontal"
 
-msgid "Brightness 2"
-msgstr "Helligkeit 2"
+msgid "Directional 1"
+msgstr "Richtung 1"
 
-msgid "Brightness 3"
-msgstr "Helligkeit 3"
+msgid "Directional 2"
+msgstr "Richtung 2"
+
+msgid "Directional 3"
+msgstr "Richtung 3"
 
 msgid "De-/Select Sliders"
 msgstr "Slider ab-/anwählen"

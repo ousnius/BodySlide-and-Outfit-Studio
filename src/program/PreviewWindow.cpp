@@ -70,10 +70,27 @@ void PreviewWindow::OnShown() {
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
 
 	int ambient = Config.GetIntValue("Lights/Ambient");
-	int brightness1 = Config.GetIntValue("Lights/Brightness1");
-	int brightness2 = Config.GetIntValue("Lights/Brightness2");
-	int brightness3 = Config.GetIntValue("Lights/Brightness3");
-	gls.UpdateLights(ambient, brightness1, brightness2, brightness3);
+	int frontal = Config.GetIntValue("Lights/Frontal");
+
+	int directional0 = Config.GetIntValue("Lights/Directional0");
+	int directional0X = Config.GetIntValue("Lights/Directional0.x");
+	int directional0Y = Config.GetIntValue("Lights/Directional0.y");
+	int directional0Z = Config.GetIntValue("Lights/Directional0.z");
+
+	int directional1 = Config.GetIntValue("Lights/Directional1");
+	int directional1X = Config.GetIntValue("Lights/Directional1.x");
+	int directional1Y = Config.GetIntValue("Lights/Directional1.y");
+	int directional1Z = Config.GetIntValue("Lights/Directional1.z");
+
+	int directional2 = Config.GetIntValue("Lights/Directional2");
+	int directional2X = Config.GetIntValue("Lights/Directional2.x");
+	int directional2Y = Config.GetIntValue("Lights/Directional2.y");
+	int directional2Z = Config.GetIntValue("Lights/Directional2.z");
+
+	Vector3 directional0Dir = Vector3(directional0X / 100.0f, directional0Y / 100.0f, directional0Z / 100.0f);
+	Vector3 directional1Dir = Vector3(directional1X / 100.0f, directional1Y / 100.0f, directional1Z / 100.0f);
+	Vector3 directional2Dir = Vector3(directional2X / 100.0f, directional2Y / 100.0f, directional2Z / 100.0f);
+	gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directional2Dir);
 
 	app->InitPreview();
 }
@@ -126,7 +143,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
-				AddNifShapeTexture(nif, string(shapeName));
+				AddNifShapeTextures(nif, string(shapeName));
 
 		}
 		else if (shapeName) {
@@ -143,24 +160,22 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
-				AddNifShapeTexture(nif, shapeList[i]);
+				AddNifShapeTextures(nif, shapeList[i]);
 		}
 	}
 
 	gls.RenderOneFrame();
 }
 
-void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName) {
-	bool isSkin = false;
+void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeName) {
 	bool hasMat = false;
 	wxString matFile;
-	string texFile;
+
+	const byte MAX_TEXTURE_PATHS = 10;
+	vector<string> texFiles(MAX_TEXTURE_PATHS);
 
 	NiShader* shader = fromNif->GetShader(shapeName);
 	if (shader) {
-		if (shader->IsSkinTint())
-			isSkin = true;
-
 		// Find material file
 		if (shader->header->GetUserVersion() == 12 && shader->header->GetUserVersion2() >= 130) {
 			matFile = shader->GetName();
@@ -169,12 +184,12 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 		}
 	}
 
+	MaterialFile mat(MaterialFile::BGSM);
 	if (hasMat) {
 		matFile = matFile.Lower();
 		matFile.Replace("\\", "/");
 
 		// Attempt to read loose material file
-		MaterialFile mat(MaterialFile::BGSM);
 		mat = MaterialFile(baseDataPath + matFile.ToStdString());
 
 		if (mat.Failed()) {
@@ -203,26 +218,53 @@ void PreviewWindow::AddNifShapeTexture(NifFile* fromNif, const string& shapeName
 		}
 
 		if (!mat.Failed()) {
-			if (mat.signature == MaterialFile::BGSM)
-				texFile = mat.diffuseTexture;
-			else if (mat.signature == MaterialFile::BGEM)
-				texFile = mat.baseTexture;
+			if (mat.signature == MaterialFile::BGSM) {
+				texFiles[0] = mat.diffuseTexture.c_str();
+				texFiles[1] = mat.normalTexture.c_str();
+				texFiles[4] = mat.envmapTexture.c_str();
+				texFiles[5] = mat.glowTexture.c_str();
+				texFiles[7] = mat.smoothSpecTexture.c_str();
+			}
+			else if (mat.signature == MaterialFile::BGEM) {
+				texFiles[0] = mat.baseTexture.c_str();
+				texFiles[1] = mat.fxNormalTexture.c_str();
+				texFiles[4] = mat.fxEnvmapTexture.c_str();
+				texFiles[5] = mat.envmapMaskTexture.c_str();
+			}
 		}
-		else
-			fromNif->GetTextureForShape(shapeName, texFile);
-	}
-	else
-		fromNif->GetTextureForShape(shapeName, texFile);
+		else {
+			hasMat = false;
 
-	if (!texFile.empty()) {
-		texFile = regex_replace(texFile, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-		texFile = regex_replace(texFile, regex("^\\\\+", regex_constants::icase), ""); // Remove all backslashes from the front
-		texFile = regex_replace(texFile, regex(".*?Data\\\\", regex_constants::icase), ""); // Remove everything before and including the data path root
-		texFile = regex_replace(texFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\"); // Add textures root path if not existing}
+			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+				fromNif->GetTextureForShape(shapeName, texFiles[i], i);
+		}
+	}
+	else {
+		for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
+			fromNif->GetTextureForShape(shapeName, texFiles[i], i);
 	}
 
-	string combinedTexFile = baseDataPath + texFile;
-	SetShapeTexture(shapeName, combinedTexFile.c_str(), isSkin);
+	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
+		if (!texFiles[i].empty()) {
+			texFiles[i] = regex_replace(texFiles[i], regex("/+|\\\\+"), "\\");												// Replace multiple slashes or forward slashes with one backslash
+			texFiles[i] = regex_replace(texFiles[i], regex("^(.*?)\\\\textures\\\\", regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
+			texFiles[i] = regex_replace(texFiles[i], regex("^\\\\+"), "");													// Remove all backslashes from the front
+			texFiles[i] = regex_replace(texFiles[i], regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\");	// If the path doesn't start with "textures\", add it to the front
+			
+			texFiles[i] = baseDataPath + texFiles[i];
+		}
+	}
+
+	string vShader = "res\\shaders\\default.vert";
+	string fShader = "res\\shaders\\default.frag";
+
+	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == FO4) {
+		vShader = "res\\shaders\\fo4_default.vert";
+		fShader = "res\\shaders\\fo4_default.frag";
+	}
+
+	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat);
 }
 
 void PreviewWindow::RightDrag(int dX, int dY) {

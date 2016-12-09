@@ -9840,11 +9840,31 @@ bool NiShader::IsDoubleSided() {
 	return false;
 }
 
+bool NiShader::IsModelSpace() {
+	return false;
+}
+
+bool NiShader::IsEmissive() {
+	return false;
+}
+
+bool NiShader::HasBacklight() {
+	return false;
+}
+
 uint NiShader::GetType() {
 	return 0xFFFFFFFF;
 }
 
 void NiShader::SetType(uint type) {
+}
+
+Vector2 NiShader::GetUVOffset() {
+	return Vector2();
+}
+
+Vector2 NiShader::GetUVScale() {
+	return Vector2(1.0f, 1.0f);
 }
 
 Vector3 NiShader::GetSpecularColor() {
@@ -9868,6 +9888,10 @@ float NiShader::GetGlossiness() {
 void NiShader::SetGlossiness(float gloss) {
 }
 
+float NiShader::GetEnvironmentMapScale() {
+	return 0.0f;
+}
+
 int NiShader::GetTextureSetRef() {
 	return 0xFFFFFFFF;
 }
@@ -9887,6 +9911,10 @@ float NiShader::GetEmissiveMultiple() {
 }
 
 void NiShader::SetEmissiveMultiple(float emissive) {
+}
+
+float NiShader::GetAlpha() {
+	return 1.0f;
 }
 
 string NiShader::GetWetMaterialName() {
@@ -10264,12 +10292,32 @@ bool BSLightingShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
 }
 
+bool BSLightingShaderProperty::IsModelSpace() {
+	return (shaderFlags1 & (1 << 12)) != 0;
+}
+
+bool BSLightingShaderProperty::IsEmissive() {
+	return (shaderFlags1 & (1 << 22)) != 0;
+}
+
+bool BSLightingShaderProperty::HasBacklight() {
+	return (shaderFlags2 & (1 << 27)) != 0;
+}
+
 uint BSLightingShaderProperty::GetType() {
 	return skyrimShaderType;
 }
 
 void BSLightingShaderProperty::SetType(uint type) {
 	skyrimShaderType = type;
+}
+
+Vector2 BSLightingShaderProperty::GetUVOffset() {
+	return uvOffset;
+}
+
+Vector2 BSLightingShaderProperty::GetUVScale() {
+	return uvScale;
 }
 
 Vector3 BSLightingShaderProperty::GetSpecularColor() {
@@ -10294,6 +10342,10 @@ float BSLightingShaderProperty::GetGlossiness() {
 
 void BSLightingShaderProperty::SetGlossiness(float gloss) {
 	glossiness = gloss;
+}
+
+float BSLightingShaderProperty::GetEnvironmentMapScale() {
+	return environmentMapScale;
 }
 
 int BSLightingShaderProperty::GetTextureSetRef() {
@@ -10324,6 +10376,10 @@ float BSLightingShaderProperty::GetEmissiveMultiple() {
 
 void BSLightingShaderProperty::SetEmissiveMultiple(float emissive) {
 	emissiveMultiple = emissive;
+}
+
+float BSLightingShaderProperty::GetAlpha() {
+	return alpha;
 }
 
 string BSLightingShaderProperty::GetWetMaterialName() {
@@ -10427,6 +10483,10 @@ uint BSShaderProperty::GetType() {
 
 void BSShaderProperty::SetType(uint type) {
 	shaderType = type;
+}
+
+float BSShaderProperty::GetEnvironmentMapScale() {
+	return environmentMapScale;
 }
 
 int BSShaderProperty::CalcBlockSize() {
@@ -10553,6 +10613,30 @@ bool BSEffectShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
 }
 
+bool BSEffectShaderProperty::IsModelSpace() {
+	return (shaderFlags1 & (1 << 12)) != 0;
+}
+
+bool BSEffectShaderProperty::IsEmissive() {
+	return (shaderFlags1 & (1 << 22)) != 0;
+}
+
+bool BSEffectShaderProperty::HasBacklight() {
+	return (shaderFlags2 & (1 << 27)) != 0;
+}
+
+Vector2 BSEffectShaderProperty::GetUVOffset() {
+	return uvOffset;
+}
+
+Vector2 BSEffectShaderProperty::GetUVScale() {
+	return uvScale;
+}
+
+float BSEffectShaderProperty::GetEnvironmentMapScale() {
+	return envMapScale;
+}
+
 Color4 BSEffectShaderProperty::GetEmissiveColor() {
 	return emissiveColor;
 }
@@ -10654,6 +10738,26 @@ bool BSWaterShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
 }
 
+bool BSWaterShaderProperty::IsModelSpace() {
+	return (shaderFlags1 & (1 << 12)) != 0;
+}
+
+bool BSWaterShaderProperty::IsEmissive() {
+	return (shaderFlags1 & (1 << 22)) != 0;
+}
+
+bool BSWaterShaderProperty::HasBacklight() {
+	return (shaderFlags2 & (1 << 27)) != 0;
+}
+
+Vector2 BSWaterShaderProperty::GetUVOffset() {
+	return uvOffset;
+}
+
+Vector2 BSWaterShaderProperty::GetUVScale() {
+	return uvScale;
+}
+
 int BSWaterShaderProperty::CalcBlockSize() {
 	NiProperty::CalcBlockSize();
 
@@ -10730,6 +10834,26 @@ void BSSkyShaderProperty::SetSkinned(const bool& enable) {
 
 bool BSSkyShaderProperty::IsDoubleSided() {
 	return (shaderFlags2 & (1 << 4)) == 16;
+}
+
+bool BSSkyShaderProperty::IsModelSpace() {
+	return (shaderFlags1 & (1 << 12)) != 0;
+}
+
+bool BSSkyShaderProperty::IsEmissive() {
+	return (shaderFlags1 & (1 << 22)) != 0;
+}
+
+bool BSSkyShaderProperty::HasBacklight() {
+	return (shaderFlags2 & (1 << 27)) != 0;
+}
+
+Vector2 BSSkyShaderProperty::GetUVOffset() {
+	return uvOffset;
+}
+
+Vector2 BSSkyShaderProperty::GetUVScale() {
+	return uvScale;
 }
 
 int BSSkyShaderProperty::CalcBlockSize() {
@@ -11057,6 +11181,10 @@ void NiMaterialProperty::Put(fstream& file) {
 		file.write((char*)&emitMulti, 4);
 }
 
+bool NiMaterialProperty::IsEmissive() {
+	return true;
+}
+
 Vector3 NiMaterialProperty::GetSpecularColor() {
 	return colorSpecular;
 }
@@ -11093,6 +11221,10 @@ float NiMaterialProperty::GetEmissiveMultiple() {
 
 void NiMaterialProperty::SetEmissiveMultiple(float emissive) {
 	emitMulti = emissive;
+}
+
+float NiMaterialProperty::GetAlpha() {
+	return alpha;
 }
 
 int NiMaterialProperty::CalcBlockSize() {

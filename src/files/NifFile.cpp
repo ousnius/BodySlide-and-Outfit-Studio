@@ -749,10 +749,24 @@ int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int
 	if (textureSetRef == 0xFFFFFFFF) {
 		if (shader->blockType == BSEFFECTSHADERPROPERTY) {
 			auto effectShader = static_cast<BSEffectShaderProperty*>(shader);
-			if (texIndex == 0)
+
+			switch (texIndex) {
+			case 0:
 				outTexFile = effectShader->sourceTexture.GetString();
-			else if (texIndex == 1)
+				break;
+			case 1:
+				outTexFile = effectShader->normalTexture.GetString();
+				break;
+			case 3:
 				outTexFile = effectShader->greyscaleTexture.GetString();
+				break;
+			case 4:
+				outTexFile = effectShader->envMapTexture.GetString();
+				break;
+			case 5:
+				outTexFile = effectShader->envMaskTexture.GetString();
+				break;
+			}
 
 			return BSEFFECTSHADERPROPERTY;
 		}
@@ -780,10 +794,25 @@ void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, in
 	if (textureSetRef == 0xFFFFFFFF) {
 		if (shader->blockType == BSEFFECTSHADERPROPERTY) {
 			auto effectShader = static_cast<BSEffectShaderProperty*>(shader);
-			if (texIndex == 0)
+
+			switch (texIndex) {
+			case 0:
 				effectShader->sourceTexture.SetString(outTexFile);
-			else if (texIndex == 1)
+				break;
+			case 1:
+				effectShader->normalTexture.SetString(outTexFile);
+				break;
+			case 3:
 				effectShader->greyscaleTexture.SetString(outTexFile);
+				break;
+			case 4:
+				effectShader->envMapTexture.SetString(outTexFile);
+				break;
+			case 5:
+				effectShader->envMaskTexture.SetString(outTexFile);
+				break;
+			}
+
 			return;
 		}
 		else

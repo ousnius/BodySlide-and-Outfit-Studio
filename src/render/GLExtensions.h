@@ -49,6 +49,7 @@ extern PFNGLGETATTRIBLOCATIONPROC glGetAttribLocation;
 extern PFNGLGETUNIFORMLOCATIONPROC glGetUniformLocation;
 extern PFNGLUNIFORM1FPROC glUniform1f;
 extern PFNGLUNIFORM1IPROC glUniform1i;
+extern PFNGLUNIFORM2FPROC glUniform2f;
 extern PFNGLUNIFORM3FPROC glUniform3f;
 extern PFNGLUNIFORMMATRIX4FVPROC glUniformMatrix4fv;
 

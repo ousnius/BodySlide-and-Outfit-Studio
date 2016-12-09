@@ -262,6 +262,56 @@ struct Vector4 {
 	}
 };
 
+struct Color4 {
+	float r;
+	float g;
+	float b;
+	float a;
+
+	Color4() {
+		r = g = b = a = 0.0f;
+	}
+	Color4(const float& r, const float& g, const float& b, const float& a) {
+		this->r = r;
+		this->g = g;
+		this->b = b;
+		this->a = a;
+	}
+
+	bool operator == (const Color4& other) {
+		return (r == other.r && g == other.g && b == other.b && a == other.a);
+	}
+	bool operator != (const Color4& other) {
+		return !(*this == other);
+	}
+
+	Color4& operator *= (const float& val) {
+		r *= val;
+		g *= val;
+		b *= val;
+		a *= val;
+		return *this;
+	}
+	Color4 operator * (const float& val) const {
+		Color4 tmp = *this;
+		tmp *= val;
+		return tmp;
+	}
+
+	Color4& operator /= (const float& val) {
+		r /= val;
+		g /= val;
+		b /= val;
+		a /= val;
+		return *this;
+	}
+	Color4 operator / (const float& val) const {
+		Color4 tmp = *this;
+		tmp /= val;
+		return tmp;
+	}
+};
+
 
 // 4D Matrix class for calculating and applying transformations.
 class Matrix4 {

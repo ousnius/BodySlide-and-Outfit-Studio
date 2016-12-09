@@ -39,10 +39,11 @@
         <CenterMode>Selected</CenterMode></Editing>
     <!--Light Settings-->
     <Lights>
-        <Ambient>20</Ambient>
-        <Brightness1>55</Brightness1>
-        <Brightness2>45</Brightness2>
-        <Brightness3>45</Brightness3></Lights>
+        <Ambient>10</Ambient>
+        <Frontal>20</Frontal>
+        <Directional0 x="-100" y="10" z="100">60</Directional0>
+        <Directional1 x="100" y="10" z="100">60</Directional1>
+        <Directional2 x="0" y="20" z="-100">85</Directional2></Lights>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
         <DefaultSkeletonReference></DefaultSkeletonReference>

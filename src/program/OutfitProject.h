@@ -19,7 +19,6 @@ using namespace std;
 class OutfitStudio;
 
 class OutfitProject {
-	string defaultTexFile = "res\\NoImg.png";
 	ConfigurationManager& appConfig;
 	OutfitStudio* owner;
 
@@ -43,7 +42,8 @@ public:
 	map<string, vector<Vector3>> boneScaleVerts;
 	map<string, unordered_map<ushort, float>> workWeights;
 
-	unordered_map<string, string> shapeTextures;
+	unordered_map<string, vector<string>> shapeTextures;
+	unordered_map<string, MaterialFile> shapeMaterialFiles;
 
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
 	OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner = nullptr);
@@ -141,10 +141,11 @@ public:
 	void GetShapes(vector<string>& outShapeNames);
 	void GetActiveBones(vector<string>& outBoneNames);
 
-	string GetShapeTexture(const string& shapeName);
+	vector<string> GetShapeTextures(const string& shapeName);
+	bool GetShapeMaterialFile(const string& shapeName, MaterialFile& outMatFile);
 
-	void SetTextures(const string& textureFile);
-	void SetTexture(const string& shapeName, const string& textureFile);
+	void SetTextures();
+	void SetTextures(const string& shapeName, const vector<string>& textureFiles = vector<string>());
 
 	bool IsValidShape(const string& shapeName);
 
