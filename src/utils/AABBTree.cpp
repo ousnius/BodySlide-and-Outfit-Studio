@@ -7,8 +7,6 @@ See the included LICENSE file
 #include "AABBTree.h"
 
 AABB::AABB() {
-	min = Vector3(0, 0, 0);
-	max = Vector3(0, 0, 0);
 }
 
 AABB::AABB(const Vector3 newMin, const Vector3 newMax) {
@@ -17,6 +15,9 @@ AABB::AABB(const Vector3 newMin, const Vector3 newMax) {
 }
 
 AABB::AABB(Vector3* points, int nPoints) {
+	if (nPoints <= 0)
+		return;
+
 	min = points[0];
 	max = points[0];
 	for (int i = 1; i < nPoints; i++) {
@@ -37,6 +38,9 @@ AABB::AABB(Vector3* points, int nPoints) {
 }
 
 AABB::AABB(Vector3* points, ushort* indices, int nPoints) {
+	if (nPoints <= 0)
+		return;
+
 	min = points[indices[0]];
 	max = points[indices[0]];
 	int idx;
@@ -122,6 +126,9 @@ void AABB::AddBoxToMesh(vector<Vector3>& verts, vector<Edge>& edges) {
 }
 
 void AABB::Merge(Vector3* points, ushort* indices, int nPoints) {
+	if (nPoints <= 0)
+		return;
+
 	int idx;
 	for (int i = 0; i < nPoints; i++) {
 		idx = indices[i];
@@ -306,6 +313,9 @@ AABBTree::AABBTreeNode::AABBTreeNode(vector<int>& facetIndices, int start, int e
 	tree = treeRef;
 	this->parent = parent;
 	int moreStart = 0;
+
+	if (facetIndices.size() < treeRef->MinFacets())
+		return;
 
 	// calculate this node's containing AABB and the geometric average
 	treeRef->CalcAABBandGeoAvg(facetIndices, start, end, mBB, axis_avg);
@@ -642,6 +652,9 @@ Vector3 AABBTree::Center() {
 }
 
 void AABBTree::CalcAABBandGeoAvg(vector<int>& forFacets, AABB& outBB, Vector3& outAxisAvg) {
+	if (forFacets.empty())
+		return;
+
 	Vector3 mid;
 	outAxisAvg = Vector3(0.0f, 0.0f, 0.0f);
 	AABB tmpBB(vertexRef, (ushort*)(&triRef[forFacets[0]]), 3);
@@ -654,6 +667,9 @@ void AABBTree::CalcAABBandGeoAvg(vector<int>& forFacets, AABB& outBB, Vector3& o
 }
 
 void AABBTree::CalcAABBandGeoAvg(vector<int>& forFacets, int start, int end, AABB& outBB, Vector3& outAxisAvg) {
+	if (forFacets.empty())
+		return;
+
 	Vector3 mid;
 	//float ytot = 0;
 	//float yaxis = 0;

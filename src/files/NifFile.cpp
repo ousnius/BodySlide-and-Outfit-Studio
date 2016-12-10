@@ -2826,15 +2826,11 @@ void NifFile::DeleteShape(const string& shapeName) {
 	DeleteShader(shapeName);
 	DeleteSkinning(shapeName);
 
-	for (int i = 0; i < shape->numProperties; i++) {
+	for (int i = shape->numProperties - 1; i >= 0; --i)
 		hdr.DeleteBlock(shape->propertiesRef[i]);
-		i--;
-	}
 
-	for (int i = 0; i < shape->GetNumExtraData(); i++) {
+	for (int i = shape->GetNumExtraData() - 1; i >= 0; --i)
 		hdr.DeleteBlock(shape->GetExtraDataRef(i));
-		i--;
-	}
 
 	int shapeID = GetBlockID(shape);
 	hdr.DeleteBlock(shapeID);
@@ -2864,8 +2860,6 @@ void NifFile::DeleteShader(const string& shapeName) {
 				hdr.DeleteBlock(shader->GetTextureSetRef());
 				hdr.DeleteBlock(shader->GetControllerRef());
 				hdr.DeleteBlock(shape->propertiesRef[i]);
-				shader->SetTextureSetRef(0xFFFFFFFF);
-				shape->propertiesRef[i] = 0xFFFFFFFF;
 				i--;
 				continue;
 			}
@@ -2888,7 +2882,6 @@ void NifFile::DeleteAlpha(const string& shapeName) {
 		alpha = hdr.GetBlock<NiAlphaProperty>(shape->propertiesRef[i]);
 		if (alpha) {
 			hdr.DeleteBlock(shape->propertiesRef[i]);
-			shape->propertiesRef[i] = 0xFFFFFFFF;
 			i--;
 			continue;
 		}

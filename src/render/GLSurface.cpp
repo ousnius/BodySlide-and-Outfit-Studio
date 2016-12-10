@@ -878,11 +878,15 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	m->nVerts = nifVerts.size();
 	m->nTris = nifTris.size();
 
-	m->verts = new Vector3[m->nVerts];
-	m->norms = new Vector3[m->nVerts];
-	m->vcolors = new Vector3[m->nVerts];
-	m->texcoord = new Vector2[m->nVerts];
-	m->tris = new Triangle[m->nTris];
+	if (m->nVerts > 0) {
+		m->verts = new Vector3[m->nVerts];
+		m->norms = new Vector3[m->nVerts];
+		m->vcolors = new Vector3[m->nVerts];
+		m->texcoord = new Vector2[m->nVerts];
+	}
+
+	if (m->nTris > 0)
+		m->tris = new Triangle[m->nTris];
 
 	m->shapeName = shapeName;
 	m->smoothSeamNormals = smoothNormalSeams;
