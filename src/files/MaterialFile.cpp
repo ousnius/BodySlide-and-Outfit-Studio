@@ -398,7 +398,7 @@ int MaterialFile::Write(ostream& output) {
 	return 0;
 }
 
-MaterialFile::AlphaBlendModeType MaterialFile::ConvertAlphaBlendMode(const byte& a, const uint& b, const uint& c) {
+MaterialFile::AlphaBlendModeType MaterialFile::ConvertAlphaBlendMode(const byte a, const uint b, const uint c) {
 	if (a == 0 && b == 6 && c == 7)
 		return AlphaBlendModeType::Unknown;
 	else if (a == 0 && b == 0 && c == 0)

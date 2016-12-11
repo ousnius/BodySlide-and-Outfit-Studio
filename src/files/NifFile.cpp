@@ -1548,7 +1548,7 @@ bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, 
 	return false;
 }
 
-bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool& rootChildrenOnly) {
+bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly) {
 	if (rootChildrenOnly) {
 		auto root = dynamic_cast<NiNode*>(blocks[0]);
 		if (root) {
@@ -2388,7 +2388,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 	}
 }
 
-void NifFile::CalcNormalsForShape(const string& shapeName, const bool& smooth, const float& smoothThresh) {
+void NifFile::CalcNormalsForShape(const string& shapeName, const bool smooth, const float& smoothThresh) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;

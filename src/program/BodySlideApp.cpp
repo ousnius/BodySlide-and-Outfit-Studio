@@ -408,7 +408,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	wxLogMessage("Finished activating set '%s'.", outfitName);
 }
 
-void BodySlideApp::ActivatePreset(const string &presetName, const bool& updatePreview) {
+void BodySlideApp::ActivatePreset(const string &presetName, const bool updatePreview) {
 	wxLogMessage("Applying preset '%s' to sliders.", presetName);
 
 	Config.SetValue("SelectedPreset", presetName);

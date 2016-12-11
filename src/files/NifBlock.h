@@ -543,7 +543,7 @@ public:
 	NiString() {};
 	NiString(fstream& file, const int& szSize);
 
-	void Put(fstream& file, const int& szSize, const bool& wantNullOutput = true);
+	void Put(fstream& file, const int& szSize, const bool wantNullOutput = true);
 	void Get(fstream& file, const int& szSize);
 };
 
@@ -635,8 +635,8 @@ public:
 	bool IsValid() { return valid; }
 
 	string GetVersionInfo();
-	void SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2);
-	bool VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool& equal = false);
+	void SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint& userVer, const uint& userVer2);
+	bool VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool equal = false);
 
 	uint GetUserVersion() { return userVersion; };
 	uint GetUserVersion2() { return userVersion2; };
@@ -710,7 +710,7 @@ public:
 	void notifyStringDelete(int stringID);
 
 	string GetName();
-	void SetName(const string& propertyName, const bool& renameExisting = false);
+	void SetName(const string& propertyName, const bool renameExisting = false);
 	void ClearName();
 
 	int GetControllerRef() { return controllerRef; }
@@ -1000,19 +1000,19 @@ public:
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 
-	void SetVertices(const bool& enable);
+	void SetVertices(const bool enable);
 	bool HasVertices() { return hasVertices; }
 
-	void SetNormals(const bool& enable);
+	void SetNormals(const bool enable);
 	bool HasNormals() { return hasNormals; }
 
-	void SetVertexColors(const bool& enable);
+	void SetVertexColors(const bool enable);
 	bool HasVertexColors() { return hasVertexColors; }
 
-	void SetUVs(const bool& enable);
+	void SetUVs(const bool enable);
 	bool HasUVs() { return (numUVSets & (1 << 0)) != 0; }
 
-	void SetTangents(const bool& enable);
+	void SetTangents(const bool enable);
 	bool HasTangents() { return (numUVSets & (1 << 12)) != 0; }
 
 	void SetBounds(const BoundingSphere& bounds) { this->bounds = bounds; }
@@ -1020,7 +1020,7 @@ public:
 	void UpdateBounds();
 
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
-	virtual void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
+	virtual void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
 	virtual void CalcTangentSpace();
 };
 
@@ -1041,22 +1041,22 @@ public:
 	virtual int GetAlphaPropertyRef();
 	virtual void SetAlphaPropertyRef(int alphaPropertyRef);
 
-	virtual void SetVertices(const bool& enable);
+	virtual void SetVertices(const bool enable);
 	virtual bool HasVertices();
 
-	virtual void SetUVs(const bool& enable);
+	virtual void SetUVs(const bool enable);
 	virtual bool HasUVs();
 
-	virtual void SetNormals(const bool& enable);
+	virtual void SetNormals(const bool enable);
 	virtual bool HasNormals();
 
-	virtual void SetTangents(const bool& enable);
+	virtual void SetTangents(const bool enable);
 	virtual bool HasTangents();
 
-	virtual void SetVertexColors(const bool& enable);
+	virtual void SetVertexColors(const bool enable);
 	virtual bool HasVertexColors();
 
-	virtual void SetSkinned(const bool& enable);
+	virtual void SetSkinned(const bool enable);
 	virtual bool IsSkinned();
 
 	virtual void SetBounds(const BoundingSphere& bounds);
@@ -1155,25 +1155,25 @@ public:
 	const vector<Vector3>* GetBitangentData(bool xform = true);
 	const vector<Vector2>* GetUVData();
 
-	void SetVertices(const bool& enable);
+	void SetVertices(const bool enable);
 	bool HasVertices() { return (vertFlags6 & (1 << 4)) != 0; }
 
-	void SetUVs(const bool& enable);
+	void SetUVs(const bool enable);
 	bool HasUVs() { return (vertFlags6 & (1 << 5)) != 0; }
 
-	void SetNormals(const bool& enable);
+	void SetNormals(const bool enable);
 	bool HasNormals() { return (vertFlags6 & (1 << 7)) != 0; }
 
-	void SetTangents(const bool& enable);
+	void SetTangents(const bool enable);
 	bool HasTangents() { return (vertFlags7 & (1 << 0)) != 0; }
 
-	void SetVertexColors(const bool& enable);
+	void SetVertexColors(const bool enable);
 	bool HasVertexColors() { return (vertFlags7 & (1 << 1)) != 0; }
 
-	void SetSkinned(const bool& enable);
+	void SetSkinned(const bool enable);
 	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 
-	void SetFullPrecision(const bool& enable);
+	void SetFullPrecision(const bool enable);
 	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0 || header->GetUserVersion2() == 100; }
 	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals() && header->GetUserVersion2() != 100); }
 
@@ -1182,7 +1182,7 @@ public:
 	void UpdateBounds();
 
 	void SetNormals(const vector<Vector3>& inNorms);
-	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	void UpdateFlags();
 	int CalcDataSizes();
@@ -1365,7 +1365,7 @@ public:
 	void Put(fstream& file);
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 	NiTriShapeData* Clone() { return new NiTriShapeData(*this); }
@@ -1394,7 +1394,7 @@ public:
 	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void StripsToTris(vector<Triangle>* outTris);
-	void RecalcNormals(const bool& smooth = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 	NiTriStripsData* Clone() { return new NiTriStripsData(*this); }
@@ -3092,7 +3092,7 @@ class NiShader : public NiProperty {
 public:
 	virtual bool IsSkinTint();
 	virtual bool IsSkinned();
-	virtual void SetSkinned(const bool& enable);
+	virtual void SetSkinned(const bool enable);
 	virtual bool IsDoubleSided();
 	virtual bool IsModelSpace();
 	virtual bool IsEmissive();
@@ -3186,7 +3186,7 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(const bool& enable);
+	void SetSkinned(const bool enable);
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
@@ -3263,7 +3263,7 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(const bool& enable);
+	void SetSkinned(const bool enable);
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
@@ -3296,7 +3296,7 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(const bool& enable);
+	void SetSkinned(const bool enable);
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
@@ -3326,7 +3326,7 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(const bool& enable);
+	void SetSkinned(const bool enable);
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
@@ -3367,7 +3367,7 @@ public:
 
 	bool IsSkinTint();
 	bool IsSkinned();
-	void SetSkinned(const bool& enable);
+	void SetSkinned(const bool enable);
 	int GetTextureSetRef();
 	void SetTextureSetRef(const int& texSetRef);
 };
@@ -3544,7 +3544,7 @@ public:
 	NiBooleanExtraData* Clone() { return new NiBooleanExtraData(*this); }
 
 	bool GetBooleanData();
-	void SetBooleanData(const bool& booleanData);
+	void SetBooleanData(const bool booleanData);
 };
 
 class NiIntegerExtraData : public NiExtraData {

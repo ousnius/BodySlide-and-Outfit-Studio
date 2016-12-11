@@ -36,7 +36,7 @@ private:
 	map<string, vector<string>> groupMembers;
 	vector<string> allOutfits;
 
-	void RefreshUI(const bool& = false);
+	void RefreshUI(const bool = false);
 	void OnLoadGroup(wxFileDirPickerEvent&);
 	void OnSaveGroup(wxCommandEvent&);
 	void OnSaveGroupAs(wxCommandEvent&);

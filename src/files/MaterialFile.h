@@ -148,6 +148,6 @@ public:
 		return failed;
 	}
 
-	AlphaBlendModeType ConvertAlphaBlendMode(const byte&, const uint&, const uint&);
+	AlphaBlendModeType ConvertAlphaBlendMode(const byte, const uint, const uint);
 	void ConvertAlphaBlendMode(const AlphaBlendModeType&, byte&, uint&, uint&);
 };

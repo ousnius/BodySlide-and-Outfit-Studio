@@ -223,7 +223,7 @@ NiString::NiString(fstream& file, const int& szSize) {
 	Get(file, szSize);
 }
 
-void NiString::Put(fstream& file, const int& szSize, const bool& wantNullOutput) {
+void NiString::Put(fstream& file, const int& szSize, const bool wantNullOutput) {
 	if (szSize == 1) {
 		byte smSize = str.length();
 		if (wantNullOutput)
@@ -347,7 +347,7 @@ string NiHeader::GetVersionInfo() {
 		"\nUser Version 2: " + to_string(userVersion2);
 }
 
-void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const byte& v4, const uint& userVer, const uint& userVer2) {
+void NiHeader::SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint& userVer, const uint& userVer2) {
 	string verString = "Gamebryo File Format, Version " + to_string(v1) + '.' + to_string(v2) + '.' + to_string(v3) + '.' + to_string(v4);
 	strncpy(verStr, verString.c_str(), 0x26);
 
@@ -359,7 +359,7 @@ void NiHeader::SetVersion(const byte& v1, const byte& v2, const byte& v3, const 
 	userVersion2 = userVer2;
 }
 
-bool NiHeader::VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool& equal) {
+bool NiHeader::VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool equal) {
 	if (equal) {
 		if (version4 == v1 && version3 == v2 && version2 == v3 && version1 == v4)
 			return true;
@@ -838,7 +838,7 @@ string NiObjectNET::GetName() {
 	return name;
 }
 
-void NiObjectNET::SetName(const string& propertyName, const bool& renameExisting) {
+void NiObjectNET::SetName(const string& propertyName, const bool renameExisting) {
 	if (renameExisting)
 		header->SetStringById(nameRef, propertyName);
 	else
@@ -1674,7 +1674,7 @@ void NiShape::SetAlphaPropertyRef(int alphaPropertyRef) { }
 int NiShape::GetDataRef() { return 0xFFFFFFFF; }
 void NiShape::SetDataRef(int dataRef) { }
 
-void NiShape::SetVertices(const bool& enable) {
+void NiShape::SetVertices(const bool enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertices(enable);
@@ -1688,7 +1688,7 @@ bool NiShape::HasVertices() {
 	return false;
 };
 
-void NiShape::SetUVs(const bool& enable) {
+void NiShape::SetUVs(const bool enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetUVs(enable);
@@ -1702,7 +1702,7 @@ bool NiShape::HasUVs() {
 	return false;
 };
 
-void NiShape::SetNormals(const bool& enable) {
+void NiShape::SetNormals(const bool enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetNormals(enable);
@@ -1716,7 +1716,7 @@ bool NiShape::HasNormals() {
 	return false;
 };
 
-void NiShape::SetTangents(const bool& enable) {
+void NiShape::SetTangents(const bool enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetTangents(enable);
@@ -1730,7 +1730,7 @@ bool NiShape::HasTangents() {
 	return false;
 };
 
-void NiShape::SetVertexColors(const bool& enable) {
+void NiShape::SetVertexColors(const bool enable) {
 	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertexColors(enable);
@@ -1744,7 +1744,7 @@ bool NiShape::HasVertexColors() {
 	return false;
 };
 
-void NiShape::SetSkinned(const bool& enable) { };
+void NiShape::SetSkinned(const bool enable) { };
 bool NiShape::IsSkinned() { return false; };
 
 void NiShape::SetBounds(const BoundingSphere& bounds) {
@@ -2329,7 +2329,7 @@ const vector<Vector2>* BSTriShape::GetUVData() {
 	return &rawUvs;
 }
 
-void BSTriShape::SetVertices(const bool& enable) {
+void BSTriShape::SetVertices(const bool enable) {
 	if (enable) {
 		vertFlags6 |= 1 << 4;
 		vertData.resize(numVertices);
@@ -2347,42 +2347,42 @@ void BSTriShape::SetVertices(const bool& enable) {
 	}
 }
 
-void BSTriShape::SetUVs(const bool& enable) {
+void BSTriShape::SetUVs(const bool enable) {
 	if (enable)
 		vertFlags6 |= 1 << 5;
 	else
 		vertFlags6 &= ~(1 << 5);
 }
 
-void BSTriShape::SetNormals(const bool& enable) {
+void BSTriShape::SetNormals(const bool enable) {
 	if (enable)
 		vertFlags6 |= 1 << 7;
 	else
 		vertFlags6 &= ~(1 << 7);
 }
 
-void BSTriShape::SetTangents(const bool& enable) {
+void BSTriShape::SetTangents(const bool enable) {
 	if (enable)
 		vertFlags7 |= 1 << 0;
 	else
 		vertFlags7 &= ~(1 << 0);
 }
 
-void BSTriShape::SetVertexColors(const bool& enable) {
+void BSTriShape::SetVertexColors(const bool enable) {
 	if (enable)
 		vertFlags7 |= 1 << 1;
 	else
 		vertFlags7 &= ~(1 << 1);
 }
 
-void BSTriShape::SetSkinned(const bool& enable) {
+void BSTriShape::SetSkinned(const bool enable) {
 	if (enable)
 		vertFlags7 |= 1 << 2;
 	else
 		vertFlags7 &= ~(1 << 2);
 }
 
-void BSTriShape::SetFullPrecision(const bool& enable) {
+void BSTriShape::SetFullPrecision(const bool enable) {
 	if (!CanChangePrecision())
 		return;
 
@@ -2412,7 +2412,7 @@ void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
 	}
 }
 
-void BSTriShape::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+void BSTriShape::RecalcNormals(const bool smooth, const float& smoothThresh) {
 	GetRawVerts();
 	SetNormals(true);
 
@@ -3344,7 +3344,7 @@ void NiGeometryData::Put(fstream& file) {
 	file.write((char*)&additionalData, 4);
 }
 
-void NiGeometryData::SetVertices(const bool& enable) {
+void NiGeometryData::SetVertices(const bool enable) {
 	hasVertices = enable;
 	if (enable) {
 		vertices.resize(numVertices);
@@ -3360,7 +3360,7 @@ void NiGeometryData::SetVertices(const bool& enable) {
 	}
 }
 
-void NiGeometryData::SetNormals(const bool& enable) {
+void NiGeometryData::SetNormals(const bool enable) {
 	hasNormals = enable;
 	if (enable)
 		normals.resize(numVertices);
@@ -3368,7 +3368,7 @@ void NiGeometryData::SetNormals(const bool& enable) {
 		normals.clear();
 }
 
-void NiGeometryData::SetVertexColors(const bool& enable) {
+void NiGeometryData::SetVertexColors(const bool enable) {
 	hasVertexColors = enable;
 	if (enable)
 		vertexColors.resize(numVertices);
@@ -3376,7 +3376,7 @@ void NiGeometryData::SetVertexColors(const bool& enable) {
 		vertexColors.clear();
 }
 
-void NiGeometryData::SetUVs(const bool& enable) {
+void NiGeometryData::SetUVs(const bool enable) {
 	if (enable) {
 		numUVSets |= 1 << 0;
 		uvSets.resize(numVertices);
@@ -3387,7 +3387,7 @@ void NiGeometryData::SetUVs(const bool& enable) {
 	}
 }
 
-void NiGeometryData::SetTangents(const bool& enable) {
+void NiGeometryData::SetTangents(const bool enable) {
 	if (enable) {
 		numUVSets |= 1 << 12;
 		tangents.resize(numVertices);
@@ -3465,7 +3465,7 @@ void NiGeometryData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 }
 
-void NiGeometryData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+void NiGeometryData::RecalcNormals(const bool smooth, const float& smoothThresh) {
 	SetNormals(true);
 }
 
@@ -3672,7 +3672,7 @@ void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 }
 
-void NiTriShapeData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+void NiTriShapeData::RecalcNormals(const bool smooth, const float& smoothThresh) {
 	if (!HasNormals())
 		return;
 
@@ -3932,7 +3932,7 @@ void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 	}
 }
 
-void NiTriStripsData::RecalcNormals(const bool& smooth, const float& smoothThresh) {
+void NiTriStripsData::RecalcNormals(const bool smooth, const float& smoothThresh) {
 	if (!HasNormals())
 		return;
 
@@ -9833,7 +9833,7 @@ bool NiShader::IsSkinned() {
 	return false;
 }
 
-void NiShader::SetSkinned(const bool& enable) {
+void NiShader::SetSkinned(const bool enable) {
 }
 
 bool NiShader::IsDoubleSided() {
@@ -10281,7 +10281,7 @@ bool BSLightingShaderProperty::IsSkinned() {
 	return (shaderFlags1 & (1 << 1)) != 0;
 }
 
-void BSLightingShaderProperty::SetSkinned(const bool& enable) {
+void BSLightingShaderProperty::SetSkinned(const bool enable) {
 	if (enable)
 		shaderFlags1 |= 1 << 1;
 	else
@@ -10602,7 +10602,7 @@ bool BSEffectShaderProperty::IsSkinned() {
 	return (shaderFlags1 & (1 << 1)) != 0;
 }
 
-void BSEffectShaderProperty::SetSkinned(const bool& enable) {
+void BSEffectShaderProperty::SetSkinned(const bool enable) {
 	if (enable)
 		shaderFlags1 |= 1 << 1;
 	else
@@ -10727,7 +10727,7 @@ bool BSWaterShaderProperty::IsSkinned() {
 	return (shaderFlags1 & (1 << 1)) != 0;
 }
 
-void BSWaterShaderProperty::SetSkinned(const bool& enable) {
+void BSWaterShaderProperty::SetSkinned(const bool enable) {
 	if (enable)
 		shaderFlags1 |= 1 << 1;
 	else
@@ -10825,7 +10825,7 @@ bool BSSkyShaderProperty::IsSkinned() {
 	return (shaderFlags1 & (1 << 1)) != 0;
 }
 
-void BSSkyShaderProperty::SetSkinned(const bool& enable) {
+void BSSkyShaderProperty::SetSkinned(const bool enable) {
 	if (enable)
 		shaderFlags1 |= 1 << 1;
 	else
@@ -11001,7 +11001,7 @@ bool BSShaderPPLightingProperty::IsSkinned() {
 	return (shaderFlags & (1 << 1)) != 0;
 }
 
-void BSShaderPPLightingProperty::SetSkinned(const bool& enable) {
+void BSShaderPPLightingProperty::SetSkinned(const bool enable) {
 	if (enable)
 		shaderFlags |= 1 << 1;
 	else
@@ -11568,7 +11568,7 @@ bool NiBooleanExtraData::GetBooleanData() {
 	return booleanData;
 }
 
-void NiBooleanExtraData::SetBooleanData(const bool& booleanData) {
+void NiBooleanExtraData::SetBooleanData(const bool booleanData) {
 	this->booleanData = booleanData;
 }
 

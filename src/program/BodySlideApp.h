@@ -168,7 +168,7 @@ public:
 	void RefreshSliders();
 
 	void ActivateOutfit(const string& outfitName);
-	void ActivatePreset(const string& presetName, const bool& updatePreview = true);
+	void ActivatePreset(const string& presetName, const bool updatePreview = true);
 
 	void LaunchOutfitStudio();
 

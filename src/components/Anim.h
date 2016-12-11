@@ -17,7 +17,7 @@ struct VertexBoneWeights {
 
 	VertexBoneWeights() { }
 
-	void Add(const byte& inBoneId, const float& inWeight) {
+	void Add(const byte inBoneId, const float inWeight) {
 		if (inWeight == 0.0f)
 			return;
 

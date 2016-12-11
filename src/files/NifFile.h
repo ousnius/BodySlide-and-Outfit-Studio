@@ -99,7 +99,7 @@ public:
 
 	int GetRootNodeID();
 	bool GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
-	bool SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool& rootChildrenOnly = false);
+	bool SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly = false);
 
 	int GetShapeBoneList(const string& shapeName, vector<string>& outList);
 	int GetShapeBoneIDList(const string& shapeName, vector<int>& outList);
@@ -137,7 +137,7 @@ public:
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
 	void InvertUVsForShape(const string& shapeName, bool invertX, bool invertY);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
-	void CalcNormalsForShape(const string& shapeName, const bool& smooth = true, const float& smoothThresh = 60.0f);
+	void CalcNormalsForShape(const string& shapeName, const bool smooth = true, const float& smoothThresh = 60.0f);
 	void CalcTangentsForShape(const string& shapeName);
 
 	void ClearShapeTransform(const string& shapeName);

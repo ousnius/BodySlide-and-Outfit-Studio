@@ -48,7 +48,7 @@ GroupManager::~GroupManager() {
 	wxXmlResource::Get()->Unload("res\\xrc\\GroupManager.xrc");
 }
 
-void GroupManager::RefreshUI(const bool& clearGroups) {
+void GroupManager::RefreshUI(const bool clearGroups) {
 	listMembers->Clear();
 	listOutfits->Clear();
 
