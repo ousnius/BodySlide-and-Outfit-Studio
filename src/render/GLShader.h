@@ -181,10 +181,7 @@ public:
 					if (texRef[id] != 0) {
 						shader.BindTexture(id, texRef[id], "texSpecular");
 						if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-						shader.SetSpecularEnabled(true);
 					}
-					else
-						shader.SetSpecularEnabled(false);
 				}
 				else {
 					if (texRef[id] != 0) {

@@ -152,7 +152,11 @@ void directionalLight(in DirectionalLight light, in vec3 inNormal, inout vec3 di
 			{
 				// No proper FO4 tangent space map rendering yet
 				//normal = normalMatrix * perturb_normal(inverse(normalMatrix) * normal, vPos);
-				//specFactor = normalMap.a;
+				
+				if (bSpecular)
+				{
+					//specFactor = normalMap.a;
+				}
 			}
 		}
 	}

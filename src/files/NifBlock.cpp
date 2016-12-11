@@ -9848,6 +9848,10 @@ bool NiShader::IsEmissive() {
 	return false;
 }
 
+bool NiShader::HasSpecular() {
+	return true;
+}
+
 bool NiShader::HasBacklight() {
 	return false;
 }
@@ -10300,6 +10304,10 @@ bool BSLightingShaderProperty::IsEmissive() {
 	return (shaderFlags1 & (1 << 22)) != 0;
 }
 
+bool BSLightingShaderProperty::HasSpecular() {
+	return (shaderFlags1 & (1 << 0)) != 0;
+}
+
 bool BSLightingShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
@@ -10485,6 +10493,10 @@ void BSShaderProperty::SetType(uint type) {
 	shaderType = type;
 }
 
+bool BSShaderProperty::HasSpecular() {
+	return (shaderFlags & (1 << 0)) != 0;
+}
+
 float BSShaderProperty::GetEnvironmentMapScale() {
 	return environmentMapScale;
 }
@@ -10621,6 +10633,10 @@ bool BSEffectShaderProperty::IsEmissive() {
 	return (shaderFlags1 & (1 << 22)) != 0;
 }
 
+bool BSEffectShaderProperty::HasSpecular() {
+	return (shaderFlags1 & (1 << 0)) != 0;
+}
+
 bool BSEffectShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
@@ -10746,6 +10762,10 @@ bool BSWaterShaderProperty::IsEmissive() {
 	return (shaderFlags1 & (1 << 22)) != 0;
 }
 
+bool BSWaterShaderProperty::HasSpecular() {
+	return (shaderFlags1 & (1 << 0)) != 0;
+}
+
 bool BSWaterShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
@@ -10842,6 +10862,10 @@ bool BSSkyShaderProperty::IsModelSpace() {
 
 bool BSSkyShaderProperty::IsEmissive() {
 	return (shaderFlags1 & (1 << 22)) != 0;
+}
+
+bool BSSkyShaderProperty::HasSpecular() {
+	return (shaderFlags1 & (1 << 0)) != 0;
 }
 
 bool BSSkyShaderProperty::HasBacklight() {

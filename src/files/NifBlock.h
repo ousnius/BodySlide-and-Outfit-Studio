@@ -3096,6 +3096,7 @@ public:
 	virtual bool IsDoubleSided();
 	virtual bool IsModelSpace();
 	virtual bool IsEmissive();
+	virtual bool HasSpecular();
 	virtual bool HasBacklight();
 	virtual uint GetType();
 	virtual void SetType(uint type);
@@ -3190,6 +3191,7 @@ public:
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
+	bool HasSpecular();
 	bool HasBacklight();
 	uint GetType();
 	void SetType(uint type);
@@ -3228,6 +3230,7 @@ public:
 
 	uint GetType();
 	void SetType(uint type);
+	bool HasSpecular();
 	float GetEnvironmentMapScale();
 };
 
@@ -3267,6 +3270,7 @@ public:
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
+	bool HasSpecular();
 	bool HasBacklight();
 	Vector2 GetUVOffset();
 	Vector2 GetUVScale();
@@ -3300,6 +3304,7 @@ public:
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
+	bool HasSpecular();
 	bool HasBacklight();
 	Vector2 GetUVOffset();
 	Vector2 GetUVScale();
@@ -3330,6 +3335,7 @@ public:
 	bool IsDoubleSided();
 	bool IsModelSpace();
 	bool IsEmissive();
+	bool HasSpecular();
 	bool HasBacklight();
 	Vector2 GetUVOffset();
 	Vector2 GetUVScale();

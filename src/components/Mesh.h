@@ -80,6 +80,7 @@ public:
 
 	RenderMode rendermode = RenderMode::Normal;
 	bool modelSpace = false;
+	bool specular = true;
 	bool emissive = false;
 	bool backlight = false;
 	bool doublesided = false;

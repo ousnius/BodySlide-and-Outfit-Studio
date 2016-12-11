@@ -24,6 +24,7 @@ GLShader::GLShader(const string& vertexSource, const string& fragmentSource) : G
 
 		SetColor(Vector3(1.0f, 1.0f, 1.0f));
 		SetModelSpace(false);
+		SetEmissive(false);
 		SetWireframeEnabled(false);
 		SetPointsEnabled(false);
 		SetLightingEnabled(true);

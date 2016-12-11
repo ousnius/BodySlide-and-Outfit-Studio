@@ -717,6 +717,7 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetMatrixModelView(modelView);
 	shader.SetColor(m->color);
 	shader.SetModelSpace(m->modelSpace);
+	shader.SetSpecularEnabled(m->specular);
 	shader.SetEmissive(m->emissive);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
@@ -861,6 +862,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
 		m->modelSpace = shader->IsModelSpace();
+		m->specular = shader->HasSpecular();
 		m->emissive = shader->IsEmissive();
 		m->backlight = shader->HasBacklight();
 		m->doublesided = shader->IsDoubleSided();
