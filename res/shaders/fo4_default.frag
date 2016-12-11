@@ -37,6 +37,7 @@ struct Properties
 	float alpha;
 };
 uniform Properties prop;
+uniform float alphaThreshold;
 
 struct FrontalLight
 {
@@ -335,8 +336,6 @@ void main(void)
 	fragColor = color;
 	fragColor.a *= prop.alpha;
 	
-	if (fragColor.a < 0.1)
-	{
+	if (fragColor.a < alphaThreshold)
 		discard;
-	}
 }

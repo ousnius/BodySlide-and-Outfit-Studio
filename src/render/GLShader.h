@@ -74,6 +74,8 @@ public:
 	void SetLightingEnabled(const bool enable);
 	void SetMatrixProjection(const glm::mat4x4& mat);
 	void SetMatrixModelView(const glm::mat4x4& mat);
+	void SetAlphaProperties(const ushort flags, const float threshold);
+	void SetAlphaThreshold(const float threshold);
 
 	void SetFrontalLight(const FrontalLight& light);
 	void SetDirectionalLight(const DirectionalLight& light, const int index);

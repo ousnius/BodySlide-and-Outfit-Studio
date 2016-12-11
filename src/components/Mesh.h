@@ -91,6 +91,9 @@ public:
 	bool bShowPoints = false;
 	bool smoothSeamNormals = true;
 
+	ushort alphaFlags = 0;
+	byte alphaThreshold = 0;
+
 	string shapeName;
 	Vector3 color;
 

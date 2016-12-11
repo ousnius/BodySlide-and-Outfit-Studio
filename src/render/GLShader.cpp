@@ -128,6 +128,43 @@ void GLShader::SetMatrixModelView(const glm::mat4x4& mat) {
 		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&mat);
 }
 
+void GLShader::SetAlphaProperties(const ushort flags, const float threshold) {
+	static const GLenum blendMap[16] = {
+		GL_ONE, GL_ZERO, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR,
+		GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+		GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA, GL_SRC_ALPHA_SATURATE, GL_ONE,
+		GL_ONE, GL_ONE, GL_ONE, GL_ONE
+	};
+
+	//static const GLenum testMap[8] = {
+	//	GL_ALWAYS, GL_LESS, GL_EQUAL, GL_LEQUAL, GL_GREATER, GL_NOTEQUAL, GL_GEQUAL, GL_NEVER
+	//};
+
+	bool alphaBlend = flags & 1;
+	bool alphaTest = (flags & (1 << 9)) != 0;
+	GLenum alphaSrc = blendMap[(flags >> 1) & 0x0F];
+	GLenum alphaDst = blendMap[(flags >> 5) & 0x0F];
+
+	//Always GL_GREATER right now
+	//GLenum alphaFunc = testMap[(flags >> 10) & 0x7];
+
+	if (alphaBlend)
+		glBlendFunc(alphaSrc, alphaDst);
+	else
+		glDisable(GL_BLEND);
+
+	if (alphaTest)
+		SetAlphaThreshold(threshold);
+	else
+		SetAlphaThreshold(0.0f);
+}
+
+void GLShader::SetAlphaThreshold(const float threshold) {
+	GLint loc = glGetUniformLocation(progID, "alphaThreshold");
+	if (loc >= 0)
+		glUniform1f(loc, threshold);
+}
+
 void GLShader::SetFrontalLight(const FrontalLight& light) {
 	GLint loc = glGetUniformLocation(progID, "frontal.diffuse");
 	if (loc >= 0)

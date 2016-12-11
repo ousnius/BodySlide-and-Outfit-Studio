@@ -150,9 +150,6 @@ int GLSurface::InitGLSettings() {
 	glLineWidth(defLineWidth);
 	glPointSize(defPointSize);
 
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-
 	InitLighting();
 
 	return 0;
@@ -657,15 +654,31 @@ void GLSurface::RenderOneFrame() {
 
 	UpdateProjection();
 
-	mesh* m;
+	mesh* m = nullptr;
+
+	// Render regular meshes
 	for (int i = 0; i < meshes.size(); i++) {
 		m = meshes[i];
 		if (!m->bVisible || m->nTris == 0)
 			continue;
 
-		RenderMesh(m);
+		bool alphaBlend = m->alphaFlags & 1;
+		if (!alphaBlend)
+			RenderMesh(m);
 	}
 
+	// Render meshes with alpha blending only
+	for (int i = 0; i < meshes.size(); i++) {
+		m = meshes[i];
+		if (!m->bVisible || m->nTris == 0)
+			continue;
+
+		bool alphaBlend = m->alphaFlags & 1;
+		if (alphaBlend)
+			RenderMesh(m);
+	}
+
+	// Render overlays on top
 	glClear(GL_DEPTH_BUFFER_BIT);
 	for (int i = 0; i < overlays.size(); i++) {
 		m = overlays[i];
@@ -687,6 +700,9 @@ void GLSurface::RenderMesh(mesh* m) {
 		glEnable(GL_CULL_FACE);
 	else
 		glDisable(GL_CULL_FACE);
+
+	glEnable(GL_BLEND);
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	m->UpdateBuffers();
 
@@ -745,6 +761,8 @@ void GLSurface::RenderMesh(mesh* m) {
 		}
 
 		if (bTextured && m->textured && m->texcoord) {
+			shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f);
+
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
 			glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
 			glEnableVertexAttribArray(3);
@@ -873,6 +891,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 
 			m->prop.alpha = material->GetAlpha();
 		}
+
+		nif->GetAlphaForShape(shapeName, m->alphaFlags, m->alphaThreshold);
 	}
 
 	m->nVerts = nifVerts.size();
