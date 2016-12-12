@@ -325,14 +325,17 @@ msgstr "重置"
 msgid "Ambient"
 msgstr "环境"
 
-msgid "Brightness 1"
-msgstr "亮度 1"
+msgid "Frontal"
+msgstr "前端"
 
-msgid "Brightness 2"
-msgstr "亮度 2"
+msgid "Directional 1"
+msgstr "方向1"
 
-msgid "Brightness 3"
-msgstr "亮度 3"
+msgid "Directional 2"
+msgstr "方向2"
+
+msgid "Directional 3"
+msgstr "方向3"
 
 msgid "De-/Select Sliders"
 msgstr "选则/取消滑块"
@@ -1233,8 +1236,8 @@ msgstr "最大"
 msgid "Options"
 msgstr "选项"
 
-msgid "Invert Slider"
-msgstr "反转滑块"
+msgid "Invert"
+msgstr "反转"
 
 msgid "Hidden"
 msgstr "隐藏"
@@ -2320,6 +2323,21 @@ msgid ""
 msgstr ""
 "NIF文件'%s'的版本不匹配当前目标游戏。若要使用这个模型到目标游戏，导出到OBJ/"
 "FBX并再次重新加载它们。"
+
+msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
+msgstr "你想在本阶段将NIF文件对特别版进行优化吗？"
+
+#~ msgid "Brightness 1"
+#~ msgstr "亮度 1"
+
+#~ msgid "Brightness 2"
+#~ msgstr "亮度 2"
+
+#~ msgid "Brightness 3"
+#~ msgstr "亮度 3"
+
+#~ msgid "Invert Slider"
+#~ msgstr "反转滑块"
 
 #~ msgid "Apply Overall Skin Transform"
 #~ msgstr "应用整体皮肤改变"
