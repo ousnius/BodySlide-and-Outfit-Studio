@@ -6,7 +6,8 @@ BodySlide and Outfit Studio, a tool to convert, create, and customize outfits an
 **Created by and/or with the help of:**
 * Caliente
 * ousnius
-* jonwd7
+* jonwd7 for NIF and general help
+* degenerated1123 for help with shaders
 * NifTools team
 
 **Libraries used:**
