@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
 	<object class="wxDialog" name="dlgChoosePreset">
-		<style>wxDEFAULT_DIALOG_STYLE</style>
-		<size>327,132</size>
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER</style>
+		<size>325,175</size>
 		<title>Select a slider preset</title>
 		<centered>1</centered>
 		<object class="wxBoxSizer">
@@ -27,12 +27,12 @@
 			</object>
 			<object class="sizeritem">
 				<option>1</option>
-				<flag>wxEXPAND</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxBoxSizer">
 					<orient>wxHORIZONTAL</orient>
 					<object class="sizeritem">
-						<option>0</option>
+						<option>1</option>
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxRadioButton" name="weightLo">
@@ -41,7 +41,7 @@
 						</object>
 					</object>
 					<object class="sizeritem">
-						<option>0</option>
+						<option>1</option>
 						<flag>wxALL</flag>
 						<border>5</border>
 						<object class="wxRadioButton" name="weightHi">
@@ -53,7 +53,7 @@
 			</object>
 			<object class="sizeritem">
 				<option>1</option>
-				<flag>wxEXPAND|wxALL</flag>
+				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">
 					<object class="button">
