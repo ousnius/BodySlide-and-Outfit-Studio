@@ -1,6 +1,6 @@
 #include <cstdio>
 #include "../load_dds.hpp"
-#include "../file.hpp"
+#include "file.hpp"
 
 namespace gli{
 namespace detail

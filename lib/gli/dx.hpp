@@ -71,8 +71,6 @@ namespace gli
 			D3DFMT_ATI2					= GLI_MAKEFOURCC('A', 'T', 'I', '2'),
 			D3DFMT_AT2N					= GLI_MAKEFOURCC('A', 'T', '2', 'N'),
 
-			D3DFMT_A2XY					= GLI_MAKEFOURCC('A', '2', 'X', 'Y'),
-
 			D3DFMT_BC4U					= GLI_MAKEFOURCC('B', 'C', '4', 'U'),
 			D3DFMT_BC4S					= GLI_MAKEFOURCC('B', 'C', '4', 'S'),
 			D3DFMT_BC5U					= GLI_MAKEFOURCC('B', 'C', '5', 'U'),

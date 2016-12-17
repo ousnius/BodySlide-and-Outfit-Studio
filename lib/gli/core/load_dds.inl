@@ -1,5 +1,5 @@
 #include "../dx.hpp"
-#include "../file.hpp"
+#include "file.hpp"
 #include <cstdio>
 #include <cassert>
 
@@ -153,7 +153,7 @@ namespace detail
 		case dx::D3DFMT_BC4S:
 			return dx::D3DFMT_AT1N;
 		case dx::D3DFMT_BC5U:
-			return dx::D3DFMT_A2XY;
+			return dx::D3DFMT_ATI2;
 		case dx::D3DFMT_BC5S:
 			return dx::D3DFMT_AT2N;
 		}
@@ -291,7 +291,7 @@ namespace detail
 			std::max<texture::size_type>(Header10.ArraySize, 1), FaceCount, MipMapCount);
 
 		std::size_t const SourceSize = Offset + Texture.size();
-		//GLI_ASSERT(SourceSize == Size);
+		GLI_ASSERT(SourceSize == Size);
 
 		std::memcpy(Texture.data(), Data + Offset, Texture.size());
 

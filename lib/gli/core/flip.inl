@@ -16,7 +16,7 @@ namespace detail
 				LineSize);
 		}
 	}
-	
+
 	struct dxt1_block
 	{
 		uint16_t Color0;
@@ -58,7 +58,7 @@ namespace detail
 		uint8_t Row2;
 		uint8_t Row3;
 	};
-	
+
 	inline void flip_block_s3tc(uint8_t* BlockDst, uint8_t* BlockSrc, format Format, bool HeightTwo)
 	{
 		// There is no distinction between RGB and RGBA in DXT-compressed textures,
@@ -72,7 +72,7 @@ namespace detail
 		{
 			dxt1_block* Src = reinterpret_cast<dxt1_block*>(BlockSrc);
 			dxt1_block* Dst = reinterpret_cast<dxt1_block*>(BlockDst);
-	
+
 			if(HeightTwo)
 			{
 				Dst->Color0 = Src->Color0;
@@ -81,7 +81,7 @@ namespace detail
 				Dst->Row1 = Src->Row0;
 				Dst->Row2 = Src->Row2;
 				Dst->Row3 = Src->Row3;
-				
+
 				return;
 			}
 
@@ -91,7 +91,7 @@ namespace detail
 			Dst->Row1 = Src->Row2;
 			Dst->Row2 = Src->Row1;
 			Dst->Row3 = Src->Row0;
-				
+
 			return;
 		}
 
@@ -127,7 +127,7 @@ namespace detail
 			Dst->Row1 = Src->Row2;
 			Dst->Row2 = Src->Row1;
 			Dst->Row3 = Src->Row0;
-				
+
 			return;
 		}
 
@@ -142,6 +142,8 @@ namespace detail
 				Dst->Alpha0 = Src->Alpha0;
 				Dst->Alpha1 = Src->Alpha1;
 				// operator+ has precedence over operator>> and operator<<, hence the parentheses. very important!
+				// the values below are bitmasks used to retrieve alpha values according to the DXT specification
+				// 0xF0 == 0b11110000 and 0xF == 0b1111
 				Dst->AlphaR0 = ((Src->AlphaR1 & 0xF0) >> 4) + ((Src->AlphaR2 & 0xF) << 4);
 				Dst->AlphaR1 = ((Src->AlphaR2 & 0xF0) >> 4) + ((Src->AlphaR0 & 0xF) << 4);
 				Dst->AlphaR2 = ((Src->AlphaR0 & 0xF0) >> 4) + ((Src->AlphaR1 & 0xF) << 4);
@@ -154,13 +156,15 @@ namespace detail
 				Dst->Row1 = Src->Row0;
 				Dst->Row2 = Src->Row2;
 				Dst->Row3 = Src->Row3;
-			
+
 				return;
 			}
 
 			Dst->Alpha0 = Src->Alpha0;
 			Dst->Alpha1 = Src->Alpha1;
 			// operator+ has precedence over operator>> and operator<<, hence the parentheses. very important!
+			// the values below are bitmasks used to retrieve alpha values according to the DXT specification
+			// 0xF0 == 0b11110000 and 0xF == 0b1111
 			Dst->AlphaR0 = ((Src->AlphaR4 & 0xF0) >> 4) + ((Src->AlphaR5 & 0xF) << 4);
 			Dst->AlphaR1 = ((Src->AlphaR5 & 0xF0) >> 4) + ((Src->AlphaR3 & 0xF) << 4);
 			Dst->AlphaR2 = ((Src->AlphaR3 & 0xF0) >> 4) + ((Src->AlphaR4 & 0xF) << 4);
@@ -173,10 +177,10 @@ namespace detail
 			Dst->Row1 = Src->Row2;
 			Dst->Row2 = Src->Row1;
 			Dst->Row3 = Src->Row0;
-			
+
 			return;
 		}
-		
+
 		// invalid format specified (unknown S3TC format?)
 		assert(false);
 	}
@@ -186,8 +190,8 @@ namespace detail
 		if(ImageSrc.extent().y == 1)
 		{
 			memcpy(ImageDst.data(),
-				   ImageSrc.data(),
-				   ImageSrc.size());
+			       ImageSrc.data(),
+			       ImageSrc.size());
 			return;
 		}
 
@@ -196,7 +200,7 @@ namespace detail
 		{
 			for(std::size_t i_block = 0; i_block < XBlocks; ++i_block)
 				flip_block_s3tc(ImageDst.data<uint8_t>() + i_block * block_size(Format), ImageSrc.data<uint8_t>() + i_block * block_size(Format), Format, true);
-			
+
 			return;
 		}
 

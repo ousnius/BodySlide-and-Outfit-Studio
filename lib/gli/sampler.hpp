@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <gli/filter.hpp>
+#include "core/filter.hpp"
 
 namespace gli
 {
