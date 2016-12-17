@@ -354,10 +354,11 @@
     <None Include="lib\SOIL2\SOIL2_d.pdb" />
     <None Include="lib\SOIL2\SOIL2_x64_d.pdb" />
     <None Include="res\shaders\default.frag" />
-    <None Include="res\shaders\mask.vert" />
+    <None Include="res\shaders\default.vert" />
+    <None Include="res\shaders\fo4_default.frag" />
+    <None Include="res\shaders\fo4_default.vert" />
     <None Include="res\shaders\primitive.frag" />
     <None Include="res\shaders\primitive.vert" />
-    <None Include="res\shaders\skin.frag" />
     <None Include="res\xrc\About.xrc" />
     <None Include="res\xrc\Actions.xrc" />
     <None Include="res\xrc\BatchBuild.xrc" />
