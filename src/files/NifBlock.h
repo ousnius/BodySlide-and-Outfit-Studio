@@ -978,7 +978,6 @@ private:
 	uint materialCRC;						// Version >= 20.2.0.7 && User Version == 12
 	bool hasNormals;
 	bool hasVertexColors;
-	ushort consistencyFlags;
 	uint additionalData;
 	BoundingSphere bounds;
 
@@ -993,6 +992,8 @@ public:
 	byte keepFlags;
 	ushort numUVSets;
 	vector<Vector2> uvSets;
+
+	ushort consistencyFlags;
 
 	void Init();
 	void Get(fstream& file);

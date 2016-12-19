@@ -1525,6 +1525,13 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			if (activeSet.GenWeights())
 				nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 		}
+
+		// Set all shapes to dynamic/mutable
+		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+			nifBig.SetShapeDynamic(it->second);
+			if (activeSet.GenWeights())
+				nifSmall.SetShapeDynamic(it->second);
+		}
 	}
 	else {
 		string triPath = outFileNameBig + ".tri";
@@ -1942,6 +1949,13 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 				nifBig.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
 				if (currentSet.GenWeights())
 					nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+			}
+
+			// Set all shapes to dynamic/mutable
+			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
+				nifBig.SetShapeDynamic(it->second);
+				if (currentSet.GenWeights())
+					nifSmall.SetShapeDynamic(it->second);
 			}
 		}
 		else {

@@ -3578,3 +3578,14 @@ void NifFile::UpdateBoundingSphere(const string& shapeName) {
 
 	shape->UpdateBounds();
 }
+
+void NifFile::SetShapeDynamic(const string& shapeName) {
+	NiShape* shape = FindShapeByName(shapeName);
+	if (!shape)
+		return;
+
+	// Set consistency flag to mutable
+	auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+	if (geomData)
+		geomData->consistencyFlags = 0;
+}

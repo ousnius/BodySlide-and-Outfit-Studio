@@ -177,6 +177,7 @@ public:
 
 	void CreateSkinning(const string& shapeName);
 	void UpdateBoundingSphere(const string& shapeName);
+	void SetShapeDynamic(const string& shapeName);
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const string& shapeName);
