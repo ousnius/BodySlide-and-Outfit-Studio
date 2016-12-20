@@ -82,6 +82,8 @@ public:
 
 			if (hasMatFile)
 				m->UpdateFromMaterialFile(matFile);
+
+			gls.UpdateShaders(m);
 		}
 	}
 

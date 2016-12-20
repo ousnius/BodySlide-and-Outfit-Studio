@@ -268,6 +268,8 @@ public:
 	void RenderOneFrame();
 	void RenderMesh(mesh* m);
 
+	void UpdateShaders(mesh* m);
+
 	void ToggleTextures() {
 		if (bTextured)
 			bTextured = false;
@@ -275,8 +277,7 @@ public:
 			bTextured = true;
 
 		for (auto &m : meshes)
-			if (m->material)
-				m->material->GetShader().ShowTexture(bTextured);
+			UpdateShaders(m);
 	}
 
 	void ToggleWireframe() {
@@ -293,42 +294,27 @@ public:
 			bLighting = true;
 
 		for (auto &m : meshes)
-			if (m->material)
-				m->material->GetShader().ShowLighting(bLighting);
+			UpdateShaders(m);
 	}
 
 	void SetMaskVisible(bool bVisible = true) {
 		bMaskVisible = bVisible;
 
 		for (auto &m : meshes)
-			if (m->material)
-				m->material->GetShader().ShowMask(bVisible);
+			UpdateShaders(m);
 	}
 
 	void SetWeightColors(bool bVisible = true) {
 		bWeightColors = bVisible;
 
 		for (auto &m : meshes)
-			if (m->material)
-				m->material->GetShader().ShowWeight(bWeightColors);
+			UpdateShaders(m);
 	}
 
 	void SetSegmentColors(bool bVisible = true) {
 		bSegmentColors = bVisible;
 
 		for (auto &m : meshes)
-			if (m->material)
-				m->material->GetShader().ShowSegments(bSegmentColors);
-	}
-
-	void ToggleWeightColors() {
-		if (bWeightColors)
-			bWeightColors = false;
-		else
-			bWeightColors = true;
-
-		for (auto &m : activeMeshes)
-			if (m->material)
-				m->material->GetShader().ShowWeight(bWeightColors);
+			UpdateShaders(m);
 	}
 };

@@ -841,6 +841,15 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.End();
 }
 
+void GLSurface::UpdateShaders(mesh* m) {
+	if (m->material) {
+		m->material->GetShader().ShowTexture(bTextured);
+		m->material->GetShader().ShowLighting(bLighting);
+		m->material->GetShader().ShowWeight(bWeightColors);
+		m->material->GetShader().ShowSegments(bSegmentColors);
+	}
+}
+
 void  GLSurface::ReloadMeshFromNif(NifFile* nif, string shapeName) {
 	DeleteMesh(shapeName);
 	AddMeshFromNif(nif, shapeName);

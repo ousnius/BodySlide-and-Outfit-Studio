@@ -5811,6 +5811,8 @@ void wxGLPanel::SetMeshTextures(const string& shapeName, const vector<string>& t
 		
 		if (hasMatFile)
 			m->UpdateFromMaterialFile(matFile);
+
+		gls.UpdateShaders(m);
 	}
 }
 
