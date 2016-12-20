@@ -315,8 +315,6 @@ void GLShader::BindTexture(const GLint& index, const GLuint& texture, const stri
 		glUniform1i(texLoc, index);
 		glActiveTexture(GL_TEXTURE0 + index);
 
-		glDisable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
 		glBindTexture(GL_TEXTURE_2D, texture);
 	}
 }
@@ -327,10 +325,8 @@ void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const stri
 		glUniform1i(texLoc, index);
 		glActiveTexture(GL_TEXTURE0 + index);
 		
-		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
 		glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
+		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 }
 

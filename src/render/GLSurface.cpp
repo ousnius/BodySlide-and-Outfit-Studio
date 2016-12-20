@@ -124,6 +124,7 @@ int GLSurface::InitGLSettings() {
 	glClearDepth(1.0f);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
+	glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 	// Get supported line width range
 	GLfloat lineRange[2];
@@ -789,11 +790,8 @@ void GLSurface::RenderMesh(mesh* m) {
 			glDrawElements(GL_TRIANGLES, m->nTris * 3, GL_UNSIGNED_SHORT, (GLvoid*)0);
 		}
 
-		if (bTextured && m->textured && m->texcoord) {
-			glBindTexture(GL_TEXTURE_2D, 0);
-			glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+		if (bTextured && m->textured && m->texcoord)
 			glDisableVertexAttribArray(3);
-		}
 
 		// Render points
 		if (m->bShowPoints && m->vcolors) {
