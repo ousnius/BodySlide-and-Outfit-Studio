@@ -1111,7 +1111,7 @@ void OutfitProject::SetTextures(const string& shapeName, const vector<string>& t
 							archive->fileContents(matFile.ToStdString(), outData);
 
 							if (!outData.IsEmpty()) {
-								data = outData;
+								data = move(outData);
 								break;
 							}
 						}

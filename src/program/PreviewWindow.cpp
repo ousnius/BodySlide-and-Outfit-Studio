@@ -202,7 +202,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 						archive->fileContents(matFile.ToStdString(), outData);
 
 						if (!outData.IsEmpty()) {
-							data = outData;
+							data = move(outData);
 							break;
 						}
 					}

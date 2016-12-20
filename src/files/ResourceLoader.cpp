@@ -215,7 +215,7 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 						archive->fileContents(texFile.ToStdString(), outData);
 
 						if (!outData.IsEmpty()) {
-							data = outData;
+							data = move(outData);
 							break;
 						}
 					}
@@ -227,15 +227,15 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 
 				// Cubemap
 				if (!textureID && i == 4)
-					textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetBufSize(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS);
+					textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetDataLen(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS);
 
 				// Normal texture (GLI)
 				if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
-					textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetBufSize());
+					textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen());
 
 				// Normal texture and image (SOIL fallback)
 				if (!textureID)
-					textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetBufSize(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+					textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetDataLen(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 			}
 			else {
 				wxLogWarning("Texture file '%s' not found.", textureFiles[i]);
