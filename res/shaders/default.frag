@@ -177,21 +177,21 @@ void directionalLight(in DirectionalLight light, in vec3 inNormal, inout vec3 di
 	
 	if (bCubemap)
 	{
-		vec3 reflected = mat3(inverse(matModelView)) * reflect(lightDir, normal);
-		vec4 cubeMap = texture(texCubemap, reflected);
-		cubeMap.rgb *= prop.envReflection;
-		
-		if (bEnvMask)
-		{
-			cubeMap.rgb *= envMask.r;
-		}
-		else
-		{
-			// No env mask, use specular factor (0.0 if no normal map either)
-			cubeMap.rgb *= specFactor;
-		}
-		
-		cube += cubeMap.rgb;
+		//vec3 reflected = mat3(inverse(matModelView)) * reflect(lightDir, normal);
+		//vec4 cubeMap = texture(texCubemap, reflected);
+		//cubeMap.rgb *= prop.envReflection;
+		//
+		//if (bEnvMask)
+		//{
+		//	cubeMap.rgb *= envMask.r;
+		//}
+		//else
+		//{
+		//	// No env mask, use specular factor (0.0 if no normal map either)
+		//	cubeMap.rgb *= specFactor;
+		//}
+		//
+		//cube += cubeMap.rgb;
 	}
 }
 
