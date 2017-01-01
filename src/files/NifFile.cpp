@@ -1310,6 +1310,23 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 						}
 					}
 
+					// Find NiOptimizeKeep string
+					for (int i = 0; i < bsShape->GetNumExtraData(); i++) {
+						auto stringData = hdr.GetBlock<NiStringExtraData>(bsShape->GetExtraDataRef(i));
+						if (stringData) {
+							if (stringData->GetStringData().find("NiOptimizeKeep") != string::npos) {
+								bsShape->particleDataSize = bsShape->numVertices * 6 + bsShape->numTriangles * 3;
+								bsShape->particleVerts = *vertices;
+
+								bsShape->particleNorms.resize(vertices->size(), Vector3(1.0f, 0.0f, 0.0f));
+								if (normals && normals->size() == vertices->size())
+									bsShape->particleNorms = *normals;
+
+								bsShape->particleTris = bsShape->triangles;
+							}
+						}
+					}
+
 					if (shape->IsSkinned()) {
 						bsShape->SetSkinned(true);
 

@@ -1115,9 +1115,10 @@ public:
 	uint dataSize;
 	uint vertexSize;	// Not in file
 
-	uint someDataSize;
-	vector<Vector3> someVerts;
-	vector<Triangle> someTris;
+	uint particleDataSize;
+	vector<Vector3> particleVerts;
+	vector<Vector3> particleNorms;
+	vector<Triangle> particleTris;
 
 	vector<Vector3> rawVertices;	// filled by GetRawVerts function and returned.
 	vector<Vector3> rawNormals;		// filled by GetNormalData function and returned.
@@ -1655,19 +1656,19 @@ private:
 	byte defaultMatNeedsUpdate;
 
 	BoundingSphere bounds;
-	byte vertFlags1;
-	byte vertFlags2;
-	byte vertFlags3;
-	byte vertFlags4;
-	byte vertFlags5;
-	byte vertFlags6;
-	byte vertFlags7;
-	byte vertFlags8;
+	byte vertFlags1 = 81;
+	byte vertFlags2 = 0;
+	byte vertFlags3 = 0;
+	byte vertFlags4 = 4;
+	byte vertFlags5 = 0;
+	byte vertFlags6 = 32;
+	byte vertFlags7 = 64;
+	byte vertFlags8 = 8;
 
-	ushort farBegin;
-	ushort farEnd;
-	ushort nearBegin;
-	ushort nearEnd;
+	ushort farBegin = 0;
+	ushort farEnd = 0;
+	ushort nearBegin = 0;
+	ushort nearEnd = 0;
 
 	int psysDataRef;
 

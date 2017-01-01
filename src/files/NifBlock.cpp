@@ -1802,7 +1802,7 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	numVertices = 0;
 	dataSize = 0;
 	vertexSize = 0;
-	someDataSize = 0;
+	particleDataSize = 0;
 }
 
 BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
@@ -1812,7 +1812,7 @@ BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
 	header = &hdr;
 
 	vertexSize = 0;
-	someDataSize = 0;
+	particleDataSize = 0;
 
 	Get(file);
 }
@@ -1942,22 +1942,36 @@ void BSTriShape::Get(fstream& file) {
 	}
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
-		file.read((char*)&someDataSize, 4);
+		file.read((char*)&particleDataSize, 4);
 
-		if (someDataSize > 0) {
-			someVerts.resize(numVertices);
-			someTris.resize(numTriangles);
+		if (particleDataSize > 0) {
+			particleVerts.resize(numVertices);
+			particleNorms.resize(numVertices);
+			particleTris.resize(numTriangles);
+
+			half_float::half halfData;
+			for (int i = 0; i < numVertices; i++) {
+				file.read((char*)&halfData, 2);
+				particleVerts[i].x = halfData;
+				file.read((char*)&halfData, 2);
+				particleVerts[i].y = halfData;
+				file.read((char*)&halfData, 2);
+				particleVerts[i].z = halfData;
+			}
 
 			for (int i = 0; i < numVertices; i++) {
-				file.read((char*)&someVerts[i].x, 4);
-				file.read((char*)&someVerts[i].y, 4);
-				file.read((char*)&someVerts[i].z, 4);
+				file.read((char*)&halfData, 2);
+				particleNorms[i].x = halfData;
+				file.read((char*)&halfData, 2);
+				particleNorms[i].y = halfData;
+				file.read((char*)&halfData, 2);
+				particleNorms[i].z = halfData;
 			}
 
 			for (int i = 0; i < numTriangles; i++) {
-				file.read((char*)&someTris[i].p1, 2);
-				file.read((char*)&someTris[i].p2, 2);
-				file.read((char*)&someTris[i].p3, 2);
+				file.read((char*)&particleTris[i].p1, 2);
+				file.read((char*)&particleTris[i].p2, 2);
+				file.read((char*)&particleTris[i].p3, 2);
 			}
 		}
 	}
@@ -2098,19 +2112,32 @@ void BSTriShape::Put(fstream& file) {
 	}
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
-		file.write((char*)&someDataSize, 4);
+		file.write((char*)&particleDataSize, 4);
 
-		if (someDataSize > 0) {
+		if (particleDataSize > 0) {
+			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
-				file.write((char*)&someVerts[i].x, 4);
-				file.write((char*)&someVerts[i].y, 4);
-				file.write((char*)&someVerts[i].z, 4);
+				halfData = particleVerts[i].x;
+				file.write((char*)&halfData, 2);
+				halfData = particleVerts[i].y;
+				file.write((char*)&halfData, 2);
+				halfData = particleVerts[i].z;
+				file.write((char*)&halfData, 2);
+			}
+
+			for (int i = 0; i < numVertices; i++) {
+				halfData = particleNorms[i].x;
+				file.write((char*)&halfData, 2);
+				halfData = particleNorms[i].y;
+				file.write((char*)&halfData, 2);
+				halfData = particleNorms[i].z;
+				file.write((char*)&halfData, 2);
 			}
 
 			for (int i = 0; i < numTriangles; i++) {
-				file.write((char*)&someTris[i].p1, 2);
-				file.write((char*)&someTris[i].p2, 2);
-				file.write((char*)&someTris[i].p3, 2);
+				file.write((char*)&particleTris[i].p1, 2);
+				file.write((char*)&particleTris[i].p2, 2);
+				file.write((char*)&particleTris[i].p3, 2);
 			}
 		}
 	}
@@ -2219,7 +2246,7 @@ int BSTriShape::CalcBlockSize() {
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
 		blockSize += 4;
 
-		if (someDataSize > 0) {
+		if (particleDataSize > 0) {
 			blockSize += 12 * numVertices;
 			blockSize += 6 * numTriangles;
 		}
