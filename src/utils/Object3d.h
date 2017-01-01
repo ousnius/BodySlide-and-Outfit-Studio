@@ -833,6 +833,12 @@ struct Triangle {
 		return (p1 == other.p1 && p2 == other.p2 && p3 == other.p3);
 	}
 
+	bool CompareIndices(const Triangle& other) const {
+		return ((p1 == other.p1 || p1 == other.p2 || p1 == other.p3)
+			&& (p2 == other.p1 || p2 == other.p2 || p2 == other.p3)
+			&& (p3 == other.p1 || p3 == other.p2 || p3 == other.p3));
+	}
+
 	void rot() {
 		if (p2 < p1 && p2 < p3) {
 			set(p2, p3, p1);

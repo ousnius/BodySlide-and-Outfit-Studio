@@ -3159,7 +3159,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 			tri.rot();
 
 			// Find current tri in full list
-			auto realTri = find(tris.begin(), tris.end(), tri);
+			auto realTri = find_if(tris.begin(), tris.end(), [&tri](const Triangle& t) { return t.CompareIndices(tri); });
 			if (realTri == tris.end()) {
 				it++;
 				continue;
