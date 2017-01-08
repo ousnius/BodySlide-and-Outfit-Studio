@@ -5056,21 +5056,8 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 				p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
 		}
 
-		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
-			// Move triangles that match to the end
-			auto removeTriEnd = partition(p.trueTriangles.begin(), p.trueTriangles.end(), [&vertIndices](const Triangle& tri) {
-				if (find(vertIndices.begin(), vertIndices.end(), tri.p1) != vertIndices.end())
-					return true;
-				if (find(vertIndices.begin(), vertIndices.end(), tri.p2) != vertIndices.end())
-					return true;
-				if (find(vertIndices.begin(), vertIndices.end(), tri.p3) != vertIndices.end())
-					return true;
-
-				return false;
-			});
-
-			p.trueTriangles.erase(p.trueTriangles.begin(), removeTriEnd);
-		}
+		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100)
+			p.trueTriangles = p.triangles;
 	}
 
 	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
