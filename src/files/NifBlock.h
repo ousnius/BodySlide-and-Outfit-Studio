@@ -1177,7 +1177,7 @@ public:
 
 	void SetFullPrecision(const bool enable);
 	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0 || header->GetUserVersion2() == 100; }
-	bool CanChangePrecision() { return (HasVertices() && HasTangents() && HasNormals() && header->GetUserVersion2() != 100); }
+	bool CanChangePrecision() { return (HasVertices() && header->GetUserVersion2() != 100); }
 
 	void SetBounds(const BoundingSphere& bounds) { this->bounds = bounds; }
 	BoundingSphere GetBounds() { return bounds; }
