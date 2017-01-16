@@ -12115,8 +12115,8 @@ void BSConnectPoint::Get(fstream& file) {
 }
 
 void BSConnectPoint::Put(fstream& file) {
-	root.Put(file, 4);
-	variableName.Put(file, 4);
+	root.Put(file, 4, false);
+	variableName.Put(file, 4, false);
 
 	file.write((char*)&rotation, 16);
 	file.write((char*)&translation, 12);
@@ -12213,13 +12213,14 @@ void BSConnectPointChildren::Put(fstream& file) {
 	file.write((char*)&numTargets, 4);
 
 	for (int i = 0; i < numTargets; i++)
-		targets[i].Put(file, 4);
+		targets[i].Put(file, 4, false);
 }
 
 int BSConnectPointChildren::CalcBlockSize() {
 	NiExtraData::CalcBlockSize();
 
 	blockSize += 5;
+	blockSize += numTargets * 4;
 
 	for (int i = 0; i < numTargets; i++)
 		blockSize += targets[i].GetLength();
