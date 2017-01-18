@@ -844,6 +844,131 @@ void NifFile::TrimTexturePaths() {
 	}
 }
 
+void NifFile::CopyController(NiShader* destShader, NiShader* srcShader) {
+	if (!destShader)
+		return;
+
+	if (!srcShader) {
+		destShader->SetControllerRef(0xFFFFFFFF);
+		return;
+	}
+
+	int shaderId = GetBlockID(destShader);
+	int nextControllerRef = srcShader->GetControllerRef();
+
+	auto srcController = srcShader->header->GetBlock<NiTimeController>(nextControllerRef);
+	if (srcController) {
+		// Copy first controller
+		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
+		int controllerId = hdr.AddBlock(destController, srcShader->header->GetBlockTypeStringById(nextControllerRef));
+
+		destController->targetRef = shaderId;
+		destShader->SetControllerRef(controllerId);
+
+		CopyInterpolators(destController, srcController);
+		nextControllerRef = srcController->nextControllerRef;
+
+		// Recursive copy for next controller references
+		while (nextControllerRef != 0xFFFFFFFF) {
+			srcController = srcShader->header->GetBlock<NiTimeController>(nextControllerRef);
+			if (srcController) {
+				NiTimeController* destControllerRec = static_cast<NiTimeController*>(srcController->Clone());
+				controllerId = hdr.AddBlock(destControllerRec, srcShader->header->GetBlockTypeStringById(nextControllerRef));
+
+				destControllerRec->targetRef = shaderId;
+
+				// Assign new controller to previous controller
+				destController->nextControllerRef = controllerId;
+				destController = destControllerRec;
+
+				CopyInterpolators(destControllerRec, srcController);
+				nextControllerRef = srcController->nextControllerRef;
+			}
+			else
+				nextControllerRef = 0xFFFFFFFF;
+		}
+	}
+}
+
+void NifFile::CopyInterpolators(NiTimeController* destController, NiTimeController* srcController) {
+	if (!destController || !srcController)
+		return;
+
+	// Copy interpolators linked in different types of controllers
+	if (srcController->blockType == BSFRUSTUMFOVCONTROLLER) {
+		auto srcCtrlrType = static_cast<BSFrustumFOVController*>(srcController);
+		auto destCtrlrType = static_cast<BSFrustumFOVController*>(destController);
+		destCtrlrType->interpolatorRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->interpolatorRef);
+	}
+	else if (srcController->blockType == BSPROCEDURALLIGHTNINGCONTROLLER) {
+		auto srcCtrlrType = static_cast<BSProceduralLightningController*>(srcController);
+		auto destCtrlrType = static_cast<BSProceduralLightningController*>(destController);
+		destCtrlrType->generationInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->mutationInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->subdivisionInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->numBranchesInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->numBranchesVarInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->lengthInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->lengthVarInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->widthInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->arcOffsetInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+	}
+	
+	auto niSingleInterp = dynamic_cast<NiSingleInterpController*>(srcController);
+	if (niSingleInterp)
+		niSingleInterp->interpolatorRef = CopyInterpolator(destController->header, srcController->header, niSingleInterp->interpolatorRef);
+}
+
+int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int srcInterpId) {
+	auto srcInterp = srcHeader->GetBlock<NiInterpolator>(srcInterpId);
+	if (srcInterp) {
+		auto destInterp = static_cast<NiInterpolator*>(srcInterp->Clone());
+		destInterp->header = destHeader;
+
+		// Copy data of interpolators as well
+		if (destInterp->blockType == NIBOOLINTERPOLATOR) {
+			auto srcInterpType = static_cast<NiBoolInterpolator*>(srcInterp);
+			auto srcData = srcHeader->GetBlock<NiBoolData>(srcInterpType->dataRef);
+			if (srcData) {
+				auto destData = static_cast<NiBoolData*>(srcData->Clone());
+				auto destInterpType = static_cast<NiBoolInterpolator*>(destInterp);
+				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+			}
+		}
+		else if (destInterp->blockType == NIFLOATINTERPOLATOR) {
+			auto srcInterpType = static_cast<NiFloatInterpolator*>(srcInterp);
+			auto srcData = srcHeader->GetBlock<NiFloatData>(srcInterpType->dataRef);
+			if (srcData) {
+				auto destData = static_cast<NiFloatData*>(srcData->Clone());
+				auto destInterpType = static_cast<NiFloatInterpolator*>(destInterp);
+				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+			}
+		}
+		else if (destInterp->blockType == NITRANSFORMINTERPOLATOR) {
+			auto srcInterpType = static_cast<NiTransformInterpolator*>(srcInterp);
+			auto srcData = srcHeader->GetBlock<NiTransformData>(srcInterpType->dataRef);
+			if (srcData) {
+				auto destData = static_cast<NiTransformData*>(srcData->Clone());
+				auto destInterpType = static_cast<NiTransformInterpolator*>(destInterp);
+				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+			}
+		}
+		else if (destInterp->blockType == NIPOINT3INTERPOLATOR) {
+			auto srcInterpType = static_cast<NiPoint3Interpolator*>(srcInterp);
+			auto srcData = srcHeader->GetBlock<NiPosData>(srcInterpType->dataRef);
+			if (srcData) {
+				auto destData = static_cast<NiPosData*>(srcData->Clone());
+				auto destInterpType = static_cast<NiPoint3Interpolator*>(destInterp);
+				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+			}
+		}
+
+		return hdr.AddBlock(destInterp, srcHeader->GetBlockTypeStringById(srcInterpId));
+	}
+
+	return 0xFFFFFFFF;
+}
+
 void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	NiShape* shape = FindShapeByName(shapeDest);
 	if (!shape)
@@ -916,13 +1041,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	}
 
 	// Controller
-	auto srcController = srcNif.hdr.GetBlock<NiTimeController>(srcShader->GetControllerRef());
-	if (srcController) {
-		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
-		int controllerId = hdr.AddBlock(destController, srcNif.hdr.GetBlockTypeStringById(srcShader->GetControllerRef()));
-		destController->targetRef = shaderId;
-		destShader->SetControllerRef(controllerId);
-	}
+	CopyController(destShader, srcShader);
 
 	auto srcTexSet = srcNif.hdr.GetBlock<BSShaderTextureSet>(srcShader->GetTextureSetRef());
 	if (srcTexSet) {

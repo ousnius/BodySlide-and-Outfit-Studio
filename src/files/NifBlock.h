@@ -2386,9 +2386,10 @@ class NiKeyBasedInterpolator : public NiInterpolator {
 class NiBoolInterpolator : public NiKeyBasedInterpolator {
 private:
 	byte boolValue;
-	int dataRef;
 
 public:
+	int dataRef;
+
 	NiBoolInterpolator(NiHeader& hdr);
 	NiBoolInterpolator(fstream& file, NiHeader& hdr);
 
@@ -2412,9 +2413,10 @@ public:
 class NiFloatInterpolator : public NiKeyBasedInterpolator {
 private:
 	float floatValue;
-	int dataRef;
 
 public:
+	int dataRef;
+
 	NiFloatInterpolator(NiHeader& hdr);
 	NiFloatInterpolator(fstream& file, NiHeader& hdr);
 
@@ -2432,9 +2434,10 @@ private:
 	Vector3 translation;
 	Quaternion rotation;
 	float scale;
-	int dataRef;
 
 public:
+	int dataRef;
+
 	NiTransformInterpolator(NiHeader& hdr);
 	NiTransformInterpolator(fstream& file, NiHeader& hdr);
 
@@ -2450,9 +2453,10 @@ public:
 class NiPoint3Interpolator : public NiKeyBasedInterpolator {
 private:
 	Vector3 point3Value;
-	int dataRef;
 
 public:
+	int dataRef;
+
 	NiPoint3Interpolator(NiHeader& hdr);
 	NiPoint3Interpolator(fstream& file, NiHeader& hdr);
 
@@ -2590,7 +2594,6 @@ public:
 
 class NiTimeController : public NiObject {
 private:
-	int nextControllerRef;
 	uint flags;
 	float frequency;
 	float phase;
@@ -2598,6 +2601,7 @@ private:
 	float stopTime;
 
 public:
+	int nextControllerRef;
 	int targetRef;
 
 	void Init();
@@ -2610,10 +2614,9 @@ public:
 };
 
 class BSFrustumFOVController : public NiTimeController {
-private:
+public:
 	int interpolatorRef;
 
-public:
 	BSFrustumFOVController(NiHeader& hdr);
 	BSFrustumFOVController(fstream& file, NiHeader& hdr);
 
@@ -2644,16 +2647,6 @@ public:
 
 class BSProceduralLightningController : public NiTimeController {
 private:
-	int generationInterpRef;
-	int mutationInterpRef;
-	int subdivisionInterpRef;
-	int numBranchesInterpRef;
-	int numBranchesVarInterpRef;
-	int lengthInterpRef;
-	int lengthVarInterpRef;
-	int widthInterpRef;
-	int arcOffsetInterpRef;
-
 	ushort subdivisions;
 	ushort numBranches;
 	ushort numBranchesPerVariation;
@@ -2670,6 +2663,16 @@ private:
 	int shaderPropertyRef;
 
 public:
+	int generationInterpRef;
+	int mutationInterpRef;
+	int subdivisionInterpRef;
+	int numBranchesInterpRef;
+	int numBranchesVarInterpRef;
+	int lengthInterpRef;
+	int lengthVarInterpRef;
+	int widthInterpRef;
+	int arcOffsetInterpRef;
+
 	BSProceduralLightningController(NiHeader& hdr);
 	BSProceduralLightningController(fstream& file, NiHeader& hdr);
 

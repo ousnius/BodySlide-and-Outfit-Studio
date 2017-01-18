@@ -86,6 +86,9 @@ public:
 
 	int CopyNamedNode(string& nodeName, NifFile& srcNif);
 	void CopyShader(const string& shapeDest, NifFile& srcNif);
+	void CopyController(NiShader* destShader, NiShader* srcShader);
+	void CopyInterpolators(NiTimeController* destController, NiTimeController* srcController);
+	int CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int srcInterpId);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 
 	BlockType GetShapeType(const string& shapeName);
