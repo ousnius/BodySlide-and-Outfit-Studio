@@ -587,6 +587,15 @@ void NifFile::PrettySortBlocks() {
 	}
 }
 
+bool NifFile::DeleteUnreferencedBlocks() {
+	if (hasUnknown)
+		return false;
+
+	bool hadDeletions = false;
+	hdr.DeleteUnreferencedBlocks(NIUNKNOWN, &hadDeletions);
+	return hadDeletions;
+}
+
 int NifFile::RemoveUnusedStrings() {
 	if (hasUnknown)
 		return 0;
@@ -1284,6 +1293,7 @@ void NifFile::Optimize() {
 	for (auto &s : shapes)
 		UpdateBoundingSphere(s);
 
+	DeleteUnreferencedBlocks();
 	RemoveUnusedStrings();
 }
 
