@@ -4528,24 +4528,28 @@ void NiSkinData::Get(fstream& file) {
 	file.read((char*)&numBones, 4);
 	file.read((char*)&hasVertWeights, 1);
 
-	SkinWeight sWt;
-	BoneData boneData;
+	bones.resize(numBones);
 	for (int i = 0; i < numBones; i++) {
-		boneData.vertexWeights.clear();
-
+		BoneData boneData;
 		file.read((char*)&boneData.boneTransform, 52);
 		file.read((char*)&boneData.bounds, 16);
 		file.read((char*)&boneData.numVertices, 2);
 
-		for (int j = 0; j < boneData.numVertices; j++) {
-			file.read((char*)&sWt.index, 2);
-			file.read((char*)&sWt.weight, 4);
-			boneData.vertexWeights.push_back(sWt);
-		}
+		if (hasVertWeights) {
+			boneData.vertexWeights.resize(boneData.numVertices);
 
-		bones.push_back(boneData);
+			for (int j = 0; j < boneData.numVertices; j++) {
+				SkinWeight weight;
+				file.read((char*)&weight.index, 2);
+				file.read((char*)&weight.weight, 4);
+				boneData.vertexWeights[i] = move(weight);
+			}
+		}
+		else
+			boneData.numVertices = 0;
+
+		bones[i] = move(boneData);
 	}
-	numBones = bones.size();
 }
 
 void NiSkinData::Put(fstream& file) {
@@ -4558,11 +4562,18 @@ void NiSkinData::Put(fstream& file) {
 	for (int i = 0; i < numBones; i++) {
 		file.write((char*)&bones[i].boneTransform, 52);
 		file.write((char*)&bones[i].bounds, 16);
-		file.write((char*)&bones[i].numVertices, 2);
 
-		for (int j = 0; j < bones[i].numVertices; j++) {
-			file.write((char*)&bones[i].vertexWeights[j].index, 2);
-			file.write((char*)&bones[i].vertexWeights[j].weight, 4);
+		if (hasVertWeights) {
+			file.write((char*)&bones[i].numVertices, 2);
+
+			for (int j = 0; j < bones[i].numVertices; j++) {
+				file.write((char*)&bones[i].vertexWeights[j].index, 2);
+				file.write((char*)&bones[i].vertexWeights[j].weight, 4);
+			}
+		}
+		else {
+			ushort numVerts = 0;
+			file.write((char*)&numVerts, 2);
 		}
 	}
 }
@@ -4605,8 +4616,13 @@ int NiSkinData::CalcBlockSize() {
 	NiObject::CalcBlockSize();
 
 	blockSize += 57;
-	for (auto &b : bones)
-		blockSize += 70 + b.numVertices * 6;
+
+	for (auto &b : bones) {
+		blockSize += 70;
+
+		if (hasVertWeights)
+			blockSize += b.numVertices * 6;
+	}
 
 	return blockSize;
 }
