@@ -4542,7 +4542,7 @@ void NiSkinData::Get(fstream& file) {
 				SkinWeight weight;
 				file.read((char*)&weight.index, 2);
 				file.read((char*)&weight.weight, 4);
-				boneData.vertexWeights[i] = move(weight);
+				boneData.vertexWeights[j] = move(weight);
 			}
 		}
 		else
