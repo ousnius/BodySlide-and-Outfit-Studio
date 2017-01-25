@@ -1590,6 +1590,15 @@ void OutfitProject::ClearReference() {
 	baseShape = "";
 }
 
+void OutfitProject::ClearReferenceShape() {
+	if (!baseShape.empty())
+		DeleteShape(baseShape);
+
+	morpher.UnlinkRefDiffData();
+
+	baseShape = "";
+}
+
 void OutfitProject::ClearOutfit() {
 	vector<string> shapes;
 	GetShapes(shapes);
@@ -1645,18 +1654,20 @@ int OutfitProject::LoadSkeletonReference(const string& skeletonFileName) {
 	return AnimSkeleton::getInstance().LoadFromNif(skeletonFileName);
 }
 
-int OutfitProject::LoadReferenceTemplate(const string& sourceFile, const string& set, const string& shape, bool clearRef) {
+int OutfitProject::LoadReferenceTemplate(const string& sourceFile, const string& set, const string& shape, bool mergeSliders) {
 	if (sourceFile.empty() || set.empty()) {
 		wxLogError("Template source entries are invalid.");
 		wxMessageBox(_("Template source entries are invalid."), _("Reference Error"), wxICON_ERROR, owner);
 		return 1;
 	}
 
-	return LoadReference(sourceFile, set, clearRef, shape);
+	return LoadReference(sourceFile, set, mergeSliders, shape);
 }
 
-int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeName, bool ClearRef) {
-	if (ClearRef)
+int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeName, bool mergeSliders) {
+	if (mergeSliders)
+		ClearReferenceShape();
+	else
 		ClearReference();
 
 	NifFile refNif;
@@ -1713,14 +1724,14 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 	return 0;
 }
 
-int OutfitProject::LoadReference(const string& fileName, const string& setName, bool ClearRef, const string& shapeName) {
-	if (ClearRef)
+int OutfitProject::LoadReference(const string& fileName, const string& setName, bool mergeSliders, const string& shapeName) {
+	if (mergeSliders)
+		ClearReferenceShape();
+	else
 		ClearReference();
 
 	string oldTarget;
 	SliderSetFile sset(fileName);
-	int oldVertCount = -1;
-	int newVertCount;
 
 	if (sset.fail()) {
 		wxLogError("Could not load slider set file '%s'!", fileName);
@@ -1728,13 +1739,11 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 		return 1;
 	}
 
+	string dataFolder = activeSet.GetDefaultDataFolder();
 	sset.GetSet(setName, activeSet);
+
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
-
 	string inMeshFile = activeSet.GetInputFileName();
-
-	if (!ClearRef)
-		oldVertCount = GetVertexCount(baseShape);
 
 	NifFile refNif;
 	int error = refNif.Load(inMeshFile);
@@ -1780,18 +1789,7 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 		}
 	}
 
-	if (!ClearRef) {
-		SliderSet tmpSS;
-		sset.GetSet(setName, tmpSS);
-		for (int i = 0; i < tmpSS.size(); i++)
-			activeSet.DeleteSlider(tmpSS[i].name);
-
-		oldTarget = ShapeToTarget(baseShape);
-		activeSet.RenameShape(baseShape, shape);
-		activeSet.ClearTargets(oldTarget);
-	}
-
-	newVertCount = refNif.GetVertCountForShape(shape);
+	int newVertCount = refNif.GetVertCountForShape(shape);
 	if (newVertCount == -1) {
 		ClearReference();
 		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refNif.GetFileName());
@@ -1823,18 +1821,16 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 				DeleteShape(s);
 	}
 
-	if (oldVertCount > 0 && oldVertCount == newVertCount) {
-		string newTarget = ShapeToTarget(shape);
-		if (!oldTarget.empty() && newTarget != oldTarget)
-			activeSet.Retarget(oldTarget, newTarget);
-	}
-
 	baseShape = shape;
 
 	activeSet.LoadSetDiffData(baseDiffData);
-	activeSet.SetAllReferenced();
-	AutoOffset(workNif);
+	activeSet.SetReferencedData(baseShape);
 
+	// Keep default data folder from current project if existing
+	if (!dataFolder.empty())
+		activeSet.SetDataFolder(dataFolder);
+
+	AutoOffset(workNif);
 	return 0;
 }
 

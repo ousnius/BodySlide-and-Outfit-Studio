@@ -96,8 +96,21 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	XMLElement* sliderEntry = element->FirstChildElement("Slider");
 	while (sliderEntry) {
 		SliderData tmpSlider;
-		if (tmpSlider.LoadSliderData(sliderEntry, genWeights) == 0)
-			sliders.push_back(move(tmpSlider));
+		if (tmpSlider.LoadSliderData(sliderEntry, genWeights) == 0) {
+			// Check if slider already exists
+			for (auto &s : sliders) {
+				if (s.name == tmpSlider.name) {
+					// Merge data of existing sliders
+					for (auto &df : tmpSlider.dataFiles)
+						s.AddDataFile(df.targetName, df.dataName, df.fileName, df.bLocal);
+
+					break;
+				}
+			}
+
+			if (!SliderExists(tmpSlider.name))
+				sliders.push_back(move(tmpSlider));
+		}
 
 		sliderEntry = sliderEntry->NextSiblingElement("Slider");
 	}

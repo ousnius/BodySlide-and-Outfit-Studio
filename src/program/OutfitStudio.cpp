@@ -880,7 +880,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 				refShape, sliderSetName, fileName);
 
 			error = project->LoadReference(fileName.ToStdString(),
-				sliderSetName.ToStdString(), true, refShape.ToStdString());
+				sliderSetName.ToStdString(), false, refShape.ToStdString());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
@@ -1007,7 +1007,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shape));
 
 	if (!shape.empty()) {
-		error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, false);
+		error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, true);
 		if (error) {
 			EndProgress();
 			RefreshGUIFromProj();
@@ -1069,7 +1069,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	glView->DeleteMesh(project->GetBaseShape());
 
 	UpdateProgress(10, _("Loading reference set..."));
-	bool ClearRef = !(XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
+	bool mergeSliders = (XRCCTRL(dlg, "chkClearSliders", wxCheckBox)->IsChecked());
 
 	int error = 0;
 	if (XRCCTRL(dlg, "npRefIsTemplate", wxRadioButton)->GetValue() == true) {
@@ -1079,7 +1079,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		string tmplName = refTemplate.ToStdString();
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
 		if (tmpl != refTemplates.end())
-			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape, ClearRef);
+			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape, mergeSliders);
 		else
 			error = 1;
 	}
@@ -1093,11 +1093,11 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 				refShape, sliderSetName, fileName);
 
 			error = project->LoadReference(fileName.ToStdString(),
-				sliderSetName.ToStdString(), ClearRef, refShape.ToStdString());
+				sliderSetName.ToStdString(), mergeSliders, refShape.ToStdString());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
-			error = project->LoadReferenceNif(fileName.ToStdString(), refShape.ToStdString(), ClearRef);
+			error = project->LoadReferenceNif(fileName.ToStdString(), refShape.ToStdString(), mergeSliders);
 		}
 	}
 	else
