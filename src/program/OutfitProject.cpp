@@ -1587,7 +1587,7 @@ void OutfitProject::ClearReference() {
 
 	morpher.UnlinkRefDiffData();
 
-	baseShape = "";
+	baseShape.clear();
 }
 
 void OutfitProject::ClearReferenceShape() {
@@ -1596,7 +1596,7 @@ void OutfitProject::ClearReferenceShape() {
 
 	morpher.UnlinkRefDiffData();
 
-	baseShape = "";
+	baseShape.clear();
 }
 
 void OutfitProject::ClearOutfit() {
@@ -2081,9 +2081,17 @@ void OutfitProject::DeleteVerts(const string& shapeName, const unordered_map<ush
 			baseDiffData.DeleteVerts(target, indices);
 		else
 			morpher.DeleteVerts(target, indices);
+		
+		activeSet.SetReferencedData(shapeName, true);
 	}
-	else
+	else {
 		DeleteShape(shapeName);
+
+		if (IsBaseShape(shapeName)) {
+			morpher.UnlinkRefDiffData();
+			baseShape.clear();
+		}
+	}
 }
 
 void OutfitProject::DuplicateShape(const string& sourceShape, const string& destShape) {

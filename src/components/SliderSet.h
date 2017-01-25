@@ -104,12 +104,12 @@ public:
 				outTargets.push_back(tdf.first);
 	}
 
-	void SetReferencedData(const string& shapeName) {
+	void SetReferencedData(const string& shapeName, const bool local = false) {
 		string targetName = ShapeToTarget(shapeName);
 		for (auto &s : sliders)
 			for (auto &df : s.dataFiles)
 				if (df.targetName == targetName)
-					df.bLocal = false;
+					df.bLocal = local;
 	}
 
 	string TargetToShape(const string& targetName) {
