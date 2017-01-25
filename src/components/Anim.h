@@ -146,6 +146,7 @@ public:
 
 	void Clear();
 	void ClearShape(const string& shape);
+	void DeleteVertsForShape(const string& shape, const vector<ushort>& indices);
 
 	// Loads the skinning information contained in the nif for all shapes.
 	// Returns false if there is no skinning information.

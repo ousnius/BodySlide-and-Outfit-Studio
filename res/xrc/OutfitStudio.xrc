@@ -1072,6 +1072,10 @@
 					<help>Inverts the Y-axis of the texture coordinates.</help>
 				</object>
 			</object>
+			<object class="wxMenuItem" name="deleteVerts">
+				<label>Delete Vertices...</label>
+				<help>Deletes all unmasked vertices of the currently selected shapes.</help>
+			</object>
 			<object class="wxMenuItem" name="copyShape">
 				<label>Duplicate...</label>
 				<help>Duplicate the current shape.</help>
@@ -1509,6 +1513,10 @@
 				<label>Invert Y</label>
 				<help>Inverts the Y-axis of the texture coordinates.</help>
 			</object>
+		</object>
+		<object class="wxMenuItem" name="deleteVerts">
+			<label>Delete Vertices...</label>
+			<help>Deletes all unmasked vertices of the currently selected shapes.</help>
 		</object>
 		<object class="wxMenuItem" name="copyShape">
 			<label>Duplicate...</label>

@@ -2062,6 +2062,30 @@ void OutfitProject::ConformShape(const string& shapeName) {
 			morpher.GenerateResultDiff(shapeName, activeSet[i].name, activeSet[i].TargetDataName(refTarget));
 }
 
+void OutfitProject::DeleteVerts(const string& shapeName, const unordered_map<ushort, float>& mask) {
+	vector<ushort> indices;
+	indices.reserve(mask.size());
+
+	for (auto &m : mask)
+		indices.push_back(m.first);
+
+	sort(indices.begin(), indices.end());
+	indices.erase(unique(indices.begin(), indices.end()), indices.end());
+
+	bool shapeDeleted = workNif.DeleteVertsForShape(shapeName, indices);
+	if (!shapeDeleted) {
+		workAnim.DeleteVertsForShape(shapeName, indices);
+
+		string target = ShapeToTarget(shapeName);
+		if (IsBaseShape(shapeName))
+			baseDiffData.DeleteVerts(target, indices);
+		else
+			morpher.DeleteVerts(target, indices);
+	}
+	else
+		DeleteShape(shapeName);
+}
+
 void OutfitProject::DuplicateShape(const string& sourceShape, const string& destShape) {
 	workNif.CopyGeometry(destShape, workNif, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);

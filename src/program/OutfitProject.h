@@ -194,6 +194,7 @@ public:
 
 	int OutfitFromSliderSet(const string& fileName, const string& setName);
 
+	void DeleteVerts(const string& shapeName, const unordered_map<ushort, float>& mask);
 	void DuplicateShape(const string& sourceShape, const string& destShape);
 	void DeleteShape(const string& shapeName) {
 		workAnim.ClearShape(shapeName);

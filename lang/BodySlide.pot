@@ -2071,6 +2071,9 @@ msgstr ""
 msgid "Duplicate Shape"
 msgstr ""
 
+msgid "Are you sure you wish to delete the unmasked vertices of the selected shapes?  This action cannot be undone."
+msgstr ""
+
 msgid "Are you sure you wish to delete the selected shapes?  This action cannot be undone."
 msgstr ""
 

@@ -173,7 +173,7 @@ public:
 	void DeleteShader(const string& shapeName);
 	void DeleteAlpha(const string& shapeName);
 	void DeleteSkinning(const string& shapeName);
-	void DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
+	bool DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices);
 
 	int CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
 	int CalcUVDiff(const string& shapeName, const vector<Vector2>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);

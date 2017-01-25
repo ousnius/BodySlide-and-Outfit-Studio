@@ -3061,13 +3061,13 @@ void NifFile::DeleteSkinning(const string& shapeName) {
 		shader->SetSkinned(false);
 }
 
-void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices) {
+bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices) {
 	if (indices.size() == 0)
-		return;
+		return false;
 
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
-		return;
+		return false;
 
 	int skinRef = shape->GetSkinInstanceRef();
 
@@ -3077,7 +3077,7 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 		if (geomData->numVertices == 0 || geomData->numTriangles == 0) {
 			// Deleted all verts or tris, remove shape and children
 			DeleteShape(shapeName);
-			return;
+			return true;
 		}
 	}
 
@@ -3087,7 +3087,7 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 		if (bsTriShape->numVertices == 0 || bsTriShape->numTriangles == 0) {
 			// Deleted all verts or tris, remove shape and children
 			DeleteShape(shapeName);
-			return;
+			return true;
 		}
 	}
 
@@ -3112,6 +3112,8 @@ void NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 			}
 		}
 	}
+
+	return false;
 }
 
 int NifFile::CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale) {

@@ -75,6 +75,38 @@ void AnimInfo::ClearShape(const string& shape) {
 	shapeSkinning.erase(shape);
 }
 
+void AnimInfo::DeleteVertsForShape(const string& shape, const vector<ushort>& indices) {
+	ushort highestRemoved = indices.back();
+	vector<int> indexCollapse(highestRemoved + 1, 0);
+
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < indices.size() && indices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;						// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapse[i] = remCount;
+	}
+
+	auto& skin = shapeSkinning[shape];
+	for (auto &w : skin.boneWeights) {
+		unordered_map<ushort, float> indexCopy;
+		for (auto &d : w.second.weights) {
+			if (d.first > highestRemoved)
+				indexCopy.emplace(d.first - remCount, d.second);
+			else if (indexCollapse[d.first] != -1)
+				indexCopy.emplace(d.first - indexCollapse[d.first], d.second);
+		}
+
+		w.second.weights.clear();
+		w.second.weights.reserve(indexCopy.size());
+		for (auto &copy : indexCopy)
+			w.second.weights[copy.first] = move(copy.second);
+	}
+}
+
 bool AnimInfo::LoadFromNif(NifFile* nif) {
 	vector<string> shapes;
 	nif->GetShapeList(shapes);

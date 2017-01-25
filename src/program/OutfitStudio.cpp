@@ -127,6 +127,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("rotateShape"), OutfitStudio::OnRotateShape)
 	EVT_MENU(XRCID("renameShape"), OutfitStudio::OnRenameShape)
 	EVT_MENU(XRCID("setReference"), OutfitStudio::OnSetReference)
+	EVT_MENU(XRCID("deleteVerts"), OutfitStudio::OnDeleteVerts)
 	EVT_MENU(XRCID("copyShape"), OutfitStudio::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudio::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudio::OnAddBone)
@@ -3345,6 +3346,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
 		GetMenuBar()->Enable(XRCID("btnShowMask"), true);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), true);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), true);
@@ -3377,6 +3379,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnClearMask"), true);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), true);
 		GetMenuBar()->Enable(XRCID("btnShowMask"), true);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), true);
 		GetToolBar()->EnableTool(XRCID("btnBrushCollision"), true);
@@ -3410,6 +3413,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
 
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
@@ -3480,6 +3484,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), true);
@@ -3545,6 +3550,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
 		GetMenuBar()->Enable(XRCID("btnShowMask"), false);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), false);
@@ -3610,6 +3616,7 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnClearMask"), false);
 		GetMenuBar()->Enable(XRCID("btnInvertMask"), false);
 		GetMenuBar()->Enable(XRCID("btnShowMask"), false);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
 
 		GetToolBar()->ToggleTool(XRCID("btnMaskBrush"), true);
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), false);
@@ -5178,6 +5185,39 @@ void OutfitStudio::PreviewRotation(const Vector3& changed) {
 		glView->ShowTransformTool();
 	if (glView->GetVertexEdit())
 		glView->ShowVertexEdit();
+}
+
+void OutfitStudio::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (bEditSlider) {
+		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
+		return;
+	}
+
+	if (wxMessageBox(_("Are you sure you wish to delete the unmasked vertices of the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
+		return;
+
+	for (auto &i : selectedItems) {
+		unordered_map<ushort, float> mask;
+		glView->GetShapeUnmasked(mask, i->shapeName);
+		glView->TriangulateMask(mask, i->shapeName);
+		project->DeleteVerts(i->shapeName, mask);
+	}
+
+	for (auto &s : sliderDisplays) {
+		glView->SetStrokeManager(&s.second->sliderStrokes);
+		glView->GetStrokeManager()->Clear();
+	}
+
+	glView->SetStrokeManager(nullptr);
+	glView->GetStrokeManager()->Clear();
+	glView->ClearMask();
+	RefreshGUIFromProj();
+	ApplySliders();
 }
 
 void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {

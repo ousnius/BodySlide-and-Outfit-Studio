@@ -55,6 +55,7 @@ public:
 	unordered_map<ushort, Vector3>* GetDiffSet(const string& targetDataName);
 	void GetDiffIndices(const string& set, const string& target, vector<ushort>& outIndices, float threshold = 0.0f);
 
+	void DeleteVerts(const string& target, const vector<ushort>& indices);
 	void ClearSet(const string& name);
 	void EmptySet(const string& set, const string& target) {
 		if (!TargetMatch(set, target))

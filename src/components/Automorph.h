@@ -66,6 +66,7 @@ public:
 
 	void MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName);
 	void MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName);
+	void DeleteVerts(const string& shapeName, const vector<ushort>& indices);
 
 	void ClearProximityCache();
 	void BuildProximityCache(const string& shapeName, const float& proximityRadius = 10.0f);

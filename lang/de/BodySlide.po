@@ -2409,6 +2409,13 @@ msgid "Duplicate Shape"
 msgstr "Modell duplizieren"
 
 msgid ""
+"Are you sure you wish to delete the unmasked vertices of the selected "
+"shapes?  This action cannot be undone."
+msgstr ""
+"Sind Sie sich sicher, dass Sie die unmaskierten Vertices löschen wollen?  "
+"Dies kann nicht rückgängig gemacht werden."
+
+msgid ""
 "Are you sure you wish to delete the selected shapes?  This action cannot be "
 "undone."
 msgstr ""

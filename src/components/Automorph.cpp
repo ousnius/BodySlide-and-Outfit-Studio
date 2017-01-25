@@ -234,6 +234,10 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 		m->tris[j] = nifTris[j];
 }
 
+void Automorph::DeleteVerts(const string& shapeName, const vector<ushort>& indices) {
+	resultDiffData.DeleteVerts(shapeName, indices);
+}
+
 void Automorph::ClearProximityCache() {
 	prox_cache.clear();
 }

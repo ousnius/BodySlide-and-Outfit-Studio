@@ -360,6 +360,39 @@ void DiffDataSets::GetDiffIndices(const string& set, const string& target, vecto
 	outIndices.erase(unique(outIndices.begin(), outIndices.end()), outIndices.end());
 }
 
+void DiffDataSets::DeleteVerts(const string& target, const vector<ushort>& indices) {
+	ushort highestRemoved = indices.back();
+	vector<int> indexCollapse(highestRemoved + 1, 0);
+
+	int remCount = 0;
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < indices.size() && indices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;						// Flag delete
+			remCount++;
+			j++;
+		}
+		else
+			indexCollapse[i] = remCount;
+	}
+
+	for (auto &data : namedSet) {
+		if (TargetMatch(data.first, target)) {
+			unordered_map<ushort, Vector3> indexCopy;
+			for (auto &d : data.second) {
+				if (d.first > highestRemoved)
+					indexCopy.emplace(d.first - remCount, d.second);
+				else if (indexCollapse[d.first] != -1)
+					indexCopy.emplace(d.first - indexCollapse[d.first], d.second);
+			}
+
+			data.second.clear();
+			data.second.reserve(indexCopy.size());
+			for (auto &copy : indexCopy)
+				data.second[copy.first] = move(copy.second);
+		}
+	}
+}
+
 void DiffDataSets::ClearSet(const string& name) {
 	namedSet.erase(name);
 	dataTargets.erase(name);
