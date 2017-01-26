@@ -244,12 +244,6 @@ msgstr ""
 msgid "Left Mouse Pan"
 msgstr ""
 
-msgid "Use the current system language for the program."
-msgstr ""
-
-msgid "Use System Language"
-msgstr ""
-
 msgid "Data Files"
 msgstr ""
 
@@ -2123,4 +2117,10 @@ msgid "Version of NIF file '%s' doesn't match current target game. To use the me
 msgstr ""
 
 msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
+msgstr ""
+
+msgid "Language"
+msgstr ""
+
+msgid "Use the selected language for the program."
 msgstr ""

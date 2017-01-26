@@ -37,12 +37,12 @@
 									<tooltip>Choose the target game you want to use the program for here.</tooltip>
 									<selection>0</selection>
 									<content>
-                    <item>Fallout 3</item>
-                    <item>Fallout New Vegas</item>
-                    <item>Skyrim</item>
-                    <item>Fallout 4</item>
-                    <item>Skyrim Special Edition</item>
-                  </content>
+										<item>Fallout 3</item>
+										<item>Fallout New Vegas</item>
+										<item>Skyrim</item>
+										<item>Fallout 4</item>
+										<item>Skyrim Special Edition</item>
+									</content>
 								</object>
 							</object>
 						</object>
@@ -129,14 +129,32 @@
 									<checked>0</checked>
 								</object>
 							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>1</option>
 								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
 								<border>5</border>
-								<object class="wxCheckBox" name="cbLanguage">
-									<tooltip>Use the current system language for the program.</tooltip>
-									<label>Use System Language</label>
-									<checked>0</checked>
+								<object class="wxStaticText" name="lbLanguage">
+									<size>100,-1</size>
+									<label>Language</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>2</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxChoice" name="choiceLanguage">
+									<tooltip>Use the selected language for the program.</tooltip>
+									<selection>0</selection>
+									<content></content>
 								</object>
 							</object>
 						</object>

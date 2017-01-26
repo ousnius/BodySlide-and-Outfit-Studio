@@ -26,7 +26,16 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ConfigurationManager Config;
-const wxString TargetGames[5] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition" };
+
+const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition" };
+const wxLanguage SupportedLangs[] = {
+	wxLANGUAGE_ENGLISH, wxLANGUAGE_AFRIKAANS, wxLANGUAGE_ARABIC, wxLANGUAGE_CATALAN, wxLANGUAGE_CZECH, wxLANGUAGE_DANISH, wxLANGUAGE_GERMAN,
+	wxLANGUAGE_GREEK, wxLANGUAGE_SPANISH, wxLANGUAGE_BASQUE, wxLANGUAGE_FINNISH, wxLANGUAGE_FRENCH, wxLANGUAGE_HINDI,
+	wxLANGUAGE_HUNGARIAN, wxLANGUAGE_INDONESIAN, wxLANGUAGE_ITALIAN, wxLANGUAGE_JAPANESE, wxLANGUAGE_KOREAN, wxLANGUAGE_LITHUANIAN,
+	wxLANGUAGE_LATVIAN, wxLANGUAGE_MALAY, wxLANGUAGE_NORWEGIAN_BOKMAL, wxLANGUAGE_NEPALI, wxLANGUAGE_DUTCH, wxLANGUAGE_POLISH,
+	wxLANGUAGE_PORTUGUESE, wxLANGUAGE_ROMANIAN, wxLANGUAGE_RUSSIAN, wxLANGUAGE_SLOVAK, wxLANGUAGE_SLOVENIAN, wxLANGUAGE_ALBANIAN,
+	wxLANGUAGE_SWEDISH, wxLANGUAGE_TAMIL, wxLANGUAGE_TURKISH, wxLANGUAGE_UKRAINIAN, wxLANGUAGE_VIETNAMESE, wxLANGUAGE_CHINESE
+};
 
 wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_MENU(wxID_EXIT, BodySlideFrame::OnExit)
@@ -1127,13 +1136,10 @@ wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
 }
 
 void BodySlideApp::InitLanguage() {
-	if (Config["UseSystemLanguage"] != "true")
-		return;
-
 	if (locale)
 		delete locale;
 
-	language = wxLocale::GetSystemLanguage();
+	int language = Config.GetIntValue("Language");
 
 	// Load language if possible, fall back to English otherwise
 	if (wxLocale::IsAvailable(language)) {
@@ -3013,8 +3019,12 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxCheckBox* cbLeftMousePan = XRCCTRL(*settings, "cbLeftMousePan", wxCheckBox);
 		cbLeftMousePan->SetValue(Config["Input/LeftMousePan"] != "false");
 
-		wxCheckBox* cbLanguage = XRCCTRL(*settings, "cbLanguage", wxCheckBox);
-		cbLanguage->SetValue(Config["UseSystemLanguage"] != "false");
+		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
+		for (int i = 0; i < extent<decltype(SupportedLangs)>::value; i++)
+			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
+
+		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
+			choiceLanguage->SetStringSelection("English");
 
 		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
 		fpSkeletonFile->SetPath(Config["Anim/DefaultSkeletonReference"]);
@@ -3050,10 +3060,10 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
 			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
 			
-			string oldLang = Config["UseSystemLanguage"];
-			string newLang = cbLanguage->IsChecked() ? "true" : "false";
+			int oldLang = Config.GetIntValue("Language");
+			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
 			if (oldLang != newLang) {
-				Config.SetValue("UseSystemLanguage", newLang);
+				Config.SetValue("Language", newLang);
 				app->InitLanguage();
 			}
 

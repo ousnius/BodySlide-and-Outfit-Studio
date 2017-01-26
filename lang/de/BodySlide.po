@@ -280,12 +280,6 @@ msgstr ""
 msgid "Left Mouse Pan"
 msgstr "Linksklick zum Verschieben"
 
-msgid "Use the current system language for the program."
-msgstr "Die aktuelle Betriebssystemsprache für dieses Programm verwenden."
-
-msgid "Use System Language"
-msgstr "Systemsprache verwenden"
-
 msgid "Data Files"
 msgstr "Datendateien"
 
@@ -2481,3 +2475,9 @@ msgstr ""
 
 msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
 msgstr "Sollen Skyrim NIFs während dieser Session für SSE optimiert werden?"
+
+msgid "Language"
+msgstr "Sprache"
+
+msgid "Use the selected language for the program."
+msgstr "Verwende die ausgewählte Sprache für das Programm."

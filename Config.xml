@@ -19,7 +19,7 @@
     <GameRegKey></GameRegKey>
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
-    <UseSystemLanguage>false</UseSystemLanguage>
+    <Language>57</Language>
     <SelectedOutfit></SelectedOutfit>
     <SelectedPreset></SelectedPreset>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
