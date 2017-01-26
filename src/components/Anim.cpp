@@ -65,6 +65,9 @@ void AnimInfo::Clear() {
 }
 
 void AnimInfo::ClearShape(const string& shape) {
+	if (shape.empty())
+		return;
+
 	for (auto &boneName : shapeBones[shape]) {
 		AnimSkeleton::getInstance().ReleaseBone(boneName);
 		if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0)

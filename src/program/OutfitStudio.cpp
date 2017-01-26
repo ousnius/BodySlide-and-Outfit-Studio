@@ -4676,12 +4676,11 @@ void OutfitStudio::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (project->IsBaseShape(activeItem->shapeName)) {
-		wxMessageBox(_("The selected shape is the reference shape already."), _("Error"));
-		return;
-	}
+	if (!project->IsBaseShape(activeItem->shapeName))
+		project->SetBaseShape(activeItem->shapeName);
+	else
+		project->SetBaseShape("");
 
-	project->SetBaseShape(activeItem->shapeName);
 	RefreshGUIFromProj();
 }
 
@@ -5208,6 +5207,8 @@ void OutfitStudio::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 		project->DeleteVerts(i->shapeName, mask);
 	}
 
+	RefreshGUIFromProj();
+
 	for (auto &s : sliderDisplays) {
 		glView->SetStrokeManager(&s.second->sliderStrokes);
 		glView->GetStrokeManager()->Clear();
@@ -5216,7 +5217,6 @@ void OutfitStudio::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
 	glView->ClearMask();
-	RefreshGUIFromProj();
 	ApplySliders();
 }
 
@@ -5268,18 +5268,15 @@ void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 		selected.push_back(*i);
 
 	for (auto &i : selected) {
-		if (!project->IsBaseShape(i.shapeName)) {
-			wxLogMessage("Deleting shape '%s'.", i.shapeName);
-			project->DeleteShape(i.shapeName);
-			glView->DeleteMesh(i.shapeName);
-			wxTreeItemId item = i.GetId();
-			outfitShapes->Delete(item);
-		}
-		else
-			wxMessageBox(_("You can't delete the reference shape!"));
+		wxLogMessage("Deleting shape '%s'.", i.shapeName);
+		project->DeleteShape(i.shapeName);
+		glView->DeleteMesh(i.shapeName);
+		wxTreeItemId item = i.GetId();
+		outfitShapes->Delete(item);
 	}
 
 	AnimationGUIFromProj();
+	glView->Render();
 }
 
 void OutfitStudio::OnAddBone(wxCommandEvent& WXUNUSED(event)) {

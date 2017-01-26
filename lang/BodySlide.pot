@@ -2053,9 +2053,6 @@ msgstr ""
 msgid "Rename Shape"
 msgstr ""
 
-msgid "The selected shape is the reference shape already."
-msgstr ""
-
 msgid "Rotating slider data is currently not possible using the Rotate Shape dialog."
 msgstr ""
 
@@ -2078,9 +2075,6 @@ msgid "Are you sure you wish to delete the selected shapes?  This action cannot 
 msgstr ""
 
 msgid "Confirm Delete"
-msgstr ""
-
-msgid "You can't delete the reference shape!"
 msgstr ""
 
 msgid "No bone name was entered!"

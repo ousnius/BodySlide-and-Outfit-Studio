@@ -2382,9 +2382,6 @@ msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für das Modell ein."
 msgid "Rename Shape"
 msgstr "Modell umbenennen"
 
-msgid "The selected shape is the reference shape already."
-msgstr "Das ausgewählte Modell ist bereits das Referenzmodell."
-
 msgid ""
 "Rotating slider data is currently not possible using the Rotate Shape dialog."
 msgstr ""
@@ -2424,9 +2421,6 @@ msgstr ""
 
 msgid "Confirm Delete"
 msgstr "Löschen bestätigen"
-
-msgid "You can't delete the reference shape!"
-msgstr "Sie können das Referenzmodell nicht löschen!"
 
 msgid "No bone name was entered!"
 msgstr "Es wurde kein Bone-Name eingegeben!"

@@ -1579,24 +1579,10 @@ void OutfitProject::ClearWorkSliders() {
 }
 
 void OutfitProject::ClearReference() {
-	if (!baseShape.empty())
-		DeleteShape(baseShape);
+	DeleteShape(baseShape);
 
 	if (activeSet.size() > 0)
 		activeSet.Clear();
-
-	morpher.UnlinkRefDiffData();
-
-	baseShape.clear();
-}
-
-void OutfitProject::ClearReferenceShape() {
-	if (!baseShape.empty())
-		DeleteShape(baseShape);
-
-	morpher.UnlinkRefDiffData();
-
-	baseShape.clear();
 }
 
 void OutfitProject::ClearOutfit() {
@@ -1666,7 +1652,7 @@ int OutfitProject::LoadReferenceTemplate(const string& sourceFile, const string&
 
 int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeName, bool mergeSliders) {
 	if (mergeSliders)
-		ClearReferenceShape();
+		DeleteShape(baseShape);
 	else
 		ClearReference();
 
@@ -1726,7 +1712,7 @@ int OutfitProject::LoadReferenceNif(const string& fileName, const string& shapeN
 
 int OutfitProject::LoadReference(const string& fileName, const string& setName, bool mergeSliders, const string& shapeName) {
 	if (mergeSliders)
-		ClearReferenceShape();
+		DeleteShape(baseShape);
 	else
 		ClearReference();
 
@@ -1969,13 +1955,15 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 		return 4;
 	}
 
+	string newBaseShape;
+
 	// First external target with skin shader becomes reference
 	vector<string> refTargets;
 	activeSet.GetReferencedTargets(refTargets);
 	for (auto &target : refTargets) {
 		string shape = activeSet.TargetToShape(target);
 		if (workNif.IsShaderSkin(shape)) {
-			baseShape = shape;
+			newBaseShape = shape;
 			break;
 		}
 	}
@@ -1984,15 +1972,15 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 	if (refTargets.empty()) {
 		for (auto shape = activeSet.TargetShapesBegin(); shape != activeSet.TargetShapesEnd(); ++shape) {
 			if (workNif.IsShaderSkin(shape->second)) {
-				baseShape = shape->second;
+				newBaseShape = shape->second;
 				break;
 			}
 		}
 	}
 
 	// Prevent duplication if valid reference was found
-	if (!baseShape.empty())
-		DeleteShape(baseShape);
+	DeleteShape(newBaseShape);
+	baseShape = newBaseShape;
 
 	owner->UpdateProgress(90, _("Updating slider data..."));
 	morpher.LoadResultDiffs(activeSet);
@@ -2084,19 +2072,24 @@ void OutfitProject::DeleteVerts(const string& shapeName, const unordered_map<ush
 		
 		activeSet.SetReferencedData(shapeName, true);
 	}
-	else {
+	else
 		DeleteShape(shapeName);
-
-		if (IsBaseShape(shapeName)) {
-			morpher.UnlinkRefDiffData();
-			baseShape.clear();
-		}
-	}
 }
 
 void OutfitProject::DuplicateShape(const string& sourceShape, const string& destShape) {
 	workNif.CopyGeometry(destShape, workNif, sourceShape);
 	workAnim.LoadFromNif(&workNif, destShape);
+}
+
+void OutfitProject::DeleteShape(const string& shapeName) {
+	workAnim.ClearShape(shapeName);
+	workNif.DeleteShape(shapeName);
+	owner->glView->DeleteMesh(shapeName);
+
+	if (IsBaseShape(shapeName)) {
+		morpher.UnlinkRefDiffData();
+		baseShape.clear();
+	}
 }
 
 void OutfitProject::RenameShape(const string& shapeName, const string& newShapeName) {

@@ -180,7 +180,6 @@ public:
 
 	void ClearWorkSliders();
 	void ClearReference();
-	void ClearReferenceShape();
 	void ClearOutfit();
 	void ClearSlider(const string& shapeName, const string& sliderName);
 	void ClearUnmaskedDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, float>* mask);
@@ -196,10 +195,7 @@ public:
 
 	void DeleteVerts(const string& shapeName, const unordered_map<ushort, float>& mask);
 	void DuplicateShape(const string& sourceShape, const string& destShape);
-	void DeleteShape(const string& shapeName) {
-		workAnim.ClearShape(shapeName);
-		workNif.DeleteShape(shapeName);
-	}
+	void DeleteShape(const string& shapeName);
 
 	void DeleteBone(const string& boneName) {
 		vector<string> shapes;
