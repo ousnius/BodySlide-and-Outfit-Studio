@@ -13,7 +13,6 @@ msgstr ""
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-# XRC STRINGS START HERE
 msgid "Outfit/Body"
 msgstr "Outfit/Körper"
 
@@ -1517,7 +1516,6 @@ msgstr "Suchradius"
 msgid "Max Vertex Targets"
 msgstr "Max Vertex Ziele"
 
-# XRC STRINGS END HERE
 msgid ""
 "Each vertex of the reference will copy its weights to the nearest collection "
 "of vertices within the given radius. Bear in mind that some geometry will "
@@ -2494,5 +2492,22 @@ msgstr "Entläd das Projekt und erstellt ein leeres neues."
 msgid ""
 "Do you really want to unload the project? All unsaved changes will be lost."
 msgstr ""
-"Willst du das Projekt wirklich entladen? Alle nicht gespeicherten Änderungen "
-"gehen verloren."
+"Wollen Sie das Projekt wirklich entladen? Alle nicht gespeicherten "
+"Änderungen gehen verloren."
+
+msgid "Delete Vertices..."
+msgstr "Vertices löschen..."
+
+msgid "Deletes all unmasked vertices of the currently selected shapes."
+msgstr ""
+"Löscht alle nicht maskierten Vertices des aktuell ausgewählten Modells."
+
+msgid "Separate Vertices..."
+msgstr "Vertices aufteilen..."
+
+msgid "Please enter a unique name for the new separated shape."
+msgstr ""
+"Bitte geben Sie einen einzigartigen Namen für das neu aufgeteilte Modell ein."
+
+msgid "Separate the current shape into two by using the mask."
+msgstr "Teilt das ausgewählte Modell mithilfe der Maske in zwei auf."

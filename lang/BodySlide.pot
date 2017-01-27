@@ -13,7 +13,6 @@ msgstr ""
 "Language: en\n"
 "X-Poedit-KeywordsList: _\n"
 
-# XRC STRINGS START HERE
 msgid "Outfit/Body"
 msgstr ""
 
@@ -1324,7 +1323,6 @@ msgstr ""
 msgid "Max Vertex Targets"
 msgstr ""
 
-# XRC STRINGS END HERE
 msgid "Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient."
 msgstr ""
 
@@ -2135,4 +2133,19 @@ msgid "Unloads the project and creates an empty new one."
 msgstr ""
 
 msgid "Do you really want to unload the project? All unsaved changes will be lost."
+msgstr ""
+
+msgid "Delete Vertices..."
+msgstr ""
+
+msgid "Deletes all unmasked vertices of the currently selected shapes."
+msgstr ""
+
+msgid "Separate Vertices..."
+msgstr ""
+
+msgid "Please enter a unique name for the new separated shape."
+msgstr ""
+
+msgid "Separate the current shape into two by using the mask."
 msgstr ""

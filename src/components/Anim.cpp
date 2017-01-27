@@ -79,6 +79,9 @@ void AnimInfo::ClearShape(const string& shape) {
 }
 
 void AnimInfo::DeleteVertsForShape(const string& shape, const vector<ushort>& indices) {
+	if (indices.empty())
+		return;
+
 	ushort highestRemoved = indices.back();
 	vector<int> indexCollapse(highestRemoved + 1, 0);
 

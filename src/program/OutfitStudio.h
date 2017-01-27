@@ -381,31 +381,33 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
-	void TriangulateMask(unordered_map<ushort, float>& mask, const string& shapeName) {
+	void InvertMaskTris(unordered_map<ushort, float>& mask, const string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		for (auto &i : mask)
-			if (i.second >= 0.1f)
-				i.second = 1.0f;
-			else
-				i.second = 0.0f;
-
 		unordered_map<ushort, float> triMask;
-		for (auto &i : mask) {
-			if (i.second != 0.0f) {
-				for (int t = 0; t < m->nTris; t++) {
-					if (m->tris[t].p1 == i.first || m->tris[t].p2 == i.first || m->tris[t].p3 == i.first) {
-						triMask.emplace(m->tris[t].p1, 1.0f);
-						triMask.emplace(m->tris[t].p2, 1.0f);
-						triMask.emplace(m->tris[t].p3, 1.0f);
-					}
-				}
+		for (int t = 0; t < m->nTris; t++) {
+			if (mask.find(m->tris[t].p1) != mask.end() ||
+				mask.find(m->tris[t].p2) != mask.end() ||
+				mask.find(m->tris[t].p3) != mask.end()) {
+				triMask.emplace(m->tris[t].p1, 1.0f);
+				triMask.emplace(m->tris[t].p2, 1.0f);
+				triMask.emplace(m->tris[t].p3, 1.0f);
 			}
 		}
 
-		mask.insert(triMask.begin(), triMask.end());
+		unordered_map<ushort, float> invertMask;
+		for (int t = 0; t < m->nTris; t++) {
+			if (triMask.find(m->tris[t].p1) == triMask.end())
+				invertMask.emplace(m->tris[t].p1, 1.0f);
+			if (triMask.find(m->tris[t].p2) == triMask.end())
+				invertMask.emplace(m->tris[t].p2, 1.0f);
+			if (triMask.find(m->tris[t].p3) == triMask.end())
+				invertMask.emplace(m->tris[t].p3, 1.0f);
+		}
+
+		mask = move(invertMask);
 	}
 
 	void InvertMask() {
@@ -951,6 +953,7 @@ private:
 	void OnRenameShape(wxCommandEvent& event);
 	void OnSetReference(wxCommandEvent& event);
 	void OnDeleteVerts(wxCommandEvent& event);
+	void OnSeparateVerts(wxCommandEvent& event);
 	void OnDupeShape(wxCommandEvent& event);
 	void OnDeleteShape(wxCommandEvent& event);
 	void OnAddBone(wxCommandEvent& event);

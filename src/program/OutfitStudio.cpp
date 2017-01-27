@@ -129,6 +129,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("renameShape"), OutfitStudio::OnRenameShape)
 	EVT_MENU(XRCID("setReference"), OutfitStudio::OnSetReference)
 	EVT_MENU(XRCID("deleteVerts"), OutfitStudio::OnDeleteVerts)
+	EVT_MENU(XRCID("separateVerts"), OutfitStudio::OnSeparateVerts)
 	EVT_MENU(XRCID("copyShape"), OutfitStudio::OnDupeShape)
 	EVT_MENU(XRCID("deleteShape"), OutfitStudio::OnDeleteShape)
 	EVT_MENU(XRCID("addBone"), OutfitStudio::OnAddBone)
@@ -5232,10 +5233,56 @@ void OutfitStudio::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	for (auto &i : selectedItems) {
 		unordered_map<ushort, float> mask;
 		glView->GetShapeUnmasked(mask, i->shapeName);
-		glView->TriangulateMask(mask, i->shapeName);
 		project->DeleteVerts(i->shapeName, mask);
 	}
 
+	RefreshGUIFromProj();
+
+	for (auto &s : sliderDisplays) {
+		glView->SetStrokeManager(&s.second->sliderStrokes);
+		glView->GetStrokeManager()->Clear();
+	}
+
+	glView->SetStrokeManager(nullptr);
+	glView->GetStrokeManager()->Clear();
+	glView->ClearMask();
+	ApplySliders();
+}
+
+void OutfitStudio::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (bEditSlider) {
+		wxMessageBox(_("You're currently editing slider data, please exit the slider's edit mode (pencil button) and try again."));
+		return;
+	}
+
+	unordered_map<ushort, float> masked;
+	glView->GetShapeMask(masked, activeItem->shapeName);
+	if (masked.empty())
+		return;
+
+	string newShapeName;
+	do {
+		wxString result = wxGetTextFromUser(_("Please enter a unique name for the new separated shape."), _("Separate Vertices..."));
+		if (result.empty())
+			return;
+
+		newShapeName = result;
+	} while (project->IsValidShape(newShapeName));
+
+	project->DuplicateShape(activeItem->shapeName, newShapeName);
+
+	unordered_map<ushort, float> unmasked = masked;
+	glView->InvertMaskTris(unmasked, activeItem->shapeName);
+
+	project->DeleteVerts(activeItem->shapeName, masked);
+	project->DeleteVerts(newShapeName, unmasked);
+
+	project->SetTextures();
 	RefreshGUIFromProj();
 
 	for (auto &s : sliderDisplays) {

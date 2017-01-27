@@ -3062,7 +3062,7 @@ void NifFile::DeleteSkinning(const string& shapeName) {
 }
 
 bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices) {
-	if (indices.size() == 0)
+	if (indices.empty())
 		return false;
 
 	NiShape* shape = FindShapeByName(shapeName);

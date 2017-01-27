@@ -361,6 +361,9 @@ void DiffDataSets::GetDiffIndices(const string& set, const string& target, vecto
 }
 
 void DiffDataSets::DeleteVerts(const string& target, const vector<ushort>& indices) {
+	if (indices.empty())
+		return;
+
 	ushort highestRemoved = indices.back();
 	vector<int> indexCollapse(highestRemoved + 1, 0);
 

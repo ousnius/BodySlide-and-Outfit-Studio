@@ -1080,6 +1080,10 @@
 				<label>Delete Vertices...</label>
 				<help>Deletes all unmasked vertices of the currently selected shapes.</help>
 			</object>
+			<object class="wxMenuItem" name="separateVerts">
+				<label>Separate Vertices...</label>
+				<help>Separate the current shape into two by using the mask.</help>
+			</object>
 			<object class="wxMenuItem" name="copyShape">
 				<label>Duplicate...</label>
 				<help>Duplicate the current shape.</help>
@@ -1521,6 +1525,10 @@
 		<object class="wxMenuItem" name="deleteVerts">
 			<label>Delete Vertices...</label>
 			<help>Deletes all unmasked vertices of the currently selected shapes.</help>
+		</object>
+		<object class="wxMenuItem" name="separateVerts">
+			<label>Separate Vertices...</label>
+			<help>Separate the current shape into two by using the mask.</help>
 		</object>
 		<object class="wxMenuItem" name="copyShape">
 			<label>Duplicate...</label>
