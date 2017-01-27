@@ -2124,3 +2124,15 @@ msgstr ""
 
 msgid "Use the selected language for the program."
 msgstr ""
+
+msgid "Unload Project"
+msgstr ""
+
+msgid "Unload Project...\tCtrl+W"
+msgstr ""
+
+msgid "Unloads the project and creates an empty new one."
+msgstr ""
+
+msgid "Do you really want to unload the project? All unsaved changes will be lost."
+msgstr ""

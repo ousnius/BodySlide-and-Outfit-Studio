@@ -33,6 +33,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("fileLoadOutfit"), OutfitStudio::OnLoadOutfit)
 	EVT_MENU(XRCID("fileSave"), OutfitStudio::OnSaveSliderSet)
 	EVT_MENU(XRCID("fileSaveAs"), OutfitStudio::OnSaveSliderSetAs)
+	EVT_MENU(XRCID("fileUnload"), OutfitStudio::OnUnloadProject)
 
 	EVT_COLLAPSIBLEPANE_CHANGED(XRCID("brushPane"), OutfitStudio::OnBrushPane)
 	EVT_COMMAND_SCROLL(XRCID("brushSize"), OutfitStudio::OnBrushSettingsSlider)
@@ -1198,6 +1199,34 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Outfit loaded.");
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
+}
+
+void OutfitStudio::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
+	int res = wxMessageBox(_("Do you really want to unload the project? All unsaved changes will be lost."), _("Unload Project"), wxYES_NO | wxICON_WARNING, this);
+	if (res != wxYES)
+		return;
+
+	wxLogMessage("Unloading project...");
+	GetMenuBar()->Enable(XRCID("fileSave"), false);
+
+	ClearProject();
+	project->ClearReference();
+	project->ClearOutfit();
+
+	glView->Cleanup();
+	glView->SetStrokeManager(nullptr);
+	glView->GetStrokeManager()->Clear();
+
+	activeSlider.clear();
+	bEditSlider = false;
+	MenuExitSliderEdit();
+
+	delete project;
+	project = new OutfitProject(appConfig, this);
+
+	CreateSetSliders();
+	RefreshGUIFromProj();
+	glView->Render();
 }
 
 void OutfitStudio::UpdateReferenceTemplates() {

@@ -827,6 +827,7 @@ private:
 	void OnLoadProject(wxCommandEvent &event);
 	void OnLoadReference(wxCommandEvent &event);
 	void OnLoadOutfit(wxCommandEvent& event);
+	void OnUnloadProject(wxCommandEvent &event);
 
 	void OnLoadOutfitFP_File(wxFileDirPickerEvent& event);
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);

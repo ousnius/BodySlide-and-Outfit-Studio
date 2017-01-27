@@ -2481,3 +2481,18 @@ msgstr "Sprache"
 
 msgid "Use the selected language for the program."
 msgstr "Verwende die ausgewählte Sprache für das Programm."
+
+msgid "Unload Project"
+msgstr "Projekt entladen"
+
+msgid "Unload Project...\tCtrl+W"
+msgstr "Projekt entladen...\tCtrl+W"
+
+msgid "Unloads the project and creates an empty new one."
+msgstr "Entläd das Projekt und erstellt ein leeres neues."
+
+msgid ""
+"Do you really want to unload the project? All unsaved changes will be lost."
+msgstr ""
+"Willst du das Projekt wirklich entladen? Alle nicht gespeicherten Änderungen "
+"gehen verloren."
