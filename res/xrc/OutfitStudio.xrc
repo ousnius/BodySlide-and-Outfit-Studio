@@ -918,8 +918,16 @@
 			<object class="wxMenu" name="menuImport">
 				<label>Import</label>
 				<object class="wxMenuItem" name="importOutfitNif">
-					<label>Import NIF</label>
+					<label>From NIF...</label>
 					<help>Choose a NIF file to import into the project.</help>
+				</object>
+				<object class="wxMenuItem" name="importOBJ">
+					<label>From OBJ...</label>
+					<help>Import an OBJ file as a new shape in the outfit.</help>
+				</object>
+				<object class="wxMenuItem" name="importFBX">
+					<label>From FBX...</label>
+					<help>Import an FBX file as a new shape in the outfit.</help>
 				</object>
 				<object class="wxMenu" name="menuImportData">
 					<label>Import Data</label>
@@ -932,12 +940,20 @@
 			<object class="wxMenu" name="menuExport">
 				<label>Export</label>
 				<object class="wxMenuItem" name="exportOutfitNif">
-					<label>Export NIF</label>
+					<label>To NIF...</label>
 					<help>Save the current outfit as a NIF file (without reference)</help>
 				</object>
 				<object class="wxMenuItem" name="exportOutfitNifWithRef">
-					<label>Export NIF With Reference</label>
+					<label>To NIF With Reference...</label>
 					<help>Save the current project as a NIF file (including reference)</help>
+				</object>
+				<object class="wxMenuItem" name="exportOBJ">
+					<label>To OBJ...</label>
+					<help>Export the current shape as an OBJ file.</help>
+				</object>
+				<object class="wxMenuItem" name="exportFBX">
+					<label>To FBX...</label>
+					<help>Export the current shape as an FBX file.</help>
 				</object>
 				<object class="wxMenu" name="menuExportData">
 					<label>Export Data</label>
@@ -1043,28 +1059,6 @@
 		</object>
 		<object class="wxMenu" name="menuMesh">
 			<label>Shape</label>
-			<object class="wxMenu" name="menuImportMesh">
-				<label>Import</label>
-				<object class="wxMenuItem" name="importShape">
-					<label>From OBJ...</label>
-					<help>Import an OBJ file as a new shape in the outfit.</help>
-				</object>
-				<object class="wxMenuItem" name="importFBX">
-					<label>From FBX...</label>
-					<help>Import an FBX file as a new shape in the outfit.</help>
-				</object>
-			</object>
-			<object class="wxMenu" name="menuExportMesh">
-				<label>Export</label>
-				<object class="wxMenuItem" name="exportShape">
-					<label>To OBJ...</label>
-					<help>Export the current shape as an OBJ file.</help>
-				</object>
-				<object class="wxMenuItem" name="exportFBX">
-					<label>To FBX...</label>
-					<help>Export the current shape as an FBX file.</help>
-				</object>
-			</object>
 			<object class="wxMenu" name="menuUV">
 				<label>UV</label>
 				<object class="wxMenuItem" name="uvInvertX">
@@ -1489,20 +1483,13 @@
 	
 	<object class="wxMenu" name="menuMeshContext">
 		<label>Shape</label>
-		<object class="wxMenu" name="menuImportMesh">
-			<label>Import</label>
-			<object class="wxMenuItem" name="importShape">
-				<label>From OBJ...</label>
-				<help>Import an OBJ file as a new shape in the outfit.</help>
-			</object>
-			<object class="wxMenuItem" name="importFBX">
-				<label>From FBX...</label>
-				<help>Import an FBX file as a new shape in the outfit.</help>
-			</object>
-		</object>
 		<object class="wxMenu" name="menuExportMesh">
 			<label>Export</label>
 			<object class="wxMenuItem" name="exportShape">
+				<label>To NIF...</label>
+				<help>Export only the selected shapes to a NIF file.</help>
+			</object>
+			<object class="wxMenuItem" name="exportOBJ">
 				<label>To OBJ...</label>
 				<help>Export the current shape as an OBJ file.</help>
 			</object>

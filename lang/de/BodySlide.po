@@ -409,8 +409,8 @@ msgstr "Speichert das Projekt unter einem neuen Namen."
 msgid "Import"
 msgstr "Import"
 
-msgid "Import NIF"
-msgstr "NIF importieren"
+msgid "From NIF..."
+msgstr "Aus NIF..."
 
 msgid "Choose a NIF file to import into the project."
 msgstr "Wählen Sie eine NIF-Datei, die dem Projekt hinzugefügt werden soll."
@@ -428,14 +428,11 @@ msgstr "Wählen Sie eine HKX-Datei zum Importieren als BSClothExtraData-Block."
 msgid "Export"
 msgstr "Export"
 
-msgid "Export NIF"
-msgstr "NIF exportieren"
-
 msgid "Save the current outfit as a NIF file (without reference)"
 msgstr "Speichert das aktuelle Outfit als NIF-Datei (ohne Referenz)"
 
-msgid "Export NIF With Reference"
-msgstr "NIF mit Referenz exportieren"
+msgid "To NIF With Reference..."
+msgstr "Als NIF mit Referenz..."
 
 msgid "Save the current project as a NIF file (including reference)"
 msgstr "Speichert das aktuelle Projekt als NIF-Datei (inklusive Referenz)"
@@ -576,6 +573,18 @@ msgstr "Aus FBX..."
 
 msgid "Import an FBX file as a new shape in the outfit."
 msgstr "Importiert eine FBX-Datei als neues Modell."
+
+msgid "To NIF..."
+msgstr "Als NIF..."
+
+msgid "Export only the selected shapes to a NIF file."
+msgstr "Exportiert nur die ausgewählten Modelle als NIF-Datei."
+
+msgid "Export selected shapes to NIF"
+msgstr "Ausgewählten Modelle als NIF-Datei exportieren"
+
+msgid "Failed to export selected shapes to NIF file!"
+msgstr "Konnte ausgewählte Modelle nicht als NIF-Datei exportieren!"
 
 msgid "To OBJ..."
 msgstr "Als OBJ..."

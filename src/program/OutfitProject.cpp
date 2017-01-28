@@ -2266,6 +2266,25 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 	return 0;
 }
 
+int OutfitProject::ExportShapeNIF(const string& fileName, const vector<string>& exportShapes) {
+	if (exportShapes.empty())
+		return 1;
+
+	if (!workNif.IsValid())
+		return 2;
+
+	NifFile clone(workNif);
+
+	vector<string> shapes;
+	clone.GetShapeList(shapes);
+
+	for (auto &s : shapes)
+		if (find(exportShapes.begin(), exportShapes.end(), s) == exportShapes.end())
+			clone.DeleteShape(s);
+
+	return clone.Save(fileName);;
+}
+
 int OutfitProject::ExportShapeFBX(const string& fileName, const string& shapeName) {
 	FBXWrangler fbxw;
 
@@ -2276,7 +2295,7 @@ int OutfitProject::ExportShapeFBX(const string& fileName, const string& shapeNam
 	return fbxw.ExportScene(fileName);
 }
 
-int OutfitProject::ExportShapeObj(const string& fileName, const string& shapeName, Vector3 scale, Vector3 offset) {
+int OutfitProject::ExportShapeOBJ(const string& fileName, const string& shapeName, Vector3 scale, Vector3 offset) {
 	vector<Triangle> tris;
 	workNif.GetTrisForShape(shapeName, &tris);
 	const vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);

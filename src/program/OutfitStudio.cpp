@@ -116,8 +116,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudio::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudio::OnEnableTextures)
 
-	EVT_MENU(XRCID("importShape"), OutfitStudio::OnImportShape)
 	EVT_MENU(XRCID("exportShape"), OutfitStudio::OnExportShape)
+	EVT_MENU(XRCID("importOBJ"), OutfitStudio::OnImportOBJ)
+	EVT_MENU(XRCID("exportOBJ"), OutfitStudio::OnExportOBJ)
 	EVT_MENU(XRCID("importFBX"), OutfitStudio::OnImportFBX)
 	EVT_MENU(XRCID("exportFBX"), OutfitStudio::OnExportFBX)
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudio::OnInvertUV)
@@ -4562,7 +4563,37 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 	EndProgress();
 }
 
-void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
+void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (project->HasUnweighted()) {
+		wxLogWarning("Unweighted vertices found.");
+		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
+		if (error != wxYES)
+			return;
+	}
+
+	string fileName = wxFileSelector(_("Export selected shapes to NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.empty())
+		return;
+
+	vector<string> shapes;
+	for (auto &i : selectedItems)
+		shapes.push_back(i->shapeName);
+
+	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
+	project->ClearBoneScale();
+
+	if (project->ExportShapeNIF(fileName, shapes)) {
+		wxLogError("Failed to export selected shapes to NIF file '%s'!", fileName);
+		wxMessageBox(_("Failed to export selected shapes to NIF file!"), _("Error"), wxICON_ERROR);
+	}
+}
+
+void OutfitStudio::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	string fn = wxFileSelector(_("Import .obj file for new shape"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
 	if (fn.empty())
 		return;
@@ -4589,7 +4620,7 @@ void OutfitStudio::OnImportShape(wxCommandEvent& WXUNUSED(event)) {
 	glView->Render();
 }
 
-void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
+void OutfitStudio::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
@@ -4604,7 +4635,7 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems) {
 			string targetFile = dir + "\\" + i->shapeName + ".obj";
 			wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", i->shapeName, targetFile);
-			project->ExportShapeObj(targetFile, i->shapeName, Vector3(0.1f, 0.1f, 0.1f));
+			project->ExportShapeOBJ(targetFile, i->shapeName, Vector3(0.1f, 0.1f, 0.1f));
 		}
 	}
 	else {
@@ -4612,7 +4643,7 @@ void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
 		if (!fileName.empty()) {
 			wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->shapeName, fileName);
 			project->ClearBoneScale();
-			if (project->ExportShapeObj(fileName, activeItem->shapeName, Vector3(0.1f, 0.1f, 0.1f))) {
+			if (project->ExportShapeOBJ(fileName, activeItem->shapeName, Vector3(0.1f, 0.1f, 0.1f))) {
 				wxLogError("Failed to export OBJ file '%s'!", fileName);
 				wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 			}

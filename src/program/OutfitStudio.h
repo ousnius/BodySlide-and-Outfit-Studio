@@ -925,8 +925,9 @@ private:
 	void OnDeleteSlider(wxCommandEvent& event);
 	void OnSliderProperties(wxCommandEvent& event);
 
-	void OnImportShape(wxCommandEvent& event);
 	void OnExportShape(wxCommandEvent& event);
+	void OnImportOBJ(wxCommandEvent& event);
+	void OnExportOBJ(wxCommandEvent& event);
 	void OnImportFBX(wxCommandEvent& event);
 	void OnExportFBX(wxCommandEvent& event);
 

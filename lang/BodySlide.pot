@@ -363,7 +363,7 @@ msgstr ""
 msgid "Import"
 msgstr ""
 
-msgid "Import NIF"
+msgid "From NIF..."
 msgstr ""
 
 msgid "Choose a NIF file to import into the project."
@@ -381,13 +381,10 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
-msgid "Export NIF"
-msgstr ""
-
 msgid "Save the current outfit as a NIF file (without reference)"
 msgstr ""
 
-msgid "Export NIF With Reference"
+msgid "To NIF With Reference..."
 msgstr ""
 
 msgid "Save the current project as a NIF file (including reference)"
@@ -514,6 +511,18 @@ msgid "From FBX..."
 msgstr ""
 
 msgid "Import an FBX file as a new shape in the outfit."
+msgstr ""
+
+msgid "To NIF..."
+msgstr ""
+
+msgid "Export only the selected shapes to a NIF file."
+msgstr ""
+
+msgid "Export selected shapes to NIF"
+msgstr ""
+
+msgid "Failed to export selected shapes to NIF file!"
 msgstr ""
 
 msgid "To OBJ..."
