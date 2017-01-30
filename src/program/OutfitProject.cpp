@@ -403,67 +403,6 @@ void OutfitProject::AddCombinedSlider(const string& newName) {
 	}
 }
 
-int OutfitProject::AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape) {
-	ObjFile obj;
-	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
-
-	if (!shapeName.empty())
-		outfitName = shapeName;
-	else if (outfitName.empty())
-		outfitName = "New Outfit";
-
-	if (obj.LoadForNif(fileName)) {
-		wxLogError("Could not load OBJ file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
-		return 1;
-	}
-	vector<string> objGroupNames;
-	obj.GetGroupList(objGroupNames);
-	for (int i = 0; i < objGroupNames.size(); i++) {
-		vector<Vector3> v;
-		vector<Triangle> t;
-		vector<Vector2> uv;
-		if (!obj.CopyDataForIndex(i, &v, &t, &uv)) {
-			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
-			wxMessageBox(wxString::Format(_("Could not copy data from OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
-			return 3;
-		}
-
-		// Skip zero size groups.  
-		if (v.size() == 0)
-			continue;
-
-		string useShapeName = objGroupNames[i];
-
-		if (mergeShape != "") {
-			vector<Vector3> shapeVerts;
-			workNif.GetVertsForShape(mergeShape, shapeVerts);
-			if (shapeVerts.size() == v.size()) {
-				int ret = wxMessageBox(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
-				if (ret == wxYES) {
-					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
-					if (ret == wxYES)
-						workNif.SetVertsForShape(mergeShape, v);
-
-					ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
-					if (ret == wxYES)
-						workNif.SetUvsForShape(mergeShape, uv);
-
-					return 101;
-				}
-			}
-			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner);
-			if (useShapeName == "")
-				return 100;
-		}
-
-		CreateNifShapeFromData(useShapeName, v, t, uv);
-	}
-
-	return 0;
-}
-
-
 int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector3>& v, vector<Triangle>& t, vector<Vector2>& uv, vector<Vector3>* norms) {
 	string blankSkel;
 	string defaultName = "New Outfit";
@@ -484,7 +423,7 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	}
 
 	if (!workNif.IsValid())
-		AddNif(blankSkel, true, defaultName);
+		ImportNIF(blankSkel, true, defaultName);
 
 	if (owner->targetGame <= SKYRIM) {
 		NiTriShapeData* nifShapeData = new NiTriShapeData(workNif.GetHeader());
@@ -1820,118 +1759,6 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	return 0;
 }
 
-int OutfitProject::AddNif(const string& fileName, bool clear, const string& inOutfitName) {
-	if (clear)
-		ClearOutfit();
-
-	if (fileName.empty()) {
-		wxLogMessage("No outfit selected.");
-		return 0;
-	}
-
-	if (!inOutfitName.empty())
-		outfitName = inOutfitName;
-	else if (outfitName.empty())
-		outfitName = "New Outfit";
-
-	if (clear) {
-		wxFileName file(fileName);
-		mGameFile = file.GetName();
-		mGamePath = file.GetPath();
-
-		int pos = mGamePath.Lower().Find("meshes");
-		if (pos != wxNOT_FOUND)
-			mGamePath = mGamePath.Mid(pos);
-		else
-			mGamePath.Clear();
-
-		if (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE) {
-			wxString fileRest;
-			if (mGameFile.EndsWith("_0", &fileRest) || mGameFile.EndsWith("_1", &fileRest))
-				mGameFile = fileRest;
-		}
-	}
-
-	NifFile nif;
-	int error = nif.Load(fileName);
-	if (error) {
-		if (error == 2) {
-			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				nif.GetFileName(), nif.GetHeader().GetVersionInfo());
-
-			wxLogError(errorText);
-			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
-			return 4;
-		}
-
-		wxLogError("Could not load NIF file '%s'!", fileName);
-		wxMessageBox(wxString::Format(_("Could not load NIF file '%s'!"), fileName), _("NIF Error"), wxICON_ERROR, owner);
-		return 1;
-	}
-
-	CheckNIFTarget(nif);
-
-	nif.SetNodeName(0, "Scene Root");
-
-	vector<string> nifShapes;
-	nif.GetShapeList(nifShapes);
-	for (auto &s : nifShapes)
-		nif.RenameDuplicateShape(s);
-
-	if (!baseShape.empty())
-		nif.RenameShape(baseShape, baseShape + "_outfit");
-
-	vector<string> shapes;
-	GetShapes(shapes);
-
-	nif.GetShapeList(nifShapes);
-	for (auto &s : nifShapes) {
-		vector<string> uniqueShapes;
-		nif.GetShapeList(uniqueShapes);
-		uniqueShapes.insert(uniqueShapes.end(), shapes.begin(), shapes.end());
-
-		string newName = s;
-		int uniqueCount = 0;
-		for (;;) {
-			auto foundShape = find(uniqueShapes.begin(), uniqueShapes.end(), newName);
-			if (foundShape != uniqueShapes.end()) {
-				uniqueShapes.erase(foundShape);
-				uniqueCount++;
-				if (uniqueCount > 1)
-					newName = s + wxString::Format("_%d", uniqueCount).ToStdString();
-			}
-			else {
-				if (uniqueCount > 1)
-					nif.RenameShape(s, newName);
-				break;
-			}
-		}
-	}
-
-	AutoOffset(nif);
-
-	// Add cloth data block of NIF to the list
-	vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nif.GetHeader().GetBlock<NiNode>(0), true);
-	for (auto &cloth : clothDataBlocks)
-		clothData[fileName] = *cloth;
-
-	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
-
-	nif.GetShapeList(nifShapes);
-	if (workNif.IsValid()) {
-		for (auto &s : nifShapes) {
-			workNif.CopyGeometry(s, nif, s);
-			workAnim.LoadFromNif(&workNif, s);
-		}
-	}
-	else {
-		workNif.CopyFrom(nif);
-		workAnim.LoadFromNif(&workNif);
-	}
-
-	return 0;
-}
-
 int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sliderSetName) {
 	owner->StartProgress(_("Loading slider set..."));
 	SliderSetFile InSS(fileName);
@@ -1950,7 +1777,7 @@ int OutfitProject::OutfitFromSliderSet(const string& fileName, const string& sli
 	string inputNif = activeSet.GetInputFileName();
 
 	owner->UpdateProgress(30, _("Loading outfit shapes..."));
-	if (AddNif(inputNif, true, sliderSetName)) {
+	if (ImportNIF(inputNif, true, sliderSetName)) {
 		owner->EndProgress();
 		return 4;
 	}
@@ -2118,7 +1945,119 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapeMes
 	}
 }
 
-int OutfitProject::SaveOutfitNif(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef) {
+int OutfitProject::ImportNIF(const string& fileName, bool clear, const string& inOutfitName) {
+	if (clear)
+		ClearOutfit();
+
+	if (fileName.empty()) {
+		wxLogMessage("No outfit selected.");
+		return 0;
+	}
+
+	if (!inOutfitName.empty())
+		outfitName = inOutfitName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
+
+	if (clear) {
+		wxFileName file(fileName);
+		mGameFile = file.GetName();
+		mGamePath = file.GetPath();
+
+		int pos = mGamePath.Lower().Find("meshes");
+		if (pos != wxNOT_FOUND)
+			mGamePath = mGamePath.Mid(pos);
+		else
+			mGamePath.Clear();
+
+		if (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE) {
+			wxString fileRest;
+			if (mGameFile.EndsWith("_0", &fileRest) || mGameFile.EndsWith("_1", &fileRest))
+				mGameFile = fileRest;
+		}
+	}
+
+	NifFile nif;
+	int error = nif.Load(fileName);
+	if (error) {
+		if (error == 2) {
+			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
+				nif.GetFileName(), nif.GetHeader().GetVersionInfo());
+
+			wxLogError(errorText);
+			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
+			return 4;
+		}
+
+		wxLogError("Could not load NIF file '%s'!", fileName);
+		wxMessageBox(wxString::Format(_("Could not load NIF file '%s'!"), fileName), _("NIF Error"), wxICON_ERROR, owner);
+		return 1;
+	}
+
+	CheckNIFTarget(nif);
+
+	nif.SetNodeName(0, "Scene Root");
+
+	vector<string> nifShapes;
+	nif.GetShapeList(nifShapes);
+	for (auto &s : nifShapes)
+		nif.RenameDuplicateShape(s);
+
+	if (!baseShape.empty())
+		nif.RenameShape(baseShape, baseShape + "_outfit");
+
+	vector<string> shapes;
+	GetShapes(shapes);
+
+	nif.GetShapeList(nifShapes);
+	for (auto &s : nifShapes) {
+		vector<string> uniqueShapes;
+		nif.GetShapeList(uniqueShapes);
+		uniqueShapes.insert(uniqueShapes.end(), shapes.begin(), shapes.end());
+
+		string newName = s;
+		int uniqueCount = 0;
+		for (;;) {
+			auto foundShape = find(uniqueShapes.begin(), uniqueShapes.end(), newName);
+			if (foundShape != uniqueShapes.end()) {
+				uniqueShapes.erase(foundShape);
+				uniqueCount++;
+				if (uniqueCount > 1)
+					newName = s + wxString::Format("_%d", uniqueCount).ToStdString();
+			}
+			else {
+				if (uniqueCount > 1)
+					nif.RenameShape(s, newName);
+				break;
+			}
+		}
+	}
+
+	AutoOffset(nif);
+
+	// Add cloth data block of NIF to the list
+	vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nif.GetHeader().GetBlock<NiNode>(0), true);
+	for (auto &cloth : clothDataBlocks)
+		clothData[fileName] = *cloth;
+
+	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
+
+	nif.GetShapeList(nifShapes);
+	if (workNif.IsValid()) {
+		for (auto &s : nifShapes) {
+			workNif.CopyGeometry(s, nif, s);
+			workAnim.LoadFromNif(&workNif, s);
+		}
+	}
+	else {
+		workNif.CopyFrom(nif);
+		workAnim.LoadFromNif(&workNif);
+	}
+
+	return 0;
+}
+
+int OutfitProject::ExportNIF(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef) {
 	NifFile clone(workNif);
 
 	ChooseClothData(clone);
@@ -2187,7 +2126,108 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 	}
 }
 
-int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeName, const string& mergeShape) {
+int OutfitProject::ExportShapeNIF(const string& fileName, const vector<string>& exportShapes) {
+	if (exportShapes.empty())
+		return 1;
+
+	if (!workNif.IsValid())
+		return 2;
+
+	NifFile clone(workNif);
+
+	vector<string> shapes;
+	clone.GetShapeList(shapes);
+
+	for (auto &s : shapes)
+		if (find(exportShapes.begin(), exportShapes.end(), s) == exportShapes.end())
+			clone.DeleteShape(s);
+
+	return clone.Save(fileName);;
+}
+
+int OutfitProject::ImportOBJ(const string& fileName, const string& shapeName, const string& mergeShape) {
+	ObjFile obj;
+	obj.SetScale(Vector3(10.0f, 10.0f, 10.0f));
+
+	if (!shapeName.empty())
+		outfitName = shapeName;
+	else if (outfitName.empty())
+		outfitName = "New Outfit";
+
+	if (obj.LoadForNif(fileName)) {
+		wxLogError("Could not load OBJ file '%s'!", fileName);
+		wxMessageBox(wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
+		return 1;
+	}
+	vector<string> objGroupNames;
+	obj.GetGroupList(objGroupNames);
+	for (int i = 0; i < objGroupNames.size(); i++) {
+		vector<Vector3> v;
+		vector<Triangle> t;
+		vector<Vector2> uv;
+		if (!obj.CopyDataForIndex(i, &v, &t, &uv)) {
+			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
+			wxMessageBox(wxString::Format(_("Could not copy data from OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
+			return 3;
+		}
+
+		// Skip zero size groups.  
+		if (v.size() == 0)
+			continue;
+
+		string useShapeName = objGroupNames[i];
+
+		if (mergeShape != "") {
+			vector<Vector3> shapeVerts;
+			workNif.GetVertsForShape(mergeShape, shapeVerts);
+			if (shapeVerts.size() == v.size()) {
+				int ret = wxMessageBox(_("The vertex count of the selected .obj file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
+				if (ret == wxYES) {
+					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
+					if (ret == wxYES)
+						workNif.SetVertsForShape(mergeShape, v);
+
+					ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
+					if (ret == wxYES)
+						workNif.SetUvsForShape(mergeShape, uv);
+
+					return 101;
+				}
+			}
+			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner);
+			if (useShapeName == "")
+				return 100;
+		}
+
+		CreateNifShapeFromData(useShapeName, v, t, uv);
+	}
+
+	return 0;
+}
+
+int OutfitProject::ExportOBJ(const string& fileName, const vector<string>& shapes, Vector3 scale, Vector3 offset) {
+	ObjFile obj;
+	obj.SetScale(scale);
+	obj.SetOffset(offset);
+
+	for (auto &s : shapes) {
+		vector<Triangle> tris;
+		if (!workNif.GetTrisForShape(s, &tris))
+			return 1;
+
+		const vector<Vector3>* verts = workNif.GetRawVertsForShape(s);
+		const vector<Vector2>* uvs = workNif.GetUvsForShape(s);
+
+		obj.AddGroup(s, *verts, tris, *uvs);
+	}
+
+	if (obj.Save(fileName))
+		return 2;
+
+	return 0;
+}
+
+int OutfitProject::ImportFBX(const string& fileName, const string& shapeName, const string& mergeShape) {
 	FBXWrangler fbxw;
 	string nonRefBones;
 
@@ -2266,54 +2306,16 @@ int OutfitProject::ImportShapeFBX(const string& fileName, const string& shapeNam
 	return 0;
 }
 
-int OutfitProject::ExportShapeNIF(const string& fileName, const vector<string>& exportShapes) {
-	if (exportShapes.empty())
-		return 1;
-
-	if (!workNif.IsValid())
-		return 2;
-
-	NifFile clone(workNif);
-
-	vector<string> shapes;
-	clone.GetShapeList(shapes);
-
-	for (auto &s : shapes)
-		if (find(exportShapes.begin(), exportShapes.end(), s) == exportShapes.end())
-			clone.DeleteShape(s);
-
-	return clone.Save(fileName);;
-}
-
-int OutfitProject::ExportShapeFBX(const string& fileName, const string& shapeName) {
+int OutfitProject::ExportFBX(const string& fileName, const vector<string>& shapes) {
 	FBXWrangler fbxw;
-
 	fbxw.AddSkeleton(&AnimSkeleton::getInstance().refSkeletonNif);
-	fbxw.AddNif(&workNif, shapeName);
-	fbxw.AddSkinning(&workAnim, shapeName);
+
+	for (auto &s : shapes) {
+		fbxw.AddNif(&workNif, s);
+		fbxw.AddSkinning(&workAnim, s);
+	}
 
 	return fbxw.ExportScene(fileName);
-}
-
-int OutfitProject::ExportShapeOBJ(const string& fileName, const string& shapeName, Vector3 scale, Vector3 offset) {
-	vector<Triangle> tris;
-	workNif.GetTrisForShape(shapeName, &tris);
-	const vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
-	const vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
-
-	Vector3 shapeTrans;
-	workNif.GetShapeTranslation(shapeName, shapeTrans);
-	Vector3 offs(shapeTrans.x + offset.x, shapeTrans.y + offset.y, shapeTrans.z + offset.z);
-
-	ObjFile obj;
-	obj.SetScale(scale);
-	obj.SetOffset(offs);
-
-	obj.AddGroup(shapeName, *verts, tris, *uvs);
-	if (obj.Save(fileName))
-		return 1;
-
-	return 0;
 }
 
 

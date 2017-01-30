@@ -96,7 +96,6 @@ public:
 	void AddZapSlider(const string& newName, unordered_map<ushort, float>& verts, const string& shapeName);
 	void AddCombinedSlider(const string& newName);
 
-	int AddShapeFromObjFile(const string& fileName, const string& shapeName, const string& mergeShape = "");
 	int CreateNifShapeFromData(const string& shapeName,  vector<Vector3>& v,  vector<Triangle>& t,  vector<Vector2>& uv, vector<Vector3>* norms = nullptr);
 
 	// Slider data can have a separate name from the shape target.
@@ -189,7 +188,6 @@ public:
 	int LoadReferenceTemplate(const string& sourceFile, const string& set, const string& shape, bool mergeSliders = false);
 	int LoadReferenceNif(const string& fileName, const string& shapeName, bool mergeSliders = false);
 	int LoadReference(const string& fileName, const string& setName, bool mergeSliders = false, const string& shapeName = "");
-	int AddNif(const string& fileName, bool clear = true, const string& inOutfitName = "");
 
 	int OutfitFromSliderSet(const string& fileName, const string& setName);
 
@@ -210,16 +208,18 @@ public:
 		}
 	}
 
-
 	void RenameShape(const string& shapeName, const string& newShapeName);
-
 	void UpdateNifNormals(NifFile* nif, const vector<mesh*>& shapemeshes);
-	int SaveOutfitNif(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 
 	void ChooseClothData(NifFile& nif);
 
-	int ImportShapeFBX(const string& fileName, const string& shapeName = "", const string& mergeShape = "");
+	int ImportNIF(const string& fileName, bool clear = true, const string& inOutfitName = "");
+	int ExportNIF(const string& fileName, const vector<mesh*>& modMeshes, bool writeNormals, bool withRef = false);
 	int ExportShapeNIF(const string& fileName, const vector<string>& exportShapes);
-	int ExportShapeFBX(const string& fileName, const string& shapeName = "");
-	int ExportShapeOBJ(const string& fileName, const string& shapeName, Vector3 scale = Vector3(1.0f, 1.0f, 1.0f), Vector3 offset = Vector3());
+
+	int ImportOBJ(const string& fileName, const string& shapeName, const string& mergeShape = "");
+	int ExportOBJ(const string& fileName, const vector<string>& shapes, Vector3 scale = Vector3(1.0f, 1.0f, 1.0f), Vector3 offset = Vector3());
+
+	int ImportFBX(const string& fileName, const string& shapeName = "", const string& mergeShape = "");
+	int ExportFBX(const string& fileName, const vector<string>& shapes);
 };

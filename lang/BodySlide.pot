@@ -381,7 +381,7 @@ msgstr ""
 msgid "Export"
 msgstr ""
 
-msgid "Save the current outfit as a NIF file (without reference)"
+msgid "Save the current project as a NIF file (without reference)"
 msgstr ""
 
 msgid "To NIF With Reference..."
@@ -528,13 +528,13 @@ msgstr ""
 msgid "To OBJ..."
 msgstr ""
 
-msgid "Export the current shape as an OBJ file."
+msgid "Export the current project as an OBJ file."
 msgstr ""
 
 msgid "To FBX..."
 msgstr ""
 
-msgid "Export the current shape as an FBX file."
+msgid "Export only the selected shapes to an FBX file."
 msgstr ""
 
 msgid "UV"
@@ -738,7 +738,7 @@ msgstr ""
 msgid "Export OBJ..."
 msgstr ""
 
-msgid "Exports the current slider's data as an OBJ file."
+msgid "Export only the selected shapes to an OBJ file."
 msgstr ""
 
 msgid "Negate Slider"
@@ -1952,6 +1952,9 @@ msgstr ""
 msgid "Failed to export OBJ file!"
 msgstr ""
 
+msgid "Failed to export FBX file!"
+msgstr ""
+
 msgid "OSD Import"
 msgstr ""
 
@@ -2036,16 +2039,25 @@ msgstr ""
 msgid "Import .obj file for new shape"
 msgstr ""
 
-msgid "Export selected shapes as .obj files"
+msgid "Export selected shapes as an .obj file"
 msgstr ""
 
 msgid "Export shape as an .obj file"
 msgstr ""
 
-msgid "Import .fbx file for new shape"
+msgid "Export project as an .obj file"
 msgstr ""
 
-msgid "Export .fbx file for new shape"
+msgid "Export project as an .fbx file"
+msgstr ""
+
+msgid "Export shape as an .fbx file"
+msgstr ""
+
+msgid "Export selected shapes as an .fbx file"
+msgstr ""
+
+msgid "Import .fbx file for new shape"
 msgstr ""
 
 msgid "Please enter a new unique name for the shape."

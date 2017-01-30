@@ -835,12 +835,23 @@ private:
 	void OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event);
 
 	void OnSetBaseShape(wxCommandEvent &event);
-	void OnImportOutfitNif(wxCommandEvent &event);
-	void OnExportOutfitNif(wxCommandEvent &event);
-	void OnExportOutfitNifWithRef(wxCommandEvent &event);
+	void OnMakeConvRef(wxCommandEvent& event);
+
+	void OnImportNIF(wxCommandEvent &event);
+	void OnExportNIF(wxCommandEvent &event);
+	void OnExportNIFWithRef(wxCommandEvent &event);
+	void OnExportShapeNIF(wxCommandEvent& event);
+
+	void OnImportOBJ(wxCommandEvent& event);
+	void OnExportOBJ(wxCommandEvent& event);
+	void OnExportShapeOBJ(wxCommandEvent& event);
+
+	void OnImportFBX(wxCommandEvent& event);
+	void OnExportFBX(wxCommandEvent& event);
+	void OnExportShapeFBX(wxCommandEvent& event);
+
 	void OnImportPhysicsData(wxCommandEvent &event);
 	void OnExportPhysicsData(wxCommandEvent &event);
-	void OnMakeConvRef(wxCommandEvent& event);
 
 	void OnSSSNameCopy(wxCommandEvent& event);
 	void OnSSSGenWeightsTrue(wxCommandEvent& event);
@@ -924,12 +935,6 @@ private:
 	void OnClearSlider(wxCommandEvent& event);
 	void OnDeleteSlider(wxCommandEvent& event);
 	void OnSliderProperties(wxCommandEvent& event);
-
-	void OnExportShape(wxCommandEvent& event);
-	void OnImportOBJ(wxCommandEvent& event);
-	void OnExportOBJ(wxCommandEvent& event);
-	void OnImportFBX(wxCommandEvent& event);
-	void OnExportFBX(wxCommandEvent& event);
 
 	void OnInvertUV(wxCommandEvent& event);
 

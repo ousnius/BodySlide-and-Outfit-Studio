@@ -917,7 +917,7 @@
 			<object class="separator" />
 			<object class="wxMenu" name="menuImport">
 				<label>Import</label>
-				<object class="wxMenuItem" name="importOutfitNif">
+				<object class="wxMenuItem" name="importNIF">
 					<label>From NIF...</label>
 					<help>Choose a NIF file to import into the project.</help>
 				</object>
@@ -939,21 +939,21 @@
 			</object>
 			<object class="wxMenu" name="menuExport">
 				<label>Export</label>
-				<object class="wxMenuItem" name="exportOutfitNif">
+				<object class="wxMenuItem" name="exportNIF">
 					<label>To NIF...</label>
-					<help>Save the current outfit as a NIF file (without reference)</help>
+					<help>Save the current project as a NIF file (without reference)</help>
 				</object>
-				<object class="wxMenuItem" name="exportOutfitNifWithRef">
+				<object class="wxMenuItem" name="exportNIFWithRef">
 					<label>To NIF With Reference...</label>
 					<help>Save the current project as a NIF file (including reference)</help>
 				</object>
 				<object class="wxMenuItem" name="exportOBJ">
 					<label>To OBJ...</label>
-					<help>Export the current shape as an OBJ file.</help>
+					<help>Export the current project as an OBJ file.</help>
 				</object>
 				<object class="wxMenuItem" name="exportFBX">
 					<label>To FBX...</label>
-					<help>Export the current shape as an FBX file.</help>
+					<help>Export the current project as an FBX file.</help>
 				</object>
 				<object class="wxMenu" name="menuExportData">
 					<label>Export Data</label>
@@ -1059,6 +1059,21 @@
 		</object>
 		<object class="wxMenu" name="menuMesh">
 			<label>Shape</label>
+			<object class="wxMenu" name="menuExportMesh">
+				<label>Export</label>
+				<object class="wxMenuItem" name="exportShapeNIF">
+					<label>To NIF...</label>
+					<help>Export only the selected shapes to a NIF file.</help>
+				</object>
+				<object class="wxMenuItem" name="exportShapeOBJ">
+					<label>To OBJ...</label>
+					<help>Export only the selected shapes to an OBJ file.</help>
+				</object>
+				<object class="wxMenuItem" name="exportShapeFBX">
+					<label>To FBX...</label>
+					<help>Export only the selected shapes to an FBX file.</help>
+				</object>
+			</object>
 			<object class="wxMenu" name="menuUV">
 				<label>UV</label>
 				<object class="wxMenuItem" name="uvInvertX">
@@ -1485,17 +1500,17 @@
 		<label>Shape</label>
 		<object class="wxMenu" name="menuExportMesh">
 			<label>Export</label>
-			<object class="wxMenuItem" name="exportShape">
+			<object class="wxMenuItem" name="exportShapeNIF">
 				<label>To NIF...</label>
 				<help>Export only the selected shapes to a NIF file.</help>
 			</object>
-			<object class="wxMenuItem" name="exportOBJ">
+			<object class="wxMenuItem" name="exportShapeOBJ">
 				<label>To OBJ...</label>
-				<help>Export the current shape as an OBJ file.</help>
+				<help>Export only the selected shapes to an OBJ file.</help>
 			</object>
-			<object class="wxMenuItem" name="exportFBX">
+			<object class="wxMenuItem" name="exportShapeFBX">
 				<label>To FBX...</label>
-				<help>Export the current shape as an FBX file.</help>
+				<help>Export only the selected shapes to an FBX file.</help>
 			</object>
 		</object>
 		<object class="wxMenu" name="menuUV">

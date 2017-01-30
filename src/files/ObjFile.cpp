@@ -198,6 +198,8 @@ int ObjFile::Save(const string &fileName) {
 	file << "# Outfit Studio - OBJ Export" << endl;
 	file << "# https://github.com/ousnius/BodySlide-and-Outfit-Studio" << endl << endl;
 
+	size_t pointOffset = 0;
+
 	for (auto& d : data) {
 		file << "g " << d.first << endl;
 		file << "usemtl NoMaterial" << endl << endl;
@@ -215,12 +217,14 @@ int ObjFile::Save(const string &fileName) {
 		file << endl;
 
 		for (int i = 0; i < d.second->tris.size(); i++) {
-			file << "f " << d.second->tris[i].p1 + 1 << "/" << d.second->tris[i].p1 + 1 << " "
-				<< d.second->tris[i].p2 + 1 << "/" << d.second->tris[i].p2 + 1 << " "
-				<< d.second->tris[i].p3 + 1 << "/" << d.second->tris[i].p3 + 1
+			file << "f " << d.second->tris[i].p1 + pointOffset + 1 << " "
+				<< d.second->tris[i].p2 + pointOffset + 1 << " "
+				<< d.second->tris[i].p3 + pointOffset + 1
 				<< endl;
 		}
 		file << endl;
+
+		pointOffset += d.second->verts.size();
 	}
 
 	file.close();

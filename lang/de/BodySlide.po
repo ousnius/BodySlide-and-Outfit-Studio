@@ -428,8 +428,8 @@ msgstr "Wählen Sie eine HKX-Datei zum Importieren als BSClothExtraData-Block."
 msgid "Export"
 msgstr "Export"
 
-msgid "Save the current outfit as a NIF file (without reference)"
-msgstr "Speichert das aktuelle Outfit als NIF-Datei (ohne Referenz)"
+msgid "Save the current project as a NIF file (without reference)"
+msgstr "Speichert das aktuelle Projekt als NIF-Datei (ohne Referenz)"
 
 msgid "To NIF With Reference..."
 msgstr "Als NIF mit Referenz..."
@@ -589,14 +589,14 @@ msgstr "Konnte ausgewählte Modelle nicht als NIF-Datei exportieren!"
 msgid "To OBJ..."
 msgstr "Als OBJ..."
 
-msgid "Export the current shape as an OBJ file."
-msgstr "Exportiert das aktuelle Modell als OBJ-Datei."
+msgid "Export the current project as an OBJ file."
+msgstr "Exportiert das aktuelle Projekt als OBJ-Datei."
 
 msgid "To FBX..."
 msgstr "Als FBX..."
 
-msgid "Export the current shape as an FBX file."
-msgstr "Exportiert das aktuelle Modell als FBX-Datei."
+msgid "Export only the selected shapes to an FBX file."
+msgstr "Exportiert nur die ausgewählten Modelle als FBX-Datei."
 
 msgid "UV"
 msgstr "UV"
@@ -847,8 +847,8 @@ msgstr "Exportiert die Daten des aktuellen Sliders als BodySlide BSD-Datei."
 msgid "Export OBJ..."
 msgstr "OBJ exportieren..."
 
-msgid "Exports the current slider's data as an OBJ file."
-msgstr "Exportiert die Daten des aktuellen Sliders als OBJ-Datei."
+msgid "Export only the selected shapes to an OBJ file."
+msgstr "Exportiert nur die ausgewählten Modelle als OBJ-Datei."
 
 msgid "Negate Slider"
 msgstr "Slider negieren"
@@ -2271,6 +2271,9 @@ msgstr "OBJ Sliderdaten exportieren"
 msgid "Failed to export OBJ file!"
 msgstr "Konnte OBJ-Datei nicht exportieren!"
 
+msgid "Failed to export FBX file!"
+msgstr "Konnte FBX-Datei nicht exportieren!"
+
 msgid "OSD Import"
 msgstr "OSD Import"
 
@@ -2365,17 +2368,26 @@ msgstr "Modell(e) angepasst."
 msgid "Import .obj file for new shape"
 msgstr "OBJ-Datei mit neuem Modell importieren"
 
-msgid "Export selected shapes as .obj files"
-msgstr "Ausgewählte Modelle als OBJ-Dateien exportieren"
+msgid "Export selected shapes as an .obj file"
+msgstr "Ausgewählte Modelle als OBJ-Datei exportieren"
 
 msgid "Export shape as an .obj file"
 msgstr "Modell als OBJ-Datei exportieren"
 
+msgid "Export project as an .obj file"
+msgstr "Projekt als OBJ-Datei exportieren"
+
+msgid "Export project as an .fbx file"
+msgstr "Projekt als FBX-Datei exportieren"
+
+msgid "Export shape as an .fbx file"
+msgstr "Modell als FBX-Datei exportieren"
+
+msgid "Export selected shapes as an .fbx file"
+msgstr "Ausgewählte Modelle als FBX-Datei exportieren"
+
 msgid "Import .fbx file for new shape"
 msgstr "FBX-Datei mit neuem Modell importieren"
-
-msgid "Export .fbx file for new shape"
-msgstr "Modell als FBX-Datei exportieren"
 
 msgid "Please enter a new unique name for the shape."
 msgstr "Bitte geben Sie einen neuen, einzigartigen Namen für das Modell ein."

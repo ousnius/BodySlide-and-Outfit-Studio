@@ -49,12 +49,23 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_CHECKBOX(wxID_ANY, OutfitStudio::OnCheckBox)
 
 	EVT_MENU(XRCID("saveBaseShape"), OutfitStudio::OnSetBaseShape)
-	EVT_MENU(XRCID("importOutfitNif"), OutfitStudio::OnImportOutfitNif)
-	EVT_MENU(XRCID("exportOutfitNif"), OutfitStudio::OnExportOutfitNif)
-	EVT_MENU(XRCID("exportOutfitNifWithRef"), OutfitStudio::OnExportOutfitNifWithRef)
+	EVT_MENU(XRCID("makeConvRef"), OutfitStudio::OnMakeConvRef)
+
+	EVT_MENU(XRCID("importNIF"), OutfitStudio::OnImportNIF)
+	EVT_MENU(XRCID("exportNIF"), OutfitStudio::OnExportNIF)
+	EVT_MENU(XRCID("exportNIFWithRef"), OutfitStudio::OnExportNIFWithRef)
+	EVT_MENU(XRCID("exportShapeNIF"), OutfitStudio::OnExportShapeNIF)
+
+	EVT_MENU(XRCID("importOBJ"), OutfitStudio::OnImportOBJ)
+	EVT_MENU(XRCID("exportOBJ"), OutfitStudio::OnExportOBJ)
+	EVT_MENU(XRCID("exportShapeOBJ"), OutfitStudio::OnExportShapeOBJ)
+
+	EVT_MENU(XRCID("importFBX"), OutfitStudio::OnImportFBX)
+	EVT_MENU(XRCID("exportFBX"), OutfitStudio::OnExportFBX)
+	EVT_MENU(XRCID("exportShapeFBX"), OutfitStudio::OnExportShapeFBX)
+
 	EVT_MENU(XRCID("importPhysicsData"), OutfitStudio::OnImportPhysicsData)
 	EVT_MENU(XRCID("exportPhysicsData"), OutfitStudio::OnExportPhysicsData)
-	EVT_MENU(XRCID("makeConvRef"), OutfitStudio::OnMakeConvRef)
 	
 	EVT_MENU(XRCID("sliderLoadPreset"), OutfitStudio::OnLoadPreset)
 	EVT_MENU(XRCID("sliderSavePreset"), OutfitStudio::OnSavePreset)
@@ -116,11 +127,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudio::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudio::OnEnableTextures)
 
-	EVT_MENU(XRCID("exportShape"), OutfitStudio::OnExportShape)
-	EVT_MENU(XRCID("importOBJ"), OutfitStudio::OnImportOBJ)
-	EVT_MENU(XRCID("exportOBJ"), OutfitStudio::OnExportOBJ)
-	EVT_MENU(XRCID("importFBX"), OutfitStudio::OnImportFBX)
-	EVT_MENU(XRCID("exportFBX"), OutfitStudio::OnExportFBX)
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudio::OnInvertUV)
 	EVT_MENU(XRCID("uvInvertY"), OutfitStudio::OnInvertUV)
 
@@ -905,11 +911,11 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		wxString fileName = XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->GetPath();
 		wxLogMessage("Loading outfit '%s' from '%s'...", outfitName, fileName);
 		if (fileName.Lower().EndsWith(".nif"))
-			error = project->AddNif(fileName.ToStdString(), true, outfitName);
+			error = project->ImportNIF(fileName.ToStdString(), true, outfitName);
 		else if (fileName.Lower().EndsWith(".obj"))
-			error = project->AddShapeFromObjFile(fileName.ToStdString(), outfitName);
+			error = project->ImportOBJ(fileName.ToStdString(), outfitName);
 		else if (fileName.Lower().EndsWith(".fbx"))
-			error = project->ImportShapeFBX(fileName.ToStdString(), outfitName);
+			error = project->ImportFBX(fileName.ToStdString(), outfitName);
 	}
 
 	if (error) {
@@ -1171,14 +1177,14 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		wxString fileName = XRCCTRL(dlg, "npWorkFilename", wxFilePickerCtrl)->GetPath();
 		if (fileName.Lower().EndsWith(".nif")) {
 			if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked())
-				ret = project->AddNif(fileName.ToStdString(), true, outfitName);
+				ret = project->ImportNIF(fileName.ToStdString(), true, outfitName);
 			else
-				ret = project->AddNif(fileName.ToStdString(), false);
+				ret = project->ImportNIF(fileName.ToStdString(), false);
 		}
 		else if (fileName.Lower().EndsWith(".obj"))
-			ret = project->AddShapeFromObjFile(fileName.ToStdString(), outfitName);
+			ret = project->ImportOBJ(fileName.ToStdString(), outfitName);
 		else if (fileName.Lower().EndsWith(".fbx"))
-			ret = project->ImportShapeFBX(fileName.ToStdString(), outfitName);
+			ret = project->ImportFBX(fileName.ToStdString(), outfitName);
 	}
 	else
 		project->ClearOutfit();
@@ -1666,24 +1672,29 @@ void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudio::OnImportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
-	string fileName = wxFileSelector(_("Import NIF file"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_FILE_MUST_EXIST, this);
-	if (fileName.empty())
+void OutfitStudio::OnImportNIF(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog importDialog(this, _("Import NIF file"), wxEmptyString, wxEmptyString, "NIF Files (*.nif)|*.nif", wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
+	if (importDialog.ShowModal() == wxID_CANCEL)
 		return;
+
+	wxArrayString fileNames;
+	importDialog.GetPaths(fileNames);
 
 	StartProgress(_("Importing NIF file..."));
 	UpdateProgress(1, _("Importing NIF file..."));
-	project->AddNif(fileName, false);
-	project->SetTextures();
+
+	for (auto &fileName : fileNames)
+		project->ImportNIF(fileName.ToStdString(), false);
 
 	UpdateProgress(60, _("Refreshing GUI..."));
+	project->SetTextures();
 	RefreshGUIFromProj();
 
 	UpdateProgress(100, _("Finished."));
 	EndProgress();
 }
 
-void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
+void OutfitStudio::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid())
 		return;
 
@@ -1698,7 +1709,7 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.empty())
 		return;
 
-	wxLogMessage("Exporting outfit to NIF file '%s'...", fileName);
+	wxLogMessage("Exporting project to NIF file '%s'...", fileName);
 	project->ClearBoneScale();
 
 	vector<mesh*> shapeMeshes;
@@ -1709,19 +1720,19 @@ void OutfitStudio::OnExportOutfitNif(wxCommandEvent& WXUNUSED(event)) {
 			shapeMeshes.push_back(glView->GetMesh(s));
 
 	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
-	int error = project->SaveOutfitNif(fileName, shapeMeshes, updateNormals);
+	int error = project->ExportNIF(fileName, shapeMeshes, updateNormals);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
 	}
 }
 
-void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
+void OutfitStudio::OnExportNIFWithRef(wxCommandEvent& event) {
 	if (!project->GetWorkNif()->IsValid())
 		return;
 
 	if (project->GetBaseShape().empty()) {
-		OnExportOutfitNif(event);
+		OnExportNIF(event);
 		return;
 	}
 
@@ -1736,7 +1747,7 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
 	if (fileName.empty())
 		return;
 
-	wxLogMessage("Exporting outfit with reference to NIF file '%s'...", fileName);
+	wxLogMessage("Exporting project with reference to NIF file '%s'...", fileName);
 	project->ClearBoneScale();
 
 	vector<mesh*> shapeMeshes;
@@ -1746,10 +1757,219 @@ void OutfitStudio::OnExportOutfitNifWithRef(wxCommandEvent& event) {
 		shapeMeshes.push_back(glView->GetMesh(s));
 
 	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
-	int error = project->SaveOutfitNif(fileName, shapeMeshes, updateNormals, true);
+	int error = project->ExportNIF(fileName, shapeMeshes, updateNormals, true);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s' with reference!"), fileName), _("Export Error"), wxICON_ERROR);
+	}
+}
+
+void OutfitStudio::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (project->HasUnweighted()) {
+		wxLogWarning("Unweighted vertices found.");
+		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
+		if (error != wxYES)
+			return;
+	}
+
+	string fileName = wxFileSelector(_("Export selected shapes to NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.empty())
+		return;
+
+	vector<string> shapes;
+	for (auto &i : selectedItems)
+		shapes.push_back(i->shapeName);
+
+	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
+	project->ClearBoneScale();
+
+	if (project->ExportShapeNIF(fileName, shapes)) {
+		wxLogError("Failed to export selected shapes to NIF file '%s'!", fileName);
+		wxMessageBox(_("Failed to export selected shapes to NIF file!"), _("Error"), wxICON_ERROR);
+	}
+}
+
+void OutfitStudio::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog importDialog(this, _("Import .obj file for new shape"), wxEmptyString, wxEmptyString, "OBJ Files (*.obj)|*.obj", wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
+	if (importDialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	wxArrayString fileNames;
+	importDialog.GetPaths(fileNames);
+
+	for (auto &fileName : fileNames) {
+		wxLogMessage("Importing shape(s) from OBJ file '%s'...", fileName);
+
+		int ret;
+		if (activeItem)
+			ret = project->ImportOBJ(fileName.ToStdString(), project->OutfitName(), activeItem->shapeName);
+		else
+			ret = project->ImportOBJ(fileName.ToStdString(), project->OutfitName());
+
+		if (ret == 101)
+			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->shapeName, fileName);
+	}
+
+	RefreshGUIFromProj();
+	wxLogMessage("Imported shape(s) from OBJ.");
+	glView->Render();
+}
+
+void OutfitStudio::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid())
+		return;
+
+	string fileName = wxFileSelector(_("Export project as an .obj file"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.empty())
+		return;
+
+	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
+	project->ClearBoneScale();
+
+	vector<string> shapes;
+	project->GetShapes(shapes);
+
+	if (project->ExportOBJ(fileName, shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+		wxLogError("Failed to export OBJ file '%s'!", fileName);
+		wxMessageBox(_("Failed to export OBJ file!"), _("Export Error"), wxICON_ERROR);
+	}
+}
+
+void OutfitStudio::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (selectedItems.size() > 1) {
+		string fileName = wxFileSelector(_("Export selected shapes as an .obj file"), wxEmptyString, wxEmptyString, ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.empty())
+			return;
+
+		wxLogMessage("Exporting selected shapes as OBJ file to '%s'.", fileName);
+		project->ClearBoneScale();
+
+		vector<string> shapes;
+		shapes.reserve(selectedItems.size());
+		for (auto &i : selectedItems)
+			shapes.push_back(i->shapeName);
+
+		if (project->ExportOBJ(fileName, shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+			wxLogError("Failed to export OBJ file '%s'!", fileName);
+			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
+		}
+	}
+	else {
+		string fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->shapeName + ".obj"), ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.empty())
+			return;
+
+		wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->shapeName, fileName);
+		project->ClearBoneScale();
+
+		vector<string> shapes = { activeItem->shapeName };
+		if (!project->ExportOBJ(fileName, shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+			wxLogError("Failed to export OBJ file '%s'!", fileName);
+			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
+		}
+	}
+}
+
+void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog importDialog(this, _("Import .fbx file for new shape"), wxEmptyString, wxEmptyString, "FBX Files (*.fbx)|*.fbx", wxFD_FILE_MUST_EXIST | wxFD_MULTIPLE);
+	if (importDialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	wxArrayString fileNames;
+	importDialog.GetPaths(fileNames);
+
+	for (auto &fileName : fileNames) {
+		wxLogMessage("Importing shape(s) from FBX file '%s'...", fileName);
+
+		int ret;
+		if (activeItem)
+			ret = project->ImportFBX(fileName.ToStdString(), project->OutfitName(), activeItem->shapeName);
+		else
+			ret = project->ImportFBX(fileName.ToStdString(), project->OutfitName());
+
+		if (ret == 101)
+			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->shapeName, fileName);
+	}
+
+	RefreshGUIFromProj();
+	wxLogMessage("Imported shape(s) from FBX.");
+	glView->Render();
+}
+
+void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid())
+		return;
+
+	if (project->HasUnweighted()) {
+		wxLogWarning("Unweighted vertices found.");
+		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
+		if (error != wxYES)
+			return;
+	}
+
+	string fileName = wxFileSelector(_("Export project as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.empty())
+		return;
+
+	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
+	project->ClearBoneScale();
+
+	vector<string> shapes;
+	project->GetShapes(shapes);
+
+	if (!project->ExportFBX(fileName, shapes)) {
+		wxLogError("Failed to export FBX file '%s'!", fileName);
+		wxMessageBox(_("Failed to export FBX file!"), _("Export Error"), wxICON_ERROR);
+	}
+}
+
+void OutfitStudio::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	if (selectedItems.size() > 1) {
+		string fileName = wxFileSelector(_("Export selected shapes as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.empty())
+			return;
+
+		wxLogMessage("Exporting selected shapes as FBX file to '%s'.", fileName);
+		project->ClearBoneScale();
+
+		vector<string> shapes;
+		shapes.reserve(selectedItems.size());
+		for (auto &i : selectedItems)
+			shapes.push_back(i->shapeName);
+
+		if (!project->ExportFBX(fileName, shapes)) {
+			wxLogError("Failed to export FBX file '%s'!", fileName);
+			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
+		}
+	}
+	else {
+		string fileName = wxFileSelector(_("Export shape as an .fbx file"), wxEmptyString, wxString(activeItem->shapeName + ".fbx"), ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.empty())
+			return;
+
+		wxLogMessage("Exporting shape '%s' as FBX file to '%s'.", activeItem->shapeName, fileName);
+		project->ClearBoneScale();
+
+		vector<string> shapes = { activeItem->shapeName };
+		if (!project->ExportFBX(fileName, shapes)) {
+			wxLogError("Failed to export FBX file '%s'!", fileName);
+			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
+		}
 	}
 }
 
@@ -4563,136 +4783,6 @@ void OutfitStudio::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 	EndProgress();
 }
 
-void OutfitStudio::OnExportShape(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
-		return;
-	}
-
-	if (project->HasUnweighted()) {
-		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
-		if (error != wxYES)
-			return;
-	}
-
-	string fileName = wxFileSelector(_("Export selected shapes to NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fileName.empty())
-		return;
-
-	vector<string> shapes;
-	for (auto &i : selectedItems)
-		shapes.push_back(i->shapeName);
-
-	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
-	project->ClearBoneScale();
-
-	if (project->ExportShapeNIF(fileName, shapes)) {
-		wxLogError("Failed to export selected shapes to NIF file '%s'!", fileName);
-		wxMessageBox(_("Failed to export selected shapes to NIF file!"), _("Error"), wxICON_ERROR);
-	}
-}
-
-void OutfitStudio::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
-	string fn = wxFileSelector(_("Import .obj file for new shape"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
-		return;
-
-	wxLogMessage("Importing shape(s) from OBJ file '%s'...", fn);
-
-	int ret;
-	if (activeItem)
-		ret = project->AddShapeFromObjFile(fn, project->OutfitName(), activeItem->shapeName);
-	else
-		ret = project->AddShapeFromObjFile(fn, project->OutfitName());
-
-	if (ret == 101) {
-		RefreshGUIFromProj();
-		wxLogMessage("Updated shape '%s' from OBJ.", activeItem->shapeName);
-		glView->Render();
-		return;
-	}
-	else if (ret)
-		return;
-
-	RefreshGUIFromProj();
-	wxLogMessage("Imported shape(s) from OBJ.");
-	glView->Render();
-}
-
-void OutfitStudio::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
-	if (!activeItem) {
-		wxMessageBox(_("There is no shape selected!"), _("Error"));
-		return;
-	}
-
-	if (selectedItems.size() > 1) {
-		string dir = wxDirSelector(_("Export selected shapes as .obj files"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
-		if (dir.empty())
-			return;
-
-		project->ClearBoneScale();
-		for (auto &i : selectedItems) {
-			string targetFile = dir + "\\" + i->shapeName + ".obj";
-			wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", i->shapeName, targetFile);
-			project->ExportShapeOBJ(targetFile, i->shapeName, Vector3(0.1f, 0.1f, 0.1f));
-		}
-	}
-	else {
-		string fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->shapeName + ".obj"), "", "Obj Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (!fileName.empty()) {
-			wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->shapeName, fileName);
-			project->ClearBoneScale();
-			if (project->ExportShapeOBJ(fileName, activeItem->shapeName, Vector3(0.1f, 0.1f, 0.1f))) {
-				wxLogError("Failed to export OBJ file '%s'!", fileName);
-				wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
-			}
-		}
-	}
-}
-
-void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
-	string fn = wxFileSelector(_("Import .fbx file for new shape"), wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
-		return;
-
-	wxLogMessage("Importing shape(s) from FBX file '%s'...", fn);
-
-	int ret;
-	if (activeItem)
-		ret = project->ImportShapeFBX(fn, project->OutfitName(), activeItem->shapeName);
-	else
-		ret = project->ImportShapeFBX(fn, project->OutfitName());
-
-	if (ret == 101) {
-		RefreshGUIFromProj();
-		wxLogMessage("Updated shape '%s' from FBX.", activeItem->shapeName);
-		glView->Render();
-		return;
-	}
-	if (ret)
-		return;
-
-	RefreshGUIFromProj();
-	wxLogMessage("Imported shape(s) from FBX.");
-	glView->Render();
-}
-
-void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
-	string defFile = "OutfitStudioShapes.fbx";
-	if (activeItem)
-		defFile = activeItem->shapeName + ".fbx";
-
-	string fn = wxFileSelector(_("Export .fbx file for new shape"), wxEmptyString, defFile, "", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fn.empty())
-		return;
-
-	if (activeItem)
-		project->ExportShapeFBX(fn, activeItem->shapeName);
-	else
-		project->ExportShapeFBX(fn, "");
-}
-
 void OutfitStudio::OnInvertUV(wxCommandEvent& event) {
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
@@ -6919,7 +7009,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			if (inputFile.Lower().EndsWith(".nif")) {
 				owner->StartProgress(_("Adding NIF file..."));
 				owner->UpdateProgress(1, _("Adding NIF file..."));
-				owner->project->AddNif(inputFile.ToStdString(), false);
+				owner->project->ImportNIF(inputFile.ToStdString(), false);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
@@ -6931,7 +7021,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			else if (inputFile.Lower().EndsWith(".obj")) {
 				owner->StartProgress("Adding OBJ file...");
 				owner->UpdateProgress(1, _("Adding OBJ file..."));
-				owner->project->AddShapeFromObjFile(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
+				owner->project->ImportOBJ(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
@@ -6943,7 +7033,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			else if (inputFile.Lower().EndsWith(".fbx")) {
 				owner->StartProgress(_("Adding FBX file..."));
 				owner->UpdateProgress(1, _("Adding FBX file..."));
-				owner->project->ImportShapeFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
+				owner->project->ImportFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
