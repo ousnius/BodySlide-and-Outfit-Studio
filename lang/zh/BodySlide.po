@@ -9,9 +9,11 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.11\n"
+"X-Generator: Poedit 2.0beta2\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Poedit-Basepath: ../..\n"
+"X-Poedit-SearchPath-0: .\n"
 
 # XRC STRINGS START HERE
 msgid "Outfit/Body"
@@ -91,7 +93,7 @@ msgid ""
 "Hold CTRL = Build to working directory\n"
 "Hold ALT = Delete from output directory"
 msgstr ""
-"建立当前选中的装备/身体。\n"
+"创建当前选中的装备/身体。\n"
 "\n"
 "按住CTRL = 在自定义目录中建立\n"
 "按住ALT = 从目录中清理所有文件"
@@ -264,12 +266,6 @@ msgstr "开启/关闭在装备工作室中用鼠标左键平移相机。"
 msgid "Left Mouse Pan"
 msgstr "鼠标左键平移"
 
-msgid "Use the current system language for the program."
-msgstr "为程序使用当前系统语言。"
-
-msgid "Use System Language"
-msgstr "使用系统语言"
-
 msgid "Data Files"
 msgstr "数据文件"
 
@@ -395,8 +391,8 @@ msgstr "以新的名称保存这个项目。"
 msgid "Import"
 msgstr "导入"
 
-msgid "Import NIF"
-msgstr "导入NIF文件"
+msgid "From NIF..."
+msgstr "从NIF..."
 
 msgid "Choose a NIF file to import into the project."
 msgstr "选择一个NIF文件导入到项目中。"
@@ -414,14 +410,11 @@ msgstr "选择一个HKX文件作为BSClothExtraData块导入到项目中。"
 msgid "Export"
 msgstr "导出"
 
-msgid "Export NIF"
-msgstr "导出NIF文件"
+msgid "Save the current project as a NIF file (without reference)"
+msgstr "保存当前项目为NIF文件（不带参照）"
 
-msgid "Save the current outfit as a NIF file (without reference)"
-msgstr "保存当前装备为NIF文件（不带参照）"
-
-msgid "Export NIF With Reference"
-msgstr "导出带参照的NIF"
+msgid "To NIF With Reference..."
+msgstr "到带参照的NIF..."
 
 msgid "Save the current project as a NIF file (including reference)"
 msgstr "保存当前项目为NIF文件（包含参照）"
@@ -558,17 +551,29 @@ msgstr "从FBX..."
 msgid "Import an FBX file as a new shape in the outfit."
 msgstr "从FBX文件中导入一个新模型插入装备。"
 
-msgid "To OBJ..."
-msgstr "到OBJ文件..."
+msgid "To NIF..."
+msgstr "到NIF..."
 
-msgid "Export the current shape as an OBJ file."
-msgstr "导出当前模型为一个OBJ文件。"
+msgid "Export only the selected shapes to a NIF file."
+msgstr "只导出已选模型到一个NIF文件。"
+
+msgid "Export selected shapes to NIF"
+msgstr "导出已选模型到NIF"
+
+msgid "Failed to export selected shapes to NIF file!"
+msgstr "未能导出已选模型到NIF文件！"
+
+msgid "To OBJ..."
+msgstr "到OBJ..."
+
+msgid "Export the current project as an OBJ file."
+msgstr "导出当前项目为一个OBJ文件。"
 
 msgid "To FBX..."
-msgstr "到FBX文件..."
+msgstr "到FBX..."
 
-msgid "Export the current shape as an FBX file."
-msgstr "导出当前模型为一个FBX文件。"
+msgid "Export only the selected shapes to an FBX file."
+msgstr "只导出已选模型为一个FBX文件。"
 
 msgid "UV"
 msgstr "UV"
@@ -793,8 +798,8 @@ msgstr "导出当前滑块数据为BSD文件。"
 msgid "Export OBJ..."
 msgstr "导出OBJ..."
 
-msgid "Exports the current slider's data as an OBJ file."
-msgstr "导出当前滑块数据为OBJ文件。"
+msgid "Export only the selected shapes to an OBJ file."
+msgstr "只导出已选模型为一个OBJ文件。"
 
 msgid "Negate Slider"
 msgstr "否定滑块"
@@ -2139,6 +2144,9 @@ msgstr "导出.obj滑块数据"
 msgid "Failed to export OBJ file!"
 msgstr "未能导出OBJ文件！"
 
+msgid "Failed to export FBX file!"
+msgstr "未能导出FBX文件！"
+
 msgid "OSD Import"
 msgstr "OSD导入"
 
@@ -2223,26 +2231,32 @@ msgstr "模型已整合。"
 msgid "Import .obj file for new shape"
 msgstr "为新模型导入.obj文件"
 
-msgid "Export selected shapes as .obj files"
-msgstr "导出已选模型为.obj文件"
+msgid "Export selected shapes as an .obj file"
+msgstr "导出已选模型为一个.obj文件"
 
 msgid "Export shape as an .obj file"
 msgstr "导出模型为一个.obj文件"
 
+msgid "Export project as an .obj file"
+msgstr "导出项目为一个.obj文件"
+
+msgid "Export project as an .fbx file"
+msgstr "导出项目为一个.fbx文件"
+
+msgid "Export shape as an .fbx file"
+msgstr "导出模型为一个.fbx文件"
+
+msgid "Export selected shapes as an .fbx file"
+msgstr "导出已选模型为一个.fbx文件"
+
 msgid "Import .fbx file for new shape"
 msgstr "为新模型导入.fbx文件"
-
-msgid "Export .fbx file for new shape"
-msgstr "为新模型导出.fbx文件"
 
 msgid "Please enter a new unique name for the shape."
 msgstr "请为模型输入一个唯一的新名称："
 
 msgid "Rename Shape"
 msgstr "重命名模型"
-
-msgid "The selected shape is the reference shape already."
-msgstr "选中的模型已是参照模型。"
 
 msgid ""
 "Rotating slider data is currently not possible using the Rotate Shape dialog."
@@ -2263,15 +2277,17 @@ msgid "Duplicate Shape"
 msgstr "复制模型"
 
 msgid ""
+"Are you sure you wish to delete the unmasked vertices of the selected "
+"shapes?  This action cannot be undone."
+msgstr "你确定要删除未遮蔽的模型吗？这个操作无法撤销。"
+
+msgid ""
 "Are you sure you wish to delete the selected shapes?  This action cannot be "
 "undone."
 msgstr "你确定要删除选定的模型吗？这个操作无法撤销。"
 
 msgid "Confirm Delete"
 msgstr "确认删除"
-
-msgid "You can't delete the reference shape!"
-msgstr "你无法删除参照模型！"
 
 msgid "No bone name was entered!"
 msgstr "没有输入骨骼名称！"
@@ -2326,6 +2342,61 @@ msgstr ""
 
 msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
 msgstr "你想在本阶段将NIF文件对特别版进行优化吗？"
+
+msgid "Language"
+msgstr "语言"
+
+msgid "Use the selected language for the program."
+msgstr "为程序使用已选的语言。"
+
+msgid "Unload Project"
+msgstr "卸载项目"
+
+msgid "Unload Project...\tCtrl+W"
+msgstr "卸载项目..\tCtrl+W"
+
+msgid "Unloads the project and creates an empty new one."
+msgstr "卸载这个项目并创建一个新的。"
+
+msgid ""
+"Do you really want to unload the project? All unsaved changes will be lost."
+msgstr "你真的要卸载项目吗？所有未保存的修改将会丢失。"
+
+msgid "Delete Vertices..."
+msgstr "删除顶点..."
+
+msgid "Deletes all unmasked vertices of the currently selected shapes."
+msgstr "删除当前已选模型所有未遮蔽的顶点。"
+
+msgid "Separate Vertices..."
+msgstr "分离顶点..."
+
+msgid "Please enter a unique name for the new separated shape."
+msgstr "请为新分离的模型输入一个唯一的名称。"
+
+msgid "Separate the current shape into two by using the mask."
+msgstr "使用遮蔽分离当前模型为两个。"
+
+#~ msgid "Use System Language"
+#~ msgstr "使用系统语言"
+
+#~ msgid "Import NIF"
+#~ msgstr "导入NIF文件"
+
+#~ msgid "Export NIF"
+#~ msgstr "导出NIF文件"
+
+#~ msgid "Exports the current slider's data as an OBJ file."
+#~ msgstr "导出当前滑块数据为OBJ文件。"
+
+#~ msgid "Export .fbx file for new shape"
+#~ msgstr "为新模型导出.fbx文件"
+
+#~ msgid "The selected shape is the reference shape already."
+#~ msgstr "选中的模型已是参照模型。"
+
+#~ msgid "You can't delete the reference shape!"
+#~ msgstr "你无法删除参照模型！"
 
 #~ msgid "Brightness 1"
 #~ msgstr "亮度 1"
