@@ -2151,10 +2151,24 @@ void NifFile::SetShapePartitions(const string& shapeName, const vector<BSDismemb
 			skinPart->partitions[i].hasVertexMap = true;
 			skinPart->partitions[i].vertexMap = verts[i];
 		}
+		else
+			skinPart->partitions[i].vertexMap.clear();
 
 		skinPart->partitions[i].numTriangles = tris[i].size();
 		if (!tris[i].empty())
 			skinPart->partitions[i].triangles = tris[i];
+		else
+			skinPart->partitions[i].triangles.clear();
+	}
+
+	vector<int> emptyIndices;
+	if (skinPart->RemoveEmptyPartitions(emptyIndices)) {
+		if (bsdSkinInst) {
+			for (auto &i : emptyIndices)
+				bsdSkinInst->RemovePartition(i);
+
+			UpdatePartitionFlags(shapeName);
+		}
 	}
 }
 
