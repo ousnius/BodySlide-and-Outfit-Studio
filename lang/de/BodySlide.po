@@ -473,8 +473,8 @@ msgstr "Rückgängig\tCtrl+Z"
 msgid "Undo the previous action."
 msgstr "Macht die letzte Aktion rückgängig."
 
-msgid "Redo\tCtrl+Shift+Z"
-msgstr "Wiederherstellen\tCtrl+Shift+Z"
+msgid "Redo\tCtrl+Y"
+msgstr "Wiederherstellen\tCtrl+Y"
 
 msgid "Redo the next undone action."
 msgstr "Stellt die letzte Aktion wieder her."
