@@ -1873,7 +1873,7 @@ void OutfitStudio::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 		project->ClearBoneScale();
 
 		vector<string> shapes = { activeItem->shapeName };
-		if (!project->ExportOBJ(fileName, shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+		if (project->ExportOBJ(fileName, shapes, Vector3(0.1f, 0.1f, 0.1f))) {
 			wxLogError("Failed to export OBJ file '%s'!", fileName);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}

@@ -249,13 +249,6 @@
     <None Include="lib\gli\glm\detail\func_packing.inl" />
     <None Include="lib\gli\glm\detail\func_trigonometric.inl" />
     <None Include="lib\gli\glm\detail\func_vector_relational.inl" />
-    <None Include="lib\gli\glm\detail\intrinsic_common.inl" />
-    <None Include="lib\gli\glm\detail\intrinsic_exponential.inl" />
-    <None Include="lib\gli\glm\detail\intrinsic_geometric.inl" />
-    <None Include="lib\gli\glm\detail\intrinsic_integer.inl" />
-    <None Include="lib\gli\glm\detail\intrinsic_matrix.inl" />
-    <None Include="lib\gli\glm\detail\intrinsic_trigonometric.inl" />
-    <None Include="lib\gli\glm\detail\intrinsic_vector_relational.inl" />
     <None Include="lib\gli\glm\detail\type_gentype.inl" />
     <None Include="lib\gli\glm\detail\type_half.inl" />
     <None Include="lib\gli\glm\detail\type_mat.inl" />
@@ -273,9 +266,6 @@
     <None Include="lib\gli\glm\detail\type_vec2.inl" />
     <None Include="lib\gli\glm\detail\type_vec3.inl" />
     <None Include="lib\gli\glm\detail\type_vec4.inl" />
-    <None Include="lib\gli\glm\detail\type_vec4_avx.inl" />
-    <None Include="lib\gli\glm\detail\type_vec4_avx2.inl" />
-    <None Include="lib\gli\glm\detail\type_vec4_sse2.inl" />
     <None Include="lib\gli\glm\gtc\bitfield.inl" />
     <None Include="lib\gli\glm\gtc\color_space.inl" />
     <None Include="lib\gli\glm\gtc\constants.inl" />
@@ -393,7 +383,6 @@
     <ClInclude Include="lib\gli\core\workaround.hpp" />
     <ClInclude Include="lib\gli\duplicate.hpp" />
     <ClInclude Include="lib\gli\dx.hpp" />
-    <ClInclude Include="lib\gli\filter.hpp" />
     <ClInclude Include="lib\gli\format.hpp" />
     <ClInclude Include="lib\gli\generate_mipmaps.hpp" />
     <ClInclude Include="lib\gli\gl.hpp" />
@@ -407,13 +396,6 @@
     <ClInclude Include="lib\gli\glm\detail\func_packing.hpp" />
     <ClInclude Include="lib\gli\glm\detail\func_trigonometric.hpp" />
     <ClInclude Include="lib\gli\glm\detail\func_vector_relational.hpp" />
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_common.hpp" />
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_exponential.hpp" />
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_geometric.hpp" />
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_integer.hpp" />
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_matrix.hpp" />
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_trigonometric.hpp" />
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_vector_relational.hpp" />
     <ClInclude Include="lib\gli\glm\detail\precision.hpp" />
     <ClInclude Include="lib\gli\glm\detail\setup.hpp" />
     <ClInclude Include="lib\gli\glm\detail\type_float.hpp" />

@@ -2134,6 +2134,7 @@ int OutfitProject::ExportShapeNIF(const string& fileName, const vector<string>& 
 		return 2;
 
 	NifFile clone(workNif);
+	ChooseClothData(clone);
 
 	vector<string> shapes;
 	clone.GetShapeList(shapes);
@@ -2142,7 +2143,12 @@ int OutfitProject::ExportShapeNIF(const string& fileName, const vector<string>& 
 		if (find(exportShapes.begin(), exportShapes.end(), s) == exportShapes.end())
 			clone.DeleteShape(s);
 
-	return clone.Save(fileName);;
+	clone.GetShapeList(shapes);
+	for (auto &s : shapes)
+		clone.UpdateSkinPartitions(s);
+
+	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
+	return clone.Save(fileName);
 }
 
 int OutfitProject::ImportOBJ(const string& fileName, const string& shapeName, const string& mergeShape) {

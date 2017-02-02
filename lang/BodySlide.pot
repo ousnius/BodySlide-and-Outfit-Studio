@@ -420,7 +420,7 @@ msgstr ""
 msgid "Undo the previous action."
 msgstr ""
 
-msgid "Redo\tCtrl+Shift+Z"
+msgid "Redo\tCtrl+Y"
 msgstr ""
 
 msgid "Redo the next undone action."

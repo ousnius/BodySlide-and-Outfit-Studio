@@ -137,27 +137,6 @@
     <None Include="lib\gli\glm\detail\func_vector_relational.inl">
       <Filter>Libraries\gli\glm\detail</Filter>
     </None>
-    <None Include="lib\gli\glm\detail\intrinsic_common.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\intrinsic_exponential.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\intrinsic_geometric.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\intrinsic_integer.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\intrinsic_matrix.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\intrinsic_trigonometric.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\intrinsic_vector_relational.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
     <None Include="lib\gli\glm\detail\type_gentype.inl">
       <Filter>Libraries\gli\glm\detail</Filter>
     </None>
@@ -207,15 +186,6 @@
       <Filter>Libraries\gli\glm\detail</Filter>
     </None>
     <None Include="lib\gli\glm\detail\type_vec4.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\type_vec4_avx.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\type_vec4_avx2.inl">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </None>
-    <None Include="lib\gli\glm\detail\type_vec4_sse2.inl">
       <Filter>Libraries\gli\glm\detail</Filter>
     </None>
     <None Include="lib\gli\glm\gtc\matrix_inverse.inl">
@@ -658,27 +628,6 @@
     <ClInclude Include="lib\gli\glm\detail\func_vector_relational.hpp">
       <Filter>Libraries\gli\glm\detail</Filter>
     </ClInclude>
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_common.hpp">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_exponential.hpp">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_geometric.hpp">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_integer.hpp">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_matrix.hpp">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_trigonometric.hpp">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\gli\glm\detail\intrinsic_vector_relational.hpp">
-      <Filter>Libraries\gli\glm\detail</Filter>
-    </ClInclude>
     <ClInclude Include="lib\gli\glm\detail\precision.hpp">
       <Filter>Libraries\gli\glm\detail</Filter>
     </ClInclude>
@@ -1055,9 +1004,6 @@
       <Filter>Libraries\gli</Filter>
     </ClInclude>
     <ClInclude Include="lib\gli\dx.hpp">
-      <Filter>Libraries\gli</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\gli\filter.hpp">
       <Filter>Libraries\gli</Filter>
     </ClInclude>
     <ClInclude Include="lib\gli\format.hpp">
