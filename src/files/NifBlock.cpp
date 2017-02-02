@@ -4981,6 +4981,9 @@ void NiSkinPartition::Put(fstream& file) {
 }
 
 void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	if (vertIndices.empty())
+		return;
+
 	ushort highestRemoved = vertIndices.back();
 	vector<int> indexCollapse(highestRemoved + 1, 0);
 
@@ -5037,39 +5040,54 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 				p.vertexMap[i] -= indexCollapse[index];
 		}
 
-		for (int i = p.numTriangles - 1; i >= 0; i--) {
-			if (p.triangles[i].p1 > mapHighestRemoved) {
-				p.triangles[i].p1 -= mapRemCount;
+		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+			for (int i = p.numTriangles - 1; i >= 0; i--) {
+				if (indexCollapse[p.triangles[i].p1] == -1 || indexCollapse[p.triangles[i].p2] == -1 || indexCollapse[p.triangles[i].p3] == -1) {
+					p.triangles.erase(p.triangles.begin() + i);
+					p.numTriangles--;
+				}
+				else {
+					p.triangles[i].p1 = p.triangles[i].p1 - indexCollapse[p.triangles[i].p1];
+					p.triangles[i].p2 = p.triangles[i].p2 - indexCollapse[p.triangles[i].p2];
+					p.triangles[i].p3 = p.triangles[i].p3 - indexCollapse[p.triangles[i].p3];
+				}
 			}
-			else if (mapCollapse[p.triangles[i].p1] == -1) {
-				p.triangles.erase(p.triangles.begin() + i);
-				p.numTriangles--;
-				continue;
-			}
-			else
-				p.triangles[i].p1 -= mapCollapse[p.triangles[i].p1];
+		}
+		else {
+			for (int i = p.numTriangles - 1; i >= 0; i--) {
+				if (p.triangles[i].p1 > mapHighestRemoved) {
+					p.triangles[i].p1 -= mapRemCount;
+				}
+				else if (mapCollapse[p.triangles[i].p1] == -1) {
+					p.triangles.erase(p.triangles.begin() + i);
+					p.numTriangles--;
+					continue;
+				}
+				else
+					p.triangles[i].p1 -= mapCollapse[p.triangles[i].p1];
 
-			if (p.triangles[i].p2 > mapHighestRemoved) {
-				p.triangles[i].p2 -= mapRemCount;
-			}
-			else if (mapCollapse[p.triangles[i].p2] == -1) {
-				p.triangles.erase(p.triangles.begin() + i);
-				p.numTriangles--;
-				continue;
-			}
-			else
-				p.triangles[i].p2 -= mapCollapse[p.triangles[i].p2];
+				if (p.triangles[i].p2 > mapHighestRemoved) {
+					p.triangles[i].p2 -= mapRemCount;
+				}
+				else if (mapCollapse[p.triangles[i].p2] == -1) {
+					p.triangles.erase(p.triangles.begin() + i);
+					p.numTriangles--;
+					continue;
+				}
+				else
+					p.triangles[i].p2 -= mapCollapse[p.triangles[i].p2];
 
-			if (p.triangles[i].p3 > mapHighestRemoved) {
-				p.triangles[i].p3 -= mapRemCount;
+				if (p.triangles[i].p3 > mapHighestRemoved) {
+					p.triangles[i].p3 -= mapRemCount;
+				}
+				else if (mapCollapse[p.triangles[i].p3] == -1) {
+					p.triangles.erase(p.triangles.begin() + i);
+					p.numTriangles--;
+					continue;
+				}
+				else
+					p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
 			}
-			else if (mapCollapse[p.triangles[i].p3] == -1) {
-				p.triangles.erase(p.triangles.begin() + i);
-				p.numTriangles--;
-				continue;
-			}
-			else
-				p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
 		}
 
 		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100)
