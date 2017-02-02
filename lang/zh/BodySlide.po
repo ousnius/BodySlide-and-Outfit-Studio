@@ -454,8 +454,8 @@ msgstr "撤销\tCtrl+Z"
 msgid "Undo the previous action."
 msgstr "撤消上一个动作。"
 
-msgid "Redo\tCtrl+Shift+Z"
-msgstr "恢复\tCtrl+Shift+Z"
+msgid "Redo\tCtrl+Y"
+msgstr "恢复\tCtrl+Y"
 
 msgid "Redo the next undone action."
 msgstr "恢复已撤销的动作。"
@@ -2376,6 +2376,9 @@ msgstr "请为新分离的模型输入一个唯一的名称。"
 
 msgid "Separate the current shape into two by using the mask."
 msgstr "使用遮蔽分离当前模型为两个。"
+
+#~ msgid "Redo\tCtrl+Shift+Z"
+#~ msgstr "恢复\tCtrl+Shift+Z"
 
 #~ msgid "Use System Language"
 #~ msgstr "使用系统语言"
