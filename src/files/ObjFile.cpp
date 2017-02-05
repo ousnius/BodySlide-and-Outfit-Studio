@@ -216,11 +216,21 @@ int ObjFile::Save(const string &fileName) {
 			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << endl;
 		file << endl;
 
-		for (int i = 0; i < d.second->tris.size(); i++) {
-			file << "f " << d.second->tris[i].p1 + pointOffset + 1 << " "
-				<< d.second->tris[i].p2 + pointOffset + 1 << " "
-				<< d.second->tris[i].p3 + pointOffset + 1
-				<< endl;
+		if (d.second->uvs.empty()) {
+			for (int i = 0; i < d.second->tris.size(); i++) {
+				file << "f " << d.second->tris[i].p1 + pointOffset + 1 << " "
+					<< d.second->tris[i].p2 + pointOffset + 1 << " "
+					<< d.second->tris[i].p3 + pointOffset + 1
+					<< endl;
+			}
+		}
+		else {
+			for (int i = 0; i < d.second->tris.size(); i++) {
+				file << "f " << d.second->tris[i].p1 + pointOffset + 1 << "/" << d.second->tris[i].p1 + pointOffset + 1 << " "
+					<< d.second->tris[i].p2 + pointOffset + 1 << "/" << d.second->tris[i].p2 + pointOffset + 1 << " "
+					<< d.second->tris[i].p3 + pointOffset + 1 << "/" << d.second->tris[i].p3 + pointOffset + 1
+					<< endl;
+			}
 		}
 		file << endl;
 
