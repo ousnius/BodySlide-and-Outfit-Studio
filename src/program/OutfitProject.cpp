@@ -1665,6 +1665,8 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 	}
 
 	string dataFolder = activeSet.GetDefaultDataFolder();
+	vector<string> dataNames = activeSet.GetLocalData(shapeName);
+
 	sset.GetSet(setName, activeSet);
 
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
@@ -1750,6 +1752,8 @@ int OutfitProject::LoadReference(const string& fileName, const string& setName, 
 
 	activeSet.LoadSetDiffData(baseDiffData);
 	activeSet.SetReferencedData(baseShape);
+	for (auto &dn : dataNames)
+		activeSet.SetReferencedDataByName(baseShape, dn, true);
 
 	// Keep default data folder from current project if existing
 	if (!dataFolder.empty())

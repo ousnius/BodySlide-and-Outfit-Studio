@@ -112,6 +112,25 @@ public:
 					df.bLocal = local;
 	}
 
+	void SetReferencedDataByName(const string& shapeName, const string& dataName, const bool local = false) {
+		string targetName = ShapeToTarget(shapeName);
+		for (auto &s : sliders)
+			for (auto &df : s.dataFiles)
+				if (df.targetName == targetName && df.dataName == dataName)
+					df.bLocal = local;
+	}
+
+	vector<string> GetLocalData(const string& shapeName) {
+		vector<string> outDataNames;
+		string targetName = ShapeToTarget(shapeName);
+		for (auto &s : sliders)
+			for (auto &df : s.dataFiles)
+				if (df.targetName == targetName && df.bLocal)
+					outDataNames.push_back(df.dataName);
+
+		return outDataNames;
+	}
+
 	string TargetToShape(const string& targetName) {
 		if (targetshapenames.find(targetName) != targetshapenames.end())
 			return targetshapenames[targetName];
