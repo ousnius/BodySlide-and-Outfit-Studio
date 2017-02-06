@@ -5042,14 +5042,19 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 
 		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
 			for (int i = p.numTriangles - 1; i >= 0; i--) {
-				if (indexCollapse[p.triangles[i].p1] == -1 || indexCollapse[p.triangles[i].p2] == -1 || indexCollapse[p.triangles[i].p3] == -1) {
+				if ((p.triangles[i].p1 < indexCollapse.size() && indexCollapse[p.triangles[i].p1] == -1) ||
+					(p.triangles[i].p2 < indexCollapse.size() && indexCollapse[p.triangles[i].p2] == -1) ||
+					(p.triangles[i].p3 < indexCollapse.size() && indexCollapse[p.triangles[i].p3] == -1)) {
 					p.triangles.erase(p.triangles.begin() + i);
 					p.numTriangles--;
 				}
 				else {
-					p.triangles[i].p1 = p.triangles[i].p1 - indexCollapse[p.triangles[i].p1];
-					p.triangles[i].p2 = p.triangles[i].p2 - indexCollapse[p.triangles[i].p2];
-					p.triangles[i].p3 = p.triangles[i].p3 - indexCollapse[p.triangles[i].p3];
+					if (p.triangles[i].p1 < indexCollapse.size())
+						p.triangles[i].p1 = p.triangles[i].p1 - indexCollapse[p.triangles[i].p1];
+					if (p.triangles[i].p2 < indexCollapse.size())
+						p.triangles[i].p2 = p.triangles[i].p2 - indexCollapse[p.triangles[i].p2];
+					if (p.triangles[i].p3 < indexCollapse.size())
+						p.triangles[i].p3 = p.triangles[i].p3 - indexCollapse[p.triangles[i].p3];
 				}
 			}
 		}
