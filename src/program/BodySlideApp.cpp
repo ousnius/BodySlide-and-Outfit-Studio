@@ -2607,8 +2607,10 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	for (auto &toggle : zapToggles) {
 		wxLogMessage("Zap '%s' toggled.", sliderName);
 
-		app->SetSliderValue(toggle, isLo, 1.0f - app->GetSliderValue(toggle, isLo));
-		app->SetSliderChanged(toggle, isLo);
+		app->SetSliderValue(toggle, true, 1.0f - app->GetSliderValue(toggle, true));
+		app->SetSliderValue(toggle, false, 1.0f - app->GetSliderValue(toggle, false));
+		app->SetSliderChanged(toggle, true);
+		app->SetSliderChanged(toggle, false);
 
 		BodySlideFrame::SliderDisplay* slider = GetSliderDisplay(toggle);
 		if (slider) {
