@@ -198,6 +198,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudio, wxFrame)
 	EVT_BUTTON(XRCID("lightReset"), OutfitStudio::OnResetLights)
 	
 	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitter"), OutfitStudio::OnSashPosChanged)
+	EVT_SPLITTER_SASH_POS_CHANGED(XRCID("splitterRight"), OutfitStudio::OnSashPosChanged)
 	EVT_MOVE_END(OutfitStudio::OnMoveWindow)
 	EVT_SIZE(OutfitStudio::OnSetSize)
 wxEND_EVENT_TABLE()
@@ -339,7 +340,8 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	splitter->SetSashPosition(sashPos);
 
 	wxSplitterWindow* splitterRight = (wxSplitterWindow*)FindWindowByName("splitterRight");
-	splitterRight->SetSashPosition(200);
+	int sashRightPos = appConfig.GetIntValue("OutfitStudioFrame.sashrightpos");
+	splitterRight->SetSashPosition(sashRightPos);
 
 	leftPanel->Layout();
 
@@ -370,7 +372,10 @@ void OutfitStudio::OnSashPosChanged(wxSplitterEvent& event) {
 		return;
 
 	int pos = event.GetSashPosition();
-	Config.SetValue("OutfitStudioFrame.sashpos", pos);
+	if (event.GetId() == XRCID("splitter"))
+		Config.SetValue("OutfitStudioFrame.sashpos", pos);
+	else if (event.GetId() == XRCID("splitterRight"))
+		Config.SetValue("OutfitStudioFrame.sashrightpos", pos);
 }
 
 void OutfitStudio::OnMoveWindow(wxMoveEvent& event) {

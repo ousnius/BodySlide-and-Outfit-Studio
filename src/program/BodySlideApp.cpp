@@ -946,6 +946,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("OutfitStudioFrame.x", 100);
 	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
 	Config.SetDefaultValue("OutfitStudioFrame.sashpos", 850);
+	Config.SetDefaultValue("OutfitStudioFrame.sashrightpos", 200);
 	Config.SetDefaultValue("SelectedOutfit", "");
 
 	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
