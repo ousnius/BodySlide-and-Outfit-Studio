@@ -2144,6 +2144,15 @@ msgstr ""
 msgid "Use the selected language for the program."
 msgstr ""
 
+msgid "Rendering"
+msgstr ""
+
+msgid "Background Color"
+msgstr ""
+
+msgid "Background color of the renderer."
+msgstr ""
+
 msgid "Unload Project"
 msgstr ""
 

@@ -5993,6 +5993,13 @@ void wxGLPanel::OnShown() {
 	Vector3 directional2Dir = Vector3(directional2X / 100.0f, directional2Y / 100.0f, directional2Z / 100.0f);
 
 	UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directional2Dir);
+
+	if (Config.Exists("Rendering/ColorBackground")) {
+		int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
+		int colorBackgroundG = Config.GetIntValue("Rendering/ColorBackground.g");
+		int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
+		gls.SetBackgroundColor(Vector3(colorBackgroundR / 255.0f, colorBackgroundG / 255.0f, colorBackgroundB / 255.0f));
+	}
 }
 
 void wxGLPanel::SetNotifyWindow(wxWindow* win) {

@@ -3003,7 +3003,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
-		settings->SetSize(wxSize(525, 533));
+		settings->SetSize(wxSize(525, -1));
 		settings->CenterOnParent();
 
 		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);
@@ -3028,6 +3028,14 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))
 			choiceLanguage->SetStringSelection("English");
+
+		wxColourPickerCtrl* cpColorBackground = XRCCTRL(*settings, "cpColorBackground", wxColourPickerCtrl);
+		if (Config.Exists("Rendering/ColorBackground")) {
+			int colorBackgroundR = Config.GetIntValue("Rendering/ColorBackground.r");
+			int colorBackgroundG = Config.GetIntValue("Rendering/ColorBackground.g");
+			int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
+			cpColorBackground->SetColour(wxColour(colorBackgroundR, colorBackgroundG, colorBackgroundB));
+		}
 
 		wxFilePickerCtrl* fpSkeletonFile = XRCCTRL(*settings, "fpSkeletonFile", wxFilePickerCtrl);
 		fpSkeletonFile->SetPath(Config["Anim/DefaultSkeletonReference"]);
@@ -3069,6 +3077,11 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				Config.SetValue("Language", newLang);
 				app->InitLanguage();
 			}
+
+			wxColour colorBackground = cpColorBackground->GetColour();
+			Config.SetValue("Rendering/ColorBackground.r", colorBackground.Red());
+			Config.SetValue("Rendering/ColorBackground.g", colorBackground.Green());
+			Config.SetValue("Rendering/ColorBackground.b", colorBackground.Blue());
 
 			wxFileName skeletonFile = fpSkeletonFile->GetFileName();
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());

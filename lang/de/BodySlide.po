@@ -2501,6 +2501,15 @@ msgstr "Sprache"
 msgid "Use the selected language for the program."
 msgstr "Verwende die ausgewählte Sprache für das Programm."
 
+msgid "Rendering"
+msgstr "Rendering"
+
+msgid "Background Color"
+msgstr "Hintergrundfarbe"
+
+msgid "Background color of the renderer."
+msgstr "Hintergrundfarbe des Renderers."
+
 msgid "Unload Project"
 msgstr "Projekt entladen"
 

@@ -45,6 +45,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dir.h>
 #include <wx/progdlg.h>
 #include <wx/intl.h>
+#include <wx/clrpicker.h>
 
 
 class BodySlideFrame;

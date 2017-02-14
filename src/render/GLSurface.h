@@ -86,6 +86,14 @@ public:
 	static const wxGLAttributes& GetGLAttribs();
 	static const wxGLContextAttrs& GetGLContextAttribs();
 
+	Vector3 GetBackgroundColor() {
+		return colorBackground;
+	}
+
+	void SetBackgroundColor(const Vector3& color) {
+		colorBackground = color;
+	}
+
 	void DeleteAllMeshes() {
 		for (auto &m : meshes)
 			delete m;
