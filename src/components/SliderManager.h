@@ -52,8 +52,14 @@ public:
 		for (auto &s : slidersBig) {
 			if (SliderHasChanged(s.name, true))
 				presetCollection.SetSliderPreset(presetName, s.name, s.value);
+			else
+				presetCollection.ClearSlider(presetName, s.name);
+
 			if (SliderHasChanged(s.name, false))
 				presetCollection.SetSliderPreset(presetName, slidersSmall[index].name, -10000.0f, slidersSmall[index].value);
+			else
+				presetCollection.ClearSlider(presetName, slidersSmall[index].name);
+
 			index++;
 		}
 		return presetCollection.SavePreset(filePath, presetName, sliderSetName, assignGroups);

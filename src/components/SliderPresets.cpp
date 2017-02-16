@@ -17,6 +17,11 @@ void PresetCollection::Clear() {
 	presetGroups.clear();
 }
 
+void PresetCollection::ClearSlider(const string& presetName, const string& sliderName) {
+	if (namedSliderPresets.find(presetName) != namedSliderPresets.end())
+		namedSliderPresets[presetName].erase(sliderName);
+}
+
 void PresetCollection::GetPresetNames(vector<string>& outNames) {
 	for (auto &it : namedSliderPresets)
 		outNames.push_back(it.first);
@@ -27,30 +32,31 @@ void PresetCollection::SetSliderPreset(const string& set, const string& slider, 
 	SliderPreset sp;
 	if (namedSliderPresets.find(set) == namedSliderPresets.end()) {
 		sp.big = sp.small = -10000.0f;
+
 		if (big > -10000.0f)
 			sp.big = big;
 		if (small > -10000.0f)
 			sp.small = small;
+
 		newPreset[slider] = sp;
 		namedSliderPresets[set] = newPreset;
-
 	}
 	else {
 		if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end()) {
 			sp.big = sp.small = -10000.0f;
+
 			if (big > -10000.0f)
 				sp.big = big;
 			if (small > -10000.0f)
 				sp.small = small;
+
 			namedSliderPresets[set][slider] = sp;
 		}
 		else {
-			if (big > -10000.0f) {
+			if (big > -10000.0f)
 				namedSliderPresets[set][slider].big = big;
-			}
-			if (small > -10000.0f) {
+			if (small > -10000.0f)
 				namedSliderPresets[set][slider].small = small;
-			}
 		}
 	}
 }

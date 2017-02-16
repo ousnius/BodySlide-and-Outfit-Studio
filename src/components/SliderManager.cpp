@@ -236,14 +236,18 @@ float SliderManager::GetSmallPresetValue(const string& presetName, const string&
 void SliderManager::InitializeSliders(const string& presetName) {
 	float ps;
 	for (int i = 0; i < slidersBig.size(); i++) {
-		if (!presetCollection.GetBigPreset(presetName, slidersBig[i].name, ps))
+		if (!presetCollection.GetBigPreset(presetName, slidersBig[i].name, ps)) {
 			ps = slidersBig[i].defValue;
+			slidersBig[i].changed = false;
+		}
 
 		slidersBig[i].value = ps;
 	}
 	for (int i = 0; i < slidersSmall.size(); i++) {
-		if (!presetCollection.GetSmallPreset(presetName, slidersSmall[i].name, ps))
+		if (!presetCollection.GetSmallPreset(presetName, slidersSmall[i].name, ps)) {
 			ps = slidersSmall[i].defValue;
+			slidersSmall[i].changed = false;
+		}
 
 		slidersSmall[i].value = ps;
 	}
@@ -253,12 +257,12 @@ bool SliderManager::SliderHasChanged(const string& slider, bool getBig) {
 	if (getBig) {
 		for (int i = 0; i < slidersBig.size(); i++)
 			if (slidersBig[i].name == slider)
-				return(slidersBig[i].defValue != slidersBig[i].value || slidersBig[i].changed);
+				return (slidersBig[i].defValue != slidersBig[i].value || (slidersBig[i].changed && slidersBig[i].zap));
 	}
 	else {
 		for (int i = 0; i < slidersSmall.size(); i++)
 			if (slidersSmall[i].name == slider)
-				return(slidersSmall[i].defValue != slidersSmall[i].value || slidersSmall[i].changed);
+				return (slidersSmall[i].defValue != slidersSmall[i].value || (slidersSmall[i].changed && slidersSmall[i].zap));
 	}
 	return false;
 }
@@ -267,12 +271,12 @@ float SliderManager::SliderValue(const string& slider, bool getBig) {
 	if (getBig) {
 		for (int i = 0; i < slidersBig.size(); i++)
 			if (slidersBig[i].name == slider)
-				return(slidersBig[i].value);
+				return slidersBig[i].value;
 	}
 	else {
 		for (int i = 0; i < slidersSmall.size(); i++)
 			if (slidersSmall[i].name == slider)
-				return(slidersSmall[i].value);
+				return slidersSmall[i].value;
 	}
 	return 0.0f;
 }
