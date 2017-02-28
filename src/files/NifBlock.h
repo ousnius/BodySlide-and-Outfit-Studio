@@ -183,6 +183,184 @@ enum BlockType : ushort {
 	BHKMOPPBVTREESHAPE
 };
 
+class NiString {
+private:
+	string str;
+
+public:
+	NiString() {};
+
+	string GetString() {
+		return str;
+	}
+
+	void SetString(const string& str) {
+		this->str = str;
+	}
+
+	size_t GetLength() {
+		return str.length();
+	}
+
+	void Clear() {
+		str.clear();
+	}
+
+	void Put(fstream& file, const int szSize, const bool wantNullOutput = true);
+	void Get(fstream& file, const int szSize);
+};
+
+class NiHeader;
+
+class StringRef {
+private:
+	int ref = 0xFFFFFFFF;
+
+public:
+	StringRef() {};
+
+	string GetString(NiHeader* hdr);
+	void SetString(NiHeader* hdr, const string& str);
+	void RenameString(NiHeader* hdr, const string& str);
+	void Clear(NiHeader* hdr);
+	void Put(fstream& file);
+	void Get(fstream& file, NiHeader* hdr);
+	void notifyStringDelete(int stringID);
+};
+
+class NiObject {
+protected:
+	uint blockSize;
+
+public:
+	NiHeader* header = nullptr;
+	BlockType blockType;
+
+	NiObject();
+	virtual ~NiObject();
+
+	virtual void Init();
+	virtual void notifyBlockDelete(int blockID);
+	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
+	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
+	virtual void notifyStringDelete(int stringID);
+
+	virtual void Get(fstream& file);
+	virtual void Put(fstream& file);
+
+	virtual void GetChildRefs(set<int>& refs);
+	virtual int CalcBlockSize();
+	virtual NiObject* Clone() { return new NiObject(*this); }
+};
+
+class NiHeader : public NiObject {
+	/*
+	Minimum supported
+	Version:			20.2.0.7
+	User Version:		11
+	User Version 2:		26
+
+	Maximum supported
+	Version:			20.2.0.7
+	User Version:		12
+	User Version 2:		130
+	*/
+
+private:
+	bool valid;
+
+	char verStr[0x26];
+	byte version1;
+	byte version2;
+	byte version3;
+	byte version4;
+	uint userVersion;
+	uint userVersion2;
+
+	byte unk1;
+	byte endian;
+
+	NiString creator;
+	NiString exportInfo1;
+	NiString exportInfo2;
+	NiString exportInfo3;
+
+	// Foreign reference to the blocks list in NifFile.
+	vector<NiObject*>* blocks;
+
+	uint numBlocks;
+	ushort numBlockTypes;
+	vector<NiString> blockTypes;
+	vector<ushort> blockTypeIndices;
+	vector<uint> blockSizes;
+
+	uint numStrings;
+	uint maxStringLen;
+	vector<NiString> strings;
+	vector<int> stringRefCount;
+
+	uint unkInt2;
+
+public:
+	NiHeader();
+
+	void Clear();
+	bool IsValid() { return valid; }
+
+	string GetVersionInfo();
+	void SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint userVer, const uint userVer2);
+	bool VerCheck(const int v1, const int v2, const int v3, const int v4, const bool equal = false);
+
+	uint GetUserVersion() { return userVersion; };
+	uint GetUserVersion2() { return userVersion2; };
+
+	string GetCreatorInfo();
+	void SetCreatorInfo(const string& creatorInfo);
+
+	string GetExportInfo();
+	void SetExportInfo(const string& exportInfo);
+
+	void SetBlockReference(vector<NiObject*>* blocks) { this->blocks = blocks; };
+	uint GetNumBlocks() { return numBlocks; }
+
+	template <class T>
+	T* GetBlock(const int blockId);
+
+	void DeleteBlock(int blockId);
+	void DeleteBlockByType(const string& blockTypeStr);
+	int AddBlock(NiObject* newBlock, const string& blockTypeStr);
+	int ReplaceBlock(int oldBlockId, NiObject* newBlock, const string& blockTypeStr);
+
+	// Swaps two blocks, updating references in other blocks that may refer to their old indices
+	void SwapBlocks(const int blockIndexLo, const int blockIndexHi);
+	bool IsBlockReferenced(const int blockId);
+	void DeleteUnreferencedBlocks(BlockType type = NIUNKNOWN, bool* hadDeletions = nullptr);
+
+	ushort AddOrFindBlockTypeId(const string& blockTypeName);
+	string GetBlockTypeStringById(const int id);
+	ushort GetBlockTypeIndex(const int id);
+
+	uint GetBlockSize(const uint blockId) { return blockSizes[blockId]; }
+	void CalcAllBlockSizes();
+
+	int GetStringCount() {
+		return strings.size();
+	}
+
+	int FindStringId(const string& str);
+	int AddOrFindStringId(const string& str);
+	string GetStringById(const int id);
+	void SetStringById(const int id, const string& str);
+
+	void AddStringRef(const int id);
+	void RemoveStringRef(const int id);
+	int RemoveUnusedStrings();
+
+	void Get(fstream& file);
+	void Put(fstream& file);
+};
+
+
 struct VertexWeight {
 	float w1;
 	float w2;
@@ -257,7 +435,7 @@ struct SkinWeight {
 	ushort index;
 	float weight;
 
-	SkinWeight(const ushort& index = 0, const float& weight = 0.0f) {
+	SkinWeight(const ushort index = 0, const float weight = 0.0f) {
 		this->index = index;
 		this->weight = weight;
 	}
@@ -311,8 +489,7 @@ struct FurniturePosition {
 
 struct BoneLOD {
 	uint distance;
-	uint boneNameRef;
-	string boneName;
+	StringRef boneName;
 };
 
 struct TBC {
@@ -351,20 +528,11 @@ struct ControllerLink {
 	int controllerRef;
 	byte priority;
 
-	uint nodeNameRef;
-	string nodeName;
-
-	uint propTypeRef;
-	string propType;
-
-	uint ctrlTypeRef;
-	string ctrlType;
-
-	uint ctrlIDRef;
-	string ctrlID;
-
-	uint interpIDRef;
-	string interpID;
+	StringRef nodeName;
+	StringRef propType;
+	StringRef ctrlType;
+	StringRef ctrlID;
+	StringRef interpID;
 };
 
 struct MotorDesc {
@@ -520,178 +688,15 @@ struct bhkCMSDChunk {
 	vector<ushort> weldingInfo;
 };
 
-class NiString {
-private:
-	string str;
-
-public:
-	string GetString() {
-		return str;
-	}
-	void SetString(const string& str) {
-		this->str = str;
-	}
-
-	size_t GetLength() {
-		return str.length();
-	}
-
-	void Clear() {
-		str.clear();
-	}
-
-	NiString() {};
-	NiString(fstream& file, const int& szSize);
-
-	void Put(fstream& file, const int& szSize, const bool wantNullOutput = true);
-	void Get(fstream& file, const int& szSize);
-};
-
 struct AVObject {
 	NiString name;
 	int objectRef;
 };
 
 
-class NiHeader;
-
-class NiObject {
-protected:
-	uint blockSize;
-
-public:
-	NiHeader* header;
-	BlockType blockType;
-
-	NiObject();
-	virtual ~NiObject();
-
-	virtual void Init();
-	virtual void notifyBlockDelete(int blockID);
-	virtual void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	virtual void notifyBlockSwap(int blockIndexLo, int blockIndexHi);
-	virtual void notifyStringDelete(int stringID);
-
-	virtual void Get(fstream& file);
-	virtual void Put(fstream& file);
-
-	virtual void GetChildRefs(set<int>& refs);
-	virtual int CalcBlockSize();
-	virtual NiObject* Clone() { return new NiObject(*this); }
-};
-
-class NiHeader : public NiObject {
-	/*
-	Minimum supported
-	Version:			20.2.0.7
-	User Version:		11
-	User Version 2:		26
-
-	Maximum supported
-	Version:			20.2.0.7
-	User Version:		12
-	User Version 2:		130
-	*/
-
-private:
-	bool valid;
-
-	char verStr[0x26];
-	byte version1;
-	byte version2;
-	byte version3;
-	byte version4;
-	uint userVersion;
-	uint userVersion2;
-
-	byte unk1;
-	byte endian;
-
-	NiString creator;
-	NiString exportInfo1;
-	NiString exportInfo2;
-	NiString exportInfo3;
-
-	// Foreign reference to the blocks list in NifFile.
-	vector<NiObject*>* blocks;
-
-	uint numBlocks;
-	ushort numBlockTypes;
-	vector<NiString> blockTypes;
-	vector<ushort> blockTypeIndices;
-	vector<uint> blockSizes;
-
-	uint numStrings;
-	uint maxStringLen;
-	vector<NiString> strings;
-	vector<int> stringRefCount;
-
-	uint unkInt2;
-
-public:
-	NiHeader();
-
-	void Clear();
-	bool IsValid() { return valid; }
-
-	string GetVersionInfo();
-	void SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint& userVer, const uint& userVer2);
-	bool VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool equal = false);
-
-	uint GetUserVersion() { return userVersion; };
-	uint GetUserVersion2() { return userVersion2; };
-
-	string GetCreatorInfo();
-	void SetCreatorInfo(const string& creatorInfo);
-
-	string GetExportInfo();
-	void SetExportInfo(const string& exportInfo);
-
-	void SetBlockReference(vector<NiObject*>* blocks) { this->blocks = blocks; };
-	uint GetNumBlocks() { return numBlocks; }
-
-	template <class T>
-	T* GetBlock(const int& blockId);
-
-	void DeleteBlock(int blockId);
-	void DeleteBlockByType(const string& blockTypeStr);
-	int AddBlock(NiObject* newBlock, const string& blockTypeStr);
-	int ReplaceBlock(int oldBlockId, NiObject* newBlock, const string& blockTypeStr);
-
-	// Swaps two blocks, updating references in other blocks that may refer to their old indices
-	void SwapBlocks(const int& blockIndexLo, const int& blockIndexHi);
-	bool IsBlockReferenced(const int& blockId);
-	void DeleteUnreferencedBlocks(BlockType type = NIUNKNOWN, bool* hadDeletions = nullptr);
-
-	ushort AddOrFindBlockTypeId(const string& blockTypeName);
-	string GetBlockTypeStringById(const int& id);
-	ushort GetBlockTypeIndex(const int& id);
-
-	uint GetBlockSize(const uint& blockId) { return blockSizes[blockId]; }
-	void CalcAllBlockSizes();
-
-	int GetStringCount() {
-		return strings.size();
-	}
-
-	int FindStringId(const string& str);
-	int AddOrFindStringId(const string& str);
-	string GetStringById(const int& id);
-	void SetStringById(const int& id, const string& str);
-
-	void AddStringRef(const int& id);
-	void RemoveStringRef(const int& id);
-	int RemoveUnusedStrings();
-
-	void Get(fstream& file);
-	void Put(fstream& file);
-};
-
-
 class NiObjectNET : public NiObject {
 private:
-	uint nameRef;
-	string name;
+	StringRef name;
 	int controllerRef;
 	int numExtraData;
 	vector<int> extraDataRef;
@@ -700,7 +705,9 @@ public:
 	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
 	bool bBSLightingShaderProperty;
 
-	~NiObjectNET();
+	~NiObjectNET() {
+		name.Clear(header);
+	};
 
 	void Init();
 	void Get(fstream& file);
@@ -710,16 +717,16 @@ public:
 	void notifyStringDelete(int stringID);
 
 	string GetName();
-	void SetName(const string& propertyName, const bool renameExisting = false);
+	void SetName(const string& str, const bool rename = false);
 	void ClearName();
 
 	int GetControllerRef() { return controllerRef; }
 	void SetControllerRef(int controllerRef) { this->controllerRef = controllerRef; }
 
 	int GetNumExtraData() { return numExtraData; }
-	void SetExtraDataRef(const int& id, const int& blockId);
-	int GetExtraDataRef(const int& id);
-	void AddExtraDataRef(const int& id);
+	void SetExtraDataRef(const int id, const int blockId);
+	int GetExtraDataRef(const int id);
+	void AddExtraDataRef(const int id);
 
 	void GetChildRefs(set<int>& refs);
 	int CalcBlockSize();
@@ -782,8 +789,8 @@ private:
 
 public:
 	NiNode() { };
-	NiNode(NiHeader& hdr);
-	NiNode(fstream& file, NiHeader& hdr);
+	NiNode(NiHeader* hdr);
+	NiNode(fstream& file, NiHeader* hdr);
 
 	void Init();
 	void Get(fstream& file);
@@ -796,21 +803,21 @@ public:
 	NiNode* Clone() { return new NiNode(*this); }
 
 	int GetNumChildren() { return numChildren; }
-	int GetChildRef(const int& id);
-	void AddChildRef(const int& id);
+	int GetChildRef(const int id);
+	void AddChildRef(const int id);
 	void ClearChildren();
 	vector<int>::iterator ChildrenBegin() { return children.begin(); }
 	vector<int>::iterator ChildrenEnd() { return children.end(); }
 
 	int GetNumEffects() { return numEffects; }
-	int GetEffectRef(const int& id);
-	void AddEffectRef(const int& id);
+	int GetEffectRef(const int id);
+	void AddEffectRef(const int id);
 };
 
 class BSFadeNode : public NiNode {
 public:
-	BSFadeNode(NiHeader& hdr);
-	BSFadeNode(fstream& file, NiHeader& hdr);
+	BSFadeNode(NiHeader* hdr);
+	BSFadeNode(fstream& file, NiHeader* hdr);
 };
 
 class BSValueNode : public NiNode {
@@ -819,8 +826,8 @@ private:
 	byte unkByte;
 
 public:
-	BSValueNode(NiHeader& hdr);
-	BSValueNode(fstream& file, NiHeader& hdr);
+	BSValueNode(NiHeader* hdr);
+	BSValueNode(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -831,8 +838,8 @@ public:
 
 class BSLeafAnimNode : public NiNode {
 public:
-	BSLeafAnimNode(NiHeader& hdr);
-	BSLeafAnimNode(fstream& file, NiHeader& hdr);
+	BSLeafAnimNode(NiHeader* hdr);
+	BSLeafAnimNode(fstream& file, NiHeader* hdr);
 };
 
 class BSTreeNode : public NiNode {
@@ -844,8 +851,8 @@ private:
 	vector<int> bones2;
 
 public:
-	BSTreeNode(NiHeader& hdr);
-	BSTreeNode(fstream& file, NiHeader& hdr);
+	BSTreeNode(NiHeader* hdr);
+	BSTreeNode(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -863,8 +870,8 @@ private:
 	bool isStaticBound;
 
 public:
-	BSOrderedNode(NiHeader& hdr);
-	BSOrderedNode(fstream& file, NiHeader& hdr);
+	BSOrderedNode(NiHeader* hdr);
+	BSOrderedNode(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -879,8 +886,8 @@ private:
 	uint cullingMode;
 
 public:
-	BSMultiBoundNode(NiHeader& hdr);
-	BSMultiBoundNode(fstream& file, NiHeader& hdr);
+	BSMultiBoundNode(NiHeader* hdr);
+	BSMultiBoundNode(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -899,8 +906,8 @@ private:
 	byte current;
 
 public:
-	BSBlastNode(NiHeader& hdr);
-	BSBlastNode(fstream& file, NiHeader& hdr);
+	BSBlastNode(NiHeader* hdr);
+	BSBlastNode(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -911,8 +918,8 @@ public:
 
 class BSDamageStage : public BSBlastNode {
 public:
-	BSDamageStage(NiHeader& hdr);
-	BSDamageStage(fstream& file, NiHeader& hdr);
+	BSDamageStage(NiHeader* hdr);
+	BSDamageStage(fstream& file, NiHeader* hdr);
 };
 
 class BSMasterParticleSystem : public NiNode {
@@ -923,8 +930,8 @@ private:
 	vector<int> particleSysRefs;
 
 public:
-	BSMasterParticleSystem(NiHeader& hdr);
-	BSMasterParticleSystem(fstream& file, NiHeader& hdr);
+	BSMasterParticleSystem(NiHeader* hdr);
+	BSMasterParticleSystem(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -941,8 +948,8 @@ private:
 	ushort billboardMode;
 
 public:
-	NiBillboardNode(NiHeader& hdr);
-	NiBillboardNode(fstream& file, NiHeader& hdr);
+	NiBillboardNode(NiHeader* hdr);
+	NiBillboardNode(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -957,8 +964,8 @@ private:
 	uint index;
 
 public:
-	NiSwitchNode(NiHeader& hdr);
-	NiSwitchNode(fstream& file, NiHeader& hdr);
+	NiSwitchNode(NiHeader* hdr);
+	NiSwitchNode(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1021,7 +1028,7 @@ public:
 	void UpdateBounds();
 
 	virtual void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
-	virtual void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
+	virtual void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	virtual void CalcTangentSpace();
 };
 
@@ -1130,8 +1137,8 @@ public:
 
 	vector<BSVertexData> vertData;
 	vector<Triangle> triangles;
-	BSTriShape(NiHeader& hdr);
-	BSTriShape(fstream& file, NiHeader& hdr);
+	BSTriShape(NiHeader* hdr);
+	BSTriShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1184,7 +1191,7 @@ public:
 	void UpdateBounds();
 
 	void SetNormals(const vector<Vector3>& inNorms);
-	void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
 	void UpdateFlags();
 	int CalcDataSizes();
@@ -1242,8 +1249,8 @@ private:
 	BSSITSSegmentation segmentation;
 
 public:
-	BSSubIndexTriShape(NiHeader& hdr);
-	BSSubIndexTriShape(fstream& file, NiHeader& hdr);
+	BSSubIndexTriShape(NiHeader* hdr);
+	BSSubIndexTriShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1264,8 +1271,8 @@ public:
 	uint lodSize1;
 	uint lodSize2;
 
-	BSMeshLODTriShape(NiHeader& hdr);
-	BSMeshLODTriShape(fstream& file, NiHeader& hdr);
+	BSMeshLODTriShape(NiHeader* hdr);
+	BSMeshLODTriShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1278,8 +1285,8 @@ public:
 	uint dynamicDataSize;
 	vector<Vector4> dynamicData;
 
-	BSDynamicTriShape(NiHeader& hdr);
-	BSDynamicTriShape(fstream& file, NiHeader& hdr);
+	BSDynamicTriShape(NiHeader* hdr);
+	BSDynamicTriShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1298,8 +1305,8 @@ private:
 	int alphaPropertyRef;					// Version >= 20.2.0.7 && User Version == 12
 
 	uint numMaterials;
-	vector<NiString> materialNames;
-	vector<int> materialExtra;
+	vector<int> materialNameRefs;
+	vector<uint> materials;
 	int activeMaterial;
 	byte dirty;
 
@@ -1344,8 +1351,8 @@ public:
 
 class NiTriShape : public NiTriBasedGeom {
 public:
-	NiTriShape(NiHeader& hdr);
-	NiTriShape(fstream& file, NiHeader& hdr);
+	NiTriShape(NiHeader* hdr);
+	NiTriShape(fstream& file, NiHeader* hdr);
 
 	NiTriShape* Clone() { return new NiTriShape(*this); }
 };
@@ -1360,14 +1367,14 @@ private:
 public:
 	vector<Triangle> triangles;
 
-	NiTriShapeData(NiHeader& hdr);
-	NiTriShapeData(fstream& file, NiHeader& hdr);
+	NiTriShapeData(NiHeader* hdr);
+	NiTriShapeData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<Vector2>* uvs);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
-	void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 	NiTriShapeData* Clone() { return new NiTriShapeData(*this); }
@@ -1375,8 +1382,8 @@ public:
 
 class NiTriStrips : public NiTriBasedGeom {
 public:
-	NiTriStrips(NiHeader& hdr);
-	NiTriStrips(fstream& file, NiHeader& hdr);
+	NiTriStrips(NiHeader* hdr);
+	NiTriStrips(fstream& file, NiHeader* hdr);
 
 	NiTriStrips* Clone() { return new NiTriStrips(*this); }
 };
@@ -1389,14 +1396,14 @@ private:
 	vector<vector<ushort>> points;
 
 public:
-	NiTriStripsData(NiHeader& hdr);
-	NiTriStripsData(fstream& file, NiHeader& hdr);
+	NiTriStripsData(NiHeader* hdr);
+	NiTriStripsData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	void StripsToTris(vector<Triangle>* outTris);
-	void RecalcNormals(const bool smooth = true, const float& smoothThres = 60.0f);
+	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
 	int CalcBlockSize();
 	NiTriStripsData* Clone() { return new NiTriStripsData(*this); }
@@ -1409,8 +1416,8 @@ private:
 	uint level2;
 
 public:
-	BSLODTriShape(NiHeader& hdr);
-	BSLODTriShape(fstream& file, NiHeader& hdr);
+	BSLODTriShape(NiHeader* hdr);
+	BSLODTriShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1432,8 +1439,8 @@ private:
 
 public:
 	NiSkinInstance() { };
-	NiSkinInstance(NiHeader& hdr);
-	NiSkinInstance(fstream& file, NiHeader& hdr);
+	NiSkinInstance(NiHeader* hdr);
+	NiSkinInstance(fstream& file, NiHeader* hdr);
 
 	void Init();
 	void Get(fstream& file);
@@ -1445,13 +1452,13 @@ public:
 	NiSkinInstance* Clone() { return new NiSkinInstance(*this); }
 
 	int GetDataRef() { return dataRef; }
-	void SetDataRef(const int& dataRef) { this->dataRef = dataRef; }
+	void SetDataRef(const int dataRef) { this->dataRef = dataRef; }
 
 	int GetSkinPartitionRef() { return skinPartitionRef; }
-	void SetSkinPartitionRef(const int& skinPartitionRef) { this->skinPartitionRef = skinPartitionRef; }
+	void SetSkinPartitionRef(const int skinPartitionRef) { this->skinPartitionRef = skinPartitionRef; }
 
 	int GetSkeletonRootRef() { return skeletonRootRef; }
-	void SetSkeletonRootRef(const int& skeletonRootRef) { this->skeletonRootRef = skeletonRootRef; }
+	void SetSkeletonRootRef(const int skeletonRootRef) { this->skeletonRootRef = skeletonRootRef; }
 };
 
 class BSDismemberSkinInstance : public NiSkinInstance {
@@ -1466,8 +1473,8 @@ private:
 	vector<PartitionInfo> partitions;
 
 public:
-	BSDismemberSkinInstance(NiHeader& hdr);
-	BSDismemberSkinInstance(fstream& file, NiHeader& hdr);
+	BSDismemberSkinInstance(NiHeader* hdr);
+	BSDismemberSkinInstance(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1478,7 +1485,7 @@ public:
 	vector<PartitionInfo> GetPartitions() { return partitions; }
 
 	void AddPartition(const PartitionInfo& partition);
-	void RemovePartition(const int& id);
+	void RemovePartition(const int id);
 	void ClearPartitions();
 
 	void SetPartitions(const vector<PartitionInfo>& partitions) {
@@ -1499,8 +1506,8 @@ public:
 	vector<SkinWeight> vertexWeights;
 
 	BSSkinInstance() { Init(); };
-	BSSkinInstance(NiHeader& hdr);
-	BSSkinInstance(fstream& file, NiHeader& hdr);
+	BSSkinInstance(NiHeader* hdr);
+	BSSkinInstance(fstream& file, NiHeader* hdr);
 
 	void Init();
 	void Get(fstream& file);
@@ -1512,10 +1519,10 @@ public:
 	BSSkinInstance* Clone() { return new BSSkinInstance(*this); }
 
 	int GetTargetRef() { return targetRef; }
-	void SetTargetRef(const int& targetRef) { this->targetRef = targetRef; }
+	void SetTargetRef(const int targetRef) { this->targetRef = targetRef; }
 
 	int GetDataRef() { return dataRef; }
-	void SetDataRef(const int& dataRef) { this->dataRef = dataRef; }
+	void SetDataRef(const int dataRef) { this->dataRef = dataRef; }
 };
 
 class BSSkinBoneData : public NiObject {
@@ -1535,8 +1542,8 @@ public:
 	vector<BoneData> boneXforms;
 
 	BSSkinBoneData() : nBones(0) { };
-	BSSkinBoneData(NiHeader& hdr);
-	BSSkinBoneData(fstream& file, NiHeader& hdr);
+	BSSkinBoneData(NiHeader* hdr);
+	BSSkinBoneData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1564,8 +1571,8 @@ public:
 	byte hasVertWeights;
 	vector<BoneData> bones;
 
-	NiSkinData(NiHeader& hdr);
-	NiSkinData(fstream& file, NiHeader& hdr);
+	NiSkinData(NiHeader* hdr);
+	NiSkinData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1630,8 +1637,8 @@ public:
 	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 	bool IsFullPrecision() { return true; }
 
-	NiSkinPartition(NiHeader& hdr);
-	NiSkinPartition(fstream& file, NiHeader& hdr);
+	NiSkinPartition(NiHeader* hdr);
+	NiSkinPartition(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1649,7 +1656,7 @@ private:
 	int alphaPropertyRef;
 
 	uint numMaterials;
-	uint materialString;
+	vector<int> materialNameRefs;
 	vector<uint> materials;
 
 	uint activeMaterial;
@@ -1677,8 +1684,8 @@ private:
 	vector<int> modifiers;
 
 public:
-	NiParticleSystem(NiHeader& hdr);
-	NiParticleSystem(fstream& file, NiHeader& hdr);
+	NiParticleSystem(NiHeader* hdr);
+	NiParticleSystem(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1691,16 +1698,16 @@ public:
 
 class NiMeshParticleSystem : public NiParticleSystem {
 public:
-	NiMeshParticleSystem(NiHeader& hdr);
-	NiMeshParticleSystem(fstream& file, NiHeader& hdr);
+	NiMeshParticleSystem(NiHeader* hdr);
+	NiMeshParticleSystem(fstream& file, NiHeader* hdr);
 
 	NiMeshParticleSystem* Clone() { return new NiMeshParticleSystem(*this); }
 };
 
 class BSStripParticleSystem : public NiParticleSystem {
 public:
-	BSStripParticleSystem(NiHeader& hdr);
-	BSStripParticleSystem(fstream& file, NiHeader& hdr);
+	BSStripParticleSystem(NiHeader* hdr);
+	BSStripParticleSystem(fstream& file, NiHeader* hdr);
 
 	BSStripParticleSystem* Clone() { return new BSStripParticleSystem(*this); }
 };
@@ -1725,8 +1732,8 @@ private:
 	float speedToAspectSpeed2;
 
 public:
-	NiParticlesData(NiHeader& hdr);
-	NiParticlesData(fstream& file, NiHeader& hdr);
+	NiParticlesData(NiHeader* hdr);
+	NiParticlesData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1736,8 +1743,8 @@ public:
 
 class NiRotatingParticlesData : public NiParticlesData {
 public:
-	NiRotatingParticlesData(NiHeader& hdr);
-	NiRotatingParticlesData(fstream& file, NiHeader& hdr);
+	NiRotatingParticlesData(NiHeader* hdr);
+	NiRotatingParticlesData(fstream& file, NiHeader* hdr);
 
 	NiRotatingParticlesData* Clone() { return new NiRotatingParticlesData(*this); }
 };
@@ -1747,8 +1754,8 @@ private:
 	bool hasRotationSpeeds;
 
 public:
-	NiPSysData(NiHeader& hdr);
-	NiPSysData(fstream& file, NiHeader& hdr);
+	NiPSysData(NiHeader* hdr);
+	NiPSysData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1767,8 +1774,8 @@ private:
 	int nodeRef;
 
 public:
-	NiMeshPSysData(NiHeader& hdr);
-	NiMeshPSysData(fstream& file, NiHeader& hdr);
+	NiMeshPSysData(NiHeader* hdr);
+	NiMeshPSysData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1787,8 +1794,8 @@ private:
 	bool doZPrepass;
 
 public:
-	BSStripPSysData(NiHeader& hdr);
-	BSStripPSysData(fstream& file, NiHeader& hdr);
+	BSStripPSysData(NiHeader* hdr);
+	BSStripPSysData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1817,8 +1824,8 @@ private:
 	int screenTexturesRef;
 
 public:
-	NiCamera(NiHeader& hdr);
-	NiCamera(fstream& file, NiHeader& hdr);
+	NiCamera(NiHeader* hdr);
+	NiCamera(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1831,14 +1838,15 @@ public:
 
 class NiPSysModifier : public NiObject {
 private:
-	uint nameRef;
-	string name;
+	StringRef name;
 	uint order;
 	int targetRef;
 	bool isActive;
 
 public:
-	~NiPSysModifier();
+	~NiPSysModifier() {
+		name.Clear(header);
+	};
 
 	void Init();
 	void Get(fstream& file);
@@ -1855,8 +1863,8 @@ private:
 	float updateDeltaTime;
 
 public:
-	BSPSysStripUpdateModifier(NiHeader& hdr);
-	BSPSysStripUpdateModifier(fstream& file, NiHeader& hdr);
+	BSPSysStripUpdateModifier(NiHeader* hdr);
+	BSPSysStripUpdateModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1870,8 +1878,8 @@ private:
 	int spawnModifierRef;
 
 public:
-	NiPSysAgeDeathModifier(NiHeader& hdr);
-	NiPSysAgeDeathModifier(fstream& file, NiHeader& hdr);
+	NiPSysAgeDeathModifier(NiHeader* hdr);
+	NiPSysAgeDeathModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1887,8 +1895,8 @@ private:
 	Vector4 unkVector;
 
 public:
-	BSPSysLODModifier(NiHeader& hdr);
-	BSPSysLODModifier(fstream& file, NiHeader& hdr);
+	BSPSysLODModifier(NiHeader* hdr);
+	BSPSysLODModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1908,8 +1916,8 @@ private:
 	float lifeSpanVariation;
 
 public:
-	NiPSysSpawnModifier(NiHeader& hdr);
-	NiPSysSpawnModifier(fstream& file, NiHeader& hdr);
+	NiPSysSpawnModifier(NiHeader* hdr);
+	NiPSysSpawnModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1930,8 +1938,8 @@ private:
 	Color4 color3;
 
 public:
-	BSPSysSimpleColorModifier(NiHeader& hdr);
-	BSPSysSimpleColorModifier(fstream& file, NiHeader& hdr);
+	BSPSysSimpleColorModifier(NiHeader* hdr);
+	BSPSysSimpleColorModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1950,8 +1958,8 @@ private:
 	Vector3 initialAxis;
 
 public:
-	NiPSysRotationModifier(NiHeader& hdr);
-	NiPSysRotationModifier(fstream& file, NiHeader& hdr);
+	NiPSysRotationModifier(NiHeader* hdr);
+	NiPSysRotationModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1965,8 +1973,8 @@ private:
 	vector<float> floats;
 
 public:
-	BSPSysScaleModifier(NiHeader& hdr);
-	BSPSysScaleModifier(fstream& file, NiHeader& hdr);
+	BSPSysScaleModifier(NiHeader* hdr);
+	BSPSysScaleModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1986,8 +1994,8 @@ private:
 	bool worldAligned;
 
 public:
-	NiPSysGravityModifier(NiHeader& hdr);
-	NiPSysGravityModifier(fstream& file, NiHeader& hdr);
+	NiPSysGravityModifier(NiHeader* hdr);
+	NiPSysGravityModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2000,8 +2008,8 @@ public:
 
 class NiPSysPositionModifier : public NiPSysModifier {
 public:
-	NiPSysPositionModifier(NiHeader& hdr);
-	NiPSysPositionModifier(fstream& file, NiHeader& hdr);
+	NiPSysPositionModifier(NiHeader* hdr);
+	NiPSysPositionModifier(fstream& file, NiHeader* hdr);
 
 	NiPSysPositionModifier* Clone() { return new NiPSysPositionModifier(*this); }
 };
@@ -2011,8 +2019,8 @@ private:
 	ushort updateSkip;
 
 public:
-	NiPSysBoundUpdateModifier(NiHeader& hdr);
-	NiPSysBoundUpdateModifier(fstream& file, NiHeader& hdr);
+	NiPSysBoundUpdateModifier(NiHeader* hdr);
+	NiPSysBoundUpdateModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2029,8 +2037,8 @@ private:
 	float rangeFalloff;
 
 public:
-	NiPSysDragModifier(NiHeader& hdr);
-	NiPSysDragModifier(fstream& file, NiHeader& hdr);
+	NiPSysDragModifier(NiHeader* hdr);
+	NiPSysDragModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2049,8 +2057,8 @@ private:
 	float velocityVar;
 
 public:
-	BSPSysInheritVelocityModifier(NiHeader& hdr);
-	BSPSysInheritVelocityModifier(fstream& file, NiHeader& hdr);
+	BSPSysInheritVelocityModifier(NiHeader* hdr);
+	BSPSysInheritVelocityModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2072,8 +2080,8 @@ private:
 	float frameCountVariation;
 
 public:
-	BSPSysSubTexModifier(NiHeader& hdr);
-	BSPSysSubTexModifier(fstream& file, NiHeader& hdr);
+	BSPSysSubTexModifier(NiHeader* hdr);
+	BSPSysSubTexModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2091,8 +2099,8 @@ private:
 	uint symmetryType;
 
 public:
-	NiPSysBombModifier(NiHeader& hdr);
-	NiPSysBombModifier(fstream& file, NiHeader& hdr);
+	NiPSysBombModifier(NiHeader* hdr);
+	NiPSysBombModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2108,8 +2116,8 @@ private:
 	float strength;
 
 public:
-	BSWindModifier(NiHeader& hdr);
-	BSWindModifier(fstream& file, NiHeader& hdr);
+	BSWindModifier(NiHeader* hdr);
+	BSWindModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2124,8 +2132,8 @@ private:
 	int targetNodeRef;
 
 public:
-	BSPSysRecycleBoundModifier(NiHeader& hdr);
-	BSPSysRecycleBoundModifier(fstream& file, NiHeader& hdr);
+	BSPSysRecycleBoundModifier(NiHeader* hdr);
+	BSPSysRecycleBoundModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2144,8 +2152,8 @@ private:
 	int modifierRef;
 
 public:
-	BSPSysHavokUpdateModifier(NiHeader& hdr);
-	BSPSysHavokUpdateModifier(fstream& file, NiHeader& hdr);
+	BSPSysHavokUpdateModifier(NiHeader* hdr);
+	BSPSysHavokUpdateModifier(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2181,8 +2189,8 @@ private:
 	float radius;
 
 public:
-	NiPSysSphericalCollider(NiHeader& hdr);
-	NiPSysSphericalCollider(fstream& file, NiHeader& hdr);
+	NiPSysSphericalCollider(NiHeader* hdr);
+	NiPSysSphericalCollider(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2198,8 +2206,8 @@ private:
 	Vector3 yAxis;
 
 public:
-	NiPSysPlanarCollider(NiHeader& hdr);
-	NiPSysPlanarCollider(fstream& file, NiHeader& hdr);
+	NiPSysPlanarCollider(NiHeader* hdr);
+	NiPSysPlanarCollider(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2212,8 +2220,8 @@ private:
 	int colliderRef;
 
 public:
-	NiPSysColliderManager(NiHeader& hdr);
-	NiPSysColliderManager(fstream& file, NiHeader& hdr);
+	NiPSysColliderManager(NiHeader* hdr);
+	NiPSysColliderManager(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2263,8 +2271,8 @@ private:
 	float radius;
 
 public:
-	NiPSysSphereEmitter(NiHeader& hdr);
-	NiPSysSphereEmitter(fstream& file, NiHeader& hdr);
+	NiPSysSphereEmitter(NiHeader* hdr);
+	NiPSysSphereEmitter(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2278,8 +2286,8 @@ private:
 	float height;
 
 public:
-	NiPSysCylinderEmitter(NiHeader& hdr);
-	NiPSysCylinderEmitter(fstream& file, NiHeader& hdr);
+	NiPSysCylinderEmitter(NiHeader* hdr);
+	NiPSysCylinderEmitter(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2294,8 +2302,8 @@ private:
 	float depth;
 
 public:
-	NiPSysBoxEmitter(NiHeader& hdr);
-	NiPSysBoxEmitter(fstream& file, NiHeader& hdr);
+	NiPSysBoxEmitter(NiHeader* hdr);
+	NiPSysBoxEmitter(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2312,8 +2320,8 @@ private:
 	Vector3 emissionAxis;
 
 public:
-	NiPSysMeshEmitter(NiHeader& hdr);
-	NiPSysMeshEmitter(fstream& file, NiHeader& hdr);
+	NiPSysMeshEmitter(NiHeader* hdr);
+	NiPSysMeshEmitter(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2343,8 +2351,8 @@ private:
 	bool value;
 
 public:
-	NiBlendBoolInterpolator(NiHeader& hdr);
-	NiBlendBoolInterpolator(fstream& file, NiHeader& hdr);
+	NiBlendBoolInterpolator(NiHeader* hdr);
+	NiBlendBoolInterpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2357,8 +2365,8 @@ private:
 	float value;
 
 public:
-	NiBlendFloatInterpolator(NiHeader& hdr);
-	NiBlendFloatInterpolator(fstream& file, NiHeader& hdr);
+	NiBlendFloatInterpolator(NiHeader* hdr);
+	NiBlendFloatInterpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2371,8 +2379,8 @@ private:
 	Vector3 point;
 
 public:
-	NiBlendPoint3Interpolator(NiHeader& hdr);
-	NiBlendPoint3Interpolator(fstream& file, NiHeader& hdr);
+	NiBlendPoint3Interpolator(NiHeader* hdr);
+	NiBlendPoint3Interpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2390,8 +2398,8 @@ private:
 public:
 	int dataRef;
 
-	NiBoolInterpolator(NiHeader& hdr);
-	NiBoolInterpolator(fstream& file, NiHeader& hdr);
+	NiBoolInterpolator(NiHeader* hdr);
+	NiBoolInterpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2404,8 +2412,8 @@ public:
 
 class NiBoolTimelineInterpolator : public NiBoolInterpolator {
 public:
-	NiBoolTimelineInterpolator(NiHeader& hdr);
-	NiBoolTimelineInterpolator(fstream& file, NiHeader& hdr);
+	NiBoolTimelineInterpolator(NiHeader* hdr);
+	NiBoolTimelineInterpolator(fstream& file, NiHeader* hdr);
 
 	NiBoolTimelineInterpolator* Clone() { return new NiBoolTimelineInterpolator(*this); }
 };
@@ -2417,8 +2425,8 @@ private:
 public:
 	int dataRef;
 
-	NiFloatInterpolator(NiHeader& hdr);
-	NiFloatInterpolator(fstream& file, NiHeader& hdr);
+	NiFloatInterpolator(NiHeader* hdr);
+	NiFloatInterpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2438,8 +2446,8 @@ private:
 public:
 	int dataRef;
 
-	NiTransformInterpolator(NiHeader& hdr);
-	NiTransformInterpolator(fstream& file, NiHeader& hdr);
+	NiTransformInterpolator(NiHeader* hdr);
+	NiTransformInterpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2457,8 +2465,8 @@ private:
 public:
 	int dataRef;
 
-	NiPoint3Interpolator(NiHeader& hdr);
-	NiPoint3Interpolator(fstream& file, NiHeader& hdr);
+	NiPoint3Interpolator(NiHeader* hdr);
+	NiPoint3Interpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2481,8 +2489,8 @@ private:
 	int percentDataRef;
 
 public:
-	NiPathInterpolator(NiHeader& hdr);
-	NiPathInterpolator(fstream& file, NiHeader& hdr);
+	NiPathInterpolator(NiHeader* hdr);
+	NiPathInterpolator(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2498,8 +2506,7 @@ private:
 	ushort flags;
 	int lookAtRef;
 
-	uint lookAtNameRef;
-	string lookAtName;
+	StringRef lookAtName;
 
 	NiQuatTransform transform;
 	int translateInterpRef;
@@ -2507,9 +2514,11 @@ private:
 	int scaleInterpRef;
 
 public:
-	NiLookAtInterpolator(NiHeader& hdr);
-	NiLookAtInterpolator(fstream& file, NiHeader& hdr);
-	~NiLookAtInterpolator();
+	NiLookAtInterpolator(NiHeader* hdr);
+	NiLookAtInterpolator(fstream& file, NiHeader* hdr);
+	~NiLookAtInterpolator() {
+		lookAtName.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2533,8 +2542,8 @@ private:
 	KeyGroup<float> scales;
 
 public:
-	NiKeyframeData(NiHeader& hdr);
-	NiKeyframeData(fstream& file, NiHeader& hdr);
+	NiKeyframeData(NiHeader* hdr);
+	NiKeyframeData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2544,8 +2553,8 @@ public:
 
 class NiTransformData : public NiKeyframeData {
 public:
-	NiTransformData(NiHeader& hdr);
-	NiTransformData(fstream& file, NiHeader& hdr);
+	NiTransformData(NiHeader* hdr);
+	NiTransformData(fstream& file, NiHeader* hdr);
 
 	NiTransformData* Clone() { return new NiTransformData(*this); }
 };
@@ -2555,8 +2564,8 @@ private:
 	KeyGroup<Vector3> data;
 
 public:
-	NiPosData(NiHeader& hdr);
-	NiPosData(fstream& file, NiHeader& hdr);
+	NiPosData(NiHeader* hdr);
+	NiPosData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2569,8 +2578,8 @@ private:
 	KeyGroup<byte> data;
 
 public:
-	NiBoolData(NiHeader& hdr);
-	NiBoolData(fstream& file, NiHeader& hdr);
+	NiBoolData(NiHeader* hdr);
+	NiBoolData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2583,8 +2592,8 @@ private:
 	KeyGroup<float> data;
 
 public:
-	NiFloatData(NiHeader& hdr);
-	NiFloatData(fstream& file, NiHeader& hdr);
+	NiFloatData(NiHeader* hdr);
+	NiFloatData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2617,8 +2626,8 @@ class BSFrustumFOVController : public NiTimeController {
 public:
 	int interpolatorRef;
 
-	BSFrustumFOVController(NiHeader& hdr);
-	BSFrustumFOVController(fstream& file, NiHeader& hdr);
+	BSFrustumFOVController(NiHeader* hdr);
+	BSFrustumFOVController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2636,8 +2645,8 @@ private:
 	float maxDistance;
 
 public:
-	BSLagBoneController(NiHeader& hdr);
-	BSLagBoneController(fstream& file, NiHeader& hdr);
+	BSLagBoneController(NiHeader* hdr);
+	BSLagBoneController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2673,8 +2682,8 @@ public:
 	int widthInterpRef;
 	int arcOffsetInterpRef;
 
-	BSProceduralLightningController(NiHeader& hdr);
-	BSProceduralLightningController(fstream& file, NiHeader& hdr);
+	BSProceduralLightningController(NiHeader* hdr);
+	BSProceduralLightningController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2699,8 +2708,8 @@ private:
 	vector<BoneArray> boneArrays;
 
 public:
-	NiBoneLODController(NiHeader& hdr);
-	NiBoneLODController(fstream& file, NiHeader& hdr);
+	NiBoneLODController(NiHeader* hdr);
+	NiBoneLODController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2732,13 +2741,14 @@ class NiExtraDataController : public NiSingleInterpController {
 
 class NiFloatExtraDataController : public NiExtraDataController {
 private:
-	uint extraDataRef;
-	string extraData;
+	StringRef extraData;
 
 public:
-	NiFloatExtraDataController(NiHeader& hdr);
-	NiFloatExtraDataController(fstream& file, NiHeader& hdr);
-	~NiFloatExtraDataController();
+	NiFloatExtraDataController(NiHeader* hdr);
+	NiFloatExtraDataController(fstream& file, NiHeader* hdr);
+	~NiFloatExtraDataController() {
+		extraData.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2752,8 +2762,8 @@ class NiBoolInterpController : public NiSingleInterpController {
 
 class NiVisController : public NiBoolInterpController {
 public:
-	NiVisController(NiHeader& hdr);
-	NiVisController(fstream& file, NiHeader& hdr);
+	NiVisController(NiHeader* hdr);
+	NiVisController(fstream& file, NiHeader* hdr);
 
 	NiVisController* Clone() { return new NiVisController(*this); }
 };
@@ -2763,40 +2773,40 @@ class NiFloatInterpController : public NiSingleInterpController {
 
 class NiAlphaController : public NiFloatInterpController {
 public:
-	NiAlphaController(NiHeader& hdr);
-	NiAlphaController(fstream& file, NiHeader& hdr);
+	NiAlphaController(NiHeader* hdr);
+	NiAlphaController(fstream& file, NiHeader* hdr);
 
 	NiAlphaController* Clone() { return new NiAlphaController(*this); }
 };
 
 class NiPSysUpdateCtlr : public NiTimeController {
 public:
-	NiPSysUpdateCtlr(NiHeader& hdr);
-	NiPSysUpdateCtlr(fstream& file, NiHeader& hdr);
+	NiPSysUpdateCtlr(NiHeader* hdr);
+	NiPSysUpdateCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysUpdateCtlr* Clone() { return new NiPSysUpdateCtlr(*this); }
 };
 
 class BSNiAlphaPropertyTestRefController : public NiAlphaController {
 public:
-	BSNiAlphaPropertyTestRefController(NiHeader& hdr);
-	BSNiAlphaPropertyTestRefController(fstream& file, NiHeader& hdr);
+	BSNiAlphaPropertyTestRefController(NiHeader* hdr);
+	BSNiAlphaPropertyTestRefController(fstream& file, NiHeader* hdr);
 
 	BSNiAlphaPropertyTestRefController* Clone() { return new BSNiAlphaPropertyTestRefController(*this); }
 };
 
 class NiKeyframeController : public NiSingleInterpController {
 public:
-	NiKeyframeController(NiHeader& hdr);
-	NiKeyframeController(fstream& file, NiHeader& hdr);
+	NiKeyframeController(NiHeader* hdr);
+	NiKeyframeController(fstream& file, NiHeader* hdr);
 
 	NiKeyframeController* Clone() { return new NiKeyframeController(*this); }
 };
 
 class NiTransformController : public NiKeyframeController {
 public:
-	NiTransformController(NiHeader& hdr);
-	NiTransformController(fstream& file, NiHeader& hdr);
+	NiTransformController(NiHeader* hdr);
+	NiTransformController(fstream& file, NiHeader* hdr);
 
 	NiTransformController* Clone() { return new NiTransformController(*this); }
 };
@@ -2806,8 +2816,8 @@ private:
 	uint typeOfControlledColor;
 
 public:
-	BSLightingShaderPropertyColorController(NiHeader& hdr);
-	BSLightingShaderPropertyColorController(fstream& file, NiHeader& hdr);
+	BSLightingShaderPropertyColorController(NiHeader* hdr);
+	BSLightingShaderPropertyColorController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2820,8 +2830,8 @@ private:
 	uint typeOfControlledVariable;
 
 public:
-	BSLightingShaderPropertyFloatController(NiHeader& hdr);
-	BSLightingShaderPropertyFloatController(fstream& file, NiHeader& hdr);
+	BSLightingShaderPropertyFloatController(NiHeader* hdr);
+	BSLightingShaderPropertyFloatController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2834,8 +2844,8 @@ private:
 	uint typeOfControlledColor;
 
 public:
-	BSEffectShaderPropertyColorController(NiHeader& hdr);
-	BSEffectShaderPropertyColorController(fstream& file, NiHeader& hdr);
+	BSEffectShaderPropertyColorController(NiHeader* hdr);
+	BSEffectShaderPropertyColorController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2848,8 +2858,8 @@ private:
 	uint typeOfControlledVariable;
 
 public:
-	BSEffectShaderPropertyFloatController(NiHeader& hdr);
-	BSEffectShaderPropertyFloatController(fstream& file, NiHeader& hdr);
+	BSEffectShaderPropertyFloatController(NiHeader* hdr);
+	BSEffectShaderPropertyFloatController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2863,8 +2873,8 @@ private:
 	vector<int> targets;
 
 public:
-	NiMultiTargetTransformController(NiHeader& hdr);
-	NiMultiTargetTransformController(fstream& file, NiHeader& hdr);
+	NiMultiTargetTransformController(NiHeader* hdr);
+	NiMultiTargetTransformController(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2877,13 +2887,13 @@ public:
 
 class NiPSysModifierCtlr : public NiSingleInterpController {
 private:
-	uint modifierNameRef;
-	string modifierName;
+	StringRef modifierName;
 
 public:
-	~NiPSysModifierCtlr();
+	~NiPSysModifierCtlr() {
+		modifierName.Clear(header);
+	};
 
-	void Init();
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyStringDelete(int stringID);
@@ -2895,8 +2905,8 @@ class NiPSysModifierBoolCtlr : public NiPSysModifierCtlr {
 
 class NiPSysModifierActiveCtlr : public NiPSysModifierBoolCtlr {
 public:
-	NiPSysModifierActiveCtlr(NiHeader& hdr);
-	NiPSysModifierActiveCtlr(fstream& file, NiHeader& hdr);
+	NiPSysModifierActiveCtlr(NiHeader* hdr);
+	NiPSysModifierActiveCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysModifierActiveCtlr* Clone() { return new NiPSysModifierActiveCtlr(*this); }
 };
@@ -2906,56 +2916,56 @@ class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr {
 
 class NiPSysEmitterLifeSpanCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterLifeSpanCtlr(NiHeader& hdr);
-	NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader& hdr);
+	NiPSysEmitterLifeSpanCtlr(NiHeader* hdr);
+	NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysEmitterLifeSpanCtlr* Clone() { return new NiPSysEmitterLifeSpanCtlr(*this); }
 };
 
 class NiPSysEmitterSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterSpeedCtlr(NiHeader& hdr);
-	NiPSysEmitterSpeedCtlr(fstream& file, NiHeader& hdr);
+	NiPSysEmitterSpeedCtlr(NiHeader* hdr);
+	NiPSysEmitterSpeedCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysEmitterSpeedCtlr* Clone() { return new NiPSysEmitterSpeedCtlr(*this); }
 };
 
 class NiPSysEmitterInitialRadiusCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterInitialRadiusCtlr(NiHeader& hdr);
-	NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader& hdr);
+	NiPSysEmitterInitialRadiusCtlr(NiHeader* hdr);
+	NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysEmitterInitialRadiusCtlr* Clone() { return new NiPSysEmitterInitialRadiusCtlr(*this); }
 };
 
 class NiPSysEmitterPlanarAngleCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterPlanarAngleCtlr(NiHeader& hdr);
-	NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader& hdr);
+	NiPSysEmitterPlanarAngleCtlr(NiHeader* hdr);
+	NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysEmitterPlanarAngleCtlr* Clone() { return new NiPSysEmitterPlanarAngleCtlr(*this); }
 };
 
 class NiPSysEmitterDeclinationCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterDeclinationCtlr(NiHeader& hdr);
-	NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader& hdr);
+	NiPSysEmitterDeclinationCtlr(NiHeader* hdr);
+	NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysEmitterDeclinationCtlr* Clone() { return new NiPSysEmitterDeclinationCtlr(*this); }
 };
 
 class NiPSysGravityStrengthCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysGravityStrengthCtlr(NiHeader& hdr);
-	NiPSysGravityStrengthCtlr(fstream& file, NiHeader& hdr);
+	NiPSysGravityStrengthCtlr(NiHeader* hdr);
+	NiPSysGravityStrengthCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysGravityStrengthCtlr* Clone() { return new NiPSysGravityStrengthCtlr(*this); }
 };
 
 class NiPSysInitialRotSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysInitialRotSpeedCtlr(NiHeader& hdr);
-	NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader& hdr);
+	NiPSysInitialRotSpeedCtlr(NiHeader* hdr);
+	NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader* hdr);
 
 	NiPSysInitialRotSpeedCtlr* Clone() { return new NiPSysInitialRotSpeedCtlr(*this); }
 };
@@ -2965,8 +2975,8 @@ private:
 	int visInterpolatorRef;
 
 public:
-	NiPSysEmitterCtlr(NiHeader& hdr);
-	NiPSysEmitterCtlr(fstream& file, NiHeader& hdr);
+	NiPSysEmitterCtlr(NiHeader* hdr);
+	NiPSysEmitterCtlr(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2983,8 +2993,8 @@ private:
 	int masterParticleSystemRef;
 
 public:
-	NiPSysMultiTargetEmitterCtlr(NiHeader& hdr);
-	NiPSysMultiTargetEmitterCtlr(fstream& file, NiHeader& hdr);
+	NiPSysMultiTargetEmitterCtlr(NiHeader* hdr);
+	NiPSysMultiTargetEmitterCtlr(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3003,8 +3013,8 @@ private:
 	int objectPaletteRef;
 
 public:
-	NiControllerManager(NiHeader& hdr);
-	NiControllerManager(fstream& file, NiHeader& hdr);
+	NiControllerManager(NiHeader* hdr);
+	NiControllerManager(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3017,16 +3027,23 @@ public:
 
 class NiSequence : public NiObject {
 private:
-	uint nameRef;
-	string name;
+	StringRef name;
 	uint numControlledBlocks;
 	uint unkInt1;
 	vector<ControllerLink> controlledBlocks;
 
 public:
-	NiSequence(NiHeader& hdr);
-	NiSequence(fstream& file, NiHeader& hdr);
-	~NiSequence();
+	NiSequence(NiHeader* hdr);
+	NiSequence(fstream& file, NiHeader* hdr);
+	~NiSequence() {
+		for (auto &cb : controlledBlocks) {
+			cb.nodeName.Clear(header);
+			cb.propType.Clear(header);
+			cb.ctrlType.Clear(header);
+			cb.ctrlID.Clear(header);
+			cb.interpID.Clear(header);
+		}
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3048,15 +3065,16 @@ private:
 	float stopTime;
 	int managerRef;
 
-	uint accumRootNameRef;
-	string accumRootName;
+	StringRef accumRootName;
 
 	ushort flags;
 
 public:
-	NiControllerSequence(NiHeader& hdr);
-	NiControllerSequence(fstream& file, NiHeader& hdr);
-	~NiControllerSequence();
+	NiControllerSequence(NiHeader* hdr);
+	NiControllerSequence(fstream& file, NiHeader* hdr);
+	~NiControllerSequence() {
+		accumRootName.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3078,8 +3096,8 @@ private:
 	vector<AVObject> objects;
 
 public:
-	NiDefaultAVObjectPalette(NiHeader& hdr);
-	NiDefaultAVObjectPalette(fstream& file, NiHeader& hdr);
+	NiDefaultAVObjectPalette(NiHeader* hdr);
+	NiDefaultAVObjectPalette(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3115,7 +3133,7 @@ public:
 	virtual void SetGlossiness(float gloss);
 	virtual float GetEnvironmentMapScale();
 	virtual int GetTextureSetRef();
-	virtual void SetTextureSetRef(const int& texSetRef);
+	virtual void SetTextureSetRef(const int texSetRef);
 	virtual Color4 GetEmissiveColor();
 	virtual void SetEmissiveColor(Color4 color);
 	virtual float GetEmissiveMultiple();
@@ -3127,8 +3145,7 @@ public:
 
 class BSLightingShaderProperty : public NiShader {
 private:
-	uint wetMaterialNameRef;
-	string wetMaterialName;
+	StringRef wetMaterialName;
 
 public:
 	uint shaderFlags1;						// User Version == 12
@@ -3177,9 +3194,11 @@ public:
 	Vector3 eyeRightReflectionCenter;		// Shader Type == 16
 
 
-	BSLightingShaderProperty(NiHeader& hdr);
-	BSLightingShaderProperty(fstream& file, NiHeader& hdr);
-	~BSLightingShaderProperty();
+	BSLightingShaderProperty(NiHeader* hdr);
+	BSLightingShaderProperty(fstream& file, NiHeader* hdr);
+	~BSLightingShaderProperty() {
+		wetMaterialName.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3210,7 +3229,7 @@ public:
 	void SetGlossiness(float gloss);
 	float GetEnvironmentMapScale();
 	int GetTextureSetRef();
-	void SetTextureSetRef(const int& texSetRef);
+	void SetTextureSetRef(const int texSetRef);
 	Color4 GetEmissiveColor();
 	void SetEmissiveColor(Color4 color);
 	float GetEmissiveMultiple();
@@ -3261,8 +3280,8 @@ public:
 	NiString envMaskTexture;
 	float envMapScale;
 
-	BSEffectShaderProperty(NiHeader& hdr);
-	BSEffectShaderProperty(fstream& file, NiHeader& hdr);
+	BSEffectShaderProperty(NiHeader* hdr);
+	BSEffectShaderProperty(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3295,8 +3314,8 @@ private:
 	uint waterFlags;
 
 public:
-	BSWaterShaderProperty(NiHeader& hdr);
-	BSWaterShaderProperty(fstream& file, NiHeader& hdr);
+	BSWaterShaderProperty(NiHeader* hdr);
+	BSWaterShaderProperty(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3326,8 +3345,8 @@ private:
 	uint skyFlags;
 
 public:
-	BSSkyShaderProperty(NiHeader& hdr);
-	BSSkyShaderProperty(fstream& file, NiHeader& hdr);
+	BSSkyShaderProperty(NiHeader* hdr);
+	BSSkyShaderProperty(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3365,8 +3384,8 @@ public:
 	float unkFloat5;						// User Version == 11 && User Version 2 > 24
 	Color4 emissiveColor;					// User Version >= 12
 
-	BSShaderPPLightingProperty(NiHeader& hdr);
-	BSShaderPPLightingProperty(fstream& file, NiHeader& hdr);
+	BSShaderPPLightingProperty(NiHeader* hdr);
+	BSShaderPPLightingProperty(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3380,7 +3399,7 @@ public:
 	bool IsSkinned();
 	void SetSkinned(const bool enable);
 	int GetTextureSetRef();
-	void SetTextureSetRef(const int& texSetRef);
+	void SetTextureSetRef(const int texSetRef);
 };
 
 class BSShaderTextureSet : public NiObject {
@@ -3388,8 +3407,8 @@ public:
 	int numTextures;
 	vector<NiString> textures;
 
-	BSShaderTextureSet(NiHeader& hdr);
-	BSShaderTextureSet(fstream& file, NiHeader& hdr);
+	BSShaderTextureSet(NiHeader* hdr);
+	BSShaderTextureSet(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3402,8 +3421,8 @@ public:
 	ushort flags;
 	byte threshold;
 
-	NiAlphaProperty(NiHeader& hdr);
-	NiAlphaProperty(fstream& file, NiHeader& hdr);
+	NiAlphaProperty(NiHeader* hdr);
+	NiAlphaProperty(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3424,8 +3443,8 @@ public:
 	Vector3 colorAmbient;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 	Vector3 colorDiffuse;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 
-	NiMaterialProperty(NiHeader& hdr);
-	NiMaterialProperty(fstream& file, NiHeader& hdr);
+	NiMaterialProperty(NiHeader* hdr);
+	NiMaterialProperty(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3450,8 +3469,8 @@ public:
 	uint stencilRef;
 	uint stencilMask;
 
-	NiStencilProperty(NiHeader& hdr);
-	NiStencilProperty(fstream& file, NiHeader& hdr);
+	NiStencilProperty(NiHeader* hdr);
+	NiStencilProperty(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3461,13 +3480,13 @@ public:
 
 class NiExtraData : public NiObject {
 private:
-	uint nameRef;
-	string name;
+	StringRef name;
 
 public:
-	~NiExtraData();
+	~NiExtraData() {
+		name.Clear(header);
+	};
 
-	void Init();
 	void Get(fstream& file);
 	void Put(fstream& file);
 	void notifyStringDelete(int stringID);
@@ -3483,8 +3502,8 @@ private:
 	vector<byte> data;
 
 public:
-	NiBinaryExtraData(NiHeader& hdr);
-	NiBinaryExtraData(fstream& file, NiHeader& hdr);
+	NiBinaryExtraData(NiHeader* hdr);
+	NiBinaryExtraData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3497,8 +3516,8 @@ private:
 	float floatData;
 
 public:
-	NiFloatExtraData(NiHeader& hdr);
-	NiFloatExtraData(fstream& file, NiHeader& hdr);
+	NiFloatExtraData(NiHeader* hdr);
+	NiFloatExtraData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3508,13 +3527,14 @@ public:
 
 class NiStringExtraData : public NiExtraData {
 private:
-	uint stringDataRef;
-	string stringData;
+	StringRef stringData;
 
 public:
-	NiStringExtraData(NiHeader& hdr);
-	NiStringExtraData(fstream& file, NiHeader& hdr);
-	~NiStringExtraData();
+	NiStringExtraData(NiHeader* hdr);
+	NiStringExtraData(fstream& file, NiHeader* hdr);
+	~NiStringExtraData() {
+		stringData.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3532,8 +3552,8 @@ private:
 	vector<NiString> stringsData;
 
 public:
-	NiStringsExtraData(NiHeader& hdr);
-	NiStringsExtraData(fstream& file, NiHeader& hdr);
+	NiStringsExtraData(NiHeader* hdr);
+	NiStringsExtraData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3546,8 +3566,8 @@ private:
 	bool booleanData;
 
 public:
-	NiBooleanExtraData(NiHeader& hdr);
-	NiBooleanExtraData(fstream& file, NiHeader& hdr);
+	NiBooleanExtraData(NiHeader* hdr);
+	NiBooleanExtraData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3563,8 +3583,8 @@ private:
 	uint integerData;
 
 public:
-	NiIntegerExtraData(NiHeader& hdr);
-	NiIntegerExtraData(fstream& file, NiHeader& hdr);
+	NiIntegerExtraData(NiHeader* hdr);
+	NiIntegerExtraData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3572,13 +3592,13 @@ public:
 	NiIntegerExtraData* Clone() { return new NiIntegerExtraData(*this); }
 
 	uint GetIntegerData();
-	void SetIntegerData(const uint& integerData);
+	void SetIntegerData(const uint integerData);
 };
 
 class BSXFlags : public NiIntegerExtraData {
 public:
-	BSXFlags(NiHeader& hdr);
-	BSXFlags(fstream& file, NiHeader& hdr);
+	BSXFlags(NiHeader* hdr);
+	BSXFlags(fstream& file, NiHeader* hdr);
 
 	BSXFlags* Clone() { return new BSXFlags(*this); }
 };
@@ -3591,8 +3611,8 @@ private:
 	float zoom;
 
 public:
-	BSInvMarker(NiHeader& hdr);
-	BSInvMarker(fstream& file, NiHeader& hdr);
+	BSInvMarker(NiHeader* hdr);
+	BSInvMarker(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3606,8 +3626,8 @@ private:
 	vector<FurniturePosition> positions;
 
 public:
-	BSFurnitureMarker(NiHeader& hdr);
-	BSFurnitureMarker(fstream& file, NiHeader& hdr);
+	BSFurnitureMarker(NiHeader* hdr);
+	BSFurnitureMarker(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3617,8 +3637,8 @@ public:
 
 class BSFurnitureMarkerNode : public BSFurnitureMarker {
 public:
-	BSFurnitureMarkerNode(NiHeader& hdr);
-	BSFurnitureMarkerNode(fstream& file, NiHeader& hdr);
+	BSFurnitureMarkerNode(NiHeader* hdr);
+	BSFurnitureMarkerNode(fstream& file, NiHeader* hdr);
 
 	BSFurnitureMarkerNode* Clone() { return new BSFurnitureMarkerNode(*this); }
 };
@@ -3637,8 +3657,8 @@ private:
 	vector<DecalVectorBlock> decalVectorBlocks;
 
 public:
-	BSDecalPlacementVectorExtraData(NiHeader& hdr);
-	BSDecalPlacementVectorExtraData(fstream& file, NiHeader& hdr);
+	BSDecalPlacementVectorExtraData(NiHeader* hdr);
+	BSDecalPlacementVectorExtraData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3648,14 +3668,15 @@ public:
 
 class BSBehaviorGraphExtraData : public NiExtraData {
 private:
-	uint behaviorGraphFileRef;
-	string behaviorGraphFile;
+	StringRef behaviorGraphFile;
 	byte controlsBaseSkel;
 
 public:
-	BSBehaviorGraphExtraData(NiHeader& hdr);
-	BSBehaviorGraphExtraData(fstream& file, NiHeader& hdr);
-	~BSBehaviorGraphExtraData();
+	BSBehaviorGraphExtraData(NiHeader* hdr);
+	BSBehaviorGraphExtraData(fstream& file, NiHeader* hdr);
+	~BSBehaviorGraphExtraData() {
+		behaviorGraphFile.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3670,8 +3691,8 @@ private:
 	Vector3 halfExtents;
 
 public:
-	BSBound(NiHeader& hdr);
-	BSBound(fstream& file, NiHeader& hdr);
+	BSBound(NiHeader* hdr);
+	BSBound(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3685,9 +3706,12 @@ private:
 	vector<BoneLOD> boneLODs;
 
 public:
-	BSBoneLODExtraData(NiHeader& hdr);
-	BSBoneLODExtraData(fstream& file, NiHeader& hdr);
-	~BSBoneLODExtraData();
+	BSBoneLODExtraData(NiHeader* hdr);
+	BSBoneLODExtraData(fstream& file, NiHeader* hdr);
+	~BSBoneLODExtraData() {
+		for (auto &lod : boneLODs)
+			lod.boneName.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3699,12 +3723,15 @@ public:
 class NiTextKeyExtraData : public NiExtraData {
 private:
 	uint numTextKeys;
-	vector<Key<uint>> textKeys;
+	vector<Key<StringRef>> textKeys;
 
 public:
-	NiTextKeyExtraData(NiHeader& hdr);
-	NiTextKeyExtraData(fstream& file, NiHeader& hdr);
-	~NiTextKeyExtraData();
+	NiTextKeyExtraData(NiHeader* hdr);
+	NiTextKeyExtraData(fstream& file, NiHeader* hdr);
+	~NiTextKeyExtraData() {
+		for (auto &tk : textKeys)
+			tk.value.Clear(header);
+	};
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3736,8 +3763,8 @@ private:
 	vector<BSConnectPoint> connectPoints;
 
 public:
-	BSConnectPointParents(NiHeader& hdr);
-	BSConnectPointParents(fstream& file, NiHeader& hdr);
+	BSConnectPointParents(NiHeader* hdr);
+	BSConnectPointParents(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3752,8 +3779,8 @@ private:
 	vector<NiString> targets;
 
 public:
-	BSConnectPointChildren(NiHeader& hdr);
-	BSConnectPointChildren(fstream& file, NiHeader& hdr);
+	BSConnectPointChildren(NiHeader* hdr);
+	BSConnectPointChildren(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3771,8 +3798,8 @@ private:
 
 public:
 	BSClothExtraData();
-	BSClothExtraData(NiHeader& hdr, const uint& size = 0);
-	BSClothExtraData(fstream& file, NiHeader& hdr);
+	BSClothExtraData(NiHeader* hdr, const uint size = 0);
+	BSClothExtraData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3788,8 +3815,8 @@ private:
 	int dataRef;
 
 public:
-	BSMultiBound(NiHeader& hdr);
-	BSMultiBound(fstream& file, NiHeader& hdr);
+	BSMultiBound(NiHeader* hdr);
+	BSMultiBound(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3810,8 +3837,8 @@ private:
 	float rotation[9];
 
 public:
-	BSMultiBoundOBB(NiHeader& hdr);
-	BSMultiBoundOBB(fstream& file, NiHeader& hdr);
+	BSMultiBoundOBB(NiHeader* hdr);
+	BSMultiBoundOBB(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3825,8 +3852,8 @@ private:
 	Vector3 halfExtent;
 
 public:
-	BSMultiBoundAABB(NiHeader& hdr);
-	BSMultiBoundAABB(fstream& file, NiHeader& hdr);
+	BSMultiBoundAABB(NiHeader* hdr);
+	BSMultiBoundAABB(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3839,8 +3866,8 @@ private:
 	int targetRef;
 
 public:
-	NiCollisionObject(NiHeader& hdr);
-	NiCollisionObject(fstream& file, NiHeader& hdr);
+	NiCollisionObject(NiHeader* hdr);
+	NiCollisionObject(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3856,8 +3883,8 @@ private:
 	int bodyRef;
 
 public:
-	bhkNiCollisionObject(NiHeader& hdr);
-	bhkNiCollisionObject(fstream& file, NiHeader& hdr);
+	bhkNiCollisionObject(NiHeader* hdr);
+	bhkNiCollisionObject(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3870,8 +3897,8 @@ public:
 
 class bhkCollisionObject : public bhkNiCollisionObject {
 public:
-	bhkCollisionObject(NiHeader& hdr);
-	bhkCollisionObject(fstream& file, NiHeader& hdr);
+	bhkCollisionObject(NiHeader* hdr);
+	bhkCollisionObject(fstream& file, NiHeader* hdr);
 
 	bhkCollisionObject* Clone() { return new bhkCollisionObject(*this); }
 };
@@ -3881,8 +3908,8 @@ private:
 	uint unkInt;
 
 public:
-	bhkNPCollisionObject(NiHeader& hdr);
-	bhkNPCollisionObject(fstream& file, NiHeader& hdr);
+	bhkNPCollisionObject(NiHeader* hdr);
+	bhkNPCollisionObject(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3892,16 +3919,16 @@ public:
 
 class bhkPCollisionObject : public bhkNiCollisionObject {
 public:
-	bhkPCollisionObject(NiHeader& hdr);
-	bhkPCollisionObject(fstream& file, NiHeader& hdr);
+	bhkPCollisionObject(NiHeader* hdr);
+	bhkPCollisionObject(fstream& file, NiHeader* hdr);
 
 	bhkPCollisionObject* Clone() { return new bhkPCollisionObject(*this); }
 };
 
 class bhkSPCollisionObject : public bhkPCollisionObject {
 public:
-	bhkSPCollisionObject(NiHeader& hdr);
-	bhkSPCollisionObject(fstream& file, NiHeader& hdr);
+	bhkSPCollisionObject(NiHeader* hdr);
+	bhkSPCollisionObject(fstream& file, NiHeader* hdr);
 
 	bhkSPCollisionObject* Clone() { return new bhkSPCollisionObject(*this); }
 };
@@ -3912,8 +3939,8 @@ private:
 	float velGain;
 
 public:
-	bhkBlendCollisionObject(NiHeader& hdr);
-	bhkBlendCollisionObject(fstream& file, NiHeader& hdr);
+	bhkBlendCollisionObject(NiHeader* hdr);
+	bhkBlendCollisionObject(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3928,8 +3955,8 @@ private:
 
 public:
 	bhkPhysicsSystem();
-	bhkPhysicsSystem(NiHeader& hdr, const uint& size = 0);
-	bhkPhysicsSystem(fstream& file, NiHeader& hdr);
+	bhkPhysicsSystem(NiHeader* hdr, const uint size = 0);
+	bhkPhysicsSystem(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3959,8 +3986,8 @@ private:
 	Vector4 center;
 
 public:
-	bhkPlaneShape(NiHeader& hdr);
-	bhkPlaneShape(fstream& file, NiHeader& hdr);
+	bhkPlaneShape(NiHeader* hdr);
+	bhkPlaneShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3996,8 +4023,8 @@ private:
 	vector<Vector4> normals;
 
 public:
-	bhkConvexVerticesShape(NiHeader& hdr);
-	bhkConvexVerticesShape(fstream& file, NiHeader& hdr);
+	bhkConvexVerticesShape(NiHeader* hdr);
+	bhkConvexVerticesShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4013,8 +4040,8 @@ private:
 	float radius2;
 
 public:
-	bhkBoxShape(NiHeader& hdr);
-	bhkBoxShape(fstream& file, NiHeader& hdr);
+	bhkBoxShape(NiHeader* hdr);
+	bhkBoxShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4024,8 +4051,8 @@ public:
 
 class bhkSphereShape : public bhkConvexShape {
 public:
-	bhkSphereShape(NiHeader& hdr);
-	bhkSphereShape(fstream& file, NiHeader& hdr);
+	bhkSphereShape(NiHeader* hdr);
+	bhkSphereShape(fstream& file, NiHeader* hdr);
 
 	bhkSphereShape* Clone() { return new bhkSphereShape(*this); }
 };
@@ -4039,8 +4066,8 @@ private:
 	Matrix4 xform;
 
 public:
-	bhkTransformShape(NiHeader& hdr);
-	bhkTransformShape(fstream& file, NiHeader& hdr);
+	bhkTransformShape(NiHeader* hdr);
+	bhkTransformShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4053,8 +4080,8 @@ public:
 
 class bhkConvexTransformShape : public bhkTransformShape {
 public:
-	bhkConvexTransformShape(NiHeader& hdr);
-	bhkConvexTransformShape(fstream& file, NiHeader& hdr);
+	bhkConvexTransformShape(NiHeader* hdr);
+	bhkConvexTransformShape(fstream& file, NiHeader* hdr);
 
 	bhkConvexTransformShape* Clone() { return new bhkConvexTransformShape(*this); }
 };
@@ -4069,8 +4096,8 @@ private:
 	float radius2;
 
 public:
-	bhkCapsuleShape(NiHeader& hdr);
-	bhkCapsuleShape(fstream& file, NiHeader& hdr);
+	bhkCapsuleShape(NiHeader* hdr);
+	bhkCapsuleShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4094,8 +4121,8 @@ private:
 	vector<byte> data;
 
 public:
-	bhkMoppBvTreeShape(NiHeader& hdr);
-	bhkMoppBvTreeShape(fstream& file, NiHeader& hdr);
+	bhkMoppBvTreeShape(NiHeader* hdr);
+	bhkMoppBvTreeShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4125,8 +4152,8 @@ private:
 	vector<uint> filters;
 
 public:
-	bhkNiTriStripsShape(NiHeader& hdr);
-	bhkNiTriStripsShape(fstream& file, NiHeader& hdr);
+	bhkNiTriStripsShape(NiHeader* hdr);
+	bhkNiTriStripsShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4150,8 +4177,8 @@ private:
 	vector<uint> unkInts;
 
 public:
-	bhkListShape(NiHeader& hdr);
-	bhkListShape(fstream& file, NiHeader& hdr);
+	bhkListShape(NiHeader* hdr);
+	bhkListShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4195,8 +4222,8 @@ private:
 	Matrix4 transform;
 
 public:
-	bhkSimpleShapePhantom(NiHeader& hdr);
-	bhkSimpleShapePhantom(fstream& file, NiHeader& hdr);
+	bhkSimpleShapePhantom(NiHeader* hdr);
+	bhkSimpleShapePhantom(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4228,8 +4255,8 @@ private:
 	HingeDesc hinge;
 
 public:
-	bhkHingeConstraint(NiHeader& hdr);
-	bhkHingeConstraint(fstream& file, NiHeader& hdr);
+	bhkHingeConstraint(NiHeader* hdr);
+	bhkHingeConstraint(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4242,8 +4269,8 @@ private:
 	LimitedHingeDesc limitedHinge;
 
 public:
-	bhkLimitedHingeConstraint(NiHeader& hdr);
-	bhkLimitedHingeConstraint(fstream& file, NiHeader& hdr);
+	bhkLimitedHingeConstraint(NiHeader* hdr);
+	bhkLimitedHingeConstraint(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4258,8 +4285,8 @@ private:
 	bool removeIfBroken;
 
 public:
-	bhkBreakableConstraint(NiHeader& hdr);
-	bhkBreakableConstraint(fstream& file, NiHeader& hdr);
+	bhkBreakableConstraint(NiHeader* hdr);
+	bhkBreakableConstraint(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4275,8 +4302,8 @@ private:
 	RagdollDesc ragdoll;
 
 public:
-	bhkRagdollConstraint(NiHeader& hdr);
-	bhkRagdollConstraint(fstream& file, NiHeader& hdr);
+	bhkRagdollConstraint(NiHeader* hdr);
+	bhkRagdollConstraint(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4289,8 +4316,8 @@ private:
 	StiffSpringDesc stiffSpring;
 
 public:
-	bhkStiffSpringConstraint(NiHeader& hdr);
-	bhkStiffSpringConstraint(fstream& file, NiHeader& hdr);
+	bhkStiffSpringConstraint(NiHeader* hdr);
+	bhkStiffSpringConstraint(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4303,8 +4330,8 @@ private:
 	BallAndSocketDesc ballAndSocket;
 
 public:
-	bhkBallAndSocketConstraint(NiHeader& hdr);
-	bhkBallAndSocketConstraint(fstream& file, NiHeader& hdr);
+	bhkBallAndSocketConstraint(NiHeader* hdr);
+	bhkBallAndSocketConstraint(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4331,8 +4358,8 @@ private:
 	uint priority;
 
 public:
-	bhkBallSocketConstraintChain(NiHeader& hdr);
-	bhkBallSocketConstraintChain(fstream& file, NiHeader& hdr);
+	bhkBallSocketConstraintChain(NiHeader* hdr);
+	bhkBallSocketConstraintChain(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4385,8 +4412,8 @@ private:
 	ushort unkShort3;						// User Version >= 12
 
 public:
-	bhkRigidBody(NiHeader& hdr);
-	bhkRigidBody(fstream& file, NiHeader& hdr);
+	bhkRigidBody(NiHeader* hdr);
+	bhkRigidBody(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4399,8 +4426,8 @@ public:
 
 class bhkRigidBodyT : public bhkRigidBody {
 public:
-	bhkRigidBodyT(NiHeader& hdr);
-	bhkRigidBodyT(fstream& file, NiHeader& hdr);
+	bhkRigidBodyT(NiHeader* hdr);
+	bhkRigidBodyT(fstream& file, NiHeader* hdr);
 
 	bhkRigidBodyT* Clone() { return new bhkRigidBodyT(*this); }
 };
@@ -4417,8 +4444,8 @@ private:
 	int dataRef;
 
 public:
-	bhkCompressedMeshShape(NiHeader& hdr);
-	bhkCompressedMeshShape(fstream& file, NiHeader& hdr);
+	bhkCompressedMeshShape(NiHeader* hdr);
+	bhkCompressedMeshShape(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4468,8 +4495,8 @@ private:
 	uint numConvexPieceA;
 
 public:
-	bhkCompressedMeshShapeData(NiHeader& hdr);
-	bhkCompressedMeshShapeData(fstream& file, NiHeader& hdr);
+	bhkCompressedMeshShapeData(NiHeader* hdr);
+	bhkCompressedMeshShapeData(fstream& file, NiHeader* hdr);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4482,8 +4509,8 @@ public:
 	vector<char> data;
 
 	NiUnknown();
-	NiUnknown(fstream& file, const uint& size);
-	NiUnknown(const uint& size);
+	NiUnknown(fstream& file, const uint size);
+	NiUnknown(const uint size);
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4492,7 +4519,7 @@ public:
 };
 
 template <class T>
-T* NiHeader::GetBlock(const int& blockId) {
+T* NiHeader::GetBlock(const int blockId) {
 	if (blockId >= 0 && blockId < numBlocks)
 		return dynamic_cast<T*>((*blocks)[blockId]);
 

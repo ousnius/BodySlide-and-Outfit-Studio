@@ -48,6 +48,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string
 	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
 
 	fullPrecision = XRCCTRL(*this, "fullPrecision", wxCheckBox);
+	subIndex = XRCCTRL(*this, "subIndex", wxCheckBox);
 	skinned = XRCCTRL(*this, "skinned", wxCheckBox);
 
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
@@ -233,11 +234,11 @@ void ShapeProperties::AddShader() {
 			case FO3:
 			case FONV: {
 				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->GetHeader());
-				shape->propertiesRef.push_back(nif->GetHeader().AddBlock(shader, "BSShaderPPLightingProperty"));
+				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(shader, "BSShaderPPLightingProperty"));
 				shape->numProperties++;
 
 				NiMaterialProperty* material = new NiMaterialProperty(nif->GetHeader());
-				shape->propertiesRef.push_back(nif->GetHeader().AddBlock(material, "NiMaterialProperty"));
+				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(material, "NiMaterialProperty"));
 				shape->numProperties++;
 				break;
 			}
@@ -246,7 +247,7 @@ void ShapeProperties::AddShader() {
 			case SKYRIMSE:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
-				shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader, "BSLightingShaderProperty"));
+				shape->SetShaderPropertyRef(nif->GetHeader()->AddBlock(shader, "BSLightingShaderProperty"));
 			}
 		}
 	}
@@ -254,7 +255,7 @@ void ShapeProperties::AddShader() {
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
 		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader());
-		shader->SetTextureSetRef(nif->GetHeader().AddBlock(nifTexSet, "BSShaderTextureSet"));
+		shader->SetTextureSetRef(nif->GetHeader()->AddBlock(nifTexSet, "BSShaderTextureSet"));
 	}
 
 	AssignDefaultTexture();
@@ -395,10 +396,15 @@ void ShapeProperties::GetGeometry() {
 	if (shape) {
 		skinned->SetValue(shape->IsSkinned());
 
+		currentSubIndex = shape->blockType == BSSUBINDEXTRISHAPE;
+		subIndex->SetValue(currentSubIndex);
+
 		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			fullPrecision->SetValue(bsTriShape->IsFullPrecision());
 			fullPrecision->Enable(bsTriShape->CanChangePrecision());
+
+			subIndex->Enable(os->targetGame == FO4);
 		}
 	}
 }
@@ -431,7 +437,7 @@ void ShapeProperties::GetExtraData() {
 		return;
 
 	for (int i = 0; i < shape->GetNumExtraData(); i++) {
-		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(shape->GetExtraDataRef(i));
+		auto extraData = nif->GetHeader()->GetBlock<NiExtraData>(shape->GetExtraDataRef(i));
 		if (extraData) {
 			extraDataIndices.push_back(shape->GetExtraDataRef(i));
 			AddExtraData(extraData, true);
@@ -518,7 +524,7 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 	int selection = extraDataType->GetSelection();
 
 	int index = extraDataIndices[id];
-	nif->GetHeader().DeleteBlock(index);
+	nif->GetHeader()->DeleteBlock(index);
 
 	for (int i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
@@ -555,7 +561,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 	extraDataValue->Destroy();
 
 	int index = extraDataIndices[id];
-	nif->GetHeader().DeleteBlock(index);
+	nif->GetHeader()->DeleteBlock(index);
 
 	for (int i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
@@ -652,8 +658,26 @@ void ShapeProperties::ApplyChanges() {
 	NiShape* shape = nif->FindShapeByName(shapeName);
 	if (shape) {
 		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
-		if (bsTriShape)
+		if (bsTriShape) {
 			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
+
+			if (os->targetGame == FO4 && currentSubIndex != subIndex->IsChecked()) {
+				if (subIndex->IsChecked()) {
+					auto bsSITS = new BSSubIndexTriShape(nif->GetHeader());
+					*dynamic_cast<BSTriShape*>(bsSITS) = *bsTriShape;
+					bsSITS->blockType = BSSUBINDEXTRISHAPE;
+					bsSITS->SetDefaultSegments();
+					bsSITS->SetName(bsTriShape->GetName());
+					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS, "BSSubIndexTriShape");
+				}
+				else {
+					auto bsTS = new BSTriShape(*bsTriShape);
+					bsTS->blockType = BSTRISHAPE;
+					bsTS->SetName(bsTriShape->GetName());
+					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS, "BSTriShape");
+				}
+			}
+		}
 	}
 
 	if (skinned->IsChecked()) {
@@ -671,7 +695,7 @@ void ShapeProperties::ApplyChanges() {
 		if (!extraDataName || !extraDataValue)
 			continue;
 
-		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndices[i]);
+		auto extraData = nif->GetHeader()->GetBlock<NiExtraData>(extraDataIndices[i]);
 		if (extraData) {
 			extraData->SetName(extraDataName->GetValue().ToStdString());
 

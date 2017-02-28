@@ -95,7 +95,7 @@ public:
 
 		int newID = 0;
 		for (auto &id : idList) {
-			auto node = loadFromFile->GetHeader().GetBlock<NiNode>(id);
+			auto node = loadFromFile->GetHeader()->GetBlock<NiNode>(id);
 			if (node) {
 				boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
 				boneNames[node->GetName()] = newID;

@@ -36,6 +36,7 @@ private:
 	wxButton* btnRemoveTransparency = nullptr;
 
 	wxCheckBox* fullPrecision = nullptr;
+	wxCheckBox* subIndex = nullptr;
 	wxCheckBox* skinned = nullptr;
 
 	vector<int> extraDataIndices;
@@ -47,6 +48,7 @@ private:
 	string shapeName;
 
 	string currentMaterialPath;
+	bool currentSubIndex = false;
 
 	void GetShader();
 	void GetShaderType();

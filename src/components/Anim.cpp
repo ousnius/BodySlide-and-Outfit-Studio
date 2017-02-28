@@ -289,7 +289,7 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 	}
 
 	bool incomplete = false;
-	bool isFO4 = (nif->GetHeader().GetUserVersion() >= 12 && nif->GetHeader().GetUserVersion2() == 130);
+	bool isFO4 = (nif->GetHeader()->GetUserVersion() >= 12 && nif->GetHeader()->GetUserVersion2() == 130);
 
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
@@ -376,7 +376,7 @@ void AnimInfo::RenameShape(const string& shapeName, const string& newShapeName) 
 AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* inParent)  {
 	parent = inParent;
 	isValidBone = false;
-	auto node = skeletonNif->GetHeader().GetBlock<NiNode>(srcBlock);
+	auto node = skeletonNif->GetHeader()->GetBlock<NiNode>(srcBlock);
 	if (node)
 		isValidBone = true;
 	else

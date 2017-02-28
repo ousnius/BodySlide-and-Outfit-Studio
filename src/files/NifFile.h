@@ -27,27 +27,33 @@ class NifFile {
 private:
 	string fileName;
 	vector<NiObject*> blocks;
-	bool isValid;
-	bool hasUnknown;
+	bool isValid = false;
+	bool hasUnknown = false;
 
 	NiHeader hdr;
 
 public:
-	NifFile();
-	NifFile(NifFile& other);
-	~NifFile();
+	NifFile() {};
 
-	void CopyFrom(NifFile& other);
-	NiHeader& GetHeader() { return hdr; }
+	NifFile(const NifFile& other) {
+		CopyFrom(other);
+	}
+
+	~NifFile() {
+		Clear();
+	}
+
+	void CopyFrom(const NifFile& other);
+	NiHeader* GetHeader() { return &hdr; }
 
 	int AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale);
 	void DeleteNode(const string& nodeName);
-	string GetNodeName(const int& blockID);
-	void SetNodeName(const int& blockID, const string& newName);
+	string GetNodeName(const int blockID);
+	void SetNodeName(const int blockID, const string& newName);
 
-	int AssignExtraData(const string& blockName, const int& extraDataId, bool isNode);
+	int AssignExtraData(const string& blockName, const int extraDataId, bool isNode);
 	int AddStringExtraData(const string& blockName, const string& name, const string& stringData, bool isNode = false);
-	int AddIntegerExtraData(const string& blockName, const string& name, const int& integerData, bool isNode = false);
+	int AddIntegerExtraData(const string& blockName, const string& name, const int integerData, bool isNode = false);
 
 	int Load(const string& filename);
 	int Save(const string& filename, bool optimize = true, bool sortBlocks = true);
@@ -108,19 +114,19 @@ public:
 	int GetShapeBoneList(const string& shapeName, vector<string>& outList);
 	int GetShapeBoneIDList(const string& shapeName, vector<int>& outList);
 	void SetShapeBoneIDList(const string& shapeName, vector<int>& inList);
-	int GetShapeBoneWeights(const string& shapeName, const int& boneIndex, unordered_map<ushort, float>& outWeights);
+	int GetShapeBoneWeights(const string& shapeName, const int boneIndex, unordered_map<ushort, float>& outWeights);
 
 	// Empty string for the bone name returns the overall skin transform for the shape.
 	bool GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform);
 	// 0xFFFFFFFF for the bone index sets the overall skin transform for the shape.
-	bool SetShapeBoneTransform(const string& shapeName, const int& boneIndex, SkinTransform& inXform);
-	bool SetShapeBoneBounds(const string& shapeName, const int& boneIndex, BoundingSphere& inBounds);
+	bool SetShapeBoneTransform(const string& shapeName, const int boneIndex, SkinTransform& inXform);
+	bool SetShapeBoneBounds(const string& shapeName, const int boneIndex, BoundingSphere& inBounds);
 	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const string& shapeName, const int& boneIndex, SkinTransform& outXform);
-	bool GetShapeBoneBounds(const string& shapeName, const int& boneIndex, BoundingSphere& outBounds);
-	void UpdateShapeBoneID(const string& shapeName, const int& oldID, const int& newID);
-	void SetShapeBoneWeights(const string& shapeName, const int& boneIndex, unordered_map<ushort, float>& inWeights);
-	void SetShapeVertWeights(const string& shapeName, const int& vertIndex, vector<byte>& boneids, vector<float>& weights);
+	bool GetShapeBoneTransform(const string& shapeName, const int boneIndex, SkinTransform& outXform);
+	bool GetShapeBoneBounds(const string& shapeName, const int boneIndex, BoundingSphere& outBounds);
+	void UpdateShapeBoneID(const string& shapeName, const int oldID, const int newID);
+	void SetShapeBoneWeights(const string& shapeName, const int boneIndex, unordered_map<ushort, float>& inWeights);
+	void SetShapeVertWeights(const string& shapeName, const int vertIndex, vector<byte>& boneids, vector<float>& weights);
 
 	bool GetShapeSegments(const string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 	void SetShapeSegments(const string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);
@@ -141,7 +147,7 @@ public:
 	void SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs);
 	void InvertUVsForShape(const string& shapeName, bool invertX, bool invertY);
 	void SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms);
-	void CalcNormalsForShape(const string& shapeName, const bool smooth = true, const float& smoothThresh = 60.0f);
+	void CalcNormalsForShape(const string& shapeName, const bool smooth = true, const float smoothThresh = 60.0f);
 	void CalcTangentsForShape(const string& shapeName);
 
 	void ClearShapeTransform(const string& shapeName);
@@ -151,15 +157,15 @@ public:
 	void GetRootTranslation(Vector3& outVec);
 	void SetRootTranslation(const Vector3& newTrans);
 	void GetRootScale(float& outScale);
-	void SetRootScale(const float& newScale);
+	void SetRootScale(const float newScale);
 
 	void GetShapeTranslation(const string& shapeName, Vector3& outVec);
 	void SetShapeTranslation(const string& shapeName, const Vector3& newTrans);
 	void GetShapeScale(const string& shapeName, float& outScale);
-	void SetShapeScale(const string& shapeName, const float& newScale);
+	void SetShapeScale(const string& shapeName, const float newScale);
 	void ApplyShapeTranslation(const string& shapeName, const Vector3& offset);
 
-	void MoveVertex(const string& shapeName, const Vector3& pos, const int& id);
+	void MoveVertex(const string& shapeName, const Vector3& pos, const int id);
 	void OffsetShape(const string& shapeName, const Vector3& offset, unordered_map<ushort, float>* mask = nullptr);
 	void ScaleShape(const string& shapeName, const Vector3& scale, unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(const string& shapeName, const Vector3& angle, unordered_map<ushort, float>* mask = nullptr);

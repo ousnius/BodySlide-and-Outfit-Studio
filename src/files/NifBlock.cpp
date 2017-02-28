@@ -219,11 +219,7 @@ int SubConstraintDesc::CalcDescSize() {
 }
 
 
-NiString::NiString(fstream& file, const int& szSize) {
-	Get(file, szSize);
-}
-
-void NiString::Put(fstream& file, const int& szSize, const bool wantNullOutput) {
+void NiString::Put(fstream& file, const int szSize, const bool wantNullOutput) {
 	if (szSize == 1) {
 		byte smSize = str.length();
 		if (wantNullOutput)
@@ -251,7 +247,7 @@ void NiString::Put(fstream& file, const int& szSize, const bool wantNullOutput) 
 		file.put(0);
 }
 
-void NiString::Get(fstream& file, const int& szSize) {
+void NiString::Get(fstream& file, const int szSize) {
 	char buf[1025];
 
 	if (szSize == 1) {
@@ -278,6 +274,38 @@ void NiString::Get(fstream& file, const int& szSize) {
 		return;
 
 	str = buf;
+}
+
+
+string StringRef::GetString(NiHeader* hdr) {
+	return hdr->GetStringById(ref);
+}
+
+void StringRef::SetString(NiHeader* hdr, const string& str) {
+	ref = hdr->AddOrFindStringId(str);
+}
+
+void StringRef::RenameString(NiHeader* hdr, const string& str) {
+	hdr->SetStringById(ref, str);
+}
+
+void StringRef::Clear(NiHeader* hdr) {
+	hdr->RemoveStringRef(ref);
+	ref = 0xFFFFFFFF;
+}
+
+void StringRef::Put(fstream& file) {
+	file.write((char*)&ref, 4);
+}
+
+void StringRef::Get(fstream& file, NiHeader* hdr) {
+	file.read((char*)&ref, 4);
+	hdr->AddStringRef(ref);
+}
+
+void StringRef::notifyStringDelete(int stringID) {
+	if (ref != 0xFFFFFFFF && ref > stringID)
+		ref--;
 }
 
 
@@ -347,7 +375,7 @@ string NiHeader::GetVersionInfo() {
 		"\nUser Version 2: " + to_string(userVersion2);
 }
 
-void NiHeader::SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint& userVer, const uint& userVer2) {
+void NiHeader::SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint userVer, const uint userVer2) {
 	string verString = "Gamebryo File Format, Version " + to_string(v1) + '.' + to_string(v2) + '.' + to_string(v3) + '.' + to_string(v4);
 	strncpy(verStr, verString.c_str(), 0x26);
 
@@ -359,7 +387,7 @@ void NiHeader::SetVersion(const byte v1, const byte v2, const byte v3, const byt
 	userVersion2 = userVer2;
 }
 
-bool NiHeader::VerCheck(const int& v1, const int& v2, const int& v3, const int& v4, const bool equal) {
+bool NiHeader::VerCheck(const int v1, const int v2, const int v3, const int v4, const bool equal) {
 	if (equal) {
 		if (version4 == v1 && version3 == v2 && version2 == v3 && version1 == v4)
 			return true;
@@ -497,7 +525,7 @@ int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock, const string& blo
 	return oldBlockId;
 }
 
-void NiHeader::SwapBlocks(const int& blockIndexLo, const int& blockIndexHi) {
+void NiHeader::SwapBlocks(const int blockIndexLo, const int blockIndexHi) {
 	if (blockIndexLo == 0xFFFFFFFF || blockIndexHi == 0xFFFFFFFF)
 		return;
 
@@ -511,7 +539,7 @@ void NiHeader::SwapBlocks(const int& blockIndexLo, const int& blockIndexHi) {
 		(*blocks)[i]->notifyBlockSwap(blockIndexLo, blockIndexHi);
 }
 
-bool NiHeader::IsBlockReferenced(const int& blockId) {
+bool NiHeader::IsBlockReferenced(const int blockId) {
 	if (blockId == 0xFFFFFFFF)
 		return false;
 
@@ -562,11 +590,11 @@ ushort NiHeader::AddOrFindBlockTypeId(const string& blockTypeName) {
 	return typeId;
 }
 
-string NiHeader::GetBlockTypeStringById(const int& id) {
+string NiHeader::GetBlockTypeStringById(const int id) {
 	return blockTypes[blockTypeIndices[id]].GetString();
 }
 
-ushort NiHeader::GetBlockTypeIndex(const int& id) {
+ushort NiHeader::GetBlockTypeIndex(const int id) {
 	return blockTypeIndices[id];
 }
 
@@ -610,14 +638,14 @@ int NiHeader::AddOrFindStringId(const string& str) {
 	return r;
 }
 
-string NiHeader::GetStringById(const int& id) {
+string NiHeader::GetStringById(const int id) {
 	if (id >= 0 && id < numStrings)
 		return strings[id].GetString();
 
 	return string();
 }
 
-void NiHeader::SetStringById(const int& id, const string& str) {
+void NiHeader::SetStringById(const int id, const string& str) {
 	if (id >= 0 && id < numStrings) {
 		strings[id].SetString(str);
 		if (maxStringLen < str.length())
@@ -625,12 +653,12 @@ void NiHeader::SetStringById(const int& id, const string& str) {
 	}
 }
 
-void NiHeader::AddStringRef(const int& id) {
+void NiHeader::AddStringRef(const int id) {
 	if (id >= 0 && id < numStrings)
 		stringRefCount[id]++;
 }
 
-void NiHeader::RemoveStringRef(const int& id) {
+void NiHeader::RemoveStringRef(const int id) {
 	if (id >= 0 && id < numStrings && stringRefCount[id] > 0)
 		stringRefCount[id]--;
 }
@@ -679,8 +707,9 @@ void NiHeader::Get(fstream& file) {
 		exportInfo3.Get(file, 1);
 
 	file.read((char*)&numBlockTypes, 2);
+	blockTypes.resize(numBlockTypes);
 	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes.push_back(NiString(file, 4));
+		blockTypes[i].Get(file, 4);
 
 	ushort uShort;
 	for (int i = 0; i < numBlocks; i++) {
@@ -699,7 +728,7 @@ void NiHeader::Get(fstream& file) {
 	strings.resize(numStrings);
 	stringRefCount.resize(numStrings);
 	for (int i = 0; i < numStrings; i++)
-		strings[i] = NiString(file, 4);
+		strings[i].Get(file, 4);
 
 	file.read((char*)&unkInt2, 4);
 	valid = true;
@@ -738,17 +767,11 @@ void NiHeader::Put(fstream& file) {
 }
 
 
-NiObjectNET::~NiObjectNET() {
-	header->RemoveStringRef(nameRef);
-}
-
 void NiObjectNET::Init() {
 	NiObject::Init();
 
 	bBSLightingShaderProperty = false;
 	skyrimShaderType = 0;
-	name.clear();
-	nameRef = 0xFFFFFFFF;
 	numExtraData = 0;
 	controllerRef = 0xFFFFFFFF;
 }
@@ -759,20 +782,12 @@ void NiObjectNET::Get(fstream& file) {
 	if (bBSLightingShaderProperty && header->GetUserVersion() >= 12)
 		file.read((char*)&skyrimShaderType, 4);
 
-	file.read((char*)&nameRef, 4);
-	if (nameRef != 0xFFFFFFFF) {
-		name = header->GetStringById(nameRef);
-		header->AddStringRef(nameRef);
-	}
-	else
-		name.clear();
+	name.Get(file, header);
 
-	int intData;
 	file.read((char*)&numExtraData, 4);
-	for (int i = 0; i < numExtraData; i++) {
-		file.read((char*)&intData, 4);
-		extraDataRef.push_back(intData);
-	}
+	extraDataRef.resize(numExtraData);
+	for (int i = 0; i < numExtraData; i++)
+		file.read((char*)&extraDataRef[i], 4);
 
 	file.read((char*)&controllerRef, 4);
 }
@@ -783,7 +798,7 @@ void NiObjectNET::Put(fstream& file) {
 	if (bBSLightingShaderProperty && header->GetUserVersion() >= 12)
 		file.write((char*)&skyrimShaderType, 4);
 
-	file.write((char*)&nameRef, 4);
+	name.Put(file);
 
 	file.write((char*)&numExtraData, 4);
 	for (int i = 0; i < numExtraData; i++)
@@ -830,41 +845,37 @@ void NiObjectNET::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void NiObjectNET::notifyStringDelete(int stringID) {
 	NiObject::notifyStringDelete(stringID);
 
-	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
-		nameRef--;
+	name.notifyStringDelete(stringID);
 }
 
 string NiObjectNET::GetName() {
-	return name;
+	return name.GetString(header);
 }
 
-void NiObjectNET::SetName(const string& propertyName, const bool renameExisting) {
-	if (renameExisting)
-		header->SetStringById(nameRef, propertyName);
+void NiObjectNET::SetName(const string& str, const bool rename) {
+	if (rename)
+		name.RenameString(header, str);
 	else
-		nameRef = header->AddOrFindStringId(propertyName);
-
-	name = propertyName;
+		name.SetString(header, str);
 }
 
 void NiObjectNET::ClearName() {
-	nameRef = 0xFFFFFFFF;
-	name.clear();
+	name.Clear(header);
 }
 
-void NiObjectNET::SetExtraDataRef(const int& id, const int& blockId) {
+void NiObjectNET::SetExtraDataRef(const int id, const int blockId) {
 	if (id >= 0 && id < numExtraData)
 		extraDataRef[id] = blockId;
 }
 
-int NiObjectNET::GetExtraDataRef(const int& id) {
+int NiObjectNET::GetExtraDataRef(const int id) {
 	if (id >= 0 && id < numExtraData)
 		return extraDataRef[id];
 
 	return 0xFFFFFFFF;
 }
 
-void NiObjectNET::AddExtraDataRef(const int& id) {
+void NiObjectNET::AddExtraDataRef(const int id) {
 	extraDataRef.push_back(id);
 	numExtraData++;
 }
@@ -1021,17 +1032,17 @@ int NiAVObject::CalcBlockSize() {
 }
 
 
-NiNode::NiNode(NiHeader& hdr) {
+NiNode::NiNode(NiHeader* hdr) {
 	Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NINODE;
 }
 
-NiNode::NiNode(fstream& file, NiHeader& hdr) {
+NiNode::NiNode(fstream& file, NiHeader* hdr) {
 	Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NINODE;
 
 	Get(file);
@@ -1140,14 +1151,14 @@ int NiNode::CalcBlockSize() {
 	return blockSize;
 }
 
-int NiNode::GetChildRef(const int& id) {
+int NiNode::GetChildRef(const int id) {
 	if (id >= 0 && id < numChildren)
 		return children[id];
 
 	return 0xFFFFFFFF;
 }
 
-void NiNode::AddChildRef(const int& id) {
+void NiNode::AddChildRef(const int id) {
 	children.push_back(id);
 	numChildren++;
 }
@@ -1157,47 +1168,47 @@ void NiNode::ClearChildren() {
 	numChildren = 0;
 }
 
-int NiNode::GetEffectRef(const int& id) {
+int NiNode::GetEffectRef(const int id) {
 	if (id >= 0 && id < numEffects)
 		return effects[id];
 
 	return 0xFFFFFFFF;
 }
 
-void NiNode::AddEffectRef(const int& id) {
+void NiNode::AddEffectRef(const int id) {
 	effects.push_back(id);
 	numEffects++;
 }
 
 
-BSFadeNode::BSFadeNode(NiHeader& hdr) {
+BSFadeNode::BSFadeNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSFADENODE;
 }
 
-BSFadeNode::BSFadeNode(fstream& file, NiHeader& hdr) {
+BSFadeNode::BSFadeNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSFADENODE;
 
 	Get(file);
 }
 
 
-BSValueNode::BSValueNode(NiHeader& hdr) {
+BSValueNode::BSValueNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSVALUENODE;
 }
 
-BSValueNode::BSValueNode(fstream& file, NiHeader& hdr) {
+BSValueNode::BSValueNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSVALUENODE;
 
 	Get(file);
@@ -1226,37 +1237,37 @@ int BSValueNode::CalcBlockSize() {
 }
 
 
-BSLeafAnimNode::BSLeafAnimNode(NiHeader& hdr) {
+BSLeafAnimNode::BSLeafAnimNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLEAFANIMNODE;
 }
 
-BSLeafAnimNode::BSLeafAnimNode(fstream& file, NiHeader& hdr) {
+BSLeafAnimNode::BSLeafAnimNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLEAFANIMNODE;
 
 	Get(file);
 }
 
 
-BSTreeNode::BSTreeNode(NiHeader& hdr) {
+BSTreeNode::BSTreeNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSTREENODE;
 
 	numBones1 = 0;
 	numBones2 = 0;
 }
 
-BSTreeNode::BSTreeNode(fstream& file, NiHeader& hdr) {
+BSTreeNode::BSTreeNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSTREENODE;
 
 	Get(file);
@@ -1348,17 +1359,17 @@ int BSTreeNode::CalcBlockSize() {
 }
 
 
-BSOrderedNode::BSOrderedNode(NiHeader& hdr) {
+BSOrderedNode::BSOrderedNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSORDEREDNODE;
 }
 
-BSOrderedNode::BSOrderedNode(fstream& file, NiHeader& hdr) {
+BSOrderedNode::BSOrderedNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSORDEREDNODE;
 
 	Get(file);
@@ -1387,17 +1398,17 @@ int BSOrderedNode::CalcBlockSize() {
 }
 
 
-BSMultiBoundNode::BSMultiBoundNode(NiHeader& hdr) {
+BSMultiBoundNode::BSMultiBoundNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUNDNODE;
 }
 
-BSMultiBoundNode::BSMultiBoundNode(fstream& file, NiHeader& hdr) {
+BSMultiBoundNode::BSMultiBoundNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUNDNODE;
 
 	Get(file);
@@ -1456,17 +1467,17 @@ int BSMultiBoundNode::CalcBlockSize() {
 }
 
 
-BSBlastNode::BSBlastNode(NiHeader& hdr) {
+BSBlastNode::BSBlastNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBLASTNODE;
 }
 
-BSBlastNode::BSBlastNode(fstream& file, NiHeader& hdr) {
+BSBlastNode::BSBlastNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBLASTNODE;
 
 	Get(file);
@@ -1497,28 +1508,28 @@ int BSBlastNode::CalcBlockSize() {
 }
 
 
-BSDamageStage::BSDamageStage(NiHeader& hdr) : BSBlastNode(hdr) {
+BSDamageStage::BSDamageStage(NiHeader* hdr) : BSBlastNode(hdr) {
 	blockType = BSDAMAGESTAGE;
 }
 
-BSDamageStage::BSDamageStage(fstream& file, NiHeader& hdr) : BSBlastNode(file, hdr) {
+BSDamageStage::BSDamageStage(fstream& file, NiHeader* hdr) : BSBlastNode(file, hdr) {
 	blockType = BSDAMAGESTAGE;
 }
 
 
-BSMasterParticleSystem::BSMasterParticleSystem(NiHeader& hdr) {
+BSMasterParticleSystem::BSMasterParticleSystem(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMASTERPARTICLESYSTEM;
 
 	numParticleSys = 0;
 }
 
-BSMasterParticleSystem::BSMasterParticleSystem(fstream& file, NiHeader& hdr) {
+BSMasterParticleSystem::BSMasterParticleSystem(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMASTERPARTICLESYSTEM;
 
 	Get(file);
@@ -1586,17 +1597,17 @@ int BSMasterParticleSystem::CalcBlockSize() {
 }
 
 
-NiBillboardNode::NiBillboardNode(NiHeader& hdr) {
+NiBillboardNode::NiBillboardNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBILLBOARDNODE;
 }
 
-NiBillboardNode::NiBillboardNode(fstream& file, NiHeader& hdr) {
+NiBillboardNode::NiBillboardNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBILLBOARDNODE;
 
 	Get(file);
@@ -1623,17 +1634,17 @@ int NiBillboardNode::CalcBlockSize() {
 }
 
 
-NiSwitchNode::NiSwitchNode(NiHeader& hdr) {
+NiSwitchNode::NiSwitchNode(NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISWITCHNODE;
 }
 
-NiSwitchNode::NiSwitchNode(fstream& file, NiHeader& hdr) {
+NiSwitchNode::NiSwitchNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISWITCHNODE;
 
 	Get(file);
@@ -1781,11 +1792,11 @@ int NiShape::GetBoneID(const string& boneName) {
 }
 
 
-BSTriShape::BSTriShape(NiHeader& hdr) {
+BSTriShape::BSTriShape(NiHeader* hdr) {
 	NiAVObject::Init();
 
 	blockType = BSTRISHAPE;
-	header = &hdr;
+	header = hdr;
 
 	skinInstanceRef = 0xFFFFFFFF;
 	shaderPropertyRef = 0xFFFFFFFF;
@@ -1805,11 +1816,11 @@ BSTriShape::BSTriShape(NiHeader& hdr) {
 	particleDataSize = 0;
 }
 
-BSTriShape::BSTriShape(fstream& file, NiHeader& hdr) {
+BSTriShape::BSTriShape(fstream& file, NiHeader* hdr) {
 	NiAVObject::Init();
 
 	blockType = BSTRISHAPE;
-	header = &hdr;
+	header = hdr;
 
 	vertexSize = 0;
 	particleDataSize = 0;
@@ -2439,7 +2450,7 @@ void BSTriShape::SetNormals(const vector<Vector3>& inNorms) {
 	}
 }
 
-void BSTriShape::RecalcNormals(const bool smooth, const float& smoothThresh) {
+void BSTriShape::RecalcNormals(const bool smooth, const float smoothThresh) {
 	GetRawVerts();
 	SetNormals(true);
 
@@ -2769,11 +2780,11 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 }
 
 
-BSSubIndexTriShape::BSSubIndexTriShape(NiHeader& hdr) : BSTriShape(hdr) {
+BSSubIndexTriShape::BSSubIndexTriShape(NiHeader* hdr) : BSTriShape(hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
 }
 
-BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
+BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader* hdr) : BSTriShape(file, hdr) {
 	blockType = BSSUBINDEXTRISHAPE;
 	Get(file);
 }
@@ -2974,7 +2985,7 @@ void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, 
 }
 
 
-BSMeshLODTriShape::BSMeshLODTriShape(NiHeader& hdr) : BSTriShape(hdr) {
+BSMeshLODTriShape::BSMeshLODTriShape(NiHeader* hdr) : BSTriShape(hdr) {
 	blockType = BSMESHLODTRISHAPE;
 
 	lodSize0 = 0;
@@ -2982,7 +2993,7 @@ BSMeshLODTriShape::BSMeshLODTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	lodSize2 = 0;
 }
 
-BSMeshLODTriShape::BSMeshLODTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
+BSMeshLODTriShape::BSMeshLODTriShape(fstream& file, NiHeader* hdr) : BSTriShape(file, hdr) {
 	blockType = BSMESHLODTRISHAPE;
 	Get(file);
 }
@@ -3010,7 +3021,7 @@ int BSMeshLODTriShape::CalcBlockSize() {
 }
 
 
-BSDynamicTriShape::BSDynamicTriShape(NiHeader& hdr) : BSTriShape(hdr) {
+BSDynamicTriShape::BSDynamicTriShape(NiHeader* hdr) : BSTriShape(hdr) {
 	blockType = BSDYNAMICTRISHAPE;
 
 	vertFlags6 &= ~(1 << 4);
@@ -3019,7 +3030,7 @@ BSDynamicTriShape::BSDynamicTriShape(NiHeader& hdr) : BSTriShape(hdr) {
 	dynamicDataSize = 0;
 }
 
-BSDynamicTriShape::BSDynamicTriShape(fstream& file, NiHeader& hdr) : BSTriShape(file, hdr) {
+BSDynamicTriShape::BSDynamicTriShape(fstream& file, NiHeader* hdr) : BSTriShape(file, hdr) {
 	blockType = BSDYNAMICTRISHAPE;
 
 	Get(file);
@@ -3125,15 +3136,15 @@ void NiGeometry::Get(fstream& file) {
 
 	file.read((char*)&dataRef, 4);
 	file.read((char*)&skinInstanceRef, 4);
-	file.read((char*)&numMaterials, 4);
-	for (int i = 0; i < numMaterials; i++)
-		materialNames.push_back(NiString(file, 2));
 
-	int intData;
-	for (int i = 0; i < numMaterials; i++) {
-		file.read((char*)&intData, 4);
-		materialExtra.push_back(intData);
-	}
+	file.read((char*)&numMaterials, 4);
+	materialNameRefs.resize(numMaterials);
+	for (int i = 0; i < numMaterials; i++)
+		file.read((char*)&materialNameRefs[i], 4);
+
+	materials.resize(numMaterials);
+	for (int i = 0; i < numMaterials; i++)
+		file.read((char*)&materials[i], 4);
 
 	file.read((char*)&activeMaterial, 4);
 	file.read((char*)&dirty, 1);
@@ -3149,12 +3160,13 @@ void NiGeometry::Put(fstream& file) {
 
 	file.write((char*)&dataRef, 4);
 	file.write((char*)&skinInstanceRef, 4);
+
 	file.write((char*)&numMaterials, 4);
 	for (int i = 0; i < numMaterials; i++)
-		materialNames[i].Put(file, 2);
+		file.write((char*)&materialNameRefs[i], 4);
 
 	for (int i = 0; i < numMaterials; i++)
-		file.write((char*)&materialExtra[i], 4);
+		file.write((char*)&materials[i], 4);
 
 	file.write((char*)&activeMaterial, 4);
 	file.write((char*)&dirty, 1);
@@ -3226,8 +3238,7 @@ int NiGeometry::CalcBlockSize() {
 	NiAVObject::CalcBlockSize();
 
 	blockSize += 17;
-	blockSize += numMaterials * 2;
-	blockSize += numMaterials * 4;
+	blockSize += numMaterials * 8;
 	if (header->GetUserVersion() > 11)
 		blockSize += 8;
 
@@ -3492,7 +3503,7 @@ void NiGeometryData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 }
 
-void NiGeometryData::RecalcNormals(const bool smooth, const float& smoothThresh) {
+void NiGeometryData::RecalcNormals(const bool smooth, const float smoothThresh) {
 	SetNormals(true);
 }
 
@@ -3567,37 +3578,37 @@ int NiTriBasedGeomData::CalcBlockSize() {
 }
 
 
-NiTriShape::NiTriShape(NiHeader& hdr) {
+NiTriShape::NiTriShape(NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISHAPE;
 }
 
-NiTriShape::NiTriShape(fstream& file, NiHeader& hdr) {
+NiTriShape::NiTriShape(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISHAPE;
 
 	Get(file);
 }
 
 
-NiTriShapeData::NiTriShapeData(NiHeader& hdr) {
+NiTriShapeData::NiTriShapeData(NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISHAPEDATA;
 	numTrianglePoints = 0;
 	hasTriangles = false;
 	numMatchGroups = 0;
 }
 
-NiTriShapeData::NiTriShapeData(fstream& file, NiHeader& hdr) {
+NiTriShapeData::NiTriShapeData(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISHAPEDATA;
 	numTrianglePoints = 0;
 	hasTriangles = false;
@@ -3699,7 +3710,7 @@ void NiTriShapeData::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 	}
 }
 
-void NiTriShapeData::RecalcNormals(const bool smooth, const float& smoothThresh) {
+void NiTriShapeData::RecalcNormals(const bool smooth, const float smoothThresh) {
 	if (!HasNormals())
 		return;
 
@@ -3835,36 +3846,36 @@ int NiTriShapeData::CalcBlockSize() {
 }
 
 
-NiTriStrips::NiTriStrips(NiHeader& hdr) {
+NiTriStrips::NiTriStrips(NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISTRIPS;
 }
 
-NiTriStrips::NiTriStrips(fstream& file, NiHeader& hdr) {
+NiTriStrips::NiTriStrips(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISTRIPS;
 
 	Get(file);
 }
 
 
-NiTriStripsData::NiTriStripsData(NiHeader& hdr) {
+NiTriStripsData::NiTriStripsData(NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISTRIPSDATA;
 	numStrips = 0;
 	hasPoints = false;
 }
 
-NiTriStripsData::NiTriStripsData(fstream& file, NiHeader& hdr) {
+NiTriStripsData::NiTriStripsData(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRISTRIPSDATA;
 	numStrips = 0;
 	hasPoints = false;
@@ -3959,7 +3970,7 @@ void NiTriStripsData::StripsToTris(vector<Triangle>* outTris) {
 	}
 }
 
-void NiTriStripsData::RecalcNormals(const bool smooth, const float& smoothThresh) {
+void NiTriStripsData::RecalcNormals(const bool smooth, const float smoothThresh) {
 	if (!HasNormals())
 		return;
 
@@ -4100,17 +4111,17 @@ int NiTriStripsData::CalcBlockSize() {
 }
 
 
-BSLODTriShape::BSLODTriShape(NiHeader& hdr) {
+BSLODTriShape::BSLODTriShape(NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLODTRISHAPE;
 }
 
-BSLODTriShape::BSLODTriShape(fstream& file, NiHeader& hdr) {
+BSLODTriShape::BSLODTriShape(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLODTRISHAPE;
 
 	Get(file);
@@ -4141,17 +4152,17 @@ int BSLODTriShape::CalcBlockSize() {
 }
 
 
-NiSkinInstance::NiSkinInstance(NiHeader& hdr) {
+NiSkinInstance::NiSkinInstance(NiHeader* hdr) {
 	Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISKININSTANCE;
 }
 
-NiSkinInstance::NiSkinInstance(fstream& file, NiHeader& hdr) {
+NiSkinInstance::NiSkinInstance(fstream& file, NiHeader* hdr) {
 	Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISKININSTANCE;
 
 	Get(file);
@@ -4275,18 +4286,18 @@ int NiSkinInstance::CalcBlockSize() {
 }
 
 
-BSDismemberSkinInstance::BSDismemberSkinInstance(NiHeader& hdr) {
+BSDismemberSkinInstance::BSDismemberSkinInstance(NiHeader* hdr) {
 	NiSkinInstance::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSDISMEMBERSKININSTANCE;
 	numPartitions = 0;
 }
 
-BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader& hdr) {
+BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader* hdr) {
 	NiSkinInstance::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSDISMEMBERSKININSTANCE;
 
 	Get(file);
@@ -4329,7 +4340,7 @@ void BSDismemberSkinInstance::AddPartition(const BSDismemberSkinInstance::Partit
 	numPartitions++;
 }
 
-void BSDismemberSkinInstance::RemovePartition(const int& id) {
+void BSDismemberSkinInstance::RemovePartition(const int id) {
 	if (id >= 0 && id < numPartitions) {
 		partitions.erase(partitions.begin() + id);
 		numPartitions--;
@@ -4342,17 +4353,17 @@ void BSDismemberSkinInstance::ClearPartitions() {
 }
 
 
-BSSkinInstance::BSSkinInstance(NiHeader& hdr) {
+BSSkinInstance::BSSkinInstance(NiHeader* hdr) {
 	Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSKININSTANCE;
 }
 
-BSSkinInstance::BSSkinInstance(fstream& file, NiHeader& hdr) {
+BSSkinInstance::BSSkinInstance(fstream& file, NiHeader* hdr) {
 	Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSKININSTANCE;
 
 	Get(file);
@@ -4452,19 +4463,19 @@ int BSSkinInstance::CalcBlockSize() {
 	return blockSize;
 }
 
-BSSkinBoneData::BSSkinBoneData(NiHeader& hdr) {
+BSSkinBoneData::BSSkinBoneData(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBONEDATA;
 
 	nBones = 0;
 }
 
-BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader& hdr) {
+BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBONEDATA;
 
 	Get(file);
@@ -4501,10 +4512,10 @@ int BSSkinBoneData::CalcBlockSize() {
 	return blockSize;
 }
 
-NiSkinData::NiSkinData(NiHeader& hdr) {
+NiSkinData::NiSkinData(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISKINDATA;
 
 	skinTransform.scale = 1.0f;
@@ -4512,10 +4523,10 @@ NiSkinData::NiSkinData(NiHeader& hdr) {
 	hasVertWeights = 1;
 }
 
-NiSkinData::NiSkinData(fstream& file, NiHeader& hdr) {
+NiSkinData::NiSkinData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISKINDATA;
 
 	Get(file);
@@ -4628,10 +4639,10 @@ int NiSkinData::CalcBlockSize() {
 }
 
 
-NiSkinPartition::NiSkinPartition(NiHeader& hdr) {
+NiSkinPartition::NiSkinPartition(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISKINPARTITION;
 
 	numPartitions = 0;
@@ -4648,10 +4659,10 @@ NiSkinPartition::NiSkinPartition(NiHeader& hdr) {
 	numVertices = 0;
 }
 
-NiSkinPartition::NiSkinPartition(fstream& file, NiHeader& hdr) {
+NiSkinPartition::NiSkinPartition(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISKINPARTITION;
 
 	dataSize = 0;
@@ -5159,10 +5170,10 @@ int NiSkinPartition::CalcBlockSize() {
 }
 
 
-NiParticleSystem::NiParticleSystem(NiHeader& hdr) {
+NiParticleSystem::NiParticleSystem(NiHeader* hdr) {
 	NiAVObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPARTICLESYSTEM;
 
 	dataRef = 0xFFFFFFFF;
@@ -5175,10 +5186,10 @@ NiParticleSystem::NiParticleSystem(NiHeader& hdr) {
 	numModifiers = 0;
 }
 
-NiParticleSystem::NiParticleSystem(fstream& file, NiHeader& hdr) {
+NiParticleSystem::NiParticleSystem(fstream& file, NiHeader* hdr) {
 	NiAVObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPARTICLESYSTEM;
 
 	Get(file);
@@ -5205,14 +5216,15 @@ void NiParticleSystem::Get(fstream& file) {
 		file.read((char*)&dataRef, 4);
 		psysDataRef = dataRef;
 		file.read((char*)&skinInstanceRef, 4);
-		file.read((char*)&numMaterials, 4);
 
-		if (numMaterials > 0) {
-			file.read((char*)&materialString, 4);
-			materials.resize(numMaterials);
-			for (int i = 0; i < numMaterials; i++)
-				file.read((char*)&materials[i], 4);
-		}
+		file.read((char*)&numMaterials, 4);
+		materialNameRefs.resize(numMaterials);
+		for (int i = 0; i < numMaterials; i++)
+			file.read((char*)&materialNameRefs[i], 4);
+
+		materials.resize(numMaterials);
+		for (int i = 0; i < numMaterials; i++)
+			file.read((char*)&materials[i], 4);
 
 		file.read((char*)&activeMaterial, 4);
 		file.read((char*)&defaultMatNeedsUpdate, 1);
@@ -5261,13 +5273,13 @@ void NiParticleSystem::Put(fstream& file) {
 	else {
 		file.write((char*)&dataRef, 4);
 		file.write((char*)&skinInstanceRef, 4);
-		file.write((char*)&numMaterials, 4);
 
-		if (numMaterials > 0) {
-			file.write((char*)&materialString, 4);
-			for (int i = 0; i < numMaterials; i++)
-				file.write((char*)&materials[i], 4);
-		}
+		file.write((char*)&numMaterials, 4);
+		for (int i = 0; i < numMaterials; i++)
+			file.write((char*)&materialNameRefs[i], 4);
+
+		for (int i = 0; i < numMaterials; i++)
+			file.write((char*)&materials[i], 4);
 
 		file.write((char*)&activeMaterial, 4);
 		file.write((char*)&defaultMatNeedsUpdate, 1);
@@ -5392,11 +5404,7 @@ int NiParticleSystem::CalcBlockSize() {
 	}
 	else {
 		blockSize += 17;
-
-		if (numMaterials > 0) {
-			blockSize += 4;
-			blockSize += numMaterials * 4;
-		}
+		blockSize += numMaterials * 8;
 
 		if (header->GetUserVersion() >= 12)
 			blockSize += 8;
@@ -5413,29 +5421,29 @@ int NiParticleSystem::CalcBlockSize() {
 }
 
 
-NiMeshParticleSystem::NiMeshParticleSystem(NiHeader& hdr) : NiParticleSystem(hdr) {
+NiMeshParticleSystem::NiMeshParticleSystem(NiHeader* hdr) : NiParticleSystem(hdr) {
 	blockType = NIMESHPARTICLESYSTEM;
 }
 
-NiMeshParticleSystem::NiMeshParticleSystem(fstream& file, NiHeader& hdr) : NiParticleSystem(file, hdr) {
+NiMeshParticleSystem::NiMeshParticleSystem(fstream& file, NiHeader* hdr) : NiParticleSystem(file, hdr) {
 	blockType = NIMESHPARTICLESYSTEM;
 }
 
 
-BSStripParticleSystem::BSStripParticleSystem(NiHeader& hdr) : NiParticleSystem(hdr) {
+BSStripParticleSystem::BSStripParticleSystem(NiHeader* hdr) : NiParticleSystem(hdr) {
 	blockType = BSSTRIPPARTICLESYSTEM;
 }
 
-BSStripParticleSystem::BSStripParticleSystem(fstream& file, NiHeader& hdr) : NiParticleSystem(file, hdr) {
+BSStripParticleSystem::BSStripParticleSystem(fstream& file, NiHeader* hdr) : NiParticleSystem(file, hdr) {
 	blockType = BSSTRIPPARTICLESYSTEM;
 }
 
 
-NiParticlesData::NiParticlesData(NiHeader& hdr) {
+NiParticlesData::NiParticlesData(NiHeader* hdr) {
 	NiGeometryData::Init();
 	NiGeometryData::isPSys = true;
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPARTICLESDATA;
 
 	hasRadii = false;
@@ -5448,11 +5456,11 @@ NiParticlesData::NiParticlesData(NiHeader& hdr) {
 	numSubtexOffsets = 0;
 }
 
-NiParticlesData::NiParticlesData(fstream& file, NiHeader& hdr) {
+NiParticlesData::NiParticlesData(fstream& file, NiHeader* hdr) {
 	NiGeometryData::Init();
 	NiGeometryData::isPSys = true;
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPARTICLESDATA;
 
 	Get(file);
@@ -5538,21 +5546,21 @@ int NiParticlesData::CalcBlockSize() {
 }
 
 
-NiRotatingParticlesData::NiRotatingParticlesData(NiHeader& hdr) : NiParticlesData(hdr) {
+NiRotatingParticlesData::NiRotatingParticlesData(NiHeader* hdr) : NiParticlesData(hdr) {
 	blockType = NIROTATINGPARTICLESDATA;
 }
 
-NiRotatingParticlesData::NiRotatingParticlesData(fstream& file, NiHeader& hdr) : NiParticlesData(file, hdr) {
+NiRotatingParticlesData::NiRotatingParticlesData(fstream& file, NiHeader* hdr) : NiParticlesData(file, hdr) {
 	blockType = NIROTATINGPARTICLESDATA;
 }
 
 
-NiPSysData::NiPSysData(NiHeader& hdr) : NiRotatingParticlesData(hdr) {
+NiPSysData::NiPSysData(NiHeader* hdr) : NiRotatingParticlesData(hdr) {
 	blockType = NIPSYSDATA;
 	hasRotationSpeeds = false;
 }
 
-NiPSysData::NiPSysData(fstream& file, NiHeader& hdr) : NiRotatingParticlesData(file, hdr) {
+NiPSysData::NiPSysData(fstream& file, NiHeader* hdr) : NiRotatingParticlesData(file, hdr) {
 	blockType = NIPSYSDATA;
 
 	Get(file);
@@ -5577,15 +5585,15 @@ int NiPSysData::CalcBlockSize() {
 }
 
 
-NiMeshPSysData::NiMeshPSysData(NiHeader& hdr) : NiPSysData(hdr) {
-	header = &hdr;
+NiMeshPSysData::NiMeshPSysData(NiHeader* hdr) : NiPSysData(hdr) {
+	header = hdr;
 	blockType = NIMESHPSYSDATA;
 
 	nodeRef = 0xFFFFFFFF;
 }
 
-NiMeshPSysData::NiMeshPSysData(fstream& file, NiHeader& hdr) : NiPSysData(file, hdr) {
-	header = &hdr;
+NiMeshPSysData::NiMeshPSysData(fstream& file, NiHeader* hdr) : NiPSysData(file, hdr) {
+	header = hdr;
 	blockType = NIMESHPSYSDATA;
 
 	Get(file);
@@ -5650,11 +5658,11 @@ int NiMeshPSysData::CalcBlockSize() {
 }
 
 
-BSStripPSysData::BSStripPSysData(NiHeader& hdr) : NiPSysData(hdr) {
+BSStripPSysData::BSStripPSysData(NiHeader* hdr) : NiPSysData(hdr) {
 	blockType = BSSTRIPPSYSDATA;
 }
 
-BSStripPSysData::BSStripPSysData(fstream& file, NiHeader& hdr) : NiPSysData(file, hdr) {
+BSStripPSysData::BSStripPSysData(fstream& file, NiHeader* hdr) : NiPSysData(file, hdr) {
 	blockType = BSSTRIPPSYSDATA;
 
 	Get(file);
@@ -5685,10 +5693,10 @@ int BSStripPSysData::CalcBlockSize() {
 }
 
 
-NiCamera::NiCamera(NiHeader& hdr) {
+NiCamera::NiCamera(NiHeader* hdr) {
 	NiAVObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NICAMERA;
 
 	sceneRef = 0xFFFFFFFF;
@@ -5696,10 +5704,10 @@ NiCamera::NiCamera(NiHeader& hdr) {
 	screenTexturesRef = 0xFFFFFFFF;
 }
 
-NiCamera::NiCamera(fstream& file, NiHeader& hdr) {
+NiCamera::NiCamera(fstream& file, NiHeader* hdr) {
 	NiAVObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NICAMERA;
 
 	Get(file);
@@ -5804,25 +5812,16 @@ int NiCamera::CalcBlockSize() {
 }
 
 
-NiPSysModifier::~NiPSysModifier() {
-	header->RemoveStringRef(nameRef);
-}
-
 void NiPSysModifier::Init() {
 	NiObject::Init();
 
-	nameRef = 0xFFFFFFFF;
 	targetRef = 0xFFFFFFFF;
 }
 
 void NiPSysModifier::Get(fstream& file) {
 	NiObject::Get(file);
 
-	file.read((char*)&nameRef, 4);
-	if (nameRef != 0xFFFFFFFF) {
-		name = header->GetStringById(nameRef);
-		header->AddStringRef(nameRef);
-	}
+	name.Get(file, header);
 
 	file.read((char*)&order, 4);
 	file.read((char*)&targetRef, 4);
@@ -5832,7 +5831,7 @@ void NiPSysModifier::Get(fstream& file) {
 void NiPSysModifier::Put(fstream& file) {
 	NiObject::Put(file);
 
-	file.write((char*)&nameRef, 4);
+	name.Put(file);
 	file.write((char*)&order, 4);
 	file.write((char*)&targetRef, 4);
 	file.write((char*)&isActive, 1);
@@ -5859,8 +5858,7 @@ void NiPSysModifier::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void NiPSysModifier::notifyStringDelete(int stringID) {
 	NiObject::notifyStringDelete(stringID);
 
-	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
-		nameRef--;
+	name.notifyStringDelete(stringID);
 }
 
 void NiPSysModifier::GetChildRefs(set<int>& refs) {
@@ -5878,17 +5876,17 @@ int NiPSysModifier::CalcBlockSize() {
 }
 
 
-BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiHeader& hdr) {
+BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSTRIPUPDATEMODIFIER;
 }
 
-BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(fstream& file, NiHeader& hdr) {
+BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSTRIPUPDATEMODIFIER;
 
 	Get(file);
@@ -5915,17 +5913,17 @@ int BSPSysStripUpdateModifier::CalcBlockSize() {
 }
 
 
-NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiHeader& hdr) {
+NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSAGEDEATHMODIFIER;
 }
 
-NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(fstream& file, NiHeader& hdr) {
+NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSAGEDEATHMODIFIER;
 
 	Get(file);
@@ -5978,17 +5976,17 @@ int NiPSysAgeDeathModifier::CalcBlockSize() {
 }
 
 
-BSPSysLODModifier::BSPSysLODModifier(NiHeader& hdr) {
+BSPSysLODModifier::BSPSysLODModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSLODMODIFIER;
 }
 
-BSPSysLODModifier::BSPSysLODModifier(fstream& file, NiHeader& hdr) {
+BSPSysLODModifier::BSPSysLODModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSLODMODIFIER;
 
 	Get(file);
@@ -6015,19 +6013,19 @@ int BSPSysLODModifier::CalcBlockSize() {
 }
 
 
-NiPSysSpawnModifier::NiPSysSpawnModifier(NiHeader& hdr) {
+NiPSysSpawnModifier::NiPSysSpawnModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSSPAWNMODIFIER;
 
 	numSpawnGenerations = 0;
 }
 
-NiPSysSpawnModifier::NiPSysSpawnModifier(fstream& file, NiHeader& hdr) {
+NiPSysSpawnModifier::NiPSysSpawnModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSSPAWNMODIFIER;
 
 	Get(file);
@@ -6068,17 +6066,17 @@ int NiPSysSpawnModifier::CalcBlockSize() {
 }
 
 
-BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiHeader& hdr) {
+BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSIMPLECOLORMODIFIER;
 }
 
-BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(fstream& file, NiHeader& hdr) {
+BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSIMPLECOLORMODIFIER;
 
 	Get(file);
@@ -6121,17 +6119,17 @@ int BSPSysSimpleColorModifier::CalcBlockSize() {
 }
 
 
-NiPSysRotationModifier::NiPSysRotationModifier(NiHeader& hdr) {
+NiPSysRotationModifier::NiPSysRotationModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSROTATIONMODIFIER;
 }
 
-NiPSysRotationModifier::NiPSysRotationModifier(fstream& file, NiHeader& hdr) {
+NiPSysRotationModifier::NiPSysRotationModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSROTATIONMODIFIER;
 
 	Get(file);
@@ -6170,19 +6168,19 @@ int NiPSysRotationModifier::CalcBlockSize() {
 }
 
 
-BSPSysScaleModifier::BSPSysScaleModifier(NiHeader& hdr) {
+BSPSysScaleModifier::BSPSysScaleModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSCALEMODIFIER;
 
 	numFloats = 0;
 }
 
-BSPSysScaleModifier::BSPSysScaleModifier(fstream& file, NiHeader& hdr) {
+BSPSysScaleModifier::BSPSysScaleModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSCALEMODIFIER;
 
 	Get(file);
@@ -6215,19 +6213,19 @@ int BSPSysScaleModifier::CalcBlockSize() {
 }
 
 
-NiPSysGravityModifier::NiPSysGravityModifier(NiHeader& hdr) {
+NiPSysGravityModifier::NiPSysGravityModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSGRAVITYMODIFIER;
 
 	gravityObjRef = 0xFFFFFFFF;
 }
 
-NiPSysGravityModifier::NiPSysGravityModifier(fstream& file, NiHeader& hdr) {
+NiPSysGravityModifier::NiPSysGravityModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSGRAVITYMODIFIER;
 
 	Get(file);
@@ -6292,34 +6290,34 @@ int NiPSysGravityModifier::CalcBlockSize() {
 }
 
 
-NiPSysPositionModifier::NiPSysPositionModifier(NiHeader& hdr) {
+NiPSysPositionModifier::NiPSysPositionModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSPOSITIONMODIFIER;
 }
 
-NiPSysPositionModifier::NiPSysPositionModifier(fstream& file, NiHeader& hdr) {
+NiPSysPositionModifier::NiPSysPositionModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSPOSITIONMODIFIER;
 
 	Get(file);
 }
 
 
-NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiHeader& hdr) {
+NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSBOUNDUPDATEMODIFIER;
 }
 
-NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(fstream& file, NiHeader& hdr) {
+NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSBOUNDUPDATEMODIFIER;
 
 	Get(file);
@@ -6346,19 +6344,19 @@ int NiPSysBoundUpdateModifier::CalcBlockSize() {
 }
 
 
-NiPSysDragModifier::NiPSysDragModifier(NiHeader& hdr) {
+NiPSysDragModifier::NiPSysDragModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSDRAGMODIFIER;
 
 	parentRef = 0xFFFFFFFF;
 }
 
-NiPSysDragModifier::NiPSysDragModifier(fstream& file, NiHeader& hdr) {
+NiPSysDragModifier::NiPSysDragModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSDRAGMODIFIER;
 
 	Get(file);
@@ -6417,19 +6415,19 @@ int NiPSysDragModifier::CalcBlockSize() {
 }
 
 
-BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiHeader& hdr) {
+BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSINHERITVELOCITYMODIFIER;
 
 	targetNodeRef = 0xFFFFFFFF;
 }
 
-BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(fstream& file, NiHeader& hdr) {
+BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSINHERITVELOCITYMODIFIER;
 
 	Get(file);
@@ -6486,17 +6484,17 @@ int BSPSysInheritVelocityModifier::CalcBlockSize() {
 }
 
 
-BSPSysSubTexModifier::BSPSysSubTexModifier(NiHeader& hdr) {
+BSPSysSubTexModifier::BSPSysSubTexModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSUBTEXMODIFIER;
 }
 
-BSPSysSubTexModifier::BSPSysSubTexModifier(fstream& file, NiHeader& hdr) {
+BSPSysSubTexModifier::BSPSysSubTexModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSSUBTEXMODIFIER;
 
 	Get(file);
@@ -6535,19 +6533,19 @@ int BSPSysSubTexModifier::CalcBlockSize() {
 }
 
 
-NiPSysBombModifier::NiPSysBombModifier(NiHeader& hdr) {
+NiPSysBombModifier::NiPSysBombModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSBOMBMODIFIER;
 
 	bombNodeRef = 0xFFFFFFFF;
 }
 
-NiPSysBombModifier::NiPSysBombModifier(fstream& file, NiHeader& hdr) {
+NiPSysBombModifier::NiPSysBombModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSBOMBMODIFIER;
 
 	Get(file);
@@ -6608,17 +6606,17 @@ int NiPSysBombModifier::CalcBlockSize() {
 }
 
 
-BSWindModifier::BSWindModifier(NiHeader& hdr) {
+BSWindModifier::BSWindModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSWINDMODIFIER;
 }
 
-BSWindModifier::BSWindModifier(fstream& file, NiHeader& hdr) {
+BSWindModifier::BSWindModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSWINDMODIFIER;
 
 	Get(file);
@@ -6645,19 +6643,19 @@ int BSWindModifier::CalcBlockSize() {
 }
 
 
-BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiHeader& hdr) {
+BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSRECYCLEBOUNDMODIFIER;
 
 	targetNodeRef = 0xFFFFFFFF;
 }
 
-BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(fstream& file, NiHeader& hdr) {
+BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSRECYCLEBOUNDMODIFIER;
 
 	Get(file);
@@ -6712,19 +6710,19 @@ int BSPSysRecycleBoundModifier::CalcBlockSize() {
 }
 
 
-BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiHeader& hdr) {
+BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSHAVOKUPDATEMODIFIER;
 
 	modifierRef = 0xFFFFFFFF;
 }
 
-BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(fstream& file, NiHeader& hdr) {
+BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPSYSHAVOKUPDATEMODIFIER;
 
 	Get(file);
@@ -6902,17 +6900,17 @@ int NiPSysCollider::CalcBlockSize() {
 }
 
 
-NiPSysSphericalCollider::NiPSysSphericalCollider(NiHeader& hdr) {
+NiPSysSphericalCollider::NiPSysSphericalCollider(NiHeader* hdr) {
 	NiPSysCollider::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSSPHERICALCOLLIDER;
 }
 
-NiPSysSphericalCollider::NiPSysSphericalCollider(fstream& file, NiHeader& hdr) {
+NiPSysSphericalCollider::NiPSysSphericalCollider(fstream& file, NiHeader* hdr) {
 	NiPSysCollider::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSSPHERICALCOLLIDER;
 
 	Get(file);
@@ -6939,17 +6937,17 @@ int NiPSysSphericalCollider::CalcBlockSize() {
 }
 
 
-NiPSysPlanarCollider::NiPSysPlanarCollider(NiHeader& hdr) {
+NiPSysPlanarCollider::NiPSysPlanarCollider(NiHeader* hdr) {
 	NiPSysCollider::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSPLANARCOLLIDER;
 }
 
-NiPSysPlanarCollider::NiPSysPlanarCollider(fstream& file, NiHeader& hdr) {
+NiPSysPlanarCollider::NiPSysPlanarCollider(fstream& file, NiHeader* hdr) {
 	NiPSysCollider::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSPLANARCOLLIDER;
 
 	Get(file);
@@ -6982,19 +6980,19 @@ int NiPSysPlanarCollider::CalcBlockSize() {
 }
 
 
-NiPSysColliderManager::NiPSysColliderManager(NiHeader& hdr) {
+NiPSysColliderManager::NiPSysColliderManager(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSCOLLIDERMANAGER;
 
 	colliderRef = 0xFFFFFFFF;
 }
 
-NiPSysColliderManager::NiPSysColliderManager(fstream& file, NiHeader& hdr) {
+NiPSysColliderManager::NiPSysColliderManager(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSCOLLIDERMANAGER;
 
 	Get(file);
@@ -7137,17 +7135,17 @@ int NiPSysVolumeEmitter::CalcBlockSize() {
 }
 
 
-NiPSysSphereEmitter::NiPSysSphereEmitter(NiHeader& hdr) {
+NiPSysSphereEmitter::NiPSysSphereEmitter(NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSSPHEREEMITTER;
 }
 
-NiPSysSphereEmitter::NiPSysSphereEmitter(fstream& file, NiHeader& hdr) {
+NiPSysSphereEmitter::NiPSysSphereEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSSPHEREEMITTER;
 
 	Get(file);
@@ -7174,17 +7172,17 @@ int NiPSysSphereEmitter::CalcBlockSize() {
 }
 
 
-NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiHeader& hdr) {
+NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSCYLINDEREMITTER;
 }
 
-NiPSysCylinderEmitter::NiPSysCylinderEmitter(fstream& file, NiHeader& hdr) {
+NiPSysCylinderEmitter::NiPSysCylinderEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSCYLINDEREMITTER;
 
 	Get(file);
@@ -7213,17 +7211,17 @@ int NiPSysCylinderEmitter::CalcBlockSize() {
 }
 
 
-NiPSysBoxEmitter::NiPSysBoxEmitter(NiHeader& hdr) {
+NiPSysBoxEmitter::NiPSysBoxEmitter(NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSBOXEMITTER;
 }
 
-NiPSysBoxEmitter::NiPSysBoxEmitter(fstream& file, NiHeader& hdr) {
+NiPSysBoxEmitter::NiPSysBoxEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSBOXEMITTER;
 
 	Get(file);
@@ -7254,19 +7252,19 @@ int NiPSysBoxEmitter::CalcBlockSize() {
 }
 
 
-NiPSysMeshEmitter::NiPSysMeshEmitter(NiHeader& hdr) {
+NiPSysMeshEmitter::NiPSysMeshEmitter(NiHeader* hdr) {
 	NiPSysEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSMESHEMITTER;
 
 	numMeshes = 0;
 }
 
-NiPSysMeshEmitter::NiPSysMeshEmitter(fstream& file, NiHeader& hdr) {
+NiPSysMeshEmitter::NiPSysMeshEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysEmitter::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSMESHEMITTER;
 
 	Get(file);
@@ -7361,19 +7359,19 @@ int NiBlendInterpolator::CalcBlockSize() {
 }
 
 
-NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiHeader& hdr) {
+NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBLENDBOOLINTERPOLATOR;
 
 	value = false;
 }
 
-NiBlendBoolInterpolator::NiBlendBoolInterpolator(fstream& file, NiHeader& hdr) {
+NiBlendBoolInterpolator::NiBlendBoolInterpolator(fstream& file, NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBLENDBOOLINTERPOLATOR;
 
 	Get(file);
@@ -7400,19 +7398,19 @@ int NiBlendBoolInterpolator::CalcBlockSize() {
 }
 
 
-NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiHeader& hdr) {
+NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBLENDFLOATINTERPOLATOR;
 
 	value = 0.0f;
 }
 
-NiBlendFloatInterpolator::NiBlendFloatInterpolator(fstream& file, NiHeader& hdr) {
+NiBlendFloatInterpolator::NiBlendFloatInterpolator(fstream& file, NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBLENDFLOATINTERPOLATOR;
 
 	Get(file);
@@ -7439,17 +7437,17 @@ int NiBlendFloatInterpolator::CalcBlockSize() {
 }
 
 
-NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiHeader& hdr) {
+NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBLENDPOINT3INTERPOLATOR;
 }
 
-NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(fstream& file, NiHeader& hdr) {
+NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(fstream& file, NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBLENDPOINT3INTERPOLATOR;
 
 	Get(file);
@@ -7476,20 +7474,20 @@ int NiBlendPoint3Interpolator::CalcBlockSize() {
 }
 
 
-NiBoolInterpolator::NiBoolInterpolator(NiHeader& hdr) {
+NiBoolInterpolator::NiBoolInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBOOLINTERPOLATOR;
 
 	boolValue = 0;
 	dataRef = 0xFFFFFFFF;
 }
 
-NiBoolInterpolator::NiBoolInterpolator(fstream& file, NiHeader& hdr) {
+NiBoolInterpolator::NiBoolInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBOOLINTERPOLATOR;
 
 	Get(file);
@@ -7541,29 +7539,29 @@ int NiBoolInterpolator::CalcBlockSize() {
 }
 
 
-NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiHeader& hdr) : NiBoolInterpolator(hdr) {
+NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiHeader* hdr) : NiBoolInterpolator(hdr) {
 	blockType = NIBOOLTIMELINEINTERPOLATOR;
 }
 
-NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(fstream& file, NiHeader& hdr) : NiBoolInterpolator(file, hdr) {
+NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(fstream& file, NiHeader* hdr) : NiBoolInterpolator(file, hdr) {
 	blockType = NIBOOLTIMELINEINTERPOLATOR;
 }
 
 
-NiFloatInterpolator::NiFloatInterpolator(NiHeader& hdr) {
+NiFloatInterpolator::NiFloatInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATINTERPOLATOR;
 
 	floatValue = 0.0f;
 	dataRef = 0xFFFFFFFF;
 }
 
-NiFloatInterpolator::NiFloatInterpolator(fstream& file, NiHeader& hdr) {
+NiFloatInterpolator::NiFloatInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATINTERPOLATOR;
 
 	Get(file);
@@ -7615,20 +7613,20 @@ int NiFloatInterpolator::CalcBlockSize() {
 }
 
 
-NiTransformInterpolator::NiTransformInterpolator(NiHeader& hdr) {
+NiTransformInterpolator::NiTransformInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRANSFORMINTERPOLATOR;
 
 	scale = 0.0f;
 	dataRef = 0xFFFFFFFF;
 }
 
-NiTransformInterpolator::NiTransformInterpolator(fstream& file, NiHeader& hdr) {
+NiTransformInterpolator::NiTransformInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITRANSFORMINTERPOLATOR;
 
 	Get(file);
@@ -7685,19 +7683,19 @@ int NiTransformInterpolator::CalcBlockSize() {
 }
 
 
-NiPoint3Interpolator::NiPoint3Interpolator(NiHeader& hdr) {
+NiPoint3Interpolator::NiPoint3Interpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPOINT3INTERPOLATOR;
 
 	dataRef = 0xFFFFFFFF;
 }
 
-NiPoint3Interpolator::NiPoint3Interpolator(fstream& file, NiHeader& hdr) {
+NiPoint3Interpolator::NiPoint3Interpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPOINT3INTERPOLATOR;
 
 	Get(file);
@@ -7750,20 +7748,20 @@ int NiPoint3Interpolator::CalcBlockSize() {
 }
 
 
-NiPathInterpolator::NiPathInterpolator(NiHeader& hdr) {
+NiPathInterpolator::NiPathInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPATHINTERPOLATOR;
 
 	pathDataRef = 0xFFFFFFFF;
 	percentDataRef = 0xFFFFFFFF;
 }
 
-NiPathInterpolator::NiPathInterpolator(fstream& file, NiHeader& hdr) {
+NiPathInterpolator::NiPathInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPATHINTERPOLATOR;
 
 	Get(file);
@@ -7837,23 +7835,18 @@ int NiPathInterpolator::CalcBlockSize() {
 }
 
 
-NiLookAtInterpolator::NiLookAtInterpolator(NiHeader& hdr) {
+NiLookAtInterpolator::NiLookAtInterpolator(NiHeader* hdr) {
 	NiInterpolator::Init();
 
 	blockType = NILOOKATINTERPOLATOR;
-
-	lookAtNameRef = 0xFFFFFFFF;
 }
 
-NiLookAtInterpolator::NiLookAtInterpolator(fstream& file, NiHeader& hdr) {
+NiLookAtInterpolator::NiLookAtInterpolator(fstream& file, NiHeader* hdr) {
 	NiInterpolator::Init();
 
 	blockType = NILOOKATINTERPOLATOR;
+
 	Get(file);
-}
-
-NiLookAtInterpolator::~NiLookAtInterpolator() {
-	header->RemoveStringRef(lookAtNameRef);
 }
 
 void NiLookAtInterpolator::Get(fstream& file) {
@@ -7861,13 +7854,7 @@ void NiLookAtInterpolator::Get(fstream& file) {
 
 	file.read((char*)&flags, 2);
 	file.read((char*)&lookAtRef, 4);
-
-	file.read((char*)&lookAtNameRef, 4);
-	if (lookAtNameRef != 0xFFFFFFFF) {
-		lookAtName = header->GetStringById(lookAtNameRef);
-		header->AddStringRef(lookAtNameRef);
-	}
-
+	lookAtName.Get(file, header);
 	file.read((char*)&transform, 32);
 	file.read((char*)&translateInterpRef, 4);
 	file.read((char*)&rollInterpRef, 4);
@@ -7879,7 +7866,7 @@ void NiLookAtInterpolator::Put(fstream& file) {
 
 	file.write((char*)&flags, 2);
 	file.write((char*)&lookAtRef, 4);
-	file.write((char*)&lookAtNameRef, 4);
+	lookAtName.Put(file);
 	file.write((char*)&transform, 32);
 	file.write((char*)&translateInterpRef, 4);
 	file.write((char*)&rollInterpRef, 4);
@@ -7937,8 +7924,7 @@ void NiLookAtInterpolator::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void NiLookAtInterpolator::notifyStringDelete(int stringID) {
 	NiInterpolator::notifyStringDelete(stringID);
 
-	if (lookAtNameRef != 0xFFFFFFFF && lookAtNameRef > stringID)
-		lookAtNameRef--;
+	lookAtName.notifyStringDelete(stringID);
 }
 
 void NiLookAtInterpolator::GetChildRefs(set<int>& refs) {
@@ -7959,19 +7945,19 @@ int NiLookAtInterpolator::CalcBlockSize() {
 }
 
 
-NiKeyframeData::NiKeyframeData(NiHeader& hdr) {
+NiKeyframeData::NiKeyframeData(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIKEYFRAMEDATA;
 
 	numRotationKeys = 0;
 }
 
-NiKeyframeData::NiKeyframeData(fstream& file, NiHeader& hdr) {
+NiKeyframeData::NiKeyframeData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIKEYFRAMEDATA;
 
 	Get(file);
@@ -8063,26 +8049,26 @@ int NiKeyframeData::CalcBlockSize() {
 }
 
 
-NiTransformData::NiTransformData(NiHeader& hdr) : NiKeyframeData(hdr) {
+NiTransformData::NiTransformData(NiHeader* hdr) : NiKeyframeData(hdr) {
 	blockType = NITRANSFORMDATA;
 }
 
-NiTransformData::NiTransformData(fstream& file, NiHeader& hdr) : NiKeyframeData(file, hdr) {
+NiTransformData::NiTransformData(fstream& file, NiHeader* hdr) : NiKeyframeData(file, hdr) {
 	blockType = NITRANSFORMDATA;
 }
 
 
-NiPosData::NiPosData(NiHeader& hdr) {
+NiPosData::NiPosData(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPOSDATA;
 }
 
-NiPosData::NiPosData(fstream& file, NiHeader& hdr) {
+NiPosData::NiPosData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPOSDATA;
 
 	Get(file);
@@ -8109,17 +8095,17 @@ int NiPosData::CalcBlockSize() {
 }
 
 
-NiBoolData::NiBoolData(NiHeader& hdr) {
+NiBoolData::NiBoolData(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBOOLDATA;
 }
 
-NiBoolData::NiBoolData(fstream& file, NiHeader& hdr) {
+NiBoolData::NiBoolData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBOOLDATA;
 
 	Get(file);
@@ -8146,17 +8132,17 @@ int NiBoolData::CalcBlockSize() {
 }
 
 
-NiFloatData::NiFloatData(NiHeader& hdr) {
+NiFloatData::NiFloatData(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATDATA;
 }
 
-NiFloatData::NiFloatData(fstream& file, NiHeader& hdr) {
+NiFloatData::NiFloatData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATDATA;
 
 	Get(file);
@@ -8263,19 +8249,19 @@ int NiTimeController::CalcBlockSize() {
 }
 
 
-BSFrustumFOVController::BSFrustumFOVController(NiHeader& hdr) {
+BSFrustumFOVController::BSFrustumFOVController(NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSFRUSTUMFOVCONTROLLER;
 
 	interpolatorRef = 0xFFFFFFFF;
 }
 
-BSFrustumFOVController::BSFrustumFOVController(fstream& file, NiHeader& hdr) {
+BSFrustumFOVController::BSFrustumFOVController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSFRUSTUMFOVCONTROLLER;
 
 	Get(file);
@@ -8326,17 +8312,17 @@ int BSFrustumFOVController::CalcBlockSize() {
 }
 
 
-BSLagBoneController::BSLagBoneController(NiHeader& hdr) {
+BSLagBoneController::BSLagBoneController(NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLAGBONECONTROLLER;
 }
 
-BSLagBoneController::BSLagBoneController(fstream& file, NiHeader& hdr) {
+BSLagBoneController::BSLagBoneController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLAGBONECONTROLLER;
 
 	Get(file);
@@ -8367,17 +8353,17 @@ int BSLagBoneController::CalcBlockSize() {
 }
 
 
-BSProceduralLightningController::BSProceduralLightningController(NiHeader& hdr) {
+BSProceduralLightningController::BSProceduralLightningController(NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPROCEDURALLIGHTNINGCONTROLLER;
 }
 
-BSProceduralLightningController::BSProceduralLightningController(fstream& file, NiHeader& hdr) {
+BSProceduralLightningController::BSProceduralLightningController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSPROCEDURALLIGHTNINGCONTROLLER;
 
 	Get(file);
@@ -8575,20 +8561,20 @@ int BSProceduralLightningController::CalcBlockSize() {
 }
 
 
-NiBoneLODController::NiBoneLODController(NiHeader& hdr) {
+NiBoneLODController::NiBoneLODController(NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBONELODCONTROLLER;
 
 	numLODs = 0;
 	boneArraysSize = 0;
 }
 
-NiBoneLODController::NiBoneLODController(fstream& file, NiHeader& hdr) {
+NiBoneLODController::NiBoneLODController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBONELODCONTROLLER;
 
 	Get(file);
@@ -8729,49 +8715,38 @@ int NiSingleInterpController::CalcBlockSize() {
 }
 
 
-NiFloatExtraDataController::NiFloatExtraDataController(NiHeader& hdr) {
+NiFloatExtraDataController::NiFloatExtraDataController(NiHeader* hdr) {
 	NiExtraDataController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATEXTRADATACONTROLLER;
-
-	extraDataRef = 0xFFFFFFFF;
 }
 
-NiFloatExtraDataController::NiFloatExtraDataController(fstream &file, NiHeader& hdr) {
+NiFloatExtraDataController::NiFloatExtraDataController(fstream &file, NiHeader* hdr) {
 	NiExtraDataController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATEXTRADATACONTROLLER;
 
 	Get(file);
 }
 
-NiFloatExtraDataController::~NiFloatExtraDataController() {
-	header->RemoveStringRef(extraDataRef);
-}
-
 void NiFloatExtraDataController::Get(fstream& file) {
 	NiExtraDataController::Get(file);
 
-	file.read((char*)&extraDataRef, 4);
-	if (extraDataRef != 0xFFFFFFFF) {
-		extraData = header->GetStringById(extraDataRef);
-		header->AddStringRef(extraDataRef);
-	}
+	extraData.Get(file, header);
 }
 
 void NiFloatExtraDataController::Put(fstream& file) {
 	NiExtraDataController::Put(file);
 
-	file.write((char*)&extraDataRef, 4);
+	extraData.Put(file);
 }
 
 void NiFloatExtraDataController::notifyStringDelete(int stringID) {
 	NiExtraDataController::notifyStringDelete(stringID);
 
-	if (extraDataRef != 0xFFFFFFFF && extraDataRef > stringID)
-		extraDataRef--;
+	extraData.notifyStringDelete(stringID);
 }
 
 int NiFloatExtraDataController::CalcBlockSize() {
@@ -8783,104 +8758,104 @@ int NiFloatExtraDataController::CalcBlockSize() {
 }
 
 
-NiVisController::NiVisController(NiHeader& hdr) {
+NiVisController::NiVisController(NiHeader* hdr) {
 	NiBoolInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIVISCONTROLLER;
 }
 
-NiVisController::NiVisController(fstream &file, NiHeader& hdr) {
+NiVisController::NiVisController(fstream &file, NiHeader* hdr) {
 	NiBoolInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIVISCONTROLLER;
 
 	Get(file);
 }
 
 
-NiAlphaController::NiAlphaController(NiHeader& hdr) {
+NiAlphaController::NiAlphaController(NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIALPHACONTROLLER;
 }
 
-NiAlphaController::NiAlphaController(fstream &file, NiHeader& hdr) {
+NiAlphaController::NiAlphaController(fstream &file, NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIALPHACONTROLLER;
 
 	Get(file);
 }
 
 
-NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiHeader& hdr) {
+NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSUPDATECTLR;
 }
 
-NiPSysUpdateCtlr::NiPSysUpdateCtlr(fstream& file, NiHeader& hdr) {
+NiPSysUpdateCtlr::NiPSysUpdateCtlr(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSUPDATECTLR;
 
 	Get(file);
 }
 
 
-BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiHeader& hdr) : NiAlphaController(hdr) {
+BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiHeader* hdr) : NiAlphaController(hdr) {
 	blockType = BSNIALPHAPROPERTYTESTREFCONTROLLER;
 }
 
-BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(fstream &file, NiHeader& hdr) : NiAlphaController(file, hdr) {
+BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(fstream &file, NiHeader* hdr) : NiAlphaController(file, hdr) {
 	blockType = BSNIALPHAPROPERTYTESTREFCONTROLLER;
 }
 
 
-NiKeyframeController::NiKeyframeController(NiHeader& hdr) {
+NiKeyframeController::NiKeyframeController(NiHeader* hdr) {
 	NiSingleInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIKEYFRAMECONTROLLER;
 }
 
-NiKeyframeController::NiKeyframeController(fstream &file, NiHeader& hdr) {
+NiKeyframeController::NiKeyframeController(fstream &file, NiHeader* hdr) {
 	NiSingleInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIKEYFRAMECONTROLLER;
 
 	Get(file);
 }
 
 
-NiTransformController::NiTransformController(NiHeader& hdr) : NiKeyframeController(hdr) {
+NiTransformController::NiTransformController(NiHeader* hdr) : NiKeyframeController(hdr) {
 	blockType = NITRANSFORMCONTROLLER;
 }
 
-NiTransformController::NiTransformController(fstream &file, NiHeader& hdr) : NiKeyframeController(file, hdr) {
+NiTransformController::NiTransformController(fstream &file, NiHeader* hdr) : NiKeyframeController(file, hdr) {
 	blockType = NITRANSFORMCONTROLLER;
 }
 
 
-BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(NiHeader& hdr) {
+BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 }
 
-BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(fstream& file, NiHeader& hdr) {
+BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(fstream& file, NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 
@@ -8908,19 +8883,19 @@ int BSLightingShaderPropertyColorController::CalcBlockSize() {
 }
 
 
-BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiHeader& hdr) {
+BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER;
 
 	typeOfControlledVariable = 0;
 }
 
-BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(fstream& file, NiHeader& hdr) {
+BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(fstream& file, NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER;
 
 	Get(file);
@@ -8947,18 +8922,18 @@ int BSLightingShaderPropertyFloatController::CalcBlockSize() {
 }
 
 
-BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiHeader& hdr) {
+BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSEFFECTSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 }
 
-BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(fstream& file, NiHeader& hdr) {
+BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(fstream& file, NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSEFFECTSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 
@@ -8986,19 +8961,19 @@ int BSEffectShaderPropertyColorController::CalcBlockSize() {
 }
 
 
-BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiHeader& hdr) {
+BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSEFFECTSHADERPROPERTYFLOATCONTROLLER;
 
 	typeOfControlledVariable = 0;
 }
 
-BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(fstream& file, NiHeader& hdr) {
+BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(fstream& file, NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSEFFECTSHADERPROPERTYFLOATCONTROLLER;
 
 	Get(file);
@@ -9025,19 +9000,19 @@ int BSEffectShaderPropertyFloatController::CalcBlockSize() {
 }
 
 
-NiMultiTargetTransformController::NiMultiTargetTransformController(NiHeader& hdr) {
+NiMultiTargetTransformController::NiMultiTargetTransformController(NiHeader* hdr) {
 	NiInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIMULTITARGETTRANSFORMCONTROLLER;
 
 	numTargets = 0;
 }
 
-NiMultiTargetTransformController::NiMultiTargetTransformController(fstream& file, NiHeader& hdr) {
+NiMultiTargetTransformController::NiMultiTargetTransformController(fstream& file, NiHeader* hdr) {
 	NiInterpController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIMULTITARGETTRANSFORMCONTROLLER;
 
 	Get(file);
@@ -9101,40 +9076,22 @@ int NiMultiTargetTransformController::CalcBlockSize() {
 }
 
 
-NiPSysModifierCtlr::~NiPSysModifierCtlr() {
-	header->RemoveStringRef(modifierNameRef);
-}
-
-void NiPSysModifierCtlr::Init() {
-	NiSingleInterpController::Init();
-
-	modifierNameRef = 0xFFFFFFFF;
-	modifierName.clear();
-}
-
 void NiPSysModifierCtlr::Get(fstream& file) {
 	NiSingleInterpController::Get(file);
 
-	file.read((char*)&modifierNameRef, 4);
-	if (modifierNameRef != 0xFFFFFFFF) {
-		modifierName = header->GetStringById(modifierNameRef);
-		header->AddStringRef(modifierNameRef);
-	}
-	else
-		modifierName.clear();
+	modifierName.Get(file, header);
 }
 
 void NiPSysModifierCtlr::Put(fstream& file) {
 	NiSingleInterpController::Put(file);
 
-	file.write((char*)&modifierNameRef, 4);
+	modifierName.Put(file);
 }
 
 void NiPSysModifierCtlr::notifyStringDelete(int stringID) {
 	NiSingleInterpController::notifyStringDelete(stringID);
 
-	if (modifierNameRef != 0xFFFFFFFF && modifierNameRef > stringID)
-		modifierNameRef--;
+	modifierName.notifyStringDelete(stringID);
 }
 
 int NiPSysModifierCtlr::CalcBlockSize() {
@@ -9146,155 +9103,155 @@ int NiPSysModifierCtlr::CalcBlockSize() {
 }
 
 
-NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiHeader& hdr) {
+NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSMODIFIERACTIVECTLR;
 }
 
-NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(fstream& file, NiHeader& hdr) {
+NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSMODIFIERACTIVECTLR;
 
 	Get(file);
 }
 
 
-NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiHeader& hdr) {
+NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERLIFESPANCTLR;
 }
 
-NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader& hdr) {
+NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERLIFESPANCTLR;
 
 	Get(file);
 }
 
 
-NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiHeader& hdr) {
+NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERSPEEDCTLR;
 }
 
-NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(fstream& file, NiHeader& hdr) {
+NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERSPEEDCTLR;
 
 	Get(file);
 }
 
 
-NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiHeader& hdr) {
+NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERINITIALRADIUSCTLR;
 }
 
-NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader& hdr) {
+NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERINITIALRADIUSCTLR;
 
 	Get(file);
 }
 
 
-NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiHeader& hdr) {
+NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERPLANARANGLECTLR;
 }
 
-NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader& hdr) {
+NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERPLANARANGLECTLR;
 
 	Get(file);
 }
 
 
-NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiHeader& hdr) {
+NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERDECLINATIONCTLR;
 }
 
-NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader& hdr) {
+NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERDECLINATIONCTLR;
 
 	Get(file);
 }
 
 
-NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiHeader& hdr) {
+NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSGRAVITYSTRENGTHCTLR;
 }
 
-NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(fstream& file, NiHeader& hdr) {
+NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSGRAVITYSTRENGTHCTLR;
 
 	Get(file);
 }
 
 
-NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiHeader& hdr) {
+NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSINITIALROTSPEEDCTLR;
 }
 
-NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader& hdr) {
+NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSINITIALROTSPEEDCTLR;
 
 	Get(file);
 }
 
 
-NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiHeader& hdr) {
+NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERCTLR;
 
 	visInterpolatorRef = 0xFFFFFFFF;
 }
 
-NiPSysEmitterCtlr::NiPSysEmitterCtlr(fstream& file, NiHeader& hdr) {
+NiPSysEmitterCtlr::NiPSysEmitterCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSEMITTERCTLR;
 
 	Get(file);
@@ -9345,19 +9302,19 @@ int NiPSysEmitterCtlr::CalcBlockSize() {
 }
 
 
-NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(NiHeader& hdr) {
+NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSMULTITARGETEMITTERCTLR;
 
 	masterParticleSystemRef = 0xFFFFFFFF;
 }
 
-NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(fstream& file, NiHeader& hdr) {
+NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIPSYSMULTITARGETEMITTERCTLR;
 
 	Get(file);
@@ -9410,20 +9367,20 @@ int NiPSysMultiTargetEmitterCtlr::CalcBlockSize() {
 }
 
 
-NiControllerManager::NiControllerManager(NiHeader& hdr) {
+NiControllerManager::NiControllerManager(NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NICONTROLLERMANAGER;
 
 	numControllerSequences = 0;
 	objectPaletteRef = 0xFFFFFFFF;
 }
 
-NiControllerManager::NiControllerManager(fstream& file, NiHeader& hdr) {
+NiControllerManager::NiControllerManager(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NICONTROLLERMANAGER;
 
 	Get(file);
@@ -9506,44 +9463,28 @@ int NiControllerManager::CalcBlockSize() {
 }
 
 
-NiSequence::NiSequence(NiHeader& hdr) {
+NiSequence::NiSequence(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISEQUENCE;
 
-	nameRef = 0xFFFFFFFF;
 	numControlledBlocks = 0;
 }
 
-NiSequence::NiSequence(fstream& file, NiHeader& hdr) {
+NiSequence::NiSequence(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISEQUENCE;
 
 	Get(file);
 }
 
-NiSequence::~NiSequence() {
-	header->RemoveStringRef(nameRef);
-	for (int i = 0; i < numControlledBlocks; i++) {
-		header->RemoveStringRef(controlledBlocks[i].nodeNameRef);
-		header->RemoveStringRef(controlledBlocks[i].propTypeRef);
-		header->RemoveStringRef(controlledBlocks[i].ctrlTypeRef);
-		header->RemoveStringRef(controlledBlocks[i].ctrlIDRef);
-		header->RemoveStringRef(controlledBlocks[i].interpIDRef);
-	}
-}
-
 void NiSequence::Get(fstream& file) {
 	NiObject::Get(file);
 
-	file.read((char*)&nameRef, 4);
-	if (nameRef != 0xFFFFFFFF) {
-		name = header->GetStringById(nameRef);
-		header->AddStringRef(nameRef);
-	}
+	name.Get(file, header);
 
 	file.read((char*)&numControlledBlocks, 4);
 	file.read((char*)&unkInt1, 4);
@@ -9554,42 +9495,18 @@ void NiSequence::Get(fstream& file) {
 		file.read((char*)&controlledBlocks[i].controllerRef, 4);
 		file.read((char*)&controlledBlocks[i].priority, 1);
 
-		file.read((char*)&controlledBlocks[i].nodeNameRef, 4);
-		if (controlledBlocks[i].nodeNameRef != 0xFFFFFFFF) {
-			controlledBlocks[i].nodeName = header->GetStringById(controlledBlocks[i].nodeNameRef);
-			header->AddStringRef(controlledBlocks[i].nodeNameRef);
-		}
-
-		file.read((char*)&controlledBlocks[i].propTypeRef, 4);
-		if (controlledBlocks[i].propTypeRef != 0xFFFFFFFF) {
-			controlledBlocks[i].propType = header->GetStringById(controlledBlocks[i].propTypeRef);
-			header->AddStringRef(controlledBlocks[i].propTypeRef);
-		}
-
-		file.read((char*)&controlledBlocks[i].ctrlTypeRef, 4);
-		if (controlledBlocks[i].ctrlTypeRef != 0xFFFFFFFF) {
-			controlledBlocks[i].ctrlType = header->GetStringById(controlledBlocks[i].ctrlTypeRef);
-			header->AddStringRef(controlledBlocks[i].ctrlTypeRef);
-		}
-
-		file.read((char*)&controlledBlocks[i].ctrlIDRef, 4);
-		if (controlledBlocks[i].ctrlIDRef != 0xFFFFFFFF) {
-			controlledBlocks[i].ctrlID = header->GetStringById(controlledBlocks[i].ctrlIDRef);
-			header->AddStringRef(controlledBlocks[i].ctrlIDRef);
-		}
-
-		file.read((char*)&controlledBlocks[i].interpIDRef, 4);
-		if (controlledBlocks[i].interpIDRef != 0xFFFFFFFF) {
-			controlledBlocks[i].interpID = header->GetStringById(controlledBlocks[i].interpIDRef);
-			header->AddStringRef(controlledBlocks[i].interpIDRef);
-		}
+		controlledBlocks[i].nodeName.Get(file, header);
+		controlledBlocks[i].propType.Get(file, header);
+		controlledBlocks[i].ctrlType.Get(file, header);
+		controlledBlocks[i].ctrlID.Get(file, header);
+		controlledBlocks[i].interpID.Get(file, header);
 	}
 }
 
 void NiSequence::Put(fstream& file) {
 	NiObject::Put(file);
 
-	file.write((char*)&nameRef, 4);
+	name.Put(file);
 	file.write((char*)&numControlledBlocks, 4);
 	file.write((char*)&unkInt1, 4);
 
@@ -9597,11 +9514,11 @@ void NiSequence::Put(fstream& file) {
 		file.write((char*)&controlledBlocks[i].interpolatorRef, 4);
 		file.write((char*)&controlledBlocks[i].controllerRef, 4);
 		file.write((char*)&controlledBlocks[i].priority, 1);
-		file.write((char*)&controlledBlocks[i].nodeNameRef, 4);
-		file.write((char*)&controlledBlocks[i].propTypeRef, 4);
-		file.write((char*)&controlledBlocks[i].ctrlTypeRef, 4);
-		file.write((char*)&controlledBlocks[i].ctrlIDRef, 4);
-		file.write((char*)&controlledBlocks[i].interpIDRef, 4);
+		controlledBlocks[i].nodeName.Put(file);
+		controlledBlocks[i].propType.Put(file);
+		controlledBlocks[i].ctrlType.Put(file);
+		controlledBlocks[i].ctrlID.Put(file);
+		controlledBlocks[i].interpID.Put(file);
 	}
 }
 
@@ -9640,24 +9557,14 @@ void NiSequence::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void NiSequence::notifyStringDelete(int stringID) {
 	NiObject::notifyStringDelete(stringID);
 
-	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
-		nameRef--;
+	name.notifyStringDelete(stringID);
 
 	for (int i = 0; i < numControlledBlocks; i++) {
-		if (controlledBlocks[i].nodeNameRef != 0xFFFFFFFF && controlledBlocks[i].nodeNameRef > stringID)
-			controlledBlocks[i].nodeNameRef--;
-
-		if (controlledBlocks[i].propTypeRef != 0xFFFFFFFF && controlledBlocks[i].propTypeRef > stringID)
-			controlledBlocks[i].propTypeRef--;
-
-		if (controlledBlocks[i].ctrlTypeRef != 0xFFFFFFFF && controlledBlocks[i].ctrlTypeRef > stringID)
-			controlledBlocks[i].ctrlTypeRef--;
-
-		if (controlledBlocks[i].ctrlIDRef != 0xFFFFFFFF && controlledBlocks[i].ctrlIDRef > stringID)
-			controlledBlocks[i].ctrlIDRef--;
-
-		if (controlledBlocks[i].interpIDRef != 0xFFFFFFFF && controlledBlocks[i].interpIDRef > stringID)
-			controlledBlocks[i].interpIDRef--;
+		controlledBlocks[i].nodeName.notifyStringDelete(stringID);
+		controlledBlocks[i].propType.notifyStringDelete(stringID);
+		controlledBlocks[i].ctrlType.notifyStringDelete(stringID);
+		controlledBlocks[i].ctrlID.notifyStringDelete(stringID);
+		controlledBlocks[i].interpID.notifyStringDelete(stringID);
 	}
 }
 
@@ -9680,21 +9587,17 @@ int NiSequence::CalcBlockSize() {
 }
 
 
-NiControllerSequence::NiControllerSequence(NiHeader& hdr) : NiSequence(hdr) {
+NiControllerSequence::NiControllerSequence(NiHeader* hdr) : NiSequence(hdr) {
 	blockType = NICONTROLLERSEQUENCE;
 
 	textKeyRef = 0xFFFFFFFF;
 	managerRef = 0xFFFFFFFF;
-	accumRootNameRef = 0xFFFFFFFF;
 }
 
-NiControllerSequence::NiControllerSequence(fstream& file, NiHeader& hdr) : NiSequence(file, hdr) {
+NiControllerSequence::NiControllerSequence(fstream& file, NiHeader* hdr) : NiSequence(file, hdr) {
 	blockType = NICONTROLLERSEQUENCE;
-	Get(file);
-}
 
-NiControllerSequence::~NiControllerSequence() {
-	header->RemoveStringRef(accumRootNameRef);
+	Get(file);
 }
 
 void NiControllerSequence::Get(fstream& file) {
@@ -9705,13 +9608,7 @@ void NiControllerSequence::Get(fstream& file) {
 	file.read((char*)&startTime, 4);
 	file.read((char*)&stopTime, 4);
 	file.read((char*)&managerRef, 4);
-
-	file.read((char*)&accumRootNameRef, 4);
-	if (accumRootNameRef != 0xFFFFFFFF) {
-		accumRootName = header->GetStringById(accumRootNameRef);
-		header->AddStringRef(accumRootNameRef);
-	}
-
+	accumRootName.Get(file, header);
 	file.read((char*)&flags, 2);
 }
 
@@ -9725,7 +9622,7 @@ void NiControllerSequence::Put(fstream& file) {
 	file.write((char*)&startTime, 4);
 	file.write((char*)&stopTime, 4);
 	file.write((char*)&managerRef, 4);
-	file.write((char*)&accumRootNameRef, 4);
+	accumRootName.Put(file);
 	file.write((char*)&flags, 2);
 }
 
@@ -9760,8 +9657,7 @@ void NiControllerSequence::notifyBlockSwap(int blockIndexLo, int blockIndexHi) {
 void NiControllerSequence::notifyStringDelete(int stringID) {
 	NiSequence::notifyStringDelete(stringID);
 
-	if (accumRootNameRef != 0xFFFFFFFF && accumRootNameRef > stringID)
-		accumRootNameRef--;
+	accumRootName.notifyStringDelete(stringID);
 }
 
 void NiControllerSequence::GetChildRefs(set<int>& refs) {
@@ -9780,20 +9676,20 @@ int NiControllerSequence::CalcBlockSize() {
 }
 
 
-NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiHeader& hdr) {
+NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiHeader* hdr) {
 	NiAVObjectPalette::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIDEFAULTAVOBJECTPALETTE;
 
 	sceneRef = 0xFFFFFFFF;
 	numObjects = 0;
 }
 
-NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(fstream& file, NiHeader& hdr) {
+NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(fstream& file, NiHeader* hdr) {
 	NiAVObjectPalette::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIDEFAULTAVOBJECTPALETTE;
 
 	Get(file);
@@ -9953,7 +9849,7 @@ int NiShader::GetTextureSetRef() {
 	return 0xFFFFFFFF;
 }
 
-void NiShader::SetTextureSetRef(const int& texSetRef) {
+void NiShader::SetTextureSetRef(const int texSetRef) {
 }
 
 Color4 NiShader::GetEmissiveColor() {
@@ -9982,18 +9878,14 @@ void NiShader::SetWetMaterialName(const string& matName) {
 }
 
 
-BSLightingShaderProperty::~BSLightingShaderProperty() {
-	header->RemoveStringRef(wetMaterialNameRef);
-}
-
-BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
+BSLightingShaderProperty::BSLightingShaderProperty(NiHeader* hdr) {
 	NiProperty::Init();
 	NiObjectNET::bBSLightingShaderProperty = true;
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLIGHTINGSHADERPROPERTY;
 
-	if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() >= 120) {
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120) {
 		shaderFlags1 = 0x80400203;
 		shaderFlags2 = 0x00000081;
 	}
@@ -10009,12 +9901,11 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	textureSetRef = 0xFFFFFFFF;
 
 	emissiveMultiple = 1.0f;
-	wetMaterialNameRef = 0xFFFFFFFF;
 	textureClampMode = 3;
 	alpha = 1.0f;
 	refractionStrength = 0.0f;
 
-	if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() >= 120)
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120)
 		glossiness = 1.0f;
 	else
 		glossiness = 20.0f;
@@ -10049,14 +9940,14 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader& hdr) {
 	eyeCubemapScale = 1.0f;
 }
 
-BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr) {
+BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 	NiObjectNET::bBSLightingShaderProperty = true;
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSLIGHTINGSHADERPROPERTY;
 
-	if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() >= 120) {
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120) {
 		shaderFlags1 = 0x80400203;
 		shaderFlags2 = 0x00000081;
 	}
@@ -10065,7 +9956,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader& hdr)
 		shaderFlags2 = 0x00008001;
 	}
 
-	wetMaterialNameRef = 0xFFFFFFFF;
 	lightingEffect1 = 0.3f;
 	lightingEffect2 = 2.0f;
 
@@ -10115,15 +10005,8 @@ void BSLightingShaderProperty::Get(fstream& file) {
 	file.read((char*)&emissiveColor.z, 4);
 	file.read((char*)&emissiveMultiple, 4);
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		file.read((char*)&wetMaterialNameRef, 4);
-		if (wetMaterialNameRef != -1) {
-			wetMaterialName = header->GetStringById(wetMaterialNameRef);
-			header->AddStringRef(wetMaterialNameRef);
-		}
-		else
-			wetMaterialName.clear();
-	}
+	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+		wetMaterialName.Get(file, header);
 
 	file.read((char*)&textureClampMode, 4);
 	file.read((char*)&alpha, 4);
@@ -10221,7 +10104,7 @@ void BSLightingShaderProperty::Put(fstream& file) {
 	file.write((char*)&emissiveMultiple, 4);
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
-		file.write((char*)&wetMaterialNameRef, 4);
+		wetMaterialName.Put(file);
 
 	file.write((char*)&textureClampMode, 4);
 	file.write((char*)&alpha, 4);
@@ -10320,8 +10203,7 @@ void BSLightingShaderProperty::notifyBlockSwap(int blockIndexLo, int blockIndexH
 void BSLightingShaderProperty::notifyStringDelete(int stringID) {
 	NiProperty::notifyStringDelete(stringID);
 
-	if (wetMaterialNameRef != 0xFFFFFFFF && wetMaterialNameRef > stringID)
-		wetMaterialNameRef--;
+	wetMaterialName.notifyStringDelete(stringID);
 }
 
 void BSLightingShaderProperty::GetChildRefs(set<int>& refs) {
@@ -10413,7 +10295,7 @@ int BSLightingShaderProperty::GetTextureSetRef() {
 	return textureSetRef;
 }
 
-void BSLightingShaderProperty::SetTextureSetRef(const int& texSetRef) {
+void BSLightingShaderProperty::SetTextureSetRef(const int texSetRef) {
 	textureSetRef = texSetRef;
 }
 
@@ -10444,12 +10326,11 @@ float BSLightingShaderProperty::GetAlpha() {
 }
 
 string BSLightingShaderProperty::GetWetMaterialName() {
-	return wetMaterialName;
+	return wetMaterialName.GetString(header);
 }
 
 void BSLightingShaderProperty::SetWetMaterialName(const string& matName) {
-	wetMaterialNameRef = header->AddOrFindStringId(matName);
-	wetMaterialName = matName;
+	wetMaterialName.SetString(header, matName);
 }
 
 int BSLightingShaderProperty::CalcBlockSize() {
@@ -10565,10 +10446,10 @@ int BSShaderProperty::CalcBlockSize() {
 }
 
 
-BSEffectShaderProperty::BSEffectShaderProperty(NiHeader& hdr) {
+BSEffectShaderProperty::BSEffectShaderProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSEFFECTSHADERPROPERTY;
 	shaderFlags1 = 0;
 	shaderFlags2 = 0;
@@ -10592,10 +10473,10 @@ BSEffectShaderProperty::BSEffectShaderProperty(NiHeader& hdr) {
 	envMapScale = 1.0f;
 }
 
-BSEffectShaderProperty::BSEffectShaderProperty(fstream& file, NiHeader& hdr) {
+BSEffectShaderProperty::BSEffectShaderProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSEFFECTSHADERPROPERTY;
 
 	Get(file);
@@ -10610,7 +10491,7 @@ void BSEffectShaderProperty::Get(fstream& file) {
 	file.read((char*)&uvOffset.v, 4);
 	file.read((char*)&uvScale.u, 4);
 	file.read((char*)&uvScale.v, 4);
-	sourceTexture = NiString(file, 4);
+	sourceTexture.Get(file, 4);
 	file.read((char*)&textureClampMode, 4);
 
 	file.read((char*)&falloffStartAngle, 4);
@@ -10620,12 +10501,12 @@ void BSEffectShaderProperty::Get(fstream& file) {
 	file.read((char*)&emissiveColor, 16);
 	file.read((char*)&emissiveMultiple, 4);
 	file.read((char*)&softFalloffDepth, 4);
-	greyscaleTexture = NiString(file, 4);
+	greyscaleTexture.Get(file, 4);
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		envMapTexture = NiString(file, 4);
-		normalTexture = NiString(file, 4);
-		envMaskTexture = NiString(file, 4);
+		envMapTexture.Get(file, 4);
+		normalTexture.Get(file, 4);
+		envMaskTexture.Get(file, 4);
 		file.read((char*)&envMapScale, 4);
 	}
 }
@@ -10740,10 +10621,10 @@ int BSEffectShaderProperty::CalcBlockSize() {
 }
 
 
-BSWaterShaderProperty::BSWaterShaderProperty(NiHeader& hdr) {
+BSWaterShaderProperty::BSWaterShaderProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSWATERSHADERPROPERTY;
 
 	shaderFlags1 = 0;
@@ -10755,10 +10636,10 @@ BSWaterShaderProperty::BSWaterShaderProperty(NiHeader& hdr) {
 	waterFlags = 0;
 }
 
-BSWaterShaderProperty::BSWaterShaderProperty(fstream& file, NiHeader& hdr) {
+BSWaterShaderProperty::BSWaterShaderProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSWATERSHADERPROPERTY;
 
 	Get(file);
@@ -10840,10 +10721,10 @@ int BSWaterShaderProperty::CalcBlockSize() {
 }
 
 
-BSSkyShaderProperty::BSSkyShaderProperty(NiHeader& hdr) {
+BSSkyShaderProperty::BSSkyShaderProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSKYSHADERPROPERTY;
 
 	shaderFlags1 = 0;
@@ -10855,10 +10736,10 @@ BSSkyShaderProperty::BSSkyShaderProperty(NiHeader& hdr) {
 	skyFlags = 0;
 }
 
-BSSkyShaderProperty::BSSkyShaderProperty(fstream& file, NiHeader& hdr) {
+BSSkyShaderProperty::BSSkyShaderProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSKYSHADERPROPERTY;
 
 	Get(file);
@@ -10973,10 +10854,10 @@ int BSShaderLightingProperty::CalcBlockSize() {
 }
 
 
-BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader& hdr) {
+BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader* hdr) {
 	BSShaderLightingProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSHADERPPLIGHTINGPROPERTY;
 	textureSetRef = 0xFFFFFFFF;
 	refractionStrength = 0.0;
@@ -10989,10 +10870,10 @@ BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader& hdr) {
 	emissiveColor.a = 0.0f;
 }
 
-BSShaderPPLightingProperty::BSShaderPPLightingProperty(fstream& file, NiHeader& hdr) {
+BSShaderPPLightingProperty::BSShaderPPLightingProperty(fstream& file, NiHeader* hdr) {
 	BSShaderLightingProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSHADERPPLIGHTINGPROPERTY;
 	refractionStrength = 0.0;
 	refractionFirePeriod = 0;
@@ -11089,7 +10970,7 @@ int BSShaderPPLightingProperty::GetTextureSetRef() {
 	return textureSetRef;
 }
 
-void BSShaderPPLightingProperty::SetTextureSetRef(const int& texSetRef) {
+void BSShaderPPLightingProperty::SetTextureSetRef(const int texSetRef) {
 	textureSetRef = texSetRef;
 }
 
@@ -11108,10 +10989,10 @@ int BSShaderPPLightingProperty::CalcBlockSize() {
 }
 
 
-BSShaderTextureSet::BSShaderTextureSet(NiHeader& hdr) {
+BSShaderTextureSet::BSShaderTextureSet(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSHADERTEXTURESET;
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
@@ -11121,14 +11002,13 @@ BSShaderTextureSet::BSShaderTextureSet(NiHeader& hdr) {
 	else
 		numTextures = 6;
 
-	for (int i = 0; i < numTextures; i++)
-		textures.push_back(NiString());
+	textures.resize(numTextures);
 }
 
-BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader& hdr) {
+BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSSHADERTEXTURESET;
 
 	Get(file);
@@ -11138,8 +11018,9 @@ void BSShaderTextureSet::Get(fstream& file) {
 	NiObject::Get(file);
 
 	file.read((char*)&numTextures, 4);
+	textures.resize(numTextures);
 	for (int i = 0; i < numTextures; i++)
-		textures.push_back(NiString(file, 4));
+		textures[i].Get(file, 4);
 }
 
 void BSShaderTextureSet::Put(fstream& file) {
@@ -11163,19 +11044,19 @@ int BSShaderTextureSet::CalcBlockSize() {
 }
 
 
-NiAlphaProperty::NiAlphaProperty(NiHeader& hdr) {
+NiAlphaProperty::NiAlphaProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIALPHAPROPERTY;
 	flags = 4844;
 	threshold = 128;
 }
 
-NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader& hdr) {
+NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIALPHAPROPERTY;
 
 	Get(file);
@@ -11204,20 +11085,20 @@ int NiAlphaProperty::CalcBlockSize() {
 }
 
 
-NiMaterialProperty::NiMaterialProperty(NiHeader& hdr) {
+NiMaterialProperty::NiMaterialProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIMATERIALPROPERTY;
 	glossiness = 1.0f;
 	alpha = 1.0f;
 	emitMulti = 1.0f;
 }
 
-NiMaterialProperty::NiMaterialProperty(fstream& file, NiHeader& hdr) {
+NiMaterialProperty::NiMaterialProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIMATERIALPROPERTY;
 	emitMulti = 1.0f;
 
@@ -11318,20 +11199,20 @@ int NiMaterialProperty::CalcBlockSize() {
 }
 
 
-NiStencilProperty::NiStencilProperty(NiHeader& hdr) {
+NiStencilProperty::NiStencilProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISTENCILPROPERTY;
 	flags = 19840;
 	stencilRef = 0;
 	stencilMask = 0xffffffff;
 }
 
-NiStencilProperty::NiStencilProperty(fstream& file, NiHeader& hdr) {
+NiStencilProperty::NiStencilProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISTENCILPROPERTY;
 
 	Get(file);
@@ -11362,49 +11243,30 @@ int NiStencilProperty::CalcBlockSize() {
 }
 
 
-NiExtraData::~NiExtraData() {
-	header->RemoveStringRef(nameRef);
-}
-
-void NiExtraData::Init() {
-	NiObject::Init();
-
-	nameRef = 0xFFFFFFFF;
-	name.clear();
-}
-
 void NiExtraData::Get(fstream& file) {
 	NiObject::Get(file);
 
-	file.read((char*)&nameRef, 4);
-	if (nameRef != 0xFFFFFFFF) {
-		name = header->GetStringById(nameRef);
-		header->AddStringRef(nameRef);
-	}
-	else
-		name.clear();
+	name.Get(file, header);
 }
 
 void NiExtraData::Put(fstream& file) {
 	NiObject::Put(file);
 
-	file.write((char*)&nameRef, 4);
+	name.Put(file);
 }
 
 void NiExtraData::notifyStringDelete(int stringID) {
 	NiObject::notifyStringDelete(stringID);
 
-	if (nameRef != 0xFFFFFFFF && nameRef > stringID)
-		nameRef--;
+	name.notifyStringDelete(stringID);
 }
 
 string NiExtraData::GetName() {
-	return name;
+	return name.GetString(header);
 }
 
 void NiExtraData::SetName(const string& extraDataName) {
-	nameRef = header->AddOrFindStringId(extraDataName);
-	name = extraDataName;
+	name.SetString(header, extraDataName);
 }
 
 int NiExtraData::CalcBlockSize() {
@@ -11416,19 +11278,19 @@ int NiExtraData::CalcBlockSize() {
 }
 
 
-NiBinaryExtraData::NiBinaryExtraData(NiHeader& hdr) {
+NiBinaryExtraData::NiBinaryExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBINARYEXTRADATA;
 
 	size = 0;
 }
 
-NiBinaryExtraData::NiBinaryExtraData(fstream& file, NiHeader& hdr) {
+NiBinaryExtraData::NiBinaryExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBINARYEXTRADATA;
 
 	Get(file);
@@ -11461,19 +11323,19 @@ int NiBinaryExtraData::CalcBlockSize() {
 }
 
 
-NiFloatExtraData::NiFloatExtraData(NiHeader& hdr) {
+NiFloatExtraData::NiFloatExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATEXTRADATA;
 
 	floatData = 0.0f;
 }
 
-NiFloatExtraData::NiFloatExtraData(fstream& file, NiHeader& hdr) {
+NiFloatExtraData::NiFloatExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIFLOATEXTRADATA;
 
 	Get(file);
@@ -11500,19 +11362,19 @@ int NiFloatExtraData::CalcBlockSize() {
 }
 
 
-NiStringsExtraData::NiStringsExtraData(NiHeader& hdr) {
+NiStringsExtraData::NiStringsExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISTRINGSEXTRADATA;
 
 	numStrings = 0;
 }
 
-NiStringsExtraData::NiStringsExtraData(fstream& file, NiHeader& hdr) {
+NiStringsExtraData::NiStringsExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISTRINGSEXTRADATA;
 
 	Get(file);
@@ -11548,23 +11410,17 @@ int NiStringsExtraData::CalcBlockSize() {
 }
 
 
-NiStringExtraData::~NiStringExtraData() {
-	header->RemoveStringRef(stringDataRef);
-}
-
-NiStringExtraData::NiStringExtraData(NiHeader& hdr) {
+NiStringExtraData::NiStringExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISTRINGEXTRADATA;
-
-	stringDataRef = 0xFFFFFFFF;
 }
 
-NiStringExtraData::NiStringExtraData(fstream& file, NiHeader& hdr) {
+NiStringExtraData::NiStringExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NISTRINGEXTRADATA;
 
 	Get(file);
@@ -11573,33 +11429,27 @@ NiStringExtraData::NiStringExtraData(fstream& file, NiHeader& hdr) {
 void NiStringExtraData::Get(fstream& file) {
 	NiExtraData::Get(file);
 
-	file.read((char*)&stringDataRef, 4);
-	if (stringDataRef != 0xFFFFFFFF) {
-		stringData = header->GetStringById(stringDataRef);
-		header->AddStringRef(stringDataRef);
-	}
+	stringData.Get(file, header);
 }
 
 void NiStringExtraData::Put(fstream& file) {
 	NiExtraData::Put(file);
 
-	file.write((char*)&stringDataRef, 4);
+	stringData.Put(file);
 }
 
 void NiStringExtraData::notifyStringDelete(int stringID) {
 	NiExtraData::notifyStringDelete(stringID);
 
-	if (stringDataRef != 0xFFFFFFFF && stringDataRef > stringID)
-		stringDataRef--;
+	stringData.notifyStringDelete(stringID);
 }
 
 string NiStringExtraData::GetStringData() {
-	return stringData;
+	return stringData.GetString(header);
 }
 
 void NiStringExtraData::SetStringData(const string& str) {
-	stringDataRef = header->AddOrFindStringId(str);
-	stringData = str;
+	stringData.SetString(header, str);
 }
 
 int NiStringExtraData::CalcBlockSize() {
@@ -11611,19 +11461,19 @@ int NiStringExtraData::CalcBlockSize() {
 }
 
 
-NiBooleanExtraData::NiBooleanExtraData(NiHeader& hdr) {
+NiBooleanExtraData::NiBooleanExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBOOLEANEXTRADATA;
 
 	booleanData = false;
 }
 
-NiBooleanExtraData::NiBooleanExtraData(fstream& file, NiHeader& hdr) {
+NiBooleanExtraData::NiBooleanExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIBOOLEANEXTRADATA;
 
 	Get(file);
@@ -11658,18 +11508,18 @@ int NiBooleanExtraData::CalcBlockSize() {
 }
 
 
-NiIntegerExtraData::NiIntegerExtraData(NiHeader& hdr) {
+NiIntegerExtraData::NiIntegerExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIINTEGEREXTRADATA;
 	integerData = 0;
 }
 
-NiIntegerExtraData::NiIntegerExtraData(fstream& file, NiHeader& hdr) {
+NiIntegerExtraData::NiIntegerExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NIINTEGEREXTRADATA;
 
 	Get(file);
@@ -11691,7 +11541,7 @@ uint NiIntegerExtraData::GetIntegerData() {
 	return integerData;
 }
 
-void NiIntegerExtraData::SetIntegerData(const uint& integerData) {
+void NiIntegerExtraData::SetIntegerData(const uint integerData) {
 	this->integerData = integerData;
 }
 
@@ -11704,28 +11554,28 @@ int NiIntegerExtraData::CalcBlockSize() {
 }
 
 
-BSXFlags::BSXFlags(NiHeader& hdr) : NiIntegerExtraData(hdr) {
-	header = &hdr;
+BSXFlags::BSXFlags(NiHeader* hdr) : NiIntegerExtraData(hdr) {
+	header = hdr;
 	blockType = BSXFLAGS;
 }
 
-BSXFlags::BSXFlags(fstream& file, NiHeader& hdr) : NiIntegerExtraData(file, hdr) {
-	header = &hdr;
+BSXFlags::BSXFlags(fstream& file, NiHeader* hdr) : NiIntegerExtraData(file, hdr) {
+	header = hdr;
 	blockType = BSXFLAGS;
 }
 
 
-BSInvMarker::BSInvMarker(NiHeader& hdr) {
+BSInvMarker::BSInvMarker(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSINVMARKER;
 }
 
-BSInvMarker::BSInvMarker(fstream& file, NiHeader& hdr) {
+BSInvMarker::BSInvMarker(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSINVMARKER;
 
 	Get(file);
@@ -11758,17 +11608,17 @@ int BSInvMarker::CalcBlockSize() {
 }
 
 
-BSFurnitureMarker::BSFurnitureMarker(NiHeader& hdr) {
+BSFurnitureMarker::BSFurnitureMarker(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	numPositions = 0;
 }
 
-BSFurnitureMarker::BSFurnitureMarker(fstream& file, NiHeader& hdr) {
+BSFurnitureMarker::BSFurnitureMarker(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 
 	Get(file);
 }
@@ -11834,28 +11684,28 @@ int BSFurnitureMarker::CalcBlockSize() {
 }
 
 
-BSFurnitureMarkerNode::BSFurnitureMarkerNode(NiHeader& hdr) : BSFurnitureMarker(hdr) {
+BSFurnitureMarkerNode::BSFurnitureMarkerNode(NiHeader* hdr) : BSFurnitureMarker(hdr) {
 	blockType = BSFURNITUREMARKERNODE;
 }
 
-BSFurnitureMarkerNode::BSFurnitureMarkerNode(fstream& file, NiHeader& hdr) : BSFurnitureMarker(file, hdr) {
+BSFurnitureMarkerNode::BSFurnitureMarkerNode(fstream& file, NiHeader* hdr) : BSFurnitureMarker(file, hdr) {
 	blockType = BSFURNITUREMARKERNODE;
 }
 
 
-BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(NiHeader& hdr) {
+BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSDECALPLACEMENTVECTOREXTRADATA;
 	unkFloat1 = 0.0f;
 	numVectorBlocks = 0;
 }
 
-BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(fstream& file, NiHeader& hdr) {
+BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSDECALPLACEMENTVECTOREXTRADATA;
 
 	Get(file);
@@ -11909,23 +11759,17 @@ int BSDecalPlacementVectorExtraData::CalcBlockSize() {
 }
 
 
-BSBehaviorGraphExtraData::~BSBehaviorGraphExtraData() {
-	header->RemoveStringRef(behaviorGraphFileRef);
-}
-
-BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiHeader& hdr) {
+BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBEHAVIORGRAPHEXTRADATA;
-
-	behaviorGraphFileRef = 0xFFFFFFFF;
 }
 
-BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(fstream& file, NiHeader& hdr) {
+BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBEHAVIORGRAPHEXTRADATA;
 
 	Get(file);
@@ -11934,27 +11778,21 @@ BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(fstream& file, NiHeader& hdr)
 void BSBehaviorGraphExtraData::Get(fstream& file) {
 	NiExtraData::Get(file);
 
-	file.read((char*)&behaviorGraphFileRef, 4);
-	if (behaviorGraphFileRef != 0xFFFFFFFF) {
-		behaviorGraphFile = header->GetStringById(behaviorGraphFileRef);
-		header->AddStringRef(behaviorGraphFileRef);
-	}
-
+	behaviorGraphFile.Get(file, header);
 	file.read((char*)&controlsBaseSkel, 1);
 }
 
 void BSBehaviorGraphExtraData::Put(fstream& file) {
 	NiExtraData::Put(file);
 
-	file.write((char*)&behaviorGraphFileRef, 4);
+	behaviorGraphFile.Put(file);
 	file.write((char*)&controlsBaseSkel, 1);
 }
 
 void BSBehaviorGraphExtraData::notifyStringDelete(int stringID) {
 	NiExtraData::notifyStringDelete(stringID);
 
-	if (behaviorGraphFileRef != 0xFFFFFFFF && behaviorGraphFileRef > stringID)
-		behaviorGraphFileRef--;
+	behaviorGraphFile.notifyStringDelete(stringID);
 }
 
 int BSBehaviorGraphExtraData::CalcBlockSize() {
@@ -11966,17 +11804,17 @@ int BSBehaviorGraphExtraData::CalcBlockSize() {
 }
 
 
-BSBound::BSBound(NiHeader& hdr) {
+BSBound::BSBound(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBOUND;
 }
 
-BSBound::BSBound(fstream& file, NiHeader& hdr) {
+BSBound::BSBound(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBOUND;
 
 	Get(file);
@@ -12005,27 +11843,22 @@ int BSBound::CalcBlockSize() {
 }
 
 
-BSBoneLODExtraData::BSBoneLODExtraData(NiHeader& hdr) {
+BSBoneLODExtraData::BSBoneLODExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBONELODEXTRADATA;
 
 	numBoneLODs = 0;
 }
 
-BSBoneLODExtraData::BSBoneLODExtraData(fstream& file, NiHeader& hdr) {
+BSBoneLODExtraData::BSBoneLODExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSBONELODEXTRADATA;
 
 	Get(file);
-}
-
-BSBoneLODExtraData::~BSBoneLODExtraData() {
-	for (int i = 0; i < numBoneLODs; i++)
-		header->RemoveStringRef(boneLODs[i].boneNameRef);
 }
 
 void BSBoneLODExtraData::Get(fstream& file) {
@@ -12035,11 +11868,7 @@ void BSBoneLODExtraData::Get(fstream& file) {
 	boneLODs.resize(numBoneLODs);
 	for (int i = 0; i < numBoneLODs; i++) {
 		file.read((char*)&boneLODs[i].distance, 4);
-		file.read((char*)&boneLODs[i].boneNameRef, 4);
-		if (boneLODs[i].boneNameRef != 0xFFFFFFFF) {
-			boneLODs[i].boneName = header->GetStringById(boneLODs[i].boneNameRef);
-			header->AddStringRef(boneLODs[i].boneNameRef);
-		}
+		boneLODs[i].boneName.Get(file, header);
 	}
 }
 
@@ -12049,17 +11878,15 @@ void BSBoneLODExtraData::Put(fstream& file) {
 	file.write((char*)&numBoneLODs, 4);
 	for (int i = 0; i < numBoneLODs; i++) {
 		file.write((char*)&boneLODs[i].distance, 4);
-		file.write((char*)&boneLODs[i].boneNameRef, 4);
+		boneLODs[i].boneName.Put(file);
 	}
 }
 
 void BSBoneLODExtraData::notifyStringDelete(int stringID) {
 	NiExtraData::notifyStringDelete(stringID);
 
-	for (int i = 0; i < numBoneLODs; i++) {
-		if (boneLODs[i].boneNameRef != 0xFFFFFFFF && boneLODs[i].boneNameRef > stringID)
-			boneLODs[i].boneNameRef--;
-	}
+	for (int i = 0; i < numBoneLODs; i++)
+		boneLODs[i].boneName.notifyStringDelete(stringID);
 }
 
 int BSBoneLODExtraData::CalcBlockSize() {
@@ -12072,27 +11899,22 @@ int BSBoneLODExtraData::CalcBlockSize() {
 }
 
 
-NiTextKeyExtraData::NiTextKeyExtraData(NiHeader& hdr) {
+NiTextKeyExtraData::NiTextKeyExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITEXTKEYEXTRADATA;
 
 	numTextKeys = 0;
 }
 
-NiTextKeyExtraData::NiTextKeyExtraData(fstream& file, NiHeader& hdr) {
+NiTextKeyExtraData::NiTextKeyExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NITEXTKEYEXTRADATA;
 
 	Get(file);
-}
-
-NiTextKeyExtraData::~NiTextKeyExtraData() {
-	for (int i = 0; i < numTextKeys; i++)
-		header->RemoveStringRef(textKeys[i].value);
 }
 
 void NiTextKeyExtraData::Get(fstream& file) {
@@ -12102,8 +11924,7 @@ void NiTextKeyExtraData::Get(fstream& file) {
 	textKeys.resize(numTextKeys);
 	for (int i = 0; i < numTextKeys; i++) {
 		file.read((char*)&textKeys[i].time, 4);
-		file.read((char*)&textKeys[i].value, 4);
-		header->AddStringRef(textKeys[i].value);
+		textKeys[i].value.Get(file, header);
 	}
 }
 
@@ -12113,17 +11934,15 @@ void NiTextKeyExtraData::Put(fstream& file) {
 	file.write((char*)&numTextKeys, 4);
 	for (int i = 0; i < numTextKeys; i++) {
 		file.write((char*)&textKeys[i].time, 4);
-		file.write((char*)&textKeys[i].value, 4);
+		textKeys[i].value.Put(file);
 	}
 }
 
 void NiTextKeyExtraData::notifyStringDelete(int stringID) {
 	NiExtraData::notifyStringDelete(stringID);
 
-	for (int i = 0; i < numTextKeys; i++) {
-		if (textKeys[i].value != 0xFFFFFFFF && textKeys[i].value > stringID)
-			textKeys[i].value--;
-	}
+	for (int i = 0; i < numTextKeys; i++)
+		textKeys[i].value.notifyStringDelete(stringID);
 }
 
 int NiTextKeyExtraData::CalcBlockSize() {
@@ -12170,18 +11989,18 @@ int BSConnectPoint::CalcBlockSize() {
 }
 
 
-BSConnectPointParents::BSConnectPointParents(NiHeader& hdr) {
+BSConnectPointParents::BSConnectPointParents(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSCONNECTPOINTPARENTS;
 	numConnectPoints = 0;
 }
 
-BSConnectPointParents::BSConnectPointParents(fstream& file, NiHeader& hdr) {
+BSConnectPointParents::BSConnectPointParents(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSCONNECTPOINTPARENTS;
 
 	Get(file);
@@ -12217,19 +12036,19 @@ int BSConnectPointParents::CalcBlockSize() {
 }
 
 
-BSConnectPointChildren::BSConnectPointChildren(NiHeader& hdr) {
+BSConnectPointChildren::BSConnectPointChildren(NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSCONNECTPOINTCHILDREN;
 	unkByte = 1;
 	numTargets = 0;
 }
 
-BSConnectPointChildren::BSConnectPointChildren(fstream& file, NiHeader& hdr) {
+BSConnectPointChildren::BSConnectPointChildren(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSCONNECTPOINTCHILDREN;
 
 	Get(file);
@@ -12241,8 +12060,9 @@ void BSConnectPointChildren::Get(fstream& file) {
 	file.read((char*)&unkByte, 1);
 	file.read((char*)&numTargets, 4);
 
+	targets.resize(numTargets);
 	for (int i = 0; i < numTargets; i++)
-		targets.push_back(NiString(file, 4));
+		targets[i].Get(file, 4);
 }
 
 void BSConnectPointChildren::Put(fstream& file) {
@@ -12276,19 +12096,19 @@ BSClothExtraData::BSClothExtraData() {
 	data.clear();
 }
 
-BSClothExtraData::BSClothExtraData(NiHeader& hdr, const uint& size) {
+BSClothExtraData::BSClothExtraData(NiHeader* hdr, const uint size) {
 	BSExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSCLOTHEXTRADATA;
 	numBytes = size;
 	data.resize(size);
 }
 
-BSClothExtraData::BSClothExtraData(fstream& file, NiHeader& hdr) {
+BSClothExtraData::BSClothExtraData(fstream& file, NiHeader* hdr) {
 	BSExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSCLOTHEXTRADATA;
 
 	Get(file);
@@ -12348,19 +12168,19 @@ bool BSClothExtraData::FromHKX(const string& fileName) {
 }
 
 
-BSMultiBound::BSMultiBound(NiHeader& hdr) {
+BSMultiBound::BSMultiBound(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUND;
 
 	dataRef = 0xFFFFFFFF;
 }
 
-BSMultiBound::BSMultiBound(fstream& file, NiHeader& hdr) {
+BSMultiBound::BSMultiBound(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUND;
 
 	Get(file);
@@ -12411,17 +12231,17 @@ int BSMultiBound::CalcBlockSize() {
 }
 
 
-BSMultiBoundOBB::BSMultiBoundOBB(NiHeader& hdr) {
+BSMultiBoundOBB::BSMultiBoundOBB(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUNDOBB;
 }
 
-BSMultiBoundOBB::BSMultiBoundOBB(fstream& file, NiHeader& hdr) {
+BSMultiBoundOBB::BSMultiBoundOBB(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUNDOBB;
 
 	Get(file);
@@ -12452,17 +12272,17 @@ int BSMultiBoundOBB::CalcBlockSize() {
 }
 
 
-BSMultiBoundAABB::BSMultiBoundAABB(NiHeader& hdr) {
+BSMultiBoundAABB::BSMultiBoundAABB(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUNDAABB;
 }
 
-BSMultiBoundAABB::BSMultiBoundAABB(fstream& file, NiHeader& hdr) {
+BSMultiBoundAABB::BSMultiBoundAABB(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BSMULTIBOUNDAABB;
 
 	Get(file);
@@ -12491,19 +12311,19 @@ int BSMultiBoundAABB::CalcBlockSize() {
 }
 
 
-NiCollisionObject::NiCollisionObject(NiHeader& hdr) {
+NiCollisionObject::NiCollisionObject(NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NICOLLISIONOBJECT;
 
 	targetRef = 0xFFFFFFFF;
 }
 
-NiCollisionObject::NiCollisionObject(fstream& file, NiHeader& hdr) {
+NiCollisionObject::NiCollisionObject(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = NICOLLISIONOBJECT;
 
 	Get(file);
@@ -12548,12 +12368,12 @@ int NiCollisionObject::CalcBlockSize() {
 }
 
 
-bhkNiCollisionObject::bhkNiCollisionObject(NiHeader& hdr) : NiCollisionObject(hdr) {
+bhkNiCollisionObject::bhkNiCollisionObject(NiHeader* hdr) : NiCollisionObject(hdr) {
 	flags = 1;
 	bodyRef = 0xFFFFFFFF;
 }
 
-bhkNiCollisionObject::bhkNiCollisionObject(fstream& file, NiHeader& hdr) : NiCollisionObject(file, hdr) {
+bhkNiCollisionObject::bhkNiCollisionObject(fstream& file, NiHeader* hdr) : NiCollisionObject(file, hdr) {
 	Get(file);
 }
 
@@ -12602,21 +12422,21 @@ int bhkNiCollisionObject::CalcBlockSize() {
 }
 
 
-bhkCollisionObject::bhkCollisionObject(NiHeader& hdr) : bhkNiCollisionObject(hdr) {
+bhkCollisionObject::bhkCollisionObject(NiHeader* hdr) : bhkNiCollisionObject(hdr) {
 	blockType = BHKCOLLISIONOBJECT;
 }
 
-bhkCollisionObject::bhkCollisionObject(fstream& file, NiHeader& hdr) : bhkNiCollisionObject(file, hdr) {
+bhkCollisionObject::bhkCollisionObject(fstream& file, NiHeader* hdr) : bhkNiCollisionObject(file, hdr) {
 	blockType = BHKCOLLISIONOBJECT;
 }
 
 
-bhkNPCollisionObject::bhkNPCollisionObject(NiHeader& hdr) : bhkCollisionObject(hdr) {
+bhkNPCollisionObject::bhkNPCollisionObject(NiHeader* hdr) : bhkCollisionObject(hdr) {
 	blockType = BHKNPCOLLISIONOBJECT;
 	unkInt = 0;
 }
 
-bhkNPCollisionObject::bhkNPCollisionObject(fstream& file, NiHeader& hdr) : bhkCollisionObject(file, hdr) {
+bhkNPCollisionObject::bhkNPCollisionObject(fstream& file, NiHeader* hdr) : bhkCollisionObject(file, hdr) {
 	blockType = BHKNPCOLLISIONOBJECT;
 
 	Get(file);
@@ -12641,29 +12461,29 @@ int bhkNPCollisionObject::CalcBlockSize() {
 }
 
 
-bhkPCollisionObject::bhkPCollisionObject(NiHeader& hdr) : bhkNiCollisionObject(hdr) {
+bhkPCollisionObject::bhkPCollisionObject(NiHeader* hdr) : bhkNiCollisionObject(hdr) {
 	blockType = BHKPCOLLISIONOBJECT;
 }
 
-bhkPCollisionObject::bhkPCollisionObject(fstream& file, NiHeader& hdr) : bhkNiCollisionObject(file, hdr) {
+bhkPCollisionObject::bhkPCollisionObject(fstream& file, NiHeader* hdr) : bhkNiCollisionObject(file, hdr) {
 	blockType = BHKPCOLLISIONOBJECT;
 }
 
 
-bhkSPCollisionObject::bhkSPCollisionObject(NiHeader& hdr) : bhkPCollisionObject(hdr) {
+bhkSPCollisionObject::bhkSPCollisionObject(NiHeader* hdr) : bhkPCollisionObject(hdr) {
 	blockType = BHKSPCOLLISIONOBJECT;
 }
 
-bhkSPCollisionObject::bhkSPCollisionObject(fstream& file, NiHeader& hdr) : bhkPCollisionObject(file, hdr) {
+bhkSPCollisionObject::bhkSPCollisionObject(fstream& file, NiHeader* hdr) : bhkPCollisionObject(file, hdr) {
 	blockType = BHKSPCOLLISIONOBJECT;
 }
 
 
-bhkBlendCollisionObject::bhkBlendCollisionObject(NiHeader& hdr) : bhkCollisionObject(hdr) {
+bhkBlendCollisionObject::bhkBlendCollisionObject(NiHeader* hdr) : bhkCollisionObject(hdr) {
 	blockType = BHKBLENDCOLLISIONOBJECT;
 }
 
-bhkBlendCollisionObject::bhkBlendCollisionObject(fstream& file, NiHeader& hdr) : bhkCollisionObject(file, hdr) {
+bhkBlendCollisionObject::bhkBlendCollisionObject(fstream& file, NiHeader* hdr) : bhkCollisionObject(file, hdr) {
 	blockType = BHKBLENDCOLLISIONOBJECT;
 
 	Get(file);
@@ -12698,19 +12518,19 @@ bhkPhysicsSystem::bhkPhysicsSystem() {
 	data.clear();
 }
 
-bhkPhysicsSystem::bhkPhysicsSystem(NiHeader& hdr, const uint& size) {
+bhkPhysicsSystem::bhkPhysicsSystem(NiHeader* hdr, const uint size) {
 	BSExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKPHYSICSSYSTEM;
 	numBytes = size;
 	data.resize(size);
 }
 
-bhkPhysicsSystem::bhkPhysicsSystem(fstream& file, NiHeader& hdr) {
+bhkPhysicsSystem::bhkPhysicsSystem(fstream& file, NiHeader* hdr) {
 	BSExtraData::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKPHYSICSSYSTEM;
 
 	Get(file);
@@ -12747,17 +12567,17 @@ int bhkPhysicsSystem::CalcBlockSize() {
 }
 
 
-bhkPlaneShape::bhkPlaneShape(NiHeader& hdr) {
+bhkPlaneShape::bhkPlaneShape(NiHeader* hdr) {
 	bhkHeightFieldShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKPLANESHAPE;
 }
 
-bhkPlaneShape::bhkPlaneShape(fstream& file, NiHeader& hdr) {
+bhkPlaneShape::bhkPlaneShape(fstream& file, NiHeader* hdr) {
 	bhkHeightFieldShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKPLANESHAPE;
 
 	Get(file);
@@ -12817,20 +12637,20 @@ int bhkSphereRepShape::CalcBlockSize() {
 }
 
 
-bhkConvexVerticesShape::bhkConvexVerticesShape(NiHeader& hdr) {
+bhkConvexVerticesShape::bhkConvexVerticesShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCONVEXVERTICESSHAPE;
 
 	numVerts = 0;
 	numNormals = 0;
 }
 
-bhkConvexVerticesShape::bhkConvexVerticesShape(fstream& file, NiHeader& hdr) {
+bhkConvexVerticesShape::bhkConvexVerticesShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCONVEXVERTICESSHAPE;
 
 	Get(file);
@@ -12879,17 +12699,17 @@ int bhkConvexVerticesShape::CalcBlockSize() {
 }
 
 
-bhkBoxShape::bhkBoxShape(NiHeader& hdr) {
+bhkBoxShape::bhkBoxShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBOXSHAPE;
 }
 
-bhkBoxShape::bhkBoxShape(fstream& file, NiHeader& hdr) {
+bhkBoxShape::bhkBoxShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBOXSHAPE;
 
 	Get(file);
@@ -12922,36 +12742,36 @@ int bhkBoxShape::CalcBlockSize() {
 }
 
 
-bhkSphereShape::bhkSphereShape(NiHeader& hdr) {
+bhkSphereShape::bhkSphereShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKSPHERESHAPE;
 }
 
-bhkSphereShape::bhkSphereShape(fstream& file, NiHeader& hdr) {
+bhkSphereShape::bhkSphereShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKSPHERESHAPE;
 
 	Get(file);
 }
 
 
-bhkTransformShape::bhkTransformShape(NiHeader& hdr) {
+bhkTransformShape::bhkTransformShape(NiHeader* hdr) {
 	bhkShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKTRANSFORMSHAPE;
 
 	shapeRef = 0xFFFFFFFF;
 }
 
-bhkTransformShape::bhkTransformShape(fstream& file, NiHeader& hdr) {
+bhkTransformShape::bhkTransformShape(fstream& file, NiHeader* hdr) {
 	bhkShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKTRANSFORMSHAPE;
 
 	Get(file);
@@ -13010,26 +12830,26 @@ int bhkTransformShape::CalcBlockSize() {
 }
 
 
-bhkConvexTransformShape::bhkConvexTransformShape(NiHeader& hdr) : bhkTransformShape(hdr) {
+bhkConvexTransformShape::bhkConvexTransformShape(NiHeader* hdr) : bhkTransformShape(hdr) {
 	blockType = BHKCONVEXTRANSFORMSHAPE;
 }
 
-bhkConvexTransformShape::bhkConvexTransformShape(fstream& file, NiHeader& hdr) : bhkTransformShape(file, hdr) {
+bhkConvexTransformShape::bhkConvexTransformShape(fstream& file, NiHeader* hdr) : bhkTransformShape(file, hdr) {
 	blockType = BHKCONVEXTRANSFORMSHAPE;
 }
 
 
-bhkCapsuleShape::bhkCapsuleShape(NiHeader& hdr) {
+bhkCapsuleShape::bhkCapsuleShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCAPSULESHAPE;
 }
 
-bhkCapsuleShape::bhkCapsuleShape(fstream& file, NiHeader& hdr) {
+bhkCapsuleShape::bhkCapsuleShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCAPSULESHAPE;
 
 	Get(file);
@@ -13066,20 +12886,20 @@ int bhkCapsuleShape::CalcBlockSize() {
 }
 
 
-bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiHeader& hdr) {
+bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiHeader* hdr) {
 	bhkBvTreeShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKMOPPBVTREESHAPE;
 
 	shapeRef = 0xFFFFFFFF;
 	dataSize = 0;
 }
 
-bhkMoppBvTreeShape::bhkMoppBvTreeShape(fstream& file, NiHeader& hdr) {
+bhkMoppBvTreeShape::bhkMoppBvTreeShape(fstream& file, NiHeader* hdr) {
 	bhkBvTreeShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKMOPPBVTREESHAPE;
 
 	Get(file);
@@ -13160,20 +12980,20 @@ int bhkMoppBvTreeShape::CalcBlockSize() {
 }
 
 
-bhkNiTriStripsShape::bhkNiTriStripsShape(NiHeader& hdr) {
+bhkNiTriStripsShape::bhkNiTriStripsShape(NiHeader* hdr) {
 	bhkShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKNITRISTRIPSSHAPE;
 
 	numParts = 0;
 	numFilters = 0;
 }
 
-bhkNiTriStripsShape::bhkNiTriStripsShape(fstream& file, NiHeader& hdr) {
+bhkNiTriStripsShape::bhkNiTriStripsShape(fstream& file, NiHeader* hdr) {
 	bhkShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKNITRISTRIPSSHAPE;
 
 	Get(file);
@@ -13267,20 +13087,20 @@ int bhkNiTriStripsShape::CalcBlockSize() {
 }
 
 
-bhkListShape::bhkListShape(NiHeader& hdr) {
+bhkListShape::bhkListShape(NiHeader* hdr) {
 	bhkShapeCollection::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKLISTSHAPE;
 
 	numSubShapes = 0;
 	numUnkInts = 0;
 }
 
-bhkListShape::bhkListShape(fstream& file, NiHeader& hdr) {
+bhkListShape::bhkListShape(fstream& file, NiHeader* hdr) {
 	bhkShapeCollection::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKLISTSHAPE;
 
 	Get(file);
@@ -13423,17 +13243,17 @@ int bhkWorldObject::CalcBlockSize() {
 }
 
 
-bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiHeader& hdr) {
+bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiHeader* hdr) {
 	bhkShapePhantom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKSIMPLESHAPEPHANTOM;
 }
 
-bhkSimpleShapePhantom::bhkSimpleShapePhantom(fstream& file, NiHeader& hdr) {
+bhkSimpleShapePhantom::bhkSimpleShapePhantom(fstream& file, NiHeader* hdr) {
 	bhkShapePhantom::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKSIMPLESHAPEPHANTOM;
 
 	Get(file);
@@ -13532,17 +13352,17 @@ int bhkConstraint::CalcBlockSize() {
 }
 
 
-bhkHingeConstraint::bhkHingeConstraint(NiHeader& hdr) {
+bhkHingeConstraint::bhkHingeConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKHINGECONSTRAINT;
 }
 
-bhkHingeConstraint::bhkHingeConstraint(fstream& file, NiHeader& hdr) {
+bhkHingeConstraint::bhkHingeConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKHINGECONSTRAINT;
 
 	Get(file);
@@ -13569,17 +13389,17 @@ int bhkHingeConstraint::CalcBlockSize() {
 }
 
 
-bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiHeader& hdr) {
+bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKLIMITEDHINGECONSTRAINT;
 }
 
-bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(fstream& file, NiHeader& hdr) {
+bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKLIMITEDHINGECONSTRAINT;
 
 	Get(file);
@@ -13622,17 +13442,17 @@ int bhkLimitedHingeConstraint::CalcBlockSize() {
 }
 
 
-bhkBreakableConstraint::bhkBreakableConstraint(NiHeader& hdr) {
+bhkBreakableConstraint::bhkBreakableConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBREAKABLECONSTRAINT;
 }
 
-bhkBreakableConstraint::bhkBreakableConstraint(fstream& file, NiHeader& hdr) {
+bhkBreakableConstraint::bhkBreakableConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBREAKABLECONSTRAINT;
 
 	Get(file);
@@ -13682,17 +13502,17 @@ int bhkBreakableConstraint::CalcBlockSize() {
 }
 
 
-bhkRagdollConstraint::bhkRagdollConstraint(NiHeader& hdr) {
+bhkRagdollConstraint::bhkRagdollConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKRAGDOLLCONSTRAINT;
 }
 
-bhkRagdollConstraint::bhkRagdollConstraint(fstream& file, NiHeader& hdr) {
+bhkRagdollConstraint::bhkRagdollConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKRAGDOLLCONSTRAINT;
 
 	Get(file);
@@ -13755,17 +13575,17 @@ int bhkRagdollConstraint::CalcBlockSize() {
 }
 
 
-bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiHeader& hdr) {
+bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKSTIFFSPRINGCONSTRAINT;
 }
 
-bhkStiffSpringConstraint::bhkStiffSpringConstraint(fstream& file, NiHeader& hdr) {
+bhkStiffSpringConstraint::bhkStiffSpringConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKSTIFFSPRINGCONSTRAINT;
 
 	Get(file);
@@ -13796,17 +13616,17 @@ int bhkStiffSpringConstraint::CalcBlockSize() {
 }
 
 
-bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiHeader& hdr) {
+bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBALLANDSOCKETCONSTRAINT;
 }
 
-bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(fstream& file, NiHeader& hdr) {
+bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBALLANDSOCKETCONSTRAINT;
 
 	Get(file);
@@ -13835,10 +13655,10 @@ int bhkBallAndSocketConstraint::CalcBlockSize() {
 }
 
 
-bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiHeader& hdr) {
+bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiHeader* hdr) {
 	bhkSerializable::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBALLSOCKETCONSTRAINTCHAIN;
 
 	numPivots = 0;
@@ -13848,10 +13668,10 @@ bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiHeader& hdr) {
 	entityBRef = 0xFFFFFFFF;
 }
 
-bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(fstream& file, NiHeader& hdr) {
+bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(fstream& file, NiHeader* hdr) {
 	bhkSerializable::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKBALLSOCKETCONSTRAINTCHAIN;
 
 	Get(file);
@@ -13967,19 +13787,19 @@ int bhkBallSocketConstraintChain::CalcBlockSize() {
 }
 
 
-bhkRigidBody::bhkRigidBody(NiHeader& hdr) {
+bhkRigidBody::bhkRigidBody(NiHeader* hdr) {
 	bhkEntity::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKRIGIDBODY;
 
 	numConstraints = 0;
 }
 
-bhkRigidBody::bhkRigidBody(fstream& file, NiHeader& hdr) {
+bhkRigidBody::bhkRigidBody(fstream& file, NiHeader* hdr) {
 	bhkEntity::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKRIGIDBODY;
 
 	Get(file);
@@ -14152,29 +13972,29 @@ int bhkRigidBody::CalcBlockSize() {
 }
 
 
-bhkRigidBodyT::bhkRigidBodyT(NiHeader& hdr) : bhkRigidBody(hdr) {
+bhkRigidBodyT::bhkRigidBodyT(NiHeader* hdr) : bhkRigidBody(hdr) {
 	blockType = BHKRIGIDBODYT;
 }
 
-bhkRigidBodyT::bhkRigidBodyT(fstream& file, NiHeader& hdr) : bhkRigidBody(file, hdr) {
+bhkRigidBodyT::bhkRigidBodyT(fstream& file, NiHeader* hdr) : bhkRigidBody(file, hdr) {
 	blockType = BHKRIGIDBODYT;
 }
 
 
-bhkCompressedMeshShape::bhkCompressedMeshShape(NiHeader& hdr) {
+bhkCompressedMeshShape::bhkCompressedMeshShape(NiHeader* hdr) {
 	bhkShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCOMPRESSEDMESHSHAPE;
 
 	targetRef = 0xFFFFFFFF;
 	dataRef = 0xFFFFFFFF;
 }
 
-bhkCompressedMeshShape::bhkCompressedMeshShape(fstream& file, NiHeader& hdr) {
+bhkCompressedMeshShape::bhkCompressedMeshShape(fstream& file, NiHeader* hdr) {
 	bhkShape::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCOMPRESSEDMESHSHAPE;
 
 	Get(file);
@@ -14250,10 +14070,10 @@ int bhkCompressedMeshShape::CalcBlockSize() {
 }
 
 
-bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiHeader& hdr) {
+bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiHeader* hdr) {
 	bhkRefObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCOMPRESSEDMESHSHAPEDATA;
 
 	numMat32 = 0;
@@ -14268,10 +14088,10 @@ bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiHeader& hdr) {
 	numConvexPieceA = 0;
 }
 
-bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(fstream& file, NiHeader& hdr) {
+bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(fstream& file, NiHeader* hdr) {
 	bhkRefObject::Init();
 
-	header = &hdr;
+	header = hdr;
 	blockType = BHKCOMPRESSEDMESHSHAPEDATA;
 
 	Get(file);
@@ -14459,7 +14279,7 @@ NiUnknown::NiUnknown() {
 	blockType = NIUNKNOWN;
 }
 
-NiUnknown::NiUnknown(fstream& file, const uint& size) {
+NiUnknown::NiUnknown(fstream& file, const uint size) {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
@@ -14469,7 +14289,7 @@ NiUnknown::NiUnknown(fstream& file, const uint& size) {
 	Get(file);
 }
 
-NiUnknown::NiUnknown(const uint& size) {
+NiUnknown::NiUnknown(const uint size) {
 	NiObject::Init();
 
 	blockType = NIUNKNOWN;
