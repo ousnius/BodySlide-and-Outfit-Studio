@@ -1202,8 +1202,10 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 
 	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true)
 		project->SetTextures();
-	else
-		project->SetTextures(XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString());
+	else {
+		auto texVec = { XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString() };
+		project->SetTextures(texVec);
+	}
 
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(50, _("Creating outfit..."));

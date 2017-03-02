@@ -144,6 +144,7 @@ public:
 	bool GetShapeMaterialFile(const string& shapeName, MaterialFile& outMatFile);
 
 	void SetTextures();
+	void SetTextures(const vector<string>& textureFiles);
 	void SetTextures(const string& shapeName, const vector<string>& textureFiles = vector<string>());
 
 	bool IsValidShape(const string& shapeName);

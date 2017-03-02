@@ -171,41 +171,45 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 }
 
 GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile) {
-	MaterialKey key(textureFiles, vShaderFile, fShaderFile);
+	auto texFiles = textureFiles;
+	for (auto &f : texFiles)
+		transform(f.begin(), f.end(), f.begin(), ::tolower);
+
+	MaterialKey key(texFiles, vShaderFile, fShaderFile);
 	auto it = materials.find(key);
 	if (it != materials.end())
 		return it->second.get();
 
-	vector<GLuint> texRefs(textureFiles.size(), 0);
-	for (int i = 0; i < textureFiles.size(); i++) {
-		if (textureFiles[i].empty())
+	vector<GLuint> texRefs(texFiles.size(), 0);
+	for (int i = 0; i < texFiles.size(); i++) {
+		if (texFiles[i].empty())
 			continue;
 
 		GLuint textureID = 0;
-		wxFileName fileName(textureFiles[i]);
+		wxFileName fileName(texFiles[i]);
 		wxString fileExt = fileName.GetExt().Lower();
 		string fileExtStr = string(fileExt.c_str());
 
 		// All textures (GLI)
 		if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
-			textureID = GLI_load_texture(textureFiles[i]);
+			textureID = GLI_load_texture(texFiles[i]);
 
 		// Cubemap fallback (SOIL)
 		if (!textureID && i == 4)
-			textureID = SOIL_load_OGL_single_cubemap(textureFiles[i].c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+			textureID = SOIL_load_OGL_single_cubemap(texFiles[i].c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 
 		// Texture and image fallback (SOIL)
 		if (!textureID)
-			textureID = SOIL_load_OGL_texture(textureFiles[i].c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+			textureID = SOIL_load_OGL_texture(texFiles[i].c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 
 		if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
 			if (Config["GameDataPath"].empty()) {
-				wxLogWarning("Texture file '%s' not found.", textureFiles[i]);
+				wxLogWarning("Texture file '%s' not found.", texFiles[i]);
 				continue;
 			}
 
 			wxMemoryBuffer data;
-			wxString texFile = textureFiles[i];
+			wxString texFile = texFiles[i];
 			texFile.Replace(Config["GameDataPath"], "");
 			texFile.Replace("\\", "/");
 			for (FSArchiveFile *archive : FSManager::archiveList()) {
@@ -238,12 +242,12 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 					textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetDataLen(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 			}
 			else {
-				wxLogWarning("Texture file '%s' not found.", textureFiles[i]);
+				wxLogWarning("Texture file '%s' not found.", texFiles[i]);
 				continue;
 			}
 		}
 		else if (!textureID) {
-			wxLogWarning("Texture file '%s' not found.", textureFiles[i]);
+			wxLogWarning("Texture file '%s' not found.", texFiles[i]);
 			continue;
 		}
 

@@ -1010,6 +1010,13 @@ void OutfitProject::SetTextures() {
 		SetTextures(s);
 }
 
+void OutfitProject::SetTextures(const vector<string>& textureFiles) {
+	vector<string> shapes;
+	GetShapes(shapes);
+	for (auto &s : shapes)
+		SetTextures(s, textureFiles);
+}
+
 void OutfitProject::SetTextures(const string& shapeName, const vector<string>& textureFiles) {
 	if (shapeName.empty())
 		return;

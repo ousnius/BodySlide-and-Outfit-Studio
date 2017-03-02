@@ -334,11 +334,12 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		if (dlg.ShowModal() == wxID_OK) {
+			auto dataPath = Config["GameDataPath"];
 			vector<string> texFiles(10);
 			for (int i = 0; i < 10; i++) {
 				string texPath = stTexGrid->GetCellValue(i, 0);
 				nif->SetTextureForShape(shapeName, texPath, i);
-				texFiles[i] = texPath;
+				texFiles[i] = dataPath + texPath;
 			}
 
 			nif->TrimTexturePaths();
