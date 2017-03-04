@@ -99,6 +99,8 @@ vec3 perturb_normal(in vec3 N, in vec3 V)
 {
 	// Assume N, the interpolated vertex normal and V, the view vector (vertex to eye)
 	vec3 map = normalMap.rgb;
+	map.r = 1.0-map.r;
+	map.g = 1.0-map.g;
 	map = map * 255.0 / 127.0 - 128.0 / 127.0;
 	mat3 TBN = cotangent_frame(N, -V);
 	return normalize(TBN * map);

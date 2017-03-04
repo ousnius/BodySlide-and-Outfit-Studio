@@ -22,6 +22,16 @@ PFNGLGENVERTEXARRAYSPROC glGenVertexArrays = nullptr;
 PFNGLBINDVERTEXARRAYPROC glBindVertexArray = nullptr;
 PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays = nullptr;
 
+PFNGLGENFRAMEBUFFERSPROC glGenFrameBuffers = nullptr;
+PFNGLDELETEFRAMEBUFFERSPROC glDeleteFrameBuffers = nullptr;
+PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer = nullptr;
+PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D = nullptr;
+PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers = nullptr;
+PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer = nullptr;
+PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferstorage = nullptr;
+PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer = nullptr;
+PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers = nullptr;
+
 // OpenGL 2.0
 PFNGLCREATESHADERPROC glCreateShader = nullptr;
 PFNGLSHADERSOURCEPROC glShaderSource = nullptr;
@@ -78,6 +88,15 @@ void InitExtensions() {
 		glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)wglGetProcAddress("glGenVertexArrays");
 		glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)wglGetProcAddress("glBindVertexArray");
 		glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)wglGetProcAddress("glDeleteVertexArrays");
+		glGenFrameBuffers = (PFNGLGENFRAMEBUFFERSPROC) wglGetProcAddress("glGenFramebuffers");
+		glDeleteFrameBuffers = (PFNGLDELETEFRAMEBUFFERSPROC) wglGetProcAddress("glDeleteFramebuffers");
+		glBindFramebuffer = (PFNGLBINDFRAMEBUFFERPROC) wglGetProcAddress("glBindFramebuffer");
+		glFramebufferTexture2D = (PFNGLFRAMEBUFFERTEXTURE2DPROC)wglGetProcAddress("glFramebufferTexture2D");
+		glGenRenderbuffers =(PFNGLGENRENDERBUFFERSPROC) wglGetProcAddress("glGenRenderbuffers");
+		glBindRenderbuffer =(PFNGLBINDRENDERBUFFERPROC) wglGetProcAddress("glBindRenderbuffer");
+		glRenderbufferstorage =(PFNGLRENDERBUFFERSTORAGEPROC) wglGetProcAddress("glRenderbufferStorage");
+		glFramebufferRenderbuffer =(PFNGLFRAMEBUFFERRENDERBUFFERPROC) wglGetProcAddress("glFramebufferRenderbuffer");
+		glDeleteRenderbuffers = (PFNGLDELETERENDERBUFFERSPROC) wglGetProcAddress("glDeleteRenderbuffers");
 
 		glCreateShader = (PFNGLCREATESHADERPROC)wglGetProcAddress("glCreateShader");
 		glShaderSource = (PFNGLSHADERSOURCEPROC)wglGetProcAddress("glShaderSource");

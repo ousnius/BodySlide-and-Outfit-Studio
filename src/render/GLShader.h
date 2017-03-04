@@ -89,6 +89,7 @@ public:
 	void ShowTexture(bool bShow = true);
 
 	void SetNormalMapEnabled(const bool enable);
+	void SetAlphaMaskEnabled(const bool enable);
 	void SetCubemapEnabled(const bool enable);
 	void SetEnvMaskEnabled(const bool enable);
 	void SetSpecularEnabled(const bool enable);
@@ -105,95 +106,42 @@ public:
 	void End();
 };
 
+class ResourceLoader;
+
 class GLMaterial {
 private:
-	vector<GLuint> texRef;
+	// texture names linked with this material.  Used to lookup OGL texture ids in Resource Loader.
+	vector<string> texNames;
+	// Cache of texture IDs. These are direct OGL texture ids used to bind textures and avoid lookups to 
+	//  the resource loader's texture database each frame.  
+	vector<GLuint> texCache;
+	// A value indicating the last time the cache was updated from the resource loader. This isn't a time,
+	//  but instead a numeric indicator of change state. This is checked prior to binding textures, and if
+	//  a change has happened, texids are refreshed from ResourceLoader based on texNames.
+	_int64 cacheTime;
 	GLShader shader;
+	ResourceLoader* resLoaderRef;
 
 public:
 	GLMaterial();
-	~GLMaterial() {
-		glDeleteTextures(texRef.size(), texRef.data());
-	}
+	~GLMaterial();
 
-	GLMaterial(const string& vertShaderProg, const string& fragShaderProg) {
-		shader = GLShader(vertShaderProg, fragShaderProg);
-	}
+	// Shader-only material, does not contain texture references, and thus does not use reference to res loader.
+	GLMaterial(const string& vertShaderProg, const string& fragShaderProg);
 
-	GLMaterial(GLuint texID, const string& vertShaderProg, const string& fragShaderProg) {
-		texRef.clear();
-		texRef.push_back(texID);
-		shader = GLShader(vertShaderProg, fragShaderProg);
-	}
 
-	GLMaterial(GLuint texID[], int texCount, const string& vertShaderProg, const string& fragShaderProg) {
-		texRef.resize(texCount, 0);
-		for (int i = 0; i < texCount; i++)
-			texRef[i] = texID[i];
+	GLMaterial(ResourceLoader* resLoader, string texName, const string& vertShaderProg, const string& fragShaderProg);
 
-		shader = GLShader(vertShaderProg, fragShaderProg);
-	}
+	GLMaterial(ResourceLoader* resLoader, vector<string> inTexNames, const string& vertShaderProg, const string& fragShaderProg);
 
-	GLShader& GetShader() {
-		return shader;
-	}
+	GLShader& GetShader();
 
-	void BindTextures(GLfloat largestAF, const bool hasBacklight) {
-		for (int id = 0; id < texRef.size(); id++) {
-			switch (id) {
-			case 0:
-				shader.BindTexture(id, texRef[id], "texDiffuse");
-				if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-				break;
-
-			case 1:
-				if (texRef[id] != 0) {
-					shader.BindTexture(id, texRef[id], "texNormal");
-					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-					shader.SetNormalMapEnabled(true);
-				}
-				else
-					shader.SetNormalMapEnabled(false);
-				break;
-
-			case 4:
-				if (texRef[id] != 0) {
-					shader.BindCubemap(id, texRef[id], "texCubemap");
-					if (largestAF) glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-					shader.SetCubemapEnabled(true);
-				}
-				else
-					shader.SetCubemapEnabled(false);
-				break;
-
-			case 5:
-				if (texRef[id] != 0) {
-					shader.BindTexture(id, texRef[id], "texEnvMask");
-					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-					shader.SetEnvMaskEnabled(true);
-				}
-				else
-					shader.SetEnvMaskEnabled(false);
-				break;
-
-			case 7:
-				if (!hasBacklight) {
-					if (texRef[id] != 0) {
-						shader.BindTexture(id, texRef[id], "texSpecular");
-						if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-					}
-				}
-				else {
-					if (texRef[id] != 0) {
-						shader.BindTexture(id, texRef[id], "texBacklight");
-						if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-						shader.SetBacklightEnabled(true);
-					}
-					else
-						shader.SetBacklightEnabled(false);
-				}
-				break;
-			}
+	GLuint GetTexID(uint index);
+	const string& GetTexName(uint index) {
+		if (index < texNames.size()) {
+			return texNames[index];
 		}
 	}
+
+	void BindTextures(GLfloat largestAF, const bool hasBacklight);
 };

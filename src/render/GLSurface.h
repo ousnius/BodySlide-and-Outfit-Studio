@@ -221,7 +221,10 @@ public:
 
 	void SetStartingView(const Vector3& camPos, const Vector3& camRot, const uint& vpWidth, const uint& vpHeight, const float& fov = 65.0f);
 	void SetSize(uint w, uint h);
+	void GetSize(uint &w, uint &h);
 	void UpdateProjection();
+
+	void RenderFullScreenQuad(GLMaterial * renderShader);
 
 	void TurnTableCamera(int dScreenX);
 	void PitchCamera(int dScreenY);
@@ -272,8 +275,12 @@ public:
 
 	GLMaterial* AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile);
 	GLMaterial* GetPrimitiveMaterial();
+	ResourceLoader* GetResourceLoader() {
+		return &resLoader;
+	}
 
 	void RenderOneFrame();
+	void RenderToTexture(GLMaterial* renderShader);
 	void RenderMesh(mesh* m);
 
 	void UpdateShaders(mesh* m);

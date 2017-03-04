@@ -285,6 +285,12 @@ void GLShader::SetNormalMapEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
+void GLShader::SetAlphaMaskEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bAlphaMask");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
 void GLShader::SetCubemapEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bCubemap");
 	if (loc >= 0)

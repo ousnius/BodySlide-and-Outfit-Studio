@@ -16,12 +16,138 @@ See the included LICENSE file
 #include <wx/log.h>
 
 ResourceLoader::ResourceLoader() {
+	cacheTime = 1;
 }
 
 ResourceLoader::~ResourceLoader() {
+	Cleanup();
 }
 
 bool ResourceLoader::extChecked = false;
+
+GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap)
+{
+	auto ti = textures.find(inFileName);
+	if (ti != textures.end()) {
+		return ti->second;
+	}
+	GLuint textureID = 0;
+	wxFileName fileName(inFileName);
+	wxString fileExt = fileName.GetExt().Lower();
+	string fileExtStr = string(fileExt.c_str());
+
+	// All textures (GLI)
+	if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
+		textureID = GLI_load_texture(inFileName);
+
+	// Cubemap fallback (SOIL)
+	if (!textureID && isCubeMap)
+		textureID = SOIL_load_OGL_single_cubemap(inFileName.c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+
+	// Texture and image fallback (SOIL)
+	if (!textureID)
+		textureID = SOIL_load_OGL_texture(inFileName.c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+
+	if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
+		if (Config["GameDataPath"].empty()) {
+			wxLogWarning("Texture file '%s' not found.", inFileName);
+			return 0;
+		}
+
+		wxMemoryBuffer data;
+		wxString texFile = inFileName;
+		texFile.Replace(Config["GameDataPath"], "");
+		texFile.Replace("\\", "/");
+		for (FSArchiveFile *archive : FSManager::archiveList()) {
+			if (archive) {
+				if (archive->hasFile(texFile.ToStdString())) {
+					wxMemoryBuffer outData;
+					archive->fileContents(texFile.ToStdString(), outData);
+
+					if (!outData.IsEmpty()) {
+						data = move(outData);
+						break;
+					}
+				}
+			}
+		}
+
+		if (!data.IsEmpty()) {
+			byte* texBuffer = static_cast<byte*>(data.GetData());
+
+			// All textures (GLI)
+			if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
+				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen());
+
+			// Cubemap fallback (SOIL)
+			if (!textureID && isCubeMap)
+				textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetDataLen(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+
+			// Texture and image fallback (SOIL)
+			if (!textureID)
+				textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetDataLen(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+		}
+		else {
+			wxLogWarning("Texture file '%s' not found.", inFileName);
+			return 0;
+		}
+	}
+	else if (!textureID) {
+		wxLogWarning("Texture file '%s' not found.", inFileName);
+		return 0;
+	}
+
+	textures[inFileName] = textureID;
+
+	return textureID;
+}
+
+GLuint ResourceLoader::GenerateTextureID(const string & texName)
+{
+	DeleteTexture(texName);
+	GLuint textureID;
+	glGenTextures(1, &textureID);
+	textures[texName] = textureID;
+	
+	return textureID;
+}
+
+GLuint ResourceLoader::GetTexID(const string & texName)
+{
+	auto ti = textures.find(texName);
+	if (ti != textures.end()) {
+		return ti->second;
+	}
+	return 0;
+}
+
+void ResourceLoader::DeleteTexture(const string & texName)
+{
+	auto ti = textures.find(texName);
+	if (ti != textures.end()) {
+		cacheTime++;	
+		glDeleteTextures(1, &ti->second);
+		textures.erase(ti);
+	}
+}
+
+
+bool ResourceLoader::RenameTexture(const string & texNameSrc, const string & texNameDest, bool overwrite)
+{
+	auto tid = textures.find(texNameDest);
+	if (tid != textures.end()) {
+		if(!overwrite)
+			return false;
+		DeleteTexture(texNameDest);
+	}
+	auto ti = textures.find(texNameSrc);
+	if (ti != textures.end()) {
+		cacheTime++;		//note, if a texture is replaced, cacheTime increment by 2 in this function (DeleteTexture also increments it)
+		textures[texNameDest] = ti->second;
+		textures.erase(ti);
+	}
+	return true;
+}
 
 // File extension can be KTX or DDS
 GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
@@ -186,98 +312,49 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 			continue;
 
 		GLuint textureID = 0;
-		wxFileName fileName(texFiles[i]);
-		wxString fileExt = fileName.GetExt().Lower();
-		string fileExtStr = string(fileExt.c_str());
 
-		// All textures (GLI)
-		if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
-			textureID = GLI_load_texture(texFiles[i]);
-
-		// Cubemap fallback (SOIL)
-		if (!textureID && i == 4)
-			textureID = SOIL_load_OGL_single_cubemap(texFiles[i].c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
-
-		// Texture and image fallback (SOIL)
-		if (!textureID)
-			textureID = SOIL_load_OGL_texture(texFiles[i].c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
-
-		if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
-			if (Config["GameDataPath"].empty()) {
-				wxLogWarning("Texture file '%s' not found.", texFiles[i]);
-				continue;
-			}
-
-			wxMemoryBuffer data;
-			wxString texFile = texFiles[i];
-			texFile.Replace(Config["GameDataPath"], "");
-			texFile.Replace("\\", "/");
-			for (FSArchiveFile *archive : FSManager::archiveList()) {
-				if (archive) {
-					if (archive->hasFile(texFile.ToStdString())) {
-						wxMemoryBuffer outData;
-						archive->fileContents(texFile.ToStdString(), outData);
-
-						if (!outData.IsEmpty()) {
-							data = move(outData);
-							break;
-						}
-					}
-				}
-			}
-
-			if (!data.IsEmpty()) {
-				byte* texBuffer = static_cast<byte*>(data.GetData());
-
-				// All textures (GLI)
-				if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
-					textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen());
-
-				// Cubemap fallback (SOIL)
-				if (!textureID && i == 4)
-					textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetDataLen(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
-
-				// Texture and image fallback (SOIL)
-				if (!textureID)
-					textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetDataLen(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
-			}
-			else {
-				wxLogWarning("Texture file '%s' not found.", texFiles[i]);
-				continue;
-			}
-		}
-		else if (!textureID) {
-			wxLogWarning("Texture file '%s' not found.", texFiles[i]);
+		textureID = LoadTexture(texFiles[i], i == 4);
+		if (textureID == 0) {
 			continue;
 		}
-
 		texRefs[i] = textureID;
-	}
+	} 
 
 	// No diffuse found
 	if (texRefs.empty() || texRefs[0] == 0) {
+		/* disabling default material key method. The file name of the default image causes the material
+		// to not be able to match the correct material from the key.  Instead, loading the default texture
+		// and "rename"ing it to match internally what the material thinks the texture name is.
+
 		// Set default material key
 		vector<string> defaultTex = { "res\\images\\NoImg.png" };
+		
 		key = MaterialKey(defaultTex, vShaderFile, fShaderFile);
 
 		// Return existing no image material
 		auto it = materials.find(key);
 		if (it != materials.end())
 			return it->second.get();
-
+		
 		// Reset texture indices
 		texRefs.resize(1, 0);
-
+		*/
 		// Load default image
-		texRefs[0] = SOIL_load_OGL_texture(defaultTex[0].c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+		string defaultTex = "res\\images\\NoImg.png";
+		texRefs[0] = LoadTexture(defaultTex, false);	
+		RenameTexture(defaultTex, textureFiles[0]);
 	}
 
 	auto& entry = materials[key];
-	entry.reset(new GLMaterial(texRefs.data(), texRefs.size(), vShaderFile, fShaderFile));
+	entry.reset(new GLMaterial(this, textureFiles, vShaderFile, fShaderFile));
 	return entry.get();
 }
 
 void ResourceLoader::Cleanup() {
+	std::for_each(textures.begin(), textures.end(), [](const pair<string, GLuint>& tp) {
+		glDeleteTextures(1, &tp.second);
+	});
+	textures.clear();
 	materials.clear();
 }
 

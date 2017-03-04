@@ -58,6 +58,7 @@ void PreviewWindow::OnShown() {
 		Destroy();
 		canvas = nullptr;
 		delete context;
+		//delete offscreen;
 		app->PreviewClosed();
 		wxLogError("Preview failed: OpenGL context is not OK.");
 		wxMessageBox(_("Preview failed: OpenGL context is not OK."), _("OpenGL Error"), wxICON_ERROR);
@@ -67,7 +68,9 @@ void PreviewWindow::OnShown() {
 	wxLogMessage("Initializing preview window...");
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
-	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
+	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight(), 95.0);
+
+	//offscreen = new GLOffScreenBuffer(4096, 4096);
 
 	int ambient = Config.GetIntValue("Lights/Ambient");
 	int frontal = Config.GetIntValue("Lights/Frontal");
@@ -262,6 +265,11 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 		}
 	}
 
+	texFiles[0] = "d:\\proj\\flatgrey.png";
+	texFiles[1] = "d:\\proj\\femalebody_1_msn.dds";
+	//texFiles[1] = "d:\\proj\\FemaleBody_2_msn.dds";
+	//texFiles[1] = "d:\\proj\\TangentNormalsTest.png";
+
 	string vShader = "res\\shaders\\default.vert";
 	string fShader = "res\\shaders\\default.frag";
 
@@ -305,6 +313,7 @@ void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	Destroy();
 	canvas = nullptr;
 	delete context;
+	//delete offscreen;
 	app->PreviewClosed();
 	wxLogMessage("Preview closed.");
 }
@@ -349,6 +358,9 @@ void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
 		break;
 	case 'L':
 		previewWindow->ToggleLighting();
+		break;
+	case 'G':
+		previewWindow->RenderNormalMap();
 		break;
 	}
 }

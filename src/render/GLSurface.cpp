@@ -631,6 +631,12 @@ void GLSurface::SetSize(uint w, uint h) {
 	vpH = h;
 }
 
+void GLSurface::GetSize(uint & w, uint & h)
+{
+	w = vpW;
+	h = vpH;
+}
+
 void GLSurface::UpdateProjection() {
 	float aspect = (float)vpW / (float)vpH;
 	if (perspective)
@@ -644,7 +650,91 @@ void GLSurface::UpdateProjection() {
 	modelView = glm::translate(modelView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
 }
 
+void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader) {	
+	if (!canvas)
+		return;
+	canvas->SetCurrent(*context);
+
+	// Dummy vertexArrayObject, needs to be bound in order for OGL to activate the shader with Draw Arrays.
+	// No array buffer is used, so this shouldn't be too slow to create here, but could be moved if necessary.
+	static GLuint m_vertexArrayObject = 0;
+	if (!m_vertexArrayObject) {
+		glGenVertexArrays(1, &m_vertexArrayObject);
+	}
+	glViewport(0, 0, 1024, 1024);
+	glClear(GL_DEPTH_BUFFER_BIT);
+	
+
+	// This relies on shader manipulation of vertex positions to render a single triangle clipped to the surface
+	// 
+	GLShader shader = renderShader->GetShader();
+	shader.Begin();
+
+		// bind the dummy array and send three fake positions to the shader.
+		//glBindVertexArray(m_vertexArrayObject);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
+	shader.End();
+
+	// clear out the dummy array object.
+	//glDeleteVertexArrays(1, &m_vertexArrayObject);
+
+	canvas->SwapBuffers();
+}
+
+void GLSurface::RenderToTexture(GLMaterial* renderShader) {
+	if (!canvas)
+		return;
+
+	canvas->SetCurrent(*context);
+
+	//glClearColor(colorBackground.x, colorBackground.y, colorBackground.z, 0.0f);
+	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// Set up orthographic projection and identity model view 
+
+	projection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -100.0f, 100.0f);
+	//projection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 100.0f);
+	modelView = glm::mat4x4();
+
+	mesh* m = nullptr;
+	bool oldDS;
+	GLMaterial* oldmat;
+
+	// Render regular meshes only
+	for (int i = 0; i < meshes.size(); i++) {
+		m = meshes[i];
+		if (!m->bVisible || m->nTris == 0)
+			continue;
+
+		oldDS = m->doublesided;
+		oldmat = m->material;
+		m->material = renderShader;
+		m->modelSpace = false;
+		m->doublesided = true;
+		RenderMesh(m);
+		m->doublesided = oldDS;
+		m->modelSpace = true;
+		m->material = oldmat;
+	}
+
+	// note no buffer swap
+
+}
+
 void GLSurface::RenderOneFrame() {
+	if (!canvas)
+		return;
+	static GLMaterial* ppMat = NULL;
+	std::vector<string> ppTex;
+	if (!ppMat) {
+		ppTex.push_back("d:\\proj\\infile.png");
+		ppMat = AddMaterial(ppTex, "res\\shaders\\fullscreentri.vert", "res\\shaders\\fullscreentri.frag");
+	}
+	
+	RenderFullScreenQuad(ppMat);
+
+	return;
 	if (!canvas)
 		return;
 
@@ -718,6 +808,7 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetMatrixModelView(modelView);
 	shader.SetColor(m->color);
 	shader.SetModelSpace(m->modelSpace);
+	//shader.SetModelSpace(false);
 	shader.SetSpecularEnabled(m->specular);
 	shader.SetEmissive(m->emissive);
 	shader.SetLightingEnabled(bLighting);
