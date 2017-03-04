@@ -24,7 +24,7 @@ class PresetCollection {
 
 public:
 	void Clear();
-	void ClearSlider(const string& presetName, const string& sliderName);
+	void ClearSlider(const string& presetName, const string& sliderName, const bool big = true);
 
 	void GetPresetNames(vector<string>& outNames);
 	void SetSliderPreset(const string& set, const string& slider, float big = -10000.0f, float small = -10000.0f);

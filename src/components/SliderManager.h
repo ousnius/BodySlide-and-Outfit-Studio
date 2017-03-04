@@ -53,12 +53,12 @@ public:
 			if (SliderHasChanged(s.name, true))
 				presetCollection.SetSliderPreset(presetName, s.name, s.value);
 			else
-				presetCollection.ClearSlider(presetName, s.name);
+				presetCollection.ClearSlider(presetName, s.name, true);
 
 			if (SliderHasChanged(s.name, false))
 				presetCollection.SetSliderPreset(presetName, slidersSmall[index].name, -10000.0f, slidersSmall[index].value);
 			else
-				presetCollection.ClearSlider(presetName, slidersSmall[index].name);
+				presetCollection.ClearSlider(presetName, slidersSmall[index].name, false);
 
 			index++;
 		}

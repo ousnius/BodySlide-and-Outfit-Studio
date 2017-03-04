@@ -17,9 +17,13 @@ void PresetCollection::Clear() {
 	presetGroups.clear();
 }
 
-void PresetCollection::ClearSlider(const string& presetName, const string& sliderName) {
-	if (namedSliderPresets.find(presetName) != namedSliderPresets.end())
-		namedSliderPresets[presetName].erase(sliderName);
+void PresetCollection::ClearSlider(const string& presetName, const string& sliderName, const bool big) {
+	if (namedSliderPresets.find(presetName) != namedSliderPresets.end()) {
+		if (big)
+			namedSliderPresets[presetName][sliderName].big = -10000.0f;
+		else
+			namedSliderPresets[presetName][sliderName].small = -10000.0f;
+	}
 }
 
 void PresetCollection::GetPresetNames(vector<string>& outNames) {
