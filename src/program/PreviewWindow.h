@@ -13,7 +13,7 @@ class BodySlideApp;
 class PreviewCanvas;
 
 #include <gli/save.hpp>
-#include <SOIL2\SOIL2.h>
+#include <SOIL2/SOIL2.h>
 
 
 /* Class for managing offscreen rendering buffers.  
@@ -309,7 +309,7 @@ public:
 		//texIds.push_back(normMat->GetTexID(0));
 		GLOffScreenBuffer offscreen(&gls, 1024, 1024, 1, texIds);
 		offscreen.Start();
-		gls.RenderFullScreenQuad(ppMat);
+		gls.RenderFullScreenQuad(ppMat, 1024, 1024);
 		offscreen.SaveTexture("d:\\proj\\outfile.png", SOIL_SAVE_TYPE_PNG);
 		offscreen.End();
 

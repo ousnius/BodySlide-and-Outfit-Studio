@@ -118,7 +118,7 @@ private:
 	// A value indicating the last time the cache was updated from the resource loader. This isn't a time,
 	//  but instead a numeric indicator of change state. This is checked prior to binding textures, and if
 	//  a change has happened, texids are refreshed from ResourceLoader based on texNames.
-	_int64 cacheTime;
+	int64_t cacheTime;
 	GLShader shader;
 	ResourceLoader* resLoaderRef;
 

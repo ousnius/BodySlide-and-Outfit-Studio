@@ -224,7 +224,7 @@ public:
 	void GetSize(uint &w, uint &h);
 	void UpdateProjection();
 
-	void RenderFullScreenQuad(GLMaterial * renderShader);
+	void RenderFullScreenQuad(GLMaterial * renderShader, unsigned int w, unsigned int h);
 
 	void TurnTableCamera(int dScreenX);
 	void PitchCamera(int dScreenY);

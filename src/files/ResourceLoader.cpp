@@ -342,11 +342,11 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 		// Load default image
 		string defaultTex = "res\\images\\NoImg.png";
 		texRefs[0] = LoadTexture(defaultTex, false);	
-		RenameTexture(defaultTex, textureFiles[0]);
+		RenameTexture(defaultTex, texFiles[0]);
 	}
 
 	auto& entry = materials[key];
-	entry.reset(new GLMaterial(this, textureFiles, vShaderFile, fShaderFile));
+	entry.reset(new GLMaterial(this, texFiles, vShaderFile, fShaderFile));
 	return entry.get();
 }
 

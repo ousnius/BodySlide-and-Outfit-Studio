@@ -2,7 +2,7 @@
 #include "GLShader.h"
 
 GLMaterial::GLMaterial() {
-	resLoaderRef = NULL;
+	resLoaderRef = nullptr;
 }
 
 GLMaterial::~GLMaterial() {
@@ -12,7 +12,7 @@ GLMaterial::~GLMaterial() {
 
 // Shader-only material, does not contain texture references, and thus does not use reference to res loader.
 GLMaterial::GLMaterial(const string& vertShaderProg, const string& fragShaderProg) {
-	resLoaderRef = NULL;
+	resLoaderRef = nullptr;
 	shader = GLShader(vertShaderProg, fragShaderProg);
 }
 

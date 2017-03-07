@@ -61,7 +61,7 @@ public:
 
 	// compares the incoming cacheTime with the internal cacheTime, and returns true if they match.  
 	//  if they do not match, the incoming cacheTime is updated to match and the function returns false.
-	bool CacheStamp(_int64& inCacheTime) {
+	bool CacheStamp(int64_t& inCacheTime) {
 		if (cacheTime == inCacheTime)
 			return true;
 		else {
@@ -90,6 +90,6 @@ private:
 	TextureCache textures;
 	MaterialCache materials;
 
-	_int64 cacheTime;
+	int64_t cacheTime;
 
 };

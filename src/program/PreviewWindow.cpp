@@ -68,7 +68,7 @@ void PreviewWindow::OnShown() {
 	wxLogMessage("Initializing preview window...");
 	gls.Initialize(canvas, context);
 	auto size = canvas->GetSize();
-	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight(), 95.0);
+	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight(), 65.0);
 
 	//offscreen = new GLOffScreenBuffer(4096, 4096);
 
