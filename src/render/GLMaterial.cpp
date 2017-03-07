@@ -1,21 +1,15 @@
-#include "..\files\ResourceLoader.h"
-#include "GLShader.h"
+#include "GLMaterial.h"
 
 GLMaterial::GLMaterial() {
-	resLoaderRef = nullptr;
 }
 
 GLMaterial::~GLMaterial() {
-	// GLMaterial no longer owns textures -- use Resource loader  to manage textures.
-	//glDeleteTextures(texRef.size(), texRef.data());
 }
 
 // Shader-only material, does not contain texture references, and thus does not use reference to res loader.
 GLMaterial::GLMaterial(const string& vertShaderProg, const string& fragShaderProg) {
-	resLoaderRef = nullptr;
 	shader = GLShader(vertShaderProg, fragShaderProg);
 }
-
 
 GLMaterial::GLMaterial(ResourceLoader* resLoader, string texName, const string& vertShaderProg, const string& fragShaderProg) {
 	resLoaderRef = resLoader;
@@ -50,6 +44,12 @@ GLuint GLMaterial::GetTexID(uint index) {
 	return texCache[index];
 }
 
+const string& GLMaterial::GetTexName(uint index) {
+	if (index < texNames.size()) {
+		return texNames[index];
+	}
+}
+
 void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklight) {
 	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
 		// outdated cache, rebuild it.  
@@ -57,6 +57,7 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklight) {
 			texCache[i] = resLoaderRef->GetTexID(texNames[i]);
 		}
 	}
+
 	for (int id = 0; id < texCache.size(); id++) {
 		switch (id) {
 		case 0:

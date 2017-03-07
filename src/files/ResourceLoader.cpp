@@ -4,8 +4,7 @@ Copyright (C) 2017  Caliente & ousnius
 See the included LICENSE file
 */
 
-#include "ResourceLoader.h"
-#include "../render/GLShader.h"
+#include "../render/GLMaterial.h"
 #include "../utils/ConfigurationManager.h"
 
 #include "FSEngine/FSManager.h"
@@ -16,7 +15,6 @@ See the included LICENSE file
 #include <wx/log.h>
 
 ResourceLoader::ResourceLoader() {
-	cacheTime = 1;
 }
 
 ResourceLoader::~ResourceLoader() {
@@ -25,12 +23,11 @@ ResourceLoader::~ResourceLoader() {
 
 bool ResourceLoader::extChecked = false;
 
-GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap)
-{
+GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap) {
 	auto ti = textures.find(inFileName);
-	if (ti != textures.end()) {
+	if (ti != textures.end())
 		return ti->second;
-	}
+
 	GLuint textureID = 0;
 	wxFileName fileName(inFileName);
 	wxString fileExt = fileName.GetExt().Lower();
@@ -56,7 +53,7 @@ GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap)
 
 		wxMemoryBuffer data;
 		wxString texFile = inFileName;
-		texFile.Replace(Config["GameDataPath"], "");
+		texFile.Replace(wxString(Config["GameDataPath"]).MakeLower(), "");
 		texFile.Replace("\\", "/");
 		for (FSArchiveFile *archive : FSManager::archiveList()) {
 			if (archive) {
@@ -351,9 +348,9 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 }
 
 void ResourceLoader::Cleanup() {
-	std::for_each(textures.begin(), textures.end(), [](const pair<string, GLuint>& tp) {
+	for (auto &tp : textures)
 		glDeleteTextures(1, &tp.second);
-	});
+
 	textures.clear();
 	materials.clear();
 }

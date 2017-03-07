@@ -6,9 +6,8 @@ See the included LICENSE file
 
 #pragma once
 
-#include "GLShader.h"
+#include "GLMaterial.h"
 #include "../files/NifFile.h"
-#include "../files/ResourceLoader.h"
 
 #include <wx/glcanvas.h>
 

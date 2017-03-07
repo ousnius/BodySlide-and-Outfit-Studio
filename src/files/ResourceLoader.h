@@ -26,8 +26,8 @@ public:
 	~ResourceLoader();
 
 	GLMaterial* AddMaterial(const vector<string>& textureFiles,
-				const string& vShaderFile,
-				const string& fShaderFile);
+		const string& vShaderFile,
+		const string& fShaderFile);
 
 
 	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and 
@@ -43,9 +43,9 @@ public:
 
 
 	/* The following functions update cacheTime, which will cause any linked material to re-search for texture ids.
-		while this is not a tremendous performance impact, these functions should not be called every frame.	
+		while this is not a tremendous performance impact, these functions should not be called every frame.
 		Functions above (that add new textures) do NOT update the cacheTime, because old Texture IDs remain valid.
-	*/
+		*/
 
 	// Deletes all materials and textures.
 	void Cleanup();
@@ -90,6 +90,5 @@ private:
 	TextureCache textures;
 	MaterialCache materials;
 
-	int64_t cacheTime;
-
+	int64_t cacheTime = 1;
 };

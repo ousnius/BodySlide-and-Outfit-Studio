@@ -566,6 +566,18 @@
     <None Include="res\shaders\primitive.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="res\shaders\fullscreentri.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="res\shaders\fullscreentri.vert">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="res\shaders\normalshade.frag">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="res\shaders\normalshade.vert">
+      <Filter>Shaders</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -1267,6 +1279,9 @@
     <ClInclude Include="lib\LZ4F\xxhash.h">
       <Filter>Libraries\LZ4F</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\GLMaterial.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1394,6 +1409,9 @@
     </ClCompile>
     <ClCompile Include="lib\LZ4F\lz4frame.c">
       <Filter>Libraries\LZ4F</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLMaterial.cpp">
+      <Filter>Rendering</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
