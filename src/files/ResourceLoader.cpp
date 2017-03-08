@@ -131,16 +131,20 @@ void ResourceLoader::DeleteTexture(const string & texName)
 
 bool ResourceLoader::RenameTexture(const string & texNameSrc, const string & texNameDest, bool overwrite)
 {
-	auto tid = textures.find(texNameDest);
+	string src = texNameSrc;
+		transform(src.begin(), src.end(), src.begin(), ::tolower);
+	string dst = texNameDest;
+		transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
+	auto tid = textures.find(dst);
 	if (tid != textures.end()) {
 		if(!overwrite)
 			return false;
-		DeleteTexture(texNameDest);
+		DeleteTexture(dst);
 	}
-	auto ti = textures.find(texNameSrc);
+	auto ti = textures.find(src);
 	if (ti != textures.end()) {
 		cacheTime++;		//note, if a texture is replaced, cacheTime increment by 2 in this function (DeleteTexture also increments it)
-		textures[texNameDest] = ti->second;
+		textures[dst] = ti->second;
 		textures.erase(ti);
 	}
 	return true;

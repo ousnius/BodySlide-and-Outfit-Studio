@@ -1282,6 +1282,9 @@
     <ClInclude Include="src\render\GLMaterial.h">
       <Filter>Rendering</Filter>
     </ClInclude>
+    <ClInclude Include="src\render\GLOffscreenBuffer.h">
+      <Filter>Rendering</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1411,6 +1414,9 @@
       <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
     <ClCompile Include="src\render\GLMaterial.cpp">
+      <Filter>Rendering</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render\GLOffscreenBuffer.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
   </ItemGroup>

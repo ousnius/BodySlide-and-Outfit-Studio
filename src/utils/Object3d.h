@@ -7,6 +7,7 @@ See the included LICENSE file
 #pragma once
 
 #include <vector>
+#include "glm/detail/type_int.hpp"
 
 using namespace std;
 
@@ -19,7 +20,7 @@ const float DEG2RAD = PI / 180.0f;
 
 typedef unsigned char byte;
 typedef unsigned short ushort;
-typedef unsigned int uint;
+using glm::uint;
 
 struct Vector2 {
 	float u;

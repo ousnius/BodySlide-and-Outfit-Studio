@@ -1,6 +1,6 @@
 <BodySlideConfig>
     <!-- 0 = FO3, 1 = FONV, 2 = SKYRIM, 3 = FO4, 4 = SKYRIMSE -->
-    <TargetGame>-1</TargetGame>
+    <TargetGame>4</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <BSATextureScan>true</BSATextureScan>
     <GameDataFiles>
@@ -14,14 +14,14 @@
         <FalloutNewVegas></FalloutNewVegas>
         <Skyrim></Skyrim>
         <Fallout4></Fallout4>
-        <SkyrimSpecialEdition></SkyrimSpecialEdition></GameDataPaths>
-    <GameDataPath></GameDataPath>
+        <SkyrimSpecialEdition>D:\steam\steamapps\common\Skyrim Special Edition\Data\</SkyrimSpecialEdition></GameDataPaths>
+    <GameDataPath>D:\steam\steamapps\common\Skyrim Special Edition\Data\</GameDataPath>
     <GameRegKey></GameRegKey>
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
     <Language>57</Language>
-    <SelectedOutfit></SelectedOutfit>
-    <SelectedPreset></SelectedPreset>
+    <SelectedOutfit>CBBE Body</SelectedOutfit>
+    <SelectedPreset>CBBE Curvy</SelectedPreset>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
 	This information is used by BodySlide for choosing what presets to display for outfits.
 	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
@@ -49,8 +49,10 @@
         <ColorBackground r="210" g="210" b="210"></ColorBackground></Rendering>
     <!-- Animation data. The default skeleton reference is used by Outfit Studio to determine the positions and skinning transforms for all vertices of an outfit -->
     <Anim>
-        <DefaultSkeletonReference></DefaultSkeletonReference>
-        <SkeletonRootName></SkeletonRootName></Anim>
+        <DefaultSkeletonReference>res\skeleton_female_sse.nif</DefaultSkeletonReference>
+        <SkeletonRootName>NPC Root [Root]</SkeletonRootName></Anim>
     <LastGroupFilter></LastGroupFilter>
     <LastOutfitFilter></LastOutfitFilter>
+    <BodySlideFrame width="1315" height="1304" maximized="false" x="203" y="239"></BodySlideFrame>
+    <OutfitStudioFrame></OutfitStudioFrame>
 </BodySlideConfig>

@@ -594,6 +594,7 @@
     <ClInclude Include="src\program\ShapeProperties.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
     <ClInclude Include="src\render\GLMaterial.h" />
+    <ClInclude Include="src\render\GLOffscreenBuffer.h" />
     <ClInclude Include="src\render\GLShader.h" />
     <ClInclude Include="src\render\GLSurface.h" />
     <ClInclude Include="src\ui\wxStateButton.h" />
@@ -640,6 +641,7 @@
     <ClCompile Include="src\program\ShapeProperties.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
     <ClCompile Include="src\render\GLMaterial.cpp" />
+    <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />
     <ClCompile Include="src\render\GLShader.cpp" />
     <ClCompile Include="src\render\GLSurface.cpp" />
     <ClCompile Include="src\ui\wxStateButton.cpp" />
