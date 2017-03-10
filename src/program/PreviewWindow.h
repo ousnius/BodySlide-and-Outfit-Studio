@@ -9,6 +9,7 @@ See the included LICENSE file
 #include <wx/wx.h>
 #include "../render/GLSurface.h"
 #include "../render/GLOffscreenBuffer.h"
+#include "NormalsGenDialog.h"
 
 class BodySlideApp;
 class PreviewCanvas;
@@ -19,6 +20,8 @@ class PreviewWindow : public wxFrame {
 	BodySlideApp* app = nullptr;
 	PreviewCanvas* canvas = nullptr; 
 	wxGLContext* context = nullptr;
+
+	NormalsGenDialog* normalsGenDlg = nullptr;
 
 	//GLOffScreenBuffer* offscreen;
 	GLSurface gls;
@@ -36,6 +39,10 @@ public:
 	void OnShown();
 	void OnClose(wxCloseEvent& event);
 	void OnWeightSlider(wxScrollEvent& event);
+
+	void ShowOptWindow(wxCommandEvent& event) { 
+		normalsGenDlg->Show(true);		
+	}
 
 	void Cleanup() {
 		gls.Cleanup();
@@ -131,14 +138,15 @@ public:
 
 	void RenderNormalMap() {
 
-		string dest_tex = gls.GetMesh("CBBE")->material->GetTexName(1);
+		string dest_tex = gls.GetMesh("BaseShapeHR")->material->GetTexName(1);
 		GLuint w, h;
 		gls.GetSize(w, h);	
 		std::vector<GLuint> texIds;
 		std::vector<string> normTextures;
 		normTextures.push_back("");
 		//normTextures.push_back("d:\\proj\\TangentNormalsTest.png");
-		normTextures.push_back("d:\\proj\\FemaleBody_n.png");
+		//normTextures.push_back("d:\\proj\\FemaleBodyt_n.dds");
+		normTextures.push_back("d:\\proj\\bodyPaintDummy-N_u0_v0.png");
 		//normTextures.push_back("d:\\proj\\masktest.png");
 		GLMaterial* normMat = gls.AddMaterial(normTextures, "res\\shaders\\normalshade.vert", "res\\shaders\\normalshade.frag");
 
@@ -162,7 +170,7 @@ public:
 		offscreen.Start();
 		gls.RenderFullScreenQuad(ppMat, 4096, 4096);
 		gls.GetResourceLoader()->RenameTexture(offscreen.texName(1), dest_tex, true);
-		//offscreen.SaveTexture("d:\\proj\\outputnormals.dds");
+		//offscreen.SaveTexture("d:\\proj\\outputnormals.png");
 		offscreen.End();
 	
 		gls.SetPerspective(true);

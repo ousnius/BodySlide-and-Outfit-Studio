@@ -31,12 +31,20 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 	: wxFrame(nullptr, wxID_ANY, "Preview", wxDefaultPosition, GetDefaultSize()), app(a) {
 	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 
+	normalsGenDlg = new NormalsGenDialog(this);
+	normalsGenDlg->Show(false);
+
+
+	
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
 
 	wxPanel* uiPanel = new wxPanel(this);
 	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100,
 		wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
+	wxButton* optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, wxSize(25,25));
+	
+	optButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(PreviewWindow::ShowOptWindow), NULL, this);
 
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
@@ -44,6 +52,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 	context = new wxGLContext(canvas, nullptr, &GLSurface::GetGLContextAttribs());
 	
 	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
+	sizerPanel->Add(optButton, 0, wxTOP | wxLEFT | wxRIGHT, 10);
 	uiPanel->SetSizer(sizerPanel);
 
 	sizer->Add(uiPanel, 0, wxEXPAND);
@@ -266,7 +275,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 	}
 
 	texFiles[0] = "d:\\proj\\flatgrey.png";
-	//texFiles[1] = "d:\\proj\\femalebody_1_msn.dds";
+	texFiles[1] = "d:\\proj\\bodyPaintDummy-N_u0_v0.png";
 	//texFiles[1] = "d:\\proj\\outfile.png";
 
 	//texFiles[1] = "d:\\proj\\FemaleBody_2_msn.dds";
