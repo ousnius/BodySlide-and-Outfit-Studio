@@ -13,15 +13,20 @@ See the included LICENSE file
 
 class BodySlideApp;
 class PreviewCanvas;
-
+class NormalsGenDialog;
 
 
 class PreviewWindow : public wxFrame {
 	BodySlideApp* app = nullptr;
 	PreviewCanvas* canvas = nullptr; 
-	wxGLContext* context = nullptr;
+	wxGLContext* context = nullptr; 
+	wxButton* optButton = nullptr;
 
 	NormalsGenDialog* normalsGenDlg = nullptr;
+	// empty normal gen layers vectory to temporarily occupy the reference until assigned by bodyslide. 
+	std::vector<NormalGenLayer> emptyLayers;
+	// Foreign normals layer generation reference, stored in SliderSet, but configured and used within the preview window.
+	std::vector<NormalGenLayer>& refNormalGenLayers;
 
 	//GLOffScreenBuffer* offscreen;
 	GLSurface gls;
@@ -40,9 +45,7 @@ public:
 	void OnClose(wxCloseEvent& event);
 	void OnWeightSlider(wxScrollEvent& event);
 
-	void ShowOptWindow(wxCommandEvent& event) { 
-		normalsGenDlg->Show(true);		
-	}
+	void ShowOptWindow(wxCommandEvent& event);
 
 	void Cleanup() {
 		gls.Cleanup();
@@ -67,6 +70,8 @@ public:
 	void SetBaseDataPath(const string& path) {
 		baseDataPath = path;
 	}
+
+	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
 
 	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
@@ -136,7 +141,9 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void RenderNormalMap() {
+	void RenderNormalMap(std::string outfilename="") {
+
+		wxBusyCursor busycursor;
 
 		string dest_tex = gls.GetMesh("BaseShapeHR")->material->GetTexName(1);
 		GLuint w, h;
@@ -170,7 +177,9 @@ public:
 		offscreen.Start();
 		gls.RenderFullScreenQuad(ppMat, 4096, 4096);
 		gls.GetResourceLoader()->RenameTexture(offscreen.texName(1), dest_tex, true);
-		//offscreen.SaveTexture("d:\\proj\\outputnormals.png");
+		if (!outfilename.empty()) {
+			offscreen.SaveTexture(outfilename);	
+		}
 		offscreen.End();
 	
 		gls.SetPerspective(true);

@@ -485,6 +485,28 @@ int ConfigurationManager::GetValueAttributeArray(const string& containerName, co
 	return count;
 }
 
+void ConfigurationManager::ReplaceVars(string & inoutStr)
+{
+	size_t first = inoutStr.find('%');
+	size_t second;
+	while (first != string::npos) {
+		second = inoutStr.find('%', first + 1);
+		size_t len = second - first;
+		if (len > 1) {
+			string varname = inoutStr.substr(first + 1, len - 1);
+			inoutStr.replace(first, len+1, GetString(varname));
+			first = inoutStr.find('%', first);
+		}
+		else if (len == 1) {
+			inoutStr.replace(first, len + 1, "%");
+			first = inoutStr.find('%', first+2);
+		}
+		else {
+			break;
+		}
+	}
+}
+
 int ConfigurationManager::SaveConfig(const string& pathToFile, const string& rootElementName) {
 	if (rootElementName.empty())
 		return 1;

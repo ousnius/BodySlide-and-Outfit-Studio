@@ -28,12 +28,11 @@ wxSize PreviewWindow::GetDefaultSize() {
 }
 
 PreviewWindow::PreviewWindow(BodySlideApp* a)
-	: wxFrame(nullptr, wxID_ANY, "Preview", wxDefaultPosition, GetDefaultSize()), app(a) {
+	: wxFrame(nullptr, wxID_ANY, "Preview", wxDefaultPosition, GetDefaultSize()), app(a), refNormalGenLayers(emptyLayers) {
 	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 
-	normalsGenDlg = new NormalsGenDialog(this);
+	normalsGenDlg = new NormalsGenDialog(this, refNormalGenLayers);
 	normalsGenDlg->Show(false);
-
 
 	
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
@@ -42,7 +41,7 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 	wxPanel* uiPanel = new wxPanel(this);
 	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100,
 		wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
-	wxButton* optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, wxSize(25,25));
+	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, wxSize(25,25));
 	
 	optButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(PreviewWindow::ShowOptWindow), NULL, this);
 
@@ -113,6 +112,19 @@ void PreviewWindow::OnShown() {
 
 	app->InitPreview();
 }
+
+void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers)
+{
+	refNormalGenLayers = normalLayers;
+	if (normalLayers.size() != 0) {
+		optButton->Show();
+	}
+	else {
+		optButton->Hide();
+	}
+	normalsGenDlg->Show(false);
+	Layout();
+} 
 
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 	vector<string> shapeList;
@@ -317,6 +329,14 @@ void PreviewWindow::MouseWheel(int dW) {
 void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
 	weight = event.GetPosition();
 	app->UpdatePreview();
+}
+
+void PreviewWindow::ShowOptWindow(wxCommandEvent & event)
+{
+	
+	normalsGenDlg->SetLayersRef(refNormalGenLayers);
+	normalsGenDlg->Show(true);
+	
 }
 
 void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {

@@ -1,4 +1,5 @@
 #include "NormalGenLayers.h"
+#include "../utils/ConfigurationManager.h"
 #include <sstream>
 
 void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::vector<NormalGenLayer>& outLayers)
@@ -16,6 +17,7 @@ void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::ve
 		
 		elem = layer->FirstChildElement("SourceFile");
 		if (elem) ngl.sourceFileName = (c=elem->GetText())?c:"";
+		Config.ReplaceVars(ngl.sourceFileName);
 
 		elem =layer->FirstChildElement("FillColor");
 		if (elem) {
@@ -47,6 +49,7 @@ void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::ve
 
 		elem = layer->FirstChildElement("MaskFile");
 		if (elem) ngl.maskFileName = (c = elem->GetText()) ? c : "";
+		Config.ReplaceVars(ngl.maskFileName);
 
 		elem = layer->FirstChildElement("XOffset");
 		if (elem) {
@@ -96,22 +99,30 @@ void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::ve
 
 void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vector<NormalGenLayer>& layers)
 {
+	std::string gamepath = Config["GameDataPath"];
+	std::string relfn;
 	for (auto l : layers) {
 
 		tinyxml2::XMLElement* layerelem = container->GetDocument()->NewElement("NormalsLayer");
 		layerelem->SetAttribute("name", l.layerName.c_str());
 		
 		tinyxml2::XMLElement* elem = container->GetDocument()->NewElement("SourceFile");
-		elem->SetText(l.sourceFileName.c_str());
+		
+		relfn = l.sourceFileName;
+		if (relfn.find(gamepath) != string::npos) {
+			relfn.replace(relfn.find(gamepath), gamepath.length(), "%GameDataPath%");
+		}
+
+		elem->SetText(relfn.c_str());
 
 		layerelem->InsertEndChild(elem);
 
 		if (l.layerName == "Background") {			// Background is a Special layer with limited properties.
 
 			elem = container->GetDocument()->NewElement("FillColor");
-			std::string s = std::to_string(l.fillColor[0]) + " ";
-			s += std::to_string(l.fillColor[1]) + " ";
-			s += std::to_string(l.fillColor[2]);
+			std::string s = std::to_string((unsigned char)l.fillColor[0]) + " ";
+			s += std::to_string((unsigned char)l.fillColor[1]) + " ";
+			s += std::to_string((unsigned char)l.fillColor[2]);
 			elem->SetText(s.c_str());
 
 			layerelem->InsertEndChild(elem);
@@ -136,8 +147,12 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 			}
 
 			tinyxml2::XMLElement* elem = container->GetDocument()->NewElement("MaskFile");
-			elem->SetText(l.maskFileName.c_str());
-
+			relfn = l.maskFileName;
+			if (relfn.find(gamepath) != string::npos) {
+				relfn.replace(relfn.find(gamepath), gamepath.length(), "%GameDataPath%");
+			}
+			elem->SetText(relfn.c_str());
+			
 			layerelem->InsertEndChild(elem);
 
 			elem = container->GetDocument()->NewElement("XOffset");

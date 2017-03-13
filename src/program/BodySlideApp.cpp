@@ -799,6 +799,8 @@ void BodySlideApp::InitPreview() {
 	for (auto &s : shapeNames)
 		preview->AddNifShapeTextures(&PreviewMod, s);
 
+	preview->SetNormalsGenerationLayers(activeSet.GetNormalsGenLayers());
+
 	preview->Refresh();
 }
 
@@ -846,6 +848,8 @@ void BodySlideApp::UpdatePreview() {
 		}
 		preview->Update(it->second, &verts, &uvs);
 	}
+
+	preview->SetNormalsGenerationLayers(activeSet.GetNormalsGenLayers());
 
 	preview->Render();
 }

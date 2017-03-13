@@ -118,6 +118,12 @@ public:
 	wxString operator [] (const wxString& inName) {
 		return GetString(inName.ToStdString());
 	}
+
+	/* Utility function to replace variables within a string with matching configuration data.  Variables
+		are surrounded by %.  EG  :  "%GameDataPath%rest of path"  might become "D:\\Skyrim\\Data\\rest of path.
+		a double percent "%%" will be replaced with a single %, while a single % without matching variable will destroy most of the string.
+		*/
+	void ReplaceVars(string& inoutStr);
 };
 
 extern ConfigurationManager Config;

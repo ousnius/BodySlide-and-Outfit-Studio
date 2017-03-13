@@ -70,6 +70,10 @@ public:
 		baseDataPath = inPath;
 	}
 
+	vector<NormalGenLayer>& GetNormalsGenLayers() {
+		return defNormalGen;
+	}
+
 	int LoadSliderSet(XMLElement* sliderSetSource);
 	void LoadSetDiffData(DiffDataSets& inDataStorage);
 

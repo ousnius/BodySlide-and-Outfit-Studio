@@ -114,9 +114,19 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 
 		sliderEntry = sliderEntry->NextSiblingElement("Slider");
 	}
+
+	// A slider set/project can optionally specify a default normals generation configuration.  If present,
+	// it activates the normals generation functionality in the preview window. Note customized normals generation settings 
+	// are saved in separate xml files -- the project-homed ones are default settings only.
 	XMLElement* NormalsGeneration = element->FirstChildElement("NormalsGeneration");
 	if (NormalsGeneration != nullptr) {
-		NormalGenLayer::LoadFromXML(NormalsGeneration, defNormalGen);
+		// only load default settings if none are currently specified. 
+		if (defNormalGen.size() == 0) {
+			NormalGenLayer::LoadFromXML(NormalsGeneration, defNormalGen);
+		}
+	}
+	else {
+		defNormalGen.clear();
 	}
 	return 0;
 }
