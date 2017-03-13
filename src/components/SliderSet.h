@@ -9,6 +9,8 @@ See the included LICENSE file
 #include "TinyXML-2/tinyxml2.h"
 #include "SliderData.h"
 
+#include "../program/NormalGenLayers.h"
+
 using namespace std;
 using namespace tinyxml2;
 
@@ -25,6 +27,7 @@ class SliderSet
 	map<string, string> targetdatafolders;
 
 	vector<SliderData> sliders;
+	vector<NormalGenLayer> defNormalGen;
 
 	SliderData Empty;
 

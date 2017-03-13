@@ -17,6 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
+#include "..\Files\wxDDSImage.h"
 
 #ifdef WIN64
 	#include <ppl.h>
@@ -101,6 +102,7 @@ bool BodySlideApp::OnInit() {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	xrc->InitAllHandlers();
 	wxInitAllImageHandlers();
+	wxImage::AddHandler(new wxDDSHandler);
 
 	preview = nullptr;
 	sliderView = nullptr;

@@ -16,47 +16,47 @@ baseNormGenDlg::baseNormGenDlg( wxWindow* parent, wxWindowID id, const wxString&
 	wxBoxSizer* topSizer;
 	topSizer = new wxBoxSizer( wxVERTICAL );
 	
+	wxBoxSizer* bSizer4;
+	bSizer4 = new wxBoxSizer( wxHORIZONTAL );
+	
 	m_staticText1 = new wxStaticText( this, wxID_ANY, _("Layers"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText1->Wrap( -1 );
-	topSizer->Add( m_staticText1, 0, wxLEFT|wxTOP, 5 );
+	bSizer4->Add( m_staticText1, 0, wxLEFT|wxTOP, 5 );
+	
+	
+	bSizer4->Add( 0, 0, 1, wxEXPAND, 5 );
+	
+	m_bpButton1 = new wxBitmapButton( this, wxID_ANY, wxBitmap( wxT("res/images/save.png"), wxBITMAP_TYPE_ANY ), wxDefaultPosition, wxDefaultSize, wxBU_AUTODRAW|wxNO_BORDER );
+	m_bpButton1->SetToolTip( _("Load or save preset layer settings") );
+	
+	bSizer4->Add( m_bpButton1, 0, wxALIGN_BOTTOM|wxRIGHT, 5 );
+	
+	
+	topSizer->Add( bSizer4, 0, wxEXPAND, 5 );
 	
 	layersProperties = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxPG_DEFAULT_STYLE|wxPG_SPLITTER_AUTO_CENTER);
 	layersProperties->SetExtraStyle( wxPG_EX_ENABLE_TLP_TRACKING|wxPG_EX_HELP_AS_TOOLTIPS ); 
-	categoryBackground = layersProperties->Append( new wxPropertyCategory( _("Background"), _("Background") ) ); 
-	m_propertyGridItem2 = layersProperties->Append( new wxImageFileProperty( _("Background File"), _("Background File") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem2, _("Filename source for this layer.  ") );
-	m_propertyGridItem7 = layersProperties->Append( new wxColourProperty( _("Color"), _("Color") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem7, _("Solid background color (If File is not set)") );
-	m_propertyGridItem6 = layersProperties->Append( new wxEnumProperty( _("Resolution"), _("Resolution") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem6, _("Output texture dimesions.  By default all images will be caled to fit this size.") );
-	categoryLayer1 = layersProperties->Append( new wxPropertyCategory( _("Layer 1"), _("Layer 1") ) ); 
-	m_propertyGridItem4 = layersProperties->Append( new wxFileProperty( _("File"), _("File") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem4, _("A file containing normals data to combine.  Note this file should fit the mesh uvs") );
-	m_propertyGridItem5 = layersProperties->Append( new wxBoolProperty( _("Is Tangent Space?"), _("Is Tangent Space?") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem5, _("True if the normals data in the layer file is in tangent space, false if they are in model space (msn). ") );
-	m_propertyGridItem8 = layersProperties->Append( new wxImageFileProperty( _("Mask"), _("Mask") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem8, _("A greyscale image used to mask updates to destination image") );
-	m_propertyGridItem9 = layersProperties->Append( new wxUIntProperty( _("X Offset"), _("X Offset") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem9, _("Offset to apply to image position ") );
-	m_propertyGridItem10 = layersProperties->Append( new wxUIntProperty( _("Y Offset"), _("Y Offset") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem10, _("Y Offset to apply to image position ") );
-	m_propertyGridItem11 = layersProperties->Append( new wxBoolProperty( _("Scale"), _("Scale") ) );
-	layersProperties->SetPropertyHelpString( m_propertyGridItem11, _("if true, scale image to match background resolution.") );
 	topSizer->Add( layersProperties, 1, wxEXPAND|wxLEFT|wxRIGHT, 5 );
 	
 	wxBoxSizer* bSizer3;
 	bSizer3 = new wxBoxSizer( wxHORIZONTAL );
 	
 	buttonAddLayer = new wxButton( this, wxID_ANY, _("Add Layer"), wxDefaultPosition, wxDefaultSize, 0 );
+	buttonAddLayer->SetToolTip( _("Add a new layer after the current one in the layer list") );
+	
 	bSizer3->Add( buttonAddLayer, 0, wxBOTTOM|wxLEFT|wxRIGHT, 5 );
 	
 	buttonMoveUp = new wxButton( this, wxID_ANY, _("Move Up"), wxDefaultPosition, wxDefaultSize, 0 );
+	buttonMoveUp->SetToolTip( _("Move selected layer up one position") );
+	
 	bSizer3->Add( buttonMoveUp, 0, wxBOTTOM, 5 );
 	
 	
 	bSizer3->Add( 0, 0, 1, wxEXPAND, 5 );
 	
 	buttonDeleteLayer = new wxButton( this, wxID_ANY, _("Delete Layer"), wxDefaultPosition, wxDefaultSize, 0 );
+	buttonDeleteLayer->SetToolTip( _("Delete the selected layer") );
+	
 	bSizer3->Add( buttonDeleteLayer, 0, wxBOTTOM|wxLEFT|wxRIGHT, 5 );
 	
 	
@@ -81,10 +81,13 @@ baseNormGenDlg::baseNormGenDlg( wxWindow* parent, wxWindowID id, const wxString&
 	
 	checkUseBackgroundFilename = new wxCheckBox( sbSizer1->GetStaticBox(), wxID_ANY, _("Use Background Layer file as output"), wxDefaultPosition, wxDefaultSize, 0 );
 	checkUseBackgroundFilename->SetValue(true); 
+	checkUseBackgroundFilename->SetToolTip( _("use the file name specified in the background layer to save the normal map") );
+	
 	sbSizer1->Add( checkUseBackgroundFilename, 0, wxALL, 5 );
 	
 	outputFileName = new wxFilePickerCtrl( sbSizer1->GetStaticBox(), wxID_ANY, wxT("Output File"), _("Select a file"), wxT("*.*"), wxDefaultPosition, wxDefaultSize, wxFLP_DEFAULT_STYLE );
 	outputFileName->Enable( false );
+	outputFileName->SetToolTip( _("Location to save normal map") );
 	
 	sbSizer1->Add( outputFileName, 0, wxEXPAND|wxLEFT, 20 );
 	
@@ -95,6 +98,8 @@ baseNormGenDlg::baseNormGenDlg( wxWindow* parent, wxWindowID id, const wxString&
 	bSizer5 = new wxBoxSizer( wxHORIZONTAL );
 	
 	buttonPreview = new wxButton( this, wxID_ANY, _("Preview"), wxDefaultPosition, wxDefaultSize, 0 );
+	buttonPreview->SetToolTip( _("Display current settings on mesh in preview window") );
+	
 	bSizer5->Add( buttonPreview, 0, wxALL, 5 );
 	
 	
@@ -111,28 +116,48 @@ baseNormGenDlg::baseNormGenDlg( wxWindow* parent, wxWindowID id, const wxString&
 	
 	this->SetSizer( topSizer );
 	this->Layout();
+	presetContext = new wxMenu();
+	wxMenuItem* ctxLoadPreset;
+	ctxLoadPreset = new wxMenuItem( presetContext, wxID_ANY, wxString( _("Load Preset...") ) , wxEmptyString, wxITEM_NORMAL );
+	presetContext->Append( ctxLoadPreset );
+	
+	wxMenuItem* ctxSavePreset;
+	ctxSavePreset = new wxMenuItem( presetContext, wxID_ANY, wxString( _("Save Preset...") ) , wxEmptyString, wxITEM_NORMAL );
+	presetContext->Append( ctxSavePreset );
+	
+	this->Connect( wxEVT_RIGHT_DOWN, wxMouseEventHandler( baseNormGenDlg::baseNormGenDlgOnContextMenu ), NULL, this ); 
+	
 	
 	this->Centre( wxBOTH );
 	
 	// Connect Events
+	m_bpButton1->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doShowPresetContext ), NULL, this );
 	layersProperties->Connect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( baseNormGenDlg::doPropertyChanged ), NULL, this );
 	buttonAddLayer->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doAddLayer ), NULL, this );
 	buttonMoveUp->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doMoveUpLayer ), NULL, this );
 	buttonDeleteLayer->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doDeleteLayer ), NULL, this );
+	checkUseBackgroundFilename->Connect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( baseNormGenDlg::OnUseBackgroundLayerCheck ), NULL, this );
 	outputFileName->Connect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( baseNormGenDlg::doSetOutputFileName ), NULL, this );
 	buttonPreview->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doPreviewNormalMap ), NULL, this );
 	buttonGenerate->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doGenerateNormalMap ), NULL, this );
+	this->Connect( ctxLoadPreset->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( baseNormGenDlg::doLoadPreset ) );
+	this->Connect( ctxSavePreset->GetId(), wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( baseNormGenDlg::doSavePreset ) );
 }
 
 baseNormGenDlg::~baseNormGenDlg()
 {
 	// Disconnect Events
+	m_bpButton1->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doShowPresetContext ), NULL, this );
 	layersProperties->Disconnect( wxEVT_PG_CHANGED, wxPropertyGridEventHandler( baseNormGenDlg::doPropertyChanged ), NULL, this );
 	buttonAddLayer->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doAddLayer ), NULL, this );
 	buttonMoveUp->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doMoveUpLayer ), NULL, this );
 	buttonDeleteLayer->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doDeleteLayer ), NULL, this );
+	checkUseBackgroundFilename->Disconnect( wxEVT_COMMAND_CHECKBOX_CLICKED, wxCommandEventHandler( baseNormGenDlg::OnUseBackgroundLayerCheck ), NULL, this );
 	outputFileName->Disconnect( wxEVT_COMMAND_FILEPICKER_CHANGED, wxFileDirPickerEventHandler( baseNormGenDlg::doSetOutputFileName ), NULL, this );
 	buttonPreview->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doPreviewNormalMap ), NULL, this );
 	buttonGenerate->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( baseNormGenDlg::doGenerateNormalMap ), NULL, this );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( baseNormGenDlg::doLoadPreset ) );
+	this->Disconnect( wxID_ANY, wxEVT_COMMAND_MENU_SELECTED, wxCommandEventHandler( baseNormGenDlg::doSavePreset ) );
 	
+	delete presetContext; 
 }

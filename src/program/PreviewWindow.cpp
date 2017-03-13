@@ -275,7 +275,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 	}
 
 	texFiles[0] = "d:\\proj\\flatgrey.png";
-	texFiles[1] = "d:\\proj\\bodyPaintDummy-N_u0_v0.png";
+	//texFiles[1] = "d:\\proj\\bodyPaintDummy-N_u0_v0.png";
 	//texFiles[1] = "d:\\proj\\outfile.png";
 
 	//texFiles[1] = "d:\\proj\\FemaleBody_2_msn.dds";

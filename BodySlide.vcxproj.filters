@@ -1291,6 +1291,12 @@
     <ClInclude Include="src\program\NormalsGenDialog.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\NormalGenLayers.h">
+      <Filter>Program</Filter>
+    </ClInclude>
+    <ClInclude Include="src\files\wxDDSImage.h">
+      <Filter>Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1431,6 +1437,10 @@
     <ClCompile Include="src\program\NormalsGenDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
+    <ClCompile Include="src\files\wxDDSImage.cpp">
+      <Filter>Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\NormalGenLayers.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\SOIL2\SOIL2_x64_d.lib">

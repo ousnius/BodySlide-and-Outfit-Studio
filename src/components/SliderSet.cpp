@@ -114,6 +114,10 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 
 		sliderEntry = sliderEntry->NextSiblingElement("Slider");
 	}
+	XMLElement* NormalsGeneration = element->FirstChildElement("NormalsGeneration");
+	if (NormalsGeneration != nullptr) {
+		NormalGenLayer::LoadFromXML(NormalsGeneration, defNormalGen);
+	}
 	return 0;
 }
 
