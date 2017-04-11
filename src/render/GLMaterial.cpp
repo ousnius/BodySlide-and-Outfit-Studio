@@ -1,3 +1,9 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2017  Caliente & ousnius
+See the included LICENSE file
+*/
+
 #include "GLMaterial.h"
 
 GLMaterial::GLMaterial() {
@@ -44,10 +50,11 @@ GLuint GLMaterial::GetTexID(uint index) {
 	return texCache[index];
 }
 
-const string& GLMaterial::GetTexName(uint index) {
-	if (index < texNames.size()) {
+string GLMaterial::GetTexName(uint index) {
+	if (index < texNames.size())
 		return texNames[index];
-	}
+
+	return "";
 }
 
 void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklight) {

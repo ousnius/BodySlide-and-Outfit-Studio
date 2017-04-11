@@ -1,3 +1,9 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2017  Caliente & ousnius
+See the included LICENSE file
+*/
+
 #include "..\files\ResourceLoader.h"
 #include "GLShader.h"
 
@@ -27,7 +33,7 @@ public:
 	GLShader& GetShader();
 
 	GLuint GetTexID(uint index);
-	const string& GetTexName(uint index);
+	string GetTexName(uint index);
 
 	void BindTextures(GLfloat largestAF, const bool hasBacklight);
 };

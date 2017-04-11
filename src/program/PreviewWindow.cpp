@@ -31,25 +31,23 @@ PreviewWindow::PreviewWindow(BodySlideApp* a)
 	: wxFrame(nullptr, wxID_ANY, "Preview", wxDefaultPosition, GetDefaultSize()), app(a), refNormalGenLayers(emptyLayers) {
 	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 
-	normalsGenDlg = new NormalsGenDialog(this, refNormalGenLayers);
-	normalsGenDlg->Show(false);
-
-	
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
 
 	wxPanel* uiPanel = new wxPanel(this);
 	wxSlider* weightSlider = new wxSlider(uiPanel, wxID_ANY, 100, 0, 100,
 		wxDefaultPosition, wxDefaultSize, wxSL_LABELS, wxDefaultValidator, "weightSlider");
-	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, wxSize(25,25));
-	
-	optButton->Connect(wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler(PreviewWindow::ShowOptWindow), NULL, this);
+
+	optButton = new wxButton(uiPanel, wxID_ANY, "N", wxDefaultPosition, wxSize(25, 25));
+	optButton->SetToolTip(_("Show the Normal Map Generator dialog."));
+	optButton->Bind(wxEVT_BUTTON, &PreviewWindow::ShowNormalGenWindow, this);
+	optButton->Hide();
 
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
 	context = new wxGLContext(canvas, nullptr, &GLSurface::GetGLContextAttribs());
-	
+
 	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
 	sizerPanel->Add(optButton, 0, wxTOP | wxLEFT | wxRIGHT, 10);
 	uiPanel->SetSizer(sizerPanel);
@@ -113,18 +111,18 @@ void PreviewWindow::OnShown() {
 	app->InitPreview();
 }
 
-void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers)
-{
+void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers) {
 	refNormalGenLayers = normalLayers;
-	if (normalLayers.size() != 0) {
+	if (normalLayers.size() != 0)
 		optButton->Show();
-	}
-	else {
+	else
 		optButton->Hide();
-	}
-	normalsGenDlg->Show(false);
+
+	if (normalsGenDlg)
+		normalsGenDlg->Hide();
+
 	Layout();
-} 
+}
 
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 	vector<string> shapeList;
@@ -331,12 +329,13 @@ void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
 	app->UpdatePreview();
 }
 
-void PreviewWindow::ShowOptWindow(wxCommandEvent & event)
-{
-	
-	normalsGenDlg->SetLayersRef(refNormalGenLayers);
-	normalsGenDlg->Show(true);
-	
+void PreviewWindow::ShowNormalGenWindow(wxCommandEvent & WXUNUSED(event)) {
+	if (!normalsGenDlg)
+		normalsGenDlg = new NormalsGenDialog(this, refNormalGenLayers);
+	else
+		normalsGenDlg->SetLayersRef(refNormalGenLayers);
+
+	normalsGenDlg->Show();
 }
 
 void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {

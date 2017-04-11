@@ -1,100 +1,121 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2017  Caliente & ousnius
+See the included LICENSE file
+*/
+
 #include "NormalGenLayers.h"
 #include "../utils/ConfigurationManager.h"
 #include <sstream>
 
 void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::vector<NormalGenLayer>& outLayers)
 {
-	std::string v;
-	const char* c;
-	tinyxml2::XMLElement* elem;
 	tinyxml2::XMLElement* layer = normalGenSource->FirstChildElement("NormalsLayer");
-	if (layer != nullptr) {
+	if (layer != nullptr)
 		outLayers.clear();
-	}
+
 	while (layer != nullptr) {
-		NormalGenLayer ngl; 
+		NormalGenLayer ngl;
 		ngl.layerName = layer->Attribute("name");
-		
+
+		tinyxml2::XMLElement* elem;
 		elem = layer->FirstChildElement("SourceFile");
-		if (elem) ngl.sourceFileName = (c=elem->GetText())?c:"";
+
+		const char* c = elem->GetText();
+		if (elem)
+			ngl.sourceFileName = c ? c : "";
+
 		Config.ReplaceVars(ngl.sourceFileName);
 
-		elem =layer->FirstChildElement("FillColor");
+		elem = layer->FirstChildElement("FillColor");
 		if (elem) {
-			std::stringstream val((c = elem->GetText()) ? c : "");
+			std::string v;
+			c = elem->GetText();
+			std::stringstream val(c ? c : "");
 			std::getline(val, v, ' ');
 			ngl.fillColor[0] = std::stoi(v);
 			std::getline(val, v, ' ');
 			ngl.fillColor[1] = std::stoi(v);
 			std::getline(val, v, ' ');
-			ngl.fillColor[2] = std::stoi(v);			
+			ngl.fillColor[2] = std::stoi(v);
 		}
 
 		elem = layer->FirstChildElement("Resolution");
 		if (elem) {
-			ngl.resolution = std::stoi((c = elem->GetText()) ? c : "");
+			c = elem->GetText();
+			ngl.resolution = std::stoi(c ? c : "");
 		}
 
 		elem = layer->FirstChildElement("TangentSpace");
 		if (elem) {
-			v = (c = elem->GetText()) ? c : "";
+			c = elem->GetText();
+			std::string v = c ? c : "";
 			ngl.isTangentSpace = (v == "true") ? true : false;
 		}
 
 		elem = layer->FirstChildElement("UseMeshNormalSource");
 		if (elem) {
-			v = (c = elem->GetText()) ? c : "";
+			c = elem->GetText();
+			std::string v = c ? c : "";
 			ngl.useMeshNormalsSource = (v == "true") ? true : false;
 		}
 
 		elem = layer->FirstChildElement("MaskFile");
-		if (elem) ngl.maskFileName = (c = elem->GetText()) ? c : "";
+		if (elem) {
+			c = elem->GetText();
+			ngl.maskFileName = c ? c : "";
+		}
+
 		Config.ReplaceVars(ngl.maskFileName);
 
 		elem = layer->FirstChildElement("XOffset");
 		if (elem) {
-			ngl.xOffset = std::stoi((c = elem->GetText()) ? c : "");
-		}		
-		
+			c = elem->GetText();
+			ngl.xOffset = std::stoi(c ? c : "");
+		}
+
 		elem = layer->FirstChildElement("YOffset");
 		if (elem) {
-			ngl.yOffset = std::stoi((c = elem->GetText()) ? c : "");
+			c = elem->GetText();
+			ngl.yOffset = std::stoi(c ? c : "");
 		}
 
 		elem = layer->FirstChildElement("ScaleToFit");
 		if (elem) {
-			v = (c = elem->GetText()) ? c : "";
+			c = elem->GetText();
+			std::string v = c ? c : "";
 			ngl.scaleToResolution = (v == "true") ? true : false;
 		}
 
 		elem = layer->FirstChildElement("SwapRG");
 		if (elem) {
-			v = (c = elem->GetText()) ? c : "";
+			c = elem->GetText();
+			std::string v = c ? c : "";
 			ngl.swapRG = (v == "true") ? true : false;
 		}
 		elem = layer->FirstChildElement("InvertRed");
 		if (elem) {
-			v = (c = elem->GetText()) ? c : "";
+			c = elem->GetText();
+			std::string v = c ? c : "";
 			ngl.invertRed = (v == "true") ? true : false;
 		}
 		elem = layer->FirstChildElement("InvertGreen");
 		if (elem) {
-			v = (c = elem->GetText()) ? c : "";
+			c = elem->GetText();
+			std::string v = c ? c : "";
 			ngl.invertGreen = (v == "true") ? true : false;
 		}
 		elem = layer->FirstChildElement("InvertBlue");
 		if (elem) {
-			v = (c = elem->GetText()) ? c : "";
+			c = elem->GetText();
+			std::string v = c ? c : "";
 			ngl.invertBlue = (v == "true") ? true : false;
 		}
 
 		outLayers.push_back(ngl);
 
 		layer = layer->NextSiblingElement("NormalsLayer");
-
-
 	}
-
 }
 
 void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vector<NormalGenLayer>& layers)
@@ -102,19 +123,16 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 	std::string gamepath = Config["GameDataPath"];
 	std::string relfn;
 	for (auto l : layers) {
-
 		tinyxml2::XMLElement* layerelem = container->GetDocument()->NewElement("NormalsLayer");
 		layerelem->SetAttribute("name", l.layerName.c_str());
-		
+
 		tinyxml2::XMLElement* elem = container->GetDocument()->NewElement("SourceFile");
-		
+
 		relfn = l.sourceFileName;
-		if (relfn.find(gamepath) != string::npos) {
+		if (relfn.find(gamepath) != string::npos)
 			relfn.replace(relfn.find(gamepath), gamepath.length(), "%GameDataPath%");
-		}
 
 		elem->SetText(relfn.c_str());
-
 		layerelem->InsertEndChild(elem);
 
 		if (l.layerName == "Background") {			// Background is a Special layer with limited properties.
@@ -131,12 +149,10 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 			elem->SetText(std::to_string(l.resolution).c_str());
 
 			layerelem->InsertEndChild(elem);
-
 		}
 		else {
-
 			elem = container->GetDocument()->NewElement("TangentSpace");
-			elem->SetText((l.isTangentSpace)?"true":"false");
+			elem->SetText((l.isTangentSpace) ? "true" : "false");
 
 			layerelem->InsertEndChild(elem);
 
@@ -148,11 +164,11 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 
 			tinyxml2::XMLElement* elem = container->GetDocument()->NewElement("MaskFile");
 			relfn = l.maskFileName;
-			if (relfn.find(gamepath) != string::npos) {
+			if (relfn.find(gamepath) != string::npos)
 				relfn.replace(relfn.find(gamepath), gamepath.length(), "%GameDataPath%");
-			}
+
 			elem->SetText(relfn.c_str());
-			
+
 			layerelem->InsertEndChild(elem);
 
 			elem = container->GetDocument()->NewElement("XOffset");
@@ -174,7 +190,7 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 				elem = container->GetDocument()->NewElement("SwapRG");
 				elem->SetText("true");
 				layerelem->InsertEndChild(elem);
-			}			
+			}
 			if (l.invertRed) {				// not outputting some default values 
 				elem = container->GetDocument()->NewElement("InvertRed");
 				elem->SetText("true");
@@ -190,8 +206,6 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 				elem->SetText("true");
 				layerelem->InsertEndChild(elem);
 			}
-
-
 		}
 		container->InsertEndChild(layerelem);
 	}

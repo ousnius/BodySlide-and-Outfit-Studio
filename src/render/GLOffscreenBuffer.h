@@ -1,17 +1,23 @@
-#pragma once
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2017  Caliente & ousnius
+See the included LICENSE file
+*/
 
+#pragma once
 
 #include "../render/GLSurface.h"
 
 
-/* Class for managing offscreen rendering buffers.
+/*
+Class for managing offscreen rendering buffers.
 Allows more than one buffer to be created, and automatically cycled for a multipass rendering chain
 Enables exporting buffers to disk files
 */
 class GLOffScreenBuffer {
-	GLSurface* glsRef;
-	GLuint* pmfbo;
-	GLuint* pmtex;
+	GLSurface* glsRef = nullptr;
+	GLuint* pmfbo = nullptr;
+	GLuint* pmtex = nullptr;
 	GLuint mrbo;
 	bool isBound;
 	int current;
@@ -40,9 +46,7 @@ public:
 	std::string texName(int index = -1);
 
 	bool SetCurrentBuffer(int bufferIndex = 0);
-
 	bool NextBuffer(bool cycle = true);
-
 	void Start();
 
 	// Retrieves the current texture ID.  Useful for externally selecting as a texture source before moving to another 
@@ -53,6 +57,4 @@ public:
 	void End();
 
 	~GLOffScreenBuffer();
-
 };
-

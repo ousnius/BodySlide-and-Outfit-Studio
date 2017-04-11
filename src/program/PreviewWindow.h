@@ -13,7 +13,6 @@ See the included LICENSE file
 
 class BodySlideApp;
 class PreviewCanvas;
-class NormalsGenDialog;
 
 
 class PreviewWindow : public wxFrame {
@@ -45,7 +44,7 @@ public:
 	void OnClose(wxCloseEvent& event);
 	void OnWeightSlider(wxScrollEvent& event);
 
-	void ShowOptWindow(wxCommandEvent& event);
+	void ShowNormalGenWindow(wxCommandEvent& event);
 
 	void Cleanup() {
 		gls.Cleanup();
@@ -145,7 +144,7 @@ public:
 
 		wxBusyCursor busycursor;
 
-		string dest_tex = gls.GetMesh("BaseShapeHR")->material->GetTexName(1);
+		string dest_tex = gls.GetMesh("CBBE")->material->GetTexName(1);
 		GLuint w, h;
 		gls.GetSize(w, h);	
 		std::vector<GLuint> texIds;

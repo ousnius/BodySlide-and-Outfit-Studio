@@ -578,6 +578,9 @@
     <None Include="res\shaders\normalshade.vert">
       <Filter>Shaders</Filter>
     </None>
+    <None Include="res\xrc\NormalsGenDlg.xrc">
+      <Filter>Resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="resource.h">
@@ -1285,17 +1288,17 @@
     <ClInclude Include="src\render\GLOffscreenBuffer.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="src\program\baseNormalsOptDlg.h">
-      <Filter>Program</Filter>
-    </ClInclude>
     <ClInclude Include="src\program\NormalsGenDialog.h">
-      <Filter>Program</Filter>
-    </ClInclude>
-    <ClInclude Include="src\program\NormalGenLayers.h">
       <Filter>Program</Filter>
     </ClInclude>
     <ClInclude Include="src\files\wxDDSImage.h">
       <Filter>Files</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ui\wxNormalsGenDlg.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="src\components\NormalGenLayers.h">
+      <Filter>Components</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -1431,16 +1434,18 @@
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp">
       <Filter>Rendering</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\baseNormalsOptDlg.cpp">
-      <Filter>Program</Filter>
-    </ClCompile>
     <ClCompile Include="src\program\NormalsGenDialog.cpp">
       <Filter>Program</Filter>
     </ClCompile>
     <ClCompile Include="src\files\wxDDSImage.cpp">
       <Filter>Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\program\NormalGenLayers.cpp" />
+    <ClCompile Include="src\ui\wxNormalsGenDlg.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\NormalGenLayers.cpp">
+      <Filter>Components</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\SOIL2\SOIL2_x64_d.lib">

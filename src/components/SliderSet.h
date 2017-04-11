@@ -9,7 +9,7 @@ See the included LICENSE file
 #include "TinyXML-2/tinyxml2.h"
 #include "SliderData.h"
 
-#include "../program/NormalGenLayers.h"
+#include "../components/NormalGenLayers.h"
 
 using namespace std;
 using namespace tinyxml2;

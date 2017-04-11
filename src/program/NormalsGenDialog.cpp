@@ -1,39 +1,43 @@
-#include "NormalsGenDialog.h"
-NormalsGenDialog::NormalsGenDialog(wxWindow* parent, std::vector<NormalGenLayer>& inLayersRef)
-	:
-	baseNormGenDlg(parent), refNormalGenLayers(inLayersRef)
-{
-	layersProperties->Connect(wxEVT_PG_SELECTED, wxPropertyGridEventHandler(NormalsGenDialog::doPropSelected), NULL, this);
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2017  Caliente & ousnius
+See the included LICENSE file
+*/
 
-	layersProperties->SetSortFunction([](wxPropertyGrid* propGrid, wxPGProperty* p1, wxPGProperty* p2)->int {
+#include "NormalsGenDialog.h"
+#include "PreviewWindow.h"
+
+NormalsGenDialog::NormalsGenDialog(wxWindow* parent, std::vector<NormalGenLayer>& inLayersRef)
+	: wxNormalsGenDlg(parent), refNormalGenLayers(inLayersRef)
+{
+	pgLayers->Bind(wxEVT_PG_SELECTED, &NormalsGenDialog::doPropSelected, this);
+
+	pgLayers->SetSortFunction([](wxPropertyGrid* WXUNUSED(propGrid), wxPGProperty* p1, wxPGProperty* p2)->int {
 		if (p1->GetClientData() >= p2->GetClientData())
 			return 1;
 		return 0;
 	});
-	wxPGProperty* categoryBackground;
-	wxPGProperty* m_propertyGridItem2;
-	wxPGProperty* m_propertyGridItem7;
-	wxPGProperty* m_propertyGridItem6;
 
 	PopulateLayers();
 
-	buttonDeleteLayer->Disable();
-	buttonMoveUp->Disable();
+	btnDeleteLayer->Disable();
+	btnMoveUp->Disable();
 }
 
-void NormalsGenDialog::doShowPresetContext( wxCommandEvent& event )
+void NormalsGenDialog::doShowPresetContext(wxCommandEvent& WXUNUSED(event))
 {
 	PopupMenu(presetContext);
 }
 
-void NormalsGenDialog::doPropertyChanged( wxPropertyGridEvent& event )
+void NormalsGenDialog::doPropertyChanged(wxPropertyGridEvent& WXUNUSED(event))
 {
 	// Just clear out the whole layers list and rebuild it based on current property grid values.
 	refNormalGenLayers.clear();
+
 	NormalGenLayer ngl;
 	wxColour clr;
-	int propindex;
-	for (wxPropertyGridIterator it = layersProperties->GetIterator(wxPG_ITERATE_ALL); !it.AtEnd(); it++) {
+	int propindex = 0;
+	for (wxPropertyGridIterator it = pgLayers->GetIterator(wxPG_ITERATE_ALL); !it.AtEnd(); it++) {
 		if (it.GetProperty()->IsCategory()) {
 			if (!ngl.layerName.empty()) {
 				// layer name not being empty means we've got layer info already, so push the layer onto the list.
@@ -58,7 +62,7 @@ void NormalsGenDialog::doPropertyChanged( wxPropertyGridEvent& event )
 					ngl.fillColor[0] = clr.Red(); ngl.fillColor[1] = clr.Green(); ngl.fillColor[2] = clr.Blue();
 				}
 				else {
-					ngl.isTangentSpace == it.GetProperty()->GetValue().GetBool();
+					ngl.isTangentSpace = it.GetProperty()->GetValue().GetBool();
 				}
 				break;
 			case 2:
@@ -85,119 +89,114 @@ void NormalsGenDialog::doPropertyChanged( wxPropertyGridEvent& event )
 			propindex++;
 		}
 	}
-
 }
 
-void NormalsGenDialog::doAddLayer( wxCommandEvent& event )
+void NormalsGenDialog::doAddLayer(wxCommandEvent& WXUNUSED(event))
 {
-
 	NormalGenLayer blankLayer;
 
 	wxTextEntryDialog entry(this, _("Enter a name for the new layer."), _("Name new layer"), nextLayerName());
-	if (entry.ShowModal() == wxID_CANCEL) {
+	if (entry.ShowModal() == wxID_CANCEL)
 		return;
-	}
+
 	blankLayer.layerName = entry.GetValue();
 
-	wxPGProperty* p = layersProperties->GetSelectedProperty();
+	wxPGProperty* p = pgLayers->GetSelectedProperty();
 	if (!p) {
 		addLayer(blankLayer);
-	return;
+		return;
 	}
+
 	wxPropertyGridIterator it;
-	for (it = layersProperties->GetIterator(wxPG_ITERATE_CATEGORIES, p); !it.AtEnd(); it++) {
+	for (it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES, p); !it.AtEnd(); it++) {
 		if (*it == p)
 			continue;
-		if((*it)->GetName() != "Background") {
+		if ((*it)->GetName() != "Background") {
 			addLayer(blankLayer, *it);
 			return;
 		}
 	}
-	addLayer(blankLayer);
 
+	addLayer(blankLayer);
 }
 
-void NormalsGenDialog::doMoveUpLayer( wxCommandEvent& event )
+void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event))
 {
 	wxPGProperty* prev = nullptr;
 	wxPGProperty* me = nullptr;
 
-	wxPGProperty* s = layersProperties->GetSelectedProperty();
-		if (!s || !s->IsCategory() || s->GetName() == _("Background")) {
+	wxPGProperty* s = pgLayers->GetSelectedProperty();
+	if (!s || !s->IsCategory() || s->GetName() == "Background")
 		return;
-	}
 
 	int n = 1;
-	for (auto it = layersProperties->GetIterator(wxPG_ITERATE_CATEGORIES); !it.AtEnd(); it++) {
+	for (auto it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES); !it.AtEnd(); it++) {
 		wxPGProperty* p = it.GetProperty();
 		p->SetClientData((void*)n++);
 		if (p == s) {
 			me = p;
-		} else
-			if (!me && p->GetName() != "Background") {
-			prev = p;
 		}
+		else
+			if (!me && p->GetName() != "Background") {
+				prev = p;
+			}
 	}
 
 	if (!me || !prev)
-	return;
+		return;
 
 	int t = (int)me->GetClientData();
 	me->SetClientData(prev->GetClientData());
 	prev->SetClientData((void*)t);
 
-	layersProperties->Sort();
-	layersProperties->Refresh();
+	pgLayers->Sort();
+	pgLayers->Refresh();
 }
 
-void NormalsGenDialog::doDeleteLayer( wxCommandEvent& event )
+void NormalsGenDialog::doDeleteLayer(wxCommandEvent& WXUNUSED(event))
 {
-	wxPGProperty* p = layersProperties->GetSelectedProperty();
-		if (p && p->IsCategory() && p->GetName() != _("Background")) {
+	wxPGProperty* p = pgLayers->GetSelectedProperty();
+	if (p && p->IsCategory() && p->GetName() != "Background") {
 		p->DeleteChildren();
-		layersProperties->DeleteProperty(p);
+		pgLayers->DeleteProperty(p);
 	}
 }
 
-void NormalsGenDialog::OnUseBackgroundLayerCheck( wxCommandEvent& event )
+void NormalsGenDialog::OnUseBackgroundLayerCheck(wxCommandEvent& event)
 {
-	if (event.IsChecked()) {
-		outputFileName->Disable();
-	}
-	else {
-		outputFileName->Enable();
-	}
+	if (event.IsChecked())
+		fpOutputFile->Disable();
+	else
+		fpOutputFile->Enable();
 }
 
-void NormalsGenDialog::doSetOutputFileName( wxFileDirPickerEvent& event )
+void NormalsGenDialog::doSetOutputFileName(wxFileDirPickerEvent& WXUNUSED(event))
 {
-// TODO: Implement doSetOutputFileName
+	// TODO: Implement doSetOutputFileName
 }
 
-void NormalsGenDialog::doPreviewNormalMap( wxCommandEvent& event )
+void NormalsGenDialog::doPreviewNormalMap(wxCommandEvent& WXUNUSED(event))
 {
-	PreviewWindow* preview = reinterpret_cast<PreviewWindow*> (GetParent());
+	PreviewWindow* preview = reinterpret_cast<PreviewWindow*>(GetParent());
 
 	// no file name specified so it only renders a preview.
 	preview->RenderNormalMap();
 }
 
-void NormalsGenDialog::doGenerateNormalMap( wxCommandEvent& event )
+void NormalsGenDialog::doGenerateNormalMap(wxCommandEvent& WXUNUSED(event))
 {
-	
-	PreviewWindow* preview = reinterpret_cast<PreviewWindow*> (GetParent());
-	
+	PreviewWindow* preview = reinterpret_cast<PreviewWindow*>(GetParent());
+
 	wxFileName outfile;
-	if (checkUseBackgroundFilename->IsChecked()) {
+	if (cbSaveToBGLayerFile->IsChecked())
 		outfile = refNormalGenLayers[0].sourceFileName;
-	}
-	else {
-		outfile = outputFileName->GetPath();
-	}
+	else
+		outfile = fpOutputFile->GetPath();
+
 	// forcing dds extension for final output. 
 	outfile.SetExt("dds");
 
-	if (checkBackup->IsChecked() && wxFileExists(outfile.GetFullPath())) {
+	if (cbBackup->IsChecked() && wxFileExists(outfile.GetFullPath())) {
 		wxFileName bak(outfile);
 		bak.SetExt("bak");
 		wxCopyFile(outfile.GetFullPath(), bak.GetFullPath(), true);
@@ -206,10 +205,10 @@ void NormalsGenDialog::doGenerateNormalMap( wxCommandEvent& event )
 	// rendering to lossless png (SOIL2 wants to run dxt1 compression on dds which loses lots of quality).
 	preview->RenderNormalMap("ngtemp.png");
 
-	if (checkCompress->IsChecked()) {
+	if (cbCompress->IsChecked()) {
 		// compression using texconv .. pretty slow, but uses direct compute to make it a bit faster.
 		wxBusyCursor compressWait;
-		wxExecute("texconv.exe -f BC7_UNORM ngtemp.png -o " + outfile.GetFullPath(),wxEXEC_SYNC);
+		wxExecute("texconv.exe -f BC7_UNORM ngtemp.png -o " + outfile.GetFullPath(), wxEXEC_SYNC);
 	}
 	else {
 		// uncompressed 8bpp using texconv just because.
@@ -217,46 +216,42 @@ void NormalsGenDialog::doGenerateNormalMap( wxCommandEvent& event )
 	}
 }
 
-void NormalsGenDialog::doLoadPreset( wxCommandEvent& event )
-{	
-	std::string outfilename;
-	wxFileDialog fl(this, _("Choose a normals generation preset file"), "NormalGen", "", "XML Files (*.xml)|*.xml", wxFD_OPEN);
-	if (fl.ShowModal() == wxID_CANCEL) {
+void NormalsGenDialog::doLoadPreset(wxCommandEvent& WXUNUSED(event))
+{
+	wxFileDialog fl(this, _("Choose a normals generation preset file"), "NormalGen", wxEmptyString, "XML Files (*.xml)|*.xml", wxFD_OPEN);
+	if (fl.ShowModal() == wxID_CANCEL)
 		return;
-	}
-	outfilename = fl.GetPath();
+
+	wxFileName fn(fl.GetPath());
+
 	tinyxml2::XMLDocument doc;
-	doc.LoadFile(outfilename.c_str());
+	doc.LoadFile(fn.GetFullPath());
+
 	tinyxml2::XMLElement* root = doc.FirstChildElement("NormalsGeneration");
-	if (root) {
+	if (root)
 		NormalGenLayer::LoadFromXML(root, refNormalGenLayers);
-	}
+
 	PopulateLayers();
 }
 
-void NormalsGenDialog::doSavePreset( wxCommandEvent& event )
+void NormalsGenDialog::doSavePreset(wxCommandEvent& WXUNUSED(event))
 {
-	std::string outfilename;
-	wxFileDialog fs(this, _("Choose a file save location for normal generation preset"), "NormalGen", "", "XML Files (*.xml)|*.xml", wxFD_SAVE);
-	if (fs.ShowModal() == wxID_CANCEL) {
+	wxFileDialog fs(this, _("Choose a file save location for normal generation preset"), "NormalGen", wxEmptyString, "XML Files (*.xml)|*.xml", wxFD_SAVE);
+	if (fs.ShowModal() == wxID_CANCEL)
 		return;
-	}
-	outfilename = fs.GetPath();
+
 	tinyxml2::XMLDocument doc;
-	wxFileName fn(outfilename);
-	fn.GetName();
 	tinyxml2::XMLElement* root = doc.NewElement("NormalsGeneration");
-	root->SetAttribute("name", fn.GetName().ToAscii());
+
+	wxFileName fn(fs.GetPath());
+	root->SetAttribute("name", fn.GetName());
 
 	doc.InsertFirstChild(root);
 
 	NormalGenLayer::SaveToXML(root, refNormalGenLayers);
 
-	doc.SaveFile(outfilename.c_str());
-
-	
+	doc.SaveFile(fn.GetFullPath());
 }
-
 
 wxString NormalsGenDialog::nextLayerName()
 {
@@ -274,6 +269,7 @@ void NormalsGenDialog::addBGLayer(NormalGenLayer & newLayer)
 	resolutions.Add("1024");
 	resolutions.Add("2048");
 	resolutions.Add("4096");
+
 	int selectedRes = 0;
 	for (int i = 0; i < resolutions.size(); i++) {
 		if (resolutions[i] == std::to_string(newLayer.resolution)) {
@@ -282,16 +278,15 @@ void NormalsGenDialog::addBGLayer(NormalGenLayer & newLayer)
 		}
 	}
 
-	newCat = layersProperties->Append(new wxPropertyCategory(newLayer.layerName, "Background"));
+	newCat = pgLayers->Append(new wxPropertyCategory(newLayer.layerName, "Background"));
 
-	newProp = layersProperties->Append(new wxImageFileProperty(_("Background File"), _("Background File"), newLayer.sourceFileName));
-	layersProperties->SetPropertyHelpString(newProp, _("Filename source for this layer.  "));
-	newProp = layersProperties->Append(new wxColourProperty(_("Color"), _("Color"), wxColor(newLayer.fillColor[0], newLayer.fillColor[1], newLayer.fillColor[2])));
-	layersProperties->SetPropertyHelpString(newProp, _("Solid background color (If File is not set)"));
-	newProp = layersProperties->Append(new wxEnumProperty(_("Resolution"), _("Resolution"), resolutions));
+	newProp = pgLayers->Append(new wxImageFileProperty(_("Background File"), _("Background File"), newLayer.sourceFileName));
+	pgLayers->SetPropertyHelpString(newProp, _("Filename source for this layer.  "));
+	newProp = pgLayers->Append(new wxColourProperty(_("Color"), _("Color"), wxColour(newLayer.fillColor[0], newLayer.fillColor[1], newLayer.fillColor[2])));
+	pgLayers->SetPropertyHelpString(newProp, _("Solid background color (If File is not set)"));
+	newProp = pgLayers->Append(new wxEnumProperty(_("Resolution"), _("Resolution"), resolutions));
 	newProp->SetChoiceSelection(selectedRes);
-	layersProperties->SetPropertyHelpString(newProp, _("Output texture dimesions.  By default all images will be caled to fit this size."));
-
+	pgLayers->SetPropertyHelpString(newProp, _("Output texture dimesions.  By default all images will be caled to fit this size."));
 }
 
 void NormalsGenDialog::addLayer(NormalGenLayer & newLayer, wxPGProperty * before)
@@ -302,45 +297,40 @@ void NormalsGenDialog::addLayer(NormalGenLayer & newLayer, wxPGProperty * before
 	wxPGProperty* newCat;
 	wxPGProperty* newProp;
 
-	if (before == nullptr) {
-		newCat = layersProperties->Append(new wxPropertyCategory(newLayer.layerName, internalName));
-	}
-	else {
-		newCat = layersProperties->Insert(before, new wxPropertyCategory(newLayer.layerName, internalName));
-	}
+	if (before)
+		newCat = pgLayers->Insert(before, new wxPropertyCategory(newLayer.layerName, internalName));
+	else
+		newCat = pgLayers->Append(new wxPropertyCategory(newLayer.layerName, internalName));
 
 	newProp = newCat->AppendChild(new wxImageFileProperty(_("File"), internalName + "File", newLayer.sourceFileName));
 	newProp->SetAttribute("Wildcard", "PNG files (*.png)|*.png");
-	layersProperties->SetPropertyHelpString(newProp, _("A file containing normals data to combine.  Note this file should fit the mesh uvs"));
+	pgLayers->SetPropertyHelpString(newProp, _("A file containing normals data to combine.  Note this file should fit the mesh uvs"));
 
-	newProp = newCat->AppendChild(new wxBoolProperty(_("Is Tangent Space?"), internalName +"IsTangent" , newLayer.isTangentSpace));
-	layersProperties->SetPropertyHelpString(newProp, _("True if the normals data in the layer file is in tangent space, false if they are in model space (msn). "));
+	newProp = newCat->AppendChild(new wxBoolProperty(_("Is Tangent Space?"), internalName + "IsTangent", newLayer.isTangentSpace));
+	pgLayers->SetPropertyHelpString(newProp, _("True if the normals data in the layer file is in tangent space, false if they are in model space (msn). "));
 
 	newProp = newCat->AppendChild(new wxImageFileProperty(_("Mask"), internalName + "Mask", newLayer.maskFileName));
-	layersProperties->SetPropertyHelpString(newProp, _("A greyscale image used to mask updates to destination image"));
+	pgLayers->SetPropertyHelpString(newProp, _("A greyscale image used to mask updates to destination image"));
 
 	newProp = newCat->AppendChild(new wxUIntProperty(_("X Offset"), internalName + "XOffset", newLayer.xOffset));
-	layersProperties->SetPropertyHelpString(newProp, _("Offset to apply to image position "));
+	pgLayers->SetPropertyHelpString(newProp, _("Offset to apply to image position "));
 
-	newProp = newCat->AppendChild(new wxUIntProperty(_("Y Offset"), internalName +"YOffset" , newLayer.yOffset));
-	layersProperties->SetPropertyHelpString(newProp, _("Y Offset to apply to image position "));
+	newProp = newCat->AppendChild(new wxUIntProperty(_("Y Offset"), internalName + "YOffset", newLayer.yOffset));
+	pgLayers->SetPropertyHelpString(newProp, _("Y Offset to apply to image position "));
 
 	newProp = newCat->AppendChild(new wxBoolProperty(_("Scale"), internalName + "Scale", newLayer.scaleToResolution));
-	layersProperties->SetPropertyHelpString(newProp, _("if true, scale image to match background resolution."));
-
+	pgLayers->SetPropertyHelpString(newProp, _("if true, scale image to match background resolution."));
 }
 
 void NormalsGenDialog::PopulateLayers()
 {
-	layersProperties->Clear();
+	pgLayers->Clear();
 	layerCount = 1;
 	for (auto l : refNormalGenLayers) {
-		if (l.layerName == "Background") {
+		if (l.layerName == "Background")
 			addBGLayer(l);
-		}
-		else {
+		else
 			addLayer(l);
-		}
 	}
 }
 
@@ -350,15 +340,15 @@ void NormalsGenDialog::SetLayersRef(std::vector<NormalGenLayer>& inLayersRef)
 	PopulateLayers();
 }
 
-void NormalsGenDialog::doPropSelected(wxPropertyGridEvent& event)
+void NormalsGenDialog::doPropSelected(wxPropertyGridEvent& WXUNUSED(event))
 {
-	wxPGProperty* p = layersProperties->GetSelectedProperty();
+	wxPGProperty* p = pgLayers->GetSelectedProperty();
 	if (p && p->IsCategory() && p->GetName() != "Background") {
-		buttonDeleteLayer->Enable();
-		buttonMoveUp->Enable();
+		btnDeleteLayer->Enable();
+		btnMoveUp->Enable();
 	}
 	else {
-		buttonDeleteLayer->Disable();
-		buttonMoveUp->Disable();
+		btnDeleteLayer->Disable();
+		btnMoveUp->Disable();
 	}
 }

@@ -1,12 +1,18 @@
+/*
+BodySlide and Outfit Studio
+Copyright (C) 2017  Caliente & ousnius
+See the included LICENSE file
+*/
+
 #include "wxDDSImage.h"
 
-#include "gli\gli.hpp"
-#define MAKE_FOURCC(a,b,c,d) (((wxUint32(d) << 24) | (wxUint32)(c) << 16) | ((wxUint32)(b) << 8) | (wxUint32)(a))
-
+#pragma warning (push, 0)
+#include "gli/gli.hpp"
+#pragma warning (pop)
 
 wxIMPLEMENT_DYNAMIC_CLASS(wxDDSHandler, wxImageHandler);
 
-bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool verbose, int index) {
+bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool WXUNUSED(verbose), int WXUNUSED(index)) {
 	size_t datasize = stream.GetSize();
 	if (datasize <= 0)
 		return false;
@@ -30,10 +36,9 @@ bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool verbose,
 	image->Create(dim.x, dim.y, false);
 	unsigned char* destPtr = image->GetData();
 
+	uint32_t pxcount = dim.x * dim.y * 3;
 	if (!gli::is_compressed(intex.format())) {
-		for (size_t i = 0; i < dim.x*dim.y*3; i+=3) {
-			uint16_t pack = *srcptr;
-
+		for (uint32_t i = 0; i < pxcount; i += 3) {
 			destPtr[i] = *srcptr++;
 			destPtr[i+1] = *srcptr++;
 			destPtr[i+2] = *srcptr++;
@@ -43,14 +48,11 @@ bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool verbose,
 		}
 	}
 	else {
-		for (size_t i = 0; i < dim.x*dim.y * 3; i += 3) {
-
+		for (uint32_t i = 0; i < pxcount; i += 3) {
 			destPtr[i] = 66;
-			destPtr[i+1] = 66;
-			destPtr[i+2] = 66;
-
+			destPtr[i + 1] = 66;
+			destPtr[i + 2] = 66;
 		}
-
 	}
 
 	delete[] buf;
@@ -86,7 +88,7 @@ bool wxDDSHandler::LoadFile(wxImage *image, wxInputStream& stream, bool verbose,
 	return true;
 }
 
-bool wxDDSHandler::SaveFile(wxImage *image, wxOutputStream& stream, bool verbose) {
+bool wxDDSHandler::SaveFile(wxImage *WXUNUSED(image), wxOutputStream& WXUNUSED(stream), bool WXUNUSED(verbose)) {
 
 	return false;
 }

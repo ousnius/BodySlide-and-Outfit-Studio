@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxDialog" name="wxNormalsGenDlg">
+		<style>wxDEFAULT_DIALOG_STYLE|wxRESIZE_BORDER|wxSTAY_ON_TOP</style>
+		<size>323,473</size>
+		<title>Normal Map Generator</title>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxLEFT|wxTOP</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lbLayers">
+							<label>Layers</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_BOTTOM|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBitmapButton" name="bpPreset">
+							<style>wxBU_AUTODRAW|wxNO_BORDER</style>
+							<tooltip>Load or save preset layer settings.</tooltip>
+							<bitmap>res/images/save.png</bitmap>
+							<default>0</default>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+				<border>5</border>
+				<object class="unknown" name="pgLayers" />
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxBOTTOM|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnAddLayer">
+							<tooltip>Add a new layer after the current one in the layer list.</tooltip>
+							<label>Add Layer</label>
+							<default>0</default>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnMoveUp">
+							<tooltip>Move selected layer up one position.</tooltip>
+							<label>Move Up</label>
+							<default>0</default>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxBOTTOM|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnDeleteLayer">
+							<tooltip>Delete the selected layer.</tooltip>
+							<label>Delete Layer</label>
+							<default>0</default>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND | wxALL</flag>
+				<border>5</border>
+				<object class="wxStaticLine" name="line1">
+					<style>wxLI_HORIZONTAL</style>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxStaticBoxSizer">
+					<orient>wxVERTICAL</orient>
+					<label>Options</label>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="cbBackup">
+							<tooltip>Save a copy of an existing normal map if one already exists. File is saved in the original directory.</tooltip>
+							<label>Backup destination file</label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="cbCompress">
+							<tooltip>Compress output file using BC7 compression. This can make saving the file take a VERY long time!</tooltip>
+							<label>Compress output </label>
+							<checked>0</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxCheckBox" name="cbSaveToBGLayerFile">
+							<tooltip>Use the file name specified in the background layer to save the normal map.</tooltip>
+							<label>Save to background layer file</label>
+							<checked>1</checked>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT</flag>
+						<border>20</border>
+						<object class="wxFilePickerCtrl" name="fpOutputFile">
+							<value></value>
+							<message>Choose an output file...</message>
+							<wildcard>Texture Files (*.dds)|*.dds</wildcard>
+							<style>wxFLP_SAVE|wxFLP_USE_TEXTCTRL</style>
+							<enabled>0</enabled>
+							<tooltip>Location to save normal map to.</tooltip>
+						</object>
+					</object>
+				</object>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<object class="wxBoxSizer">
+					<orient>wxHORIZONTAL</orient>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnPreview">
+							<tooltip>Display current settings on mesh in preview window.</tooltip>
+							<label>Preview</label>
+							<default>0</default>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>1</option>
+						<flag>wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnGenerate">
+							<tooltip>Generate and save the normal map file.</tooltip>
+							<label>Generate</label>
+							<default>0</default>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxMenu" name="presetContext">
+		<label>Preset</label>
+		<object class="wxMenuItem" name="ctxLoadPreset">
+			<label>Load Preset...</label>
+			<help></help>
+		</object>
+		<object class="wxMenuItem" name="ctxSavePreset">
+			<label>Save Preset...</label>
+			<help></help>
+		</object>
+	</object>
+</resource>
