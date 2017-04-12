@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 2.0.1\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -2544,3 +2544,141 @@ msgstr ""
 
 msgid "Separate the current shape into two by using the mask."
 msgstr "Teilt das ausgewählte Modell mithilfe der Maske in zwei auf."
+
+msgid "Show the Normal Map Generator dialog."
+msgstr "Zeige den Normal Map Generator-Dialog."
+
+msgid "Normal Map Generator"
+msgstr "Normal Map Generator"
+
+msgid "Layers"
+msgstr "Schichten"
+
+msgid "Load or save preset layer settings."
+msgstr "Schichteneinstellungen laden oder speichern."
+
+msgid "Choose a normals generator preset file..."
+msgstr "Normal-Generator Voreinstellungsdatei auswählen..."
+
+msgid "Save normals generator preset to..."
+msgstr "Normal-Generator Voreinstellung speichern nach..."
+
+msgid "Background"
+msgstr "Hintergrund"
+
+msgid "Background File"
+msgstr "Hintergrunddatei"
+
+msgid "File source for this layer."
+msgstr "Dateiquelle für diese Schicht."
+
+msgid ""
+"File containing normals data to combine. Note this file should fit the mesh "
+"UVs."
+msgstr ""
+"Datei mit den zu kombinierenden Normals-Daten. Diese Datei sollte an die UVs "
+"des Modells angepasst sein."
+
+msgid "Color"
+msgstr "Farbe"
+
+msgid "Solid background color (if file is not set)."
+msgstr "Einheitliche Hintergrundfarbe (wenn Datei nicht gesetzt)."
+
+msgid "Resolution"
+msgstr "Auflösung"
+
+msgid ""
+"Output texture dimensions. By default all images will be scaled to fit this "
+"size."
+msgstr ""
+"Dimensionen der Ausgabetextur. Standardmäßig werden alle Texturen auf diese "
+"Größe angepasst."
+
+msgid "Is Tangent Space?"
+msgstr "Ist Tangent Space?"
+
+msgid ""
+"True if the normals data in the layer file is in tangent space, false if "
+"they are in model space (msn)."
+msgstr ""
+"Ja, wenn die Normals-Daten in der Schichtdatei im Tangent Space ist. Nein, "
+"wenn sie im Model Space (msn) ist."
+
+msgid "A greyscale image used to mask updates to destination image."
+msgstr "Graustufenbild um Änderungen an der Ausgabetextur zur maskieren."
+
+msgid "X Offset"
+msgstr "X-Verschiebung"
+
+msgid "Y Offset"
+msgstr "Y-Verschiebung"
+
+msgid "Offset to apply to image position."
+msgstr "Verschiebung der Bildposition."
+
+msgid "If true, scale image to match background resolution."
+msgstr "Wenn ja, wird das Bild an die Hintergrundauflösung angepasst."
+
+msgid "Add Layer"
+msgstr "Schicht hinzufügen"
+
+msgid "Add a new layer after the current one in the layer list."
+msgstr ""
+"Fügt eine neue Schicht nach der aktuell in der Liste ausgewählten hinzu."
+
+msgid "Move Up"
+msgstr "Nach oben"
+
+msgid "Move selected layer up one position."
+msgstr "Bewegt die ausgewählte Schicht um eins nach oben."
+
+msgid "Delete Layer"
+msgstr "Schicht löschen"
+
+msgid "Delete the selected layer."
+msgstr "Die ausgewählte Schicht löschen."
+
+msgid "Backup destination file"
+msgstr "Zieldatei sichern"
+
+msgid ""
+"Save a copy of an existing normal map if one already exists. File is saved "
+"in the original directory."
+msgstr ""
+"Speichert eine Kopie einer existierenden Normal Map, wenn bereits eine "
+"existiert. Die Datei wird im selben Verzeichnis gespeichert."
+
+msgid "Compress output"
+msgstr "Ausgabe komprimieren"
+
+msgid ""
+"Compress output file using BC7 compression. This can make saving the file "
+"take a VERY long time!"
+msgstr ""
+"Ausgabedatei mit BC7 kompromieren. Dies kann die Speicherzeit um einiges "
+"erhöhen!"
+
+msgid "Save to background layer file"
+msgstr "Zur Hintergrund-Datei speichern"
+
+msgid ""
+"Use the file name specified in the background layer to save the normal map."
+msgstr ""
+"Verwende zum Speichern der Normal Map den Dateinamen, der in der "
+"Hintergrundschicht angegeben wurde."
+
+msgid "Location to save normal map to."
+msgstr "Pfad zum Speichern der Normal Map."
+
+msgid "Choose an output file..."
+msgstr "Ausgabedatei auswählen..."
+
+msgid "Display current settings on mesh in preview window."
+msgstr "Zeige die aktuellen Einstellungen auf dem Modell in der Vorschau."
+
+msgid "Generate"
+msgstr "Generieren"
+
+msgid "Generate and save the normal map file."
+msgstr "Normal Map-Datei generieren und abspeichern."

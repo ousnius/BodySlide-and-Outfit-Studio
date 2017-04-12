@@ -218,7 +218,7 @@ void NormalsGenDialog::doGenerateNormalMap(wxCommandEvent& WXUNUSED(event))
 
 void NormalsGenDialog::doLoadPreset(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog fl(this, _("Choose a normals generation preset file"), "NormalGen", wxEmptyString, "XML Files (*.xml)|*.xml", wxFD_OPEN);
+	wxFileDialog fl(this, _("Choose a normals generator preset file..."), "NormalGen", wxEmptyString, "XML Files (*.xml)|*.xml", wxFD_OPEN);
 	if (fl.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -236,7 +236,7 @@ void NormalsGenDialog::doLoadPreset(wxCommandEvent& WXUNUSED(event))
 
 void NormalsGenDialog::doSavePreset(wxCommandEvent& WXUNUSED(event))
 {
-	wxFileDialog fs(this, _("Choose a file save location for normal generation preset"), "NormalGen", wxEmptyString, "XML Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog fs(this, _("Save normals generator preset to..."), "NormalGen", wxEmptyString, "XML Files (*.xml)|*.xml", wxFD_SAVE);
 	if (fs.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -255,7 +255,7 @@ void NormalsGenDialog::doSavePreset(wxCommandEvent& WXUNUSED(event))
 
 wxString NormalsGenDialog::nextLayerName()
 {
-	wxString nameStr = _("Layer ") + wxString::Format("%d", layerCount);
+	wxString nameStr = _("Layer") + wxString::Format(" %d", layerCount);
 	return nameStr;
 }
 
@@ -281,12 +281,12 @@ void NormalsGenDialog::addBGLayer(NormalGenLayer & newLayer)
 	newCat = pgLayers->Append(new wxPropertyCategory(newLayer.layerName, "Background"));
 
 	newProp = pgLayers->Append(new wxImageFileProperty(_("Background File"), _("Background File"), newLayer.sourceFileName));
-	pgLayers->SetPropertyHelpString(newProp, _("Filename source for this layer.  "));
+	pgLayers->SetPropertyHelpString(newProp, _("File source for this layer."));
 	newProp = pgLayers->Append(new wxColourProperty(_("Color"), _("Color"), wxColour(newLayer.fillColor[0], newLayer.fillColor[1], newLayer.fillColor[2])));
-	pgLayers->SetPropertyHelpString(newProp, _("Solid background color (If File is not set)"));
+	pgLayers->SetPropertyHelpString(newProp, _("Solid background color (if file is not set)."));
 	newProp = pgLayers->Append(new wxEnumProperty(_("Resolution"), _("Resolution"), resolutions));
 	newProp->SetChoiceSelection(selectedRes);
-	pgLayers->SetPropertyHelpString(newProp, _("Output texture dimesions.  By default all images will be caled to fit this size."));
+	pgLayers->SetPropertyHelpString(newProp, _("Output texture dimensions. By default all images will be scaled to fit this size."));
 }
 
 void NormalsGenDialog::addLayer(NormalGenLayer & newLayer, wxPGProperty * before)
@@ -304,22 +304,22 @@ void NormalsGenDialog::addLayer(NormalGenLayer & newLayer, wxPGProperty * before
 
 	newProp = newCat->AppendChild(new wxImageFileProperty(_("File"), internalName + "File", newLayer.sourceFileName));
 	newProp->SetAttribute("Wildcard", "PNG files (*.png)|*.png");
-	pgLayers->SetPropertyHelpString(newProp, _("A file containing normals data to combine.  Note this file should fit the mesh uvs"));
+	pgLayers->SetPropertyHelpString(newProp, _("File containing normals data to combine. Note this file should fit the mesh UVs."));
 
 	newProp = newCat->AppendChild(new wxBoolProperty(_("Is Tangent Space?"), internalName + "IsTangent", newLayer.isTangentSpace));
-	pgLayers->SetPropertyHelpString(newProp, _("True if the normals data in the layer file is in tangent space, false if they are in model space (msn). "));
+	pgLayers->SetPropertyHelpString(newProp, _("True if the normals data in the layer file is in tangent space, false if they are in model space (msn)."));
 
 	newProp = newCat->AppendChild(new wxImageFileProperty(_("Mask"), internalName + "Mask", newLayer.maskFileName));
-	pgLayers->SetPropertyHelpString(newProp, _("A greyscale image used to mask updates to destination image"));
+	pgLayers->SetPropertyHelpString(newProp, _("A greyscale image used to mask updates to destination image."));
 
 	newProp = newCat->AppendChild(new wxUIntProperty(_("X Offset"), internalName + "XOffset", newLayer.xOffset));
-	pgLayers->SetPropertyHelpString(newProp, _("Offset to apply to image position "));
+	pgLayers->SetPropertyHelpString(newProp, _("Offset to apply to image position."));
 
 	newProp = newCat->AppendChild(new wxUIntProperty(_("Y Offset"), internalName + "YOffset", newLayer.yOffset));
-	pgLayers->SetPropertyHelpString(newProp, _("Y Offset to apply to image position "));
+	pgLayers->SetPropertyHelpString(newProp, _("Offset to apply to image position."));
 
 	newProp = newCat->AppendChild(new wxBoolProperty(_("Scale"), internalName + "Scale", newLayer.scaleToResolution));
-	pgLayers->SetPropertyHelpString(newProp, _("if true, scale image to match background resolution."));
+	pgLayers->SetPropertyHelpString(newProp, _("If true, scale image to match background resolution."));
 }
 
 void NormalsGenDialog::PopulateLayers()

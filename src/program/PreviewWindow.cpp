@@ -28,7 +28,7 @@ wxSize PreviewWindow::GetDefaultSize() {
 }
 
 PreviewWindow::PreviewWindow(BodySlideApp* a)
-	: wxFrame(nullptr, wxID_ANY, "Preview", wxDefaultPosition, GetDefaultSize()), app(a), refNormalGenLayers(emptyLayers) {
+	: wxFrame(nullptr, wxID_ANY, _("Preview"), wxDefaultPosition, GetDefaultSize()), app(a), refNormalGenLayers(emptyLayers) {
 	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);

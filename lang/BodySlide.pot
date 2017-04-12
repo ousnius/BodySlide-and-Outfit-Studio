@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.8.12\n"
+"X-Generator: Poedit 2.0.1\n"
 "Language: en\n"
 "X-Poedit-KeywordsList: _\n"
 
@@ -2181,4 +2181,118 @@ msgid "Please enter a unique name for the new separated shape."
 msgstr ""
 
 msgid "Separate the current shape into two by using the mask."
+msgstr ""
+
+msgid "Show the Normal Map Generator dialog."
+msgstr ""
+
+msgid "Normal Map Generator"
+msgstr ""
+
+msgid "Layers"
+msgstr ""
+
+msgid "Load or save preset layer settings."
+msgstr ""
+
+msgid "Choose a normals generator preset file..."
+msgstr ""
+
+msgid "Save normals generator preset to..."
+msgstr ""
+
+msgid "Background"
+msgstr ""
+
+msgid "Background File"
+msgstr ""
+
+msgid "File source for this layer."
+msgstr ""
+
+msgid "File containing normals data to combine. Note this file should fit the mesh UVs."
+msgstr ""
+
+msgid "Color"
+msgstr ""
+
+msgid "Solid background color (if file is not set)."
+msgstr ""
+
+msgid "Resolution"
+msgstr ""
+
+msgid "Output texture dimensions. By default all images will be scaled to fit this size."
+msgstr ""
+
+msgid "Is Tangent Space?"
+msgstr ""
+
+msgid "True if the normals data in the layer file is in tangent space, false if they are in model space (msn)."
+msgstr ""
+
+msgid "A greyscale image used to mask updates to destination image."
+msgstr ""
+
+msgid "X Offset"
+msgstr ""
+
+msgid "Y Offset"
+msgstr ""
+
+msgid "Offset to apply to image position."
+msgstr ""
+
+msgid "If true, scale image to match background resolution."
+msgstr ""
+
+msgid "Add Layer"
+msgstr ""
+
+msgid "Add a new layer after the current one in the layer list."
+msgstr ""
+
+msgid "Move Up"
+msgstr ""
+
+msgid "Move selected layer up one position."
+msgstr ""
+
+msgid "Delete Layer"
+msgstr ""
+
+msgid "Delete the selected layer."
+msgstr ""
+
+msgid "Backup destination file"
+msgstr ""
+
+msgid "Save a copy of an existing normal map if one already exists. File is saved in the original directory."
+msgstr ""
+
+msgid "Compress output"
+msgstr ""
+
+msgid "Compress output file using BC7 compression. This can make saving the file take a VERY long time!"
+msgstr ""
+
+msgid "Save to background layer file"
+msgstr ""
+
+msgid "Use the file name specified in the background layer to save the normal map."
+msgstr ""
+
+msgid "Location to save normal map to."
+msgstr ""
+
+msgid "Choose an output file..."
+msgstr ""
+
+msgid "Display current settings on mesh in preview window."
+msgstr ""
+
+msgid "Generate"
+msgstr ""
+
+msgid "Generate and save the normal map file."
 msgstr ""
