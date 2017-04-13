@@ -5025,7 +5025,7 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 		mapRemCount = 0;
 		mapHighestRemoved = maxVertexMapSz;
 		for (int i = 0; i < p.vertexMap.size(); i++) {
-			if (p.vertexMap[i] < indexCollapse.size() && indexCollapse[p.vertexMap[i]] == -1) {
+			if (p.vertexMap[i] <= highestRemoved && indexCollapse[p.vertexMap[i]] == -1) {
 				mapRemCount++;
 				mapCollapse[i] = -1;
 				mapHighestRemoved = i;
@@ -5053,21 +5053,41 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 
 		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
 			for (int i = p.numTriangles - 1; i >= 0; i--) {
-				if ((p.triangles[i].p1 < indexCollapse.size() && indexCollapse[p.triangles[i].p1] == -1) ||
-					(p.triangles[i].p2 < indexCollapse.size() && indexCollapse[p.triangles[i].p2] == -1) ||
-					(p.triangles[i].p3 < indexCollapse.size() && indexCollapse[p.triangles[i].p3] == -1)) {
+				if (p.triangles[i].p1 > highestRemoved) {
+					p.triangles[i].p1 -= remCount;
+				}
+				else if (indexCollapse[p.triangles[i].p1] == -1) {
 					p.triangles.erase(p.triangles.begin() + i);
 					p.numTriangles--;
+					continue;
 				}
-				else {
-					if (p.triangles[i].p1 < indexCollapse.size())
-						p.triangles[i].p1 = p.triangles[i].p1 - indexCollapse[p.triangles[i].p1];
-					if (p.triangles[i].p2 < indexCollapse.size())
-						p.triangles[i].p2 = p.triangles[i].p2 - indexCollapse[p.triangles[i].p2];
-					if (p.triangles[i].p3 < indexCollapse.size())
-						p.triangles[i].p3 = p.triangles[i].p3 - indexCollapse[p.triangles[i].p3];
+				else
+					p.triangles[i].p1 -= indexCollapse[p.triangles[i].p1];
+
+				if (p.triangles[i].p2 > highestRemoved) {
+					p.triangles[i].p2 -= remCount;
 				}
+				else if (indexCollapse[p.triangles[i].p2] == -1) {
+					p.triangles.erase(p.triangles.begin() + i);
+					p.numTriangles--;
+					continue;
+				}
+				else
+					p.triangles[i].p2 -= indexCollapse[p.triangles[i].p2];
+
+				if (p.triangles[i].p3 > highestRemoved) {
+					p.triangles[i].p3 -= remCount;
+				}
+				else if (indexCollapse[p.triangles[i].p3] == -1) {
+					p.triangles.erase(p.triangles.begin() + i);
+					p.numTriangles--;
+					continue;
+				}
+				else
+					p.triangles[i].p3 -= indexCollapse[p.triangles[i].p3];
 			}
+
+			p.trueTriangles = p.triangles;
 		}
 		else {
 			for (int i = p.numTriangles - 1; i >= 0; i--) {
@@ -5105,16 +5125,16 @@ void NiSkinPartition::notifyVerticesDelete(const vector<ushort>& vertIndices) {
 					p.triangles[i].p3 -= mapCollapse[p.triangles[i].p3];
 			}
 		}
-
-		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100)
-			p.trueTriangles = p.triangles;
 	}
 
 	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
-		for (int i = vertData.size() - 1; i >= 0; i--)
-			if (find(vertIndices.begin(), vertIndices.end(), i) != vertIndices.end())
-				vertData.erase(vertData.begin() + i);
+		auto vertBegin = &vertData.front();
+		auto pos = remove_if(vertData.begin(), vertData.end(), [&vertBegin, &vertIndices](BSVertexData& v) {
+			auto i = distance(vertBegin, &v);
+			return (find(vertIndices.begin(), vertIndices.end(), i) != vertIndices.end());
+		});
 
+		vertData.erase(pos, vertData.end());
 		numVertices = vertData.size();
 	}
 }
