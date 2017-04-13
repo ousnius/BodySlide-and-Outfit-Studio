@@ -1276,6 +1276,7 @@ public:
 
 	void Get(fstream& file);
 	void Put(fstream& file);
+	void notifyVerticesDelete(const vector<ushort>& vertIndices);
 	int CalcBlockSize();
 	BSMeshLODTriShape* Clone() { return new BSMeshLODTriShape(*this); }
 };

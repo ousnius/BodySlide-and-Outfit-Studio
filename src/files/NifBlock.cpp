@@ -3012,6 +3012,15 @@ void BSMeshLODTriShape::Put(fstream& file) {
 	file.write((char*)&lodSize2, 4);
 }
 
+void BSMeshLODTriShape::notifyVerticesDelete(const vector<ushort>& vertIndices) {
+	BSTriShape::notifyVerticesDelete(vertIndices);
+
+	// Force full LOD (workaround)
+	lodSize0 = 0;
+	lodSize1 = 0;
+	lodSize2 = numTriangles;
+}
+
 int BSMeshLODTriShape::CalcBlockSize() {
 	BSTriShape::CalcBlockSize();
 
