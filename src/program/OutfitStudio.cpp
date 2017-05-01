@@ -4013,10 +4013,10 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 		if (XRCCTRL(dlg, "weightLo", wxRadioButton)->GetValue())
 			hi = false;
 
+		ZeroSliders();
 
 		if (choice == "Zero All") {
-			ZeroSliders();
-			wxLogMessage("Resetting sliders to zero.");
+			wxLogMessage("Sliders were reset to zero.");
 			return;
 		}
 
@@ -4044,6 +4044,7 @@ void OutfitStudio::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 			v *= 100.0f;
 			SetSliderValue(i, v);
 		}
+
 		ApplySliders();
 	}
 }
