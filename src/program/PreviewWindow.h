@@ -34,15 +34,16 @@ class PreviewWindow : public wxFrame {
 	int weight = 100;
 
 	wxDECLARE_EVENT_TABLE();
-	static wxSize GetDefaultSize();
 
 public:
-	PreviewWindow(BodySlideApp* app);
+	PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideApp* app);
 	~PreviewWindow();
 
 	void OnShown();
 	void OnClose(wxCloseEvent& event);
 	void OnWeightSlider(wxScrollEvent& event);
+	void OnMoveWindow(wxMoveEvent& event);
+	void OnSetSize(wxSizeEvent& event);
 
 	void ShowNormalGenWindow(wxCommandEvent& event);
 

@@ -716,7 +716,15 @@ void BodySlideApp::ShowPreview() {
 	if (preview)
 		return;
 
-	preview = new PreviewWindow(this);
+	int x = Config.GetIntValue("PreviewFrame.x");
+	int y = Config.GetIntValue("PreviewFrame.y");
+	int w = Config.GetIntValue("PreviewFrame.width");
+	int h = Config.GetIntValue("PreviewFrame.height");
+	string maximized = Config["PreviewFrame.maximized"];
+
+	preview = new PreviewWindow(wxPoint(x, y), wxSize(w, h), this);
+	if (maximized == "true")
+		preview->Maximize();
 }
 
 void BodySlideApp::InitPreview() {
@@ -914,6 +922,13 @@ void BodySlideApp::RebuildPreviewMeshes() {
 }
 
 bool BodySlideApp::SetDefaultConfig() {
+	int xborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_X);
+	if (xborder < 0)
+		xborder = 0;
+	int yborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_Y);
+	if (yborder < 0)
+		yborder = 0;
+
 	int currentTarget = -1;
 	Config.SetDefaultValue("TargetGame", currentTarget);
 	currentTarget = Config.GetIntValue("TargetGame");
@@ -924,6 +939,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("BSATextureScan", "true");
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("UseSystemLanguage", "false");
+	Config.SetDefaultValue("SelectedOutfit", "");
 	Config.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
@@ -953,7 +969,12 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
 	Config.SetDefaultValue("OutfitStudioFrame.sashpos", 850);
 	Config.SetDefaultValue("OutfitStudioFrame.sashrightpos", 200);
-	Config.SetDefaultValue("SelectedOutfit", "");
+
+	wxSize previewSize(720 + xborder * 2, 720 + yborder * 2);
+	Config.SetDefaultValue("PreviewFrame.width", previewSize.GetWidth());
+	Config.SetDefaultValue("PreviewFrame.height", previewSize.GetHeight());
+	Config.SetDefaultValue("PreviewFrame.x", 100);
+	Config.SetDefaultValue("PreviewFrame.y", 100);
 
 	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
 	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");

@@ -12,23 +12,15 @@ See the included LICENSE file
 wxBEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
 	EVT_CLOSE(PreviewWindow::OnClose)
 	EVT_COMMAND_SCROLL(wxID_ANY, PreviewWindow::OnWeightSlider)
+	EVT_MOVE_END(PreviewWindow::OnMoveWindow)
+	EVT_SIZE(PreviewWindow::OnSetSize)
 wxEND_EVENT_TABLE()
 
 PreviewWindow::~PreviewWindow() {
 }
 
-wxSize PreviewWindow::GetDefaultSize() {
-	int xborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_X);
-	if (xborder < 0)
-		xborder = 0;
-	int yborder = wxSystemSettings::GetMetric(wxSYS_FRAMESIZE_Y);
-	if (yborder < 0)
-		yborder = 0;
-	return wxSize(720 + xborder * 2, 720 + yborder * 2);
-}
-
-PreviewWindow::PreviewWindow(BodySlideApp* a)
-	: wxFrame(nullptr, wxID_ANY, _("Preview"), wxDefaultPosition, GetDefaultSize()), app(a), refNormalGenLayers(emptyLayers) {
+PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideApp* app)
+	: wxFrame(nullptr, wxID_ANY, _("Preview"), pos, size), app(app), refNormalGenLayers(emptyLayers) {
 	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
@@ -327,6 +319,25 @@ void PreviewWindow::MouseWheel(int dW) {
 void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
 	weight = event.GetPosition();
 	app->UpdatePreview();
+}
+
+void PreviewWindow::OnMoveWindow(wxMoveEvent& event) {
+	wxPoint p = GetPosition();
+	Config.SetValue("PreviewFrame.x", p.x);
+	Config.SetValue("PreviewFrame.y", p.y);
+	event.Skip();
+}
+
+void PreviewWindow::OnSetSize(wxSizeEvent& event) {
+	bool maximized = IsMaximized();
+	if (!maximized) {
+		wxSize p = event.GetSize();
+		Config.SetValue("PreviewFrame.width", p.x);
+		Config.SetValue("PreviewFrame.height", p.y);
+	}
+
+	Config.SetValue("PreviewFrame.maximized", maximized ? "true" : "false");
+	event.Skip();
 }
 
 void PreviewWindow::ShowNormalGenWindow(wxCommandEvent & WXUNUSED(event)) {
