@@ -350,7 +350,6 @@ NiHeader::NiHeader() {
 	valid = false;
 
 	header = this;
-	blockType = NIHEADER;
 
 	numBlocks = 0;
 	numStrings = 0;
@@ -489,8 +488,8 @@ void NiHeader::DeleteBlockByType(const string& blockTypeStr) {
 		DeleteBlock(indices[j]);
 }
 
-int NiHeader::AddBlock(NiObject* newBlock, const string& blockTypeStr) {
-	ushort btID = AddOrFindBlockTypeId(blockTypeStr);
+int NiHeader::AddBlock(NiObject* newBlock) {
+	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices.push_back(btID);
 	blockSizes.push_back(newBlock->CalcBlockSize());
 	(*blocks).push_back(newBlock);
@@ -498,7 +497,7 @@ int NiHeader::AddBlock(NiObject* newBlock, const string& blockTypeStr) {
 	return numBlocks - 1;
 }
 
-int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock, const string& blockTypeStr) {
+int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock) {
 	if (oldBlockId == 0xFFFFFFFF)
 		return 0xFFFFFFFF;
 
@@ -518,7 +517,7 @@ int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock, const string& blo
 
 	delete (*blocks)[oldBlockId];
 
-	ushort btID = AddOrFindBlockTypeId(blockTypeStr);
+	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices[oldBlockId] = btID;
 	blockSizes[oldBlockId] = newBlock->CalcBlockSize();
 	(*blocks)[oldBlockId] = newBlock;
@@ -556,7 +555,7 @@ bool NiHeader::IsBlockReferenced(const int blockId) {
 
 void NiHeader::DeleteUnreferencedBlocks(BlockType type, bool* hadDeletions) {
 	for (int i = 1; i < numBlocks; i++) {
-		if (type != NIUNKNOWN && (*blocks)[i]->blockType != type)
+		if (type != NIUNKNOWN && (*blocks)[i]->GetBlockType() != type)
 			continue;
 
 		if (!IsBlockReferenced(i)) {
@@ -1036,15 +1035,12 @@ NiNode::NiNode(NiHeader* hdr) {
 	Init();
 
 	header = hdr;
-	blockType = NINODE;
 }
 
 NiNode::NiNode(fstream& file, NiHeader* hdr) {
 	Init();
 
 	header = hdr;
-	blockType = NINODE;
-
 	Get(file);
 }
 
@@ -1185,15 +1181,12 @@ BSFadeNode::BSFadeNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSFADENODE;
 }
 
 BSFadeNode::BSFadeNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSFADENODE;
-
 	Get(file);
 }
 
@@ -1202,15 +1195,12 @@ BSValueNode::BSValueNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSVALUENODE;
 }
 
 BSValueNode::BSValueNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSVALUENODE;
-
 	Get(file);
 }
 
@@ -1241,15 +1231,12 @@ BSLeafAnimNode::BSLeafAnimNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSLEAFANIMNODE;
 }
 
 BSLeafAnimNode::BSLeafAnimNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSLEAFANIMNODE;
-
 	Get(file);
 }
 
@@ -1258,7 +1245,6 @@ BSTreeNode::BSTreeNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSTREENODE;
 
 	numBones1 = 0;
 	numBones2 = 0;
@@ -1268,8 +1254,6 @@ BSTreeNode::BSTreeNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSTREENODE;
-
 	Get(file);
 }
 
@@ -1363,15 +1347,12 @@ BSOrderedNode::BSOrderedNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSORDEREDNODE;
 }
 
 BSOrderedNode::BSOrderedNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSORDEREDNODE;
-
 	Get(file);
 }
 
@@ -1402,15 +1383,12 @@ BSMultiBoundNode::BSMultiBoundNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUNDNODE;
 }
 
 BSMultiBoundNode::BSMultiBoundNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUNDNODE;
-
 	Get(file);
 }
 
@@ -1471,15 +1449,12 @@ BSBlastNode::BSBlastNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSBLASTNODE;
 }
 
 BSBlastNode::BSBlastNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSBLASTNODE;
-
 	Get(file);
 }
 
@@ -1509,11 +1484,9 @@ int BSBlastNode::CalcBlockSize() {
 
 
 BSDamageStage::BSDamageStage(NiHeader* hdr) : BSBlastNode(hdr) {
-	blockType = BSDAMAGESTAGE;
 }
 
 BSDamageStage::BSDamageStage(fstream& file, NiHeader* hdr) : BSBlastNode(file, hdr) {
-	blockType = BSDAMAGESTAGE;
 }
 
 
@@ -1521,7 +1494,6 @@ BSMasterParticleSystem::BSMasterParticleSystem(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSMASTERPARTICLESYSTEM;
 
 	numParticleSys = 0;
 }
@@ -1530,8 +1502,6 @@ BSMasterParticleSystem::BSMasterParticleSystem(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = BSMASTERPARTICLESYSTEM;
-
 	Get(file);
 }
 
@@ -1601,15 +1571,12 @@ NiBillboardNode::NiBillboardNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = NIBILLBOARDNODE;
 }
 
 NiBillboardNode::NiBillboardNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = NIBILLBOARDNODE;
-
 	Get(file);
 }
 
@@ -1638,15 +1605,12 @@ NiSwitchNode::NiSwitchNode(NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = NISWITCHNODE;
 }
 
 NiSwitchNode::NiSwitchNode(fstream& file, NiHeader* hdr) {
 	NiNode::Init();
 
 	header = hdr;
-	blockType = NISWITCHNODE;
-
 	Get(file);
 }
 
@@ -1795,7 +1759,6 @@ int NiShape::GetBoneID(const string& boneName) {
 BSTriShape::BSTriShape(NiHeader* hdr) {
 	NiAVObject::Init();
 
-	blockType = BSTRISHAPE;
 	header = hdr;
 
 	skinInstanceRef = 0xFFFFFFFF;
@@ -1819,7 +1782,6 @@ BSTriShape::BSTriShape(NiHeader* hdr) {
 BSTriShape::BSTriShape(fstream& file, NiHeader* hdr) {
 	NiAVObject::Init();
 
-	blockType = BSTRISHAPE;
 	header = hdr;
 
 	vertexSize = 0;
@@ -2029,7 +1991,7 @@ void BSTriShape::Put(fstream& file) {
 		uint numUInt = 0;
 		file.write((char*)&numUShort, 2);
 
-		if (blockType == BSDYNAMICTRISHAPE)
+		if (GetBlockType() == BSDYNAMICTRISHAPE)
 			file.write((char*)&numVertices, 2);
 		else
 			file.write((char*)&numUShort, 2);
@@ -2602,7 +2564,7 @@ void BSTriShape::UpdateFlags() {
 	vertFlags5 = 0;
 	vertFlags8 = 0;
 
-	if (blockType == BSDYNAMICTRISHAPE) {
+	if (GetBlockType() == BSDYNAMICTRISHAPE) {
 		if (HasNormals()) {
 			vertFlags3 = 1;
 
@@ -2726,7 +2688,7 @@ int BSTriShape::CalcDataSizes() {
 
 	vertFlags1 = vertexSize;
 
-	if (blockType == BSDYNAMICTRISHAPE)
+	if (GetBlockType() == BSDYNAMICTRISHAPE)
 		vertFlags1 = (vertFlags1 & 0xF) | 0x40;
 
 	vertexSize *= 4;
@@ -2781,11 +2743,9 @@ void BSTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, vector<V
 
 
 BSSubIndexTriShape::BSSubIndexTriShape(NiHeader* hdr) : BSTriShape(hdr) {
-	blockType = BSSUBINDEXTRISHAPE;
 }
 
 BSSubIndexTriShape::BSSubIndexTriShape(fstream& file, NiHeader* hdr) : BSTriShape(file, hdr) {
-	blockType = BSSUBINDEXTRISHAPE;
 	Get(file);
 }
 
@@ -2986,15 +2946,12 @@ void BSSubIndexTriShape::Create(vector<Vector3>* verts, vector<Triangle>* tris, 
 
 
 BSMeshLODTriShape::BSMeshLODTriShape(NiHeader* hdr) : BSTriShape(hdr) {
-	blockType = BSMESHLODTRISHAPE;
-
 	lodSize0 = 0;
 	lodSize1 = 0;
 	lodSize2 = 0;
 }
 
 BSMeshLODTriShape::BSMeshLODTriShape(fstream& file, NiHeader* hdr) : BSTriShape(file, hdr) {
-	blockType = BSMESHLODTRISHAPE;
 	Get(file);
 }
 
@@ -3031,8 +2988,6 @@ int BSMeshLODTriShape::CalcBlockSize() {
 
 
 BSDynamicTriShape::BSDynamicTriShape(NiHeader* hdr) : BSTriShape(hdr) {
-	blockType = BSDYNAMICTRISHAPE;
-
 	vertFlags6 &= ~(1 << 4);
 	vertFlags7 |= 1 << 6;
 
@@ -3040,8 +2995,6 @@ BSDynamicTriShape::BSDynamicTriShape(NiHeader* hdr) : BSTriShape(hdr) {
 }
 
 BSDynamicTriShape::BSDynamicTriShape(fstream& file, NiHeader* hdr) : BSTriShape(file, hdr) {
-	blockType = BSDYNAMICTRISHAPE;
-
 	Get(file);
 }
 
@@ -3591,15 +3544,12 @@ NiTriShape::NiTriShape(NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
 	header = hdr;
-	blockType = NITRISHAPE;
 }
 
 NiTriShape::NiTriShape(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
 	header = hdr;
-	blockType = NITRISHAPE;
-
 	Get(file);
 }
 
@@ -3608,7 +3558,6 @@ NiTriShapeData::NiTriShapeData(NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
 	header = hdr;
-	blockType = NITRISHAPEDATA;
 	numTrianglePoints = 0;
 	hasTriangles = false;
 	numMatchGroups = 0;
@@ -3618,7 +3567,6 @@ NiTriShapeData::NiTriShapeData(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
 	header = hdr;
-	blockType = NITRISHAPEDATA;
 	numTrianglePoints = 0;
 	hasTriangles = false;
 	numMatchGroups = 0;
@@ -3859,15 +3807,12 @@ NiTriStrips::NiTriStrips(NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
 	header = hdr;
-	blockType = NITRISTRIPS;
 }
 
 NiTriStrips::NiTriStrips(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
 	header = hdr;
-	blockType = NITRISTRIPS;
-
 	Get(file);
 }
 
@@ -3876,7 +3821,6 @@ NiTriStripsData::NiTriStripsData(NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
 	header = hdr;
-	blockType = NITRISTRIPSDATA;
 	numStrips = 0;
 	hasPoints = false;
 }
@@ -3885,7 +3829,6 @@ NiTriStripsData::NiTriStripsData(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeomData::Init();
 
 	header = hdr;
-	blockType = NITRISTRIPSDATA;
 	numStrips = 0;
 	hasPoints = false;
 
@@ -4124,15 +4067,12 @@ BSLODTriShape::BSLODTriShape(NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
 	header = hdr;
-	blockType = BSLODTRISHAPE;
 }
 
 BSLODTriShape::BSLODTriShape(fstream& file, NiHeader* hdr) {
 	NiTriBasedGeom::Init();
 
 	header = hdr;
-	blockType = BSLODTRISHAPE;
-
 	Get(file);
 }
 
@@ -4165,15 +4105,12 @@ NiSkinInstance::NiSkinInstance(NiHeader* hdr) {
 	Init();
 
 	header = hdr;
-	blockType = NISKININSTANCE;
 }
 
 NiSkinInstance::NiSkinInstance(fstream& file, NiHeader* hdr) {
 	Init();
 
 	header = hdr;
-	blockType = NISKININSTANCE;
-
 	Get(file);
 }
 
@@ -4299,7 +4236,6 @@ BSDismemberSkinInstance::BSDismemberSkinInstance(NiHeader* hdr) {
 	NiSkinInstance::Init();
 
 	header = hdr;
-	blockType = BSDISMEMBERSKININSTANCE;
 	numPartitions = 0;
 }
 
@@ -4307,8 +4243,6 @@ BSDismemberSkinInstance::BSDismemberSkinInstance(fstream& file, NiHeader* hdr) {
 	NiSkinInstance::Init();
 
 	header = hdr;
-	blockType = BSDISMEMBERSKININSTANCE;
-
 	Get(file);
 }
 
@@ -4366,15 +4300,12 @@ BSSkinInstance::BSSkinInstance(NiHeader* hdr) {
 	Init();
 
 	header = hdr;
-	blockType = BSSKININSTANCE;
 }
 
 BSSkinInstance::BSSkinInstance(fstream& file, NiHeader* hdr) {
 	Init();
 
 	header = hdr;
-	blockType = BSSKININSTANCE;
-
 	Get(file);
 }
 
@@ -4476,8 +4407,6 @@ BSSkinBoneData::BSSkinBoneData(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSBONEDATA;
-
 	nBones = 0;
 }
 
@@ -4485,8 +4414,6 @@ BSSkinBoneData::BSSkinBoneData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSBONEDATA;
-
 	Get(file);
 }
 
@@ -4525,7 +4452,6 @@ NiSkinData::NiSkinData(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NISKINDATA;
 
 	skinTransform.scale = 1.0f;
 	numBones = 0;
@@ -4536,8 +4462,6 @@ NiSkinData::NiSkinData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NISKINDATA;
-
 	Get(file);
 }
 
@@ -4652,7 +4576,6 @@ NiSkinPartition::NiSkinPartition(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NISKINPARTITION;
 
 	numPartitions = 0;
 	dataSize = 0;
@@ -4672,7 +4595,6 @@ NiSkinPartition::NiSkinPartition(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NISKINPARTITION;
 
 	dataSize = 0;
 	vertexSize = 0;
@@ -5203,7 +5125,6 @@ NiParticleSystem::NiParticleSystem(NiHeader* hdr) {
 	NiAVObject::Init();
 
 	header = hdr;
-	blockType = NIPARTICLESYSTEM;
 
 	dataRef = 0xFFFFFFFF;
 	skinInstanceRef = 0xFFFFFFFF;
@@ -5219,8 +5140,6 @@ NiParticleSystem::NiParticleSystem(fstream& file, NiHeader* hdr) {
 	NiAVObject::Init();
 
 	header = hdr;
-	blockType = NIPARTICLESYSTEM;
-
 	Get(file);
 }
 
@@ -5451,20 +5370,16 @@ int NiParticleSystem::CalcBlockSize() {
 
 
 NiMeshParticleSystem::NiMeshParticleSystem(NiHeader* hdr) : NiParticleSystem(hdr) {
-	blockType = NIMESHPARTICLESYSTEM;
 }
 
 NiMeshParticleSystem::NiMeshParticleSystem(fstream& file, NiHeader* hdr) : NiParticleSystem(file, hdr) {
-	blockType = NIMESHPARTICLESYSTEM;
 }
 
 
 BSStripParticleSystem::BSStripParticleSystem(NiHeader* hdr) : NiParticleSystem(hdr) {
-	blockType = BSSTRIPPARTICLESYSTEM;
 }
 
 BSStripParticleSystem::BSStripParticleSystem(fstream& file, NiHeader* hdr) : NiParticleSystem(file, hdr) {
-	blockType = BSSTRIPPARTICLESYSTEM;
 }
 
 
@@ -5473,7 +5388,6 @@ NiParticlesData::NiParticlesData(NiHeader* hdr) {
 	NiGeometryData::isPSys = true;
 
 	header = hdr;
-	blockType = NIPARTICLESDATA;
 
 	hasRadii = false;
 	numActive = 0;
@@ -5490,7 +5404,6 @@ NiParticlesData::NiParticlesData(fstream& file, NiHeader* hdr) {
 	NiGeometryData::isPSys = true;
 
 	header = hdr;
-	blockType = NIPARTICLESDATA;
 
 	Get(file);
 }
@@ -5576,22 +5489,17 @@ int NiParticlesData::CalcBlockSize() {
 
 
 NiRotatingParticlesData::NiRotatingParticlesData(NiHeader* hdr) : NiParticlesData(hdr) {
-	blockType = NIROTATINGPARTICLESDATA;
 }
 
 NiRotatingParticlesData::NiRotatingParticlesData(fstream& file, NiHeader* hdr) : NiParticlesData(file, hdr) {
-	blockType = NIROTATINGPARTICLESDATA;
 }
 
 
 NiPSysData::NiPSysData(NiHeader* hdr) : NiRotatingParticlesData(hdr) {
-	blockType = NIPSYSDATA;
 	hasRotationSpeeds = false;
 }
 
 NiPSysData::NiPSysData(fstream& file, NiHeader* hdr) : NiRotatingParticlesData(file, hdr) {
-	blockType = NIPSYSDATA;
-
 	Get(file);
 }
 
@@ -5616,15 +5524,12 @@ int NiPSysData::CalcBlockSize() {
 
 NiMeshPSysData::NiMeshPSysData(NiHeader* hdr) : NiPSysData(hdr) {
 	header = hdr;
-	blockType = NIMESHPSYSDATA;
 
 	nodeRef = 0xFFFFFFFF;
 }
 
 NiMeshPSysData::NiMeshPSysData(fstream& file, NiHeader* hdr) : NiPSysData(file, hdr) {
 	header = hdr;
-	blockType = NIMESHPSYSDATA;
-
 	Get(file);
 }
 
@@ -5688,12 +5593,9 @@ int NiMeshPSysData::CalcBlockSize() {
 
 
 BSStripPSysData::BSStripPSysData(NiHeader* hdr) : NiPSysData(hdr) {
-	blockType = BSSTRIPPSYSDATA;
 }
 
 BSStripPSysData::BSStripPSysData(fstream& file, NiHeader* hdr) : NiPSysData(file, hdr) {
-	blockType = BSSTRIPPSYSDATA;
-
 	Get(file);
 }
 
@@ -5726,7 +5628,6 @@ NiCamera::NiCamera(NiHeader* hdr) {
 	NiAVObject::Init();
 
 	header = hdr;
-	blockType = NICAMERA;
 
 	sceneRef = 0xFFFFFFFF;
 	screenPolygonsRef = 0xFFFFFFFF;
@@ -5737,8 +5638,6 @@ NiCamera::NiCamera(fstream& file, NiHeader* hdr) {
 	NiAVObject::Init();
 
 	header = hdr;
-	blockType = NICAMERA;
-
 	Get(file);
 }
 
@@ -5909,15 +5808,12 @@ BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSTRIPUPDATEMODIFIER;
 }
 
 BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSTRIPUPDATEMODIFIER;
-
 	Get(file);
 }
 
@@ -5946,15 +5842,12 @@ NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSAGEDEATHMODIFIER;
 }
 
 NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSAGEDEATHMODIFIER;
-
 	Get(file);
 }
 
@@ -6009,15 +5902,12 @@ BSPSysLODModifier::BSPSysLODModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSLODMODIFIER;
 }
 
 BSPSysLODModifier::BSPSysLODModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSLODMODIFIER;
-
 	Get(file);
 }
 
@@ -6046,7 +5936,6 @@ NiPSysSpawnModifier::NiPSysSpawnModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSSPAWNMODIFIER;
 
 	numSpawnGenerations = 0;
 }
@@ -6055,8 +5944,6 @@ NiPSysSpawnModifier::NiPSysSpawnModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSSPAWNMODIFIER;
-
 	Get(file);
 }
 
@@ -6099,15 +5986,12 @@ BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSIMPLECOLORMODIFIER;
 }
 
 BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSIMPLECOLORMODIFIER;
-
 	Get(file);
 }
 
@@ -6152,15 +6036,12 @@ NiPSysRotationModifier::NiPSysRotationModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSROTATIONMODIFIER;
 }
 
 NiPSysRotationModifier::NiPSysRotationModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSROTATIONMODIFIER;
-
 	Get(file);
 }
 
@@ -6201,7 +6082,6 @@ BSPSysScaleModifier::BSPSysScaleModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSCALEMODIFIER;
 
 	numFloats = 0;
 }
@@ -6210,8 +6090,6 @@ BSPSysScaleModifier::BSPSysScaleModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSCALEMODIFIER;
-
 	Get(file);
 }
 
@@ -6246,7 +6124,6 @@ NiPSysGravityModifier::NiPSysGravityModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSGRAVITYMODIFIER;
 
 	gravityObjRef = 0xFFFFFFFF;
 }
@@ -6255,8 +6132,6 @@ NiPSysGravityModifier::NiPSysGravityModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSGRAVITYMODIFIER;
-
 	Get(file);
 }
 
@@ -6323,15 +6198,12 @@ NiPSysPositionModifier::NiPSysPositionModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSPOSITIONMODIFIER;
 }
 
 NiPSysPositionModifier::NiPSysPositionModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSPOSITIONMODIFIER;
-
 	Get(file);
 }
 
@@ -6340,15 +6212,12 @@ NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSBOUNDUPDATEMODIFIER;
 }
 
 NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSBOUNDUPDATEMODIFIER;
-
 	Get(file);
 }
 
@@ -6377,7 +6246,6 @@ NiPSysDragModifier::NiPSysDragModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSDRAGMODIFIER;
 
 	parentRef = 0xFFFFFFFF;
 }
@@ -6386,8 +6254,6 @@ NiPSysDragModifier::NiPSysDragModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSDRAGMODIFIER;
-
 	Get(file);
 }
 
@@ -6448,7 +6314,6 @@ BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSINHERITVELOCITYMODIFIER;
 
 	targetNodeRef = 0xFFFFFFFF;
 }
@@ -6457,8 +6322,6 @@ BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(fstream& file, NiHe
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSINHERITVELOCITYMODIFIER;
-
 	Get(file);
 }
 
@@ -6517,15 +6380,12 @@ BSPSysSubTexModifier::BSPSysSubTexModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSUBTEXMODIFIER;
 }
 
 BSPSysSubTexModifier::BSPSysSubTexModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSSUBTEXMODIFIER;
-
 	Get(file);
 }
 
@@ -6566,7 +6426,6 @@ NiPSysBombModifier::NiPSysBombModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSBOMBMODIFIER;
 
 	bombNodeRef = 0xFFFFFFFF;
 }
@@ -6575,8 +6434,6 @@ NiPSysBombModifier::NiPSysBombModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSBOMBMODIFIER;
-
 	Get(file);
 }
 
@@ -6639,15 +6496,12 @@ BSWindModifier::BSWindModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSWINDMODIFIER;
 }
 
 BSWindModifier::BSWindModifier(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSWINDMODIFIER;
-
 	Get(file);
 }
 
@@ -6676,7 +6530,6 @@ BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSRECYCLEBOUNDMODIFIER;
 
 	targetNodeRef = 0xFFFFFFFF;
 }
@@ -6685,8 +6538,6 @@ BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(fstream& file, NiHeader* 
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSRECYCLEBOUNDMODIFIER;
-
 	Get(file);
 }
 
@@ -6743,7 +6594,6 @@ BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSHAVOKUPDATEMODIFIER;
 
 	modifierRef = 0xFFFFFFFF;
 }
@@ -6752,8 +6602,6 @@ BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(fstream& file, NiHeader* hd
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = BSPSYSHAVOKUPDATEMODIFIER;
-
 	Get(file);
 }
 
@@ -6933,15 +6781,12 @@ NiPSysSphericalCollider::NiPSysSphericalCollider(NiHeader* hdr) {
 	NiPSysCollider::Init();
 
 	header = hdr;
-	blockType = NIPSYSSPHERICALCOLLIDER;
 }
 
 NiPSysSphericalCollider::NiPSysSphericalCollider(fstream& file, NiHeader* hdr) {
 	NiPSysCollider::Init();
 
 	header = hdr;
-	blockType = NIPSYSSPHERICALCOLLIDER;
-
 	Get(file);
 }
 
@@ -6970,15 +6815,12 @@ NiPSysPlanarCollider::NiPSysPlanarCollider(NiHeader* hdr) {
 	NiPSysCollider::Init();
 
 	header = hdr;
-	blockType = NIPSYSPLANARCOLLIDER;
 }
 
 NiPSysPlanarCollider::NiPSysPlanarCollider(fstream& file, NiHeader* hdr) {
 	NiPSysCollider::Init();
 
 	header = hdr;
-	blockType = NIPSYSPLANARCOLLIDER;
-
 	Get(file);
 }
 
@@ -7013,7 +6855,6 @@ NiPSysColliderManager::NiPSysColliderManager(NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSCOLLIDERMANAGER;
 
 	colliderRef = 0xFFFFFFFF;
 }
@@ -7022,8 +6863,6 @@ NiPSysColliderManager::NiPSysColliderManager(fstream& file, NiHeader* hdr) {
 	NiPSysModifier::Init();
 
 	header = hdr;
-	blockType = NIPSYSCOLLIDERMANAGER;
-
 	Get(file);
 }
 
@@ -7168,15 +7007,12 @@ NiPSysSphereEmitter::NiPSysSphereEmitter(NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSSPHEREEMITTER;
 }
 
 NiPSysSphereEmitter::NiPSysSphereEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSSPHEREEMITTER;
-
 	Get(file);
 }
 
@@ -7205,15 +7041,12 @@ NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSCYLINDEREMITTER;
 }
 
 NiPSysCylinderEmitter::NiPSysCylinderEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSCYLINDEREMITTER;
-
 	Get(file);
 }
 
@@ -7244,15 +7077,12 @@ NiPSysBoxEmitter::NiPSysBoxEmitter(NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSBOXEMITTER;
 }
 
 NiPSysBoxEmitter::NiPSysBoxEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysVolumeEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSBOXEMITTER;
-
 	Get(file);
 }
 
@@ -7285,7 +7115,6 @@ NiPSysMeshEmitter::NiPSysMeshEmitter(NiHeader* hdr) {
 	NiPSysEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSMESHEMITTER;
 
 	numMeshes = 0;
 }
@@ -7294,8 +7123,6 @@ NiPSysMeshEmitter::NiPSysMeshEmitter(fstream& file, NiHeader* hdr) {
 	NiPSysEmitter::Init();
 
 	header = hdr;
-	blockType = NIPSYSMESHEMITTER;
-
 	Get(file);
 }
 
@@ -7392,7 +7219,6 @@ NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBLENDBOOLINTERPOLATOR;
 
 	value = false;
 }
@@ -7401,8 +7227,6 @@ NiBlendBoolInterpolator::NiBlendBoolInterpolator(fstream& file, NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBLENDBOOLINTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7431,7 +7255,6 @@ NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBLENDFLOATINTERPOLATOR;
 
 	value = 0.0f;
 }
@@ -7440,8 +7263,6 @@ NiBlendFloatInterpolator::NiBlendFloatInterpolator(fstream& file, NiHeader* hdr)
 	NiBlendInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBLENDFLOATINTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7470,15 +7291,12 @@ NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBLENDPOINT3INTERPOLATOR;
 }
 
 NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(fstream& file, NiHeader* hdr) {
 	NiBlendInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBLENDPOINT3INTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7507,7 +7325,6 @@ NiBoolInterpolator::NiBoolInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBOOLINTERPOLATOR;
 
 	boolValue = 0;
 	dataRef = 0xFFFFFFFF;
@@ -7517,8 +7334,6 @@ NiBoolInterpolator::NiBoolInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIBOOLINTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7569,11 +7384,9 @@ int NiBoolInterpolator::CalcBlockSize() {
 
 
 NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiHeader* hdr) : NiBoolInterpolator(hdr) {
-	blockType = NIBOOLTIMELINEINTERPOLATOR;
 }
 
 NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(fstream& file, NiHeader* hdr) : NiBoolInterpolator(file, hdr) {
-	blockType = NIBOOLTIMELINEINTERPOLATOR;
 }
 
 
@@ -7581,7 +7394,6 @@ NiFloatInterpolator::NiFloatInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIFLOATINTERPOLATOR;
 
 	floatValue = 0.0f;
 	dataRef = 0xFFFFFFFF;
@@ -7591,8 +7403,6 @@ NiFloatInterpolator::NiFloatInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIFLOATINTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7646,7 +7456,6 @@ NiTransformInterpolator::NiTransformInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NITRANSFORMINTERPOLATOR;
 
 	scale = 0.0f;
 	dataRef = 0xFFFFFFFF;
@@ -7656,8 +7465,6 @@ NiTransformInterpolator::NiTransformInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NITRANSFORMINTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7716,7 +7523,6 @@ NiPoint3Interpolator::NiPoint3Interpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIPOINT3INTERPOLATOR;
 
 	dataRef = 0xFFFFFFFF;
 }
@@ -7725,8 +7531,6 @@ NiPoint3Interpolator::NiPoint3Interpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIPOINT3INTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7781,7 +7585,6 @@ NiPathInterpolator::NiPathInterpolator(NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIPATHINTERPOLATOR;
 
 	pathDataRef = 0xFFFFFFFF;
 	percentDataRef = 0xFFFFFFFF;
@@ -7791,8 +7594,6 @@ NiPathInterpolator::NiPathInterpolator(fstream& file, NiHeader* hdr) {
 	NiKeyBasedInterpolator::Init();
 
 	header = hdr;
-	blockType = NIPATHINTERPOLATOR;
-
 	Get(file);
 }
 
@@ -7866,14 +7667,10 @@ int NiPathInterpolator::CalcBlockSize() {
 
 NiLookAtInterpolator::NiLookAtInterpolator(NiHeader* hdr) {
 	NiInterpolator::Init();
-
-	blockType = NILOOKATINTERPOLATOR;
 }
 
 NiLookAtInterpolator::NiLookAtInterpolator(fstream& file, NiHeader* hdr) {
 	NiInterpolator::Init();
-
-	blockType = NILOOKATINTERPOLATOR;
 
 	Get(file);
 }
@@ -7978,7 +7775,6 @@ NiKeyframeData::NiKeyframeData(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIKEYFRAMEDATA;
 
 	numRotationKeys = 0;
 }
@@ -7987,8 +7783,6 @@ NiKeyframeData::NiKeyframeData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIKEYFRAMEDATA;
-
 	Get(file);
 }
 
@@ -8079,11 +7873,9 @@ int NiKeyframeData::CalcBlockSize() {
 
 
 NiTransformData::NiTransformData(NiHeader* hdr) : NiKeyframeData(hdr) {
-	blockType = NITRANSFORMDATA;
 }
 
 NiTransformData::NiTransformData(fstream& file, NiHeader* hdr) : NiKeyframeData(file, hdr) {
-	blockType = NITRANSFORMDATA;
 }
 
 
@@ -8091,15 +7883,12 @@ NiPosData::NiPosData(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIPOSDATA;
 }
 
 NiPosData::NiPosData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIPOSDATA;
-
 	Get(file);
 }
 
@@ -8128,15 +7917,12 @@ NiBoolData::NiBoolData(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIBOOLDATA;
 }
 
 NiBoolData::NiBoolData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIBOOLDATA;
-
 	Get(file);
 }
 
@@ -8165,15 +7951,12 @@ NiFloatData::NiFloatData(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIFLOATDATA;
 }
 
 NiFloatData::NiFloatData(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NIFLOATDATA;
-
 	Get(file);
 }
 
@@ -8282,7 +8065,6 @@ BSFrustumFOVController::BSFrustumFOVController(NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = BSFRUSTUMFOVCONTROLLER;
 
 	interpolatorRef = 0xFFFFFFFF;
 }
@@ -8291,8 +8073,6 @@ BSFrustumFOVController::BSFrustumFOVController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = BSFRUSTUMFOVCONTROLLER;
-
 	Get(file);
 }
 
@@ -8345,15 +8125,12 @@ BSLagBoneController::BSLagBoneController(NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = BSLAGBONECONTROLLER;
 }
 
 BSLagBoneController::BSLagBoneController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = BSLAGBONECONTROLLER;
-
 	Get(file);
 }
 
@@ -8386,15 +8163,12 @@ BSProceduralLightningController::BSProceduralLightningController(NiHeader* hdr) 
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = BSPROCEDURALLIGHTNINGCONTROLLER;
 }
 
 BSProceduralLightningController::BSProceduralLightningController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = BSPROCEDURALLIGHTNINGCONTROLLER;
-
 	Get(file);
 }
 
@@ -8594,7 +8368,6 @@ NiBoneLODController::NiBoneLODController(NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = NIBONELODCONTROLLER;
 
 	numLODs = 0;
 	boneArraysSize = 0;
@@ -8604,8 +8377,6 @@ NiBoneLODController::NiBoneLODController(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = NIBONELODCONTROLLER;
-
 	Get(file);
 }
 
@@ -8748,15 +8519,12 @@ NiFloatExtraDataController::NiFloatExtraDataController(NiHeader* hdr) {
 	NiExtraDataController::Init();
 
 	header = hdr;
-	blockType = NIFLOATEXTRADATACONTROLLER;
 }
 
 NiFloatExtraDataController::NiFloatExtraDataController(fstream &file, NiHeader* hdr) {
 	NiExtraDataController::Init();
 
 	header = hdr;
-	blockType = NIFLOATEXTRADATACONTROLLER;
-
 	Get(file);
 }
 
@@ -8791,15 +8559,12 @@ NiVisController::NiVisController(NiHeader* hdr) {
 	NiBoolInterpController::Init();
 
 	header = hdr;
-	blockType = NIVISCONTROLLER;
 }
 
 NiVisController::NiVisController(fstream &file, NiHeader* hdr) {
 	NiBoolInterpController::Init();
 
 	header = hdr;
-	blockType = NIVISCONTROLLER;
-
 	Get(file);
 }
 
@@ -8808,15 +8573,12 @@ NiAlphaController::NiAlphaController(NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = NIALPHACONTROLLER;
 }
 
 NiAlphaController::NiAlphaController(fstream &file, NiHeader* hdr) {
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = NIALPHACONTROLLER;
-
 	Get(file);
 }
 
@@ -8825,25 +8587,20 @@ NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = NIPSYSUPDATECTLR;
 }
 
 NiPSysUpdateCtlr::NiPSysUpdateCtlr(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = NIPSYSUPDATECTLR;
-
 	Get(file);
 }
 
 
 BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiHeader* hdr) : NiAlphaController(hdr) {
-	blockType = BSNIALPHAPROPERTYTESTREFCONTROLLER;
 }
 
 BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(fstream &file, NiHeader* hdr) : NiAlphaController(file, hdr) {
-	blockType = BSNIALPHAPROPERTYTESTREFCONTROLLER;
 }
 
 
@@ -8851,25 +8608,20 @@ NiKeyframeController::NiKeyframeController(NiHeader* hdr) {
 	NiSingleInterpController::Init();
 
 	header = hdr;
-	blockType = NIKEYFRAMECONTROLLER;
 }
 
 NiKeyframeController::NiKeyframeController(fstream &file, NiHeader* hdr) {
 	NiSingleInterpController::Init();
 
 	header = hdr;
-	blockType = NIKEYFRAMECONTROLLER;
-
 	Get(file);
 }
 
 
 NiTransformController::NiTransformController(NiHeader* hdr) : NiKeyframeController(hdr) {
-	blockType = NITRANSFORMCONTROLLER;
 }
 
 NiTransformController::NiTransformController(fstream &file, NiHeader* hdr) : NiKeyframeController(file, hdr) {
-	blockType = NITRANSFORMCONTROLLER;
 }
 
 
@@ -8877,7 +8629,6 @@ BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 }
 
@@ -8885,7 +8636,6 @@ BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSLIGHTINGSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 
 	Get(file);
@@ -8916,8 +8666,6 @@ BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER;
-
 	typeOfControlledVariable = 0;
 }
 
@@ -8925,8 +8673,6 @@ BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSLIGHTINGSHADERPROPERTYFLOATCONTROLLER;
-
 	Get(file);
 }
 
@@ -8955,7 +8701,6 @@ BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiH
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSEFFECTSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 }
 
@@ -8963,7 +8708,6 @@ BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(fst
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSEFFECTSHADERPROPERTYCOLORCONTROLLER;
 	typeOfControlledColor = 0;
 
 	Get(file);
@@ -8994,8 +8738,6 @@ BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiH
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSEFFECTSHADERPROPERTYFLOATCONTROLLER;
-
 	typeOfControlledVariable = 0;
 }
 
@@ -9003,8 +8745,6 @@ BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(fst
 	NiFloatInterpController::Init();
 
 	header = hdr;
-	blockType = BSEFFECTSHADERPROPERTYFLOATCONTROLLER;
-
 	Get(file);
 }
 
@@ -9033,8 +8773,6 @@ NiMultiTargetTransformController::NiMultiTargetTransformController(NiHeader* hdr
 	NiInterpController::Init();
 
 	header = hdr;
-	blockType = NIMULTITARGETTRANSFORMCONTROLLER;
-
 	numTargets = 0;
 }
 
@@ -9042,8 +8780,6 @@ NiMultiTargetTransformController::NiMultiTargetTransformController(fstream& file
 	NiInterpController::Init();
 
 	header = hdr;
-	blockType = NIMULTITARGETTRANSFORMCONTROLLER;
-
 	Get(file);
 }
 
@@ -9136,15 +8872,12 @@ NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSMODIFIERACTIVECTLR;
 }
 
 NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSMODIFIERACTIVECTLR;
-
 	Get(file);
 }
 
@@ -9153,15 +8886,12 @@ NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERLIFESPANCTLR;
 }
 
 NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERLIFESPANCTLR;
-
 	Get(file);
 }
 
@@ -9170,15 +8900,12 @@ NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERSPEEDCTLR;
 }
 
 NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERSPEEDCTLR;
-
 	Get(file);
 }
 
@@ -9187,15 +8914,12 @@ NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERINITIALRADIUSCTLR;
 }
 
 NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERINITIALRADIUSCTLR;
-
 	Get(file);
 }
 
@@ -9204,15 +8928,12 @@ NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERPLANARANGLECTLR;
 }
 
 NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERPLANARANGLECTLR;
-
 	Get(file);
 }
 
@@ -9221,15 +8942,12 @@ NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERDECLINATIONCTLR;
 }
 
 NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERDECLINATIONCTLR;
-
 	Get(file);
 }
 
@@ -9238,15 +8956,12 @@ NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSGRAVITYSTRENGTHCTLR;
 }
 
 NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSGRAVITYSTRENGTHCTLR;
-
 	Get(file);
 }
 
@@ -9255,15 +8970,12 @@ NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSINITIALROTSPEEDCTLR;
 }
 
 NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSINITIALROTSPEEDCTLR;
-
 	Get(file);
 }
 
@@ -9272,7 +8984,6 @@ NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERCTLR;
 
 	visInterpolatorRef = 0xFFFFFFFF;
 }
@@ -9281,8 +8992,6 @@ NiPSysEmitterCtlr::NiPSysEmitterCtlr(fstream& file, NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSEMITTERCTLR;
-
 	Get(file);
 }
 
@@ -9335,7 +9044,6 @@ NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(NiHeader* hdr) {
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSMULTITARGETEMITTERCTLR;
 
 	masterParticleSystemRef = 0xFFFFFFFF;
 }
@@ -9344,8 +9052,6 @@ NiPSysMultiTargetEmitterCtlr::NiPSysMultiTargetEmitterCtlr(fstream& file, NiHead
 	NiPSysModifierCtlr::Init();
 
 	header = hdr;
-	blockType = NIPSYSMULTITARGETEMITTERCTLR;
-
 	Get(file);
 }
 
@@ -9400,7 +9106,6 @@ NiControllerManager::NiControllerManager(NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = NICONTROLLERMANAGER;
 
 	numControllerSequences = 0;
 	objectPaletteRef = 0xFFFFFFFF;
@@ -9410,8 +9115,6 @@ NiControllerManager::NiControllerManager(fstream& file, NiHeader* hdr) {
 	NiTimeController::Init();
 
 	header = hdr;
-	blockType = NICONTROLLERMANAGER;
-
 	Get(file);
 }
 
@@ -9496,7 +9199,6 @@ NiSequence::NiSequence(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NISEQUENCE;
 
 	numControlledBlocks = 0;
 }
@@ -9505,8 +9207,6 @@ NiSequence::NiSequence(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NISEQUENCE;
-
 	Get(file);
 }
 
@@ -9617,15 +9317,11 @@ int NiSequence::CalcBlockSize() {
 
 
 NiControllerSequence::NiControllerSequence(NiHeader* hdr) : NiSequence(hdr) {
-	blockType = NICONTROLLERSEQUENCE;
-
 	textKeyRef = 0xFFFFFFFF;
 	managerRef = 0xFFFFFFFF;
 }
 
 NiControllerSequence::NiControllerSequence(fstream& file, NiHeader* hdr) : NiSequence(file, hdr) {
-	blockType = NICONTROLLERSEQUENCE;
-
 	Get(file);
 }
 
@@ -9709,7 +9405,6 @@ NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiHeader* hdr) {
 	NiAVObjectPalette::Init();
 
 	header = hdr;
-	blockType = NIDEFAULTAVOBJECTPALETTE;
 
 	sceneRef = 0xFFFFFFFF;
 	numObjects = 0;
@@ -9719,8 +9414,6 @@ NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(fstream& file, NiHeader* hdr)
 	NiAVObjectPalette::Init();
 
 	header = hdr;
-	blockType = NIDEFAULTAVOBJECTPALETTE;
-
 	Get(file);
 }
 
@@ -9912,7 +9605,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader* hdr) {
 	NiObjectNET::bBSLightingShaderProperty = true;
 
 	header = hdr;
-	blockType = BSLIGHTINGSHADERPROPERTY;
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120) {
 		shaderFlags1 = 0x80400203;
@@ -9974,7 +9666,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(fstream& file, NiHeader* hdr)
 	NiObjectNET::bBSLightingShaderProperty = true;
 
 	header = hdr;
-	blockType = BSLIGHTINGSHADERPROPERTY;
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120) {
 		shaderFlags1 = 0x80400203;
@@ -10479,7 +10170,7 @@ BSEffectShaderProperty::BSEffectShaderProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = BSEFFECTSHADERPROPERTY;
+
 	shaderFlags1 = 0;
 	shaderFlags2 = 0;
 	uvOffset.u = 0.0f;
@@ -10506,8 +10197,6 @@ BSEffectShaderProperty::BSEffectShaderProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = BSEFFECTSHADERPROPERTY;
-
 	Get(file);
 }
 
@@ -10654,7 +10343,6 @@ BSWaterShaderProperty::BSWaterShaderProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = BSWATERSHADERPROPERTY;
 
 	shaderFlags1 = 0;
 	shaderFlags2 = 0;
@@ -10669,8 +10357,6 @@ BSWaterShaderProperty::BSWaterShaderProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = BSWATERSHADERPROPERTY;
-
 	Get(file);
 }
 
@@ -10754,7 +10440,6 @@ BSSkyShaderProperty::BSSkyShaderProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = BSSKYSHADERPROPERTY;
 
 	shaderFlags1 = 0;
 	shaderFlags2 = 0;
@@ -10769,8 +10454,6 @@ BSSkyShaderProperty::BSSkyShaderProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = BSSKYSHADERPROPERTY;
-
 	Get(file);
 }
 
@@ -10887,7 +10570,7 @@ BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader* hdr) {
 	BSShaderLightingProperty::Init();
 
 	header = hdr;
-	blockType = BSSHADERPPLIGHTINGPROPERTY;
+
 	textureSetRef = 0xFFFFFFFF;
 	refractionStrength = 0.0;
 	refractionFirePeriod = 0;
@@ -10903,7 +10586,7 @@ BSShaderPPLightingProperty::BSShaderPPLightingProperty(fstream& file, NiHeader* 
 	BSShaderLightingProperty::Init();
 
 	header = hdr;
-	blockType = BSSHADERPPLIGHTINGPROPERTY;
+
 	refractionStrength = 0.0;
 	refractionFirePeriod = 0;
 	unkFloat4 = 4.0f;
@@ -11022,7 +10705,6 @@ BSShaderTextureSet::BSShaderTextureSet(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSSHADERTEXTURESET;
 
 	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
 		numTextures = 10;
@@ -11038,8 +10720,6 @@ BSShaderTextureSet::BSShaderTextureSet(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSSHADERTEXTURESET;
-
 	Get(file);
 }
 
@@ -11077,7 +10757,7 @@ NiAlphaProperty::NiAlphaProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = NIALPHAPROPERTY;
+
 	flags = 4844;
 	threshold = 128;
 }
@@ -11086,8 +10766,6 @@ NiAlphaProperty::NiAlphaProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = NIALPHAPROPERTY;
-
 	Get(file);
 }
 
@@ -11118,7 +10796,7 @@ NiMaterialProperty::NiMaterialProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = NIMATERIALPROPERTY;
+
 	glossiness = 1.0f;
 	alpha = 1.0f;
 	emitMulti = 1.0f;
@@ -11128,7 +10806,6 @@ NiMaterialProperty::NiMaterialProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = NIMATERIALPROPERTY;
 	emitMulti = 1.0f;
 
 	Get(file);
@@ -11232,7 +10909,7 @@ NiStencilProperty::NiStencilProperty(NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = NISTENCILPROPERTY;
+
 	flags = 19840;
 	stencilRef = 0;
 	stencilMask = 0xffffffff;
@@ -11242,8 +10919,6 @@ NiStencilProperty::NiStencilProperty(fstream& file, NiHeader* hdr) {
 	NiProperty::Init();
 
 	header = hdr;
-	blockType = NISTENCILPROPERTY;
-
 	Get(file);
 }
 
@@ -11311,7 +10986,6 @@ NiBinaryExtraData::NiBinaryExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIBINARYEXTRADATA;
 
 	size = 0;
 }
@@ -11320,8 +10994,6 @@ NiBinaryExtraData::NiBinaryExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIBINARYEXTRADATA;
-
 	Get(file);
 }
 
@@ -11356,7 +11028,6 @@ NiFloatExtraData::NiFloatExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIFLOATEXTRADATA;
 
 	floatData = 0.0f;
 }
@@ -11365,8 +11036,6 @@ NiFloatExtraData::NiFloatExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIFLOATEXTRADATA;
-
 	Get(file);
 }
 
@@ -11395,7 +11064,6 @@ NiStringsExtraData::NiStringsExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NISTRINGSEXTRADATA;
 
 	numStrings = 0;
 }
@@ -11404,8 +11072,6 @@ NiStringsExtraData::NiStringsExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NISTRINGSEXTRADATA;
-
 	Get(file);
 }
 
@@ -11443,15 +11109,12 @@ NiStringExtraData::NiStringExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NISTRINGEXTRADATA;
 }
 
 NiStringExtraData::NiStringExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NISTRINGEXTRADATA;
-
 	Get(file);
 }
 
@@ -11494,7 +11157,6 @@ NiBooleanExtraData::NiBooleanExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIBOOLEANEXTRADATA;
 
 	booleanData = false;
 }
@@ -11503,8 +11165,6 @@ NiBooleanExtraData::NiBooleanExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIBOOLEANEXTRADATA;
-
 	Get(file);
 }
 
@@ -11541,7 +11201,7 @@ NiIntegerExtraData::NiIntegerExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIINTEGEREXTRADATA;
+
 	integerData = 0;
 }
 
@@ -11549,8 +11209,6 @@ NiIntegerExtraData::NiIntegerExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NIINTEGEREXTRADATA;
-
 	Get(file);
 }
 
@@ -11584,13 +11242,9 @@ int NiIntegerExtraData::CalcBlockSize() {
 
 
 BSXFlags::BSXFlags(NiHeader* hdr) : NiIntegerExtraData(hdr) {
-	header = hdr;
-	blockType = BSXFLAGS;
 }
 
 BSXFlags::BSXFlags(fstream& file, NiHeader* hdr) : NiIntegerExtraData(file, hdr) {
-	header = hdr;
-	blockType = BSXFLAGS;
 }
 
 
@@ -11598,15 +11252,12 @@ BSInvMarker::BSInvMarker(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSINVMARKER;
 }
 
 BSInvMarker::BSInvMarker(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSINVMARKER;
-
 	Get(file);
 }
 
@@ -11714,11 +11365,9 @@ int BSFurnitureMarker::CalcBlockSize() {
 
 
 BSFurnitureMarkerNode::BSFurnitureMarkerNode(NiHeader* hdr) : BSFurnitureMarker(hdr) {
-	blockType = BSFURNITUREMARKERNODE;
 }
 
 BSFurnitureMarkerNode::BSFurnitureMarkerNode(fstream& file, NiHeader* hdr) : BSFurnitureMarker(file, hdr) {
-	blockType = BSFURNITUREMARKERNODE;
 }
 
 
@@ -11726,7 +11375,7 @@ BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(NiHeader* hdr) 
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSDECALPLACEMENTVECTOREXTRADATA;
+
 	unkFloat1 = 0.0f;
 	numVectorBlocks = 0;
 }
@@ -11735,8 +11384,6 @@ BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(fstream& file, 
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSDECALPLACEMENTVECTOREXTRADATA;
-
 	Get(file);
 }
 
@@ -11792,15 +11439,12 @@ BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSBEHAVIORGRAPHEXTRADATA;
 }
 
 BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSBEHAVIORGRAPHEXTRADATA;
-
 	Get(file);
 }
 
@@ -11837,15 +11481,12 @@ BSBound::BSBound(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSBOUND;
 }
 
 BSBound::BSBound(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSBOUND;
-
 	Get(file);
 }
 
@@ -11876,7 +11517,6 @@ BSBoneLODExtraData::BSBoneLODExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSBONELODEXTRADATA;
 
 	numBoneLODs = 0;
 }
@@ -11885,8 +11525,6 @@ BSBoneLODExtraData::BSBoneLODExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSBONELODEXTRADATA;
-
 	Get(file);
 }
 
@@ -11932,7 +11570,6 @@ NiTextKeyExtraData::NiTextKeyExtraData(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NITEXTKEYEXTRADATA;
 
 	numTextKeys = 0;
 }
@@ -11941,8 +11578,6 @@ NiTextKeyExtraData::NiTextKeyExtraData(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = NITEXTKEYEXTRADATA;
-
 	Get(file);
 }
 
@@ -12022,7 +11657,7 @@ BSConnectPointParents::BSConnectPointParents(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSCONNECTPOINTPARENTS;
+
 	numConnectPoints = 0;
 }
 
@@ -12030,8 +11665,6 @@ BSConnectPointParents::BSConnectPointParents(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSCONNECTPOINTPARENTS;
-
 	Get(file);
 }
 
@@ -12069,7 +11702,7 @@ BSConnectPointChildren::BSConnectPointChildren(NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSCONNECTPOINTCHILDREN;
+
 	unkByte = 1;
 	numTargets = 0;
 }
@@ -12078,8 +11711,6 @@ BSConnectPointChildren::BSConnectPointChildren(fstream& file, NiHeader* hdr) {
 	NiExtraData::Init();
 
 	header = hdr;
-	blockType = BSCONNECTPOINTCHILDREN;
-
 	Get(file);
 }
 
@@ -12120,7 +11751,6 @@ int BSConnectPointChildren::CalcBlockSize() {
 BSClothExtraData::BSClothExtraData() {
 	BSExtraData::Init();
 
-	blockType = BSCLOTHEXTRADATA;
 	numBytes = 0;
 	data.clear();
 }
@@ -12129,7 +11759,7 @@ BSClothExtraData::BSClothExtraData(NiHeader* hdr, const uint size) {
 	BSExtraData::Init();
 
 	header = hdr;
-	blockType = BSCLOTHEXTRADATA;
+
 	numBytes = size;
 	data.resize(size);
 }
@@ -12138,8 +11768,6 @@ BSClothExtraData::BSClothExtraData(fstream& file, NiHeader* hdr) {
 	BSExtraData::Init();
 
 	header = hdr;
-	blockType = BSCLOTHEXTRADATA;
-
 	Get(file);
 }
 
@@ -12201,7 +11829,6 @@ BSMultiBound::BSMultiBound(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUND;
 
 	dataRef = 0xFFFFFFFF;
 }
@@ -12210,8 +11837,6 @@ BSMultiBound::BSMultiBound(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUND;
-
 	Get(file);
 }
 
@@ -12264,15 +11889,12 @@ BSMultiBoundOBB::BSMultiBoundOBB(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUNDOBB;
 }
 
 BSMultiBoundOBB::BSMultiBoundOBB(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUNDOBB;
-
 	Get(file);
 }
 
@@ -12305,15 +11927,12 @@ BSMultiBoundAABB::BSMultiBoundAABB(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUNDAABB;
 }
 
 BSMultiBoundAABB::BSMultiBoundAABB(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = BSMULTIBOUNDAABB;
-
 	Get(file);
 }
 
@@ -12344,7 +11963,6 @@ NiCollisionObject::NiCollisionObject(NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NICOLLISIONOBJECT;
 
 	targetRef = 0xFFFFFFFF;
 }
@@ -12353,8 +11971,6 @@ NiCollisionObject::NiCollisionObject(fstream& file, NiHeader* hdr) {
 	NiObject::Init();
 
 	header = hdr;
-	blockType = NICOLLISIONOBJECT;
-
 	Get(file);
 }
 
@@ -12452,22 +12068,17 @@ int bhkNiCollisionObject::CalcBlockSize() {
 
 
 bhkCollisionObject::bhkCollisionObject(NiHeader* hdr) : bhkNiCollisionObject(hdr) {
-	blockType = BHKCOLLISIONOBJECT;
 }
 
 bhkCollisionObject::bhkCollisionObject(fstream& file, NiHeader* hdr) : bhkNiCollisionObject(file, hdr) {
-	blockType = BHKCOLLISIONOBJECT;
 }
 
 
 bhkNPCollisionObject::bhkNPCollisionObject(NiHeader* hdr) : bhkCollisionObject(hdr) {
-	blockType = BHKNPCOLLISIONOBJECT;
 	unkInt = 0;
 }
 
 bhkNPCollisionObject::bhkNPCollisionObject(fstream& file, NiHeader* hdr) : bhkCollisionObject(file, hdr) {
-	blockType = BHKNPCOLLISIONOBJECT;
-
 	Get(file);
 }
 
@@ -12491,30 +12102,23 @@ int bhkNPCollisionObject::CalcBlockSize() {
 
 
 bhkPCollisionObject::bhkPCollisionObject(NiHeader* hdr) : bhkNiCollisionObject(hdr) {
-	blockType = BHKPCOLLISIONOBJECT;
 }
 
 bhkPCollisionObject::bhkPCollisionObject(fstream& file, NiHeader* hdr) : bhkNiCollisionObject(file, hdr) {
-	blockType = BHKPCOLLISIONOBJECT;
 }
 
 
 bhkSPCollisionObject::bhkSPCollisionObject(NiHeader* hdr) : bhkPCollisionObject(hdr) {
-	blockType = BHKSPCOLLISIONOBJECT;
 }
 
 bhkSPCollisionObject::bhkSPCollisionObject(fstream& file, NiHeader* hdr) : bhkPCollisionObject(file, hdr) {
-	blockType = BHKSPCOLLISIONOBJECT;
 }
 
 
 bhkBlendCollisionObject::bhkBlendCollisionObject(NiHeader* hdr) : bhkCollisionObject(hdr) {
-	blockType = BHKBLENDCOLLISIONOBJECT;
 }
 
 bhkBlendCollisionObject::bhkBlendCollisionObject(fstream& file, NiHeader* hdr) : bhkCollisionObject(file, hdr) {
-	blockType = BHKBLENDCOLLISIONOBJECT;
-
 	Get(file);
 }
 
@@ -12542,7 +12146,6 @@ int bhkBlendCollisionObject::CalcBlockSize() {
 bhkPhysicsSystem::bhkPhysicsSystem() {
 	BSExtraData::Init();
 
-	blockType = BHKPHYSICSSYSTEM;
 	numBytes = 0;
 	data.clear();
 }
@@ -12551,7 +12154,7 @@ bhkPhysicsSystem::bhkPhysicsSystem(NiHeader* hdr, const uint size) {
 	BSExtraData::Init();
 
 	header = hdr;
-	blockType = BHKPHYSICSSYSTEM;
+
 	numBytes = size;
 	data.resize(size);
 }
@@ -12560,8 +12163,6 @@ bhkPhysicsSystem::bhkPhysicsSystem(fstream& file, NiHeader* hdr) {
 	BSExtraData::Init();
 
 	header = hdr;
-	blockType = BHKPHYSICSSYSTEM;
-
 	Get(file);
 }
 
@@ -12600,15 +12201,12 @@ bhkPlaneShape::bhkPlaneShape(NiHeader* hdr) {
 	bhkHeightFieldShape::Init();
 
 	header = hdr;
-	blockType = BHKPLANESHAPE;
 }
 
 bhkPlaneShape::bhkPlaneShape(fstream& file, NiHeader* hdr) {
 	bhkHeightFieldShape::Init();
 
 	header = hdr;
-	blockType = BHKPLANESHAPE;
-
 	Get(file);
 }
 
@@ -12670,7 +12268,6 @@ bhkConvexVerticesShape::bhkConvexVerticesShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKCONVEXVERTICESSHAPE;
 
 	numVerts = 0;
 	numNormals = 0;
@@ -12680,8 +12277,6 @@ bhkConvexVerticesShape::bhkConvexVerticesShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKCONVEXVERTICESSHAPE;
-
 	Get(file);
 }
 
@@ -12732,15 +12327,12 @@ bhkBoxShape::bhkBoxShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKBOXSHAPE;
 }
 
 bhkBoxShape::bhkBoxShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKBOXSHAPE;
-
 	Get(file);
 }
 
@@ -12775,15 +12367,12 @@ bhkSphereShape::bhkSphereShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKSPHERESHAPE;
 }
 
 bhkSphereShape::bhkSphereShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKSPHERESHAPE;
-
 	Get(file);
 }
 
@@ -12792,7 +12381,6 @@ bhkTransformShape::bhkTransformShape(NiHeader* hdr) {
 	bhkShape::Init();
 
 	header = hdr;
-	blockType = BHKTRANSFORMSHAPE;
 
 	shapeRef = 0xFFFFFFFF;
 }
@@ -12801,8 +12389,6 @@ bhkTransformShape::bhkTransformShape(fstream& file, NiHeader* hdr) {
 	bhkShape::Init();
 
 	header = hdr;
-	blockType = BHKTRANSFORMSHAPE;
-
 	Get(file);
 }
 
@@ -12860,11 +12446,9 @@ int bhkTransformShape::CalcBlockSize() {
 
 
 bhkConvexTransformShape::bhkConvexTransformShape(NiHeader* hdr) : bhkTransformShape(hdr) {
-	blockType = BHKCONVEXTRANSFORMSHAPE;
 }
 
 bhkConvexTransformShape::bhkConvexTransformShape(fstream& file, NiHeader* hdr) : bhkTransformShape(file, hdr) {
-	blockType = BHKCONVEXTRANSFORMSHAPE;
 }
 
 
@@ -12872,15 +12456,12 @@ bhkCapsuleShape::bhkCapsuleShape(NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKCAPSULESHAPE;
 }
 
 bhkCapsuleShape::bhkCapsuleShape(fstream& file, NiHeader* hdr) {
 	bhkConvexShape::Init();
 
 	header = hdr;
-	blockType = BHKCAPSULESHAPE;
-
 	Get(file);
 }
 
@@ -12919,7 +12500,6 @@ bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiHeader* hdr) {
 	bhkBvTreeShape::Init();
 
 	header = hdr;
-	blockType = BHKMOPPBVTREESHAPE;
 
 	shapeRef = 0xFFFFFFFF;
 	dataSize = 0;
@@ -12929,8 +12509,6 @@ bhkMoppBvTreeShape::bhkMoppBvTreeShape(fstream& file, NiHeader* hdr) {
 	bhkBvTreeShape::Init();
 
 	header = hdr;
-	blockType = BHKMOPPBVTREESHAPE;
-
 	Get(file);
 }
 
@@ -13013,7 +12591,6 @@ bhkNiTriStripsShape::bhkNiTriStripsShape(NiHeader* hdr) {
 	bhkShape::Init();
 
 	header = hdr;
-	blockType = BHKNITRISTRIPSSHAPE;
 
 	numParts = 0;
 	numFilters = 0;
@@ -13023,8 +12600,6 @@ bhkNiTriStripsShape::bhkNiTriStripsShape(fstream& file, NiHeader* hdr) {
 	bhkShape::Init();
 
 	header = hdr;
-	blockType = BHKNITRISTRIPSSHAPE;
-
 	Get(file);
 }
 
@@ -13120,7 +12695,6 @@ bhkListShape::bhkListShape(NiHeader* hdr) {
 	bhkShapeCollection::Init();
 
 	header = hdr;
-	blockType = BHKLISTSHAPE;
 
 	numSubShapes = 0;
 	numUnkInts = 0;
@@ -13130,8 +12704,6 @@ bhkListShape::bhkListShape(fstream& file, NiHeader* hdr) {
 	bhkShapeCollection::Init();
 
 	header = hdr;
-	blockType = BHKLISTSHAPE;
-
 	Get(file);
 }
 
@@ -13276,15 +12848,12 @@ bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiHeader* hdr) {
 	bhkShapePhantom::Init();
 
 	header = hdr;
-	blockType = BHKSIMPLESHAPEPHANTOM;
 }
 
 bhkSimpleShapePhantom::bhkSimpleShapePhantom(fstream& file, NiHeader* hdr) {
 	bhkShapePhantom::Init();
 
 	header = hdr;
-	blockType = BHKSIMPLESHAPEPHANTOM;
-
 	Get(file);
 }
 
@@ -13385,15 +12954,12 @@ bhkHingeConstraint::bhkHingeConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKHINGECONSTRAINT;
 }
 
 bhkHingeConstraint::bhkHingeConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKHINGECONSTRAINT;
-
 	Get(file);
 }
 
@@ -13422,15 +12988,12 @@ bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKLIMITEDHINGECONSTRAINT;
 }
 
 bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKLIMITEDHINGECONSTRAINT;
-
 	Get(file);
 }
 
@@ -13475,15 +13038,12 @@ bhkBreakableConstraint::bhkBreakableConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKBREAKABLECONSTRAINT;
 }
 
 bhkBreakableConstraint::bhkBreakableConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKBREAKABLECONSTRAINT;
-
 	Get(file);
 }
 
@@ -13535,15 +13095,12 @@ bhkRagdollConstraint::bhkRagdollConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKRAGDOLLCONSTRAINT;
 }
 
 bhkRagdollConstraint::bhkRagdollConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKRAGDOLLCONSTRAINT;
-
 	Get(file);
 }
 
@@ -13608,15 +13165,12 @@ bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKSTIFFSPRINGCONSTRAINT;
 }
 
 bhkStiffSpringConstraint::bhkStiffSpringConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKSTIFFSPRINGCONSTRAINT;
-
 	Get(file);
 }
 
@@ -13649,15 +13203,12 @@ bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKBALLANDSOCKETCONSTRAINT;
 }
 
 bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(fstream& file, NiHeader* hdr) {
 	bhkConstraint::Init();
 
 	header = hdr;
-	blockType = BHKBALLANDSOCKETCONSTRAINT;
-
 	Get(file);
 }
 
@@ -13688,7 +13239,6 @@ bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiHeader* hdr) {
 	bhkSerializable::Init();
 
 	header = hdr;
-	blockType = BHKBALLSOCKETCONSTRAINTCHAIN;
 
 	numPivots = 0;
 	numEntitiesA = 0;
@@ -13701,8 +13251,6 @@ bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(fstream& file, NiHead
 	bhkSerializable::Init();
 
 	header = hdr;
-	blockType = BHKBALLSOCKETCONSTRAINTCHAIN;
-
 	Get(file);
 }
 
@@ -13820,7 +13368,6 @@ bhkRigidBody::bhkRigidBody(NiHeader* hdr) {
 	bhkEntity::Init();
 
 	header = hdr;
-	blockType = BHKRIGIDBODY;
 
 	numConstraints = 0;
 }
@@ -13829,8 +13376,6 @@ bhkRigidBody::bhkRigidBody(fstream& file, NiHeader* hdr) {
 	bhkEntity::Init();
 
 	header = hdr;
-	blockType = BHKRIGIDBODY;
-
 	Get(file);
 }
 
@@ -14002,11 +13547,9 @@ int bhkRigidBody::CalcBlockSize() {
 
 
 bhkRigidBodyT::bhkRigidBodyT(NiHeader* hdr) : bhkRigidBody(hdr) {
-	blockType = BHKRIGIDBODYT;
 }
 
 bhkRigidBodyT::bhkRigidBodyT(fstream& file, NiHeader* hdr) : bhkRigidBody(file, hdr) {
-	blockType = BHKRIGIDBODYT;
 }
 
 
@@ -14014,7 +13557,6 @@ bhkCompressedMeshShape::bhkCompressedMeshShape(NiHeader* hdr) {
 	bhkShape::Init();
 
 	header = hdr;
-	blockType = BHKCOMPRESSEDMESHSHAPE;
 
 	targetRef = 0xFFFFFFFF;
 	dataRef = 0xFFFFFFFF;
@@ -14024,8 +13566,6 @@ bhkCompressedMeshShape::bhkCompressedMeshShape(fstream& file, NiHeader* hdr) {
 	bhkShape::Init();
 
 	header = hdr;
-	blockType = BHKCOMPRESSEDMESHSHAPE;
-
 	Get(file);
 }
 
@@ -14103,7 +13643,6 @@ bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiHeader* hdr) {
 	bhkRefObject::Init();
 
 	header = hdr;
-	blockType = BHKCOMPRESSEDMESHSHAPEDATA;
 
 	numMat32 = 0;
 	numMat16 = 0;
@@ -14121,8 +13660,6 @@ bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(fstream& file, NiHeader* 
 	bhkRefObject::Init();
 
 	header = hdr;
-	blockType = BHKCOMPRESSEDMESHSHAPEDATA;
-
 	Get(file);
 }
 
@@ -14304,14 +13841,11 @@ int bhkCompressedMeshShapeData::CalcBlockSize() {
 
 NiUnknown::NiUnknown() {
 	NiObject::Init();
-
-	blockType = NIUNKNOWN;
 }
 
 NiUnknown::NiUnknown(fstream& file, const uint size) {
 	NiObject::Init();
 
-	blockType = NIUNKNOWN;
 	data.resize(size);
 
 	blockSize = size;
@@ -14321,7 +13855,6 @@ NiUnknown::NiUnknown(fstream& file, const uint size) {
 NiUnknown::NiUnknown(const uint size) {
 	NiObject::Init();
 
-	blockType = NIUNKNOWN;
 	data.resize(size);
 
 	blockSize = size;

@@ -23,6 +23,45 @@ struct OptResultSSE {
 	vector<string> shapesTangentsAdded;
 };
 
+
+class IFactory {
+public:
+	virtual NiObject* Create(fstream& file, NiHeader* hdr) = 0;
+};
+
+template<typename T>
+class NiFactory : public IFactory {
+public:
+	// If you need parameters you pass them through create, you can use generic objects for this too
+	virtual NiObject* Create(fstream& file, NiHeader* hdr) override {
+		return new T(file, hdr);
+	}
+};
+
+class NiFactoryRegister {
+public:
+	NiFactoryRegister();
+
+	template<typename T>
+	void RegisterFactory() {
+		m_registrations.emplace(T::StaticBlockName(), make_shared<NiFactory<T>>());
+	}
+
+	shared_ptr<IFactory> GetFactoryByName(const string& name) {
+		auto it = m_registrations.find(name);
+		if (it != m_registrations.end())
+			return it->second;
+
+		return nullptr;
+	}
+
+protected:
+	unordered_map<string, shared_ptr<IFactory>> m_registrations;
+};
+
+NiFactoryRegister& GetNiFactoryRegister();
+
+
 class NifFile {
 private:
 	string fileName;

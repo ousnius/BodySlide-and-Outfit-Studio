@@ -94,7 +94,7 @@ void ShapeProperties::GetShader() {
 
 		Color4 color;
 		Vector3 colorVec;
-		switch (shader->blockType) {
+		switch (shader->GetBlockType()) {
 			case BSEFFECTSHADERPROPERTY:
 				specularColor->Disable();
 				specularStrength->Disable();
@@ -141,7 +141,7 @@ void ShapeProperties::GetShaderType() {
 	uint type;
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
-		switch (shader->blockType) {
+		switch (shader->GetBlockType()) {
 			case BSLIGHTINGSHADERPROPERTY:
 				type = shader->GetType();
 				if (type > BSLightingShaderPropertyShaderType::WorldLODMultitexture)
@@ -234,11 +234,11 @@ void ShapeProperties::AddShader() {
 			case FO3:
 			case FONV: {
 				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->GetHeader());
-				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(shader, "BSShaderPPLightingProperty"));
+				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(shader));
 				shape->numProperties++;
 
 				NiMaterialProperty* material = new NiMaterialProperty(nif->GetHeader());
-				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(material, "NiMaterialProperty"));
+				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(material));
 				shape->numProperties++;
 				break;
 			}
@@ -247,7 +247,7 @@ void ShapeProperties::AddShader() {
 			case SKYRIMSE:
 			default: {
 				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
-				shape->SetShaderPropertyRef(nif->GetHeader()->AddBlock(shader, "BSLightingShaderProperty"));
+				shape->SetShaderPropertyRef(nif->GetHeader()->AddBlock(shader));
 			}
 		}
 	}
@@ -255,7 +255,7 @@ void ShapeProperties::AddShader() {
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
 		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader());
-		shader->SetTextureSetRef(nif->GetHeader()->AddBlock(nifTexSet, "BSShaderTextureSet"));
+		shader->SetTextureSetRef(nif->GetHeader()->AddBlock(nifTexSet));
 	}
 
 	AssignDefaultTexture();
@@ -397,7 +397,7 @@ void ShapeProperties::GetGeometry() {
 	if (shape) {
 		skinned->SetValue(shape->IsSkinned());
 
-		currentSubIndex = shape->blockType == BSSUBINDEXTRISHAPE;
+		currentSubIndex = shape->GetBlockType() == BSSUBINDEXTRISHAPE;
 		subIndex->SetValue(currentSubIndex);
 
 		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
@@ -453,13 +453,13 @@ void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
 
 void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
-		if (extraData->blockType == NISTRINGEXTRADATA) {
+		if (extraData->GetBlockType() == NISTRINGEXTRADATA) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 			int index = nif->AddStringExtraData(shapeName, stringExtraData->GetName(), stringExtraData->GetStringData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
-		else if (extraData->blockType == NIINTEGEREXTRADATA) {
+		else if (extraData->GetBlockType() == NIINTEGEREXTRADATA) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 			int index = nif->AddIntegerExtraData(shapeName, intExtraData->GetName(), intExtraData->GetIntegerData());
 			if (index != 0xFFFFFFFF)
@@ -486,13 +486,13 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	wxTextCtrl* extraDataValue = new wxTextCtrl(pgExtraData, 4000 + id);
 
 	if (uiOnly) {
-		if (extraData->blockType == NISTRINGEXTRADATA) {
+		if (extraData->GetBlockType() == NISTRINGEXTRADATA) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 			extraDataType->SetSelection(0);
 			extraDataName->SetValue(stringExtraData->GetName());
 			extraDataValue->SetValue(stringExtraData->GetStringData());
 		}
-		else if (extraData->blockType == NIINTEGEREXTRADATA) {
+		else if (extraData->GetBlockType() == NIINTEGEREXTRADATA) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 			extraDataType->SetSelection(1);
 			extraDataName->SetValue(intExtraData->GetName());
@@ -599,7 +599,7 @@ void ShapeProperties::ApplyChanges() {
 
 		shader->SetName(name);
 
-		switch (shader->blockType) {
+		switch (shader->GetBlockType()) {
 			case BSEFFECTSHADERPROPERTY: {
 				shader->SetEmissiveColor(emisColor);
 				shader->SetEmissiveMultiple(emisMultiple);
@@ -666,16 +666,14 @@ void ShapeProperties::ApplyChanges() {
 				if (subIndex->IsChecked()) {
 					auto bsSITS = new BSSubIndexTriShape(nif->GetHeader());
 					*dynamic_cast<BSTriShape*>(bsSITS) = *bsTriShape;
-					bsSITS->blockType = BSSUBINDEXTRISHAPE;
 					bsSITS->SetDefaultSegments();
 					bsSITS->SetName(bsTriShape->GetName());
-					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS, "BSSubIndexTriShape");
+					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
 				}
 				else {
 					auto bsTS = new BSTriShape(*bsTriShape);
-					bsTS->blockType = BSTRISHAPE;
 					bsTS->SetName(bsTriShape->GetName());
-					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS, "BSTriShape");
+					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
 				}
 			}
 		}
@@ -700,11 +698,11 @@ void ShapeProperties::ApplyChanges() {
 		if (extraData) {
 			extraData->SetName(extraDataName->GetValue().ToStdString());
 
-			if (extraData->blockType == NISTRINGEXTRADATA) {
+			if (extraData->GetBlockType() == NISTRINGEXTRADATA) {
 				auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 				stringExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
 			}
-			else if (extraData->blockType == NIINTEGEREXTRADATA) {
+			else if (extraData->GetBlockType() == NIINTEGEREXTRADATA) {
 				auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 				unsigned long val = 0;
 				if (extraDataValue->GetValue().ToULong(&val))

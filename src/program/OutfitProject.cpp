@@ -433,16 +433,16 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 			nifShapeData->SetNormals(true);
 		}
 
-		int shapeID = blank.GetHeader()->AddBlock(nifShapeData, "NiTriShapeData");
+		int shapeID = blank.GetHeader()->AddBlock(nifShapeData);
 
 		NiSkinData* nifSkinData = new NiSkinData(workNif.GetHeader());
-		int skinID = blank.GetHeader()->AddBlock(nifSkinData, "NiSkinData");
+		int skinID = blank.GetHeader()->AddBlock(nifSkinData);
 
 		NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.GetHeader());
-		int partID = blank.GetHeader()->AddBlock(nifSkinPartition, "NiSkinPartition");
+		int partID = blank.GetHeader()->AddBlock(nifSkinPartition);
 
 		BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.GetHeader());
-		int dismemberID = blank.GetHeader()->AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
+		int dismemberID = blank.GetHeader()->AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
 		nifDismemberInst->SetSkeletonRootRef(0);
@@ -456,18 +456,18 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		case FO3:
 		case FONV:
 			nifShaderPP = new BSShaderPPLightingProperty(workNif.GetHeader());
-			shaderID = blank.GetHeader()->AddBlock(nifShaderPP, "BSShaderPPLightingProperty");
-			nifShaderPP->textureSetRef = blank.GetHeader()->AddBlock(nifTexset, "BSShaderTextureSet");
+			shaderID = blank.GetHeader()->AddBlock(nifShaderPP);
+			nifShaderPP->textureSetRef = blank.GetHeader()->AddBlock(nifTexset);
 			break;
 		case SKYRIM:
 		default:
 			nifShader = new BSLightingShaderProperty(workNif.GetHeader());
-			shaderID = blank.GetHeader()->AddBlock(nifShader, "BSLightingShaderProperty");
-			nifShader->textureSetRef = blank.GetHeader()->AddBlock(nifTexset, "BSShaderTextureSet");
+			shaderID = blank.GetHeader()->AddBlock(nifShader);
+			nifShader->textureSetRef = blank.GetHeader()->AddBlock(nifTexset);
 		}
 
 		NiTriShape* nifTriShape = new NiTriShape(workNif.GetHeader());
-		blank.GetHeader()->AddBlock(nifTriShape, "NiTriShape");
+		blank.GetHeader()->AddBlock(nifTriShape);
 		if (owner->targetGame < SKYRIM) {
 			nifTriShape->propertiesRef.push_back(shaderID);
 			nifTriShape->numProperties++;
@@ -486,14 +486,14 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape(workNif.GetHeader());
 		nifBSTriShape->Create(&v, &t, &uv, norms);
-		blank.GetHeader()->AddBlock(nifBSTriShape, "BSSubIndexTriShape");
+		blank.GetHeader()->AddBlock(nifBSTriShape);
 
 		BSSkinInstance* nifBSSkinInstance = new BSSkinInstance(workNif.GetHeader());
-		int skinID = blank.GetHeader()->AddBlock(nifBSSkinInstance, "BSSkin::Instance");
+		int skinID = blank.GetHeader()->AddBlock(nifBSSkinInstance);
 		nifBSSkinInstance->SetTargetRef(workNif.GetRootNodeID());
 
 		BSSkinBoneData* nifBoneData = new BSSkinBoneData(workNif.GetHeader());
-		int boneID = blank.GetHeader()->AddBlock(nifBoneData, "BSSkin::BoneData");
+		int boneID = blank.GetHeader()->AddBlock(nifBoneData);
 		nifBSSkinInstance->SetDataRef(boneID);
 		nifBSTriShape->SetSkinInstanceRef(skinID);
 		triShapeBase = nifBSTriShape;
@@ -501,8 +501,8 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.GetHeader());
 
 		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.GetHeader());
-		int shaderID = blank.GetHeader()->AddBlock(nifShader, "BSLightingShaderProperty");
-		nifShader->textureSetRef = blank.GetHeader()->AddBlock(nifTexset, "BSShaderTextureSet");
+		int shaderID = blank.GetHeader()->AddBlock(nifShader);
+		nifShader->textureSetRef = blank.GetHeader()->AddBlock(nifTexset);
 		nifShader->SetWetMaterialName(wetShaderName);
 
 		triShapeBase->SetName(shapeName);
@@ -511,16 +511,16 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 	else {
 		BSTriShape* triShape = new BSTriShape(workNif.GetHeader());
 		triShape->Create(&v, &t, &uv, norms);
-		blank.GetHeader()->AddBlock(triShape, "BSTriShape");
+		blank.GetHeader()->AddBlock(triShape);
 
 		NiSkinData* nifSkinData = new NiSkinData(workNif.GetHeader());
-		int skinID = blank.GetHeader()->AddBlock(nifSkinData, "NiSkinData");
+		int skinID = blank.GetHeader()->AddBlock(nifSkinData);
 
 		NiSkinPartition* nifSkinPartition = new NiSkinPartition(workNif.GetHeader());
-		int partID = blank.GetHeader()->AddBlock(nifSkinPartition, "NiSkinPartition");
+		int partID = blank.GetHeader()->AddBlock(nifSkinPartition);
 
 		BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance(workNif.GetHeader());
-		int dismemberID = blank.GetHeader()->AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
+		int dismemberID = blank.GetHeader()->AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
 		nifDismemberInst->SetSkeletonRootRef(0);
@@ -530,8 +530,8 @@ int OutfitProject::CreateNifShapeFromData(const string& shapeName, vector<Vector
 		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(workNif.GetHeader());
 
 		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(workNif.GetHeader());
-		int shaderID = blank.GetHeader()->AddBlock(nifShader, "BSLightingShaderProperty");
-		nifShader->textureSetRef = blank.GetHeader()->AddBlock(nifTexset, "BSShaderTextureSet");
+		int shaderID = blank.GetHeader()->AddBlock(nifShader);
+		nifShader->textureSetRef = blank.GetHeader()->AddBlock(nifTexset);
 
 		triShape->SetName(shapeName);
 		triShape->SetShaderPropertyRef(shaderID);
@@ -2126,7 +2126,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 			string selString = clothFileNames[sel[i]].ToStdString();
 			if (!selString.empty()) {
 				auto clothBlock = new BSClothExtraData(clothData[selString]);
-				int id = nif.GetHeader()->AddBlock(clothBlock, "BSClothExtraData");
+				int id = nif.GetHeader()->AddBlock(clothBlock);
 				if (id != 0xFFFFFFFF) {
 					NiNode* root = nif.GetHeader()->GetBlock<NiNode>(0);
 					if (root)

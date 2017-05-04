@@ -11,10 +11,182 @@ See the included LICENSE file
 #include <regex>
 
 
+NiFactoryRegister& GetNiFactoryRegister() {
+	static NiFactoryRegister instance;
+	return instance;
+}
+
+NiFactoryRegister::NiFactoryRegister() {
+	RegisterFactory<NiNode>();
+	RegisterFactory<BSFadeNode>();
+	RegisterFactory<BSValueNode>();
+	RegisterFactory<BSLeafAnimNode>();
+	RegisterFactory<BSTreeNode>();
+	RegisterFactory<BSOrderedNode>();
+	RegisterFactory<BSMultiBoundNode>();
+	RegisterFactory<BSBlastNode>();
+	RegisterFactory<BSDamageStage>();
+	RegisterFactory<BSMasterParticleSystem>();
+	RegisterFactory<NiBillboardNode>();
+	RegisterFactory<NiSwitchNode>();
+	RegisterFactory<NiTriShape>();
+	RegisterFactory<NiTriShapeData>();
+	RegisterFactory<NiTriStrips>();
+	RegisterFactory<NiTriStripsData>();
+	RegisterFactory<BSLODTriShape>();
+	RegisterFactory<BSTriShape>();
+	RegisterFactory<BSSubIndexTriShape>();
+	RegisterFactory<BSMeshLODTriShape>();
+	RegisterFactory<BSDynamicTriShape>();
+	RegisterFactory<NiSkinInstance>();
+	RegisterFactory<BSDismemberSkinInstance>();
+	RegisterFactory<NiSkinData>();
+	RegisterFactory<NiSkinPartition>();
+	RegisterFactory<BSSkinInstance>();
+	RegisterFactory<BSSkinBoneData>();
+	RegisterFactory<BSShaderPPLightingProperty>();
+	RegisterFactory<BSLightingShaderProperty>();
+	RegisterFactory<BSEffectShaderProperty>();
+	RegisterFactory<BSWaterShaderProperty>();
+	RegisterFactory<BSSkyShaderProperty>();
+	RegisterFactory<NiAlphaProperty>();
+	RegisterFactory<NiMaterialProperty>();
+	RegisterFactory<NiStencilProperty>();
+	RegisterFactory<BSShaderTextureSet>();
+	RegisterFactory<NiParticleSystem>();
+	RegisterFactory<NiMeshParticleSystem>();
+	RegisterFactory<BSStripParticleSystem>();
+	RegisterFactory<NiParticlesData>();
+	RegisterFactory<NiRotatingParticlesData>();
+	RegisterFactory<NiPSysData>();
+	RegisterFactory<NiMeshPSysData>();
+	RegisterFactory<BSStripPSysData>();
+	RegisterFactory<NiCamera>();
+	RegisterFactory<BSPSysStripUpdateModifier>();
+	RegisterFactory<NiPSysAgeDeathModifier>();
+	RegisterFactory<BSPSysLODModifier>();
+	RegisterFactory<NiPSysSpawnModifier>();
+	RegisterFactory<BSPSysSimpleColorModifier>();
+	RegisterFactory<NiPSysRotationModifier>();
+	RegisterFactory<BSPSysScaleModifier>();
+	RegisterFactory<NiPSysGravityModifier>();
+	RegisterFactory<NiPSysPositionModifier>();
+	RegisterFactory<NiPSysBoundUpdateModifier>();
+	RegisterFactory<NiPSysDragModifier>();
+	RegisterFactory<BSPSysInheritVelocityModifier>();
+	RegisterFactory<BSPSysSubTexModifier>();
+	RegisterFactory<NiPSysBombModifier>();
+	RegisterFactory<BSWindModifier>();
+	RegisterFactory<BSPSysRecycleBoundModifier>();
+	RegisterFactory<BSPSysHavokUpdateModifier>();
+	RegisterFactory<NiPSysSphericalCollider>();
+	RegisterFactory<NiPSysPlanarCollider>();
+	RegisterFactory<NiPSysColliderManager>();
+	RegisterFactory<NiPSysSphereEmitter>();
+	RegisterFactory<NiPSysCylinderEmitter>();
+	RegisterFactory<NiPSysBoxEmitter>();
+	RegisterFactory<NiPSysMeshEmitter>();
+	RegisterFactory<BSLightingShaderPropertyColorController>();
+	RegisterFactory<BSLightingShaderPropertyFloatController>();
+	RegisterFactory<BSEffectShaderPropertyColorController>();
+	RegisterFactory<BSEffectShaderPropertyFloatController>();
+	RegisterFactory<BSFrustumFOVController>();
+	RegisterFactory<BSLagBoneController>();
+	RegisterFactory<BSProceduralLightningController>();
+	RegisterFactory<NiBoneLODController>();
+	RegisterFactory<NiFloatExtraDataController>();
+	RegisterFactory<NiVisController>();
+	RegisterFactory<NiAlphaController>();
+	RegisterFactory<BSNiAlphaPropertyTestRefController>();
+	RegisterFactory<NiKeyframeController>();
+	RegisterFactory<NiTransformController>();
+	RegisterFactory<NiMultiTargetTransformController>();
+	RegisterFactory<NiPSysModifierActiveCtlr>();
+	RegisterFactory<NiPSysEmitterLifeSpanCtlr>();
+	RegisterFactory<NiPSysEmitterSpeedCtlr>();
+	RegisterFactory<NiPSysEmitterInitialRadiusCtlr>();
+	RegisterFactory<NiPSysEmitterPlanarAngleCtlr>();
+	RegisterFactory<NiPSysEmitterDeclinationCtlr>();
+	RegisterFactory<NiPSysGravityStrengthCtlr>();
+	RegisterFactory<NiPSysInitialRotSpeedCtlr>();
+	RegisterFactory<NiPSysEmitterCtlr>();
+	RegisterFactory<NiPSysMultiTargetEmitterCtlr>();
+	RegisterFactory<NiControllerManager>();
+	RegisterFactory<NiSequence>();
+	RegisterFactory<NiControllerSequence>();
+	RegisterFactory<NiDefaultAVObjectPalette>();
+	RegisterFactory<NiBlendBoolInterpolator>();
+	RegisterFactory<NiBlendFloatInterpolator>();
+	RegisterFactory<NiBlendPoint3Interpolator>();
+	RegisterFactory<NiBoolInterpolator>();
+	RegisterFactory<NiBoolTimelineInterpolator>();
+	RegisterFactory<NiFloatInterpolator>();
+	RegisterFactory<NiTransformInterpolator>();
+	RegisterFactory<NiPoint3Interpolator>();
+	RegisterFactory<NiPathInterpolator>();
+	RegisterFactory<NiLookAtInterpolator>();
+	RegisterFactory<NiPSysUpdateCtlr>();
+	RegisterFactory<NiKeyframeData>();
+	RegisterFactory<NiTransformData>();
+	RegisterFactory<NiPosData>();
+	RegisterFactory<NiBoolData>();
+	RegisterFactory<NiFloatData>();
+	RegisterFactory<NiBinaryExtraData>();
+	RegisterFactory<NiFloatExtraData>();
+	RegisterFactory<NiStringExtraData>();
+	RegisterFactory<NiStringsExtraData>();
+	RegisterFactory<NiBooleanExtraData>();
+	RegisterFactory<NiIntegerExtraData>();
+	RegisterFactory<BSXFlags>();
+	RegisterFactory<BSInvMarker>();
+	RegisterFactory<BSFurnitureMarkerNode>();
+	RegisterFactory<BSDecalPlacementVectorExtraData>();
+	RegisterFactory<BSBehaviorGraphExtraData>();
+	RegisterFactory<BSBound>();
+	RegisterFactory<BSBoneLODExtraData>();
+	RegisterFactory<NiTextKeyExtraData>();
+	RegisterFactory<BSClothExtraData>();
+	RegisterFactory<BSConnectPointParents>();
+	RegisterFactory<BSConnectPointChildren>();
+	RegisterFactory<BSMultiBound>();
+	RegisterFactory<BSMultiBoundOBB>();
+	RegisterFactory<BSMultiBoundAABB>();
+	RegisterFactory<NiCollisionObject>();
+	RegisterFactory<bhkCollisionObject>();
+	RegisterFactory<bhkNPCollisionObject>();
+	RegisterFactory<bhkPCollisionObject>();
+	RegisterFactory<bhkSPCollisionObject>();
+	RegisterFactory<bhkBlendCollisionObject>();
+	RegisterFactory<bhkPhysicsSystem>();
+	RegisterFactory<bhkPlaneShape>();
+	RegisterFactory<bhkConvexVerticesShape>();
+	RegisterFactory<bhkBoxShape>();
+	RegisterFactory<bhkSphereShape>();
+	RegisterFactory<bhkTransformShape>();
+	RegisterFactory<bhkConvexTransformShape>();
+	RegisterFactory<bhkCapsuleShape>();
+	RegisterFactory<bhkNiTriStripsShape>();
+	RegisterFactory<bhkListShape>();
+	RegisterFactory<bhkSimpleShapePhantom>();
+	RegisterFactory<bhkHingeConstraint>();
+	RegisterFactory<bhkLimitedHingeConstraint>();
+	RegisterFactory<bhkRagdollConstraint>();
+	RegisterFactory<bhkBreakableConstraint>();
+	RegisterFactory<bhkStiffSpringConstraint>();
+	RegisterFactory<bhkBallAndSocketConstraint>();
+	RegisterFactory<bhkBallSocketConstraintChain>();
+	RegisterFactory<bhkRigidBody>();
+	RegisterFactory<bhkRigidBodyT>();
+	RegisterFactory<bhkCompressedMeshShape>();
+	RegisterFactory<bhkCompressedMeshShapeData>();
+	RegisterFactory<bhkMoppBvTreeShape>();
+}
+
+
 NiShape* NifFile::FindShapeByName(const string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
-		BlockType type = block->blockType;
+		BlockType type = block->GetBlockType();
 		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 			auto geom = dynamic_cast<NiShape*>(block);
 			if (geom && !name.compare(geom->GetName())) {
@@ -31,7 +203,7 @@ NiShape* NifFile::FindShapeByName(const string& name, int dupIndex) {
 NiAVObject* NifFile::FindAVObjectByName(const string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
-		BlockType type = block->blockType;
+		BlockType type = block->GetBlockType();
 		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 			auto avo = dynamic_cast<NiAVObject*>(block);
 			if (avo && !name.compare(avo->GetName())) {
@@ -47,7 +219,7 @@ NiAVObject* NifFile::FindAVObjectByName(const string& name, int dupIndex) {
 
 NiNode* NifFile::FindNodeByName(const string& name) {
 	for (auto& block : blocks) {
-		if (block->blockType == NINODE) {
+		if (block->GetBlockType() == NINODE) {
 			auto node = dynamic_cast<NiNode*>(block);
 			if (node && !name.compare(node->GetName()))
 				return node;
@@ -136,341 +308,19 @@ int NifFile::Load(const string& filename) {
 
 		hdr.SetBlockReference(&blocks);
 
-		string blockTypeStr;
+		auto& nifactories = GetNiFactoryRegister();
+
 		for (int i = 0; i < hdr.GetNumBlocks(); i++) {
 			NiObject* block = nullptr;
-			blockTypeStr = hdr.GetBlockTypeStringById(i);
-			if (!blockTypeStr.compare("NiNode"))
-				block = (NiObject*) new NiNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSFadeNode"))
-				block = (NiObject*) new BSFadeNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSValueNode"))
-				block = (NiObject*) new BSValueNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSLeafAnimNode"))
-				block = (NiObject*) new BSLeafAnimNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSTreeNode"))
-				block = (NiObject*) new BSTreeNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSOrderedNode"))
-				block = (NiObject*) new BSOrderedNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSMultiBoundNode"))
-				block = (NiObject*) new BSMultiBoundNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSBlastNode"))
-				block = (NiObject*) new BSBlastNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSDamageStage"))
-				block = (NiObject*) new BSDamageStage(file, &hdr);
-			else if (!blockTypeStr.compare("BSMasterParticleSystem"))
-				block = (NiObject*) new BSMasterParticleSystem(file, &hdr);
-			else if (!blockTypeStr.compare("NiBillboardNode"))
-				block = (NiObject*) new NiBillboardNode(file, &hdr);
-			else if (!blockTypeStr.compare("NiSwitchNode"))
-				block = (NiObject*) new NiSwitchNode(file, &hdr);
-			else if (!blockTypeStr.compare("NiTriShape"))
-				block = (NiObject*) new NiTriShape(file, &hdr);
-			else if (!blockTypeStr.compare("NiTriShapeData"))
-				block = (NiObject*) new NiTriShapeData(file, &hdr);
-			else if (!blockTypeStr.compare("NiTriStrips"))
-				block = (NiObject*) new NiTriStrips(file, &hdr);
-			else if (!blockTypeStr.compare("NiTriStripsData"))
-				block = (NiObject*) new NiTriStripsData(file, &hdr);
-			else if (!blockTypeStr.compare("BSLODTriShape"))
-				block = (NiObject*) new BSLODTriShape(file, &hdr);
-			else if (!blockTypeStr.compare("BSTriShape"))
-				block = (NiObject*) new BSTriShape(file, &hdr);
-			else if (!blockTypeStr.compare("BSSubIndexTriShape"))
-				block = (NiObject*) new BSSubIndexTriShape(file, &hdr);
-			else if (!blockTypeStr.compare("BSMeshLODTriShape"))
-				block = (NiObject*) new BSMeshLODTriShape(file, &hdr);
-			else if (!blockTypeStr.compare("BSDynamicTriShape"))
-				block = (NiObject*) new BSDynamicTriShape(file, &hdr);
-			else if (!blockTypeStr.compare("NiSkinInstance"))
-				block = (NiObject*) new NiSkinInstance(file, &hdr);
-			else if (!blockTypeStr.compare("BSDismemberSkinInstance"))
-				block = (NiObject*) new BSDismemberSkinInstance(file, &hdr);
-			else if (!blockTypeStr.compare("NiSkinData"))
-				block = (NiObject*) new NiSkinData(file, &hdr);
-			else if (!blockTypeStr.compare("NiSkinPartition"))
-				block = (NiObject*) new NiSkinPartition(file, &hdr);
-			else if (!blockTypeStr.compare("BSSkin::Instance"))
-				block = (NiObject*) new BSSkinInstance(file, &hdr);
-			else if (!blockTypeStr.compare("BSSkin::BoneData"))
-				block = (NiObject*) new BSSkinBoneData(file, &hdr);
-			else if (!blockTypeStr.compare("BSShaderPPLightingProperty"))
-				block = (NiObject*) new BSShaderPPLightingProperty(file, &hdr);
-			else if (!blockTypeStr.compare("BSLightingShaderProperty"))
-				block = (NiObject*) new BSLightingShaderProperty(file, &hdr);
-			else if (!blockTypeStr.compare("BSEffectShaderProperty"))
-				block = (NiObject*) new BSEffectShaderProperty(file, &hdr);
-			else if (!blockTypeStr.compare("BSWaterShaderProperty"))
-				block = (NiObject*) new BSWaterShaderProperty(file, &hdr);
-			else if (!blockTypeStr.compare("BSSkyShaderProperty"))
-				block = (NiObject*) new BSSkyShaderProperty(file, &hdr);
-			else if (!blockTypeStr.compare("NiAlphaProperty"))
-				block = (NiObject*) new NiAlphaProperty(file, &hdr);
-			else if (!blockTypeStr.compare("NiMaterialProperty"))
-				block = (NiObject*) new NiMaterialProperty(file, &hdr);
-			else if (!blockTypeStr.compare("NiStencilProperty"))
-				block = (NiObject*) new NiStencilProperty(file, &hdr);
-			else if (!blockTypeStr.compare("BSShaderTextureSet"))
-				block = (NiObject*) new BSShaderTextureSet(file, &hdr);
-			else if (!blockTypeStr.compare("NiParticleSystem"))
-				block = (NiObject*) new NiParticleSystem(file, &hdr);
-			else if (!blockTypeStr.compare("NiMeshParticleSystem"))
-				block = (NiObject*) new NiMeshParticleSystem(file, &hdr);
-			else if (!blockTypeStr.compare("BSStripParticleSystem"))
-				block = (NiObject*) new BSStripParticleSystem(file, &hdr);
-			else if (!blockTypeStr.compare("NiParticlesData"))
-				block = (NiObject*) new NiParticlesData(file, &hdr);
-			else if (!blockTypeStr.compare("NiRotatingParticlesData"))
-				block = (NiObject*) new NiRotatingParticlesData(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysData"))
-				block = (NiObject*) new NiPSysData(file, &hdr);
-			else if (!blockTypeStr.compare("NiMeshPSysData"))
-				block = (NiObject*) new NiMeshPSysData(file, &hdr);
-			else if (!blockTypeStr.compare("BSStripPSysData"))
-				block = (NiObject*) new BSStripPSysData(file, &hdr);
-			else if (!blockTypeStr.compare("NiCamera"))
-				block = (NiObject*) new NiCamera(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysStripUpdateModifier"))
-				block = (NiObject*) new BSPSysStripUpdateModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysAgeDeathModifier"))
-				block = (NiObject*) new NiPSysAgeDeathModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysLODModifier"))
-				block = (NiObject*) new BSPSysLODModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysSpawnModifier"))
-				block = (NiObject*) new NiPSysSpawnModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysSimpleColorModifier"))
-				block = (NiObject*) new BSPSysSimpleColorModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysRotationModifier"))
-				block = (NiObject*) new NiPSysRotationModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysScaleModifier"))
-				block = (NiObject*) new BSPSysScaleModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysGravityModifier"))
-				block = (NiObject*) new NiPSysGravityModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysPositionModifier"))
-				block = (NiObject*) new NiPSysPositionModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysBoundUpdateModifier"))
-				block = (NiObject*) new NiPSysBoundUpdateModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysDragModifier"))
-				block = (NiObject*) new NiPSysDragModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysInheritVelocityModifier"))
-				block = (NiObject*) new BSPSysInheritVelocityModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysSubTexModifier"))
-				block = (NiObject*) new BSPSysSubTexModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysBombModifier"))
-				block = (NiObject*) new NiPSysBombModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSWindModifier"))
-				block = (NiObject*) new BSWindModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysRecycleBoundModifier"))
-				block = (NiObject*) new BSPSysRecycleBoundModifier(file, &hdr);
-			else if (!blockTypeStr.compare("BSPSysHavokUpdateModifier"))
-				block = (NiObject*) new BSPSysHavokUpdateModifier(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysSphericalCollider"))
-				block = (NiObject*) new NiPSysSphericalCollider(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysPlanarCollider"))
-				block = (NiObject*) new NiPSysPlanarCollider(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysColliderManager"))
-				block = (NiObject*) new NiPSysColliderManager(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysSphereEmitter"))
-				block = (NiObject*) new NiPSysSphereEmitter(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysCylinderEmitter"))
-				block = (NiObject*) new NiPSysCylinderEmitter(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysBoxEmitter"))
-				block = (NiObject*) new NiPSysBoxEmitter(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysMeshEmitter"))
-				block = (NiObject*) new NiPSysMeshEmitter(file, &hdr);
-			else if (!blockTypeStr.compare("BSLightingShaderPropertyColorController"))
-				block = (NiObject*) new BSLightingShaderPropertyColorController(file, &hdr);
-			else if (!blockTypeStr.compare("BSLightingShaderPropertyFloatController"))
-				block = (NiObject*) new BSLightingShaderPropertyFloatController(file, &hdr);
-			else if (!blockTypeStr.compare("BSEffectShaderPropertyColorController"))
-				block = (NiObject*) new BSEffectShaderPropertyColorController(file, &hdr);
-			else if (!blockTypeStr.compare("BSEffectShaderPropertyFloatController"))
-				block = (NiObject*) new BSEffectShaderPropertyFloatController(file, &hdr);
-			else if (!blockTypeStr.compare("BSFrustumFOVController"))
-				block = (NiObject*) new BSFrustumFOVController(file, &hdr);
-			else if (!blockTypeStr.compare("BSLagBoneController"))
-				block = (NiObject*) new BSLagBoneController(file, &hdr);
-			else if (!blockTypeStr.compare("BSProceduralLightningController"))
-				block = (NiObject*) new BSProceduralLightningController(file, &hdr);
-			else if (!blockTypeStr.compare("NiBoneLODController"))
-				block = (NiObject*) new NiBoneLODController(file, &hdr);
-			else if (!blockTypeStr.compare("NiFloatExtraDataController"))
-				block = (NiObject*) new NiFloatExtraDataController(file, &hdr);
-			else if (!blockTypeStr.compare("NiVisController"))
-				block = (NiObject*) new NiVisController(file, &hdr);
-			else if (!blockTypeStr.compare("NiAlphaController"))
-				block = (NiObject*) new NiAlphaController(file, &hdr);
-			else if (!blockTypeStr.compare("BSNiAlphaPropertyTestRefController"))
-				block = (NiObject*) new BSNiAlphaPropertyTestRefController(file, &hdr);
-			else if (!blockTypeStr.compare("NiKeyframeController"))
-				block = (NiObject*) new NiKeyframeController(file, &hdr);
-			else if (!blockTypeStr.compare("NiTransformController"))
-				block = (NiObject*) new NiTransformController(file, &hdr);
-			else if (!blockTypeStr.compare("NiMultiTargetTransformController"))
-				block = (NiObject*) new NiMultiTargetTransformController(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysModifierActiveCtlr"))
-				block = (NiObject*) new NiPSysModifierActiveCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysEmitterLifeSpanCtlr"))
-				block = (NiObject*) new NiPSysEmitterLifeSpanCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysEmitterSpeedCtlr"))
-				block = (NiObject*) new NiPSysEmitterSpeedCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysEmitterInitialRadiusCtlr"))
-				block = (NiObject*) new NiPSysEmitterInitialRadiusCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysEmitterPlanarAngleCtlr"))
-				block = (NiObject*) new NiPSysEmitterPlanarAngleCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysEmitterDeclinationCtlr"))
-				block = (NiObject*) new NiPSysEmitterDeclinationCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysGravityStrengthCtlr"))
-				block = (NiObject*) new NiPSysGravityStrengthCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysInitialRotSpeedCtlr"))
-				block = (NiObject*) new NiPSysInitialRotSpeedCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysEmitterCtlr"))
-				block = (NiObject*) new NiPSysEmitterCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysMultiTargetEmitterCtlr"))
-				block = (NiObject*) new NiPSysMultiTargetEmitterCtlr(file, &hdr);
-			else if (!blockTypeStr.compare("NiControllerManager"))
-				block = (NiObject*) new NiControllerManager(file, &hdr);
-			else if (!blockTypeStr.compare("NiSequence"))
-				block = (NiObject*) new NiSequence(file, &hdr);
-			else if (!blockTypeStr.compare("NiControllerSequence"))
-				block = (NiObject*) new NiControllerSequence(file, &hdr);
-			else if (!blockTypeStr.compare("NiDefaultAVObjectPalette"))
-				block = (NiObject*) new NiDefaultAVObjectPalette(file, &hdr);
-			else if (!blockTypeStr.compare("NiBlendBoolInterpolator"))
-				block = (NiObject*) new NiBlendBoolInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiBlendFloatInterpolator"))
-				block = (NiObject*) new NiBlendFloatInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiBlendPoint3Interpolator"))
-				block = (NiObject*) new NiBlendPoint3Interpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiBoolInterpolator"))
-				block = (NiObject*) new NiBoolInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiBoolTimelineInterpolator"))
-				block = (NiObject*) new NiBoolTimelineInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiFloatInterpolator"))
-				block = (NiObject*) new NiFloatInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiTransformInterpolator"))
-				block = (NiObject*) new NiTransformInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiPoint3Interpolator"))
-				block = (NiObject*) new NiPoint3Interpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiPathInterpolator"))
-				block = (NiObject*) new NiPathInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiLookAtInterpolator"))
-				block = (NiObject*) new NiLookAtInterpolator(file, &hdr);
-			else if (!blockTypeStr.compare("NiPSysUpdateCtlr"))
-				block = (NiObject*) new NiPSysUpdateCtlr(file, &hdr);
+			string blockTypeStr = hdr.GetBlockTypeStringById(i);
 
-			if (!blockTypeStr.compare("NiKeyframeData"))
-				block = (NiObject*) new NiKeyframeData(file, &hdr);
-			else if (!blockTypeStr.compare("NiTransformData"))
-				block = (NiObject*) new NiTransformData(file, &hdr);
-			else if (!blockTypeStr.compare("NiPosData"))
-				block = (NiObject*) new NiPosData(file, &hdr);
-			else if (!blockTypeStr.compare("NiBoolData"))
-				block = (NiObject*) new NiBoolData(file, &hdr);
-			else if (!blockTypeStr.compare("NiFloatData"))
-				block = (NiObject*) new NiFloatData(file, &hdr);
-			else if (!blockTypeStr.compare("NiBinaryExtraData"))
-				block = (NiObject*) new NiBinaryExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("NiFloatExtraData"))
-				block = (NiObject*) new NiFloatExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("NiStringExtraData"))
-				block = (NiObject*) new NiStringExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("NiStringsExtraData"))
-				block = (NiObject*) new NiStringsExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("NiBooleanExtraData"))
-				block = (NiObject*) new NiBooleanExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("NiIntegerExtraData"))
-				block = (NiObject*) new NiIntegerExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("BSXFlags"))
-				block = (NiObject*) new BSXFlags(file, &hdr);
-			else if (!blockTypeStr.compare("BSInvMarker"))
-				block = (NiObject*) new BSInvMarker(file, &hdr);
-			else if (!blockTypeStr.compare("BSFurnitureMarkerNode"))
-				block = (NiObject*) new BSFurnitureMarkerNode(file, &hdr);
-			else if (!blockTypeStr.compare("BSDecalPlacementVectorExtraData"))
-				block = (NiObject*) new BSDecalPlacementVectorExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("BSBehaviorGraphExtraData"))
-				block = (NiObject*) new BSBehaviorGraphExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("BSBound"))
-				block = (NiObject*) new BSBound(file, &hdr);
-			else if (!blockTypeStr.compare("BSBoneLODExtraData"))
-				block = (NiObject*) new BSBoneLODExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("NiTextKeyExtraData"))
-				block = (NiObject*) new NiTextKeyExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("BSClothExtraData"))
-				block = (NiObject*) new BSClothExtraData(file, &hdr);
-			else if (!blockTypeStr.compare("BSConnectPoint::Parents"))
-				block = (NiObject*) new BSConnectPointParents(file, &hdr);
-			else if (!blockTypeStr.compare("BSConnectPoint::Children"))
-				block = (NiObject*) new BSConnectPointChildren(file, &hdr);
-			else if (!blockTypeStr.compare("BSMultiBound"))
-				block = (NiObject*) new BSMultiBound(file, &hdr);
-			else if (!blockTypeStr.compare("BSMultiBoundOBB"))
-				block = (NiObject*) new BSMultiBoundOBB(file, &hdr);
-			else if (!blockTypeStr.compare("BSMultiBoundAABB"))
-				block = (NiObject*) new BSMultiBoundAABB(file, &hdr);
-			else if (!blockTypeStr.compare("NiCollisionObject"))
-				block = (NiObject*) new NiCollisionObject(file, &hdr);
-			else if (!blockTypeStr.compare("bhkCollisionObject"))
-				block = (NiObject*) new bhkCollisionObject(file, &hdr);
-			else if (!blockTypeStr.compare("bhkNPCollisionObject"))
-				block = (NiObject*) new bhkNPCollisionObject(file, &hdr);
-			else if (!blockTypeStr.compare("bhkPCollisionObject"))
-				block = (NiObject*) new bhkPCollisionObject(file, &hdr);
-			else if (!blockTypeStr.compare("bhkSPCollisionObject"))
-				block = (NiObject*) new bhkSPCollisionObject(file, &hdr);
-			else if (!blockTypeStr.compare("bhkBlendCollisionObject"))
-				block = (NiObject*) new bhkBlendCollisionObject(file, &hdr);
-			else if (!blockTypeStr.compare("bhkPhysicsSystem"))
-				block = (NiObject*) new bhkPhysicsSystem(file, &hdr);
-			else if (!blockTypeStr.compare("bhkPlaneShape"))
-				block = (NiObject*) new bhkPlaneShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkConvexVerticesShape"))
-				block = (NiObject*) new bhkConvexVerticesShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkBoxShape"))
-				block = (NiObject*) new bhkBoxShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkSphereShape"))
-				block = (NiObject*) new bhkSphereShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkTransformShape"))
-				block = (NiObject*) new bhkTransformShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkConvexTransformShape"))
-				block = (NiObject*) new bhkConvexTransformShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkCapsuleShape"))
-				block = (NiObject*) new bhkCapsuleShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkNiTriStripsShape"))
-				block = (NiObject*) new bhkNiTriStripsShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkListShape"))
-				block = (NiObject*) new bhkListShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkSimpleShapePhantom"))
-				block = (NiObject*) new bhkSimpleShapePhantom(file, &hdr);
-			else if (!blockTypeStr.compare("bhkHingeConstraint"))
-				block = (NiObject*) new bhkHingeConstraint(file, &hdr);
-			else if (!blockTypeStr.compare("bhkLimitedHingeConstraint"))
-				block = (NiObject*) new bhkLimitedHingeConstraint(file, &hdr);
-			else if (!blockTypeStr.compare("bhkRagdollConstraint"))
-				block = (NiObject*) new bhkRagdollConstraint(file, &hdr);
-			else if (!blockTypeStr.compare("bhkBreakableConstraint"))
-				block = (NiObject*) new bhkBreakableConstraint(file, &hdr);
-			else if (!blockTypeStr.compare("bhkStiffSpringConstraint"))
-				block = (NiObject*) new bhkStiffSpringConstraint(file, &hdr);
-			else if (!blockTypeStr.compare("bhkBallAndSocketConstraint"))
-				block = (NiObject*) new bhkBallAndSocketConstraint(file, &hdr);
-			else if (!blockTypeStr.compare("bhkBallSocketConstraintChain"))
-				block = (NiObject*) new bhkBallSocketConstraintChain(file, &hdr);
-			else if (!blockTypeStr.compare("bhkRigidBody"))
-				block = (NiObject*) new bhkRigidBody(file, &hdr);
-			else if (!blockTypeStr.compare("bhkRigidBodyT"))
-				block = (NiObject*) new bhkRigidBodyT(file, &hdr);
-			else if (!blockTypeStr.compare("bhkCompressedMeshShape"))
-				block = (NiObject*) new bhkCompressedMeshShape(file, &hdr);
-			else if (!blockTypeStr.compare("bhkCompressedMeshShapeData"))
-				block = (NiObject*) new bhkCompressedMeshShapeData(file, &hdr);
-			else if (!blockTypeStr.compare("bhkMoppBvTreeShape"))
-				block = (NiObject*) new bhkMoppBvTreeShape(file, &hdr);
-
-			if (!block) {
+			auto nifactory = nifactories.GetFactoryByName(blockTypeStr);
+			if (nifactory) {
+				block = nifactory->Create(file, &hdr);
+			}
+			else {
 				hasUnknown = true;
-				block = (NiObject*) new NiUnknown(file, hdr.GetBlockSize(i));
+				block = (NiObject*)new NiUnknown(file, hdr.GetBlockSize(i));
 			}
 
 			if (block)
@@ -564,8 +414,9 @@ void NifFile::PrettySortBlocks() {
 	for (int i = 0; peek < root->ChildrenEnd(); i++) {
 		auto block = hdr.GetBlock<NiObject>(root->GetChildRef(i));
 		if (block) {
-			if (block->blockType == NITRISHAPE || block->blockType == NITRISTRIPS || block->blockType == BSLODTRISHAPE ||
-				block->blockType == BSTRISHAPE || block->blockType == BSSUBINDEXTRISHAPE || block->blockType == BSMESHLODTRISHAPE || block->blockType == BSDYNAMICTRISHAPE) {
+			BlockType type = block->GetBlockType();
+			if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE ||
+				type == BSTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 				iter_swap(bookmark, peek);
 				bookmark++;
 			}
@@ -603,7 +454,7 @@ int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& tran
 	newNode->scale = scale;
 	newNode->SetName(nodeName);
 
-	int newNodeId = hdr.AddBlock(newNode, "NiNode");
+	int newNodeId = hdr.AddBlock(newNode);
 	if (newNodeId != 0xFFFFFFFF)
 		root->AddChildRef(newNodeId);
 
@@ -662,7 +513,7 @@ int NifFile::AddStringExtraData(const string& blockName, const string& name, con
 	strExtraData->SetName(name);
 	strExtraData->SetStringData(stringData);
 
-	return AssignExtraData(blockName, hdr.AddBlock(strExtraData, "NiStringExtraData"), isNode);
+	return AssignExtraData(blockName, hdr.AddBlock(strExtraData), isNode);
 }
 
 int NifFile::AddIntegerExtraData(const string& blockName, const string& name, const int integerData, bool isNode) {
@@ -670,7 +521,7 @@ int NifFile::AddIntegerExtraData(const string& blockName, const string& name, co
 	intExtraData->SetName(name);
 	intExtraData->SetIntegerData(integerData);
 
-	return AssignExtraData(blockName, hdr.AddBlock(intExtraData, "NiIntegerExtraData"), isNode);
+	return AssignExtraData(blockName, hdr.AddBlock(intExtraData), isNode);
 }
 
 NiShader* NifFile::GetShader(const string& shapeName) {
@@ -683,7 +534,7 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 	if (prop1 != 0xFFFFFFFF) {
 		auto shader = hdr.GetBlock<NiShader>(prop1);
 		if (shader) {
-			ushort type = shader->blockType;
+			ushort type = shader->GetBlockType();
 			if (type == BSLIGHTINGSHADERPROPERTY ||
 				type == BSEFFECTSHADERPROPERTY ||
 				type == BSSHADERPPLIGHTINGPROPERTY)
@@ -698,7 +549,7 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 		for (int i = 0; i < props.size(); i++) {
 			auto shader = hdr.GetBlock<NiShader>(props[i]);
 			if (shader) {
-				ushort type = shader->blockType;
+				ushort type = shader->GetBlockType();
 				if (type == BSLIGHTINGSHADERPROPERTY ||
 					type == BSEFFECTSHADERPROPERTY ||
 					type == BSSHADERPPLIGHTINGPROPERTY)
@@ -743,7 +594,7 @@ int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int
 		return 0;
 
 	if (textureSetRef == 0xFFFFFFFF) {
-		if (shader->blockType == BSEFFECTSHADERPROPERTY) {
+		if (shader->GetBlockType() == BSEFFECTSHADERPROPERTY) {
 			auto effectShader = static_cast<BSEffectShaderProperty*>(shader);
 
 			switch (texIndex) {
@@ -788,7 +639,7 @@ void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, in
 		return;
 
 	if (textureSetRef == 0xFFFFFFFF) {
-		if (shader->blockType == BSEFFECTSHADERPROPERTY) {
+		if (shader->GetBlockType() == BSEFFECTSHADERPROPERTY) {
 			auto effectShader = static_cast<BSEffectShaderProperty*>(shader);
 
 			switch (texIndex) {
@@ -856,7 +707,7 @@ void NifFile::CopyController(NiShader* destShader, NiShader* srcShader) {
 	if (srcController) {
 		// Copy first controller
 		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
-		int controllerId = hdr.AddBlock(destController, srcShader->header->GetBlockTypeStringById(nextControllerRef));
+		int controllerId = hdr.AddBlock(destController);
 
 		destController->targetRef = shaderId;
 		destShader->SetControllerRef(controllerId);
@@ -869,7 +720,7 @@ void NifFile::CopyController(NiShader* destShader, NiShader* srcShader) {
 			srcController = srcShader->header->GetBlock<NiTimeController>(nextControllerRef);
 			if (srcController) {
 				NiTimeController* destControllerRec = static_cast<NiTimeController*>(srcController->Clone());
-				controllerId = hdr.AddBlock(destControllerRec, srcShader->header->GetBlockTypeStringById(nextControllerRef));
+				controllerId = hdr.AddBlock(destControllerRec);
 
 				destControllerRec->targetRef = shaderId;
 
@@ -891,12 +742,12 @@ void NifFile::CopyInterpolators(NiTimeController* destController, NiTimeControll
 		return;
 
 	// Copy interpolators linked in different types of controllers
-	if (srcController->blockType == BSFRUSTUMFOVCONTROLLER) {
+	if (srcController->GetBlockType() == BSFRUSTUMFOVCONTROLLER) {
 		auto srcCtrlrType = static_cast<BSFrustumFOVController*>(srcController);
 		auto destCtrlrType = static_cast<BSFrustumFOVController*>(destController);
 		destCtrlrType->interpolatorRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->interpolatorRef);
 	}
-	else if (srcController->blockType == BSPROCEDURALLIGHTNINGCONTROLLER) {
+	else if (srcController->GetBlockType() == BSPROCEDURALLIGHTNINGCONTROLLER) {
 		auto srcCtrlrType = static_cast<BSProceduralLightningController*>(srcController);
 		auto destCtrlrType = static_cast<BSProceduralLightningController*>(destController);
 		destCtrlrType->generationInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
@@ -922,44 +773,44 @@ int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int src
 		destInterp->header = destHeader;
 
 		// Copy data of interpolators as well
-		if (destInterp->blockType == NIBOOLINTERPOLATOR) {
+		if (destInterp->GetBlockType() == NIBOOLINTERPOLATOR) {
 			auto srcInterpType = static_cast<NiBoolInterpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiBoolData>(srcInterpType->dataRef);
 			if (srcData) {
 				auto destData = static_cast<NiBoolData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiBoolInterpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+				destInterpType->dataRef = hdr.AddBlock(destData);
 			}
 		}
-		else if (destInterp->blockType == NIFLOATINTERPOLATOR) {
+		else if (destInterp->GetBlockType() == NIFLOATINTERPOLATOR) {
 			auto srcInterpType = static_cast<NiFloatInterpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiFloatData>(srcInterpType->dataRef);
 			if (srcData) {
 				auto destData = static_cast<NiFloatData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiFloatInterpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+				destInterpType->dataRef = hdr.AddBlock(destData);
 			}
 		}
-		else if (destInterp->blockType == NITRANSFORMINTERPOLATOR) {
+		else if (destInterp->GetBlockType() == NITRANSFORMINTERPOLATOR) {
 			auto srcInterpType = static_cast<NiTransformInterpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiTransformData>(srcInterpType->dataRef);
 			if (srcData) {
 				auto destData = static_cast<NiTransformData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiTransformInterpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+				destInterpType->dataRef = hdr.AddBlock(destData);
 			}
 		}
-		else if (destInterp->blockType == NIPOINT3INTERPOLATOR) {
+		else if (destInterp->GetBlockType() == NIPOINT3INTERPOLATOR) {
 			auto srcInterpType = static_cast<NiPoint3Interpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiPosData>(srcInterpType->dataRef);
 			if (srcData) {
 				auto destData = static_cast<NiPosData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiPoint3Interpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData, srcHeader->GetBlockTypeStringById(srcInterpType->dataRef));
+				destInterpType->dataRef = hdr.AddBlock(destData);
 			}
 		}
 
-		return hdr.AddBlock(destInterp, srcHeader->GetBlockTypeStringById(srcInterpId));
+		return hdr.AddBlock(destInterp);
 	}
 
 	return 0xFFFFFFFF;
@@ -1014,7 +865,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 		destShader->ClearName();
 
 	// Add shader block to nif
-	int shaderId = hdr.AddBlock(destShader, srcNif.hdr.GetBlockTypeStringById(srcShaderRef));
+	int shaderId = hdr.AddBlock(destShader);
 
 	// Extra Data
 	for (int i = 0; i < srcShader->GetNumExtraData(); i++) {
@@ -1024,10 +875,10 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 			destExtraData->header = &hdr;
 			destExtraData->SetName(srcExtraData->GetName());
 
-			int extraDataId = hdr.AddBlock(destExtraData, srcNif.hdr.GetBlockTypeStringById(srcShader->GetExtraDataRef(i)));
+			int extraDataId = hdr.AddBlock(destExtraData);
 			destShader->SetExtraDataRef(i, extraDataId);
 
-			if (destExtraData->blockType == NISTRINGEXTRADATA) {
+			if (destExtraData->GetBlockType() == NISTRINGEXTRADATA) {
 				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
 				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
 				if (strSrcExtraData && strDestExtraData)
@@ -1046,7 +897,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 		destTexSet->header = &hdr;
 
 		// Add texture block to nif
-		int texSetId = hdr.AddBlock(destTexSet, "BSShaderTextureSet");
+		int texSetId = hdr.AddBlock(destTexSet);
 
 		// Assign texture set block id to shader
 		destShader->SetTextureSetRef(texSetId);
@@ -1057,14 +908,14 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	if (!srcWetMaterialName.empty())
 		destShader->SetWetMaterialName(srcWetMaterialName);
 
-	if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+	if (srcShader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY)
 		shape->propertiesRef[propRef1] = shaderId;
 	else
 		shape->SetShaderPropertyRef(shaderId);
 
 	// Kill normals and tangents
 	if (destShader->IsSkinTint() && hdr.GetUserVersion() >= 12) {
-		if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+		if (shape->GetBlockType() == NITRISHAPE || shape->GetBlockType() == NITRISTRIPS) {
 			shape->SetNormals(false);
 			shape->SetTangents(false);
 		}
@@ -1080,8 +931,8 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 		else
 			destAlphaProp->ClearName();
 
-		int alphaPropId = hdr.AddBlock(destAlphaProp, "NiAlphaProperty");
-		if (srcShader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+		int alphaPropId = hdr.AddBlock(destAlphaProp);
+		if (srcShader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY)
 			shape->propertiesRef[propRef2] = alphaPropId;
 		else
 			shape->SetAlphaPropertyRef(alphaPropId);
@@ -1097,7 +948,7 @@ int NifFile::CopyNamedNode(string& nodeName, NifFile& srcNif) {
 	destNode->header = &hdr;
 	destNode->SetName(nodeName);
 
-	return hdr.AddBlock(destNode, "NiNode");
+	return hdr.AddBlock(destNode);
 }
 
 void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape) {
@@ -1110,7 +961,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	destGeom->header = &hdr;
 	destGeom->SetName(shapeDest);
 
-	int destId = hdr.AddBlock(destGeom, srcNif.hdr.GetBlockTypeStringById(srcNif.GetBlockID(srcGeom)));
+	int destId = hdr.AddBlock(destGeom);
 
 	// Extra Data
 	for (int i = 0; i < srcGeom->GetNumExtraData(); i++) {
@@ -1120,10 +971,10 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 			destExtraData->header = &hdr;
 			destExtraData->SetName(srcExtraData->GetName());
 
-			int extraDataId = hdr.AddBlock(destExtraData, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetExtraDataRef(i)));
+			int extraDataId = hdr.AddBlock(destExtraData);
 			destGeom->SetExtraDataRef(i, extraDataId);
 
-			if (destExtraData->blockType == NISTRINGEXTRADATA) {
+			if (destExtraData->GetBlockType() == NISTRINGEXTRADATA) {
 				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
 				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
 				if (strSrcExtraData && strDestExtraData)
@@ -1138,7 +989,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 		auto destCollisionObj = srcCollisionObj->Clone();
 		destCollisionObj->header = &hdr;
 
-		int collisionId = hdr.AddBlock(destCollisionObj, srcNif.hdr.GetBlockTypeStringById(srcGeom->collisionRef));
+		int collisionId = hdr.AddBlock(destCollisionObj);
 		destGeom->collisionRef = collisionId;
 	}
 
@@ -1148,15 +999,15 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 		NiTriBasedGeomData* destGeomData = static_cast<NiTriBasedGeomData*>(srcGeomData->Clone());
 		destGeomData->header = &hdr;
 
-		int destDataId = hdr.AddBlock(destGeomData, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetDataRef()));
+		int destDataId = hdr.AddBlock(destGeomData);
 		destGeom->SetDataRef(destDataId);
 	}
 
 	// Skinning
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
-		if (destGeom->blockType == NITRISHAPE || destGeom->blockType == NITRISTRIPS || destGeom->blockType == BSLODTRISHAPE ||
-			((destGeom->blockType == BSTRISHAPE || destGeom->blockType == BSDYNAMICTRISHAPE) && hdr.GetUserVersion2() == 100)) {
+		if (destGeom->GetBlockType() == NITRISHAPE || destGeom->GetBlockType() == NITRISTRIPS || destGeom->GetBlockType() == BSLODTRISHAPE ||
+			((destGeom->GetBlockType() == BSTRISHAPE || destGeom->GetBlockType() == BSDYNAMICTRISHAPE) && hdr.GetUserVersion2() == 100)) {
 			auto srcSkinInst = srcNif.hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcSkinInst) {
 				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
@@ -1171,9 +1022,9 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 				auto destSkinPart = srcSkinPart->Clone();
 				destSkinPart->header = &hdr;
 
-				int destSkinId = hdr.AddBlock(destSkinInst, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetSkinInstanceRef()));
-				int destSkinDataId = hdr.AddBlock(destSkinData, srcNif.hdr.GetBlockTypeStringById(srcSkinInst->GetDataRef()));
-				int destSkinPartId = hdr.AddBlock(destSkinPart, srcNif.hdr.GetBlockTypeStringById(srcSkinInst->GetSkinPartitionRef()));
+				int destSkinId = hdr.AddBlock(destSkinInst);
+				int destSkinDataId = hdr.AddBlock(destSkinData);
+				int destSkinPartId = hdr.AddBlock(destSkinPart);
 
 				destGeom->SetSkinInstanceRef(destSkinId);
 				destSkinInst->SetDataRef(destSkinDataId);
@@ -1182,19 +1033,19 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 				destBoneCont = static_cast<NiBoneContainer*>(destSkinInst);
 			}
 		}
-		else if (destGeom->blockType == BSTRISHAPE || destGeom->blockType == BSSUBINDEXTRISHAPE || destGeom->blockType == BSMESHLODTRISHAPE) {
+		else if (destGeom->GetBlockType() == BSTRISHAPE || destGeom->GetBlockType() == BSSUBINDEXTRISHAPE || destGeom->GetBlockType() == BSMESHLODTRISHAPE) {
 			auto srcBSSkinInst = srcNif.hdr.GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcBSSkinInst) {
 				auto destBSSkinInst = srcBSSkinInst->Clone();
 
-				int destSkinInstId = hdr.AddBlock(destBSSkinInst, srcNif.hdr.GetBlockTypeStringById(srcGeom->GetSkinInstanceRef()));
+				int destSkinInstId = hdr.AddBlock(destBSSkinInst);
 				destGeom->SetSkinInstanceRef(destSkinInstId);
 
 				auto srcBoneData = srcNif.hdr.GetBlock<BSSkinBoneData>(srcBSSkinInst->GetDataRef());
 				if (srcBoneData) {
 					auto destBoneData = srcBoneData->Clone();
 
-					int destBoneDataId = hdr.AddBlock(destBoneData, srcNif.hdr.GetBlockTypeStringById(srcBSSkinInst->GetDataRef()));
+					int destBoneDataId = hdr.AddBlock(destBoneData);
 					destBSSkinInst->SetDataRef(destBoneDataId);
 
 					destBoneCont = static_cast<NiBoneContainer*>(destBSSkinInst);
@@ -1213,7 +1064,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 			auto destProp = srcProp->Clone();
 			destProp->header = &hdr;
 
-			int propId = hdr.AddBlock(destProp, srcNif.hdr.GetBlockTypeStringById(srcGeom->propertiesRef[i]));
+			int propId = hdr.AddBlock(destProp);
 			destGeom->propertiesRef[i] = propId;
 		}
 	}
@@ -1319,12 +1170,12 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				const vector<Color4>& colors = geomData->vertexColors;
 				vector<Triangle> triangles;
 
-				if (geomData->blockType == NITRISHAPEDATA) {
+				if (geomData->GetBlockType() == NITRISHAPEDATA) {
 					auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 					if (shapeData)
 						triangles = shapeData->triangles;
 				}
-				else if (geomData->blockType == NITRISTRIPSDATA) {
+				else if (geomData->GetBlockType() == NITRISTRIPSDATA) {
 					auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 					if (stripsData) {
 						triangles.reserve(stripsData->numTriangles);
@@ -1506,10 +1357,10 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if (headPartEyes)
 						bsShape->vertFlags7 |= 1 << 4;
 
-					hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSDynamicTriShape");
+					hdr.ReplaceBlock(GetBlockID(shape), bsShape);
 				}
 				else
-					hdr.ReplaceBlock(GetBlockID(shape), bsShape, "BSTriShape");
+					hdr.ReplaceBlock(GetBlockID(shape), bsShape);
 
 				UpdateSkinPartitions(s);
 			}
@@ -1553,7 +1404,7 @@ void NifFile::PrepareData() {
 
 				bsTriShape->numTriangles = bsTriShape->triangles.size();
 
-				if (bsTriShape->blockType == BSDYNAMICTRISHAPE) {
+				if (bsTriShape->GetBlockType() == BSDYNAMICTRISHAPE) {
 					BSDynamicTriShape* dynamicShape = dynamic_cast<BSDynamicTriShape*>(bsTriShape);
 					if (dynamicShape) {
 						for (int i = 0; i < dynamicShape->numVertices; i++) {
@@ -1613,13 +1464,13 @@ BlockType NifFile::GetShapeType(const string& shapeName) {
 	if (!shape)
 		return NIUNKNOWN;
 
-	return shape->blockType;
+	return shape->GetBlockType();
 }
 
 int NifFile::GetShapeList(vector<string>& outList) {
 	outList.clear();
 	for (auto& block : blocks) {
-		BlockType type = block->blockType;
+		BlockType type = block->GetBlockType();
 		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 			auto shape = static_cast<NiShape*>(block);
 			if (shape)
@@ -1665,7 +1516,7 @@ int NifFile::GetRootNodeID() {
 
 bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
 	for (auto& block : blocks) {
-		if (block->blockType == NINODE) {
+		if (block->GetBlockType() == NINODE) {
 			auto node = static_cast<NiNode*>(block);
 			if (!node->GetName().compare(nodeName)) {
 				outRot.clear();
@@ -1702,7 +1553,7 @@ bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform, c
 	}
 	else {
 		for (auto& block : blocks) {
-			if (block->blockType == NINODE) {
+			if (block->GetBlockType() == NINODE) {
 				auto node = static_cast<NiNode*>(block);
 				if (!node->GetName().compare(nodeName)) {
 					node->rotation[0] = inXform.rotation[0];
@@ -1765,7 +1616,8 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 		return;
 
 	BSSkinBoneData* boneData = nullptr;
-	if (shape->blockType == BSTRISHAPE || shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	BlockType type = shape->GetBlockType();
+	if (type == BSTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 		if (skinForBoneRef)
 			boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
@@ -2166,7 +2018,7 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 
 	vector<Vector3> verts;
 	vector<Triangle> tris;
-	if (shape->blockType == NITRISHAPE) {
+	if (shape->GetBlockType() == NITRISHAPE) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
@@ -2174,7 +2026,7 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 		verts = shapeData->vertices;
 		tris = shapeData->triangles;
 	}
-	else if (shape->blockType == NITRISTRIPS) {
+	else if (shape->GetBlockType() == NITRISTRIPS) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (!stripsData)
 			return;
@@ -2182,7 +2034,7 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 		verts = stripsData->vertices;
 		stripsData->StripsToTris(&tris);
 	}
-	else if (shape->blockType == BSTRISHAPE) {
+	else if (shape->GetBlockType() == BSTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -2238,12 +2090,13 @@ const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 	if (!shape)
 		return nullptr;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->vertices;
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->GetRawVerts();
@@ -2257,21 +2110,22 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	if (!shape)
 		return false;
 
-	if (shape->blockType == NITRISHAPE) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (shapeData) {
 			*outTris = shapeData->triangles;
 			return true;
 		}
 	}
-	else if (shape->blockType == NITRISTRIPS) {
+	else if (type == NITRISTRIPS) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (stripsData) {
 			stripsData->StripsToTris(outTris);
 			return true;
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			*outTris = bsTriShape->triangles;
@@ -2288,7 +2142,9 @@ bool NifFile::ReorderTriangles(const string& shapeName, const vector<uint>& tria
 		return false;
 
 	vector<Triangle> triangles;
-	if (shape->blockType == NITRISHAPE) {
+
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return false;
@@ -2305,10 +2161,10 @@ bool NifFile::ReorderTriangles(const string& shapeName, const vector<uint>& tria
 
 		shapeData->triangles = triangles;
 	}
-	else if (shape->blockType == NITRISTRIPS) {
+	else if (type == NITRISTRIPS) {
 		return false;
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return false;
@@ -2334,12 +2190,13 @@ const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool
 	if (!shape)
 		return nullptr;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->normals;
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->GetNormalData(transform);
@@ -2353,12 +2210,13 @@ const vector<Vector2>* NifFile::GetUvsForShape(const string& shapeName) {
 	if (!shape)
 		return nullptr;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->uvSets;
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->GetUVData();
@@ -2384,7 +2242,8 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 		return false;
 	}
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			outVerts.resize(geomData->numVertices);
@@ -2395,7 +2254,7 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 			return true;
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			outVerts.resize(bsTriShape->numVertices);
@@ -2416,12 +2275,13 @@ int NifFile::GetVertCountForShape(const string& shapeName) {
 	if (!shape)
 		return 0xFFFFFFFF;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return geomData->numVertices;
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->numVertices;
@@ -2435,7 +2295,8 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (verts.size() != geomData->vertices.size())
@@ -2445,7 +2306,7 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 				geomData->vertices[i] = verts[i];
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			if (verts.size() != bsTriShape->numVertices)
@@ -2462,7 +2323,8 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (uvs.size() != geomData->vertices.size())
@@ -2471,7 +2333,7 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 			geomData->uvSets.assign(uvs.begin(), uvs.end());
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			if (uvs.size() != bsTriShape->vertData.size())
@@ -2488,7 +2350,8 @@ void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool inve
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (invertX)
@@ -2500,7 +2363,7 @@ void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool inve
 					geomData->uvSets[i].v = 1.0f - geomData->uvSets[i].v;
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			if (invertX)
@@ -2519,7 +2382,8 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			geomData->SetNormals(true);
@@ -2528,7 +2392,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 				geomData->normals[i] = norms[i];
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			bsTriShape->SetNormals(norms);
@@ -2546,12 +2410,13 @@ void NifFile::CalcNormalsForShape(const string& shapeName, const bool smooth, co
 			return;
 	}
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->RecalcNormals(smooth, smoothThresh);
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			bsTriShape->RecalcNormals(smooth, smoothThresh);
@@ -2563,12 +2428,13 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->CalcTangentSpace();
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			bsTriShape->CalcTangentSpace();
@@ -2687,7 +2553,8 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geom = dynamic_cast<NiGeometry*>(shape);
 		if (!geom)
 			return;
@@ -2700,7 +2567,7 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 			geom->translation = Vector3(0.0f, 0.0f, 0.0f);
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			for (int i = 0; i < bsTriShape->numVertices; i++)
@@ -2716,12 +2583,13 @@ void NifFile::MoveVertex(const string& shapeName, const Vector3& pos, const int 
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData && geomData->numVertices > id)
 			geomData->vertices[id] = pos;
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape && bsTriShape->numVertices > id)
 			bsTriShape->vertData[id].vert = pos;
@@ -2733,7 +2601,8 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			for (int i = 0; i < geomData->vertices.size(); i++) {
@@ -2751,7 +2620,7 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 			}
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			for (int i = 0; i < bsTriShape->numVertices; i++) {
@@ -2779,7 +2648,8 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 	Vector3 root;
 	GetRootTranslation(root);
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
@@ -2803,7 +2673,7 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 			geomData->vertices[i] = target;
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -2837,7 +2707,8 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 	Vector3 root;
 	GetRootTranslation(root);
 
-	if (shape->blockType == NITRISHAPE || shape->blockType == NITRISTRIPS) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE || type == NITRISTRIPS) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
@@ -2863,7 +2734,7 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 			geomData->vertices[i] = target;
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -2938,11 +2809,11 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 			return;
 
 		auto alphaProp = new NiAlphaProperty(&hdr);
-		alphaRef = hdr.AddBlock(alphaProp, "NiAlphaProperty");
+		alphaRef = hdr.AddBlock(alphaProp);
 
-		if (shader->blockType == BSLIGHTINGSHADERPROPERTY || shader->blockType == BSEFFECTSHADERPROPERTY)
+		if (shader->GetBlockType() == BSLIGHTINGSHADERPROPERTY || shader->GetBlockType() == BSEFFECTSHADERPROPERTY)
 			shape->SetAlphaPropertyRef(alphaRef);
-		else if (shader->blockType == BSSHADERPPLIGHTINGPROPERTY)
+		else if (shader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY)
 			shape->propertiesRef.push_back(alphaRef);
 		else
 			return;
@@ -3003,7 +2874,7 @@ void NifFile::DeleteShader(const string& shapeName) {
 	for (int i = 0; i < shape->numProperties; i++) {
 		auto shader = hdr.GetBlock<NiShader>(shape->propertiesRef[i]);
 		if (shader) {
-			if (shader->blockType == BSSHADERPPLIGHTINGPROPERTY || shader->blockType == NIMATERIALPROPERTY) {
+			if (shader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY || shader->GetBlockType() == NIMATERIALPROPERTY) {
 				hdr.DeleteBlock(shader->GetTextureSetRef());
 				hdr.DeleteBlock(shader->GetControllerRef());
 				hdr.DeleteBlock(shape->propertiesRef[i]);
@@ -3103,7 +2974,7 @@ bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 			skinPartition->notifyVerticesDelete(indices);
 			vector<int> emptyIndices;
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
-				if (skinInst->blockType == BSDISMEMBERSKININSTANCE) {
+				if (skinInst->GetBlockType() == BSDISMEMBERSKININSTANCE) {
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
 					for (auto &i : emptyIndices)
 						bsdSkinInst->RemovePartition(i);
@@ -3196,7 +3067,9 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	vector<Triangle> tris;
 	ushort numTriangles;
 	ushort numVerts;
-	if (shape->blockType == NITRISHAPE) {
+
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
@@ -3205,7 +3078,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		numTriangles = shapeData->numTriangles;
 		numVerts = shapeData->numVertices;
 	}
-	else if (shape->blockType == NITRISTRIPS) {
+	else if (type == NITRISTRIPS) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (!stripsData)
 			return;
@@ -3214,7 +3087,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		numTriangles = stripsData->numTriangles;
 		numVerts = stripsData->numVertices;
 	}
-	else if (shape->blockType == BSTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -3646,16 +3519,17 @@ void NifFile::CreateSkinning(const string& shapeName) {
 	if (!shape)
 		return;
 
-	if (shape->blockType == NITRISHAPE) {
+	BlockType type = shape->GetBlockType();
+	if (type == NITRISHAPE) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			auto nifSkinData = new NiSkinData(&hdr);
-			int skinDataID = hdr.AddBlock(nifSkinData, "NiSkinData");
+			int skinDataID = hdr.AddBlock(nifSkinData);
 
 			auto nifSkinPartition = new NiSkinPartition(&hdr);
-			int partID = hdr.AddBlock(nifSkinPartition, "NiSkinPartition");
+			int partID = hdr.AddBlock(nifSkinPartition);
 
 			auto nifDismemberInst = new BSDismemberSkinInstance(&hdr);
-			int dismemberID = hdr.AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
+			int dismemberID = hdr.AddBlock(nifDismemberInst);
 
 			nifDismemberInst->SetDataRef(skinDataID);
 			nifDismemberInst->SetSkinPartitionRef(partID);
@@ -3664,16 +3538,16 @@ void NifFile::CreateSkinning(const string& shapeName) {
 			shape->SetSkinned(true);
 		}
 	}
-	else if (shape->blockType == NITRISTRIPS) {
+	else if (type == NITRISTRIPS) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			auto nifSkinData = new NiSkinData(&hdr);
-			int skinDataID = hdr.AddBlock(nifSkinData, "NiSkinData");
+			int skinDataID = hdr.AddBlock(nifSkinData);
 
 			auto nifSkinPartition = new NiSkinPartition(&hdr);
-			int partID = hdr.AddBlock(nifSkinPartition, "NiSkinPartition");
+			int partID = hdr.AddBlock(nifSkinPartition);
 
 			auto nifDismemberInst = new BSDismemberSkinInstance(&hdr);
-			int skinID = hdr.AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
+			int skinID = hdr.AddBlock(nifDismemberInst);
 
 			nifDismemberInst->SetDataRef(skinDataID);
 			nifDismemberInst->SetSkinPartitionRef(partID);
@@ -3682,18 +3556,18 @@ void NifFile::CreateSkinning(const string& shapeName) {
 			shape->SetSkinned(true);
 		}
 	}
-	else if (shape->blockType == BSSUBINDEXTRISHAPE || shape->blockType == BSTRISHAPE || shape->blockType == BSMESHLODTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) {
+	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			int skinInstID;
-			if ((shape->blockType == BSTRISHAPE || shape->blockType == BSDYNAMICTRISHAPE) && hdr.GetUserVersion2() == 100) {
+			if ((type == BSTRISHAPE || type == BSDYNAMICTRISHAPE) && hdr.GetUserVersion2() == 100) {
 				auto nifSkinData = new NiSkinData(&hdr);
-				int skinDataID = hdr.AddBlock(nifSkinData, "NiSkinData");
+				int skinDataID = hdr.AddBlock(nifSkinData);
 
 				auto nifSkinPartition = new NiSkinPartition(&hdr);
-				int partID = hdr.AddBlock(nifSkinPartition, "NiSkinPartition");
+				int partID = hdr.AddBlock(nifSkinPartition);
 
 				auto nifDismemberInst = new BSDismemberSkinInstance(&hdr);
-				skinInstID = hdr.AddBlock(nifDismemberInst, "BSDismemberSkinInstance");
+				skinInstID = hdr.AddBlock(nifDismemberInst);
 
 				nifDismemberInst->SetDataRef(skinDataID);
 				nifDismemberInst->SetSkinPartitionRef(partID);
@@ -3701,10 +3575,10 @@ void NifFile::CreateSkinning(const string& shapeName) {
 			}
 			else {
 				auto newSkinInst = new BSSkinInstance(&hdr);
-				skinInstID = hdr.AddBlock(newSkinInst, "BSSkin::Instance");
+				skinInstID = hdr.AddBlock(newSkinInst);
 
 				auto newBoneData = new BSSkinBoneData(&hdr);
-				int boneDataRef = hdr.AddBlock(newBoneData, "BSSkin::BoneData");
+				int boneDataRef = hdr.AddBlock(newBoneData);
 
 				newSkinInst->SetTargetRef(GetRootNodeID());
 				newSkinInst->SetDataRef(boneDataRef);
