@@ -295,11 +295,11 @@ void AnimInfo::WriteToNif(NifFile* nif, bool synchBoneIDs, const string& shapeEx
 		if (shapeBoneList.first == shapeException)
 			continue;
 
-		int stype = nif->GetShapeType(shapeBoneList.first);
-		if (stype == NIUNKNOWN)
+		auto shape = nif->FindShapeByName(shapeBoneList.first);
+		if (!shape)
 			continue;
 
-		bool isBSShape = (stype == BSTRISHAPE || stype == BSSUBINDEXTRISHAPE || stype == BSMESHLODTRISHAPE || stype == BSDYNAMICTRISHAPE);
+		bool isBSShape = shape->HasType<BSTriShape>();
 
 		unordered_map<ushort, VertexBoneWeights> vertWeights;
 		for (auto &boneName : shapeBoneList.second) {

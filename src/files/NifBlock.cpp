@@ -553,11 +553,8 @@ bool NiHeader::IsBlockReferenced(const int blockId) {
 	return false;
 }
 
-void NiHeader::DeleteUnreferencedBlocks(BlockType type, bool* hadDeletions) {
+void NiHeader::DeleteUnreferencedBlocks(bool* hadDeletions) {
 	for (int i = 1; i < numBlocks; i++) {
-		if (type != NIUNKNOWN && (*blocks)[i]->GetBlockType() != type)
-			continue;
-
 		if (!IsBlockReferenced(i)) {
 			DeleteBlock(i);
 
@@ -1991,7 +1988,7 @@ void BSTriShape::Put(fstream& file) {
 		uint numUInt = 0;
 		file.write((char*)&numUShort, 2);
 
-		if (GetBlockType() == BSDYNAMICTRISHAPE)
+		if (HasType<BSDynamicTriShape>())
 			file.write((char*)&numVertices, 2);
 		else
 			file.write((char*)&numUShort, 2);
@@ -2564,7 +2561,7 @@ void BSTriShape::UpdateFlags() {
 	vertFlags5 = 0;
 	vertFlags8 = 0;
 
-	if (GetBlockType() == BSDYNAMICTRISHAPE) {
+	if (HasType<BSDynamicTriShape>()) {
 		if (HasNormals()) {
 			vertFlags3 = 1;
 
@@ -2688,7 +2685,7 @@ int BSTriShape::CalcDataSizes() {
 
 	vertFlags1 = vertexSize;
 
-	if (GetBlockType() == BSDYNAMICTRISHAPE)
+	if (HasType<BSDynamicTriShape>())
 		vertFlags1 = (vertFlags1 & 0xF) | 0x40;
 
 	vertexSize *= 4;

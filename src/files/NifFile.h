@@ -26,27 +26,30 @@ struct OptResultSSE {
 
 class IFactory {
 public:
-	virtual NiObject* Create(fstream& file, NiHeader* hdr) = 0;
+	virtual NiObject* Load(fstream& file, NiHeader* hdr) = 0;
 };
 
 template<typename T>
 class NiFactory : public IFactory {
 public:
-	// If you need parameters you pass them through create, you can use generic objects for this too
-	virtual NiObject* Create(fstream& file, NiHeader* hdr) override {
+	// Load new NiObject from file
+	virtual NiObject* Load(fstream& file, NiHeader* hdr) override {
 		return new T(file, hdr);
 	}
 };
 
 class NiFactoryRegister {
 public:
+	// Constructor registers the block types
 	NiFactoryRegister();
 
 	template<typename T>
 	void RegisterFactory() {
+		// Any NiObject can be registered together with its block name
 		m_registrations.emplace(T::StaticBlockName(), make_shared<NiFactory<T>>());
 	}
 
+	// Get block factory via header string
 	shared_ptr<IFactory> GetFactoryByName(const string& name) {
 		auto it = m_registrations.find(name);
 		if (it != m_registrations.end())
@@ -55,11 +58,12 @@ public:
 		return nullptr;
 	}
 
+	// Get static instance of factory register
+	static NiFactoryRegister& GetNiFactoryRegister();
+
 protected:
 	unordered_map<string, shared_ptr<IFactory>> m_registrations;
 };
-
-NiFactoryRegister& GetNiFactoryRegister();
 
 
 class NifFile {
@@ -137,7 +141,6 @@ public:
 	int CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int srcInterpId);
 	void CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape);
 
-	BlockType GetShapeType(const string& shapeName);
 	int GetShapeList(vector<string>& outList);
 	void RenameShape(const string& oldName, const string& newName);
 	bool RenameDuplicateShape(const string& dupedShape);

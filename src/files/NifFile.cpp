@@ -11,7 +11,7 @@ See the included LICENSE file
 #include <regex>
 
 
-NiFactoryRegister& GetNiFactoryRegister() {
+NiFactoryRegister& NiFactoryRegister::GetNiFactoryRegister() {
 	static NiFactoryRegister instance;
 	return instance;
 }
@@ -186,15 +186,12 @@ NiFactoryRegister::NiFactoryRegister() {
 NiShape* NifFile::FindShapeByName(const string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
-		BlockType type = block->GetBlockType();
-		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
-			auto geom = dynamic_cast<NiShape*>(block);
-			if (geom && !name.compare(geom->GetName())) {
-				if (numFound >= dupIndex)
-					return geom;
+		auto geom = dynamic_cast<NiShape*>(block);
+		if (geom && !name.compare(geom->GetName())) {
+			if (numFound >= dupIndex)
+				return geom;
 
-				numFound++;
-			}
+			numFound++;
 		}
 	}
 	return nullptr;
@@ -203,15 +200,12 @@ NiShape* NifFile::FindShapeByName(const string& name, int dupIndex) {
 NiAVObject* NifFile::FindAVObjectByName(const string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
-		BlockType type = block->GetBlockType();
-		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
-			auto avo = dynamic_cast<NiAVObject*>(block);
-			if (avo && !name.compare(avo->GetName())) {
-				if (numFound >= dupIndex)
-					return avo;
+		auto avo = dynamic_cast<NiAVObject*>(block);
+		if (avo && !name.compare(avo->GetName())) {
+			if (numFound >= dupIndex)
+				return avo;
 
-				numFound++;
-			}
+			numFound++;
 		}
 	}
 	return nullptr;
@@ -219,11 +213,9 @@ NiAVObject* NifFile::FindAVObjectByName(const string& name, int dupIndex) {
 
 NiNode* NifFile::FindNodeByName(const string& name) {
 	for (auto& block : blocks) {
-		if (block->GetBlockType() == NINODE) {
-			auto node = dynamic_cast<NiNode*>(block);
-			if (node && !name.compare(node->GetName()))
-				return node;
-		}
+		auto node = dynamic_cast<NiNode*>(block);
+		if (node && !name.compare(node->GetName()))
+			return node;
 	}
 	return nullptr;
 }
@@ -308,7 +300,7 @@ int NifFile::Load(const string& filename) {
 
 		hdr.SetBlockReference(&blocks);
 
-		auto& nifactories = GetNiFactoryRegister();
+		auto& nifactories = NiFactoryRegister::GetNiFactoryRegister();
 
 		for (int i = 0; i < hdr.GetNumBlocks(); i++) {
 			NiObject* block = nullptr;
@@ -316,7 +308,7 @@ int NifFile::Load(const string& filename) {
 
 			auto nifactory = nifactories.GetFactoryByName(blockTypeStr);
 			if (nifactory) {
-				block = nifactory->Create(file, &hdr);
+				block = nifactory->Load(file, &hdr);
 			}
 			else {
 				hasUnknown = true;
@@ -413,13 +405,9 @@ void NifFile::PrettySortBlocks() {
 
 	for (int i = 0; peek < root->ChildrenEnd(); i++) {
 		auto block = hdr.GetBlock<NiObject>(root->GetChildRef(i));
-		if (block) {
-			BlockType type = block->GetBlockType();
-			if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE ||
-				type == BSTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
-				iter_swap(bookmark, peek);
-				bookmark++;
-			}
+		if (block && block->HasType<NiShape>()) {
+			iter_swap(bookmark, peek);
+			bookmark++;
 		}
 		peek++;
 	}
@@ -430,7 +418,7 @@ bool NifFile::DeleteUnreferencedBlocks() {
 		return false;
 
 	bool hadDeletions = false;
-	hdr.DeleteUnreferencedBlocks(NIUNKNOWN, &hadDeletions);
+	hdr.DeleteUnreferencedBlocks(&hadDeletions);
 	return hadDeletions;
 }
 
@@ -533,13 +521,8 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 
 	if (prop1 != 0xFFFFFFFF) {
 		auto shader = hdr.GetBlock<NiShader>(prop1);
-		if (shader) {
-			ushort type = shader->GetBlockType();
-			if (type == BSLIGHTINGSHADERPROPERTY ||
-				type == BSEFFECTSHADERPROPERTY ||
-				type == BSSHADERPPLIGHTINGPROPERTY)
-				return shader;
-		}
+		if (shader)
+			return shader;
 	}
 	else {
 		vector<int> props = shape->propertiesRef;
@@ -548,13 +531,8 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 
 		for (int i = 0; i < props.size(); i++) {
 			auto shader = hdr.GetBlock<NiShader>(props[i]);
-			if (shader) {
-				ushort type = shader->GetBlockType();
-				if (type == BSLIGHTINGSHADERPROPERTY ||
-					type == BSEFFECTSHADERPROPERTY ||
-					type == BSSHADERPPLIGHTINGPROPERTY)
-					return shader;
-			}
+			if (shader)
+				return shader;
 		}
 	}
 
@@ -594,9 +572,8 @@ int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int
 		return 0;
 
 	if (textureSetRef == 0xFFFFFFFF) {
-		if (shader->GetBlockType() == BSEFFECTSHADERPROPERTY) {
-			auto effectShader = static_cast<BSEffectShaderProperty*>(shader);
-
+		auto effectShader = dynamic_cast<BSEffectShaderProperty*>(shader);
+		if (effectShader) {
 			switch (texIndex) {
 			case 0:
 				outTexFile = effectShader->sourceTexture.GetString();
@@ -615,7 +592,7 @@ int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int
 				break;
 			}
 
-			return BSEFFECTSHADERPROPERTY;
+			return 2;
 		}
 		else
 			return 0;
@@ -639,9 +616,8 @@ void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, in
 		return;
 
 	if (textureSetRef == 0xFFFFFFFF) {
-		if (shader->GetBlockType() == BSEFFECTSHADERPROPERTY) {
-			auto effectShader = static_cast<BSEffectShaderProperty*>(shader);
-
+		auto effectShader = dynamic_cast<BSEffectShaderProperty*>(shader);
+		if (effectShader) {
 			switch (texIndex) {
 			case 0:
 				effectShader->sourceTexture.SetString(outTexFile);
@@ -659,11 +635,9 @@ void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, in
 				effectShader->envMaskTexture.SetString(outTexFile);
 				break;
 			}
-
-			return;
 		}
-		else
-			return;
+
+		return;
 	}
 
 	auto textureSet = hdr.GetBlock<BSShaderTextureSet>(textureSetRef);
@@ -742,12 +716,12 @@ void NifFile::CopyInterpolators(NiTimeController* destController, NiTimeControll
 		return;
 
 	// Copy interpolators linked in different types of controllers
-	if (srcController->GetBlockType() == BSFRUSTUMFOVCONTROLLER) {
+	if (srcController->HasType<BSFrustumFOVController>()) {
 		auto srcCtrlrType = static_cast<BSFrustumFOVController*>(srcController);
 		auto destCtrlrType = static_cast<BSFrustumFOVController*>(destController);
 		destCtrlrType->interpolatorRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->interpolatorRef);
 	}
-	else if (srcController->GetBlockType() == BSPROCEDURALLIGHTNINGCONTROLLER) {
+	else if (srcController->HasType<BSProceduralLightningController>()) {
 		auto srcCtrlrType = static_cast<BSProceduralLightningController*>(srcController);
 		auto destCtrlrType = static_cast<BSProceduralLightningController*>(destController);
 		destCtrlrType->generationInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
@@ -773,7 +747,7 @@ int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int src
 		destInterp->header = destHeader;
 
 		// Copy data of interpolators as well
-		if (destInterp->GetBlockType() == NIBOOLINTERPOLATOR) {
+		if (destInterp->HasType<NiBoolInterpolator>()) {
 			auto srcInterpType = static_cast<NiBoolInterpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiBoolData>(srcInterpType->dataRef);
 			if (srcData) {
@@ -782,7 +756,7 @@ int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int src
 				destInterpType->dataRef = hdr.AddBlock(destData);
 			}
 		}
-		else if (destInterp->GetBlockType() == NIFLOATINTERPOLATOR) {
+		else if (destInterp->HasType<NiFloatInterpolator>()) {
 			auto srcInterpType = static_cast<NiFloatInterpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiFloatData>(srcInterpType->dataRef);
 			if (srcData) {
@@ -791,7 +765,7 @@ int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int src
 				destInterpType->dataRef = hdr.AddBlock(destData);
 			}
 		}
-		else if (destInterp->GetBlockType() == NITRANSFORMINTERPOLATOR) {
+		else if (destInterp->HasType<NiTransformInterpolator>()) {
 			auto srcInterpType = static_cast<NiTransformInterpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiTransformData>(srcInterpType->dataRef);
 			if (srcData) {
@@ -800,7 +774,7 @@ int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int src
 				destInterpType->dataRef = hdr.AddBlock(destData);
 			}
 		}
-		else if (destInterp->GetBlockType() == NIPOINT3INTERPOLATOR) {
+		else if (destInterp->HasType<NiPoint3Interpolator>()) {
 			auto srcInterpType = static_cast<NiPoint3Interpolator*>(srcInterp);
 			auto srcData = srcHeader->GetBlock<NiPosData>(srcInterpType->dataRef);
 			if (srcData) {
@@ -878,7 +852,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 			int extraDataId = hdr.AddBlock(destExtraData);
 			destShader->SetExtraDataRef(i, extraDataId);
 
-			if (destExtraData->GetBlockType() == NISTRINGEXTRADATA) {
+			if (destExtraData->HasType<NiStringExtraData>()) {
 				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
 				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
 				if (strSrcExtraData && strDestExtraData)
@@ -908,14 +882,14 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	if (!srcWetMaterialName.empty())
 		destShader->SetWetMaterialName(srcWetMaterialName);
 
-	if (srcShader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY)
+	if (srcShader->HasType<BSShaderPPLightingProperty>())
 		shape->propertiesRef[propRef1] = shaderId;
 	else
 		shape->SetShaderPropertyRef(shaderId);
 
 	// Kill normals and tangents
 	if (destShader->IsSkinTint() && hdr.GetUserVersion() >= 12) {
-		if (shape->GetBlockType() == NITRISHAPE || shape->GetBlockType() == NITRISTRIPS) {
+		if (shape->HasType<NiTriBasedGeom>()) {
 			shape->SetNormals(false);
 			shape->SetTangents(false);
 		}
@@ -932,7 +906,7 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 			destAlphaProp->ClearName();
 
 		int alphaPropId = hdr.AddBlock(destAlphaProp);
-		if (srcShader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY)
+		if (srcShader->HasType<BSShaderPPLightingProperty>())
 			shape->propertiesRef[propRef2] = alphaPropId;
 		else
 			shape->SetAlphaPropertyRef(alphaPropId);
@@ -974,7 +948,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 			int extraDataId = hdr.AddBlock(destExtraData);
 			destGeom->SetExtraDataRef(i, extraDataId);
 
-			if (destExtraData->GetBlockType() == NISTRINGEXTRADATA) {
+			if (destExtraData->HasType<NiStringExtraData>()) {
 				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
 				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
 				if (strSrcExtraData && strDestExtraData)
@@ -1006,8 +980,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	// Skinning
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
-		if (destGeom->GetBlockType() == NITRISHAPE || destGeom->GetBlockType() == NITRISTRIPS || destGeom->GetBlockType() == BSLODTRISHAPE ||
-			((destGeom->GetBlockType() == BSTRISHAPE || destGeom->GetBlockType() == BSDYNAMICTRISHAPE) && hdr.GetUserVersion2() == 100)) {
+		if (destGeom->HasType<NiTriBasedGeom>() || (destGeom->HasType<BSTriShape>() && hdr.GetUserVersion2() == 100)) {
 			auto srcSkinInst = srcNif.hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcSkinInst) {
 				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
@@ -1033,7 +1006,7 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 				destBoneCont = static_cast<NiBoneContainer*>(destSkinInst);
 			}
 		}
-		else if (destGeom->GetBlockType() == BSTRISHAPE || destGeom->GetBlockType() == BSSUBINDEXTRISHAPE || destGeom->GetBlockType() == BSMESHLODTRISHAPE) {
+		else if (destGeom->HasType<BSTriShape>()) {
 			auto srcBSSkinInst = srcNif.hdr.GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcBSSkinInst) {
 				auto destBSSkinInst = srcBSSkinInst->Clone();
@@ -1170,12 +1143,12 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				const vector<Color4>& colors = geomData->vertexColors;
 				vector<Triangle> triangles;
 
-				if (geomData->GetBlockType() == NITRISHAPEDATA) {
+				if (geomData->HasType<NiTriShapeData>()) {
 					auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 					if (shapeData)
 						triangles = shapeData->triangles;
 				}
-				else if (geomData->GetBlockType() == NITRISTRIPSDATA) {
+				else if (geomData->HasType<NiTriStripsData>()) {
 					auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 					if (stripsData) {
 						triangles.reserve(stripsData->numTriangles);
@@ -1367,8 +1340,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 		}
 	}
 
-	hdr.DeleteUnreferencedBlocks(NITRISHAPEDATA);
-	hdr.DeleteUnreferencedBlocks(NITRISTRIPSDATA);
+	hdr.DeleteUnreferencedBlocks();
 	return result;
 }
 
@@ -1404,14 +1376,12 @@ void NifFile::PrepareData() {
 
 				bsTriShape->numTriangles = bsTriShape->triangles.size();
 
-				if (bsTriShape->GetBlockType() == BSDYNAMICTRISHAPE) {
-					BSDynamicTriShape* dynamicShape = dynamic_cast<BSDynamicTriShape*>(bsTriShape);
-					if (dynamicShape) {
-						for (int i = 0; i < dynamicShape->numVertices; i++) {
-							dynamicShape->vertData[i].vert.x = dynamicShape->dynamicData[i].x;
-							dynamicShape->vertData[i].vert.y = dynamicShape->dynamicData[i].y;
-							dynamicShape->vertData[i].vert.z = dynamicShape->dynamicData[i].z;
-						}
+				auto dynamicShape = dynamic_cast<BSDynamicTriShape*>(bsTriShape);
+				if (dynamicShape) {
+					for (int i = 0; i < dynamicShape->numVertices; i++) {
+						dynamicShape->vertData[i].vert.x = dynamicShape->dynamicData[i].x;
+						dynamicShape->vertData[i].vert.y = dynamicShape->dynamicData[i].y;
+						dynamicShape->vertData[i].vert.z = dynamicShape->dynamicData[i].z;
 					}
 				}
 			}
@@ -1459,23 +1429,12 @@ void NifFile::FinalizeData() {
 	}
 }
 
-BlockType NifFile::GetShapeType(const string& shapeName) {
-	NiShape* shape = FindShapeByName(shapeName);
-	if (!shape)
-		return NIUNKNOWN;
-
-	return shape->GetBlockType();
-}
-
 int NifFile::GetShapeList(vector<string>& outList) {
 	outList.clear();
 	for (auto& block : blocks) {
-		BlockType type = block->GetBlockType();
-		if (type == NITRISHAPE || type == NITRISTRIPS || type == BSLODTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
-			auto shape = static_cast<NiShape*>(block);
-			if (shape)
-				outList.push_back(shape->GetName());
-		}
+		auto shape = dynamic_cast<NiShape*>(block);
+		if (shape)
+			outList.push_back(shape->GetName());
 	}
 	return outList.size();
 }
@@ -1516,17 +1475,15 @@ int NifFile::GetRootNodeID() {
 
 bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
 	for (auto& block : blocks) {
-		if (block->GetBlockType() == NINODE) {
-			auto node = static_cast<NiNode*>(block);
-			if (!node->GetName().compare(nodeName)) {
-				outRot.clear();
-				outRot.push_back(node->rotation[0]);
-				outRot.push_back(node->rotation[1]);
-				outRot.push_back(node->rotation[2]);
-				outTrans = node->translation;
-				outScale = node->scale;
-				return true;
-			}
+		auto node = dynamic_cast<NiNode*>(block);
+		if (node && !node->GetName().compare(nodeName)) {
+			outRot.clear();
+			outRot.push_back(node->rotation[0]);
+			outRot.push_back(node->rotation[1]);
+			outRot.push_back(node->rotation[2]);
+			outTrans = node->translation;
+			outScale = node->scale;
+			return true;
 		}
 	}
 	return false;
@@ -1553,16 +1510,14 @@ bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform, c
 	}
 	else {
 		for (auto& block : blocks) {
-			if (block->GetBlockType() == NINODE) {
-				auto node = static_cast<NiNode*>(block);
-				if (!node->GetName().compare(nodeName)) {
-					node->rotation[0] = inXform.rotation[0];
-					node->rotation[1] = inXform.rotation[1];
-					node->rotation[2] = inXform.rotation[2];
-					node->translation = inXform.translation;
-					node->scale = inXform.scale;
-					return true;
-				}
+			auto node = dynamic_cast<NiNode*>(block);
+			if (node && !node->GetName().compare(nodeName)) {
+				node->rotation[0] = inXform.rotation[0];
+				node->rotation[1] = inXform.rotation[1];
+				node->rotation[2] = inXform.rotation[2];
+				node->translation = inXform.translation;
+				node->scale = inXform.scale;
+				return true;
 			}
 		}
 	}
@@ -1616,8 +1571,7 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 		return;
 
 	BSSkinBoneData* boneData = nullptr;
-	BlockType type = shape->GetBlockType();
-	if (type == BSTRISHAPE || type == BSSUBINDEXTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	if (shape->HasType<BSTriShape>()) {
 		auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 		if (skinForBoneRef)
 			boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
@@ -2018,7 +1972,7 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 
 	vector<Vector3> verts;
 	vector<Triangle> tris;
-	if (shape->GetBlockType() == NITRISHAPE) {
+	if (shape->HasType<NiTriShape>()) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
@@ -2026,7 +1980,7 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 		verts = shapeData->vertices;
 		tris = shapeData->triangles;
 	}
-	else if (shape->GetBlockType() == NITRISTRIPS) {
+	else if (shape->HasType<NiTriStrips>()) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (!stripsData)
 			return;
@@ -2034,7 +1988,7 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 		verts = stripsData->vertices;
 		stripsData->StripsToTris(&tris);
 	}
-	else if (shape->GetBlockType() == BSTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -2090,13 +2044,12 @@ const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 	if (!shape)
 		return nullptr;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->vertices;
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->GetRawVerts();
@@ -2110,22 +2063,21 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	if (!shape)
 		return false;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE) {
+	if (shape->HasType<NiTriShape>()) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (shapeData) {
 			*outTris = shapeData->triangles;
 			return true;
 		}
 	}
-	else if (type == NITRISTRIPS) {
+	else if (shape->HasType<NiTriStrips>()) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (stripsData) {
 			stripsData->StripsToTris(outTris);
 			return true;
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			*outTris = bsTriShape->triangles;
@@ -2143,8 +2095,7 @@ bool NifFile::ReorderTriangles(const string& shapeName, const vector<uint>& tria
 
 	vector<Triangle> triangles;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE) {
+	if (shape->HasType<NiTriShape>()) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return false;
@@ -2161,10 +2112,10 @@ bool NifFile::ReorderTriangles(const string& shapeName, const vector<uint>& tria
 
 		shapeData->triangles = triangles;
 	}
-	else if (type == NITRISTRIPS) {
+	else if (shape->HasType<NiTriStrips>()) {
 		return false;
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return false;
@@ -2190,13 +2141,12 @@ const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool
 	if (!shape)
 		return nullptr;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->normals;
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->GetNormalData(transform);
@@ -2210,13 +2160,12 @@ const vector<Vector2>* NifFile::GetUvsForShape(const string& shapeName) {
 	if (!shape)
 		return nullptr;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->uvSets;
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->GetUVData();
@@ -2242,8 +2191,7 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 		return false;
 	}
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			outVerts.resize(geomData->numVertices);
@@ -2254,7 +2202,7 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 			return true;
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			outVerts.resize(bsTriShape->numVertices);
@@ -2275,13 +2223,12 @@ int NifFile::GetVertCountForShape(const string& shapeName) {
 	if (!shape)
 		return 0xFFFFFFFF;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return geomData->numVertices;
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			return bsTriShape->numVertices;
@@ -2295,8 +2242,7 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (verts.size() != geomData->vertices.size())
@@ -2306,7 +2252,7 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 				geomData->vertices[i] = verts[i];
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			if (verts.size() != bsTriShape->numVertices)
@@ -2323,8 +2269,7 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (uvs.size() != geomData->vertices.size())
@@ -2333,7 +2278,7 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 			geomData->uvSets.assign(uvs.begin(), uvs.end());
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			if (uvs.size() != bsTriShape->vertData.size())
@@ -2350,8 +2295,7 @@ void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool inve
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (invertX)
@@ -2363,7 +2307,7 @@ void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool inve
 					geomData->uvSets[i].v = 1.0f - geomData->uvSets[i].v;
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			if (invertX)
@@ -2382,8 +2326,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			geomData->SetNormals(true);
@@ -2392,7 +2335,7 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 				geomData->normals[i] = norms[i];
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			bsTriShape->SetNormals(norms);
@@ -2410,13 +2353,12 @@ void NifFile::CalcNormalsForShape(const string& shapeName, const bool smooth, co
 			return;
 	}
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->RecalcNormals(smooth, smoothThresh);
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			bsTriShape->RecalcNormals(smooth, smoothThresh);
@@ -2428,13 +2370,12 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->CalcTangentSpace();
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape)
 			bsTriShape->CalcTangentSpace();
@@ -2553,8 +2494,7 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geom = dynamic_cast<NiGeometry*>(shape);
 		if (!geom)
 			return;
@@ -2567,7 +2507,7 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 			geom->translation = Vector3(0.0f, 0.0f, 0.0f);
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			for (int i = 0; i < bsTriShape->numVertices; i++)
@@ -2583,13 +2523,12 @@ void NifFile::MoveVertex(const string& shapeName, const Vector3& pos, const int 
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData && geomData->numVertices > id)
 			geomData->vertices[id] = pos;
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape && bsTriShape->numVertices > id)
 			bsTriShape->vertData[id].vert = pos;
@@ -2601,8 +2540,7 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			for (int i = 0; i < geomData->vertices.size(); i++) {
@@ -2620,7 +2558,7 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 			}
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
 			for (int i = 0; i < bsTriShape->numVertices; i++) {
@@ -2648,8 +2586,7 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 	Vector3 root;
 	GetRootTranslation(root);
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
@@ -2673,7 +2610,7 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 			geomData->vertices[i] = target;
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -2707,8 +2644,7 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 	Vector3 root;
 	GetRootTranslation(root);
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE || type == NITRISTRIPS) {
+	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
@@ -2734,7 +2670,7 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 			geomData->vertices[i] = target;
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -2811,12 +2747,10 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 		auto alphaProp = new NiAlphaProperty(&hdr);
 		alphaRef = hdr.AddBlock(alphaProp);
 
-		if (shader->GetBlockType() == BSLIGHTINGSHADERPROPERTY || shader->GetBlockType() == BSEFFECTSHADERPROPERTY)
-			shape->SetAlphaPropertyRef(alphaRef);
-		else if (shader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY)
+		if (shader->HasType<BSShaderPPLightingProperty>())
 			shape->propertiesRef.push_back(alphaRef);
 		else
-			return;
+			shape->SetAlphaPropertyRef(alphaRef);
 	}
 
 	auto alpha = hdr.GetBlock<NiAlphaProperty>(alphaRef);
@@ -2874,7 +2808,7 @@ void NifFile::DeleteShader(const string& shapeName) {
 	for (int i = 0; i < shape->numProperties; i++) {
 		auto shader = hdr.GetBlock<NiShader>(shape->propertiesRef[i]);
 		if (shader) {
-			if (shader->GetBlockType() == BSSHADERPPLIGHTINGPROPERTY || shader->GetBlockType() == NIMATERIALPROPERTY) {
+			if (shader->HasType<BSShaderPPLightingProperty>() || shader->HasType<NiMaterialProperty>()) {
 				hdr.DeleteBlock(shader->GetTextureSetRef());
 				hdr.DeleteBlock(shader->GetControllerRef());
 				hdr.DeleteBlock(shape->propertiesRef[i]);
@@ -2974,7 +2908,7 @@ bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 			skinPartition->notifyVerticesDelete(indices);
 			vector<int> emptyIndices;
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
-				if (skinInst->GetBlockType() == BSDISMEMBERSKININSTANCE) {
+				if (skinInst->HasType<BSDismemberSkinInstance>()) {
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
 					for (auto &i : emptyIndices)
 						bsdSkinInst->RemovePartition(i);
@@ -3068,8 +3002,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	ushort numTriangles;
 	ushort numVerts;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE) {
+	if (shape->HasType<NiTriShape>()) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
@@ -3078,7 +3011,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		numTriangles = shapeData->numTriangles;
 		numVerts = shapeData->numVertices;
 	}
-	else if (type == NITRISTRIPS) {
+	else if (shape->HasType<NiTriStrips>()) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (!stripsData)
 			return;
@@ -3087,7 +3020,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		numTriangles = stripsData->numTriangles;
 		numVerts = stripsData->numVertices;
 	}
-	else if (type == BSTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (!bsTriShape)
 			return;
@@ -3519,8 +3452,7 @@ void NifFile::CreateSkinning(const string& shapeName) {
 	if (!shape)
 		return;
 
-	BlockType type = shape->GetBlockType();
-	if (type == NITRISHAPE) {
+	if (shape->HasType<NiTriShape>()) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			auto nifSkinData = new NiSkinData(&hdr);
 			int skinDataID = hdr.AddBlock(nifSkinData);
@@ -3538,7 +3470,7 @@ void NifFile::CreateSkinning(const string& shapeName) {
 			shape->SetSkinned(true);
 		}
 	}
-	else if (type == NITRISTRIPS) {
+	else if (shape->HasType<NiTriStrips>()) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			auto nifSkinData = new NiSkinData(&hdr);
 			int skinDataID = hdr.AddBlock(nifSkinData);
@@ -3556,10 +3488,10 @@ void NifFile::CreateSkinning(const string& shapeName) {
 			shape->SetSkinned(true);
 		}
 	}
-	else if (type == BSSUBINDEXTRISHAPE || type == BSTRISHAPE || type == BSMESHLODTRISHAPE || type == BSDYNAMICTRISHAPE) {
+	else if (shape->HasType<BSTriShape>()) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			int skinInstID;
-			if ((type == BSTRISHAPE || type == BSDYNAMICTRISHAPE) && hdr.GetUserVersion2() == 100) {
+			if (hdr.GetUserVersion2() == 100) {
 				auto nifSkinData = new NiSkinData(&hdr);
 				int skinDataID = hdr.AddBlock(nifSkinData);
 

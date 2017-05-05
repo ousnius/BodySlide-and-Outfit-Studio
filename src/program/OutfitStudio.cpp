@@ -3098,12 +3098,15 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 			}
 		}
 		else {
+			auto shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+			if (!shape)
+				return;
+
 			// Get all triangles of the active shape
 			vector<Triangle> tris;
 			project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
 
-			BlockType shapeType = project->GetWorkNif()->GetShapeType(activeItem->shapeName);
-			bool isBSTri = (shapeType == BSTRISHAPE || shapeType == BSDYNAMICTRISHAPE);
+			bool isBSTri = shape->HasType<BSTriShape>();
 
 			// Add vertices and triangles from mask
 			set<Triangle> realTris;
