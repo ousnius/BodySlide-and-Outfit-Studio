@@ -210,6 +210,7 @@
 						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxCheckListBox" name="DataFileList">
+							<style>wxLB_HSCROLL|wxLB_NEEDED_SB|wxLB_EXTENDED</style>
 							<content />
 						</object>
 					</object>

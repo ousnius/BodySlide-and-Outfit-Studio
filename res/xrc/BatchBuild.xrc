@@ -17,7 +17,7 @@
 						<option>0</option>
 						<flag>wxALL</flag>
 						<border>5</border>
-						<object class="wxStaticText" name="m_staticText17">
+						<object class="wxStaticText" name="lbDescription">
 							<label>Select the slider sets for the batch build process. Use the group and outfit filters to show the outfits you want!</label>
 							<wrap>625</wrap>
 						</object>
@@ -35,7 +35,7 @@
 				<flag>wxBOTTOM|wxEXPAND|wxLEFT|wxRIGHT</flag>
 				<border>5</border>
 				<object class="wxCheckListBox" name="batchBuildList">
-					<style>wxLB_HSCROLL|wxLB_NEEDED_SB</style>
+					<style>wxLB_HSCROLL|wxLB_NEEDED_SB|wxLB_EXTENDED</style>
 				</object>
 			</object>
 			<object class="sizeritem">
