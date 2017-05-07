@@ -7,7 +7,7 @@ See the included LICENSE file
 #pragma once
 
 #pragma warning (push, 0)
-#include "gli/glm/gtc/matrix_transform.hpp"
+#include "../gli/glm/gtc/matrix_transform.hpp"
 #pragma warning (pop)
 
 #include "../utils/Object3d.h"

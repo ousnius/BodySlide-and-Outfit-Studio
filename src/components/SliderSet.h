@@ -6,7 +6,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "TinyXML-2/tinyxml2.h"
+#include "../TinyXML-2/tinyxml2.h"
 #include "SliderData.h"
 
 #include "../components/NormalGenLayers.h"
@@ -167,8 +167,8 @@ public:
 				tsn.second = newShapeName;
 	}
 
-	void AddTargetDataFolder(const string& targetName, const string& datafolder) {
-		targetdatafolders[targetName] = datafolder;
+	void AddTargetDataFolder(const string& targetName, const string& dataFolder) {
+		targetdatafolders[targetName] = dataFolder;
 	}
 
 	map<string, string>::iterator TargetShapesBegin() {

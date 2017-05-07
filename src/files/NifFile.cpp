@@ -3212,7 +3212,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 					}
 
 					// How many new bones are in the tri's bonelist?
-					int newBoneCount = 0;
+					newBoneCount = 0;
 					for (auto &tb : triBones)
 						if (partBones[partID].find(tb) == partBones[partID].end())
 							newBoneCount++;

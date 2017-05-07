@@ -17,9 +17,6 @@
     <Filter Include="Libraries\gli">
       <UniqueIdentifier>{e366b310-4d8d-4f5e-b43d-0aa7f0edeef1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Libraries\SOIL2">
-      <UniqueIdentifier>{2df752f6-95f8-4a68-8092-95a23d5b4bc4}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Libraries\TinyXML-2">
       <UniqueIdentifier>{fd5a7d0f-084f-4202-b4d6-67732f2c2302}</UniqueIdentifier>
     </Filter>
@@ -58,6 +55,9 @@
     </Filter>
     <Filter Include="Libraries\LZ4F">
       <UniqueIdentifier>{1dd6227a-2c07-441b-a703-df5e11788296}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\SOIL2">
+      <UniqueIdentifier>{746df173-aa97-45f5-9200-676a6b050846}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -106,12 +106,6 @@
     </None>
     <None Include="res\xrc\BatchBuild.xrc">
       <Filter>Resources</Filter>
-    </None>
-    <None Include="lib\SOIL2\SOIL2_x64_d.pdb">
-      <Filter>Libraries\SOIL2</Filter>
-    </None>
-    <None Include="lib\SOIL2\SOIL2_d.pdb">
-      <Filter>Libraries\SOIL2</Filter>
     </None>
     <None Include="lib\gli\glm\detail\func_common.inl">
       <Filter>Libraries\gli\glm\detail</Filter>
@@ -588,9 +582,6 @@
     </ClInclude>
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h">
       <Filter>Libraries\TinyXML-2</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\SOIL2\SOIL2.h">
-      <Filter>Libraries\SOIL2</Filter>
     </ClInclude>
     <ClInclude Include="lib\FSEngine\FSEngine.h">
       <Filter>Libraries\FSEngine</Filter>
@@ -1300,6 +1291,57 @@
     <ClInclude Include="src\components\NormalGenLayers.h">
       <Filter>Components</Filter>
     </ClInclude>
+    <ClInclude Include="lib\SOIL2\jo_jpeg.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\pkm_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\pvr_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\SOIL2.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stb_image.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stb_image_write.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_DDS.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_DDS_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_ext.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_ext_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pkm.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pkm_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pvr.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\stbi_pvr_c.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\etc1_utils.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_DXT.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\SOIL2\image_helper.h">
+      <Filter>Libraries\SOIL2</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1446,20 +1488,18 @@
     <ClCompile Include="src\components\NormalGenLayers.cpp">
       <Filter>Components</Filter>
     </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\SOIL2\SOIL2_x64_d.lib">
+    <ClCompile Include="lib\SOIL2\SOIL2.c">
       <Filter>Libraries\SOIL2</Filter>
-    </Library>
-    <Library Include="lib\SOIL2\SOIL2.lib">
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\etc1_utils.c">
       <Filter>Libraries\SOIL2</Filter>
-    </Library>
-    <Library Include="lib\SOIL2\SOIL2_d.lib">
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_DXT.c">
       <Filter>Libraries\SOIL2</Filter>
-    </Library>
-    <Library Include="lib\SOIL2\SOIL2_x64.lib">
+    </ClCompile>
+    <ClCompile Include="lib\SOIL2\image_helper.c">
       <Filter>Libraries\SOIL2</Filter>
-    </Library>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml">

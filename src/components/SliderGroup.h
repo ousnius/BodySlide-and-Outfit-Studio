@@ -6,7 +6,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "TinyXML-2/tinyxml2.h"
+#include "../TinyXML-2/tinyxml2.h"
 
 #include <wx/dir.h>
 #include <vector>

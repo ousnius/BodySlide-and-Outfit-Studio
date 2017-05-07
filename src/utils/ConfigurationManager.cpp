@@ -57,9 +57,9 @@ int ConfigurationItem::SettingFromXML(XMLElement* xml) {
 	return 0;
 }
 
-void ConfigurationItem::ToXML(XMLElement* parent) {
-	XMLElement* newElement = parent->GetDocument()->NewElement(name.c_str());
-	XMLElement* element = parent->InsertEndChild(newElement)->ToElement();
+void ConfigurationItem::ToXML(XMLElement* elem) {
+	XMLElement* newElement = elem->GetDocument()->NewElement(name.c_str());
+	XMLElement* element = elem->InsertEndChild(newElement)->ToElement();
 
 	for (auto &prop : properties) {
 		if (prop->isDefault)
@@ -70,14 +70,14 @@ void ConfigurationItem::ToXML(XMLElement* parent) {
 		if (child->isDefault)
 			continue;
 		if (child->isComment) {
-			XMLComment* newComment = parent->GetDocument()->NewComment(child->value.c_str());
+			XMLComment* newComment = elem->GetDocument()->NewComment(child->value.c_str());
 			element->InsertEndChild(newComment);
 		}
 		else
 			child->ToXML(element);
 	}
 
-	XMLText* newText = parent->GetDocument()->NewText(value.c_str());
+	XMLText* newText = elem->GetDocument()->NewText(value.c_str());
 	element->InsertEndChild(newText);
 }
 
@@ -182,7 +182,7 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 	return found;
 }
 
-ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const string& value, bool isElement) {
+ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const string& val, bool isElement) {
 	ConfigurationItem* found = nullptr;
 	int pos = inName.find_first_of("/.");
 	string tmpName = inName.substr(0, pos);
@@ -205,14 +205,14 @@ ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const strin
 
 		newCI->level = level + 1;
 		if (pos == -1) {
-			newCI->value = value;
+			newCI->value = val;
 			found = newCI;
 		}
 		else if (inName.at(pos) == '/') {
-			found = newCI->AddChild(inName.substr(pos + 1), value, true);
+			found = newCI->AddChild(inName.substr(pos + 1), val, true);
 		}
 		else if (inName.at(pos) == '.')
-			found = newCI->AddChild(inName.substr(pos + 1), value, false);
+			found = newCI->AddChild(inName.substr(pos + 1), val, false);
 
 		if (isElement)
 			children.push_back(newCI);
@@ -224,9 +224,9 @@ ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const strin
 		if (pos == -1)
 			return nullptr;
 		else if (inName.at(pos) == '/')
-			found = found->AddChild(inName.substr(pos + 1), value, true);
+			found = found->AddChild(inName.substr(pos + 1), val, true);
 		else if (inName.at(pos) == '.')
-			found = found->AddChild(inName.substr(pos + 1), value, false);
+			found = found->AddChild(inName.substr(pos + 1), val, false);
 	}
 
 	return found;

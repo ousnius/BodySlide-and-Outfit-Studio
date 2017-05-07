@@ -4,7 +4,7 @@ Copyright (C) 2017  Caliente & ousnius
 See the included LICENSE file
 */
 
-#include "TinyXML-2/tinyxml2.h"
+#include "../TinyXML-2/tinyxml2.h"
 #include "SliderPresets.h"
 
 #include <wx/dir.h>

@@ -5,7 +5,7 @@ See the included LICENSE file
 */
 
 #include "NifBlock.h"
-#include "half.hpp"
+#include "../half.hpp"
 
 #pragma warning (disable : 4100)
 

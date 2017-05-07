@@ -3230,13 +3230,13 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					if (!isBSTri) {
 						for (auto &v : vertsToRemove) {
 							for (auto itTri = childPartition->tris.begin(); itTri < removeTriEnd; ++itTri) {
-								const Triangle& tri = (*itTri);
-								if (v == childPartition->verts[tri.p1])
-									vertsToDecrement.insert(tri.p1);
-								else if (v == childPartition->verts[tri.p2])
-									vertsToDecrement.insert(tri.p2);
-								else if (v == childPartition->verts[tri.p3])
-									vertsToDecrement.insert(tri.p3);
+								const Triangle& t = (*itTri);
+								if (v == childPartition->verts[t.p1])
+									vertsToDecrement.insert(t.p1);
+								else if (v == childPartition->verts[t.p2])
+									vertsToDecrement.insert(t.p2);
+								else if (v == childPartition->verts[t.p3])
+									vertsToDecrement.insert(t.p3);
 							}
 						}
 					}
@@ -6253,8 +6253,8 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	}
 
 	if (activeBrush->Type() == TBT_WEIGHT) {
-		for (auto &s : os->GetSelectedItems()) {
-			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(s->shapeName, os->GetActiveBone());
+		for (auto &sel : os->GetSelectedItems()) {
+			int boneIndex = os->project->GetWorkAnim()->GetShapeBoneIndex(sel->shapeName, os->GetActiveBone());
 			if (boneIndex < 0)
 				os->project->AddBoneRef(os->GetActiveBone());
 		}

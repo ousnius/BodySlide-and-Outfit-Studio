@@ -9,8 +9,8 @@ See the included LICENSE file
 #include "../files/FBXWrangler.h"
 #include "../program/FBXImportDialog.h"
 
-#include "FSEngine/FSManager.h"
-#include "FSEngine/FSEngine.h"
+#include "../FSEngine/FSManager.h"
+#include "../FSEngine/FSEngine.h"
 
 #include <sstream>
 #include <regex>

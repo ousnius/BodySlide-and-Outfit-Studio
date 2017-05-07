@@ -29,8 +29,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../files/TriFile.h"
 #include "../utils/Log.h"
 
-#include "FSEngine/FSManager.h"
-#include "FSEngine/FSEngine.h"
+#include "../FSEngine/FSManager.h"
+#include "../FSEngine/FSEngine.h"
 
 #include <wx/wxprec.h>
 #include <wx/srchctrl.h>

@@ -1,5 +1,5 @@
 #include "Object3d.h"
-#include "Miniball.hpp"
+#include "../Miniball.hpp"
 
 BoundingSphere::BoundingSphere(const vector<Vector3>& vertices) {
 	if (vertices.empty()) {

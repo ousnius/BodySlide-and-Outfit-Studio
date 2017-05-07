@@ -7,9 +7,8 @@ See the included LICENSE file
 #include "../render/GLMaterial.h"
 #include "../utils/ConfigurationManager.h"
 
-#include "FSEngine/FSManager.h"
-#include "FSEngine/FSEngine.h"
-#include "SOIL2/SOIL2.h"
+#include "../FSEngine/FSManager.h"
+#include "../FSEngine/FSEngine.h"
 
 #include <wx/filename.h>
 #include <wx/log.h>
@@ -99,51 +98,52 @@ GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap) {
 	return textureID;
 }
 
-GLuint ResourceLoader::GenerateTextureID(const string & texName)
-{
+GLuint ResourceLoader::GenerateTextureID(const string& texName) {
 	DeleteTexture(texName);
+
 	GLuint textureID;
 	glGenTextures(1, &textureID);
 	textures[texName] = textureID;
-	
+
 	return textureID;
 }
 
-GLuint ResourceLoader::GetTexID(const string & texName)
-{
+GLuint ResourceLoader::GetTexID(const string& texName) {
 	auto ti = textures.find(texName);
-	if (ti != textures.end()) {
+	if (ti != textures.end())
 		return ti->second;
-	}
+
 	return 0;
 }
 
-void ResourceLoader::DeleteTexture(const string & texName)
-{
+void ResourceLoader::DeleteTexture(const string& texName) {
 	auto ti = textures.find(texName);
 	if (ti != textures.end()) {
-		cacheTime++;	
+		cacheTime++;
 		glDeleteTextures(1, &ti->second);
 		textures.erase(ti);
 	}
 }
 
-
-bool ResourceLoader::RenameTexture(const string & texNameSrc, const string & texNameDest, bool overwrite)
-{
+bool ResourceLoader::RenameTexture(const string& texNameSrc, const string& texNameDest, bool overwrite) {
 	string src = texNameSrc;
-		transform(src.begin(), src.end(), src.begin(), ::tolower);
 	string dst = texNameDest;
-		transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
+
+	transform(src.begin(), src.end(), src.begin(), ::tolower);
+	transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
+
 	auto tid = textures.find(dst);
 	if (tid != textures.end()) {
-		if(!overwrite)
+		if (!overwrite)
 			return false;
+
 		DeleteTexture(dst);
 	}
+
 	auto ti = textures.find(src);
 	if (ti != textures.end()) {
-		cacheTime++;		//note, if a texture is replaced, cacheTime increment by 2 in this function (DeleteTexture also increments it)
+		// If a texture is replaced, cacheTime increment by 2 in this function (DeleteTexture also increments it)
+		cacheTime++;
 		textures[dst] = ti->second;
 		textures.erase(ti);
 	}
@@ -209,7 +209,7 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 		for (size_t face = 0; face < texture.faces(); ++face) {
 			for (size_t level = 0; level < texture.levels(); ++level) {
 				GLsizei const layerGL = static_cast<GLsizei>(layer);
-				glm::tvec3<GLsizei> textureExtent(texture.extent(level));
+				glm::tvec3<GLsizei> textureLevelExtent(texture.extent(level));
 				target = gli::is_target_cube(texture.target())
 					? static_cast<GLenum>(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face)
 					: target;
@@ -218,12 +218,12 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 				case gli::TARGET_1D:
 					if (gli::is_compressed(texture.format()))
 						glCompressedTexSubImage1D(
-						target, static_cast<GLint>(level), 0, textureExtent.x,
+						target, static_cast<GLint>(level), 0, textureLevelExtent.x,
 						format.Internal, static_cast<GLsizei>(texture.size(level)),
 						texture.data(layer, face, level));
 					else
 						glTexSubImage1D(
-						target, static_cast<GLint>(level), 0, textureExtent.x,
+						target, static_cast<GLint>(level), 0, textureLevelExtent.x,
 						format.External, format.Type,
 						texture.data(layer, face, level));
 					break;
@@ -235,16 +235,16 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 						glCompressedTexSubImage2D(
 						target, static_cast<GLint>(level),
 						0, 0,
-						textureExtent.x,
-						texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureExtent.y,
+						textureLevelExtent.x,
+						texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureLevelExtent.y,
 						format.Internal, static_cast<GLsizei>(texture.size(level)),
 						texture.data(layer, face, level));
 					else
 						glTexSubImage2D(
 						target, static_cast<GLint>(level),
 						0, 0,
-						textureExtent.x,
-						texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureExtent.y,
+						textureLevelExtent.x,
+						texture.target() == gli::TARGET_1D_ARRAY ? layerGL : textureLevelExtent.y,
 						format.External, format.Type,
 						texture.data(layer, face, level));
 					break;
@@ -256,16 +256,16 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 						glCompressedTexSubImage3D(
 						target, static_cast<GLint>(level),
 						0, 0, 0,
-						textureExtent.x, textureExtent.y,
-						texture.target() == gli::TARGET_3D ? textureExtent.z : layerGL,
+						textureLevelExtent.x, textureLevelExtent.y,
+						texture.target() == gli::TARGET_3D ? textureLevelExtent.z : layerGL,
 						format.Internal, static_cast<GLsizei>(texture.size(level)),
 						texture.data(layer, face, level));
 					else
 						glTexSubImage3D(
 						target, static_cast<GLint>(level),
 						0, 0, 0,
-						textureExtent.x, textureExtent.y,
-						texture.target() == gli::TARGET_3D ? textureExtent.z : layerGL,
+						textureLevelExtent.x, textureLevelExtent.y,
+						texture.target() == gli::TARGET_3D ? textureLevelExtent.z : layerGL,
 						format.External, format.Type,
 						texture.data(layer, face, level));
 					break;
@@ -315,34 +315,17 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 		GLuint textureID = 0;
 
 		textureID = LoadTexture(texFiles[i], i == 4);
-		if (textureID == 0) {
+		if (!textureID)
 			continue;
-		}
+
 		texRefs[i] = textureID;
-	} 
+	}
 
 	// No diffuse found
 	if (texRefs.empty() || texRefs[0] == 0) {
-		/* disabling default material key method. The file name of the default image causes the material
-		// to not be able to match the correct material from the key.  Instead, loading the default texture
-		// and "rename"ing it to match internally what the material thinks the texture name is.
-
-		// Set default material key
-		vector<string> defaultTex = { "res\\images\\NoImg.png" };
-		
-		key = MaterialKey(defaultTex, vShaderFile, fShaderFile);
-
-		// Return existing no image material
-		auto it = materials.find(key);
-		if (it != materials.end())
-			return it->second.get();
-		
-		// Reset texture indices
-		texRefs.resize(1, 0);
-		*/
 		// Load default image
-		string defaultTex = "res\\images\\NoImg.png";
-		texRefs[0] = LoadTexture(defaultTex, false);	
+		string defaultTex = "res\\images\\noimg.png";
+		texRefs[0] = LoadTexture(defaultTex, false);
 		RenameTexture(defaultTex, texFiles[0]);
 	}
 

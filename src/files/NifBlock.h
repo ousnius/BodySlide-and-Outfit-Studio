@@ -14,6 +14,8 @@ See the included LICENSE file
 #include <string>
 #include <memory>
 
+#pragma warning (disable : 4458)
+
 using namespace std;
 
 class NiString {

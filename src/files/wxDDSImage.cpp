@@ -7,7 +7,7 @@ See the included LICENSE file
 #include "wxDDSImage.h"
 
 #pragma warning (push, 0)
-#include "gli/gli.hpp"
+#include "gli.hpp"
 #pragma warning (pop)
 
 wxIMPLEMENT_DYNAMIC_CLASS(wxDDSHandler, wxImageHandler);

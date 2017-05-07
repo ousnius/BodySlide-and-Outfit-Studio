@@ -241,11 +241,11 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const string& shapeName) {
 	if (!skelNode)
 		return;
 
-	for (auto &skin : anim->shapeSkinning) {
-		if (skin.first != shapeName && !shapeName.empty())
+	for (auto &animSkin : anim->shapeSkinning) {
+		if (animSkin.first != shapeName && !shapeName.empty())
 			continue;
 
-		string shape = skin.first;
+		string shape = animSkin.first;
 		FbxNode* shapeNode = rootNode->FindChild(shape.c_str());
 		if (!shapeNode)
 			continue;
@@ -395,17 +395,17 @@ bool FBXWrangler::LoadMeshes(const FBXImportOptions& options) {
 				shape.tris.emplace_back(p1, p2, p3);
 
 				if (uv && uv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-					FbxVector2 uv;
+					FbxVector2 v_uv;
 					bool isUnmapped;
 
-					if (m->GetPolygonVertexUV(t, 0, uvName, uv, isUnmapped))
-						shape.uvs[p1] = Vector2(uv.mData[0], uv.mData[1]);
+					if (m->GetPolygonVertexUV(t, 0, uvName, v_uv, isUnmapped))
+						shape.uvs[p1] = Vector2(v_uv.mData[0], v_uv.mData[1]);
 
-					if (m->GetPolygonVertexUV(t, 1, uvName, uv, isUnmapped))
-						shape.uvs[p2] = Vector2(uv.mData[0], uv.mData[1]);
+					if (m->GetPolygonVertexUV(t, 1, uvName, v_uv, isUnmapped))
+						shape.uvs[p2] = Vector2(v_uv.mData[0], v_uv.mData[1]);
 
-					if (m->GetPolygonVertexUV(t, 2, uvName, uv, isUnmapped))
-						shape.uvs[p3] = Vector2(uv.mData[0], uv.mData[1]);
+					if (m->GetPolygonVertexUV(t, 2, uvName, v_uv, isUnmapped))
+						shape.uvs[p3] = Vector2(v_uv.mData[0], v_uv.mData[1]);
 				}
 			}
 

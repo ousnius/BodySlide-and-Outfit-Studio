@@ -162,7 +162,7 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 				layerelem->InsertEndChild(elem);
 			}
 
-			tinyxml2::XMLElement* elem = container->GetDocument()->NewElement("MaskFile");
+			elem = container->GetDocument()->NewElement("MaskFile");
 			relfn = l.maskFileName;
 			if (relfn.find(gamepath) != string::npos)
 				relfn.replace(relfn.find(gamepath), gamepath.length(), "%GameDataPath%");

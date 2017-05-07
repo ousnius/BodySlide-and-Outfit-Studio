@@ -460,8 +460,8 @@ public:
 	void InvalidateBVH() {
 		bvhValid = false;
 	}
-	void PushBVH(vector<mesh*> refMeshes) {
-		for (auto &m : refMeshes)
+	void PushBVH(vector<mesh*> meshes) {
+		for (auto &m : meshes)
 			endBVH[m] = m->bvh;
 	}
 	void RestoreStartState(mesh* m);

@@ -6,11 +6,10 @@ See the included LICENSE file
 
 #include "GLOffscreenBuffer.h"
 
-#include <SOIL2/SOIL2.h>
-#include <gli/texture2d.hpp>
-#include <gli/convert.hpp>
-#include <gli/save.hpp>
-#include <gli/make_texture.hpp>
+#include <texture2d.hpp>
+#include <convert.hpp>
+#include <save.hpp>
+#include <make_texture.hpp>
 
 #include <glm/gtx/gradient_paint.hpp>
 

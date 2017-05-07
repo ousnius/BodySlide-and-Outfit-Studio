@@ -447,9 +447,9 @@ void mesh::FacetNormals() {
 	queueUpdate[UpdateType::Normals] = true;
 }
 
-void mesh::ColorFill(const Vector3& color) {
+void mesh::ColorFill(const Vector3& vcolor) {
 	for (int i = 0; i < nVerts; i++)
-		vcolors[i] = color;
+		vcolors[i] = vcolor;
 
 	queueUpdate[UpdateType::VertexColors] = true;
 }

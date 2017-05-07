@@ -31,14 +31,14 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ***** END LICENCE BLOCK *****/
 
 #include "FSBSA.h"
-#include "DDS.h"
+#include "../DDS.h"
 
 #include <wx/mstream.h>
 #include <wx/zstream.h>
 #include <vector>
 #include <algorithm>
 
-#include "../lib/LZ4F/lz4frame.h"
+#include "../LZ4F/lz4frame.h"
 
 #pragma warning (disable : 4389 4018)
 
@@ -448,13 +448,13 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 		wxMutexLocker lock(bsaMutex);
 		if (bsa.Seek(file->offset)) {
 			wxInt64 filesz = file->size();
-			ssize_t ok = 1;
+			ssize_t fileok = 1;
 			if (namePrefix) {
 				char len;
-				ok = bsa.Read(&len, 1);
+				fileok = bsa.Read(&len, 1);
 				filesz -= len;
-				if (ok != wxInvalidOffset)
-					ok = bsa.Seek(file->offset + 1 + len);
+				if (fileok != wxInvalidOffset)
+					fileok = bsa.Seek(file->offset + 1 + len);
 			}
 
 			if (file->tex.chunks.size() > 0) {
@@ -530,7 +530,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 
 			wxMemoryBuffer firstChunk(filesz);
 			firstChunk.SetDataLen(filesz);
-			if (ok != wxInvalidOffset && bsa.Read(firstChunk.GetData(), filesz) == filesz) {
+			if (fileok != wxInvalidOffset && bsa.Read(firstChunk.GetData(), filesz) == filesz) {
 				if (file->sizeFlags > 0) {
 					// BSA
 					if (file->compressed() ^ compressToggle) {

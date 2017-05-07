@@ -11,7 +11,8 @@ See the included LICENSE file
 #include <unordered_map>
 
 #pragma warning (push, 0)
-#include "gli/gli.hpp"
+#include "gli.hpp"
+#include "../SOIL2/SOIL2.h""
 #pragma warning (pop)
 
 using namespace std;

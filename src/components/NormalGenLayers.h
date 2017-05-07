@@ -8,7 +8,7 @@ See the included LICENSE file
 
 #include <string>
 #include <vector>
-#include "TinyXML-2/tinyxml2.h"
+#include "../TinyXML-2/tinyxml2.h"
 
 class NormalGenLayer {
 public:

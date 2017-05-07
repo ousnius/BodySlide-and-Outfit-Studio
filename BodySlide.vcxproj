@@ -22,12 +22,12 @@
     <ProjectGuid>{F7E444AD-893D-4E93-8897-AF050C1C6A48}</ProjectGuid>
     <RootNamespace>BodySlide</RootNamespace>
     <Keyword>Win32Proj</Keyword>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CLRSupport>false</CLRSupport>
@@ -35,7 +35,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CLRSupport>false</CLRSupport>
@@ -43,12 +43,12 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
-    <PlatformToolset>v120</PlatformToolset>
+    <PlatformToolset>v140</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -96,7 +96,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -105,8 +105,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;rpcrt4.lib;OpenGL32.lib;glu32.lib;opengl32.lib;SOIL2_d.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libraries\fbx\lib\vs2013\x86\debug;..\wxWidgets\lib\vc_lib;lib\SOIL2;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x86\debug;..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -117,7 +117,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -126,8 +126,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;rpcrt4.lib;OpenGL32.lib;glu32.lib;opengl32.lib;SOIL2_x64_d.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libraries\fbx\lib\vs2013\x64\debug;..\wxWidgets\lib\vc_x64_lib;lib\SOIL2;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x64\debug;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -139,7 +139,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -149,8 +149,8 @@
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;rpcrt4.lib;OpenGL32.lib;glu32.lib;opengl32.lib;SOIL2.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libraries\fbx\lib\vs2013\x86\release;..\wxWidgets\lib\vc_lib;lib\SOIL2;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x86\release;..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -167,7 +167,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\libraries\fbx\include;lib;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -177,8 +177,8 @@
       <DebugInformationFormat>None</DebugInformationFormat>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>comctl32.lib;rpcrt4.lib;OpenGL32.lib;glu32.lib;opengl32.lib;SOIL2_x64.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\libraries\fbx\lib\vs2013\x64\release;..\wxWidgets\lib\vc_x64_lib;lib\SOIL2;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x64\release;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -342,8 +342,6 @@
     <None Include="lib\gli\glm\gtx\vector_angle.inl" />
     <None Include="lib\gli\glm\gtx\vector_query.inl" />
     <None Include="lib\gli\glm\gtx\wrap.inl" />
-    <None Include="lib\SOIL2\SOIL2_d.pdb" />
-    <None Include="lib\SOIL2\SOIL2_x64_d.pdb" />
     <None Include="res\shaders\default.frag" />
     <None Include="res\shaders\default.vert" />
     <None Include="res\shaders\fo4_default.frag" />
@@ -564,7 +562,23 @@
     <ClInclude Include="lib\LZ4F\lz4frame.h" />
     <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\Miniball.hpp" />
+    <ClInclude Include="lib\SOIL2\etc1_utils.h" />
+    <ClInclude Include="lib\SOIL2\image_DXT.h" />
+    <ClInclude Include="lib\SOIL2\image_helper.h" />
+    <ClInclude Include="lib\SOIL2\jo_jpeg.h" />
+    <ClInclude Include="lib\SOIL2\pkm_helper.h" />
+    <ClInclude Include="lib\SOIL2\pvr_helper.h" />
     <ClInclude Include="lib\SOIL2\SOIL2.h" />
+    <ClInclude Include="lib\SOIL2\stbi_DDS.h" />
+    <ClInclude Include="lib\SOIL2\stbi_DDS_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_ext.h" />
+    <ClInclude Include="lib\SOIL2\stbi_ext_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pkm.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pkm_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pvr.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pvr_c.h" />
+    <ClInclude Include="lib\SOIL2\stb_image.h" />
+    <ClInclude Include="lib\SOIL2\stb_image_write.h" />
     <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="src\components\Anim.h" />
@@ -618,6 +632,10 @@
     <ClCompile Include="lib\gli\glm\detail\glm.cpp" />
     <ClCompile Include="lib\LZ4F\lz4frame.c" />
     <ClCompile Include="lib\LZ4F\xxhash.c" />
+    <ClCompile Include="lib\SOIL2\etc1_utils.c" />
+    <ClCompile Include="lib\SOIL2\image_DXT.c" />
+    <ClCompile Include="lib\SOIL2\image_helper.c" />
+    <ClCompile Include="lib\SOIL2\SOIL2.c" />
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp" />
     <ClCompile Include="src\components\Anim.cpp" />
     <ClCompile Include="src\components\Automorph.cpp" />
@@ -659,12 +677,6 @@
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="src\utils\Log.cpp" />
     <ClCompile Include="src\utils\Object3d.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <Library Include="lib\SOIL2\SOIL2.lib" />
-    <Library Include="lib\SOIL2\SOIL2_d.lib" />
-    <Library Include="lib\SOIL2\SOIL2_x64.lib" />
-    <Library Include="lib\SOIL2\SOIL2_x64_d.lib" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml" />
