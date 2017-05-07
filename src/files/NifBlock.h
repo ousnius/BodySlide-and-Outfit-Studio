@@ -73,8 +73,8 @@ public:
 	NiObject();
 	virtual ~NiObject();
 
-	static const char* StaticBlockName() { return "NiUnknown"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiUnknown";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	virtual void Init();
 	virtual void notifyBlockDelete(int blockID);
@@ -146,8 +146,8 @@ private:
 public:
 	NiHeader();
 
-	static const char* StaticBlockName() { return "NiHeader"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiHeader";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Clear();
 	bool IsValid() { return valid; }
@@ -637,8 +637,8 @@ public:
 	NiNode(NiHeader* hdr);
 	NiNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Init();
 	void Get(fstream& file);
@@ -667,8 +667,8 @@ public:
 	BSFadeNode(NiHeader* hdr);
 	BSFadeNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSFadeNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSFadeNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	BSFadeNode* Clone() { return new BSFadeNode(*this); }
 };
@@ -682,8 +682,8 @@ public:
 	BSValueNode(NiHeader* hdr);
 	BSValueNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSValueNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSValueNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -697,8 +697,8 @@ public:
 	BSLeafAnimNode(NiHeader* hdr);
 	BSLeafAnimNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSLeafAnimNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSLeafAnimNode";
+	virtual const char* GetBlockName() { return BlockName; }
 };
 
 class BSTreeNode : public NiNode {
@@ -713,8 +713,8 @@ public:
 	BSTreeNode(NiHeader* hdr);
 	BSTreeNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSTreeNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSTreeNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -735,8 +735,8 @@ public:
 	BSOrderedNode(NiHeader* hdr);
 	BSOrderedNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSOrderedNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSOrderedNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -754,8 +754,8 @@ public:
 	BSMultiBoundNode(NiHeader* hdr);
 	BSMultiBoundNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSMultiBoundNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSMultiBoundNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -777,8 +777,8 @@ public:
 	BSBlastNode(NiHeader* hdr);
 	BSBlastNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSBlastNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSBlastNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -792,8 +792,8 @@ public:
 	BSDamageStage(NiHeader* hdr);
 	BSDamageStage(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSDamageStage"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSDamageStage";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	BSDamageStage* Clone() { return new BSDamageStage(*this); }
 };
@@ -809,8 +809,8 @@ public:
 	BSMasterParticleSystem(NiHeader* hdr);
 	BSMasterParticleSystem(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSMasterParticleSystem"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSMasterParticleSystem";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -830,8 +830,8 @@ public:
 	NiBillboardNode(NiHeader* hdr);
 	NiBillboardNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBillboardNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBillboardNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -849,8 +849,8 @@ public:
 	NiSwitchNode(NiHeader* hdr);
 	NiSwitchNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiSwitchNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiSwitchNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1025,8 +1025,8 @@ public:
 	BSTriShape(NiHeader* hdr);
 	BSTriShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSTriShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSTriShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1140,8 +1140,8 @@ public:
 	BSSubIndexTriShape(NiHeader* hdr);
 	BSSubIndexTriShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSSubIndexTriShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSSubIndexTriShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1165,8 +1165,8 @@ public:
 	BSMeshLODTriShape(NiHeader* hdr);
 	BSMeshLODTriShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSMeshLODTriShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSMeshLODTriShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1183,8 +1183,8 @@ public:
 	BSDynamicTriShape(NiHeader* hdr);
 	BSDynamicTriShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSDynamicTriShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSDynamicTriShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1252,8 +1252,8 @@ public:
 	NiTriShape(NiHeader* hdr);
 	NiTriShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiTriShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTriShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiTriShape* Clone() { return new NiTriShape(*this); }
 };
@@ -1271,8 +1271,8 @@ public:
 	NiTriShapeData(NiHeader* hdr);
 	NiTriShapeData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiTriShapeData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTriShapeData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1289,8 +1289,8 @@ public:
 	NiTriStrips(NiHeader* hdr);
 	NiTriStrips(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiTriStrips"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTriStrips";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiTriStrips* Clone() { return new NiTriStrips(*this); }
 };
@@ -1306,8 +1306,8 @@ public:
 	NiTriStripsData(NiHeader* hdr);
 	NiTriStripsData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiTriStripsData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTriStripsData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1329,8 +1329,8 @@ public:
 	BSLODTriShape(NiHeader* hdr);
 	BSLODTriShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSLODTriShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSLODTriShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1355,8 +1355,8 @@ public:
 	NiSkinInstance(NiHeader* hdr);
 	NiSkinInstance(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiSkinInstance"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiSkinInstance";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Init();
 	void Get(fstream& file);
@@ -1392,8 +1392,8 @@ public:
 	BSDismemberSkinInstance(NiHeader* hdr);
 	BSDismemberSkinInstance(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSDismemberSkinInstance"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSDismemberSkinInstance";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1428,8 +1428,8 @@ public:
 	BSSkinInstance(NiHeader* hdr);
 	BSSkinInstance(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSSkin::Instance"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSSkin::Instance";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Init();
 	void Get(fstream& file);
@@ -1467,8 +1467,8 @@ public:
 	BSSkinBoneData(NiHeader* hdr);
 	BSSkinBoneData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSSkin::BoneData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSSkin::BoneData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1499,8 +1499,8 @@ public:
 	NiSkinData(NiHeader* hdr);
 	NiSkinData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiSkinData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiSkinData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1568,8 +1568,8 @@ public:
 	NiSkinPartition(NiHeader* hdr);
 	NiSkinPartition(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiSkinPartition"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiSkinPartition";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1618,8 +1618,8 @@ public:
 	NiParticleSystem(NiHeader* hdr);
 	NiParticleSystem(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiParticleSystem"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiParticleSystem";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1635,8 +1635,8 @@ public:
 	NiMeshParticleSystem(NiHeader* hdr);
 	NiMeshParticleSystem(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiMeshParticleSystem"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiMeshParticleSystem";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiMeshParticleSystem* Clone() { return new NiMeshParticleSystem(*this); }
 };
@@ -1646,8 +1646,8 @@ public:
 	BSStripParticleSystem(NiHeader* hdr);
 	BSStripParticleSystem(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSStripParticleSystem"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSStripParticleSystem";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	BSStripParticleSystem* Clone() { return new BSStripParticleSystem(*this); }
 };
@@ -1675,8 +1675,8 @@ public:
 	NiParticlesData(NiHeader* hdr);
 	NiParticlesData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiParticlesData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiParticlesData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1689,8 +1689,8 @@ public:
 	NiRotatingParticlesData(NiHeader* hdr);
 	NiRotatingParticlesData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiRotatingParticlesData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiRotatingParticlesData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiRotatingParticlesData* Clone() { return new NiRotatingParticlesData(*this); }
 };
@@ -1703,8 +1703,8 @@ public:
 	NiPSysData(NiHeader* hdr);
 	NiPSysData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1726,8 +1726,8 @@ public:
 	NiMeshPSysData(NiHeader* hdr);
 	NiMeshPSysData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiMeshPSysData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiMeshPSysData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1749,8 +1749,8 @@ public:
 	BSStripPSysData(NiHeader* hdr);
 	BSStripPSysData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSStripPSysData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSStripPSysData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1782,8 +1782,8 @@ public:
 	NiCamera(NiHeader* hdr);
 	NiCamera(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiCamera"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiCamera";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1824,8 +1824,8 @@ public:
 	BSPSysStripUpdateModifier(NiHeader* hdr);
 	BSPSysStripUpdateModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysStripUpdateModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysStripUpdateModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1842,8 +1842,8 @@ public:
 	NiPSysAgeDeathModifier(NiHeader* hdr);
 	NiPSysAgeDeathModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysAgeDeathModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysAgeDeathModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1862,8 +1862,8 @@ public:
 	BSPSysLODModifier(NiHeader* hdr);
 	BSPSysLODModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysLODModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysLODModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1886,8 +1886,8 @@ public:
 	NiPSysSpawnModifier(NiHeader* hdr);
 	NiPSysSpawnModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysSpawnModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysSpawnModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1911,8 +1911,8 @@ public:
 	BSPSysSimpleColorModifier(NiHeader* hdr);
 	BSPSysSimpleColorModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysSimpleColorModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysSimpleColorModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1934,8 +1934,8 @@ public:
 	NiPSysRotationModifier(NiHeader* hdr);
 	NiPSysRotationModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysRotationModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysRotationModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1952,8 +1952,8 @@ public:
 	BSPSysScaleModifier(NiHeader* hdr);
 	BSPSysScaleModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysScaleModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysScaleModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1976,8 +1976,8 @@ public:
 	NiPSysGravityModifier(NiHeader* hdr);
 	NiPSysGravityModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysGravityModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysGravityModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -1993,8 +1993,8 @@ public:
 	NiPSysPositionModifier(NiHeader* hdr);
 	NiPSysPositionModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysPositionModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysPositionModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysPositionModifier* Clone() { return new NiPSysPositionModifier(*this); }
 };
@@ -2007,8 +2007,8 @@ public:
 	NiPSysBoundUpdateModifier(NiHeader* hdr);
 	NiPSysBoundUpdateModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysBoundUpdateModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysBoundUpdateModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2028,8 +2028,8 @@ public:
 	NiPSysDragModifier(NiHeader* hdr);
 	NiPSysDragModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysDragModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysDragModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2051,8 +2051,8 @@ public:
 	BSPSysInheritVelocityModifier(NiHeader* hdr);
 	BSPSysInheritVelocityModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysInheritVelocityModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysInheritVelocityModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2077,8 +2077,8 @@ public:
 	BSPSysSubTexModifier(NiHeader* hdr);
 	BSPSysSubTexModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysSubTexModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysSubTexModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2099,8 +2099,8 @@ public:
 	NiPSysBombModifier(NiHeader* hdr);
 	NiPSysBombModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysBombModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysBombModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2119,8 +2119,8 @@ public:
 	BSWindModifier(NiHeader* hdr);
 	BSWindModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSWindModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSWindModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2138,8 +2138,8 @@ public:
 	BSPSysRecycleBoundModifier(NiHeader* hdr);
 	BSPSysRecycleBoundModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysRecycleBoundModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysRecycleBoundModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2161,8 +2161,8 @@ public:
 	BSPSysHavokUpdateModifier(NiHeader* hdr);
 	BSPSysHavokUpdateModifier(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSPSysHavokUpdateModifier"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSPSysHavokUpdateModifier";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2201,8 +2201,8 @@ public:
 	NiPSysSphericalCollider(NiHeader* hdr);
 	NiPSysSphericalCollider(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysSphericalCollider"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysSphericalCollider";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2221,8 +2221,8 @@ public:
 	NiPSysPlanarCollider(NiHeader* hdr);
 	NiPSysPlanarCollider(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysPlanarCollider"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysPlanarCollider";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2238,8 +2238,8 @@ public:
 	NiPSysColliderManager(NiHeader* hdr);
 	NiPSysColliderManager(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysColliderManager"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysColliderManager";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2292,8 +2292,8 @@ public:
 	NiPSysSphereEmitter(NiHeader* hdr);
 	NiPSysSphereEmitter(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysSphereEmitter"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysSphereEmitter";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2310,8 +2310,8 @@ public:
 	NiPSysCylinderEmitter(NiHeader* hdr);
 	NiPSysCylinderEmitter(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysCylinderEmitter"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysCylinderEmitter";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2329,8 +2329,8 @@ public:
 	NiPSysBoxEmitter(NiHeader* hdr);
 	NiPSysBoxEmitter(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysBoxEmitter"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysBoxEmitter";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2350,8 +2350,8 @@ public:
 	NiPSysMeshEmitter(NiHeader* hdr);
 	NiPSysMeshEmitter(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysMeshEmitter"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysMeshEmitter";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2384,8 +2384,8 @@ public:
 	NiBlendBoolInterpolator(NiHeader* hdr);
 	NiBlendBoolInterpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBlendBoolInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBlendBoolInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2401,8 +2401,8 @@ public:
 	NiBlendFloatInterpolator(NiHeader* hdr);
 	NiBlendFloatInterpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBlendFloatInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBlendFloatInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2418,8 +2418,8 @@ public:
 	NiBlendPoint3Interpolator(NiHeader* hdr);
 	NiBlendPoint3Interpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBlendPoint3Interpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBlendPoint3Interpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2440,8 +2440,8 @@ public:
 	NiBoolInterpolator(NiHeader* hdr);
 	NiBoolInterpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBoolInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBoolInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2457,8 +2457,8 @@ public:
 	NiBoolTimelineInterpolator(NiHeader* hdr);
 	NiBoolTimelineInterpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBoolTimelineInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBoolTimelineInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiBoolTimelineInterpolator* Clone() { return new NiBoolTimelineInterpolator(*this); }
 };
@@ -2473,8 +2473,8 @@ public:
 	NiFloatInterpolator(NiHeader* hdr);
 	NiFloatInterpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiFloatInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiFloatInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2497,8 +2497,8 @@ public:
 	NiTransformInterpolator(NiHeader* hdr);
 	NiTransformInterpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiTransformInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTransformInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2519,8 +2519,8 @@ public:
 	NiPoint3Interpolator(NiHeader* hdr);
 	NiPoint3Interpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPoint3Interpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPoint3Interpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2546,8 +2546,8 @@ public:
 	NiPathInterpolator(NiHeader* hdr);
 	NiPathInterpolator(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPathInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPathInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2577,8 +2577,8 @@ public:
 		lookAtName.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "NiLookAtInterpolator"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiLookAtInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2605,8 +2605,8 @@ public:
 	NiKeyframeData(NiHeader* hdr);
 	NiKeyframeData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiKeyframeData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiKeyframeData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2619,8 +2619,8 @@ public:
 	NiTransformData(NiHeader* hdr);
 	NiTransformData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiTransformData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTransformData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiTransformData* Clone() { return new NiTransformData(*this); }
 };
@@ -2633,8 +2633,8 @@ public:
 	NiPosData(NiHeader* hdr);
 	NiPosData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPosData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPosData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2650,8 +2650,8 @@ public:
 	NiBoolData(NiHeader* hdr);
 	NiBoolData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBoolData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBoolData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2667,8 +2667,8 @@ public:
 	NiFloatData(NiHeader* hdr);
 	NiFloatData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiFloatData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiFloatData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2704,8 +2704,8 @@ public:
 	BSFrustumFOVController(NiHeader* hdr);
 	BSFrustumFOVController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSFrustumFOVController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSFrustumFOVController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2726,8 +2726,8 @@ public:
 	BSLagBoneController(NiHeader* hdr);
 	BSLagBoneController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSLagBoneController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSLagBoneController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2766,8 +2766,8 @@ public:
 	BSProceduralLightningController(NiHeader* hdr);
 	BSProceduralLightningController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSProceduralLightningController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSProceduralLightningController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2795,8 +2795,8 @@ public:
 	NiBoneLODController(NiHeader* hdr);
 	NiBoneLODController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBoneLODController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBoneLODController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2837,8 +2837,8 @@ public:
 		extraData.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "NiFloatExtraDataController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiFloatExtraDataController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2855,7 +2855,7 @@ public:
 	NiVisController(NiHeader* hdr);
 	NiVisController(fstream& file, NiHeader* hdr);
 
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiVisController* Clone() { return new NiVisController(*this); }
 };
@@ -2868,8 +2868,8 @@ public:
 	NiAlphaController(NiHeader* hdr);
 	NiAlphaController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiAlphaController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiAlphaController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiAlphaController* Clone() { return new NiAlphaController(*this); }
 };
@@ -2879,8 +2879,8 @@ public:
 	NiPSysUpdateCtlr(NiHeader* hdr);
 	NiPSysUpdateCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysUpdateCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysUpdateCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysUpdateCtlr* Clone() { return new NiPSysUpdateCtlr(*this); }
 };
@@ -2890,8 +2890,8 @@ public:
 	BSNiAlphaPropertyTestRefController(NiHeader* hdr);
 	BSNiAlphaPropertyTestRefController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSNiAlphaPropertyTestRefController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSNiAlphaPropertyTestRefController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	BSNiAlphaPropertyTestRefController* Clone() { return new BSNiAlphaPropertyTestRefController(*this); }
 };
@@ -2901,8 +2901,8 @@ public:
 	NiKeyframeController(NiHeader* hdr);
 	NiKeyframeController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiKeyframeController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiKeyframeController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiKeyframeController* Clone() { return new NiKeyframeController(*this); }
 };
@@ -2912,8 +2912,8 @@ public:
 	NiTransformController(NiHeader* hdr);
 	NiTransformController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiTransformController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTransformController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiTransformController* Clone() { return new NiTransformController(*this); }
 };
@@ -2926,8 +2926,8 @@ public:
 	BSLightingShaderPropertyColorController(NiHeader* hdr);
 	BSLightingShaderPropertyColorController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSLightingShaderPropertyColorController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSLightingShaderPropertyColorController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2943,8 +2943,8 @@ public:
 	BSLightingShaderPropertyFloatController(NiHeader* hdr);
 	BSLightingShaderPropertyFloatController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSLightingShaderPropertyFloatController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSLightingShaderPropertyFloatController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2960,8 +2960,8 @@ public:
 	BSEffectShaderPropertyColorController(NiHeader* hdr);
 	BSEffectShaderPropertyColorController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSEffectShaderPropertyColorController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSEffectShaderPropertyColorController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2977,8 +2977,8 @@ public:
 	BSEffectShaderPropertyFloatController(NiHeader* hdr);
 	BSEffectShaderPropertyFloatController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSEffectShaderPropertyFloatController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSEffectShaderPropertyFloatController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -2995,8 +2995,8 @@ public:
 	NiMultiTargetTransformController(NiHeader* hdr);
 	NiMultiTargetTransformController(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiMultiTargetTransformController"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiMultiTargetTransformController";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3030,8 +3030,8 @@ public:
 	NiPSysModifierActiveCtlr(NiHeader* hdr);
 	NiPSysModifierActiveCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysModifierActiveCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysModifierActiveCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysModifierActiveCtlr* Clone() { return new NiPSysModifierActiveCtlr(*this); }
 };
@@ -3044,8 +3044,8 @@ public:
 	NiPSysEmitterLifeSpanCtlr(NiHeader* hdr);
 	NiPSysEmitterLifeSpanCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysEmitterLifeSpanCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysEmitterLifeSpanCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysEmitterLifeSpanCtlr* Clone() { return new NiPSysEmitterLifeSpanCtlr(*this); }
 };
@@ -3055,8 +3055,8 @@ public:
 	NiPSysEmitterSpeedCtlr(NiHeader* hdr);
 	NiPSysEmitterSpeedCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysEmitterSpeedCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysEmitterSpeedCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysEmitterSpeedCtlr* Clone() { return new NiPSysEmitterSpeedCtlr(*this); }
 };
@@ -3066,8 +3066,8 @@ public:
 	NiPSysEmitterInitialRadiusCtlr(NiHeader* hdr);
 	NiPSysEmitterInitialRadiusCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysEmitterInitialRadiusCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysEmitterInitialRadiusCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysEmitterInitialRadiusCtlr* Clone() { return new NiPSysEmitterInitialRadiusCtlr(*this); }
 };
@@ -3077,8 +3077,8 @@ public:
 	NiPSysEmitterPlanarAngleCtlr(NiHeader* hdr);
 	NiPSysEmitterPlanarAngleCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysEmitterPlanarAngleCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysEmitterPlanarAngleCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysEmitterPlanarAngleCtlr* Clone() { return new NiPSysEmitterPlanarAngleCtlr(*this); }
 };
@@ -3088,8 +3088,8 @@ public:
 	NiPSysEmitterDeclinationCtlr(NiHeader* hdr);
 	NiPSysEmitterDeclinationCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysEmitterDeclinationCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysEmitterDeclinationCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysEmitterDeclinationCtlr* Clone() { return new NiPSysEmitterDeclinationCtlr(*this); }
 };
@@ -3099,8 +3099,8 @@ public:
 	NiPSysGravityStrengthCtlr(NiHeader* hdr);
 	NiPSysGravityStrengthCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysGravityStrengthCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysGravityStrengthCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysGravityStrengthCtlr* Clone() { return new NiPSysGravityStrengthCtlr(*this); }
 };
@@ -3110,8 +3110,8 @@ public:
 	NiPSysInitialRotSpeedCtlr(NiHeader* hdr);
 	NiPSysInitialRotSpeedCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysInitialRotSpeedCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysInitialRotSpeedCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysInitialRotSpeedCtlr* Clone() { return new NiPSysInitialRotSpeedCtlr(*this); }
 };
@@ -3124,8 +3124,8 @@ public:
 	NiPSysEmitterCtlr(NiHeader* hdr);
 	NiPSysEmitterCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysEmitterCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysEmitterCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3145,8 +3145,8 @@ public:
 	NiPSysMultiTargetEmitterCtlr(NiHeader* hdr);
 	NiPSysMultiTargetEmitterCtlr(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiPSysMultiTargetEmitterCtlr"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiPSysMultiTargetEmitterCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3168,8 +3168,8 @@ public:
 	NiControllerManager(NiHeader* hdr);
 	NiControllerManager(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiControllerManager"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiControllerManager";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3200,8 +3200,8 @@ public:
 		}
 	};
 
-	static const char* StaticBlockName() { return "NiSequence"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiSequence";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3234,8 +3234,8 @@ public:
 		accumRootName.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "NiControllerSequence"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiControllerSequence";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3260,8 +3260,8 @@ public:
 	NiDefaultAVObjectPalette(NiHeader* hdr);
 	NiDefaultAVObjectPalette(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiDefaultAVObjectPalette"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiDefaultAVObjectPalette";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3364,8 +3364,8 @@ public:
 		wetMaterialName.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "BSLightingShaderProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSLightingShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3450,8 +3450,8 @@ public:
 	BSEffectShaderProperty(NiHeader* hdr);
 	BSEffectShaderProperty(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSEffectShaderProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSEffectShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3487,8 +3487,8 @@ public:
 	BSWaterShaderProperty(NiHeader* hdr);
 	BSWaterShaderProperty(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSWaterShaderProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSWaterShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3521,8 +3521,8 @@ public:
 	BSSkyShaderProperty(NiHeader* hdr);
 	BSSkyShaderProperty(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSSkyShaderProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSSkyShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3563,8 +3563,8 @@ public:
 	BSShaderPPLightingProperty(NiHeader* hdr);
 	BSShaderPPLightingProperty(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSShaderPPLightingProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSShaderPPLightingProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3589,8 +3589,8 @@ public:
 	BSShaderTextureSet(NiHeader* hdr);
 	BSShaderTextureSet(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSShaderTextureSet"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSShaderTextureSet";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3606,8 +3606,8 @@ public:
 	NiAlphaProperty(NiHeader* hdr);
 	NiAlphaProperty(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiAlphaProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiAlphaProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3631,8 +3631,8 @@ public:
 	NiMaterialProperty(NiHeader* hdr);
 	NiMaterialProperty(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiMaterialProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiMaterialProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3660,8 +3660,8 @@ public:
 	NiStencilProperty(NiHeader* hdr);
 	NiStencilProperty(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiStencilProperty"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiStencilProperty";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3696,8 +3696,8 @@ public:
 	NiBinaryExtraData(NiHeader* hdr);
 	NiBinaryExtraData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBinaryExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBinaryExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3713,8 +3713,8 @@ public:
 	NiFloatExtraData(NiHeader* hdr);
 	NiFloatExtraData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiFloatExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiFloatExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3733,8 +3733,8 @@ public:
 		stringData.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "NiStringExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiStringExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3755,8 +3755,8 @@ public:
 	NiStringsExtraData(NiHeader* hdr);
 	NiStringsExtraData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiStringsExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiStringsExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3772,8 +3772,8 @@ public:
 	NiBooleanExtraData(NiHeader* hdr);
 	NiBooleanExtraData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiBooleanExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiBooleanExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3792,8 +3792,8 @@ public:
 	NiIntegerExtraData(NiHeader* hdr);
 	NiIntegerExtraData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiIntegerExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiIntegerExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3809,8 +3809,8 @@ public:
 	BSXFlags(NiHeader* hdr);
 	BSXFlags(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSXFlags"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSXFlags";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	BSXFlags* Clone() { return new BSXFlags(*this); }
 };
@@ -3826,8 +3826,8 @@ public:
 	BSInvMarker(NiHeader* hdr);
 	BSInvMarker(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSInvMarker"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSInvMarker";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3844,8 +3844,8 @@ public:
 	BSFurnitureMarker(NiHeader* hdr);
 	BSFurnitureMarker(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSFurnitureMarker"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSFurnitureMarker";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3858,8 +3858,8 @@ public:
 	BSFurnitureMarkerNode(NiHeader* hdr);
 	BSFurnitureMarkerNode(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSFurnitureMarkerNode"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSFurnitureMarkerNode";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	BSFurnitureMarkerNode* Clone() { return new BSFurnitureMarkerNode(*this); }
 };
@@ -3881,8 +3881,8 @@ public:
 	BSDecalPlacementVectorExtraData(NiHeader* hdr);
 	BSDecalPlacementVectorExtraData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSDecalPlacementVectorExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSDecalPlacementVectorExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3902,8 +3902,8 @@ public:
 		behaviorGraphFile.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "BSBehaviorGraphExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSBehaviorGraphExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3921,8 +3921,8 @@ public:
 	BSBound(NiHeader* hdr);
 	BSBound(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSBound"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSBound";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3943,8 +3943,8 @@ public:
 			lod.boneName.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "BSBoneLODExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSBoneLODExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -3966,8 +3966,8 @@ public:
 			tk.value.Clear(header);
 	};
 
-	static const char* StaticBlockName() { return "NiTextKeyExtraData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiTextKeyExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4002,8 +4002,8 @@ public:
 	BSConnectPointParents(NiHeader* hdr);
 	BSConnectPointParents(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSConnectPoint::Parents"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSConnectPoint::Parents";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4021,8 +4021,8 @@ public:
 	BSConnectPointChildren(NiHeader* hdr);
 	BSConnectPointChildren(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSConnectPoint::Children"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSConnectPoint::Children";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4060,8 +4060,8 @@ public:
 	BSMultiBound(NiHeader* hdr);
 	BSMultiBound(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSMultiBound"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSMultiBound";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4085,8 +4085,8 @@ public:
 	BSMultiBoundOBB(NiHeader* hdr);
 	BSMultiBoundOBB(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSMultiBoundOBB"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSMultiBoundOBB";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4103,8 +4103,8 @@ public:
 	BSMultiBoundAABB(NiHeader* hdr);
 	BSMultiBoundAABB(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "BSMultiBoundAABB"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "BSMultiBoundAABB";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4120,8 +4120,8 @@ public:
 	NiCollisionObject(NiHeader* hdr);
 	NiCollisionObject(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "NiCollisionObject"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "NiCollisionObject";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4140,8 +4140,8 @@ public:
 	bhkNiCollisionObject(NiHeader* hdr);
 	bhkNiCollisionObject(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkNiCollisionObject"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkNiCollisionObject";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4157,8 +4157,8 @@ public:
 	bhkCollisionObject(NiHeader* hdr);
 	bhkCollisionObject(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkCollisionObject"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkCollisionObject";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	bhkCollisionObject* Clone() { return new bhkCollisionObject(*this); }
 };
@@ -4171,8 +4171,8 @@ public:
 	bhkNPCollisionObject(NiHeader* hdr);
 	bhkNPCollisionObject(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkNPCollisionObject"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkNPCollisionObject";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4185,8 +4185,8 @@ public:
 	bhkPCollisionObject(NiHeader* hdr);
 	bhkPCollisionObject(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkPCollisionObject"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkPCollisionObject";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	bhkPCollisionObject* Clone() { return new bhkPCollisionObject(*this); }
 };
@@ -4196,8 +4196,8 @@ public:
 	bhkSPCollisionObject(NiHeader* hdr);
 	bhkSPCollisionObject(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkSPCollisionObject"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkSPCollisionObject";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	bhkSPCollisionObject* Clone() { return new bhkSPCollisionObject(*this); }
 };
@@ -4211,8 +4211,8 @@ public:
 	bhkBlendCollisionObject(NiHeader* hdr);
 	bhkBlendCollisionObject(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkBlendCollisionObject"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkBlendCollisionObject";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4261,8 +4261,8 @@ public:
 	bhkPlaneShape(NiHeader* hdr);
 	bhkPlaneShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkPlaneShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkPlaneShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4301,8 +4301,8 @@ public:
 	bhkConvexVerticesShape(NiHeader* hdr);
 	bhkConvexVerticesShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkConvexVerticesShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkConvexVerticesShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4321,8 +4321,8 @@ public:
 	bhkBoxShape(NiHeader* hdr);
 	bhkBoxShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkBoxShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkBoxShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4335,8 +4335,8 @@ public:
 	bhkSphereShape(NiHeader* hdr);
 	bhkSphereShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkSphereShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkSphereShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	bhkSphereShape* Clone() { return new bhkSphereShape(*this); }
 };
@@ -4353,8 +4353,8 @@ public:
 	bhkTransformShape(NiHeader* hdr);
 	bhkTransformShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkTransformShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkTransformShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4370,8 +4370,8 @@ public:
 	bhkConvexTransformShape(NiHeader* hdr);
 	bhkConvexTransformShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkConvexTransformShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkConvexTransformShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	bhkConvexTransformShape* Clone() { return new bhkConvexTransformShape(*this); }
 };
@@ -4389,8 +4389,8 @@ public:
 	bhkCapsuleShape(NiHeader* hdr);
 	bhkCapsuleShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkCapsuleShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkCapsuleShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4417,8 +4417,8 @@ public:
 	bhkMoppBvTreeShape(NiHeader* hdr);
 	bhkMoppBvTreeShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkMoppBvTreeShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkMoppBvTreeShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4451,8 +4451,8 @@ public:
 	bhkNiTriStripsShape(NiHeader* hdr);
 	bhkNiTriStripsShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkNiTriStripsShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkNiTriStripsShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4479,8 +4479,8 @@ public:
 	bhkListShape(NiHeader* hdr);
 	bhkListShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkListShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkListShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4527,8 +4527,8 @@ public:
 	bhkSimpleShapePhantom(NiHeader* hdr);
 	bhkSimpleShapePhantom(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkSimpleShapePhantom"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkSimpleShapePhantom";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4563,8 +4563,8 @@ public:
 	bhkHingeConstraint(NiHeader* hdr);
 	bhkHingeConstraint(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkHingeConstraint"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkHingeConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4580,8 +4580,8 @@ public:
 	bhkLimitedHingeConstraint(NiHeader* hdr);
 	bhkLimitedHingeConstraint(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkLimitedHingeConstraint"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkLimitedHingeConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4599,8 +4599,8 @@ public:
 	bhkBreakableConstraint(NiHeader* hdr);
 	bhkBreakableConstraint(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkBreakableConstraint"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkBreakableConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4619,8 +4619,8 @@ public:
 	bhkRagdollConstraint(NiHeader* hdr);
 	bhkRagdollConstraint(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkRagdollConstraint"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkRagdollConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4636,8 +4636,8 @@ public:
 	bhkStiffSpringConstraint(NiHeader* hdr);
 	bhkStiffSpringConstraint(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkStiffSpringConstraint"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkStiffSpringConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4653,8 +4653,8 @@ public:
 	bhkBallAndSocketConstraint(NiHeader* hdr);
 	bhkBallAndSocketConstraint(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkBallAndSocketConstraint"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkBallAndSocketConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4684,8 +4684,8 @@ public:
 	bhkBallSocketConstraintChain(NiHeader* hdr);
 	bhkBallSocketConstraintChain(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkBallSocketConstraintChain"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkBallSocketConstraintChain";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4741,8 +4741,8 @@ public:
 	bhkRigidBody(NiHeader* hdr);
 	bhkRigidBody(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkRigidBody"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkRigidBody";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4758,8 +4758,8 @@ public:
 	bhkRigidBodyT(NiHeader* hdr);
 	bhkRigidBodyT(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkRigidBodyT"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkRigidBodyT";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	bhkRigidBodyT* Clone() { return new bhkRigidBodyT(*this); }
 };
@@ -4779,8 +4779,8 @@ public:
 	bhkCompressedMeshShape(NiHeader* hdr);
 	bhkCompressedMeshShape(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkCompressedMeshShape"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkCompressedMeshShape";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);
@@ -4833,8 +4833,8 @@ public:
 	bhkCompressedMeshShapeData(NiHeader* hdr);
 	bhkCompressedMeshShapeData(fstream& file, NiHeader* hdr);
 
-	static const char* StaticBlockName() { return "bhkCompressedMeshShapeData"; }
-	virtual const char* GetBlockName() { return StaticBlockName(); }
+	static constexpr const char* BlockName = "bhkCompressedMeshShapeData";
+	virtual const char* GetBlockName() { return BlockName; }
 
 	void Get(fstream& file);
 	void Put(fstream& file);

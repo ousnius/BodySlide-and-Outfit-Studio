@@ -46,7 +46,7 @@ public:
 	template<typename T>
 	void RegisterFactory() {
 		// Any NiObject can be registered together with its block name
-		m_registrations.emplace(T::StaticBlockName(), make_shared<NiFactory<T>>());
+		m_registrations.emplace(T::BlockName, make_shared<NiFactory<T>>());
 	}
 
 	// Get block factory via header string
