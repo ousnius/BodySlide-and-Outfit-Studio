@@ -39,7 +39,7 @@ void FBXWrangler::CloseScene() {
 	comName.clear();
 }
 
-void FBXWrangler::AddGeometry(const string& shapeName, const vector<Vector3>* verts, const vector<Vector3>* norms, const vector<Triangle>* tris, const vector<Vector2>* uvs) {
+void FBXWrangler::AddGeometry(const std::string& shapeName, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs) {
 	if (!verts || verts->empty())
 		return;
 
@@ -54,7 +54,7 @@ void FBXWrangler::AddGeometry(const string& shapeName, const vector<Vector3>* ve
 	
 	FbxGeometryElementUV* uvElement = nullptr;
 	if (uvs && !uvs->empty()) {
-		string uvName = shapeName + "UV";
+		std::string uvName = shapeName + "UV";
 		uvElement = m->CreateElementUV(uvName.c_str());
 		uvElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
 		uvElement->SetReferenceMode(FbxGeometryElement::eDirect);
@@ -111,13 +111,13 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		comName = com->GetName();
 
 	// Check if skeleton already exists
-	string skelName = "NifSkeleton";
+	std::string skelName = "NifSkeleton";
 	FbxNode* skelNode = scene->GetRootNode()->FindChild(skelName.c_str());
 	if (skelNode && onlyNonSkeleton) {
 		// Add non-skeleton nodes to the existing skeleton
 		FbxNode* comNode = skelNode->FindChild(comName.c_str());
 		if (comNode) {
-			vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
+			std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
 			for (auto &b : boneNodes)
 				comNode->AddChild(AddLimb(nif, b));
 		}
@@ -174,7 +174,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			parentNode = comNode;
 		}
 
-		vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
+		std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(com);
 		for (auto bn : boneNodes)
 			parentNode->AddChild(AddLimb(nif, bn));
 
@@ -212,30 +212,30 @@ FbxNode* FBXWrangler::AddLimb(NifFile* nif, NiNode* nifBone) {
 }
 
 void FBXWrangler::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) {
-	vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(nifBone);
+	std::vector<NiNode*> boneNodes = nif->GetChildren<NiNode>(nifBone);
 	for (auto &b : boneNodes)
 		node->AddChild(AddLimb(nif, b));
 }
 
-void FBXWrangler::AddNif(NifFile* nif, const string& shapeName) {
+void FBXWrangler::AddNif(NifFile* nif, const std::string& shapeName) {
 	AddSkeleton(nif, true);
 
-	vector<string> shapeList;
+	std::vector<std::string> shapeList;
 	nif->GetShapeList(shapeList);
 	for (auto &s : shapeList) {
 		if (s == shapeName || shapeName.empty()) {
-			vector<Triangle> tris;
+			std::vector<Triangle> tris;
 			if (nif->GetTrisForShape(s, &tris)) {
-				const vector<Vector3>* verts = nif->GetRawVertsForShape(s);
-				const vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
-				const vector<Vector2>* uvs = nif->GetUvsForShape(s);
+				const std::vector<Vector3>* verts = nif->GetRawVertsForShape(s);
+				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
+				const std::vector<Vector2>* uvs = nif->GetUvsForShape(s);
 				AddGeometry(s, verts, norms, &tris, uvs);
 			}
 		}
 	}
 }
 
-void FBXWrangler::AddSkinning(AnimInfo* anim, const string& shapeName) {
+void FBXWrangler::AddSkinning(AnimInfo* anim, const std::string& shapeName) {
 	FbxNode* rootNode = scene->GetRootNode();
 	FbxNode* skelNode = rootNode->FindChild("NifSkeleton");
 	if (!skelNode)
@@ -245,19 +245,19 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const string& shapeName) {
 		if (animSkin.first != shapeName && !shapeName.empty())
 			continue;
 
-		string shape = animSkin.first;
+		std::string shape = animSkin.first;
 		FbxNode* shapeNode = rootNode->FindChild(shape.c_str());
 		if (!shapeNode)
 			continue;
 
-		string shapeSkin = shape + "_sk";
+		std::string shapeSkin = shape + "_sk";
 		FbxSkin* skin = FbxSkin::Create(scene, shapeSkin.c_str());
 
-		unordered_map<ushort, float> outWeights;
+		std::unordered_map<ushort, float> outWeights;
 		for (auto &bone : anim->shapeBones[shape]) {
 			FbxNode* jointNode = skelNode->FindChild(bone.c_str());
 			if (jointNode) {
-				string boneSkin = bone + "_sk";
+				std::string boneSkin = bone + "_sk";
 				FbxCluster* aCluster = FbxCluster::Create(scene, boneSkin.c_str());
 				aCluster->SetLink(jointNode);
 				aCluster->SetLinkMode(FbxCluster::eTotalOne);
@@ -276,7 +276,7 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const string& shapeName) {
 	}
 }
 
-bool FBXWrangler::ExportScene(const string& fileName) {
+bool FBXWrangler::ExportScene(const std::string& fileName) {
 	FbxExporter* iExporter = FbxExporter::Create(sdkManager, "");
 	if (!iExporter->Initialize(fileName.c_str(), -1, sdkManager->GetIOSettings())) {
 		iExporter->Destroy();
@@ -308,7 +308,7 @@ bool FBXWrangler::ExportScene(const string& fileName) {
 	return status;
 }
 
-bool FBXWrangler::ImportScene(const string& fileName, const FBXImportOptions& options) {
+bool FBXWrangler::ImportScene(const std::string& fileName, const FBXImportOptions& options) {
 	FbxIOSettings* ios = sdkManager->GetIOSettings();
 	ios->SetBoolProp(IMP_FBX_MATERIAL, true);
 	ios->SetBoolProp(IMP_FBX_TEXTURE, true);
@@ -417,7 +417,7 @@ bool FBXWrangler::LoadMeshes(const FBXImportOptions& options) {
 					if (!cluster->GetLink())
 						continue;
 
-					string bone = cluster->GetLink()->GetName();
+					std::string bone = cluster->GetLink()->GetName();
 					shape.boneNames.insert(bone);
 					for (int iPoint = 0; iPoint < cluster->GetControlPointIndicesCount(); iPoint++) {
 						int v = cluster->GetControlPointIndices()[iPoint];

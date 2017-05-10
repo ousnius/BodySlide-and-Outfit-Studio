@@ -12,20 +12,18 @@ See the included LICENSE file
 #include <regex>
 #include <set>
 
-using namespace std;
-
 class PresetSaveDialog : public wxDialog {
 public:
-	vector<string> allGroupNames;
-	vector<string> filteredGroups;
-	set<string> selectedGroups;
-	string outFileName;
-	string outPresetName;
-	vector<string> outGroups;
+	std::vector<std::string> allGroupNames;
+	std::vector<std::string> filteredGroups;
+	std::set<std::string> selectedGroups;
+	std::string outFileName;
+	std::string outPresetName;
+	std::vector<std::string> outGroups;
 	PresetSaveDialog(wxWindow* parent);
 	~PresetSaveDialog();
 
-	void FilterGroups(const string& filter = "");
+	void FilterGroups(const std::string& filter = "");
 
 	void OnEraseBackground(wxEraseEvent &event);
 	void FilterChanged(wxCommandEvent& event);

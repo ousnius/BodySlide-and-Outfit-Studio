@@ -22,29 +22,29 @@ void Log::Initialize(int level, wxString fileName) {
 
 	if (level >= 0) {
 		//Signature to find separate runs
-		string signature = "[#Log";
-		string textCopy;
-		string word;
+		std::string signature = "[#Log";
+		std::string textCopy;
+		std::string word;
 		int sigCount = 0;
 
 		//Open stream at end to find out file size
-		ifstream truncStream(fileName.ToStdString(), ios_base::ate);
+		std::ifstream truncStream(fileName.ToStdString(), std::ios_base::ate);
 		if (truncStream) {
 			//Store size and seek back to beginning
 			int streamSize = truncStream.tellg();
-			truncStream.seekg(0, ios::beg);
+			truncStream.seekg(0, std::ios::beg);
 
 			//Count all occurences of the signature
-			sigCount = count(istream_iterator<string>(truncStream), istream_iterator<string>(), signature);
+			sigCount = std::count(std::istream_iterator<std::string>(truncStream), std::istream_iterator<std::string>(), signature);
 			if (sigCount >= 4) {
 				//Maximum amount of runs per log file exceeded, seek back to beginning
 				sigCount = 0;
 				truncStream.clear();
-				truncStream.seekg(0, ios::beg);
+				truncStream.seekg(0, std::ios::beg);
 
 				//Count signatures until the 2nd, starting the beginning, is reached
-				auto pos = istream_iterator<string>(truncStream);
-				auto end = istream_iterator<string>();
+				auto pos = std::istream_iterator<std::string>(truncStream);
+				auto end = std::istream_iterator<std::string>();
 				for (; pos != end; ++pos) {
 					if (*pos == signature)
 						sigCount++;
@@ -56,7 +56,7 @@ void Log::Initialize(int level, wxString fileName) {
 						truncStream.read((char*)&textCopy.front(), textCopy.size());
 						textCopy.insert(0, *pos);
 						size_t trim = textCopy.find_last_of('\n');
-						if (trim != string::npos)
+						if (trim != std::string::npos)
 							textCopy.erase(trim);
 						break;
 					}
@@ -66,7 +66,7 @@ void Log::Initialize(int level, wxString fileName) {
 		}
 
 		//Open ofstream, creating empty log file
-		stream.open(fileName.ToStdString(), ios_base::app);
+		stream.open(fileName.ToStdString(), std::ios_base::app);
 		if (stream) {
 			wxLog* log = new wxLogStream(&stream);
 			log->SetLogLevel(level);

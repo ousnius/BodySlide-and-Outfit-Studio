@@ -6,9 +6,7 @@ See the included LICENSE file
 
 #include "SliderGroup.h"
 
-#pragma warning (disable: 4018)
-
-int SliderSetGroupCollection::LoadGroups(const string& basePath) {
+int SliderSetGroupCollection::LoadGroups(const std::string& basePath) {
 	groups.clear();
 
 	wxArrayString files;
@@ -16,7 +14,7 @@ int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 
 	for (auto &file : files) {
 		SliderSetGroupFile groupFile(file.ToStdString());
-		vector<string> groupNames;
+		std::vector<std::string> groupNames;
 		groupFile.GetGroupNames(groupNames);
 		for (auto &group : groupNames) {
 			SliderSetGroup ssg;
@@ -24,14 +22,14 @@ int SliderSetGroupCollection::LoadGroups(const string& basePath) {
 			if (groups.find(group) != groups.end())
 				groups[group].MergeMembers(ssg);
 			else
-				groups[group] = move(ssg);
+				groups[group] = std::move(ssg);
 		}
 	}
 
 	return 0;
 }
 
-int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {
+int SliderSetGroupCollection::GetAllGroups(std::set<std::string>& outGroups) {
 	outGroups.clear();
 	for (auto &g : groups)
 		outGroups.insert(g.first);
@@ -39,7 +37,7 @@ int SliderSetGroupCollection::GetAllGroups(set<string>& outGroups) {
 	return outGroups.size();
 }
 
-int SliderSetGroupCollection::GetOutfitGroups(const string& outfitName, vector<string>& outGroups) {
+int SliderSetGroupCollection::GetOutfitGroups(const std::string& outfitName, std::vector<std::string>& outGroups) {
 	outGroups.clear();
 	for (auto &g : groups)
 		if (g.second.HasMember(outfitName))
@@ -48,7 +46,7 @@ int SliderSetGroupCollection::GetOutfitGroups(const string& outfitName, vector<s
 	return outGroups.size();
 }
 
-int SliderSetGroupCollection::GetGroupMembers(const string& groupName, vector<string>& outMembers, bool append) {
+int SliderSetGroupCollection::GetGroupMembers(const std::string& groupName, std::vector<std::string>& outMembers, bool append) {
 	auto git = groups.find(groupName);
 	if (git == groups.end())
 		return 0;
@@ -59,7 +57,7 @@ int SliderSetGroupCollection::GetGroupMembers(const string& groupName, vector<st
 		return git->second.GetMembers(outMembers);
 }
 
-int SliderSetGroupCollection::GetGroupMembers(const string& groupName, unordered_set<string>& outMembers, bool append) {
+int SliderSetGroupCollection::GetGroupMembers(const std::string& groupName, std::unordered_set<std::string>& outMembers, bool append) {
 	auto git = groups.find(groupName);
 	if (git == groups.end())
 		return 0;
@@ -72,7 +70,7 @@ int SliderSetGroupCollection::GetGroupMembers(const string& groupName, unordered
 
 // Combine the source groups members into this one's list. Also merges the source file list.
 void SliderSetGroup::MergeMembers(const SliderSetGroup& sourceGroup) {
-	for (int i = 0; i < sourceGroup.members.size(); i++) {
+	for (size_t i = 0; i < sourceGroup.members.size(); i++) {
 		members.push_back(sourceGroup.members[i]);
 		sourceFiles.push_back(sourceGroup.sourceFiles[i]);
 	}
@@ -85,17 +83,17 @@ int SliderSetGroup::LoadGroup(XMLElement* srcGroupElement) {
 	name = srcGroupElement->Attribute("name");
 	XMLElement* member = srcGroupElement->FirstChildElement("Member");
 	while (member) {
-		string mName = member->Attribute("name");
+		std::string mName = member->Attribute("name");
 		members.push_back(mName);
 		
-		string* fileName = static_cast<string*>(member->GetDocument()->GetUserData());
+		std::string* fileName = static_cast<std::string*>(member->GetDocument()->GetUserData());
 		sourceFiles.push_back(*fileName);
 		member = member->NextSiblingElement("Member");
 	}
 	return 0;
 }
 
-bool SliderSetGroup::HasMember(const string& search) {
+bool SliderSetGroup::HasMember(const std::string& search) {
 	for (auto &m : members)
 		if (m.compare(search) == 0)
 			return true;
@@ -103,29 +101,29 @@ bool SliderSetGroup::HasMember(const string& search) {
 	return false;
 }
 
-int SliderSetGroup::GetMembers(vector<string>& outMembers) {
-	set<string> alphaOrder(members.begin(), members.end());
+int SliderSetGroup::GetMembers(std::vector<std::string>& outMembers) {
+	std::set<std::string> alphaOrder(members.begin(), members.end());
 	outMembers.assign(alphaOrder.begin(), alphaOrder.end());
 	return outMembers.size();
 }
 
-int SliderSetGroup::GetMembers(unordered_set<string>& outMembers) {
+int SliderSetGroup::GetMembers(std::unordered_set<std::string>& outMembers) {
 	outMembers.insert(members.begin(), members.end());
 	return outMembers.size();
 }
 
-int SliderSetGroup::AppendMembers(vector<string>& outMembers) {
-	set<string> alphaOrder(members.begin(), members.end());
+int SliderSetGroup::AppendMembers(std::vector<std::string>& outMembers) {
+	std::set<std::string> alphaOrder(members.begin(), members.end());
 	outMembers.insert(outMembers.end(), alphaOrder.begin(), alphaOrder.end());
 	return outMembers.size();
 }
 
-int SliderSetGroup::AppendMembers(unordered_set<string>& outMembers) {
+int SliderSetGroup::AppendMembers(std::unordered_set<std::string>& outMembers) {
 	outMembers.insert(members.begin(), members.end());
 	return outMembers.size();
 }
 
-int SliderSetGroup::AddMembers(const vector<string>& inMembers) {
+int SliderSetGroup::AddMembers(const std::vector<std::string>& inMembers) {
 	members.insert(members.end(), inMembers.begin(), inMembers.end());
 	return members.size();
 }
@@ -141,14 +139,14 @@ void SliderSetGroup::WriteGroup(XMLElement* groupElement, bool append) {
 	}
 }
 
-SliderSetGroupFile::SliderSetGroupFile(const string& srcFileName) {
+SliderSetGroupFile::SliderSetGroupFile(const std::string& srcFileName) {
 	root = nullptr;
 	error = 0;
 	Open(srcFileName);
 }
 
 // Loads the XML document and identifies included group names. On a failure, sets the internal error value.
-void SliderSetGroupFile::Open(const string& srcFileName) {
+void SliderSetGroupFile::Open(const std::string& srcFileName) {
 	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
 		fileName = srcFileName;
 		doc.SetUserData(&fileName);
@@ -177,7 +175,7 @@ void SliderSetGroupFile::Open(const string& srcFileName) {
 }
 
 // Creates a new empty group document structure, ready to add new groups and members to.
-void SliderSetGroupFile::New(const string& newFileName) {
+void SliderSetGroupFile::New(const std::string& newFileName) {
 	if (root)
 		return;
 
@@ -202,16 +200,16 @@ void SliderSetGroupFile::Clear() {
 
 // Changes the internal file name. The XML file isn't saved until the save() function is used.
 // Note the original file name is not changed. This method allows you to save a group as a new file without altering the original.
-void SliderSetGroupFile::Rename(const string& newFileName) {
+void SliderSetGroupFile::Rename(const std::string& newFileName) {
 	fileName = newFileName;
 }
 
 // Returns a list of all the groups found in the file.
-int SliderSetGroupFile::GetGroupNames(vector<string>& outGroupNames, bool append, bool unique) {
+int SliderSetGroupFile::GetGroupNames(std::vector<std::string>& outGroupNames, bool append, bool unique) {
 	if (!append)
 		outGroupNames.clear();
 
-	unordered_set<string> existingNames;
+	std::unordered_set<std::string> existingNames;
 	if (unique)
 		existingNames.insert(outGroupNames.begin(), outGroupNames.end());
 
@@ -227,7 +225,7 @@ int SliderSetGroupFile::GetGroupNames(vector<string>& outGroupNames, bool append
 }
 
 // Returns true if the group name exists in the file.
-bool SliderSetGroupFile::HasGroup(const string& queryGroupName) {
+bool SliderSetGroupFile::HasGroup(const std::string& queryGroupName) {
 	if (groupsInFile.find(queryGroupName) != groupsInFile.end())
 		return true;
 
@@ -235,7 +233,7 @@ bool SliderSetGroupFile::HasGroup(const string& queryGroupName) {
 }
 	
 // Adds all of the groups in the file to the supplied groups vector. Does not clear the vector before doing so.
-int SliderSetGroupFile::GetAllGroups(vector<SliderSetGroup>& outAppendGroups) {
+int SliderSetGroupFile::GetAllGroups(std::vector<SliderSetGroup>& outAppendGroups) {
 	int count = 0;
 	bool add = true;
 	for (auto &g : groupsInFile) {
@@ -257,7 +255,7 @@ int SliderSetGroupFile::GetAllGroups(vector<SliderSetGroup>& outAppendGroups) {
 }
 
 // Gets a single group from the XML document based on the name.
-int SliderSetGroupFile::GetGroup(const string& groupName, SliderSetGroup& outSliderSetGroup) {
+int SliderSetGroupFile::GetGroup(const std::string& groupName, SliderSetGroup& outSliderSetGroup) {
 	if (groupsInFile.find(groupName) != groupsInFile.end())
 		outSliderSetGroup.LoadGroup(groupsInFile[groupName]);
 	else

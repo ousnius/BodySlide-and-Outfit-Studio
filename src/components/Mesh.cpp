@@ -49,8 +49,8 @@ mesh::~mesh() {
 	vertEdges = nullptr;
 }
 
-shared_ptr<AABBTree> mesh::CreateBVH() {
-	bvh = make_shared<AABBTree>(verts, tris, nTris, 100, 2);
+std::shared_ptr<AABBTree> mesh::CreateBVH() {
+	bvh = std::make_shared<AABBTree>(verts, tris, nTris, 100, 2);
 	return bvh;
 }
 
@@ -58,7 +58,7 @@ void mesh::BuildTriAdjacency() {
 	if (!tris)
 		return;
 
-	vertTris = new vector<int>[nVerts];
+	vertTris = new std::vector<int>[nVerts];
 	for (int t = 0; t < nTris; t++) {
 		vertTris[tris[t].p1].push_back(t);
 		vertTris[tris[t].p2].push_back(t);
@@ -92,7 +92,7 @@ void mesh::BuildEdgeList() {
 	if (!edges)
 		MakeEdges();
 
-	vertEdges = new vector<int>[nVerts];
+	vertEdges = new std::vector<int>[nVerts];
 	for (int e = 0; e < nEdges; e++) {
 		vertEdges[edges[e].p1].push_back(e);
 		vertEdges[edges[e].p2].push_back(e);
@@ -222,7 +222,7 @@ void mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	queueUpdate[UpdateType::Position] = true;
 }
 
-void mesh::GetAdjacentPoints(int querypoint, set<int>& outPoints) {
+void mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
 	int tp1;
 	int tp2;
 	int tp3;
@@ -351,7 +351,7 @@ void mesh::SetSmoothThreshold(float degrees) {
 	smoothThresh = degrees * DEG2RAD;
 }
 
-void mesh::SmoothNormals(const set<int>& vertices) {
+void mesh::SmoothNormals(const std::set<int>& vertices) {
 	// Zero old normals
 	for (int i = 0; i < nVerts; i++) {
 		if (!vertices.empty() && vertices.find(i) == vertices.end())
@@ -394,8 +394,8 @@ void mesh::SmoothNormals(const set<int>& vertices) {
 	if (smoothSeamNormals) {
 		kd_matcher matcher(verts, nVerts);
 		for (int i = 0; i < matcher.matches.size(); i++) {
-			pair<Vector3*, int>& a = matcher.matches[i].first;
-			pair<Vector3*, int>& b = matcher.matches[i].second;
+			std::pair<Vector3*, int>& a = matcher.matches[i].first;
+			std::pair<Vector3*, int>& b = matcher.matches[i].second;
 
 			if (!vertices.empty()) {
 				if (vertices.find(a.second) == vertices.end() ||
@@ -467,7 +467,7 @@ void mesh::ColorChannelFill(int channel, float value) {
 	queueUpdate[UpdateType::VertexColors] = true;
 }
 
-bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets) {
+bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
 	if (!vertTris)
 		return false;
 	if (!vertEdges)
@@ -535,7 +535,7 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 	return true;
 }
 
-bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets) {
+bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {
 	if (!vertTris)
 		return false;
 	if (startTri < 0)

@@ -41,7 +41,7 @@ void SliderManager::AddSlidersInSet(SliderSet& inSet) {
 	}
 }
 
-void SliderManager::AddSlider(const string& name, bool invert, const string& dataSetName) {
+void SliderManager::AddSlider(const std::string& name, bool invert, const std::string& dataSetName) {
 	Slider s;
 	s.name = name;
 	if (dataSetName.length() > 0)
@@ -60,7 +60,7 @@ void SliderManager::AddSlider(const string& name, bool invert, const string& dat
 	mSliderCount++;
 }
 
-void SliderManager::AddUVSlider(const string& name, bool invert, bool isZap, const string& dataSetName) {
+void SliderManager::AddUVSlider(const std::string& name, bool invert, bool isZap, const std::string& dataSetName) {
 	Slider s;
 	s.name = name;
 	if (dataSetName.length() > 0)
@@ -79,7 +79,7 @@ void SliderManager::AddUVSlider(const string& name, bool invert, bool isZap, con
 	mSliderCount++;
 }
 
-void SliderManager::AddZapSlider(const string& name, const vector<string>& zapToggles, const string& dataSetName) {
+void SliderManager::AddZapSlider(const std::string& name, const std::vector<std::string>& zapToggles, const std::string& dataSetName) {
 	Slider s;
 	s.name = name;
 	if (dataSetName.length() > 0)
@@ -99,7 +99,7 @@ void SliderManager::AddZapSlider(const string& name, const vector<string>& zapTo
 	mSliderCount++;
 }
 
-void SliderManager::AddHiddenSlider(const string& name, bool invert, bool isZap, bool isUv, const string& dataSetName) {
+void SliderManager::AddHiddenSlider(const std::string& name, bool invert, bool isZap, bool isUv, const std::string& dataSetName) {
 	Slider s;
 	s.name = name;
 	if (dataSetName.length() > 0)
@@ -117,7 +117,7 @@ void SliderManager::AddHiddenSlider(const string& name, bool invert, bool isZap,
 	slidersBig.push_back(s);
 }
 
-void SliderManager::SetSliderDefaults(const string& slider, float bigVal, float smallVal) {
+void SliderManager::SetSliderDefaults(const std::string& slider, float bigVal, float smallVal) {
 	for (int i = 0; i < slidersBig.size(); i++)
 		if (slidersBig[i].name == slider)
 			slidersBig[i].defValue = bigVal;
@@ -127,7 +127,7 @@ void SliderManager::SetSliderDefaults(const string& slider, float bigVal, float 
 			slidersSmall[i].defValue = smallVal;
 }
 
-void SliderManager::SetClampSlider(const string& slider) {
+void SliderManager::SetClampSlider(const std::string& slider) {
 	for (int i = 0; i < slidersBig.size(); i++)
 		if (slidersBig[i].name == slider)
 			slidersBig[i].clamp = true;
@@ -137,7 +137,7 @@ void SliderManager::SetClampSlider(const string& slider) {
 			slidersSmall[i].clamp = true;
 }
 
-void SliderManager::AddSliderLink(const string& slider, const string& dataSetName) {
+void SliderManager::AddSliderLink(const std::string& slider, const std::string& dataSetName) {
 	for (int i = 0; i < slidersBig.size(); i++)
 		if (slidersBig[i].name == slider)
 			slidersBig[i].linkedDataSets.push_back(dataSetName);
@@ -147,7 +147,7 @@ void SliderManager::AddSliderLink(const string& slider, const string& dataSetNam
 			slidersSmall[i].linkedDataSets.push_back(dataSetName);
 }
 
-float SliderManager::GetSlider(const string& slider, bool isSmall) {
+float SliderManager::GetSlider(const std::string& slider, bool isSmall) {
 	if (!isSmall) {
 		for (int i = 0; i < slidersBig.size(); i++)
 			if (slidersBig[i].name == slider)
@@ -161,15 +161,15 @@ float SliderManager::GetSlider(const string& slider, bool isSmall) {
 	return 0.0f;
 }
 
-vector<string> SliderManager::GetSliderZapToggles(const string& slider) {
+std::vector<std::string> SliderManager::GetSliderZapToggles(const std::string& slider) {
 	for (int i = 0; i < slidersBig.size(); i++)
 		if (slidersBig[i].name == slider)
 			return slidersBig[i].zapToggles;
 
-	return vector<string>();
+	return std::vector<std::string>();
 }
 
-void SliderManager::SetSlider(const string& slider, bool isSmall, float val) {
+void SliderManager::SetSlider(const std::string& slider, bool isSmall, float val) {
 	if (!isSmall) {
 		for (int i = 0; i < slidersBig.size(); i++) {
 			if (slidersBig[i].name == slider) {
@@ -198,7 +198,7 @@ void SliderManager::SetSlider(const string& slider, bool isSmall, float val) {
 	}
 }
 
-void SliderManager::SetChanged(const string& slider, bool isSmall) {
+void SliderManager::SetChanged(const std::string& slider, bool isSmall) {
 	if (!isSmall) {
 		for (int i = 0; i < slidersBig.size(); i++) {
 			if (slidersBig[i].name == slider) {
@@ -217,7 +217,7 @@ void SliderManager::SetChanged(const string& slider, bool isSmall) {
 	}
 }
 
-float SliderManager::GetBigPresetValue(const string& presetName, const string& sliderName, float defVal) {
+float SliderManager::GetBigPresetValue(const std::string& presetName, const std::string& sliderName, float defVal) {
 	float ps;
 	if (!presetCollection.GetBigPreset(presetName, sliderName, ps))
 		ps = defVal;
@@ -225,7 +225,7 @@ float SliderManager::GetBigPresetValue(const string& presetName, const string& s
 	return ps;
 }
 
-float SliderManager::GetSmallPresetValue(const string& presetName, const string& sliderName, float defVal){
+float SliderManager::GetSmallPresetValue(const std::string& presetName, const std::string& sliderName, float defVal){
 	float ps;
 	if (!presetCollection.GetSmallPreset(presetName, sliderName, ps))
 		ps = defVal;
@@ -233,7 +233,7 @@ float SliderManager::GetSmallPresetValue(const string& presetName, const string&
 	return ps;
 }
 
-void SliderManager::InitializeSliders(const string& presetName) {
+void SliderManager::InitializeSliders(const std::string& presetName) {
 	float ps;
 	for (int i = 0; i < slidersBig.size(); i++) {
 		if (!presetCollection.GetBigPreset(presetName, slidersBig[i].name, ps)) {
@@ -253,7 +253,7 @@ void SliderManager::InitializeSliders(const string& presetName) {
 	}
 }
 
-bool SliderManager::SliderHasChanged(const string& slider, bool getBig) {
+bool SliderManager::SliderHasChanged(const std::string& slider, bool getBig) {
 	if (getBig) {
 		for (int i = 0; i < slidersBig.size(); i++)
 			if (slidersBig[i].name == slider)
@@ -267,7 +267,7 @@ bool SliderManager::SliderHasChanged(const string& slider, bool getBig) {
 	return false;
 }
 
-float SliderManager::SliderValue(const string& slider, bool getBig) {
+float SliderManager::SliderValue(const std::string& slider, bool getBig) {
 	if (getBig) {
 		for (int i = 0; i < slidersBig.size(); i++)
 			if (slidersBig[i].name == slider)
@@ -281,12 +281,12 @@ float SliderManager::SliderValue(const string& slider, bool getBig) {
 	return 0.0f;
 }
 
-void SliderManager::GetSmallSliderList(vector<string>& names) {
+void SliderManager::GetSmallSliderList(std::vector<std::string>& names) {
 	for (int i = 0; i < slidersSmall.size(); i++)
 		names.push_back(slidersSmall[i].name);
 }
 
-void SliderManager::GetBigSliderList(vector<string>& names) {
+void SliderManager::GetBigSliderList(std::vector<std::string>& names) {
 	for (int i = 0; i < slidersBig.size(); i++)
 		names.push_back(slidersBig[i].name);
 }

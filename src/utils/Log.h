@@ -10,8 +10,6 @@ See the included LICENSE file
 #include <wx/log.h>
 #include <fstream>
 
-using namespace std;
-
 //Example
 //[19:30:25][3] Log.h(10): Message here
 class LogFormatter : public wxLogFormatter {

@@ -62,8 +62,6 @@ See the included LICENSE file
 
 #include <future>
 
-using namespace std;
-
 const int TB_MAX_UNDO = 40;
 
 enum TweakBrushType {
@@ -90,13 +88,13 @@ class TweakBrushMeshCache {
 public:
 	int* cachedPoints;
 	int nCachedPoints;
-	vector<int> cachedFacets;
+	std::vector<int> cachedFacets;
 	int* cachedPointsM;
 	int nCachedPointsM;
-	vector<int> cachedFacetsM;
-	unordered_map<int, Vector3> cachedPositions;
-	unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
-	unordered_set<AABBTree::AABBTreeNode*> cachedNodesM;
+	std::vector<int> cachedFacetsM;
+	std::unordered_map<int, Vector3> cachedPositions;
+	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodes;
+	std::unordered_set<AABBTree::AABBTreeNode*> cachedNodesM;
 
 	TweakBrushMeshCache() {
 		cachedPoints = nullptr;
@@ -118,7 +116,7 @@ public:
 class TweakBrush {
 protected:
 	TweakBrushType brushType;
-	string brushName;
+	std::string brushName;
 	float radius;
 	float focus;			// Focus between 1 and 5.
 	float strength;
@@ -129,7 +127,7 @@ protected:
 	bool bLiveNormals;		// Update mesh normals at each update instead of at stroke completion.
 	bool bConnected;		// Operate on connected vertices only.
 
-	unordered_map<mesh*, TweakBrushMeshCache> cache;
+	std::unordered_map<mesh*, TweakBrushMeshCache> cache;
 
 public:
 	TweakBrush();
@@ -138,7 +136,7 @@ public:
 	int Type() {
 		return brushType;
 	}
-	string Name() {
+	std::string Name() {
 		return brushName;
 	}
 
@@ -196,7 +194,7 @@ public:
 
 	// Stroke initialization interface, allows a brush to set up initial conditions.
 	// Default implementation is to return true. Return false to cancel stroke based on provided data.
-	virtual bool strokeInit(vector<mesh*>, TweakPickInfo&) {
+	virtual bool strokeInit(std::vector<mesh*>, TweakPickInfo&) {
 		return true;
 	}
 
@@ -214,11 +212,11 @@ public:
 	// Also optionally, the query can return only connected points within the sphere.
 	//virtual bool queryPoints (mesh* refmesh, TweakPickInfo& pickInfo, set<int>& resultPoints, vector<int>& resultFacets, set<AABBTree::AABBTreeNode*>& affectedNodes);
 
-	virtual bool queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*> &affectedNodes);
+	virtual bool queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes);
 
 	// Apply the brush effect to the mesh, modifying the points in the set provided.
 	// Overridden versions should return the original point positions in the movedpoints map.
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 
 	// Version using a pre-allocated array of vectors matching the order of the points array.
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
@@ -229,11 +227,11 @@ public:
 	TB_Mask();
 	virtual ~TB_Mask();
 
-	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
+	virtual bool strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo&) {
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -245,11 +243,11 @@ public:
 	TB_Unmask();
 	virtual ~TB_Unmask();
 
-	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
+	virtual bool strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo&) {
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -278,18 +276,18 @@ class TB_Smooth : public TweakBrush {
 
 	// Laplacian smoothing filter. Points are the set of point indices into refmesh to smooth.
 	// wv is the current position of those points. This function can be called iteratively, reusing wv.
-	void lapFilter(mesh* refmesh, int* points, int nPoints, unordered_map<int, Vector3>& wv);
+	void lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
 
 	// Improved laplacian smoothing filter (HC-Smooth) points are the set of point indices into refmesh to smooth.
 	// wv is the current position of those points. This function can be called iteratively, reusing wv.
 	// This algo is much slower than lap, but tries to maintain mesh volume.
-	void hclapFilter(mesh* refmesh, int* points, int nPoints, unordered_map<int, Vector3>& wv);
+	void hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
 
 public:
 	TB_Smooth();
 	virtual ~TB_Smooth();
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -309,9 +307,9 @@ public:
 	TB_Move();
 	virtual ~TB_Move();
 
-	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo);
-	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual bool strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo& pickInfo);
+	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
+	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -344,9 +342,9 @@ public:
 		xformType = type;
 	}
 
-	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo);
-	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
-	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual bool strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo& pickInfo);
+	virtual bool queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes);
+	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 	virtual bool checkSpacing(Vector3&, Vector3&) {
 		return true;
@@ -355,38 +353,38 @@ public:
 
 class TB_Weight : public TweakBrush {
 public:
-	string refBone;
+	std::string refBone;
 	bool bFixedWeight;
 
 	TB_Weight();
 	virtual ~TB_Weight();
 
-	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
+	virtual bool strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo&) {
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
 class TB_Unweight : public TweakBrush {
 public:
-	string refBone;
+	std::string refBone;
 
 	TB_Unweight();
 	virtual ~TB_Unweight();
 
-	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
+	virtual bool strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo&) {
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
 class TB_SmoothWeight : public TweakBrush {
 public:
-	string refBone;
+	std::string refBone;
 	int iterations;
 	byte method;			// 0 for laplacian, 1 for HC-Smooth.
 	float hcAlpha;			// Blending constants.
@@ -395,44 +393,44 @@ public:
 	Vector3* b;				// Scratch space used in the hc-lap smooth filter.
 	mesh* lastMesh;			// Last mesh smoothed, used to sync the hc-lap smooth scratch space.
 
-	void lapFilter(mesh* refmesh, int* points, int nPoints, unordered_map<int, Vector3>& wv);
-	void hclapFilter(mesh* refmesh, int* points, int nPoints, unordered_map<int, Vector3>& wv);
+	void lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
+	void hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
 
 	TB_SmoothWeight();
 	virtual ~TB_SmoothWeight();
 
-	virtual bool strokeInit(vector<mesh*> refMeshes, TweakPickInfo&) {
+	virtual bool strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo&) {
 		return true;
 	}
 
-	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
 };
 
 class TweakStroke {
-	vector<mesh*> refMeshes;
+	std::vector<mesh*> refMeshes;
 	TweakBrush* refBrush;
 	bool newStroke;
 	Vector3 lastPoint;
 
-	unordered_map<mesh*, shared_ptr<AABBTree>> startBVH;
-	unordered_map<mesh*, shared_ptr<AABBTree>> endBVH;
+	std::unordered_map<mesh*, std::shared_ptr<AABBTree>> startBVH;
+	std::unordered_map<mesh*, std::shared_ptr<AABBTree>> endBVH;
 
-	static unordered_map<mesh*, Vector3*> outPositions;
-	static unordered_map<mesh*, int> outPositionCount;
+	static std::unordered_map<mesh*, Vector3*> outPositions;
+	static std::unordered_map<mesh*, int> outPositionCount;
 	static int nStrokes;
 
-	static vector<future<void>> normalUpdates;
+	static std::vector<std::future<void>> normalUpdates;
 
-	unordered_map<mesh*, int*> pts1;
-	unordered_map<mesh*, int*> pts2;
+	std::unordered_map<mesh*, int*> pts1;
+	std::unordered_map<mesh*, int*> pts2;
 
 	// When the mesh BVH is recalculated, historical BVH nodes are broken.
 	// This lets us keep the undo history at the cost of forcing a full recalc for each undo/redo.
 	bool bvhValid;
 
 public:
-	TweakStroke(vector<mesh*> meshes, TweakBrush* theBrush) {
+	TweakStroke(std::vector<mesh*> meshes, TweakBrush* theBrush) {
 		newStroke = true;
 		refMeshes = meshes;
 		refBrush = theBrush;
@@ -451,16 +449,16 @@ public:
 		}
 	}
 
-	unordered_map<mesh*, unordered_map<int, Vector3>> pointStartState;
-	unordered_map<mesh*, unordered_map<int, Vector3>> pointEndState;
-	unordered_map<mesh*, unordered_set<AABBTree::AABBTreeNode*>> affectedNodes;
+	std::unordered_map<mesh*, std::unordered_map<int, Vector3>> pointStartState;
+	std::unordered_map<mesh*, std::unordered_map<int, Vector3>> pointEndState;
+	std::unordered_map<mesh*, std::unordered_set<AABBTree::AABBTreeNode*>> affectedNodes;
 
 	void addPoint(mesh* m, int point, Vector3& newPos);
 
 	void InvalidateBVH() {
 		bvhValid = false;
 	}
-	void PushBVH(vector<mesh*> meshes) {
+	void PushBVH(std::vector<mesh*> meshes) {
 		for (auto &m : meshes)
 			endBVH[m] = m->bvh;
 	}
@@ -474,29 +472,29 @@ public:
 	int BrushType() {
 		return refBrush->Type();
 	}
-	string BrushName() {
+	std::string BrushName() {
 		return refBrush->Name();
 	}
 	TweakBrush* GetRefBrush() {
 		return refBrush;
 	}
-	vector<mesh*> GetRefMeshes() {
+	std::vector<mesh*> GetRefMeshes() {
 		return refMeshes;
 	}
 };
 
 class TweakUndo {
 	int curState = -1;
-	vector<TweakStroke*> strokes;
+	std::vector<TweakStroke*> strokes;
 
 public:
 	TweakUndo();
 	~TweakUndo();
 
-	TweakStroke* CreateStroke(vector<mesh*> refMeshes, TweakBrush* refBrush);
+	TweakStroke* CreateStroke(std::vector<mesh*> refMeshes, TweakBrush* refBrush);
 	void addStroke(TweakStroke* stroke);
-	bool backStroke(const vector<mesh*>& validMeshes);
-	bool forwardStroke(const vector<mesh*>& validMeshes);
+	bool backStroke(const std::vector<mesh*>& validMeshes);
+	bool forwardStroke(const std::vector<mesh*>& validMeshes);
 	void Clear();
 
 	TweakStroke* GetCurStateStroke() {
@@ -506,8 +504,8 @@ public:
 		return strokes[curState];
 	}
 
-	vector<mesh*> GetCurStateMeshes() {
-		vector<mesh*> meshes;
+	std::vector<mesh*> GetCurStateMeshes() {
+		std::vector<mesh*> meshes;
 		if (curState == -1)
 			return meshes;
 
@@ -515,8 +513,8 @@ public:
 		return meshes;
 	}
 
-	vector<mesh*> GetNextStateMeshes() {
-		vector<mesh*> meshes;
+	std::vector<mesh*> GetNextStateMeshes() {
+		std::vector<mesh*> meshes;
 		int sz = strokes.size();
 		sz -= 1;
 

@@ -14,14 +14,13 @@ See the included LICENSE file
 #include <set>
 #include <unordered_set>
 
-using namespace std;
 using namespace tinyxml2;
 
 class SliderCategory {
-	string name;
-	vector<string> sliders;
-	unordered_map<string, string> displayNames;
-	vector<string> sourceFiles;
+	std::string name;
+	std::vector<std::string> sliders;
+	std::unordered_map<std::string, std::string> displayNames;
+	std::vector<std::string> sourceFiles;
 	bool isValid;
 	bool isHidden;
 
@@ -35,21 +34,21 @@ public:
 		isHidden = false;
 	}
 
-	string GetName() {
+	std::string GetName() {
 		return name;
 	}
-	void SetName(const string& inName) {
+	void SetName(const std::string& inName) {
 		name = inName;
 	}
 
-	int AddSliders(const vector<string>& inSliders);
-	bool HasSlider(const string& search);
-	int GetSliders(vector<string>& outSliders);
-	int GetSliders(unordered_set<string>& outSliders);
-	int AppendSliders(vector<string>& outSliders);
-	int AppendSliders(unordered_set<string>& outSliders);
+	int AddSliders(const std::vector<std::string>& inSliders);
+	bool HasSlider(const std::string& search);
+	int GetSliders(std::vector<std::string>& outSliders);
+	int GetSliders(std::unordered_set<std::string>& outSliders);
+	int AppendSliders(std::vector<std::string>& outSliders);
+	int AppendSliders(std::unordered_set<std::string>& outSliders);
 
-	string GetSliderDisplayName(const string& sliderName);
+	std::string GetSliderDisplayName(const std::string& sliderName);
 
 	bool GetHidden();
 	void SetHidden(bool hide);
@@ -63,34 +62,34 @@ public:
 
 
 class SliderCategoryCollection {
-	unordered_map<string, SliderCategory> categories;
+	std::unordered_map<std::string, SliderCategory> categories;
 
 public:
 	// Loads all categories in the specified folder.
-	int LoadCategories(const string& basePath);
+	int LoadCategories(const std::string& basePath);
 
-	int GetAllCategories(vector<string>& outCategories);
-	int GetSliderCategory(const string& sliderName, string& outCategory);
-	string GetSliderDisplayName(const string& categoryName, const string& sliderName);
+	int GetAllCategories(std::vector<std::string>& outCategories);
+	int GetSliderCategory(const std::string& sliderName, std::string& outCategory);
+	std::string GetSliderDisplayName(const std::string& categoryName, const std::string& sliderName);
 
-	bool GetCategoryHidden(const string& categoryName);
-	int SetCategoryHidden(const string& categoryName, bool hide);
+	bool GetCategoryHidden(const std::string& categoryName);
+	int SetCategoryHidden(const std::string& categoryName, bool hide);
 
-	int GetCategorySliders(const string& categoryName, vector<string>& outSliders, bool append = true);
-	int GetCategorySliders(const string& categoryName, unordered_set<string>& outSliders, bool append = true);
+	int GetCategorySliders(const std::string& categoryName, std::vector<std::string>& outSliders, bool append = true);
+	int GetCategorySliders(const std::string& categoryName, std::unordered_set<std::string>& outSliders, bool append = true);
 };
 
 
 class SliderCategoryFile {
 	XMLDocument doc;
 	XMLElement* root;
-	unordered_map<string, XMLElement*> categoriesInFile;
+	std::unordered_map<std::string, XMLElement*> categoriesInFile;
 	int error;
 
 public:
-	string fileName;
+	std::string fileName;
 	SliderCategoryFile() :error(0), root(nullptr) { }
-	SliderCategoryFile(const string& srcFileName);
+	SliderCategoryFile(const std::string& srcFileName);
 	~SliderCategoryFile() {};
 
 	bool fail() {
@@ -101,26 +100,26 @@ public:
 	}
 
 	// Loads the XML document and identifies included category names. On a failure, sets the internal error value.
-	void Open(const string& srcFileName);
+	void Open(const std::string& srcFileName);
 
 	// Creates a new empty category document structure, ready to add new categories and sliders to.
-	void New(const string& newFileName);
+	void New(const std::string& newFileName);
 
 	// Changes the internal file name. The XML file isn't saved until the Save() function is used.
 	// Note the original file name is not changed. This method allows you to save a category as a new file without altering the original.
-	void Rename(const string& newFileName);
+	void Rename(const std::string& newFileName);
 
 	// Returns a list of all the categories found in the file.
-	int GetCategoryNames(vector<string>& outCategoryNames, bool append = true, bool unique = false);
+	int GetCategoryNames(std::vector<std::string>& outCategoryNames, bool append = true, bool unique = false);
 
 	// Returns true if the category name exists in the file.
-	bool HasCategory(const string& queryCategoryName);
+	bool HasCategory(const std::string& queryCategoryName);
 
 	// Adds all of the categories in the file to the supplied categories vector. Does not clear the vector before doing so.
-	int GetAllCategories(vector<SliderCategory>& outAppendCategories);
+	int GetAllCategories(std::vector<SliderCategory>& outAppendCategories);
 
 	// Gets a single category from the XML document based on the name.
-	int GetCategory(const string& categoryName, SliderCategory& outCategories);
+	int GetCategory(const std::string& categoryName, SliderCategory& outCategories);
 
 	// Updates a slider category in the xml document with the provided information.
 	// If the category does not already exist in the file (based on name) the category is added.

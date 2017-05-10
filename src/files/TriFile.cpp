@@ -6,8 +6,8 @@ See the included LICENSE file
 
 #include "TriFile.h"
 
-int TriFile::Read(string fileName) {
-	ifstream triFile(fileName.c_str(), ios_base::binary);
+int TriFile::Read(std::string fileName) {
+	std::ifstream triFile(fileName.c_str(), std::ios_base::binary);
 
 	if (triFile.is_open()) {
 		bool packed = false;
@@ -27,28 +27,28 @@ int TriFile::Read(string fileName) {
 
 		for (int i = 0; i < shapeCount; i++) {
 			byte shapeLength = 0;
-			string shapeName;
+			std::string shapeName;
 			triFile.read((char*)&shapeLength, 1);
 			shapeName.resize(shapeLength, ' ');
 			triFile.read((char*)&shapeName.front(), shapeLength);
 
 			if (!packed)
-				triFile.seekg(packedBytes, ios_base::cur);
+				triFile.seekg(packedBytes, std::ios_base::cur);
 
 			uint morphCount = 0;
 			triFile.read((char*)&morphCount, packedBytes);
 
 			for (int j = 0; j < morphCount; j++) {
 				byte morphLength = 0;
-				string morphName;
+				std::string morphName;
 				triFile.read((char*)&morphLength, 1);
 				morphName.resize(morphLength, ' ');
 				triFile.read((char*)&morphName.front(), morphLength);
 
 				if (!packed)
-					triFile.seekg(packedBytes, ios_base::cur);
+					triFile.seekg(packedBytes, std::ios_base::cur);
 
-				map<int, Vector3> morphOffsets;
+				std::map<int, Vector3> morphOffsets;
 				if (packed) {
 					float mult = 0.0f;
 					ushort morphVertCount = 0;
@@ -86,7 +86,7 @@ int TriFile::Read(string fileName) {
 				}
 
 				if (morphOffsets.size() > 0) {
-					MorphDataPtr morph = make_shared<MorphData>();
+					MorphDataPtr morph = std::make_shared<MorphData>();
 					morph->name = morphName;
 					morph->offsets = morphOffsets;
 					AddMorph(shapeName, morph);
@@ -100,8 +100,8 @@ int TriFile::Read(string fileName) {
 	return true;
 }
 
-int TriFile::Write(string fileName) {
-	ofstream triFile(fileName.c_str(), ios_base::binary);
+int TriFile::Write(std::string fileName) {
+	std::ofstream triFile(fileName.c_str(), std::ios_base::binary);
 
 	if (triFile.is_open()) {
 		uint hdr = 'TRIP';
@@ -112,7 +112,7 @@ int TriFile::Write(string fileName) {
 
 		for (auto& shape : shapeMorphs) {
 			byte shapeLength = shape.first.length();
-			string shapeName = shape.first;
+			std::string shapeName = shape.first;
 			triFile.write((char*)&shapeLength, 1);
 			triFile.write(shapeName.c_str(), shapeLength);
 
@@ -121,7 +121,7 @@ int TriFile::Write(string fileName) {
 
 			for (auto& morph : shape.second) {
 				byte morphLength = morph->name.length();
-				string morphName = morph->name;
+				std::string morphName = morph->name;
 				triFile.write((char*)&morphLength, 1);
 				triFile.write(morphName.c_str(), morphLength);
 
@@ -160,7 +160,7 @@ int TriFile::Write(string fileName) {
 	return true;
 }
 
-void TriFile::AddMorph(string shapeName, MorphDataPtr data) {
+void TriFile::AddMorph(std::string shapeName, MorphDataPtr data) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end()) {
 		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == data->name) return true; return false; });
@@ -168,12 +168,12 @@ void TriFile::AddMorph(string shapeName, MorphDataPtr data) {
 			shape->second.push_back(data);
 	}
 	else {
-		shapeMorphs.emplace(shapeName, vector<MorphDataPtr>());
+		shapeMorphs.emplace(shapeName, std::vector<MorphDataPtr>());
 		AddMorph(shapeName, data);
 	}
 }
 
-void TriFile::DeleteMorph(string shapeName, string morphName) {
+void TriFile::DeleteMorph(std::string shapeName, std::string morphName) {
 	for (auto shape = shapeMorphs.begin(); shape != shapeMorphs.end();) {
 		if (shape->first == shapeName) {
 			auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
@@ -186,13 +186,13 @@ void TriFile::DeleteMorph(string shapeName, string morphName) {
 	}
 }
 
-void TriFile::DeleteMorphs(string shapeName) {
+void TriFile::DeleteMorphs(std::string shapeName) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end())
 			shape->second.clear();
 }
 
-void TriFile::DeleteMorphFromAll(string morphName) {
+void TriFile::DeleteMorphFromAll(std::string morphName) {
 	for (auto shape = shapeMorphs.begin(); shape != shapeMorphs.end();) {
 		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
 		if (morph != shape->second.end())
@@ -201,7 +201,7 @@ void TriFile::DeleteMorphFromAll(string morphName) {
 	}
 }
 
-MorphDataPtr TriFile::GetMorph(string shapeName, string morphName) {
+MorphDataPtr TriFile::GetMorph(std::string shapeName, std::string morphName) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end()) {
 		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
@@ -212,6 +212,6 @@ MorphDataPtr TriFile::GetMorph(string shapeName, string morphName) {
 	return nullptr;
 }
 
-map<string, vector<MorphDataPtr>> TriFile::GetMorphs() {
+std::map<std::string, std::vector<MorphDataPtr>> TriFile::GetMorphs() {
 	return shapeMorphs;
 }

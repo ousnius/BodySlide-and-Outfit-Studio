@@ -10,7 +10,7 @@ See the included LICENSE file
 #include "../gli/glm/gtc/matrix_transform.hpp"
 #pragma warning (pop)
 
-#include "../utils/Object3d.h"
+#include "../NIF/utils/Object3d.h"
 #include "../components/Mesh.h"
 #include "GLExtensions.h"
 
@@ -18,8 +18,8 @@ class GLShader {
 	static bool extChecked;
 
 	// Source text for shaders
-	string vertSrc;
-	string fragSrc;
+	std::string vertSrc;
+	std::string fragSrc;
 
 	// Compiled shader IDs after compile.
 	GLuint vertShadID;
@@ -39,13 +39,13 @@ class GLShader {
 		4 = program link failed.
 		*/
 	int errorState;
-	string errorString;
+	std::string errorString;
 
 	bool CheckExtensions();
-	bool LoadShaderFile(const string& fileName, string& text);
+	bool LoadShaderFile(const std::string& fileName, std::string& text);
 
 	// Attempts to load the specified source files (in text format).
-	bool LoadShaders(const string& vertexSource, const string& fragmentSource);
+	bool LoadShaders(const std::string& vertexSource, const std::string& fragmentSource);
 
 	// Compiles and links the loaded shaders, generating a program that can be activated.
 	bool BuildShaders();
@@ -63,7 +63,7 @@ public:
 	GLShader();
 
 	// Creates the shader object and runs LoadShaders followed by BuildShaders.
-	GLShader(const string& vertexSource, const string& fragmentSource);
+	GLShader(const std::string& vertexSource, const std::string& fragmentSource);
 	~GLShader();
 
 	void SetColor(const Vector3& color);
@@ -94,10 +94,10 @@ public:
 	void SetEnvMaskEnabled(const bool enable);
 	void SetSpecularEnabled(const bool enable);
 	void SetBacklightEnabled(const bool enable);
-	void BindTexture(const GLint& index, const GLuint& texture, const string& samplerName);
-	void BindCubemap(const GLint& index, const GLuint& texture, const string& samplerName);
+	void BindTexture(const GLint& index, const GLuint& texture, const std::string& samplerName);
+	void BindCubemap(const GLint& index, const GLuint& texture, const std::string& samplerName);
 
-	bool GetError(string* errorStr = nullptr);
+	bool GetError(std::string* errorStr = nullptr);
 
 	// Activates the stored program for subsequent GL rendering calls.
 	int Begin();

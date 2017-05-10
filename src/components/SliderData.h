@@ -9,22 +9,21 @@ See the included LICENSE file
 #include "../TinyXML-2/tinyxml2.h"
 #include "DiffData.h"
 
-using namespace std;
 using namespace tinyxml2;
 
 struct DiffInfo {
 	bool bLocal;			// Local files use the slider set's directory for path info. Otherwise, it uses the target's data path.
-	string dataName;		// Alias for the data.
-	string targetName;		// Shape affected by the data.
-	string fileName;		// File name not including path.
-	DiffInfo(bool l = false, const string& dn = "", const string& tn = "", const string& fn = "")
+	std::string dataName;		// Alias for the data.
+	std::string targetName;		// Shape affected by the data.
+	std::string fileName;		// File name not including path.
+	DiffInfo(bool l = false, const std::string& dn = "", const std::string& tn = "", const std::string& fn = "")
 		: bLocal(l), dataName(dn), targetName(tn), fileName(fn) {
 	}
 };
 
 class SliderData {
 public:
-	string name;
+	std::string name;
 	bool bHidden;
 	bool bInvert;
 	bool bZap;
@@ -32,27 +31,26 @@ public:
 	bool bUV;			// UV Sliders!? Wat!
 	float defSmallValue;
 	float defBigValue;
-	vector<string> zapToggles;
+	std::vector<std::string> zapToggles;
 
 	// Outfit Studio values
 	float curValue;		// Current slider value.
 	bool bShow;			// On to enable this slider when deforming verts.
 
-	vector<DiffInfo> dataFiles;
+	std::vector<DiffInfo> dataFiles;
 
-	SliderData(const string& inName = "");
-	SliderData(XMLElement* element);
+	SliderData(const std::string& inName = "");
 	~SliderData();
 
 	// Gets the slider's data record name for the specified target.
-	string TargetDataName(const string& targetName) {
+	std::string TargetDataName(const std::string& targetName) {
 		for (auto &df : dataFiles)
 			if (df.targetName == targetName)
 				return df.dataName;
 
 		return "";
 	}
-	string DataFileName(const string& targetDataName) {
+	std::string DataFileName(const std::string& targetDataName) {
 		for (auto &df : dataFiles)
 			if (df.dataName == targetDataName)
 				return df.fileName;
@@ -61,12 +59,12 @@ public:
 	}
 
 	// Creates a data file record and returns the record index.  
-	int AddDataFile(const string& shapeTarget, const string& dataAlias, const string& fileName, bool localData = true) {
+	int AddDataFile(const std::string& shapeTarget, const std::string& dataAlias, const std::string& fileName, bool localData = true) {
 		dataFiles.emplace_back(localData, dataAlias, shapeTarget, fileName);
 		return dataFiles.size() - 1;
 	}
 
-	bool IsLocalData(const string& dataAlias) {
+	bool IsLocalData(const std::string& dataAlias) {
 		for (auto &df : dataFiles)
 			if (df.dataName == dataAlias)
 				return df.bLocal;
@@ -74,7 +72,7 @@ public:
 		return false;
 	}
 
-	void SetLocalData(const string& dataAlias) {
+	void SetLocalData(const std::string& dataAlias) {
 		for (auto &df : dataFiles)
 			if (df.dataName == dataAlias)
 				df.bLocal = true;

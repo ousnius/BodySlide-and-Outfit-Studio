@@ -8,13 +8,11 @@ See the included LICENSE file
 #include <fstream>
 #include <sstream>
 
-#pragma warning (disable : 4130)
-
 GLShader::GLShader() {
 	errorState = -1;
 }
 
-GLShader::GLShader(const string& vertexSource, const string& fragmentSource) : GLShader() {
+GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource) : GLShader() {
 	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
 		ShowLighting();
 		ShowTexture();
@@ -49,12 +47,12 @@ bool GLShader::CheckExtensions() {
 	return extSupported;
 }
 
-bool GLShader::LoadShaderFile(const string& fileName, string& text) {
-	ifstream file(fileName, ios_base::in | ios_base::binary);
+bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
+	std::ifstream file(fileName, std::ios_base::in | std::ios_base::binary);
 	if (!file)
 		return false;
 
-	stringstream buffer;
+	std::stringstream buffer;
 	buffer << file.rdbuf();
 
 	text = buffer.str();
@@ -65,7 +63,7 @@ bool GLShader::LoadShaderFile(const string& fileName, string& text) {
 	return true;
 }
 
-bool GLShader::LoadShaders(const string& vertexSource, const string& fragmentSource) {
+bool GLShader::LoadShaders(const std::string& vertexSource, const std::string& fragmentSource) {
 	if (!LoadShaderFile(vertexSource, vertSrc)) {
 		errorState = 2;
 		errorString = "OpenGL: Failed to load vertex shader from file: " + vertexSource;
@@ -173,9 +171,9 @@ void GLShader::SetFrontalLight(const FrontalLight& light) {
 }
 
 void GLShader::SetDirectionalLight(const DirectionalLight& light, const int index) {
-	string lightName = "directional" + to_string(index);
-	string lightDiffuse = lightName + ".diffuse";
-	string lightDirection = lightName + ".direction";
+	std::string lightName = "directional" + std::to_string(index);
+	std::string lightDiffuse = lightName + ".diffuse";
+	std::string lightDirection = lightName + ".direction";
 
 	GLint loc = glGetUniformLocation(progID, lightDiffuse.c_str());
 	if (loc >= 0)
@@ -315,7 +313,7 @@ void GLShader::SetBacklightEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
-void GLShader::BindTexture(const GLint& index, const GLuint& texture, const string& samplerName) {
+void GLShader::BindTexture(const GLint& index, const GLuint& texture, const std::string& samplerName) {
 	GLint texLoc = glGetUniformLocation(progID, samplerName.c_str());
 	if (texLoc >= 0) {
 		glUniform1i(texLoc, index);
@@ -325,7 +323,7 @@ void GLShader::BindTexture(const GLint& index, const GLuint& texture, const stri
 	}
 }
 
-void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const string& samplerName) {
+void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const std::string& samplerName) {
 	GLint texLoc = glGetUniformLocation(progID, samplerName.c_str());
 	if (texLoc >= 0) {
 		glUniform1i(texLoc, index);
@@ -336,7 +334,7 @@ void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const stri
 	}
 }
 
-bool GLShader::GetError(string* errorStr) {
+bool GLShader::GetError(std::string* errorStr) {
 	if (!errorState)
 		return false;
 
@@ -361,7 +359,7 @@ bool GLShader::BuildShaders() {
 		glGetShaderiv(vertShadID, GL_INFO_LOG_LENGTH, &loglength);
 		GLchar* logdata = new GLchar[loglength];
 		glGetShaderInfoLog(vertShadID, loglength, nullptr, logdata);
-		errorString = string("OpenGL: Vertex shader compile failed: ") + logdata;
+		errorString = std::string("OpenGL: Vertex shader compile failed: ") + logdata;
 		delete[] logdata;
 
 		errorState = 2;
@@ -378,7 +376,7 @@ bool GLShader::BuildShaders() {
 		glGetShaderiv(fragShadID, GL_INFO_LOG_LENGTH, &loglength);
 		GLchar* logdata = new GLchar[loglength];
 		glGetShaderInfoLog(fragShadID, loglength, nullptr, logdata);
-		errorString = string("OpenGL: Fragment shader compile failed: ") + logdata;
+		errorString = std::string("OpenGL: Fragment shader compile failed: ") + logdata;
 		delete[] logdata;
 
 		errorState = 3;
@@ -396,7 +394,7 @@ bool GLShader::BuildShaders() {
 		glGetProgramiv(progID, GL_INFO_LOG_LENGTH, &loglength);
 		GLchar* logdata = new GLchar[loglength];
 		glGetProgramInfoLog(progID, loglength, nullptr, logdata);
-		errorString = string("OpenGL: Shader program link failed: ") + logdata;
+		errorString = std::string("OpenGL: Shader program link failed: ") + logdata;
 		delete[] logdata;
 
 		errorState = 4;

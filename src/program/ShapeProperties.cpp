@@ -17,7 +17,7 @@ wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(wxID_OK, ShapeProperties::OnApply)
 wxEND_EVENT_TABLE()
 
-ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const string& shape) {
+ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, const std::string& shape) {
 	wxXmlResource *xrc = wxXmlResource::Get();
 	xrc->Load("res\\xrc\\ShapeProperties.xrc");
 	xrc->LoadDialog(this, parent, "dlgShapeProp");
@@ -229,12 +229,10 @@ void ShapeProperties::AddShader() {
 			case FO3:
 			case FONV: {
 				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->GetHeader());
-				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(shader));
-				shape->numProperties++;
+				shape->propertyRefs.AddBlockRef(nif->GetHeader()->AddBlock(shader));
 
 				NiMaterialProperty* material = new NiMaterialProperty(nif->GetHeader());
-				shape->propertiesRef.push_back(nif->GetHeader()->AddBlock(material));
-				shape->numProperties++;
+				shape->propertyRefs.AddBlockRef(nif->GetHeader()->AddBlock(material));
 				break;
 			}
 			case SKYRIM:
@@ -307,7 +305,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 		int blockType = 0;
 		for (int i = 0; i < 10; i++) {
-			string texPath;
+			std::string texPath;
 			blockType = nif->GetTextureForShape(shapeName, texPath, i);
 			if (!blockType)
 				continue;
@@ -331,9 +329,9 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 
 		if (dlg.ShowModal() == wxID_OK) {
 			auto dataPath = Config["GameDataPath"];
-			vector<string> texFiles(10);
+			std::vector<std::string> texFiles(10);
 			for (int i = 0; i < 10; i++) {
-				string texPath = stTexGrid->GetCellValue(i, 0);
+				std::string texPath = stTexGrid->GetCellValue(i, 0);
 				nif->SetTextureForShape(shapeName, texPath, i);
 				texFiles[i] = dataPath + texPath;
 			}
@@ -580,7 +578,7 @@ void ShapeProperties::ApplyChanges() {
 	NiShader* shader = nif->GetShader(shapeName);
 
 	if (shader) {
-		string name = shaderName->GetValue();
+		std::string name = shaderName->GetValue();
 		uint type = shaderType->GetSelection();
 		wxColour color = specularColor->GetColour();
 		Vector3 specColor(color.Red(), color.Green(), color.Blue());

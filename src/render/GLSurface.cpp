@@ -303,7 +303,7 @@ int GLSurface::PickMesh(int ScreenX, int ScreenY) {
 	int result = -1;
 
 	GetPickRay(ScreenX, ScreenY, d, o);
-	vector<IntersectResult> results;
+	std::vector<IntersectResult> results;
 
 	for (int i = 0; i < meshes.size(); i++) {
 		results.clear();
@@ -337,7 +337,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 	}
 
 	bool collided = false;
-	unordered_map<mesh*, float> allHitDistances;
+	std::unordered_map<mesh*, float> allHitDistances;
 	for (auto &m : activeMeshes) {
 		if (!m->bvh)
 			continue;
@@ -345,7 +345,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 		if (!allMeshes && m != selectedMesh)
 			continue;
 
-		vector<IntersectResult> results;
+		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
 				collided = true;
@@ -406,9 +406,9 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 	}
 
 	bool collided = false;
-	unordered_map<mesh*, float> allHitDistances;
+	std::unordered_map<mesh*, float> allHitDistances;
 	for (auto &ov : overlays) {
-		vector<IntersectResult> results;
+		std::vector<IntersectResult> results;
 		if (!ov->bvh)
 			continue;
 
@@ -466,7 +466,7 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* hitMeshName, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
 	bool ret = false;
 	if (activeMeshes.empty())
 		return ret;
@@ -485,12 +485,12 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, string* h
 
 	GetPickRay(ScreenX, ScreenY, d, o);
 
-	unordered_map<mesh*, Vector3> allHitDistances;
+	std::unordered_map<mesh*, Vector3> allHitDistances;
 	for (auto &m : activeMeshes) {
 		if (!allMeshes && m != selectedMesh)
 			continue;
 
-		vector<IntersectResult> results;
+		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			ret = true;
 			if (results.size() > 0) {
@@ -576,7 +576,7 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 	GetPickRay(ScreenX, ScreenY, d, o);
 
 	for (auto &m : activeMeshes) {
-		vector<IntersectResult> results;
+		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
 				int min_i = 0;
@@ -928,19 +928,19 @@ void GLSurface::UpdateShaders(mesh* m) {
 	}
 }
 
-void  GLSurface::ReloadMeshFromNif(NifFile* nif, string shapeName) {
+void  GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
 	DeleteMesh(shapeName);
 	AddMeshFromNif(nif, shapeName);
 }
 
-void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, bool smoothNormalSeams) {
-	vector<Vector3> nifVerts;
-	vector<Triangle> nifTris;
+void GLSurface::AddMeshFromNif(NifFile* nif, std::string shapeName, Vector3* color, bool smoothNormalSeams) {
+	std::vector<Vector3> nifVerts;
+	std::vector<Triangle> nifTris;
 	nif->GetVertsForShape(shapeName, nifVerts);
 	nif->GetTrisForShape(shapeName, &nifTris);
 
-	const vector<Vector3>* nifNorms = nif->GetNormalsForShape(shapeName, false);
-	const vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
+	const std::vector<Vector3>* nifNorms = nif->GetNormalsForShape(shapeName, false);
+	const std::vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
 
 	mesh* m = new mesh();
 
@@ -1027,8 +1027,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		if (smoothNormalSeams) {
 			kd_matcher matcher(m->verts, m->nVerts);
 			for (int i = 0; i < matcher.matches.size(); i++) {
-				pair<Vector3*, int>& a = matcher.matches[i].first;
-				pair<Vector3*, int>& b = matcher.matches[i].second;
+				std::pair<Vector3*, int>& a = matcher.matches[i].first;
+				std::pair<Vector3*, int>& b = matcher.matches[i].second;
 				m->weldVerts[a.second].push_back(b.second);
 				m->weldVerts[b.second].push_back(a.second);
 
@@ -1064,8 +1064,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 		// Virtually weld verts across UV seams
 		kd_matcher matcher(m->verts, m->nVerts);
 		for (int i = 0; i < matcher.matches.size(); i++) {
-			pair<Vector3*, int>& a = matcher.matches[i].first;
-			pair<Vector3*, int>& b = matcher.matches[i].second;
+			std::pair<Vector3*, int>& a = matcher.matches[i].first;
+			std::pair<Vector3*, int>& b = matcher.matches[i].second;
 			m->weldVerts[a.second].push_back(b.second);
 			m->weldVerts[b.second].push_back(a.second);
 		}
@@ -1094,7 +1094,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color, b
 	}
 }
 
-mesh* GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3* color) {
+mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Vector3* color) {
 	mesh* m = GetOverlay(name);
 	if (m) {
 		m->verts[0] = p;
@@ -1127,7 +1127,7 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const string& name, const Vector3
 	return m;
 }
 
-int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name) {
+int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const std::string& name) {
 	Matrix4 rotMat;
 	int ringMesh = GetOverlayID(name);
 	if (ringMesh >= 0)
@@ -1177,7 +1177,7 @@ int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float 
 	return ringMesh;
 }
 
-mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name) {
+mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name) {
 	int myMesh = GetOverlayID(name);
 	if (myMesh >= 0)
 		delete overlays[myMesh];
@@ -1279,7 +1279,7 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 }
 
 
-mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name) {
+mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const std::string& name) {
 	Matrix4 rotMat;
 
 	int myMesh = GetOverlayID(name);
@@ -1369,7 +1369,7 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 	return m;
 }
 
-mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const string& name) {
+mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name) {
 	int meshID = GetOverlayID(name);
 	if (meshID >= 0)
 		delete overlays[meshID];
@@ -1431,7 +1431,7 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 	return m;
 }
 
-void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs, set<int>* changed) {
+void GLSurface::Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::set<int>* changed) {
 	int id = GetMeshID(shapeName);
 	if (id < 0)
 		return;
@@ -1439,7 +1439,7 @@ void GLSurface::Update(const string& shapeName, vector<Vector3>* vertices, vecto
 	Update(id, vertices, uvs, changed);
 }
 
-void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs, set<int>* changed) {
+void GLSurface::Update(int shapeIndex, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs, std::set<int>* changed) {
 	if (shapeIndex >= meshes.size())
 		return;
 
@@ -1468,7 +1468,7 @@ void GLSurface::Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2
 		m->QueueUpdate(mesh::UpdateType::TextureCoordinates);
 }
 
-void GLSurface::RecalculateMeshBVH(const string& shapeName) {
+void GLSurface::RecalculateMeshBVH(const std::string& shapeName) {
 	int id = GetMeshID(shapeName);
 	if (id < 0)
 		return;
@@ -1484,7 +1484,7 @@ void GLSurface::RecalculateMeshBVH(int shapeIndex) {
 	m->CreateBVH();
 }
 
-void GLSurface::SetMeshVisibility(const string& name, bool visible) {
+void GLSurface::SetMeshVisibility(const std::string& name, bool visible) {
 	int shapeIndex = GetMeshID(name);
 	if (shapeIndex < 0)
 		return;
@@ -1501,7 +1501,7 @@ void GLSurface::SetMeshVisibility(int shapeIndex, bool visible) {
 	m->bVisible = visible;
 }
 
-void GLSurface::SetOverlayVisibility(const string& name, bool visible) {
+void GLSurface::SetOverlayVisibility(const std::string& name, bool visible) {
 	int shapeIndex = GetOverlayID(name);
 	if (shapeIndex < 0)
 		return;
@@ -1510,7 +1510,7 @@ void GLSurface::SetOverlayVisibility(const string& name, bool visible) {
 	m->bVisible = visible;
 }
 
-void GLSurface::SetActiveMeshesID(const vector<int>& shapeIndices) {
+void GLSurface::SetActiveMeshesID(const std::vector<int>& shapeIndices) {
 	activeMeshesID.clear();
 	activeMeshes.clear();
 
@@ -1519,7 +1519,7 @@ void GLSurface::SetActiveMeshesID(const vector<int>& shapeIndices) {
 		activeMeshes.push_back(meshes[id]);
 }
 
-void GLSurface::SetActiveMeshesID(const vector<string>& shapeNames) {
+void GLSurface::SetActiveMeshesID(const std::vector<std::string>& shapeNames) {
 	activeMeshesID.clear();
 	activeMeshes.clear();
 
@@ -1532,7 +1532,7 @@ void GLSurface::SetActiveMeshesID(const vector<string>& shapeNames) {
 	}
 }
 
-void GLSurface::SetSelectedMesh(const string& shapeName) {
+void GLSurface::SetSelectedMesh(const std::string& shapeName) {
 	int id = GetMeshID(shapeName);
 	if (id != -1)
 		selectedMesh = meshes[id];
@@ -1540,7 +1540,7 @@ void GLSurface::SetSelectedMesh(const string& shapeName) {
 		selectedMesh = nullptr;
 }
 
-RenderMode GLSurface::SetMeshRenderMode(const string& name, RenderMode mode) {
+RenderMode GLSurface::SetMeshRenderMode(const std::string& name, RenderMode mode) {
 	int shapeIndex = GetMeshID(name);
 	if (shapeIndex < 0)
 		return RenderMode::Normal;
@@ -1550,10 +1550,10 @@ RenderMode GLSurface::SetMeshRenderMode(const string& name, RenderMode mode) {
 	return r;
 }
 
-GLMaterial* GLSurface::AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile) {
+GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile) {
 	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile);
 	if (mat) {
-		string shaderError;
+		std::string shaderError;
 		if (mat->GetShader().GetError(&shaderError)) {
 			wxLogError(wxString(shaderError));
 			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);
@@ -1567,7 +1567,7 @@ GLMaterial* GLSurface::GetPrimitiveMaterial() {
 	if (!primitiveMat) {
 		primitiveMat = new GLMaterial("res\\shaders\\primitive.vert", "res\\shaders\\primitive.frag");
 
-		string shaderError;
+		std::string shaderError;
 		if (primitiveMat->GetShader().GetError(&shaderError)) {
 			wxLogError(wxString(shaderError));
 			wxMessageBox(shaderError, _("OpenGL Error"), wxICON_ERROR);

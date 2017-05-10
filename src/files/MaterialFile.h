@@ -6,10 +6,8 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../utils/Object3d.h"
+#include "../NIF/utils/Object3d.h"
 #include <fstream>
-
-using namespace std;
 
 class MaterialFile {
 	bool failed = false;
@@ -55,15 +53,15 @@ public:
 	bool grayscaleToPaletteColor = false;
 
 	// BGSM 0x4D534742
-	string diffuseTexture;
-	string normalTexture;
-	string smoothSpecTexture;
-	string greyscaleTexture;
-	string envmapTexture;
-	string glowTexture;
-	string innerLayerTexture;
-	string wrinklesTexture;
-	string displacementTexture;
+	std::string diffuseTexture;
+	std::string normalTexture;
+	std::string smoothSpecTexture;
+	std::string greyscaleTexture;
+	std::string envmapTexture;
+	std::string glowTexture;
+	std::string innerLayerTexture;
+	std::string wrinklesTexture;
+	std::string displacementTexture;
 	bool enableEditorAlphaRef = false;
 	bool rimLighting = false;
 	float rimPower = 2.0f;
@@ -81,7 +79,7 @@ public:
 	float wetnessControlEnvMapScale = -1.0f;
 	float wetnessControlFresnelPower = -1.0f;
 	float wetnessControlMetalness = -1.0f;
-	string rootMaterialPath;
+	std::string rootMaterialPath;
 	bool anisoLighting = false;
 	bool emitEnabled = false;
 	Vector3 emittanceColor = { 1.0f, 1.0f, 1.0f };
@@ -112,11 +110,11 @@ public:
 	bool skewSpecularAlpha = false;
 
 	// BGEM 0x4D454742
-	string baseTexture;
-	string grayscaleTexture;
-	string fxEnvmapTexture;
-	string fxNormalTexture;
-	string envmapMaskTexture;
+	std::string baseTexture;
+	std::string grayscaleTexture;
+	std::string fxEnvmapTexture;
+	std::string fxNormalTexture;
+	std::string envmapMaskTexture;
 	bool bloodEnabled = false;
 	bool effectLightingEnabled = false;
 	bool falloffEnabled = false;
@@ -138,11 +136,11 @@ public:
 	}
 
 	MaterialFile(const Type&);
-	MaterialFile(const string&);
-	MaterialFile(istream&);
+	MaterialFile(const std::string&);
+	MaterialFile(std::istream&);
 
-	int Read(istream&);
-	int Write(ostream&);
+	int Read(std::istream&);
+	int Write(std::ostream&);
 
 	bool Failed() {
 		return failed;

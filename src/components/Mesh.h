@@ -6,7 +6,7 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../utils/KDMatcher.h"
+#include "../NIF/utils/KDMatcher.h"
 #include "../utils/AABBTree.h"
 #include "../render/GLExtensions.h"
 #include "../files/MaterialFile.h"
@@ -28,7 +28,7 @@ class GLMaterial;
 
 class mesh {
 private:
-	vector<bool> queueUpdate;
+	std::vector<bool> queueUpdate;
 
 public:
 	enum UpdateType {
@@ -65,7 +65,7 @@ public:
 
 	bool genBuffers = false;
 	GLuint vao = 0;
-	vector<GLuint> vbo;
+	std::vector<GLuint> vbo;
 	GLuint ibo = 0;
 
 	ShaderProperties prop;
@@ -74,9 +74,9 @@ public:
 	float scale = 1.0f;								// Information only, does not cause verts to be scaled during render (except point/lines).
 	float smoothThresh = 60.0f * DEG2RAD;			// Smoothing threshold for generating smooth normals.
 
-	vector<int>* vertTris = nullptr;				// Map of triangles for which each vert is a member.
-	vector<int>* vertEdges = nullptr;				// Map of edges for which each vert is a member.
-	unordered_map <int, vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
+	std::vector<int>* vertTris = nullptr;				// Map of triangles for which each vert is a member.
+	std::vector<int>* vertEdges = nullptr;				// Map of edges for which each vert is a member.
+	std::unordered_map <int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
 
 	RenderMode rendermode = RenderMode::Normal;
 	bool modelSpace = false;
@@ -86,7 +86,7 @@ public:
 	bool doublesided = false;
 	bool textured = false;
 
-	shared_ptr<AABBTree> bvh = nullptr;
+	std::shared_ptr<AABBTree> bvh = nullptr;
 
 	bool bVisible = true;
 	bool bShowPoints = false;
@@ -95,13 +95,13 @@ public:
 	ushort alphaFlags = 0;
 	byte alphaThreshold = 0;
 
-	string shapeName;
+	std::string shapeName;
 	Vector3 color;
 
 	mesh();
 
 	// Creates a new bvh tree for the mesh.
-	shared_ptr<AABBTree> CreateBVH();
+	std::shared_ptr<AABBTree> CreateBVH();
 
 	void MakeEdges();			// Creates the list of edges from the list of triangles.
 
@@ -119,19 +119,19 @@ public:
 	float GetSmoothThreshold();
 
 	void FacetNormals();
-	void SmoothNormals(const set<int>& vertices = set<int>());
+	void SmoothNormals(const std::set<int>& vertices = std::set<int>());
 	static void SmoothNormalsStatic(mesh* m) {
 		m->SmoothNormals();
 	}
 	static void SmoothNormalsStaticArray(mesh* m, int* vertices, int nVertices) {
-		set<int> verts;
+		std::set<int> verts;
 		for (int i = 0; i < nVertices; i++)
 			verts.insert(vertices[i]);
 
 		m->SmoothNormals(verts);
 	}
-	static void SmoothNormalsStaticMap(mesh* m, const unordered_map<int, Vector3>& vertices) {
-		set<int> verts;
+	static void SmoothNormalsStaticMap(mesh* m, const std::unordered_map<int, Vector3>& vertices) {
+		std::set<int> verts;
 		for (auto &v : vertices)
 			verts.insert(v.first);
 
@@ -142,14 +142,14 @@ public:
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
 	// Also requires trivisit to be allocated by the caller - one slot for every tri in the mesh.
 	// Recursive - large query will overflow the stack!
-	bool ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets);
+	bool ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Similar to above, but uses an edge list to determine adjacency, with less risk of stack problems.
-	bool ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, vector<int>& outFacets);
+	bool ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Convenience function to gather connected points, taking into account "welded" vertices.
 	// Optionally sorts the results by distance. Does not clear the output set.
-	void GetAdjacentPoints(int querypoint, set<int>& outPoints);
+	void GetAdjacentPoints(int querypoint, std::set<int>& outPoints);
 
 	// More optimized adjacency fetch, using edge adjacency and storing the output in a static array.
 	// Requires that BuildEdgeList() be called prior to use.

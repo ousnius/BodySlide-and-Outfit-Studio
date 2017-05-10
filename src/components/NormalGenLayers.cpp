@@ -129,7 +129,7 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 		tinyxml2::XMLElement* elem = container->GetDocument()->NewElement("SourceFile");
 
 		relfn = l.sourceFileName;
-		if (relfn.find(gamepath) != string::npos)
+		if (relfn.find(gamepath) != std::string::npos)
 			relfn.replace(relfn.find(gamepath), gamepath.length(), "%GameDataPath%");
 
 		elem->SetText(relfn.c_str());
@@ -164,7 +164,7 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 
 			elem = container->GetDocument()->NewElement("MaskFile");
 			relfn = l.maskFileName;
-			if (relfn.find(gamepath) != string::npos)
+			if (relfn.find(gamepath) != std::string::npos)
 				relfn.replace(relfn.find(gamepath), gamepath.length(), "%GameDataPath%");
 
 			elem->SetText(relfn.c_str());

@@ -12,12 +12,11 @@ See the included LICENSE file
 #include <unordered_map>
 #include <wx/string.h>
 
-using namespace std;
 using namespace tinyxml2;
 
 class ConfigurationItem {
-	vector<ConfigurationItem*> children;
-	vector<ConfigurationItem*> properties;
+	std::vector<ConfigurationItem*> children;
+	std::vector<ConfigurationItem*> properties;
 
 public:
 	ConfigurationItem() : parent(nullptr), level(0), isProp(false), isComment(false), isDefault(false) { }
@@ -29,7 +28,7 @@ public:
 		isDefault = false;
 		SettingFromXML(srcElement);
 	}
-	ConfigurationItem(const string& text, ConfigurationItem* inParent = nullptr, int inLevel = 0) {
+	ConfigurationItem(const std::string& text, ConfigurationItem* inParent = nullptr, int inLevel = 0) {
 		parent = inParent;
 		level = inLevel;
 		isProp = false;
@@ -45,74 +44,74 @@ public:
 	bool isComment;
 	bool isDefault;								// Default values are not saved with config.
 
-	string name;								// Name associated with this node.
-	string value;								// Value associated with this node.
-	string path;
+	std::string name;								// Name associated with this node.
+	std::string value;								// Value associated with this node.
+	std::string path;
 
 	int SettingFromXML(XMLElement* xml);
 
 	void ToXML(XMLElement* parent);
-	int EnumerateProperties(vector<ConfigurationItem*>& outList);
-	int EnumerateProperties(string& outList);
-	int EnumerateChildren(vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
-	int EnumerateChildren(const string& inName, vector<string>& outValueList);
-	int EnumerateChildrenProperty(const string& inName, const string& propertyName, vector<string>& outValueList);
-	ConfigurationItem* FindChild(const string& inName, bool recurse = true);
-	ConfigurationItem* AddChild(const string& inName, const string& value, bool isElement = true);
+	int EnumerateProperties(std::vector<ConfigurationItem*>& outList);
+	int EnumerateProperties(std::string& outList);
+	int EnumerateChildren(std::vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
+	int EnumerateChildren(const std::string& inName, std::vector<std::string>& outValueList);
+	int EnumerateChildrenProperty(const std::string& inName, const std::string& propertyName, std::vector<std::string>& outValueList);
+	ConfigurationItem* FindChild(const std::string& inName, bool recurse = true);
+	ConfigurationItem* AddChild(const std::string& inName, const std::string& value, bool isElement = true);
 
-	ConfigurationItem* FindProperty(const string& inName);
+	ConfigurationItem* FindProperty(const std::string& inName);
 
-	bool Match(const string& otherName) {
+	bool Match(const std::string& otherName) {
 		return (!_stricmp(otherName.c_str(), name.c_str()));
 	}
 };
 
 class ConfigurationManager
 {
-	vector<ConfigurationItem*> ciList;
-	string file;
-	ConfigurationItem* FindCI(const string& inName);
+	std::vector<ConfigurationItem*> ciList;
+	std::string file;
+	ConfigurationItem* FindCI(const std::string& inName);
 
 public:
 	ConfigurationManager();
 	~ConfigurationManager();
 
 	void Clear();
-	int LoadConfig(const string& pathToFile = "Config.xml", const string& rootElement = "BodySlideConfig");
+	int LoadConfig(const std::string& pathToFile = "Config.xml", const std::string& rootElement = "BodySlideConfig");
 
-	int SaveConfig(const string& pathToFile, const string& rootElementName = "BodySlideConfig");
+	int SaveConfig(const std::string& pathToFile, const std::string& rootElementName = "BodySlideConfig");
 
-	int EnumerateCIs(vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
+	int EnumerateCIs(std::vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
 
-	int EnumerateChildCIs(vector<ConfigurationItem*>& outList, const string& parentCI, bool withProperties = true, bool traverse = true);
+	int EnumerateChildCIs(std::vector<ConfigurationItem*>& outList, const std::string& parentCI, bool withProperties = true, bool traverse = true);
 
-	bool Exists(const string& inName);
+	bool Exists(const std::string& inName);
 
-	string GetString(const string& inName);
+	std::string GetString(const std::string& inName);
 
-	int GetIntValue(const string& inName, int def = 0);
-	float GetFloatValue(const string& inName, float def = 0.0f);
+	int GetIntValue(const std::string& inName, int def = 0);
+	float GetFloatValue(const std::string& inName, float def = 0.0f);
 
-	void SetValue(const string& inName, const string& newValue, bool flagDefault = false);
-	void SetValue(const string& inName, int newValue, bool flagDefault = false);
-	void SetValue(const string& inName, float newValue, bool flagDefault = false);
+	void SetValue(const std::string& inName, const std::string& newValue, bool flagDefault = false);
+	void SetValue(const std::string& inName, int newValue, bool flagDefault = false);
+	void SetValue(const std::string& inName, float newValue, bool flagDefault = false);
 
-	void SetDefaultValue(const string& inName, const string& newValue);
-	void SetDefaultValue(const string& inName, int newValue);
+	void SetDefaultValue(const std::string& inName, const std::string& newValue);
+	void SetDefaultValue(const std::string& inName, int newValue);
 
-	bool MatchValue(const string& inName, const string& val, bool useCase = false);
+	bool MatchValue(const std::string& inName, const std::string& val, bool useCase = false);
 
-	void GetFullKey(ConfigurationItem* from, string& outstr);
+	void GetFullKey(ConfigurationItem* from, std::string& outstr);
 
-	int GetValueArray(const string& containerName, const string& arrayName, vector<string>& outValues);
-	int GetValueAttributeArray(const string& containerName, const string& arrayName, const string& attributeName, vector<string>& outValues);
+	int GetValueArray(const std::string& containerName, const std::string& arrayName, std::vector<std::string>& outValues);
+	int GetValueAttributeArray(const std::string& containerName, const std::string& arrayName, const std::string& attributeName, std::vector<std::string>& outValues);
 
-	string operator [] (const char* inName)
+	std::string operator [] (const char* inName)
 	{
-		return GetString(string(inName));
+		return GetString(std::string(inName));
 	}
 
-	string operator [] (const string& inName) {
+	std::string operator [] (const std::string& inName) {
 		return GetString(inName);
 	}
 	wxString operator [] (const wxString& inName) {
@@ -123,7 +122,7 @@ public:
 		are surrounded by %.  EG  :  "%GameDataPath%rest of path"  might become "D:\\Skyrim\\Data\\rest of path.
 		a double percent "%%" will be replaced with a single %, while a single % without matching variable will destroy most of the string.
 		*/
-	void ReplaceVars(string& inoutStr);
+	void ReplaceVars(std::string& inoutStr);
 };
 
 extern ConfigurationManager Config;

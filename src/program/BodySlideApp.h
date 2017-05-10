@@ -74,24 +74,24 @@ class BodySlideApp : public wxApp {
 	Log logger;
 
 	/* Data Items */
-	map<string, string> outfitNameSource;		// All currently defined outfits.
-	vector<string> outfitNameOrder;				// All currently defined outfits, in their order of appearance.
-	map<string, vector<string>> groupMembers;	// All currently defined groups.
-	map<string, string> groupAlias;				// Group name aliases.
-	vector<string> ungroupedOutfits;			// Outfits without a group.
-	vector<string> filteredOutfits;				// Filtered outfit names.
-	vector<string> presetGroups;
-	vector<string> allGroups;
+	std::map<std::string, std::string> outfitNameSource;		// All currently defined outfits.
+	std::vector<std::string> outfitNameOrder;				// All currently defined outfits, in their order of appearance.
+	std::map<std::string, std::vector<std::string>> groupMembers;	// All currently defined groups.
+	std::map<std::string, std::string> groupAlias;				// Group name aliases.
+	std::vector<std::string> ungroupedOutfits;			// Outfits without a group.
+	std::vector<std::string> filteredOutfits;				// Filtered outfit names.
+	std::vector<std::string> presetGroups;
+	std::vector<std::string> allGroups;
 	SliderSetGroupCollection gCollection;
 
-	map<string, vector<string>> outFileCount;	// Counts how many sets write to the same output file
+	std::map<std::string, std::vector<std::string>> outFileCount;	// Counts how many sets write to the same output file
 
-	string previewBaseName;
-	string previewSetName;
+	std::string previewBaseName;
+	std::string previewSetName;
 	NifFile* previewBaseNif = nullptr;
 	NifFile PreviewMod;
 
-	int CreateSetSliders(const string& outfit);
+	int CreateSetSliders(const std::string& outfit);
 
 public:
 	virtual ~BodySlideApp();
@@ -113,7 +113,7 @@ public:
 	void InitLanguage();
 
 	void InitArchives();
-	void GetArchiveFiles(vector<string>& outList);
+	void GetArchiveFiles(std::vector<std::string>& outList);
 
 	void LoadData();
 	void CharHook(wxKeyEvent& event) {
@@ -132,9 +132,9 @@ public:
 			return;
 		}
 
-		string stupidkeys = "0123456789-";
+		std::string stupidkeys = "0123456789-";
 		bool stupidHack = false;
-		if (event.GetKeyCode() < 256 && stupidkeys.find(event.GetKeyCode()) != string::npos)
+		if (event.GetKeyCode() < 256 && stupidkeys.find(event.GetKeyCode()) != std::string::npos)
 			stupidHack = true;
 
 		if (stupidHack && nm.EndsWith("|readout")) {
@@ -149,18 +149,18 @@ public:
 
 	void LoadAllCategories();
 
-	void SetPresetGroups(const string& setName);
+	void SetPresetGroups(const std::string& setName);
 	void LoadAllGroups();
-	void GetAllGroupNames(vector<string>& outGroups);
-	int SaveGroupList(const string& filename, const string& groupname);
+	void GetAllGroupNames(std::vector<std::string>& outGroups);
+	int SaveGroupList(const std::string& filename, const std::string& groupname);
 
 	void ApplyOutfitFilter();
-	int GetOutfits(vector<string>& outList);
-	int GetFilteredOutfits(vector<string>& outList);
+	int GetOutfits(std::vector<std::string>& outList);
+	int GetFilteredOutfits(std::vector<std::string>& outList);
 
-	void LoadPresets(const string& sliderSet);
-	void PopulatePresetList(const string& select);
-	void PopulateOutfitList(const string& select);
+	void LoadPresets(const std::string& sliderSet);
+	void PopulatePresetList(const std::string& select);
+	void PopulateOutfitList(const std::string& select);
 	void DisplayActiveSet();
 
 	int LoadSliderSets();
@@ -168,13 +168,13 @@ public:
 
 	void RefreshSliders();
 
-	void ActivateOutfit(const string& outfitName);
-	void ActivatePreset(const string& presetName, const bool updatePreview = true);
+	void ActivateOutfit(const std::string& outfitName);
+	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 
 	void LaunchOutfitStudio();
 
-	void ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& zapidx, vector<Vector2>* uvs = nullptr);
-	int WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>>& zapIndices);
+	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& zapidx, std::vector<Vector2>* uvs = nullptr);
+	int WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();
@@ -205,17 +205,17 @@ public:
 	void RebuildPreviewMeshes();
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
-	int BuildListBodies(vector<string>& outfitList, map<string, string>& failedOutfits, bool remove = false, bool tri = false, const string& custPath = "");
-	void GroupBuild(const string& group);
+	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, const std::string& custPath = "");
+	void GroupBuild(const std::string& group);
 
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	bool IsUVSlider(const wxString& sliderName);
-	vector<string> GetSliderZapToggles(const wxString& sliderName);
+	std::vector<std::string> GetSliderZapToggles(const wxString& sliderName);
 	void SetSliderValue(const wxString& sliderName, bool isLo, float val);
 	void SetSliderChanged(const wxString& sliderName, bool isLo);
 
-	int UpdateSliderPositions(const string& presetName);
-	int SaveSliderPositions(const string& outputFile, const string& presetName, vector<string>& groups);
+	int UpdateSliderPositions(const std::string& presetName);
+	int SaveSliderPositions(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups);
 };
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
@@ -237,7 +237,7 @@ public:
 	public:
 		bool isZap;
 		bool oneSize;
-		string sliderName;
+		std::string sliderName;
 		wxStaticText* lblSliderLo;
 		wxSlider* sliderLo;
 		wxTextCtrl* sliderReadoutLo;
@@ -262,7 +262,7 @@ public:
 		}
 	};
 
-	unordered_map<string, SliderDisplay*> sliderDisplays;
+	std::unordered_map<std::string, SliderDisplay*> sliderDisplays;
 
 	wxTimer delayLoad;
 	wxSearchCtrl* search;
@@ -278,7 +278,7 @@ public:
 	void AddCategorySliderUI(const wxString& name, bool show, bool oneSize);
 	void AddSliderGUI(const wxString& name, const wxString& displayName, bool isZap, bool oneSize = false);
 
-	BodySlideFrame::SliderDisplay* GetSliderDisplay(const string& name) {
+	BodySlideFrame::SliderDisplay* GetSliderDisplay(const std::string& name) {
 		if (sliderDisplays.find(name) != sliderDisplays.end())
 			return sliderDisplays[name];
 

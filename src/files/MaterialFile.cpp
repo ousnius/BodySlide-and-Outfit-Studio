@@ -10,8 +10,8 @@ MaterialFile::MaterialFile(const Type& signature) {
 	this->signature = signature;
 }
 
-MaterialFile::MaterialFile(const string& fileName) {
-	ifstream input(fileName, ifstream::binary);
+MaterialFile::MaterialFile(const std::string& fileName) {
+	std::ifstream input(fileName, std::ifstream::binary);
 	if (!input) {
 		failed = true;
 		return;
@@ -21,7 +21,7 @@ MaterialFile::MaterialFile(const string& fileName) {
 		failed = true;
 }
 
-MaterialFile::MaterialFile(istream& input) {
+MaterialFile::MaterialFile(std::istream& input) {
 	if (!input) {
 		failed = true;
 		return;
@@ -31,7 +31,7 @@ MaterialFile::MaterialFile(istream& input) {
 		failed = true;
 }
 
-int MaterialFile::Read(istream& input) {
+int MaterialFile::Read(std::istream& input) {
 	uint magic;
 	input.read((char*)&magic, 4);
 	if (magic != BGSM && magic != BGEM)
@@ -217,7 +217,7 @@ int MaterialFile::Read(istream& input) {
 	return 0;
 }
 
-int MaterialFile::Write(ostream& output) {
+int MaterialFile::Write(std::ostream& output) {
 	output.write((char*)&signature, 4);
 
 	output.write((char*)&version, 4);

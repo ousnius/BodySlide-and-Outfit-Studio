@@ -10,24 +10,22 @@ See the included LICENSE file
 #include <map>
 #include <algorithm>
 
-using namespace std;
-
 // A specialized KD tree that finds duplicate vertices in a point cloud.  
 
 class kd_matcher {
 public:
 	class kd_node {
 	public:
-		pair<Vector3*, int> p;
+		std::pair<Vector3*, int> p;
 		kd_node* less;
 		kd_node* more;
 
 		kd_node() {
 			less = more = nullptr;
-			p = pair<Vector3*, int>(nullptr, -1);
+			p = std::pair<Vector3*, int>(nullptr, -1);
 		}
 
-		kd_node(const pair<Vector3*, int>& point) {
+		kd_node(const std::pair<Vector3*, int>& point) {
 			less = more = nullptr;
 			p = point;
 		}
@@ -40,15 +38,16 @@ public:
 			less = more = nullptr;
 		}
 
-		pair<Vector3*, int> add(const pair<Vector3*, int>& point, int depth) {
+		std::pair<Vector3*, int> add(const std::pair<Vector3*, int>& point, int depth) {
 			int axis = depth % 3;
 			bool domore = false;
 			float dx = p.first->x - point.first->x;
 			float dy = p.first->y - point.first->y;
 			float dz = p.first->z - point.first->z;
 
-			if (fabs(dx) < EPSILON && fabs(dy) < EPSILON && fabs(dz) < EPSILON)
+			if (std::fabs(dx) < EPSILON && std::fabs(dy) < EPSILON && std::fabs(dz) < EPSILON)
 				return p;
+
 			switch (axis) {
 			case 0:
 				if (dx > 0) domore = true;
@@ -68,14 +67,14 @@ public:
 				if (less) return less->add(point, depth + 1);
 				else less = new kd_node(point);
 			}
-			return pair<Vector3*, int>(nullptr, -1);
+			return std::pair<Vector3*, int>(nullptr, -1);
 		}
 	};
 
 	kd_node* root = nullptr;
 	Vector3* points = nullptr;
 	int count;
-	vector<pair<pair<Vector3*, int>, pair<Vector3*, int>>> matches;
+	std::vector<std::pair<std::pair<Vector3*, int>, std::pair<Vector3*, int>>> matches;
 
 	~kd_matcher() {
 		if (root)
@@ -88,13 +87,13 @@ public:
 		if (count <= 0)
 			return;
 
-		pair<Vector3*, int> pong;
-		root = new kd_node(pair<Vector3*, int>(&points[0], 0));
+		std::pair<Vector3*, int> pong;
+		root = new kd_node(std::pair<Vector3*, int>(&points[0], 0));
 		for (int i = 1; i < count; i++) {
-			pair<Vector3*, int> point(&points[i], i);
+			std::pair<Vector3*, int> point(&points[i], i);
 			pong = root->add(point, 0);
 			if (pong.first)
-				matches.push_back(pair<pair<Vector3*, int>, pair<Vector3*, int>>(point, pong));
+				matches.push_back(std::pair<std::pair<Vector3*, int>, std::pair<Vector3*, int>>(point, pong));
 		}
 	}
 };
@@ -169,7 +168,7 @@ public:
 
 		// Finds the closest point(s) to "querypoint" within the provided radius. If radius is 0, only the single closest point is found.
 		// On first call, "mindist" should be set to FLT_MAX and depth set to 0.
-		void find_closest(Vector3* querypoint, vector<kd_query_result>& queryResult, float radius, float& mindist, int depth = 0) {
+		void find_closest(Vector3* querypoint, std::vector<kd_query_result>& queryResult, float radius, float& mindist, int depth = 0) {
 			kd_query_result kdqr;
 			int axis = depth % 3;				// Which separating axis to use based on depth
 			float dx = p->x - querypoint->x;	// Axis sides
@@ -186,21 +185,21 @@ public:
 					act = more;
 					opp = less;
 				}
-				axisdist = fabs(dx);
+				axisdist = std::fabs(dx);
 				break;
 			case 1:
 				if (dy > 0) {
 					act = more;
 					opp = less;
 				}
-				axisdist = fabs(dy);
+				axisdist = std::fabs(dy);
 				break;
 			case 2:
 				if (dz > 0)  {
 					act = more;
 					opp = less;
 				}
-				axisdist = fabs(dz);
+				axisdist = std::fabs(dz);
 				break;
 			}
 
@@ -249,7 +248,7 @@ public:
 	};
 
 	kd_node* root;
-	vector<kd_query_result> queryResult;
+	std::vector<kd_query_result> queryResult;
 
 	~kd_tree() {
 		if (root)
@@ -268,14 +267,14 @@ public:
 	}
 
 	int kd_nn(Vector3* querypoint, float radius) {
-		float mindist = FLT_MAX;
+		float mindist = std::numeric_limits<float>().max();
 		if (radius != 0.0f)
 			mindist = radius;
 
 		queryResult.clear();
 		root->find_closest(querypoint, queryResult, radius, mindist);
 		if (queryResult.size() > 1)
-			sort(queryResult.begin(), queryResult.end());
+			std::sort(queryResult.begin(), queryResult.end());
 
 		return queryResult.size();
 	}

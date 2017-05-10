@@ -9,7 +9,7 @@ See the included LICENSE file
 #include <wx/dir.h>
 #include <wx/tokenzr.h>
 
-SliderData::SliderData(const string& inName) {
+SliderData::SliderData(const std::string& inName) {
 	name = inName;
 	bClamp = false;
 	bHidden = false;
@@ -35,7 +35,7 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	XMLElement *root = element->Parent()->Parent()->ToElement();
 	int version = root->IntAttribute("version");
 
-	string dataFileStr = version >= 1 ? "Data" : "datafile";
+	std::string dataFileStr = version >= 1 ? "Data" : "datafile";
 
 	name = element->Attribute("name");
 	if (element->Attribute("invert"))

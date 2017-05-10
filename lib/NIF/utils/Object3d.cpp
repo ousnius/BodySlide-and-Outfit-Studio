@@ -1,16 +1,16 @@
 #include "Object3d.h"
-#include "../Miniball.hpp"
+#include "Miniball.hpp"
 
-BoundingSphere::BoundingSphere(const vector<Vector3>& vertices) {
+BoundingSphere::BoundingSphere(const std::vector<Vector3>& vertices) {
 	if (vertices.empty()) {
 		BoundingSphere::BoundingSphere();
 		return;
 	}
 
 	// Convert vertices to list of coordinates
-	list<vector<float>> lp;
+	std::list<std::vector<float>> lp;
 	for (int i = 0; i < vertices.size(); ++i) {
-		vector<float> p(3);
+		std::vector<float> p(3);
 		p[0] = vertices[i].x;
 		p[1] = vertices[i].y;
 		p[2] = vertices[i].z;
@@ -19,8 +19,8 @@ BoundingSphere::BoundingSphere(const vector<Vector3>& vertices) {
 
 	// Create an instance of Miniball
 	Miniball::Miniball < Miniball::CoordAccessor
-		< list<vector<float>>::const_iterator,
-		vector<float>::const_iterator >>
+		< std::list<std::vector<float>>::const_iterator,
+		std::vector<float>::const_iterator >>
 		mb(3, lp.begin(), lp.end());
 
 	const float* pCenter = mb.center();

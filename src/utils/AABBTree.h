@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Object3d.h"
+#include "../NIF/utils/Object3d.h"
 
 struct IntersectResult;
 
@@ -14,7 +14,7 @@ struct AABB {
 	AABB(Vector3* points, int nPoints);
 	AABB(Vector3* points, ushort* indices, int nPoints);
 
-	void AddBoxToMesh(vector<Vector3>& verts, vector<Edge>& edges);
+	void AddBoxToMesh(std::vector<Vector3>& verts, std::vector<Edge>& edges);
 
 	void Merge(Vector3* points, ushort* indices, int nPoints);
 	void Merge(AABB& other);
@@ -52,18 +52,18 @@ public:
 		~AABBTreeNode();
 
 		// Recursively generates AABB Tree nodes using the referenced data.
-		AABBTreeNode(vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parent, int depth);
+		AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parent, int depth);
 
 		// As above, but facetIndices is modified with in-place sorting rather than using vector::push_back to generate sub lists.
 		// Sorting swaps from front of list to end when pos midpoints are found at the beginning of the list.
-		AABBTreeNode(vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parent, int depth);
+		AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parent, int depth);
 
 		Vector3 Center();
 
-		void AddDebugFrames(vector<Vector3>& verts, vector<Edge>& edges, int maxdepth = 0, int curdepth = 0);
-		void AddRayIntersectFrames(Vector3& origin, Vector3& direction, vector<Vector3>& verts, vector<Edge>& edges);
-		bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results);
-		bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results);
+		void AddDebugFrames(std::vector<Vector3>& verts, std::vector<Edge>& edges, int maxdepth = 0, int curdepth = 0);
+		void AddRayIntersectFrames(Vector3& origin, Vector3& direction, std::vector<Vector3>& verts, std::vector<Edge>& edges);
+		bool IntersectRay(Vector3& origin, Vector3& direction, std::vector<IntersectResult>* results);
+		bool IntersectSphere(Vector3& origin, float radius, std::vector<IntersectResult>* results);
 		void UpdateAABB(AABB* childBB = nullptr);
 	};
 
@@ -80,15 +80,15 @@ public:
 	Vector3 Center();
 
 	// Calculate bounding box and geometric average.
-	void CalcAABBandGeoAvg(vector<int>& forFacets, AABB& outBB, Vector3& outAxisAvg);
+	void CalcAABBandGeoAvg(std::vector<int>& forFacets, AABB& outBB, Vector3& outAxisAvg);
 
 	// Calculate bounding box and geometric average for sub list.
-	void CalcAABBandGeoAvg(vector<int>& forFacets, int start, int end, AABB& outBB, Vector3& outAxisAvg);
+	void CalcAABBandGeoAvg(std::vector<int>& forFacets, int start, int end, AABB& outBB, Vector3& outAxisAvg);
 	void CalcAABBandGeoAvg(int forFacets[], int start, int end, AABB& outBB, Vector3& outAxisAvg);
 	void BuildDebugFrames(Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
 	void BuildRayIntersectFrames(Vector3& origin, Vector3& direction, Vector3** outVerts, int* outNumVerts, Edge** outEdges, int* outNumEdges);
-	bool IntersectRay(Vector3& origin, Vector3& direction, vector<IntersectResult>* results = nullptr);
-	bool IntersectSphere(Vector3& origin, float radius, vector<IntersectResult>* results = nullptr);
+	bool IntersectRay(Vector3& origin, Vector3& direction, std::vector<IntersectResult>* results = nullptr);
+	bool IntersectSphere(Vector3& origin, float radius, std::vector<IntersectResult>* results = nullptr);
 };
 
 struct IntersectResult {

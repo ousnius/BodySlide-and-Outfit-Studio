@@ -8,7 +8,7 @@ See the included LICENSE file
 
 #pragma warning (disable: 4018)
 
-int SliderCategoryCollection::LoadCategories(const string& basePath) {
+int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
 	categories.clear();
 
 	wxArrayString files;
@@ -16,7 +16,7 @@ int SliderCategoryCollection::LoadCategories(const string& basePath) {
 
 	for (auto &file : files) {
 		SliderCategoryFile catFile(file.ToStdString());
-		vector<string> cats;
+		std::vector<std::string> cats;
 		catFile.GetCategoryNames(cats);
 		for (auto &cat : cats) {
 			SliderCategory sliderCat;
@@ -24,14 +24,14 @@ int SliderCategoryCollection::LoadCategories(const string& basePath) {
 			if (categories.find(cat) != categories.end())
 				categories[cat].MergeSliders(sliderCat);
 			else
-				categories[cat] = move(sliderCat);
+				categories[cat] = std::move(sliderCat);
 		}
 	}
 
 	return 0;
 }
 
-int SliderCategoryCollection::GetAllCategories(vector<string>& outCategories) {
+int SliderCategoryCollection::GetAllCategories(std::vector<std::string>& outCategories) {
 	outCategories.clear();
 	for (auto &c : categories)
 		outCategories.push_back(c.first);
@@ -39,7 +39,7 @@ int SliderCategoryCollection::GetAllCategories(vector<string>& outCategories) {
 	return outCategories.size();
 }
 
-string SliderCategoryCollection::GetSliderDisplayName(const string& categoryName, const string& sliderName) {
+std::string SliderCategoryCollection::GetSliderDisplayName(const std::string& categoryName, const std::string& sliderName) {
 	auto git = categories.find(categoryName);
 	if (git == categories.end())
 		return "";
@@ -47,7 +47,7 @@ string SliderCategoryCollection::GetSliderDisplayName(const string& categoryName
 	return git->second.GetSliderDisplayName(sliderName);
 }
 
-int SliderCategoryCollection::GetSliderCategory(const string& sliderName, string& outCategory) {
+int SliderCategoryCollection::GetSliderCategory(const std::string& sliderName, std::string& outCategory) {
 	for (auto &c : categories)
 		if (c.second.HasSlider(sliderName)) {
 			outCategory = c.first;
@@ -57,7 +57,7 @@ int SliderCategoryCollection::GetSliderCategory(const string& sliderName, string
 	return outCategory.size();
 }
 
-int SliderCategoryCollection::GetCategorySliders(const string& categoryName, vector<string>& outSliders, bool append) {
+int SliderCategoryCollection::GetCategorySliders(const std::string& categoryName, std::vector<std::string>& outSliders, bool append) {
 	auto git = categories.find(categoryName);
 	if (git == categories.end())
 		return 0;
@@ -68,7 +68,7 @@ int SliderCategoryCollection::GetCategorySliders(const string& categoryName, vec
 		return git->second.GetSliders(outSliders);
 }
 
-int SliderCategoryCollection::GetCategorySliders(const string& categoryName, unordered_set<string>& outSliders, bool append) {
+int SliderCategoryCollection::GetCategorySliders(const std::string& categoryName, std::unordered_set<std::string>& outSliders, bool append) {
 	auto git = categories.find(categoryName);
 	if (git == categories.end())
 		return 0;
@@ -79,7 +79,7 @@ int SliderCategoryCollection::GetCategorySliders(const string& categoryName, uno
 		return git->second.GetSliders(outSliders);
 }
 
-bool SliderCategoryCollection::GetCategoryHidden(const string& categoryName) {
+bool SliderCategoryCollection::GetCategoryHidden(const std::string& categoryName) {
 	auto git = categories.find(categoryName);
 	if (git == categories.end())
 		return true;
@@ -87,7 +87,7 @@ bool SliderCategoryCollection::GetCategoryHidden(const string& categoryName) {
 	return git->second.GetHidden();
 }
 
-int SliderCategoryCollection::SetCategoryHidden(const string& categoryName, bool hide) {
+int SliderCategoryCollection::SetCategoryHidden(const std::string& categoryName, bool hide) {
 	auto git = categories.find(categoryName);
 	if (git == categories.end())
 		return 1;
@@ -117,7 +117,7 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 			continue;
 		}
 
-		string sName = slider->Attribute("name");
+		std::string sName = slider->Attribute("name");
 		sliders.push_back(sName);
 
 		if (slider->Attribute("displayname"))
@@ -125,7 +125,7 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 		else
 			displayNames[sName] = "";
 
-		string* fileName = static_cast<string*>(slider->GetDocument()->GetUserData());
+		std::string* fileName = static_cast<std::string*>(slider->GetDocument()->GetUserData());
 		sourceFiles.push_back(*fileName);
 
 		slider = slider->NextSiblingElement("Slider");
@@ -133,7 +133,7 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 	return 0;
 }
 
-bool SliderCategory::HasSlider(const string& search) {
+bool SliderCategory::HasSlider(const std::string& search) {
 	for (auto &m : sliders)
 		if (m.compare(search) == 0)
 			return true;
@@ -141,7 +141,7 @@ bool SliderCategory::HasSlider(const string& search) {
 	return false;
 }
 
-string SliderCategory::GetSliderDisplayName(const string& sliderName) {
+std::string SliderCategory::GetSliderDisplayName(const std::string& sliderName) {
 	if (!HasSlider(sliderName))
 		return "";
 	
@@ -156,28 +156,28 @@ void SliderCategory::SetHidden(bool hide) {
 	isHidden = hide;
 }
 
-int SliderCategory::GetSliders(vector<string>& outSliders) {
+int SliderCategory::GetSliders(std::vector<std::string>& outSliders) {
 	outSliders.clear();
 	outSliders.insert(outSliders.end(), sliders.begin(), sliders.end());
 	return outSliders.size();
 }
 
-int SliderCategory::GetSliders(unordered_set<string>& outSliders) {
+int SliderCategory::GetSliders(std::unordered_set<std::string>& outSliders) {
 	outSliders.insert(sliders.begin(), sliders.end());
 	return outSliders.size();
 }
 
-int SliderCategory::AppendSliders(vector<string>& outSliders) {
+int SliderCategory::AppendSliders(std::vector<std::string>& outSliders) {
 	outSliders.insert(outSliders.end(), sliders.begin(), sliders.end());
 	return outSliders.size();
 }
 
-int SliderCategory::AppendSliders(unordered_set<string>& outSliders) {
+int SliderCategory::AppendSliders(std::unordered_set<std::string>& outSliders) {
 	outSliders.insert(sliders.begin(), sliders.end());
 	return outSliders.size();
 }
 
-int SliderCategory::AddSliders(const vector<string>& inSliders) {
+int SliderCategory::AddSliders(const std::vector<std::string>& inSliders) {
 	sliders.insert(sliders.end(), inSliders.begin(), inSliders.end());
 	return sliders.size();
 }
@@ -193,13 +193,13 @@ void SliderCategory::WriteCategory(XMLElement* categoryElement, bool append) {
 	}
 }
 
-SliderCategoryFile::SliderCategoryFile(const string& srcFileName) {
+SliderCategoryFile::SliderCategoryFile(const std::string& srcFileName) {
 	root = nullptr;
 	error = 0;
 	Open(srcFileName);
 }
 
-void SliderCategoryFile::Open(const string& srcFileName) {
+void SliderCategoryFile::Open(const std::string& srcFileName) {
 	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
 		fileName = srcFileName;
 		doc.SetUserData(&fileName);
@@ -227,7 +227,7 @@ void SliderCategoryFile::Open(const string& srcFileName) {
 	error = 0;
 }
 
-void SliderCategoryFile::New(const string& newFileName) {
+void SliderCategoryFile::New(const std::string& newFileName) {
 	if (root)
 		return;
 
@@ -245,12 +245,12 @@ void SliderCategoryFile::New(const string& newFileName) {
 	error = 0;
 }
 
-void SliderCategoryFile::Rename(const string& newFileName) {
+void SliderCategoryFile::Rename(const std::string& newFileName) {
 	fileName = newFileName;
 }
 
-int SliderCategoryFile::GetCategoryNames(vector<string>& outCategoryNames, bool append, bool unique) {
-	unordered_set<string> existingNames;
+int SliderCategoryFile::GetCategoryNames(std::vector<std::string>& outCategoryNames, bool append, bool unique) {
+	std::unordered_set<std::string> existingNames;
 	if (!append)
 		outCategoryNames.clear();
 
@@ -268,14 +268,14 @@ int SliderCategoryFile::GetCategoryNames(vector<string>& outCategoryNames, bool 
 	return 0;
 }
 
-bool SliderCategoryFile::HasCategory(const string& queryCategoryName) {
+bool SliderCategoryFile::HasCategory(const std::string& queryCategoryName) {
 	if (categoriesInFile.find(queryCategoryName) != categoriesInFile.end())
 		return true;
 
 	return false;
 }
 
-int SliderCategoryFile::GetAllCategories(vector<SliderCategory>& outAppendCategories) {
+int SliderCategoryFile::GetAllCategories(std::vector<SliderCategory>& outAppendCategories) {
 	int count = 0;
 	bool add = true;
 	for (auto &c : categoriesInFile) {
@@ -296,7 +296,7 @@ int SliderCategoryFile::GetAllCategories(vector<SliderCategory>& outAppendCatego
 	return count;
 }
 
-int SliderCategoryFile::GetCategory(const string& categoryName, SliderCategory& outCategories) {
+int SliderCategoryFile::GetCategory(const std::string& categoryName, SliderCategory& outCategories) {
 	if (categoriesInFile.find(categoryName) != categoriesInFile.end())
 		outCategories.LoadCategory(categoriesInFile[categoryName]);
 	else

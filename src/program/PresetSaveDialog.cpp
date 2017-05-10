@@ -37,7 +37,7 @@ PresetSaveDialog::~PresetSaveDialog() {
 	wxXmlResource::Get()->Unload("res\\xrc\\SavePreset.xrc");
 }
 
-void PresetSaveDialog::FilterGroups(const string& filter) {
+void PresetSaveDialog::FilterGroups(const std::string& filter) {
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
 	wxArrayString strings;
 	filteredGroups.clear();
@@ -47,9 +47,9 @@ void PresetSaveDialog::FilterGroups(const string& filter) {
 	}
 	else {
 		try {
-			regex re(filter, regex_constants::icase);
+			std::regex re(filter, std::regex_constants::icase);
 			for (auto &s : allGroupNames) {
-				if (regex_search(s, re))
+				if (std::regex_search(s, re))
 					filteredGroups.push_back(s);
 			}
 		}
@@ -65,12 +65,12 @@ void PresetSaveDialog::FilterGroups(const string& filter) {
 }
 
 void PresetSaveDialog::FilterChanged(wxCommandEvent& event) {
-	string filter = event.GetString();
+	std::string filter = event.GetString();
 	FilterGroups(filter);
 }
 
 void PresetSaveDialog::CheckGroup(wxCommandEvent& event) {
-	string name;
+	std::string name;
 	wxCheckListBox* chk = (wxCheckListBox*)event.GetEventObject();
 	int item = event.GetInt();
 	if (chk->IsChecked(item)) {
@@ -85,7 +85,7 @@ void PresetSaveDialog::CheckGroup(wxCommandEvent& event) {
 
 void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue();
-	string presetFile = outPresetName + ".xml";
+	std::string presetFile = outPresetName + ".xml";
 
 	wxFileDialog savePresetDialog(this, "Choose a preset file", "SliderPresets", presetFile, "Preset Files (*.xml)|*.xml", wxFD_SAVE);
 	if (savePresetDialog.ShowModal() == wxID_OK) {

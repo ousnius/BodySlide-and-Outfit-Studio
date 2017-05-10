@@ -29,8 +29,8 @@ class PreviewWindow : public wxFrame {
 
 	//GLOffScreenBuffer* offscreen;
 	GLSurface gls;
-	unordered_map<string, GLMaterial*> shapeMaterials;
-	string baseDataPath;
+	std::unordered_map<std::string, GLMaterial*> shapeMaterials;
+	std::string baseDataPath;
 	int weight = 100;
 
 	wxDECLARE_EVENT_TABLE();
@@ -67,7 +67,7 @@ public:
 		}
 	}
 
-	void SetBaseDataPath(const string& path) {
+	void SetBaseDataPath(const std::string& path) {
 		baseDataPath = path;
 	}
 
@@ -75,10 +75,10 @@ public:
 
 	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
-	void AddNifShapeTextures(NifFile* fromNif, const string& shapeName);
+	void AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName);
 
-	void Update(string& shapeName, vector<Vector3>* verts, vector<Vector2>* uvs = nullptr) {
-		set<int> changed;
+	void Update(std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
+		std::set<int> changed;
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs, &changed);
 
 		mesh* m = gls.GetMesh(shapeName);
@@ -86,7 +86,7 @@ public:
 			m->SmoothNormals(changed);
 	}
 
-	void SetShapeTextures(const string& shapeName, const vector<string>& textureFiles, const string& vShader, const string& fShader, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile()) {
+	void SetShapeTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const std::string& vShader, const std::string& fShader, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile()) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -145,11 +145,11 @@ public:
 
 		wxBusyCursor busycursor;
 
-		string dest_tex = gls.GetMesh("CBBE")->material->GetTexName(1);
+		std::string dest_tex = gls.GetMesh("CBBE")->material->GetTexName(1);
 		GLuint w, h;
 		gls.GetSize(w, h);	
 		std::vector<GLuint> texIds;
-		std::vector<string> normTextures;
+		std::vector<std::string> normTextures;
 		normTextures.push_back("");
 		//normTextures.push_back("d:\\proj\\TangentNormalsTest.png");
 		//normTextures.push_back("d:\\proj\\FemaleBodyt_n.dds");
@@ -157,7 +157,7 @@ public:
 		//normTextures.push_back("d:\\proj\\masktest.png");
 		GLMaterial* normMat = gls.AddMaterial(normTextures, "res\\shaders\\normalshade.vert", "res\\shaders\\normalshade.frag");
 
-		std::vector<string> ppTex;
+		std::vector<std::string> ppTex;
 		ppTex.push_back("pproc");
 		GLMaterial* ppMat = gls.AddMaterial(ppTex, "res\\shaders\\fullscreentri.vert", "res\\shaders\\fullscreentri.frag");
 

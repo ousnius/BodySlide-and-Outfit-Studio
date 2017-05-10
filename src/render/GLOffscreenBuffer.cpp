@@ -121,7 +121,7 @@ GLuint GLOffScreenBuffer::GetTexID() {
 	return 0;
 }
 
-void GLOffScreenBuffer::SaveTexture(const string& filename) {
+void GLOffScreenBuffer::SaveTexture(const std::string& filename) {
 	if (!isBound)
 		Start();		//not bound, bind the current framebuffer to read it's pixels.
 

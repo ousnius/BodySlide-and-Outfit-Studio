@@ -9,11 +9,9 @@ See the included LICENSE file
 #include "SliderSet.h"
 #include "SliderPresets.h"
 
-using namespace std;
-
 class Slider {
 public:
-	string name;
+	std::string name;
 	bool invert;
 	bool zap;
 	bool clamp;
@@ -21,8 +19,8 @@ public:
 	bool changed;
 	float defValue;
 	float value;
-	vector<string> zapToggles;
-	vector<string> linkedDataSets;
+	std::vector<std::string> zapToggles;
+	std::vector<std::string> linkedDataSets;
 };
 
 class SliderManager {
@@ -31,8 +29,8 @@ class SliderManager {
 	bool bNeedReload;
 
 public:
-	vector<Slider> slidersBig;
-	vector<Slider> slidersSmall;
+	std::vector<Slider> slidersBig;
+	std::vector<Slider> slidersSmall;
 
 	SliderManager();
 	~SliderManager();
@@ -43,11 +41,11 @@ public:
 		mSliderCount = 0;
 	}
 
-	bool LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilters, const bool allPresets = false) {
+	bool LoadPresets(const std::string& basePath, const std::string& sliderSet, std::vector<std::string>& groupFilters, const bool allPresets = false) {
 		return presetCollection.LoadPresets(basePath, sliderSet, groupFilters, allPresets);
 	}
 
-	int SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {
+	int SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups) {
 		int index = 0;
 		for (auto &s : slidersBig) {
 			if (SliderHasChanged(s.name, true))
@@ -65,22 +63,22 @@ public:
 		return presetCollection.SavePreset(filePath, presetName, sliderSetName, assignGroups);
 	}
 
-	void SetSliderPreset(const string& presetName, const string& slider, float big = -1, float little = -1) {
+	void SetSliderPreset(const std::string& presetName, const std::string& slider, float big = -1, float little = -1) {
 		presetCollection.SetSliderPreset(presetName, slider, big, little);
 	}
 
-	float GetBigPresetValue(const string& presetName, const string& sliderName, float defVal = 0.0f);
-	float GetSmallPresetValue(const string& presetName, const string& sliderName, float defVal = 0.0f);
+	float GetBigPresetValue(const std::string& presetName, const std::string& sliderName, float defVal = 0.0f);
+	float GetSmallPresetValue(const std::string& presetName, const std::string& sliderName, float defVal = 0.0f);
 
-	void GetPresetNames(vector<string>& outNames) {
+	void GetPresetNames(std::vector<std::string>& outNames) {
 		presetCollection.GetPresetNames(outNames);
 	}
 
-	string GetPresetFileNames(const string& set) {
+	std::string GetPresetFileNames(const std::string& set) {
 		return presetCollection.GetPresetFileName(set);
 	}
 
-	void GetPresetGroups(const string& set, vector<string>& outGroups) {
+	void GetPresetGroups(const std::string& set, std::vector<std::string>& outGroups) {
 		presetCollection.GetPresetGroups(set, outGroups);
 	}
 
@@ -90,23 +88,23 @@ public:
 
 	void AddSlidersInSet(SliderSet& inSet);
 
-	void AddSlider(const string& name, bool invert = false, const string& dataSetName = "");
-	void AddHiddenSlider(const string& name, bool invert = false, bool isZap = false, bool isUV = false, const string& dataSetName = "");
-	void AddZapSlider(const string& name, const vector<string>& zapToggles, const string& dataSetName = "");
-	void AddUVSlider(const string& name, bool invert = false, bool isZap = false, const string& dataSetName = "");
-	void SetSliderDefaults(const string& slider, float bigVal, float smallVal);
-	void SetClampSlider(const string& slider);
-	void AddSliderLink(const string& slider, const string& dataSetName);
+	void AddSlider(const std::string& name, bool invert = false, const std::string& dataSetName = "");
+	void AddHiddenSlider(const std::string& name, bool invert = false, bool isZap = false, bool isUV = false, const std::string& dataSetName = "");
+	void AddZapSlider(const std::string& name, const std::vector<std::string>& zapToggles, const std::string& dataSetName = "");
+	void AddUVSlider(const std::string& name, bool invert = false, bool isZap = false, const std::string& dataSetName = "");
+	void SetSliderDefaults(const std::string& slider, float bigVal, float smallVal);
+	void SetClampSlider(const std::string& slider);
+	void AddSliderLink(const std::string& slider, const std::string& dataSetName);
 
-	float GetSlider(const string& slider, bool isSmall);
-	vector<string> GetSliderZapToggles(const string& slider);
-	void SetSlider(const string& slider, bool isSmall, float val);
-	void SetChanged(const string& slider, bool isSmall);
+	float GetSlider(const std::string& slider, bool isSmall);
+	std::vector<std::string> GetSliderZapToggles(const std::string& slider);
+	void SetSlider(const std::string& slider, bool isSmall, float val);
+	void SetChanged(const std::string& slider, bool isSmall);
 
-	void InitializeSliders(const string& presetName = "");
+	void InitializeSliders(const std::string& presetName = "");
 
-	bool SliderHasChanged(const string& slider, bool getBig);
-	float SliderValue(const string& slider, bool getBig);
+	bool SliderHasChanged(const std::string& slider, bool getBig);
+	float SliderValue(const std::string& slider, bool getBig);
 
 	void FlagReload(bool needReload) {
 		bNeedReload = needReload;
@@ -116,7 +114,7 @@ public:
 		return bNeedReload;
 	}
 
-	void GetSmallSliderList(vector<string>& names);
-	void GetBigSliderList(vector<string>& names);
+	void GetSmallSliderList(std::vector<std::string>& names);
+	void GetBigSliderList(std::vector<std::string>& names);
 	int VisibleSliderCount() { return mSliderCount; }
 };

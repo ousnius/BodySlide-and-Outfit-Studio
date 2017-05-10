@@ -42,28 +42,28 @@ enum TargetGame {
 
 class ShapeItemData : public wxTreeItemData  {
 public:
-	string shapeName;
-	ShapeItemData(const string& inShapeName = "") {
+	std::string shapeName;
+	ShapeItemData(const std::string& inShapeName = "") {
 		shapeName = inShapeName;
 	}
 };
 
 class SegmentItemData : public wxTreeItemData  {
 public:
-	set<uint> tris;
+	std::set<uint> tris;
 
-	SegmentItemData(const set<uint>& inTriangles) {
+	SegmentItemData(const std::set<uint>& inTriangles) {
 		tris = inTriangles;
 	}
 };
 
 class SubSegmentItemData : public wxTreeItemData  {
 public:
-	set<uint> tris;
+	std::set<uint> tris;
 	uint type;
-	vector<float> extraData;
+	std::vector<float> extraData;
 
-	SubSegmentItemData(const set<uint>& inTriangles, const uint& inType, const vector<float>& inExtraData = vector<float>()) {
+	SubSegmentItemData(const std::set<uint>& inTriangles, const uint& inType, const std::vector<float>& inExtraData = std::vector<float>()) {
 		tris = inTriangles;
 		type = inType;
 		extraData = inExtraData;
@@ -72,11 +72,11 @@ public:
 
 class PartitionItemData : public wxTreeItemData  {
 public:
-	vector<ushort> verts;
-	vector<Triangle> tris;
+	std::vector<ushort> verts;
+	std::vector<Triangle> tris;
 	ushort type;
 
-	PartitionItemData(const vector<ushort>& inVerts, const vector<Triangle>& inTris, const ushort& inType) {
+	PartitionItemData(const std::vector<ushort>& inVerts, const std::vector<Triangle>& inTris, const ushort& inType) {
 		verts = inVerts;
 		tris = inTris;
 		type = inType;
@@ -89,10 +89,10 @@ struct WeightCopyOptions {
 };
 
 struct ReferenceTemplate {
-	string name;
-	string sourceFile;
-	string set;
-	string shape;
+	std::string name;
+	std::string sourceFile;
+	std::string set;
+	std::string shape;
 };
 
 
@@ -105,24 +105,24 @@ public:
 
 	void SetNotifyWindow(wxWindow* win);
 
-	void AddMeshFromNif(NifFile* nif, const string& shapeName, bool buildNormals);
+	void AddMeshFromNif(NifFile* nif, const std::string& shapeName, bool buildNormals);
 
-	void RenameShape(const string& shapeName, const string& newShapeName) {
+	void RenameShape(const std::string& shapeName, const std::string& newShapeName) {
 		gls.RenameMesh(shapeName, newShapeName);
 	}
 
-	void SetMeshTextures(const string& shapeName, const vector<string>& textureFiles, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile());
+	void SetMeshTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile());
 
-	mesh* GetMesh(const string& shapeName) {
+	mesh* GetMesh(const std::string& shapeName) {
 		return gls.GetMesh(shapeName);
 	}
 
-	void UpdateMeshVertices(const string& shapeName, vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true, vector<Vector2>* uvs = nullptr);
-	void RecalculateMeshBVH(const string& shapeName);
+	void UpdateMeshVertices(const std::string& shapeName, std::vector<Vector3>* verts, bool updateBVH = true, bool recalcNormals = true, bool render = true, std::vector<Vector2>* uvs = nullptr);
+	void RecalculateMeshBVH(const std::string& shapeName);
 
-	void ShowShape(const string& shapeName, bool show = true);
-	void SetActiveShapes(const vector<string>& shapeNames);
-	void SetSelectedShape(const string& shapeName);
+	void ShowShape(const std::string& shapeName, bool show = true);
+	void SetActiveShapes(const std::vector<std::string>& shapeNames);
+	void SetSelectedShape(const std::string& shapeName);
 
 	TweakUndo* GetStrokeManager() {
 		return strokeManager;
@@ -208,7 +208,7 @@ public:
 		bGlobalBrushCollision = on;
 	}
 
-	void SetShapeGhostMode(const string& shapeName, bool on = true) {
+	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m) return;
 		if (on)
@@ -236,7 +236,7 @@ public:
 		}
 	}
 
-	void RecalcNormals(const string& shape) {
+	void RecalcNormals(const std::string& shape) {
 		mesh* m = gls.GetMesh(shape);
 		if (!m)
 			return;
@@ -337,7 +337,7 @@ public:
 			m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
 	}
 
-	void GetActiveMask(unordered_map<ushort, float>& mask) {
+	void GetActiveMask(std::unordered_map<ushort, float>& mask) {
 		if (gls.GetActiveMeshes().empty())
 			return;
 
@@ -349,7 +349,7 @@ public:
 		}
 	}
 
-	void GetActiveUnmasked(unordered_map<ushort, float>& mask) {
+	void GetActiveUnmasked(std::unordered_map<ushort, float>& mask) {
 		if (gls.GetActiveMeshes().empty())
 			return;
 
@@ -360,7 +360,7 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
-	void GetShapeMask(unordered_map<ushort, float>& mask, const string& shapeName) {
+	void GetShapeMask(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -371,7 +371,7 @@ public:
 		}
 	}
 
-	void GetShapeUnmasked(unordered_map<ushort, float>& mask, const string& shapeName) {
+	void GetShapeUnmasked(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
@@ -381,12 +381,12 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
-	void InvertMaskTris(unordered_map<ushort, float>& mask, const string& shapeName) {
+	void InvertMaskTris(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
-		unordered_map<ushort, float> triMask;
+		std::unordered_map<ushort, float> triMask;
 		for (int t = 0; t < m->nTris; t++) {
 			if (mask.find(m->tris[t].p1) != mask.end() ||
 				mask.find(m->tris[t].p2) != mask.end() ||
@@ -397,7 +397,7 @@ public:
 			}
 		}
 
-		unordered_map<ushort, float> invertMask;
+		std::unordered_map<ushort, float> invertMask;
 		for (int t = 0; t < m->nTris; t++) {
 			if (triMask.find(m->tris[t].p1) == triMask.end())
 				invertMask.emplace(m->tris[t].p1, 1.0f);
@@ -407,7 +407,7 @@ public:
 				invertMask.emplace(m->tris[t].p3, 1.0f);
 		}
 
-		mask = move(invertMask);
+		mask = std::move(invertMask);
 	}
 
 	void InvertMask() {
@@ -419,7 +419,7 @@ public:
 		}
 	}
 
-	void DeleteMesh(const string& shape) {
+	void DeleteMesh(const std::string& shape) {
 		gls.DeleteMesh(shape);
 	}
 
@@ -507,7 +507,7 @@ private:
 	int lastX;
 	int lastY;
 
-	set<int> BVHUpdateQueue;
+	std::set<int> BVHUpdateQueue;
 
 	OutfitStudio* os;
 
@@ -572,7 +572,7 @@ public:
 	wxGLPanel* glView = nullptr;
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
-	string activeSlider;
+	std::string activeSlider;
 	bool bEditSlider;
 
 	wxTreeCtrl* outfitShapes;
@@ -612,24 +612,24 @@ public:
 		TweakUndo sliderStrokes;			// This probably shouldn't be here, but it's a convenient location to store undo info.
 	};
 
-	map<string, SliderDisplay*> sliderDisplays;
+	std::map<std::string, SliderDisplay*> sliderDisplays;
 
 	void CreateSetSliders();
 
-	string NewSlider(const string& suggestedName = "", bool skipPrompt = false);
+	std::string NewSlider(const std::string& suggestedName = "", bool skipPrompt = false);
 
 	void SetSliderValue(int index, int val);
-	void SetSliderValue(const string& name, int val);
+	void SetSliderValue(const std::string& name, int val);
 
 	void ApplySliders(bool recalcBVH = true);
 
 	void ShowSliderEffect(int slider, bool show = true);
-	void ShowSliderEffect(const string& sliderName, bool show = true);
+	void ShowSliderEffect(const std::string& sliderName, bool show = true);
 
-	void SelectShape(const string& shapeName);
-	vector<string> GetShapeList();
+	void SelectShape(const std::string& shapeName);
+	std::vector<std::string> GetShapeList();
 
-	void UpdateShapeSource(const string& shapeName);
+	void UpdateShapeSource(const std::string& shapeName);
 
 	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
 	void UpdateActiveShapeUI();
@@ -643,12 +643,12 @@ public:
 	void AnimationGUIFromProj();
 	void RefreshGUIFromProj();
 
-	vector<ShapeItemData*>& GetSelectedItems();
-	string GetActiveBone();
+	std::vector<ShapeItemData*>& GetSelectedItems();
+	std::string GetActiveBone();
 
 	bool NotifyStrokeStarting();
 
-	void EnterSliderEdit(const string& sliderName);
+	void EnterSliderEdit(const std::string& sliderName);
 	void ExitSliderEdit();
 	void MenuEnterSliderEdit();
 	void MenuExitSliderEdit();
@@ -727,7 +727,7 @@ public:
 	}
 
 	wxGauge* progressBar = nullptr;
-	vector<pair<int, int>> progressStack;
+	std::vector<std::pair<int, int>> progressStack;
 	int progressVal = 0;
 
 	void StartProgress(const wxString& msg = "") {
@@ -797,23 +797,23 @@ private:
 	Vector3 previewMove;
 	Vector3 previewScale;
 	Vector3 previewRotation;
-	unordered_map<string, unordered_map<ushort, Vector3>> previewDiff;
+	std::unordered_map<std::string, std::unordered_map<ushort, Vector3>> previewDiff;
 
-	vector<ShapeItemData*> selectedItems;
-	string activeBone;
+	std::vector<ShapeItemData*> selectedItems;
+	std::string activeBone;
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
 
-	vector<ReferenceTemplate> refTemplates;
+	std::vector<ReferenceTemplate> refTemplates;
 
-	void createSliderGUI(const string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
-	void HighlightSlider(const string& name);
+	void createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
+	void HighlightSlider(const std::string& name);
 	void ZeroSliders();
 
 	void UpdateReferenceTemplates();
 
 	void ClearProject();
-	void RenameProject(const string& projectName);
+	void RenameProject(const std::string& projectName);
 
 	void WorkingGUIFromProj();
 
@@ -902,8 +902,8 @@ private:
 	void OnPartitionApply(wxCommandEvent& event);
 	void OnPartitionReset(wxCommandEvent& event);
 
-	void CreateSegmentTree(const string& shapeName = "");
-	void CreatePartitionTree(const string& shapeName = "");
+	void CreateSegmentTree(const std::string& shapeName = "");
+	void CreatePartitionTree(const std::string& shapeName = "");
 
 	void OnSelectTool(wxCommandEvent& event);
 
@@ -1139,5 +1139,5 @@ public:
 private:
 	OutfitStudio *owner;
 	wxDragResult lastResult;
-	string targetSlider;
+	std::string targetSlider;
 };

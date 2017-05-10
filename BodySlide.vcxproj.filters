@@ -59,6 +59,12 @@
     <Filter Include="Libraries\SOIL2">
       <UniqueIdentifier>{746df173-aa97-45f5-9200-676a6b050846}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Libraries\NIF">
+      <UniqueIdentifier>{d5f75115-c5ce-431b-8980-64f7e6301cba}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Libraries\NIF\Utilities">
+      <UniqueIdentifier>{87e732ef-b103-43f4-8637-0929f126386c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Image Include="BodySlide.ico">
@@ -1195,12 +1201,6 @@
     <ClInclude Include="src\files\MaterialFile.h">
       <Filter>Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\files\NifBlock.h">
-      <Filter>Files</Filter>
-    </ClInclude>
-    <ClInclude Include="src\files\NifFile.h">
-      <Filter>Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\program\OutfitStudio.h">
       <Filter>Program</Filter>
     </ClInclude>
@@ -1234,25 +1234,13 @@
     <ClInclude Include="src\utils\ConfigurationManager.h">
       <Filter>Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="src\utils\KDMatcher.h">
-      <Filter>Utilities</Filter>
-    </ClInclude>
     <ClInclude Include="src\utils\Log.h">
-      <Filter>Utilities</Filter>
-    </ClInclude>
-    <ClInclude Include="src\utils\Object3d.h">
       <Filter>Utilities</Filter>
     </ClInclude>
     <ClInclude Include="src\utils\AABBTree.h">
       <Filter>Utilities</Filter>
     </ClInclude>
-    <ClInclude Include="lib\Miniball.hpp">
-      <Filter>Libraries</Filter>
-    </ClInclude>
     <ClInclude Include="lib\DDS.h">
-      <Filter>Libraries</Filter>
-    </ClInclude>
-    <ClInclude Include="lib\half.hpp">
       <Filter>Libraries</Filter>
     </ClInclude>
     <ClInclude Include="src\components\Anim.h">
@@ -1342,6 +1330,54 @@
     <ClInclude Include="lib\SOIL2\image_helper.h">
       <Filter>Libraries\SOIL2</Filter>
     </ClInclude>
+    <ClInclude Include="lib\NIF\NifFile.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\utils\Miniball.hpp">
+      <Filter>Libraries\NIF\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\utils\Object3d.h">
+      <Filter>Libraries\NIF\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\utils\half.hpp">
+      <Filter>Libraries\NIF\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\utils\KDMatcher.h">
+      <Filter>Libraries\NIF\Utilities</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\Animation.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\BasicTypes.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\ExtraData.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\Keys.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\bhk.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\Particles.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\Geometry.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\Skin.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\Objects.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\Shaders.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\NIF\VertexData.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1407,12 +1443,6 @@
     <ClCompile Include="src\files\MaterialFile.cpp">
       <Filter>Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\files\NifBlock.cpp">
-      <Filter>Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\files\NifFile.cpp">
-      <Filter>Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\program\OutfitStudio.cpp">
       <Filter>Program</Filter>
     </ClCompile>
@@ -1447,9 +1477,6 @@
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\Log.cpp">
-      <Filter>Utilities</Filter>
-    </ClCompile>
-    <ClCompile Include="src\utils\Object3d.cpp">
       <Filter>Utilities</Filter>
     </ClCompile>
     <ClCompile Include="src\utils\AABBTree.cpp">
@@ -1499,6 +1526,39 @@
     </ClCompile>
     <ClCompile Include="lib\SOIL2\image_helper.c">
       <Filter>Libraries\SOIL2</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\NifFile.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\utils\Object3d.cpp">
+      <Filter>Libraries\NIF\Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\Animation.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\BasicTypes.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\ExtraData.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\bhk.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\Particles.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\Geometry.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\Skin.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\Objects.cpp">
+      <Filter>Libraries\NIF</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\Shaders.cpp">
+      <Filter>Libraries\NIF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

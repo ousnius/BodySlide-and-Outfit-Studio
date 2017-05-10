@@ -9,11 +9,9 @@ See the included LICENSE file
 #include "OutfitStudio.h"
 #include <wx/clrpicker.h>
 
-using namespace std;
-
 class ShapeProperties : public wxDialog {
 public:
-	ShapeProperties(wxWindow*, NifFile*, const string&);
+	ShapeProperties(wxWindow*, NifFile*, const std::string&);
 	~ShapeProperties();
 
 private:
@@ -39,15 +37,15 @@ private:
 	wxCheckBox* subIndex = nullptr;
 	wxCheckBox* skinned = nullptr;
 
-	vector<int> extraDataIndices;
+	std::vector<int> extraDataIndices;
 	wxPanel* pgExtraData = nullptr;
 	wxFlexGridSizer* extraDataGrid = nullptr;
 
 	OutfitStudio* os = nullptr;
 	NifFile* nif = nullptr;
-	string shapeName;
+	std::string shapeName;
 
-	string currentMaterialPath;
+	std::string currentMaterialPath;
 	bool currentSubIndex = false;
 
 	void GetShader();

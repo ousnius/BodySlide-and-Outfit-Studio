@@ -36,15 +36,15 @@ void Automorph::ClearSourceShapes() {
 	foreignShapes.clear();
 }
 
-void Automorph::RenameResultDiffData(const string& shape, const string& oldName, const string& newName) {
-	string setName = ResultDataName(shape, oldName);
-	string newSetName = shape + newName;
+void Automorph::RenameResultDiffData(const std::string& shape, const std::string& oldName, const std::string& newName) {
+	std::string setName = ResultDataName(shape, oldName);
+	std::string newSetName = shape + newName;
 
 	resultDiffData.RenameSet(setName, newSetName);
 	targetSliderDataNames.erase(setName);
 }
 
-void Automorph::RenameShape(const string& shapeName, const string& newShapeName) {
+void Automorph::RenameShape(const std::string& shapeName, const std::string& newShapeName) {
 	if (sourceShapes.find(shapeName) != sourceShapes.end()){
 		sourceShapes[newShapeName] = sourceShapes[shapeName];
 		sourceShapes.erase(shapeName);
@@ -55,12 +55,12 @@ void Automorph::RenameShape(const string& shapeName, const string& newShapeName)
 	}
 	resultDiffData.DeepRename(shapeName, newShapeName);
 
-	vector<string> newVals;
-	vector<string> oldKeys;
-	vector<string> newKeys;
+	std::vector<std::string> newVals;
+	std::vector<std::string> oldKeys;
+	std::vector<std::string> newKeys;
 	for (auto &tsdn : targetSliderDataNames) {
-		string newDN = tsdn.second;
-		string newKey = tsdn.first;
+		std::string newDN = tsdn.second;
+		std::string newKey = tsdn.first;
 		bool found = false;
 		size_t p = newDN.find(shapeName);
 		if (p == 0) {
@@ -86,7 +86,7 @@ void Automorph::RenameShape(const string& shapeName, const string& newShapeName)
 	}
 }
 
-void Automorph::SetRef(NifFile& ref, const string& refShape) {
+void Automorph::SetRef(NifFile& ref, const std::string& refShape) {
 	if (morphRef)
 		delete morphRef;
 
@@ -107,25 +107,25 @@ void Automorph::UnlinkRefDiffData() {
 	srcDiffData = &__srcDiffData;
 }
 
-void Automorph::ApplyDiffToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength) {
+void Automorph::ApplyDiffToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength) {
 	srcDiffData->ApplyDiff(sliderName, shapeTargetName, strength, inOutResult);
 }
 
-void Automorph::ApplyResultToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength) {
-	string setname = ResultDataName(shapeTargetName, sliderName);
+void Automorph::ApplyResultToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength) {
+	std::string setname = ResultDataName(shapeTargetName, sliderName);
 
 	resultDiffData.ApplyDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
-void Automorph::ApplyResultToUVs(const string& sliderName, const string& shapeTargetName, vector<Vector2>* inOutResult, float strength) {
-	string setname = ResultDataName(shapeTargetName, sliderName);
+void Automorph::ApplyResultToUVs(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector2>* inOutResult, float strength) {
+	std::string setname = ResultDataName(shapeTargetName, sliderName);
 
 	resultDiffData.ApplyUVDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
 void Automorph::SourceShapesFromNif(NifFile &baseNif) {
 	ClearSourceShapes();
-	vector<string> shapes;
+	std::vector<std::string> shapes;
 	baseNif.GetShapeList(shapes);
 	for (int i = 0; i < shapes.size(); i++) {
 		mesh* m = new mesh();
@@ -136,7 +136,7 @@ void Automorph::SourceShapesFromNif(NifFile &baseNif) {
 
 void Automorph::SourceShapesFromObj(ObjFile &baseObj) {
 	ClearSourceShapes();
-	vector<string> shapes;
+	std::vector<std::string> shapes;
 	baseObj.GetGroupList(shapes);
 	for (int i = 0; i < shapes.size(); i++) {
 		mesh* m = new mesh();
@@ -145,12 +145,12 @@ void Automorph::SourceShapesFromObj(ObjFile &baseObj) {
 	}
 }
 
-void Automorph::UpdateMeshFromNif(NifFile &baseNif, const string& shapeName) {
+void Automorph::UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
 
 	mesh* m = sourceShapes[shapeName];
-	vector<Vector3> upVerts;
+	std::vector<Vector3> upVerts;
 	baseNif.GetVertsForShape(shapeName, upVerts);
 
 	int numUpVerts = upVerts.size();
@@ -161,7 +161,7 @@ void Automorph::UpdateMeshFromNif(NifFile &baseNif, const string& shapeName) {
 		m->verts[i] = upVerts[i];
 }
 
-void Automorph::CopyMeshMask(mesh* m, const string& shapeName) {
+void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 	mesh* dm = sourceShapes[shapeName];
 	if (dm->nVerts != m->nVerts)
 		return;
@@ -176,15 +176,15 @@ void Automorph::CopyMeshMask(mesh* m, const string& shapeName) {
 		dm->vcolors[i] = m->vcolors[i];
 }
 
-void Automorph::LinkSourceShapeMesh(mesh* m, const string& shapeName) {
+void Automorph::LinkSourceShapeMesh(mesh* m, const std::string& shapeName) {
 	sourceShapes[shapeName] = m;
 	foreignShapes[shapeName] = m;
 }
 
-void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName) {
+void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const std::string& shapeName) {
 	m->shapeName = shapeName;
-	vector<Vector3> objVerts;
-	vector<Triangle> objTris;
+	std::vector<Vector3> objVerts;
+	std::vector<Triangle> objTris;
 	ref.CopyDataForGroup(shapeName, &objVerts, &objTris, nullptr);
 
 	//float c = 0.4f + (meshes.size() * 0.3f);
@@ -208,9 +208,9 @@ void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName)
 	}
 }
 
-void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName) {
-	vector<Vector3> nifVerts;
-	vector<Triangle> nifTris;
+void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shapeName) {
+	std::vector<Vector3> nifVerts;
+	std::vector<Triangle> nifTris;
 	ref.GetVertsForShape(shapeName, nifVerts);
 	ref.GetTrisForShape(shapeName, &nifTris);
 
@@ -234,7 +234,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName)
 		m->tris[j] = nifTris[j];
 }
 
-void Automorph::DeleteVerts(const string& shapeName, const vector<ushort>& indices) {
+void Automorph::DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices) {
 	resultDiffData.DeleteVerts(shapeName, indices);
 }
 
@@ -242,7 +242,7 @@ void Automorph::ClearProximityCache() {
 	prox_cache.clear();
 }
 
-void Automorph::BuildProximityCache(const string &shapeName, const float& proximityRadius) {
+void Automorph::BuildProximityCache(const std::string& shapeName, const float& proximityRadius) {
 	mesh* m = sourceShapes[shapeName];
 	int maxCount = 0;
 	int minCount = 60000;
@@ -261,7 +261,7 @@ void Automorph::BuildProximityCache(const string &shapeName, const float& proxim
 		if (resultCount > maxCount)
 			maxCount = resultCount;
 
-		vector<kd_query_result> indexResults;
+		std::vector<kd_query_result> indexResults;
 		for (int id = 0; id < resultCount; id++)
 			indexResults.push_back(refTree->queryResult[id]);
 
@@ -269,28 +269,28 @@ void Automorph::BuildProximityCache(const string &shapeName, const float& proxim
 	}
 }
 
-void Automorph::GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& outDiff) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::GetRawResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& outDiff) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		return;
 
 	outDiff.clear();
 
-	unordered_map<ushort, Vector3>* set = resultDiffData.GetDiffSet(setName);
+	std::unordered_map<ushort, Vector3>* set = resultDiffData.GetDiffSet(setName);
 	for (auto &i : *set)
 		outDiff[i.first] = i.second;
 }
 
-int  Automorph::GetResultDiffSize(const string& shapeName, const string& sliderName) {
-	string setname = ResultDataName(shapeName, sliderName);
+int  Automorph::GetResultDiffSize(const std::string& shapeName, const std::string& sliderName) {
+	std::string setname = ResultDataName(shapeName, sliderName);
 	if (!resultDiffData.TargetMatch(setname, shapeName))
 		return 0;
 
 	return resultDiffData.GetDiffSet(setname)->size();
 }
 
-void Automorph::ScaleResultDiff(const string& shapeName, const string& sliderName, float scaleValue) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::ScaleResultDiff(const std::string& shapeName, const std::string& sliderName, float scaleValue) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 	resultDiffData.ScaleDiff(setName, shapeName, scaleValue);
 }
 
@@ -303,17 +303,17 @@ void Automorph::LoadResultDiffs(SliderSet &fromSet) {
 				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
 }
 
-void Automorph::ClearResultSet(const string& sliderName) {
+void Automorph::ClearResultSet(const std::string& sliderName) {
 	resultDiffData.ClearSet(sliderName);
 }
 
-void Automorph::SaveResultDiff(const string& shapeName, const string& sliderName, const string& fileName) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::SaveResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& fileName) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 	resultDiffData.SaveSet(setName, shapeName, fileName);
 }
 
-void Automorph::SetResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		resultDiffData.AddEmptySet(setName, shapeName);
@@ -322,8 +322,8 @@ void Automorph::SetResultDiff(const string& shapeName, const string& sliderName,
 		resultDiffData.SumDiff(setName, shapeName, i.first, i.second);
 }
 
-void Automorph::UpdateResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 
 	if (!resultDiffData.TargetMatch(setName, shapeName))
 		resultDiffData.AddEmptySet(setName, shapeName);
@@ -334,8 +334,8 @@ void Automorph::UpdateResultDiff(const string& shapeName, const string& sliderNa
 	}
 }
 
-void Automorph::UpdateRefDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::UpdateRefDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 
 	if (!srcDiffData->TargetMatch(setName, shapeName))
 		srcDiffData->AddEmptySet(setName, shapeName);
@@ -346,22 +346,22 @@ void Automorph::UpdateRefDiff(const string& shapeName, const string& sliderName,
 	}
 }
 
-void Automorph::EmptyResultDiff(const string& shapeName, const string& sliderName) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::EmptyResultDiff(const std::string& shapeName, const std::string& sliderName) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 	resultDiffData.EmptySet(setName, shapeName);
 }
 
-void Automorph::ZeroVertDiff(const string& shapeName, const string& sliderName, vector<ushort>* vertSet, unordered_map<ushort, float>* mask) {
-	string setName = ResultDataName(shapeName, sliderName);
+void Automorph::ZeroVertDiff(const std::string& shapeName, const std::string& sliderName, std::vector<ushort>* vertSet, std::unordered_map<ushort, float>* mask) {
+	std::string setName = ResultDataName(shapeName, sliderName);
 	resultDiffData.ZeroVertDiff(setName, shapeName, vertSet, mask);
 }
 
-void Automorph::SetResultDataName(const string& shapeName, const string& sliderName, const string& dataName) {
+void Automorph::SetResultDataName(const std::string& shapeName, const std::string& sliderName, const std::string& dataName) {
 	targetSliderDataNames[shapeName + sliderName] = dataName;
 }
 
-string Automorph::ResultDataName(const string& shapeName, const string& sliderName) {
-	string search = shapeName + sliderName;
+std::string Automorph::ResultDataName(const std::string& shapeName, const std::string& sliderName) {
+	std::string search = shapeName + sliderName;
 	auto f = targetSliderDataNames.find(search);
 	if (f == targetSliderDataNames.end())
 		return search;
@@ -369,8 +369,8 @@ string Automorph::ResultDataName(const string& shapeName, const string& sliderNa
 	return f->second;
 }
 
-void Automorph::GenerateResultDiff(const string& shapeName, const string &sliderName, const string& refDataName, const int& maxResults) {
-	unordered_map<ushort, Vector3>* diffData = srcDiffData->GetDiffSet(refDataName);
+void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int& maxResults) {
+	std::unordered_map<ushort, Vector3>* diffData = srcDiffData->GetDiffSet(refDataName);
 	if (!diffData)
 		return;
 
@@ -385,7 +385,7 @@ void Automorph::GenerateResultDiff(const string& shapeName, const string &slider
 	resultDiffData.AddEmptySet(shapeName + sliderName, shapeName);
 
 	for (int i = 0; i < m->nVerts; i++) {
-		vector<kd_query_result>* vertProx = &prox_cache[i];
+		std::vector<kd_query_result>* vertProx = &prox_cache[i];
 		int nValues = vertProx->size();
 		if (nValues > maxResults)
 			nValues = maxResults;
@@ -395,8 +395,8 @@ void Automorph::GenerateResultDiff(const string& shapeName, const string &slider
 
 		double weight;
 		Vector3 totalMove;
-		vector<double> invDist(nValues);
-		vector<Vector3> effectVector(nValues);
+		std::vector<double> invDist(nValues);
+		std::vector<Vector3> effectVector(nValues);
 		for (int j = 0; j < nValues; j++) {
 			ushort vi = (*vertProx)[j].vertex_index;
 			auto diffItem = diffData->find(vi);

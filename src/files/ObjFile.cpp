@@ -16,7 +16,7 @@ ObjFile::~ObjFile() {
 		delete d.second;
 }
 
-int ObjFile::AddGroup(const string& name, const vector<Vector3>& verts, const vector<Triangle>& tris, const vector<Vector2>& uvs) {
+int ObjFile::AddGroup(const std::string& name, const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector2>& uvs) {
 	if (name.empty() || verts.empty())
 		return 1;
 
@@ -30,8 +30,8 @@ int ObjFile::AddGroup(const string& name, const vector<Vector3>& verts, const ve
 	return 0;
 }
 
-int ObjFile::LoadForNif(const string &fileName) {
-	fstream base(fileName.c_str(), ios_base::in | ios_base::binary);
+int ObjFile::LoadForNif(const std::string& fileName) {
+	std::fstream base(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
 	if (base.fail())
 		return 1;
 
@@ -40,7 +40,7 @@ int ObjFile::LoadForNif(const string &fileName) {
 	return 0;
 }
 
-int ObjFile::LoadForNif(fstream &base) {
+int ObjFile::LoadForNif(std::fstream& base) {
 	ObjData* di = new ObjData();
 
 	Vector3 v;
@@ -48,22 +48,22 @@ int ObjFile::LoadForNif(fstream &base) {
 	Vector2 uv2;
 	Triangle t;
 
-	string dump;
-	string curgrp;
-	string facept1;
-	string facept2;
-	string facept3;
-	string facept4;
+	std::string dump;
+	std::string curgrp;
+	std::string facept1;
+	std::string facept2;
+	std::string facept3;
+	std::string facept4;
 	int f[4];
 	int ft[4];
 	int nPoints = 0;
 	int v_idx[4];
 
-	vector<Vector3> verts;
-	vector<Vector2> uvs;
+	std::vector<Vector3> verts;
+	std::vector<Vector2> uvs;
 	size_t pos;
-	map<int, vector<VertUV>> vertMap;
-	map<int, vector<VertUV>>::iterator savedVert;
+	std::map<int, std::vector<VertUV>> vertMap;
+	std::map<int, std::vector<VertUV>>::iterator savedVert;
 
 	bool gotface = false;
 
@@ -190,38 +190,38 @@ int ObjFile::LoadForNif(fstream &base) {
 }
 
 
-int ObjFile::Save(const string &fileName) {
-	ofstream file(fileName.c_str(), ios_base::binary);
+int ObjFile::Save(const std::string &fileName) {
+	std::ofstream file(fileName.c_str(), std::ios_base::binary);
 	if (file.fail())
 		return 1;
 
-	file << "# Outfit Studio - OBJ Export" << endl;
-	file << "# https://github.com/ousnius/BodySlide-and-Outfit-Studio" << endl << endl;
+	file << "# Outfit Studio - OBJ Export" << std::endl;
+	file << "# https://github.com/ousnius/BodySlide-and-Outfit-Studio" << std::endl << std::endl;
 
 	size_t pointOffset = 0;
 
 	for (auto& d : data) {
-		file << "g " << d.first << endl;
-		file << "usemtl NoMaterial" << endl << endl;
+		file << "g " << d.first << std::endl;
+		file << "usemtl NoMaterial" << std::endl << std::endl;
 
 		for (int i = 0; i < d.second->verts.size(); i++) {
 			file << "v " << (d.second->verts[i].x + offset.x) * scale.x
 				<< " " << (d.second->verts[i].y + offset.y) * scale.y
 				<< " " << (d.second->verts[i].z + offset.z) * scale.z
-				<< endl;
+				<< std::endl;
 		}
-		file << endl;
+		file << std::endl;
 
 		for (int i = 0; i < d.second->uvs.size(); i++)
-			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << endl;
-		file << endl;
+			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << std::endl;
+		file << std::endl;
 
 		if (d.second->uvs.empty()) {
 			for (int i = 0; i < d.second->tris.size(); i++) {
 				file << "f " << d.second->tris[i].p1 + pointOffset + 1 << " "
 					<< d.second->tris[i].p2 + pointOffset + 1 << " "
 					<< d.second->tris[i].p3 + pointOffset + 1
-					<< endl;
+					<< std::endl;
 			}
 		}
 		else {
@@ -229,10 +229,10 @@ int ObjFile::Save(const string &fileName) {
 				file << "f " << d.second->tris[i].p1 + pointOffset + 1 << "/" << d.second->tris[i].p1 + pointOffset + 1 << " "
 					<< d.second->tris[i].p2 + pointOffset + 1 << "/" << d.second->tris[i].p2 + pointOffset + 1 << " "
 					<< d.second->tris[i].p3 + pointOffset + 1 << "/" << d.second->tris[i].p3 + pointOffset + 1
-					<< endl;
+					<< std::endl;
 			}
 		}
-		file << endl;
+		file << std::endl;
 
 		pointOffset += d.second->verts.size();
 	}
@@ -241,7 +241,7 @@ int ObjFile::Save(const string &fileName) {
 	return 0;
 }
 
-bool ObjFile::CopyDataForGroup(const string &name, vector<Vector3> *v, vector<Triangle> *t, vector<Vector2> *uv) {
+bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v, std::vector<Triangle> *t, std::vector<Vector2> *uv) {
 	if (data.find(name) == data.end())
 		return false;
 
@@ -272,14 +272,14 @@ bool ObjFile::CopyDataForGroup(const string &name, vector<Vector3> *v, vector<Tr
 	return true;
 }
 
-bool ObjFile::CopyDataForIndex(int index, vector<Vector3> *v, vector<Triangle> *t, vector<Vector2> *uv) {
+bool ObjFile::CopyDataForIndex(int index, std::vector<Vector3> *v, std::vector<Triangle> *t, std::vector<Vector2> *uv) {
 	if (objGroups.size() > index)
 		return CopyDataForGroup(objGroups[index], v, t, uv);
 	else
 		return false;
 }
 
-void ObjFile::GetGroupList(std::vector<string> &shapeNames) {
+void ObjFile::GetGroupList(std::vector<std::string> &shapeNames) {
 	shapeNames.clear();
 	for (int i = 0; i < objGroups.size(); i++)
 		shapeNames.push_back(objGroups[i]);

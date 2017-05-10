@@ -117,7 +117,7 @@ void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& norm
 }
 
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
-	vector<string> shapeList;
+	std::vector<std::string> shapeList;
 	nif->GetShapeList(shapeList);
 	mesh* m = nullptr;
 	for (int i = 0; i < shapeList.size(); i++) {
@@ -146,7 +146,7 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 }
 
 void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
-	vector<string> shapeList;
+	std::vector<std::string> shapeList;
 	nif->GetShapeList(shapeList);
 	mesh* m = nullptr;
 	if (shapeName == nullptr)
@@ -164,7 +164,7 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 			if (iter != shapeMaterials.end())
 				m->material = iter->second;
 			else
-				AddNifShapeTextures(nif, string(shapeName));
+				AddNifShapeTextures(nif, std::string(shapeName));
 
 		}
 		else if (shapeName) {
@@ -188,12 +188,12 @@ void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
 	gls.RenderOneFrame();
 }
 
-void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeName) {
+void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName) {
 	bool hasMat = false;
 	wxString matFile;
 
 	const byte MAX_TEXTURE_PATHS = 10;
-	vector<string> texFiles(MAX_TEXTURE_PATHS);
+	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
 
 	NiShader* shader = fromNif->GetShader(shapeName);
 	if (shader) {
@@ -223,7 +223,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 						archive->fileContents(matFile.ToStdString(), outData);
 
 						if (!outData.IsEmpty()) {
-							data = move(outData);
+							data = std::move(outData);
 							break;
 						}
 					}
@@ -231,8 +231,8 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 			}
 
 			if (!data.IsEmpty()) {
-				string content((char*)data.GetData(), data.GetDataLen());
-				istringstream contentStream(content, istringstream::binary);
+				std::string content((char*)data.GetData(), data.GetDataLen());
+				std::istringstream contentStream(content, std::istringstream::binary);
 
 				mat = MaterialFile(contentStream);
 			}
@@ -267,10 +267,10 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 
 	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 		if (!texFiles[i].empty()) {
-			texFiles[i] = regex_replace(texFiles[i], regex("/+|\\\\+"), "\\");												// Replace multiple slashes or forward slashes with one backslash
-			texFiles[i] = regex_replace(texFiles[i], regex("^(.*?)\\\\textures\\\\", regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
-			texFiles[i] = regex_replace(texFiles[i], regex("^\\\\+"), "");													// Remove all backslashes from the front
-			texFiles[i] = regex_replace(texFiles[i], regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\");	// If the path doesn't start with "textures\", add it to the front
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("/+|\\\\+"), "\\");													// Replace multiple slashes or forward slashes with one backslash
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(.*?)\\\\textures\\\\", std::regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^\\\\+"), "");														// Remove all backslashes from the front
+			texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(?!^textures\\\\)", std::regex_constants::icase), "textures\\");		// If the path doesn't start with "textures\", add it to the front
 			
 			texFiles[i] = baseDataPath + texFiles[i];
 		}
@@ -283,8 +283,8 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const string& shapeNam
 	//texFiles[1] = "d:\\proj\\FemaleBody_2_msn.dds";
 	//texFiles[1] = "d:\\proj\\TangentNormalsTest.png";
 
-	string vShader = "res\\shaders\\default.vert";
-	string fShader = "res\\shaders\\default.frag";
+	std::string vShader = "res\\shaders\\default.vert";
+	std::string fShader = "res\\shaders\\default.frag";
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == FO4) {

@@ -6,20 +6,18 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../files/NifFile.h"
+#include "../NIF/NifFile.h"
+#include "../NIF/utils/KDMatcher.h"
 #include "../files/ObjFile.h"
 #include "Mesh.h"
 #include "SliderSet.h"
 
-#pragma warning (disable: 4018)
-using namespace std;
-
 class Automorph {
 	kd_tree* refTree;
-	map<string, mesh*> sourceShapes;
-	map<string, mesh*> foreignShapes;	// Meshes linked by LinkSourceShapeMesh loaded and managed outside the.
+	std::map<std::string, mesh*> sourceShapes;
+	std::map<std::string, mesh*> foreignShapes;	// Meshes linked by LinkSourceShapeMesh loaded and managed outside the.
 	// Class - to prevent AutoMorph from deleting it. Golly, smart pointers would be nice.
-	map<int, vector<kd_query_result>> prox_cache;
+	std::map<int, std::vector<kd_query_result>> prox_cache;
 	DiffDataSets __srcDiffData;			// Unternally loaded and stored diff data.diffs loaded from existing reference .bsd files.
 	DiffDataSets* srcDiffData;			// Either __srcDiffData or an external linked data set.
 	DiffDataSets resultDiffData;		// Diffs calculated by AutoMorph.
@@ -29,7 +27,7 @@ class Automorph {
 	// A translation between shapetarget + slidername and the data name for the result diff data set.
 	// This only has values when a sliderset is loaded from disk and a slider's data name for a target
 	// doesn't match the format targetname + slidername.
-	unordered_map<string, string> targetSliderDataNames;
+	std::unordered_map<std::string, std::string> targetSliderDataNames;
 
 public:
 	mesh* morphRef;
@@ -42,55 +40,55 @@ public:
 	}
 	void ClearSourceShapes();
 
-	void RenameResultDiffData(const string& shape, const string& oldName, const string& newName);
-	void RenameShape(const string& shapeName, const string& newShapeName);
+	void RenameResultDiffData(const std::string& shape, const std::string& oldName, const std::string& newName);
+	void RenameShape(const std::string& shapeName, const std::string& newShapeName);
 
 	void EnableMasking(bool enable = true) {
 		bEnableMask = enable;
 	}
 
-	void SetRef(NifFile& Ref, const string& refShape);
+	void SetRef(NifFile& Ref, const std::string& refShape);
 
 	void LinkRefDiffData(DiffDataSets* diffData);
 	void UnlinkRefDiffData();
 
-	void ApplyDiffToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength = 1.0f);
-	void ApplyResultToVerts(const string& sliderName, const string& shapeTargetName, vector<Vector3>* inOutResult, float strength = 1.0f);
-	void ApplyResultToUVs(const string& sliderName, const string& shapeTargetName, vector<Vector2>* inOutResult, float strength = 1.0f);
+	void ApplyDiffToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength = 1.0f);
+	void ApplyResultToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength = 1.0f);
+	void ApplyResultToUVs(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector2>* inOutResult, float strength = 1.0f);
 
 	void SourceShapesFromNif(NifFile& baseNif);
 	void SourceShapesFromObj(ObjFile& baseObj);
-	void LinkSourceShapeMesh(mesh* m, const string& shapeName);
-	void UpdateMeshFromNif(NifFile &baseNif, const string& shapeName);
-	void CopyMeshMask(mesh*m, const string& shapeName);
+	void LinkSourceShapeMesh(mesh* m, const std::string& shapeName);
+	void UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName);
+	void CopyMeshMask(mesh*m, const std::string& shapeName);
 
-	void MeshFromNifShape(mesh* m, NifFile& ref, const string& shapeName);
-	void MeshFromObjShape(mesh* m, ObjFile& ref, const string& shapeName);
-	void DeleteVerts(const string& shapeName, const vector<ushort>& indices);
+	void MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shapeName);
+	void MeshFromObjShape(mesh* m, ObjFile& ref, const std::string& shapeName);
+	void DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices);
 
 	void ClearProximityCache();
-	void BuildProximityCache(const string& shapeName, const float& proximityRadius = 10.0f);
+	void BuildProximityCache(const std::string& shapeName, const float& proximityRadius = 10.0f);
 
 	// shapeName = name of the mesh to morph (eg "IronArmor") also known as target name.
 	// sliderName = name of the morph to apply (eg "BreastsSH").
-	void GenerateResultDiff(const string& shapeName, const string& sliderName, const string& refDataName, const int& maxResults = 10);
+	void GenerateResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& refDataName, const int& maxResults = 10);
 
-	void SetResultDataName(const string& shapeName, const string& sliderName, const string& dataName);
-	string ResultDataName(const string& shapeName, const string& sliderName);
+	void SetResultDataName(const std::string& shapeName, const std::string& sliderName, const std::string& dataName);
+	std::string ResultDataName(const std::string& shapeName, const std::string& sliderName);
 
-	void GetRawResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& outDiff);
-	int GetResultDiffSize(const string& shapeName, const string& sliderName);
+	void GetRawResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& outDiff);
+	int GetResultDiffSize(const std::string& shapeName, const std::string& sliderName);
 
-	void SetResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff);
-	void UpdateResultDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff);
-	void UpdateRefDiff(const string& shapeName, const string& sliderName, unordered_map<ushort, Vector3>& diff);
-	void EmptyResultDiff(const string& shapeName, const string& sliderName);
-	void ZeroVertDiff(const string& shapeName, const string& sliderName, vector<ushort>* vertSet, unordered_map<ushort, float>* mask);
-	void ScaleResultDiff(const string& shapeName, const string& sliderName, float scaleValue);
+	void SetResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff);
+	void UpdateResultDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff);
+	void UpdateRefDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& diff);
+	void EmptyResultDiff(const std::string& shapeName, const std::string& sliderName);
+	void ZeroVertDiff(const std::string& shapeName, const std::string& sliderName, std::vector<ushort>* vertSet, std::unordered_map<ushort, float>* mask);
+	void ScaleResultDiff(const std::string& shapeName, const std::string& sliderName, float scaleValue);
 
 	void LoadResultDiffs(SliderSet &fromSet);
 
-	void ClearResultSet(const string& sliderName);
+	void ClearResultSet(const std::string& sliderName);
 
-	void SaveResultDiff(const string& shapeName, const string& sliderName, const string& fileName);
+	void SaveResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& fileName);
 };

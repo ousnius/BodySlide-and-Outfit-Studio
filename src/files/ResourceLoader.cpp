@@ -22,7 +22,7 @@ ResourceLoader::~ResourceLoader() {
 
 bool ResourceLoader::extChecked = false;
 
-GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap) {
+GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap) {
 	auto ti = textures.find(inFileName);
 	if (ti != textures.end())
 		return ti->second;
@@ -30,7 +30,7 @@ GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap) {
 	GLuint textureID = 0;
 	wxFileName fileName(inFileName);
 	wxString fileExt = fileName.GetExt().Lower();
-	string fileExtStr = string(fileExt.c_str());
+	std::string fileExtStr = std::string(fileExt.c_str());
 
 	// All textures (GLI)
 	if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
@@ -61,7 +61,7 @@ GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap) {
 					archive->fileContents(texFile.ToStdString(), outData);
 
 					if (!outData.IsEmpty()) {
-						data = move(outData);
+						data = std::move(outData);
 						break;
 					}
 				}
@@ -98,7 +98,7 @@ GLuint ResourceLoader::LoadTexture(const string & inFileName, bool isCubeMap) {
 	return textureID;
 }
 
-GLuint ResourceLoader::GenerateTextureID(const string& texName) {
+GLuint ResourceLoader::GenerateTextureID(const std::string& texName) {
 	DeleteTexture(texName);
 
 	GLuint textureID;
@@ -108,7 +108,7 @@ GLuint ResourceLoader::GenerateTextureID(const string& texName) {
 	return textureID;
 }
 
-GLuint ResourceLoader::GetTexID(const string& texName) {
+GLuint ResourceLoader::GetTexID(const std::string& texName) {
 	auto ti = textures.find(texName);
 	if (ti != textures.end())
 		return ti->second;
@@ -116,7 +116,7 @@ GLuint ResourceLoader::GetTexID(const string& texName) {
 	return 0;
 }
 
-void ResourceLoader::DeleteTexture(const string& texName) {
+void ResourceLoader::DeleteTexture(const std::string& texName) {
 	auto ti = textures.find(texName);
 	if (ti != textures.end()) {
 		cacheTime++;
@@ -125,12 +125,12 @@ void ResourceLoader::DeleteTexture(const string& texName) {
 	}
 }
 
-bool ResourceLoader::RenameTexture(const string& texNameSrc, const string& texNameDest, bool overwrite) {
-	string src = texNameSrc;
-	string dst = texNameDest;
+bool ResourceLoader::RenameTexture(const std::string& texNameSrc, const std::string& texNameDest, bool overwrite) {
+	std::string src = texNameSrc;
+	std::string dst = texNameDest;
 
-	transform(src.begin(), src.end(), src.begin(), ::tolower);
-	transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
+	std::transform(src.begin(), src.end(), src.begin(), ::tolower);
+	std::transform(dst.begin(), dst.end(), dst.begin(), ::tolower);
 
 	auto tid = textures.find(dst);
 	if (tid != textures.end()) {
@@ -281,7 +281,7 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 	return textureID;
 }
 
-GLuint ResourceLoader::GLI_load_texture(const string& fileName) {
+GLuint ResourceLoader::GLI_load_texture(const std::string& fileName) {
 	gli::texture texture = gli::load(fileName);
 	if (texture.empty())
 		return 0;
@@ -297,17 +297,17 @@ GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t s
 	return GLI_create_texture(texture);
 }
 
-GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile) {
+GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile) {
 	auto texFiles = textureFiles;
 	for (auto &f : texFiles)
-		transform(f.begin(), f.end(), f.begin(), ::tolower);
+		std::transform(f.begin(), f.end(), f.begin(), ::tolower);
 
 	MaterialKey key(texFiles, vShaderFile, fShaderFile);
 	auto it = materials.find(key);
 	if (it != materials.end())
 		return it->second.get();
 
-	vector<GLuint> texRefs(texFiles.size(), 0);
+	std::vector<GLuint> texRefs(texFiles.size(), 0);
 	for (int i = 0; i < texFiles.size(); i++) {
 		if (texFiles[i].empty())
 			continue;
@@ -324,7 +324,7 @@ GLMaterial* ResourceLoader::AddMaterial(const vector<string>& textureFiles, cons
 	// No diffuse found
 	if (texRefs.empty() || texRefs[0] == 0) {
 		// Load default image
-		string defaultTex = "res\\images\\noimg.png";
+		std::string defaultTex = "res\\images\\noimg.png";
 		texRefs[0] = LoadTexture(defaultTex, false);
 		RenameTexture(defaultTex, texFiles[0]);
 	}
@@ -343,11 +343,11 @@ void ResourceLoader::Cleanup() {
 }
 
 size_t ResourceLoader::MatKeyHash::operator()(const MaterialKey& key) const {
-	hash<string> strHash;
-	size_t resHash = strHash(get<1>(key)) ^ strHash(get<2>(key));
+	std::hash<std::string> strHash;
+	size_t resHash = strHash(std::get<1>(key)) ^ strHash(std::get<2>(key));
 
-	for (int i = 0; i < get<0>(key).size(); i++)
-		resHash ^= strHash(get<0>(key)[i]);
+	for (int i = 0; i < std::get<0>(key).size(); i++)
+		resHash ^= strHash(std::get<0>(key)[i]);
 
 	return resHash;
 }

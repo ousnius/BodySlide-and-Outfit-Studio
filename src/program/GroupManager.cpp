@@ -6,8 +6,6 @@ See the included LICENSE file
 
 #include "GroupManager.h"
 
-#pragma warning (disable: 4018)
-
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)
@@ -19,7 +17,7 @@ wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_BUTTON(XRCID("btAddMember"), GroupManager::OnAddMember)
 wxEND_EVENT_TABLE()
 
-GroupManager::GroupManager(wxWindow* parent, vector<string> outfits) {
+GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits) {
 	wxXmlResource *xrc = wxXmlResource::Get();
 	xrc->Load("res\\xrc\\GroupManager.xrc");
 	xrc->LoadDialog(this, parent, "dlgGroupManager");
@@ -54,7 +52,7 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 
 	btSave->Enable(dirty & !fileName.empty());
 
-	string selectedGroup;
+	std::string selectedGroup;
 	if (clearGroups) {
 		// Add groups to list
 		listGroups->Clear();
@@ -94,14 +92,14 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	btRemoveGroup->Enable();
 
 	// Fill group member map
-	vector<string> groupNames;
+	std::vector<std::string> groupNames;
 	groupFile.GetGroupNames(groupNames, true, true);
 	for (auto &grp : groupNames) {
 		SliderSetGroup group;
 		if (groupFile.GetGroup(grp, group))
 			return;
 
-		vector<string> members;
+		std::vector<std::string> members;
 		group.GetMembers(members);
 		groupMembers[grp] = members;
 	}
@@ -164,7 +162,7 @@ void GroupManager::OnAddGroup(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	// Create empty group entry
-	groupMembers[name.ToStdString()] = vector<string>();
+	groupMembers[name.ToStdString()] = std::vector<std::string>();
 	listGroups->Append(name);
 
 	dirty = true;
@@ -189,10 +187,10 @@ void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
 	listMembers->GetSelections(selections);
 
 	// Find and remove member from selected group
-	string selectedGroup = listGroups->GetStringSelection().ToStdString();
+	std::string selectedGroup = listGroups->GetStringSelection().ToStdString();
 	if (!selectedGroup.empty()) {
 		for (int i = 0; i < selections.size(); i++) {
-			string member = listMembers->GetString(selections[i]);
+			std::string member = listMembers->GetString(selections[i]);
 			auto it = find(groupMembers[selectedGroup].begin(), groupMembers[selectedGroup].end(), member);
 			if (it != groupMembers[selectedGroup].end())
 				groupMembers[selectedGroup].erase(it);
@@ -209,10 +207,10 @@ void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 	listOutfits->GetSelections(selections);
 
 	// Add member to selected group
-	string selectedGroup = listGroups->GetStringSelection().ToStdString();
+	std::string selectedGroup = listGroups->GetStringSelection().ToStdString();
 	if (!selectedGroup.empty()) {
 		for (int i = 0; i < selections.size(); i++) {
-			string member = listOutfits->GetString(selections[i]);
+			std::string member = listOutfits->GetString(selections[i]);
 			groupMembers[selectedGroup].push_back(member);
 		}
 	}

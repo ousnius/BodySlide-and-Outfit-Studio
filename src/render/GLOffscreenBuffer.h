@@ -53,7 +53,7 @@ public:
 	// buffer in a multi rendering chain.
 	GLuint GetTexID();
 
-	void SaveTexture(const string& filename);
+	void SaveTexture(const std::string& filename);
 	void End();
 
 	~GLOffScreenBuffer();

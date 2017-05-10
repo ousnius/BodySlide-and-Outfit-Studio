@@ -7,9 +7,6 @@ See the included LICENSE file
 #pragma once
 
 #include <vector>
-#include "glm/detail/type_int.hpp"
-
-using namespace std;
 
 #pragma warning (disable : 4018 4244 4267 4389)
 
@@ -20,7 +17,7 @@ const float DEG2RAD = PI / 180.0f;
 
 typedef unsigned char byte;
 typedef unsigned short ushort;
-using glm::uint;
+typedef unsigned int uint;
 
 struct Vector2 {
 	float u;
@@ -110,7 +107,7 @@ struct Vector3 {
 
 	bool IsZero(bool bUseEpsilon = false) {
 		if (bUseEpsilon) {
-			if (fabs(x) < EPSILON && fabs(y) < EPSILON && fabs(z) < EPSILON)
+			if (std::fabs(x) < EPSILON && std::fabs(y) < EPSILON && std::fabs(z) < EPSILON)
 				return true;
 		}
 		else {
@@ -122,7 +119,7 @@ struct Vector3 {
 	}
 
 	void Normalize() {
-		float d = sqrt(x*x + y*y + z*z);
+		float d = std::sqrt(x*x + y*y + z*z);
 		if (d == 0)
 			d = 1.0f;
 
@@ -209,7 +206,7 @@ struct Vector3 {
 		float dx = target.x - x;
 		float dy = target.y - y;
 		float dz = target.z - z;
-		return (float)sqrt(dx*dx + dy*dy + dz*dz);
+		return (float)std::sqrt(dx*dx + dy*dy + dz*dz);
 	}
 
 	float DistanceSquaredTo(const Vector3& target) {
@@ -325,7 +322,7 @@ public:
 	Matrix4(const Matrix4& other) {
 		memcpy(m, other.m, sizeof(float) * 16);
 	}
-	Matrix4(const vector<Vector3>& mat33) {
+	Matrix4(const std::vector<Vector3>& mat33) {
 		Set(mat33);
 	}
 	~Matrix4() {}
@@ -337,7 +334,7 @@ public:
 		m[12] = 0;		   m[13] = 0;		  m[14] = 0;	      m[15] = 1;
 	}
 
-	void Set(const vector<Vector3>& mat33) {
+	void Set(const std::vector<Vector3>& mat33) {
 		m[0] = mat33[0].x; m[1] = mat33[0].y; m[2] = mat33[0].z; m[3] = 0;
 		m[4] = mat33[1].x; m[5] = mat33[1].y; m[6] = mat33[1].z; m[7] = 0;
 		m[8] = mat33[2].x; m[9] = mat33[2].y; m[10] = mat33[2].z; m[11] = 0;
@@ -355,7 +352,7 @@ public:
 	}
 
 	bool operator==(const Matrix4& other) {
-		return (equal(m, m + sizeof m / sizeof *m, other.m));
+		return (std::equal(m, m + sizeof m / sizeof *m, other.m));
 	}
 
 	bool IsIdentity() {
@@ -549,8 +546,8 @@ public:
 	}
 
 	Matrix4& Rotate(float radAngle, float x, float y, float z) {
-		float c = cosf(radAngle);
-		float s = sinf(radAngle);
+		float c = std::cosf(radAngle);
+		float s = std::sinf(radAngle);
 
 		float xx = x*x;
 		float xy = x*y;
@@ -604,13 +601,13 @@ struct BoundingSphere {
 		radius = 0.0f;
 	}
 
-	BoundingSphere(const Vector3& center, const float& radius) {
+	BoundingSphere(const Vector3& center, const float radius) {
 		this->center = center;
 		this->radius = radius;
 	}
 
 	// Miniball algorithm
-	BoundingSphere(const vector<Vector3>& vertices);
+	BoundingSphere(const std::vector<Vector3>& vertices);
 };
 
 
@@ -633,6 +630,13 @@ struct Quaternion {
 		this->y = y;
 		this->z = z;
 	}
+};
+
+
+struct QuatTransform {
+	Vector3 translation;
+	Quaternion rotation;
+	float scale;
 };
 
 
@@ -660,7 +664,7 @@ struct Triangle {
 		outNormal->z = (vertref[p2].x - vertref[p1].x) * (vertref[p3].y - vertref[p1].y) - (vertref[p2].y - vertref[p1].y) * (vertref[p3].x - vertref[p1].x);
 	}
 
-	void trinormal(const vector<Vector3>& vertref, Vector3* outNormal) {
+	void trinormal(const std::vector<Vector3>& vertref, Vector3* outNormal) {
 		outNormal->x = (vertref[p2].y - vertref[p1].y) * (vertref[p3].z - vertref[p1].z) - (vertref[p2].z - vertref[p1].z) * (vertref[p3].y - vertref[p1].y);
 		outNormal->y = (vertref[p2].z - vertref[p1].z) * (vertref[p3].x - vertref[p1].x) - (vertref[p2].x - vertref[p1].x) * (vertref[p3].z - vertref[p1].z);
 		outNormal->z = (vertref[p2].x - vertref[p1].x) * (vertref[p3].y - vertref[p1].y) - (vertref[p2].y - vertref[p1].y) * (vertref[p3].x - vertref[p1].x);
@@ -863,23 +867,23 @@ struct Edge {
 };
 
 namespace std {
-	template<> struct hash < Edge > {
+	template<> struct std::hash < Edge > {
 		std::size_t operator() (const Edge& t) const {
 			return ((t.p2 << 16) | (t.p1 & 0xFFFF));
 		}
 	};
 
-	template <> struct equal_to < Edge > {
+	template <> struct std::equal_to < Edge > {
 		bool operator() (const Edge& t1, const Edge& t2) const {
 			return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2));
 		}
 	};
 
-	template <> struct hash < Triangle > {
+	template <> struct std::hash < Triangle > {
 		std::size_t operator() (const Triangle& t) const {
 			char* d = (char*)&t;
-			size_t len = sizeof(Triangle);
-			size_t hash, i;
+			std::size_t len = sizeof(Triangle);
+			std::size_t hash, i;
 			for (hash = i = 0; i < len; ++i) {
 				hash += d[i];
 				hash += (hash << 10);
@@ -892,7 +896,7 @@ namespace std {
 		}
 	};
 
-	template <> struct equal_to < Triangle > {
+	template <> struct std::equal_to < Triangle > {
 		bool operator() (const Triangle& t1, const Triangle& t2) const {
 			return ((t1.p1 == t2.p1) && (t1.p2 == t2.p2) && (t1.p3 == t2.p3));
 		}

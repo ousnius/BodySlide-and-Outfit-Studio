@@ -132,7 +132,7 @@ bool BodySlideApp::OnInit() {
 	int y = Config.GetIntValue("BodySlideFrame.y");
 	int w = Config.GetIntValue("BodySlideFrame.width");	
 	int h = Config.GetIntValue("BodySlideFrame.height");
-	string maximized = Config["BodySlideFrame.maximized"];
+	std::string maximized = Config["BodySlideFrame.maximized"];
 
 	wxLogMessage("Loading BodySlide frame at X:%d Y:%d with W:%d H:%d...", x, y, w, h);
 	sliderView = new BodySlideFrame(this, wxSize(w, h));
@@ -174,7 +174,7 @@ bool BodySlideApp::OnExceptionInMainLoop() {
 	try {
 		throw;
 	}
-	catch (const exception& e) {
+	catch (const std::exception& e) {
 		error = e.what();
 	}
 	catch (...) {
@@ -195,7 +195,7 @@ void BodySlideApp::OnUnhandledException() {
 	try {
 		throw;
 	}
-	catch (const exception& e) {
+	catch (const std::exception& e) {
 		error = e.what();
 	}
 	catch (...) {
@@ -224,19 +224,19 @@ void BodySlideApp::InitArchives() {
 	// Auto-detect archives
 	FSManager::del();
 
-	vector<string> fileList;
+	std::vector<std::string> fileList;
 	GetArchiveFiles(fileList);
 
 	FSManager::addArchives(fileList);
 }
 
-void BodySlideApp::GetArchiveFiles(vector<string>& outList) {
+void BodySlideApp::GetArchiveFiles(std::vector<std::string>& outList) {
 	TargetGame targ = (TargetGame)Config.GetIntValue("TargetGame");
-	string cp = "GameDataFiles/" + TargetGames[targ];
+	std::string cp = "GameDataFiles/" + TargetGames[targ];
 	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
-	map<wxString, bool> fsearch;
+	std::map<wxString, bool> fsearch;
 	while (tokenizer.HasMoreTokens()) {
 		wxString val = tokenizer.GetNextToken().Trim(false);
 		val = val.Trim().MakeLower();
@@ -264,7 +264,7 @@ void BodySlideApp::LoadData() {
 	LoadAllGroups();
 	LoadSliderSets();
 
-	string activeOutfit = Config["SelectedOutfit"];
+	std::string activeOutfit = Config["SelectedOutfit"];
 	if (activeOutfit.empty() && !outfitNameOrder.empty()) {
 		activeOutfit = outfitNameOrder.front();
 		Config.SetValue("SelectedOutfit", activeOutfit);
@@ -291,7 +291,7 @@ void BodySlideApp::LoadData() {
 		SetPresetGroups(activeOutfit);
 		LoadPresets(activeOutfit);
 
-		string activePreset = Config["SelectedPreset"];
+		std::string activePreset = Config["SelectedPreset"];
 		PopulatePresetList(activePreset);
 		ActivatePreset(activePreset);
 
@@ -310,7 +310,7 @@ void BodySlideApp::LoadData() {
 		LaunchOutfitStudio();
 }
 
-int BodySlideApp::CreateSetSliders(const string& outfit) {
+int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 	wxLogMessage("Creating sliders...");
 	dataSets.Clear();
 	if (outfitNameSource.find(outfit) == outfitNameSource.end())
@@ -339,7 +339,7 @@ int BodySlideApp::CreateSetSliders(const string& outfit) {
 
 void BodySlideApp::RefreshOutfitList() {
 	LoadSliderSets();
-	string activeOutfit = Config["SelectedOutfit"];
+	std::string activeOutfit = Config["SelectedOutfit"];
 	PopulateOutfitList(activeOutfit);
 }
 
@@ -360,8 +360,8 @@ int BodySlideApp::LoadSliderSets() {
 		if (sliderDoc.fail())
 			continue;
 
-		string outFilePath;
-		vector<string> outfitNames;
+		std::string outFilePath;
+		std::vector<std::string> outfitNames;
 		sliderDoc.GetSetNamesUnsorted(outfitNames, false);
 		for (int i = 0; i < outfitNames.size(); i++) {
 			outfitNameSource[outfitNames[i]] = file.ToStdString();
@@ -377,7 +377,7 @@ int BodySlideApp::LoadSliderSets() {
 
 	ungroupedOutfits.clear();
 	for (auto &o : outfitNameSource) {
-		vector<string> groups;
+		std::vector<std::string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
 		if (groups.empty())
 			ungroupedOutfits.push_back(o.first);
@@ -386,7 +386,7 @@ int BodySlideApp::LoadSliderSets() {
 	return 0;
 }
 
-void BodySlideApp::ActivateOutfit(const string& outfitName) {
+void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 	wxLogMessage("Activating set '%s'...", outfitName);
 
 	Config.SetValue("SelectedOutfit", outfitName);
@@ -397,7 +397,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	
 	CleanupPreview();
 
-	string activePreset = Config["SelectedPreset"];
+	std::string activePreset = Config["SelectedPreset"];
 
 	sliderManager.ClearPresets();
 	SetPresetGroups(outfitName);
@@ -419,7 +419,7 @@ void BodySlideApp::ActivateOutfit(const string& outfitName) {
 	wxLogMessage("Finished activating set '%s'.", outfitName);
 }
 
-void BodySlideApp::ActivatePreset(const string &presetName, const bool updatePreview) {
+void BodySlideApp::ActivatePreset(const std::string &presetName, const bool updatePreview) {
 	wxLogMessage("Applying preset '%s' to sliders.", presetName);
 
 	Config.SetValue("SelectedPreset", presetName);
@@ -463,8 +463,8 @@ void BodySlideApp::RefreshSliders() {
 		UpdatePreview();
 }
 
-void BodySlideApp::PopulatePresetList(const string& select) {
-	vector<string> presets;
+void BodySlideApp::PopulatePresetList(const std::string& select) {
+	std::vector<std::string> presets;
 	wxArrayString items;
 	sliderManager.GetPresetNames(presets);
 	items.reserve(presets.size());
@@ -474,8 +474,8 @@ void BodySlideApp::PopulatePresetList(const string& select) {
 	sliderView->PopulatePresetList(items, select);
 }
 
-void BodySlideApp::PopulateOutfitList(const string& select) {
-	string myselect = Config["SelectedOutfit"];
+void BodySlideApp::PopulateOutfitList(const std::string& select) {
+	std::string myselect = Config["SelectedOutfit"];
 	if (!select.empty())
 		myselect = select;
 
@@ -500,13 +500,13 @@ void BodySlideApp::DisplayActiveSet() {
 		sliderView->ShowLowColumn(false);
 
 	// Category name, slider names, hidden flag
-	vector<tuple<string, vector<string>, bool>> sliderCategories;
-	vector<string> cats;
+	std::vector<std::tuple<std::string, std::vector<std::string>, bool>> sliderCategories;
+	std::vector<std::string> cats;
 	cCollection.GetAllCategories(cats);
 
 	// Populate category data
 	for (auto &cat : cats) {
-		vector<string> catSliders;
+		std::vector<std::string> catSliders;
 		cCollection.GetCategorySliders(cat, catSliders);
 
 		if (catSliders.size() > 0) {
@@ -518,7 +518,7 @@ void BodySlideApp::DisplayActiveSet() {
 	}
 
 	// Loop slider set
-	vector<vector<int>> catSliders;
+	std::vector<std::vector<int>> catSliders;
 	for (int i = 0; i < activeSet.size(); i++) {
 		if (activeSet[i].bHidden)
 			continue;
@@ -527,8 +527,8 @@ void BodySlideApp::DisplayActiveSet() {
 		bool regularSlider = true;
 		int iter = 0;
 		for (auto &cat : sliderCategories) {
-			catSliders.push_back(vector<int>());
-			if (find(get<1>(cat).begin(), get<1>(cat).end(), activeSet[i].name) != get<1>(cat).end()) {
+			catSliders.push_back(std::vector<int>());
+			if (find(std::get<1>(cat).begin(), std::get<1>(cat).end(), activeSet[i].name) != std::get<1>(cat).end()) {
 				catSliders[iter].push_back(i);
 				regularSlider = false;
 				break;
@@ -545,9 +545,9 @@ void BodySlideApp::DisplayActiveSet() {
 	int iter = 0;
 	if (catSliders.size() > 0) {
 		for (auto &cat : sliderCategories) {
-			string name = get<0>(cat);
-			bool show = get<2>(cat);
-			string displayName;
+			std::string name = std::get<0>(cat);
+			bool show = std::get<2>(cat);
+			std::string displayName;
 
 			if (catSliders.size() > iter && catSliders[iter].size() > 0) {
 				sliderView->AddCategorySliderUI(name, show, !activeSet.GenWeights());
@@ -584,7 +584,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 		int y = Config.GetIntValue("OutfitStudioFrame.y");
 		int w = Config.GetIntValue("OutfitStudioFrame.width");
 		int h = Config.GetIntValue("OutfitStudioFrame.height");
-		string maximized = Config["OutfitStudioFrame.maximized"];
+		std::string maximized = Config["OutfitStudioFrame.maximized"];
 
 		outfitStudio = new OutfitStudio(wxPoint(x, y), wxSize(w, h), Config);
 		if (maximized == "true")
@@ -594,7 +594,7 @@ void BodySlideApp::LaunchOutfitStudio() {
 	}
 }
 
-void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& sliderSet, vector<Vector3>& verts, vector<ushort>& ZapIdx, vector<Vector2>* uvs) {
+void BodySlideApp::ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& ZapIdx, std::vector<Vector2>* uvs) {
 	for (auto &slider : sliderSet) {
 		float val = slider.value;
 		if (slider.zap && !slider.uv) {
@@ -623,27 +623,27 @@ void BodySlideApp::ApplySliders(const string& targetShape, vector<Slider>& slide
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
 
-int BodySlideApp::WriteMorphTRI(const string& triPath, SliderSet& sliderSet, NifFile& nif, unordered_map<string, vector<ushort>>& zapIndices) {
+int BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices) {
 	DiffDataSets currentDiffs;
 	sliderSet.LoadSetDiffData(currentDiffs);
 
 	TriFile tri;
-	string triFilePath = triPath + ".tri";
+	std::string triFilePath = triPath + ".tri";
 
 	for (auto shape = sliderSet.TargetShapesBegin(); shape != sliderSet.TargetShapesEnd(); ++shape) {
 		for (int s = 0; s < sliderSet.size(); s++) {
-			string dn = sliderSet[s].TargetDataName(shape->first);
-			string target = shape->first;
+			std::string dn = sliderSet[s].TargetDataName(shape->first);
+			std::string target = shape->first;
 			if (dn.empty())
 				continue;
 
 			if (!sliderSet[s].bUV && !sliderSet[s].bClamp && !sliderSet[s].bZap) {
-				MorphDataPtr morph = make_shared<MorphData>();
+				MorphDataPtr morph = std::make_shared<MorphData>();
 				morph->name = sliderSet[s].name;
 
-				const vector<ushort>& shapeZapIndices = zapIndices[shape->second];
+				const std::vector<ushort>& shapeZapIndices = zapIndices[shape->second];
 
-				vector<Vector3> verts;
+				std::vector<Vector3> verts;
 				int shapeVertCount = nif.GetVertCountForShape(shape->second);
 				shapeVertCount += shapeZapIndices.size();
 				if (shapeVertCount > 0)
@@ -720,7 +720,7 @@ void BodySlideApp::ShowPreview() {
 	int y = Config.GetIntValue("PreviewFrame.y");
 	int w = Config.GetIntValue("PreviewFrame.width");
 	int h = Config.GetIntValue("PreviewFrame.height");
-	string maximized = Config["PreviewFrame.maximized"];
+	std::string maximized = Config["PreviewFrame.maximized"];
 
 	preview = new PreviewWindow(wxPoint(x, y), wxSize(w, h), this);
 	if (maximized == "true")
@@ -732,8 +732,8 @@ void BodySlideApp::InitPreview() {
 		return;
 
 	wxLogMessage("Loading preview meshes...");
-	string inputFileName = activeSet.GetInputFileName();
-	string inputSetName = activeSet.GetName();
+	std::string inputFileName = activeSet.GetInputFileName();
+	std::string inputSetName = activeSet.GetName();
 	bool freshLoad = false;
 
 	if (!previewBaseNif) {
@@ -761,9 +761,9 @@ void BodySlideApp::InitPreview() {
 	
 	preview->ShowWeight(activeSet.GenWeights());
 
-	vector<Vector3> verts;
-	vector<Vector2> uvs;
-	vector<ushort> zapIdx;
+	std::vector<Vector3> verts;
+	std::vector<Vector2> uvs;
+	std::vector<ushort> zapIdx;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		zapIdx.clear();
 		if (!previewBaseNif->GetVertsForShape(it->second, verts))
@@ -798,11 +798,11 @@ void BodySlideApp::InitPreview() {
 		}
 	}
 
-	string baseGamePath = Config["GameDataPath"];
+	std::string baseGamePath = Config["GameDataPath"];
 	preview->AddMeshFromNif(&PreviewMod);
 	preview->SetBaseDataPath(baseGamePath);
 
-	vector<string> shapeNames;
+	std::vector<std::string> shapeNames;
 	PreviewMod.GetShapeList(shapeNames);
 	for (auto &s : shapeNames)
 		preview->AddNifShapeTextures(&PreviewMod, s);
@@ -820,9 +820,9 @@ void BodySlideApp::UpdatePreview() {
 		return;
 	
 	int weight = preview->GetWeight();
-	vector<Vector3> verts, vertsLow, vertsHigh;
-	vector<Vector2> uvs, uvsLow, uvsHigh;
-	vector<ushort> zapIdx;
+	std::vector<Vector3> verts, vertsLow, vertsHigh;
+	std::vector<Vector2> uvs, uvsLow, uvsHigh;
+	std::vector<ushort> zapIdx;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		zapIdx.clear();
 		if (!previewBaseNif->GetVertsForShape(it->second, verts))
@@ -879,9 +879,9 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	int weight = preview->GetWeight();
 	PreviewMod.CopyFrom((*previewBaseNif));
 	
-	vector<Vector3> verts, vertsLow, vertsHigh;
-	vector<Vector2> uvs, uvsLow, uvsHigh;
-	vector<ushort> zapIdx;
+	std::vector<Vector3> verts, vertsLow, vertsHigh;
+	std::vector<Vector2> uvs, uvsLow, uvsHigh;
+	std::vector<ushort> zapIdx;
 	Vector3 v;
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		zapIdx.clear();
@@ -1167,32 +1167,32 @@ void BodySlideApp::InitLanguage() {
 	if (locale)
 		delete locale;
 
-	int language = Config.GetIntValue("Language");
+	int lang = Config.GetIntValue("Language");
 
 	// Load language if possible, fall back to English otherwise
-	if (wxLocale::IsAvailable(language)) {
-		locale = new wxLocale(language);
+	if (wxLocale::IsAvailable(lang)) {
+		locale = new wxLocale(lang);
 		locale->AddCatalogLookupPathPrefix("lang");
 		locale->AddCatalog("BodySlide");
 
 		if (!locale->IsOk()) {
-			wxLogError("System language '%d' is wrong.", language);
-			wxMessageBox(wxString::Format(_("System language '%d' is wrong."), language));
+			wxLogError("System language '%d' is wrong.", lang);
+			wxMessageBox(wxString::Format(_("System language '%d' is wrong."), lang));
 
 			delete locale;
 			locale = new wxLocale(wxLANGUAGE_ENGLISH);
-			language = wxLANGUAGE_ENGLISH;
+			lang = wxLANGUAGE_ENGLISH;
 		}
 	}
 	else {
-		wxLogError("The system language '%d' is not supported by your system. Try installing support for this language.", language);
-		wxMessageBox(wxString::Format(_("The system language '%d' is not supported by your system. Try installing support for this language."), language));
+		wxLogError("The system language '%d' is not supported by your system. Try installing support for this language.", lang);
+		wxMessageBox(wxString::Format(_("The system language '%d' is not supported by your system. Try installing support for this language."), lang));
 
 		locale = new wxLocale(wxLANGUAGE_ENGLISH);
-		language = wxLANGUAGE_ENGLISH;
+		lang = wxLANGUAGE_ENGLISH;
 	}
 
-	wxLogMessage("Using language '%s'.", wxLocale::GetLanguageName(language));
+	wxLogMessage("Using language '%s'.", wxLocale::GetLanguageName(lang));
 }
 
 void BodySlideApp::LoadAllCategories() {
@@ -1200,7 +1200,7 @@ void BodySlideApp::LoadAllCategories() {
 	cCollection.LoadCategories("SliderCategories");
 }
 
-void BodySlideApp::SetPresetGroups(const string& setName) {
+void BodySlideApp::SetPresetGroups(const std::string& setName) {
 	presetGroups.clear();
 	gCollection.GetOutfitGroups(setName, presetGroups);
 
@@ -1231,15 +1231,15 @@ void BodySlideApp::LoadAllGroups() {
 
 	ungroupedOutfits.clear();
 	for (auto &o : outfitNameSource) {
-		vector<string> groups;
+		std::vector<std::string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
 		if (groups.empty())
 			ungroupedOutfits.push_back(o.first);
 	}
 
-	vector<string> aliases;
+	std::vector<std::string> aliases;
 	Config.GetValueAttributeArray("GroupAliases", "GroupAlias", "alias", aliases);
-	vector<string> groups;
+	std::vector<std::string> groups;
 	Config.GetValueAttributeArray("GroupAliases", "GroupAlias", "group", groups);
 
 	if (aliases.size() == groups.size())
@@ -1247,17 +1247,17 @@ void BodySlideApp::LoadAllGroups() {
 			groupAlias[aliases[i]] = groups[i];
 }
 
-void BodySlideApp::GetAllGroupNames(vector<string>& outGroups) {
-	set<string> gNames;
+void BodySlideApp::GetAllGroupNames(std::vector<std::string>& outGroups) {
+	std::set<std::string> gNames;
 	gCollection.GetAllGroups(gNames);
 	outGroups.assign(gNames.begin(), gNames.end());
 }
 
-int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName) {
+int BodySlideApp::SaveGroupList(const std::string& fileName, const std::string& groupName) {
 	if (filteredOutfits.empty())
 		return 1;
 
-	vector <string> existing;
+	std::vector<std::string> existing;
 	SliderSetGroupFile outfile(fileName);
 	if (outfile.GetError() != 0) {
 		if (outfile.GetError() == 1)
@@ -1297,10 +1297,10 @@ int BodySlideApp::SaveGroupList(const string& fileName, const string& groupName)
 void BodySlideApp::ApplyOutfitFilter() {
 	bool showUngrouped = false;
 	filteredOutfits.clear();
-	unordered_set<string> grpFiltOutfits;
-	vector<string> workfiltList;
+	std::unordered_set<std::string> grpFiltOutfits;
+	std::vector<std::string> workfiltList;
 	static wxString lastGrps = "";
-	static set<string> grouplist;
+	static std::set<std::string> grouplist;
 
 
 	wxString grpSrch = sliderView->search->GetValue();
@@ -1318,7 +1318,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 				wxString token = tokenizer.GetNextToken();
 				token.Trim();
 				token.Trim(false);
-				string group = token;
+				std::string group = token;
 				grouplist.insert(group);
 			}
 		}
@@ -1350,41 +1350,41 @@ void BodySlideApp::ApplyOutfitFilter() {
 			filteredOutfits.push_back(w);
 	}
 	else {
-		regex re;
+		std::regex re;
 		try {
-			re.assign(outfitSrch, regex::icase);
+			re.assign(outfitSrch, std::regex::icase);
 			for (auto &w : workfiltList)
-				if (regex_search(w, re))
+				if (std::regex_search(w, re))
 					filteredOutfits.push_back(w);
 		}
-		catch (regex_error) {
+		catch (std::regex_error) {
 			for (auto &w : workfiltList)
 				filteredOutfits.push_back(w);
 		}
 	}
 
-	Config.SetValue("LastGroupFilter", string(grpSrch));
-	Config.SetValue("LastOutfitFilter", string(outfitSrch));
+	Config.SetValue("LastGroupFilter", std::string(grpSrch));
+	Config.SetValue("LastOutfitFilter", std::string(outfitSrch));
 }
 
-int BodySlideApp::GetOutfits(vector<string>& outList) {
+int BodySlideApp::GetOutfits(std::vector<std::string>& outList) {
 	outList.assign(outfitNameOrder.begin(), outfitNameOrder.end());
 	return outList.size();
 }
 
-int BodySlideApp::GetFilteredOutfits(vector<string>& outList) {
+int BodySlideApp::GetFilteredOutfits(std::vector<std::string>& outList) {
 	outList.assign(filteredOutfits.begin(), filteredOutfits.end());
 	return outList.size();
 }
 
-void BodySlideApp::LoadPresets(const string& sliderSet) {
-	string outfit = sliderSet;
+void BodySlideApp::LoadPresets(const std::string& sliderSet) {
+	std::string outfit = sliderSet;
 	if (sliderSet.empty())
 		outfit = Config["SelectedOutfit"];
 
 	wxLogMessage("Loading assigned presets...");
 
-	vector<string> groups_and_aliases;
+	std::vector<std::string> groups_and_aliases;
 	for (auto &g : presetGroups) {
 		groups_and_aliases.push_back(g);
 		for (auto &ag : this->groupAlias)
@@ -1396,12 +1396,12 @@ void BodySlideApp::LoadPresets(const string& sliderSet) {
 }
 
 int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
-	string inputFileName = activeSet.GetInputFileName();
+	std::string inputFileName = activeSet.GetInputFileName();
 	NifFile nifSmall;
 	NifFile nifBig;
 
-	string outFileNameSmall;
-	string outFileNameBig;
+	std::string outFileNameSmall;
+	std::string outFileNameBig;
 
 	wxLogMessage("Building set '%s' with options: Local Path = %s, Cleaning = %s, TRI = %s, GenWeights = %s",
 		activeSet.GetName(), localPath ? "True" : "False", clean ? "True" : "False", tri ? "True" : "False", activeSet.GenWeights() ? "True" : "False");
@@ -1487,12 +1487,12 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		if (nifSmall.Load(inputFileName))
 			return 1;
 
-	vector<Vector3> vertsLow;
-	vector<Vector3> vertsHigh;
-	vector<Vector2> uvsLow;
-	vector<Vector2> uvsHigh;
-	vector<ushort> zapIdx;
-	unordered_map<string, vector<ushort>> zapIdxAll;
+	std::vector<Vector3> vertsLow;
+	std::vector<Vector3> vertsHigh;
+	std::vector<Vector2> uvsLow;
+	std::vector<Vector2> uvsHigh;
+	std::vector<ushort> zapIdx;
+	std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
 
 	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 		if (!nifBig.GetVertsForShape(it->second, vertsHigh))
@@ -1507,7 +1507,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			nifSmall.GetUvsForShape(it->second, uvsLow);
 		}
 
-		zapIdxAll.emplace(it->second, vector<ushort>());
+		zapIdxAll.emplace(it->second, std::vector<ushort>());
 
 		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		nifBig.SetVertsForShape(it->second, vertsHigh);
@@ -1532,10 +1532,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 	/* Add TRI path for in-game morphs */
 	if (tri) {
-		string triPath = activeSet.GetOutputFilePath() + ".tri";
-		string triPathTrimmed = triPath;
-		triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-		triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
+		std::string triPath = activeSet.GetOutputFilePath() + ".tri";
+		std::string triPathTrimmed = triPath;
+		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");									// Replace multiple slashes or forward slashes with one backslash
+		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
 
 		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
 			wxLogError("Failed to write TRI file to '%s'!", triPath);
@@ -1543,7 +1543,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 
 		if (targetGame < FO4) {
-			string triShapeLink;
+			std::string triShapeLink;
 			for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 				triShapeLink = it->second;
 				if (tri && nifBig.GetVertCountForShape(triShapeLink) > 0) {
@@ -1568,7 +1568,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 	}
 	else {
-		string triPath = outFileNameBig + ".tri";
+		std::string triPath = outFileNameBig + ".tri";
 		if (wxFileName::FileExists(triPath))
 			wxRemoveFile(triPath);
 	}
@@ -1638,8 +1638,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	return 0;
 }
 
-int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string>& failedOutfits, bool clean, bool tri, const string& custPath) {
-	string datapath = custPath;
+int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool clean, bool tri, const std::string& custPath) {
+	std::string datapath = custPath;
 	wxProgressDialog* progWnd;
 
 	wxLogMessage("Started batch build with options: Custom Path = %s, Cleaning = %s, TRI = %s",
@@ -1653,7 +1653,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		}
 	}
 
-	string activePreset = Config["SelectedPreset"];
+	std::string activePreset = Config["SelectedPreset"];
 
 	if (datapath.empty()) {
 		if (Config["GameDataPath"].empty()) {
@@ -1677,7 +1677,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	}
 
 	if (Config.MatchValue("WarnBatchBuildOverride", "true")) {
-		vector<wxArrayString> choicesList;
+		std::vector<wxArrayString> choicesList;
 		for (auto &filePath : outFileCount) {
 			if (filePath.second.size() > 1) {
 				wxArrayString selFilePaths;
@@ -1706,7 +1706,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			wxBoxSizer* choicesSizer = (wxBoxSizer*)scrollOverrides->GetSizer();
 
 			int nChoice = 1;
-			vector<wxRadioBox*> choiceBoxes;
+			std::vector<wxRadioBox*> choiceBoxes;
 			for (auto &choices : choicesList) {
 				wxRadioBox* choiceBox = new wxRadioBox(scrollOverrides, wxID_ANY, _("Choose output set") + wxString::Format(" #%d", nChoice), wxDefaultPosition, wxDefaultSize, choices, 1, wxRA_SPECIFY_COLS);
 				choicesSizer->Add(choiceBox, 0, wxALL | wxEXPAND, 5);
@@ -1746,11 +1746,11 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
 #ifdef _PPL_H
 	concurrency::critical_section critical;
-	concurrency::concurrent_unordered_map<string, string> failedOutfitsCon;
-	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const string& outfit)
+	concurrency::concurrent_unordered_map<std::string, std::string> failedOutfitsCon;
+	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const std::string& outfit)
 #else
 	#define return continue
-	unordered_map<string, string> failedOutfitsCon;
+	std::unordered_map<std::string, std::string> failedOutfitsCon;
 	for (auto &outfit : outfitList)
 #endif
 	{
@@ -1797,8 +1797,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		if (clean && custPath.empty()) {
 			bool genWeights = currentSet.GenWeights();
 
-			string removePath = datapath + currentSet.GetOutputFilePath();
-			string removeHigh = removePath + ".nif";
+			std::string removePath = datapath + currentSet.GetOutputFilePath();
+			std::string removeHigh = removePath + ".nif";
 			if (genWeights)
 				removeHigh = removePath + "_1.nif";
 
@@ -1808,7 +1808,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			if (!genWeights)
 				return;
 
-			string removeLow = removePath + "_0.nif";
+			std::string removeLow = removePath + "_0.nif";
 			if (wxFileName::FileExists(removeLow))
 				wxRemoveFile(removeLow);
 
@@ -1830,12 +1830,12 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 		currentSet.LoadSetDiffData(currentDiffs);
 
 		/* Shape the NIF files */
-		vector<Vector3> vertsLow;
-		vector<Vector3> vertsHigh;
-		vector<Vector2> uvsLow;
-		vector<Vector2> uvsHigh;
-		vector<ushort> zapIdx;
-		unordered_map<string, vector<ushort>> zapIdxAll;
+		std::vector<Vector3> vertsLow;
+		std::vector<Vector3> vertsHigh;
+		std::vector<Vector2> uvsLow;
+		std::vector<Vector2> uvsHigh;
+		std::vector<ushort> zapIdx;
+		std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
 
 		for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
 			if (!nifBig.GetVertsForShape(it->second, vertsHigh))
@@ -1852,12 +1852,12 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 			float vbig = 0.0f;
 			float vsmall = 0.0f;
-			vector<int> clamps;
-			zapIdxAll.emplace(it->second, vector<ushort>());
+			std::vector<int> clamps;
+			zapIdxAll.emplace(it->second, std::vector<ushort>());
 
 			for (int s = 0; s < currentSet.size(); s++) {
-				string dn = currentSet[s].TargetDataName(it->first);
-				string target = it->first;
+				std::string dn = currentSet[s].TargetDataName(it->first);
+				std::string target = it->first;
 				if (dn.empty())
 					continue;
 
@@ -1913,8 +1913,8 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 			if (!clamps.empty()) {
 				for (auto &c : clamps) {
-					string dn = currentSet[c].TargetDataName(it->first);
-					string target = it->first;
+					std::string dn = currentSet[c].TargetDataName(it->first);
+					std::string target = it->first;
 					if (currentSet[c].defBigValue > 0)
 						currentDiffs.ApplyClamp(dn, target, &vertsHigh);
 
@@ -1952,16 +1952,16 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			return;
 		}
 
-		string outFileNameSmall = datapath + currentSet.GetOutputFilePath();
-		string outFileNameBig = outFileNameSmall;
+		std::string outFileNameSmall = datapath + currentSet.GetOutputFilePath();
+		std::string outFileNameBig = outFileNameSmall;
 
 		/* Add TRI path for in-game morphs */
 		bool triEnd = tri;
 		if (triEnd) {
-			string triPath = currentSet.GetOutputFilePath() + ".tri";
-			string triPathTrimmed = triPath;
-			triPathTrimmed = regex_replace(triPathTrimmed, regex("/+|\\\\+"), "\\"); // Replace multiple slashes or forward slashes with one backslash
-			triPathTrimmed = regex_replace(triPathTrimmed, regex(".*meshes\\\\", regex_constants::icase), ""); // Remove everything before and including the meshes path
+			std::string triPath = currentSet.GetOutputFilePath() + ".tri";
+			std::string triPathTrimmed = triPath;
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");									// Replace multiple slashes or forward slashes with one backslash
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
 
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
@@ -1970,7 +1970,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 
 			if (targetGame < FO4) {
 				for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-					string triShapeLink = it->second;
+					std::string triShapeLink = it->second;
 					if (triEnd && nifBig.GetVertCountForShape(triShapeLink) > 0) {
 						nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
 						if (currentSet.GenWeights())
@@ -1993,7 +1993,7 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 			}
 		}
 		else {
-			string triPath = outFileNameBig + ".tri";
+			std::string triPath = outFileNameBig + ".tri";
 			if (wxFileName::FileExists(triPath))
 				wxRemoveFile(triPath);
 		}
@@ -2041,22 +2041,22 @@ int BodySlideApp::BuildListBodies(vector<string>& outfitList, map<string, string
 	return 0;
 }
 
-void BodySlideApp::GroupBuild(const string& group) {
-	vector<string> outfits;
+void BodySlideApp::GroupBuild(const std::string& group) {
+	std::vector<std::string> outfits;
 	for (auto &o : outfitNameSource) {
-		vector<string> groups;
+		std::vector<std::string> groups;
 		gCollection.GetOutfitGroups(o.first, groups);
 		if (find(groups.begin(), groups.end(), group) != groups.end())
 			outfits.push_back(o.first);
 	}
 
-	string preset;
+	std::string preset;
 	if (!cmdPreset.IsEmpty()) {
 		preset = Config["SelectedPreset"];
 		Config.SetValue("SelectedPreset", cmdPreset.ToStdString());
 	}
 
-	map<string, string> failedOutfits;
+	std::map<std::string, std::string> failedOutfits;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, cmdTargetDir.ToStdString());
 
 	if (!cmdPreset.IsEmpty())
@@ -2082,34 +2082,34 @@ void BodySlideApp::GroupBuild(const string& group) {
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
-	string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToStdString();
 	return sliderManager.GetSlider(sstr, isLo);
 }
 
 bool BodySlideApp::IsUVSlider(const wxString& sliderName) {
-	string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToStdString();
 	return activeSet[sstr].bUV;
 }
 
-vector<string> BodySlideApp::GetSliderZapToggles(const wxString& sliderName) {
+std::vector<std::string> BodySlideApp::GetSliderZapToggles(const wxString& sliderName) {
 	return sliderManager.GetSliderZapToggles(sliderName.ToStdString());
 }
 
 void BodySlideApp::SetSliderValue(const wxString& sliderName, bool isLo, float val) {
-	string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToStdString();
 	sliderManager.SetSlider(sstr, isLo, val);
 }
 
 void BodySlideApp::SetSliderChanged(const wxString& sliderName, bool isLo) {
-	string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToStdString();
 	sliderManager.SetChanged(sstr, isLo);
 }
 
-int BodySlideApp::UpdateSliderPositions(const string& presetName) {
-	string outfitName = Config["SelectedOutfit"];
-	vector<string> groups;
+int BodySlideApp::UpdateSliderPositions(const std::string& presetName) {
+	std::string outfitName = Config["SelectedOutfit"];
+	std::vector<std::string> groups;
 
-	string outputFile = sliderManager.GetPresetFileNames(presetName);
+	std::string outputFile = sliderManager.GetPresetFileNames(presetName);
 	if (outputFile.empty())
 		return -2;
 
@@ -2118,8 +2118,8 @@ int BodySlideApp::UpdateSliderPositions(const string& presetName) {
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
-int BodySlideApp::SaveSliderPositions(const string& outputFile, const string& presetName, vector<string>& groups) {
-	string outfitName = Config["SelectedOutfit"];
+int BodySlideApp::SaveSliderPositions(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups) {
+	std::string outfitName = Config["SelectedOutfit"];
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
@@ -2599,7 +2599,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 		}
 	}
 
-	string sliderName = sn.ToStdString();
+	std::string sliderName = sn.ToStdString();
 	wxLogMessage("Zap '%s' %s.", sliderName, event.IsChecked() ? "checked" : "unchecked");
 
 	if (event.IsChecked()) {
@@ -2631,7 +2631,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 
 	app->SetSliderChanged(sliderName, isLo);
 
-	vector<string> zapToggles = app->GetSliderZapToggles(sliderName);
+	std::vector<std::string> zapToggles = app->GetSliderZapToggles(sliderName);
 	for (auto &toggle : zapToggles) {
 		wxLogMessage("Zap '%s' toggled.", sliderName);
 
@@ -2671,8 +2671,8 @@ void BodySlideFrame::OnDelayLoad(wxTimerEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
-	vector<string> groupNames;
-	unordered_set<string> curGroupNames;
+	std::vector<std::string> groupNames;
+	std::unordered_set<std::string> curGroupNames;
 	app->GetAllGroupNames(groupNames);
 
 	wxString srch = search->GetValue();
@@ -2718,8 +2718,8 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 	if (saveGroupDialog.ShowModal() == wxID_CANCEL)
 		return;
 
-	string fName = saveGroupDialog.GetPath();
-	string gName;
+	std::string fName = saveGroupDialog.GetPath();
+	std::string gName;
 	int ret;
 
 	do {
@@ -2747,12 +2747,12 @@ void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
-	string sstr = event.GetString().ToStdString();
+	std::string sstr = event.GetString().ToStdString();
 	app->ActivateOutfit(sstr);
 }
 
 void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
-	string sstr = event.GetString().ToStdString();
+	std::string sstr = event.GetString().ToStdString();
 	app->ActivatePreset(sstr);
 }
 
@@ -2760,7 +2760,7 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	string presetName = Config["SelectedPreset"];
+	std::string presetName = Config["SelectedPreset"];
 	if (presetName.empty())
 		return;
 
@@ -2778,7 +2778,7 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	vector<string> groups;
+	std::vector<std::string> groups;
 	PresetSaveDialog psd(this);
 
 	app->GetAllGroupNames(psd.allGroupNames);
@@ -2787,8 +2787,8 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 	if (psd.outFileName.empty())
 		return;
 
-	string fname = psd.outFileName;
-	string presetName = psd.outPresetName;
+	std::string fname = psd.outFileName;
+	std::string presetName = psd.outPresetName;
 	groups.assign(psd.outGroups.begin(), psd.outGroups.end());
 
 	int error = app->SaveSliderPositions(fname, presetName, groups);
@@ -2803,7 +2803,7 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
-	vector<string> outfits;
+	std::vector<std::string> outfits;
 	app->GetOutfits(outfits);
 
 	GroupManager gm(this, outfits);
@@ -2849,8 +2849,8 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 
 	wxArrayString oChoices;
 	wxArrayInt oSelections;
-	vector<string> outfitChoices;
-	vector<string> toBuild;
+	std::vector<std::string> outfitChoices;
+	std::vector<std::string> toBuild;
 
 	wxCheckBox* cbMorphs = (wxCheckBox*)FindWindowByName("cbMorphs");
 	bool custpath = false;
@@ -2903,10 +2903,10 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	map<string, string> failedOutfits;
+	std::map<std::string, std::string> failedOutfits;
 	int ret;
 	if (custpath) {
-		string path = wxDirSelector(_("Choose a folder to contain the saved files"));
+		std::string path = wxDirSelector(_("Choose a folder to contain the saved files"));
 		if (path.empty())
 			return;
 
@@ -3003,7 +3003,7 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 	wxString activatedFiles = Config[cp];
 
 	wxStringTokenizer tokenizer(activatedFiles, ";");
-	map<wxString, bool> fsearch;
+	std::map<wxString, bool> fsearch;
 	while (tokenizer.HasMoreTokens()) {
 		wxString val = tokenizer.GetNextToken().Trim(false).Trim();
 		val.MakeLower();
@@ -3050,7 +3050,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		cbLeftMousePan->SetValue(Config["Input/LeftMousePan"] != "false");
 
 		wxChoice* choiceLanguage = XRCCTRL(*settings, "choiceLanguage", wxChoice);
-		for (int i = 0; i < extent<decltype(SupportedLangs)>::value; i++)
+		for (int i = 0; i < std::extent<decltype(SupportedLangs)>::value; i++)
 			choiceLanguage->AppendString(wxLocale::GetLanguageName(SupportedLangs[i]));
 
 		if (!choiceLanguage->SetStringSelection(wxLocale::GetLanguageName(Config.GetIntValue("Language"))))

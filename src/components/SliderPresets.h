@@ -9,8 +9,6 @@ See the included LICENSE file
 #include <map>
 #include <vector>
 
-using namespace std;
-
 class SliderPreset {
 public:
 	float big;
@@ -18,23 +16,23 @@ public:
 };
 
 class PresetCollection {
-	map<string, map<string, SliderPreset>> namedSliderPresets;
-	map<string, string> presetFileNames;
-	map<string, vector<string>> presetGroups;
+	std::map<std::string, std::map<std::string, SliderPreset>> namedSliderPresets;
+	std::map<std::string, std::string> presetFileNames;
+	std::map<std::string, std::vector<std::string>> presetGroups;
 
 public:
 	void Clear();
-	void ClearSlider(const string& presetName, const string& sliderName, const bool big = true);
+	void ClearSlider(const std::string& presetName, const std::string& sliderName, const bool big = true);
 
-	void GetPresetNames(vector<string>& outNames);
-	void SetSliderPreset(const string& set, const string& slider, float big = -10000.0f, float small = -10000.0f);
-	bool GetSliderExists(const string& set, const string& slider);
-	bool GetBigPreset(const string& set, const string& slider, float& big);
-	bool GetSmallPreset(const string& set, const string& slider, float& small);
+	void GetPresetNames(std::vector<std::string>& outNames);
+	void SetSliderPreset(const std::string& set, const std::string& slider, float big = -10000.0f, float small = -10000.0f);
+	bool GetSliderExists(const std::string& set, const std::string& slider);
+	bool GetBigPreset(const std::string& set, const std::string& slider, float& big);
+	bool GetSmallPreset(const std::string& set, const std::string& slider, float& small);
 
-	string GetPresetFileName(const string& set);
-	void GetPresetGroups(const string& set, vector<string>& outGroups);
+	std::string GetPresetFileName(const std::string& set);
+	void GetPresetGroups(const std::string& set, std::vector<std::string>& outGroups);
 
-	bool LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter, bool allPresets = false);
-	int SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups);
+	bool LoadPresets(const std::string& basePath, const std::string& sliderSet, std::vector<std::string>& groupFilter, bool allPresets = false);
+	int SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups);
 };

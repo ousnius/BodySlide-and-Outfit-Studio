@@ -11,8 +11,6 @@ See the included LICENSE file
 
 #include "FBXImportOptions.h"
 
-using namespace std;
-
 class FBXImportDialog : public wxDialog {
 public:
 	FBXImportDialog(wxWindow* parent);

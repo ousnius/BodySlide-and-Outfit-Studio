@@ -9,7 +9,7 @@ See the included LICENSE file
 #include "../components/Mesh.h"	
 #include "../components/Anim.h"
 #include "../program/FBXImportOptions.h"
-#include "NifFile.h"
+#include "../NIF/NifFile.h"
 
 #include <fbxsdk.h>
 
@@ -18,7 +18,7 @@ class FBXShape {
 public:
 	class FBXSkin {
 	private:
-		unordered_map<ushort, float> vertWeights;
+		std::unordered_map<ushort, float> vertWeights;
 
 	public:
 		void SetWeight(ushort vert, float wt) {
@@ -33,19 +33,19 @@ public:
 			return vertWeights[vert];
 		}
 
-		unordered_map<ushort, float>& GetWeights() {
+		std::unordered_map<ushort, float>& GetWeights() {
 			return vertWeights;
 		}
 	};
 
-	string name;
-	vector<Vector3> verts;
-	vector<Triangle> tris;
-	vector<Vector2> uvs;
-	vector<Vector3> normals;
+	std::string name;
+	std::vector<Vector3> verts;
+	std::vector<Triangle> tris;
+	std::vector<Vector2> uvs;
+	std::vector<Vector3> normals;
 
-	unordered_map<string, FBXSkin> boneSkin;
-	set<string> boneNames;
+	std::unordered_map<std::string, FBXSkin> boneSkin;
+	std::set<std::string> boneNames;
 };
 
 class FBXWrangler {
@@ -53,8 +53,8 @@ private:
 	FbxManager* sdkManager = nullptr;
 	FbxScene* scene = nullptr;
 
-	string comName;
-	map<string, FBXShape> shapes;
+	std::string comName;
+	std::map<std::string, FBXShape> shapes;
 
 public:
 	FBXWrangler();
@@ -63,12 +63,12 @@ public:
 	void NewScene();
 	void CloseScene();
 
-	void GetShapeNames(vector<string>& outNames) {
+	void GetShapeNames(std::vector<std::string>& outNames) {
 		for (auto &s : shapes)
 			outNames.push_back(s.first);
 	}
 
-	FBXShape* GetShape(const string& shapeName) {
+	FBXShape* GetShape(const std::string& shapeName) {
 		return &(shapes[shapeName]);
 	}
 
@@ -78,12 +78,12 @@ public:
 	FbxNode* AddLimb(NifFile* nif, NiNode* nifBone);
 	void AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone);
 
-	void AddNif(NifFile* meshNif, const string& shapeName = "");
-	void AddSkinning(AnimInfo* anim, const string& shapeName = "");
-	void AddGeometry(const string& shapeName, const vector<Vector3>* verts, const vector<Vector3>* norms, const vector<Triangle>* tris, const vector<Vector2>* uvs);
+	void AddNif(NifFile* meshNif, const std::string& shapeName = "");
+	void AddSkinning(AnimInfo* anim, const std::string& shapeName = "");
+	void AddGeometry(const std::string& shapeName, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs);
 
-	bool ExportScene(const string& fileName);
-	bool ImportScene(const string& fileName, const FBXImportOptions& options = FBXImportOptions());
+	bool ExportScene(const std::string& fileName);
+	bool ImportScene(const std::string& fileName, const FBXImportOptions& options = FBXImportOptions());
 
 	bool LoadMeshes(const FBXImportOptions& options);
 };

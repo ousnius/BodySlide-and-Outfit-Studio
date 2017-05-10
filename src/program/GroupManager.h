@@ -12,11 +12,9 @@ See the included LICENSE file
 #include <wx/xrc/xmlres.h>
 #include <wx/filepicker.h>
 
-using namespace std;
-
 class GroupManager : public wxDialog {
 public:
-	GroupManager(wxWindow*, vector<string>);
+	GroupManager(wxWindow*, std::vector<std::string>);
 	~GroupManager();
 
 private:
@@ -33,8 +31,8 @@ private:
 
 	bool dirty = false;
 	wxString fileName;
-	map<string, vector<string>> groupMembers;
-	vector<string> allOutfits;
+	std::map<std::string, std::vector<std::string>> groupMembers;
+	std::vector<std::string> allOutfits;
 
 	void RefreshUI(const bool = false);
 	void OnLoadGroup(wxFileDirPickerEvent&);

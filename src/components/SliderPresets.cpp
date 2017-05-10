@@ -17,7 +17,7 @@ void PresetCollection::Clear() {
 	presetGroups.clear();
 }
 
-void PresetCollection::ClearSlider(const string& presetName, const string& sliderName, const bool big) {
+void PresetCollection::ClearSlider(const std::string& presetName, const std::string& sliderName, const bool big) {
 	if (namedSliderPresets.find(presetName) != namedSliderPresets.end()) {
 		if (big)
 			namedSliderPresets[presetName][sliderName].big = -10000.0f;
@@ -26,13 +26,13 @@ void PresetCollection::ClearSlider(const string& presetName, const string& slide
 	}
 }
 
-void PresetCollection::GetPresetNames(vector<string>& outNames) {
+void PresetCollection::GetPresetNames(std::vector<std::string>& outNames) {
 	for (auto &it : namedSliderPresets)
 		outNames.push_back(it.first);
 }
 
-void PresetCollection::SetSliderPreset(const string& set, const string& slider, float big, float small) {
-	map<string, SliderPreset> newPreset;
+void PresetCollection::SetSliderPreset(const std::string& set, const std::string& slider, float big, float small) {
+	std::map<std::string, SliderPreset> newPreset;
 	SliderPreset sp;
 	if (namedSliderPresets.find(set) == namedSliderPresets.end()) {
 		sp.big = sp.small = -10000.0f;
@@ -65,7 +65,7 @@ void PresetCollection::SetSliderPreset(const string& set, const string& slider, 
 	}
 }
 
-bool PresetCollection::GetSliderExists(const string& set, const string& slider) {
+bool PresetCollection::GetSliderExists(const std::string& set, const std::string& slider) {
 	if (namedSliderPresets.find(set) == namedSliderPresets.end())
 		return false;
 	if (namedSliderPresets[set].find(slider) == namedSliderPresets[set].end())
@@ -74,7 +74,7 @@ bool PresetCollection::GetSliderExists(const string& set, const string& slider) 
 	return true;
 }
 
-bool PresetCollection::GetBigPreset(const string& set, const string& slider, float& big) {
+bool PresetCollection::GetBigPreset(const std::string& set, const std::string& slider, float& big) {
 	float b;
 	if (namedSliderPresets.find(set) == namedSliderPresets.end())
 		return false;
@@ -88,7 +88,7 @@ bool PresetCollection::GetBigPreset(const string& set, const string& slider, flo
 	return false;
 }
 
-bool PresetCollection::GetSmallPreset(const string& set, const string& slider, float& small) {
+bool PresetCollection::GetSmallPreset(const std::string& set, const std::string& slider, float& small) {
 	float b;
 	if (namedSliderPresets.find(set) == namedSliderPresets.end())
 		return false;
@@ -102,7 +102,7 @@ bool PresetCollection::GetSmallPreset(const string& set, const string& slider, f
 	return false;
 }
 
-string PresetCollection::GetPresetFileName(const string& set) {
+std::string PresetCollection::GetPresetFileName(const std::string& set) {
 	auto result = presetFileNames.find(set);
 	if (result != presetFileNames.end())
 		return result->second;
@@ -110,7 +110,7 @@ string PresetCollection::GetPresetFileName(const string& set) {
 	return "";
 }
 
-void PresetCollection::GetPresetGroups(const string& set, vector<string>& outGroups) {
+void PresetCollection::GetPresetGroups(const std::string& set, std::vector<std::string>& outGroups) {
 	outGroups.clear();
 
 	auto result = presetGroups.find(set);
@@ -118,14 +118,14 @@ void PresetCollection::GetPresetGroups(const string& set, vector<string>& outGro
 		outGroups = result->second;
 }
 
-bool PresetCollection::LoadPresets(const string& basePath, const string& sliderSet, vector<string>& groupFilter, bool allPresets) {
+bool PresetCollection::LoadPresets(const std::string& basePath, const std::string& sliderSet, std::vector<std::string>& groupFilter, bool allPresets) {
 	XMLDocument doc;
 	XMLElement* root;
 	XMLElement* element;
 	XMLElement* g;
 	XMLElement* setSlider;
 
-	string presetName, sliderName, applyTo;
+	std::string presetName, sliderName, applyTo;
 	float o, b, s;
 
 	wxArrayString files;
@@ -142,11 +142,11 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 		element = root->FirstChildElement("Preset");
 		while (element) {
 			bool skip = true;
-			vector<string> groups;
+			std::vector<std::string> groups;
 
 			g = element->FirstChildElement("Group");
 			while (g) {
-				string groupName = g->Attribute("name");
+				std::string groupName = g->Attribute("name");
 				groups.push_back(groupName);
 
 				for (auto &filter : groupFilter) {
@@ -192,7 +192,7 @@ bool PresetCollection::LoadPresets(const string& basePath, const string& sliderS
 	return 0;
 }
 
-int PresetCollection::SavePreset(const string& filePath, const string& presetName, const string& sliderSetName, vector<string>& assignGroups) {
+int PresetCollection::SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups) {
 	if (namedSliderPresets.find(presetName) == namedSliderPresets.end())
 		return -1;
 

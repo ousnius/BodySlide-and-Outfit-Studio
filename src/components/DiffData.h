@@ -6,58 +6,56 @@ See the included LICENSE file
 
 #pragma once
 
-#include "../utils/Object3d.h"
+#include "../NIF/utils/Object3d.h"
 
 #include <map>
 #include <unordered_map>
-
-using namespace std;
 
 class OSDataFile {
 	uint header;
 	uint version;
 	uint dataCount;
-	map<string, unordered_map<ushort, Vector3>> dataDiffs;
+	std::map<std::string, std::unordered_map<ushort, Vector3>> dataDiffs;
 
 public:
 	OSDataFile();
 	~OSDataFile();
 
-	bool Read(const string& fileName);
-	bool Write(const string& fileName);
+	bool Read(const std::string& fileName);
+	bool Write(const std::string& fileName);
 
-	map<string, unordered_map<ushort, Vector3>> GetDataDiffs();
-	unordered_map<ushort, Vector3>* GetDataDiff(const string& dataName);
-	void SetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& inDataDiff);
+	std::map<std::string, std::unordered_map<ushort, Vector3>> GetDataDiffs();
+	std::unordered_map<ushort, Vector3>* GetDataDiff(const std::string& dataName);
+	void SetDataDiff(const std::string& dataName, std::unordered_map<ushort, Vector3>& inDataDiff);
 };
 
 class DiffDataSets {
-	map<string, unordered_map<ushort, Vector3>> namedSet;
-	map<string, string> dataTargets;
+	std::map<std::string, std::unordered_map<ushort, Vector3>> namedSet;
+	std::map<std::string, std::string> dataTargets;
 
 public:
-	inline bool TargetMatch(const string& set, const string& target);
-	int LoadSet(const string& name, const string& target, unordered_map<ushort, Vector3>& inDiffData);
-	int LoadSet(const string& name, const string& target, const string& fromFile);
-	int SaveSet(const string& name, const string& target, const string& toFile);
-	bool LoadData(const map<string, map<string, string>>& osdNames);
-	bool SaveData(const map<string, map<string, string>>& osdNames);
-	void RenameSet(const string& oldName, const string& newName);
-	void DeepRename(const string& oldName, const string& newName);
-	void AddEmptySet(const string& name, const string& target);
-	void UpdateDiff(const string& name, const string& target, ushort index, Vector3& newdiff);
-	void SumDiff(const string& name, const string& target, ushort index, Vector3& newdiff);
-	void ScaleDiff(const string& name, const string& target, float scalevalue);
-	void OffsetDiff(const string& name, const string& target, Vector3 &offset);
-	void ApplyDiff(const string& set, const string& target, float percent, vector<Vector3>* inOutResult);
-	void ApplyUVDiff(const string& set, const string& target, float percent, vector<Vector2>* inOutResult);
-	void ApplyClamp(const string& set, const string& target, vector<Vector3>* inOutResult);
-	unordered_map<ushort, Vector3>* GetDiffSet(const string& targetDataName);
-	void GetDiffIndices(const string& set, const string& target, vector<ushort>& outIndices, float threshold = 0.0f);
+	inline bool TargetMatch(const std::string& set, const std::string& target);
+	int LoadSet(const std::string& name, const std::string& target, std::unordered_map<ushort, Vector3>& inDiffData);
+	int LoadSet(const std::string& name, const std::string& target, const std::string& fromFile);
+	int SaveSet(const std::string& name, const std::string& target, const std::string& toFile);
+	bool LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
+	bool SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
+	void RenameSet(const std::string& oldName, const std::string& newName);
+	void DeepRename(const std::string& oldName, const std::string& newName);
+	void AddEmptySet(const std::string& name, const std::string& target);
+	void UpdateDiff(const std::string& name, const std::string& target, ushort index, Vector3& newdiff);
+	void SumDiff(const std::string& name, const std::string& target, ushort index, Vector3& newdiff);
+	void ScaleDiff(const std::string& name, const std::string& target, float scalevalue);
+	void OffsetDiff(const std::string& name, const std::string& target, Vector3 &offset);
+	void ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector3>* inOutResult);
+	void ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector2>* inOutResult);
+	void ApplyClamp(const std::string& set, const std::string& target, std::vector<Vector3>* inOutResult);
+	std::unordered_map<ushort, Vector3>* GetDiffSet(const std::string& targetDataName);
+	void GetDiffIndices(const std::string& set, const std::string& target, std::vector<ushort>& outIndices, float threshold = 0.0f);
 
-	void DeleteVerts(const string& target, const vector<ushort>& indices);
-	void ClearSet(const string& name);
-	void EmptySet(const string& set, const string& target) {
+	void DeleteVerts(const std::string& target, const std::vector<ushort>& indices);
+	void ClearSet(const std::string& name);
+	void EmptySet(const std::string& set, const std::string& target) {
 		if (!TargetMatch(set, target))
 			return;
 
@@ -65,7 +63,7 @@ public:
 	}
 
 
-	void ZeroVertDiff(const string& set, Vector3* vColorMask) {
+	void ZeroVertDiff(const std::string& set, Vector3* vColorMask) {
 		for (auto &ns : namedSet[set]) {
 			float f = vColorMask[ns.first].x;
 			if (f == 1.0f)
@@ -79,11 +77,11 @@ public:
 
 	// Zeroes diffs for the specified verts (or all verts in set if vertSet is null), with an optional mask value. A partially masked vertex will have its diff brought closer to 0,
 	// a fully masked vertex will have its diff remain the same and a fully unmasked vert will have its diff erased.
-	void ZeroVertDiff(const string& set, const string& target, vector<ushort>* vertSet, unordered_map<ushort, float>* mask) {
+	void ZeroVertDiff(const std::string& set, const std::string& target, std::vector<ushort>* vertSet, std::unordered_map<ushort, float>* mask) {
 		if (!TargetMatch(set, target))
 			return;
 
-		vector<ushort> v;
+		std::vector<ushort> v;
 		if (vertSet) {
 			v = (*vertSet);
 		}
@@ -122,7 +120,7 @@ public:
 };
 
 // Set == slider name, target == shape name.
-bool DiffDataSets::TargetMatch(const string& set, const string& target) {
+bool DiffDataSets::TargetMatch(const std::string& set, const std::string& target) {
 	auto it = dataTargets.find(set);
 	if (it != dataTargets.end())
 		return it->second == target;

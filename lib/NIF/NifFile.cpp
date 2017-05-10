@@ -110,7 +110,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiPSysGravityStrengthCtlr>();
 	RegisterFactory<NiPSysInitialRotSpeedCtlr>();
 	RegisterFactory<NiPSysEmitterCtlr>();
-	RegisterFactory<NiPSysMultiTargetEmitterCtlr>();
+	RegisterFactory<BSPSysMultiTargetEmitterCtlr>();
 	RegisterFactory<NiControllerManager>();
 	RegisterFactory<NiSequence>();
 	RegisterFactory<NiControllerSequence>();
@@ -183,7 +183,7 @@ NiFactoryRegister::NiFactoryRegister() {
 }
 
 
-NiShape* NifFile::FindShapeByName(const string& name, int dupIndex) {
+NiShape* NifFile::FindShapeByName(const std::string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
 		auto geom = dynamic_cast<NiShape*>(block);
@@ -197,7 +197,7 @@ NiShape* NifFile::FindShapeByName(const string& name, int dupIndex) {
 	return nullptr;
 }
 
-NiAVObject* NifFile::FindAVObjectByName(const string& name, int dupIndex) {
+NiAVObject* NifFile::FindAVObjectByName(const std::string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
 		auto avo = dynamic_cast<NiAVObject*>(block);
@@ -211,7 +211,7 @@ NiAVObject* NifFile::FindAVObjectByName(const string& name, int dupIndex) {
 	return nullptr;
 }
 
-NiNode* NifFile::FindNodeByName(const string& name) {
+NiNode* NifFile::FindNodeByName(const std::string& name) {
 	for (auto& block : blocks) {
 		auto node = dynamic_cast<NiNode*>(block);
 		if (node && !name.compare(node->GetName()))
@@ -236,8 +236,9 @@ NiNode* NifFile::GetParentNode(NiObject* childBlock) {
 		for (auto &block : blocks) {
 			auto node = dynamic_cast<NiNode*>(block);
 			if (node) {
-				for (auto it = node->ChildrenBegin(); it < node->ChildrenEnd(); it++) {
-					if (childId == *it)
+				auto children = node->GetChildren();
+				for (auto it = children.begin(); it < children.end(); it++) {
+					if (childId == it->index)
 						return node;
 				}
 			}
@@ -254,70 +255,74 @@ void NifFile::CopyFrom(const NifFile& other) {
 	isValid = other.isValid;
 	hasUnknown = other.hasUnknown;
 	fileName = other.fileName;
-	hdr = other.hdr;
 
-	for (int i = 0; i < other.blocks.size(); i++) {
-		NiObject* blockCopy = other.blocks[i]->Clone();
-		if (blockCopy) {
-			blockCopy->header = &hdr;
-			blocks.push_back(blockCopy);
-		}
+	hdr = new NiHeader(*other.hdr);
+
+	size_t nBlocks = other.blocks.size();
+	blocks.resize(nBlocks);
+
+	for (int i = 0; i < nBlocks; i++) {
+		blocks[i] = other.blocks[i]->Clone();
+		blocks[i]->header = hdr;
 	}
 
-	hdr.SetBlockReference(&blocks);
+	hdr->SetBlockReference(&blocks);
 }
 
 void NifFile::Clear() {
+	isValid = false;
+	hasUnknown = false;
+
 	for (int i = 0; i < blocks.size(); i++)
 		delete blocks[i];
 
 	blocks.clear();
-	hdr.Clear();
-	isValid = false;
-	hasUnknown = false;
+	hdr->Clear();
 }
 
-int NifFile::Load(const string& filename) {
+int NifFile::Load(const std::string& filename) {
 	Clear();
 
-	fstream file(filename.c_str(), ios_base::in | ios_base::binary);
+	std::fstream file(filename.c_str(), std::ios_base::in | std::ios_base::binary);
 	if (file.is_open()) {
-		if (filename.rfind("\\") != string::npos)
+		if (filename.rfind("\\") != std::string::npos)
 			fileName = filename.substr(filename.rfind("\\"));
 		else
 			fileName = filename;
 
-		hdr.Get(file);
-		if (!hdr.IsValid()) {
+		hdr->Get(file);
+		if (!hdr->IsValid()) {
 			Clear();
 			return 1;
 		}
 
-		if (!(hdr.VerCheck(20, 2, 0, 7) && (hdr.GetUserVersion() == 11 || hdr.GetUserVersion() == 12))) {
+		if (!(hdr->VerCheck(20, 2, 0, 7) && (hdr->GetUserVersion() == 11 || hdr->GetUserVersion() == 12))) {
 			Clear();
 			return 2;
 		}
 
-		hdr.SetBlockReference(&blocks);
+		uint nBlocks = hdr->GetNumBlocks();
+		blocks.resize(nBlocks);
 
 		auto& nifactories = NiFactoryRegister::GetNiFactoryRegister();
-
-		for (int i = 0; i < hdr.GetNumBlocks(); i++) {
+		for (int i = 0; i < nBlocks; i++) {
 			NiObject* block = nullptr;
-			string blockTypeStr = hdr.GetBlockTypeStringById(i);
+			std::string blockTypeStr = hdr->GetBlockTypeStringById(i);
 
 			auto nifactory = nifactories.GetFactoryByName(blockTypeStr);
 			if (nifactory) {
-				block = nifactory->Load(file, &hdr);
+				block = nifactory->Load(file, hdr);
 			}
 			else {
 				hasUnknown = true;
-				block = (NiObject*)new NiUnknown(file, hdr.GetBlockSize(i));
+				block = (NiObject*)new NiUnknown(file, hdr->GetBlockSize(i));
 			}
 
 			if (block)
-				blocks.push_back(block);
+				blocks[i] = block;
 		}
+
+		hdr->SetBlockReference(&blocks);
 		file.close();
 	}
 	else {
@@ -332,19 +337,19 @@ int NifFile::Load(const string& filename) {
 	return 0;
 }
 
-void NifFile::SetShapeOrder(const vector<string>& order) {
+void NifFile::SetShapeOrder(const std::vector<std::string>& order) {
 	if (hasUnknown)
 		return;
 
-	vector<int> delta;
+	std::vector<int> delta;
 	bool hadoffset = false;
 
 	// Have to do this in multiple passes
 	do {
-		vector<string> oldOrder;
+		std::vector<std::string> oldOrder;
 		GetShapeList(oldOrder);
 
-		vector<int> oldOrderIds;
+		std::vector<int> oldOrderIds;
 		for (auto s : oldOrder) {
 			int blockID = GetBlockID(FindShapeByName(s));
 			if (blockID != 0xFFFFFFFF)
@@ -375,7 +380,7 @@ void NifFile::SetShapeOrder(const vector<string>& order) {
 			int c = 0 - delta[i];
 			int p = i;
 			while (c > 0) {
-				hdr.SwapBlocks(oldOrderIds[p], oldOrderIds[p - 1]);
+				hdr->SwapBlocks(oldOrderIds[p], oldOrderIds[p - 1]);
 				p--;
 				c--;
 			}
@@ -393,18 +398,22 @@ void NifFile::PrettySortBlocks() {
 	if (!root)
 		return;
 
-	vector<int> oldChildren(root->ChildrenBegin(), root->ChildrenEnd());
+	std::vector<int> oldChildren(root->GetNumChildren());
+	for (int i = 0; i < oldChildren.size(); i++)
+		oldChildren[i] = root->GetChildRef(i);
+
 	root->ClearChildren();
 
-	for (int i = 0; i < hdr.GetNumBlocks(); i++)
+	for (int i = 0; i < hdr->GetNumBlocks(); i++)
 		if (find(oldChildren.begin(), oldChildren.end(), i) != oldChildren.end())
 			root->AddChildRef(i);
 
-	auto bookmark = root->ChildrenBegin();
-	auto peek = root->ChildrenBegin();
+	auto& children = root->GetChildren();
+	auto bookmark = children.begin();
+	auto peek = children.begin();
 
-	for (int i = 0; peek < root->ChildrenEnd(); i++) {
-		auto block = hdr.GetBlock<NiObject>(root->GetChildRef(i));
+	for (int i = 0; peek < children.end(); i++) {
+		auto block = hdr->GetBlock<NiObject>(root->GetChildRef(i));
 		if (block && block->HasType<NiShape>()) {
 			iter_swap(bookmark, peek);
 			bookmark++;
@@ -418,7 +427,7 @@ bool NifFile::DeleteUnreferencedBlocks() {
 		return false;
 
 	bool hadDeletions = false;
-	hdr.DeleteUnreferencedBlocks(&hadDeletions);
+	hdr->DeleteUnreferencedBlocks(&hadDeletions);
 	return hadDeletions;
 }
 
@@ -426,15 +435,15 @@ int NifFile::RemoveUnusedStrings() {
 	if (hasUnknown)
 		return 0;
 
-	return hdr.RemoveUnusedStrings();
+	return hdr->RemoveUnusedStrings();
 }
 
-int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& trans, float scale) {
+int NifFile::AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale) {
 	auto root = dynamic_cast<NiNode*>(blocks[0]);
 	if (!root)
 		return 0xFFFFFFFF;
 
-	auto newNode = new NiNode(&hdr);
+	auto newNode = new NiNode(hdr);
 	newNode->rotation[0] = rot[0];
 	newNode->rotation[1] = rot[1];
 	newNode->rotation[2] = rot[2];
@@ -442,21 +451,21 @@ int NifFile::AddNode(const string& nodeName, vector<Vector3>& rot, Vector3& tran
 	newNode->scale = scale;
 	newNode->SetName(nodeName);
 
-	int newNodeId = hdr.AddBlock(newNode);
+	int newNodeId = hdr->AddBlock(newNode);
 	if (newNodeId != 0xFFFFFFFF)
 		root->AddChildRef(newNodeId);
 
 	return newNodeId;
 }
 
-void NifFile::DeleteNode(const string& nodeName) {
-	hdr.DeleteBlock(GetBlockID(FindNodeByName(nodeName)));
+void NifFile::DeleteNode(const std::string& nodeName) {
+	hdr->DeleteBlock(GetBlockID(FindNodeByName(nodeName)));
 }
 
-string NifFile::GetNodeName(const int blockID) {
-	string name;
+std::string NifFile::GetNodeName(const int blockID) {
+	std::string name;
 
-	auto n = hdr.GetBlock<NiNode>(blockID);
+	auto n = hdr->GetBlock<NiNode>(blockID);
 	if (n) {
 		name = n->GetName();
 		if (name.empty())
@@ -466,15 +475,15 @@ string NifFile::GetNodeName(const int blockID) {
 	return name;
 }
 
-void NifFile::SetNodeName(const int blockID, const string& newName) {
-	auto node = hdr.GetBlock<NiNode>(blockID);
+void NifFile::SetNodeName(const int blockID, const std::string& newName) {
+	auto node = hdr->GetBlock<NiNode>(blockID);
 	if (!node)
 		return;
 
 	node->SetName(newName, true);
 }
 
-int NifFile::AssignExtraData(const string& blockName, const int extraDataId, bool isNode) {
+int NifFile::AssignExtraData(const std::string& blockName, const int extraDataId, bool isNode) {
 	if (extraDataId != 0xFFFFFFFF) {
 		if (isNode) {
 			// Assign to node
@@ -496,23 +505,23 @@ int NifFile::AssignExtraData(const string& blockName, const int extraDataId, boo
 	return extraDataId;
 }
 
-int NifFile::AddStringExtraData(const string& blockName, const string& name, const string& stringData, bool isNode) {
-	auto strExtraData = new NiStringExtraData(&hdr);
+int NifFile::AddStringExtraData(const std::string& blockName, const std::string& name, const std::string& stringData, bool isNode) {
+	auto strExtraData = new NiStringExtraData(hdr);
 	strExtraData->SetName(name);
 	strExtraData->SetStringData(stringData);
 
-	return AssignExtraData(blockName, hdr.AddBlock(strExtraData), isNode);
+	return AssignExtraData(blockName, hdr->AddBlock(strExtraData), isNode);
 }
 
-int NifFile::AddIntegerExtraData(const string& blockName, const string& name, const int integerData, bool isNode) {
-	auto intExtraData = new NiIntegerExtraData(&hdr);
+int NifFile::AddIntegerExtraData(const std::string& blockName, const std::string& name, const int integerData, bool isNode) {
+	auto intExtraData = new NiIntegerExtraData(hdr);
 	intExtraData->SetName(name);
 	intExtraData->SetIntegerData(integerData);
 
-	return AssignExtraData(blockName, hdr.AddBlock(intExtraData), isNode);
+	return AssignExtraData(blockName, hdr->AddBlock(intExtraData), isNode);
 }
 
-NiShader* NifFile::GetShader(const string& shapeName) {
+NiShader* NifFile::GetShader(const std::string& shapeName) {
 	int prop1 = 0xFFFFFFFF;
 
 	NiShape* shape = FindShapeByName(shapeName);
@@ -520,17 +529,17 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 		prop1 = shape->GetShaderPropertyRef();
 
 	if (prop1 != 0xFFFFFFFF) {
-		auto shader = hdr.GetBlock<NiShader>(prop1);
+		auto shader = hdr->GetBlock<NiShader>(prop1);
 		if (shader)
 			return shader;
 	}
 	else {
-		vector<int> props = shape->propertiesRef;
+		std::vector<int> props = shape->propertyRefs.GetIndices();
 		if (props.empty())
 			return nullptr;
 
 		for (int i = 0; i < props.size(); i++) {
-			auto shader = hdr.GetBlock<NiShader>(props[i]);
+			auto shader = hdr->GetBlock<NiShader>(props[i]);
 			if (shader)
 				return shader;
 		}
@@ -539,7 +548,7 @@ NiShader* NifFile::GetShader(const string& shapeName) {
 	return nullptr;
 }
 
-bool NifFile::IsShaderSkin(const string& shapeName) {
+bool NifFile::IsShaderSkin(const std::string& shapeName) {
 	NiShader* shader = GetShader(shapeName);
 	if (shader)
 		return shader->IsSkinTint();
@@ -547,13 +556,13 @@ bool NifFile::IsShaderSkin(const string& shapeName) {
 	return false;
 }
 
-NiMaterialProperty* NifFile::GetMaterialProperty(const string& shapeName) {
+NiMaterialProperty* NifFile::GetMaterialProperty(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return nullptr;
 
-	for (int i = 0; i < shape->numProperties; i++) {
-		auto material = hdr.GetBlock<NiMaterialProperty>(shape->propertiesRef[i]);
+	for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
+		auto material = hdr->GetBlock<NiMaterialProperty>(shape->propertyRefs.GetBlockRef(i));
 		if (material)
 			return material;
 	}
@@ -561,7 +570,7 @@ NiMaterialProperty* NifFile::GetMaterialProperty(const string& shapeName) {
 	return nullptr;
 }
 
-int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
+int NifFile::GetTextureForShape(const std::string& shapeName, std::string& outTexFile, int texIndex) {
 	int textureSetRef = 0xFFFFFFFF;
 	outTexFile.clear();
 
@@ -598,7 +607,7 @@ int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int
 			return 0;
 	}
 
-	auto textureSet = hdr.GetBlock<BSShaderTextureSet>(textureSetRef);
+	auto textureSet = hdr->GetBlock<BSShaderTextureSet>(textureSetRef);
 	if (!textureSet || texIndex + 1 > textureSet->numTextures)
 		return 0;
 
@@ -606,7 +615,7 @@ int NifFile::GetTextureForShape(const string& shapeName, string& outTexFile, int
 	return 1;
 }
 
-void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, int texIndex) {
+void NifFile::SetTextureForShape(const std::string& shapeName, std::string& outTexFile, int texIndex) {
 	int textureSetRef = 0xFFFFFFFF;
 
 	NiShader* shader = GetShader(shapeName);
@@ -640,7 +649,7 @@ void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, in
 		return;
 	}
 
-	auto textureSet = hdr.GetBlock<BSShaderTextureSet>(textureSetRef);
+	auto textureSet = hdr->GetBlock<BSShaderTextureSet>(textureSetRef);
 	if (!textureSet || texIndex + 1 > textureSet->numTextures)
 		return;
 
@@ -648,17 +657,17 @@ void NifFile::SetTextureForShape(const string& shapeName, string& outTexFile, in
 }
 
 void NifFile::TrimTexturePaths() {
-	string tFile;
-	vector<string> shapes;
+	std::string tFile;
+	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 
 	for (auto &s : shapes) {
 		for (int i = 0; i < 10; i++) {
 			if (GetTextureForShape(s, tFile, i) && !tFile.empty()) {
-				tFile = regex_replace(tFile, regex("/+|\\\\+"), "\\");												// Replace multiple slashes or forward slashes with one backslash
-				tFile = regex_replace(tFile, regex("^(.*?)\\\\textures\\\\", regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
-				tFile = regex_replace(tFile, regex("^\\\\+"), "");													// Remove all backslashes from the front
-				tFile = regex_replace(tFile, regex("^(?!^textures\\\\)", regex_constants::icase), "textures\\");	// If the path doesn't start with "textures\", add it to the front
+				tFile = std::regex_replace(tFile, std::regex("/+|\\\\+"), "\\");													// Replace multiple slashes or forward slashes with one backslash
+				tFile = std::regex_replace(tFile, std::regex("^(.*?)\\\\textures\\\\", std::regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
+				tFile = std::regex_replace(tFile, std::regex("^\\\\+"), "");														// Remove all backslashes from the front
+				tFile = std::regex_replace(tFile, std::regex("^(?!^textures\\\\)", std::regex_constants::icase), "textures\\");		// If the path doesn't start with "textures\", add it to the front
 				SetTextureForShape(s, tFile, i);
 			}
 		}
@@ -681,29 +690,29 @@ void NifFile::CopyController(NiShader* destShader, NiShader* srcShader) {
 	if (srcController) {
 		// Copy first controller
 		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
-		int controllerId = hdr.AddBlock(destController);
+		int controllerId = hdr->AddBlock(destController);
 
-		destController->targetRef = shaderId;
+		destController->targetRef.index = shaderId;
 		destShader->SetControllerRef(controllerId);
 
 		CopyInterpolators(destController, srcController);
-		nextControllerRef = srcController->nextControllerRef;
+		nextControllerRef = srcController->nextControllerRef.index;
 
 		// Recursive copy for next controller references
 		while (nextControllerRef != 0xFFFFFFFF) {
 			srcController = srcShader->header->GetBlock<NiTimeController>(nextControllerRef);
 			if (srcController) {
 				NiTimeController* destControllerRec = static_cast<NiTimeController*>(srcController->Clone());
-				controllerId = hdr.AddBlock(destControllerRec);
+				controllerId = hdr->AddBlock(destControllerRec);
 
-				destControllerRec->targetRef = shaderId;
+				destControllerRec->targetRef.index = shaderId;
 
 				// Assign new controller to previous controller
-				destController->nextControllerRef = controllerId;
+				destController->nextControllerRef.index = controllerId;
 				destController = destControllerRec;
 
 				CopyInterpolators(destControllerRec, srcController);
-				nextControllerRef = srcController->nextControllerRef;
+				nextControllerRef = srcController->nextControllerRef.index;
 			}
 			else
 				nextControllerRef = 0xFFFFFFFF;
@@ -719,25 +728,25 @@ void NifFile::CopyInterpolators(NiTimeController* destController, NiTimeControll
 	if (srcController->HasType<BSFrustumFOVController>()) {
 		auto srcCtrlrType = static_cast<BSFrustumFOVController*>(srcController);
 		auto destCtrlrType = static_cast<BSFrustumFOVController*>(destController);
-		destCtrlrType->interpolatorRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->interpolatorRef);
+		destCtrlrType->interpolatorRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->interpolatorRef.index);
 	}
 	else if (srcController->HasType<BSProceduralLightningController>()) {
 		auto srcCtrlrType = static_cast<BSProceduralLightningController*>(srcController);
 		auto destCtrlrType = static_cast<BSProceduralLightningController*>(destController);
-		destCtrlrType->generationInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->mutationInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->subdivisionInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->numBranchesInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->numBranchesVarInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->lengthInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->lengthVarInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->widthInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
-		destCtrlrType->arcOffsetInterpRef = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef);
+		destCtrlrType->generationInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->mutationInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->subdivisionInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->numBranchesInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->numBranchesVarInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->lengthInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->lengthVarInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->widthInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->arcOffsetInterpRef.index = CopyInterpolator(destController->header, srcController->header, srcCtrlrType->generationInterpRef.index);
 	}
 	
 	auto niSingleInterp = dynamic_cast<NiSingleInterpController*>(srcController);
 	if (niSingleInterp)
-		niSingleInterp->interpolatorRef = CopyInterpolator(destController->header, srcController->header, niSingleInterp->interpolatorRef);
+		niSingleInterp->interpolatorRef.index = CopyInterpolator(destController->header, srcController->header, niSingleInterp->interpolatorRef.index);
 }
 
 int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int srcInterpId) {
@@ -749,48 +758,48 @@ int NifFile::CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int src
 		// Copy data of interpolators as well
 		if (destInterp->HasType<NiBoolInterpolator>()) {
 			auto srcInterpType = static_cast<NiBoolInterpolator*>(srcInterp);
-			auto srcData = srcHeader->GetBlock<NiBoolData>(srcInterpType->dataRef);
+			auto srcData = srcHeader->GetBlock<NiBoolData>(srcInterpType->dataRef.index);
 			if (srcData) {
 				auto destData = static_cast<NiBoolData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiBoolInterpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData);
+				destInterpType->dataRef.index = hdr->AddBlock(destData);
 			}
 		}
 		else if (destInterp->HasType<NiFloatInterpolator>()) {
 			auto srcInterpType = static_cast<NiFloatInterpolator*>(srcInterp);
-			auto srcData = srcHeader->GetBlock<NiFloatData>(srcInterpType->dataRef);
+			auto srcData = srcHeader->GetBlock<NiFloatData>(srcInterpType->dataRef.index);
 			if (srcData) {
 				auto destData = static_cast<NiFloatData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiFloatInterpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData);
+				destInterpType->dataRef.index = hdr->AddBlock(destData);
 			}
 		}
 		else if (destInterp->HasType<NiTransformInterpolator>()) {
 			auto srcInterpType = static_cast<NiTransformInterpolator*>(srcInterp);
-			auto srcData = srcHeader->GetBlock<NiTransformData>(srcInterpType->dataRef);
+			auto srcData = srcHeader->GetBlock<NiTransformData>(srcInterpType->dataRef.index);
 			if (srcData) {
 				auto destData = static_cast<NiTransformData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiTransformInterpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData);
+				destInterpType->dataRef.index = hdr->AddBlock(destData);
 			}
 		}
 		else if (destInterp->HasType<NiPoint3Interpolator>()) {
 			auto srcInterpType = static_cast<NiPoint3Interpolator*>(srcInterp);
-			auto srcData = srcHeader->GetBlock<NiPosData>(srcInterpType->dataRef);
+			auto srcData = srcHeader->GetBlock<NiPosData>(srcInterpType->dataRef.index);
 			if (srcData) {
 				auto destData = static_cast<NiPosData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiPoint3Interpolator*>(destInterp);
-				destInterpType->dataRef = hdr.AddBlock(destData);
+				destInterpType->dataRef.index = hdr->AddBlock(destData);
 			}
 		}
 
-		return hdr.AddBlock(destInterp);
+		return hdr->AddBlock(destInterp);
 	}
 
 	return 0xFFFFFFFF;
 }
 
-void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
+void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 	NiShape* shape = FindShapeByName(shapeDest);
 	if (!shape)
 		return;
@@ -799,13 +808,13 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	int propRef1 = 0xFFFFFFFF;
 	int propRef2 = 0xFFFFFFFF;
 
-	auto srcShader = srcNif.hdr.GetBlock<NiShader>(shape->GetShaderPropertyRef());
+	auto srcShader = srcNif.hdr->GetBlock<NiShader>(shape->GetShaderPropertyRef());
 	if (!srcShader) {
 		// No shader found, look in other properties
-		for (int i = 0; i < shape->numProperties; i++) {
-			srcShader = srcNif.hdr.GetBlock<NiShader>(shape->propertiesRef[i]);
+		for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
+			srcShader = srcNif.hdr->GetBlock<NiShader>(shape->propertyRefs.GetBlockRef(i));
 			if (srcShader) {
-				srcShaderRef = shape->propertiesRef[i];
+				srcShaderRef = shape->propertyRefs.GetBlockRef(i);
 				propRef1 = i;
 				break;
 			}
@@ -818,11 +827,11 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	else
 		srcShaderRef = shape->GetShaderPropertyRef();
 
-	auto srcAlphaProp = srcNif.hdr.GetBlock<NiAlphaProperty>(shape->GetAlphaPropertyRef());
+	auto srcAlphaProp = srcNif.hdr->GetBlock<NiAlphaProperty>(shape->GetAlphaPropertyRef());
 	if (!srcAlphaProp) {
 		// No alpha found, look in other properties
-		for (int i = 0; i < shape->numProperties; i++) {
-			srcAlphaProp = srcNif.hdr.GetBlock<NiAlphaProperty>(shape->propertiesRef[i]);
+		for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
+			srcAlphaProp = srcNif.hdr->GetBlock<NiAlphaProperty>(shape->propertyRefs.GetBlockRef(i));
 			if (srcAlphaProp) {
 				propRef2 = i;
 				break;
@@ -832,24 +841,24 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 
 	// Clone shader from source
 	NiShader* destShader = static_cast<NiShader*>(srcShader->Clone());
-	destShader->header = &hdr;
-	if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() >= 120)
+	destShader->header = hdr;
+	if (hdr->GetUserVersion() == 12 && hdr->GetUserVersion2() >= 120)
 		destShader->SetName(srcShader->GetName());
 	else
 		destShader->ClearName();
 
 	// Add shader block to nif
-	int shaderId = hdr.AddBlock(destShader);
+	int shaderId = hdr->AddBlock(destShader);
 
 	// Extra Data
 	for (int i = 0; i < srcShader->GetNumExtraData(); i++) {
-		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcShader->GetExtraDataRef(i));
+		auto srcExtraData = srcNif.hdr->GetBlock<NiExtraData>(srcShader->GetExtraDataRef(i));
 		if (srcExtraData) {
 			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
-			destExtraData->header = &hdr;
+			destExtraData->header = hdr;
 			destExtraData->SetName(srcExtraData->GetName());
 
-			int extraDataId = hdr.AddBlock(destExtraData);
+			int extraDataId = hdr->AddBlock(destExtraData);
 			destShader->SetExtraDataRef(i, extraDataId);
 
 			if (destExtraData->HasType<NiStringExtraData>()) {
@@ -864,31 +873,31 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	// Controller
 	CopyController(destShader, srcShader);
 
-	auto srcTexSet = srcNif.hdr.GetBlock<BSShaderTextureSet>(srcShader->GetTextureSetRef());
+	auto srcTexSet = srcNif.hdr->GetBlock<BSShaderTextureSet>(srcShader->GetTextureSetRef());
 	if (srcTexSet) {
 		// Create texture set block and copy
 		auto destTexSet = srcTexSet->Clone();
-		destTexSet->header = &hdr;
+		destTexSet->header = hdr;
 
 		// Add texture block to nif
-		int texSetId = hdr.AddBlock(destTexSet);
+		int texSetId = hdr->AddBlock(destTexSet);
 
 		// Assign texture set block id to shader
 		destShader->SetTextureSetRef(texSetId);
 	}
 
 	// Wet Material
-	string srcWetMaterialName = srcShader->GetWetMaterialName();
+	std::string srcWetMaterialName = srcShader->GetWetMaterialName();
 	if (!srcWetMaterialName.empty())
 		destShader->SetWetMaterialName(srcWetMaterialName);
 
 	if (srcShader->HasType<BSShaderPPLightingProperty>())
-		shape->propertiesRef[propRef1] = shaderId;
+		shape->propertyRefs.SetBlockRef(propRef1, shaderId);
 	else
 		shape->SetShaderPropertyRef(shaderId);
 
 	// Kill normals and tangents
-	if (destShader->IsSkinTint() && hdr.GetUserVersion() >= 12) {
+	if (destShader->IsSkinTint() && hdr->GetUserVersion() >= 12) {
 		if (shape->HasType<NiTriBasedGeom>()) {
 			shape->SetNormals(false);
 			shape->SetTangents(false);
@@ -898,54 +907,54 @@ void NifFile::CopyShader(const string& shapeDest, NifFile& srcNif) {
 	// Create alpha property and copy
 	if (srcAlphaProp) {
 		auto destAlphaProp = srcAlphaProp->Clone();
-		destAlphaProp->header = &hdr;
+		destAlphaProp->header = hdr;
 
-		if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() >= 120)
+		if (hdr->GetUserVersion() == 12 && hdr->GetUserVersion2() >= 120)
 			destAlphaProp->SetName(srcAlphaProp->GetName());
 		else
 			destAlphaProp->ClearName();
 
-		int alphaPropId = hdr.AddBlock(destAlphaProp);
+		int alphaPropId = hdr->AddBlock(destAlphaProp);
 		if (srcShader->HasType<BSShaderPPLightingProperty>())
-			shape->propertiesRef[propRef2] = alphaPropId;
+			shape->propertyRefs.SetBlockRef(propRef2, alphaPropId);
 		else
 			shape->SetAlphaPropertyRef(alphaPropId);
 	}
 }
 
-int NifFile::CopyNamedNode(string& nodeName, NifFile& srcNif) {
+int NifFile::CopyNamedNode(std::string& nodeName, NifFile& srcNif) {
 	NiNode* srcNode = srcNif.FindNodeByName(nodeName);
 	if (!srcNode)
 		return 0xFFFFFFFF;
 
 	auto destNode = srcNode->Clone();
-	destNode->header = &hdr;
+	destNode->header = hdr;
 	destNode->SetName(nodeName);
 
-	return hdr.AddBlock(destNode);
+	return hdr->AddBlock(destNode);
 }
 
-void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const string& srcShape) {
+void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const std::string& srcShape) {
 	NiShape* srcGeom = srcNif.FindShapeByName(srcShape);
 	if (!srcGeom)
 		return;
 
 	// Shape
 	NiShape* destGeom = static_cast<NiShape*>(srcGeom->Clone());
-	destGeom->header = &hdr;
+	destGeom->header = hdr;
 	destGeom->SetName(shapeDest);
 
-	int destId = hdr.AddBlock(destGeom);
+	int destId = hdr->AddBlock(destGeom);
 
 	// Extra Data
 	for (int i = 0; i < srcGeom->GetNumExtraData(); i++) {
-		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcGeom->GetExtraDataRef(i));
+		auto srcExtraData = srcNif.hdr->GetBlock<NiExtraData>(srcGeom->GetExtraDataRef(i));
 		if (srcExtraData) {
 			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
-			destExtraData->header = &hdr;
+			destExtraData->header = hdr;
 			destExtraData->SetName(srcExtraData->GetName());
 
-			int extraDataId = hdr.AddBlock(destExtraData);
+			int extraDataId = hdr->AddBlock(destExtraData);
 			destGeom->SetExtraDataRef(i, extraDataId);
 
 			if (destExtraData->HasType<NiStringExtraData>()) {
@@ -958,46 +967,46 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	}
 
 	// Collision Object
-	auto srcCollisionObj = srcNif.hdr.GetBlock<NiCollisionObject>(srcGeom->collisionRef);
+	auto srcCollisionObj = srcNif.hdr->GetBlock<NiCollisionObject>(srcGeom->GetCollisionRef());
 	if (srcCollisionObj) {
 		auto destCollisionObj = srcCollisionObj->Clone();
-		destCollisionObj->header = &hdr;
+		destCollisionObj->header = hdr;
 
-		int collisionId = hdr.AddBlock(destCollisionObj);
-		destGeom->collisionRef = collisionId;
+		int collisionId = hdr->AddBlock(destCollisionObj);
+		destGeom->SetCollisionRef(collisionId);
 	}
 
 	// Geometry Data
-	auto srcGeomData = srcNif.hdr.GetBlock<NiTriBasedGeomData>(srcGeom->GetDataRef());
+	auto srcGeomData = srcNif.hdr->GetBlock<NiTriBasedGeomData>(srcGeom->GetDataRef());
 	if (srcGeomData) {
 		NiTriBasedGeomData* destGeomData = static_cast<NiTriBasedGeomData*>(srcGeomData->Clone());
-		destGeomData->header = &hdr;
+		destGeomData->header = hdr;
 
-		int destDataId = hdr.AddBlock(destGeomData);
+		int destDataId = hdr->AddBlock(destGeomData);
 		destGeom->SetDataRef(destDataId);
 	}
 
 	// Skinning
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
-		if (destGeom->HasType<NiTriBasedGeom>() || (destGeom->HasType<BSTriShape>() && hdr.GetUserVersion2() == 100)) {
-			auto srcSkinInst = srcNif.hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
+		if (destGeom->HasType<NiTriBasedGeom>() || (destGeom->HasType<BSTriShape>() && hdr->GetUserVersion2() == 100)) {
+			auto srcSkinInst = srcNif.hdr->GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcSkinInst) {
-				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
-				auto srcSkinPart = srcNif.hdr.GetBlock<NiSkinPartition>(srcSkinInst->GetSkinPartitionRef());
+				auto srcSkinData = srcNif.hdr->GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
+				auto srcSkinPart = srcNif.hdr->GetBlock<NiSkinPartition>(srcSkinInst->GetSkinPartitionRef());
 
 				NiSkinInstance* destSkinInst = srcSkinInst->Clone();
-				destSkinInst->header = &hdr;
+				destSkinInst->header = hdr;
 
 				// Treat skinning and partition info as blobs of anonymous data.
 				auto destSkinData = srcSkinData->Clone();
-				destSkinData->header = &hdr;
+				destSkinData->header = hdr;
 				auto destSkinPart = srcSkinPart->Clone();
-				destSkinPart->header = &hdr;
+				destSkinPart->header = hdr;
 
-				int destSkinId = hdr.AddBlock(destSkinInst);
-				int destSkinDataId = hdr.AddBlock(destSkinData);
-				int destSkinPartId = hdr.AddBlock(destSkinPart);
+				int destSkinId = hdr->AddBlock(destSkinInst);
+				int destSkinDataId = hdr->AddBlock(destSkinData);
+				int destSkinPartId = hdr->AddBlock(destSkinPart);
 
 				destGeom->SetSkinInstanceRef(destSkinId);
 				destSkinInst->SetDataRef(destSkinDataId);
@@ -1007,18 +1016,18 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 			}
 		}
 		else if (destGeom->HasType<BSTriShape>()) {
-			auto srcBSSkinInst = srcNif.hdr.GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
+			auto srcBSSkinInst = srcNif.hdr->GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcBSSkinInst) {
 				auto destBSSkinInst = srcBSSkinInst->Clone();
 
-				int destSkinInstId = hdr.AddBlock(destBSSkinInst);
+				int destSkinInstId = hdr->AddBlock(destBSSkinInst);
 				destGeom->SetSkinInstanceRef(destSkinInstId);
 
-				auto srcBoneData = srcNif.hdr.GetBlock<BSSkinBoneData>(srcBSSkinInst->GetDataRef());
+				auto srcBoneData = srcNif.hdr->GetBlock<BSSkinBoneData>(srcBSSkinInst->GetDataRef());
 				if (srcBoneData) {
 					auto destBoneData = srcBoneData->Clone();
 
-					int destBoneDataId = hdr.AddBlock(destBoneData);
+					int destBoneDataId = hdr->AddBlock(destBoneData);
 					destBSSkinInst->SetDataRef(destBoneDataId);
 
 					destBoneCont = static_cast<NiBoneContainer*>(destBSSkinInst);
@@ -1031,21 +1040,21 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 	CopyShader(shapeDest, srcNif);
 
 	// Properties
-	for (int i = 0; i < srcGeom->numProperties; i++) {
-		auto srcProp = srcNif.hdr.GetBlock<NiProperty>(srcGeom->propertiesRef[i]);
+	for (int i = 0; i < srcGeom->propertyRefs.GetSize(); i++) {
+		auto srcProp = srcNif.hdr->GetBlock<NiProperty>(srcGeom->propertyRefs.GetBlockRef(i));
 		if (srcProp) {
 			auto destProp = srcProp->Clone();
-			destProp->header = &hdr;
+			destProp->header = hdr;
 
-			int propId = hdr.AddBlock(destProp);
-			destGeom->propertiesRef[i] = propId;
+			int propId = hdr->AddBlock(destProp);
+			destGeom->propertyRefs.SetBlockRef(i, propId);
 		}
 	}
 
-	vector<string> srcBoneList;
+	std::vector<std::string> srcBoneList;
 	srcNif.GetShapeBoneList(srcShape, srcBoneList);
 	if (destBoneCont)
-		destBoneCont->bones.clear();
+		destBoneCont->boneRefs.Clear();
 
 	// Bones
 	auto rootNode = dynamic_cast<NiNode*>(blocks[0]);
@@ -1058,18 +1067,15 @@ void NifFile::CopyGeometry(const string& shapeDest, NifFile& srcNif, const strin
 			}
 
 			if (destBoneCont)
-				destBoneCont->bones.push_back(boneID);
+				destBoneCont->boneRefs.AddBlockRef(boneID);
 		}
 
 		rootNode->AddChildRef(destId);
 	}
-
-	if (destBoneCont)
-		destBoneCont->numBones = destBoneCont->bones.size();
 }
 
-int NifFile::Save(const string& filename, bool optimize, bool sortBlocks) {
-	fstream file(filename.c_str(), ios_base::out | ios_base::binary);
+int NifFile::Save(const std::string& filename, bool optimize, bool sortBlocks) {
+	std::fstream file(filename.c_str(), std::ios_base::out | std::ios_base::binary);
 	if (file.is_open()) {
 		FinalizeData();
 
@@ -1079,10 +1085,10 @@ int NifFile::Save(const string& filename, bool optimize, bool sortBlocks) {
 		if (sortBlocks)
 			PrettySortBlocks();
 
-		hdr.CalcAllBlockSizes();
-		hdr.Put(file);
+		hdr->CalcAllBlockSizes();
+		hdr->Put(file);
 
-		for (int i = 0; i < hdr.GetNumBlocks(); i++)
+		for (int i = 0; i < hdr->GetNumBlocks(); i++)
 			blocks[i]->Put(file);
 
 		uint endPad = 1;
@@ -1098,7 +1104,7 @@ int NifFile::Save(const string& filename, bool optimize, bool sortBlocks) {
 }
 
 void NifFile::Optimize() {
-	vector<string> shapes;
+	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 
 	for (auto &s : shapes)
@@ -1110,12 +1116,12 @@ void NifFile::Optimize() {
 
 OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	OptResultSSE result;
-	if (!(hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() == 83)) {
+	if (!(hdr->GetUserVersion() == 12 && hdr->GetUserVersion2() == 83)) {
 		result.versionMismatch = true;
 		return result;
 	}
 
-	vector<string> shapes;
+	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 	for (auto &s : shapes) {
 		bool renamed = RenameDuplicateShape(s);
@@ -1123,7 +1129,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 			result.shapesRenamed.push_back(s);
 	}
 
-	hdr.SetVersion(20, 2, 0, 7, 12, 100);
+	hdr->SetVersion(20, 2, 0, 7, 12, 100);
 
 	GetShapeList(shapes);
 	for (auto &s : shapes) {
@@ -1133,23 +1139,23 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 			if (!parentNode)
 				continue;
 
-			auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+			auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 			if (geomData) {
 				bool removeVertexColors = true;
 				bool hasTangents = geomData->HasTangents();
-				vector<Vector3>* vertices = &geomData->vertices;
-				vector<Vector3>* normals = &geomData->normals;
-				vector<Vector2>* uvs = &geomData->uvSets;
-				const vector<Color4>& colors = geomData->vertexColors;
-				vector<Triangle> triangles;
+				std::vector<Vector3>* vertices = &geomData->vertices;
+				std::vector<Vector3>* normals = &geomData->normals;
+				std::vector<Vector2>* uvs = &geomData->uvSets;
+				const std::vector<Color4>& colors = geomData->vertexColors;
+				std::vector<Triangle> triangles;
 
 				if (geomData->HasType<NiTriShapeData>()) {
-					auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+					auto shapeData = hdr->GetBlock<NiTriShapeData>(shape->GetDataRef());
 					if (shapeData)
 						triangles = shapeData->triangles;
 				}
 				else if (geomData->HasType<NiTriStripsData>()) {
-					auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
+					auto stripsData = hdr->GetBlock<NiTriStripsData>(shape->GetDataRef());
 					if (stripsData) {
 						triangles.reserve(stripsData->numTriangles);
 						stripsData->StripsToTris(&triangles);
@@ -1204,18 +1210,17 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 
 				BSTriShape* bsShape = nullptr;
 				if (options.headParts)
-					bsShape = new BSDynamicTriShape(&hdr);
+					bsShape = new BSDynamicTriShape(hdr);
 				else
-					bsShape = new BSTriShape(&hdr);
+					bsShape = new BSTriShape(hdr);
 
 				bsShape->SetName(shape->GetName());
 				bsShape->SetControllerRef(shape->GetControllerRef());
 				bsShape->SetSkinInstanceRef(shape->GetSkinInstanceRef());
 				bsShape->SetShaderPropertyRef(shape->GetShaderPropertyRef());
 				bsShape->SetAlphaPropertyRef(shape->GetAlphaPropertyRef());
-				bsShape->collisionRef = shape->collisionRef;
-				bsShape->numProperties = shape->numProperties;
-				bsShape->propertiesRef = shape->propertiesRef;
+				bsShape->SetCollisionRef(shape->GetCollisionRef());
+				bsShape->propertyRefs.SetIndices(shape->propertyRefs.GetIndices());
 
 				for (int i = 0; i < shape->GetNumExtraData(); i++)
 					bsShape->AddExtraDataRef(shape->GetExtraDataRef(i));
@@ -1236,25 +1241,25 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if (!removeVertexColors && colors.size() > 0) {
 						bsShape->SetVertexColors(true);
 						for (int i = 0; i < bsShape->numVertices; i++) {
-							float f = max(0.0f, min(1.0f, colors[i].r));
-							bsShape->vertData[i].colorData[0] = (byte)floor(f == 1.0f ? 255 : f * 256.0);
+							float f = std::max(0.0f, std::min(1.0f, colors[i].r));
+							bsShape->vertData[i].colorData[0] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 
-							f = max(0.0f, min(1.0f, colors[i].g));
-							bsShape->vertData[i].colorData[1] = (byte)floor(f == 1.0f ? 255 : f * 256.0);
+							f = std::max(0.0f, std::min(1.0f, colors[i].g));
+							bsShape->vertData[i].colorData[1] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 
-							f = max(0.0f, min(1.0f, colors[i].b));
-							bsShape->vertData[i].colorData[2] = (byte)floor(f == 1.0f ? 255 : f * 256.0);
+							f = std::max(0.0f, std::min(1.0f, colors[i].b));
+							bsShape->vertData[i].colorData[2] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 
-							f = max(0.0f, min(1.0f, colors[i].a));
-							bsShape->vertData[i].colorData[3] = (byte)floor(f == 1.0f ? 255 : f * 256.0);
+							f = std::max(0.0f, std::min(1.0f, colors[i].a));
+							bsShape->vertData[i].colorData[3] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 						}
 					}
 
 					// Find NiOptimizeKeep string
 					for (int i = 0; i < bsShape->GetNumExtraData(); i++) {
-						auto stringData = hdr.GetBlock<NiStringExtraData>(bsShape->GetExtraDataRef(i));
+						auto stringData = hdr->GetBlock<NiStringExtraData>(bsShape->GetExtraDataRef(i));
 						if (stringData) {
-							if (stringData->GetStringData().find("NiOptimizeKeep") != string::npos) {
+							if (stringData->GetStringData().find("NiOptimizeKeep") != std::string::npos) {
 								bsShape->particleDataSize = bsShape->numVertices * 6 + bsShape->numTriangles * 3;
 								bsShape->particleVerts = *vertices;
 
@@ -1270,9 +1275,9 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if (shape->IsSkinned()) {
 						bsShape->SetSkinned(true);
 
-						auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+						auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 						if (skinInst) {
-							auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+							auto skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 							if (skinPart) {
 								bool triangulated = TriangulatePartitions(s);
 								if (triangulated)
@@ -1299,7 +1304,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 										}
 									}
 
-									vector<Triangle> realTris(part.numTriangles);
+									std::vector<Triangle> realTris(part.numTriangles);
 									for (int i = 0; i < part.numTriangles; i++) {
 										// Find the actual tri index from the partition tri index
 										Triangle tri;
@@ -1330,38 +1335,38 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if (headPartEyes)
 						bsShape->vertFlags7 |= 1 << 4;
 
-					hdr.ReplaceBlock(GetBlockID(shape), bsShape);
+					hdr->ReplaceBlock(GetBlockID(shape), bsShape);
 				}
 				else
-					hdr.ReplaceBlock(GetBlockID(shape), bsShape);
+					hdr->ReplaceBlock(GetBlockID(shape), bsShape);
 
 				UpdateSkinPartitions(s);
 			}
 		}
 	}
 
-	hdr.DeleteUnreferencedBlocks();
+	hdr->DeleteUnreferencedBlocks();
 	return result;
 }
 
 void NifFile::PrepareData() {
-	vector<string> shapes;
+	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 
 	for (auto &s : shapes) {
 		// Move triangle and vertex data from partition to shape
-		if (hdr.GetUserVersion() >= 12 && hdr.GetUserVersion2() == 100) {
+		if (hdr->GetUserVersion() >= 12 && hdr->GetUserVersion2() == 100) {
 			NiShape* shape = FindShapeByName(s);
 			if (shape) {
 				BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 				if (!bsTriShape)
 					continue;
 
-				auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+				auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 				if (!skinInst)
 					continue;
 
-				auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+				auto skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 				if (!skinPart)
 					continue;
 
@@ -1390,23 +1395,23 @@ void NifFile::PrepareData() {
 }
 
 void NifFile::FinalizeData() {
-	vector<string> shapes;
+	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 
 	for (auto &s : shapes) {
 		// Move triangle and vertex data from shape to partition
-		if (hdr.GetUserVersion() >= 12 && hdr.GetUserVersion2() == 100) {
+		if (hdr->GetUserVersion() >= 12 && hdr->GetUserVersion2() == 100) {
 			NiShape* shape = FindShapeByName(s);
 			if (shape) {
 				BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 				if (!bsTriShape)
 					continue;
 
-				auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+				auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 				if (!skinInst)
 					continue;
 
-				auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+				auto skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 				if (!skinPart)
 					continue;
 
@@ -1429,7 +1434,7 @@ void NifFile::FinalizeData() {
 	}
 }
 
-int NifFile::GetShapeList(vector<string>& outList) {
+int NifFile::GetShapeList(std::vector<std::string>& outList) {
 	outList.clear();
 	for (auto& block : blocks) {
 		auto shape = dynamic_cast<NiShape*>(block);
@@ -1439,13 +1444,13 @@ int NifFile::GetShapeList(vector<string>& outList) {
 	return outList.size();
 }
 
-void NifFile::RenameShape(const string& oldName, const string& newName) {
+void NifFile::RenameShape(const std::string& oldName, const std::string& newName) {
 	NiAVObject* geom = FindAVObjectByName(oldName);
 	if (geom)
 		geom->SetName(newName, true);
 }
 
-bool NifFile::RenameDuplicateShape(const string& dupedShape) {
+bool NifFile::RenameDuplicateShape(const std::string& dupedShape) {
 	int dupCount = 1;
 	char buf[10];
 
@@ -1453,7 +1458,7 @@ bool NifFile::RenameDuplicateShape(const string& dupedShape) {
 	if (geom) {
 		while ((geom = FindAVObjectByName(dupedShape, 1)) != nullptr) {
 			_snprintf(buf, 10, "_%d", dupCount);
-			while (hdr.FindStringId(geom->GetName() + buf) != 0xFFFFFFFF) {
+			while (hdr->FindStringId(geom->GetName() + buf) != 0xFFFFFFFF) {
 				dupCount++;
 				_snprintf(buf, 10, "_%d", dupCount);
 			}
@@ -1473,7 +1478,7 @@ int NifFile::GetRootNodeID() {
 	return 0;
 }
 
-bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
+bool NifFile::GetNodeTransform(const std::string& nodeName, std::vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
 	for (auto& block : blocks) {
 		auto node = dynamic_cast<NiNode*>(block);
 		if (node && !node->GetName().compare(nodeName)) {
@@ -1489,12 +1494,12 @@ bool NifFile::GetNodeTransform(const string& nodeName, vector<Vector3>& outRot, 
 	return false;
 }
 
-bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly) {
+bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly) {
 	if (rootChildrenOnly) {
 		auto root = dynamic_cast<NiNode*>(blocks[0]);
 		if (root) {
 			for (int i = 0; i < root->GetNumChildren(); i++) {
-				auto node = hdr.GetBlock<NiNode>(root->GetChildRef(i));
+				auto node = hdr->GetBlock<NiNode>(root->GetChildRef(i));
 				if (node) {
 					if (!node->GetName().compare(nodeName)) {
 						node->rotation[0] = inXform.rotation[0];
@@ -1525,19 +1530,19 @@ bool NifFile::SetNodeTransform(const string& nodeName, SkinTransform& inXform, c
 	return false;
 }
 
-int NifFile::GetShapeBoneList(const string& shapeName, vector<string>& outList) {
+int NifFile::GetShapeBoneList(const std::string& shapeName, std::vector<std::string>& outList) {
 	outList.clear();
 
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return 0;
 
-	auto skinInst = hdr.GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return 0;
 
-	for (int i = 0; i < skinInst->bones.size(); i++) {
-		auto node = hdr.GetBlock<NiNode>(skinInst->bones[i]);
+	for (int i = 0; i < skinInst->boneRefs.GetSize(); i++) {
+		auto node = hdr->GetBlock<NiNode>(skinInst->boneRefs.GetBlockRef(i));
 		if (node)
 			outList.push_back(node->GetName());
 	}
@@ -1545,24 +1550,24 @@ int NifFile::GetShapeBoneList(const string& shapeName, vector<string>& outList) 
 	return outList.size();
 }
 
-int NifFile::GetShapeBoneIDList(const string& shapeName, vector<int>& outList) {
+int NifFile::GetShapeBoneIDList(const std::string& shapeName, std::vector<int>& outList) {
 	outList.clear();
 
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return 0;
 
-	auto skinInst = hdr.GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return 0;
 
-	for (int i = 0; i < skinInst->bones.size(); i++)
-		outList.push_back(skinInst->bones[i]);
+	for (int i = 0; i < skinInst->boneRefs.GetSize(); i++)
+		outList.push_back(skinInst->boneRefs.GetBlockRef(i));
 
 	return outList.size();
 }
 
-void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
+void NifFile::SetShapeBoneIDList(const std::string& shapeName, std::vector<int>& inList) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -1572,17 +1577,16 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 
 	BSSkinBoneData* boneData = nullptr;
 	if (shape->HasType<BSTriShape>()) {
-		auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+		auto skinForBoneRef = hdr->GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 		if (skinForBoneRef)
-			boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+			boneData = hdr->GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
 	}
 
-	auto boneCont = hdr.GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
+	auto boneCont = hdr->GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
 	if (!boneCont)
 		return;
 
-	boneCont->bones.clear();
-	boneCont->numBones = 0;
+	boneCont->boneRefs.Clear();
 
 	bool feedBoneData = false;
 	if (boneData && boneData->nBones != inList.size()) {
@@ -1593,8 +1597,7 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 	}
 
 	for (auto &i : inList) {
-		boneCont->bones.push_back(i);
-		boneCont->numBones++;
+		boneCont->boneRefs.AddBlockRef(i);
 		if (boneData && feedBoneData) {
 			boneData->boneXforms.emplace_back();
 			boneData->nBones++;
@@ -1603,21 +1606,26 @@ void NifFile::SetShapeBoneIDList(const string& shapeName, vector<int>& inList) {
 
 	auto skinInst = dynamic_cast<NiSkinInstance*>(boneCont);
 	if (skinInst) {
-		auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+		auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 		if (skinData) {
-			int nBonesToAdd = skinInst->bones.size() - skinData->numBones;
-			if (nBonesToAdd > 0) {
-				for (int i = 0; i < nBonesToAdd; i++) {
-					skinData->bones.emplace_back();
-					skinData->bones.back().numVertices = 0;
-					skinData->numBones++;
-				}
+			feedBoneData = false;
+
+			if (skinData->numBones != inList.size()) {
+				// Clear if size doesn't match
+				skinData->numBones = 0;
+				skinData->bones.clear();
+				feedBoneData = true;
+			}
+
+			if (feedBoneData) {
+				skinData->bones.resize(inList.size());
+				skinData->numBones = skinData->bones.size();
 			}
 		}
 	}
 }
 
-int NifFile::GetShapeBoneWeights(const string& shapeName, const int boneIndex, unordered_map<ushort, float>& outWeights) {
+int NifFile::GetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& outWeights) {
 	outWeights.clear();
 
 	NiShape* shape = FindShapeByName(shapeName);
@@ -1637,11 +1645,11 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, const int boneIndex, u
 		return outWeights.size();
 	}
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return 0;
 
-	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 	if (!skinData || boneIndex > skinData->numBones)
 		return 0;
 
@@ -1656,7 +1664,7 @@ int NifFile::GetShapeBoneWeights(const string& shapeName, const int boneIndex, u
 	return outWeights.size();
 }
 
-bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneName, SkinTransform& outXform) {
+bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const std::string& boneName, SkinTransform& outXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1668,14 +1676,14 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, const string& boneN
 	return GetShapeBoneTransform(shapeName, boneIndex, outXform);
 }
 
-bool NifFile::SetShapeBoneTransform(const string& shapeName, const int boneIndex, SkinTransform& inXform) {
+bool NifFile::SetShapeBoneTransform(const std::string& shapeName, const int boneIndex, SkinTransform& inXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
-	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinForBoneRef = hdr->GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 	if (skinForBoneRef && boneIndex != 0xFFFFFFFF) {
-		auto bsSkin = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		auto bsSkin = hdr->GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
 		if (!bsSkin)
 			return false;
 
@@ -1683,11 +1691,11 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, const int boneIndex
 		return true;
 	}
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return false;
 
-	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 	if (!skinData)
 		return false;
 
@@ -1705,14 +1713,14 @@ bool NifFile::SetShapeBoneTransform(const string& shapeName, const int boneIndex
 	return true;
 }
 
-bool NifFile::SetShapeBoneBounds(const string& shapeName, const int boneIndex, BoundingSphere& inBounds) {
+bool NifFile::SetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& inBounds) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
-	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinForBoneRef = hdr->GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 	if (skinForBoneRef && boneIndex != 0xFFFFFFFF) {
-		auto bsSkin = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		auto bsSkin = hdr->GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
 		if (!bsSkin)
 			return false;
 
@@ -1720,11 +1728,11 @@ bool NifFile::SetShapeBoneBounds(const string& shapeName, const int boneIndex, B
 		return true;
 	}
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return false;
 
-	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 	if (!skinData)
 		return false;
 
@@ -1736,14 +1744,14 @@ bool NifFile::SetShapeBoneBounds(const string& shapeName, const int boneIndex, B
 	return true;
 }
 
-bool NifFile::GetShapeBoneTransform(const string& shapeName, const int boneIndex, SkinTransform& outXform) {
+bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int boneIndex, SkinTransform& outXform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
-	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinForBoneRef = hdr->GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 	if (skinForBoneRef) {
-		auto boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		auto boneData = hdr->GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
 		if (boneData) {
 			if (boneIndex == 0xFFFFFFFF) {
 				// Overall skin transform not found in FO4 meshes :(
@@ -1755,11 +1763,11 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, const int boneIndex
 		}
 	}
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return false;
 
-	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 	if (!skinData)
 		return false;
 
@@ -1777,25 +1785,25 @@ bool NifFile::GetShapeBoneTransform(const string& shapeName, const int boneIndex
 	return true;
 }
 
-bool NifFile::GetShapeBoneBounds(const string& shapeName, const int boneIndex, BoundingSphere& outBounds) {
+bool NifFile::GetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& outBounds) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
-	auto skinForBoneRef = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinForBoneRef = hdr->GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 	if (skinForBoneRef) {
-		auto boneData = hdr.GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
+		auto boneData = hdr->GetBlock<BSSkinBoneData>(skinForBoneRef->GetDataRef());
 		if (boneData) {
 			outBounds = boneData->boneXforms[boneIndex].bounds;
 			return true;
 		}
 	}
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return false;
 
-	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 	if (!skinData)
 		return false;
 
@@ -1807,34 +1815,34 @@ bool NifFile::GetShapeBoneBounds(const string& shapeName, const int boneIndex, B
 	return true;
 }
 
-void NifFile::UpdateShapeBoneID(const string& shapeName, const int oldID, const int newID) {
+void NifFile::UpdateShapeBoneID(const std::string& shapeName, const int oldID, const int newID) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	auto boneCont = hdr.GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
+	auto boneCont = hdr->GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
 	if (!boneCont)
 		return;
 
-	for (auto &bp : boneCont->bones) {
-		if (bp == oldID) {
-			bp = newID;
+	for (auto &bp : boneCont->boneRefs.GetRefs()) {
+		if (bp.index == oldID) {
+			bp.index = newID;
 			return;
 		}
 	}
 }
 
 // Not implemented for BSTriShape, use SetShapeVertWeights instead
-void NifFile::SetShapeBoneWeights(const string& shapeName, const int boneIndex, unordered_map<ushort, float>& inWeights) {
+void NifFile::SetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& inWeights) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return;
 
-	auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+	auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 	if (!skinData)
 		return;
 
@@ -1850,7 +1858,7 @@ void NifFile::SetShapeBoneWeights(const string& shapeName, const int boneIndex, 
 	bone->numVertices = (ushort)bone->vertexWeights.size();
 }
 
-void NifFile::SetShapeVertWeights(const string& shapeName, const int vertIndex, vector<byte>& boneids, vector<float>& weights) {
+void NifFile::SetShapeVertWeights(const std::string& shapeName, const int vertIndex, std::vector<byte>& boneids, std::vector<float>& weights) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -1875,7 +1883,7 @@ void NifFile::SetShapeVertWeights(const string& shapeName, const int vertIndex, 
 	}
 }
 
-bool NifFile::GetShapeSegments(const string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+bool NifFile::GetShapeSegments(const std::string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
 	BSSubIndexTriShape* siTriShape = dynamic_cast<BSSubIndexTriShape*>(FindShapeByName(shapeName));
 	if (!siTriShape)
 		return false;
@@ -1884,7 +1892,7 @@ bool NifFile::GetShapeSegments(const string& shapeName, BSSubIndexTriShape::BSSI
 	return true;
 }
 
-void NifFile::SetShapeSegments(const string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+void NifFile::SetShapeSegments(const std::string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
 	BSSubIndexTriShape* siTriShape = dynamic_cast<BSSubIndexTriShape*>(FindShapeByName(shapeName));
 	if (!siTriShape)
 		return;
@@ -1892,22 +1900,22 @@ void NifFile::SetShapeSegments(const string& shapeName, const BSSubIndexTriShape
 	siTriShape->SetSegmentation(segmentation);
 }
 
-bool NifFile::GetShapePartitions(const string& shapeName, vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, vector<vector<ushort>>& verts, vector<vector<Triangle>>& tris) {
+bool NifFile::GetShapePartitions(const std::string& shapeName, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
-	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	auto bsdSkinInst = hdr->GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
 	if (bsdSkinInst)
 		partitionInfo = bsdSkinInst->GetPartitions();
 	else
 		partitionInfo.clear();
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return false;
 
-	auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+	auto skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 	if (!skinPart)
 		return false;
 
@@ -1919,20 +1927,20 @@ bool NifFile::GetShapePartitions(const string& shapeName, vector<BSDismemberSkin
 	return true;
 }
 
-void NifFile::SetShapePartitions(const string& shapeName, const vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const vector<vector<ushort>>& verts, const vector<vector<Triangle>>& tris) {
+void NifFile::SetShapePartitions(const std::string& shapeName, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	auto bsdSkinInst = hdr->GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
 	if (bsdSkinInst)
 		bsdSkinInst->SetPartitions(partitionInfo);
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return;
 
-	auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+	auto skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 	if (!skinPart)
 		return;
 
@@ -1954,7 +1962,7 @@ void NifFile::SetShapePartitions(const string& shapeName, const vector<BSDismemb
 			skinPart->partitions[i].triangles.clear();
 	}
 
-	vector<int> emptyIndices;
+	std::vector<int> emptyIndices;
 	if (skinPart->RemoveEmptyPartitions(emptyIndices)) {
 		if (bsdSkinInst) {
 			for (auto &i : emptyIndices)
@@ -1965,15 +1973,15 @@ void NifFile::SetShapePartitions(const string& shapeName, const vector<BSDismemb
 	}
 }
 
-void NifFile::SetDefaultPartition(const string& shapeName) {
+void NifFile::SetDefaultPartition(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	vector<Vector3> verts;
-	vector<Triangle> tris;
+	std::vector<Vector3> verts;
+	std::vector<Triangle> tris;
 	if (shape->HasType<NiTriShape>()) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+		auto shapeData = hdr->GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
 
@@ -1981,7 +1989,7 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 		tris = shapeData->triangles;
 	}
 	else if (shape->HasType<NiTriStrips>()) {
-		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
+		auto stripsData = hdr->GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (!stripsData)
 			return;
 
@@ -2000,28 +2008,28 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 		tris = bsTriShape->triangles;
 	}
 
-	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	auto bsdSkinInst = hdr->GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
 	if (bsdSkinInst) {
 		BSDismemberSkinInstance::PartitionInfo partInfo;
 		partInfo.flags = 1;
-		partInfo.partID = hdr.GetUserVersion() >= 12 ? 32 : 0;
+		partInfo.partID = hdr->GetUserVersion() >= 12 ? 32 : 0;
 
 		bsdSkinInst->ClearPartitions();
 		bsdSkinInst->AddPartition(partInfo);
 	}
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return;
 
-	auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+	auto skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 	if (skinPart) {
 		NiSkinPartition::PartitionBlock part;
 		if (!verts.empty()) {
 			part.hasVertexMap = true;
 			part.numVertices = verts.size();
 
-			vector<ushort> vertIndices(part.numVertices);
+			std::vector<ushort> vertIndices(part.numVertices);
 			for (int i = 0; i < vertIndices.size(); i++)
 				vertIndices[i] = i;
 
@@ -2039,13 +2047,13 @@ void NifFile::SetDefaultPartition(const string& shapeName) {
 	}
 }
 
-const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
+const std::vector<Vector3>* NifFile::GetRawVertsForShape(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return nullptr;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->vertices;
 	}
@@ -2058,20 +2066,20 @@ const vector<Vector3>* NifFile::GetRawVertsForShape(const string& shapeName) {
 	return nullptr;
 }
 
-bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris) {
+bool NifFile::GetTrisForShape(const std::string& shapeName, std::vector<Triangle>* outTris) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
 	if (shape->HasType<NiTriShape>()) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+		auto shapeData = hdr->GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (shapeData) {
 			*outTris = shapeData->triangles;
 			return true;
 		}
 	}
 	else if (shape->HasType<NiTriStrips>()) {
-		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
+		auto stripsData = hdr->GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (stripsData) {
 			stripsData->StripsToTris(outTris);
 			return true;
@@ -2088,15 +2096,15 @@ bool NifFile::GetTrisForShape(const string& shapeName, vector<Triangle>* outTris
 	return false;
 }
 
-bool NifFile::ReorderTriangles(const string& shapeName, const vector<uint>& triangleIndices) {
+bool NifFile::ReorderTriangles(const std::string& shapeName, const std::vector<uint>& triangleIndices) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
-	vector<Triangle> triangles;
+	std::vector<Triangle> triangles;
 
 	if (shape->HasType<NiTriShape>()) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+		auto shapeData = hdr->GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return false;
 
@@ -2136,13 +2144,13 @@ bool NifFile::ReorderTriangles(const string& shapeName, const vector<uint>& tria
 	return true;
 }
 
-const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool transform) {
+const std::vector<Vector3>* NifFile::GetNormalsForShape(const std::string& shapeName, bool transform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return nullptr;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->normals;
 	}
@@ -2155,13 +2163,13 @@ const vector<Vector3>* NifFile::GetNormalsForShape(const string& shapeName, bool
 	return nullptr;
 }
 
-const vector<Vector2>* NifFile::GetUvsForShape(const string& shapeName) {
+const std::vector<Vector2>* NifFile::GetUvsForShape(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return nullptr;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return &geomData->uvSets;
 	}
@@ -2174,8 +2182,8 @@ const vector<Vector2>* NifFile::GetUvsForShape(const string& shapeName) {
 	return nullptr;
 }
 
-bool NifFile::GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs) {
-	const vector<Vector2>* uvData = GetUvsForShape(shapeName);
+bool NifFile::GetUvsForShape(const std::string& shapeName, std::vector<Vector2>& outUvs) {
+	const std::vector<Vector2>* uvData = GetUvsForShape(shapeName);
 	if (uvData) {
 		outUvs.assign(uvData->begin(), uvData->end());
 		return true;
@@ -2184,7 +2192,7 @@ bool NifFile::GetUvsForShape(const string& shapeName, vector<Vector2>& outUvs) {
 	return false;
 }
 
-bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVerts) {
+bool NifFile::GetVertsForShape(const std::string& shapeName, std::vector<Vector3>& outVerts) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape) {
 		outVerts.clear();
@@ -2192,7 +2200,7 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 	}
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			outVerts.resize(geomData->numVertices);
 
@@ -2218,13 +2226,13 @@ bool NifFile::GetVertsForShape(const string& shapeName, vector<Vector3>& outVert
 	return false;
 }
 
-int NifFile::GetVertCountForShape(const string& shapeName) {
+int NifFile::GetVertCountForShape(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return 0xFFFFFFFF;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			return geomData->numVertices;
 	}
@@ -2237,13 +2245,13 @@ int NifFile::GetVertCountForShape(const string& shapeName) {
 	return 0xFFFFFFFF;
 }
 
-void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& verts) {
+void NifFile::SetVertsForShape(const std::string& shapeName, const std::vector<Vector3>& verts) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (verts.size() != geomData->vertices.size())
 				return;
@@ -2264,13 +2272,13 @@ void NifFile::SetVertsForShape(const string& shapeName, const vector<Vector3>& v
 	}
 }
 
-void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs) {
+void NifFile::SetUvsForShape(const std::string& shapeName, const std::vector<Vector2>& uvs) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (uvs.size() != geomData->vertices.size())
 				return;
@@ -2290,13 +2298,13 @@ void NifFile::SetUvsForShape(const string& shapeName, const vector<Vector2>& uvs
 	}
 }
 
-void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool invertY) {
+void NifFile::InvertUVsForShape(const std::string& shapeName, bool invertX, bool invertY) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			if (invertX)
 				for (int i = 0; i < geomData->uvSets.size(); ++i)
@@ -2321,13 +2329,13 @@ void NifFile::InvertUVsForShape(const string& shapeName, bool invertX, bool inve
 	}
 }
 
-void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>& norms) {
+void NifFile::SetNormalsForShape(const std::string& shapeName, const std::vector<Vector3>& norms) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			geomData->SetNormals(true);
 
@@ -2342,19 +2350,19 @@ void NifFile::SetNormalsForShape(const string& shapeName, const vector<Vector3>&
 	}
 }
 
-void NifFile::CalcNormalsForShape(const string& shapeName, const bool smooth, const float smoothThresh) {
+void NifFile::CalcNormalsForShape(const std::string& shapeName, const bool smooth, const float smoothThresh) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	if (hdr.GetUserVersion() == 12 && hdr.GetUserVersion2() <= 100) {
+	if (hdr->GetUserVersion() == 12 && hdr->GetUserVersion2() <= 100) {
 		NiShader* shader = GetShader(shapeName);
 		if (shader && shader->IsSkinTint())
 			return;
 	}
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->RecalcNormals(smooth, smoothThresh);
 	}
@@ -2365,13 +2373,13 @@ void NifFile::CalcNormalsForShape(const string& shapeName, const bool smooth, co
 	}
 }
 
-void NifFile::CalcTangentsForShape(const string& shapeName) {
+void NifFile::CalcTangentsForShape(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData)
 			geomData->CalcTangentSpace();
 	}
@@ -2382,7 +2390,7 @@ void NifFile::CalcTangentsForShape(const string& shapeName) {
 	}
 }
 
-void NifFile::ClearShapeTransform(const string& shapeName) {
+void NifFile::ClearShapeTransform(const std::string& shapeName) {
 	NiAVObject* avo = FindAVObjectByName(shapeName);
 	if (avo) {
 		avo->translation.Zero();
@@ -2393,7 +2401,7 @@ void NifFile::ClearShapeTransform(const string& shapeName) {
 	}
 }
 
-void NifFile::GetShapeTransform(const string& shapeName, Matrix4& outTransform) {
+void NifFile::GetShapeTransform(const std::string& shapeName, Matrix4& outTransform) {
 	SkinTransform xFormRoot;
 	auto root = dynamic_cast<NiNode*>(blocks[0]);
 	if (root) {
@@ -2458,7 +2466,7 @@ void NifFile::SetRootScale(const float newScale) {
 		root->scale = newScale;
 }
 
-void NifFile::GetShapeTranslation(const string& shapeName, Vector3& outVec) {
+void NifFile::GetShapeTranslation(const std::string& shapeName, Vector3& outVec) {
 	NiAVObject* avo = FindAVObjectByName(shapeName);
 	if (avo)
 		outVec = avo->translation;
@@ -2471,25 +2479,25 @@ void NifFile::GetShapeTranslation(const string& shapeName, Vector3& outVec) {
 	//	outVec.Zero();
 }
 
-void NifFile::SetShapeTranslation(const string& shapeName, const Vector3& newTrans) {
+void NifFile::SetShapeTranslation(const std::string& shapeName, const Vector3& newTrans) {
 	NiAVObject* avo = FindAVObjectByName(shapeName);
 	if (avo)
 		avo->translation = newTrans;
 }
 
-void NifFile::GetShapeScale(const string& shapeName, float& outScale) {
+void NifFile::GetShapeScale(const std::string& shapeName, float& outScale) {
 	NiAVObject* avo = FindAVObjectByName(shapeName);
 	if (avo)
 		outScale = avo->scale;
 }
 
-void NifFile::SetShapeScale(const string& shapeName, const float newScale) {
+void NifFile::SetShapeScale(const std::string& shapeName, const float newScale) {
 	NiAVObject* avo = FindAVObjectByName(shapeName);
 	if (avo)
 		avo->scale = newScale;
 }
 
-void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offset) {
+void NifFile::ApplyShapeTranslation(const std::string& shapeName, const Vector3& offset) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -2499,7 +2507,7 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 		if (!geom)
 			return;
 
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			for (int i = 0; i < geomData->vertices.size(); i++)
 				geomData->vertices[i] += geom->translation + offset;
@@ -2518,13 +2526,13 @@ void NifFile::ApplyShapeTranslation(const string& shapeName, const Vector3& offs
 	}
 }
 
-void NifFile::MoveVertex(const string& shapeName, const Vector3& pos, const int id) {
+void NifFile::MoveVertex(const std::string& shapeName, const Vector3& pos, const int id) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData && geomData->numVertices > id)
 			geomData->vertices[id] = pos;
 	}
@@ -2535,13 +2543,13 @@ void NifFile::MoveVertex(const string& shapeName, const Vector3& pos, const int 
 	}
 }
 
-void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unordered_map<ushort, float>* mask) {
+void NifFile::OffsetShape(const std::string& shapeName, const Vector3& offset, std::unordered_map<ushort, float>* mask) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
 			for (int i = 0; i < geomData->vertices.size(); i++) {
 				if (mask) {
@@ -2578,7 +2586,7 @@ void NifFile::OffsetShape(const string& shapeName, const Vector3& offset, unorde
 	}
 }
 
-void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordered_map<ushort, float>* mask) {
+void NifFile::ScaleShape(const std::string& shapeName, const Vector3& scale, std::unordered_map<ushort, float>* mask) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -2587,11 +2595,11 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 	GetRootTranslation(root);
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
 
-		unordered_map<ushort, Vector3> diff;
+		std::unordered_map<ushort, Vector3> diff;
 		for (int i = 0; i < geomData->vertices.size(); i++) {
 			Vector3 target = geomData->vertices[i] - root;
 			target.x *= scale.x;
@@ -2615,7 +2623,7 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 		if (!bsTriShape)
 			return;
 
-		unordered_map<ushort, Vector3> diff;
+		std::unordered_map<ushort, Vector3> diff;
 		for (int i = 0; i < bsTriShape->numVertices; i++) {
 			Vector3 target = bsTriShape->vertData[i].vert - root;
 			target.x *= scale.x;
@@ -2636,7 +2644,7 @@ void NifFile::ScaleShape(const string& shapeName, const Vector3& scale, unordere
 	}
 }
 
-void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unordered_map<ushort, float>* mask) {
+void NifFile::RotateShape(const std::string& shapeName, const Vector3& angle, std::unordered_map<ushort, float>* mask) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -2645,11 +2653,11 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 	GetRootTranslation(root);
 
 	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (!geomData)
 			return;
 
-		unordered_map<ushort, Vector3> diff;
+		std::unordered_map<ushort, Vector3> diff;
 		for (int i = 0; i < geomData->vertices.size(); i++) {
 			Vector3 target = geomData->vertices[i] - root;
 			Matrix4 mat;
@@ -2675,7 +2683,7 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 		if (!bsTriShape)
 			return;
 
-		unordered_map<ushort, Vector3> diff;
+		std::unordered_map<ushort, Vector3> diff;
 		for (int i = 0; i < bsTriShape->numVertices; i++) {
 			Vector3 target = bsTriShape->vertData[i].vert - root;
 			Matrix4 mat;
@@ -2698,23 +2706,23 @@ void NifFile::RotateShape(const string& shapeName, const Vector3& angle, unorder
 	}
 }
 
-bool NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& outThreshold) {
+bool NifFile::GetAlphaForShape(const std::string& shapeName, ushort& outFlags, byte& outThreshold) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
 	int alphaRef = shape->GetAlphaPropertyRef();
 	if (alphaRef == 0xFFFFFFFF) {
-		for (int i = 0; i < shape->numProperties; i++) {
-			auto alphaProp = hdr.GetBlock<NiAlphaProperty>(shape->propertiesRef[i]);
+		for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
+			auto alphaProp = hdr->GetBlock<NiAlphaProperty>(shape->propertyRefs.GetBlockRef(i));
 			if (alphaProp) {
-				alphaRef = shape->propertiesRef[i];
+				alphaRef = shape->propertyRefs.GetBlockRef(i);
 				break;
 			}
 		}
 	}
 
-	auto alpha = hdr.GetBlock<NiAlphaProperty>(alphaRef);
+	auto alpha = hdr->GetBlock<NiAlphaProperty>(alphaRef);
 	if (!alpha)
 		return false;
 
@@ -2723,17 +2731,17 @@ bool NifFile::GetAlphaForShape(const string& shapeName, ushort& outFlags, byte& 
 	return true;
 }
 
-void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort threshold) {
+void NifFile::SetAlphaForShape(const std::string& shapeName, ushort flags, ushort threshold) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	int alphaRef = shape->GetAlphaPropertyRef();
 	if (alphaRef == 0xFFFFFFFF) {
-		for (int i = 0; i < shape->numProperties; i++) {
-			auto alphaProp = hdr.GetBlock<NiAlphaProperty>(shape->propertiesRef[i]);
+		for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
+			auto alphaProp = hdr->GetBlock<NiAlphaProperty>(shape->propertyRefs.GetBlockRef(i));
 			if (alphaProp) {
-				alphaRef = shape->propertiesRef[i];
+				alphaRef = shape->propertyRefs.GetBlockRef(i);
 				break;
 			}
 		}
@@ -2744,16 +2752,16 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 		if (!shader)
 			return;
 
-		auto alphaProp = new NiAlphaProperty(&hdr);
-		alphaRef = hdr.AddBlock(alphaProp);
+		auto alphaProp = new NiAlphaProperty(hdr);
+		alphaRef = hdr->AddBlock(alphaProp);
 
 		if (shader->HasType<BSShaderPPLightingProperty>())
-			shape->propertiesRef.push_back(alphaRef);
+			shape->propertyRefs.AddBlockRef(alphaRef);
 		else
 			shape->SetAlphaPropertyRef(alphaRef);
 	}
 
-	auto alpha = hdr.GetBlock<NiAlphaProperty>(alphaRef);
+	auto alpha = hdr->GetBlock<NiAlphaProperty>(alphaRef);
 	if (!alpha)
 		return;
 
@@ -2761,7 +2769,7 @@ void NifFile::SetAlphaForShape(const string& shapeName, ushort flags, ushort thr
 	alpha->threshold = (byte)threshold;
 }
 
-bool NifFile::IsShapeSkinned(const string& shapeName) {
+bool NifFile::IsShapeSkinned(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (shape)
 		return shape->IsSkinned();
@@ -2769,49 +2777,49 @@ bool NifFile::IsShapeSkinned(const string& shapeName) {
 	return false;
 }
 
-void NifFile::DeleteShape(const string& shapeName) {
+void NifFile::DeleteShape(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	hdr.DeleteBlock(shape->GetDataRef());
+	hdr->DeleteBlock(shape->GetDataRef());
 	DeleteShader(shapeName);
 	DeleteSkinning(shapeName);
 
-	for (int i = shape->numProperties - 1; i >= 0; --i)
-		hdr.DeleteBlock(shape->propertiesRef[i]);
+	for (int i = shape->propertyRefs.GetSize() - 1; i >= 0; --i)
+		hdr->DeleteBlock(shape->propertyRefs.GetBlockRef(i));
 
 	for (int i = shape->GetNumExtraData() - 1; i >= 0; --i)
-		hdr.DeleteBlock(shape->GetExtraDataRef(i));
+		hdr->DeleteBlock(shape->GetExtraDataRef(i));
 
 	int shapeID = GetBlockID(shape);
-	hdr.DeleteBlock(shapeID);
+	hdr->DeleteBlock(shapeID);
 }
 
-void NifFile::DeleteShader(const string& shapeName) {
+void NifFile::DeleteShader(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->GetShaderPropertyRef() != 0xFFFFFFFF) {
-		auto shader = hdr.GetBlock<NiShader>(shape->GetShaderPropertyRef());
+		auto shader = hdr->GetBlock<NiShader>(shape->GetShaderPropertyRef());
 		if (shader) {
-			hdr.DeleteBlock(shader->GetTextureSetRef());
-			hdr.DeleteBlock(shader->GetControllerRef());
-			hdr.DeleteBlock(shape->GetShaderPropertyRef());
+			hdr->DeleteBlock(shader->GetTextureSetRef());
+			hdr->DeleteBlock(shader->GetControllerRef());
+			hdr->DeleteBlock(shape->GetShaderPropertyRef());
 			shape->SetShaderPropertyRef(0xFFFFFFFF);
 		}
 	}
 
 	DeleteAlpha(shapeName);
 
-	for (int i = 0; i < shape->numProperties; i++) {
-		auto shader = hdr.GetBlock<NiShader>(shape->propertiesRef[i]);
+	for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
+		auto shader = hdr->GetBlock<NiShader>(shape->propertyRefs.GetBlockRef(i));
 		if (shader) {
 			if (shader->HasType<BSShaderPPLightingProperty>() || shader->HasType<NiMaterialProperty>()) {
-				hdr.DeleteBlock(shader->GetTextureSetRef());
-				hdr.DeleteBlock(shader->GetControllerRef());
-				hdr.DeleteBlock(shape->propertiesRef[i]);
+				hdr->DeleteBlock(shader->GetTextureSetRef());
+				hdr->DeleteBlock(shader->GetControllerRef());
+				hdr->DeleteBlock(shape->propertyRefs.GetBlockRef(i));
 				i--;
 				continue;
 			}
@@ -2819,44 +2827,44 @@ void NifFile::DeleteShader(const string& shapeName) {
 	}
 }
 
-void NifFile::DeleteAlpha(const string& shapeName) {
+void NifFile::DeleteAlpha(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	auto alpha = hdr.GetBlock<NiAlphaProperty>(shape->GetAlphaPropertyRef());
+	auto alpha = hdr->GetBlock<NiAlphaProperty>(shape->GetAlphaPropertyRef());
 	if (alpha) {
-		hdr.DeleteBlock(shape->GetAlphaPropertyRef());
+		hdr->DeleteBlock(shape->GetAlphaPropertyRef());
 		shape->SetAlphaPropertyRef(0xFFFFFFFF);
 	}
 
-	for (int i = 0; i < shape->numProperties; i++) {
-		alpha = hdr.GetBlock<NiAlphaProperty>(shape->propertiesRef[i]);
+	for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
+		alpha = hdr->GetBlock<NiAlphaProperty>(shape->propertyRefs.GetBlockRef(i));
 		if (alpha) {
-			hdr.DeleteBlock(shape->propertiesRef[i]);
+			hdr->DeleteBlock(shape->propertyRefs.GetBlockRef(i));
 			i--;
 			continue;
 		}
 	}
 }
 
-void NifFile::DeleteSkinning(const string& shapeName) {
+void NifFile::DeleteSkinning(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (skinInst) {
-		hdr.DeleteBlock(skinInst->GetDataRef());
-		hdr.DeleteBlock(skinInst->GetSkinPartitionRef());
-		hdr.DeleteBlock(shape->GetSkinInstanceRef());
+		hdr->DeleteBlock(skinInst->GetDataRef());
+		hdr->DeleteBlock(skinInst->GetSkinPartitionRef());
+		hdr->DeleteBlock(shape->GetSkinInstanceRef());
 		shape->SetSkinInstanceRef(0xFFFFFFFF);
 	}
 
-	auto bsSkinInst = hdr.GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
+	auto bsSkinInst = hdr->GetBlock<BSSkinInstance>(shape->GetSkinInstanceRef());
 	if (bsSkinInst) {
-		hdr.DeleteBlock(bsSkinInst->GetDataRef());
-		hdr.DeleteBlock(shape->GetSkinInstanceRef());
+		hdr->DeleteBlock(bsSkinInst->GetDataRef());
+		hdr->DeleteBlock(shape->GetSkinInstanceRef());
 		shape->SetSkinInstanceRef(0xFFFFFFFF);
 	}
 
@@ -2867,7 +2875,7 @@ void NifFile::DeleteSkinning(const string& shapeName) {
 		shader->SetSkinned(false);
 }
 
-bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>& indices) {
+bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vector<ushort>& indices) {
 	if (indices.empty())
 		return false;
 
@@ -2877,7 +2885,7 @@ bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 
 	int skinRef = shape->GetSkinInstanceRef();
 
-	auto geomData = hdr.GetBlock<NiTriBasedGeomData>(shape->GetDataRef());
+	auto geomData = hdr->GetBlock<NiTriBasedGeomData>(shape->GetDataRef());
 	if (geomData) {
 		geomData->notifyVerticesDelete(indices);
 		if (geomData->numVertices == 0 || geomData->numTriangles == 0) {
@@ -2897,16 +2905,16 @@ bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 		}
 	}
 
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(skinRef);
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(skinRef);
 	if (skinInst) {
-		auto skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
+		auto skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
 		if (skinData)
 			skinData->notifyVerticesDelete(indices);
 
-		auto skinPartition = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+		auto skinPartition = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 		if (skinPartition) {
 			skinPartition->notifyVerticesDelete(indices);
-			vector<int> emptyIndices;
+			std::vector<int> emptyIndices;
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
 				if (skinInst->HasType<BSDismemberSkinInstance>()) {
 					auto bsdSkinInst = static_cast<BSDismemberSkinInstance*>(skinInst);
@@ -2922,9 +2930,9 @@ bool NifFile::DeleteVertsForShape(const string& shapeName, const vector<ushort>&
 	return false;
 }
 
-int NifFile::CalcShapeDiff(const string& shapeName, const vector<Vector3>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale) {
+int NifFile::CalcShapeDiff(const std::string& shapeName, const std::vector<Vector3>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale) {
 	outDiffData.clear();
-	const vector<Vector3>* myData = GetRawVertsForShape(shapeName);
+	const std::vector<Vector3>* myData = GetRawVertsForShape(shapeName);
 	if (!myData)
 		return 1;
 
@@ -2949,9 +2957,9 @@ int NifFile::CalcShapeDiff(const string& shapeName, const vector<Vector3>* targe
 	return 0;
 }
 
-int NifFile::CalcUVDiff(const string& shapeName, const vector<Vector2>* targetData, unordered_map<ushort, Vector3>& outDiffData, float scale) {
+int NifFile::CalcUVDiff(const std::string& shapeName, const std::vector<Vector2>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale) {
 	outDiffData.clear();
-	const vector<Vector2>* myData = GetUvsForShape(shapeName);
+	const std::vector<Vector2>* myData = GetUvsForShape(shapeName);
 	if (!myData)
 		return 1;
 
@@ -2975,17 +2983,17 @@ int NifFile::CalcUVDiff(const string& shapeName, const vector<Vector2>* targetDa
 	return 0;
 }
 
-void NifFile::UpdateSkinPartitions(const string& shapeName) {
+void NifFile::UpdateSkinPartitions(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	NiSkinData* skinData = nullptr;
 	NiSkinPartition* skinPart = nullptr;
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (skinInst) {
-		skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
-		skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+		skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
+		skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 
 		if (!skinData || !skinPart)
 			return;
@@ -2998,12 +3006,12 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	BSTriShape* bsTriShape = nullptr;
 	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
 
-	vector<Triangle> tris;
+	std::vector<Triangle> tris;
 	ushort numTriangles;
 	ushort numVerts;
 
 	if (shape->HasType<NiTriShape>()) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+		auto shapeData = hdr->GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
 
@@ -3012,7 +3020,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		numVerts = shapeData->numVertices;
 	}
 	else if (shape->HasType<NiTriStrips>()) {
-		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
+		auto stripsData = hdr->GetBlock<NiTriStripsData>(shape->GetDataRef());
 		if (!stripsData)
 			return;
 
@@ -3038,7 +3046,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		t.rot();
 
 	// Make maps of vertices to bones and weights
-	unordered_map<ushort, vector<SkinWeight>> vertBoneWeights;
+	std::unordered_map<ushort, std::vector<SkinWeight>> vertBoneWeights;
 
 	int boneIndex = 0;
 	for (auto &bone : skinData->bones) {
@@ -3059,7 +3067,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		if (bw.second.size() > maxBonesPerVertex)
 			bw.second.erase(bw.second.begin() + maxBonesPerVertex, bw.second.end());
 
-	unordered_map<int, vector<int>> vertTris;
+	std::unordered_map<int, std::vector<int>> vertTris;
 	for (int t = 0; t < tris.size(); t++) {
 		vertTris[tris[t].p1].push_back(t);
 		vertTris[tris[t].p2].push_back(t);
@@ -3067,7 +3075,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	}
 
 	// Lambda for finding bones that have the tri assigned
-	set<int> triBones;
+	std::set<int> triBones;
 	auto fTriBones = [&triBones, &tris, &vertBoneWeights](const int tri) {
 		triBones.clear();
 
@@ -3079,22 +3087,22 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		}
 	};
 
-	unordered_map<int, int> triParts;
+	std::unordered_map<int, int> triParts;
 	triParts.reserve(numTriangles);
 	for (int i = 0; i < numTriangles; i++)
 		triParts.emplace(i, -1);
 
-	vector<bool> usedTris;
+	std::vector<bool> usedTris;
 	usedTris.resize(numTriangles);
 
-	vector<bool> usedVerts;
+	std::vector<bool> usedVerts;
 	usedVerts.resize(numVerts);
 
 	// 18 for pre-SK
-	int maxBonesPerPartition = hdr.GetUserVersion() >= 12 ? numeric_limits<int>::max() : 18;
-	unordered_map<int, set<int>> partBones;
+	int maxBonesPerPartition = hdr->GetUserVersion() >= 12 ? std::numeric_limits<int>::max() : 18;
+	std::unordered_map<int, std::set<int>> partBones;
 
-	vector<NiSkinPartition::PartitionBlock> partitions;
+	std::vector<NiSkinPartition::PartitionBlock> partitions;
 	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
 		fill(usedVerts.begin(), usedVerts.end(), false);
 
@@ -3176,7 +3184,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 			usedVerts[tri.p3] = true;
 			numTrisInPart++;
 
-			queue<int> vertQueue;
+			std::queue<int> vertQueue;
 			auto fSelectVerts = [&usedVerts, &tris, &vertQueue](const int tri) {
 				if (!usedVerts[tris[tri].p1]) {
 					usedVerts[tris[tri].p1] = true;
@@ -3242,7 +3250,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 		part.hasVertexWeights = true;
 		part.numWeightsPerVertex = maxBonesPerVertex;
 
-		unordered_map<int, int> vertMap;
+		std::unordered_map<int, int> vertMap;
 		for (int triID = 0; triID < tris.size(); triID++) {
 			if (triParts[triID] != partID)
 				continue;
@@ -3296,7 +3304,7 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 			part.vertFlags8 = bsTriShape->vertFlags8;
 		}
 
-		unordered_map<int, int> boneLookup;
+		std::unordered_map<int, int> boneLookup;
 		boneLookup.reserve(partBones[partID].size());
 		part.numBones = partBones[partID].size();
 		part.bones.reserve(part.numBones);
@@ -3333,11 +3341,11 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 			part.vertexWeights.push_back(vw);
 		}
 
-		partitions.push_back(move(part));
+		partitions.push_back(std::move(part));
 	}
 
 	skinPart->numPartitions = partitions.size();
-	skinPart->partitions = move(partitions);
+	skinPart->partitions = std::move(partitions);
 
 	if (bsTriShape) {
 		skinPart->numVertices = bsTriShape->numVertices;
@@ -3357,17 +3365,17 @@ void NifFile::UpdateSkinPartitions(const string& shapeName) {
 	UpdatePartitionFlags(shapeName);
 }
 
-bool NifFile::TriangulatePartitions(const string& shapeName) {
+bool NifFile::TriangulatePartitions(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
 	NiSkinData* skinData = nullptr;
 	NiSkinPartition* skinPart = nullptr;
-	auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+	auto skinInst = hdr->GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 	if (skinInst) {
-		skinData = hdr.GetBlock<NiSkinData>(skinInst->GetDataRef());
-		skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+		skinData = hdr->GetBlock<NiSkinData>(skinInst->GetDataRef());
+		skinPart = hdr->GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 
 		if (!skinData || !skinPart)
 			return false;
@@ -3376,11 +3384,11 @@ bool NifFile::TriangulatePartitions(const string& shapeName) {
 		return false;
 
 	bool triangulated = false;
-	vector<NiSkinPartition::PartitionBlock> partitions;
+	std::vector<NiSkinPartition::PartitionBlock> partitions;
 	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
 		// Triangulate partition if stripified
 		if (skinPart->partitions[partID].numStrips > 0) {
-			vector<Triangle> stripTris;
+			std::vector<Triangle> stripTris;
 			for (auto &strip : skinPart->partitions[partID].strips) {
 				if (strip.size() < 3)
 					continue;
@@ -3418,16 +3426,16 @@ bool NifFile::TriangulatePartitions(const string& shapeName) {
 	return triangulated;
 }
 
-void NifFile::UpdatePartitionFlags(const string& shapeName) {
+void NifFile::UpdatePartitionFlags(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
-	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
+	auto bsdSkinInst = hdr->GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
 	if (!bsdSkinInst)
 		return;
 
-	auto skinPart = hdr.GetBlock<NiSkinPartition>(bsdSkinInst->GetSkinPartitionRef());
+	auto skinPart = hdr->GetBlock<NiSkinPartition>(bsdSkinInst->GetSkinPartitionRef());
 	if (!skinPart)
 		return;
 
@@ -3447,21 +3455,21 @@ void NifFile::UpdatePartitionFlags(const string& shapeName) {
 	bsdSkinInst->SetPartitions(partInfo);
 }
 
-void NifFile::CreateSkinning(const string& shapeName) {
+void NifFile::CreateSkinning(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	if (shape->HasType<NiTriShape>()) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
-			auto nifSkinData = new NiSkinData(&hdr);
-			int skinDataID = hdr.AddBlock(nifSkinData);
+			auto nifSkinData = new NiSkinData(hdr);
+			int skinDataID = hdr->AddBlock(nifSkinData);
 
-			auto nifSkinPartition = new NiSkinPartition(&hdr);
-			int partID = hdr.AddBlock(nifSkinPartition);
+			auto nifSkinPartition = new NiSkinPartition(hdr);
+			int partID = hdr->AddBlock(nifSkinPartition);
 
-			auto nifDismemberInst = new BSDismemberSkinInstance(&hdr);
-			int dismemberID = hdr.AddBlock(nifDismemberInst);
+			auto nifDismemberInst = new BSDismemberSkinInstance(hdr);
+			int dismemberID = hdr->AddBlock(nifDismemberInst);
 
 			nifDismemberInst->SetDataRef(skinDataID);
 			nifDismemberInst->SetSkinPartitionRef(partID);
@@ -3472,14 +3480,14 @@ void NifFile::CreateSkinning(const string& shapeName) {
 	}
 	else if (shape->HasType<NiTriStrips>()) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
-			auto nifSkinData = new NiSkinData(&hdr);
-			int skinDataID = hdr.AddBlock(nifSkinData);
+			auto nifSkinData = new NiSkinData(hdr);
+			int skinDataID = hdr->AddBlock(nifSkinData);
 
-			auto nifSkinPartition = new NiSkinPartition(&hdr);
-			int partID = hdr.AddBlock(nifSkinPartition);
+			auto nifSkinPartition = new NiSkinPartition(hdr);
+			int partID = hdr->AddBlock(nifSkinPartition);
 
-			auto nifDismemberInst = new BSDismemberSkinInstance(&hdr);
-			int skinID = hdr.AddBlock(nifDismemberInst);
+			auto nifDismemberInst = new BSDismemberSkinInstance(hdr);
+			int skinID = hdr->AddBlock(nifDismemberInst);
 
 			nifDismemberInst->SetDataRef(skinDataID);
 			nifDismemberInst->SetSkinPartitionRef(partID);
@@ -3491,26 +3499,26 @@ void NifFile::CreateSkinning(const string& shapeName) {
 	else if (shape->HasType<BSTriShape>()) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			int skinInstID;
-			if (hdr.GetUserVersion2() == 100) {
-				auto nifSkinData = new NiSkinData(&hdr);
-				int skinDataID = hdr.AddBlock(nifSkinData);
+			if (hdr->GetUserVersion2() == 100) {
+				auto nifSkinData = new NiSkinData(hdr);
+				int skinDataID = hdr->AddBlock(nifSkinData);
 
-				auto nifSkinPartition = new NiSkinPartition(&hdr);
-				int partID = hdr.AddBlock(nifSkinPartition);
+				auto nifSkinPartition = new NiSkinPartition(hdr);
+				int partID = hdr->AddBlock(nifSkinPartition);
 
-				auto nifDismemberInst = new BSDismemberSkinInstance(&hdr);
-				skinInstID = hdr.AddBlock(nifDismemberInst);
+				auto nifDismemberInst = new BSDismemberSkinInstance(hdr);
+				skinInstID = hdr->AddBlock(nifDismemberInst);
 
 				nifDismemberInst->SetDataRef(skinDataID);
 				nifDismemberInst->SetSkinPartitionRef(partID);
 				nifDismemberInst->SetSkeletonRootRef(0);
 			}
 			else {
-				auto newSkinInst = new BSSkinInstance(&hdr);
-				skinInstID = hdr.AddBlock(newSkinInst);
+				auto newSkinInst = new BSSkinInstance(hdr);
+				skinInstID = hdr->AddBlock(newSkinInst);
 
-				auto newBoneData = new BSSkinBoneData(&hdr);
-				int boneDataRef = hdr.AddBlock(newBoneData);
+				auto newBoneData = new BSSkinBoneData(hdr);
+				int boneDataRef = hdr->AddBlock(newBoneData);
 
 				newSkinInst->SetTargetRef(GetRootNodeID());
 				newSkinInst->SetDataRef(boneDataRef);
@@ -3526,7 +3534,7 @@ void NifFile::CreateSkinning(const string& shapeName) {
 		shader->SetSkinned(true);
 }
 
-void NifFile::UpdateBoundingSphere(const string& shapeName) {
+void NifFile::UpdateBoundingSphere(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
@@ -3534,13 +3542,13 @@ void NifFile::UpdateBoundingSphere(const string& shapeName) {
 	shape->UpdateBounds();
 }
 
-void NifFile::SetShapeDynamic(const string& shapeName) {
+void NifFile::SetShapeDynamic(const std::string& shapeName) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return;
 
 	// Set consistency flag to mutable
-	auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+	auto geomData = hdr->GetBlock<NiGeometryData>(shape->GetDataRef());
 	if (geomData)
 		geomData->consistencyFlags = 0;
 }

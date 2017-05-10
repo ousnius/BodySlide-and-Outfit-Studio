@@ -13,11 +13,11 @@ GLMaterial::~GLMaterial() {
 }
 
 // Shader-only material, does not contain texture references, and thus does not use reference to res loader.
-GLMaterial::GLMaterial(const string& vertShaderProg, const string& fragShaderProg) {
+GLMaterial::GLMaterial(const std::string& vertShaderProg, const std::string& fragShaderProg) {
 	shader = GLShader(vertShaderProg, fragShaderProg);
 }
 
-GLMaterial::GLMaterial(ResourceLoader* resLoader, string texName, const string& vertShaderProg, const string& fragShaderProg) {
+GLMaterial::GLMaterial(ResourceLoader* resLoader, std::string texName, const std::string& vertShaderProg, const std::string& fragShaderProg) {
 	resLoaderRef = resLoader;
 	texNames.push_back(texName);
 	resLoader->CacheStamp(cacheTime);
@@ -25,7 +25,7 @@ GLMaterial::GLMaterial(ResourceLoader* resLoader, string texName, const string& 
 	shader = GLShader(vertShaderProg, fragShaderProg);
 }
 
-GLMaterial::GLMaterial(ResourceLoader* resLoader, vector<string> inTexNames, const string& vertShaderProg, const string& fragShaderProg) {
+GLMaterial::GLMaterial(ResourceLoader* resLoader, std::vector<std::string> inTexNames, const std::string& vertShaderProg, const std::string& fragShaderProg) {
 	resLoaderRef = resLoader;
 	texNames = inTexNames;
 	resLoader->CacheStamp(cacheTime);
@@ -50,7 +50,7 @@ GLuint GLMaterial::GetTexID(uint index) {
 	return texCache[index];
 }
 
-string GLMaterial::GetTexName(uint index) {
+std::string GLMaterial::GetTexName(uint index) {
 	if (index < texNames.size())
 		return texNames[index];
 

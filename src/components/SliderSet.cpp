@@ -17,7 +17,7 @@ SliderSet::SliderSet(XMLElement* element) {
 }
 
 
-void SliderSet::DeleteSlider(const string& setName) {
+void SliderSet::DeleteSlider(const std::string& setName) {
 	for (int i = 0; i < sliders.size(); i++) {
 		if (sliders[i].name == setName) {
 			sliders.erase(sliders.begin() + i);
@@ -26,7 +26,7 @@ void SliderSet::DeleteSlider(const string& setName) {
 	}
 }
 
-int SliderSet::CreateSlider(const string& setName) {
+int SliderSet::CreateSlider(const std::string& setName) {
 	sliders.emplace_back(setName);
 	return sliders.size() - 1;
 }
@@ -50,8 +50,8 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	XMLElement *root = element->Parent()->ToElement();
 	int version = root->IntAttribute("version");
 
-	string shapeStr = version >= 1 ? "Shape" : "BaseShapeName";
-	string dataFolderStr = version >= 1 ? "DataFolder" : "SetFolder";
+	std::string shapeStr = version >= 1 ? "Shape" : "BaseShapeName";
+	std::string dataFolderStr = version >= 1 ? "DataFolder" : "SetFolder";
 
 	name = element->Attribute("name");
 
@@ -74,7 +74,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	if (tmpElement) {
 		outputfile = tmpElement->GetText();
 		if (tmpElement->Attribute("GenWeights")) {
-			string gw = tmpElement->Attribute("GenWeights");
+			std::string gw = tmpElement->Attribute("GenWeights");
 			if (_strnicmp(gw.c_str(), "false", 5) == 0) {
 				genWeights = false;
 			}
@@ -109,7 +109,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 			}
 
 			if (!SliderExists(tmpSlider.name))
-				sliders.push_back(move(tmpSlider));
+				sliders.push_back(std::move(tmpSlider));
 		}
 
 		sliderEntry = sliderEntry->NextSiblingElement("Slider");
@@ -132,11 +132,11 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 }
 
 void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
-	map<string, map<string, string>> osdNames;
+	std::map<std::string, std::map<std::string, std::string>> osdNames;
 
 	for (auto &slider : sliders) {
 		for (auto &ddf : slider.dataFiles) {
-			string fullFilePath = baseDataPath + "\\";
+			std::string fullFilePath = baseDataPath + "\\";
 			if (ddf.bLocal)
 				fullFilePath += datafolder + "\\";
 			else
@@ -155,8 +155,8 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
 				if (split < 0)
 					continue;
 
-				string dataName = fullFilePath.substr(split + 1);
-				string fileName = fullFilePath.substr(0, split);
+				std::string dataName = fullFilePath.substr(split + 1);
+				std::string fileName = fullFilePath.substr(0, split);
 
 				// Cache data locations
 				osdNames[fileName][dataName] = ddf.targetName;
@@ -231,7 +231,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		if (slider.bZap) {
 			sliderElement->SetAttribute("zap", "true");
 
-			string zapToggles;
+			std::string zapToggles;
 			for (auto &toggle : slider.zapToggles) {
 				zapToggles.append(toggle);
 				zapToggles.append(";");
@@ -258,15 +258,15 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	}
 }
 
-string SliderSet::GetInputFileName() {
-	string o;
+std::string SliderSet::GetInputFileName() {
+	std::string o;
 	o = baseDataPath + "\\";
 	o += datafolder + "\\";
 	o += inputfile;
 	return o;
 }
 
-string SliderSet::GetOutputFilePath() {
+std::string SliderSet::GetOutputFilePath() {
 	return outputpath + "\\" + outputfile;
 }
 
@@ -274,11 +274,11 @@ bool SliderSet::GenWeights() {
 	return genWeights;
 }
 
-SliderSetFile::SliderSetFile(const string& srcFileName) :error(0) {
+SliderSetFile::SliderSetFile(const std::string& srcFileName) :error(0) {
 	Open(srcFileName);
 }
 
-void SliderSetFile::Open(const string& srcFileName) {
+void SliderSetFile::Open(const std::string& srcFileName) {
 	fileName = srcFileName;
 	error = doc.LoadFile(srcFileName.c_str());
 	if (error)
@@ -293,7 +293,7 @@ void SliderSetFile::Open(const string& srcFileName) {
 	version = root->IntAttribute("version");
 
 	XMLElement* setElement;
-	string setname;
+	std::string setname;
 	setElement = root->FirstChildElement("SliderSet");
 	while (setElement) {
 		setname = setElement->Attribute("name");
@@ -303,7 +303,7 @@ void SliderSetFile::Open(const string& srcFileName) {
 	}
 }
 
-void SliderSetFile::New(const string& newFileName) {
+void SliderSetFile::New(const std::string& newFileName) {
 	version = 1; // Most recent
 	error = 0;
 	fileName = newFileName;
@@ -317,7 +317,7 @@ void SliderSetFile::New(const string& newFileName) {
 	root = doc.FirstChildElement("SliderSetInfo");
 }
 
-int SliderSetFile::GetSetNames(vector<string> &outSetNames, bool append) {
+int SliderSetFile::GetSetNames(std::vector<std::string> &outSetNames, bool append) {
 	if (!append)
 		outSetNames.clear();
 
@@ -327,7 +327,7 @@ int SliderSetFile::GetSetNames(vector<string> &outSetNames, bool append) {
 	return outSetNames.size();
 }
 
-int SliderSetFile::GetSetNamesUnsorted(vector<string> &outSetNames, bool append) {
+int SliderSetFile::GetSetNamesUnsorted(std::vector<std::string> &outSetNames, bool append) {
 	if (!append) {
 		outSetNames.clear();
 		outSetNames.assign(setsOrder.begin(), setsOrder.end());
@@ -338,11 +338,11 @@ int SliderSetFile::GetSetNamesUnsorted(vector<string> &outSetNames, bool append)
 	return outSetNames.size();
 }
 
-bool SliderSetFile::HasSet(const string &querySetName) {
+bool SliderSetFile::HasSet(const std::string& querySetName) {
 	return (setsInFile.find(querySetName) != setsInFile.end());
 }
 
-void SliderSetFile::SetShapes(const string& set, vector<string>& outShapeNames) {
+void SliderSetFile::SetShapes(const std::string& set, std::vector<std::string>& outShapeNames) {
 	if (!HasSet(set))
 		return;
 
@@ -354,7 +354,7 @@ void SliderSetFile::SetShapes(const string& set, vector<string>& outShapeNames) 
 	}
 }
 
-int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet) {
+int SliderSetFile::GetSet(const std::string& setName, SliderSet &outSliderSet) {
 	XMLElement* setPtr;
 	if (!HasSet(setName))
 		return 1;
@@ -367,7 +367,7 @@ int SliderSetFile::GetSet(const string &setName, SliderSet &outSliderSet) {
 	return ret;
 }
 
-int SliderSetFile::GetAllSets(vector<SliderSet> &outAppendSets) {
+int SliderSetFile::GetAllSets(std::vector<SliderSet> &outAppendSets) {
 	int err;
 	SliderSet tmpSet;
 	for (auto &xmlit : setsInFile) {
@@ -379,7 +379,7 @@ int SliderSetFile::GetAllSets(vector<SliderSet> &outAppendSets) {
 	return 0;
 }
 
-void SliderSetFile::GetSetOutputFilePath(const string &setName, string &outFilePath) {
+void SliderSetFile::GetSetOutputFilePath(const std::string& setName, std::string& outFilePath) {
 	outFilePath.clear();
 
 	if (!HasSet(setName))
@@ -399,7 +399,7 @@ void SliderSetFile::GetSetOutputFilePath(const string &setName, string &outFileP
 
 int SliderSetFile::UpdateSet(SliderSet &inSliderSet) {
 	XMLElement* setPtr;
-	string setName;
+	std::string setName;
 	setName = inSliderSet.GetName();
 	if (HasSet(setName)) {
 		setPtr = setsInFile[setName];

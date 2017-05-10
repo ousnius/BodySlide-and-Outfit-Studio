@@ -558,10 +558,24 @@
     <ClInclude Include="lib\gli\transform.hpp" />
     <ClInclude Include="lib\gli\type.hpp" />
     <ClInclude Include="lib\gli\view.hpp" />
-    <ClInclude Include="lib\half.hpp" />
     <ClInclude Include="lib\LZ4F\lz4frame.h" />
     <ClInclude Include="lib\LZ4F\xxhash.h" />
-    <ClInclude Include="lib\Miniball.hpp" />
+    <ClInclude Include="lib\NIF\Animation.h" />
+    <ClInclude Include="lib\NIF\BasicTypes.h" />
+    <ClInclude Include="lib\NIF\bhk.h" />
+    <ClInclude Include="lib\NIF\ExtraData.h" />
+    <ClInclude Include="lib\NIF\Geometry.h" />
+    <ClInclude Include="lib\NIF\Keys.h" />
+    <ClInclude Include="lib\NIF\NifFile.h" />
+    <ClInclude Include="lib\NIF\Objects.h" />
+    <ClInclude Include="lib\NIF\Particles.h" />
+    <ClInclude Include="lib\NIF\Shaders.h" />
+    <ClInclude Include="lib\NIF\Skin.h" />
+    <ClInclude Include="lib\NIF\utils\half.hpp" />
+    <ClInclude Include="lib\NIF\utils\KDMatcher.h" />
+    <ClInclude Include="lib\NIF\utils\Miniball.hpp" />
+    <ClInclude Include="lib\NIF\utils\Object3d.h" />
+    <ClInclude Include="lib\NIF\VertexData.h" />
     <ClInclude Include="lib\SOIL2\etc1_utils.h" />
     <ClInclude Include="lib\SOIL2\image_DXT.h" />
     <ClInclude Include="lib\SOIL2\image_helper.h" />
@@ -595,8 +609,6 @@
     <ClInclude Include="src\components\TweakBrush.h" />
     <ClInclude Include="src\files\FBXWrangler.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
-    <ClInclude Include="src\files\NifBlock.h" />
-    <ClInclude Include="src\files\NifFile.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\TriFile.h" />
@@ -620,9 +632,7 @@
     <ClInclude Include="src\ui\wxStateButton.h" />
     <ClInclude Include="src\utils\AABBTree.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
-    <ClInclude Include="src\utils\KDMatcher.h" />
     <ClInclude Include="src\utils\Log.h" />
-    <ClInclude Include="src\utils\Object3d.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\FSEngine\FSBSA.cpp" />
@@ -632,6 +642,17 @@
     <ClCompile Include="lib\gli\glm\detail\glm.cpp" />
     <ClCompile Include="lib\LZ4F\lz4frame.c" />
     <ClCompile Include="lib\LZ4F\xxhash.c" />
+    <ClCompile Include="lib\NIF\Animation.cpp" />
+    <ClCompile Include="lib\NIF\BasicTypes.cpp" />
+    <ClCompile Include="lib\NIF\bhk.cpp" />
+    <ClCompile Include="lib\NIF\ExtraData.cpp" />
+    <ClCompile Include="lib\NIF\Geometry.cpp" />
+    <ClCompile Include="lib\NIF\NifFile.cpp" />
+    <ClCompile Include="lib\NIF\Objects.cpp" />
+    <ClCompile Include="lib\NIF\Particles.cpp" />
+    <ClCompile Include="lib\NIF\Shaders.cpp" />
+    <ClCompile Include="lib\NIF\Skin.cpp" />
+    <ClCompile Include="lib\NIF\utils\Object3d.cpp" />
     <ClCompile Include="lib\SOIL2\etc1_utils.c" />
     <ClCompile Include="lib\SOIL2\image_DXT.c" />
     <ClCompile Include="lib\SOIL2\image_helper.c" />
@@ -651,8 +672,6 @@
     <ClCompile Include="src\components\TweakBrush.cpp" />
     <ClCompile Include="src\files\FBXWrangler.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
-    <ClCompile Include="src\files\NifBlock.cpp" />
-    <ClCompile Include="src\files\NifFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
@@ -676,7 +695,6 @@
     <ClCompile Include="src\utils\AABBTree.cpp" />
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="src\utils\Log.cpp" />
-    <ClCompile Include="src\utils\Object3d.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml" />

@@ -81,7 +81,7 @@ void ConfigurationItem::ToXML(XMLElement* elem) {
 	element->InsertEndChild(newText);
 }
 
-int ConfigurationItem::EnumerateProperties(vector<ConfigurationItem*>& outList) {
+int ConfigurationItem::EnumerateProperties(std::vector<ConfigurationItem*>& outList) {
 	int count = 0;
 	for (auto &prop : properties) {
 		count++;
@@ -90,7 +90,7 @@ int ConfigurationItem::EnumerateProperties(vector<ConfigurationItem*>& outList) 
 	return count;
 }
 
-int ConfigurationItem::EnumerateProperties(string& outList) {
+int ConfigurationItem::EnumerateProperties(std::string& outList) {
 	int count = 0;
 	outList = "";
 
@@ -102,7 +102,7 @@ int ConfigurationItem::EnumerateProperties(string& outList) {
 	return count;
 }
 
-int ConfigurationItem::EnumerateChildren(vector<ConfigurationItem*>& outList, bool withProperties, bool traverse) {
+int ConfigurationItem::EnumerateChildren(std::vector<ConfigurationItem*>& outList, bool withProperties, bool traverse) {
 	int count = 0;
 	for (auto &child : children) {
 		if (child->isComment)
@@ -119,7 +119,7 @@ int ConfigurationItem::EnumerateChildren(vector<ConfigurationItem*>& outList, bo
 	return count;
 }
 
-int ConfigurationItem::EnumerateChildren(const string& inName, vector<string>& outList) {
+int ConfigurationItem::EnumerateChildren(const std::string& inName, std::vector<std::string>& outList) {
 	for (auto &child : children) {
 		if (child->isComment)
 			continue;
@@ -129,7 +129,7 @@ int ConfigurationItem::EnumerateChildren(const string& inName, vector<string>& o
 	return outList.size();
 }
 
-int ConfigurationItem::EnumerateChildrenProperty(const string& inName, const string& propertyName, vector<string>& outList) {
+int ConfigurationItem::EnumerateChildrenProperty(const std::string& inName, const std::string& propertyName, std::vector<std::string>& outList) {
 	for (auto &child : children) {
 		if (child->isComment)
 			continue;
@@ -143,12 +143,12 @@ int ConfigurationItem::EnumerateChildrenProperty(const string& inName, const str
 	return outList.size();
 }
 
-ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recurse) {
+ConfigurationItem* ConfigurationItem::FindChild(const std::string& inName, bool recurse) {
 	ConfigurationItem* found = nullptr;
 	size_t pos = inName.find_first_of("/.");
 
-	if (pos != string::npos) {
-		string tmpName = inName.substr(0, pos);
+	if (pos != std::string::npos) {
+		std::string tmpName = inName.substr(0, pos);
 		for (auto &child : children) {
 			if (child->isComment)
 				continue;
@@ -182,10 +182,10 @@ ConfigurationItem* ConfigurationItem::FindChild(const string& inName, bool recur
 	return found;
 }
 
-ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const string& val, bool isElement) {
+ConfigurationItem* ConfigurationItem::AddChild(const std::string& inName, const std::string& val, bool isElement) {
 	ConfigurationItem* found = nullptr;
 	int pos = inName.find_first_of("/.");
-	string tmpName = inName.substr(0, pos);
+	std::string tmpName = inName.substr(0, pos);
 
 	for (auto &child : children) {
 		if (child->isComment)
@@ -232,7 +232,7 @@ ConfigurationItem* ConfigurationItem::AddChild(const string& inName, const strin
 	return found;
 }
 
-ConfigurationItem* ConfigurationItem::FindProperty(const string& inName) {
+ConfigurationItem* ConfigurationItem::FindProperty(const std::string& inName) {
 	for (auto &prop : properties)
 		if (prop->Match(inName))
 			return prop;
@@ -254,7 +254,7 @@ void ConfigurationManager::Clear() {
 	ciList.clear();
 }
 
-int ConfigurationManager::LoadConfig(const string& pathToFile, const string& rootElement) {
+int ConfigurationManager::LoadConfig(const std::string& pathToFile, const std::string& rootElement) {
 	XMLDocument configXML;
 	configXML.LoadFile(pathToFile.c_str());
 
@@ -279,7 +279,7 @@ int ConfigurationManager::LoadConfig(const string& pathToFile, const string& roo
 	return 0;
 }
 
-int ConfigurationManager::EnumerateCIs(vector<ConfigurationItem*>& outList, bool withProperties, bool traverse) {
+int ConfigurationManager::EnumerateCIs(std::vector<ConfigurationItem*>& outList, bool withProperties, bool traverse) {
 	if (ciList.size() == 0)
 		return 0;
 
@@ -296,7 +296,7 @@ int ConfigurationManager::EnumerateCIs(vector<ConfigurationItem*>& outList, bool
 	return count;
 }
 
-int ConfigurationManager::EnumerateChildCIs(vector<ConfigurationItem*>& outList, const string& parentCI, bool withProperties, bool traverse) {
+int ConfigurationManager::EnumerateChildCIs(std::vector<ConfigurationItem*>& outList, const std::string& parentCI, bool withProperties, bool traverse) {
 	ConfigurationItem* ci = FindCI(parentCI);
 	if (!ci)
 		return 0;
@@ -304,7 +304,7 @@ int ConfigurationManager::EnumerateChildCIs(vector<ConfigurationItem*>& outList,
 	return ci->EnumerateChildren(outList, withProperties, traverse);
 }
 
-bool ConfigurationManager::Exists(const string& name) {
+bool ConfigurationManager::Exists(const std::string& name) {
 	ConfigurationItem* itemFound = FindCI(name);
 	if (itemFound)
 		return true;
@@ -312,12 +312,12 @@ bool ConfigurationManager::Exists(const string& name) {
 		return false;
 }
 
-ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
+ConfigurationItem* ConfigurationManager::FindCI(const std::string& inName) {
 	ConfigurationItem* found = nullptr;
 	int pos = inName.find_first_of("/.");
 
 	if (pos != -1) {
-		string tmpName = inName.substr(0, pos);
+		std::string tmpName = inName.substr(0, pos);
 		for (auto &ci : ciList)
 			if (ci->Match(tmpName))
 				found = ci;
@@ -341,7 +341,7 @@ ConfigurationItem* ConfigurationManager::FindCI(const string& inName) {
 	return found;
 }
 
-int ConfigurationManager::GetIntValue(const string& inName, int def) {
+int ConfigurationManager::GetIntValue(const std::string& inName, int def) {
 	int res = def;
 
 	ConfigurationItem* itemFound = FindCI(inName);
@@ -352,7 +352,7 @@ int ConfigurationManager::GetIntValue(const string& inName, int def) {
 	return res;
 }
 
-float ConfigurationManager::GetFloatValue(const string& inName, float def) {
+float ConfigurationManager::GetFloatValue(const std::string& inName, float def) {
 	float res = def;
 
 	ConfigurationItem* itemFound = FindCI(inName);
@@ -363,7 +363,7 @@ float ConfigurationManager::GetFloatValue(const string& inName, float def) {
 	return res;
 }
 
-string ConfigurationManager::GetString(const string& inName) {
+std::string ConfigurationManager::GetString(const std::string& inName) {
 	ConfigurationItem* itemFound = FindCI(inName);
 	if (itemFound)
 		return itemFound->value;
@@ -371,22 +371,22 @@ string ConfigurationManager::GetString(const string& inName) {
 	return "";
 }
 
-void ConfigurationManager::SetDefaultValue(const string& inName, const string& newValue) {
+void ConfigurationManager::SetDefaultValue(const std::string& inName, const std::string& newValue) {
 	if (FindCI(inName))
 		return;
 
 	SetValue(inName, newValue, true);
 }
 
-void ConfigurationManager::SetDefaultValue(const string& inName, int newValue) {
+void ConfigurationManager::SetDefaultValue(const std::string& inName, int newValue) {
 	if (FindCI(inName))
 		return;
 
 	SetValue(inName, newValue, true);
 }
 
-void ConfigurationManager::SetValue(const string& inName, const string& newValue, bool flagDefault) {
-	string search = inName;
+void ConfigurationManager::SetValue(const std::string& inName, const std::string& newValue, bool flagDefault) {
+	std::string search = inName;
 
 	ConfigurationItem* itemFound = FindCI(search);
 	if (itemFound) {
@@ -395,7 +395,7 @@ void ConfigurationManager::SetValue(const string& inName, const string& newValue
 	}
 	else {
 		int pos = search.find_first_of("/.");
-		string tmpName = search.substr(0, pos);
+		std::string tmpName = search.substr(0, pos);
 		for (auto &ci : ciList) {
 			if (ci->Match(tmpName))
 				itemFound = ci;
@@ -421,19 +421,19 @@ void ConfigurationManager::SetValue(const string& inName, const string& newValue
 	}
 }
 
-void ConfigurationManager::SetValue(const string& inName, int newValue, bool flagDefault) {
+void ConfigurationManager::SetValue(const std::string& inName, int newValue, bool flagDefault) {
 	char intStr[24];
 	_snprintf_s(intStr, 24, 24, "%d", newValue);
-	SetValue(inName, string(intStr), flagDefault);
+	SetValue(inName, std::string(intStr), flagDefault);
 }
 
-void ConfigurationManager::SetValue(const string& inName, float newValue, bool flagDefault) {
+void ConfigurationManager::SetValue(const std::string& inName, float newValue, bool flagDefault) {
 	char intStr[24];
 	_snprintf_s(intStr, 24, 24, "%0.5f", newValue);
-	SetValue(inName, string(intStr), flagDefault);
+	SetValue(inName, std::string(intStr), flagDefault);
 }
 
-bool ConfigurationManager::MatchValue(const string& inName, const string& val, bool useCase) {
+bool ConfigurationManager::MatchValue(const std::string& inName, const std::string& val, bool useCase) {
 	ConfigurationItem* itemFound = FindCI(inName);
 	if (itemFound) {
 		if (!useCase) {
@@ -448,8 +448,8 @@ bool ConfigurationManager::MatchValue(const string& inName, const string& val, b
 	return false;
 }
 
-void ConfigurationManager::GetFullKey(ConfigurationItem* from, string& outStr) {
-	vector<string> stringStack;
+void ConfigurationManager::GetFullKey(ConfigurationItem* from, std::string& outStr) {
+	std::vector<std::string> stringStack;
 	outStr = "";
 
 	while (from) {
@@ -465,7 +465,7 @@ void ConfigurationManager::GetFullKey(ConfigurationItem* from, string& outStr) {
 	}
 }
 
-int ConfigurationManager::GetValueArray(const string& containerName, const string& arrayName, vector<string>& outValues) {
+int ConfigurationManager::GetValueArray(const std::string& containerName, const std::string& arrayName, std::vector<std::string>& outValues) {
 	int count = 0;
 
 	ConfigurationItem* container = FindCI(containerName);
@@ -475,7 +475,7 @@ int ConfigurationManager::GetValueArray(const string& containerName, const strin
 	return count;
 }
 
-int ConfigurationManager::GetValueAttributeArray(const string& containerName, const string& arrayName, const string& attributeName, vector<string>& outValues) {
+int ConfigurationManager::GetValueAttributeArray(const std::string& containerName, const std::string& arrayName, const std::string& attributeName, std::vector<std::string>& outValues) {
 	int count = 0;
 
 	ConfigurationItem* container = FindCI(containerName);
@@ -485,15 +485,15 @@ int ConfigurationManager::GetValueAttributeArray(const string& containerName, co
 	return count;
 }
 
-void ConfigurationManager::ReplaceVars(string & inoutStr)
+void ConfigurationManager::ReplaceVars(std::string & inoutStr)
 {
 	size_t first = inoutStr.find('%');
 	size_t second;
-	while (first != string::npos) {
+	while (first != std::string::npos) {
 		second = inoutStr.find('%', first + 1);
 		size_t len = second - first;
 		if (len > 1) {
-			string varname = inoutStr.substr(first + 1, len - 1);
+			std::string varname = inoutStr.substr(first + 1, len - 1);
 			inoutStr.replace(first, len+1, GetString(varname));
 			first = inoutStr.find('%', first);
 		}
@@ -507,7 +507,7 @@ void ConfigurationManager::ReplaceVars(string & inoutStr)
 	}
 }
 
-int ConfigurationManager::SaveConfig(const string& pathToFile, const string& rootElementName) {
+int ConfigurationManager::SaveConfig(const std::string& pathToFile, const std::string& rootElementName) {
 	if (rootElementName.empty())
 		return 1;
 

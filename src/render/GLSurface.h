@@ -7,11 +7,9 @@ See the included LICENSE file
 #pragma once
 
 #include "GLMaterial.h"
-#include "../files/NifFile.h"
+#include "../NIF/NifFile.h"
 
 #include <wx/glcanvas.h>
-
-using namespace std;
 
 class GLSurface {
 	wxGLCanvas* canvas = nullptr;
@@ -53,13 +51,13 @@ class GLSurface {
 	ResourceLoader resLoader;
 	GLMaterial* primitiveMat = nullptr;
 
-	unordered_map<string, int> namedMeshes;
-	unordered_map<string, int> namedOverlays;
-	vector<mesh*> meshes;
-	vector<mesh*> overlays;
+	std::unordered_map<std::string, int> namedMeshes;
+	std::unordered_map<std::string, int> namedOverlays;
+	std::vector<mesh*> meshes;
+	std::vector<mesh*> overlays;
 
-	vector<mesh*> activeMeshes;
-	vector<int> activeMeshesID;
+	std::vector<mesh*> activeMeshes;
+	std::vector<int> activeMeshesID;
 	mesh* selectedMesh = nullptr;
 
 	void InitLighting();
@@ -103,7 +101,7 @@ public:
 		activeMeshes.clear();
 	}
 
-	void DeleteMesh(const string& shapeName) {
+	void DeleteMesh(const std::string& shapeName) {
 		int id = GetMeshID(shapeName);
 		if (id >= 0) {
 			DeleteMesh(id);
@@ -120,14 +118,14 @@ public:
 	}
 
 
-	int GetMeshID(const string& shapeName) {
+	int GetMeshID(const std::string& shapeName) {
 		auto it = namedMeshes.find(shapeName);
 		if (it != namedMeshes.end())
 			return it->second;
 
 		return -1;
 	}
-	string GetMeshName(int id) {
+	std::string GetMeshName(int id) {
 		for (auto &mn : namedMeshes)
 			if (mn.second == id)
 				return mn.first;
@@ -135,7 +133,7 @@ public:
 		return "";
 	}
 
-	void RenameMesh(const string& shapeName, const string& newShapeName) {
+	void RenameMesh(const std::string& shapeName, const std::string& newShapeName) {
 		if (namedMeshes.find(shapeName) != namedMeshes.end()) {
 			int mid = namedMeshes[shapeName];
 			namedMeshes[newShapeName] = mid;
@@ -145,15 +143,15 @@ public:
 	}
 
 
-	int GetOverlayID(const string& shapeName) {
-		unordered_map<string, int>::iterator it = namedOverlays.find(shapeName);
+	int GetOverlayID(const std::string& shapeName) {
+		std::unordered_map<std::string, int>::iterator it = namedOverlays.find(shapeName);
 		if (it != namedOverlays.end())
 			return it->second;
 
 		return -1;
 	}
 
-	vector<mesh*> GetActiveMeshes() {
+	std::vector<mesh*> GetActiveMeshes() {
 		return activeMeshes;
 	}
 
@@ -180,7 +178,7 @@ public:
 		return total;
 	}
 
-	mesh* GetMesh(const string& shapeName) {
+	mesh* GetMesh(const std::string& shapeName) {
 		int id = GetMeshID(shapeName);
 		if (id >= 0)
 			return meshes[id];
@@ -188,7 +186,7 @@ public:
 		return nullptr;
 	}
 
-	const vector<mesh*>& GetMeshes() {
+	const std::vector<mesh*>& GetMeshes() {
 		return meshes;
 	}
 
@@ -199,7 +197,7 @@ public:
 		return nullptr;
 	}
 
-	mesh* GetOverlay(const string& overlayName) {
+	mesh* GetOverlay(const std::string& overlayName) {
 		int id = GetOverlayID(overlayName);
 		if (id >= 0)
 			return overlays[id];
@@ -239,7 +237,7 @@ public:
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
+	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr);
 	void ShowCursor(bool show = true);
 
@@ -250,29 +248,29 @@ public:
 	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
 	bool CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
 
-	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const string& name = "RingMesh");
-	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const string& name);
-	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const string& name);
-	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const string& name);
-	mesh* AddVisPoint(const Vector3& p, const string& name = "PointMesh", const Vector3* color = nullptr);
+	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const std::string& name = "RingMesh");
+	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name);
+	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const std::string& name);
+	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
+	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
 
-	void AddMeshFromNif(NifFile* nif, string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
-	void Update(const string& shapeName, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, set<int>* changed = nullptr);
-	void Update(int shapeIndex, vector<Vector3>* vertices, vector<Vector2>* uvs = nullptr, set<int>* changed = nullptr);
-	void ReloadMeshFromNif(NifFile* nif, string shapeName);
-	void RecalculateMeshBVH(const string& shapeName);
+	void AddMeshFromNif(NifFile* nif, std::string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
+	void Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	void Update(int shapeIndex, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
+	void ReloadMeshFromNif(NifFile* nif, std::string shapeName);
+	void RecalculateMeshBVH(const std::string& shapeName);
 	void RecalculateMeshBVH(int shapeIndex);
 
-	void SetMeshVisibility(const string& name, bool visible = true);
+	void SetMeshVisibility(const std::string& name, bool visible = true);
 	void SetMeshVisibility(int shapeIndex, bool visible = true);
-	void SetOverlayVisibility(const string& name, bool visible = true);
-	void SetActiveMeshesID(const vector<int>& shapeIndices);
-	void SetActiveMeshesID(const vector<string>& shapeNames);
-	void SetSelectedMesh(const string& shapeName);
+	void SetOverlayVisibility(const std::string& name, bool visible = true);
+	void SetActiveMeshesID(const std::vector<int>& shapeIndices);
+	void SetActiveMeshesID(const std::vector<std::string>& shapeNames);
+	void SetSelectedMesh(const std::string& shapeName);
 
-	RenderMode SetMeshRenderMode(const string& name, RenderMode mode);
+	RenderMode SetMeshRenderMode(const std::string& name, RenderMode mode);
 
-	GLMaterial* AddMaterial(const vector<string>& textureFiles, const string& vShaderFile, const string& fShaderFile);
+	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile);
 	GLMaterial* GetPrimitiveMaterial();
 	ResourceLoader* GetResourceLoader() {
 		return &resLoader;

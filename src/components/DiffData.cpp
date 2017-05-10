@@ -18,8 +18,8 @@ OSDataFile::OSDataFile() {
 OSDataFile::~OSDataFile() {
 }
 
-bool OSDataFile::Read(const string& fileName) {
-	ifstream file(fileName, ios_base::binary);
+bool OSDataFile::Read(const std::string& fileName) {
+	std::ifstream file(fileName, std::ios_base::binary);
 	if (!file)
 		return false;
 
@@ -31,7 +31,7 @@ bool OSDataFile::Read(const string& fileName) {
 	file.read((char*)&dataCount, 4);
 
 	byte nameLength;
-	string dataName;
+	std::string dataName;
 	ushort diffSize;
 	for (int i = 0; i < dataCount; ++i) {
 		file.read((char*)&nameLength, 1);
@@ -40,7 +40,7 @@ bool OSDataFile::Read(const string& fileName) {
 
 		ushort index;
 		Vector3 diff;
-		unordered_map<ushort, Vector3> diffs;
+		std::unordered_map<ushort, Vector3> diffs;
 
 		file.read((char*)&diffSize, 2);
 		diffs.reserve(diffSize);
@@ -57,8 +57,8 @@ bool OSDataFile::Read(const string& fileName) {
 	return true;
 }
 
-bool OSDataFile::Write(const string& fileName) {
-	ofstream file(fileName, ios_base::binary);
+bool OSDataFile::Write(const std::string& fileName) {
+	std::ofstream file(fileName, std::ios_base::binary);
 	if (!file)
 		return false;
 
@@ -84,11 +84,11 @@ bool OSDataFile::Write(const string& fileName) {
 	return true;
 }
 
-map<string, unordered_map<ushort, Vector3>> OSDataFile::GetDataDiffs() {
+std::map<std::string, std::unordered_map<ushort, Vector3>> OSDataFile::GetDataDiffs() {
 	return dataDiffs;
 }
 
-unordered_map<ushort, Vector3>* OSDataFile::GetDataDiff(const string& dataName) {
+std::unordered_map<ushort, Vector3>* OSDataFile::GetDataDiff(const std::string& dataName) {
 	auto it = dataDiffs.find(dataName);
 	if (it != dataDiffs.end())
 		return &dataDiffs[dataName];
@@ -96,7 +96,7 @@ unordered_map<ushort, Vector3>* OSDataFile::GetDataDiff(const string& dataName) 
 	return nullptr;
 }
 
-void OSDataFile::SetDataDiff(const string& dataName, unordered_map<ushort, Vector3>& inDataDiff) {
+void OSDataFile::SetDataDiff(const std::string& dataName, std::unordered_map<ushort, Vector3>& inDataDiff) {
 	auto it = dataDiffs.find(dataName);
 	if (it != dataDiffs.end())
 		dataDiffs.erase(dataName);
@@ -106,7 +106,7 @@ void OSDataFile::SetDataDiff(const string& dataName, unordered_map<ushort, Vecto
 }
 
 
-int DiffDataSets::LoadSet(const string& name, const string& target, unordered_map<ushort, Vector3>& inDiffData) {
+int DiffDataSets::LoadSet(const std::string& name, const std::string& target, std::unordered_map<ushort, Vector3>& inDiffData) {
 	if (namedSet.find(name) != namedSet.end())
 		namedSet.erase(name);
 
@@ -116,15 +116,15 @@ int DiffDataSets::LoadSet(const string& name, const string& target, unordered_ma
 	return 0;
 }
 
-int DiffDataSets::LoadSet(const string& name, const string& target, const string& fromFile) {
-	ifstream inFile(fromFile, ios_base::binary);
+int DiffDataSets::LoadSet(const std::string& name, const std::string& target, const std::string& fromFile) {
+	std::ifstream inFile(fromFile, std::ios_base::binary);
 	if (!inFile)
 		return 1;
 
 	int sz;
 	inFile.read((char*)&sz, 4);
 
-	unordered_map<ushort, Vector3> data;
+	std::unordered_map<ushort, Vector3> data;
 	data.reserve(sz);
 
 	int idx;
@@ -147,7 +147,7 @@ int DiffDataSets::LoadSet(const string& name, const string& target, const string
 	return 0;
 }
 
-bool DiffDataSets::LoadData(const map<string, map<string, string>>& osdNames) {
+bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
 	for (auto &osd : osdNames) {
 		OSDataFile osdFile;
 		if (!osdFile.Read(osd.first))
@@ -163,12 +163,12 @@ bool DiffDataSets::LoadData(const map<string, map<string, string>>& osdNames) {
 	return true;
 }
 
-int DiffDataSets::SaveSet(const string& name, const string& target, const string& toFile) {
-	unordered_map<ushort, Vector3>* data = &namedSet[name];
+int DiffDataSets::SaveSet(const std::string& name, const std::string& target, const std::string& toFile) {
+	std::unordered_map<ushort, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
 		return 2;
 
-	ofstream outFile(toFile, ios_base::binary);
+	std::ofstream outFile(toFile, std::ios_base::binary);
 	if (!outFile)
 		return 1;
 
@@ -181,11 +181,11 @@ int DiffDataSets::SaveSet(const string& name, const string& target, const string
 	return 0;
 }
 
-bool DiffDataSets::SaveData(const map<string, map<string, string>>& osdNames) {
+bool DiffDataSets::SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames) {
 	for (auto &osd : osdNames) {
 		OSDataFile osdFile;
 		for (auto &dataNames : osd.second) {
-			unordered_map<ushort, Vector3>* data = &namedSet[dataNames.first];
+			std::unordered_map<ushort, Vector3>* data = &namedSet[dataNames.first];
 			if (!TargetMatch(dataNames.first, dataNames.second))
 				continue;
 
@@ -199,7 +199,7 @@ bool DiffDataSets::SaveData(const map<string, map<string, string>>& osdNames) {
 	return true;
 }
 
-void DiffDataSets::RenameSet(const string& oldName, const string& newName) {
+void DiffDataSets::RenameSet(const std::string& oldName, const std::string& newName) {
 	if (namedSet.find(oldName) != namedSet.end()) {
 		namedSet.emplace(newName, namedSet[oldName]);
 		namedSet.erase(oldName);
@@ -208,10 +208,10 @@ void DiffDataSets::RenameSet(const string& oldName, const string& newName) {
 	}
 }
 
-void DiffDataSets::DeepRename(const string& oldName, const string& newName) {
-	vector<string> oldTargets;
-	vector<string> newTargets;
-	string newDT = "";
+void DiffDataSets::DeepRename(const std::string& oldName, const std::string& newName) {
+	std::vector<std::string> oldTargets;
+	std::vector<std::string> newTargets;
+	std::string newDT = "";
 	for (auto& dt : dataTargets) {
 		if (dt.second == oldName && dt.first.length() >= oldName.length()) {
 			oldTargets.push_back(dt.first);
@@ -222,8 +222,8 @@ void DiffDataSets::DeepRename(const string& oldName, const string& newName) {
 		}
 	}
 	for (int i = 0; i < oldTargets.size(); i++) {
-		string ot = oldTargets[i];
-		string nt = newTargets[i];
+		std::string ot = oldTargets[i];
+		std::string nt = newTargets[i];
 		if (dataTargets.find(ot) != dataTargets.end()) {
 			dataTargets[nt] = dataTargets[ot];
 			dataTargets.erase(ot);
@@ -235,24 +235,24 @@ void DiffDataSets::DeepRename(const string& oldName, const string& newName) {
 	}
 }
 
-void DiffDataSets::AddEmptySet(const string &name, const string &target) {
+void DiffDataSets::AddEmptySet(const std::string& name, const std::string& target) {
 	if (namedSet.find(name) == namedSet.end()) {
-		unordered_map<ushort, Vector3> data;
+		std::unordered_map<ushort, Vector3> data;
 		namedSet[name] = data;
 		dataTargets[name] = target;
 	}
 }
 
-void DiffDataSets::UpdateDiff(const string& name, const string& target, ushort index, Vector3 &newdiff) {
-	unordered_map<ushort, Vector3>* data = &namedSet[name];
+void DiffDataSets::UpdateDiff(const std::string& name, const std::string& target, ushort index, Vector3 &newdiff) {
+	std::unordered_map<ushort, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
 
 	(*data)[index] = newdiff;
 }
 
-void DiffDataSets::SumDiff(const string& name, const string& target, ushort index, Vector3 &newdiff) {
-	unordered_map<ushort, Vector3>* data = &namedSet[name];
+void DiffDataSets::SumDiff(const std::string& name, const std::string& target, ushort index, Vector3 &newdiff) {
+	std::unordered_map<ushort, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
 
@@ -261,8 +261,8 @@ void DiffDataSets::SumDiff(const string& name, const string& target, ushort inde
 	(*data)[index] = v;
 }
 
-void DiffDataSets::ScaleDiff(const string& name, const string& target, float scalevalue) {
-	unordered_map<ushort, Vector3>* data = &namedSet[name];
+void DiffDataSets::ScaleDiff(const std::string& name, const std::string& target, float scalevalue) {
+	std::unordered_map<ushort, Vector3>* data = &namedSet[name];
 
 	if (!TargetMatch(name, target))
 		return;
@@ -271,8 +271,8 @@ void DiffDataSets::ScaleDiff(const string& name, const string& target, float sca
 		resultIt->second *= scalevalue;
 }
 
-void DiffDataSets::OffsetDiff(const string& name, const string& target, Vector3 &offset) {
-	unordered_map<ushort, Vector3>* data = &namedSet[name];
+void DiffDataSets::OffsetDiff(const std::string& name, const std::string& target, Vector3 &offset) {
+	std::unordered_map<ushort, Vector3>* data = &namedSet[name];
 	if (!TargetMatch(name, target))
 		return;
 
@@ -280,7 +280,7 @@ void DiffDataSets::OffsetDiff(const string& name, const string& target, Vector3 
 		resultIt->second += offset;
 }
 
-void DiffDataSets::ApplyUVDiff(const string& set, const string& target, float percent, vector<Vector2>* inOutResult) {
+void DiffDataSets::ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector2>* inOutResult) {
 	if (percent == 0)
 		return;
 
@@ -288,7 +288,7 @@ void DiffDataSets::ApplyUVDiff(const string& set, const string& target, float pe
 		return;
 
 	int maxidx = (*inOutResult).size();
-	unordered_map<ushort, Vector3>* data = &namedSet[set];
+	std::unordered_map<ushort, Vector3>* data = &namedSet[set];
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
@@ -299,7 +299,7 @@ void DiffDataSets::ApplyUVDiff(const string& set, const string& target, float pe
 	}
 }
 
-void DiffDataSets::ApplyDiff(const string& set, const string& target, float percent, vector<Vector3>* inOutResult) {
+void DiffDataSets::ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector3>* inOutResult) {
 	if (percent == 0)
 		return;
 
@@ -307,7 +307,7 @@ void DiffDataSets::ApplyDiff(const string& set, const string& target, float perc
 		return;
 
 	int maxidx = (*inOutResult).size();
-	unordered_map<ushort, Vector3>* data = &namedSet[set];
+	std::unordered_map<ushort, Vector3>* data = &namedSet[set];
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
@@ -319,12 +319,12 @@ void DiffDataSets::ApplyDiff(const string& set, const string& target, float perc
 	}
 }
 
-void DiffDataSets::ApplyClamp(const string& set, const string& target, vector<Vector3>* inOutResult) {
+void DiffDataSets::ApplyClamp(const std::string& set, const std::string& target, std::vector<Vector3>* inOutResult) {
 	if (!TargetMatch(set, target))
 		return;
 
 	int maxidx = (*inOutResult).size();
-	unordered_map<ushort, Vector3>* data = &namedSet[set];
+	std::unordered_map<ushort, Vector3>* data = &namedSet[set];
 
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (resultIt->first >= maxidx)
@@ -336,18 +336,18 @@ void DiffDataSets::ApplyClamp(const string& set, const string& target, vector<Ve
 	}
 }
 
-unordered_map<ushort, Vector3>* DiffDataSets::GetDiffSet(const string& targetDataName) {
+std::unordered_map<ushort, Vector3>* DiffDataSets::GetDiffSet(const std::string& targetDataName) {
 	if (namedSet.find(targetDataName) == namedSet.end())
 		return nullptr;
 
 	return &namedSet[targetDataName];
 }
 
-void DiffDataSets::GetDiffIndices(const string& set, const string& target, vector<ushort>& outIndices, float threshold) {
+void DiffDataSets::GetDiffIndices(const std::string& set, const std::string& target, std::vector<ushort>& outIndices, float threshold) {
 	if (!TargetMatch(set, target))
 		return;
 
-	unordered_map<ushort, Vector3>* data = &namedSet[set];
+	std::unordered_map<ushort, Vector3>* data = &namedSet[set];
 	for (auto resultIt = data->begin(); resultIt != data->end(); ++resultIt) {
 		if (fabs(resultIt->second.x) > threshold ||
 			fabs(resultIt->second.y) > threshold ||
@@ -356,16 +356,16 @@ void DiffDataSets::GetDiffIndices(const string& set, const string& target, vecto
 		}
 	}
 
-	sort(outIndices.begin(), outIndices.end());
-	outIndices.erase(unique(outIndices.begin(), outIndices.end()), outIndices.end());
+	std::sort(outIndices.begin(), outIndices.end());
+	outIndices.erase(std::unique(outIndices.begin(), outIndices.end()), outIndices.end());
 }
 
-void DiffDataSets::DeleteVerts(const string& target, const vector<ushort>& indices) {
+void DiffDataSets::DeleteVerts(const std::string& target, const std::vector<ushort>& indices) {
 	if (indices.empty())
 		return;
 
 	ushort highestRemoved = indices.back();
-	vector<int> indexCollapse(highestRemoved + 1, 0);
+	std::vector<int> indexCollapse(highestRemoved + 1, 0);
 
 	int remCount = 0;
 	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
@@ -380,7 +380,7 @@ void DiffDataSets::DeleteVerts(const string& target, const vector<ushort>& indic
 
 	for (auto &data : namedSet) {
 		if (TargetMatch(data.first, target)) {
-			unordered_map<ushort, Vector3> indexCopy;
+			std::unordered_map<ushort, Vector3> indexCopy;
 			for (auto &d : data.second) {
 				if (d.first > highestRemoved)
 					indexCopy.emplace(d.first - remCount, d.second);
@@ -391,12 +391,12 @@ void DiffDataSets::DeleteVerts(const string& target, const vector<ushort>& indic
 			data.second.clear();
 			data.second.reserve(indexCopy.size());
 			for (auto &copy : indexCopy)
-				data.second[copy.first] = move(copy.second);
+				data.second[copy.first] = std::move(copy.second);
 		}
 	}
 }
 
-void DiffDataSets::ClearSet(const string& name) {
+void DiffDataSets::ClearSet(const std::string& name) {
 	namedSet.erase(name);
 	dataTargets.erase(name);
 }

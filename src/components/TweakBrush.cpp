@@ -5,6 +5,7 @@ See the included LICENSE file
 */
 
 #include "TweakBrush.h"
+
 #pragma warning (disable : 4100)
 
 TweakUndo::TweakUndo() : curState(-1) {
@@ -22,12 +23,12 @@ void TweakUndo::Clear()	{
 	curState = -1;
 }
 
-unordered_map<mesh*, Vector3*> TweakStroke::outPositions{};
-unordered_map<mesh*, int> TweakStroke::outPositionCount{};
+std::unordered_map<mesh*, Vector3*> TweakStroke::outPositions{};
+std::unordered_map<mesh*, int> TweakStroke::outPositionCount{};
 int TweakStroke::nStrokes = 0;
-vector<future<void>> TweakStroke::normalUpdates{};
+std::vector<std::future<void>> TweakStroke::normalUpdates{};
 
-TweakStroke* TweakUndo::CreateStroke(vector<mesh*> refMeshes, TweakBrush* refBrush) {
+TweakStroke* TweakUndo::CreateStroke(std::vector<mesh*> refMeshes, TweakBrush* refBrush) {
 	TweakStroke* newStroke = new TweakStroke(refMeshes, refBrush);
 	addStroke(newStroke);
 	return newStroke;
@@ -52,10 +53,10 @@ void TweakUndo::addStroke(TweakStroke* stroke) {
 	strokes.push_back(stroke);
 }
 
-bool TweakUndo::backStroke(const vector<mesh*>& validMeshes) {
+bool TweakUndo::backStroke(const std::vector<mesh*>& validMeshes) {
 	if (curState > -1) {
 		for (auto &m : GetCurStateMeshes()) {
-			if (find(validMeshes.begin(), validMeshes.end(), m) != validMeshes.end()) {
+			if (std::find(validMeshes.begin(), validMeshes.end(), m) != validMeshes.end()) {
 				strokes[curState]->RestoreStartState(m);
 			}
 		}
@@ -65,11 +66,11 @@ bool TweakUndo::backStroke(const vector<mesh*>& validMeshes) {
 	return false;
 }
 
-bool TweakUndo::forwardStroke(const vector<mesh*>& validMeshes) {
+bool TweakUndo::forwardStroke(const std::vector<mesh*>& validMeshes) {
 	int maxState = strokes.size() - 1;
 	if (curState < maxState) {
 		for (auto &m : GetNextStateMeshes()) {
-			if (find(validMeshes.begin(), validMeshes.end(), m) != validMeshes.end()) {
+			if (std::find(validMeshes.begin(), validMeshes.end(), m) != validMeshes.end()) {
 				strokes[curState + 1]->RestoreEndState(m);
 			}
 		}
@@ -167,7 +168,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 	// Remove finished tasks
 	for (int i = 0; i < normalUpdates.size(); i++) {
-		if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
+		if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 			normalUpdates.erase(normalUpdates.begin() + i);
 			i--;
 		}
@@ -177,7 +178,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	// Mirroring is done internally, most of the pick info values are ignored.
 	if (brushType == TBT_MOVE || brushType == TBT_XFORM) {
 		for (auto &m : refMeshes) {
-			vector<int> facets;
+			std::vector<int> facets;
 			int nPts1 = 0;
 
 			if (!refBrush->queryPoints(m, pickInfo, nullptr, nPts1, facets, affectedNodes[m]))
@@ -192,15 +193,15 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			}
 
 			if (refBrush->LiveNormals()) {
-				auto pending = async(launch::async, mesh::SmoothNormalsStaticMap, m, pointStartState[m]);
-				normalUpdates.push_back(move(pending));
+				auto pending = async(std::launch::async, mesh::SmoothNormalsStaticMap, m, pointStartState[m]);
+				normalUpdates.push_back(std::move(pending));
 			}
 		}
 	}
 	else {
 		for (auto &m : refMeshes) {
-			vector<int> facets;
-			vector<int> facets2;
+			std::vector<int> facets;
+			std::vector<int> facets2;
 			int nPts1 = 0;
 			int nPts2 = 0;
 
@@ -221,11 +222,11 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 			}
 
 			if (refBrush->LiveNormals() && brushType != TBT_WEIGHT && brushType != TBT_MASK) {
-				auto pending1 = async(launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m], nPts1);
-				normalUpdates.push_back(move(pending1));
+				auto pending1 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m], nPts1);
+				normalUpdates.push_back(std::move(pending1));
 
-				auto pending2 = async(launch::async, mesh::SmoothNormalsStaticArray, m, pts2[m], nPts2);
-				normalUpdates.push_back(move(pending2));
+				auto pending2 = async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts2[m], nPts2);
+				normalUpdates.push_back(std::move(pending2));
 			}
 		}
 	}
@@ -260,8 +261,8 @@ void TweakStroke::endStroke() {
 
 	if (!refBrush->LiveNormals() || refBrush->Type() == TBT_WEIGHT) {
 		for (auto &m : refMeshes) {
-			auto pending = async(launch::async, mesh::SmoothNormalsStatic, m);
-			normalUpdates.push_back(move(pending));
+			auto pending = std::async(std::launch::async, mesh::SmoothNormalsStatic, m);
+			normalUpdates.push_back(std::move(pending));
 		}
 	}
 
@@ -269,7 +270,7 @@ void TweakStroke::endStroke() {
 	while (notReady) {
 		notReady = false;
 		for (int i = 0; i < normalUpdates.size(); i++) {
-			if (normalUpdates[i].wait_for(chrono::seconds(0)) == future_status::ready) {
+			if (normalUpdates[i].wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
 				normalUpdates.erase(normalUpdates.begin() + i);
 				i--;
 			}
@@ -365,8 +366,8 @@ void TweakBrush::applyFalloff(Vector3 &deltaVec, float dist) {
 	deltaVec *= p;
 }
 
-bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes) {
-	vector<IntersectResult> IResults;
+bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes) {
+	std::vector<IntersectResult> IResults;
 
 	if (!refmesh->bvh->IntersectSphere(pickInfo.origin, radius, &IResults))
 		return false;
@@ -408,7 +409,7 @@ bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* result
 	return true;
 }
 
-void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3> &movedpoints) {
+void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3> &movedpoints) {
 	Matrix4 xform;
 	xform.Translate(pickInfo.normal * strength);
 	Vector3 vs;
@@ -466,7 +467,7 @@ TB_Mask::TB_Mask() :TweakBrush() {
 TB_Mask::~TB_Mask() {
 }
 
-void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints) {
+void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
 	Vector3 vs;
 	Vector3 vc;
 	Vector3 ve;
@@ -538,7 +539,7 @@ TB_Unmask::TB_Unmask() :TweakBrush() {
 TB_Unmask::~TB_Unmask() {
 }
 
-void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints) {
+void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
 	Vector3 vs;
 	Vector3 vc;
 	Vector3 ve;
@@ -635,8 +636,8 @@ TB_Smooth::~TB_Smooth() {
 	}
 }
 
-void TB_Smooth::lapFilter(mesh* refmesh, int* points, int nPoints, unordered_map <int, Vector3>& wv) {
-	unordered_map<int, Vector3>::iterator mi;
+void TB_Smooth::lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map <int, Vector3>& wv) {
+	std::unordered_map<int, Vector3>::iterator mi;
 	Vector3 d;
 	int adjPoints[1000];
 	int c = 0;
@@ -671,8 +672,8 @@ void TB_Smooth::lapFilter(mesh* refmesh, int* points, int nPoints, unordered_map
 	}
 }
 
-void TB_Smooth::hclapFilter(mesh* refmesh, int* points, int nPoints, unordered_map <int, Vector3>& wv) {
-	unordered_map<int, Vector3>::iterator mi;
+void TB_Smooth::hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map <int, Vector3>& wv) {
+	std::unordered_map<int, Vector3>::iterator mi;
 
 	if (refmesh != lastMesh) {
 		if (b) free(b);
@@ -747,8 +748,8 @@ void TB_Smooth::hclapFilter(mesh* refmesh, int* points, int nPoints, unordered_m
 	}
 }
 
-void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints) {
-	unordered_map<int, Vector3> wv;
+void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
 
 	for (int i = 0; i < nPoints; i++) {
@@ -783,7 +784,7 @@ void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 }
 
 void TB_Smooth::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
-	unordered_map<int, Vector3> wv;
+	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
 
 	for (int i = 0; i < nPoints; i++) {
@@ -827,7 +828,7 @@ TB_Move::TB_Move() : TweakBrush() {
 TB_Move::~TB_Move() {
 }
 
-bool TB_Move::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
+bool TB_Move::strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
 	pick = pickInfo;
 	mpick = pickInfo;
 	mpick.origin.x = -mpick.origin.x;
@@ -864,7 +865,7 @@ bool TB_Move::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
 	return true;
 }
 
-bool TB_Move::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
+bool TB_Move::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (meshCache->nCachedPoints == 0)
 		return false;
@@ -879,7 +880,7 @@ bool TB_Move::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, i
 	return true;
 }
 
-void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints){
+void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints){
 	float dist = pickInfo.origin.dot(pick.view) - d;
 	Vector3 v = pickInfo.origin - pick.view*dist;
 	Vector3 dv = v - pick.origin;
@@ -1009,7 +1010,7 @@ void TB_XForm::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
 	outPlaneDist = pick.origin.dot(pick.normal);
 }
 
-bool TB_XForm::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
+bool TB_XForm::strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
 	pick = pickInfo;
 	d = pick.origin.dot(pick.normal);
 
@@ -1024,7 +1025,7 @@ bool TB_XForm::strokeInit(vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
 	return true;
 }
 
-bool TB_XForm::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, vector<int>& resultFacets, unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
+bool TB_XForm::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (meshCache->nCachedPoints == 0)
 		return false;
@@ -1039,7 +1040,7 @@ bool TB_XForm::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, 
 	return true;
 }
 
-void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints) {
+void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
 	float dist = pickInfo.origin.dot(pick.normal) - d;
 	Vector3 v = pickInfo.origin;
 	v -= pick.view * dist;
@@ -1153,7 +1154,7 @@ TB_Weight::TB_Weight() :TweakBrush() {
 TB_Weight::~TB_Weight() {
 }
 
-void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints) {
+void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
 	Vector3 vs;
 	Vector3 vc;
 	Vector3 ve;
@@ -1212,7 +1213,7 @@ TB_Unweight::TB_Unweight() :TweakBrush() {
 TB_Unweight::~TB_Unweight() {
 }
 
-void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints) {
+void TB_Unweight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
 	Vector3 vs;
 	Vector3 vc;
 	Vector3 ve;
@@ -1282,8 +1283,8 @@ TB_SmoothWeight::~TB_SmoothWeight() {
 	}
 }
 
-void TB_SmoothWeight::lapFilter(mesh* refmesh, int* points, int nPoints, unordered_map <int, Vector3>& wv) {
-	unordered_map<int, Vector3>::iterator mi;
+void TB_SmoothWeight::lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
+	std::unordered_map<int, Vector3>::iterator mi;
 	Vector3 d;
 	int adjPoints[1000];
 	int c = 0;
@@ -1316,8 +1317,8 @@ void TB_SmoothWeight::lapFilter(mesh* refmesh, int* points, int nPoints, unorder
 	}
 }
 
-void TB_SmoothWeight::hclapFilter(mesh* refmesh, int* points, int nPoints, unordered_map <int, Vector3>& wv) {
-	unordered_map<int, Vector3>::iterator mi;
+void TB_SmoothWeight::hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
+	std::unordered_map<int, Vector3>::iterator mi;
 
 	if (refmesh != lastMesh) {
 		if (b) free(b);
@@ -1392,8 +1393,8 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, int* points, int nPoints, unord
 	}
 }
 
-void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, unordered_map<int, Vector3>& movedpoints) {
-	unordered_map<int, Vector3> wv;
+void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
 	Vector3 vc;
 
@@ -1433,7 +1434,7 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* p
 }
 
 void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
-	unordered_map<int, Vector3> wv;
+	std::unordered_map<int, Vector3> wv;
 	Vector3 vs;
 	Vector3 vc;
 
