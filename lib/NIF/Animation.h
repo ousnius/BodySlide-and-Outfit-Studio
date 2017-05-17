@@ -12,7 +12,7 @@ See the included LICENSE file
 
 class NiKeyframeData : public NiObject {
 private:
-	uint numRotationKeys;
+	uint numRotationKeys = 0;
 	uint rotationType;
 	std::vector<Key<Quaternion>> quaternionKeys;
 	KeyGroup<float> xRotations;
@@ -22,22 +22,22 @@ private:
 	KeyGroup<float> scales;
 
 public:
-	NiKeyframeData(NiHeader* hdr);
-	NiKeyframeData(std::fstream& file, NiHeader* hdr);
+	NiKeyframeData();
+	NiKeyframeData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiKeyframeData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiKeyframeData* Clone() { return new NiKeyframeData(*this); }
 };
 
 class NiTransformData : public NiKeyframeData {
 public:
-	NiTransformData(NiHeader* hdr);
-	NiTransformData(std::fstream& file, NiHeader* hdr);
+	NiTransformData();
+	NiTransformData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTransformData";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -50,15 +50,15 @@ private:
 	KeyGroup<Vector3> data;
 
 public:
-	NiPosData(NiHeader* hdr);
-	NiPosData(std::fstream& file, NiHeader* hdr);
+	NiPosData();
+	NiPosData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPosData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPosData* Clone() { return new NiPosData(*this); }
 };
 
@@ -67,15 +67,15 @@ private:
 	KeyGroup<byte> data;
 
 public:
-	NiBoolData(NiHeader* hdr);
-	NiBoolData(std::fstream& file, NiHeader* hdr);
+	NiBoolData();
+	NiBoolData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBoolData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiBoolData* Clone() { return new NiBoolData(*this); }
 };
 
@@ -84,15 +84,15 @@ private:
 	KeyGroup<float> data;
 
 public:
-	NiFloatData(NiHeader* hdr);
-	NiFloatData(std::fstream& file, NiHeader* hdr);
+	NiFloatData();
+	NiFloatData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiFloatData* Clone() { return new NiFloatData(*this); }
 };
 
@@ -105,42 +105,42 @@ private:
 	uint unkInt;
 
 public:
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 };
 
 class NiBlendBoolInterpolator : public NiBlendInterpolator {
 private:
-	bool value;
+	bool value = false;
 
 public:
-	NiBlendBoolInterpolator(NiHeader* hdr);
-	NiBlendBoolInterpolator(std::fstream& file, NiHeader* hdr);
+	NiBlendBoolInterpolator();
+	NiBlendBoolInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBlendBoolInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiBlendBoolInterpolator* Clone() { return new NiBlendBoolInterpolator(*this); }
 };
 
 class NiBlendFloatInterpolator : public NiBlendInterpolator {
 private:
-	float value;
+	float value = 0.0f;
 
 public:
-	NiBlendFloatInterpolator(NiHeader* hdr);
-	NiBlendFloatInterpolator(std::fstream& file, NiHeader* hdr);
+	NiBlendFloatInterpolator();
+	NiBlendFloatInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBlendFloatInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiBlendFloatInterpolator* Clone() { return new NiBlendFloatInterpolator(*this); }
 };
 
@@ -149,15 +149,15 @@ private:
 	Vector3 point;
 
 public:
-	NiBlendPoint3Interpolator(NiHeader* hdr);
-	NiBlendPoint3Interpolator(std::fstream& file, NiHeader* hdr);
+	NiBlendPoint3Interpolator();
+	NiBlendPoint3Interpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBlendPoint3Interpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiBlendPoint3Interpolator* Clone() { return new NiBlendPoint3Interpolator(*this); }
 };
 
@@ -171,23 +171,23 @@ private:
 public:
 	BlockRef<NiBoolData> dataRef;
 
-	NiBoolInterpolator(NiHeader* hdr);
-	NiBoolInterpolator(std::fstream& file, NiHeader* hdr);
+	NiBoolInterpolator();
+	NiBoolInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBoolInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiBoolInterpolator* Clone() { return new NiBoolInterpolator(*this); }
 };
 
 class NiBoolTimelineInterpolator : public NiBoolInterpolator {
 public:
-	NiBoolTimelineInterpolator(NiHeader* hdr);
-	NiBoolTimelineInterpolator(std::fstream& file, NiHeader* hdr);
+	NiBoolTimelineInterpolator();
+	NiBoolTimelineInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBoolTimelineInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -202,16 +202,16 @@ private:
 public:
 	BlockRef<NiFloatData> dataRef;
 
-	NiFloatInterpolator(NiHeader* hdr);
-	NiFloatInterpolator(std::fstream& file, NiHeader* hdr);
+	NiFloatInterpolator();
+	NiFloatInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiFloatInterpolator* Clone() { return new NiFloatInterpolator(*this); }
 };
 
@@ -224,16 +224,16 @@ private:
 public:
 	BlockRef<NiTransformData> dataRef;
 
-	NiTransformInterpolator(NiHeader* hdr);
-	NiTransformInterpolator(std::fstream& file, NiHeader* hdr);
+	NiTransformInterpolator();
+	NiTransformInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTransformInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiTransformInterpolator* Clone() { return new NiTransformInterpolator(*this); }
 };
 
@@ -244,16 +244,16 @@ private:
 public:
 	BlockRef<NiPosData> dataRef;
 
-	NiPoint3Interpolator(NiHeader* hdr);
-	NiPoint3Interpolator(std::fstream& file, NiHeader* hdr);
+	NiPoint3Interpolator();
+	NiPoint3Interpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPoint3Interpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPoint3Interpolator* Clone() { return new NiPoint3Interpolator(*this); }
 };
 
@@ -269,16 +269,16 @@ private:
 	BlockRef<NiFloatData> percentDataRef;
 
 public:
-	NiPathInterpolator(NiHeader* hdr);
-	NiPathInterpolator(std::fstream& file, NiHeader* hdr);
+	NiPathInterpolator();
+	NiPathInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPathInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPathInterpolator* Clone() { return new NiPathInterpolator(*this); }
 };
 
@@ -297,20 +297,17 @@ private:
 	BlockRef<NiFloatInterpolator> scaleInterpRef;
 
 public:
-	NiLookAtInterpolator(NiHeader* hdr);
-	NiLookAtInterpolator(std::fstream& file, NiHeader* hdr);
-	~NiLookAtInterpolator() {
-		lookAtName.Clear(header);
-	};
+	NiLookAtInterpolator();
+	NiLookAtInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiLookAtInterpolator";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiLookAtInterpolator* Clone() { return new NiLookAtInterpolator(*this); }
 };
 
@@ -318,37 +315,37 @@ class NiObjectNET;
 
 class NiTimeController : public NiObject {
 private:
-	uint flags;
-	float frequency;
-	float phase;
-	float startTime;
-	float stopTime;
+	ushort flags = 0x000C;
+	float frequency = 1.0f;
+	float phase = 0.0f;
+	float startTime = 0.0f;
+	float stopTime = 0.0f;
 
 public:
 	BlockRef<NiTimeController> nextControllerRef;
 	BlockRef<NiObjectNET> targetRef;
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 };
 
 class BSFrustumFOVController : public NiTimeController {
 public:
 	BlockRef<NiInterpolator> interpolatorRef;
 
-	BSFrustumFOVController(NiHeader* hdr);
-	BSFrustumFOVController(std::fstream& file, NiHeader* hdr);
+	BSFrustumFOVController();
+	BSFrustumFOVController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSFrustumFOVController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSFrustumFOVController* Clone() { return new BSFrustumFOVController(*this); }
 };
 
@@ -359,15 +356,15 @@ private:
 	float maxDistance;
 
 public:
-	BSLagBoneController(NiHeader* hdr);
-	BSLagBoneController(std::fstream& file, NiHeader* hdr);
+	BSLagBoneController();
+	BSLagBoneController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLagBoneController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSLagBoneController* Clone() { return new BSLagBoneController(*this); }
 };
 
@@ -401,37 +398,37 @@ public:
 	BlockRef<NiInterpolator> widthInterpRef;
 	BlockRef<NiInterpolator> arcOffsetInterpRef;
 
-	BSProceduralLightningController(NiHeader* hdr);
-	BSProceduralLightningController(std::fstream& file, NiHeader* hdr);
+	BSProceduralLightningController();
+	BSProceduralLightningController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSProceduralLightningController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSProceduralLightningController* Clone() { return new BSProceduralLightningController(*this); }
 };
 
 class NiBoneLODController : public NiTimeController {
 private:
 	uint lod;
-	uint numLODs;
-	uint boneArraysSize;
+	uint numLODs = 0;
+	uint boneArraysSize = 0;
 	std::vector<BlockRefArray<NiNode>> boneArrays;
 
 public:
-	NiBoneLODController(NiHeader* hdr);
-	NiBoneLODController(std::fstream& file, NiHeader* hdr);
+	NiBoneLODController();
+	NiBoneLODController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBoneLODController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiBoneLODController* Clone() { return new NiBoneLODController(*this); }
 };
 
@@ -442,11 +439,11 @@ class NiSingleInterpController : public NiInterpController {
 public:
 	BlockRef<NiInterpController> interpolatorRef;
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 };
 
 class NiExtraDataController : public NiSingleInterpController {
@@ -457,19 +454,16 @@ private:
 	StringRef extraData;
 
 public:
-	NiFloatExtraDataController(NiHeader* hdr);
-	NiFloatExtraDataController(std::fstream& file, NiHeader* hdr);
-	~NiFloatExtraDataController() {
-		extraData.Clear(header);
-	};
+	NiFloatExtraDataController();
+	NiFloatExtraDataController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatExtraDataController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 	NiFloatExtraDataController* Clone() { return new NiFloatExtraDataController(*this); }
 };
 
@@ -478,8 +472,8 @@ class NiBoolInterpController : public NiSingleInterpController {
 
 class NiVisController : public NiBoolInterpController {
 public:
-	NiVisController(NiHeader* hdr);
-	NiVisController(std::fstream& file, NiHeader* hdr);
+	NiVisController();
+	NiVisController(NiStream& stream);
 
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -491,8 +485,8 @@ class NiFloatInterpController : public NiSingleInterpController {
 
 class NiAlphaController : public NiFloatInterpController {
 public:
-	NiAlphaController(NiHeader* hdr);
-	NiAlphaController(std::fstream& file, NiHeader* hdr);
+	NiAlphaController();
+	NiAlphaController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiAlphaController";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -502,8 +496,8 @@ public:
 
 class NiPSysUpdateCtlr : public NiTimeController {
 public:
-	NiPSysUpdateCtlr(NiHeader* hdr);
-	NiPSysUpdateCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysUpdateCtlr();
+	NiPSysUpdateCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysUpdateCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -513,8 +507,8 @@ public:
 
 class BSNiAlphaPropertyTestRefController : public NiAlphaController {
 public:
-	BSNiAlphaPropertyTestRefController(NiHeader* hdr);
-	BSNiAlphaPropertyTestRefController(std::fstream& file, NiHeader* hdr);
+	BSNiAlphaPropertyTestRefController();
+	BSNiAlphaPropertyTestRefController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSNiAlphaPropertyTestRefController";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -524,8 +518,8 @@ public:
 
 class NiKeyframeController : public NiSingleInterpController {
 public:
-	NiKeyframeController(NiHeader* hdr);
-	NiKeyframeController(std::fstream& file, NiHeader* hdr);
+	NiKeyframeController();
+	NiKeyframeController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiKeyframeController";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -535,8 +529,8 @@ public:
 
 class NiTransformController : public NiKeyframeController {
 public:
-	NiTransformController(NiHeader* hdr);
-	NiTransformController(std::fstream& file, NiHeader* hdr);
+	NiTransformController();
+	NiTransformController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTransformController";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -546,69 +540,69 @@ public:
 
 class BSLightingShaderPropertyColorController : public NiFloatInterpController {
 private:
-	uint typeOfControlledColor;
+	uint typeOfControlledColor = 0;
 
 public:
-	BSLightingShaderPropertyColorController(NiHeader* hdr);
-	BSLightingShaderPropertyColorController(std::fstream& file, NiHeader* hdr);
+	BSLightingShaderPropertyColorController();
+	BSLightingShaderPropertyColorController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLightingShaderPropertyColorController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSLightingShaderPropertyColorController* Clone() { return new BSLightingShaderPropertyColorController(*this); }
 };
 
 class BSLightingShaderPropertyFloatController : public NiFloatInterpController {
 private:
-	uint typeOfControlledVariable;
+	uint typeOfControlledVariable = 0;
 
 public:
-	BSLightingShaderPropertyFloatController(NiHeader* hdr);
-	BSLightingShaderPropertyFloatController(std::fstream& file, NiHeader* hdr);
+	BSLightingShaderPropertyFloatController();
+	BSLightingShaderPropertyFloatController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLightingShaderPropertyFloatController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSLightingShaderPropertyFloatController* Clone() { return new BSLightingShaderPropertyFloatController(*this); }
 };
 
 class BSEffectShaderPropertyColorController : public NiFloatInterpController {
 private:
-	uint typeOfControlledColor;
+	uint typeOfControlledColor = 0;
 
 public:
-	BSEffectShaderPropertyColorController(NiHeader* hdr);
-	BSEffectShaderPropertyColorController(std::fstream& file, NiHeader* hdr);
+	BSEffectShaderPropertyColorController();
+	BSEffectShaderPropertyColorController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSEffectShaderPropertyColorController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSEffectShaderPropertyColorController* Clone() { return new BSEffectShaderPropertyColorController(*this); }
 };
 
 class BSEffectShaderPropertyFloatController : public NiFloatInterpController {
 private:
-	uint typeOfControlledVariable;
+	uint typeOfControlledVariable = 0;
 
 public:
-	BSEffectShaderPropertyFloatController(NiHeader* hdr);
-	BSEffectShaderPropertyFloatController(std::fstream& file, NiHeader* hdr);
+	BSEffectShaderPropertyFloatController();
+	BSEffectShaderPropertyFloatController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSEffectShaderPropertyFloatController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSEffectShaderPropertyFloatController* Clone() { return new BSEffectShaderPropertyFloatController(*this); }
 };
 
@@ -619,15 +613,16 @@ private:
 	BlockRefShortArray<NiAVObject> targetRefs;
 
 public:
-	NiMultiTargetTransformController(NiHeader* hdr);
-	NiMultiTargetTransformController(std::fstream& file, NiHeader* hdr);
+	NiMultiTargetTransformController();
+	NiMultiTargetTransformController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiMultiTargetTransformController";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 	NiMultiTargetTransformController* Clone() { return new NiMultiTargetTransformController(*this); }
 };
 
@@ -636,14 +631,10 @@ private:
 	StringRef modifierName;
 
 public:
-	~NiPSysModifierCtlr() {
-		modifierName.Clear(header);
-	};
-
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 };
 
 class NiPSysModifierBoolCtlr : public NiPSysModifierCtlr {
@@ -651,8 +642,8 @@ class NiPSysModifierBoolCtlr : public NiPSysModifierCtlr {
 
 class NiPSysModifierActiveCtlr : public NiPSysModifierBoolCtlr {
 public:
-	NiPSysModifierActiveCtlr(NiHeader* hdr);
-	NiPSysModifierActiveCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysModifierActiveCtlr();
+	NiPSysModifierActiveCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysModifierActiveCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -665,8 +656,8 @@ class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr {
 
 class NiPSysEmitterLifeSpanCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterLifeSpanCtlr(NiHeader* hdr);
-	NiPSysEmitterLifeSpanCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysEmitterLifeSpanCtlr();
+	NiPSysEmitterLifeSpanCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterLifeSpanCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -676,8 +667,8 @@ public:
 
 class NiPSysEmitterSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterSpeedCtlr(NiHeader* hdr);
-	NiPSysEmitterSpeedCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysEmitterSpeedCtlr();
+	NiPSysEmitterSpeedCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterSpeedCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -687,8 +678,8 @@ public:
 
 class NiPSysEmitterInitialRadiusCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterInitialRadiusCtlr(NiHeader* hdr);
-	NiPSysEmitterInitialRadiusCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysEmitterInitialRadiusCtlr();
+	NiPSysEmitterInitialRadiusCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterInitialRadiusCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -698,8 +689,8 @@ public:
 
 class NiPSysEmitterPlanarAngleCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterPlanarAngleCtlr(NiHeader* hdr);
-	NiPSysEmitterPlanarAngleCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysEmitterPlanarAngleCtlr();
+	NiPSysEmitterPlanarAngleCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterPlanarAngleCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -709,8 +700,8 @@ public:
 
 class NiPSysEmitterDeclinationCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterDeclinationCtlr(NiHeader* hdr);
-	NiPSysEmitterDeclinationCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysEmitterDeclinationCtlr();
+	NiPSysEmitterDeclinationCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterDeclinationCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -720,8 +711,8 @@ public:
 
 class NiPSysGravityStrengthCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysGravityStrengthCtlr(NiHeader* hdr);
-	NiPSysGravityStrengthCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysGravityStrengthCtlr();
+	NiPSysGravityStrengthCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysGravityStrengthCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -731,8 +722,8 @@ public:
 
 class NiPSysInitialRotSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysInitialRotSpeedCtlr(NiHeader* hdr);
-	NiPSysInitialRotSpeedCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysInitialRotSpeedCtlr();
+	NiPSysInitialRotSpeedCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysInitialRotSpeedCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -745,16 +736,16 @@ private:
 	BlockRef<NiInterpolator> visInterpolatorRef;
 
 public:
-	NiPSysEmitterCtlr(NiHeader* hdr);
-	NiPSysEmitterCtlr(std::fstream& file, NiHeader* hdr);
+	NiPSysEmitterCtlr();
+	NiPSysEmitterCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPSysEmitterCtlr* Clone() { return new NiPSysEmitterCtlr(*this); }
 };
 
@@ -766,16 +757,16 @@ private:
 	BlockRef<BSMasterParticleSystem> masterParticleSystemRef;
 
 public:
-	BSPSysMultiTargetEmitterCtlr(NiHeader* hdr);
-	BSPSysMultiTargetEmitterCtlr(std::fstream& file, NiHeader* hdr);
+	BSPSysMultiTargetEmitterCtlr();
+	BSPSysMultiTargetEmitterCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysMultiTargetEmitterCtlr";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSPSysMultiTargetEmitterCtlr* Clone() { return new BSPSysMultiTargetEmitterCtlr(*this); }
 };
 
@@ -794,31 +785,22 @@ struct ControllerLink {
 class NiSequence : public NiObject {
 private:
 	StringRef name;
-	uint numControlledBlocks;
+	uint numControlledBlocks = 0;
 	uint unkInt1;
 	std::vector<ControllerLink> controlledBlocks;
 
 public:
-	NiSequence(NiHeader* hdr);
-	NiSequence(std::fstream& file, NiHeader* hdr);
-	~NiSequence() {
-		for (auto &cb : controlledBlocks) {
-			cb.nodeName.Clear(header);
-			cb.propType.Clear(header);
-			cb.ctrlType.Clear(header);
-			cb.ctrlID.Clear(header);
-			cb.interpID.Clear(header);
-		}
-	};
+	NiSequence();
+	NiSequence(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSequence";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiSequence* Clone() { return new NiSequence(*this); }
 };
 
@@ -839,20 +821,17 @@ private:
 	ushort flags;
 
 public:
-	NiControllerSequence(NiHeader* hdr);
-	NiControllerSequence(std::fstream& file, NiHeader* hdr);
-	~NiControllerSequence() {
-		accumRootName.Clear(header);
-	};
+	NiControllerSequence();
+	NiControllerSequence(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiControllerSequence";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiControllerSequence* Clone() { return new NiControllerSequence(*this); }
 };
 
@@ -865,15 +844,15 @@ private:
 	BlockRef<NiDefaultAVObjectPalette> objectPaletteRef;
 
 public:
-	NiControllerManager(NiHeader* hdr);
-	NiControllerManager(std::fstream& file, NiHeader* hdr);
+	NiControllerManager();
+	NiControllerManager(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiControllerManager";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiControllerManager* Clone() { return new NiControllerManager(*this); }
 };

@@ -6,87 +6,68 @@ See the included LICENSE file
 
 #include "BasicTypes.h"
 
+std::string NiVersion::GetVersionInfo() {
+	return vstr +
+		"\nUser Version: " + std::to_string(vuser) +
+		"\nUser Version 2: " + std::to_string(vuser2);
+}
+
+void NiVersion::Set(byte v1, byte v2, byte v3, byte v4, uint userVer, uint userVer2) {
+	std::string verNum = std::to_string(v1) + '.' + std::to_string(v2) + '.' + std::to_string(v3) + '.' + std::to_string(v4);
+	vstr = "Gamebryo File Format, Version " + verNum;
+
+	vfile = Get(v1, v2, v3, v4);
+	vuser = userVer;
+	vuser2 = userVer2;
+}
+
+
 std::string StringRef::GetString(NiHeader* hdr) {
-	return hdr->GetStringById(ref);
+	return hdr->GetStringById(index);
 }
 
 void StringRef::SetString(NiHeader* hdr, const std::string& str) {
-	ref = hdr->AddOrFindStringId(str);
+	index = hdr->AddOrFindStringId(str);
 }
 
 void StringRef::RenameString(NiHeader* hdr, const std::string& str) {
-	hdr->SetStringById(ref, str);
+	hdr->SetStringById(index, str);
 }
 
-void StringRef::Clear(NiHeader* hdr) {
-	hdr->RemoveStringRef(ref);
-	ref = 0xFFFFFFFF;
+void StringRef::Clear() {
+	index = 0xFFFFFFFF;
 }
 
-void StringRef::Put(std::fstream& file) {
-	file.write((char*)&ref, 4);
+void StringRef::Get(NiStream& stream) {
+	stream >> index;
 }
 
-void StringRef::Get(std::fstream& file, NiHeader* hdr) {
-	file.read((char*)&ref, 4);
-	hdr->AddStringRef(ref);
-}
-
-void StringRef::notifyStringDelete(int stringID) {
-	if (ref != 0xFFFFFFFF && ref > stringID)
-		ref--;
+void StringRef::Put(NiStream& stream) {
+	stream << index;
 }
 
 
-void NiString::Put(std::fstream& file, const int szSize, const bool wantNullOutput) {
-	if (szSize == 1) {
-		byte smSize = str.length();
-		if (wantNullOutput)
-			smSize += 1;
-
-		file.write((char*)&smSize, 1);
-	}
-	else if (szSize == 2) {
-		ushort medSize = str.length();
-		if (wantNullOutput)
-			medSize += 1;
-
-		file.write((char*)&medSize, 2);
-	}
-	else if (szSize == 4) {
-		uint bigSize = str.length();
-		if (wantNullOutput)
-			bigSize += 1;
-
-		file.write((char*)&bigSize, 4);
-	}
-
-	file.write(str.c_str(), str.length());
-	if (wantNullOutput)
-		file.put(0);
-}
-
-void NiString::Get(std::fstream& file, const int szSize) {
+void NiString::Get(NiStream& stream, const int szSize) {
 	char buf[1025];
 
 	if (szSize == 1) {
 		byte smSize;
-		file.read((char*)&smSize, 1);
-		file.read(buf, smSize);
+		stream >> smSize;
+		stream.read(buf, smSize);
 		buf[smSize] = 0;
 	}
 	else if (szSize == 2) {
 		ushort medSize;
-		file.read((char*)&medSize, 2);
+		stream >> medSize;
 		if (medSize < 1025)
-			file.read(buf, medSize);
+			stream.read(buf, medSize);
 		buf[medSize] = 0;
 	}
 	else if (szSize == 4) {
 		uint bigSize;
-		file.read((char*)&bigSize, 4);
+		stream >> bigSize;
 		if (bigSize < 1025)
-			file.read(buf, bigSize);
+			stream.read(buf, bigSize);
 		buf[bigSize] = 0;
 	}
 	else
@@ -95,11 +76,37 @@ void NiString::Get(std::fstream& file, const int szSize) {
 	str = buf;
 }
 
+void NiString::Put(NiStream& stream, const int szSize, const bool wantNullOutput) {
+	if (szSize == 1) {
+		byte smSize = str.length();
+		if (wantNullOutput)
+			smSize += 1;
+
+		stream << smSize;
+	}
+	else if (szSize == 2) {
+		ushort medSize = str.length();
+		if (wantNullOutput)
+			medSize += 1;
+
+		stream << medSize;
+	}
+	else if (szSize == 4) {
+		uint bigSize = str.length();
+		if (wantNullOutput)
+			bigSize += 1;
+
+		stream << bigSize;
+	}
+
+	stream.write(str.c_str(), str.length());
+	if (wantNullOutput)
+		stream << byte(0);
+}
+
 
 NiHeader::NiHeader() {
 	valid = false;
-
-	header = this;
 
 	numBlocks = 0;
 	numStrings = 0;
@@ -115,38 +122,6 @@ void NiHeader::Clear() {
 	blockTypeIndices.clear();
 	blockSizes.clear();
 	strings.clear();
-	stringRefCount.clear();
-}
-
-std::string NiHeader::GetVersionInfo() {
-	return std::string(verStr, 0x26) +
-		"\nUser Version: " + std::to_string(userVersion) +
-		"\nUser Version 2: " + std::to_string(userVersion2);
-}
-
-void NiHeader::SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint userVer, const uint userVer2) {
-	std::string verString = "Gamebryo File Format, Version " + std::to_string(v1) + '.' + std::to_string(v2) + '.' + std::to_string(v3) + '.' + std::to_string(v4);
-	strncpy(verStr, verString.c_str(), 0x26);
-
-	version4 = v1;
-	version3 = v2;
-	version2 = v3;
-	version1 = v4;
-	userVersion = userVer;
-	userVersion2 = userVer2;
-}
-
-bool NiHeader::VerCheck(const int v1, const int v2, const int v3, const int v4, const bool equal) {
-	if (equal) {
-		if (version4 == v1 && version3 == v2 && version2 == v3 && version1 == v4)
-			return true;
-	}
-	else {
-		if (version4 >= v1 && version3 >= v2 && version2 >= v3 && version1 >= v4)
-			return true;
-	}
-
-	return false;
 }
 
 std::string NiHeader::GetCreatorInfo() {
@@ -242,7 +217,7 @@ void NiHeader::DeleteBlockByType(const std::string& blockTypeStr) {
 int NiHeader::AddBlock(NiObject* newBlock) {
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices.push_back(btID);
-	blockSizes.push_back(newBlock->CalcBlockSize());
+	blockSizes.push_back(newBlock->CalcBlockSize(version));
 	(*blocks).push_back(newBlock);
 	numBlocks = (*blocks).size();
 	return numBlocks - 1;
@@ -270,7 +245,7 @@ int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock) {
 
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices[oldBlockId] = btID;
-	blockSizes[oldBlockId] = newBlock->CalcBlockSize();
+	blockSizes[oldBlockId] = newBlock->CalcBlockSize(version);
 	(*blocks)[oldBlockId] = newBlock;
 	return oldBlockId;
 }
@@ -348,7 +323,7 @@ ushort NiHeader::GetBlockTypeIndex(const int id) {
 
 void NiHeader::CalcAllBlockSizes() {
 	for (int i = 0; i < numBlocks; i++)
-		blockSizes[i] = (*blocks)[i]->CalcBlockSize();
+		blockSizes[i] = (*blocks)[i]->CalcBlockSize(version);
 }
 
 int NiHeader::FindStringId(const std::string& str) {
@@ -365,7 +340,6 @@ int NiHeader::AddOrFindStringId(const std::string& str) {
 
 	for (int i = 0; i < strings.size(); i++) {
 		if (strings[i].GetString().compare(str) == 0) {
-			stringRefCount[i]++;
 			return i;
 		}
 	}
@@ -377,12 +351,7 @@ int NiHeader::AddOrFindStringId(const std::string& str) {
 	strings.push_back(niStr);
 	numStrings++;
 
-	stringRefCount.resize(numStrings);
-	stringRefCount[numStrings - 1]++;
-
-	if (maxStringLen < str.length())
-		maxStringLen = str.length();
-
+	UpdateMaxStringLength();
 	return r;
 }
 
@@ -396,44 +365,50 @@ std::string NiHeader::GetStringById(const int id) {
 void NiHeader::SetStringById(const int id, const std::string& str) {
 	if (id >= 0 && id < numStrings) {
 		strings[id].SetString(str);
-		if (maxStringLen < str.length())
-			maxStringLen = str.length();
+		UpdateMaxStringLength();
 	}
-}
-
-void NiHeader::AddStringRef(const int id) {
-	if (id >= 0 && id < numStrings)
-		stringRefCount[id]++;
-}
-
-void NiHeader::RemoveStringRef(const int id) {
-	if (id >= 0 && id < numStrings && stringRefCount[id] > 0)
-		stringRefCount[id]--;
 }
 
 int NiHeader::RemoveUnusedStrings() {
-	int count = 0;
+	int count = strings.size();
 
-	for (int i = 0; i < stringRefCount.size(); i++) {
-		if (stringRefCount[i] <= 0) {
+	// Get pointers to all string indices
+	std::set<int*> stringRefs;
+	for (auto &b : (*blocks))
+		b->GetStringRefs(stringRefs);
+
+	for (int i = strings.size() - 1; i >= 0; i--) {
+		// Count string refs that still have the index
+		auto refcount = std::count_if(stringRefs.begin(), stringRefs.end(), [&i](int* index) {
+			if ((*index) == i)
+				return true;
+			else
+				return false;
+		});
+
+		// Remove index if not referenced
+		if (refcount <= 0) {
 			strings.erase(strings.begin() + i);
-			stringRefCount.erase(stringRefCount.begin() + i);
 			numStrings--;
 
-			for (auto &block : (*blocks))
-				block->notifyStringDelete(i);
-
-			i--;
-			count++;
+			// Decrement other indices larger than removed index
+			for (auto &r : stringRefs) {
+				if ((*r) != 0xFFFFFFFF && (*r) > i) {
+					(*r)--;
+				}
+			}
 		}
 	}
 
+	UpdateMaxStringLength();
+	return count - strings.size();
+}
+
+void NiHeader::UpdateMaxStringLength() {
 	maxStringLen = 0;
 	for (auto &s : strings)
 		if (maxStringLen < s.GetLength())
 			maxStringLen = s.GetLength();
-
-	return count;
 }
 
 void NiHeader::BlockDeleted(NiObject* p, int blockId) {
@@ -462,90 +437,96 @@ void NiHeader::BlockSwapped(NiObject* o, int blockIndexLo, int blockIndexHi) {
 	}
 }
 
-void NiHeader::Get(std::fstream& file) {
-	file.read(verStr, 38);
-	if (_strnicmp(verStr, "Gamebryo", 8) != 0)
+void NiHeader::Get(NiStream& stream) {
+	char ver[256];
+	stream.getline(ver, sizeof(ver));
+	if (_strnicmp(ver, "Gamebryo", 8) != 0)
 		return;
 
-	unk1 = 10;
-	file >> version1 >> version2 >> version3 >> version4;
-	file >> endian;
-	file.read((char*)&userVersion, 4);
-	file.read((char*)&numBlocks, 4);
-	file.read((char*)&userVersion2, 4);
-	creator.Get(file, 1);
-	exportInfo1.Get(file, 1);
-	exportInfo2.Get(file, 1);
+	byte v1, v2, v3, v4;
+	uint vuser, vuser2;
+	stream >> v1 >> v2 >> v3 >> v4;
+	stream >> endian;
+	stream >> vuser;
+	stream >> numBlocks;
+	stream >> vuser2;
 
-	if (userVersion2 >= 130)
-		exportInfo3.Get(file, 1);
+	version.Set(v4, v3, v2, v1, vuser, vuser2);
 
-	file.read((char*)&numBlockTypes, 2);
+	creator.Get(stream, 1);
+	exportInfo1.Get(stream, 1);
+	exportInfo2.Get(stream, 1);
+
+	if (version.User2() >= 130)
+		exportInfo3.Get(stream, 1);
+
+	stream >> numBlockTypes;
 	blockTypes.resize(numBlockTypes);
 	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes[i].Get(file, 4);
+		blockTypes[i].Get(stream, 4);
 
-	ushort uShort;
-	for (int i = 0; i < numBlocks; i++) {
-		file.read((char*)&uShort, 2);
-		blockTypeIndices.push_back(uShort);
-	}
-	uint uInt;
-	for (int i = 0; i < numBlocks; i++) {
-		file.read((char*)&uInt, 4);
-		blockSizes.push_back(uInt);
-	}
+	blockTypeIndices.resize(numBlocks);
+	for (int i = 0; i < numBlocks; i++)
+		stream >> blockTypeIndices[i];
 
-	file.read((char*)&numStrings, 4);
-	file.read((char*)&maxStringLen, 4);
+	blockSizes.resize(numBlocks);
+	for (int i = 0; i < numBlocks; i++)
+		stream >> blockSizes[i];
+
+	stream >> numStrings;
+	stream >> maxStringLen;
 
 	strings.resize(numStrings);
-	stringRefCount.resize(numStrings);
 	for (int i = 0; i < numStrings; i++)
-		strings[i].Get(file, 4);
+		strings[i].Get(stream, 4);
 
-	file.read((char*)&unkInt2, 4);
+	stream >> unkInt2;
 	valid = true;
 }
 
-void NiHeader::Put(std::fstream& file) {
-	file.write(verStr, 0x26);
-	file << unk1;
-	file << version1 << version2 << version3 << version4;
-	file << endian;
-	file.write((char*)&userVersion, 4);
-	file.write((char*)&numBlocks, 4);
-	file.write((char*)&userVersion2, 4);
-	creator.Put(file, 1);
-	exportInfo1.Put(file, 1);
-	exportInfo2.Put(file, 1);
-	if (userVersion2 >= 130)
-		exportInfo3.Put(file, 1);
+void NiHeader::Put(NiStream& stream) {
+	std::string ver = version.String();
+	stream.write(ver.data(), ver.size());
 
-	file.write((char*)&numBlockTypes, 2);
+	// Newline to end header string
+	stream << byte(0x0A);
+
+	stream << version.File();
+	stream << endian;
+	stream << version.User();
+	stream << numBlocks;
+	stream << version.User2();
+
+	creator.Put(stream, 1);
+	exportInfo1.Put(stream, 1);
+	exportInfo2.Put(stream, 1);
+	if (version.User2() >= 130)
+		exportInfo3.Put(stream, 1);
+
+	stream << numBlockTypes;
 	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes[i].Put(file, 4, false);
+		blockTypes[i].Put(stream, 4, false);
 
 	for (int i = 0; i < numBlocks; i++)
-		file.write((char*)&blockTypeIndices[i], 2);
+		stream << blockTypeIndices[i];
 
 	for (int i = 0; i < numBlocks; i++)
-		file.write((char*)&blockSizes[i], 4);
+		stream << blockSizes[i];
 
-	file.write((char*)&numStrings, 4);
-	file.write((char*)&maxStringLen, 4);
+	stream << numStrings;
+	stream << maxStringLen;
 	for (int i = 0; i < numStrings; i++)
-		strings[i].Put(file, 4, false);
+		strings[i].Put(stream, 4, false);
 
-	file.write((char*)&unkInt2, 4);
+	stream << unkInt2;
 }
 
 
-NiUnknown::NiUnknown(std::fstream& file, const uint size) {
+NiUnknown::NiUnknown(NiStream& stream, const uint size) {
 	data.resize(size);
 
 	blockSize = size;
-	Get(file);
+	Get(stream);
 }
 
 NiUnknown::NiUnknown(const uint size) {
@@ -554,16 +535,16 @@ NiUnknown::NiUnknown(const uint size) {
 	blockSize = size;
 }
 
-void NiUnknown::Get(std::fstream& file) {
+void NiUnknown::Get(NiStream& stream) {
 	if (data.empty())
 		return;
 
-	file.read(&data[0], blockSize);
+	stream.read(&data[0], blockSize);
 }
 
-void NiUnknown::Put(std::fstream& file) {
+void NiUnknown::Put(NiStream& stream) {
 	if (data.empty())
 		return;
 
-	file.write(&data[0], blockSize);
+	stream.write(&data[0], blockSize);
 }

@@ -15,34 +15,34 @@ protected:
 	bool isPSys = false;
 
 private:
-	int groupID;
-	byte compressFlags;
-	bool hasVertices;
-	uint materialCRC;						// Version >= 20.2.0.7 && User Version == 12
-	bool hasNormals;
-	bool hasVertexColors;
-	uint additionalData;
+	int groupID = 0;
+	byte compressFlags = 0;
+	bool hasVertices = true;
+	uint materialCRC = 0;					// Version >= 20.2.0.7 && User Version == 12
+	bool hasNormals = false;
+	bool hasVertexColors = false;
+	uint additionalData = 0xFFFFFFFF;
 	BoundingSphere bounds;
 
 public:
-	ushort numVertices;
+	ushort numVertices = 0;
 	std::vector<Vector3> vertices;
 	std::vector<Vector3> normals;
 	std::vector<Vector3> tangents;
 	std::vector<Vector3> bitangents;
 	std::vector<Color4> vertexColors;
 
-	byte keepFlags;
-	ushort numUVSets;
+	byte keepFlags = 0;
+	ushort numUVSets = 0;
 	std::vector<Vector2> uvSets;
 
-	ushort consistencyFlags;
+	ushort consistencyFlags = 0;
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 
 	void SetVertices(const bool enable);
 	bool HasVertices() { return hasVertices; }
@@ -69,8 +69,8 @@ public:
 };
 
 class NiShape : public NiAVObject {
-private:
-	NiGeometryData* GetGeomData() { return header->GetBlock<NiGeometryData>(GetDataRef()); }
+protected:
+	NiGeometryData* geomData = nullptr;
 
 public:
 	virtual int GetDataRef();
@@ -107,7 +107,8 @@ public:
 	virtual BoundingSphere GetBounds();
 	virtual void UpdateBounds();
 
-	int GetBoneID(const std::string& boneName);
+	void SetGeomData(NiGeometryData* geomDataPtr) { geomData = geomDataPtr; }
+	int GetBoneID(NiHeader* hdr, const std::string& boneName);
 };
 
 
@@ -120,23 +121,23 @@ private:
 	BoundingSphere bounds;
 
 public:
-	// Set in CalcBlockSize()
-	byte vertFlags1;	// Number of uint elements in vertex data
-	byte vertFlags2;	// 4 byte or 2 byte position data
+	// Set in CalcBlockSize(NiVersion& version)
+	byte vertFlags1;			// Number of uint elements in vertex data
+	byte vertFlags2;			// 4 byte or 2 byte position data
 
-	byte vertFlags3;
-	byte vertFlags4;
-	byte vertFlags5;
-	byte vertFlags6;	// Vertex, UVs, Normals
-	byte vertFlags7;	// (Bi)Tangents, Vertex Colors, Skinning, Precision
-	byte vertFlags8;
+	byte vertFlags3 = 0x43;
+	byte vertFlags4 = 0x50;
+	byte vertFlags5 = 0x0;
+	byte vertFlags6 = 0xB0;		// Vertex, UVs, Normals
+	byte vertFlags7 = 0x1;		// (Bi)Tangents, Vertex Colors, Skinning, Precision
+	byte vertFlags8 = 0x0;
 
-	uint numTriangles;
-	ushort numVertices;
-	uint dataSize;
-	uint vertexSize;	// Not in file
+	uint numTriangles = 0;
+	ushort numVertices = 0;
+	uint dataSize = 0;
+	uint vertexSize = 0;		// Not in file
 
-	uint particleDataSize;
+	uint particleDataSize = 0;
 	std::vector<Vector3> particleVerts;
 	std::vector<Vector3> particleNorms;
 	std::vector<Triangle> particleTris;
@@ -152,17 +153,17 @@ public:
 	std::vector<BSVertexData> vertData;
 	std::vector<Triangle> triangles;
 
-	BSTriShape(NiHeader* hdr);
-	BSTriShape(std::fstream& file, NiHeader* hdr);
+	BSTriShape();
+	BSTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSTriShape* Clone() { return new BSTriShape(*this); }
 
 	int GetSkinInstanceRef() { return skinInstanceRef.index; }
@@ -199,8 +200,8 @@ public:
 	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 
 	void SetFullPrecision(const bool enable);
-	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0 || header->GetUserVersion2() == 100; }
-	bool CanChangePrecision() { return (HasVertices() && header->GetUserVersion2() != 100); }
+	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0; }
+	bool CanChangePrecision() { return (HasVertices()); }
 
 	void SetBounds(const BoundingSphere& newBounds) { this->bounds = newBounds; }
 	BoundingSphere GetBounds() { return bounds; }
@@ -209,8 +210,8 @@ public:
 	void SetNormals(const std::vector<Vector3>& inNorms);
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
-	void UpdateFlags();
-	int CalcDataSizes();
+	void UpdateFlags(NiVersion& version);
+	int CalcDataSizes(NiVersion& version);
 
 	virtual void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
 };
@@ -265,16 +266,16 @@ private:
 	BSSITSSegmentation segmentation;
 
 public:
-	BSSubIndexTriShape(NiHeader* hdr);
-	BSSubIndexTriShape(std::fstream& file, NiHeader* hdr);
+	BSSubIndexTriShape();
+	BSSubIndexTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSubIndexTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSSubIndexTriShape* Clone() { return new BSSubIndexTriShape(*this); }
 
 	BSSITSSegmentation GetSegmentation() { return segmentation; }
@@ -286,20 +287,20 @@ public:
 
 class BSMeshLODTriShape : public BSTriShape {
 public:
-	uint lodSize0;
-	uint lodSize1;
-	uint lodSize2;
+	uint lodSize0 = 0;
+	uint lodSize1 = 0;
+	uint lodSize2 = 0;
 
-	BSMeshLODTriShape(NiHeader* hdr);
-	BSMeshLODTriShape(std::fstream& file, NiHeader* hdr);
+	BSMeshLODTriShape();
+	BSMeshLODTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMeshLODTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSMeshLODTriShape* Clone() { return new BSMeshLODTriShape(*this); }
 };
 
@@ -308,16 +309,16 @@ public:
 	uint dynamicDataSize;
 	std::vector<Vector4> dynamicData;
 
-	BSDynamicTriShape(NiHeader* hdr);
-	BSDynamicTriShape(std::fstream& file, NiHeader* hdr);
+	BSDynamicTriShape();
+	BSDynamicTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSDynamicTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSDynamicTriShape* Clone() { return new BSDynamicTriShape(*this); }
 
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
@@ -339,17 +340,12 @@ private:
 	byte dirty = 0;
 
 public:
-	~NiGeometry() {
-		for (auto &m : materialNameRefs) {
-			m.Clear(header);
-		}
-	}
-
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 
 	bool IsSkinned() { return skinInstanceRef.index != 0xFFFFFFFF; }
 
@@ -371,20 +367,20 @@ class NiTriBasedGeom : public NiGeometry {
 
 class NiTriBasedGeomData : public NiGeometryData {
 public:
-	ushort numTriangles;
+	ushort numTriangles = 0;
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
 };
 
 class NiTriShape : public NiTriBasedGeom {
 public:
-	NiTriShape(NiHeader* hdr);
-	NiTriShape(std::fstream& file, NiHeader* hdr);
+	NiTriShape();
+	NiTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -399,34 +395,34 @@ struct MatchGroup {
 
 class NiTriShapeData : public NiTriBasedGeomData {
 private:
-	bool hasTriangles;
-	uint numTrianglePoints;
-	ushort numMatchGroups;
+	bool hasTriangles = false;
+	uint numTrianglePoints = 0;
+	ushort numMatchGroups = 0;
 	std::vector<MatchGroup> matchGroups;
 
 public:
 	std::vector<Triangle> triangles;
 
-	NiTriShapeData(NiHeader* hdr);
-	NiTriShapeData(std::fstream& file, NiHeader* hdr);
+	NiTriShapeData();
+	NiTriShapeData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriShapeData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiTriShapeData* Clone() { return new NiTriShapeData(*this); }
 };
 
 class NiTriStrips : public NiTriBasedGeom {
 public:
-	NiTriStrips(NiHeader* hdr);
-	NiTriStrips(std::fstream& file, NiHeader* hdr);
+	NiTriStrips();
+	NiTriStrips(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriStrips";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -436,25 +432,25 @@ public:
 
 class NiTriStripsData : public NiTriBasedGeomData {
 private:
-	ushort numStrips;
+	ushort numStrips = 0;
 	std::vector<ushort> stripLengths;
-	byte hasPoints;
+	bool hasPoints = false;
 	std::vector<std::vector<ushort>> points;
 
 public:
-	NiTriStripsData(NiHeader* hdr);
-	NiTriStripsData(std::fstream& file, NiHeader* hdr);
+	NiTriStripsData();
+	NiTriStripsData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriStripsData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	void StripsToTris(std::vector<Triangle>* outTris);
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiTriStripsData* Clone() { return new NiTriStripsData(*this); }
 };
 
@@ -465,14 +461,14 @@ private:
 	uint level2;
 
 public:
-	BSLODTriShape(NiHeader* hdr);
-	BSLODTriShape(std::fstream& file, NiHeader* hdr);
+	BSLODTriShape();
+	BSLODTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLODTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSLODTriShape* Clone() { return new BSLODTriShape(*this); }
 };

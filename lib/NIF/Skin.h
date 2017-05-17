@@ -99,20 +99,20 @@ public:
 	};
 
 	SkinTransform skinTransform;
-	uint numBones;
-	byte hasVertWeights;
+	uint numBones = 0;
+	byte hasVertWeights = 1;
 	std::vector<BoneData> bones;
 
-	NiSkinData(NiHeader* hdr);
-	NiSkinData(std::fstream& file, NiHeader* hdr);
+	NiSkinData();
+	NiSkinData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSkinData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiSkinData* Clone() { return new NiSkinData(*this); }
 };
 
@@ -148,18 +148,18 @@ public:
 		std::vector<Triangle> trueTriangles;	// User Version >= 12, User Version 2 == 100
 	};
 
-	uint numPartitions;
-	uint dataSize;							// User Version >= 12, User Version 2 == 100
-	uint vertexSize;						// User Version >= 12, User Version 2 == 100
-	byte vertFlags1;						// User Version >= 12, User Version 2 == 100, Number of uint elements in vertex data
-	byte vertFlags2;						// User Version >= 12, User Version 2 == 100, 4 byte or 2 byte position data
-	byte vertFlags3;						// User Version >= 12, User Version 2 == 100
-	byte vertFlags4;						// User Version >= 12, User Version 2 == 100
-	byte vertFlags5;						// User Version >= 12, User Version 2 == 100
-	byte vertFlags6;						// User Version >= 12, User Version 2 == 100, Vertex, UVs, Normals
-	byte vertFlags7;						// User Version >= 12, User Version 2 == 100, (Bi)Tangents, Vertex Colors, Skinning, Precision
-	byte vertFlags8;						// User Version >= 12, User Version 2 == 100
-	uint numVertices;						// Not in file
+	uint numPartitions = 0;
+	uint dataSize = 0;						// User Version >= 12, User Version 2 == 100
+	uint vertexSize = 0;					// User Version >= 12, User Version 2 == 100
+	byte vertFlags1 = 0;					// User Version >= 12, User Version 2 == 100, Number of uint elements in vertex data
+	byte vertFlags2 = 0;					// User Version >= 12, User Version 2 == 100, 4 byte or 2 byte position data
+	byte vertFlags3 = 0;					// User Version >= 12, User Version 2 == 100
+	byte vertFlags4 = 0;					// User Version >= 12, User Version 2 == 100
+	byte vertFlags5 = 0;					// User Version >= 12, User Version 2 == 100
+	byte vertFlags6 = 0;					// User Version >= 12, User Version 2 == 100, Vertex, UVs, Normals
+	byte vertFlags7 = 0;					// User Version >= 12, User Version 2 == 100, (Bi)Tangents, Vertex Colors, Skinning, Precision
+	byte vertFlags8 = 0;					// User Version >= 12, User Version 2 == 100
+	uint numVertices = 0;					// Not in file
 	std::vector<BSVertexData> vertData;		// User Version >= 12, User Version 2 == 100
 	std::vector<PartitionBlock> partitions;
 
@@ -171,17 +171,17 @@ public:
 	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 	bool IsFullPrecision() { return true; }
 
-	NiSkinPartition(NiHeader* hdr);
-	NiSkinPartition(std::fstream& file, NiHeader* hdr);
+	NiSkinPartition();
+	NiSkinPartition(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSkinPartition";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(std::vector<int>& outDeletedIndices);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiSkinPartition* Clone() { return new NiSkinPartition(*this); }
 };
 
@@ -199,16 +199,16 @@ private:
 	BlockRef<NiNode> targetRef;
 
 public:
-	NiSkinInstance(NiHeader* hdr);
-	NiSkinInstance(std::fstream& file, NiHeader* hdr);
+	NiSkinInstance();
+	NiSkinInstance(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSkinInstance";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiSkinInstance* Clone() { return new NiSkinInstance(*this); }
 
 	int GetDataRef() { return dataRef.index; }
@@ -233,15 +233,15 @@ private:
 	std::vector<PartitionInfo> partitions;
 
 public:
-	BSDismemberSkinInstance(NiHeader* hdr);
-	BSDismemberSkinInstance(std::fstream& file, NiHeader* hdr);
+	BSDismemberSkinInstance();
+	BSDismemberSkinInstance(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSDismemberSkinInstance";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSDismemberSkinInstance* Clone() { return new BSDismemberSkinInstance(*this); }
 
 	int GetNumPartitions() { return numPartitions; }
@@ -259,7 +259,7 @@ public:
 
 class BSSkinBoneData : public NiObject {
 public:
-	uint nBones;
+	uint nBones = 0;
 
 	class BoneData {
 	public:
@@ -273,16 +273,15 @@ public:
 
 	std::vector<BoneData> boneXforms;
 
-	BSSkinBoneData() : nBones(0) { };
-	BSSkinBoneData(NiHeader* hdr);
-	BSSkinBoneData(std::fstream& file, NiHeader* hdr);
+	BSSkinBoneData();
+	BSSkinBoneData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSkin::BoneData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSSkinBoneData* Clone() { return new BSSkinBoneData(*this); }
 };
 
@@ -297,18 +296,16 @@ private:
 	std::vector<Vector3> unk;
 
 public:
-	std::vector<SkinWeight> vertexWeights;
-
-	BSSkinInstance(NiHeader* hdr);
-	BSSkinInstance(std::fstream& file, NiHeader* hdr);
+	BSSkinInstance();
+	BSSkinInstance(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSkin::Instance";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSSkinInstance* Clone() { return new BSSkinInstance(*this); }
 
 	int GetTargetRef() { return targetRef.index; }

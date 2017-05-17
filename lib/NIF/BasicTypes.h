@@ -9,26 +9,85 @@ See the included LICENSE file
 #include "utils/Object3d.h"
 
 #include <set>
-#include <fstream>
+#include <streambuf>
 #include <string>
 #include <algorithm>
 
 #pragma warning (disable : 4100)
 
+class NiVersion {
+private:
+	std::string vstr;
+	uint vfile;
+	uint vuser;
+	uint vuser2;
+
+public:
+	static uint Get(byte v1, byte v2, byte v3, byte v4) {
+		return (v1 << 24) | (v2 << 16) | (v3 << 8) | v4;
+	}
+
+	std::string GetVersionInfo();
+	void Set(byte v1, byte v2, byte v3, byte v4, uint userVer, uint userVer2);
+
+	std::string String() { return vstr; }
+	uint File() { return vfile; }
+	uint User() { return vuser; }
+	uint User2() { return vuser2; }
+};
+
+class NiStream {
+private:
+	std::iostream* stream = nullptr;
+	NiVersion* version = nullptr;
+
+public:
+	NiStream(std::iostream* stream, NiVersion* version) {
+		this->stream = stream;
+		this->version = version;
+	}
+
+	void write(const char* ptr, std::streamsize count) {
+		stream->write(ptr, count);
+	}
+
+	void read(char* ptr, std::streamsize count) {
+		stream->read(ptr, count);
+	}
+
+	void getline(char* ptr, std::streamsize maxCount) {
+		stream->getline(ptr, maxCount);
+	}
+
+	// Be careful with sizes of structs and classes
+	template<typename T>
+	NiStream& operator<<(const T& t) {
+		write((const char*)&t, sizeof(T));
+		return *this;
+	}
+
+	// Be careful with sizes of structs and classes
+	template<typename T>
+	NiStream& operator>>(T& t) {
+		read((char*)&t, sizeof(T));
+		return *this;
+	}
+
+	NiVersion& GetVersion() { return *version; }
+};
+
 class NiHeader;
 
 class StringRef {
-private:
-	int ref = 0xFFFFFFFF;
-
 public:
+	int index = 0xFFFFFFFF;
+
 	std::string GetString(NiHeader* hdr);
 	void SetString(NiHeader* hdr, const std::string& str);
 	void RenameString(NiHeader* hdr, const std::string& str);
-	void Clear(NiHeader* hdr);
-	void Put(std::fstream& file);
-	void Get(std::fstream& file, NiHeader* hdr);
-	void notifyStringDelete(int stringID);
+	void Clear();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 };
 
 class Ref {
@@ -48,12 +107,12 @@ public:
 		index = other.index;
 	}
 
-	void Get(std::fstream& file) {
-		file.read((char*)&index, 4);
+	void Get(NiStream& stream) {
+		stream >> index;
 	}
 
-	void Put(std::fstream& file) {
-		file.write((char*)&index, 4);
+	void Put(NiStream& stream) {
+		stream << index;
 	}
 };
 
@@ -68,8 +127,8 @@ public:
 		return arraySize;
 	}
 
-	virtual void Get(std::fstream& file) = 0;
-	virtual void Put(std::fstream& file) = 0;
+	virtual void Get(NiStream& stream) = 0;
+	virtual void Put(NiStream& stream) = 0;
 	virtual void AddBlockRef(const int id) = 0;
 	virtual int GetBlockRef(const int id) = 0;
 	virtual void SetBlockRef(const int id, const int index) = 0;
@@ -105,21 +164,21 @@ public:
 		return refs;
 	}
 
-	virtual void Get(std::fstream& file) override {
-		file.read((char*)&arraySize, 4);
+	virtual void Get(NiStream& stream) override {
+		stream >> arraySize;
 		refs.resize(arraySize);
 
 		for (auto &r : refs)
-			r.Get(file);
+			r.Get(stream);
 	}
 
-	virtual void Put(std::fstream& file) override {
+	virtual void Put(NiStream& stream) override {
 		CleanInvalidRefs();
 
-		file.write((char*)&arraySize, 4);
+		stream << arraySize;
 
 		for (auto &r : refs)
-			r.Put(file);
+			r.Put(stream);
 	}
 
 	virtual void AddBlockRef(const int index) override {
@@ -172,19 +231,19 @@ public:
 template <typename T>
 class BlockRefShortArray : public BlockRefArray<T> {
 public:
-	virtual void Get(std::fstream& file) override {
-		file.read((char*)&arraySize, 2);
+	virtual void Get(NiStream& stream) override {
+		stream.read((char*)&arraySize, 2);
 		refs.resize(arraySize);
 
 		for (auto &r : refs)
-			r.Get(file);
+			r.Get(stream);
 	}
 
-	virtual void Put(std::fstream& file) override {
-		file.write((char*)&arraySize, 2);
+	virtual void Put(NiStream& stream) override {
+		stream.write((char*)&arraySize, 2);
 
 		for (auto &r : refs)
-			r.Put(file);
+			r.Put(stream);
 	}
 };
 
@@ -211,8 +270,8 @@ public:
 		str.clear();
 	}
 
-	void Put(std::fstream& file, const int szSize, const bool wantNullOutput = true);
-	void Get(std::fstream& file, const int szSize);
+	void Get(NiStream& stream, const int szSize);
+	void Put(NiStream& stream, const int szSize, const bool wantNullOutput = true);
 };
 
 class NiObject {
@@ -220,26 +279,22 @@ protected:
 	uint blockSize = 0;
 
 public:
-	NiHeader* header = nullptr;
-
 	virtual ~NiObject() {}
 
 	static constexpr const char* BlockName = "NiUnknown";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	virtual void Init(NiHeader* hdr) {
-		header = hdr;
-	}
+	virtual void Init() {}
 
 	virtual void notifyVerticesDelete(const std::vector<ushort>) {}
-	virtual void notifyStringDelete(int) {}
 
-	virtual void Get(std::fstream&) {}
-	virtual void Put(std::fstream&) {}
+	virtual void Get(NiStream&) {}
+	virtual void Put(NiStream&) {}
 
+	virtual void GetStringRefs(std::set<int*>&) {}
 	virtual void GetChildRefs(std::set<int*>&) {}
 
-	virtual int CalcBlockSize() {
+	virtual int CalcBlockSize(NiVersion& version) {
 		blockSize = 0;	// Calculate from the ground up
 		return blockSize;
 	}
@@ -267,18 +322,8 @@ class NiHeader : public NiObject {
 
 private:
 	bool valid;
-
-	char verStr[0x26];
-	byte version1;
-	byte version2;
-	byte version3;
-	byte version4;
-	uint userVersion;
-	uint userVersion2;
-
-	byte unk1;
+	NiVersion version;
 	byte endian;
-
 	NiString creator;
 	NiString exportInfo1;
 	NiString exportInfo2;
@@ -296,7 +341,6 @@ private:
 	uint numStrings;
 	uint maxStringLen;
 	std::vector<NiString> strings;
-	std::vector<int> stringRefCount;
 
 	uint unkInt2;
 
@@ -309,12 +353,7 @@ public:
 	void Clear();
 	bool IsValid() { return valid; }
 
-	std::string GetVersionInfo();
-	void SetVersion(const byte v1, const byte v2, const byte v3, const byte v4, const uint userVer, const uint userVer2);
-	bool VerCheck(const int v1, const int v2, const int v3, const int v4, const bool equal = false);
-
-	uint GetUserVersion() { return userVersion; };
-	uint GetUserVersion2() { return userVersion2; };
+	NiVersion& GetVersion() { return version; };
 
 	std::string GetCreatorInfo();
 	void SetCreatorInfo(const std::string& creatorInfo);
@@ -362,15 +401,14 @@ public:
 	std::string GetStringById(const int id);
 	void SetStringById(const int id, const std::string& str);
 
-	void AddStringRef(const int id);
-	void RemoveStringRef(const int id);
 	int RemoveUnusedStrings();
+	void UpdateMaxStringLength();
 
 	static void BlockDeleted(NiObject* o, int blockId);
 	static void BlockSwapped(NiObject* o, int blockIndexLo, int blockIndexHi);
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 };
 
 class NiUnknown : public NiObject {
@@ -378,11 +416,11 @@ public:
 	std::vector<char> data;
 
 	NiUnknown() {}
-	NiUnknown(std::fstream& file, const uint size);
+	NiUnknown(NiStream& stream, const uint size);
 	NiUnknown(const uint size);
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize() { return blockSize; }
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version) { return blockSize; }
 	NiUnknown* Clone() { return new NiUnknown(*this); }
 };

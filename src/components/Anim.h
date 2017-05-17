@@ -98,7 +98,7 @@ public:
 			auto node = loadFromFile->GetHeader()->GetBlock<NiNode>(id);
 			if (node) {
 				boneWeights[newID] = AnimWeight(loadFromFile, shape, newID);
-				boneNames[node->GetName()] = newID;
+				boneNames[node->GetName(loadFromFile->GetHeader())] = newID;
 				newID++;
 			}
 		}

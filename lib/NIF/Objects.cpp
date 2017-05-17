@@ -6,56 +6,56 @@ See the included LICENSE file
 
 #include "Objects.h"
 
-void NiObjectNET::Init(NiHeader* hdr) {
-	NiObject::Init(hdr);
+void NiObjectNET::Init() {
+	NiObject::Init();
 
 	bBSLightingShaderProperty = false;
 	skyrimShaderType = 0;
 }
 
-void NiObjectNET::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiObjectNET::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	if (bBSLightingShaderProperty && header->GetUserVersion() >= 12)
-		file.read((char*)&skyrimShaderType, 4);
+	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12)
+		stream >> skyrimShaderType;
 
-	name.Get(file, header);
+	name.Get(stream);
 
-	extraDataRefs.Get(file);
-	controllerRef.Get(file);
+	extraDataRefs.Get(stream);
+	controllerRef.Get(stream);
 }
 
-void NiObjectNET::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiObjectNET::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	if (bBSLightingShaderProperty && header->GetUserVersion() >= 12)
-		file.write((char*)&skyrimShaderType, 4);
+	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12)
+		stream << skyrimShaderType;
 
-	name.Put(file);
+	name.Put(stream);
 
-	extraDataRefs.Put(file);
-	controllerRef.Put(file);
+	extraDataRefs.Put(stream);
+	controllerRef.Put(stream);
 }
 
-void NiObjectNET::notifyStringDelete(int stringID) {
-	NiObject::notifyStringDelete(stringID);
+void NiObjectNET::GetStringRefs(std::set<int*>& refs) {
+	NiObject::GetStringRefs(refs);
 
-	name.notifyStringDelete(stringID);
+	refs.insert(&name.index);
 }
 
-std::string NiObjectNET::GetName() {
-	return name.GetString(header);
+std::string NiObjectNET::GetName(NiHeader* hdr) {
+	return name.GetString(hdr);
 }
 
-void NiObjectNET::SetName(const std::string& str, const bool rename) {
+void NiObjectNET::SetName(NiHeader* hdr, const std::string& str, const bool rename) {
 	if (rename)
-		name.RenameString(header, str);
+		name.RenameString(hdr, str);
 	else
-		name.SetString(header, str);
+		name.SetString(hdr, str);
 }
 
 void NiObjectNET::ClearName() {
-	name.Clear(header);
+	name.Clear();
 }
 
 int NiObjectNET::GetControllerRef() {
@@ -89,10 +89,10 @@ void NiObjectNET::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&controllerRef.index);
 }
 
-int NiObjectNET::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiObjectNET::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
-	if (bBSLightingShaderProperty && header->GetUserVersion() >= 12)
+	if (bBSLightingShaderProperty && version.User() >= 12)
 		blockSize += 4;
 
 	blockSize += 12;
@@ -102,8 +102,8 @@ int NiObjectNET::CalcBlockSize() {
 }
 
 
-void NiAVObject::Init(NiHeader* hdr) {
-	NiObjectNET::Init(hdr);
+void NiAVObject::Init() {
+	NiObjectNET::Init();
 
 	flags = 524302;
 	rotation[0].x = 1.0f;
@@ -112,57 +112,47 @@ void NiAVObject::Init(NiHeader* hdr) {
 	scale = 1.0f;
 }
 
-void NiAVObject::Get(std::fstream& file) {
-	NiObjectNET::Get(file);
+void NiAVObject::Get(NiStream& stream) {
+	NiObjectNET::Get(stream);
 
 	flags = 0;
-	if (header->GetUserVersion2() <= 26)
-		file.read((char*)&flags, 2);
+	if (stream.GetVersion().User2() <= 26)
+		stream.read((char*)&flags, 2);
 	else
-		file.read((char*)&flags, 4);
+		stream >> flags;
 
-	file.read((char*)&translation.x, 4);
-	file.read((char*)&translation.y, 4);
-	file.read((char*)&translation.z, 4);
+	stream >> translation;
 
-	for (int i = 0; i < 3; i++) {
-		file.read((char*)&rotation[i].x, 4);
-		file.read((char*)&rotation[i].y, 4);
-		file.read((char*)&rotation[i].z, 4);
-	}
+	for (int i = 0; i < 3; i++)
+		stream >> rotation[i];
 
-	file.read((char*)&scale, 4);
+	stream >> scale;
 
-	if (header->GetUserVersion() <= 11)
-		propertyRefs.Get(file);
+	if (stream.GetVersion().User() <= 11)
+		propertyRefs.Get(stream);
 	
-	collisionRef.Get(file);
+	collisionRef.Get(stream);
 }
 
-void NiAVObject::Put(std::fstream& file) {
-	NiObjectNET::Put(file);
+void NiAVObject::Put(NiStream& stream) {
+	NiObjectNET::Put(stream);
 
-	if (header->GetUserVersion2() <= 26)
-		file.write((char*)&flags, 2);
+	if (stream.GetVersion().User2() <= 26)
+		stream.write((char*)&flags, 2);
 	else
-		file.write((char*)&flags, 4);
+		stream << flags;
 
-	file.write((char*)&translation.x, 4);
-	file.write((char*)&translation.y, 4);
-	file.write((char*)&translation.z, 4);
+	stream << translation;
 
-	for (int i = 0; i < 3; i++) {
-		file.write((char*)&rotation[i].x, 4);
-		file.write((char*)&rotation[i].y, 4);
-		file.write((char*)&rotation[i].z, 4);
-	}
+	for (int i = 0; i < 3; i++)
+		stream << rotation[i];
 
-	file.write((char*)&scale, 4);
+	stream << scale;
 
-	if (header->GetUserVersion() <= 11)
-		propertyRefs.Put(file);
+	if (stream.GetVersion().User() <= 11)
+		propertyRefs.Put(stream);
 
-	collisionRef.Put(file);
+	collisionRef.Put(stream);
 }
 
 void NiAVObject::GetChildRefs(std::set<int*>& refs) {
@@ -172,53 +162,53 @@ void NiAVObject::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&collisionRef.index);
 }
 
-int NiAVObject::CalcBlockSize() {
-	NiObjectNET::CalcBlockSize();
+int NiAVObject::CalcBlockSize(NiVersion& version) {
+	NiObjectNET::CalcBlockSize(version);
 
 	blockSize += 58;
 
-	if (header->GetUserVersion() <= 11) {
+	if (version.User() <= 11) {
 		blockSize += 4;
 		blockSize += propertyRefs.GetSize() * 4;
 	}
 
-	if (header->GetUserVersion2() > 26)
+	if (version.User2() > 26)
 		blockSize += 2;
 
 	return blockSize;
 }
 
 
-NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiHeader* hdr) {
-	NiAVObjectPalette::Init(hdr);
+NiDefaultAVObjectPalette::NiDefaultAVObjectPalette() {
+	NiAVObjectPalette::Init();
 }
 
-NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(std::fstream& file, NiHeader* hdr) : NiDefaultAVObjectPalette(hdr) {
-	Get(file);
+NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiStream& stream) : NiDefaultAVObjectPalette() {
+	Get(stream);
 }
 
-void NiDefaultAVObjectPalette::Get(std::fstream& file) {
-	NiAVObjectPalette::Get(file);
+void NiDefaultAVObjectPalette::Get(NiStream& stream) {
+	NiAVObjectPalette::Get(stream);
 
-	sceneRef.Get(file);
+	sceneRef.Get(stream);
 
-	file.read((char*)&numObjects, 4);
+	stream >> numObjects;
 	objects.resize(numObjects);
 	for (int i = 0; i < numObjects; i++) {
-		objects[i].name.Get(file, 4);
-		objects[i].objectRef.Get(file);
+		objects[i].name.Get(stream, 4);
+		objects[i].objectRef.Get(stream);
 	}
 }
 
-void NiDefaultAVObjectPalette::Put(std::fstream& file) {
-	NiAVObjectPalette::Put(file);
+void NiDefaultAVObjectPalette::Put(NiStream& stream) {
+	NiAVObjectPalette::Put(stream);
 
-	sceneRef.Put(file);
+	sceneRef.Put(stream);
 
-	file.write((char*)&numObjects, 4);
+	stream << numObjects;
 	for (int i = 0; i < numObjects; i++) {
-		objects[i].name.Put(file, 4, false);
-		objects[i].objectRef.Put(file);
+		objects[i].name.Put(stream, 4, false);
+		objects[i].objectRef.Put(stream);
 	}
 }
 
@@ -231,8 +221,8 @@ void NiDefaultAVObjectPalette::GetChildRefs(std::set<int*>& refs) {
 		refs.insert(&objects[i].objectRef.index);
 }
 
-int NiDefaultAVObjectPalette::CalcBlockSize() {
-	NiAVObjectPalette::CalcBlockSize();
+int NiDefaultAVObjectPalette::CalcBlockSize(NiVersion& version) {
+	NiAVObjectPalette::CalcBlockSize(version);
 
 	blockSize += 8;
 	blockSize += numObjects * 8;
@@ -244,56 +234,56 @@ int NiDefaultAVObjectPalette::CalcBlockSize() {
 }
 
 
-NiCamera::NiCamera(NiHeader* hdr) {
-	NiAVObject::Init(hdr);
+NiCamera::NiCamera() {
+	NiAVObject::Init();
 }
 
-NiCamera::NiCamera(std::fstream& file, NiHeader* hdr) : NiCamera(hdr) {
-	Get(file);
+NiCamera::NiCamera(NiStream& stream) : NiCamera() {
+	Get(stream);
 }
 
-void NiCamera::Get(std::fstream& file) {
-	NiAVObject::Get(file);
+void NiCamera::Get(NiStream& stream) {
+	NiAVObject::Get(stream);
 
-	file.read((char*)&obsoleteFlags, 2);
-	file.read((char*)&frustumLeft, 4);
-	file.read((char*)&frustumRight, 4);
-	file.read((char*)&frustumTop, 4);
-	file.read((char*)&frustomBottom, 4);
-	file.read((char*)&frustumNear, 4);
-	file.read((char*)&frustumFar, 4);
-	file.read((char*)&useOrtho, 1);
-	file.read((char*)&viewportLeft, 4);
-	file.read((char*)&viewportRight, 4);
-	file.read((char*)&viewportTop, 4);
-	file.read((char*)&viewportBottom, 4);
-	file.read((char*)&lodAdjust, 4);
+	stream >> obsoleteFlags;
+	stream >> frustumLeft;
+	stream >> frustumRight;
+	stream >> frustumTop;
+	stream >> frustomBottom;
+	stream >> frustumNear;
+	stream >> frustumFar;
+	stream >> useOrtho;
+	stream >> viewportLeft;
+	stream >> viewportRight;
+	stream >> viewportTop;
+	stream >> viewportBottom;
+	stream >> lodAdjust;
 
-	sceneRef.Get(file);
-	file.read((char*)&numScreenPolygons, 4);
-	file.read((char*)&numScreenTextures, 4);
+	sceneRef.Get(stream);
+	stream >> numScreenPolygons;
+	stream >> numScreenTextures;
 }
 
-void NiCamera::Put(std::fstream& file) {
-	NiAVObject::Put(file);
+void NiCamera::Put(NiStream& stream) {
+	NiAVObject::Put(stream);
 
-	file.write((char*)&obsoleteFlags, 2);
-	file.write((char*)&frustumLeft, 4);
-	file.write((char*)&frustumRight, 4);
-	file.write((char*)&frustumTop, 4);
-	file.write((char*)&frustomBottom, 4);
-	file.write((char*)&frustumNear, 4);
-	file.write((char*)&frustumFar, 4);
-	file.write((char*)&useOrtho, 1);
-	file.write((char*)&viewportLeft, 4);
-	file.write((char*)&viewportRight, 4);
-	file.write((char*)&viewportTop, 4);
-	file.write((char*)&viewportBottom, 4);
-	file.write((char*)&lodAdjust, 4);
+	stream << obsoleteFlags;
+	stream << frustumLeft;
+	stream << frustumRight;
+	stream << frustumTop;
+	stream << frustomBottom;
+	stream << frustumNear;
+	stream << frustumFar;
+	stream << useOrtho;
+	stream << viewportLeft;
+	stream << viewportRight;
+	stream << viewportTop;
+	stream << viewportBottom;
+	stream << lodAdjust;
 
-	sceneRef.Put(file);
-	file.write((char*)&numScreenPolygons, 4);
-	file.write((char*)&numScreenTextures, 4);
+	sceneRef.Put(stream);
+	stream << numScreenPolygons;
+	stream << numScreenTextures;
 }
 
 void NiCamera::GetChildRefs(std::set<int*>& refs) {
@@ -302,8 +292,8 @@ void NiCamera::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&sceneRef.index);
 }
 
-int NiCamera::CalcBlockSize() {
-	NiAVObject::CalcBlockSize();
+int NiCamera::CalcBlockSize(NiVersion& version) {
+	NiAVObject::CalcBlockSize(version);
 
 	blockSize += 59;
 
@@ -311,30 +301,30 @@ int NiCamera::CalcBlockSize() {
 }
 
 
-NiNode::NiNode(NiHeader* hdr) {
-	NiAVObject::Init(hdr);
+NiNode::NiNode() {
+	NiAVObject::Init();
 }
 
-NiNode::NiNode(std::fstream& file, NiHeader* hdr) : NiNode(hdr) {
-	Get(file);
+NiNode::NiNode(NiStream& stream) : NiNode() {
+	Get(stream);
 }
 
-void NiNode::Get(std::fstream& file) {
-	NiAVObject::Get(file);
+void NiNode::Get(NiStream& stream) {
+	NiAVObject::Get(stream);
 
-	childRefs.Get(file);
+	childRefs.Get(stream);
 
-	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130)
-		effectRefs.Get(file);
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130)
+		effectRefs.Get(stream);
 }
 
-void NiNode::Put(std::fstream& file) {
-	NiAVObject::Put(file);
+void NiNode::Put(NiStream& stream) {
+	NiAVObject::Put(stream);
 
-	childRefs.Put(file);
+	childRefs.Put(stream);
 
-	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130)
-		effectRefs.Put(file);
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130)
+		effectRefs.Put(stream);
 }
 
 void NiNode::GetChildRefs(std::set<int*>& refs) {
@@ -344,12 +334,12 @@ void NiNode::GetChildRefs(std::set<int*>& refs) {
 	effectRefs.GetIndexPtrs(refs);
 }
 
-int NiNode::CalcBlockSize() {
-	NiAVObject::CalcBlockSize();
+int NiNode::CalcBlockSize(NiVersion& version) {
+	NiAVObject::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += childRefs.GetSize() * 4;
-	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130) {
+	if (version.User() <= 12 && version.User2() < 130) {
 		blockSize += 4;
 		blockSize += effectRefs.GetSize() * 4;
 	}
@@ -383,37 +373,37 @@ void NiNode::AddEffectRef(const int id) {
 }
 
 
-BSFadeNode::BSFadeNode(NiHeader* hdr) : NiNode(hdr) {
+BSFadeNode::BSFadeNode() : NiNode() {
 }
 
-BSFadeNode::BSFadeNode(std::fstream& file, NiHeader* hdr) : BSFadeNode(hdr) {
-	Get(file);
+BSFadeNode::BSFadeNode(NiStream& stream) : BSFadeNode() {
+	Get(stream);
 }
 
 
-BSValueNode::BSValueNode(NiHeader* hdr) : NiNode(hdr) {
+BSValueNode::BSValueNode() : NiNode() {
 }
 
-BSValueNode::BSValueNode(std::fstream& file, NiHeader* hdr) : BSValueNode(hdr) {
-	Get(file);
+BSValueNode::BSValueNode(NiStream& stream) : BSValueNode() {
+	Get(stream);
 }
 
-void BSValueNode::Get(std::fstream& file) {
-	NiNode::Get(file);
+void BSValueNode::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	file.read((char*)&value, 4);
-	file.read((char*)&valueFlags, 1);
+	stream >> value;
+	stream >> valueFlags;
 }
 
-void BSValueNode::Put(std::fstream& file) {
-	NiNode::Put(file);
+void BSValueNode::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	file.write((char*)&value, 4);
-	file.write((char*)&valueFlags, 1);
+	stream << value;
+	stream << valueFlags;
 }
 
-int BSValueNode::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int BSValueNode::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 5;
 
@@ -421,33 +411,33 @@ int BSValueNode::CalcBlockSize() {
 }
 
 
-BSLeafAnimNode::BSLeafAnimNode(NiHeader* hdr) : NiNode(hdr) {
+BSLeafAnimNode::BSLeafAnimNode() : NiNode() {
 }
 
-BSLeafAnimNode::BSLeafAnimNode(std::fstream& file, NiHeader* hdr) : BSLeafAnimNode(hdr) {
-	Get(file);
+BSLeafAnimNode::BSLeafAnimNode(NiStream& stream) : BSLeafAnimNode() {
+	Get(stream);
 }
 
 
-BSTreeNode::BSTreeNode(NiHeader* hdr) : NiNode(hdr) {
+BSTreeNode::BSTreeNode() : NiNode() {
 }
 
-BSTreeNode::BSTreeNode(std::fstream& file, NiHeader* hdr) : BSTreeNode(hdr) {
-	Get(file);
+BSTreeNode::BSTreeNode(NiStream& stream) : BSTreeNode() {
+	Get(stream);
 }
 
-void BSTreeNode::Get(std::fstream& file) {
-	NiNode::Get(file);
+void BSTreeNode::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	bones1.Get(file);
-	bones2.Get(file);
+	bones1.Get(stream);
+	bones2.Get(stream);
 }
 
-void BSTreeNode::Put(std::fstream& file) {
-	NiNode::Put(file);
+void BSTreeNode::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	bones1.Put(file);
-	bones2.Put(file);
+	bones1.Put(stream);
+	bones2.Put(stream);
 }
 
 void BSTreeNode::GetChildRefs(std::set<int*>& refs) {
@@ -457,8 +447,8 @@ void BSTreeNode::GetChildRefs(std::set<int*>& refs) {
 	bones2.GetIndexPtrs(refs);
 }
 
-int BSTreeNode::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int BSTreeNode::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 8;
 	blockSize += bones1.GetSize() * 4;
@@ -468,29 +458,29 @@ int BSTreeNode::CalcBlockSize() {
 }
 
 
-BSOrderedNode::BSOrderedNode(NiHeader* hdr) : NiNode(hdr) {
+BSOrderedNode::BSOrderedNode() : NiNode() {
 }
 
-BSOrderedNode::BSOrderedNode(std::fstream& file, NiHeader* hdr) : BSOrderedNode(hdr) {
-	Get(file);
+BSOrderedNode::BSOrderedNode(NiStream& stream) : BSOrderedNode() {
+	Get(stream);
 }
 
-void BSOrderedNode::Get(std::fstream& file) {
-	NiNode::Get(file);
+void BSOrderedNode::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	file.read((char*)&alphaSortBound, 16);
-	file.read((char*)&isStaticBound, 1);
+	stream >> alphaSortBound;
+	stream >> isStaticBound;
 }
 
-void BSOrderedNode::Put(std::fstream& file) {
-	NiNode::Put(file);
+void BSOrderedNode::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	file.write((char*)&alphaSortBound, 16);
-	file.write((char*)&isStaticBound, 1);
+	stream << alphaSortBound;
+	stream << isStaticBound;
 }
 
-int BSOrderedNode::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int BSOrderedNode::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 17;
 
@@ -498,32 +488,32 @@ int BSOrderedNode::CalcBlockSize() {
 }
 
 
-BSMultiBoundOBB::BSMultiBoundOBB(NiHeader* hdr) {
-	NiObject::Init(hdr);
+BSMultiBoundOBB::BSMultiBoundOBB() {
+	NiObject::Init();
 }
 
-BSMultiBoundOBB::BSMultiBoundOBB(std::fstream& file, NiHeader* hdr) : BSMultiBoundOBB(hdr) {
-	Get(file);
+BSMultiBoundOBB::BSMultiBoundOBB(NiStream& stream) : BSMultiBoundOBB() {
+	Get(stream);
 }
 
-void BSMultiBoundOBB::Get(std::fstream& file) {
-	NiObject::Get(file);
+void BSMultiBoundOBB::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&center, 12);
-	file.read((char*)&size, 12);
-	file.read((char*)rotation, 36);
+	stream >> center;
+	stream >> size;
+	stream.read((char*)rotation, 36);
 }
 
-void BSMultiBoundOBB::Put(std::fstream& file) {
-	NiObject::Put(file);
+void BSMultiBoundOBB::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&center, 12);
-	file.write((char*)&size, 12);
-	file.write((char*)rotation, 36);
+	stream << center;
+	stream << size;
+	stream.write((char*)rotation, 36);
 }
 
-int BSMultiBoundOBB::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int BSMultiBoundOBB::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 60;
 
@@ -531,30 +521,30 @@ int BSMultiBoundOBB::CalcBlockSize() {
 }
 
 
-BSMultiBoundAABB::BSMultiBoundAABB(NiHeader* hdr) {
-	NiObject::Init(hdr);
+BSMultiBoundAABB::BSMultiBoundAABB() {
+	NiObject::Init();
 }
 
-BSMultiBoundAABB::BSMultiBoundAABB(std::fstream& file, NiHeader* hdr) : BSMultiBoundAABB(hdr) {
-	Get(file);
+BSMultiBoundAABB::BSMultiBoundAABB(NiStream& stream) : BSMultiBoundAABB() {
+	Get(stream);
 }
 
-void BSMultiBoundAABB::Get(std::fstream& file) {
-	NiObject::Get(file);
+void BSMultiBoundAABB::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&center, 12);
-	file.read((char*)&halfExtent, 12);
+	stream >> center;
+	stream >> halfExtent;
 }
 
-void BSMultiBoundAABB::Put(std::fstream& file) {
-	NiObject::Put(file);
+void BSMultiBoundAABB::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&center, 12);
-	file.write((char*)&halfExtent, 12);
+	stream << center;
+	stream << halfExtent;
 }
 
-int BSMultiBoundAABB::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int BSMultiBoundAABB::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 24;
 
@@ -562,24 +552,24 @@ int BSMultiBoundAABB::CalcBlockSize() {
 }
 
 
-BSMultiBound::BSMultiBound(NiHeader* hdr) {
-	NiObject::Init(hdr);
+BSMultiBound::BSMultiBound() {
+	NiObject::Init();
 }
 
-BSMultiBound::BSMultiBound(std::fstream& file, NiHeader* hdr) : BSMultiBound(hdr) {
-	Get(file);
+BSMultiBound::BSMultiBound(NiStream& stream) : BSMultiBound() {
+	Get(stream);
 }
 
-void BSMultiBound::Get(std::fstream& file) {
-	NiObject::Get(file);
+void BSMultiBound::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	dataRef.Get(file);
+	dataRef.Get(stream);
 }
 
-void BSMultiBound::Put(std::fstream& file) {
-	NiObject::Put(file);
+void BSMultiBound::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	dataRef.Put(file);
+	dataRef.Put(stream);
 }
 
 void BSMultiBound::GetChildRefs(std::set<int*>& refs) {
@@ -588,8 +578,8 @@ void BSMultiBound::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int BSMultiBound::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int BSMultiBound::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -597,29 +587,29 @@ int BSMultiBound::CalcBlockSize() {
 }
 
 
-BSMultiBoundNode::BSMultiBoundNode(NiHeader* hdr) : NiNode(hdr) {
+BSMultiBoundNode::BSMultiBoundNode() : NiNode() {
 }
 
-BSMultiBoundNode::BSMultiBoundNode(std::fstream& file, NiHeader* hdr) : BSMultiBoundNode(hdr) {
-	Get(file);
+BSMultiBoundNode::BSMultiBoundNode(NiStream& stream) : BSMultiBoundNode() {
+	Get(stream);
 }
 
-void BSMultiBoundNode::Get(std::fstream& file) {
-	NiNode::Get(file);
+void BSMultiBoundNode::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	multiBoundRef.Get(file);
+	multiBoundRef.Get(stream);
 
-	if (header->GetUserVersion() >= 12)
-		file.read((char*)&cullingMode, 4);
+	if (stream.GetVersion().User() >= 12)
+		stream >> cullingMode;
 }
 
-void BSMultiBoundNode::Put(std::fstream& file) {
-	NiNode::Put(file);
+void BSMultiBoundNode::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	multiBoundRef.Put(file);
+	multiBoundRef.Put(stream);
 
-	if (header->GetUserVersion() >= 12)
-		file.write((char*)&cullingMode, 4);
+	if (stream.GetVersion().User() >= 12)
+		stream << cullingMode;
 }
 
 void BSMultiBoundNode::GetChildRefs(std::set<int*>& refs) {
@@ -628,42 +618,42 @@ void BSMultiBoundNode::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&multiBoundRef.index);
 }
 
-int BSMultiBoundNode::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int BSMultiBoundNode::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 4;
-	if (header->GetUserVersion() >= 12)
+	if (version.User() >= 12)
 		blockSize += 4;
 
 	return blockSize;
 }
 
 
-BSBlastNode::BSBlastNode(NiHeader* hdr) : NiNode(hdr) {
+BSBlastNode::BSBlastNode() : NiNode() {
 }
 
-BSBlastNode::BSBlastNode(std::fstream& file, NiHeader* hdr) : BSBlastNode(hdr) {
-	Get(file);
+BSBlastNode::BSBlastNode(NiStream& stream) : BSBlastNode() {
+	Get(stream);
 }
 
-void BSBlastNode::Get(std::fstream& file) {
-	NiNode::Get(file);
+void BSBlastNode::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	file.read((char*)&min, 1);
-	file.read((char*)&max, 1);
-	file.read((char*)&current, 1);
+	stream >> min;
+	stream >> max;
+	stream >> current;
 }
 
-void BSBlastNode::Put(std::fstream& file) {
-	NiNode::Put(file);
+void BSBlastNode::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	file.write((char*)&min, 1);
-	file.write((char*)&max, 1);
-	file.write((char*)&current, 1);
+	stream << min;
+	stream << max;
+	stream << current;
 }
 
-int BSBlastNode::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int BSBlastNode::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 3;
 
@@ -671,35 +661,35 @@ int BSBlastNode::CalcBlockSize() {
 }
 
 
-BSDamageStage::BSDamageStage(NiHeader* hdr) : BSBlastNode(hdr) {
+BSDamageStage::BSDamageStage() : BSBlastNode() {
 }
 
-BSDamageStage::BSDamageStage(std::fstream& file, NiHeader* hdr) : BSDamageStage(hdr) {
-	Get(file);
+BSDamageStage::BSDamageStage(NiStream& stream) : BSDamageStage() {
+	Get(stream);
 }
 
 
-NiBillboardNode::NiBillboardNode(NiHeader* hdr) : NiNode(hdr) {
+NiBillboardNode::NiBillboardNode() : NiNode() {
 }
 
-NiBillboardNode::NiBillboardNode(std::fstream& file, NiHeader* hdr) : NiBillboardNode(hdr) {
-	Get(file);
+NiBillboardNode::NiBillboardNode(NiStream& stream) : NiBillboardNode() {
+	Get(stream);
 }
 
-void NiBillboardNode::Get(std::fstream& file) {
-	NiNode::Get(file);
+void NiBillboardNode::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	file.read((char*)&billboardMode, 2);
+	stream >> billboardMode;
 }
 
-void NiBillboardNode::Put(std::fstream& file) {
-	NiNode::Put(file);
+void NiBillboardNode::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	file.write((char*)&billboardMode, 2);
+	stream << billboardMode;
 }
 
-int NiBillboardNode::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int NiBillboardNode::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 2;
 
@@ -707,29 +697,29 @@ int NiBillboardNode::CalcBlockSize() {
 }
 
 
-NiSwitchNode::NiSwitchNode(NiHeader* hdr) : NiNode(hdr) {
+NiSwitchNode::NiSwitchNode() : NiNode() {
 }
 
-NiSwitchNode::NiSwitchNode(std::fstream& file, NiHeader* hdr) : NiSwitchNode(hdr) {
-	Get(file);
+NiSwitchNode::NiSwitchNode(NiStream& stream) : NiSwitchNode() {
+	Get(stream);
 }
 
-void NiSwitchNode::Get(std::fstream& file) {
-	NiNode::Get(file);
+void NiSwitchNode::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	file.read((char*)&flags, 2);
-	file.read((char*)&index, 4);
+	stream >> flags;
+	stream >> index;
 }
 
-void NiSwitchNode::Put(std::fstream& file) {
-	NiNode::Put(file);
+void NiSwitchNode::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	file.write((char*)&flags, 2);
-	file.write((char*)&index, 4);
+	stream << flags;
+	stream << index;
 }
 
-int NiSwitchNode::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int NiSwitchNode::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 6;
 

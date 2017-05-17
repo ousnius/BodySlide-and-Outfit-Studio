@@ -287,7 +287,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	}
 
 	bool incomplete = false;
-	bool isFO4 = (nif->GetHeader()->GetUserVersion() >= 12 && nif->GetHeader()->GetUserVersion2() == 130);
+	bool isFO4 = (nif->GetHeader()->GetVersion().User() >= 12 && nif->GetHeader()->GetVersion().User2() == 130);
 
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
@@ -381,7 +381,7 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 		return (*this);
 
 	boneID = srcBlock;
-	boneName = node->GetName();
+	boneName = node->GetName(skeletonNif->GetHeader());
 	refCount = 0;
 
 	localRot.Set(node->rotation);

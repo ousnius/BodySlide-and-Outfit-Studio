@@ -6,94 +6,85 @@ See the included LICENSE file
 
 #include "Particles.h"
 
-NiParticlesData::NiParticlesData(NiHeader* hdr) {
-	NiGeometryData::Init(hdr);
+NiParticlesData::NiParticlesData() {
+	NiGeometryData::Init();
 	NiGeometryData::isPSys = true;
-
-	hasRadii = false;
-	numActive = 0;
-	hasSizes = false;
-	hasRotations = false;
-	hasRotationAngles = false;
-	hasRotationAxes = false;
-	hasTextureIndices = false;
-	numSubtexOffsets = 0;
 }
 
-NiParticlesData::NiParticlesData(std::fstream& file, NiHeader* hdr) : NiParticlesData(hdr) {
-	Get(file);
+NiParticlesData::NiParticlesData(NiStream& stream) : NiParticlesData() {
+	Get(stream);
 }
 
-void NiParticlesData::Get(std::fstream& file) {
-	NiGeometryData::Get(file);
+void NiParticlesData::Get(NiStream& stream) {
+	NiGeometryData::Get(stream);
 
-	file.read((char*)&hasRadii, 1);
-	file.read((char*)&numActive, 2);
-	file.read((char*)&hasSizes, 1);
-	file.read((char*)&hasRotations, 1);
-	file.read((char*)&hasRotationAngles, 1);
-	file.read((char*)&hasRotationAxes, 1);
-	file.read((char*)&hasTextureIndices, 1);
+	stream >> hasRadii;
+	stream >> numActive;
+	stream >> hasSizes;
+	stream >> hasRotations;
+	stream >> hasRotationAngles;
+	stream >> hasRotationAxes;
+	stream >> hasTextureIndices;
 
-	if (header->GetUserVersion() >= 12) {
-		file.read((char*)&numSubtexOffsets, 4);
+	if (stream.GetVersion().User() >= 12) {
+		stream >> numSubtexOffsets;
 	}
 	else {
 		byte numOffsets = 0;
-		file.read((char*)&numOffsets, 1);
+		stream >> numOffsets;
 		numSubtexOffsets = numOffsets;
 	}
 
 	subtexOffsets.resize(numSubtexOffsets);
 	for (int i = 0; i < numSubtexOffsets; i++)
-		file.read((char*)&subtexOffsets[i], 16);
+		stream >> subtexOffsets[i];
 
-	if (header->GetUserVersion() >= 12) {
-		file.read((char*)&aspectRatio, 4);
-		file.read((char*)&aspectFlags, 2);
-		file.read((char*)&speedToAspectAspect2, 4);
-		file.read((char*)&speedToAspectSpeed1, 4);
-		file.read((char*)&speedToAspectSpeed2, 4);
+	if (stream.GetVersion().User() >= 12) {
+		stream >> aspectRatio;
+		stream >> aspectFlags;
+		stream >> speedToAspectAspect2;
+		stream >> speedToAspectSpeed1;
+		stream >> speedToAspectSpeed2;
 	}
 }
 
-void NiParticlesData::Put(std::fstream& file) {
-	NiGeometryData::Put(file);
+void NiParticlesData::Put(NiStream& stream) {
+	NiGeometryData::Put(stream);
 
-	file.write((char*)&hasRadii, 1);
-	file.write((char*)&numActive, 2);
-	file.write((char*)&hasSizes, 1);
-	file.write((char*)&hasRotations, 1);
-	file.write((char*)&hasRotationAngles, 1);
-	file.write((char*)&hasRotationAxes, 1);
-	file.write((char*)&hasTextureIndices, 1);
+	stream << hasRadii;
+	stream << numActive;
+	stream << hasSizes;
+	stream << hasRotations;
+	stream << hasRotationAngles;
+	stream << hasRotationAxes;
+	stream << hasTextureIndices;
 
-	if (header->GetUserVersion() >= 12) {
-		file.write((char*)&numSubtexOffsets, 4);
+	if (stream.GetVersion().User() >= 12) {
+		stream << numSubtexOffsets;
 	}
 	else {
 		byte numOffsets = numSubtexOffsets > 255 ? 255 : numSubtexOffsets;
-		file.write((char*)&numOffsets, 1);
+		stream << numOffsets;
 	}
 
 	for (int i = 0; i < numSubtexOffsets; i++)
-		file.write((char*)&subtexOffsets[i], 16);
+		stream << subtexOffsets[i];
 
-	if (header->GetUserVersion() >= 12) {
-		file.write((char*)&aspectRatio, 4);
-		file.write((char*)&aspectFlags, 2);
-		file.write((char*)&speedToAspectAspect2, 4);
-		file.write((char*)&speedToAspectSpeed1, 4);
-		file.write((char*)&speedToAspectSpeed2, 4);
+	if (stream.GetVersion().User() >= 12) {
+		stream << aspectRatio;
+		stream << aspectFlags;
+		stream << speedToAspectAspect2;
+		stream << speedToAspectSpeed1;
+		stream << speedToAspectSpeed2;
 	}
 }
 
-int NiParticlesData::CalcBlockSize() {
-	NiGeometryData::CalcBlockSize();
+int NiParticlesData::CalcBlockSize(NiVersion& version) {
+	NiGeometryData::CalcBlockSize(version);
 
 	blockSize += 8;
 
-	if (header->GetUserVersion() >= 12)
+	if (version.User() >= 12)
 		blockSize += 22;
 	else
 		blockSize += 1;
@@ -104,36 +95,35 @@ int NiParticlesData::CalcBlockSize() {
 }
 
 
-NiRotatingParticlesData::NiRotatingParticlesData(NiHeader* hdr) : NiParticlesData(hdr) {
+NiRotatingParticlesData::NiRotatingParticlesData() : NiParticlesData() {
 }
 
-NiRotatingParticlesData::NiRotatingParticlesData(std::fstream& file, NiHeader* hdr) : NiRotatingParticlesData(hdr) {
-	Get(file);
+NiRotatingParticlesData::NiRotatingParticlesData(NiStream& stream) : NiRotatingParticlesData() {
+	Get(stream);
 }
 
 
-NiPSysData::NiPSysData(NiHeader* hdr) : NiRotatingParticlesData(hdr) {
-	hasRotationSpeeds = false;
+NiPSysData::NiPSysData() : NiRotatingParticlesData() {
 }
 
-NiPSysData::NiPSysData(std::fstream& file, NiHeader* hdr) : NiPSysData(hdr) {
-	Get(file);
+NiPSysData::NiPSysData(NiStream& stream) : NiPSysData() {
+	Get(stream);
 }
 
-void NiPSysData::Get(std::fstream& file) {
-	NiRotatingParticlesData::Get(file);
+void NiPSysData::Get(NiStream& stream) {
+	NiRotatingParticlesData::Get(stream);
 
-	file.read((char*)&hasRotationSpeeds, 1);
+	stream >> hasRotationSpeeds;
 }
 
-void NiPSysData::Put(std::fstream& file) {
-	NiRotatingParticlesData::Put(file);
+void NiPSysData::Put(NiStream& stream) {
+	NiRotatingParticlesData::Put(stream);
 
-	file.write((char*)&hasRotationSpeeds, 1);
+	stream << hasRotationSpeeds;
 }
 
-int NiPSysData::CalcBlockSize() {
-	NiRotatingParticlesData::CalcBlockSize();
+int NiPSysData::CalcBlockSize(NiVersion& version) {
+	NiRotatingParticlesData::CalcBlockSize(version);
 
 	blockSize += 1;
 
@@ -141,49 +131,48 @@ int NiPSysData::CalcBlockSize() {
 }
 
 
-NiMeshPSysData::NiMeshPSysData(NiHeader* hdr) : NiPSysData(hdr) {
-	nodeRef = 0xFFFFFFFF;
+NiMeshPSysData::NiMeshPSysData() : NiPSysData() {
 }
 
-NiMeshPSysData::NiMeshPSysData(std::fstream& file, NiHeader* hdr) : NiMeshPSysData(hdr) {
-	Get(file);
+NiMeshPSysData::NiMeshPSysData(NiStream& stream) : NiMeshPSysData() {
+	Get(stream);
 }
 
-void NiMeshPSysData::Get(std::fstream& file) {
-	NiPSysData::Get(file);
+void NiMeshPSysData::Get(NiStream& stream) {
+	NiPSysData::Get(stream);
 
-	file.read((char*)&defaultPoolSize, 4);
-	file.read((char*)&fillPoolsOnLoad, 1);
+	stream >> defaultPoolSize;
+	stream >> fillPoolsOnLoad;
 
-	file.read((char*)&numGenerations, 4);
+	stream >> numGenerations;
 	generationPoolSize.resize(numGenerations);
 	for (int i = 0; i < numGenerations; i++)
-		file.read((char*)&generationPoolSize[i], 4);
+		stream >> generationPoolSize[i];
 
-	file.read((char*)&nodeRef, 4);
+	nodeRef.Get(stream);
 }
 
-void NiMeshPSysData::Put(std::fstream& file) {
-	NiPSysData::Put(file);
+void NiMeshPSysData::Put(NiStream& stream) {
+	NiPSysData::Put(stream);
 
-	file.write((char*)&defaultPoolSize, 4);
-	file.write((char*)&fillPoolsOnLoad, 1);
+	stream << defaultPoolSize;
+	stream << fillPoolsOnLoad;
 
-	file.write((char*)&numGenerations, 4);
+	stream << numGenerations;
 	for (int i = 0; i < numGenerations; i++)
-		file.write((char*)&generationPoolSize[i], 4);
+		stream << generationPoolSize[i];
 
-	file.write((char*)&nodeRef, 4);
+	nodeRef.Put(stream);
 }
 
 void NiMeshPSysData::GetChildRefs(std::set<int*>& refs) {
 	NiPSysData::GetChildRefs(refs);
 
-	refs.insert(&nodeRef);
+	refs.insert(&nodeRef.index);
 }
 
-int NiMeshPSysData::CalcBlockSize() {
-	NiPSysData::CalcBlockSize();
+int NiMeshPSysData::CalcBlockSize(NiVersion& version) {
+	NiPSysData::CalcBlockSize(version);
 
 	blockSize += 9;
 	blockSize += numGenerations * 4;
@@ -192,33 +181,33 @@ int NiMeshPSysData::CalcBlockSize() {
 }
 
 
-BSStripPSysData::BSStripPSysData(NiHeader* hdr) : NiPSysData(hdr) {
+BSStripPSysData::BSStripPSysData() : NiPSysData() {
 }
 
-BSStripPSysData::BSStripPSysData(std::fstream& file, NiHeader* hdr) : BSStripPSysData(hdr) {
-	Get(file);
+BSStripPSysData::BSStripPSysData(NiStream& stream) : BSStripPSysData() {
+	Get(stream);
 }
 
-void BSStripPSysData::Get(std::fstream& file) {
-	NiPSysData::Get(file);
+void BSStripPSysData::Get(NiStream& stream) {
+	NiPSysData::Get(stream);
 
-	file.read((char*)&maxPointCount, 2);
-	file.read((char*)&startCapSize, 4);
-	file.read((char*)&endCapSize, 4);
-	file.read((char*)&doZPrepass, 1);
+	stream >> maxPointCount;
+	stream >> startCapSize;
+	stream >> endCapSize;
+	stream >> doZPrepass;
 }
 
-void BSStripPSysData::Put(std::fstream& file) {
-	NiPSysData::Put(file);
+void BSStripPSysData::Put(NiStream& stream) {
+	NiPSysData::Put(stream);
 
-	file.write((char*)&maxPointCount, 2);
-	file.write((char*)&startCapSize, 4);
-	file.write((char*)&endCapSize, 4);
-	file.write((char*)&doZPrepass, 1);
+	stream << maxPointCount;
+	stream << startCapSize;
+	stream << endCapSize;
+	stream << doZPrepass;
 }
 
-int BSStripPSysData::CalcBlockSize() {
-	NiPSysData::CalcBlockSize();
+int BSStripPSysData::CalcBlockSize(NiVersion& version) {
+	NiPSysData::CalcBlockSize(version);
 
 	blockSize += 11;
 
@@ -226,37 +215,38 @@ int BSStripPSysData::CalcBlockSize() {
 }
 
 
-void NiPSysModifier::Init(NiHeader* hdr) {
-	NiObject::Init(hdr);
+void NiPSysModifier::Init() {
+	NiObject::Init();
 }
 
-void NiPSysModifier::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiPSysModifier::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	name.Get(file, header);
+	name.Get(stream);
 
-	file.read((char*)&order, 4);
-	targetRef.Get(file);
-	file.read((char*)&isActive, 1);
+	stream >> order;
+	targetRef.Get(stream);
+	stream >> isActive;
 }
 
-void NiPSysModifier::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiPSysModifier::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	name.Put(file);
-	file.write((char*)&order, 4);
-	targetRef.Put(file);
-	file.write((char*)&isActive, 1);
+	name.Put(stream);
+
+	stream << order;
+	targetRef.Put(stream);
+	stream << isActive;
 }
 
-void NiPSysModifier::notifyStringDelete(int stringID) {
-	NiObject::notifyStringDelete(stringID);
+void NiPSysModifier::GetStringRefs(std::set<int*>& refs) {
+	NiObject::GetStringRefs(refs);
 
-	name.notifyStringDelete(stringID);
+	refs.insert(&name.index);
 }
 
-int NiPSysModifier::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiPSysModifier::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 13;
 
@@ -264,28 +254,28 @@ int NiPSysModifier::CalcBlockSize() {
 }
 
 
-BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSPSysStripUpdateModifier::BSPSysStripUpdateModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(std::fstream& file, NiHeader* hdr) : BSPSysStripUpdateModifier(hdr) {
-	Get(file);
+BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiStream& stream) : BSPSysStripUpdateModifier() {
+	Get(stream);
 }
 
-void BSPSysStripUpdateModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysStripUpdateModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&updateDeltaTime, 4);
+	stream >> updateDeltaTime;
 }
 
-void BSPSysStripUpdateModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysStripUpdateModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&updateDeltaTime, 4);
+	stream << updateDeltaTime;
 }
 
-int BSPSysStripUpdateModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysStripUpdateModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -293,44 +283,42 @@ int BSPSysStripUpdateModifier::CalcBlockSize() {
 }
 
 
-NiPSysSpawnModifier::NiPSysSpawnModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
-
-	numSpawnGenerations = 0;
+NiPSysSpawnModifier::NiPSysSpawnModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysSpawnModifier::NiPSysSpawnModifier(std::fstream& file, NiHeader* hdr) : NiPSysSpawnModifier(hdr) {
-	Get(file);
+NiPSysSpawnModifier::NiPSysSpawnModifier(NiStream& stream) : NiPSysSpawnModifier() {
+	Get(stream);
 }
 
-void NiPSysSpawnModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysSpawnModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&numSpawnGenerations, 2);
-	file.read((char*)&percentSpawned, 4);
-	file.read((char*)&minSpawned, 2);
-	file.read((char*)&maxSpawned, 2);
-	file.read((char*)&spawnSpeedVariation, 4);
-	file.read((char*)&spawnDirVariation, 4);
-	file.read((char*)&lifeSpan, 4);
-	file.read((char*)&lifeSpanVariation, 4);
+	stream >> numSpawnGenerations;
+	stream >> percentSpawned;
+	stream >> minSpawned;
+	stream >> maxSpawned;
+	stream >> spawnSpeedVariation;
+	stream >> spawnDirVariation;
+	stream >> lifeSpan;
+	stream >> lifeSpanVariation;
 }
 
-void NiPSysSpawnModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysSpawnModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&numSpawnGenerations, 2);
-	file.write((char*)&percentSpawned, 4);
-	file.write((char*)&minSpawned, 2);
-	file.write((char*)&maxSpawned, 2);
-	file.write((char*)&spawnSpeedVariation, 4);
-	file.write((char*)&spawnDirVariation, 4);
-	file.write((char*)&lifeSpan, 4);
-	file.write((char*)&lifeSpanVariation, 4);
+	stream << numSpawnGenerations;
+	stream << percentSpawned;
+	stream << minSpawned;
+	stream << maxSpawned;
+	stream << spawnSpeedVariation;
+	stream << spawnDirVariation;
+	stream << lifeSpan;
+	stream << lifeSpanVariation;
 }
 
-int NiPSysSpawnModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysSpawnModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 26;
 
@@ -338,26 +326,26 @@ int NiPSysSpawnModifier::CalcBlockSize() {
 }
 
 
-NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysAgeDeathModifier::NiPSysAgeDeathModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(std::fstream& file, NiHeader* hdr) : NiPSysAgeDeathModifier(hdr) {
-	Get(file);
+NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiStream& stream) : NiPSysAgeDeathModifier() {
+	Get(stream);
 }
 
-void NiPSysAgeDeathModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysAgeDeathModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&spawnOnDeath, 1);
-	spawnModifierRef.Get(file);
+	stream >> spawnOnDeath;
+	spawnModifierRef.Get(stream);
 }
 
-void NiPSysAgeDeathModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysAgeDeathModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&spawnOnDeath, 1);
-	spawnModifierRef.Put(file);
+	stream << spawnOnDeath;
+	spawnModifierRef.Put(stream);
 }
 
 void NiPSysAgeDeathModifier::GetChildRefs(std::set<int*>& refs) {
@@ -366,8 +354,8 @@ void NiPSysAgeDeathModifier::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&spawnModifierRef.index);
 }
 
-int NiPSysAgeDeathModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysAgeDeathModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 5;
 
@@ -375,34 +363,34 @@ int NiPSysAgeDeathModifier::CalcBlockSize() {
 }
 
 
-BSPSysLODModifier::BSPSysLODModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSPSysLODModifier::BSPSysLODModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysLODModifier::BSPSysLODModifier(std::fstream& file, NiHeader* hdr) : BSPSysLODModifier(hdr) {
-	Get(file);
+BSPSysLODModifier::BSPSysLODModifier(NiStream& stream) : BSPSysLODModifier() {
+	Get(stream);
 }
 
-void BSPSysLODModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysLODModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&lodBeginDistance, 4);
-	file.read((char*)&lodEndDistance, 4);
-	file.read((char*)&unknownFadeFactor1, 4);
-	file.read((char*)&unknownFadeFactor2, 4);
+	stream >> lodBeginDistance;
+	stream >> lodEndDistance;
+	stream >> unknownFadeFactor1;
+	stream >> unknownFadeFactor2;
 }
 
-void BSPSysLODModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysLODModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&lodBeginDistance, 4);
-	file.write((char*)&lodEndDistance, 4);
-	file.write((char*)&unknownFadeFactor1, 4);
-	file.write((char*)&unknownFadeFactor2, 4);
+	stream << lodBeginDistance;
+	stream << lodEndDistance;
+	stream << unknownFadeFactor1;
+	stream << unknownFadeFactor2;
 }
 
-int BSPSysLODModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysLODModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 16;
 
@@ -410,44 +398,44 @@ int BSPSysLODModifier::CalcBlockSize() {
 }
 
 
-BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSPSysSimpleColorModifier::BSPSysSimpleColorModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(std::fstream& file, NiHeader* hdr) : BSPSysSimpleColorModifier(hdr) {
-	Get(file);
+BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiStream& stream) : BSPSysSimpleColorModifier() {
+	Get(stream);
 }
 
-void BSPSysSimpleColorModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysSimpleColorModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&fadeInPercent, 4);
-	file.read((char*)&fadeOutPercent, 4);
-	file.read((char*)&color1EndPercent, 4);
-	file.read((char*)&color2StartPercent, 4);
-	file.read((char*)&color2EndPercent, 4);
-	file.read((char*)&color3StartPercent, 4);
-	file.read((char*)&color1, 16);
-	file.read((char*)&color2, 16);
-	file.read((char*)&color3, 16);
+	stream >> fadeInPercent;
+	stream >> fadeOutPercent;
+	stream >> color1EndPercent;
+	stream >> color2StartPercent;
+	stream >> color2EndPercent;
+	stream >> color3StartPercent;
+	stream >> color1;
+	stream >> color2;
+	stream >> color3;
 }
 
-void BSPSysSimpleColorModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysSimpleColorModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&fadeInPercent, 4);
-	file.write((char*)&fadeOutPercent, 4);
-	file.write((char*)&color1EndPercent, 4);
-	file.write((char*)&color2StartPercent, 4);
-	file.write((char*)&color2EndPercent, 4);
-	file.write((char*)&color3StartPercent, 4);
-	file.write((char*)&color1, 16);
-	file.write((char*)&color2, 16);
-	file.write((char*)&color3, 16);
+	stream << fadeInPercent;
+	stream << fadeOutPercent;
+	stream << color1EndPercent;
+	stream << color2StartPercent;
+	stream << color2EndPercent;
+	stream << color3StartPercent;
+	stream << color1;
+	stream << color2;
+	stream << color3;
 }
 
-int BSPSysSimpleColorModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysSimpleColorModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 72;
 
@@ -455,40 +443,40 @@ int BSPSysSimpleColorModifier::CalcBlockSize() {
 }
 
 
-NiPSysRotationModifier::NiPSysRotationModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysRotationModifier::NiPSysRotationModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysRotationModifier::NiPSysRotationModifier(std::fstream& file, NiHeader* hdr) : NiPSysRotationModifier(hdr) {
-	Get(file);
+NiPSysRotationModifier::NiPSysRotationModifier(NiStream& stream) : NiPSysRotationModifier() {
+	Get(stream);
 }
 
-void NiPSysRotationModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysRotationModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&initialSpeed, 4);
-	file.read((char*)&initialSpeedVariation, 4);
-	file.read((char*)&initialAngle, 4);
-	file.read((char*)&initialAngleVariation, 4);
-	file.read((char*)&randomSpeedSign, 1);
-	file.read((char*)&randomInitialAxis, 1);
-	file.read((char*)&initialAxis, 12);
+	stream >> initialSpeed;
+	stream >> initialSpeedVariation;
+	stream >> initialAngle;
+	stream >> initialAngleVariation;
+	stream >> randomSpeedSign;
+	stream >> randomInitialAxis;
+	stream >> initialAxis;
 }
 
-void NiPSysRotationModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysRotationModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&initialSpeed, 4);
-	file.write((char*)&initialSpeedVariation, 4);
-	file.write((char*)&initialAngle, 4);
-	file.write((char*)&initialAngleVariation, 4);
-	file.write((char*)&randomSpeedSign, 1);
-	file.write((char*)&randomInitialAxis, 1);
-	file.write((char*)&initialAxis, 12);
+	stream << initialSpeed;
+	stream << initialSpeedVariation;
+	stream << initialAngle;
+	stream << initialAngleVariation;
+	stream << randomSpeedSign;
+	stream << randomInitialAxis;
+	stream << initialAxis;
 }
 
-int NiPSysRotationModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysRotationModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 30;
 
@@ -496,35 +484,33 @@ int NiPSysRotationModifier::CalcBlockSize() {
 }
 
 
-BSPSysScaleModifier::BSPSysScaleModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
-
-	numFloats = 0;
+BSPSysScaleModifier::BSPSysScaleModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysScaleModifier::BSPSysScaleModifier(std::fstream& file, NiHeader* hdr) : BSPSysScaleModifier(hdr) {
-	Get(file);
+BSPSysScaleModifier::BSPSysScaleModifier(NiStream& stream) : BSPSysScaleModifier() {
+	Get(stream);
 }
 
-void BSPSysScaleModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysScaleModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&numFloats, 4);
+	stream >> numFloats;
 	floats.resize(numFloats);
 	for (int i = 0; i < numFloats; i++)
-		file.read((char*)&floats[i], 4);
+		stream >> floats[i];
 }
 
-void BSPSysScaleModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysScaleModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&numFloats, 4);
+	stream << numFloats;
 	for (int i = 0; i < numFloats; i++)
-		file.write((char*)&floats[i], 4);
+		stream << floats[i];
 }
 
-int BSPSysScaleModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysScaleModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += numFloats * 4;
@@ -533,38 +519,38 @@ int BSPSysScaleModifier::CalcBlockSize() {
 }
 
 
-NiPSysGravityModifier::NiPSysGravityModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysGravityModifier::NiPSysGravityModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysGravityModifier::NiPSysGravityModifier(std::fstream& file, NiHeader* hdr) : NiPSysGravityModifier(hdr) {
-	Get(file);
+NiPSysGravityModifier::NiPSysGravityModifier(NiStream& stream) : NiPSysGravityModifier() {
+	Get(stream);
 }
 
-void NiPSysGravityModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysGravityModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	gravityObjRef.Get(file);
-	file.read((char*)&gravityAxis, 12);
-	file.read((char*)&decay, 4);
-	file.read((char*)&strength, 4);
-	file.read((char*)&forceType, 4);
-	file.read((char*)&turbulence, 4);
-	file.read((char*)&turbulenceScale, 4);
-	file.read((char*)&worldAligned, 1);
+	gravityObjRef.Get(stream);
+	stream >> gravityAxis;
+	stream >> decay;
+	stream >> strength;
+	stream >> forceType;
+	stream >> turbulence;
+	stream >> turbulenceScale;
+	stream >> worldAligned;
 }
 
-void NiPSysGravityModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysGravityModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	gravityObjRef.Put(file);
-	file.write((char*)&gravityAxis, 12);
-	file.write((char*)&decay, 4);
-	file.write((char*)&strength, 4);
-	file.write((char*)&forceType, 4);
-	file.write((char*)&turbulence, 4);
-	file.write((char*)&turbulenceScale, 4);
-	file.write((char*)&worldAligned, 1);
+	gravityObjRef.Put(stream);
+	stream << gravityAxis;
+	stream << decay;
+	stream << strength;
+	stream << forceType;
+	stream << turbulence;
+	stream << turbulenceScale;
+	stream << worldAligned;
 }
 
 void NiPSysGravityModifier::GetChildRefs(std::set<int*>& refs) {
@@ -573,8 +559,8 @@ void NiPSysGravityModifier::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&gravityObjRef.index);
 }
 
-int NiPSysGravityModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysGravityModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 37;
 
@@ -582,37 +568,37 @@ int NiPSysGravityModifier::CalcBlockSize() {
 }
 
 
-NiPSysPositionModifier::NiPSysPositionModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysPositionModifier::NiPSysPositionModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysPositionModifier::NiPSysPositionModifier(std::fstream& file, NiHeader* hdr) : NiPSysPositionModifier(hdr) {
-	Get(file);
+NiPSysPositionModifier::NiPSysPositionModifier(NiStream& stream) : NiPSysPositionModifier() {
+	Get(stream);
 }
 
 
-NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(std::fstream& file, NiHeader* hdr) : NiPSysBoundUpdateModifier(hdr) {
-	Get(file);
+NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiStream& stream) : NiPSysBoundUpdateModifier() {
+	Get(stream);
 }
 
-void NiPSysBoundUpdateModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysBoundUpdateModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&updateSkip, 2);
+	stream >> updateSkip;
 }
 
-void NiPSysBoundUpdateModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysBoundUpdateModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&updateSkip, 2);
+	stream << updateSkip;
 }
 
-int NiPSysBoundUpdateModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysBoundUpdateModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 2;
 
@@ -620,32 +606,32 @@ int NiPSysBoundUpdateModifier::CalcBlockSize() {
 }
 
 
-NiPSysDragModifier::NiPSysDragModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysDragModifier::NiPSysDragModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysDragModifier::NiPSysDragModifier(std::fstream& file, NiHeader* hdr) : NiPSysDragModifier(hdr) {
-	Get(file);
+NiPSysDragModifier::NiPSysDragModifier(NiStream& stream) : NiPSysDragModifier() {
+	Get(stream);
 }
 
-void NiPSysDragModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysDragModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	parentRef.Get(file);
-	file.read((char*)&dragAxis, 12);
-	file.read((char*)&percentage, 4);
-	file.read((char*)&range, 4);
-	file.read((char*)&rangeFalloff, 4);
+	parentRef.Get(stream);
+	stream >> dragAxis;
+	stream >> percentage;
+	stream >> range;
+	stream >> rangeFalloff;
 }
 
-void NiPSysDragModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysDragModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	parentRef.Put(file);
-	file.write((char*)&dragAxis, 12);
-	file.write((char*)&percentage, 4);
-	file.write((char*)&range, 4);
-	file.write((char*)&rangeFalloff, 4);
+	parentRef.Put(stream);
+	stream << dragAxis;
+	stream << percentage;
+	stream << range;
+	stream << rangeFalloff;
 }
 
 void NiPSysDragModifier::GetChildRefs(std::set<int*>& refs) {
@@ -654,8 +640,8 @@ void NiPSysDragModifier::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&parentRef.index);
 }
 
-int NiPSysDragModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysDragModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 28;
 
@@ -663,34 +649,34 @@ int NiPSysDragModifier::CalcBlockSize() {
 }
 
 
-BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(std::fstream& file, NiHeader* hdr) : BSPSysInheritVelocityModifier(hdr) {
-	Get(file);
+BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiStream& stream) : BSPSysInheritVelocityModifier() {
+	Get(stream);
 }
 
-void BSPSysInheritVelocityModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysInheritVelocityModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	targetNodeRef.Get(file);
-	file.read((char*)&changeToInherit, 4);
-	file.read((char*)&velocityMult, 4);
-	file.read((char*)&velocityVar, 4);
+	targetNodeRef.Get(stream);
+	stream >> changeToInherit;
+	stream >> velocityMult;
+	stream >> velocityVar;
 }
 
-void BSPSysInheritVelocityModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysInheritVelocityModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	targetNodeRef.Put(file);
-	file.write((char*)&changeToInherit, 4);
-	file.write((char*)&velocityMult, 4);
-	file.write((char*)&velocityVar, 4);
+	targetNodeRef.Put(stream);
+	stream << changeToInherit;
+	stream << velocityMult;
+	stream << velocityVar;
 }
 
-int BSPSysInheritVelocityModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysInheritVelocityModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 16;
 
@@ -698,40 +684,40 @@ int BSPSysInheritVelocityModifier::CalcBlockSize() {
 }
 
 
-BSPSysSubTexModifier::BSPSysSubTexModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSPSysSubTexModifier::BSPSysSubTexModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysSubTexModifier::BSPSysSubTexModifier(std::fstream& file, NiHeader* hdr) : BSPSysSubTexModifier(hdr) {
-	Get(file);
+BSPSysSubTexModifier::BSPSysSubTexModifier(NiStream& stream) : BSPSysSubTexModifier() {
+	Get(stream);
 }
 
-void BSPSysSubTexModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysSubTexModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&startFrame, 4);
-	file.read((char*)&startFrameVariation, 4);
-	file.read((char*)&endFrame, 4);
-	file.read((char*)&loopStartFrame, 4);
-	file.read((char*)&loopStartFrameVariation, 4);
-	file.read((char*)&frameCount, 4);
-	file.read((char*)&frameCountVariation, 4);
+	stream >> startFrame;
+	stream >> startFrameVariation;
+	stream >> endFrame;
+	stream >> loopStartFrame;
+	stream >> loopStartFrameVariation;
+	stream >> frameCount;
+	stream >> frameCountVariation;
 }
 
-void BSPSysSubTexModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysSubTexModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&startFrame, 4);
-	file.write((char*)&startFrameVariation, 4);
-	file.write((char*)&endFrame, 4);
-	file.write((char*)&loopStartFrame, 4);
-	file.write((char*)&loopStartFrameVariation, 4);
-	file.write((char*)&frameCount, 4);
-	file.write((char*)&frameCountVariation, 4);
+	stream << startFrame;
+	stream << startFrameVariation;
+	stream << endFrame;
+	stream << loopStartFrame;
+	stream << loopStartFrameVariation;
+	stream << frameCount;
+	stream << frameCountVariation;
 }
 
-int BSPSysSubTexModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysSubTexModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 28;
 
@@ -739,34 +725,34 @@ int BSPSysSubTexModifier::CalcBlockSize() {
 }
 
 
-NiPSysBombModifier::NiPSysBombModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysBombModifier::NiPSysBombModifier() {
+	NiPSysModifier::Init();
 }
 
-NiPSysBombModifier::NiPSysBombModifier(std::fstream& file, NiHeader* hdr) : NiPSysBombModifier(hdr) {
-	Get(file);
+NiPSysBombModifier::NiPSysBombModifier(NiStream& stream) : NiPSysBombModifier() {
+	Get(stream);
 }
 
-void NiPSysBombModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysBombModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	bombNodeRef.Get(file);
-	file.read((char*)&bombAxis, 12);
-	file.read((char*)&decay, 4);
-	file.read((char*)&deltaV, 4);
-	file.read((char*)&decayType, 4);
-	file.read((char*)&symmetryType, 4);
+	bombNodeRef.Get(stream);
+	stream >> bombAxis;
+	stream >> decay;
+	stream >> deltaV;
+	stream >> decayType;
+	stream >> symmetryType;
 }
 
-void NiPSysBombModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysBombModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	bombNodeRef.Put(file);
-	file.write((char*)&bombAxis, 12);
-	file.write((char*)&decay, 4);
-	file.write((char*)&deltaV, 4);
-	file.write((char*)&decayType, 4);
-	file.write((char*)&symmetryType, 4);
+	bombNodeRef.Put(stream);
+	stream << bombAxis;
+	stream << decay;
+	stream << deltaV;
+	stream << decayType;
+	stream << symmetryType;
 }
 
 void NiPSysBombModifier::GetChildRefs(std::set<int*>& refs) {
@@ -775,8 +761,8 @@ void NiPSysBombModifier::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&bombNodeRef.index);
 }
 
-int NiPSysBombModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysBombModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 32;
 
@@ -784,28 +770,28 @@ int NiPSysBombModifier::CalcBlockSize() {
 }
 
 
-BSWindModifier::BSWindModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSWindModifier::BSWindModifier() {
+	NiPSysModifier::Init();
 }
 
-BSWindModifier::BSWindModifier(std::fstream& file, NiHeader* hdr) : BSWindModifier(hdr) {
-	Get(file);
+BSWindModifier::BSWindModifier(NiStream& stream) : BSWindModifier() {
+	Get(stream);
 }
 
-void BSWindModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSWindModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&strength, 4);
+	stream >> strength;
 }
 
-void BSWindModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSWindModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&strength, 4);
+	stream << strength;
 }
 
-int BSWindModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSWindModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -813,32 +799,32 @@ int BSWindModifier::CalcBlockSize() {
 }
 
 
-BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(std::fstream& file, NiHeader* hdr) : BSPSysRecycleBoundModifier(hdr) {
-	Get(file);
+BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiStream& stream) : BSPSysRecycleBoundModifier() {
+	Get(stream);
 }
 
-void BSPSysRecycleBoundModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysRecycleBoundModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&boundOffset, 12);
-	file.read((char*)&boundExtent, 12);
-	targetNodeRef.Get(file);
+	stream >> boundOffset;
+	stream >> boundExtent;
+	targetNodeRef.Get(stream);
 }
 
-void BSPSysRecycleBoundModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysRecycleBoundModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&boundOffset, 12);
-	file.write((char*)&boundExtent, 12);
-	targetNodeRef.Put(file);
+	stream << boundOffset;
+	stream << boundExtent;
+	targetNodeRef.Put(stream);
 }
 
-int BSPSysRecycleBoundModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysRecycleBoundModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 28;
 
@@ -846,26 +832,26 @@ int BSPSysRecycleBoundModifier::CalcBlockSize() {
 }
 
 
-BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier() {
+	NiPSysModifier::Init();
 }
 
-BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(std::fstream& file, NiHeader* hdr) : BSPSysHavokUpdateModifier(hdr) {
-	Get(file);
+BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiStream& stream) : BSPSysHavokUpdateModifier() {
+	Get(stream);
 }
 
-void BSPSysHavokUpdateModifier::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void BSPSysHavokUpdateModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	nodeRefs.Get(file);
-	modifierRef.Get(file);
+	nodeRefs.Get(stream);
+	modifierRef.Get(stream);
 }
 
-void BSPSysHavokUpdateModifier::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void BSPSysHavokUpdateModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	nodeRefs.Put(file);
-	modifierRef.Put(file);
+	nodeRefs.Put(stream);
+	modifierRef.Put(stream);
 }
 
 void BSPSysHavokUpdateModifier::GetChildRefs(std::set<int*>& refs) {
@@ -875,8 +861,8 @@ void BSPSysHavokUpdateModifier::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&modifierRef.index);
 }
 
-int BSPSysHavokUpdateModifier::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int BSPSysHavokUpdateModifier::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 8;
 	blockSize += nodeRefs.GetSize() * 4;
@@ -885,25 +871,25 @@ int BSPSysHavokUpdateModifier::CalcBlockSize() {
 }
 
 
-BSMasterParticleSystem::BSMasterParticleSystem(NiHeader* hdr) : NiNode(hdr) {
+BSMasterParticleSystem::BSMasterParticleSystem() : NiNode() {
 }
 
-BSMasterParticleSystem::BSMasterParticleSystem(std::fstream& file, NiHeader* hdr) : BSMasterParticleSystem(hdr) {
-	Get(file);
+BSMasterParticleSystem::BSMasterParticleSystem(NiStream& stream) : BSMasterParticleSystem() {
+	Get(stream);
 }
 
-void BSMasterParticleSystem::Get(std::fstream& file) {
-	NiNode::Get(file);
+void BSMasterParticleSystem::Get(NiStream& stream) {
+	NiNode::Get(stream);
 
-	file.read((char*)&maxEmitterObjs, 2);
-	particleSysRefs.Get(file);
+	stream >> maxEmitterObjs;
+	particleSysRefs.Get(stream);
 }
 
-void BSMasterParticleSystem::Put(std::fstream& file) {
-	NiNode::Put(file);
+void BSMasterParticleSystem::Put(NiStream& stream) {
+	NiNode::Put(stream);
 
-	file.write((char*)&maxEmitterObjs, 2);
-	particleSysRefs.Put(file);
+	stream << maxEmitterObjs;
+	particleSysRefs.Put(stream);
 }
 
 void BSMasterParticleSystem::GetChildRefs(std::set<int*>& refs) {
@@ -912,8 +898,8 @@ void BSMasterParticleSystem::GetChildRefs(std::set<int*>& refs) {
 	particleSysRefs.GetIndexPtrs(refs);
 }
 
-int BSMasterParticleSystem::CalcBlockSize() {
-	NiNode::CalcBlockSize();
+int BSMasterParticleSystem::CalcBlockSize(NiVersion& version) {
+	NiNode::CalcBlockSize(version);
 
 	blockSize += 6;
 	blockSize += particleSysRefs.GetSize() * 4;
@@ -922,117 +908,124 @@ int BSMasterParticleSystem::CalcBlockSize() {
 }
 
 
-NiParticleSystem::NiParticleSystem(NiHeader* hdr) {
-	NiAVObject::Init(hdr);
+NiParticleSystem::NiParticleSystem() {
+	NiAVObject::Init();
 }
 
-NiParticleSystem::NiParticleSystem(std::fstream& file, NiHeader* hdr) : NiParticleSystem(hdr) {
-	Get(file);
+NiParticleSystem::NiParticleSystem(NiStream& stream) : NiParticleSystem() {
+	Get(stream);
 }
 
-void NiParticleSystem::Get(std::fstream& file) {
-	NiAVObject::Get(file);
+void NiParticleSystem::Get(NiStream& stream) {
+	NiAVObject::Get(stream);
 
-	if (header->GetUserVersion2() >= 100) {
-		file.read((char*)&bounds, 16);
-		skinInstanceRef.Get(file);
-		shaderPropertyRef.Get(file);
-		alphaPropertyRef.Get(file);
-		file.read((char*)&vertFlags1, 1);
-		file.read((char*)&vertFlags2, 1);
-		file.read((char*)&vertFlags3, 1);
-		file.read((char*)&vertFlags4, 1);
-		file.read((char*)&vertFlags5, 1);
-		file.read((char*)&vertFlags6, 1);
-		file.read((char*)&vertFlags7, 1);
-		file.read((char*)&vertFlags8, 1);
+	if (stream.GetVersion().User2() >= 100) {
+		stream >> bounds;
+		skinInstanceRef.Get(stream);
+		shaderPropertyRef.Get(stream);
+		alphaPropertyRef.Get(stream);
+		stream >> vertFlags1;
+		stream >> vertFlags2;
+		stream >> vertFlags3;
+		stream >> vertFlags4;
+		stream >> vertFlags5;
+		stream >> vertFlags6;
+		stream >> vertFlags7;
+		stream >> vertFlags8;
 	}
 	else {
-		dataRef.Get(file);
+		dataRef.Get(stream);
 		psysDataRef.index = dataRef.index;
-		skinInstanceRef.Get(file);
+		skinInstanceRef.Get(stream);
 
-		file.read((char*)&numMaterials, 4);
+		stream >> numMaterials;
 		materialNameRefs.resize(numMaterials);
 		for (int i = 0; i < numMaterials; i++)
-			materialNameRefs[i].Get(file, header);
+			materialNameRefs[i].Get(stream);
 
 		materials.resize(numMaterials);
 		for (int i = 0; i < numMaterials; i++)
-			file.read((char*)&materials[i], 4);
+			stream >> materials[i];
 
-		file.read((char*)&activeMaterial, 4);
-		file.read((char*)&defaultMatNeedsUpdate, 1);
+		stream >> activeMaterial;
+		stream >> defaultMatNeedsUpdate;
 
-		if (header->GetUserVersion() >= 12) {
-			shaderPropertyRef.Get(file);
-			alphaPropertyRef.Get(file);
+		if (stream.GetVersion().User() >= 12) {
+			shaderPropertyRef.Get(stream);
+			alphaPropertyRef.Get(stream);
 		}
 	}
 
-	if (header->GetUserVersion() >= 12) {
-		file.read((char*)&farBegin, 2);
-		file.read((char*)&farEnd, 2);
-		file.read((char*)&nearBegin, 2);
-		file.read((char*)&nearEnd, 2);
+	if (stream.GetVersion().User() >= 12) {
+		stream >> farBegin;
+		stream >> farEnd;
+		stream >> nearBegin;
+		stream >> nearEnd;
 
-		if (header->GetUserVersion2() >= 100)
-			psysDataRef.Get(file);
+		if (stream.GetVersion().User2() >= 100)
+			psysDataRef.Get(stream);
 	}
 
-	file.read((char*)&isWorldSpace, 1);
-	modifierRefs.Get(file);
+	stream >> isWorldSpace;
+	modifierRefs.Get(stream);
 }
 
-void NiParticleSystem::Put(std::fstream& file) {
-	NiAVObject::Put(file);
+void NiParticleSystem::Put(NiStream& stream) {
+	NiAVObject::Put(stream);
 
-	if (header->GetUserVersion2() >= 100) {
-		file.write((char*)&bounds, 16);
-		skinInstanceRef.Put(file);
-		shaderPropertyRef.Put(file);
-		alphaPropertyRef.Put(file);
-		file.write((char*)&vertFlags1, 1);
-		file.write((char*)&vertFlags2, 1);
-		file.write((char*)&vertFlags3, 1);
-		file.write((char*)&vertFlags4, 1);
-		file.write((char*)&vertFlags5, 1);
-		file.write((char*)&vertFlags6, 1);
-		file.write((char*)&vertFlags7, 1);
-		file.write((char*)&vertFlags8, 1);
+	if (stream.GetVersion().User2() >= 100) {
+		stream << bounds;
+		skinInstanceRef.Put(stream);
+		shaderPropertyRef.Put(stream);
+		alphaPropertyRef.Put(stream);
+		stream << vertFlags1;
+		stream << vertFlags2;
+		stream << vertFlags3;
+		stream << vertFlags4;
+		stream << vertFlags5;
+		stream << vertFlags6;
+		stream << vertFlags7;
+		stream << vertFlags8;
 	}
 	else {
-		dataRef.Put(file);
-		skinInstanceRef.Put(file);
+		dataRef.Put(stream);
+		skinInstanceRef.Put(stream);
 
-		file.write((char*)&numMaterials, 4);
+		stream << numMaterials;
 		for (int i = 0; i < numMaterials; i++)
-			materialNameRefs[i].Put(file);
+			materialNameRefs[i].Put(stream);
 
 		for (int i = 0; i < numMaterials; i++)
-			file.write((char*)&materials[i], 4);
+			stream << materials[i];
 
-		file.write((char*)&activeMaterial, 4);
-		file.write((char*)&defaultMatNeedsUpdate, 1);
+		stream << activeMaterial;
+		stream << defaultMatNeedsUpdate;
 
-		if (header->GetUserVersion() >= 12) {
-			shaderPropertyRef.Put(file);
-			alphaPropertyRef.Put(file);
+		if (stream.GetVersion().User() >= 12) {
+			shaderPropertyRef.Put(stream);
+			alphaPropertyRef.Put(stream);
 		}
 	}
 
-	if (header->GetUserVersion() >= 12) {
-		file.write((char*)&farBegin, 2);
-		file.write((char*)&farEnd, 2);
-		file.write((char*)&nearBegin, 2);
-		file.write((char*)&nearEnd, 2);
+	if (stream.GetVersion().User() >= 12) {
+		stream << farBegin;
+		stream << farEnd;
+		stream << nearBegin;
+		stream << nearEnd;
 
-		if (header->GetUserVersion2() >= 100)
-			psysDataRef.Put(file);
+		if (stream.GetVersion().User2() >= 100)
+			psysDataRef.Put(stream);
 	}
 
-	file.write((char*)&isWorldSpace, 1);
-	modifierRefs.Put(file);
+	stream << isWorldSpace;
+	modifierRefs.Put(stream);
+}
+
+void NiParticleSystem::GetStringRefs(std::set<int*>& refs) {
+	NiAVObject::GetStringRefs(refs);
+
+	for (auto &m : materialNameRefs)
+		refs.insert(&m.index);
 }
 
 void NiParticleSystem::GetChildRefs(std::set<int*>& refs) {
@@ -1046,27 +1039,27 @@ void NiParticleSystem::GetChildRefs(std::set<int*>& refs) {
 	modifierRefs.GetIndexPtrs(refs);
 }
 
-int NiParticleSystem::CalcBlockSize() {
-	NiAVObject::CalcBlockSize();
+int NiParticleSystem::CalcBlockSize(NiVersion& version) {
+	NiAVObject::CalcBlockSize(version);
 
 	blockSize += 5;
 	blockSize += modifierRefs.GetSize() * 4;
 
-	if (header->GetUserVersion2() >= 100) {
+	if (version.User2() >= 100) {
 		blockSize += 36;
 	}
 	else {
 		blockSize += 17;
 		blockSize += numMaterials * 8;
 
-		if (header->GetUserVersion() >= 12)
+		if (version.User() >= 12)
 			blockSize += 8;
 	}
 
-	if (header->GetUserVersion() >= 12) {
+	if (version.User() >= 12) {
 		blockSize += 8;
 
-		if (header->GetUserVersion2() >= 100)
+		if (version.User2() >= 100)
 			blockSize += 4;
 	}
 
@@ -1074,48 +1067,48 @@ int NiParticleSystem::CalcBlockSize() {
 }
 
 
-NiMeshParticleSystem::NiMeshParticleSystem(NiHeader* hdr) : NiParticleSystem(hdr) {
+NiMeshParticleSystem::NiMeshParticleSystem() : NiParticleSystem() {
 }
 
-NiMeshParticleSystem::NiMeshParticleSystem(std::fstream& file, NiHeader* hdr) : NiMeshParticleSystem(hdr) {
-	Get(file);
-}
-
-
-BSStripParticleSystem::BSStripParticleSystem(NiHeader* hdr) : NiParticleSystem(hdr) {
-}
-
-BSStripParticleSystem::BSStripParticleSystem(std::fstream& file, NiHeader* hdr) : BSStripParticleSystem(hdr) {
-	Get(file);
+NiMeshParticleSystem::NiMeshParticleSystem(NiStream& stream) : NiMeshParticleSystem() {
+	Get(stream);
 }
 
 
-void NiPSysCollider::Init(NiHeader* hdr) {
-	NiObject::Init(hdr);
+BSStripParticleSystem::BSStripParticleSystem() : NiParticleSystem() {
 }
 
-void NiPSysCollider::Get(std::fstream& file) {
-	NiObject::Get(file);
-
-	file.read((char*)&bounce, 4);
-	file.read((char*)&spawnOnCollide, 1);
-	file.read((char*)&dieOnCollide, 1);
-	spawnModifierRef.Get(file);
-	managerRef.Get(file);
-	nextColliderRef.Get(file);
-	colliderNodeRef.Get(file);
+BSStripParticleSystem::BSStripParticleSystem(NiStream& stream) : BSStripParticleSystem() {
+	Get(stream);
 }
 
-void NiPSysCollider::Put(std::fstream& file) {
-	NiObject::Put(file);
 
-	file.write((char*)&bounce, 4);
-	file.write((char*)&spawnOnCollide, 1);
-	file.write((char*)&dieOnCollide, 1);
-	spawnModifierRef.Put(file);
-	managerRef.Put(file);
-	nextColliderRef.Put(file);
-	colliderNodeRef.Put(file);
+void NiPSysCollider::Init() {
+	NiObject::Init();
+}
+
+void NiPSysCollider::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> bounce;
+	stream >> spawnOnCollide;
+	stream >> dieOnCollide;
+	spawnModifierRef.Get(stream);
+	managerRef.Get(stream);
+	nextColliderRef.Get(stream);
+	colliderNodeRef.Get(stream);
+}
+
+void NiPSysCollider::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	stream << bounce;
+	stream << spawnOnCollide;
+	stream << dieOnCollide;
+	spawnModifierRef.Put(stream);
+	managerRef.Put(stream);
+	nextColliderRef.Put(stream);
+	colliderNodeRef.Put(stream);
 }
 
 void NiPSysCollider::GetChildRefs(std::set<int*>& refs) {
@@ -1127,8 +1120,8 @@ void NiPSysCollider::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&colliderNodeRef.index);
 }
 
-int NiPSysCollider::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiPSysCollider::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 22;
 
@@ -1136,28 +1129,28 @@ int NiPSysCollider::CalcBlockSize() {
 }
 
 
-NiPSysSphericalCollider::NiPSysSphericalCollider(NiHeader* hdr) {
-	NiPSysCollider::Init(hdr);
+NiPSysSphericalCollider::NiPSysSphericalCollider() {
+	NiPSysCollider::Init();
 }
 
-NiPSysSphericalCollider::NiPSysSphericalCollider(std::fstream& file, NiHeader* hdr) : NiPSysSphericalCollider(hdr) {
-	Get(file);
+NiPSysSphericalCollider::NiPSysSphericalCollider(NiStream& stream) : NiPSysSphericalCollider() {
+	Get(stream);
 }
 
-void NiPSysSphericalCollider::Get(std::fstream& file) {
-	NiPSysCollider::Get(file);
+void NiPSysSphericalCollider::Get(NiStream& stream) {
+	NiPSysCollider::Get(stream);
 
-	file.read((char*)&radius, 4);
+	stream >> radius;
 }
 
-void NiPSysSphericalCollider::Put(std::fstream& file) {
-	NiPSysCollider::Put(file);
+void NiPSysSphericalCollider::Put(NiStream& stream) {
+	NiPSysCollider::Put(stream);
 
-	file.write((char*)&radius, 4);
+	stream << radius;
 }
 
-int NiPSysSphericalCollider::CalcBlockSize() {
-	NiPSysCollider::CalcBlockSize();
+int NiPSysSphericalCollider::CalcBlockSize(NiVersion& version) {
+	NiPSysCollider::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -1165,34 +1158,34 @@ int NiPSysSphericalCollider::CalcBlockSize() {
 }
 
 
-NiPSysPlanarCollider::NiPSysPlanarCollider(NiHeader* hdr) {
-	NiPSysCollider::Init(hdr);
+NiPSysPlanarCollider::NiPSysPlanarCollider() {
+	NiPSysCollider::Init();
 }
 
-NiPSysPlanarCollider::NiPSysPlanarCollider(std::fstream& file, NiHeader* hdr) : NiPSysPlanarCollider(hdr) {
-	Get(file);
+NiPSysPlanarCollider::NiPSysPlanarCollider(NiStream& stream) : NiPSysPlanarCollider() {
+	Get(stream);
 }
 
-void NiPSysPlanarCollider::Get(std::fstream& file) {
-	NiPSysCollider::Get(file);
+void NiPSysPlanarCollider::Get(NiStream& stream) {
+	NiPSysCollider::Get(stream);
 
-	file.read((char*)&width, 4);
-	file.read((char*)&height, 4);
-	file.read((char*)&xAxis, 12);
-	file.read((char*)&yAxis, 12);
+	stream >> width;
+	stream >> height;
+	stream >> xAxis;
+	stream >> yAxis;
 }
 
-void NiPSysPlanarCollider::Put(std::fstream& file) {
-	NiPSysCollider::Put(file);
+void NiPSysPlanarCollider::Put(NiStream& stream) {
+	NiPSysCollider::Put(stream);
 
-	file.write((char*)&width, 4);
-	file.write((char*)&height, 4);
-	file.write((char*)&xAxis, 12);
-	file.write((char*)&yAxis, 12);
+	stream << width;
+	stream << height;
+	stream << xAxis;
+	stream << yAxis;
 }
 
-int NiPSysPlanarCollider::CalcBlockSize() {
-	NiPSysCollider::CalcBlockSize();
+int NiPSysPlanarCollider::CalcBlockSize(NiVersion& version) {
+	NiPSysCollider::CalcBlockSize(version);
 
 	blockSize += 32;
 
@@ -1200,24 +1193,24 @@ int NiPSysPlanarCollider::CalcBlockSize() {
 }
 
 
-NiPSysColliderManager::NiPSysColliderManager(NiHeader* hdr) {
-	NiPSysModifier::Init(hdr);
+NiPSysColliderManager::NiPSysColliderManager() {
+	NiPSysModifier::Init();
 }
 
-NiPSysColliderManager::NiPSysColliderManager(std::fstream& file, NiHeader* hdr) : NiPSysColliderManager(hdr) {
-	Get(file);
+NiPSysColliderManager::NiPSysColliderManager(NiStream& stream) : NiPSysColliderManager() {
+	Get(stream);
 }
 
-void NiPSysColliderManager::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysColliderManager::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	colliderRef.Get(file);
+	colliderRef.Get(stream);
 }
 
-void NiPSysColliderManager::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysColliderManager::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	colliderRef.Put(file);
+	colliderRef.Put(stream);
 }
 
 void NiPSysColliderManager::GetChildRefs(std::set<int*>& refs) {
@@ -1226,8 +1219,8 @@ void NiPSysColliderManager::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&colliderRef.index);
 }
 
-int NiPSysColliderManager::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysColliderManager::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -1235,40 +1228,40 @@ int NiPSysColliderManager::CalcBlockSize() {
 }
 
 
-void NiPSysEmitter::Get(std::fstream& file) {
-	NiPSysModifier::Get(file);
+void NiPSysEmitter::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
 
-	file.read((char*)&speed, 4);
-	file.read((char*)&speedVariation, 4);
-	file.read((char*)&declination, 4);
-	file.read((char*)&declinationVariation, 4);
-	file.read((char*)&planarAngle, 4);
-	file.read((char*)&planarAngleVariation, 4);
-	file.read((char*)&color, 16);
-	file.read((char*)&radius, 4);
-	file.read((char*)&radiusVariation, 4);
-	file.read((char*)&lifeSpan, 4);
-	file.read((char*)&lifeSpanVariation, 4);
+	stream >> speed;
+	stream >> speedVariation;
+	stream >> declination;
+	stream >> declinationVariation;
+	stream >> planarAngle;
+	stream >> planarAngleVariation;
+	stream >> color;
+	stream >> radius;
+	stream >> radiusVariation;
+	stream >> lifeSpan;
+	stream >> lifeSpanVariation;
 }
 
-void NiPSysEmitter::Put(std::fstream& file) {
-	NiPSysModifier::Put(file);
+void NiPSysEmitter::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
 
-	file.write((char*)&speed, 4);
-	file.write((char*)&speedVariation, 4);
-	file.write((char*)&declination, 4);
-	file.write((char*)&declinationVariation, 4);
-	file.write((char*)&planarAngle, 4);
-	file.write((char*)&planarAngleVariation, 4);
-	file.write((char*)&color, 16);
-	file.write((char*)&radius, 4);
-	file.write((char*)&radiusVariation, 4);
-	file.write((char*)&lifeSpan, 4);
-	file.write((char*)&lifeSpanVariation, 4);
+	stream << speed;
+	stream << speedVariation;
+	stream << declination;
+	stream << declinationVariation;
+	stream << planarAngle;
+	stream << planarAngleVariation;
+	stream << color;
+	stream << radius;
+	stream << radiusVariation;
+	stream << lifeSpan;
+	stream << lifeSpanVariation;
 }
 
-int NiPSysEmitter::CalcBlockSize() {
-	NiPSysModifier::CalcBlockSize();
+int NiPSysEmitter::CalcBlockSize(NiVersion& version) {
+	NiPSysModifier::CalcBlockSize(version);
 
 	blockSize += 56;
 
@@ -1276,20 +1269,20 @@ int NiPSysEmitter::CalcBlockSize() {
 }
 
 
-void NiPSysVolumeEmitter::Init(NiHeader* hdr) {
-	NiPSysEmitter::Init(hdr);
+void NiPSysVolumeEmitter::Init() {
+	NiPSysEmitter::Init();
 }
 
-void NiPSysVolumeEmitter::Get(std::fstream& file) {
-	NiPSysEmitter::Get(file);
+void NiPSysVolumeEmitter::Get(NiStream& stream) {
+	NiPSysEmitter::Get(stream);
 
-	emitterNodeRef.Get(file);
+	emitterNodeRef.Get(stream);
 }
 
-void NiPSysVolumeEmitter::Put(std::fstream& file) {
-	NiPSysEmitter::Put(file);
+void NiPSysVolumeEmitter::Put(NiStream& stream) {
+	NiPSysEmitter::Put(stream);
 
-	emitterNodeRef.Put(file);
+	emitterNodeRef.Put(stream);
 }
 
 void NiPSysVolumeEmitter::GetChildRefs(std::set<int*>& refs) {
@@ -1298,8 +1291,8 @@ void NiPSysVolumeEmitter::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&emitterNodeRef.index);
 }
 
-int NiPSysVolumeEmitter::CalcBlockSize() {
-	NiPSysEmitter::CalcBlockSize();
+int NiPSysVolumeEmitter::CalcBlockSize(NiVersion& version) {
+	NiPSysEmitter::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -1307,28 +1300,28 @@ int NiPSysVolumeEmitter::CalcBlockSize() {
 }
 
 
-NiPSysSphereEmitter::NiPSysSphereEmitter(NiHeader* hdr) {
-	NiPSysVolumeEmitter::Init(hdr);
+NiPSysSphereEmitter::NiPSysSphereEmitter() {
+	NiPSysVolumeEmitter::Init();
 }
 
-NiPSysSphereEmitter::NiPSysSphereEmitter(std::fstream& file, NiHeader* hdr) : NiPSysSphereEmitter(hdr) {
-	Get(file);
+NiPSysSphereEmitter::NiPSysSphereEmitter(NiStream& stream) : NiPSysSphereEmitter() {
+	Get(stream);
 }
 
-void NiPSysSphereEmitter::Get(std::fstream& file) {
-	NiPSysVolumeEmitter::Get(file);
+void NiPSysSphereEmitter::Get(NiStream& stream) {
+	NiPSysVolumeEmitter::Get(stream);
 
-	file.read((char*)&radius, 4);
+	stream >> radius;
 }
 
-void NiPSysSphereEmitter::Put(std::fstream& file) {
-	NiPSysVolumeEmitter::Put(file);
+void NiPSysSphereEmitter::Put(NiStream& stream) {
+	NiPSysVolumeEmitter::Put(stream);
 
-	file.write((char*)&radius, 4);
+	stream << radius;
 }
 
-int NiPSysSphereEmitter::CalcBlockSize() {
-	NiPSysVolumeEmitter::CalcBlockSize();
+int NiPSysSphereEmitter::CalcBlockSize(NiVersion& version) {
+	NiPSysVolumeEmitter::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -1336,30 +1329,30 @@ int NiPSysSphereEmitter::CalcBlockSize() {
 }
 
 
-NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiHeader* hdr) {
-	NiPSysVolumeEmitter::Init(hdr);
+NiPSysCylinderEmitter::NiPSysCylinderEmitter() {
+	NiPSysVolumeEmitter::Init();
 }
 
-NiPSysCylinderEmitter::NiPSysCylinderEmitter(std::fstream& file, NiHeader* hdr) : NiPSysCylinderEmitter(hdr) {
-	Get(file);
+NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiStream& stream) : NiPSysCylinderEmitter() {
+	Get(stream);
 }
 
-void NiPSysCylinderEmitter::Get(std::fstream& file) {
-	NiPSysVolumeEmitter::Get(file);
+void NiPSysCylinderEmitter::Get(NiStream& stream) {
+	NiPSysVolumeEmitter::Get(stream);
 
-	file.read((char*)&radius, 4);
-	file.read((char*)&height, 4);
+	stream >> radius;
+	stream >> height;
 }
 
-void NiPSysCylinderEmitter::Put(std::fstream& file) {
-	NiPSysVolumeEmitter::Put(file);
+void NiPSysCylinderEmitter::Put(NiStream& stream) {
+	NiPSysVolumeEmitter::Put(stream);
 
-	file.write((char*)&radius, 4);
-	file.write((char*)&height, 4);
+	stream << radius;
+	stream << height;
 }
 
-int NiPSysCylinderEmitter::CalcBlockSize() {
-	NiPSysVolumeEmitter::CalcBlockSize();
+int NiPSysCylinderEmitter::CalcBlockSize(NiVersion& version) {
+	NiPSysVolumeEmitter::CalcBlockSize(version);
 
 	blockSize += 8;
 
@@ -1367,32 +1360,32 @@ int NiPSysCylinderEmitter::CalcBlockSize() {
 }
 
 
-NiPSysBoxEmitter::NiPSysBoxEmitter(NiHeader* hdr) {
-	NiPSysVolumeEmitter::Init(hdr);
+NiPSysBoxEmitter::NiPSysBoxEmitter() {
+	NiPSysVolumeEmitter::Init();
 }
 
-NiPSysBoxEmitter::NiPSysBoxEmitter(std::fstream& file, NiHeader* hdr) : NiPSysBoxEmitter(hdr) {
-	Get(file);
+NiPSysBoxEmitter::NiPSysBoxEmitter(NiStream& stream) : NiPSysBoxEmitter() {
+	Get(stream);
 }
 
-void NiPSysBoxEmitter::Get(std::fstream& file) {
-	NiPSysVolumeEmitter::Get(file);
+void NiPSysBoxEmitter::Get(NiStream& stream) {
+	NiPSysVolumeEmitter::Get(stream);
 
-	file.read((char*)&width, 4);
-	file.read((char*)&height, 4);
-	file.read((char*)&depth, 4);
+	stream >> width;
+	stream >> height;
+	stream >> depth;
 }
 
-void NiPSysBoxEmitter::Put(std::fstream& file) {
-	NiPSysVolumeEmitter::Put(file);
+void NiPSysBoxEmitter::Put(NiStream& stream) {
+	NiPSysVolumeEmitter::Put(stream);
 
-	file.write((char*)&width, 4);
-	file.write((char*)&height, 4);
-	file.write((char*)&depth, 4);
+	stream << width;
+	stream << height;
+	stream << depth;
 }
 
-int NiPSysBoxEmitter::CalcBlockSize() {
-	NiPSysVolumeEmitter::CalcBlockSize();
+int NiPSysBoxEmitter::CalcBlockSize(NiVersion& version) {
+	NiPSysVolumeEmitter::CalcBlockSize(version);
 
 	blockSize += 12;
 
@@ -1400,32 +1393,32 @@ int NiPSysBoxEmitter::CalcBlockSize() {
 }
 
 
-NiPSysMeshEmitter::NiPSysMeshEmitter(NiHeader* hdr) {
-	NiPSysEmitter::Init(hdr);
+NiPSysMeshEmitter::NiPSysMeshEmitter() {
+	NiPSysEmitter::Init();
 }
 
-NiPSysMeshEmitter::NiPSysMeshEmitter(std::fstream& file, NiHeader* hdr) : NiPSysMeshEmitter(hdr) {
-	Get(file);
+NiPSysMeshEmitter::NiPSysMeshEmitter(NiStream& stream) : NiPSysMeshEmitter() {
+	Get(stream);
 }
 
-void NiPSysMeshEmitter::Get(std::fstream& file) {
-	NiPSysEmitter::Get(file);
+void NiPSysMeshEmitter::Get(NiStream& stream) {
+	NiPSysEmitter::Get(stream);
 
-	meshRefs.Get(file);
+	meshRefs.Get(stream);
 
-	file.read((char*)&velocityType, 4);
-	file.read((char*)&emissionType, 4);
-	file.read((char*)&emissionAxis, 12);
+	stream >> velocityType;
+	stream >> emissionType;
+	stream >> emissionAxis;
 }
 
-void NiPSysMeshEmitter::Put(std::fstream& file) {
-	NiPSysEmitter::Put(file);
+void NiPSysMeshEmitter::Put(NiStream& stream) {
+	NiPSysEmitter::Put(stream);
 
-	meshRefs.Put(file);
+	meshRefs.Put(stream);
 
-	file.write((char*)&velocityType, 4);
-	file.write((char*)&emissionType, 4);
-	file.write((char*)&emissionAxis, 12);
+	stream << velocityType;
+	stream << emissionType;
+	stream << emissionAxis;
 }
 
 void NiPSysMeshEmitter::GetChildRefs(std::set<int*>& refs) {
@@ -1434,8 +1427,8 @@ void NiPSysMeshEmitter::GetChildRefs(std::set<int*>& refs) {
 	meshRefs.GetIndexPtrs(refs);
 }
 
-int NiPSysMeshEmitter::CalcBlockSize() {
-	NiPSysEmitter::CalcBlockSize();
+int NiPSysMeshEmitter::CalcBlockSize(NiVersion& version) {
+	NiPSysEmitter::CalcBlockSize(version);
 
 	blockSize += 24;
 	blockSize += meshRefs.GetSize() * 4;

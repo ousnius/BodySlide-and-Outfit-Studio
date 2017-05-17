@@ -6,8 +6,8 @@ See the included LICENSE file
 
 #include "Shaders.h"
 
-void BSShaderProperty::Init(NiHeader* hdr) {
-	NiProperty::Init(hdr);
+void BSShaderProperty::Init() {
+	NiProperty::Init();
 
 	shaderFlags = 1;
 	shaderType = BSShaderType::SHADER_DEFAULT;
@@ -17,39 +17,39 @@ void BSShaderProperty::Init(NiHeader* hdr) {
 	uvScale = Vector2(1.0f, 1.0f);
 }
 
-void BSShaderProperty::Get(std::fstream& file) {
-	NiProperty::Get(file);
+void BSShaderProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
 
-	if (header->GetUserVersion() <= 11) {
-		file.read((char*)&shaderFlags, 2);
-		file.read((char*)&shaderType, 4);
-		file.read((char*)&shaderFlags1, 4);
-		file.read((char*)&shaderFlags2, 4);
-		file.read((char*)&environmentMapScale, 4);
+	if (stream.GetVersion().User() <= 11) {
+		stream >> shaderFlags;
+		stream >> shaderType;
+		stream >> shaderFlags1;
+		stream >> shaderFlags2;
+		stream >> environmentMapScale;
 	}
 	else {
-		file.read((char*)&shaderFlags1, 4);
-		file.read((char*)&shaderFlags2, 4);
-		file.read((char*)&uvOffset, 8);
-		file.read((char*)&uvScale, 8);
+		stream >> shaderFlags1;
+		stream >> shaderFlags2;
+		stream >> uvOffset;
+		stream >> uvScale;
 	}
 }
 
-void BSShaderProperty::Put(std::fstream& file) {
-	NiProperty::Put(file);
+void BSShaderProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
 
-	if (header->GetUserVersion() <= 11) {
-		file.write((char*)&shaderFlags, 2);
-		file.write((char*)&shaderType, 4);
-		file.write((char*)&shaderFlags1, 4);
-		file.write((char*)&shaderFlags2, 4);
-		file.write((char*)&environmentMapScale, 4);
+	if (stream.GetVersion().User() <= 11) {
+		stream << shaderFlags;
+		stream << shaderType;
+		stream << shaderFlags1;
+		stream << shaderFlags2;
+		stream << environmentMapScale;
 	}
 	else {
-		file.write((char*)&shaderFlags1, 4);
-		file.write((char*)&shaderFlags2, 4);
-		file.write((char*)&uvOffset, 8);
-		file.write((char*)&uvScale, 8);
+		stream << shaderFlags1;
+		stream << shaderFlags2;
+		stream << uvOffset;
+		stream << uvScale;
 	}
 }
 
@@ -77,11 +77,11 @@ Vector2 BSShaderProperty::GetUVScale() {
 	return uvScale;
 }
 
-int BSShaderProperty::CalcBlockSize() {
-	NiProperty::CalcBlockSize();
+int BSShaderProperty::CalcBlockSize(NiVersion& version) {
+	NiProperty::CalcBlockSize(version);
 
 	blockSize += 8;
-	if (header->GetUserVersion() <= 11)
+	if (version.User() <= 11)
 		blockSize += 10;
 	else
 		blockSize += 16;
@@ -90,12 +90,19 @@ int BSShaderProperty::CalcBlockSize() {
 }
 
 
-BSShaderTextureSet::BSShaderTextureSet(NiHeader* hdr) {
-	NiObject::Init(hdr);
+BSShaderTextureSet::BSShaderTextureSet() {
+	NiObject::Init();
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+	numTextures = 10;
+	textures.resize(numTextures);
+}
+
+BSShaderTextureSet::BSShaderTextureSet(NiVersion& version) {
+	NiObject::Init();
+
+	if (version.User() == 12 && version.User2() >= 130)
 		numTextures = 10;
-	else if (header->GetUserVersion() == 12)
+	else if (version.User() == 12)
 		numTextures = 9;
 	else
 		numTextures = 6;
@@ -103,29 +110,29 @@ BSShaderTextureSet::BSShaderTextureSet(NiHeader* hdr) {
 	textures.resize(numTextures);
 }
 
-BSShaderTextureSet::BSShaderTextureSet(std::fstream& file, NiHeader* hdr) : BSShaderTextureSet(hdr) {
-	Get(file);
+BSShaderTextureSet::BSShaderTextureSet(NiStream& stream) : BSShaderTextureSet() {
+	Get(stream);
 }
 
-void BSShaderTextureSet::Get(std::fstream& file) {
-	NiObject::Get(file);
+void BSShaderTextureSet::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&numTextures, 4);
+	stream >> numTextures;
 	textures.resize(numTextures);
 	for (int i = 0; i < numTextures; i++)
-		textures[i].Get(file, 4);
+		textures[i].Get(stream, 4);
 }
 
-void BSShaderTextureSet::Put(std::fstream& file) {
-	NiObject::Put(file);
+void BSShaderTextureSet::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&numTextures, 4);
+	stream << numTextures;
 	for (int i = 0; i < numTextures; i++)
-		textures[i].Put(file, 4, false);
+		textures[i].Put(stream, 4, false);
 }
 
-int BSShaderTextureSet::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int BSShaderTextureSet::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 4;
 	for (auto &tex : textures) {
@@ -136,29 +143,18 @@ int BSShaderTextureSet::CalcBlockSize() {
 	return blockSize;
 }
 
-
-BSLightingShaderProperty::BSLightingShaderProperty(NiHeader* hdr) {
-	BSShaderProperty::Init(hdr);
+BSLightingShaderProperty::BSLightingShaderProperty() {
+	BSShaderProperty::Init();
 	NiObjectNET::bBSLightingShaderProperty = true;
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120) {
-		shaderFlags1 = 0x80400203;
-		shaderFlags2 = 0x00000081;
-	}
-	else {
-		shaderFlags1 = 0x82400303;
-		shaderFlags2 = 0x00008001;
-	}
+	shaderFlags1 = 0x80400203;
+	shaderFlags2 = 0x00000081;
 
 	emissiveMultiple = 1.0f;
 	textureClampMode = 3;
 	alpha = 1.0f;
 	refractionStrength = 0.0f;
-
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120)
-		glossiness = 1.0f;
-	else
-		glossiness = 20.0f;
+	glossiness = 1.0f;
 
 	specularColor = Vector3(1.0f, 1.0f, 1.0f);
 	specularStrength = 1.0f;
@@ -189,8 +185,8 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiHeader* hdr) {
 	eyeCubemapScale = 1.0f;
 }
 
-BSLightingShaderProperty::BSLightingShaderProperty(std::fstream& file, NiHeader* hdr) : BSLightingShaderProperty(hdr) {
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 120) {
+BSLightingShaderProperty::BSLightingShaderProperty(NiVersion& version) : BSLightingShaderProperty() {
+	if (version.User() == 12 && version.User2() >= 120) {
 		shaderFlags1 = 0x80400203;
 		shaderFlags2 = 0x00000081;
 	}
@@ -199,217 +195,166 @@ BSLightingShaderProperty::BSLightingShaderProperty(std::fstream& file, NiHeader*
 		shaderFlags2 = 0x00008001;
 	}
 
-	lightingEffect1 = 0.3f;
-	lightingEffect2 = 2.0f;
-
-	subsurfaceRolloff = 0.0f;
-	unkFloat1 = std::numeric_limits<float>::max();
-	backlightPower = 0.0f;
-	grayscaleToPaletteScale = 1.0f;
-	fresnelPower = 5.0f;
-	wetnessSpecScale = 0.6f;
-	wetnessSpecPower = 1.4f;
-	wetnessMinVar = 0.2f;
-	wetnessEnvmapScale = 1.0f;
-	wetnessFresnelPower = 1.6f;
-	wetnessMetalness = 0.0f;
-
-	unkEnvmap = 0;
-	unkSkinTint = 0;
-	maxPasses = 1.0f;
-	scale = 1.0f;
-	parallaxInnerLayerThickness = 0.0f;
-	parallaxRefractionScale = 1.0f;
-	parallaxInnerLayerTextureScale.u = 1.0f;
-	parallaxInnerLayerTextureScale.v = 1.0f;
-	parallaxEnvmapStrength = 1.0f;
-	eyeCubemapScale = 1.0f;
-
-	Get(file);
+	if (version.User() == 12 && version.User2() >= 120)
+		glossiness = 1.0f;
+	else
+		glossiness = 20.0f;
 }
 
-void BSLightingShaderProperty::Get(std::fstream& file) {
-	BSShaderProperty::Get(file);
+BSLightingShaderProperty::BSLightingShaderProperty(NiStream& stream) : BSLightingShaderProperty(stream.GetVersion()) {
+	Get(stream);
+}
 
-	textureSetRef.Get(file);
+void BSLightingShaderProperty::Get(NiStream& stream) {
+	BSShaderProperty::Get(stream);
 
-	file.read((char*)&emissiveColor.x, 4);
-	file.read((char*)&emissiveColor.y, 4);
-	file.read((char*)&emissiveColor.z, 4);
-	file.read((char*)&emissiveMultiple, 4);
+	textureSetRef.Get(stream);
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
-		wetMaterialName.Get(file, header);
+	stream >> emissiveColor;
+	stream >> emissiveMultiple;
 
-	file.read((char*)&textureClampMode, 4);
-	file.read((char*)&alpha, 4);
-	file.read((char*)&refractionStrength, 4);
-	file.read((char*)&glossiness, 4);
-	file.read((char*)&specularColor.x, 4);
-	file.read((char*)&specularColor.y, 4);
-	file.read((char*)&specularColor.z, 4);
-	file.read((char*)&specularStrength, 4);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+		wetMaterialName.Get(stream);
 
-	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130) {
-		file.read((char*)&lightingEffect1, 4);
-		file.read((char*)&lightingEffect2, 4);
+	stream >> textureClampMode;
+	stream >> alpha;
+	stream >> refractionStrength;
+	stream >> glossiness;
+	stream >> specularColor;
+	stream >> specularStrength;
+
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130) {
+		stream >> lightingEffect1;
+		stream >> lightingEffect2;
 	}
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		file.read((char*)&subsurfaceRolloff, 4);
-		file.read((char*)&unkFloat1, 4);
-		file.read((char*)&backlightPower, 4);
-		file.read((char*)&grayscaleToPaletteScale, 4);
-		file.read((char*)&fresnelPower, 4);
-		file.read((char*)&wetnessSpecScale, 4);
-		file.read((char*)&wetnessSpecPower, 4);
-		file.read((char*)&wetnessMinVar, 4);
-		file.read((char*)&wetnessEnvmapScale, 4);
-		file.read((char*)&wetnessFresnelPower, 4);
-		file.read((char*)&wetnessMetalness, 4);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+		stream >> subsurfaceRolloff;
+		stream >> unkFloat1;
+		stream >> backlightPower;
+		stream >> grayscaleToPaletteScale;
+		stream >> fresnelPower;
+		stream >> wetnessSpecScale;
+		stream >> wetnessSpecPower;
+		stream >> wetnessMinVar;
+		stream >> wetnessEnvmapScale;
+		stream >> wetnessFresnelPower;
+		stream >> wetnessMetalness;
 	}
 
 	switch (skyrimShaderType) {
 	case 1:
-		file.read((char*)&environmentMapScale, 4);
-		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
-			file.read((char*)&unkEnvmap, 2);
+		stream >> environmentMapScale;
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+			stream >> unkEnvmap;
 		break;
 	case 5:
-		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
-			file.read((char*)&unkSkinTint, 4);
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+			stream >> unkSkinTint;
 
-		file.read((char*)&skinTintColor.x, 4);
-		file.read((char*)&skinTintColor.y, 4);
-		file.read((char*)&skinTintColor.z, 4);
+		stream >> skinTintColor;
 		break;
 	case 6:
-		file.read((char*)&hairTintColor.x, 4);
-		file.read((char*)&hairTintColor.y, 4);
-		file.read((char*)&hairTintColor.z, 4);
+		stream >> hairTintColor;
 		break;
 	case 7:
-		file.read((char*)&maxPasses, 4);
-		file.read((char*)&scale, 4);
+		stream >> maxPasses;
+		stream >> scale;
 		break;
 	case 11:
-		file.read((char*)&parallaxInnerLayerThickness, 4);
-		file.read((char*)&parallaxRefractionScale, 4);
-		file.read((char*)&parallaxInnerLayerTextureScale.u, 4);
-		file.read((char*)&parallaxInnerLayerTextureScale.v, 4);
-		file.read((char*)&parallaxEnvmapStrength, 4);
+		stream >> parallaxInnerLayerThickness;
+		stream >> parallaxRefractionScale;
+		stream >> parallaxInnerLayerTextureScale;
+		stream >> parallaxEnvmapStrength;
 		break;
 	case 14:
-		file.read((char*)&sparkleParameters.r, 4);
-		file.read((char*)&sparkleParameters.g, 4);
-		file.read((char*)&sparkleParameters.b, 4);
-		file.read((char*)&sparkleParameters.a, 4);
+		stream >> sparkleParameters;
 		break;
 	case 16:
-		file.read((char*)&eyeCubemapScale, 4);
-		file.read((char*)&eyeLeftReflectionCenter.x, 4);
-		file.read((char*)&eyeLeftReflectionCenter.y, 4);
-		file.read((char*)&eyeLeftReflectionCenter.z, 4);
-		file.read((char*)&eyeRightReflectionCenter.x, 4);
-		file.read((char*)&eyeRightReflectionCenter.y, 4);
-		file.read((char*)&eyeRightReflectionCenter.z, 4);
+		stream >> eyeCubemapScale;
+		stream >> eyeLeftReflectionCenter;
+		stream >> eyeRightReflectionCenter;
 		break;
 	}
 }
 
-void BSLightingShaderProperty::Put(std::fstream& file) {
-	BSShaderProperty::Put(file);
+void BSLightingShaderProperty::Put(NiStream& stream) {
+	BSShaderProperty::Put(stream);
 
-	textureSetRef.Put(file);
+	textureSetRef.Put(stream);
 
-	file.write((char*)&emissiveColor.x, 4);
-	file.write((char*)&emissiveColor.y, 4);
-	file.write((char*)&emissiveColor.z, 4);
-	file.write((char*)&emissiveMultiple, 4);
+	stream << emissiveColor;
+	stream << emissiveMultiple;
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
-		wetMaterialName.Put(file);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+		wetMaterialName.Put(stream);
 
-	file.write((char*)&textureClampMode, 4);
-	file.write((char*)&alpha, 4);
-	file.write((char*)&refractionStrength, 4);
-	file.write((char*)&glossiness, 4);
-	file.write((char*)&specularColor.x, 4);
-	file.write((char*)&specularColor.y, 4);
-	file.write((char*)&specularColor.z, 4);
-	file.write((char*)&specularStrength, 4);
+	stream << textureClampMode;
+	stream << alpha;
+	stream << refractionStrength;
+	stream << glossiness;
+	stream << specularColor;
+	stream << specularStrength;
 
-	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130) {
-		file.write((char*)&lightingEffect1, 4);
-		file.write((char*)&lightingEffect2, 4);
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130) {
+		stream << lightingEffect1;
+		stream << lightingEffect2;
 	}
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		file.write((char*)&subsurfaceRolloff, 4);
-		file.write((char*)&unkFloat1, 4);
-		file.write((char*)&backlightPower, 4);
-		file.write((char*)&grayscaleToPaletteScale, 4);
-		file.write((char*)&fresnelPower, 4);
-		file.write((char*)&wetnessSpecScale, 4);
-		file.write((char*)&wetnessSpecPower, 4);
-		file.write((char*)&wetnessMinVar, 4);
-		file.write((char*)&wetnessEnvmapScale, 4);
-		file.write((char*)&wetnessFresnelPower, 4);
-		file.write((char*)&wetnessMetalness, 4);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+		stream << subsurfaceRolloff;
+		stream << unkFloat1;
+		stream << backlightPower;
+		stream << grayscaleToPaletteScale;
+		stream << fresnelPower;
+		stream << wetnessSpecScale;
+		stream << wetnessSpecPower;
+		stream << wetnessMinVar;
+		stream << wetnessEnvmapScale;
+		stream << wetnessFresnelPower;
+		stream << wetnessMetalness;
 	}
 
 	switch (skyrimShaderType) {
 	case 1:
-		file.write((char*)&environmentMapScale, 4);
-		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
-			file.write((char*)&unkEnvmap, 2);
+		stream << environmentMapScale;
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+			stream << unkEnvmap;
 		break;
 	case 5:
-		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
-			file.write((char*)&unkSkinTint, 4);
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+			stream << unkSkinTint;
 
-		file.write((char*)&skinTintColor.x, 4);
-		file.write((char*)&skinTintColor.y, 4);
-		file.write((char*)&skinTintColor.z, 4);
+		stream << skinTintColor;
 		break;
 	case 6:
-		file.write((char*)&hairTintColor.x, 4);
-		file.write((char*)&hairTintColor.y, 4);
-		file.write((char*)&hairTintColor.z, 4);
+		stream << hairTintColor;
 		break;
 	case 7:
-		file.write((char*)&maxPasses, 4);
-		file.write((char*)&scale, 4);
+		stream << maxPasses;
+		stream << scale;
 		break;
 	case 11:
-		file.write((char*)&parallaxInnerLayerThickness, 4);
-		file.write((char*)&parallaxRefractionScale, 4);
-		file.write((char*)&parallaxInnerLayerTextureScale.u, 4);
-		file.write((char*)&parallaxInnerLayerTextureScale.v, 4);
-		file.write((char*)&parallaxEnvmapStrength, 4);
+		stream << parallaxInnerLayerThickness;
+		stream << parallaxRefractionScale;
+		stream << parallaxInnerLayerTextureScale;
+		stream << parallaxEnvmapStrength;
 		break;
 	case 14:
-		file.write((char*)&sparkleParameters.r, 4);
-		file.write((char*)&sparkleParameters.g, 4);
-		file.write((char*)&sparkleParameters.b, 4);
-		file.write((char*)&sparkleParameters.a, 4);
+		stream << sparkleParameters;
 		break;
 	case 16:
-		file.write((char*)&eyeCubemapScale, 4);
-		file.write((char*)&eyeLeftReflectionCenter.x, 4);
-		file.write((char*)&eyeLeftReflectionCenter.y, 4);
-		file.write((char*)&eyeLeftReflectionCenter.z, 4);
-		file.write((char*)&eyeRightReflectionCenter.x, 4);
-		file.write((char*)&eyeRightReflectionCenter.y, 4);
-		file.write((char*)&eyeRightReflectionCenter.z, 4);
+		stream << eyeCubemapScale;
+		stream << eyeLeftReflectionCenter;
+		stream << eyeRightReflectionCenter;
 		break;
 	}
 }
 
-void BSLightingShaderProperty::notifyStringDelete(int stringID) {
-	BSShaderProperty::notifyStringDelete(stringID);
+void BSLightingShaderProperty::GetStringRefs(std::set<int*>& refs) {
+	BSShaderProperty::GetStringRefs(refs);
 
-	wetMaterialName.notifyStringDelete(stringID);
+	refs.insert(&wetMaterialName.index);
 }
 
 void BSLightingShaderProperty::GetChildRefs(std::set<int*>& refs) {
@@ -515,38 +460,38 @@ float BSLightingShaderProperty::GetAlpha() {
 	return alpha;
 }
 
-std::string BSLightingShaderProperty::GetWetMaterialName() {
-	return wetMaterialName.GetString(header);
+std::string BSLightingShaderProperty::GetWetMaterialName(NiHeader* hdr) {
+	return wetMaterialName.GetString(hdr);
 }
 
-void BSLightingShaderProperty::SetWetMaterialName(const std::string& matName) {
-	wetMaterialName.SetString(header, matName);
+void BSLightingShaderProperty::SetWetMaterialName(NiHeader* hdr, const std::string& matName) {
+	wetMaterialName.SetString(hdr, matName);
 }
 
-int BSLightingShaderProperty::CalcBlockSize() {
-	BSShaderProperty::CalcBlockSize();
+int BSLightingShaderProperty::CalcBlockSize(NiVersion& version) {
+	BSShaderProperty::CalcBlockSize(version);
 
 	blockSize += 20;
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+	if (version.User() == 12 && version.User2() >= 130)
 		blockSize += 4;
 
 	blockSize += 32;
 
-	if (header->GetUserVersion() <= 12 && header->GetUserVersion2() < 130)
+	if (version.User() <= 12 && version.User2() < 130)
 		blockSize += 8;
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+	if (version.User() == 12 && version.User2() >= 130)
 		blockSize += 44;
 
 	switch (skyrimShaderType) {
 	case 1:
 		blockSize += 4;
-		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+		if (version.User() == 12 && version.User2() >= 130)
 			blockSize += 2;
 		break;
 	case 5:
-		if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130)
+		if (version.User() == 12 && version.User2() >= 130)
 			blockSize += 4;
 
 		blockSize += 12;
@@ -572,8 +517,8 @@ int BSLightingShaderProperty::CalcBlockSize() {
 }
 
 
-BSEffectShaderProperty::BSEffectShaderProperty(NiHeader* hdr) {
-	BSShaderProperty::Init(hdr);
+BSEffectShaderProperty::BSEffectShaderProperty() {
+	BSShaderProperty::Init();
 
 	textureClampMode = 0;
 	falloffStartAngle = 1.0f;
@@ -590,53 +535,53 @@ BSEffectShaderProperty::BSEffectShaderProperty(NiHeader* hdr) {
 	envMapScale = 1.0f;
 }
 
-BSEffectShaderProperty::BSEffectShaderProperty(std::fstream& file, NiHeader* hdr) : BSEffectShaderProperty(hdr) {
-	Get(file);
+BSEffectShaderProperty::BSEffectShaderProperty(NiStream& stream) : BSEffectShaderProperty() {
+	Get(stream);
 }
 
-void BSEffectShaderProperty::Get(std::fstream& file) {
-	BSShaderProperty::Get(file);
+void BSEffectShaderProperty::Get(NiStream& stream) {
+	BSShaderProperty::Get(stream);
 
-	sourceTexture.Get(file, 4);
-	file.read((char*)&textureClampMode, 4);
+	sourceTexture.Get(stream, 4);
+	stream >> textureClampMode;
 
-	file.read((char*)&falloffStartAngle, 4);
-	file.read((char*)&falloffStopAngle, 4);
-	file.read((char*)&falloffStartOpacity, 4);
-	file.read((char*)&falloffStopOpacity, 4);
-	file.read((char*)&emissiveColor, 16);
-	file.read((char*)&emissiveMultiple, 4);
-	file.read((char*)&softFalloffDepth, 4);
-	greyscaleTexture.Get(file, 4);
+	stream >> falloffStartAngle;
+	stream >> falloffStopAngle;
+	stream >> falloffStartOpacity;
+	stream >> falloffStopOpacity;
+	stream >> emissiveColor;
+	stream >> emissiveMultiple;
+	stream >> softFalloffDepth;
+	greyscaleTexture.Get(stream, 4);
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		envMapTexture.Get(file, 4);
-		normalTexture.Get(file, 4);
-		envMaskTexture.Get(file, 4);
-		file.read((char*)&envMapScale, 4);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+		envMapTexture.Get(stream, 4);
+		normalTexture.Get(stream, 4);
+		envMaskTexture.Get(stream, 4);
+		stream >> envMapScale;
 	}
 }
 
-void BSEffectShaderProperty::Put(std::fstream& file) {
-	BSShaderProperty::Put(file);
+void BSEffectShaderProperty::Put(NiStream& stream) {
+	BSShaderProperty::Put(stream);
 
-	sourceTexture.Put(file, 4, false);
-	file.write((char*)&textureClampMode, 4);
+	sourceTexture.Put(stream, 4, false);
+	stream << textureClampMode;
 
-	file.write((char*)&falloffStartAngle, 4);
-	file.write((char*)&falloffStopAngle, 4);
-	file.write((char*)&falloffStartOpacity, 4);
-	file.write((char*)&falloffStopOpacity, 4);
-	file.write((char*)&emissiveColor, 16);
-	file.write((char*)&emissiveMultiple, 4);
-	file.write((char*)&softFalloffDepth, 4);
-	greyscaleTexture.Put(file, 4, false);
+	stream << falloffStartAngle;
+	stream << falloffStopAngle;
+	stream << falloffStartOpacity;
+	stream << falloffStopOpacity;
+	stream << emissiveColor;
+	stream << emissiveMultiple;
+	stream << softFalloffDepth;
+	greyscaleTexture.Put(stream, 4, false);
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
-		envMapTexture.Put(file, 4, false);
-		normalTexture.Put(file, 4, false);
-		envMaskTexture.Put(file, 4, false);
-		file.write((char*)&envMapScale, 4);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+		envMapTexture.Put(stream, 4, false);
+		normalTexture.Put(stream, 4, false);
+		envMaskTexture.Put(stream, 4, false);
+		stream << envMapScale;
 	}
 }
 
@@ -691,14 +636,14 @@ void BSEffectShaderProperty::SetEmissiveMultiple(float emissive) {
 	emissiveMultiple = emissive;
 }
 
-int BSEffectShaderProperty::CalcBlockSize() {
-	BSShaderProperty::CalcBlockSize();
+int BSEffectShaderProperty::CalcBlockSize(NiVersion& version) {
+	BSShaderProperty::CalcBlockSize(version);
 
 	blockSize += 52;
 	blockSize += sourceTexture.GetLength();
 	blockSize += greyscaleTexture.GetLength();
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() >= 130) {
+	if (version.User() == 12 && version.User2() >= 130) {
 		blockSize += 16;
 		blockSize += envMapTexture.GetLength();
 		blockSize += normalTexture.GetLength();
@@ -709,26 +654,26 @@ int BSEffectShaderProperty::CalcBlockSize() {
 }
 
 
-BSWaterShaderProperty::BSWaterShaderProperty(NiHeader* hdr) {
-	BSShaderProperty::Init(hdr);
+BSWaterShaderProperty::BSWaterShaderProperty() {
+	BSShaderProperty::Init();
 
 	waterFlags = 0;
 }
 
-BSWaterShaderProperty::BSWaterShaderProperty(std::fstream& file, NiHeader* hdr) : BSWaterShaderProperty(hdr) {
-	Get(file);
+BSWaterShaderProperty::BSWaterShaderProperty(NiStream& stream) : BSWaterShaderProperty() {
+	Get(stream);
 }
 
-void BSWaterShaderProperty::Get(std::fstream& file) {
-	BSShaderProperty::Get(file);
+void BSWaterShaderProperty::Get(NiStream& stream) {
+	BSShaderProperty::Get(stream);
 
-	file.read((char*)&waterFlags, 4);
+	stream >> waterFlags;
 }
 
-void BSWaterShaderProperty::Put(std::fstream& file) {
-	BSShaderProperty::Put(file);
+void BSWaterShaderProperty::Put(NiStream& stream) {
+	BSShaderProperty::Put(stream);
 
-	file.write((char*)&waterFlags, 4);
+	stream << waterFlags;
 }
 
 bool BSWaterShaderProperty::IsSkinTint() {
@@ -762,8 +707,8 @@ bool BSWaterShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
 
-int BSWaterShaderProperty::CalcBlockSize() {
-	BSShaderProperty::CalcBlockSize();
+int BSWaterShaderProperty::CalcBlockSize(NiVersion& version) {
+	BSShaderProperty::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -771,28 +716,26 @@ int BSWaterShaderProperty::CalcBlockSize() {
 }
 
 
-BSSkyShaderProperty::BSSkyShaderProperty(NiHeader* hdr) {
-	BSShaderProperty::Init(hdr);
-
-	skyFlags = 0;
+BSSkyShaderProperty::BSSkyShaderProperty() {
+	BSShaderProperty::Init();
 }
 
-BSSkyShaderProperty::BSSkyShaderProperty(std::fstream& file, NiHeader* hdr) : BSSkyShaderProperty(hdr) {
-	Get(file);
+BSSkyShaderProperty::BSSkyShaderProperty(NiStream& stream) : BSSkyShaderProperty() {
+	Get(stream);
 }
 
-void BSSkyShaderProperty::Get(std::fstream& file) {
-	BSShaderProperty::Get(file);
+void BSSkyShaderProperty::Get(NiStream& stream) {
+	BSShaderProperty::Get(stream);
 
-	baseTexture.Get(file, 4);
-	file.read((char*)&skyFlags, 4);
+	baseTexture.Get(stream, 4);
+	stream >> skyFlags;
 }
 
-void BSSkyShaderProperty::Put(std::fstream& file) {
-	BSShaderProperty::Put(file);
+void BSSkyShaderProperty::Put(NiStream& stream) {
+	BSShaderProperty::Put(stream);
 
-	baseTexture.Put(file, 4, false);
-	file.write((char*)&skyFlags, 4);
+	baseTexture.Put(stream, 4, false);
+	stream << skyFlags;
 }
 
 bool BSSkyShaderProperty::IsSkinTint() {
@@ -826,8 +769,8 @@ bool BSSkyShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
 
-int BSSkyShaderProperty::CalcBlockSize() {
-	BSShaderProperty::CalcBlockSize();
+int BSSkyShaderProperty::CalcBlockSize(NiVersion& version) {
+	BSShaderProperty::CalcBlockSize(version);
 
 	blockSize += 8;
 	blockSize += baseTexture.GetLength();
@@ -836,91 +779,79 @@ int BSSkyShaderProperty::CalcBlockSize() {
 }
 
 
-void BSShaderLightingProperty::Init(NiHeader* hdr) {
-	BSShaderProperty::Init(hdr);
+void BSShaderLightingProperty::Init() {
+	BSShaderProperty::Init();
 
 	textureClampMode = 3;
 }
 
-void BSShaderLightingProperty::Get(std::fstream& file) {
-	BSShaderProperty::Get(file);
+void BSShaderLightingProperty::Get(NiStream& stream) {
+	BSShaderProperty::Get(stream);
 
-	if (header->GetUserVersion() <= 11)
-		file.read((char*)&textureClampMode, 4);
+	if (stream.GetVersion().User() <= 11)
+		stream >> textureClampMode;
 }
 
-void BSShaderLightingProperty::Put(std::fstream& file) {
-	BSShaderProperty::Put(file);
+void BSShaderLightingProperty::Put(NiStream& stream) {
+	BSShaderProperty::Put(stream);
 
-	if (header->GetUserVersion() <= 11)
-		file.write((char*)&textureClampMode, 4);
+	if (stream.GetVersion().User() <= 11)
+		stream << textureClampMode;
 }
 
-int BSShaderLightingProperty::CalcBlockSize() {
-	BSShaderProperty::CalcBlockSize();
+int BSShaderLightingProperty::CalcBlockSize(NiVersion& version) {
+	BSShaderProperty::CalcBlockSize(version);
 
-	if (header->GetUserVersion() <= 11)
+	if (version.User() <= 11)
 		blockSize += 4;
 
 	return blockSize;
 }
 
 
-BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiHeader* hdr) {
-	BSShaderLightingProperty::Init(hdr);
+BSShaderPPLightingProperty::BSShaderPPLightingProperty() {
+	BSShaderLightingProperty::Init();
 
 	refractionStrength = 0.0;
 	refractionFirePeriod = 0;
 	parallaxMaxPasses = 4.0f;
 	parallaxScale = 1.0f;
-	emissiveColor.r = 0.0f;
-	emissiveColor.g = 0.0f;
-	emissiveColor.b = 0.0f;
-	emissiveColor.a = 0.0f;
 }
 
-BSShaderPPLightingProperty::BSShaderPPLightingProperty(std::fstream& file, NiHeader* hdr) : BSShaderPPLightingProperty(hdr) {
-	Get(file);
+BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiStream& stream) : BSShaderPPLightingProperty() {
+	Get(stream);
 }
 
-void BSShaderPPLightingProperty::Get(std::fstream& file) {
-	BSShaderLightingProperty::Get(file);
+void BSShaderPPLightingProperty::Get(NiStream& stream) {
+	BSShaderLightingProperty::Get(stream);
 
-	textureSetRef.Get(file);
+	textureSetRef.Get(stream);
 
-	if (header->GetUserVersion() == 11) {
-		file.read((char*)&refractionStrength, 4);
-		file.read((char*)&refractionFirePeriod, 4);
-		file.read((char*)&parallaxMaxPasses, 4);
-		file.read((char*)&parallaxScale, 4);
+	if (stream.GetVersion().User() == 11) {
+		stream >> refractionStrength;
+		stream >> refractionFirePeriod;
+		stream >> parallaxMaxPasses;
+		stream >> parallaxScale;
 	}
 
-	if (header->GetUserVersion() >= 12) {
-		file.read((char*)&emissiveColor.r, 4);
-		file.read((char*)&emissiveColor.g, 4);
-		file.read((char*)&emissiveColor.b, 4);
-		file.read((char*)&emissiveColor.a, 4);
-	}
+	if (stream.GetVersion().User() >= 12)
+		stream >> emissiveColor;
 }
 
-void BSShaderPPLightingProperty::Put(std::fstream& file) {
-	BSShaderLightingProperty::Put(file);
+void BSShaderPPLightingProperty::Put(NiStream& stream) {
+	BSShaderLightingProperty::Put(stream);
 
-	textureSetRef.Put(file);
+	textureSetRef.Put(stream);
 
-	if (header->GetUserVersion() == 11) {
-		file.write((char*)&refractionStrength, 4);
-		file.write((char*)&refractionFirePeriod, 4);
-		file.write((char*)&parallaxMaxPasses, 4);
-		file.write((char*)&parallaxScale, 4);
+	if (stream.GetVersion().User() == 11) {
+		stream << refractionStrength;
+		stream << refractionFirePeriod;
+		stream << parallaxMaxPasses;
+		stream << parallaxScale;
 	}
 
-	if (header->GetUserVersion() >= 12) {
-		file.write((char*)&emissiveColor.r, 4);
-		file.write((char*)&emissiveColor.g, 4);
-		file.write((char*)&emissiveColor.b, 4);
-		file.write((char*)&emissiveColor.a, 4);
-	}
+	if (stream.GetVersion().User() >= 12)
+		stream << emissiveColor;
 }
 
 void BSShaderPPLightingProperty::GetChildRefs(std::set<int*>& refs) {
@@ -952,58 +883,57 @@ void BSShaderPPLightingProperty::SetTextureSetRef(const int texSetRef) {
 	textureSetRef.index = texSetRef;
 }
 
-int BSShaderPPLightingProperty::CalcBlockSize() {
-	BSShaderLightingProperty::CalcBlockSize();
+int BSShaderPPLightingProperty::CalcBlockSize(NiVersion& version) {
+	BSShaderLightingProperty::CalcBlockSize(version);
 
 	blockSize += 4;
 
-	if (header->GetUserVersion() == 11)
+	if (version.User() == 11)
 		blockSize += 16;
 
-	if (header->GetUserVersion() >= 12)
+	if (version.User() >= 12)
 		blockSize += 16;
 
 	return blockSize;
 }
 
 
-BSShaderNoLightingProperty::BSShaderNoLightingProperty(NiHeader* hdr) {
-	BSShaderLightingProperty::Init(hdr);
+BSShaderNoLightingProperty::BSShaderNoLightingProperty() {
+	BSShaderLightingProperty::Init();
 
 	falloffStartAngle = 1.0f;
 	falloffStopAngle = 0.0f;
 	falloffStartOpacity = 1.0f;
 	falloffStopOpacity = 1.0f;
-
 }
 
-BSShaderNoLightingProperty::BSShaderNoLightingProperty(std::fstream& file, NiHeader* hdr) : BSShaderNoLightingProperty(hdr) {
-	Get(file);
+BSShaderNoLightingProperty::BSShaderNoLightingProperty(NiStream& stream) : BSShaderNoLightingProperty() {
+	Get(stream);
 }
 
-void BSShaderNoLightingProperty::Get(std::fstream& file) {
-	BSShaderLightingProperty::Get(file);
+void BSShaderNoLightingProperty::Get(NiStream& stream) {
+	BSShaderLightingProperty::Get(stream);
 
-	baseTexture.Get(file, 4);
+	baseTexture.Get(stream, 4);
 
-	if (header->GetUserVersion2() > 26) {
-		file.read((char*)&falloffStartAngle, 4);
-		file.read((char*)&falloffStopAngle, 4);
-		file.read((char*)&falloffStartOpacity, 4);
-		file.read((char*)&falloffStopOpacity, 4);
+	if (stream.GetVersion().User2() > 26) {
+		stream >> falloffStartAngle;
+		stream >> falloffStopAngle;
+		stream >> falloffStartOpacity;
+		stream >> falloffStopOpacity;
 	}
 }
 
-void BSShaderNoLightingProperty::Put(std::fstream& file) {
-	BSShaderLightingProperty::Put(file);
+void BSShaderNoLightingProperty::Put(NiStream& stream) {
+	BSShaderLightingProperty::Put(stream);
 
-	baseTexture.Put(file, 4, false);
+	baseTexture.Put(stream, 4, false);
 
-	if (header->GetUserVersion2() > 26) {
-		file.write((char*)&falloffStartAngle, 4);
-		file.write((char*)&falloffStopAngle, 4);
-		file.write((char*)&falloffStartOpacity, 4);
-		file.write((char*)&falloffStopOpacity, 4);
+	if (stream.GetVersion().User2() > 26) {
+		stream << falloffStartAngle;
+		stream << falloffStopAngle;
+		stream << falloffStartOpacity;
+		stream << falloffStopOpacity;
 	}
 }
 
@@ -1022,46 +952,46 @@ void BSShaderNoLightingProperty::SetSkinned(const bool enable) {
 		shaderFlags1 &= ~(1 << 1);
 }
 
-int BSShaderNoLightingProperty::CalcBlockSize() {
-	BSShaderLightingProperty::CalcBlockSize();
+int BSShaderNoLightingProperty::CalcBlockSize(NiVersion& version) {
+	BSShaderLightingProperty::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += baseTexture.GetLength();
 
-	if (header->GetUserVersion2() > 26)
+	if (version.User2() > 26)
 		blockSize += 16;
 
 	return blockSize;
 }
 
 
-NiAlphaProperty::NiAlphaProperty(NiHeader* hdr) {
-	NiProperty::Init(hdr);
+NiAlphaProperty::NiAlphaProperty() {
+	NiProperty::Init();
 
 	flags = 4844;
 	threshold = 128;
 }
 
-NiAlphaProperty::NiAlphaProperty(std::fstream& file, NiHeader* hdr) : NiAlphaProperty(hdr) {
-	Get(file);
+NiAlphaProperty::NiAlphaProperty(NiStream& stream) : NiAlphaProperty() {
+	Get(stream);
 }
 
-void NiAlphaProperty::Get(std::fstream& file) {
-	NiProperty::Get(file);
+void NiAlphaProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
 
-	file.read((char*)&flags, 2);
-	file.read((char*)&threshold, 1);
+	stream >> flags;
+	stream >> threshold;
 }
 
-void NiAlphaProperty::Put(std::fstream& file) {
-	NiProperty::Put(file);
+void NiAlphaProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
 
-	file.write((char*)&flags, 2);
-	file.write((char*)&threshold, 1);
+	stream << flags;
+	stream << threshold;
 }
 
-int NiAlphaProperty::CalcBlockSize() {
-	NiProperty::CalcBlockSize();
+int NiAlphaProperty::CalcBlockSize(NiVersion& version) {
+	NiProperty::CalcBlockSize(version);
 
 	blockSize += 3;
 
@@ -1069,50 +999,52 @@ int NiAlphaProperty::CalcBlockSize() {
 }
 
 
-NiMaterialProperty::NiMaterialProperty(NiHeader* hdr) {
-	NiProperty::Init(hdr);
+NiMaterialProperty::NiMaterialProperty() {
+	NiProperty::Init();
 
 	glossiness = 1.0f;
 	alpha = 1.0f;
 	emitMulti = 1.0f;
 }
 
-NiMaterialProperty::NiMaterialProperty(std::fstream& file, NiHeader* hdr) : NiMaterialProperty(hdr) {
-	Get(file);
+NiMaterialProperty::NiMaterialProperty(NiStream& stream) : NiMaterialProperty() {
+	Get(stream);
 }
 
-void NiMaterialProperty::Get(std::fstream& file) {
-	NiProperty::Get(file);
+void NiMaterialProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
 
-	if (!(header->VerCheck(20, 2, 0, 7, true) && header->GetUserVersion() >= 11 && header->GetUserVersion2() > 21)) {
-		file.read((char*)&colorAmbient, 12);
-		file.read((char*)&colorDiffuse, 12);
+	NiVersion& version = stream.GetVersion();
+	if (!(version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)) {
+		stream >> colorAmbient;
+		stream >> colorDiffuse;
 	}
 
-	file.read((char*)&colorSpecular, 12);
-	file.read((char*)&colorEmissive, 12);
-	file.read((char*)&glossiness, 4);
-	file.read((char*)&alpha, 4);
+	stream >> colorSpecular;
+	stream >> colorEmissive;
+	stream >> glossiness;
+	stream >> alpha;
 
-	if (header->VerCheck(20, 2, 0, 7, true) && header->GetUserVersion() >= 11 && header->GetUserVersion2() > 21)
-		file.read((char*)&emitMulti, 4);
+	if (version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)
+		stream >> emitMulti;
 }
 
-void NiMaterialProperty::Put(std::fstream& file) {
-	NiProperty::Put(file);
+void NiMaterialProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
 
-	if (!(header->VerCheck(20, 2, 0, 7, true) && header->GetUserVersion() >= 11 && header->GetUserVersion2() > 21)) {
-		file.write((char*)&colorAmbient, 12);
-		file.write((char*)&colorDiffuse, 12);
+	NiVersion& version = stream.GetVersion();
+	if (!(version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)) {
+		stream << colorAmbient;
+		stream << colorDiffuse;
 	}
 
-	file.write((char*)&colorSpecular, 12);
-	file.write((char*)&colorEmissive, 12);
-	file.write((char*)&glossiness, 4);
-	file.write((char*)&alpha, 4);
+	stream << colorSpecular;
+	stream << colorEmissive;
+	stream << glossiness;
+	stream << alpha;
 
-	if (header->VerCheck(20, 2, 0, 7, true) && header->GetUserVersion() >= 11 && header->GetUserVersion2() > 21)
-		file.write((char*)&emitMulti, 4);
+	if (version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)
+		stream << emitMulti;
 }
 
 bool NiMaterialProperty::IsEmissive() {
@@ -1161,10 +1093,10 @@ float NiMaterialProperty::GetAlpha() {
 	return alpha;
 }
 
-int NiMaterialProperty::CalcBlockSize() {
-	NiProperty::CalcBlockSize();
+int NiMaterialProperty::CalcBlockSize(NiVersion& version) {
+	NiProperty::CalcBlockSize(version);
 
-	if (!(header->VerCheck(20, 2, 0, 7, true) && header->GetUserVersion() >= 11 && header->GetUserVersion2() > 21))
+	if (!(version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21))
 		blockSize += 24;
 	else
 		blockSize += 4;
@@ -1175,36 +1107,36 @@ int NiMaterialProperty::CalcBlockSize() {
 }
 
 
-NiStencilProperty::NiStencilProperty(NiHeader* hdr) {
-	NiProperty::Init(hdr);
+NiStencilProperty::NiStencilProperty() {
+	NiProperty::Init();
 
 	flags = 19840;
 	stencilRef = 0;
 	stencilMask = 0xffffffff;
 }
 
-NiStencilProperty::NiStencilProperty(std::fstream& file, NiHeader* hdr) : NiStencilProperty(hdr) {
-	Get(file);
+NiStencilProperty::NiStencilProperty(NiStream& stream) : NiStencilProperty() {
+	Get(stream);
 }
 
-void NiStencilProperty::Get(std::fstream& file) {
-	NiProperty::Get(file);
+void NiStencilProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
 
-	file.read((char*)&flags, 2);
-	file.read((char*)&stencilRef, 4);
-	file.read((char*)&stencilMask, 4);
+	stream >> flags;
+	stream >> stencilRef;
+	stream >> stencilMask;
 }
 
-void NiStencilProperty::Put(std::fstream& file) {
-	NiProperty::Put(file);
+void NiStencilProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
 
-	file.write((char*)&flags, 2);
-	file.write((char*)&stencilRef, 4);
-	file.write((char*)&stencilMask, 4);
+	stream << flags;
+	stream << stencilRef;
+	stream << stencilMask;
 }
 
-int NiStencilProperty::CalcBlockSize() {
-	NiProperty::CalcBlockSize();
+int NiStencilProperty::CalcBlockSize(NiVersion& version) {
+	NiProperty::CalcBlockSize(version);
 
 	blockSize += 10;
 

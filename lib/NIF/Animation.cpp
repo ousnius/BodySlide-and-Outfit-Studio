@@ -6,76 +6,74 @@ See the included LICENSE file
 
 #include "Animation.h"
 
-NiKeyframeData::NiKeyframeData(NiHeader* hdr) {
-	NiObject::Init(hdr);
-
-	numRotationKeys = 0;
+NiKeyframeData::NiKeyframeData() {
+	NiObject::Init();
 }
 
-NiKeyframeData::NiKeyframeData(std::fstream& file, NiHeader* hdr) : NiKeyframeData(hdr) {
-	Get(file);
+NiKeyframeData::NiKeyframeData(NiStream& stream) : NiKeyframeData() {
+	Get(stream);
 }
 
-void NiKeyframeData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiKeyframeData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&numRotationKeys, 4);
+	stream >> numRotationKeys;
 
 	if (numRotationKeys > 0) {
-		file.read((char*)&rotationType, 4);
+		stream >> rotationType;
 
 		if (rotationType != 4) {
 			quaternionKeys.resize(numRotationKeys);
 
 			for (int i = 0; i < numRotationKeys; i++) {
-				file.read((char*)&quaternionKeys[i].time, 4);
-				file.read((char*)&quaternionKeys[i].value, 16);
+				stream >> quaternionKeys[i].time;
+				stream >> quaternionKeys[i].value;
 
 				if (rotationType == 3)
-					file.read((char*)&quaternionKeys[i].tbc, 12);
+					stream >> quaternionKeys[i].tbc;
 			}
 		}
 		else {
-			xRotations.Get(file);
-			yRotations.Get(file);
-			zRotations.Get(file);
+			xRotations.Get(stream);
+			yRotations.Get(stream);
+			zRotations.Get(stream);
 		}
 	}
 
-	translations.Get(file);
-	scales.Get(file);
+	translations.Get(stream);
+	scales.Get(stream);
 }
 
-void NiKeyframeData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiKeyframeData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&numRotationKeys, 4);
+	stream << numRotationKeys;
 
 	if (numRotationKeys > 0) {
-		file.write((char*)&rotationType, 4);
+		stream << rotationType;
 
 		if (rotationType != 4) {
 			for (int i = 0; i < numRotationKeys; i++) {
-				file.write((char*)&quaternionKeys[i].time, 4);
-				file.write((char*)&quaternionKeys[i].value, 16);
+				stream << quaternionKeys[i].time;
+				stream << quaternionKeys[i].value;
 
 				if (rotationType == 3)
-					file.write((char*)&quaternionKeys[i].tbc, 12);
+					stream << quaternionKeys[i].tbc;
 			}
 		}
 		else {
-			xRotations.Put(file);
-			yRotations.Put(file);
-			zRotations.Put(file);
+			xRotations.Put(stream);
+			yRotations.Put(stream);
+			zRotations.Put(stream);
 		}
 	}
 
-	translations.Put(file);
-	scales.Put(file);
+	translations.Put(stream);
+	scales.Put(stream);
 }
 
-int NiKeyframeData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiKeyframeData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -102,36 +100,36 @@ int NiKeyframeData::CalcBlockSize() {
 }
 
 
-NiTransformData::NiTransformData(NiHeader* hdr) : NiKeyframeData(hdr) {
+NiTransformData::NiTransformData() : NiKeyframeData() {
 }
 
-NiTransformData::NiTransformData(std::fstream& file, NiHeader* hdr) : NiTransformData(hdr) {
-	Get(file);
+NiTransformData::NiTransformData(NiStream& stream) : NiTransformData() {
+	Get(stream);
 }
 
 
-NiPosData::NiPosData(NiHeader* hdr) {
-	NiObject::Init(hdr);
+NiPosData::NiPosData() {
+	NiObject::Init();
 }
 
-NiPosData::NiPosData(std::fstream& file, NiHeader* hdr) : NiPosData(hdr) {
-	Get(file);
+NiPosData::NiPosData(NiStream& stream) : NiPosData() {
+	Get(stream);
 }
 
-void NiPosData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiPosData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	data.Get(file);
+	data.Get(stream);
 }
 
-void NiPosData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiPosData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	data.Put(file);
+	data.Put(stream);
 }
 
-int NiPosData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiPosData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += data.CalcGroupSize();
 
@@ -139,28 +137,28 @@ int NiPosData::CalcBlockSize() {
 }
 
 
-NiBoolData::NiBoolData(NiHeader* hdr) {
-	NiObject::Init(hdr);
+NiBoolData::NiBoolData() {
+	NiObject::Init();
 }
 
-NiBoolData::NiBoolData(std::fstream& file, NiHeader* hdr) : NiBoolData(hdr) {
-	Get(file);
+NiBoolData::NiBoolData(NiStream& stream) : NiBoolData() {
+	Get(stream);
 }
 
-void NiBoolData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiBoolData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	data.Get(file);
+	data.Get(stream);
 }
 
-void NiBoolData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiBoolData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	data.Put(file);
+	data.Put(stream);
 }
 
-int NiBoolData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiBoolData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += data.CalcGroupSize();
 
@@ -168,28 +166,28 @@ int NiBoolData::CalcBlockSize() {
 }
 
 
-NiFloatData::NiFloatData(NiHeader* hdr) {
-	NiObject::Init(hdr);
+NiFloatData::NiFloatData() {
+	NiObject::Init();
 }
 
-NiFloatData::NiFloatData(std::fstream& file, NiHeader* hdr) : NiFloatData(hdr) {
-	Get(file);
+NiFloatData::NiFloatData(NiStream& stream) : NiFloatData() {
+	Get(stream);
 }
 
-void NiFloatData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiFloatData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	data.Get(file);
+	data.Get(stream);
 }
 
-void NiFloatData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiFloatData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	data.Put(file);
+	data.Put(stream);
 }
 
-int NiFloatData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiFloatData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += data.CalcGroupSize();
 
@@ -197,38 +195,32 @@ int NiFloatData::CalcBlockSize() {
 }
 
 
-void NiTimeController::Init(NiHeader* hdr) {
-	NiObject::Init(hdr);
-
-	flags = 0x000C;
-	frequency = 1.0f;
-	phase = 0.0f;
-	startTime = 0.0f;
-	stopTime = 0.0f;
+void NiTimeController::Init() {
+	NiObject::Init();
 }
 
-void NiTimeController::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiTimeController::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	nextControllerRef.Get(file);
-	file.read((char*)&flags, 2);
-	file.read((char*)&frequency, 4);
-	file.read((char*)&phase, 4);
-	file.read((char*)&startTime, 4);
-	file.read((char*)&stopTime, 4);
-	targetRef.Get(file);
+	nextControllerRef.Get(stream);
+	stream >> flags;
+	stream >> frequency;
+	stream >> phase;
+	stream >> startTime;
+	stream >> stopTime;
+	targetRef.Get(stream);
 }
 
-void NiTimeController::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiTimeController::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	nextControllerRef.Put(file);
-	file.write((char*)&flags, 2);
-	file.write((char*)&frequency, 4);
-	file.write((char*)&phase, 4);
-	file.write((char*)&startTime, 4);
-	file.write((char*)&stopTime, 4);
-	targetRef.Put(file);
+	nextControllerRef.Put(stream);
+	stream << flags;
+	stream << frequency;
+	stream << phase;
+	stream << startTime;
+	stream << stopTime;
+	targetRef.Put(stream);
 }
 
 void NiTimeController::GetChildRefs(std::set<int*>& refs) {
@@ -237,8 +229,8 @@ void NiTimeController::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&nextControllerRef.index);
 }
 
-int NiTimeController::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiTimeController::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 26;
 
@@ -246,24 +238,24 @@ int NiTimeController::CalcBlockSize() {
 }
 
 
-BSFrustumFOVController::BSFrustumFOVController(NiHeader* hdr) {
-	NiTimeController::Init(hdr);
+BSFrustumFOVController::BSFrustumFOVController() {
+	NiTimeController::Init();
 }
 
-BSFrustumFOVController::BSFrustumFOVController(std::fstream& file, NiHeader* hdr) : BSFrustumFOVController(hdr) {
-	Get(file);
+BSFrustumFOVController::BSFrustumFOVController(NiStream& stream) : BSFrustumFOVController() {
+	Get(stream);
 }
 
-void BSFrustumFOVController::Get(std::fstream& file) {
-	NiTimeController::Get(file);
+void BSFrustumFOVController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
 
-	interpolatorRef.Get(file);
+	interpolatorRef.Get(stream);
 }
 
-void BSFrustumFOVController::Put(std::fstream& file) {
-	NiTimeController::Put(file);
+void BSFrustumFOVController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
 
-	interpolatorRef.Put(file);
+	interpolatorRef.Put(stream);
 }
 
 void BSFrustumFOVController::GetChildRefs(std::set<int*>& refs) {
@@ -272,8 +264,8 @@ void BSFrustumFOVController::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&interpolatorRef.index);
 }
 
-int BSFrustumFOVController::CalcBlockSize() {
-	NiTimeController::CalcBlockSize();
+int BSFrustumFOVController::CalcBlockSize(NiVersion& version) {
+	NiTimeController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -281,32 +273,32 @@ int BSFrustumFOVController::CalcBlockSize() {
 }
 
 
-BSLagBoneController::BSLagBoneController(NiHeader* hdr) {
-	NiTimeController::Init(hdr);
+BSLagBoneController::BSLagBoneController() {
+	NiTimeController::Init();
 }
 
-BSLagBoneController::BSLagBoneController(std::fstream& file, NiHeader* hdr) : BSLagBoneController(hdr) {
-	Get(file);
+BSLagBoneController::BSLagBoneController(NiStream& stream) : BSLagBoneController() {
+	Get(stream);
 }
 
-void BSLagBoneController::Get(std::fstream& file) {
-	NiTimeController::Get(file);
+void BSLagBoneController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
 
-	file.read((char*)&linearVelocity, 4);
-	file.read((char*)&linearRotation, 4);
-	file.read((char*)&maxDistance, 4);
+	stream >> linearVelocity;
+	stream >> linearRotation;
+	stream >> maxDistance;
 }
 
-void BSLagBoneController::Put(std::fstream& file) {
-	NiTimeController::Put(file);
+void BSLagBoneController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
 
-	file.write((char*)&linearVelocity, 4);
-	file.write((char*)&linearRotation, 4);
-	file.write((char*)&maxDistance, 4);
+	stream << linearVelocity;
+	stream << linearRotation;
+	stream << maxDistance;
 }
 
-int BSLagBoneController::CalcBlockSize() {
-	NiTimeController::CalcBlockSize();
+int BSLagBoneController::CalcBlockSize(NiVersion& version) {
+	NiTimeController::CalcBlockSize(version);
 
 	blockSize += 12;
 
@@ -314,72 +306,72 @@ int BSLagBoneController::CalcBlockSize() {
 }
 
 
-BSProceduralLightningController::BSProceduralLightningController(NiHeader* hdr) {
-	NiTimeController::Init(hdr);
+BSProceduralLightningController::BSProceduralLightningController() {
+	NiTimeController::Init();
 }
 
-BSProceduralLightningController::BSProceduralLightningController(std::fstream& file, NiHeader* hdr) : BSProceduralLightningController(hdr) {
-	Get(file);
+BSProceduralLightningController::BSProceduralLightningController(NiStream& stream) : BSProceduralLightningController() {
+	Get(stream);
 }
 
-void BSProceduralLightningController::Get(std::fstream& file) {
-	NiTimeController::Get(file);
+void BSProceduralLightningController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
 
-	generationInterpRef.Get(file);
-	mutationInterpRef.Get(file);
-	subdivisionInterpRef.Get(file);
-	numBranchesInterpRef.Get(file);
-	numBranchesVarInterpRef.Get(file);
-	lengthInterpRef.Get(file);
-	lengthVarInterpRef.Get(file);
-	widthInterpRef.Get(file);
-	arcOffsetInterpRef.Get(file);
+	generationInterpRef.Get(stream);
+	mutationInterpRef.Get(stream);
+	subdivisionInterpRef.Get(stream);
+	numBranchesInterpRef.Get(stream);
+	numBranchesVarInterpRef.Get(stream);
+	lengthInterpRef.Get(stream);
+	lengthVarInterpRef.Get(stream);
+	widthInterpRef.Get(stream);
+	arcOffsetInterpRef.Get(stream);
 
-	file.read((char*)&subdivisions, 2);
-	file.read((char*)&numBranches, 2);
-	file.read((char*)&numBranchesPerVariation, 2);
+	stream >> subdivisions;
+	stream >> numBranches;
+	stream >> numBranchesPerVariation;
 
-	file.read((char*)&length, 4);
-	file.read((char*)&lengthVariation, 4);
-	file.read((char*)&width, 4);
-	file.read((char*)&childWidthMult, 4);
-	file.read((char*)&arcOffset, 4);
+	stream >> length;
+	stream >> lengthVariation;
+	stream >> width;
+	stream >> childWidthMult;
+	stream >> arcOffset;
 
-	file.read((char*)&fadeMainBolt, 1);
-	file.read((char*)&fadeChildBolts, 1);
-	file.read((char*)&animateArcOffset, 1);
+	stream >> fadeMainBolt;
+	stream >> fadeChildBolts;
+	stream >> animateArcOffset;
 
-	shaderPropertyRef.Get(file);
+	shaderPropertyRef.Get(stream);
 }
 
-void BSProceduralLightningController::Put(std::fstream& file) {
-	NiTimeController::Put(file);
+void BSProceduralLightningController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
 
-	generationInterpRef.Put(file);
-	mutationInterpRef.Put(file);
-	subdivisionInterpRef.Put(file);
-	numBranchesInterpRef.Put(file);
-	numBranchesVarInterpRef.Put(file);
-	lengthInterpRef.Put(file);
-	lengthVarInterpRef.Put(file);
-	widthInterpRef.Put(file);
-	arcOffsetInterpRef.Put(file);
+	generationInterpRef.Put(stream);
+	mutationInterpRef.Put(stream);
+	subdivisionInterpRef.Put(stream);
+	numBranchesInterpRef.Put(stream);
+	numBranchesVarInterpRef.Put(stream);
+	lengthInterpRef.Put(stream);
+	lengthVarInterpRef.Put(stream);
+	widthInterpRef.Put(stream);
+	arcOffsetInterpRef.Put(stream);
 
-	file.write((char*)&subdivisions, 2);
-	file.write((char*)&numBranches, 2);
-	file.write((char*)&numBranchesPerVariation, 2);
+	stream << subdivisions;
+	stream << numBranches;
+	stream << numBranchesPerVariation;
 
-	file.write((char*)&length, 4);
-	file.write((char*)&lengthVariation, 4);
-	file.write((char*)&width, 4);
-	file.write((char*)&childWidthMult, 4);
-	file.write((char*)&arcOffset, 4);
+	stream << length;
+	stream << lengthVariation;
+	stream << width;
+	stream << childWidthMult;
+	stream << arcOffset;
 
-	file.write((char*)&fadeMainBolt, 1);
-	file.write((char*)&fadeChildBolts, 1);
-	file.write((char*)&animateArcOffset, 1);
+	stream << fadeMainBolt;
+	stream << fadeChildBolts;
+	stream << animateArcOffset;
 
-	shaderPropertyRef.Put(file);
+	shaderPropertyRef.Put(stream);
 }
 
 void BSProceduralLightningController::GetChildRefs(std::set<int*>& refs) {
@@ -397,8 +389,8 @@ void BSProceduralLightningController::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shaderPropertyRef.index);
 }
 
-int BSProceduralLightningController::CalcBlockSize() {
-	NiTimeController::CalcBlockSize();
+int BSProceduralLightningController::CalcBlockSize(NiVersion& version) {
+	NiTimeController::CalcBlockSize(version);
 
 	blockSize += 69;
 
@@ -406,38 +398,35 @@ int BSProceduralLightningController::CalcBlockSize() {
 }
 
 
-NiBoneLODController::NiBoneLODController(NiHeader* hdr) {
-	NiTimeController::Init(hdr);
-
-	numLODs = 0;
-	boneArraysSize = 0;
+NiBoneLODController::NiBoneLODController() {
+	NiTimeController::Init();
 }
 
-NiBoneLODController::NiBoneLODController(std::fstream& file, NiHeader* hdr) : NiBoneLODController(hdr) {
-	Get(file);
+NiBoneLODController::NiBoneLODController(NiStream& stream) : NiBoneLODController() {
+	Get(stream);
 }
 
-void NiBoneLODController::Get(std::fstream& file) {
-	NiTimeController::Get(file);
+void NiBoneLODController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
 
-	file.read((char*)&lod, 4);
-	file.read((char*)&numLODs, 4);
+	stream >> lod;
+	stream >> numLODs;
 
-	file.read((char*)&boneArraysSize, 4);
+	stream >> boneArraysSize;
 	boneArrays.resize(boneArraysSize);
 	for (int i = 0; i < boneArraysSize; i++)
-		boneArrays[i].Get(file);
+		boneArrays[i].Get(stream);
 }
 
-void NiBoneLODController::Put(std::fstream& file) {
-	NiTimeController::Put(file);
+void NiBoneLODController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
 
-	file.write((char*)&lod, 4);
-	file.write((char*)&numLODs, 4);
+	stream << lod;
+	stream << numLODs;
 
-	file.write((char*)&boneArraysSize, 4);
+	stream << boneArraysSize;
 	for (int i = 0; i < boneArraysSize; i++)
-		boneArrays[i].Put(file);
+		boneArrays[i].Put(stream);
 }
 
 void NiBoneLODController::GetChildRefs(std::set<int*>& refs) {
@@ -447,8 +436,8 @@ void NiBoneLODController::GetChildRefs(std::set<int*>& refs) {
 		boneArrays[i].GetIndexPtrs(refs);
 }
 
-int NiBoneLODController::CalcBlockSize() {
-	NiTimeController::CalcBlockSize();
+int NiBoneLODController::CalcBlockSize(NiVersion& version) {
+	NiTimeController::CalcBlockSize(version);
 
 	blockSize += 12;
 	blockSize += boneArraysSize * 4;
@@ -459,20 +448,20 @@ int NiBoneLODController::CalcBlockSize() {
 }
 
 
-void NiSingleInterpController::Init(NiHeader* hdr) {
-	NiInterpController::Init(hdr);
+void NiSingleInterpController::Init() {
+	NiInterpController::Init();
 }
 
-void NiSingleInterpController::Get(std::fstream& file) {
-	NiInterpController::Get(file);
+void NiSingleInterpController::Get(NiStream& stream) {
+	NiInterpController::Get(stream);
 
-	interpolatorRef.Get(file);
+	interpolatorRef.Get(stream);
 }
 
-void NiSingleInterpController::Put(std::fstream& file) {
-	NiInterpController::Put(file);
+void NiSingleInterpController::Put(NiStream& stream) {
+	NiInterpController::Put(stream);
 
-	interpolatorRef.Put(file);
+	interpolatorRef.Put(stream);
 }
 
 void NiSingleInterpController::GetChildRefs(std::set<int*>& refs) {
@@ -481,8 +470,8 @@ void NiSingleInterpController::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&interpolatorRef.index);
 }
 
-int NiSingleInterpController::CalcBlockSize() {
-	NiInterpController::CalcBlockSize();
+int NiSingleInterpController::CalcBlockSize(NiVersion& version) {
+	NiInterpController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -490,34 +479,34 @@ int NiSingleInterpController::CalcBlockSize() {
 }
 
 
-NiFloatExtraDataController::NiFloatExtraDataController(NiHeader* hdr) {
-	NiExtraDataController::Init(hdr);
+NiFloatExtraDataController::NiFloatExtraDataController() {
+	NiExtraDataController::Init();
 }
 
-NiFloatExtraDataController::NiFloatExtraDataController(std::fstream& file, NiHeader* hdr) : NiFloatExtraDataController(hdr) {
-	Get(file);
+NiFloatExtraDataController::NiFloatExtraDataController(NiStream& stream) : NiFloatExtraDataController() {
+	Get(stream);
 }
 
-void NiFloatExtraDataController::Get(std::fstream& file) {
-	NiExtraDataController::Get(file);
+void NiFloatExtraDataController::Get(NiStream& stream) {
+	NiExtraDataController::Get(stream);
 
-	extraData.Get(file, header);
+	extraData.Get(stream);
 }
 
-void NiFloatExtraDataController::Put(std::fstream& file) {
-	NiExtraDataController::Put(file);
+void NiFloatExtraDataController::Put(NiStream& stream) {
+	NiExtraDataController::Put(stream);
 
-	extraData.Put(file);
+	extraData.Put(stream);
 }
 
-void NiFloatExtraDataController::notifyStringDelete(int stringID) {
-	NiExtraDataController::notifyStringDelete(stringID);
+void NiFloatExtraDataController::GetStringRefs(std::set<int*>& refs) {
+	NiExtraDataController::GetStringRefs(refs);
 
-	extraData.notifyStringDelete(stringID);
+	refs.insert(&extraData.index);
 }
 
-int NiFloatExtraDataController::CalcBlockSize() {
-	NiExtraDataController::CalcBlockSize();
+int NiFloatExtraDataController::CalcBlockSize(NiVersion& version) {
+	NiExtraDataController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -525,82 +514,80 @@ int NiFloatExtraDataController::CalcBlockSize() {
 }
 
 
-NiVisController::NiVisController(NiHeader* hdr) {
-	NiBoolInterpController::Init(hdr);
+NiVisController::NiVisController() {
+	NiBoolInterpController::Init();
 }
 
-NiVisController::NiVisController(std::fstream& file, NiHeader* hdr) : NiVisController(hdr) {
-	Get(file);
-}
-
-
-NiAlphaController::NiAlphaController(NiHeader* hdr) {
-	NiFloatInterpController::Init(hdr);
-}
-
-NiAlphaController::NiAlphaController(std::fstream& file, NiHeader* hdr) : NiAlphaController(hdr) {
-	Get(file);
+NiVisController::NiVisController(NiStream& stream) : NiVisController() {
+	Get(stream);
 }
 
 
-NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiHeader* hdr) {
-	NiTimeController::Init(hdr);
+NiAlphaController::NiAlphaController() {
+	NiFloatInterpController::Init();
 }
 
-NiPSysUpdateCtlr::NiPSysUpdateCtlr(std::fstream& file, NiHeader* hdr) : NiPSysUpdateCtlr(hdr) {
-	Get(file);
-}
-
-
-BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiHeader* hdr) : NiAlphaController(hdr) {
-}
-
-BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(std::fstream& file, NiHeader* hdr) : BSNiAlphaPropertyTestRefController(hdr) {
-	Get(file);
+NiAlphaController::NiAlphaController(NiStream& stream) : NiAlphaController() {
+	Get(stream);
 }
 
 
-NiKeyframeController::NiKeyframeController(NiHeader* hdr) {
-	NiSingleInterpController::Init(hdr);
+NiPSysUpdateCtlr::NiPSysUpdateCtlr() {
+	NiTimeController::Init();
 }
 
-NiKeyframeController::NiKeyframeController(std::fstream& file, NiHeader* hdr) : NiKeyframeController(hdr) {
-	Get(file);
-}
-
-
-NiTransformController::NiTransformController(NiHeader* hdr) : NiKeyframeController(hdr) {
-}
-
-NiTransformController::NiTransformController(std::fstream& file, NiHeader* hdr) : NiTransformController(hdr) {
-	Get(file);
+NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiStream& stream) : NiPSysUpdateCtlr() {
+	Get(stream);
 }
 
 
-BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(NiHeader* hdr) {
-	NiFloatInterpController::Init(hdr);
-
-	typeOfControlledColor = 0;
+BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController() : NiAlphaController() {
 }
 
-BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(std::fstream& file, NiHeader* hdr) : BSLightingShaderPropertyColorController(hdr) {
-	Get(file);
+BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiStream& stream) : BSNiAlphaPropertyTestRefController() {
+	Get(stream);
 }
 
-void BSLightingShaderPropertyColorController::Get(std::fstream& file) {
-	NiFloatInterpController::Get(file);
 
-	file.read((char*)&typeOfControlledColor, 4);
+NiKeyframeController::NiKeyframeController() {
+	NiSingleInterpController::Init();
 }
 
-void BSLightingShaderPropertyColorController::Put(std::fstream& file) {
-	NiFloatInterpController::Put(file);
-
-	file.write((char*)&typeOfControlledColor, 4);
+NiKeyframeController::NiKeyframeController(NiStream& stream) : NiKeyframeController() {
+	Get(stream);
 }
 
-int BSLightingShaderPropertyColorController::CalcBlockSize() {
-	NiFloatInterpController::CalcBlockSize();
+
+NiTransformController::NiTransformController() : NiKeyframeController() {
+}
+
+NiTransformController::NiTransformController(NiStream& stream) : NiTransformController() {
+	Get(stream);
+}
+
+
+BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController() {
+	NiFloatInterpController::Init();
+}
+
+BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(NiStream& stream) : BSLightingShaderPropertyColorController() {
+	Get(stream);
+}
+
+void BSLightingShaderPropertyColorController::Get(NiStream& stream) {
+	NiFloatInterpController::Get(stream);
+
+	stream >> typeOfControlledColor;
+}
+
+void BSLightingShaderPropertyColorController::Put(NiStream& stream) {
+	NiFloatInterpController::Put(stream);
+
+	stream << typeOfControlledColor;
+}
+
+int BSLightingShaderPropertyColorController::CalcBlockSize(NiVersion& version) {
+	NiFloatInterpController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -608,30 +595,28 @@ int BSLightingShaderPropertyColorController::CalcBlockSize() {
 }
 
 
-BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiHeader* hdr) {
-	NiFloatInterpController::Init(hdr);
-
-	typeOfControlledVariable = 0;
+BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController() {
+	NiFloatInterpController::Init();
 }
 
-BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(std::fstream& file, NiHeader* hdr) : BSLightingShaderPropertyFloatController(hdr) {
-	Get(file);
+BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiStream& stream) : BSLightingShaderPropertyFloatController() {
+	Get(stream);
 }
 
-void BSLightingShaderPropertyFloatController::Get(std::fstream& file) {
-	NiFloatInterpController::Get(file);
+void BSLightingShaderPropertyFloatController::Get(NiStream& stream) {
+	NiFloatInterpController::Get(stream);
 
-	file.read((char*)&typeOfControlledVariable, 4);
+	stream >> typeOfControlledVariable;
 }
 
-void BSLightingShaderPropertyFloatController::Put(std::fstream& file) {
-	NiFloatInterpController::Put(file);
+void BSLightingShaderPropertyFloatController::Put(NiStream& stream) {
+	NiFloatInterpController::Put(stream);
 
-	file.write((char*)&typeOfControlledVariable, 4);
+	stream << typeOfControlledVariable;
 }
 
-int BSLightingShaderPropertyFloatController::CalcBlockSize() {
-	NiFloatInterpController::CalcBlockSize();
+int BSLightingShaderPropertyFloatController::CalcBlockSize(NiVersion& version) {
+	NiFloatInterpController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -639,30 +624,28 @@ int BSLightingShaderPropertyFloatController::CalcBlockSize() {
 }
 
 
-BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiHeader* hdr) {
-	NiFloatInterpController::Init(hdr);
-
-	typeOfControlledColor = 0;
+BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController() {
+	NiFloatInterpController::Init();
 }
 
-BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(std::fstream& file, NiHeader* hdr) : BSEffectShaderPropertyColorController(hdr) {
-	Get(file);
+BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiStream& stream) : BSEffectShaderPropertyColorController() {
+	Get(stream);
 }
 
-void BSEffectShaderPropertyColorController::Get(std::fstream& file) {
-	NiFloatInterpController::Get(file);
+void BSEffectShaderPropertyColorController::Get(NiStream& stream) {
+	NiFloatInterpController::Get(stream);
 
-	file.read((char*)&typeOfControlledColor, 4);
+	stream >> typeOfControlledColor;
 }
 
-void BSEffectShaderPropertyColorController::Put(std::fstream& file) {
-	NiFloatInterpController::Put(file);
+void BSEffectShaderPropertyColorController::Put(NiStream& stream) {
+	NiFloatInterpController::Put(stream);
 
-	file.write((char*)&typeOfControlledColor, 4);
+	stream << typeOfControlledColor;
 }
 
-int BSEffectShaderPropertyColorController::CalcBlockSize() {
-	NiFloatInterpController::CalcBlockSize();
+int BSEffectShaderPropertyColorController::CalcBlockSize(NiVersion& version) {
+	NiFloatInterpController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -670,30 +653,28 @@ int BSEffectShaderPropertyColorController::CalcBlockSize() {
 }
 
 
-BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiHeader* hdr) {
-	NiFloatInterpController::Init(hdr);
-
-	typeOfControlledVariable = 0;
+BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController() {
+	NiFloatInterpController::Init();
 }
 
-BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(std::fstream& file, NiHeader* hdr) : BSEffectShaderPropertyFloatController(hdr) {
-	Get(file);
+BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiStream& stream) : BSEffectShaderPropertyFloatController() {
+	Get(stream);
 }
 
-void BSEffectShaderPropertyFloatController::Get(std::fstream& file) {
-	NiFloatInterpController::Get(file);
+void BSEffectShaderPropertyFloatController::Get(NiStream& stream) {
+	NiFloatInterpController::Get(stream);
 
-	file.read((char*)&typeOfControlledVariable, 4);
+	stream >> typeOfControlledVariable;
 }
 
-void BSEffectShaderPropertyFloatController::Put(std::fstream& file) {
-	NiFloatInterpController::Put(file);
+void BSEffectShaderPropertyFloatController::Put(NiStream& stream) {
+	NiFloatInterpController::Put(stream);
 
-	file.write((char*)&typeOfControlledVariable, 4);
+	stream << typeOfControlledVariable;
 }
 
-int BSEffectShaderPropertyFloatController::CalcBlockSize() {
-	NiFloatInterpController::CalcBlockSize();
+int BSEffectShaderPropertyFloatController::CalcBlockSize(NiVersion& version) {
+	NiFloatInterpController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -701,28 +682,34 @@ int BSEffectShaderPropertyFloatController::CalcBlockSize() {
 }
 
 
-NiMultiTargetTransformController::NiMultiTargetTransformController(NiHeader* hdr) {
-	NiInterpController::Init(hdr);
+NiMultiTargetTransformController::NiMultiTargetTransformController() {
+	NiInterpController::Init();
 }
 
-NiMultiTargetTransformController::NiMultiTargetTransformController(std::fstream& file, NiHeader* hdr) : NiMultiTargetTransformController(hdr) {
-	Get(file);
+NiMultiTargetTransformController::NiMultiTargetTransformController(NiStream& stream) : NiMultiTargetTransformController() {
+	Get(stream);
 }
 
-void NiMultiTargetTransformController::Get(std::fstream& file) {
-	NiInterpController::Get(file);
+void NiMultiTargetTransformController::Get(NiStream& stream) {
+	NiInterpController::Get(stream);
 
-	targetRefs.Get(file);
+	targetRefs.Get(stream);
 }
 
-void NiMultiTargetTransformController::Put(std::fstream& file) {
-	NiInterpController::Put(file);
+void NiMultiTargetTransformController::Put(NiStream& stream) {
+	NiInterpController::Put(stream);
 
-	targetRefs.Put(file);
+	targetRefs.Put(stream);
 }
 
-int NiMultiTargetTransformController::CalcBlockSize() {
-	NiInterpController::CalcBlockSize();
+void NiMultiTargetTransformController::GetChildRefs(std::set<int*>& refs) {
+	NiInterpController::GetChildRefs(refs);
+
+	targetRefs.GetIndexPtrs(refs);
+}
+
+int NiMultiTargetTransformController::CalcBlockSize(NiVersion& version) {
+	NiInterpController::CalcBlockSize(version);
 
 	blockSize += 2;
 	blockSize += targetRefs.GetSize() * 4;
@@ -731,26 +718,26 @@ int NiMultiTargetTransformController::CalcBlockSize() {
 }
 
 
-void NiPSysModifierCtlr::Get(std::fstream& file) {
-	NiSingleInterpController::Get(file);
+void NiPSysModifierCtlr::Get(NiStream& stream) {
+	NiSingleInterpController::Get(stream);
 
-	modifierName.Get(file, header);
+	modifierName.Get(stream);
 }
 
-void NiPSysModifierCtlr::Put(std::fstream& file) {
-	NiSingleInterpController::Put(file);
+void NiPSysModifierCtlr::Put(NiStream& stream) {
+	NiSingleInterpController::Put(stream);
 
-	modifierName.Put(file);
+	modifierName.Put(stream);
 }
 
-void NiPSysModifierCtlr::notifyStringDelete(int stringID) {
-	NiSingleInterpController::notifyStringDelete(stringID);
+void NiPSysModifierCtlr::GetStringRefs(std::set<int*>& refs) {
+	NiSingleInterpController::GetStringRefs(refs);
 
-	modifierName.notifyStringDelete(stringID);
+	refs.insert(&modifierName.index);
 }
 
-int NiPSysModifierCtlr::CalcBlockSize() {
-	NiSingleInterpController::CalcBlockSize();
+int NiPSysModifierCtlr::CalcBlockSize(NiVersion& version) {
+	NiSingleInterpController::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -758,96 +745,96 @@ int NiPSysModifierCtlr::CalcBlockSize() {
 }
 
 
-NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
+NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr() {
+	NiPSysModifierCtlr::Init();
 }
 
-NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(std::fstream& file, NiHeader* hdr) : NiPSysModifierActiveCtlr(hdr) {
-	Get(file);
-}
-
-
-NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
-}
-
-NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(std::fstream& file, NiHeader* hdr) : NiPSysEmitterLifeSpanCtlr(hdr) {
-	Get(file);
+NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiStream& stream) : NiPSysModifierActiveCtlr() {
+	Get(stream);
 }
 
 
-NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
+NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr() {
+	NiPSysModifierCtlr::Init();
 }
 
-NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(std::fstream& file, NiHeader* hdr) : NiPSysEmitterSpeedCtlr(hdr) {
-	Get(file);
-}
-
-
-NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
-}
-
-NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(std::fstream& file, NiHeader* hdr) : NiPSysEmitterInitialRadiusCtlr(hdr) {
-	Get(file);
+NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiStream& stream) : NiPSysEmitterLifeSpanCtlr() {
+	Get(stream);
 }
 
 
-NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
+NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr() {
+	NiPSysModifierCtlr::Init();
 }
 
-NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(std::fstream& file, NiHeader* hdr) : NiPSysEmitterPlanarAngleCtlr(hdr) {
-	Get(file);
-}
-
-
-NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
-}
-
-NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(std::fstream& file, NiHeader* hdr) : NiPSysEmitterDeclinationCtlr(hdr) {
-	Get(file);
+NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiStream& stream) : NiPSysEmitterSpeedCtlr() {
+	Get(stream);
 }
 
 
-NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
+NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr() {
+	NiPSysModifierCtlr::Init();
 }
 
-NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(std::fstream& file, NiHeader* hdr) : NiPSysGravityStrengthCtlr(hdr) {
-	Get(file);
-}
-
-
-NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
-}
-
-NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(std::fstream& file, NiHeader* hdr) : NiPSysInitialRotSpeedCtlr(hdr) {
-	Get(file);
+NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiStream& stream) : NiPSysEmitterInitialRadiusCtlr() {
+	Get(stream);
 }
 
 
-NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiHeader* hdr) {
-	NiPSysModifierCtlr::Init(hdr);
+NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr() {
+	NiPSysModifierCtlr::Init();
 }
 
-NiPSysEmitterCtlr::NiPSysEmitterCtlr(std::fstream& file, NiHeader* hdr) : NiPSysEmitterCtlr(hdr) {
-	Get(file);
+NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiStream& stream) : NiPSysEmitterPlanarAngleCtlr() {
+	Get(stream);
 }
 
-void NiPSysEmitterCtlr::Get(std::fstream& file) {
-	NiPSysModifierCtlr::Get(file);
 
-	visInterpolatorRef.Get(file);
+NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr() {
+	NiPSysModifierCtlr::Init();
 }
 
-void NiPSysEmitterCtlr::Put(std::fstream& file) {
-	NiPSysModifierCtlr::Put(file);
+NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiStream& stream) : NiPSysEmitterDeclinationCtlr() {
+	Get(stream);
+}
 
-	visInterpolatorRef.Put(file);
+
+NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr() {
+	NiPSysModifierCtlr::Init();
+}
+
+NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiStream& stream) : NiPSysGravityStrengthCtlr() {
+	Get(stream);
+}
+
+
+NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr() {
+	NiPSysModifierCtlr::Init();
+}
+
+NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiStream& stream) : NiPSysInitialRotSpeedCtlr() {
+	Get(stream);
+}
+
+
+NiPSysEmitterCtlr::NiPSysEmitterCtlr() {
+	NiPSysModifierCtlr::Init();
+}
+
+NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiStream& stream) : NiPSysEmitterCtlr() {
+	Get(stream);
+}
+
+void NiPSysEmitterCtlr::Get(NiStream& stream) {
+	NiPSysModifierCtlr::Get(stream);
+
+	visInterpolatorRef.Get(stream);
+}
+
+void NiPSysEmitterCtlr::Put(NiStream& stream) {
+	NiPSysModifierCtlr::Put(stream);
+
+	visInterpolatorRef.Put(stream);
 }
 
 void NiPSysEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
@@ -856,8 +843,8 @@ void NiPSysEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&visInterpolatorRef.index);
 }
 
-int NiPSysEmitterCtlr::CalcBlockSize() {
-	NiPSysModifierCtlr::CalcBlockSize();
+int NiPSysEmitterCtlr::CalcBlockSize(NiVersion& version) {
+	NiPSysModifierCtlr::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -865,25 +852,25 @@ int NiPSysEmitterCtlr::CalcBlockSize() {
 }
 
 
-BSPSysMultiTargetEmitterCtlr::BSPSysMultiTargetEmitterCtlr(NiHeader* hdr) : NiPSysEmitterCtlr(hdr) {
+BSPSysMultiTargetEmitterCtlr::BSPSysMultiTargetEmitterCtlr() : NiPSysEmitterCtlr() {
 }
 
-BSPSysMultiTargetEmitterCtlr::BSPSysMultiTargetEmitterCtlr(std::fstream& file, NiHeader* hdr) : BSPSysMultiTargetEmitterCtlr(hdr) {
-	Get(file);
+BSPSysMultiTargetEmitterCtlr::BSPSysMultiTargetEmitterCtlr(NiStream& stream) : BSPSysMultiTargetEmitterCtlr() {
+	Get(stream);
 }
 
-void BSPSysMultiTargetEmitterCtlr::Get(std::fstream& file) {
-	NiPSysEmitterCtlr::Get(file);
+void BSPSysMultiTargetEmitterCtlr::Get(NiStream& stream) {
+	NiPSysEmitterCtlr::Get(stream);
 
-	file.read((char*)&maxEmitters, 2);
-	masterParticleSystemRef.Get(file);
+	stream >> maxEmitters;
+	masterParticleSystemRef.Get(stream);
 }
 
-void BSPSysMultiTargetEmitterCtlr::Put(std::fstream& file) {
-	NiPSysEmitterCtlr::Put(file);
+void BSPSysMultiTargetEmitterCtlr::Put(NiStream& stream) {
+	NiPSysEmitterCtlr::Put(stream);
 
-	file.write((char*)&maxEmitters, 2);
-	masterParticleSystemRef.Put(file);
+	stream << maxEmitters;
+	masterParticleSystemRef.Put(stream);
 }
 
 void BSPSysMultiTargetEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
@@ -892,8 +879,8 @@ void BSPSysMultiTargetEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&masterParticleSystemRef.index);
 }
 
-int BSPSysMultiTargetEmitterCtlr::CalcBlockSize() {
-	NiPSysEmitterCtlr::CalcBlockSize();
+int BSPSysMultiTargetEmitterCtlr::CalcBlockSize(NiVersion& version) {
+	NiPSysEmitterCtlr::CalcBlockSize(version);
 
 	blockSize += 6;
 
@@ -901,22 +888,22 @@ int BSPSysMultiTargetEmitterCtlr::CalcBlockSize() {
 }
 
 
-void NiBlendInterpolator::Get(std::fstream& file) {
-	NiInterpolator::Get(file);
+void NiBlendInterpolator::Get(NiStream& stream) {
+	NiInterpolator::Get(stream);
 
-	file.read((char*)&flags, 2);
-	file.read((char*)&unkInt, 4);
+	stream >> flags;
+	stream >> unkInt;
 }
 
-void NiBlendInterpolator::Put(std::fstream& file) {
-	NiInterpolator::Put(file);
+void NiBlendInterpolator::Put(NiStream& stream) {
+	NiInterpolator::Put(stream);
 
-	file.write((char*)&flags, 2);
-	file.write((char*)&unkInt, 4);
+	stream << flags;
+	stream << unkInt;
 }
 
-int NiBlendInterpolator::CalcBlockSize() {
-	NiInterpolator::CalcBlockSize();
+int NiBlendInterpolator::CalcBlockSize(NiVersion& version) {
+	NiInterpolator::CalcBlockSize(version);
 
 	blockSize += 6;
 
@@ -924,30 +911,28 @@ int NiBlendInterpolator::CalcBlockSize() {
 }
 
 
-NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiHeader* hdr) {
-	NiBlendInterpolator::Init(hdr);
-
-	value = false;
+NiBlendBoolInterpolator::NiBlendBoolInterpolator() {
+	NiBlendInterpolator::Init();
 }
 
-NiBlendBoolInterpolator::NiBlendBoolInterpolator(std::fstream& file, NiHeader* hdr) : NiBlendBoolInterpolator(hdr) {
-	Get(file);
+NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiStream& stream) : NiBlendBoolInterpolator() {
+	Get(stream);
 }
 
-void NiBlendBoolInterpolator::Get(std::fstream& file) {
-	NiBlendInterpolator::Get(file);
+void NiBlendBoolInterpolator::Get(NiStream& stream) {
+	NiBlendInterpolator::Get(stream);
 
-	file.read((char*)&value, 1);
+	stream >> value;
 }
 
-void NiBlendBoolInterpolator::Put(std::fstream& file) {
-	NiBlendInterpolator::Put(file);
+void NiBlendBoolInterpolator::Put(NiStream& stream) {
+	NiBlendInterpolator::Put(stream);
 
-	file.write((char*)&value, 1);
+	stream << value;
 }
 
-int NiBlendBoolInterpolator::CalcBlockSize() {
-	NiBlendInterpolator::CalcBlockSize();
+int NiBlendBoolInterpolator::CalcBlockSize(NiVersion& version) {
+	NiBlendInterpolator::CalcBlockSize(version);
 
 	blockSize += 1;
 
@@ -955,30 +940,28 @@ int NiBlendBoolInterpolator::CalcBlockSize() {
 }
 
 
-NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiHeader* hdr) {
-	NiBlendInterpolator::Init(hdr);
-
-	value = 0.0f;
+NiBlendFloatInterpolator::NiBlendFloatInterpolator() {
+	NiBlendInterpolator::Init();
 }
 
-NiBlendFloatInterpolator::NiBlendFloatInterpolator(std::fstream& file, NiHeader* hdr) : NiBlendFloatInterpolator(hdr) {
-	Get(file);
+NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiStream& stream) : NiBlendFloatInterpolator() {
+	Get(stream);
 }
 
-void NiBlendFloatInterpolator::Get(std::fstream& file) {
-	NiBlendInterpolator::Get(file);
+void NiBlendFloatInterpolator::Get(NiStream& stream) {
+	NiBlendInterpolator::Get(stream);
 
-	file.read((char*)&value, 4);
+	stream >> value;
 }
 
-void NiBlendFloatInterpolator::Put(std::fstream& file) {
-	NiBlendInterpolator::Put(file);
+void NiBlendFloatInterpolator::Put(NiStream& stream) {
+	NiBlendInterpolator::Put(stream);
 
-	file.write((char*)&value, 4);
+	stream << value;
 }
 
-int NiBlendFloatInterpolator::CalcBlockSize() {
-	NiBlendInterpolator::CalcBlockSize();
+int NiBlendFloatInterpolator::CalcBlockSize(NiVersion& version) {
+	NiBlendInterpolator::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -986,28 +969,28 @@ int NiBlendFloatInterpolator::CalcBlockSize() {
 }
 
 
-NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiHeader* hdr) {
-	NiBlendInterpolator::Init(hdr);
+NiBlendPoint3Interpolator::NiBlendPoint3Interpolator() {
+	NiBlendInterpolator::Init();
 }
 
-NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(std::fstream& file, NiHeader* hdr) : NiBlendPoint3Interpolator(hdr) {
-	Get(file);
+NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiStream& stream) : NiBlendPoint3Interpolator() {
+	Get(stream);
 }
 
-void NiBlendPoint3Interpolator::Get(std::fstream& file) {
-	NiBlendInterpolator::Get(file);
+void NiBlendPoint3Interpolator::Get(NiStream& stream) {
+	NiBlendInterpolator::Get(stream);
 
-	file.read((char*)&point, 12);
+	stream >> point;
 }
 
-void NiBlendPoint3Interpolator::Put(std::fstream& file) {
-	NiBlendInterpolator::Put(file);
+void NiBlendPoint3Interpolator::Put(NiStream& stream) {
+	NiBlendInterpolator::Put(stream);
 
-	file.write((char*)&point, 12);
+	stream << point;
 }
 
-int NiBlendPoint3Interpolator::CalcBlockSize() {
-	NiBlendInterpolator::CalcBlockSize();
+int NiBlendPoint3Interpolator::CalcBlockSize(NiVersion& version) {
+	NiBlendInterpolator::CalcBlockSize(version);
 
 	blockSize += 12;
 
@@ -1015,26 +998,26 @@ int NiBlendPoint3Interpolator::CalcBlockSize() {
 }
 
 
-NiBoolInterpolator::NiBoolInterpolator(NiHeader* hdr) {
-	NiKeyBasedInterpolator::Init(hdr);
+NiBoolInterpolator::NiBoolInterpolator() {
+	NiKeyBasedInterpolator::Init();
 }
 
-NiBoolInterpolator::NiBoolInterpolator(std::fstream& file, NiHeader* hdr) : NiBoolInterpolator(hdr) {
-	Get(file);
+NiBoolInterpolator::NiBoolInterpolator(NiStream& stream) : NiBoolInterpolator() {
+	Get(stream);
 }
 
-void NiBoolInterpolator::Get(std::fstream& file) {
-	NiKeyBasedInterpolator::Get(file);
+void NiBoolInterpolator::Get(NiStream& stream) {
+	NiKeyBasedInterpolator::Get(stream);
 
-	file.read((char*)&boolValue, 1);
-	dataRef.Get(file);
+	stream >> boolValue;
+	dataRef.Get(stream);
 }
 
-void NiBoolInterpolator::Put(std::fstream& file) {
-	NiKeyBasedInterpolator::Put(file);
+void NiBoolInterpolator::Put(NiStream& stream) {
+	NiKeyBasedInterpolator::Put(stream);
 
-	file.write((char*)&boolValue, 1);
-	dataRef.Put(file);
+	stream << boolValue;
+	dataRef.Put(stream);
 }
 
 void NiBoolInterpolator::GetChildRefs(std::set<int*>& refs) {
@@ -1043,8 +1026,8 @@ void NiBoolInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int NiBoolInterpolator::CalcBlockSize() {
-	NiKeyBasedInterpolator::CalcBlockSize();
+int NiBoolInterpolator::CalcBlockSize(NiVersion& version) {
+	NiKeyBasedInterpolator::CalcBlockSize(version);
 
 	blockSize += 5;
 
@@ -1052,34 +1035,34 @@ int NiBoolInterpolator::CalcBlockSize() {
 }
 
 
-NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiHeader* hdr) : NiBoolInterpolator(hdr) {
+NiBoolTimelineInterpolator::NiBoolTimelineInterpolator() : NiBoolInterpolator() {
 }
 
-NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(std::fstream& file, NiHeader* hdr) : NiBoolTimelineInterpolator(hdr) {
-	Get(file);
+NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiStream& stream) : NiBoolTimelineInterpolator() {
+	Get(stream);
 }
 
 
-NiFloatInterpolator::NiFloatInterpolator(NiHeader* hdr) {
-	NiKeyBasedInterpolator::Init(hdr);
+NiFloatInterpolator::NiFloatInterpolator() {
+	NiKeyBasedInterpolator::Init();
 }
 
-NiFloatInterpolator::NiFloatInterpolator(std::fstream& file, NiHeader* hdr) : NiFloatInterpolator(hdr) {
-	Get(file);
+NiFloatInterpolator::NiFloatInterpolator(NiStream& stream) : NiFloatInterpolator() {
+	Get(stream);
 }
 
-void NiFloatInterpolator::Get(std::fstream& file) {
-	NiKeyBasedInterpolator::Get(file);
+void NiFloatInterpolator::Get(NiStream& stream) {
+	NiKeyBasedInterpolator::Get(stream);
 
-	file.read((char*)&floatValue, 4);
-	dataRef.Get(file);
+	stream >> floatValue;
+	dataRef.Get(stream);
 }
 
-void NiFloatInterpolator::Put(std::fstream& file) {
-	NiKeyBasedInterpolator::Put(file);
+void NiFloatInterpolator::Put(NiStream& stream) {
+	NiKeyBasedInterpolator::Put(stream);
 
-	file.write((char*)&floatValue, 4);
-	dataRef.Put(file);
+	stream << floatValue;
+	dataRef.Put(stream);
 }
 
 void NiFloatInterpolator::GetChildRefs(std::set<int*>& refs) {
@@ -1088,8 +1071,8 @@ void NiFloatInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int NiFloatInterpolator::CalcBlockSize() {
-	NiKeyBasedInterpolator::CalcBlockSize();
+int NiFloatInterpolator::CalcBlockSize(NiVersion& version) {
+	NiKeyBasedInterpolator::CalcBlockSize(version);
 
 	blockSize += 8;
 
@@ -1097,30 +1080,30 @@ int NiFloatInterpolator::CalcBlockSize() {
 }
 
 
-NiTransformInterpolator::NiTransformInterpolator(NiHeader* hdr) {
-	NiKeyBasedInterpolator::Init(hdr);
+NiTransformInterpolator::NiTransformInterpolator() {
+	NiKeyBasedInterpolator::Init();
 }
 
-NiTransformInterpolator::NiTransformInterpolator(std::fstream& file, NiHeader* hdr) : NiTransformInterpolator(hdr) {
-	Get(file);
+NiTransformInterpolator::NiTransformInterpolator(NiStream& stream) : NiTransformInterpolator() {
+	Get(stream);
 }
 
-void NiTransformInterpolator::Get(std::fstream& file) {
-	NiKeyBasedInterpolator::Get(file);
+void NiTransformInterpolator::Get(NiStream& stream) {
+	NiKeyBasedInterpolator::Get(stream);
 
-	file.read((char*)&translation, 12);
-	file.read((char*)&rotation, 16);
-	file.read((char*)&scale, 4);
-	dataRef.Get(file);
+	stream >> translation;
+	stream >> rotation;
+	stream >> scale;
+	dataRef.Get(stream);
 }
 
-void NiTransformInterpolator::Put(std::fstream& file) {
-	NiKeyBasedInterpolator::Put(file);
+void NiTransformInterpolator::Put(NiStream& stream) {
+	NiKeyBasedInterpolator::Put(stream);
 
-	file.write((char*)&translation, 12);
-	file.write((char*)&rotation, 16);
-	file.write((char*)&scale, 4);
-	dataRef.Put(file);
+	stream << translation;
+	stream << rotation;
+	stream << scale;
+	dataRef.Put(stream);
 }
 
 void NiTransformInterpolator::GetChildRefs(std::set<int*>& refs) {
@@ -1129,8 +1112,8 @@ void NiTransformInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int NiTransformInterpolator::CalcBlockSize() {
-	NiKeyBasedInterpolator::CalcBlockSize();
+int NiTransformInterpolator::CalcBlockSize(NiVersion& version) {
+	NiKeyBasedInterpolator::CalcBlockSize(version);
 
 	blockSize += 36;
 
@@ -1138,26 +1121,26 @@ int NiTransformInterpolator::CalcBlockSize() {
 }
 
 
-NiPoint3Interpolator::NiPoint3Interpolator(NiHeader* hdr) {
-	NiKeyBasedInterpolator::Init(hdr);
+NiPoint3Interpolator::NiPoint3Interpolator() {
+	NiKeyBasedInterpolator::Init();
 }
 
-NiPoint3Interpolator::NiPoint3Interpolator(std::fstream& file, NiHeader* hdr) : NiPoint3Interpolator(hdr) {
-	Get(file);
+NiPoint3Interpolator::NiPoint3Interpolator(NiStream& stream) : NiPoint3Interpolator() {
+	Get(stream);
 }
 
-void NiPoint3Interpolator::Get(std::fstream& file) {
-	NiKeyBasedInterpolator::Get(file);
+void NiPoint3Interpolator::Get(NiStream& stream) {
+	NiKeyBasedInterpolator::Get(stream);
 
-	file.read((char*)&point3Value, 12);
-	dataRef.Get(file);
+	stream >> point3Value;
+	dataRef.Get(stream);
 }
 
-void NiPoint3Interpolator::Put(std::fstream& file) {
-	NiKeyBasedInterpolator::Put(file);
+void NiPoint3Interpolator::Put(NiStream& stream) {
+	NiKeyBasedInterpolator::Put(stream);
 
-	file.write((char*)&point3Value, 12);
-	dataRef.Put(file);
+	stream << point3Value;
+	dataRef.Put(stream);
 }
 
 void NiPoint3Interpolator::GetChildRefs(std::set<int*>& refs) {
@@ -1166,8 +1149,8 @@ void NiPoint3Interpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int NiPoint3Interpolator::CalcBlockSize() {
-	NiKeyBasedInterpolator::CalcBlockSize();
+int NiPoint3Interpolator::CalcBlockSize(NiVersion& version) {
+	NiKeyBasedInterpolator::CalcBlockSize(version);
 
 	blockSize += 16;
 
@@ -1175,36 +1158,36 @@ int NiPoint3Interpolator::CalcBlockSize() {
 }
 
 
-NiPathInterpolator::NiPathInterpolator(NiHeader* hdr) {
-	NiKeyBasedInterpolator::Init(hdr);
+NiPathInterpolator::NiPathInterpolator() {
+	NiKeyBasedInterpolator::Init();
 }
 
-NiPathInterpolator::NiPathInterpolator(std::fstream& file, NiHeader* hdr) : NiPathInterpolator(hdr) {
-	Get(file);
+NiPathInterpolator::NiPathInterpolator(NiStream& stream) : NiPathInterpolator() {
+	Get(stream);
 }
 
-void NiPathInterpolator::Get(std::fstream& file) {
-	NiKeyBasedInterpolator::Get(file);
+void NiPathInterpolator::Get(NiStream& stream) {
+	NiKeyBasedInterpolator::Get(stream);
 
-	file.read((char*)&flags, 2);
-	file.read((char*)&bankDir, 4);
-	file.read((char*)&maxBankAngle, 4);
-	file.read((char*)&smoothing, 4);
-	file.read((char*)&followAxis, 2);
-	pathDataRef.Get(file);
-	percentDataRef.Get(file);
+	stream >> flags;
+	stream >> bankDir;
+	stream >> maxBankAngle;
+	stream >> smoothing;
+	stream >> followAxis;
+	pathDataRef.Get(stream);
+	percentDataRef.Get(stream);
 }
 
-void NiPathInterpolator::Put(std::fstream& file) {
-	NiKeyBasedInterpolator::Put(file);
+void NiPathInterpolator::Put(NiStream& stream) {
+	NiKeyBasedInterpolator::Put(stream);
 
-	file.write((char*)&flags, 2);
-	file.write((char*)&bankDir, 4);
-	file.write((char*)&maxBankAngle, 4);
-	file.write((char*)&smoothing, 4);
-	file.write((char*)&followAxis, 2);
-	pathDataRef.Put(file);
-	percentDataRef.Put(file);
+	stream << flags;
+	stream << bankDir;
+	stream << maxBankAngle;
+	stream << smoothing;
+	stream << followAxis;
+	pathDataRef.Put(stream);
+	percentDataRef.Put(stream);
 }
 
 void NiPathInterpolator::GetChildRefs(std::set<int*>& refs) {
@@ -1214,8 +1197,8 @@ void NiPathInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&percentDataRef.index);
 }
 
-int NiPathInterpolator::CalcBlockSize() {
-	NiKeyBasedInterpolator::CalcBlockSize();
+int NiPathInterpolator::CalcBlockSize(NiVersion& version) {
+	NiKeyBasedInterpolator::CalcBlockSize(version);
 
 	blockSize += 24;
 
@@ -1223,42 +1206,42 @@ int NiPathInterpolator::CalcBlockSize() {
 }
 
 
-NiLookAtInterpolator::NiLookAtInterpolator(NiHeader* hdr) {
-	NiInterpolator::Init(hdr);
+NiLookAtInterpolator::NiLookAtInterpolator() {
+	NiInterpolator::Init();
 }
 
-NiLookAtInterpolator::NiLookAtInterpolator(std::fstream& file, NiHeader* hdr) : NiLookAtInterpolator(hdr) {
-	Get(file);
+NiLookAtInterpolator::NiLookAtInterpolator(NiStream& stream) : NiLookAtInterpolator() {
+	Get(stream);
 }
 
-void NiLookAtInterpolator::Get(std::fstream& file) {
-	NiInterpolator::Get(file);
-
-	file.read((char*)&flags, 2);
-	lookAtRef.Get(file);
-	lookAtName.Get(file, header);
-	file.read((char*)&transform, 32);
-	translateInterpRef.Get(file);
-	rollInterpRef.Get(file);
-	scaleInterpRef.Get(file);
+void NiLookAtInterpolator::Get(NiStream& stream) {
+	NiInterpolator::Get(stream);
+	
+	stream >> flags;
+	lookAtRef.Get(stream);
+	lookAtName.Get(stream);
+	stream >> transform;
+	translateInterpRef.Get(stream);
+	rollInterpRef.Get(stream);
+	scaleInterpRef.Get(stream);
 }
 
-void NiLookAtInterpolator::Put(std::fstream& file) {
-	NiInterpolator::Put(file);
+void NiLookAtInterpolator::Put(NiStream& stream) {
+	NiInterpolator::Put(stream);
 
-	file.write((char*)&flags, 2);
-	lookAtRef.Put(file);
-	lookAtName.Put(file);
-	file.write((char*)&transform, 32);
-	translateInterpRef.Put(file);
-	rollInterpRef.Put(file);
-	scaleInterpRef.Put(file);
+	stream << flags;
+	lookAtRef.Put(stream);
+	lookAtName.Put(stream);
+	stream << transform;
+	translateInterpRef.Put(stream);
+	rollInterpRef.Put(stream);
+	scaleInterpRef.Put(stream);
 }
 
-void NiLookAtInterpolator::notifyStringDelete(int stringID) {
-	NiInterpolator::notifyStringDelete(stringID);
+void NiLookAtInterpolator::GetStringRefs(std::set<int*>& refs) {
+	NiInterpolator::GetStringRefs(refs);
 
-	lookAtName.notifyStringDelete(stringID);
+	refs.insert(&lookAtName.index);
 }
 
 void NiLookAtInterpolator::GetChildRefs(std::set<int*>& refs) {
@@ -1270,8 +1253,8 @@ void NiLookAtInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&scaleInterpRef.index);
 }
 
-int NiLookAtInterpolator::CalcBlockSize() {
-	NiInterpolator::CalcBlockSize();
+int NiLookAtInterpolator::CalcBlockSize(NiVersion& version) {
+	NiInterpolator::CalcBlockSize(version);
 
 	blockSize += 54;
 
@@ -1279,68 +1262,67 @@ int NiLookAtInterpolator::CalcBlockSize() {
 }
 
 
-NiSequence::NiSequence(NiHeader* hdr) {
-	NiObject::Init(hdr);
-
-	numControlledBlocks = 0;
+NiSequence::NiSequence() {
+	NiObject::Init();
 }
 
-NiSequence::NiSequence(std::fstream& file, NiHeader* hdr) : NiSequence(hdr) {
-	Get(file);
+NiSequence::NiSequence(NiStream& stream) : NiSequence() {
+	Get(stream);
 }
 
-void NiSequence::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiSequence::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	name.Get(file, header);
+	name.Get(stream);
 
-	file.read((char*)&numControlledBlocks, 4);
-	file.read((char*)&unkInt1, 4);
+	stream >> numControlledBlocks;
+	stream >> unkInt1;
 
 	controlledBlocks.resize(numControlledBlocks);
 	for (int i = 0; i < numControlledBlocks; i++) {
-		controlledBlocks[i].interpolatorRef.Get(file);
-		controlledBlocks[i].controllerRef.Get(file);
-		file.read((char*)&controlledBlocks[i].priority, 1);
+		controlledBlocks[i].interpolatorRef.Get(stream);
+		controlledBlocks[i].controllerRef.Get(stream);
+		stream >> controlledBlocks[i].priority;
 
-		controlledBlocks[i].nodeName.Get(file, header);
-		controlledBlocks[i].propType.Get(file, header);
-		controlledBlocks[i].ctrlType.Get(file, header);
-		controlledBlocks[i].ctrlID.Get(file, header);
-		controlledBlocks[i].interpID.Get(file, header);
+		controlledBlocks[i].nodeName.Get(stream);
+		controlledBlocks[i].propType.Get(stream);
+		controlledBlocks[i].ctrlType.Get(stream);
+		controlledBlocks[i].ctrlID.Get(stream);
+		controlledBlocks[i].interpID.Get(stream);
 	}
 }
 
-void NiSequence::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiSequence::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	name.Put(file);
-	file.write((char*)&numControlledBlocks, 4);
-	file.write((char*)&unkInt1, 4);
+	name.Put(stream);
+
+	stream << numControlledBlocks;
+	stream << unkInt1;
 
 	for (int i = 0; i < numControlledBlocks; i++) {
-		controlledBlocks[i].interpolatorRef.Put(file);
-		controlledBlocks[i].controllerRef.Put(file);
-		file.write((char*)&controlledBlocks[i].priority, 1);
-		controlledBlocks[i].nodeName.Put(file);
-		controlledBlocks[i].propType.Put(file);
-		controlledBlocks[i].ctrlType.Put(file);
-		controlledBlocks[i].ctrlID.Put(file);
-		controlledBlocks[i].interpID.Put(file);
+		controlledBlocks[i].interpolatorRef.Put(stream);
+		controlledBlocks[i].controllerRef.Put(stream);
+		stream << controlledBlocks[i].priority;
+		controlledBlocks[i].nodeName.Put(stream);
+		controlledBlocks[i].propType.Put(stream);
+		controlledBlocks[i].ctrlType.Put(stream);
+		controlledBlocks[i].ctrlID.Put(stream);
+		controlledBlocks[i].interpID.Put(stream);
 	}
 }
 
-void NiSequence::notifyStringDelete(int stringID) {
-	NiObject::notifyStringDelete(stringID);
+void NiSequence::GetStringRefs(std::set<int*>& refs) {
+	NiObject::GetStringRefs(refs);
 
-	name.notifyStringDelete(stringID);
+	refs.insert(&name.index);
 
 	for (int i = 0; i < numControlledBlocks; i++) {
-		controlledBlocks[i].nodeName.notifyStringDelete(stringID);
-		controlledBlocks[i].propType.notifyStringDelete(stringID);
-		controlledBlocks[i].ctrlType.notifyStringDelete(stringID);
-		controlledBlocks[i].ctrlID.notifyStringDelete(stringID);
-		controlledBlocks[i].interpID.notifyStringDelete(stringID);
+		refs.insert(&controlledBlocks[i].nodeName.index);
+		refs.insert(&controlledBlocks[i].propType.index);
+		refs.insert(&controlledBlocks[i].ctrlType.index);
+		refs.insert(&controlledBlocks[i].ctrlID.index);
+		refs.insert(&controlledBlocks[i].interpID.index);
 	}
 }
 
@@ -1353,8 +1335,8 @@ void NiSequence::GetChildRefs(std::set<int*>& refs) {
 	}
 }
 
-int NiSequence::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiSequence::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 12;
 	blockSize += numControlledBlocks * 29;
@@ -1363,46 +1345,45 @@ int NiSequence::CalcBlockSize() {
 }
 
 
-NiControllerSequence::NiControllerSequence(NiHeader* hdr) : NiSequence(hdr) {
+NiControllerSequence::NiControllerSequence() : NiSequence() {
 }
 
-NiControllerSequence::NiControllerSequence(std::fstream& file, NiHeader* hdr) : NiControllerSequence(hdr) {
-	Get(file);
+NiControllerSequence::NiControllerSequence(NiStream& stream) : NiControllerSequence() {
+	Get(stream);
 }
 
-void NiControllerSequence::Get(std::fstream& file) {
-	NiSequence::Get(file);
+void NiControllerSequence::Get(NiStream& stream) {
+	NiSequence::Get(stream);
 
-	file.read((char*)&weight, 4);
-	textKeyRef.Get(file);
-	file.read((char*)&textKeyRef, 4);
-	file.read((char*)&cycleType, 4);
-	file.read((char*)&frequency, 4);
-	file.read((char*)&startTime, 4);
-	file.read((char*)&stopTime, 4);
-	managerRef.Get(file);
-	accumRootName.Get(file, header);
-	file.read((char*)&flags, 2);
+	stream >> weight;
+	textKeyRef.Get(stream);
+	stream >> cycleType;
+	stream >> frequency;
+	stream >> startTime;
+	stream >> stopTime;
+	managerRef.Get(stream);
+	accumRootName.Get(stream);
+	stream >> flags;
 }
 
-void NiControllerSequence::Put(std::fstream& file) {
-	NiSequence::Put(file);
+void NiControllerSequence::Put(NiStream& stream) {
+	NiSequence::Put(stream);
 
-	file.write((char*)&weight, 4);
-	textKeyRef.Put(file);
-	file.write((char*)&cycleType, 4);
-	file.write((char*)&frequency, 4);
-	file.write((char*)&startTime, 4);
-	file.write((char*)&stopTime, 4);
-	managerRef.Put(file);
-	accumRootName.Put(file);
-	file.write((char*)&flags, 2);
+	stream << weight;
+	textKeyRef.Put(stream);
+	stream << cycleType;
+	stream << frequency;
+	stream << startTime;
+	stream << stopTime;
+	managerRef.Put(stream);
+	accumRootName.Put(stream);
+	stream << flags;
 }
 
-void NiControllerSequence::notifyStringDelete(int stringID) {
-	NiSequence::notifyStringDelete(stringID);
+void NiControllerSequence::GetStringRefs(std::set<int*>& refs) {
+	NiSequence::GetStringRefs(refs);
 
-	accumRootName.notifyStringDelete(stringID);
+	refs.insert(&accumRootName.index);
 }
 
 void NiControllerSequence::GetChildRefs(std::set<int*>& refs) {
@@ -1412,8 +1393,8 @@ void NiControllerSequence::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&managerRef.index);
 }
 
-int NiControllerSequence::CalcBlockSize() {
-	NiSequence::CalcBlockSize();
+int NiControllerSequence::CalcBlockSize(NiVersion& version) {
+	NiSequence::CalcBlockSize(version);
 
 	blockSize += 34;
 
@@ -1421,30 +1402,30 @@ int NiControllerSequence::CalcBlockSize() {
 }
 
 
-NiControllerManager::NiControllerManager(NiHeader* hdr) {
-	NiTimeController::Init(hdr);
+NiControllerManager::NiControllerManager() {
+	NiTimeController::Init();
 }
 
-NiControllerManager::NiControllerManager(std::fstream& file, NiHeader* hdr) : NiControllerManager(hdr) {
-	Get(file);
+NiControllerManager::NiControllerManager(NiStream& stream) : NiControllerManager() {
+	Get(stream);
 }
 
-void NiControllerManager::Get(std::fstream& file) {
-	NiTimeController::Get(file);
+void NiControllerManager::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
 
-	file.read((char*)&cumulative, 1);
+	stream >> cumulative;
 
-	controllerSequenceRefs.Get(file);
-	objectPaletteRef.Get(file);
+	controllerSequenceRefs.Get(stream);
+	objectPaletteRef.Get(stream);
 }
 
-void NiControllerManager::Put(std::fstream& file) {
-	NiTimeController::Put(file);
+void NiControllerManager::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
 
-	file.write((char*)&cumulative, 1);
+	stream << cumulative;
 
-	controllerSequenceRefs.Put(file);
-	objectPaletteRef.Put(file);
+	controllerSequenceRefs.Put(stream);
+	objectPaletteRef.Put(stream);
 }
 
 void NiControllerManager::GetChildRefs(std::set<int*>& refs) {
@@ -1454,8 +1435,8 @@ void NiControllerManager::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&objectPaletteRef.index);
 }
 
-int NiControllerManager::CalcBlockSize() {
-	NiTimeController::CalcBlockSize();
+int NiControllerManager::CalcBlockSize(NiVersion& version) {
+	NiTimeController::CalcBlockSize(version);
 
 	blockSize += 9;
 	blockSize += controllerSequenceRefs.GetSize() * 4;

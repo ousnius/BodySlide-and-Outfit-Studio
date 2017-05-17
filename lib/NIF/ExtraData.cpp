@@ -5,35 +5,36 @@ See the included LICENSE file
 */
 
 #include "ExtraData.h"
+#include <fstream>
 
-void NiExtraData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiExtraData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	name.Get(file, header);
+	name.Get(stream);
 }
 
-void NiExtraData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiExtraData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	name.Put(file);
+	name.Put(stream);
 }
 
-void NiExtraData::notifyStringDelete(int stringID) {
-	NiObject::notifyStringDelete(stringID);
+void NiExtraData::GetStringRefs(std::set<int*>& refs) {
+	NiObject::GetStringRefs(refs);
 
-	name.notifyStringDelete(stringID);
+	refs.insert(&name.index);
 }
 
-std::string NiExtraData::GetName() {
-	return name.GetString(header);
+std::string NiExtraData::GetName(NiHeader* hdr) {
+	return name.GetString(hdr);
 }
 
-void NiExtraData::SetName(const std::string& extraDataName) {
-	name.SetString(header, extraDataName);
+void NiExtraData::SetName(NiHeader* hdr, const std::string& extraDataName) {
+	name.SetString(hdr, extraDataName);
 }
 
-int NiExtraData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiExtraData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -41,35 +42,35 @@ int NiExtraData::CalcBlockSize() {
 }
 
 
-NiBinaryExtraData::NiBinaryExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
+NiBinaryExtraData::NiBinaryExtraData() {
+	NiExtraData::Init();
 
 	size = 0;
 }
 
-NiBinaryExtraData::NiBinaryExtraData(std::fstream& file, NiHeader* hdr) : NiBinaryExtraData(hdr) {
-	Get(file);
+NiBinaryExtraData::NiBinaryExtraData(NiStream& stream) : NiBinaryExtraData() {
+	Get(stream);
 }
 
-void NiBinaryExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void NiBinaryExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&size, 4);
+	stream >> size;
 	data.resize(size);
 	for (int i = 0; i < size; i++)
-		file.read((char*)&data[i], 1);
+		stream >> data[i];
 }
 
-void NiBinaryExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void NiBinaryExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&size, 4);
+	stream << size;
 	for (int i = 0; i < size; i++)
-		file.write((char*)&data[i], 1);
+		stream << data[i];
 }
 
-int NiBinaryExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int NiBinaryExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += size;
@@ -78,30 +79,28 @@ int NiBinaryExtraData::CalcBlockSize() {
 }
 
 
-NiFloatExtraData::NiFloatExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	floatData = 0.0f;
+NiFloatExtraData::NiFloatExtraData() {
+	NiExtraData::Init();
 }
 
-NiFloatExtraData::NiFloatExtraData(std::fstream& file, NiHeader* hdr) : NiFloatExtraData(hdr) {
-	Get(file);
+NiFloatExtraData::NiFloatExtraData(NiStream& stream) : NiFloatExtraData() {
+	Get(stream);
 }
 
-void NiFloatExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void NiFloatExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&floatData, 4);
+	stream >> floatData;
 }
 
-void NiFloatExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void NiFloatExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&floatData, 4);
+	stream << floatData;
 }
 
-int NiFloatExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int NiFloatExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -109,35 +108,33 @@ int NiFloatExtraData::CalcBlockSize() {
 }
 
 
-NiStringsExtraData::NiStringsExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	numStrings = 0;
+NiStringsExtraData::NiStringsExtraData() {
+	NiExtraData::Init();
 }
 
-NiStringsExtraData::NiStringsExtraData(std::fstream& file, NiHeader* hdr) : NiStringsExtraData(hdr){
-	Get(file);
+NiStringsExtraData::NiStringsExtraData(NiStream& stream) : NiStringsExtraData() {
+	Get(stream);
 }
 
-void NiStringsExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void NiStringsExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&numStrings, 4);
+	stream >> numStrings;
 	stringsData.resize(numStrings);
 	for (int i = 0; i < numStrings; i++)
-		stringsData[i].Get(file, 4);
+		stringsData[i].Get(stream, 4);
 }
 
-void NiStringsExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void NiStringsExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&numStrings, 4);
+	stream << numStrings;
 	for (int i = 0; i < numStrings; i++)
-		stringsData[i].Put(file, 4, false);
+		stringsData[i].Put(stream, 4, false);
 }
 
-int NiStringsExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int NiStringsExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += numStrings * 4;
@@ -149,42 +146,42 @@ int NiStringsExtraData::CalcBlockSize() {
 }
 
 
-NiStringExtraData::NiStringExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
+NiStringExtraData::NiStringExtraData() {
+	NiExtraData::Init();
 }
 
-NiStringExtraData::NiStringExtraData(std::fstream& file, NiHeader* hdr) : NiStringExtraData(hdr) {
-	Get(file);
+NiStringExtraData::NiStringExtraData(NiStream& stream) : NiStringExtraData() {
+	Get(stream);
 }
 
-void NiStringExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void NiStringExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	stringData.Get(file, header);
+	stringData.Get(stream);
 }
 
-void NiStringExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void NiStringExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	stringData.Put(file);
+	stringData.Put(stream);
 }
 
-void NiStringExtraData::notifyStringDelete(int stringID) {
-	NiExtraData::notifyStringDelete(stringID);
+void NiStringExtraData::GetStringRefs(std::set<int*>& refs) {
+	NiExtraData::GetStringRefs(refs);
 
-	stringData.notifyStringDelete(stringID);
+	refs.insert(&stringData.index);
 }
 
-std::string NiStringExtraData::GetStringData() {
-	return stringData.GetString(header);
+std::string NiStringExtraData::GetStringData(NiHeader* hdr) {
+	return stringData.GetString(hdr);
 }
 
-void NiStringExtraData::SetStringData(const std::string& str) {
-	stringData.SetString(header, str);
+void NiStringExtraData::SetStringData(NiHeader* hdr, const std::string& str) {
+	stringData.SetString(hdr, str);
 }
 
-int NiStringExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int NiStringExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -192,26 +189,24 @@ int NiStringExtraData::CalcBlockSize() {
 }
 
 
-NiBooleanExtraData::NiBooleanExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	booleanData = false;
+NiBooleanExtraData::NiBooleanExtraData() {
+	NiExtraData::Init();
 }
 
-NiBooleanExtraData::NiBooleanExtraData(std::fstream& file, NiHeader* hdr) : NiBooleanExtraData(hdr) {
-	Get(file);
+NiBooleanExtraData::NiBooleanExtraData(NiStream& stream) : NiBooleanExtraData() {
+	Get(stream);
 }
 
-void NiBooleanExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void NiBooleanExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&booleanData, 1);
+	stream >> booleanData;
 }
 
-void NiBooleanExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void NiBooleanExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&booleanData, 1);
+	stream << booleanData;
 }
 
 bool NiBooleanExtraData::GetBooleanData() {
@@ -222,8 +217,8 @@ void NiBooleanExtraData::SetBooleanData(const bool boolData) {
 	this->booleanData = boolData;
 }
 
-int NiBooleanExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int NiBooleanExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 1;
 
@@ -231,26 +226,26 @@ int NiBooleanExtraData::CalcBlockSize() {
 }
 
 
-NiIntegerExtraData::NiIntegerExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
+NiIntegerExtraData::NiIntegerExtraData() {
+	NiExtraData::Init();
 
 	integerData = 0;
 }
 
-NiIntegerExtraData::NiIntegerExtraData(std::fstream& file, NiHeader* hdr) : NiIntegerExtraData(hdr) {
-	Get(file);
+NiIntegerExtraData::NiIntegerExtraData(NiStream& stream) : NiIntegerExtraData() {
+	Get(stream);
 }
 
-void NiIntegerExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void NiIntegerExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&integerData, 4);
+	stream >> integerData;
 }
 
-void NiIntegerExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void NiIntegerExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&integerData, 4);
+	stream << integerData;
 }
 
 uint NiIntegerExtraData::GetIntegerData() {
@@ -261,8 +256,8 @@ void NiIntegerExtraData::SetIntegerData(const uint intData) {
 	this->integerData = intData;
 }
 
-int NiIntegerExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int NiIntegerExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -270,42 +265,42 @@ int NiIntegerExtraData::CalcBlockSize() {
 }
 
 
-BSXFlags::BSXFlags(NiHeader* hdr) : NiIntegerExtraData(hdr) {
+BSXFlags::BSXFlags() : NiIntegerExtraData() {
 }
 
-BSXFlags::BSXFlags(std::fstream& file, NiHeader* hdr) : BSXFlags(hdr) {
-	Get(file);
+BSXFlags::BSXFlags(NiStream& stream) : BSXFlags() {
+	Get(stream);
 }
 
 
-BSInvMarker::BSInvMarker(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
+BSInvMarker::BSInvMarker() {
+	NiExtraData::Init();
 }
 
-BSInvMarker::BSInvMarker(std::fstream& file, NiHeader* hdr) : BSInvMarker(hdr) {
-	Get(file);
+BSInvMarker::BSInvMarker(NiStream& stream) : BSInvMarker() {
+	Get(stream);
 }
 
-void BSInvMarker::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void BSInvMarker::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&rotationX, 2);
-	file.read((char*)&rotationY, 2);
-	file.read((char*)&rotationZ, 2);
-	file.read((char*)&zoom, 4);
+	stream >> rotationX;
+	stream >> rotationY;
+	stream >> rotationZ;
+	stream >> zoom;
 }
 
-void BSInvMarker::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void BSInvMarker::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&rotationX, 2);
-	file.write((char*)&rotationY, 2);
-	file.write((char*)&rotationZ, 2);
-	file.write((char*)&zoom, 4);
+	stream << rotationX;
+	stream << rotationY;
+	stream << rotationZ;
+	stream << zoom;
 }
 
-int BSInvMarker::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int BSInvMarker::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 10;
 
@@ -313,130 +308,127 @@ int BSInvMarker::CalcBlockSize() {
 }
 
 
-BSFurnitureMarker::BSFurnitureMarker(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	numPositions = 0;
+BSFurnitureMarker::BSFurnitureMarker() {
+	NiExtraData::Init();
 }
 
-BSFurnitureMarker::BSFurnitureMarker(std::fstream& file, NiHeader* hdr) : BSFurnitureMarker(hdr) {
-	Get(file);
+BSFurnitureMarker::BSFurnitureMarker(NiStream& stream) : BSFurnitureMarker() {
+	Get(stream);
 }
 
-void BSFurnitureMarker::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void BSFurnitureMarker::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&numPositions, 4);
+	stream >> numPositions;
 	positions.resize(numPositions);
 
 	for (int i = 0; i < numPositions; i++) {
-		file.read((char*)&positions[i].offset, 12);
+		stream >> positions[i].offset;
 
-		if (header->GetUserVersion() <= 11) {
-			file.read((char*)&positions[i].orientation, 2);
-			file.read((char*)&positions[i].posRef1, 1);
-			file.read((char*)&positions[i].posRef2, 1);
+		if (stream.GetVersion().User() <= 11) {
+			stream >> positions[i].orientation;
+			stream >> positions[i].posRef1;
+			stream >> positions[i].posRef2;
 		}
 
-		if (header->GetUserVersion() >= 12) {
-			file.read((char*)&positions[i].heading, 4);
-			file.read((char*)&positions[i].animationType, 2);
-			file.read((char*)&positions[i].entryPoints, 2);
+		if (stream.GetVersion().User() >= 12) {
+			stream >> positions[i].heading;
+			stream >> positions[i].animationType;
+			stream >> positions[i].entryPoints;
 		}
 	}
 }
 
-void BSFurnitureMarker::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void BSFurnitureMarker::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&numPositions, 4);
+	stream << numPositions;
 
 	for (int i = 0; i < numPositions; i++) {
-		file.write((char*)&positions[i].offset, 12);
+		stream << positions[i].offset;
 
-		if (header->GetUserVersion() <= 11) {
-			file.write((char*)&positions[i].orientation, 2);
-			file.write((char*)&positions[i].posRef1, 1);
-			file.write((char*)&positions[i].posRef2, 1);
+		if (stream.GetVersion().User() <= 11) {
+			stream << positions[i].orientation;
+			stream << positions[i].posRef1;
+			stream << positions[i].posRef2;
 		}
 
-		if (header->GetUserVersion() >= 12) {
-			file.write((char*)&positions[i].heading, 4);
-			file.write((char*)&positions[i].animationType, 2);
-			file.write((char*)&positions[i].entryPoints, 2);
+		if (stream.GetVersion().User() >= 12) {
+			stream << positions[i].heading;
+			stream << positions[i].animationType;
+			stream << positions[i].entryPoints;
 		}
 	}
 }
 
-int BSFurnitureMarker::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int BSFurnitureMarker::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += 12 * numPositions;
 
-	if (header->GetUserVersion() <= 11)
+	if (version.User() <= 11)
 		blockSize += 4 * numPositions;
 
-	if (header->GetUserVersion() >= 12)
+	if (version.User() >= 12)
 		blockSize += 8 * numPositions;
 
 	return blockSize;
 }
 
 
-BSFurnitureMarkerNode::BSFurnitureMarkerNode(NiHeader* hdr) : BSFurnitureMarker(hdr) {
+BSFurnitureMarkerNode::BSFurnitureMarkerNode() : BSFurnitureMarker() {
 }
 
-BSFurnitureMarkerNode::BSFurnitureMarkerNode(std::fstream& file, NiHeader* hdr) : BSFurnitureMarkerNode(hdr) {
-	Get(file);
+BSFurnitureMarkerNode::BSFurnitureMarkerNode(NiStream& stream) : BSFurnitureMarkerNode() {
+	Get(stream);
 }
 
 
-BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(NiHeader* hdr) : NiFloatExtraData(hdr) {
-	numVectorBlocks = 0;
+BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData() : NiFloatExtraData() {
 }
 
-BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(std::fstream& file, NiHeader* hdr) : BSDecalPlacementVectorExtraData(hdr) {
-	Get(file);
+BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(NiStream& stream) : BSDecalPlacementVectorExtraData() {
+	Get(stream);
 }
 
-void BSDecalPlacementVectorExtraData::Get(std::fstream& file) {
-	NiFloatExtraData::Get(file);
+void BSDecalPlacementVectorExtraData::Get(NiStream& stream) {
+	NiFloatExtraData::Get(stream);
 
-	file.read((char*)&numVectorBlocks, 2);
+	stream >> numVectorBlocks;
 	decalVectorBlocks.resize(numVectorBlocks);
 
 	for (int i = 0; i < numVectorBlocks; i++) {
-		file.read((char*)&decalVectorBlocks[i].numVectors, 2);
+		stream >> decalVectorBlocks[i].numVectors;
 
 		decalVectorBlocks[i].points.resize(decalVectorBlocks[i].numVectors);
 		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
-			file.read((char*)&decalVectorBlocks[i].points[j], 12);
+			stream >> decalVectorBlocks[i].points[j];
 
 		decalVectorBlocks[i].normals.resize(decalVectorBlocks[i].numVectors);
 		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
-			file.read((char*)&decalVectorBlocks[i].normals[j], 12);
+			stream >> decalVectorBlocks[i].normals[j];
 	}
 }
 
-void BSDecalPlacementVectorExtraData::Put(std::fstream& file) {
-	NiFloatExtraData::Put(file);
+void BSDecalPlacementVectorExtraData::Put(NiStream& stream) {
+	NiFloatExtraData::Put(stream);
 
-	file.write((char*)&numVectorBlocks, 2);
+	stream << numVectorBlocks;
 
 	for (int i = 0; i < numVectorBlocks; i++) {
-		file.write((char*)&decalVectorBlocks[i].numVectors, 2);
+		stream << decalVectorBlocks[i].numVectors;
 
 		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
-			file.write((char*)&decalVectorBlocks[i].points[j], 12);
+			stream << decalVectorBlocks[i].points[j];
 
 		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
-			file.write((char*)&decalVectorBlocks[i].normals[j], 12);
+			stream << decalVectorBlocks[i].normals[j];
 	}
 }
 
-int BSDecalPlacementVectorExtraData::CalcBlockSize() {
-	NiFloatExtraData::CalcBlockSize();
+int BSDecalPlacementVectorExtraData::CalcBlockSize(NiVersion& version) {
+	NiFloatExtraData::CalcBlockSize(version);
 
 	blockSize += 2;
 	for (int i = 0; i < numVectorBlocks; i++)
@@ -446,36 +438,36 @@ int BSDecalPlacementVectorExtraData::CalcBlockSize() {
 }
 
 
-BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
+BSBehaviorGraphExtraData::BSBehaviorGraphExtraData() {
+	NiExtraData::Init();
 }
 
-BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(std::fstream& file, NiHeader* hdr) : BSBehaviorGraphExtraData(hdr) {
-	Get(file);
+BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiStream& stream) : BSBehaviorGraphExtraData() {
+	Get(stream);
 }
 
-void BSBehaviorGraphExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void BSBehaviorGraphExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	behaviorGraphFile.Get(file, header);
-	file.read((char*)&controlsBaseSkel, 1);
+	behaviorGraphFile.Get(stream);
+	stream >> controlsBaseSkel;
 }
 
-void BSBehaviorGraphExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void BSBehaviorGraphExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	behaviorGraphFile.Put(file);
-	file.write((char*)&controlsBaseSkel, 1);
+	behaviorGraphFile.Put(stream);
+	stream << controlsBaseSkel;
 }
 
-void BSBehaviorGraphExtraData::notifyStringDelete(int stringID) {
-	NiExtraData::notifyStringDelete(stringID);
+void BSBehaviorGraphExtraData::GetStringRefs(std::set<int*>& refs) {
+	NiExtraData::GetStringRefs(refs);
 
-	behaviorGraphFile.notifyStringDelete(stringID);
+	refs.insert(&behaviorGraphFile.index);
 }
 
-int BSBehaviorGraphExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int BSBehaviorGraphExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 5;
 
@@ -483,30 +475,30 @@ int BSBehaviorGraphExtraData::CalcBlockSize() {
 }
 
 
-BSBound::BSBound(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
+BSBound::BSBound() {
+	NiExtraData::Init();
 }
 
-BSBound::BSBound(std::fstream& file, NiHeader* hdr) : BSBound(hdr) {
-	Get(file);
+BSBound::BSBound(NiStream& stream) : BSBound() {
+	Get(stream);
 }
 
-void BSBound::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void BSBound::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&center, 12);
-	file.read((char*)&halfExtents, 12);
+	stream >> center;
+	stream >> halfExtents;
 }
 
-void BSBound::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void BSBound::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&center, 12);
-	file.write((char*)&halfExtents, 12);
+	stream << center;
+	stream << halfExtents;
 }
 
-int BSBound::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int BSBound::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 24;
 
@@ -514,46 +506,44 @@ int BSBound::CalcBlockSize() {
 }
 
 
-BSBoneLODExtraData::BSBoneLODExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	numBoneLODs = 0;
+BSBoneLODExtraData::BSBoneLODExtraData() {
+	NiExtraData::Init();
 }
 
-BSBoneLODExtraData::BSBoneLODExtraData(std::fstream& file, NiHeader* hdr) : BSBoneLODExtraData(hdr) {
-	Get(file);
+BSBoneLODExtraData::BSBoneLODExtraData(NiStream& stream) : BSBoneLODExtraData() {
+	Get(stream);
 }
 
-void BSBoneLODExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void BSBoneLODExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&numBoneLODs, 4);
+	stream >> numBoneLODs;
 	boneLODs.resize(numBoneLODs);
 	for (int i = 0; i < numBoneLODs; i++) {
-		file.read((char*)&boneLODs[i].distance, 4);
-		boneLODs[i].boneName.Get(file, header);
+		stream >> boneLODs[i].distance;
+		boneLODs[i].boneName.Get(stream);
 	}
 }
 
-void BSBoneLODExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void BSBoneLODExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&numBoneLODs, 4);
+	stream << numBoneLODs;
 	for (int i = 0; i < numBoneLODs; i++) {
-		file.write((char*)&boneLODs[i].distance, 4);
-		boneLODs[i].boneName.Put(file);
+		stream << boneLODs[i].distance;
+		boneLODs[i].boneName.Put(stream);
 	}
 }
 
-void BSBoneLODExtraData::notifyStringDelete(int stringID) {
-	NiExtraData::notifyStringDelete(stringID);
+void BSBoneLODExtraData::GetStringRefs(std::set<int*>& refs) {
+	NiExtraData::GetStringRefs(refs);
 
 	for (int i = 0; i < numBoneLODs; i++)
-		boneLODs[i].boneName.notifyStringDelete(stringID);
+		refs.insert(&boneLODs[i].boneName.index);
 }
 
-int BSBoneLODExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int BSBoneLODExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += numBoneLODs * 8;
@@ -562,46 +552,44 @@ int BSBoneLODExtraData::CalcBlockSize() {
 }
 
 
-NiTextKeyExtraData::NiTextKeyExtraData(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	numTextKeys = 0;
+NiTextKeyExtraData::NiTextKeyExtraData() {
+	NiExtraData::Init();
 }
 
-NiTextKeyExtraData::NiTextKeyExtraData(std::fstream& file, NiHeader* hdr) : NiTextKeyExtraData(hdr) {
-	Get(file);
+NiTextKeyExtraData::NiTextKeyExtraData(NiStream& stream) : NiTextKeyExtraData() {
+	Get(stream);
 }
 
-void NiTextKeyExtraData::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void NiTextKeyExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&numTextKeys, 4);
+	stream >> numTextKeys;
 	textKeys.resize(numTextKeys);
 	for (int i = 0; i < numTextKeys; i++) {
-		file.read((char*)&textKeys[i].time, 4);
-		textKeys[i].value.Get(file, header);
+		stream >> textKeys[i].time;
+		textKeys[i].value.Get(stream);
 	}
 }
 
-void NiTextKeyExtraData::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void NiTextKeyExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&numTextKeys, 4);
+	stream << numTextKeys;
 	for (int i = 0; i < numTextKeys; i++) {
-		file.write((char*)&textKeys[i].time, 4);
-		textKeys[i].value.Put(file);
+		stream << textKeys[i].time;
+		textKeys[i].value.Put(stream);
 	}
 }
 
-void NiTextKeyExtraData::notifyStringDelete(int stringID) {
-	NiExtraData::notifyStringDelete(stringID);
+void NiTextKeyExtraData::GetStringRefs(std::set<int*>& refs) {
+	NiExtraData::GetStringRefs(refs);
 
 	for (int i = 0; i < numTextKeys; i++)
-		textKeys[i].value.notifyStringDelete(stringID);
+		refs.insert(&textKeys[i].value.index);
 }
 
-int NiTextKeyExtraData::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int NiTextKeyExtraData::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += numTextKeys * 8;
@@ -611,32 +599,31 @@ int NiTextKeyExtraData::CalcBlockSize() {
 
 
 BSConnectPoint::BSConnectPoint() {
-	scale = 1.0f;
 }
 
-BSConnectPoint::BSConnectPoint(std::fstream& file) {
-	Get(file);
+BSConnectPoint::BSConnectPoint(NiStream& stream) {
+	Get(stream);
 }
 
-void BSConnectPoint::Get(std::fstream& file) {
-	root.Get(file, 4);
-	variableName.Get(file, 4);
+void BSConnectPoint::Get(NiStream& stream) {
+	root.Get(stream, 4);
+	variableName.Get(stream, 4);
 
-	file.read((char*)&rotation, 16);
-	file.read((char*)&translation, 12);
-	file.read((char*)&scale, 4);
+	stream >> rotation;
+	stream >> translation;
+	stream >> scale;
 }
 
-void BSConnectPoint::Put(std::fstream& file) {
-	root.Put(file, 4, false);
-	variableName.Put(file, 4, false);
+void BSConnectPoint::Put(NiStream& stream) {
+	root.Put(stream, 4, false);
+	variableName.Put(stream, 4, false);
 
-	file.write((char*)&rotation, 16);
-	file.write((char*)&translation, 12);
-	file.write((char*)&scale, 4);
+	stream << rotation;
+	stream << translation;
+	stream << scale;
 }
 
-int BSConnectPoint::CalcBlockSize() {
+int BSConnectPoint::CalcBlockSize(NiVersion& version) {
 	int blockSize = 40;
 	blockSize += root.GetLength();
 	blockSize += variableName.GetLength();
@@ -644,80 +631,75 @@ int BSConnectPoint::CalcBlockSize() {
 }
 
 
-BSConnectPointParents::BSConnectPointParents(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	numConnectPoints = 0;
+BSConnectPointParents::BSConnectPointParents() {
+	NiExtraData::Init();
 }
 
-BSConnectPointParents::BSConnectPointParents(std::fstream& file, NiHeader* hdr) : BSConnectPointParents(hdr) {
-	Get(file);
+BSConnectPointParents::BSConnectPointParents(NiStream& stream) : BSConnectPointParents() {
+	Get(stream);
 }
 
-void BSConnectPointParents::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void BSConnectPointParents::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&numConnectPoints, 4);
+	stream >> numConnectPoints;
 
 	for (int i = 0; i < numConnectPoints; i++)
-		connectPoints.push_back(BSConnectPoint(file));
+		connectPoints.push_back(BSConnectPoint(stream));
 }
 
-void BSConnectPointParents::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void BSConnectPointParents::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&numConnectPoints, 4);
+	stream << numConnectPoints;
 
 	for (int i = 0; i < numConnectPoints; i++)
-		connectPoints[i].Put(file);
+		connectPoints[i].Put(stream);
 }
 
-int BSConnectPointParents::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int BSConnectPointParents::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 
 	for (int i = 0; i < numConnectPoints; i++)
-		blockSize += connectPoints[i].CalcBlockSize();
+		blockSize += connectPoints[i].CalcBlockSize(version);
 
 	return blockSize;
 }
 
 
-BSConnectPointChildren::BSConnectPointChildren(NiHeader* hdr) {
-	NiExtraData::Init(hdr);
-
-	unkByte = 1;
-	numTargets = 0;
+BSConnectPointChildren::BSConnectPointChildren() {
+	NiExtraData::Init();
 }
 
-BSConnectPointChildren::BSConnectPointChildren(std::fstream& file, NiHeader* hdr) : BSConnectPointChildren(hdr) {
-	Get(file);
+BSConnectPointChildren::BSConnectPointChildren(NiStream& stream) : BSConnectPointChildren() {
+	Get(stream);
 }
 
-void BSConnectPointChildren::Get(std::fstream& file) {
-	NiExtraData::Get(file);
+void BSConnectPointChildren::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
 
-	file.read((char*)&unkByte, 1);
-	file.read((char*)&numTargets, 4);
+	stream >> unkByte;
+	stream >> numTargets;
 
 	targets.resize(numTargets);
 	for (int i = 0; i < numTargets; i++)
-		targets[i].Get(file, 4);
+		targets[i].Get(stream, 4);
 }
 
-void BSConnectPointChildren::Put(std::fstream& file) {
-	NiExtraData::Put(file);
+void BSConnectPointChildren::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
 
-	file.write((char*)&unkByte, 1);
-	file.write((char*)&numTargets, 4);
+	stream << unkByte;
+	stream << numTargets;
 
 	for (int i = 0; i < numTargets; i++)
-		targets[i].Put(file, 4, false);
+		targets[i].Put(stream, 4, false);
 }
 
-int BSConnectPointChildren::CalcBlockSize() {
-	NiExtraData::CalcBlockSize();
+int BSConnectPointChildren::CalcBlockSize(NiVersion& version) {
+	NiExtraData::CalcBlockSize(version);
 
 	blockSize += 5;
 	blockSize += numTargets * 4;
@@ -729,40 +711,40 @@ int BSConnectPointChildren::CalcBlockSize() {
 }
 
 
-BSClothExtraData::BSClothExtraData(NiHeader* hdr, const uint size) {
-	BSExtraData::Init(hdr);
+BSClothExtraData::BSClothExtraData(const uint size) {
+	BSExtraData::Init();
 
 	numBytes = size;
 	data.resize(size);
 }
 
-BSClothExtraData::BSClothExtraData(std::fstream& file, NiHeader* hdr) : BSClothExtraData(hdr) {
-	Get(file);
+BSClothExtraData::BSClothExtraData(NiStream& stream) : BSClothExtraData() {
+	Get(stream);
 }
 
-void BSClothExtraData::Get(std::fstream& file) {
-	BSExtraData::Get(file);
+void BSClothExtraData::Get(NiStream& stream) {
+	BSExtraData::Get(stream);
 
-	file.read((char*)&numBytes, 4);
+	stream >> numBytes;
 	data.resize(numBytes);
 	if (data.empty())
 		return;
 
-	file.read(&data[0], numBytes);
+	stream.read(&data[0], numBytes);
 }
 
-void BSClothExtraData::Put(std::fstream& file) {
-	BSExtraData::Put(file);
+void BSClothExtraData::Put(NiStream& stream) {
+	BSExtraData::Put(stream);
 
-	file.write((char*)&numBytes, 4);
+	stream << numBytes;
 	if (data.empty())
 		return;
 
-	file.write(&data[0], numBytes);
+	stream.write(&data[0], numBytes);
 }
 
-int BSClothExtraData::CalcBlockSize() {
-	BSExtraData::CalcBlockSize();
+int BSClothExtraData::CalcBlockSize(NiVersion& version) {
+	BSExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += numBytes;

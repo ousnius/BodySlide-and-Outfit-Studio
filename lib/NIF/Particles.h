@@ -11,15 +11,15 @@ See the included LICENSE file
 
 class NiParticlesData : public NiGeometryData {
 private:
-	bool hasRadii;
-	ushort numActive;
-	bool hasSizes;
-	bool hasRotations;
-	bool hasRotationAngles;
-	bool hasRotationAxes;
-	bool hasTextureIndices;
+	bool hasRadii = false;
+	ushort numActive = 0;
+	bool hasSizes = false;
+	bool hasRotations = false;
+	bool hasRotationAngles = false;
+	bool hasRotationAxes = false;
+	bool hasTextureIndices = false;
 
-	uint numSubtexOffsets;
+	uint numSubtexOffsets = 0;
 	std::vector<Vector4> subtexOffsets;
 
 	float aspectRatio;
@@ -29,22 +29,22 @@ private:
 	float speedToAspectSpeed2;
 
 public:
-	NiParticlesData(NiHeader* hdr);
-	NiParticlesData(std::fstream& file, NiHeader* hdr);
+	NiParticlesData();
+	NiParticlesData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiParticlesData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiParticlesData* Clone() { return new NiParticlesData(*this); }
 };
 
 class NiRotatingParticlesData : public NiParticlesData {
 public:
-	NiRotatingParticlesData(NiHeader* hdr);
-	NiRotatingParticlesData(std::fstream& file, NiHeader* hdr);
+	NiRotatingParticlesData();
+	NiRotatingParticlesData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiRotatingParticlesData";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -54,18 +54,18 @@ public:
 
 class NiPSysData : public NiRotatingParticlesData {
 private:
-	bool hasRotationSpeeds;
+	bool hasRotationSpeeds = false;
 
 public:
-	NiPSysData(NiHeader* hdr);
-	NiPSysData(std::fstream& file, NiHeader* hdr);
+	NiPSysData();
+	NiPSysData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysData* Clone() { return new NiPSysData(*this); }
 };
 
@@ -74,22 +74,22 @@ private:
 	uint defaultPoolSize;
 	bool fillPoolsOnLoad;
 
-	uint numGenerations;
+	uint numGenerations = 0;
 	std::vector<uint> generationPoolSize;
 
-	int nodeRef;
+	BlockRef<NiNode> nodeRef;
 
 public:
-	NiMeshPSysData(NiHeader* hdr);
-	NiMeshPSysData(std::fstream& file, NiHeader* hdr);
+	NiMeshPSysData();
+	NiMeshPSysData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiMeshPSysData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiMeshPSysData* Clone() { return new NiMeshPSysData(*this); }
 };
 
@@ -101,15 +101,15 @@ private:
 	bool doZPrepass;
 
 public:
-	BSStripPSysData(NiHeader* hdr);
-	BSStripPSysData(std::fstream& file, NiHeader* hdr);
+	BSStripPSysData();
+	BSStripPSysData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSStripPSysData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSStripPSysData* Clone() { return new BSStripPSysData(*this); }
 };
 
@@ -123,15 +123,11 @@ private:
 	bool isActive;
 
 public:
-	~NiPSysModifier() {
-		name.Clear(header);
-	};
-
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 };
 
 class BSPSysStripUpdateModifier : public NiPSysModifier {
@@ -139,21 +135,21 @@ private:
 	float updateDeltaTime;
 
 public:
-	BSPSysStripUpdateModifier(NiHeader* hdr);
-	BSPSysStripUpdateModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysStripUpdateModifier();
+	BSPSysStripUpdateModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysStripUpdateModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSPSysStripUpdateModifier* Clone() { return new BSPSysStripUpdateModifier(*this); }
 };
 
 class NiPSysSpawnModifier : public NiPSysModifier {
 private:
-	ushort numSpawnGenerations;
+	ushort numSpawnGenerations = 0;
 	float percentSpawned;
 	ushort minSpawned;
 	ushort maxSpawned;
@@ -163,15 +159,15 @@ private:
 	float lifeSpanVariation;
 
 public:
-	NiPSysSpawnModifier(NiHeader* hdr);
-	NiPSysSpawnModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysSpawnModifier();
+	NiPSysSpawnModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysSpawnModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysSpawnModifier* Clone() { return new NiPSysSpawnModifier(*this); }
 };
 
@@ -181,16 +177,16 @@ private:
 	BlockRef<NiPSysSpawnModifier> spawnModifierRef;
 
 public:
-	NiPSysAgeDeathModifier(NiHeader* hdr);
-	NiPSysAgeDeathModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysAgeDeathModifier();
+	NiPSysAgeDeathModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysAgeDeathModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPSysAgeDeathModifier* Clone() { return new NiPSysAgeDeathModifier(*this); }
 };
 
@@ -202,15 +198,15 @@ private:
 	float unknownFadeFactor2;
 
 public:
-	BSPSysLODModifier(NiHeader* hdr);
-	BSPSysLODModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysLODModifier();
+	BSPSysLODModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysLODModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSPSysLODModifier* Clone() { return new BSPSysLODModifier(*this); }
 };
 
@@ -227,15 +223,15 @@ private:
 	Color4 color3;
 
 public:
-	BSPSysSimpleColorModifier(NiHeader* hdr);
-	BSPSysSimpleColorModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysSimpleColorModifier();
+	BSPSysSimpleColorModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysSimpleColorModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSPSysSimpleColorModifier* Clone() { return new BSPSysSimpleColorModifier(*this); }
 };
 
@@ -250,33 +246,33 @@ private:
 	Vector3 initialAxis;
 
 public:
-	NiPSysRotationModifier(NiHeader* hdr);
-	NiPSysRotationModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysRotationModifier();
+	NiPSysRotationModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysRotationModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysRotationModifier* Clone() { return new NiPSysRotationModifier(*this); }
 };
 
 class BSPSysScaleModifier : public NiPSysModifier {
 private:
-	uint numFloats;
+	uint numFloats = 0;
 	std::vector<float> floats;
 
 public:
-	BSPSysScaleModifier(NiHeader* hdr);
-	BSPSysScaleModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysScaleModifier();
+	BSPSysScaleModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysScaleModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSPSysScaleModifier* Clone() { return new BSPSysScaleModifier(*this); }
 };
 
@@ -292,23 +288,23 @@ private:
 	bool worldAligned;
 
 public:
-	NiPSysGravityModifier(NiHeader* hdr);
-	NiPSysGravityModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysGravityModifier();
+	NiPSysGravityModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysGravityModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPSysGravityModifier* Clone() { return new NiPSysGravityModifier(*this); }
 };
 
 class NiPSysPositionModifier : public NiPSysModifier {
 public:
-	NiPSysPositionModifier(NiHeader* hdr);
-	NiPSysPositionModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysPositionModifier();
+	NiPSysPositionModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysPositionModifier";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -321,15 +317,15 @@ private:
 	ushort updateSkip;
 
 public:
-	NiPSysBoundUpdateModifier(NiHeader* hdr);
-	NiPSysBoundUpdateModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysBoundUpdateModifier();
+	NiPSysBoundUpdateModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysBoundUpdateModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysBoundUpdateModifier* Clone() { return new NiPSysBoundUpdateModifier(*this); }
 };
 
@@ -342,16 +338,16 @@ private:
 	float rangeFalloff;
 
 public:
-	NiPSysDragModifier(NiHeader* hdr);
-	NiPSysDragModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysDragModifier();
+	NiPSysDragModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysDragModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPSysDragModifier* Clone() { return new NiPSysDragModifier(*this); }
 };
 
@@ -363,15 +359,15 @@ private:
 	float velocityVar;
 
 public:
-	BSPSysInheritVelocityModifier(NiHeader* hdr);
-	BSPSysInheritVelocityModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysInheritVelocityModifier();
+	BSPSysInheritVelocityModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysInheritVelocityModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSPSysInheritVelocityModifier* Clone() { return new BSPSysInheritVelocityModifier(*this); }
 };
 
@@ -386,15 +382,15 @@ private:
 	float frameCountVariation;
 
 public:
-	BSPSysSubTexModifier(NiHeader* hdr);
-	BSPSysSubTexModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysSubTexModifier();
+	BSPSysSubTexModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysSubTexModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSPSysSubTexModifier* Clone() { return new BSPSysSubTexModifier(*this); }
 };
 
@@ -408,16 +404,16 @@ private:
 	uint symmetryType;
 
 public:
-	NiPSysBombModifier(NiHeader* hdr);
-	NiPSysBombModifier(std::fstream& file, NiHeader* hdr);
+	NiPSysBombModifier();
+	NiPSysBombModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysBombModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPSysBombModifier* Clone() { return new NiPSysBombModifier(*this); }
 };
 
@@ -426,15 +422,15 @@ private:
 	float strength;
 
 public:
-	BSWindModifier(NiHeader* hdr);
-	BSWindModifier(std::fstream& file, NiHeader* hdr);
+	BSWindModifier();
+	BSWindModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSWindModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSWindModifier* Clone() { return new BSWindModifier(*this); }
 };
 
@@ -445,15 +441,15 @@ private:
 	BlockRef<NiNode> targetNodeRef;
 
 public:
-	BSPSysRecycleBoundModifier(NiHeader* hdr);
-	BSPSysRecycleBoundModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysRecycleBoundModifier();
+	BSPSysRecycleBoundModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysRecycleBoundModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSPSysRecycleBoundModifier* Clone() { return new BSPSysRecycleBoundModifier(*this); }
 };
 
@@ -463,16 +459,16 @@ private:
 	BlockRef<NiPSysModifier> modifierRef;
 
 public:
-	BSPSysHavokUpdateModifier(NiHeader* hdr);
-	BSPSysHavokUpdateModifier(std::fstream& file, NiHeader* hdr);
+	BSPSysHavokUpdateModifier();
+	BSPSysHavokUpdateModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysHavokUpdateModifier";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSPSysHavokUpdateModifier* Clone() { return new BSPSysHavokUpdateModifier(*this); }
 };
 
@@ -482,17 +478,17 @@ private:
 	BlockRefArray<NiAVObject> particleSysRefs;
 
 public:
-	BSMasterParticleSystem(NiHeader* hdr);
-	BSMasterParticleSystem(std::fstream& file, NiHeader* hdr);
+	BSMasterParticleSystem();
+	BSMasterParticleSystem(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMasterParticleSystem";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSMasterParticleSystem* Clone() { return new BSMasterParticleSystem(*this); }
 };
 
@@ -531,28 +527,24 @@ private:
 	BlockRefArray<NiPSysModifier> modifierRefs;
 
 public:
-	~NiParticleSystem() {
-		for (auto &m : materialNameRefs) {
-			m.Clear(header);
-		}
-	};
-	NiParticleSystem(NiHeader* hdr);
-	NiParticleSystem(std::fstream& file, NiHeader* hdr);
+	NiParticleSystem();
+	NiParticleSystem(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiParticleSystem";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiParticleSystem* Clone() { return new NiParticleSystem(*this); }
 };
 
 class NiMeshParticleSystem : public NiParticleSystem {
 public:
-	NiMeshParticleSystem(NiHeader* hdr);
-	NiMeshParticleSystem(std::fstream& file, NiHeader* hdr);
+	NiMeshParticleSystem();
+	NiMeshParticleSystem(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiMeshParticleSystem";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -562,8 +554,8 @@ public:
 
 class BSStripParticleSystem : public NiParticleSystem {
 public:
-	BSStripParticleSystem(NiHeader* hdr);
-	BSStripParticleSystem(std::fstream& file, NiHeader* hdr);
+	BSStripParticleSystem();
+	BSStripParticleSystem(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSStripParticleSystem";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -584,11 +576,11 @@ private:
 	BlockRef<NiNode> colliderNodeRef;
 
 public:
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 };
 
 class NiPSysSphericalCollider : public NiPSysCollider {
@@ -596,15 +588,15 @@ private:
 	float radius;
 
 public:
-	NiPSysSphericalCollider(NiHeader* hdr);
-	NiPSysSphericalCollider(std::fstream& file, NiHeader* hdr);
+	NiPSysSphericalCollider();
+	NiPSysSphericalCollider(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysSphericalCollider";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysSphericalCollider* Clone() { return new NiPSysSphericalCollider(*this); }
 };
 
@@ -616,15 +608,15 @@ private:
 	Vector3 yAxis;
 
 public:
-	NiPSysPlanarCollider(NiHeader* hdr);
-	NiPSysPlanarCollider(std::fstream& file, NiHeader* hdr);
+	NiPSysPlanarCollider();
+	NiPSysPlanarCollider(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysPlanarCollider";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysPlanarCollider* Clone() { return new NiPSysPlanarCollider(*this); }
 };
 
@@ -633,16 +625,16 @@ private:
 	BlockRef<NiPSysCollider> colliderRef;
 
 public:
-	NiPSysColliderManager(NiHeader* hdr);
-	NiPSysColliderManager(std::fstream& file, NiHeader* hdr);
+	NiPSysColliderManager();
+	NiPSysColliderManager(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysColliderManager";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPSysColliderManager* Clone() { return new NiPSysColliderManager(*this); }
 };
 
@@ -661,9 +653,9 @@ private:
 	float lifeSpanVariation;
 
 public:
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 };
 
 class NiPSysVolumeEmitter : public NiPSysEmitter {
@@ -671,11 +663,11 @@ private:
 	BlockRef<NiNode> emitterNodeRef;
 
 public:
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 };
 
 class NiPSysSphereEmitter : public NiPSysVolumeEmitter {
@@ -683,15 +675,15 @@ private:
 	float radius;
 
 public:
-	NiPSysSphereEmitter(NiHeader* hdr);
-	NiPSysSphereEmitter(std::fstream& file, NiHeader* hdr);
+	NiPSysSphereEmitter();
+	NiPSysSphereEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysSphereEmitter";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysSphereEmitter* Clone() { return new NiPSysSphereEmitter(*this); }
 };
 
@@ -701,15 +693,15 @@ private:
 	float height;
 
 public:
-	NiPSysCylinderEmitter(NiHeader* hdr);
-	NiPSysCylinderEmitter(std::fstream& file, NiHeader* hdr);
+	NiPSysCylinderEmitter();
+	NiPSysCylinderEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysCylinderEmitter";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysCylinderEmitter* Clone() { return new NiPSysCylinderEmitter(*this); }
 };
 
@@ -720,15 +712,15 @@ private:
 	float depth;
 
 public:
-	NiPSysBoxEmitter(NiHeader* hdr);
-	NiPSysBoxEmitter(std::fstream& file, NiHeader* hdr);
+	NiPSysBoxEmitter();
+	NiPSysBoxEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysBoxEmitter";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiPSysBoxEmitter* Clone() { return new NiPSysBoxEmitter(*this); }
 };
 
@@ -740,15 +732,15 @@ private:
 	Vector3 emissionAxis;
 
 public:
-	NiPSysMeshEmitter(NiHeader* hdr);
-	NiPSysMeshEmitter(std::fstream& file, NiHeader* hdr);
+	NiPSysMeshEmitter();
+	NiPSysMeshEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysMeshEmitter";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiPSysMeshEmitter* Clone() { return new NiPSysMeshEmitter(*this); }
 };

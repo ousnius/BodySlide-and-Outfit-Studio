@@ -10,140 +10,126 @@ See the included LICENSE file
 #include "utils/half.hpp"
 #include "utils/KDMatcher.h"
 
-void NiGeometryData::Init(NiHeader* hdr) {
-	NiObject::Init(hdr);
-
-	groupID = 0;
-	numVertices = 0;
-	keepFlags = 0;
-	compressFlags = 0;
-	hasVertices = true;
-	numUVSets = 0;
-	//extraVectorsFlags = 0;
-	materialCRC = 0;
-	hasNormals = false;
-	hasVertexColors = false;
-	consistencyFlags = 0;
-	additionalData = 0xFFFFFFFF;
+void NiGeometryData::Init() {
+	NiObject::Init();
 }
 
-void NiGeometryData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiGeometryData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&groupID, 4);
-	file.read((char*)&numVertices, 2);
-	file.read((char*)&keepFlags, 1);
-	file.read((char*)&compressFlags, 1);
-	file.read((char*)&hasVertices, 1);
+	stream >> groupID;
+	stream >> numVertices;
+	stream >> keepFlags;
+	stream >> compressFlags;
+	stream >> hasVertices;
 
 	if (hasVertices && !isPSys) {
 		vertices.resize(numVertices);
 		for (int i = 0; i < numVertices; i++)
-			file.read((char*)&vertices[i], 12);
+			stream >> vertices[i];
 	}
 
-	file.read((char*)&numUVSets, 2);
+	stream >> numUVSets;
 
 	ushort nbtMethod = numUVSets & 0xF000;
 	byte numTextureSets = numUVSets & 0x3F;
-	if (header->GetUserVersion2() >= 83)
+	if (stream.GetVersion().User2() >= 83)
 		numTextureSets = numUVSets & 0x1;
 
-	if (header->GetUserVersion() == 12)
-		file.read((char*)&materialCRC, 4);
+	if (stream.GetVersion().User() == 12)
+		stream >> materialCRC;
 
-	file.read((char*)&hasNormals, 1);
+	stream >> hasNormals;
 	if (hasNormals && !isPSys) {
 		normals.resize(numVertices);
 
 		for (int i = 0; i < numVertices; i++)
-			file.read((char*)&normals[i], 12);
+			stream >> normals[i];
 
 		if (nbtMethod) {
 			tangents.resize(numVertices);
 			bitangents.resize(numVertices);
 
 			for (int i = 0; i < numVertices; i++)
-				file.read((char*)&tangents[i], 12);
+				stream >> tangents[i];
 
 			for (int i = 0; i < numVertices; i++)
-				file.read((char*)&bitangents[i], 12);
+				stream >> bitangents[i];
 		}
 	}
 
-	file.read((char*)&bounds, 16);
+	stream >> bounds;
 
-	file.read((char*)&hasVertexColors, 1);
+	stream >> hasVertexColors;
 	if (hasVertexColors && !isPSys) {
 		vertexColors.resize(numVertices);
 		for (int i = 0; i < numVertices; i++)
-			file.read((char*)&vertexColors[i], 16);
+			stream >> vertexColors[i];
 	}
 
 	if (numTextureSets > 0 && !isPSys) {
 		uvSets.resize(numVertices);
 		for (int i = 0; i < numVertices; i++)
-			file.read((char*)&uvSets[i], 8);
+			stream >> uvSets[i];
 	}
 
-	file.read((char*)&consistencyFlags, 2);
-	file.read((char*)&additionalData, 4);
+	stream >> consistencyFlags;
+	stream >> additionalData;
 }
 
-void NiGeometryData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiGeometryData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&groupID, 4);
-	file.write((char*)&numVertices, 2);
-	file.write((char*)&keepFlags, 1);
-	file.write((char*)&compressFlags, 1);
-
-	file.write((char*)&hasVertices, 1);
+	stream << groupID;
+	stream << numVertices;
+	stream << keepFlags;
+	stream << compressFlags;
+	stream << hasVertices;
 
 	if (hasVertices && !isPSys) {
 		for (int i = 0; i < numVertices; i++)
-			file.write((char*)&vertices[i], 12);
+			stream << vertices[i];
 	}
 
-	file.write((char*)&numUVSets, 2);
+	stream << numUVSets;
 
 	ushort nbtMethod = numUVSets & 0xF000;
 	byte numTextureSets = numUVSets & 0x3F;
-	if (header->GetUserVersion2() >= 83)
+	if (stream.GetVersion().User2() >= 83)
 		numTextureSets = numUVSets & 0x1;
 
-	if (header->GetUserVersion() == 12)
-		file.write((char*)&materialCRC, 4);
+	if (stream.GetVersion().User() == 12)
+		stream << materialCRC;
 
-	file.write((char*)&hasNormals, 1);
+	stream << hasNormals;
 	if (hasNormals && !isPSys) {
 		for (int i = 0; i < numVertices; i++)
-			file.write((char*)&normals[i], 12);
+			stream << normals[i];
 
 		if (nbtMethod) {
 			for (int i = 0; i < numVertices; i++)
-				file.write((char*)&tangents[i], 12);
+				stream << tangents[i];
 
 			for (int i = 0; i < numVertices; i++)
-				file.write((char*)&bitangents[i], 12);
+				stream << bitangents[i];
 		}
 	}
 
-	file.write((char*)&bounds, 16);
+	stream << bounds;
 
-	file.write((char*)&hasVertexColors, 1);
+	stream << hasVertexColors;
 	if (hasVertexColors && !isPSys) {
 		for (int i = 0; i < numVertices; i++)
-			file.write((char*)&vertexColors[i], 16);
+			stream << vertexColors[i];
 	}
 
 	if (numTextureSets > 0 && !isPSys) {
 		for (int i = 0; i < numVertices; i++)
-			file.write((char*)&uvSets[i], 8);
+			stream << uvSets[i];
 	}
 
-	file.write((char*)&consistencyFlags, 2);
-	file.write((char*)&additionalData, 4);
+	stream << consistencyFlags;
+	stream << additionalData;
 }
 
 void NiGeometryData::SetVertices(const bool enable) {
@@ -274,17 +260,17 @@ void NiGeometryData::CalcTangentSpace() {
 	SetTangents(true);
 }
 
-int NiGeometryData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiGeometryData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 35;
-	if (header->GetUserVersion() == 12)
+	if (version.User() == 12)
 		blockSize += 4;
 
 	if (hasVertices && !isPSys) {
 		ushort nbtMethod = numUVSets & 0xF000;
 		byte numTextureSets = numUVSets & 0x3F;
-		if (header->GetUserVersion2() >= 83)
+		if (version.User2() >= 83)
 			numTextureSets = numUVSets & 0x1;
 
 		blockSize += numVertices * 12;
@@ -322,13 +308,11 @@ int NiShape::GetDataRef() { return 0xFFFFFFFF; }
 void NiShape::SetDataRef(int dataRef) { }
 
 void NiShape::SetVertices(const bool enable) {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertices(enable);
 };
 
 bool NiShape::HasVertices() {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasVertices();
 
@@ -336,13 +320,11 @@ bool NiShape::HasVertices() {
 };
 
 void NiShape::SetUVs(const bool enable) {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetUVs(enable);
 };
 
 bool NiShape::HasUVs() {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasUVs();
 
@@ -350,13 +332,11 @@ bool NiShape::HasUVs() {
 };
 
 void NiShape::SetNormals(const bool enable) {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetNormals(enable);
 };
 
 bool NiShape::HasNormals() {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasNormals();
 
@@ -364,13 +344,11 @@ bool NiShape::HasNormals() {
 };
 
 void NiShape::SetTangents(const bool enable) {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetTangents(enable);
 };
 
 bool NiShape::HasTangents() {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasTangents();
 
@@ -378,13 +356,11 @@ bool NiShape::HasTangents() {
 };
 
 void NiShape::SetVertexColors(const bool enable) {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertexColors(enable);
 };
 
 bool NiShape::HasVertexColors() {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasVertexColors();
 
@@ -395,13 +371,11 @@ void NiShape::SetSkinned(const bool enable) { };
 bool NiShape::IsSkinned() { return false; };
 
 void NiShape::SetBounds(const BoundingSphere& bounds) {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->SetBounds(bounds);
 }
 
 BoundingSphere NiShape::GetBounds() {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		return geomData->GetBounds();
 
@@ -409,17 +383,16 @@ BoundingSphere NiShape::GetBounds() {
 }
 
 void NiShape::UpdateBounds() {
-	NiGeometryData* geomData = GetGeomData();
 	if (geomData)
 		geomData->UpdateBounds();
 }
 
-int NiShape::GetBoneID(const std::string& boneName) {
-	auto boneCont = header->GetBlock<NiBoneContainer>(GetSkinInstanceRef());
+int NiShape::GetBoneID(NiHeader* hdr, const std::string& boneName) {
+	auto boneCont = hdr->GetBlock<NiBoneContainer>(GetSkinInstanceRef());
 	if (boneCont) {
 		for (int i = 0; i < boneCont->boneRefs.GetSize(); i++) {
-			auto node = header->GetBlock<NiNode>(boneCont->boneRefs.GetBlockRef(i));
-			if (node && node->GetName() == boneName)
+			auto node = hdr->GetBlock<NiNode>(boneCont->boneRefs.GetBlockRef(i));
+			if (node && node->GetName(hdr) == boneName)
 				return i;
 		}
 	}
@@ -428,72 +401,53 @@ int NiShape::GetBoneID(const std::string& boneName) {
 }
 
 
-BSTriShape::BSTriShape(NiHeader* hdr) {
-	NiAVObject::Init(hdr);
-
-	vertFlags3 = 0x43;
-	vertFlags4 = 0x50;
-	vertFlags5 = 0x0;
-	vertFlags6 = 0xB0;
-	vertFlags7 = 0x1;
-	vertFlags8 = 0x0;
-
-	numTriangles = 0;
-	numVertices = 0;
-	dataSize = 0;
-	vertexSize = 0;
-	particleDataSize = 0;
+BSTriShape::BSTriShape() {
+	NiAVObject::Init();
 }
 
-BSTriShape::BSTriShape(std::fstream& file, NiHeader* hdr) : BSTriShape(hdr) {
-	Get(file);
+BSTriShape::BSTriShape(NiStream& stream) : BSTriShape() {
+	Get(stream);
 }
 
-void BSTriShape::Get(std::fstream& file) {
+void BSTriShape::Get(NiStream& stream) {
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
-	NiObjectNET::Get(file);
+	NiObjectNET::Get(stream);
 
-	file.read((char*)&flags, 4);
+	stream >> flags;
+	stream >> translation;
 
-	file.read((char*)&translation.x, 4);
-	file.read((char*)&translation.y, 4);
-	file.read((char*)&translation.z, 4);
+	for (int i = 0; i < 3; i++)
+		stream >> rotation[i];
 
-	for (int i = 0; i < 3; i++) {
-		file.read((char*)&rotation[i].x, 4);
-		file.read((char*)&rotation[i].y, 4);
-		file.read((char*)&rotation[i].z, 4);
-	}
+	stream >> scale;
+	collisionRef.Get(stream);
 
-	file.read((char*)&scale, 4);
-	collisionRef.Get(file);
+	stream >> bounds;
 
-	file.read((char*)&bounds, 16);
+	skinInstanceRef.Get(stream);
+	shaderPropertyRef.Get(stream);
+	alphaPropertyRef.Get(stream);
 
-	skinInstanceRef.Get(file);
-	shaderPropertyRef.Get(file);
-	alphaPropertyRef.Get(file);
+	stream >> vertFlags1;
+	stream >> vertFlags2;
+	stream >> vertFlags3;
+	stream >> vertFlags4;
+	stream >> vertFlags5;
+	stream >> vertFlags6;
+	stream >> vertFlags7;
+	stream >> vertFlags8;
 
-	file.read((char*)&vertFlags1, 1);
-	file.read((char*)&vertFlags2, 1);
-	file.read((char*)&vertFlags3, 1);
-	file.read((char*)&vertFlags4, 1);
-	file.read((char*)&vertFlags5, 1);
-	file.read((char*)&vertFlags6, 1);
-	file.read((char*)&vertFlags7, 1);
-	file.read((char*)&vertFlags8, 1);
-
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130) {
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130) {
 		ushort num = 0;
-		file.read((char*)&num, 2);
+		stream >> num;
 		numTriangles = num;
 	}
 	else
-		file.read((char*)&numTriangles, 4);
+		stream >> numTriangles;
 
-	file.read((char*)&numVertices, 2);
-	file.read((char*)&dataSize, 4);
+	stream >> numVertices;
+	stream >> dataSize;
 
 	vertData.resize(numVertices);
 
@@ -501,80 +455,75 @@ void BSTriShape::Get(std::fstream& file) {
 		half_float::half halfData;
 		for (int i = 0; i < numVertices; i++) {
 			if (HasVertices()) {
-				if (IsFullPrecision()) {
+				if (IsFullPrecision() || stream.GetVersion().User2() == 100) {
 					// Full precision
-					file.read((char*)&vertData[i].vert.x, 4);
-					file.read((char*)&vertData[i].vert.y, 4);
-					file.read((char*)&vertData[i].vert.z, 4);
-
-					file.read((char*)&vertData[i].bitangentX, 4);
+					stream >> vertData[i].vert;
+					stream >> vertData[i].bitangentX;
 				}
 				else {
 					// Half precision
-					file.read((char*)&halfData, 2);
+					stream.read((char*)&halfData, 2);
 					vertData[i].vert.x = halfData;
-					file.read((char*)&halfData, 2);
+					stream.read((char*)&halfData, 2);
 					vertData[i].vert.y = halfData;
-					file.read((char*)&halfData, 2);
+					stream.read((char*)&halfData, 2);
 					vertData[i].vert.z = halfData;
 
-					file.read((char*)&halfData, 2);
+					stream.read((char*)&halfData, 2);
 					vertData[i].bitangentX = halfData;
 				}
 			}
 
 			if (HasUVs()) {
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				vertData[i].uv.u = halfData;
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				vertData[i].uv.v = halfData;
 			}
 
 			if (HasNormals()) {
 				for (int j = 0; j < 3; j++)
-					file.read((char*)&vertData[i].normal[j], 1);
+					stream >> vertData[i].normal[j];
 
-				file.read((char*)&vertData[i].bitangentY, 1);
+				stream >> vertData[i].bitangentY;
 
 				if (HasTangents()) {
 					for (int j = 0; j < 3; j++)
-						file.read((char*)&vertData[i].tangent[j], 1);
+						stream >> vertData[i].tangent[j];
 
-					file.read((char*)&vertData[i].bitangentZ, 1);
+					stream >> vertData[i].bitangentZ;
 				}
 			}
 
 
 			if (HasVertexColors())
-				file.read((char*)&vertData[i].colorData, 4);
+				for (int j = 0; j < 4; j++)
+					stream >> vertData[i].colorData[j];
 
 			if (IsSkinned()) {
 				for (int j = 0; j < 4; j++) {
-					file.read((char*)&halfData, 2);
+					stream.read((char*)&halfData, 2);
 					vertData[i].weights[j] = halfData;
 				}
 
 				for (int j = 0; j < 4; j++)
-					file.read((char*)&vertData[i].weightBones[j], 1);
+					stream >> vertData[i].weightBones[j];
 			}
 
 			if ((vertFlags7 & (1 << 4)) != 0)
-				file.read((char*)&vertData[i].eyeData, 4);
+				stream >> vertData[i].eyeData;
 		}
 	}
 
 	triangles.resize(numTriangles);
 
 	if (dataSize > 0) {
-		for (int i = 0; i < numTriangles; i++) {
-			file.read((char*)&triangles[i].p1, 2);
-			file.read((char*)&triangles[i].p2, 2);
-			file.read((char*)&triangles[i].p3, 2);
-		}
+		for (int i = 0; i < numTriangles; i++)
+			stream >> triangles[i];
 	}
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
-		file.read((char*)&particleDataSize, 4);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() == 100) {
+		stream >> particleDataSize;
 
 		if (particleDataSize > 0) {
 			particleVerts.resize(numVertices);
@@ -583,194 +532,177 @@ void BSTriShape::Get(std::fstream& file) {
 
 			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				particleVerts[i].x = halfData;
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				particleVerts[i].y = halfData;
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				particleVerts[i].z = halfData;
 			}
 
 			for (int i = 0; i < numVertices; i++) {
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				particleNorms[i].x = halfData;
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				particleNorms[i].y = halfData;
-				file.read((char*)&halfData, 2);
+				stream.read((char*)&halfData, 2);
 				particleNorms[i].z = halfData;
 			}
 
-			for (int i = 0; i < numTriangles; i++) {
-				file.read((char*)&particleTris[i].p1, 2);
-				file.read((char*)&particleTris[i].p2, 2);
-				file.read((char*)&particleTris[i].p3, 2);
-			}
+			for (int i = 0; i < numTriangles; i++)
+				stream >> particleTris[i];
 		}
 	}
 }
 
-void BSTriShape::Put(std::fstream& file) {
+void BSTriShape::Put(NiStream& stream) {
 	// The order of definition deviates slightly from previous versions, so can't directly use the super Get... instead
 	// that code is duplicated here and the super super get is called.
-	NiObjectNET::Put(file);
+	NiObjectNET::Put(stream);
 
-	file.write((char*)&flags, 4);
+	stream << flags;
+	stream << translation;
 
-	file.write((char*)&translation.x, 4);
-	file.write((char*)&translation.y, 4);
-	file.write((char*)&translation.z, 4);
+	for (int i = 0; i < 3; i++)
+		stream << rotation[i];
 
-	for (int i = 0; i < 3; i++) {
-		file.write((char*)&rotation[i].x, 4);
-		file.write((char*)&rotation[i].y, 4);
-		file.write((char*)&rotation[i].z, 4);
-	}
+	stream << scale;
+	collisionRef.Put(stream);
 
-	file.write((char*)&scale, 4);
-	collisionRef.Put(file);
+	stream << bounds;
 
-	file.write((char*)&bounds, 16);
+	skinInstanceRef.Put(stream);
+	shaderPropertyRef.Put(stream);
+	alphaPropertyRef.Put(stream);
 
-	skinInstanceRef.Put(file);
-	shaderPropertyRef.Put(file);
-	alphaPropertyRef.Put(file);
+	stream << vertFlags1;
+	stream << vertFlags2;
+	stream << vertFlags3;
+	stream << vertFlags4;
+	stream << vertFlags5;
+	stream << vertFlags6;
+	stream << vertFlags7;
+	stream << vertFlags8;
 
-	file.write((char*)&vertFlags1, 1);
-	file.write((char*)&vertFlags2, 1);
-	file.write((char*)&vertFlags3, 1);
-	file.write((char*)&vertFlags4, 1);
-	file.write((char*)&vertFlags5, 1);
-	file.write((char*)&vertFlags6, 1);
-	file.write((char*)&vertFlags7, 1);
-	file.write((char*)&vertFlags8, 1);
-
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130 && IsSkinned()) {
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130 && IsSkinned()) {
 		// Triangle and vertex data is in partition instead
 		ushort numUShort = 0;
 		uint numUInt = 0;
-		file.write((char*)&numUShort, 2);
+		stream << numUShort;
 
 		if (HasType<BSDynamicTriShape>())
-			file.write((char*)&numVertices, 2);
+			stream << numVertices;
 		else
-			file.write((char*)&numUShort, 2);
+			stream << numUShort;
 
-		file.write((char*)&numUInt, 4);
+		stream << numUInt;
 	}
 	else {
-		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130) {
+		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130) {
 			ushort numUShort = numTriangles;
-			file.write((char*)&numUShort, 2);
+			stream << numUShort;
 		}
 		else
-			file.write((char*)&numTriangles, 4);
+			stream << numTriangles;
 
-		file.write((char*)&numVertices, 2);
-		file.write((char*)&dataSize, 4);
+		stream << numVertices;
+		stream << dataSize;
 
 		if (dataSize > 0) {
 			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
 				if (HasVertices()) {
-					if (IsFullPrecision()) {
+					if (IsFullPrecision() || stream.GetVersion().User2() == 100) {
 						// Full precision
-						file.write((char*)&vertData[i].vert.x, 4);
-						file.write((char*)&vertData[i].vert.y, 4);
-						file.write((char*)&vertData[i].vert.z, 4);
-
-						file.write((char*)&vertData[i].bitangentX, 4);
+						stream << vertData[i].vert;
+						stream << vertData[i].bitangentX;
 					}
 					else {
 						// Half precision
 						halfData = vertData[i].vert.x;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 						halfData = vertData[i].vert.y;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 						halfData = vertData[i].vert.z;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 
 						halfData = vertData[i].bitangentX;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 					}
 				}
 
 				if (HasUVs()) {
 					halfData = vertData[i].uv.u;
-					file.write((char*)&halfData, 2);
+					stream.write((char*)&halfData, 2);
 
 					halfData = vertData[i].uv.v;
-					file.write((char*)&halfData, 2);
+					stream.write((char*)&halfData, 2);
 				}
 
 				if (HasNormals()) {
 					for (int j = 0; j < 3; j++)
-						file.write((char*)&vertData[i].normal[j], 1);
+						stream << vertData[i].normal[j];
 
-					file.write((char*)&vertData[i].bitangentY, 1);
+					stream << vertData[i].bitangentY;
 
 					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
-							file.write((char*)&vertData[i].tangent[j], 1);
+							stream << vertData[i].tangent[j];
 
-						file.write((char*)&vertData[i].bitangentZ, 1);
+						stream << vertData[i].bitangentZ;
 					}
 				}
 
 				if (HasVertexColors())
-					file.write((char*)&vertData[i].colorData, 4);
+					for (int j = 0; j < 4; j++)
+						stream << vertData[i].colorData[j];
 
 				if (IsSkinned()) {
 					for (int j = 0; j < 4; j++) {
 						halfData = vertData[i].weights[j];
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 					}
 
 					for (int j = 0; j < 4; j++)
-						file.write((char*)&vertData[i].weightBones[j], 1);
+						stream << vertData[i].weightBones[j];
 				}
 
 				if ((vertFlags7 & (1 << 4)) != 0)
-					file.write((char*)&vertData[i].eyeData, 4);
+					stream << vertData[i].eyeData;
 			}
 		}
 
 		if (dataSize > 0) {
-			for (int i = 0; i < numTriangles; i++) {
-				file.write((char*)&triangles[i].p1, 2);
-				file.write((char*)&triangles[i].p2, 2);
-				file.write((char*)&triangles[i].p3, 2);
-			}
+			for (int i = 0; i < numTriangles; i++)
+				stream << triangles[i];
 		}
 	}
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
-		file.write((char*)&particleDataSize, 4);
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() == 100) {
+		stream << particleDataSize;
 
 		if (particleDataSize > 0) {
 			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
 				halfData = particleVerts[i].x;
-				file.write((char*)&halfData, 2);
+				stream.write((char*)&halfData, 2);
 				halfData = particleVerts[i].y;
-				file.write((char*)&halfData, 2);
+				stream.write((char*)&halfData, 2);
 				halfData = particleVerts[i].z;
-				file.write((char*)&halfData, 2);
+				stream.write((char*)&halfData, 2);
 			}
 
 			for (int i = 0; i < numVertices; i++) {
 				halfData = particleNorms[i].x;
-				file.write((char*)&halfData, 2);
+				stream.write((char*)&halfData, 2);
 				halfData = particleNorms[i].y;
-				file.write((char*)&halfData, 2);
+				stream.write((char*)&halfData, 2);
 				halfData = particleNorms[i].z;
-				file.write((char*)&halfData, 2);
+				stream.write((char*)&halfData, 2);
 			}
 
-			for (int i = 0; i < numTriangles; i++) {
-				file.write((char*)&particleTris[i].p1, 2);
-				file.write((char*)&particleTris[i].p2, 2);
-				file.write((char*)&particleTris[i].p3, 2);
-			}
+			for (int i = 0; i < numTriangles; i++)
+				stream << particleTris[i];
 		}
 	}
 }
@@ -822,22 +754,22 @@ void BSTriShape::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&alphaPropertyRef.index);
 }
 
-int BSTriShape::CalcBlockSize() {
-	NiAVObject::CalcBlockSize();
+int BSTriShape::CalcBlockSize(NiVersion& version) {
+	NiAVObject::CalcBlockSize(version);
 
 	blockSize += 42;
 
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130)
+	if (version.User() >= 12 && version.User2() < 130)
 		blockSize += 2;
 	else
 		blockSize += 4;
 
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() < 130 && IsSkinned())
-		CalcDataSizes();
+	if (version.User() >= 12 && version.User2() < 130 && IsSkinned())
+		CalcDataSizes(version);
 	else
-		blockSize += CalcDataSizes();
+		blockSize += CalcDataSizes(version);
 
-	if (header->GetUserVersion() == 12 && header->GetUserVersion2() == 100) {
+	if (version.User() == 12 && version.User2() == 100) {
 		blockSize += 4;
 
 		if (particleDataSize > 0) {
@@ -1179,7 +1111,7 @@ void BSTriShape::CalcTangentSpace() {
 	}
 }
 
-void BSTriShape::UpdateFlags() {
+void BSTriShape::UpdateFlags(NiVersion& version) {
 	vertFlags3 = 0;
 	vertFlags4 = 0;
 	vertFlags5 = 0;
@@ -1213,7 +1145,7 @@ void BSTriShape::UpdateFlags() {
 		if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
 			vertFlags5 = 96;
 	}
-	else if (IsFullPrecision()) {
+	else if (IsFullPrecision() || version.User2() == 100) {
 		if (HasNormals()) {
 			vertFlags3 = 4;
 
@@ -1271,12 +1203,12 @@ void BSTriShape::UpdateFlags() {
 	}
 }
 
-int BSTriShape::CalcDataSizes() {
+int BSTriShape::CalcDataSizes(NiVersion& version) {
 	vertexSize = 0;
 	dataSize = 0;
 
-	if (HasVertices()) {
-		if (IsFullPrecision()) {	// Position + Bitangent X
+	if (HasVertices()) {		// Position + Bitangent X
+		if (IsFullPrecision() || version.User2() == 100) {
 			vertexSize += 4;
 			vertFlags2 = 4;
 		}
@@ -1315,7 +1247,7 @@ int BSTriShape::CalcDataSizes() {
 	vertexSize *= 4;
 	dataSize = vertexSize * numVertices + 6 * numTriangles;
 
-	UpdateFlags();
+	UpdateFlags(version);
 
 	return dataSize;
 }
@@ -1363,103 +1295,103 @@ void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris
 }
 
 
-BSSubIndexTriShape::BSSubIndexTriShape(NiHeader* hdr) : BSTriShape(hdr) {
+BSSubIndexTriShape::BSSubIndexTriShape() : BSTriShape() {
 }
 
-BSSubIndexTriShape::BSSubIndexTriShape(std::fstream& file, NiHeader* hdr) : BSSubIndexTriShape(hdr) {
-	Get(file);
+BSSubIndexTriShape::BSSubIndexTriShape(NiStream& stream) : BSSubIndexTriShape() {
+	Get(stream);
 }
 
-void BSSubIndexTriShape::Get(std::fstream& file) {
-	BSTriShape::Get(file);
+void BSSubIndexTriShape::Get(NiStream& stream) {
+	BSTriShape::Get(stream);
 
 	if (dataSize <= 0)
 		return;
-
-	file.read((char*)&segmentation.numPrimitives, 4);
-	file.read((char*)&segmentation.numSegments, 4);
-	file.read((char*)&segmentation.numTotalSegments, 4);
+	
+	stream >> segmentation.numPrimitives;
+	stream >> segmentation.numSegments;
+	stream >> segmentation.numTotalSegments;
 
 	segmentation.segments.resize(segmentation.numSegments);
 	for (auto &segment : segmentation.segments) {
-		file.read((char*)&segment.startIndex, 4);
-		file.read((char*)&segment.numPrimitives, 4);
-		file.read((char*)&segment.parentArrayIndex, 4);
-		file.read((char*)&segment.numSubSegments, 4);
+		stream >> segment.startIndex;
+		stream >> segment.numPrimitives;
+		stream >> segment.parentArrayIndex;
+		stream >> segment.numSubSegments;
 
 		segment.subSegments.resize(segment.numSubSegments);
 		for (auto &subSegment : segment.subSegments) {
-			file.read((char*)&subSegment.startIndex, 4);
-			file.read((char*)&subSegment.numPrimitives, 4);
-			file.read((char*)&subSegment.arrayIndex, 4);
-			file.read((char*)&subSegment.unkInt1, 4);
+			stream >> subSegment.startIndex;
+			stream >> subSegment.numPrimitives;
+			stream >> subSegment.arrayIndex;
+			stream >> subSegment.unkInt1;
 		}
 	}
 
 	if (segmentation.numSegments < segmentation.numTotalSegments) {
-		file.read((char*)&segmentation.subSegmentData.numSegments, 4);
-		file.read((char*)&segmentation.subSegmentData.numTotalSegments, 4);
+		stream >> segmentation.subSegmentData.numSegments;
+		stream >> segmentation.subSegmentData.numTotalSegments;
 
 		segmentation.subSegmentData.arrayIndices.resize(segmentation.numSegments);
 		for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
-			file.read((char*)&arrayIndex, 4);
+			stream >> arrayIndex;
 
 		segmentation.subSegmentData.dataRecords.resize(segmentation.numTotalSegments);
 		for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
-			file.read((char*)&dataRecord.segmentUser, 4);
-			file.read((char*)&dataRecord.unkInt2, 4);
-			file.read((char*)&dataRecord.numData, 4);
+			stream >> dataRecord.segmentUser;
+			stream >> dataRecord.unkInt2;
+			stream >> dataRecord.numData;
 
 			dataRecord.extraData.resize(dataRecord.numData);
 			for (auto &data : dataRecord.extraData)
-				file.read((char*)&data, 4);
+				stream >> data;
 		}
 
-		segmentation.subSegmentData.ssfFile.Get(file, 2);
+		segmentation.subSegmentData.ssfFile.Get(stream, 2);
 	}
 }
 
-void BSSubIndexTriShape::Put(std::fstream& file) {
-	BSTriShape::Put(file);
+void BSSubIndexTriShape::Put(NiStream& stream) {
+	BSTriShape::Put(stream);
 
 	if (dataSize <= 0)
 		return;
 
-	file.write((char*)&segmentation.numPrimitives, 4);
-	file.write((char*)&segmentation.numSegments, 4);
-	file.write((char*)&segmentation.numTotalSegments, 4);
+	stream << segmentation.numPrimitives;
+	stream << segmentation.numSegments;
+	stream << segmentation.numTotalSegments;
 
 	for (auto &segment : segmentation.segments) {
-		file.write((char*)&segment.startIndex, 4);
-		file.write((char*)&segment.numPrimitives, 4);
-		file.write((char*)&segment.parentArrayIndex, 4);
-		file.write((char*)&segment.numSubSegments, 4);
+		stream << segment.startIndex;
+		stream << segment.numPrimitives;
+		stream << segment.parentArrayIndex;
+		stream << segment.numSubSegments;
 
 		for (auto &subSegment : segment.subSegments) {
-			file.write((char*)&subSegment.startIndex, 4);
-			file.write((char*)&subSegment.numPrimitives, 4);
-			file.write((char*)&subSegment.arrayIndex, 4);
-			file.write((char*)&subSegment.unkInt1, 4);
+			stream << subSegment.startIndex;
+			stream << subSegment.numPrimitives;
+			stream << subSegment.arrayIndex;
+			stream << subSegment.unkInt1;
 		}
 	}
 
 	if (segmentation.numSegments < segmentation.numTotalSegments) {
-		file.write((char*)&segmentation.subSegmentData.numSegments, 4);
-		file.write((char*)&segmentation.subSegmentData.numTotalSegments, 4);
+		stream << segmentation.subSegmentData.numSegments;
+		stream << segmentation.subSegmentData.numTotalSegments;
 
 		for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
-			file.write((char*)&arrayIndex, 4);
+			stream << arrayIndex;
 
 		for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
-			file.write((char*)&dataRecord.segmentUser, 4);
-			file.write((char*)&dataRecord.unkInt2, 4);
-			file.write((char*)&dataRecord.numData, 4);
+			stream << dataRecord.segmentUser;
+			stream << dataRecord.unkInt2;
+			stream << dataRecord.numData;
 
 			for (auto &data : dataRecord.extraData)
-				file.write((char*)&data, 4);
+				stream << data;
 		}
 
-		segmentation.subSegmentData.ssfFile.Put(file, 2, false);
+		segmentation.subSegmentData.ssfFile.Put(stream, 2, false);
 	}
 }
 
@@ -1508,8 +1440,8 @@ void BSSubIndexTriShape::notifyVerticesDelete(const std::vector<ushort>& vertInd
 	}
 }
 
-int BSSubIndexTriShape::CalcBlockSize() {
-	BSTriShape::CalcBlockSize();
+int BSSubIndexTriShape::CalcBlockSize(NiVersion& version) {
+	BSTriShape::CalcBlockSize(version);
 
 	if (dataSize > 0) {
 		blockSize += 12;
@@ -1568,30 +1500,27 @@ void BSSubIndexTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangl
 }
 
 
-BSMeshLODTriShape::BSMeshLODTriShape(NiHeader* hdr) : BSTriShape(hdr) {
-	lodSize0 = 0;
-	lodSize1 = 0;
-	lodSize2 = 0;
+BSMeshLODTriShape::BSMeshLODTriShape() : BSTriShape() {
 }
 
-BSMeshLODTriShape::BSMeshLODTriShape(std::fstream& file, NiHeader* hdr) : BSMeshLODTriShape(hdr) {
-	Get(file);
+BSMeshLODTriShape::BSMeshLODTriShape(NiStream& stream) : BSMeshLODTriShape() {
+	Get(stream);
 }
 
-void BSMeshLODTriShape::Get(std::fstream& file) {
-	BSTriShape::Get(file);
+void BSMeshLODTriShape::Get(NiStream& stream) {
+	BSTriShape::Get(stream);
 
-	file.read((char*)&lodSize0, 4);
-	file.read((char*)&lodSize1, 4);
-	file.read((char*)&lodSize2, 4);
+	stream >> lodSize0;
+	stream >> lodSize1;
+	stream >> lodSize2;
 }
 
-void BSMeshLODTriShape::Put(std::fstream& file) {
-	BSTriShape::Put(file);
+void BSMeshLODTriShape::Put(NiStream& stream) {
+	BSTriShape::Put(stream);
 
-	file.write((char*)&lodSize0, 4);
-	file.write((char*)&lodSize1, 4);
-	file.write((char*)&lodSize2, 4);
+	stream << lodSize0;
+	stream << lodSize1;
+	stream << lodSize2;
 }
 
 void BSMeshLODTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
@@ -1603,8 +1532,8 @@ void BSMeshLODTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndi
 	lodSize2 = numTriangles;
 }
 
-int BSMeshLODTriShape::CalcBlockSize() {
-	BSTriShape::CalcBlockSize();
+int BSMeshLODTriShape::CalcBlockSize(NiVersion& version) {
+	BSTriShape::CalcBlockSize(version);
 
 	blockSize += 12;
 
@@ -1612,42 +1541,34 @@ int BSMeshLODTriShape::CalcBlockSize() {
 }
 
 
-BSDynamicTriShape::BSDynamicTriShape(NiHeader* hdr) : BSTriShape(hdr) {
+BSDynamicTriShape::BSDynamicTriShape() : BSTriShape() {
 	vertFlags6 &= ~(1 << 4);
 	vertFlags7 |= 1 << 6;
 
 	dynamicDataSize = 0;
 }
 
-BSDynamicTriShape::BSDynamicTriShape(std::fstream& file, NiHeader* hdr) : BSDynamicTriShape(hdr) {
-	Get(file);
+BSDynamicTriShape::BSDynamicTriShape(NiStream& stream) : BSDynamicTriShape() {
+	Get(stream);
 }
 
-void BSDynamicTriShape::Get(std::fstream& file) {
-	BSTriShape::Get(file);
+void BSDynamicTriShape::Get(NiStream& stream) {
+	BSTriShape::Get(stream);
 
-	file.read((char*)&dynamicDataSize, 4);
+	stream >> dynamicDataSize;
 
 	dynamicData.resize(numVertices);
-	for (int i = 0; i < numVertices; i++) {
-		file.read((char*)&dynamicData[i].x, 4);
-		file.read((char*)&dynamicData[i].y, 4);
-		file.read((char*)&dynamicData[i].z, 4);
-		file.read((char*)&dynamicData[i].w, 4);
-	}
+	for (int i = 0; i < numVertices; i++)
+		stream >> dynamicData[i];
 }
 
-void BSDynamicTriShape::Put(std::fstream& file) {
-	BSTriShape::Put(file);
+void BSDynamicTriShape::Put(NiStream& stream) {
+	BSTriShape::Put(stream);
 
-	file.write((char*)&dynamicDataSize, 4);
+	stream << dynamicDataSize;
 
-	for (int i = 0; i < numVertices; i++) {
-		file.write((char*)&dynamicData[i].x, 4);
-		file.write((char*)&dynamicData[i].y, 4);
-		file.write((char*)&dynamicData[i].z, 4);
-		file.write((char*)&dynamicData[i].w, 4);
-	}
+	for (int i = 0; i < numVertices; i++)
+		stream << dynamicData[i];
 }
 
 void BSDynamicTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
@@ -1669,8 +1590,8 @@ void BSDynamicTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndi
 	}
 }
 
-int BSDynamicTriShape::CalcBlockSize() {
-	BSTriShape::CalcBlockSize();
+int BSDynamicTriShape::CalcBlockSize(NiVersion& version) {
+	BSTriShape::CalcBlockSize(version);
 
 	dynamicDataSize = numVertices * 16;
 
@@ -1708,54 +1629,61 @@ void BSDynamicTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle
 }
 
 
-void NiGeometry::Init(NiHeader* hdr) {
-	NiAVObject::Init(hdr);
+void NiGeometry::Init() {
+	NiAVObject::Init();
 }
 
-void NiGeometry::Get(std::fstream& file) {
-	NiAVObject::Get(file);
+void NiGeometry::Get(NiStream& stream) {
+	NiAVObject::Get(stream);
 
-	dataRef.Get(file);
-	skinInstanceRef.Get(file);
+	dataRef.Get(stream);
+	skinInstanceRef.Get(stream);
 
-	file.read((char*)&numMaterials, 4);
+	stream >> numMaterials;
 	materialNameRefs.resize(numMaterials);
 	for (int i = 0; i < numMaterials; i++)
-		materialNameRefs[i].Get(file, header);
+		materialNameRefs[i].Get(stream);
 
 	materials.resize(numMaterials);
 	for (int i = 0; i < numMaterials; i++)
-		file.read((char*)&materials[i], 4);
+		stream >> materials[i];
 
-	file.read((char*)&activeMaterial, 4);
-	file.read((char*)&dirty, 1);
+	stream >> activeMaterial;
+	stream >> dirty;
 
-	if (header->GetUserVersion() > 11) {
-		shaderPropertyRef.Get(file);
-		alphaPropertyRef.Get(file);
+	if (stream.GetVersion().User() > 11) {
+		shaderPropertyRef.Get(stream);
+		alphaPropertyRef.Get(stream);
 	}
 }
 
-void NiGeometry::Put(std::fstream& file) {
-	NiAVObject::Put(file);
+void NiGeometry::Put(NiStream& stream) {
+	NiAVObject::Put(stream);
 
-	dataRef.Put(file);
-	skinInstanceRef.Put(file);
+	dataRef.Put(stream);
+	skinInstanceRef.Put(stream);
 
-	file.write((char*)&numMaterials, 4);
+	stream << numMaterials;
 	for (int i = 0; i < numMaterials; i++)
-		materialNameRefs[i].Put(file);
+		materialNameRefs[i].Put(stream);
 
 	for (int i = 0; i < numMaterials; i++)
-		file.write((char*)&materials[i], 4);
+		stream << materials[i];
 
-	file.write((char*)&activeMaterial, 4);
-	file.write((char*)&dirty, 1);
+	stream << activeMaterial;
+	stream << dirty;
 
-	if (header->GetUserVersion() > 11) {
-		shaderPropertyRef.Put(file);
-		alphaPropertyRef.Put(file);
+	if (stream.GetVersion().User() > 11) {
+		shaderPropertyRef.Put(stream);
+		alphaPropertyRef.Put(stream);
 	}
+}
+
+void NiGeometry::GetStringRefs(std::set<int*>& refs) {
+	NiAVObject::GetStringRefs(refs);
+
+	for (auto &m : materialNameRefs)
+		refs.insert(&m.index);
 }
 
 void NiGeometry::GetChildRefs(std::set<int*>& refs) {
@@ -1767,34 +1695,32 @@ void NiGeometry::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&alphaPropertyRef.index);
 }
 
-int NiGeometry::CalcBlockSize() {
-	NiAVObject::CalcBlockSize();
+int NiGeometry::CalcBlockSize(NiVersion& version) {
+	NiAVObject::CalcBlockSize(version);
 
 	blockSize += 17;
 	blockSize += numMaterials * 8;
-	if (header->GetUserVersion() > 11)
+	if (version.User() > 11)
 		blockSize += 8;
 
 	return blockSize;
 }
 
 
-void NiTriBasedGeomData::Init(NiHeader* hdr) {
-	NiGeometryData::Init(hdr);
-
-	numTriangles = 0;
+void NiTriBasedGeomData::Init() {
+	NiGeometryData::Init();
 }
 
-void NiTriBasedGeomData::Get(std::fstream& file) {
-	NiGeometryData::Get(file);
+void NiTriBasedGeomData::Get(NiStream& stream) {
+	NiGeometryData::Get(stream);
 
-	file.read((char*)&numTriangles, 2);
+	stream >> numTriangles;
 }
 
-void NiTriBasedGeomData::Put(std::fstream& file) {
-	NiGeometryData::Put(file);
+void NiTriBasedGeomData::Put(NiStream& stream) {
+	NiGeometryData::Put(stream);
 
-	file.write((char*)&numTriangles, 2);
+	stream << numTriangles;
 }
 
 void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords) {
@@ -1803,61 +1729,53 @@ void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangl
 	numTriangles = inTris->size();
 }
 
-int NiTriBasedGeomData::CalcBlockSize() {
-	NiGeometryData::CalcBlockSize();
+int NiTriBasedGeomData::CalcBlockSize(NiVersion& version) {
+	NiGeometryData::CalcBlockSize(version);
 
 	blockSize += 2;
 	return blockSize;
 }
 
 
-NiTriShape::NiTriShape(NiHeader* hdr) {
-	NiTriBasedGeom::Init(hdr);
+NiTriShape::NiTriShape() {
+	NiTriBasedGeom::Init();
 }
 
-NiTriShape::NiTriShape(std::fstream& file, NiHeader* hdr) : NiTriShape(hdr) {
-	Get(file);
+NiTriShape::NiTriShape(NiStream& stream) : NiTriShape() {
+	Get(stream);
 }
 
 
-NiTriShapeData::NiTriShapeData(NiHeader* hdr) {
-	NiTriBasedGeomData::Init(hdr);
-
-	numTrianglePoints = 0;
-	hasTriangles = false;
-	numMatchGroups = 0;
+NiTriShapeData::NiTriShapeData() {
+	NiTriBasedGeomData::Init();
 }
 
-NiTriShapeData::NiTriShapeData(std::fstream& file, NiHeader* hdr) : NiTriShapeData(hdr) {
-	Get(file);
+NiTriShapeData::NiTriShapeData(NiStream& stream) : NiTriShapeData() {
+	Get(stream);
 }
 
-void NiTriShapeData::Get(std::fstream& file) {
-	NiTriBasedGeomData::Get(file);
+void NiTriShapeData::Get(NiStream& stream) {
+	NiTriBasedGeomData::Get(stream);
 
-	file.read((char*)&numTrianglePoints, 4);
-	file.read((char*)&hasTriangles, 1);
+	stream >> numTrianglePoints;
+	stream >> hasTriangles;
+
 	if (hasTriangles) {
-		Triangle triangle;
-		for (int i = 0; i < numTriangles; i++) {
-			file.read((char*)&triangle.p1, 2);
-			file.read((char*)&triangle.p2, 2);
-			file.read((char*)&triangle.p3, 2);
-			triangles.push_back(triangle);
-		}
+		triangles.resize(numTriangles);
+		for (int i = 0; i < numTriangles; i++) 
+			stream >> triangles[i];
 	}
 
-	ushort uShort;
 	MatchGroup mg;
-	file.read((char*)&numMatchGroups, 2);
+	stream >> numMatchGroups;
+	matchGroups.resize(numMatchGroups);
 	for (int i = 0; i < numMatchGroups; i++) {
-		file.read((char*)&mg.count, 2);
-		mg.matches.clear();
-		for (int j = 0; j < mg.count; j++) {
-			file.read((char*)&uShort, 2);
-			mg.matches.push_back(uShort);
-		}
-		matchGroups.push_back(mg);
+		stream >> mg.count;
+		mg.matches.resize(mg.count);
+		for (int j = 0; j < mg.count; j++)
+			stream >> mg.matches[j];
+
+		matchGroups[i] = mg;
 	}
 
 	// Not supported yet, so clear it again after reading
@@ -1865,23 +1783,22 @@ void NiTriShapeData::Get(std::fstream& file) {
 	numMatchGroups = 0;
 }
 
-void NiTriShapeData::Put(std::fstream& file) {
-	NiTriBasedGeomData::Put(file);
+void NiTriShapeData::Put(NiStream& stream) {
+	NiTriBasedGeomData::Put(stream);
 
-	file.write((char*)&numTrianglePoints, 4);
-	file.write((char*)&hasTriangles, 1);
+	stream << numTrianglePoints;
+	stream << hasTriangles;
+
 	if (hasTriangles) {
-		for (int i = 0; i < numTriangles; i++) {
-			file.write((char*)&triangles[i].p1, 2);
-			file.write((char*)&triangles[i].p2, 2);
-			file.write((char*)&triangles[i].p3, 2);
-		}
+		for (int i = 0; i < numTriangles; i++)
+			stream << triangles[i];
 	}
-	file.write((char*)&numMatchGroups, 2);
+
+	stream << numMatchGroups;
 	for (int i = 0; i < numMatchGroups; i++) {
-		file.write((char*)&matchGroups[i].count, 2);
+		stream << matchGroups[i].count;
 		for (int j = 0; j < matchGroups[i].count; j++)
-			file.write((char*)&matchGroups[i].matches[j], 2);
+			stream << matchGroups[i].matches[j];
 	}
 }
 
@@ -2047,8 +1964,8 @@ void NiTriShapeData::CalcTangentSpace() {
 	}
 }
 
-int NiTriShapeData::CalcBlockSize() {
-	NiTriBasedGeomData::CalcBlockSize();
+int NiTriShapeData::CalcBlockSize(NiVersion& version) {
+	NiTriBasedGeomData::CalcBlockSize(version);
 
 	blockSize += 7;
 	blockSize += triangles.size() * 6;	// Triangles
@@ -2061,61 +1978,54 @@ int NiTriShapeData::CalcBlockSize() {
 }
 
 
-NiTriStrips::NiTriStrips(NiHeader* hdr) {
-	NiTriBasedGeom::Init(hdr);
+NiTriStrips::NiTriStrips() {
+	NiTriBasedGeom::Init();
 }
 
-NiTriStrips::NiTriStrips(std::fstream& file, NiHeader* hdr) : NiTriStrips(hdr) {
-	Get(file);
+NiTriStrips::NiTriStrips(NiStream& stream) : NiTriStrips() {
+	Get(stream);
 }
 
 
-NiTriStripsData::NiTriStripsData(NiHeader* hdr) {
-	NiTriBasedGeomData::Init(hdr);
-
-	numStrips = 0;
-	hasPoints = false;
+NiTriStripsData::NiTriStripsData() {
+	NiTriBasedGeomData::Init();
 }
 
-NiTriStripsData::NiTriStripsData(std::fstream& file, NiHeader* hdr) : NiTriStripsData(hdr) {
-	Get(file);
+NiTriStripsData::NiTriStripsData(NiStream& stream) : NiTriStripsData() {
+	Get(stream);
 }
 
-void NiTriStripsData::Get(std::fstream& file) {
-	NiTriBasedGeomData::Get(file);
+void NiTriStripsData::Get(NiStream& stream) {
+	NiTriBasedGeomData::Get(stream);
 
-	ushort uShort;
-	file.read((char*)&numStrips, 2);
-	for (int i = 0; i < numStrips; i++) {
-		file.read((char*)&uShort, 2);
-		stripLengths.push_back(uShort);
-	}
+	stream >> numStrips;
+	stripLengths.resize(numStrips);
+	for (int i = 0; i < numStrips; i++)
+		stream >> stripLengths[i];
 
-	file.read((char*)&hasPoints, 1);
+	stream >> hasPoints;
 	if (hasPoints) {
+		points.resize(numStrips);
 		for (int i = 0; i < numStrips; i++) {
-			points.push_back(std::vector<ushort>());
-			for (int j = 0; j < stripLengths[i]; j++) {
-				file.read((char*)&uShort, 2);
-				points[i].push_back(uShort);
-			}
+			points[i].resize(stripLengths[i]);
+			for (int j = 0; j < stripLengths[i]; j++)
+				stream >> points[i][j];
 		}
 	}
 }
 
-void NiTriStripsData::Put(std::fstream& file) {
-	NiTriBasedGeomData::Put(file);
+void NiTriStripsData::Put(NiStream& stream) {
+	NiTriBasedGeomData::Put(stream);
 
-	file.write((char*)&numStrips, 2);
+	stream << numStrips;
 	for (int i = 0; i < numStrips; i++)
-		file.write((char*)&stripLengths[i], 2);
+		stream << stripLengths[i];
 
-	file.write((char*)&hasPoints, 1);
-
+	stream << hasPoints;
 	if (hasPoints) {
 		for (int i = 0; i < numStrips; i++)
 			for (int j = 0; j < stripLengths[i]; j++)
-				file.write((char*)&points[i][j], 2);
+				stream << points[i][j];
 	}
 }
 
@@ -2296,8 +2206,8 @@ void NiTriStripsData::CalcTangentSpace() {
 	}
 }
 
-int NiTriStripsData::CalcBlockSize() {
-	NiTriBasedGeomData::CalcBlockSize();
+int NiTriStripsData::CalcBlockSize(NiVersion& version) {
+	NiTriBasedGeomData::CalcBlockSize(version);
 
 	blockSize += 3;
 	blockSize += numStrips * 2;				// Strip Lengths
@@ -2309,32 +2219,32 @@ int NiTriStripsData::CalcBlockSize() {
 }
 
 
-BSLODTriShape::BSLODTriShape(NiHeader* hdr) {
-	NiTriBasedGeom::Init(hdr);
+BSLODTriShape::BSLODTriShape() {
+	NiTriBasedGeom::Init();
 }
 
-BSLODTriShape::BSLODTriShape(std::fstream& file, NiHeader* hdr) : BSLODTriShape(hdr) {
-	Get(file);
+BSLODTriShape::BSLODTriShape(NiStream& stream) : BSLODTriShape() {
+	Get(stream);
 }
 
-void BSLODTriShape::Get(std::fstream& file) {
-	NiTriBasedGeom::Get(file);
+void BSLODTriShape::Get(NiStream& stream) {
+	NiTriBasedGeom::Get(stream);
 
-	file.read((char*)&level0, 4);
-	file.read((char*)&level1, 4);
-	file.read((char*)&level2, 4);
+	stream >> level0;
+	stream >> level1;
+	stream >> level2;
 }
 
-void BSLODTriShape::Put(std::fstream& file) {
-	NiTriBasedGeom::Put(file);
+void BSLODTriShape::Put(NiStream& stream) {
+	NiTriBasedGeom::Put(stream);
 
-	file.write((char*)&level0, 4);
-	file.write((char*)&level1, 4);
-	file.write((char*)&level2, 4);
+	stream << level0;
+	stream << level1;
+	stream << level2;
 }
 
-int BSLODTriShape::CalcBlockSize() {
-	NiTriBasedGeom::CalcBlockSize();
+int BSLODTriShape::CalcBlockSize(NiVersion& version) {
+	NiTriBasedGeom::CalcBlockSize(version);
 
 	blockSize += 12;
 

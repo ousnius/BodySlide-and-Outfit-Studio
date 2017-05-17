@@ -32,29 +32,29 @@ private:
 
 public:
 	KeyGroup() {}
-	KeyGroup(std::fstream& file) {
-		Get(file);
+	KeyGroup(NiStream& stream) {
+		Get(stream);
 	}
 
-	void Get(std::fstream& file) {
-		file.read((char*)&numKeys, 4);
+	void Get(NiStream& stream) {
+		stream >> numKeys;
 		keys.resize(numKeys);
 
 		if (numKeys > 0) {
-			file.read((char*)&interpolation, 4);
+			stream >> interpolation;
 
 			for (int i = 0; i < numKeys; i++) {
 				Key<T> key;
-				file.read((char*)&key.time, 4);
-				file.read((char*)&key.value, sizeof(T));
+				stream >> key.time;
+				stream >> key.value;
 
 				switch (interpolation) {
 				case 2:
-					file.read((char*)&key.forward, sizeof(T));
-					file.read((char*)&key.backward, sizeof(T));
+					stream >> key.forward;
+					stream >> key.backward;
 					break;
 				case 3:
-					file.read((char*)&key.tbc, 12);
+					stream >> key.tbc;
 					break;
 				}
 
@@ -63,23 +63,23 @@ public:
 		}
 	}
 
-	void Put(std::fstream& file) {
-		file.write((char*)&numKeys, 4);
+	void Put(NiStream& stream) {
+		stream << numKeys;
 
 		if (numKeys > 0) {
-			file.write((char*)&interpolation, 4);
+			stream << interpolation;
 
 			for (int i = 0; i < numKeys; i++) {
-				file.write((char*)&keys[i].time, 4);
-				file.write((char*)&keys[i].value, sizeof(T));
+				stream << keys[i].time;
+				stream << keys[i].value;
 
 				switch (interpolation) {
 				case 2:
-					file.write((char*)&keys[i].forward, sizeof(T));
-					file.write((char*)&keys[i].backward, sizeof(T));
+					stream << keys[i].forward;
+					stream << keys[i].backward;
 					break;
 				case 3:
-					file.write((char*)&keys[i].tbc, 12);
+					stream << keys[i].tbc;
 					break;
 				}
 			}

@@ -1985,7 +1985,7 @@ void OutfitStudio::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.empty())
 		return;
 
-	auto physicsBlock = new BSClothExtraData(project->GetWorkNif()->GetHeader());
+	auto physicsBlock = new BSClothExtraData();
 	if (!physicsBlock->FromHKX(fileName)) {
 		wxLogError("Failed to import physics data file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to import physics data file '%s'!"), fileName), _("Import Error"), wxICON_ERROR);

@@ -87,10 +87,10 @@ void ShapeProperties::GetShader() {
 		emissiveMultiple->Disable();
 	}
 	else {
-		shaderName->SetValue(shader->GetName());
+		shaderName->SetValue(shader->GetName(nif->GetHeader()));
 
 		if (os->targetGame == FO4)
-			currentMaterialPath = shader->GetName();
+			currentMaterialPath = shader->GetName(nif->GetHeader());
 
 		Color4 color;
 		Vector3 colorVec;
@@ -228,10 +228,10 @@ void ShapeProperties::AddShader() {
 		switch (os->targetGame) {
 			case FO3:
 			case FONV: {
-				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty(nif->GetHeader());
+				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty();
 				shape->propertyRefs.AddBlockRef(nif->GetHeader()->AddBlock(shader));
 
-				NiMaterialProperty* material = new NiMaterialProperty(nif->GetHeader());
+				NiMaterialProperty* material = new NiMaterialProperty();
 				shape->propertyRefs.AddBlockRef(nif->GetHeader()->AddBlock(material));
 				break;
 			}
@@ -239,7 +239,7 @@ void ShapeProperties::AddShader() {
 			case FO4:
 			case SKYRIMSE:
 			default: {
-				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader());
+				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader()->GetVersion());
 				shape->SetShaderPropertyRef(nif->GetHeader()->AddBlock(shader));
 			}
 		}
@@ -247,7 +247,7 @@ void ShapeProperties::AddShader() {
 
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
-		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader());
+		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader()->GetVersion());
 		shader->SetTextureSetRef(nif->GetHeader()->AddBlock(nifTexSet));
 	}
 
@@ -396,8 +396,14 @@ void ShapeProperties::GetGeometry() {
 
 		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			fullPrecision->SetValue(bsTriShape->IsFullPrecision());
-			fullPrecision->Enable(bsTriShape->CanChangePrecision());
+			if (nif->GetHeader()->GetVersion().User2() == 100) {
+				fullPrecision->SetValue(true);
+				fullPrecision->Enable(false);
+			}
+			else {
+				fullPrecision->SetValue(bsTriShape->IsFullPrecision());
+				fullPrecision->Enable(bsTriShape->CanChangePrecision());
+			}
 
 			subIndex->Enable(os->targetGame == FO4);
 		}
@@ -441,7 +447,7 @@ void ShapeProperties::GetExtraData() {
 }
 
 void ShapeProperties::OnAddExtraData(wxCommandEvent& WXUNUSED(event)) {
-	NiStringExtraData extraDataTemp(nif->GetHeader());
+	NiStringExtraData extraDataTemp;
 	AddExtraData(&extraDataTemp);
 }
 
@@ -449,13 +455,13 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
 		if (extraData->HasType<NiStringExtraData>()) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-			int index = nif->AddStringExtraData(shapeName, stringExtraData->GetName(), stringExtraData->GetStringData());
+			int index = nif->AddStringExtraData(shapeName, stringExtraData->GetName(nif->GetHeader()), stringExtraData->GetStringData(nif->GetHeader()));
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
 		else if (extraData->HasType<NiIntegerExtraData>()) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
-			int index = nif->AddIntegerExtraData(shapeName, intExtraData->GetName(), intExtraData->GetIntegerData());
+			int index = nif->AddIntegerExtraData(shapeName, intExtraData->GetName(nif->GetHeader()), intExtraData->GetIntegerData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
@@ -483,13 +489,13 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 		if (extraData->HasType<NiStringExtraData>()) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 			extraDataType->SetSelection(0);
-			extraDataName->SetValue(stringExtraData->GetName());
-			extraDataValue->SetValue(stringExtraData->GetStringData());
+			extraDataName->SetValue(stringExtraData->GetName(nif->GetHeader()));
+			extraDataValue->SetValue(stringExtraData->GetStringData(nif->GetHeader()));
 		}
 		else if (extraData->HasType<NiIntegerExtraData>()) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 			extraDataType->SetSelection(1);
-			extraDataName->SetValue(intExtraData->GetName());
+			extraDataName->SetValue(intExtraData->GetName(nif->GetHeader()));
 			extraDataValue->SetValue(wxString::Format("%d", intExtraData->GetIntegerData()));
 		}
 		else {
@@ -591,7 +597,7 @@ void ShapeProperties::ApplyChanges() {
 		emisColor /= 255.0f;
 		float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
 
-		shader->SetName(name);
+		shader->SetName(nif->GetHeader(), name);
 
 		if (shader->HasType<BSEffectShaderProperty>()) {
 			shader->SetEmissiveColor(emisColor);
@@ -648,19 +654,20 @@ void ShapeProperties::ApplyChanges() {
 	if (shape) {
 		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
+			if (nif->GetHeader()->GetVersion().User2() != 100)
+				bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 
 			if (os->targetGame == FO4 && currentSubIndex != subIndex->IsChecked()) {
 				if (subIndex->IsChecked()) {
-					auto bsSITS = new BSSubIndexTriShape(nif->GetHeader());
+					auto bsSITS = new BSSubIndexTriShape();
 					*dynamic_cast<BSTriShape*>(bsSITS) = *bsTriShape;
 					bsSITS->SetDefaultSegments();
-					bsSITS->SetName(bsTriShape->GetName());
+					bsSITS->SetName(nif->GetHeader(), bsTriShape->GetName(nif->GetHeader()));
 					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
 				}
 				else {
 					auto bsTS = new BSTriShape(*bsTriShape);
-					bsTS->SetName(bsTriShape->GetName());
+					bsTS->SetName(nif->GetHeader(), bsTriShape->GetName(nif->GetHeader()));
 					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
 				}
 			}
@@ -684,11 +691,11 @@ void ShapeProperties::ApplyChanges() {
 
 		auto extraData = nif->GetHeader()->GetBlock<NiExtraData>(extraDataIndices[i]);
 		if (extraData) {
-			extraData->SetName(extraDataName->GetValue().ToStdString());
+			extraData->SetName(nif->GetHeader(), extraDataName->GetValue().ToStdString());
 
 			if (extraData->HasType<NiStringExtraData>()) {
 				auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-				stringExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
+				stringExtraData->SetStringData(nif->GetHeader(), extraDataValue->GetValue().ToStdString());
 			}
 			else if (extraData->HasType<NiIntegerExtraData>()) {
 				auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);

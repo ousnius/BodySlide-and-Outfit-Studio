@@ -24,7 +24,12 @@ struct hkWorldObjCInfoProperty {
 };
 
 struct MotorDesc {
-	float unkFloat[6];
+	float unkFloat1;
+	float unkFloat2;
+	float unkFloat3;
+	float unkFloat4;
+	float unkFloat5;
+	float unkFloat6;
 	byte unkByte;
 };
 
@@ -143,15 +148,15 @@ private:
 	BlockRef<NiAVObject> targetRef;
 
 public:
-	NiCollisionObject(NiHeader* hdr);
-	NiCollisionObject(std::fstream& file, NiHeader* hdr);
+	NiCollisionObject();
+	NiCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiCollisionObject";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiCollisionObject* Clone() { return new NiCollisionObject(*this); }
 };
 
@@ -161,23 +166,23 @@ private:
 	BlockRef<NiObject> bodyRef;
 
 public:
-	bhkNiCollisionObject(NiHeader* hdr);
-	bhkNiCollisionObject(std::fstream& file, NiHeader* hdr);
+	bhkNiCollisionObject();
+	bhkNiCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkNiCollisionObject";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkNiCollisionObject* Clone() { return new bhkNiCollisionObject(*this); }
 };
 
 class bhkCollisionObject : public bhkNiCollisionObject {
 public:
-	bhkCollisionObject(NiHeader* hdr);
-	bhkCollisionObject(std::fstream& file, NiHeader* hdr);
+	bhkCollisionObject();
+	bhkCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkCollisionObject";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -190,22 +195,22 @@ private:
 	uint bodyID = 0;
 
 public:
-	bhkNPCollisionObject(NiHeader* hdr);
-	bhkNPCollisionObject(std::fstream& file, NiHeader* hdr);
+	bhkNPCollisionObject();
+	bhkNPCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkNPCollisionObject";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkNPCollisionObject* Clone() { return new bhkNPCollisionObject(*this); }
 };
 
 class bhkPCollisionObject : public bhkNiCollisionObject {
 public:
-	bhkPCollisionObject(NiHeader* hdr);
-	bhkPCollisionObject(std::fstream& file, NiHeader* hdr);
+	bhkPCollisionObject();
+	bhkPCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkPCollisionObject";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -215,8 +220,8 @@ public:
 
 class bhkSPCollisionObject : public bhkPCollisionObject {
 public:
-	bhkSPCollisionObject(NiHeader* hdr);
-	bhkSPCollisionObject(std::fstream& file, NiHeader* hdr);
+	bhkSPCollisionObject();
+	bhkSPCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkSPCollisionObject";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -230,15 +235,15 @@ private:
 	float velGain;
 
 public:
-	bhkBlendCollisionObject(NiHeader* hdr);
-	bhkBlendCollisionObject(std::fstream& file, NiHeader* hdr);
+	bhkBlendCollisionObject();
+	bhkBlendCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBlendCollisionObject";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkBlendCollisionObject* Clone() { return new bhkBlendCollisionObject(*this); }
 };
 
@@ -248,12 +253,12 @@ private:
 	std::vector<char> data;
 
 public:
-	bhkPhysicsSystem(NiHeader* hdr, const uint size = 0);
-	bhkPhysicsSystem(std::fstream& file, NiHeader* hdr);
+	bhkPhysicsSystem(const uint size = 0);
+	bhkPhysicsSystem(NiStream& stream);
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkPhysicsSystem* Clone() { return new bhkPhysicsSystem(*this); }
 };
 
@@ -279,15 +284,15 @@ private:
 	Vector4 center;
 
 public:
-	bhkPlaneShape(NiHeader* hdr);
-	bhkPlaneShape(std::fstream& file, NiHeader* hdr);
+	bhkPlaneShape();
+	bhkPlaneShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkPlaneShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkPlaneShape* Clone() { return new bhkPlaneShape(*this); }
 };
 
@@ -297,9 +302,9 @@ private:
 	float radius;
 
 public:
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 };
 
 class bhkConvexShape : public bhkSphereRepShape {
@@ -312,48 +317,48 @@ private:
 	hkWorldObjCInfoProperty vertsProp;
 	hkWorldObjCInfoProperty normalsProp;
 
-	uint numVerts;
+	uint numVerts = 0;
 	std::vector<Vector4> verts;
 
-	uint numNormals;
+	uint numNormals = 0;
 	std::vector<Vector4> normals;
 
 public:
-	bhkConvexVerticesShape(NiHeader* hdr);
-	bhkConvexVerticesShape(std::fstream& file, NiHeader* hdr);
+	bhkConvexVerticesShape();
+	bhkConvexVerticesShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkConvexVerticesShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkConvexVerticesShape* Clone() { return new bhkConvexVerticesShape(*this); }
 };
 
 class bhkBoxShape : public bhkConvexShape {
 private:
-	byte padding[8];
+	uint64_t padding;
 	Vector3 dimensions;
 	float radius2;
 
 public:
-	bhkBoxShape(NiHeader* hdr);
-	bhkBoxShape(std::fstream& file, NiHeader* hdr);
+	bhkBoxShape();
+	bhkBoxShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBoxShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkBoxShape* Clone() { return new bhkBoxShape(*this); }
 };
 
 class bhkSphereShape : public bhkConvexShape {
 public:
-	bhkSphereShape(NiHeader* hdr);
-	bhkSphereShape(std::fstream& file, NiHeader* hdr);
+	bhkSphereShape();
+	bhkSphereShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkSphereShape";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -366,27 +371,27 @@ private:
 	BlockRef<bhkShape> shapeRef;
 	HavokMaterial material;
 	float radius;
-	byte padding[8];
+	uint64_t padding;
 	Matrix4 xform;
 
 public:
-	bhkTransformShape(NiHeader* hdr);
-	bhkTransformShape(std::fstream& file, NiHeader* hdr);
+	bhkTransformShape();
+	bhkTransformShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkTransformShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkTransformShape* Clone() { return new bhkTransformShape(*this); }
 };
 
 class bhkConvexTransformShape : public bhkTransformShape {
 public:
-	bhkConvexTransformShape(NiHeader* hdr);
-	bhkConvexTransformShape(std::fstream& file, NiHeader* hdr);
+	bhkConvexTransformShape();
+	bhkConvexTransformShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkConvexTransformShape";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -396,22 +401,22 @@ public:
 
 class bhkCapsuleShape : public bhkConvexShape {
 private:
-	byte padding[8];
+	uint64_t padding;
 	Vector3 point1;
 	float radius1;
 	Vector3 point2;
 	float radius2;
 
 public:
-	bhkCapsuleShape(NiHeader* hdr);
-	bhkCapsuleShape(std::fstream& file, NiHeader* hdr);
+	bhkCapsuleShape();
+	bhkCapsuleShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkCapsuleShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkCapsuleShape* Clone() { return new bhkCapsuleShape(*this); }
 };
 
@@ -431,16 +436,16 @@ private:
 	std::vector<byte> data;
 
 public:
-	bhkMoppBvTreeShape(NiHeader* hdr);
-	bhkMoppBvTreeShape(std::fstream& file, NiHeader* hdr);
+	bhkMoppBvTreeShape();
+	bhkMoppBvTreeShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkMoppBvTreeShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkMoppBvTreeShape* Clone() { return new bhkMoppBvTreeShape(*this); }
 };
 
@@ -464,16 +469,16 @@ private:
 	std::vector<uint> filters;
 
 public:
-	bhkNiTriStripsShape(NiHeader* hdr);
-	bhkNiTriStripsShape(std::fstream& file, NiHeader* hdr);
+	bhkNiTriStripsShape();
+	bhkNiTriStripsShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkNiTriStripsShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkNiTriStripsShape* Clone() { return new bhkNiTriStripsShape(*this); }
 };
 
@@ -490,16 +495,16 @@ private:
 	std::vector<uint> unkInts;
 
 public:
-	bhkListShape(NiHeader* hdr);
-	bhkListShape(std::fstream& file, NiHeader* hdr);
+	bhkListShape();
+	bhkListShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkListShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkListShape* Clone() { return new bhkListShape(*this); }
 };
 
@@ -513,11 +518,11 @@ private:
 	hkWorldObjCInfoProperty prop;
 
 public:
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkWorldObject* Clone() { return new bhkWorldObject(*this); }
 };
 
@@ -529,19 +534,19 @@ class bhkShapePhantom : public bhkPhantom {
 
 class bhkSimpleShapePhantom : public bhkShapePhantom {
 private:
-	byte padding[8];
+	uint64_t padding;
 	Matrix4 transform;
 
 public:
-	bhkSimpleShapePhantom(NiHeader* hdr);
-	bhkSimpleShapePhantom(std::fstream& file, NiHeader* hdr);
+	bhkSimpleShapePhantom();
+	bhkSimpleShapePhantom(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkSimpleShapePhantom";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkSimpleShapePhantom* Clone() { return new bhkSimpleShapePhantom(*this); }
 };
 
@@ -554,11 +559,11 @@ private:
 	uint priority;
 
 public:
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 };
 
 class bhkHingeConstraint : public bhkConstraint {
@@ -566,15 +571,15 @@ private:
 	HingeDesc hinge;
 
 public:
-	bhkHingeConstraint(NiHeader* hdr);
-	bhkHingeConstraint(std::fstream& file, NiHeader* hdr);
+	bhkHingeConstraint();
+	bhkHingeConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkHingeConstraint";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkHingeConstraint* Clone() { return new bhkHingeConstraint(*this); }
 };
 
@@ -583,15 +588,15 @@ private:
 	LimitedHingeDesc limitedHinge;
 
 public:
-	bhkLimitedHingeConstraint(NiHeader* hdr);
-	bhkLimitedHingeConstraint(std::fstream& file, NiHeader* hdr);
+	bhkLimitedHingeConstraint();
+	bhkLimitedHingeConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkLimitedHingeConstraint";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkLimitedHingeConstraint* Clone() { return new bhkLimitedHingeConstraint(*this); }
 };
 
@@ -609,8 +614,8 @@ private:
 	StiffSpringDesc desc6;
 
 public:
-	void Put(std::fstream& file);
-	void Get(std::fstream& file, NiObject* parent);
+	void Get(NiStream& stream, NiObject* parent);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	int CalcDescSize();
 };
@@ -622,16 +627,16 @@ private:
 	bool removeIfBroken;
 
 public:
-	bhkBreakableConstraint(NiHeader* hdr);
-	bhkBreakableConstraint(std::fstream& file, NiHeader* hdr);
+	bhkBreakableConstraint();
+	bhkBreakableConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBreakableConstraint";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkBreakableConstraint* Clone() { return new bhkBreakableConstraint(*this); }
 };
 
@@ -640,15 +645,15 @@ private:
 	RagdollDesc ragdoll;
 
 public:
-	bhkRagdollConstraint(NiHeader* hdr);
-	bhkRagdollConstraint(std::fstream& file, NiHeader* hdr);
+	bhkRagdollConstraint();
+	bhkRagdollConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkRagdollConstraint";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkRagdollConstraint* Clone() { return new bhkRagdollConstraint(*this); }
 };
 
@@ -657,15 +662,15 @@ private:
 	StiffSpringDesc stiffSpring;
 
 public:
-	bhkStiffSpringConstraint(NiHeader* hdr);
-	bhkStiffSpringConstraint(std::fstream& file, NiHeader* hdr);
+	bhkStiffSpringConstraint();
+	bhkStiffSpringConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkStiffSpringConstraint";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkStiffSpringConstraint* Clone() { return new bhkStiffSpringConstraint(*this); }
 };
 
@@ -674,15 +679,15 @@ private:
 	BallAndSocketDesc ballAndSocket;
 
 public:
-	bhkBallAndSocketConstraint(NiHeader* hdr);
-	bhkBallAndSocketConstraint(std::fstream& file, NiHeader* hdr);
+	bhkBallAndSocketConstraint();
+	bhkBallAndSocketConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBallAndSocketConstraint";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkBallAndSocketConstraint* Clone() { return new bhkBallAndSocketConstraint(*this); }
 };
 
@@ -704,16 +709,16 @@ private:
 	uint priority;
 
 public:
-	bhkBallSocketConstraintChain(NiHeader* hdr);
-	bhkBallSocketConstraintChain(std::fstream& file, NiHeader* hdr);
+	bhkBallSocketConstraintChain();
+	bhkBallSocketConstraintChain(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBallSocketConstraintChain";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkBallSocketConstraintChain* Clone() { return new bhkBallSocketConstraintChain(*this); }
 };
 
@@ -758,23 +763,23 @@ private:
 	ushort unkShort3;						// User Version >= 12
 
 public:
-	bhkRigidBody(NiHeader* hdr);
-	bhkRigidBody(std::fstream& file, NiHeader* hdr);
+	bhkRigidBody();
+	bhkRigidBody(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkRigidBody";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkRigidBody* Clone() { return new bhkRigidBody(*this); }
 };
 
 class bhkRigidBodyT : public bhkRigidBody {
 public:
-	bhkRigidBodyT(NiHeader* hdr);
-	bhkRigidBodyT(std::fstream& file, NiHeader* hdr);
+	bhkRigidBodyT();
+	bhkRigidBodyT(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkRigidBodyT";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -794,42 +799,42 @@ private:
 	byte weldingType;
 	byte materialType;
 
-	uint numMat32;
+	uint numMat32 = 0;
 	std::vector<uint> mat32;
-	uint numMat16;
+	uint numMat16 = 0;
 	std::vector<uint> mat16;
-	uint numMat8;
+	uint numMat8 = 0;
 	std::vector<uint> mat8;
 
-	uint numMaterials;
+	uint numMaterials = 0;
 	std::vector<bhkCMSDMaterial> materials;
 
-	uint numNamedMat;
+	uint numNamedMat = 0;
 
-	uint numTransforms;
+	uint numTransforms = 0;
 	std::vector<bhkCMSDTransform> transforms;
 
-	uint numBigVerts;
+	uint numBigVerts = 0;
 	std::vector<Vector4> bigVerts;
 
-	uint numBigTris;
+	uint numBigTris = 0;
 	std::vector<bhkCMSDBigTris> bigTris;
 
-	uint numChunks;
+	uint numChunks = 0;
 	std::vector<bhkCMSDChunk> chunks;
 
-	uint numConvexPieceA;
+	uint numConvexPieceA = 0;
 
 public:
-	bhkCompressedMeshShapeData(NiHeader* hdr);
-	bhkCompressedMeshShapeData(std::fstream& file, NiHeader* hdr);
+	bhkCompressedMeshShapeData();
+	bhkCompressedMeshShapeData(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkCompressedMeshShapeData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	bhkCompressedMeshShapeData* Clone() { return new bhkCompressedMeshShapeData(*this); }
 };
 
@@ -845,15 +850,15 @@ private:
 	BlockRef<bhkCompressedMeshShapeData> dataRef;
 
 public:
-	bhkCompressedMeshShape(NiHeader* hdr);
-	bhkCompressedMeshShape(std::fstream& file, NiHeader* hdr);
+	bhkCompressedMeshShape();
+	bhkCompressedMeshShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkCompressedMeshShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
 };

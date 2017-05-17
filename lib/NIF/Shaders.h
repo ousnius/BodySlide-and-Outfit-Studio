@@ -74,8 +74,8 @@ public:
 	virtual float GetEmissiveMultiple() { return 0.0f; }
 	virtual void SetEmissiveMultiple(float emissive) {}
 	virtual float GetAlpha() { return 1.0f; }
-	virtual std::string GetWetMaterialName() { return std::string(); }
-	virtual void SetWetMaterialName(const std::string& matName) {}
+	virtual std::string GetWetMaterialName(NiHeader* hdr) { return std::string(); }
+	virtual void SetWetMaterialName(NiHeader* hdr, const std::string& matName) {}
 };
 
 class BSShaderProperty : public NiShader {
@@ -88,10 +88,10 @@ public:
 	Vector2 uvOffset;
 	Vector2 uvScale;
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 
 	uint GetType();
 	void SetType(uint type);
@@ -106,15 +106,16 @@ public:
 	int numTextures;
 	std::vector<NiString> textures;
 
-	BSShaderTextureSet(NiHeader* hdr);
-	BSShaderTextureSet(std::fstream& file, NiHeader* hdr);
+	BSShaderTextureSet();
+	BSShaderTextureSet(NiVersion& version);
+	BSShaderTextureSet(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSShaderTextureSet";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSShaderTextureSet* Clone() { return new BSShaderTextureSet(*this); }
 };
 
@@ -162,21 +163,18 @@ public:
 	Vector3 eyeLeftReflectionCenter;		// Shader Type == 16
 	Vector3 eyeRightReflectionCenter;		// Shader Type == 16
 
-
-	BSLightingShaderProperty(NiHeader* hdr);
-	BSLightingShaderProperty(std::fstream& file, NiHeader* hdr);
-	~BSLightingShaderProperty() {
-		wetMaterialName.Clear(header);
-	};
+	BSLightingShaderProperty();
+	BSLightingShaderProperty(NiVersion& version);
+	BSLightingShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLightingShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -201,8 +199,8 @@ public:
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
 	float GetAlpha();
-	std::string GetWetMaterialName();
-	void SetWetMaterialName(const std::string& matName);
+	std::string GetWetMaterialName(NiHeader* hdr);
+	void SetWetMaterialName(NiHeader* hdr, const std::string& matName);
 };
 
 class BSEffectShaderProperty : public BSShaderProperty {
@@ -223,15 +221,15 @@ public:
 	NiString envMaskTexture;
 	float envMapScale;
 
-	BSEffectShaderProperty(NiHeader* hdr);
-	BSEffectShaderProperty(std::fstream& file, NiHeader* hdr);
+	BSEffectShaderProperty();
+	BSEffectShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSEffectShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSEffectShaderProperty* Clone() { return new BSEffectShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -253,15 +251,15 @@ private:
 	uint waterFlags;
 
 public:
-	BSWaterShaderProperty(NiHeader* hdr);
-	BSWaterShaderProperty(std::fstream& file, NiHeader* hdr);
+	BSWaterShaderProperty();
+	BSWaterShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSWaterShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSWaterShaderProperty* Clone() { return new BSWaterShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -276,18 +274,18 @@ public:
 class BSSkyShaderProperty : public BSShaderProperty {
 private:
 	NiString baseTexture;
-	uint skyFlags;
+	uint skyFlags = 0;
 
 public:
-	BSSkyShaderProperty(NiHeader* hdr);
-	BSSkyShaderProperty(std::fstream& file, NiHeader* hdr);
+	BSSkyShaderProperty();
+	BSSkyShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSkyShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSSkyShaderProperty* Clone() { return new BSSkyShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -303,10 +301,10 @@ class BSShaderLightingProperty : public BSShaderProperty {
 public:
 	uint textureClampMode;					// User Version <= 11
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 };
 
 class BSShaderNoLightingProperty : public BSShaderLightingProperty {
@@ -317,15 +315,15 @@ public:
 	float falloffStartOpacity;				// User Version 2 > 26
 	float falloffStopOpacity;				// User Version 2 > 26
 
-	BSShaderNoLightingProperty(NiHeader* hdr);
-	BSShaderNoLightingProperty(std::fstream& file, NiHeader* hdr);
+	BSShaderNoLightingProperty();
+	BSShaderNoLightingProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSShaderNoLightingProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSShaderNoLightingProperty* Clone() { return new BSShaderNoLightingProperty(*this); }
 
 	bool IsSkinTint();
@@ -344,16 +342,16 @@ public:
 	float parallaxScale;					// User Version == 11 && User Version 2 > 24
 	Color4 emissiveColor;					// User Version >= 12
 
-	BSShaderPPLightingProperty(NiHeader* hdr);
-	BSShaderPPLightingProperty(std::fstream& file, NiHeader* hdr);
+	BSShaderPPLightingProperty();
+	BSShaderPPLightingProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSShaderPPLightingProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSShaderPPLightingProperty* Clone() { return new BSShaderPPLightingProperty(*this); }
 
 	bool IsSkinTint();
@@ -368,15 +366,15 @@ public:
 	ushort flags;
 	byte threshold;
 
-	NiAlphaProperty(NiHeader* hdr);
-	NiAlphaProperty(std::fstream& file, NiHeader* hdr);
+	NiAlphaProperty();
+	NiAlphaProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiAlphaProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiAlphaProperty* Clone() { return new NiAlphaProperty(*this); }
 };
 
@@ -393,15 +391,15 @@ public:
 	Vector3 colorAmbient;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 	Vector3 colorDiffuse;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 
-	NiMaterialProperty(NiHeader* hdr);
-	NiMaterialProperty(std::fstream& file, NiHeader* hdr);
+	NiMaterialProperty();
+	NiMaterialProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiMaterialProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiMaterialProperty* Clone() { return new NiMaterialProperty(*this); }
 
 	bool IsEmissive();
@@ -422,14 +420,14 @@ public:
 	uint stencilRef;
 	uint stencilMask;
 
-	NiStencilProperty(NiHeader* hdr);
-	NiStencilProperty(std::fstream& file, NiHeader* hdr);
+	NiStencilProperty();
+	NiStencilProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiStencilProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiStencilProperty* Clone() { return new NiStencilProperty(*this); }
 };

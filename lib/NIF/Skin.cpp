@@ -7,40 +7,34 @@ See the included LICENSE file
 #include "Skin.h"
 #include "utils/half.hpp"
 
-NiSkinData::NiSkinData(NiHeader* hdr) {
-	NiObject::Init(hdr);
-
-	skinTransform.scale = 1.0f;
-	numBones = 0;
-	hasVertWeights = 1;
+NiSkinData::NiSkinData() {
+	NiObject::Init();
 }
 
-NiSkinData::NiSkinData(std::fstream& file, NiHeader* hdr) : NiSkinData(hdr) {
-	Get(file);
+NiSkinData::NiSkinData(NiStream& stream) : NiSkinData() {
+	Get(stream);
 }
 
-void NiSkinData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiSkinData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&skinTransform, 52);
-	file.read((char*)&numBones, 4);
-	file.read((char*)&hasVertWeights, 1);
+	stream >> skinTransform;
+	stream >> numBones;
+	stream >> hasVertWeights;
 
 	bones.resize(numBones);
 	for (int i = 0; i < numBones; i++) {
 		BoneData boneData;
-		file.read((char*)&boneData.boneTransform, 52);
-		file.read((char*)&boneData.bounds, 16);
-		file.read((char*)&boneData.numVertices, 2);
+		stream >> boneData.boneTransform;
+		stream >> boneData.bounds;
+		stream >> boneData.numVertices;
 
 		if (hasVertWeights) {
 			boneData.vertexWeights.resize(boneData.numVertices);
 
 			for (int j = 0; j < boneData.numVertices; j++) {
-				SkinWeight weight;
-				file.read((char*)&weight.index, 2);
-				file.read((char*)&weight.weight, 4);
-				boneData.vertexWeights[j] = std::move(weight);
+				stream >> boneData.vertexWeights[j].index;
+				stream >> boneData.vertexWeights[j].weight;
 			}
 		}
 		else
@@ -50,28 +44,26 @@ void NiSkinData::Get(std::fstream& file) {
 	}
 }
 
-void NiSkinData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiSkinData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&skinTransform, 52);
-	file.write((char*)&numBones, 4);
-	file.write((char*)&hasVertWeights, 1);
+	stream << skinTransform;
+	stream << numBones;
+	stream << hasVertWeights;
 
 	for (int i = 0; i < numBones; i++) {
-		file.write((char*)&bones[i].boneTransform, 52);
-		file.write((char*)&bones[i].bounds, 16);
+		stream << bones[i].boneTransform;
+		stream << bones[i].bounds;
 
-		if (hasVertWeights) {
-			file.write((char*)&bones[i].numVertices, 2);
+		ushort numVerts = 0;
+		if (hasVertWeights)
+			numVerts = bones[i].numVertices;
 
-			for (int j = 0; j < bones[i].numVertices; j++) {
-				file.write((char*)&bones[i].vertexWeights[j].index, 2);
-				file.write((char*)&bones[i].vertexWeights[j].weight, 4);
-			}
-		}
-		else {
-			ushort numVerts = 0;
-			file.write((char*)&numVerts, 2);
+		stream << numVerts;
+
+		for (int j = 0; j < numVerts; j++) {
+			stream << bones[i].vertexWeights[j].index;
+			stream << bones[i].vertexWeights[j].weight;
 		}
 	}
 }
@@ -110,8 +102,8 @@ void NiSkinData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	}
 }
 
-int NiSkinData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiSkinData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 57;
 
@@ -126,44 +118,31 @@ int NiSkinData::CalcBlockSize() {
 }
 
 
-NiSkinPartition::NiSkinPartition(NiHeader* hdr) {
-	NiObject::Init(hdr);
-
-	numPartitions = 0;
-	dataSize = 0;
-	vertexSize = 0;
-	vertFlags1 = 0;
-	vertFlags2 = 0;
-	vertFlags3 = 0;
-	vertFlags4 = 0;
-	vertFlags5 = 0;
-	vertFlags6 = 0;
-	vertFlags7 = 0;
-	vertFlags8 = 0;
-	numVertices = 0;
+NiSkinPartition::NiSkinPartition() {
+	NiObject::Init();
 }
 
-NiSkinPartition::NiSkinPartition(std::fstream& file, NiHeader* hdr) : NiSkinPartition(hdr) {
-	Get(file);
+NiSkinPartition::NiSkinPartition(NiStream& stream) : NiSkinPartition() {
+	Get(stream);
 }
 
-void NiSkinPartition::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiSkinPartition::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&numPartitions, 4);
+	stream >> numPartitions;
 	partitions.resize(numPartitions);
 
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
-		file.read((char*)&dataSize, 4);
-		file.read((char*)&vertexSize, 4);
-		file.read((char*)&vertFlags1, 1);
-		file.read((char*)&vertFlags2, 1);
-		file.read((char*)&vertFlags3, 1);
-		file.read((char*)&vertFlags4, 1);
-		file.read((char*)&vertFlags5, 1);
-		file.read((char*)&vertFlags6, 1);
-		file.read((char*)&vertFlags7, 1);
-		file.read((char*)&vertFlags8, 1);
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+		stream >> dataSize;
+		stream >> vertexSize;
+		stream >> vertFlags1;
+		stream >> vertFlags2;
+		stream >> vertFlags3;
+		stream >> vertFlags4;
+		stream >> vertFlags5;
+		stream >> vertFlags6;
+		stream >> vertFlags7;
+		stream >> vertFlags8;
 
 		if (dataSize > 0) {
 			numVertices = dataSize / vertexSize;
@@ -174,160 +153,155 @@ void NiSkinPartition::Get(std::fstream& file) {
 				if (HasVertices()) {
 					if (IsFullPrecision()) {
 						// Full precision
-						file.read((char*)&vertData[i].vert.x, 4);
-						file.read((char*)&vertData[i].vert.y, 4);
-						file.read((char*)&vertData[i].vert.z, 4);
-
-						file.read((char*)&vertData[i].bitangentX, 4);
+						stream >> vertData[i].vert;
+						stream >> vertData[i].bitangentX;
 					}
 					else {
 						// Half precision
-						file.read((char*)&halfData, 2);
+						stream.read((char*)&halfData, 2);
 						vertData[i].vert.x = halfData;
-						file.read((char*)&halfData, 2);
+						stream.read((char*)&halfData, 2);
 						vertData[i].vert.y = halfData;
-						file.read((char*)&halfData, 2);
+						stream.read((char*)&halfData, 2);
 						vertData[i].vert.z = halfData;
 
-						file.read((char*)&halfData, 2);
+						stream.read((char*)&halfData, 2);
 						vertData[i].bitangentX = halfData;
 					}
 				}
 
 				if (HasUVs()) {
-					file.read((char*)&halfData, 2);
+					stream.read((char*)&halfData, 2);
 					vertData[i].uv.u = halfData;
-					file.read((char*)&halfData, 2);
+					stream.read((char*)&halfData, 2);
 					vertData[i].uv.v = halfData;
 				}
 
 				if (HasNormals()) {
 					for (int j = 0; j < 3; j++)
-						file.read((char*)&vertData[i].normal[j], 1);
+						stream >> vertData[i].normal[j];
 
-					file.read((char*)&vertData[i].bitangentY, 1);
+					stream >> vertData[i].bitangentY;
 
 					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
-							file.read((char*)&vertData[i].tangent[j], 1);
+							stream >> vertData[i].tangent[j];
 
-						file.read((char*)&vertData[i].bitangentZ, 1);
+						stream >> vertData[i].bitangentZ;
 					}
 				}
 
 				if (HasVertexColors())
-					file.read((char*)&vertData[i].colorData, 4);
+					for (int j = 0; j < 4; j++)
+						stream >> vertData[i].colorData[j];
 
 				if (IsSkinned()) {
 					for (int j = 0; j < 4; j++) {
-						file.read((char*)&halfData, 2);
+						stream.read((char*)&halfData, 2);
 						vertData[i].weights[j] = halfData;
 					}
 
 					for (int j = 0; j < 4; j++)
-						file.read((char*)&vertData[i].weightBones[j], 1);
+						stream >> vertData[i].weightBones[j];
 				}
 
 				if ((vertFlags7 & (1 << 4)) != 0)
-					file.read((char*)&vertData[i].eyeData, 4);
+					stream >> vertData[i].eyeData;
 			}
 		}
 	}
 
 	for (int p = 0; p < numPartitions; p++) {
 		PartitionBlock partition;
-		file.read((char*)&partition.numVertices, 2);
-		file.read((char*)&partition.numTriangles, 2);
-		file.read((char*)&partition.numBones, 2);
-		file.read((char*)&partition.numStrips, 2);
-		file.read((char*)&partition.numWeightsPerVertex, 2);
+		stream >> partition.numVertices;
+		stream >> partition.numTriangles;
+		stream >> partition.numBones;
+		stream >> partition.numStrips;
+		stream >> partition.numWeightsPerVertex;
 
 		partition.bones.resize(partition.numBones);
 		for (int i = 0; i < partition.numBones; i++)
-			file.read((char*)&partition.bones[i], 2);
+			stream >> partition.bones[i];
 
-		file.read((char*)&partition.hasVertexMap, 1);
+		stream >> partition.hasVertexMap;
 		if (partition.hasVertexMap) {
 			partition.vertexMap.resize(partition.numVertices);
 			for (int i = 0; i < partition.numVertices; i++)
-				file.read((char*)&partition.vertexMap[i], 2);
+				stream >> partition.vertexMap[i];
 		}
 
-		file.read((char*)&partition.hasVertexWeights, 1);
+		stream >> partition.hasVertexWeights;
 		if (partition.hasVertexWeights) {
 			partition.vertexWeights.resize(partition.numVertices);
 			for (int i = 0; i < partition.numVertices; i++)
-				file.read((char*)&partition.vertexWeights[i], 16);
+				stream >> partition.vertexWeights[i];
 		}
 
 		partition.stripLengths.resize(partition.numStrips);
 		for (int i = 0; i < partition.numStrips; i++)
-			file.read((char*)&partition.stripLengths[i], 2);
+			stream >> partition.stripLengths[i];
 
-		file.read((char*)&partition.hasFaces, 1);
+		stream >> partition.hasFaces;
 		if (partition.hasFaces) {
 			partition.strips.resize(partition.numStrips);
 			for (int i = 0; i < partition.numStrips; i++) {
 				partition.strips[i].resize(partition.stripLengths[i]);
 				for (int j = 0; j < partition.stripLengths[i]; j++)
-					file.read((char*)&partition.strips[i][j], 2);
+					stream >> partition.strips[i][j];
 			}
 		}
 
 		if (partition.numStrips == 0 && partition.hasFaces) {
 			partition.triangles.resize(partition.numTriangles);
 			for (int i = 0; i < partition.numTriangles; i++)
-				file.read((char*)&partition.triangles[i], 6);
+				stream >> partition.triangles[i];
 		}
 
-		file.read((char*)&partition.hasBoneIndices, 1);
+		stream >> partition.hasBoneIndices;
 		if (partition.hasBoneIndices) {
 			partition.boneIndices.resize(partition.numVertices);
 			for (int i = 0; i < partition.numVertices; i++)
-				file.read((char*)&partition.boneIndices[i], 4);
+				stream >> partition.boneIndices[i];
 		}
 
-		if (header->GetUserVersion() >= 12)
-			file.read((char*)&partition.unkShort, 2);
+		if (stream.GetVersion().User() >= 12)
+			stream >> partition.unkShort;
 
-		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
-			file.read((char*)&partition.vertFlags1, 1);
-			file.read((char*)&partition.vertFlags2, 1);
-			file.read((char*)&partition.vertFlags3, 1);
-			file.read((char*)&partition.vertFlags4, 1);
-			file.read((char*)&partition.vertFlags5, 1);
-			file.read((char*)&partition.vertFlags6, 1);
-			file.read((char*)&partition.vertFlags7, 1);
-			file.read((char*)&partition.vertFlags8, 1);
+		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+			stream >> partition.vertFlags1;
+			stream >> partition.vertFlags2;
+			stream >> partition.vertFlags3;
+			stream >> partition.vertFlags4;
+			stream >> partition.vertFlags5;
+			stream >> partition.vertFlags6;
+			stream >> partition.vertFlags7;
+			stream >> partition.vertFlags8;
 
 			partition.trueTriangles.resize(partition.numTriangles);
-			for (int i = 0; i < partition.numTriangles; i++) {
-				file.read((char*)&partition.trueTriangles[i].p1, 2);
-				file.read((char*)&partition.trueTriangles[i].p2, 2);
-				file.read((char*)&partition.trueTriangles[i].p3, 2);
-			}
+			for (int i = 0; i < partition.numTriangles; i++)
+				stream >> partition.trueTriangles[i];
 		}
 
 		partitions[p] = partition;
 	}
 }
 
-void NiSkinPartition::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiSkinPartition::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&numPartitions, 4);
+	stream << numPartitions;
 
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
-		file.write((char*)&dataSize, 4);
-		file.write((char*)&vertexSize, 4);
-		file.write((char*)&vertFlags1, 1);
-		file.write((char*)&vertFlags2, 1);
-		file.write((char*)&vertFlags3, 1);
-		file.write((char*)&vertFlags4, 1);
-		file.write((char*)&vertFlags5, 1);
-		file.write((char*)&vertFlags6, 1);
-		file.write((char*)&vertFlags7, 1);
-		file.write((char*)&vertFlags8, 1);
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+		stream << dataSize;
+		stream << vertexSize;
+		stream << vertFlags1;
+		stream << vertFlags2;
+		stream << vertFlags3;
+		stream << vertFlags4;
+		stream << vertFlags5;
+		stream << vertFlags6;
+		stream << vertFlags7;
+		stream << vertFlags8;
 
 		if (dataSize > 0) {
 			half_float::half halfData;
@@ -335,125 +309,120 @@ void NiSkinPartition::Put(std::fstream& file) {
 				if (HasVertices()) {
 					if (IsFullPrecision()) {
 						// Full precision
-						file.write((char*)&vertData[i].vert.x, 4);
-						file.write((char*)&vertData[i].vert.y, 4);
-						file.write((char*)&vertData[i].vert.z, 4);
-
-						file.write((char*)&vertData[i].bitangentX, 4);
+						stream << vertData[i].vert;
+						stream << vertData[i].bitangentX;
 					}
 					else {
 						// Half precision
 						halfData = vertData[i].vert.x;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 						halfData = vertData[i].vert.y;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 						halfData = vertData[i].vert.z;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 
 						halfData = vertData[i].bitangentX;
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 					}
 				}
 
 				if (HasUVs()) {
 					halfData = vertData[i].uv.u;
-					file.write((char*)&halfData, 2);
+					stream.write((char*)&halfData, 2);
 					halfData = vertData[i].uv.v;
-					file.write((char*)&halfData, 2);
+					stream.write((char*)&halfData, 2);
 				}
 
 				if (HasNormals()) {
 					for (int j = 0; j < 3; j++)
-						file.write((char*)&vertData[i].normal[j], 1);
+						stream << vertData[i].normal[j];
 
-					file.write((char*)&vertData[i].bitangentY, 1);
+					stream << vertData[i].bitangentY;
 
 					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
-							file.write((char*)&vertData[i].tangent[j], 1);
+							stream << vertData[i].tangent[j];
 
-						file.write((char*)&vertData[i].bitangentZ, 1);
+						stream << vertData[i].bitangentZ;
 					}
 				}
 
 				if (HasVertexColors())
-					file.write((char*)&vertData[i].colorData, 4);
+					for (int j = 0; j < 4; j++)
+						stream << vertData[i].colorData[j];
 
 				if (IsSkinned()) {
 					for (int j = 0; j < 4; j++) {
 						halfData = vertData[i].weights[j];
-						file.write((char*)&halfData, 2);
+						stream.write((char*)&halfData, 2);
 					}
 
 					for (int j = 0; j < 4; j++)
-						file.write((char*)&vertData[i].weightBones[j], 1);
+						stream << vertData[i].weightBones[j];
 				}
 
 				if ((vertFlags7 & (1 << 4)) != 0)
-					file.write((char*)&vertData[i].eyeData, 4);
+					stream << vertData[i].eyeData;
 			}
 		}
 	}
 
 	for (int p = 0; p < numPartitions; p++) {
-		file.write((char*)&partitions[p].numVertices, 2);
-		file.write((char*)&partitions[p].numTriangles, 2);
-		file.write((char*)&partitions[p].numBones, 2);
-		file.write((char*)&partitions[p].numStrips, 2);
-		file.write((char*)&partitions[p].numWeightsPerVertex, 2);
+		stream << partitions[p].numVertices;
+		stream << partitions[p].numTriangles;
+		stream << partitions[p].numBones;
+		stream << partitions[p].numStrips;
+		stream << partitions[p].numWeightsPerVertex;
 
 		for (int i = 0; i < partitions[p].numBones; i++)
-			file.write((char*)&partitions[p].bones[i], 2);
+			stream << partitions[p].bones[i];
 
-		file.write((char*)&partitions[p].hasVertexMap, 1);
+		stream << partitions[p].hasVertexMap;
 		if (partitions[p].hasVertexMap)
 			for (int i = 0; i < partitions[p].numVertices; i++)
-				file.write((char*)&partitions[p].vertexMap[i], 2);
+				stream << partitions[p].vertexMap[i];
 
-		file.write((char*)&partitions[p].hasVertexWeights, 1);
+		stream << partitions[p].hasVertexWeights;
 		if (partitions[p].hasVertexWeights)
 			for (int i = 0; i < partitions[p].numVertices; i++)
-				file.write((char*)&partitions[p].vertexWeights[i], 16);
+				stream << partitions[p].vertexWeights[i];
 
 		for (int i = 0; i < partitions[p].numStrips; i++)
-			file.write((char*)&partitions[p].stripLengths[i], 2);
+			stream << partitions[p].stripLengths[i];
 
-		file.write((char*)&partitions[p].hasFaces, 1);
+		stream << partitions[p].hasFaces;
 		if (partitions[p].hasFaces)
 			for (int i = 0; i < partitions[p].numStrips; i++)
 				for (int j = 0; j < partitions[p].stripLengths[i]; j++)
-					file.write((char*)&partitions[p].strips[i][j], 2);
+					stream << partitions[p].strips[i][j];
 
 		if (partitions[p].numStrips == 0 && partitions[p].hasFaces)
 			for (int i = 0; i < partitions[p].numTriangles; i++)
-				file.write((char*)&partitions[p].triangles[i].p1, 6);
+				stream << partitions[p].triangles[i];
 
-		file.write((char*)&partitions[p].hasBoneIndices, 1);
+		stream << partitions[p].hasBoneIndices;
 		if (partitions[p].hasBoneIndices)
 			for (int i = 0; i < partitions[p].numVertices; i++)
-				file.write((char*)&partitions[p].boneIndices[i], 4);
+				stream << partitions[p].boneIndices[i];
 
-		if (header->GetUserVersion() >= 12)
-			file.write((char*)&partitions[p].unkShort, 2);
+		if (stream.GetVersion().User() >= 12)
+			stream << partitions[p].unkShort;
 
-		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
-			file.write((char*)&partitions[p].vertFlags1, 1);
-			file.write((char*)&partitions[p].vertFlags2, 1);
-			file.write((char*)&partitions[p].vertFlags3, 1);
-			file.write((char*)&partitions[p].vertFlags4, 1);
-			file.write((char*)&partitions[p].vertFlags5, 1);
-			file.write((char*)&partitions[p].vertFlags6, 1);
-			file.write((char*)&partitions[p].vertFlags7, 1);
-			file.write((char*)&partitions[p].vertFlags8, 1);
+		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+			stream << partitions[p].vertFlags1;
+			stream << partitions[p].vertFlags2;
+			stream << partitions[p].vertFlags3;
+			stream << partitions[p].vertFlags4;
+			stream << partitions[p].vertFlags5;
+			stream << partitions[p].vertFlags6;
+			stream << partitions[p].vertFlags7;
+			stream << partitions[p].vertFlags8;
 
 			if (partitions[p].trueTriangles.size() != partitions[p].numTriangles)
 				partitions[p].trueTriangles = partitions[p].triangles;
 
-			for (int i = 0; i < partitions[p].numTriangles; i++) {
-				file.write((char*)&partitions[p].trueTriangles[i].p1, 2);
-				file.write((char*)&partitions[p].trueTriangles[i].p2, 2);
-				file.write((char*)&partitions[p].trueTriangles[i].p3, 2);
-			}
+			for (int i = 0; i < partitions[p].numTriangles; i++)
+				stream << partitions[p].trueTriangles[i];
 		}
 	}
 }
@@ -518,7 +487,7 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 				p.vertexMap[i] -= indexCollapse[index];
 		}
 
-		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+		if (!p.trueTriangles.empty()) {
 			for (int i = p.numTriangles - 1; i >= 0; i--) {
 				if (p.triangles[i].p1 > highestRemoved) {
 					p.triangles[i].p1 -= remCount;
@@ -594,7 +563,7 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 		}
 	}
 
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+	if (!vertData.empty()) {
 		auto vertBegin = &vertData.front();
 		auto pos = remove_if(vertData.begin(), vertData.end(), [&vertBegin, &vertIndices](BSVertexData& v) {
 			auto i = std::distance(vertBegin, &v);
@@ -618,12 +587,12 @@ int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) 
 	return outDeletedIndices.size();
 }
 
-int NiSkinPartition::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiSkinPartition::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 4;
 
-	if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+	if (version.User() >= 12 && version.User2() == 100) {
 		blockSize += 16;
 
 		dataSize = vertexSize * numVertices;
@@ -631,7 +600,7 @@ int NiSkinPartition::CalcBlockSize() {
 	}
 
 	for (auto &p : partitions) {
-		if (header->GetUserVersion() >= 12)				// Plain data size
+		if (version.User() >= 12)					// Plain data size
 			blockSize += 16;
 		else
 			blockSize += 14;
@@ -647,7 +616,7 @@ int NiSkinPartition::CalcBlockSize() {
 		if (p.numStrips == 0)
 			blockSize += 6 * p.numTriangles;		// Triangle list size
 
-		if (header->GetUserVersion() >= 12 && header->GetUserVersion2() == 100) {
+		if (version.User() >= 12 && version.User2() == 100) {
 			blockSize += 8;
 			blockSize += p.numTriangles * 6;
 		}
@@ -657,30 +626,30 @@ int NiSkinPartition::CalcBlockSize() {
 }
 
 
-NiSkinInstance::NiSkinInstance(NiHeader* hdr) {
-	NiObject::Init(hdr);
+NiSkinInstance::NiSkinInstance() {
+	NiObject::Init();
 }
 
-NiSkinInstance::NiSkinInstance(std::fstream& file, NiHeader* hdr) : NiSkinInstance(hdr) {
-	Get(file);
+NiSkinInstance::NiSkinInstance(NiStream& stream) : NiSkinInstance() {
+	Get(stream);
 }
 
-void NiSkinInstance::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiSkinInstance::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	dataRef.Get(file);
-	skinPartitionRef.Get(file);
-	targetRef.Get(file);
-	boneRefs.Get(file);
+	dataRef.Get(stream);
+	skinPartitionRef.Get(stream);
+	targetRef.Get(stream);
+	boneRefs.Get(stream);
 }
 
-void NiSkinInstance::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiSkinInstance::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	dataRef.Put(file);
-	skinPartitionRef.Put(file);
-	targetRef.Put(file);
-	boneRefs.Put(file);
+	dataRef.Put(stream);
+	skinPartitionRef.Put(stream);
+	targetRef.Put(stream);
+	boneRefs.Put(stream);
 }
 
 void NiSkinInstance::GetChildRefs(std::set<int*>& refs) {
@@ -691,8 +660,8 @@ void NiSkinInstance::GetChildRefs(std::set<int*>& refs) {
 	boneRefs.GetIndexPtrs(refs);
 }
 
-int NiSkinInstance::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiSkinInstance::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 16;
 	blockSize += boneRefs.GetSize() * 4;
@@ -700,39 +669,33 @@ int NiSkinInstance::CalcBlockSize() {
 }
 
 
-BSDismemberSkinInstance::BSDismemberSkinInstance(NiHeader* hdr) : NiSkinInstance(hdr) {
+BSDismemberSkinInstance::BSDismemberSkinInstance() : NiSkinInstance() {
 }
 
-BSDismemberSkinInstance::BSDismemberSkinInstance(std::fstream& file, NiHeader* hdr) : BSDismemberSkinInstance(hdr) {
-	Get(file);
+BSDismemberSkinInstance::BSDismemberSkinInstance(NiStream& stream) : BSDismemberSkinInstance() {
+	Get(stream);
 }
 
-void BSDismemberSkinInstance::Get(std::fstream& file) {
-	NiSkinInstance::Get(file);
+void BSDismemberSkinInstance::Get(NiStream& stream) {
+	NiSkinInstance::Get(stream);
 
-	file.read((char*)&numPartitions, 4);
+	stream >> numPartitions;
 	partitions.resize(numPartitions);
 
-	for (int i = 0; i < numPartitions; i++) {
-		PartitionInfo part;
-		file.read((char*)&part.flags, 2);
-		file.read((char*)&part.partID, 2);
-		partitions[i] = part;
-	}
+	for (int i = 0; i < numPartitions; i++)
+		stream >> partitions[i];
 }
 
-void BSDismemberSkinInstance::Put(std::fstream& file) {
-	NiSkinInstance::Put(file);
+void BSDismemberSkinInstance::Put(NiStream& stream) {
+	NiSkinInstance::Put(stream);
 
-	file.write((char*)&numPartitions, 4);
-	for (int i = 0; i < numPartitions; i++) {
-		file.write((char*)&partitions[i].flags, 2);
-		file.write((char*)&partitions[i].partID, 2);
-	}
+	stream << numPartitions;
+	for (int i = 0; i < numPartitions; i++)
+		stream << partitions[i];
 }
 
-int BSDismemberSkinInstance::CalcBlockSize() {
-	NiSkinInstance::CalcBlockSize();
+int BSDismemberSkinInstance::CalcBlockSize(NiVersion& version) {
+	NiSkinInstance::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += numPartitions * 4;
@@ -757,40 +720,33 @@ void BSDismemberSkinInstance::ClearPartitions() {
 }
 
 
-BSSkinBoneData::BSSkinBoneData(NiHeader* hdr) {
-	NiObject::Init(hdr);
-
-	nBones = 0;
+BSSkinBoneData::BSSkinBoneData() {
+	NiObject::Init();
 }
 
-BSSkinBoneData::BSSkinBoneData(std::fstream& file, NiHeader* hdr) : BSSkinBoneData(hdr) {
-	Get(file);
+BSSkinBoneData::BSSkinBoneData(NiStream& stream) : BSSkinBoneData() {
+	Get(stream);
 }
 
-void BSSkinBoneData::Get(std::fstream& file) {
-	NiObject::Get(file);
+void BSSkinBoneData::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	file.read((char*)&nBones, 4);
+	stream >> nBones;
 	boneXforms.resize(nBones);
-	for (int i = 0; i < nBones; i++) {
-		file.read((char*)&boneXforms[i].bounds, 16);
-		file.read((char*)&boneXforms[i].boneTransform, 52);
-	}
+	for (int i = 0; i < nBones; i++)
+		stream >> boneXforms[i];
 }
 
-void BSSkinBoneData::Put(std::fstream& file) {
-	NiObject::Put(file);
+void BSSkinBoneData::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	file.write((char*)&nBones, 4);
-
-	for (int i = 0; i < nBones; i++) {
-		file.write((char*)&boneXforms[i].bounds, 16);
-		file.write((char*)&boneXforms[i].boneTransform, 52);
-	}
+	stream << nBones;
+	for (int i = 0; i < nBones; i++)
+		stream << boneXforms[i];
 }
 
-int BSSkinBoneData::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int BSSkinBoneData::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += 68 * nBones;
@@ -799,37 +755,37 @@ int BSSkinBoneData::CalcBlockSize() {
 }
 
 
-BSSkinInstance::BSSkinInstance(NiHeader* hdr) {
-	NiObject::Init(hdr);
+BSSkinInstance::BSSkinInstance() {
+	NiObject::Init();
 }
 
-BSSkinInstance::BSSkinInstance(std::fstream& file, NiHeader* hdr) : BSSkinInstance(hdr) {
-	Get(file);
+BSSkinInstance::BSSkinInstance(NiStream& stream) : BSSkinInstance() {
+	Get(stream);
 }
 
-void BSSkinInstance::Get(std::fstream& file) {
-	NiObject::Get(file);
+void BSSkinInstance::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	targetRef.Get(file);
-	dataRef.Get(file);
-	boneRefs.Get(file);
+	targetRef.Get(stream);
+	dataRef.Get(stream);
+	boneRefs.Get(stream);
 
-	file.read((char*)&numUnk, 4);
+	stream >> numUnk;
 	unk.resize(numUnk);
 	for (int i = 0; i < numUnk; i++)
-		file.read((char*)&unk[i], 12);
+		stream >> unk[i];
 }
 
-void BSSkinInstance::Put(std::fstream& file) {
-	NiObject::Put(file);
+void BSSkinInstance::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	targetRef.Put(file);
-	dataRef.Put(file);
-	boneRefs.Put(file);
+	targetRef.Put(stream);
+	dataRef.Put(stream);
+	boneRefs.Put(stream);
 
-	file.write((char*)&numUnk, 4);
+	stream << numUnk;
 	for (int i = 0; i < numUnk; i++)
-		file.write((char*)&unk[i], 12);
+		stream << unk[i];
 }
 
 void BSSkinInstance::GetChildRefs(std::set<int*>& refs) {
@@ -839,8 +795,8 @@ void BSSkinInstance::GetChildRefs(std::set<int*>& refs) {
 	boneRefs.GetIndexPtrs(refs);
 }
 
-int BSSkinInstance::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int BSSkinInstance::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 16;
 	blockSize += boneRefs.GetSize() * 4;

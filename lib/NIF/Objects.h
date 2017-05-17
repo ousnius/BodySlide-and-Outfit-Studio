@@ -20,17 +20,13 @@ public:
 	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
 	bool bBSLightingShaderProperty;
 
-	~NiObjectNET() {
-		name.Clear(header);
-	};
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-
-	std::string GetName();
-	void SetName(const std::string& str, const bool rename = false);
+	std::string GetName(NiHeader* hdr);
+	void SetName(NiHeader* hdr, const std::string& str, const bool rename = false);
 	void ClearName();
 
 	int GetControllerRef();
@@ -42,7 +38,7 @@ public:
 	void AddExtraDataRef(const int id);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 };
 
 class NiProperty;
@@ -59,11 +55,11 @@ public:
 	float scale;
 	BlockRefArray<NiProperty> propertyRefs;
 
-	void Init(NiHeader* hdr);
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Init();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 
 	int GetCollisionRef() { return collisionRef.index; }
 	void SetCollisionRef(const int colRef) { collisionRef.index = colRef; }
@@ -113,16 +109,16 @@ private:
 	std::vector<AVObject> objects;
 
 public:
-	NiDefaultAVObjectPalette(NiHeader* hdr);
-	NiDefaultAVObjectPalette(std::fstream& file, NiHeader* hdr);
+	NiDefaultAVObjectPalette();
+	NiDefaultAVObjectPalette(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiDefaultAVObjectPalette";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiDefaultAVObjectPalette* Clone() { return new NiDefaultAVObjectPalette(*this); }
 };
 
@@ -147,16 +143,16 @@ private:
 	uint numScreenTextures = 0;
 
 public:
-	NiCamera(NiHeader* hdr);
-	NiCamera(std::fstream& file, NiHeader* hdr);
+	NiCamera();
+	NiCamera(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiCamera";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiCamera* Clone() { return new NiCamera(*this); }
 };
 
@@ -166,17 +162,17 @@ private:
 	BlockRefArray<NiAVObject> effectRefs;	// should be NiDynamicEffect
 
 public:
-	NiNode(NiHeader* hdr);
-	NiNode(std::fstream& file, NiHeader* hdr);
+	NiNode();
+	NiNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiNode* Clone() { return new NiNode(*this); }
 
 	int GetNumChildren() { return childRefs.GetSize(); }
@@ -192,8 +188,8 @@ public:
 
 class BSFadeNode : public NiNode {
 public:
-	BSFadeNode(NiHeader* hdr);
-	BSFadeNode(std::fstream& file, NiHeader* hdr);
+	BSFadeNode();
+	BSFadeNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSFadeNode";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -207,23 +203,23 @@ private:
 	byte valueFlags;
 
 public:
-	BSValueNode(NiHeader* hdr);
-	BSValueNode(std::fstream& file, NiHeader* hdr);
+	BSValueNode();
+	BSValueNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSValueNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSValueNode* Clone() { return new BSValueNode(*this); }
 };
 
 class BSLeafAnimNode : public NiNode {
 public:
-	BSLeafAnimNode(NiHeader* hdr);
-	BSLeafAnimNode(std::fstream& file, NiHeader* hdr);
+	BSLeafAnimNode();
+	BSLeafAnimNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLeafAnimNode";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -235,17 +231,17 @@ private:
 	BlockRefArray<NiNode> bones2;
 
 public:
-	BSTreeNode(NiHeader* hdr);
-	BSTreeNode(std::fstream& file, NiHeader* hdr);
+	BSTreeNode();
+	BSTreeNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSTreeNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSTreeNode* Clone() { return new BSTreeNode(*this); }
 };
 
@@ -255,16 +251,16 @@ private:
 	bool isStaticBound;
 
 public:
-	BSOrderedNode(NiHeader* hdr);
-	BSOrderedNode(std::fstream& file, NiHeader* hdr);
+	BSOrderedNode();
+	BSOrderedNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSOrderedNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSOrderedNode* Clone() { return new BSOrderedNode(*this); }
 };
 
@@ -278,15 +274,15 @@ private:
 	float rotation[9];
 
 public:
-	BSMultiBoundOBB(NiHeader* hdr);
-	BSMultiBoundOBB(std::fstream& file, NiHeader* hdr);
+	BSMultiBoundOBB();
+	BSMultiBoundOBB(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMultiBoundOBB";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSMultiBoundOBB* Clone() { return new BSMultiBoundOBB(*this); }
 };
 
@@ -296,15 +292,15 @@ private:
 	Vector3 halfExtent;
 
 public:
-	BSMultiBoundAABB(NiHeader* hdr);
-	BSMultiBoundAABB(std::fstream& file, NiHeader* hdr);
+	BSMultiBoundAABB();
+	BSMultiBoundAABB(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMultiBoundAABB";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSMultiBoundAABB* Clone() { return new BSMultiBoundAABB(*this); }
 };
 
@@ -313,16 +309,16 @@ private:
 	BlockRef<BSMultiBoundData> dataRef;
 
 public:
-	BSMultiBound(NiHeader* hdr);
-	BSMultiBound(std::fstream& file, NiHeader* hdr);
+	BSMultiBound();
+	BSMultiBound(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMultiBound";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSMultiBound* Clone() { return new BSMultiBound(*this); }
 };
 
@@ -332,17 +328,17 @@ private:
 	uint cullingMode;
 
 public:
-	BSMultiBoundNode(NiHeader* hdr);
-	BSMultiBoundNode(std::fstream& file, NiHeader* hdr);
+	BSMultiBoundNode();
+	BSMultiBoundNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMultiBoundNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSMultiBoundNode* Clone() { return new BSMultiBoundNode(*this); }
 };
 
@@ -353,23 +349,23 @@ private:
 	byte current;
 
 public:
-	BSBlastNode(NiHeader* hdr);
-	BSBlastNode(std::fstream& file, NiHeader* hdr);
+	BSBlastNode();
+	BSBlastNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSBlastNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	BSBlastNode* Clone() { return new BSBlastNode(*this); }
 };
 
 class BSDamageStage : public BSBlastNode {
 public:
-	BSDamageStage(NiHeader* hdr);
-	BSDamageStage(std::fstream& file, NiHeader* hdr);
+	BSDamageStage();
+	BSDamageStage(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSDamageStage";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -382,16 +378,16 @@ private:
 	ushort billboardMode;
 
 public:
-	NiBillboardNode(NiHeader* hdr);
-	NiBillboardNode(std::fstream& file, NiHeader* hdr);
+	NiBillboardNode();
+	NiBillboardNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBillboardNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiBillboardNode* Clone() { return new NiBillboardNode(*this); }
 };
 
@@ -401,15 +397,15 @@ private:
 	uint index;
 
 public:
-	NiSwitchNode(NiHeader* hdr);
-	NiSwitchNode(std::fstream& file, NiHeader* hdr);
+	NiSwitchNode();
+	NiSwitchNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSwitchNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
 
-	int CalcBlockSize();
+	int CalcBlockSize(NiVersion& version);
 	NiSwitchNode* Clone() { return new NiSwitchNode(*this); }
 };

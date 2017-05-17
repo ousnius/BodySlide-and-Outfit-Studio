@@ -36,21 +36,21 @@ struct OptResultSSE {
 
 class IFactory {
 public:
-	virtual NiObject* Create(NiHeader* hdr) = 0;
-	virtual NiObject* Load(std::fstream& file, NiHeader* hdr) = 0;
+	virtual NiObject* Create() = 0;
+	virtual NiObject* Load(NiStream& stream) = 0;
 };
 
 template<typename T>
 class NiFactory : public IFactory {
 public:
 	// Create new NiObject
-	virtual NiObject* Create(NiHeader* hdr) override {
-		return new T(hdr);
+	virtual NiObject* Create() override {
+		return new T();
 	}
 
 	// Load new NiObject from file
-	virtual NiObject* Load(std::fstream& file, NiHeader* hdr) override {
-		return new T(file, hdr);
+	virtual NiObject* Load(NiStream& stream) override {
+		return new T(stream);
 	}
 };
 
@@ -165,9 +165,9 @@ public:
 
 	int CopyNamedNode(std::string& nodeName, NifFile& srcNif);
 	void CopyShader(const std::string& shapeDest, NifFile& srcNif);
-	void CopyController(NiShader* destShader, NiShader* srcShader);
-	void CopyInterpolators(NiTimeController* destController, NiTimeController* srcController);
-	int CopyInterpolator(NiHeader* destHeader, NiHeader* srcHeader, int srcInterpId);
+	void CopyController(NiHeader* srcHeader, NiShader* destShader, NiShader* srcShader);
+	void CopyInterpolators(NiHeader* srcHeader, NiTimeController* destController, NiTimeController* srcController);
+	int CopyInterpolator(NiHeader* srcHeader, int srcInterpId);
 	void CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const std::string& srcShape);
 
 	int GetShapeList(std::vector<std::string>& outList);

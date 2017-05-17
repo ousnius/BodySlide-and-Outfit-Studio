@@ -6,28 +6,28 @@ See the included LICENSE file
 
 #include "bhk.h"
 
-NiCollisionObject::NiCollisionObject(NiHeader* hdr) {
-	NiObject::Init(hdr);
+NiCollisionObject::NiCollisionObject() {
+	NiObject::Init();
 }
 
-NiCollisionObject::NiCollisionObject(std::fstream& file, NiHeader* hdr) : NiCollisionObject(hdr) {
-	Get(file);
+NiCollisionObject::NiCollisionObject(NiStream& stream) : NiCollisionObject() {
+	Get(stream);
 }
 
-void NiCollisionObject::Get(std::fstream& file) {
-	NiObject::Get(file);
+void NiCollisionObject::Get(NiStream& stream) {
+	NiObject::Get(stream);
 
-	targetRef.Get(file);
+	targetRef.Get(stream);
 }
 
-void NiCollisionObject::Put(std::fstream& file) {
-	NiObject::Put(file);
+void NiCollisionObject::Put(NiStream& stream) {
+	NiObject::Put(stream);
 
-	targetRef.Put(file);
+	targetRef.Put(stream);
 }
 
-int NiCollisionObject::CalcBlockSize() {
-	NiObject::CalcBlockSize();
+int NiCollisionObject::CalcBlockSize(NiVersion& version) {
+	NiObject::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -35,25 +35,25 @@ int NiCollisionObject::CalcBlockSize() {
 }
 
 
-bhkNiCollisionObject::bhkNiCollisionObject(NiHeader* hdr) : NiCollisionObject(hdr) {
+bhkNiCollisionObject::bhkNiCollisionObject() : NiCollisionObject() {
 }
 
-bhkNiCollisionObject::bhkNiCollisionObject(std::fstream& file, NiHeader* hdr) : bhkNiCollisionObject(hdr) {
-	Get(file);
+bhkNiCollisionObject::bhkNiCollisionObject(NiStream& stream) : bhkNiCollisionObject() {
+	Get(stream);
 }
 
-void bhkNiCollisionObject::Get(std::fstream& file) {
-	NiCollisionObject::Get(file);
+void bhkNiCollisionObject::Get(NiStream& stream) {
+	NiCollisionObject::Get(stream);
 
-	file.read((char*)&flags, 2);
-	bodyRef.Get(file);
+	stream >> flags;
+	bodyRef.Get(stream);
 }
 
-void bhkNiCollisionObject::Put(std::fstream& file) {
-	NiCollisionObject::Put(file);
+void bhkNiCollisionObject::Put(NiStream& stream) {
+	NiCollisionObject::Put(stream);
 
-	file.write((char*)&flags, 2);
-	bodyRef.Put(file);
+	stream << flags;
+	bodyRef.Put(stream);
 }
 
 void bhkNiCollisionObject::GetChildRefs(std::set<int*>& refs) {
@@ -62,8 +62,8 @@ void bhkNiCollisionObject::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&bodyRef.index);
 }
 
-int bhkNiCollisionObject::CalcBlockSize() {
-	NiCollisionObject::CalcBlockSize();
+int bhkNiCollisionObject::CalcBlockSize(NiVersion& version) {
+	NiCollisionObject::CalcBlockSize(version);
 
 	blockSize += 6;
 
@@ -71,35 +71,35 @@ int bhkNiCollisionObject::CalcBlockSize() {
 }
 
 
-bhkCollisionObject::bhkCollisionObject(NiHeader* hdr) : bhkNiCollisionObject(hdr) {
+bhkCollisionObject::bhkCollisionObject() : bhkNiCollisionObject() {
 }
 
-bhkCollisionObject::bhkCollisionObject(std::fstream& file, NiHeader* hdr) : bhkCollisionObject(hdr) {
-	Get(file);
+bhkCollisionObject::bhkCollisionObject(NiStream& stream) : bhkCollisionObject() {
+	Get(stream);
 }
 
 
-bhkNPCollisionObject::bhkNPCollisionObject(NiHeader* hdr) : bhkCollisionObject(hdr) {
+bhkNPCollisionObject::bhkNPCollisionObject() : bhkCollisionObject() {
 }
 
-bhkNPCollisionObject::bhkNPCollisionObject(std::fstream& file, NiHeader* hdr) : bhkNPCollisionObject(hdr) {
-	Get(file);
+bhkNPCollisionObject::bhkNPCollisionObject(NiStream& stream) : bhkNPCollisionObject() {
+	Get(stream);
 }
 
-void bhkNPCollisionObject::Get(std::fstream& file) {
-	bhkCollisionObject::Get(file);
+void bhkNPCollisionObject::Get(NiStream& stream) {
+	bhkCollisionObject::Get(stream);
 
-	file.read((char*)&bodyID, 4);
+	stream >> bodyID;
 }
 
-void bhkNPCollisionObject::Put(std::fstream& file) {
-	bhkCollisionObject::Put(file);
+void bhkNPCollisionObject::Put(NiStream& stream) {
+	bhkCollisionObject::Put(stream);
 
-	file.write((char*)&bodyID, 4);
+	stream << bodyID;
 }
 
-int bhkNPCollisionObject::CalcBlockSize() {
-	bhkCollisionObject::CalcBlockSize();
+int bhkNPCollisionObject::CalcBlockSize(NiVersion& version) {
+	bhkCollisionObject::CalcBlockSize(version);
 
 	blockSize += 4;
 
@@ -107,45 +107,45 @@ int bhkNPCollisionObject::CalcBlockSize() {
 }
 
 
-bhkPCollisionObject::bhkPCollisionObject(NiHeader* hdr) : bhkNiCollisionObject(hdr) {
+bhkPCollisionObject::bhkPCollisionObject() : bhkNiCollisionObject() {
 }
 
-bhkPCollisionObject::bhkPCollisionObject(std::fstream& file, NiHeader* hdr) : bhkPCollisionObject(hdr) {
-	Get(file);
-}
-
-
-bhkSPCollisionObject::bhkSPCollisionObject(NiHeader* hdr) : bhkPCollisionObject(hdr) {
-}
-
-bhkSPCollisionObject::bhkSPCollisionObject(std::fstream& file, NiHeader* hdr) : bhkSPCollisionObject(hdr) {
-	Get(file);
+bhkPCollisionObject::bhkPCollisionObject(NiStream& stream) : bhkPCollisionObject() {
+	Get(stream);
 }
 
 
-bhkBlendCollisionObject::bhkBlendCollisionObject(NiHeader* hdr) : bhkCollisionObject(hdr) {
+bhkSPCollisionObject::bhkSPCollisionObject() : bhkPCollisionObject() {
 }
 
-bhkBlendCollisionObject::bhkBlendCollisionObject(std::fstream& file, NiHeader* hdr) : bhkBlendCollisionObject(hdr) {
-	Get(file);
+bhkSPCollisionObject::bhkSPCollisionObject(NiStream& stream) : bhkSPCollisionObject() {
+	Get(stream);
 }
 
-void bhkBlendCollisionObject::Get(std::fstream& file) {
-	bhkCollisionObject::Get(file);
 
-	file.read((char*)&heirGain, 4);
-	file.read((char*)&velGain, 4);
+bhkBlendCollisionObject::bhkBlendCollisionObject() : bhkCollisionObject() {
 }
 
-void bhkBlendCollisionObject::Put(std::fstream& file) {
-	bhkCollisionObject::Put(file);
-
-	file.write((char*)&heirGain, 4);
-	file.write((char*)&velGain, 4);
+bhkBlendCollisionObject::bhkBlendCollisionObject(NiStream& stream) : bhkBlendCollisionObject() {
+	Get(stream);
 }
 
-int bhkBlendCollisionObject::CalcBlockSize() {
-	bhkCollisionObject::CalcBlockSize();
+void bhkBlendCollisionObject::Get(NiStream& stream) {
+	bhkCollisionObject::Get(stream);
+
+	stream >> heirGain;
+	stream >> velGain;
+}
+
+void bhkBlendCollisionObject::Put(NiStream& stream) {
+	bhkCollisionObject::Put(stream);
+
+	stream << heirGain;
+	stream << velGain;
+}
+
+int bhkBlendCollisionObject::CalcBlockSize(NiVersion& version) {
+	bhkCollisionObject::CalcBlockSize(version);
 
 	blockSize += 8;
 
@@ -153,40 +153,40 @@ int bhkBlendCollisionObject::CalcBlockSize() {
 }
 
 
-bhkPhysicsSystem::bhkPhysicsSystem(NiHeader* hdr, const uint size) {
-	BSExtraData::Init(hdr);
+bhkPhysicsSystem::bhkPhysicsSystem(const uint size) {
+	BSExtraData::Init();
 
 	numBytes = size;
 	data.resize(size);
 }
 
-bhkPhysicsSystem::bhkPhysicsSystem(std::fstream& file, NiHeader* hdr) : bhkPhysicsSystem(hdr) {
-	Get(file);
+bhkPhysicsSystem::bhkPhysicsSystem(NiStream& stream) : bhkPhysicsSystem() {
+	Get(stream);
 }
 
-void bhkPhysicsSystem::Get(std::fstream& file) {
-	BSExtraData::Get(file);
+void bhkPhysicsSystem::Get(NiStream& stream) {
+	BSExtraData::Get(stream);
 
-	file.read((char*)&numBytes, 4);
+	stream >> numBytes;
 	data.resize(numBytes);
 	if (data.empty())
 		return;
 
-	file.read(&data[0], numBytes);
+	stream.read(&data[0], numBytes);
 }
 
-void bhkPhysicsSystem::Put(std::fstream& file) {
-	BSExtraData::Put(file);
+void bhkPhysicsSystem::Put(NiStream& stream) {
+	BSExtraData::Put(stream);
 
-	file.write((char*)&numBytes, 4);
+	stream << numBytes;
 	if (data.empty())
 		return;
 
-	file.write(&data[0], numBytes);
+	stream.write(&data[0], numBytes);
 }
 
-int bhkPhysicsSystem::CalcBlockSize() {
-	BSExtraData::CalcBlockSize();
+int bhkPhysicsSystem::CalcBlockSize(NiVersion& version) {
+	BSExtraData::CalcBlockSize(version);
 
 	blockSize += 4;
 	blockSize += numBytes;
@@ -195,38 +195,38 @@ int bhkPhysicsSystem::CalcBlockSize() {
 }
 
 
-bhkPlaneShape::bhkPlaneShape(NiHeader* hdr) {
-	bhkHeightFieldShape::Init(hdr);
+bhkPlaneShape::bhkPlaneShape() {
+	bhkHeightFieldShape::Init();
 }
 
-bhkPlaneShape::bhkPlaneShape(std::fstream& file, NiHeader* hdr) : bhkPlaneShape(hdr) {
-	Get(file);
+bhkPlaneShape::bhkPlaneShape(NiStream& stream) : bhkPlaneShape() {
+	Get(stream);
 }
 
-void bhkPlaneShape::Get(std::fstream& file) {
-	bhkHeightFieldShape::Get(file);
+void bhkPlaneShape::Get(NiStream& stream) {
+	bhkHeightFieldShape::Get(stream);
 
-	file.read((char*)&material, 4);
-	file.read((char*)&unkVec, 12);
-	file.read((char*)&direction, 12);
-	file.read((char*)&constant, 4);
-	file.read((char*)&halfExtents, 16);
-	file.read((char*)&center, 16);
+	stream >> material;
+	stream >> unkVec;
+	stream >> direction;
+	stream >> constant;
+	stream >> halfExtents;
+	stream >> center;
 }
 
-void bhkPlaneShape::Put(std::fstream& file) {
-	bhkHeightFieldShape::Put(file);
+void bhkPlaneShape::Put(NiStream& stream) {
+	bhkHeightFieldShape::Put(stream);
 
-	file.write((char*)&material, 4);
-	file.write((char*)&unkVec, 12);
-	file.write((char*)&direction, 12);
-	file.write((char*)&constant, 4);
-	file.write((char*)&halfExtents, 16);
-	file.write((char*)&center, 16);
+	stream << material;
+	stream << unkVec;
+	stream << direction;
+	stream << constant;
+	stream << halfExtents;
+	stream << center;
 }
 
-int bhkPlaneShape::CalcBlockSize() {
-	bhkHeightFieldShape::CalcBlockSize();
+int bhkPlaneShape::CalcBlockSize(NiVersion& version) {
+	bhkHeightFieldShape::CalcBlockSize(version);
 
 	blockSize += 64;
 
@@ -234,22 +234,22 @@ int bhkPlaneShape::CalcBlockSize() {
 }
 
 
-void bhkSphereRepShape::Get(std::fstream& file) {
-	bhkShape::Get(file);
+void bhkSphereRepShape::Get(NiStream& stream) {
+	bhkShape::Get(stream);
 
-	file.read((char*)&material, 4);
-	file.read((char*)&radius, 4);
+	stream >> material;
+	stream >> radius;
 }
 
-void bhkSphereRepShape::Put(std::fstream& file) {
-	bhkShape::Put(file);
+void bhkSphereRepShape::Put(NiStream& stream) {
+	bhkShape::Put(stream);
 
-	file.write((char*)&material, 4);
-	file.write((char*)&radius, 4);
+	stream << material;
+	stream << radius;
 }
 
-int bhkSphereRepShape::CalcBlockSize() {
-	bhkShape::CalcBlockSize();
+int bhkSphereRepShape::CalcBlockSize(NiVersion& version) {
+	bhkShape::CalcBlockSize(version);
 
 	blockSize += 8;
 
@@ -257,51 +257,48 @@ int bhkSphereRepShape::CalcBlockSize() {
 }
 
 
-bhkConvexVerticesShape::bhkConvexVerticesShape(NiHeader* hdr) {
-	bhkConvexShape::Init(hdr);
-
-	numVerts = 0;
-	numNormals = 0;
+bhkConvexVerticesShape::bhkConvexVerticesShape() {
+	bhkConvexShape::Init();
 }
 
-bhkConvexVerticesShape::bhkConvexVerticesShape(std::fstream& file, NiHeader* hdr) : bhkConvexVerticesShape(hdr) {
-	Get(file);
+bhkConvexVerticesShape::bhkConvexVerticesShape(NiStream& stream) : bhkConvexVerticesShape() {
+	Get(stream);
 }
 
-void bhkConvexVerticesShape::Get(std::fstream& file) {
-	bhkConvexShape::Get(file);
+void bhkConvexVerticesShape::Get(NiStream& stream) {
+	bhkConvexShape::Get(stream);
 
-	file.read((char*)&vertsProp, 12);
-	file.read((char*)&normalsProp, 12);
+	stream >> vertsProp;
+	stream >> normalsProp;
 
-	file.read((char*)&numVerts, 4);
+	stream >> numVerts;
 	verts.resize(numVerts);
 	for (int i = 0; i < numVerts; i++)
-		file.read((char*)&verts[i], 16);
+		stream >> verts[i];
 
-	file.read((char*)&numNormals, 4);
+	stream >> numNormals;
 	normals.resize(numNormals);
 	for (int i = 0; i < numNormals; i++)
-		file.read((char*)&normals[i], 16);
+		stream >> normals[i];
 }
 
-void bhkConvexVerticesShape::Put(std::fstream& file) {
-	bhkConvexShape::Put(file);
+void bhkConvexVerticesShape::Put(NiStream& stream) {
+	bhkConvexShape::Put(stream);
 
-	file.write((char*)&vertsProp, 12);
-	file.write((char*)&normalsProp, 12);
+	stream << vertsProp;
+	stream << normalsProp;
 
-	file.write((char*)&numVerts, 4);
+	stream << numVerts;
 	for (int i = 0; i < numVerts; i++)
-		file.write((char*)&verts[i], 16);
+		stream << verts[i];
 
-	file.write((char*)&numNormals, 4);
+	stream << numNormals;
 	for (int i = 0; i < numNormals; i++)
-		file.write((char*)&normals[i], 16);
+		stream << normals[i];
 }
 
-int bhkConvexVerticesShape::CalcBlockSize() {
-	bhkConvexShape::CalcBlockSize();
+int bhkConvexVerticesShape::CalcBlockSize(NiVersion& version) {
+	bhkConvexShape::CalcBlockSize(version);
 
 	blockSize += 32;
 	blockSize += numVerts * 16;
@@ -311,32 +308,32 @@ int bhkConvexVerticesShape::CalcBlockSize() {
 }
 
 
-bhkBoxShape::bhkBoxShape(NiHeader* hdr) {
-	bhkConvexShape::Init(hdr);
+bhkBoxShape::bhkBoxShape() {
+	bhkConvexShape::Init();
 }
 
-bhkBoxShape::bhkBoxShape(std::fstream& file, NiHeader* hdr) : bhkBoxShape(hdr) {
-	Get(file);
+bhkBoxShape::bhkBoxShape(NiStream& stream) : bhkBoxShape() {
+	Get(stream);
 }
 
-void bhkBoxShape::Get(std::fstream& file) {
-	bhkConvexShape::Get(file);
+void bhkBoxShape::Get(NiStream& stream) {
+	bhkConvexShape::Get(stream);
 
-	file.read((char*)padding, 8);
-	file.read((char*)&dimensions, 12);
-	file.read((char*)&radius2, 4);
+	stream >> padding;
+	stream >> dimensions;
+	stream >> radius2;
 }
 
-void bhkBoxShape::Put(std::fstream& file) {
-	bhkConvexShape::Put(file);
+void bhkBoxShape::Put(NiStream& stream) {
+	bhkConvexShape::Put(stream);
 
-	file.write((char*)padding, 8);
-	file.write((char*)&dimensions, 12);
-	file.write((char*)&radius2, 4);
+	stream << padding;
+	stream << dimensions;
+	stream << radius2;
 }
 
-int bhkBoxShape::CalcBlockSize() {
-	bhkConvexShape::CalcBlockSize();
+int bhkBoxShape::CalcBlockSize(NiVersion& version) {
+	bhkConvexShape::CalcBlockSize(version);
 
 	blockSize += 24;
 
@@ -344,41 +341,41 @@ int bhkBoxShape::CalcBlockSize() {
 }
 
 
-bhkSphereShape::bhkSphereShape(NiHeader* hdr) {
-	bhkConvexShape::Init(hdr);
+bhkSphereShape::bhkSphereShape() {
+	bhkConvexShape::Init();
 }
 
-bhkSphereShape::bhkSphereShape(std::fstream& file, NiHeader* hdr) : bhkSphereShape(hdr) {
-	Get(file);
+bhkSphereShape::bhkSphereShape(NiStream& stream) : bhkSphereShape() {
+	Get(stream);
 }
 
 
-bhkTransformShape::bhkTransformShape(NiHeader* hdr) {
-	bhkShape::Init(hdr);
+bhkTransformShape::bhkTransformShape() {
+	bhkShape::Init();
 }
 
-bhkTransformShape::bhkTransformShape(std::fstream& file, NiHeader* hdr) : bhkTransformShape(hdr) {
-	Get(file);
+bhkTransformShape::bhkTransformShape(NiStream& stream) : bhkTransformShape() {
+	Get(stream);
 }
 
-void bhkTransformShape::Get(std::fstream& file) {
-	bhkShape::Get(file);
+void bhkTransformShape::Get(NiStream& stream) {
+	bhkShape::Get(stream);
 
-	shapeRef.Get(file);
-	file.read((char*)&material, 4);
-	file.read((char*)&radius, 4);
-	file.read((char*)padding, 8);
-	file.read((char*)&xform, 64);
+	shapeRef.Get(stream);
+	stream >> material;
+	stream >> radius;
+	stream >> padding;
+	stream >> xform;
 }
 
-void bhkTransformShape::Put(std::fstream& file) {
-	bhkShape::Put(file);
+void bhkTransformShape::Put(NiStream& stream) {
+	bhkShape::Put(stream);
 
-	shapeRef.Put(file);
-	file.write((char*)&material, 4);
-	file.write((char*)&radius, 4);
-	file.write((char*)padding, 8);
-	file.write((char*)&xform, 64);
+	shapeRef.Put(stream);
+	stream << material;
+	stream << radius;
+	stream << padding;
+	stream << xform;
 }
 
 void bhkTransformShape::GetChildRefs(std::set<int*>& refs) {
@@ -387,8 +384,8 @@ void bhkTransformShape::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shapeRef.index);
 }
 
-int bhkTransformShape::CalcBlockSize() {
-	bhkShape::CalcBlockSize();
+int bhkTransformShape::CalcBlockSize(NiVersion& version) {
+	bhkShape::CalcBlockSize(version);
 
 	blockSize += 84;
 
@@ -396,44 +393,44 @@ int bhkTransformShape::CalcBlockSize() {
 }
 
 
-bhkConvexTransformShape::bhkConvexTransformShape(NiHeader* hdr) : bhkTransformShape(hdr) {
+bhkConvexTransformShape::bhkConvexTransformShape() : bhkTransformShape() {
 }
 
-bhkConvexTransformShape::bhkConvexTransformShape(std::fstream& file, NiHeader* hdr) : bhkConvexTransformShape(hdr) {
-	Get(file);
+bhkConvexTransformShape::bhkConvexTransformShape(NiStream& stream) : bhkConvexTransformShape() {
+	Get(stream);
 }
 
 
-bhkCapsuleShape::bhkCapsuleShape(NiHeader* hdr) {
-	bhkConvexShape::Init(hdr);
+bhkCapsuleShape::bhkCapsuleShape() {
+	bhkConvexShape::Init();
 }
 
-bhkCapsuleShape::bhkCapsuleShape(std::fstream& file, NiHeader* hdr) : bhkCapsuleShape(hdr) {
-	Get(file);
+bhkCapsuleShape::bhkCapsuleShape(NiStream& stream) : bhkCapsuleShape() {
+	Get(stream);
 }
 
-void bhkCapsuleShape::Get(std::fstream& file) {
-	bhkConvexShape::Get(file);
+void bhkCapsuleShape::Get(NiStream& stream) {
+	bhkConvexShape::Get(stream);
 
-	file.read((char*)padding, 8);
-	file.read((char*)&point1, 12);
-	file.read((char*)&radius1, 4);
-	file.read((char*)&point2, 12);
-	file.read((char*)&radius2, 4);
+	stream >> padding;
+	stream >> point1;
+	stream >> radius1;
+	stream >> point2;
+	stream >> radius2;
 }
 
-void bhkCapsuleShape::Put(std::fstream& file) {
-	bhkConvexShape::Put(file);
+void bhkCapsuleShape::Put(NiStream& stream) {
+	bhkConvexShape::Put(stream);
 
-	file.write((char*)padding, 8);
-	file.write((char*)&point1, 12);
-	file.write((char*)&radius1, 4);
-	file.write((char*)&point2, 12);
-	file.write((char*)&radius2, 4);
+	stream << padding;
+	stream << point1;
+	stream << radius1;
+	stream << point2;
+	stream << radius2;
 }
 
-int bhkCapsuleShape::CalcBlockSize() {
-	bhkConvexShape::CalcBlockSize();
+int bhkCapsuleShape::CalcBlockSize(NiVersion& version) {
+	bhkConvexShape::CalcBlockSize(version);
 
 	blockSize += 40;
 
@@ -441,49 +438,49 @@ int bhkCapsuleShape::CalcBlockSize() {
 }
 
 
-bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiHeader* hdr) {
-	bhkBvTreeShape::Init(hdr);
+bhkMoppBvTreeShape::bhkMoppBvTreeShape() {
+	bhkBvTreeShape::Init();
 }
 
-bhkMoppBvTreeShape::bhkMoppBvTreeShape(std::fstream& file, NiHeader* hdr) : bhkMoppBvTreeShape(hdr) {
-	Get(file);
+bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiStream& stream) : bhkMoppBvTreeShape() {
+	Get(stream);
 }
 
-void bhkMoppBvTreeShape::Get(std::fstream& file) {
-	bhkBvTreeShape::Get(file);
+void bhkMoppBvTreeShape::Get(NiStream& stream) {
+	bhkBvTreeShape::Get(stream);
 
-	shapeRef.Get(file);
-	file.read((char*)&userData, 4);
-	file.read((char*)&shapeCollection, 4);
-	file.read((char*)&code, 4);
-	file.read((char*)&scale, 4);
-	file.read((char*)&dataSize, 4);
-	file.read((char*)&offset, 16);
+	shapeRef.Get(stream);
+	stream >> userData;
+	stream >> shapeCollection;
+	stream >> code;
+	stream >> scale;
+	stream >> dataSize;
+	stream >> offset;
 
-	if (header->GetUserVersion() >= 12)
-		file.read((char*)&buildType, 1);
+	if (stream.GetVersion().User() >= 12)
+		stream >> buildType;
 
 	data.resize(dataSize);
 	for (int i = 0; i < dataSize; i++)
-		file.read((char*)&data[i], 1);
+		stream >> data[i];
 }
 
-void bhkMoppBvTreeShape::Put(std::fstream& file) {
-	bhkBvTreeShape::Put(file);
+void bhkMoppBvTreeShape::Put(NiStream& stream) {
+	bhkBvTreeShape::Put(stream);
 
-	shapeRef.Put(file);
-	file.write((char*)&userData, 4);
-	file.write((char*)&shapeCollection, 4);
-	file.write((char*)&code, 4);
-	file.write((char*)&scale, 4);
-	file.write((char*)&dataSize, 4);
-	file.write((char*)&offset, 16);
+	shapeRef.Put(stream);
+	stream << userData;
+	stream << shapeCollection;
+	stream << code;
+	stream << scale;
+	stream << dataSize;
+	stream << offset;
 
-	if (header->GetUserVersion() >= 12)
-		file.write((char*)&buildType, 1);
+	if (stream.GetVersion().User() >= 12)
+		stream << buildType;
 
 	for (int i = 0; i < dataSize; i++)
-		file.write((char*)&data[i], 1);
+		stream << data[i];
 }
 
 void bhkMoppBvTreeShape::GetChildRefs(std::set<int*>& refs) {
@@ -492,12 +489,12 @@ void bhkMoppBvTreeShape::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shapeRef.index);
 }
 
-int bhkMoppBvTreeShape::CalcBlockSize() {
-	bhkBvTreeShape::CalcBlockSize();
+int bhkMoppBvTreeShape::CalcBlockSize(NiVersion& version) {
+	bhkBvTreeShape::CalcBlockSize(version);
 
 	blockSize += 40;
 
-	if (header->GetUserVersion() >= 12)
+	if (version.User() >= 12)
 		blockSize += 1;
 
 	blockSize += dataSize;
@@ -506,53 +503,53 @@ int bhkMoppBvTreeShape::CalcBlockSize() {
 }
 
 
-bhkNiTriStripsShape::bhkNiTriStripsShape(NiHeader* hdr) {
-	bhkShape::Init(hdr);
+bhkNiTriStripsShape::bhkNiTriStripsShape() {
+	bhkShape::Init();
 }
 
-bhkNiTriStripsShape::bhkNiTriStripsShape(std::fstream& file, NiHeader* hdr) : bhkNiTriStripsShape(hdr) {
-	Get(file);
+bhkNiTriStripsShape::bhkNiTriStripsShape(NiStream& stream) : bhkNiTriStripsShape() {
+	Get(stream);
 }
 
-void bhkNiTriStripsShape::Get(std::fstream& file) {
-	bhkShape::Get(file);
+void bhkNiTriStripsShape::Get(NiStream& stream) {
+	bhkShape::Get(stream);
 
-	file.read((char*)&material, 4);
-	file.read((char*)&radius, 4);
-	file.read((char*)&unused1, 4);
-	file.read((char*)&unused2, 4);
-	file.read((char*)&unused3, 4);
-	file.read((char*)&unused4, 4);
-	file.read((char*)&unused5, 4);
-	file.read((char*)&growBy, 4);
-	file.read((char*)&scale, 16);
+	stream >> material;
+	stream >> radius;
+	stream >> unused1;
+	stream >> unused2;
+	stream >> unused3;
+	stream >> unused4;
+	stream >> unused5;
+	stream >> growBy;
+	stream >> scale;
 
-	partRefs.Get(file);
+	partRefs.Get(stream);
 
-	file.read((char*)&numFilters, 4);
+	stream >> numFilters;
 	filters.resize(numFilters);
 	for (int i = 0; i < numFilters; i++)
-		file.read((char*)&filters[i], 4);
+		stream >> filters[i];
 }
 
-void bhkNiTriStripsShape::Put(std::fstream& file) {
-	bhkShape::Put(file);
+void bhkNiTriStripsShape::Put(NiStream& stream) {
+	bhkShape::Put(stream);
 
-	file.write((char*)&material, 4);
-	file.write((char*)&radius, 4);
-	file.write((char*)&unused1, 4);
-	file.write((char*)&unused2, 4);
-	file.write((char*)&unused3, 4);
-	file.write((char*)&unused4, 4);
-	file.write((char*)&unused5, 4);
-	file.write((char*)&growBy, 4);
-	file.write((char*)&scale, 16);
+	stream << material;
+	stream << radius;
+	stream << unused1;
+	stream << unused2;
+	stream << unused3;
+	stream << unused4;
+	stream << unused5;
+	stream << growBy;
+	stream << scale;
 
-	partRefs.Put(file);
+	partRefs.Put(stream);
 
-	file.write((char*)&numFilters, 4);
+	stream << numFilters;
 	for (int i = 0; i < numFilters; i++)
-		file.write((char*)&filters[i], 4);
+		stream << filters[i];
 }
 
 void bhkNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
@@ -561,8 +558,8 @@ void bhkNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
 	partRefs.GetIndexPtrs(refs);
 }
 
-int bhkNiTriStripsShape::CalcBlockSize() {
-	bhkShape::CalcBlockSize();
+int bhkNiTriStripsShape::CalcBlockSize(NiVersion& version) {
+	bhkShape::CalcBlockSize(version);
 
 	blockSize += 56;
 	blockSize += partRefs.GetSize() * 4;
@@ -572,42 +569,42 @@ int bhkNiTriStripsShape::CalcBlockSize() {
 }
 
 
-bhkListShape::bhkListShape(NiHeader* hdr) {
-	bhkShapeCollection::Init(hdr);
+bhkListShape::bhkListShape() {
+	bhkShapeCollection::Init();
 }
 
-bhkListShape::bhkListShape(std::fstream& file, NiHeader* hdr) : bhkListShape(hdr) {
-	Get(file);
+bhkListShape::bhkListShape(NiStream& stream) : bhkListShape() {
+	Get(stream);
 }
 
-void bhkListShape::Get(std::fstream& file) {
-	bhkShapeCollection::Get(file);
+void bhkListShape::Get(NiStream& stream) {
+	bhkShapeCollection::Get(stream);
 
-	subShapeRefs.Get(file);
+	subShapeRefs.Get(stream);
 
-	file.read((char*)&material, 4);
-	file.read((char*)&childShapeProp, 12);
-	file.read((char*)&childFilterProp, 12);
+	stream >> material;
+	stream >> childShapeProp;
+	stream >> childFilterProp;
 
-	file.read((char*)&numUnkInts, 4);
+	stream >> numUnkInts;
 	unkInts.resize(numUnkInts);
 
 	for (int i = 0; i < numUnkInts; i++)
-		file.read((char*)&unkInts[i], 4);
+		stream >> unkInts[i];
 }
 
-void bhkListShape::Put(std::fstream& file) {
-	bhkShapeCollection::Put(file);
+void bhkListShape::Put(NiStream& stream) {
+	bhkShapeCollection::Put(stream);
 
-	subShapeRefs.Put(file);
+	subShapeRefs.Put(stream);
 
-	file.write((char*)&material, 4);
-	file.write((char*)&childShapeProp, 12);
-	file.write((char*)&childFilterProp, 12);
+	stream << material;
+	stream << childShapeProp;
+	stream << childFilterProp;
 
-	file.write((char*)&numUnkInts, 4);
+	stream << numUnkInts;
 	for (int i = 0; i < numUnkInts; i++)
-		file.write((char*)&unkInts[i], 4);
+		stream << unkInts[i];
 }
 
 void bhkListShape::GetChildRefs(std::set<int*>& refs) {
@@ -616,8 +613,8 @@ void bhkListShape::GetChildRefs(std::set<int*>& refs) {
 	subShapeRefs.GetIndexPtrs(refs);
 }
 
-int bhkListShape::CalcBlockSize() {
-	bhkShapeCollection::CalcBlockSize();
+int bhkListShape::CalcBlockSize(NiVersion& version) {
+	bhkShapeCollection::CalcBlockSize(version);
 
 	blockSize += 36;
 	blockSize += 4 * subShapeRefs.GetSize();
@@ -627,30 +624,30 @@ int bhkListShape::CalcBlockSize() {
 }
 
 
-void bhkWorldObject::Init(NiHeader* hdr) {
-	bhkSerializable::Init(hdr);
+void bhkWorldObject::Init() {
+	bhkSerializable::Init();
 }
 
-void bhkWorldObject::Get(std::fstream& file) {
-	bhkSerializable::Get(file);
+void bhkWorldObject::Get(NiStream& stream) {
+	bhkSerializable::Get(stream);
 
-	shapeRef.Get(file);
-	file.read((char*)&collisionFilter, 4);
-	file.read((char*)&unkInt1, 4);
-	file.read((char*)&broadPhaseType, 1);
-	file.read((char*)unkBytes, 3);
-	file.read((char*)&prop, 12);
+	shapeRef.Get(stream);
+	stream >> collisionFilter;
+	stream >> unkInt1;
+	stream >> broadPhaseType;
+	stream.read((char*)unkBytes, 3);
+	stream >> prop;
 }
 
-void bhkWorldObject::Put(std::fstream& file) {
-	bhkSerializable::Put(file);
+void bhkWorldObject::Put(NiStream& stream) {
+	bhkSerializable::Put(stream);
 
-	shapeRef.Put(file);
-	file.write((char*)&collisionFilter, 4);
-	file.write((char*)&unkInt1, 4);
-	file.write((char*)&broadPhaseType, 1);
-	file.write((char*)unkBytes, 3);
-	file.write((char*)&prop, 12);
+	shapeRef.Put(stream);
+	stream << collisionFilter;
+	stream << unkInt1;
+	stream << broadPhaseType;
+	stream.write((char*)unkBytes, 3);
+	stream << prop;
 }
 
 void bhkWorldObject::GetChildRefs(std::set<int*>& refs) {
@@ -659,8 +656,8 @@ void bhkWorldObject::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shapeRef.index);
 }
 
-int bhkWorldObject::CalcBlockSize() {
-	bhkSerializable::CalcBlockSize();
+int bhkWorldObject::CalcBlockSize(NiVersion& version) {
+	bhkSerializable::CalcBlockSize(version);
 
 	blockSize += 28;
 
@@ -668,30 +665,30 @@ int bhkWorldObject::CalcBlockSize() {
 }
 
 
-bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiHeader* hdr) {
-	bhkShapePhantom::Init(hdr);
+bhkSimpleShapePhantom::bhkSimpleShapePhantom() {
+	bhkShapePhantom::Init();
 }
 
-bhkSimpleShapePhantom::bhkSimpleShapePhantom(std::fstream& file, NiHeader* hdr) : bhkSimpleShapePhantom(hdr) {
-	Get(file);
+bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiStream& stream) : bhkSimpleShapePhantom() {
+	Get(stream);
 }
 
-void bhkSimpleShapePhantom::Get(std::fstream& file) {
-	bhkShapePhantom::Get(file);
+void bhkSimpleShapePhantom::Get(NiStream& stream) {
+	bhkShapePhantom::Get(stream);
 
-	file.read((char*)padding, 8);
-	file.read((char*)&transform, 64);
+	stream >> padding;
+	stream >> transform;
 }
 
-void bhkSimpleShapePhantom::Put(std::fstream& file) {
-	bhkShapePhantom::Put(file);
+void bhkSimpleShapePhantom::Put(NiStream& stream) {
+	bhkShapePhantom::Put(stream);
 
-	file.write((char*)padding, 8);
-	file.write((char*)&transform, 64);
+	stream << padding;
+	stream << transform;
 }
 
-int bhkSimpleShapePhantom::CalcBlockSize() {
-	bhkShapePhantom::CalcBlockSize();
+int bhkSimpleShapePhantom::CalcBlockSize(NiVersion& version) {
+	bhkShapePhantom::CalcBlockSize(version);
 
 	blockSize += 72;
 
@@ -699,24 +696,24 @@ int bhkSimpleShapePhantom::CalcBlockSize() {
 }
 
 
-void bhkConstraint::Init(NiHeader* hdr) {
-	bhkSerializable::Init(hdr);
+void bhkConstraint::Init() {
+	bhkSerializable::Init();
 }
 
-void bhkConstraint::Get(std::fstream& file) {
-	bhkSerializable::Get(file);
+void bhkConstraint::Get(NiStream& stream) {
+	bhkSerializable::Get(stream);
 
-	entityRefs.Get(file);
+	entityRefs.Get(stream);
 
-	file.read((char*)&priority, 4);
+	stream >> priority;
 }
 
-void bhkConstraint::Put(std::fstream& file) {
-	bhkSerializable::Put(file);
+void bhkConstraint::Put(NiStream& stream) {
+	bhkSerializable::Put(stream);
 
-	entityRefs.Put(file);
+	entityRefs.Put(stream);
 
-	file.write((char*)&priority, 4);
+	stream << priority;
 }
 
 void bhkConstraint::GetChildRefs(std::set<int*>& refs) {
@@ -725,8 +722,8 @@ void bhkConstraint::GetChildRefs(std::set<int*>& refs) {
 	entityRefs.GetIndexPtrs(refs);
 }
 
-int bhkConstraint::CalcBlockSize() {
-	bhkSerializable::CalcBlockSize();
+int bhkConstraint::CalcBlockSize(NiVersion& version) {
+	bhkSerializable::CalcBlockSize(version);
 
 	blockSize += 8;
 	blockSize += entityRefs.GetSize() * 4;
@@ -735,28 +732,28 @@ int bhkConstraint::CalcBlockSize() {
 }
 
 
-bhkHingeConstraint::bhkHingeConstraint(NiHeader* hdr) {
-	bhkConstraint::Init(hdr);
+bhkHingeConstraint::bhkHingeConstraint() {
+	bhkConstraint::Init();
 }
 
-bhkHingeConstraint::bhkHingeConstraint(std::fstream& file, NiHeader* hdr) : bhkHingeConstraint(hdr) {
-	Get(file);
+bhkHingeConstraint::bhkHingeConstraint(NiStream& stream) : bhkHingeConstraint() {
+	Get(stream);
 }
 
-void bhkHingeConstraint::Get(std::fstream& file) {
-	bhkConstraint::Get(file);
+void bhkHingeConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
 
-	file.read((char*)&hinge, 128);
+	stream >> hinge;
 }
 
-void bhkHingeConstraint::Put(std::fstream& file) {
-	bhkConstraint::Put(file);
+void bhkHingeConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
 
-	file.write((char*)&hinge, 128);
+	stream << hinge;
 }
 
-int bhkHingeConstraint::CalcBlockSize() {
-	bhkConstraint::CalcBlockSize();
+int bhkHingeConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 128;
 
@@ -764,42 +761,42 @@ int bhkHingeConstraint::CalcBlockSize() {
 }
 
 
-bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiHeader* hdr) {
-	bhkConstraint::Init(hdr);
+bhkLimitedHingeConstraint::bhkLimitedHingeConstraint() {
+	bhkConstraint::Init();
 }
 
-bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(std::fstream& file, NiHeader* hdr) : bhkLimitedHingeConstraint(hdr) {
-	Get(file);
+bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiStream& stream) : bhkLimitedHingeConstraint() {
+	Get(stream);
 }
 
-void bhkLimitedHingeConstraint::Get(std::fstream& file) {
-	bhkConstraint::Get(file);
+void bhkLimitedHingeConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
 
-	file.read((char*)&limitedHinge.hinge, 128);
-	file.read((char*)&limitedHinge.minAngle, 4);
-	file.read((char*)&limitedHinge.maxAngle, 4);
-	file.read((char*)&limitedHinge.maxFriction, 4);
-	file.read((char*)&limitedHinge.enableMotor, 1);
+	stream >> limitedHinge.hinge;
+	stream >> limitedHinge.minAngle;
+	stream >> limitedHinge.maxAngle;
+	stream >> limitedHinge.maxFriction;
+	stream >> limitedHinge.enableMotor;
 
 	if (limitedHinge.enableMotor)
-		file.read((char*)&limitedHinge.motor, 25);
+		stream.read((char*)&limitedHinge.motor, 25);
 }
 
-void bhkLimitedHingeConstraint::Put(std::fstream& file) {
-	bhkConstraint::Put(file);
+void bhkLimitedHingeConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
 
-	file.write((char*)&limitedHinge.hinge, 128);
-	file.write((char*)&limitedHinge.minAngle, 4);
-	file.write((char*)&limitedHinge.maxAngle, 4);
-	file.write((char*)&limitedHinge.maxFriction, 4);
-	file.write((char*)&limitedHinge.enableMotor, 1);
+	stream << limitedHinge.hinge;
+	stream << limitedHinge.minAngle;
+	stream << limitedHinge.maxAngle;
+	stream << limitedHinge.maxFriction;
+	stream << limitedHinge.enableMotor;
 
 	if (limitedHinge.enableMotor)
-		file.write((char*)&limitedHinge.motor, 25);
+		stream.write((char*)&limitedHinge.motor, 25);
 }
 
-int bhkLimitedHingeConstraint::CalcBlockSize() {
-	bhkConstraint::CalcBlockSize();
+int bhkLimitedHingeConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 141;
 	if (limitedHinge.enableMotor)
@@ -809,57 +806,58 @@ int bhkLimitedHingeConstraint::CalcBlockSize() {
 }
 
 
-void SubConstraintDesc::Get(std::fstream& file, NiObject* parent) {
-	file.read((char*)&type, 4);
+void SubConstraintDesc::Get(NiStream& stream, NiObject* parent) {
+	stream >> type;
 
-	entityRefs.Get(file);
-	file.read((char*)&priority, 4);
+	entityRefs.Get(stream);
+	stream >> priority;
 
 	switch (type) {
 	case BallAndSocket:
-		file.read((char*)&desc1, 32);
+		stream.read((char*)&desc1, 32);
 		break;
 	case Hinge:
-		file.read((char*)&desc2, 128);
+		stream.read((char*)&desc2, 128);
 		break;
 	case LimitedHinge:
-		file.read((char*)&desc3, 166);
+		stream.read((char*)&desc3, 166);
 		break;
 	case Prismatic:
-		file.read((char*)&desc4, 141);
+		stream.read((char*)&desc4, 141);
 		break;
 	case Ragdoll:
-		file.read((char*)&desc5, 178);
+		stream.read((char*)&desc5, 178);
 		break;
 	case StiffSpring:
-		file.read((char*)&desc6, 36);
+		stream.read((char*)&desc6, 36);
 		break;
 	}
 }
 
-void SubConstraintDesc::Put(std::fstream& file) {
-	file.write((char*)&type, 4);
-	entityRefs.Put(file);
-	file.write((char*)&priority, 4);
+void SubConstraintDesc::Put(NiStream& stream) {
+	stream << type;
+
+	entityRefs.Put(stream);
+	stream << priority;
 
 	switch (type) {
 	case BallAndSocket:
-		file.write((char*)&desc1, 32);
+		stream.write((char*)&desc1, 32);
 		break;
 	case Hinge:
-		file.write((char*)&desc2, 128);
+		stream.write((char*)&desc2, 128);
 		break;
 	case LimitedHinge:
-		file.write((char*)&desc3, 166);
+		stream.write((char*)&desc3, 166);
 		break;
 	case Prismatic:
-		file.write((char*)&desc4, 141);
+		stream.write((char*)&desc4, 141);
 		break;
 	case Ragdoll:
-		file.write((char*)&desc5, 178);
+		stream.write((char*)&desc5, 178);
 		break;
 	case StiffSpring:
-		file.write((char*)&desc6, 36);
+		stream.write((char*)&desc6, 36);
 		break;
 	}
 }
@@ -897,28 +895,28 @@ int SubConstraintDesc::CalcDescSize() {
 }
 
 
-bhkBreakableConstraint::bhkBreakableConstraint(NiHeader* hdr) {
-	bhkConstraint::Init(hdr);
+bhkBreakableConstraint::bhkBreakableConstraint() {
+	bhkConstraint::Init();
 }
 
-bhkBreakableConstraint::bhkBreakableConstraint(std::fstream& file, NiHeader* hdr) : bhkBreakableConstraint(hdr) {
-	Get(file);
+bhkBreakableConstraint::bhkBreakableConstraint(NiStream& stream) : bhkBreakableConstraint() {
+	Get(stream);
 }
 
-void bhkBreakableConstraint::Get(std::fstream& file) {
-	bhkConstraint::Get(file);
+void bhkBreakableConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
 
-	subConstraint.Get(file, this);
-	file.read((char*)&threshold, 4);
-	file.read((char*)&removeIfBroken, 1);
+	subConstraint.Get(stream, this);
+	stream >> threshold;
+	stream >> removeIfBroken;
 }
 
-void bhkBreakableConstraint::Put(std::fstream& file) {
-	bhkConstraint::Put(file);
+void bhkBreakableConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
 
-	subConstraint.Put(file);
-	file.write((char*)&threshold, 4);
-	file.write((char*)&removeIfBroken, 1);
+	subConstraint.Put(stream);
+	stream << threshold;
+	stream << removeIfBroken;
 }
 
 void bhkBreakableConstraint::GetChildRefs(std::set<int*>& refs) {
@@ -927,8 +925,8 @@ void bhkBreakableConstraint::GetChildRefs(std::set<int*>& refs) {
 	subConstraint.GetChildRefs(refs);
 }
 
-int bhkBreakableConstraint::CalcBlockSize() {
-	bhkConstraint::CalcBlockSize();
+int bhkBreakableConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 5;
 	blockSize += subConstraint.CalcDescSize();
@@ -937,62 +935,62 @@ int bhkBreakableConstraint::CalcBlockSize() {
 }
 
 
-bhkRagdollConstraint::bhkRagdollConstraint(NiHeader* hdr) {
-	bhkConstraint::Init(hdr);
+bhkRagdollConstraint::bhkRagdollConstraint() {
+	bhkConstraint::Init();
 }
 
-bhkRagdollConstraint::bhkRagdollConstraint(std::fstream& file, NiHeader* hdr) : bhkRagdollConstraint(hdr) {
-	Get(file);
+bhkRagdollConstraint::bhkRagdollConstraint(NiStream& stream) : bhkRagdollConstraint() {
+	Get(stream);
 }
 
-void bhkRagdollConstraint::Get(std::fstream& file) {
-	bhkConstraint::Get(file);
+void bhkRagdollConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
 
-	file.read((char*)&ragdoll.twistA, 16);
-	file.read((char*)&ragdoll.planeA, 16);
-	file.read((char*)&ragdoll.motorA, 16);
-	file.read((char*)&ragdoll.pivotA, 16);
-	file.read((char*)&ragdoll.twistB, 16);
-	file.read((char*)&ragdoll.planeB, 16);
-	file.read((char*)&ragdoll.motorB, 16);
-	file.read((char*)&ragdoll.pivotB, 16);
-	file.read((char*)&ragdoll.coneMaxAngle, 4);
-	file.read((char*)&ragdoll.planeMinAngle, 4);
-	file.read((char*)&ragdoll.planeMaxAngle, 4);
-	file.read((char*)&ragdoll.twistMinAngle, 4);
-	file.read((char*)&ragdoll.twistMaxAngle, 4);
-	file.read((char*)&ragdoll.maxFriction, 4);
-	file.read((char*)&ragdoll.enableMotor, 1);
+	stream >> ragdoll.twistA;
+	stream >> ragdoll.planeA;
+	stream >> ragdoll.motorA;
+	stream >> ragdoll.pivotA;
+	stream >> ragdoll.twistB;
+	stream >> ragdoll.planeB;
+	stream >> ragdoll.motorB;
+	stream >> ragdoll.pivotB;
+	stream >> ragdoll.coneMaxAngle;
+	stream >> ragdoll.planeMinAngle;
+	stream >> ragdoll.planeMaxAngle;
+	stream >> ragdoll.twistMinAngle;
+	stream >> ragdoll.twistMaxAngle;
+	stream >> ragdoll.maxFriction;
+	stream >> ragdoll.enableMotor;
 
 	if (ragdoll.enableMotor)
-		file.read((char*)&ragdoll.motor, 25);
+		stream.read((char*)&ragdoll.motor, 25);
 }
 
-void bhkRagdollConstraint::Put(std::fstream& file) {
-	bhkConstraint::Put(file);
+void bhkRagdollConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
 
-	file.write((char*)&ragdoll.twistA, 16);
-	file.write((char*)&ragdoll.planeA, 16);
-	file.write((char*)&ragdoll.motorA, 16);
-	file.write((char*)&ragdoll.pivotA, 16);
-	file.write((char*)&ragdoll.twistB, 16);
-	file.write((char*)&ragdoll.planeB, 16);
-	file.write((char*)&ragdoll.motorB, 16);
-	file.write((char*)&ragdoll.pivotB, 16);
-	file.write((char*)&ragdoll.coneMaxAngle, 4);
-	file.write((char*)&ragdoll.planeMinAngle, 4);
-	file.write((char*)&ragdoll.planeMaxAngle, 4);
-	file.write((char*)&ragdoll.twistMinAngle, 4);
-	file.write((char*)&ragdoll.twistMaxAngle, 4);
-	file.write((char*)&ragdoll.maxFriction, 4);
-	file.write((char*)&ragdoll.enableMotor, 1);
+	stream << ragdoll.twistA;
+	stream << ragdoll.planeA;
+	stream << ragdoll.motorA;
+	stream << ragdoll.pivotA;
+	stream << ragdoll.twistB;
+	stream << ragdoll.planeB;
+	stream << ragdoll.motorB;
+	stream << ragdoll.pivotB;
+	stream << ragdoll.coneMaxAngle;
+	stream << ragdoll.planeMinAngle;
+	stream << ragdoll.planeMaxAngle;
+	stream << ragdoll.twistMinAngle;
+	stream << ragdoll.twistMaxAngle;
+	stream << ragdoll.maxFriction;
+	stream << ragdoll.enableMotor;
 
 	if (ragdoll.enableMotor)
-		file.write((char*)&ragdoll.motor, 25);
+		stream.write((char*)&ragdoll.motor, 25);
 }
 
-int bhkRagdollConstraint::CalcBlockSize() {
-	bhkConstraint::CalcBlockSize();
+int bhkRagdollConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 153;
 	if (ragdoll.enableMotor)
@@ -1002,32 +1000,32 @@ int bhkRagdollConstraint::CalcBlockSize() {
 }
 
 
-bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiHeader* hdr) {
-	bhkConstraint::Init(hdr);
+bhkStiffSpringConstraint::bhkStiffSpringConstraint() {
+	bhkConstraint::Init();
 }
 
-bhkStiffSpringConstraint::bhkStiffSpringConstraint(std::fstream& file, NiHeader* hdr) : bhkStiffSpringConstraint(hdr) {
-	Get(file);
+bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiStream& stream) : bhkStiffSpringConstraint() {
+	Get(stream);
 }
 
-void bhkStiffSpringConstraint::Get(std::fstream& file) {
-	bhkConstraint::Get(file);
+void bhkStiffSpringConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
 
-	file.read((char*)&stiffSpring.pivotA, 16);
-	file.read((char*)&stiffSpring.pivotB, 16);
-	file.read((char*)&stiffSpring.length, 4);
+	stream >> stiffSpring.pivotA;
+	stream >> stiffSpring.pivotB;
+	stream >> stiffSpring.length;
 }
 
-void bhkStiffSpringConstraint::Put(std::fstream& file) {
-	bhkConstraint::Put(file);
+void bhkStiffSpringConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
 
-	file.write((char*)&stiffSpring.pivotA, 16);
-	file.write((char*)&stiffSpring.pivotB, 16);
-	file.write((char*)&stiffSpring.length, 4);
+	stream << stiffSpring.pivotA;
+	stream << stiffSpring.pivotB;
+	stream << stiffSpring.length;
 }
 
-int bhkStiffSpringConstraint::CalcBlockSize() {
-	bhkConstraint::CalcBlockSize();
+int bhkStiffSpringConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 36;
 
@@ -1035,30 +1033,30 @@ int bhkStiffSpringConstraint::CalcBlockSize() {
 }
 
 
-bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiHeader* hdr) {
-	bhkConstraint::Init(hdr);
+bhkBallAndSocketConstraint::bhkBallAndSocketConstraint() {
+	bhkConstraint::Init();
 }
 
-bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(std::fstream& file, NiHeader* hdr) : bhkBallAndSocketConstraint(hdr) {
-	Get(file);
+bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiStream& stream) : bhkBallAndSocketConstraint() {
+	Get(stream);
 }
 
-void bhkBallAndSocketConstraint::Get(std::fstream& file) {
-	bhkConstraint::Get(file);
+void bhkBallAndSocketConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
 
-	file.read((char*)&ballAndSocket.translationA, 16);
-	file.read((char*)&ballAndSocket.translationB, 16);
+	stream >> ballAndSocket.translationA;
+	stream >> ballAndSocket.translationB;
 }
 
-void bhkBallAndSocketConstraint::Put(std::fstream& file) {
-	bhkConstraint::Put(file);
+void bhkBallAndSocketConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
 
-	file.write((char*)&ballAndSocket.translationA, 16);
-	file.write((char*)&ballAndSocket.translationB, 16);
+	stream << ballAndSocket.translationA;
+	stream << ballAndSocket.translationB;
 }
 
-int bhkBallAndSocketConstraint::CalcBlockSize() {
-	bhkConstraint::CalcBlockSize();
+int bhkBallAndSocketConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 32;
 
@@ -1066,53 +1064,53 @@ int bhkBallAndSocketConstraint::CalcBlockSize() {
 }
 
 
-bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiHeader* hdr) {
-	bhkSerializable::Init(hdr);
+bhkBallSocketConstraintChain::bhkBallSocketConstraintChain() {
+	bhkSerializable::Init();
 }
 
-bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(std::fstream& file, NiHeader* hdr) : bhkBallSocketConstraintChain(hdr) {
-	Get(file);
+bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiStream& stream) : bhkBallSocketConstraintChain() {
+	Get(stream);
 }
 
-void bhkBallSocketConstraintChain::Get(std::fstream& file) {
-	bhkSerializable::Get(file);
+void bhkBallSocketConstraintChain::Get(NiStream& stream) {
+	bhkSerializable::Get(stream);
 
-	file.read((char*)&numPivots, 4);
+	stream >> numPivots;
 	pivots.resize(numPivots);
 	for (int i = 0; i < numPivots; i++)
-		file.read((char*)&pivots[i], 16);
+		stream >> pivots[i];
 
-	file.read((char*)&tau, 4);
-	file.read((char*)&damping, 4);
-	file.read((char*)&cfm, 4);
-	file.read((char*)&maxErrorDistance, 4);
+	stream >> tau;
+	stream >> damping;
+	stream >> cfm;
+	stream >> maxErrorDistance;
 
-	entityARefs.Get(file);
+	entityARefs.Get(stream);
 
-	file.read((char*)&numEntities, 4);
-	entityARef.Get(file);
-	entityBRef.Get(file);
-	file.read((char*)&priority, 4);
+	stream >> numEntities;
+	entityARef.Get(stream);
+	entityBRef.Get(stream);
+	stream >> priority;
 }
 
-void bhkBallSocketConstraintChain::Put(std::fstream& file) {
-	bhkSerializable::Put(file);
+void bhkBallSocketConstraintChain::Put(NiStream& stream) {
+	bhkSerializable::Put(stream);
 
-	file.write((char*)&numPivots, 4);
+	stream << numPivots;
 	for (int i = 0; i < numPivots; i++)
-		file.write((char*)&pivots[i], 16);
+		stream.write((char*)&pivots[i], 16);
 
-	file.write((char*)&tau, 4);
-	file.write((char*)&damping, 4);
-	file.write((char*)&cfm, 4);
-	file.write((char*)&maxErrorDistance, 4);
+	stream << tau;
+	stream << damping;
+	stream << cfm;
+	stream << maxErrorDistance;
 
-	entityARefs.Put(file);
+	entityARefs.Put(stream);
 
-	file.write((char*)&numEntities, 4);
-	entityARef.Put(file);
-	entityBRef.Put(file);
-	file.write((char*)&priority, 4);
+	stream << numEntities;
+	entityARef.Put(stream);
+	entityBRef.Put(stream);
+	stream << priority;
 }
 
 void bhkBallSocketConstraintChain::GetChildRefs(std::set<int*>& refs) {
@@ -1123,8 +1121,8 @@ void bhkBallSocketConstraintChain::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&entityBRef.index);
 }
 
-int bhkBallSocketConstraintChain::CalcBlockSize() {
-	bhkSerializable::CalcBlockSize();
+int bhkBallSocketConstraintChain::CalcBlockSize(NiVersion& version) {
+	bhkSerializable::CalcBlockSize(version);
 
 	blockSize += 40;
 	blockSize += numPivots * 16;
@@ -1134,124 +1132,124 @@ int bhkBallSocketConstraintChain::CalcBlockSize() {
 }
 
 
-bhkRigidBody::bhkRigidBody(NiHeader* hdr) {
-	bhkEntity::Init(hdr);
+bhkRigidBody::bhkRigidBody() {
+	bhkEntity::Init();
 }
 
-bhkRigidBody::bhkRigidBody(std::fstream& file, NiHeader* hdr) : bhkRigidBody(hdr) {
-	Get(file);
+bhkRigidBody::bhkRigidBody(NiStream& stream) : bhkRigidBody() {
+	Get(stream);
 }
 
-void bhkRigidBody::Get(std::fstream& file) {
-	bhkEntity::Get(file);
+void bhkRigidBody::Get(NiStream& stream) {
+	bhkEntity::Get(stream);
 
-	file.read((char*)&responseType, 1);
-	file.read((char*)&unkByte, 1);
-	file.read((char*)&processContactCallbackDelay, 2);
-	file.read((char*)unkShorts, 4);
-	file.read((char*)&collisionFilterCopy, 4);
-	file.read((char*)unkShorts2, 12);
-	file.read((char*)&translation, 16);
-	file.read((char*)&rotation, 16);
-	file.read((char*)&linearVelocity, 16);
-	file.read((char*)&angularVelocity, 16);
-	file.read((char*)inertiaMatrix, 48);
-	file.read((char*)&center, 16);
-	file.read((char*)&mass, 4);
-	file.read((char*)&linearDamping, 4);
-	file.read((char*)&angularDamping, 4);
+	stream >> responseType;
+	stream >> unkByte;
+	stream >> processContactCallbackDelay;
+	stream.read((char*)unkShorts, 4);
+	stream >> collisionFilterCopy;
+	stream.read((char*)unkShorts2, 12);
+	stream >> translation;
+	stream >> rotation;
+	stream >> linearVelocity;
+	stream >> angularVelocity;
+	stream.read((char*)inertiaMatrix, 48);
+	stream >> center;
+	stream >> mass;
+	stream >> linearDamping;
+	stream >> angularDamping;
 
-	if (header->GetUserVersion() >= 12) {
-		file.read((char*)&timeFactor, 4);
-		file.read((char*)&gravityFactor, 4);
+	if (stream.GetVersion().User() >= 12) {
+		stream >> timeFactor;
+		stream >> gravityFactor;
 	}
 
-	file.read((char*)&friction, 4);
+	stream >> friction;
 
-	if (header->GetUserVersion() >= 12)
-		file.read((char*)&rollingFrictionMult, 4);
+	if (stream.GetVersion().User() >= 12)
+		stream >> rollingFrictionMult;
 
-	file.read((char*)&restitution, 4);
-	file.read((char*)&maxLinearVelocity, 4);
-	file.read((char*)&maxAngularVelocity, 4);
-	file.read((char*)&penetrationDepth, 4);
-	file.read((char*)&motionSystem, 1);
-	file.read((char*)&deactivatorType, 1);
-	file.read((char*)&solverDeactivation, 1);
-	file.read((char*)&qualityType, 1);
-	file.read((char*)&autoRemoveLevel, 1);
-	file.read((char*)&responseModifierFlag, 1);
-	file.read((char*)&numShapeKeysInContactPointProps, 1);
-	file.read((char*)&forceCollideOntoPpu, 1);
-	file.read((char*)&unkInt2, 4);
-	file.read((char*)&unkInt3, 4);
+	stream >> restitution;
+	stream >> maxLinearVelocity;
+	stream >> maxAngularVelocity;
+	stream >> penetrationDepth;
+	stream >> motionSystem;
+	stream >> deactivatorType;
+	stream >> solverDeactivation;
+	stream >> qualityType;
+	stream >> autoRemoveLevel;
+	stream >> responseModifierFlag;
+	stream >> numShapeKeysInContactPointProps;
+	stream >> forceCollideOntoPpu;
+	stream >> unkInt2;
+	stream >> unkInt3;
 
-	if (header->GetUserVersion() >= 12)
-		file.read((char*)&unkInt4, 4);
+	if (stream.GetVersion().User() >= 12)
+		stream >> unkInt4;
 
-	constraintRefs.Get(file);
+	constraintRefs.Get(stream);
 
-	if (header->GetUserVersion() <= 11)
-		file.read((char*)&unkInt5, 4);
+	if (stream.GetVersion().User() <= 11)
+		stream >> unkInt5;
 
-	if (header->GetUserVersion() >= 12)
-		file.read((char*)&unkShort3, 2);
+	if (stream.GetVersion().User() >= 12)
+		stream >> unkShort3;
 }
 
-void bhkRigidBody::Put(std::fstream& file) {
-	bhkEntity::Put(file);
+void bhkRigidBody::Put(NiStream& stream) {
+	bhkEntity::Put(stream);
 
-	file.write((char*)&responseType, 1);
-	file.write((char*)&unkByte, 1);
-	file.write((char*)&processContactCallbackDelay, 2);
-	file.write((char*)unkShorts, 4);
-	file.write((char*)&collisionFilterCopy, 4);
-	file.write((char*)unkShorts2, 12);
-	file.write((char*)&translation, 16);
-	file.write((char*)&rotation, 16);
-	file.write((char*)&linearVelocity, 16);
-	file.write((char*)&angularVelocity, 16);
-	file.write((char*)inertiaMatrix, 48);
-	file.write((char*)&center, 16);
-	file.write((char*)&mass, 4);
-	file.write((char*)&linearDamping, 4);
-	file.write((char*)&angularDamping, 4);
+	stream << responseType;
+	stream << unkByte;
+	stream << processContactCallbackDelay;
+	stream.read((char*)unkShorts, 4);
+	stream << collisionFilterCopy;
+	stream.write((char*)unkShorts2, 12);
+	stream << translation;
+	stream << rotation;
+	stream << linearVelocity;
+	stream << angularVelocity;
+	stream.write((char*)inertiaMatrix, 48);
+	stream << center;
+	stream << mass;
+	stream << linearDamping;
+	stream << angularDamping;
 
-	if (header->GetUserVersion() >= 12) {
-		file.write((char*)&timeFactor, 4);
-		file.write((char*)&gravityFactor, 4);
+	if (stream.GetVersion().User() >= 12) {
+		stream << timeFactor;
+		stream << gravityFactor;
 	}
 
-	file.write((char*)&friction, 4);
+	stream << friction;
 
-	if (header->GetUserVersion() >= 12)
-		file.write((char*)&rollingFrictionMult, 4);
+	if (stream.GetVersion().User() >= 12)
+		stream << rollingFrictionMult;
 
-	file.write((char*)&restitution, 4);
-	file.write((char*)&maxLinearVelocity, 4);
-	file.write((char*)&maxAngularVelocity, 4);
-	file.write((char*)&penetrationDepth, 4);
-	file.write((char*)&motionSystem, 1);
-	file.write((char*)&deactivatorType, 1);
-	file.write((char*)&solverDeactivation, 1);
-	file.write((char*)&qualityType, 1);
-	file.write((char*)&autoRemoveLevel, 1);
-	file.write((char*)&responseModifierFlag, 1);
-	file.write((char*)&numShapeKeysInContactPointProps, 1);
-	file.write((char*)&forceCollideOntoPpu, 1);
-	file.write((char*)&unkInt2, 4);
-	file.write((char*)&unkInt3, 4);
+	stream << restitution;
+	stream << maxLinearVelocity;
+	stream << maxAngularVelocity;
+	stream << penetrationDepth;
+	stream << motionSystem;
+	stream << deactivatorType;
+	stream << solverDeactivation;
+	stream << qualityType;
+	stream << autoRemoveLevel;
+	stream << responseModifierFlag;
+	stream << numShapeKeysInContactPointProps;
+	stream << forceCollideOntoPpu;
+	stream << unkInt2;
+	stream << unkInt3;
 
-	if (header->GetUserVersion() >= 12)
-		file.write((char*)&unkInt4, 4);
+	if (stream.GetVersion().User() >= 12)
+		stream << unkInt4;
 
-	constraintRefs.Put(file);
+	constraintRefs.Put(stream);
 
-	if (header->GetUserVersion() <= 11)
-		file.write((char*)&unkInt5, 4);
+	if (stream.GetVersion().User() <= 11)
+		stream << unkInt5;
 
-	if (header->GetUserVersion() >= 12)
-		file.write((char*)&unkShort3, 2);
+	if (stream.GetVersion().User() >= 12)
+		stream << unkShort3;
 }
 
 void bhkRigidBody::GetChildRefs(std::set<int*>& refs) {
@@ -1260,203 +1258,192 @@ void bhkRigidBody::GetChildRefs(std::set<int*>& refs) {
 	constraintRefs.GetIndexPtrs(refs);
 }
 
-int bhkRigidBody::CalcBlockSize() {
-	bhkEntity::CalcBlockSize();
+int bhkRigidBody::CalcBlockSize(NiVersion& version) {
+	bhkEntity::CalcBlockSize(version);
 
 	blockSize += 204;
 	blockSize += 4 * constraintRefs.GetSize();
 
-	if (header->GetUserVersion() <= 11)
+	if (version.User() <= 11)
 		blockSize += 4;
 
-	if (header->GetUserVersion() >= 12)
+	if (version.User() >= 12)
 		blockSize += 18;
 
 	return blockSize;
 }
 
 
-bhkRigidBodyT::bhkRigidBodyT(NiHeader* hdr) : bhkRigidBody(hdr) {
+bhkRigidBodyT::bhkRigidBodyT() : bhkRigidBody() {
 }
 
-bhkRigidBodyT::bhkRigidBodyT(std::fstream& file, NiHeader* hdr) : bhkRigidBodyT(hdr) {
-	Get(file);
+bhkRigidBodyT::bhkRigidBodyT(NiStream& stream) : bhkRigidBodyT() {
+	Get(stream);
 }
 
 
-bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiHeader* hdr) {
-	bhkRefObject::Init(hdr);
-
-	numMat32 = 0;
-	numMat16 = 0;
-	numMat8 = 0;
-	numMaterials = 0;
-	numNamedMat = 0;
-	numTransforms = 0;
-	numBigVerts = 0;
-	numBigTris = 0;
-	numChunks = 0;
-	numConvexPieceA = 0;
+bhkCompressedMeshShapeData::bhkCompressedMeshShapeData() {
+	bhkRefObject::Init();
 }
 
-bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(std::fstream& file, NiHeader* hdr) : bhkCompressedMeshShapeData(hdr) {
-	Get(file);
+bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiStream& stream) : bhkCompressedMeshShapeData() {
+	Get(stream);
 }
 
-void bhkCompressedMeshShapeData::Get(std::fstream& file) {
-	bhkRefObject::Get(file);
+void bhkCompressedMeshShapeData::Get(NiStream& stream) {
+	bhkRefObject::Get(stream);
 
-	file.read((char*)&bitsPerIndex, 4);
-	file.read((char*)&bitsPerWIndex, 4);
-	file.read((char*)&maskWIndex, 4);
-	file.read((char*)&maskIndex, 4);
-	file.read((char*)&error, 4);
-	file.read((char*)&aabbBoundMin, 16);
-	file.read((char*)&aabbBoundMax, 16);
-	file.read((char*)&weldingType, 1);
-	file.read((char*)&materialType, 1);
+	stream >> bitsPerIndex;
+	stream >> bitsPerWIndex;
+	stream >> maskWIndex;
+	stream >> maskIndex;
+	stream >> error;
+	stream >> aabbBoundMin;
+	stream >> aabbBoundMax;
+	stream >> weldingType;
+	stream >> materialType;
 
-	file.read((char*)&numMat32, 4);
+	stream >> numMat32;
 	mat32.resize(numMat32);
 	for (int i = 0; i < numMat32; i++)
-		file.read((char*)&mat32[i], 4);
+		stream >> mat32[i];
 
-	file.read((char*)&numMat16, 4);
+	stream >> numMat16;
 	mat16.resize(numMat16);
 	for (int i = 0; i < numMat16; i++)
-		file.read((char*)&mat16[i], 4);
+		stream >> mat16[i];
 
-	file.read((char*)&numMat8, 4);
+	stream >> numMat8;
 	mat8.resize(numMat8);
 	for (int i = 0; i < numMat8; i++)
-		file.read((char*)&mat8[i], 4);
+		stream >> mat8[i];
 
-	file.read((char*)&numMaterials, 4);
+	stream >> numMaterials;
 	materials.resize(numMaterials);
 	for (int i = 0; i < numMaterials; i++)
-		file.read((char*)&materials[i], 8);
+		stream >> materials[i];
 
-	file.read((char*)&numNamedMat, 4);
+	stream >> numNamedMat;
 
-	file.read((char*)&numTransforms, 4);
+	stream >> numTransforms;
 	transforms.resize(numTransforms);
 	for (int i = 0; i < numTransforms; i++)
-		file.read((char*)&transforms[i], 32);
+		stream >> transforms[i];
 
-	file.read((char*)&numBigVerts, 4);
+	stream >> numBigVerts;
 	bigVerts.resize(numBigVerts);
 	for (int i = 0; i < numBigVerts; i++)
-		file.read((char*)&bigVerts[i], 16);
+		stream >> bigVerts[i];
 
-	file.read((char*)&numBigTris, 4);
+	stream >> numBigTris;
 	bigTris.resize(numBigTris);
 	for (int i = 0; i < numBigTris; i++)
-		file.read((char*)&bigTris[i], 12);
+		stream.read((char*)&bigTris[i], 12);
 
-	file.read((char*)&numChunks, 4);
+	stream >> numChunks;
 	chunks.resize(numChunks);
 	for (int i = 0; i < numChunks; i++) {
-		file.read((char*)&chunks[i].translation, 16);
-		file.read((char*)&chunks[i].matIndex, 4);
-		file.read((char*)&chunks[i].reference, 2);
-		file.read((char*)&chunks[i].transformIndex, 2);
+		stream >> chunks[i].translation;
+		stream >> chunks[i].matIndex;
+		stream >> chunks[i].reference;
+		stream >> chunks[i].transformIndex;
 
-		file.read((char*)&chunks[i].numVerts, 4);
+		stream >> chunks[i].numVerts;
 		chunks[i].verts.resize(chunks[i].numVerts);
 		for (int j = 0; j < chunks[i].numVerts; j++)
-			file.read((char*)&chunks[i].verts[j], 2);
+			stream >> chunks[i].verts[j];
 
-		file.read((char*)&chunks[i].numIndices, 4);
+		stream >> chunks[i].numIndices;
 		chunks[i].indices.resize(chunks[i].numIndices);
 		for (int j = 0; j < chunks[i].numIndices; j++)
-			file.read((char*)&chunks[i].indices[j], 2);
+			stream >> chunks[i].indices[j];
 
-		file.read((char*)&chunks[i].numStrips, 4);
+		stream >> chunks[i].numStrips;
 		chunks[i].strips.resize(chunks[i].numStrips);
 		for (int j = 0; j < chunks[i].numStrips; j++)
-			file.read((char*)&chunks[i].strips[j], 2);
+			stream >> chunks[i].strips[j];
 
-		file.read((char*)&chunks[i].numWeldingInfo, 4);
+		stream >> chunks[i].numWeldingInfo;
 		chunks[i].weldingInfo.resize(chunks[i].numWeldingInfo);
 		for (int j = 0; j < chunks[i].numWeldingInfo; j++)
-			file.read((char*)&chunks[i].weldingInfo[j], 2);
+			stream >> chunks[i].weldingInfo[j];
 	}
 
-	file.read((char*)&numConvexPieceA, 4);
+	stream >> numConvexPieceA;
 }
 
-void bhkCompressedMeshShapeData::Put(std::fstream& file) {
-	bhkRefObject::Put(file);
+void bhkCompressedMeshShapeData::Put(NiStream& stream) {
+	bhkRefObject::Put(stream);
 
-	file.write((char*)&bitsPerIndex, 4);
-	file.write((char*)&bitsPerWIndex, 4);
-	file.write((char*)&maskWIndex, 4);
-	file.write((char*)&maskIndex, 4);
-	file.write((char*)&error, 4);
-	file.write((char*)&aabbBoundMin, 16);
-	file.write((char*)&aabbBoundMax, 16);
-	file.write((char*)&weldingType, 1);
-	file.write((char*)&materialType, 1);
+	stream << bitsPerIndex;
+	stream << bitsPerWIndex;
+	stream << maskWIndex;
+	stream << maskIndex;
+	stream << error;
+	stream << aabbBoundMin;
+	stream << aabbBoundMax;
+	stream << weldingType;
+	stream << materialType;
 
-	file.write((char*)&numMat32, 4);
+	stream << numMat32;
 	for (int i = 0; i < numMat32; i++)
-		file.write((char*)&mat32[i], 4);
+		stream << mat32[i];
 
-	file.write((char*)&numMat16, 4);
+	stream << numMat16;
 	for (int i = 0; i < numMat16; i++)
-		file.write((char*)&mat16[i], 4);
+		stream << mat16[i];
 
-	file.write((char*)&numMat8, 4);
+	stream << numMat8;
 	for (int i = 0; i < numMat8; i++)
-		file.write((char*)&mat8[i], 4);
+		stream << mat8[i];
 
-	file.write((char*)&numMaterials, 4);
+	stream << numMaterials;
 	for (int i = 0; i < numMaterials; i++)
-		file.write((char*)&materials[i], 8);
+		stream << materials[i];
 
-	file.write((char*)&numNamedMat, 4);
+	stream << numNamedMat;
 
-	file.write((char*)&numTransforms, 4);
+	stream << numTransforms;
 	for (int i = 0; i < numTransforms; i++)
-		file.write((char*)&transforms[i], 32);
+		stream << transforms[i];
 
-	file.write((char*)&numBigVerts, 4);
+	stream << numBigVerts;
 	for (int i = 0; i < numBigVerts; i++)
-		file.write((char*)&bigVerts[i], 16);
+		stream << bigVerts[i];
 
-	file.write((char*)&numBigTris, 4);
+	stream << numBigTris;
 	for (int i = 0; i < numBigTris; i++)
-		file.write((char*)&bigTris[i], 12);
+		stream.write((char*)&bigTris[i], 12);
 
-	file.write((char*)&numChunks, 4);
+	stream << numChunks;
 	for (int i = 0; i < numChunks; i++) {
-		file.write((char*)&chunks[i].translation, 16);
-		file.write((char*)&chunks[i].matIndex, 4);
-		file.write((char*)&chunks[i].reference, 2);
-		file.write((char*)&chunks[i].transformIndex, 2);
+		stream << chunks[i].translation;
+		stream << chunks[i].matIndex;
+		stream << chunks[i].reference;
+		stream << chunks[i].transformIndex;
 
-		file.write((char*)&chunks[i].numVerts, 4);
+		stream << chunks[i].numVerts;
 		for (int j = 0; j < chunks[i].numVerts; j++)
-			file.write((char*)&chunks[i].verts[j], 2);
+			stream << chunks[i].verts[j];
 
-		file.write((char*)&chunks[i].numIndices, 4);
+		stream << chunks[i].numIndices;
 		for (int j = 0; j < chunks[i].numIndices; j++)
-			file.write((char*)&chunks[i].indices[j], 2);
+			stream << chunks[i].indices[j];
 
-		file.write((char*)&chunks[i].numStrips, 4);
+		stream << chunks[i].numStrips;
 		for (int j = 0; j < chunks[i].numStrips; j++)
-			file.write((char*)&chunks[i].strips[j], 2);
+			stream << chunks[i].strips[j];
 
-		file.write((char*)&chunks[i].numWeldingInfo, 4);
+		stream << chunks[i].numWeldingInfo;
 		for (int j = 0; j < chunks[i].numWeldingInfo; j++)
-			file.write((char*)&chunks[i].weldingInfo[j], 2);
+			stream << chunks[i].weldingInfo[j];
 	}
 
-	file.write((char*)&numConvexPieceA, 4);
+	stream << numConvexPieceA;
 }
 
-int bhkCompressedMeshShapeData::CalcBlockSize() {
-	bhkRefObject::CalcBlockSize();
+int bhkCompressedMeshShapeData::CalcBlockSize(NiVersion& version) {
+	bhkRefObject::CalcBlockSize(version);
 
 	blockSize += 94;
 	blockSize += numMat32 * 4;
@@ -1479,38 +1466,38 @@ int bhkCompressedMeshShapeData::CalcBlockSize() {
 }
 
 
-bhkCompressedMeshShape::bhkCompressedMeshShape(NiHeader* hdr) {
-	bhkShape::Init(hdr);
+bhkCompressedMeshShape::bhkCompressedMeshShape() {
+	bhkShape::Init();
 }
 
-bhkCompressedMeshShape::bhkCompressedMeshShape(std::fstream& file, NiHeader* hdr) : bhkCompressedMeshShape(hdr) {
-	Get(file);
+bhkCompressedMeshShape::bhkCompressedMeshShape(NiStream& stream) : bhkCompressedMeshShape() {
+	Get(stream);
 }
 
-void bhkCompressedMeshShape::Get(std::fstream& file) {
-	bhkShape::Get(file);
+void bhkCompressedMeshShape::Get(NiStream& stream) {
+	bhkShape::Get(stream);
 
-	targetRef.Get(file);
-	file.read((char*)&userData, 4);
-	file.read((char*)&radius, 4);
-	file.read((char*)&unkFloat, 4);
-	file.read((char*)&scaling, 16);
-	file.read((char*)&radius2, 4);
-	file.read((char*)&scaling2, 16);
-	dataRef.Get(file);
+	targetRef.Get(stream);
+	stream >> userData;
+	stream >> radius;
+	stream >> unkFloat;
+	stream >> scaling;
+	stream >> radius2;
+	stream >> scaling2;
+	dataRef.Get(stream);
 }
 
-void bhkCompressedMeshShape::Put(std::fstream& file) {
-	bhkShape::Put(file);
+void bhkCompressedMeshShape::Put(NiStream& stream) {
+	bhkShape::Put(stream);
 
-	targetRef.Put(file);
-	file.write((char*)&userData, 4);
-	file.write((char*)&radius, 4);
-	file.write((char*)&unkFloat, 4);
-	file.write((char*)&scaling, 16);
-	file.write((char*)&radius2, 4);
-	file.write((char*)&scaling2, 16);
-	dataRef.Put(file);
+	targetRef.Put(stream);
+	stream << userData;
+	stream << radius;
+	stream << unkFloat;
+	stream << scaling;
+	stream << radius2;
+	stream << scaling2;
+	dataRef.Put(stream);
 }
 
 void bhkCompressedMeshShape::GetChildRefs(std::set<int*>& refs) {
@@ -1519,8 +1506,8 @@ void bhkCompressedMeshShape::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int bhkCompressedMeshShape::CalcBlockSize() {
-	bhkShape::CalcBlockSize();
+int bhkCompressedMeshShape::CalcBlockSize(NiVersion& version) {
+	bhkShape::CalcBlockSize(version);
 
 	blockSize += 56;
 

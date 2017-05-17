@@ -198,8 +198,8 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	NiShader* shader = fromNif->GetShader(shapeName);
 	if (shader) {
 		// Find material file
-		if (shader->header->GetUserVersion() == 12 && shader->header->GetUserVersion2() >= 130) {
-			matFile = shader->GetName();
+		if (fromNif->GetHeader()->GetVersion().User() == 12 && fromNif->GetHeader()->GetVersion().User2() >= 130) {
+			matFile = shader->GetName(fromNif->GetHeader());
 			if (!matFile.IsEmpty())
 				hasMat = true;
 		}

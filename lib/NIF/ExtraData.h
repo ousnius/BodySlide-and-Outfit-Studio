@@ -14,17 +14,13 @@ private:
 	StringRef name;
 
 public:
-	~NiExtraData() {
-		name.Clear(header);
-	};
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
-
-	std::string GetName();
-	void SetName(const std::string& extraDataName);
+	std::string GetName(NiHeader* hdr);
+	void SetName(NiHeader* hdr, const std::string& extraDataName);
 };
 
 class NiBinaryExtraData : public NiExtraData {
@@ -33,32 +29,32 @@ private:
 	std::vector<byte> data;
 
 public:
-	NiBinaryExtraData(NiHeader* hdr);
-	NiBinaryExtraData(std::fstream& file, NiHeader* hdr);
+	NiBinaryExtraData();
+	NiBinaryExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBinaryExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiBinaryExtraData* Clone() { return new NiBinaryExtraData(*this); }
 };
 
 class NiFloatExtraData : public NiExtraData {
 private:
-	float floatData;
+	float floatData = 0.0f;
 
 public:
-	NiFloatExtraData(NiHeader* hdr);
-	NiFloatExtraData(std::fstream& file, NiHeader* hdr);
+	NiFloatExtraData();
+	NiFloatExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiFloatExtraData* Clone() { return new NiFloatExtraData(*this); }
 };
 
@@ -67,57 +63,54 @@ private:
 	StringRef stringData;
 
 public:
-	NiStringExtraData(NiHeader* hdr);
-	NiStringExtraData(std::fstream& file, NiHeader* hdr);
-	~NiStringExtraData() {
-		stringData.Clear(header);
-	};
+	NiStringExtraData();
+	NiStringExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiStringExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 	NiStringExtraData* Clone() { return new NiStringExtraData(*this); }
 
-	std::string GetStringData();
-	void SetStringData(const std::string& str);
+	std::string GetStringData(NiHeader* hdr);
+	void SetStringData(NiHeader* hdr, const std::string& str);
 };
 
 class NiStringsExtraData : public NiExtraData {
 private:
-	uint numStrings;
+	uint numStrings = 0;
 	std::vector<NiString> stringsData;
 
 public:
-	NiStringsExtraData(NiHeader* hdr);
-	NiStringsExtraData(std::fstream& file, NiHeader* hdr);
+	NiStringsExtraData();
+	NiStringsExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiStringsExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiStringsExtraData* Clone() { return new NiStringsExtraData(*this); }
 };
 
 class NiBooleanExtraData : public NiExtraData {
 private:
-	bool booleanData;
+	bool booleanData = false;
 
 public:
-	NiBooleanExtraData(NiHeader* hdr);
-	NiBooleanExtraData(std::fstream& file, NiHeader* hdr);
+	NiBooleanExtraData();
+	NiBooleanExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBooleanExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiBooleanExtraData* Clone() { return new NiBooleanExtraData(*this); }
 
 	bool GetBooleanData();
@@ -129,15 +122,15 @@ private:
 	uint integerData;
 
 public:
-	NiIntegerExtraData(NiHeader* hdr);
-	NiIntegerExtraData(std::fstream& file, NiHeader* hdr);
+	NiIntegerExtraData();
+	NiIntegerExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiIntegerExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	NiIntegerExtraData* Clone() { return new NiIntegerExtraData(*this); }
 
 	uint GetIntegerData();
@@ -146,8 +139,8 @@ public:
 
 class BSXFlags : public NiIntegerExtraData {
 public:
-	BSXFlags(NiHeader* hdr);
-	BSXFlags(std::fstream& file, NiHeader* hdr);
+	BSXFlags();
+	BSXFlags(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSXFlags";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -163,15 +156,15 @@ private:
 	float zoom;
 
 public:
-	BSInvMarker(NiHeader* hdr);
-	BSInvMarker(std::fstream& file, NiHeader* hdr);
+	BSInvMarker();
+	BSInvMarker(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSInvMarker";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSInvMarker* Clone() { return new BSInvMarker(*this); }
 };
 
@@ -189,26 +182,26 @@ struct FurniturePosition {
 
 class BSFurnitureMarker : public NiExtraData {
 private:
-	uint numPositions;
+	uint numPositions = 0;
 	std::vector<FurniturePosition> positions;
 
 public:
-	BSFurnitureMarker(NiHeader* hdr);
-	BSFurnitureMarker(std::fstream& file, NiHeader* hdr);
+	BSFurnitureMarker();
+	BSFurnitureMarker(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSFurnitureMarker";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSFurnitureMarker* Clone() { return new BSFurnitureMarker(*this); }
 };
 
 class BSFurnitureMarkerNode : public BSFurnitureMarker {
 public:
-	BSFurnitureMarkerNode(NiHeader* hdr);
-	BSFurnitureMarkerNode(std::fstream& file, NiHeader* hdr);
+	BSFurnitureMarkerNode();
+	BSFurnitureMarkerNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSFurnitureMarkerNode";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -225,19 +218,19 @@ public:
 	};
 
 private:
-	ushort numVectorBlocks;
+	ushort numVectorBlocks = 0;
 	std::vector<DecalVectorBlock> decalVectorBlocks;
 
 public:
-	BSDecalPlacementVectorExtraData(NiHeader* hdr);
-	BSDecalPlacementVectorExtraData(std::fstream& file, NiHeader* hdr);
+	BSDecalPlacementVectorExtraData();
+	BSDecalPlacementVectorExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSDecalPlacementVectorExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSDecalPlacementVectorExtraData* Clone() { return new BSDecalPlacementVectorExtraData(*this); }
 };
 
@@ -247,19 +240,16 @@ private:
 	byte controlsBaseSkel;
 
 public:
-	BSBehaviorGraphExtraData(NiHeader* hdr);
-	BSBehaviorGraphExtraData(std::fstream& file, NiHeader* hdr);
-	~BSBehaviorGraphExtraData() {
-		behaviorGraphFile.Clear(header);
-	};
+	BSBehaviorGraphExtraData();
+	BSBehaviorGraphExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSBehaviorGraphExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 	BSBehaviorGraphExtraData* Clone() { return new BSBehaviorGraphExtraData(*this); }
 };
 
@@ -269,15 +259,15 @@ private:
 	Vector3 halfExtents;
 
 public:
-	BSBound(NiHeader* hdr);
-	BSBound(std::fstream& file, NiHeader* hdr);
+	BSBound();
+	BSBound(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSBound";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSBound* Clone() { return new BSBound(*this); }
 };
 
@@ -288,47 +278,39 @@ struct BoneLOD {
 
 class BSBoneLODExtraData : public NiExtraData {
 private:
-	uint numBoneLODs;
+	uint numBoneLODs = 0;
 	std::vector<BoneLOD> boneLODs;
 
 public:
-	BSBoneLODExtraData(NiHeader* hdr);
-	BSBoneLODExtraData(std::fstream& file, NiHeader* hdr);
-	~BSBoneLODExtraData() {
-		for (auto &lod : boneLODs)
-			lod.boneName.Clear(header);
-	};
+	BSBoneLODExtraData();
+	BSBoneLODExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSBoneLODExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 	BSBoneLODExtraData* Clone() { return new BSBoneLODExtraData(*this); }
 };
 
 class NiTextKeyExtraData : public NiExtraData {
 private:
-	uint numTextKeys;
+	uint numTextKeys = 0;
 	std::vector<Key<StringRef>> textKeys;
 
 public:
-	NiTextKeyExtraData(NiHeader* hdr);
-	NiTextKeyExtraData(std::fstream& file, NiHeader* hdr);
-	~NiTextKeyExtraData() {
-		for (auto &tk : textKeys)
-			tk.value.Clear(header);
-	};
+	NiTextKeyExtraData();
+	NiTextKeyExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTextKeyExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	void notifyStringDelete(int stringID);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<int*>& refs);
+	int CalcBlockSize(NiVersion& version);
 	NiTextKeyExtraData* Clone() { return new NiTextKeyExtraData(*this); }
 };
 
@@ -338,51 +320,51 @@ public:
 	NiString variableName;
 	Quaternion rotation;
 	Vector3 translation;
-	float scale;
+	float scale = 1.0f;
 
 	BSConnectPoint();
-	BSConnectPoint(std::fstream& file);
+	BSConnectPoint(NiStream& stream);
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSConnectPoint* Clone() { return new BSConnectPoint(*this); }
 };
 
 class BSConnectPointParents : public NiExtraData {
 private:
-	uint numConnectPoints;
+	uint numConnectPoints = 0;
 	std::vector<BSConnectPoint> connectPoints;
 
 public:
-	BSConnectPointParents(NiHeader* hdr);
-	BSConnectPointParents(std::fstream& file, NiHeader* hdr);
+	BSConnectPointParents();
+	BSConnectPointParents(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSConnectPoint::Parents";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSConnectPointParents* Clone() { return new BSConnectPointParents(*this); }
 };
 
 class BSConnectPointChildren : public NiExtraData {
 private:
-	byte unkByte;
-	uint numTargets;
+	byte unkByte = 1;
+	uint numTargets = 0;
 	std::vector<NiString> targets;
 
 public:
-	BSConnectPointChildren(NiHeader* hdr);
-	BSConnectPointChildren(std::fstream& file, NiHeader* hdr);
+	BSConnectPointChildren();
+	BSConnectPointChildren(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSConnectPoint::Children";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSConnectPointChildren* Clone() { return new BSConnectPointChildren(*this); }
 };
 
@@ -395,12 +377,12 @@ private:
 	std::vector<char> data;
 
 public:
-	BSClothExtraData(NiHeader* hdr, const uint size = 0);
-	BSClothExtraData(std::fstream& file, NiHeader* hdr);
+	BSClothExtraData(const uint size = 0);
+	BSClothExtraData(NiStream& stream);
 
-	void Get(std::fstream& file);
-	void Put(std::fstream& file);
-	int CalcBlockSize();
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
 	BSClothExtraData* Clone() { return new BSClothExtraData(*this); }
 
 	bool ToHKX(const std::string& fileName);
