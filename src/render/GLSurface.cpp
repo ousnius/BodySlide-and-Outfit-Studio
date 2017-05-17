@@ -640,9 +640,9 @@ void GLSurface::GetSize(uint & w, uint & h)
 void GLSurface::UpdateProjection() {
 	float aspect = (float)vpW / (float)vpH;
 	if (perspective)
-		projection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 100.0f);
+		projection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 1000.0f);
 	else
-		projection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 100.0f);
+		projection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 1000.0f);
 
 	modelView = glm::translate(glm::mat4x4(), glm::vec3(camPos.x, camPos.y, camPos.z));
 	modelView = glm::rotate(modelView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
