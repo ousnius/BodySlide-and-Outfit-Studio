@@ -268,7 +268,19 @@ void NifFile::CopyFrom(const NifFile& other) {
 	for (int i = 0; i < nBlocks; i++)
 		blocks[i] = other.blocks[i]->Clone();
 
+	LinkGeomData();
 	hdr->SetBlockReference(&blocks);
+}
+
+void NifFile::LinkGeomData() {
+	for (auto &b : blocks) {
+		auto geom = dynamic_cast<NiGeometry*>(b);
+		if (geom) {
+			auto geomData = hdr->GetBlock<NiGeometryData>(geom->GetDataRef());
+			if (geomData)
+				geom->SetGeomData(geomData);
+		}
+	}
 }
 
 void NifFile::Clear() {
@@ -978,6 +990,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 
 		int destDataId = hdr->AddBlock(destGeomData);
 		destGeom->SetDataRef(destDataId);
+		destGeom->SetGeomData(destGeomData);
 	}
 
 	// Skinning
@@ -1340,20 +1353,14 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 }
 
 void NifFile::PrepareData() {
+	LinkGeomData();
+
 	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 
 	for (auto &s : shapes) {
 		NiShape* shape = FindShapeByName(s);
 		if (shape) {
-			// Link NiGeometryData to NiGeometry
-			auto geom = dynamic_cast<NiGeometry*>(shape);
-			if (geom) {
-				auto geomData = hdr->GetBlock<NiGeometryData>(geom->GetDataRef());
-				if (geomData)
-					geom->SetGeomData(geomData);
-			}
-
 			// Move triangle and vertex data from partition to shape
 			if (hdr->GetVersion().User() >= 12 && hdr->GetVersion().User2() == 100) {
 				BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);

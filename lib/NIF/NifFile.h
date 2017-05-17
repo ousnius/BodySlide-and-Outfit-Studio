@@ -115,8 +115,11 @@ public:
 		delete hdr;
 	}
 
-	void CopyFrom(const NifFile& other);
 	NiHeader* GetHeader() { return hdr; }
+	void CopyFrom(const NifFile& other);
+
+	// Link NiGeometryData to NiGeometry
+	void LinkGeomData();
 
 	int AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale);
 	void DeleteNode(const std::string& nodeName);
