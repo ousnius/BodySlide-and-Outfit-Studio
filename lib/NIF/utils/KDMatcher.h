@@ -7,8 +7,8 @@ See the included LICENSE file
 #pragma once
 
 #include "Object3d.h"
-#include <map>
 #include <algorithm>
+#include <memory>
 
 // A specialized KD tree that finds duplicate vertices in a point cloud.  
 
@@ -16,26 +16,12 @@ class kd_matcher {
 public:
 	class kd_node {
 	public:
-		std::pair<Vector3*, int> p;
-		kd_node* less;
-		kd_node* more;
-
-		kd_node() {
-			less = more = nullptr;
-			p = std::pair<Vector3*, int>(nullptr, -1);
-		}
+		std::pair<Vector3*, int> p = std::pair<Vector3*, int>(nullptr, -1);
+		std::unique_ptr<kd_node> less;
+		std::unique_ptr<kd_node> more;
 
 		kd_node(const std::pair<Vector3*, int>& point) {
-			less = more = nullptr;
 			p = point;
-		}
-
-		~kd_node() {
-			if (less)
-				delete less;
-			if (more)
-				delete more;
-			less = more = nullptr;
 		}
 
 		std::pair<Vector3*, int> add(const std::pair<Vector3*, int>& point, int depth) {
@@ -61,34 +47,27 @@ public:
 			}
 			if (domore) {
 				if (more) return more->add(point, depth + 1);
-				else more = new kd_node(point);
+				else more = std::make_unique<kd_node>(point);
 			}
 			else {
 				if (less) return less->add(point, depth + 1);
-				else less = new kd_node(point);
+				else less = std::make_unique<kd_node>(point);
 			}
 			return std::pair<Vector3*, int>(nullptr, -1);
 		}
 	};
 
-	kd_node* root = nullptr;
+	std::unique_ptr<kd_node> root;
 	Vector3* points = nullptr;
 	int count;
 	std::vector<std::pair<std::pair<Vector3*, int>, std::pair<Vector3*, int>>> matches;
-
-	~kd_matcher() {
-		if (root)
-			delete root;
-
-		root = nullptr;
-	}
 
 	kd_matcher(Vector3* points, int count) {
 		if (count <= 0)
 			return;
 
 		std::pair<Vector3*, int> pong;
-		root = new kd_node(std::pair<Vector3*, int>(&points[0], 0));
+		root = std::make_unique<kd_node>(std::pair<Vector3*, int>(&points[0], 0));
 		for (int i = 1; i < count; i++) {
 			std::pair<Vector3*, int> point(&points[i], i);
 			pong = root->add(point, 0);
@@ -113,27 +92,12 @@ class kd_tree {
 public:
 	class kd_node {
 	public:
-		Vector3* p;
-		int p_i;
-		kd_node* less;
-		kd_node* more;
-
-		kd_node() {
-			less = more = nullptr;
-			p = nullptr;
-			p_i = -1;
-		}
-
-		~kd_node() {
-			if (less)
-				delete less;
-			if (more)
-				delete more;
-			less = more = nullptr;
-		}
+		Vector3* p = nullptr;
+		int p_i = -1;
+		std::unique_ptr<kd_node> less;
+		std::unique_ptr<kd_node> more;
 
 		kd_node(Vector3* point, int point_index) {
-			less = more = nullptr;
 			p = point;
 			p_i = point_index;
 		}
@@ -158,11 +122,11 @@ public:
 			}
 			if (domore) {
 				if (more) return more->add(point, point_index, depth + 1);
-				else more = new kd_node(point, point_index);
+				else more = std::make_unique<kd_node>(point, point_index);
 			}
 			else {
 				if (less) return less->add(point, point_index, depth + 1);
-				else less = new kd_node(point, point_index);
+				else less = std::make_unique<kd_node>(point, point_index);
 			}
 		}
 
@@ -174,30 +138,30 @@ public:
 			float dx = p->x - querypoint->x;	// Axis sides
 			float dy = p->y - querypoint->y;
 			float dz = p->z - querypoint->z;
-			kd_node* act = less;				// Active search branch
-			kd_node* opp = more;				// Opposite search branch
+			kd_node* act = less.get();				// Active search branch
+			kd_node* opp = more.get();				// Opposite search branch
 			float axisdist = 0;					// Distance from the query point to the separating axis
 			float pointdist;					// Distance from the query point to the node's point
 
 			switch (axis) {
 			case 0:
 				if (dx > 0)  {
-					act = more;
-					opp = less;
+					act = more.get();
+					opp = less.get();
 				}
 				axisdist = std::fabs(dx);
 				break;
 			case 1:
 				if (dy > 0) {
-					act = more;
-					opp = less;
+					act = more.get();
+					opp = less.get();
 				}
 				axisdist = std::fabs(dy);
 				break;
 			case 2:
 				if (dz > 0)  {
-					act = more;
-					opp = less;
+					act = more.get();
+					opp = less.get();
 				}
 				axisdist = std::fabs(dz);
 				break;
@@ -247,21 +211,14 @@ public:
 		}
 	};
 
-	kd_node* root;
+	std::unique_ptr<kd_node> root;
 	std::vector<kd_query_result> queryResult;
-
-	~kd_tree() {
-		if (root)
-			delete root;
-
-		root = nullptr;
-	}
 
 	kd_tree(Vector3* points, int count) {
 		if (count <= 0)
 			return;
 
-		root = new kd_node(&points[0], 0);
+		root = std::make_unique<kd_node>(&points[0], 0);
 		for (int i = 1; i < count; i++)
 			root->add(&points[i], i, 0);
 	}
