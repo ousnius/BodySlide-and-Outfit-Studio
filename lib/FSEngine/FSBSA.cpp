@@ -230,12 +230,10 @@ bool BSA::open() {
 						bsa.Read((char*)&tex.header, 24);
 
 						std::vector<F4TexChunk> texChunks(tex.header.numChunks);
-						for (wxUint32 j = 0; j < tex.header.numChunks; j++)
-							bsa.Read((char*)&texChunks[j], 24);
+						bsa.Read(texChunks.data(), tex.header.numChunks * 24);
+						tex.chunks = std::move(texChunks);
 
-						tex.chunks = texChunks;
-
-						F4TexChunk chunk = tex.chunks[0];
+						const F4TexChunk& chunk = tex.chunks[0];
 						insertFile(superbuffer + path_sizes[n], path_sizes[n + 1] - path_sizes[n], chunk.packedSize, chunk.unpackedSize, chunk.offset, &tex);
 						n += 2;
 					}
@@ -555,7 +553,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				if (file->tex.chunks.size() > 0) {
 					// Start at 2nd chunk for BA2
 					for (int i = 1; i < file->tex.chunks.size(); i++) {
-						F4TexChunk chunk = file->tex.chunks[i];
+						const F4TexChunk& chunk = file->tex.chunks[i];
 						if (bsa.Seek(chunk.offset)) {
 							wxMemoryBuffer chunkData;
 
