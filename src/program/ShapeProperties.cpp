@@ -229,26 +229,26 @@ void ShapeProperties::AddShader() {
 			case FO3:
 			case FONV: {
 				BSShaderPPLightingProperty* shader = new BSShaderPPLightingProperty();
-				shape->propertyRefs.AddBlockRef(nif->GetHeader()->AddBlock(shader));
+				shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(shader));
 
 				NiMaterialProperty* material = new NiMaterialProperty();
-				shape->propertyRefs.AddBlockRef(nif->GetHeader()->AddBlock(material));
+				shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(material));
 				break;
 			}
 			case SKYRIM:
 			case FO4:
 			case SKYRIMSE:
 			default: {
-				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader()->GetVersion());
-				shape->SetShaderPropertyRef(nif->GetHeader()->AddBlock(shader));
+				BSLightingShaderProperty* shader = new BSLightingShaderProperty(nif->GetHeader().GetVersion());
+				shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(shader));
 			}
 		}
 	}
 
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
-		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader()->GetVersion());
-		shader->SetTextureSetRef(nif->GetHeader()->AddBlock(nifTexSet));
+		BSShaderTextureSet* nifTexSet = new BSShaderTextureSet(nif->GetHeader().GetVersion());
+		shader->SetTextureSetRef(nif->GetHeader().AddBlock(nifTexSet));
 	}
 
 	AssignDefaultTexture();
@@ -396,7 +396,7 @@ void ShapeProperties::GetGeometry() {
 
 		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			if (nif->GetHeader()->GetVersion().User2() == 100) {
+			if (nif->GetHeader().GetVersion().User2() == 100) {
 				fullPrecision->SetValue(true);
 				fullPrecision->Enable(false);
 			}
@@ -438,7 +438,7 @@ void ShapeProperties::GetExtraData() {
 		return;
 
 	for (int i = 0; i < shape->GetNumExtraData(); i++) {
-		auto extraData = nif->GetHeader()->GetBlock<NiExtraData>(shape->GetExtraDataRef(i));
+		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(shape->GetExtraDataRef(i));
 		if (extraData) {
 			extraDataIndices.push_back(shape->GetExtraDataRef(i));
 			AddExtraData(extraData, true);
@@ -525,7 +525,7 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 	int selection = extraDataType->GetSelection();
 
 	int index = extraDataIndices[id];
-	nif->GetHeader()->DeleteBlock(index);
+	nif->GetHeader().DeleteBlock(index);
 
 	for (int i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
@@ -562,7 +562,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 	extraDataValue->Destroy();
 
 	int index = extraDataIndices[id];
-	nif->GetHeader()->DeleteBlock(index);
+	nif->GetHeader().DeleteBlock(index);
 
 	for (int i = 0; i < extraDataIndices.size(); i++)
 		if (extraDataIndices[i] > index)
@@ -654,7 +654,7 @@ void ShapeProperties::ApplyChanges() {
 	if (shape) {
 		BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			if (nif->GetHeader()->GetVersion().User2() != 100)
+			if (nif->GetHeader().GetVersion().User2() != 100)
 				bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 
 			if (os->targetGame == FO4 && currentSubIndex != subIndex->IsChecked()) {
@@ -663,12 +663,12 @@ void ShapeProperties::ApplyChanges() {
 					*dynamic_cast<BSTriShape*>(bsSITS) = *bsTriShape;
 					bsSITS->SetDefaultSegments();
 					bsSITS->SetName(bsTriShape->GetName());
-					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
+					nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
 				}
 				else {
 					auto bsTS = new BSTriShape(*bsTriShape);
 					bsTS->SetName(bsTriShape->GetName());
-					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
+					nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
 				}
 			}
 		}
@@ -689,7 +689,7 @@ void ShapeProperties::ApplyChanges() {
 		if (!extraDataName || !extraDataValue)
 			continue;
 
-		auto extraData = nif->GetHeader()->GetBlock<NiExtraData>(extraDataIndices[i]);
+		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataIndices[i]);
 		if (extraData) {
 			extraData->SetName(extraDataName->GetValue().ToStdString());
 

@@ -108,7 +108,7 @@ public:
 	virtual void UpdateBounds();
 
 	void SetGeomData(NiGeometryData* geomDataPtr) { geomData = geomDataPtr; }
-	int GetBoneID(NiHeader* hdr, const std::string& boneName);
+	int GetBoneID(NiHeader& hdr, const std::string& boneName);
 };
 
 

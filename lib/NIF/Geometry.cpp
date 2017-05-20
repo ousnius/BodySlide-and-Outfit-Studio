@@ -387,11 +387,11 @@ void NiShape::UpdateBounds() {
 		geomData->UpdateBounds();
 }
 
-int NiShape::GetBoneID(NiHeader* hdr, const std::string& boneName) {
-	auto boneCont = hdr->GetBlock<NiBoneContainer>(GetSkinInstanceRef());
+int NiShape::GetBoneID(NiHeader& hdr, const std::string& boneName) {
+	auto boneCont = hdr.GetBlock<NiBoneContainer>(GetSkinInstanceRef());
 	if (boneCont) {
 		for (int i = 0; i < boneCont->boneRefs.GetSize(); i++) {
-			auto node = hdr->GetBlock<NiNode>(boneCont->boneRefs.GetBlockRef(i));
+			auto node = hdr.GetBlock<NiNode>(boneCont->boneRefs.GetBlockRef(i));
 			if (node && node->GetName() == boneName)
 				return i;
 		}

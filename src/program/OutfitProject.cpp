@@ -220,7 +220,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 			clone.UpdateSkinPartitions(s);
 
 		clone.SetShapeOrder(owner->GetShapeList());
-		clone.GetHeader()->SetExportInfo("Exported using Outfit Studio.");
+		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
 		if (clone.Save(saveFileName)) {
 			errmsg = _("Failed to write base .nif file: ") + saveFileName;
@@ -435,21 +435,21 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 			nifShapeData->SetNormals(true);
 		}
 
-		int shapeID = blank.GetHeader()->AddBlock(nifShapeData);
+		int shapeID = blank.GetHeader().AddBlock(nifShapeData);
 
 		NiSkinData* nifSkinData = new NiSkinData();
-		int skinID = blank.GetHeader()->AddBlock(nifSkinData);
+		int skinID = blank.GetHeader().AddBlock(nifSkinData);
 
 		NiSkinPartition* nifSkinPartition = new NiSkinPartition();
-		int partID = blank.GetHeader()->AddBlock(nifSkinPartition);
+		int partID = blank.GetHeader().AddBlock(nifSkinPartition);
 
 		BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance();
-		int dismemberID = blank.GetHeader()->AddBlock(nifDismemberInst);
+		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
 		nifDismemberInst->SetSkeletonRootRef(0);
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader()->GetVersion());
+		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
 
 		int shaderID;
 		BSLightingShaderProperty* nifShader = nullptr;
@@ -458,18 +458,18 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		case FO3:
 		case FONV:
 			nifShaderPP = new BSShaderPPLightingProperty();
-			shaderID = blank.GetHeader()->AddBlock(nifShaderPP);
-			nifShaderPP->SetTextureSetRef(blank.GetHeader()->AddBlock(nifTexset));
+			shaderID = blank.GetHeader().AddBlock(nifShaderPP);
+			nifShaderPP->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
 			break;
 		case SKYRIM:
 		default:
-			nifShader = new BSLightingShaderProperty(blank.GetHeader()->GetVersion());
-			shaderID = blank.GetHeader()->AddBlock(nifShader);
-			nifShader->SetTextureSetRef(blank.GetHeader()->AddBlock(nifTexset));
+			nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
+			shaderID = blank.GetHeader().AddBlock(nifShader);
+			nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
 		}
 
 		NiTriShape* nifTriShape = new NiTriShape();
-		blank.GetHeader()->AddBlock(nifTriShape);
+		blank.GetHeader().AddBlock(nifTriShape);
 		if (owner->targetGame < SKYRIM)
 			nifTriShape->propertyRefs.AddBlockRef(shaderID);
 		else
@@ -486,23 +486,23 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape();
 		nifBSTriShape->Create(&v, &t, &uv, norms);
-		blank.GetHeader()->AddBlock(nifBSTriShape);
+		blank.GetHeader().AddBlock(nifBSTriShape);
 
 		BSSkinInstance* nifBSSkinInstance = new BSSkinInstance();
-		int skinID = blank.GetHeader()->AddBlock(nifBSSkinInstance);
+		int skinID = blank.GetHeader().AddBlock(nifBSSkinInstance);
 		nifBSSkinInstance->SetTargetRef(workNif.GetRootNodeID());
 
 		BSSkinBoneData* nifBoneData = new BSSkinBoneData();
-		int boneID = blank.GetHeader()->AddBlock(nifBoneData);
+		int boneID = blank.GetHeader().AddBlock(nifBoneData);
 		nifBSSkinInstance->SetDataRef(boneID);
 		nifBSTriShape->SetSkinInstanceRef(skinID);
 		triShapeBase = nifBSTriShape;
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader()->GetVersion());
+		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
 
-		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(blank.GetHeader()->GetVersion());
-		int shaderID = blank.GetHeader()->AddBlock(nifShader);
-		nifShader->SetTextureSetRef(blank.GetHeader()->AddBlock(nifTexset));
+		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
+		int shaderID = blank.GetHeader().AddBlock(nifShader);
+		nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
 		nifShader->SetWetMaterialName(wetShaderName);
 
 		triShapeBase->SetName(shapeName);
@@ -511,27 +511,27 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 	else {
 		BSTriShape* triShape = new BSTriShape();
 		triShape->Create(&v, &t, &uv, norms);
-		blank.GetHeader()->AddBlock(triShape);
+		blank.GetHeader().AddBlock(triShape);
 
 		NiSkinData* nifSkinData = new NiSkinData();
-		int skinID = blank.GetHeader()->AddBlock(nifSkinData);
+		int skinID = blank.GetHeader().AddBlock(nifSkinData);
 
 		NiSkinPartition* nifSkinPartition = new NiSkinPartition();
-		int partID = blank.GetHeader()->AddBlock(nifSkinPartition);
+		int partID = blank.GetHeader().AddBlock(nifSkinPartition);
 
 		BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance();
-		int dismemberID = blank.GetHeader()->AddBlock(nifDismemberInst);
+		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
 		nifDismemberInst->SetSkeletonRootRef(0);
 		triShape->SetSkinInstanceRef(dismemberID);
 		triShape->SetSkinned(true);
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader()->GetVersion());
+		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
 
-		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(blank.GetHeader()->GetVersion());
-		int shaderID = blank.GetHeader()->AddBlock(nifShader);
-		nifShader->SetTextureSetRef(blank.GetHeader()->AddBlock(nifTexset));
+		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
+		int shaderID = blank.GetHeader().AddBlock(nifShader);
+		nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
 
 		triShape->SetName(shapeName);
 		triShape->SetShaderPropertyRef(shaderID);
@@ -1032,7 +1032,7 @@ void OutfitProject::SetTextures(const std::string& shapeName, const std::vector<
 		NiShader* shader = workNif.GetShader(shapeName);
 		if (shader) {
 			// Find material file
-			if (workNif.GetHeader()->GetVersion().User() == 12 && workNif.GetHeader()->GetVersion().User2() >= 130) {
+			if (workNif.GetHeader().GetVersion().User() == 12 && workNif.GetHeader().GetVersion().User2() >= 130) {
 				matFile = shader->GetName();
 				if (!matFile.IsEmpty())
 					hasMat = true;
@@ -1607,7 +1607,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				refNif.GetFileName(), refNif.GetHeader()->GetVersion().GetVersionInfo());
+				refNif.GetFileName(), refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
@@ -1684,7 +1684,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				refNif.GetFileName(), refNif.GetHeader()->GetVersion().GetVersionInfo());
+				refNif.GetFileName(), refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
@@ -1732,11 +1732,11 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	}
 
 	// Add cloth data block of NIF to the list
-	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(refNif.GetHeader()->GetBlock<NiNode>(0), true);
+	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(refNif.GetHeader().GetBlock<NiNode>(0), true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[inMeshFile] = cloth->Clone();
 
-	refNif.GetHeader()->DeleteBlockByType("BSClothExtraData");
+	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	if (workNif.IsValid()) {
 		// Copy only reference shape
@@ -1993,7 +1993,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				nif.GetFileName(), nif.GetHeader()->GetVersion().GetVersionInfo());
+				nif.GetFileName(), nif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
@@ -2047,11 +2047,11 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	AutoOffset(nif);
 
 	// Add cloth data block of NIF to the list
-	std::vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nif.GetHeader()->GetBlock<NiNode>(0), true);
+	std::vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nif.GetHeader().GetBlock<NiNode>(0), true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[fileName] = cloth->Clone();
 
-	nif.GetHeader()->DeleteBlockByType("BSClothExtraData");
+	nif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
 	nif.GetShapeList(nifShapes);
 	if (workNif.IsValid()) {
@@ -2106,7 +2106,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 		clone.UpdateSkinPartitions(s);
 
 	clone.SetShapeOrder(owner->GetShapeList());
-	clone.GetHeader()->SetExportInfo("Exported using Outfit Studio.");
+	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 	return clone.Save(fileName);
 }
 
@@ -2126,9 +2126,9 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 			std::string selString = clothFileNames[sel[i]].ToStdString();
 			if (!selString.empty()) {
 				auto clothBlock = clothData[selString]->Clone();
-				int id = nif.GetHeader()->AddBlock(clothBlock);
+				int id = nif.GetHeader().AddBlock(clothBlock);
 				if (id != 0xFFFFFFFF) {
-					NiNode* root = nif.GetHeader()->GetBlock<NiNode>(0);
+					NiNode* root = nif.GetHeader().GetBlock<NiNode>(0);
 					if (root)
 						root->AddExtraDataRef(id);
 				}
@@ -2158,7 +2158,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	for (auto &s : shapes)
 		clone.UpdateSkinPartitions(s);
 
-	clone.GetHeader()->SetExportInfo("Exported using Outfit Studio.");
+	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 	return clone.Save(fileName);
 }
 
@@ -2342,21 +2342,21 @@ void OutfitProject::CheckNIFTarget(NifFile& nif) {
 	switch (owner->targetGame) {
 	case FO3:
 	case FONV:
-		match = (nif.GetHeader()->GetVersion().User2() == 34);
+		match = (nif.GetHeader().GetVersion().User2() == 34);
 		break;
 	case SKYRIM:
-		match = (nif.GetHeader()->GetVersion().User2() == 83);
+		match = (nif.GetHeader().GetVersion().User2() == 83);
 		break;
 	case FO4:
-		match = (nif.GetHeader()->GetVersion().User2() == 130);
+		match = (nif.GetHeader().GetVersion().User2() == 130);
 		break;
 	case SKYRIMSE:
-		match = (nif.GetHeader()->GetVersion().User2() == 100);
+		match = (nif.GetHeader().GetVersion().User2() == 100);
 		break;
 	}
 
 	if (!match) {
-		if (owner->targetGame == SKYRIMSE && nif.GetHeader()->GetVersion().User2() == 83) {
+		if (owner->targetGame == SKYRIMSE && nif.GetHeader().GetVersion().User2() == 83) {
 			if (!Config.Exists("OptimizeForSSE")) {
 				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
 				if (res == wxYES)

@@ -74,8 +74,8 @@ public:
 	virtual float GetEmissiveMultiple() { return 0.0f; }
 	virtual void SetEmissiveMultiple(float emissive) {}
 	virtual float GetAlpha() { return 1.0f; }
-	virtual std::string GetWetMaterialName(NiHeader* hdr) { return std::string(); }
-	virtual void SetWetMaterialName(NiHeader* hdr, const std::string& matName) {}
+	virtual std::string GetWetMaterialName() { return std::string(); }
+	virtual void SetWetMaterialName(const std::string& matName) {}
 };
 
 class BSShaderProperty : public NiShader {

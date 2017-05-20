@@ -202,7 +202,7 @@ public:
 
 			int blockID = workNif.GetBlockID(workNif.FindNodeByName(boneName));
 			if (blockID >= 0)
-				workNif.GetHeader()->DeleteBlock(blockID);
+				workNif.GetHeader().DeleteBlock(blockID);
 		}
 	}
 

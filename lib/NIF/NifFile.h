@@ -99,12 +99,10 @@ private:
 	bool isValid = false;
 	bool hasUnknown = false;
 
-	NiHeader* hdr = nullptr;
+	NiHeader hdr;
 
 public:
-	NifFile() {
-		hdr = new NiHeader();
-	};
+	NifFile() {}
 
 	NifFile(const NifFile& other) {
 		CopyFrom(other);
@@ -112,10 +110,9 @@ public:
 
 	~NifFile() {
 		Clear();
-		delete hdr;
 	}
 
-	NiHeader* GetHeader() { return hdr; }
+	NiHeader& GetHeader() { return hdr; }
 	void CopyFrom(const NifFile& other);
 
 	// Link NiGeometryData to NiGeometry
@@ -167,9 +164,9 @@ public:
 
 	int CopyNamedNode(std::string& nodeName, NifFile& srcNif);
 	void CopyShader(const std::string& shapeDest, NifFile& srcNif);
-	void CopyController(NiHeader* srcHeader, NiShader* destShader, NiShader* srcShader);
-	void CopyInterpolators(NiHeader* srcHeader, NiTimeController* destController, NiTimeController* srcController);
-	int CopyInterpolator(NiHeader* srcHeader, int srcInterpId);
+	void CopyController(NiHeader& srcHeader, NiShader* destShader, NiShader* srcShader);
+	void CopyInterpolators(NiHeader& srcHeader, NiTimeController* destController, NiTimeController* srcController);
+	int CopyInterpolator(NiHeader& srcHeader, int srcInterpId);
 	void CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const std::string& srcShape);
 
 	int GetShapeList(std::vector<std::string>& outList);
@@ -282,14 +279,14 @@ std::vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	}
 
 	for (int i = 0; i < parent->GetNumChildren(); i++) {
-		n = hdr->GetBlock<T>(parent->GetChildRef(i));
+		n = hdr.GetBlock<T>(parent->GetChildRef(i));
 		if (n)
 			result.push_back(n);
 	}
 
 	if (searchExtraData) {
 		for (int i = 0; i < parent->GetNumExtraData(); i++) {
-			n = hdr->GetBlock<T>(parent->GetExtraDataRef(i));
+			n = hdr.GetBlock<T>(parent->GetExtraDataRef(i));
 			if (n)
 				result.push_back(n);
 		}
