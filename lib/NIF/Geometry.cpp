@@ -392,7 +392,7 @@ int NiShape::GetBoneID(NiHeader* hdr, const std::string& boneName) {
 	if (boneCont) {
 		for (int i = 0; i < boneCont->boneRefs.GetSize(); i++) {
 			auto node = hdr->GetBlock<NiNode>(boneCont->boneRefs.GetBlockRef(i));
-			if (node && node->GetName(hdr) == boneName)
+			if (node && node->GetName() == boneName)
 				return i;
 		}
 	}
@@ -1679,11 +1679,11 @@ void NiGeometry::Put(NiStream& stream) {
 	}
 }
 
-void NiGeometry::GetStringRefs(std::set<int*>& refs) {
+void NiGeometry::GetStringRefs(std::set<StringRef*>& refs) {
 	NiAVObject::GetStringRefs(refs);
 
 	for (auto &m : materialNameRefs)
-		refs.insert(&m.index);
+		refs.insert(&m);
 }
 
 void NiGeometry::GetChildRefs(std::set<int*>& refs) {

@@ -381,7 +381,7 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 		return (*this);
 
 	boneID = srcBlock;
-	boneName = node->GetName(skeletonNif->GetHeader());
+	boneName = node->GetName();
 	refCount = 0;
 
 	localRot.Set(node->rotation);

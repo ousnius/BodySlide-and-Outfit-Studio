@@ -16,11 +16,11 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 
-	std::string GetName(NiHeader* hdr);
-	void SetName(NiHeader* hdr, const std::string& extraDataName);
+	std::string GetName();
+	void SetName(const std::string& extraDataName);
 };
 
 class NiBinaryExtraData : public NiExtraData {
@@ -71,12 +71,12 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	NiStringExtraData* Clone() { return new NiStringExtraData(*this); }
 
-	std::string GetStringData(NiHeader* hdr);
-	void SetStringData(NiHeader* hdr, const std::string& str);
+	std::string GetStringData();
+	void SetStringData(const std::string& str);
 };
 
 class NiStringsExtraData : public NiExtraData {
@@ -248,7 +248,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	BSBehaviorGraphExtraData* Clone() { return new BSBehaviorGraphExtraData(*this); }
 };
@@ -290,7 +290,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	BSBoneLODExtraData* Clone() { return new BSBoneLODExtraData(*this); }
 };
@@ -309,7 +309,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	NiTextKeyExtraData* Clone() { return new NiTextKeyExtraData(*this); }
 };

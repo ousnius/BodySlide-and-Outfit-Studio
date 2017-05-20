@@ -499,10 +499,10 @@ void NiFloatExtraDataController::Put(NiStream& stream) {
 	extraData.Put(stream);
 }
 
-void NiFloatExtraDataController::GetStringRefs(std::set<int*>& refs) {
+void NiFloatExtraDataController::GetStringRefs(std::set<StringRef*>& refs) {
 	NiExtraDataController::GetStringRefs(refs);
 
-	refs.insert(&extraData.index);
+	refs.insert(&extraData);
 }
 
 int NiFloatExtraDataController::CalcBlockSize(NiVersion& version) {
@@ -730,10 +730,10 @@ void NiPSysModifierCtlr::Put(NiStream& stream) {
 	modifierName.Put(stream);
 }
 
-void NiPSysModifierCtlr::GetStringRefs(std::set<int*>& refs) {
+void NiPSysModifierCtlr::GetStringRefs(std::set<StringRef*>& refs) {
 	NiSingleInterpController::GetStringRefs(refs);
 
-	refs.insert(&modifierName.index);
+	refs.insert(&modifierName);
 }
 
 int NiPSysModifierCtlr::CalcBlockSize(NiVersion& version) {
@@ -1238,10 +1238,10 @@ void NiLookAtInterpolator::Put(NiStream& stream) {
 	scaleInterpRef.Put(stream);
 }
 
-void NiLookAtInterpolator::GetStringRefs(std::set<int*>& refs) {
+void NiLookAtInterpolator::GetStringRefs(std::set<StringRef*>& refs) {
 	NiInterpolator::GetStringRefs(refs);
 
-	refs.insert(&lookAtName.index);
+	refs.insert(&lookAtName);
 }
 
 void NiLookAtInterpolator::GetChildRefs(std::set<int*>& refs) {
@@ -1312,17 +1312,17 @@ void NiSequence::Put(NiStream& stream) {
 	}
 }
 
-void NiSequence::GetStringRefs(std::set<int*>& refs) {
+void NiSequence::GetStringRefs(std::set<StringRef*>& refs) {
 	NiObject::GetStringRefs(refs);
 
-	refs.insert(&name.index);
+	refs.insert(&name);
 
 	for (int i = 0; i < numControlledBlocks; i++) {
-		refs.insert(&controlledBlocks[i].nodeName.index);
-		refs.insert(&controlledBlocks[i].propType.index);
-		refs.insert(&controlledBlocks[i].ctrlType.index);
-		refs.insert(&controlledBlocks[i].ctrlID.index);
-		refs.insert(&controlledBlocks[i].interpID.index);
+		refs.insert(&controlledBlocks[i].nodeName);
+		refs.insert(&controlledBlocks[i].propType);
+		refs.insert(&controlledBlocks[i].ctrlType);
+		refs.insert(&controlledBlocks[i].ctrlID);
+		refs.insert(&controlledBlocks[i].interpID);
 	}
 }
 
@@ -1380,10 +1380,10 @@ void NiControllerSequence::Put(NiStream& stream) {
 	stream << flags;
 }
 
-void NiControllerSequence::GetStringRefs(std::set<int*>& refs) {
+void NiControllerSequence::GetStringRefs(std::set<StringRef*>& refs) {
 	NiSequence::GetStringRefs(refs);
 
-	refs.insert(&accumRootName.index);
+	refs.insert(&accumRootName);
 }
 
 void NiControllerSequence::GetChildRefs(std::set<int*>& refs) {

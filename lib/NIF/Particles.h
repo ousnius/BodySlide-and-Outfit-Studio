@@ -126,7 +126,7 @@ public:
 	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 };
 
@@ -535,7 +535,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	NiParticleSystem* Clone() { return new NiParticleSystem(*this); }

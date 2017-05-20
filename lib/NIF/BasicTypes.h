@@ -76,18 +76,31 @@ public:
 	NiVersion& GetVersion() { return *version; }
 };
 
-class NiHeader;
-
 class StringRef {
-public:
+private:
+	// Temporary index storage for load/save
 	int index = 0xFFFFFFFF;
+	std::string str;
 
-	std::string GetString(NiHeader* hdr);
-	void SetString(NiHeader* hdr, const std::string& str);
-	void RenameString(NiHeader* hdr, const std::string& str);
-	void Clear();
-	void Get(NiStream& stream);
-	void Put(NiStream& stream);
+public:
+	std::string GetString() { return str; }
+	void SetString(const std::string& s) { str = s; }
+
+	int GetIndex() { return index; }
+	void SetIndex(const int id) { index = id; }
+
+	void Clear() {
+		index = 0xFFFFFFFF;
+		str.clear();
+	}
+
+	void Get(NiStream& stream) {
+		stream >> index;
+	}
+
+	void Put(NiStream& stream) {
+		stream << index;
+	}
 };
 
 class Ref {
@@ -101,10 +114,6 @@ public:
 	BlockRef() {}
 	BlockRef(const int id) {
 		index = id;
-	}
-
-	void operator=(const BlockRef& other) {
-		index = other.index;
 	}
 
 	void Get(NiStream& stream) {
@@ -291,7 +300,7 @@ public:
 	virtual void Get(NiStream&) {}
 	virtual void Put(NiStream&) {}
 
-	virtual void GetStringRefs(std::set<int*>&) {}
+	virtual void GetStringRefs(std::set<StringRef*>&) {}
 	virtual void GetChildRefs(std::set<int*>&) {}
 
 	virtual int CalcBlockSize(NiVersion& version) {
@@ -401,8 +410,10 @@ public:
 	std::string GetStringById(const int id);
 	void SetStringById(const int id, const std::string& str);
 
-	int RemoveUnusedStrings();
+	void ClearStrings();
 	void UpdateMaxStringLength();
+	void FillStringRefs();
+	void UpdateHeaderStrings(const bool hasUnknown);
 
 	static void BlockDeleted(NiObject* o, int blockId);
 	static void BlockSwapped(NiObject* o, int blockIndexLo, int blockIndexHi);

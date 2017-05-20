@@ -22,31 +22,6 @@ void NiVersion::Set(byte v1, byte v2, byte v3, byte v4, uint userVer, uint userV
 }
 
 
-std::string StringRef::GetString(NiHeader* hdr) {
-	return hdr->GetStringById(index);
-}
-
-void StringRef::SetString(NiHeader* hdr, const std::string& str) {
-	index = hdr->AddOrFindStringId(str);
-}
-
-void StringRef::RenameString(NiHeader* hdr, const std::string& str) {
-	hdr->SetStringById(index, str);
-}
-
-void StringRef::Clear() {
-	index = 0xFFFFFFFF;
-}
-
-void StringRef::Get(NiStream& stream) {
-	stream >> index;
-}
-
-void StringRef::Put(NiStream& stream) {
-	stream << index;
-}
-
-
 void NiString::Get(NiStream& stream, const int szSize) {
 	char buf[1025];
 
@@ -351,7 +326,6 @@ int NiHeader::AddOrFindStringId(const std::string& str) {
 	strings.push_back(niStr);
 	numStrings++;
 
-	UpdateMaxStringLength();
 	return r;
 }
 
@@ -363,45 +337,14 @@ std::string NiHeader::GetStringById(const int id) {
 }
 
 void NiHeader::SetStringById(const int id, const std::string& str) {
-	if (id >= 0 && id < numStrings) {
+	if (id >= 0 && id < numStrings)
 		strings[id].SetString(str);
-		UpdateMaxStringLength();
-	}
 }
 
-int NiHeader::RemoveUnusedStrings() {
-	int count = strings.size();
-
-	// Get pointers to all string indices
-	std::set<int*> stringRefs;
-	for (auto &b : (*blocks))
-		b->GetStringRefs(stringRefs);
-
-	for (int i = strings.size() - 1; i >= 0; i--) {
-		// Count string refs that still have the index
-		auto refcount = std::count_if(stringRefs.begin(), stringRefs.end(), [&i](int* index) {
-			if ((*index) == i)
-				return true;
-			else
-				return false;
-		});
-
-		// Remove index if not referenced
-		if (refcount <= 0) {
-			strings.erase(strings.begin() + i);
-			numStrings--;
-
-			// Decrement other indices larger than removed index
-			for (auto &r : stringRefs) {
-				if ((*r) != 0xFFFFFFFF && (*r) > i) {
-					(*r)--;
-				}
-			}
-		}
-	}
-
-	UpdateMaxStringLength();
-	return count - strings.size();
+void NiHeader::ClearStrings() {
+	strings.clear();
+	numStrings = 0;
+	maxStringLen = 0;
 }
 
 void NiHeader::UpdateMaxStringLength() {
@@ -409,6 +352,35 @@ void NiHeader::UpdateMaxStringLength() {
 	for (auto &s : strings)
 		if (maxStringLen < s.GetLength())
 			maxStringLen = s.GetLength();
+}
+
+void NiHeader::FillStringRefs() {
+	for (auto &b : (*blocks)) {
+		std::set<StringRef*> stringRefs;
+		b->GetStringRefs(stringRefs);
+
+		for (auto &r : stringRefs) {
+			std::string str = GetStringById(r->GetIndex());
+			r->SetString(str);
+		}
+	}
+}
+
+void NiHeader::UpdateHeaderStrings(const bool hasUnknown) {
+	if (!hasUnknown)
+		ClearStrings();
+
+	for (auto &b : (*blocks)) {
+		std::set<StringRef*> stringRefs;
+		b->GetStringRefs(stringRefs);
+
+		for (auto &r : stringRefs) {
+			int stringId = AddOrFindStringId(r->GetString());
+			r->SetIndex(stringId);
+		}
+	}
+
+	UpdateMaxStringLength();
 }
 
 void NiHeader::BlockDeleted(NiObject* p, int blockId) {

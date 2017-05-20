@@ -351,10 +351,10 @@ void BSLightingShaderProperty::Put(NiStream& stream) {
 	}
 }
 
-void BSLightingShaderProperty::GetStringRefs(std::set<int*>& refs) {
+void BSLightingShaderProperty::GetStringRefs(std::set<StringRef*>& refs) {
 	BSShaderProperty::GetStringRefs(refs);
 
-	refs.insert(&wetMaterialName.index);
+	refs.insert(&wetMaterialName);
 }
 
 void BSLightingShaderProperty::GetChildRefs(std::set<int*>& refs) {
@@ -460,12 +460,12 @@ float BSLightingShaderProperty::GetAlpha() {
 	return alpha;
 }
 
-std::string BSLightingShaderProperty::GetWetMaterialName(NiHeader* hdr) {
-	return wetMaterialName.GetString(hdr);
+std::string BSLightingShaderProperty::GetWetMaterialName() {
+	return wetMaterialName.GetString();
 }
 
-void BSLightingShaderProperty::SetWetMaterialName(NiHeader* hdr, const std::string& matName) {
-	wetMaterialName.SetString(hdr, matName);
+void BSLightingShaderProperty::SetWetMaterialName(const std::string& matName) {
+	wetMaterialName.SetString(matName);
 }
 
 int BSLightingShaderProperty::CalcBlockSize(NiVersion& version) {

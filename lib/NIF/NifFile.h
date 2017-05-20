@@ -150,7 +150,6 @@ public:
 	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
 	void PrettySortBlocks();
 	bool DeleteUnreferencedBlocks();
-	int RemoveUnusedStrings();
 
 	NiShape* FindShapeByName(const std::string& name, int dupIndex = 0);
 	NiAVObject* FindAVObjectByName(const std::string& name, int dupIndex = 0);

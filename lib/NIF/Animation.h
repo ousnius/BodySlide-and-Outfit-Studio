@@ -305,7 +305,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	NiLookAtInterpolator* Clone() { return new NiLookAtInterpolator(*this); }
@@ -462,7 +462,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	NiFloatExtraDataController* Clone() { return new NiFloatExtraDataController(*this); }
 };
@@ -633,7 +633,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	int CalcBlockSize(NiVersion& version);
 };
 
@@ -798,7 +798,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	NiSequence* Clone() { return new NiSequence(*this); }
@@ -829,7 +829,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	NiControllerSequence* Clone() { return new NiControllerSequence(*this); }

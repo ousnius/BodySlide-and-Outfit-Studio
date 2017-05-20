@@ -172,7 +172,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
 	int CalcBlockSize(NiVersion& version);
 	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
@@ -199,8 +199,8 @@ public:
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(float emissive);
 	float GetAlpha();
-	std::string GetWetMaterialName(NiHeader* hdr);
-	void SetWetMaterialName(NiHeader* hdr, const std::string& matName);
+	std::string GetWetMaterialName();
+	void SetWetMaterialName(const std::string& matName);
 };
 
 class BSEffectShaderProperty : public BSShaderProperty {

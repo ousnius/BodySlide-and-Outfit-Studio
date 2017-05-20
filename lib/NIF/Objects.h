@@ -23,10 +23,10 @@ public:
 	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetStringRefs(std::set<int*>& refs);
+	void GetStringRefs(std::set<StringRef*>& refs);
 
-	std::string GetName(NiHeader* hdr);
-	void SetName(NiHeader* hdr, const std::string& str, const bool rename = false);
+	std::string GetName();
+	void SetName(const std::string& str);
 	void ClearName();
 
 	int GetControllerRef();

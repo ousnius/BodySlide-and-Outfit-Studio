@@ -87,10 +87,10 @@ void ShapeProperties::GetShader() {
 		emissiveMultiple->Disable();
 	}
 	else {
-		shaderName->SetValue(shader->GetName(nif->GetHeader()));
+		shaderName->SetValue(shader->GetName());
 
 		if (os->targetGame == FO4)
-			currentMaterialPath = shader->GetName(nif->GetHeader());
+			currentMaterialPath = shader->GetName();
 
 		Color4 color;
 		Vector3 colorVec;
@@ -455,13 +455,13 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	if (!uiOnly) {
 		if (extraData->HasType<NiStringExtraData>()) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-			int index = nif->AddStringExtraData(shapeName, stringExtraData->GetName(nif->GetHeader()), stringExtraData->GetStringData(nif->GetHeader()));
+			int index = nif->AddStringExtraData(shapeName, stringExtraData->GetName(), stringExtraData->GetStringData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
 		else if (extraData->HasType<NiIntegerExtraData>()) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
-			int index = nif->AddIntegerExtraData(shapeName, intExtraData->GetName(nif->GetHeader()), intExtraData->GetIntegerData());
+			int index = nif->AddIntegerExtraData(shapeName, intExtraData->GetName(), intExtraData->GetIntegerData());
 			if (index != 0xFFFFFFFF)
 				extraDataIndices.push_back(index);
 		}
@@ -489,13 +489,13 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 		if (extraData->HasType<NiStringExtraData>()) {
 			auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
 			extraDataType->SetSelection(0);
-			extraDataName->SetValue(stringExtraData->GetName(nif->GetHeader()));
-			extraDataValue->SetValue(stringExtraData->GetStringData(nif->GetHeader()));
+			extraDataName->SetValue(stringExtraData->GetName());
+			extraDataValue->SetValue(stringExtraData->GetStringData());
 		}
 		else if (extraData->HasType<NiIntegerExtraData>()) {
 			auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);
 			extraDataType->SetSelection(1);
-			extraDataName->SetValue(intExtraData->GetName(nif->GetHeader()));
+			extraDataName->SetValue(intExtraData->GetName());
 			extraDataValue->SetValue(wxString::Format("%d", intExtraData->GetIntegerData()));
 		}
 		else {
@@ -597,7 +597,7 @@ void ShapeProperties::ApplyChanges() {
 		emisColor /= 255.0f;
 		float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
 
-		shader->SetName(nif->GetHeader(), name);
+		shader->SetName(name);
 
 		if (shader->HasType<BSEffectShaderProperty>()) {
 			shader->SetEmissiveColor(emisColor);
@@ -662,12 +662,12 @@ void ShapeProperties::ApplyChanges() {
 					auto bsSITS = new BSSubIndexTriShape();
 					*dynamic_cast<BSTriShape*>(bsSITS) = *bsTriShape;
 					bsSITS->SetDefaultSegments();
-					bsSITS->SetName(nif->GetHeader(), bsTriShape->GetName(nif->GetHeader()));
+					bsSITS->SetName(bsTriShape->GetName());
 					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
 				}
 				else {
 					auto bsTS = new BSTriShape(*bsTriShape);
-					bsTS->SetName(nif->GetHeader(), bsTriShape->GetName(nif->GetHeader()));
+					bsTS->SetName(bsTriShape->GetName());
 					nif->GetHeader()->ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
 				}
 			}
@@ -691,11 +691,11 @@ void ShapeProperties::ApplyChanges() {
 
 		auto extraData = nif->GetHeader()->GetBlock<NiExtraData>(extraDataIndices[i]);
 		if (extraData) {
-			extraData->SetName(nif->GetHeader(), extraDataName->GetValue().ToStdString());
+			extraData->SetName(extraDataName->GetValue().ToStdString());
 
 			if (extraData->HasType<NiStringExtraData>()) {
 				auto stringExtraData = static_cast<NiStringExtraData*>(extraData);
-				stringExtraData->SetStringData(nif->GetHeader(), extraDataValue->GetValue().ToStdString());
+				stringExtraData->SetStringData(extraDataValue->GetValue().ToStdString());
 			}
 			else if (extraData->HasType<NiIntegerExtraData>()) {
 				auto intExtraData = static_cast<NiIntegerExtraData*>(extraData);

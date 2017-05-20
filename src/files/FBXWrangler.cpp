@@ -108,7 +108,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		return;
 
 	if (comName.empty())
-		comName = com->GetName(nif->GetHeader());
+		comName = com->GetName();
 
 	// Check if skeleton already exists
 	std::string skelName = "NifSkeleton";
@@ -135,11 +135,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 		FbxNode* parentNode = skelNode;
 		if (root) {
-			FbxSkeleton* rootBone = FbxSkeleton::Create(scene, root->GetName(nif->GetHeader()).c_str());
+			FbxSkeleton* rootBone = FbxSkeleton::Create(scene, root->GetName().c_str());
 			rootBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 			rootBone->Size.Set(1.0);
 
-			FbxNode* rootNode = FbxNode::Create(scene, root->GetName(nif->GetHeader()).c_str());
+			FbxNode* rootNode = FbxNode::Create(scene, root->GetName().c_str());
 			rootNode->SetNodeAttribute(rootBone);
 
 			rootNode->LclTranslation.Set(FbxDouble3(root->translation.x, root->translation.y, root->translation.z));
@@ -155,11 +155,11 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 		}
 
 		if (com) {
-			FbxSkeleton* comBone = FbxSkeleton::Create(scene, com->GetName(nif->GetHeader()).c_str());
+			FbxSkeleton* comBone = FbxSkeleton::Create(scene, com->GetName().c_str());
 			comBone->SetSkeletonType(FbxSkeleton::eLimbNode);
 			comBone->Size.Set(1.0);
 
-			FbxNode* comNode = FbxNode::Create(scene, com->GetName(nif->GetHeader()).c_str());
+			FbxNode* comNode = FbxNode::Create(scene, com->GetName().c_str());
 			comNode->SetNodeAttribute(comBone);
 
 			comNode->LclTranslation.Set(FbxDouble3(com->translation.y, com->translation.z, com->translation.x));
@@ -183,14 +183,14 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 }
 
 FbxNode* FBXWrangler::AddLimb(NifFile* nif, NiNode* nifBone) {
-	FbxNode* node = scene->GetRootNode()->FindChild(nifBone->GetName(nif->GetHeader()).c_str());
+	FbxNode* node = scene->GetRootNode()->FindChild(nifBone->GetName().c_str());
 	if (!node) {
 		// Add new bone
-		FbxSkeleton* bone = FbxSkeleton::Create(scene, nifBone->GetName(nif->GetHeader()).c_str());
+		FbxSkeleton* bone = FbxSkeleton::Create(scene, nifBone->GetName().c_str());
 		bone->SetSkeletonType(FbxSkeleton::eLimbNode);
 		bone->Size.Set(1.0f);
 
-		node = FbxNode::Create(scene, nifBone->GetName(nif->GetHeader()).c_str());
+		node = FbxNode::Create(scene, nifBone->GetName().c_str());
 		node->SetNodeAttribute(bone);
 
 		Vector3 translation = nifBone->translation;

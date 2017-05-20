@@ -37,21 +37,18 @@ void NiObjectNET::Put(NiStream& stream) {
 	controllerRef.Put(stream);
 }
 
-void NiObjectNET::GetStringRefs(std::set<int*>& refs) {
+void NiObjectNET::GetStringRefs(std::set<StringRef*>& refs) {
 	NiObject::GetStringRefs(refs);
 
-	refs.insert(&name.index);
+	refs.insert(&name);
 }
 
-std::string NiObjectNET::GetName(NiHeader* hdr) {
-	return name.GetString(hdr);
+std::string NiObjectNET::GetName() {
+	return name.GetString();
 }
 
-void NiObjectNET::SetName(NiHeader* hdr, const std::string& str, const bool rename) {
-	if (rename)
-		name.RenameString(hdr, str);
-	else
-		name.SetString(hdr, str);
+void NiObjectNET::SetName(const std::string& str) {
+	name.SetString(str);
 }
 
 void NiObjectNET::ClearName() {

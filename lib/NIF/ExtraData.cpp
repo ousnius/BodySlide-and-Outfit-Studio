@@ -19,18 +19,18 @@ void NiExtraData::Put(NiStream& stream) {
 	name.Put(stream);
 }
 
-void NiExtraData::GetStringRefs(std::set<int*>& refs) {
+void NiExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 	NiObject::GetStringRefs(refs);
 
-	refs.insert(&name.index);
+	refs.insert(&name);
 }
 
-std::string NiExtraData::GetName(NiHeader* hdr) {
-	return name.GetString(hdr);
+std::string NiExtraData::GetName() {
+	return name.GetString();
 }
 
-void NiExtraData::SetName(NiHeader* hdr, const std::string& extraDataName) {
-	name.SetString(hdr, extraDataName);
+void NiExtraData::SetName(const std::string& extraDataName) {
+	name.SetString(extraDataName);
 }
 
 int NiExtraData::CalcBlockSize(NiVersion& version) {
@@ -166,18 +166,18 @@ void NiStringExtraData::Put(NiStream& stream) {
 	stringData.Put(stream);
 }
 
-void NiStringExtraData::GetStringRefs(std::set<int*>& refs) {
+void NiStringExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 	NiExtraData::GetStringRefs(refs);
 
-	refs.insert(&stringData.index);
+	refs.insert(&stringData);
 }
 
-std::string NiStringExtraData::GetStringData(NiHeader* hdr) {
-	return stringData.GetString(hdr);
+std::string NiStringExtraData::GetStringData() {
+	return stringData.GetString();
 }
 
-void NiStringExtraData::SetStringData(NiHeader* hdr, const std::string& str) {
-	stringData.SetString(hdr, str);
+void NiStringExtraData::SetStringData(const std::string& str) {
+	stringData.SetString(str);
 }
 
 int NiStringExtraData::CalcBlockSize(NiVersion& version) {
@@ -460,10 +460,10 @@ void BSBehaviorGraphExtraData::Put(NiStream& stream) {
 	stream << controlsBaseSkel;
 }
 
-void BSBehaviorGraphExtraData::GetStringRefs(std::set<int*>& refs) {
+void BSBehaviorGraphExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 	NiExtraData::GetStringRefs(refs);
 
-	refs.insert(&behaviorGraphFile.index);
+	refs.insert(&behaviorGraphFile);
 }
 
 int BSBehaviorGraphExtraData::CalcBlockSize(NiVersion& version) {
@@ -535,11 +535,11 @@ void BSBoneLODExtraData::Put(NiStream& stream) {
 	}
 }
 
-void BSBoneLODExtraData::GetStringRefs(std::set<int*>& refs) {
+void BSBoneLODExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 	NiExtraData::GetStringRefs(refs);
 
 	for (int i = 0; i < numBoneLODs; i++)
-		refs.insert(&boneLODs[i].boneName.index);
+		refs.insert(&boneLODs[i].boneName);
 }
 
 int BSBoneLODExtraData::CalcBlockSize(NiVersion& version) {
@@ -581,11 +581,11 @@ void NiTextKeyExtraData::Put(NiStream& stream) {
 	}
 }
 
-void NiTextKeyExtraData::GetStringRefs(std::set<int*>& refs) {
+void NiTextKeyExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 	NiExtraData::GetStringRefs(refs);
 
 	for (int i = 0; i < numTextKeys; i++)
-		refs.insert(&textKeys[i].value.index);
+		refs.insert(&textKeys[i].value);
 }
 
 int NiTextKeyExtraData::CalcBlockSize(NiVersion& version) {

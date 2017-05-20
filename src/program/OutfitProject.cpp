@@ -475,7 +475,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		else
 			nifTriShape->SetShaderPropertyRef(shaderID);
 
-		nifTriShape->SetName(workNif.GetHeader(), shapeName);
+		nifTriShape->SetName(shapeName);
 		nifTriShape->SetDataRef(shapeID);
 		nifTriShape->SetSkinInstanceRef(dismemberID);
 
@@ -503,9 +503,9 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(blank.GetHeader()->GetVersion());
 		int shaderID = blank.GetHeader()->AddBlock(nifShader);
 		nifShader->SetTextureSetRef(blank.GetHeader()->AddBlock(nifTexset));
-		nifShader->SetWetMaterialName(blank.GetHeader(), wetShaderName);
+		nifShader->SetWetMaterialName(wetShaderName);
 
-		triShapeBase->SetName(workNif.GetHeader(), shapeName);
+		triShapeBase->SetName(shapeName);
 		triShapeBase->SetShaderPropertyRef(shaderID);
 	}
 	else {
@@ -533,7 +533,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		int shaderID = blank.GetHeader()->AddBlock(nifShader);
 		nifShader->SetTextureSetRef(blank.GetHeader()->AddBlock(nifTexset));
 
-		triShape->SetName(workNif.GetHeader(), shapeName);
+		triShape->SetName(shapeName);
 		triShape->SetShaderPropertyRef(shaderID);
 
 		blank.SetDefaultPartition(shapeName);
@@ -1033,7 +1033,7 @@ void OutfitProject::SetTextures(const std::string& shapeName, const std::vector<
 		if (shader) {
 			// Find material file
 			if (workNif.GetHeader()->GetVersion().User() == 12 && workNif.GetHeader()->GetVersion().User2() >= 130) {
-				matFile = shader->GetName(workNif.GetHeader());
+				matFile = shader->GetName();
 				if (!matFile.IsEmpty())
 					hasMat = true;
 			}

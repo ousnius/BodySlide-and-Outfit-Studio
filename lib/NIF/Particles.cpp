@@ -239,10 +239,10 @@ void NiPSysModifier::Put(NiStream& stream) {
 	stream << isActive;
 }
 
-void NiPSysModifier::GetStringRefs(std::set<int*>& refs) {
+void NiPSysModifier::GetStringRefs(std::set<StringRef*>& refs) {
 	NiObject::GetStringRefs(refs);
 
-	refs.insert(&name.index);
+	refs.insert(&name);
 }
 
 int NiPSysModifier::CalcBlockSize(NiVersion& version) {
@@ -1021,11 +1021,11 @@ void NiParticleSystem::Put(NiStream& stream) {
 	modifierRefs.Put(stream);
 }
 
-void NiParticleSystem::GetStringRefs(std::set<int*>& refs) {
+void NiParticleSystem::GetStringRefs(std::set<StringRef*>& refs) {
 	NiAVObject::GetStringRefs(refs);
 
 	for (auto &m : materialNameRefs)
-		refs.insert(&m.index);
+		refs.insert(&m);
 }
 
 void NiParticleSystem::GetChildRefs(std::set<int*>& refs) {
