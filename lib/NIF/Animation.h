@@ -475,6 +475,7 @@ public:
 	NiVisController();
 	NiVisController(NiStream& stream);
 
+	static constexpr const char* BlockName = "NiVisController";
 	virtual const char* GetBlockName() { return BlockName; }
 
 	NiVisController* Clone() { return new NiVisController(*this); }
