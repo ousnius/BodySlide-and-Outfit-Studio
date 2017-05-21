@@ -2,6 +2,8 @@
 
 #include "../NIF/utils/Object3d.h"
 
+#include <memory>
+
 struct IntersectResult;
 
 struct AABB {
@@ -29,34 +31,33 @@ struct AABB {
 class AABBTree {
 	int max_depth;
 	int min_facets;
-	Vector3* vertexRef;
-	Triangle* triRef;
+	Vector3* vertexRef = nullptr;
+	Triangle* triRef = nullptr;
 
 public:
-	bool bFlag;
-	int depthCounter;
-	int sentinel;
+	bool bFlag = false;
+	int depthCounter = 0;
+	int sentinel = 0;
 
 	class AABBTreeNode {
-		AABBTreeNode* N;
-		AABBTreeNode* P;
-		AABBTreeNode* parent;
+		std::unique_ptr<AABBTreeNode> N;
+		std::unique_ptr<AABBTreeNode> P;
+		AABBTreeNode* parent = nullptr;
 		AABB mBB;
-		AABBTree* tree;
-		int* mIFacets;
+		AABBTree* tree = nullptr;
+		std::unique_ptr<int[]> mIFacets;
 		int nFacets;
 		int id;
 
 	public:
 		AABBTreeNode();
-		~AABBTreeNode();
 
 		// Recursively generates AABB Tree nodes using the referenced data.
-		AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parent, int depth);
+		AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parentRef, int depth);
 
 		// As above, but facetIndices is modified with in-place sorting rather than using vector::push_back to generate sub lists.
 		// Sorting swaps from front of list to end when pos midpoints are found at the beginning of the list.
-		AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parent, int depth);
+		AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parentRef, int depth);
 
 		Vector3 Center();
 
@@ -67,12 +68,11 @@ public:
 		void UpdateAABB(AABB* childBB = nullptr);
 	};
 
-	AABBTreeNode* root;
+	std::unique_ptr<AABBTreeNode> root;
 
 public:
 	AABBTree();
 	AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets);
-	~AABBTree();
 
 	int MinFacets();
 	int MaxDepth();
@@ -95,5 +95,5 @@ struct IntersectResult {
 	int HitFacet;
 	float HitDistance;
 	Vector3 HitCoord;
-	AABBTree::AABBTreeNode* bvhNode;
+	AABBTree::AABBTreeNode* bvhNode = nullptr;
 };

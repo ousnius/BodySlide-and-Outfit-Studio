@@ -293,25 +293,13 @@ bool AABB::IntersectSphere(Vector3& Origin, float radius) {
 }
 
 AABBTree::AABBTreeNode::AABBTreeNode() {
-	N = P = nullptr;
-	tree = nullptr;
-	mIFacets = nullptr;
 }
 
-AABBTree::AABBTreeNode::~AABBTreeNode() {
-	if (mIFacets)
-		delete[] mIFacets;
-	if (N) delete N;
-	if (P) delete P;
-}
-
-AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parent, int depth) {
+AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parentRef, int depth) {
 	int axis;
 	Vector3 axis_avg;
-	N = P = nullptr;
-	mIFacets = nullptr;
 	tree = treeRef;
-	this->parent = parent;
+	parent = parentRef;
 	int moreStart = 0;
 
 	if (facetIndices.size() < treeRef->MinFacets())
@@ -323,7 +311,7 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, 
 	// Force a leaf if the facet count gets below a certain threshold or the depth becomes too large.
 	if ((end - start + 1) <= treeRef->MinFacets() || depth > treeRef->MaxDepth()) {
 		nFacets = end - start + 1;
-		mIFacets = new int[nFacets];
+		mIFacets = std::make_unique<int[]>(nFacets);
 		int p = 0;
 		for (int f = start; f <= end; f++)
 			mIFacets[p++] = facetIndices[f];
@@ -414,23 +402,21 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, 
 	if (moreStart == start)
 		moreStart = (end + start) / 2;
 
-	P = new AABBTreeNode(facetIndices, moreStart, end, treeRef, this, depth + 1);
-	N = new AABBTreeNode(facetIndices, start, moreStart - 1, treeRef, this, depth + 1);
+	P = std::make_unique<AABBTreeNode>(facetIndices, moreStart, end, treeRef, this, depth + 1);
+	N = std::make_unique<AABBTreeNode>(facetIndices, start, moreStart - 1, treeRef, this, depth + 1);
 }
 
-AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parent, int depth) {
+AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parentRef, int depth) {
 	int axis;
 	Vector3 axis_avg;
-	N = P = nullptr;
-	mIFacets = nullptr;
 	tree = treeRef;
-	this->parent = parent;
+	parent = parentRef;
 
 	// Force a leaf if the facet count gets below a certain threshold or the depth becomes too large.
 	if (facetIndices.size() <= treeRef->MinFacets() || depth > treeRef->MaxDepth()) {
 		treeRef->CalcAABBandGeoAvg(facetIndices, mBB, axis_avg);
 		nFacets = facetIndices.size();
-		mIFacets = new int[nFacets];
+		mIFacets = std::make_unique<int[]>(nFacets);
 		for (int f = 0; f < facetIndices.size(); f++)
 			mIFacets[f] = facetIndices[f];
 
@@ -509,8 +495,8 @@ AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, AABBTree* t
 		}
 	}
 
-	P = new AABBTreeNode(more, treeRef, this, depth + 1);
-	N = new AABBTreeNode(less, treeRef, this, depth + 1);
+	P = std::make_unique<AABBTreeNode>(more, treeRef, this, depth + 1);
+	N = std::make_unique<AABBTreeNode>(less, treeRef, this, depth + 1);
 }
 
 Vector3 AABBTree::AABBTreeNode::Center() {
@@ -606,7 +592,7 @@ bool AABBTree::AABBTreeNode::IntersectSphere(Vector3 &origin, float radius, std:
 void AABBTree::AABBTreeNode::UpdateAABB(AABB* childBB) {
 	if (!childBB) {
 		Vector3 bogus;
-		tree->CalcAABBandGeoAvg(mIFacets, 0, nFacets - 1, mBB, bogus);
+		tree->CalcAABBandGeoAvg(mIFacets.get(), 0, nFacets - 1, mBB, bogus);
 	}
 	else
 		mBB.Merge((*childBB));
@@ -616,10 +602,6 @@ void AABBTree::AABBTreeNode::UpdateAABB(AABB* childBB) {
 }
 
 AABBTree::AABBTree() {
-	bFlag = false;
-	depthCounter = 0;
-	sentinel = 0;
-	root = nullptr;
 }
 
 AABBTree::AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets) {
@@ -627,21 +609,12 @@ AABBTree::AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDept
 	vertexRef = vertices;
 	max_depth = maxDepth;
 	min_facets = minFacets;
-	bFlag = false;
-	depthCounter = 0;
-	sentinel = 0;
 
 	std::vector<int> facetIndices(nFacets, 0);
 	for (int i = 0; i < nFacets; i++)
 		facetIndices[i] = i;
 
-	//root = new AABBTreeNode(facetIndices, this, nullptr, 0);
-	root = new AABBTreeNode(facetIndices, 0, nFacets - 1, this, nullptr, 0);
-}
-
-AABBTree::~AABBTree() {
-	if (root)
-		delete root;
+	root = std::make_unique<AABBTreeNode>(facetIndices, 0, nFacets - 1, this, nullptr, 0);
 }
 
 int AABBTree::MinFacets() { return min_facets; }

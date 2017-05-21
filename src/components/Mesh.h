@@ -52,15 +52,15 @@ public:
 	};
 
 	int nVerts = 0;
-	Vector3* verts = nullptr;
-	Vector3* norms = nullptr;
-	Vector3* vcolors = nullptr;
-	Vector2* texcoord = nullptr;
+	std::unique_ptr<Vector3[]> verts;
+	std::unique_ptr<Vector3[]> norms;
+	std::unique_ptr<Vector3[]> vcolors;
+	std::unique_ptr<Vector2[]> texcoord;
 
-	Triangle* tris = nullptr;
+	std::unique_ptr<Triangle[]> tris;
 	int nTris = 0;
 
-	Edge* edges = nullptr;
+	std::unique_ptr<Edge[]> edges;
 	int nEdges = 0;
 
 	bool genBuffers = false;
@@ -74,9 +74,9 @@ public:
 	float scale = 1.0f;								// Information only, does not cause verts to be scaled during render (except point/lines).
 	float smoothThresh = 60.0f * DEG2RAD;			// Smoothing threshold for generating smooth normals.
 
-	std::vector<int>* vertTris = nullptr;				// Map of triangles for which each vert is a member.
-	std::vector<int>* vertEdges = nullptr;				// Map of edges for which each vert is a member.
-	std::unordered_map <int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
+	std::unique_ptr<std::vector<int>[]> vertTris;				// Map of triangles for which each vert is a member.
+	std::unique_ptr<std::vector<int>[]> vertEdges;				// Map of edges for which each vert is a member.
+	std::unordered_map<int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
 
 	RenderMode rendermode = RenderMode::Normal;
 	bool modelSpace = false;
@@ -99,6 +99,7 @@ public:
 	Vector3 color;
 
 	mesh();
+	~mesh();
 
 	// Creates a new bvh tree for the mesh.
 	std::shared_ptr<AABBTree> CreateBVH();
@@ -161,6 +162,4 @@ public:
 	void ColorFill(const Vector3& color);
 
 	void ColorChannelFill(int channel, float value);
-
-	~mesh();
 };

@@ -378,7 +378,7 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 					if (outFacet)
 						(*outFacet) = results[min_i].HitFacet;
 
-					m->tris[results[min_i].HitFacet].trinormal(m->verts, &outNormal);
+					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &outNormal);
 
 					if (hitMesh)
 						(*hitMesh) = m;
@@ -442,7 +442,7 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 					if (outFacet)
 						(*outFacet) = results[min_i].HitFacet;
 
-					ov->tris[results[min_i].HitFacet].trinormal(ov->verts, &outNormal);
+					ov->tris[results[min_i].HitFacet].trinormal(ov->verts.get(), &outNormal);
 				}
 			}
 		}
@@ -544,7 +544,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 						(*hitMeshName) = m->shapeName;
 
 					Vector3 norm;
-					m->tris[results[min_i].HitFacet].trinormal(m->verts, &norm);
+					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
 					int ringID = AddVisCircle(results[min_i].HitCoord, norm, cursorSize, "cursormesh");
 					overlays[ringID]->scale = 2.0f;
 
@@ -986,14 +986,14 @@ void GLSurface::AddMeshFromNif(NifFile* nif, std::string shapeName, Vector3* col
 	m->nTris = nifTris.size();
 
 	if (m->nVerts > 0) {
-		m->verts = new Vector3[m->nVerts];
-		m->norms = new Vector3[m->nVerts];
-		m->vcolors = new Vector3[m->nVerts];
-		m->texcoord = new Vector2[m->nVerts];
+		m->verts = std::make_unique<Vector3[]>(m->nVerts);
+		m->norms = std::make_unique<Vector3[]>(m->nVerts);
+		m->vcolors = std::make_unique<Vector3[]>(m->nVerts);
+		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
 	}
 
 	if (m->nTris > 0)
-		m->tris = new Triangle[m->nTris];
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 	m->shapeName = shapeName;
 	m->smoothSeamNormals = smoothNormalSeams;
@@ -1025,7 +1025,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, std::string shapeName, Vector3* col
 
 		// Smooth normals
 		if (smoothNormalSeams) {
-			kd_matcher matcher(m->verts, m->nVerts);
+			kd_matcher matcher(m->verts.get(), m->nVerts);
 			for (int i = 0; i < matcher.matches.size(); i++) {
 				std::pair<Vector3*, int>& a = matcher.matches[i].first;
 				std::pair<Vector3*, int>& b = matcher.matches[i].second;
@@ -1062,7 +1062,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, std::string shapeName, Vector3* col
 		}
 
 		// Virtually weld verts across UV seams
-		kd_matcher matcher(m->verts, m->nVerts);
+		kd_matcher matcher(m->verts.get(), m->nVerts);
 		for (int i = 0; i < matcher.matches.size(); i++) {
 			std::pair<Vector3*, int>& a = matcher.matches[i].first;
 			std::pair<Vector3*, int>& b = matcher.matches[i].second;
@@ -1111,7 +1111,7 @@ mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Ve
 	m = new mesh();
 
 	m->nVerts = 1;
-	m->verts = new Vector3[1];
+	m->verts = std::make_unique<Vector3[]>(1);
 	m->verts[0] = p;
 	m->nEdges = 0;
 	m->nTris = 0;
@@ -1140,8 +1140,8 @@ int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float 
 	m->nVerts = 360 / 5;
 	m->nEdges = m->nVerts;
 
-	m->verts = new Vector3[m->nVerts];
-	m->edges = new Edge[m->nEdges];
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
+	m->edges = std::make_unique<Edge[]>(m->nEdges);
 
 	m->shapeName = name;
 	m->color = Vector3(1.0f, 0.0f, 0.0f);
@@ -1185,22 +1185,20 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 		myMesh = -1;
 
 	mesh* m = new mesh();
-	int nRingSegments = 36;
-	int nRingSteps = 4;
+	const int nRingSegments = 36;
+	const int nRingSteps = 4;
 
-	m->nVerts = (nRingSegments)* nRingSteps;
+	m->nVerts = nRingSegments * nRingSteps;
 	m->nTris = m->nVerts * 2;
 	m->nEdges = 0;
 
-	m->verts = new Vector3[m->nVerts];
-	m->tris = new Triangle[m->nTris];
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
+	m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 	m->shapeName = name;
 	m->color = color;
 	m->rendermode = RenderMode::UnlitSolid;
 	m->material = GetPrimitiveMaterial();
-
-	Vector3* loftVerts = new Vector3[nRingSteps];
 
 	Matrix4 xf1;
 	xf1.Align(Vector3(0.0f, 0.0f, 1.0f), Vector3(1.0f, 0.0f, 0.0f));
@@ -1212,6 +1210,7 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 
 	float rStep = DEG2RAD * (360.0f / nRingSteps);
 	float i = 0.0f;
+	Vector3 loftVerts[nRingSteps];
 	for (int r = 0; r < nRingSteps; r++) {
 		loftVerts[r].x = sin(i) * ringRadius;
 		loftVerts[r].y = cos(i) * ringRadius;
@@ -1225,11 +1224,11 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 	int seg = 0.0f;
 	int ctri = 0;
 	int p1, p2, p3, p4;
-	for (int vi = 0; vi < m->nVerts;){
+	for (int vi = 0; vi < m->nVerts;) {
 		xf2.Identity();
-		xf2.Rotate(rStep*seg, 0.0f, 0.0f, 1.0f);
-		for (int r = 0; r < nRingSteps; r++){
-			m->verts[vi] = xf3*xf2*loftVerts[r];
+		xf2.Rotate(rStep * seg, 0.0f, 0.0f, 1.0f);
+		for (int r = 0; r < nRingSteps; r++) {
+			m->verts[vi] = xf3 * xf2 * loftVerts[r];
 			if (seg > 0) {
 				p1 = vi;
 				p3 = vi - nRingSteps;
@@ -1295,7 +1294,7 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 	m->nTris = nRingVerts * 5;
 	m->nEdges = 0;
 
-	m->verts = new Vector3[m->nVerts];
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
 	m->color = color;
 	m->shapeName = name;
 	m->rendermode = RenderMode::UnlitSolid;
@@ -1332,7 +1331,7 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 
 	int p1, p2, p3, p4, p5, p6, p7;
 	p7 = m->nVerts - 1;
-	m->tris = new Triangle[m->nTris];
+	m->tris = std::make_unique<Triangle[]>(m->nTris);
 	int t = 0;
 	for (int j = 0; j < nRingVerts; j++) {
 		p1 = j;
@@ -1384,8 +1383,8 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 	m->nTris = nCubeTris;
 	m->nEdges = 0;
 
-	m->verts = new Vector3[m->nVerts];
-	m->tris = new Triangle[m->nTris];
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
+	m->tris = std::make_unique<Triangle[]>(m->nTris);
 	m->color = color;
 	m->shapeName = name;
 	m->rendermode = RenderMode::UnlitSolid;

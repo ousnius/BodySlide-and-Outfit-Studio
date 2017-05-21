@@ -21,36 +21,10 @@ mesh::~mesh() {
 		glDeleteBuffers(1, &ibo);
 		glDeleteVertexArrays(1, &vao);
 	}
-
-	if (verts)
-		delete[] verts;
-	if (norms)
-		delete[] norms;
-	if (vcolors)
-		delete[] vcolors;
-	if (texcoord)
-		delete[] texcoord;
-	if (tris)
-		delete[] tris;
-	if (vertTris)
-		delete[] vertTris;
-	if (vertEdges)
-		delete[] vertEdges;
-	if (edges)
-		delete[] edges;
-
-	verts = nullptr;
-	norms = nullptr;
-	vcolors = nullptr;
-	texcoord = nullptr;
-	tris = nullptr;
-	edges = nullptr;
-	vertTris = nullptr;
-	vertEdges = nullptr;
 }
 
 std::shared_ptr<AABBTree> mesh::CreateBVH() {
-	bvh = std::make_shared<AABBTree>(verts, tris, nTris, 100, 2);
+	bvh = std::make_shared<AABBTree>(verts.get(), tris.get(), nTris, 100, 2);
 	return bvh;
 }
 
@@ -58,11 +32,11 @@ void mesh::BuildTriAdjacency() {
 	if (!tris)
 		return;
 
-	vertTris = new std::vector<int>[nVerts];
+	vertTris = std::make_unique<std::vector<int>[]>(nVerts);
 	for (int t = 0; t < nTris; t++) {
-		vertTris[tris[t].p1].push_back(t);
-		vertTris[tris[t].p2].push_back(t);
-		vertTris[tris[t].p3].push_back(t);
+		vertTris.get()[tris[t].p1].push_back(t);
+		vertTris.get()[tris[t].p2].push_back(t);
+		vertTris.get()[tris[t].p3].push_back(t);
 	}
 }
 
@@ -73,7 +47,7 @@ void mesh::MakeEdges() {
 		return;
 
 	nEdges = nTris * 3;
-	edges = new Edge[nEdges];
+	edges = std::make_unique<Edge[]>(nEdges);
 
 	for (int i = 0; i < nEdges; i++) {
 		// Find correct points for edge
@@ -92,10 +66,10 @@ void mesh::BuildEdgeList() {
 	if (!edges)
 		MakeEdges();
 
-	vertEdges = new std::vector<int>[nVerts];
+	vertEdges = std::make_unique<std::vector<int>[]>(nVerts);
 	for (int e = 0; e < nEdges; e++) {
-		vertEdges[edges[e].p1].push_back(e);
-		vertEdges[edges[e].p2].push_back(e);
+		vertEdges.get()[edges[e].p1].push_back(e);
+		vertEdges.get()[edges[e].p2].push_back(e);
 	}
 }
 
@@ -110,21 +84,21 @@ void mesh::CreateBuffers() {
 	glBindVertexArray(vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
-	glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), verts.get(), GL_DYNAMIC_DRAW);
 
 	if (norms) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), norms, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), norms.get(), GL_DYNAMIC_DRAW);
 	}
 
 	if (vcolors) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), vcolors, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), vcolors.get(), GL_DYNAMIC_DRAW);
 	}
 
 	if (texcoord) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
-		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord.get(), GL_DYNAMIC_DRAW);
 	}
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -132,12 +106,12 @@ void mesh::CreateBuffers() {
 	// Element index array
 	if (tris) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), tris, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nTris * sizeof(Triangle), tris.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 	else if (edges) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nEdges * sizeof(Edge), edges, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, nEdges * sizeof(Edge), edges.get(), GL_DYNAMIC_DRAW);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
@@ -151,25 +125,25 @@ void mesh::UpdateBuffers() {
 
 		if (queueUpdate[UpdateType::Position]) {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Position]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), verts);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), verts.get());
 			queueUpdate[UpdateType::Position] = false;
 		}
 
 		if (norms && queueUpdate[UpdateType::Normals]) {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Normals]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), norms);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), norms.get());
 			queueUpdate[UpdateType::Normals] = false;
 		}
 
 		if (vcolors && queueUpdate[UpdateType::VertexColors]) {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::VertexColors]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), vcolors);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), vcolors.get());
 			queueUpdate[UpdateType::VertexColors] = false;
 		}
 
 		if (texcoord && queueUpdate[UpdateType::TextureCoordinates]) {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::TextureCoordinates]);
-			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector2), texcoord);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector2), texcoord.get());
 			queueUpdate[UpdateType::TextureCoordinates] = false;
 		}
 
@@ -178,12 +152,12 @@ void mesh::UpdateBuffers() {
 		if (queueUpdate[UpdateType::Indices]) {
 			if (tris) {
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nTris * sizeof(Triangle), tris);
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nTris * sizeof(Triangle), tris.get());
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			}
 			else if (edges) {
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo);
-				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nEdges * sizeof(Edge), edges);
+				glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, nEdges * sizeof(Edge), edges.get());
 				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 			}
 			queueUpdate[UpdateType::Indices] = false;
@@ -230,10 +204,11 @@ void mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
 	if (!vertTris)
 		return;
 
-	for (uint t = 0; t < vertTris[querypoint].size(); t++) {
-		tp1 = tris[vertTris[querypoint][t]].p1;
-		tp2 = tris[vertTris[querypoint][t]].p2;
-		tp3 = tris[vertTris[querypoint][t]].p3;
+	auto vtris = vertTris.get();
+	for (uint t = 0; t < vtris[querypoint].size(); t++) {
+		tp1 = tris[vtris[querypoint][t]].p1;
+		tp2 = tris[vtris[querypoint][t]].p2;
+		tp3 = tris[vtris[querypoint][t]].p3;
 		if (tp1 != querypoint)
 			outPoints.insert(tp1);
 		if (tp2 != querypoint)
@@ -241,13 +216,14 @@ void mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
 		if (tp3 != querypoint)
 			outPoints.insert(tp3);		
 	}
+
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
 		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
 			wq = weldVerts[querypoint][v];
-			for (uint t = 0; t < vertTris[wq].size(); t++) {
-				tp1 = tris[vertTris[wq][t]].p1;
-				tp2 = tris[vertTris[wq][t]].p2;
-				tp3 = tris[vertTris[wq][t]].p3;
+			for (uint t = 0; t < vtris[wq].size(); t++) {
+				tp1 = tris[vtris[wq][t]].p1;
+				tp2 = tris[vtris[wq][t]].p2;
+				tp3 = tris[vtris[wq][t]].p3;
 				if (tp1 != wq)
 					outPoints.insert(tp1);
 				if (tp2 != wq)
@@ -269,9 +245,10 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 	if (!vertEdges)
 		return 0;
 
-	for (uint e = 0; e < vertEdges[querypoint].size(); e++) {
-		ep1 = edges[vertEdges[querypoint][e]].p1;
-		ep2 = edges[vertEdges[querypoint][e]].p2;
+	auto vedges = vertEdges.get();
+	for (uint e = 0; e < vedges[querypoint].size(); e++) {
+		ep1 = edges[vedges[querypoint][e]].p1;
+		ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
 			if (ep1 != querypoint)
 				outPoints[n++] = ep1;
@@ -282,9 +259,9 @@ int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
 		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
 			wq = weldVerts[querypoint][v];
-			for (uint e = 0; e < vertEdges[wq].size(); e++) {
-				ep1 = edges[vertEdges[wq][e]].p1;
-				ep2 = edges[vertEdges[wq][e]].p2;
+			for (uint e = 0; e < vedges[wq].size(); e++) {
+				ep1 = edges[vedges[wq][e]].p1;
+				ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
 					if (ep1 != wq)
 						outPoints[n++] = ep1;
@@ -305,9 +282,11 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	int ep1;
 	int ep2;
 	int n = 0;
-	for (uint e = 0; e < vertEdges[querypoint].size(); e++) {
-		ep1 = edges[vertEdges[querypoint][e]].p1;
-		ep2 = edges[vertEdges[querypoint][e]].p2;
+
+	auto vedges = vertEdges.get();
+	for (uint e = 0; e < vedges[querypoint].size(); e++) {
+		ep1 = edges[vedges[querypoint][e]].p1;
+		ep2 = edges[vedges[querypoint][e]].p2;
 		if (n + 1 < maxPoints) {
 			if (ep1 != querypoint && !visPoint[ep1]) {
 				outPoints[n++] = ep1;
@@ -323,9 +302,9 @@ int mesh::GetAdjacentUnvisitedPoints(int querypoint, int outPoints[], int maxPoi
 	if (weldVerts.find(querypoint) != weldVerts.end()) {
 		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
 			int wq = weldVerts[querypoint][v];
-			for (uint e = 0; e < vertEdges[wq].size(); e++) {
-				ep1 = edges[vertEdges[wq][e]].p1;
-				ep2 = edges[vertEdges[wq][e]].p2;
+			for (uint e = 0; e < vedges[wq].size(); e++) {
+				ep1 = edges[vedges[wq][e]].p1;
+				ep2 = edges[vedges[wq][e]].p2;
 				if (n + 1 < maxPoints) {
 					if (ep1 != wq && !visPoint[ep1]) {
 						outPoints[n++] = ep1;
@@ -372,7 +351,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 		if (!bn1 && !bn2 && !bn3)
 			continue;
 
-		tris[t].trinormal(verts, &tn);
+		tris[t].trinormal(verts.get(), &tn);
 		Vector3& pn1 = norms[tris[t].p1];
 		Vector3& pn2 = norms[tris[t].p2];
 		Vector3& pn3 = norms[tris[t].p3];
@@ -392,7 +371,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 
 	// Smooth normals
 	if (smoothSeamNormals) {
-		kd_matcher matcher(verts, nVerts);
+		kd_matcher matcher(verts.get(), nVerts);
 		for (int i = 0; i < matcher.matches.size(); i++) {
 			std::pair<Vector3*, int>& a = matcher.matches[i].first;
 			std::pair<Vector3*, int>& b = matcher.matches[i].second;
@@ -430,7 +409,7 @@ void mesh::FacetNormals() {
 
 	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
-		tris[t].trinormal(verts, &tn);
+		tris[t].trinormal(verts.get(), &tn);
 		Vector3& pn1 = norms[tris[t].p1];
 		Vector3& pn2 = norms[tris[t].p2];
 		Vector3& pn3 = norms[tris[t].p3];
@@ -544,12 +523,13 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 	outFacets.push_back(startTri);
 	trivisit[startTri] = true;
 
+	auto vtris = vertTris.get();
 	if (verts[tris[startTri].p1].DistanceSquaredTo(center) <= sqradius) {
 		if (!pointvisit[tris[startTri].p1]) {
 			pointvisit[tris[startTri].p1] = true;
 			outPoints[nOutPoints++] = tris[startTri].p1;
 		}
-		for (auto &t : vertTris[tris[startTri].p1]) {
+		for (auto &t : vtris[tris[startTri].p1]) {
 			if (trivisit[t])
 				continue;
 			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
@@ -557,7 +537,7 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 		auto wv = weldVerts.find(tris[startTri].p1);
 		if (wv != weldVerts.end()) {
 			for (auto &w : wv->second) {
-				for (auto &t : vertTris[w]) {
+				for (auto &t : vtris[w]) {
 					if (trivisit[t])
 						continue;
 					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
@@ -571,7 +551,7 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 			pointvisit[tris[startTri].p2] = true;
 			outPoints[nOutPoints++] = tris[startTri].p2;
 		}		
-		for (auto &t : vertTris[tris[startTri].p2]) {
+		for (auto &t : vtris[tris[startTri].p2]) {
 			if (trivisit[t])
 				continue;
 			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
@@ -579,7 +559,7 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 		auto wv = weldVerts.find(tris[startTri].p2);
 		if (wv != weldVerts.end()) {
 			for (auto &w : wv->second) {
-				for (auto &t : vertTris[w]) {
+				for (auto &t : vtris[w]) {
 					if (trivisit[t])
 						continue;
 					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
@@ -592,7 +572,7 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 			pointvisit[tris[startTri].p3] = true;
 			outPoints[nOutPoints++] = tris[startTri].p3;
 		}
-		for (auto &t : vertTris[tris[startTri].p3]) {
+		for (auto &t : vtris[tris[startTri].p3]) {
 			if (trivisit[t])
 				continue;
 			ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);
@@ -600,7 +580,7 @@ bool mesh::ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri
 		auto wv = weldVerts.find(tris[startTri].p3);
 		if (wv != weldVerts.end()) {
 			for (auto &w : wv->second) {
-				for (auto &t : vertTris[w]) {
+				for (auto &t : vtris[w]) {
 					if (trivisit[t])
 						continue;
 					ConnectedPointsInSphere(center, sqradius, t, trivisit, pointvisit, outPoints, nOutPoints, outFacets);

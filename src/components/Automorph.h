@@ -13,16 +13,16 @@ See the included LICENSE file
 #include "SliderSet.h"
 
 class Automorph {
-	kd_tree* refTree;
+	std::unique_ptr<kd_tree> refTree;
 	std::map<std::string, mesh*> sourceShapes;
 	std::map<std::string, mesh*> foreignShapes;	// Meshes linked by LinkSourceShapeMesh loaded and managed outside the.
 	// Class - to prevent AutoMorph from deleting it. Golly, smart pointers would be nice.
 	std::map<int, std::vector<kd_query_result>> prox_cache;
-	DiffDataSets __srcDiffData;			// Unternally loaded and stored diff data.diffs loaded from existing reference .bsd files.
-	DiffDataSets* srcDiffData;			// Either __srcDiffData or an external linked data set.
-	DiffDataSets resultDiffData;		// Diffs calculated by AutoMorph.
+	DiffDataSets __srcDiffData;				// Unternally loaded and stored diff data.diffs loaded from existing reference .bsd files.
+	DiffDataSets* srcDiffData = nullptr;	// Either __srcDiffData or an external linked data set.
+	DiffDataSets resultDiffData;			// Diffs calculated by AutoMorph.
 
-	bool bEnableMask;					// Use red component of mesh vertex color as a mask for morphing.
+	bool bEnableMask = true;				// Use red component of mesh vertex color as a mask for morphing.
 
 	// A translation between shapetarget + slidername and the data name for the result diff data set.
 	// This only has values when a sliderset is loaded from disk and a slider's data name for a target
@@ -30,7 +30,7 @@ class Automorph {
 	std::unordered_map<std::string, std::string> targetSliderDataNames;
 
 public:
-	mesh* morphRef;
+	std::unique_ptr<mesh> morphRef;
 
 	Automorph();
 	~Automorph();

@@ -7,21 +7,9 @@ See the included LICENSE file
 #include "Automorph.h"
 
 Automorph::Automorph() {
-	morphRef = nullptr;
-	refTree = nullptr;
-	srcDiffData = nullptr;
-	bEnableMask = true;
 }
 
 Automorph::~Automorph() {
-	if (morphRef) {
-		delete morphRef;
-		morphRef = nullptr;
-	}
-	if (refTree) {
-		delete refTree;
-		refTree = nullptr;
-	}
 	ClearSourceShapes();
 }
 
@@ -87,16 +75,10 @@ void Automorph::RenameShape(const std::string& shapeName, const std::string& new
 }
 
 void Automorph::SetRef(NifFile& ref, const std::string& refShape) {
-	if (morphRef)
-		delete morphRef;
+	morphRef = std::make_unique<mesh>();
+	MeshFromNifShape(morphRef.get(), ref, refShape);
 
-	morphRef = new mesh();
-	MeshFromNifShape(morphRef, ref, refShape);
-
-	if (refTree)
-		delete refTree;
-
-	refTree = new kd_tree(morphRef->verts, morphRef->nVerts);
+	refTree = std::make_unique<kd_tree>(morphRef->verts.get(), morphRef->nVerts);
 }
 
 void Automorph::LinkRefDiffData(DiffDataSets* diffData) {
@@ -170,7 +152,7 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 		return;
 
 	if (!dm->vcolors)
-		dm->vcolors = new Vector3[dm->nVerts];
+		dm->vcolors = std::make_unique<Vector3[]>(dm->nVerts);
 
 	for (int i = 0; i < dm->nVerts; i++)
 		dm->vcolors[i] = m->vcolors[i];
@@ -191,10 +173,10 @@ void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const std::string& shape
 	//m->color = Vector3(c, c, c);
 
 	m->nVerts = objVerts.size();
-	m->verts = new Vector3[m->nVerts];
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
 
 	m->nTris = objTris.size();
-	m->tris = new Triangle[m->nTris];
+	m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
 	for (int i = 0; i < m->nVerts; i++)
@@ -220,10 +202,10 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shape
 	//m->color = Vector3(c,c,c);
 
 	m->nVerts = nifVerts.size();
-	m->verts = new Vector3[m->nVerts];
+	m->verts = std::make_unique<Vector3[]>(m->nVerts);
 
 	m->nTris = nifTris.size();
-	m->tris = new Triangle[m->nTris];
+	m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
 	for (int i = 0; i < m->nVerts; i++)
@@ -377,7 +359,7 @@ void Automorph::GenerateResultDiff(const std::string& shapeName, const std::stri
 	mesh* m = sourceShapes[shapeName];
 	if (resultDiffData.TargetMatch(shapeName + sliderName, shapeName)) {
 		if (m->vcolors)
-			resultDiffData.ZeroVertDiff(shapeName + sliderName, m->vcolors);
+			resultDiffData.ZeroVertDiff(shapeName + sliderName, m->vcolors.get());
 		else
 			resultDiffData.ClearSet(shapeName + sliderName);
 	}
