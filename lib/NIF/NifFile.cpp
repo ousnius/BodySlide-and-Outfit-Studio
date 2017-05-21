@@ -187,7 +187,7 @@ NiFactoryRegister::NiFactoryRegister() {
 NiShape* NifFile::FindShapeByName(const std::string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
-		auto geom = dynamic_cast<NiShape*>(block);
+		auto geom = dynamic_cast<NiShape*>(block.get());
 		if (geom && !name.compare(geom->GetName())) {
 			if (numFound >= dupIndex)
 				return geom;
@@ -201,7 +201,7 @@ NiShape* NifFile::FindShapeByName(const std::string& name, int dupIndex) {
 NiAVObject* NifFile::FindAVObjectByName(const std::string& name, int dupIndex) {
 	int numFound = 0;
 	for (auto& block : blocks) {
-		auto avo = dynamic_cast<NiAVObject*>(block);
+		auto avo = dynamic_cast<NiAVObject*>(block.get());
 		if (avo && !name.compare(avo->GetName())) {
 			if (numFound >= dupIndex)
 				return avo;
@@ -214,7 +214,7 @@ NiAVObject* NifFile::FindAVObjectByName(const std::string& name, int dupIndex) {
 
 NiNode* NifFile::FindNodeByName(const std::string& name) {
 	for (auto& block : blocks) {
-		auto node = dynamic_cast<NiNode*>(block);
+		auto node = dynamic_cast<NiNode*>(block.get());
 		if (node && !name.compare(node->GetName()))
 			return node;
 	}
@@ -223,9 +223,15 @@ NiNode* NifFile::FindNodeByName(const std::string& name) {
 
 int NifFile::GetBlockID(NiObject* block) {
 	if (block != nullptr) {
-		auto it = find(blocks.begin(), blocks.end(), block);
+		auto it = std::find_if(blocks.begin(), blocks.end(), [&block] (const auto& ptr) {
+			if (ptr.get() == block)
+				return true;
+			else
+				return false;
+		});
+
 		if (it != blocks.end())
-			return distance(blocks.begin(), it);
+			return std::distance(blocks.begin(), it);
 	}
 
 	return 0xFFFFFFFF;
@@ -235,7 +241,7 @@ NiNode* NifFile::GetParentNode(NiObject* childBlock) {
 	if (childBlock != nullptr) {
 		int childId = GetBlockID(childBlock);
 		for (auto &block : blocks) {
-			auto node = dynamic_cast<NiNode*>(block);
+			auto node = dynamic_cast<NiNode*>(block.get());
 			if (node) {
 				auto children = node->GetChildren();
 				for (auto it = children.begin(); it < children.end(); it++) {
@@ -263,15 +269,15 @@ void NifFile::CopyFrom(const NifFile& other) {
 	blocks.resize(nBlocks);
 
 	for (int i = 0; i < nBlocks; i++)
-		blocks[i] = other.blocks[i]->Clone();
+		blocks[i] = std::move(std::unique_ptr<NiObject>(other.blocks[i]->Clone()));
 
 	LinkGeomData();
 	hdr.SetBlockReference(&blocks);
 }
 
 void NifFile::LinkGeomData() {
-	for (auto &b : blocks) {
-		auto geom = dynamic_cast<NiGeometry*>(b);
+	for (auto &block : blocks) {
+		auto geom = dynamic_cast<NiGeometry*>(block.get());
 		if (geom) {
 			auto geomData = hdr.GetBlock<NiGeometryData>(geom->GetDataRef());
 			if (geomData)
@@ -283,9 +289,6 @@ void NifFile::LinkGeomData() {
 void NifFile::Clear() {
 	isValid = false;
 	hasUnknown = false;
-
-	for (int i = 0; i < blocks.size(); i++)
-		delete blocks[i];
 
 	blocks.clear();
 	hdr.Clear();
@@ -332,7 +335,7 @@ int NifFile::Load(const std::string& filename) {
 			}
 
 			if (block)
-				blocks[i] = block;
+				blocks[i] = std::move(std::unique_ptr<NiObject>(block));
 		}
 
 		hdr.SetBlockReference(&blocks);
@@ -375,7 +378,7 @@ void NifFile::SetShapeOrder(const std::vector<std::string>& order) {
 		delta.resize(order.size());
 
 		for (int p = 0; p < oldOrder.size(); p++)
-			delta[p] = (find(order.begin(), order.end(), oldOrder[p]) - order.begin()) - p;
+			delta[p] = (std::find(order.begin(), order.end(), oldOrder[p]) - order.begin()) - p;
 
 		hadoffset = false;
 		//Positive offsets mean that the item has moved down the list.  By necessity, that means another item has moved up the list. 
@@ -405,7 +408,7 @@ void NifFile::PrettySortBlocks() {
 	if (hasUnknown)
 		return;
 
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (!root)
 		return;
 
@@ -416,7 +419,7 @@ void NifFile::PrettySortBlocks() {
 	root->ClearChildren();
 
 	for (int i = 0; i < hdr.GetNumBlocks(); i++)
-		if (find(oldChildren.begin(), oldChildren.end(), i) != oldChildren.end())
+		if (std::find(oldChildren.begin(), oldChildren.end(), i) != oldChildren.end())
 			root->AddChildRef(i);
 
 	auto& children = root->GetChildren();
@@ -443,7 +446,7 @@ bool NifFile::DeleteUnreferencedBlocks() {
 }
 
 int NifFile::AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale) {
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (!root)
 		return 0xFFFFFFFF;
 
@@ -1047,7 +1050,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 		destBoneCont->boneRefs.Clear();
 
 	// Bones
-	auto rootNode = dynamic_cast<NiNode*>(blocks[0]);
+	auto rootNode = dynamic_cast<NiNode*>(blocks[0].get());
 	if (rootNode) {
 		for (auto &boneName : srcBoneList) {
 			int boneID = GetBlockID(FindNodeByName(boneName));
@@ -1437,7 +1440,7 @@ void NifFile::FinalizeData() {
 int NifFile::GetShapeList(std::vector<std::string>& outList) {
 	outList.clear();
 	for (auto& block : blocks) {
-		auto shape = dynamic_cast<NiShape*>(block);
+		auto shape = dynamic_cast<NiShape*>(block.get());
 		if (shape)
 			outList.push_back(shape->GetName());
 	}
@@ -1480,7 +1483,7 @@ int NifFile::GetRootNodeID() {
 
 bool NifFile::GetNodeTransform(const std::string& nodeName, std::vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
 	for (auto& block : blocks) {
-		auto node = dynamic_cast<NiNode*>(block);
+		auto node = dynamic_cast<NiNode*>(block.get());
 		if (node && !node->GetName().compare(nodeName)) {
 			outRot.clear();
 			outRot.push_back(node->rotation[0]);
@@ -1496,7 +1499,7 @@ bool NifFile::GetNodeTransform(const std::string& nodeName, std::vector<Vector3>
 
 bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly) {
 	if (rootChildrenOnly) {
-		auto root = dynamic_cast<NiNode*>(blocks[0]);
+		auto root = dynamic_cast<NiNode*>(blocks[0].get());
 		if (root) {
 			for (int i = 0; i < root->GetNumChildren(); i++) {
 				auto node = hdr.GetBlock<NiNode>(root->GetChildRef(i));
@@ -1515,7 +1518,7 @@ bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXfo
 	}
 	else {
 		for (auto& block : blocks) {
-			auto node = dynamic_cast<NiNode*>(block);
+			auto node = dynamic_cast<NiNode*>(block.get());
 			if (node && !node->GetName().compare(nodeName)) {
 				node->rotation[0] = inXform.rotation[0];
 				node->rotation[1] = inXform.rotation[1];
@@ -2403,7 +2406,7 @@ void NifFile::ClearShapeTransform(const std::string& shapeName) {
 
 void NifFile::GetShapeTransform(const std::string& shapeName, Matrix4& outTransform) {
 	SkinTransform xFormRoot;
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (root) {
 		xFormRoot.translation = root->translation;
 		xFormRoot.scale = root->scale;
@@ -2428,7 +2431,7 @@ void NifFile::GetShapeTransform(const std::string& shapeName, Matrix4& outTransf
 }
 
 void NifFile::ClearRootTransform() {
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (root) {
 		root->translation.Zero();
 		root->scale = 1.0f;
@@ -2439,7 +2442,7 @@ void NifFile::ClearRootTransform() {
 }
 
 void NifFile::GetRootTranslation(Vector3& outVec) {
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (root)
 		outVec = root->translation;
 	else
@@ -2447,13 +2450,13 @@ void NifFile::GetRootTranslation(Vector3& outVec) {
 }
 
 void NifFile::SetRootTranslation(const Vector3& newTrans) {
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (root)
 		root->translation = newTrans;
 }
 
 void NifFile::GetRootScale(float& outScale) {
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (root)
 		outScale = root->scale;
 	else
@@ -2461,7 +2464,7 @@ void NifFile::GetRootScale(float& outScale) {
 }
 
 void NifFile::SetRootScale(const float newScale) {
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (root)
 		root->scale = newScale;
 }
@@ -2471,7 +2474,7 @@ void NifFile::GetShapeTranslation(const std::string& shapeName, Vector3& outVec)
 	if (avo)
 		outVec = avo->translation;
 
-	auto root = dynamic_cast<NiNode*>(blocks[0]);
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
 	if (root)
 		outVec += root->translation;
 

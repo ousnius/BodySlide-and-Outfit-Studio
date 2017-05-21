@@ -17,7 +17,6 @@ See the included LICENSE file
 #include "Shaders.h"
 #include "Skin.h"
 
-#include <memory>
 #include <unordered_map>
 
 struct OptOptionsSSE {
@@ -95,7 +94,7 @@ struct BoneWeightsSort {
 class NifFile {
 private:
 	std::string fileName;
-	std::vector<NiObject*> blocks;
+	std::vector<std::unique_ptr<NiObject>> blocks;
 	bool isValid = false;
 	bool hasUnknown = false;
 
@@ -271,7 +270,7 @@ std::vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	T* n;
 
 	if (parent == nullptr) {
-		n = dynamic_cast<T*>(blocks[0]);
+		n = dynamic_cast<T*>(blocks[0].get());
 		if (n)
 			result.push_back(n);
 

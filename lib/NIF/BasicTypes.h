@@ -12,6 +12,7 @@ See the included LICENSE file
 #include <streambuf>
 #include <string>
 #include <algorithm>
+#include <memory>
 
 #pragma warning (disable : 4100)
 
@@ -339,7 +340,7 @@ private:
 	NiString exportInfo3;
 
 	// Foreign reference to the blocks list in NifFile.
-	std::vector<NiObject*>* blocks;
+	std::vector<std::unique_ptr<NiObject>>* blocks;
 
 	uint numBlocks;
 	ushort numBlockTypes;
@@ -370,7 +371,7 @@ public:
 	std::string GetExportInfo();
 	void SetExportInfo(const std::string& exportInfo);
 
-	void SetBlockReference(std::vector<NiObject*>* blockRef) {
+	void SetBlockReference(std::vector<std::unique_ptr<NiObject>>* blockRef) {
 		blocks = blockRef;
 	};
 
@@ -379,7 +380,7 @@ public:
 	template <class T>
 	T* GetBlock(const int blockId) {
 		if (blockId >= 0 && blockId < numBlocks)
-			return dynamic_cast<T*>((*blocks)[blockId]);
+			return dynamic_cast<T*>((*blocks)[blockId].get());
 
 		return nullptr;
 	}

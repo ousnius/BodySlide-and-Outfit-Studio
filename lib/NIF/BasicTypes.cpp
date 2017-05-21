@@ -160,15 +160,14 @@ void NiHeader::DeleteBlock(int blockId) {
 				blockTypeIndices[i]--;
 	}
 
-	delete (*blocks)[blockId];
-	(*blocks).erase((*blocks).begin() + blockId);
+	blocks->erase(blocks->begin() + blockId);
 	numBlocks--;
 	blockTypeIndices.erase(blockTypeIndices.begin() + blockId);
 	blockSizes.erase(blockSizes.begin() + blockId);
 
 	// Next tell all the blocks that the deletion happened
 	for (auto &b : (*blocks))
-		BlockDeleted(b, blockId);
+		BlockDeleted(b.get(), blockId);
 }
 
 void NiHeader::DeleteBlockByType(const std::string& blockTypeStr) {
@@ -193,8 +192,8 @@ int NiHeader::AddBlock(NiObject* newBlock) {
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices.push_back(btID);
 	blockSizes.push_back(newBlock->CalcBlockSize(version));
-	(*blocks).push_back(newBlock);
-	numBlocks = (*blocks).size();
+	blocks->push_back(std::move(std::unique_ptr<NiObject>(newBlock)));
+	numBlocks = blocks->size();
 	return numBlocks - 1;
 }
 
@@ -216,12 +215,11 @@ int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock) {
 				blockTypeIndices[i]--;
 	}
 
-	delete (*blocks)[oldBlockId];
-
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices[oldBlockId] = btID;
 	blockSizes[oldBlockId] = newBlock->CalcBlockSize(version);
-	(*blocks)[oldBlockId] = newBlock;
+	auto blockPtrSwap = std::unique_ptr<NiObject>(newBlock);
+	(*blocks)[oldBlockId].swap(blockPtrSwap);
 	return oldBlockId;
 }
 
@@ -232,11 +230,11 @@ void NiHeader::SwapBlocks(const int blockIndexLo, const int blockIndexHi) {
 	// First swap data
 	iter_swap(blockTypeIndices.begin() + blockIndexLo, blockTypeIndices.begin() + blockIndexHi);
 	iter_swap(blockSizes.begin() + blockIndexLo, blockSizes.begin() + blockIndexHi);
-	iter_swap((*blocks).begin() + blockIndexLo, (*blocks).begin() + blockIndexHi);
+	iter_swap(blocks->begin() + blockIndexLo, blocks->begin() + blockIndexHi);
 
 	// Next tell all the blocks that the swap happened
 	for (auto &b : (*blocks))
-		BlockSwapped(b, blockIndexLo, blockIndexHi);
+		BlockSwapped(b.get(), blockIndexLo, blockIndexHi);
 }
 
 bool NiHeader::IsBlockReferenced(const int blockId) {
@@ -298,7 +296,7 @@ ushort NiHeader::GetBlockTypeIndex(const int id) {
 
 void NiHeader::CalcAllBlockSizes() {
 	for (int i = 0; i < numBlocks; i++)
-		blockSizes[i] = (*blocks)[i]->CalcBlockSize(version);
+		blockSizes[i] = blocks->at(i)->CalcBlockSize(version);
 }
 
 int NiHeader::FindStringId(const std::string& str) {
