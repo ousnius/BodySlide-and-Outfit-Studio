@@ -380,6 +380,9 @@ public:
 	BSClothExtraData(const uint size = 0);
 	BSClothExtraData(NiStream& stream);
 
+	static constexpr const char* BlockName = "BSClothExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
+
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	int CalcBlockSize(NiVersion& version);
