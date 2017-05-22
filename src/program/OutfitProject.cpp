@@ -1770,7 +1770,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	return 0;
 }
 
-int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::string& sliderSetName) {
+int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::string& sliderSetName, std::vector<std::string>* origShapeOrder) {
 	owner->StartProgress(_("Loading slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
@@ -1792,6 +1792,9 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 		owner->EndProgress();
 		return 4;
 	}
+
+	if (origShapeOrder)
+		workNif.GetShapeList(*origShapeOrder);
 
 	std::string newBaseShape;
 

@@ -1008,7 +1008,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(10, _("Loading outfit data..."));
 	StartSubProgress(10, 40);
 
-	int error = project->OutfitFromSliderSet(file, outfit);
+	std::vector<std::string> origShapeOrder;
+	int error = project->OutfitFromSliderSet(file, outfit, &origShapeOrder);
 	if (error) {
 		EndProgress();
 		wxLogError("Failed to create project (%d)!", error);
@@ -1029,6 +1030,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 			return;
 		}
 	}
+
+	project->GetWorkNif()->SetShapeOrder(origShapeOrder);
 
 	wxLogMessage("Loading textures...");
 	UpdateProgress(60, _("Loading textures..."));

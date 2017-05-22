@@ -187,7 +187,7 @@ public:
 	int LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders = false);
 	int LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders = false, const std::string& shapeName = "");
 
-	int OutfitFromSliderSet(const std::string& fileName, const std::string& setName);
+	int OutfitFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 
 	void DeleteVerts(const std::string& shapeName, const std::unordered_map<ushort, float>& mask);
 	void DuplicateShape(const std::string& sourceShape, const std::string& destShape);
