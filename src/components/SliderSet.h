@@ -160,9 +160,21 @@ public:
 	}
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName) {
-		for (auto& tsn : targetshapenames)
-			if (tsn.second == shapeName)
-				tsn.second = newShapeName;
+		std::string target = ShapeToTarget(shapeName);
+		if (!target.empty()) {
+			if (targetshapenames.find(target) != targetshapenames.end()) {
+				targetshapenames[newShapeName] = newShapeName;
+				targetshapenames.erase(target);
+			}
+
+			if (targetdatafolders.find(target) != targetdatafolders.end()) {
+				targetdatafolders[newShapeName] = targetdatafolders[target];
+				targetdatafolders.erase(target);
+			}
+		}
+
+		for (auto& slider : sliders)
+			slider.RenameTarget(target, newShapeName);
 	}
 
 	void AddTargetDataFolder(const std::string& targetName, const std::string& dataFolder) {

@@ -114,7 +114,6 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		std::string targ;
 		std::string targSlider;
 		std::string targSliderData;
-		std::string targDataName;
 
 		prog = 10;
 		step = 20 / activeSet.size();
@@ -128,10 +127,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 				targSlider = activeSet[i].TargetDataName(targ);
 				if (baseDiffData.GetDiffSet(targSlider) && baseDiffData.GetDiffSet(targSlider)->size() > 0) {
 					if (activeSet[i].IsLocalData(targSlider)) {
-						targDataName = activeSet[i].DataFileName(targSlider);
-						int lastIndex = targDataName.find_last_of('\\') + 1;
-
-						targSliderData = osdFileName + "\\" + targDataName.substr(lastIndex, targDataName.length() - lastIndex);
+						targSliderData = osdFileName + "\\" + targSlider;
 						outSet[id].AddDataFile(targ, targSlider, targSliderData);
 					}
 					else {
@@ -644,10 +640,16 @@ void OutfitProject::SetSliderName(int index, const std::string& newName) {
 	std::vector<std::string> shapes;
 	GetShapes(shapes);
 	for (auto &s : shapes) {
-		if (IsBaseShape(s))
-			continue;
+		std::string oldDT = s + oldName;
+		std::string newDT = s + newName;
 
-		morpher.RenameResultDiffData(s, oldName, newName);
+		if (IsBaseShape(s))
+			baseDiffData.RenameSet(oldDT, newDT);
+		else
+			morpher.RenameResultDiffData(s, oldName, newName);
+
+		activeSet[index].RenameData(oldDT, newDT);
+		activeSet[index].SetLocalData(newDT);
 	}
 
 	activeSet[index].name = newName;
@@ -1936,11 +1938,16 @@ void OutfitProject::DeleteShape(const std::string& shapeName) {
 void OutfitProject::RenameShape(const std::string& shapeName, const std::string& newShapeName) {
 	workNif.RenameShape(shapeName, newShapeName);
 	workAnim.RenameShape(shapeName, newShapeName);
+	activeSet.RenameShape(shapeName, newShapeName);
 
-	if (!IsBaseShape(shapeName))
+	if (IsBaseShape(shapeName)) {
+		activeSet.SetReferencedData(newShapeName, true);
+		baseDiffData.DeepRename(shapeName, newShapeName);
+		baseShape = newShapeName;
+	}
+	else
 		morpher.RenameShape(shapeName, newShapeName);
 
-	activeSet.RenameShape(shapeName, newShapeName);
 	wxLogMessage("Renamed shape '%s' to '%s'.", shapeName, newShapeName);
 }
 

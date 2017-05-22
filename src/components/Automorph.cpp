@@ -33,14 +33,15 @@ void Automorph::RenameResultDiffData(const std::string& shape, const std::string
 }
 
 void Automorph::RenameShape(const std::string& shapeName, const std::string& newShapeName) {
-	if (sourceShapes.find(shapeName) != sourceShapes.end()){
+	if (sourceShapes.find(shapeName) != sourceShapes.end()) {
 		sourceShapes[newShapeName] = sourceShapes[shapeName];
 		sourceShapes.erase(shapeName);
 	}
-	if (foreignShapes.find(shapeName) != foreignShapes.end()){
+	if (foreignShapes.find(shapeName) != foreignShapes.end()) {
 		foreignShapes[newShapeName] = foreignShapes[shapeName];
 		foreignShapes.erase(shapeName);
 	}
+
 	resultDiffData.DeepRename(shapeName, newShapeName);
 
 	std::vector<std::string> newVals;

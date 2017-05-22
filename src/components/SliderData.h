@@ -12,7 +12,7 @@ See the included LICENSE file
 using namespace tinyxml2;
 
 struct DiffInfo {
-	bool bLocal;			// Local files use the slider set's directory for path info. Otherwise, it uses the target's data path.
+	bool bLocal;				// Local files use the slider set's directory for path info. Otherwise, it uses the target's data path.
 	std::string dataName;		// Alias for the data.
 	std::string targetName;		// Shape affected by the data.
 	std::string fileName;		// File name not including path.
@@ -50,12 +50,33 @@ public:
 
 		return "";
 	}
+
 	std::string DataFileName(const std::string& targetDataName) {
 		for (auto &df : dataFiles)
 			if (df.dataName == targetDataName)
 				return df.fileName;
 
 		return "";
+	}
+
+	void RenameTarget(const std::string& oldTarget, const std::string& newTarget) {
+		for (auto &df : dataFiles) {
+			if (df.targetName == oldTarget) {
+				df.targetName = newTarget;
+
+				if (df.dataName.length() >= oldTarget.length()) {
+					std::string dtname = df.dataName.substr(oldTarget.length());
+					df.dataName = newTarget + dtname;
+				}
+			}
+		}
+	}
+
+	void RenameData(const std::string& oldDT, const std::string& newDT) {
+		for (auto &df : dataFiles) {
+			if (df.dataName == oldDT)
+				df.dataName = newDT;
+		}
 	}
 
 	// Creates a data file record and returns the record index.  
