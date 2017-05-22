@@ -561,8 +561,8 @@ void bhkNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
 int bhkNiTriStripsShape::CalcBlockSize(NiVersion& version) {
 	bhkShape::CalcBlockSize(version);
 
-	blockSize += 56;
-	blockSize += partRefs.GetSize() * 4;
+	blockSize += 52;
+	blockSize += partRefs.CalcBlockSize();
 	blockSize += numFilters * 4;
 
 	return blockSize;
@@ -616,8 +616,8 @@ void bhkListShape::GetChildRefs(std::set<int*>& refs) {
 int bhkListShape::CalcBlockSize(NiVersion& version) {
 	bhkShapeCollection::CalcBlockSize(version);
 
-	blockSize += 36;
-	blockSize += 4 * subShapeRefs.GetSize();
+	blockSize += 32;
+	blockSize += subShapeRefs.CalcBlockSize();
 	blockSize += 4 * numUnkInts;
 
 	return blockSize;
@@ -725,8 +725,8 @@ void bhkConstraint::GetChildRefs(std::set<int*>& refs) {
 int bhkConstraint::CalcBlockSize(NiVersion& version) {
 	bhkSerializable::CalcBlockSize(version);
 
-	blockSize += 8;
-	blockSize += entityRefs.GetSize() * 4;
+	blockSize += 4;
+	blockSize += entityRefs.CalcBlockSize();
 
 	return blockSize;
 }
@@ -867,8 +867,8 @@ void SubConstraintDesc::GetChildRefs(std::set<int*>& refs) {
 }
 
 int SubConstraintDesc::CalcDescSize() {
-	int descSize = 12;
-	descSize += entityRefs.GetSize() * 4;
+	int descSize = 8;
+	descSize += entityRefs.CalcBlockSize();
 
 	switch (type) {
 	case BallAndSocket:
@@ -1124,9 +1124,9 @@ void bhkBallSocketConstraintChain::GetChildRefs(std::set<int*>& refs) {
 int bhkBallSocketConstraintChain::CalcBlockSize(NiVersion& version) {
 	bhkSerializable::CalcBlockSize(version);
 
-	blockSize += 40;
+	blockSize += 36;
 	blockSize += numPivots * 16;
-	blockSize += entityARefs.GetSize() * 4;
+	blockSize += entityARefs.CalcBlockSize();
 
 	return blockSize;
 }
@@ -1261,8 +1261,8 @@ void bhkRigidBody::GetChildRefs(std::set<int*>& refs) {
 int bhkRigidBody::CalcBlockSize(NiVersion& version) {
 	bhkEntity::CalcBlockSize(version);
 
-	blockSize += 204;
-	blockSize += 4 * constraintRefs.GetSize();
+	blockSize += 200;
+	blockSize += constraintRefs.CalcBlockSize();
 
 	if (version.User() <= 11)
 		blockSize += 4;

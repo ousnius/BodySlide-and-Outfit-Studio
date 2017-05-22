@@ -440,9 +440,8 @@ int NiBoneLODController::CalcBlockSize(NiVersion& version) {
 	NiTimeController::CalcBlockSize(version);
 
 	blockSize += 12;
-	blockSize += boneArraysSize * 4;
 	for (int i = 0; i < boneArraysSize; i++)
-		blockSize += boneArrays[i].GetSize() * 4;
+		blockSize += boneArrays[i].CalcBlockSize();
 
 	return blockSize;
 }
@@ -711,8 +710,7 @@ void NiMultiTargetTransformController::GetChildRefs(std::set<int*>& refs) {
 int NiMultiTargetTransformController::CalcBlockSize(NiVersion& version) {
 	NiInterpController::CalcBlockSize(version);
 
-	blockSize += 2;
-	blockSize += targetRefs.GetSize() * 4;
+	blockSize += targetRefs.CalcBlockSize();
 
 	return blockSize;
 }
@@ -1438,8 +1436,8 @@ void NiControllerManager::GetChildRefs(std::set<int*>& refs) {
 int NiControllerManager::CalcBlockSize(NiVersion& version) {
 	NiTimeController::CalcBlockSize(version);
 
-	blockSize += 9;
-	blockSize += controllerSequenceRefs.GetSize() * 4;
+	blockSize += 5;
+	blockSize += controllerSequenceRefs.CalcBlockSize();
 
 	return blockSize;
 }

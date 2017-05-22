@@ -663,8 +663,8 @@ void NiSkinInstance::GetChildRefs(std::set<int*>& refs) {
 int NiSkinInstance::CalcBlockSize(NiVersion& version) {
 	NiObject::CalcBlockSize(version);
 
-	blockSize += 16;
-	blockSize += boneRefs.GetSize() * 4;
+	blockSize += 12;
+	blockSize += boneRefs.CalcBlockSize();
 	return blockSize;
 }
 
@@ -798,8 +798,8 @@ void BSSkinInstance::GetChildRefs(std::set<int*>& refs) {
 int BSSkinInstance::CalcBlockSize(NiVersion& version) {
 	NiObject::CalcBlockSize(version);
 
-	blockSize += 16;
-	blockSize += boneRefs.GetSize() * 4;
+	blockSize += 12;
+	blockSize += boneRefs.CalcBlockSize();
 	blockSize += numUnk * 12;
 
 	return blockSize;

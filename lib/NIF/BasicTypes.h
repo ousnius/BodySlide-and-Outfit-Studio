@@ -146,6 +146,7 @@ public:
 	virtual std::vector<int> GetIndices() = 0;
 	virtual void GetIndexPtrs(std::set<int*>& indices) = 0;
 	virtual void SetIndices(const std::vector<int>& indices) = 0;
+	virtual int CalcBlockSize() = 0;
 };
 
 template <typename T>
@@ -183,8 +184,6 @@ public:
 	}
 
 	virtual void Put(NiStream& stream) override {
-		CleanInvalidRefs();
-
 		stream << arraySize;
 
 		for (auto &r : refs)
@@ -236,6 +235,11 @@ public:
 		for (int i = 0; i < arraySize; i++)
 			refs[i].index = indices[i];
 	}
+
+	virtual int CalcBlockSize() override {
+		CleanInvalidRefs();
+		return 4 + arraySize * 4;
+	}
 };
 
 template <typename T>
@@ -254,6 +258,11 @@ public:
 
 		for (auto &r : refs)
 			r.Put(stream);
+	}
+
+	virtual int CalcBlockSize() override {
+		CleanInvalidRefs();
+		return 2 + arraySize * 4;
 	}
 };
 

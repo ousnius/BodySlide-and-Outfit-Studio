@@ -92,8 +92,8 @@ int NiObjectNET::CalcBlockSize(NiVersion& version) {
 	if (bBSLightingShaderProperty && version.User() >= 12)
 		blockSize += 4;
 
-	blockSize += 12;
-	blockSize += extraDataRefs.GetSize() * 4;
+	blockSize += 8;
+	blockSize += extraDataRefs.CalcBlockSize();
 
 	return blockSize;
 }
@@ -164,10 +164,8 @@ int NiAVObject::CalcBlockSize(NiVersion& version) {
 
 	blockSize += 58;
 
-	if (version.User() <= 11) {
-		blockSize += 4;
-		blockSize += propertyRefs.GetSize() * 4;
-	}
+	if (version.User() <= 11)
+		blockSize += propertyRefs.CalcBlockSize();
 
 	if (version.User2() > 26)
 		blockSize += 2;
@@ -334,12 +332,11 @@ void NiNode::GetChildRefs(std::set<int*>& refs) {
 int NiNode::CalcBlockSize(NiVersion& version) {
 	NiAVObject::CalcBlockSize(version);
 
-	blockSize += 4;
-	blockSize += childRefs.GetSize() * 4;
-	if (version.User() <= 12 && version.User2() < 130) {
-		blockSize += 4;
-		blockSize += effectRefs.GetSize() * 4;
-	}
+	blockSize += childRefs.CalcBlockSize();
+
+	if (version.User() <= 12 && version.User2() < 130)
+		blockSize += effectRefs.CalcBlockSize();
+
 	return blockSize;
 }
 
@@ -447,9 +444,8 @@ void BSTreeNode::GetChildRefs(std::set<int*>& refs) {
 int BSTreeNode::CalcBlockSize(NiVersion& version) {
 	NiNode::CalcBlockSize(version);
 
-	blockSize += 8;
-	blockSize += bones1.GetSize() * 4;
-	blockSize += bones2.GetSize() * 4;
+	blockSize += bones1.CalcBlockSize();
+	blockSize += bones2.CalcBlockSize();
 
 	return blockSize;
 }

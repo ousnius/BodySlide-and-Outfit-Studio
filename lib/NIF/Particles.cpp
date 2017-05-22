@@ -864,8 +864,8 @@ void BSPSysHavokUpdateModifier::GetChildRefs(std::set<int*>& refs) {
 int BSPSysHavokUpdateModifier::CalcBlockSize(NiVersion& version) {
 	NiPSysModifier::CalcBlockSize(version);
 
-	blockSize += 8;
-	blockSize += nodeRefs.GetSize() * 4;
+	blockSize += 4;
+	blockSize += nodeRefs.CalcBlockSize();
 
 	return blockSize;
 }
@@ -1042,8 +1042,8 @@ void NiParticleSystem::GetChildRefs(std::set<int*>& refs) {
 int NiParticleSystem::CalcBlockSize(NiVersion& version) {
 	NiAVObject::CalcBlockSize(version);
 
-	blockSize += 5;
-	blockSize += modifierRefs.GetSize() * 4;
+	blockSize += 1;
+	blockSize += modifierRefs.CalcBlockSize();
 
 	if (version.User2() >= 100) {
 		blockSize += 36;
@@ -1430,8 +1430,8 @@ void NiPSysMeshEmitter::GetChildRefs(std::set<int*>& refs) {
 int NiPSysMeshEmitter::CalcBlockSize(NiVersion& version) {
 	NiPSysEmitter::CalcBlockSize(version);
 
-	blockSize += 24;
-	blockSize += meshRefs.GetSize() * 4;
+	blockSize += 20;
+	blockSize += meshRefs.CalcBlockSize();
 
 	return blockSize;
 }
