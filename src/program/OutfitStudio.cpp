@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "OutfitStudio.h"
 #include "BodySlideApp.h"
 #include "ShapeProperties.h"
-#include <functional>
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -5466,6 +5465,12 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
+	if (bEditSlider) {
+		wxCommandEvent evt;
+		OnDeleteSlider(evt);
+		return;
+	}
+
 	if (!activeItem) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
