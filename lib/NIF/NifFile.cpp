@@ -664,18 +664,46 @@ void NifFile::SetTextureForShape(const std::string& shapeName, std::string& outT
 }
 
 void NifFile::TrimTexturePaths() {
-	std::string tFile;
+	auto trimPath = [](std::string& tex) -> std::string& {
+		if (!tex.empty()) {
+			tex = std::regex_replace(tex, std::regex("/+|\\\\+"), "\\");													// Replace multiple slashes or forward slashes with one backslash
+			tex = std::regex_replace(tex, std::regex("^(.*?)\\\\textures\\\\", std::regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
+			tex = std::regex_replace(tex, std::regex("^\\\\+"), "");														// Remove all backslashes from the front
+			tex = std::regex_replace(tex, std::regex("^(?!^textures\\\\)", std::regex_constants::icase), "textures\\");		// If the path doesn't start with "textures\", add it to the front
+		}
+		return tex;
+	};
+
 	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 
 	for (auto &s : shapes) {
-		for (int i = 0; i < 10; i++) {
-			if (GetTextureForShape(s, tFile, i) && !tFile.empty()) {
-				tFile = std::regex_replace(tFile, std::regex("/+|\\\\+"), "\\");													// Replace multiple slashes or forward slashes with one backslash
-				tFile = std::regex_replace(tFile, std::regex("^(.*?)\\\\textures\\\\", std::regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
-				tFile = std::regex_replace(tFile, std::regex("^\\\\+"), "");														// Remove all backslashes from the front
-				tFile = std::regex_replace(tFile, std::regex("^(?!^textures\\\\)", std::regex_constants::icase), "textures\\");		// If the path doesn't start with "textures\", add it to the front
-				SetTextureForShape(s, tFile, i);
+		NiShader* shader = GetShader(s);
+		if (shader) {
+			auto textureSet = hdr.GetBlock<BSShaderTextureSet>(shader->GetTextureSetRef());
+			if (textureSet) {
+				for (int i = 0; i < textureSet->numTextures; i++) {
+					std::string tex = textureSet->textures[i].GetString();
+					textureSet->textures[i].SetString(trimPath(tex));
+				}
+
+				auto effectShader = dynamic_cast<BSEffectShaderProperty*>(shader);
+				if (effectShader) {
+					std::string tex = effectShader->sourceTexture.GetString();
+					effectShader->sourceTexture.SetString(trimPath(tex));
+
+					tex = effectShader->normalTexture.GetString();
+					effectShader->normalTexture.SetString(trimPath(tex));
+
+					tex = effectShader->greyscaleTexture.GetString();
+					effectShader->greyscaleTexture.SetString(trimPath(tex));
+
+					tex = effectShader->envMapTexture.GetString();
+					effectShader->envMapTexture.SetString(trimPath(tex));
+
+					tex = effectShader->envMaskTexture.GetString();
+					effectShader->envMaskTexture.SetString(trimPath(tex));
+				}
 			}
 		}
 	}
