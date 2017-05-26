@@ -820,13 +820,36 @@ void SubConstraintDesc::Get(NiStream& stream, NiObject* parent) {
 		stream.read((char*)&desc2, 128);
 		break;
 	case LimitedHinge:
-		stream.read((char*)&desc3, 166);
+		stream >> desc3.hinge;
+		stream >> desc3.minAngle;
+		stream >> desc3.maxAngle;
+		stream >> desc3.maxFriction;
+		stream >> desc3.enableMotor;
+		if (desc3.enableMotor)
+			stream.read((char*)&desc3.motor, 25);
 		break;
 	case Prismatic:
 		stream.read((char*)&desc4, 141);
 		break;
 	case Ragdoll:
-		stream.read((char*)&desc5, 178);
+		stream >> desc5.twistA;
+		stream >> desc5.planeA;
+		stream >> desc5.motorA;
+		stream >> desc5.pivotA;
+		stream >> desc5.twistB;
+		stream >> desc5.planeB;
+		stream >> desc5.motorB;
+		stream >> desc5.pivotB;
+		stream >> desc5.coneMaxAngle;
+		stream >> desc5.planeMinAngle;
+		stream >> desc5.planeMaxAngle;
+		stream >> desc5.twistMinAngle;
+		stream >> desc5.twistMaxAngle;
+		stream >> desc5.maxFriction;
+		stream >> desc5.enableMotor;
+
+		if (desc5.enableMotor)
+			stream.read((char*)&desc5.motor, 25);
 		break;
 	case StiffSpring:
 		stream.read((char*)&desc6, 36);
@@ -848,13 +871,36 @@ void SubConstraintDesc::Put(NiStream& stream) {
 		stream.write((char*)&desc2, 128);
 		break;
 	case LimitedHinge:
-		stream.write((char*)&desc3, 166);
+		stream << desc3.hinge;
+		stream << desc3.minAngle;
+		stream << desc3.maxAngle;
+		stream << desc3.maxFriction;
+		stream << desc3.enableMotor;
+		if (desc3.enableMotor)
+			stream.write((char*)&desc3.motor, 25);
 		break;
 	case Prismatic:
 		stream.write((char*)&desc4, 141);
 		break;
 	case Ragdoll:
-		stream.write((char*)&desc5, 178);
+		stream << desc5.twistA;
+		stream << desc5.planeA;
+		stream << desc5.motorA;
+		stream << desc5.pivotA;
+		stream << desc5.twistB;
+		stream << desc5.planeB;
+		stream << desc5.motorB;
+		stream << desc5.pivotB;
+		stream << desc5.coneMaxAngle;
+		stream << desc5.planeMinAngle;
+		stream << desc5.planeMaxAngle;
+		stream << desc5.twistMinAngle;
+		stream << desc5.twistMaxAngle;
+		stream << desc5.maxFriction;
+		stream << desc5.enableMotor;
+
+		if (desc5.enableMotor)
+			stream.write((char*)&desc5.motor, 25);
 		break;
 	case StiffSpring:
 		stream.write((char*)&desc6, 36);
@@ -878,13 +924,17 @@ int SubConstraintDesc::CalcDescSize() {
 		descSize += 128;
 		break;
 	case LimitedHinge:
-		descSize += 166;
+		descSize += 141;
+		if (desc3.enableMotor)
+			descSize += 25;
 		break;
 	case Prismatic:
 		descSize += 141;
 		break;
 	case Ragdoll:
-		descSize += 178;
+		descSize += 153;
+		if (desc5.enableMotor)
+			descSize += 25;
 		break;
 	case StiffSpring:
 		descSize += 36;
