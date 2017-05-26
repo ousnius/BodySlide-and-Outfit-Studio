@@ -23,14 +23,89 @@ struct hkWorldObjCInfoProperty {
 	uint capacityAndFlags;
 };
 
-struct MotorDesc {
-	float unkFloat1;
-	float unkFloat2;
-	float unkFloat3;
-	float unkFloat4;
-	float unkFloat5;
-	float unkFloat6;
-	byte unkByte;
+enum MotorType : byte {
+	None = 0,
+	Position = 1,
+	Velocity = 2,
+	SpringDamper = 3
+};
+
+struct bhkLimitedForceConstraintMotor {
+	float minForce;
+	float maxForce;
+	bool motorEnabled;
+};
+
+struct bhkPositionConstraintMotor : bhkLimitedForceConstraintMotor {
+	float tau;
+	float damping;
+	float proportionalRecoveryVelocity;
+	float constantRecoveryVelocity;
+
+	void Get(NiStream& stream) {
+		stream >> minForce;
+		stream >> maxForce;
+		stream >> tau;
+		stream >> damping;
+		stream >> proportionalRecoveryVelocity;
+		stream >> constantRecoveryVelocity;
+		stream >> motorEnabled;
+	}
+
+	void Put(NiStream& stream) {
+		stream << minForce;
+		stream << maxForce;
+		stream << tau;
+		stream << damping;
+		stream << proportionalRecoveryVelocity;
+		stream << constantRecoveryVelocity;
+		stream << motorEnabled;
+	}
+};
+
+struct bhkVelocityConstraintMotor : bhkLimitedForceConstraintMotor {
+	float tau;
+	float velocityTarget;
+	bool useVelocityTargetFromConstraintTargets;
+
+	void Get(NiStream& stream) {
+		stream >> minForce;
+		stream >> maxForce;
+		stream >> tau;
+		stream >> velocityTarget;
+		stream >> useVelocityTargetFromConstraintTargets;
+		stream >> motorEnabled;
+	}
+
+	void Put(NiStream& stream) {
+		stream << minForce;
+		stream << maxForce;
+		stream << tau;
+		stream << velocityTarget;
+		stream << useVelocityTargetFromConstraintTargets;
+		stream << motorEnabled;
+	}
+};
+
+struct bhkSpringDamperConstraintMotor : bhkLimitedForceConstraintMotor {
+	float springConstant;
+	float springDamping;
+
+	void Get(NiStream& stream) {
+		stream >> minForce;
+		stream >> maxForce;
+		stream >> springConstant;
+		stream >> springDamping;
+		stream >> motorEnabled;
+	}
+
+	void Put(NiStream& stream) {
+		stream << minForce;
+		stream << maxForce;
+		stream << springConstant;
+		stream << springDamping;
+		stream << motorEnabled;
+	}
 };
 
 struct HingeDesc {
@@ -49,8 +124,10 @@ struct LimitedHingeDesc {
 	float minAngle;
 	float maxAngle;
 	float maxFriction;
-	bool enableMotor;
-	MotorDesc motor;
+	MotorType motorType;
+	bhkPositionConstraintMotor motorPosition;
+	bhkVelocityConstraintMotor motorVelocity;
+	bhkSpringDamperConstraintMotor motorSpringDamper;
 };
 
 struct RagdollDesc {
@@ -68,8 +145,10 @@ struct RagdollDesc {
 	float twistMinAngle;
 	float twistMaxAngle;
 	float maxFriction;
-	bool enableMotor;
-	MotorDesc motor;
+	MotorType motorType;
+	bhkPositionConstraintMotor motorPosition;
+	bhkVelocityConstraintMotor motorVelocity;
+	bhkSpringDamperConstraintMotor motorSpringDamper;
 };
 
 struct StiffSpringDesc {
