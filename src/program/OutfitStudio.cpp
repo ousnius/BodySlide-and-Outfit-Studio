@@ -4623,6 +4623,7 @@ void OutfitStudio::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	sliderDisplays.erase(activeSlider);
 	project->DeleteSlider(activeSlider);
 	activeSlider = "";
+	bEditSlider = false;
 
 	ApplySliders();
 }
