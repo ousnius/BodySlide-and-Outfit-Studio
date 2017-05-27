@@ -766,7 +766,7 @@
 										<object class="wxScrolledWindow" name="sliderScroll">
 											<style>wxHSCROLL|wxVSCROLL</style>
 											<bg>#404040</bg>
-											<scrollrate>5,5</scrollrate>
+											<scrollrate>18,18</scrollrate>
 											<object class="wxBoxSizer">
 												<orient>wxVERTICAL</orient>
 												<object class="sizeritem">
