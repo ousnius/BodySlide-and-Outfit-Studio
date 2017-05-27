@@ -776,19 +776,7 @@ void bhkLimitedHingeConstraint::Get(NiStream& stream) {
 	stream >> limitedHinge.minAngle;
 	stream >> limitedHinge.maxAngle;
 	stream >> limitedHinge.maxFriction;
-	stream >> limitedHinge.motorType;
-
-	switch (limitedHinge.motorType) {
-	case MotorType::Position:
-		limitedHinge.motorPosition.Get(stream);
-		break;
-	case MotorType::Velocity:
-		limitedHinge.motorVelocity.Get(stream);
-		break;
-	case MotorType::SpringDamper:
-		limitedHinge.motorSpringDamper.Get(stream);
-		break;
-	}
+	limitedHinge.motorDesc.Get(stream);
 }
 
 void bhkLimitedHingeConstraint::Put(NiStream& stream) {
@@ -798,43 +786,20 @@ void bhkLimitedHingeConstraint::Put(NiStream& stream) {
 	stream << limitedHinge.minAngle;
 	stream << limitedHinge.maxAngle;
 	stream << limitedHinge.maxFriction;
-	stream << limitedHinge.motorType;
-
-	switch (limitedHinge.motorType) {
-	case MotorType::Position:
-		limitedHinge.motorPosition.Put(stream);
-		break;
-	case MotorType::Velocity:
-		limitedHinge.motorVelocity.Put(stream);
-		break;
-	case MotorType::SpringDamper:
-		limitedHinge.motorSpringDamper.Put(stream);
-		break;
-	}
+	limitedHinge.motorDesc.Put(stream);
 }
 
 int bhkLimitedHingeConstraint::CalcBlockSize(NiVersion& version) {
 	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 141;
-
-	switch (limitedHinge.motorType) {
-	case MotorType::Position:
-		blockSize += 25;
-		break;
-	case MotorType::Velocity:
-		blockSize += 18;
-		break;
-	case MotorType::SpringDamper:
-		blockSize += 17;
-		break;
-	}
+	blockSize += limitedHinge.motorDesc.CalcMotorSize();
 
 	return blockSize;
 }
 
 
-void SubConstraintDesc::Get(NiStream& stream, NiObject* parent) {
+void SubConstraintDesc::Get(NiStream& stream) {
 	stream >> type;
 
 	entityRefs.Get(stream);
@@ -852,22 +817,21 @@ void SubConstraintDesc::Get(NiStream& stream, NiObject* parent) {
 		stream >> desc3.minAngle;
 		stream >> desc3.maxAngle;
 		stream >> desc3.maxFriction;
-		stream >> desc3.motorType;
-
-		switch (desc3.motorType) {
-		case MotorType::Position:
-			desc3.motorPosition.Get(stream);
-			break;
-		case MotorType::Velocity:
-			desc3.motorVelocity.Get(stream);
-			break;
-		case MotorType::SpringDamper:
-			desc3.motorSpringDamper.Get(stream);
-			break;
-		}
+		desc3.motorDesc.Get(stream);
 		break;
 	case Prismatic:
-		stream.read((char*)&desc4, 141);
+		stream >> desc4.slidingA;
+		stream >> desc4.rotationA;
+		stream >> desc4.planeA;
+		stream >> desc4.pivotA;
+		stream >> desc4.slidingB;
+		stream >> desc4.rotationB;
+		stream >> desc4.planeB;
+		stream >> desc4.pivotB;
+		stream >> desc4.minDistance;
+		stream >> desc4.maxDistance;
+		stream >> desc4.friction;
+		desc4.motorDesc.Get(stream);
 		break;
 	case Ragdoll:
 		stream >> desc5.twistA;
@@ -884,24 +848,14 @@ void SubConstraintDesc::Get(NiStream& stream, NiObject* parent) {
 		stream >> desc5.twistMinAngle;
 		stream >> desc5.twistMaxAngle;
 		stream >> desc5.maxFriction;
-		stream >> desc5.motorType;
-
-		switch (desc5.motorType) {
-		case MotorType::Position:
-			desc5.motorPosition.Get(stream);
-			break;
-		case MotorType::Velocity:
-			desc5.motorVelocity.Get(stream);
-			break;
-		case MotorType::SpringDamper:
-			desc5.motorSpringDamper.Get(stream);
-			break;
-		}
+		desc5.motorDesc.Get(stream);
 		break;
 	case StiffSpring:
 		stream.read((char*)&desc6, 36);
 		break;
 	}
+
+	stream >> strength;
 }
 
 void SubConstraintDesc::Put(NiStream& stream) {
@@ -922,22 +876,21 @@ void SubConstraintDesc::Put(NiStream& stream) {
 		stream << desc3.minAngle;
 		stream << desc3.maxAngle;
 		stream << desc3.maxFriction;
-		stream << desc3.motorType;
-
-		switch (desc3.motorType) {
-		case MotorType::Position:
-			desc3.motorPosition.Put(stream);
-			break;
-		case MotorType::Velocity:
-			desc3.motorVelocity.Put(stream);
-			break;
-		case MotorType::SpringDamper:
-			desc3.motorSpringDamper.Put(stream);
-			break;
-		}
+		desc3.motorDesc.Put(stream);
 		break;
 	case Prismatic:
-		stream.write((char*)&desc4, 141);
+		stream << desc4.slidingA;
+		stream << desc4.rotationA;
+		stream << desc4.planeA;
+		stream << desc4.pivotA;
+		stream << desc4.slidingB;
+		stream << desc4.rotationB;
+		stream << desc4.planeB;
+		stream << desc4.pivotB;
+		stream << desc4.minDistance;
+		stream << desc4.maxDistance;
+		stream << desc4.friction;
+		desc4.motorDesc.Put(stream);
 		break;
 	case Ragdoll:
 		stream << desc5.twistA;
@@ -954,24 +907,14 @@ void SubConstraintDesc::Put(NiStream& stream) {
 		stream << desc5.twistMinAngle;
 		stream << desc5.twistMaxAngle;
 		stream << desc5.maxFriction;
-		stream << desc5.motorType;
-
-		switch (desc5.motorType) {
-		case MotorType::Position:
-			desc5.motorPosition.Put(stream);
-			break;
-		case MotorType::Velocity:
-			desc5.motorVelocity.Put(stream);
-			break;
-		case MotorType::SpringDamper:
-			desc5.motorSpringDamper.Put(stream);
-			break;
-		}
+		desc5.motorDesc.Put(stream);
 		break;
 	case StiffSpring:
 		stream.write((char*)&desc6, 36);
 		break;
 	}
+
+	stream << strength;
 }
 
 void SubConstraintDesc::GetChildRefs(std::set<int*>& refs) {
@@ -979,7 +922,7 @@ void SubConstraintDesc::GetChildRefs(std::set<int*>& refs) {
 }
 
 int SubConstraintDesc::CalcDescSize() {
-	int descSize = 8;
+	int descSize = 12;
 	descSize += entityRefs.CalcBlockSize();
 
 	switch (type) {
@@ -991,36 +934,15 @@ int SubConstraintDesc::CalcDescSize() {
 		break;
 	case LimitedHinge:
 		descSize += 141;
-
-		switch (desc3.motorType) {
-		case MotorType::Position:
-			descSize += 25;
-			break;
-		case MotorType::Velocity:
-			descSize += 18;
-			break;
-		case MotorType::SpringDamper:
-			descSize += 17;
-			break;
-		}
+		descSize += desc3.motorDesc.CalcMotorSize();
 		break;
 	case Prismatic:
-		descSize += 141;
+		descSize += 116;
+		descSize += desc4.motorDesc.CalcMotorSize();
 		break;
 	case Ragdoll:
 		descSize += 153;
-
-		switch (desc5.motorType) {
-		case MotorType::Position:
-			descSize += 25;
-			break;
-		case MotorType::Velocity:
-			descSize += 18;
-			break;
-		case MotorType::SpringDamper:
-			descSize += 17;
-			break;
-		}
+		descSize += desc5.motorDesc.CalcMotorSize();
 		break;
 	case StiffSpring:
 		descSize += 36;
@@ -1042,17 +964,15 @@ bhkBreakableConstraint::bhkBreakableConstraint(NiStream& stream) : bhkBreakableC
 void bhkBreakableConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
 
-	subConstraint.Get(stream, this);
-	stream >> threshold;
-	stream >> removeIfBroken;
+	subConstraint.Get(stream);
+	stream >> removeWhenBroken;
 }
 
 void bhkBreakableConstraint::Put(NiStream& stream) {
 	bhkConstraint::Put(stream);
 
 	subConstraint.Put(stream);
-	stream << threshold;
-	stream << removeIfBroken;
+	stream << removeWhenBroken;
 }
 
 void bhkBreakableConstraint::GetChildRefs(std::set<int*>& refs) {
@@ -1064,7 +984,7 @@ void bhkBreakableConstraint::GetChildRefs(std::set<int*>& refs) {
 int bhkBreakableConstraint::CalcBlockSize(NiVersion& version) {
 	bhkConstraint::CalcBlockSize(version);
 
-	blockSize += 5;
+	blockSize += 1;
 	blockSize += subConstraint.CalcDescSize();
 
 	return blockSize;
@@ -1096,19 +1016,7 @@ void bhkRagdollConstraint::Get(NiStream& stream) {
 	stream >> ragdoll.twistMinAngle;
 	stream >> ragdoll.twistMaxAngle;
 	stream >> ragdoll.maxFriction;
-	stream >> ragdoll.motorType;
-
-	switch (ragdoll.motorType) {
-	case MotorType::Position:
-		ragdoll.motorPosition.Get(stream);
-		break;
-	case MotorType::Velocity:
-		ragdoll.motorVelocity.Get(stream);
-		break;
-	case MotorType::SpringDamper:
-		ragdoll.motorSpringDamper.Get(stream);
-		break;
-	}
+	ragdoll.motorDesc.Get(stream);
 }
 
 void bhkRagdollConstraint::Put(NiStream& stream) {
@@ -1128,37 +1036,14 @@ void bhkRagdollConstraint::Put(NiStream& stream) {
 	stream << ragdoll.twistMinAngle;
 	stream << ragdoll.twistMaxAngle;
 	stream << ragdoll.maxFriction;
-	stream << ragdoll.motorType;
-
-	switch (ragdoll.motorType) {
-	case MotorType::Position:
-		ragdoll.motorPosition.Put(stream);
-		break;
-	case MotorType::Velocity:
-		ragdoll.motorVelocity.Put(stream);
-		break;
-	case MotorType::SpringDamper:
-		ragdoll.motorSpringDamper.Put(stream);
-		break;
-	}
+	ragdoll.motorDesc.Put(stream);
 }
 
 int bhkRagdollConstraint::CalcBlockSize(NiVersion& version) {
 	bhkConstraint::CalcBlockSize(version);
 
 	blockSize += 153;
-
-	switch (ragdoll.motorType) {
-	case MotorType::Position:
-		blockSize += 25;
-		break;
-	case MotorType::Velocity:
-		blockSize += 18;
-		break;
-	case MotorType::SpringDamper:
-		blockSize += 17;
-		break;
-	}
+	blockSize += ragdoll.motorDesc.CalcMotorSize();
 
 	return blockSize;
 }

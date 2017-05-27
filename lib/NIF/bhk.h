@@ -108,6 +108,58 @@ struct bhkSpringDamperConstraintMotor : bhkLimitedForceConstraintMotor {
 	}
 };
 
+struct MotorDesc {
+	MotorType motorType;
+	bhkPositionConstraintMotor motorPosition;
+	bhkVelocityConstraintMotor motorVelocity;
+	bhkSpringDamperConstraintMotor motorSpringDamper;
+
+	void Get(NiStream& stream) {
+		stream >> motorType;
+
+		switch (motorType) {
+		case MotorType::Position:
+			motorPosition.Get(stream);
+			break;
+		case MotorType::Velocity:
+			motorVelocity.Get(stream);
+			break;
+		case MotorType::SpringDamper:
+			motorSpringDamper.Get(stream);
+			break;
+		}
+	}
+
+	void Put(NiStream& stream) {
+		stream << motorType;
+
+		switch (motorType) {
+		case MotorType::Position:
+			motorPosition.Put(stream);
+			break;
+		case MotorType::Velocity:
+			motorVelocity.Put(stream);
+			break;
+		case MotorType::SpringDamper:
+			motorSpringDamper.Put(stream);
+			break;
+		}
+	}
+
+	int CalcMotorSize() {
+		switch (motorType) {
+		case MotorType::Position:
+			return 25;
+		case MotorType::Velocity:
+			return 18;
+		case MotorType::SpringDamper:
+			return 17;
+		default:
+			return 0;
+		}
+	}
+};
+
 struct HingeDesc {
 	Vector4 axleA;
 	Vector4 axleInA1;
@@ -124,10 +176,7 @@ struct LimitedHingeDesc {
 	float minAngle;
 	float maxAngle;
 	float maxFriction;
-	MotorType motorType;
-	bhkPositionConstraintMotor motorPosition;
-	bhkVelocityConstraintMotor motorVelocity;
-	bhkSpringDamperConstraintMotor motorSpringDamper;
+	MotorDesc motorDesc;
 };
 
 struct RagdollDesc {
@@ -145,10 +194,7 @@ struct RagdollDesc {
 	float twistMinAngle;
 	float twistMaxAngle;
 	float maxFriction;
-	MotorType motorType;
-	bhkPositionConstraintMotor motorPosition;
-	bhkVelocityConstraintMotor motorVelocity;
-	bhkSpringDamperConstraintMotor motorSpringDamper;
+	MotorDesc motorDesc;
 };
 
 struct StiffSpringDesc {
@@ -174,7 +220,7 @@ struct PrismaticDesc {
 	float minDistance;
 	float maxDistance;
 	float friction;
-	byte unkByte;
+	MotorDesc motorDesc;
 };
 
 enum hkConstraintType : uint {
@@ -692,8 +738,10 @@ private:
 	RagdollDesc desc5;
 	StiffSpringDesc desc6;
 
+	float strength;
+
 public:
-	void Get(NiStream& stream, NiObject* parent);
+	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	int CalcDescSize();
@@ -702,8 +750,7 @@ public:
 class bhkBreakableConstraint : public bhkConstraint {
 private:
 	SubConstraintDesc subConstraint;
-	float threshold;
-	bool removeIfBroken;
+	bool removeWhenBroken;
 
 public:
 	bhkBreakableConstraint();
