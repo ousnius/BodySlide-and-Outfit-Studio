@@ -174,6 +174,8 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<bhkRagdollConstraint>();
 	RegisterFactory<bhkBreakableConstraint>();
 	RegisterFactory<bhkStiffSpringConstraint>();
+	RegisterFactory<bhkPrismaticConstraint>();
+	RegisterFactory<bhkMalleableConstraint>();
 	RegisterFactory<bhkBallAndSocketConstraint>();
 	RegisterFactory<bhkBallSocketConstraintChain>();
 	RegisterFactory<bhkRigidBody>();

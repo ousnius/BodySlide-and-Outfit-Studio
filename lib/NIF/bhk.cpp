@@ -1082,6 +1082,86 @@ int bhkStiffSpringConstraint::CalcBlockSize(NiVersion& version) {
 }
 
 
+bhkPrismaticConstraint::bhkPrismaticConstraint() {
+	bhkConstraint::Init();
+}
+
+bhkPrismaticConstraint::bhkPrismaticConstraint(NiStream& stream) : bhkPrismaticConstraint() {
+	Get(stream);
+}
+
+void bhkPrismaticConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
+
+	stream >> prismatic.slidingA;
+	stream >> prismatic.rotationA;
+	stream >> prismatic.planeA;
+	stream >> prismatic.pivotA;
+	stream >> prismatic.slidingB;
+	stream >> prismatic.rotationB;
+	stream >> prismatic.planeB;
+	stream >> prismatic.pivotB;
+	stream >> prismatic.minDistance;
+	stream >> prismatic.maxDistance;
+	stream >> prismatic.friction;
+	prismatic.motorDesc.Get(stream);
+}
+
+void bhkPrismaticConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
+
+	stream << prismatic.slidingA;
+	stream << prismatic.rotationA;
+	stream << prismatic.planeA;
+	stream << prismatic.pivotA;
+	stream << prismatic.slidingB;
+	stream << prismatic.rotationB;
+	stream << prismatic.planeB;
+	stream << prismatic.pivotB;
+	stream << prismatic.minDistance;
+	stream << prismatic.maxDistance;
+	stream << prismatic.friction;
+	prismatic.motorDesc.Put(stream);
+}
+
+int bhkPrismaticConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
+
+	blockSize += 116;
+	blockSize += prismatic.motorDesc.CalcMotorSize();
+
+	return blockSize;
+}
+
+
+bhkMalleableConstraint::bhkMalleableConstraint() {
+	bhkConstraint::Init();
+}
+
+bhkMalleableConstraint::bhkMalleableConstraint(NiStream& stream) : bhkMalleableConstraint() {
+	Get(stream);
+}
+
+void bhkMalleableConstraint::Get(NiStream& stream) {
+	bhkConstraint::Get(stream);
+
+	subConstraint.Get(stream);
+}
+
+void bhkMalleableConstraint::Put(NiStream& stream) {
+	bhkConstraint::Put(stream);
+
+	subConstraint.Put(stream);
+}
+
+int bhkMalleableConstraint::CalcBlockSize(NiVersion& version) {
+	bhkConstraint::CalcBlockSize(version);
+
+	blockSize += subConstraint.CalcDescSize();
+	return blockSize;
+}
+
+
 bhkBallAndSocketConstraint::bhkBallAndSocketConstraint() {
 	bhkConstraint::Init();
 }

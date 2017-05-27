@@ -800,6 +800,40 @@ public:
 	bhkStiffSpringConstraint* Clone() { return new bhkStiffSpringConstraint(*this); }
 };
 
+class bhkPrismaticConstraint : public bhkConstraint {
+private:
+	PrismaticDesc prismatic;
+
+public:
+	bhkPrismaticConstraint();
+	bhkPrismaticConstraint(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkPrismaticConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
+	bhkPrismaticConstraint* Clone() { return new bhkPrismaticConstraint(*this); }
+};
+
+class bhkMalleableConstraint : public bhkConstraint {
+private:
+	SubConstraintDesc subConstraint;
+
+public:
+	bhkMalleableConstraint();
+	bhkMalleableConstraint(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkMalleableConstraint";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	int CalcBlockSize(NiVersion& version);
+	bhkMalleableConstraint* Clone() { return new bhkMalleableConstraint(*this); }
+};
+
 class bhkBallAndSocketConstraint : public bhkConstraint {
 private:
 	BallAndSocketDesc ballAndSocket;
