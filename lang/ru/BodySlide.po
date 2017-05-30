@@ -1,0 +1,2257 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: BodySlide\n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Language-Team: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.8.6\n"
+"X-Poedit-KeywordsList: _\n"
+"Last-Translator: \n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Language: ru\n"
+"X-Language: ru_RU\n"
+"X-Source-Language: en\n"
+
+# XRC STRINGS START HERE
+msgid "Outfit/Body"
+msgstr "Обозначения для частей тела"
+
+msgid "Select an outfit to modify"
+msgstr ""
+
+msgid "Preset"
+msgstr "Пресет"
+
+msgid "Choose from a list of slider settings presets"
+msgstr ""
+
+msgid "Saves the new slider values to the currently selected preset"
+msgstr ""
+
+msgid "Save"
+msgstr "Сохранить"
+
+msgid "Save the current slider settings as a new preset"
+msgstr ""
+
+msgid "Save As..."
+msgstr "Сохранить как..."
+
+msgid "Browse"
+msgstr "Открыть"
+
+msgid ""
+"Opens the group manager where you can edit existing or create new groups"
+msgstr ""
+
+msgid "Group Manager"
+msgstr "Менеджер Групп"
+
+msgid "Single Weight"
+msgstr ""
+
+msgid "Low Weight"
+msgstr ""
+
+msgid "High Weight"
+msgstr ""
+
+msgid "Copy the low weight slider values to the high weight section."
+msgstr ""
+
+msgid ""
+"Build multiple outfits using the currently active slider values.\n"
+"\n"
+"Hold CTRL = Build to custom directory\n"
+"Hold ALT = Delete from output directory"
+msgstr ""
+
+msgid "Batch Build..."
+msgstr "Пакетная Обработка..."
+
+msgid "Build Morphs"
+msgstr "Добавить Морфы"
+
+msgid ""
+"Builds a morphs (.tri) file alongside the meshes for accessing the sliders "
+"in-game. Requires other mods to make use of the morph data."
+msgstr ""
+
+msgid "Show a preview window for this outfit."
+msgstr ""
+
+msgid "Preview"
+msgstr "Просмотр"
+
+msgid ""
+"Creates the currently selected outfit/body.\n"
+"\n"
+"Hold CTRL = Build to working directory\n"
+"Hold ALT = Delete from output directory"
+msgstr ""
+
+msgid "Build"
+msgstr ""
+
+msgid "Copy the high weight slider values to the low weight section."
+msgstr ""
+
+msgid "About"
+msgstr "О программе"
+
+msgid "Open settings dialog."
+msgstr ""
+
+msgid "Settings"
+msgstr "Настройки"
+
+msgid ""
+"Open Outfit Studio, a full-featured tool for creating and converting outfits."
+msgstr ""
+
+msgid "Filter Options"
+msgstr "Опции Фильтра"
+
+msgid "Choose groups..."
+msgstr "Выбор Групп..."
+
+msgid "Choose groups to display in the Outfit menu"
+msgstr ""
+
+msgid "Refresh Groups"
+msgstr "Сбросить Группы"
+
+msgid "Refresh group information"
+msgstr ""
+
+msgid "Save Outfit list as group..."
+msgstr ""
+
+msgid "Save the current filtered outfit list as a group"
+msgstr ""
+
+msgid "Refresh Outfits"
+msgstr ""
+
+msgid "Reloads outfit list"
+msgstr ""
+
+msgid "Select None"
+msgstr "Не выберать ничего"
+
+msgid "Select All"
+msgstr "Выбрать Всё"
+
+msgid "Enter preset name..."
+msgstr "Введите имя пресета..."
+
+msgid "Please enter a name for the new preset:"
+msgstr ""
+
+msgid "Select groups to assign to the new preset:"
+msgstr ""
+
+msgid "&Save"
+msgstr "&Сохранить"
+
+msgid "&OK"
+msgstr "&OK"
+
+msgid "&Cancel"
+msgstr "&Выход"
+
+msgid ""
+"Choose a group and add or remove members by selecting them in the lists."
+msgstr ""
+
+msgid "Select a group XML file"
+msgstr ""
+
+msgid "Save As"
+msgstr "Сохранить как"
+
+msgid "Groups"
+msgstr "Группы"
+
+msgid "Add Group"
+msgstr "Добавить Группу"
+
+msgid "Remove Group"
+msgstr "Удалить Группу"
+
+msgid "Members"
+msgstr ""
+
+msgid "Remove >>"
+msgstr "Удалить>>"
+
+msgid "Outfits"
+msgstr ""
+
+msgid "<< Add"
+msgstr "<<Добавить"
+
+msgid "Batch Build"
+msgstr ""
+
+msgid ""
+"Select the slider sets for the batch build process. Use the group and outfit "
+"filters to show the outfits you want!"
+msgstr ""
+
+msgid "&Build"
+msgstr ""
+
+msgid "Game"
+msgstr "Игра"
+
+msgid "Target Game"
+msgstr "Целевая Игра"
+
+msgid "Choose the target game you want to use the program for here."
+msgstr ""
+
+msgid "Fallout 3"
+msgstr ""
+
+msgid "Fallout New Vegas"
+msgstr ""
+
+msgid "Skyrim"
+msgstr ""
+
+msgid "Fallout 4"
+msgstr ""
+
+msgid "Game Data Path"
+msgstr "Путь к папке Data"
+
+msgid "Select the data path of the game..."
+msgstr ""
+
+msgid "Data path to load textures from and build files to."
+msgstr ""
+
+msgid "General"
+msgstr "Общие"
+
+msgid ""
+"Enables/disables the dialog for choosing which set to build during a batch "
+"build if overrides happen."
+msgstr ""
+
+msgid "Override Warning"
+msgstr "Предупреждать о перезаписи"
+
+msgid ""
+"Enables/disables scanning BSAs in the game data folder for textures to load."
+msgstr ""
+
+msgid "BSA Textures"
+msgstr "Текстуры из BSA"
+
+msgid ""
+"Enables/disables panning the camera with the left mouse button in Outfit "
+"Studio."
+msgstr ""
+
+msgid "Left Mouse Pan"
+msgstr "Перемещение левой клавишей мыши"
+
+msgid "Use the current system language for the program."
+msgstr ""
+
+msgid "Use System Language"
+msgstr "Использовать язык системы"
+
+msgid "Data Files"
+msgstr ""
+
+msgid "Reference Skeleton"
+msgstr "Скелет Референса"
+
+msgid "File"
+msgstr "Файл"
+
+msgid "Select a reference skeleton .nif file..."
+msgstr ""
+
+msgid "The reference skeleton file for Outfit Studio."
+msgstr ""
+
+msgid "Root Node"
+msgstr "Корневой Нод"
+
+msgid ""
+"The root node name of the reference skeleton. Can differ from game to game."
+msgstr ""
+
+msgid "Close"
+msgstr "Закрыть"
+
+msgid "Brush Settings"
+msgstr "Настройки Кисти"
+
+msgid "Size"
+msgstr "Размер"
+
+msgid "Strength"
+msgstr "Сила"
+
+msgid "Focus"
+msgstr ""
+
+msgid "Spacing"
+msgstr ""
+
+msgid "Meshes"
+msgstr ""
+
+msgid "Bones"
+msgstr "Кости"
+
+msgid "Lights"
+msgstr "Свет"
+
+msgid "Reset"
+msgstr "Сбросить"
+
+msgid "Ambient"
+msgstr ""
+
+msgid "Brightness 1"
+msgstr ""
+
+msgid "Brightness 2"
+msgstr ""
+
+msgid "Brightness 3"
+msgstr ""
+
+msgid "De-/Select Sliders"
+msgstr ""
+
+msgid "Fixed Weight Brush"
+msgstr ""
+
+msgid "Preview Scaling"
+msgstr ""
+
+msgid "Menu"
+msgstr "Меню"
+
+msgid "New Project...\tCtrl+N"
+msgstr "Новый Проект...\tCtrl+N"
+
+msgid "Create a new outfit project."
+msgstr ""
+
+msgid "Load Project..\tCtrl+O"
+msgstr "Загрузить Проект..\tCtrl+O"
+
+msgid "Load a project."
+msgstr "Загрузить Проект."
+
+msgid "Load Reference..."
+msgstr "Загрузить Референс..."
+
+msgid ""
+"Load a new reference slider set, replacing any current reference objects."
+msgstr ""
+
+msgid "Load Outfit..."
+msgstr ""
+
+msgid ""
+"Load a NIF file as the working outfit, replacing any current outfit objects."
+msgstr ""
+
+msgid ""
+"Disable for a different way of loading NIF files to see if that puts it into "
+"the right (or a better) spot."
+msgstr ""
+
+msgid "Save Project\tCtrl+S"
+msgstr "Сохранить Проект\tCtrl+S"
+
+msgid "Save the project."
+msgstr "Сохранить Проект."
+
+msgid "Save Project As...\tCtrl+Shift+S"
+msgstr "Сохранить Проект Как...\tCtrl+Shift+S"
+
+msgid "Save the project under a new name."
+msgstr ""
+
+msgid "Import"
+msgstr "Импорт"
+
+msgid "Import NIF"
+msgstr "Импорт NIF"
+
+msgid "Choose a NIF file to import into the project."
+msgstr ""
+
+msgid "Import Data"
+msgstr ""
+
+msgid "Import BSClothExtraData From HKX"
+msgstr ""
+
+msgid ""
+"Choose an HKX file to import as a BSClothExtraData block into the project."
+msgstr ""
+
+msgid "Export"
+msgstr "Экспорт"
+
+msgid "Export NIF"
+msgstr "Экспорт NIF"
+
+msgid "Save the current outfit as a NIF file (without reference)"
+msgstr ""
+
+msgid "Export NIF With Reference"
+msgstr "Экспортировать NIF как Шаблон"
+
+msgid "Save the current project as a NIF file (including reference)"
+msgstr ""
+
+msgid "Export Data"
+msgstr ""
+
+msgid "Export BSClothExtraData As HKX"
+msgstr ""
+
+msgid ""
+"Save one of the currently loaded BSClothExtraData blocks to an HKX file."
+msgstr ""
+
+msgid "Make Conversion Reference"
+msgstr ""
+
+msgid ""
+"Using the current slider settings for the reference shape, create a new "
+"reference that will morph from the current shape back to the base shape."
+msgstr ""
+
+msgid "Exit\tAlt+F4"
+msgstr "Выход\tAlt+F4"
+
+msgid "Exit Outfit Studio."
+msgstr ""
+
+msgid "Edit"
+msgstr "Редактировать"
+
+msgid "Undo\tCtrl+Z"
+msgstr "Назад\tCtrl+Z"
+
+msgid "Undo the previous action."
+msgstr ""
+
+msgid "Redo\tCtrl+Shift+Z"
+msgstr "Вперед\tCtrl+Shift+Z"
+
+msgid "Redo the next undone action."
+msgstr ""
+
+msgid "X Mirror\tX"
+msgstr ""
+
+msgid "Mirror edits across the X axis."
+msgstr ""
+
+msgid "Edit Connected Only\tC"
+msgstr ""
+
+msgid ""
+"Edit only vertices that are connected to the ones under the brush within the "
+"brush radius"
+msgstr ""
+
+msgid "Global Brush Collision\tB"
+msgstr ""
+
+msgid ""
+"Allows for the brushes to collide with all currently selected meshes at the "
+"same time"
+msgstr ""
+"Позволяет кисти взаимодействовать со всеми выбранными в данный момент мешами"
+
+msgid "Auto Normals"
+msgstr ""
+
+msgid "Recalculate normals as you edit"
+msgstr ""
+
+msgid "Recalculate Normals\tR"
+msgstr ""
+
+msgid "Recalculate normals on active mesh"
+msgstr ""
+
+msgid "View"
+msgstr "Вид"
+
+msgid "Front\tShift+1"
+msgstr ""
+
+msgid "Back\tShift+2"
+msgstr ""
+
+msgid "Left\tShift+3"
+msgstr ""
+
+msgid "Right\tShift+4"
+msgstr ""
+
+msgid "Perspective\tShift+5"
+msgstr ""
+
+msgid "Toggle Ghost Mode\tG"
+msgstr ""
+
+msgid "Show the active mesh in translucent mode."
+msgstr ""
+
+msgid "Show Wireframe\tW"
+msgstr ""
+
+msgid "Show wireframe on all models."
+msgstr ""
+
+msgid "Enable Lighting\tL"
+msgstr ""
+
+msgid "Turn on or off lighting."
+msgstr ""
+
+msgid "Enable Textures\tT"
+msgstr ""
+
+msgid "Display texture maps on models."
+msgstr ""
+
+msgid "Shape"
+msgstr "Форма"
+
+msgid "From OBJ..."
+msgstr "Из OBJ..."
+
+msgid "Import an OBJ file as a new shape in the outfit."
+msgstr ""
+
+msgid "From FBX..."
+msgstr "Из FBX..."
+
+msgid "Import an FBX file as a new shape in the outfit."
+msgstr ""
+
+msgid "To OBJ..."
+msgstr "В OBJ..."
+
+msgid "Export the current shape as an OBJ file."
+msgstr ""
+
+msgid "To FBX..."
+msgstr "В FBX..."
+
+msgid "Export the current shape as an FBX file."
+msgstr ""
+
+msgid "UV"
+msgstr ""
+
+msgid "Invert X"
+msgstr "Инвертировать X"
+
+msgid "Inverts the X-axis of the texture coordinates."
+msgstr ""
+
+msgid "Invert Y"
+msgstr "Инвертировать Y"
+
+msgid "Inverts the Y-axis of the texture coordinates."
+msgstr ""
+
+msgid "Duplicate..."
+msgstr "Дублировать..."
+
+msgid "Duplicate the current shape."
+msgstr ""
+
+msgid "Rename...\tF2"
+msgstr "Переименовать...\tF2"
+
+msgid "Change the name of the current shape."
+msgstr ""
+
+msgid "Set Reference"
+msgstr "Сделать Референсом"
+
+msgid "Turn the shape into the reference shape of the project."
+msgstr ""
+
+msgid "Move..."
+msgstr ""
+
+msgid ""
+"Apply an offset adjustment to the mesh vertices. This permanently moves "
+"vertices."
+msgstr ""
+
+msgid "Scale..."
+msgstr "Масштаб..."
+
+msgid "Apply a scale adjustment to the shape. This permanently moves vertices."
+msgstr ""
+
+msgid "Rotate..."
+msgstr "Вращение..."
+
+msgid "Apply a rotation to the mesh vertices. This permanently moves vertices."
+msgstr ""
+
+msgid "Smooth Seam Normals"
+msgstr ""
+
+msgid ""
+"Smooths edges of seams (usually found at texture borders), disable if this "
+"causes odd normals on the shape."
+msgstr ""
+
+msgid "Copy Bone Weights"
+msgstr ""
+
+msgid "Copies all bone weights from the reference shape to the current shape."
+msgstr ""
+
+msgid "Copy Selected Weights"
+msgstr ""
+
+msgid ""
+"Copies selected bone weights from the reference shape to the current shape."
+msgstr ""
+
+msgid "Transfer Selected Weights"
+msgstr ""
+
+msgid ""
+"Transfers selected weights from the reference shape to the current shape. "
+"Requires same vertex count and order."
+msgstr ""
+
+msgid "Mask Weighted Vertices"
+msgstr ""
+
+msgid ""
+"Masks vertices with bone weights, so you can manually assign weights to "
+"unweighted vertices."
+msgstr ""
+
+msgid "Delete\tDel"
+msgstr "Удалить\tDel"
+
+msgid "Removes the currently selected shape from the outfit."
+msgstr ""
+
+msgid "Properties..."
+msgstr "Свойства..."
+
+msgid ""
+"Opens the properties dialog for shader, texture and more settings of the "
+"selected shape."
+msgstr ""
+
+msgid "Slider"
+msgstr "Слайдер"
+
+msgid "Conform Selected\tCtrl+C"
+msgstr ""
+
+msgid "Conform selected outfit shape to all checked sliders."
+msgstr ""
+
+msgid "Conform All\tCtrl+Shift+C"
+msgstr ""
+
+msgid "Conform all outfit shapes to all checked sliders."
+msgstr ""
+
+msgid "Set Base Shape"
+msgstr ""
+
+msgid "Set the current outfit shape as the base shape and clear slider data."
+msgstr ""
+
+msgid "Load Preset..."
+msgstr "Загрузить Пресет..."
+
+msgid ""
+"Load and preview a slider preset. Inverted sliders will have inverted values."
+msgstr ""
+
+msgid "Save Preset..."
+msgstr "Сохранить Пресет..."
+
+msgid ""
+"Save a slider preset with the current values. Inverted sliders will have "
+"inverted values."
+msgstr ""
+
+msgid "New Slider"
+msgstr "Новый Слайдер"
+
+msgid "Create a new shape transformation slider."
+msgstr ""
+
+msgid "Coalesce sliders"
+msgstr ""
+
+msgid ""
+"Create a new shape transformation slider based on the current slider values"
+msgstr ""
+
+msgid "New Zap Slider"
+msgstr ""
+
+msgid "Create a new Zap slider based on unmasked vertices"
+msgstr ""
+
+msgid "Import OSD..."
+msgstr "Импортировать OSD..."
+
+msgid "Imports OSD file and creates sliders for shapes with a matching name."
+msgstr ""
+
+msgid "Export OSD..."
+msgstr "Экспортировать OSD..."
+
+msgid "Exports all currently loaded slider data to an OSD file."
+msgstr ""
+
+msgid "Import TRI Morphs..."
+msgstr "Импортровать TRI Морфы..."
+
+msgid ""
+"Imports TRI morphs from a TRI file and creates sliders for shapes with a "
+"matching name."
+msgstr ""
+
+msgid "Export TRI Morphs..."
+msgstr "Экспортировать TRI Морфы..."
+
+msgid "Exports TRI morphs to a TRI file."
+msgstr ""
+
+msgid "Import Slider Data"
+msgstr ""
+
+msgid "Import BSD..."
+msgstr "Импорт BSD..."
+
+msgid ""
+"Import a BodySlide BSD file and overwrites the current shape's slider data."
+msgstr ""
+
+msgid "Import OBJ..."
+msgstr "Импорт OBJ..."
+
+msgid ""
+"Import an OBJ file matching the current shape's vertex count, and calculate "
+"slider data from the difference."
+msgstr ""
+
+msgid "Import FBX..."
+msgstr "Импорт FBX..."
+
+msgid ""
+"Import an FBX file matching the current shape's vertex count, and calculate "
+"slider data from the difference."
+msgstr ""
+
+msgid "Export Slider Data"
+msgstr ""
+
+msgid "Export BSD..."
+msgstr "Экспорт BSD..."
+
+msgid "Exports the current slider's data as a BodySlide BSD file."
+msgstr ""
+
+msgid "Export OBJ..."
+msgstr "Экспорт OBJ..."
+
+msgid "Exports the current slider's data as an OBJ file."
+msgstr ""
+
+msgid "Negate Slider"
+msgstr ""
+
+msgid "Negates the current slider, reversing it's effect"
+msgstr ""
+
+msgid "Mask Affected Vertices"
+msgstr ""
+
+msgid "Masks the vertices the slider is affecting for all selected shapes."
+msgstr ""
+
+msgid "Clear Slider Data"
+msgstr ""
+
+msgid ""
+"Erases the slider data without removing the slider itself. (Cannot be undone)"
+msgstr ""
+
+msgid "Delete Slider"
+msgstr ""
+
+msgid "Delete the active slider from the project. (Cannot be undone)"
+msgstr ""
+
+msgid "Properties...\tTab"
+msgstr "Свойства...\tTab"
+
+msgid "Display and edit the active slider's properties."
+msgstr ""
+
+msgid "Tool"
+msgstr "Инструменты"
+
+msgid "Current Tool"
+msgstr ""
+
+msgid "Select\t0"
+msgstr ""
+
+msgid "Navigate and select meshes (or vertices in vertex mode)."
+msgstr ""
+
+msgid "Mask\t1"
+msgstr ""
+
+msgid ""
+"Mask vertices to prevent them from being transformed.\n"
+"Hold down the ALT key to remove masking."
+msgstr ""
+
+msgid "Inflate\t2"
+msgstr ""
+
+msgid "Increase mesh volume in an area."
+msgstr ""
+
+msgid "Deflate\t3"
+msgstr ""
+
+msgid "Decrease mesh volume in an area."
+msgstr ""
+
+msgid "Move\t4"
+msgstr ""
+
+msgid "Move vertices over a plane parallel to the view."
+msgstr ""
+
+msgid "Smooth\t5"
+msgstr ""
+
+msgid "Smooth an area of a mesh."
+msgstr ""
+
+msgid "Weight Paint\t6"
+msgstr ""
+
+msgid ""
+"Apply animation weight values for the currently selected bone.\n"
+"Hold down the ALT key to weaken the weighting."
+msgstr ""
+
+msgid "Transform\tF"
+msgstr ""
+
+msgid "Shows a transform tool to manipulate shapes and vertices with."
+msgstr ""
+
+msgid "Vertex Edit\tQ"
+msgstr ""
+
+msgid ""
+"Lets you select vertices to add to or remove from the mask.\n"
+"Click on a vertex to select/unmask it.\n"
+"Hold down CTRL to unselect/mask it."
+msgstr ""
+
+msgid "Increase Brush Size\tShift++"
+msgstr ""
+
+msgid "Increase brush diameter"
+msgstr ""
+
+msgid "Decrease Brush Size\tShift+-"
+msgstr ""
+
+msgid "Decrease brush diameter"
+msgstr ""
+
+msgid "Increase Brush Strength\tCtrl++"
+msgstr ""
+
+msgid "Increase brush strength"
+msgstr ""
+
+msgid "Decrease Brush Strength\tCtrl+-"
+msgstr ""
+
+msgid "Decrease brush strength"
+msgstr ""
+
+msgid "Invert Mask\tCtrl+I"
+msgstr "Инвертировать Маску\tCtrl+I"
+
+msgid "Invert Mask"
+msgstr "Инвертирует Маску"
+
+msgid "Clear Mask\tCtrl+A"
+msgstr "Очистить Маску\tCtrl+A"
+
+msgid "Clear Mask"
+msgstr "Очищает Маску"
+
+msgid "Show Mask\tM"
+msgstr "Показать Маску\tM"
+
+msgid "Shade meshes to indicate areas that are currently masked."
+msgstr ""
+
+msgid "New Project"
+msgstr "Новый Проект"
+
+msgid ""
+"Create a new project by selecting a reference body slider set, and outfit "
+"model files."
+msgstr ""
+
+msgid "Load Project"
+msgstr "Загрузить Проект"
+
+msgid "Load a previously created slider set for editing."
+msgstr ""
+
+msgid "Select"
+msgstr "Выбрать"
+
+msgid "Mask"
+msgstr "Маска"
+
+msgid "Inflate"
+msgstr ""
+
+msgid "Deflate"
+msgstr ""
+
+msgid "Move"
+msgstr "Переместить"
+
+msgid "Smooth"
+msgstr ""
+
+msgid "Weight Paint"
+msgstr ""
+
+msgid ""
+"Apply animation weight values for currently selected bone.\n"
+"Hold down the ALT key to weaken the weighting."
+msgstr ""
+
+msgid "Transform"
+msgstr ""
+
+msgid "Vertex Edit"
+msgstr ""
+
+msgid "X Mirror"
+msgstr ""
+
+msgid ""
+"Edit only vertices that are connected to the ones under the brush within the "
+"brush radius."
+msgstr ""
+
+msgid "Global Brush Collision\tC"
+msgstr ""
+
+msgid ""
+"Allows for the brushes to collide with all currently selected meshes at the "
+"same time."
+msgstr ""
+
+msgid "View Front"
+msgstr ""
+
+msgid "Change camera view to the front."
+msgstr ""
+
+msgid "View Back"
+msgstr ""
+
+msgid "Change camera view to the back."
+msgstr ""
+
+msgid "View Left"
+msgstr ""
+
+msgid "Change camera view to the left."
+msgstr ""
+
+msgid "View Right"
+msgstr ""
+
+msgid "Change camera view to the right."
+msgstr ""
+
+msgid "Perspective View"
+msgstr ""
+
+msgid "Toggle perspective view."
+msgstr ""
+
+msgid "Field of View"
+msgstr ""
+
+msgid "Field of View: 65"
+msgstr ""
+
+msgid "Move Shape"
+msgstr ""
+
+msgid "CBBE to Vanilla (old)"
+msgstr ""
+
+msgid "Scale Shape"
+msgstr ""
+
+msgid ""
+"Scaling will adjust the size of a mesh. This permanently affects vertices."
+msgstr ""
+
+msgid "Scale"
+msgstr "Масштаб"
+
+msgid "Rotate Shape"
+msgstr ""
+
+msgid "Apply a vertex position"
+msgstr ""
+
+msgid "This permanently moves a single vertex straight to the given location."
+msgstr ""
+
+msgid ""
+"Welcome to the New Project wizard!\n"
+"\n"
+"First, please choose a reference. Typically, this is a body (such as CBBE) "
+"or a conversion set (such as Vanilla To CBBE) and comes with its sliders."
+msgstr ""
+
+msgid "Reference"
+msgstr ""
+
+msgid "From Template"
+msgstr "Из Шаблона"
+
+msgid "From File"
+msgstr "Из Файла"
+
+msgid "Select a project or NIF file"
+msgstr ""
+
+msgid "Slider Set:"
+msgstr ""
+
+msgid "Shape:"
+msgstr ""
+
+msgid "Clear Reference"
+msgstr ""
+
+msgid "Next, select an outfit/mesh to work on and enter a display name for it."
+msgstr ""
+
+msgid "Display Name"
+msgstr ""
+
+msgid "New Outfit"
+msgstr ""
+
+msgid "Outfit/Mesh"
+msgstr ""
+
+msgid "Select a file to load as an outfit/mesh"
+msgstr ""
+
+msgid "Clear Outfit"
+msgstr ""
+
+msgid "Textures"
+msgstr "Текстуры"
+
+msgid "Automatically search for textures"
+msgstr ""
+
+msgid "Select a texture file"
+msgstr ""
+
+msgid "Select a slider preset"
+msgstr ""
+
+msgid "Choose a preset:"
+msgstr ""
+
+msgid "Low weight"
+msgstr ""
+
+msgid "High weight"
+msgstr ""
+
+msgid "Set Shape Textures"
+msgstr ""
+
+msgid "Display Texture:"
+msgstr ""
+
+msgid ""
+"Applies the current diffuse texture path to the Outfit Studio display "
+"texture path."
+msgstr ""
+
+msgid "Apply Diffuse"
+msgstr ""
+
+msgid "Load Reference"
+msgstr "Загрузить Референс"
+
+msgid ""
+"Please choose a reference. Typically, this is a body (such as CBBE) or a "
+"conversion set (such as Vanilla To CBBE) and comes with its sliders."
+msgstr ""
+
+msgid "Merge new sliders with existing sliders"
+msgstr ""
+
+msgid "Load Outfit"
+msgstr ""
+
+msgid ""
+"Please select an outfit/mesh to work on and enter a display name for it."
+msgstr ""
+
+msgid "Keep other shapes"
+msgstr ""
+
+msgid "Add"
+msgstr "Добавить"
+
+msgid "Delete"
+msgstr "Удалить"
+
+msgid "From Project"
+msgstr ""
+
+msgid "Delete bone(s) from all shapes of the project."
+msgstr ""
+
+msgid "From Selected Shapes"
+msgstr ""
+
+msgid "Delete bone(s) from only the selected shapes."
+msgstr ""
+
+msgid "From Skeleton..."
+msgstr ""
+
+msgid "Choose a bone from the reference skeleton to add to the project."
+msgstr ""
+
+msgid "Custom Bone..."
+msgstr ""
+
+msgid "Add a custom bone to the project."
+msgstr ""
+
+msgid "Select a bone to add"
+msgstr ""
+
+msgid "Bones in the current reference skeleton:"
+msgstr ""
+
+msgid "Add Custom Bone"
+msgstr ""
+
+msgid "Name"
+msgstr "Имя"
+
+msgid "Slider Properties"
+msgstr "Свойства Слайдера"
+
+msgid "Slider Name"
+msgstr "Имя Слайдера"
+
+msgid "Default Values"
+msgstr "Значение По умолчанию"
+
+msgid "Low"
+msgstr ""
+
+msgid "High"
+msgstr ""
+
+msgid "Options"
+msgstr "Настройки"
+
+msgid "Invert"
+msgstr "Инвертировать"
+
+msgid "Hidden"
+msgstr "Скрыть"
+
+msgid "Zap"
+msgstr ""
+
+msgid "Save Project As..."
+msgstr "Сохранить Проект Как..."
+
+msgid "The name of the outfit and slider set, as it will appear in BodySlide."
+msgstr ""
+
+msgid "Copies the current display name to the project text fields below."
+msgstr ""
+
+msgid "To Project"
+msgstr ""
+
+msgid "Output File Name"
+msgstr ""
+
+msgid ""
+"The name of the outfit file that will end up in the game data path when "
+"BodySlide builds it. Should not include _1 or _0 in the name, e.g: "
+"lovelydress"
+msgstr ""
+
+msgid "_0/_1.nif"
+msgstr ""
+
+msgid "Output Data Path"
+msgstr ""
+
+msgid ""
+"The location in the game's data path where BodySlide-built outfit files will "
+"be placed, e.g: meshes\\clothes\\lovelydress"
+msgstr ""
+
+msgid ""
+"If this is enabled, BodySlide creates a low and high weight model when it "
+"generates the final outfit."
+msgstr ""
+
+msgid "Low/High Weight Output"
+msgstr ""
+
+msgid ""
+"If this is enabled, only one output file will be created (useful for single-"
+"weighted things like hair)."
+msgstr ""
+
+msgid "Single Weight Output"
+msgstr ""
+
+msgid "Project"
+msgstr "Проект"
+
+msgid "Slider Set File"
+msgstr ""
+
+msgid "The .osp slider set project file"
+msgstr ""
+
+msgid "Select slider set .osp file name"
+msgstr ""
+
+msgid "Shape Data Folder"
+msgstr ""
+
+msgid ""
+"The folder where all the slider data will go, as well as the base outfit NIF "
+"file."
+msgstr ""
+
+msgid "Select slider data folder"
+msgstr ""
+
+msgid "Shape Data File"
+msgstr ""
+
+msgid "The name of the output's base NIF file."
+msgstr ""
+
+msgid "Select output NIF file name"
+msgstr ""
+
+msgid ""
+"Outfits require the reference body to be a part of the output file. Disable "
+"this if you've already copied the reference over or you don't want it "
+"included."
+msgstr ""
+
+msgid "Copy reference shape into output"
+msgstr ""
+
+msgid "Shape Properties"
+msgstr ""
+
+msgid "Material"
+msgstr "Материал"
+
+msgid "Choose material file"
+msgstr ""
+
+msgid "Shader"
+msgstr "Шейдер"
+
+msgid "Type"
+msgstr "Тип"
+
+msgid "Specular Color"
+msgstr ""
+
+msgid "Specular Strength"
+msgstr ""
+
+msgid "Specular Power"
+msgstr ""
+
+msgid "Emissive Color"
+msgstr ""
+
+msgid "Emissive Multiple"
+msgstr ""
+
+msgid "Remove"
+msgstr "Удалить"
+
+msgid "Textures..."
+msgstr "Текстуры..."
+
+msgid "Transparency"
+msgstr ""
+
+msgid "Threshold"
+msgstr ""
+
+msgid "Geometry"
+msgstr "Геометрия"
+
+msgid "Full Precision"
+msgstr ""
+
+msgid "Extra Data"
+msgstr ""
+
+msgid "Value"
+msgstr "Значение"
+
+msgid "Segments"
+msgstr ""
+
+msgid "Apply"
+msgstr "Применить"
+
+msgid "SSF File"
+msgstr ""
+
+msgid "Partitions"
+msgstr ""
+
+msgid "Add Partition..."
+msgstr ""
+
+msgid "Adds a new partition to the shape."
+msgstr ""
+
+msgid "Delete Partition..."
+msgstr ""
+
+msgid "Deletes the partition from the shape."
+msgstr ""
+
+msgid "FBX Import Options..."
+msgstr ""
+
+msgid "Invert U"
+msgstr ""
+
+msgid "Invert V"
+msgstr ""
+
+msgid "Toggle Zaps:"
+msgstr ""
+
+msgid "Search Radius"
+msgstr ""
+
+msgid "Max Vertex Targets"
+msgstr ""
+
+# XRC STRINGS END HERE
+msgid ""
+"Each vertex of the reference will copy its weights to the nearest collection "
+"of vertices within the given radius. Bear in mind that some geometry will "
+"always require manual tweaking to become weighted and work well. Often, the "
+"default values are sufficient."
+msgstr ""
+
+msgid ""
+"Bone information incomplete. Exported data will not contain correct bone "
+"entries! Be sure to load a reference NIF prior to export."
+msgstr ""
+
+msgid "Export Warning"
+msgstr ""
+
+msgid "Failed to load skeleton '%s'!"
+msgstr ""
+
+msgid "Root '%s' not found in skeleton '%s'!"
+msgstr ""
+
+msgid ""
+"No read/write permission for game data path!\n"
+"\n"
+"Please launch the program with admin elevation and make sure the game data "
+"path in the settings is correct."
+msgstr ""
+
+msgid "Warning"
+msgstr "Внимание"
+
+msgid "Unexpected exception has occurred: %s, the program will terminate."
+msgstr ""
+
+msgid "Unexpected exception"
+msgstr ""
+
+msgid "Unhandled exception has occurred: %s, the program will terminate."
+msgstr ""
+
+msgid "Unhandled exception"
+msgstr ""
+
+msgid "Fatal exception has occurred, the program will terminate."
+msgstr ""
+
+msgid "Fatal exception"
+msgstr ""
+
+msgid ""
+"Failed to find game install path registry value or GameDataPath in the "
+"config."
+msgstr ""
+
+msgid ""
+"Failed to find game install path registry key or GameDataPath in the config."
+msgstr ""
+
+msgid "System language '%d' is wrong."
+msgstr ""
+
+msgid ""
+"The system language '%d' is not supported by your system. Try installing "
+"support for this language."
+msgstr ""
+
+msgid "Failed to create group file."
+msgstr ""
+
+msgid ""
+"That group already exists in the specified file, do you wish to overwrite "
+"the group?"
+msgstr ""
+
+msgid "Group already exists"
+msgstr ""
+
+msgid ""
+"WARNING: Game data path not configured. Would you like to show BodySlide "
+"where it is?"
+msgstr ""
+
+msgid "Game not found"
+msgstr ""
+
+msgid "Please choose a directory to set as your Data path"
+msgstr ""
+
+msgid ""
+"WARNING: This will delete the output files from the output folder, "
+"potentially causing crashes.\n"
+"\n"
+"Do you want to continue?"
+msgstr ""
+
+msgid "Clean Build"
+msgstr ""
+
+msgid "Removed the following files:\n"
+msgstr ""
+
+msgid " (no action)\n"
+msgstr ""
+
+msgid "Process Successful"
+msgstr ""
+
+msgid ""
+"Failed to write TRI file to the following location\n"
+"\n"
+"%s"
+msgstr ""
+
+msgid "Unable to process"
+msgstr ""
+
+msgid ""
+"Failed to build set to the following location\n"
+"\n"
+"%s"
+msgstr ""
+
+msgid "Choose alternate file name"
+msgstr ""
+
+msgid "Successfully processed the following files:\n"
+msgstr ""
+
+msgid ""
+"WARNING: This will delete the output files from the output folders, "
+"potentially causing crashes.\n"
+"\n"
+"Do you want to continue?"
+msgstr ""
+
+msgid "Clean Batch Build"
+msgstr ""
+
+msgid ""
+"WARNING: Game data path not configured. Files can't be removed that way."
+msgstr ""
+
+msgid ""
+"WARNING: Game data path not configured. Continue saving files to the working "
+"directory?"
+msgstr ""
+
+msgid ""
+"The following sets will override the same files.\n"
+"Please decide which one to use and select it in the list below."
+msgstr ""
+
+msgid "Choose output set"
+msgstr ""
+
+msgid "Processing Outfits"
+msgstr ""
+
+msgid "Starting..."
+msgstr ""
+
+msgid "Processing '%s' (%d of %d)..."
+msgstr ""
+
+msgid "No recorded outfit name source"
+msgstr ""
+
+msgid "Unable to get slider set from file: "
+msgstr ""
+
+msgid "Unable to open slider set file: "
+msgstr ""
+
+msgid "Unable to load input nif: "
+msgstr ""
+
+msgid "Unable to create destination directory: "
+msgstr ""
+
+msgid "Unable to save nif file: "
+msgstr ""
+
+msgid "All group build sets processed successfully!"
+msgstr ""
+
+msgid "Complete"
+msgstr ""
+
+msgid "The following sets failed"
+msgstr ""
+
+msgid "Failed"
+msgstr ""
+
+msgid "Failed to load BodyslideFrame.xrc file!"
+msgstr ""
+
+msgid "Error"
+msgstr ""
+
+msgid "Failed to load BodySlide frame!"
+msgstr ""
+
+msgid "Group Filter"
+msgstr "Фильтр Групп"
+
+msgid "Filter by group"
+msgstr ""
+
+msgid "Outfit Filter"
+msgstr ""
+
+msgid "Filter by outfit"
+msgstr ""
+
+msgid "Choose groups to filter outfit list"
+msgstr ""
+
+msgid "Choose Groups"
+msgstr ""
+
+msgid "Choose or create group file"
+msgstr ""
+
+msgid "What would you like the new group to be called?"
+msgstr ""
+
+msgid "New Group Name"
+msgstr ""
+
+msgid "Failed to save preset (%d)!"
+msgstr ""
+
+msgid "Failed to save preset as '%s' (%d)!"
+msgstr ""
+
+msgid "Choose a folder to contain the saved files"
+msgstr ""
+
+msgid "All sets processed successfully!"
+msgstr ""
+
+msgid "You can't change the settings while Outfit Studio is opened up."
+msgstr ""
+
+msgid "OpenGL Error"
+msgstr ""
+
+msgid "Checking destination..."
+msgstr ""
+
+msgid "Adding reference shapes..."
+msgstr ""
+
+msgid "Adding outfit shapes..."
+msgstr ""
+
+msgid "Calculating slider data..."
+msgstr ""
+
+msgid "Creating slider set file..."
+msgstr ""
+
+msgid "Failed to open or create slider set file: "
+msgstr ""
+
+msgid "Saving slider set file..."
+msgstr ""
+
+msgid "Failed to write to slider set file: "
+msgstr ""
+
+msgid "Saving NIF file..."
+msgstr ""
+
+msgid "Failed to write base .nif file: "
+msgstr ""
+
+msgid "Finished"
+msgstr ""
+
+msgid "Could not load OBJ file '%s'!"
+msgstr ""
+
+msgid "OBJ Error"
+msgstr ""
+
+msgid "Could not copy data from OBJ file '%s'!"
+msgstr ""
+
+msgid ""
+"The vertex count of the selected .obj file matches the currently selected "
+"outfit shape.  Do you wish to update the current shape?  (click No to create "
+"a new shape)"
+msgstr ""
+
+msgid "Merge or New"
+msgstr ""
+
+msgid "Update Vertex Positions?"
+msgstr ""
+
+msgid "Vertex Position Update"
+msgstr ""
+
+msgid "Update Texture Coordinates?"
+msgstr ""
+
+msgid "UV Update"
+msgstr ""
+
+msgid "Please specify a name for the new shape"
+msgstr ""
+
+msgid "New Shape Name"
+msgstr ""
+
+msgid "Could not load 'SkeletonBlank.nif' for importing data file."
+msgstr ""
+
+msgid "Import Data Error"
+msgstr ""
+
+msgid "Gathering bones..."
+msgstr ""
+
+msgid "Initializing proximity data..."
+msgstr ""
+
+msgid "Copying bone weights..."
+msgstr ""
+
+msgid "Transferring bone weights..."
+msgstr ""
+
+msgid "Template source entries are invalid."
+msgstr ""
+
+msgid "Reference Error"
+msgstr ""
+
+msgid ""
+"NIF version not supported!\n"
+"\n"
+"File: %s\n"
+"%s\n"
+"User Version: %i\n"
+"User Version 2: %i"
+msgstr ""
+
+msgid "Could not load reference NIF file '%s'!"
+msgstr ""
+
+msgid "Could not load slider set file '%s'!"
+msgstr ""
+
+msgid "Reference NIF file '%s' does not contain any shapes."
+msgstr ""
+
+msgid "Shape '%s' not found in reference NIF file '%s'!"
+msgstr ""
+
+msgid "NIF Error"
+msgstr ""
+
+msgid "Could not load NIF file '%s'!"
+msgstr ""
+
+msgid "Loading slider set..."
+msgstr ""
+
+msgid "Retrieving sliders..."
+msgstr ""
+
+msgid "Loading outfit shapes..."
+msgstr ""
+
+msgid "Updating slider data..."
+msgstr ""
+
+msgid ""
+"There was cloth physics data loaded at some point (BSClothExtraData). Please "
+"choose all the origins to use in the output."
+msgstr ""
+
+msgid "Choose cloth data"
+msgstr ""
+
+msgid ""
+"The vertex count of the selected .fbx file matches the currently selected "
+"outfit shape.  Do you wish to update the current shape?  (click No to create "
+"a new shape)"
+msgstr ""
+
+msgid "Update Animation Weighting?"
+msgstr ""
+
+msgid "Animation Weight Update"
+msgstr ""
+
+msgid "Failed to load outfitStudio.xrc file!"
+msgstr ""
+
+msgid "Failed to load Outfit Studio frame!"
+msgstr ""
+
+msgid "Ready!"
+msgstr "Готово!"
+
+msgid "Creating sliders..."
+msgstr ""
+
+msgid "Clearing old sliders..."
+msgstr ""
+
+msgid "Loading slider: "
+msgstr ""
+
+msgid "Turn on edit mode for this slider."
+msgstr ""
+
+msgid "Weaken slider data by 1%."
+msgstr ""
+
+msgid "Strengthen slider data by 1%."
+msgstr ""
+
+msgid "Enter a name for the new slider:"
+msgstr ""
+
+msgid "Create New Slider"
+msgstr ""
+
+msgid ""
+"You can only edit the base shape when all sliders are zero. Do you wish to "
+"set all sliders to zero now?  Note, use the pencil button next to a slider "
+"to enable editing of that slider's morph."
+msgstr ""
+
+msgid "Creating project '%s'..."
+msgstr ""
+
+msgid "Loading reference..."
+msgstr ""
+
+msgid "Loading outfit..."
+msgstr ""
+
+msgid "Creating outfit..."
+msgstr ""
+
+msgid "Creating %d slider(s)..."
+msgstr ""
+
+msgid "Applying slider effects..."
+msgstr ""
+
+msgid "Select a slider set to load"
+msgstr ""
+
+msgid "Failed to open '%s' as a slider set file!"
+msgstr ""
+
+msgid "Slider Set Error"
+msgstr ""
+
+msgid "Please choose an outfit to load"
+msgstr ""
+
+msgid "Load a slider set"
+msgstr ""
+
+msgid "Loading project..."
+msgstr ""
+
+msgid "Loading outfit data..."
+msgstr ""
+
+msgid "Failed to create project '%s' from file '%s' (%d)!"
+msgstr ""
+
+msgid "Loading reference shape '%s'..."
+msgstr ""
+
+msgid "Loading textures..."
+msgstr ""
+
+msgid ""
+"You're currently editing slider data, please exit the slider's edit mode "
+"(pencil button) and try again."
+msgstr ""
+
+msgid "Loading reference set..."
+msgstr ""
+
+msgid "Creating reference..."
+msgstr ""
+
+msgid "There are no valid shapes loaded!"
+msgstr ""
+
+msgid ""
+"At least one vertex does not have any weighting assigned to it. This will "
+"cause issues and you should fix it using the weight brush. The affected "
+"vertices have been put under a mask. Do you want to save anyway?"
+msgstr ""
+
+msgid "Unweighted Vertices"
+msgstr ""
+
+msgid "Saving project '%s'..."
+msgstr ""
+
+msgid "Invalid or no slider set file specified! Please try again."
+msgstr ""
+
+msgid "No outfit name specified! Please try again."
+msgstr ""
+
+msgid "No data folder specified! Please try again."
+msgstr ""
+
+msgid ""
+"An invalid or no base outfit .nif file name specified! Please try again."
+msgstr ""
+
+msgid "No game file path specified! Please try again."
+msgstr ""
+
+msgid "No game file name specified! Please try again."
+msgstr ""
+
+msgid "Import NIF file"
+msgstr ""
+
+msgid "Importing NIF file..."
+msgstr ""
+
+msgid "Refreshing GUI..."
+msgstr ""
+
+msgid "Finished."
+msgstr ""
+
+msgid "Export outfit NIF"
+msgstr ""
+
+msgid "Failed to save NIF file '%s'!"
+msgstr ""
+
+msgid "Export Error"
+msgstr ""
+
+msgid "Export project NIF"
+msgstr ""
+
+msgid "Failed to save NIF file '%s' with reference!"
+msgstr ""
+
+msgid "Import physics data to project"
+msgstr ""
+
+msgid "Failed to import physics data file '%s'!"
+msgstr ""
+
+msgid "Import Error"
+msgstr "Ошибка Импорта"
+
+msgid "There is no physics data loaded!"
+msgstr ""
+
+msgid "Info"
+msgstr "Инфо"
+
+msgid "Please choose the physics data source you want to export."
+msgstr ""
+
+msgid "Choose physics data"
+msgstr ""
+
+msgid "Export physics data"
+msgstr ""
+
+msgid "Failed to save physics data file '%s'!"
+msgstr ""
+
+msgid "This function requires at least one slider position to be non-zero."
+msgstr ""
+
+msgid ""
+"Create a conversion slider for the current slider settings with the "
+"following name: "
+msgstr ""
+
+msgid "Create New Conversion Slider"
+msgstr ""
+
+msgid "Field of View: %d"
+msgstr ""
+
+msgid "There are no sliders loaded!"
+msgstr ""
+
+msgid "No changes were made to the sliders, so no preset was saved!"
+msgstr ""
+
+msgid "There is no shape selected!"
+msgstr ""
+
+msgid "There is no slider in edit mode to import data to!"
+msgstr ""
+
+msgid "Import .bsd slider data"
+msgstr ""
+
+msgid "Import .obj file for slider calculation"
+msgstr ""
+
+msgid "Vertex count of .obj file mesh does not match currently selected shape!"
+msgstr ""
+
+msgid "Import .tri morphs"
+msgstr ""
+
+msgid "This will delete all loaded sliders. Are you sure?"
+msgstr ""
+
+msgid "TRI Import"
+msgstr ""
+
+msgid "Failed to load TRI file!"
+msgstr ""
+
+msgid ""
+"Added morphs for the following shapes:\n"
+"\n"
+"%s"
+msgstr ""
+
+msgid "Import .fbx file for slider calculation"
+msgstr ""
+
+msgid "There is no slider in edit mode to export data from!"
+msgstr ""
+
+msgid "Export .bsd slider data to directory"
+msgstr ""
+
+msgid "Export .bsd slider data"
+msgstr ""
+
+msgid "Export .obj slider data to directory"
+msgstr ""
+
+msgid "Export .obj slider data"
+msgstr ""
+
+msgid "Failed to export OBJ file!"
+msgstr ""
+
+msgid "OSD Import"
+msgstr "Импорт OSD"
+
+msgid "Import .osd file"
+msgstr ""
+
+msgid "Failed to import OSD file!"
+msgstr ""
+
+msgid "Export .osd file"
+msgstr ""
+
+msgid "Failed to export OSD file!"
+msgstr ""
+
+msgid "Export .tri morphs"
+msgstr ""
+
+msgid "Failed to export TRI file!"
+msgstr ""
+
+msgid "There is no slider in edit mode to clear data from!"
+msgstr ""
+
+msgid "Are you sure you wish to clear the unmasked slider data \""
+msgstr ""
+
+msgid "\" for the selected shapes? This cannot be undone."
+msgstr ""
+
+msgid "Confirm data erase"
+msgstr ""
+
+msgid "\" for the shape \""
+msgstr ""
+
+msgid "Enter a name for the new zap:"
+msgstr ""
+
+msgid "Create New Zap"
+msgstr ""
+
+msgid "There is no slider in edit mode to negate!"
+msgstr ""
+
+msgid "There is no slider in edit mode to create a mask from!"
+msgstr ""
+
+msgid "There is no slider in edit mode to delete!"
+msgstr ""
+
+msgid "Are you sure you wish to delete the slider \""
+msgstr ""
+
+msgid "\"? This cannot be undone."
+msgstr ""
+
+msgid "Confirm slider delete"
+msgstr "Пдтвердите удаление слайдера"
+
+msgid "There is no slider in edit mode to show properties for!"
+msgstr ""
+
+msgid "Conforming all shapes..."
+msgstr ""
+
+msgid "Conforming: "
+msgstr ""
+
+msgid "All shapes conformed."
+msgstr ""
+
+msgid "Conforming..."
+msgstr ""
+
+msgid "Initializing data..."
+msgstr ""
+
+msgid "Shape(s) conformed."
+msgstr ""
+
+msgid "Import .obj file for new shape"
+msgstr ""
+
+msgid "Export selected shapes as .obj files"
+msgstr ""
+
+msgid "Export shape as an .obj file"
+msgstr ""
+
+msgid "Import .fbx file for new shape"
+msgstr ""
+
+msgid "Export .fbx file for new shape"
+msgstr ""
+
+msgid "Please enter a new unique name for the shape."
+msgstr ""
+
+msgid "Rename Shape"
+msgstr "Переименовать Форму"
+
+msgid "The selected shape is the reference shape already."
+msgstr ""
+
+msgid ""
+"Rotating slider data is currently not possible using the Rotate Shape dialog."
+msgstr ""
+
+msgid "Rotate"
+msgstr "Вращение"
+
+msgid ""
+"You can only copy shapes into an outfit, and there is no outfit in the "
+"current project. Load one first!"
+msgstr ""
+
+msgid "Please enter a unique name for the duplicated shape."
+msgstr ""
+
+msgid "Duplicate Shape"
+msgstr ""
+
+msgid ""
+"Are you sure you wish to delete the selected shapes?  This action cannot be "
+"undone."
+msgstr ""
+
+msgid "Confirm Delete"
+msgstr ""
+
+msgid "You can't delete the reference shape!"
+msgstr ""
+
+msgid "No bone name was entered!"
+msgstr ""
+
+msgid "Bone '%s' already exists in the project!"
+msgstr ""
+
+msgid ""
+"Sorry, you can't copy weights from the reference shape to itself. Skipping "
+"this shape."
+msgstr ""
+
+msgid "Can't copy weights"
+msgstr ""
+
+msgid "Copying selected bone weights..."
+msgstr ""
+
+msgid "Sorry, you can't copy weights from the reference shape to itself."
+msgstr ""
+
+msgid "The vertex count of the reference and chosen shape is not the same!"
+msgstr ""
+
+msgid "Outfit Studio: OpenGL context is not OK."
+msgstr ""
+
+msgid "Adding NIF file..."
+msgstr ""
+
+msgid "Adding OBJ file..."
+msgstr ""
+
+msgid "Adding FBX file..."
+msgstr ""
+
+msgid "Loading slider file..."
+msgstr ""
+
+msgid "Preview failed: OpenGL context is not OK."
+msgstr ""
+
+msgid "Version"
+msgstr "Версия"
+
+msgid ""
+"Version of NIF file '%s' doesn't match current target game. To use the "
+"meshes for the target game, export to OBJ/FBX and reload them again."
+msgstr ""
+
+msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
+msgstr ""
