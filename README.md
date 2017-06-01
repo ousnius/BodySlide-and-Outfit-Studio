@@ -17,6 +17,7 @@ BodySlide and Outfit Studio, a tool to convert, create, and customize outfits an
 * TinyXML-2
 * FSEngine (BSA/BA2 library)
 * Autodesk FBX SDK
+* half - IEEE 754-based half-precision floating point library
 * Miniball
 * LZ4(F)
 * wxWidgets
