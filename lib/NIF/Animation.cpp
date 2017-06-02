@@ -229,6 +229,12 @@ void NiTimeController::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&nextControllerRef.index);
 }
 
+void NiTimeController::GetPtrs(std::set<int*>& ptrs) {
+	NiObject::GetPtrs(ptrs);
+
+	ptrs.insert(&targetRef.index);
+}
+
 int NiTimeController::CalcBlockSize(NiVersion& version) {
 	NiObject::CalcBlockSize(version);
 
@@ -429,11 +435,11 @@ void NiBoneLODController::Put(NiStream& stream) {
 		boneArrays[i].Put(stream);
 }
 
-void NiBoneLODController::GetChildRefs(std::set<int*>& refs) {
-	NiTimeController::GetChildRefs(refs);
+void NiBoneLODController::GetPtrs(std::set<int*>& ptrs) {
+	NiTimeController::GetPtrs(ptrs);
 
 	for (int i = 0; i < boneArraysSize; i++)
-		boneArrays[i].GetIndexPtrs(refs);
+		boneArrays[i].GetIndexPtrs(ptrs);
 }
 
 int NiBoneLODController::CalcBlockSize(NiVersion& version) {
@@ -701,10 +707,10 @@ void NiMultiTargetTransformController::Put(NiStream& stream) {
 	targetRefs.Put(stream);
 }
 
-void NiMultiTargetTransformController::GetChildRefs(std::set<int*>& refs) {
-	NiInterpController::GetChildRefs(refs);
+void NiMultiTargetTransformController::GetPtrs(std::set<int*>& ptrs) {
+	NiInterpController::GetPtrs(ptrs);
 
-	targetRefs.GetIndexPtrs(refs);
+	targetRefs.GetIndexPtrs(ptrs);
 }
 
 int NiMultiTargetTransformController::CalcBlockSize(NiVersion& version) {
@@ -871,10 +877,10 @@ void BSPSysMultiTargetEmitterCtlr::Put(NiStream& stream) {
 	masterParticleSystemRef.Put(stream);
 }
 
-void BSPSysMultiTargetEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
-	NiPSysEmitterCtlr::GetChildRefs(refs);
+void BSPSysMultiTargetEmitterCtlr::GetPtrs(std::set<int*>& ptrs) {
+	NiPSysEmitterCtlr::GetPtrs(ptrs);
 
-	refs.insert(&masterParticleSystemRef.index);
+	ptrs.insert(&masterParticleSystemRef.index);
 }
 
 int BSPSysMultiTargetEmitterCtlr::CalcBlockSize(NiVersion& version) {
@@ -1245,10 +1251,15 @@ void NiLookAtInterpolator::GetStringRefs(std::set<StringRef*>& refs) {
 void NiLookAtInterpolator::GetChildRefs(std::set<int*>& refs) {
 	NiInterpolator::GetChildRefs(refs);
 
-	refs.insert(&lookAtRef.index);
 	refs.insert(&translateInterpRef.index);
 	refs.insert(&rollInterpRef.index);
 	refs.insert(&scaleInterpRef.index);
+}
+
+void NiLookAtInterpolator::GetPtrs(std::set<int*>& ptrs) {
+	NiInterpolator::GetPtrs(ptrs);
+
+	ptrs.insert(&lookAtRef.index);
 }
 
 int NiLookAtInterpolator::CalcBlockSize(NiVersion& version) {
@@ -1388,7 +1399,12 @@ void NiControllerSequence::GetChildRefs(std::set<int*>& refs) {
 	NiSequence::GetChildRefs(refs);
 
 	refs.insert(&textKeyRef.index);
-	refs.insert(&managerRef.index);
+}
+
+void NiControllerSequence::GetPtrs(std::set<int*>& ptrs) {
+	NiSequence::GetPtrs(ptrs);
+
+	ptrs.insert(&managerRef.index);
 }
 
 int NiControllerSequence::CalcBlockSize(NiVersion& version) {

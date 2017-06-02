@@ -281,6 +281,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiCollisionObject* Clone() { return new NiCollisionObject(*this); }
 };
@@ -687,7 +688,7 @@ public:
 	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 };
 
@@ -743,7 +744,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcDescSize();
 };
 
@@ -761,7 +762,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	bhkBreakableConstraint* Clone() { return new bhkBreakableConstraint(*this); }
 };
@@ -877,7 +878,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	bhkBallSocketConstraintChain* Clone() { return new bhkBallSocketConstraintChain(*this); }
 };
@@ -1019,6 +1020,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
 };

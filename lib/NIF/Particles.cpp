@@ -245,6 +245,12 @@ void NiPSysModifier::GetStringRefs(std::set<StringRef*>& refs) {
 	refs.insert(&name);
 }
 
+void NiPSysModifier::GetPtrs(std::set<int*>& ptrs) {
+	NiObject::GetPtrs(ptrs);
+
+	ptrs.insert(&targetRef.index);
+}
+
 int NiPSysModifier::CalcBlockSize(NiVersion& version) {
 	NiObject::CalcBlockSize(version);
 
@@ -553,10 +559,10 @@ void NiPSysGravityModifier::Put(NiStream& stream) {
 	stream << worldAligned;
 }
 
-void NiPSysGravityModifier::GetChildRefs(std::set<int*>& refs) {
-	NiPSysModifier::GetChildRefs(refs);
+void NiPSysGravityModifier::GetPtrs(std::set<int*>& ptrs) {
+	NiPSysModifier::GetPtrs(ptrs);
 
-	refs.insert(&gravityObjRef.index);
+	ptrs.insert(&gravityObjRef.index);
 }
 
 int NiPSysGravityModifier::CalcBlockSize(NiVersion& version) {
@@ -634,10 +640,10 @@ void NiPSysDragModifier::Put(NiStream& stream) {
 	stream << rangeFalloff;
 }
 
-void NiPSysDragModifier::GetChildRefs(std::set<int*>& refs) {
-	NiPSysModifier::GetChildRefs(refs);
+void NiPSysDragModifier::GetPtrs(std::set<int*>& ptrs) {
+	NiPSysModifier::GetPtrs(ptrs);
 
-	refs.insert(&parentRef.index);
+	ptrs.insert(&parentRef.index);
 }
 
 int NiPSysDragModifier::CalcBlockSize(NiVersion& version) {
@@ -673,6 +679,12 @@ void BSPSysInheritVelocityModifier::Put(NiStream& stream) {
 	stream << changeToInherit;
 	stream << velocityMult;
 	stream << velocityVar;
+}
+
+void BSPSysInheritVelocityModifier::GetPtrs(std::set<int*>& ptrs) {
+	NiPSysModifier::GetPtrs(ptrs);
+
+	ptrs.insert(&targetNodeRef.index);
 }
 
 int BSPSysInheritVelocityModifier::CalcBlockSize(NiVersion& version) {
@@ -755,10 +767,10 @@ void NiPSysBombModifier::Put(NiStream& stream) {
 	stream << symmetryType;
 }
 
-void NiPSysBombModifier::GetChildRefs(std::set<int*>& refs) {
-	NiPSysModifier::GetChildRefs(refs);
+void NiPSysBombModifier::GetPtrs(std::set<int*>& ptrs) {
+	NiPSysModifier::GetPtrs(ptrs);
 
-	refs.insert(&bombNodeRef.index);
+	ptrs.insert(&bombNodeRef.index);
 }
 
 int NiPSysBombModifier::CalcBlockSize(NiVersion& version) {
@@ -821,6 +833,12 @@ void BSPSysRecycleBoundModifier::Put(NiStream& stream) {
 	stream << boundOffset;
 	stream << boundExtent;
 	targetNodeRef.Put(stream);
+}
+
+void BSPSysRecycleBoundModifier::GetPtrs(std::set<int*>& ptrs) {
+	NiPSysModifier::GetPtrs(ptrs);
+
+	ptrs.insert(&targetNodeRef.index);
 }
 
 int BSPSysRecycleBoundModifier::CalcBlockSize(NiVersion& version) {
@@ -1115,9 +1133,14 @@ void NiPSysCollider::GetChildRefs(std::set<int*>& refs) {
 	NiObject::GetChildRefs(refs);
 
 	refs.insert(&spawnModifierRef.index);
-	refs.insert(&managerRef.index);
 	refs.insert(&nextColliderRef.index);
-	refs.insert(&colliderNodeRef.index);
+}
+
+void NiPSysCollider::GetPtrs(std::set<int*>& ptrs) {
+	NiObject::GetPtrs(ptrs);
+
+	ptrs.insert(&managerRef.index);
+	ptrs.insert(&colliderNodeRef.index);
 }
 
 int NiPSysCollider::CalcBlockSize(NiVersion& version) {
@@ -1285,10 +1308,10 @@ void NiPSysVolumeEmitter::Put(NiStream& stream) {
 	emitterNodeRef.Put(stream);
 }
 
-void NiPSysVolumeEmitter::GetChildRefs(std::set<int*>& refs) {
-	NiPSysEmitter::GetChildRefs(refs);
+void NiPSysVolumeEmitter::GetPtrs(std::set<int*>& ptrs) {
+	NiPSysEmitter::GetPtrs(ptrs);
 
-	refs.insert(&emitterNodeRef.index);
+	ptrs.insert(&emitterNodeRef.index);
 }
 
 int NiPSysVolumeEmitter::CalcBlockSize(NiVersion& version) {

@@ -307,6 +307,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiLookAtInterpolator* Clone() { return new NiLookAtInterpolator(*this); }
 };
@@ -329,6 +330,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 };
 
@@ -427,7 +429,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiBoneLODController* Clone() { return new NiBoneLODController(*this); }
 };
@@ -622,7 +624,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiMultiTargetTransformController* Clone() { return new NiMultiTargetTransformController(*this); }
 };
@@ -766,7 +768,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	BSPSysMultiTargetEmitterCtlr* Clone() { return new BSPSysMultiTargetEmitterCtlr(*this); }
 };
@@ -832,6 +834,7 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiControllerSequence* Clone() { return new NiControllerSequence(*this); }
 };

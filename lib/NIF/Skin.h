@@ -208,6 +208,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiSkinInstance* Clone() { return new NiSkinInstance(*this); }
 
@@ -305,6 +306,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	BSSkinInstance* Clone() { return new BSSkinInstance(*this); }
 

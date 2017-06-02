@@ -657,7 +657,13 @@ void NiSkinInstance::GetChildRefs(std::set<int*>& refs) {
 
 	refs.insert(&dataRef.index);
 	refs.insert(&skinPartitionRef.index);
-	boneRefs.GetIndexPtrs(refs);
+}
+
+void NiSkinInstance::GetPtrs(std::set<int*>& ptrs) {
+	NiObject::GetPtrs(ptrs);
+
+	ptrs.insert(&targetRef.index);
+	boneRefs.GetIndexPtrs(ptrs);
 }
 
 int NiSkinInstance::CalcBlockSize(NiVersion& version) {
@@ -792,7 +798,13 @@ void BSSkinInstance::GetChildRefs(std::set<int*>& refs) {
 	NiObject::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
-	boneRefs.GetIndexPtrs(refs);
+}
+
+void BSSkinInstance::GetPtrs(std::set<int*>& ptrs) {
+	NiObject::GetPtrs(ptrs);
+
+	ptrs.insert(&targetRef.index);
+	boneRefs.GetIndexPtrs(ptrs);
 }
 
 int BSSkinInstance::CalcBlockSize(NiVersion& version) {

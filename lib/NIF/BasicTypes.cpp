@@ -381,11 +381,12 @@ void NiHeader::UpdateHeaderStrings(const bool hasUnknown) {
 	UpdateMaxStringLength();
 }
 
-void NiHeader::BlockDeleted(NiObject* p, int blockId) {
-	std::set<int*> childRefs;
-	p->GetChildRefs(childRefs);
+void NiHeader::BlockDeleted(NiObject* o, int blockId) {
+	std::set<int*> refs;
+	o->GetChildRefs(refs);
+	o->GetPtrs(refs);
 
-	for (auto &r : childRefs) {
+	for (auto &r : refs) {
 		auto& index = (*r);
 		if (index == blockId)
 			index = 0xFFFFFFFF;
@@ -395,10 +396,11 @@ void NiHeader::BlockDeleted(NiObject* p, int blockId) {
 }
 
 void NiHeader::BlockSwapped(NiObject* o, int blockIndexLo, int blockIndexHi) {
-	std::set<int*> childRefs;
-	o->GetChildRefs(childRefs);
+	std::set<int*> refs;
+	o->GetChildRefs(refs);
+	o->GetPtrs(refs);
 
-	for (auto &r : childRefs) {
+	for (auto &r : refs) {
 		auto& index = (*r);
 		if (index == blockIndexLo)
 			index = blockIndexHi;

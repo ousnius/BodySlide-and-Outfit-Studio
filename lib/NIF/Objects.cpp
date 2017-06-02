@@ -207,13 +207,13 @@ void NiDefaultAVObjectPalette::Put(NiStream& stream) {
 	}
 }
 
-void NiDefaultAVObjectPalette::GetChildRefs(std::set<int*>& refs) {
-	NiAVObjectPalette::GetChildRefs(refs);
+void NiDefaultAVObjectPalette::GetPtrs(std::set<int*>& ptrs) {
+	NiAVObjectPalette::GetPtrs(ptrs);
 
-	refs.insert(&sceneRef.index);
+	ptrs.insert(&sceneRef.index);
 
 	for (int i = 0; i < numObjects; i++)
-		refs.insert(&objects[i].objectRef.index);
+		ptrs.insert(&objects[i].objectRef.index);
 }
 
 int NiDefaultAVObjectPalette::CalcBlockSize(NiVersion& version) {

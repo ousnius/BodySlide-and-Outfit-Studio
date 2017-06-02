@@ -1857,7 +1857,7 @@ void NifFile::UpdateShapeBoneID(const std::string& shapeName, const int oldID, c
 	if (!boneCont)
 		return;
 
-	for (auto &bp : boneCont->boneRefs.GetRefs()) {
+	for (auto &bp : boneCont->boneRefs.GetBlockRefs()) {
 		if (bp.index == oldID) {
 			bp.index = newID;
 			return;

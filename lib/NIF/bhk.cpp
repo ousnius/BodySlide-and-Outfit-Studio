@@ -26,6 +26,12 @@ void NiCollisionObject::Put(NiStream& stream) {
 	targetRef.Put(stream);
 }
 
+void NiCollisionObject::GetPtrs(std::set<int*>& ptrs) {
+	NiObject::GetPtrs(ptrs);
+
+	ptrs.insert(&targetRef.index);
+}
+
 int NiCollisionObject::CalcBlockSize(NiVersion& version) {
 	NiObject::CalcBlockSize(version);
 
@@ -716,10 +722,10 @@ void bhkConstraint::Put(NiStream& stream) {
 	stream << priority;
 }
 
-void bhkConstraint::GetChildRefs(std::set<int*>& refs) {
-	bhkSerializable::GetChildRefs(refs);
+void bhkConstraint::GetPtrs(std::set<int*>& ptrs) {
+	bhkSerializable::GetPtrs(ptrs);
 
-	entityRefs.GetIndexPtrs(refs);
+	entityRefs.GetIndexPtrs(ptrs);
 }
 
 int bhkConstraint::CalcBlockSize(NiVersion& version) {
@@ -917,8 +923,8 @@ void SubConstraintDesc::Put(NiStream& stream) {
 	stream << strength;
 }
 
-void SubConstraintDesc::GetChildRefs(std::set<int*>& refs) {
-	entityRefs.GetIndexPtrs(refs);
+void SubConstraintDesc::GetPtrs(std::set<int*>& ptrs) {
+	entityRefs.GetIndexPtrs(ptrs);
 }
 
 int SubConstraintDesc::CalcDescSize() {
@@ -975,10 +981,10 @@ void bhkBreakableConstraint::Put(NiStream& stream) {
 	stream << removeWhenBroken;
 }
 
-void bhkBreakableConstraint::GetChildRefs(std::set<int*>& refs) {
-	bhkConstraint::GetChildRefs(refs);
+void bhkBreakableConstraint::GetPtrs(std::set<int*>& ptrs) {
+	bhkConstraint::GetPtrs(ptrs);
 
-	subConstraint.GetChildRefs(refs);
+	subConstraint.GetPtrs(ptrs);
 }
 
 int bhkBreakableConstraint::CalcBlockSize(NiVersion& version) {
@@ -1242,12 +1248,12 @@ void bhkBallSocketConstraintChain::Put(NiStream& stream) {
 	stream << priority;
 }
 
-void bhkBallSocketConstraintChain::GetChildRefs(std::set<int*>& refs) {
-	bhkSerializable::GetChildRefs(refs);
+void bhkBallSocketConstraintChain::GetPtrs(std::set<int*>& ptrs) {
+	bhkSerializable::GetPtrs(ptrs);
 
-	entityARefs.GetIndexPtrs(refs);
-	refs.insert(&entityARef.index);
-	refs.insert(&entityBRef.index);
+	entityARefs.GetIndexPtrs(ptrs);
+	ptrs.insert(&entityARef.index);
+	ptrs.insert(&entityBRef.index);
 }
 
 int bhkBallSocketConstraintChain::CalcBlockSize(NiVersion& version) {
@@ -1633,6 +1639,12 @@ void bhkCompressedMeshShape::GetChildRefs(std::set<int*>& refs) {
 	bhkShape::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
+}
+
+void bhkCompressedMeshShape::GetPtrs(std::set<int*>& ptrs) {
+	bhkShape::GetPtrs(ptrs);
+
+	ptrs.insert(&targetRef.index);
 }
 
 int bhkCompressedMeshShape::CalcBlockSize(NiVersion& version) {

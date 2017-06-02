@@ -127,6 +127,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 };
 
@@ -296,7 +297,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiPSysGravityModifier* Clone() { return new NiPSysGravityModifier(*this); }
 };
@@ -346,7 +347,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiPSysDragModifier* Clone() { return new NiPSysDragModifier(*this); }
 };
@@ -367,6 +368,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	BSPSysInheritVelocityModifier* Clone() { return new BSPSysInheritVelocityModifier(*this); }
 };
@@ -412,7 +414,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiPSysBombModifier* Clone() { return new NiPSysBombModifier(*this); }
 };
@@ -449,6 +451,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	BSPSysRecycleBoundModifier* Clone() { return new BSPSysRecycleBoundModifier(*this); }
 };
@@ -580,6 +583,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 };
 
@@ -666,7 +670,7 @@ public:
 	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 };
 

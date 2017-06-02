@@ -117,7 +117,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetPtrs(std::set<int*>& ptrs);
 	int CalcBlockSize(NiVersion& version);
 	NiDefaultAVObjectPalette* Clone() { return new NiDefaultAVObjectPalette(*this); }
 };
@@ -179,7 +179,7 @@ public:
 	int GetChildRef(const int id);
 	void AddChildRef(const int id);
 	void ClearChildren();
-	std::vector<BlockRef<NiAVObject>>& GetChildren() { return childRefs.GetRefs(); }
+	std::vector<BlockRef<NiAVObject>>& GetChildren() { return childRefs.GetBlockRefs(); }
 
 	int GetNumEffects() { return effectRefs.GetSize(); }
 	int GetEffectRef(const int id);

@@ -171,7 +171,7 @@ public:
 		arraySize = 0;
 	}
 
-	std::vector<BlockRef<T>>& GetRefs() {
+	std::vector<BlockRef<T>>& GetBlockRefs() {
 		return refs;
 	}
 
@@ -312,6 +312,7 @@ public:
 
 	virtual void GetStringRefs(std::set<StringRef*>&) {}
 	virtual void GetChildRefs(std::set<int*>&) {}
+	virtual void GetPtrs(std::set<int*>&) {}
 
 	virtual int CalcBlockSize(NiVersion& version) {
 		blockSize = 0;	// Calculate from the ground up
