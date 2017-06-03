@@ -305,7 +305,7 @@ public:
 
 	virtual void Init() {}
 
-	virtual void notifyVerticesDelete(const std::vector<ushort>) {}
+	virtual void notifyVerticesDelete(const std::vector<ushort>&) {}
 
 	virtual void Get(NiStream&) {}
 	virtual void Put(NiStream&) {}
