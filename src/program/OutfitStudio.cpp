@@ -1294,6 +1294,7 @@ void OutfitStudio::ClearProject() {
 	project->mCopyRef = true;
 
 	glView->DestroyOverlays();
+	activePartition.Unset();
 }
 
 void OutfitStudio::RenameProject(const std::string& projectName) {
@@ -3067,7 +3068,7 @@ void OutfitStudio::CreatePartitionTree(const std::string& shapeName) {
 }
 
 void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) {
-	if (!glView->GetSegmentMode())
+	if (!activeItem || !glView->GetSegmentMode())
 		return;
 
 	std::unordered_map<ushort, float> mask;
