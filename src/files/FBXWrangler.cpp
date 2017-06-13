@@ -339,105 +339,110 @@ bool FBXWrangler::LoadMeshes(const FBXImportOptions& options) {
 	if (!scene)
 		return false;
 
-	FbxNode* root = scene->GetRootNode();
+	std::function<void(FbxNode*)> loadNodeChildren = [&](FbxNode* root) {
+		for (int i = 0; i < root->GetChildCount(); i++) {
+			FbxNode* child = root->GetChild(i);
 
-	for (int i = 0; i < root->GetChildCount(); i++) {
-		FbxNode* child = root->GetChild(i);
+			if (child->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
+				FBXShape shape;
+				FbxMesh* m = (FbxMesh*)child->GetNodeAttribute();
 
-		if (child->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh) {
-			FBXShape shape;
-			FbxMesh* m = (FbxMesh*)child->GetNodeAttribute();
-
-			if (!m->IsTriangleMesh()) {
-				FbxGeometryConverter converter(sdkManager);
-				m = (FbxMesh*)converter.Triangulate((FbxNodeAttribute*)m, true);
-			}
-
-			FbxGeometryElementUV* uv = m->GetElementUV(0);
-			FbxGeometryElementNormal* normal = m->GetElementNormal(0);
-
-			shape.name = child->GetName();
-			int numVerts = m->GetControlPointsCount();
-			int numTris = m->GetPolygonCount();
-
-			for (int v = 0; v < numVerts; v++) {
-				FbxVector4 vert = m->GetControlPointAt(v);
-				shape.verts.emplace_back((float)vert.mData[0], (float)vert.mData[1], (float)vert.mData[2]);
-				if (uv && uv->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
-					int uIndex = v;
-					if (uv->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
-						uIndex = uv->GetIndexArray().GetAt(v);
-
-					shape.uvs.emplace_back((float)uv->GetDirectArray().GetAt(uIndex).mData[0],
-						(float)uv->GetDirectArray().GetAt(uIndex).mData[1]);
+				if (!m->IsTriangleMesh()) {
+					FbxGeometryConverter converter(sdkManager);
+					m = (FbxMesh*)converter.Triangulate((FbxNodeAttribute*)m, true);
 				}
 
-				if (normal && normal->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
-					shape.normals.emplace_back((float)normal->GetDirectArray().GetAt(v).mData[0],
-						(float)normal->GetDirectArray().GetAt(v).mData[1],
-						(float)normal->GetDirectArray().GetAt(v).mData[2]);
-				}
-			}
+				FbxGeometryElementUV* uv = m->GetElementUV(0);
+				FbxGeometryElementNormal* normal = m->GetElementNormal(0);
 
-			const char* uvName = nullptr;
-			if (uv) {
-				uvName = uv->GetName();
-				shape.uvs.resize(numVerts);
-			}
+				shape.name = child->GetName();
+				int numVerts = m->GetControlPointsCount();
+				int numTris = m->GetPolygonCount();
 
-			for (int t = 0; t < numTris; t++) {
-				if (m->GetPolygonSize(t) != 3)
-					continue;
+				for (int v = 0; v < numVerts; v++) {
+					FbxVector4 vert = m->GetControlPointAt(v);
+					shape.verts.emplace_back((float)vert.mData[0], (float)vert.mData[1], (float)vert.mData[2]);
+					if (uv && uv->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
+						int uIndex = v;
+						if (uv->GetReferenceMode() == FbxLayerElement::eIndexToDirect)
+							uIndex = uv->GetIndexArray().GetAt(v);
 
-				int p1 = m->GetPolygonVertex(t, 0);
-				int p2 = m->GetPolygonVertex(t, 1);
-				int p3 = m->GetPolygonVertex(t, 2);
-				shape.tris.emplace_back(p1, p2, p3);
+						shape.uvs.emplace_back((float)uv->GetDirectArray().GetAt(uIndex).mData[0],
+							(float)uv->GetDirectArray().GetAt(uIndex).mData[1]);
+					}
 
-				if (uv && uv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
-					FbxVector2 v_uv;
-					bool isUnmapped;
-
-					if (m->GetPolygonVertexUV(t, 0, uvName, v_uv, isUnmapped))
-						shape.uvs[p1] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-
-					if (m->GetPolygonVertexUV(t, 1, uvName, v_uv, isUnmapped))
-						shape.uvs[p2] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-
-					if (m->GetPolygonVertexUV(t, 2, uvName, v_uv, isUnmapped))
-						shape.uvs[p3] = Vector2(v_uv.mData[0], v_uv.mData[1]);
-				}
-			}
-
-			for (int iSkin = 0; iSkin < m->GetDeformerCount(FbxDeformer::eSkin); iSkin++) {
-				FbxSkin* skin = (FbxSkin*)m->GetDeformer(iSkin, FbxDeformer::eSkin);
-
-				for (int iCluster = 0; iCluster < skin->GetClusterCount(); iCluster++) {
-					FbxCluster* cluster = skin->GetCluster(iCluster);
-					if (!cluster->GetLink())
-						continue;
-
-					std::string bone = cluster->GetLink()->GetName();
-					shape.boneNames.insert(bone);
-					for (int iPoint = 0; iPoint < cluster->GetControlPointIndicesCount(); iPoint++) {
-						int v = cluster->GetControlPointIndices()[iPoint];
-						float w = cluster->GetControlPointWeights()[iPoint];
-						shape.boneSkin[bone].SetWeight(v, w);
+					if (normal && normal->GetMappingMode() == FbxGeometryElement::eByControlPoint) {
+						shape.normals.emplace_back((float)normal->GetDirectArray().GetAt(v).mData[0],
+							(float)normal->GetDirectArray().GetAt(v).mData[1],
+							(float)normal->GetDirectArray().GetAt(v).mData[2]);
 					}
 				}
+
+				const char* uvName = nullptr;
+				if (uv) {
+					uvName = uv->GetName();
+					shape.uvs.resize(numVerts);
+				}
+
+				for (int t = 0; t < numTris; t++) {
+					if (m->GetPolygonSize(t) != 3)
+						continue;
+
+					int p1 = m->GetPolygonVertex(t, 0);
+					int p2 = m->GetPolygonVertex(t, 1);
+					int p3 = m->GetPolygonVertex(t, 2);
+					shape.tris.emplace_back(p1, p2, p3);
+
+					if (uv && uv->GetMappingMode() == FbxGeometryElement::eByPolygonVertex) {
+						FbxVector2 v_uv;
+						bool isUnmapped;
+
+						if (m->GetPolygonVertexUV(t, 0, uvName, v_uv, isUnmapped))
+							shape.uvs[p1] = Vector2(v_uv.mData[0], v_uv.mData[1]);
+
+						if (m->GetPolygonVertexUV(t, 1, uvName, v_uv, isUnmapped))
+							shape.uvs[p2] = Vector2(v_uv.mData[0], v_uv.mData[1]);
+
+						if (m->GetPolygonVertexUV(t, 2, uvName, v_uv, isUnmapped))
+							shape.uvs[p3] = Vector2(v_uv.mData[0], v_uv.mData[1]);
+					}
+				}
+
+				for (int iSkin = 0; iSkin < m->GetDeformerCount(FbxDeformer::eSkin); iSkin++) {
+					FbxSkin* skin = (FbxSkin*)m->GetDeformer(iSkin, FbxDeformer::eSkin);
+
+					for (int iCluster = 0; iCluster < skin->GetClusterCount(); iCluster++) {
+						FbxCluster* cluster = skin->GetCluster(iCluster);
+						if (!cluster->GetLink())
+							continue;
+
+						std::string bone = cluster->GetLink()->GetName();
+						shape.boneNames.insert(bone);
+						for (int iPoint = 0; iPoint < cluster->GetControlPointIndicesCount(); iPoint++) {
+							int v = cluster->GetControlPointIndices()[iPoint];
+							float w = cluster->GetControlPointWeights()[iPoint];
+							shape.boneSkin[bone].SetWeight(v, w);
+						}
+					}
+				}
+
+				if (options.InvertU)
+					for (auto &u : shape.uvs)
+						u.u = 1.0f - u.u;
+
+				if (options.InvertV)
+					for (auto &v : shape.uvs)
+						v.v = 1.0f - v.v;
+
+				shapes[shape.name] = shape;
 			}
 
-			if (options.InvertU)
-				for (auto &u : shape.uvs)
-					u.u = 1.0f - u.u;
-
-			if (options.InvertV)
-				for (auto &v : shape.uvs)
-					v.v = 1.0f - v.v;
-
-			shapes[shape.name] = shape;
+			loadNodeChildren(child);
 		}
-	}
+	};
+
+	FbxNode* root = scene->GetRootNode();
+	loadNodeChildren(root);
 
 	return true;
 }
