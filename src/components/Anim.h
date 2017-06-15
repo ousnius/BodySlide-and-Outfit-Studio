@@ -49,10 +49,6 @@ public:
 	Matrix4 localRot;			// rotation offset from parent bone.
 	Vector3 localTrans;			// offset from parent bone
 
-	bool hasSkinXform;
-	Matrix4 skinRot;			// skinning rotation transform   (NOT node transform
-	Vector3 skinTrans;			// skinning translation transform  (NOT node transform
-
 	int refCount;				// reference count of this bone
 
 	AnimBone() {
@@ -61,7 +57,6 @@ public:
 		refCount = 0;
 		parent = nullptr;
 		isValidBone = false;
-		hasSkinXform = false;
 	}
 
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
@@ -140,8 +135,7 @@ public:
 	AnimInfo() { refNif = nullptr; }
 
 	// Returns true if a new bone is added, false if the bone already exists.
-	bool AddShapeBone(const std::string& shape, AnimBone& boneDataRef);
-
+	bool AddShapeBone(const std::string& shape, const std::string& boneName);
 	bool RemoveShapeBone(const std::string& shape, const std::string& boneName);
 
 	void Clear();
@@ -192,8 +186,8 @@ public:
 
 	AnimBone* GetBonePtr(const std::string& boneName = "");
 	bool GetBone(const std::string& boneName, AnimBone& outBone);
-	bool GetSkinTransform(const std::string& boneName, const SkinTransform& skinning, SkinTransform& xform);
 	bool GetBoneTransform(const std::string& boneName, SkinTransform& xform);
+	bool GetSkinTransform(const std::string& boneName, const SkinTransform& skinning, SkinTransform& xform);
 
 	int GetActiveBoneNames(std::vector<std::string>& outBoneNames);
 };

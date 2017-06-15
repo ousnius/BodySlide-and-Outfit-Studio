@@ -1265,9 +1265,7 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 		}
 
 		if (diffResult.size() > 0) {
-			AnimBone boneRef;
-			AnimSkeleton::getInstance().GetBone(boneName, boneRef);
-			if (workAnim.AddShapeBone(destShape, boneRef)) {
+			if (workAnim.AddShapeBone(destShape, boneName)) {
 				if (owner->targetGame == FO4) {
 					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 					SkinTransform xForm;
@@ -1335,9 +1333,7 @@ void OutfitProject::TransferSelectedWeights(const std::string& destShape, std::u
 				weights[w.first] = w.second;
 		}
 
-		AnimBone boneRef;
-		AnimSkeleton::getInstance().GetBone(boneName, boneRef);
-		if (workAnim.AddShapeBone(destShape, boneRef)) {
+		if (workAnim.AddShapeBone(destShape, boneName)) {
 			if (owner->targetGame == FO4) {
 				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 				SkinTransform xForm;
@@ -1484,21 +1480,14 @@ void OutfitProject::ClearBoneScale(bool clear) {
 }
 
 void OutfitProject::AddBoneRef(const std::string& boneName) {
-	AnimBone *boneRef = AnimSkeleton::getInstance().GetBonePtr(boneName);
-	if (!boneRef)
-		return;
-
 	SkinTransform xForm;
-	workAnim.GetBoneXForm(boneName, xForm);
-
-	boneRef->skinRot.Set(xForm.rotation);
-	boneRef->skinTrans = xForm.translation;
-	boneRef->hasSkinXform = true;
+	if (!AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm, xForm))
+		return;
 
 	std::vector<std::string> shapes;
 	GetShapes(shapes);
 	for (auto &s : shapes)
-		if (workAnim.AddShapeBone(s, *boneRef))
+		if (workAnim.AddShapeBone(s, boneName))
 			workAnim.SetShapeBoneXForm(s, boneName, xForm);
 }
 
@@ -1508,17 +1497,13 @@ void OutfitProject::AddCustomBoneRef(const std::string& boneName, const Vector3&
 	SkinTransform xForm;
 	xForm.translation = translation;
 
-
 	customBone.trans = xForm.translation;
-	customBone.skinTrans = xForm.translation;
-	customBone.skinRot.Set(xForm.rotation);
 	customBone.scale = xForm.scale;
-	customBone.hasSkinXform = true;
 
 	std::vector<std::string> shapes;
 	GetShapes(shapes);
 	for (auto &s : shapes)
-		if (workAnim.AddShapeBone(s, customBone))
+		if (workAnim.AddShapeBone(s, boneName))
 			workAnim.SetShapeBoneXForm(s, boneName, xForm);
 }
 

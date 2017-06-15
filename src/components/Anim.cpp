@@ -8,14 +8,14 @@ See the included LICENSE file
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 
-bool AnimInfo::AddShapeBone(const std::string& shape, AnimBone& boneDataRef) {
+bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneName) {
 	for (auto &bone : shapeBones[shape])
-		if (!bone.compare(boneDataRef.boneName))
+		if (!bone.compare(boneName))
 			return false;
 
-	shapeSkinning[shape].boneNames[boneDataRef.boneName] = shapeBones[shape].size();
-	shapeBones[shape].push_back(boneDataRef.boneName);
-	AnimSkeleton::getInstance().RefBone(boneDataRef.boneName);
+	shapeSkinning[shape].boneNames[boneName] = shapeBones[shape].size();
+	shapeBones[shape].push_back(boneName);
+	AnimSkeleton::getInstance().RefBone(boneName);
 	return true;
 }
 
@@ -153,22 +153,13 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNi
 			AnimSkeleton::getInstance().RefBone(bn);
 		}
 
-		AnimBone* bonePtr = AnimSkeleton::getInstance().GetBonePtr(bn);
-		if (bonePtr && !bonePtr->hasSkinXform) {
-			SkinTransform shapeskinxform;
-			if (nif->GetShapeBoneTransform(shape, bn, shapeskinxform)) {
-				bonePtr->skinRot.Set(shapeskinxform.rotation);
-				bonePtr->skinTrans = shapeskinxform.translation;
-				bonePtr->hasSkinXform = true;
-			}
-		}
 		shapeBones[shape].push_back(bn);
 	}
 
 	shapeSkinning[shape] = AnimSkin(nif, shape);
 
 	if (!nonRefBones.empty())
-		wxLogMessage("Bones in shape '%s' not found in reference skeleton:\n%s", shape, nonRefBones);
+		wxLogMessage("Bones in shape '%s' not found in reference skeleton and added as custom bones:\n%s", shape, nonRefBones);
 
 	return true;
 }
@@ -314,22 +305,16 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 					vertWeights[vw.first].Add(bid, vw.second);
 
 			if (isFO4) {
-				if (!bptr || !bptr->hasSkinXform) {
+				if (!bptr) {
 					incomplete = true;
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
 				}
 				else {
-					SkinTransform st;
-					st.rotation[0] = Vector3(bptr->skinRot[0], bptr->skinRot[1], bptr->skinRot[2]);
-					st.rotation[1] = Vector3(bptr->skinRot[4], bptr->skinRot[5], bptr->skinRot[6]);
-					st.rotation[2] = Vector3(bptr->skinRot[8], bptr->skinRot[9], bptr->skinRot[10]);
-					st.translation = bptr->skinTrans;
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, st);
-					bw.xform = st;
+					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
 				}
 			}
 			else {
-				if (!bptr || !bptr->hasSkinXform) {
+				if (!bptr) {
 					incomplete = true;
 					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
 				}
