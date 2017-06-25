@@ -2921,7 +2921,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 
 	if (ret == 0) {
 		wxLogMessage("All sets processed successfully!");
-		wxMessageBox(_("All sets processed successfully!"), _("Complete"), wxICON_INFORMATION);
+		wxMessageBox(_("All sets processed successfully!"), _("Complete"), wxICON_INFORMATION | wxSTAY_ON_TOP );
 	}
 	else if (ret == 3) {
 		wxArrayString errlist;
