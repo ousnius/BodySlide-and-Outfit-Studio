@@ -319,13 +319,10 @@ public:
 	Matrix4(){
 		Identity();
 	}
-	Matrix4(const Matrix4& other) {
-		memcpy(m, other.m, sizeof(float) * 16);
-	}
+
 	Matrix4(const std::vector<Vector3>& mat33) {
 		Set(mat33);
 	}
-	~Matrix4() {}
 
 	void Set(Vector3 mat33[3]) {
 		m[0] = mat33[0].x; m[1] = mat33[0].y; m[2] = mat33[0].z; m[3] = 0;
@@ -386,7 +383,7 @@ public:
 	Matrix4 Inverse() {
 		Matrix4 c;
 		float det = Det();
-		if (det == 0) {
+		if (det == 0.0f) {
 			c[0] = std::numeric_limits<float>::max();
 			return c;
 		}
@@ -594,12 +591,9 @@ public:
 
 struct BoundingSphere {
 	Vector3 center;
-	float radius;
+	float radius = 0.0f;
 
-	BoundingSphere() {
-		center.Zero();
-		radius = 0.0f;
-	}
+	BoundingSphere() {}
 
 	BoundingSphere(const Vector3& center, const float radius) {
 		this->center = center;
@@ -636,7 +630,7 @@ struct Quaternion {
 struct QuatTransform {
 	Vector3 translation;
 	Quaternion rotation;
-	float scale;
+	float scale = 1.0f;
 };
 
 

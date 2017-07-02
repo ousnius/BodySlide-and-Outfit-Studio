@@ -150,63 +150,64 @@ void NiSkinPartition::Get(NiStream& stream) {
 
 			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
+				auto& vertex = vertData[i];
 				if (HasVertices()) {
 					if (IsFullPrecision()) {
 						// Full precision
-						stream >> vertData[i].vert;
-						stream >> vertData[i].bitangentX;
+						stream >> vertex.vert;
+						stream >> vertex.bitangentX;
 					}
 					else {
 						// Half precision
 						stream.read((char*)&halfData, 2);
-						vertData[i].vert.x = halfData;
+						vertex.vert.x = halfData;
 						stream.read((char*)&halfData, 2);
-						vertData[i].vert.y = halfData;
+						vertex.vert.y = halfData;
 						stream.read((char*)&halfData, 2);
-						vertData[i].vert.z = halfData;
+						vertex.vert.z = halfData;
 
 						stream.read((char*)&halfData, 2);
-						vertData[i].bitangentX = halfData;
+						vertex.bitangentX = halfData;
 					}
 				}
 
 				if (HasUVs()) {
 					stream.read((char*)&halfData, 2);
-					vertData[i].uv.u = halfData;
+					vertex.uv.u = halfData;
 					stream.read((char*)&halfData, 2);
-					vertData[i].uv.v = halfData;
+					vertex.uv.v = halfData;
 				}
 
 				if (HasNormals()) {
 					for (int j = 0; j < 3; j++)
-						stream >> vertData[i].normal[j];
+						stream >> vertex.normal[j];
 
-					stream >> vertData[i].bitangentY;
+					stream >> vertex.bitangentY;
 
 					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
-							stream >> vertData[i].tangent[j];
+							stream >> vertex.tangent[j];
 
-						stream >> vertData[i].bitangentZ;
+						stream >> vertex.bitangentZ;
 					}
 				}
 
 				if (HasVertexColors())
 					for (int j = 0; j < 4; j++)
-						stream >> vertData[i].colorData[j];
+						stream >> vertex.colorData[j];
 
 				if (IsSkinned()) {
 					for (int j = 0; j < 4; j++) {
 						stream.read((char*)&halfData, 2);
-						vertData[i].weights[j] = halfData;
+						vertex.weights[j] = halfData;
 					}
 
 					for (int j = 0; j < 4; j++)
-						stream >> vertData[i].weightBones[j];
+						stream >> vertex.weightBones[j];
 				}
 
 				if ((vertFlags7 & (1 << 4)) != 0)
-					stream >> vertData[i].eyeData;
+					stream >> vertex.eyeData;
 			}
 		}
 	}
@@ -306,63 +307,64 @@ void NiSkinPartition::Put(NiStream& stream) {
 		if (dataSize > 0) {
 			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
+				auto& vertex = vertData[i];
 				if (HasVertices()) {
 					if (IsFullPrecision()) {
 						// Full precision
-						stream << vertData[i].vert;
-						stream << vertData[i].bitangentX;
+						stream << vertex.vert;
+						stream << vertex.bitangentX;
 					}
 					else {
 						// Half precision
-						halfData = vertData[i].vert.x;
+						halfData = vertex.vert.x;
 						stream.write((char*)&halfData, 2);
-						halfData = vertData[i].vert.y;
+						halfData = vertex.vert.y;
 						stream.write((char*)&halfData, 2);
-						halfData = vertData[i].vert.z;
+						halfData = vertex.vert.z;
 						stream.write((char*)&halfData, 2);
 
-						halfData = vertData[i].bitangentX;
+						halfData = vertex.bitangentX;
 						stream.write((char*)&halfData, 2);
 					}
 				}
 
 				if (HasUVs()) {
-					halfData = vertData[i].uv.u;
+					halfData = vertex.uv.u;
 					stream.write((char*)&halfData, 2);
-					halfData = vertData[i].uv.v;
+					halfData = vertex.uv.v;
 					stream.write((char*)&halfData, 2);
 				}
 
 				if (HasNormals()) {
 					for (int j = 0; j < 3; j++)
-						stream << vertData[i].normal[j];
+						stream << vertex.normal[j];
 
-					stream << vertData[i].bitangentY;
+					stream << vertex.bitangentY;
 
 					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
-							stream << vertData[i].tangent[j];
+							stream << vertex.tangent[j];
 
-						stream << vertData[i].bitangentZ;
+						stream << vertex.bitangentZ;
 					}
 				}
 
 				if (HasVertexColors())
 					for (int j = 0; j < 4; j++)
-						stream << vertData[i].colorData[j];
+						stream << vertex.colorData[j];
 
 				if (IsSkinned()) {
 					for (int j = 0; j < 4; j++) {
-						halfData = vertData[i].weights[j];
+						halfData = vertex.weights[j];
 						stream.write((char*)&halfData, 2);
 					}
 
 					for (int j = 0; j < 4; j++)
-						stream << vertData[i].weightBones[j];
+						stream << vertex.weightBones[j];
 				}
 
 				if ((vertFlags7 & (1 << 4)) != 0)
-					stream << vertData[i].eyeData;
+					stream << vertex.eyeData;
 			}
 		}
 	}

@@ -9,7 +9,7 @@ See the included LICENSE file
 #include <wx/wx.h>
 
 class wxStateButton : public wxButton {
-	bool m_bChecked;
+	bool m_bChecked = false;
 	wxString text;
 
 public:

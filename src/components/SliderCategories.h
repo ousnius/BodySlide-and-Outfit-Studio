@@ -21,17 +21,12 @@ class SliderCategory {
 	std::vector<std::string> sliders;
 	std::unordered_map<std::string, std::string> displayNames;
 	std::vector<std::string> sourceFiles;
-	bool isValid;
-	bool isHidden;
+	bool isHidden = false;
 
 public:
-	SliderCategory() :isValid(false), isHidden(false) { }
+	SliderCategory() { }
 	SliderCategory(XMLElement* srcCategoryElement) {
-		if (LoadCategory(srcCategoryElement))
-			isValid = false;
-
-		isValid = true;
-		isHidden = false;
+		LoadCategory(srcCategoryElement);
 	}
 
 	std::string GetName() {
@@ -45,8 +40,6 @@ public:
 	bool HasSlider(const std::string& search);
 	int GetSliders(std::vector<std::string>& outSliders);
 	int GetSliders(std::unordered_set<std::string>& outSliders);
-	int AppendSliders(std::vector<std::string>& outSliders);
-	int AppendSliders(std::unordered_set<std::string>& outSliders);
 
 	std::string GetSliderDisplayName(const std::string& sliderName);
 
@@ -75,8 +68,8 @@ public:
 	bool GetCategoryHidden(const std::string& categoryName);
 	int SetCategoryHidden(const std::string& categoryName, bool hide);
 
-	int GetCategorySliders(const std::string& categoryName, std::vector<std::string>& outSliders, bool append = true);
-	int GetCategorySliders(const std::string& categoryName, std::unordered_set<std::string>& outSliders, bool append = true);
+	int GetCategorySliders(const std::string& categoryName, std::vector<std::string>& outSliders);
+	int GetCategorySliders(const std::string& categoryName, std::unordered_set<std::string>& outSliders);
 };
 
 

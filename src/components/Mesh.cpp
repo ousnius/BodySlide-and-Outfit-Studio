@@ -455,7 +455,9 @@ bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri,
 		return false;
 
 	outFacets.push_back(startTri);
-	trivisit[startTri] = true;
+
+	if (trivisit)
+		trivisit[startTri] = true;
 
 	if (verts[tris[startTri].p1].DistanceSquaredTo(center) <= sqradius) {
 		outPoints[nOutPoints++] = tris[startTri].p1;

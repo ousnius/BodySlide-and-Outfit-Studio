@@ -13,7 +13,7 @@ See the included LICENSE file
 class NiKeyframeData : public NiObject {
 private:
 	uint numRotationKeys = 0;
-	uint rotationType;
+	KeyType rotationType = NO_INTERP;
 	std::vector<Key<Quaternion>> quaternionKeys;
 	KeyGroup<float> xRotations;
 	KeyGroup<float> yRotations;
@@ -259,11 +259,11 @@ public:
 
 class NiPathInterpolator : public NiKeyBasedInterpolator {
 private:
-	ushort flags;
-	uint bankDir;
-	float maxBankAngle;
-	float smoothing;
-	ushort followAxis;
+	ushort flags = 0;
+	uint bankDir = 0;
+	float maxBankAngle = 0.0f;
+	float smoothing = 0.0f;
+	ushort followAxis = 0;
 
 	BlockRef<NiPosData> pathDataRef;
 	BlockRef<NiFloatData> percentDataRef;
@@ -282,11 +282,18 @@ public:
 	NiPathInterpolator* Clone() { return new NiPathInterpolator(*this); }
 };
 
+enum LookAtFlags : ushort {
+	LOOK_X_AXIS = 0x0000,
+	LOOK_FLIP = 0x0001,
+	LOOK_Y_AXIS = 0x0002,
+	LOOK_Z_AXIS = 0x0004
+};
+
 class NiNode;
 
 class NiLookAtInterpolator : public NiInterpolator {
 private:
-	ushort flags;
+	LookAtFlags flags = LOOK_X_AXIS;
 	BlockRef<NiNode> lookAtRef;
 
 	StringRef lookAtName;
@@ -353,9 +360,9 @@ public:
 
 class BSLagBoneController : public NiTimeController {
 private:
-	float linearVelocity;
-	float linearRotation;
-	float maxDistance;
+	float linearVelocity = 0.0f;
+	float linearRotation = 0.0f;
+	float maxDistance = 0.0f;
 
 public:
 	BSLagBoneController();
@@ -374,18 +381,18 @@ class BSShaderProperty;
 
 class BSProceduralLightningController : public NiTimeController {
 private:
-	ushort subdivisions;
-	ushort numBranches;
-	ushort numBranchesPerVariation;
+	ushort subdivisions = 0;
+	ushort numBranches = 0;
+	ushort numBranchesPerVariation = 0;
 
-	float length;
-	float lengthVariation;
-	float width;
-	float childWidthMult;
-	float arcOffset;
-	bool fadeMainBolt;
-	bool fadeChildBolts;
-	bool animateArcOffset;
+	float length = 0.0f;
+	float lengthVariation = 0.0f;
+	float width = 0.0f;
+	float childWidthMult = 0.0f;
+	float arcOffset = 0.0f;
+	bool fadeMainBolt = 0.0f;
+	bool fadeChildBolts = 0.0f;
+	bool animateArcOffset = 0.0f;
 
 	BlockRef<BSShaderProperty> shaderPropertyRef;
 
@@ -415,7 +422,7 @@ public:
 
 class NiBoneLODController : public NiTimeController {
 private:
-	uint lod;
+	uint lod = 0;
 	uint numLODs = 0;
 	uint boneArraysSize = 0;
 	std::vector<BlockRefArray<NiNode>> boneArrays;
@@ -756,7 +763,7 @@ class BSMasterParticleSystem;
 
 class BSPSysMultiTargetEmitterCtlr : public NiPSysEmitterCtlr {
 private:
-	ushort maxEmitters;
+	ushort maxEmitters = 0;
 	BlockRef<BSMasterParticleSystem> masterParticleSystemRef;
 
 public:
@@ -789,7 +796,7 @@ class NiSequence : public NiObject {
 private:
 	StringRef name;
 	uint numControlledBlocks = 0;
-	uint unkInt1;
+	uint arrayGrowBy = 0;
 	std::vector<ControllerLink> controlledBlocks;
 
 public:
@@ -807,21 +814,27 @@ public:
 	NiSequence* Clone() { return new NiSequence(*this); }
 };
 
+enum CycleType : uint {
+	CYCLE_LOOP,
+	CYCLE_REVERSE,
+	CYCLE_CLAMP
+};
+
 class NiControllerManager;
 
 class NiControllerSequence : public NiSequence {
 private:
-	float weight;
+	float weight = 1.0f;
 	BlockRef<NiTextKeyExtraData> textKeyRef;
-	uint cycleType;
-	float frequency;
-	float startTime;
-	float stopTime;
+	CycleType cycleType = CYCLE_LOOP;
+	float frequency = 0.0f;
+	float startTime = 0.0f;
+	float stopTime = 0.0f;
 	BlockRef<NiControllerManager> managerRef;
 
 	StringRef accumRootName;
 
-	ushort flags;
+	ushort flags = 0;
 
 public:
 	NiControllerSequence();
@@ -843,7 +856,7 @@ class NiDefaultAVObjectPalette;
 
 class NiControllerManager : public NiTimeController {
 private:
-	bool cumulative;
+	bool cumulative = false;
 	BlockRefArray<NiControllerSequence> controllerSequenceRefs;
 	BlockRef<NiDefaultAVObjectPalette> objectPaletteRef;
 

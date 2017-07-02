@@ -660,7 +660,7 @@ void ShapeProperties::ApplyChanges() {
 			if (os->targetGame == FO4 && currentSubIndex != subIndex->IsChecked()) {
 				if (subIndex->IsChecked()) {
 					auto bsSITS = new BSSubIndexTriShape();
-					*dynamic_cast<BSTriShape*>(bsSITS) = *bsTriShape;
+					*static_cast<BSTriShape*>(bsSITS) = *bsTriShape;
 					bsSITS->SetDefaultSegments();
 					bsSITS->SetName(bsTriShape->GetName());
 					nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);

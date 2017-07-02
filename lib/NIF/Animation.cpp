@@ -22,14 +22,14 @@ void NiKeyframeData::Get(NiStream& stream) {
 	if (numRotationKeys > 0) {
 		stream >> rotationType;
 
-		if (rotationType != 4) {
+		if (rotationType != XYZ_ROTATION_KEY) {
 			quaternionKeys.resize(numRotationKeys);
 
 			for (int i = 0; i < numRotationKeys; i++) {
 				stream >> quaternionKeys[i].time;
 				stream >> quaternionKeys[i].value;
 
-				if (rotationType == 3)
+				if (rotationType == TBC_KEY)
 					stream >> quaternionKeys[i].tbc;
 			}
 		}
@@ -52,12 +52,12 @@ void NiKeyframeData::Put(NiStream& stream) {
 	if (numRotationKeys > 0) {
 		stream << rotationType;
 
-		if (rotationType != 4) {
+		if (rotationType != XYZ_ROTATION_KEY) {
 			for (int i = 0; i < numRotationKeys; i++) {
 				stream << quaternionKeys[i].time;
 				stream << quaternionKeys[i].value;
 
-				if (rotationType == 3)
+				if (rotationType == TBC_KEY)
 					stream << quaternionKeys[i].tbc;
 			}
 		}
@@ -80,10 +80,10 @@ int NiKeyframeData::CalcBlockSize(NiVersion& version) {
 	if (numRotationKeys > 0) {
 		blockSize += 4;
 
-		if (rotationType != 4) {
+		if (rotationType != XYZ_ROTATION_KEY) {
 			blockSize += 20 * numRotationKeys;
 
-			if (rotationType == 3)
+			if (rotationType == TBC_KEY)
 				blockSize += 12 * numRotationKeys;
 		}
 		else {
@@ -1285,7 +1285,7 @@ void NiSequence::Get(NiStream& stream) {
 	name.Get(stream);
 
 	stream >> numControlledBlocks;
-	stream >> unkInt1;
+	stream >> arrayGrowBy;
 
 	controlledBlocks.resize(numControlledBlocks);
 	for (int i = 0; i < numControlledBlocks; i++) {
@@ -1307,7 +1307,7 @@ void NiSequence::Put(NiStream& stream) {
 	name.Put(stream);
 
 	stream << numControlledBlocks;
-	stream << unkInt1;
+	stream << arrayGrowBy;
 
 	for (int i = 0; i < numControlledBlocks; i++) {
 		controlledBlocks[i].interpolatorRef.Put(stream);

@@ -14,17 +14,6 @@ See the included LICENSE file
 #include <limits>
 
 
-GLSurface::GLSurface() {
-	mFov = 90.0f;
-	bTextured = true;
-	bWireframe = false;
-	bLighting = true;
-	bMaskVisible = false;
-	bWeightColors = false;
-	bSegmentColors = false;
-	cursorSize = 0.5f;
-}
-
 GLSurface::~GLSurface() {
 	Cleanup();
 }
@@ -256,7 +245,7 @@ void GLSurface::SetFieldOfView(const int fieldOfView) {
 }
 
 void GLSurface::UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-	const Vector3 directional0Dir, const Vector3 directional1Dir, const Vector3 directional2Dir)
+	const Vector3& directional0Dir, const Vector3& directional1Dir, const Vector3& directional2Dir)
 {
 	ambientLight = 0.01f * ambient;
 	frontalLight.diffuse = Vector3(0.01f * frontal, 0.01f * frontal, 0.01f * frontal);
@@ -921,10 +910,11 @@ void GLSurface::RenderMesh(mesh* m) {
 
 void GLSurface::UpdateShaders(mesh* m) {
 	if (m->material) {
-		m->material->GetShader().ShowTexture(bTextured);
-		m->material->GetShader().ShowLighting(bLighting);
-		m->material->GetShader().ShowWeight(bWeightColors);
-		m->material->GetShader().ShowSegments(bSegmentColors);
+		GLShader& shader = m->material->GetShader();
+		shader.ShowTexture(bTextured);
+		shader.ShowLighting(bLighting);
+		shader.ShowWeight(bWeightColors);
+		shader.ShowSegments(bSegmentColors);
 	}
 }
 
@@ -933,7 +923,7 @@ void  GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
 	AddMeshFromNif(nif, shapeName);
 }
 
-void GLSurface::AddMeshFromNif(NifFile* nif, std::string shapeName, Vector3* color, bool smoothNormalSeams) {
+void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color, bool smoothNormalSeams) {
 	std::vector<Vector3> nifVerts;
 	std::vector<Triangle> nifTris;
 	nif->GetVertsForShape(shapeName, nifVerts);
@@ -1303,7 +1293,7 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), direction);
 	rotMat.Translate(origin);
 
-	float rStep = (3.141592653 / 180) * (360.0f / nRingVerts);
+	float rStep = DEG2RAD * (360.0f / nRingVerts);
 	float i = 0.0f;
 	float stemlen = length * 4.0 / 5.0;
 	for (int j = 0; j < nRingVerts; j++) {
@@ -1342,16 +1332,26 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 			p4 = j + nRingVerts + 1;
 			p6 = j + nRingVerts * 2 + 1;
 		}
-		else{
+		else {
 			p2 = 0;
 			p4 = nRingVerts;
 			p6 = nRingVerts * 2;
 		}
-		m->tris[t].p1 = p1;	m->tris[t].p2 = p2;	m->tris[t].p3 = p3;
-		m->tris[t + 1].p1 = p3;	m->tris[t + 1].p2 = p2;	m->tris[t + 1].p3 = p4;
-		m->tris[t + 2].p1 = p3;	m->tris[t + 2].p2 = p4;	m->tris[t + 2].p3 = p5;
-		m->tris[t + 3].p1 = p5;	m->tris[t + 3].p2 = p4;	m->tris[t + 3].p3 = p6;
-		m->tris[t + 4].p1 = p5;	m->tris[t + 4].p2 = p6;	m->tris[t + 4].p3 = p7;
+		m->tris[t].p1 = p1;
+		m->tris[t].p2 = p2;
+		m->tris[t].p3 = p3;
+		m->tris[t + 1].p1 = p3;
+		m->tris[t + 1].p2 = p2;
+		m->tris[t + 1].p3 = p4;
+		m->tris[t + 2].p1 = p3;
+		m->tris[t + 2].p2 = p4;
+		m->tris[t + 2].p3 = p5;
+		m->tris[t + 3].p1 = p5;
+		m->tris[t + 3].p2 = p4;
+		m->tris[t + 3].p3 = p6;
+		m->tris[t + 4].p1 = p5;
+		m->tris[t + 4].p2 = p6;
+		m->tris[t + 4].p3 = p7;
 		t += 5;
 	}
 

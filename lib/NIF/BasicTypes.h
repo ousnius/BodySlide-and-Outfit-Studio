@@ -19,9 +19,9 @@ See the included LICENSE file
 class NiVersion {
 private:
 	std::string vstr;
-	uint vfile;
-	uint vuser;
-	uint vuser2;
+	uint vfile = 0;
+	uint vuser = 0;
+	uint vuser2 = 0;
 
 public:
 	static uint Get(byte v1, byte v2, byte v3, byte v4) {
@@ -35,6 +35,11 @@ public:
 	uint File() { return vfile; }
 	uint User() { return vuser; }
 	uint User2() { return vuser2; }
+};
+
+enum NiEndian : byte {
+	ENDIAN_BIG,
+	ENDIAN_LITTLE
 };
 
 class NiStream {
@@ -341,31 +346,31 @@ class NiHeader : public NiObject {
 	*/
 
 private:
-	bool valid;
+	bool valid = false;
 	NiVersion version;
-	byte endian;
+	NiEndian endian = ENDIAN_LITTLE;
 	NiString creator;
 	NiString exportInfo1;
 	NiString exportInfo2;
 	NiString exportInfo3;
 
 	// Foreign reference to the blocks list in NifFile.
-	std::vector<std::unique_ptr<NiObject>>* blocks;
+	std::vector<std::unique_ptr<NiObject>>* blocks = nullptr;
 
-	uint numBlocks;
-	ushort numBlockTypes;
+	uint numBlocks = 0;
+	ushort numBlockTypes = 0;
 	std::vector<NiString> blockTypes;
 	std::vector<ushort> blockTypeIndices;
 	std::vector<uint> blockSizes;
 
-	uint numStrings;
-	uint maxStringLen;
+	uint numStrings = 0;
+	uint maxStringLen = 0;
 	std::vector<NiString> strings;
 
-	uint unkInt2;
+	uint unkInt2 = 0;
 
 public:
-	NiHeader();
+	NiHeader() {};
 
 	static constexpr const char* BlockName = "NiHeader";
 	virtual const char* GetBlockName() { return BlockName; }

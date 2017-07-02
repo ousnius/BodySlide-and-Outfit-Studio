@@ -65,7 +65,7 @@ public:
 	bool enableEditorAlphaRef = false;
 	bool rimLighting = false;
 	float rimPower = 2.0f;
-	float backLightPower;
+	float backLightPower = 0.0f;
 	bool subsurfaceLighting = false;
 	float subsurfaceLightingRolloff = 0.3f;
 	bool specularEnabled = false;
@@ -131,10 +131,7 @@ public:
 	byte envmapMinLOD = 0;
 	float softDepth = 100.0f;
 
-	MaterialFile() {
-		signature = BGSM;
-	}
-
+	MaterialFile() {}
 	MaterialFile(const Type&);
 	MaterialFile(const std::string&);
 	MaterialFile(std::istream&);

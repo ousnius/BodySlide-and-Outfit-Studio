@@ -92,7 +92,7 @@ int ConfigurationItem::EnumerateProperties(std::vector<ConfigurationItem*>& outL
 
 int ConfigurationItem::EnumerateProperties(std::string& outList) {
 	int count = 0;
-	outList = "";
+	outList.clear();
 
 	for (auto &prop : properties) {
 		count++;
@@ -450,7 +450,7 @@ bool ConfigurationManager::MatchValue(const std::string& inName, const std::stri
 
 void ConfigurationManager::GetFullKey(ConfigurationItem* from, std::string& outStr) {
 	std::vector<std::string> stringStack;
-	outStr = "";
+	outStr.clear();
 
 	while (from) {
 		stringStack.push_back(from->name);

@@ -28,7 +28,7 @@ std::unordered_map<mesh*, int> TweakStroke::outPositionCount{};
 int TweakStroke::nStrokes = 0;
 std::vector<std::future<void>> TweakStroke::normalUpdates{};
 
-TweakStroke* TweakUndo::CreateStroke(std::vector<mesh*> refMeshes, TweakBrush* refBrush) {
+TweakStroke* TweakUndo::CreateStroke(const std::vector<mesh*>& refMeshes, TweakBrush* refBrush) {
 	TweakStroke* newStroke = new TweakStroke(refMeshes, refBrush);
 	addStroke(newStroke);
 	return newStroke;
@@ -335,8 +335,9 @@ void TweakBrush::applyFalloff(Vector3 &deltaVec, float dist) {
 		deltaVec.x = deltaVec.y = deltaVec.z = 0.0f;
 		return;
 	}
+
 	// at 0, always full strength
-	if (dist == 0)
+	if (dist == 0.0f)
 		return;
 
 	float p = 1.0f;
@@ -374,29 +375,25 @@ bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* result
 
 	bool* pointVisit = (bool*)calloc(refmesh->nVerts, sizeof(bool));
 
-	if (bConnected) {
-		bool* triVisit = (bool*)calloc(refmesh->nTris, sizeof(bool));
-		refmesh->ConnectedPointsInSphere(pickInfo.origin, radius*radius, pickInfo.facet, triVisit, pointVisit, resultPoints, outResultCount, resultFacets);
-		free(triVisit);
-	}
-	else {
+	if (bConnected)
+		refmesh->ConnectedPointsInSphere(pickInfo.origin, radius * radius, pickInfo.facet, nullptr, pointVisit, resultPoints, outResultCount, resultFacets);
+	else
 		outResultCount = 0;
-	}
 
 	Triangle t;
 	for (unsigned int i = 0; i < IResults.size(); i++) {
 		if (!bConnected) {
 			resultFacets.push_back(IResults[i].HitFacet);
 			t = refmesh->tris[IResults[i].HitFacet];
-			if (!pointVisit[t.p1]){
+			if (!pointVisit[t.p1]) {
 				resultPoints[outResultCount++] = t.p1;
 				pointVisit[t.p1] = true;
 			}
-			if (!pointVisit[t.p2]){
+			if (!pointVisit[t.p2]) {
 				resultPoints[outResultCount++] = t.p2;
 				pointVisit[t.p2] = true;
 			}
-			if (!pointVisit[t.p3]){
+			if (!pointVisit[t.p3]) {
 				resultPoints[outResultCount++] = t.p3;
 				pointVisit[t.p3] = true;
 			}
@@ -624,16 +621,11 @@ TB_Smooth::TB_Smooth() :TweakBrush() {
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	bMirror = false;
-	b = nullptr;
 	lastMesh = nullptr;
 	brushName = "Smooth Brush";
 }
 
 TB_Smooth::~TB_Smooth() {
-	if (b) {
-		free(b);
-		b = nullptr;
-	}
 }
 
 void TB_Smooth::lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map <int, Vector3>& wv) {
@@ -675,14 +667,11 @@ void TB_Smooth::lapFilter(mesh* refmesh, int* points, int nPoints, std::unordere
 void TB_Smooth::hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map <int, Vector3>& wv) {
 	std::unordered_map<int, Vector3>::iterator mi;
 
-	if (refmesh != lastMesh) {
-		if (b) free(b);
-		b = (Vector3*)calloc(refmesh->nVerts, sizeof(Vector3));
+	b.resize(refmesh->nVerts);
+	if (refmesh != lastMesh)
 		lastMesh = refmesh;
-	}
-	else {
-		memset(b, 0, refmesh->nVerts * sizeof(Vector3));
-	}
+	else
+		memset(b.data(), 0, b.size() * sizeof(Vector3));
 
 	Vector3 d;
 	Vector3 q;
@@ -828,7 +817,7 @@ TB_Move::TB_Move() : TweakBrush() {
 TB_Move::~TB_Move() {
 }
 
-bool TB_Move::strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
+bool TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pickInfo) {
 	pick = pickInfo;
 	mpick = pickInfo;
 	mpick.origin.x = -mpick.origin.x;
@@ -999,7 +988,6 @@ TB_XForm::TB_XForm() {
 	bLiveBVH = false;
 	focus = 1.0f;
 	strength = 1.0f;
-	xformType = 0;
 }
 
 TB_XForm::~TB_XForm() {
@@ -1010,7 +998,7 @@ void TB_XForm::GetWorkingPlane(Vector3& outPlaneNormal, float& outPlaneDist) {
 	outPlaneDist = pick.origin.dot(pick.normal);
 }
 
-bool TB_XForm::strokeInit(std::vector<mesh*> refMeshes, TweakPickInfo& pickInfo) {
+bool TB_XForm::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pickInfo) {
 	pick = pickInfo;
 	d = pick.origin.dot(pick.normal);
 
@@ -1271,16 +1259,11 @@ TB_SmoothWeight::TB_SmoothWeight() :TweakBrush() {
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
 	bMirror = false;
-	b = nullptr;
 	lastMesh = nullptr;
 	brushName = "Weight Smooth";
 }
 
 TB_SmoothWeight::~TB_SmoothWeight() {
-	if (b) {
-		free(b);
-		b = nullptr;
-	}
 }
 
 void TB_SmoothWeight::lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
@@ -1320,14 +1303,11 @@ void TB_SmoothWeight::lapFilter(mesh* refmesh, int* points, int nPoints, std::un
 void TB_SmoothWeight::hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
 	std::unordered_map<int, Vector3>::iterator mi;
 
-	if (refmesh != lastMesh) {
-		if (b) free(b);
-		b = (Vector3*)calloc(refmesh->nVerts, sizeof(Vector3));
+	b.resize(refmesh->nVerts);
+	if (refmesh != lastMesh)
 		lastMesh = refmesh;
-	}
-	else {
-		memset(b, 0, refmesh->nVerts * sizeof(Vector3));
-	}
+	else
+		memset(b.data(), 0, b.size() * sizeof(Vector3));
 
 	Vector3 d;
 	Vector3 q;

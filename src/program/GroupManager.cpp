@@ -189,8 +189,8 @@ void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
 	// Find and remove member from selected group
 	std::string selectedGroup = listGroups->GetStringSelection().ToStdString();
 	if (!selectedGroup.empty()) {
-		for (int i = 0; i < selections.size(); i++) {
-			std::string member = listMembers->GetString(selections[i]);
+		for (auto &sel : selections) {
+			std::string member = listMembers->GetString(sel);
 			auto it = find(groupMembers[selectedGroup].begin(), groupMembers[selectedGroup].end(), member);
 			if (it != groupMembers[selectedGroup].end())
 				groupMembers[selectedGroup].erase(it);
@@ -209,8 +209,8 @@ void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 	// Add member to selected group
 	std::string selectedGroup = listGroups->GetStringSelection().ToStdString();
 	if (!selectedGroup.empty()) {
-		for (int i = 0; i < selections.size(); i++) {
-			std::string member = listOutfits->GetString(selections[i]);
+		for (auto &sel : selections) {
+			std::string member = listOutfits->GetString(sel);
 			groupMembers[selectedGroup].push_back(member);
 		}
 	}

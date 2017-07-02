@@ -725,7 +725,7 @@ void OutfitProject::MaskAffected(const std::string& sliderName, const std::strin
 	m->QueueUpdate(mesh::UpdateType::VertexColors);
 }
 
-int OutfitProject::WriteMorphTRI(const std::string& triPath) {
+bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 	std::vector<std::string> shapes;
 	GetShapes(shapes);
 
@@ -882,8 +882,6 @@ bool OutfitProject::SetSliderFromFBX(const std::string& sliderName, const std::s
 	std::string target = ShapeToTarget(shapeName);
 
 	FBXWrangler fbxw;
-	std::string invalidBones;
-
 	bool result = fbxw.ImportScene(fileName);
 	if (!result)
 		return 1;
@@ -947,7 +945,7 @@ void OutfitProject::GetLiveVerts(const std::string& shapeName, std::vector<Vecto
 		for (int i = 0; i < activeSet.size(); i++) {
 			if (activeSet[i].bShow && activeSet[i].curValue != 0.0f) {
 				std::string targetData = activeSet.ShapeToDataName(i, shapeName);
-				if (targetData == "")
+				if (targetData.empty())
 					continue;
 
 				if (activeSet[i].bUV) {
@@ -1133,9 +1131,12 @@ void OutfitProject::RefreshMorphShape(const std::string& shapeName) {
 }
 
 void OutfitProject::UpdateShapeFromMesh(const std::string& shapeName, const mesh* m) {
-	std::vector<Vector3> liveVerts;
-	for (int i = 0; i < m->nVerts; i++)
-		liveVerts.emplace_back(std::move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10)));
+	std::vector<Vector3> liveVerts(m->nVerts);
+
+	for (int i = 0; i < m->nVerts; i++) {
+		auto& vertex = m->verts[i];
+		liveVerts[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
+	}
 
 	workNif.SetVertsForShape(shapeName, liveVerts);
 }
@@ -1411,8 +1412,10 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 			mesh* m = owner->glView->GetMesh(s);
 			boneScaleVerts.emplace(s, std::vector<Vector3>(m->nVerts));
 			it = boneScaleVerts.find(s);
-			for (int i = 0; i < m->nVerts; i++)
-				it->second[i] = std::move(Vector3(m->verts[i].x * -10, m->verts[i].z * 10, m->verts[i].y * 10));
+			for (int i = 0; i < m->nVerts; i++) {
+				auto& vertex = m->verts[i];
+				it->second[i] = std::move(Vector3(vertex.x * -10.0f, vertex.z * 10.0f, vertex.y * 10.0f));
+			}
 		}
 
 		std::vector<Vector3>* verts = &it->second;
@@ -1649,9 +1652,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	else
 		ClearReference();
 
-	std::string oldTarget;
 	SliderSetFile sset(fileName);
-
 	if (sset.fail()) {
 		wxLogError("Could not load slider set file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Could not load slider set file '%s'!"), fileName), _("Reference Error"), wxICON_ERROR, owner);
@@ -2189,7 +2190,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 
 		std::string useShapeName = objGroupNames[i];
 
-		if (mergeShape != "") {
+		if (!mergeShape.empty()) {
 			std::vector<Vector3> shapeVerts;
 			workNif.GetVertsForShape(mergeShape, shapeVerts);
 			if (shapeVerts.size() == v.size()) {
@@ -2207,7 +2208,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 				}
 			}
 			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner);
-			if (useShapeName == "")
+			if (useShapeName.empty())
 				return 100;
 		}
 
@@ -2217,7 +2218,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 	return 0;
 }
 
-int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<std::string>& shapes, Vector3 scale, Vector3 offset) {
+int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<std::string>& shapes, const Vector3& scale, const Vector3& offset) {
 	ObjFile obj;
 	obj.SetScale(scale);
 	obj.SetOffset(offset);

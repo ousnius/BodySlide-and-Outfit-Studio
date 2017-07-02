@@ -174,7 +174,7 @@ public:
 	void LaunchOutfitStudio();
 
 	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& zapidx, std::vector<Vector2>* uvs = nullptr);
-	int WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices);
+	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices);
 
 	void CopySliderValues(bool toHigh);
 	void ShowPreview();
@@ -235,39 +235,27 @@ class BodySlideFrame : public wxFrame {
 public:
 	class SliderDisplay {
 	public:
-		bool isZap;
-		bool oneSize;
+		bool isZap = false;
+		bool oneSize = false;
 		std::string sliderName;
-		wxStaticText* lblSliderLo;
-		wxSlider* sliderLo;
-		wxTextCtrl* sliderReadoutLo;
-		wxStaticText* lblSliderHi;
-		wxSlider* sliderHi;
-		wxTextCtrl* sliderReadoutHi;
-		wxCheckBox* zapCheckHi;
-		wxCheckBox* zapCheckLo;
-		SliderDisplay() {
-			isZap = false;
-			oneSize = false;
-			lblSliderLo = nullptr;
-			sliderLo = nullptr;
-			sliderReadoutLo = nullptr;
-			lblSliderLo = nullptr;
-			lblSliderHi = nullptr;
-			sliderHi = nullptr;
-			sliderReadoutLo = nullptr;
-			lblSliderLo = nullptr;
-			zapCheckHi = nullptr;
-			zapCheckLo = nullptr;
-		}
+		wxStaticText* lblSliderLo = nullptr;
+		wxSlider* sliderLo = nullptr;
+		wxTextCtrl* sliderReadoutLo = nullptr;
+		wxStaticText* lblSliderHi = nullptr;
+		wxSlider* sliderHi = nullptr;
+		wxTextCtrl* sliderReadoutHi = nullptr;
+		wxCheckBox* zapCheckHi = nullptr;
+		wxCheckBox* zapCheckLo = nullptr;
+
+		SliderDisplay() {}
 	};
 
 	std::unordered_map<std::string, SliderDisplay*> sliderDisplays;
 
 	wxTimer delayLoad;
-	wxSearchCtrl* search;
-	wxSearchCtrl* outfitsearch;
-	wxCheckListBox* batchBuildList;
+	wxSearchCtrl* search = nullptr;
+	wxSearchCtrl* outfitsearch = nullptr;
+	wxCheckListBox* batchBuildList = nullptr;
 
 	BodySlideFrame(BodySlideApp* app, const wxSize& size);
 	~BodySlideFrame() {

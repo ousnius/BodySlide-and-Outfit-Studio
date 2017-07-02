@@ -17,14 +17,13 @@ See the included LICENSE file
 3: wxLogMessage
 */
 
-void Log::Initialize(int level, wxString fileName) {
+void Log::Initialize(int level, const wxString& fileName) {
 	wxLog::EnableLogging(false);
 
 	if (level >= 0) {
 		//Signature to find separate runs
 		std::string signature = "[#Log";
 		std::string textCopy;
-		std::string word;
 		int sigCount = 0;
 
 		//Open stream at end to find out file size

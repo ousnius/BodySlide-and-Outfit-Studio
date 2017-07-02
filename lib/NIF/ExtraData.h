@@ -150,10 +150,10 @@ public:
 
 class BSInvMarker : public NiExtraData {
 private:
-	ushort rotationX;
-	ushort rotationY;
-	ushort rotationZ;
-	float zoom;
+	ushort rotationX = 4712;
+	ushort rotationY = 6283;
+	ushort rotationZ = 0;
+	float zoom = 1.0f;
 
 public:
 	BSInvMarker();
@@ -237,7 +237,7 @@ public:
 class BSBehaviorGraphExtraData : public NiExtraData {
 private:
 	StringRef behaviorGraphFile;
-	byte controlsBaseSkel;
+	bool controlsBaseSkel = false;
 
 public:
 	BSBehaviorGraphExtraData();

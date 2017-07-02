@@ -398,7 +398,7 @@ uint BSLightingShaderProperty::GetType() {
 	return skyrimShaderType;
 }
 
-void BSLightingShaderProperty::SetType(uint type) {
+void BSLightingShaderProperty::SetType(const uint type) {
 	skyrimShaderType = type;
 }
 
@@ -406,7 +406,7 @@ Vector3 BSLightingShaderProperty::GetSpecularColor() {
 	return specularColor;
 }
 
-void BSLightingShaderProperty::SetSpecularColor(Vector3 color) {
+void BSLightingShaderProperty::SetSpecularColor(const Vector3& color) {
 	specularColor = color;
 }
 
@@ -414,7 +414,7 @@ float BSLightingShaderProperty::GetSpecularStrength() {
 	return specularStrength;
 }
 
-void BSLightingShaderProperty::SetSpecularStrength(float strength) {
+void BSLightingShaderProperty::SetSpecularStrength(const float strength) {
 	specularStrength = strength;
 }
 
@@ -422,7 +422,7 @@ float BSLightingShaderProperty::GetGlossiness() {
 	return glossiness;
 }
 
-void BSLightingShaderProperty::SetGlossiness(float gloss) {
+void BSLightingShaderProperty::SetGlossiness(const float gloss) {
 	glossiness = gloss;
 }
 
@@ -442,7 +442,7 @@ Color4 BSLightingShaderProperty::GetEmissiveColor() {
 	return color;
 }
 
-void BSLightingShaderProperty::SetEmissiveColor(Color4 color) {
+void BSLightingShaderProperty::SetEmissiveColor(const Color4& color) {
 	emissiveColor.x = color.r;
 	emissiveColor.y = color.g;
 	emissiveColor.z = color.b;
@@ -452,7 +452,7 @@ float BSLightingShaderProperty::GetEmissiveMultiple() {
 	return emissiveMultiple;
 }
 
-void BSLightingShaderProperty::SetEmissiveMultiple(float emissive) {
+void BSLightingShaderProperty::SetEmissiveMultiple(const float emissive) {
 	emissiveMultiple = emissive;
 }
 
@@ -624,7 +624,7 @@ Color4 BSEffectShaderProperty::GetEmissiveColor() {
 	return emissiveColor;
 }
 
-void BSEffectShaderProperty::SetEmissiveColor(Color4 color) {
+void BSEffectShaderProperty::SetEmissiveColor(const Color4& color) {
 	emissiveColor = color;
 }
 
@@ -632,7 +632,7 @@ float BSEffectShaderProperty::GetEmissiveMultiple() {
 	return emissiveMultiple;
 }
 
-void BSEffectShaderProperty::SetEmissiveMultiple(float emissive) {
+void BSEffectShaderProperty::SetEmissiveMultiple(const float emissive) {
 	emissiveMultiple = emissive;
 }
 
@@ -1055,7 +1055,7 @@ Vector3 NiMaterialProperty::GetSpecularColor() {
 	return colorSpecular;
 }
 
-void NiMaterialProperty::SetSpecularColor(Vector3 color) {
+void NiMaterialProperty::SetSpecularColor(const Vector3& color) {
 	colorSpecular = color;
 }
 
@@ -1063,7 +1063,7 @@ float NiMaterialProperty::GetGlossiness() {
 	return glossiness;
 }
 
-void NiMaterialProperty::SetGlossiness(float gloss) {
+void NiMaterialProperty::SetGlossiness(const float gloss) {
 	glossiness = gloss;
 }
 
@@ -1075,7 +1075,7 @@ Color4 NiMaterialProperty::GetEmissiveColor() {
 	return color;
 }
 
-void NiMaterialProperty::SetEmissiveColor(Color4 color) {
+void NiMaterialProperty::SetEmissiveColor(const Color4& color) {
 	colorEmissive.x = color.r;
 	colorEmissive.y = color.g;
 	colorEmissive.z = color.b;
@@ -1085,7 +1085,7 @@ float NiMaterialProperty::GetEmissiveMultiple() {
 	return emitMulti;
 }
 
-void NiMaterialProperty::SetEmissiveMultiple(float emissive) {
+void NiMaterialProperty::SetEmissiveMultiple(const float emissive) {
 	emitMulti = emissive;
 }
 

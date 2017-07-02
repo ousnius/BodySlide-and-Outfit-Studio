@@ -15,7 +15,6 @@ BEGIN_EVENT_TABLE(wxStateButton, wxButton)
 END_EVENT_TABLE()
 
 wxStateButton::wxStateButton() : wxButton() {
-	m_bChecked = false;
 }
 
 wxStateButton::wxStateButton(wxWindow* parent, wxWindowID id, const wxString& label, const wxPoint& pos,

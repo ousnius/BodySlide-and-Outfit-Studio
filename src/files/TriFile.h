@@ -24,14 +24,14 @@ class TriFile {
 	std::map<std::string, std::vector<MorphDataPtr>> shapeMorphs;
 
 public:
-	int Read(std::string fileName);
-	int Write(std::string fileName);
+	bool Read(const std::string& fileName);
+	bool Write(const std::string& fileName);
 	
-	void AddMorph(std::string shapeName, MorphDataPtr data);
-	void DeleteMorph(std::string shapeName, std::string morphName);
-	void DeleteMorphs(std::string shapeName);
-	void DeleteMorphFromAll(std::string morphName);
+	void AddMorph(const std::string& shapeName, MorphDataPtr data);
+	void DeleteMorph(const std::string& shapeName, const std::string& morphName);
+	void DeleteMorphs(const std::string& shapeName);
+	void DeleteMorphFromAll(const std::string& morphName);
 
-	MorphDataPtr GetMorph(std::string shapeName, std::string morphName);
+	MorphDataPtr GetMorph(const std::string& shapeName, const std::string& morphName);
 	std::map<std::string, std::vector<MorphDataPtr>> GetMorphs();
 };

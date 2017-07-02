@@ -388,23 +388,25 @@ public:
 
 		std::unordered_map<ushort, float> triMask;
 		for (int t = 0; t < m->nTris; t++) {
-			if (mask.find(m->tris[t].p1) != mask.end() ||
-				mask.find(m->tris[t].p2) != mask.end() ||
-				mask.find(m->tris[t].p3) != mask.end()) {
-				triMask.emplace(m->tris[t].p1, 1.0f);
-				triMask.emplace(m->tris[t].p2, 1.0f);
-				triMask.emplace(m->tris[t].p3, 1.0f);
+			auto& tri = m->tris[t];
+			if (mask.find(tri.p1) != mask.end() ||
+				mask.find(tri.p2) != mask.end() ||
+				mask.find(tri.p3) != mask.end()) {
+				triMask.emplace(tri.p1, 1.0f);
+				triMask.emplace(tri.p2, 1.0f);
+				triMask.emplace(tri.p3, 1.0f);
 			}
 		}
 
 		std::unordered_map<ushort, float> invertMask;
 		for (int t = 0; t < m->nTris; t++) {
-			if (triMask.find(m->tris[t].p1) == triMask.end())
-				invertMask.emplace(m->tris[t].p1, 1.0f);
-			if (triMask.find(m->tris[t].p2) == triMask.end())
-				invertMask.emplace(m->tris[t].p2, 1.0f);
-			if (triMask.find(m->tris[t].p3) == triMask.end())
-				invertMask.emplace(m->tris[t].p3, 1.0f);
+			auto& tri = m->tris[t];
+			if (triMask.find(tri.p1) == triMask.end())
+				invertMask.emplace(tri.p1, 1.0f);
+			if (triMask.find(tri.p2) == triMask.end())
+				invertMask.emplace(tri.p2, 1.0f);
+			if (triMask.find(tri.p3) == triMask.end())
+				invertMask.emplace(tri.p3, 1.0f);
 		}
 
 		mask = std::move(invertMask);
@@ -461,7 +463,7 @@ public:
 	}
 
 	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-		const Vector3 directional0Dir = Vector3(), const Vector3 directional1Dir = Vector3(), const Vector3 directonal2Dir = Vector3())
+		const Vector3& directional0Dir = Vector3(), const Vector3& directional1Dir = Vector3(), const Vector3& directonal2Dir = Vector3())
 	{
 		gls.UpdateLights(ambient, frontal, directional0, directional1, directional2, directional0Dir, directional1Dir, directonal2Dir);
 		gls.RenderOneFrame();
@@ -1126,7 +1128,7 @@ public:
 	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
 
 private:
-	OutfitStudio *owner;
+	OutfitStudio *owner = nullptr;
 };
 
 class DnDSliderFile : public wxFileDropTarget {
@@ -1137,7 +1139,7 @@ public:
 	virtual wxDragResult OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult);
 
 private:
-	OutfitStudio *owner;
-	wxDragResult lastResult;
+	OutfitStudio *owner = nullptr;
+	wxDragResult lastResult = wxDragNone;
 	std::string targetSlider;
 };

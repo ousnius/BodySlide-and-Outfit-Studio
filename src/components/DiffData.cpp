@@ -281,7 +281,7 @@ void DiffDataSets::OffsetDiff(const std::string& name, const std::string& target
 }
 
 void DiffDataSets::ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector2>* inOutResult) {
-	if (percent == 0)
+	if (percent == 0.0f)
 		return;
 
 	if (!TargetMatch(set, target))
@@ -300,7 +300,7 @@ void DiffDataSets::ApplyUVDiff(const std::string& set, const std::string& target
 }
 
 void DiffDataSets::ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector3>* inOutResult) {
-	if (percent == 0)
+	if (percent == 0.0f)
 		return;
 
 	if (!TargetMatch(set, target))

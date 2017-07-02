@@ -500,10 +500,9 @@ void OutfitStudio::createSliderGUI(const std::string& name, int id, wxScrolledWi
 
 std::string OutfitStudio::NewSlider(const std::string& suggestedName, bool skipPrompt) {
 	std::string namebase = "NewSlider";
-	if (suggestedName != "")
-	{
+	if (!suggestedName.empty())
 		namebase = suggestedName;
-	}
+
 	char thename[256];
 	_snprintf_s(thename, 256, 256, "%s", namebase.c_str());
 	int count = 1;
@@ -1677,7 +1676,7 @@ void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 		d->sliderStrokes.Clear(); //InvalidateHistoricalBVH();
 		d->slider->SetFocus();
 		HighlightSlider("");
-		activeSlider = "";
+		activeSlider.clear();
 		glView->SetStrokeManager(nullptr);
 	}
 }
@@ -2042,7 +2041,7 @@ void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 
 	std::string finalName = wxGetTextFromUser(_("Create a conversion slider for the current slider settings with the following name: "), _("Create New Conversion Slider"), thename, this);
-	if (finalName == "")
+	if (finalName.empty())
 		return;
 
 	wxLogMessage("Creating new conversion slider '%s'...", finalName);
@@ -2704,32 +2703,32 @@ void OutfitStudio::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
 			if (segmentData) {
 				for (auto &tri : subSegmentData->tris)
 					segmentData->tris.insert(tri);
-			}
 
-			// Remove new triangles from all other segments and their subsegments
-			wxTreeItemIdValue segCookie;
-			wxTreeItemId segChild = segmentTree->GetFirstChild(segmentRoot, segCookie);
-			while (segChild.IsOk()) {
-				SegmentItemData* childSegmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(segChild));
-				if (childSegmentData && childSegmentData != segmentData) {
-					wxTreeItemIdValue subCookie;
-					wxTreeItemId subChild = segmentTree->GetFirstChild(segChild, subCookie);
-					while (subChild.IsOk()) {
-						SubSegmentItemData* childSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
-						if (childSubSegmentData)
-							for (auto &tri : segmentData->tris)
-								if (childSubSegmentData->tris.find(tri) != childSubSegmentData->tris.end())
-									childSubSegmentData->tris.erase(tri);
+				// Remove new triangles from all other segments and their subsegments
+				wxTreeItemIdValue segCookie;
+				wxTreeItemId segChild = segmentTree->GetFirstChild(segmentRoot, segCookie);
+				while (segChild.IsOk()) {
+					SegmentItemData* childSegmentData = dynamic_cast<SegmentItemData*>(segmentTree->GetItemData(segChild));
+					if (childSegmentData && childSegmentData != segmentData) {
+						wxTreeItemIdValue subCookie;
+						wxTreeItemId subChild = segmentTree->GetFirstChild(segChild, subCookie);
+						while (subChild.IsOk()) {
+							SubSegmentItemData* childSubSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
+							if (childSubSegmentData)
+								for (auto &tri : segmentData->tris)
+									if (childSubSegmentData->tris.find(tri) != childSubSegmentData->tris.end())
+										childSubSegmentData->tris.erase(tri);
 
-						subChild = segmentTree->GetNextChild(segChild, subCookie);
+							subChild = segmentTree->GetNextChild(segChild, subCookie);
+						}
+
+						for (auto &parentTri : segmentData->tris)
+							if (childSegmentData->tris.find(parentTri) != childSegmentData->tris.end())
+								childSegmentData->tris.erase(parentTri);
 					}
 
-					for (auto &parentTri : segmentData->tris)
-						if (childSegmentData->tris.find(parentTri) != childSegmentData->tris.end())
-							childSegmentData->tris.erase(parentTri);
+					segChild = segmentTree->GetNextChild(segmentRoot, segCookie);
 				}
-
-				segChild = segmentTree->GetNextChild(segmentRoot, segCookie);
 			}
 		}
 		else {
@@ -4210,7 +4209,7 @@ void OutfitStudio::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	glView->SetStrokeManager(nullptr);
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
-	activeSlider = "";
+	activeSlider.clear();
 
 	std::vector<std::string> shapes;
 	project->GetShapes(shapes);
@@ -4299,7 +4298,7 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	glView->SetStrokeManager(nullptr);
 	MenuExitSliderEdit();
 	sliderScroll->FitInside();
-	activeSlider = "";
+	activeSlider.clear();
 
 	std::vector<std::string> shapes;
 	project->GetShapes(shapes);
@@ -4623,7 +4622,7 @@ void OutfitStudio::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
 	delete sd;
 	sliderDisplays.erase(activeSlider);
 	project->DeleteSlider(activeSlider);
-	activeSlider = "";
+	activeSlider.clear();
 	bEditSlider = false;
 
 	ApplySliders();
@@ -5577,7 +5576,7 @@ void OutfitStudio::OnDeleteBone(wxCommandEvent& WXUNUSED(event)) {
 		wxLogMessage("Deleting bone '%s' from project.", bone);
 
 		project->DeleteBone(bone);
-		activeBone = "";
+		activeBone.clear();
 
 		outfitBones->Delete(selItems[i]);
 	}
@@ -6485,8 +6484,6 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 
 	translateBrush.GetWorkingPlane(pn, pd);
 	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, -pd);
-	if (tpi.origin.x < 0)
-		tpi.origin.x = tpi.origin.x;
 
 	activeStroke->updateStroke(tpi);
 

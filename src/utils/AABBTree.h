@@ -10,8 +10,8 @@ struct AABB {
 	Vector3 min;
 	Vector3 max;
 
-	AABB();
-	AABB(const Vector3 newMin, const Vector3 newMax);
+	AABB() {}
+	AABB(const Vector3& newMin, const Vector3& newMax);
 
 	AABB(Vector3* points, int nPoints);
 	AABB(Vector3* points, ushort* indices, int nPoints);
@@ -29,8 +29,8 @@ struct AABB {
 };
 
 class AABBTree {
-	int max_depth;
-	int min_facets;
+	int max_depth = 100;
+	int min_facets = 2;
 	Vector3* vertexRef = nullptr;
 	Triangle* triRef = nullptr;
 
@@ -46,11 +46,10 @@ public:
 		AABB mBB;
 		AABBTree* tree = nullptr;
 		std::unique_ptr<int[]> mIFacets;
-		int nFacets;
-		int id;
+		int nFacets = 0;
 
 	public:
-		AABBTreeNode();
+		AABBTreeNode() {}
 
 		// Recursively generates AABB Tree nodes using the referenced data.
 		AABBTreeNode(std::vector<int>& facetIndices, AABBTree* treeRef, AABBTreeNode* parentRef, int depth);
@@ -71,7 +70,7 @@ public:
 	std::unique_ptr<AABBTreeNode> root;
 
 public:
-	AABBTree();
+	AABBTree() {}
 	AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets);
 
 	int MinFacets();
@@ -92,8 +91,8 @@ public:
 };
 
 struct IntersectResult {
-	int HitFacet;
-	float HitDistance;
+	int HitFacet = 0;
+	float HitDistance = 0.0f;
 	Vector3 HitCoord;
 	AABBTree::AABBTreeNode* bvhNode = nullptr;
 };

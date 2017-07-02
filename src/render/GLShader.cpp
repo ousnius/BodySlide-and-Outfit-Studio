@@ -8,10 +8,6 @@ See the included LICENSE file
 #include <fstream>
 #include <sstream>
 
-GLShader::GLShader() {
-	errorState = -1;
-}
-
 GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentSource) : GLShader() {
 	if (CheckExtensions() && LoadShaders(vertexSource, fragmentSource)) {
 		ShowLighting();
@@ -27,9 +23,6 @@ GLShader::GLShader(const std::string& vertexSource, const std::string& fragmentS
 		SetPointsEnabled(false);
 		SetLightingEnabled(true);
 	}
-}
-
-GLShader::~GLShader() {
 }
 
 bool GLShader::extChecked = false;
@@ -345,12 +338,11 @@ bool GLShader::GetError(std::string* errorStr) {
 }
 
 bool GLShader::BuildShaders() {
-	const GLchar* src = nullptr;
 	GLint compiled;
 	GLint loglength;
 
+	const GLchar* src = vertSrc.c_str();
 	vertShadID = glCreateShader(GL_VERTEX_SHADER);
-	src = (const GLchar*)vertSrc.c_str();
 	glShaderSource(vertShadID, 1, &src, nullptr);
 
 	glCompileShader(vertShadID);
@@ -366,8 +358,8 @@ bool GLShader::BuildShaders() {
 		return false;
 	}
 
+	src = fragSrc.c_str();
 	fragShadID = glCreateShader(GL_FRAGMENT_SHADER);
-	src = (const GLchar*)fragSrc.c_str();
 	glShaderSource(fragShadID, 1, &src, nullptr);
 
 	glCompileShader(fragShadID);

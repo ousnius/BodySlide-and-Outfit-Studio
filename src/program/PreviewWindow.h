@@ -77,7 +77,7 @@ public:
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName);
 
-	void Update(std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
+	void UpdateMeshes(std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
 		std::set<int> changed;
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs, &changed);
 
@@ -141,7 +141,7 @@ public:
 		gls.RenderOneFrame();
 	}
 
-	void RenderNormalMap(std::string outfilename="") {
+	void RenderNormalMap(const std::string& outfilename = "") {
 
 		wxBusyCursor busycursor;
 

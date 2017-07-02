@@ -246,7 +246,7 @@ NiNode* NifFile::GetParentNode(NiObject* childBlock) {
 			auto node = dynamic_cast<NiNode*>(block.get());
 			if (node) {
 				auto children = node->GetChildren();
-				for (auto it = children.begin(); it < children.end(); it++) {
+				for (auto it = children.begin(); it < children.end(); ++it) {
 					if (childId == it->index)
 						return node;
 				}
@@ -302,8 +302,8 @@ int NifFile::Load(const std::string& filename) {
 	std::fstream file(filename.c_str(), std::ios::in | std::ios::binary);
 	if (file.is_open()) {
 		NiStream stream(&file, &hdr.GetVersion());
-		if (filename.rfind("\\") != std::string::npos)
-			fileName = filename.substr(filename.rfind("\\"));
+		if (filename.rfind('\\') != std::string::npos)
+			fileName = filename.substr(filename.rfind('\\'));
 		else
 			fileName = filename;
 
@@ -333,7 +333,7 @@ int NifFile::Load(const std::string& filename) {
 			}
 			else {
 				hasUnknown = true;
-				block = (NiObject*)new NiUnknown(stream, hdr.GetBlockSize(i));
+				block = new NiUnknown(stream, hdr.GetBlockSize(i));
 			}
 
 			if (block)
@@ -431,10 +431,10 @@ void NifFile::PrettySortBlocks() {
 	for (int i = 0; peek < children.end(); i++) {
 		auto block = hdr.GetBlock<NiObject>(root->GetChildRef(i));
 		if (block && block->HasType<NiShape>()) {
-			iter_swap(bookmark, peek);
-			bookmark++;
+			std::iter_swap(bookmark, peek);
+			++bookmark;
 		}
-		peek++;
+		++peek;
 	}
 }
 
@@ -1264,17 +1264,19 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if (!removeVertexColors && colors.size() > 0) {
 						bsShape->SetVertexColors(true);
 						for (int i = 0; i < bsShape->numVertices; i++) {
+							auto& vertex = bsShape->vertData[i];
+
 							float f = std::max(0.0f, std::min(1.0f, colors[i].r));
-							bsShape->vertData[i].colorData[0] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+							vertex.colorData[0] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 
 							f = std::max(0.0f, std::min(1.0f, colors[i].g));
-							bsShape->vertData[i].colorData[1] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+							vertex.colorData[1] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 
 							f = std::max(0.0f, std::min(1.0f, colors[i].b));
-							bsShape->vertData[i].colorData[2] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+							vertex.colorData[2] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 
 							f = std::max(0.0f, std::min(1.0f, colors[i].a));
-							bsShape->vertData[i].colorData[3] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+							vertex.colorData[3] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
 						}
 					}
 
@@ -1312,28 +1314,36 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 									for (int i = 0; i < part.numVertices; i++) {
 										const ushort v = part.vertexMap[i];
 
-										if (part.hasVertexWeights) {
-											bsShape->vertData[v].weights[0] = part.vertexWeights[i].w1;
-											bsShape->vertData[v].weights[1] = part.vertexWeights[i].w2;
-											bsShape->vertData[v].weights[2] = part.vertexWeights[i].w3;
-											bsShape->vertData[v].weights[3] = part.vertexWeights[i].w4;
-										}
+										if (bsShape->vertData.size() > v) {
+											auto& vertex = bsShape->vertData[v];
 
-										if (part.hasBoneIndices) {
-											bsShape->vertData[v].weightBones[0] = part.bones[part.boneIndices[i].i1];
-											bsShape->vertData[v].weightBones[1] = part.bones[part.boneIndices[i].i2];
-											bsShape->vertData[v].weightBones[2] = part.bones[part.boneIndices[i].i3];
-											bsShape->vertData[v].weightBones[3] = part.bones[part.boneIndices[i].i4];
+											if (part.hasVertexWeights) {
+												auto& weights = part.vertexWeights[i];
+												vertex.weights[0] = weights.w1;
+												vertex.weights[1] = weights.w2;
+												vertex.weights[2] = weights.w3;
+												vertex.weights[3] = weights.w4;
+											}
+
+											if (part.hasBoneIndices) {
+												auto& boneIndices = part.boneIndices[i];
+												vertex.weightBones[0] = part.bones[boneIndices.i1];
+												vertex.weightBones[1] = part.bones[boneIndices.i2];
+												vertex.weightBones[2] = part.bones[boneIndices.i3];
+												vertex.weightBones[3] = part.bones[boneIndices.i4];
+											}
 										}
 									}
 
 									std::vector<Triangle> realTris(part.numTriangles);
 									for (int i = 0; i < part.numTriangles; i++) {
+										auto& partTri = part.triangles[i];
+
 										// Find the actual tri index from the partition tri index
 										Triangle tri;
-										tri.p1 = part.vertexMap[part.triangles[i].p1];
-										tri.p2 = part.vertexMap[part.triangles[i].p2];
-										tri.p3 = part.vertexMap[part.triangles[i].p3];
+										tri.p1 = part.vertexMap[partTri.p1];
+										tri.p2 = part.vertexMap[partTri.p2];
+										tri.p3 = part.vertexMap[partTri.p3];
 
 										tri.rot();
 										realTris[i] = tri;
@@ -1669,9 +1679,10 @@ int NifFile::GetShapeBoneWeights(const std::string& shapeName, const int boneInd
 	if (bsTriShape) {
 		outWeights.reserve(bsTriShape->numVertices);
 		for (int vid = 0; vid < bsTriShape->numVertices; vid++) {
+			auto& vertex = bsTriShape->vertData[vid];
 			for (int i = 0; i < 4; i++) {
-				if (bsTriShape->vertData[vid].weightBones[i] == boneIndex && bsTriShape->vertData[vid].weights[i] != 0)
-					outWeights.emplace(vid, bsTriShape->vertData[vid].weights[i]);
+				if (vertex.weightBones[i] == boneIndex && vertex.weights[i] != 0.0f)
+					outWeights.emplace(vid, vertex.weights[i]);
 			}
 		}
 
@@ -1900,8 +1911,12 @@ void NifFile::SetShapeVertWeights(const std::string& shapeName, const int vertIn
 	if (!bsTriShape)
 		return;
 
-	memset(bsTriShape->vertData[vertIndex].weights, 0, sizeof(float) * 4);
-	memset(bsTriShape->vertData[vertIndex].weightBones, 0, sizeof(byte) * 4);
+	if (vertIndex < 0 || vertIndex >= bsTriShape->vertData.size())
+		return;
+
+	auto& vertex = bsTriShape->vertData[vertIndex];
+	memset(vertex.weights, 0, sizeof(float) * 4);
+	memset(vertex.weightBones, 0, sizeof(byte) * 4);
 
 	// Sum weights to normalize values
 	float sum = 0.0f;
@@ -1911,8 +1926,8 @@ void NifFile::SetShapeVertWeights(const std::string& shapeName, const int vertIn
 	int num = (weights.size() < 4 ? weights.size() : 4);
 
 	for (int i = 0; i < num; i++) {
-		bsTriShape->vertData[vertIndex].weightBones[i] = boneids[i];
-		bsTriShape->vertData[vertIndex].weights[i] = weights[i] / sum;
+		vertex.weightBones[i] = boneids[i];
+		vertex.weights[i] = weights[i] / sum;
 	}
 }
 
@@ -2976,10 +2991,13 @@ int NifFile::CalcShapeDiff(const std::string& shapeName, const std::vector<Vecto
 		return 3;
 
 	for (int i = 0; i < myData->size(); i++) {
+		auto& target = targetData->at(i);
+		auto& src = myData->at(i);
+
 		Vector3 v;
-		v.x = (targetData->at(i).x * scale) - myData->at(i).x;
-		v.y = (targetData->at(i).y * scale) - myData->at(i).y;
-		v.z = (targetData->at(i).z * scale) - myData->at(i).z;
+		v.x = (target.x * scale) - src.x;
+		v.y = (target.y * scale) - src.y;
+		v.z = (target.z * scale) - src.z;
 
 		if (v.IsZero(true))
 			continue;
@@ -3139,17 +3157,18 @@ void NifFile::UpdateSkinPartitions(const std::string& shapeName) {
 	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
 		fill(usedVerts.begin(), usedVerts.end(), false);
 
+		auto& partition = skinPart->partitions[partID];
 		ushort numTrisInPart = 0;
-		for (int it = 0; it < skinPart->partitions[partID].numTriangles;) {
+		for (int it = 0; it < partition.numTriangles;) {
 			// Find the actual tri index from the partition tri index
 			Triangle tri;
 			if (bsTriShape) {
-				tri = skinPart->partitions[partID].triangles[it];
+				tri = partition.triangles[it];
 			}
 			else {
-				tri.p1 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p1];
-				tri.p2 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p2];
-				tri.p3 = skinPart->partitions[partID].vertexMap[skinPart->partitions[partID].triangles[it].p3];
+				tri.p1 = partition.vertexMap[partition.triangles[it].p1];
+				tri.p2 = partition.vertexMap[partition.triangles[it].p2];
+				tri.p3 = partition.vertexMap[partition.triangles[it].p3];
 			}
 
 			tri.rot();
@@ -3185,10 +3204,10 @@ void NifFile::UpdateSkinPartitions(const std::string& shapeName) {
 			if (partBones[partID].size() + newBoneCount > maxBonesPerPartition) {
 				// Too many bones for this partition, make a new partition starting with this triangle
 				NiSkinPartition::PartitionBlock tempPart;
-				tempPart.triangles.assign(skinPart->partitions[partID].triangles.begin() + numTrisInPart, skinPart->partitions[partID].triangles.end());
+				tempPart.triangles.assign(partition.triangles.begin() + numTrisInPart, partition.triangles.end());
 				tempPart.numTriangles = tempPart.triangles.size();
 
-				tempPart.vertexMap = skinPart->partitions[partID].vertexMap;
+				tempPart.vertexMap = partition.vertexMap;
 				tempPart.numVertices = tempPart.vertexMap.size();
 
 				skinPart->partitions.insert(skinPart->partitions.begin() + partID + 1, tempPart);
@@ -3417,12 +3436,12 @@ bool NifFile::TriangulatePartitions(const std::string& shapeName) {
 		return false;
 
 	bool triangulated = false;
-	std::vector<NiSkinPartition::PartitionBlock> partitions;
 	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
 		// Triangulate partition if stripified
-		if (skinPart->partitions[partID].numStrips > 0) {
+		auto& partition = skinPart->partitions[partID];
+		if (partition.numStrips > 0) {
 			std::vector<Triangle> stripTris;
-			for (auto &strip : skinPart->partitions[partID].strips) {
+			for (auto &strip : partition.strips) {
 				if (strip.size() < 3)
 					continue;
 
@@ -3447,11 +3466,11 @@ bool NifFile::TriangulatePartitions(const std::string& shapeName) {
 				}
 			}
 
-			skinPart->partitions[partID].numTriangles = stripTris.size();
-			skinPart->partitions[partID].triangles = move(stripTris);
-			skinPart->partitions[partID].numStrips = 0;
-			skinPart->partitions[partID].strips.clear();
-			skinPart->partitions[partID].stripLengths.clear();
+			partition.numTriangles = stripTris.size();
+			partition.triangles = move(stripTris);
+			partition.numStrips = 0;
+			partition.strips.clear();
+			partition.stripLengths.clear();
 			triangulated = true;
 		}
 	}

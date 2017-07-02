@@ -80,7 +80,7 @@ int ObjFile::LoadForNif(std::fstream& base) {
 		else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
 			base >> curgrp;
 
-			if (di->name != "") {
+			if (!di->name.empty()) {
 				data[di->name] = di;
 				di = new ObjData;
 			}
@@ -135,14 +135,10 @@ int ObjFile::LoadForNif(std::fstream& base) {
 						else if (uvs.size() > 0) {
 							uv = uvs[ft[i]];
 							uv2 = uvs[savedVert->second[j].uv];
-							if (fabs(uv.u - uv2.u) > uvDupThreshold) {
-								v_idx[i] = v_idx[i];
+
+							if (fabs(uv.u - uv2.u) > uvDupThreshold || fabs(uv.v - uv2.v) > uvDupThreshold)
 								continue;
-							}
-							else if (fabs(uv.v - uv2.v) > uvDupThreshold) {
-								v_idx[i] = v_idx[i];
-								continue;
-							}
+
 							v_idx[i] = savedVert->second[j].v;
 						}
 					}

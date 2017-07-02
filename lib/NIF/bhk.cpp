@@ -1278,10 +1278,10 @@ bhkRigidBody::bhkRigidBody(NiStream& stream) : bhkRigidBody() {
 void bhkRigidBody::Get(NiStream& stream) {
 	bhkEntity::Get(stream);
 
-	stream >> responseType;
-	stream >> unkByte;
+	stream >> collisionResponse;
+	stream >> unusedByte1;
 	stream >> processContactCallbackDelay;
-	stream.read((char*)unkShorts, 4);
+	stream >> unkInt1;
 	stream >> collisionFilterCopy;
 	stream.read((char*)unkShorts2, 12);
 	stream >> translation;
@@ -1334,10 +1334,10 @@ void bhkRigidBody::Get(NiStream& stream) {
 void bhkRigidBody::Put(NiStream& stream) {
 	bhkEntity::Put(stream);
 
-	stream << responseType;
-	stream << unkByte;
+	stream << collisionResponse;
+	stream << unusedByte1;
 	stream << processContactCallbackDelay;
-	stream.read((char*)unkShorts, 4);
+	stream << unkInt1;
 	stream << collisionFilterCopy;
 	stream.write((char*)unkShorts2, 12);
 	stream << translation;

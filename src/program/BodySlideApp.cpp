@@ -19,6 +19,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BodySlideApp.h"
 #include "..\Files\wxDDSImage.h"
 
+#include <regex>
+
 #ifdef WIN64
 	#include <ppl.h>
 	#include <concurrent_unordered_map.h>
@@ -623,7 +625,7 @@ void BodySlideApp::ApplySliders(const std::string& targetShape, std::vector<Slid
 				dataSets.ApplyClamp(slider.linkedDataSets[j], targetShape, &verts);
 }
 
-int BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices) {
+bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices) {
 	DiffDataSets currentDiffs;
 	sliderSet.LoadSetDiffData(currentDiffs);
 
@@ -854,7 +856,7 @@ void BodySlideApp::UpdatePreview() {
 				uvs.erase(uvs.begin() + zapIdx[z]);
 			}
 		}
-		preview->Update(it->second, &verts, &uvs);
+		preview->UpdateMeshes(it->second, &verts, &uvs);
 	}
 
 	preview->SetNormalsGenerationLayers(activeSet.GetNormalsGenLayers());
@@ -1357,7 +1359,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 				if (std::regex_search(w, re))
 					filteredOutfits.push_back(w);
 		}
-		catch (std::regex_error) {
+		catch (std::regex_error&) {
 			for (auto &w : workfiltList)
 				filteredOutfits.push_back(w);
 		}
@@ -2123,8 +2125,8 @@ int BodySlideApp::SaveSliderPositions(const std::string& outputFile, const std::
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
-BodySlideFrame::BodySlideFrame(BodySlideApp* app, const wxSize &size) : delayLoad(this, DELAYLOAD_TIMER) {
-	this->app = app;
+BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(this, DELAYLOAD_TIMER) {
+	app = a;
 	rowCount = 0;
 
 	wxXmlResource* xrc = wxXmlResource::Get();
@@ -2413,7 +2415,6 @@ void BodySlideFrame::PopulatePresetList(const wxArrayString& items, const wxStri
 }
 
 void BodySlideFrame::SetSliderPosition(const wxString &name, float newValue, short HiLo) {
-	wxString fullname = name;
 	int intval = (int)(newValue * 100.0f);
 
 	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToStdString());
@@ -2873,7 +2874,6 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		idx++;
 	}
 
-	wxString filter;
 	wxXmlResource* rsrc = wxXmlResource::Get();
 	wxDialog* batchBuildChooser = rsrc->LoadDialog(this, "dlgBatchBuild");
 	if (!batchBuildChooser)

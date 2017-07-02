@@ -71,8 +71,8 @@ public:
 
 class NiMeshPSysData : public NiPSysData {
 private:
-	uint defaultPoolSize;
-	bool fillPoolsOnLoad;
+	uint defaultPoolSize = 0;
+	bool fillPoolsOnLoad = false;
 
 	uint numGenerations = 0;
 	std::vector<uint> generationPoolSize;
@@ -95,10 +95,10 @@ public:
 
 class BSStripPSysData : public NiPSysData {
 private:
-	ushort maxPointCount;
-	uint startCapSize;
-	uint endCapSize;
-	bool doZPrepass;
+	ushort maxPointCount = 0;
+	uint startCapSize = 0;
+	uint endCapSize = 0;
+	bool doZPrepass = false;
 
 public:
 	BSStripPSysData();
@@ -133,7 +133,7 @@ public:
 
 class BSPSysStripUpdateModifier : public NiPSysModifier {
 private:
-	float updateDeltaTime;
+	float updateDeltaTime = 0.0f;
 
 public:
 	BSPSysStripUpdateModifier();
@@ -151,13 +151,13 @@ public:
 class NiPSysSpawnModifier : public NiPSysModifier {
 private:
 	ushort numSpawnGenerations = 0;
-	float percentSpawned;
-	ushort minSpawned;
-	ushort maxSpawned;
-	float spawnSpeedVariation;
-	float spawnDirVariation;
-	float lifeSpan;
-	float lifeSpanVariation;
+	float percentSpawned = 0.0f;
+	ushort minSpawned = 0;
+	ushort maxSpawned = 0;
+	float spawnSpeedVariation = 0.0f;
+	float spawnDirVariation = 0.0f;
+	float lifeSpan = 0.0f;
+	float lifeSpanVariation = 0.0f;
 
 public:
 	NiPSysSpawnModifier();
@@ -174,7 +174,7 @@ public:
 
 class NiPSysAgeDeathModifier : public NiPSysModifier {
 private:
-	bool spawnOnDeath;
+	bool spawnOnDeath = false;
 	BlockRef<NiPSysSpawnModifier> spawnModifierRef;
 
 public:
@@ -193,10 +193,10 @@ public:
 
 class BSPSysLODModifier : public NiPSysModifier {
 private:
-	float lodBeginDistance;
-	float lodEndDistance;
-	float unknownFadeFactor1;
-	float unknownFadeFactor2;
+	float lodBeginDistance = 0.0f;
+	float lodEndDistance = 0.0f;
+	float unknownFadeFactor1 = 0.0f;
+	float unknownFadeFactor2 = 0.0f;
 
 public:
 	BSPSysLODModifier();
@@ -213,12 +213,12 @@ public:
 
 class BSPSysSimpleColorModifier : public NiPSysModifier {
 private:
-	float fadeInPercent;
-	float fadeOutPercent;
-	float color1EndPercent;
-	float color2StartPercent;
-	float color2EndPercent;
-	float color3StartPercent;
+	float fadeInPercent = 0.0f;
+	float fadeOutPercent = 0.0f;
+	float color1EndPercent = 0.0f;
+	float color2StartPercent = 0.0f;
+	float color2EndPercent = 0.0f;
+	float color3StartPercent = 0.0f;
 	Color4 color1;
 	Color4 color2;
 	Color4 color3;
@@ -238,12 +238,12 @@ public:
 
 class NiPSysRotationModifier : public NiPSysModifier {
 private:
-	float initialSpeed;
-	float initialSpeedVariation;
-	float initialAngle;
-	float initialAngleVariation;
-	bool randomSpeedSign;
-	bool randomInitialAxis;
+	float initialSpeed = 0.0f;
+	float initialSpeedVariation = 0.0f;
+	float initialAngle = 0.0f;
+	float initialAngleVariation = 0.0f;
+	bool randomSpeedSign = false;
+	bool randomInitialAxis = false;
 	Vector3 initialAxis;
 
 public:
@@ -277,16 +277,22 @@ public:
 	BSPSysScaleModifier* Clone() { return new BSPSysScaleModifier(*this); }
 };
 
+enum ForceType : uint {
+	FORCE_PLANAR,
+	FORCE_SPHERICAL,
+	FORCE_UNKNOWN
+};
+
 class NiPSysGravityModifier : public NiPSysModifier {
 private:
 	BlockRef<NiNode> gravityObjRef;
 	Vector3 gravityAxis;
-	float decay;
-	float strength;
-	uint forceType;
-	float turbulence;
-	float turbulenceScale;
-	bool worldAligned;
+	float decay = 0.0f;
+	float strength = 0.0f;
+	ForceType forceType = FORCE_UNKNOWN;
+	float turbulence = 0.0f;
+	float turbulenceScale = 1.0f;
+	bool worldAligned = false;
 
 public:
 	NiPSysGravityModifier();
@@ -315,7 +321,7 @@ public:
 
 class NiPSysBoundUpdateModifier : public NiPSysModifier {
 private:
-	ushort updateSkip;
+	ushort updateSkip = 0;
 
 public:
 	NiPSysBoundUpdateModifier();
@@ -334,9 +340,9 @@ class NiPSysDragModifier : public NiPSysModifier {
 private:
 	BlockRef<NiObject> parentRef;
 	Vector3 dragAxis;
-	float percentage;
-	float range;
-	float rangeFalloff;
+	float percentage = 0.0f;
+	float range = 0.0f;
+	float rangeFalloff = 0.0f;
 
 public:
 	NiPSysDragModifier();
@@ -355,9 +361,9 @@ public:
 class BSPSysInheritVelocityModifier : public NiPSysModifier {
 private:
 	BlockRef<NiNode> targetNodeRef;
-	float changeToInherit;
-	float velocityMult;
-	float velocityVar;
+	float changeToInherit = 0.0f;
+	float velocityMult = 0.0f;
+	float velocityVar = 0.0f;
 
 public:
 	BSPSysInheritVelocityModifier();
@@ -375,13 +381,13 @@ public:
 
 class BSPSysSubTexModifier : public NiPSysModifier {
 private:
-	float startFrame;
-	float startFrameVariation;
-	float endFrame;
-	float loopStartFrame;
-	float loopStartFrameVariation;
-	float frameCount;
-	float frameCountVariation;
+	float startFrame = 0.0f;
+	float startFrameVariation = 0.0f;
+	float endFrame = 0.0f;
+	float loopStartFrame = 0.0f;
+	float loopStartFrameVariation = 0.0f;
+	float frameCount = 0.0f;
+	float frameCountVariation = 0.0f;
 
 public:
 	BSPSysSubTexModifier();
@@ -396,14 +402,26 @@ public:
 	BSPSysSubTexModifier* Clone() { return new BSPSysSubTexModifier(*this); }
 };
 
+enum DecayType : uint {
+	DECAY_NONE,
+	DECAY_LINEAR,
+	DECAY_EXPONENTIAL
+};
+
+enum SymmetryType : uint {
+	SYMMETRY_SPHERICAL,
+	SYMMETRY_CYLINDRICAL,
+	SYMMETRY_PLANAR
+};
+
 class NiPSysBombModifier : public NiPSysModifier {
 private:
 	BlockRef<NiNode> bombNodeRef;
 	Vector3 bombAxis;
-	float decay;
-	float deltaV;
-	uint decayType;
-	uint symmetryType;
+	float decay = 0.0f;
+	float deltaV = 0.0f;
+	DecayType decayType = DECAY_NONE;
+	SymmetryType symmetryType = SYMMETRY_SPHERICAL;
 
 public:
 	NiPSysBombModifier();
@@ -421,7 +439,7 @@ public:
 
 class BSWindModifier : public NiPSysModifier {
 private:
-	float strength;
+	float strength = 0.0f;
 
 public:
 	BSWindModifier();
@@ -477,7 +495,7 @@ public:
 
 class BSMasterParticleSystem : public NiNode {
 private:
-	ushort maxEmitterObjs;
+	ushort maxEmitterObjs = 0;
 	BlockRefArray<NiAVObject> particleSysRefs;
 
 public:
@@ -589,7 +607,7 @@ public:
 
 class NiPSysSphericalCollider : public NiPSysCollider {
 private:
-	float radius;
+	float radius = 0.0f;
 
 public:
 	NiPSysSphericalCollider();
@@ -606,8 +624,8 @@ public:
 
 class NiPSysPlanarCollider : public NiPSysCollider {
 private:
-	float width;
-	float height;
+	float width = 0.0f;
+	float height = 0.0f;
 	Vector3 xAxis;
 	Vector3 yAxis;
 
@@ -676,7 +694,7 @@ public:
 
 class NiPSysSphereEmitter : public NiPSysVolumeEmitter {
 private:
-	float radius;
+	float radius = 0.0f;
 
 public:
 	NiPSysSphereEmitter();
@@ -693,8 +711,8 @@ public:
 
 class NiPSysCylinderEmitter : public NiPSysVolumeEmitter {
 private:
-	float radius;
-	float height;
+	float radius = 0.0f;
+	float height = 0.0f;
 
 public:
 	NiPSysCylinderEmitter();
@@ -711,9 +729,9 @@ public:
 
 class NiPSysBoxEmitter : public NiPSysVolumeEmitter {
 private:
-	float width;
-	float height;
-	float depth;
+	float width = 0.0f;
+	float height = 0.0f;
+	float depth = 0.0f;
 
 public:
 	NiPSysBoxEmitter();
@@ -728,11 +746,25 @@ public:
 	NiPSysBoxEmitter* Clone() { return new NiPSysBoxEmitter(*this); }
 };
 
+enum VelocityType : uint {
+	VELOCITY_USE_NORMALS,
+	VELOCITY_USE_RANDOM,
+	VELOCITY_USE_DIRECTION
+};
+
+enum EmitFrom : uint {
+	EMIT_FROM_VERTICES,
+	EMIT_FROM_FACE_CENTER,
+	EMIT_FROM_EDGE_CENTER,
+	EMIT_FROM_FACE_SURFACE,
+	EMIT_FROM_EDGE_SURFACE
+};
+
 class NiPSysMeshEmitter : public NiPSysEmitter {
 private:
 	BlockRefArray<NiAVObject> meshRefs;
-	uint velocityType;
-	uint emissionType;
+	VelocityType velocityType = VELOCITY_USE_NORMALS;
+	EmitFrom emissionType = EMIT_FROM_VERTICES;
 	Vector3 emissionAxis;
 
 public:

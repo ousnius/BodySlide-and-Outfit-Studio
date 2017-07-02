@@ -141,11 +141,12 @@ public:
 
 
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
-	// Also requires trivisit to be allocated by the caller - one slot for every tri in the mesh.
+	// Also requires pointvisit to be allocated by the caller.
 	// Recursive - large query will overflow the stack!
 	bool ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Similar to above, but uses an edge list to determine adjacency, with less risk of stack problems.
+	// Also requires trivisit and pointvisit to be allocated by the caller.
 	bool ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
 	// Convenience function to gather connected points, taking into account "welded" vertices.

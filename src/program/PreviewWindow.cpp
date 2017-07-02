@@ -8,6 +8,7 @@ See the included LICENSE file
 #include "BodySlideApp.h"
 
 #include <sstream>
+#include <regex>
 
 wxBEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
 	EVT_CLOSE(PreviewWindow::OnClose)

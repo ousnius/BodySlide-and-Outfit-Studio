@@ -456,9 +456,9 @@ public:
 
 class BSLODTriShape : public NiTriBasedGeom {
 private:
-	uint level0;
-	uint level1;
-	uint level2;
+	uint level0 = 0;
+	uint level1 = 0;
+	uint level2 = 0;
 
 public:
 	BSLODTriShape();

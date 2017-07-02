@@ -17,32 +17,32 @@ class GLSurface {
 
 	glm::mat4x4 projection;
 	glm::mat4x4 modelView;
-	bool perspective;
-	float mFov;
+	bool perspective = true;
+	float mFov = 90.0f;
 	Vector3 camPos;
 	Vector3 camRot;		// Turntable camera emulation.
 	Vector3 camOffset;
-	uint vpW;
-	uint vpH;
+	uint vpW = 800;
+	uint vpH = 600;
 
 	GLfloat largestAF = 0;
 
-	bool bWireframe;
-	bool bLighting;
-	bool bTextured;
-	bool bMaskVisible;
-	bool bWeightColors;
-	bool bSegmentColors;
+	bool bWireframe = false;
+	bool bLighting = true;
+	bool bTextured = true;
+	bool bMaskVisible = false;
+	bool bWeightColors = false;
+	bool bSegmentColors = false;
 
-	float defLineWidth;
-	float defPointSize;
-	float cursorSize;
+	float defLineWidth = 1.0f;
+	float defPointSize = 5.0f;
+	float cursorSize = 0.5f;
 
 	GLShader::FrontalLight frontalLight;
 	GLShader::DirectionalLight directionalLight0;
 	GLShader::DirectionalLight directionalLight1;
 	GLShader::DirectionalLight directionalLight2;
-	float ambientLight;
+	float ambientLight = 0.10f;
 
 	Vector3 colorBackground = Vector3(0.82f, 0.82f, 0.82f);
 	Vector3 colorRed = Vector3(1.0f, 0.25f, 0.25f);
@@ -76,7 +76,7 @@ class GLSurface {
 	}
 
 public:
-	GLSurface();
+	GLSurface() {};
 	~GLSurface();
 
 	// Get the attributes to use for creating a wxGLCanvas
@@ -233,7 +233,7 @@ public:
 	void SetPerspective(const bool enabled);
 	void SetFieldOfView(const int fieldOfView);
 	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
-		const Vector3 directional0Dir, const Vector3 directional1Dir, const Vector3 directional2Dir);
+		const Vector3& directional0Dir, const Vector3& directional1Dir, const Vector3& directional2Dir);
 
 	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
@@ -254,7 +254,7 @@ public:
 	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
 	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
 
-	void AddMeshFromNif(NifFile* nif, std::string shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
+	void AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
 	void Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	void Update(int shapeIndex, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	void ReloadMeshFromNif(NifFile* nif, std::string shapeName);

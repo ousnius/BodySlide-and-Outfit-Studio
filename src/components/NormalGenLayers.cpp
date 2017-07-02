@@ -8,24 +8,22 @@ See the included LICENSE file
 #include "../utils/ConfigurationManager.h"
 #include <sstream>
 
-void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::vector<NormalGenLayer>& outLayers)
-{
+void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::vector<NormalGenLayer>& outLayers) {
 	tinyxml2::XMLElement* layer = normalGenSource->FirstChildElement("NormalsLayer");
-	if (layer != nullptr)
+	if (layer)
 		outLayers.clear();
 
-	while (layer != nullptr) {
+	while (layer) {
 		NormalGenLayer ngl;
 		ngl.layerName = layer->Attribute("name");
 
-		tinyxml2::XMLElement* elem;
-		elem = layer->FirstChildElement("SourceFile");
-
-		const char* c = elem->GetText();
-		if (elem)
+		const char* c = nullptr;
+		tinyxml2::XMLElement* elem = layer->FirstChildElement("SourceFile");
+		if (elem) {
+			c = elem->GetText();
 			ngl.sourceFileName = c ? c : "";
-
-		Config.ReplaceVars(ngl.sourceFileName);
+			Config.ReplaceVars(ngl.sourceFileName);
+		}
 
 		elem = layer->FirstChildElement("FillColor");
 		if (elem) {
@@ -118,11 +116,10 @@ void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::ve
 	}
 }
 
-void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vector<NormalGenLayer>& layers)
-{
+void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vector<NormalGenLayer>& layers) {
 	std::string gamepath = Config["GameDataPath"];
 	std::string relfn;
-	for (auto l : layers) {
+	for (auto &l : layers) {
 		tinyxml2::XMLElement* layerelem = container->GetDocument()->NewElement("NormalsLayer");
 		layerelem->SetAttribute("name", l.layerName.c_str());
 

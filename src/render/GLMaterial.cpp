@@ -81,16 +81,17 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklight) {
 			else
 				shader.SetNormalMapEnabled(false);
 			break;
-			// Internal use for compositing and postprocessing textures, not represented by game textures.  
+
 		case 2:
+			// Internal use for compositing and postprocessing textures, not represented by game textures.
 			if (texCache[id] != 0) {
 				shader.BindTexture(id, texCache[id], "texAlphaMask");
 				if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				shader.SetAlphaMaskEnabled(true);
 			}
-			else {
+			else
 				shader.SetAlphaMaskEnabled(false);
-			}
+			break;
 
 		case 4:
 			if (texCache[id] != 0) {

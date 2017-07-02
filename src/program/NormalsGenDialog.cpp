@@ -37,7 +37,7 @@ void NormalsGenDialog::doPropertyChanged(wxPropertyGridEvent& WXUNUSED(event))
 	NormalGenLayer ngl;
 	wxColour clr;
 	int propindex = 0;
-	for (wxPropertyGridIterator it = pgLayers->GetIterator(wxPG_ITERATE_ALL); !it.AtEnd(); it++) {
+	for (wxPropertyGridIterator it = pgLayers->GetIterator(wxPG_ITERATE_ALL); !it.AtEnd(); ++it) {
 		if (it.GetProperty()->IsCategory()) {
 			if (!ngl.layerName.empty()) {
 				// layer name not being empty means we've got layer info already, so push the layer onto the list.
@@ -52,7 +52,7 @@ void NormalsGenDialog::doPropertyChanged(wxPropertyGridEvent& WXUNUSED(event))
 			case 0:
 				ngl.sourceFileName = it.GetProperty()->GetValueAsString();
 				if (ngl.sourceFileName == "0")
-					ngl.sourceFileName = "";
+					ngl.sourceFileName.clear();
 
 				break;
 			case 1:
@@ -73,7 +73,7 @@ void NormalsGenDialog::doPropertyChanged(wxPropertyGridEvent& WXUNUSED(event))
 				else {
 					ngl.maskFileName = it.GetProperty()->GetValueAsString();
 					if (ngl.maskFileName == "0")
-						ngl.maskFileName = "";
+						ngl.maskFileName.clear();
 				}
 				break;
 			case 3:
@@ -108,7 +108,7 @@ void NormalsGenDialog::doAddLayer(wxCommandEvent& WXUNUSED(event))
 	}
 
 	wxPropertyGridIterator it;
-	for (it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES, p); !it.AtEnd(); it++) {
+	for (it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES, p); !it.AtEnd(); ++it) {
 		if (*it == p)
 			continue;
 		if ((*it)->GetName() != "Background") {
@@ -130,7 +130,7 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event))
 		return;
 
 	int n = 1;
-	for (auto it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES); !it.AtEnd(); it++) {
+	for (auto it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES); !it.AtEnd(); ++it) {
 		wxPGProperty* p = it.GetProperty();
 		p->SetClientData((void*)n++);
 		if (p == s) {

@@ -80,14 +80,6 @@ void NiString::Put(NiStream& stream, const int szSize, const bool wantNullOutput
 }
 
 
-NiHeader::NiHeader() {
-	valid = false;
-
-	numBlocks = 0;
-	numStrings = 0;
-	blocks = nullptr;
-}
-
 void NiHeader::Clear() {
 	numBlockTypes = 0;
 	numStrings = 0;
@@ -134,7 +126,7 @@ void NiHeader::SetExportInfo(const std::string& exportInfo) {
 	exportStrings[2] = &exportInfo3;
 
 	auto it = exportStrings.begin();
-	for (size_t i = 0; i < exportInfo.length() && it < exportStrings.end(); i += 256, it++) {
+	for (size_t i = 0; i < exportInfo.length() && it < exportStrings.end(); i += 256, ++it) {
 		if (i + 256 <= exportInfo.length())
 			(*it)->SetString(exportInfo.substr(i, 256));
 		else
@@ -415,15 +407,15 @@ void NiHeader::Get(NiStream& stream) {
 	if (_strnicmp(ver, "Gamebryo", 8) != 0)
 		return;
 
-	byte v1, v2, v3, v4;
+	byte v4, v3, v2, v1;
 	uint vuser, vuser2;
-	stream >> v1 >> v2 >> v3 >> v4;
+	stream >> v4 >> v3 >> v2 >> v1;
 	stream >> endian;
 	stream >> vuser;
 	stream >> numBlocks;
 	stream >> vuser2;
 
-	version.Set(v4, v3, v2, v1, vuser, vuser2);
+	version.Set(v1, v2, v3, v4, vuser, vuser2);
 
 	creator.Get(stream, 1);
 	exportInfo1.Get(stream, 1);

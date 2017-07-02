@@ -107,8 +107,8 @@ public:
 		CopyFrom(other);
 	}
 
-	~NifFile() {
-		Clear();
+	NifFile& operator=(const NifFile& other) {
+		CopyFrom(other);
 	}
 
 	NiHeader& GetHeader() { return hdr; }

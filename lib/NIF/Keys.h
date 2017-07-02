@@ -8,6 +8,15 @@ See the included LICENSE file
 
 #include "BasicTypes.h"
 
+enum KeyType : uint {
+	NO_INTERP,
+	LINEAR_KEY,
+	QUADRATIC_KEY,
+	TBC_KEY,
+	XYZ_ROTATION_KEY,
+	CONST_KEY
+};
+
 struct TBC {
 	float tension;
 	float bias;
@@ -27,7 +36,7 @@ template<typename T>
 class KeyGroup {
 private:
 	uint numKeys = 0;
-	uint interpolation;
+	KeyType interpolation = NO_INTERP;
 	std::vector<Key<T>> keys;
 
 public:
@@ -49,11 +58,11 @@ public:
 				stream >> key.value;
 
 				switch (interpolation) {
-				case 2:
+				case QUADRATIC_KEY:
 					stream >> key.forward;
 					stream >> key.backward;
 					break;
-				case 3:
+				case TBC_KEY:
 					stream >> key.tbc;
 					break;
 				}
@@ -74,11 +83,11 @@ public:
 				stream << keys[i].value;
 
 				switch (interpolation) {
-				case 2:
+				case QUADRATIC_KEY:
 					stream << keys[i].forward;
 					stream << keys[i].backward;
 					break;
-				case 3:
+				case TBC_KEY:
 					stream << keys[i].tbc;
 					break;
 				}
@@ -95,10 +104,10 @@ public:
 			groupSize += sizeof(T) * numKeys;
 
 			switch (interpolation) {
-			case 2:
+			case QUADRATIC_KEY:
 				groupSize += sizeof(T) * numKeys * 2;
 				break;
-			case 3:
+			case TBC_KEY:
 				groupSize += 12 * numKeys;
 				break;
 			}

@@ -20,7 +20,7 @@ class SliderSet
 	std::string inputfile;
 	std::string outputpath;
 	std::string outputfile;
-	bool genWeights;										// Generate both low and high weight meshes on output.
+	bool genWeights = false;								// Generate both low and high weight meshes on output.
 	std::map<std::string, std::string> targetshapenames;	// Target names mapped to nif file shape names.
 	std::map<std::string, std::string> targetdatafolders;
 
@@ -243,17 +243,17 @@ document while the slidersetfile object exists.
 */
 class SliderSetFile {
 	XMLDocument doc;
-	XMLElement* root;
+	XMLElement* root = nullptr;
 	std::map<std::string, XMLElement*> setsInFile;
 	std::vector<std::string> setsOrder;
-	int version;
-	int error;
+	int version = 1;
+	int error = 0;
 
 public:
 	std::string fileName;
-	SliderSetFile() : error(0) { }
+
+	SliderSetFile() {}
 	SliderSetFile(const std::string& srcFileName);
-	~SliderSetFile() { }
 
 	bool fail() {
 		return error != 0;

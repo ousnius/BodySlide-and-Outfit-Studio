@@ -57,22 +57,22 @@ public:
 	virtual bool HasSpecular() { return true; }
 	virtual bool HasBacklight() { return false; }
 	virtual uint GetType() { return 0xFFFFFFFF; }
-	virtual void SetType(uint type) {}
+	virtual void SetType(const uint type) {}
 	virtual Vector2 GetUVOffset() { return Vector2(); }
 	virtual Vector2 GetUVScale() { return Vector2(1.0f, 1.0f); }
 	virtual Vector3 GetSpecularColor() { return Vector3(); }
-	virtual void SetSpecularColor(Vector3 color) {}
+	virtual void SetSpecularColor(const Vector3& color) {}
 	virtual float GetSpecularStrength() { return 0.0f; }
-	virtual void SetSpecularStrength(float strength) {}
+	virtual void SetSpecularStrength(const float strength) {}
 	virtual float GetGlossiness() { return 0.0f; }
-	virtual void SetGlossiness(float gloss) {}
+	virtual void SetGlossiness(const float gloss) {}
 	virtual float GetEnvironmentMapScale() { return 0.0f; }
 	virtual int GetTextureSetRef() { return 0xFFFFFFFF; }
 	virtual void SetTextureSetRef(const int texSetRef) {}
 	virtual Color4 GetEmissiveColor() { return Color4(); }
-	virtual void SetEmissiveColor(Color4 color) {}
+	virtual void SetEmissiveColor(const Color4& color) {}
 	virtual float GetEmissiveMultiple() { return 0.0f; }
-	virtual void SetEmissiveMultiple(float emissive) {}
+	virtual void SetEmissiveMultiple(const float emissive) {}
 	virtual float GetAlpha() { return 1.0f; }
 	virtual std::string GetWetMaterialName() { return std::string(); }
 	virtual void SetWetMaterialName(const std::string& matName) {}
@@ -94,7 +94,7 @@ public:
 	int CalcBlockSize(NiVersion& version);
 
 	uint GetType();
-	void SetType(uint type);
+	void SetType(const uint type);
 	bool HasSpecular();
 	float GetEnvironmentMapScale();
 	Vector2 GetUVOffset();
@@ -185,19 +185,19 @@ public:
 	bool IsEmissive();
 	bool HasBacklight();
 	uint GetType();
-	void SetType(uint type);
+	void SetType(const uint type);
 	Vector3 GetSpecularColor();
-	void SetSpecularColor(Vector3 color);
+	void SetSpecularColor(const Vector3& color);
 	float GetSpecularStrength();
-	void SetSpecularStrength(float strength);
+	void SetSpecularStrength(const float strength);
 	float GetGlossiness();
-	void SetGlossiness(float gloss);
+	void SetGlossiness(const float gloss);
 	int GetTextureSetRef();
 	void SetTextureSetRef(const int texSetRef);
 	Color4 GetEmissiveColor();
-	void SetEmissiveColor(Color4 color);
+	void SetEmissiveColor(const Color4& color);
 	float GetEmissiveMultiple();
-	void SetEmissiveMultiple(float emissive);
+	void SetEmissiveMultiple(const float emissive);
 	float GetAlpha();
 	std::string GetWetMaterialName();
 	void SetWetMaterialName(const std::string& matName);
@@ -241,9 +241,9 @@ public:
 	bool HasBacklight();
 	float GetEnvironmentMapScale();
 	Color4 GetEmissiveColor();
-	void SetEmissiveColor(Color4 color);
+	void SetEmissiveColor(const Color4& color);
 	float GetEmissiveMultiple();
-	void SetEmissiveMultiple(float emissive);
+	void SetEmissiveMultiple(const float emissive);
 };
 
 class BSWaterShaderProperty : public BSShaderProperty {
@@ -404,13 +404,13 @@ public:
 
 	bool IsEmissive();
 	Vector3 GetSpecularColor();
-	void SetSpecularColor(Vector3 color);
+	void SetSpecularColor(const Vector3& color);
 	float GetGlossiness();
-	void SetGlossiness(float gloss);
+	void SetGlossiness(const float gloss);
 	Color4 GetEmissiveColor();
-	void SetEmissiveColor(Color4 color);
+	void SetEmissiveColor(const Color4& color);
 	float GetEmissiveMultiple();
-	void SetEmissiveMultiple(float emissive);
+	void SetEmissiveMultiple(const float emissive);
 	float GetAlpha();
 };
 

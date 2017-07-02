@@ -9,7 +9,6 @@ See the included LICENSE file
 #include <wx/wx.h>
 #include <wx/xrc/xmlres.h>
 #include <wx/srchctrl.h>
-#include <regex>
 #include <set>
 
 class PresetSaveDialog : public wxDialog {

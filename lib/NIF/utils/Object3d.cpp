@@ -2,10 +2,8 @@
 #include "Miniball.hpp"
 
 BoundingSphere::BoundingSphere(const std::vector<Vector3>& vertices) {
-	if (vertices.empty()) {
-		BoundingSphere::BoundingSphere();
+	if (vertices.empty())
 		return;
-	}
 
 	// Convert vertices to list of coordinates
 	std::list<std::vector<float>> lp;

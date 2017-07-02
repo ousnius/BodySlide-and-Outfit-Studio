@@ -454,64 +454,65 @@ void BSTriShape::Get(NiStream& stream) {
 	if (dataSize > 0) {
 		half_float::half halfData;
 		for (int i = 0; i < numVertices; i++) {
+			auto& vertex = vertData[i];
 			if (HasVertices()) {
 				if (IsFullPrecision() || stream.GetVersion().User2() == 100) {
 					// Full precision
-					stream >> vertData[i].vert;
-					stream >> vertData[i].bitangentX;
+					stream >> vertex.vert;
+					stream >> vertex.bitangentX;
 				}
 				else {
 					// Half precision
 					stream.read((char*)&halfData, 2);
-					vertData[i].vert.x = halfData;
+					vertex.vert.x = halfData;
 					stream.read((char*)&halfData, 2);
-					vertData[i].vert.y = halfData;
+					vertex.vert.y = halfData;
 					stream.read((char*)&halfData, 2);
-					vertData[i].vert.z = halfData;
+					vertex.vert.z = halfData;
 
 					stream.read((char*)&halfData, 2);
-					vertData[i].bitangentX = halfData;
+					vertex.bitangentX = halfData;
 				}
 			}
 
 			if (HasUVs()) {
 				stream.read((char*)&halfData, 2);
-				vertData[i].uv.u = halfData;
+				vertex.uv.u = halfData;
 				stream.read((char*)&halfData, 2);
-				vertData[i].uv.v = halfData;
+				vertex.uv.v = halfData;
 			}
 
 			if (HasNormals()) {
 				for (int j = 0; j < 3; j++)
-					stream >> vertData[i].normal[j];
+					stream >> vertex.normal[j];
 
-				stream >> vertData[i].bitangentY;
+				stream >> vertex.bitangentY;
 
 				if (HasTangents()) {
 					for (int j = 0; j < 3; j++)
-						stream >> vertData[i].tangent[j];
+						stream >> vertex.tangent[j];
 
-					stream >> vertData[i].bitangentZ;
+					stream >> vertex.bitangentZ;
 				}
 			}
 
 
 			if (HasVertexColors())
 				for (int j = 0; j < 4; j++)
-					stream >> vertData[i].colorData[j];
+					stream >> vertex.colorData[j];
 
 			if (IsSkinned()) {
 				for (int j = 0; j < 4; j++) {
 					stream.read((char*)&halfData, 2);
-					vertData[i].weights[j] = halfData;
+					vertex.weights[j] = halfData;
 				}
 
 				for (int j = 0; j < 4; j++)
-					stream >> vertData[i].weightBones[j];
+					stream >> vertex.weightBones[j];
 			}
 
 			if ((vertFlags7 & (1 << 4)) != 0)
-				stream >> vertData[i].eyeData;
+				stream >> vertex.eyeData;
 		}
 	}
 
@@ -611,64 +612,65 @@ void BSTriShape::Put(NiStream& stream) {
 		if (dataSize > 0) {
 			half_float::half halfData;
 			for (int i = 0; i < numVertices; i++) {
+				auto& vertex = vertData[i];
 				if (HasVertices()) {
 					if (IsFullPrecision() || stream.GetVersion().User2() == 100) {
 						// Full precision
-						stream << vertData[i].vert;
-						stream << vertData[i].bitangentX;
+						stream << vertex.vert;
+						stream << vertex.bitangentX;
 					}
 					else {
 						// Half precision
-						halfData = vertData[i].vert.x;
+						halfData = vertex.vert.x;
 						stream.write((char*)&halfData, 2);
-						halfData = vertData[i].vert.y;
+						halfData = vertex.vert.y;
 						stream.write((char*)&halfData, 2);
-						halfData = vertData[i].vert.z;
+						halfData = vertex.vert.z;
 						stream.write((char*)&halfData, 2);
 
-						halfData = vertData[i].bitangentX;
+						halfData = vertex.bitangentX;
 						stream.write((char*)&halfData, 2);
 					}
 				}
 
 				if (HasUVs()) {
-					halfData = vertData[i].uv.u;
+					halfData = vertex.uv.u;
 					stream.write((char*)&halfData, 2);
 
-					halfData = vertData[i].uv.v;
+					halfData = vertex.uv.v;
 					stream.write((char*)&halfData, 2);
 				}
 
 				if (HasNormals()) {
 					for (int j = 0; j < 3; j++)
-						stream << vertData[i].normal[j];
+						stream << vertex.normal[j];
 
-					stream << vertData[i].bitangentY;
+					stream << vertex.bitangentY;
 
 					if (HasTangents()) {
 						for (int j = 0; j < 3; j++)
-							stream << vertData[i].tangent[j];
+							stream << vertex.tangent[j];
 
-						stream << vertData[i].bitangentZ;
+						stream << vertex.bitangentZ;
 					}
 				}
 
 				if (HasVertexColors())
 					for (int j = 0; j < 4; j++)
-						stream << vertData[i].colorData[j];
+						stream << vertex.colorData[j];
 
 				if (IsSkinned()) {
 					for (int j = 0; j < 4; j++) {
-						halfData = vertData[i].weights[j];
+						halfData = vertex.weights[j];
 						stream.write((char*)&halfData, 2);
 					}
 
 					for (int j = 0; j < 4; j++)
-						stream << vertData[i].weightBones[j];
+						stream << vertex.weightBones[j];
 				}
 
 				if ((vertFlags7 & (1 << 4)) != 0)
-					stream << vertData[i].eyeData;
+					stream << vertex.eyeData;
 			}
 		}
 
@@ -709,7 +711,6 @@ void BSTriShape::Put(NiStream& stream) {
 
 void BSTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	std::vector<int> indexCollapse(vertData.size(), 0);
-	std::vector<int> indexCollapseTris(vertData.size(), 0);
 
 	deletedTris.clear();
 
@@ -717,12 +718,11 @@ void BSTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
 		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
 			indexCollapse[i] = -1;	// Flag delete
-			indexCollapseTris[i] = -1;	// Flag delete
 			remCount++;
 			j++;
 		}
 		else
-			indexCollapseTris[i] = remCount;
+			indexCollapse[i] = remCount;
 	}
 
 	for (int i = vertData.size() - 1; i >= 0; i--) {
@@ -733,15 +733,15 @@ void BSTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	}
 
 	for (int i = numTriangles - 1; i >= 0; i--) {
-		if (indexCollapseTris[triangles[i].p1] == -1 || indexCollapseTris[triangles[i].p2] == -1 || indexCollapseTris[triangles[i].p3] == -1) {
+		if (indexCollapse[triangles[i].p1] == -1 || indexCollapse[triangles[i].p2] == -1 || indexCollapse[triangles[i].p3] == -1) {
 			deletedTris.push_back(i);
 			triangles.erase(triangles.begin() + i);
 			numTriangles--;
 		}
 		else {
-			triangles[i].p1 = triangles[i].p1 - indexCollapseTris[triangles[i].p1];
-			triangles[i].p2 = triangles[i].p2 - indexCollapseTris[triangles[i].p2];
-			triangles[i].p3 = triangles[i].p3 - indexCollapseTris[triangles[i].p3];
+			triangles[i].p1 = triangles[i].p1 - indexCollapse[triangles[i].p1];
+			triangles[i].p2 = triangles[i].p2 - indexCollapse[triangles[i].p2];
+			triangles[i].p3 = triangles[i].p3 - indexCollapse[triangles[i].p3];
 		}
 	}
 }
@@ -946,11 +946,8 @@ void BSTriShape::SetFullPrecision(const bool enable) {
 }
 
 void BSTriShape::UpdateBounds() {
-	const std::vector<Vector3>* vertices = GetRawVerts();
-	if (vertices)
-		bounds = BoundingSphere(*vertices);
-	else
-		bounds = BoundingSphere();
+	GetRawVerts();
+	bounds = BoundingSphere(rawVertices);
 }
 
 void BSTriShape::SetNormals(const std::vector<Vector3>& inNorms) {
@@ -1263,19 +1260,20 @@ void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris
 		SetUVs(false);
 
 	for (int i = 0; i < numVertices; i++) {
-		vertData[i].vert = (*verts)[i];
+		auto& vertex = vertData[i];
+		vertex.vert = (*verts)[i];
 
 		if (uvs && uvs->size() == numVertices)
-			vertData[i].uv = (*uvs)[i];
+			vertex.uv = (*uvs)[i];
 
-		vertData[i].bitangentX = 0.0f;
-		vertData[i].bitangentY = 0;
-		vertData[i].bitangentZ = 0;
-		vertData[i].normal[0] = vertData[i].normal[1] = vertData[i].normal[2] = 0;
-		memset(vertData[i].colorData, 255, 4);
-		memset(vertData[i].weights, 0, sizeof(float) * 4);
-		memset(vertData[i].weightBones, 0, 4);
-		vertData[i].eyeData = 0.0f;
+		vertex.bitangentX = 0.0f;
+		vertex.bitangentY = 0;
+		vertex.bitangentZ = 0;
+		vertex.normal[0] = vertex.normal[1] = vertex.normal[2] = 0;
+		memset(vertex.colorData, 255, 4);
+		memset(vertex.weights, 0, sizeof(float) * 4);
+		memset(vertex.weightBones, 0, 4);
+		vertex.eyeData = 0.0f;
 	}
 
 	triangles.resize(numTriangles);
@@ -1597,15 +1595,16 @@ int BSDynamicTriShape::CalcBlockSize(NiVersion& version) {
 
 	dynamicData.resize(numVertices);
 	for (int i = 0; i < numVertices; i++) {
-		dynamicData[i].x = vertData[i].vert.x;
-		dynamicData[i].y = vertData[i].vert.y;
-		dynamicData[i].z = vertData[i].vert.z;
-		dynamicData[i].w = vertData[i].bitangentX;
+		auto& vertex = vertData[i];
+		dynamicData[i].x = vertex.vert.x;
+		dynamicData[i].y = vertex.vert.y;
+		dynamicData[i].z = vertex.vert.z;
+		dynamicData[i].w = vertex.bitangentX;
 
 		if (dynamicData[i].x > 0.0f)
-			vertData[i].eyeData = 1.0f;
+			vertex.eyeData = 1.0f;
 		else
-			vertData[i].eyeData = 0.0f;
+			vertex.eyeData = 0.0f;
 	}
 
 	blockSize += 4;

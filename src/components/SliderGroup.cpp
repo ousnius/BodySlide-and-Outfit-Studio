@@ -46,26 +46,20 @@ int SliderSetGroupCollection::GetOutfitGroups(const std::string& outfitName, std
 	return outGroups.size();
 }
 
-int SliderSetGroupCollection::GetGroupMembers(const std::string& groupName, std::vector<std::string>& outMembers, bool append) {
+int SliderSetGroupCollection::GetGroupMembers(const std::string& groupName, std::vector<std::string>& outMembers) {
 	auto git = groups.find(groupName);
 	if (git == groups.end())
 		return 0;
 
-	if (append)
-		return git->second.AppendMembers(outMembers);
-	else
-		return git->second.GetMembers(outMembers);
+	return git->second.GetMembers(outMembers);
 }
 
-int SliderSetGroupCollection::GetGroupMembers(const std::string& groupName, std::unordered_set<std::string>& outMembers, bool append) {
+int SliderSetGroupCollection::GetGroupMembers(const std::string& groupName, std::unordered_set<std::string>& outMembers) {
 	auto git = groups.find(groupName);
 	if (git == groups.end())
 		return 0;
 
-	if (append)
-		return git->second.AppendMembers(outMembers);
-	else
-		return git->second.GetMembers(outMembers);
+	return git->second.GetMembers(outMembers);
 }
 
 // Combine the source groups members into this one's list. Also merges the source file list.
@@ -102,23 +96,11 @@ bool SliderSetGroup::HasMember(const std::string& search) {
 }
 
 int SliderSetGroup::GetMembers(std::vector<std::string>& outMembers) {
-	std::set<std::string> alphaOrder(members.begin(), members.end());
-	outMembers.assign(alphaOrder.begin(), alphaOrder.end());
+	outMembers.insert(outMembers.end(), members.begin(), members.end());
 	return outMembers.size();
 }
 
 int SliderSetGroup::GetMembers(std::unordered_set<std::string>& outMembers) {
-	outMembers.insert(members.begin(), members.end());
-	return outMembers.size();
-}
-
-int SliderSetGroup::AppendMembers(std::vector<std::string>& outMembers) {
-	std::set<std::string> alphaOrder(members.begin(), members.end());
-	outMembers.insert(outMembers.end(), alphaOrder.begin(), alphaOrder.end());
-	return outMembers.size();
-}
-
-int SliderSetGroup::AppendMembers(std::unordered_set<std::string>& outMembers) {
 	outMembers.insert(members.begin(), members.end());
 	return outMembers.size();
 }

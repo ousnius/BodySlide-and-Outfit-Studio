@@ -38,7 +38,7 @@ class Log {
 
 public:
 	//Opens and truncates log file to a maximum of runs
-	void Initialize(int level = -1, wxString fileName = "Log.txt");
+	void Initialize(int level = -1, const wxString& fileName = "Log.txt");
 
 	//Swaps out log formatter
 	void SetFormatter(bool withFile = true);

@@ -12,35 +12,35 @@ See the included LICENSE file
 typedef uint HavokMaterial;
 
 struct HavokFilter {
-	byte layer;
-	byte flagsAndParts;
-	ushort group;
+	byte layer = 1;
+	byte flagsAndParts = 0;
+	ushort group = 0;
 };
 
 struct hkWorldObjCInfoProperty {
-	uint data;
-	uint size;
-	uint capacityAndFlags;
+	uint data = 0;
+	uint size = 0;
+	uint capacityAndFlags = 0x80000000;
 };
 
 enum MotorType : byte {
-	None = 0,
-	Position = 1,
-	Velocity = 2,
-	SpringDamper = 3
+	MOTOR_NONE = 0,
+	MOTOR_POSITION = 1,
+	MOTOR_VELOCITY = 2,
+	MOTOR_SPRING = 3
 };
 
 struct bhkLimitedForceConstraintMotor {
-	float minForce;
-	float maxForce;
-	bool motorEnabled;
+	float minForce = -1000000.0f;
+	float maxForce = 1000000.0f;
+	bool motorEnabled = false;
 };
 
 struct bhkPositionConstraintMotor : bhkLimitedForceConstraintMotor {
-	float tau;
-	float damping;
-	float proportionalRecoveryVelocity;
-	float constantRecoveryVelocity;
+	float tau = 0.8f;
+	float damping = 1.0f;
+	float proportionalRecoveryVelocity = 2.0f;
+	float constantRecoveryVelocity = 1.0f;
 
 	void Get(NiStream& stream) {
 		stream >> minForce;
@@ -64,9 +64,9 @@ struct bhkPositionConstraintMotor : bhkLimitedForceConstraintMotor {
 };
 
 struct bhkVelocityConstraintMotor : bhkLimitedForceConstraintMotor {
-	float tau;
-	float velocityTarget;
-	bool useVelocityTargetFromConstraintTargets;
+	float tau = 0.0f;
+	float velocityTarget = 0.0f;
+	bool useVelocityTargetFromConstraintTargets = 0.0f;
 
 	void Get(NiStream& stream) {
 		stream >> minForce;
@@ -88,8 +88,8 @@ struct bhkVelocityConstraintMotor : bhkLimitedForceConstraintMotor {
 };
 
 struct bhkSpringDamperConstraintMotor : bhkLimitedForceConstraintMotor {
-	float springConstant;
-	float springDamping;
+	float springConstant = 0.0f;
+	float springDamping = 0.0f;
 
 	void Get(NiStream& stream) {
 		stream >> minForce;
@@ -109,7 +109,7 @@ struct bhkSpringDamperConstraintMotor : bhkLimitedForceConstraintMotor {
 };
 
 struct MotorDesc {
-	MotorType motorType;
+	MotorType motorType = MOTOR_NONE;
 	bhkPositionConstraintMotor motorPosition;
 	bhkVelocityConstraintMotor motorVelocity;
 	bhkSpringDamperConstraintMotor motorSpringDamper;
@@ -118,13 +118,13 @@ struct MotorDesc {
 		stream >> motorType;
 
 		switch (motorType) {
-		case MotorType::Position:
+		case MOTOR_POSITION:
 			motorPosition.Get(stream);
 			break;
-		case MotorType::Velocity:
+		case MOTOR_VELOCITY:
 			motorVelocity.Get(stream);
 			break;
-		case MotorType::SpringDamper:
+		case MOTOR_SPRING:
 			motorSpringDamper.Get(stream);
 			break;
 		}
@@ -134,13 +134,13 @@ struct MotorDesc {
 		stream << motorType;
 
 		switch (motorType) {
-		case MotorType::Position:
+		case MOTOR_POSITION:
 			motorPosition.Put(stream);
 			break;
-		case MotorType::Velocity:
+		case MOTOR_VELOCITY:
 			motorVelocity.Put(stream);
 			break;
-		case MotorType::SpringDamper:
+		case MOTOR_SPRING:
 			motorSpringDamper.Put(stream);
 			break;
 		}
@@ -148,11 +148,11 @@ struct MotorDesc {
 
 	int CalcMotorSize() {
 		switch (motorType) {
-		case MotorType::Position:
+		case MOTOR_POSITION:
 			return 25;
-		case MotorType::Velocity:
+		case MOTOR_VELOCITY:
 			return 18;
-		case MotorType::SpringDamper:
+		case MOTOR_SPRING:
 			return 17;
 		default:
 			return 0;
@@ -173,9 +173,9 @@ struct HingeDesc {
 
 struct LimitedHingeDesc {
 	HingeDesc hinge;
-	float minAngle;
-	float maxAngle;
-	float maxFriction;
+	float minAngle = 0.0f;
+	float maxAngle = 0.0f;
+	float maxFriction = 0.0f;
 	MotorDesc motorDesc;
 };
 
@@ -188,19 +188,19 @@ struct RagdollDesc {
 	Vector4 planeB;
 	Vector4 motorB;
 	Vector4 pivotB;
-	float coneMaxAngle;
-	float planeMinAngle;
-	float planeMaxAngle;
-	float twistMinAngle;
-	float twistMaxAngle;
-	float maxFriction;
+	float coneMaxAngle = 0.0f;
+	float planeMinAngle = 0.0f;
+	float planeMaxAngle = 0.0f;
+	float twistMinAngle = 0.0f;
+	float twistMaxAngle = 0.0f;
+	float maxFriction = 0.0f;
 	MotorDesc motorDesc;
 };
 
 struct StiffSpringDesc {
 	Vector4 pivotA;
 	Vector4 pivotB;
-	float length;
+	float length = 0.0f;
 };
 
 struct BallAndSocketDesc {
@@ -217,9 +217,9 @@ struct PrismaticDesc {
 	Vector4 rotationB;
 	Vector4 planeB;
 	Vector4 pivotB;
-	float minDistance;
-	float maxDistance;
-	float friction;
+	float minDistance = 0.0f;
+	float maxDistance = 0.0f;
+	float friction = 0.0f;
 	MotorDesc motorDesc;
 };
 
@@ -357,8 +357,8 @@ public:
 
 class bhkBlendCollisionObject : public bhkCollisionObject {
 private:
-	float heirGain;
-	float velGain;
+	float heirGain = 0.0f;
+	float velGain = 0.0f;
 
 public:
 	bhkBlendCollisionObject();
@@ -402,10 +402,10 @@ class bhkHeightFieldShape : public bhkShape {
 
 class bhkPlaneShape : public bhkHeightFieldShape {
 private:
-	HavokMaterial material;
+	HavokMaterial material = 0;
 	Vector3 unkVec;
 	Vector3 direction;
-	float constant;
+	float constant = 0.0f;
 	Vector4 halfExtents;
 	Vector4 center;
 
@@ -438,8 +438,8 @@ class bhkConvexShape : public bhkSphereRepShape {
 
 class bhkConvexVerticesShape : public bhkConvexShape {
 private:
-	uint mat;
-	float radius;
+	uint mat = 0;
+	float radius = 0.0f;
 	hkWorldObjCInfoProperty vertsProp;
 	hkWorldObjCInfoProperty normalsProp;
 
@@ -464,9 +464,9 @@ public:
 
 class bhkBoxShape : public bhkConvexShape {
 private:
-	uint64_t padding;
+	uint64_t padding = 0;
 	Vector3 dimensions;
-	float radius2;
+	float radius2 = 0.0f;
 
 public:
 	bhkBoxShape();
@@ -495,9 +495,9 @@ public:
 class bhkTransformShape : public bhkShape {
 private:
 	BlockRef<bhkShape> shapeRef;
-	HavokMaterial material;
-	float radius;
-	uint64_t padding;
+	HavokMaterial material = 0;
+	float radius = 0.0f;
+	uint64_t padding = 0;
 	Matrix4 xform;
 
 public:
@@ -527,11 +527,11 @@ public:
 
 class bhkCapsuleShape : public bhkConvexShape {
 private:
-	uint64_t padding;
+	uint64_t padding = 0;
 	Vector3 point1;
-	float radius1;
+	float radius1 = 0.0f;
 	Vector3 point2;
-	float radius2;
+	float radius2 = 0.0f;
 
 public:
 	bhkCapsuleShape();
@@ -552,13 +552,13 @@ class bhkBvTreeShape : public bhkShape {
 class bhkMoppBvTreeShape : public bhkBvTreeShape {
 private:
 	BlockRef<bhkShape> shapeRef;
-	uint userData;
-	uint shapeCollection;
-	uint code;
-	float scale;
+	uint userData = 0;
+	uint shapeCollection = 0;
+	uint code = 0;
+	float scale = 0.0f;
 	uint dataSize = 0;
 	Vector4 offset;
-	byte buildType;							// User Version >= 12
+	byte buildType = 2;						// User Version >= 12
 	std::vector<byte> data;
 
 public:
@@ -579,15 +579,15 @@ class NiTriStripsData;
 
 class bhkNiTriStripsShape : public bhkShape {
 private:
-	HavokMaterial material;
-	float radius;
-	uint unused1;
-	uint unused2;
-	uint unused3;
-	uint unused4;
-	uint unused5;
-	uint growBy;
-	Vector4 scale;
+	HavokMaterial material = 0;
+	float radius = 0.1f;
+	uint unused1 = 0;
+	uint unused2 = 0;
+	uint unused3 = 0;
+	uint unused4 = 0;
+	uint unused5 = 0;
+	uint growBy = 1;
+	Vector4 scale = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 
 	BlockRefArray<NiTriStripsData> partRefs;
 
@@ -614,7 +614,7 @@ class bhkShapeCollection : public bhkShape {
 class bhkListShape : public bhkShapeCollection {
 private:
 	BlockRefArray<bhkShape> subShapeRefs;
-	HavokMaterial material;
+	HavokMaterial material = 0;
 	hkWorldObjCInfoProperty childShapeProp;
 	hkWorldObjCInfoProperty childFilterProp;
 	uint numUnkInts = 0;
@@ -660,7 +660,7 @@ class bhkShapePhantom : public bhkPhantom {
 
 class bhkSimpleShapePhantom : public bhkShapePhantom {
 private:
-	uint64_t padding;
+	uint64_t padding = 0;
 	Matrix4 transform;
 
 public:
@@ -730,7 +730,7 @@ class SubConstraintDesc {
 private:
 	hkConstraintType type;
 	BlockRefArray<bhkEntity> entityRefs;
-	uint priority;
+	uint priority = 1;
 
 	BallAndSocketDesc desc1;
 	HingeDesc desc2;
@@ -739,7 +739,7 @@ private:
 	RagdollDesc desc5;
 	StiffSpringDesc desc6;
 
-	float strength;
+	float strength = 0.0f;
 
 public:
 	void Get(NiStream& stream);
@@ -751,7 +751,7 @@ public:
 class bhkBreakableConstraint : public bhkConstraint {
 private:
 	SubConstraintDesc subConstraint;
-	bool removeWhenBroken;
+	bool removeWhenBroken = false;
 
 public:
 	bhkBreakableConstraint();
@@ -857,17 +857,17 @@ private:
 	uint numPivots = 0;
 	std::vector<Vector4> pivots;
 
-	float tau;
-	float damping;
-	float cfm;
-	float maxErrorDistance;
+	float tau = 1.0f;
+	float damping = 0.6f;
+	float cfm = 1.1920929e-08f;
+	float maxErrorDistance = 0.1f;
 
 	BlockRefArray<bhkEntity> entityARefs;
 
 	uint numEntities = 0;
 	BlockRef<bhkEntity> entityARef;
 	BlockRef<bhkEntity> entityBRef;
-	uint priority;
+	uint priority = 0;
 
 public:
 	bhkBallSocketConstraintChain();
@@ -883,12 +883,19 @@ public:
 	bhkBallSocketConstraintChain* Clone() { return new bhkBallSocketConstraintChain(*this); }
 };
 
+enum hkResponseType : byte {
+	RESPONSE_INVALID,
+	RESPONSE_SIMPLE_CONTACT,
+	RESPONSE_REPORTING,
+	RESPONSE_NONE
+};
+
 class bhkRigidBody : public bhkEntity {
 private:
-	byte responseType;
-	byte unkByte;
-	ushort processContactCallbackDelay;
-	ushort unkShorts[2];
+	hkResponseType collisionResponse = RESPONSE_SIMPLE_CONTACT;
+	byte unusedByte1 = 0;
+	ushort processContactCallbackDelay = 0xFFFF;
+	uint unkInt1 = 0;
 	HavokFilter collisionFilterCopy;
 	ushort unkShorts2[6];
 	Vector4 translation;
@@ -897,31 +904,31 @@ private:
 	Vector4 angularVelocity;
 	float inertiaMatrix[12];
 	Vector4 center;
-	float mass;
-	float linearDamping;
-	float angularDamping;
-	float timeFactor;						// User Version >= 12
-	float gravityFactor;					// User Version >= 12
-	float friction;
-	float rollingFrictionMult;				// User Version >= 12
-	float restitution;
-	float maxLinearVelocity;
-	float maxAngularVelocity;
-	float penetrationDepth;
-	byte motionSystem;
-	byte deactivatorType;
-	byte solverDeactivation;
-	byte qualityType;
-	byte autoRemoveLevel;
-	byte responseModifierFlag;
-	byte numShapeKeysInContactPointProps;
-	bool forceCollideOntoPpu;
-	uint unkInt2;
-	uint unkInt3;
-	uint unkInt4;							// User Version >= 12
+	float mass = 1.0f;
+	float linearDamping = 0.1f;
+	float angularDamping = 0.05f;
+	float timeFactor = 1.0f;				// User Version >= 12
+	float gravityFactor = 1.0f;				// User Version >= 12
+	float friction = 0.5f;
+	float rollingFrictionMult = 1.0f;		// User Version >= 12
+	float restitution = 0.4f;
+	float maxLinearVelocity = 104.4f;
+	float maxAngularVelocity = 31.57f;
+	float penetrationDepth = 0.15f;
+	byte motionSystem = 1;
+	byte deactivatorType = 1;
+	byte solverDeactivation = 1;
+	byte qualityType = 1;
+	byte autoRemoveLevel = 0;
+	byte responseModifierFlag = 0;
+	byte numShapeKeysInContactPointProps = 0;
+	bool forceCollideOntoPpu = false;
+	uint unkInt2 = 0;
+	uint unkInt3 = 0;
+	uint unkInt4 = 0;						// User Version >= 12
 	BlockRefArray<bhkSerializable> constraintRefs;
-	uint unkInt5;							// User Version <= 11
-	ushort unkShort3;						// User Version >= 12
+	uint unkInt5 = 0;						// User Version <= 11
+	ushort unkShort3 = 0;					// User Version >= 12
 
 public:
 	bhkRigidBody();
@@ -950,15 +957,15 @@ public:
 
 class bhkCompressedMeshShapeData : public bhkRefObject {
 private:
-	uint bitsPerIndex;
-	uint bitsPerWIndex;
-	uint maskWIndex;
-	uint maskIndex;
-	float error;
+	uint bitsPerIndex = 0;
+	uint bitsPerWIndex = 0;
+	uint maskWIndex = 0;
+	uint maskIndex = 0;
+	float error = 0.0f;
 	Vector4 aabbBoundMin;
 	Vector4 aabbBoundMax;
-	byte weldingType;
-	byte materialType;
+	byte weldingType = 0;
+	byte materialType = 0;
 
 	uint numMat32 = 0;
 	std::vector<uint> mat32;
@@ -1002,12 +1009,12 @@ public:
 class bhkCompressedMeshShape : public bhkShape {
 private:
 	BlockRef<NiAVObject> targetRef;
-	uint userData;
-	float radius;
-	float unkFloat;
-	Vector4 scaling;
-	float radius2;
-	Vector4 scaling2;
+	uint userData = 0;
+	float radius = 0.005f;
+	float unkFloat = 0.0f;
+	Vector4 scaling = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
+	float radius2 = 0.005f;
+	Vector4 scaling2 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);;
 	BlockRef<bhkCompressedMeshShapeData> dataRef;
 
 public:

@@ -28,17 +28,10 @@ public:
 	bool invertRed = false;
 
 	/* background layer special properties */
-	uint8_t fillColor[3];					// A solid color to set the background to, if no original file is to be used as the background
-	int resolution;							// the resolution for the in memory texture information and, optionally, output data.  
+	uint8_t fillColor[3] = { 126, 127, 255 };	// A solid color to set the background to, if no original file is to be used as the background
+	int resolution = 4096;						// the resolution for the in memory texture information and, optionally, output data.  
 
-
-	NormalGenLayer() {
-		fillColor[0] = 126;
-		fillColor[1] = 127;
-		fillColor[2] = 255;
-	}
-
-	~NormalGenLayer() {}
+	NormalGenLayer() {}
 
 	bool IsBackground() {
 		return layerName == "Background";

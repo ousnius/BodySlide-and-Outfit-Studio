@@ -6,6 +6,8 @@ See the included LICENSE file
 
 #include "PresetSaveDialog.h"
 
+#include <regex>
+
 wxBEGIN_EVENT_TABLE(PresetSaveDialog, wxDialog) 
 	EVT_TEXT_ENTER(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
 	EVT_TEXT(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
@@ -39,28 +41,30 @@ PresetSaveDialog::~PresetSaveDialog() {
 
 void PresetSaveDialog::FilterGroups(const std::string& filter) {
 	wxCheckListBox* chkbox = XRCCTRL((*this), "spGroupDisplay", wxCheckListBox);
-	wxArrayString strings;
-	filteredGroups.clear();
 	chkbox->Clear();
+	filteredGroups.clear();
+
 	if (filter.empty()) {
 		filteredGroups.assign(allGroupNames.begin(), allGroupNames.end());
 	}
 	else {
 		try {
 			std::regex re(filter, std::regex_constants::icase);
-			for (auto &s : allGroupNames) {
-				if (std::regex_search(s, re))
-					filteredGroups.push_back(s);
+			for (auto &group : allGroupNames) {
+				if (std::regex_search(group, re))
+					filteredGroups.push_back(group);
 			}
 		}
-		catch (...) {}
-
+		catch (std::regex_error) {
+			for (auto &group : allGroupNames)
+				filteredGroups.push_back(group);
+		}
 	}
+
 	for (auto &g : filteredGroups) {
 		int i = chkbox->Append(g);
-		if (selectedGroups.find(g) != selectedGroups.end()) {
+		if (selectedGroups.find(g) != selectedGroups.end())
 			chkbox->Check(i);
-		}
 	}
 }
 

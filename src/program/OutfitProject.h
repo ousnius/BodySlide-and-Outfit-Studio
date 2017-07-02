@@ -122,7 +122,7 @@ public:
 	void SetSliderFromDiff(const std::string& sliderName, const std::string& shapeName, std::unordered_map<ushort, Vector3>& diff);
 	int SaveSliderBSD(const std::string& sliderName, const std::string& shapeName, const std::string& fileName);
 	int SaveSliderOBJ(const std::string& sliderName, const std::string& shapeName, const std::string& fileName);
-	int WriteMorphTRI(const std::string& triPath);
+	bool WriteMorphTRI(const std::string& triPath);
 
 	float& SliderValue(int index);
 	float& SliderValue(const std::string& name);
@@ -216,7 +216,7 @@ public:
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName, const std::string& mergeShape = "");
-	int ExportOBJ(const std::string& fileName, const std::vector<std::string>& shapes, Vector3 scale = Vector3(1.0f, 1.0f, 1.0f), Vector3 offset = Vector3());
+	int ExportOBJ(const std::string& fileName, const std::vector<std::string>& shapes, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());
 
 	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", const std::string& mergeShape = "");
 	int ExportFBX(const std::string& fileName, const std::vector<std::string>& shapes);

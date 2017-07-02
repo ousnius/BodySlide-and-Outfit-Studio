@@ -6,10 +6,7 @@ See the included LICENSE file
 
 #include "AABBTree.h"
 
-AABB::AABB() {
-}
-
-AABB::AABB(const Vector3 newMin, const Vector3 newMax) {
+AABB::AABB(const Vector3& newMin, const Vector3& newMax) {
 	min = newMin;
 	max = newMax;
 }
@@ -158,7 +155,7 @@ bool AABB::IntersectAABB(AABB& other) {
 	if (min.z > other.max.z) return false;
 	if (max.x < other.min.x) return false;
 	if (max.y < other.min.y) return false;
-	if (max.z < other.max.z) return false;
+	if (max.z < other.min.z) return false;
 	return true;
 }
 
@@ -175,14 +172,14 @@ bool AABB::IntersectRay(Vector3& Origin, Vector3& Direction, Vector3* outCoord) 
 	if (Origin.x < min.x) {
 		inside = false;
 		candidatePlane[0] = min.x;
-		if (Direction.x != 0) {
+		if (Direction.x != 0.0f) {
 			maxT.x = (min.x - Origin.x) / Direction.x;
 		}
 	}
 	else if (Origin.x > max.x) {
 		inside = false;
 		candidatePlane[0] = max.x;
-		if (Direction.x != 0) {
+		if (Direction.x != 0.0f) {
 			maxT.x = (max.x - Origin.x) / Direction.x;
 		}
 	}
@@ -191,14 +188,14 @@ bool AABB::IntersectRay(Vector3& Origin, Vector3& Direction, Vector3* outCoord) 
 	if (Origin.y < min.y) {
 		inside = false;
 		candidatePlane[1] = min.y;
-		if (Direction.y != 0) {
+		if (Direction.y != 0.0f) {
 			maxT.y = (min.y - Origin.y) / Direction.y;
 		}
 	}
 	else if (Origin.y > max.y) {
 		inside = false;
 		candidatePlane[1] = max.y;
-		if (Direction.y != 0) {
+		if (Direction.y != 0.0f) {
 			maxT.y = (max.y - Origin.y) / Direction.y;
 		}
 	}
@@ -210,14 +207,14 @@ bool AABB::IntersectRay(Vector3& Origin, Vector3& Direction, Vector3* outCoord) 
 	if (Origin.z < min.z) {
 		inside = false;
 		candidatePlane[2] = min.z;
-		if (Direction.z != 0) {
+		if (Direction.z != 0.0f) {
 			maxT.z = (min.z - Origin.z) / Direction.z;
 		}
 	}
 	else if (Origin.z > max.z) {
 		inside = false;
 		candidatePlane[2] = max.z;
-		if (Direction.z != 0) {
+		if (Direction.z != 0.0f) {
 			maxT.z = (max.z - Origin.z) / Direction.z;
 		}
 	}
@@ -290,9 +287,6 @@ bool AABB::IntersectSphere(Vector3& Origin, float radius) {
 	}
 
 	return d <= radius * radius;
-}
-
-AABBTree::AABBTreeNode::AABBTreeNode() {
 }
 
 AABBTree::AABBTreeNode::AABBTreeNode(std::vector<int>& facetIndices, int start, int end, AABBTree* treeRef, AABBTreeNode* parentRef, int depth) {
@@ -599,9 +593,6 @@ void AABBTree::AABBTreeNode::UpdateAABB(AABB* childBB) {
 
 	if (parent)
 		parent->UpdateAABB(&mBB);
-}
-
-AABBTree::AABBTree() {
 }
 
 AABBTree::AABBTree(Vector3* vertices, Triangle* facets, int nFacets, int maxDepth, int minFacets) {

@@ -22,13 +22,13 @@ class GLShader {
 	std::string fragSrc;
 
 	// Compiled shader IDs after compile.
-	GLuint vertShadID;
-	GLuint fragShadID;
-	GLint vertShadLength;
-	GLint fragShadLength;
+	GLuint vertShadID = 0;
+	GLuint fragShadID = 0;
+	GLint vertShadLength = 0;
+	GLint fragShadLength = 0;
 
 	// Linked Program ID after program creation.
-	GLuint progID;
+	GLuint progID = 0;
 
 	/* error state, set if compile/link fails.  check errorstring for compile log
 		-1 = initial state -- not ready
@@ -38,7 +38,7 @@ class GLShader {
 		3 = fragment shader compile failed,
 		4 = program link failed.
 		*/
-	int errorState;
+	int errorState = -1;
 	std::string errorString;
 
 	bool CheckExtensions();
@@ -60,11 +60,10 @@ public:
 		Vector3 direction;
 	};
 
-	GLShader();
+	GLShader() {}
 
 	// Creates the shader object and runs LoadShaders followed by BuildShaders.
 	GLShader(const std::string& vertexSource, const std::string& fragmentSource);
-	~GLShader();
 
 	void SetColor(const Vector3& color);
 	void SetModelSpace(const bool enable);

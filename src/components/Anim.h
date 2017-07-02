@@ -37,27 +37,21 @@ struct VertexBoneWeights {
 
 class AnimBone {
 public:
-	std::string boneName;		// bone names are node names in the nif file
-	int boneID;					// block id from the original nif file
-	Matrix4 rot;				// original node rotation value (total rotation, including parents)
-	Vector3 trans;				// original node translation value (total translation, including parents)
-	float scale;				// original node scale value
+	std::string boneName = "bogus";		// bone names are node names in the nif file
+	int boneID = -1;					// block id from the original nif file
+	Matrix4 rot;						// original node rotation value (total rotation, including parents)
+	Vector3 trans;						// original node translation value (total translation, including parents)
+	float scale = 1.0f;					// original node scale value
 
-	bool isValidBone;
-	AnimBone* parent;
+	bool isValidBone = false;
+	AnimBone* parent = nullptr;
 	std::vector<AnimBone*> children;
-	Matrix4 localRot;			// rotation offset from parent bone.
-	Vector3 localTrans;			// offset from parent bone
+	Matrix4 localRot;					// rotation offset from parent bone.
+	Vector3 localTrans;					// offset from parent bone
 
-	int refCount;				// reference count of this bone
+	int refCount = 0;					// reference count of this bone
 
-	AnimBone() {
-		boneName = "bogus";
-		boneID = -1;
-		refCount = 0;
-		parent = nullptr;
-		isValidBone = false;
-	}
+	AnimBone() {}
 
 	AnimBone& LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* parent = nullptr);
 };

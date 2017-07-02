@@ -57,26 +57,20 @@ int SliderCategoryCollection::GetSliderCategory(const std::string& sliderName, s
 	return outCategory.size();
 }
 
-int SliderCategoryCollection::GetCategorySliders(const std::string& categoryName, std::vector<std::string>& outSliders, bool append) {
+int SliderCategoryCollection::GetCategorySliders(const std::string& categoryName, std::vector<std::string>& outSliders) {
 	auto git = categories.find(categoryName);
 	if (git == categories.end())
 		return 0;
 
-	if (append)
-		return git->second.AppendSliders(outSliders);
-	else
-		return git->second.GetSliders(outSliders);
+	return git->second.GetSliders(outSliders);
 }
 
-int SliderCategoryCollection::GetCategorySliders(const std::string& categoryName, std::unordered_set<std::string>& outSliders, bool append) {
+int SliderCategoryCollection::GetCategorySliders(const std::string& categoryName, std::unordered_set<std::string>& outSliders) {
 	auto git = categories.find(categoryName);
 	if (git == categories.end())
 		return 0;
 
-	if (append)
-		return git->second.AppendSliders(outSliders);
-	else
-		return git->second.GetSliders(outSliders);
+	return git->second.GetSliders(outSliders);
 }
 
 bool SliderCategoryCollection::GetCategoryHidden(const std::string& categoryName) {
@@ -123,7 +117,7 @@ int SliderCategory::LoadCategory(XMLElement* srcCategoryElement) {
 		if (slider->Attribute("displayname"))
 			displayNames[sName] = slider->Attribute("displayname");
 		else
-			displayNames[sName] = "";
+			displayNames[sName].clear();
 
 		std::string* fileName = static_cast<std::string*>(slider->GetDocument()->GetUserData());
 		sourceFiles.push_back(*fileName);
@@ -157,22 +151,11 @@ void SliderCategory::SetHidden(bool hide) {
 }
 
 int SliderCategory::GetSliders(std::vector<std::string>& outSliders) {
-	outSliders.clear();
 	outSliders.insert(outSliders.end(), sliders.begin(), sliders.end());
 	return outSliders.size();
 }
 
 int SliderCategory::GetSliders(std::unordered_set<std::string>& outSliders) {
-	outSliders.insert(sliders.begin(), sliders.end());
-	return outSliders.size();
-}
-
-int SliderCategory::AppendSliders(std::vector<std::string>& outSliders) {
-	outSliders.insert(outSliders.end(), sliders.begin(), sliders.end());
-	return outSliders.size();
-}
-
-int SliderCategory::AppendSliders(std::unordered_set<std::string>& outSliders) {
 	outSliders.insert(sliders.begin(), sliders.end());
 	return outSliders.size();
 }

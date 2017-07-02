@@ -27,13 +27,13 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 	if (ti != textures.end())
 		return ti->second;
 
-	GLuint textureID = 0;
 	wxFileName fileName(inFileName);
 	wxString fileExt = fileName.GetExt().Lower();
 	std::string fileExtStr = std::string(fileExt.c_str());
 
 	// All textures (GLI)
-	if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
+	GLuint textureID = 0;
+	if (fileExtStr == "dds" || fileExtStr == "ktx")
 		textureID = GLI_load_texture(inFileName);
 
 	// Cubemap fallback (SOIL)
@@ -72,7 +72,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 			byte* texBuffer = static_cast<byte*>(data.GetData());
 
 			// All textures (GLI)
-			if (!textureID && fileExtStr == "dds" || fileExtStr == "ktx")
+			if (fileExtStr == "dds" || fileExtStr == "ktx")
 				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen());
 
 			// Cubemap fallback (SOIL)

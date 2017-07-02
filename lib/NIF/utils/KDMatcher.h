@@ -62,14 +62,14 @@ public:
 	int count;
 	std::vector<std::pair<std::pair<Vector3*, int>, std::pair<Vector3*, int>>> matches;
 
-	kd_matcher(Vector3* points, int count) {
-		if (count <= 0)
+	kd_matcher(Vector3* pts, int cnt) {
+		if (cnt <= 0)
 			return;
 
 		std::pair<Vector3*, int> pong;
-		root = std::make_unique<kd_node>(std::pair<Vector3*, int>(&points[0], 0));
-		for (int i = 1; i < count; i++) {
-			std::pair<Vector3*, int> point(&points[i], i);
+		root = std::make_unique<kd_node>(std::pair<Vector3*, int>(&pts[0], 0));
+		for (int i = 1; i < cnt; i++) {
+			std::pair<Vector3*, int> point(&pts[i], i);
 			pong = root->add(point, 0);
 			if (pong.first)
 				matches.push_back(std::pair<std::pair<Vector3*, int>, std::pair<Vector3*, int>>(point, pong));
@@ -138,28 +138,28 @@ public:
 			float dx = p->x - querypoint->x;	// Axis sides
 			float dy = p->y - querypoint->y;
 			float dz = p->z - querypoint->z;
-			kd_node* act = less.get();				// Active search branch
-			kd_node* opp = more.get();				// Opposite search branch
-			float axisdist = 0;					// Distance from the query point to the separating axis
+			kd_node* act = less.get();			// Active search branch
+			kd_node* opp = more.get();			// Opposite search branch
+			float axisdist = 0.0f;				// Distance from the query point to the separating axis
 			float pointdist;					// Distance from the query point to the node's point
 
 			switch (axis) {
 			case 0:
-				if (dx > 0)  {
+				if (dx > 0.0f)  {
 					act = more.get();
 					opp = less.get();
 				}
 				axisdist = std::fabs(dx);
 				break;
 			case 1:
-				if (dy > 0) {
+				if (dy > 0.0f) {
 					act = more.get();
 					opp = less.get();
 				}
 				axisdist = std::fabs(dy);
 				break;
 			case 2:
-				if (dz > 0)  {
+				if (dz > 0.0f)  {
 					act = more.get();
 					opp = less.get();
 				}
@@ -197,7 +197,7 @@ public:
 
 			// Check the opposite branch if it exists
 			if (opp) {
-				if (radius) {
+				if (radius > 0.0f) {
 					if (radius >= axisdist)	// If separating axis is within the check radius
 						opp->find_closest(querypoint, queryResult, radius, mindist, depth + 1);
 				}
@@ -225,13 +225,12 @@ public:
 
 	int kd_nn(Vector3* querypoint, float radius) {
 		float mindist = std::numeric_limits<float>().max();
-		if (radius != 0.0f)
+		if (radius > 0.0f)
 			mindist = radius;
 
 		queryResult.clear();
 		root->find_closest(querypoint, queryResult, radius, mindist);
-		if (queryResult.size() > 1)
-			std::sort(queryResult.begin(), queryResult.end());
+		std::sort(queryResult.begin(), queryResult.end());
 
 		return queryResult.size();
 	}

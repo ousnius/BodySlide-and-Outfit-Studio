@@ -197,10 +197,16 @@ public:
 	BSFadeNode* Clone() { return new BSFadeNode(*this); }
 };
 
+enum BSValueNodeFlags : byte {
+	BSVN_NONE = 0x0,
+	BSVN_BILLBOARD_WORLD_Z = 0x1,
+	BSVN_USE_PLAYER_ADJUST = 0x2
+};
+
 class BSValueNode : public NiNode {
 private:
-	int value;
-	byte valueFlags;
+	int value = 0;
+	BSValueNodeFlags valueFlags = BSVN_NONE;
 
 public:
 	BSValueNode();
@@ -248,7 +254,7 @@ public:
 class BSOrderedNode : public NiNode {
 private:
 	Vector4 alphaSortBound;
-	bool isStaticBound;
+	bool isStaticBound = false;
 
 public:
 	BSOrderedNode();
@@ -271,7 +277,7 @@ class BSMultiBoundOBB : public BSMultiBoundData {
 private:
 	Vector3 center;
 	Vector3 size;
-	float rotation[9];
+	float rotation[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 
 public:
 	BSMultiBoundOBB();
@@ -322,10 +328,18 @@ public:
 	BSMultiBound* Clone() { return new BSMultiBound(*this); }
 };
 
+enum BSCPCullingType : uint {
+	BSCP_CULL_NORMAL,
+	BSCP_CULL_ALLPASS,
+	BSCP_CULL_ALLFAIL,
+	BSCP_CULL_IGNOREMULTIBOUNDS,
+	BSCP_CULL_FORCEMULTIBOUNDSNOUPDATE
+};
+
 class BSMultiBoundNode : public NiNode {
 private:
 	BlockRef<BSMultiBound> multiBoundRef;
-	uint cullingMode;
+	BSCPCullingType cullingMode = BSCP_CULL_NORMAL;
 
 public:
 	BSMultiBoundNode();
@@ -344,9 +358,9 @@ public:
 
 class BSBlastNode : public NiNode {
 private:
-	byte min;
-	byte max;
-	byte current;
+	byte min = 0;
+	byte max = 0;
+	byte current = 0;
 
 public:
 	BSBlastNode();
@@ -373,9 +387,19 @@ public:
 	BSDamageStage* Clone() { return new BSDamageStage(*this); }
 };
 
+enum BillboardMode : ushort {
+	ALWAYS_FACE_CAMERA,
+	ROTATE_ABOUT_UP,
+	RIGID_FACE_CAMERA,
+	ALWAYS_FACE_CENTER,
+	RIGID_FACE_CENTER,
+	BSROTATE_ABOUT_UP,
+	ROTATE_ABOUT_UP2 = 9
+};
+
 class NiBillboardNode : public NiNode {
 private:
-	ushort billboardMode;
+	BillboardMode billboardMode = ALWAYS_FACE_CAMERA;
 
 public:
 	NiBillboardNode();
@@ -391,10 +415,15 @@ public:
 	NiBillboardNode* Clone() { return new NiBillboardNode(*this); }
 };
 
+enum NiSwitchFlags : ushort {
+	UPDATE_ONLY_ACTIVE_CHILD,
+	UPDATE_CONTROLLERS
+};
+
 class NiSwitchNode : public NiNode {
 private:
-	ushort flags;
-	uint index;
+	NiSwitchFlags flags = UPDATE_ONLY_ACTIVE_CHILD;
+	uint index = 0;
 
 public:
 	NiSwitchNode();

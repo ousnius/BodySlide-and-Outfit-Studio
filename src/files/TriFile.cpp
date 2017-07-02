@@ -6,7 +6,7 @@ See the included LICENSE file
 
 #include "TriFile.h"
 
-int TriFile::Read(std::string fileName) {
+bool TriFile::Read(const std::string& fileName) {
 	std::ifstream triFile(fileName.c_str(), std::ios_base::binary);
 
 	if (triFile.is_open()) {
@@ -100,7 +100,7 @@ int TriFile::Read(std::string fileName) {
 	return true;
 }
 
-int TriFile::Write(std::string fileName) {
+bool TriFile::Write(const std::string& fileName) {
 	std::ofstream triFile(fileName.c_str(), std::ios_base::binary);
 
 	if (triFile.is_open()) {
@@ -160,7 +160,7 @@ int TriFile::Write(std::string fileName) {
 	return true;
 }
 
-void TriFile::AddMorph(std::string shapeName, MorphDataPtr data) {
+void TriFile::AddMorph(const std::string& shapeName, MorphDataPtr data) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end()) {
 		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == data->name) return true; return false; });
@@ -173,7 +173,7 @@ void TriFile::AddMorph(std::string shapeName, MorphDataPtr data) {
 	}
 }
 
-void TriFile::DeleteMorph(std::string shapeName, std::string morphName) {
+void TriFile::DeleteMorph(const std::string& shapeName, const std::string& morphName) {
 	for (auto shape = shapeMorphs.begin(); shape != shapeMorphs.end();) {
 		if (shape->first == shapeName) {
 			auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
@@ -186,13 +186,13 @@ void TriFile::DeleteMorph(std::string shapeName, std::string morphName) {
 	}
 }
 
-void TriFile::DeleteMorphs(std::string shapeName) {
+void TriFile::DeleteMorphs(const std::string& shapeName) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end())
 			shape->second.clear();
 }
 
-void TriFile::DeleteMorphFromAll(std::string morphName) {
+void TriFile::DeleteMorphFromAll(const std::string& morphName) {
 	for (auto shape = shapeMorphs.begin(); shape != shapeMorphs.end();) {
 		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });
 		if (morph != shape->second.end())
@@ -201,7 +201,7 @@ void TriFile::DeleteMorphFromAll(std::string morphName) {
 	}
 }
 
-MorphDataPtr TriFile::GetMorph(std::string shapeName, std::string morphName) {
+MorphDataPtr TriFile::GetMorph(const std::string& shapeName, const std::string& morphName) {
 	auto shape = shapeMorphs.find(shapeName);
 	if (shape != shapeMorphs.end()) {
 		auto morph = find_if(shape->second.begin(), shape->second.end(), [&](MorphDataPtr searchData){ if (searchData->name == morphName) return true; return false; });

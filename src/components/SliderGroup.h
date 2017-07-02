@@ -20,14 +20,11 @@ class SliderSetGroup {
 	std::string name;
 	std::vector<std::string> members;
 	std::vector<std::string> sourceFiles;
-	bool isValid;
 
 public:
-	SliderSetGroup() :isValid(false) { }
+	SliderSetGroup() { }
 	SliderSetGroup(XMLElement * srcGroupElement) {
-		if (LoadGroup(srcGroupElement))
-			isValid = false;
-		isValid = true;
+		LoadGroup(srcGroupElement);
 	}
 
 	std::string GetName() {
@@ -39,9 +36,7 @@ public:
 
 	bool HasMember(const std::string& search);
 	int GetMembers(std::vector<std::string>& outMembers);
-	int AppendMembers(std::vector<std::string>& outMembers);
 	int GetMembers(std::unordered_set<std::string>& outMembers);
-	int AppendMembers(std::unordered_set<std::string>& outMembers);
 	int AddMembers(const std::vector<std::string>& inMembers);
 
 	// Combine the source groups members into this one's list. Also merges the source file list.
@@ -62,8 +57,8 @@ public:
 	int GetAllGroups(std::set<std::string>& outGroups);
 	int GetOutfitGroups(const std::string& outfitName, std::vector<std::string>& outGroups);
 
-	int GetGroupMembers(const std::string& groupName, std::vector<std::string>& outMembers, bool append = true);
-	int GetGroupMembers(const std::string& groupName, std::unordered_set<std::string>& outMembers, bool append = true);
+	int GetGroupMembers(const std::string& groupName, std::vector<std::string>& outMembers);
+	int GetGroupMembers(const std::string& groupName, std::unordered_set<std::string>& outMembers);
 };
 
 
