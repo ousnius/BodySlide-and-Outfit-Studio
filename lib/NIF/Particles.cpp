@@ -7,7 +7,6 @@ See the included LICENSE file
 #include "Particles.h"
 
 NiParticlesData::NiParticlesData() {
-	NiGeometryData::Init();
 	NiGeometryData::isPSys = true;
 }
 
@@ -215,10 +214,6 @@ int BSStripPSysData::CalcBlockSize(NiVersion& version) {
 }
 
 
-void NiPSysModifier::Init() {
-	NiObject::Init();
-}
-
 void NiPSysModifier::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -260,10 +255,6 @@ int NiPSysModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSPSysStripUpdateModifier::BSPSysStripUpdateModifier() {
-	NiPSysModifier::Init();
-}
-
 BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiStream& stream) : BSPSysStripUpdateModifier() {
 	Get(stream);
 }
@@ -288,10 +279,6 @@ int BSPSysStripUpdateModifier::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysSpawnModifier::NiPSysSpawnModifier() {
-	NiPSysModifier::Init();
-}
 
 NiPSysSpawnModifier::NiPSysSpawnModifier(NiStream& stream) : NiPSysSpawnModifier() {
 	Get(stream);
@@ -332,10 +319,6 @@ int NiPSysSpawnModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiPSysAgeDeathModifier::NiPSysAgeDeathModifier() {
-	NiPSysModifier::Init();
-}
-
 NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiStream& stream) : NiPSysAgeDeathModifier() {
 	Get(stream);
 }
@@ -369,10 +352,6 @@ int NiPSysAgeDeathModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSPSysLODModifier::BSPSysLODModifier() {
-	NiPSysModifier::Init();
-}
-
 BSPSysLODModifier::BSPSysLODModifier(NiStream& stream) : BSPSysLODModifier() {
 	Get(stream);
 }
@@ -403,10 +382,6 @@ int BSPSysLODModifier::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSPSysSimpleColorModifier::BSPSysSimpleColorModifier() {
-	NiPSysModifier::Init();
-}
 
 BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiStream& stream) : BSPSysSimpleColorModifier() {
 	Get(stream);
@@ -449,10 +424,6 @@ int BSPSysSimpleColorModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiPSysRotationModifier::NiPSysRotationModifier() {
-	NiPSysModifier::Init();
-}
-
 NiPSysRotationModifier::NiPSysRotationModifier(NiStream& stream) : NiPSysRotationModifier() {
 	Get(stream);
 }
@@ -490,10 +461,6 @@ int NiPSysRotationModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSPSysScaleModifier::BSPSysScaleModifier() {
-	NiPSysModifier::Init();
-}
-
 BSPSysScaleModifier::BSPSysScaleModifier(NiStream& stream) : BSPSysScaleModifier() {
 	Get(stream);
 }
@@ -524,10 +491,6 @@ int BSPSysScaleModifier::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysGravityModifier::NiPSysGravityModifier() {
-	NiPSysModifier::Init();
-}
 
 NiPSysGravityModifier::NiPSysGravityModifier(NiStream& stream) : NiPSysGravityModifier() {
 	Get(stream);
@@ -574,18 +537,10 @@ int NiPSysGravityModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiPSysPositionModifier::NiPSysPositionModifier() {
-	NiPSysModifier::Init();
-}
-
 NiPSysPositionModifier::NiPSysPositionModifier(NiStream& stream) : NiPSysPositionModifier() {
 	Get(stream);
 }
 
-
-NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier() {
-	NiPSysModifier::Init();
-}
 
 NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiStream& stream) : NiPSysBoundUpdateModifier() {
 	Get(stream);
@@ -611,10 +566,6 @@ int NiPSysBoundUpdateModifier::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysDragModifier::NiPSysDragModifier() {
-	NiPSysModifier::Init();
-}
 
 NiPSysDragModifier::NiPSysDragModifier(NiStream& stream) : NiPSysDragModifier() {
 	Get(stream);
@@ -655,10 +606,6 @@ int NiPSysDragModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier() {
-	NiPSysModifier::Init();
-}
-
 BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiStream& stream) : BSPSysInheritVelocityModifier() {
 	Get(stream);
 }
@@ -696,10 +643,6 @@ int BSPSysInheritVelocityModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSPSysSubTexModifier::BSPSysSubTexModifier() {
-	NiPSysModifier::Init();
-}
-
 BSPSysSubTexModifier::BSPSysSubTexModifier(NiStream& stream) : BSPSysSubTexModifier() {
 	Get(stream);
 }
@@ -736,10 +679,6 @@ int BSPSysSubTexModifier::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysBombModifier::NiPSysBombModifier() {
-	NiPSysModifier::Init();
-}
 
 NiPSysBombModifier::NiPSysBombModifier(NiStream& stream) : NiPSysBombModifier() {
 	Get(stream);
@@ -782,10 +721,6 @@ int NiPSysBombModifier::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSWindModifier::BSWindModifier() {
-	NiPSysModifier::Init();
-}
-
 BSWindModifier::BSWindModifier(NiStream& stream) : BSWindModifier() {
 	Get(stream);
 }
@@ -810,10 +745,6 @@ int BSWindModifier::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier() {
-	NiPSysModifier::Init();
-}
 
 BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiStream& stream) : BSPSysRecycleBoundModifier() {
 	Get(stream);
@@ -849,10 +780,6 @@ int BSPSysRecycleBoundModifier::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier() {
-	NiPSysModifier::Init();
-}
 
 BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiStream& stream) : BSPSysHavokUpdateModifier() {
 	Get(stream);
@@ -925,10 +852,6 @@ int BSMasterParticleSystem::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiParticleSystem::NiParticleSystem() {
-	NiAVObject::Init();
-}
 
 NiParticleSystem::NiParticleSystem(NiStream& stream) : NiParticleSystem() {
 	Get(stream);
@@ -1101,10 +1024,6 @@ BSStripParticleSystem::BSStripParticleSystem(NiStream& stream) : BSStripParticle
 }
 
 
-void NiPSysCollider::Init() {
-	NiObject::Init();
-}
-
 void NiPSysCollider::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -1152,10 +1071,6 @@ int NiPSysCollider::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiPSysSphericalCollider::NiPSysSphericalCollider() {
-	NiPSysCollider::Init();
-}
-
 NiPSysSphericalCollider::NiPSysSphericalCollider(NiStream& stream) : NiPSysSphericalCollider() {
 	Get(stream);
 }
@@ -1180,10 +1095,6 @@ int NiPSysSphericalCollider::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysPlanarCollider::NiPSysPlanarCollider() {
-	NiPSysCollider::Init();
-}
 
 NiPSysPlanarCollider::NiPSysPlanarCollider(NiStream& stream) : NiPSysPlanarCollider() {
 	Get(stream);
@@ -1215,10 +1126,6 @@ int NiPSysPlanarCollider::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysColliderManager::NiPSysColliderManager() {
-	NiPSysModifier::Init();
-}
 
 NiPSysColliderManager::NiPSysColliderManager(NiStream& stream) : NiPSysColliderManager() {
 	Get(stream);
@@ -1292,10 +1199,6 @@ int NiPSysEmitter::CalcBlockSize(NiVersion& version) {
 }
 
 
-void NiPSysVolumeEmitter::Init() {
-	NiPSysEmitter::Init();
-}
-
 void NiPSysVolumeEmitter::Get(NiStream& stream) {
 	NiPSysEmitter::Get(stream);
 
@@ -1323,10 +1226,6 @@ int NiPSysVolumeEmitter::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiPSysSphereEmitter::NiPSysSphereEmitter() {
-	NiPSysVolumeEmitter::Init();
-}
-
 NiPSysSphereEmitter::NiPSysSphereEmitter(NiStream& stream) : NiPSysSphereEmitter() {
 	Get(stream);
 }
@@ -1351,10 +1250,6 @@ int NiPSysSphereEmitter::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysCylinderEmitter::NiPSysCylinderEmitter() {
-	NiPSysVolumeEmitter::Init();
-}
 
 NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiStream& stream) : NiPSysCylinderEmitter() {
 	Get(stream);
@@ -1382,10 +1277,6 @@ int NiPSysCylinderEmitter::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysBoxEmitter::NiPSysBoxEmitter() {
-	NiPSysVolumeEmitter::Init();
-}
 
 NiPSysBoxEmitter::NiPSysBoxEmitter(NiStream& stream) : NiPSysBoxEmitter() {
 	Get(stream);
@@ -1415,10 +1306,6 @@ int NiPSysBoxEmitter::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPSysMeshEmitter::NiPSysMeshEmitter() {
-	NiPSysEmitter::Init();
-}
 
 NiPSysMeshEmitter::NiPSysMeshEmitter(NiStream& stream) : NiPSysMeshEmitter() {
 	Get(stream);

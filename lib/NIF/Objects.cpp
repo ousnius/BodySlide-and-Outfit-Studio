@@ -6,13 +6,6 @@ See the included LICENSE file
 
 #include "Objects.h"
 
-void NiObjectNET::Init() {
-	NiObject::Init();
-
-	bBSLightingShaderProperty = false;
-	skyrimShaderType = 0;
-}
-
 void NiObjectNET::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -99,16 +92,6 @@ int NiObjectNET::CalcBlockSize(NiVersion& version) {
 }
 
 
-void NiAVObject::Init() {
-	NiObjectNET::Init();
-
-	flags = 524302;
-	rotation[0].x = 1.0f;
-	rotation[1].y = 1.0f;
-	rotation[2].z = 1.0f;
-	scale = 1.0f;
-}
-
 void NiAVObject::Get(NiStream& stream) {
 	NiObjectNET::Get(stream);
 
@@ -174,10 +157,6 @@ int NiAVObject::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiDefaultAVObjectPalette::NiDefaultAVObjectPalette() {
-	NiAVObjectPalette::Init();
-}
-
 NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiStream& stream) : NiDefaultAVObjectPalette() {
 	Get(stream);
 }
@@ -228,10 +207,6 @@ int NiDefaultAVObjectPalette::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiCamera::NiCamera() {
-	NiAVObject::Init();
-}
 
 NiCamera::NiCamera(NiStream& stream) : NiCamera() {
 	Get(stream);
@@ -295,10 +270,6 @@ int NiCamera::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiNode::NiNode() {
-	NiAVObject::Init();
-}
 
 NiNode::NiNode(NiStream& stream) : NiNode() {
 	Get(stream);
@@ -481,10 +452,6 @@ int BSOrderedNode::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSMultiBoundOBB::BSMultiBoundOBB() {
-	NiObject::Init();
-}
-
 BSMultiBoundOBB::BSMultiBoundOBB(NiStream& stream) : BSMultiBoundOBB() {
 	Get(stream);
 }
@@ -514,10 +481,6 @@ int BSMultiBoundOBB::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSMultiBoundAABB::BSMultiBoundAABB() {
-	NiObject::Init();
-}
-
 BSMultiBoundAABB::BSMultiBoundAABB(NiStream& stream) : BSMultiBoundAABB() {
 	Get(stream);
 }
@@ -544,10 +507,6 @@ int BSMultiBoundAABB::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSMultiBound::BSMultiBound() {
-	NiObject::Init();
-}
 
 BSMultiBound::BSMultiBound(NiStream& stream) : BSMultiBound() {
 	Get(stream);

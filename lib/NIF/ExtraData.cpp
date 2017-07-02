@@ -42,12 +42,6 @@ int NiExtraData::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiBinaryExtraData::NiBinaryExtraData() {
-	NiExtraData::Init();
-
-	size = 0;
-}
-
 NiBinaryExtraData::NiBinaryExtraData(NiStream& stream) : NiBinaryExtraData() {
 	Get(stream);
 }
@@ -79,10 +73,6 @@ int NiBinaryExtraData::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiFloatExtraData::NiFloatExtraData() {
-	NiExtraData::Init();
-}
-
 NiFloatExtraData::NiFloatExtraData(NiStream& stream) : NiFloatExtraData() {
 	Get(stream);
 }
@@ -107,10 +97,6 @@ int NiFloatExtraData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiStringsExtraData::NiStringsExtraData() {
-	NiExtraData::Init();
-}
 
 NiStringsExtraData::NiStringsExtraData(NiStream& stream) : NiStringsExtraData() {
 	Get(stream);
@@ -145,10 +131,6 @@ int NiStringsExtraData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiStringExtraData::NiStringExtraData() {
-	NiExtraData::Init();
-}
 
 NiStringExtraData::NiStringExtraData(NiStream& stream) : NiStringExtraData() {
 	Get(stream);
@@ -189,10 +171,6 @@ int NiStringExtraData::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiBooleanExtraData::NiBooleanExtraData() {
-	NiExtraData::Init();
-}
-
 NiBooleanExtraData::NiBooleanExtraData(NiStream& stream) : NiBooleanExtraData() {
 	Get(stream);
 }
@@ -225,12 +203,6 @@ int NiBooleanExtraData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiIntegerExtraData::NiIntegerExtraData() {
-	NiExtraData::Init();
-
-	integerData = 0;
-}
 
 NiIntegerExtraData::NiIntegerExtraData(NiStream& stream) : NiIntegerExtraData() {
 	Get(stream);
@@ -273,10 +245,6 @@ BSXFlags::BSXFlags(NiStream& stream) : BSXFlags() {
 }
 
 
-BSInvMarker::BSInvMarker() {
-	NiExtraData::Init();
-}
-
 BSInvMarker::BSInvMarker(NiStream& stream) : BSInvMarker() {
 	Get(stream);
 }
@@ -307,10 +275,6 @@ int BSInvMarker::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSFurnitureMarker::BSFurnitureMarker() {
-	NiExtraData::Init();
-}
 
 BSFurnitureMarker::BSFurnitureMarker(NiStream& stream) : BSFurnitureMarker() {
 	Get(stream);
@@ -438,10 +402,6 @@ int BSDecalPlacementVectorExtraData::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSBehaviorGraphExtraData::BSBehaviorGraphExtraData() {
-	NiExtraData::Init();
-}
-
 BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiStream& stream) : BSBehaviorGraphExtraData() {
 	Get(stream);
 }
@@ -475,10 +435,6 @@ int BSBehaviorGraphExtraData::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSBound::BSBound() {
-	NiExtraData::Init();
-}
-
 BSBound::BSBound(NiStream& stream) : BSBound() {
 	Get(stream);
 }
@@ -505,10 +461,6 @@ int BSBound::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSBoneLODExtraData::BSBoneLODExtraData() {
-	NiExtraData::Init();
-}
 
 BSBoneLODExtraData::BSBoneLODExtraData(NiStream& stream) : BSBoneLODExtraData() {
 	Get(stream);
@@ -551,10 +503,6 @@ int BSBoneLODExtraData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiTextKeyExtraData::NiTextKeyExtraData() {
-	NiExtraData::Init();
-}
 
 NiTextKeyExtraData::NiTextKeyExtraData(NiStream& stream) : NiTextKeyExtraData() {
 	Get(stream);
@@ -631,10 +579,6 @@ int BSConnectPoint::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSConnectPointParents::BSConnectPointParents() {
-	NiExtraData::Init();
-}
-
 BSConnectPointParents::BSConnectPointParents(NiStream& stream) : BSConnectPointParents() {
 	Get(stream);
 }
@@ -668,10 +612,6 @@ int BSConnectPointParents::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSConnectPointChildren::BSConnectPointChildren() {
-	NiExtraData::Init();
-}
 
 BSConnectPointChildren::BSConnectPointChildren(NiStream& stream) : BSConnectPointChildren() {
 	Get(stream);
@@ -712,8 +652,6 @@ int BSConnectPointChildren::CalcBlockSize(NiVersion& version) {
 
 
 BSClothExtraData::BSClothExtraData(const uint size) {
-	BSExtraData::Init();
-
 	numBytes = size;
 	data.resize(size);
 }

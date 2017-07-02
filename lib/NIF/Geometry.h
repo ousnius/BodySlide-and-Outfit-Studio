@@ -38,7 +38,6 @@ public:
 
 	ushort consistencyFlags = 0;
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
@@ -153,7 +152,7 @@ public:
 	std::vector<BSVertexData> vertData;
 	std::vector<Triangle> triangles;
 
-	BSTriShape();
+	BSTriShape() {}
 	BSTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSTriShape";
@@ -340,7 +339,6 @@ private:
 	byte dirty = 0;
 
 public:
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
@@ -369,7 +367,6 @@ class NiTriBasedGeomData : public NiGeometryData {
 public:
 	ushort numTriangles = 0;
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	int CalcBlockSize(NiVersion& version);
@@ -379,7 +376,7 @@ public:
 
 class NiTriShape : public NiTriBasedGeom {
 public:
-	NiTriShape();
+	NiTriShape() {}
 	NiTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriShape";
@@ -403,7 +400,7 @@ private:
 public:
 	std::vector<Triangle> triangles;
 
-	NiTriShapeData();
+	NiTriShapeData() {}
 	NiTriShapeData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriShapeData";
@@ -421,7 +418,7 @@ public:
 
 class NiTriStrips : public NiTriBasedGeom {
 public:
-	NiTriStrips();
+	NiTriStrips() {}
 	NiTriStrips(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriStrips";
@@ -438,7 +435,7 @@ private:
 	std::vector<std::vector<ushort>> points;
 
 public:
-	NiTriStripsData();
+	NiTriStripsData() {}
 	NiTriStripsData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTriStripsData";
@@ -461,7 +458,7 @@ private:
 	uint level2 = 0;
 
 public:
-	BSLODTriShape();
+	BSLODTriShape() {}
 	BSLODTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLODTriShape";

@@ -80,15 +80,14 @@ public:
 
 class BSShaderProperty : public NiShader {
 public:
-	ushort shaderFlags;
-	BSShaderType shaderType;
-	uint shaderFlags1;
-	uint shaderFlags2;
-	float environmentMapScale;
+	ushort shaderFlags = 1;
+	BSShaderType shaderType = SHADER_DEFAULT;
+	uint shaderFlags1 = 0x82000000;
+	uint shaderFlags2 = 1;
+	float environmentMapScale = 1.0f;
 	Vector2 uvOffset;
-	Vector2 uvScale;
+	Vector2 uvScale = Vector2(1.0f, 1.0f);
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	int CalcBlockSize(NiVersion& version);
@@ -103,7 +102,7 @@ public:
 
 class BSShaderTextureSet : public NiObject {
 public:
-	int numTextures;
+	int numTextures = 10;
 	std::vector<NiString> textures;
 
 	BSShaderTextureSet();
@@ -126,42 +125,42 @@ private:
 
 public:
 	Vector3 emissiveColor;
-	float emissiveMultiple;
-	uint textureClampMode;
-	float alpha;
-	float refractionStrength;
-	float glossiness;
-	Vector3 specularColor;
-	float specularStrength;
-	float lightingEffect1;					// User Version <= 12, User Version 2 < 130
-	float lightingEffect2;					// User Version <= 12, User Version 2 < 130
+	float emissiveMultiple = 1.0f;
+	uint textureClampMode = 3;
+	float alpha = 1.0f;
+	float refractionStrength = 0.0f;
+	float glossiness = 1.0f;
+	Vector3 specularColor = Vector3(1.0f, 1.0f, 1.0f);
+	float specularStrength = 1.0f;
+	float lightingEffect1 = 0.3f;			// User Version <= 12, User Version 2 < 130
+	float lightingEffect2 = 2.0f;			// User Version <= 12, User Version 2 < 130
 
-	float subsurfaceRolloff;				// User Version == 12, User Version 2 >= 130
-	float unkFloat1;						// User Version == 12, User Version 2 >= 130
-	float backlightPower;					// User Version == 12, User Version 2 >= 130
-	float grayscaleToPaletteScale;			// User Version == 12, User Version 2 >= 130
-	float fresnelPower;						// User Version == 12, User Version 2 >= 130
-	float wetnessSpecScale;					// User Version == 12, User Version 2 >= 130
-	float wetnessSpecPower;					// User Version == 12, User Version 2 >= 130
-	float wetnessMinVar;					// User Version == 12, User Version 2 >= 130
-	float wetnessEnvmapScale;				// User Version == 12, User Version 2 >= 130
-	float wetnessFresnelPower;				// User Version == 12, User Version 2 >= 130
-	float wetnessMetalness;					// User Version == 12, User Version 2 >= 130
+	float subsurfaceRolloff = 0.0f;			// User Version == 12, User Version 2 >= 130
+	float unkFloat1 = 0.0f;					// User Version == 12, User Version 2 >= 130
+	float backlightPower = 0.0f;			// User Version == 12, User Version 2 >= 130
+	float grayscaleToPaletteScale = 1.0f;	// User Version == 12, User Version 2 >= 130
+	float fresnelPower = 5.0f;				// User Version == 12, User Version 2 >= 130
+	float wetnessSpecScale = 0.6f;			// User Version == 12, User Version 2 >= 130
+	float wetnessSpecPower = 1.4f;			// User Version == 12, User Version 2 >= 130
+	float wetnessMinVar = 0.2f;				// User Version == 12, User Version 2 >= 130
+	float wetnessEnvmapScale = 1.0f;		// User Version == 12, User Version 2 >= 130
+	float wetnessFresnelPower = 1.6f;		// User Version == 12, User Version 2 >= 130
+	float wetnessMetalness = 0.0f;			// User Version == 12, User Version 2 >= 130
 
-	ushort unkEnvmap;						// Shader Type == 1, User Version == 12, User Version 2 >= 130
-	Vector3 skinTintColor;					// Shader Type == 5
-	uint unkSkinTint;						// Shader Type == 5, User Version == 12, User Version 2 >= 130
-	Vector3 hairTintColor;					// Shader Type == 6
-	float maxPasses;						// Shader Type == 7
-	float scale;							// Shader Type == 7
-	float parallaxInnerLayerThickness;		// Shader Type == 11
-	float parallaxRefractionScale;			// Shader Type == 11
-	Vector2 parallaxInnerLayerTextureScale;	// Shader Type == 11
-	float parallaxEnvmapStrength;			// Shader Type == 11
-	Color4 sparkleParameters;				// Shader Type == 14
-	float eyeCubemapScale;					// Shader Type == 16
-	Vector3 eyeLeftReflectionCenter;		// Shader Type == 16
-	Vector3 eyeRightReflectionCenter;		// Shader Type == 16
+	ushort unkEnvmap = 0;											// Shader Type == 1, User Version == 12, User Version 2 >= 130
+	Vector3 skinTintColor;											// Shader Type == 5
+	uint unkSkinTint = 0;											// Shader Type == 5, User Version == 12, User Version 2 >= 130
+	Vector3 hairTintColor;											// Shader Type == 6
+	float maxPasses = 1.0f;											// Shader Type == 7
+	float scale = 1.0f;												// Shader Type == 7
+	float parallaxInnerLayerThickness = 0.0f;						// Shader Type == 11
+	float parallaxRefractionScale = 1.0f;							// Shader Type == 11
+	Vector2 parallaxInnerLayerTextureScale = Vector2(1.0f, 1.0f);	// Shader Type == 11
+	float parallaxEnvmapStrength = 1.0f;							// Shader Type == 11
+	Color4 sparkleParameters;										// Shader Type == 14
+	float eyeCubemapScale = 1.0f;									// Shader Type == 16
+	Vector3 eyeLeftReflectionCenter;								// Shader Type == 16
+	Vector3 eyeRightReflectionCenter;								// Shader Type == 16
 
 	BSLightingShaderProperty();
 	BSLightingShaderProperty(NiVersion& version);
@@ -206,22 +205,22 @@ public:
 class BSEffectShaderProperty : public BSShaderProperty {
 public:
 	NiString sourceTexture;
-	uint textureClampMode;
-	float falloffStartAngle;
-	float falloffStopAngle;
-	float falloffStartOpacity;
-	float falloffStopOpacity;
+	uint textureClampMode = 0;
+	float falloffStartAngle = 1.0f;
+	float falloffStopAngle = 1.0f;
+	float falloffStartOpacity = 0.0f;
+	float falloffStopOpacity = 0.0f;
 	Color4 emissiveColor;
-	float emissiveMultiple;
-	float softFalloffDepth;
+	float emissiveMultiple = 0.0f;
+	float softFalloffDepth = 0.0f;
 	NiString greyscaleTexture;
 
 	NiString envMapTexture;
 	NiString normalTexture;
 	NiString envMaskTexture;
-	float envMapScale;
+	float envMapScale = 1.0f;
 
-	BSEffectShaderProperty();
+	BSEffectShaderProperty() {}
 	BSEffectShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSEffectShaderProperty";
@@ -248,10 +247,10 @@ public:
 
 class BSWaterShaderProperty : public BSShaderProperty {
 private:
-	uint waterFlags;
+	uint waterFlags = 0;
 
 public:
-	BSWaterShaderProperty();
+	BSWaterShaderProperty() {}
 	BSWaterShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSWaterShaderProperty";
@@ -277,7 +276,7 @@ private:
 	uint skyFlags = 0;
 
 public:
-	BSSkyShaderProperty();
+	BSSkyShaderProperty() {}
 	BSSkyShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSkyShaderProperty";
@@ -299,9 +298,8 @@ public:
 
 class BSShaderLightingProperty : public BSShaderProperty {
 public:
-	uint textureClampMode;					// User Version <= 11
+	uint textureClampMode = 3;				// User Version <= 11
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	int CalcBlockSize(NiVersion& version);
@@ -310,12 +308,12 @@ public:
 class BSShaderNoLightingProperty : public BSShaderLightingProperty {
 public:
 	NiString baseTexture;
-	float falloffStartAngle;				// User Version 2 > 26
-	float falloffStopAngle;					// User Version 2 > 26
-	float falloffStartOpacity;				// User Version 2 > 26
-	float falloffStopOpacity;				// User Version 2 > 26
+	float falloffStartAngle = 1.0f;			// User Version 2 > 26
+	float falloffStopAngle = 0.0f;			// User Version 2 > 26
+	float falloffStartOpacity = 1.0f;		// User Version 2 > 26
+	float falloffStopOpacity = 1.0f;		// User Version 2 > 26
 
-	BSShaderNoLightingProperty();
+	BSShaderNoLightingProperty() {}
 	BSShaderNoLightingProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSShaderNoLightingProperty";
@@ -336,13 +334,13 @@ private:
 	BlockRef<BSShaderTextureSet> textureSetRef;
 
 public:
-	float refractionStrength;				// User Version == 11 && User Version 2 > 14
-	int refractionFirePeriod;				// User Version == 11 && User Version 2 > 14
-	float parallaxMaxPasses;				// User Version == 11 && User Version 2 > 24
-	float parallaxScale;					// User Version == 11 && User Version 2 > 24
+	float refractionStrength = 0.0f;		// User Version == 11 && User Version 2 > 14
+	int refractionFirePeriod = 0;			// User Version == 11 && User Version 2 > 14
+	float parallaxMaxPasses = 4.0f;			// User Version == 11 && User Version 2 > 24
+	float parallaxScale = 1.0f;				// User Version == 11 && User Version 2 > 24
 	Color4 emissiveColor;					// User Version >= 12
 
-	BSShaderPPLightingProperty();
+	BSShaderPPLightingProperty() {}
 	BSShaderPPLightingProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSShaderPPLightingProperty";
@@ -363,10 +361,10 @@ public:
 
 class NiAlphaProperty : public NiProperty {
 public:
-	ushort flags;
-	byte threshold;
+	ushort flags = 4844;
+	byte threshold = 128;
 
-	NiAlphaProperty();
+	NiAlphaProperty() {}
 	NiAlphaProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiAlphaProperty";
@@ -383,15 +381,15 @@ class NiMaterialProperty : public NiProperty {
 private:
 	Vector3 colorSpecular;
 	Vector3 colorEmissive;
-	float glossiness;
-	float alpha;
-	float emitMulti;						// Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21
+	float glossiness = 1.0f;
+	float alpha = 1.0f;
+	float emitMulti = 1.0f;					// Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21
 
 public:
 	Vector3 colorAmbient;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 	Vector3 colorDiffuse;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 
-	NiMaterialProperty();
+	NiMaterialProperty() {}
 	NiMaterialProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiMaterialProperty";
@@ -416,11 +414,11 @@ public:
 
 class NiStencilProperty : public NiProperty {
 public:
-	ushort flags;
-	uint stencilRef;
-	uint stencilMask;
+	ushort flags = 19840;
+	uint stencilRef = 0;
+	uint stencilMask = 0xFFFFFFFF;
 
-	NiStencilProperty();
+	NiStencilProperty() {}
 	NiStencilProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiStencilProperty";

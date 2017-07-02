@@ -273,7 +273,7 @@ private:
 	BlockRef<NiAVObject> targetRef;
 
 public:
-	NiCollisionObject();
+	NiCollisionObject() {}
 	NiCollisionObject(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiCollisionObject";
@@ -410,7 +410,7 @@ private:
 	Vector4 center;
 
 public:
-	bhkPlaneShape();
+	bhkPlaneShape() {}
 	bhkPlaneShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkPlaneShape";
@@ -450,7 +450,7 @@ private:
 	std::vector<Vector4> normals;
 
 public:
-	bhkConvexVerticesShape();
+	bhkConvexVerticesShape() {}
 	bhkConvexVerticesShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkConvexVerticesShape";
@@ -469,7 +469,7 @@ private:
 	float radius2 = 0.0f;
 
 public:
-	bhkBoxShape();
+	bhkBoxShape() {}
 	bhkBoxShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBoxShape";
@@ -483,7 +483,7 @@ public:
 
 class bhkSphereShape : public bhkConvexShape {
 public:
-	bhkSphereShape();
+	bhkSphereShape() {}
 	bhkSphereShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkSphereShape";
@@ -501,7 +501,7 @@ private:
 	Matrix4 xform;
 
 public:
-	bhkTransformShape();
+	bhkTransformShape() {}
 	bhkTransformShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkTransformShape";
@@ -534,7 +534,7 @@ private:
 	float radius2 = 0.0f;
 
 public:
-	bhkCapsuleShape();
+	bhkCapsuleShape() {}
 	bhkCapsuleShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkCapsuleShape";
@@ -562,7 +562,7 @@ private:
 	std::vector<byte> data;
 
 public:
-	bhkMoppBvTreeShape();
+	bhkMoppBvTreeShape() {}
 	bhkMoppBvTreeShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkMoppBvTreeShape";
@@ -595,7 +595,7 @@ private:
 	std::vector<uint> filters;
 
 public:
-	bhkNiTriStripsShape();
+	bhkNiTriStripsShape() {}
 	bhkNiTriStripsShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkNiTriStripsShape";
@@ -621,7 +621,7 @@ private:
 	std::vector<uint> unkInts;
 
 public:
-	bhkListShape();
+	bhkListShape() {}
 	bhkListShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkListShape";
@@ -644,7 +644,6 @@ private:
 	hkWorldObjCInfoProperty prop;
 
 public:
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
@@ -664,7 +663,7 @@ private:
 	Matrix4 transform;
 
 public:
-	bhkSimpleShapePhantom();
+	bhkSimpleShapePhantom() {}
 	bhkSimpleShapePhantom(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkSimpleShapePhantom";
@@ -685,7 +684,6 @@ private:
 	uint priority;
 
 public:
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
@@ -697,7 +695,7 @@ private:
 	HingeDesc hinge;
 
 public:
-	bhkHingeConstraint();
+	bhkHingeConstraint() {}
 	bhkHingeConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkHingeConstraint";
@@ -714,7 +712,7 @@ private:
 	LimitedHingeDesc limitedHinge;
 
 public:
-	bhkLimitedHingeConstraint();
+	bhkLimitedHingeConstraint() {}
 	bhkLimitedHingeConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkLimitedHingeConstraint";
@@ -754,7 +752,7 @@ private:
 	bool removeWhenBroken = false;
 
 public:
-	bhkBreakableConstraint();
+	bhkBreakableConstraint() {}
 	bhkBreakableConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBreakableConstraint";
@@ -772,7 +770,7 @@ private:
 	RagdollDesc ragdoll;
 
 public:
-	bhkRagdollConstraint();
+	bhkRagdollConstraint() {}
 	bhkRagdollConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkRagdollConstraint";
@@ -789,7 +787,7 @@ private:
 	StiffSpringDesc stiffSpring;
 
 public:
-	bhkStiffSpringConstraint();
+	bhkStiffSpringConstraint() {}
 	bhkStiffSpringConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkStiffSpringConstraint";
@@ -806,7 +804,7 @@ private:
 	PrismaticDesc prismatic;
 
 public:
-	bhkPrismaticConstraint();
+	bhkPrismaticConstraint() {}
 	bhkPrismaticConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkPrismaticConstraint";
@@ -823,7 +821,7 @@ private:
 	SubConstraintDesc subConstraint;
 
 public:
-	bhkMalleableConstraint();
+	bhkMalleableConstraint() {}
 	bhkMalleableConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkMalleableConstraint";
@@ -840,7 +838,7 @@ private:
 	BallAndSocketDesc ballAndSocket;
 
 public:
-	bhkBallAndSocketConstraint();
+	bhkBallAndSocketConstraint() {}
 	bhkBallAndSocketConstraint(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBallAndSocketConstraint";
@@ -870,7 +868,7 @@ private:
 	uint priority = 0;
 
 public:
-	bhkBallSocketConstraintChain();
+	bhkBallSocketConstraintChain() {}
 	bhkBallSocketConstraintChain(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkBallSocketConstraintChain";
@@ -931,7 +929,7 @@ private:
 	ushort unkShort3 = 0;					// User Version >= 12
 
 public:
-	bhkRigidBody();
+	bhkRigidBody() {}
 	bhkRigidBody(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkRigidBody";
@@ -994,7 +992,7 @@ private:
 	uint numConvexPieceA = 0;
 
 public:
-	bhkCompressedMeshShapeData();
+	bhkCompressedMeshShapeData() {}
 	bhkCompressedMeshShapeData(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkCompressedMeshShapeData";
@@ -1018,7 +1016,7 @@ private:
 	BlockRef<bhkCompressedMeshShapeData> dataRef;
 
 public:
-	bhkCompressedMeshShape();
+	bhkCompressedMeshShape() {}
 	bhkCompressedMeshShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "bhkCompressedMeshShape";

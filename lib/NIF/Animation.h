@@ -22,7 +22,7 @@ private:
 	KeyGroup<float> scales;
 
 public:
-	NiKeyframeData();
+	NiKeyframeData() {}
 	NiKeyframeData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiKeyframeData";
@@ -50,7 +50,7 @@ private:
 	KeyGroup<Vector3> data;
 
 public:
-	NiPosData();
+	NiPosData() {}
 	NiPosData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPosData";
@@ -67,7 +67,7 @@ private:
 	KeyGroup<byte> data;
 
 public:
-	NiBoolData();
+	NiBoolData() {}
 	NiBoolData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBoolData";
@@ -84,7 +84,7 @@ private:
 	KeyGroup<float> data;
 
 public:
-	NiFloatData();
+	NiFloatData() {}
 	NiFloatData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatData";
@@ -115,7 +115,7 @@ private:
 	bool value = false;
 
 public:
-	NiBlendBoolInterpolator();
+	NiBlendBoolInterpolator() {}
 	NiBlendBoolInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBlendBoolInterpolator";
@@ -132,7 +132,7 @@ private:
 	float value = 0.0f;
 
 public:
-	NiBlendFloatInterpolator();
+	NiBlendFloatInterpolator() {}
 	NiBlendFloatInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBlendFloatInterpolator";
@@ -149,7 +149,7 @@ private:
 	Vector3 point;
 
 public:
-	NiBlendPoint3Interpolator();
+	NiBlendPoint3Interpolator() {}
 	NiBlendPoint3Interpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBlendPoint3Interpolator";
@@ -171,7 +171,7 @@ private:
 public:
 	BlockRef<NiBoolData> dataRef;
 
-	NiBoolInterpolator();
+	NiBoolInterpolator() {}
 	NiBoolInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBoolInterpolator";
@@ -202,7 +202,7 @@ private:
 public:
 	BlockRef<NiFloatData> dataRef;
 
-	NiFloatInterpolator();
+	NiFloatInterpolator() {}
 	NiFloatInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatInterpolator";
@@ -224,7 +224,7 @@ private:
 public:
 	BlockRef<NiTransformData> dataRef;
 
-	NiTransformInterpolator();
+	NiTransformInterpolator() {}
 	NiTransformInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTransformInterpolator";
@@ -244,7 +244,7 @@ private:
 public:
 	BlockRef<NiPosData> dataRef;
 
-	NiPoint3Interpolator();
+	NiPoint3Interpolator() {}
 	NiPoint3Interpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPoint3Interpolator";
@@ -269,7 +269,7 @@ private:
 	BlockRef<NiFloatData> percentDataRef;
 
 public:
-	NiPathInterpolator();
+	NiPathInterpolator() {}
 	NiPathInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPathInterpolator";
@@ -304,7 +304,7 @@ private:
 	BlockRef<NiFloatInterpolator> scaleInterpRef;
 
 public:
-	NiLookAtInterpolator();
+	NiLookAtInterpolator() {}
 	NiLookAtInterpolator(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiLookAtInterpolator";
@@ -333,7 +333,6 @@ public:
 	BlockRef<NiTimeController> nextControllerRef;
 	BlockRef<NiObjectNET> targetRef;
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
@@ -345,7 +344,7 @@ class BSFrustumFOVController : public NiTimeController {
 public:
 	BlockRef<NiInterpolator> interpolatorRef;
 
-	BSFrustumFOVController();
+	BSFrustumFOVController() {}
 	BSFrustumFOVController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSFrustumFOVController";
@@ -365,7 +364,7 @@ private:
 	float maxDistance = 0.0f;
 
 public:
-	BSLagBoneController();
+	BSLagBoneController() {}
 	BSLagBoneController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLagBoneController";
@@ -407,7 +406,7 @@ public:
 	BlockRef<NiInterpolator> widthInterpRef;
 	BlockRef<NiInterpolator> arcOffsetInterpRef;
 
-	BSProceduralLightningController();
+	BSProceduralLightningController() {}
 	BSProceduralLightningController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSProceduralLightningController";
@@ -428,7 +427,7 @@ private:
 	std::vector<BlockRefArray<NiNode>> boneArrays;
 
 public:
-	NiBoneLODController();
+	NiBoneLODController() {}
 	NiBoneLODController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBoneLODController";
@@ -448,7 +447,6 @@ class NiSingleInterpController : public NiInterpController {
 public:
 	BlockRef<NiInterpController> interpolatorRef;
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
@@ -463,7 +461,7 @@ private:
 	StringRef extraData;
 
 public:
-	NiFloatExtraDataController();
+	NiFloatExtraDataController() {}
 	NiFloatExtraDataController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatExtraDataController";
@@ -481,7 +479,7 @@ class NiBoolInterpController : public NiSingleInterpController {
 
 class NiVisController : public NiBoolInterpController {
 public:
-	NiVisController();
+	NiVisController() {}
 	NiVisController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiVisController";
@@ -495,7 +493,7 @@ class NiFloatInterpController : public NiSingleInterpController {
 
 class NiAlphaController : public NiFloatInterpController {
 public:
-	NiAlphaController();
+	NiAlphaController() {}
 	NiAlphaController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiAlphaController";
@@ -506,7 +504,7 @@ public:
 
 class NiPSysUpdateCtlr : public NiTimeController {
 public:
-	NiPSysUpdateCtlr();
+	NiPSysUpdateCtlr() {}
 	NiPSysUpdateCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysUpdateCtlr";
@@ -528,7 +526,7 @@ public:
 
 class NiKeyframeController : public NiSingleInterpController {
 public:
-	NiKeyframeController();
+	NiKeyframeController() {}
 	NiKeyframeController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiKeyframeController";
@@ -553,7 +551,7 @@ private:
 	uint typeOfControlledColor = 0;
 
 public:
-	BSLightingShaderPropertyColorController();
+	BSLightingShaderPropertyColorController() {}
 	BSLightingShaderPropertyColorController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLightingShaderPropertyColorController";
@@ -570,7 +568,7 @@ private:
 	uint typeOfControlledVariable = 0;
 
 public:
-	BSLightingShaderPropertyFloatController();
+	BSLightingShaderPropertyFloatController() {}
 	BSLightingShaderPropertyFloatController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLightingShaderPropertyFloatController";
@@ -587,7 +585,7 @@ private:
 	uint typeOfControlledColor = 0;
 
 public:
-	BSEffectShaderPropertyColorController();
+	BSEffectShaderPropertyColorController() {}
 	BSEffectShaderPropertyColorController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSEffectShaderPropertyColorController";
@@ -604,7 +602,7 @@ private:
 	uint typeOfControlledVariable = 0;
 
 public:
-	BSEffectShaderPropertyFloatController();
+	BSEffectShaderPropertyFloatController() {}
 	BSEffectShaderPropertyFloatController(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSEffectShaderPropertyFloatController";
@@ -623,7 +621,7 @@ private:
 	BlockRefShortArray<NiAVObject> targetRefs;
 
 public:
-	NiMultiTargetTransformController();
+	NiMultiTargetTransformController() {}
 	NiMultiTargetTransformController(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiMultiTargetTransformController";
@@ -652,7 +650,7 @@ class NiPSysModifierBoolCtlr : public NiPSysModifierCtlr {
 
 class NiPSysModifierActiveCtlr : public NiPSysModifierBoolCtlr {
 public:
-	NiPSysModifierActiveCtlr();
+	NiPSysModifierActiveCtlr() {}
 	NiPSysModifierActiveCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysModifierActiveCtlr";
@@ -666,7 +664,7 @@ class NiPSysModifierFloatCtlr : public NiPSysModifierCtlr {
 
 class NiPSysEmitterLifeSpanCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterLifeSpanCtlr();
+	NiPSysEmitterLifeSpanCtlr() {}
 	NiPSysEmitterLifeSpanCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterLifeSpanCtlr";
@@ -677,7 +675,7 @@ public:
 
 class NiPSysEmitterSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterSpeedCtlr();
+	NiPSysEmitterSpeedCtlr() {}
 	NiPSysEmitterSpeedCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterSpeedCtlr";
@@ -688,7 +686,7 @@ public:
 
 class NiPSysEmitterInitialRadiusCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterInitialRadiusCtlr();
+	NiPSysEmitterInitialRadiusCtlr() {}
 	NiPSysEmitterInitialRadiusCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterInitialRadiusCtlr";
@@ -699,7 +697,7 @@ public:
 
 class NiPSysEmitterPlanarAngleCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterPlanarAngleCtlr();
+	NiPSysEmitterPlanarAngleCtlr() {}
 	NiPSysEmitterPlanarAngleCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterPlanarAngleCtlr";
@@ -710,7 +708,7 @@ public:
 
 class NiPSysEmitterDeclinationCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysEmitterDeclinationCtlr();
+	NiPSysEmitterDeclinationCtlr() {}
 	NiPSysEmitterDeclinationCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterDeclinationCtlr";
@@ -721,7 +719,7 @@ public:
 
 class NiPSysGravityStrengthCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysGravityStrengthCtlr();
+	NiPSysGravityStrengthCtlr() {}
 	NiPSysGravityStrengthCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysGravityStrengthCtlr";
@@ -732,7 +730,7 @@ public:
 
 class NiPSysInitialRotSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
-	NiPSysInitialRotSpeedCtlr();
+	NiPSysInitialRotSpeedCtlr() {}
 	NiPSysInitialRotSpeedCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysInitialRotSpeedCtlr";
@@ -746,7 +744,7 @@ private:
 	BlockRef<NiInterpolator> visInterpolatorRef;
 
 public:
-	NiPSysEmitterCtlr();
+	NiPSysEmitterCtlr() {}
 	NiPSysEmitterCtlr(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysEmitterCtlr";
@@ -800,7 +798,7 @@ private:
 	std::vector<ControllerLink> controlledBlocks;
 
 public:
-	NiSequence();
+	NiSequence() {}
 	NiSequence(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSequence";
@@ -861,7 +859,7 @@ private:
 	BlockRef<NiDefaultAVObjectPalette> objectPaletteRef;
 
 public:
-	NiControllerManager();
+	NiControllerManager() {}
 	NiControllerManager(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiControllerManager";

@@ -6,10 +6,6 @@ See the included LICENSE file
 
 #include "Animation.h"
 
-NiKeyframeData::NiKeyframeData() {
-	NiObject::Init();
-}
-
 NiKeyframeData::NiKeyframeData(NiStream& stream) : NiKeyframeData() {
 	Get(stream);
 }
@@ -108,10 +104,6 @@ NiTransformData::NiTransformData(NiStream& stream) : NiTransformData() {
 }
 
 
-NiPosData::NiPosData() {
-	NiObject::Init();
-}
-
 NiPosData::NiPosData(NiStream& stream) : NiPosData() {
 	Get(stream);
 }
@@ -136,10 +128,6 @@ int NiPosData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiBoolData::NiBoolData() {
-	NiObject::Init();
-}
 
 NiBoolData::NiBoolData(NiStream& stream) : NiBoolData() {
 	Get(stream);
@@ -166,10 +154,6 @@ int NiBoolData::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiFloatData::NiFloatData() {
-	NiObject::Init();
-}
-
 NiFloatData::NiFloatData(NiStream& stream) : NiFloatData() {
 	Get(stream);
 }
@@ -194,10 +178,6 @@ int NiFloatData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-void NiTimeController::Init() {
-	NiObject::Init();
-}
 
 void NiTimeController::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -244,10 +224,6 @@ int NiTimeController::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSFrustumFOVController::BSFrustumFOVController() {
-	NiTimeController::Init();
-}
-
 BSFrustumFOVController::BSFrustumFOVController(NiStream& stream) : BSFrustumFOVController() {
 	Get(stream);
 }
@@ -279,10 +255,6 @@ int BSFrustumFOVController::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSLagBoneController::BSLagBoneController() {
-	NiTimeController::Init();
-}
-
 BSLagBoneController::BSLagBoneController(NiStream& stream) : BSLagBoneController() {
 	Get(stream);
 }
@@ -311,10 +283,6 @@ int BSLagBoneController::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSProceduralLightningController::BSProceduralLightningController() {
-	NiTimeController::Init();
-}
 
 BSProceduralLightningController::BSProceduralLightningController(NiStream& stream) : BSProceduralLightningController() {
 	Get(stream);
@@ -404,10 +372,6 @@ int BSProceduralLightningController::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiBoneLODController::NiBoneLODController() {
-	NiTimeController::Init();
-}
-
 NiBoneLODController::NiBoneLODController(NiStream& stream) : NiBoneLODController() {
 	Get(stream);
 }
@@ -453,10 +417,6 @@ int NiBoneLODController::CalcBlockSize(NiVersion& version) {
 }
 
 
-void NiSingleInterpController::Init() {
-	NiInterpController::Init();
-}
-
 void NiSingleInterpController::Get(NiStream& stream) {
 	NiInterpController::Get(stream);
 
@@ -483,10 +443,6 @@ int NiSingleInterpController::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiFloatExtraDataController::NiFloatExtraDataController() {
-	NiExtraDataController::Init();
-}
 
 NiFloatExtraDataController::NiFloatExtraDataController(NiStream& stream) : NiFloatExtraDataController() {
 	Get(stream);
@@ -519,27 +475,15 @@ int NiFloatExtraDataController::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiVisController::NiVisController() {
-	NiBoolInterpController::Init();
-}
-
 NiVisController::NiVisController(NiStream& stream) : NiVisController() {
 	Get(stream);
 }
 
 
-NiAlphaController::NiAlphaController() {
-	NiFloatInterpController::Init();
-}
-
 NiAlphaController::NiAlphaController(NiStream& stream) : NiAlphaController() {
 	Get(stream);
 }
 
-
-NiPSysUpdateCtlr::NiPSysUpdateCtlr() {
-	NiTimeController::Init();
-}
 
 NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiStream& stream) : NiPSysUpdateCtlr() {
 	Get(stream);
@@ -554,10 +498,6 @@ BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiStream&
 }
 
 
-NiKeyframeController::NiKeyframeController() {
-	NiSingleInterpController::Init();
-}
-
 NiKeyframeController::NiKeyframeController(NiStream& stream) : NiKeyframeController() {
 	Get(stream);
 }
@@ -570,10 +510,6 @@ NiTransformController::NiTransformController(NiStream& stream) : NiTransformCont
 	Get(stream);
 }
 
-
-BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController() {
-	NiFloatInterpController::Init();
-}
 
 BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(NiStream& stream) : BSLightingShaderPropertyColorController() {
 	Get(stream);
@@ -600,10 +536,6 @@ int BSLightingShaderPropertyColorController::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController() {
-	NiFloatInterpController::Init();
-}
-
 BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiStream& stream) : BSLightingShaderPropertyFloatController() {
 	Get(stream);
 }
@@ -628,10 +560,6 @@ int BSLightingShaderPropertyFloatController::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController() {
-	NiFloatInterpController::Init();
-}
 
 BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiStream& stream) : BSEffectShaderPropertyColorController() {
 	Get(stream);
@@ -658,10 +586,6 @@ int BSEffectShaderPropertyColorController::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController() {
-	NiFloatInterpController::Init();
-}
-
 BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiStream& stream) : BSEffectShaderPropertyFloatController() {
 	Get(stream);
 }
@@ -686,10 +610,6 @@ int BSEffectShaderPropertyFloatController::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiMultiTargetTransformController::NiMultiTargetTransformController() {
-	NiInterpController::Init();
-}
 
 NiMultiTargetTransformController::NiMultiTargetTransformController(NiStream& stream) : NiMultiTargetTransformController() {
 	Get(stream);
@@ -749,81 +669,45 @@ int NiPSysModifierCtlr::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr() {
-	NiPSysModifierCtlr::Init();
-}
-
 NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiStream& stream) : NiPSysModifierActiveCtlr() {
 	Get(stream);
 }
 
-
-NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr() {
-	NiPSysModifierCtlr::Init();
-}
 
 NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiStream& stream) : NiPSysEmitterLifeSpanCtlr() {
 	Get(stream);
 }
 
 
-NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr() {
-	NiPSysModifierCtlr::Init();
-}
-
 NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiStream& stream) : NiPSysEmitterSpeedCtlr() {
 	Get(stream);
 }
 
-
-NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr() {
-	NiPSysModifierCtlr::Init();
-}
 
 NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiStream& stream) : NiPSysEmitterInitialRadiusCtlr() {
 	Get(stream);
 }
 
 
-NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr() {
-	NiPSysModifierCtlr::Init();
-}
-
 NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiStream& stream) : NiPSysEmitterPlanarAngleCtlr() {
 	Get(stream);
 }
 
-
-NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr() {
-	NiPSysModifierCtlr::Init();
-}
 
 NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiStream& stream) : NiPSysEmitterDeclinationCtlr() {
 	Get(stream);
 }
 
 
-NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr() {
-	NiPSysModifierCtlr::Init();
-}
-
 NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiStream& stream) : NiPSysGravityStrengthCtlr() {
 	Get(stream);
 }
 
 
-NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr() {
-	NiPSysModifierCtlr::Init();
-}
-
 NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiStream& stream) : NiPSysInitialRotSpeedCtlr() {
 	Get(stream);
 }
 
-
-NiPSysEmitterCtlr::NiPSysEmitterCtlr() {
-	NiPSysModifierCtlr::Init();
-}
 
 NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiStream& stream) : NiPSysEmitterCtlr() {
 	Get(stream);
@@ -915,10 +799,6 @@ int NiBlendInterpolator::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiBlendBoolInterpolator::NiBlendBoolInterpolator() {
-	NiBlendInterpolator::Init();
-}
-
 NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiStream& stream) : NiBlendBoolInterpolator() {
 	Get(stream);
 }
@@ -943,10 +823,6 @@ int NiBlendBoolInterpolator::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiBlendFloatInterpolator::NiBlendFloatInterpolator() {
-	NiBlendInterpolator::Init();
-}
 
 NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiStream& stream) : NiBlendFloatInterpolator() {
 	Get(stream);
@@ -973,10 +849,6 @@ int NiBlendFloatInterpolator::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiBlendPoint3Interpolator::NiBlendPoint3Interpolator() {
-	NiBlendInterpolator::Init();
-}
-
 NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiStream& stream) : NiBlendPoint3Interpolator() {
 	Get(stream);
 }
@@ -1001,10 +873,6 @@ int NiBlendPoint3Interpolator::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiBoolInterpolator::NiBoolInterpolator() {
-	NiKeyBasedInterpolator::Init();
-}
 
 NiBoolInterpolator::NiBoolInterpolator(NiStream& stream) : NiBoolInterpolator() {
 	Get(stream);
@@ -1047,10 +915,6 @@ NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiStream& stream) : NiBoo
 }
 
 
-NiFloatInterpolator::NiFloatInterpolator() {
-	NiKeyBasedInterpolator::Init();
-}
-
 NiFloatInterpolator::NiFloatInterpolator(NiStream& stream) : NiFloatInterpolator() {
 	Get(stream);
 }
@@ -1083,10 +947,6 @@ int NiFloatInterpolator::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiTransformInterpolator::NiTransformInterpolator() {
-	NiKeyBasedInterpolator::Init();
-}
 
 NiTransformInterpolator::NiTransformInterpolator(NiStream& stream) : NiTransformInterpolator() {
 	Get(stream);
@@ -1125,10 +985,6 @@ int NiTransformInterpolator::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiPoint3Interpolator::NiPoint3Interpolator() {
-	NiKeyBasedInterpolator::Init();
-}
-
 NiPoint3Interpolator::NiPoint3Interpolator(NiStream& stream) : NiPoint3Interpolator() {
 	Get(stream);
 }
@@ -1161,10 +1017,6 @@ int NiPoint3Interpolator::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiPathInterpolator::NiPathInterpolator() {
-	NiKeyBasedInterpolator::Init();
-}
 
 NiPathInterpolator::NiPathInterpolator(NiStream& stream) : NiPathInterpolator() {
 	Get(stream);
@@ -1209,10 +1061,6 @@ int NiPathInterpolator::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiLookAtInterpolator::NiLookAtInterpolator() {
-	NiInterpolator::Init();
-}
 
 NiLookAtInterpolator::NiLookAtInterpolator(NiStream& stream) : NiLookAtInterpolator() {
 	Get(stream);
@@ -1270,10 +1118,6 @@ int NiLookAtInterpolator::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiSequence::NiSequence() {
-	NiObject::Init();
-}
 
 NiSequence::NiSequence(NiStream& stream) : NiSequence() {
 	Get(stream);
@@ -1415,10 +1259,6 @@ int NiControllerSequence::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiControllerManager::NiControllerManager() {
-	NiTimeController::Init();
-}
 
 NiControllerManager::NiControllerManager(NiStream& stream) : NiControllerManager() {
 	Get(stream);

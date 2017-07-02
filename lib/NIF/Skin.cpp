@@ -7,10 +7,6 @@ See the included LICENSE file
 #include "Skin.h"
 #include "utils/half.hpp"
 
-NiSkinData::NiSkinData() {
-	NiObject::Init();
-}
-
 NiSkinData::NiSkinData(NiStream& stream) : NiSkinData() {
 	Get(stream);
 }
@@ -117,10 +113,6 @@ int NiSkinData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiSkinPartition::NiSkinPartition() {
-	NiObject::Init();
-}
 
 NiSkinPartition::NiSkinPartition(NiStream& stream) : NiSkinPartition() {
 	Get(stream);
@@ -628,10 +620,6 @@ int NiSkinPartition::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiSkinInstance::NiSkinInstance() {
-	NiObject::Init();
-}
-
 NiSkinInstance::NiSkinInstance(NiStream& stream) : NiSkinInstance() {
 	Get(stream);
 }
@@ -728,10 +716,6 @@ void BSDismemberSkinInstance::ClearPartitions() {
 }
 
 
-BSSkinBoneData::BSSkinBoneData() {
-	NiObject::Init();
-}
-
 BSSkinBoneData::BSSkinBoneData(NiStream& stream) : BSSkinBoneData() {
 	Get(stream);
 }
@@ -762,10 +746,6 @@ int BSSkinBoneData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSSkinInstance::BSSkinInstance() {
-	NiObject::Init();
-}
 
 BSSkinInstance::BSSkinInstance(NiStream& stream) : BSSkinInstance() {
 	Get(stream);

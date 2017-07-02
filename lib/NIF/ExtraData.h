@@ -25,11 +25,11 @@ public:
 
 class NiBinaryExtraData : public NiExtraData {
 private:
-	uint size;
+	uint size = 0;
 	std::vector<byte> data;
 
 public:
-	NiBinaryExtraData();
+	NiBinaryExtraData() {}
 	NiBinaryExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBinaryExtraData";
@@ -46,7 +46,7 @@ private:
 	float floatData = 0.0f;
 
 public:
-	NiFloatExtraData();
+	NiFloatExtraData() {}
 	NiFloatExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiFloatExtraData";
@@ -63,7 +63,7 @@ private:
 	StringRef stringData;
 
 public:
-	NiStringExtraData();
+	NiStringExtraData() {}
 	NiStringExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiStringExtraData";
@@ -85,7 +85,7 @@ private:
 	std::vector<NiString> stringsData;
 
 public:
-	NiStringsExtraData();
+	NiStringsExtraData() {}
 	NiStringsExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiStringsExtraData";
@@ -102,7 +102,7 @@ private:
 	bool booleanData = false;
 
 public:
-	NiBooleanExtraData();
+	NiBooleanExtraData() {}
 	NiBooleanExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiBooleanExtraData";
@@ -119,10 +119,10 @@ public:
 
 class NiIntegerExtraData : public NiExtraData {
 private:
-	uint integerData;
+	uint integerData = 0;
 
 public:
-	NiIntegerExtraData();
+	NiIntegerExtraData() {}
 	NiIntegerExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiIntegerExtraData";
@@ -156,7 +156,7 @@ private:
 	float zoom = 1.0f;
 
 public:
-	BSInvMarker();
+	BSInvMarker() {}
 	BSInvMarker(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSInvMarker";
@@ -186,7 +186,7 @@ private:
 	std::vector<FurniturePosition> positions;
 
 public:
-	BSFurnitureMarker();
+	BSFurnitureMarker() {}
 	BSFurnitureMarker(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSFurnitureMarker";
@@ -240,7 +240,7 @@ private:
 	bool controlsBaseSkel = false;
 
 public:
-	BSBehaviorGraphExtraData();
+	BSBehaviorGraphExtraData() {}
 	BSBehaviorGraphExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSBehaviorGraphExtraData";
@@ -259,7 +259,7 @@ private:
 	Vector3 halfExtents;
 
 public:
-	BSBound();
+	BSBound() {}
 	BSBound(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSBound";
@@ -282,7 +282,7 @@ private:
 	std::vector<BoneLOD> boneLODs;
 
 public:
-	BSBoneLODExtraData();
+	BSBoneLODExtraData() {}
 	BSBoneLODExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSBoneLODExtraData";
@@ -301,7 +301,7 @@ private:
 	std::vector<Key<StringRef>> textKeys;
 
 public:
-	NiTextKeyExtraData();
+	NiTextKeyExtraData() {}
 	NiTextKeyExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiTextKeyExtraData";
@@ -337,7 +337,7 @@ private:
 	std::vector<BSConnectPoint> connectPoints;
 
 public:
-	BSConnectPointParents();
+	BSConnectPointParents() {}
 	BSConnectPointParents(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSConnectPoint::Parents";
@@ -356,7 +356,7 @@ private:
 	std::vector<NiString> targets;
 
 public:
-	BSConnectPointChildren();
+	BSConnectPointChildren() {}
 	BSConnectPointChildren(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSConnectPoint::Children";
@@ -377,7 +377,8 @@ private:
 	std::vector<char> data;
 
 public:
-	BSClothExtraData(const uint size = 0);
+	BSClothExtraData() {}
+	BSClothExtraData(const uint size);
 	BSClothExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSClothExtraData";

@@ -17,10 +17,9 @@ private:
 	BlockRefArray<NiExtraData> extraDataRefs;
 
 public:
-	uint skyrimShaderType;					// BSLightingShaderProperty && User Version >= 12
-	bool bBSLightingShaderProperty;
+	uint skyrimShaderType = 0;				// BSLightingShaderProperty && User Version >= 12
+	bool bBSLightingShaderProperty = false;
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
@@ -49,13 +48,12 @@ protected:
 	BlockRef<NiCollisionObject> collisionRef;
 
 public:
-	uint flags;
+	uint flags = 524302;
 	Vector3 translation;
-	Vector3 rotation[3];
-	float scale;
+	Vector3 rotation[3] = { Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f) };
+	float scale = 1.0f;
 	BlockRefArray<NiProperty> propertyRefs;
 
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
@@ -109,7 +107,7 @@ private:
 	std::vector<AVObject> objects;
 
 public:
-	NiDefaultAVObjectPalette();
+	NiDefaultAVObjectPalette() {}
 	NiDefaultAVObjectPalette(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiDefaultAVObjectPalette";
@@ -143,7 +141,7 @@ private:
 	uint numScreenTextures = 0;
 
 public:
-	NiCamera();
+	NiCamera() {}
 	NiCamera(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiCamera";
@@ -162,7 +160,7 @@ private:
 	BlockRefArray<NiAVObject> effectRefs;	// should be NiDynamicEffect
 
 public:
-	NiNode();
+	NiNode() {}
 	NiNode(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiNode";
@@ -280,7 +278,7 @@ private:
 	float rotation[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
 
 public:
-	BSMultiBoundOBB();
+	BSMultiBoundOBB() {}
 	BSMultiBoundOBB(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMultiBoundOBB";
@@ -298,7 +296,7 @@ private:
 	Vector3 halfExtent;
 
 public:
-	BSMultiBoundAABB();
+	BSMultiBoundAABB() {}
 	BSMultiBoundAABB(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMultiBoundAABB";
@@ -315,7 +313,7 @@ private:
 	BlockRef<BSMultiBoundData> dataRef;
 
 public:
-	BSMultiBound();
+	BSMultiBound() {}
 	BSMultiBound(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSMultiBound";

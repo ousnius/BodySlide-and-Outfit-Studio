@@ -123,7 +123,6 @@ private:
 	bool isActive;
 
 public:
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
@@ -136,7 +135,7 @@ private:
 	float updateDeltaTime = 0.0f;
 
 public:
-	BSPSysStripUpdateModifier();
+	BSPSysStripUpdateModifier() {}
 	BSPSysStripUpdateModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysStripUpdateModifier";
@@ -160,7 +159,7 @@ private:
 	float lifeSpanVariation = 0.0f;
 
 public:
-	NiPSysSpawnModifier();
+	NiPSysSpawnModifier() {}
 	NiPSysSpawnModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysSpawnModifier";
@@ -178,7 +177,7 @@ private:
 	BlockRef<NiPSysSpawnModifier> spawnModifierRef;
 
 public:
-	NiPSysAgeDeathModifier();
+	NiPSysAgeDeathModifier() {}
 	NiPSysAgeDeathModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysAgeDeathModifier";
@@ -199,7 +198,7 @@ private:
 	float unknownFadeFactor2 = 0.0f;
 
 public:
-	BSPSysLODModifier();
+	BSPSysLODModifier() {}
 	BSPSysLODModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysLODModifier";
@@ -224,7 +223,7 @@ private:
 	Color4 color3;
 
 public:
-	BSPSysSimpleColorModifier();
+	BSPSysSimpleColorModifier() {}
 	BSPSysSimpleColorModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysSimpleColorModifier";
@@ -247,7 +246,7 @@ private:
 	Vector3 initialAxis;
 
 public:
-	NiPSysRotationModifier();
+	NiPSysRotationModifier() {}
 	NiPSysRotationModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysRotationModifier";
@@ -265,7 +264,7 @@ private:
 	std::vector<float> floats;
 
 public:
-	BSPSysScaleModifier();
+	BSPSysScaleModifier() {}
 	BSPSysScaleModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysScaleModifier";
@@ -295,7 +294,7 @@ private:
 	bool worldAligned = false;
 
 public:
-	NiPSysGravityModifier();
+	NiPSysGravityModifier() {}
 	NiPSysGravityModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysGravityModifier";
@@ -310,7 +309,7 @@ public:
 
 class NiPSysPositionModifier : public NiPSysModifier {
 public:
-	NiPSysPositionModifier();
+	NiPSysPositionModifier() {}
 	NiPSysPositionModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysPositionModifier";
@@ -324,7 +323,7 @@ private:
 	ushort updateSkip = 0;
 
 public:
-	NiPSysBoundUpdateModifier();
+	NiPSysBoundUpdateModifier() {}
 	NiPSysBoundUpdateModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysBoundUpdateModifier";
@@ -345,7 +344,7 @@ private:
 	float rangeFalloff = 0.0f;
 
 public:
-	NiPSysDragModifier();
+	NiPSysDragModifier() {}
 	NiPSysDragModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysDragModifier";
@@ -366,7 +365,7 @@ private:
 	float velocityVar = 0.0f;
 
 public:
-	BSPSysInheritVelocityModifier();
+	BSPSysInheritVelocityModifier() {}
 	BSPSysInheritVelocityModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysInheritVelocityModifier";
@@ -390,7 +389,7 @@ private:
 	float frameCountVariation = 0.0f;
 
 public:
-	BSPSysSubTexModifier();
+	BSPSysSubTexModifier() {}
 	BSPSysSubTexModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysSubTexModifier";
@@ -424,7 +423,7 @@ private:
 	SymmetryType symmetryType = SYMMETRY_SPHERICAL;
 
 public:
-	NiPSysBombModifier();
+	NiPSysBombModifier() {}
 	NiPSysBombModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysBombModifier";
@@ -442,7 +441,7 @@ private:
 	float strength = 0.0f;
 
 public:
-	BSWindModifier();
+	BSWindModifier() {}
 	BSWindModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSWindModifier";
@@ -461,7 +460,7 @@ private:
 	BlockRef<NiNode> targetNodeRef;
 
 public:
-	BSPSysRecycleBoundModifier();
+	BSPSysRecycleBoundModifier() {}
 	BSPSysRecycleBoundModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysRecycleBoundModifier";
@@ -480,7 +479,7 @@ private:
 	BlockRef<NiPSysModifier> modifierRef;
 
 public:
-	BSPSysHavokUpdateModifier();
+	BSPSysHavokUpdateModifier() {}
 	BSPSysHavokUpdateModifier(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSPSysHavokUpdateModifier";
@@ -548,7 +547,7 @@ private:
 	BlockRefArray<NiPSysModifier> modifierRefs;
 
 public:
-	NiParticleSystem();
+	NiParticleSystem() {}
 	NiParticleSystem(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiParticleSystem";
@@ -597,7 +596,6 @@ private:
 	BlockRef<NiNode> colliderNodeRef;
 
 public:
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
@@ -610,7 +608,7 @@ private:
 	float radius = 0.0f;
 
 public:
-	NiPSysSphericalCollider();
+	NiPSysSphericalCollider() {}
 	NiPSysSphericalCollider(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysSphericalCollider";
@@ -630,7 +628,7 @@ private:
 	Vector3 yAxis;
 
 public:
-	NiPSysPlanarCollider();
+	NiPSysPlanarCollider() {}
 	NiPSysPlanarCollider(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysPlanarCollider";
@@ -647,7 +645,7 @@ private:
 	BlockRef<NiPSysCollider> colliderRef;
 
 public:
-	NiPSysColliderManager();
+	NiPSysColliderManager() {}
 	NiPSysColliderManager(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysColliderManager";
@@ -685,7 +683,6 @@ private:
 	BlockRef<NiNode> emitterNodeRef;
 
 public:
-	void Init();
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
@@ -697,7 +694,7 @@ private:
 	float radius = 0.0f;
 
 public:
-	NiPSysSphereEmitter();
+	NiPSysSphereEmitter() {}
 	NiPSysSphereEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysSphereEmitter";
@@ -715,7 +712,7 @@ private:
 	float height = 0.0f;
 
 public:
-	NiPSysCylinderEmitter();
+	NiPSysCylinderEmitter() {}
 	NiPSysCylinderEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysCylinderEmitter";
@@ -734,7 +731,7 @@ private:
 	float depth = 0.0f;
 
 public:
-	NiPSysBoxEmitter();
+	NiPSysBoxEmitter() {}
 	NiPSysBoxEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysBoxEmitter";
@@ -768,7 +765,7 @@ private:
 	Vector3 emissionAxis;
 
 public:
-	NiPSysMeshEmitter();
+	NiPSysMeshEmitter() {}
 	NiPSysMeshEmitter(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiPSysMeshEmitter";

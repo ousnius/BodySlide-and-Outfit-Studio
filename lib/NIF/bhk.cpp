@@ -6,10 +6,6 @@ See the included LICENSE file
 
 #include "bhk.h"
 
-NiCollisionObject::NiCollisionObject() {
-	NiObject::Init();
-}
-
 NiCollisionObject::NiCollisionObject(NiStream& stream) : NiCollisionObject() {
 	Get(stream);
 }
@@ -160,8 +156,6 @@ int bhkBlendCollisionObject::CalcBlockSize(NiVersion& version) {
 
 
 bhkPhysicsSystem::bhkPhysicsSystem(const uint size) {
-	BSExtraData::Init();
-
 	numBytes = size;
 	data.resize(size);
 }
@@ -200,10 +194,6 @@ int bhkPhysicsSystem::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkPlaneShape::bhkPlaneShape() {
-	bhkHeightFieldShape::Init();
-}
 
 bhkPlaneShape::bhkPlaneShape(NiStream& stream) : bhkPlaneShape() {
 	Get(stream);
@@ -263,10 +253,6 @@ int bhkSphereRepShape::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkConvexVerticesShape::bhkConvexVerticesShape() {
-	bhkConvexShape::Init();
-}
-
 bhkConvexVerticesShape::bhkConvexVerticesShape(NiStream& stream) : bhkConvexVerticesShape() {
 	Get(stream);
 }
@@ -314,10 +300,6 @@ int bhkConvexVerticesShape::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkBoxShape::bhkBoxShape() {
-	bhkConvexShape::Init();
-}
-
 bhkBoxShape::bhkBoxShape(NiStream& stream) : bhkBoxShape() {
 	Get(stream);
 }
@@ -347,18 +329,10 @@ int bhkBoxShape::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkSphereShape::bhkSphereShape() {
-	bhkConvexShape::Init();
-}
-
 bhkSphereShape::bhkSphereShape(NiStream& stream) : bhkSphereShape() {
 	Get(stream);
 }
 
-
-bhkTransformShape::bhkTransformShape() {
-	bhkShape::Init();
-}
 
 bhkTransformShape::bhkTransformShape(NiStream& stream) : bhkTransformShape() {
 	Get(stream);
@@ -407,10 +381,6 @@ bhkConvexTransformShape::bhkConvexTransformShape(NiStream& stream) : bhkConvexTr
 }
 
 
-bhkCapsuleShape::bhkCapsuleShape() {
-	bhkConvexShape::Init();
-}
-
 bhkCapsuleShape::bhkCapsuleShape(NiStream& stream) : bhkCapsuleShape() {
 	Get(stream);
 }
@@ -443,10 +413,6 @@ int bhkCapsuleShape::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkMoppBvTreeShape::bhkMoppBvTreeShape() {
-	bhkBvTreeShape::Init();
-}
 
 bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiStream& stream) : bhkMoppBvTreeShape() {
 	Get(stream);
@@ -508,10 +474,6 @@ int bhkMoppBvTreeShape::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkNiTriStripsShape::bhkNiTriStripsShape() {
-	bhkShape::Init();
-}
 
 bhkNiTriStripsShape::bhkNiTriStripsShape(NiStream& stream) : bhkNiTriStripsShape() {
 	Get(stream);
@@ -575,10 +537,6 @@ int bhkNiTriStripsShape::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkListShape::bhkListShape() {
-	bhkShapeCollection::Init();
-}
-
 bhkListShape::bhkListShape(NiStream& stream) : bhkListShape() {
 	Get(stream);
 }
@@ -630,10 +588,6 @@ int bhkListShape::CalcBlockSize(NiVersion& version) {
 }
 
 
-void bhkWorldObject::Init() {
-	bhkSerializable::Init();
-}
-
 void bhkWorldObject::Get(NiStream& stream) {
 	bhkSerializable::Get(stream);
 
@@ -671,10 +625,6 @@ int bhkWorldObject::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkSimpleShapePhantom::bhkSimpleShapePhantom() {
-	bhkShapePhantom::Init();
-}
-
 bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiStream& stream) : bhkSimpleShapePhantom() {
 	Get(stream);
 }
@@ -701,10 +651,6 @@ int bhkSimpleShapePhantom::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-void bhkConstraint::Init() {
-	bhkSerializable::Init();
-}
 
 void bhkConstraint::Get(NiStream& stream) {
 	bhkSerializable::Get(stream);
@@ -738,10 +684,6 @@ int bhkConstraint::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkHingeConstraint::bhkHingeConstraint() {
-	bhkConstraint::Init();
-}
-
 bhkHingeConstraint::bhkHingeConstraint(NiStream& stream) : bhkHingeConstraint() {
 	Get(stream);
 }
@@ -766,10 +708,6 @@ int bhkHingeConstraint::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkLimitedHingeConstraint::bhkLimitedHingeConstraint() {
-	bhkConstraint::Init();
-}
 
 bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiStream& stream) : bhkLimitedHingeConstraint() {
 	Get(stream);
@@ -959,10 +897,6 @@ int SubConstraintDesc::CalcDescSize() {
 }
 
 
-bhkBreakableConstraint::bhkBreakableConstraint() {
-	bhkConstraint::Init();
-}
-
 bhkBreakableConstraint::bhkBreakableConstraint(NiStream& stream) : bhkBreakableConstraint() {
 	Get(stream);
 }
@@ -996,10 +930,6 @@ int bhkBreakableConstraint::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkRagdollConstraint::bhkRagdollConstraint() {
-	bhkConstraint::Init();
-}
 
 bhkRagdollConstraint::bhkRagdollConstraint(NiStream& stream) : bhkRagdollConstraint() {
 	Get(stream);
@@ -1055,10 +985,6 @@ int bhkRagdollConstraint::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkStiffSpringConstraint::bhkStiffSpringConstraint() {
-	bhkConstraint::Init();
-}
-
 bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiStream& stream) : bhkStiffSpringConstraint() {
 	Get(stream);
 }
@@ -1087,10 +1013,6 @@ int bhkStiffSpringConstraint::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkPrismaticConstraint::bhkPrismaticConstraint() {
-	bhkConstraint::Init();
-}
 
 bhkPrismaticConstraint::bhkPrismaticConstraint(NiStream& stream) : bhkPrismaticConstraint() {
 	Get(stream);
@@ -1140,10 +1062,6 @@ int bhkPrismaticConstraint::CalcBlockSize(NiVersion& version) {
 }
 
 
-bhkMalleableConstraint::bhkMalleableConstraint() {
-	bhkConstraint::Init();
-}
-
 bhkMalleableConstraint::bhkMalleableConstraint(NiStream& stream) : bhkMalleableConstraint() {
 	Get(stream);
 }
@@ -1167,10 +1085,6 @@ int bhkMalleableConstraint::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkBallAndSocketConstraint::bhkBallAndSocketConstraint() {
-	bhkConstraint::Init();
-}
 
 bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiStream& stream) : bhkBallAndSocketConstraint() {
 	Get(stream);
@@ -1198,10 +1112,6 @@ int bhkBallAndSocketConstraint::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkBallSocketConstraintChain::bhkBallSocketConstraintChain() {
-	bhkSerializable::Init();
-}
 
 bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiStream& stream) : bhkBallSocketConstraintChain() {
 	Get(stream);
@@ -1266,10 +1176,6 @@ int bhkBallSocketConstraintChain::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkRigidBody::bhkRigidBody() {
-	bhkEntity::Init();
-}
 
 bhkRigidBody::bhkRigidBody(NiStream& stream) : bhkRigidBody() {
 	Get(stream);
@@ -1416,10 +1322,6 @@ bhkRigidBodyT::bhkRigidBodyT(NiStream& stream) : bhkRigidBodyT() {
 	Get(stream);
 }
 
-
-bhkCompressedMeshShapeData::bhkCompressedMeshShapeData() {
-	bhkRefObject::Init();
-}
 
 bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiStream& stream) : bhkCompressedMeshShapeData() {
 	Get(stream);
@@ -1600,10 +1502,6 @@ int bhkCompressedMeshShapeData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-bhkCompressedMeshShape::bhkCompressedMeshShape() {
-	bhkShape::Init();
-}
 
 bhkCompressedMeshShape::bhkCompressedMeshShape(NiStream& stream) : bhkCompressedMeshShape() {
 	Get(stream);

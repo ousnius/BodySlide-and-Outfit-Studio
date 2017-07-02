@@ -308,8 +308,6 @@ public:
 	static constexpr const char* BlockName = "NiUnknown";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	virtual void Init() {}
-
 	virtual void notifyVerticesDelete(const std::vector<ushort>&) {}
 
 	virtual void Get(NiStream&) {}

@@ -10,10 +10,6 @@ See the included LICENSE file
 #include "utils/half.hpp"
 #include "utils/KDMatcher.h"
 
-void NiGeometryData::Init() {
-	NiObject::Init();
-}
-
 void NiGeometryData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -400,10 +396,6 @@ int NiShape::GetBoneID(NiHeader& hdr, const std::string& boneName) {
 	return 0xFFFFFFFF;
 }
 
-
-BSTriShape::BSTriShape() {
-	NiAVObject::Init();
-}
 
 BSTriShape::BSTriShape(NiStream& stream) : BSTriShape() {
 	Get(stream);
@@ -1628,10 +1620,6 @@ void BSDynamicTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle
 }
 
 
-void NiGeometry::Init() {
-	NiAVObject::Init();
-}
-
 void NiGeometry::Get(NiStream& stream) {
 	NiAVObject::Get(stream);
 
@@ -1706,10 +1694,6 @@ int NiGeometry::CalcBlockSize(NiVersion& version) {
 }
 
 
-void NiTriBasedGeomData::Init() {
-	NiGeometryData::Init();
-}
-
 void NiTriBasedGeomData::Get(NiStream& stream) {
 	NiGeometryData::Get(stream);
 
@@ -1736,18 +1720,10 @@ int NiTriBasedGeomData::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiTriShape::NiTriShape() {
-	NiTriBasedGeom::Init();
-}
-
 NiTriShape::NiTriShape(NiStream& stream) : NiTriShape() {
 	Get(stream);
 }
 
-
-NiTriShapeData::NiTriShapeData() {
-	NiTriBasedGeomData::Init();
-}
 
 NiTriShapeData::NiTriShapeData(NiStream& stream) : NiTriShapeData() {
 	Get(stream);
@@ -1977,18 +1953,10 @@ int NiTriShapeData::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiTriStrips::NiTriStrips() {
-	NiTriBasedGeom::Init();
-}
-
 NiTriStrips::NiTriStrips(NiStream& stream) : NiTriStrips() {
 	Get(stream);
 }
 
-
-NiTriStripsData::NiTriStripsData() {
-	NiTriBasedGeomData::Init();
-}
 
 NiTriStripsData::NiTriStripsData(NiStream& stream) : NiTriStripsData() {
 	Get(stream);
@@ -2217,10 +2185,6 @@ int NiTriStripsData::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSLODTriShape::BSLODTriShape() {
-	NiTriBasedGeom::Init();
-}
 
 BSLODTriShape::BSLODTriShape(NiStream& stream) : BSLODTriShape() {
 	Get(stream);

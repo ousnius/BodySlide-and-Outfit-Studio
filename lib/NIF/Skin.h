@@ -103,7 +103,7 @@ public:
 	byte hasVertWeights = 1;
 	std::vector<BoneData> bones;
 
-	NiSkinData();
+	NiSkinData() {}
 	NiSkinData(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSkinData";
@@ -171,7 +171,7 @@ public:
 	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
 	bool IsFullPrecision() { return true; }
 
-	NiSkinPartition();
+	NiSkinPartition() {}
 	NiSkinPartition(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSkinPartition";
@@ -199,7 +199,7 @@ private:
 	BlockRef<NiNode> targetRef;
 
 public:
-	NiSkinInstance();
+	NiSkinInstance() {}
 	NiSkinInstance(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiSkinInstance";
@@ -274,7 +274,7 @@ public:
 
 	std::vector<BoneData> boneXforms;
 
-	BSSkinBoneData();
+	BSSkinBoneData() {}
 	BSSkinBoneData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSkin::BoneData";
@@ -297,7 +297,7 @@ private:
 	std::vector<Vector3> unk;
 
 public:
-	BSSkinInstance();
+	BSSkinInstance() {}
 	BSSkinInstance(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSkin::Instance";

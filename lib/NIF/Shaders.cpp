@@ -6,17 +6,6 @@ See the included LICENSE file
 
 #include "Shaders.h"
 
-void BSShaderProperty::Init() {
-	NiProperty::Init();
-
-	shaderFlags = 1;
-	shaderType = BSShaderType::SHADER_DEFAULT;
-	shaderFlags1 = 0x82000000;
-	shaderFlags2 = 1;
-	environmentMapScale = 1.0f;
-	uvScale = Vector2(1.0f, 1.0f);
-}
-
 void BSShaderProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -91,15 +80,10 @@ int BSShaderProperty::CalcBlockSize(NiVersion& version) {
 
 
 BSShaderTextureSet::BSShaderTextureSet() {
-	NiObject::Init();
-
-	numTextures = 10;
 	textures.resize(numTextures);
 }
 
 BSShaderTextureSet::BSShaderTextureSet(NiVersion& version) {
-	NiObject::Init();
-
 	if (version.User() == 12 && version.User2() >= 130)
 		numTextures = 10;
 	else if (version.User() == 12)
@@ -144,45 +128,12 @@ int BSShaderTextureSet::CalcBlockSize(NiVersion& version) {
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty() {
-	BSShaderProperty::Init();
 	NiObjectNET::bBSLightingShaderProperty = true;
 
 	shaderFlags1 = 0x80400203;
 	shaderFlags2 = 0x00000081;
 
-	emissiveMultiple = 1.0f;
-	textureClampMode = 3;
-	alpha = 1.0f;
-	refractionStrength = 0.0f;
-	glossiness = 1.0f;
-
-	specularColor = Vector3(1.0f, 1.0f, 1.0f);
-	specularStrength = 1.0f;
-	lightingEffect1 = 0.3f;
-	lightingEffect2 = 2.0f;
-
-	subsurfaceRolloff = 0.0f;
 	unkFloat1 = std::numeric_limits<float>::max();
-	backlightPower = 0.0f;
-	grayscaleToPaletteScale = 1.0f;
-	fresnelPower = 5.0f;
-	wetnessSpecScale = 0.6f;
-	wetnessSpecPower = 1.4f;
-	wetnessMinVar = 0.2f;
-	wetnessEnvmapScale = 1.0f;
-	wetnessFresnelPower = 1.6f;
-	wetnessMetalness = 0.0f;
-
-	unkEnvmap = 0;
-	unkSkinTint = 0;
-	maxPasses = 1.0f;
-	scale = 1.0f;
-	parallaxInnerLayerThickness = 0.0f;
-	parallaxRefractionScale = 1.0f;
-	parallaxInnerLayerTextureScale.u = 1.0f;
-	parallaxInnerLayerTextureScale.v = 1.0f;
-	parallaxEnvmapStrength = 1.0f;
-	eyeCubemapScale = 1.0f;
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty(NiVersion& version) : BSLightingShaderProperty() {
@@ -517,24 +468,6 @@ int BSLightingShaderProperty::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSEffectShaderProperty::BSEffectShaderProperty() {
-	BSShaderProperty::Init();
-
-	textureClampMode = 0;
-	falloffStartAngle = 1.0f;
-	falloffStopAngle = 1.0f;
-	falloffStartOpacity = 0.0f;
-	falloffStopOpacity = 0.0f;
-	emissiveColor.r = 0.0f;
-	emissiveColor.g = 0.0f;
-	emissiveColor.b = 0.0f;
-	emissiveColor.a = 0.0f;
-	emissiveMultiple = 0.0f;
-	softFalloffDepth = 0.0f;
-
-	envMapScale = 1.0f;
-}
-
 BSEffectShaderProperty::BSEffectShaderProperty(NiStream& stream) : BSEffectShaderProperty() {
 	Get(stream);
 }
@@ -654,12 +587,6 @@ int BSEffectShaderProperty::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSWaterShaderProperty::BSWaterShaderProperty() {
-	BSShaderProperty::Init();
-
-	waterFlags = 0;
-}
-
 BSWaterShaderProperty::BSWaterShaderProperty(NiStream& stream) : BSWaterShaderProperty() {
 	Get(stream);
 }
@@ -715,10 +642,6 @@ int BSWaterShaderProperty::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSSkyShaderProperty::BSSkyShaderProperty() {
-	BSShaderProperty::Init();
-}
 
 BSSkyShaderProperty::BSSkyShaderProperty(NiStream& stream) : BSSkyShaderProperty() {
 	Get(stream);
@@ -779,12 +702,6 @@ int BSSkyShaderProperty::CalcBlockSize(NiVersion& version) {
 }
 
 
-void BSShaderLightingProperty::Init() {
-	BSShaderProperty::Init();
-
-	textureClampMode = 3;
-}
-
 void BSShaderLightingProperty::Get(NiStream& stream) {
 	BSShaderProperty::Get(stream);
 
@@ -808,15 +725,6 @@ int BSShaderLightingProperty::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-BSShaderPPLightingProperty::BSShaderPPLightingProperty() {
-	BSShaderLightingProperty::Init();
-
-	refractionStrength = 0.0;
-	refractionFirePeriod = 0;
-	parallaxMaxPasses = 4.0f;
-	parallaxScale = 1.0f;
-}
 
 BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiStream& stream) : BSShaderPPLightingProperty() {
 	Get(stream);
@@ -898,15 +806,6 @@ int BSShaderPPLightingProperty::CalcBlockSize(NiVersion& version) {
 }
 
 
-BSShaderNoLightingProperty::BSShaderNoLightingProperty() {
-	BSShaderLightingProperty::Init();
-
-	falloffStartAngle = 1.0f;
-	falloffStopAngle = 0.0f;
-	falloffStartOpacity = 1.0f;
-	falloffStopOpacity = 1.0f;
-}
-
 BSShaderNoLightingProperty::BSShaderNoLightingProperty(NiStream& stream) : BSShaderNoLightingProperty() {
 	Get(stream);
 }
@@ -965,13 +864,6 @@ int BSShaderNoLightingProperty::CalcBlockSize(NiVersion& version) {
 }
 
 
-NiAlphaProperty::NiAlphaProperty() {
-	NiProperty::Init();
-
-	flags = 4844;
-	threshold = 128;
-}
-
 NiAlphaProperty::NiAlphaProperty(NiStream& stream) : NiAlphaProperty() {
 	Get(stream);
 }
@@ -998,14 +890,6 @@ int NiAlphaProperty::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiMaterialProperty::NiMaterialProperty() {
-	NiProperty::Init();
-
-	glossiness = 1.0f;
-	alpha = 1.0f;
-	emitMulti = 1.0f;
-}
 
 NiMaterialProperty::NiMaterialProperty(NiStream& stream) : NiMaterialProperty() {
 	Get(stream);
@@ -1106,14 +990,6 @@ int NiMaterialProperty::CalcBlockSize(NiVersion& version) {
 	return blockSize;
 }
 
-
-NiStencilProperty::NiStencilProperty() {
-	NiProperty::Init();
-
-	flags = 19840;
-	stencilRef = 0;
-	stencilMask = 0xffffffff;
-}
 
 NiStencilProperty::NiStencilProperty(NiStream& stream) : NiStencilProperty() {
 	Get(stream);
