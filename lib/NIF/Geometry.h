@@ -41,7 +41,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize(NiVersion& version);
 
 	void SetVertices(const bool enable);
 	bool HasVertices() { return hasVertices; }
@@ -120,7 +119,6 @@ private:
 	BoundingSphere bounds;
 
 public:
-	// Set in CalcBlockSize(NiVersion& version)
 	byte vertFlags1;			// Number of uint elements in vertex data
 	byte vertFlags2;			// 4 byte or 2 byte position data
 
@@ -162,7 +160,6 @@ public:
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSTriShape* Clone() { return new BSTriShape(*this); }
 
 	int GetSkinInstanceRef() { return skinInstanceRef.index; }
@@ -274,7 +271,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize(NiVersion& version);
 	BSSubIndexTriShape* Clone() { return new BSSubIndexTriShape(*this); }
 
 	BSSITSSegmentation GetSegmentation() { return segmentation; }
@@ -299,7 +295,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize(NiVersion& version);
 	BSMeshLODTriShape* Clone() { return new BSMeshLODTriShape(*this); }
 };
 
@@ -317,7 +312,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize(NiVersion& version);
+	void CalcDynamicData();
 	BSDynamicTriShape* Clone() { return new BSDynamicTriShape(*this); }
 
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
@@ -343,7 +338,6 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 
 	bool IsSkinned() { return skinInstanceRef.index != 0xFFFFFFFF; }
 
@@ -369,7 +363,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
 };
@@ -412,7 +405,6 @@ public:
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
-	int CalcBlockSize(NiVersion& version);
 	NiTriShapeData* Clone() { return new NiTriShapeData(*this); }
 };
 
@@ -447,7 +439,6 @@ public:
 	void StripsToTris(std::vector<Triangle>* outTris);
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
-	int CalcBlockSize(NiVersion& version);
 	NiTriStripsData* Clone() { return new NiTriStripsData(*this); }
 };
 
@@ -466,6 +457,5 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSLODTriShape* Clone() { return new BSLODTriShape(*this); }
 };

@@ -112,7 +112,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	int CalcBlockSize(NiVersion& version);
 	NiSkinData* Clone() { return new NiSkinData(*this); }
 };
 
@@ -181,7 +180,6 @@ public:
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 	int RemoveEmptyPartitions(std::vector<int>& outDeletedIndices);
-	int CalcBlockSize(NiVersion& version);
 	NiSkinPartition* Clone() { return new NiSkinPartition(*this); }
 };
 
@@ -209,7 +207,6 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	NiSkinInstance* Clone() { return new NiSkinInstance(*this); }
 
 	int GetDataRef() { return dataRef.index; }
@@ -242,7 +239,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSDismemberSkinInstance* Clone() { return new BSDismemberSkinInstance(*this); }
 
 	int GetNumPartitions() { return numPartitions; }
@@ -282,7 +278,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSSkinBoneData* Clone() { return new BSSkinBoneData(*this); }
 };
 
@@ -307,7 +302,6 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	BSSkinInstance* Clone() { return new BSSkinInstance(*this); }
 
 	int GetTargetRef() { return targetRef.index; }

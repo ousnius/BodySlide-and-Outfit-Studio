@@ -37,7 +37,6 @@ public:
 	void AddExtraDataRef(const int id);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class NiProperty;
@@ -57,7 +56,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 
 	int GetCollisionRef() { return collisionRef.index; }
 	void SetCollisionRef(const int colRef) { collisionRef.index = colRef; }
@@ -116,7 +114,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	NiDefaultAVObjectPalette* Clone() { return new NiDefaultAVObjectPalette(*this); }
 };
 
@@ -150,7 +147,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiCamera* Clone() { return new NiCamera(*this); }
 };
 
@@ -170,7 +166,6 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiNode* Clone() { return new NiNode(*this); }
 
 	int GetNumChildren() { return childRefs.GetSize(); }
@@ -216,7 +211,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	int CalcBlockSize(NiVersion& version);
 	BSValueNode* Clone() { return new BSValueNode(*this); }
 };
 
@@ -245,7 +239,6 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSTreeNode* Clone() { return new BSTreeNode(*this); }
 };
 
@@ -264,7 +257,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	int CalcBlockSize(NiVersion& version);
 	BSOrderedNode* Clone() { return new BSOrderedNode(*this); }
 };
 
@@ -286,7 +278,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSMultiBoundOBB* Clone() { return new BSMultiBoundOBB(*this); }
 };
 
@@ -304,7 +295,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSMultiBoundAABB* Clone() { return new BSMultiBoundAABB(*this); }
 };
 
@@ -322,7 +312,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSMultiBound* Clone() { return new BSMultiBound(*this); }
 };
 
@@ -350,7 +339,6 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSMultiBoundNode* Clone() { return new BSMultiBoundNode(*this); }
 };
 
@@ -370,7 +358,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	int CalcBlockSize(NiVersion& version);
 	BSBlastNode* Clone() { return new BSBlastNode(*this); }
 };
 
@@ -409,7 +396,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	int CalcBlockSize(NiVersion& version);
 	NiBillboardNode* Clone() { return new NiBillboardNode(*this); }
 };
 
@@ -433,6 +419,5 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	int CalcBlockSize(NiVersion& version);
 	NiSwitchNode* Clone() { return new NiSwitchNode(*this); }
 };

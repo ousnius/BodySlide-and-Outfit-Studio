@@ -79,18 +79,6 @@ void NiObjectNET::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&controllerRef.index);
 }
 
-int NiObjectNET::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	if (bBSLightingShaderProperty && version.User() >= 12)
-		blockSize += 4;
-
-	blockSize += 8;
-	blockSize += extraDataRefs.CalcBlockSize();
-
-	return blockSize;
-}
-
 
 void NiAVObject::Get(NiStream& stream) {
 	NiObjectNET::Get(stream);
@@ -142,20 +130,6 @@ void NiAVObject::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&collisionRef.index);
 }
 
-int NiAVObject::CalcBlockSize(NiVersion& version) {
-	NiObjectNET::CalcBlockSize(version);
-
-	blockSize += 58;
-
-	if (version.User() <= 11)
-		blockSize += propertyRefs.CalcBlockSize();
-
-	if (version.User2() > 26)
-		blockSize += 2;
-
-	return blockSize;
-}
-
 
 NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiStream& stream) : NiDefaultAVObjectPalette() {
 	Get(stream);
@@ -193,18 +167,6 @@ void NiDefaultAVObjectPalette::GetPtrs(std::set<int*>& ptrs) {
 
 	for (int i = 0; i < numObjects; i++)
 		ptrs.insert(&objects[i].objectRef.index);
-}
-
-int NiDefaultAVObjectPalette::CalcBlockSize(NiVersion& version) {
-	NiAVObjectPalette::CalcBlockSize(version);
-
-	blockSize += 8;
-	blockSize += numObjects * 8;
-
-	for (int i = 0; i < numObjects; i++)
-		blockSize += objects[i].name.GetLength();
-
-	return blockSize;
 }
 
 
@@ -262,14 +224,6 @@ void NiCamera::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&sceneRef.index);
 }
 
-int NiCamera::CalcBlockSize(NiVersion& version) {
-	NiAVObject::CalcBlockSize(version);
-
-	blockSize += 59;
-
-	return blockSize;
-}
-
 
 NiNode::NiNode(NiStream& stream) : NiNode() {
 	Get(stream);
@@ -298,17 +252,6 @@ void NiNode::GetChildRefs(std::set<int*>& refs) {
 
 	childRefs.GetIndexPtrs(refs);
 	effectRefs.GetIndexPtrs(refs);
-}
-
-int NiNode::CalcBlockSize(NiVersion& version) {
-	NiAVObject::CalcBlockSize(version);
-
-	blockSize += childRefs.CalcBlockSize();
-
-	if (version.User() <= 12 && version.User2() < 130)
-		blockSize += effectRefs.CalcBlockSize();
-
-	return blockSize;
 }
 
 int NiNode::GetChildRef(const int id) {
@@ -367,14 +310,6 @@ void BSValueNode::Put(NiStream& stream) {
 	stream << valueFlags;
 }
 
-int BSValueNode::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += 5;
-
-	return blockSize;
-}
-
 
 BSLeafAnimNode::BSLeafAnimNode() : NiNode() {
 }
@@ -412,15 +347,6 @@ void BSTreeNode::GetChildRefs(std::set<int*>& refs) {
 	bones2.GetIndexPtrs(refs);
 }
 
-int BSTreeNode::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += bones1.CalcBlockSize();
-	blockSize += bones2.CalcBlockSize();
-
-	return blockSize;
-}
-
 
 BSOrderedNode::BSOrderedNode() : NiNode() {
 }
@@ -441,14 +367,6 @@ void BSOrderedNode::Put(NiStream& stream) {
 
 	stream << alphaSortBound;
 	stream << isStaticBound;
-}
-
-int BSOrderedNode::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += 17;
-
-	return blockSize;
 }
 
 
@@ -472,14 +390,6 @@ void BSMultiBoundOBB::Put(NiStream& stream) {
 	stream.write((char*)rotation, 36);
 }
 
-int BSMultiBoundOBB::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 60;
-
-	return blockSize;
-}
-
 
 BSMultiBoundAABB::BSMultiBoundAABB(NiStream& stream) : BSMultiBoundAABB() {
 	Get(stream);
@@ -497,14 +407,6 @@ void BSMultiBoundAABB::Put(NiStream& stream) {
 
 	stream << center;
 	stream << halfExtent;
-}
-
-int BSMultiBoundAABB::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 24;
-
-	return blockSize;
 }
 
 
@@ -528,14 +430,6 @@ void BSMultiBound::GetChildRefs(std::set<int*>& refs) {
 	NiObject::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
-}
-
-int BSMultiBound::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -570,16 +464,6 @@ void BSMultiBoundNode::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&multiBoundRef.index);
 }
 
-int BSMultiBoundNode::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += 4;
-	if (version.User() >= 12)
-		blockSize += 4;
-
-	return blockSize;
-}
-
 
 BSBlastNode::BSBlastNode() : NiNode() {
 }
@@ -602,14 +486,6 @@ void BSBlastNode::Put(NiStream& stream) {
 	stream << min;
 	stream << max;
 	stream << current;
-}
-
-int BSBlastNode::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += 3;
-
-	return blockSize;
 }
 
 
@@ -640,14 +516,6 @@ void NiBillboardNode::Put(NiStream& stream) {
 	stream << billboardMode;
 }
 
-int NiBillboardNode::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += 2;
-
-	return blockSize;
-}
-
 
 NiSwitchNode::NiSwitchNode() : NiNode() {
 }
@@ -668,12 +536,4 @@ void NiSwitchNode::Put(NiStream& stream) {
 
 	stream << flags;
 	stream << index;
-}
-
-int NiSwitchNode::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += 6;
-
-	return blockSize;
 }

@@ -1109,16 +1109,33 @@ int NifFile::Save(const std::string& filename, bool optimize, bool sortBlocks) {
 		if (sortBlocks)
 			PrettySortBlocks();
 
-		hdr.CalcAllBlockSizes();
 		hdr.Put(stream);
+		stream.InitBlockSize();
 
-		for (int i = 0; i < hdr.GetNumBlocks(); i++)
+		// Retrieve block sizes from NiStream while writing
+		std::vector<int> blockSizes(hdr.GetNumBlocks());
+		for (int i = 0; i < hdr.GetNumBlocks(); i++) {
 			blocks[i]->Put(stream);
+			blockSizes[i] = stream.GetBlockSize();
+			stream.InitBlockSize();
+		}
 
 		uint endPad = 1;
 		stream << endPad;
 		endPad = 0;
 		stream << endPad;
+
+		// Get previous stream pos of block size array and overwrite
+		std::streampos blockSizePos = hdr.GetBlockSizeStreamPos();
+		if (blockSizePos.seekpos() != std::fpos_t()) {
+			file.seekg(blockSizePos);
+
+			for (int i = 0; i < hdr.GetNumBlocks(); i++)
+				stream << blockSizes[i];
+
+			hdr.ResetBlockSizeStreamPos();
+		}
+
 		file.close();
 	}
 	else
@@ -1444,32 +1461,33 @@ void NifFile::FinalizeData() {
 		if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().User2() == 100) {
 			NiShape* shape = FindShapeByName(s);
 			if (shape) {
-				BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
-				if (!bsTriShape)
-					continue;
+				auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+				if (bsTriShape) {
+					auto bsDynTriShape = dynamic_cast<BSDynamicTriShape*>(shape);
+					if (bsDynTriShape)
+						bsDynTriShape->CalcDynamicData();
 
-				auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-				if (!skinInst)
-					continue;
+					bsTriShape->CalcDataSizes(hdr.GetVersion());
 
-				auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-				if (!skinPart)
-					continue;
-
-				bsTriShape->CalcDataSizes(hdr.GetVersion());
-
-				skinPart->numVertices = bsTriShape->numVertices;
-				skinPart->dataSize = bsTriShape->dataSize;
-				skinPart->vertexSize = bsTriShape->vertexSize;
-				skinPart->vertData = bsTriShape->vertData;
-				skinPart->vertFlags1 = bsTriShape->vertFlags1;
-				skinPart->vertFlags2 = bsTriShape->vertFlags2;
-				skinPart->vertFlags3 = bsTriShape->vertFlags3;
-				skinPart->vertFlags4 = bsTriShape->vertFlags4;
-				skinPart->vertFlags5 = bsTriShape->vertFlags5;
-				skinPart->vertFlags6 = bsTriShape->vertFlags6;
-				skinPart->vertFlags7 = bsTriShape->vertFlags7;
-				skinPart->vertFlags8 = bsTriShape->vertFlags8;
+					auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+					if (skinInst) {
+						auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+						if (skinPart) {
+							skinPart->numVertices = bsTriShape->numVertices;
+							skinPart->dataSize = bsTriShape->dataSize;
+							skinPart->vertexSize = bsTriShape->vertexSize;
+							skinPart->vertData = bsTriShape->vertData;
+							skinPart->vertFlags1 = bsTriShape->vertFlags1;
+							skinPart->vertFlags2 = bsTriShape->vertFlags2;
+							skinPart->vertFlags3 = bsTriShape->vertFlags3;
+							skinPart->vertFlags4 = bsTriShape->vertFlags4;
+							skinPart->vertFlags5 = bsTriShape->vertFlags5;
+							skinPart->vertFlags6 = bsTriShape->vertFlags6;
+							skinPart->vertFlags7 = bsTriShape->vertFlags7;
+							skinPart->vertFlags8 = bsTriShape->vertFlags8;
+						}
+					}
+				}
 			}
 		}
 	}

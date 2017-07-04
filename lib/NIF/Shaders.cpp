@@ -66,18 +66,6 @@ Vector2 BSShaderProperty::GetUVScale() {
 	return uvScale;
 }
 
-int BSShaderProperty::CalcBlockSize(NiVersion& version) {
-	NiProperty::CalcBlockSize(version);
-
-	blockSize += 8;
-	if (version.User() <= 11)
-		blockSize += 10;
-	else
-		blockSize += 16;
-
-	return blockSize;
-}
-
 
 BSShaderTextureSet::BSShaderTextureSet() {
 	textures.resize(numTextures);
@@ -113,18 +101,6 @@ void BSShaderTextureSet::Put(NiStream& stream) {
 	stream << numTextures;
 	for (int i = 0; i < numTextures; i++)
 		textures[i].Put(stream, 4, false);
-}
-
-int BSShaderTextureSet::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 4;
-	for (auto &tex : textures) {
-		blockSize += 4;
-		blockSize += tex.GetLength();
-	}
-
-	return blockSize;
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty() {
@@ -419,54 +395,6 @@ void BSLightingShaderProperty::SetWetMaterialName(const std::string& matName) {
 	wetMaterialName.SetString(matName);
 }
 
-int BSLightingShaderProperty::CalcBlockSize(NiVersion& version) {
-	BSShaderProperty::CalcBlockSize(version);
-
-	blockSize += 20;
-
-	if (version.User() == 12 && version.User2() >= 130)
-		blockSize += 4;
-
-	blockSize += 32;
-
-	if (version.User() <= 12 && version.User2() < 130)
-		blockSize += 8;
-
-	if (version.User() == 12 && version.User2() >= 130)
-		blockSize += 44;
-
-	switch (skyrimShaderType) {
-	case 1:
-		blockSize += 4;
-		if (version.User() == 12 && version.User2() >= 130)
-			blockSize += 2;
-		break;
-	case 5:
-		if (version.User() == 12 && version.User2() >= 130)
-			blockSize += 4;
-
-		blockSize += 12;
-		break;
-	case 6:
-		blockSize += 12;
-		break;
-	case 7:
-		blockSize += 8;
-		break;
-	case 11:
-		blockSize += 20;
-		break;
-	case 14:
-		blockSize += 16;
-		break;
-	case 16:
-		blockSize += 28;
-		break;
-	}
-
-	return blockSize;
-}
-
 
 BSEffectShaderProperty::BSEffectShaderProperty(NiStream& stream) : BSEffectShaderProperty() {
 	Get(stream);
@@ -569,23 +497,6 @@ void BSEffectShaderProperty::SetEmissiveMultiple(const float emissive) {
 	emissiveMultiple = emissive;
 }
 
-int BSEffectShaderProperty::CalcBlockSize(NiVersion& version) {
-	BSShaderProperty::CalcBlockSize(version);
-
-	blockSize += 52;
-	blockSize += sourceTexture.GetLength();
-	blockSize += greyscaleTexture.GetLength();
-
-	if (version.User() == 12 && version.User2() >= 130) {
-		blockSize += 16;
-		blockSize += envMapTexture.GetLength();
-		blockSize += normalTexture.GetLength();
-		blockSize += envMaskTexture.GetLength();
-	}
-
-	return blockSize;
-}
-
 
 BSWaterShaderProperty::BSWaterShaderProperty(NiStream& stream) : BSWaterShaderProperty() {
 	Get(stream);
@@ -632,14 +543,6 @@ bool BSWaterShaderProperty::IsEmissive() {
 
 bool BSWaterShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
-}
-
-int BSWaterShaderProperty::CalcBlockSize(NiVersion& version) {
-	BSShaderProperty::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -692,15 +595,6 @@ bool BSSkyShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
 
-int BSSkyShaderProperty::CalcBlockSize(NiVersion& version) {
-	BSShaderProperty::CalcBlockSize(version);
-
-	blockSize += 8;
-	blockSize += baseTexture.GetLength();
-
-	return blockSize;
-}
-
 
 void BSShaderLightingProperty::Get(NiStream& stream) {
 	BSShaderProperty::Get(stream);
@@ -714,15 +608,6 @@ void BSShaderLightingProperty::Put(NiStream& stream) {
 
 	if (stream.GetVersion().User() <= 11)
 		stream << textureClampMode;
-}
-
-int BSShaderLightingProperty::CalcBlockSize(NiVersion& version) {
-	BSShaderProperty::CalcBlockSize(version);
-
-	if (version.User() <= 11)
-		blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -791,20 +676,6 @@ void BSShaderPPLightingProperty::SetTextureSetRef(const int texSetRef) {
 	textureSetRef.index = texSetRef;
 }
 
-int BSShaderPPLightingProperty::CalcBlockSize(NiVersion& version) {
-	BSShaderLightingProperty::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	if (version.User() == 11)
-		blockSize += 16;
-
-	if (version.User() >= 12)
-		blockSize += 16;
-
-	return blockSize;
-}
-
 
 BSShaderNoLightingProperty::BSShaderNoLightingProperty(NiStream& stream) : BSShaderNoLightingProperty() {
 	Get(stream);
@@ -851,18 +722,6 @@ void BSShaderNoLightingProperty::SetSkinned(const bool enable) {
 		shaderFlags1 &= ~(1 << 1);
 }
 
-int BSShaderNoLightingProperty::CalcBlockSize(NiVersion& version) {
-	BSShaderLightingProperty::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += baseTexture.GetLength();
-
-	if (version.User2() > 26)
-		blockSize += 16;
-
-	return blockSize;
-}
-
 
 NiAlphaProperty::NiAlphaProperty(NiStream& stream) : NiAlphaProperty() {
 	Get(stream);
@@ -880,14 +739,6 @@ void NiAlphaProperty::Put(NiStream& stream) {
 
 	stream << flags;
 	stream << threshold;
-}
-
-int NiAlphaProperty::CalcBlockSize(NiVersion& version) {
-	NiProperty::CalcBlockSize(version);
-
-	blockSize += 3;
-
-	return blockSize;
 }
 
 
@@ -977,19 +828,6 @@ float NiMaterialProperty::GetAlpha() {
 	return alpha;
 }
 
-int NiMaterialProperty::CalcBlockSize(NiVersion& version) {
-	NiProperty::CalcBlockSize(version);
-
-	if (!(version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21))
-		blockSize += 24;
-	else
-		blockSize += 4;
-
-	blockSize += 32;
-
-	return blockSize;
-}
-
 
 NiStencilProperty::NiStencilProperty(NiStream& stream) : NiStencilProperty() {
 	Get(stream);
@@ -1009,12 +847,4 @@ void NiStencilProperty::Put(NiStream& stream) {
 	stream << flags;
 	stream << stencilRef;
 	stream << stencilMask;
-}
-
-int NiStencilProperty::CalcBlockSize(NiVersion& version) {
-	NiProperty::CalcBlockSize(version);
-
-	blockSize += 10;
-
-	return blockSize;
 }

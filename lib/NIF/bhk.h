@@ -145,19 +145,6 @@ struct MotorDesc {
 			break;
 		}
 	}
-
-	int CalcMotorSize() {
-		switch (motorType) {
-		case MOTOR_POSITION:
-			return 25;
-		case MOTOR_VELOCITY:
-			return 18;
-		case MOTOR_SPRING:
-			return 17;
-		default:
-			return 0;
-		}
-	}
 };
 
 struct HingeDesc {
@@ -282,7 +269,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	NiCollisionObject* Clone() { return new NiCollisionObject(*this); }
 };
 
@@ -301,7 +287,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	bhkNiCollisionObject* Clone() { return new bhkNiCollisionObject(*this); }
 };
 
@@ -329,7 +314,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkNPCollisionObject* Clone() { return new bhkNPCollisionObject(*this); }
 };
 
@@ -369,7 +353,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkBlendCollisionObject* Clone() { return new bhkBlendCollisionObject(*this); }
 };
 
@@ -384,7 +367,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkPhysicsSystem* Clone() { return new bhkPhysicsSystem(*this); }
 };
 
@@ -418,7 +400,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkPlaneShape* Clone() { return new bhkPlaneShape(*this); }
 };
 
@@ -430,7 +411,6 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class bhkConvexShape : public bhkSphereRepShape {
@@ -458,7 +438,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkConvexVerticesShape* Clone() { return new bhkConvexVerticesShape(*this); }
 };
 
@@ -477,7 +456,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkBoxShape* Clone() { return new bhkBoxShape(*this); }
 };
 
@@ -510,7 +488,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	bhkTransformShape* Clone() { return new bhkTransformShape(*this); }
 };
 
@@ -542,7 +519,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkCapsuleShape* Clone() { return new bhkCapsuleShape(*this); }
 };
 
@@ -571,7 +547,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	bhkMoppBvTreeShape* Clone() { return new bhkMoppBvTreeShape(*this); }
 };
 
@@ -604,7 +579,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	bhkNiTriStripsShape* Clone() { return new bhkNiTriStripsShape(*this); }
 };
 
@@ -630,7 +604,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	bhkListShape* Clone() { return new bhkListShape(*this); }
 };
 
@@ -647,7 +620,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	bhkWorldObject* Clone() { return new bhkWorldObject(*this); }
 };
 
@@ -671,7 +643,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkSimpleShapePhantom* Clone() { return new bhkSimpleShapePhantom(*this); }
 };
 
@@ -687,7 +658,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class bhkHingeConstraint : public bhkConstraint {
@@ -703,7 +673,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkHingeConstraint* Clone() { return new bhkHingeConstraint(*this); }
 };
 
@@ -720,7 +689,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkLimitedHingeConstraint* Clone() { return new bhkLimitedHingeConstraint(*this); }
 };
 
@@ -743,7 +711,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcDescSize();
 };
 
 class bhkBreakableConstraint : public bhkConstraint {
@@ -761,7 +728,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	bhkBreakableConstraint* Clone() { return new bhkBreakableConstraint(*this); }
 };
 
@@ -778,7 +744,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkRagdollConstraint* Clone() { return new bhkRagdollConstraint(*this); }
 };
 
@@ -795,7 +760,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkStiffSpringConstraint* Clone() { return new bhkStiffSpringConstraint(*this); }
 };
 
@@ -812,7 +776,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkPrismaticConstraint* Clone() { return new bhkPrismaticConstraint(*this); }
 };
 
@@ -829,7 +792,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkMalleableConstraint* Clone() { return new bhkMalleableConstraint(*this); }
 };
 
@@ -846,7 +808,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkBallAndSocketConstraint* Clone() { return new bhkBallAndSocketConstraint(*this); }
 };
 
@@ -877,7 +838,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	bhkBallSocketConstraintChain* Clone() { return new bhkBallSocketConstraintChain(*this); }
 };
 
@@ -938,7 +898,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	bhkRigidBody* Clone() { return new bhkRigidBody(*this); }
 };
 
@@ -1000,7 +959,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	bhkCompressedMeshShapeData* Clone() { return new bhkCompressedMeshShapeData(*this); }
 };
 
@@ -1026,6 +984,5 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
 };

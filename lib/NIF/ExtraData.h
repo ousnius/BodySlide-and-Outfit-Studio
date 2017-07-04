@@ -17,7 +17,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	int CalcBlockSize(NiVersion& version);
 
 	std::string GetName();
 	void SetName(const std::string& extraDataName);
@@ -37,7 +36,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiBinaryExtraData* Clone() { return new NiBinaryExtraData(*this); }
 };
 
@@ -54,7 +52,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiFloatExtraData* Clone() { return new NiFloatExtraData(*this); }
 };
 
@@ -72,7 +69,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiStringExtraData* Clone() { return new NiStringExtraData(*this); }
 
 	std::string GetStringData();
@@ -93,7 +89,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiStringsExtraData* Clone() { return new NiStringsExtraData(*this); }
 };
 
@@ -110,7 +105,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiBooleanExtraData* Clone() { return new NiBooleanExtraData(*this); }
 
 	bool GetBooleanData();
@@ -130,7 +124,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiIntegerExtraData* Clone() { return new NiIntegerExtraData(*this); }
 
 	uint GetIntegerData();
@@ -164,7 +157,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSInvMarker* Clone() { return new BSInvMarker(*this); }
 };
 
@@ -194,7 +186,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSFurnitureMarker* Clone() { return new BSFurnitureMarker(*this); }
 };
 
@@ -230,7 +221,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSDecalPlacementVectorExtraData* Clone() { return new BSDecalPlacementVectorExtraData(*this); }
 };
 
@@ -249,7 +239,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSBehaviorGraphExtraData* Clone() { return new BSBehaviorGraphExtraData(*this); }
 };
 
@@ -267,7 +256,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSBound* Clone() { return new BSBound(*this); }
 };
 
@@ -291,7 +279,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSBoneLODExtraData* Clone() { return new BSBoneLODExtraData(*this); }
 };
 
@@ -310,7 +297,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiTextKeyExtraData* Clone() { return new NiTextKeyExtraData(*this); }
 };
 
@@ -327,7 +313,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSConnectPoint* Clone() { return new BSConnectPoint(*this); }
 };
 
@@ -345,7 +330,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSConnectPointParents* Clone() { return new BSConnectPointParents(*this); }
 };
 
@@ -364,7 +348,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSConnectPointChildren* Clone() { return new BSConnectPointChildren(*this); }
 };
 
@@ -386,7 +369,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSClothExtraData* Clone() { return new BSClothExtraData(*this); }
 
 	bool ToHKX(const std::string& fileName);

@@ -68,33 +68,6 @@ void NiKeyframeData::Put(NiStream& stream) {
 	scales.Put(stream);
 }
 
-int NiKeyframeData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	if (numRotationKeys > 0) {
-		blockSize += 4;
-
-		if (rotationType != XYZ_ROTATION_KEY) {
-			blockSize += 20 * numRotationKeys;
-
-			if (rotationType == TBC_KEY)
-				blockSize += 12 * numRotationKeys;
-		}
-		else {
-			blockSize += xRotations.CalcGroupSize();
-			blockSize += yRotations.CalcGroupSize();
-			blockSize += zRotations.CalcGroupSize();
-		}
-	}
-
-	blockSize += translations.CalcGroupSize();
-	blockSize += scales.CalcGroupSize();
-
-	return blockSize;
-}
-
 
 NiTransformData::NiTransformData() : NiKeyframeData() {
 }
@@ -120,14 +93,6 @@ void NiPosData::Put(NiStream& stream) {
 	data.Put(stream);
 }
 
-int NiPosData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += data.CalcGroupSize();
-
-	return blockSize;
-}
-
 
 NiBoolData::NiBoolData(NiStream& stream) : NiBoolData() {
 	Get(stream);
@@ -145,14 +110,6 @@ void NiBoolData::Put(NiStream& stream) {
 	data.Put(stream);
 }
 
-int NiBoolData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += data.CalcGroupSize();
-
-	return blockSize;
-}
-
 
 NiFloatData::NiFloatData(NiStream& stream) : NiFloatData() {
 	Get(stream);
@@ -168,14 +125,6 @@ void NiFloatData::Put(NiStream& stream) {
 	NiObject::Put(stream);
 
 	data.Put(stream);
-}
-
-int NiFloatData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += data.CalcGroupSize();
-
-	return blockSize;
 }
 
 
@@ -215,14 +164,6 @@ void NiTimeController::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&targetRef.index);
 }
 
-int NiTimeController::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 26;
-
-	return blockSize;
-}
-
 
 BSFrustumFOVController::BSFrustumFOVController(NiStream& stream) : BSFrustumFOVController() {
 	Get(stream);
@@ -246,14 +187,6 @@ void BSFrustumFOVController::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&interpolatorRef.index);
 }
 
-int BSFrustumFOVController::CalcBlockSize(NiVersion& version) {
-	NiTimeController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 BSLagBoneController::BSLagBoneController(NiStream& stream) : BSLagBoneController() {
 	Get(stream);
@@ -273,14 +206,6 @@ void BSLagBoneController::Put(NiStream& stream) {
 	stream << linearVelocity;
 	stream << linearRotation;
 	stream << maxDistance;
-}
-
-int BSLagBoneController::CalcBlockSize(NiVersion& version) {
-	NiTimeController::CalcBlockSize(version);
-
-	blockSize += 12;
-
-	return blockSize;
 }
 
 
@@ -363,14 +288,6 @@ void BSProceduralLightningController::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shaderPropertyRef.index);
 }
 
-int BSProceduralLightningController::CalcBlockSize(NiVersion& version) {
-	NiTimeController::CalcBlockSize(version);
-
-	blockSize += 69;
-
-	return blockSize;
-}
-
 
 NiBoneLODController::NiBoneLODController(NiStream& stream) : NiBoneLODController() {
 	Get(stream);
@@ -406,16 +323,6 @@ void NiBoneLODController::GetPtrs(std::set<int*>& ptrs) {
 		boneArrays[i].GetIndexPtrs(ptrs);
 }
 
-int NiBoneLODController::CalcBlockSize(NiVersion& version) {
-	NiTimeController::CalcBlockSize(version);
-
-	blockSize += 12;
-	for (int i = 0; i < boneArraysSize; i++)
-		blockSize += boneArrays[i].CalcBlockSize();
-
-	return blockSize;
-}
-
 
 void NiSingleInterpController::Get(NiStream& stream) {
 	NiInterpController::Get(stream);
@@ -433,14 +340,6 @@ void NiSingleInterpController::GetChildRefs(std::set<int*>& refs) {
 	NiInterpController::GetChildRefs(refs);
 
 	refs.insert(&interpolatorRef.index);
-}
-
-int NiSingleInterpController::CalcBlockSize(NiVersion& version) {
-	NiInterpController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -464,14 +363,6 @@ void NiFloatExtraDataController::GetStringRefs(std::set<StringRef*>& refs) {
 	NiExtraDataController::GetStringRefs(refs);
 
 	refs.insert(&extraData);
-}
-
-int NiFloatExtraDataController::CalcBlockSize(NiVersion& version) {
-	NiExtraDataController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -527,14 +418,6 @@ void BSLightingShaderPropertyColorController::Put(NiStream& stream) {
 	stream << typeOfControlledColor;
 }
 
-int BSLightingShaderPropertyColorController::CalcBlockSize(NiVersion& version) {
-	NiFloatInterpController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiStream& stream) : BSLightingShaderPropertyFloatController() {
 	Get(stream);
@@ -550,14 +433,6 @@ void BSLightingShaderPropertyFloatController::Put(NiStream& stream) {
 	NiFloatInterpController::Put(stream);
 
 	stream << typeOfControlledVariable;
-}
-
-int BSLightingShaderPropertyFloatController::CalcBlockSize(NiVersion& version) {
-	NiFloatInterpController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -577,14 +452,6 @@ void BSEffectShaderPropertyColorController::Put(NiStream& stream) {
 	stream << typeOfControlledColor;
 }
 
-int BSEffectShaderPropertyColorController::CalcBlockSize(NiVersion& version) {
-	NiFloatInterpController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiStream& stream) : BSEffectShaderPropertyFloatController() {
 	Get(stream);
@@ -600,14 +467,6 @@ void BSEffectShaderPropertyFloatController::Put(NiStream& stream) {
 	NiFloatInterpController::Put(stream);
 
 	stream << typeOfControlledVariable;
-}
-
-int BSEffectShaderPropertyFloatController::CalcBlockSize(NiVersion& version) {
-	NiFloatInterpController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -633,14 +492,6 @@ void NiMultiTargetTransformController::GetPtrs(std::set<int*>& ptrs) {
 	targetRefs.GetIndexPtrs(ptrs);
 }
 
-int NiMultiTargetTransformController::CalcBlockSize(NiVersion& version) {
-	NiInterpController::CalcBlockSize(version);
-
-	blockSize += targetRefs.CalcBlockSize();
-
-	return blockSize;
-}
-
 
 void NiPSysModifierCtlr::Get(NiStream& stream) {
 	NiSingleInterpController::Get(stream);
@@ -658,14 +509,6 @@ void NiPSysModifierCtlr::GetStringRefs(std::set<StringRef*>& refs) {
 	NiSingleInterpController::GetStringRefs(refs);
 
 	refs.insert(&modifierName);
-}
-
-int NiPSysModifierCtlr::CalcBlockSize(NiVersion& version) {
-	NiSingleInterpController::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -731,14 +574,6 @@ void NiPSysEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&visInterpolatorRef.index);
 }
 
-int NiPSysEmitterCtlr::CalcBlockSize(NiVersion& version) {
-	NiPSysModifierCtlr::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 BSPSysMultiTargetEmitterCtlr::BSPSysMultiTargetEmitterCtlr() : NiPSysEmitterCtlr() {
 }
@@ -767,14 +602,6 @@ void BSPSysMultiTargetEmitterCtlr::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&masterParticleSystemRef.index);
 }
 
-int BSPSysMultiTargetEmitterCtlr::CalcBlockSize(NiVersion& version) {
-	NiPSysEmitterCtlr::CalcBlockSize(version);
-
-	blockSize += 6;
-
-	return blockSize;
-}
-
 
 void NiBlendInterpolator::Get(NiStream& stream) {
 	NiInterpolator::Get(stream);
@@ -788,14 +615,6 @@ void NiBlendInterpolator::Put(NiStream& stream) {
 
 	stream << flags;
 	stream << unkInt;
-}
-
-int NiBlendInterpolator::CalcBlockSize(NiVersion& version) {
-	NiInterpolator::CalcBlockSize(version);
-
-	blockSize += 6;
-
-	return blockSize;
 }
 
 
@@ -815,14 +634,6 @@ void NiBlendBoolInterpolator::Put(NiStream& stream) {
 	stream << value;
 }
 
-int NiBlendBoolInterpolator::CalcBlockSize(NiVersion& version) {
-	NiBlendInterpolator::CalcBlockSize(version);
-
-	blockSize += 1;
-
-	return blockSize;
-}
-
 
 NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiStream& stream) : NiBlendFloatInterpolator() {
 	Get(stream);
@@ -840,14 +651,6 @@ void NiBlendFloatInterpolator::Put(NiStream& stream) {
 	stream << value;
 }
 
-int NiBlendFloatInterpolator::CalcBlockSize(NiVersion& version) {
-	NiBlendInterpolator::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiStream& stream) : NiBlendPoint3Interpolator() {
 	Get(stream);
@@ -863,14 +666,6 @@ void NiBlendPoint3Interpolator::Put(NiStream& stream) {
 	NiBlendInterpolator::Put(stream);
 
 	stream << point;
-}
-
-int NiBlendPoint3Interpolator::CalcBlockSize(NiVersion& version) {
-	NiBlendInterpolator::CalcBlockSize(version);
-
-	blockSize += 12;
-
-	return blockSize;
 }
 
 
@@ -896,14 +691,6 @@ void NiBoolInterpolator::GetChildRefs(std::set<int*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
-}
-
-int NiBoolInterpolator::CalcBlockSize(NiVersion& version) {
-	NiKeyBasedInterpolator::CalcBlockSize(version);
-
-	blockSize += 5;
-
-	return blockSize;
 }
 
 
@@ -939,14 +726,6 @@ void NiFloatInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int NiFloatInterpolator::CalcBlockSize(NiVersion& version) {
-	NiKeyBasedInterpolator::CalcBlockSize(version);
-
-	blockSize += 8;
-
-	return blockSize;
-}
-
 
 NiTransformInterpolator::NiTransformInterpolator(NiStream& stream) : NiTransformInterpolator() {
 	Get(stream);
@@ -976,14 +755,6 @@ void NiTransformInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-int NiTransformInterpolator::CalcBlockSize(NiVersion& version) {
-	NiKeyBasedInterpolator::CalcBlockSize(version);
-
-	blockSize += 36;
-
-	return blockSize;
-}
-
 
 NiPoint3Interpolator::NiPoint3Interpolator(NiStream& stream) : NiPoint3Interpolator() {
 	Get(stream);
@@ -1007,14 +778,6 @@ void NiPoint3Interpolator::GetChildRefs(std::set<int*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
-}
-
-int NiPoint3Interpolator::CalcBlockSize(NiVersion& version) {
-	NiKeyBasedInterpolator::CalcBlockSize(version);
-
-	blockSize += 16;
-
-	return blockSize;
 }
 
 
@@ -1051,14 +814,6 @@ void NiPathInterpolator::GetChildRefs(std::set<int*>& refs) {
 
 	refs.insert(&pathDataRef.index);
 	refs.insert(&percentDataRef.index);
-}
-
-int NiPathInterpolator::CalcBlockSize(NiVersion& version) {
-	NiKeyBasedInterpolator::CalcBlockSize(version);
-
-	blockSize += 24;
-
-	return blockSize;
 }
 
 
@@ -1108,14 +863,6 @@ void NiLookAtInterpolator::GetPtrs(std::set<int*>& ptrs) {
 	NiInterpolator::GetPtrs(ptrs);
 
 	ptrs.insert(&lookAtRef.index);
-}
-
-int NiLookAtInterpolator::CalcBlockSize(NiVersion& version) {
-	NiInterpolator::CalcBlockSize(version);
-
-	blockSize += 54;
-
-	return blockSize;
 }
 
 
@@ -1188,15 +935,6 @@ void NiSequence::GetChildRefs(std::set<int*>& refs) {
 	}
 }
 
-int NiSequence::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 12;
-	blockSize += numControlledBlocks * 29;
-
-	return blockSize;
-}
-
 
 NiControllerSequence::NiControllerSequence() : NiSequence() {
 }
@@ -1251,14 +989,6 @@ void NiControllerSequence::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&managerRef.index);
 }
 
-int NiControllerSequence::CalcBlockSize(NiVersion& version) {
-	NiSequence::CalcBlockSize(version);
-
-	blockSize += 34;
-
-	return blockSize;
-}
-
 
 NiControllerManager::NiControllerManager(NiStream& stream) : NiControllerManager() {
 	Get(stream);
@@ -1287,13 +1017,4 @@ void NiControllerManager::GetChildRefs(std::set<int*>& refs) {
 
 	controllerSequenceRefs.GetIndexPtrs(refs);
 	refs.insert(&objectPaletteRef.index);
-}
-
-int NiControllerManager::CalcBlockSize(NiVersion& version) {
-	NiTimeController::CalcBlockSize(version);
-
-	blockSize += 5;
-	blockSize += controllerSequenceRefs.CalcBlockSize();
-
-	return blockSize;
 }

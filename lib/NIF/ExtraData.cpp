@@ -33,14 +33,6 @@ void NiExtraData::SetName(const std::string& extraDataName) {
 	name.SetString(extraDataName);
 }
 
-int NiExtraData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 NiBinaryExtraData::NiBinaryExtraData(NiStream& stream) : NiBinaryExtraData() {
 	Get(stream);
@@ -63,15 +55,6 @@ void NiBinaryExtraData::Put(NiStream& stream) {
 		stream << data[i];
 }
 
-int NiBinaryExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += size;
-
-	return blockSize;
-}
-
 
 NiFloatExtraData::NiFloatExtraData(NiStream& stream) : NiFloatExtraData() {
 	Get(stream);
@@ -87,14 +70,6 @@ void NiFloatExtraData::Put(NiStream& stream) {
 	NiExtraData::Put(stream);
 
 	stream << floatData;
-}
-
-int NiFloatExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -117,18 +92,6 @@ void NiStringsExtraData::Put(NiStream& stream) {
 	stream << numStrings;
 	for (int i = 0; i < numStrings; i++)
 		stringsData[i].Put(stream, 4, false);
-}
-
-int NiStringsExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += numStrings * 4;
-
-	for (int i = 0; i < numStrings; i++)
-		blockSize += stringsData[i].GetLength();
-
-	return blockSize;
 }
 
 
@@ -162,14 +125,6 @@ void NiStringExtraData::SetStringData(const std::string& str) {
 	stringData.SetString(str);
 }
 
-int NiStringExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 NiBooleanExtraData::NiBooleanExtraData(NiStream& stream) : NiBooleanExtraData() {
 	Get(stream);
@@ -195,14 +150,6 @@ void NiBooleanExtraData::SetBooleanData(const bool boolData) {
 	this->booleanData = boolData;
 }
 
-int NiBooleanExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 1;
-
-	return blockSize;
-}
-
 
 NiIntegerExtraData::NiIntegerExtraData(NiStream& stream) : NiIntegerExtraData() {
 	Get(stream);
@@ -226,14 +173,6 @@ uint NiIntegerExtraData::GetIntegerData() {
 
 void NiIntegerExtraData::SetIntegerData(const uint intData) {
 	this->integerData = intData;
-}
-
-int NiIntegerExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -265,14 +204,6 @@ void BSInvMarker::Put(NiStream& stream) {
 	stream << rotationY;
 	stream << rotationZ;
 	stream << zoom;
-}
-
-int BSInvMarker::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 10;
-
-	return blockSize;
 }
 
 
@@ -323,21 +254,6 @@ void BSFurnitureMarker::Put(NiStream& stream) {
 			stream << positions[i].entryPoints;
 		}
 	}
-}
-
-int BSFurnitureMarker::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += 12 * numPositions;
-
-	if (version.User() <= 11)
-		blockSize += 4 * numPositions;
-
-	if (version.User() >= 12)
-		blockSize += 8 * numPositions;
-
-	return blockSize;
 }
 
 
@@ -391,16 +307,6 @@ void BSDecalPlacementVectorExtraData::Put(NiStream& stream) {
 	}
 }
 
-int BSDecalPlacementVectorExtraData::CalcBlockSize(NiVersion& version) {
-	NiFloatExtraData::CalcBlockSize(version);
-
-	blockSize += 2;
-	for (int i = 0; i < numVectorBlocks; i++)
-		blockSize += 2 + decalVectorBlocks[i].numVectors * 24;
-
-	return blockSize;
-}
-
 
 BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiStream& stream) : BSBehaviorGraphExtraData() {
 	Get(stream);
@@ -426,14 +332,6 @@ void BSBehaviorGraphExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 	refs.insert(&behaviorGraphFile);
 }
 
-int BSBehaviorGraphExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 5;
-
-	return blockSize;
-}
-
 
 BSBound::BSBound(NiStream& stream) : BSBound() {
 	Get(stream);
@@ -451,14 +349,6 @@ void BSBound::Put(NiStream& stream) {
 
 	stream << center;
 	stream << halfExtents;
-}
-
-int BSBound::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 24;
-
-	return blockSize;
 }
 
 
@@ -494,15 +384,6 @@ void BSBoneLODExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 		refs.insert(&boneLODs[i].boneName);
 }
 
-int BSBoneLODExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += numBoneLODs * 8;
-
-	return blockSize;
-}
-
 
 NiTextKeyExtraData::NiTextKeyExtraData(NiStream& stream) : NiTextKeyExtraData() {
 	Get(stream);
@@ -536,15 +417,6 @@ void NiTextKeyExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 		refs.insert(&textKeys[i].value);
 }
 
-int NiTextKeyExtraData::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += numTextKeys * 8;
-
-	return blockSize;
-}
-
 
 BSConnectPoint::BSConnectPoint() {
 }
@@ -571,13 +443,6 @@ void BSConnectPoint::Put(NiStream& stream) {
 	stream << scale;
 }
 
-int BSConnectPoint::CalcBlockSize(NiVersion& version) {
-	int blockSize = 40;
-	blockSize += root.GetLength();
-	blockSize += variableName.GetLength();
-	return blockSize;
-}
-
 
 BSConnectPointParents::BSConnectPointParents(NiStream& stream) : BSConnectPointParents() {
 	Get(stream);
@@ -599,17 +464,6 @@ void BSConnectPointParents::Put(NiStream& stream) {
 
 	for (int i = 0; i < numConnectPoints; i++)
 		connectPoints[i].Put(stream);
-}
-
-int BSConnectPointParents::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	for (int i = 0; i < numConnectPoints; i++)
-		blockSize += connectPoints[i].CalcBlockSize(version);
-
-	return blockSize;
 }
 
 
@@ -636,18 +490,6 @@ void BSConnectPointChildren::Put(NiStream& stream) {
 
 	for (int i = 0; i < numTargets; i++)
 		targets[i].Put(stream, 4, false);
-}
-
-int BSConnectPointChildren::CalcBlockSize(NiVersion& version) {
-	NiExtraData::CalcBlockSize(version);
-
-	blockSize += 5;
-	blockSize += numTargets * 4;
-
-	for (int i = 0; i < numTargets; i++)
-		blockSize += targets[i].GetLength();
-
-	return blockSize;
 }
 
 
@@ -679,15 +521,6 @@ void BSClothExtraData::Put(NiStream& stream) {
 		return;
 
 	stream.write(&data[0], numBytes);
-}
-
-int BSClothExtraData::CalcBlockSize(NiVersion& version) {
-	BSExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += numBytes;
-
-	return blockSize;
 }
 
 

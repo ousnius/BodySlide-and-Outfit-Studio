@@ -28,14 +28,6 @@ void NiCollisionObject::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&targetRef.index);
 }
 
-int NiCollisionObject::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 bhkNiCollisionObject::bhkNiCollisionObject() : NiCollisionObject() {
 }
@@ -64,14 +56,6 @@ void bhkNiCollisionObject::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&bodyRef.index);
 }
 
-int bhkNiCollisionObject::CalcBlockSize(NiVersion& version) {
-	NiCollisionObject::CalcBlockSize(version);
-
-	blockSize += 6;
-
-	return blockSize;
-}
-
 
 bhkCollisionObject::bhkCollisionObject() : bhkNiCollisionObject() {
 }
@@ -98,14 +82,6 @@ void bhkNPCollisionObject::Put(NiStream& stream) {
 	bhkCollisionObject::Put(stream);
 
 	stream << bodyID;
-}
-
-int bhkNPCollisionObject::CalcBlockSize(NiVersion& version) {
-	bhkCollisionObject::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -146,14 +122,6 @@ void bhkBlendCollisionObject::Put(NiStream& stream) {
 	stream << velGain;
 }
 
-int bhkBlendCollisionObject::CalcBlockSize(NiVersion& version) {
-	bhkCollisionObject::CalcBlockSize(version);
-
-	blockSize += 8;
-
-	return blockSize;
-}
-
 
 bhkPhysicsSystem::bhkPhysicsSystem(const uint size) {
 	numBytes = size;
@@ -185,15 +153,6 @@ void bhkPhysicsSystem::Put(NiStream& stream) {
 	stream.write(&data[0], numBytes);
 }
 
-int bhkPhysicsSystem::CalcBlockSize(NiVersion& version) {
-	BSExtraData::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += numBytes;
-
-	return blockSize;
-}
-
 
 bhkPlaneShape::bhkPlaneShape(NiStream& stream) : bhkPlaneShape() {
 	Get(stream);
@@ -221,14 +180,6 @@ void bhkPlaneShape::Put(NiStream& stream) {
 	stream << center;
 }
 
-int bhkPlaneShape::CalcBlockSize(NiVersion& version) {
-	bhkHeightFieldShape::CalcBlockSize(version);
-
-	blockSize += 64;
-
-	return blockSize;
-}
-
 
 void bhkSphereRepShape::Get(NiStream& stream) {
 	bhkShape::Get(stream);
@@ -242,14 +193,6 @@ void bhkSphereRepShape::Put(NiStream& stream) {
 
 	stream << material;
 	stream << radius;
-}
-
-int bhkSphereRepShape::CalcBlockSize(NiVersion& version) {
-	bhkShape::CalcBlockSize(version);
-
-	blockSize += 8;
-
-	return blockSize;
 }
 
 
@@ -289,16 +232,6 @@ void bhkConvexVerticesShape::Put(NiStream& stream) {
 		stream << normals[i];
 }
 
-int bhkConvexVerticesShape::CalcBlockSize(NiVersion& version) {
-	bhkConvexShape::CalcBlockSize(version);
-
-	blockSize += 32;
-	blockSize += numVerts * 16;
-	blockSize += numNormals * 16;
-
-	return blockSize;
-}
-
 
 bhkBoxShape::bhkBoxShape(NiStream& stream) : bhkBoxShape() {
 	Get(stream);
@@ -318,14 +251,6 @@ void bhkBoxShape::Put(NiStream& stream) {
 	stream << padding;
 	stream << dimensions;
 	stream << radius2;
-}
-
-int bhkBoxShape::CalcBlockSize(NiVersion& version) {
-	bhkConvexShape::CalcBlockSize(version);
-
-	blockSize += 24;
-
-	return blockSize;
 }
 
 
@@ -364,14 +289,6 @@ void bhkTransformShape::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shapeRef.index);
 }
 
-int bhkTransformShape::CalcBlockSize(NiVersion& version) {
-	bhkShape::CalcBlockSize(version);
-
-	blockSize += 84;
-
-	return blockSize;
-}
-
 
 bhkConvexTransformShape::bhkConvexTransformShape() : bhkTransformShape() {
 }
@@ -403,14 +320,6 @@ void bhkCapsuleShape::Put(NiStream& stream) {
 	stream << radius1;
 	stream << point2;
 	stream << radius2;
-}
-
-int bhkCapsuleShape::CalcBlockSize(NiVersion& version) {
-	bhkConvexShape::CalcBlockSize(version);
-
-	blockSize += 40;
-
-	return blockSize;
 }
 
 
@@ -459,19 +368,6 @@ void bhkMoppBvTreeShape::GetChildRefs(std::set<int*>& refs) {
 	bhkBvTreeShape::GetChildRefs(refs);
 
 	refs.insert(&shapeRef.index);
-}
-
-int bhkMoppBvTreeShape::CalcBlockSize(NiVersion& version) {
-	bhkBvTreeShape::CalcBlockSize(version);
-
-	blockSize += 40;
-
-	if (version.User() >= 12)
-		blockSize += 1;
-
-	blockSize += dataSize;
-
-	return blockSize;
 }
 
 
@@ -526,16 +422,6 @@ void bhkNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
 	partRefs.GetIndexPtrs(refs);
 }
 
-int bhkNiTriStripsShape::CalcBlockSize(NiVersion& version) {
-	bhkShape::CalcBlockSize(version);
-
-	blockSize += 52;
-	blockSize += partRefs.CalcBlockSize();
-	blockSize += numFilters * 4;
-
-	return blockSize;
-}
-
 
 bhkListShape::bhkListShape(NiStream& stream) : bhkListShape() {
 	Get(stream);
@@ -577,16 +463,6 @@ void bhkListShape::GetChildRefs(std::set<int*>& refs) {
 	subShapeRefs.GetIndexPtrs(refs);
 }
 
-int bhkListShape::CalcBlockSize(NiVersion& version) {
-	bhkShapeCollection::CalcBlockSize(version);
-
-	blockSize += 32;
-	blockSize += subShapeRefs.CalcBlockSize();
-	blockSize += 4 * numUnkInts;
-
-	return blockSize;
-}
-
 
 void bhkWorldObject::Get(NiStream& stream) {
 	bhkSerializable::Get(stream);
@@ -616,14 +492,6 @@ void bhkWorldObject::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shapeRef.index);
 }
 
-int bhkWorldObject::CalcBlockSize(NiVersion& version) {
-	bhkSerializable::CalcBlockSize(version);
-
-	blockSize += 28;
-
-	return blockSize;
-}
-
 
 bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiStream& stream) : bhkSimpleShapePhantom() {
 	Get(stream);
@@ -641,14 +509,6 @@ void bhkSimpleShapePhantom::Put(NiStream& stream) {
 
 	stream << padding;
 	stream << transform;
-}
-
-int bhkSimpleShapePhantom::CalcBlockSize(NiVersion& version) {
-	bhkShapePhantom::CalcBlockSize(version);
-
-	blockSize += 72;
-
-	return blockSize;
 }
 
 
@@ -674,15 +534,6 @@ void bhkConstraint::GetPtrs(std::set<int*>& ptrs) {
 	entityRefs.GetIndexPtrs(ptrs);
 }
 
-int bhkConstraint::CalcBlockSize(NiVersion& version) {
-	bhkSerializable::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += entityRefs.CalcBlockSize();
-
-	return blockSize;
-}
-
 
 bhkHingeConstraint::bhkHingeConstraint(NiStream& stream) : bhkHingeConstraint() {
 	Get(stream);
@@ -698,14 +549,6 @@ void bhkHingeConstraint::Put(NiStream& stream) {
 	bhkConstraint::Put(stream);
 
 	stream << hinge;
-}
-
-int bhkHingeConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += 128;
-
-	return blockSize;
 }
 
 
@@ -731,15 +574,6 @@ void bhkLimitedHingeConstraint::Put(NiStream& stream) {
 	stream << limitedHinge.maxAngle;
 	stream << limitedHinge.maxFriction;
 	limitedHinge.motorDesc.Put(stream);
-}
-
-int bhkLimitedHingeConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += 141;
-	blockSize += limitedHinge.motorDesc.CalcMotorSize();
-
-	return blockSize;
 }
 
 
@@ -865,37 +699,6 @@ void SubConstraintDesc::GetPtrs(std::set<int*>& ptrs) {
 	entityRefs.GetIndexPtrs(ptrs);
 }
 
-int SubConstraintDesc::CalcDescSize() {
-	int descSize = 12;
-	descSize += entityRefs.CalcBlockSize();
-
-	switch (type) {
-	case BallAndSocket:
-		descSize += 32;
-		break;
-	case Hinge:
-		descSize += 128;
-		break;
-	case LimitedHinge:
-		descSize += 141;
-		descSize += desc3.motorDesc.CalcMotorSize();
-		break;
-	case Prismatic:
-		descSize += 116;
-		descSize += desc4.motorDesc.CalcMotorSize();
-		break;
-	case Ragdoll:
-		descSize += 153;
-		descSize += desc5.motorDesc.CalcMotorSize();
-		break;
-	case StiffSpring:
-		descSize += 36;
-		break;
-	}
-
-	return descSize;
-}
-
 
 bhkBreakableConstraint::bhkBreakableConstraint(NiStream& stream) : bhkBreakableConstraint() {
 	Get(stream);
@@ -919,15 +722,6 @@ void bhkBreakableConstraint::GetPtrs(std::set<int*>& ptrs) {
 	bhkConstraint::GetPtrs(ptrs);
 
 	subConstraint.GetPtrs(ptrs);
-}
-
-int bhkBreakableConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += 1;
-	blockSize += subConstraint.CalcDescSize();
-
-	return blockSize;
 }
 
 
@@ -975,15 +769,6 @@ void bhkRagdollConstraint::Put(NiStream& stream) {
 	ragdoll.motorDesc.Put(stream);
 }
 
-int bhkRagdollConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += 153;
-	blockSize += ragdoll.motorDesc.CalcMotorSize();
-
-	return blockSize;
-}
-
 
 bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiStream& stream) : bhkStiffSpringConstraint() {
 	Get(stream);
@@ -1003,14 +788,6 @@ void bhkStiffSpringConstraint::Put(NiStream& stream) {
 	stream << stiffSpring.pivotA;
 	stream << stiffSpring.pivotB;
 	stream << stiffSpring.length;
-}
-
-int bhkStiffSpringConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += 36;
-
-	return blockSize;
 }
 
 
@@ -1052,15 +829,6 @@ void bhkPrismaticConstraint::Put(NiStream& stream) {
 	prismatic.motorDesc.Put(stream);
 }
 
-int bhkPrismaticConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += 116;
-	blockSize += prismatic.motorDesc.CalcMotorSize();
-
-	return blockSize;
-}
-
 
 bhkMalleableConstraint::bhkMalleableConstraint(NiStream& stream) : bhkMalleableConstraint() {
 	Get(stream);
@@ -1076,13 +844,6 @@ void bhkMalleableConstraint::Put(NiStream& stream) {
 	bhkConstraint::Put(stream);
 
 	subConstraint.Put(stream);
-}
-
-int bhkMalleableConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += subConstraint.CalcDescSize();
-	return blockSize;
 }
 
 
@@ -1102,14 +863,6 @@ void bhkBallAndSocketConstraint::Put(NiStream& stream) {
 
 	stream << ballAndSocket.translationA;
 	stream << ballAndSocket.translationB;
-}
-
-int bhkBallAndSocketConstraint::CalcBlockSize(NiVersion& version) {
-	bhkConstraint::CalcBlockSize(version);
-
-	blockSize += 32;
-
-	return blockSize;
 }
 
 
@@ -1164,16 +917,6 @@ void bhkBallSocketConstraintChain::GetPtrs(std::set<int*>& ptrs) {
 	entityARefs.GetIndexPtrs(ptrs);
 	ptrs.insert(&entityARef.index);
 	ptrs.insert(&entityBRef.index);
-}
-
-int bhkBallSocketConstraintChain::CalcBlockSize(NiVersion& version) {
-	bhkSerializable::CalcBlockSize(version);
-
-	blockSize += 36;
-	blockSize += numPivots * 16;
-	blockSize += entityARefs.CalcBlockSize();
-
-	return blockSize;
 }
 
 
@@ -1297,21 +1040,6 @@ void bhkRigidBody::GetChildRefs(std::set<int*>& refs) {
 	bhkEntity::GetChildRefs(refs);
 
 	constraintRefs.GetIndexPtrs(refs);
-}
-
-int bhkRigidBody::CalcBlockSize(NiVersion& version) {
-	bhkEntity::CalcBlockSize(version);
-
-	blockSize += 200;
-	blockSize += constraintRefs.CalcBlockSize();
-
-	if (version.User() <= 11)
-		blockSize += 4;
-
-	if (version.User() >= 12)
-		blockSize += 18;
-
-	return blockSize;
 }
 
 
@@ -1479,29 +1207,6 @@ void bhkCompressedMeshShapeData::Put(NiStream& stream) {
 	stream << numConvexPieceA;
 }
 
-int bhkCompressedMeshShapeData::CalcBlockSize(NiVersion& version) {
-	bhkRefObject::CalcBlockSize(version);
-
-	blockSize += 94;
-	blockSize += numMat32 * 4;
-	blockSize += numMat16 * 4;
-	blockSize += numMat8 * 4;
-	blockSize += numMaterials * 8;
-	blockSize += numTransforms * 32;
-	blockSize += numBigVerts * 16;
-	blockSize += numBigTris * 12;
-
-	blockSize += numChunks * 40;
-	for (int i = 0; i < numChunks; i++) {
-		blockSize += chunks[i].numVerts * 2;
-		blockSize += chunks[i].numIndices * 2;
-		blockSize += chunks[i].numStrips * 2;
-		blockSize += chunks[i].numWeldingInfo * 2;
-	}
-
-	return blockSize;
-}
-
 
 bhkCompressedMeshShape::bhkCompressedMeshShape(NiStream& stream) : bhkCompressedMeshShape() {
 	Get(stream);
@@ -1543,12 +1248,4 @@ void bhkCompressedMeshShape::GetPtrs(std::set<int*>& ptrs) {
 	bhkShape::GetPtrs(ptrs);
 
 	ptrs.insert(&targetRef.index);
-}
-
-int bhkCompressedMeshShape::CalcBlockSize(NiVersion& version) {
-	bhkShape::CalcBlockSize(version);
-
-	blockSize += 56;
-
-	return blockSize;
 }

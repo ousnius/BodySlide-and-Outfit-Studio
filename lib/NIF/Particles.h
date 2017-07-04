@@ -37,7 +37,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiParticlesData* Clone() { return new NiParticlesData(*this); }
 };
 
@@ -65,7 +64,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysData* Clone() { return new NiPSysData(*this); }
 };
 
@@ -89,7 +87,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiMeshPSysData* Clone() { return new NiMeshPSysData(*this); }
 };
 
@@ -109,7 +106,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSStripPSysData* Clone() { return new BSStripPSysData(*this); }
 };
 
@@ -127,7 +123,6 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class BSPSysStripUpdateModifier : public NiPSysModifier {
@@ -143,7 +138,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysStripUpdateModifier* Clone() { return new BSPSysStripUpdateModifier(*this); }
 };
 
@@ -167,7 +161,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysSpawnModifier* Clone() { return new NiPSysSpawnModifier(*this); }
 };
 
@@ -186,7 +179,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysAgeDeathModifier* Clone() { return new NiPSysAgeDeathModifier(*this); }
 };
 
@@ -206,7 +198,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysLODModifier* Clone() { return new BSPSysLODModifier(*this); }
 };
 
@@ -231,7 +222,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysSimpleColorModifier* Clone() { return new BSPSysSimpleColorModifier(*this); }
 };
 
@@ -254,7 +244,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysRotationModifier* Clone() { return new NiPSysRotationModifier(*this); }
 };
 
@@ -272,7 +261,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysScaleModifier* Clone() { return new BSPSysScaleModifier(*this); }
 };
 
@@ -303,7 +291,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysGravityModifier* Clone() { return new NiPSysGravityModifier(*this); }
 };
 
@@ -331,7 +318,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysBoundUpdateModifier* Clone() { return new NiPSysBoundUpdateModifier(*this); }
 };
 
@@ -353,7 +339,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysDragModifier* Clone() { return new NiPSysDragModifier(*this); }
 };
 
@@ -374,7 +359,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysInheritVelocityModifier* Clone() { return new BSPSysInheritVelocityModifier(*this); }
 };
 
@@ -397,7 +381,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysSubTexModifier* Clone() { return new BSPSysSubTexModifier(*this); }
 };
 
@@ -432,7 +415,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysBombModifier* Clone() { return new NiPSysBombModifier(*this); }
 };
 
@@ -449,7 +431,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSWindModifier* Clone() { return new BSWindModifier(*this); }
 };
 
@@ -469,7 +450,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysRecycleBoundModifier* Clone() { return new BSPSysRecycleBoundModifier(*this); }
 };
 
@@ -488,7 +468,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSPSysHavokUpdateModifier* Clone() { return new BSPSysHavokUpdateModifier(*this); }
 };
 
@@ -508,7 +487,6 @@ public:
 	void Put(NiStream& stream);
 
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSMasterParticleSystem* Clone() { return new BSMasterParticleSystem(*this); }
 };
 
@@ -557,7 +535,6 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiParticleSystem* Clone() { return new NiParticleSystem(*this); }
 };
 
@@ -600,7 +577,6 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class NiPSysSphericalCollider : public NiPSysCollider {
@@ -616,7 +592,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysSphericalCollider* Clone() { return new NiPSysSphericalCollider(*this); }
 };
 
@@ -636,7 +611,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysPlanarCollider* Clone() { return new NiPSysPlanarCollider(*this); }
 };
 
@@ -654,7 +628,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysColliderManager* Clone() { return new NiPSysColliderManager(*this); }
 };
 
@@ -675,7 +648,6 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class NiPSysVolumeEmitter : public NiPSysEmitter {
@@ -686,7 +658,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class NiPSysSphereEmitter : public NiPSysVolumeEmitter {
@@ -702,7 +673,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysSphereEmitter* Clone() { return new NiPSysSphereEmitter(*this); }
 };
 
@@ -720,7 +690,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysCylinderEmitter* Clone() { return new NiPSysCylinderEmitter(*this); }
 };
 
@@ -739,7 +708,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysBoxEmitter* Clone() { return new NiPSysBoxEmitter(*this); }
 };
 
@@ -774,6 +742,5 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	NiPSysMeshEmitter* Clone() { return new NiPSysMeshEmitter(*this); }
 };

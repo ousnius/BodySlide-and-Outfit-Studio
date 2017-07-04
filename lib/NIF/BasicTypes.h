@@ -46,6 +46,7 @@ class NiStream {
 private:
 	std::iostream* stream = nullptr;
 	NiVersion* version = nullptr;
+	int blockSize = 0;
 
 public:
 	NiStream(std::iostream* stream, NiVersion* version) {
@@ -55,6 +56,7 @@ public:
 
 	void write(const char* ptr, std::streamsize count) {
 		stream->write(ptr, count);
+		blockSize += count;
 	}
 
 	void read(char* ptr, std::streamsize count) {
@@ -63,6 +65,10 @@ public:
 
 	void getline(char* ptr, std::streamsize maxCount) {
 		stream->getline(ptr, maxCount);
+	}
+
+	std::streampos tellp() {
+		return stream->tellp();
 	}
 
 	// Be careful with sizes of structs and classes
@@ -78,6 +84,9 @@ public:
 		read((char*)&t, sizeof(T));
 		return *this;
 	}
+
+	void InitBlockSize() { blockSize = 0; }
+	int GetBlockSize() { return blockSize; }
 
 	NiVersion& GetVersion() { return *version; }
 };
@@ -151,7 +160,6 @@ public:
 	virtual std::vector<int> GetIndices() = 0;
 	virtual void GetIndexPtrs(std::set<int*>& indices) = 0;
 	virtual void SetIndices(const std::vector<int>& indices) = 0;
-	virtual int CalcBlockSize() = 0;
 };
 
 template <typename T>
@@ -189,6 +197,7 @@ public:
 	}
 
 	virtual void Put(NiStream& stream) override {
+		CleanInvalidRefs();
 		stream << arraySize;
 
 		for (auto &r : refs)
@@ -240,11 +249,6 @@ public:
 		for (int i = 0; i < arraySize; i++)
 			refs[i].index = indices[i];
 	}
-
-	virtual int CalcBlockSize() override {
-		CleanInvalidRefs();
-		return 4 + arraySize * 4;
-	}
 };
 
 template <typename T>
@@ -259,15 +263,11 @@ public:
 	}
 
 	virtual void Put(NiStream& stream) override {
+		CleanInvalidRefs();
 		stream.write((char*)&arraySize, 2);
 
 		for (auto &r : refs)
 			r.Put(stream);
-	}
-
-	virtual int CalcBlockSize() override {
-		CleanInvalidRefs();
-		return 2 + arraySize * 4;
 	}
 };
 
@@ -317,11 +317,6 @@ public:
 	virtual void GetChildRefs(std::set<int*>&) {}
 	virtual void GetPtrs(std::set<int*>&) {}
 
-	virtual int CalcBlockSize(NiVersion& version) {
-		blockSize = 0;	// Calculate from the ground up
-		return blockSize;
-	}
-
 	virtual NiObject* Clone() { return new NiObject(*this); }
 
 	template <typename T>
@@ -345,6 +340,8 @@ class NiHeader : public NiObject {
 
 private:
 	bool valid = false;
+	std::streampos blockSizePos;
+
 	NiVersion version;
 	NiEndian endian = ENDIAN_LITTLE;
 	NiString creator;
@@ -413,7 +410,8 @@ public:
 	ushort GetBlockTypeIndex(const int id);
 
 	uint GetBlockSize(const uint blockId) { return blockSizes[blockId]; }
-	void CalcAllBlockSizes();
+	std::streampos GetBlockSizeStreamPos() { return blockSizePos; }
+	void ResetBlockSizeStreamPos() { blockSizePos = std::streampos(); }
 
 	int GetStringCount() {
 		return strings.size();
@@ -446,6 +444,5 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version) { return blockSize; }
 	NiUnknown* Clone() { return new NiUnknown(*this); }
 };

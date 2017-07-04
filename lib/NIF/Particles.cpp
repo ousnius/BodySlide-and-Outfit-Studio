@@ -78,21 +78,6 @@ void NiParticlesData::Put(NiStream& stream) {
 	}
 }
 
-int NiParticlesData::CalcBlockSize(NiVersion& version) {
-	NiGeometryData::CalcBlockSize(version);
-
-	blockSize += 8;
-
-	if (version.User() >= 12)
-		blockSize += 22;
-	else
-		blockSize += 1;
-
-	blockSize += numSubtexOffsets * 16;
-
-	return blockSize;
-}
-
 
 NiRotatingParticlesData::NiRotatingParticlesData() : NiParticlesData() {
 }
@@ -119,14 +104,6 @@ void NiPSysData::Put(NiStream& stream) {
 	NiRotatingParticlesData::Put(stream);
 
 	stream << hasRotationSpeeds;
-}
-
-int NiPSysData::CalcBlockSize(NiVersion& version) {
-	NiRotatingParticlesData::CalcBlockSize(version);
-
-	blockSize += 1;
-
-	return blockSize;
 }
 
 
@@ -170,15 +147,6 @@ void NiMeshPSysData::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&nodeRef.index);
 }
 
-int NiMeshPSysData::CalcBlockSize(NiVersion& version) {
-	NiPSysData::CalcBlockSize(version);
-
-	blockSize += 9;
-	blockSize += numGenerations * 4;
-
-	return blockSize;
-}
-
 
 BSStripPSysData::BSStripPSysData() : NiPSysData() {
 }
@@ -203,14 +171,6 @@ void BSStripPSysData::Put(NiStream& stream) {
 	stream << startCapSize;
 	stream << endCapSize;
 	stream << doZPrepass;
-}
-
-int BSStripPSysData::CalcBlockSize(NiVersion& version) {
-	NiPSysData::CalcBlockSize(version);
-
-	blockSize += 11;
-
-	return blockSize;
 }
 
 
@@ -246,14 +206,6 @@ void NiPSysModifier::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&targetRef.index);
 }
 
-int NiPSysModifier::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 13;
-
-	return blockSize;
-}
-
 
 BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiStream& stream) : BSPSysStripUpdateModifier() {
 	Get(stream);
@@ -269,14 +221,6 @@ void BSPSysStripUpdateModifier::Put(NiStream& stream) {
 	NiPSysModifier::Put(stream);
 
 	stream << updateDeltaTime;
-}
-
-int BSPSysStripUpdateModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -310,14 +254,6 @@ void NiPSysSpawnModifier::Put(NiStream& stream) {
 	stream << lifeSpanVariation;
 }
 
-int NiPSysSpawnModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 26;
-
-	return blockSize;
-}
-
 
 NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiStream& stream) : NiPSysAgeDeathModifier() {
 	Get(stream);
@@ -343,14 +279,6 @@ void NiPSysAgeDeathModifier::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&spawnModifierRef.index);
 }
 
-int NiPSysAgeDeathModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 5;
-
-	return blockSize;
-}
-
 
 BSPSysLODModifier::BSPSysLODModifier(NiStream& stream) : BSPSysLODModifier() {
 	Get(stream);
@@ -372,14 +300,6 @@ void BSPSysLODModifier::Put(NiStream& stream) {
 	stream << lodEndDistance;
 	stream << unknownFadeFactor1;
 	stream << unknownFadeFactor2;
-}
-
-int BSPSysLODModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 16;
-
-	return blockSize;
 }
 
 
@@ -415,14 +335,6 @@ void BSPSysSimpleColorModifier::Put(NiStream& stream) {
 	stream << color3;
 }
 
-int BSPSysSimpleColorModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 72;
-
-	return blockSize;
-}
-
 
 NiPSysRotationModifier::NiPSysRotationModifier(NiStream& stream) : NiPSysRotationModifier() {
 	Get(stream);
@@ -452,14 +364,6 @@ void NiPSysRotationModifier::Put(NiStream& stream) {
 	stream << initialAxis;
 }
 
-int NiPSysRotationModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 30;
-
-	return blockSize;
-}
-
 
 BSPSysScaleModifier::BSPSysScaleModifier(NiStream& stream) : BSPSysScaleModifier() {
 	Get(stream);
@@ -480,15 +384,6 @@ void BSPSysScaleModifier::Put(NiStream& stream) {
 	stream << numFloats;
 	for (int i = 0; i < numFloats; i++)
 		stream << floats[i];
-}
-
-int BSPSysScaleModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += numFloats * 4;
-
-	return blockSize;
 }
 
 
@@ -528,14 +423,6 @@ void NiPSysGravityModifier::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&gravityObjRef.index);
 }
 
-int NiPSysGravityModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 37;
-
-	return blockSize;
-}
-
 
 NiPSysPositionModifier::NiPSysPositionModifier(NiStream& stream) : NiPSysPositionModifier() {
 	Get(stream);
@@ -556,14 +443,6 @@ void NiPSysBoundUpdateModifier::Put(NiStream& stream) {
 	NiPSysModifier::Put(stream);
 
 	stream << updateSkip;
-}
-
-int NiPSysBoundUpdateModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 2;
-
-	return blockSize;
 }
 
 
@@ -597,14 +476,6 @@ void NiPSysDragModifier::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&parentRef.index);
 }
 
-int NiPSysDragModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 28;
-
-	return blockSize;
-}
-
 
 BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiStream& stream) : BSPSysInheritVelocityModifier() {
 	Get(stream);
@@ -634,14 +505,6 @@ void BSPSysInheritVelocityModifier::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&targetNodeRef.index);
 }
 
-int BSPSysInheritVelocityModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 16;
-
-	return blockSize;
-}
-
 
 BSPSysSubTexModifier::BSPSysSubTexModifier(NiStream& stream) : BSPSysSubTexModifier() {
 	Get(stream);
@@ -669,14 +532,6 @@ void BSPSysSubTexModifier::Put(NiStream& stream) {
 	stream << loopStartFrameVariation;
 	stream << frameCount;
 	stream << frameCountVariation;
-}
-
-int BSPSysSubTexModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 28;
-
-	return blockSize;
 }
 
 
@@ -712,14 +567,6 @@ void NiPSysBombModifier::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&bombNodeRef.index);
 }
 
-int NiPSysBombModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 32;
-
-	return blockSize;
-}
-
 
 BSWindModifier::BSWindModifier(NiStream& stream) : BSWindModifier() {
 	Get(stream);
@@ -735,14 +582,6 @@ void BSWindModifier::Put(NiStream& stream) {
 	NiPSysModifier::Put(stream);
 
 	stream << strength;
-}
-
-int BSWindModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -772,14 +611,6 @@ void BSPSysRecycleBoundModifier::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&targetNodeRef.index);
 }
 
-int BSPSysRecycleBoundModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 28;
-
-	return blockSize;
-}
-
 
 BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiStream& stream) : BSPSysHavokUpdateModifier() {
 	Get(stream);
@@ -804,15 +635,6 @@ void BSPSysHavokUpdateModifier::GetChildRefs(std::set<int*>& refs) {
 
 	nodeRefs.GetIndexPtrs(refs);
 	refs.insert(&modifierRef.index);
-}
-
-int BSPSysHavokUpdateModifier::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += nodeRefs.CalcBlockSize();
-
-	return blockSize;
 }
 
 
@@ -841,15 +663,6 @@ void BSMasterParticleSystem::GetChildRefs(std::set<int*>& refs) {
 	NiNode::GetChildRefs(refs);
 
 	particleSysRefs.GetIndexPtrs(refs);
-}
-
-int BSMasterParticleSystem::CalcBlockSize(NiVersion& version) {
-	NiNode::CalcBlockSize(version);
-
-	blockSize += 6;
-	blockSize += particleSysRefs.GetSize() * 4;
-
-	return blockSize;
 }
 
 
@@ -980,33 +793,6 @@ void NiParticleSystem::GetChildRefs(std::set<int*>& refs) {
 	modifierRefs.GetIndexPtrs(refs);
 }
 
-int NiParticleSystem::CalcBlockSize(NiVersion& version) {
-	NiAVObject::CalcBlockSize(version);
-
-	blockSize += 1;
-	blockSize += modifierRefs.CalcBlockSize();
-
-	if (version.User2() >= 100) {
-		blockSize += 36;
-	}
-	else {
-		blockSize += 17;
-		blockSize += numMaterials * 8;
-
-		if (version.User() >= 12)
-			blockSize += 8;
-	}
-
-	if (version.User() >= 12) {
-		blockSize += 8;
-
-		if (version.User2() >= 100)
-			blockSize += 4;
-	}
-
-	return blockSize;
-}
-
 
 NiMeshParticleSystem::NiMeshParticleSystem() : NiParticleSystem() {
 }
@@ -1062,14 +848,6 @@ void NiPSysCollider::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&colliderNodeRef.index);
 }
 
-int NiPSysCollider::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 22;
-
-	return blockSize;
-}
-
 
 NiPSysSphericalCollider::NiPSysSphericalCollider(NiStream& stream) : NiPSysSphericalCollider() {
 	Get(stream);
@@ -1085,14 +863,6 @@ void NiPSysSphericalCollider::Put(NiStream& stream) {
 	NiPSysCollider::Put(stream);
 
 	stream << radius;
-}
-
-int NiPSysSphericalCollider::CalcBlockSize(NiVersion& version) {
-	NiPSysCollider::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -1118,14 +888,6 @@ void NiPSysPlanarCollider::Put(NiStream& stream) {
 	stream << yAxis;
 }
 
-int NiPSysPlanarCollider::CalcBlockSize(NiVersion& version) {
-	NiPSysCollider::CalcBlockSize(version);
-
-	blockSize += 32;
-
-	return blockSize;
-}
-
 
 NiPSysColliderManager::NiPSysColliderManager(NiStream& stream) : NiPSysColliderManager() {
 	Get(stream);
@@ -1147,14 +909,6 @@ void NiPSysColliderManager::GetChildRefs(std::set<int*>& refs) {
 	NiPSysModifier::GetChildRefs(refs);
 
 	refs.insert(&colliderRef.index);
-}
-
-int NiPSysColliderManager::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -1190,14 +944,6 @@ void NiPSysEmitter::Put(NiStream& stream) {
 	stream << lifeSpanVariation;
 }
 
-int NiPSysEmitter::CalcBlockSize(NiVersion& version) {
-	NiPSysModifier::CalcBlockSize(version);
-
-	blockSize += 56;
-
-	return blockSize;
-}
-
 
 void NiPSysVolumeEmitter::Get(NiStream& stream) {
 	NiPSysEmitter::Get(stream);
@@ -1217,14 +963,6 @@ void NiPSysVolumeEmitter::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&emitterNodeRef.index);
 }
 
-int NiPSysVolumeEmitter::CalcBlockSize(NiVersion& version) {
-	NiPSysEmitter::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
-}
-
 
 NiPSysSphereEmitter::NiPSysSphereEmitter(NiStream& stream) : NiPSysSphereEmitter() {
 	Get(stream);
@@ -1240,14 +978,6 @@ void NiPSysSphereEmitter::Put(NiStream& stream) {
 	NiPSysVolumeEmitter::Put(stream);
 
 	stream << radius;
-}
-
-int NiPSysSphereEmitter::CalcBlockSize(NiVersion& version) {
-	NiPSysVolumeEmitter::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	return blockSize;
 }
 
 
@@ -1269,14 +999,6 @@ void NiPSysCylinderEmitter::Put(NiStream& stream) {
 	stream << height;
 }
 
-int NiPSysCylinderEmitter::CalcBlockSize(NiVersion& version) {
-	NiPSysVolumeEmitter::CalcBlockSize(version);
-
-	blockSize += 8;
-
-	return blockSize;
-}
-
 
 NiPSysBoxEmitter::NiPSysBoxEmitter(NiStream& stream) : NiPSysBoxEmitter() {
 	Get(stream);
@@ -1296,14 +1018,6 @@ void NiPSysBoxEmitter::Put(NiStream& stream) {
 	stream << width;
 	stream << height;
 	stream << depth;
-}
-
-int NiPSysBoxEmitter::CalcBlockSize(NiVersion& version) {
-	NiPSysVolumeEmitter::CalcBlockSize(version);
-
-	blockSize += 12;
-
-	return blockSize;
 }
 
 
@@ -1335,13 +1049,4 @@ void NiPSysMeshEmitter::GetChildRefs(std::set<int*>& refs) {
 	NiPSysEmitter::GetChildRefs(refs);
 
 	meshRefs.GetIndexPtrs(refs);
-}
-
-int NiPSysMeshEmitter::CalcBlockSize(NiVersion& version) {
-	NiPSysEmitter::CalcBlockSize(version);
-
-	blockSize += 20;
-	blockSize += meshRefs.CalcBlockSize();
-
-	return blockSize;
 }

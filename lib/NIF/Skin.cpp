@@ -98,21 +98,6 @@ void NiSkinData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	}
 }
 
-int NiSkinData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 57;
-
-	for (auto &b : bones) {
-		blockSize += 70;
-
-		if (hasVertWeights)
-			blockSize += b.numVertices * 6;
-	}
-
-	return blockSize;
-}
-
 
 NiSkinPartition::NiSkinPartition(NiStream& stream) : NiSkinPartition() {
 	Get(stream);
@@ -285,6 +270,8 @@ void NiSkinPartition::Put(NiStream& stream) {
 	stream << numPartitions;
 
 	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+		dataSize = vertexSize * numVertices;
+
 		stream << dataSize;
 		stream << vertexSize;
 		stream << vertFlags1;
@@ -581,44 +568,6 @@ int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) 
 	return outDeletedIndices.size();
 }
 
-int NiSkinPartition::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 4;
-
-	if (version.User() >= 12 && version.User2() == 100) {
-		blockSize += 16;
-
-		dataSize = vertexSize * numVertices;
-		blockSize += dataSize;
-	}
-
-	for (auto &p : partitions) {
-		if (version.User() >= 12)					// Plain data size
-			blockSize += 16;
-		else
-			blockSize += 14;
-
-		blockSize += 2 * p.numBones;				// Bone list size
-		blockSize += 2 * p.numVertices;				// Vertex map size
-		blockSize += 4 * p.numVertices;				// Bone index size
-		blockSize += 16 * p.numVertices;			// Vertex weights size
-		blockSize += 2 * p.numStrips;				// Strip lengths size
-		for (int i = 0; i < p.numStrips; i++)
-			blockSize += 2 * p.stripLengths[i];		// Strip list size
-
-		if (p.numStrips == 0)
-			blockSize += 6 * p.numTriangles;		// Triangle list size
-
-		if (version.User() >= 12 && version.User2() == 100) {
-			blockSize += 8;
-			blockSize += p.numTriangles * 6;
-		}
-	}
-
-	return blockSize;
-}
-
 
 NiSkinInstance::NiSkinInstance(NiStream& stream) : NiSkinInstance() {
 	Get(stream);
@@ -656,14 +605,6 @@ void NiSkinInstance::GetPtrs(std::set<int*>& ptrs) {
 	boneRefs.GetIndexPtrs(ptrs);
 }
 
-int NiSkinInstance::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 12;
-	blockSize += boneRefs.CalcBlockSize();
-	return blockSize;
-}
-
 
 BSDismemberSkinInstance::BSDismemberSkinInstance() : NiSkinInstance() {
 }
@@ -688,14 +629,6 @@ void BSDismemberSkinInstance::Put(NiStream& stream) {
 	stream << numPartitions;
 	for (int i = 0; i < numPartitions; i++)
 		stream << partitions[i];
-}
-
-int BSDismemberSkinInstance::CalcBlockSize(NiVersion& version) {
-	NiSkinInstance::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += numPartitions * 4;
-	return blockSize;
 }
 
 void BSDismemberSkinInstance::AddPartition(const BSDismemberSkinInstance::PartitionInfo& part) {
@@ -735,15 +668,6 @@ void BSSkinBoneData::Put(NiStream& stream) {
 	stream << nBones;
 	for (int i = 0; i < nBones; i++)
 		stream << boneXforms[i];
-}
-
-int BSSkinBoneData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 4;
-	blockSize += 68 * nBones;
-
-	return blockSize;
 }
 
 
@@ -787,14 +711,4 @@ void BSSkinInstance::GetPtrs(std::set<int*>& ptrs) {
 
 	ptrs.insert(&targetRef.index);
 	boneRefs.GetIndexPtrs(ptrs);
-}
-
-int BSSkinInstance::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 12;
-	blockSize += boneRefs.CalcBlockSize();
-	blockSize += numUnk * 12;
-
-	return blockSize;
 }

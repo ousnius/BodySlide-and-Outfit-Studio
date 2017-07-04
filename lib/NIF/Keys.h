@@ -94,25 +94,4 @@ public:
 			}
 		}
 	}
-
-	int CalcGroupSize() {
-		int groupSize = 4;
-
-		if (numKeys > 0) {
-			groupSize += 4;
-			groupSize += 4 * numKeys;
-			groupSize += sizeof(T) * numKeys;
-
-			switch (interpolation) {
-			case QUADRATIC_KEY:
-				groupSize += sizeof(T) * numKeys * 2;
-				break;
-			case TBC_KEY:
-				groupSize += 12 * numKeys;
-				break;
-			}
-		}
-
-		return groupSize;
-	}
 };

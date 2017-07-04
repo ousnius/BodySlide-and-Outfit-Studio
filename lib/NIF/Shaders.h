@@ -90,7 +90,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 
 	uint GetType();
 	void SetType(const uint type);
@@ -114,7 +113,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSShaderTextureSet* Clone() { return new BSShaderTextureSet(*this); }
 };
 
@@ -173,7 +171,6 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -228,7 +225,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSEffectShaderProperty* Clone() { return new BSEffectShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -258,7 +254,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSWaterShaderProperty* Clone() { return new BSWaterShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -284,7 +279,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSSkyShaderProperty* Clone() { return new BSSkyShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -302,7 +296,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 };
 
 class BSShaderNoLightingProperty : public BSShaderLightingProperty {
@@ -321,7 +314,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	BSShaderNoLightingProperty* Clone() { return new BSShaderNoLightingProperty(*this); }
 
 	bool IsSkinTint();
@@ -349,7 +341,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
-	int CalcBlockSize(NiVersion& version);
 	BSShaderPPLightingProperty* Clone() { return new BSShaderPPLightingProperty(*this); }
 
 	bool IsSkinTint();
@@ -372,7 +363,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiAlphaProperty* Clone() { return new NiAlphaProperty(*this); }
 };
 
@@ -397,7 +387,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiMaterialProperty* Clone() { return new NiMaterialProperty(*this); }
 
 	bool IsEmissive();
@@ -426,6 +415,5 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	int CalcBlockSize(NiVersion& version);
 	NiStencilProperty* Clone() { return new NiStencilProperty(*this); }
 };

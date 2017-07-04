@@ -183,7 +183,7 @@ void NiHeader::DeleteBlockByType(const std::string& blockTypeStr) {
 int NiHeader::AddBlock(NiObject* newBlock) {
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices.push_back(btID);
-	blockSizes.push_back(newBlock->CalcBlockSize(version));
+	blockSizes.push_back(0);
 	blocks->push_back(std::move(std::unique_ptr<NiObject>(newBlock)));
 	numBlocks = blocks->size();
 	return numBlocks - 1;
@@ -209,7 +209,7 @@ int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock) {
 
 	ushort btID = AddOrFindBlockTypeId(newBlock->GetBlockName());
 	blockTypeIndices[oldBlockId] = btID;
-	blockSizes[oldBlockId] = newBlock->CalcBlockSize(version);
+	blockSizes[oldBlockId] = 0;
 	auto blockPtrSwap = std::unique_ptr<NiObject>(newBlock);
 	(*blocks)[oldBlockId].swap(blockPtrSwap);
 	return oldBlockId;
@@ -284,11 +284,6 @@ std::string NiHeader::GetBlockTypeStringById(const int id) {
 
 ushort NiHeader::GetBlockTypeIndex(const int id) {
 	return blockTypeIndices[id];
-}
-
-void NiHeader::CalcAllBlockSizes() {
-	for (int i = 0; i < numBlocks; i++)
-		blockSizes[i] = blocks->at(i)->CalcBlockSize(version);
 }
 
 int NiHeader::FindStringId(const std::string& str) {
@@ -474,6 +469,7 @@ void NiHeader::Put(NiStream& stream) {
 	for (int i = 0; i < numBlocks; i++)
 		stream << blockTypeIndices[i];
 
+	blockSizePos = stream.tellp();
 	for (int i = 0; i < numBlocks; i++)
 		stream << blockSizes[i];
 

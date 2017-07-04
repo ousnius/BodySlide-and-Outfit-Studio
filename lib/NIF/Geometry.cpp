@@ -256,40 +256,6 @@ void NiGeometryData::CalcTangentSpace() {
 	SetTangents(true);
 }
 
-int NiGeometryData::CalcBlockSize(NiVersion& version) {
-	NiObject::CalcBlockSize(version);
-
-	blockSize += 35;
-	if (version.User() == 12)
-		blockSize += 4;
-
-	if (hasVertices && !isPSys) {
-		ushort nbtMethod = numUVSets & 0xF000;
-		byte numTextureSets = numUVSets & 0x3F;
-		if (version.User2() >= 83)
-			numTextureSets = numUVSets & 0x1;
-
-		blockSize += numVertices * 12;
-
-		if (hasNormals) {
-			blockSize += normals.size() * 12;
-
-			if (nbtMethod) {
-				blockSize += tangents.size() * 12;
-				blockSize += bitangents.size() * 12;
-			}
-		}
-
-		if (hasVertexColors)
-			blockSize += vertexColors.size() * 16;
-
-		if (numTextureSets > 0)
-			blockSize += uvSets.size() * 8;
-	}
-
-	return blockSize;
-}
-
 
 int NiShape::GetSkinInstanceRef() { return 0xFFFFFFFF; }
 void NiShape::SetSkinInstanceRef(int skinInstanceRef) { }
@@ -744,33 +710,6 @@ void BSTriShape::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&skinInstanceRef.index);
 	refs.insert(&shaderPropertyRef.index);
 	refs.insert(&alphaPropertyRef.index);
-}
-
-int BSTriShape::CalcBlockSize(NiVersion& version) {
-	NiAVObject::CalcBlockSize(version);
-
-	blockSize += 42;
-
-	if (version.User() >= 12 && version.User2() < 130)
-		blockSize += 2;
-	else
-		blockSize += 4;
-
-	if (version.User() >= 12 && version.User2() < 130 && IsSkinned())
-		CalcDataSizes(version);
-	else
-		blockSize += CalcDataSizes(version);
-
-	if (version.User() == 12 && version.User2() == 100) {
-		blockSize += 4;
-
-		if (particleDataSize > 0) {
-			blockSize += 12 * numVertices;
-			blockSize += 6 * numTriangles;
-		}
-	}
-
-	return blockSize;
 }
 
 const std::vector<Vector3>* BSTriShape::GetRawVerts() {
@@ -1430,31 +1369,6 @@ void BSSubIndexTriShape::notifyVerticesDelete(const std::vector<ushort>& vertInd
 	}
 }
 
-int BSSubIndexTriShape::CalcBlockSize(NiVersion& version) {
-	BSTriShape::CalcBlockSize(version);
-
-	if (dataSize > 0) {
-		blockSize += 12;
-
-		blockSize += segmentation.numSegments * 16;
-		for (auto &segment : segmentation.segments)
-			blockSize += segment.numSubSegments * 16;
-
-		if (segmentation.numSegments < segmentation.numTotalSegments) {
-			blockSize += 10;
-			blockSize += segmentation.subSegmentData.numSegments * 4;
-			blockSize += segmentation.subSegmentData.numTotalSegments * 12;
-
-			for (auto &dataRecord : segmentation.subSegmentData.dataRecords)
-				blockSize += dataRecord.numData * 4;
-
-			blockSize += segmentation.subSegmentData.ssfFile.GetLength();
-		}
-	}
-
-	return blockSize;
-}
-
 void BSSubIndexTriShape::SetDefaultSegments() {
 	segmentation.numPrimitives = numTriangles;
 	segmentation.numSegments = 4;
@@ -1522,14 +1436,6 @@ void BSMeshLODTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndi
 	lodSize2 = numTriangles;
 }
 
-int BSMeshLODTriShape::CalcBlockSize(NiVersion& version) {
-	BSTriShape::CalcBlockSize(version);
-
-	blockSize += 12;
-
-	return blockSize;
-}
-
 
 BSDynamicTriShape::BSDynamicTriShape() : BSTriShape() {
 	vertFlags6 &= ~(1 << 4);
@@ -1580,9 +1486,7 @@ void BSDynamicTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndi
 	}
 }
 
-int BSDynamicTriShape::CalcBlockSize(NiVersion& version) {
-	BSTriShape::CalcBlockSize(version);
-
+void BSDynamicTriShape::CalcDynamicData() {
 	dynamicDataSize = numVertices * 16;
 
 	dynamicData.resize(numVertices);
@@ -1598,11 +1502,6 @@ int BSDynamicTriShape::CalcBlockSize(NiVersion& version) {
 		else
 			vertex.eyeData = 0.0f;
 	}
-
-	blockSize += 4;
-	blockSize += dynamicDataSize;
-
-	return blockSize;
 }
 
 void BSDynamicTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals) {
@@ -1682,17 +1581,6 @@ void NiGeometry::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&alphaPropertyRef.index);
 }
 
-int NiGeometry::CalcBlockSize(NiVersion& version) {
-	NiAVObject::CalcBlockSize(version);
-
-	blockSize += 17;
-	blockSize += numMaterials * 8;
-	if (version.User() > 11)
-		blockSize += 8;
-
-	return blockSize;
-}
-
 
 void NiTriBasedGeomData::Get(NiStream& stream) {
 	NiGeometryData::Get(stream);
@@ -1710,13 +1598,6 @@ void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangl
 	NiGeometryData::Create(verts, inTris, texcoords);
 
 	numTriangles = inTris->size();
-}
-
-int NiTriBasedGeomData::CalcBlockSize(NiVersion& version) {
-	NiGeometryData::CalcBlockSize(version);
-
-	blockSize += 2;
-	return blockSize;
 }
 
 
@@ -1937,19 +1818,6 @@ void NiTriShapeData::CalcTangentSpace() {
 			bitangents[i].Normalize();
 		}
 	}
-}
-
-int NiTriShapeData::CalcBlockSize(NiVersion& version) {
-	NiTriBasedGeomData::CalcBlockSize(version);
-
-	blockSize += 7;
-	blockSize += triangles.size() * 6;	// Triangles
-	for (auto &mg : matchGroups) {
-		blockSize += 4;
-		blockSize += mg.count * 2;
-	}
-
-	return blockSize;
 }
 
 
@@ -2173,18 +2041,6 @@ void NiTriStripsData::CalcTangentSpace() {
 	}
 }
 
-int NiTriStripsData::CalcBlockSize(NiVersion& version) {
-	NiTriBasedGeomData::CalcBlockSize(version);
-
-	blockSize += 3;
-	blockSize += numStrips * 2;				// Strip Lengths
-
-	for (auto &pl : points)
-		blockSize += pl.size() * 2;
-
-	return blockSize;
-}
-
 
 BSLODTriShape::BSLODTriShape(NiStream& stream) : BSLODTriShape() {
 	Get(stream);
@@ -2204,12 +2060,4 @@ void BSLODTriShape::Put(NiStream& stream) {
 	stream << level0;
 	stream << level1;
 	stream << level2;
-}
-
-int BSLODTriShape::CalcBlockSize(NiVersion& version) {
-	NiTriBasedGeom::CalcBlockSize(version);
-
-	blockSize += 12;
-
-	return blockSize;
 }

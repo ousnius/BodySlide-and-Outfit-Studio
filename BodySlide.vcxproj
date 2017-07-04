@@ -103,6 +103,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -124,6 +125,7 @@
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -147,6 +149,7 @@
       <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -175,6 +178,7 @@
       <WarningLevel>Level4</WarningLevel>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
