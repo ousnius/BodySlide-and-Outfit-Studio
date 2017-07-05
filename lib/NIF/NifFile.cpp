@@ -35,6 +35,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiTriStrips>();
 	RegisterFactory<NiTriStripsData>();
 	RegisterFactory<BSLODTriShape>();
+	RegisterFactory<BSSegmentedTriShape>();
 	RegisterFactory<BSTriShape>();
 	RegisterFactory<BSSubIndexTriShape>();
 	RegisterFactory<BSMeshLODTriShape>();
@@ -666,15 +667,20 @@ void NifFile::SetTextureForShape(const std::string& shapeName, std::string& outT
 }
 
 void NifFile::TrimTexturePaths() {
-	auto trimPath = [](std::string& tex) -> std::string& {
+	auto trimPath = [](std::string& tex, bool addData) -> std::string& {
 		if (!tex.empty()) {
 			tex = std::regex_replace(tex, std::regex("/+|\\\\+"), "\\");													// Replace multiple slashes or forward slashes with one backslash
 			tex = std::regex_replace(tex, std::regex("^(.*?)\\\\textures\\\\", std::regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
 			tex = std::regex_replace(tex, std::regex("^\\\\+"), "");														// Remove all backslashes from the front
 			tex = std::regex_replace(tex, std::regex("^(?!^textures\\\\)", std::regex_constants::icase), "textures\\");		// If the path doesn't start with "textures\", add it to the front
+
+			if (addData)
+				tex = std::regex_replace(tex, std::regex("^(?!^Data\\\\)", std::regex_constants::icase), "Data\\");			// If the path doesn't start with "Data\", add it to the front
 		}
 		return tex;
 	};
+
+	bool addData = (fileName.rfind(".bto") != std::string::npos) || (fileName.rfind(".btr") != std::string::npos);
 
 	std::vector<std::string> shapes;
 	GetShapeList(shapes);
@@ -686,25 +692,25 @@ void NifFile::TrimTexturePaths() {
 			if (textureSet) {
 				for (int i = 0; i < textureSet->numTextures; i++) {
 					std::string tex = textureSet->textures[i].GetString();
-					textureSet->textures[i].SetString(trimPath(tex));
+					textureSet->textures[i].SetString(trimPath(tex, addData));
 				}
 
 				auto effectShader = dynamic_cast<BSEffectShaderProperty*>(shader);
 				if (effectShader) {
 					std::string tex = effectShader->sourceTexture.GetString();
-					effectShader->sourceTexture.SetString(trimPath(tex));
+					effectShader->sourceTexture.SetString(trimPath(tex, addData));
 
 					tex = effectShader->normalTexture.GetString();
-					effectShader->normalTexture.SetString(trimPath(tex));
+					effectShader->normalTexture.SetString(trimPath(tex, addData));
 
 					tex = effectShader->greyscaleTexture.GetString();
-					effectShader->greyscaleTexture.SetString(trimPath(tex));
+					effectShader->greyscaleTexture.SetString(trimPath(tex, addData));
 
 					tex = effectShader->envMapTexture.GetString();
-					effectShader->envMapTexture.SetString(trimPath(tex));
+					effectShader->envMapTexture.SetString(trimPath(tex, addData));
 
 					tex = effectShader->envMaskTexture.GetString();
-					effectShader->envMaskTexture.SetString(trimPath(tex));
+					effectShader->envMaskTexture.SetString(trimPath(tex, addData));
 				}
 			}
 		}
@@ -1248,40 +1254,52 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					}
 				}
 
-				BSTriShape* bsShape = nullptr;
-				if (options.headParts)
-					bsShape = new BSDynamicTriShape();
-				else
-					bsShape = new BSTriShape();
+				BSTriShape* bsOptShape = nullptr;
+				auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
+				if (bsSegmentShape) {
+					bsOptShape = new BSSubIndexTriShape();
+				}
+				else {
+					if (options.headParts)
+						bsOptShape = new BSDynamicTriShape();
+					else
+						bsOptShape = new BSTriShape();
+				}
 
-				bsShape->SetName(shape->GetName());
-				bsShape->SetControllerRef(shape->GetControllerRef());
-				bsShape->SetSkinInstanceRef(shape->GetSkinInstanceRef());
-				bsShape->SetShaderPropertyRef(shape->GetShaderPropertyRef());
-				bsShape->SetAlphaPropertyRef(shape->GetAlphaPropertyRef());
-				bsShape->SetCollisionRef(shape->GetCollisionRef());
-				bsShape->propertyRefs.SetIndices(shape->propertyRefs.GetIndices());
+				bsOptShape->SetName(shape->GetName());
+				bsOptShape->SetControllerRef(shape->GetControllerRef());
+				bsOptShape->SetSkinInstanceRef(shape->GetSkinInstanceRef());
+				bsOptShape->SetShaderPropertyRef(shape->GetShaderPropertyRef());
+				bsOptShape->SetAlphaPropertyRef(shape->GetAlphaPropertyRef());
+				bsOptShape->SetCollisionRef(shape->GetCollisionRef());
+				bsOptShape->propertyRefs.SetIndices(shape->propertyRefs.GetIndices());
 
 				for (int i = 0; i < shape->GetNumExtraData(); i++)
-					bsShape->AddExtraDataRef(shape->GetExtraDataRef(i));
+					bsOptShape->AddExtraDataRef(shape->GetExtraDataRef(i));
 
-				bsShape->rotation[0] = shape->rotation[0];
-				bsShape->rotation[1] = shape->rotation[1];
-				bsShape->rotation[2] = shape->rotation[2];
-				bsShape->scale = shape->scale;
-				bsShape->translation = shape->translation;
+				bsOptShape->rotation[0] = shape->rotation[0];
+				bsOptShape->rotation[1] = shape->rotation[1];
+				bsOptShape->rotation[2] = shape->rotation[2];
+				bsOptShape->scale = shape->scale;
+				bsOptShape->translation = shape->translation;
 
-				bsShape->Create(vertices, &triangles, uvs, normals);
-				bsShape->flags = shape->flags;
+				bsOptShape->Create(vertices, &triangles, uvs, normals);
+				bsOptShape->flags = shape->flags;
+
+				if (bsSegmentShape) {
+					auto bsSITS = dynamic_cast<BSSubIndexTriShape*>(bsOptShape);
+					bsSITS->numSegments = bsSegmentShape->numSegments;
+					bsSITS->segments = bsSegmentShape->segments;
+				}
 
 				if (!shape->IsSkinned())
-					bsShape->SetBounds(geomData->GetBounds());
+					bsOptShape->SetBounds(geomData->GetBounds());
 
-				if (bsShape->numVertices > 0) {
+				if (bsOptShape->numVertices > 0) {
 					if (!removeVertexColors && colors.size() > 0) {
-						bsShape->SetVertexColors(true);
-						for (int i = 0; i < bsShape->numVertices; i++) {
-							auto& vertex = bsShape->vertData[i];
+						bsOptShape->SetVertexColors(true);
+						for (int i = 0; i < bsOptShape->numVertices; i++) {
+							auto& vertex = bsOptShape->vertData[i];
 
 							float f = std::max(0.0f, std::min(1.0f, colors[i].r));
 							vertex.colorData[0] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
@@ -1298,24 +1316,24 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					}
 
 					// Find NiOptimizeKeep string
-					for (int i = 0; i < bsShape->GetNumExtraData(); i++) {
-						auto stringData = hdr.GetBlock<NiStringExtraData>(bsShape->GetExtraDataRef(i));
+					for (int i = 0; i < bsOptShape->GetNumExtraData(); i++) {
+						auto stringData = hdr.GetBlock<NiStringExtraData>(bsOptShape->GetExtraDataRef(i));
 						if (stringData) {
 							if (stringData->GetStringData().find("NiOptimizeKeep") != std::string::npos) {
-								bsShape->particleDataSize = bsShape->numVertices * 6 + bsShape->numTriangles * 3;
-								bsShape->particleVerts = *vertices;
+								bsOptShape->particleDataSize = bsOptShape->numVertices * 6 + bsOptShape->numTriangles * 3;
+								bsOptShape->particleVerts = *vertices;
 
-								bsShape->particleNorms.resize(vertices->size(), Vector3(1.0f, 0.0f, 0.0f));
+								bsOptShape->particleNorms.resize(vertices->size(), Vector3(1.0f, 0.0f, 0.0f));
 								if (normals && normals->size() == vertices->size())
-									bsShape->particleNorms = *normals;
+									bsOptShape->particleNorms = *normals;
 
-								bsShape->particleTris = bsShape->triangles;
+								bsOptShape->particleTris = bsOptShape->triangles;
 							}
 						}
 					}
 
 					if (shape->IsSkinned()) {
-						bsShape->SetSkinned(true);
+						bsOptShape->SetSkinned(true);
 
 						auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 						if (skinInst) {
@@ -1331,8 +1349,8 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 									for (int i = 0; i < part.numVertices; i++) {
 										const ushort v = part.vertexMap[i];
 
-										if (bsShape->vertData.size() > v) {
-											auto& vertex = bsShape->vertData[v];
+										if (bsOptShape->vertData.size() > v) {
+											auto& vertex = bsOptShape->vertData[v];
 
 											if (part.hasVertexWeights) {
 												auto& weights = part.vertexWeights[i];
@@ -1373,23 +1391,22 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 						}
 					}
 					else
-						bsShape->SetSkinned(false);
+						bsOptShape->SetSkinned(false);
 				}
 				else
-					bsShape->SetVertices(false);
+					bsOptShape->SetVertices(false);
 
-				if (!hasTangents && bsShape->HasTangents())
+				if (!hasTangents && bsOptShape->HasTangents())
 					result.shapesTangentsAdded.push_back(s);
 
-				if (options.headParts) {
-					if (headPartEyes)
-						bsShape->vertFlags7 |= 1 << 4;
-
-					hdr.ReplaceBlock(GetBlockID(shape), bsShape);
+				if (!bsSegmentShape) {
+					if (options.headParts) {
+						if (headPartEyes)
+							bsOptShape->vertFlags7 |= 1 << 4;
+					}
 				}
-				else
-					hdr.ReplaceBlock(GetBlockID(shape), bsShape);
 
+				hdr.ReplaceBlock(GetBlockID(shape), bsOptShape);
 				UpdateSkinPartitions(s);
 			}
 		}

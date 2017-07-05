@@ -1234,93 +1234,104 @@ BSSubIndexTriShape::BSSubIndexTriShape(NiStream& stream) : BSSubIndexTriShape() 
 void BSSubIndexTriShape::Get(NiStream& stream) {
 	BSTriShape::Get(stream);
 
-	if (dataSize <= 0)
-		return;
-	
-	stream >> segmentation.numPrimitives;
-	stream >> segmentation.numSegments;
-	stream >> segmentation.numTotalSegments;
+	if (stream.GetVersion().User2() >= 130 && dataSize > 0) {
+		stream >> segmentation.numPrimitives;
+		stream >> segmentation.numSegments;
+		stream >> segmentation.numTotalSegments;
 
-	segmentation.segments.resize(segmentation.numSegments);
-	for (auto &segment : segmentation.segments) {
-		stream >> segment.startIndex;
-		stream >> segment.numPrimitives;
-		stream >> segment.parentArrayIndex;
-		stream >> segment.numSubSegments;
+		segmentation.segments.resize(segmentation.numSegments);
+		for (auto &segment : segmentation.segments) {
+			stream >> segment.startIndex;
+			stream >> segment.numPrimitives;
+			stream >> segment.parentArrayIndex;
+			stream >> segment.numSubSegments;
 
-		segment.subSegments.resize(segment.numSubSegments);
-		for (auto &subSegment : segment.subSegments) {
-			stream >> subSegment.startIndex;
-			stream >> subSegment.numPrimitives;
-			stream >> subSegment.arrayIndex;
-			stream >> subSegment.unkInt1;
+			segment.subSegments.resize(segment.numSubSegments);
+			for (auto &subSegment : segment.subSegments) {
+				stream >> subSegment.startIndex;
+				stream >> subSegment.numPrimitives;
+				stream >> subSegment.arrayIndex;
+				stream >> subSegment.unkInt1;
+			}
+		}
+
+		if (segmentation.numSegments < segmentation.numTotalSegments) {
+			stream >> segmentation.subSegmentData.numSegments;
+			stream >> segmentation.subSegmentData.numTotalSegments;
+
+			segmentation.subSegmentData.arrayIndices.resize(segmentation.numSegments);
+			for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
+				stream >> arrayIndex;
+
+			segmentation.subSegmentData.dataRecords.resize(segmentation.numTotalSegments);
+			for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
+				stream >> dataRecord.segmentUser;
+				stream >> dataRecord.unkInt2;
+				stream >> dataRecord.numData;
+
+				dataRecord.extraData.resize(dataRecord.numData);
+				for (auto &data : dataRecord.extraData)
+					stream >> data;
+			}
+
+			segmentation.subSegmentData.ssfFile.Get(stream, 2);
 		}
 	}
+	else if (stream.GetVersion().User2() == 100) {
+		stream >> numSegments;
+		segments.resize(numSegments);
 
-	if (segmentation.numSegments < segmentation.numTotalSegments) {
-		stream >> segmentation.subSegmentData.numSegments;
-		stream >> segmentation.subSegmentData.numTotalSegments;
-
-		segmentation.subSegmentData.arrayIndices.resize(segmentation.numSegments);
-		for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
-			stream >> arrayIndex;
-
-		segmentation.subSegmentData.dataRecords.resize(segmentation.numTotalSegments);
-		for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
-			stream >> dataRecord.segmentUser;
-			stream >> dataRecord.unkInt2;
-			stream >> dataRecord.numData;
-
-			dataRecord.extraData.resize(dataRecord.numData);
-			for (auto &data : dataRecord.extraData)
-				stream >> data;
-		}
-
-		segmentation.subSegmentData.ssfFile.Get(stream, 2);
+		for (auto &segment : segments)
+			segment.Get(stream);
 	}
 }
 
 void BSSubIndexTriShape::Put(NiStream& stream) {
 	BSTriShape::Put(stream);
 
-	if (dataSize <= 0)
-		return;
+	if (stream.GetVersion().User2() >= 130 && dataSize > 0) {
+		stream << segmentation.numPrimitives;
+		stream << segmentation.numSegments;
+		stream << segmentation.numTotalSegments;
 
-	stream << segmentation.numPrimitives;
-	stream << segmentation.numSegments;
-	stream << segmentation.numTotalSegments;
+		for (auto &segment : segmentation.segments) {
+			stream << segment.startIndex;
+			stream << segment.numPrimitives;
+			stream << segment.parentArrayIndex;
+			stream << segment.numSubSegments;
 
-	for (auto &segment : segmentation.segments) {
-		stream << segment.startIndex;
-		stream << segment.numPrimitives;
-		stream << segment.parentArrayIndex;
-		stream << segment.numSubSegments;
+			for (auto &subSegment : segment.subSegments) {
+				stream << subSegment.startIndex;
+				stream << subSegment.numPrimitives;
+				stream << subSegment.arrayIndex;
+				stream << subSegment.unkInt1;
+			}
+		}
 
-		for (auto &subSegment : segment.subSegments) {
-			stream << subSegment.startIndex;
-			stream << subSegment.numPrimitives;
-			stream << subSegment.arrayIndex;
-			stream << subSegment.unkInt1;
+		if (segmentation.numSegments < segmentation.numTotalSegments) {
+			stream << segmentation.subSegmentData.numSegments;
+			stream << segmentation.subSegmentData.numTotalSegments;
+
+			for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
+				stream << arrayIndex;
+
+			for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
+				stream << dataRecord.segmentUser;
+				stream << dataRecord.unkInt2;
+				stream << dataRecord.numData;
+
+				for (auto &data : dataRecord.extraData)
+					stream << data;
+			}
+
+			segmentation.subSegmentData.ssfFile.Put(stream, 2, false);
 		}
 	}
+	else if (stream.GetVersion().User2() == 100) {
+		stream << numSegments;
 
-	if (segmentation.numSegments < segmentation.numTotalSegments) {
-		stream << segmentation.subSegmentData.numSegments;
-		stream << segmentation.subSegmentData.numTotalSegments;
-
-		for (auto &arrayIndex : segmentation.subSegmentData.arrayIndices)
-			stream << arrayIndex;
-
-		for (auto &dataRecord : segmentation.subSegmentData.dataRecords) {
-			stream << dataRecord.segmentUser;
-			stream << dataRecord.unkInt2;
-			stream << dataRecord.numData;
-
-			for (auto &data : dataRecord.extraData)
-				stream << data;
-		}
-
-		segmentation.subSegmentData.ssfFile.Put(stream, 2, false);
+		for (auto &segment : segments)
+			segment.Put(stream);
 	}
 }
 
@@ -1367,6 +1378,25 @@ void BSSubIndexTriShape::notifyVerticesDelete(const std::vector<ushort>& vertInd
 
 		i++;
 	}
+
+	// Remove triangles from SSE segments
+	for (auto &segment : segments) {
+		for (auto &id : deletedTris)
+			if (segment.numTris > 0 && id >= segment.index / 3 && id < segment.index / 3 + segment.numTris)
+				segment.numTris--;
+	}
+
+	// Align SSE segments
+	i = 0;
+	for (auto &segment : segments) {
+		if (i + 1 >= numSegments)
+			continue;
+
+		BSGeometrySegmentData& nextSegment = segments[i + 1];
+		nextSegment.index = segment.index + segment.numTris * 3;
+
+		i++;
+	}
 }
 
 void BSSubIndexTriShape::SetDefaultSegments() {
@@ -1393,6 +1423,9 @@ void BSSubIndexTriShape::SetDefaultSegments() {
 	segmentation.segments[3].numPrimitives = numTriangles;
 	segmentation.segments[3].parentArrayIndex = 0xFFFFFFFF;
 	segmentation.segments[3].numSubSegments = 0;
+
+	numSegments = 0;
+	segments.clear();
 }
 
 void BSSubIndexTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals) {
@@ -2060,4 +2093,41 @@ void BSLODTriShape::Put(NiStream& stream) {
 	stream << level0;
 	stream << level1;
 	stream << level2;
+}
+
+
+void BSGeometrySegmentData::Get(NiStream& stream) {
+	stream >> flags;
+	stream >> index;
+	stream >> numTris;
+}
+
+void BSGeometrySegmentData::Put(NiStream& stream) {
+	stream << flags;
+	stream << index;
+	stream << numTris;
+}
+
+
+BSSegmentedTriShape::BSSegmentedTriShape(NiStream& stream) : NiTriShape() {
+	Get(stream);
+}
+
+void BSSegmentedTriShape::Get(NiStream& stream) {
+	NiTriShape::Get(stream);
+
+	stream >> numSegments;
+	segments.resize(numSegments);
+
+	for (auto &segment : segments)
+		segment.Get(stream);
+}
+
+void BSSegmentedTriShape::Put(NiStream& stream) {
+	NiTriShape::Put(stream);
+
+	stream << numSegments;
+
+	for (auto &segment : segments)
+		segment.Put(stream);
 }

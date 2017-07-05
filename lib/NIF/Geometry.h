@@ -213,6 +213,16 @@ public:
 };
 
 
+class BSGeometrySegmentData {
+public:
+	byte flags = 0;
+	uint index = 0;
+	uint numTris = 0;
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+};
+
 class BSSubIndexTriShape : public BSTriShape {
 public:
 	class BSSITSSubSegment {
@@ -258,7 +268,12 @@ public:
 		BSSITSSubSegmentData subSegmentData;
 	};
 
+	// SSE
+	uint numSegments = 0;
+	std::vector<BSGeometrySegmentData> segments;
+
 private:
+	// FO4
 	BSSITSSegmentation segmentation;
 
 public:
@@ -274,7 +289,7 @@ public:
 	BSSubIndexTriShape* Clone() { return new BSSubIndexTriShape(*this); }
 
 	BSSITSSegmentation GetSegmentation() { return segmentation; }
-	void SetSegmentation(const BSSITSSegmentation& segments) { this->segmentation = segments; }
+	void SetSegmentation(const BSSITSSegmentation& seg) { segmentation = seg; }
 
 	void SetDefaultSegments();
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);
@@ -458,4 +473,20 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSLODTriShape* Clone() { return new BSLODTriShape(*this); }
+};
+
+class BSSegmentedTriShape : public NiTriShape {
+public:
+	uint numSegments = 0;
+	std::vector<BSGeometrySegmentData> segments;
+
+	BSSegmentedTriShape() {}
+	BSSegmentedTriShape(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSSegmentedTriShape";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSSegmentedTriShape* Clone() { return new BSSegmentedTriShape(*this); }
 };
