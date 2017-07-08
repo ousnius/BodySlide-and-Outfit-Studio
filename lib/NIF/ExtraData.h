@@ -300,6 +300,22 @@ public:
 	NiTextKeyExtraData* Clone() { return new NiTextKeyExtraData(*this); }
 };
 
+class BSDistantObjectLargeRefExtraData : public NiExtraData {
+private:
+	bool largeRef = true;
+
+public:
+	BSDistantObjectLargeRefExtraData() {}
+	BSDistantObjectLargeRefExtraData(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSDistantObjectLargeRefExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSDistantObjectLargeRefExtraData* Clone() { return new BSDistantObjectLargeRefExtraData(*this); }
+};
+
 class BSConnectPoint {
 public:
 	NiString root;

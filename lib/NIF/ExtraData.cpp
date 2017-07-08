@@ -418,6 +418,21 @@ void NiTextKeyExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 }
 
 
+BSDistantObjectLargeRefExtraData::BSDistantObjectLargeRefExtraData(NiStream& stream) : BSDistantObjectLargeRefExtraData() {
+	Get(stream);
+}
+
+void BSDistantObjectLargeRefExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+	stream >> largeRef;
+}
+
+void BSDistantObjectLargeRefExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+	stream << largeRef;
+}
+
+
 BSConnectPoint::BSConnectPoint() {
 }
 

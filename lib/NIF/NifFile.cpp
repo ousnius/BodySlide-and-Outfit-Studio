@@ -147,6 +147,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<BSBound>();
 	RegisterFactory<BSBoneLODExtraData>();
 	RegisterFactory<NiTextKeyExtraData>();
+	RegisterFactory<BSDistantObjectLargeRefExtraData>();
 	RegisterFactory<BSClothExtraData>();
 	RegisterFactory<BSConnectPointParents>();
 	RegisterFactory<BSConnectPointChildren>();
@@ -1167,12 +1168,16 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 		return result;
 	}
 
+	bool isBTO = fileName.rfind(".bto") != std::string::npos;
+
 	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 	for (auto &s : shapes) {
-		bool renamed = RenameDuplicateShape(s);
-		if (renamed)
-			result.shapesRenamed.push_back(s);
+		if (!s.empty()) {
+			bool renamed = RenameDuplicateShape(s);
+			if (renamed)
+				result.shapesRenamed.push_back(s);
+		}
 	}
 
 	hdr.GetVersion().Set(20, 2, 0, 7, 12, 100);
@@ -1286,15 +1291,18 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				bsOptShape->Create(vertices, &triangles, uvs, normals);
 				bsOptShape->flags = shape->flags;
 
+				// Move segments to new shape
 				if (bsSegmentShape) {
 					auto bsSITS = dynamic_cast<BSSubIndexTriShape*>(bsOptShape);
 					bsSITS->numSegments = bsSegmentShape->numSegments;
 					bsSITS->segments = bsSegmentShape->segments;
 				}
 
+				// Don't use new bounds for static meshes
 				if (!shape->IsSkinned())
 					bsOptShape->SetBounds(geomData->GetBounds());
 
+				// Vertex Colors
 				if (bsOptShape->numVertices > 0) {
 					if (!removeVertexColors && colors.size() > 0) {
 						bsOptShape->SetVertexColors(true);
@@ -1332,6 +1340,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 						}
 					}
 
+					// Skinning and partitions
 					if (shape->IsSkinned()) {
 						bsOptShape->SetSkinned(true);
 
@@ -1396,14 +1405,26 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				else
 					bsOptShape->SetVertices(false);
 
+				// Check if tangents were added
 				if (!hasTangents && bsOptShape->HasTangents())
 					result.shapesTangentsAdded.push_back(s);
 
+				// Enable eye data flag
 				if (!bsSegmentShape) {
 					if (options.headParts) {
 						if (headPartEyes)
 							bsOptShape->vertFlags7 |= 1 << 4;
 					}
+				}
+
+				// Add large ref data to shapes tagged as "HD"
+				if (isBTO && s.rfind("HD") != std::string::npos) {
+					auto largeRef = new BSDistantObjectLargeRefExtraData();
+					largeRef->SetName("DOLRED");
+
+					int largeRefId = hdr.AddBlock(largeRef);
+					bsOptShape->AddExtraDataRef(largeRefId);
+					bsOptShape->SetName(s + "-LargeRef");
 				}
 
 				hdr.ReplaceBlock(GetBlockID(shape), bsOptShape);
