@@ -1413,7 +1413,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				if (!bsSegmentShape) {
 					if (options.headParts) {
 						if (headPartEyes)
-							bsOptShape->vertFlags7 |= 1 << 4;
+							bsOptShape->SetEyeData(true);
 					}
 				}
 
@@ -1495,18 +1495,18 @@ void NifFile::FinalizeData() {
 	GetShapeList(shapes);
 
 	for (auto &s : shapes) {
-		// Move triangle and vertex data from shape to partition
-		if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().User2() == 100) {
-			NiShape* shape = FindShapeByName(s);
-			if (shape) {
-				auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-				if (bsTriShape) {
-					auto bsDynTriShape = dynamic_cast<BSDynamicTriShape*>(shape);
-					if (bsDynTriShape)
-						bsDynTriShape->CalcDynamicData();
+		NiShape* shape = FindShapeByName(s);
+		if (shape) {
+			auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+			if (bsTriShape) {
+				auto bsDynTriShape = dynamic_cast<BSDynamicTriShape*>(shape);
+				if (bsDynTriShape)
+					bsDynTriShape->CalcDynamicData();
 
-					bsTriShape->CalcDataSizes(hdr.GetVersion());
+				bsTriShape->CalcDataSizes(hdr.GetVersion());
 
+				if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().User2() == 100) {
+					// Move triangle and vertex data from shape to partition
 					auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 					if (skinInst) {
 						auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
@@ -1515,14 +1515,7 @@ void NifFile::FinalizeData() {
 							skinPart->dataSize = bsTriShape->dataSize;
 							skinPart->vertexSize = bsTriShape->vertexSize;
 							skinPart->vertData = bsTriShape->vertData;
-							skinPart->vertFlags1 = bsTriShape->vertFlags1;
-							skinPart->vertFlags2 = bsTriShape->vertFlags2;
-							skinPart->vertFlags3 = bsTriShape->vertFlags3;
-							skinPart->vertFlags4 = bsTriShape->vertFlags4;
-							skinPart->vertFlags5 = bsTriShape->vertFlags5;
-							skinPart->vertFlags6 = bsTriShape->vertFlags6;
-							skinPart->vertFlags7 = bsTriShape->vertFlags7;
-							skinPart->vertFlags8 = bsTriShape->vertFlags8;
+							skinPart->vertexDesc = bsTriShape->vertexDesc;
 						}
 					}
 				}
@@ -3401,16 +3394,8 @@ void NifFile::UpdateSkinPartitions(const std::string& shapeName) {
 		part.numTriangles = part.triangles.size();
 
 		// Copy relevant data from shape to partition
-		if (bsTriShape) {
-			part.vertFlags1 = bsTriShape->vertFlags1;
-			part.vertFlags2 = bsTriShape->vertFlags2;
-			part.vertFlags3 = bsTriShape->vertFlags3;
-			part.vertFlags4 = bsTriShape->vertFlags4;
-			part.vertFlags5 = bsTriShape->vertFlags5;
-			part.vertFlags6 = bsTriShape->vertFlags6;
-			part.vertFlags7 = bsTriShape->vertFlags7;
-			part.vertFlags8 = bsTriShape->vertFlags8;
-		}
+		if (bsTriShape)
+			part.vertexDesc = bsTriShape->vertexDesc;
 
 		std::unordered_map<int, int> boneLookup;
 		boneLookup.reserve(partBones[partID].size());
@@ -3460,14 +3445,7 @@ void NifFile::UpdateSkinPartitions(const std::string& shapeName) {
 		skinPart->dataSize = bsTriShape->dataSize;
 		skinPart->vertexSize = bsTriShape->vertexSize;
 		skinPart->vertData = bsTriShape->vertData;
-		skinPart->vertFlags1 = bsTriShape->vertFlags1;
-		skinPart->vertFlags2 = bsTriShape->vertFlags2;
-		skinPart->vertFlags3 = bsTriShape->vertFlags3;
-		skinPart->vertFlags4 = bsTriShape->vertFlags4;
-		skinPart->vertFlags5 = bsTriShape->vertFlags5;
-		skinPart->vertFlags6 = bsTriShape->vertFlags6;
-		skinPart->vertFlags7 = bsTriShape->vertFlags7;
-		skinPart->vertFlags8 = bsTriShape->vertFlags8;
+		skinPart->vertexDesc = bsTriShape->vertexDesc;
 	}
 
 	UpdatePartitionFlags(shapeName);

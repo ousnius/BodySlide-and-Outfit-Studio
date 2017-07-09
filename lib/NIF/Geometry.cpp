@@ -363,6 +363,14 @@ int NiShape::GetBoneID(NiHeader& hdr, const std::string& boneName) {
 }
 
 
+BSTriShape::BSTriShape() {
+	vertexDesc.SetFlag(VF_VERTEX);
+	vertexDesc.SetFlag(VF_UV);
+	vertexDesc.SetFlag(VF_NORMAL);
+	vertexDesc.SetFlag(VF_TANGENT);
+	vertexDesc.SetFlag(VF_SKINNED);
+}
+
 BSTriShape::BSTriShape(NiStream& stream) : BSTriShape() {
 	Get(stream);
 }
@@ -387,14 +395,7 @@ void BSTriShape::Get(NiStream& stream) {
 	shaderPropertyRef.Get(stream);
 	alphaPropertyRef.Get(stream);
 
-	stream >> vertFlags1;
-	stream >> vertFlags2;
-	stream >> vertFlags3;
-	stream >> vertFlags4;
-	stream >> vertFlags5;
-	stream >> vertFlags6;
-	stream >> vertFlags7;
-	stream >> vertFlags8;
+	vertexDesc.Get(stream);
 
 	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130) {
 		ushort num = 0;
@@ -469,7 +470,7 @@ void BSTriShape::Get(NiStream& stream) {
 					stream >> vertex.weightBones[j];
 			}
 
-			if ((vertFlags7 & (1 << 4)) != 0)
+			if (HasEyeData())
 				stream >> vertex.eyeData;
 		}
 	}
@@ -534,14 +535,7 @@ void BSTriShape::Put(NiStream& stream) {
 	shaderPropertyRef.Put(stream);
 	alphaPropertyRef.Put(stream);
 
-	stream << vertFlags1;
-	stream << vertFlags2;
-	stream << vertFlags3;
-	stream << vertFlags4;
-	stream << vertFlags5;
-	stream << vertFlags6;
-	stream << vertFlags7;
-	stream << vertFlags8;
+	vertexDesc.Put(stream);
 
 	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130 && IsSkinned()) {
 		// Triangle and vertex data is in partition instead
@@ -627,7 +621,7 @@ void BSTriShape::Put(NiStream& stream) {
 						stream << vertex.weightBones[j];
 				}
 
-				if ((vertFlags7 & (1 << 4)) != 0)
+				if (HasEyeData())
 					stream << vertex.eyeData;
 			}
 		}
@@ -815,11 +809,11 @@ const std::vector<Vector2>* BSTriShape::GetUVData() {
 
 void BSTriShape::SetVertices(const bool enable) {
 	if (enable) {
-		vertFlags6 |= 1 << 4;
+		vertexDesc.SetFlag(VF_VERTEX);
 		vertData.resize(numVertices);
 	}
 	else {
-		vertFlags6 &= ~(1 << 4);
+		vertexDesc.RemoveFlag(VF_VERTEX);
 		vertData.clear();
 		numVertices = 0;
 
@@ -833,37 +827,51 @@ void BSTriShape::SetVertices(const bool enable) {
 
 void BSTriShape::SetUVs(const bool enable) {
 	if (enable)
-		vertFlags6 |= 1 << 5;
+		vertexDesc.SetFlag(VF_UV);
 	else
-		vertFlags6 &= ~(1 << 5);
+		vertexDesc.RemoveFlag(VF_UV);
+}
+
+void BSTriShape::SetSecondUVs(const bool enable) {
+	if (enable)
+		vertexDesc.SetFlag(VF_UV_2);
+	else
+		vertexDesc.RemoveFlag(VF_UV_2);
 }
 
 void BSTriShape::SetNormals(const bool enable) {
 	if (enable)
-		vertFlags6 |= 1 << 7;
+		vertexDesc.SetFlag(VF_NORMAL);
 	else
-		vertFlags6 &= ~(1 << 7);
+		vertexDesc.RemoveFlag(VF_NORMAL);
 }
 
 void BSTriShape::SetTangents(const bool enable) {
 	if (enable)
-		vertFlags7 |= 1 << 0;
+		vertexDesc.SetFlag(VF_TANGENT);
 	else
-		vertFlags7 &= ~(1 << 0);
+		vertexDesc.RemoveFlag(VF_TANGENT);
 }
 
 void BSTriShape::SetVertexColors(const bool enable) {
 	if (enable)
-		vertFlags7 |= 1 << 1;
+		vertexDesc.SetFlag(VF_COLORS);
 	else
-		vertFlags7 &= ~(1 << 1);
+		vertexDesc.RemoveFlag(VF_COLORS);
 }
 
 void BSTriShape::SetSkinned(const bool enable) {
 	if (enable)
-		vertFlags7 |= 1 << 2;
+		vertexDesc.SetFlag(VF_SKINNED);
 	else
-		vertFlags7 &= ~(1 << 2);
+		vertexDesc.RemoveFlag(VF_SKINNED);
+}
+
+void BSTriShape::SetEyeData(const bool enable) {
+	if (enable)
+		vertexDesc.SetFlag(VF_EYEDATA);
+	else
+		vertexDesc.RemoveFlag(VF_EYEDATA);
 }
 
 void BSTriShape::SetFullPrecision(const bool enable) {
@@ -871,9 +879,9 @@ void BSTriShape::SetFullPrecision(const bool enable) {
 		return;
 
 	if (enable)
-		vertFlags7 |= 1 << 6;
+		vertexDesc.SetFlag(VF_FULLPREC);
 	else
-		vertFlags7 &= ~(1 << 6);
+		vertexDesc.RemoveFlag(VF_FULLPREC);
 }
 
 void BSTriShape::UpdateBounds() {
@@ -1039,143 +1047,57 @@ void BSTriShape::CalcTangentSpace() {
 	}
 }
 
-void BSTriShape::UpdateFlags(NiVersion& version) {
-	vertFlags3 = 0;
-	vertFlags4 = 0;
-	vertFlags5 = 0;
-	vertFlags8 = 0;
-
-	if (HasType<BSDynamicTriShape>()) {
-		if (HasNormals()) {
-			vertFlags3 = 1;
-
-			if (HasTangents())
-				vertFlags3 = 33;
-		}
-
-		if (HasTangents()) {
-			if (IsSkinned() && HasVertexColors())
-				vertFlags4 = 67;
-			else if (IsSkinned())
-				vertFlags4 = 48;
-			else if (HasVertexColors())
-				vertFlags4 = 3;
-		}
-		else {
-			if (IsSkinned() && HasVertexColors())
-				vertFlags4 = 33;
-			else if (IsSkinned())
-				vertFlags4 = 16;
-			else if (HasVertexColors())
-				vertFlags4 = 1;
-		}
-
-		if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
-			vertFlags5 = 96;
-	}
-	else if (IsFullPrecision() || version.User2() == 100) {
-		if (HasNormals()) {
-			vertFlags3 = 4;
-
-			if (HasTangents())
-				vertFlags3 = 101;
-		}
-
-		if (HasTangents()) {
-			if (IsSkinned() && HasVertexColors())
-				vertFlags4 = 135;
-			else if (IsSkinned())
-				vertFlags4 = 112;
-			else if (HasVertexColors())
-				vertFlags4 = 7;
-		}
-		else {
-			if (IsSkinned() && HasVertexColors())
-				vertFlags4 = 101;
-			else if (IsSkinned())
-				vertFlags4 = 80;
-			else if (HasVertexColors())
-				vertFlags4 = 5;
-		}
-
-		if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
-			vertFlags5 = 144;
-	}
-	else {
-		if (HasNormals()) {
-			vertFlags3 = 2;
-
-			if (HasTangents())
-				vertFlags3 = 67;
-		}
-
-		if (HasTangents()) {
-			if (IsSkinned() && HasVertexColors())
-				vertFlags4 = 101;
-			else if (IsSkinned())
-				vertFlags4 = 80;
-			else if (HasVertexColors())
-				vertFlags4 = 5;
-		}
-		else {
-			if (IsSkinned() && HasVertexColors())
-				vertFlags4 = 67;
-			else if (IsSkinned())
-				vertFlags4 = 48;
-			else if (HasVertexColors())
-				vertFlags4 = 3;
-		}
-
-		if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
-			vertFlags5 = 144;
-	}
-}
-
 int BSTriShape::CalcDataSizes(NiVersion& version) {
 	vertexSize = 0;
 	dataSize = 0;
 
-	if (HasVertices()) {		// Position + Bitangent X
-		if (IsFullPrecision() || version.User2() == 100) {
-			vertexSize += 4;
-			vertFlags2 = 4;
-		}
-		else {
-			vertexSize += 2;
-			vertFlags2 = 2;
-		}
+	VertexFlags vf = vertexDesc.GetFlags();
+	vertexDesc.ClearAttributeOffsets();
+
+	uint attributeSizes[VA_COUNT] = {};
+	if (HasVertices()) {
+		if (IsFullPrecision() || version.User2() == 100)
+			attributeSizes[VA_POSITION] = 4;
+		else
+			attributeSizes[VA_POSITION] = 2;
 	}
-	else
-		vertFlags2 = 0;
 
 	if (HasUVs())
-		vertexSize += 1;		// UVs
+		attributeSizes[VA_TEXCOORD0] = 1;
 
-	if (HasNormals()) {			// Normals + Bitangent Y
-		vertexSize += 1;
+	if (HasSecondUVs())
+		attributeSizes[VA_TEXCOORD1] = 1;
 
-		if (HasTangents())		// Tangents + Bitangent Z
-			vertexSize += 1;
+	if (HasNormals()) {
+		attributeSizes[VA_NORMAL] = 1;
+
+		if (HasTangents())
+			attributeSizes[VA_BINORMAL] = 1;
 	}
 
-	if (HasVertexColors())		// Vertex Colors
-		vertexSize += 1;
+	if (HasVertexColors())
+		attributeSizes[VA_COLOR] = 1;
 
-	if (IsSkinned())			// Skinning
-		vertexSize += 3;
+	if (IsSkinned())
+		attributeSizes[VA_SKINNING] = 3;
 
-	if ((vertFlags7 & (1 << 4)) != 0)	// Eye Data
-		vertexSize += 1;
+	if (HasEyeData())
+		attributeSizes[VA_EYEDATA] = 1;
 
-	vertFlags1 = vertexSize;
+	for (int va = 0; va < VA_COUNT; va++) {
+		if (attributeSizes[va] != 0) {
+			vertexDesc.SetAttributeOffset(VertexAttribute(va), vertexSize);
+			vertexSize += attributeSizes[va] * 4;
+		}
+	}
+
+	vertexDesc.SetSize(vertexSize);
+	vertexDesc.SetFlags(vf);
 
 	if (HasType<BSDynamicTriShape>())
-		vertFlags1 = (vertFlags1 & 0xF) | 0x40;
+		vertexDesc.MakeDynamic();
 
-	vertexSize *= 4;
 	dataSize = vertexSize * numVertices + 6 * numTriangles;
-
-	UpdateFlags(version);
 
 	return dataSize;
 }
@@ -1471,8 +1393,8 @@ void BSMeshLODTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndi
 
 
 BSDynamicTriShape::BSDynamicTriShape() : BSTriShape() {
-	vertFlags6 &= ~(1 << 4);
-	vertFlags7 |= 1 << 6;
+	vertexDesc.RemoveFlag(VF_VERTEX);
+	vertexDesc.SetFlag(VF_FULLPREC);
 
 	dynamicDataSize = 0;
 }

@@ -119,15 +119,7 @@ private:
 	BoundingSphere bounds;
 
 public:
-	byte vertFlags1;			// Number of uint elements in vertex data
-	byte vertFlags2;			// 4 byte or 2 byte position data
-
-	byte vertFlags3 = 0x43;
-	byte vertFlags4 = 0x50;
-	byte vertFlags5 = 0x0;
-	byte vertFlags6 = 0xB0;		// Vertex, UVs, Normals
-	byte vertFlags7 = 0x1;		// (Bi)Tangents, Vertex Colors, Skinning, Precision
-	byte vertFlags8 = 0x0;
+	VertexDesc vertexDesc;
 
 	uint numTriangles = 0;
 	ushort numVertices = 0;
@@ -150,7 +142,7 @@ public:
 	std::vector<BSVertexData> vertData;
 	std::vector<Triangle> triangles;
 
-	BSTriShape() {}
+	BSTriShape();
 	BSTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSTriShape";
@@ -178,25 +170,31 @@ public:
 	const std::vector<Vector2>* GetUVData();
 
 	void SetVertices(const bool enable);
-	bool HasVertices() { return (vertFlags6 & (1 << 4)) != 0; }
+	bool HasVertices() { return vertexDesc.HasFlag(VF_VERTEX); }
 
 	void SetUVs(const bool enable);
-	bool HasUVs() { return (vertFlags6 & (1 << 5)) != 0; }
+	bool HasUVs() { return vertexDesc.HasFlag(VF_UV); }
+
+	void SetSecondUVs(const bool enable);
+	bool HasSecondUVs() { return vertexDesc.HasFlag(VF_UV_2); }
 
 	void SetNormals(const bool enable);
-	bool HasNormals() { return (vertFlags6 & (1 << 7)) != 0; }
+	bool HasNormals() { return vertexDesc.HasFlag(VF_NORMAL); }
 
 	void SetTangents(const bool enable);
-	bool HasTangents() { return (vertFlags7 & (1 << 0)) != 0; }
+	bool HasTangents() { return vertexDesc.HasFlag(VF_TANGENT); }
 
 	void SetVertexColors(const bool enable);
-	bool HasVertexColors() { return (vertFlags7 & (1 << 1)) != 0; }
+	bool HasVertexColors() { return vertexDesc.HasFlag(VF_COLORS); }
 
 	void SetSkinned(const bool enable);
-	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
+	bool IsSkinned() { return vertexDesc.HasFlag(VF_SKINNED); }
+
+	void SetEyeData(const bool enable);
+	bool HasEyeData() { return vertexDesc.HasFlag(VF_EYEDATA); }
 
 	void SetFullPrecision(const bool enable);
-	bool IsFullPrecision() { return (vertFlags7 & (1 << 6)) != 0; }
+	bool IsFullPrecision() { return vertexDesc.HasFlag(VF_FULLPREC); }
 	bool CanChangePrecision() { return (HasVertices()); }
 
 	void SetBounds(const BoundingSphere& newBounds) { this->bounds = newBounds; }
@@ -206,7 +204,6 @@ public:
 	void SetNormals(const std::vector<Vector3>& inNorms);
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
-	void UpdateFlags(NiVersion& version);
 	int CalcDataSizes(NiVersion& version);
 
 	virtual void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals = nullptr);

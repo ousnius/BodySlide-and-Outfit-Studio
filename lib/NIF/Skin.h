@@ -136,38 +136,26 @@ public:
 		std::vector<BoneIndices> boneIndices;
 
 		ushort unkShort = 0;					// User Version >= 12
-		byte vertFlags1 = 0;					// User Version >= 12, User Version 2 == 100, Number of uint elements in vertex data
-		byte vertFlags2 = 0;					// User Version >= 12, User Version 2 == 100, 4 byte or 2 byte position data
-		byte vertFlags3 = 0;					// User Version >= 12, User Version 2 == 100
-		byte vertFlags4 = 0;					// User Version >= 12, User Version 2 == 100
-		byte vertFlags5 = 0;					// User Version >= 12, User Version 2 == 100
-		byte vertFlags6 = 0;					// User Version >= 12, User Version 2 == 100, Vertex, UVs, Normals
-		byte vertFlags7 = 0;					// User Version >= 12, User Version 2 == 100, (Bi)Tangents, Vertex Colors, Skinning, Precision
-		byte vertFlags8 = 0;					// User Version >= 12, User Version 2 == 100
+		VertexDesc vertexDesc;					// User Version >= 12, User Version 2 == 100
 		std::vector<Triangle> trueTriangles;	// User Version >= 12, User Version 2 == 100
 	};
 
 	uint numPartitions = 0;
 	uint dataSize = 0;						// User Version >= 12, User Version 2 == 100
 	uint vertexSize = 0;					// User Version >= 12, User Version 2 == 100
-	byte vertFlags1 = 0;					// User Version >= 12, User Version 2 == 100, Number of uint elements in vertex data
-	byte vertFlags2 = 0;					// User Version >= 12, User Version 2 == 100, 4 byte or 2 byte position data
-	byte vertFlags3 = 0;					// User Version >= 12, User Version 2 == 100
-	byte vertFlags4 = 0;					// User Version >= 12, User Version 2 == 100
-	byte vertFlags5 = 0;					// User Version >= 12, User Version 2 == 100
-	byte vertFlags6 = 0;					// User Version >= 12, User Version 2 == 100, Vertex, UVs, Normals
-	byte vertFlags7 = 0;					// User Version >= 12, User Version 2 == 100, (Bi)Tangents, Vertex Colors, Skinning, Precision
-	byte vertFlags8 = 0;					// User Version >= 12, User Version 2 == 100
+	VertexDesc vertexDesc;					// User Version >= 12, User Version 2 == 100
+
 	uint numVertices = 0;					// Not in file
 	std::vector<BSVertexData> vertData;		// User Version >= 12, User Version 2 == 100
 	std::vector<PartitionBlock> partitions;
 
-	bool HasVertices() { return (vertFlags6 & (1 << 4)) != 0; }
-	bool HasUVs() { return (vertFlags6 & (1 << 5)) != 0; }
-	bool HasNormals() { return (vertFlags6 & (1 << 7)) != 0; }
-	bool HasTangents() { return (vertFlags7 & (1 << 0)) != 0; }
-	bool HasVertexColors() { return (vertFlags7 & (1 << 1)) != 0; }
-	bool IsSkinned() { return (vertFlags7 & (1 << 2)) != 0; }
+	bool HasVertices() { return vertexDesc.HasFlag(VF_VERTEX); }
+	bool HasUVs() { return vertexDesc.HasFlag(VF_UV); }
+	bool HasNormals() { return vertexDesc.HasFlag(VF_NORMAL); }
+	bool HasTangents() { return vertexDesc.HasFlag(VF_TANGENT); }
+	bool HasVertexColors() { return vertexDesc.HasFlag(VF_COLORS); }
+	bool IsSkinned() { return vertexDesc.HasFlag(VF_SKINNED); }
+	bool HasEyeData() { return vertexDesc.HasFlag(VF_EYEDATA); }
 	bool IsFullPrecision() { return true; }
 
 	NiSkinPartition() {}

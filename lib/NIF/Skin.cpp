@@ -112,14 +112,7 @@ void NiSkinPartition::Get(NiStream& stream) {
 	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
 		stream >> dataSize;
 		stream >> vertexSize;
-		stream >> vertFlags1;
-		stream >> vertFlags2;
-		stream >> vertFlags3;
-		stream >> vertFlags4;
-		stream >> vertFlags5;
-		stream >> vertFlags6;
-		stream >> vertFlags7;
-		stream >> vertFlags8;
+		vertexDesc.Get(stream);
 
 		if (dataSize > 0) {
 			numVertices = dataSize / vertexSize;
@@ -183,7 +176,7 @@ void NiSkinPartition::Get(NiStream& stream) {
 						stream >> vertex.weightBones[j];
 				}
 
-				if ((vertFlags7 & (1 << 4)) != 0)
+				if (HasEyeData())
 					stream >> vertex.eyeData;
 			}
 		}
@@ -246,14 +239,7 @@ void NiSkinPartition::Get(NiStream& stream) {
 			stream >> partition.unkShort;
 
 		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
-			stream >> partition.vertFlags1;
-			stream >> partition.vertFlags2;
-			stream >> partition.vertFlags3;
-			stream >> partition.vertFlags4;
-			stream >> partition.vertFlags5;
-			stream >> partition.vertFlags6;
-			stream >> partition.vertFlags7;
-			stream >> partition.vertFlags8;
+			partition.vertexDesc.Get(stream);
 
 			partition.trueTriangles.resize(partition.numTriangles);
 			for (int i = 0; i < partition.numTriangles; i++)
@@ -274,14 +260,7 @@ void NiSkinPartition::Put(NiStream& stream) {
 
 		stream << dataSize;
 		stream << vertexSize;
-		stream << vertFlags1;
-		stream << vertFlags2;
-		stream << vertFlags3;
-		stream << vertFlags4;
-		stream << vertFlags5;
-		stream << vertFlags6;
-		stream << vertFlags7;
-		stream << vertFlags8;
+		vertexDesc.Put(stream);
 
 		if (dataSize > 0) {
 			half_float::half halfData;
@@ -342,7 +321,7 @@ void NiSkinPartition::Put(NiStream& stream) {
 						stream << vertex.weightBones[j];
 				}
 
-				if ((vertFlags7 & (1 << 4)) != 0)
+				if (HasEyeData())
 					stream << vertex.eyeData;
 			}
 		}
@@ -390,14 +369,7 @@ void NiSkinPartition::Put(NiStream& stream) {
 			stream << partitions[p].unkShort;
 
 		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
-			stream << partitions[p].vertFlags1;
-			stream << partitions[p].vertFlags2;
-			stream << partitions[p].vertFlags3;
-			stream << partitions[p].vertFlags4;
-			stream << partitions[p].vertFlags5;
-			stream << partitions[p].vertFlags6;
-			stream << partitions[p].vertFlags7;
-			stream << partitions[p].vertFlags8;
+			partitions[p].vertexDesc.Put(stream);
 
 			if (partitions[p].trueTriangles.size() != partitions[p].numTriangles)
 				partitions[p].trueTriangles = partitions[p].triangles;
