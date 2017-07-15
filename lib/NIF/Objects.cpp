@@ -223,3 +223,185 @@ void NiCamera::GetChildRefs(std::set<int*>& refs) {
 
 	refs.insert(&sceneRef.index);
 }
+
+
+NiSourceTexture::NiSourceTexture(NiStream& stream) : NiSourceTexture() {
+	Get(stream);
+}
+
+void NiSourceTexture::Get(NiStream& stream) {
+	NiTexture::Get(stream);
+
+	stream >> useExternal;
+	fileName.Get(stream);
+	dataRef.Get(stream);
+	stream >> pixelLayout;
+	stream >> mipMapFormat;
+	stream >> alphaFormat;
+	stream >> isStatic;
+	stream >> directRender;
+	stream >> persistentRenderData;
+}
+
+void NiSourceTexture::Put(NiStream& stream) {
+	NiTexture::Put(stream);
+
+	stream << useExternal;
+	fileName.Put(stream);
+	dataRef.Put(stream);
+	stream << pixelLayout;
+	stream << mipMapFormat;
+	stream << alphaFormat;
+	stream << isStatic;
+	stream << directRender;
+	stream << persistentRenderData;
+}
+
+void NiSourceTexture::GetStringRefs(std::set<StringRef*>& refs) {
+	NiTexture::GetStringRefs(refs);
+
+	refs.insert(&fileName);
+}
+
+void NiSourceTexture::GetChildRefs(std::set<int*>& refs) {
+	NiTexture::GetChildRefs(refs);
+
+	refs.insert(&dataRef.index);
+}
+
+
+void NiDynamicEffect::Get(NiStream& stream) {
+	NiAVObject::Get(stream);
+
+	if (stream.GetVersion().User2() < 130) {
+		stream >> switchState;
+		affectedNodes.Get(stream);
+	}
+}
+
+void NiDynamicEffect::Put(NiStream& stream) {
+	NiAVObject::Put(stream);
+
+	if (stream.GetVersion().User2() < 130) {
+		stream << switchState;
+		affectedNodes.Put(stream);
+	}
+}
+
+void NiDynamicEffect::GetChildRefs(std::set<int*>& refs) {
+	NiAVObject::GetChildRefs(refs);
+
+	affectedNodes.GetIndexPtrs(refs);
+}
+
+
+NiTextureEffect::NiTextureEffect(NiStream& stream) : NiTextureEffect() {
+	Get(stream);
+}
+
+void NiTextureEffect::Get(NiStream& stream) {
+	NiDynamicEffect::Get(stream);
+
+	stream >> modelProjectionMatrix;
+	stream >> modelProjectionTransform;
+	stream >> textureFiltering;
+	stream >> textureClamping;
+	stream >> textureType;
+	stream >> coordinateGenerationType;
+	sourceTexture.Get(stream);
+	stream >> clippingPlane;
+	stream >> unkVector;
+	stream >> unkFloat;
+}
+
+void NiTextureEffect::Put(NiStream& stream) {
+	NiDynamicEffect::Put(stream);
+
+	stream << modelProjectionMatrix;
+	stream << modelProjectionTransform;
+	stream << textureFiltering;
+	stream << textureClamping;
+	stream << textureType;
+	stream << coordinateGenerationType;
+	sourceTexture.Put(stream);
+	stream << clippingPlane;
+	stream << unkVector;
+	stream << unkFloat;
+}
+
+void NiTextureEffect::GetChildRefs(std::set<int*>& refs) {
+	NiDynamicEffect::GetChildRefs(refs);
+
+	refs.insert(&sourceTexture.index);
+}
+
+
+void NiLight::Get(NiStream& stream) {
+	NiDynamicEffect::Get(stream);
+
+	stream >> dimmer;
+	stream >> ambientColor;
+	stream >> diffuseColor;
+	stream >> specularColor;
+}
+
+void NiLight::Put(NiStream& stream) {
+	NiDynamicEffect::Put(stream);
+
+	stream << dimmer;
+	stream << ambientColor;
+	stream << diffuseColor;
+	stream << specularColor;
+}
+
+
+NiAmbientLight::NiAmbientLight(NiStream& stream) : NiAmbientLight() {
+	Get(stream);
+}
+
+
+NiDirectionalLight::NiDirectionalLight(NiStream& stream) : NiDirectionalLight() {
+	Get(stream);
+}
+
+
+NiPointLight::NiPointLight(NiStream& stream) : NiPointLight() {
+	Get(stream);
+}
+
+void NiPointLight::Get(NiStream& stream) {
+	NiLight::Get(stream);
+
+	stream >> constantAttenuation;
+	stream >> linearAttenuation;
+	stream >> quadraticAttenuation;
+}
+
+void NiPointLight::Put(NiStream& stream) {
+	NiLight::Put(stream);
+
+	stream << constantAttenuation;
+	stream << linearAttenuation;
+	stream << quadraticAttenuation;
+}
+
+
+NiSpotLight::NiSpotLight(NiStream& stream) : NiSpotLight() {
+	Get(stream);
+}
+
+void NiSpotLight::Get(NiStream& stream) {
+	NiPointLight::Get(stream);
+
+	stream >> cutoffAngle;
+	stream >> unkFloat;
+	stream >> exponent;
+}
+
+void NiSpotLight::Put(NiStream& stream) {
+	NiPointLight::Put(stream);
+
+	stream << cutoffAngle;
+	stream << unkFloat;
+	stream << exponent;
+}

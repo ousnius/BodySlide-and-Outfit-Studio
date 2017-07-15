@@ -383,6 +383,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
+	void GetChildRefs(std::set<int*>& refs);
 	NiLODNode* Clone() { return new NiLODNode(*this); }
 };
 

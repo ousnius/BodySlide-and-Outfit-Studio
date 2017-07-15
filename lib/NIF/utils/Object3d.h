@@ -260,6 +260,52 @@ struct Vector4 {
 	}
 };
 
+struct Color3 {
+	float r;
+	float g;
+	float b;
+
+	Color3() {
+		r = g = b = 0.0f;
+	}
+	Color3(const float& r, const float& g, const float& b) {
+		this->r = r;
+		this->g = g;
+		this->b = b;
+	}
+
+	bool operator == (const Color3& other) {
+		return (r == other.r && g == other.g && b == other.b);
+	}
+	bool operator != (const Color3& other) {
+		return !(*this == other);
+	}
+
+	Color3& operator *= (const float& val) {
+		r *= val;
+		g *= val;
+		b *= val;
+		return *this;
+	}
+	Color3 operator * (const float& val) const {
+		Color3 tmp = *this;
+		tmp *= val;
+		return tmp;
+	}
+
+	Color3& operator /= (const float& val) {
+		r /= val;
+		g /= val;
+		b /= val;
+		return *this;
+	}
+	Color3 operator / (const float& val) const {
+		Color3 tmp = *this;
+		tmp /= val;
+		return tmp;
+	}
+};
+
 struct Color4 {
 	float r;
 	float g;

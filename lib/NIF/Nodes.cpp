@@ -442,6 +442,12 @@ void NiLODNode::Put(NiStream& stream) {
 	lodLevelData.Put(stream);
 }
 
+void NiLODNode::GetChildRefs(std::set<int*>& refs) {
+	NiSwitchNode::GetChildRefs(refs);
+
+	refs.insert(&lodLevelData.index);
+}
+
 
 NiBone::NiBone() : NiNode() {
 }

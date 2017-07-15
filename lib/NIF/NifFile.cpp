@@ -33,9 +33,14 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiRangeLODData>();
 	RegisterFactory<NiScreenLODData>();
 	RegisterFactory<NiLODNode>();
-	RegisterFactory<BSMasterParticleSystem>();
 	RegisterFactory<NiBillboardNode>();
 	RegisterFactory<NiSwitchNode>();
+	RegisterFactory<NiSourceTexture>();
+	RegisterFactory<NiTextureEffect>();
+	RegisterFactory<NiAmbientLight>();
+	RegisterFactory<NiDirectionalLight>();
+	RegisterFactory<NiPointLight>();
+	RegisterFactory<NiSpotLight>();
 	RegisterFactory<NiTriShape>();
 	RegisterFactory<NiTriShapeData>();
 	RegisterFactory<NiTriStrips>();
@@ -61,6 +66,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiMaterialProperty>();
 	RegisterFactory<NiStencilProperty>();
 	RegisterFactory<BSShaderTextureSet>();
+	RegisterFactory<BSMasterParticleSystem>();
 	RegisterFactory<NiParticleSystem>();
 	RegisterFactory<NiMeshParticleSystem>();
 	RegisterFactory<BSStripParticleSystem>();
