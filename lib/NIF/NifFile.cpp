@@ -1245,6 +1245,23 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 						// Disable flag if vertex colors were removed
 						if (removeVertexColors)
 							bslsp->shaderFlags2 &= ~(1 << 5);
+
+						if (options.removeParallax) {
+							if (bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::Heightmap) {
+								// Change type from parallax to default
+								bslsp->SetShaderType(BSLightingShaderPropertyShaderType::Default);
+
+								// Remove parallax flag
+								bslsp->shaderFlags1 &= ~(1 << 11);
+
+								// Remove parallax texture from set
+								auto textureSet = hdr.GetBlock<BSShaderTextureSet>(shader->GetTextureSetRef());
+								if (textureSet && textureSet->numTextures >= 4)
+									textureSet->textures[3].Clear();
+
+								result.shapesParallaxRemoved.push_back(s);
+							}
+						}
 					}
 
 					auto bsesp = dynamic_cast<BSEffectShaderProperty*>(shader);

@@ -21,6 +21,7 @@ See the included LICENSE file
 
 struct OptOptionsSSE {
 	bool headParts = false;
+	bool removeParallax = true;
 };
 
 struct OptResultSSE {
@@ -30,6 +31,7 @@ struct OptResultSSE {
 	std::vector<std::string> shapesNormalsRemoved;
 	std::vector<std::string> shapesPartTriangulated;
 	std::vector<std::string> shapesTangentsAdded;
+	std::vector<std::string> shapesParallaxRemoved;
 };
 
 

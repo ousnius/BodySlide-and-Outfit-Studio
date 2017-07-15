@@ -139,7 +139,7 @@ void ShapeProperties::GetShaderType() {
 	NiShader* shader = nif->GetShader(shapeName);
 	if (shader) {
 		if (shader->HasType<BSLightingShaderProperty>()) {
-			type = shader->GetType();
+			type = shader->GetShaderType();
 			if (type > BSLightingShaderPropertyShaderType::WorldLODMultitexture)
 				type = 0;
 
@@ -168,7 +168,7 @@ void ShapeProperties::GetShaderType() {
 			shaderType->SetSelection(type);
 		}
 		else if (shader->HasType<BSShaderPPLightingProperty>()) {
-			type = shader->GetType();
+			type = shader->GetShaderType();
 			shaderType->Append("Tall Grass");
 			shaderType->Append("Default");
 			shaderType->Append("Sky");
@@ -604,7 +604,7 @@ void ShapeProperties::ApplyChanges() {
 			shader->SetEmissiveMultiple(emisMultiple);
 		}
 		else if (shader->HasType<BSLightingShaderProperty>()) {
-			shader->SetType(type);
+			shader->SetShaderType(type);
 
 			shader->SetSpecularColor(specColor);
 			shader->SetSpecularStrength(specStrength);
@@ -625,7 +625,7 @@ void ShapeProperties::ApplyChanges() {
 			case 7: type = BSShaderType::SHADER_NOLIGHTING; break;
 			}
 
-			shader->SetType(type);
+			shader->SetShaderType(type);
 
 			NiMaterialProperty* material = nif->GetMaterialProperty(shapeName);
 			if (material) {

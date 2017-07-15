@@ -42,11 +42,11 @@ void BSShaderProperty::Put(NiStream& stream) {
 	}
 }
 
-uint BSShaderProperty::GetType() {
+uint BSShaderProperty::GetShaderType() {
 	return shaderType;
 }
 
-void BSShaderProperty::SetType(uint type) {
+void BSShaderProperty::SetShaderType(uint type) {
 	shaderType = (BSShaderType)type;
 }
 
@@ -321,11 +321,11 @@ bool BSLightingShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
 
-uint BSLightingShaderProperty::GetType() {
+uint BSLightingShaderProperty::GetShaderType() {
 	return skyrimShaderType;
 }
 
-void BSLightingShaderProperty::SetType(const uint type) {
+void BSLightingShaderProperty::SetShaderType(const uint type) {
 	skyrimShaderType = type;
 }
 

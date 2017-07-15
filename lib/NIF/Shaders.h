@@ -56,8 +56,8 @@ public:
 	virtual bool IsEmissive() { return false; }
 	virtual bool HasSpecular() { return true; }
 	virtual bool HasBacklight() { return false; }
-	virtual uint GetType() { return 0xFFFFFFFF; }
-	virtual void SetType(const uint type) {}
+	virtual uint GetShaderType() { return 0; }
+	virtual void SetShaderType(const uint type) {}
 	virtual Vector2 GetUVOffset() { return Vector2(); }
 	virtual Vector2 GetUVScale() { return Vector2(1.0f, 1.0f); }
 	virtual Vector3 GetSpecularColor() { return Vector3(); }
@@ -91,8 +91,8 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	uint GetType();
-	void SetType(const uint type);
+	uint GetShaderType();
+	void SetShaderType(const uint type);
 	bool HasSpecular();
 	float GetEnvironmentMapScale();
 	Vector2 GetUVOffset();
@@ -180,8 +180,8 @@ public:
 	bool IsModelSpace();
 	bool IsEmissive();
 	bool HasBacklight();
-	uint GetType();
-	void SetType(const uint type);
+	uint GetShaderType();
+	void SetShaderType(const uint type);
 	Vector3 GetSpecularColor();
 	void SetSpecularColor(const Vector3& color);
 	float GetSpecularStrength();
