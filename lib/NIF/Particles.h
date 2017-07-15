@@ -8,6 +8,7 @@ See the included LICENSE file
 
 #include "BasicTypes.h"
 #include "Geometry.h"
+#include "Nodes.h"
 
 class NiParticlesData : public NiGeometryData {
 private:

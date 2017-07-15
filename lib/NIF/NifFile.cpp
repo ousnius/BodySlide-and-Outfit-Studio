@@ -25,8 +25,14 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<BSTreeNode>();
 	RegisterFactory<BSOrderedNode>();
 	RegisterFactory<BSMultiBoundNode>();
+	RegisterFactory<BSDebrisNode>();
 	RegisterFactory<BSBlastNode>();
 	RegisterFactory<BSDamageStage>();
+	RegisterFactory<NiBone>();
+	RegisterFactory<NiSortAdjustNode>();
+	RegisterFactory<NiRangeLODData>();
+	RegisterFactory<NiScreenLODData>();
+	RegisterFactory<NiLODNode>();
 	RegisterFactory<BSMasterParticleSystem>();
 	RegisterFactory<NiBillboardNode>();
 	RegisterFactory<NiSwitchNode>();
@@ -90,6 +96,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiPSysMeshEmitter>();
 	RegisterFactory<BSLightingShaderPropertyColorController>();
 	RegisterFactory<BSLightingShaderPropertyFloatController>();
+	RegisterFactory<BSLightingShaderPropertyUShortController>();
 	RegisterFactory<BSEffectShaderPropertyColorController>();
 	RegisterFactory<BSEffectShaderPropertyFloatController>();
 	RegisterFactory<BSFrustumFOVController>();
@@ -154,6 +161,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<BSMultiBound>();
 	RegisterFactory<BSMultiBoundOBB>();
 	RegisterFactory<BSMultiBoundAABB>();
+	RegisterFactory<BSMultiBoundSphere>();
 	RegisterFactory<NiCollisionObject>();
 	RegisterFactory<bhkCollisionObject>();
 	RegisterFactory<bhkNPCollisionObject>();

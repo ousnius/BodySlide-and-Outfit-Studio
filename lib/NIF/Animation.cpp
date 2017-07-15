@@ -436,6 +436,23 @@ void BSLightingShaderPropertyFloatController::Put(NiStream& stream) {
 }
 
 
+BSLightingShaderPropertyUShortController::BSLightingShaderPropertyUShortController(NiStream& stream) : BSLightingShaderPropertyUShortController() {
+	Get(stream);
+}
+
+void BSLightingShaderPropertyUShortController::Get(NiStream& stream) {
+	NiFloatInterpController::Get(stream);
+
+	stream >> typeOfControlledVariable;
+}
+
+void BSLightingShaderPropertyUShortController::Put(NiStream& stream) {
+	NiFloatInterpController::Put(stream);
+
+	stream << typeOfControlledVariable;
+}
+
+
 BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiStream& stream) : BSEffectShaderPropertyColorController() {
 	Get(stream);
 }

@@ -557,6 +557,22 @@ public:
 	BSLightingShaderPropertyFloatController* Clone() { return new BSLightingShaderPropertyFloatController(*this); }
 };
 
+class BSLightingShaderPropertyUShortController : public NiFloatInterpController {
+private:
+	uint typeOfControlledVariable = 0;
+
+public:
+	BSLightingShaderPropertyUShortController() {}
+	BSLightingShaderPropertyUShortController(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSLightingShaderPropertyUShortController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSLightingShaderPropertyUShortController* Clone() { return new BSLightingShaderPropertyUShortController(*this); }
+};
+
 class BSEffectShaderPropertyColorController : public NiFloatInterpController {
 private:
 	uint typeOfControlledColor = 0;

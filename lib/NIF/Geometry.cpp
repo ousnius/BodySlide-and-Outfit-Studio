@@ -6,6 +6,7 @@ See the included LICENSE file
 
 #include "Geometry.h"
 #include "Skin.h"
+#include "Nodes.h"
 
 #include "utils/half.hpp"
 #include "utils/KDMatcher.h"
