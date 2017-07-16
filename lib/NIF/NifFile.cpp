@@ -1183,19 +1183,14 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	}
 
 	bool isBTO = fileName.rfind(".bto") != std::string::npos;
+	bool isBTR = fileName.rfind(".btr") != std::string::npos;
 
-	std::vector<std::string> shapes;
-	GetShapeList(shapes);
-	for (auto &s : shapes) {
-		if (!s.empty()) {
-			bool renamed = RenameDuplicateShape(s);
-			if (renamed)
-				result.shapesRenamed.push_back(s);
-		}
-	}
+	if (!isBTO && !isBTR)
+		result.dupesRenamed = RenameDuplicateShapes();
 
 	hdr.GetVersion().Set(20, 2, 0, 7, 12, 100);
 
+	std::vector<std::string> shapes;
 	GetShapeList(shapes);
 	for (auto &s : shapes) {
 		NiShape* shape = FindShapeByName(s);
@@ -1573,25 +1568,57 @@ void NifFile::RenameShape(const std::string& oldName, const std::string& newName
 		geom->SetName(newName);
 }
 
-bool NifFile::RenameDuplicateShape(const std::string& dupedShape) {
-	int dupCount = 1;
-	char buf[10];
+bool NifFile::RenameDuplicateShapes() {
+	auto countDupes = [this](NiNode* parent, const std::string& name) {
+		if (name.empty())
+			return ptrdiff_t(0);
 
-	NiAVObject* geom = FindAVObjectByName(dupedShape);
-	if (geom) {
-		while ((geom = FindAVObjectByName(dupedShape, 1)) != nullptr) {
-			_snprintf(buf, 10, "_%d", dupCount);
-			while (hdr.FindStringId(geom->GetName() + buf) != 0xFFFFFFFF) {
-				dupCount++;
-				_snprintf(buf, 10, "_%d", dupCount);
+		std::vector<std::string> names;
+		for (auto &child : parent->GetChildren()) {
+			auto obj = hdr.GetBlock<NiAVObject>(child.index);
+			if (obj)
+				names.push_back(obj->GetName());
+		}
+
+		return std::count(names.begin(), names.end(), name);
+	};
+
+	bool renamed = false;
+	auto nodes = GetChildren<NiNode>();
+
+	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	nodes.push_back(root);
+
+	for (auto &node : nodes) {
+		int dupCount = 0;
+
+		for (auto &child : node->GetChildren()) {
+			auto shape = hdr.GetBlock<NiShape>(child.index);
+			if (shape) {
+				// Skip first child
+				if (dupCount == 0) {
+					dupCount++;
+					continue;
+				}
+
+				bool duped = countDupes(node, shape->GetName()) > 1;
+				if (duped) {
+					std::string dup = "_" + std::to_string(dupCount);
+
+					while (countDupes(node, shape->GetName() + dup) > 1) {
+						dupCount++;
+						dup = "_" + std::to_string(dupCount);
+					}
+
+					shape->SetName(shape->GetName() + dup);
+					dupCount++;
+					renamed = true;
+				}
 			}
-
-			geom->SetName(geom->GetName() + buf);
-			dupCount++;
 		}
 	}
 
-	return (dupCount > 1);
+	return renamed;
 }
 
 int NifFile::GetRootNodeID() {

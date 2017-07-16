@@ -1720,7 +1720,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	}
 
 	// Add cloth data block of NIF to the list
-	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(refNif.GetHeader().GetBlock<NiNode>(0), true);
+	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(nullptr, true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[inMeshFile] = cloth->Clone();
 
@@ -2004,11 +2004,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	CheckNIFTarget(nif);
 
 	nif.SetNodeName(0, "Scene Root");
-
-	std::vector<std::string> nifShapes;
-	nif.GetShapeList(nifShapes);
-	for (auto &s : nifShapes)
-		nif.RenameDuplicateShape(s);
+	nif.RenameDuplicateShapes();
 
 	if (!baseShape.empty())
 		nif.RenameShape(baseShape, baseShape + "_outfit");
@@ -2016,6 +2012,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	std::vector<std::string> shapes;
 	GetShapes(shapes);
 
+	std::vector<std::string> nifShapes;
 	nif.GetShapeList(nifShapes);
 	for (auto &s : nifShapes) {
 		std::vector<std::string> uniqueShapes;
@@ -2043,7 +2040,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	AutoOffset(nif);
 
 	// Add cloth data block of NIF to the list
-	std::vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nif.GetHeader().GetBlock<NiNode>(0), true);
+	std::vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nullptr, true);
 	for (auto &cloth : clothDataBlocks)
 		clothData[fileName] = cloth->Clone();
 

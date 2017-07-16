@@ -26,7 +26,7 @@ struct OptOptionsSSE {
 
 struct OptResultSSE {
 	bool versionMismatch = false;
-	std::vector<std::string> shapesRenamed;
+	bool dupesRenamed = false;
 	std::vector<std::string> shapesVColorsRemoved;
 	std::vector<std::string> shapesNormalsRemoved;
 	std::vector<std::string> shapesPartTriangulated;
@@ -172,11 +172,11 @@ public:
 
 	int GetShapeList(std::vector<std::string>& outList);
 	void RenameShape(const std::string& oldName, const std::string& newName);
-	bool RenameDuplicateShape(const std::string& dupedShape);
+	bool RenameDuplicateShapes();
 
 	/// GetChildren of a node ... templatized to allow any particular type to be queried.   useful for walking a node tree
 	template <class T>
-	std::vector<T*> GetChildren(NiNode* parent, bool searchExtraData = false);
+	std::vector<T*> GetChildren(NiNode* parent = nullptr, bool searchExtraData = false);
 
 	int GetRootNodeID();
 	bool GetNodeTransform(const std::string& nodeName, std::vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
@@ -272,11 +272,9 @@ std::vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	T* n;
 
 	if (parent == nullptr) {
-		n = dynamic_cast<T*>(blocks[0].get());
-		if (n)
-			result.push_back(n);
-
-		return result;
+		parent = dynamic_cast<NiNode*>(blocks[0].get());
+		if (parent == nullptr)
+			return result;
 	}
 
 	for (int i = 0; i < parent->GetNumChildren(); i++) {
