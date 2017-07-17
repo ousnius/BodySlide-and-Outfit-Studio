@@ -250,7 +250,7 @@ public:
 
 class NiTextureEffect : public NiDynamicEffect {
 private:
-	float modelProjectionMatrix[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+	Matrix3 modelProjectionMatrix;
 	Vector3 modelProjectionTransform;
 	TexFilterMode textureFiltering = FILTER_TRILERP;
 	TexClampMode textureClamping = WRAP_S_WRAP_T;

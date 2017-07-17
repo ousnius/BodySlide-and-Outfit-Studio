@@ -160,7 +160,7 @@ void BSMultiBoundOBB::Get(NiStream& stream) {
 
 	stream >> center;
 	stream >> size;
-	stream.read((char*)rotation, 36);
+	stream >> rotation;
 }
 
 void BSMultiBoundOBB::Put(NiStream& stream) {
@@ -168,7 +168,7 @@ void BSMultiBoundOBB::Put(NiStream& stream) {
 
 	stream << center;
 	stream << size;
-	stream.write((char*)rotation, 36);
+	stream << rotation;
 }
 
 

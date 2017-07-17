@@ -126,7 +126,7 @@ class BSMultiBoundOBB : public BSMultiBoundData {
 private:
 	Vector3 center;
 	Vector3 size;
-	float rotation[9] = { 1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f };
+	Matrix3 rotation;
 
 public:
 	BSMultiBoundOBB() {}

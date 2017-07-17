@@ -356,6 +356,59 @@ struct Color4 {
 	}
 };
 
+class Matrix3 {
+	float m[9];
+
+public:
+	Matrix3() {
+		Identity();
+	}
+
+	float& operator[] (int index) {
+		return m[index];
+	}
+
+	bool operator==(const Matrix3& other) {
+		return (std::equal(m, m + sizeof m / sizeof *m, other.m));
+	}
+
+	bool IsIdentity() {
+		return *this == Matrix3();
+	}
+
+	Matrix3& Identity() {
+		//1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
+		memset(m, 0, sizeof(float) * 9);
+		m[0] = m[4] = m[8] = 1.0f;
+		return *this;
+	}
+
+	Matrix3 operator+(const Matrix3& other) const {
+		Matrix3 t(*this);
+		t += other;
+		return t;
+	}
+
+	Matrix3& operator+=(const Matrix3& other) {
+		for (int i = 0; i < 9; i++)
+			m[i] += other.m[i];
+
+		return (*this);
+	}
+
+	Matrix3 operator-(const Matrix3& other) const {
+		Matrix3 t(*this);
+		t -= other;
+		return t;
+	}
+
+	Matrix3& operator-=(const Matrix3& other) {
+		for (int i = 0; i < 9; i++)
+			m[i] -= other.m[i];
+
+		return(*this);
+	}
+};
 
 // 4D Matrix class for calculating and applying transformations.
 class Matrix4 {
