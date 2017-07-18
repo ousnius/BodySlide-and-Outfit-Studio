@@ -58,7 +58,7 @@ void mesh::MakeEdges() {
 			pB = 0;
 
 		// Create edge from points
-		edges[i] = Edge(min(points[pA], points[pB]), max(points[pA], points[pB]));
+		edges[i] = Edge(std::min(points[pA], points[pB]), std::max(points[pA], points[pB]));
 	}
 }
 

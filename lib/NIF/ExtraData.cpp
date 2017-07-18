@@ -5,6 +5,8 @@ See the included LICENSE file
 */
 
 #include "ExtraData.h"
+#include "utils/half.hpp"
+
 #include <fstream>
 
 void NiExtraData::Get(NiStream& stream) {
@@ -70,6 +72,45 @@ void NiFloatExtraData::Put(NiStream& stream) {
 	NiExtraData::Put(stream);
 
 	stream << floatData;
+}
+
+float NiFloatExtraData::GetFloatData() {
+	return floatData;
+}
+
+void NiFloatExtraData::SetFloatData(const float fltData) {
+	floatData = fltData;
+}
+
+
+NiFloatsExtraData::NiFloatsExtraData(NiStream& stream) : NiFloatsExtraData() {
+	Get(stream);
+}
+
+void NiFloatsExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	stream >> numFloats;
+	floatsData.resize(numFloats);
+	for (int i = 0; i < numFloats; i++)
+		stream >> floatsData[i];
+}
+
+void NiFloatsExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	stream << numFloats;
+	for (int i = 0; i < numFloats; i++)
+		stream << floatsData[i];
+}
+
+std::vector<float> NiFloatsExtraData::GetFloatsData() {
+	return floatsData;
+}
+
+void NiFloatsExtraData::SetFloatsData(const std::vector<float>& fltsData) {
+	numFloats = fltsData.size();
+	floatsData = fltsData;
 }
 
 
@@ -147,7 +188,7 @@ bool NiBooleanExtraData::GetBooleanData() {
 }
 
 void NiBooleanExtraData::SetBooleanData(const bool boolData) {
-	this->booleanData = boolData;
+	booleanData = boolData;
 }
 
 
@@ -172,7 +213,88 @@ uint NiIntegerExtraData::GetIntegerData() {
 }
 
 void NiIntegerExtraData::SetIntegerData(const uint intData) {
-	this->integerData = intData;
+	integerData = intData;
+}
+
+
+NiIntegersExtraData::NiIntegersExtraData(NiStream& stream) : NiIntegersExtraData() {
+	Get(stream);
+}
+
+void NiIntegersExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	stream >> numIntegers;
+	integersData.resize(numIntegers);
+	for (int i = 0; i < numIntegers; i++)
+		stream >> integersData[i];
+}
+
+void NiIntegersExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	stream << numIntegers;
+	for (int i = 0; i < numIntegers; i++)
+		stream << integersData[i];
+}
+
+std::vector<uint> NiIntegersExtraData::GetIntegersData() {
+	return integersData;
+}
+
+void NiIntegersExtraData::SetIntegersData(const std::vector<uint>& intData) {
+	numIntegers = intData.size();
+	integersData = intData;
+}
+
+
+NiVectorExtraData::NiVectorExtraData(NiStream& stream) : NiVectorExtraData() {
+	Get(stream);
+}
+
+void NiVectorExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	stream >> vectorData;
+}
+
+void NiVectorExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	stream << vectorData;
+}
+
+Vector4 NiVectorExtraData::GetVectorData() {
+	return vectorData;
+}
+
+void NiVectorExtraData::SetVectorData(const Vector4& vecData) {
+	vectorData = vecData;
+}
+
+
+NiColorExtraData::NiColorExtraData(NiStream& stream) : NiColorExtraData() {
+	Get(stream);
+}
+
+void NiColorExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	stream >> colorData;
+}
+
+void NiColorExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	stream << colorData;
+}
+
+Color4 NiColorExtraData::GetColorData() {
+	return colorData;
+}
+
+void NiColorExtraData::SetColorData(const Color4& colData) {
+	colorData = colData;
 }
 
 
@@ -181,6 +303,174 @@ BSXFlags::BSXFlags() : NiIntegerExtraData() {
 
 BSXFlags::BSXFlags(NiStream& stream) : BSXFlags() {
 	Get(stream);
+}
+
+
+BSWArray::BSWArray(NiStream& stream) : BSWArray() {
+	Get(stream);
+}
+
+void BSWArray::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	stream >> numData;
+	data.resize(numData);
+	for (int i = 0; i < numData; i++)
+		stream >> data[i];
+}
+
+void BSWArray::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	stream << numData;
+	for (int i = 0; i < numData; i++)
+		stream << data[i];
+}
+
+std::vector<uint> BSWArray::GetData() {
+	return data;
+}
+
+void BSWArray::SetData(const std::vector<uint>& dat) {
+	numData = dat.size();
+	data = dat;
+}
+
+
+BSPositionData::BSPositionData(NiStream& stream) : BSPositionData() {
+	Get(stream);
+}
+
+void BSPositionData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	stream >> numData;
+	data.resize(numData);
+	for (int i = 0; i < numData; i++)
+		stream >> data[i];
+}
+
+void BSPositionData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	stream << numData;
+	for (int i = 0; i < numData; i++)
+		stream << data[i];
+}
+
+std::vector<half_float::half> BSPositionData::GetData() {
+	return data;
+}
+
+void BSPositionData::SetData(const std::vector<half_float::half>& dat) {
+	numData = dat.size();
+	data = dat;
+}
+
+
+BSEyeCenterExtraData::BSEyeCenterExtraData(NiStream& stream) : BSEyeCenterExtraData() {
+	Get(stream);
+}
+
+void BSEyeCenterExtraData::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	stream >> numData;
+	data.resize(numData);
+	for (int i = 0; i < numData; i++)
+		stream >> data[i];
+}
+
+void BSEyeCenterExtraData::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	stream << numData;
+	for (int i = 0; i < numData; i++)
+		stream << data[i];
+}
+
+std::vector<float> BSEyeCenterExtraData::GetData() {
+	return data;
+}
+
+void BSEyeCenterExtraData::SetData(const std::vector<float>& dat) {
+	numData = dat.size();
+	data = dat;
+}
+
+
+void BSPackedGeomData::Get(NiStream& stream) {
+	stream >> numVerts;
+
+	stream >> lodLevels;
+	lod.resize(lodLevels);
+	for (int i = 0; i < lodLevels; i++)
+		stream >> lod[i];
+
+	stream >> numCombined;
+	combined.resize(numCombined);
+	for (int i = 0; i < numCombined; i++)
+		stream >> combined[i];
+
+	stream >> unkInt1;
+	stream >> unkInt2;
+}
+
+void BSPackedGeomData::Put(NiStream& stream) {
+	stream << numVerts;
+
+	stream << lodLevels;
+	for (int i = 0; i < lodLevels; i++)
+		stream << lod[i];
+
+	stream << numCombined;
+	for (int i = 0; i < numCombined; i++)
+		stream << combined[i];
+
+	stream << unkInt1;
+	stream << unkInt2;
+}
+
+
+BSPackedCombinedSharedGeomDataExtra::BSPackedCombinedSharedGeomDataExtra(NiStream& stream) : BSPackedCombinedSharedGeomDataExtra() {
+	Get(stream);
+}
+
+void BSPackedCombinedSharedGeomDataExtra::Get(NiStream& stream) {
+	NiExtraData::Get(stream);
+
+	vertDesc.Get(stream);
+	stream >> numVertices;
+	stream >> numTriangles;
+	stream >> unkFlags1;
+	stream >> unkFlags2;
+
+	stream >> numData;
+	objects.resize(numData);
+	data.resize(numData);
+
+	for (int i = 0; i < numData; i++)
+		stream >> objects[i];
+
+	for (int i = 0; i < numData; i++)
+		data[i].Get(stream);
+}
+
+void BSPackedCombinedSharedGeomDataExtra::Put(NiStream& stream) {
+	NiExtraData::Put(stream);
+
+	vertDesc.Put(stream);
+	stream << numVertices;
+	stream << numTriangles;
+	stream << unkFlags1;
+	stream << unkFlags2;
+	stream << numData;
+
+	for (int i = 0; i < numData; i++)
+		stream << objects[i];
+
+	for (int i = 0; i < numData; i++)
+		data[i].Put(stream);
 }
 
 

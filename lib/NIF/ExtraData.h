@@ -8,6 +8,8 @@ See the included LICENSE file
 
 #include "BasicTypes.h"
 #include "Keys.h"
+#include "VertexData.h"
+#include "utils/half.hpp"
 
 class NiExtraData : public NiObject {
 private:
@@ -53,6 +55,29 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	NiFloatExtraData* Clone() { return new NiFloatExtraData(*this); }
+
+	float GetFloatData();
+	void SetFloatData(const float fltData);
+};
+
+class NiFloatsExtraData : public NiExtraData {
+private:
+	uint numFloats = 0;
+	std::vector<float> floatsData;
+
+public:
+	NiFloatsExtraData() {}
+	NiFloatsExtraData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiFloatsExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiFloatsExtraData* Clone() { return new NiFloatsExtraData(*this); }
+
+	std::vector<float> GetFloatsData();
+	void SetFloatsData(const std::vector<float>& fltsData);
 };
 
 class NiStringExtraData : public NiExtraData {
@@ -130,6 +155,64 @@ public:
 	void SetIntegerData(const uint intData);
 };
 
+class NiIntegersExtraData : public NiExtraData {
+private:
+	uint numIntegers = 0;
+	std::vector<uint> integersData;
+
+public:
+	NiIntegersExtraData() {}
+	NiIntegersExtraData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiIntegersExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiIntegersExtraData* Clone() { return new NiIntegersExtraData(*this); }
+
+	std::vector<uint> GetIntegersData();
+	void SetIntegersData(const std::vector<uint>& intData);
+};
+
+class NiVectorExtraData : public NiExtraData {
+private:
+	Vector4 vectorData;
+
+public:
+	NiVectorExtraData() {}
+	NiVectorExtraData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiVectorExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiVectorExtraData* Clone() { return new NiVectorExtraData(*this); }
+
+	Vector4 GetVectorData();
+	void SetVectorData(const Vector4& vecData);
+};
+
+class NiColorExtraData : public NiExtraData {
+private:
+	Color4 colorData;
+
+public:
+	NiColorExtraData() {}
+	NiColorExtraData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiColorExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiColorExtraData* Clone() { return new NiColorExtraData(*this); }
+
+	Color4 GetColorData();
+	void SetColorData(const Color4& colData);
+};
+
 class BSXFlags : public NiIntegerExtraData {
 public:
 	BSXFlags();
@@ -139,6 +222,120 @@ public:
 	virtual const char* GetBlockName() { return BlockName; }
 
 	BSXFlags* Clone() { return new BSXFlags(*this); }
+};
+
+class BSWArray : public NiExtraData {
+private:
+	uint numData;
+	std::vector<uint> data;
+
+public:
+	BSWArray() {}
+	BSWArray(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSWArray";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSWArray* Clone() { return new BSWArray(*this); }
+
+	std::vector<uint> GetData();
+	void SetData(const std::vector<uint>& dat);
+};
+
+class BSPositionData : public NiExtraData {
+private:
+	uint numData;
+	std::vector<half_float::half> data;
+
+public:
+	BSPositionData() {}
+	BSPositionData(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSPositionData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSPositionData* Clone() { return new BSPositionData(*this); }
+
+	std::vector<half_float::half> GetData();
+	void SetData(const std::vector<half_float::half>& dat);
+};
+
+class BSEyeCenterExtraData : public NiExtraData {
+private:
+	uint numData;
+	std::vector<float> data;
+
+public:
+	BSEyeCenterExtraData() {}
+	BSEyeCenterExtraData(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSEyeCenterExtraData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSEyeCenterExtraData* Clone() { return new BSEyeCenterExtraData(*this); }
+
+	std::vector<float> GetData();
+	void SetData(const std::vector<float>& dat);
+};
+
+struct BSPackedGeomObject {
+	uint unkInt1 = 0;
+	uint objectHash = 0;
+};
+
+struct BSPackedGeomDataLOD {
+	uint triangleCount = 0;
+	uint triangleOffset = 0;
+};
+
+struct BSPackedGeomDataCombined {
+	float grayscaleToPaletteScale = 1.0f;
+	Matrix3 rotation;
+	Vector3 translation;
+	float scale = 1.0f;
+	BoundingSphere bounds;
+};
+
+struct BSPackedGeomData {
+	uint numVerts = 0;
+	uint lodLevels = 0;
+	std::vector<BSPackedGeomDataLOD> lod;
+	uint numCombined = 0;
+	std::vector<BSPackedGeomDataCombined> combined;
+	uint unkInt1 = 0;
+	uint unkInt2 = 0;
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+};
+
+class BSPackedCombinedSharedGeomDataExtra : public NiExtraData {
+private:
+	VertexDesc vertDesc;
+	uint numVertices = 0;
+	uint numTriangles = 0;
+	uint unkFlags1 = 0;
+	uint unkFlags2 = 0;
+	uint numData = 0;
+	std::vector<BSPackedGeomObject> objects;
+	std::vector<BSPackedGeomData> data;
+
+public:
+	BSPackedCombinedSharedGeomDataExtra() {}
+	BSPackedCombinedSharedGeomDataExtra(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSPackedCombinedSharedGeomDataExtra";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSPackedCombinedSharedGeomDataExtra* Clone() { return new BSPackedCombinedSharedGeomDataExtra(*this); }
 };
 
 class BSInvMarker : public NiExtraData {
