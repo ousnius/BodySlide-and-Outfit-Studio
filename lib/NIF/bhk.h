@@ -8,6 +8,7 @@ See the included LICENSE file
 
 #include "BasicTypes.h"
 #include "ExtraData.h"
+#include "Animation.h"
 
 typedef uint HavokMaterial;
 
@@ -220,36 +221,36 @@ enum hkConstraintType : uint {
 };
 
 struct bhkCMSDMaterial {
-	HavokMaterial material;
+	HavokMaterial material = 0;
 	HavokFilter layer;
 };
 
 struct bhkCMSDBigTris {
-	ushort triangle1;
-	ushort triangle2;
-	ushort triangle3;
-	uint material;
-	ushort weldingInfo;
+	ushort triangle1 = 0;
+	ushort triangle2 = 0;
+	ushort triangle3 = 0;
+	HavokMaterial material = 0;
+	ushort weldingInfo = 0;
 };
 
 struct bhkCMSDTransform {
 	Vector4 translation;
-	Quaternion rotation;
+	QuaternionXYZW rotation;
 };
 
 struct bhkCMSDChunk {
 	Vector4 translation;
-	uint matIndex;
-	ushort reference;
-	ushort transformIndex;
+	uint matIndex = 0;
+	ushort reference = 0;
+	ushort transformIndex = 0;
 
-	uint numVerts;
+	uint numVerts = 0;
 	std::vector<ushort> verts;
-	uint numIndices;
+	uint numIndices = 0;
 	std::vector<ushort> indices;
-	uint numStrips;
+	uint numStrips = 0;
 	std::vector<ushort> strips;
-	uint numWeldingInfo;
+	uint numWeldingInfo = 0;
 	std::vector<ushort> weldingInfo;
 };
 
@@ -365,9 +366,45 @@ public:
 	bhkPhysicsSystem(const uint size = 0);
 	bhkPhysicsSystem(NiStream& stream);
 
+	static constexpr const char* BlockName = "bhkPhysicsSystem";
+	virtual const char* GetBlockName() { return BlockName; }
+
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	bhkPhysicsSystem* Clone() { return new bhkPhysicsSystem(*this); }
+};
+
+class bhkRagdollSystem : public BSExtraData {
+private:
+	uint numBytes = 0;
+	std::vector<char> data;
+
+public:
+	bhkRagdollSystem(const uint size = 0);
+	bhkRagdollSystem(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkRagdollSystem";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	bhkRagdollSystem* Clone() { return new bhkRagdollSystem(*this); }
+};
+
+class bhkBlendController : public NiTimeController {
+private:
+	uint keys = 0;
+
+public:
+	bhkBlendController();
+	bhkBlendController(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkBlendController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	bhkBlendController* Clone() { return new bhkBlendController(*this); }
 };
 
 class bhkRefObject : public NiObject {
@@ -405,21 +442,62 @@ public:
 
 class bhkSphereRepShape : public bhkShape {
 private:
-	HavokMaterial material;
-	float radius;
+	HavokMaterial material = 0;
+	float radius = 0.0f;
 
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 };
 
+class bhkMultiSphereShape : public bhkSphereRepShape {
+private:
+	float unkFloat1 = 0.0f;
+	float unkFloat2 = 0.0f;
+	uint numSpheres = 0;
+	std::vector<BoundingSphere> spheres;
+
+public:
+	bhkMultiSphereShape() {}
+	bhkMultiSphereShape(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkMultiSphereShape";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	bhkMultiSphereShape* Clone() { return new bhkMultiSphereShape(*this); }
+};
+
 class bhkConvexShape : public bhkSphereRepShape {
+};
+
+class bhkConvexListShape : public bhkShape {
+private:
+	BlockRefArray<bhkConvexShape> shapeRefs;
+	HavokMaterial material = 0;
+	float radius = 0.0f;
+	uint unkInt1 = 0;
+	float unkFloat1 = 0.0f;
+	hkWorldObjCInfoProperty childShapeProp;
+	byte unkByte1 = 0;
+	float unkFloat2 = 0.0f;
+
+public:
+	bhkConvexListShape() {}
+	bhkConvexListShape(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkConvexListShape";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	bhkConvexListShape* Clone() { return new bhkConvexListShape(*this); }
 };
 
 class bhkConvexVerticesShape : public bhkConvexShape {
 private:
-	uint mat = 0;
-	float radius = 0.0f;
 	hkWorldObjCInfoProperty vertsProp;
 	hkWorldObjCInfoProperty normalsProp;
 
@@ -607,6 +685,122 @@ public:
 	bhkListShape* Clone() { return new bhkListShape(*this); }
 };
 
+struct hkTriangleData {
+	Triangle tri;
+	ushort weldingInfo = 0;
+};
+
+struct hkTriangleNormalData {
+	Triangle tri;
+	ushort weldingInfo = 0;
+	Vector3 normal;
+};
+
+struct hkSubPartData {
+	HavokFilter filter;
+	uint numVerts = 0;
+	HavokMaterial material = 0;
+};
+
+class hkPackedNiTriStripsData : public bhkShapeCollection {
+private:
+	uint keyCount = 0;
+	std::vector<hkTriangleData> triData;
+	std::vector<hkTriangleNormalData> triNormData;
+
+	uint numVerts = 0;
+	byte unkByte = 0;
+	std::vector<Vector3> compressedVertData;
+
+	ushort partCount = 0;
+	std::vector<hkSubPartData> data;
+
+public:
+	hkPackedNiTriStripsData() {}
+	hkPackedNiTriStripsData(NiStream& stream);
+
+	static constexpr const char* BlockName = "hkPackedNiTriStripsData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	hkPackedNiTriStripsData* Clone() { return new hkPackedNiTriStripsData(*this); }
+};
+
+class bhkPackedNiTriStripsShape : public bhkShapeCollection {
+private:
+	ushort partCount = 0;
+	std::vector<hkSubPartData> data;
+
+	uint userData = 0;
+	uint unused1 = 0;
+	float radius = 0.0f;
+	uint unused2 = 0;
+	Vector4 scaling;
+	float radius2 = 0.0f;
+	Vector4 scaling2;
+	BlockRef<hkPackedNiTriStripsData> dataRef;
+
+public:
+	bhkPackedNiTriStripsShape() {}
+	bhkPackedNiTriStripsShape(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkPackedNiTriStripsShape";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	bhkPackedNiTriStripsShape* Clone() { return new bhkPackedNiTriStripsShape(*this); }
+};
+
+class bhkLiquidAction : public bhkSerializable {
+private:
+	uint userData = 0;
+	uint unkInt1 = 0;
+	uint unkInt2 = 0;
+	float initialStickForce = 0.0f;
+	float stickStrength = 0.0f;
+	float neighborDistance = 0.0f;
+	float neighborStrength = 0.0f;
+
+public:
+	bhkLiquidAction() {}
+	bhkLiquidAction(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkLiquidAction";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	bhkLiquidAction* Clone() { return new bhkLiquidAction(*this); }
+};
+
+class bhkOrientHingedBodyAction : public bhkSerializable {
+private:
+	BlockRef<NiObject> bodyRef;
+	uint unkInt1 = 0;
+	uint unkInt2 = 0;
+	uint64_t padding = 0;
+	Vector4 hingeAxisLS;
+	Vector4 forwardLS;
+	float strength = 0.0f;
+	float damping = 0.0f;
+	uint64_t padding2 = 0;
+
+public:
+	bhkOrientHingedBodyAction() {}
+	bhkOrientHingedBodyAction(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkOrientHingedBodyAction";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetPtrs(std::set<int*>& ptrs);
+	bhkOrientHingedBodyAction* Clone() { return new bhkOrientHingedBodyAction(*this); }
+};
+
 class bhkWorldObject : public bhkSerializable {
 private:
 	BlockRef<bhkShape> shapeRef;
@@ -644,6 +838,24 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	bhkSimpleShapePhantom* Clone() { return new bhkSimpleShapePhantom(*this); }
+};
+
+class bhkAabbPhantom : public bhkShapePhantom {
+private:
+	uint64_t padding = 0;
+	Vector4 aabbMin;
+	Vector4 aabbMax;
+
+public:
+	bhkAabbPhantom() {}
+	bhkAabbPhantom(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkAabbPhantom";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	bhkAabbPhantom* Clone() { return new bhkAabbPhantom(*this); }
 };
 
 class bhkEntity : public bhkWorldObject {
@@ -692,7 +904,7 @@ public:
 	bhkLimitedHingeConstraint* Clone() { return new bhkLimitedHingeConstraint(*this); }
 };
 
-class SubConstraintDesc {
+class ConstraintData {
 private:
 	hkConstraintType type;
 	BlockRefArray<bhkEntity> entityRefs;
@@ -715,7 +927,7 @@ public:
 
 class bhkBreakableConstraint : public bhkConstraint {
 private:
-	SubConstraintDesc subConstraint;
+	ConstraintData subConstraint;
 	bool removeWhenBroken = false;
 
 public:
@@ -781,7 +993,7 @@ public:
 
 class bhkMalleableConstraint : public bhkConstraint {
 private:
-	SubConstraintDesc subConstraint;
+	ConstraintData subConstraint;
 
 public:
 	bhkMalleableConstraint() {}
@@ -857,7 +1069,7 @@ private:
 	HavokFilter collisionFilterCopy;
 	ushort unkShorts2[6];
 	Vector4 translation;
-	Quaternion rotation;
+	QuaternionXYZW rotation;
 	Vector4 linearVelocity;
 	Vector4 angularVelocity;
 	float inertiaMatrix[12];
@@ -970,7 +1182,7 @@ private:
 	float unkFloat = 0.0f;
 	Vector4 scaling = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	float radius2 = 0.005f;
-	Vector4 scaling2 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);;
+	Vector4 scaling2 = Vector4(1.0f, 1.0f, 1.0f, 1.0f);
 	BlockRef<bhkCompressedMeshShapeData> dataRef;
 
 public:
@@ -985,4 +1197,91 @@ public:
 	void GetChildRefs(std::set<int*>& refs);
 	void GetPtrs(std::set<int*>& ptrs);
 	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
+};
+
+struct BoneMatrix {
+	Vector3 translation;
+	QuaternionXYZW rotation;
+	Vector3 scale;
+};
+
+struct BonePose {
+	uint numMatrices = 0;
+	std::vector<BoneMatrix> matrices;
+
+	void Get(NiStream& stream) {
+		stream >> numMatrices;
+		matrices.resize(numMatrices);
+		for (int i = 0; i < numMatrices; i++)
+			stream >> matrices[i];
+	}
+
+	void Put(NiStream& stream) {
+		stream << numMatrices;
+		for (int i = 0; i < numMatrices; i++)
+			stream << matrices[i];
+	}
+};
+
+class bhkPoseArray : public NiObject {
+private:
+	uint numBones = 0;
+	std::vector<StringRef> bones;
+
+	uint numPoses = 0;
+	std::vector<BonePose> poses;
+
+public:
+	bhkPoseArray() {}
+	bhkPoseArray(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkPoseArray";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<StringRef*>& refs);
+	bhkPoseArray* Clone() { return new bhkPoseArray(*this); }
+};
+
+class bhkRagdollTemplate : public NiExtraData {
+private:
+	uint numBones = 0;
+	BlockRefArray<NiObject> boneRefs;
+
+public:
+	bhkRagdollTemplate() {}
+	bhkRagdollTemplate(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkRagdollTemplate";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	bhkRagdollTemplate* Clone() { return new bhkRagdollTemplate(*this); }
+};
+
+class bhkRagdollTemplateData : public NiObject {
+private:
+	StringRef name;
+	float mass = 9.0f;
+	float restitution = 0.8f;
+	float friction = 0.3f;
+	float radius = 1.0f;
+	HavokMaterial material = 7;
+	uint numConstraints = 0;
+	std::vector<ConstraintData> constraints;
+
+public:
+	bhkRagdollTemplateData() {}
+	bhkRagdollTemplateData(NiStream& stream);
+
+	static constexpr const char* BlockName = "bhkRagdollTemplateData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<StringRef*>& refs);
+	bhkRagdollTemplateData* Clone() { return new bhkRagdollTemplateData(*this); }
 };

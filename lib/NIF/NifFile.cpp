@@ -183,7 +183,11 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<bhkSPCollisionObject>();
 	RegisterFactory<bhkBlendCollisionObject>();
 	RegisterFactory<bhkPhysicsSystem>();
+	RegisterFactory<bhkRagdollSystem>();
+	RegisterFactory<bhkBlendController>();
 	RegisterFactory<bhkPlaneShape>();
+	RegisterFactory<bhkMultiSphereShape>();
+	RegisterFactory<bhkConvexListShape>();
 	RegisterFactory<bhkConvexVerticesShape>();
 	RegisterFactory<bhkBoxShape>();
 	RegisterFactory<bhkSphereShape>();
@@ -192,7 +196,12 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<bhkCapsuleShape>();
 	RegisterFactory<bhkNiTriStripsShape>();
 	RegisterFactory<bhkListShape>();
+	RegisterFactory<hkPackedNiTriStripsData>();
+	RegisterFactory<bhkPackedNiTriStripsShape>();
+	RegisterFactory<bhkLiquidAction>();
+	RegisterFactory<bhkOrientHingedBodyAction>();
 	RegisterFactory<bhkSimpleShapePhantom>();
+	RegisterFactory<bhkAabbPhantom>();
 	RegisterFactory<bhkHingeConstraint>();
 	RegisterFactory<bhkLimitedHingeConstraint>();
 	RegisterFactory<bhkRagdollConstraint>();
@@ -207,6 +216,9 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<bhkCompressedMeshShape>();
 	RegisterFactory<bhkCompressedMeshShapeData>();
 	RegisterFactory<bhkMoppBvTreeShape>();
+	RegisterFactory<bhkPoseArray>();
+	RegisterFactory<bhkRagdollTemplate>();
+	RegisterFactory<bhkRagdollTemplateData>();
 }
 
 
