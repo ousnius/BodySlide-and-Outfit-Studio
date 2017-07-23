@@ -419,6 +419,193 @@ public:
 	NiPSysBombModifier* Clone() { return new NiPSysBombModifier(*this); }
 };
 
+class NiColorData : public NiObject {
+private:
+	KeyGroup<Color4> data;
+
+public:
+	NiColorData() {}
+	NiColorData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiColorData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiColorData* Clone() { return new NiColorData(*this); }
+};
+
+class NiPSysColorModifier : public NiPSysModifier {
+private:
+	BlockRef<NiColorData> dataRef;
+
+public:
+	NiPSysColorModifier() {}
+	NiPSysColorModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysColorModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	NiPSysColorModifier* Clone() { return new NiPSysColorModifier(*this); }
+};
+
+class NiPSysGrowFadeModifier : public NiPSysModifier {
+private:
+	float growTime = 0.0f;
+	ushort growGeneration = 0;
+	float fadeTime = 0.0f;
+	ushort fadeGeneration = 0;
+	float baseScale = 0.0f;
+
+public:
+	NiPSysGrowFadeModifier() {}
+	NiPSysGrowFadeModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysGrowFadeModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysGrowFadeModifier* Clone() { return new NiPSysGrowFadeModifier(*this); }
+};
+
+class NiPSysMeshUpdateModifier : public NiPSysModifier {
+private:
+	BlockRefArray<NiAVObject> meshRefs;
+
+public:
+	NiPSysMeshUpdateModifier() {}
+	NiPSysMeshUpdateModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysMeshUpdateModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	NiPSysMeshUpdateModifier* Clone() { return new NiPSysMeshUpdateModifier(*this); }
+};
+
+class NiPSysFieldModifier : public NiPSysModifier {
+private:
+	BlockRef<NiAVObject> fieldObjectRef;
+	float magnitude = 0.0f;
+	float attenuation = 0.0f;
+	bool useMaxDistance = false;
+	float maxDistance = 0.0f;
+
+public:
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+};
+
+class NiPSysVortexFieldModifier : public NiPSysFieldModifier {
+private:
+	Vector3 direction;
+
+public:
+	NiPSysVortexFieldModifier() {}
+	NiPSysVortexFieldModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysVortexFieldModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysVortexFieldModifier* Clone() { return new NiPSysVortexFieldModifier(*this); }
+};
+
+class NiPSysGravityFieldModifier : public NiPSysFieldModifier {
+private:
+	Vector3 direction;
+
+public:
+	NiPSysGravityFieldModifier() {}
+	NiPSysGravityFieldModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysGravityFieldModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysGravityFieldModifier* Clone() { return new NiPSysGravityFieldModifier(*this); }
+};
+
+class NiPSysDragFieldModifier : public NiPSysFieldModifier {
+private:
+	bool useDirection = false;
+	Vector3 direction;
+
+public:
+	NiPSysDragFieldModifier() {}
+	NiPSysDragFieldModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysDragFieldModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysDragFieldModifier* Clone() { return new NiPSysDragFieldModifier(*this); }
+};
+
+class NiPSysTurbulenceFieldModifier : public NiPSysFieldModifier {
+private:
+	float frequency = 0.0f;
+
+public:
+	NiPSysTurbulenceFieldModifier() {}
+	NiPSysTurbulenceFieldModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysTurbulenceFieldModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysTurbulenceFieldModifier* Clone() { return new NiPSysTurbulenceFieldModifier(*this); }
+};
+
+class NiPSysAirFieldModifier : public NiPSysFieldModifier {
+private:
+	Vector3 direction;
+	float unkFloat1 = 0.0f;
+	float unkFloat2 = 0.0f;
+	bool unkBool1 = false;
+	bool unkBool2 = false;
+	bool unkBool3 = false;
+	float unkFloat3 = 0.0f;
+
+public:
+	NiPSysAirFieldModifier() {}
+	NiPSysAirFieldModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysAirFieldModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysAirFieldModifier* Clone() { return new NiPSysAirFieldModifier(*this); }
+};
+
+class NiPSysRadialFieldModifier : public NiPSysFieldModifier {
+private:
+	uint radialType = 0;
+
+public:
+	NiPSysRadialFieldModifier() {}
+	NiPSysRadialFieldModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysRadialFieldModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysRadialFieldModifier* Clone() { return new NiPSysRadialFieldModifier(*this); }
+};
+
 class BSWindModifier : public NiPSysModifier {
 private:
 	float strength = 0.0f;
@@ -470,6 +657,22 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	BSPSysHavokUpdateModifier* Clone() { return new BSPSysHavokUpdateModifier(*this); }
+};
+
+class BSParentVelocityModifier : public NiPSysModifier {
+private:
+	float damping = 0.0f;
+
+public:
+	BSParentVelocityModifier() {}
+	BSParentVelocityModifier(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSParentVelocityModifier";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	BSParentVelocityModifier* Clone() { return new BSParentVelocityModifier(*this); }
 };
 
 class BSMasterParticleSystem : public NiNode {

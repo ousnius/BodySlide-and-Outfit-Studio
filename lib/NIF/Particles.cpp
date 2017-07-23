@@ -568,6 +568,241 @@ void NiPSysBombModifier::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
+NiColorData::NiColorData(NiStream& stream) : NiColorData() {
+	Get(stream);
+}
+
+void NiColorData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	data.Get(stream);
+}
+
+void NiColorData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	data.Put(stream);
+}
+
+
+NiPSysColorModifier::NiPSysColorModifier(NiStream& stream) : NiPSysColorModifier() {
+	Get(stream);
+}
+
+void NiPSysColorModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
+
+	dataRef.Get(stream);
+}
+
+void NiPSysColorModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
+
+	dataRef.Put(stream);
+}
+
+void NiPSysColorModifier::GetChildRefs(std::set<int*>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(&dataRef.index);
+}
+
+
+NiPSysGrowFadeModifier::NiPSysGrowFadeModifier(NiStream& stream) : NiPSysGrowFadeModifier() {
+	Get(stream);
+}
+
+void NiPSysGrowFadeModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
+
+	stream >> growTime;
+	stream >> growGeneration;
+	stream >> fadeTime;
+	stream >> fadeGeneration;
+
+	if (stream.GetVersion().User2() >= 34)
+		stream >> baseScale;
+}
+
+void NiPSysGrowFadeModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
+
+	stream << growTime;
+	stream << growGeneration;
+	stream << fadeTime;
+	stream << fadeGeneration;
+
+	if (stream.GetVersion().User2() >= 34)
+		stream << baseScale;
+}
+
+
+NiPSysMeshUpdateModifier::NiPSysMeshUpdateModifier(NiStream& stream) : NiPSysMeshUpdateModifier() {
+	Get(stream);
+}
+
+void NiPSysMeshUpdateModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
+
+	meshRefs.Get(stream);
+}
+
+void NiPSysMeshUpdateModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
+
+	meshRefs.Put(stream);
+}
+
+void NiPSysMeshUpdateModifier::GetChildRefs(std::set<int*>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	meshRefs.GetIndexPtrs(refs);
+}
+
+
+void NiPSysFieldModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
+
+	fieldObjectRef.Get(stream);
+	stream >> magnitude;
+	stream >> attenuation;
+	stream >> useMaxDistance;
+	stream >> maxDistance;
+}
+
+void NiPSysFieldModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
+
+	fieldObjectRef.Put(stream);
+	stream << magnitude;
+	stream << attenuation;
+	stream << useMaxDistance;
+	stream << maxDistance;
+}
+
+void NiPSysFieldModifier::GetChildRefs(std::set<int*>& refs) {
+	NiPSysModifier::GetChildRefs(refs);
+
+	refs.insert(&fieldObjectRef.index);
+}
+
+
+NiPSysVortexFieldModifier::NiPSysVortexFieldModifier(NiStream& stream) : NiPSysVortexFieldModifier() {
+	Get(stream);
+}
+
+void NiPSysVortexFieldModifier::Get(NiStream& stream) {
+	NiPSysFieldModifier::Get(stream);
+
+	stream >> direction;
+}
+
+void NiPSysVortexFieldModifier::Put(NiStream& stream) {
+	NiPSysFieldModifier::Put(stream);
+
+	stream << direction;
+}
+
+
+NiPSysGravityFieldModifier::NiPSysGravityFieldModifier(NiStream& stream) : NiPSysGravityFieldModifier() {
+	Get(stream);
+}
+
+void NiPSysGravityFieldModifier::Get(NiStream& stream) {
+	NiPSysFieldModifier::Get(stream);
+
+	stream >> direction;
+}
+
+void NiPSysGravityFieldModifier::Put(NiStream& stream) {
+	NiPSysFieldModifier::Put(stream);
+
+	stream << direction;
+}
+
+
+NiPSysDragFieldModifier::NiPSysDragFieldModifier(NiStream& stream) : NiPSysDragFieldModifier() {
+	Get(stream);
+}
+
+void NiPSysDragFieldModifier::Get(NiStream& stream) {
+	NiPSysFieldModifier::Get(stream);
+
+	stream >> useDirection;
+	stream >> direction;
+}
+
+void NiPSysDragFieldModifier::Put(NiStream& stream) {
+	NiPSysFieldModifier::Put(stream);
+
+	stream << useDirection;
+	stream << direction;
+}
+
+
+NiPSysTurbulenceFieldModifier::NiPSysTurbulenceFieldModifier(NiStream& stream) : NiPSysTurbulenceFieldModifier() {
+	Get(stream);
+}
+
+void NiPSysTurbulenceFieldModifier::Get(NiStream& stream) {
+	NiPSysFieldModifier::Get(stream);
+
+	stream >> frequency;
+}
+
+void NiPSysTurbulenceFieldModifier::Put(NiStream& stream) {
+	NiPSysFieldModifier::Put(stream);
+
+	stream << frequency;
+}
+
+
+NiPSysAirFieldModifier::NiPSysAirFieldModifier(NiStream& stream) : NiPSysAirFieldModifier() {
+	Get(stream);
+}
+
+void NiPSysAirFieldModifier::Get(NiStream& stream) {
+	NiPSysFieldModifier::Get(stream);
+
+	stream >> direction;
+	stream >> unkFloat1;
+	stream >> unkFloat2;
+	stream >> unkBool1;
+	stream >> unkBool2;
+	stream >> unkBool3;
+	stream >> unkFloat3;
+}
+
+void NiPSysAirFieldModifier::Put(NiStream& stream) {
+	NiPSysFieldModifier::Put(stream);
+
+	stream << direction;
+	stream << unkFloat1;
+	stream << unkFloat2;
+	stream << unkBool1;
+	stream << unkBool2;
+	stream << unkBool3;
+	stream << unkFloat3;
+}
+
+
+NiPSysRadialFieldModifier::NiPSysRadialFieldModifier(NiStream& stream) : NiPSysRadialFieldModifier() {
+	Get(stream);
+}
+
+void NiPSysRadialFieldModifier::Get(NiStream& stream) {
+	NiPSysFieldModifier::Get(stream);
+
+	stream >> radialType;
+}
+
+void NiPSysRadialFieldModifier::Put(NiStream& stream) {
+	NiPSysFieldModifier::Put(stream);
+
+	stream << radialType;
+}
+
+
 BSWindModifier::BSWindModifier(NiStream& stream) : BSWindModifier() {
 	Get(stream);
 }
@@ -635,6 +870,23 @@ void BSPSysHavokUpdateModifier::GetChildRefs(std::set<int*>& refs) {
 
 	nodeRefs.GetIndexPtrs(refs);
 	refs.insert(&modifierRef.index);
+}
+
+
+BSParentVelocityModifier::BSParentVelocityModifier(NiStream& stream) : BSParentVelocityModifier() {
+	Get(stream);
+}
+
+void BSParentVelocityModifier::Get(NiStream& stream) {
+	NiPSysModifier::Get(stream);
+
+	stream >> damping;
+}
+
+void BSParentVelocityModifier::Put(NiStream& stream) {
+	NiPSysModifier::Put(stream);
+
+	stream << damping;
 }
 
 
