@@ -92,7 +92,146 @@ public:
 	NiFloatData* Clone() { return new NiFloatData(*this); }
 };
 
+class NiBSplineData : public NiObject {
+private:
+	uint numFloatControlPoints = 0;
+	std::vector<float> floatControlPoints;
+
+	uint numShortControlPoints = 0;
+	std::vector<short> shortControlPoints;
+
+public:
+	NiBSplineData() {}
+	NiBSplineData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBSplineData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiBSplineData* Clone() { return new NiBSplineData(*this); }
+};
+
+class NiBSplineBasisData : public NiObject {
+private:
+	uint numControlPoints = 0;
+
+public:
+	NiBSplineBasisData() {}
+	NiBSplineBasisData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBSplineBasisData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiBSplineBasisData* Clone() { return new NiBSplineBasisData(*this); }
+};
+
 class NiInterpolator : public NiObject {
+};
+
+class NiBSplineInterpolator : public NiInterpolator {
+private:
+	float startTime = 0.0f;
+	float stopTime = 0.0f;
+	BlockRef<NiBSplineData> splineDataRef;
+	BlockRef<NiBSplineBasisData> basisDataRef;
+
+public:
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+};
+
+class NiBSplineFloatInterpolator : public NiBSplineInterpolator {
+};
+
+class NiBSplineCompFloatInterpolator : public NiBSplineFloatInterpolator {
+private:
+	float base = 0.0f;
+	uint offset = 0;
+	float bias = 0.0f;
+	float multiplier = 0.0f;
+
+public:
+	NiBSplineCompFloatInterpolator() {}
+	NiBSplineCompFloatInterpolator(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBSplineCompFloatInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiBSplineCompFloatInterpolator* Clone() { return new NiBSplineCompFloatInterpolator(*this); }
+};
+
+class NiBSplinePoint3Interpolator : public NiBSplineInterpolator {
+private:
+	float unkFloat1 = 0.0f;
+	float unkFloat2 = 0.0f;
+	float unkFloat3 = 0.0f;
+	float unkFloat4 = 0.0f;
+	float unkFloat5 = 0.0f;
+	float unkFloat6 = 0.0f;
+
+public:
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+};
+
+class NiBSplineCompPoint3Interpolator : public NiBSplinePoint3Interpolator {
+public:
+	NiBSplineCompPoint3Interpolator() {}
+	NiBSplineCompPoint3Interpolator(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBSplineCompPoint3Interpolator";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiBSplineCompPoint3Interpolator* Clone() { return new NiBSplineCompPoint3Interpolator(*this); }
+};
+
+class NiBSplineTransformInterpolator : public NiBSplineInterpolator {
+private:
+	Vector3 translation;
+	Quaternion rotation;
+	float scale = 1.0f;
+
+	uint translationOffset = 0;
+	uint rotationOffset = 0;
+	uint scaleOffset = 0;
+
+public:
+	NiBSplineTransformInterpolator() {}
+	NiBSplineTransformInterpolator(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBSplineTransformInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiBSplineTransformInterpolator* Clone() { return new NiBSplineTransformInterpolator(*this); }
+};
+
+class NiBSplineCompTransformInterpolator : public NiBSplineTransformInterpolator {
+private:
+	float translationBias = 0.0f;
+	float translationMultiplier = 0.0f;
+	float rotationBias = 0.0f;
+	float rotationMultiplier = 0.0f;
+	float scaleBias = 0.0f;
+	float scaleMultiplier = 0.0f;
+
+public:
+	NiBSplineCompTransformInterpolator() {}
+	NiBSplineCompTransformInterpolator(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBSplineCompTransformInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiBSplineCompTransformInterpolator* Clone() { return new NiBSplineCompTransformInterpolator(*this); }
 };
 
 class NiBlendInterpolator : public NiInterpolator {
@@ -151,6 +290,17 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	NiBlendPoint3Interpolator* Clone() { return new NiBlendPoint3Interpolator(*this); }
+};
+
+class NiBlendTransformInterpolator : public NiBlendInterpolator {
+public:
+	NiBlendTransformInterpolator() {}
+	NiBlendTransformInterpolator(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBlendTransformInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiBlendTransformInterpolator* Clone() { return new NiBlendTransformInterpolator(*this); }
 };
 
 class NiKeyBasedInterpolator : public NiInterpolator {
@@ -224,6 +374,17 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
 	NiTransformInterpolator* Clone() { return new NiTransformInterpolator(*this); }
+};
+
+class BSRotAccumTransfInterpolator : public NiTransformInterpolator {
+public:
+	BSRotAccumTransfInterpolator() {}
+	BSRotAccumTransfInterpolator(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSRotAccumTransfInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	BSRotAccumTransfInterpolator* Clone() { return new BSRotAccumTransfInterpolator(*this); }
 };
 
 class NiPoint3Interpolator : public NiKeyBasedInterpolator {
@@ -303,6 +464,54 @@ public:
 	void GetChildRefs(std::set<int*>& refs);
 	void GetPtrs(std::set<int*>& ptrs);
 	NiLookAtInterpolator* Clone() { return new NiLookAtInterpolator(*this); }
+};
+
+struct BSTreadTransformData {
+	Vector3 translation;
+	Quaternion rotation;
+	float scale = 1.0f;
+};
+
+struct BSTreadTransform {
+	StringRef name;
+	BSTreadTransformData transform1;
+	BSTreadTransformData transform2;
+
+	void Get(NiStream& stream) {
+		name.Get(stream);
+		stream >> transform1;
+		stream >> transform2;
+	}
+
+	void Put(NiStream& stream) {
+		name.Put(stream);
+		stream << transform1;
+		stream << transform2;
+	}
+
+	void GetStringRefs(std::set<StringRef*>& refs) {
+		refs.insert(&name);
+	}
+};
+
+class BSTreadTransfInterpolator : public NiInterpolator {
+private:
+	uint numTreadTransforms = 0;
+	std::vector<BSTreadTransform> treadTransforms;
+	BlockRef<NiFloatData> dataRef;
+
+public:
+	BSTreadTransfInterpolator() {}
+	BSTreadTransfInterpolator(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSTreadTransfInterpolator";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<StringRef*>& refs);
+	void GetChildRefs(std::set<int*>& refs);
+	BSTreadTransfInterpolator* Clone() { return new BSTreadTransfInterpolator(*this); }
 };
 
 class NiObjectNET;

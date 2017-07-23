@@ -128,6 +128,54 @@ void NiFloatData::Put(NiStream& stream) {
 }
 
 
+NiBSplineData::NiBSplineData(NiStream& stream) : NiBSplineData() {
+	Get(stream);
+}
+
+void NiBSplineData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> numFloatControlPoints;
+	floatControlPoints.resize(numFloatControlPoints);
+	for (int i = 0; i < numFloatControlPoints; i++)
+		stream >> floatControlPoints[i];
+
+	stream >> numShortControlPoints;
+	shortControlPoints.resize(numShortControlPoints);
+	for (int i = 0; i < numShortControlPoints; i++)
+		stream >> shortControlPoints[i];
+}
+
+void NiBSplineData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	stream << numFloatControlPoints;
+	for (int i = 0; i < numFloatControlPoints; i++)
+		stream << floatControlPoints[i];
+
+	stream << numShortControlPoints;
+	for (int i = 0; i < numShortControlPoints; i++)
+		stream << shortControlPoints[i];
+}
+
+
+NiBSplineBasisData::NiBSplineBasisData(NiStream& stream) : NiBSplineBasisData() {
+	Get(stream);
+}
+
+void NiBSplineBasisData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> numControlPoints;
+}
+
+void NiBSplineBasisData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	stream << numControlPoints;
+}
+
+
 void NiTimeController::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -675,6 +723,139 @@ void BSPSysMultiTargetEmitterCtlr::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
+void NiBSplineInterpolator::Get(NiStream& stream) {
+	NiInterpolator::Get(stream);
+
+	stream >> startTime;
+	stream >> stopTime;
+	splineDataRef.Get(stream);
+	basisDataRef.Get(stream);
+}
+
+void NiBSplineInterpolator::Put(NiStream& stream) {
+	NiInterpolator::Put(stream);
+
+	stream << startTime;
+	stream << stopTime;
+	splineDataRef.Put(stream);
+	basisDataRef.Put(stream);
+}
+
+void NiBSplineInterpolator::GetChildRefs(std::set<int*>& refs) {
+	NiInterpolator::GetChildRefs(refs);
+
+	refs.insert(&splineDataRef.index);
+	refs.insert(&basisDataRef.index);
+}
+
+
+NiBSplineCompFloatInterpolator::NiBSplineCompFloatInterpolator(NiStream& stream) : NiBSplineCompFloatInterpolator() {
+	Get(stream);
+}
+
+void NiBSplineCompFloatInterpolator::Get(NiStream& stream) {
+	NiBSplineFloatInterpolator::Get(stream);
+
+	stream >> base;
+	stream >> offset;
+	stream >> bias;
+	stream >> multiplier;
+}
+
+void NiBSplineCompFloatInterpolator::Put(NiStream& stream) {
+	NiBSplineFloatInterpolator::Put(stream);
+
+	stream << base;
+	stream << offset;
+	stream << bias;
+	stream << multiplier;
+}
+
+
+void NiBSplinePoint3Interpolator::Get(NiStream& stream) {
+	NiBSplineInterpolator::Get(stream);
+
+	stream >> unkFloat1;
+	stream >> unkFloat2;
+	stream >> unkFloat3;
+	stream >> unkFloat4;
+	stream >> unkFloat5;
+	stream >> unkFloat6;
+}
+
+void NiBSplinePoint3Interpolator::Put(NiStream& stream) {
+	NiBSplineInterpolator::Put(stream);
+
+	stream << unkFloat1;
+	stream << unkFloat2;
+	stream << unkFloat3;
+	stream << unkFloat4;
+	stream << unkFloat5;
+	stream << unkFloat6;
+}
+
+
+NiBSplineCompPoint3Interpolator::NiBSplineCompPoint3Interpolator(NiStream& stream) : NiBSplineCompPoint3Interpolator() {
+	Get(stream);
+}
+
+
+NiBSplineTransformInterpolator::NiBSplineTransformInterpolator(NiStream& stream) : NiBSplineTransformInterpolator() {
+	Get(stream);
+}
+
+void NiBSplineTransformInterpolator::Get(NiStream& stream) {
+	NiBSplineInterpolator::Get(stream);
+
+	stream >> translation;
+	stream >> rotation;
+	stream >> scale;
+
+	stream >> translationOffset;
+	stream >> rotationOffset;
+	stream >> scaleOffset;
+}
+
+void NiBSplineTransformInterpolator::Put(NiStream& stream) {
+	NiBSplineInterpolator::Put(stream);
+
+	stream << translation;
+	stream << rotation;
+	stream << scale;
+
+	stream << translationOffset;
+	stream << rotationOffset;
+	stream << scaleOffset;
+}
+
+
+NiBSplineCompTransformInterpolator::NiBSplineCompTransformInterpolator(NiStream& stream) : NiBSplineCompTransformInterpolator() {
+	Get(stream);
+}
+
+void NiBSplineCompTransformInterpolator::Get(NiStream& stream) {
+	NiBSplineTransformInterpolator::Get(stream);
+
+	stream >> translationBias;
+	stream >> translationMultiplier;
+	stream >> rotationBias;
+	stream >> rotationMultiplier;
+	stream >> scaleBias;
+	stream >> scaleMultiplier;
+}
+
+void NiBSplineCompTransformInterpolator::Put(NiStream& stream) {
+	NiBSplineTransformInterpolator::Put(stream);
+
+	stream << translationBias;
+	stream << translationMultiplier;
+	stream << rotationBias;
+	stream << rotationMultiplier;
+	stream << scaleBias;
+	stream << scaleMultiplier;
+}
+
+
 void NiBlendInterpolator::Get(NiStream& stream) {
 	NiInterpolator::Get(stream);
 
@@ -738,6 +919,11 @@ void NiBlendPoint3Interpolator::Put(NiStream& stream) {
 	NiBlendInterpolator::Put(stream);
 
 	stream << point;
+}
+
+
+NiBlendTransformInterpolator::NiBlendTransformInterpolator(NiStream& stream) : NiBlendTransformInterpolator() {
+	Get(stream);
 }
 
 
@@ -825,6 +1011,11 @@ void NiTransformInterpolator::GetChildRefs(std::set<int*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
+}
+
+
+BSRotAccumTransfInterpolator::BSRotAccumTransfInterpolator(NiStream& stream) : BSRotAccumTransfInterpolator() {
+	Get(stream);
 }
 
 
@@ -935,6 +1126,45 @@ void NiLookAtInterpolator::GetPtrs(std::set<int*>& ptrs) {
 	NiInterpolator::GetPtrs(ptrs);
 
 	ptrs.insert(&lookAtRef.index);
+}
+
+
+BSTreadTransfInterpolator::BSTreadTransfInterpolator(NiStream& stream) : BSTreadTransfInterpolator() {
+	Get(stream);
+}
+
+void BSTreadTransfInterpolator::Get(NiStream& stream) {
+	NiInterpolator::Get(stream);
+
+	stream >> numTreadTransforms;
+	treadTransforms.resize(numTreadTransforms);
+	for (int i = 0; i < numTreadTransforms; i++)
+		treadTransforms[i].Get(stream);
+
+	dataRef.Get(stream);
+}
+
+void BSTreadTransfInterpolator::Put(NiStream& stream) {
+	NiInterpolator::Put(stream);
+
+	stream << numTreadTransforms;
+	for (int i = 0; i < numTreadTransforms; i++)
+		treadTransforms[i].Put(stream);
+
+	dataRef.Put(stream);
+}
+
+void BSTreadTransfInterpolator::GetStringRefs(std::set<StringRef*>& refs) {
+	NiInterpolator::GetStringRefs(refs);
+
+	for (int i = 0; i < numTreadTransforms; i++)
+		treadTransforms[i].GetStringRefs(refs);
+}
+
+void BSTreadTransfInterpolator::GetChildRefs(std::set<int*>& refs) {
+	NiInterpolator::GetChildRefs(refs);
+
+	refs.insert(&dataRef.index);
 }
 
 
