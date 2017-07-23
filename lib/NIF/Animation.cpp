@@ -549,11 +549,6 @@ NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiStream& stream)
 }
 
 
-NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiStream& stream) : NiPSysEmitterPlanarAngleCtlr() {
-	Get(stream);
-}
-
-
 NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiStream& stream) : NiPSysEmitterDeclinationCtlr() {
 	Get(stream);
 }
@@ -564,7 +559,67 @@ NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiStream& stream) : NiPSysG
 }
 
 
+NiPSysEmitterDeclinationVarCtlr::NiPSysEmitterDeclinationVarCtlr(NiStream& stream) : NiPSysEmitterDeclinationVarCtlr() {
+	Get(stream);
+}
+
+
+NiPSysFieldMagnitudeCtlr::NiPSysFieldMagnitudeCtlr(NiStream& stream) : NiPSysFieldMagnitudeCtlr() {
+	Get(stream);
+}
+
+
+NiPSysFieldAttenuationCtlr::NiPSysFieldAttenuationCtlr(NiStream& stream) : NiPSysFieldAttenuationCtlr() {
+	Get(stream);
+}
+
+
+NiPSysFieldMaxDistanceCtlr::NiPSysFieldMaxDistanceCtlr(NiStream& stream) : NiPSysFieldMaxDistanceCtlr() {
+	Get(stream);
+}
+
+
+NiPSysAirFieldAirFrictionCtlr::NiPSysAirFieldAirFrictionCtlr(NiStream& stream) : NiPSysAirFieldAirFrictionCtlr() {
+	Get(stream);
+}
+
+
+NiPSysAirFieldInheritVelocityCtlr::NiPSysAirFieldInheritVelocityCtlr(NiStream& stream) : NiPSysAirFieldInheritVelocityCtlr() {
+	Get(stream);
+}
+
+
+NiPSysAirFieldSpreadCtlr::NiPSysAirFieldSpreadCtlr(NiStream& stream) : NiPSysAirFieldSpreadCtlr() {
+	Get(stream);
+}
+
+
 NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiStream& stream) : NiPSysInitialRotSpeedCtlr() {
+	Get(stream);
+}
+
+
+NiPSysInitialRotSpeedVarCtlr::NiPSysInitialRotSpeedVarCtlr(NiStream& stream) : NiPSysInitialRotSpeedVarCtlr() {
+	Get(stream);
+}
+
+
+NiPSysInitialRotAngleCtlr::NiPSysInitialRotAngleCtlr(NiStream& stream) : NiPSysInitialRotAngleCtlr() {
+	Get(stream);
+}
+
+
+NiPSysInitialRotAngleVarCtlr::NiPSysInitialRotAngleVarCtlr(NiStream& stream) : NiPSysInitialRotAngleVarCtlr() {
+	Get(stream);
+}
+
+
+NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiStream& stream) : NiPSysEmitterPlanarAngleCtlr() {
+	Get(stream);
+}
+
+
+NiPSysEmitterPlanarAngleVarCtlr::NiPSysEmitterPlanarAngleVarCtlr(NiStream& stream) : NiPSysEmitterPlanarAngleVarCtlr() {
 	Get(stream);
 }
 

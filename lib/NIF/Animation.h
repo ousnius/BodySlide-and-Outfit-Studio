@@ -684,17 +684,6 @@ public:
 	NiPSysEmitterInitialRadiusCtlr* Clone() { return new NiPSysEmitterInitialRadiusCtlr(*this); }
 };
 
-class NiPSysEmitterPlanarAngleCtlr : public NiPSysModifierFloatCtlr {
-public:
-	NiPSysEmitterPlanarAngleCtlr() {}
-	NiPSysEmitterPlanarAngleCtlr(NiStream& stream);
-
-	static constexpr const char* BlockName = "NiPSysEmitterPlanarAngleCtlr";
-	virtual const char* GetBlockName() { return BlockName; }
-
-	NiPSysEmitterPlanarAngleCtlr* Clone() { return new NiPSysEmitterPlanarAngleCtlr(*this); }
-};
-
 class NiPSysEmitterDeclinationCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysEmitterDeclinationCtlr() {}
@@ -717,6 +706,83 @@ public:
 	NiPSysGravityStrengthCtlr* Clone() { return new NiPSysGravityStrengthCtlr(*this); }
 };
 
+class NiPSysEmitterDeclinationVarCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysEmitterDeclinationVarCtlr() {}
+	NiPSysEmitterDeclinationVarCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysEmitterDeclinationVarCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysEmitterDeclinationVarCtlr* Clone() { return new NiPSysEmitterDeclinationVarCtlr(*this); }
+};
+
+class NiPSysFieldMagnitudeCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysFieldMagnitudeCtlr() {}
+	NiPSysFieldMagnitudeCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysFieldMagnitudeCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysFieldMagnitudeCtlr* Clone() { return new NiPSysFieldMagnitudeCtlr(*this); }
+};
+
+class NiPSysFieldAttenuationCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysFieldAttenuationCtlr() {}
+	NiPSysFieldAttenuationCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysFieldAttenuationCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysFieldAttenuationCtlr* Clone() { return new NiPSysFieldAttenuationCtlr(*this); }
+};
+
+class NiPSysFieldMaxDistanceCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysFieldMaxDistanceCtlr() {}
+	NiPSysFieldMaxDistanceCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysFieldMaxDistanceCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysFieldMaxDistanceCtlr* Clone() { return new NiPSysFieldMaxDistanceCtlr(*this); }
+};
+
+class NiPSysAirFieldAirFrictionCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysAirFieldAirFrictionCtlr() {}
+	NiPSysAirFieldAirFrictionCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysAirFieldAirFrictionCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysAirFieldAirFrictionCtlr* Clone() { return new NiPSysAirFieldAirFrictionCtlr(*this); }
+};
+
+class NiPSysAirFieldInheritVelocityCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysAirFieldInheritVelocityCtlr() {}
+	NiPSysAirFieldInheritVelocityCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysAirFieldInheritVelocityCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysAirFieldInheritVelocityCtlr* Clone() { return new NiPSysAirFieldInheritVelocityCtlr(*this); }
+};
+
+class NiPSysAirFieldSpreadCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysAirFieldSpreadCtlr() {}
+	NiPSysAirFieldSpreadCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysAirFieldSpreadCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysAirFieldSpreadCtlr* Clone() { return new NiPSysAirFieldSpreadCtlr(*this); }
+};
+
 class NiPSysInitialRotSpeedCtlr : public NiPSysModifierFloatCtlr {
 public:
 	NiPSysInitialRotSpeedCtlr() {}
@@ -726,6 +792,61 @@ public:
 	virtual const char* GetBlockName() { return BlockName; }
 
 	NiPSysInitialRotSpeedCtlr* Clone() { return new NiPSysInitialRotSpeedCtlr(*this); }
+};
+
+class NiPSysInitialRotSpeedVarCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysInitialRotSpeedVarCtlr() {}
+	NiPSysInitialRotSpeedVarCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysInitialRotSpeedVarCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysInitialRotSpeedVarCtlr* Clone() { return new NiPSysInitialRotSpeedVarCtlr(*this); }
+};
+
+class NiPSysInitialRotAngleCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysInitialRotAngleCtlr() {}
+	NiPSysInitialRotAngleCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysInitialRotAngleCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysInitialRotAngleCtlr* Clone() { return new NiPSysInitialRotAngleCtlr(*this); }
+};
+
+class NiPSysInitialRotAngleVarCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysInitialRotAngleVarCtlr() {}
+	NiPSysInitialRotAngleVarCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysInitialRotAngleVarCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysInitialRotAngleVarCtlr* Clone() { return new NiPSysInitialRotAngleVarCtlr(*this); }
+};
+
+class NiPSysEmitterPlanarAngleCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysEmitterPlanarAngleCtlr() {}
+	NiPSysEmitterPlanarAngleCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysEmitterPlanarAngleCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysEmitterPlanarAngleCtlr* Clone() { return new NiPSysEmitterPlanarAngleCtlr(*this); }
+};
+
+class NiPSysEmitterPlanarAngleVarCtlr : public NiPSysModifierFloatCtlr {
+public:
+	NiPSysEmitterPlanarAngleVarCtlr() {}
+	NiPSysEmitterPlanarAngleVarCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysEmitterPlanarAngleVarCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysEmitterPlanarAngleVarCtlr* Clone() { return new NiPSysEmitterPlanarAngleVarCtlr(*this); }
 };
 
 class NiPSysEmitterCtlr : public NiPSysModifierCtlr {
