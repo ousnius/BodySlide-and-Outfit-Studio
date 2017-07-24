@@ -736,6 +736,17 @@ public:
 	NiBoneLODController* Clone() { return new NiBoneLODController(*this); }
 };
 
+class NiBSBoneLODController : public NiBoneLODController {
+public:
+	NiBSBoneLODController() {}
+	NiBSBoneLODController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiBSBoneLODController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiBSBoneLODController* Clone() { return new NiBSBoneLODController(*this); }
+};
+
 class NiInterpController : public NiTimeController {
 };
 

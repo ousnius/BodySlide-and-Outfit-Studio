@@ -150,6 +150,17 @@ public:
 	NiCamera* Clone() { return new NiCamera(*this); }
 };
 
+class NiSequenceStreamHelper : public NiObjectNET {
+public:
+	NiSequenceStreamHelper() {}
+	NiSequenceStreamHelper(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiSequenceStreamHelper";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiSequenceStreamHelper* Clone() { return new NiSequenceStreamHelper(*this); }
+};
+
 enum PixelLayout : uint {
 	PIX_LAY_PALETTISED,
 	PIX_LAY_HIGH_COLOR_16,
@@ -204,6 +215,17 @@ public:
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<int*>& refs);
 	NiSourceTexture* Clone() { return new NiSourceTexture(*this); }
+};
+
+class NiSourceCubeMap : public NiSourceTexture {
+public:
+	NiSourceCubeMap() {}
+	NiSourceCubeMap(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiSourceCubeMap";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiSourceCubeMap* Clone() { return new NiSourceCubeMap(*this); }
 };
 
 enum TexFilterMode : uint {

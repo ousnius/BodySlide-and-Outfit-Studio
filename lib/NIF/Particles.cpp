@@ -174,6 +174,36 @@ void BSStripPSysData::Put(NiStream& stream) {
 }
 
 
+NiPSysEmitterCtlrData::NiPSysEmitterCtlrData(NiStream& stream) : NiPSysEmitterCtlrData() {
+	Get(stream);
+}
+
+void NiPSysEmitterCtlrData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	floatKeys.Get(stream);
+
+	stream >> numVisibilityKeys;
+	visibilityKeys.resize(numVisibilityKeys);
+	for (int i = 0; i < numVisibilityKeys; i++) {
+		stream >> visibilityKeys[i].time;
+		stream >> visibilityKeys[i].value;
+	}
+}
+
+void NiPSysEmitterCtlrData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	floatKeys.Put(stream);
+
+	stream << numVisibilityKeys;
+	for (int i = 0; i < numVisibilityKeys; i++) {
+		stream << visibilityKeys[i].time;
+		stream << visibilityKeys[i].value;
+	}
+}
+
+
 void NiPSysModifier::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -1270,6 +1300,11 @@ void NiPSysBoxEmitter::Put(NiStream& stream) {
 	stream << width;
 	stream << height;
 	stream << depth;
+}
+
+
+BSPSysArrayEmitter::BSPSysArrayEmitter(NiStream& stream) : BSPSysArrayEmitter() {
+	Get(stream);
 }
 
 

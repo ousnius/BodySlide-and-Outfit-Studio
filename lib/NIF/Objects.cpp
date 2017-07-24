@@ -225,6 +225,11 @@ void NiCamera::GetChildRefs(std::set<int*>& refs) {
 }
 
 
+NiSequenceStreamHelper::NiSequenceStreamHelper(NiStream& stream) : NiSequenceStreamHelper() {
+	Get(stream);
+}
+
+
 NiSourceTexture::NiSourceTexture(NiStream& stream) : NiSourceTexture() {
 	Get(stream);
 }
@@ -267,6 +272,11 @@ void NiSourceTexture::GetChildRefs(std::set<int*>& refs) {
 	NiTexture::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
+}
+
+
+NiSourceCubeMap::NiSourceCubeMap(NiStream& stream) : NiSourceCubeMap() {
+	Get(stream);
 }
 
 

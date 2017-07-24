@@ -35,7 +35,9 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiLODNode>();
 	RegisterFactory<NiBillboardNode>();
 	RegisterFactory<NiSwitchNode>();
+	RegisterFactory<NiSequenceStreamHelper>();
 	RegisterFactory<NiSourceTexture>();
+	RegisterFactory<NiSourceCubeMap>();
 	RegisterFactory<NiTextureEffect>();
 	RegisterFactory<NiAmbientLight>();
 	RegisterFactory<NiDirectionalLight>();
@@ -75,6 +77,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiPSysData>();
 	RegisterFactory<NiMeshPSysData>();
 	RegisterFactory<BSStripPSysData>();
+	RegisterFactory<NiPSysEmitterCtlrData>();
 	RegisterFactory<NiCamera>();
 	RegisterFactory<BSPSysStripUpdateModifier>();
 	RegisterFactory<NiPSysAgeDeathModifier>();
@@ -110,6 +113,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiPSysSphereEmitter>();
 	RegisterFactory<NiPSysCylinderEmitter>();
 	RegisterFactory<NiPSysBoxEmitter>();
+	RegisterFactory<BSPSysArrayEmitter>();
 	RegisterFactory<NiPSysMeshEmitter>();
 	RegisterFactory<BSLightingShaderPropertyColorController>();
 	RegisterFactory<BSLightingShaderPropertyFloatController>();
@@ -126,6 +130,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<BSLagBoneController>();
 	RegisterFactory<BSProceduralLightningController>();
 	RegisterFactory<NiBoneLODController>();
+	RegisterFactory<NiBSBoneLODController>();
 	RegisterFactory<NiFloatExtraDataController>();
 	RegisterFactory<NiVisController>();
 	RegisterFactory<NiAlphaController>();
@@ -214,6 +219,7 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<BSMultiBoundAABB>();
 	RegisterFactory<BSMultiBoundSphere>();
 	RegisterFactory<NiCollisionObject>();
+	RegisterFactory<NiCollisionData>();
 	RegisterFactory<bhkCollisionObject>();
 	RegisterFactory<bhkNPCollisionObject>();
 	RegisterFactory<bhkPCollisionObject>();

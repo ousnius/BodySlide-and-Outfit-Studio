@@ -511,6 +511,11 @@ void NiBoneLODController::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
+NiBSBoneLODController::NiBSBoneLODController(NiStream& stream) : NiBSBoneLODController() {
+	Get(stream);
+}
+
+
 void NiSingleInterpController::Get(NiStream& stream) {
 	NiInterpController::Get(stream);
 

@@ -273,6 +273,107 @@ public:
 	NiCollisionObject* Clone() { return new NiCollisionObject(*this); }
 };
 
+enum PropagationMode : uint {
+	PROPAGATE_ON_SUCCESS,
+	PROPAGATE_ON_FAILURE,
+	PROPAGATE_ALWAYS,
+	PROPAGATE_NEVER
+};
+
+enum CollisionMode : uint {
+	CM_USE_OBB,
+	CM_USE_TRI,
+	CM_USE_ABV,
+	CM_NOTEST,
+	CM_USE_NIBOUND
+};
+
+enum BoundVolumeType : uint {
+	BASE_BV = 0xFFFFFFFF,
+	SPHERE_BV = 0,
+	BOX_BV = 1,
+	CAPSULE_BV = 2,
+	UNION_BV = 4,
+	HALFSPACE_BV = 5
+};
+
+struct BoxBV {
+	Vector3 center;
+	Vector3 axis1;
+	Vector3 axis2;
+	Vector3 axis3;
+	float extent1 = 0.0f;
+	float extent2 = 0.0f;
+	float extent3 = 0.0f;
+};
+
+struct CapsuleBV {
+	Vector3 center;
+	Vector3 origin;
+	float unkFloat1 = 0.0f;
+	float unkFloat2 = 0.0f;
+};
+
+struct HalfSpaceBV {
+	Vector3 normal;
+	Vector3 center;
+	float unkFloat1 = 0.0f;
+};
+
+struct UnionBV;
+
+struct BoundingVolume {
+	BoundVolumeType collisionType = BASE_BV;
+	BoundingSphere bvSphere;
+	BoxBV bvBox;
+	CapsuleBV bvCapsule;
+	UnionBV* bvUnion = nullptr;
+	HalfSpaceBV bvHalfSpace;
+
+	BoundingVolume();
+	~BoundingVolume();
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+};
+
+struct UnionBV {
+	uint numBV = 0;
+	std::vector<BoundingVolume> boundingVolumes;
+
+	void Get(NiStream& stream) {
+		stream >> numBV;
+		boundingVolumes.resize(numBV);
+		for (int i = 0; i < numBV; i++)
+			boundingVolumes[i].Get(stream);
+	}
+
+	void Put(NiStream& stream) {
+		stream << numBV;
+		for (int i = 0; i < numBV; i++)
+			boundingVolumes[i].Put(stream);
+	}
+};
+
+class NiCollisionData : public NiCollisionObject {
+private:
+	PropagationMode propagationMode = PROPAGATE_ON_SUCCESS;
+	CollisionMode collisionMode = CM_USE_OBB;
+	bool useABV = false;
+	BoundingVolume boundingVolume;
+
+public:
+	NiCollisionData() {}
+	NiCollisionData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiCollisionData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiCollisionData* Clone() { return new NiCollisionData(*this); }
+};
+
 class bhkNiCollisionObject : public NiCollisionObject {
 private:
 	ushort flags = 1;

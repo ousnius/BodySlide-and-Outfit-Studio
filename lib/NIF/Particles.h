@@ -110,6 +110,24 @@ public:
 	BSStripPSysData* Clone() { return new BSStripPSysData(*this); }
 };
 
+class NiPSysEmitterCtlrData : public NiObject {
+private:
+	KeyGroup<float> floatKeys;
+	uint numVisibilityKeys = 0;
+	std::vector<Key<byte>> visibilityKeys;
+
+public:
+	NiPSysEmitterCtlrData() {}
+	NiPSysEmitterCtlrData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysEmitterCtlrData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiPSysEmitterCtlrData* Clone() { return new NiPSysEmitterCtlrData(*this); }
+};
+
 class NiParticleSystem;
 
 class NiPSysModifier : public NiObject {
@@ -913,6 +931,17 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	NiPSysBoxEmitter* Clone() { return new NiPSysBoxEmitter(*this); }
+};
+
+class BSPSysArrayEmitter : public NiPSysVolumeEmitter {
+public:
+	BSPSysArrayEmitter() {}
+	BSPSysArrayEmitter(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSPSysArrayEmitter";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	BSPSysArrayEmitter* Clone() { return new BSPSysArrayEmitter(*this); }
 };
 
 enum VelocityType : uint {

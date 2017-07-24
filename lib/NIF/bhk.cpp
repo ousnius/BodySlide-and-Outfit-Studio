@@ -29,6 +29,86 @@ void NiCollisionObject::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
+BoundingVolume::BoundingVolume() {
+	bvUnion = new UnionBV();
+}
+
+BoundingVolume::~BoundingVolume() {
+	delete bvUnion;
+}
+
+void BoundingVolume::Get(NiStream& stream) {
+	stream >> collisionType;
+
+	switch (collisionType) {
+	case SPHERE_BV:
+		stream >> bvSphere;
+		break;
+	case BOX_BV:
+		stream >> bvBox;
+		break;
+	case CAPSULE_BV:
+		stream >> bvCapsule;
+		break;
+	case UNION_BV:
+		bvUnion->Get(stream);
+		break;
+	case HALFSPACE_BV:
+		stream >> bvHalfSpace;
+		break;
+	}
+}
+
+void BoundingVolume::Put(NiStream& stream) {
+	stream << collisionType;
+
+	switch (collisionType) {
+	case SPHERE_BV:
+		stream << bvSphere;
+		break;
+	case BOX_BV:
+		stream << bvBox;
+		break;
+	case CAPSULE_BV:
+		stream << bvCapsule;
+		break;
+	case UNION_BV:
+		bvUnion->Put(stream);
+		break;
+	case HALFSPACE_BV:
+		stream << bvHalfSpace;
+		break;
+	}
+}
+
+
+NiCollisionData::NiCollisionData(NiStream& stream) : NiCollisionData() {
+	Get(stream);
+}
+
+void NiCollisionData::Get(NiStream& stream) {
+	NiCollisionObject::Get(stream);
+
+	stream >> propagationMode;
+	stream >> collisionMode;
+	stream >> useABV;
+
+	if (useABV)
+		boundingVolume.Get(stream);
+}
+
+void NiCollisionData::Put(NiStream& stream) {
+	NiCollisionObject::Put(stream);
+
+	stream << propagationMode;
+	stream << collisionMode;
+	stream << useABV;
+
+	if (useABV)
+		boundingVolume.Put(stream);
+}
+
+
 bhkNiCollisionObject::bhkNiCollisionObject() : NiCollisionObject() {
 }
 
