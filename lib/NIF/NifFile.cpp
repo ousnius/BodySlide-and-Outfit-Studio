@@ -116,6 +116,12 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<BSLightingShaderPropertyUShortController>();
 	RegisterFactory<BSEffectShaderPropertyColorController>();
 	RegisterFactory<BSEffectShaderPropertyFloatController>();
+	RegisterFactory<NiLookAtController>();
+	RegisterFactory<NiPathController>();
+	RegisterFactory<NiPSysResetOnLoopCtlr>();
+	RegisterFactory<NiUVData>();
+	RegisterFactory<NiUVController>();
+	RegisterFactory<BSRefractionFirePeriodController>();
 	RegisterFactory<BSFrustumFOVController>();
 	RegisterFactory<BSLagBoneController>();
 	RegisterFactory<BSProceduralLightningController>();

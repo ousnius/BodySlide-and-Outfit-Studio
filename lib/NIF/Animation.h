@@ -534,6 +534,112 @@ public:
 	void GetPtrs(std::set<int*>& ptrs);
 };
 
+class NiLookAtController : public NiTimeController {
+private:
+	ushort unkShort1 = 0;
+	BlockRef<NiNode> lookAtNodePtr;
+
+public:
+	NiLookAtController() {}
+	NiLookAtController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiLookAtController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetPtrs(std::set<int*>& ptrs);
+	NiLookAtController* Clone() { return new NiLookAtController(*this); }
+};
+
+class NiPathController : public NiTimeController {
+private:
+	ushort unkShort1 = 0;
+	uint unkInt1 = 1;
+	float unkFloat1 = 0.0f;
+	float unkFloat2 = 0.0f;
+	ushort unkShort2 = 0;
+	BlockRef<NiPosData> posDataRef;
+	BlockRef<NiFloatData> floatDataRef;
+
+public:
+	NiPathController() {}
+	NiPathController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPathController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	NiPathController* Clone() { return new NiPathController(*this); }
+};
+
+class NiPSysResetOnLoopCtlr : public NiTimeController {
+public:
+	NiPSysResetOnLoopCtlr() {}
+	NiPSysResetOnLoopCtlr(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPSysResetOnLoopCtlr";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiPSysResetOnLoopCtlr* Clone() { return new NiPSysResetOnLoopCtlr(*this); }
+};
+
+class NiUVData : public NiObject {
+private:
+	KeyGroup<float> uTrans;
+	KeyGroup<float> vTrans;
+	KeyGroup<float> uScale;
+	KeyGroup<float> vScale;
+
+public:
+	NiUVData() {}
+	NiUVData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiUVData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	NiUVData* Clone() { return new NiUVData(*this); }
+};
+
+class NiUVController : public NiTimeController {
+private:
+	ushort unkShort1 = 0;
+	BlockRef<NiUVData> dataRef;
+
+public:
+	NiUVController() {}
+	NiUVController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiUVController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	NiUVController* Clone() { return new NiUVController(*this); }
+};
+
+class BSRefractionFirePeriodController : public NiTimeController {
+private:
+	BlockRef<NiInterpolator> interpRef;
+
+public:
+	BSRefractionFirePeriodController() {}
+	BSRefractionFirePeriodController(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSRefractionFirePeriodController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+	BSRefractionFirePeriodController* Clone() { return new BSRefractionFirePeriodController(*this); }
+};
+
 class BSFrustumFOVController : public NiTimeController {
 public:
 	BlockRef<NiInterpolator> interpolatorRef;

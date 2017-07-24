@@ -213,6 +213,145 @@ void NiTimeController::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
+NiLookAtController::NiLookAtController(NiStream& stream) : NiLookAtController() {
+	Get(stream);
+}
+
+void NiLookAtController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
+
+	stream >> unkShort1;
+	lookAtNodePtr.Get(stream);
+}
+
+void NiLookAtController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
+
+	stream << unkShort1;
+	lookAtNodePtr.Put(stream);
+}
+
+void NiLookAtController::GetPtrs(std::set<int*>& ptrs) {
+	NiTimeController::GetPtrs(ptrs);
+
+	ptrs.insert(&lookAtNodePtr.index);
+}
+
+
+NiPathController::NiPathController(NiStream& stream) : NiPathController() {
+	Get(stream);
+}
+
+void NiPathController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
+
+	stream >> unkShort1;
+	stream >> unkInt1;
+	stream >> unkFloat1;
+	stream >> unkFloat2;
+	stream >> unkShort2;
+	posDataRef.Get(stream);
+	floatDataRef.Get(stream);
+}
+
+void NiPathController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
+
+	stream << unkShort1;
+	stream << unkInt1;
+	stream << unkFloat1;
+	stream << unkFloat2;
+	stream << unkShort2;
+	posDataRef.Put(stream);
+	floatDataRef.Put(stream);
+}
+
+void NiPathController::GetChildRefs(std::set<int*>& refs) {
+	NiTimeController::GetChildRefs(refs);
+
+	refs.insert(&posDataRef.index);
+	refs.insert(&floatDataRef.index);
+}
+
+
+NiPSysResetOnLoopCtlr::NiPSysResetOnLoopCtlr(NiStream& stream) : NiPSysResetOnLoopCtlr() {
+	Get(stream);
+}
+
+
+NiUVData::NiUVData(NiStream& stream) : NiUVData() {
+	Get(stream);
+}
+
+void NiUVData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	uTrans.Get(stream);
+	vTrans.Get(stream);
+	uScale.Get(stream);
+	vScale.Get(stream);
+}
+
+void NiUVData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	uTrans.Put(stream);
+	vTrans.Put(stream);
+	uScale.Put(stream);
+	vScale.Put(stream);
+}
+
+
+NiUVController::NiUVController(NiStream& stream) : NiUVController() {
+	Get(stream);
+}
+
+void NiUVController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
+
+	stream >> unkShort1;
+	dataRef.Get(stream);
+}
+
+void NiUVController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
+
+	stream << unkShort1;
+	dataRef.Put(stream);
+}
+
+void NiUVController::GetChildRefs(std::set<int*>& refs) {
+	NiTimeController::GetChildRefs(refs);
+
+	refs.insert(&dataRef.index);
+}
+
+
+BSRefractionFirePeriodController::BSRefractionFirePeriodController(NiStream& stream) : BSRefractionFirePeriodController() {
+	Get(stream);
+}
+
+void BSRefractionFirePeriodController::Get(NiStream& stream) {
+	NiTimeController::Get(stream);
+
+	if (stream.GetVersion().File() >= NiVersion::Get(20, 2, 0, 7))
+		interpRef.Get(stream);
+}
+
+void BSRefractionFirePeriodController::Put(NiStream& stream) {
+	NiTimeController::Put(stream);
+
+	if (stream.GetVersion().File() >= NiVersion::Get(20, 2, 0, 7))
+		interpRef.Put(stream);
+}
+
+void BSRefractionFirePeriodController::GetChildRefs(std::set<int*>& refs) {
+	NiTimeController::GetChildRefs(refs);
+
+	refs.insert(&interpRef.index);
+}
+
+
 BSFrustumFOVController::BSFrustumFOVController(NiStream& stream) : BSFrustumFOVController() {
 	Get(stream);
 }
