@@ -747,7 +747,92 @@ public:
 	NiBSBoneLODController* Clone() { return new NiBSBoneLODController(*this); }
 };
 
+struct Morph {
+	StringRef frameName;
+	std::vector<Vector3> vectors;
+
+	void Get(NiStream& stream, uint numVerts) {
+		frameName.Get(stream);
+		vectors.resize(numVerts);
+		for (int i = 0; i < numVerts; i++)
+			stream >> vectors[i];
+	}
+
+	void Put(NiStream& stream, uint numVerts) {
+		frameName.Put(stream);
+		for (int i = 0; i < numVerts; i++)
+			stream << vectors[i];
+	}
+
+	void GetStringRefs(std::set<StringRef*>& refs) {
+		refs.insert(&frameName);
+	}
+};
+
+class NiMorphData : public NiObject {
+private:
+	uint numMorphs = 0;
+	uint numVertices = 0;
+	byte relativeTargets = 1;
+	std::vector<Morph> morphs;
+
+public:
+	NiMorphData() {}
+	NiMorphData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiMorphData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetStringRefs(std::set<StringRef*>& refs);
+
+	NiMorphData* Clone() { return new NiMorphData(*this); }
+};
+
 class NiInterpController : public NiTimeController {
+};
+
+struct MorphWeight {
+	BlockRef<NiInterpolator> interpRef;
+	float weight = 0.0f;
+
+	void Get(NiStream& stream) {
+		interpRef.Get(stream);
+		stream >> weight;
+	}
+
+	void Put(NiStream& stream) {
+		interpRef.Put(stream);
+		stream << weight;
+	}
+
+	void GetChildRefs(std::set<int*>& refs) {
+		refs.insert(&interpRef.index);
+	}
+};
+
+class NiGeomMorpherController : public NiInterpController {
+private:
+	ushort extraFlags = 0;
+	BlockRef<NiMorphData> dataRef;
+	bool alwaysUpdate = false;
+
+	uint numTargets = 0;
+	std::vector<MorphWeight> interpWeights;
+
+public:
+	NiGeomMorpherController() {}
+	NiGeomMorpherController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiGeomMorpherController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+
+	NiGeomMorpherController* Clone() { return new NiGeomMorpherController(*this); }
 };
 
 class NiSingleInterpController : public NiInterpController {
@@ -757,6 +842,62 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<int*>& refs);
+};
+
+class NiRollController : public NiSingleInterpController {
+private:
+	BlockRef<NiFloatData> dataRef;
+
+public:
+	NiRollController() {}
+	NiRollController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiRollController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+
+	NiRollController* Clone() { return new NiRollController(*this); }
+};
+
+enum TargetColor : ushort {
+	TC_AMBIENT,
+	TC_DIFFUSE,
+	TC_SPECULAR,
+	TC_SELF_ILLUM
+};
+
+class NiPoint3InterpController : public NiSingleInterpController {
+private:
+	TargetColor targetColor = TC_AMBIENT;
+
+public:
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+};
+
+class NiMaterialColorController : public NiPoint3InterpController {
+public:
+	NiMaterialColorController() {}
+	NiMaterialColorController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiMaterialColorController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiMaterialColorController* Clone() { return new NiMaterialColorController(*this); }
+};
+
+class NiLightColorController : public NiPoint3InterpController {
+public:
+	NiLightColorController() {}
+	NiLightColorController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiLightColorController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiLightColorController* Clone() { return new NiLightColorController(*this); }
 };
 
 class NiExtraDataController : public NiSingleInterpController {
@@ -793,7 +934,92 @@ public:
 	NiVisController* Clone() { return new NiVisController(*this); }
 };
 
+enum TexType : uint {
+	BASE_MAP,
+	DARK_MAP,
+	DETAIL_MAP,
+	GLOSS_MAP,
+	GLOW_MAP,
+	BUMP_MAP,
+	NORMAL_MAP,
+	UNKNOWN2_MAP,
+	DECAL_0_MAP,
+	DECAL_1_MAP,
+	DECAL_2_MAP,
+	DECAL_3_MAP
+};
+
 class NiFloatInterpController : public NiSingleInterpController {
+};
+
+class NiSourceTexture;
+
+class NiFlipController : public NiFloatInterpController {
+private:
+	TexType textureSlot = BASE_MAP;
+	BlockRefArray<NiSourceTexture> sourceRefs;
+
+public:
+	NiFlipController() {}
+	NiFlipController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiFlipController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+
+	NiFlipController* Clone() { return new NiFlipController(*this); }
+};
+
+enum TexTransform : uint {
+	TT_TRANSLATE_U,
+	TT_TRANSLATE_V,
+	TT_ROTATE,
+	TT_SCALE_U,
+	TT_SCALE_V
+};
+
+class NiTextureTransformController : public NiFloatInterpController {
+private:
+	byte unkByte1 = 0;
+	TexType textureSlot = BASE_MAP;
+	TexTransform operation = TT_TRANSLATE_U;
+
+public:
+	NiTextureTransformController() {}
+	NiTextureTransformController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiTextureTransformController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiTextureTransformController* Clone() { return new NiTextureTransformController(*this); }
+};
+
+class NiLightDimmerController : public NiFloatInterpController {
+public:
+	NiLightDimmerController() {}
+	NiLightDimmerController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiLightDimmerController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiLightDimmerController* Clone() { return new NiLightDimmerController(*this); }
+};
+
+class NiLightRadiusController : public NiFloatInterpController {
+public:
+	NiLightRadiusController() {}
+	NiLightRadiusController(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiLightRadiusController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiLightRadiusController* Clone() { return new NiLightRadiusController(*this); }
 };
 
 class NiAlphaController : public NiFloatInterpController {
@@ -849,6 +1075,28 @@ public:
 	virtual const char* GetBlockName() { return BlockName; }
 
 	NiTransformController* Clone() { return new NiTransformController(*this); }
+};
+
+class BSMaterialEmittanceMultController : public NiFloatInterpController {
+public:
+	BSMaterialEmittanceMultController() {}
+	BSMaterialEmittanceMultController(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSMaterialEmittanceMultController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	BSMaterialEmittanceMultController* Clone() { return new BSMaterialEmittanceMultController(*this); }
+};
+
+class BSRefractionStrengthController : public NiFloatInterpController {
+public:
+	BSRefractionStrengthController() {}
+	BSRefractionStrengthController(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSRefractionStrengthController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	BSRefractionStrengthController* Clone() { return new BSRefractionStrengthController(*this); }
 };
 
 class BSLightingShaderPropertyColorController : public NiFloatInterpController {

@@ -516,6 +516,80 @@ NiBSBoneLODController::NiBSBoneLODController(NiStream& stream) : NiBSBoneLODCont
 }
 
 
+NiMorphData::NiMorphData(NiStream& stream) : NiMorphData() {
+	Get(stream);
+}
+
+void NiMorphData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> numMorphs;
+	stream >> numVertices;
+	stream >> relativeTargets;
+
+	morphs.resize(numMorphs);
+	for (int i = 0; i < numMorphs; i++)
+		morphs[i].Get(stream, numVertices);
+}
+
+void NiMorphData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	stream << numMorphs;
+	stream << numVertices;
+	stream << relativeTargets;
+
+	for (int i = 0; i < numMorphs; i++)
+		morphs[i].Put(stream, numVertices);
+}
+
+void NiMorphData::GetStringRefs(std::set<StringRef*>& refs) {
+	NiObject::GetStringRefs(refs);
+
+	for (auto &m : morphs)
+		m.GetStringRefs(refs);
+}
+
+
+NiGeomMorpherController::NiGeomMorpherController(NiStream& stream) : NiGeomMorpherController() {
+	Get(stream);
+}
+
+void NiGeomMorpherController::Get(NiStream& stream) {
+	NiInterpController::Get(stream);
+
+	stream >> extraFlags;
+	dataRef.Get(stream);
+	stream >> alwaysUpdate;
+
+	stream >> numTargets;
+	interpWeights.resize(numTargets);
+	for (int i = 0; i < numTargets; i++)
+		interpWeights[i].Get(stream);
+}
+
+void NiGeomMorpherController::Put(NiStream& stream) {
+	NiInterpController::Put(stream);
+
+	stream << extraFlags;
+	dataRef.Put(stream);
+	stream << alwaysUpdate;
+
+	stream << numTargets;
+	for (int i = 0; i < numTargets; i++)
+		interpWeights[i].Put(stream);
+}
+
+void NiGeomMorpherController::GetChildRefs(std::set<int*>& refs) {
+	NiInterpController::GetChildRefs(refs);
+
+	refs.insert(&dataRef.index);
+
+	for (auto &m : interpWeights)
+		m.GetChildRefs(refs);
+}
+
+
 void NiSingleInterpController::Get(NiStream& stream) {
 	NiInterpController::Get(stream);
 
@@ -532,6 +606,52 @@ void NiSingleInterpController::GetChildRefs(std::set<int*>& refs) {
 	NiInterpController::GetChildRefs(refs);
 
 	refs.insert(&interpolatorRef.index);
+}
+
+
+NiRollController::NiRollController(NiStream& stream) : NiRollController() {
+	Get(stream);
+}
+
+void NiRollController::Get(NiStream& stream) {
+	NiSingleInterpController::Get(stream);
+
+	dataRef.Get(stream);
+}
+
+void NiRollController::Put(NiStream& stream) {
+	NiSingleInterpController::Put(stream);
+
+	dataRef.Put(stream);
+}
+
+void NiRollController::GetChildRefs(std::set<int*>& refs) {
+	NiSingleInterpController::GetChildRefs(refs);
+
+	refs.insert(&dataRef.index);
+}
+
+
+void NiPoint3InterpController::Get(NiStream& stream) {
+	NiSingleInterpController::Get(stream);
+
+	stream >> targetColor;
+}
+
+void NiPoint3InterpController::Put(NiStream& stream) {
+	NiSingleInterpController::Put(stream);
+
+	stream << targetColor;
+}
+
+
+NiMaterialColorController::NiMaterialColorController(NiStream& stream) : NiMaterialColorController() {
+	Get(stream);
+}
+
+
+NiLightColorController::NiLightColorController(NiStream& stream) : NiLightColorController() {
+	Get(stream);
 }
 
 
@@ -563,6 +683,62 @@ NiVisController::NiVisController(NiStream& stream) : NiVisController() {
 }
 
 
+NiFlipController::NiFlipController(NiStream& stream) : NiFlipController() {
+	Get(stream);
+}
+
+void NiFlipController::Get(NiStream& stream) {
+	NiFloatInterpController::Get(stream);
+
+	stream >> textureSlot;
+	sourceRefs.Get(stream);
+}
+
+void NiFlipController::Put(NiStream& stream) {
+	NiFloatInterpController::Put(stream);
+
+	stream << textureSlot;
+	sourceRefs.Put(stream);
+}
+
+void NiFlipController::GetChildRefs(std::set<int*>& refs) {
+	NiFloatInterpController::GetChildRefs(refs);
+
+	sourceRefs.GetIndexPtrs(refs);
+}
+
+
+NiTextureTransformController::NiTextureTransformController(NiStream& stream) : NiTextureTransformController() {
+	Get(stream);
+}
+
+void NiTextureTransformController::Get(NiStream& stream) {
+	NiFloatInterpController::Get(stream);
+
+	stream >> unkByte1;
+	stream >> textureSlot;
+	stream >> operation;
+}
+
+void NiTextureTransformController::Put(NiStream& stream) {
+	NiFloatInterpController::Put(stream);
+
+	stream << unkByte1;
+	stream << textureSlot;
+	stream << operation;
+}
+
+
+NiLightDimmerController::NiLightDimmerController(NiStream& stream) : NiLightDimmerController() {
+	Get(stream);
+}
+
+
+NiLightRadiusController::NiLightRadiusController(NiStream& stream) : NiLightRadiusController() {
+	Get(stream);
+}
+
+
 NiAlphaController::NiAlphaController(NiStream& stream) : NiAlphaController() {
 	Get(stream);
 }
@@ -590,6 +766,15 @@ NiTransformController::NiTransformController() : NiKeyframeController() {
 }
 
 NiTransformController::NiTransformController(NiStream& stream) : NiTransformController() {
+	Get(stream);
+}
+
+
+BSMaterialEmittanceMultController::BSMaterialEmittanceMultController(NiStream& stream) : BSMaterialEmittanceMultController() {
+	Get(stream);
+}
+
+BSRefractionStrengthController::BSRefractionStrengthController(NiStream& stream) : BSRefractionStrengthController() {
 	Get(stream);
 }
 
