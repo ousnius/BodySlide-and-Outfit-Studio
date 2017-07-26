@@ -10,6 +10,82 @@ See the included LICENSE file
 
 #include "utils/KDMatcher.h"
 
+NiAdditionalGeometryData::NiAdditionalGeometryData() : AdditionalGeomData() {
+}
+
+NiAdditionalGeometryData::NiAdditionalGeometryData(NiStream & stream) : NiAdditionalGeometryData() {
+	Get(stream);
+}
+
+void NiAdditionalGeometryData::Get(NiStream & stream) {
+	AdditionalGeomData::Get(stream);
+
+	stream >> numVertices;
+
+	stream >> numBlockInfos;
+	blockInfos.resize(numBlockInfos);
+	for (int i = 0; i < numBlockInfos; i++)
+		blockInfos[i].Get(stream);
+
+	stream >> numBlocks;
+	blocks.resize(numBlocks);
+	for (int i = 0; i < numBlocks; i++)
+		blocks[i].Get(stream);
+}
+
+void NiAdditionalGeometryData::Put(NiStream & stream) {
+	AdditionalGeomData::Put(stream);
+
+	stream << numVertices;
+
+	stream << numBlockInfos;
+	for (int i = 0; i < numBlockInfos; i++)
+		blockInfos[i].Put(stream);
+
+	stream << numBlocks;
+	for (int i = 0; i < numBlocks; i++)
+		blocks[i].Put(stream);
+}
+
+
+BSPackedAdditionalGeometryData::BSPackedAdditionalGeometryData() : AdditionalGeomData() {
+}
+
+BSPackedAdditionalGeometryData::BSPackedAdditionalGeometryData(NiStream & stream) : BSPackedAdditionalGeometryData() {
+	Get(stream);
+}
+
+void BSPackedAdditionalGeometryData::Get(NiStream & stream) {
+	AdditionalGeomData::Get(stream);
+
+	stream >> numVertices;
+
+	stream >> numBlockInfos;
+	blockInfos.resize(numBlockInfos);
+	for (int i = 0; i < numBlockInfos; i++)
+		blockInfos[i].Get(stream);
+
+	stream >> numBlocks;
+	blocks.resize(numBlocks);
+	for (int i = 0; i < numBlocks; i++)
+		blocks[i].Get(stream);
+}
+
+void BSPackedAdditionalGeometryData::Put(NiStream & stream) {
+	AdditionalGeomData::Put(stream);
+
+	stream << numVertices;
+
+	stream << numBlockInfos;
+	for (int i = 0; i < numBlockInfos; i++)
+		blockInfos[i].Put(stream);
+
+	stream << numBlocks;
+	for (int i = 0; i < numBlocks; i++)
+		blocks[i].Put(stream);
+}
+
+
 void NiGeometryData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -70,7 +146,7 @@ void NiGeometryData::Get(NiStream& stream) {
 	}
 
 	stream >> consistencyFlags;
-	stream >> additionalData;
+	additionalDataRef.Get(stream);
 }
 
 void NiGeometryData::Put(NiStream& stream) {
@@ -125,7 +201,13 @@ void NiGeometryData::Put(NiStream& stream) {
 	}
 
 	stream << consistencyFlags;
-	stream << additionalData;
+	additionalDataRef.Put(stream);
+}
+
+void NiGeometryData::GetChildRefs(std::set<int*>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(&additionalDataRef.index);
 }
 
 void NiGeometryData::SetVertices(const bool enable) {
@@ -189,11 +271,6 @@ void NiGeometryData::UpdateBounds() {
 }
 
 void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords) {
-	groupID = 0;
-	keepFlags = 0;
-	compressFlags = 0;
-
-	hasVertices = true;
 	numVertices = verts->size();
 	for (auto &v : (*verts))
 		vertices.push_back(v);
@@ -203,16 +280,10 @@ void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* 
 	else
 		numUVSets = 0;
 
-	materialCRC = 0;
-	hasNormals = false;
-	hasVertexColors = false;
-
 	bounds = BoundingSphere(*verts);
 
 	for (auto &uv : *texcoords)
 		uvSets.push_back(uv);
-
-	additionalData = 0xFFFFFFFF;
 }
 
 void NiGeometryData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {

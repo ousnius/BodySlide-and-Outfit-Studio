@@ -10,6 +10,204 @@ See the included LICENSE file
 #include "Objects.h"
 #include "VertexData.h"
 
+struct AdditionalDataInfo {
+	int dataType = 0;
+	uint numChannelBytesPerElement = 0;
+	uint numChannelBytes = 0;
+	uint numTotalBytesPerElement = 0;
+	uint blockIndex = 0;
+	uint channelOffset = 0;
+	byte unkByte1 = 2;
+
+	void Get(NiStream& stream) {
+		stream >> dataType;
+		stream >> numChannelBytesPerElement;
+		stream >> numChannelBytes;
+		stream >> numTotalBytesPerElement;
+		stream >> blockIndex;
+		stream >> channelOffset;
+		stream >> unkByte1;
+	}
+
+	void Put(NiStream& stream) {
+		stream << dataType;
+		stream << numChannelBytesPerElement;
+		stream << numChannelBytes;
+		stream << numTotalBytesPerElement;
+		stream << blockIndex;
+		stream << channelOffset;
+		stream << unkByte1;
+	}
+};
+
+struct AdditionalDataBlock {
+	bool hasData = false;
+	uint blockSize = 0;
+
+	uint numBlocks = 0;
+	std::vector<uint> blockOffsets;
+
+	uint numData = 0;
+	std::vector<uint> dataSizes;
+	std::vector<std::vector<byte>> data;
+
+	void Get(NiStream& stream) {
+		stream >> hasData;
+
+		if (hasData) {
+			stream >> blockSize;
+
+			stream >> numBlocks;
+			blockOffsets.resize(numBlocks);
+			for (int i = 0; i < numBlocks; i++)
+				stream >> blockOffsets[i];
+
+			stream >> numData;
+			dataSizes.resize(numData);
+			for (int i = 0; i < numData; i++)
+				stream >> dataSizes[i];
+
+			data.resize(numData);
+			for (int i = 0; i < numData; i++) {
+				data[i].resize(blockSize);
+				for (int j = 0; j < blockSize; j++)
+					stream >> data[i][j];
+			}
+		}
+	}
+
+	void Put(NiStream& stream) {
+		stream << hasData;
+
+		if (hasData) {
+			stream << blockSize;
+
+			stream << numBlocks;
+			for (int i = 0; i < numBlocks; i++)
+				stream << blockOffsets[i];
+
+			stream << numData;
+			for (int i = 0; i < numData; i++)
+				stream << dataSizes[i];
+
+			for (int i = 0; i < numData; i++)
+				for (int j = 0; j < blockSize; j++)
+					stream << data[i][j];
+		}
+	}
+};
+
+class AdditionalGeomData : public NiObject {
+};
+
+class NiAdditionalGeometryData : public AdditionalGeomData {
+private:
+	uint numVertices = 0;
+
+	uint numBlockInfos = 0;
+	std::vector<AdditionalDataInfo> blockInfos;
+
+	uint numBlocks = 0;
+	std::vector<AdditionalDataBlock> blocks;
+
+public:
+	NiAdditionalGeometryData();
+	NiAdditionalGeometryData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiAdditionalGeometryData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiAdditionalGeometryData* Clone() { return new NiAdditionalGeometryData(*this); }
+};
+
+struct BSPackedAdditionalDataBlock {
+	bool hasData = false;
+	uint numTotalBytes = 0;
+
+	uint numBlocks = 0;
+	std::vector<uint> blockOffsets;
+
+	uint numAtoms = 0;
+	std::vector<uint> atomSizes;
+	std::vector<byte> data;
+
+	uint unkInt1 = 0;
+	uint numTotalBytesPerElement = 0;
+
+	void Get(NiStream& stream) {
+		stream >> hasData;
+
+		if (hasData) {
+			stream >> numTotalBytes;
+
+			stream >> numBlocks;
+			blockOffsets.resize(numBlocks);
+			for (int i = 0; i < numBlocks; i++)
+				stream >> blockOffsets[i];
+
+			stream >> numAtoms;
+			atomSizes.resize(numAtoms);
+			for (int i = 0; i < numAtoms; i++)
+				stream >> atomSizes[i];
+
+			data.resize(numTotalBytes);
+			for (int i = 0; i < numTotalBytes; i++)
+				stream >> data[i];
+		}
+
+		stream >> unkInt1;
+		stream >> numTotalBytesPerElement;
+	}
+
+	void Put(NiStream& stream) {
+		stream << hasData;
+
+		if (hasData) {
+			stream << numTotalBytes;
+
+			stream << numBlocks;
+			for (int i = 0; i < numBlocks; i++)
+				stream << blockOffsets[i];
+
+			stream << numAtoms;
+			for (int i = 0; i < numAtoms; i++)
+				stream << atomSizes[i];
+
+			for (int i = 0; i < numTotalBytes; i++)
+				stream << data[i];
+		}
+
+		stream << unkInt1;
+		stream << numTotalBytesPerElement;
+	}
+};
+
+class BSPackedAdditionalGeometryData : public AdditionalGeomData {
+private:
+	ushort numVertices = 0;
+
+	uint numBlockInfos = 0;
+	std::vector<AdditionalDataInfo> blockInfos;
+
+	uint numBlocks = 0;
+	std::vector<BSPackedAdditionalDataBlock> blocks;
+
+public:
+	BSPackedAdditionalGeometryData();
+	BSPackedAdditionalGeometryData(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSPackedAdditionalGeometryData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	BSPackedAdditionalGeometryData* Clone() { return new BSPackedAdditionalGeometryData(*this); }
+};
+
 class NiGeometryData : public NiObject {
 protected:
 	bool isPSys = false;
@@ -21,7 +219,7 @@ private:
 	uint materialCRC = 0;					// Version >= 20.2.0.7 && User Version == 12
 	bool hasNormals = false;
 	bool hasVertexColors = false;
-	uint additionalData = 0xFFFFFFFF;
+	BlockRef<AdditionalGeomData> additionalDataRef;
 	BoundingSphere bounds;
 
 public:
@@ -40,6 +238,8 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 
 	void SetVertices(const bool enable);

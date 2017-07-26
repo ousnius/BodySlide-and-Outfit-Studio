@@ -43,6 +43,8 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiDirectionalLight>();
 	RegisterFactory<NiPointLight>();
 	RegisterFactory<NiSpotLight>();
+	RegisterFactory<NiAdditionalGeometryData>();
+	RegisterFactory<BSPackedAdditionalGeometryData>();
 	RegisterFactory<NiTriShape>();
 	RegisterFactory<NiTriShapeData>();
 	RegisterFactory<NiTriStrips>();
