@@ -1499,6 +1499,52 @@ enum CycleType : uint {
 	CYCLE_CLAMP
 };
 
+class BSAnimNote : public NiObject {
+public:
+	enum AnimNoteType : uint {
+		ANT_INVALID,
+		ANT_GRABIK,
+		ANT_LOOKIK
+	};
+
+private:
+	AnimNoteType type = ANT_INVALID;
+	float time = 0.0f;
+	uint arm = 0;
+	float gain = 0.0f;
+	uint state = 0;
+
+public:
+	BSAnimNote() {}
+	BSAnimNote(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSAnimNote";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	BSAnimNote* Clone() { return new BSAnimNote(*this); }
+};
+
+class BSAnimNotes : public NiObject {
+private:
+	BlockRefShortArray<BSAnimNote> animNoteRefs;
+
+public:
+	BSAnimNotes() {}
+	BSAnimNotes(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSAnimNotes";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+
+	BSAnimNotes* Clone() { return new BSAnimNotes(*this); }
+};
+
 class NiControllerManager;
 
 class NiControllerSequence : public NiSequence {
@@ -1510,10 +1556,10 @@ private:
 	float startTime = 0.0f;
 	float stopTime = 0.0f;
 	BlockRef<NiControllerManager> managerRef;
-
 	StringRef accumRootName;
 
-	ushort flags = 0;
+	BlockRef<BSAnimNotes> animNotesRef;
+	BlockRefShortArray<BSAnimNotes> animNotesRefs;
 
 public:
 	NiControllerSequence();

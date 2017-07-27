@@ -49,6 +49,10 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<NiTriShapeData>();
 	RegisterFactory<NiTriStrips>();
 	RegisterFactory<NiTriStripsData>();
+	RegisterFactory<NiLines>();
+	RegisterFactory<NiLinesData>();
+	RegisterFactory<NiScreenElements>();
+	RegisterFactory<NiScreenElementsData>();
 	RegisterFactory<BSLODTriShape>();
 	RegisterFactory<BSSegmentedTriShape>();
 	RegisterFactory<BSTriShape>();
@@ -174,6 +178,8 @@ NiFactoryRegister::NiFactoryRegister() {
 	RegisterFactory<BSPSysMultiTargetEmitterCtlr>();
 	RegisterFactory<NiControllerManager>();
 	RegisterFactory<NiSequence>();
+	RegisterFactory<BSAnimNote>();
+	RegisterFactory<BSAnimNotes>();
 	RegisterFactory<NiControllerSequence>();
 	RegisterFactory<NiDefaultAVObjectPalette>();
 	RegisterFactory<NiBSplineData>();

@@ -1567,6 +1567,64 @@ void NiSequence::GetChildRefs(std::set<int*>& refs) {
 }
 
 
+BSAnimNote::BSAnimNote(NiStream& stream) : BSAnimNote() {
+	Get(stream);
+}
+
+void BSAnimNote::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> type;
+	stream >> time;
+
+	if (type == ANT_GRABIK)
+		stream >> arm;
+
+	if (type != ANT_INVALID) {
+		stream >> gain;
+		stream >> state;
+	}
+}
+
+void BSAnimNote::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	stream << type;
+	stream << time;
+
+	if (type == ANT_GRABIK)
+		stream << arm;
+
+	if (type != ANT_INVALID) {
+		stream << gain;
+		stream << state;
+	}
+}
+
+
+BSAnimNotes::BSAnimNotes(NiStream& stream) : BSAnimNotes() {
+	Get(stream);
+}
+
+void BSAnimNotes::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	animNoteRefs.Get(stream);
+}
+
+void BSAnimNotes::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	animNoteRefs.Put(stream);
+}
+
+void BSAnimNotes::GetChildRefs(std::set<int*>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	animNoteRefs.GetIndexPtrs(refs);
+}
+
+
 NiControllerSequence::NiControllerSequence() : NiSequence() {
 }
 
@@ -1585,7 +1643,11 @@ void NiControllerSequence::Get(NiStream& stream) {
 	stream >> stopTime;
 	managerRef.Get(stream);
 	accumRootName.Get(stream);
-	stream >> flags;
+
+	if (stream.GetVersion().User2() <= 28)
+		animNotesRef.Get(stream);
+	else
+		animNotesRefs.Get(stream);
 }
 
 void NiControllerSequence::Put(NiStream& stream) {
@@ -1599,7 +1661,11 @@ void NiControllerSequence::Put(NiStream& stream) {
 	stream << stopTime;
 	managerRef.Put(stream);
 	accumRootName.Put(stream);
-	stream << flags;
+
+	if (stream.GetVersion().User2() <= 28)
+		animNotesRef.Put(stream);
+	else
+		animNotesRefs.Put(stream);
 }
 
 void NiControllerSequence::GetStringRefs(std::set<StringRef*>& refs) {
@@ -1612,6 +1678,8 @@ void NiControllerSequence::GetChildRefs(std::set<int*>& refs) {
 	NiSequence::GetChildRefs(refs);
 
 	refs.insert(&textKeyRef.index);
+	refs.insert(&animNotesRef.index);
+	animNotesRefs.GetIndexPtrs(refs);
 }
 
 void NiControllerSequence::GetPtrs(std::set<int*>& ptrs) {

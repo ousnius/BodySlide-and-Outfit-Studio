@@ -10,6 +10,8 @@ See the included LICENSE file
 #include "Objects.h"
 #include "VertexData.h"
 
+#include <deque>
+
 struct AdditionalDataInfo {
 	int dataType = 0;
 	uint numChannelBytesPerElement = 0;
@@ -591,7 +593,7 @@ public:
 };
 
 struct MatchGroup {
-	ushort count;
+	ushort count = 0;
 	std::vector<ushort> matches;
 };
 
@@ -652,6 +654,80 @@ public:
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
 	NiTriStripsData* Clone() { return new NiTriStripsData(*this); }
+};
+
+class NiLines : public NiTriBasedGeom {
+public:
+	NiLines() {}
+	NiLines(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiLines";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiLines* Clone() { return new NiLines(*this); }
+};
+
+class NiLinesData : public NiGeometryData {
+private:
+	std::deque<bool> lineFlags;
+
+public:
+	NiLinesData() {}
+	NiLinesData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiLinesData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
+
+	NiLinesData* Clone() { return new NiLinesData(*this); }
+};
+
+class NiScreenElements : public NiTriShape {
+public:
+	NiScreenElements() {}
+	NiScreenElements(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiScreenElements";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiScreenElements* Clone() { return new NiScreenElements(*this); }
+};
+
+struct PolygonInfo {
+	ushort numVertices = 0;
+	ushort vertexOffset = 0;
+	ushort numTriangles = 0;
+	ushort triangleOffset = 0;
+};
+
+class NiScreenElementsData : public NiTriShapeData {
+private:
+	ushort maxPolygons = 0;
+	std::vector<PolygonInfo> polygons;
+	std::vector<ushort> polygonIndices;
+
+	ushort unkShort1 = 1;
+	ushort numPolygons = 0;
+	ushort usedVertices = 0;
+	ushort unkShort2 = 1;
+	ushort usedTrianglePoints = 0;
+	ushort unkShort3 = 1;
+
+public:
+	NiScreenElementsData() {}
+	NiScreenElementsData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiScreenElementsData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
+
+	NiScreenElementsData* Clone() { return new NiScreenElementsData(*this); }
 };
 
 class BSLODTriShape : public NiTriBasedGeom {

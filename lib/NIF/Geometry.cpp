@@ -2068,6 +2068,110 @@ void NiTriStripsData::CalcTangentSpace() {
 }
 
 
+NiLines::NiLines(NiStream& stream) : NiLines() {
+	Get(stream);
+}
+
+
+NiLinesData::NiLinesData(NiStream& stream) : NiLinesData() {
+	Get(stream);
+}
+
+void NiLinesData::Get(NiStream& stream) {
+	NiGeometryData::Get(stream);
+
+	lineFlags.resize(numVertices);
+	for (int i = 0; i < numVertices; i++)
+		stream >> lineFlags[i];
+}
+
+void NiLinesData::Put(NiStream& stream) {
+	NiGeometryData::Put(stream);
+
+	for (int i = 0; i < numVertices; i++)
+		stream << lineFlags[i];
+}
+
+void NiLinesData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
+	NiGeometryData::notifyVerticesDelete(vertIndices);
+
+	std::vector<int> indexCollapse(lineFlags.size(), 0);
+
+	for (int i = 0, j = 0; i < indexCollapse.size(); i++) {
+		if (j < vertIndices.size() && vertIndices[j] == i) {	// Found one to remove
+			indexCollapse[i] = -1;	// Flag delete
+			j++;
+		}
+	}
+
+	for (int i = lineFlags.size() - 1; i >= 0; i--) {
+		if (indexCollapse[i] == -1) {
+			lineFlags.erase(lineFlags.begin() + i);
+		}
+	}
+}
+
+
+NiScreenElements::NiScreenElements(NiStream& stream) : NiScreenElements() {
+	Get(stream);
+}
+
+
+NiScreenElementsData::NiScreenElementsData(NiStream& stream) : NiScreenElementsData() {
+	Get(stream);
+}
+
+void NiScreenElementsData::Get(NiStream& stream) {
+	NiTriShapeData::Get(stream);
+
+	stream >> maxPolygons;
+	polygons.resize(maxPolygons);
+	for (int i = 0; i < maxPolygons; i++)
+		stream >> polygons[i];
+
+	polygonIndices.resize(maxPolygons);
+	for (int i = 0; i < maxPolygons; i++)
+		stream >> polygonIndices[i];
+
+	stream >> unkShort1;
+	stream >> numPolygons;
+	stream >> usedVertices;
+	stream >> unkShort2;
+	stream >> usedTrianglePoints;
+	stream >> unkShort3;
+}
+
+void NiScreenElementsData::Put(NiStream& stream) {
+	NiTriShapeData::Put(stream);
+
+	stream << maxPolygons;
+	for (int i = 0; i < maxPolygons; i++)
+		stream << polygons[i];
+
+	for (int i = 0; i < maxPolygons; i++)
+		stream << polygonIndices[i];
+
+	stream << unkShort1;
+	stream << numPolygons;
+	stream << usedVertices;
+	stream << unkShort2;
+	stream << usedTrianglePoints;
+	stream << unkShort3;
+}
+
+void NiScreenElementsData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
+	NiTriShapeData::notifyVerticesDelete(vertIndices);
+
+	// Clearing as workaround
+	maxPolygons = 0;
+	polygons.clear();
+	polygonIndices.clear();
+	numPolygons = 0;
+	usedVertices = 0;
+	usedTrianglePoints = 0;
+}
+
+
 BSLODTriShape::BSLODTriShape(NiStream& stream) : BSLODTriShape() {
 	Get(stream);
 }
