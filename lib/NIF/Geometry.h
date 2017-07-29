@@ -104,7 +104,7 @@ class AdditionalGeomData : public NiObject {
 
 class NiAdditionalGeometryData : public AdditionalGeomData {
 private:
-	uint numVertices = 0;
+	ushort numVertices = 0;
 
 	uint numBlockInfos = 0;
 	std::vector<AdditionalDataInfo> blockInfos;
