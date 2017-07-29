@@ -316,7 +316,7 @@ private:
 
 	// NiPixelData if < 20.2.0.4 or !persistentRenderData
 	// else NiPersistentSrcTextureRendererData
-	BlockRef<NiObject> dataRef;
+	BlockRef<TextureRenderData> dataRef;
 
 	PixelLayout pixelLayout = PIX_LAY_PALETTISED_4;
 	MipMapFormat mipMapFormat = MIP_FMT_DEFAULT;

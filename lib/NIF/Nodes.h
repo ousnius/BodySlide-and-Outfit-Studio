@@ -12,7 +12,7 @@ See the included LICENSE file
 class NiNode : public NiAVObject {
 private:
 	BlockRefArray<NiAVObject> childRefs;
-	BlockRefArray<NiAVObject> effectRefs;	// should be NiDynamicEffect
+	BlockRefArray<NiDynamicEffect> effectRefs;
 
 public:
 	NiNode() {}
