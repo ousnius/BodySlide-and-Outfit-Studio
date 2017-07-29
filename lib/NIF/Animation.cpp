@@ -1691,9 +1691,9 @@ void NiControllerSequence::Get(NiStream& stream) {
 	managerRef.Get(stream);
 	accumRootName.Get(stream);
 
-	if (stream.GetVersion().User2() <= 28)
+	if (stream.GetVersion().User2() >= 24 && stream.GetVersion().User2() <= 28)
 		animNotesRef.Get(stream);
-	else
+	else if (stream.GetVersion().User2() > 28)
 		animNotesRefs.Get(stream);
 }
 
@@ -1709,9 +1709,9 @@ void NiControllerSequence::Put(NiStream& stream) {
 	managerRef.Put(stream);
 	accumRootName.Put(stream);
 
-	if (stream.GetVersion().User2() <= 28)
+	if (stream.GetVersion().User2() >= 24 && stream.GetVersion().User2() <= 28)
 		animNotesRef.Put(stream);
-	else
+	else if (stream.GetVersion().User2() > 28)
 		animNotesRefs.Put(stream);
 }
 

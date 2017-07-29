@@ -989,9 +989,12 @@ void BSShaderPPLightingProperty::Get(NiStream& stream) {
 
 	textureSetRef.Get(stream);
 
-	if (stream.GetVersion().User() == 11) {
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 14) {
 		stream >> refractionStrength;
 		stream >> refractionFirePeriod;
+	}
+
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 24) {
 		stream >> parallaxMaxPasses;
 		stream >> parallaxScale;
 	}
@@ -1005,9 +1008,12 @@ void BSShaderPPLightingProperty::Put(NiStream& stream) {
 
 	textureSetRef.Put(stream);
 
-	if (stream.GetVersion().User() == 11) {
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 14) {
 		stream << refractionStrength;
 		stream << refractionFirePeriod;
+	}
+
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 24) {
 		stream << parallaxMaxPasses;
 		stream << parallaxScale;
 	}
