@@ -6,6 +6,26 @@ See the included LICENSE file
 
 #include "Particles.h"
 
+NiParticles::NiParticles(NiStream& stream) : NiParticles() {
+	Get(stream);
+}
+
+
+NiAutoNormalParticles::NiAutoNormalParticles(NiStream& stream) : NiAutoNormalParticles() {
+	Get(stream);
+}
+
+
+NiParticleMeshes::NiParticleMeshes(NiStream& stream) : NiParticleMeshes() {
+	Get(stream);
+}
+
+
+NiRotatingParticles::NiRotatingParticles(NiStream& stream) : NiRotatingParticles() {
+	Get(stream);
+}
+
+
 NiParticlesData::NiParticlesData() {
 	NiGeometryData::isPSys = true;
 }
@@ -79,11 +99,45 @@ void NiParticlesData::Put(NiStream& stream) {
 }
 
 
+NiAutoNormalParticlesData::NiAutoNormalParticlesData() : NiParticlesData() {
+}
+
+NiAutoNormalParticlesData::NiAutoNormalParticlesData(NiStream& stream) : NiAutoNormalParticlesData() {
+	Get(stream);
+}
+
+
 NiRotatingParticlesData::NiRotatingParticlesData() : NiParticlesData() {
 }
 
 NiRotatingParticlesData::NiRotatingParticlesData(NiStream& stream) : NiRotatingParticlesData() {
 	Get(stream);
+}
+
+
+NiParticleMeshesData::NiParticleMeshesData() : NiRotatingParticlesData() {
+}
+
+NiParticleMeshesData::NiParticleMeshesData(NiStream& stream) : NiParticleMeshesData() {
+	Get(stream);
+}
+
+void NiParticleMeshesData::Get(NiStream& stream) {
+	NiRotatingParticlesData::Get(stream);
+
+	dataRef.Get(stream);
+}
+
+void NiParticleMeshesData::Put(NiStream& stream) {
+	NiRotatingParticlesData::Put(stream);
+
+	dataRef.Put(stream);
+}
+
+void NiParticleMeshesData::GetChildRefs(std::set<int*>& refs) {
+	NiRotatingParticlesData::GetChildRefs(refs);
+
+	refs.insert(&dataRef.index);
 }
 
 

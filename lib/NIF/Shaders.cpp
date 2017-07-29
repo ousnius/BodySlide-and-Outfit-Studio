@@ -6,6 +6,297 @@ See the included LICENSE file
 
 #include "Shaders.h"
 
+NiShadeProperty::NiShadeProperty(NiStream& stream) : NiShadeProperty() {
+	Get(stream);
+}
+
+void NiShadeProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+}
+
+void NiShadeProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+}
+
+
+NiSpecularProperty::NiSpecularProperty(NiStream& stream) : NiSpecularProperty() {
+	Get(stream);
+}
+
+void NiSpecularProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+}
+
+void NiSpecularProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+}
+
+
+NiTexturingProperty::NiTexturingProperty(NiStream& stream) : NiTexturingProperty() {
+	Get(stream);
+}
+
+void NiTexturingProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+	stream >> textureCount;
+
+	stream >> hasBaseTex;
+	if (hasBaseTex)
+		baseTex.Get(stream);
+
+	stream >> hasDarkTex;
+	if (hasDarkTex)
+		darkTex.Get(stream);
+
+	stream >> hasDetailTex;
+	if (hasDetailTex)
+		detailTex.Get(stream);
+
+	stream >> hasGlossTex;
+	if (hasGlossTex)
+		glossTex.Get(stream);
+
+	stream >> hasGlowTex;
+	if (hasGlowTex)
+		glowTex.Get(stream);
+
+	stream >> hasBumpTex;
+	if (hasBumpTex) {
+		bumpTex.Get(stream);
+		stream >> lumaScale;
+		stream >> lumaOffset;
+		stream >> bumpMatrix;
+	}
+
+	stream >> hasNormalTex;
+	if (hasNormalTex)
+		normalTex.Get(stream);
+
+	stream >> hasUnkTex;
+	if (hasUnkTex) {
+		unkTex.Get(stream);
+		stream >> unkFloat1;
+	}
+
+	stream >> hasDecalTex0;
+	if (hasDecalTex0)
+		decalTex0.Get(stream);
+
+	if (textureCount > 9) {
+		stream >> hasDecalTex1;
+		if (hasDecalTex1)
+			decalTex1.Get(stream);
+	}
+
+	if (textureCount > 10) {
+		stream >> hasDecalTex2;
+		if (hasDecalTex2)
+			decalTex2.Get(stream);
+	}
+
+	if (textureCount > 11) {
+		stream >> hasDecalTex3;
+		if (hasDecalTex3)
+			decalTex3.Get(stream);
+	}
+
+	stream >> numShaderTex;
+	shaderTex.resize(numShaderTex);
+	for (int i = 0; i < numShaderTex; i++)
+		shaderTex[i].Get(stream);
+}
+
+void NiTexturingProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+	stream << textureCount;
+
+	stream << hasBaseTex;
+	if (hasBaseTex)
+		baseTex.Put(stream);
+
+	stream << hasDarkTex;
+	if (hasDarkTex)
+		darkTex.Put(stream);
+
+	stream << hasDetailTex;
+	if (hasDetailTex)
+		detailTex.Put(stream);
+
+	stream << hasGlossTex;
+	if (hasGlossTex)
+		glossTex.Put(stream);
+
+	stream << hasGlowTex;
+	if (hasGlowTex)
+		glowTex.Put(stream);
+
+	stream << hasBumpTex;
+	if (hasBumpTex) {
+		bumpTex.Put(stream);
+		stream << lumaScale;
+		stream << lumaOffset;
+		stream << bumpMatrix;
+	}
+
+	stream << hasNormalTex;
+	if (hasNormalTex)
+		normalTex.Put(stream);
+
+	stream << hasUnkTex;
+	if (hasUnkTex) {
+		unkTex.Put(stream);
+		stream << unkFloat1;
+	}
+
+	stream << hasDecalTex0;
+	if (hasDecalTex0)
+		decalTex0.Put(stream);
+
+	if (textureCount > 9) {
+		stream << hasDecalTex1;
+		if (hasDecalTex1)
+			decalTex1.Put(stream);
+	}
+
+	if (textureCount > 10) {
+		stream << hasDecalTex2;
+		if (hasDecalTex2)
+			decalTex2.Put(stream);
+	}
+
+	if (textureCount > 11) {
+		stream << hasDecalTex3;
+		if (hasDecalTex3)
+			decalTex3.Put(stream);
+	}
+
+	stream << numShaderTex;
+	for (int i = 0; i < numShaderTex; i++)
+		shaderTex[i].Put(stream);
+}
+
+void NiTexturingProperty::GetChildRefs(std::set<int*>& refs) {
+	NiProperty::GetChildRefs(refs);
+
+	baseTex.GetChildRefs(refs);
+	darkTex.GetChildRefs(refs);
+	detailTex.GetChildRefs(refs);
+	glossTex.GetChildRefs(refs);
+	glowTex.GetChildRefs(refs);
+	bumpTex.GetChildRefs(refs);
+	normalTex.GetChildRefs(refs);
+	unkTex.GetChildRefs(refs);
+	decalTex0.GetChildRefs(refs);
+	decalTex1.GetChildRefs(refs);
+	decalTex2.GetChildRefs(refs);
+	decalTex3.GetChildRefs(refs);
+
+	for (auto &t : shaderTex)
+		t.GetChildRefs(refs);
+}
+
+
+NiVertexColorProperty::NiVertexColorProperty(NiStream& stream) : NiVertexColorProperty() {
+	Get(stream);
+}
+
+void NiVertexColorProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+}
+
+void NiVertexColorProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+}
+
+
+NiDitherProperty::NiDitherProperty(NiStream& stream) : NiDitherProperty() {
+	Get(stream);
+}
+
+void NiDitherProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+}
+
+void NiDitherProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+}
+
+
+NiFogProperty::NiFogProperty(NiStream& stream) : NiFogProperty() {
+	Get(stream);
+}
+
+void NiFogProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+	stream >> fogDepth;
+	stream >> fogColor;
+}
+
+void NiFogProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+	stream << fogDepth;
+	stream << fogColor;
+}
+
+
+NiWireframeProperty::NiWireframeProperty(NiStream& stream) : NiWireframeProperty() {
+	Get(stream);
+}
+
+void NiWireframeProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+}
+
+void NiWireframeProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+}
+
+
+NiZBufferProperty::NiZBufferProperty(NiStream& stream) : NiZBufferProperty() {
+	Get(stream);
+}
+
+void NiZBufferProperty::Get(NiStream& stream) {
+	NiProperty::Get(stream);
+
+	stream >> flags;
+}
+
+void NiZBufferProperty::Put(NiStream& stream) {
+	NiProperty::Put(stream);
+
+	stream << flags;
+}
+
+
 void BSShaderProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -64,6 +355,84 @@ Vector2 BSShaderProperty::GetUVOffset() {
 
 Vector2 BSShaderProperty::GetUVScale() {
 	return uvScale;
+}
+
+
+WaterShaderProperty::WaterShaderProperty(NiStream& stream) : WaterShaderProperty() {
+	Get(stream);
+}
+
+
+HairShaderProperty::HairShaderProperty(NiStream& stream) : HairShaderProperty() {
+	Get(stream);
+}
+
+
+DistantLODShaderProperty::DistantLODShaderProperty(NiStream& stream) : DistantLODShaderProperty() {
+	Get(stream);
+}
+
+
+BSDistantTreeShaderProperty::BSDistantTreeShaderProperty(NiStream& stream) : BSDistantTreeShaderProperty() {
+	Get(stream);
+}
+
+
+TallGrassShaderProperty::TallGrassShaderProperty(NiStream& stream) : TallGrassShaderProperty() {
+	Get(stream);
+}
+
+void TallGrassShaderProperty::Get(NiStream& stream) {
+	BSShaderProperty::Get(stream);
+
+	fileName.Get(stream, 4);
+}
+
+void TallGrassShaderProperty::Put(NiStream& stream) {
+	BSShaderProperty::Put(stream);
+
+	fileName.Put(stream, 4, false);
+}
+
+
+VolumetricFogShaderProperty::VolumetricFogShaderProperty(NiStream& stream) : VolumetricFogShaderProperty() {
+	Get(stream);
+}
+
+
+SkyShaderProperty::SkyShaderProperty(NiStream& stream) : SkyShaderProperty() {
+	Get(stream);
+}
+
+void SkyShaderProperty::Get(NiStream& stream) {
+	BSShaderLightingProperty::Get(stream);
+
+	fileName.Get(stream, 4);
+	stream >> skyObjectType;
+}
+
+void SkyShaderProperty::Put(NiStream& stream) {
+	BSShaderLightingProperty::Put(stream);
+
+	fileName.Put(stream, 4, false);
+	stream << skyObjectType;
+}
+
+
+TileShaderProperty::TileShaderProperty(NiStream& stream) : TileShaderProperty() {
+	Get(stream);
+}
+
+void TileShaderProperty::Get(NiStream& stream) {
+	BSShaderLightingProperty::Get(stream);
+
+	fileName.Get(stream, 4);
+}
+
+void TileShaderProperty::Put(NiStream& stream) {
+	BSShaderLightingProperty::Put(stream);
+
+	fileName.Put(stream, 4, false);
 }
 
 
@@ -674,6 +1043,11 @@ int BSShaderPPLightingProperty::GetTextureSetRef() {
 
 void BSShaderPPLightingProperty::SetTextureSetRef(const int texSetRef) {
 	textureSetRef.index = texSetRef;
+}
+
+
+Lighting30ShaderProperty::Lighting30ShaderProperty(NiStream& stream) : Lighting30ShaderProperty() {
+	Get(stream);
 }
 
 

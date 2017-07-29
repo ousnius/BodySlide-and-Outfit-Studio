@@ -920,6 +920,24 @@ public:
 	NiFloatExtraDataController* Clone() { return new NiFloatExtraDataController(*this); }
 };
 
+class NiVisData : public NiObject {
+private:
+	uint numKeys = 0;
+	std::vector<Key<byte>> keys;
+
+public:
+	NiVisData() {}
+	NiVisData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiVisData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiVisData* Clone() { return new NiVisData(*this); }
+};
+
 class NiBoolInterpController : public NiSingleInterpController {
 };
 
@@ -973,7 +991,7 @@ public:
 	NiFlipController* Clone() { return new NiFlipController(*this); }
 };
 
-enum TexTransform : uint {
+enum TexTransformType : uint {
 	TT_TRANSLATE_U,
 	TT_TRANSLATE_V,
 	TT_ROTATE,
@@ -985,7 +1003,7 @@ class NiTextureTransformController : public NiFloatInterpController {
 private:
 	byte unkByte1 = 0;
 	TexType textureSlot = BASE_MAP;
-	TexTransform operation = TT_TRANSLATE_U;
+	TexTransformType operation = TT_TRANSLATE_U;
 
 public:
 	NiTextureTransformController() {}
@@ -1458,6 +1476,24 @@ public:
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<int*>& ptrs);
 	BSPSysMultiTargetEmitterCtlr* Clone() { return new BSPSysMultiTargetEmitterCtlr(*this); }
+};
+
+class NiStringPalette : public NiObject {
+private:
+	NiString palette;
+	uint length = 0;
+
+public:
+	NiStringPalette() {}
+	NiStringPalette(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiStringPalette";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiStringPalette* Clone() { return new NiStringPalette(*this); }
 };
 
 struct ControllerLink {

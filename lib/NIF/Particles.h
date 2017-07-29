@@ -10,6 +10,50 @@ See the included LICENSE file
 #include "Geometry.h"
 #include "Nodes.h"
 
+class NiParticles : public NiGeometry {
+public:
+	NiParticles() {}
+	NiParticles(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiParticles";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiParticles* Clone() { return new NiParticles(*this); }
+};
+
+class NiAutoNormalParticles : public NiParticles {
+public:
+	NiAutoNormalParticles() {}
+	NiAutoNormalParticles(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiAutoNormalParticles";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiAutoNormalParticles* Clone() { return new NiAutoNormalParticles(*this); }
+};
+
+class NiParticleMeshes : public NiParticles {
+public:
+	NiParticleMeshes() {}
+	NiParticleMeshes(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiParticleMeshes";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiParticleMeshes* Clone() { return new NiParticleMeshes(*this); }
+};
+
+class NiRotatingParticles : public NiParticles {
+public:
+	NiRotatingParticles() {}
+	NiRotatingParticles(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiRotatingParticles";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiRotatingParticles* Clone() { return new NiRotatingParticles(*this); }
+};
+
 class NiParticlesData : public NiGeometryData {
 private:
 	bool hasRadii = false;
@@ -41,6 +85,17 @@ public:
 	NiParticlesData* Clone() { return new NiParticlesData(*this); }
 };
 
+class NiAutoNormalParticlesData : public NiParticlesData {
+public:
+	NiAutoNormalParticlesData();
+	NiAutoNormalParticlesData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiAutoNormalParticlesData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiAutoNormalParticlesData* Clone() { return new NiAutoNormalParticlesData(*this); }
+};
+
 class NiRotatingParticlesData : public NiParticlesData {
 public:
 	NiRotatingParticlesData();
@@ -50,6 +105,24 @@ public:
 	virtual const char* GetBlockName() { return BlockName; }
 
 	NiRotatingParticlesData* Clone() { return new NiRotatingParticlesData(*this); }
+};
+
+class NiParticleMeshesData : public NiRotatingParticlesData {
+private:
+	BlockRef<NiAVObject> dataRef;
+
+public:
+	NiParticleMeshesData();
+	NiParticleMeshesData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiParticleMeshesData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+
+	NiParticleMeshesData* Clone() { return new NiParticleMeshesData(*this); }
 };
 
 class NiPSysData : public NiRotatingParticlesData {

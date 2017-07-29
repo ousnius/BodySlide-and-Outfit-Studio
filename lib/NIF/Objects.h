@@ -161,6 +161,128 @@ public:
 	NiSequenceStreamHelper* Clone() { return new NiSequenceStreamHelper(*this); }
 };
 
+class NiPalette : public NiObject {
+private:
+	bool hasAlpha = false;
+	uint numEntries = 256;
+	std::vector<ByteColor4> palette = std::vector<ByteColor4>(256);
+
+public:
+	NiPalette() {}
+	NiPalette(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPalette";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiPalette* Clone() { return new NiPalette(*this); }
+};
+
+enum PixelFormat : uint {
+	PX_FMT_RGB8,
+	PX_FMT_RGBA8,
+	PX_FMT_PAL8,
+	PX_FMT_DXT1 = 4,
+	PX_FMT_DXT5 = 5,
+	PX_FMT_DXT5_ALT = 6,
+};
+
+enum ChannelType : uint {
+	CHNL_RED,
+	CHNL_GREEN,
+	CHNL_BLUE,
+	CHNL_ALPHA,
+	CHNL_COMPRESSED,
+	CHNL_INDEX = 16,
+	CHNL_EMPTY = 19,
+};
+
+enum ChannelConvention : uint {
+	CC_FIXED,
+	CC_INDEX = 3,
+	CC_COMPRESSED = 4,
+	CC_EMPTY = 5
+};
+
+struct ChannelData {
+	ChannelType type = CHNL_EMPTY;
+	ChannelConvention convention = CC_EMPTY;
+	byte bitsPerChannel = 0;
+	byte unkByte1 = 0;
+};
+
+struct MipMapInfo {
+	uint width = 0;
+	uint height = 0;
+	uint offset = 0;
+};
+
+class TextureRenderData : public NiObject {
+private:
+	PixelFormat pixelFormat = PX_FMT_RGB8;
+	byte bitsPerPixel = 0;
+	int unkInt1 = 0xFFFFFFFF;
+	uint unkInt2 = 0;
+	byte flags = 0;
+	uint unkInt3 = 0;
+
+	std::vector<ChannelData> channels = std::vector<ChannelData>(4);
+
+	BlockRef<NiPalette> paletteRef;
+	uint numMipmaps = 0;
+	uint bytesPerPixel = 0;
+	std::vector<MipMapInfo> mipmaps;
+
+public:
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+};
+
+class NiPersistentSrcTextureRendererData : public TextureRenderData {
+private:
+	uint numPixels = 0;
+	uint unkInt4 = 0;
+	uint numFaces = 0;
+	uint unkInt5 = 0;
+	
+	std::vector<std::vector<byte>> pixelData;
+
+public:
+	NiPersistentSrcTextureRendererData() {}
+	NiPersistentSrcTextureRendererData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPersistentSrcTextureRendererData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiPersistentSrcTextureRendererData* Clone() { return new NiPersistentSrcTextureRendererData(*this); }
+};
+
+class NiPixelData : public TextureRenderData {
+private:
+	uint numPixels = 0;
+	uint numFaces = 0;
+
+	std::vector<std::vector<byte>> pixelData;
+
+public:
+	NiPixelData() {}
+	NiPixelData(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiPixelData";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiPixelData* Clone() { return new NiPixelData(*this); }
+};
+
 enum PixelLayout : uint {
 	PIX_LAY_PALETTISED,
 	PIX_LAY_HIGH_COLOR_16,

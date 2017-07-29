@@ -356,6 +356,33 @@ struct Color4 {
 	}
 };
 
+struct ByteColor3 {
+	byte r = 0;
+	byte g = 0;
+	byte b = 0;
+
+	bool operator == (const ByteColor3& other) {
+		return (r == other.r && g == other.g && b == other.b);
+	}
+	bool operator != (const ByteColor3& other) {
+		return !(*this == other);
+	}
+};
+
+struct ByteColor4 {
+	byte r = 0;
+	byte g = 0;
+	byte b = 0;
+	byte a = 0;
+
+	bool operator == (const ByteColor4& other) {
+		return (r == other.r && g == other.g && b == other.b && a == other.a);
+	}
+	bool operator != (const ByteColor4& other) {
+		return !(*this == other);
+	}
+};
+
 class Matrix3 {
 	float m[9];
 

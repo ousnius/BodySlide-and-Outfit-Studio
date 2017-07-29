@@ -46,6 +46,254 @@ enum BSLightingShaderPropertyShaderType : uint {
 class NiProperty : public NiObjectNET {
 };
 
+class NiShadeProperty : public NiProperty {
+private:
+	ushort flags = 0;
+
+public:
+	NiShadeProperty() {}
+	NiShadeProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiShadeProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiShadeProperty* Clone() { return new NiShadeProperty(*this); }
+};
+
+class NiSpecularProperty : public NiProperty {
+private:
+	ushort flags = 0;
+
+public:
+	NiSpecularProperty() {}
+	NiSpecularProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiSpecularProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiSpecularProperty* Clone() { return new NiSpecularProperty(*this); }
+};
+
+struct TexTransform {
+	Vector2 translation;
+	Vector2 tiling;
+	float wRotation = 0.0f;
+	uint transformType = 0;
+	Vector2 offset;
+};
+
+struct TexDesc {
+	BlockRef<NiSourceTexture> sourceRef;
+	ushort flags = 0;
+	bool hasTexTransform = false;
+	TexTransform transform;
+
+	void Get(NiStream& stream) {
+		sourceRef.Get(stream);
+		stream >> flags;
+		stream >> hasTexTransform;
+
+		if (hasTexTransform)
+			stream >> transform;
+	}
+
+	void Put(NiStream& stream) {
+		sourceRef.Put(stream);
+		stream << flags;
+		stream << hasTexTransform;
+
+		if (hasTexTransform)
+			stream << transform;
+	}
+
+	void GetChildRefs(std::set<int*>& refs) {
+		refs.insert(&sourceRef.index);
+	}
+};
+
+struct ShaderTexDesc {
+	bool isUsed = false;
+	TexDesc data;
+	uint mapIndex = 0;
+
+	void Get(NiStream& stream) {
+		stream >> isUsed;
+
+		if (isUsed) {
+			data.Get(stream);
+			stream >> mapIndex;
+		}
+	}
+
+	void Put(NiStream& stream) {
+		stream << isUsed;
+
+		if (isUsed) {
+			data.Put(stream);
+			stream << mapIndex;
+		}
+	}
+
+	void GetChildRefs(std::set<int*>& refs) {
+		data.GetChildRefs(refs);
+	}
+};
+
+class NiTexturingProperty : public NiProperty {
+private:
+	ushort flags = 0;
+	uint textureCount = 0;
+
+	bool hasBaseTex = false;
+	TexDesc baseTex;
+
+	bool hasDarkTex = false;
+	TexDesc darkTex;
+
+	bool hasDetailTex = false;
+	TexDesc detailTex;
+
+	bool hasGlossTex = false;
+	TexDesc glossTex;
+
+	bool hasGlowTex = false;
+	TexDesc glowTex;
+
+	bool hasBumpTex = false;
+	TexDesc bumpTex;
+	float lumaScale = 1.0f;
+	float lumaOffset = 0.0f;
+	Vector4 bumpMatrix;
+
+	bool hasNormalTex = false;
+	TexDesc normalTex;
+
+	bool hasUnkTex = false;
+	TexDesc unkTex;
+	float unkFloat1 = 0.0f;
+
+	bool hasDecalTex0 = false;
+	TexDesc decalTex0;
+
+	bool hasDecalTex1 = false;
+	TexDesc decalTex1;
+
+	bool hasDecalTex2 = false;
+	TexDesc decalTex2;
+
+	bool hasDecalTex3 = false;
+	TexDesc decalTex3;
+
+	uint numShaderTex = 0;
+	std::vector<ShaderTexDesc> shaderTex;
+
+public:
+	NiTexturingProperty() {}
+	NiTexturingProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiTexturingProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+	void GetChildRefs(std::set<int*>& refs);
+
+	NiTexturingProperty* Clone() { return new NiTexturingProperty(*this); }
+};
+
+class NiVertexColorProperty : public NiProperty {
+private:
+	ushort flags = 0;
+
+public:
+	NiVertexColorProperty() {}
+	NiVertexColorProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiVertexColorProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiVertexColorProperty* Clone() { return new NiVertexColorProperty(*this); }
+};
+
+class NiDitherProperty : public NiProperty {
+private:
+	ushort flags = 0;
+
+public:
+	NiDitherProperty() {}
+	NiDitherProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiDitherProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiDitherProperty* Clone() { return new NiDitherProperty(*this); }
+};
+
+class NiFogProperty : public NiProperty {
+private:
+	ushort flags = 0;
+	float fogDepth = 1.0f;
+	Color3 fogColor;
+
+public:
+	NiFogProperty() {}
+	NiFogProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiFogProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiFogProperty* Clone() { return new NiFogProperty(*this); }
+};
+
+class NiWireframeProperty : public NiProperty {
+private:
+	ushort flags = 0;
+
+public:
+	NiWireframeProperty() {}
+	NiWireframeProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiWireframeProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiWireframeProperty* Clone() { return new NiWireframeProperty(*this); }
+};
+
+class NiZBufferProperty : public NiProperty {
+private:
+	ushort flags = 3;
+
+public:
+	NiZBufferProperty() {}
+	NiZBufferProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "NiZBufferProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	NiZBufferProperty* Clone() { return new NiZBufferProperty(*this); }
+};
+
 class NiShader : public NiProperty {
 public:
 	virtual bool IsSkinTint() { return false; }
@@ -97,6 +345,78 @@ public:
 	float GetEnvironmentMapScale();
 	Vector2 GetUVOffset();
 	Vector2 GetUVScale();
+};
+
+class WaterShaderProperty : public BSShaderProperty {
+public:
+	WaterShaderProperty() {}
+	WaterShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "WaterShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	WaterShaderProperty* Clone() { return new WaterShaderProperty(*this); }
+};
+
+class HairShaderProperty : public BSShaderProperty {
+public:
+	HairShaderProperty() {}
+	HairShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "HairShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	HairShaderProperty* Clone() { return new HairShaderProperty(*this); }
+};
+
+class DistantLODShaderProperty : public BSShaderProperty {
+public:
+	DistantLODShaderProperty() {}
+	DistantLODShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "DistantLODShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	DistantLODShaderProperty* Clone() { return new DistantLODShaderProperty(*this); }
+};
+
+class BSDistantTreeShaderProperty : public BSShaderProperty {
+public:
+	BSDistantTreeShaderProperty() {}
+	BSDistantTreeShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "BSDistantTreeShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	BSDistantTreeShaderProperty* Clone() { return new BSDistantTreeShaderProperty(*this); }
+};
+
+class TallGrassShaderProperty : public BSShaderProperty {
+private:
+	NiString fileName;
+
+public:
+	TallGrassShaderProperty() {}
+	TallGrassShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "TallGrassShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	TallGrassShaderProperty* Clone() { return new TallGrassShaderProperty(*this); }
+};
+
+class VolumetricFogShaderProperty : public BSShaderProperty {
+public:
+	VolumetricFogShaderProperty() {}
+	VolumetricFogShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "VolumetricFogShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	VolumetricFogShaderProperty* Clone() { return new VolumetricFogShaderProperty(*this); }
 };
 
 class BSShaderTextureSet : public NiObject {
@@ -298,6 +618,50 @@ public:
 	void Put(NiStream& stream);
 };
 
+enum SkyObjectType : uint {
+	BSSM_SKY_TEXTURE,
+	BSSM_SKY_SUNGLARE,
+	BSSM_SKY,
+	BSSM_SKY_CLOUDS,
+	BSSM_SKY_STARS = 5,
+	BSSM_SKY_MOON_STARS_MASK = 7
+};
+
+class SkyShaderProperty : public BSShaderLightingProperty {
+private:
+	NiString fileName;
+	SkyObjectType skyObjectType = BSSM_SKY_TEXTURE;
+
+public:
+	SkyShaderProperty() {}
+	SkyShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "SkyShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	SkyShaderProperty* Clone() { return new SkyShaderProperty(*this); }
+};
+
+class TileShaderProperty : public BSShaderLightingProperty {
+private:
+	NiString fileName;
+
+public:
+	TileShaderProperty() {}
+	TileShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "TileShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	void Get(NiStream& stream);
+	void Put(NiStream& stream);
+
+	TileShaderProperty* Clone() { return new TileShaderProperty(*this); }
+};
+
 class BSShaderNoLightingProperty : public BSShaderLightingProperty {
 public:
 	NiString baseTexture;
@@ -348,6 +712,17 @@ public:
 	void SetSkinned(const bool enable);
 	int GetTextureSetRef();
 	void SetTextureSetRef(const int texSetRef);
+};
+
+class Lighting30ShaderProperty : public BSShaderPPLightingProperty {
+public:
+	Lighting30ShaderProperty() {}
+	Lighting30ShaderProperty(NiStream& stream);
+
+	static constexpr const char* BlockName = "Lighting30ShaderProperty";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	Lighting30ShaderProperty* Clone() { return new Lighting30ShaderProperty(*this); }
 };
 
 class NiAlphaProperty : public NiProperty {

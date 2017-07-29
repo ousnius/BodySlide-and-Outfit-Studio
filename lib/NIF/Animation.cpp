@@ -678,6 +678,32 @@ void NiFloatExtraDataController::GetStringRefs(std::set<StringRef*>& refs) {
 }
 
 
+NiVisData::NiVisData(NiStream& stream) : NiVisData() {
+	Get(stream);
+}
+
+void NiVisData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> numKeys;
+	keys.resize(numKeys);
+	for (int i = 0; i < numKeys; i++) {
+		stream >> keys[i].time;
+		stream >> keys[i].value;
+	}
+}
+
+void NiVisData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	stream << numKeys;
+	for (int i = 0; i < numKeys; i++) {
+		stream << keys[i].time;
+		stream << keys[i].value;
+	}
+}
+
+
 NiVisController::NiVisController(NiStream& stream) : NiVisController() {
 	Get(stream);
 }
@@ -1494,6 +1520,27 @@ void BSTreadTransfInterpolator::GetChildRefs(std::set<int*>& refs) {
 	NiInterpolator::GetChildRefs(refs);
 
 	refs.insert(&dataRef.index);
+}
+
+
+NiStringPalette::NiStringPalette(NiStream& stream) : NiStringPalette() {
+	Get(stream);
+}
+
+void NiStringPalette::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	palette.Get(stream, 4);
+	stream >> length;
+}
+
+void NiStringPalette::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	length = palette.GetLength();
+
+	palette.Put(stream, 4, false);
+	stream << length;
 }
 
 

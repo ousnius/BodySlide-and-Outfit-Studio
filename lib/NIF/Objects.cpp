@@ -230,6 +230,162 @@ NiSequenceStreamHelper::NiSequenceStreamHelper(NiStream& stream) : NiSequenceStr
 }
 
 
+NiPalette::NiPalette(NiStream& stream) : NiPalette() {
+	Get(stream);
+}
+
+void NiPalette::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> hasAlpha;
+	stream >> numEntries;
+	palette.resize(numEntries);
+	for (int i = 0; i < numEntries; i++)
+		stream >> palette[i];
+}
+
+void NiPalette::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	// Size can only be 16 or 256
+	if (numEntries != 16 || numEntries != 256) {
+		if (numEntries >= 128)
+			numEntries = 256;
+		else
+			numEntries = 16;
+
+		palette.resize(numEntries);
+	}
+
+	stream << hasAlpha;
+	stream << numEntries;
+	for (int i = 0; i < numEntries; i++)
+		stream << palette[i];
+}
+
+
+void TextureRenderData::Get(NiStream& stream) {
+	NiObject::Get(stream);
+
+	stream >> pixelFormat;
+	stream >> bitsPerPixel;
+	stream >> unkInt1;
+	stream >> unkInt2;
+	stream >> flags;
+	stream >> unkInt3;
+
+	for (int i = 0; i < 4; i++) {
+		stream >> channels[i].type;
+		stream >> channels[i].convention;
+		stream >> channels[i].bitsPerChannel;
+		stream >> channels[i].unkByte1;
+	}
+
+	paletteRef.Get(stream);
+
+	stream >> numMipmaps;
+	stream >> bytesPerPixel;
+	mipmaps.resize(numMipmaps);
+	for (int i = 0; i < numMipmaps; i++)
+		stream >> mipmaps[i];
+}
+
+void TextureRenderData::Put(NiStream& stream) {
+	NiObject::Put(stream);
+
+	stream << pixelFormat;
+	stream << bitsPerPixel;
+	stream << unkInt1;
+	stream << unkInt2;
+	stream << flags;
+	stream << unkInt3;
+
+	for (int i = 0; i < 4; i++) {
+		stream << channels[i].type;
+		stream << channels[i].convention;
+		stream << channels[i].bitsPerChannel;
+		stream << channels[i].unkByte1;
+	}
+
+	paletteRef.Put(stream);
+
+	stream << numMipmaps;
+	stream << bytesPerPixel;
+	for (int i = 0; i < numMipmaps; i++)
+		stream << mipmaps[i];
+}
+
+void TextureRenderData::GetChildRefs(std::set<int*>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	refs.insert(&paletteRef.index);
+}
+
+
+NiPersistentSrcTextureRendererData::NiPersistentSrcTextureRendererData(NiStream& stream) : NiPersistentSrcTextureRendererData() {
+	Get(stream);
+}
+
+void NiPersistentSrcTextureRendererData::Get(NiStream& stream) {
+	TextureRenderData::Get(stream);
+
+	stream >> numPixels;
+	stream >> unkInt4;
+	stream >> numFaces;
+	stream >> unkInt5;
+
+	pixelData.resize(numFaces);
+	for (int f = 0; f < numFaces; f++) {
+		pixelData[f].resize(numPixels);
+		for (int p = 0; p < numPixels; p++)
+			stream >> pixelData[f][p];
+	}
+}
+
+void NiPersistentSrcTextureRendererData::Put(NiStream& stream) {
+	TextureRenderData::Put(stream);
+
+	stream >> numPixels;
+	stream >> unkInt4;
+	stream >> numFaces;
+	stream >> unkInt5;
+
+	for (int f = 0; f < numFaces; f++)
+		for (int p = 0; p < numPixels; p++)
+			stream >> pixelData[f][p];
+}
+
+
+NiPixelData::NiPixelData(NiStream& stream) : NiPixelData() {
+	Get(stream);
+}
+
+void NiPixelData::Get(NiStream& stream) {
+	TextureRenderData::Get(stream);
+
+	stream >> numPixels;
+	stream >> numFaces;
+
+	pixelData.resize(numFaces);
+	for (int f = 0; f < numFaces; f++) {
+		pixelData[f].resize(numPixels);
+		for (int p = 0; p < numPixels; p++)
+			stream >> pixelData[f][p];
+	}
+}
+
+void NiPixelData::Put(NiStream& stream) {
+	TextureRenderData::Put(stream);
+
+	stream >> numPixels;
+	stream >> numFaces;
+
+	for (int f = 0; f < numFaces; f++)
+		for (int p = 0; p < numPixels; p++)
+			stream >> pixelData[f][p];
+}
+
+
 NiSourceTexture::NiSourceTexture(NiStream& stream) : NiSourceTexture() {
 	Get(stream);
 }
