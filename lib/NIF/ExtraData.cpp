@@ -36,10 +36,6 @@ void NiExtraData::SetName(const std::string& extraDataName) {
 }
 
 
-NiBinaryExtraData::NiBinaryExtraData(NiStream& stream) : NiBinaryExtraData() {
-	Get(stream);
-}
-
 void NiBinaryExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -57,10 +53,6 @@ void NiBinaryExtraData::Put(NiStream& stream) {
 		stream << data[i];
 }
 
-
-NiFloatExtraData::NiFloatExtraData(NiStream& stream) : NiFloatExtraData() {
-	Get(stream);
-}
 
 void NiFloatExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -82,10 +74,6 @@ void NiFloatExtraData::SetFloatData(const float fltData) {
 	floatData = fltData;
 }
 
-
-NiFloatsExtraData::NiFloatsExtraData(NiStream& stream) : NiFloatsExtraData() {
-	Get(stream);
-}
 
 void NiFloatsExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -114,10 +102,6 @@ void NiFloatsExtraData::SetFloatsData(const std::vector<float>& fltsData) {
 }
 
 
-NiStringsExtraData::NiStringsExtraData(NiStream& stream) : NiStringsExtraData() {
-	Get(stream);
-}
-
 void NiStringsExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -135,10 +119,6 @@ void NiStringsExtraData::Put(NiStream& stream) {
 		stringsData[i].Put(stream, 4, false);
 }
 
-
-NiStringExtraData::NiStringExtraData(NiStream& stream) : NiStringExtraData() {
-	Get(stream);
-}
 
 void NiStringExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -167,10 +147,6 @@ void NiStringExtraData::SetStringData(const std::string& str) {
 }
 
 
-NiBooleanExtraData::NiBooleanExtraData(NiStream& stream) : NiBooleanExtraData() {
-	Get(stream);
-}
-
 void NiBooleanExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -192,10 +168,6 @@ void NiBooleanExtraData::SetBooleanData(const bool boolData) {
 }
 
 
-NiIntegerExtraData::NiIntegerExtraData(NiStream& stream) : NiIntegerExtraData() {
-	Get(stream);
-}
-
 void NiIntegerExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -216,10 +188,6 @@ void NiIntegerExtraData::SetIntegerData(const uint intData) {
 	integerData = intData;
 }
 
-
-NiIntegersExtraData::NiIntegersExtraData(NiStream& stream) : NiIntegersExtraData() {
-	Get(stream);
-}
 
 void NiIntegersExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -248,10 +216,6 @@ void NiIntegersExtraData::SetIntegersData(const std::vector<uint>& intData) {
 }
 
 
-NiVectorExtraData::NiVectorExtraData(NiStream& stream) : NiVectorExtraData() {
-	Get(stream);
-}
-
 void NiVectorExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -273,10 +237,6 @@ void NiVectorExtraData::SetVectorData(const Vector4& vecData) {
 }
 
 
-NiColorExtraData::NiColorExtraData(NiStream& stream) : NiColorExtraData() {
-	Get(stream);
-}
-
 void NiColorExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -297,18 +257,6 @@ void NiColorExtraData::SetColorData(const Color4& colData) {
 	colorData = colData;
 }
 
-
-BSXFlags::BSXFlags() : NiIntegerExtraData() {
-}
-
-BSXFlags::BSXFlags(NiStream& stream) : BSXFlags() {
-	Get(stream);
-}
-
-
-BSWArray::BSWArray(NiStream& stream) : BSWArray() {
-	Get(stream);
-}
 
 void BSWArray::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -337,10 +285,6 @@ void BSWArray::SetData(const std::vector<uint>& dat) {
 }
 
 
-BSPositionData::BSPositionData(NiStream& stream) : BSPositionData() {
-	Get(stream);
-}
-
 void BSPositionData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -367,10 +311,6 @@ void BSPositionData::SetData(const std::vector<half_float::half>& dat) {
 	data = dat;
 }
 
-
-BSEyeCenterExtraData::BSEyeCenterExtraData(NiStream& stream) : BSEyeCenterExtraData() {
-	Get(stream);
-}
 
 void BSEyeCenterExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -432,10 +372,6 @@ void BSPackedGeomData::Put(NiStream& stream) {
 }
 
 
-BSPackedCombinedSharedGeomDataExtra::BSPackedCombinedSharedGeomDataExtra(NiStream& stream) : BSPackedCombinedSharedGeomDataExtra() {
-	Get(stream);
-}
-
 void BSPackedCombinedSharedGeomDataExtra::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -474,10 +410,6 @@ void BSPackedCombinedSharedGeomDataExtra::Put(NiStream& stream) {
 }
 
 
-BSInvMarker::BSInvMarker(NiStream& stream) : BSInvMarker() {
-	Get(stream);
-}
-
 void BSInvMarker::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -496,10 +428,6 @@ void BSInvMarker::Put(NiStream& stream) {
 	stream << zoom;
 }
 
-
-BSFurnitureMarker::BSFurnitureMarker(NiStream& stream) : BSFurnitureMarker() {
-	Get(stream);
-}
 
 void BSFurnitureMarker::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -547,21 +475,6 @@ void BSFurnitureMarker::Put(NiStream& stream) {
 }
 
 
-BSFurnitureMarkerNode::BSFurnitureMarkerNode() : BSFurnitureMarker() {
-}
-
-BSFurnitureMarkerNode::BSFurnitureMarkerNode(NiStream& stream) : BSFurnitureMarkerNode() {
-	Get(stream);
-}
-
-
-BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData() : NiFloatExtraData() {
-}
-
-BSDecalPlacementVectorExtraData::BSDecalPlacementVectorExtraData(NiStream& stream) : BSDecalPlacementVectorExtraData() {
-	Get(stream);
-}
-
 void BSDecalPlacementVectorExtraData::Get(NiStream& stream) {
 	NiFloatExtraData::Get(stream);
 
@@ -598,10 +511,6 @@ void BSDecalPlacementVectorExtraData::Put(NiStream& stream) {
 }
 
 
-BSBehaviorGraphExtraData::BSBehaviorGraphExtraData(NiStream& stream) : BSBehaviorGraphExtraData() {
-	Get(stream);
-}
-
 void BSBehaviorGraphExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -623,10 +532,6 @@ void BSBehaviorGraphExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 }
 
 
-BSBound::BSBound(NiStream& stream) : BSBound() {
-	Get(stream);
-}
-
 void BSBound::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -641,10 +546,6 @@ void BSBound::Put(NiStream& stream) {
 	stream << halfExtents;
 }
 
-
-BSBoneLODExtraData::BSBoneLODExtraData(NiStream& stream) : BSBoneLODExtraData() {
-	Get(stream);
-}
 
 void BSBoneLODExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -675,10 +576,6 @@ void BSBoneLODExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 }
 
 
-NiTextKeyExtraData::NiTextKeyExtraData(NiStream& stream) : NiTextKeyExtraData() {
-	Get(stream);
-}
-
 void NiTextKeyExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -708,10 +605,6 @@ void NiTextKeyExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 }
 
 
-BSDistantObjectLargeRefExtraData::BSDistantObjectLargeRefExtraData(NiStream& stream) : BSDistantObjectLargeRefExtraData() {
-	Get(stream);
-}
-
 void BSDistantObjectLargeRefExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 	stream >> largeRef;
@@ -722,13 +615,6 @@ void BSDistantObjectLargeRefExtraData::Put(NiStream& stream) {
 	stream << largeRef;
 }
 
-
-BSConnectPoint::BSConnectPoint() {
-}
-
-BSConnectPoint::BSConnectPoint(NiStream& stream) {
-	Get(stream);
-}
 
 void BSConnectPoint::Get(NiStream& stream) {
 	root.Get(stream, 4);
@@ -749,17 +635,14 @@ void BSConnectPoint::Put(NiStream& stream) {
 }
 
 
-BSConnectPointParents::BSConnectPointParents(NiStream& stream) : BSConnectPointParents() {
-	Get(stream);
-}
-
 void BSConnectPointParents::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
 	stream >> numConnectPoints;
+	connectPoints.resize(numConnectPoints);
 
 	for (int i = 0; i < numConnectPoints; i++)
-		connectPoints.push_back(BSConnectPoint(stream));
+		connectPoints[i].Get(stream);
 }
 
 void BSConnectPointParents::Put(NiStream& stream) {
@@ -771,10 +654,6 @@ void BSConnectPointParents::Put(NiStream& stream) {
 		connectPoints[i].Put(stream);
 }
 
-
-BSConnectPointChildren::BSConnectPointChildren(NiStream& stream) : BSConnectPointChildren() {
-	Get(stream);
-}
 
 void BSConnectPointChildren::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -801,10 +680,6 @@ void BSConnectPointChildren::Put(NiStream& stream) {
 BSClothExtraData::BSClothExtraData(const uint size) {
 	numBytes = size;
 	data.resize(size);
-}
-
-BSClothExtraData::BSClothExtraData(NiStream& stream) : BSClothExtraData() {
-	Get(stream);
 }
 
 void BSClothExtraData::Get(NiStream& stream) {

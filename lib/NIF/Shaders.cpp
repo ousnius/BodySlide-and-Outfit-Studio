@@ -6,10 +6,6 @@ See the included LICENSE file
 
 #include "Shaders.h"
 
-NiShadeProperty::NiShadeProperty(NiStream& stream) : NiShadeProperty() {
-	Get(stream);
-}
-
 void NiShadeProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -23,10 +19,6 @@ void NiShadeProperty::Put(NiStream& stream) {
 }
 
 
-NiSpecularProperty::NiSpecularProperty(NiStream& stream) : NiSpecularProperty() {
-	Get(stream);
-}
-
 void NiSpecularProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -39,10 +31,6 @@ void NiSpecularProperty::Put(NiStream& stream) {
 	stream << flags;
 }
 
-
-NiTexturingProperty::NiTexturingProperty(NiStream& stream) : NiTexturingProperty() {
-	Get(stream);
-}
 
 void NiTexturingProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
@@ -208,10 +196,6 @@ void NiTexturingProperty::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiVertexColorProperty::NiVertexColorProperty(NiStream& stream) : NiVertexColorProperty() {
-	Get(stream);
-}
-
 void NiVertexColorProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -225,10 +209,6 @@ void NiVertexColorProperty::Put(NiStream& stream) {
 }
 
 
-NiDitherProperty::NiDitherProperty(NiStream& stream) : NiDitherProperty() {
-	Get(stream);
-}
-
 void NiDitherProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -241,10 +221,6 @@ void NiDitherProperty::Put(NiStream& stream) {
 	stream << flags;
 }
 
-
-NiFogProperty::NiFogProperty(NiStream& stream) : NiFogProperty() {
-	Get(stream);
-}
 
 void NiFogProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
@@ -263,10 +239,6 @@ void NiFogProperty::Put(NiStream& stream) {
 }
 
 
-NiWireframeProperty::NiWireframeProperty(NiStream& stream) : NiWireframeProperty() {
-	Get(stream);
-}
-
 void NiWireframeProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -279,10 +251,6 @@ void NiWireframeProperty::Put(NiStream& stream) {
 	stream << flags;
 }
 
-
-NiZBufferProperty::NiZBufferProperty(NiStream& stream) : NiZBufferProperty() {
-	Get(stream);
-}
 
 void NiZBufferProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
@@ -358,30 +326,6 @@ Vector2 BSShaderProperty::GetUVScale() {
 }
 
 
-WaterShaderProperty::WaterShaderProperty(NiStream& stream) : WaterShaderProperty() {
-	Get(stream);
-}
-
-
-HairShaderProperty::HairShaderProperty(NiStream& stream) : HairShaderProperty() {
-	Get(stream);
-}
-
-
-DistantLODShaderProperty::DistantLODShaderProperty(NiStream& stream) : DistantLODShaderProperty() {
-	Get(stream);
-}
-
-
-BSDistantTreeShaderProperty::BSDistantTreeShaderProperty(NiStream& stream) : BSDistantTreeShaderProperty() {
-	Get(stream);
-}
-
-
-TallGrassShaderProperty::TallGrassShaderProperty(NiStream& stream) : TallGrassShaderProperty() {
-	Get(stream);
-}
-
 void TallGrassShaderProperty::Get(NiStream& stream) {
 	BSShaderProperty::Get(stream);
 
@@ -394,15 +338,6 @@ void TallGrassShaderProperty::Put(NiStream& stream) {
 	fileName.Put(stream, 4, false);
 }
 
-
-VolumetricFogShaderProperty::VolumetricFogShaderProperty(NiStream& stream) : VolumetricFogShaderProperty() {
-	Get(stream);
-}
-
-
-SkyShaderProperty::SkyShaderProperty(NiStream& stream) : SkyShaderProperty() {
-	Get(stream);
-}
 
 void SkyShaderProperty::Get(NiStream& stream) {
 	BSShaderLightingProperty::Get(stream);
@@ -419,10 +354,6 @@ void SkyShaderProperty::Put(NiStream& stream) {
 }
 
 
-TileShaderProperty::TileShaderProperty(NiStream& stream) : TileShaderProperty() {
-	Get(stream);
-}
-
 void TileShaderProperty::Get(NiStream& stream) {
 	BSShaderLightingProperty::Get(stream);
 
@@ -436,10 +367,6 @@ void TileShaderProperty::Put(NiStream& stream) {
 }
 
 
-BSShaderTextureSet::BSShaderTextureSet() {
-	textures.resize(numTextures);
-}
-
 BSShaderTextureSet::BSShaderTextureSet(NiVersion& version) {
 	if (version.User() == 12 && version.User2() >= 130)
 		numTextures = 10;
@@ -449,10 +376,6 @@ BSShaderTextureSet::BSShaderTextureSet(NiVersion& version) {
 		numTextures = 6;
 
 	textures.resize(numTextures);
-}
-
-BSShaderTextureSet::BSShaderTextureSet(NiStream& stream) : BSShaderTextureSet() {
-	Get(stream);
 }
 
 void BSShaderTextureSet::Get(NiStream& stream) {
@@ -495,10 +418,6 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiVersion& version) : BSLight
 		glossiness = 1.0f;
 	else
 		glossiness = 20.0f;
-}
-
-BSLightingShaderProperty::BSLightingShaderProperty(NiStream& stream) : BSLightingShaderProperty(stream.GetVersion()) {
-	Get(stream);
 }
 
 void BSLightingShaderProperty::Get(NiStream& stream) {
@@ -765,10 +684,6 @@ void BSLightingShaderProperty::SetWetMaterialName(const std::string& matName) {
 }
 
 
-BSEffectShaderProperty::BSEffectShaderProperty(NiStream& stream) : BSEffectShaderProperty() {
-	Get(stream);
-}
-
 void BSEffectShaderProperty::Get(NiStream& stream) {
 	BSShaderProperty::Get(stream);
 
@@ -867,10 +782,6 @@ void BSEffectShaderProperty::SetEmissiveMultiple(const float emissive) {
 }
 
 
-BSWaterShaderProperty::BSWaterShaderProperty(NiStream& stream) : BSWaterShaderProperty() {
-	Get(stream);
-}
-
 void BSWaterShaderProperty::Get(NiStream& stream) {
 	BSShaderProperty::Get(stream);
 
@@ -914,10 +825,6 @@ bool BSWaterShaderProperty::HasBacklight() {
 	return (shaderFlags2 & (1 << 27)) != 0;
 }
 
-
-BSSkyShaderProperty::BSSkyShaderProperty(NiStream& stream) : BSSkyShaderProperty() {
-	Get(stream);
-}
 
 void BSSkyShaderProperty::Get(NiStream& stream) {
 	BSShaderProperty::Get(stream);
@@ -979,10 +886,6 @@ void BSShaderLightingProperty::Put(NiStream& stream) {
 		stream << textureClampMode;
 }
 
-
-BSShaderPPLightingProperty::BSShaderPPLightingProperty(NiStream& stream) : BSShaderPPLightingProperty() {
-	Get(stream);
-}
 
 void BSShaderPPLightingProperty::Get(NiStream& stream) {
 	BSShaderLightingProperty::Get(stream);
@@ -1052,15 +955,6 @@ void BSShaderPPLightingProperty::SetTextureSetRef(const int texSetRef) {
 }
 
 
-Lighting30ShaderProperty::Lighting30ShaderProperty(NiStream& stream) : Lighting30ShaderProperty() {
-	Get(stream);
-}
-
-
-BSShaderNoLightingProperty::BSShaderNoLightingProperty(NiStream& stream) : BSShaderNoLightingProperty() {
-	Get(stream);
-}
-
 void BSShaderNoLightingProperty::Get(NiStream& stream) {
 	BSShaderLightingProperty::Get(stream);
 
@@ -1103,10 +997,6 @@ void BSShaderNoLightingProperty::SetSkinned(const bool enable) {
 }
 
 
-NiAlphaProperty::NiAlphaProperty(NiStream& stream) : NiAlphaProperty() {
-	Get(stream);
-}
-
 void NiAlphaProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
@@ -1121,10 +1011,6 @@ void NiAlphaProperty::Put(NiStream& stream) {
 	stream << threshold;
 }
 
-
-NiMaterialProperty::NiMaterialProperty(NiStream& stream) : NiMaterialProperty() {
-	Get(stream);
-}
 
 void NiMaterialProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
@@ -1208,10 +1094,6 @@ float NiMaterialProperty::GetAlpha() {
 	return alpha;
 }
 
-
-NiStencilProperty::NiStencilProperty(NiStream& stream) : NiStencilProperty() {
-	Get(stream);
-}
 
 void NiStencilProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);

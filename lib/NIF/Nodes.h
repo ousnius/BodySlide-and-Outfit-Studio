@@ -15,9 +15,6 @@ private:
 	BlockRefArray<NiDynamicEffect> effectRefs;
 
 public:
-	NiNode() {}
-	NiNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -40,9 +37,6 @@ public:
 
 class BSFadeNode : public NiNode {
 public:
-	BSFadeNode();
-	BSFadeNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSFadeNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -61,9 +55,6 @@ private:
 	BSValueNodeFlags valueFlags = BSVN_NONE;
 
 public:
-	BSValueNode();
-	BSValueNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSValueNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -75,9 +66,6 @@ public:
 
 class BSLeafAnimNode : public NiNode {
 public:
-	BSLeafAnimNode();
-	BSLeafAnimNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSLeafAnimNode";
 	virtual const char* GetBlockName() { return BlockName; }
 };
@@ -88,9 +76,6 @@ private:
 	BlockRefArray<NiNode> bones2;
 
 public:
-	BSTreeNode();
-	BSTreeNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSTreeNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -107,9 +92,6 @@ private:
 	bool isStaticBound = false;
 
 public:
-	BSOrderedNode();
-	BSOrderedNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSOrderedNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -129,9 +111,6 @@ private:
 	Matrix3 rotation;
 
 public:
-	BSMultiBoundOBB() {}
-	BSMultiBoundOBB(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSMultiBoundOBB";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -146,9 +125,6 @@ private:
 	Vector3 halfExtent;
 
 public:
-	BSMultiBoundAABB() {}
-	BSMultiBoundAABB(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSMultiBoundAABB";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -163,9 +139,6 @@ private:
 	float radius = 0.0f;
 
 public:
-	BSMultiBoundSphere() {}
-	BSMultiBoundSphere(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSMultiBoundSphere";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -179,9 +152,6 @@ private:
 	BlockRef<BSMultiBoundData> dataRef;
 
 public:
-	BSMultiBound() {}
-	BSMultiBound(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSMultiBound";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -205,9 +175,6 @@ private:
 	BSCPCullingType cullingMode = BSCP_CULL_NORMAL;
 
 public:
-	BSMultiBoundNode();
-	BSMultiBoundNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSMultiBoundNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -225,9 +192,6 @@ private:
 	byte current = 0;
 
 public:
-	BSRangeNode();
-	BSRangeNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSRangeNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -239,9 +203,6 @@ public:
 
 class BSDebrisNode : public BSRangeNode {
 public:
-	BSDebrisNode();
-	BSDebrisNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSDebrisNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -250,9 +211,6 @@ public:
 
 class BSBlastNode : public BSRangeNode {
 public:
-	BSBlastNode();
-	BSBlastNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSBlastNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -261,9 +219,6 @@ public:
 
 class BSDamageStage : public BSBlastNode {
 public:
-	BSDamageStage();
-	BSDamageStage(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSDamageStage";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -285,9 +240,6 @@ private:
 	BillboardMode billboardMode = ALWAYS_FACE_CAMERA;
 
 public:
-	NiBillboardNode();
-	NiBillboardNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiBillboardNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -308,9 +260,6 @@ private:
 	uint index = 0;
 
 public:
-	NiSwitchNode();
-	NiSwitchNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSwitchNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -335,9 +284,6 @@ private:
 	std::vector<LODRange> lodLevels;
 
 public:
-	NiRangeLODData();
-	NiRangeLODData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiRangeLODData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -357,9 +303,6 @@ private:
 	std::vector<float> proportionLevels;
 
 public:
-	NiScreenLODData();
-	NiScreenLODData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiScreenLODData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -374,9 +317,6 @@ private:
 	BlockRef<NiLODData> lodLevelData;
 
 public:
-	NiLODNode();
-	NiLODNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiLODNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -389,9 +329,6 @@ public:
 
 class NiBone : public NiNode {
 public:
-	NiBone();
-	NiBone(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiBone";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -408,9 +345,6 @@ private:
 	SortingMode sortingMode = SORTING_INHERIT;
 
 public:
-	NiSortAdjustNode();
-	NiSortAdjustNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSortAdjustNode";
 	virtual const char* GetBlockName() { return BlockName; }
 

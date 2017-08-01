@@ -6,32 +6,8 @@ See the included LICENSE file
 
 #include "Particles.h"
 
-NiParticles::NiParticles(NiStream& stream) : NiParticles() {
-	Get(stream);
-}
-
-
-NiAutoNormalParticles::NiAutoNormalParticles(NiStream& stream) : NiAutoNormalParticles() {
-	Get(stream);
-}
-
-
-NiParticleMeshes::NiParticleMeshes(NiStream& stream) : NiParticleMeshes() {
-	Get(stream);
-}
-
-
-NiRotatingParticles::NiRotatingParticles(NiStream& stream) : NiRotatingParticles() {
-	Get(stream);
-}
-
-
 NiParticlesData::NiParticlesData() {
 	NiGeometryData::isPSys = true;
-}
-
-NiParticlesData::NiParticlesData(NiStream& stream) : NiParticlesData() {
-	Get(stream);
 }
 
 void NiParticlesData::Get(NiStream& stream) {
@@ -99,29 +75,6 @@ void NiParticlesData::Put(NiStream& stream) {
 }
 
 
-NiAutoNormalParticlesData::NiAutoNormalParticlesData() : NiParticlesData() {
-}
-
-NiAutoNormalParticlesData::NiAutoNormalParticlesData(NiStream& stream) : NiAutoNormalParticlesData() {
-	Get(stream);
-}
-
-
-NiRotatingParticlesData::NiRotatingParticlesData() : NiParticlesData() {
-}
-
-NiRotatingParticlesData::NiRotatingParticlesData(NiStream& stream) : NiRotatingParticlesData() {
-	Get(stream);
-}
-
-
-NiParticleMeshesData::NiParticleMeshesData() : NiRotatingParticlesData() {
-}
-
-NiParticleMeshesData::NiParticleMeshesData(NiStream& stream) : NiParticleMeshesData() {
-	Get(stream);
-}
-
 void NiParticleMeshesData::Get(NiStream& stream) {
 	NiRotatingParticlesData::Get(stream);
 
@@ -141,13 +94,6 @@ void NiParticleMeshesData::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiPSysData::NiPSysData() : NiRotatingParticlesData() {
-}
-
-NiPSysData::NiPSysData(NiStream& stream) : NiPSysData() {
-	Get(stream);
-}
-
 void NiPSysData::Get(NiStream& stream) {
 	NiRotatingParticlesData::Get(stream);
 
@@ -160,13 +106,6 @@ void NiPSysData::Put(NiStream& stream) {
 	stream << hasRotationSpeeds;
 }
 
-
-NiMeshPSysData::NiMeshPSysData() : NiPSysData() {
-}
-
-NiMeshPSysData::NiMeshPSysData(NiStream& stream) : NiMeshPSysData() {
-	Get(stream);
-}
 
 void NiMeshPSysData::Get(NiStream& stream) {
 	NiPSysData::Get(stream);
@@ -202,13 +141,6 @@ void NiMeshPSysData::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSStripPSysData::BSStripPSysData() : NiPSysData() {
-}
-
-BSStripPSysData::BSStripPSysData(NiStream& stream) : BSStripPSysData() {
-	Get(stream);
-}
-
 void BSStripPSysData::Get(NiStream& stream) {
 	NiPSysData::Get(stream);
 
@@ -227,10 +159,6 @@ void BSStripPSysData::Put(NiStream& stream) {
 	stream << doZPrepass;
 }
 
-
-NiPSysEmitterCtlrData::NiPSysEmitterCtlrData(NiStream& stream) : NiPSysEmitterCtlrData() {
-	Get(stream);
-}
 
 void NiPSysEmitterCtlrData::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -291,10 +219,6 @@ void NiPSysModifier::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-BSPSysStripUpdateModifier::BSPSysStripUpdateModifier(NiStream& stream) : BSPSysStripUpdateModifier() {
-	Get(stream);
-}
-
 void BSPSysStripUpdateModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -307,10 +231,6 @@ void BSPSysStripUpdateModifier::Put(NiStream& stream) {
 	stream << updateDeltaTime;
 }
 
-
-NiPSysSpawnModifier::NiPSysSpawnModifier(NiStream& stream) : NiPSysSpawnModifier() {
-	Get(stream);
-}
 
 void NiPSysSpawnModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -339,10 +259,6 @@ void NiPSysSpawnModifier::Put(NiStream& stream) {
 }
 
 
-NiPSysAgeDeathModifier::NiPSysAgeDeathModifier(NiStream& stream) : NiPSysAgeDeathModifier() {
-	Get(stream);
-}
-
 void NiPSysAgeDeathModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -364,10 +280,6 @@ void NiPSysAgeDeathModifier::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSPSysLODModifier::BSPSysLODModifier(NiStream& stream) : BSPSysLODModifier() {
-	Get(stream);
-}
-
 void BSPSysLODModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -386,10 +298,6 @@ void BSPSysLODModifier::Put(NiStream& stream) {
 	stream << unknownFadeFactor2;
 }
 
-
-BSPSysSimpleColorModifier::BSPSysSimpleColorModifier(NiStream& stream) : BSPSysSimpleColorModifier() {
-	Get(stream);
-}
 
 void BSPSysSimpleColorModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -420,10 +328,6 @@ void BSPSysSimpleColorModifier::Put(NiStream& stream) {
 }
 
 
-NiPSysRotationModifier::NiPSysRotationModifier(NiStream& stream) : NiPSysRotationModifier() {
-	Get(stream);
-}
-
 void NiPSysRotationModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -449,10 +353,6 @@ void NiPSysRotationModifier::Put(NiStream& stream) {
 }
 
 
-BSPSysScaleModifier::BSPSysScaleModifier(NiStream& stream) : BSPSysScaleModifier() {
-	Get(stream);
-}
-
 void BSPSysScaleModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -470,10 +370,6 @@ void BSPSysScaleModifier::Put(NiStream& stream) {
 		stream << floats[i];
 }
 
-
-NiPSysGravityModifier::NiPSysGravityModifier(NiStream& stream) : NiPSysGravityModifier() {
-	Get(stream);
-}
 
 void NiPSysGravityModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -508,15 +404,6 @@ void NiPSysGravityModifier::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-NiPSysPositionModifier::NiPSysPositionModifier(NiStream& stream) : NiPSysPositionModifier() {
-	Get(stream);
-}
-
-
-NiPSysBoundUpdateModifier::NiPSysBoundUpdateModifier(NiStream& stream) : NiPSysBoundUpdateModifier() {
-	Get(stream);
-}
-
 void NiPSysBoundUpdateModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -529,10 +416,6 @@ void NiPSysBoundUpdateModifier::Put(NiStream& stream) {
 	stream << updateSkip;
 }
 
-
-NiPSysDragModifier::NiPSysDragModifier(NiStream& stream) : NiPSysDragModifier() {
-	Get(stream);
-}
 
 void NiPSysDragModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -561,10 +444,6 @@ void NiPSysDragModifier::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-BSPSysInheritVelocityModifier::BSPSysInheritVelocityModifier(NiStream& stream) : BSPSysInheritVelocityModifier() {
-	Get(stream);
-}
-
 void BSPSysInheritVelocityModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -590,10 +469,6 @@ void BSPSysInheritVelocityModifier::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-BSPSysSubTexModifier::BSPSysSubTexModifier(NiStream& stream) : BSPSysSubTexModifier() {
-	Get(stream);
-}
-
 void BSPSysSubTexModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -618,10 +493,6 @@ void BSPSysSubTexModifier::Put(NiStream& stream) {
 	stream << frameCountVariation;
 }
 
-
-NiPSysBombModifier::NiPSysBombModifier(NiStream& stream) : NiPSysBombModifier() {
-	Get(stream);
-}
 
 void NiPSysBombModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -652,10 +523,6 @@ void NiPSysBombModifier::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-NiColorData::NiColorData(NiStream& stream) : NiColorData() {
-	Get(stream);
-}
-
 void NiColorData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -668,10 +535,6 @@ void NiColorData::Put(NiStream& stream) {
 	data.Put(stream);
 }
 
-
-NiPSysColorModifier::NiPSysColorModifier(NiStream& stream) : NiPSysColorModifier() {
-	Get(stream);
-}
 
 void NiPSysColorModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -691,10 +554,6 @@ void NiPSysColorModifier::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-
-NiPSysGrowFadeModifier::NiPSysGrowFadeModifier(NiStream& stream) : NiPSysGrowFadeModifier() {
-	Get(stream);
-}
 
 void NiPSysGrowFadeModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -720,10 +579,6 @@ void NiPSysGrowFadeModifier::Put(NiStream& stream) {
 		stream << baseScale;
 }
 
-
-NiPSysMeshUpdateModifier::NiPSysMeshUpdateModifier(NiStream& stream) : NiPSysMeshUpdateModifier() {
-	Get(stream);
-}
 
 void NiPSysMeshUpdateModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -771,10 +626,6 @@ void NiPSysFieldModifier::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiPSysVortexFieldModifier::NiPSysVortexFieldModifier(NiStream& stream) : NiPSysVortexFieldModifier() {
-	Get(stream);
-}
-
 void NiPSysVortexFieldModifier::Get(NiStream& stream) {
 	NiPSysFieldModifier::Get(stream);
 
@@ -788,10 +639,6 @@ void NiPSysVortexFieldModifier::Put(NiStream& stream) {
 }
 
 
-NiPSysGravityFieldModifier::NiPSysGravityFieldModifier(NiStream& stream) : NiPSysGravityFieldModifier() {
-	Get(stream);
-}
-
 void NiPSysGravityFieldModifier::Get(NiStream& stream) {
 	NiPSysFieldModifier::Get(stream);
 
@@ -804,10 +651,6 @@ void NiPSysGravityFieldModifier::Put(NiStream& stream) {
 	stream << direction;
 }
 
-
-NiPSysDragFieldModifier::NiPSysDragFieldModifier(NiStream& stream) : NiPSysDragFieldModifier() {
-	Get(stream);
-}
 
 void NiPSysDragFieldModifier::Get(NiStream& stream) {
 	NiPSysFieldModifier::Get(stream);
@@ -824,10 +667,6 @@ void NiPSysDragFieldModifier::Put(NiStream& stream) {
 }
 
 
-NiPSysTurbulenceFieldModifier::NiPSysTurbulenceFieldModifier(NiStream& stream) : NiPSysTurbulenceFieldModifier() {
-	Get(stream);
-}
-
 void NiPSysTurbulenceFieldModifier::Get(NiStream& stream) {
 	NiPSysFieldModifier::Get(stream);
 
@@ -840,10 +679,6 @@ void NiPSysTurbulenceFieldModifier::Put(NiStream& stream) {
 	stream << frequency;
 }
 
-
-NiPSysAirFieldModifier::NiPSysAirFieldModifier(NiStream& stream) : NiPSysAirFieldModifier() {
-	Get(stream);
-}
 
 void NiPSysAirFieldModifier::Get(NiStream& stream) {
 	NiPSysFieldModifier::Get(stream);
@@ -870,10 +705,6 @@ void NiPSysAirFieldModifier::Put(NiStream& stream) {
 }
 
 
-NiPSysRadialFieldModifier::NiPSysRadialFieldModifier(NiStream& stream) : NiPSysRadialFieldModifier() {
-	Get(stream);
-}
-
 void NiPSysRadialFieldModifier::Get(NiStream& stream) {
 	NiPSysFieldModifier::Get(stream);
 
@@ -887,10 +718,6 @@ void NiPSysRadialFieldModifier::Put(NiStream& stream) {
 }
 
 
-BSWindModifier::BSWindModifier(NiStream& stream) : BSWindModifier() {
-	Get(stream);
-}
-
 void BSWindModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -903,10 +730,6 @@ void BSWindModifier::Put(NiStream& stream) {
 	stream << strength;
 }
 
-
-BSPSysRecycleBoundModifier::BSPSysRecycleBoundModifier(NiStream& stream) : BSPSysRecycleBoundModifier() {
-	Get(stream);
-}
 
 void BSPSysRecycleBoundModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -931,10 +754,6 @@ void BSPSysRecycleBoundModifier::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-BSPSysHavokUpdateModifier::BSPSysHavokUpdateModifier(NiStream& stream) : BSPSysHavokUpdateModifier() {
-	Get(stream);
-}
-
 void BSPSysHavokUpdateModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -957,10 +776,6 @@ void BSPSysHavokUpdateModifier::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSParentVelocityModifier::BSParentVelocityModifier(NiStream& stream) : BSParentVelocityModifier() {
-	Get(stream);
-}
-
 void BSParentVelocityModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -973,13 +788,6 @@ void BSParentVelocityModifier::Put(NiStream& stream) {
 	stream << damping;
 }
 
-
-BSMasterParticleSystem::BSMasterParticleSystem() : NiNode() {
-}
-
-BSMasterParticleSystem::BSMasterParticleSystem(NiStream& stream) : BSMasterParticleSystem() {
-	Get(stream);
-}
 
 void BSMasterParticleSystem::Get(NiStream& stream) {
 	NiNode::Get(stream);
@@ -1001,10 +809,6 @@ void BSMasterParticleSystem::GetChildRefs(std::set<int*>& refs) {
 	particleSysRefs.GetIndexPtrs(refs);
 }
 
-
-NiParticleSystem::NiParticleSystem(NiStream& stream) : NiParticleSystem() {
-	Get(stream);
-}
 
 void NiParticleSystem::Get(NiStream& stream) {
 	NiAVObject::Get(stream);
@@ -1130,22 +934,6 @@ void NiParticleSystem::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiMeshParticleSystem::NiMeshParticleSystem() : NiParticleSystem() {
-}
-
-NiMeshParticleSystem::NiMeshParticleSystem(NiStream& stream) : NiMeshParticleSystem() {
-	Get(stream);
-}
-
-
-BSStripParticleSystem::BSStripParticleSystem() : NiParticleSystem() {
-}
-
-BSStripParticleSystem::BSStripParticleSystem(NiStream& stream) : BSStripParticleSystem() {
-	Get(stream);
-}
-
-
 void NiPSysCollider::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -1185,10 +973,6 @@ void NiPSysCollider::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-NiPSysSphericalCollider::NiPSysSphericalCollider(NiStream& stream) : NiPSysSphericalCollider() {
-	Get(stream);
-}
-
 void NiPSysSphericalCollider::Get(NiStream& stream) {
 	NiPSysCollider::Get(stream);
 
@@ -1201,10 +985,6 @@ void NiPSysSphericalCollider::Put(NiStream& stream) {
 	stream << radius;
 }
 
-
-NiPSysPlanarCollider::NiPSysPlanarCollider(NiStream& stream) : NiPSysPlanarCollider() {
-	Get(stream);
-}
 
 void NiPSysPlanarCollider::Get(NiStream& stream) {
 	NiPSysCollider::Get(stream);
@@ -1224,10 +1004,6 @@ void NiPSysPlanarCollider::Put(NiStream& stream) {
 	stream << yAxis;
 }
 
-
-NiPSysColliderManager::NiPSysColliderManager(NiStream& stream) : NiPSysColliderManager() {
-	Get(stream);
-}
 
 void NiPSysColliderManager::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -1300,10 +1076,6 @@ void NiPSysVolumeEmitter::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-NiPSysSphereEmitter::NiPSysSphereEmitter(NiStream& stream) : NiPSysSphereEmitter() {
-	Get(stream);
-}
-
 void NiPSysSphereEmitter::Get(NiStream& stream) {
 	NiPSysVolumeEmitter::Get(stream);
 
@@ -1316,10 +1088,6 @@ void NiPSysSphereEmitter::Put(NiStream& stream) {
 	stream << radius;
 }
 
-
-NiPSysCylinderEmitter::NiPSysCylinderEmitter(NiStream& stream) : NiPSysCylinderEmitter() {
-	Get(stream);
-}
 
 void NiPSysCylinderEmitter::Get(NiStream& stream) {
 	NiPSysVolumeEmitter::Get(stream);
@@ -1335,10 +1103,6 @@ void NiPSysCylinderEmitter::Put(NiStream& stream) {
 	stream << height;
 }
 
-
-NiPSysBoxEmitter::NiPSysBoxEmitter(NiStream& stream) : NiPSysBoxEmitter() {
-	Get(stream);
-}
 
 void NiPSysBoxEmitter::Get(NiStream& stream) {
 	NiPSysVolumeEmitter::Get(stream);
@@ -1356,15 +1120,6 @@ void NiPSysBoxEmitter::Put(NiStream& stream) {
 	stream << depth;
 }
 
-
-BSPSysArrayEmitter::BSPSysArrayEmitter(NiStream& stream) : BSPSysArrayEmitter() {
-	Get(stream);
-}
-
-
-NiPSysMeshEmitter::NiPSysMeshEmitter(NiStream& stream) : NiPSysMeshEmitter() {
-	Get(stream);
-}
 
 void NiPSysMeshEmitter::Get(NiStream& stream) {
 	NiPSysEmitter::Get(stream);

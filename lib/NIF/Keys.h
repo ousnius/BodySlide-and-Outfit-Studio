@@ -40,11 +40,6 @@ private:
 	std::vector<Key<T>> keys;
 
 public:
-	KeyGroup() {}
-	KeyGroup(NiStream& stream) {
-		Get(stream);
-	}
-
 	void Get(NiStream& stream) {
 		stream >> numKeys;
 		keys.resize(numKeys);

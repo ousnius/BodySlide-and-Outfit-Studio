@@ -6,10 +6,6 @@ See the included LICENSE file
 
 #include "Animation.h"
 
-NiKeyframeData::NiKeyframeData(NiStream& stream) : NiKeyframeData() {
-	Get(stream);
-}
-
 void NiKeyframeData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -69,18 +65,6 @@ void NiKeyframeData::Put(NiStream& stream) {
 }
 
 
-NiTransformData::NiTransformData() : NiKeyframeData() {
-}
-
-NiTransformData::NiTransformData(NiStream& stream) : NiTransformData() {
-	Get(stream);
-}
-
-
-NiPosData::NiPosData(NiStream& stream) : NiPosData() {
-	Get(stream);
-}
-
 void NiPosData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -93,10 +77,6 @@ void NiPosData::Put(NiStream& stream) {
 	data.Put(stream);
 }
 
-
-NiBoolData::NiBoolData(NiStream& stream) : NiBoolData() {
-	Get(stream);
-}
 
 void NiBoolData::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -111,10 +91,6 @@ void NiBoolData::Put(NiStream& stream) {
 }
 
 
-NiFloatData::NiFloatData(NiStream& stream) : NiFloatData() {
-	Get(stream);
-}
-
 void NiFloatData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -127,10 +103,6 @@ void NiFloatData::Put(NiStream& stream) {
 	data.Put(stream);
 }
 
-
-NiBSplineData::NiBSplineData(NiStream& stream) : NiBSplineData() {
-	Get(stream);
-}
 
 void NiBSplineData::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -158,10 +130,6 @@ void NiBSplineData::Put(NiStream& stream) {
 		stream << shortControlPoints[i];
 }
 
-
-NiBSplineBasisData::NiBSplineBasisData(NiStream& stream) : NiBSplineBasisData() {
-	Get(stream);
-}
 
 void NiBSplineBasisData::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -213,10 +181,6 @@ void NiTimeController::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-NiLookAtController::NiLookAtController(NiStream& stream) : NiLookAtController() {
-	Get(stream);
-}
-
 void NiLookAtController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
@@ -237,10 +201,6 @@ void NiLookAtController::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&lookAtNodePtr.index);
 }
 
-
-NiPathController::NiPathController(NiStream& stream) : NiPathController() {
-	Get(stream);
-}
 
 void NiPathController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
@@ -274,15 +234,6 @@ void NiPathController::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiPSysResetOnLoopCtlr::NiPSysResetOnLoopCtlr(NiStream& stream) : NiPSysResetOnLoopCtlr() {
-	Get(stream);
-}
-
-
-NiUVData::NiUVData(NiStream& stream) : NiUVData() {
-	Get(stream);
-}
-
 void NiUVData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -301,10 +252,6 @@ void NiUVData::Put(NiStream& stream) {
 	vScale.Put(stream);
 }
 
-
-NiUVController::NiUVController(NiStream& stream) : NiUVController() {
-	Get(stream);
-}
 
 void NiUVController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
@@ -327,10 +274,6 @@ void NiUVController::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSRefractionFirePeriodController::BSRefractionFirePeriodController(NiStream& stream) : BSRefractionFirePeriodController() {
-	Get(stream);
-}
-
 void BSRefractionFirePeriodController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
@@ -352,10 +295,6 @@ void BSRefractionFirePeriodController::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSFrustumFOVController::BSFrustumFOVController(NiStream& stream) : BSFrustumFOVController() {
-	Get(stream);
-}
-
 void BSFrustumFOVController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
@@ -375,10 +314,6 @@ void BSFrustumFOVController::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSLagBoneController::BSLagBoneController(NiStream& stream) : BSLagBoneController() {
-	Get(stream);
-}
-
 void BSLagBoneController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
@@ -395,10 +330,6 @@ void BSLagBoneController::Put(NiStream& stream) {
 	stream << maxDistance;
 }
 
-
-BSProceduralLightningController::BSProceduralLightningController(NiStream& stream) : BSProceduralLightningController() {
-	Get(stream);
-}
 
 void BSProceduralLightningController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
@@ -476,10 +407,6 @@ void BSProceduralLightningController::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiBoneLODController::NiBoneLODController(NiStream& stream) : NiBoneLODController() {
-	Get(stream);
-}
-
 void NiBoneLODController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
@@ -511,15 +438,6 @@ void NiBoneLODController::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-NiBSBoneLODController::NiBSBoneLODController(NiStream& stream) : NiBSBoneLODController() {
-	Get(stream);
-}
-
-
-NiMorphData::NiMorphData(NiStream& stream) : NiMorphData() {
-	Get(stream);
-}
-
 void NiMorphData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -550,10 +468,6 @@ void NiMorphData::GetStringRefs(std::set<StringRef*>& refs) {
 		m.GetStringRefs(refs);
 }
 
-
-NiGeomMorpherController::NiGeomMorpherController(NiStream& stream) : NiGeomMorpherController() {
-	Get(stream);
-}
 
 void NiGeomMorpherController::Get(NiStream& stream) {
 	NiInterpController::Get(stream);
@@ -609,10 +523,6 @@ void NiSingleInterpController::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiRollController::NiRollController(NiStream& stream) : NiRollController() {
-	Get(stream);
-}
-
 void NiRollController::Get(NiStream& stream) {
 	NiSingleInterpController::Get(stream);
 
@@ -645,20 +555,6 @@ void NiPoint3InterpController::Put(NiStream& stream) {
 }
 
 
-NiMaterialColorController::NiMaterialColorController(NiStream& stream) : NiMaterialColorController() {
-	Get(stream);
-}
-
-
-NiLightColorController::NiLightColorController(NiStream& stream) : NiLightColorController() {
-	Get(stream);
-}
-
-
-NiFloatExtraDataController::NiFloatExtraDataController(NiStream& stream) : NiFloatExtraDataController() {
-	Get(stream);
-}
-
 void NiFloatExtraDataController::Get(NiStream& stream) {
 	NiExtraDataController::Get(stream);
 
@@ -677,10 +573,6 @@ void NiFloatExtraDataController::GetStringRefs(std::set<StringRef*>& refs) {
 	refs.insert(&extraData);
 }
 
-
-NiVisData::NiVisData(NiStream& stream) : NiVisData() {
-	Get(stream);
-}
 
 void NiVisData::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -704,15 +596,6 @@ void NiVisData::Put(NiStream& stream) {
 }
 
 
-NiVisController::NiVisController(NiStream& stream) : NiVisController() {
-	Get(stream);
-}
-
-
-NiFlipController::NiFlipController(NiStream& stream) : NiFlipController() {
-	Get(stream);
-}
-
 void NiFlipController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
 
@@ -734,10 +617,6 @@ void NiFlipController::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiTextureTransformController::NiTextureTransformController(NiStream& stream) : NiTextureTransformController() {
-	Get(stream);
-}
-
 void NiTextureTransformController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
 
@@ -755,60 +634,6 @@ void NiTextureTransformController::Put(NiStream& stream) {
 }
 
 
-NiLightDimmerController::NiLightDimmerController(NiStream& stream) : NiLightDimmerController() {
-	Get(stream);
-}
-
-
-NiLightRadiusController::NiLightRadiusController(NiStream& stream) : NiLightRadiusController() {
-	Get(stream);
-}
-
-
-NiAlphaController::NiAlphaController(NiStream& stream) : NiAlphaController() {
-	Get(stream);
-}
-
-
-NiPSysUpdateCtlr::NiPSysUpdateCtlr(NiStream& stream) : NiPSysUpdateCtlr() {
-	Get(stream);
-}
-
-
-BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController() : NiAlphaController() {
-}
-
-BSNiAlphaPropertyTestRefController::BSNiAlphaPropertyTestRefController(NiStream& stream) : BSNiAlphaPropertyTestRefController() {
-	Get(stream);
-}
-
-
-NiKeyframeController::NiKeyframeController(NiStream& stream) : NiKeyframeController() {
-	Get(stream);
-}
-
-
-NiTransformController::NiTransformController() : NiKeyframeController() {
-}
-
-NiTransformController::NiTransformController(NiStream& stream) : NiTransformController() {
-	Get(stream);
-}
-
-
-BSMaterialEmittanceMultController::BSMaterialEmittanceMultController(NiStream& stream) : BSMaterialEmittanceMultController() {
-	Get(stream);
-}
-
-BSRefractionStrengthController::BSRefractionStrengthController(NiStream& stream) : BSRefractionStrengthController() {
-	Get(stream);
-}
-
-
-BSLightingShaderPropertyColorController::BSLightingShaderPropertyColorController(NiStream& stream) : BSLightingShaderPropertyColorController() {
-	Get(stream);
-}
-
 void BSLightingShaderPropertyColorController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
 
@@ -821,10 +646,6 @@ void BSLightingShaderPropertyColorController::Put(NiStream& stream) {
 	stream << typeOfControlledColor;
 }
 
-
-BSLightingShaderPropertyFloatController::BSLightingShaderPropertyFloatController(NiStream& stream) : BSLightingShaderPropertyFloatController() {
-	Get(stream);
-}
 
 void BSLightingShaderPropertyFloatController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
@@ -839,10 +660,6 @@ void BSLightingShaderPropertyFloatController::Put(NiStream& stream) {
 }
 
 
-BSLightingShaderPropertyUShortController::BSLightingShaderPropertyUShortController(NiStream& stream) : BSLightingShaderPropertyUShortController() {
-	Get(stream);
-}
-
 void BSLightingShaderPropertyUShortController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
 
@@ -855,10 +672,6 @@ void BSLightingShaderPropertyUShortController::Put(NiStream& stream) {
 	stream << typeOfControlledVariable;
 }
 
-
-BSEffectShaderPropertyColorController::BSEffectShaderPropertyColorController(NiStream& stream) : BSEffectShaderPropertyColorController() {
-	Get(stream);
-}
 
 void BSEffectShaderPropertyColorController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
@@ -873,10 +686,6 @@ void BSEffectShaderPropertyColorController::Put(NiStream& stream) {
 }
 
 
-BSEffectShaderPropertyFloatController::BSEffectShaderPropertyFloatController(NiStream& stream) : BSEffectShaderPropertyFloatController() {
-	Get(stream);
-}
-
 void BSEffectShaderPropertyFloatController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
 
@@ -889,10 +698,6 @@ void BSEffectShaderPropertyFloatController::Put(NiStream& stream) {
 	stream << typeOfControlledVariable;
 }
 
-
-NiMultiTargetTransformController::NiMultiTargetTransformController(NiStream& stream) : NiMultiTargetTransformController() {
-	Get(stream);
-}
 
 void NiMultiTargetTransformController::Get(NiStream& stream) {
 	NiInterpController::Get(stream);
@@ -932,105 +737,6 @@ void NiPSysModifierCtlr::GetStringRefs(std::set<StringRef*>& refs) {
 }
 
 
-NiPSysModifierActiveCtlr::NiPSysModifierActiveCtlr(NiStream& stream) : NiPSysModifierActiveCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterLifeSpanCtlr::NiPSysEmitterLifeSpanCtlr(NiStream& stream) : NiPSysEmitterLifeSpanCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterSpeedCtlr::NiPSysEmitterSpeedCtlr(NiStream& stream) : NiPSysEmitterSpeedCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterInitialRadiusCtlr::NiPSysEmitterInitialRadiusCtlr(NiStream& stream) : NiPSysEmitterInitialRadiusCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterDeclinationCtlr::NiPSysEmitterDeclinationCtlr(NiStream& stream) : NiPSysEmitterDeclinationCtlr() {
-	Get(stream);
-}
-
-
-NiPSysGravityStrengthCtlr::NiPSysGravityStrengthCtlr(NiStream& stream) : NiPSysGravityStrengthCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterDeclinationVarCtlr::NiPSysEmitterDeclinationVarCtlr(NiStream& stream) : NiPSysEmitterDeclinationVarCtlr() {
-	Get(stream);
-}
-
-
-NiPSysFieldMagnitudeCtlr::NiPSysFieldMagnitudeCtlr(NiStream& stream) : NiPSysFieldMagnitudeCtlr() {
-	Get(stream);
-}
-
-
-NiPSysFieldAttenuationCtlr::NiPSysFieldAttenuationCtlr(NiStream& stream) : NiPSysFieldAttenuationCtlr() {
-	Get(stream);
-}
-
-
-NiPSysFieldMaxDistanceCtlr::NiPSysFieldMaxDistanceCtlr(NiStream& stream) : NiPSysFieldMaxDistanceCtlr() {
-	Get(stream);
-}
-
-
-NiPSysAirFieldAirFrictionCtlr::NiPSysAirFieldAirFrictionCtlr(NiStream& stream) : NiPSysAirFieldAirFrictionCtlr() {
-	Get(stream);
-}
-
-
-NiPSysAirFieldInheritVelocityCtlr::NiPSysAirFieldInheritVelocityCtlr(NiStream& stream) : NiPSysAirFieldInheritVelocityCtlr() {
-	Get(stream);
-}
-
-
-NiPSysAirFieldSpreadCtlr::NiPSysAirFieldSpreadCtlr(NiStream& stream) : NiPSysAirFieldSpreadCtlr() {
-	Get(stream);
-}
-
-
-NiPSysInitialRotSpeedCtlr::NiPSysInitialRotSpeedCtlr(NiStream& stream) : NiPSysInitialRotSpeedCtlr() {
-	Get(stream);
-}
-
-
-NiPSysInitialRotSpeedVarCtlr::NiPSysInitialRotSpeedVarCtlr(NiStream& stream) : NiPSysInitialRotSpeedVarCtlr() {
-	Get(stream);
-}
-
-
-NiPSysInitialRotAngleCtlr::NiPSysInitialRotAngleCtlr(NiStream& stream) : NiPSysInitialRotAngleCtlr() {
-	Get(stream);
-}
-
-
-NiPSysInitialRotAngleVarCtlr::NiPSysInitialRotAngleVarCtlr(NiStream& stream) : NiPSysInitialRotAngleVarCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterPlanarAngleCtlr::NiPSysEmitterPlanarAngleCtlr(NiStream& stream) : NiPSysEmitterPlanarAngleCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterPlanarAngleVarCtlr::NiPSysEmitterPlanarAngleVarCtlr(NiStream& stream) : NiPSysEmitterPlanarAngleVarCtlr() {
-	Get(stream);
-}
-
-
-NiPSysEmitterCtlr::NiPSysEmitterCtlr(NiStream& stream) : NiPSysEmitterCtlr() {
-	Get(stream);
-}
-
 void NiPSysEmitterCtlr::Get(NiStream& stream) {
 	NiPSysModifierCtlr::Get(stream);
 
@@ -1049,13 +755,6 @@ void NiPSysEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&visInterpolatorRef.index);
 }
 
-
-BSPSysMultiTargetEmitterCtlr::BSPSysMultiTargetEmitterCtlr() : NiPSysEmitterCtlr() {
-}
-
-BSPSysMultiTargetEmitterCtlr::BSPSysMultiTargetEmitterCtlr(NiStream& stream) : BSPSysMultiTargetEmitterCtlr() {
-	Get(stream);
-}
 
 void BSPSysMultiTargetEmitterCtlr::Get(NiStream& stream) {
 	NiPSysEmitterCtlr::Get(stream);
@@ -1104,10 +803,6 @@ void NiBSplineInterpolator::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiBSplineCompFloatInterpolator::NiBSplineCompFloatInterpolator(NiStream& stream) : NiBSplineCompFloatInterpolator() {
-	Get(stream);
-}
-
 void NiBSplineCompFloatInterpolator::Get(NiStream& stream) {
 	NiBSplineFloatInterpolator::Get(stream);
 
@@ -1150,15 +845,6 @@ void NiBSplinePoint3Interpolator::Put(NiStream& stream) {
 }
 
 
-NiBSplineCompPoint3Interpolator::NiBSplineCompPoint3Interpolator(NiStream& stream) : NiBSplineCompPoint3Interpolator() {
-	Get(stream);
-}
-
-
-NiBSplineTransformInterpolator::NiBSplineTransformInterpolator(NiStream& stream) : NiBSplineTransformInterpolator() {
-	Get(stream);
-}
-
 void NiBSplineTransformInterpolator::Get(NiStream& stream) {
 	NiBSplineInterpolator::Get(stream);
 
@@ -1183,10 +869,6 @@ void NiBSplineTransformInterpolator::Put(NiStream& stream) {
 	stream << scaleOffset;
 }
 
-
-NiBSplineCompTransformInterpolator::NiBSplineCompTransformInterpolator(NiStream& stream) : NiBSplineCompTransformInterpolator() {
-	Get(stream);
-}
 
 void NiBSplineCompTransformInterpolator::Get(NiStream& stream) {
 	NiBSplineTransformInterpolator::Get(stream);
@@ -1226,10 +908,6 @@ void NiBlendInterpolator::Put(NiStream& stream) {
 }
 
 
-NiBlendBoolInterpolator::NiBlendBoolInterpolator(NiStream& stream) : NiBlendBoolInterpolator() {
-	Get(stream);
-}
-
 void NiBlendBoolInterpolator::Get(NiStream& stream) {
 	NiBlendInterpolator::Get(stream);
 
@@ -1242,10 +920,6 @@ void NiBlendBoolInterpolator::Put(NiStream& stream) {
 	stream << value;
 }
 
-
-NiBlendFloatInterpolator::NiBlendFloatInterpolator(NiStream& stream) : NiBlendFloatInterpolator() {
-	Get(stream);
-}
 
 void NiBlendFloatInterpolator::Get(NiStream& stream) {
 	NiBlendInterpolator::Get(stream);
@@ -1260,10 +934,6 @@ void NiBlendFloatInterpolator::Put(NiStream& stream) {
 }
 
 
-NiBlendPoint3Interpolator::NiBlendPoint3Interpolator(NiStream& stream) : NiBlendPoint3Interpolator() {
-	Get(stream);
-}
-
 void NiBlendPoint3Interpolator::Get(NiStream& stream) {
 	NiBlendInterpolator::Get(stream);
 
@@ -1276,15 +946,6 @@ void NiBlendPoint3Interpolator::Put(NiStream& stream) {
 	stream << point;
 }
 
-
-NiBlendTransformInterpolator::NiBlendTransformInterpolator(NiStream& stream) : NiBlendTransformInterpolator() {
-	Get(stream);
-}
-
-
-NiBoolInterpolator::NiBoolInterpolator(NiStream& stream) : NiBoolInterpolator() {
-	Get(stream);
-}
 
 void NiBoolInterpolator::Get(NiStream& stream) {
 	NiKeyBasedInterpolator::Get(stream);
@@ -1307,18 +968,6 @@ void NiBoolInterpolator::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiBoolTimelineInterpolator::NiBoolTimelineInterpolator() : NiBoolInterpolator() {
-}
-
-NiBoolTimelineInterpolator::NiBoolTimelineInterpolator(NiStream& stream) : NiBoolTimelineInterpolator() {
-	Get(stream);
-}
-
-
-NiFloatInterpolator::NiFloatInterpolator(NiStream& stream) : NiFloatInterpolator() {
-	Get(stream);
-}
-
 void NiFloatInterpolator::Get(NiStream& stream) {
 	NiKeyBasedInterpolator::Get(stream);
 
@@ -1339,10 +988,6 @@ void NiFloatInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-
-NiTransformInterpolator::NiTransformInterpolator(NiStream& stream) : NiTransformInterpolator() {
-	Get(stream);
-}
 
 void NiTransformInterpolator::Get(NiStream& stream) {
 	NiKeyBasedInterpolator::Get(stream);
@@ -1369,15 +1014,6 @@ void NiTransformInterpolator::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSRotAccumTransfInterpolator::BSRotAccumTransfInterpolator(NiStream& stream) : BSRotAccumTransfInterpolator() {
-	Get(stream);
-}
-
-
-NiPoint3Interpolator::NiPoint3Interpolator(NiStream& stream) : NiPoint3Interpolator() {
-	Get(stream);
-}
-
 void NiPoint3Interpolator::Get(NiStream& stream) {
 	NiKeyBasedInterpolator::Get(stream);
 
@@ -1398,10 +1034,6 @@ void NiPoint3Interpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&dataRef.index);
 }
 
-
-NiPathInterpolator::NiPathInterpolator(NiStream& stream) : NiPathInterpolator() {
-	Get(stream);
-}
 
 void NiPathInterpolator::Get(NiStream& stream) {
 	NiKeyBasedInterpolator::Get(stream);
@@ -1434,10 +1066,6 @@ void NiPathInterpolator::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&percentDataRef.index);
 }
 
-
-NiLookAtInterpolator::NiLookAtInterpolator(NiStream& stream) : NiLookAtInterpolator() {
-	Get(stream);
-}
 
 void NiLookAtInterpolator::Get(NiStream& stream) {
 	NiInterpolator::Get(stream);
@@ -1484,10 +1112,6 @@ void NiLookAtInterpolator::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-BSTreadTransfInterpolator::BSTreadTransfInterpolator(NiStream& stream) : BSTreadTransfInterpolator() {
-	Get(stream);
-}
-
 void BSTreadTransfInterpolator::Get(NiStream& stream) {
 	NiInterpolator::Get(stream);
 
@@ -1523,10 +1147,6 @@ void BSTreadTransfInterpolator::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiStringPalette::NiStringPalette(NiStream& stream) : NiStringPalette() {
-	Get(stream);
-}
-
 void NiStringPalette::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -1543,10 +1163,6 @@ void NiStringPalette::Put(NiStream& stream) {
 	stream << length;
 }
 
-
-NiSequence::NiSequence(NiStream& stream) : NiSequence() {
-	Get(stream);
-}
 
 void NiSequence::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -1614,10 +1230,6 @@ void NiSequence::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-BSAnimNote::BSAnimNote(NiStream& stream) : BSAnimNote() {
-	Get(stream);
-}
-
 void BSAnimNote::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -1649,10 +1261,6 @@ void BSAnimNote::Put(NiStream& stream) {
 }
 
 
-BSAnimNotes::BSAnimNotes(NiStream& stream) : BSAnimNotes() {
-	Get(stream);
-}
-
 void BSAnimNotes::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -1671,13 +1279,6 @@ void BSAnimNotes::GetChildRefs(std::set<int*>& refs) {
 	animNoteRefs.GetIndexPtrs(refs);
 }
 
-
-NiControllerSequence::NiControllerSequence() : NiSequence() {
-}
-
-NiControllerSequence::NiControllerSequence(NiStream& stream) : NiControllerSequence() {
-	Get(stream);
-}
 
 void NiControllerSequence::Get(NiStream& stream) {
 	NiSequence::Get(stream);
@@ -1735,10 +1336,6 @@ void NiControllerSequence::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&managerRef.index);
 }
 
-
-NiControllerManager::NiControllerManager(NiStream& stream) : NiControllerManager() {
-	Get(stream);
-}
 
 void NiControllerManager::Get(NiStream& stream) {
 	NiTimeController::Get(stream);

@@ -7,10 +7,6 @@ See the included LICENSE file
 #include "Skin.h"
 #include "utils/half.hpp"
 
-NiSkinData::NiSkinData(NiStream& stream) : NiSkinData() {
-	Get(stream);
-}
-
 void NiSkinData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -98,10 +94,6 @@ void NiSkinData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	}
 }
 
-
-NiSkinPartition::NiSkinPartition(NiStream& stream) : NiSkinPartition() {
-	Get(stream);
-}
 
 void NiSkinPartition::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -541,10 +533,6 @@ int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) 
 }
 
 
-NiSkinInstance::NiSkinInstance(NiStream& stream) : NiSkinInstance() {
-	Get(stream);
-}
-
 void NiSkinInstance::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -577,13 +565,6 @@ void NiSkinInstance::GetPtrs(std::set<int*>& ptrs) {
 	boneRefs.GetIndexPtrs(ptrs);
 }
 
-
-BSDismemberSkinInstance::BSDismemberSkinInstance() : NiSkinInstance() {
-}
-
-BSDismemberSkinInstance::BSDismemberSkinInstance(NiStream& stream) : BSDismemberSkinInstance() {
-	Get(stream);
-}
 
 void BSDismemberSkinInstance::Get(NiStream& stream) {
 	NiSkinInstance::Get(stream);
@@ -621,10 +602,6 @@ void BSDismemberSkinInstance::ClearPartitions() {
 }
 
 
-BSSkinBoneData::BSSkinBoneData(NiStream& stream) : BSSkinBoneData() {
-	Get(stream);
-}
-
 void BSSkinBoneData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -642,10 +619,6 @@ void BSSkinBoneData::Put(NiStream& stream) {
 		stream << boneXforms[i];
 }
 
-
-BSSkinInstance::BSSkinInstance(NiStream& stream) : BSSkinInstance() {
-	Get(stream);
-}
 
 void BSSkinInstance::Get(NiStream& stream) {
 	NiObject::Get(stream);

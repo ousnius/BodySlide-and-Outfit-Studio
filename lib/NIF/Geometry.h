@@ -113,9 +113,6 @@ private:
 	std::vector<AdditionalDataBlock> blocks;
 
 public:
-	NiAdditionalGeometryData();
-	NiAdditionalGeometryData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiAdditionalGeometryData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -198,9 +195,6 @@ private:
 	std::vector<BSPackedAdditionalDataBlock> blocks;
 
 public:
-	BSPackedAdditionalGeometryData();
-	BSPackedAdditionalGeometryData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSPackedAdditionalGeometryData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -345,7 +339,6 @@ public:
 	std::vector<Triangle> triangles;
 
 	BSTriShape();
-	BSTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -476,9 +469,6 @@ private:
 	BSSITSSegmentation segmentation;
 
 public:
-	BSSubIndexTriShape();
-	BSSubIndexTriShape(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSSubIndexTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -500,9 +490,6 @@ public:
 	uint lodSize1 = 0;
 	uint lodSize2 = 0;
 
-	BSMeshLODTriShape();
-	BSMeshLODTriShape(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSMeshLODTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -518,7 +505,6 @@ public:
 	std::vector<Vector4> dynamicData;
 
 	BSDynamicTriShape();
-	BSDynamicTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSDynamicTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -583,9 +569,6 @@ public:
 
 class NiTriShape : public NiTriBasedGeom {
 public:
-	NiTriShape() {}
-	NiTriShape(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -607,9 +590,6 @@ private:
 public:
 	std::vector<Triangle> triangles;
 
-	NiTriShapeData() {}
-	NiTriShapeData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiTriShapeData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -624,9 +604,6 @@ public:
 
 class NiTriStrips : public NiTriBasedGeom {
 public:
-	NiTriStrips() {}
-	NiTriStrips(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiTriStrips";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -641,9 +618,6 @@ private:
 	std::vector<std::vector<ushort>> points;
 
 public:
-	NiTriStripsData() {}
-	NiTriStripsData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiTriStripsData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -658,9 +632,6 @@ public:
 
 class NiLines : public NiTriBasedGeom {
 public:
-	NiLines() {}
-	NiLines(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiLines";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -672,9 +643,6 @@ private:
 	std::deque<bool> lineFlags;
 
 public:
-	NiLinesData() {}
-	NiLinesData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiLinesData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -687,9 +655,6 @@ public:
 
 class NiScreenElements : public NiTriShape {
 public:
-	NiScreenElements() {}
-	NiScreenElements(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiScreenElements";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -717,9 +682,6 @@ private:
 	ushort unkShort3 = 1;
 
 public:
-	NiScreenElementsData() {}
-	NiScreenElementsData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiScreenElementsData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -737,9 +699,6 @@ private:
 	uint level2 = 0;
 
 public:
-	BSLODTriShape() {}
-	BSLODTriShape(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSLODTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -752,9 +711,6 @@ class BSSegmentedTriShape : public NiTriShape {
 public:
 	uint numSegments = 0;
 	std::vector<BSGeometrySegmentData> segments;
-
-	BSSegmentedTriShape() {}
-	BSSegmentedTriShape(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSSegmentedTriShape";
 	virtual const char* GetBlockName() { return BlockName; }

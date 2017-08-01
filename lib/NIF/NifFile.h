@@ -51,7 +51,9 @@ public:
 
 	// Load new NiObject from file
 	virtual NiObject* Load(NiStream& stream) override {
-		return new T(stream);
+		T* nio = new T();
+		nio->Get(stream);
+		return nio;
 	}
 };
 

@@ -105,9 +105,6 @@ private:
 	std::vector<AVObject> objects;
 
 public:
-	NiDefaultAVObjectPalette() {}
-	NiDefaultAVObjectPalette(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiDefaultAVObjectPalette";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -138,9 +135,6 @@ private:
 	uint numScreenTextures = 0;
 
 public:
-	NiCamera() {}
-	NiCamera(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiCamera";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -152,9 +146,6 @@ public:
 
 class NiSequenceStreamHelper : public NiObjectNET {
 public:
-	NiSequenceStreamHelper() {}
-	NiSequenceStreamHelper(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSequenceStreamHelper";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -168,9 +159,6 @@ private:
 	std::vector<ByteColor4> palette = std::vector<ByteColor4>(256);
 
 public:
-	NiPalette() {}
-	NiPalette(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiPalette";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -251,9 +239,6 @@ private:
 	std::vector<std::vector<byte>> pixelData;
 
 public:
-	NiPersistentSrcTextureRendererData() {}
-	NiPersistentSrcTextureRendererData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiPersistentSrcTextureRendererData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -271,9 +256,6 @@ private:
 	std::vector<std::vector<byte>> pixelData;
 
 public:
-	NiPixelData() {}
-	NiPixelData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiPixelData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -326,9 +308,6 @@ private:
 	bool persistentRenderData = false;
 
 public:
-	NiSourceTexture() {}
-	NiSourceTexture(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSourceTexture";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -341,9 +320,6 @@ public:
 
 class NiSourceCubeMap : public NiSourceTexture {
 public:
-	NiSourceCubeMap() {}
-	NiSourceCubeMap(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSourceCubeMap";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -406,9 +382,6 @@ private:
 	float unkFloat = 0.0f;
 
 public:
-	NiTextureEffect() {}
-	NiTextureEffect(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiTextureEffect";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -432,9 +405,6 @@ public:
 
 class NiAmbientLight : public NiLight {
 public:
-	NiAmbientLight() {}
-	NiAmbientLight(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiAmbientLight";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -443,9 +413,6 @@ public:
 
 class NiDirectionalLight : public NiLight {
 public:
-	NiDirectionalLight() {}
-	NiDirectionalLight(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiDirectionalLight";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -459,9 +426,6 @@ private:
 	float quadraticAttenuation = 0.0f;
 
 public:
-	NiPointLight() {}
-	NiPointLight(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiPointLight";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -477,9 +441,6 @@ private:
 	float exponent = 0.0f;
 
 public:
-	NiSpotLight() {}
-	NiSpotLight(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSpotLight";
 	virtual const char* GetBlockName() { return BlockName; }
 

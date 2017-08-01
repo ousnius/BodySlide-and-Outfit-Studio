@@ -30,9 +30,6 @@ private:
 	std::vector<byte> data;
 
 public:
-	NiBinaryExtraData() {}
-	NiBinaryExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiBinaryExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -46,9 +43,6 @@ private:
 	float floatData = 0.0f;
 
 public:
-	NiFloatExtraData() {}
-	NiFloatExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiFloatExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -66,9 +60,6 @@ private:
 	std::vector<float> floatsData;
 
 public:
-	NiFloatsExtraData() {}
-	NiFloatsExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiFloatsExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -85,9 +76,6 @@ private:
 	StringRef stringData;
 
 public:
-	NiStringExtraData() {}
-	NiStringExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiStringExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -106,9 +94,6 @@ private:
 	std::vector<NiString> stringsData;
 
 public:
-	NiStringsExtraData() {}
-	NiStringsExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiStringsExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -122,9 +107,6 @@ private:
 	bool booleanData = false;
 
 public:
-	NiBooleanExtraData() {}
-	NiBooleanExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiBooleanExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -141,9 +123,6 @@ private:
 	uint integerData = 0;
 
 public:
-	NiIntegerExtraData() {}
-	NiIntegerExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiIntegerExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -161,9 +140,6 @@ private:
 	std::vector<uint> integersData;
 
 public:
-	NiIntegersExtraData() {}
-	NiIntegersExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiIntegersExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -180,9 +156,6 @@ private:
 	Vector4 vectorData;
 
 public:
-	NiVectorExtraData() {}
-	NiVectorExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiVectorExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -199,9 +172,6 @@ private:
 	Color4 colorData;
 
 public:
-	NiColorExtraData() {}
-	NiColorExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiColorExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -215,9 +185,6 @@ public:
 
 class BSXFlags : public NiIntegerExtraData {
 public:
-	BSXFlags();
-	BSXFlags(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSXFlags";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -226,13 +193,10 @@ public:
 
 class BSWArray : public NiExtraData {
 private:
-	uint numData;
+	uint numData = 0;
 	std::vector<uint> data;
 
 public:
-	BSWArray() {}
-	BSWArray(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSWArray";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -246,13 +210,10 @@ public:
 
 class BSPositionData : public NiExtraData {
 private:
-	uint numData;
+	uint numData = 0;
 	std::vector<half_float::half> data;
 
 public:
-	BSPositionData() {}
-	BSPositionData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSPositionData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -266,13 +227,10 @@ public:
 
 class BSEyeCenterExtraData : public NiExtraData {
 private:
-	uint numData;
+	uint numData = 0;
 	std::vector<float> data;
 
 public:
-	BSEyeCenterExtraData() {}
-	BSEyeCenterExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSEyeCenterExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -327,9 +285,6 @@ private:
 	std::vector<BSPackedGeomData> data;
 
 public:
-	BSPackedCombinedSharedGeomDataExtra() {}
-	BSPackedCombinedSharedGeomDataExtra(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSPackedCombinedSharedGeomDataExtra";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -346,9 +301,6 @@ private:
 	float zoom = 1.0f;
 
 public:
-	BSInvMarker() {}
-	BSInvMarker(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSInvMarker";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -375,9 +327,6 @@ private:
 	std::vector<FurniturePosition> positions;
 
 public:
-	BSFurnitureMarker() {}
-	BSFurnitureMarker(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSFurnitureMarker";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -388,9 +337,6 @@ public:
 
 class BSFurnitureMarkerNode : public BSFurnitureMarker {
 public:
-	BSFurnitureMarkerNode();
-	BSFurnitureMarkerNode(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSFurnitureMarkerNode";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -410,9 +356,6 @@ private:
 	std::vector<DecalVectorBlock> decalVectorBlocks;
 
 public:
-	BSDecalPlacementVectorExtraData();
-	BSDecalPlacementVectorExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSDecalPlacementVectorExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -427,9 +370,6 @@ private:
 	bool controlsBaseSkel = false;
 
 public:
-	BSBehaviorGraphExtraData() {}
-	BSBehaviorGraphExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSBehaviorGraphExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -445,9 +385,6 @@ private:
 	Vector3 halfExtents;
 
 public:
-	BSBound() {}
-	BSBound(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSBound";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -467,9 +404,6 @@ private:
 	std::vector<BoneLOD> boneLODs;
 
 public:
-	BSBoneLODExtraData() {}
-	BSBoneLODExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSBoneLODExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -485,9 +419,6 @@ private:
 	std::vector<Key<StringRef>> textKeys;
 
 public:
-	NiTextKeyExtraData() {}
-	NiTextKeyExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiTextKeyExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -502,9 +433,6 @@ private:
 	bool largeRef = true;
 
 public:
-	BSDistantObjectLargeRefExtraData() {}
-	BSDistantObjectLargeRefExtraData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSDistantObjectLargeRefExtraData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -521,9 +449,6 @@ public:
 	Vector3 translation;
 	float scale = 1.0f;
 
-	BSConnectPoint();
-	BSConnectPoint(NiStream& stream);
-
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSConnectPoint* Clone() { return new BSConnectPoint(*this); }
@@ -535,9 +460,6 @@ private:
 	std::vector<BSConnectPoint> connectPoints;
 
 public:
-	BSConnectPointParents() {}
-	BSConnectPointParents(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSConnectPoint::Parents";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -553,9 +475,6 @@ private:
 	std::vector<NiString> targets;
 
 public:
-	BSConnectPointChildren() {}
-	BSConnectPointChildren(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSConnectPoint::Children";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -575,7 +494,6 @@ private:
 public:
 	BSClothExtraData() {}
 	BSClothExtraData(const uint size);
-	BSClothExtraData(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSClothExtraData";
 	virtual const char* GetBlockName() { return BlockName; }

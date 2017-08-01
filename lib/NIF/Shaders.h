@@ -51,9 +51,6 @@ private:
 	ushort flags = 0;
 
 public:
-	NiShadeProperty() {}
-	NiShadeProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiShadeProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -68,9 +65,6 @@ private:
 	ushort flags = 0;
 
 public:
-	NiSpecularProperty() {}
-	NiSpecularProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSpecularProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -194,9 +188,6 @@ private:
 	std::vector<ShaderTexDesc> shaderTex;
 
 public:
-	NiTexturingProperty() {}
-	NiTexturingProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiTexturingProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -212,9 +203,6 @@ private:
 	ushort flags = 0;
 
 public:
-	NiVertexColorProperty() {}
-	NiVertexColorProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiVertexColorProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -229,9 +217,6 @@ private:
 	ushort flags = 0;
 
 public:
-	NiDitherProperty() {}
-	NiDitherProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiDitherProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -248,9 +233,6 @@ private:
 	Color3 fogColor;
 
 public:
-	NiFogProperty() {}
-	NiFogProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiFogProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -265,9 +247,6 @@ private:
 	ushort flags = 0;
 
 public:
-	NiWireframeProperty() {}
-	NiWireframeProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiWireframeProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -282,9 +261,6 @@ private:
 	ushort flags = 3;
 
 public:
-	NiZBufferProperty() {}
-	NiZBufferProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiZBufferProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -349,9 +325,6 @@ public:
 
 class WaterShaderProperty : public BSShaderProperty {
 public:
-	WaterShaderProperty() {}
-	WaterShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "WaterShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -360,9 +333,6 @@ public:
 
 class HairShaderProperty : public BSShaderProperty {
 public:
-	HairShaderProperty() {}
-	HairShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "HairShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -371,9 +341,6 @@ public:
 
 class DistantLODShaderProperty : public BSShaderProperty {
 public:
-	DistantLODShaderProperty() {}
-	DistantLODShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "DistantLODShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -382,9 +349,6 @@ public:
 
 class BSDistantTreeShaderProperty : public BSShaderProperty {
 public:
-	BSDistantTreeShaderProperty() {}
-	BSDistantTreeShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSDistantTreeShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -396,9 +360,6 @@ private:
 	NiString fileName;
 
 public:
-	TallGrassShaderProperty() {}
-	TallGrassShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "TallGrassShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -410,9 +371,6 @@ public:
 
 class VolumetricFogShaderProperty : public BSShaderProperty {
 public:
-	VolumetricFogShaderProperty() {}
-	VolumetricFogShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "VolumetricFogShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -422,11 +380,10 @@ public:
 class BSShaderTextureSet : public NiObject {
 public:
 	int numTextures = 10;
-	std::vector<NiString> textures;
+	std::vector<NiString> textures = std::vector<NiString>(10);
 
-	BSShaderTextureSet();
+	BSShaderTextureSet() {}
 	BSShaderTextureSet(NiVersion& version);
-	BSShaderTextureSet(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSShaderTextureSet";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -482,7 +439,6 @@ public:
 
 	BSLightingShaderProperty();
 	BSLightingShaderProperty(NiVersion& version);
-	BSLightingShaderProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSLightingShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -537,9 +493,6 @@ public:
 	NiString envMaskTexture;
 	float envMapScale = 1.0f;
 
-	BSEffectShaderProperty() {}
-	BSEffectShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSEffectShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -566,9 +519,6 @@ private:
 	uint waterFlags = 0;
 
 public:
-	BSWaterShaderProperty() {}
-	BSWaterShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSWaterShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -591,9 +541,6 @@ private:
 	uint skyFlags = 0;
 
 public:
-	BSSkyShaderProperty() {}
-	BSSkyShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSSkyShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -633,9 +580,6 @@ private:
 	SkyObjectType skyObjectType = BSSM_SKY_TEXTURE;
 
 public:
-	SkyShaderProperty() {}
-	SkyShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "SkyShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -650,9 +594,6 @@ private:
 	NiString fileName;
 
 public:
-	TileShaderProperty() {}
-	TileShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "TileShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -669,9 +610,6 @@ public:
 	float falloffStopAngle = 0.0f;			// User Version 2 > 26
 	float falloffStartOpacity = 1.0f;		// User Version 2 > 26
 	float falloffStopOpacity = 1.0f;		// User Version 2 > 26
-
-	BSShaderNoLightingProperty() {}
-	BSShaderNoLightingProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "BSShaderNoLightingProperty";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -696,9 +634,6 @@ public:
 	float parallaxScale = 1.0f;				// User Version == 11 && User Version 2 > 24
 	Color4 emissiveColor;					// User Version >= 12
 
-	BSShaderPPLightingProperty() {}
-	BSShaderPPLightingProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSShaderPPLightingProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -716,9 +651,6 @@ public:
 
 class Lighting30ShaderProperty : public BSShaderPPLightingProperty {
 public:
-	Lighting30ShaderProperty() {}
-	Lighting30ShaderProperty(NiStream& stream);
-
 	static constexpr const char* BlockName = "Lighting30ShaderProperty";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -729,9 +661,6 @@ class NiAlphaProperty : public NiProperty {
 public:
 	ushort flags = 4844;
 	byte threshold = 128;
-
-	NiAlphaProperty() {}
-	NiAlphaProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiAlphaProperty";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -753,9 +682,6 @@ private:
 public:
 	Vector3 colorAmbient;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
 	Vector3 colorDiffuse;					// !(Version == 20.2.0.7 && User Version >= 11 && User Version 2 > 21)
-
-	NiMaterialProperty() {}
-	NiMaterialProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiMaterialProperty";
 	virtual const char* GetBlockName() { return BlockName; }
@@ -781,9 +707,6 @@ public:
 	ushort flags = 19840;
 	uint stencilRef = 0;
 	uint stencilMask = 0xFFFFFFFF;
-
-	NiStencilProperty() {}
-	NiStencilProperty(NiStream& stream);
 
 	static constexpr const char* BlockName = "NiStencilProperty";
 	virtual const char* GetBlockName() { return BlockName; }

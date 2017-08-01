@@ -103,9 +103,6 @@ public:
 	byte hasVertWeights = 1;
 	std::vector<BoneData> bones;
 
-	NiSkinData() {}
-	NiSkinData(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSkinData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -158,9 +155,6 @@ public:
 	bool HasEyeData() { return vertexDesc.HasFlag(VF_EYEDATA); }
 	bool IsFullPrecision() { return true; }
 
-	NiSkinPartition() {}
-	NiSkinPartition(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSkinPartition";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -185,9 +179,6 @@ private:
 	BlockRef<NiNode> targetRef;
 
 public:
-	NiSkinInstance() {}
-	NiSkinInstance(NiStream& stream);
-
 	static constexpr const char* BlockName = "NiSkinInstance";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -219,9 +210,6 @@ private:
 	std::vector<PartitionInfo> partitions;
 
 public:
-	BSDismemberSkinInstance();
-	BSDismemberSkinInstance(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSDismemberSkinInstance";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -258,9 +246,6 @@ public:
 
 	std::vector<BoneData> boneXforms;
 
-	BSSkinBoneData() {}
-	BSSkinBoneData(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSSkin::BoneData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -280,9 +265,6 @@ private:
 	std::vector<Vector3> unk;
 
 public:
-	BSSkinInstance() {}
-	BSSkinInstance(NiStream& stream);
-
 	static constexpr const char* BlockName = "BSSkin::Instance";
 	virtual const char* GetBlockName() { return BlockName; }
 

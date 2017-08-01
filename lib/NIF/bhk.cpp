@@ -6,10 +6,6 @@ See the included LICENSE file
 
 #include "bhk.h"
 
-NiCollisionObject::NiCollisionObject(NiStream& stream) : NiCollisionObject() {
-	Get(stream);
-}
-
 void NiCollisionObject::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -82,10 +78,6 @@ void BoundingVolume::Put(NiStream& stream) {
 }
 
 
-NiCollisionData::NiCollisionData(NiStream& stream) : NiCollisionData() {
-	Get(stream);
-}
-
 void NiCollisionData::Get(NiStream& stream) {
 	NiCollisionObject::Get(stream);
 
@@ -109,13 +101,6 @@ void NiCollisionData::Put(NiStream& stream) {
 }
 
 
-bhkNiCollisionObject::bhkNiCollisionObject() : NiCollisionObject() {
-}
-
-bhkNiCollisionObject::bhkNiCollisionObject(NiStream& stream) : bhkNiCollisionObject() {
-	Get(stream);
-}
-
 void bhkNiCollisionObject::Get(NiStream& stream) {
 	NiCollisionObject::Get(stream);
 
@@ -137,21 +122,6 @@ void bhkNiCollisionObject::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-bhkCollisionObject::bhkCollisionObject() : bhkNiCollisionObject() {
-}
-
-bhkCollisionObject::bhkCollisionObject(NiStream& stream) : bhkCollisionObject() {
-	Get(stream);
-}
-
-
-bhkNPCollisionObject::bhkNPCollisionObject() : bhkCollisionObject() {
-}
-
-bhkNPCollisionObject::bhkNPCollisionObject(NiStream& stream) : bhkNPCollisionObject() {
-	Get(stream);
-}
-
 void bhkNPCollisionObject::Get(NiStream& stream) {
 	bhkCollisionObject::Get(stream);
 
@@ -164,29 +134,6 @@ void bhkNPCollisionObject::Put(NiStream& stream) {
 	stream << bodyID;
 }
 
-
-bhkPCollisionObject::bhkPCollisionObject() : bhkNiCollisionObject() {
-}
-
-bhkPCollisionObject::bhkPCollisionObject(NiStream& stream) : bhkPCollisionObject() {
-	Get(stream);
-}
-
-
-bhkSPCollisionObject::bhkSPCollisionObject() : bhkPCollisionObject() {
-}
-
-bhkSPCollisionObject::bhkSPCollisionObject(NiStream& stream) : bhkSPCollisionObject() {
-	Get(stream);
-}
-
-
-bhkBlendCollisionObject::bhkBlendCollisionObject() : bhkCollisionObject() {
-}
-
-bhkBlendCollisionObject::bhkBlendCollisionObject(NiStream& stream) : bhkBlendCollisionObject() {
-	Get(stream);
-}
 
 void bhkBlendCollisionObject::Get(NiStream& stream) {
 	bhkCollisionObject::Get(stream);
@@ -206,10 +153,6 @@ void bhkBlendCollisionObject::Put(NiStream& stream) {
 bhkPhysicsSystem::bhkPhysicsSystem(const uint size) {
 	numBytes = size;
 	data.resize(size);
-}
-
-bhkPhysicsSystem::bhkPhysicsSystem(NiStream& stream) : bhkPhysicsSystem() {
-	Get(stream);
 }
 
 void bhkPhysicsSystem::Get(NiStream& stream) {
@@ -239,10 +182,6 @@ bhkRagdollSystem::bhkRagdollSystem(const uint size) {
 	data.resize(size);
 }
 
-bhkRagdollSystem::bhkRagdollSystem(NiStream& stream) : bhkRagdollSystem() {
-	Get(stream);
-}
-
 void bhkRagdollSystem::Get(NiStream& stream) {
 	BSExtraData::Get(stream);
 
@@ -265,13 +204,6 @@ void bhkRagdollSystem::Put(NiStream& stream) {
 }
 
 
-bhkBlendController::bhkBlendController() : NiTimeController() {
-}
-
-bhkBlendController::bhkBlendController(NiStream& stream) : bhkBlendController() {
-	Get(stream);
-}
-
 void bhkBlendController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
@@ -284,10 +216,6 @@ void bhkBlendController::Put(NiStream& stream) {
 	stream << keys;
 }
 
-
-bhkPlaneShape::bhkPlaneShape(NiStream& stream) : bhkPlaneShape() {
-	Get(stream);
-}
 
 void bhkPlaneShape::Get(NiStream& stream) {
 	bhkHeightFieldShape::Get(stream);
@@ -327,10 +255,6 @@ void bhkSphereRepShape::Put(NiStream& stream) {
 }
 
 
-bhkMultiSphereShape::bhkMultiSphereShape(NiStream& stream) : bhkMultiSphereShape() {
-	Get(stream);
-}
-
 void bhkMultiSphereShape::Get(NiStream& stream) {
 	bhkSphereRepShape::Get(stream);
 
@@ -354,10 +278,6 @@ void bhkMultiSphereShape::Put(NiStream& stream) {
 		stream << spheres[i];
 }
 
-
-bhkConvexListShape::bhkConvexListShape(NiStream& stream) : bhkConvexListShape() {
-	Get(stream);
-}
 
 void bhkConvexListShape::Get(NiStream& stream) {
 	bhkShape::Get(stream);
@@ -392,10 +312,6 @@ void bhkConvexListShape::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-bhkConvexVerticesShape::bhkConvexVerticesShape(NiStream& stream) : bhkConvexVerticesShape() {
-	Get(stream);
-}
-
 void bhkConvexVerticesShape::Get(NiStream& stream) {
 	bhkConvexShape::Get(stream);
 
@@ -429,10 +345,6 @@ void bhkConvexVerticesShape::Put(NiStream& stream) {
 }
 
 
-bhkBoxShape::bhkBoxShape(NiStream& stream) : bhkBoxShape() {
-	Get(stream);
-}
-
 void bhkBoxShape::Get(NiStream& stream) {
 	bhkConvexShape::Get(stream);
 
@@ -449,15 +361,6 @@ void bhkBoxShape::Put(NiStream& stream) {
 	stream << radius2;
 }
 
-
-bhkSphereShape::bhkSphereShape(NiStream& stream) : bhkSphereShape() {
-	Get(stream);
-}
-
-
-bhkTransformShape::bhkTransformShape(NiStream& stream) : bhkTransformShape() {
-	Get(stream);
-}
 
 void bhkTransformShape::Get(NiStream& stream) {
 	bhkShape::Get(stream);
@@ -486,18 +389,6 @@ void bhkTransformShape::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-bhkConvexTransformShape::bhkConvexTransformShape() : bhkTransformShape() {
-}
-
-bhkConvexTransformShape::bhkConvexTransformShape(NiStream& stream) : bhkConvexTransformShape() {
-	Get(stream);
-}
-
-
-bhkCapsuleShape::bhkCapsuleShape(NiStream& stream) : bhkCapsuleShape() {
-	Get(stream);
-}
-
 void bhkCapsuleShape::Get(NiStream& stream) {
 	bhkConvexShape::Get(stream);
 
@@ -518,10 +409,6 @@ void bhkCapsuleShape::Put(NiStream& stream) {
 	stream << radius2;
 }
 
-
-bhkMoppBvTreeShape::bhkMoppBvTreeShape(NiStream& stream) : bhkMoppBvTreeShape() {
-	Get(stream);
-}
 
 void bhkMoppBvTreeShape::Get(NiStream& stream) {
 	bhkBvTreeShape::Get(stream);
@@ -566,10 +453,6 @@ void bhkMoppBvTreeShape::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&shapeRef.index);
 }
 
-
-bhkNiTriStripsShape::bhkNiTriStripsShape(NiStream& stream) : bhkNiTriStripsShape() {
-	Get(stream);
-}
 
 void bhkNiTriStripsShape::Get(NiStream& stream) {
 	bhkShape::Get(stream);
@@ -619,10 +502,6 @@ void bhkNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-bhkListShape::bhkListShape(NiStream& stream) : bhkListShape() {
-	Get(stream);
-}
-
 void bhkListShape::Get(NiStream& stream) {
 	bhkShapeCollection::Get(stream);
 
@@ -659,10 +538,6 @@ void bhkListShape::GetChildRefs(std::set<int*>& refs) {
 	subShapeRefs.GetIndexPtrs(refs);
 }
 
-
-hkPackedNiTriStripsData::hkPackedNiTriStripsData(NiStream& stream) : hkPackedNiTriStripsData() {
-	Get(stream);
-}
 
 void hkPackedNiTriStripsData::Get(NiStream& stream) {
 	bhkShapeCollection::Get(stream);
@@ -727,10 +602,6 @@ void hkPackedNiTriStripsData::Put(NiStream& stream) {
 }
 
 
-bhkPackedNiTriStripsShape::bhkPackedNiTriStripsShape(NiStream& stream) : bhkPackedNiTriStripsShape() {
-	Get(stream);
-}
-
 void bhkPackedNiTriStripsShape::Get(NiStream& stream) {
 	bhkShapeCollection::Get(stream);
 
@@ -777,10 +648,6 @@ void bhkPackedNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-bhkLiquidAction::bhkLiquidAction(NiStream& stream) : bhkLiquidAction() {
-	Get(stream);
-}
-
 void bhkLiquidAction::Get(NiStream& stream) {
 	bhkSerializable::Get(stream);
 
@@ -805,10 +672,6 @@ void bhkLiquidAction::Put(NiStream& stream) {
 	stream << neighborStrength;
 }
 
-
-bhkOrientHingedBodyAction::bhkOrientHingedBodyAction(NiStream& stream) : bhkOrientHingedBodyAction() {
-	Get(stream);
-}
 
 void bhkOrientHingedBodyAction::Get(NiStream& stream) {
 	bhkSerializable::Get(stream);
@@ -874,10 +737,6 @@ void bhkWorldObject::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-bhkSimpleShapePhantom::bhkSimpleShapePhantom(NiStream& stream) : bhkSimpleShapePhantom() {
-	Get(stream);
-}
-
 void bhkSimpleShapePhantom::Get(NiStream& stream) {
 	bhkShapePhantom::Get(stream);
 
@@ -892,10 +751,6 @@ void bhkSimpleShapePhantom::Put(NiStream& stream) {
 	stream << transform;
 }
 
-
-bhkAabbPhantom::bhkAabbPhantom(NiStream& stream) : bhkAabbPhantom() {
-	Get(stream);
-}
 
 void bhkAabbPhantom::Get(NiStream& stream) {
 	bhkShapePhantom::Get(stream);
@@ -937,10 +792,6 @@ void bhkConstraint::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-bhkHingeConstraint::bhkHingeConstraint(NiStream& stream) : bhkHingeConstraint() {
-	Get(stream);
-}
-
 void bhkHingeConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
 
@@ -953,10 +804,6 @@ void bhkHingeConstraint::Put(NiStream& stream) {
 	stream << hinge;
 }
 
-
-bhkLimitedHingeConstraint::bhkLimitedHingeConstraint(NiStream& stream) : bhkLimitedHingeConstraint() {
-	Get(stream);
-}
 
 void bhkLimitedHingeConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
@@ -1102,10 +949,6 @@ void ConstraintData::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-bhkBreakableConstraint::bhkBreakableConstraint(NiStream& stream) : bhkBreakableConstraint() {
-	Get(stream);
-}
-
 void bhkBreakableConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
 
@@ -1126,10 +969,6 @@ void bhkBreakableConstraint::GetPtrs(std::set<int*>& ptrs) {
 	subConstraint.GetPtrs(ptrs);
 }
 
-
-bhkRagdollConstraint::bhkRagdollConstraint(NiStream& stream) : bhkRagdollConstraint() {
-	Get(stream);
-}
 
 void bhkRagdollConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
@@ -1172,10 +1011,6 @@ void bhkRagdollConstraint::Put(NiStream& stream) {
 }
 
 
-bhkStiffSpringConstraint::bhkStiffSpringConstraint(NiStream& stream) : bhkStiffSpringConstraint() {
-	Get(stream);
-}
-
 void bhkStiffSpringConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
 
@@ -1192,10 +1027,6 @@ void bhkStiffSpringConstraint::Put(NiStream& stream) {
 	stream << stiffSpring.length;
 }
 
-
-bhkPrismaticConstraint::bhkPrismaticConstraint(NiStream& stream) : bhkPrismaticConstraint() {
-	Get(stream);
-}
 
 void bhkPrismaticConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
@@ -1232,10 +1063,6 @@ void bhkPrismaticConstraint::Put(NiStream& stream) {
 }
 
 
-bhkMalleableConstraint::bhkMalleableConstraint(NiStream& stream) : bhkMalleableConstraint() {
-	Get(stream);
-}
-
 void bhkMalleableConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
 
@@ -1248,10 +1075,6 @@ void bhkMalleableConstraint::Put(NiStream& stream) {
 	subConstraint.Put(stream);
 }
 
-
-bhkBallAndSocketConstraint::bhkBallAndSocketConstraint(NiStream& stream) : bhkBallAndSocketConstraint() {
-	Get(stream);
-}
 
 void bhkBallAndSocketConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
@@ -1267,10 +1090,6 @@ void bhkBallAndSocketConstraint::Put(NiStream& stream) {
 	stream << ballAndSocket.translationB;
 }
 
-
-bhkBallSocketConstraintChain::bhkBallSocketConstraintChain(NiStream& stream) : bhkBallSocketConstraintChain() {
-	Get(stream);
-}
 
 void bhkBallSocketConstraintChain::Get(NiStream& stream) {
 	bhkSerializable::Get(stream);
@@ -1321,10 +1140,6 @@ void bhkBallSocketConstraintChain::GetPtrs(std::set<int*>& ptrs) {
 	ptrs.insert(&entityBRef.index);
 }
 
-
-bhkRigidBody::bhkRigidBody(NiStream& stream) : bhkRigidBody() {
-	Get(stream);
-}
 
 void bhkRigidBody::Get(NiStream& stream) {
 	bhkEntity::Get(stream);
@@ -1444,18 +1259,6 @@ void bhkRigidBody::GetChildRefs(std::set<int*>& refs) {
 	constraintRefs.GetIndexPtrs(refs);
 }
 
-
-bhkRigidBodyT::bhkRigidBodyT() : bhkRigidBody() {
-}
-
-bhkRigidBodyT::bhkRigidBodyT(NiStream& stream) : bhkRigidBodyT() {
-	Get(stream);
-}
-
-
-bhkCompressedMeshShapeData::bhkCompressedMeshShapeData(NiStream& stream) : bhkCompressedMeshShapeData() {
-	Get(stream);
-}
 
 void bhkCompressedMeshShapeData::Get(NiStream& stream) {
 	bhkRefObject::Get(stream);
@@ -1610,10 +1413,6 @@ void bhkCompressedMeshShapeData::Put(NiStream& stream) {
 }
 
 
-bhkCompressedMeshShape::bhkCompressedMeshShape(NiStream& stream) : bhkCompressedMeshShape() {
-	Get(stream);
-}
-
 void bhkCompressedMeshShape::Get(NiStream& stream) {
 	bhkShape::Get(stream);
 
@@ -1653,10 +1452,6 @@ void bhkCompressedMeshShape::GetPtrs(std::set<int*>& ptrs) {
 }
 
 
-bhkPoseArray::bhkPoseArray(NiStream& stream) : bhkPoseArray() {
-	Get(stream);
-}
-
 void bhkPoseArray::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
@@ -1691,10 +1486,6 @@ void bhkPoseArray::GetStringRefs(std::set<StringRef*>& refs) {
 }
 
 
-bhkRagdollTemplate::bhkRagdollTemplate(NiStream& stream) : bhkRagdollTemplate() {
-	Get(stream);
-}
-
 void bhkRagdollTemplate::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
 
@@ -1715,10 +1506,6 @@ void bhkRagdollTemplate::GetChildRefs(std::set<int*>& refs) {
 	boneRefs.GetIndexPtrs(refs);
 }
 
-
-bhkRagdollTemplateData::bhkRagdollTemplateData(NiStream& stream) : bhkRagdollTemplateData() {
-	Get(stream);
-}
 
 void bhkRagdollTemplateData::Get(NiStream& stream) {
 	NiObject::Get(stream);

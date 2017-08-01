@@ -10,13 +10,6 @@ See the included LICENSE file
 
 #include "utils/KDMatcher.h"
 
-NiAdditionalGeometryData::NiAdditionalGeometryData() : AdditionalGeomData() {
-}
-
-NiAdditionalGeometryData::NiAdditionalGeometryData(NiStream & stream) : NiAdditionalGeometryData() {
-	Get(stream);
-}
-
 void NiAdditionalGeometryData::Get(NiStream & stream) {
 	AdditionalGeomData::Get(stream);
 
@@ -47,13 +40,6 @@ void NiAdditionalGeometryData::Put(NiStream & stream) {
 		blocks[i].Put(stream);
 }
 
-
-BSPackedAdditionalGeometryData::BSPackedAdditionalGeometryData() : AdditionalGeomData() {
-}
-
-BSPackedAdditionalGeometryData::BSPackedAdditionalGeometryData(NiStream & stream) : BSPackedAdditionalGeometryData() {
-	Get(stream);
-}
 
 void BSPackedAdditionalGeometryData::Get(NiStream & stream) {
 	AdditionalGeomData::Get(stream);
@@ -440,10 +426,6 @@ BSTriShape::BSTriShape() {
 	vertexDesc.SetFlag(VF_NORMAL);
 	vertexDesc.SetFlag(VF_TANGENT);
 	vertexDesc.SetFlag(VF_SKINNED);
-}
-
-BSTriShape::BSTriShape(NiStream& stream) : BSTriShape() {
-	Get(stream);
 }
 
 void BSTriShape::Get(NiStream& stream) {
@@ -1217,13 +1199,6 @@ void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris
 }
 
 
-BSSubIndexTriShape::BSSubIndexTriShape() : BSTriShape() {
-}
-
-BSSubIndexTriShape::BSSubIndexTriShape(NiStream& stream) : BSSubIndexTriShape() {
-	Get(stream);
-}
-
 void BSSubIndexTriShape::Get(NiStream& stream) {
 	BSTriShape::Get(stream);
 
@@ -1430,13 +1405,6 @@ void BSSubIndexTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangl
 }
 
 
-BSMeshLODTriShape::BSMeshLODTriShape() : BSTriShape() {
-}
-
-BSMeshLODTriShape::BSMeshLODTriShape(NiStream& stream) : BSMeshLODTriShape() {
-	Get(stream);
-}
-
 void BSMeshLODTriShape::Get(NiStream& stream) {
 	BSTriShape::Get(stream);
 
@@ -1463,15 +1431,11 @@ void BSMeshLODTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndi
 }
 
 
-BSDynamicTriShape::BSDynamicTriShape() : BSTriShape() {
+BSDynamicTriShape::BSDynamicTriShape() {
 	vertexDesc.RemoveFlag(VF_VERTEX);
 	vertexDesc.SetFlag(VF_FULLPREC);
 
 	dynamicDataSize = 0;
-}
-
-BSDynamicTriShape::BSDynamicTriShape(NiStream& stream) : BSDynamicTriShape() {
-	Get(stream);
 }
 
 void BSDynamicTriShape::Get(NiStream& stream) {
@@ -1626,15 +1590,6 @@ void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangl
 	numTriangles = inTris->size();
 }
 
-
-NiTriShape::NiTriShape(NiStream& stream) : NiTriShape() {
-	Get(stream);
-}
-
-
-NiTriShapeData::NiTriShapeData(NiStream& stream) : NiTriShapeData() {
-	Get(stream);
-}
 
 void NiTriShapeData::Get(NiStream& stream) {
 	NiTriBasedGeomData::Get(stream);
@@ -1846,15 +1801,6 @@ void NiTriShapeData::CalcTangentSpace() {
 	}
 }
 
-
-NiTriStrips::NiTriStrips(NiStream& stream) : NiTriStrips() {
-	Get(stream);
-}
-
-
-NiTriStripsData::NiTriStripsData(NiStream& stream) : NiTriStripsData() {
-	Get(stream);
-}
 
 void NiTriStripsData::Get(NiStream& stream) {
 	NiTriBasedGeomData::Get(stream);
@@ -2068,15 +2014,6 @@ void NiTriStripsData::CalcTangentSpace() {
 }
 
 
-NiLines::NiLines(NiStream& stream) : NiLines() {
-	Get(stream);
-}
-
-
-NiLinesData::NiLinesData(NiStream& stream) : NiLinesData() {
-	Get(stream);
-}
-
 void NiLinesData::Get(NiStream& stream) {
 	NiGeometryData::Get(stream);
 
@@ -2111,15 +2048,6 @@ void NiLinesData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	}
 }
 
-
-NiScreenElements::NiScreenElements(NiStream& stream) : NiScreenElements() {
-	Get(stream);
-}
-
-
-NiScreenElementsData::NiScreenElementsData(NiStream& stream) : NiScreenElementsData() {
-	Get(stream);
-}
 
 void NiScreenElementsData::Get(NiStream& stream) {
 	NiTriShapeData::Get(stream);
@@ -2172,10 +2100,6 @@ void NiScreenElementsData::notifyVerticesDelete(const std::vector<ushort>& vertI
 }
 
 
-BSLODTriShape::BSLODTriShape(NiStream& stream) : BSLODTriShape() {
-	Get(stream);
-}
-
 void BSLODTriShape::Get(NiStream& stream) {
 	NiTriBasedGeom::Get(stream);
 
@@ -2205,10 +2129,6 @@ void BSGeometrySegmentData::Put(NiStream& stream) {
 	stream << numTris;
 }
 
-
-BSSegmentedTriShape::BSSegmentedTriShape(NiStream& stream) : NiTriShape() {
-	Get(stream);
-}
 
 void BSSegmentedTriShape::Get(NiStream& stream) {
 	NiTriShape::Get(stream);

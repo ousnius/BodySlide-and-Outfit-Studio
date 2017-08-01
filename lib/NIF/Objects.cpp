@@ -131,10 +131,6 @@ void NiAVObject::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiDefaultAVObjectPalette::NiDefaultAVObjectPalette(NiStream& stream) : NiDefaultAVObjectPalette() {
-	Get(stream);
-}
-
 void NiDefaultAVObjectPalette::Get(NiStream& stream) {
 	NiAVObjectPalette::Get(stream);
 
@@ -169,10 +165,6 @@ void NiDefaultAVObjectPalette::GetPtrs(std::set<int*>& ptrs) {
 		ptrs.insert(&objects[i].objectRef.index);
 }
 
-
-NiCamera::NiCamera(NiStream& stream) : NiCamera() {
-	Get(stream);
-}
 
 void NiCamera::Get(NiStream& stream) {
 	NiAVObject::Get(stream);
@@ -224,15 +216,6 @@ void NiCamera::GetChildRefs(std::set<int*>& refs) {
 	refs.insert(&sceneRef.index);
 }
 
-
-NiSequenceStreamHelper::NiSequenceStreamHelper(NiStream& stream) : NiSequenceStreamHelper() {
-	Get(stream);
-}
-
-
-NiPalette::NiPalette(NiStream& stream) : NiPalette() {
-	Get(stream);
-}
 
 void NiPalette::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -322,10 +305,6 @@ void TextureRenderData::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiPersistentSrcTextureRendererData::NiPersistentSrcTextureRendererData(NiStream& stream) : NiPersistentSrcTextureRendererData() {
-	Get(stream);
-}
-
 void NiPersistentSrcTextureRendererData::Get(NiStream& stream) {
 	TextureRenderData::Get(stream);
 
@@ -356,10 +335,6 @@ void NiPersistentSrcTextureRendererData::Put(NiStream& stream) {
 }
 
 
-NiPixelData::NiPixelData(NiStream& stream) : NiPixelData() {
-	Get(stream);
-}
-
 void NiPixelData::Get(NiStream& stream) {
 	TextureRenderData::Get(stream);
 
@@ -385,10 +360,6 @@ void NiPixelData::Put(NiStream& stream) {
 			stream >> pixelData[f][p];
 }
 
-
-NiSourceTexture::NiSourceTexture(NiStream& stream) : NiSourceTexture() {
-	Get(stream);
-}
 
 void NiSourceTexture::Get(NiStream& stream) {
 	NiTexture::Get(stream);
@@ -431,11 +402,6 @@ void NiSourceTexture::GetChildRefs(std::set<int*>& refs) {
 }
 
 
-NiSourceCubeMap::NiSourceCubeMap(NiStream& stream) : NiSourceCubeMap() {
-	Get(stream);
-}
-
-
 void NiDynamicEffect::Get(NiStream& stream) {
 	NiAVObject::Get(stream);
 
@@ -460,10 +426,6 @@ void NiDynamicEffect::GetChildRefs(std::set<int*>& refs) {
 	affectedNodes.GetIndexPtrs(refs);
 }
 
-
-NiTextureEffect::NiTextureEffect(NiStream& stream) : NiTextureEffect() {
-	Get(stream);
-}
 
 void NiTextureEffect::Get(NiStream& stream) {
 	NiDynamicEffect::Get(stream);
@@ -521,20 +483,6 @@ void NiLight::Put(NiStream& stream) {
 }
 
 
-NiAmbientLight::NiAmbientLight(NiStream& stream) : NiAmbientLight() {
-	Get(stream);
-}
-
-
-NiDirectionalLight::NiDirectionalLight(NiStream& stream) : NiDirectionalLight() {
-	Get(stream);
-}
-
-
-NiPointLight::NiPointLight(NiStream& stream) : NiPointLight() {
-	Get(stream);
-}
-
 void NiPointLight::Get(NiStream& stream) {
 	NiLight::Get(stream);
 
@@ -551,10 +499,6 @@ void NiPointLight::Put(NiStream& stream) {
 	stream << quadraticAttenuation;
 }
 
-
-NiSpotLight::NiSpotLight(NiStream& stream) : NiSpotLight() {
-	Get(stream);
-}
 
 void NiSpotLight::Get(NiStream& stream) {
 	NiPointLight::Get(stream);
