@@ -158,6 +158,7 @@ public:
 	NiNode* GetParentNode(NiObject* block);
 
 	NiShader* GetShader(const std::string& shapeName);
+	NiShader* GetShader(NiShape* shape);
 	bool IsShaderSkin(const std::string& shapeName);
 	NiMaterialProperty* GetMaterialProperty(const std::string& shapeName);
 
@@ -173,6 +174,7 @@ public:
 	void CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const std::string& srcShape);
 
 	int GetShapeList(std::vector<std::string>& outList);
+	int GetShapeList(std::vector<NiShape*>& outList);
 	void RenameShape(const std::string& oldName, const std::string& newName);
 	bool RenameDuplicateShapes();
 
@@ -263,9 +265,10 @@ public:
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
 	void UpdateSkinPartitions(const std::string& shapeName);
-	bool TriangulatePartitions(const std::string& shapeName);
+	void UpdateSkinPartitions(NiShape* shape);
+	bool TriangulatePartitions(NiShape* shape);
 	// Update bone set flags
-	void UpdatePartitionFlags(const std::string& shapeName);
+	void UpdatePartitionFlags(NiShape* shape);
 };
 
 template <class T>
