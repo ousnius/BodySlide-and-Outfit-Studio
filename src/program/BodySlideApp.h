@@ -208,6 +208,8 @@ public:
 	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, const std::string& custPath = "");
 	void GroupBuild(const std::string& group);
 
+	void AddTriData(NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot = false);
+
 	float GetSliderValue(const wxString& sliderName, bool isLo);
 	bool IsUVSlider(const wxString& sliderName);
 	std::vector<std::string> GetSliderZapToggles(const wxString& sliderName);

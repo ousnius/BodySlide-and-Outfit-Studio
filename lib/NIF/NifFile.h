@@ -118,22 +118,12 @@ public:
 	NiHeader& GetHeader() { return hdr; }
 	void CopyFrom(const NifFile& other);
 
-	// Link NiGeometryData to NiGeometry
-	void LinkGeomData();
-
-	int AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale);
-	void DeleteNode(const std::string& nodeName);
-	std::string GetNodeName(const int blockID);
-	void SetNodeName(const int blockID, const std::string& newName);
-
-	int AssignExtraData(const std::string& blockName, const int extraDataId, bool isNode);
-	int AddStringExtraData(const std::string& blockName, const std::string& name, const std::string& stringData, bool isNode = false);
-	int AddIntegerExtraData(const std::string& blockName, const std::string& name, const int integerData, bool isNode = false);
-
 	int Load(const std::string& filename);
 	int Save(const std::string& filename, bool optimize = true, bool sortBlocks = true);
+
 	void Optimize();
 	OptResultSSE OptimizeForSSE(const OptOptionsSSE& options = OptOptionsSSE());
+
 	void PrepareData();
 	void FinalizeData();
 
@@ -143,6 +133,16 @@ public:
 	bool HasUnknown() { return hasUnknown; }
 
 	void Clear();
+
+	// Link NiGeometryData to NiGeometry
+	void LinkGeomData();
+
+	int AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale);
+	void DeleteNode(const std::string& nodeName);
+	std::string GetNodeName(const int blockID);
+	void SetNodeName(const int blockID, const std::string& newName);
+
+	int AssignExtraData(NiAVObject* target, NiExtraData* extraData);
 
 	// Explicitly sets the order of shapes to a new one.
 	void SetShapeOrder(const std::vector<std::string>& order);
@@ -157,13 +157,11 @@ public:
 	int GetBlockID(NiObject* block);
 	NiNode* GetParentNode(NiObject* block);
 
-	NiShader* GetShader(const std::string& shapeName);
 	NiShader* GetShader(NiShape* shape);
-	bool IsShaderSkin(const std::string& shapeName);
-	NiMaterialProperty* GetMaterialProperty(const std::string& shapeName);
+	NiMaterialProperty* GetMaterialProperty(NiShape* shape);
 
-	int GetTextureForShape(const std::string& shapeName, std::string& outTexFile, int texIndex = 0);
-	void SetTextureForShape(const std::string& shapeName, std::string& inTexFile, int texIndex = 0);
+	int GetTextureSlot(NiShader* shader, std::string& outTexFile, int texIndex = 0);
+	void SetTextureSlot(NiShader* shader, std::string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();
 
 	int CopyNamedNode(std::string& nodeName, NifFile& srcNif);
@@ -173,8 +171,8 @@ public:
 	int CopyInterpolator(NiHeader& srcHeader, int srcInterpId);
 	void CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const std::string& srcShape);
 
-	int GetShapeList(std::vector<std::string>& outList);
-	int GetShapeList(std::vector<NiShape*>& outList);
+	std::vector<std::string> GetShapeNames();
+	std::vector<NiShape*> GetShapes();
 	void RenameShape(const std::string& oldName, const std::string& newName);
 	bool RenameDuplicateShapes();
 
@@ -245,21 +243,19 @@ public:
 	void ScaleShape(const std::string& shapeName, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
 	void RotateShape(const std::string& shapeName, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
 
-	bool GetAlphaForShape(const std::string& shapeName, ushort& outFlags, byte& outThreshold);
-	void SetAlphaForShape(const std::string& shapeName, ushort flags = 4844, ushort threshold = 128);
-
-	bool IsShapeSkinned(const std::string& shapeName);
+	NiAlphaProperty* GetAlphaProperty(NiShape* shape);
+	int AssignAlphaProperty(NiShape* shape, NiAlphaProperty* alphaProp); // ushort flags = 4844, ushort threshold = 128
+	void RemoveAlphaProperty(NiShape* shape);
 
 	void DeleteShape(const std::string& shapeName);
-	void DeleteShader(const std::string& shapeName);
-	void DeleteAlpha(const std::string& shapeName);
-	void DeleteSkinning(const std::string& shapeName);
+	void DeleteShader(NiShape* shape);
+	void DeleteSkinning(NiShape* shape);
 	bool DeleteVertsForShape(const std::string& shapeName, const std::vector<ushort>& indices);
 
 	int CalcShapeDiff(const std::string& shapeName, const std::vector<Vector3>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
 	int CalcUVDiff(const std::string& shapeName, const std::vector<Vector2>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
 
-	void CreateSkinning(const std::string& shapeName);
+	void CreateSkinning(NiShape* shape);
 	void UpdateBoundingSphere(const std::string& shapeName);
 	void SetShapeDynamic(const std::string& shapeName);
 

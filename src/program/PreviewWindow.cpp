@@ -118,9 +118,9 @@ void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& norm
 }
 
 void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
-	std::vector<std::string> shapeList;
-	nif->GetShapeList(shapeList);
 	mesh* m = nullptr;
+	std::vector<std::string> shapeList = nif->GetShapeNames();
+
 	for (int i = 0; i < shapeList.size(); i++) {
 		if (shapeName && (shapeList[i] == shapeName)) {
 			gls.AddMeshFromNif(nif, shapeList[i]);
@@ -147,9 +147,9 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 }
 
 void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
-	std::vector<std::string> shapeList;
-	nif->GetShapeList(shapeList);
 	mesh* m = nullptr;
+	std::vector<std::string> shapeList = nif->GetShapeNames();
+
 	if (shapeName == nullptr)
 		gls.DeleteAllMeshes();
 
@@ -196,13 +196,17 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	const byte MAX_TEXTURE_PATHS = 10;
 	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
 
-	NiShader* shader = fromNif->GetShader(shapeName);
-	if (shader) {
-		// Find material file
-		if (fromNif->GetHeader().GetVersion().User() == 12 && fromNif->GetHeader().GetVersion().User2() >= 130) {
-			matFile = shader->GetName();
-			if (!matFile.IsEmpty())
-				hasMat = true;
+	NiShader* shader = nullptr;
+	NiShape* shape = fromNif->FindShapeByName(shapeName);
+	if (shape) {
+		shader = fromNif->GetShader(shape);
+		if (shader) {
+			// Find material file
+			if (fromNif->GetHeader().GetVersion().User() == 12 && fromNif->GetHeader().GetVersion().User2() >= 130) {
+				matFile = shader->GetName();
+				if (!matFile.IsEmpty())
+					hasMat = true;
+			}
 		}
 	}
 
@@ -254,16 +258,16 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 				texFiles[5] = mat.envmapMaskTexture.c_str();
 			}
 		}
-		else {
+		else if (shader) {
 			hasMat = false;
 
 			for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-				fromNif->GetTextureForShape(shapeName, texFiles[i], i);
+				fromNif->GetTextureSlot(shader, texFiles[i], i);
 		}
 	}
-	else {
+	else if (shader) {
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++)
-			fromNif->GetTextureForShape(shapeName, texFiles[i], i);
+			fromNif->GetTextureSlot(shader, texFiles[i], i);
 	}
 
 	for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {

@@ -134,7 +134,6 @@ public:
 	const std::string& ShapeToTarget(const std::string& shapeName);
 	int GetVertexCount(const std::string& shapeName);
 	void GetLiveVerts(const std::string& shapeName, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs = nullptr);
-	void GetShapes(std::vector<std::string>& outShapeNames);
 	void GetActiveBones(std::vector<std::string>& outBoneNames);
 
 	std::vector<std::string> GetShapeTextures(const std::string& shapeName);
@@ -142,7 +141,7 @@ public:
 
 	void SetTextures();
 	void SetTextures(const std::vector<std::string>& textureFiles);
-	void SetTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles = std::vector<std::string>());
+	void SetTextures(NiShape* shape, const std::vector<std::string>& textureFiles = std::vector<std::string>());
 
 	bool IsValidShape(const std::string& shapeName);
 
@@ -194,10 +193,8 @@ public:
 	void DeleteShape(const std::string& shapeName);
 
 	void DeleteBone(const std::string& boneName) {
-		std::vector<std::string> shapes;
 		if (workNif.IsValid()) {
-			GetShapes(shapes);
-			for (auto &s : shapes)
+			for (auto &s : workNif.GetShapeNames())
 				workAnim.RemoveShapeBone(s, boneName);
 
 			int blockID = workNif.GetBlockID(workNif.FindNodeByName(boneName));

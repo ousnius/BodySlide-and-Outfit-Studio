@@ -11,7 +11,7 @@ See the included LICENSE file
 
 class ShapeProperties : public wxDialog {
 public:
-	ShapeProperties(wxWindow*, NifFile*, const std::string&);
+	ShapeProperties(wxWindow*, NifFile*, NiShape*);
 	~ShapeProperties();
 
 private:
@@ -43,7 +43,7 @@ private:
 
 	OutfitStudio* os = nullptr;
 	NifFile* nif = nullptr;
-	std::string shapeName;
+	NiShape* shape = nullptr;
 
 	std::string currentMaterialPath;
 	bool currentSubIndex = false;

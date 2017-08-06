@@ -804,9 +804,7 @@ void BodySlideApp::InitPreview() {
 	preview->AddMeshFromNif(&PreviewMod);
 	preview->SetBaseDataPath(baseGamePath);
 
-	std::vector<std::string> shapeNames;
-	PreviewMod.GetShapeList(shapeNames);
-	for (auto &s : shapeNames)
+	for (auto &s : PreviewMod.GetShapeNames())
 		preview->AddNifShapeTextures(&PreviewMod, s);
 
 	preview->SetNormalsGenerationLayers(activeSet.GetNormalsGenLayers());
@@ -1549,17 +1547,18 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
 				triShapeLink = it->second;
 				if (tri && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-					nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+					AddTriData(nifBig, triShapeLink, triPathTrimmed);
 					if (activeSet.GenWeights())
-						nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+						AddTriData(nifSmall, triShapeLink, triPathTrimmed);
+
 					tri = false;
 				}
 			}
 		}
 		else {
-			nifBig.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+			AddTriData(nifBig, "", triPathTrimmed, true);
 			if (activeSet.GenWeights())
-				nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+				AddTriData(nifSmall, "", triPathTrimmed, true);
 		}
 
 		// Set all shapes to dynamic/mutable
@@ -1974,17 +1973,18 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
 					std::string triShapeLink = it->second;
 					if (triEnd && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-						nifBig.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+						AddTriData(nifBig, triShapeLink, triPathTrimmed);
 						if (currentSet.GenWeights())
-							nifSmall.AddStringExtraData(triShapeLink, "BODYTRI", triPathTrimmed);
+							AddTriData(nifSmall, triShapeLink, triPathTrimmed);
+
 						triEnd = false;
 					}
 				}
 			}
 			else {
-				nifBig.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+				AddTriData(nifBig, "", triPathTrimmed, true);
 				if (currentSet.GenWeights())
-					nifSmall.AddStringExtraData(nifBig.GetNodeName(nifBig.GetRootNodeID()), "BODYTRI", triPathTrimmed, true);
+					AddTriData(nifSmall, "", triPathTrimmed, true);
 			}
 
 			// Set all shapes to dynamic/mutable
@@ -2081,6 +2081,22 @@ void BodySlideApp::GroupBuild(const std::string& group) {
 	}
 
 	sliderView->Close(true);
+}
+
+void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const std::string& triPath, bool toRoot) {
+	NiAVObject* target = nullptr;
+
+	if (toRoot)
+		target = nif.GetHeader().GetBlock<NiNode>(nif.GetRootNodeID());
+	else
+		target = nif.FindShapeByName(shapeName);
+
+	if (target) {
+		auto triExtraData = new NiStringExtraData();
+		triExtraData->SetName("BODYTRI");
+		triExtraData->SetStringData(triPath);
+		nif.AssignExtraData(target, triExtraData);
+	}
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {

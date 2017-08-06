@@ -220,9 +220,7 @@ void FBXWrangler::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) 
 void FBXWrangler::AddNif(NifFile* nif, const std::string& shapeName) {
 	AddSkeleton(nif, true);
 
-	std::vector<std::string> shapeList;
-	nif->GetShapeList(shapeList);
-	for (auto &s : shapeList) {
+	for (auto &s : nif->GetShapeNames()) {
 		if (s == shapeName || shapeName.empty()) {
 			std::vector<Triangle> tris;
 			if (nif->GetTrisForShape(s, &tris)) {

@@ -934,42 +934,49 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 
 	mesh* m = new mesh();
 
-	NiShader* shader = nif->GetShader(shapeName);
-	if (shader) {
-		m->modelSpace = shader->IsModelSpace();
-		m->specular = shader->HasSpecular();
-		m->emissive = shader->IsEmissive();
-		m->backlight = shader->HasBacklight();
-		m->doublesided = shader->IsDoubleSided();
+	NiShape* shape = nif->FindShapeByName(shapeName);
+	if (shape) {
+		NiShader* shader = nif->GetShader(shape);
+		if (shader) {
+			m->modelSpace = shader->IsModelSpace();
+			m->specular = shader->HasSpecular();
+			m->emissive = shader->IsEmissive();
+			m->backlight = shader->HasBacklight();
+			m->doublesided = shader->IsDoubleSided();
 
-		m->prop.uvOffset = shader->GetUVOffset();
-		m->prop.uvScale = shader->GetUVScale();
-		m->prop.specularColor = shader->GetSpecularColor();
-		m->prop.specularStrength = shader->GetSpecularStrength();
-		m->prop.shininess = shader->GetGlossiness();
-		m->prop.envReflection = shader->GetEnvironmentMapScale();
+			m->prop.uvOffset = shader->GetUVOffset();
+			m->prop.uvScale = shader->GetUVScale();
+			m->prop.specularColor = shader->GetSpecularColor();
+			m->prop.specularStrength = shader->GetSpecularStrength();
+			m->prop.shininess = shader->GetGlossiness();
+			m->prop.envReflection = shader->GetEnvironmentMapScale();
 
-		Color4 emissiveColor = shader->GetEmissiveColor();
-		m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
-		m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
-
-		m->prop.alpha = shader->GetAlpha();
-
-		NiMaterialProperty* material = nif->GetMaterialProperty(shapeName);
-		if (material) {
-			m->emissive = material->IsEmissive();
-
-			m->prop.specularColor = material->GetSpecularColor();
-			m->prop.shininess = material->GetGlossiness();
-
-			emissiveColor = material->GetEmissiveColor();
+			Color4 emissiveColor = shader->GetEmissiveColor();
 			m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
-			m->prop.emissiveMultiple = material->GetEmissiveMultiple();
+			m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
 
-			m->prop.alpha = material->GetAlpha();
+			m->prop.alpha = shader->GetAlpha();
+
+			NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+			if (material) {
+				m->emissive = material->IsEmissive();
+
+				m->prop.specularColor = material->GetSpecularColor();
+				m->prop.shininess = material->GetGlossiness();
+
+				emissiveColor = material->GetEmissiveColor();
+				m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
+				m->prop.emissiveMultiple = material->GetEmissiveMultiple();
+
+				m->prop.alpha = material->GetAlpha();
+			}
+
+			NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
+			if (alphaProp) {
+				m->alphaFlags = alphaProp->flags;
+				m->alphaThreshold = alphaProp->threshold;
+			}
 		}
-
-		nif->GetAlphaForShape(shapeName, m->alphaFlags, m->alphaThreshold);
 	}
 
 	m->nVerts = nifVerts.size();
@@ -1078,7 +1085,6 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 
 	// Offset camera for skinned FO4 shapes
 	if (nif->GetHeader().GetVersion().User() == 12 && nif->GetHeader().GetVersion().User2() == 130) {
-		NiShape* shape = nif->FindShapeByName(shapeName);
 		if (shape && shape->IsSkinned())
 			camOffset.y = 12.0f;
 	}

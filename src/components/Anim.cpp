@@ -45,9 +45,6 @@ bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& bone
 
 void AnimInfo::Clear() {
 	if (refNif && refNif->IsValid()) {
-		std::vector<std::string> shapes;
-		refNif->GetShapeList(shapes);
-
 		for (auto &shapeBoneList : shapeBones) {
 			for (auto &boneName : shapeBoneList.second) {
 				AnimSkeleton::getInstance().ReleaseBone(boneName);
@@ -57,7 +54,7 @@ void AnimInfo::Clear() {
 		}
 
 		shapeSkinning.clear();
-		for (auto &s : shapes)
+		for (auto &s : refNif->GetShapeNames())
 			shapeBones[s].clear();
 
 		refNif = nullptr;
@@ -114,12 +111,9 @@ void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<u
 }
 
 bool AnimInfo::LoadFromNif(NifFile* nif) {
-	std::vector<std::string> shapes;
-	nif->GetShapeList(shapes);
-
 	Clear();
 
-	for (auto &s : shapes)
+	for (auto &s : nif->GetShapeNames())
 		LoadFromNif(nif, s);
 
 	refNif = nif;

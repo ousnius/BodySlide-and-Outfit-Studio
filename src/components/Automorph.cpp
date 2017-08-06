@@ -108,8 +108,8 @@ void Automorph::ApplyResultToUVs(const std::string& sliderName, const std::strin
 
 void Automorph::SourceShapesFromNif(NifFile &baseNif) {
 	ClearSourceShapes();
-	std::vector<std::string> shapes;
-	baseNif.GetShapeList(shapes);
+
+	std::vector<std::string> shapes = baseNif.GetShapeNames();
 	for (int i = 0; i < shapes.size(); i++) {
 		mesh* m = new mesh();
 		MeshFromNifShape(m, baseNif, shapes[i]);
