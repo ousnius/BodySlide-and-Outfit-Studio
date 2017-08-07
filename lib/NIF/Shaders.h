@@ -274,32 +274,32 @@ class NiShader : public NiProperty {
 public:
 	virtual bool IsSkinTint() { return false; }
 	virtual bool IsSkinned() { return false; }
-	virtual void SetSkinned(const bool enable) {}
+	virtual void SetSkinned(const bool) {}
 	virtual bool IsDoubleSided() { return false; }
 	virtual bool IsModelSpace() { return false; }
 	virtual bool IsEmissive() { return false; }
 	virtual bool HasSpecular() { return true; }
 	virtual bool HasBacklight() { return false; }
 	virtual uint GetShaderType() { return 0; }
-	virtual void SetShaderType(const uint type) {}
+	virtual void SetShaderType(const uint) {}
 	virtual Vector2 GetUVOffset() { return Vector2(); }
 	virtual Vector2 GetUVScale() { return Vector2(1.0f, 1.0f); }
 	virtual Vector3 GetSpecularColor() { return Vector3(); }
-	virtual void SetSpecularColor(const Vector3& color) {}
+	virtual void SetSpecularColor(const Vector3&) {}
 	virtual float GetSpecularStrength() { return 0.0f; }
-	virtual void SetSpecularStrength(const float strength) {}
+	virtual void SetSpecularStrength(const float) {}
 	virtual float GetGlossiness() { return 0.0f; }
-	virtual void SetGlossiness(const float gloss) {}
+	virtual void SetGlossiness(const float) {}
 	virtual float GetEnvironmentMapScale() { return 0.0f; }
 	virtual int GetTextureSetRef() { return 0xFFFFFFFF; }
-	virtual void SetTextureSetRef(const int texSetRef) {}
+	virtual void SetTextureSetRef(const int) {}
 	virtual Color4 GetEmissiveColor() { return Color4(); }
-	virtual void SetEmissiveColor(const Color4& color) {}
+	virtual void SetEmissiveColor(const Color4&) {}
 	virtual float GetEmissiveMultiple() { return 0.0f; }
-	virtual void SetEmissiveMultiple(const float emissive) {}
+	virtual void SetEmissiveMultiple(const float) {}
 	virtual float GetAlpha() { return 1.0f; }
 	virtual std::string GetWetMaterialName() { return std::string(); }
-	virtual void SetWetMaterialName(const std::string& matName) {}
+	virtual void SetWetMaterialName(const std::string&) {}
 };
 
 class BSShaderProperty : public NiShader {

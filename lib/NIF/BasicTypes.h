@@ -14,8 +14,6 @@ See the included LICENSE file
 #include <algorithm>
 #include <memory>
 
-#pragma warning (disable : 4100)
-
 class NiVersion {
 private:
 	std::string vstr;

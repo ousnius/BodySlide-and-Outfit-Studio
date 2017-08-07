@@ -6,8 +6,6 @@ See the included LICENSE file
 
 #include "SliderCategories.h"
 
-#pragma warning (disable: 4018)
-
 int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
 	categories.clear();
 
@@ -91,7 +89,7 @@ int SliderCategoryCollection::SetCategoryHidden(const std::string& categoryName,
 }
 
 void SliderCategory::MergeSliders(const SliderCategory& sourceCategory) {
-	for (int i = 0; i < sourceCategory.sliders.size(); i++) {
+	for (size_t i = 0; i < sourceCategory.sliders.size(); i++) {
 		sliders.push_back(sourceCategory.sliders[i]);
 		sourceFiles.push_back(sourceCategory.sourceFiles[i]);
 	}

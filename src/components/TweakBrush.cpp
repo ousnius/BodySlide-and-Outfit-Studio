@@ -6,8 +6,6 @@ See the included LICENSE file
 
 #include "TweakBrush.h"
 
-#pragma warning (disable : 4100)
-
 TweakUndo::TweakUndo() : curState(-1) {
 }
 
@@ -854,7 +852,7 @@ bool TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 	return true;
 }
 
-bool TB_Move::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
+bool TB_Move::queryPoints(mesh* m, TweakPickInfo&, int* resultPoints, int& outResultCount, std::vector<int>&, std::unordered_set<AABBTree::AABBTreeNode*>&) {
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (meshCache->nCachedPoints == 0)
 		return false;
@@ -869,7 +867,7 @@ bool TB_Move::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, i
 	return true;
 }
 
-void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints){
+void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, std::unordered_map<int, Vector3>& movedpoints){
 	float dist = pickInfo.origin.dot(pick.view) - d;
 	Vector3 v = pickInfo.origin - pick.view*dist;
 	Vector3 dv = v - pick.origin;
@@ -922,7 +920,7 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPo
 	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
-void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
+void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3* movedpoints) {
 	float dist = pickInfo.origin.dot(pick.view) - d;
 	Vector3 v = pickInfo.origin - pick.view*dist;
 	Vector3 dv = v - pick.origin;
@@ -1013,7 +1011,7 @@ bool TB_XForm::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pi
 	return true;
 }
 
-bool TB_XForm::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*>& affectedNodes) {
+bool TB_XForm::queryPoints(mesh* m, TweakPickInfo&, int* resultPoints, int& outResultCount, std::vector<int>&, std::unordered_set<AABBTree::AABBTreeNode*>&) {
 	TweakBrushMeshCache* meshCache = &cache[m];
 	if (meshCache->nCachedPoints == 0)
 		return false;
@@ -1028,7 +1026,7 @@ bool TB_XForm::queryPoints(mesh* m, TweakPickInfo& pickInfo, int* resultPoints, 
 	return true;
 }
 
-void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, std::unordered_map<int, Vector3>& movedpoints) {
 	float dist = pickInfo.origin.dot(pick.normal) - d;
 	Vector3 v = pickInfo.origin;
 	v -= pick.view * dist;
@@ -1059,7 +1057,7 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nP
 	m->QueueUpdate(mesh::UpdateType::Position);
 }
 
-void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
+void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3* movedpoints) {
 	Vector3 v = pickInfo.origin;
 	Vector3 dv = v - pick.origin;
 

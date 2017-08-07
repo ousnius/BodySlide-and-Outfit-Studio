@@ -53,25 +53,31 @@ void NiString::Get(NiStream& stream, const int szSize) {
 
 void NiString::Put(NiStream& stream, const int szSize, const bool wantNullOutput) {
 	if (szSize == 1) {
-		byte smSize = str.length();
-		if (wantNullOutput)
-			smSize += 1;
+		byte sz = byte(str.length());
+		str.resize(sz);
 
-		stream << smSize;
+		if (wantNullOutput)
+			sz += 1;
+
+		stream << sz;
 	}
 	else if (szSize == 2) {
-		ushort medSize = str.length();
-		if (wantNullOutput)
-			medSize += 1;
+		ushort sz = ushort(str.length());
+		str.resize(sz);
 
-		stream << medSize;
+		if (wantNullOutput)
+			sz += 1;
+
+		stream << sz;
 	}
 	else if (szSize == 4) {
-		uint bigSize = str.length();
-		if (wantNullOutput)
-			bigSize += 1;
+		uint sz = uint(str.length());
+		str.resize(sz);
 
-		stream << bigSize;
+		if (wantNullOutput)
+			sz += 1;
+
+		stream << sz;
 	}
 
 	stream.write(str.c_str(), str.length());

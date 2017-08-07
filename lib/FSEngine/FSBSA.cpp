@@ -40,8 +40,6 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "../LZ4F/lz4frame.h"
 
-#pragma warning (disable : 4389 4018)
-
 
 wxUint32 BSA::BSAFile::size() const {
 	if (sizeFlags > 0) {
@@ -277,7 +275,7 @@ bool BSA::open() {
 				throw std::string("file name seek");
 
 			wxMemoryBuffer fileNames(header.FileNameLength);
-			if (bsa.Read(fileNames.GetData(), header.FileNameLength) != header.FileNameLength)
+			if (bsa.Read(fileNames.GetData(), header.FileNameLength) != (ssize_t)header.FileNameLength)
 				throw std::string("file name read");
 
 			wxUint32 fileNameIndex = 0;
@@ -289,7 +287,7 @@ bool BSA::open() {
 			std::vector<BSAFolderInfo> folderInfos(header.FolderCount, initInfo);
 			if (version != SSE_BSAHEADER_VERSION) {
 				bool ok = true;
-				for (int i = 0; i < header.FolderCount; i++) {
+				for (wxUint32 i = 0; i < header.FolderCount; i++) {
 					ok &= bsa.Read((char *)&folderInfos[i], 8) == 8;		// Hash
 					ok &= bsa.Read((char *)&folderInfos[i] + 8, 4) == 4;	// File size
 					ok &= bsa.Read((char *)&folderInfos[i] + 16, 4) == 4;	// Offset: this is reading a uint32 into a uint64 whose memory must be zeroed
@@ -299,7 +297,7 @@ bool BSA::open() {
 				}
 			}
 			else {
-				if (bsa.Read((char *)folderInfos.data(), header.FolderCount * folderSize) != header.FolderCount * folderSize)
+				if (bsa.Read((char *)folderInfos.data(), header.FolderCount * folderSize) != (ssize_t)(header.FolderCount * folderSize))
 					throw std::string("folder info read");
 			}
 
@@ -315,7 +313,7 @@ bool BSA::open() {
 				wxUint32 fcnt = folderInfo.fileCount;
 				totalFileCount += fcnt;
 				std::vector<OBBSAFileInfo> fileInfos(fcnt);
-				if (bsa.Read((char *)fileInfos.data(), fcnt * sizeof(OBBSAFileInfo)) != fcnt * sizeof(OBBSAFileInfo))
+				if (bsa.Read((char *)fileInfos.data(), fcnt * sizeof(OBBSAFileInfo)) != (ssize_t)(fcnt * sizeof(OBBSAFileInfo)))
 					throw std::string("file info read");
 
 				for (const OBBSAFileInfo fileInfo : fileInfos) {
@@ -347,19 +345,19 @@ bool BSA::open() {
 
 			// file size/offset table
 			std::vector<MWBSAFileSizeOffset> sizeOffset(header.FileCount);
-			if (bsa.Read((char *)sizeOffset.data(), header.FileCount * sizeof(MWBSAFileSizeOffset)) != header.FileCount * sizeof(MWBSAFileSizeOffset))
+			if (bsa.Read((char *)sizeOffset.data(), header.FileCount * sizeof(MWBSAFileSizeOffset)) != (ssize_t)(header.FileCount * sizeof(MWBSAFileSizeOffset)))
 				throw std::string("file size/offset");
 
 			// filename offset table
 			std::vector<wxUint32> nameOffset(header.FileCount);
-			if (bsa.Read((char *)nameOffset.data(), header.FileCount * sizeof(wxUint32)) != header.FileCount * sizeof(wxUint32))
+			if (bsa.Read((char *)nameOffset.data(), header.FileCount * sizeof(wxUint32)) != (ssize_t)(header.FileCount * sizeof(wxUint32)))
 				throw std::string("file name offset");
 
 			// filenames. size is given by ( HashOffset - ( 8 * number of file/size offsets) - ( 4 * number of filenames) )
 			// i.e. ( HashOffset - ( 12 * number of files ) )
 			wxMemoryBuffer fileNames;
 			fileNames.SetBufSize(header.HashOffset - 12 * header.FileCount);
-			if (bsa.Read((char *)fileNames.GetData(), header.HashOffset - 12 * header.FileCount) != header.HashOffset - 12 * header.FileCount)
+			if (bsa.Read((char *)fileNames.GetData(), header.HashOffset - 12 * header.FileCount) != (ssize_t)(header.HashOffset - 12 * header.FileCount))
 				throw std::string("file names");
 
 			// table of 8 bytes of hash values follow, but we don't need to know what they are
@@ -413,7 +411,7 @@ wxInt64 BSA::fileSize(const std::string & fn) const {
 		wxUint64 size = file->unpackedLength;
 
 		if (file->tex.chunks.size()) {
-			for (int i = 1; i < file->tex.chunks.size(); i++) {
+			for (size_t i = 1; i < file->tex.chunks.size(); i++) {
 				size += file->tex.chunks[i].unpackedSize;
 			}
 		}
@@ -552,7 +550,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 
 				if (file->tex.chunks.size() > 0) {
 					// Start at 2nd chunk for BA2
-					for (int i = 1; i < file->tex.chunks.size(); i++) {
+					for (size_t i = 1; i < file->tex.chunks.size(); i++) {
 						const F4TexChunk& chunk = file->tex.chunks[i];
 						if (bsa.Seek(chunk.offset)) {
 							wxMemoryBuffer chunkData;
@@ -560,7 +558,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 							if (chunk.packedSize > 0) {
 								chunkData.SetBufSize(chunk.packedSize);
 								chunkData.SetDataLen(chunk.packedSize);
-								if (bsa.Read(chunkData.GetData(), chunk.packedSize) == chunk.packedSize)
+								if (bsa.Read(chunkData.GetData(), chunk.packedSize) == (ssize_t)chunk.packedSize)
 									chunkData = gUncompress(chunkData);
 
 								if (chunkData.GetDataLen() != chunk.unpackedSize) {
@@ -572,7 +570,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 							else {
 								chunkData.SetBufSize(chunk.unpackedSize);
 								chunkData.SetDataLen(chunk.unpackedSize);
-								if (!(bsa.Read(chunkData.GetData(), chunk.unpackedSize) == chunk.unpackedSize)) {
+								if (!(bsa.Read(chunkData.GetData(), chunk.unpackedSize) == (ssize_t)chunk.unpackedSize)) {
 									// Size does not match at chunk.offset
 									return false;
 								}

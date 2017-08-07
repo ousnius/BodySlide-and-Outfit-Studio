@@ -61,7 +61,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 	outSet.SetGenWeights(genWeights);
 
 	wxString ssFileName = strFileName;
-	if (ssFileName.Find("SliderSets\\") == wxString::npos)
+	if (ssFileName.Find("SliderSets\\") == wxNOT_FOUND)
 		ssFileName = ssFileName.Prepend("SliderSets\\");
 
 	mFileName = ssFileName;

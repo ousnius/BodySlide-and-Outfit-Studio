@@ -256,20 +256,31 @@ void NiGeometryData::UpdateBounds() {
 	bounds = BoundingSphere(vertices);
 }
 
-void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords) {
-	numVertices = verts->size();
-	for (auto &v : (*verts))
-		vertices.push_back(v);
+void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>*, std::vector<Vector2>* texcoords) {
+	size_t vertCount = verts->size();
+	ushort maxIndex = std::numeric_limits<ushort>().max();
 
-	if (texcoords->size() > 0)
-		numUVSets = 4097;
+	if (vertCount > maxIndex)
+		numVertices = maxIndex;
 	else
-		numUVSets = 0;
+		numVertices = ushort(vertCount);
+
+	vertices.resize(numVertices);
+	for (int v = 0; v < numVertices; v++)
+		vertices[v] = (*verts)[v];
 
 	bounds = BoundingSphere(*verts);
+	numUVSets = 0;
 
-	for (auto &uv : *texcoords)
-		uvSets.push_back(uv);
+	size_t uvCount = texcoords->size();
+	if (uvCount == numVertices) {
+		uvSets.resize(uvCount);
+		for (size_t uv = 0; uv < uvSets.size(); uv++)
+			uvSets[uv] = (*texcoords)[uv];
+
+		if (uvCount > 0)
+			numUVSets = 4097;
+	}
 }
 
 void NiGeometryData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
@@ -305,7 +316,7 @@ void NiGeometryData::notifyVerticesDelete(const std::vector<ushort>& vertIndices
 	}
 }
 
-void NiGeometryData::RecalcNormals(const bool smooth, const float smoothThresh) {
+void NiGeometryData::RecalcNormals(const bool, const float) {
 	SetNormals(true);
 }
 
@@ -315,16 +326,16 @@ void NiGeometryData::CalcTangentSpace() {
 
 
 int NiShape::GetSkinInstanceRef() { return 0xFFFFFFFF; }
-void NiShape::SetSkinInstanceRef(int skinInstanceRef) { }
+void NiShape::SetSkinInstanceRef(int) { }
 
 int NiShape::GetShaderPropertyRef() { return 0xFFFFFFFF; }
-void NiShape::SetShaderPropertyRef(int shaderPropertyRef) { }
+void NiShape::SetShaderPropertyRef(int) { }
 
 int NiShape::GetAlphaPropertyRef() { return 0xFFFFFFFF; }
-void NiShape::SetAlphaPropertyRef(int alphaPropertyRef) { }
+void NiShape::SetAlphaPropertyRef(int) { }
 
 int NiShape::GetDataRef() { return 0xFFFFFFFF; }
-void NiShape::SetDataRef(int dataRef) { }
+void NiShape::SetDataRef(int) { }
 
 void NiShape::SetVertices(const bool enable) {
 	if (geomData)
@@ -386,7 +397,7 @@ bool NiShape::HasVertexColors() {
 	return false;
 };
 
-void NiShape::SetSkinned(const bool enable) { };
+void NiShape::SetSkinned(const bool) { };
 bool NiShape::IsSkinned() { return false; };
 
 void NiShape::SetBounds(const BoundingSphere& bounds) {
@@ -1157,8 +1168,20 @@ int BSTriShape::CalcDataSizes(NiVersion& version) {
 
 void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals) {
 	flags = 14;
-	numVertices = verts->size();
-	numTriangles = tris->size();
+
+	ushort maxVertIndex = std::numeric_limits<ushort>().max();
+	size_t vertCount = verts->size();
+	if (vertCount > maxVertIndex)
+		numVertices = maxVertIndex;
+	else
+		numVertices = ushort(vertCount);
+
+	uint maxTriIndex = std::numeric_limits<uint>().max();
+	size_t triCount = tris->size();
+	if (triCount > maxTriIndex)
+		numTriangles = maxTriIndex;
+	else
+		numTriangles = uint(triCount);
 
 	vertData.resize(numVertices);
 
@@ -1497,7 +1520,12 @@ void BSDynamicTriShape::CalcDynamicData() {
 void BSDynamicTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* normals) {
 	BSTriShape::Create(verts, tris, uvs, normals);
 
-	dynamicDataSize = verts->size();
+	uint maxIndex = std::numeric_limits<uint>().max();
+	size_t vertCount = verts->size();
+	if (vertCount > maxIndex)
+		dynamicDataSize = maxIndex;
+	else
+		dynamicDataSize = uint(vertCount);
 
 	dynamicData.resize(dynamicDataSize);
 	for (int i = 0; i < dynamicDataSize; i++) {
@@ -1587,7 +1615,12 @@ void NiTriBasedGeomData::Put(NiStream& stream) {
 void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords) {
 	NiGeometryData::Create(verts, inTris, texcoords);
 
-	numTriangles = inTris->size();
+	ushort maxIndex = std::numeric_limits<ushort>().max();
+	size_t triCount = inTris->size();
+	if (triCount > maxIndex)
+		numTriangles = maxIndex;
+	else
+		numTriangles = ushort(triCount);
 }
 
 
@@ -1644,8 +1677,10 @@ void NiTriShapeData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* 
 
 	numTrianglePoints = numTriangles * 3;
 	hasTriangles = true;
-	for (auto &t : *inTris)
-		triangles.push_back(t);
+
+	triangles.resize(numTriangles);
+	for (ushort t = 0; t < numTriangles; t++)
+		triangles[t] = (*inTris)[t];
 
 	numMatchGroups = 0;
 }
