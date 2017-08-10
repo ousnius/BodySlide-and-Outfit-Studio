@@ -24,7 +24,7 @@ void NiNode::Put(NiStream& stream) {
 		effectRefs.Put(stream);
 }
 
-void NiNode::GetChildRefs(std::set<int*>& refs) {
+void NiNode::GetChildRefs(std::set<Ref*>& refs) {
 	NiAVObject::GetChildRefs(refs);
 
 	childRefs.GetIndexPtrs(refs);
@@ -87,7 +87,7 @@ void BSTreeNode::Put(NiStream& stream) {
 	bones2.Put(stream);
 }
 
-void BSTreeNode::GetChildRefs(std::set<int*>& refs) {
+void BSTreeNode::GetChildRefs(std::set<Ref*>& refs) {
 	NiNode::GetChildRefs(refs);
 
 	bones1.GetIndexPtrs(refs);
@@ -169,10 +169,10 @@ void BSMultiBound::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void BSMultiBound::GetChildRefs(std::set<int*>& refs) {
+void BSMultiBound::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -194,10 +194,10 @@ void BSMultiBoundNode::Put(NiStream& stream) {
 		stream << cullingMode;
 }
 
-void BSMultiBoundNode::GetChildRefs(std::set<int*>& refs) {
+void BSMultiBoundNode::GetChildRefs(std::set<Ref*>& refs) {
 	NiNode::GetChildRefs(refs);
 
-	refs.insert(&multiBoundRef.index);
+	refs.insert(&multiBoundRef);
 }
 
 
@@ -312,10 +312,10 @@ void NiLODNode::Put(NiStream& stream) {
 	lodLevelData.Put(stream);
 }
 
-void NiLODNode::GetChildRefs(std::set<int*>& refs) {
+void NiLODNode::GetChildRefs(std::set<Ref*>& refs) {
 	NiSwitchNode::GetChildRefs(refs);
 
-	refs.insert(&lodLevelData.index);
+	refs.insert(&lodLevelData);
 }
 
 

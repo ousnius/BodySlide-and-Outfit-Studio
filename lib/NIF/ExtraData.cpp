@@ -53,6 +53,15 @@ void NiBinaryExtraData::Put(NiStream& stream) {
 		stream << data[i];
 }
 
+std::vector<byte> NiBinaryExtraData::GetData() {
+	return data;
+}
+
+void NiBinaryExtraData::SetData(const std::vector<byte>& dat) {
+	size = dat.size();
+	data = dat;
+}
+
 
 void NiFloatExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -117,6 +126,15 @@ void NiStringsExtraData::Put(NiStream& stream) {
 	stream << numStrings;
 	for (int i = 0; i < numStrings; i++)
 		stringsData[i].Put(stream, 4, false);
+}
+
+std::vector<NiString> NiStringsExtraData::GetStringsData() {
+	return stringsData;
+}
+
+void NiStringsExtraData::SetStringsData(const std::vector<NiString>& strsData) {
+	numStrings = strsData.size();
+	stringsData = strsData;
 }
 
 
@@ -474,6 +492,15 @@ void BSFurnitureMarker::Put(NiStream& stream) {
 	}
 }
 
+std::vector<FurniturePosition> BSFurnitureMarker::GetPositions() {
+	return positions;
+}
+
+void BSFurnitureMarker::SetPositions(const std::vector<FurniturePosition>& pos) {
+	numPositions = pos.size();
+	positions = pos;
+}
+
 
 void BSDecalPlacementVectorExtraData::Get(NiStream& stream) {
 	NiFloatExtraData::Get(stream);
@@ -508,6 +535,15 @@ void BSDecalPlacementVectorExtraData::Put(NiStream& stream) {
 		for (int j = 0; j < decalVectorBlocks[i].numVectors; j++)
 			stream << decalVectorBlocks[i].normals[j];
 	}
+}
+
+std::vector<DecalVectorBlock> BSDecalPlacementVectorExtraData::GetDecalVectorBlocks() {
+	return decalVectorBlocks;
+}
+
+void BSDecalPlacementVectorExtraData::SetDecalVectorBlocks(const std::vector<DecalVectorBlock>& vectorBlocks) {
+	numVectorBlocks = vectorBlocks.size();
+	decalVectorBlocks = vectorBlocks;
 }
 
 
@@ -575,6 +611,15 @@ void BSBoneLODExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 		refs.insert(&boneLODs[i].boneName);
 }
 
+std::vector<BoneLOD> BSBoneLODExtraData::GetBoneLODs() {
+	return boneLODs;
+}
+
+void BSBoneLODExtraData::SetBoneLODs(const std::vector<BoneLOD>& lods) {
+	numBoneLODs = lods.size();
+	boneLODs = lods;
+}
+
 
 void NiTextKeyExtraData::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -602,6 +647,15 @@ void NiTextKeyExtraData::GetStringRefs(std::set<StringRef*>& refs) {
 
 	for (int i = 0; i < numTextKeys; i++)
 		refs.insert(&textKeys[i].value);
+}
+
+std::vector<Key<StringRef>> NiTextKeyExtraData::GetTextKeys() {
+	return textKeys;
+}
+
+void NiTextKeyExtraData::SetTextKeys(const std::vector<Key<StringRef>>& keys) {
+	numTextKeys = keys.size();
+	textKeys = keys;
 }
 
 
@@ -654,6 +708,15 @@ void BSConnectPointParents::Put(NiStream& stream) {
 		connectPoints[i].Put(stream);
 }
 
+std::vector<BSConnectPoint> BSConnectPointParents::GetConnectPoints() {
+	return connectPoints;
+}
+
+void BSConnectPointParents::SetConnectPoints(const std::vector<BSConnectPoint>& cps) {
+	numConnectPoints = cps.size();
+	connectPoints = cps;
+}
+
 
 void BSConnectPointChildren::Get(NiStream& stream) {
 	NiExtraData::Get(stream);
@@ -674,6 +737,15 @@ void BSConnectPointChildren::Put(NiStream& stream) {
 
 	for (int i = 0; i < numTargets; i++)
 		targets[i].Put(stream, 4, false);
+}
+
+std::vector<NiString> BSConnectPointChildren::GetTargets() {
+	return targets;
+}
+
+void BSConnectPointChildren::SetTargets(const std::vector<NiString>& targ) {
+	numTargets = targ.size();
+	targets = targ;
 }
 
 
@@ -701,6 +773,15 @@ void BSClothExtraData::Put(NiStream& stream) {
 		return;
 
 	stream.write(&data[0], numBytes);
+}
+
+std::vector<char> BSClothExtraData::GetData() {
+	return data;
+}
+
+void BSClothExtraData::SetData(const std::vector<char>& dat) {
+	numBytes = dat.size();
+	data = dat;
 }
 
 

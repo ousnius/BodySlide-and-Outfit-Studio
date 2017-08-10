@@ -36,7 +36,7 @@ public:
 	int GetExtraDataRef(const int id);
 	void AddExtraDataRef(const int id);
 
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 };
 
 class NiProperty;
@@ -55,10 +55,10 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 
-	int GetCollisionRef() { return collisionRef.index; }
-	void SetCollisionRef(const int colRef) { collisionRef.index = colRef; }
+	int GetCollisionRef() { return collisionRef.GetIndex(); }
+	void SetCollisionRef(const int colRef) { collisionRef.SetIndex(colRef); }
 
 	bool rotToEulerDegrees(float &Y, float& P, float& R) {
 		float rx, ry, rz;
@@ -110,7 +110,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	NiDefaultAVObjectPalette* Clone() { return new NiDefaultAVObjectPalette(*this); }
 };
 
@@ -140,7 +140,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiCamera* Clone() { return new NiCamera(*this); }
 };
 
@@ -226,7 +226,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 };
 
 class NiPersistentSrcTextureRendererData : public TextureRenderData {
@@ -314,7 +314,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiSourceTexture* Clone() { return new NiSourceTexture(*this); }
 };
 
@@ -365,7 +365,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 };
 
 class NiTextureEffect : public NiDynamicEffect {
@@ -387,7 +387,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiTextureEffect* Clone() { return new NiTextureEffect(*this); }
 };
 

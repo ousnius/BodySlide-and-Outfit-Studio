@@ -106,8 +106,8 @@ struct TexDesc {
 			stream << transform;
 	}
 
-	void GetChildRefs(std::set<int*>& refs) {
-		refs.insert(&sourceRef.index);
+	void GetChildRefs(std::set<Ref*>& refs) {
+		refs.insert(&sourceRef);
 	}
 };
 
@@ -134,7 +134,7 @@ struct ShaderTexDesc {
 		}
 	}
 
-	void GetChildRefs(std::set<int*>& refs) {
+	void GetChildRefs(std::set<Ref*>& refs) {
 		data.GetChildRefs(refs);
 	}
 };
@@ -193,7 +193,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 
 	NiTexturingProperty* Clone() { return new NiTexturingProperty(*this); }
 };
@@ -446,7 +446,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
 
 	bool IsSkinTint();
@@ -639,7 +639,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSShaderPPLightingProperty* Clone() { return new BSShaderPPLightingProperty(*this); }
 
 	bool IsSkinTint();

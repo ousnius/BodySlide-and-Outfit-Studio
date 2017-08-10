@@ -175,7 +175,7 @@ void NiTexturingProperty::Put(NiStream& stream) {
 		shaderTex[i].Put(stream);
 }
 
-void NiTexturingProperty::GetChildRefs(std::set<int*>& refs) {
+void NiTexturingProperty::GetChildRefs(std::set<Ref*>& refs) {
 	NiProperty::GetChildRefs(refs);
 
 	baseTex.GetChildRefs(refs);
@@ -572,10 +572,10 @@ void BSLightingShaderProperty::GetStringRefs(std::set<StringRef*>& refs) {
 	refs.insert(&wetMaterialName);
 }
 
-void BSLightingShaderProperty::GetChildRefs(std::set<int*>& refs) {
+void BSLightingShaderProperty::GetChildRefs(std::set<Ref*>& refs) {
 	BSShaderProperty::GetChildRefs(refs);
 
-	refs.insert(&textureSetRef.index);
+	refs.insert(&textureSetRef);
 }
 
 bool BSLightingShaderProperty::IsSkinTint() {
@@ -642,11 +642,11 @@ void BSLightingShaderProperty::SetGlossiness(const float gloss) {
 }
 
 int BSLightingShaderProperty::GetTextureSetRef() {
-	return textureSetRef.index;
+	return textureSetRef.GetIndex();
 }
 
 void BSLightingShaderProperty::SetTextureSetRef(const int texSetRef) {
-	textureSetRef.index = texSetRef;
+	textureSetRef.SetIndex(texSetRef);
 }
 
 Color4 BSLightingShaderProperty::GetEmissiveColor() {
@@ -925,10 +925,10 @@ void BSShaderPPLightingProperty::Put(NiStream& stream) {
 		stream << emissiveColor;
 }
 
-void BSShaderPPLightingProperty::GetChildRefs(std::set<int*>& refs) {
+void BSShaderPPLightingProperty::GetChildRefs(std::set<Ref*>& refs) {
 	BSShaderLightingProperty::GetChildRefs(refs);
 
-	refs.insert(&textureSetRef.index);
+	refs.insert(&textureSetRef);
 }
 
 bool BSShaderPPLightingProperty::IsSkinTint() {
@@ -947,11 +947,11 @@ void BSShaderPPLightingProperty::SetSkinned(const bool enable) {
 }
 
 int BSShaderPPLightingProperty::GetTextureSetRef() {
-	return textureSetRef.index;
+	return textureSetRef.GetIndex();
 }
 
 void BSShaderPPLightingProperty::SetTextureSetRef(const int texSetRef) {
-	textureSetRef.index = texSetRef;
+	textureSetRef.SetIndex(texSetRef);
 }
 
 

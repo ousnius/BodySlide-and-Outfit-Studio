@@ -551,17 +551,17 @@ void NiSkinInstance::Put(NiStream& stream) {
 	boneRefs.Put(stream);
 }
 
-void NiSkinInstance::GetChildRefs(std::set<int*>& refs) {
+void NiSkinInstance::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
-	refs.insert(&skinPartitionRef.index);
+	refs.insert(&dataRef);
+	refs.insert(&skinPartitionRef);
 }
 
-void NiSkinInstance::GetPtrs(std::set<int*>& ptrs) {
+void NiSkinInstance::GetPtrs(std::set<Ref*>& ptrs) {
 	NiObject::GetPtrs(ptrs);
 
-	ptrs.insert(&targetRef.index);
+	ptrs.insert(&targetRef);
 	boneRefs.GetIndexPtrs(ptrs);
 }
 
@@ -645,15 +645,15 @@ void BSSkinInstance::Put(NiStream& stream) {
 		stream << unk[i];
 }
 
-void BSSkinInstance::GetChildRefs(std::set<int*>& refs) {
+void BSSkinInstance::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
-void BSSkinInstance::GetPtrs(std::set<int*>& ptrs) {
+void BSSkinInstance::GetPtrs(std::set<Ref*>& ptrs) {
 	NiObject::GetPtrs(ptrs);
 
-	ptrs.insert(&targetRef.index);
+	ptrs.insert(&targetRef);
 	boneRefs.GetIndexPtrs(ptrs);
 }

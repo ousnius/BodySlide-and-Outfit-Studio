@@ -168,16 +168,16 @@ void NiTimeController::Put(NiStream& stream) {
 	targetRef.Put(stream);
 }
 
-void NiTimeController::GetChildRefs(std::set<int*>& refs) {
+void NiTimeController::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
-	refs.insert(&nextControllerRef.index);
+	refs.insert(&nextControllerRef);
 }
 
-void NiTimeController::GetPtrs(std::set<int*>& ptrs) {
+void NiTimeController::GetPtrs(std::set<Ref*>& ptrs) {
 	NiObject::GetPtrs(ptrs);
 
-	ptrs.insert(&targetRef.index);
+	ptrs.insert(&targetRef);
 }
 
 
@@ -195,10 +195,10 @@ void NiLookAtController::Put(NiStream& stream) {
 	lookAtNodePtr.Put(stream);
 }
 
-void NiLookAtController::GetPtrs(std::set<int*>& ptrs) {
+void NiLookAtController::GetPtrs(std::set<Ref*>& ptrs) {
 	NiTimeController::GetPtrs(ptrs);
 
-	ptrs.insert(&lookAtNodePtr.index);
+	ptrs.insert(&lookAtNodePtr);
 }
 
 
@@ -226,11 +226,11 @@ void NiPathController::Put(NiStream& stream) {
 	floatDataRef.Put(stream);
 }
 
-void NiPathController::GetChildRefs(std::set<int*>& refs) {
+void NiPathController::GetChildRefs(std::set<Ref*>& refs) {
 	NiTimeController::GetChildRefs(refs);
 
-	refs.insert(&posDataRef.index);
-	refs.insert(&floatDataRef.index);
+	refs.insert(&posDataRef);
+	refs.insert(&floatDataRef);
 }
 
 
@@ -267,10 +267,10 @@ void NiUVController::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void NiUVController::GetChildRefs(std::set<int*>& refs) {
+void NiUVController::GetChildRefs(std::set<Ref*>& refs) {
 	NiTimeController::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -288,10 +288,10 @@ void BSRefractionFirePeriodController::Put(NiStream& stream) {
 		interpRef.Put(stream);
 }
 
-void BSRefractionFirePeriodController::GetChildRefs(std::set<int*>& refs) {
+void BSRefractionFirePeriodController::GetChildRefs(std::set<Ref*>& refs) {
 	NiTimeController::GetChildRefs(refs);
 
-	refs.insert(&interpRef.index);
+	refs.insert(&interpRef);
 }
 
 
@@ -307,10 +307,10 @@ void BSFrustumFOVController::Put(NiStream& stream) {
 	interpolatorRef.Put(stream);
 }
 
-void BSFrustumFOVController::GetChildRefs(std::set<int*>& refs) {
+void BSFrustumFOVController::GetChildRefs(std::set<Ref*>& refs) {
 	NiTimeController::GetChildRefs(refs);
 
-	refs.insert(&interpolatorRef.index);
+	refs.insert(&interpolatorRef);
 }
 
 
@@ -391,19 +391,19 @@ void BSProceduralLightningController::Put(NiStream& stream) {
 	shaderPropertyRef.Put(stream);
 }
 
-void BSProceduralLightningController::GetChildRefs(std::set<int*>& refs) {
+void BSProceduralLightningController::GetChildRefs(std::set<Ref*>& refs) {
 	NiTimeController::GetChildRefs(refs);
 
-	refs.insert(&generationInterpRef.index);
-	refs.insert(&mutationInterpRef.index);
-	refs.insert(&subdivisionInterpRef.index);
-	refs.insert(&numBranchesInterpRef.index);
-	refs.insert(&numBranchesVarInterpRef.index);
-	refs.insert(&lengthInterpRef.index);
-	refs.insert(&lengthVarInterpRef.index);
-	refs.insert(&widthInterpRef.index);
-	refs.insert(&arcOffsetInterpRef.index);
-	refs.insert(&shaderPropertyRef.index);
+	refs.insert(&generationInterpRef);
+	refs.insert(&mutationInterpRef);
+	refs.insert(&subdivisionInterpRef);
+	refs.insert(&numBranchesInterpRef);
+	refs.insert(&numBranchesVarInterpRef);
+	refs.insert(&lengthInterpRef);
+	refs.insert(&lengthVarInterpRef);
+	refs.insert(&widthInterpRef);
+	refs.insert(&arcOffsetInterpRef);
+	refs.insert(&shaderPropertyRef);
 }
 
 
@@ -430,7 +430,7 @@ void NiBoneLODController::Put(NiStream& stream) {
 		boneArrays[i].Put(stream);
 }
 
-void NiBoneLODController::GetPtrs(std::set<int*>& ptrs) {
+void NiBoneLODController::GetPtrs(std::set<Ref*>& ptrs) {
 	NiTimeController::GetPtrs(ptrs);
 
 	for (int i = 0; i < boneArraysSize; i++)
@@ -494,10 +494,10 @@ void NiGeomMorpherController::Put(NiStream& stream) {
 		interpWeights[i].Put(stream);
 }
 
-void NiGeomMorpherController::GetChildRefs(std::set<int*>& refs) {
+void NiGeomMorpherController::GetChildRefs(std::set<Ref*>& refs) {
 	NiInterpController::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 
 	for (auto &m : interpWeights)
 		m.GetChildRefs(refs);
@@ -516,10 +516,10 @@ void NiSingleInterpController::Put(NiStream& stream) {
 	interpolatorRef.Put(stream);
 }
 
-void NiSingleInterpController::GetChildRefs(std::set<int*>& refs) {
+void NiSingleInterpController::GetChildRefs(std::set<Ref*>& refs) {
 	NiInterpController::GetChildRefs(refs);
 
-	refs.insert(&interpolatorRef.index);
+	refs.insert(&interpolatorRef);
 }
 
 
@@ -535,10 +535,10 @@ void NiRollController::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void NiRollController::GetChildRefs(std::set<int*>& refs) {
+void NiRollController::GetChildRefs(std::set<Ref*>& refs) {
 	NiSingleInterpController::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -610,7 +610,7 @@ void NiFlipController::Put(NiStream& stream) {
 	sourceRefs.Put(stream);
 }
 
-void NiFlipController::GetChildRefs(std::set<int*>& refs) {
+void NiFlipController::GetChildRefs(std::set<Ref*>& refs) {
 	NiFloatInterpController::GetChildRefs(refs);
 
 	sourceRefs.GetIndexPtrs(refs);
@@ -711,7 +711,7 @@ void NiMultiTargetTransformController::Put(NiStream& stream) {
 	targetRefs.Put(stream);
 }
 
-void NiMultiTargetTransformController::GetPtrs(std::set<int*>& ptrs) {
+void NiMultiTargetTransformController::GetPtrs(std::set<Ref*>& ptrs) {
 	NiInterpController::GetPtrs(ptrs);
 
 	targetRefs.GetIndexPtrs(ptrs);
@@ -749,10 +749,10 @@ void NiPSysEmitterCtlr::Put(NiStream& stream) {
 	visInterpolatorRef.Put(stream);
 }
 
-void NiPSysEmitterCtlr::GetChildRefs(std::set<int*>& refs) {
+void NiPSysEmitterCtlr::GetChildRefs(std::set<Ref*>& refs) {
 	NiPSysModifierCtlr::GetChildRefs(refs);
 
-	refs.insert(&visInterpolatorRef.index);
+	refs.insert(&visInterpolatorRef);
 }
 
 
@@ -770,10 +770,10 @@ void BSPSysMultiTargetEmitterCtlr::Put(NiStream& stream) {
 	masterParticleSystemRef.Put(stream);
 }
 
-void BSPSysMultiTargetEmitterCtlr::GetPtrs(std::set<int*>& ptrs) {
+void BSPSysMultiTargetEmitterCtlr::GetPtrs(std::set<Ref*>& ptrs) {
 	NiPSysEmitterCtlr::GetPtrs(ptrs);
 
-	ptrs.insert(&masterParticleSystemRef.index);
+	ptrs.insert(&masterParticleSystemRef);
 }
 
 
@@ -795,11 +795,11 @@ void NiBSplineInterpolator::Put(NiStream& stream) {
 	basisDataRef.Put(stream);
 }
 
-void NiBSplineInterpolator::GetChildRefs(std::set<int*>& refs) {
+void NiBSplineInterpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiInterpolator::GetChildRefs(refs);
 
-	refs.insert(&splineDataRef.index);
-	refs.insert(&basisDataRef.index);
+	refs.insert(&splineDataRef);
+	refs.insert(&basisDataRef);
 }
 
 
@@ -961,10 +961,10 @@ void NiBoolInterpolator::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void NiBoolInterpolator::GetChildRefs(std::set<int*>& refs) {
+void NiBoolInterpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -982,10 +982,10 @@ void NiFloatInterpolator::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void NiFloatInterpolator::GetChildRefs(std::set<int*>& refs) {
+void NiFloatInterpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -1007,10 +1007,10 @@ void NiTransformInterpolator::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void NiTransformInterpolator::GetChildRefs(std::set<int*>& refs) {
+void NiTransformInterpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -1028,10 +1028,10 @@ void NiPoint3Interpolator::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void NiPoint3Interpolator::GetChildRefs(std::set<int*>& refs) {
+void NiPoint3Interpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -1059,11 +1059,11 @@ void NiPathInterpolator::Put(NiStream& stream) {
 	percentDataRef.Put(stream);
 }
 
-void NiPathInterpolator::GetChildRefs(std::set<int*>& refs) {
+void NiPathInterpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiKeyBasedInterpolator::GetChildRefs(refs);
 
-	refs.insert(&pathDataRef.index);
-	refs.insert(&percentDataRef.index);
+	refs.insert(&pathDataRef);
+	refs.insert(&percentDataRef);
 }
 
 
@@ -1097,18 +1097,18 @@ void NiLookAtInterpolator::GetStringRefs(std::set<StringRef*>& refs) {
 	refs.insert(&lookAtName);
 }
 
-void NiLookAtInterpolator::GetChildRefs(std::set<int*>& refs) {
+void NiLookAtInterpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiInterpolator::GetChildRefs(refs);
 
-	refs.insert(&translateInterpRef.index);
-	refs.insert(&rollInterpRef.index);
-	refs.insert(&scaleInterpRef.index);
+	refs.insert(&translateInterpRef);
+	refs.insert(&rollInterpRef);
+	refs.insert(&scaleInterpRef);
 }
 
-void NiLookAtInterpolator::GetPtrs(std::set<int*>& ptrs) {
+void NiLookAtInterpolator::GetPtrs(std::set<Ref*>& ptrs) {
 	NiInterpolator::GetPtrs(ptrs);
 
-	ptrs.insert(&lookAtRef.index);
+	ptrs.insert(&lookAtRef);
 }
 
 
@@ -1140,10 +1140,10 @@ void BSTreadTransfInterpolator::GetStringRefs(std::set<StringRef*>& refs) {
 		treadTransforms[i].GetStringRefs(refs);
 }
 
-void BSTreadTransfInterpolator::GetChildRefs(std::set<int*>& refs) {
+void BSTreadTransfInterpolator::GetChildRefs(std::set<Ref*>& refs) {
 	NiInterpolator::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -1220,12 +1220,12 @@ void NiSequence::GetStringRefs(std::set<StringRef*>& refs) {
 	}
 }
 
-void NiSequence::GetChildRefs(std::set<int*>& refs) {
+void NiSequence::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
 	for (int i = 0; i < numControlledBlocks; i++) {
-		refs.insert(&controlledBlocks[i].interpolatorRef.index);
-		refs.insert(&controlledBlocks[i].controllerRef.index);
+		refs.insert(&controlledBlocks[i].interpolatorRef);
+		refs.insert(&controlledBlocks[i].controllerRef);
 	}
 }
 
@@ -1273,7 +1273,7 @@ void BSAnimNotes::Put(NiStream& stream) {
 	animNoteRefs.Put(stream);
 }
 
-void BSAnimNotes::GetChildRefs(std::set<int*>& refs) {
+void BSAnimNotes::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
 	animNoteRefs.GetIndexPtrs(refs);
@@ -1322,18 +1322,18 @@ void NiControllerSequence::GetStringRefs(std::set<StringRef*>& refs) {
 	refs.insert(&accumRootName);
 }
 
-void NiControllerSequence::GetChildRefs(std::set<int*>& refs) {
+void NiControllerSequence::GetChildRefs(std::set<Ref*>& refs) {
 	NiSequence::GetChildRefs(refs);
 
-	refs.insert(&textKeyRef.index);
-	refs.insert(&animNotesRef.index);
+	refs.insert(&textKeyRef);
+	refs.insert(&animNotesRef);
 	animNotesRefs.GetIndexPtrs(refs);
 }
 
-void NiControllerSequence::GetPtrs(std::set<int*>& ptrs) {
+void NiControllerSequence::GetPtrs(std::set<Ref*>& ptrs) {
 	NiSequence::GetPtrs(ptrs);
 
-	ptrs.insert(&managerRef.index);
+	ptrs.insert(&managerRef);
 }
 
 
@@ -1355,9 +1355,9 @@ void NiControllerManager::Put(NiStream& stream) {
 	objectPaletteRef.Put(stream);
 }
 
-void NiControllerManager::GetChildRefs(std::set<int*>& refs) {
+void NiControllerManager::GetChildRefs(std::set<Ref*>& refs) {
 	NiTimeController::GetChildRefs(refs);
 
 	controllerSequenceRefs.GetIndexPtrs(refs);
-	refs.insert(&objectPaletteRef.index);
+	refs.insert(&objectPaletteRef);
 }

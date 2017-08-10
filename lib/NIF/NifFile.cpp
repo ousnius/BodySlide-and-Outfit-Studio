@@ -373,7 +373,7 @@ NiNode* NifFile::GetParentNode(NiObject* childBlock) {
 			if (node) {
 				auto children = node->GetChildren();
 				for (auto it = children.begin(); it < children.end(); ++it) {
-					if (childId == it->index)
+					if (childId == it->GetIndex())
 						return node;
 				}
 			}
@@ -789,11 +789,11 @@ void NifFile::CopyController(NiHeader& srcHeader, NiShader* destShader, NiShader
 		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
 		int controllerId = hdr.AddBlock(destController);
 
-		destController->targetRef.index = shaderId;
+		destController->SetTargetRef(shaderId);
 		destShader->SetControllerRef(controllerId);
 
 		CopyInterpolators(srcHeader, destController, srcController);
-		nextControllerRef = srcController->nextControllerRef.index;
+		nextControllerRef = srcController->GetNextControllerRef();
 
 		// Recursive copy for next controller references
 		while (nextControllerRef != 0xFFFFFFFF) {
@@ -802,14 +802,14 @@ void NifFile::CopyController(NiHeader& srcHeader, NiShader* destShader, NiShader
 				NiTimeController* destControllerRec = static_cast<NiTimeController*>(srcController->Clone());
 				controllerId = hdr.AddBlock(destControllerRec);
 
-				destControllerRec->targetRef.index = shaderId;
+				destControllerRec->SetTargetRef(shaderId);
 
 				// Assign new controller to previous controller
-				destController->nextControllerRef.index = controllerId;
+				destController->SetNextControllerRef(controllerId);
 				destController = destControllerRec;
 
 				CopyInterpolators(srcHeader, destControllerRec, srcController);
-				nextControllerRef = srcController->nextControllerRef.index;
+				nextControllerRef = srcController->GetNextControllerRef();
 			}
 			else
 				nextControllerRef = 0xFFFFFFFF;
@@ -825,25 +825,25 @@ void NifFile::CopyInterpolators(NiHeader& srcHeader, NiTimeController* destContr
 	if (srcController->HasType<BSFrustumFOVController>()) {
 		auto srcCtrlrType = static_cast<BSFrustumFOVController*>(srcController);
 		auto destCtrlrType = static_cast<BSFrustumFOVController*>(destController);
-		destCtrlrType->interpolatorRef.index = CopyInterpolator(srcHeader, srcCtrlrType->interpolatorRef.index);
+		destCtrlrType->SetInterpolatorRef(CopyInterpolator(srcHeader, srcCtrlrType->GetInterpolatorRef()));
 	}
 	else if (srcController->HasType<BSProceduralLightningController>()) {
 		auto srcCtrlrType = static_cast<BSProceduralLightningController*>(srcController);
 		auto destCtrlrType = static_cast<BSProceduralLightningController*>(destController);
-		destCtrlrType->generationInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->mutationInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->subdivisionInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->numBranchesInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->numBranchesVarInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->lengthInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->lengthVarInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->widthInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
-		destCtrlrType->arcOffsetInterpRef.index = CopyInterpolator(srcHeader, srcCtrlrType->generationInterpRef.index);
+		destCtrlrType->SetGenerationInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetGenerationInterpRef()));
+		destCtrlrType->SetMutationInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetMutationInterpRef()));
+		destCtrlrType->SetSubdivisionInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetSubdivisionInterpRef()));
+		destCtrlrType->SetNumBranchesInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetNumBranchesInterpRef()));
+		destCtrlrType->SetNumBranchesVarInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetNumBranchesVarInterpRef()));
+		destCtrlrType->SetLengthInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetLengthInterpRef()));
+		destCtrlrType->SetLengthVarInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetLengthVarInterpRef()));
+		destCtrlrType->SetWidthInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetWidthInterpRef()));
+		destCtrlrType->SetArcOffsetInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetArcOffsetInterpRef()));
 	}
 	
 	auto niSingleInterp = dynamic_cast<NiSingleInterpController*>(srcController);
 	if (niSingleInterp)
-		niSingleInterp->interpolatorRef.index = CopyInterpolator(srcHeader, niSingleInterp->interpolatorRef.index);
+		niSingleInterp->SetInterpolatorRef(CopyInterpolator(srcHeader, niSingleInterp->GetInterpolatorRef()));
 }
 
 int NifFile::CopyInterpolator(NiHeader& srcHeader, int srcInterpId) {
@@ -854,38 +854,38 @@ int NifFile::CopyInterpolator(NiHeader& srcHeader, int srcInterpId) {
 		// Copy data of interpolators as well
 		if (destInterp->HasType<NiBoolInterpolator>()) {
 			auto srcInterpType = static_cast<NiBoolInterpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiBoolData>(srcInterpType->dataRef.index);
+			auto srcData = srcHeader.GetBlock<NiBoolData>(srcInterpType->GetDataRef());
 			if (srcData) {
 				auto destData = static_cast<NiBoolData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiBoolInterpolator*>(destInterp);
-				destInterpType->dataRef.index = hdr.AddBlock(destData);
+				destInterpType->SetDataRef(hdr.AddBlock(destData));
 			}
 		}
 		else if (destInterp->HasType<NiFloatInterpolator>()) {
 			auto srcInterpType = static_cast<NiFloatInterpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiFloatData>(srcInterpType->dataRef.index);
+			auto srcData = srcHeader.GetBlock<NiFloatData>(srcInterpType->GetDataRef());
 			if (srcData) {
 				auto destData = static_cast<NiFloatData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiFloatInterpolator*>(destInterp);
-				destInterpType->dataRef.index = hdr.AddBlock(destData);
+				destInterpType->SetDataRef(hdr.AddBlock(destData));
 			}
 		}
 		else if (destInterp->HasType<NiTransformInterpolator>()) {
 			auto srcInterpType = static_cast<NiTransformInterpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiTransformData>(srcInterpType->dataRef.index);
+			auto srcData = srcHeader.GetBlock<NiTransformData>(srcInterpType->GetDataRef());
 			if (srcData) {
 				auto destData = static_cast<NiTransformData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiTransformInterpolator*>(destInterp);
-				destInterpType->dataRef.index = hdr.AddBlock(destData);
+				destInterpType->SetDataRef(hdr.AddBlock(destData));
 			}
 		}
 		else if (destInterp->HasType<NiPoint3Interpolator>()) {
 			auto srcInterpType = static_cast<NiPoint3Interpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiPosData>(srcInterpType->dataRef.index);
+			auto srcData = srcHeader.GetBlock<NiPosData>(srcInterpType->GetDataRef());
 			if (srcData) {
 				auto destData = static_cast<NiPosData*>(srcData->Clone());
 				auto destInterpType = static_cast<NiPoint3Interpolator*>(destInterp);
-				destInterpType->dataRef.index = hdr.AddBlock(destData);
+				destInterpType->SetDataRef(hdr.AddBlock(destData));
 			}
 		}
 
@@ -1606,7 +1606,7 @@ bool NifFile::RenameDuplicateShapes() {
 
 		std::vector<std::string> names;
 		for (auto &child : parent->GetChildren()) {
-			auto obj = hdr.GetBlock<NiAVObject>(child.index);
+			auto obj = hdr.GetBlock<NiAVObject>(child.GetIndex());
 			if (obj)
 				names.push_back(obj->GetName());
 		}
@@ -1624,7 +1624,7 @@ bool NifFile::RenameDuplicateShapes() {
 		int dupCount = 0;
 
 		for (auto &child : node->GetChildren()) {
-			auto shape = hdr.GetBlock<NiShape>(child.index);
+			auto shape = hdr.GetBlock<NiShape>(child.GetIndex());
 			if (shape) {
 				// Skip first child
 				if (dupCount == 0) {
@@ -2007,8 +2007,8 @@ void NifFile::UpdateShapeBoneID(const std::string& shapeName, const int oldID, c
 		return;
 
 	for (auto &bp : boneCont->boneRefs.GetBlockRefs()) {
-		if (bp.index == oldID) {
-			bp.index = newID;
+		if (bp.GetIndex() == oldID) {
+			bp.SetIndex(newID);
 			return;
 		}
 	}

@@ -98,7 +98,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 
 	NiParticleMeshesData* Clone() { return new NiParticleMeshesData(*this); }
 };
@@ -132,7 +132,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiMeshPSysData* Clone() { return new NiMeshPSysData(*this); }
 };
 
@@ -180,7 +180,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 };
 
 class BSPSysStripUpdateModifier : public NiPSysModifier {
@@ -227,7 +227,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiPSysAgeDeathModifier* Clone() { return new NiPSysAgeDeathModifier(*this); }
 };
 
@@ -324,7 +324,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	NiPSysGravityModifier* Clone() { return new NiPSysGravityModifier(*this); }
 };
 
@@ -363,7 +363,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	NiPSysDragModifier* Clone() { return new NiPSysDragModifier(*this); }
 };
 
@@ -380,7 +380,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	BSPSysInheritVelocityModifier* Clone() { return new BSPSysInheritVelocityModifier(*this); }
 };
 
@@ -430,7 +430,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	NiPSysBombModifier* Clone() { return new NiPSysBombModifier(*this); }
 };
 
@@ -457,7 +457,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiPSysColorModifier* Clone() { return new NiPSysColorModifier(*this); }
 };
 
@@ -488,7 +488,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiPSysMeshUpdateModifier* Clone() { return new NiPSysMeshUpdateModifier(*this); }
 };
 
@@ -503,7 +503,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 };
 
 class NiPSysVortexFieldModifier : public NiPSysFieldModifier {
@@ -616,7 +616,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	BSPSysRecycleBoundModifier* Clone() { return new BSPSysRecycleBoundModifier(*this); }
 };
 
@@ -631,7 +631,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSPSysHavokUpdateModifier* Clone() { return new BSPSysHavokUpdateModifier(*this); }
 };
 
@@ -660,7 +660,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSMasterParticleSystem* Clone() { return new BSMasterParticleSystem(*this); }
 };
 
@@ -705,7 +705,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiParticleSystem* Clone() { return new NiParticleSystem(*this); }
 };
 
@@ -740,8 +740,8 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetChildRefs(std::set<Ref*>& refs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 };
 
 class NiPSysSphericalCollider : public NiPSysCollider {
@@ -783,7 +783,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiPSysColliderManager* Clone() { return new NiPSysColliderManager(*this); }
 };
 
@@ -813,7 +813,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 };
 
 class NiPSysSphereEmitter : public NiPSysVolumeEmitter {
@@ -893,6 +893,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiPSysMeshEmitter* Clone() { return new NiPSysMeshEmitter(*this); }
 };

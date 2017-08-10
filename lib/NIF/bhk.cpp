@@ -18,10 +18,10 @@ void NiCollisionObject::Put(NiStream& stream) {
 	targetRef.Put(stream);
 }
 
-void NiCollisionObject::GetPtrs(std::set<int*>& ptrs) {
+void NiCollisionObject::GetPtrs(std::set<Ref*>& ptrs) {
 	NiObject::GetPtrs(ptrs);
 
-	ptrs.insert(&targetRef.index);
+	ptrs.insert(&targetRef);
 }
 
 
@@ -115,10 +115,10 @@ void bhkNiCollisionObject::Put(NiStream& stream) {
 	bodyRef.Put(stream);
 }
 
-void bhkNiCollisionObject::GetChildRefs(std::set<int*>& refs) {
+void bhkNiCollisionObject::GetChildRefs(std::set<Ref*>& refs) {
 	NiCollisionObject::GetChildRefs(refs);
 
-	refs.insert(&bodyRef.index);
+	refs.insert(&bodyRef);
 }
 
 
@@ -305,7 +305,7 @@ void bhkConvexListShape::Put(NiStream& stream) {
 	stream << unkFloat2;
 }
 
-void bhkConvexListShape::GetChildRefs(std::set<int*>& refs) {
+void bhkConvexListShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkShape::GetChildRefs(refs);
 
 	shapeRefs.GetIndexPtrs(refs);
@@ -382,10 +382,10 @@ void bhkTransformShape::Put(NiStream& stream) {
 	stream << xform;
 }
 
-void bhkTransformShape::GetChildRefs(std::set<int*>& refs) {
+void bhkTransformShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkShape::GetChildRefs(refs);
 
-	refs.insert(&shapeRef.index);
+	refs.insert(&shapeRef);
 }
 
 
@@ -447,10 +447,10 @@ void bhkMoppBvTreeShape::Put(NiStream& stream) {
 		stream << data[i];
 }
 
-void bhkMoppBvTreeShape::GetChildRefs(std::set<int*>& refs) {
+void bhkMoppBvTreeShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkBvTreeShape::GetChildRefs(refs);
 
-	refs.insert(&shapeRef.index);
+	refs.insert(&shapeRef);
 }
 
 
@@ -495,7 +495,7 @@ void bhkNiTriStripsShape::Put(NiStream& stream) {
 		stream << filters[i];
 }
 
-void bhkNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
+void bhkNiTriStripsShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkShape::GetChildRefs(refs);
 
 	partRefs.GetIndexPtrs(refs);
@@ -532,7 +532,7 @@ void bhkListShape::Put(NiStream& stream) {
 		stream << unkInts[i];
 }
 
-void bhkListShape::GetChildRefs(std::set<int*>& refs) {
+void bhkListShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkShapeCollection::GetChildRefs(refs);
 
 	subShapeRefs.GetIndexPtrs(refs);
@@ -641,10 +641,10 @@ void bhkPackedNiTriStripsShape::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void bhkPackedNiTriStripsShape::GetChildRefs(std::set<int*>& refs) {
+void bhkPackedNiTriStripsShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkShapeCollection::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
 
@@ -701,10 +701,10 @@ void bhkOrientHingedBodyAction::Put(NiStream& stream) {
 	stream << padding2;
 }
 
-void bhkOrientHingedBodyAction::GetPtrs(std::set<int*>& ptrs) {
+void bhkOrientHingedBodyAction::GetPtrs(std::set<Ref*>& ptrs) {
 	bhkSerializable::GetPtrs(ptrs);
 
-	ptrs.insert(&bodyRef.index);
+	ptrs.insert(&bodyRef);
 }
 
 
@@ -730,10 +730,10 @@ void bhkWorldObject::Put(NiStream& stream) {
 	stream << prop;
 }
 
-void bhkWorldObject::GetChildRefs(std::set<int*>& refs) {
+void bhkWorldObject::GetChildRefs(std::set<Ref*>& refs) {
 	bhkSerializable::GetChildRefs(refs);
 
-	refs.insert(&shapeRef.index);
+	refs.insert(&shapeRef);
 }
 
 
@@ -785,7 +785,7 @@ void bhkConstraint::Put(NiStream& stream) {
 	stream << priority;
 }
 
-void bhkConstraint::GetPtrs(std::set<int*>& ptrs) {
+void bhkConstraint::GetPtrs(std::set<Ref*>& ptrs) {
 	bhkSerializable::GetPtrs(ptrs);
 
 	entityRefs.GetIndexPtrs(ptrs);
@@ -944,7 +944,7 @@ void ConstraintData::Put(NiStream& stream) {
 	stream << strength;
 }
 
-void ConstraintData::GetPtrs(std::set<int*>& ptrs) {
+void ConstraintData::GetPtrs(std::set<Ref*>& ptrs) {
 	entityRefs.GetIndexPtrs(ptrs);
 }
 
@@ -963,7 +963,7 @@ void bhkBreakableConstraint::Put(NiStream& stream) {
 	stream << removeWhenBroken;
 }
 
-void bhkBreakableConstraint::GetPtrs(std::set<int*>& ptrs) {
+void bhkBreakableConstraint::GetPtrs(std::set<Ref*>& ptrs) {
 	bhkConstraint::GetPtrs(ptrs);
 
 	subConstraint.GetPtrs(ptrs);
@@ -1132,12 +1132,12 @@ void bhkBallSocketConstraintChain::Put(NiStream& stream) {
 	stream << priority;
 }
 
-void bhkBallSocketConstraintChain::GetPtrs(std::set<int*>& ptrs) {
+void bhkBallSocketConstraintChain::GetPtrs(std::set<Ref*>& ptrs) {
 	bhkSerializable::GetPtrs(ptrs);
 
 	entityARefs.GetIndexPtrs(ptrs);
-	ptrs.insert(&entityARef.index);
-	ptrs.insert(&entityBRef.index);
+	ptrs.insert(&entityARef);
+	ptrs.insert(&entityBRef);
 }
 
 
@@ -1253,7 +1253,7 @@ void bhkRigidBody::Put(NiStream& stream) {
 		stream << unkShort3;
 }
 
-void bhkRigidBody::GetChildRefs(std::set<int*>& refs) {
+void bhkRigidBody::GetChildRefs(std::set<Ref*>& refs) {
 	bhkEntity::GetChildRefs(refs);
 
 	constraintRefs.GetIndexPtrs(refs);
@@ -1439,16 +1439,16 @@ void bhkCompressedMeshShape::Put(NiStream& stream) {
 	dataRef.Put(stream);
 }
 
-void bhkCompressedMeshShape::GetChildRefs(std::set<int*>& refs) {
+void bhkCompressedMeshShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkShape::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
+	refs.insert(&dataRef);
 }
 
-void bhkCompressedMeshShape::GetPtrs(std::set<int*>& ptrs) {
+void bhkCompressedMeshShape::GetPtrs(std::set<Ref*>& ptrs) {
 	bhkShape::GetPtrs(ptrs);
 
-	ptrs.insert(&targetRef.index);
+	ptrs.insert(&targetRef);
 }
 
 
@@ -1500,7 +1500,7 @@ void bhkRagdollTemplate::Put(NiStream& stream) {
 	boneRefs.Put(stream);
 }
 
-void bhkRagdollTemplate::GetChildRefs(std::set<int*>& refs) {
+void bhkRagdollTemplate::GetChildRefs(std::set<Ref*>& refs) {
 	NiExtraData::GetChildRefs(refs);
 
 	boneRefs.GetIndexPtrs(refs);

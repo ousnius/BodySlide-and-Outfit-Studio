@@ -190,10 +190,10 @@ void NiGeometryData::Put(NiStream& stream) {
 	additionalDataRef.Put(stream);
 }
 
-void NiGeometryData::GetChildRefs(std::set<int*>& refs) {
+void NiGeometryData::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
-	refs.insert(&additionalDataRef.index);
+	refs.insert(&additionalDataRef);
 }
 
 void NiGeometryData::SetVertices(const bool enable) {
@@ -762,12 +762,12 @@ void BSTriShape::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 	}
 }
 
-void BSTriShape::GetChildRefs(std::set<int*>& refs) {
+void BSTriShape::GetChildRefs(std::set<Ref*>& refs) {
 	NiAVObject::GetChildRefs(refs);
 
-	refs.insert(&skinInstanceRef.index);
-	refs.insert(&shaderPropertyRef.index);
-	refs.insert(&alphaPropertyRef.index);
+	refs.insert(&skinInstanceRef);
+	refs.insert(&shaderPropertyRef);
+	refs.insert(&alphaPropertyRef);
 }
 
 const std::vector<Vector3>* BSTriShape::GetRawVerts() {
@@ -1590,13 +1590,13 @@ void NiGeometry::GetStringRefs(std::set<StringRef*>& refs) {
 		refs.insert(&m);
 }
 
-void NiGeometry::GetChildRefs(std::set<int*>& refs) {
+void NiGeometry::GetChildRefs(std::set<Ref*>& refs) {
 	NiAVObject::GetChildRefs(refs);
 
-	refs.insert(&dataRef.index);
-	refs.insert(&skinInstanceRef.index);
-	refs.insert(&shaderPropertyRef.index);
-	refs.insert(&alphaPropertyRef.index);
+	refs.insert(&dataRef);
+	refs.insert(&skinInstanceRef);
+	refs.insert(&shaderPropertyRef);
+	refs.insert(&alphaPropertyRef);
 }
 
 

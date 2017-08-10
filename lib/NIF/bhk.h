@@ -266,7 +266,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	NiCollisionObject* Clone() { return new NiCollisionObject(*this); }
 };
 
@@ -379,7 +379,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkNiCollisionObject* Clone() { return new bhkNiCollisionObject(*this); }
 };
 
@@ -555,7 +555,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkConvexListShape* Clone() { return new bhkConvexListShape(*this); }
 };
 
@@ -616,7 +616,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkTransformShape* Clone() { return new bhkTransformShape(*this); }
 };
 
@@ -666,7 +666,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkMoppBvTreeShape* Clone() { return new bhkMoppBvTreeShape(*this); }
 };
 
@@ -695,7 +695,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkNiTriStripsShape* Clone() { return new bhkNiTriStripsShape(*this); }
 };
 
@@ -717,7 +717,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkListShape* Clone() { return new bhkListShape(*this); }
 };
 
@@ -780,7 +780,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkPackedNiTriStripsShape* Clone() { return new bhkPackedNiTriStripsShape(*this); }
 };
 
@@ -821,7 +821,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkOrientHingedBodyAction* Clone() { return new bhkOrientHingedBodyAction(*this); }
 };
 
@@ -837,7 +837,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkWorldObject* Clone() { return new bhkWorldObject(*this); }
 };
 
@@ -887,7 +887,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 };
 
 class bhkHingeConstraint : public bhkConstraint {
@@ -934,7 +934,7 @@ private:
 public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 };
 
 class bhkBreakableConstraint : public bhkConstraint {
@@ -948,7 +948,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkBreakableConstraint* Clone() { return new bhkBreakableConstraint(*this); }
 };
 
@@ -1040,7 +1040,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkBallSocketConstraintChain* Clone() { return new bhkBallSocketConstraintChain(*this); }
 };
 
@@ -1097,7 +1097,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkRigidBody* Clone() { return new bhkRigidBody(*this); }
 };
 
@@ -1173,8 +1173,8 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetChildRefs(std::set<Ref*>& refs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkCompressedMeshShape* Clone() { return new bhkCompressedMeshShape(*this); }
 };
 
@@ -1231,7 +1231,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	bhkRagdollTemplate* Clone() { return new bhkRagdollTemplate(*this); }
 };
 

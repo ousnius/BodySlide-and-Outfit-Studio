@@ -234,7 +234,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 
@@ -346,17 +346,17 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSTriShape* Clone() { return new BSTriShape(*this); }
 
-	int GetSkinInstanceRef() { return skinInstanceRef.index; }
-	void SetSkinInstanceRef(int skinInstRef) { this->skinInstanceRef.index = skinInstRef; }
+	int GetSkinInstanceRef() { return skinInstanceRef.GetIndex(); }
+	void SetSkinInstanceRef(int skinInstRef) { skinInstanceRef.SetIndex(skinInstRef); }
 
-	int GetShaderPropertyRef() { return shaderPropertyRef.index; }
-	void SetShaderPropertyRef(int shaderPropRef) { this->shaderPropertyRef.index = shaderPropRef; }
+	int GetShaderPropertyRef() { return shaderPropertyRef.GetIndex(); }
+	void SetShaderPropertyRef(int shaderPropRef) { shaderPropertyRef.SetIndex(shaderPropRef); }
 
-	int GetAlphaPropertyRef() { return alphaPropertyRef.index; }
-	void SetAlphaPropertyRef(int alphaPropRef) { this->alphaPropertyRef.index = alphaPropRef; }
+	int GetAlphaPropertyRef() { return alphaPropertyRef.GetIndex(); }
+	void SetAlphaPropertyRef(int alphaPropRef) { alphaPropertyRef.SetIndex(alphaPropRef); }
 
 	const std::vector<Vector3>* GetRawVerts();
 	const std::vector<Vector3>* GetNormalData(bool xform = true);
@@ -537,21 +537,21 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 
-	bool IsSkinned() { return skinInstanceRef.index != 0xFFFFFFFF; }
+	bool IsSkinned() { return skinInstanceRef.GetIndex() != 0xFFFFFFFF; }
 
-	int GetDataRef() { return dataRef.index; }
-	void SetDataRef(int datRef) { this->dataRef.index = datRef; }
+	int GetDataRef() { return dataRef.GetIndex(); }
+	void SetDataRef(int datRef) { dataRef.SetIndex(datRef); }
 
-	int GetSkinInstanceRef() { return skinInstanceRef.index; }
-	void SetSkinInstanceRef(int skinInstRef) { this->skinInstanceRef.index = skinInstRef; }
+	int GetSkinInstanceRef() { return skinInstanceRef.GetIndex(); }
+	void SetSkinInstanceRef(int skinInstRef) { skinInstanceRef.SetIndex(skinInstRef); }
 
-	int GetShaderPropertyRef() { return shaderPropertyRef.index; }
-	void SetShaderPropertyRef(int shaderPropRef) { this->shaderPropertyRef.index = shaderPropRef; }
+	int GetShaderPropertyRef() { return shaderPropertyRef.GetIndex(); }
+	void SetShaderPropertyRef(int shaderPropRef) { shaderPropertyRef.SetIndex(shaderPropRef); }
 
-	int GetAlphaPropertyRef() { return alphaPropertyRef.index; }
-	void SetAlphaPropertyRef(int alphaPropRef) { this->alphaPropertyRef.index = alphaPropRef; }
+	int GetAlphaPropertyRef() { return alphaPropertyRef.GetIndex(); }
+	void SetAlphaPropertyRef(int alphaPropRef) { alphaPropertyRef.SetIndex(alphaPropRef); }
 };
 
 class NiTriBasedGeom : public NiGeometry {

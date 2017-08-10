@@ -83,10 +83,17 @@ public:
 		return *this;
 	}
 
-	void InitBlockSize() { blockSize = 0; }
-	int GetBlockSize() { return blockSize; }
+	void InitBlockSize() {
+		blockSize = 0;
+	}
 
-	NiVersion& GetVersion() { return *version; }
+	int GetBlockSize() {
+		return blockSize;
+	}
+
+	NiVersion& GetVersion() {
+		return *version;
+	}
 };
 
 class StringRef {
@@ -96,11 +103,21 @@ private:
 	std::string str;
 
 public:
-	std::string GetString() { return str; }
-	void SetString(const std::string& s) { str = s; }
+	std::string GetString() {
+		return str;
+	}
 
-	int GetIndex() { return index; }
-	void SetIndex(const int id) { index = id; }
+	void SetString(const std::string& s) {
+		str = s;
+	}
+
+	int GetIndex() {
+		return index;
+	}
+
+	void SetIndex(const int id) {
+		index = id;
+	}
 
 	void Clear() {
 		index = 0xFFFFFFFF;
@@ -117,8 +134,21 @@ public:
 };
 
 class Ref {
-public:
+protected:
 	int index = 0xFFFFFFFF;
+
+public:
+	int GetIndex() {
+		return index;
+	}
+
+	void SetIndex(const int id) {
+		index = id;
+	}
+
+	void Clear() {
+		index = 0xFFFFFFFF;
+	}
 };
 
 template <typename T>
@@ -156,7 +186,7 @@ public:
 	virtual void SetBlockRef(const int id, const int index) = 0;
 	virtual void RemoveBlockRef(const int id) = 0;
 	virtual std::vector<int> GetIndices() = 0;
-	virtual void GetIndexPtrs(std::set<int*>& indices) = 0;
+	virtual void GetIndexPtrs(std::set<Ref*>& indices) = 0;
 	virtual void SetIndices(const std::vector<int>& indices) = 0;
 };
 
@@ -167,7 +197,7 @@ protected:
 
 	void CleanInvalidRefs() {
 		refs.erase(std::remove_if(refs.begin(), refs.end(), [](BlockRef<T> r) {
-			if (r.index == 0xFFFFFFFF)
+			if (r.GetIndex() == 0xFFFFFFFF)
 				return true;
 			else
 				return false;
@@ -209,14 +239,14 @@ public:
 
 	virtual int GetBlockRef(const int id) override {
 		if (id >= 0 && refs.size() > id)
-			return refs[id].index;
+			return refs[id].GetIndex();
 
 		return 0xFFFFFFFF;
 	}
 
 	virtual void SetBlockRef(const int id, const int index) override {
 		if (id >= 0 && refs.size() > id)
-			refs[id].index = index;
+			refs[id].SetIndex(index);
 	}
 
 	virtual void RemoveBlockRef(const int id) override {
@@ -230,14 +260,14 @@ public:
 		std::vector<int> indices;
 		indices.reserve(arraySize);
 		for (auto &r : refs)
-			indices.push_back(r.index);
+			indices.push_back(r.GetIndex());
 
 		return indices;
 	}
 
-	virtual void GetIndexPtrs(std::set<int*>& indices) override {
+	virtual void GetIndexPtrs(std::set<Ref*>& indices) override {
 		for (auto &r : refs)
-			indices.insert(&r.index);
+			indices.insert(&r);
 	}
 
 	virtual void SetIndices(const std::vector<int>& indices) override {
@@ -245,7 +275,7 @@ public:
 		refs.resize(arraySize);
 
 		for (int i = 0; i < arraySize; i++)
-			refs[i].index = indices[i];
+			refs[i].SetIndex(indices[i]);
 	}
 };
 
@@ -312,8 +342,8 @@ public:
 	virtual void Put(NiStream&) {}
 
 	virtual void GetStringRefs(std::set<StringRef*>&) {}
-	virtual void GetChildRefs(std::set<int*>&) {}
-	virtual void GetPtrs(std::set<int*>&) {}
+	virtual void GetChildRefs(std::set<Ref*>&) {}
+	virtual void GetPtrs(std::set<Ref*>&) {}
 
 	virtual NiObject* Clone() { return new NiObject(*this); }
 
@@ -369,9 +399,14 @@ public:
 	virtual const char* GetBlockName() { return BlockName; }
 
 	void Clear();
-	bool IsValid() { return valid; }
 
-	NiVersion& GetVersion() { return version; };
+	bool IsValid() {
+		return valid;
+	}
+
+	NiVersion& GetVersion() {
+		return version;
+	};
 
 	std::string GetCreatorInfo();
 	void SetCreatorInfo(const std::string& creatorInfo);
@@ -383,7 +418,9 @@ public:
 		blocks = blockRef;
 	};
 
-	uint GetNumBlocks() { return numBlocks; }
+	uint GetNumBlocks() {
+		return numBlocks;
+	}
 
 	template <class T>
 	T* GetBlock(const int blockId) {
@@ -404,17 +441,14 @@ public:
 	void DeleteUnreferencedBlocks(bool* hadDeletions = nullptr);
 
 	ushort AddOrFindBlockTypeId(const std::string& blockTypeName);
-	std::string GetBlockTypeStringById(const int id);
-	ushort GetBlockTypeIndex(const int id);
+	std::string GetBlockTypeStringById(const int blockId);
+	ushort GetBlockTypeIndex(const int blockId);
 
-	uint GetBlockSize(const uint blockId) { return blockSizes[blockId]; }
-	std::streampos GetBlockSizeStreamPos() { return blockSizePos; }
-	void ResetBlockSizeStreamPos() { blockSizePos = std::streampos(); }
+	uint GetBlockSize(const uint blockId);
+	std::streampos GetBlockSizeStreamPos();
+	void ResetBlockSizeStreamPos();
 
-	int GetStringCount() {
-		return strings.size();
-	}
-
+	int GetStringCount();
 	int FindStringId(const std::string& str);
 	int AddOrFindStringId(const std::string& str);
 	std::string GetStringById(const int id);
@@ -433,9 +467,10 @@ public:
 };
 
 class NiUnknown : public NiObject {
-public:
+private:
 	std::vector<char> data;
 
+public:
 	NiUnknown() {}
 	NiUnknown(NiStream& stream, const uint size);
 	NiUnknown(const uint size);
@@ -443,4 +478,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	NiUnknown* Clone() { return new NiUnknown(*this); }
+
+	std::vector<char> GetData() { return data; }
 };

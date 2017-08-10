@@ -240,11 +240,11 @@ bool NiHeader::IsBlockReferenced(const int blockId) {
 		return false;
 
 	for (auto &block : (*blocks)) {
-		std::set<int*> references;
+		std::set<Ref*> references;
 		block->GetChildRefs(references);
 
 		for (auto &ref : references)
-			if ((*ref) == blockId)
+			if (ref->GetIndex() == blockId)
 				return true;
 	}
 
@@ -284,12 +284,40 @@ ushort NiHeader::AddOrFindBlockTypeId(const std::string& blockTypeName) {
 	return typeId;
 }
 
-std::string NiHeader::GetBlockTypeStringById(const int id) {
-	return blockTypes[blockTypeIndices[id]].GetString();
+std::string NiHeader::GetBlockTypeStringById(const int blockId) {
+	if (blockId >= 0 && blockId < numBlocks) {
+		ushort typeIndex = blockTypeIndices[blockId];
+		if (typeIndex >= 0 && typeIndex < numBlockTypes)
+			return blockTypes[typeIndex].GetString();
+	}
+	
+	return std::string();
 }
 
-ushort NiHeader::GetBlockTypeIndex(const int id) {
-	return blockTypeIndices[id];
+ushort NiHeader::GetBlockTypeIndex(const int blockId) {
+	if (blockId >= 0 && blockId < numBlocks)
+		return blockTypeIndices[blockId];
+
+	return 0xFFFFFFFF;
+}
+
+uint NiHeader::GetBlockSize(const uint blockId) {
+	if (blockId >= 0 && blockId < numBlocks)
+		return blockSizes[blockId];
+
+	return 0xFFFFFFFF;
+}
+
+std::streampos NiHeader::GetBlockSizeStreamPos() {
+	return blockSizePos;
+}
+
+void NiHeader::ResetBlockSizeStreamPos() {
+	blockSizePos = std::streampos();
+}
+
+int NiHeader::GetStringCount() {
+	return strings.size();
 }
 
 int NiHeader::FindStringId(const std::string& str) {
@@ -304,11 +332,9 @@ int NiHeader::AddOrFindStringId(const std::string& str) {
 	if (str.empty())
 		return 0xFFFFFFFF;
 
-	for (int i = 0; i < strings.size(); i++) {
-		if (strings[i].GetString().compare(str) == 0) {
+	for (int i = 0; i < strings.size(); i++)
+		if (strings[i].GetString().compare(str) == 0)
 			return i;
-		}
-	}
 
 	int r = strings.size();
 
@@ -375,30 +401,30 @@ void NiHeader::UpdateHeaderStrings(const bool hasUnknown) {
 }
 
 void NiHeader::BlockDeleted(NiObject* o, int blockId) {
-	std::set<int*> refs;
+	std::set<Ref*> refs;
 	o->GetChildRefs(refs);
 	o->GetPtrs(refs);
 
 	for (auto &r : refs) {
-		auto& index = (*r);
+		int index = r->GetIndex();
 		if (index == blockId)
-			index = 0xFFFFFFFF;
+			r->Clear();
 		else if (index > blockId)
-			index--;
+			r->SetIndex(index - 1);
 	}
 }
 
 void NiHeader::BlockSwapped(NiObject* o, int blockIndexLo, int blockIndexHi) {
-	std::set<int*> refs;
+	std::set<Ref*> refs;
 	o->GetChildRefs(refs);
 	o->GetPtrs(refs);
 
 	for (auto &r : refs) {
-		auto& index = (*r);
+		int index = r->GetIndex();
 		if (index == blockIndexLo)
-			index = blockIndexHi;
+			r->SetIndex(blockIndexHi);
 		else if (index == blockIndexHi)
-			index = blockIndexLo;
+			r->SetIndex(blockIndexLo);
 	}
 }
 

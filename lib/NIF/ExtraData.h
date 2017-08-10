@@ -36,6 +36,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	NiBinaryExtraData* Clone() { return new NiBinaryExtraData(*this); }
+
+	std::vector<byte> GetData();
+	void SetData(const std::vector<byte>& dat);
 };
 
 class NiFloatExtraData : public NiExtraData {
@@ -100,6 +103,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	NiStringsExtraData* Clone() { return new NiStringsExtraData(*this); }
+
+	std::vector<NiString> GetStringsData();
+	void SetStringsData(const std::vector<NiString>& strsData);
 };
 
 class NiBooleanExtraData : public NiExtraData {
@@ -307,6 +313,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSInvMarker* Clone() { return new BSInvMarker(*this); }
+
+	float GetZoom() { return zoom; }
+	void SetZoom(const float z) { zoom = z; }
 };
 
 struct FurniturePosition {
@@ -333,6 +342,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSFurnitureMarker* Clone() { return new BSFurnitureMarker(*this); }
+
+	std::vector<FurniturePosition> GetPositions();
+	void SetPositions(const std::vector<FurniturePosition>& pos);
 };
 
 class BSFurnitureMarkerNode : public BSFurnitureMarker {
@@ -343,14 +355,13 @@ public:
 	BSFurnitureMarkerNode* Clone() { return new BSFurnitureMarkerNode(*this); }
 };
 
-class BSDecalPlacementVectorExtraData : public NiFloatExtraData {
-public:
-	struct DecalVectorBlock {
-		ushort numVectors;
-		std::vector<Vector3> points;
-		std::vector<Vector3> normals;
-	};
+struct DecalVectorBlock {
+	ushort numVectors;
+	std::vector<Vector3> points;
+	std::vector<Vector3> normals;
+};
 
+class BSDecalPlacementVectorExtraData : public NiFloatExtraData {
 private:
 	ushort numVectorBlocks = 0;
 	std::vector<DecalVectorBlock> decalVectorBlocks;
@@ -362,6 +373,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSDecalPlacementVectorExtraData* Clone() { return new BSDecalPlacementVectorExtraData(*this); }
+
+	std::vector<DecalVectorBlock> GetDecalVectorBlocks();
+	void SetDecalVectorBlocks(const std::vector<DecalVectorBlock>& vectorBlocks);
 };
 
 class BSBehaviorGraphExtraData : public NiExtraData {
@@ -391,6 +405,12 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSBound* Clone() { return new BSBound(*this); }
+
+	Vector3 GetCenter() { return center; }
+	void SetCenter(const Vector3& ctr) { center = ctr; }
+
+	Vector3 GetHalfExtents() { return halfExtents; }
+	void SetHalfExtents(const Vector3& hExtents) { halfExtents = hExtents; }
 };
 
 struct BoneLOD {
@@ -411,6 +431,9 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	BSBoneLODExtraData* Clone() { return new BSBoneLODExtraData(*this); }
+
+	std::vector<BoneLOD> GetBoneLODs();
+	void SetBoneLODs(const std::vector<BoneLOD>& lods);
 };
 
 class NiTextKeyExtraData : public NiExtraData {
@@ -426,6 +449,9 @@ public:
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
 	NiTextKeyExtraData* Clone() { return new NiTextKeyExtraData(*this); }
+
+	std::vector<Key<StringRef>> GetTextKeys();
+	void SetTextKeys(const std::vector<Key<StringRef>>& keys);
 };
 
 class BSDistantObjectLargeRefExtraData : public NiExtraData {
@@ -439,10 +465,12 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSDistantObjectLargeRefExtraData* Clone() { return new BSDistantObjectLargeRefExtraData(*this); }
+
+	bool IsLargeRef() { return largeRef; }
+	void SetLargeRef(const bool isLargeRef) { largeRef = isLargeRef; }
 };
 
-class BSConnectPoint {
-public:
+struct BSConnectPoint {
 	NiString root;
 	NiString variableName;
 	Quaternion rotation;
@@ -451,7 +479,6 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	BSConnectPoint* Clone() { return new BSConnectPoint(*this); }
 };
 
 class BSConnectPointParents : public NiExtraData {
@@ -466,6 +493,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSConnectPointParents* Clone() { return new BSConnectPointParents(*this); }
+
+	std::vector<BSConnectPoint> GetConnectPoints();
+	void SetConnectPoints(const std::vector<BSConnectPoint>& cps);
 };
 
 class BSConnectPointChildren : public NiExtraData {
@@ -481,6 +511,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSConnectPointChildren* Clone() { return new BSConnectPointChildren(*this); }
+
+	std::vector<NiString> GetTargets();
+	void SetTargets(const std::vector<NiString>& targ);
 };
 
 class BSExtraData : public NiObject {
@@ -501,6 +534,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSClothExtraData* Clone() { return new BSClothExtraData(*this); }
+
+	std::vector<char> GetData();
+	void SetData(const std::vector<char>& dat);
 
 	bool ToHKX(const std::string& fileName);
 	bool FromHKX(const std::string& fileName);

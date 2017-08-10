@@ -184,18 +184,18 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetChildRefs(std::set<Ref*>& refs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	NiSkinInstance* Clone() { return new NiSkinInstance(*this); }
 
-	int GetDataRef() { return dataRef.index; }
-	void SetDataRef(const int datRef) { this->dataRef.index = datRef; }
+	int GetDataRef() { return dataRef.GetIndex(); }
+	void SetDataRef(const int datRef) { dataRef.SetIndex(datRef); }
 
-	int GetSkinPartitionRef() { return skinPartitionRef.index; }
-	void SetSkinPartitionRef(const int skinPartRef) { this->skinPartitionRef.index = skinPartRef; }
+	int GetSkinPartitionRef() { return skinPartitionRef.GetIndex(); }
+	void SetSkinPartitionRef(const int skinPartRef) { skinPartitionRef.SetIndex(skinPartRef); }
 
-	int GetSkeletonRootRef() { return targetRef.index; }
-	void SetSkeletonRootRef(const int skelRootRef) { this->targetRef.index = skelRootRef; }
+	int GetSkeletonRootRef() { return targetRef.GetIndex(); }
+	void SetSkeletonRootRef(const int skelRootRef) { targetRef.SetIndex(skelRootRef); }
 };
 
 class BSDismemberSkinInstance : public NiSkinInstance {
@@ -270,13 +270,13 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
-	void GetPtrs(std::set<int*>& ptrs);
+	void GetChildRefs(std::set<Ref*>& refs);
+	void GetPtrs(std::set<Ref*>& ptrs);
 	BSSkinInstance* Clone() { return new BSSkinInstance(*this); }
 
-	int GetTargetRef() { return targetRef.index; }
-	void SetTargetRef(const int targRef) { this->targetRef.index = targRef; }
+	int GetTargetRef() { return targetRef.GetIndex(); }
+	void SetTargetRef(const int targRef) { targetRef.SetIndex(targRef); }
 
-	int GetDataRef() { return dataRef.index; }
-	void SetDataRef(const int datRef) { this->dataRef.index = datRef; }
+	int GetDataRef() { return dataRef.GetIndex(); }
+	void SetDataRef(const int datRef) { dataRef.SetIndex(datRef); }
 };

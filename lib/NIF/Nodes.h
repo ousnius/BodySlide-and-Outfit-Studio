@@ -21,7 +21,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiNode* Clone() { return new NiNode(*this); }
 
 	int GetNumChildren() { return childRefs.GetSize(); }
@@ -82,7 +82,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSTreeNode* Clone() { return new BSTreeNode(*this); }
 };
 
@@ -157,7 +157,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSMultiBound* Clone() { return new BSMultiBound(*this); }
 };
 
@@ -181,7 +181,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	BSMultiBoundNode* Clone() { return new BSMultiBoundNode(*this); }
 };
 
@@ -323,7 +323,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	void GetChildRefs(std::set<int*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 	NiLODNode* Clone() { return new NiLODNode(*this); }
 };
 
