@@ -18,14 +18,14 @@ enum KeyType : uint {
 };
 
 struct TBC {
-	float tension;
-	float bias;
-	float continuity;
+	float tension = 0.0f;
+	float bias = 0.0f;
+	float continuity = 0.0f;
 };
 
 template<typename T>
 struct Key {
-	float time;
+	float time = 0.0f;
 	T value;
 	T forward;
 	T backward;
@@ -88,5 +88,40 @@ public:
 				}
 			}
 		}
+	}
+
+	KeyType GetInterpolationType() {
+		return interpolation;
+	}
+
+	void SetInterpolationType(const KeyType interp) {
+		interpolation = interp;
+	}
+
+	uint GetNumKeys() {
+		return numKeys;
+	}
+
+	Key<T> GetKey(const int id) {
+		return keys[id];
+	}
+
+	void SetKey(const int id, const Key<T>& key) {
+		keys[id] = key;
+	}
+
+	void AddKey(const Key<T>& key) {
+		keys.push_back(key);
+		numKeys++;
+	}
+
+	void RemoveKey(const int id) {
+		keys.erase(keys.begin() + id);
+		numKeys--;
+	}
+
+	void ClearKeys() {
+		keys.clear();
+		numKeys = 0;
 	}
 };
