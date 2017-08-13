@@ -3,13 +3,13 @@ msgstr ""
 "Project-Id-Version: BodySlide\n"
 "POT-Creation-Date: \n"
 "PO-Revision-Date: \n"
-"Last-Translator: S猫 <silent.haven@gmail.com>\n"
+"Last-Translator: S喵 <silent.haven@gmail.com>\n"
 "Language-Team: \n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0beta2\n"
+"X-Generator: Poedit 2.0.3\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Poedit-Basepath: ../..\n"
@@ -1299,8 +1299,7 @@ msgid ""
 "If this is enabled, only one output file will be created (useful for single-"
 "weighted things like hair)."
 msgstr ""
-"服装需要参照身形作为模型文件的一个部份。如果已经将那部份复制进去或不想将那部"
-"份包含进去就可以禁用此项。"
+"如果启用此项，只会创建一个输出文件（对于像头发这样的单权重的东西很有用）。"
 
 msgid "Single Weight Output"
 msgstr "单体重输出"
@@ -1395,6 +1394,10 @@ msgstr "几何结构"
 
 msgid "Full Precision"
 msgstr "全精度"
+
+#, fuzzy
+msgid "Sub Index"
+msgstr "子索引"
 
 msgid "Extra Data"
 msgstr "附加数据"
@@ -2349,6 +2352,15 @@ msgstr "语言"
 msgid "Use the selected language for the program."
 msgstr "为程序使用已选的语言。"
 
+msgid "Rendering"
+msgstr "渲染中"
+
+msgid "Background Color"
+msgstr "背景颜色"
+
+msgid "Background color of the renderer."
+msgstr "渲染器的背景颜色。"
+
 msgid "Unload Project"
 msgstr "卸载项目"
 
@@ -2376,6 +2388,133 @@ msgstr "请为新分离的模型输入一个唯一的名称。"
 
 msgid "Separate the current shape into two by using the mask."
 msgstr "使用遮蔽分离当前模型为两个。"
+
+msgid "Show the Normal Map Generator dialog."
+msgstr "显示法线贴图生成器对话框。"
+
+msgid "Normal Map Generator"
+msgstr "法线贴图生成器"
+
+msgid "Layers"
+msgstr "图层"
+
+msgid "Load or save preset layer settings."
+msgstr "打开或保存预设图层设置。"
+
+msgid "Choose a normals generator preset file..."
+msgstr "选择一个法线生成器预设文件..."
+
+msgid "Save normals generator preset to..."
+msgstr "将法线生成器预设保存到..."
+
+msgid "Background"
+msgstr "背景"
+
+msgid "Background File"
+msgstr "背景文件"
+
+msgid "File source for this layer."
+msgstr "此图层的文件来源。"
+
+msgid ""
+"File containing normals data to combine. Note this file should fit the mesh "
+"UVs."
+msgstr "合并包含法线数据的文件。注意这个文件应该适合这个网格UV。"
+
+msgid "Color"
+msgstr "颜色"
+
+msgid "Solid background color (if file is not set)."
+msgstr "背景色（如果文件没有设置）。"
+
+msgid "Resolution"
+msgstr "分辨率"
+
+msgid ""
+"Output texture dimensions. By default all images will be scaled to fit this "
+"size."
+msgstr "输出贴图的分辨率。默认所有图像都会缩放到合适的尺寸。"
+
+msgid "Is Tangent Space?"
+msgstr "是否切线空间？"
+
+msgid ""
+"True if the normals data in the layer file is in tangent space, false if "
+"they are in model space (msn)."
+msgstr ""
+"如果图层文件中的法线数据位于切线空间中，为真；如果它们位于模型空间(msn)中，则"
+"为假。"
+
+msgid "A greyscale image used to mask updates to destination image."
+msgstr "一个用于屏蔽目标图像更新的灰度图像。"
+
+msgid "X Offset"
+msgstr "X偏移量"
+
+msgid "Y Offset"
+msgstr "Y偏移量"
+
+msgid "Offset to apply to image position."
+msgstr "适用于图像位置的偏移。"
+
+msgid "If true, scale image to match background resolution."
+msgstr "如果为真，缩放图像来匹配背景分辨率。"
+
+msgid "Add Layer"
+msgstr "添加图层"
+
+msgid "Add a new layer after the current one in the layer list."
+msgstr "在当前图层后添加一个新图层。"
+
+msgid "Move Up"
+msgstr "上移"
+
+msgid "Move selected layer up one position."
+msgstr "将选定的图层向上移动一个位置。"
+
+msgid "Delete Layer"
+msgstr "删除图层"
+
+msgid "Delete the selected layer."
+msgstr "删除所选图层。"
+
+msgid "Backup destination file"
+msgstr "备份目标文件..."
+
+msgid ""
+"Save a copy of an existing normal map if one already exists. File is saved "
+"in the original directory."
+msgstr "保存现有法线贴图的副本，如果文件已存在。文件保存在原始目录中。"
+
+msgid "Compress output"
+msgstr "压缩输出"
+
+msgid ""
+"Compress output file using BC7 compression. This can make saving the file "
+"take a VERY long time!"
+msgstr "使用BC7压缩输出文件。这会使保存文件花费很长时间！"
+
+msgid "Save to background layer file"
+msgstr "保存到背景图层文件"
+
+msgid ""
+"Use the file name specified in the background layer to save the normal map."
+msgstr "使用背景图层中指定的文件名来保存法线贴图。"
+
+msgid "Location to save normal map to."
+msgstr "保存法线贴图的位置。"
+
+msgid "Choose an output file..."
+msgstr "选择一个输出文件..."
+
+msgid "Display current settings on mesh in preview window."
+msgstr "在预览窗口中显示网格上的当前设置。"
+
+msgid "Generate"
+msgstr "生成器"
+
+msgid "Generate and save the normal map file."
+msgstr "生成并保存法线贴图文件。"
 
 #~ msgid "Redo\tCtrl+Shift+Z"
 #~ msgstr "恢复\tCtrl+Shift+Z"
