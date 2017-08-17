@@ -908,6 +908,8 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 
 	NiFlipController* Clone() { return new NiFlipController(*this); }
+
+	BlockRefArray<NiSourceTexture>& GetSources();
 };
 
 enum TexTransformType : uint {
@@ -1085,6 +1087,8 @@ public:
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	NiMultiTargetTransformController* Clone() { return new NiMultiTargetTransformController(*this); }
+
+	BlockRefShortArray<NiAVObject>& GetTargets();
 };
 
 class NiPSysModifierCtlr : public NiSingleInterpController {
@@ -1375,6 +1379,8 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 
 	BSAnimNotes* Clone() { return new BSAnimNotes(*this); }
+
+	BlockRefShortArray<BSAnimNote>& GetAnimNotes();
 };
 
 class NiControllerManager;
@@ -1403,6 +1409,11 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	NiControllerSequence* Clone() { return new NiControllerSequence(*this); }
+
+	int GetAnimNotesRef();
+	void SetAnimNotesRef(int notesRef);
+
+	BlockRefShortArray<BSAnimNotes>& GetAnimNotes();
 };
 
 class NiDefaultAVObjectPalette;
@@ -1421,4 +1432,9 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiControllerManager* Clone() { return new NiControllerManager(*this); }
+
+	BlockRefArray<NiControllerSequence>& GetControllerSequences();
+
+	int GetObjectPaletteRef();
+	void SetObjectPaletteRef(int paletteRef);
 };

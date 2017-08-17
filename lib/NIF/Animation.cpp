@@ -616,6 +616,10 @@ void NiFlipController::GetChildRefs(std::set<Ref*>& refs) {
 	sourceRefs.GetIndexPtrs(refs);
 }
 
+BlockRefArray<NiSourceTexture>& NiFlipController::GetSources() {
+	return sourceRefs;
+}
+
 
 void NiTextureTransformController::Get(NiStream& stream) {
 	NiFloatInterpController::Get(stream);
@@ -715,6 +719,10 @@ void NiMultiTargetTransformController::GetPtrs(std::set<Ref*>& ptrs) {
 	NiInterpController::GetPtrs(ptrs);
 
 	targetRefs.GetIndexPtrs(ptrs);
+}
+
+BlockRefShortArray<NiAVObject>& NiMultiTargetTransformController::GetTargets() {
+	return targetRefs;
 }
 
 
@@ -1279,6 +1287,10 @@ void BSAnimNotes::GetChildRefs(std::set<Ref*>& refs) {
 	animNoteRefs.GetIndexPtrs(refs);
 }
 
+BlockRefShortArray<BSAnimNote>& BSAnimNotes::GetAnimNotes() {
+	return animNoteRefs;
+}
+
 
 void NiControllerSequence::Get(NiStream& stream) {
 	NiSequence::Get(stream);
@@ -1336,6 +1348,18 @@ void NiControllerSequence::GetPtrs(std::set<Ref*>& ptrs) {
 	ptrs.insert(&managerRef);
 }
 
+int NiControllerSequence::GetAnimNotesRef() {
+	return animNotesRef.GetIndex();
+}
+
+void NiControllerSequence::SetAnimNotesRef(int notesRef) {
+	animNotesRef.SetIndex(notesRef);
+}
+
+BlockRefShortArray<BSAnimNotes>& NiControllerSequence::GetAnimNotes() {
+	return animNotesRefs;
+}
+
 
 void NiControllerManager::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
@@ -1360,4 +1384,16 @@ void NiControllerManager::GetChildRefs(std::set<Ref*>& refs) {
 
 	controllerSequenceRefs.GetIndexPtrs(refs);
 	refs.insert(&objectPaletteRef);
+}
+
+BlockRefArray<NiControllerSequence>& NiControllerManager::GetControllerSequences() {
+	return controllerSequenceRefs;
+}
+
+int NiControllerManager::GetObjectPaletteRef() {
+	return objectPaletteRef.GetIndex();
+}
+
+void NiControllerManager::SetObjectPaletteRef(int paletteRef) {
+	objectPaletteRef.SetIndex(paletteRef);
 }

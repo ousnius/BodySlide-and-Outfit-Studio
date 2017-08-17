@@ -533,6 +533,11 @@ int NiSkinPartition::RemoveEmptyPartitions(std::vector<int>& outDeletedIndices) 
 }
 
 
+BlockRefArray<NiNode>& NiBoneContainer::GetBones() {
+	return boneRefs;
+}
+
+
 void NiSkinInstance::Get(NiStream& stream) {
 	NiObject::Get(stream);
 

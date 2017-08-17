@@ -207,13 +207,28 @@ protected:
 	}
 
 public:
+	typedef typename std::vector<BlockRef<T>>::iterator iterator;
+	typedef typename std::vector<BlockRef<T>>::const_iterator const_iterator;
+
+	typename std::vector<BlockRef<T>>::iterator begin() {
+		return refs.begin();
+	}
+
+	typename std::vector<BlockRef<T>>::iterator end() {
+		return refs.end();
+	}
+
+	typename std::vector<BlockRef<T>>::const_iterator begin() const {
+		return refs.begin();
+	}
+
+	typename std::vector<BlockRef<T>>::const_iterator end() const {
+		return refs.end();
+	}
+
 	void Clear() {
 		refs.clear();
 		arraySize = 0;
-	}
-
-	std::vector<BlockRef<T>>& GetBlockRefs() {
-		return refs;
 	}
 
 	virtual void Get(NiStream& stream) override {

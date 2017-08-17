@@ -168,8 +168,11 @@ public:
 class NiNode;
 
 class NiBoneContainer : public NiObject {
-public:
+protected:
 	BlockRefArray<NiNode> boneRefs;
+
+public:
+	BlockRefArray<NiNode>& GetBones();
 };
 
 class NiSkinInstance : public NiBoneContainer {

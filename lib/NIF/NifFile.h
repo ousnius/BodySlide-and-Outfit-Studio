@@ -278,15 +278,15 @@ std::vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 			return result;
 	}
 
-	for (int i = 0; i < parent->GetNumChildren(); i++) {
-		n = hdr.GetBlock<T>(parent->GetChildRef(i));
+	for (auto& child : parent->GetChildren()) {
+		n = hdr.GetBlock<T>(child.GetIndex());
 		if (n)
 			result.push_back(n);
 	}
 
 	if (searchExtraData) {
-		for (int i = 0; i < parent->GetNumExtraData(); i++) {
-			n = hdr.GetBlock<T>(parent->GetExtraDataRef(i));
+		for (auto& extraData : parent->GetExtraData()) {
+			n = hdr.GetBlock<T>(extraData.GetIndex());
 			if (n)
 				result.push_back(n);
 		}

@@ -298,7 +298,7 @@ ushort NiHeader::GetBlockTypeIndex(const int blockId) {
 	if (blockId >= 0 && blockId < numBlocks)
 		return blockTypeIndices[blockId];
 
-	return 0xFFFFFFFF;
+	return 0xFFFF;
 }
 
 uint NiHeader::GetBlockSize(const uint blockId) {

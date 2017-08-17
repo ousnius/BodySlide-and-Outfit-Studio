@@ -196,6 +196,14 @@ void NiGeometryData::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&additionalDataRef);
 }
 
+int NiGeometryData::GetAdditionalDataRef() {
+	return additionalDataRef.GetIndex();
+}
+
+void NiGeometryData::SetAdditionalDataRef(int dataRef) {
+	additionalDataRef.SetIndex(dataRef);
+}
+
 void NiGeometryData::SetVertices(const bool enable) {
 	hasVertices = enable;
 	if (enable) {
@@ -420,10 +428,12 @@ void NiShape::UpdateBounds() {
 int NiShape::GetBoneID(NiHeader& hdr, const std::string& boneName) {
 	auto boneCont = hdr.GetBlock<NiBoneContainer>(GetSkinInstanceRef());
 	if (boneCont) {
-		for (int i = 0; i < boneCont->boneRefs.GetSize(); i++) {
-			auto node = hdr.GetBlock<NiNode>(boneCont->boneRefs.GetBlockRef(i));
+		int i = 0;
+		for (auto& bone : boneCont->GetBones()) {
+			auto node = hdr.GetBlock<NiNode>(bone.GetIndex());
 			if (node && node->GetName() == boneName)
 				return i;
+			++i;
 		}
 	}
 
@@ -768,6 +778,30 @@ void BSTriShape::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&skinInstanceRef);
 	refs.insert(&shaderPropertyRef);
 	refs.insert(&alphaPropertyRef);
+}
+
+int BSTriShape::GetSkinInstanceRef() {
+	return skinInstanceRef.GetIndex();
+}
+
+void BSTriShape::SetSkinInstanceRef(int skinInstRef) {
+	skinInstanceRef.SetIndex(skinInstRef);
+}
+
+int BSTriShape::GetShaderPropertyRef() {
+	return shaderPropertyRef.GetIndex();
+}
+
+void BSTriShape::SetShaderPropertyRef(int shaderPropRef) {
+	shaderPropertyRef.SetIndex(shaderPropRef);
+}
+
+int BSTriShape::GetAlphaPropertyRef() {
+	return alphaPropertyRef.GetIndex();
+}
+
+void BSTriShape::SetAlphaPropertyRef(int alphaPropRef) {
+	alphaPropertyRef.SetIndex(alphaPropRef);
 }
 
 const std::vector<Vector3>* BSTriShape::GetRawVerts() {
@@ -1597,6 +1631,42 @@ void NiGeometry::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&skinInstanceRef);
 	refs.insert(&shaderPropertyRef);
 	refs.insert(&alphaPropertyRef);
+}
+
+bool NiGeometry::IsSkinned() {
+	return skinInstanceRef.GetIndex() != 0xFFFFFFFF;
+}
+
+int NiGeometry::GetDataRef() {
+	return dataRef.GetIndex();
+}
+
+void NiGeometry::SetDataRef(int datRef) {
+	dataRef.SetIndex(datRef);
+}
+
+int NiGeometry::GetSkinInstanceRef() {
+	return skinInstanceRef.GetIndex();
+}
+
+void NiGeometry::SetSkinInstanceRef(int skinInstRef) {
+	skinInstanceRef.SetIndex(skinInstRef);
+}
+
+int NiGeometry::GetShaderPropertyRef() {
+	return shaderPropertyRef.GetIndex();
+}
+
+void NiGeometry::SetShaderPropertyRef(int shaderPropRef) {
+	shaderPropertyRef.SetIndex(shaderPropRef);
+}
+
+int NiGeometry::GetAlphaPropertyRef() {
+	return alphaPropertyRef.GetIndex();
+}
+
+void NiGeometry::SetAlphaPropertyRef(int alphaPropRef) {
+	alphaPropertyRef.SetIndex(alphaPropRef);
 }
 
 

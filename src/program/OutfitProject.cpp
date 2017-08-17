@@ -462,7 +462,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		NiTriShape* nifTriShape = new NiTriShape();
 		blank.GetHeader().AddBlock(nifTriShape);
 		if (owner->targetGame < SKYRIM)
-			nifTriShape->propertyRefs.AddBlockRef(shaderID);
+			nifTriShape->GetProperties().AddBlockRef(shaderID);
 		else
 			nifTriShape->SetShaderPropertyRef(shaderID);
 
@@ -2095,7 +2095,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 				if (id != 0xFFFFFFFF) {
 					NiNode* root = nif.GetHeader().GetBlock<NiNode>(0);
 					if (root)
-						root->AddExtraDataRef(id);
+						root->GetExtraData().AddBlockRef(id);
 				}
 			}
 		}

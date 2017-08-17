@@ -557,6 +557,8 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	bhkConvexListShape* Clone() { return new bhkConvexListShape(*this); }
+
+	BlockRefArray<bhkConvexShape>& GetShapes();
 };
 
 class bhkConvexVerticesShape : public bhkConvexShape {
@@ -697,6 +699,8 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	bhkNiTriStripsShape* Clone() { return new bhkNiTriStripsShape(*this); }
+
+	BlockRefArray<NiTriStripsData>& GetParts();
 };
 
 class bhkShapeCollection : public bhkShape {
@@ -719,6 +723,8 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	bhkListShape* Clone() { return new bhkListShape(*this); }
+
+	BlockRefArray<bhkShape>& GetSubShapes();
 };
 
 struct hkTriangleData {
@@ -888,6 +894,8 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<Ref*>& ptrs);
+
+	BlockRefArray<bhkEntity>& GetEntities();
 };
 
 class bhkHingeConstraint : public bhkConstraint {
@@ -935,6 +943,8 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<Ref*>& ptrs);
+
+	BlockRefArray<bhkEntity>& GetEntities();
 };
 
 class bhkBreakableConstraint : public bhkConstraint {
@@ -1042,6 +1052,14 @@ public:
 	void Put(NiStream& stream);
 	void GetPtrs(std::set<Ref*>& ptrs);
 	bhkBallSocketConstraintChain* Clone() { return new bhkBallSocketConstraintChain(*this); }
+
+	BlockRefArray<bhkEntity>& GetEntitiesA();
+
+	int GetEntityARef();
+	void SetEntityARef(int entityRef);
+
+	int GetEntityBRef();
+	void SetEntityBRef(int entityRef);
 };
 
 enum hkResponseType : byte {
@@ -1099,6 +1117,8 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	bhkRigidBody* Clone() { return new bhkRigidBody(*this); }
+
+	BlockRefArray<bhkSerializable>& GetConstraints();
 };
 
 class bhkRigidBodyT : public bhkRigidBody {
@@ -1233,6 +1253,8 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	bhkRagdollTemplate* Clone() { return new bhkRagdollTemplate(*this); }
+
+	BlockRefArray<NiObject>& GetBones();
 };
 
 class bhkRagdollTemplateData : public NiObject {

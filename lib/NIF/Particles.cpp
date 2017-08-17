@@ -598,6 +598,10 @@ void NiPSysMeshUpdateModifier::GetChildRefs(std::set<Ref*>& refs) {
 	meshRefs.GetIndexPtrs(refs);
 }
 
+BlockRefArray<NiAVObject>& NiPSysMeshUpdateModifier::GetMeshes() {
+	return meshRefs;
+}
+
 
 void NiPSysFieldModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
@@ -776,6 +780,19 @@ void BSPSysHavokUpdateModifier::GetChildRefs(std::set<Ref*>& refs) {
 }
 
 
+BlockRefArray<NiNode>& BSPSysHavokUpdateModifier::GetNodes() {
+	return nodeRefs;
+}
+
+int BSPSysHavokUpdateModifier::GetModifierRef() {
+	return modifierRef.GetIndex();
+}
+
+void BSPSysHavokUpdateModifier::SetModifierRef(int modRef) {
+	modifierRef.SetIndex(modRef);
+}
+
+
 void BSParentVelocityModifier::Get(NiStream& stream) {
 	NiPSysModifier::Get(stream);
 
@@ -807,6 +824,10 @@ void BSMasterParticleSystem::GetChildRefs(std::set<Ref*>& refs) {
 	NiNode::GetChildRefs(refs);
 
 	particleSysRefs.GetIndexPtrs(refs);
+}
+
+BlockRefArray<NiAVObject>& BSMasterParticleSystem::GetParticleSystems() {
+	return particleSysRefs;
 }
 
 
@@ -931,6 +952,50 @@ void NiParticleSystem::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&alphaPropertyRef);
 	refs.insert(&psysDataRef);
 	modifierRefs.GetIndexPtrs(refs);
+}
+
+int NiParticleSystem::GetDataRef() {
+	return dataRef.GetIndex();
+}
+
+void NiParticleSystem::SetDataRef(int datRef) {
+	dataRef.SetIndex(datRef);
+}
+
+int NiParticleSystem::GetSkinInstanceRef() {
+	return skinInstanceRef.GetIndex();
+}
+
+void NiParticleSystem::SetSkinInstanceRef(int skinRef) {
+	skinInstanceRef.SetIndex(skinRef);
+}
+
+int NiParticleSystem::GetShaderPropertyRef() {
+	return shaderPropertyRef.GetIndex();
+}
+
+void NiParticleSystem::SetShaderPropertyRef(int shaderRef) {
+	shaderPropertyRef.SetIndex(shaderRef);
+}
+
+int NiParticleSystem::GetAlphaPropertyRef() {
+	return alphaPropertyRef.GetIndex();
+}
+
+void NiParticleSystem::SetAlphaPropertyRef(int alphaRef) {
+	alphaPropertyRef.SetIndex(alphaRef);
+}
+
+int NiParticleSystem::GetPSysDataRef() {
+	return psysDataRef.GetIndex();
+}
+
+void NiParticleSystem::SetPSysDataRef(int psysDatRef) {
+	psysDataRef.SetIndex(psysDatRef);
+}
+
+BlockRefArray<NiPSysModifier>& NiParticleSystem::GetModifiers() {
+	return modifierRefs;
 }
 
 
@@ -1145,4 +1210,8 @@ void NiPSysMeshEmitter::GetChildRefs(std::set<Ref*>& refs) {
 	NiPSysEmitter::GetChildRefs(refs);
 
 	meshRefs.GetIndexPtrs(refs);
+}
+
+BlockRefArray<NiAVObject>& NiPSysMeshEmitter::GetMeshes() {
+	return meshRefs;
 }

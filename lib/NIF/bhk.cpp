@@ -311,6 +311,10 @@ void bhkConvexListShape::GetChildRefs(std::set<Ref*>& refs) {
 	shapeRefs.GetIndexPtrs(refs);
 }
 
+BlockRefArray<bhkConvexShape>& bhkConvexListShape::GetShapes() {
+	return shapeRefs;
+}
+
 
 void bhkConvexVerticesShape::Get(NiStream& stream) {
 	bhkConvexShape::Get(stream);
@@ -501,6 +505,10 @@ void bhkNiTriStripsShape::GetChildRefs(std::set<Ref*>& refs) {
 	partRefs.GetIndexPtrs(refs);
 }
 
+BlockRefArray<NiTriStripsData>& bhkNiTriStripsShape::GetParts() {
+	return partRefs;
+}
+
 
 void bhkListShape::Get(NiStream& stream) {
 	bhkShapeCollection::Get(stream);
@@ -536,6 +544,10 @@ void bhkListShape::GetChildRefs(std::set<Ref*>& refs) {
 	bhkShapeCollection::GetChildRefs(refs);
 
 	subShapeRefs.GetIndexPtrs(refs);
+}
+
+BlockRefArray<bhkShape>& bhkListShape::GetSubShapes() {
+	return subShapeRefs;
 }
 
 
@@ -791,6 +803,10 @@ void bhkConstraint::GetPtrs(std::set<Ref*>& ptrs) {
 	entityRefs.GetIndexPtrs(ptrs);
 }
 
+BlockRefArray<bhkEntity>& bhkConstraint::GetEntities() {
+	return entityRefs;
+}
+
 
 void bhkHingeConstraint::Get(NiStream& stream) {
 	bhkConstraint::Get(stream);
@@ -946,6 +962,10 @@ void ConstraintData::Put(NiStream& stream) {
 
 void ConstraintData::GetPtrs(std::set<Ref*>& ptrs) {
 	entityRefs.GetIndexPtrs(ptrs);
+}
+
+BlockRefArray<bhkEntity>& ConstraintData::GetEntities() {
+	return entityRefs;
 }
 
 
@@ -1140,6 +1160,26 @@ void bhkBallSocketConstraintChain::GetPtrs(std::set<Ref*>& ptrs) {
 	ptrs.insert(&entityBRef);
 }
 
+BlockRefArray<bhkEntity>& bhkBallSocketConstraintChain::GetEntitiesA() {
+	return entityARefs;
+}
+
+int bhkBallSocketConstraintChain::GetEntityARef() {
+	return entityARef.GetIndex();
+}
+
+void bhkBallSocketConstraintChain::SetEntityARef(int entityRef) {
+	entityARef.SetIndex(entityRef);
+}
+
+int bhkBallSocketConstraintChain::GetEntityBRef() {
+	return entityBRef.GetIndex();
+}
+
+void bhkBallSocketConstraintChain::SetEntityBRef(int entityRef) {
+	entityBRef.SetIndex(entityRef);
+}
+
 
 void bhkRigidBody::Get(NiStream& stream) {
 	bhkEntity::Get(stream);
@@ -1257,6 +1297,10 @@ void bhkRigidBody::GetChildRefs(std::set<Ref*>& refs) {
 	bhkEntity::GetChildRefs(refs);
 
 	constraintRefs.GetIndexPtrs(refs);
+}
+
+BlockRefArray<bhkSerializable>& bhkRigidBody::GetConstraints() {
+	return constraintRefs;
 }
 
 
@@ -1504,6 +1548,10 @@ void bhkRagdollTemplate::GetChildRefs(std::set<Ref*>& refs) {
 	NiExtraData::GetChildRefs(refs);
 
 	boneRefs.GetIndexPtrs(refs);
+}
+
+BlockRefArray<NiObject>& bhkRagdollTemplate::GetBones() {
+	return boneRefs;
 }
 
 

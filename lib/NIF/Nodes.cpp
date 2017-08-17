@@ -31,30 +31,12 @@ void NiNode::GetChildRefs(std::set<Ref*>& refs) {
 	effectRefs.GetIndexPtrs(refs);
 }
 
-int NiNode::GetChildRef(const int id) {
-	if (id >= 0 && id < childRefs.GetSize())
-		return childRefs.GetBlockRef(id);
-
-	return 0xFFFFFFFF;
+BlockRefArray<NiAVObject>& NiNode::GetChildren() {
+	return childRefs;
 }
 
-void NiNode::AddChildRef(const int id) {
-	childRefs.AddBlockRef(id);
-}
-
-void NiNode::ClearChildren() {
-	childRefs.Clear();
-}
-
-int NiNode::GetEffectRef(const int id) {
-	if (id >= 0 && id < effectRefs.GetSize())
-		return effectRefs.GetBlockRef(id);
-
-	return 0xFFFFFFFF;
-}
-
-void NiNode::AddEffectRef(const int id) {
-	effectRefs.AddBlockRef(id);
+BlockRefArray<NiDynamicEffect>& NiNode::GetEffects() {
+	return effectRefs;
 }
 
 
@@ -92,6 +74,14 @@ void BSTreeNode::GetChildRefs(std::set<Ref*>& refs) {
 
 	bones1.GetIndexPtrs(refs);
 	bones2.GetIndexPtrs(refs);
+}
+
+BlockRefArray<NiNode>& BSTreeNode::GetBones1() {
+	return bones1;
+}
+
+BlockRefArray<NiNode>& BSTreeNode::GetBones2() {
+	return bones2;
 }
 
 
@@ -175,6 +165,14 @@ void BSMultiBound::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&dataRef);
 }
 
+int BSMultiBound::GetDataRef() {
+	return dataRef.GetIndex();
+}
+
+void BSMultiBound::SetDataRef(int datRef) {
+	dataRef.SetIndex(datRef);
+}
+
 
 void BSMultiBoundNode::Get(NiStream& stream) {
 	NiNode::Get(stream);
@@ -198,6 +196,14 @@ void BSMultiBoundNode::GetChildRefs(std::set<Ref*>& refs) {
 	NiNode::GetChildRefs(refs);
 
 	refs.insert(&multiBoundRef);
+}
+
+int BSMultiBoundNode::GetMultiBoundRef() {
+	return multiBoundRef.GetIndex();
+}
+
+void BSMultiBoundNode::SetMultiBoundRef(int multBoundRef) {
+	multiBoundRef.SetIndex(multBoundRef);
 }
 
 
@@ -316,6 +322,14 @@ void NiLODNode::GetChildRefs(std::set<Ref*>& refs) {
 	NiSwitchNode::GetChildRefs(refs);
 
 	refs.insert(&lodLevelData);
+}
+
+int NiLODNode::GetLodLevelDataRef() {
+	return lodLevelData.GetIndex();
+}
+
+void NiLODNode::SetLodLevelDataRef(int dataRef) {
+	lodLevelData.SetIndex(dataRef);
 }
 
 

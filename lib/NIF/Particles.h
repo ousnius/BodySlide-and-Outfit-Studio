@@ -490,6 +490,8 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiPSysMeshUpdateModifier* Clone() { return new NiPSysMeshUpdateModifier(*this); }
+
+	BlockRefArray<NiAVObject>& GetMeshes();
 };
 
 class NiPSysFieldModifier : public NiPSysModifier {
@@ -633,6 +635,11 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSPSysHavokUpdateModifier* Clone() { return new BSPSysHavokUpdateModifier(*this); }
+
+	BlockRefArray<NiNode>& GetNodes();
+
+	int GetModifierRef();
+	void SetModifierRef(int modRef);
 };
 
 class BSParentVelocityModifier : public NiPSysModifier {
@@ -662,6 +669,8 @@ public:
 
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSMasterParticleSystem* Clone() { return new BSMasterParticleSystem(*this); }
+
+	BlockRefArray<NiAVObject>& GetParticleSystems();
 };
 
 class NiParticleSystem : public NiAVObject {
@@ -707,6 +716,23 @@ public:
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiParticleSystem* Clone() { return new NiParticleSystem(*this); }
+
+	int GetDataRef();
+	void SetDataRef(int datRef);
+
+	int GetSkinInstanceRef();
+	void SetSkinInstanceRef(int skinRef);
+
+	int GetShaderPropertyRef();
+	void SetShaderPropertyRef(int shaderRef);
+
+	int GetAlphaPropertyRef();
+	void SetAlphaPropertyRef(int alphaRef);
+
+	int GetPSysDataRef();
+	void SetPSysDataRef(int psysDatRef);
+
+	BlockRefArray<NiPSysModifier>& GetModifiers();
 };
 
 class NiMeshParticleSystem : public NiParticleSystem {
@@ -895,4 +921,6 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiPSysMeshEmitter* Clone() { return new NiPSysMeshEmitter(*this); }
+
+	BlockRefArray<NiAVObject>& GetMeshes();
 };

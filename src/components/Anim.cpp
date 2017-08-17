@@ -376,13 +376,13 @@ AnimBone& AnimBone::LoadFromNif(NifFile* skeletonNif, int srcBlock, AnimBone* in
 		rot = localRot;
 	}
 
-	for (int i = 0; i < node->GetNumChildren(); i++) {
-		std::string name = skeletonNif->GetNodeName(node->GetChildRef(i));
+	for (auto& child : node->GetChildren()) {
+		std::string name = skeletonNif->GetNodeName(child.GetIndex());
 		if (!name.empty()) {
 			if (name == "_unnamed_")
 				name = AnimSkeleton::getInstance().GenerateBoneName();
 
-			AnimBone& bone = AnimSkeleton::getInstance().AddBone(name).LoadFromNif(skeletonNif, node->GetChildRef(i), this);
+			AnimBone& bone = AnimSkeleton::getInstance().AddBone(name).LoadFromNif(skeletonNif, child.GetIndex(), this);
 			children.push_back(&bone);
 		}
 	}

@@ -230,10 +230,10 @@ void ShapeProperties::AddShader() {
 	case FO3:
 	case FONV:
 		newShader = new BSShaderPPLightingProperty();
-		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(newShader));
+		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(newShader));
 
 		newMaterial = new NiMaterialProperty();
-		shape->propertyRefs.AddBlockRef(nif->GetHeader().AddBlock(newMaterial));
+		shape->GetProperties().AddBlockRef(nif->GetHeader().AddBlock(newMaterial));
 		break;
 
 	case SKYRIM:
@@ -432,10 +432,10 @@ void ShapeProperties::GetExtraData() {
 
 	extraDataIndices.clear();
 
-	for (int i = 0; i < shape->GetNumExtraData(); i++) {
-		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(shape->GetExtraDataRef(i));
+	for (auto& extraDataRef : shape->GetExtraData()) {
+		auto extraData = nif->GetHeader().GetBlock<NiExtraData>(extraDataRef.GetIndex());
 		if (extraData) {
-			extraDataIndices.push_back(shape->GetExtraDataRef(i));
+			extraDataIndices.push_back(extraDataRef.GetIndex());
 			AddExtraData(extraData, true);
 		}
 	}

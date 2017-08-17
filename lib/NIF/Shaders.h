@@ -82,12 +82,14 @@ struct TexTransform {
 	Vector2 offset;
 };
 
-struct TexDesc {
+class TexDesc {
+private:
 	BlockRef<NiSourceTexture> sourceRef;
 	ushort flags = 0;
 	bool hasTexTransform = false;
 	TexTransform transform;
 
+public:
 	void Get(NiStream& stream) {
 		sourceRef.Get(stream);
 		stream >> flags;
@@ -109,13 +111,23 @@ struct TexDesc {
 	void GetChildRefs(std::set<Ref*>& refs) {
 		refs.insert(&sourceRef);
 	}
+
+	int GetSourceRef() {
+		return sourceRef.GetIndex();
+	}
+
+	void SetSourceRef(int srcRef) {
+		sourceRef.SetIndex(srcRef);
+	}
 };
 
-struct ShaderTexDesc {
+class ShaderTexDesc {
+private:
 	bool isUsed = false;
 	TexDesc data;
 	uint mapIndex = 0;
 
+public:
 	void Get(NiStream& stream) {
 		stream >> isUsed;
 

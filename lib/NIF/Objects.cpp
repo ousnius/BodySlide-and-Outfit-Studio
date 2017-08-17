@@ -36,6 +36,13 @@ void NiObjectNET::GetStringRefs(std::set<StringRef*>& refs) {
 	refs.insert(&name);
 }
 
+void NiObjectNET::GetChildRefs(std::set<Ref*>& refs) {
+	NiObject::GetChildRefs(refs);
+
+	extraDataRefs.GetIndexPtrs(refs);
+	refs.insert(&controllerRef);
+}
+
 std::string NiObjectNET::GetName() {
 	return name.GetString();
 }
@@ -56,27 +63,8 @@ void NiObjectNET::SetControllerRef(int ctlrRef) {
 	controllerRef.SetIndex(ctlrRef);
 }
 
-int NiObjectNET::GetNumExtraData() {
-	return extraDataRefs.GetSize();
-}
-
-void NiObjectNET::SetExtraDataRef(const int id, const int blockId) {
-	extraDataRefs.SetBlockRef(id, blockId);
-}
-
-int NiObjectNET::GetExtraDataRef(const int id) {
-	return extraDataRefs.GetBlockRef(id);
-}
-
-void NiObjectNET::AddExtraDataRef(const int id) {
-	extraDataRefs.AddBlockRef(id);
-}
-
-void NiObjectNET::GetChildRefs(std::set<Ref*>& refs) {
-	NiObject::GetChildRefs(refs);
-
-	extraDataRefs.GetIndexPtrs(refs);
-	refs.insert(&controllerRef);
+BlockRefArray<NiExtraData>& NiObjectNET::GetExtraData() {
+	return extraDataRefs;
 }
 
 
@@ -128,6 +116,10 @@ void NiAVObject::GetChildRefs(std::set<Ref*>& refs) {
 
 	propertyRefs.GetIndexPtrs(refs);
 	refs.insert(&collisionRef);
+}
+
+BlockRefArray<NiProperty>& NiAVObject::GetProperties() {
+	return propertyRefs;
 }
 
 
@@ -216,6 +208,14 @@ void NiCamera::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&sceneRef);
 }
 
+int NiCamera::GetSceneRef() {
+	return sceneRef.GetIndex();
+}
+
+void NiCamera::SetSceneRef(int scRef) {
+	sceneRef.SetIndex(scRef);
+}
+
 
 void NiPalette::Get(NiStream& stream) {
 	NiObject::Get(stream);
@@ -302,6 +302,14 @@ void TextureRenderData::GetChildRefs(std::set<Ref*>& refs) {
 	NiObject::GetChildRefs(refs);
 
 	refs.insert(&paletteRef);
+}
+
+int TextureRenderData::GetPaletteRef() {
+	return paletteRef.GetIndex();
+}
+
+void TextureRenderData::SetPaletteRef(int palRef) {
+	paletteRef.SetIndex(palRef);
 }
 
 
@@ -401,6 +409,14 @@ void NiSourceTexture::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&dataRef);
 }
 
+int NiSourceTexture::GetDataRef() {
+	return dataRef.GetIndex();
+}
+
+void NiSourceTexture::SetDataRef(int datRef) {
+	dataRef.SetIndex(datRef);
+}
+
 
 void NiDynamicEffect::Get(NiStream& stream) {
 	NiAVObject::Get(stream);
@@ -424,6 +440,10 @@ void NiDynamicEffect::GetChildRefs(std::set<Ref*>& refs) {
 	NiAVObject::GetChildRefs(refs);
 
 	affectedNodes.GetIndexPtrs(refs);
+}
+
+BlockRefArray<NiNode>& NiDynamicEffect::GetAffectedNodes() {
+	return affectedNodes;
 }
 
 
@@ -461,6 +481,14 @@ void NiTextureEffect::GetChildRefs(std::set<Ref*>& refs) {
 	NiDynamicEffect::GetChildRefs(refs);
 
 	refs.insert(&sourceTexture);
+}
+
+int NiTextureEffect::GetSourceTextureRef() {
+	return sourceTexture.GetIndex();
+}
+
+void NiTextureEffect::SetSourceTextureRef(int srcTexRef) {
+	sourceTexture.SetIndex(srcTexRef);
 }
 
 

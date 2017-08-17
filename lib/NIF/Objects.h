@@ -23,6 +23,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetStringRefs(std::set<StringRef*>& refs);
+	void GetChildRefs(std::set<Ref*>& refs);
 
 	std::string GetName();
 	void SetName(const std::string& str);
@@ -31,12 +32,7 @@ public:
 	int GetControllerRef();
 	void SetControllerRef(int ctlrRef);
 
-	int GetNumExtraData();
-	void SetExtraDataRef(const int id, const int blockId);
-	int GetExtraDataRef(const int id);
-	void AddExtraDataRef(const int id);
-
-	void GetChildRefs(std::set<Ref*>& refs);
+	BlockRefArray<NiExtraData>& GetExtraData();
 };
 
 class NiProperty;
@@ -44,6 +40,7 @@ class NiCollisionObject;
 
 class NiAVObject : public NiObjectNET {
 protected:
+	BlockRefArray<NiProperty> propertyRefs;
 	BlockRef<NiCollisionObject> collisionRef;
 
 public:
@@ -51,11 +48,12 @@ public:
 	Vector3 translation;
 	Vector3 rotation[3] = { Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f) };
 	float scale = 1.0f;
-	BlockRefArray<NiProperty> propertyRefs;
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+
+	BlockRefArray<NiProperty>& GetProperties();
 
 	int GetCollisionRef() { return collisionRef.GetIndex(); }
 	void SetCollisionRef(const int colRef) { collisionRef.SetIndex(colRef); }
@@ -142,6 +140,9 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiCamera* Clone() { return new NiCamera(*this); }
+
+	int GetSceneRef();
+	void SetSceneRef(int scRef);
 };
 
 class NiSequenceStreamHelper : public NiObjectNET {
@@ -227,6 +228,9 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+
+	int GetPaletteRef();
+	void SetPaletteRef(int palRef);
 };
 
 class NiPersistentSrcTextureRendererData : public TextureRenderData {
@@ -316,6 +320,9 @@ public:
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiSourceTexture* Clone() { return new NiSourceTexture(*this); }
+
+	int GetDataRef();
+	void SetDataRef(int datRef);
 };
 
 class NiSourceCubeMap : public NiSourceTexture {
@@ -366,6 +373,8 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
+
+	BlockRefArray<NiNode>& GetAffectedNodes();
 };
 
 class NiTextureEffect : public NiDynamicEffect {
@@ -389,6 +398,9 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiTextureEffect* Clone() { return new NiTextureEffect(*this); }
+
+	int GetSourceTextureRef();
+	void SetSourceTextureRef(int srcTexRef);
 };
 
 class NiLight : public NiDynamicEffect {

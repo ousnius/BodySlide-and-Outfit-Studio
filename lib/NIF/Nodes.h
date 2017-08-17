@@ -24,15 +24,8 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiNode* Clone() { return new NiNode(*this); }
 
-	int GetNumChildren() { return childRefs.GetSize(); }
-	int GetChildRef(const int id);
-	void AddChildRef(const int id);
-	void ClearChildren();
-	std::vector<BlockRef<NiAVObject>>& GetChildren() { return childRefs.GetBlockRefs(); }
-
-	int GetNumEffects() { return effectRefs.GetSize(); }
-	int GetEffectRef(const int id);
-	void AddEffectRef(const int id);
+	BlockRefArray<NiAVObject>& GetChildren();
+	BlockRefArray<NiDynamicEffect>& GetEffects();
 };
 
 class BSFadeNode : public NiNode {
@@ -84,6 +77,9 @@ public:
 
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSTreeNode* Clone() { return new BSTreeNode(*this); }
+
+	BlockRefArray<NiNode>& GetBones1();
+	BlockRefArray<NiNode>& GetBones2();
 };
 
 class BSOrderedNode : public NiNode {
@@ -159,6 +155,9 @@ public:
 	void Put(NiStream& stream);
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSMultiBound* Clone() { return new BSMultiBound(*this); }
+
+	int GetDataRef();
+	void SetDataRef(int datRef);
 };
 
 enum BSCPCullingType : uint {
@@ -183,6 +182,9 @@ public:
 
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSMultiBoundNode* Clone() { return new BSMultiBoundNode(*this); }
+
+	int GetMultiBoundRef();
+	void SetMultiBoundRef(int multBoundRef);
 };
 
 class BSRangeNode : public NiNode {
@@ -325,6 +327,9 @@ public:
 
 	void GetChildRefs(std::set<Ref*>& refs);
 	NiLODNode* Clone() { return new NiLODNode(*this); }
+
+	int GetLodLevelDataRef();
+	void SetLodLevelDataRef(int dataRef);
 };
 
 class NiBone : public NiNode {

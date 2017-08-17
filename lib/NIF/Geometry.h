@@ -238,6 +238,9 @@ public:
 
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 
+	int GetAdditionalDataRef();
+	void SetAdditionalDataRef(int dataRef);
+
 	void SetVertices(const bool enable);
 	bool HasVertices() { return hasVertices; }
 
@@ -349,14 +352,14 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSTriShape* Clone() { return new BSTriShape(*this); }
 
-	int GetSkinInstanceRef() { return skinInstanceRef.GetIndex(); }
-	void SetSkinInstanceRef(int skinInstRef) { skinInstanceRef.SetIndex(skinInstRef); }
+	int GetSkinInstanceRef();
+	void SetSkinInstanceRef(int skinInstRef);
 
-	int GetShaderPropertyRef() { return shaderPropertyRef.GetIndex(); }
-	void SetShaderPropertyRef(int shaderPropRef) { shaderPropertyRef.SetIndex(shaderPropRef); }
+	int GetShaderPropertyRef();
+	void SetShaderPropertyRef(int shaderPropRef);
 
-	int GetAlphaPropertyRef() { return alphaPropertyRef.GetIndex(); }
-	void SetAlphaPropertyRef(int alphaPropRef) { alphaPropertyRef.SetIndex(alphaPropRef); }
+	int GetAlphaPropertyRef();
+	void SetAlphaPropertyRef(int alphaPropRef);
 
 	const std::vector<Vector3>* GetRawVerts();
 	const std::vector<Vector3>* GetNormalData(bool xform = true);
@@ -392,7 +395,7 @@ public:
 	bool IsFullPrecision() { return vertexDesc.HasFlag(VF_FULLPREC); }
 	bool CanChangePrecision() { return (HasVertices()); }
 
-	void SetBounds(const BoundingSphere& newBounds) { this->bounds = newBounds; }
+	void SetBounds(const BoundingSphere& newBounds) { bounds = newBounds; }
 	BoundingSphere GetBounds() { return bounds; }
 	void UpdateBounds();
 
@@ -539,19 +542,19 @@ public:
 	void GetStringRefs(std::set<StringRef*>& refs);
 	void GetChildRefs(std::set<Ref*>& refs);
 
-	bool IsSkinned() { return skinInstanceRef.GetIndex() != 0xFFFFFFFF; }
+	bool IsSkinned();
 
-	int GetDataRef() { return dataRef.GetIndex(); }
-	void SetDataRef(int datRef) { dataRef.SetIndex(datRef); }
+	int GetDataRef();
+	void SetDataRef(int datRef);
 
-	int GetSkinInstanceRef() { return skinInstanceRef.GetIndex(); }
-	void SetSkinInstanceRef(int skinInstRef) { skinInstanceRef.SetIndex(skinInstRef); }
+	int GetSkinInstanceRef();
+	void SetSkinInstanceRef(int skinInstRef);
 
-	int GetShaderPropertyRef() { return shaderPropertyRef.GetIndex(); }
-	void SetShaderPropertyRef(int shaderPropRef) { shaderPropertyRef.SetIndex(shaderPropRef); }
+	int GetShaderPropertyRef();
+	void SetShaderPropertyRef(int shaderPropRef);
 
-	int GetAlphaPropertyRef() { return alphaPropertyRef.GetIndex(); }
-	void SetAlphaPropertyRef(int alphaPropRef) { alphaPropertyRef.SetIndex(alphaPropRef); }
+	int GetAlphaPropertyRef();
+	void SetAlphaPropertyRef(int alphaPropRef);
 };
 
 class NiTriBasedGeom : public NiGeometry {

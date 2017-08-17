@@ -538,22 +538,19 @@ void NifFile::PrettySortBlocks() {
 	if (!root)
 		return;
 
-	std::vector<int> oldChildren(root->GetNumChildren());
-	for (int i = 0; i < oldChildren.size(); i++)
-		oldChildren[i] = root->GetChildRef(i);
-
-	root->ClearChildren();
+	auto& children = root->GetChildren();
+	std::vector<int> indices = children.GetIndices();
+	children.Clear();
 
 	for (int i = 0; i < hdr.GetNumBlocks(); i++)
-		if (std::find(oldChildren.begin(), oldChildren.end(), i) != oldChildren.end())
-			root->AddChildRef(i);
+		if (std::find(indices.begin(), indices.end(), i) != indices.end())
+			children.AddBlockRef(i);
 
-	auto& children = root->GetChildren();
 	auto bookmark = children.begin();
 	auto peek = children.begin();
 
 	for (int i = 0; peek < children.end(); i++) {
-		auto block = hdr.GetBlock<NiObject>(root->GetChildRef(i));
+		auto block = hdr.GetBlock<NiObject>(children.GetBlockRef(i));
 		if (block && block->HasType<NiShape>()) {
 			std::iter_swap(bookmark, peek);
 			++bookmark;
@@ -586,7 +583,7 @@ int NifFile::AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vec
 
 	int newNodeId = hdr.AddBlock(newNode);
 	if (newNodeId != 0xFFFFFFFF)
-		root->AddChildRef(newNodeId);
+		root->GetChildren().AddBlockRef(newNodeId);
 
 	return newNodeId;
 }
@@ -618,7 +615,7 @@ void NifFile::SetNodeName(const int blockID, const std::string& newName) {
 
 int NifFile::AssignExtraData(NiAVObject* target, NiExtraData* extraData) {
 	int extraDataId = hdr.AddBlock(extraData);
-	target->AddExtraDataRef(extraDataId);
+	target->GetExtraData().AddBlockRef(extraDataId);
 	return extraDataId;
 }
 
@@ -627,12 +624,8 @@ NiShader* NifFile::GetShader(NiShape* shape) {
 	if (shader)
 		return shader;
 
-	std::vector<int> props = shape->propertyRefs.GetIndices();
-	if (props.empty())
-		return nullptr;
-
-	for (int i = 0; i < props.size(); i++) {
-		auto shaderProp = hdr.GetBlock<NiShader>(props[i]);
+	for (auto& prop : shape->GetProperties()) {
+		auto shaderProp = hdr.GetBlock<NiShader>(prop.GetIndex());
 		if (shaderProp)
 			return shaderProp;
 	}
@@ -641,8 +634,8 @@ NiShader* NifFile::GetShader(NiShape* shape) {
 }
 
 NiMaterialProperty* NifFile::GetMaterialProperty(NiShape* shape) {
-	for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
-		auto material = hdr.GetBlock<NiMaterialProperty>(shape->propertyRefs.GetBlockRef(i));
+	for (auto& prop : shape->GetProperties()) {
+		auto material = hdr.GetBlock<NiMaterialProperty>(prop.GetIndex());
 		if (material)
 			return material;
 	}
@@ -907,10 +900,10 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 	auto srcShader = srcNif.hdr.GetBlock<NiShader>(shape->GetShaderPropertyRef());
 	if (!srcShader) {
 		// No shader found, look in other properties
-		for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
-			srcShader = srcNif.hdr.GetBlock<NiShader>(shape->propertyRefs.GetBlockRef(i));
+		for (int i = 0; i < shape->GetProperties().GetSize(); i++) {
+			srcShader = srcNif.hdr.GetBlock<NiShader>(shape->GetProperties().GetBlockRef(i));
 			if (srcShader) {
-				srcShaderRef = shape->propertyRefs.GetBlockRef(i);
+				srcShaderRef = shape->GetProperties().GetBlockRef(i);
 				propRef1 = i;
 				break;
 			}
@@ -926,8 +919,8 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 	auto srcAlphaProp = srcNif.hdr.GetBlock<NiAlphaProperty>(shape->GetAlphaPropertyRef());
 	if (!srcAlphaProp) {
 		// No alpha found, look in other properties
-		for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
-			srcAlphaProp = srcNif.hdr.GetBlock<NiAlphaProperty>(shape->propertyRefs.GetBlockRef(i));
+		for (int i = 0; i < shape->GetProperties().GetSize(); i++) {
+			srcAlphaProp = srcNif.hdr.GetBlock<NiAlphaProperty>(shape->GetProperties().GetBlockRef(i));
 			if (srcAlphaProp) {
 				propRef2 = i;
 				break;
@@ -946,14 +939,14 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 	int shaderId = hdr.AddBlock(destShader);
 
 	// Extra Data
-	for (int i = 0; i < srcShader->GetNumExtraData(); i++) {
-		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcShader->GetExtraDataRef(i));
+	for (int i = 0; i < srcShader->GetExtraData().GetSize(); i++) {
+		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcShader->GetExtraData().GetBlockRef(i));
 		if (srcExtraData) {
 			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
 			destExtraData->SetName(srcExtraData->GetName());
 
 			int extraDataId = hdr.AddBlock(destExtraData);
-			destShader->SetExtraDataRef(i, extraDataId);
+			destShader->GetExtraData().SetBlockRef(i, extraDataId);
 
 			if (destExtraData->HasType<NiStringExtraData>()) {
 				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
@@ -985,7 +978,7 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 		destShader->SetWetMaterialName(srcWetMaterialName);
 
 	if (srcShader->HasType<BSShaderPPLightingProperty>())
-		shape->propertyRefs.SetBlockRef(propRef1, shaderId);
+		shape->GetProperties().SetBlockRef(propRef1, shaderId);
 	else
 		shape->SetShaderPropertyRef(shaderId);
 
@@ -1008,7 +1001,7 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 
 		int alphaPropId = hdr.AddBlock(destAlphaProp);
 		if (srcShader->HasType<BSShaderPPLightingProperty>())
-			shape->propertyRefs.SetBlockRef(propRef2, alphaPropId);
+			shape->GetProperties().SetBlockRef(propRef2, alphaPropId);
 		else
 			shape->SetAlphaPropertyRef(alphaPropId);
 	}
@@ -1037,14 +1030,14 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	int destId = hdr.AddBlock(destGeom);
 
 	// Extra Data
-	for (int i = 0; i < srcGeom->GetNumExtraData(); i++) {
-		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcGeom->GetExtraDataRef(i));
+	for (int i = 0; i < srcGeom->GetExtraData().GetSize(); i++) {
+		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcGeom->GetExtraData().GetBlockRef(i));
 		if (srcExtraData) {
 			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
 			destExtraData->SetName(srcExtraData->GetName());
 
 			int extraDataId = hdr.AddBlock(destExtraData);
-			destGeom->SetExtraDataRef(i, extraDataId);
+			destGeom->GetExtraData().SetBlockRef(i, extraDataId);
 
 			if (destExtraData->HasType<NiStringExtraData>()) {
 				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
@@ -1125,19 +1118,19 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	CopyShader(shapeDest, srcNif);
 
 	// Properties
-	for (int i = 0; i < srcGeom->propertyRefs.GetSize(); i++) {
-		auto srcProp = srcNif.hdr.GetBlock<NiProperty>(srcGeom->propertyRefs.GetBlockRef(i));
+	for (int i = 0; i < srcGeom->GetProperties().GetSize(); i++) {
+		auto srcProp = srcNif.hdr.GetBlock<NiProperty>(srcGeom->GetProperties().GetBlockRef(i));
 		if (srcProp) {
 			auto destProp = srcProp->Clone();
 			int propId = hdr.AddBlock(destProp);
-			destGeom->propertyRefs.SetBlockRef(i, propId);
+			destGeom->GetProperties().SetBlockRef(i, propId);
 		}
 	}
 
 	std::vector<std::string> srcBoneList;
 	srcNif.GetShapeBoneList(srcShape, srcBoneList);
 	if (destBoneCont)
-		destBoneCont->boneRefs.Clear();
+		destBoneCont->GetBones().Clear();
 
 	// Bones
 	auto rootNode = dynamic_cast<NiNode*>(blocks[0].get());
@@ -1146,14 +1139,14 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 			int boneID = GetBlockID(FindNodeByName(boneName));
 			if (boneID == 0xFFFFFFFF) {
 				boneID = CopyNamedNode(boneName, srcNif);
-				rootNode->AddChildRef(boneID);
+				rootNode->GetChildren().AddBlockRef(boneID);
 			}
 
 			if (destBoneCont)
-				destBoneCont->boneRefs.AddBlockRef(boneID);
+				destBoneCont->GetBones().AddBlockRef(boneID);
 		}
 
-		rootNode->AddChildRef(destId);
+		rootNode->GetChildren().AddBlockRef(destId);
 	}
 }
 
@@ -1337,10 +1330,8 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 			bsOptShape->SetShaderPropertyRef(shape->GetShaderPropertyRef());
 			bsOptShape->SetAlphaPropertyRef(shape->GetAlphaPropertyRef());
 			bsOptShape->SetCollisionRef(shape->GetCollisionRef());
-			bsOptShape->propertyRefs.SetIndices(shape->propertyRefs.GetIndices());
-
-			for (int i = 0; i < shape->GetNumExtraData(); i++)
-				bsOptShape->AddExtraDataRef(shape->GetExtraDataRef(i));
+			bsOptShape->GetProperties() = shape->GetProperties();
+			bsOptShape->GetExtraData() = shape->GetExtraData();
 
 			bsOptShape->rotation[0] = shape->rotation[0];
 			bsOptShape->rotation[1] = shape->rotation[1];
@@ -1384,8 +1375,8 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				}
 
 				// Find NiOptimizeKeep string
-				for (int i = 0; i < bsOptShape->GetNumExtraData(); i++) {
-					auto stringData = hdr.GetBlock<NiStringExtraData>(bsOptShape->GetExtraDataRef(i));
+				for (auto& extraData : bsOptShape->GetExtraData()) {
+					auto stringData = hdr.GetBlock<NiStringExtraData>(extraData.GetIndex());
 					if (stringData) {
 						if (stringData->GetStringData().find("NiOptimizeKeep") != std::string::npos) {
 							bsOptShape->particleDataSize = bsOptShape->numVertices * 6 + bsOptShape->numTriangles * 3;
@@ -1483,7 +1474,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				largeRef->SetName("DOLRED");
 
 				int largeRefId = hdr.AddBlock(largeRef);
-				bsOptShape->AddExtraDataRef(largeRefId);
+				bsOptShape->GetExtraData().AddBlockRef(largeRefId);
 				bsOptShape->SetName(shapeName + "-LargeRef");
 			}
 
@@ -1679,8 +1670,8 @@ bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXfo
 	if (rootChildrenOnly) {
 		auto root = dynamic_cast<NiNode*>(blocks[0].get());
 		if (root) {
-			for (int i = 0; i < root->GetNumChildren(); i++) {
-				auto node = hdr.GetBlock<NiNode>(root->GetChildRef(i));
+			for (auto& child : root->GetChildren()) {
+				auto node = hdr.GetBlock<NiNode>(child.GetIndex());
 				if (node) {
 					if (!node->GetName().compare(nodeName)) {
 						node->rotation[0] = inXform.rotation[0];
@@ -1721,9 +1712,10 @@ int NifFile::GetShapeBoneList(const std::string& shapeName, std::vector<std::str
 	auto skinInst = hdr.GetBlock<NiBoneContainer>(shape->GetSkinInstanceRef());
 	if (!skinInst)
 		return 0;
-
-	for (int i = 0; i < skinInst->boneRefs.GetSize(); i++) {
-		auto node = hdr.GetBlock<NiNode>(skinInst->boneRefs.GetBlockRef(i));
+	
+	auto& bones = skinInst->GetBones();
+	for (int i = 0; i < bones.GetSize(); i++) {
+		auto node = hdr.GetBlock<NiNode>(bones.GetBlockRef(i));
 		if (node)
 			outList.push_back(node->GetName());
 	}
@@ -1742,8 +1734,9 @@ int NifFile::GetShapeBoneIDList(const std::string& shapeName, std::vector<int>& 
 	if (!skinInst)
 		return 0;
 
-	for (int i = 0; i < skinInst->boneRefs.GetSize(); i++)
-		outList.push_back(skinInst->boneRefs.GetBlockRef(i));
+	auto& bones = skinInst->GetBones();
+	for (int i = 0; i < bones.GetSize(); i++)
+		outList.push_back(bones.GetBlockRef(i));
 
 	return outList.size();
 }
@@ -1767,7 +1760,7 @@ void NifFile::SetShapeBoneIDList(const std::string& shapeName, std::vector<int>&
 	if (!boneCont)
 		return;
 
-	boneCont->boneRefs.Clear();
+	boneCont->GetBones().Clear();
 
 	bool feedBoneData = false;
 	if (boneData && boneData->nBones != inList.size()) {
@@ -1778,7 +1771,7 @@ void NifFile::SetShapeBoneIDList(const std::string& shapeName, std::vector<int>&
 	}
 
 	for (auto &i : inList) {
-		boneCont->boneRefs.AddBlockRef(i);
+		boneCont->GetBones().AddBlockRef(i);
 		if (boneData && feedBoneData) {
 			boneData->boneXforms.emplace_back();
 			boneData->nBones++;
@@ -2006,7 +1999,7 @@ void NifFile::UpdateShapeBoneID(const std::string& shapeName, const int oldID, c
 	if (!boneCont)
 		return;
 
-	for (auto &bp : boneCont->boneRefs.GetBlockRefs()) {
+	for (auto &bp : boneCont->GetBones()) {
 		if (bp.GetIndex() == oldID) {
 			bp.SetIndex(newID);
 			return;
@@ -2895,10 +2888,10 @@ void NifFile::RotateShape(const std::string& shapeName, const Vector3& angle, st
 NiAlphaProperty* NifFile::GetAlphaProperty(NiShape* shape) {
 	int alphaRef = shape->GetAlphaPropertyRef();
 	if (alphaRef == 0xFFFFFFFF) {
-		for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
-			auto alphaProp = hdr.GetBlock<NiAlphaProperty>(shape->propertyRefs.GetBlockRef(i));
+		for (auto& prop : shape->GetProperties()) {
+			auto alphaProp = hdr.GetBlock<NiAlphaProperty>(prop.GetIndex());
 			if (alphaProp) {
-				alphaRef = shape->propertyRefs.GetBlockRef(i);
+				alphaRef = prop.GetIndex();
 				break;
 			}
 		}
@@ -2914,7 +2907,7 @@ int NifFile::AssignAlphaProperty(NiShape* shape, NiAlphaProperty* alphaProp) {
 	if (shader) {
 		int alphaRef = hdr.AddBlock(alphaProp);
 		if (shader->HasType<BSShaderPPLightingProperty>())
-			shape->propertyRefs.AddBlockRef(alphaRef);
+			shape->GetProperties().AddBlockRef(alphaRef);
 		else
 			shape->SetAlphaPropertyRef(alphaRef);
 
@@ -2931,10 +2924,10 @@ void NifFile::RemoveAlphaProperty(NiShape* shape) {
 		shape->SetAlphaPropertyRef(0xFFFFFFFF);
 	}
 
-	for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
-		alpha = hdr.GetBlock<NiAlphaProperty>(shape->propertyRefs.GetBlockRef(i));
+	for (int i = 0; i < shape->GetProperties().GetSize(); i++) {
+		alpha = hdr.GetBlock<NiAlphaProperty>(shape->GetProperties().GetBlockRef(i));
 		if (alpha) {
-			hdr.DeleteBlock(shape->propertyRefs.GetBlockRef(i));
+			hdr.DeleteBlock(shape->GetProperties().GetBlockRef(i));
 			i--;
 			continue;
 		}
@@ -2950,11 +2943,11 @@ void NifFile::DeleteShape(const std::string& shapeName) {
 	DeleteShader(shape);
 	DeleteSkinning(shape);
 
-	for (int i = shape->propertyRefs.GetSize() - 1; i >= 0; --i)
-		hdr.DeleteBlock(shape->propertyRefs.GetBlockRef(i));
+	for (int i = shape->GetProperties().GetSize() - 1; i >= 0; --i)
+		hdr.DeleteBlock(shape->GetProperties().GetBlockRef(i));
 
-	for (int i = shape->GetNumExtraData() - 1; i >= 0; --i)
-		hdr.DeleteBlock(shape->GetExtraDataRef(i));
+	for (int i = shape->GetExtraData().GetSize() - 1; i >= 0; --i)
+		hdr.DeleteBlock(shape->GetExtraData().GetBlockRef(i));
 
 	int shapeID = GetBlockID(shape);
 	hdr.DeleteBlock(shapeID);
@@ -2973,13 +2966,13 @@ void NifFile::DeleteShader(NiShape* shape) {
 
 	RemoveAlphaProperty(shape);
 
-	for (int i = 0; i < shape->propertyRefs.GetSize(); i++) {
-		auto shader = hdr.GetBlock<NiShader>(shape->propertyRefs.GetBlockRef(i));
+	for (int i = 0; i < shape->GetProperties().GetSize(); i++) {
+		auto shader = hdr.GetBlock<NiShader>(shape->GetProperties().GetBlockRef(i));
 		if (shader) {
 			if (shader->HasType<BSShaderPPLightingProperty>() || shader->HasType<NiMaterialProperty>()) {
 				hdr.DeleteBlock(shader->GetTextureSetRef());
 				hdr.DeleteBlock(shader->GetControllerRef());
-				hdr.DeleteBlock(shape->propertyRefs.GetBlockRef(i));
+				hdr.DeleteBlock(shape->GetProperties().GetBlockRef(i));
 				i--;
 				continue;
 			}
