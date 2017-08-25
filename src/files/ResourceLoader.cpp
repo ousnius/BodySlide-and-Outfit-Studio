@@ -38,7 +38,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 	// Cubemap fallback (SOIL)
 	if (!textureID && isCubeMap)
-		textureID = SOIL_load_OGL_single_cubemap(inFileName.c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+		textureID = SOIL_load_OGL_single_cubemap(inFileName.c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS);
 
 	// Texture and image fallback (SOIL)
 	if (!textureID)
@@ -77,7 +77,7 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 			// Cubemap fallback (SOIL)
 			if (!textureID && isCubeMap)
-				textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetDataLen(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+				textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetDataLen(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS);
 
 			// Texture and image fallback (SOIL)
 			if (!textureID)
@@ -188,7 +188,7 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 	case gli::TARGET_CUBE:
 		glTexStorage2D(
 			target, static_cast<GLint>(texture.levels()), format.Internal,
-			textureExtent.x, texture.target() == gli::TARGET_2D ? textureExtent.y : faceTotal);
+			textureExtent.x, texture.target() != gli::TARGET_1D_ARRAY ? textureExtent.y : faceTotal);
 		break;
 
 	case gli::TARGET_2D_ARRAY:
