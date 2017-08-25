@@ -39,7 +39,7 @@
         <CenterMode>Selected</CenterMode></Editing>
     <!--Light Settings-->
     <Lights>
-        <Ambient>10</Ambient>
+        <Ambient>20</Ambient>
         <Frontal>20</Frontal>
         <Directional0 x="-100" y="10" z="100">60</Directional0>
         <Directional1 x="100" y="10" z="100">60</Directional1>

@@ -51,10 +51,6 @@ class GLShader {
 	bool BuildShaders();
 
 public:
-	struct FrontalLight {
-		Vector3 diffuse;
-	};
-
 	struct DirectionalLight {
 		Vector3 diffuse;
 		Vector3 direction;
@@ -76,7 +72,7 @@ public:
 	void SetAlphaProperties(const ushort flags, const float threshold);
 	void SetAlphaThreshold(const float threshold);
 
-	void SetFrontalLight(const FrontalLight& light);
+	void SetFrontalLight(const DirectionalLight& light);
 	void SetDirectionalLight(const DirectionalLight& light, const int index);
 	void SetAmbientLight(const float light);
 	void SetProperties(const mesh::ShaderProperties& prop);
@@ -89,6 +85,7 @@ public:
 
 	void SetNormalMapEnabled(const bool enable);
 	void SetAlphaMaskEnabled(const bool enable);
+	void SetGreyscaleColorEnabled(const bool enable);
 	void SetCubemapEnabled(const bool enable);
 	void SetEnvMaskEnabled(const bool enable);
 	void SetSpecularEnabled(const bool enable);

@@ -7,7 +7,7 @@ See the included LICENSE file
 #include "Mesh.h"
 
 mesh::mesh() {
-	vbo.resize(4, 0);
+	vbo.resize(6, 0);
 	queueUpdate.resize(vbo.size() + 1, false);
 }
 
@@ -91,13 +91,23 @@ void mesh::CreateBuffers() {
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), norms.get(), GL_DYNAMIC_DRAW);
 	}
 
-	if (vcolors) {
+	if (tangents) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[2]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), tangents.get(), GL_DYNAMIC_DRAW);
+	}
+
+	if (bitangents) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), bitangents.get(), GL_DYNAMIC_DRAW);
+	}
+
+	if (vcolors) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[4]);
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), vcolors.get(), GL_DYNAMIC_DRAW);
 	}
 
 	if (texcoord) {
-		glBindBuffer(GL_ARRAY_BUFFER, vbo[3]);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[5]);
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord.get(), GL_DYNAMIC_DRAW);
 	}
 
@@ -133,6 +143,18 @@ void mesh::UpdateBuffers() {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Normals]);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), norms.get());
 			queueUpdate[UpdateType::Normals] = false;
+		}
+
+		if (tangents && queueUpdate[UpdateType::Tangents]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Tangents]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), tangents.get());
+			queueUpdate[UpdateType::Tangents] = false;
+		}
+
+		if (bitangents && queueUpdate[UpdateType::Bitangents]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::Bitangents]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), bitangents.get());
+			queueUpdate[UpdateType::Bitangents] = false;
 		}
 
 		if (vcolors && queueUpdate[UpdateType::VertexColors]) {
@@ -174,8 +196,9 @@ void mesh::QueueUpdate(const UpdateType& type) {
 void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	emissive = matFile.emitEnabled;
 	doublesided = matFile.twoSided;
-	//backlight = matFile.backLighting;
 	modelSpace = matFile.modelSpaceNormals;
+	backlight = matFile.backLighting;
+	greyscaleColor = matFile.grayscaleToPaletteColor;
 
 	prop.alpha = matFile.alpha;
 	prop.uvOffset = matFile.uvOffset;
@@ -186,6 +209,9 @@ void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	prop.emissiveColor = matFile.emittanceColor;
 	prop.emissiveMultiple = matFile.emittanceMult;
 	prop.envReflection = matFile.environmentMappingMaskScale;
+	prop.backlightPower = matFile.backLightPower;
+	prop.fresnelPower = matFile.fresnelPower;
+	prop.paletteScale = matFile.grayscaleToPaletteScale;
 }
 
 void mesh::ScaleVertices(const Vector3& center, const float& factor) {
@@ -398,6 +424,7 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 	}
 
 	queueUpdate[UpdateType::Normals] = true;
+	CalcTangentSpace();
 }
 
 void mesh::FacetNormals() {
@@ -424,6 +451,7 @@ void mesh::FacetNormals() {
 	}
 
 	queueUpdate[UpdateType::Normals] = true;
+	CalcTangentSpace();
 }
 
 void mesh::ColorFill(const Vector3& vcolor) {
@@ -444,6 +472,78 @@ void mesh::ColorChannelFill(int channel, float value) {
 	}
 
 	queueUpdate[UpdateType::VertexColors] = true;
+}
+
+void mesh::CalcTangentSpace() {
+	if (!norms || !texcoord)
+		return;
+
+	for (int i = 0; i < nTris; i++) {
+		int i1 = tris[i].p1;
+		int i2 = tris[i].p2;
+		int i3 = tris[i].p3;
+
+		Vector3 v1 = verts[i1];
+		Vector3 v2 = verts[i2];
+		Vector3 v3 = verts[i3];
+
+		Vector2 w1 = texcoord[i1];
+		Vector2 w2 = texcoord[i2];
+		Vector2 w3 = texcoord[i3];
+
+		float x1 = v2.x - v1.x;
+		float x2 = v3.x - v1.x;
+		float y1 = v2.y - v1.y;
+		float y2 = v3.y - v1.y;
+		float z1 = v2.z - v1.z;
+		float z2 = v3.z - v1.z;
+
+		float s1 = w2.u - w1.u;
+		float s2 = w3.u - w1.u;
+		float t1 = w2.v - w1.v;
+		float t2 = w3.v - w1.v;
+
+		float r = (s1 * t2 - s2 * t1);
+		r = (r >= 0.0f ? +1.0f : -1.0f);
+
+		Vector3 sdir = Vector3((t2 * x1 - t1 * x2) * r, (t2 * y1 - t1 * y2) * r, (t2 * z1 - t1 * z2) * r);
+		Vector3 tdir = Vector3((s1 * x2 - s2 * x1) * r, (s1 * y2 - s2 * y1) * r, (s1 * z2 - s2 * z1) * r);
+
+		sdir.Normalize();
+		tdir.Normalize();
+
+		tangents[i1] += tdir;
+		tangents[i2] += tdir;
+		tangents[i3] += tdir;
+
+		bitangents[i1] += sdir;
+		bitangents[i2] += sdir;
+		bitangents[i3] += sdir;
+	}
+
+	for (int i = 0; i < nVerts; i++) {
+		if (tangents[i].IsZero() || bitangents[i].IsZero()) {
+			tangents[i].x = norms[i].y;
+			tangents[i].y = norms[i].z;
+			tangents[i].z = norms[i].x;
+			bitangents[i] = norms[i].cross(tangents[i]);
+		}
+		else {
+			tangents[i].Normalize();
+			tangents[i] = (tangents[i] - norms[i] * norms[i].dot(tangents[i]));
+			tangents[i].Normalize();
+
+			bitangents[i].Normalize();
+
+			bitangents[i] = (bitangents[i] - norms[i] * norms[i].dot(bitangents[i]));
+			bitangents[i] = (bitangents[i] - tangents[i] * tangents[i].dot(bitangents[i]));
+
+			bitangents[i].Normalize();
+		}
+	}
+
+	queueUpdate[UpdateType::Tangents] = true;
+	queueUpdate[UpdateType::Bitangents] = true;
 }
 
 bool mesh::ConnectedPointsInSphere(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets) {

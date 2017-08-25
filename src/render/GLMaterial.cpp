@@ -57,13 +57,22 @@ std::string GLMaterial::GetTexName(uint index) {
 	return "";
 }
 
-void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklight) {
+void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklightMap) {
 	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
 		// outdated cache, rebuild it.  
 		for (int i = 0; i < texCache.size(); i++) {
 			texCache[i] = resLoaderRef->GetTexID(texNames[i]);
 		}
 	}
+
+	shader.BindTexture(0, 0, "texDiffuse");
+	shader.BindTexture(1, 0, "texNormal");
+	shader.BindTexture(2, 0, "texAlphaMask");
+	shader.BindTexture(3, 0, "texGreyscale");
+	shader.BindCubemap(4, 0, "texCubemap");
+	shader.BindTexture(5, 0, "texEnvMask");
+	shader.BindTexture(7, 0, "texSpecular");
+	shader.BindTexture(7, 0, "texBacklight");
 
 	for (int id = 0; id < texCache.size(); id++) {
 		switch (id) {
@@ -93,6 +102,15 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklight) {
 				shader.SetAlphaMaskEnabled(false);
 			break;
 
+		case 3:
+			if (texCache[id] != 0) {
+				shader.BindTexture(id, texCache[id], "texGreyscale");
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+				if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
+			}
+			break;
+
 		case 4:
 			if (texCache[id] != 0) {
 				shader.BindCubemap(id, texCache[id], "texCubemap");
@@ -114,7 +132,7 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasBacklight) {
 			break;
 
 		case 7:
-			if (!hasBacklight) {
+			if (!hasBacklightMap) {
 				if (texCache[id] != 0) {
 					shader.BindTexture(id, texCache[id], "texSpecular");
 					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);

@@ -34,6 +34,8 @@ public:
 	enum UpdateType {
 		Position,
 		Normals,
+		Tangents,
+		Bitangents,
 		VertexColors,
 		TextureCoordinates,
 		Indices
@@ -49,11 +51,16 @@ public:
 		Vector3 emissiveColor = Vector3(1.0f, 1.0f, 1.0f);
 		float emissiveMultiple = 1.0f;
 		float alpha = 1.0f;
+		float backlightPower = 0.0f;
+		float fresnelPower = 5.0f;
+		float paletteScale = 0.0f;
 	};
 
 	int nVerts = 0;
 	std::unique_ptr<Vector3[]> verts;
 	std::unique_ptr<Vector3[]> norms;
+	std::unique_ptr<Vector3[]> tangents;
+	std::unique_ptr<Vector3[]> bitangents;
 	std::unique_ptr<Vector3[]> vcolors;
 	std::unique_ptr<Vector2[]> texcoord;
 
@@ -83,6 +90,8 @@ public:
 	bool specular = true;
 	bool emissive = false;
 	bool backlight = false;
+	bool backlightMap = false;
+	bool greyscaleColor = false;
 	bool doublesided = false;
 	bool textured = false;
 
@@ -139,6 +148,7 @@ public:
 		m->SmoothNormals(verts);
 	}
 
+	void CalcTangentSpace();
 
 	// Retrieve connected points in a sphere's radius (squared, requires tri adjacency to be set up).
 	// Also requires pointvisit to be allocated by the caller.

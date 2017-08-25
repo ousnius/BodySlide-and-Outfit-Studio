@@ -1,12 +1,18 @@
 #version 330
+
+/*
+ * BodySlide and Outfit Studio
+ * Shaders by jonwd7 and ousnius
+ * https://github.com/ousnius/BodySlide-and-Outfit-Studio
+ * http://www.niftools.org/
+ */
+
 uniform sampler2D texDiffuse;
 uniform sampler2D texNormal;
 uniform samplerCube texCubemap;
 uniform sampler2D texEnvMask;
 uniform sampler2D texSpecular;
-uniform sampler2D texBacklight;
-
-uniform mat4 matModelView;
+uniform sampler2D texGreyscale;
 
 uniform bool bLightEnabled;
 uniform bool bShowTexture;
@@ -22,7 +28,9 @@ uniform bool bCubemap;
 uniform bool bEnvMask;
 uniform bool bSpecular;
 uniform bool bEmissive;
-uniform bool bBacklight;
+uniform bool bGreyscaleColor;
+
+uniform mat4 matModelView;
 
 struct Properties
 {
@@ -35,25 +43,27 @@ struct Properties
 	vec3 emissiveColor;
 	float emissiveMultiple;
 	float alpha;
+	float backlightPower;
+	float fresnelPower;
+	float paletteScale;
 };
 uniform Properties prop;
 uniform float alphaThreshold;
 
-struct FrontalLight
-{
-	vec3 diffuse;
-};
+uniform float ambient;
+
 struct DirectionalLight
 {
 	vec3 diffuse;
 	vec3 direction;
 };
 
-uniform FrontalLight frontal;
-uniform DirectionalLight directional0;
-uniform DirectionalLight directional1;
-uniform DirectionalLight directional2;
-uniform float ambient;
+in DirectionalLight lightFrontal;
+in DirectionalLight lightDirectional0;
+in DirectionalLight lightDirectional1;
+in DirectionalLight lightDirectional2;
+
+in vec3 viewDir;
 
 in float maskFactor;
 in vec4 weightColor;
@@ -62,46 +72,129 @@ in vec4 segmentColor;
 in vec3 vPos;
 smooth in vec4 vColor;
 smooth in vec2 vUV;
-smooth in vec3 vNormal;
 
 out vec4 fragColor;
 
+vec3 normal = vec3(0.0);
+float specGloss = 1.0;
+float specFactor = 1.0;
+
 vec2 uv = vec2(0.0);
+vec3 albedo = vec3(0.0);
 vec3 emissive = vec3(0.0);
 
 vec4 baseMap = vec4(0.0);
 vec4 normalMap = vec4(0.0);
 vec4 specMap = vec4(0.0);
-vec4 backlightMap = vec4(0.0);
 vec4 envMask = vec4(0.0);
 
-// http://www.thetenthplanet.de/archives/1180
-mat3 cotangent_frame(in vec3 N, in vec3 p)
+#ifndef M_PI
+	#define M_PI 3.1415926535897932384626433832795
+#endif
+
+#define FLT_EPSILON 1.192092896e-07F // smallest such that 1.0 + FLT_EPSILON != 1.0
+
+float OrenNayarFull(vec3 L, vec3 V, vec3 N, float roughness, float NdotL)
 {
-    // Get edge vectors of the pixel triangle
-    vec3 dp1 = dFdx(p);
-    vec3 dp2 = dFdy(p);
-    vec2 duv1 = dFdx(uv);
-    vec2 duv2 = dFdy(uv);
+	//float NdotL = dot(N, L);
+	float NdotV = dot(N, V);
+	float LdotV = dot(L, V);
 	
-    // Solve the linear system
-    vec3 dp2perp = cross(dp2, N);
-    vec3 dp1perp = cross(N, dp1);
-    vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
-    vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+	float angleVN = acos(max(NdotV, FLT_EPSILON));
+	float angleLN = acos(max(NdotL, FLT_EPSILON));
 	
-    // Construct a scale-invariant frame
-    float invmax = inversesqrt(max(dot(T, T), dot(B, B)));
-    return mat3(T * invmax, B * invmax, N);
+	float alpha = max(angleVN, angleLN);
+	float beta = min(angleVN, angleLN);
+	float gamma = LdotV - NdotL * NdotV;
+	
+	float roughnessSquared = roughness * roughness;
+	float roughnessSquared9 = (roughnessSquared / (roughnessSquared + 0.09));
+	
+	// C1, C2, and C3
+	float C1 = 1.0 - 0.5 * (roughnessSquared / (roughnessSquared + 0.33));
+	float C2 = 0.45 * roughnessSquared9;
+	
+	if( gamma >= 0.0 )
+		C2 *= sin(alpha);
+	else
+		C2 *= (sin(alpha) - pow((2.0 * beta) / M_PI, 3.0));
+	
+	float powValue = (4.0 * alpha * beta) / (M_PI * M_PI);
+	float C3 = 0.125 * roughnessSquared9 * powValue * powValue;
+	
+	// Avoid asymptote at pi/2
+	float asym = M_PI / 2.0;
+	float lim1 = asym + 0.01;
+	float lim2 = asym - 0.01;
+
+	float ab2 = (alpha + beta) / 2.0;
+
+	if (beta >= asym && beta < lim1)
+		beta = lim1;
+	else if (beta < asym && beta >= lim2)
+		beta = lim2;
+
+	if (ab2 >= asym && ab2 < lim1)
+		ab2 = lim1;
+	else if (ab2 < asym && ab2 >= lim2)
+		ab2 = lim2;
+	
+	// Reflection
+	float A = gamma * C2 * tan(beta);
+	float B = (1.0 - abs(gamma)) * C3 * tan(ab2);
+	
+	float L1 = max(FLT_EPSILON, NdotL) * (C1 + A + B);
+	
+	// Interreflection
+	float twoBetaPi = 2.0 * beta / M_PI;
+	float L2 = 0.17 * max(FLT_EPSILON, NdotL) * (roughnessSquared / (roughnessSquared + 0.13)) * (1.0 - gamma * twoBetaPi * twoBetaPi);
+	
+	return L1 + L2;
 }
 
-vec3 perturb_normal(in vec3 N, in vec3 V)
+// Schlick's Fresnel approximation
+float fresnelSchlick(float VdotH, float F0)
 {
-	// Assume N, the interpolated vertex normal and V, the view vector (vertex to eye)
-	vec3 map = normalMap.rgb;
-	map = map * 255.0 / 127.0 - 128.0 / 127.0;
-	mat3 TBN = cotangent_frame(N, -V);
-	return normalize(TBN * map);
+	float base = 1.0 - VdotH;
+	float exp = pow(base, prop.fresnelPower);
+	return clamp(exp + F0 * (1.0 - exp), 0.0, 1.0);
+}
+
+// The Torrance-Sparrow visibility factor, G
+float VisibDiv(float NdotL, float NdotV, float VdotH, float NdotH)
+{	
+	float denom = max(VdotH, FLT_EPSILON);
+	float numL = min(NdotV, NdotL);
+	float numR = 2.0 * NdotH;
+	if (denom >= (numL * numR))
+	{
+		numL = (numL == NdotV) ? 1.0 : (NdotL / NdotV);
+		return (numL * numR) / denom;
+	}
+	return 1.0 / NdotV;
+}
+
+// this is a normalized Phong model used in the Torrance-Sparrow model
+vec3 TorranceSparrow(float NdotL, float NdotH, float NdotV, float VdotH, vec3 color, float power, float F0)
+{
+	// D: Normalized phong model
+	float D = ((power + 2.0) / (2.0 * M_PI)) * pow(NdotH, power);
+	
+	// G: Torrance-Sparrow visibility term divided by NdotV
+	float G_NdotV = VisibDiv(NdotL, NdotV, VdotH, NdotH);
+	
+	// F: Schlick's approximation
+	float F = fresnelSchlick(VdotH, F0);
+
+	// Torrance-Sparrow:
+	// (F * G * D) / (4 * NdotL * NdotV)
+	// Division by NdotV is done in VisibDiv()
+	// and division by NdotL is removed since 
+	// outgoing radiance is determined by:
+	// BRDF * NdotL * L()
+	float spec = (F * G_NdotV * D) / 4.0;
+	
+	return color * spec * M_PI;
 }
 
 vec3 tonemap(in vec3 x)
@@ -116,101 +209,75 @@ vec3 tonemap(in vec3 x)
 	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
-void directionalLight(in DirectionalLight light, in vec3 inNormal, inout vec3 diffuse, inout vec3 spec, inout vec3 cube, in bool front)
+void directionalLight(in DirectionalLight light, in bool useForBacklight, inout vec3 outDiffuse, inout vec3 outSpec)
 {
-	mat3 normalMatrix = transpose(inverse(mat3(matModelView)));
-	vec3 normal = inNormal;
-	float specFactor = 0.0;
+	vec3 half = normalize(light.direction + viewDir);
+	float NdotL = dot(normal, light.direction);
+	float NdotL0 = max(NdotL, FLT_EPSILON);
+	float NdotH = max(dot(normal, half), FLT_EPSILON);
+	float NdotV = max(dot(normal, viewDir), FLT_EPSILON);
+	float VdotH = max(dot(viewDir, half), FLT_EPSILON);
+
+	// Temporary diffuse
+	vec3 diff = ambient + NdotL0 * light.diffuse;
 	
-	vec3 lightDir;
-	if (front)
+	// Specularity
+	float smoothness = 1.0;
+	float roughness = 0.0;
+	float specMask = 1.0;
+	if (bSpecular && bShowTexture)
 	{
-		lightDir = light.direction * normalMatrix;
-	}
-	else
-	{
-		lightDir = light.direction;
+		smoothness = specGloss * prop.shininess;
+		roughness = 1.0 - smoothness;
+		float fSpecularPower = exp2(smoothness * 10.0 + 1.0);
+		specMask = specFactor * prop.specularStrength;
+
+		outSpec += TorranceSparrow(NdotL0, NdotH, NdotV, VdotH, vec3(specMask), fSpecularPower, 0.2) * NdotL0 * light.diffuse * prop.specularColor;
+		outSpec += ambient * specMask * fresnelSchlick(VdotH, 0.2) * (1.0 - NdotV) * light.diffuse;
 	}
 	
-	if (bShowTexture)
+	// Environment
+	if (bCubemap && bShowTexture)
 	{
-		if (bNormalMap)
+		vec3 reflected = mat3(matModelView) * reflect(viewDir, normal);
+		vec4 cube = textureLod(texCubemap, reflected, 8.0 - smoothness * 8.0);
+		cube.rgb *= prop.envReflection * prop.specularStrength;
+		if (bEnvMask)
 		{
-			if (bModelSpace)
-			{
-				// No proper FO4 model space map rendering yet
-				//normal = normalize(normalMap.rgb * 2.0 - 1.0);
-				//normal.r = -normal.r;
-				
-				if (bSpecular)
-				{
-					// No proper FO4 specular map rendering yet
-					//specFactor = specMap.r;
-				}
-			}
-			else
-			{
-				// No proper FO4 tangent space map rendering yet
-				//normal = normalMatrix * perturb_normal(inverse(normalMatrix) * normal, vPos);
-				
-				if (bSpecular)
-				{
-					//specFactor = normalMap.a;
-				}
-			}
+			cube.rgb *= envMask.r;
 		}
+		else
+		{
+			// No env mask, use specular factor
+			cube.rgb *= specFactor;
+		}
+    
+		outSpec += cube.rgb * diff;
 	}
 	
-	float NdotL = max(0.0, dot(normal, lightDir));
-	float NdotNegL = max(0.0, dot(normal, -lightDir));
-	float NdotH = max(0.0, dot(normal * inverse(normalMatrix), normalize(lightDir - vPos)));
-	
-	// No proper FO4 specular yet
-	//spec += clamp(prop.specularColor * prop.specularStrength * specFactor * pow(NdotH, prop.shininess), 0.0, 1.0) * light.diffuse * NdotL;
-	diffuse += NdotL * light.diffuse;
-	
-	if (bBacklight)
+	// Only one source for backlight
+	if (useForBacklight && prop.backlightPower > 0.0)
 	{
-		vec3 backlight = backlightMap.rgb;
-		backlight *= NdotNegL;
-		
+		float NdotNegL = max(dot(normal, -light.direction), FLT_EPSILON);
+		vec3 backlight = albedo * NdotNegL * clamp(prop.backlightPower, 0.0, 1.0);
 		emissive += backlight * light.diffuse;
 	}
 	
-	if (bCubemap)
-	{
-		//vec3 reflected = mat3(inverse(matModelView)) * reflect(lightDir, normal);
-		//vec4 cubeMap = texture(texCubemap, reflected);
-		//cubeMap.rgb *= prop.envReflection;
-		//
-		//if (bEnvMask)
-		//{
-		//	cubeMap.rgb *= envMask.r;
-		//}
-		//else
-		//{
-		//	// No env mask, use specular factor (0.0 if no normal map either)
-		//	cubeMap.rgb *= specFactor;
-		//}
-		//
-		//cube += cubeMap.rgb;
-	}
+	// Diffuse
+	diff = vec3(OrenNayarFull(light.direction, viewDir, normal, roughness, NdotL0));
+	outDiffuse += diff * light.diffuse;
 }
 
-void frontalLight(in FrontalLight light, in vec3 inNormal, inout vec3 diffuse, inout vec3 spec, inout vec3 cube)
+vec4 colorLookup(in float x, in float y)
 {
-	DirectionalLight dirLight;
-	dirLight.diffuse = light.diffuse;
-	dirLight.direction = vec3(0.0, 0.0, 1.0);
-	
-	directionalLight(dirLight, inNormal, diffuse, spec, cube, true);
+	return texture(texGreyscale, vec2(clamp(x, 0.0, 1.0), clamp(y, 0.0, 1.0)));
 }
 
 void main(void)
 {
 	uv = vUV * prop.uvScale + prop.uvOffset;
 	vec4 color = vColor;
-	vec3 albedo = vColor.rgb;
+	albedo = vColor.rgb;
 	
 	if (!bPoints)
 	{
@@ -223,25 +290,22 @@ void main(void)
 				albedo *= baseMap.rgb;
 				color.a *= baseMap.a;
 				
+				// Diffuse texture without lighting
+				color.rgb = albedo;
+				
 				if (bLightEnabled)
 				{
 					if (bNormalMap)
 					{
 						normalMap = texture(texNormal, uv);
-						
-						if (bModelSpace)
+
+						if (bSpecular)
 						{
-							if (bSpecular)
-							{
-								// Dedicated Specular Map
-								specMap = texture(texSpecular, uv);
-							}
+							// Specular Map
+							specMap = texture(texSpecular, uv);
+							specGloss = specMap.g;
+							specFactor = specMap.r;
 						}
-					}
-					
-					if (bBacklight)
-					{
-						backlightMap = texture(texBacklight, uv);
 					}
 					
 					if (bCubemap)
@@ -260,38 +324,59 @@ void main(void)
 				// Lighting with or without textures
 				vec3 outDiffuse = vec3(0.0);
 				vec3 outSpecular = vec3(0.0);
-				vec3 outCube = vec3(0.0);
 				
-				frontalLight(frontal, vNormal, outDiffuse, outSpecular, outCube);
-				directionalLight(directional0, vNormal, outDiffuse, outSpecular, outCube, false);
-				directionalLight(directional1, vNormal, outDiffuse, outSpecular, outCube, false);
-				directionalLight(directional2, vNormal, outDiffuse, outSpecular, outCube, false);
-				
-				outDiffuse += ambient;
-				albedo += outCube;
+				// Start off neutral
+				normal = normalize(vec3(0.0, 0.0, 0.5));
 				
 				if (bShowTexture)
 				{
-					// Hack for FO4 brightness
-					albedo *= vec3(1.4, 1.4, 1.4);
+					if (bNormalMap)
+					{
+						if (bModelSpace)
+						{
+							// No proper FO4 model space map rendering yet
+							//normal = normalize(normalMap.rgb * 2.0 - 1.0);
+							//normal.r = -normal.r;
+						}
+						else
+						{
+							// Tangent space map
+							normal = normalize(normalMap.rgb * 2.0 - 1.0);
+							normal.rg = normal.gr;
+							
+							// Calculate missing blue channel
+							normal.b = sqrt(1.0 - dot(normal.rg, normal.rg));
+						}
+					}
+					
+					if (bGreyscaleColor)
+					{
+						vec4 luG = colorLookup(baseMap.g, prop.paletteScale - (1.0 - vColor.r));
+						albedo = luG.rgb;
+					}
 				}
+				
+				directionalLight(lightFrontal, false, outDiffuse, outSpecular);
+				directionalLight(lightDirectional0, true, outDiffuse, outSpecular);
+				directionalLight(lightDirectional1, false, outDiffuse, outSpecular);
+				directionalLight(lightDirectional2, false, outDiffuse, outSpecular);
 				
 				if (bEmissive)
 				{
 					emissive += prop.emissiveColor * prop.emissiveMultiple;
+					
+					// Glowmap here
 				}
 				
-				color.rgb = albedo * (outDiffuse + emissive) + outSpecular;
-			}
-			else if (bShowTexture)
-			{
-				// Diffuse texture without lighting
-				color.rgb = albedo;
+				color.rgb = outDiffuse * albedo;
+				color.rgb += outSpecular;
+				color.rgb += emissive;
+				color.rgb += ambient * albedo;
 			}
 			
 			if (bShowSegments)
 			{
-				if (segmentColor.r != 0.0 && segmentColor.g != 0.0 && segmentColor.b != 0.0 &&
+				if (segmentColor.rgb != vec3(0.0, 0.0, 0.0) &&
 					segmentColor.rg != normalize(segmentColor.rg) &&
 					segmentColor.rb != normalize(segmentColor.rb) &&
 					segmentColor.gb != normalize(segmentColor.gb))
@@ -327,8 +412,7 @@ void main(void)
 	else
 	{
 		// Calculate normal from point coord
-		vec2 norm;
-		norm = gl_PointCoord * 2.0 - vec2(1.0); 
+		vec2 norm = gl_PointCoord * 2.0 - vec2(1.0); 
 		float mag = dot(norm, norm);
 		if (mag > 1.0) 
 			discard; // Kill pixels outside point

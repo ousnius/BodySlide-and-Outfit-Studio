@@ -3460,7 +3460,7 @@ void OutfitStudio::OnUpdateLights(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnResetLights(wxCommandEvent& WXUNUSED(event)) {
-	int ambient = 10;
+	int ambient = 20;
 	int frontal = 20;
 	int directional0 = 60;
 	int directional1 = 60;

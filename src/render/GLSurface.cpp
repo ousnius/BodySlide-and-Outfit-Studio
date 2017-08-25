@@ -69,7 +69,7 @@ const wxGLContextAttrs& GLSurface::GetGLContextAttribs() {
 }
 
 void GLSurface::InitLighting() {
-	ambientLight = 0.10f;
+	ambientLight = 0.2f;
 
 	frontalLight.diffuse = Vector3(0.2f, 0.2f, 0.2f);
 
@@ -784,12 +784,17 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetMatrixModelView(modelView);
 	shader.SetColor(m->color);
 	shader.SetModelSpace(m->modelSpace);
-	//shader.SetModelSpace(false);
 	shader.SetSpecularEnabled(m->specular);
 	shader.SetEmissive(m->emissive);
+	shader.SetBacklightEnabled(m->backlight);
+	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
 	shader.SetPointsEnabled(false);
+	shader.SetNormalMapEnabled(false);
+	shader.SetAlphaMaskEnabled(false);
+	shader.SetCubemapEnabled(false);
+	shader.SetEnvMaskEnabled(false);
 
 	glBindVertexArray(m->vao);
 
@@ -814,29 +819,41 @@ void GLSurface::RenderMesh(mesh* m) {
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);			// Positions
 		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);			// Positions
 
 		if (m->norms) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[1]);
-			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Normals
 			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Normals
+		}
+
+		if (m->tangents) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
+			glEnableVertexAttribArray(2);
+			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Tangents
+		}
+
+		if (m->bitangents) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
+			glEnableVertexAttribArray(3);
+			glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Bitangents
 		}
 
 		if (m->vcolors) {
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[2]);
-			glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Colors
-			glEnableVertexAttribArray(2);
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[4]);
+			glEnableVertexAttribArray(4);
+			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Colors
 		}
 
 		if (bTextured && m->textured && m->texcoord) {
 			shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f);
 
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[3]);
-			glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
-			glEnableVertexAttribArray(3);
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
+			glEnableVertexAttribArray(5);
+			glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
 
-			m->material->BindTextures(largestAF, m->backlight);
+			m->material->BindTextures(largestAF, m->backlightMap);
 		}
 
 		// Offset triangles so that points can be visible
@@ -858,7 +875,7 @@ void GLSurface::RenderMesh(mesh* m) {
 		}
 
 		if (bTextured && m->textured && m->texcoord)
-			glDisableVertexAttribArray(3);
+			glDisableVertexAttribArray(5);
 
 		// Render points
 		if (m->bShowPoints && m->vcolors) {
@@ -869,9 +886,11 @@ void GLSurface::RenderMesh(mesh* m) {
 			glDrawArrays(GL_POINTS, 0, m->nVerts);
 		}
 
-		glDisableVertexAttribArray(0);
-		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(4);
+		glDisableVertexAttribArray(3);
 		glDisableVertexAttribArray(2);
+		glDisableVertexAttribArray(1);
+		glDisableVertexAttribArray(0);
 	}
 	else if (m->rendermode == RenderMode::UnlitWire) {
 		glDisable(GL_CULL_FACE);
@@ -879,8 +898,8 @@ void GLSurface::RenderMesh(mesh* m) {
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m->ibo);
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 		glDrawElements(GL_LINES, m->nEdges * 2, GL_UNSIGNED_SHORT, (GLvoid*)0);
@@ -892,8 +911,8 @@ void GLSurface::RenderMesh(mesh* m) {
 		glDisable(GL_DEPTH_TEST);
 
 		glBindBuffer(GL_ARRAY_BUFFER, m->vbo[0]);
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 		glEnableVertexAttribArray(0);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);
 
 		shader.SetPointsEnabled(true);
 		glDrawArrays(GL_POINTS, 0, m->nVerts);
@@ -918,7 +937,7 @@ void GLSurface::UpdateShaders(mesh* m) {
 	}
 }
 
-void  GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
+void GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
 	DeleteMesh(shapeName);
 	AddMeshFromNif(nif, shapeName);
 }
@@ -942,7 +961,12 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 			m->specular = shader->HasSpecular();
 			m->emissive = shader->IsEmissive();
 			m->backlight = shader->HasBacklight();
+			//m->greyscaleColor = shader->HasGreyscaleColor();
 			m->doublesided = shader->IsDoubleSided();
+
+			// Only for dedicated backlight maps
+			if (nif->GetHeader().GetVersion().User2() < 130)
+				m->backlightMap = m->backlight;
 
 			m->prop.uvOffset = shader->GetUVOffset();
 			m->prop.uvScale = shader->GetUVScale();
@@ -950,6 +974,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 			m->prop.specularStrength = shader->GetSpecularStrength();
 			m->prop.shininess = shader->GetGlossiness();
 			m->prop.envReflection = shader->GetEnvironmentMapScale();
+			//m->prop.backlightPower = shader->GetBacklightPower();
+			//m->prop.fresnelPower = shader->GetFresnelPower();
 
 			Color4 emissiveColor = shader->GetEmissiveColor();
 			m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
@@ -985,6 +1011,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 	if (m->nVerts > 0) {
 		m->verts = std::make_unique<Vector3[]>(m->nVerts);
 		m->norms = std::make_unique<Vector3[]>(m->nVerts);
+		m->tangents = std::make_unique<Vector3[]>(m->nVerts);
+		m->bitangents = std::make_unique<Vector3[]>(m->nVerts);
 		m->vcolors = std::make_unique<Vector3[]>(m->nVerts);
 		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
 	}
@@ -1068,6 +1096,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 		}
 	}
 
+	m->CalcTangentSpace();
 	m->CreateBVH();
 
 	if (color)

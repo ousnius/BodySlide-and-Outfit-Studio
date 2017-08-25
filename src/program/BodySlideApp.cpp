@@ -945,7 +945,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultValue("Input/LeftMousePan", "false");
 	Config.SetDefaultValue("Editing/CenterMode", "Selected");
-	Config.SetDefaultValue("Lights/Ambient", 10);
+	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);
 	Config.SetDefaultValue("Lights/Directional0.x", -90);

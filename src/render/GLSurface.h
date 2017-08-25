@@ -38,11 +38,11 @@ class GLSurface {
 	float defPointSize = 5.0f;
 	float cursorSize = 0.5f;
 
-	GLShader::FrontalLight frontalLight;
+	GLShader::DirectionalLight frontalLight;
 	GLShader::DirectionalLight directionalLight0;
 	GLShader::DirectionalLight directionalLight1;
 	GLShader::DirectionalLight directionalLight2;
-	float ambientLight = 0.10f;
+	float ambientLight = 0.2f;
 
 	Vector3 colorBackground = Vector3(0.82f, 0.82f, 0.82f);
 	Vector3 colorRed = Vector3(1.0f, 0.25f, 0.25f);

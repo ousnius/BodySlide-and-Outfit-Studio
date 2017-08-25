@@ -157,10 +157,17 @@ void GLShader::SetAlphaThreshold(const float threshold) {
 		glUniform1f(loc, threshold);
 }
 
-void GLShader::SetFrontalLight(const FrontalLight& light) {
-	GLint loc = glGetUniformLocation(progID, "frontal.diffuse");
+void GLShader::SetFrontalLight(const DirectionalLight& light) {
+	std::string lightDiffuse = "frontal.diffuse";
+	std::string lightDirection = "frontal.direction";
+
+	GLint loc = glGetUniformLocation(progID, lightDiffuse.c_str());
 	if (loc >= 0)
 		glUniform3f(loc, light.diffuse.x, light.diffuse.y, light.diffuse.z);
+
+	loc = glGetUniformLocation(progID, lightDirection.c_str());
+	if (loc >= 0)
+		glUniform3f(loc, 0.0f, 0.0f, 1.0f);
 }
 
 void GLShader::SetDirectionalLight(const DirectionalLight& light, const int index) {
@@ -219,6 +226,18 @@ void GLShader::SetProperties(const mesh::ShaderProperties& prop) {
 	loc = glGetUniformLocation(progID, "prop.alpha");
 	if (loc >= 0)
 		glUniform1f(loc, prop.alpha);
+
+	loc = glGetUniformLocation(progID, "prop.backlightPower");
+	if (loc >= 0)
+		glUniform1f(loc, prop.backlightPower);
+
+	loc = glGetUniformLocation(progID, "prop.fresnelPower");
+	if (loc >= 0)
+		glUniform1f(loc, prop.fresnelPower);
+
+	loc = glGetUniformLocation(progID, "prop.paletteScale");
+	if (loc >= 0)
+		glUniform1f(loc, prop.paletteScale);
 }
 
 void GLShader::ShowLighting(bool bShow) {
@@ -282,6 +301,12 @@ void GLShader::SetAlphaMaskEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
+void GLShader::SetGreyscaleColorEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bGreyscaleColor");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
 void GLShader::SetCubemapEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bCubemap");
 	if (loc >= 0)
@@ -323,7 +348,6 @@ void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const std:
 		glActiveTexture(GL_TEXTURE0 + index);
 		
 		glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
-		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	}
 }
 

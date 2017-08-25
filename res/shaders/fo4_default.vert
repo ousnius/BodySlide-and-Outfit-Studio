@@ -1,9 +1,16 @@
 #version 330
+
+/*
+ * BodySlide and Outfit Studio
+ * Shaders by jonwd7 and ousnius
+ * https://github.com/ousnius/BodySlide-and-Outfit-Studio
+ * http://www.niftools.org/
+ */
+
 uniform mat4 matProjection;
 uniform mat4 matModelView;
 uniform vec3 color;
 
-uniform bool bLightEnabled;
 uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
@@ -11,12 +18,31 @@ uniform bool bShowSegments;
 
 uniform bool bWireframe;
 uniform bool bPoints;
-uniform bool bLighting;
 
 layout(location = 0) in vec3 vertexPosition;
 layout(location = 1) in vec3 vertexNormal;
-layout(location = 2) in vec3 vertexColors;
-layout(location = 3) in vec2 vertexUV;
+layout(location = 2) in vec3 vertexTangent;
+layout(location = 3) in vec3 vertexBitangent;
+layout(location = 4) in vec3 vertexColors;
+layout(location = 5) in vec2 vertexUV;
+
+struct DirectionalLight
+{
+	vec3 diffuse;
+	vec3 direction;
+};
+
+uniform DirectionalLight frontal;
+uniform DirectionalLight directional0;
+uniform DirectionalLight directional1;
+uniform DirectionalLight directional2;
+
+out DirectionalLight lightFrontal;
+out DirectionalLight lightDirectional0;
+out DirectionalLight lightDirectional1;
+out DirectionalLight lightDirectional2;
+
+out vec3 viewDir;
 
 out float maskFactor;
 out vec4 weightColor;
@@ -25,7 +51,6 @@ out vec4 segmentColor;
 out vec3 vPos;
 smooth out vec4 vColor;
 smooth out vec2 vUV;
-smooth out vec3 vNormal;
 
 vec4 colorRamp(in float value)
 {
@@ -73,11 +98,34 @@ void main(void)
 	segmentColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vUV = vertexUV;
-	vNormal = vertexNormal;
+	lightFrontal = frontal;
+	lightDirectional0 = directional0;
+	lightDirectional1 = directional1;
+	lightDirectional2 = directional2;
 	
 	// Eye-coordinate position of vertex
 	vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
 	gl_Position = matProjection * vec4(vPos, 1.0);
+
+	mat3 normalMatrix = transpose(inverse(mat3(matModelView)));
+	vec3 normal = normalize(normalMatrix * vertexNormal);
+	vec3 tangent = normalize(normalMatrix * vertexTangent);
+	vec3 bitangent = normalize(normalMatrix * vertexBitangent);
+	
+	mat3 tbn = mat3(tangent.x, bitangent.x, normal.x,
+                    tangent.y, bitangent.y, normal.y,
+                    tangent.z, bitangent.z, normal.z);
+			   
+	viewDir = normalize(tbn * -vPos);
+	lightFrontal.direction = normalize(tbn * lightFrontal.direction);
+	
+	mat3 tbnDir = mat3(vertexTangent.x, vertexBitangent.x, vertexNormal.x,
+                       vertexTangent.y, vertexBitangent.y, vertexNormal.y,
+                       vertexTangent.z, vertexBitangent.z, vertexNormal.z);
+					
+	lightDirectional0.direction = normalize(tbnDir * lightDirectional0.direction);
+	lightDirectional1.direction = normalize(tbnDir * lightDirectional1.direction);
+	lightDirectional2.direction = normalize(tbnDir * lightDirectional2.direction);
 
 	if (!bPoints)
 	{
