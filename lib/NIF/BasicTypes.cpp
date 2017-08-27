@@ -5,20 +5,47 @@ See the included LICENSE file
 */
 
 #include "BasicTypes.h"
+#include <regex>
+
+static const std::string NIF_GAMEBRYO = "Gamebryo File Format";
+static const std::string NIF_NETIMMERSE = "NetImmerse File Format";
+static const std::string NIF_NDS = "NDSNIF....@....@....";
+static const std::string NIF_VERSTRING = ", Version ";
 
 std::string NiVersion::GetVersionInfo() {
 	return vstr +
-		"\nUser Version: " + std::to_string(vuser) +
-		"\nUser Version 2: " + std::to_string(vuser2);
+		"\nUser Version: " + std::to_string(user) +
+		"\nStream Version: " + std::to_string(stream);
 }
 
-void NiVersion::Set(byte v1, byte v2, byte v3, byte v4, uint userVer, uint userVer2) {
-	std::string verNum = std::to_string(v1) + '.' + std::to_string(v2) + '.' + std::to_string(v3) + '.' + std::to_string(v4);
-	vstr = "Gamebryo File Format, Version " + verNum;
+void NiVersion::SetFile(NiFileVersion fileVer) {
+	std::vector<byte> verArr = ToArray(fileVer);
+	std::string verNum;
 
-	vfile = Get(v1, v2, v3, v4);
-	vuser = userVer;
-	vuser2 = userVer2;
+	if (fileVer > V3_1) {
+		verNum =
+			std::to_string(verArr[0]) + '.' +
+			std::to_string(verArr[1]) + '.' +
+			std::to_string(verArr[2]) + '.' +
+			std::to_string(verArr[3]);
+	}
+	else {
+		verNum =
+			std::to_string(verArr[0]) + '.' +
+			std::to_string(verArr[1]);
+	}
+
+	if (nds != 0)
+		vstr = NIF_NDS;
+	else if (fileVer < V10_0_0_0)
+		vstr = NIF_NETIMMERSE;
+	else
+		vstr = NIF_GAMEBRYO;
+
+	vstr += NIF_VERSTRING;
+	vstr += verNum.data();
+
+	file = fileVer;
 }
 
 
@@ -429,49 +456,124 @@ void NiHeader::BlockSwapped(NiObject* o, int blockIndexLo, int blockIndexHi) {
 }
 
 void NiHeader::Get(NiStream& stream) {
-	char ver[256];
+	char ver[128] = { 0 };
 	stream.getline(ver, sizeof(ver));
-	if (_strnicmp(ver, "Gamebryo", 8) != 0)
+
+	bool isNetImmerse = std::strstr(ver, NIF_NETIMMERSE.c_str()) != nullptr;
+	bool isGamebryo = std::strstr(ver, NIF_GAMEBRYO.c_str()) != nullptr;
+	bool isNDS = std::strstr(ver, NIF_NDS.c_str()) != nullptr;
+
+	if (!isNetImmerse && !isGamebryo && !isNDS)
 		return;
 
-	byte v4, v3, v2, v1;
-	uint vuser, vuser2;
-	stream >> v4 >> v3 >> v2 >> v1;
-	stream >> endian;
-	stream >> vuser;
+	NiFileVersion vfile = UNKNOWN;
+	uint vuser = 0;
+	uint vstream = 0;
+
+	auto verStrPtr = std::strstr(ver, NIF_VERSTRING.c_str());
+	if (verStrPtr) {
+		std::string verStr = verStrPtr + 10;
+		std::regex reg("25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9]");
+		std::smatch matches;
+
+		byte v[4] = { 0 };
+		size_t m = 0;
+		while (std::regex_search(verStr, matches, reg) && m < 4) {
+			v[m] = std::stoi(matches[0]);
+			verStr = matches.suffix();
+			m++;
+		}
+
+		vfile = NiVersion::ToFile(v[0], v[1], v[2], v[3]);
+	}
+
+	if (vfile > V3_1 && !isNDS) {
+		stream >> vfile;
+	}
+	else if (isNDS) {
+		uint versionNDS = 0;
+		stream >> versionNDS;
+		version.SetNDS(versionNDS);
+	}
+	else {
+		char cr1[128] = { 0 };
+		stream.getline(cr1, sizeof(cr1));
+		copyright1 = cr1;
+
+		char cr2[128] = { 0 };
+		stream.getline(cr2, sizeof(cr2));
+		copyright2 = cr2;
+
+		char cr3[128] = { 0 };
+		stream.getline(cr3, sizeof(cr3));
+		copyright3 = cr3;
+	}
+
+	version.SetFile(vfile);
+
+	if (version.File() >= NiVersion::ToFile(20, 0, 0, 3))
+		stream >> endian;
+	else
+		endian = ENDIAN_LITTLE;
+
+	if (version.File() >= NiVersion::ToFile(10, 0, 1, 8)) {
+		stream >> vuser;
+		version.SetUser(vuser);
+	}
+
 	stream >> numBlocks;
-	stream >> vuser2;
 
-	version.Set(v1, v2, v3, v4, vuser, vuser2);
+	if (version.IsBethesda()) {
+		stream >> vstream;
+		version.SetStream(vstream);
 
-	creator.Get(stream, 1);
-	exportInfo1.Get(stream, 1);
-	exportInfo2.Get(stream, 1);
+		creator.Get(stream, 1);
+		exportInfo1.Get(stream, 1);
+		exportInfo2.Get(stream, 1);
 
-	if (version.User2() >= 130)
-		exportInfo3.Get(stream, 1);
+		if (version.Stream() >= 130)
+			exportInfo3.Get(stream, 1);
+	}
+	else if (version.File() >= V30_0_0_2) {
+		stream >> embedDataSize;
+		embedData.resize(embedDataSize);
+		for (int i = 0; i < embedDataSize; i++)
+			stream >> embedData[i];
+	}
 
-	stream >> numBlockTypes;
-	blockTypes.resize(numBlockTypes);
-	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes[i].Get(stream, 4);
+	if (version.File() >= V5_0_0_1) {
+		stream >> numBlockTypes;
+		blockTypes.resize(numBlockTypes);
+		for (int i = 0; i < numBlockTypes; i++)
+			blockTypes[i].Get(stream, 4);
 
-	blockTypeIndices.resize(numBlocks);
-	for (int i = 0; i < numBlocks; i++)
-		stream >> blockTypeIndices[i];
+		blockTypeIndices.resize(numBlocks);
+		for (int i = 0; i < numBlocks; i++)
+			stream >> blockTypeIndices[i];
+	}
 
-	blockSizes.resize(numBlocks);
-	for (int i = 0; i < numBlocks; i++)
-		stream >> blockSizes[i];
+	if (version.File() >= V20_2_0_5) {
+		blockSizes.resize(numBlocks);
+		for (int i = 0; i < numBlocks; i++)
+			stream >> blockSizes[i];
+	}
 
-	stream >> numStrings;
-	stream >> maxStringLen;
+	if (version.File() >= V20_1_0_1) {
+		stream >> numStrings;
+		stream >> maxStringLen;
 
-	strings.resize(numStrings);
-	for (int i = 0; i < numStrings; i++)
-		strings[i].Get(stream, 4);
+		strings.resize(numStrings);
+		for (int i = 0; i < numStrings; i++)
+			strings[i].Get(stream, 4);
+	}
 
-	stream >> unkInt2;
+	if (version.File() >= NiVersion::ToFile(5, 0, 0, 6)) {
+		stream >> numGroups;
+		groupSizes.resize(numGroups);
+		for (int i = 0; i < numGroups; i++)
+			stream >> groupSizes[i];
+	}
+
 	valid = true;
 }
 
@@ -482,35 +584,69 @@ void NiHeader::Put(NiStream& stream) {
 	// Newline to end header string
 	stream << byte(0x0A);
 
-	stream << version.File();
-	stream << endian;
-	stream << version.User();
+	bool isNDS = version.NDS() != 0;
+	if (version.File() > V3_1 && !isNDS) {
+		stream << version.File();
+	}
+	else if (isNDS) {
+		stream << version.NDS();
+	}
+	else {
+		stream.writeline(copyright1.data(), copyright1.size());
+		stream.writeline(copyright2.data(), copyright2.size());
+		stream.writeline(copyright3.data(), copyright3.size());
+	}
+
+	if (version.File() >= NiVersion::ToFile(20, 0, 0, 3))
+		stream << endian;
+
+	if (version.File() >= NiVersion::ToFile(10, 0, 1, 8))
+		stream << version.User();
+
 	stream << numBlocks;
-	stream << version.User2();
 
-	creator.Put(stream, 1);
-	exportInfo1.Put(stream, 1);
-	exportInfo2.Put(stream, 1);
-	if (version.User2() >= 130)
-		exportInfo3.Put(stream, 1);
+	if (version.IsBethesda()) {
+		stream << version.Stream();
 
-	stream << numBlockTypes;
-	for (int i = 0; i < numBlockTypes; i++)
-		blockTypes[i].Put(stream, 4, false);
+		creator.Put(stream, 1);
+		exportInfo1.Put(stream, 1);
+		exportInfo2.Put(stream, 1);
+		if (version.Stream() >= 130)
+			exportInfo3.Put(stream, 1);
+	}
+	else if (version.File() >= V30_0_0_2) {
+		stream << embedDataSize;
+		for (int i = 0; i < embedDataSize; i++)
+			stream << embedData[i];
+	}
 
-	for (int i = 0; i < numBlocks; i++)
-		stream << blockTypeIndices[i];
+	if (version.File() >= V5_0_0_1) {
+		stream << numBlockTypes;
+		for (int i = 0; i < numBlockTypes; i++)
+			blockTypes[i].Put(stream, 4, false);
 
-	blockSizePos = stream.tellp();
-	for (int i = 0; i < numBlocks; i++)
-		stream << blockSizes[i];
+		for (int i = 0; i < numBlocks; i++)
+			stream << blockTypeIndices[i];
+	}
 
-	stream << numStrings;
-	stream << maxStringLen;
-	for (int i = 0; i < numStrings; i++)
-		strings[i].Put(stream, 4, false);
+	if (version.File() >= V20_2_0_5) {
+		blockSizePos = stream.tellp();
+		for (int i = 0; i < numBlocks; i++)
+			stream << blockSizes[i];
+	}
 
-	stream << unkInt2;
+	if (version.File() >= V20_1_0_1) {
+		stream << numStrings;
+		stream << maxStringLen;
+		for (int i = 0; i < numStrings; i++)
+			strings[i].Put(stream, 4, false);
+	}
+
+	if (version.File() >= NiVersion::ToFile(5, 0, 0, 6)) {
+		stream << numGroups;
+		for (int i = 0; i < numGroups; i++)
+			stream << groupSizes[i];
+	}
 }
 
 

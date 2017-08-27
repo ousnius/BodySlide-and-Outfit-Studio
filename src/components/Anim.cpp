@@ -272,7 +272,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	}
 
 	bool incomplete = false;
-	bool isFO4 = (nif->GetHeader().GetVersion().User() >= 12 && nif->GetHeader().GetVersion().User2() == 130);
+	bool isFO4 = (nif->GetHeader().GetVersion().User() >= 12 && nif->GetHeader().GetVersion().Stream() == 130);
 
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)

@@ -556,7 +556,7 @@ void hkPackedNiTriStripsData::Get(NiStream& stream) {
 
 	stream >> keyCount;
 
-	if (stream.GetVersion().User2() > 11) {
+	if (stream.GetVersion().Stream() > 11) {
 		triData.resize(keyCount);
 		for (int i = 0; i < keyCount; i++)
 			stream >> triData[i];
@@ -569,14 +569,14 @@ void hkPackedNiTriStripsData::Get(NiStream& stream) {
 
 	stream >> numVerts;
 
-	if (stream.GetVersion().User2() > 11)
+	if (stream.GetVersion().Stream() > 11)
 		stream >> unkByte;
 
 	compressedVertData.resize(numVerts);
 	for (int i = 0; i < numVerts; i++)
 		stream >> compressedVertData[i];
 
-	if (stream.GetVersion().User2() > 11) {
+	if (stream.GetVersion().Stream() > 11) {
 		stream >> partCount;
 		data.resize(partCount);
 		for (int i = 0; i < partCount; i++)
@@ -589,7 +589,7 @@ void hkPackedNiTriStripsData::Put(NiStream& stream) {
 
 	stream << keyCount;
 
-	if (stream.GetVersion().User2() > 11) {
+	if (stream.GetVersion().Stream() > 11) {
 		for (int i = 0; i < keyCount; i++)
 			stream << triData[i];
 	}
@@ -600,13 +600,13 @@ void hkPackedNiTriStripsData::Put(NiStream& stream) {
 
 	stream << numVerts;
 
-	if (stream.GetVersion().User2() > 11)
+	if (stream.GetVersion().Stream() > 11)
 		stream << unkByte;
 
 	for (int i = 0; i < numVerts; i++)
 		stream << compressedVertData[i];
 
-	if (stream.GetVersion().User2() > 11) {
+	if (stream.GetVersion().Stream() > 11) {
 		stream << partCount;
 		for (int i = 0; i < partCount; i++)
 			stream << data[i];
@@ -617,7 +617,7 @@ void hkPackedNiTriStripsData::Put(NiStream& stream) {
 void bhkPackedNiTriStripsShape::Get(NiStream& stream) {
 	bhkShapeCollection::Get(stream);
 
-	if (stream.GetVersion().User2() <= 11) {
+	if (stream.GetVersion().Stream() <= 11) {
 		stream >> partCount;
 		data.resize(partCount);
 		for (int i = 0; i < partCount; i++)
@@ -637,7 +637,7 @@ void bhkPackedNiTriStripsShape::Get(NiStream& stream) {
 void bhkPackedNiTriStripsShape::Put(NiStream& stream) {
 	bhkShapeCollection::Put(stream);
 
-	if (stream.GetVersion().User2() <= 11) {
+	if (stream.GetVersion().Stream() <= 11) {
 		stream << partCount;
 		for (int i = 0; i < partCount; i++)
 			stream << data[i];

@@ -563,7 +563,7 @@ void NiPSysGrowFadeModifier::Get(NiStream& stream) {
 	stream >> fadeTime;
 	stream >> fadeGeneration;
 
-	if (stream.GetVersion().User2() >= 34)
+	if (stream.GetVersion().Stream() >= 34)
 		stream >> baseScale;
 }
 
@@ -575,7 +575,7 @@ void NiPSysGrowFadeModifier::Put(NiStream& stream) {
 	stream << fadeTime;
 	stream << fadeGeneration;
 
-	if (stream.GetVersion().User2() >= 34)
+	if (stream.GetVersion().Stream() >= 34)
 		stream << baseScale;
 }
 
@@ -834,7 +834,7 @@ BlockRefArray<NiAVObject>& BSMasterParticleSystem::GetParticleSystems() {
 void NiParticleSystem::Get(NiStream& stream) {
 	NiAVObject::Get(stream);
 
-	if (stream.GetVersion().User2() >= 100) {
+	if (stream.GetVersion().Stream() >= 100) {
 		stream >> bounds;
 		skinInstanceRef.Get(stream);
 		shaderPropertyRef.Get(stream);
@@ -877,7 +877,7 @@ void NiParticleSystem::Get(NiStream& stream) {
 		stream >> nearBegin;
 		stream >> nearEnd;
 
-		if (stream.GetVersion().User2() >= 100)
+		if (stream.GetVersion().Stream() >= 100)
 			psysDataRef.Get(stream);
 	}
 
@@ -888,7 +888,7 @@ void NiParticleSystem::Get(NiStream& stream) {
 void NiParticleSystem::Put(NiStream& stream) {
 	NiAVObject::Put(stream);
 
-	if (stream.GetVersion().User2() >= 100) {
+	if (stream.GetVersion().Stream() >= 100) {
 		stream << bounds;
 		skinInstanceRef.Put(stream);
 		shaderPropertyRef.Put(stream);
@@ -928,7 +928,7 @@ void NiParticleSystem::Put(NiStream& stream) {
 		stream << nearBegin;
 		stream << nearEnd;
 
-		if (stream.GetVersion().User2() >= 100)
+		if (stream.GetVersion().Stream() >= 100)
 			psysDataRef.Put(stream);
 	}
 

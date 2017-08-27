@@ -965,7 +965,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 			m->doublesided = shader->IsDoubleSided();
 
 			// Only for dedicated backlight maps
-			if (nif->GetHeader().GetVersion().User2() < 130)
+			if (nif->GetHeader().GetVersion().Stream() < 130)
 				m->backlightMap = m->backlight;
 
 			m->prop.uvOffset = shader->GetUVOffset();
@@ -1113,7 +1113,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 	}
 
 	// Offset camera for skinned FO4 shapes
-	if (nif->GetHeader().GetVersion().User() == 12 && nif->GetHeader().GetVersion().User2() == 130) {
+	if (nif->GetHeader().GetVersion().User() == 12 && nif->GetHeader().GetVersion().Stream() == 130) {
 		if (shape && shape->IsSkinned())
 			camOffset.y = 12.0f;
 	}

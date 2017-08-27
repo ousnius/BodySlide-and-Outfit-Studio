@@ -549,20 +549,6 @@ public:
 	NiUVController* Clone() { return new NiUVController(*this); }
 };
 
-class BSRefractionFirePeriodController : public NiTimeController {
-private:
-	BlockRef<NiInterpolator> interpRef;
-
-public:
-	static constexpr const char* BlockName = "BSRefractionFirePeriodController";
-	virtual const char* GetBlockName() { return BlockName; }
-
-	void Get(NiStream& stream);
-	void Put(NiStream& stream);
-	void GetChildRefs(std::set<Ref*>& refs);
-	BSRefractionFirePeriodController* Clone() { return new BSRefractionFirePeriodController(*this); }
-};
-
 class BSFrustumFOVController : public NiTimeController {
 private:
 	BlockRef<NiInterpolator> interpolatorRef;
@@ -890,6 +876,14 @@ enum TexType : uint {
 };
 
 class NiFloatInterpController : public NiSingleInterpController {
+};
+
+class BSRefractionFirePeriodController : public NiSingleInterpController {
+public:
+	static constexpr const char* BlockName = "BSRefractionFirePeriodController";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	BSRefractionFirePeriodController* Clone() { return new BSRefractionFirePeriodController(*this); }
 };
 
 class NiSourceTexture;

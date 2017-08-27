@@ -396,7 +396,7 @@ void ShapeProperties::GetGeometry() {
 
 	BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {
-		if (nif->GetHeader().GetVersion().User2() == 100) {
+		if (nif->GetHeader().GetVersion().Stream() == 100) {
 			fullPrecision->SetValue(true);
 			fullPrecision->Enable(false);
 		}
@@ -646,7 +646,7 @@ void ShapeProperties::ApplyChanges() {
 
 	BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {
-		if (nif->GetHeader().GetVersion().User2() != 100)
+		if (nif->GetHeader().GetVersion().Stream() != 100)
 			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 
 		if (os->targetGame == FO4 && currentSubIndex != subIndex->IsChecked()) {

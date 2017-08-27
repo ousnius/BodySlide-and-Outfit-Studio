@@ -14,25 +14,98 @@ See the included LICENSE file
 #include <algorithm>
 #include <memory>
 
+enum NiFileVersion : uint {
+	V2_3 = 0x02030000,
+	V3_0 = 0x03000000,
+	V3_03 = 0x03000300,
+	V3_1 = 0x03010000,
+	V3_3_0_13 = 0x0303000D,
+	V4_0_0_0 = 0x04000000,
+	V4_0_0_2 = 0x04000002,
+	V4_1_0_12 = 0x0401000C,
+	V4_2_0_2 = 0x04020002,
+	V4_2_1_0 = 0x04020100,
+	V4_2_2_0 = 0x04020200,
+	V5_0_0_1 = 0x05000001,
+	V10_0_0_0 = 0x0A000000,
+	V10_0_1_0 = 0x0A000100,
+	V10_0_1_2 = 0x0A000102,
+	V10_0_1_3 = 0x0A000103,
+	V10_1_0_0 = 0x0A010000,
+	V10_1_0_101 = 0x0A010065,
+	V10_1_0_104 = 0x0A010068,
+	V10_1_0_106 = 0x0A01006A,
+	V10_1_0_114 = 0x0A010072,
+	V10_2_0_0 = 0x0A020000,
+	V10_2_0_1 = 0x0A020001,
+	V10_3_0_1 = 0x0A030001,
+	V10_4_0_1 = 0x0A040001,
+	V20_0_0_4 = 0x14000004,
+	V20_0_0_5 = 0x14000005,
+	V20_1_0_1 = 0x14010001,
+	V20_1_0_3 = 0x14010003,
+	V20_2_0_5 = 0x14020005,
+	V20_2_0_7 = 0x14020007,
+	V20_2_0_8 = 0x14020008,
+	V20_3_0_1 = 0x14030001,
+	V20_3_0_2 = 0x14030002,
+	V20_3_0_3 = 0x14030003,
+	V20_3_0_6 = 0x14030006,
+	V20_3_0_9 = 0x14030009,
+	V20_5_0_0 = 0x14050000,
+	V20_6_0_0 = 0x14060000,
+	V20_6_5_0 = 0x14060500,
+	V30_0_0_2 = 0x1E000002,
+	V30_1_0_3 = 0x1E010003,
+	UNKNOWN = 0xFFFFFFFF
+};
+
 class NiVersion {
 private:
 	std::string vstr;
-	uint vfile = 0;
-	uint vuser = 0;
-	uint vuser2 = 0;
+	NiFileVersion file = UNKNOWN;
+	uint user = 0;
+	uint stream = 0;
+	uint nds = 0;
 
 public:
-	static uint Get(byte v1, byte v2, byte v3, byte v4) {
-		return (v1 << 24) | (v2 << 16) | (v3 << 8) | v4;
+	// Construct a file version enumeration from individual values
+	static NiFileVersion ToFile(byte major, byte minor, byte patch, byte internal) {
+		return NiFileVersion((major << 24) | (minor << 16) | (patch << 8) | internal);
+	}
+
+	// Return file version as individual values
+	static std::vector<byte> ToArray(NiFileVersion file) {
+		return { byte(file >> 24), byte(file >> 16), byte(file >> 8), byte(file) };
 	}
 
 	std::string GetVersionInfo();
-	void Set(byte v1, byte v2, byte v3, byte v4, uint userVer, uint userVer2);
-
 	std::string String() { return vstr; }
-	uint File() { return vfile; }
-	uint User() { return vuser; }
-	uint User2() { return vuser2; }
+
+	NiFileVersion File() { return file; }
+	void SetFile(NiFileVersion fileVer);
+
+	uint User() { return user; }
+	void SetUser(const uint userVer) { user = userVer; }
+
+	uint Stream() { return stream; }
+	void SetStream(const uint streamVer) { stream = streamVer; }
+
+	uint NDS() { return nds; }
+	void SetNDS(const uint ndsVer) { nds = ndsVer; }
+
+	bool IsBethesda() { return (file == V20_2_0_7 && user >= 11) || IsOB(); }
+
+	bool IsOB() {
+		return ((file == V10_1_0_106 || file == V10_2_0_0) && user >= 3 && user < 11)
+			|| (file == V20_0_0_4 && (user == 10 || user == 11))
+			|| (file == V20_0_0_5 && user == 11);
+	}
+
+	bool IsFO3() { return file == V20_2_0_7 && stream > 11 && stream < 83; }
+	bool IsSK() { return file == V20_2_0_7 && stream == 83; }
+	bool IsSSE() { return file == V20_2_0_7 && stream == 100; }
+	bool IsFO4() { return file == V20_2_0_7 && stream == 130; }
 };
 
 enum NiEndian : byte {
@@ -55,6 +128,12 @@ public:
 	void write(const char* ptr, std::streamsize count) {
 		stream->write(ptr, count);
 		blockSize += count;
+	}
+
+	void writeline(const char* ptr, std::streamsize count) {
+		stream->write(ptr, count);
+		stream->write("\n", 1);
+		blockSize += count + 1;
 	}
 
 	void read(char* ptr, std::streamsize count) {
@@ -392,6 +471,13 @@ private:
 	NiString exportInfo2;
 	NiString exportInfo3;
 
+	std::string copyright1;
+	std::string copyright2;
+	std::string copyright3;
+
+	uint embedDataSize = 0;
+	std::vector<byte> embedData;
+
 	// Foreign reference to the blocks list in NifFile.
 	std::vector<std::unique_ptr<NiObject>>* blocks = nullptr;
 
@@ -405,7 +491,8 @@ private:
 	uint maxStringLen = 0;
 	std::vector<NiString> strings;
 
-	uint unkInt2 = 0;
+	uint numGroups = 0;
+	std::vector<uint> groupSizes;
 
 public:
 	NiHeader() {};

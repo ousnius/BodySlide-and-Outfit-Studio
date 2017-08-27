@@ -368,7 +368,7 @@ void TileShaderProperty::Put(NiStream& stream) {
 
 
 BSShaderTextureSet::BSShaderTextureSet(NiVersion& version) {
-	if (version.User() == 12 && version.User2() >= 130)
+	if (version.User() == 12 && version.Stream() >= 130)
 		numTextures = 10;
 	else if (version.User() == 12)
 		numTextures = 9;
@@ -405,7 +405,7 @@ BSLightingShaderProperty::BSLightingShaderProperty() {
 }
 
 BSLightingShaderProperty::BSLightingShaderProperty(NiVersion& version) : BSLightingShaderProperty() {
-	if (version.User() == 12 && version.User2() >= 120) {
+	if (version.User() == 12 && version.Stream() >= 120) {
 		shaderFlags1 = 0x80400203;
 		shaderFlags2 = 0x00000081;
 	}
@@ -414,7 +414,7 @@ BSLightingShaderProperty::BSLightingShaderProperty(NiVersion& version) : BSLight
 		shaderFlags2 = 0x00008001;
 	}
 
-	if (version.User() == 12 && version.User2() >= 120)
+	if (version.User() == 12 && version.Stream() >= 120)
 		glossiness = 1.0f;
 	else
 		glossiness = 20.0f;
@@ -428,7 +428,7 @@ void BSLightingShaderProperty::Get(NiStream& stream) {
 	stream >> emissiveColor;
 	stream >> emissiveMultiple;
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
 		wetMaterialName.Get(stream);
 
 	stream >> textureClampMode;
@@ -438,12 +438,12 @@ void BSLightingShaderProperty::Get(NiStream& stream) {
 	stream >> specularColor;
 	stream >> specularStrength;
 
-	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130) {
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().Stream() < 130) {
 		stream >> lightingEffect1;
 		stream >> lightingEffect2;
 	}
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130) {
 		stream >> subsurfaceRolloff;
 		stream >> unkFloat1;
 		stream >> backlightPower;
@@ -460,11 +460,11 @@ void BSLightingShaderProperty::Get(NiStream& stream) {
 	switch (skyrimShaderType) {
 	case 1:
 		stream >> environmentMapScale;
-		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
 			stream >> unkEnvmap;
 		break;
 	case 5:
-		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
 			stream >> unkSkinTint;
 
 		stream >> skinTintColor;
@@ -501,7 +501,7 @@ void BSLightingShaderProperty::Put(NiStream& stream) {
 	stream << emissiveColor;
 	stream << emissiveMultiple;
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
 		wetMaterialName.Put(stream);
 
 	stream << textureClampMode;
@@ -511,12 +511,12 @@ void BSLightingShaderProperty::Put(NiStream& stream) {
 	stream << specularColor;
 	stream << specularStrength;
 
-	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130) {
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().Stream() < 130) {
 		stream << lightingEffect1;
 		stream << lightingEffect2;
 	}
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130) {
 		stream << subsurfaceRolloff;
 		stream << unkFloat1;
 		stream << backlightPower;
@@ -533,11 +533,11 @@ void BSLightingShaderProperty::Put(NiStream& stream) {
 	switch (skyrimShaderType) {
 	case 1:
 		stream << environmentMapScale;
-		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
 			stream << unkEnvmap;
 		break;
 	case 5:
-		if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130)
+		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
 			stream << unkSkinTint;
 
 		stream << skinTintColor;
@@ -699,7 +699,7 @@ void BSEffectShaderProperty::Get(NiStream& stream) {
 	stream >> softFalloffDepth;
 	greyscaleTexture.Get(stream, 4);
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130) {
 		envMapTexture.Get(stream, 4);
 		normalTexture.Get(stream, 4);
 		envMaskTexture.Get(stream, 4);
@@ -722,7 +722,7 @@ void BSEffectShaderProperty::Put(NiStream& stream) {
 	stream << softFalloffDepth;
 	greyscaleTexture.Put(stream, 4, false);
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() >= 130) {
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130) {
 		envMapTexture.Put(stream, 4, false);
 		normalTexture.Put(stream, 4, false);
 		envMaskTexture.Put(stream, 4, false);
@@ -892,12 +892,12 @@ void BSShaderPPLightingProperty::Get(NiStream& stream) {
 
 	textureSetRef.Get(stream);
 
-	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 14) {
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().Stream() > 14) {
 		stream >> refractionStrength;
 		stream >> refractionFirePeriod;
 	}
 
-	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 24) {
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().Stream() > 24) {
 		stream >> parallaxMaxPasses;
 		stream >> parallaxScale;
 	}
@@ -911,12 +911,12 @@ void BSShaderPPLightingProperty::Put(NiStream& stream) {
 
 	textureSetRef.Put(stream);
 
-	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 14) {
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().Stream() > 14) {
 		stream << refractionStrength;
 		stream << refractionFirePeriod;
 	}
 
-	if (stream.GetVersion().User() == 11 && stream.GetVersion().User2() > 24) {
+	if (stream.GetVersion().User() == 11 && stream.GetVersion().Stream() > 24) {
 		stream << parallaxMaxPasses;
 		stream << parallaxScale;
 	}
@@ -960,7 +960,7 @@ void BSShaderNoLightingProperty::Get(NiStream& stream) {
 
 	baseTexture.Get(stream, 4);
 
-	if (stream.GetVersion().User2() > 26) {
+	if (stream.GetVersion().Stream() > 26) {
 		stream >> falloffStartAngle;
 		stream >> falloffStopAngle;
 		stream >> falloffStartOpacity;
@@ -973,7 +973,7 @@ void BSShaderNoLightingProperty::Put(NiStream& stream) {
 
 	baseTexture.Put(stream, 4, false);
 
-	if (stream.GetVersion().User2() > 26) {
+	if (stream.GetVersion().Stream() > 26) {
 		stream << falloffStartAngle;
 		stream << falloffStopAngle;
 		stream << falloffStartOpacity;
@@ -1016,7 +1016,8 @@ void NiMaterialProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
 	NiVersion& version = stream.GetVersion();
-	if (!(version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)) {
+
+	if (!(version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)) {
 		stream >> colorAmbient;
 		stream >> colorDiffuse;
 	}
@@ -1026,7 +1027,7 @@ void NiMaterialProperty::Get(NiStream& stream) {
 	stream >> glossiness;
 	stream >> alpha;
 
-	if (version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)
+	if (version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)
 		stream >> emitMulti;
 }
 
@@ -1034,7 +1035,7 @@ void NiMaterialProperty::Put(NiStream& stream) {
 	NiProperty::Put(stream);
 
 	NiVersion& version = stream.GetVersion();
-	if (!(version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)) {
+	if (!(version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)) {
 		stream << colorAmbient;
 		stream << colorDiffuse;
 	}
@@ -1044,7 +1045,7 @@ void NiMaterialProperty::Put(NiStream& stream) {
 	stream << glossiness;
 	stream << alpha;
 
-	if (version.File() == NiVersion::Get(20, 2, 0, 7) && version.User() >= 11 && version.User2() > 21)
+	if (version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)
 		stream << emitMulti;
 }
 

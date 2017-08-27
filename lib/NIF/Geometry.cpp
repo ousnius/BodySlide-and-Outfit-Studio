@@ -91,7 +91,7 @@ void NiGeometryData::Get(NiStream& stream) {
 
 	ushort nbtMethod = numUVSets & 0xF000;
 	byte numTextureSets = numUVSets & 0x3F;
-	if (stream.GetVersion().User2() >= 83)
+	if (stream.GetVersion().Stream() >= 83)
 		numTextureSets = numUVSets & 0x1;
 
 	if (stream.GetVersion().User() == 12)
@@ -153,7 +153,7 @@ void NiGeometryData::Put(NiStream& stream) {
 
 	ushort nbtMethod = numUVSets & 0xF000;
 	byte numTextureSets = numUVSets & 0x3F;
-	if (stream.GetVersion().User2() >= 83)
+	if (stream.GetVersion().Stream() >= 83)
 		numTextureSets = numUVSets & 0x1;
 
 	if (stream.GetVersion().User() == 12)
@@ -471,7 +471,7 @@ void BSTriShape::Get(NiStream& stream) {
 
 	vertexDesc.Get(stream);
 
-	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130) {
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() < 130) {
 		ushort num = 0;
 		stream >> num;
 		numTriangles = num;
@@ -489,7 +489,7 @@ void BSTriShape::Get(NiStream& stream) {
 		for (int i = 0; i < numVertices; i++) {
 			auto& vertex = vertData[i];
 			if (HasVertices()) {
-				if (IsFullPrecision() || stream.GetVersion().User2() == 100) {
+				if (IsFullPrecision() || stream.GetVersion().Stream() == 100) {
 					// Full precision
 					stream >> vertex.vert;
 					stream >> vertex.bitangentX;
@@ -556,7 +556,7 @@ void BSTriShape::Get(NiStream& stream) {
 			stream >> triangles[i];
 	}
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() == 100) {
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() == 100) {
 		stream >> particleDataSize;
 
 		if (particleDataSize > 0) {
@@ -611,7 +611,7 @@ void BSTriShape::Put(NiStream& stream) {
 
 	vertexDesc.Put(stream);
 
-	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130 && IsSkinned()) {
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() < 130 && IsSkinned()) {
 		// Triangle and vertex data is in partition instead
 		ushort numUShort = 0;
 		uint numUInt = 0;
@@ -625,7 +625,7 @@ void BSTriShape::Put(NiStream& stream) {
 		stream << numUInt;
 	}
 	else {
-		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() < 130) {
+		if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() < 130) {
 			ushort numUShort = numTriangles;
 			stream << numUShort;
 		}
@@ -640,7 +640,7 @@ void BSTriShape::Put(NiStream& stream) {
 			for (int i = 0; i < numVertices; i++) {
 				auto& vertex = vertData[i];
 				if (HasVertices()) {
-					if (IsFullPrecision() || stream.GetVersion().User2() == 100) {
+					if (IsFullPrecision() || stream.GetVersion().Stream() == 100) {
 						// Full precision
 						stream << vertex.vert;
 						stream << vertex.bitangentX;
@@ -706,7 +706,7 @@ void BSTriShape::Put(NiStream& stream) {
 		}
 	}
 
-	if (stream.GetVersion().User() == 12 && stream.GetVersion().User2() == 100) {
+	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() == 100) {
 		stream << particleDataSize;
 
 		if (particleDataSize > 0) {
@@ -1154,7 +1154,7 @@ int BSTriShape::CalcDataSizes(NiVersion& version) {
 
 	uint attributeSizes[VA_COUNT] = {};
 	if (HasVertices()) {
-		if (IsFullPrecision() || version.User2() == 100)
+		if (IsFullPrecision() || version.Stream() == 100)
 			attributeSizes[VA_POSITION] = 4;
 		else
 			attributeSizes[VA_POSITION] = 2;
@@ -1259,7 +1259,7 @@ void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris
 void BSSubIndexTriShape::Get(NiStream& stream) {
 	BSTriShape::Get(stream);
 
-	if (stream.GetVersion().User2() >= 130 && dataSize > 0) {
+	if (stream.GetVersion().Stream() >= 130 && dataSize > 0) {
 		stream >> segmentation.numPrimitives;
 		stream >> segmentation.numSegments;
 		stream >> segmentation.numTotalSegments;
@@ -1302,7 +1302,7 @@ void BSSubIndexTriShape::Get(NiStream& stream) {
 			segmentation.subSegmentData.ssfFile.Get(stream, 2);
 		}
 	}
-	else if (stream.GetVersion().User2() == 100) {
+	else if (stream.GetVersion().Stream() == 100) {
 		stream >> numSegments;
 		segments.resize(numSegments);
 
@@ -1314,7 +1314,7 @@ void BSSubIndexTriShape::Get(NiStream& stream) {
 void BSSubIndexTriShape::Put(NiStream& stream) {
 	BSTriShape::Put(stream);
 
-	if (stream.GetVersion().User2() >= 130 && dataSize > 0) {
+	if (stream.GetVersion().Stream() >= 130 && dataSize > 0) {
 		stream << segmentation.numPrimitives;
 		stream << segmentation.numSegments;
 		stream << segmentation.numTotalSegments;
@@ -1352,7 +1352,7 @@ void BSSubIndexTriShape::Put(NiStream& stream) {
 			segmentation.subSegmentData.ssfFile.Put(stream, 2, false);
 		}
 	}
-	else if (stream.GetVersion().User2() == 100) {
+	else if (stream.GetVersion().Stream() == 100) {
 		stream << numSegments;
 
 		for (auto &segment : segments)

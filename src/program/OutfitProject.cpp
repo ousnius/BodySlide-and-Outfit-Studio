@@ -1018,7 +1018,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		NiShader* shader = workNif.GetShader(shape);
 		if (shader) {
 			// Find material file
-			if (workNif.GetHeader().GetVersion().User() == 12 && workNif.GetHeader().GetVersion().User2() >= 130) {
+			if (workNif.GetHeader().GetVersion().User() == 12 && workNif.GetHeader().GetVersion().Stream() >= 130) {
 				matFile = shader->GetName();
 				if (!matFile.IsEmpty())
 					hasMat = true;
@@ -2305,21 +2305,21 @@ void OutfitProject::CheckNIFTarget(NifFile& nif) {
 	switch (owner->targetGame) {
 	case FO3:
 	case FONV:
-		match = (nif.GetHeader().GetVersion().User2() == 34);
+		match = (nif.GetHeader().GetVersion().Stream() == 34);
 		break;
 	case SKYRIM:
-		match = (nif.GetHeader().GetVersion().User2() == 83);
+		match = (nif.GetHeader().GetVersion().Stream() == 83);
 		break;
 	case FO4:
-		match = (nif.GetHeader().GetVersion().User2() == 130);
+		match = (nif.GetHeader().GetVersion().Stream() == 130);
 		break;
 	case SKYRIMSE:
-		match = (nif.GetHeader().GetVersion().User2() == 100);
+		match = (nif.GetHeader().GetVersion().Stream() == 100);
 		break;
 	}
 
 	if (!match) {
-		if (owner->targetGame == SKYRIMSE && nif.GetHeader().GetVersion().User2() == 83) {
+		if (owner->targetGame == SKYRIMSE && nif.GetHeader().GetVersion().Stream() == 83) {
 			if (!Config.Exists("OptimizeForSSE")) {
 				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
 				if (res == wxYES)

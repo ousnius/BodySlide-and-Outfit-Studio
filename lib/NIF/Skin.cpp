@@ -101,7 +101,7 @@ void NiSkinPartition::Get(NiStream& stream) {
 	stream >> numPartitions;
 	partitions.resize(numPartitions);
 
-	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() == 100) {
 		stream >> dataSize;
 		stream >> vertexSize;
 		vertexDesc.Get(stream);
@@ -230,7 +230,7 @@ void NiSkinPartition::Get(NiStream& stream) {
 		if (stream.GetVersion().User() >= 12)
 			stream >> partition.unkShort;
 
-		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+		if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() == 100) {
 			partition.vertexDesc.Get(stream);
 
 			partition.trueTriangles.resize(partition.numTriangles);
@@ -247,7 +247,7 @@ void NiSkinPartition::Put(NiStream& stream) {
 
 	stream << numPartitions;
 
-	if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+	if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() == 100) {
 		dataSize = vertexSize * numVertices;
 
 		stream << dataSize;
@@ -360,7 +360,7 @@ void NiSkinPartition::Put(NiStream& stream) {
 		if (stream.GetVersion().User() >= 12)
 			stream << partitions[p].unkShort;
 
-		if (stream.GetVersion().User() >= 12 && stream.GetVersion().User2() == 100) {
+		if (stream.GetVersion().User() >= 12 && stream.GetVersion().Stream() == 100) {
 			partitions[p].vertexDesc.Put(stream);
 
 			if (partitions[p].trueTriangles.size() != partitions[p].numTriangles)

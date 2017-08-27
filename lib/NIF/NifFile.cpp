@@ -440,7 +440,7 @@ int NifFile::Load(const std::string& filename) {
 		}
 
 		NiVersion& version = stream.GetVersion();
-		if (!(version.File() >= NiVersion::Get(20, 2, 0, 7) && (version.User() == 11 || version.User() == 12))) {
+		if (!(version.File() >= NiVersion::ToFile(20, 2, 0, 7) && (version.User() == 11 || version.User() == 12))) {
 			Clear();
 			return 2;
 		}
@@ -930,7 +930,7 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 
 	// Clone shader from source
 	NiShader* destShader = static_cast<NiShader*>(srcShader->Clone());
-	if (hdr.GetVersion().User() == 12 && hdr.GetVersion().User2() >= 120)
+	if (hdr.GetVersion().User() == 12 && hdr.GetVersion().Stream() >= 120)
 		destShader->SetName(srcShader->GetName());
 	else
 		destShader->ClearName();
@@ -994,7 +994,7 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 	if (srcAlphaProp) {
 		auto destAlphaProp = srcAlphaProp->Clone();
 
-		if (hdr.GetVersion().User() == 12 && hdr.GetVersion().User2() >= 120)
+		if (hdr.GetVersion().User() == 12 && hdr.GetVersion().Stream() >= 120)
 			destAlphaProp->SetName(srcAlphaProp->GetName());
 		else
 			destAlphaProp->ClearName();
@@ -1070,7 +1070,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	// Skinning
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
-		if (destGeom->HasType<NiTriBasedGeom>() || (destGeom->HasType<BSTriShape>() && hdr.GetVersion().User2() == 100)) {
+		if (destGeom->HasType<NiTriBasedGeom>() || (destGeom->HasType<BSTriShape>() && hdr.GetVersion().Stream() == 100)) {
 			auto srcSkinInst = srcNif.hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcSkinInst) {
 				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
@@ -1206,7 +1206,7 @@ void NifFile::Optimize() {
 
 OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	OptResultSSE result;
-	if (!(hdr.GetVersion().User() == 12 && hdr.GetVersion().User2() == 83)) {
+	if (!(hdr.GetVersion().User() == 12 && hdr.GetVersion().Stream() == 83)) {
 		result.versionMismatch = true;
 		return result;
 	}
@@ -1217,7 +1217,10 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	if (!isBTO && !isBTR)
 		result.dupesRenamed = RenameDuplicateShapes();
 
-	hdr.GetVersion().Set(20, 2, 0, 7, 12, 100);
+	NiVersion& version = hdr.GetVersion();
+	version.SetFile(V20_2_0_7);
+	version.SetUser(12);
+	version.SetStream(100);
 
 	for (auto &shape : GetShapes()) {
 		NiNode* parentNode = GetParentNode(shape);
@@ -1494,7 +1497,7 @@ void NifFile::PrepareData() {
 
 	for (auto &shape : GetShapes()) {
 		// Move triangle and vertex data from partition to shape
-		if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().User2() == 100) {
+		if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().Stream() == 100) {
 			BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 			if (!bsTriShape)
 				continue;
@@ -1544,7 +1547,7 @@ void NifFile::FinalizeData() {
 
 			bsTriShape->CalcDataSizes(hdr.GetVersion());
 
-			if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().User2() == 100) {
+			if (hdr.GetVersion().User() >= 12 && hdr.GetVersion().Stream() == 100) {
 				// Move triangle and vertex data from shape to partition
 				auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
 				if (skinInst) {
@@ -2534,7 +2537,7 @@ void NifFile::CalcNormalsForShape(const std::string& shapeName, const bool smoot
 	if (!shape)
 		return;
 
-	if (hdr.GetVersion().User() == 12 && hdr.GetVersion().User2() <= 100) {
+	if (hdr.GetVersion().User() == 12 && hdr.GetVersion().Stream() <= 100) {
 		NiShader* shader = GetShader(shape);
 		if (shader && shader->IsSkinTint())
 			return;
@@ -3606,7 +3609,7 @@ void NifFile::CreateSkinning(NiShape* shape) {
 	else if (shape->HasType<BSTriShape>()) {
 		if (shape->GetSkinInstanceRef() == 0xFFFFFFFF) {
 			int skinInstID;
-			if (hdr.GetVersion().User2() == 100) {
+			if (hdr.GetVersion().Stream() == 100) {
 				auto nifSkinData = new NiSkinData();
 				int skinDataID = hdr.AddBlock(nifSkinData);
 

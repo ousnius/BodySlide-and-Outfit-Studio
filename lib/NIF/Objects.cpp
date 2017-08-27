@@ -72,7 +72,7 @@ void NiAVObject::Get(NiStream& stream) {
 	NiObjectNET::Get(stream);
 
 	flags = 0;
-	if (stream.GetVersion().User2() <= 26)
+	if (stream.GetVersion().Stream() <= 26)
 		stream.read((char*)&flags, 2);
 	else
 		stream >> flags;
@@ -93,7 +93,7 @@ void NiAVObject::Get(NiStream& stream) {
 void NiAVObject::Put(NiStream& stream) {
 	NiObjectNET::Put(stream);
 
-	if (stream.GetVersion().User2() <= 26)
+	if (stream.GetVersion().Stream() <= 26)
 		stream.write((char*)&flags, 2);
 	else
 		stream << flags;
@@ -421,7 +421,7 @@ void NiSourceTexture::SetDataRef(int datRef) {
 void NiDynamicEffect::Get(NiStream& stream) {
 	NiAVObject::Get(stream);
 
-	if (stream.GetVersion().User2() < 130) {
+	if (stream.GetVersion().Stream() < 130) {
 		stream >> switchState;
 		affectedNodes.Get(stream);
 	}
@@ -430,7 +430,7 @@ void NiDynamicEffect::Get(NiStream& stream) {
 void NiDynamicEffect::Put(NiStream& stream) {
 	NiAVObject::Put(stream);
 
-	if (stream.GetVersion().User2() < 130) {
+	if (stream.GetVersion().Stream() < 130) {
 		stream << switchState;
 		affectedNodes.Put(stream);
 	}

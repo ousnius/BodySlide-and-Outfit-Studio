@@ -11,7 +11,7 @@ void NiNode::Get(NiStream& stream) {
 
 	childRefs.Get(stream);
 
-	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130)
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().Stream() < 130)
 		effectRefs.Get(stream);
 }
 
@@ -20,7 +20,7 @@ void NiNode::Put(NiStream& stream) {
 
 	childRefs.Put(stream);
 
-	if (stream.GetVersion().User() <= 12 && stream.GetVersion().User2() < 130)
+	if (stream.GetVersion().User() <= 12 && stream.GetVersion().Stream() < 130)
 		effectRefs.Put(stream);
 }
 

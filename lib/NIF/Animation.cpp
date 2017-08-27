@@ -274,27 +274,6 @@ void NiUVController::GetChildRefs(std::set<Ref*>& refs) {
 }
 
 
-void BSRefractionFirePeriodController::Get(NiStream& stream) {
-	NiTimeController::Get(stream);
-
-	if (stream.GetVersion().File() >= NiVersion::Get(20, 2, 0, 7))
-		interpRef.Get(stream);
-}
-
-void BSRefractionFirePeriodController::Put(NiStream& stream) {
-	NiTimeController::Put(stream);
-
-	if (stream.GetVersion().File() >= NiVersion::Get(20, 2, 0, 7))
-		interpRef.Put(stream);
-}
-
-void BSRefractionFirePeriodController::GetChildRefs(std::set<Ref*>& refs) {
-	NiTimeController::GetChildRefs(refs);
-
-	refs.insert(&interpRef);
-}
-
-
 void BSFrustumFOVController::Get(NiStream& stream) {
 	NiTimeController::Get(stream);
 
@@ -507,13 +486,15 @@ void NiGeomMorpherController::GetChildRefs(std::set<Ref*>& refs) {
 void NiSingleInterpController::Get(NiStream& stream) {
 	NiInterpController::Get(stream);
 
-	interpolatorRef.Get(stream);
+	if (stream.GetVersion().File() >= V10_1_0_104)
+		interpolatorRef.Get(stream);
 }
 
 void NiSingleInterpController::Put(NiStream& stream) {
 	NiInterpController::Put(stream);
 
-	interpolatorRef.Put(stream);
+	if (stream.GetVersion().File() >= V10_1_0_104)
+		interpolatorRef.Put(stream);
 }
 
 void NiSingleInterpController::GetChildRefs(std::set<Ref*>& refs) {
@@ -1304,9 +1285,9 @@ void NiControllerSequence::Get(NiStream& stream) {
 	managerRef.Get(stream);
 	accumRootName.Get(stream);
 
-	if (stream.GetVersion().User2() >= 24 && stream.GetVersion().User2() <= 28)
+	if (stream.GetVersion().Stream() >= 24 && stream.GetVersion().Stream() <= 28)
 		animNotesRef.Get(stream);
-	else if (stream.GetVersion().User2() > 28)
+	else if (stream.GetVersion().Stream() > 28)
 		animNotesRefs.Get(stream);
 }
 
@@ -1322,9 +1303,9 @@ void NiControllerSequence::Put(NiStream& stream) {
 	managerRef.Put(stream);
 	accumRootName.Put(stream);
 
-	if (stream.GetVersion().User2() >= 24 && stream.GetVersion().User2() <= 28)
+	if (stream.GetVersion().Stream() >= 24 && stream.GetVersion().Stream() <= 28)
 		animNotesRef.Put(stream);
-	else if (stream.GetVersion().User2() > 28)
+	else if (stream.GetVersion().Stream() > 28)
 		animNotesRefs.Put(stream);
 }
 
