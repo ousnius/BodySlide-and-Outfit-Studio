@@ -8,7 +8,6 @@ See the included LICENSE file
 
 #include "../NIF/NifFile.h"
 #include "../NIF/utils/KDMatcher.h"
-#include "../files/ObjFile.h"
 #include "Mesh.h"
 #include "SliderSet.h"
 

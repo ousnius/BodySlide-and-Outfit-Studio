@@ -5,6 +5,7 @@ See the included LICENSE file
 */
 
 #include "OutfitProject.h"
+#include "../files/ObjFile.h"
 #include "../files/TriFile.h"
 #include "../files/FBXWrangler.h"
 #include "../program/FBXImportDialog.h"
