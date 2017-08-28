@@ -834,22 +834,20 @@ bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, const std::s
 	ObjFile obj;
 	obj.LoadForNif(fileName);
 
-	std::vector<std::string> groupNames;
-	obj.GetGroupList(groupNames);
+	// File needs at least one group
+	std::vector<std::string> groupNames = obj.GetGroupList();
+	if (groupNames.empty())
+		return false;
 
-	int i = 0;
-	int index = 0;
-	for (auto &n : groupNames) {
-		if (n == shapeName) {
-			index = i;
-			break;
-		}
-		i++;
-	}
+	// Use first shape or shape with matching name
+	std::string sourceShape = groupNames.front();
+	if (std::find(groupNames.begin(), groupNames.end(), shapeName) != groupNames.end())
+		sourceShape = shapeName;
 
 	std::vector<Vector3> objVerts;
 	std::vector<Vector2> objUVs;
-	obj.CopyDataForIndex(index, &objVerts, nullptr, &objUVs);
+	if (!obj.CopyDataForGroup(sourceShape, &objVerts, nullptr, &objUVs))
+		return false;
 
 	std::unordered_map<ushort, Vector3> diff;
 	if (activeSet[sliderName].bUV) {
@@ -2139,13 +2137,13 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		wxMessageBox(wxString::Format(_("Could not load OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
 		return 1;
 	}
-	std::vector<std::string> objGroupNames;
-	obj.GetGroupList(objGroupNames);
-	for (int i = 0; i < objGroupNames.size(); i++) {
+
+	std::vector<std::string> groupNames = obj.GetGroupList();
+	for (const auto& group : groupNames) {
 		std::vector<Vector3> v;
 		std::vector<Triangle> t;
 		std::vector<Vector2> uv;
-		if (!obj.CopyDataForIndex(i, &v, &t, &uv)) {
+		if (!obj.CopyDataForGroup(group, &v, &t, &uv)) {
 			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
 			wxMessageBox(wxString::Format(_("Could not copy data from OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
 			return 3;
@@ -2155,7 +2153,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		if (v.size() == 0)
 			continue;
 
-		std::string useShapeName = objGroupNames[i];
+		std::string useShapeName = group;
 
 		if (!mergeShape.empty()) {
 			std::vector<Vector3> shapeVerts;

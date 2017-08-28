@@ -9,7 +9,6 @@ See the included LICENSE file
 #include "../NIF/utils/Object3d.h"
 
 #include <map>
-#include <unordered_map>
 #include <fstream>
 #include <string>
 
@@ -27,7 +26,6 @@ struct ObjData {
 };
 
 class ObjFile {
-	std::vector<std::string> objGroups;
 	std::map<std::string, ObjData*> data;
 
 public:
@@ -49,7 +47,5 @@ public:
 	int Save(const std::string& fileName);
 
 	bool CopyDataForGroup(const std::string& name, std::vector<Vector3>* v, std::vector<Triangle>* t, std::vector<Vector2>* uv);
-	bool CopyDataForIndex(int index, std::vector<Vector3>* v, std::vector<Triangle>* t, std::vector<Vector2>* uv);
-
-	void GetGroupList(std::vector<std::string>& outNames);
+	std::vector<std::string> GetGroupList();
 };

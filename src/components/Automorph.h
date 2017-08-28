@@ -57,13 +57,11 @@ public:
 	void ApplyResultToUVs(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector2>* inOutResult, float strength = 1.0f);
 
 	void SourceShapesFromNif(NifFile& baseNif);
-	void SourceShapesFromObj(ObjFile& baseObj);
 	void LinkSourceShapeMesh(mesh* m, const std::string& shapeName);
 	void UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName);
 	void CopyMeshMask(mesh*m, const std::string& shapeName);
 
 	void MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shapeName);
-	void MeshFromObjShape(mesh* m, ObjFile& ref, const std::string& shapeName);
 	void DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices);
 
 	void ClearProximityCache();

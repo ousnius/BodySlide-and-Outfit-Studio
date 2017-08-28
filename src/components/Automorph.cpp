@@ -117,17 +117,6 @@ void Automorph::SourceShapesFromNif(NifFile &baseNif) {
 	}
 }
 
-void Automorph::SourceShapesFromObj(ObjFile &baseObj) {
-	ClearSourceShapes();
-	std::vector<std::string> shapes;
-	baseObj.GetGroupList(shapes);
-	for (int i = 0; i < shapes.size(); i++) {
-		mesh* m = new mesh();
-		MeshFromObjShape(m, baseObj, shapes[i]);
-		sourceShapes[shapes[i]] = m;
-	}
-}
-
 void Automorph::UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName) {
 	if (sourceShapes.find(shapeName) == sourceShapes.end())
 		return;
@@ -162,33 +151,6 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 void Automorph::LinkSourceShapeMesh(mesh* m, const std::string& shapeName) {
 	sourceShapes[shapeName] = m;
 	foreignShapes[shapeName] = m;
-}
-
-void Automorph::MeshFromObjShape(mesh* m, ObjFile& ref, const std::string& shapeName) {
-	m->shapeName = shapeName;
-	std::vector<Vector3> objVerts;
-	std::vector<Triangle> objTris;
-	ref.CopyDataForGroup(shapeName, &objVerts, &objTris, nullptr);
-
-	//float c = 0.4f + (meshes.size() * 0.3f);
-	//m->color = Vector3(c, c, c);
-
-	m->nVerts = objVerts.size();
-	m->verts = std::make_unique<Vector3[]>(m->nVerts);
-
-	m->nTris = objTris.size();
-	m->tris = std::make_unique<Triangle[]>(m->nTris);
-
-	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
-	for (int i = 0; i < m->nVerts; i++)
-		m->verts[i] = objVerts[i];
-
-	// Load triangles
-	for (int j = 0; j < m->nTris; j++) {
-		m->tris[j].p1 = objTris[j].p1;
-		m->tris[j].p2 = objTris[j].p2;
-		m->tris[j].p3 = objTris[j].p3;
-	}
 }
 
 void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shapeName) {

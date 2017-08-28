@@ -86,7 +86,6 @@ int ObjFile::LoadForNif(std::fstream& base) {
 			}
 
 			di->name = curgrp;
-			objGroups.push_back(curgrp);
 		}
 		else if (dump.compare("vt") == 0) {
 			base >> uv.u >> uv.v;
@@ -176,10 +175,8 @@ int ObjFile::LoadForNif(std::fstream& base) {
 		}
 	}
 
-	if (di->name.empty()) {
+	if (di->name.empty())
 		di->name = "object";
-		objGroups.push_back(di->name);
-	}
 
 	data[di->name] = di;
 	return 0;
@@ -251,32 +248,30 @@ bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v,
 			(*v)[i].z = (od->verts[i].z + offset.z) * scale.z;
 		}
 	}
+
 	if (t) {
 		t->clear();
 		t->resize(od->tris.size());
-		for (int i = 0; i < od->tris.size(); i++) {
+		for (int i = 0; i < od->tris.size(); i++)
 			(*t)[i] = od->tris[i];
-		}
 	}
+
 	if (uv) {
 		uv->clear();
 		uv->resize(od->uvs.size());
-		for (int i = 0; i < od->uvs.size(); i++) {
+		for (int i = 0; i < od->uvs.size(); i++)
 			(*uv)[i] = od->uvs[i];
-		}
 	}
+
 	return true;
 }
 
-bool ObjFile::CopyDataForIndex(int index, std::vector<Vector3> *v, std::vector<Triangle> *t, std::vector<Vector2> *uv) {
-	if (objGroups.size() > index)
-		return CopyDataForGroup(objGroups[index], v, t, uv);
-	else
-		return false;
-}
+std::vector<std::string> ObjFile::GetGroupList() {
+	std::vector<std::string> groupList;
+	groupList.reserve(data.size());
 
-void ObjFile::GetGroupList(std::vector<std::string> &shapeNames) {
-	shapeNames.clear();
-	for (int i = 0; i < objGroups.size(); i++)
-		shapeNames.push_back(objGroups[i]);
+	for (const auto& group : data)
+		groupList.push_back(group.first);
+
+	return groupList;
 }
