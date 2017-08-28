@@ -2041,6 +2041,14 @@ void OutfitStudio::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 			continue;
 		project->DeleteSlider(s);
 	}
+
+	glView->SetStrokeManager(nullptr);
+	glView->GetStrokeManager()->Clear();
+
+	activeSlider.clear();
+	bEditSlider = false;
+	MenuExitSliderEdit();
+
 	CreateSetSliders();
 }
 
