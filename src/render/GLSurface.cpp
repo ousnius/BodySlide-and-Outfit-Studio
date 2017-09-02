@@ -23,12 +23,21 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static wxGLAttributes attribs;
 
 	if (!attribsInitialized) {
-		// 8x AA
-		attribs.PlatformDefaults().RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(8).EndList();
+		// 16x AA
+		attribs.PlatformDefaults().RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(16).EndList();
 
 		bool displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		if (!displaySupported) {
-			wxLogWarning("OpenGL attributes not supported. Trying out different ones...");
+			wxLogWarning("OpenGL attributes with 16x AA not supported. Trying out different ones...");
+			attribs.Reset();
+
+			// 8x AA
+			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(8).EndList();
+			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
+		}
+
+		if (!displaySupported) {
+			wxLogWarning("OpenGL attributes with 8x AA not supported. Trying out different ones...");
 			attribs.Reset();
 
 			// 4x AA
@@ -37,7 +46,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 		}
 
 		if (!displaySupported) {
-			wxLogWarning("OpenGL attributes not supported. Trying out different ones...");
+			wxLogWarning("OpenGL attributes with 4x AA not supported. Trying out different ones...");
 			attribs.Reset();
 
 			// No AA
