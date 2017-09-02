@@ -241,7 +241,7 @@ void main(void)
 			
 			if (bShowSegments)
 			{
-				if (segmentColor.rgb != vec3(0.0, 0.0, 0.0) &&
+				if (segmentColor.r != 0.0 && segmentColor.g != 0.0 && segmentColor.b != 0.0 &&
 					segmentColor.rg != normalize(segmentColor.rg) &&
 					segmentColor.rb != normalize(segmentColor.rb) &&
 					segmentColor.gb != normalize(segmentColor.gb))
