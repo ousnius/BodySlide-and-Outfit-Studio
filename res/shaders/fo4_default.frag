@@ -64,6 +64,9 @@ in DirectionalLight lightDirectional1;
 in DirectionalLight lightDirectional2;
 
 in vec3 viewDir;
+in vec3 t;
+in vec3 b;
+in vec3 n;
 
 in float maskFactor;
 in vec4 weightColor;
@@ -239,8 +242,11 @@ void directionalLight(in DirectionalLight light, in bool useForBacklight, inout 
 	// Environment
 	if (bCubemap && bShowTexture)
 	{
-		vec3 reflected = mat3(matModelView) * reflect(viewDir, normal);
-		vec4 cube = textureLod(texCubemap, reflected, 8.0 - smoothness * 8.0);
+		vec3 reflected = reflect(viewDir, normal);
+		vec3 reflectedVS = t * reflected.x + b * reflected.y + n * reflected.z;
+		vec3 reflectedWS = mat3(matModelView) * reflectedVS;
+		
+		vec4 cube = textureLod(texCubemap, reflectedWS, 8.0 - smoothness * 8.0);
 		cube.rgb *= prop.envReflection * prop.specularStrength;
 		if (bEnvMask)
 		{

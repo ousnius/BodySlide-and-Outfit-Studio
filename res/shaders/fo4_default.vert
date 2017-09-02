@@ -43,6 +43,9 @@ out DirectionalLight lightDirectional1;
 out DirectionalLight lightDirectional2;
 
 out vec3 viewDir;
+out vec3 t;
+out vec3 b;
+out vec3 n;
 
 out float maskFactor;
 out vec4 weightColor;
@@ -106,22 +109,26 @@ void main(void)
 	// Eye-coordinate position of vertex
 	vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
 	gl_Position = matProjection * vec4(vPos, 1.0);
+	
+	t = vertexTangent;
+	b = vertexBitangent;
+	n = vertexNormal;
 
 	mat3 normalMatrix = transpose(inverse(mat3(matModelView)));
-	vec3 normal = normalize(normalMatrix * vertexNormal);
-	vec3 tangent = normalize(normalMatrix * vertexTangent);
-	vec3 bitangent = normalize(normalMatrix * vertexBitangent);
+	vec3 n_normal = normalize(normalMatrix * n);
+	vec3 n_tangent = normalize(normalMatrix * t);
+	vec3 n_bitangent = normalize(normalMatrix * b);
 	
-	mat3 tbn = mat3(tangent.x, bitangent.x, normal.x,
-                    tangent.y, bitangent.y, normal.y,
-                    tangent.z, bitangent.z, normal.z);
+	mat3 tbn = mat3(n_tangent.x, n_bitangent.x, n_normal.x,
+                    n_tangent.y, n_bitangent.y, n_normal.y,
+                    n_tangent.z, n_bitangent.z, n_normal.z);
 			   
 	viewDir = normalize(tbn * -vPos);
 	lightFrontal.direction = normalize(tbn * lightFrontal.direction);
 	
-	mat3 tbnDir = mat3(vertexTangent.x, vertexBitangent.x, vertexNormal.x,
-                       vertexTangent.y, vertexBitangent.y, vertexNormal.y,
-                       vertexTangent.z, vertexBitangent.z, vertexNormal.z);
+	mat3 tbnDir = mat3(t.x, b.x, n.x,
+                       t.y, b.y, n.y,
+                       t.z, b.z, n.z);
 					
 	lightDirectional0.direction = normalize(tbnDir * lightDirectional0.direction);
 	lightDirectional1.direction = normalize(tbnDir * lightDirectional1.direction);

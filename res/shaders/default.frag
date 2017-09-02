@@ -64,6 +64,9 @@ in DirectionalLight lightDirectional1;
 in DirectionalLight lightDirectional2;
 
 in vec3 viewDir;
+in vec3 t;
+in vec3 b;
+in vec3 n;
 
 in float maskFactor;
 in vec4 weightColor;
@@ -177,6 +180,12 @@ void main(void)
 				normal = normalize(vec3(0.0, 0.0, 0.5));
 				specFactor = 0.0;
 				
+				if (bModelSpace)
+				{
+					// Vertex normal for shading with disabled maps
+					normal = mat3(matModelView) * n;
+				}
+				
 				if (bShowTexture)
 				{
 					if (bNormalMap)
@@ -213,9 +222,11 @@ void main(void)
 				
 				if (bCubemap && bShowTexture)
 				{
-					vec3 reflected = mat3(matModelView) * reflect(-viewDir, normal);
+					vec3 reflected = reflect(-viewDir, normal);
+					vec3 reflectedVS = b * reflected.x + t * reflected.y + n * reflected.z;
+					vec3 reflectedWS = mat3(matModelView) * reflectedVS;
 					
-					vec4 cubeMap = texture(texCubemap, reflected);
+					vec4 cubeMap = texture(texCubemap, reflectedWS);
 					cubeMap.rgb *= prop.envReflection;
 					
 					if (bEnvMask)
