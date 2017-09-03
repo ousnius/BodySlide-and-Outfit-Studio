@@ -364,7 +364,7 @@ bool BSShaderProperty::HasGreyscaleColor() {
 }
 
 bool BSShaderProperty::HasEnvironmentMapping() {
-	return (shaderFlags1 & (1 << 6)) != 0;
+	return (shaderFlags1 & (1 << 7)) != 0;
 }
 
 float BSShaderProperty::GetEnvironmentMapScale() {

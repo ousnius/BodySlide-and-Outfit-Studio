@@ -38,10 +38,10 @@ uniform DirectionalLight directional0;
 uniform DirectionalLight directional1;
 uniform DirectionalLight directional2;
 
-out DirectionalLight lightFrontal;
-out DirectionalLight lightDirectional0;
-out DirectionalLight lightDirectional1;
-out DirectionalLight lightDirectional2;
+out vec3 lightFrontal;
+out vec3 lightDirectional0;
+out vec3 lightDirectional1;
+out vec3 lightDirectional2;
 
 out vec3 viewDir;
 out vec3 t;
@@ -52,9 +52,8 @@ out float maskFactor;
 out vec4 weightColor;
 out vec4 segmentColor;
 
-out vec3 vPos;
-smooth out vec4 vColor;
-smooth out vec2 vUV;
+out vec4 vColor;
+out vec2 vUV;
 
 vec4 colorRamp(in float value)
 {
@@ -102,13 +101,9 @@ void main(void)
 	segmentColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vUV = vertexUV;
-	lightFrontal = frontal;
-	lightDirectional0 = directional0;
-	lightDirectional1 = directional1;
-	lightDirectional2 = directional2;
 	
 	// Eye-coordinate position of vertex
-	vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
+	vec3 vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
 	gl_Position = matProjection * vec4(vPos, 1.0);
 	
 	t = vertexTangent;
@@ -131,17 +126,17 @@ void main(void)
                            b.z, t.z, n.z);
 						   
 		viewDir = normalize(tbn * -vPos);
-		lightFrontal.direction = normalize(tbn * lightFrontal.direction);
-		lightDirectional0.direction = normalize(tbnDir * lightDirectional0.direction);
-		lightDirectional1.direction = normalize(tbnDir * lightDirectional1.direction);
-		lightDirectional2.direction = normalize(tbnDir * lightDirectional2.direction);
+		lightFrontal = normalize(tbn * frontal.direction);
+		lightDirectional0 = normalize(tbnDir * directional0.direction);
+		lightDirectional1 = normalize(tbnDir * directional1.direction);
+		lightDirectional2 = normalize(tbnDir * directional2.direction);
 	}
 	else
 	{
 		viewDir = normalize(-vPos);
-		lightDirectional0.direction = normalize(mat3(matModelView) * lightDirectional0.direction);
-		lightDirectional1.direction = normalize(mat3(matModelView) * lightDirectional1.direction);
-		lightDirectional2.direction = normalize(mat3(matModelView) * lightDirectional2.direction);
+		lightDirectional0 = normalize(mat3(matModelView) * directional0.direction);
+		lightDirectional1 = normalize(mat3(matModelView) * directional1.direction);
+		lightDirectional2 = normalize(mat3(matModelView) * directional2.direction);
 	}
 
 	if (!bPoints)

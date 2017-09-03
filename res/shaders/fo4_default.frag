@@ -65,10 +65,15 @@ struct DirectionalLight
 	vec3 direction;
 };
 
-in DirectionalLight lightFrontal;
-in DirectionalLight lightDirectional0;
-in DirectionalLight lightDirectional1;
-in DirectionalLight lightDirectional2;
+uniform DirectionalLight frontal;
+uniform DirectionalLight directional0;
+uniform DirectionalLight directional1;
+uniform DirectionalLight directional2;
+
+in vec3 lightFrontal;
+in vec3 lightDirectional0;
+in vec3 lightDirectional1;
+in vec3 lightDirectional2;
 
 in vec3 viewDir;
 in vec3 t;
@@ -76,12 +81,11 @@ in vec3 b;
 in vec3 n;
 
 in float maskFactor;
-in vec4 weightColor;
-in vec4 segmentColor;
+in vec3 weightColor;
+in vec3 segmentColor;
 
-in vec3 vPos;
-smooth in vec4 vColor;
-smooth in vec2 vUV;
+in vec4 vColor;
+in vec2 vUV;
 
 out vec4 fragColor;
 
@@ -219,14 +223,14 @@ vec3 tonemap(in vec3 x)
 	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
-void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout vec3 outSpec)
+void directionalLight(in DirectionalLight light, in vec3 lightDir, inout vec3 outDiffuse, inout vec3 outSpec)
 {
-	vec3 half = normalize(light.direction + viewDir);
-	float NdotL = dot(normal, light.direction);
+	vec3 halfDir = normalize(lightDir + viewDir);
+	float NdotL = dot(normal, lightDir);
 	float NdotL0 = max(NdotL, FLT_EPSILON);
-	float NdotH = max(dot(normal, half), FLT_EPSILON);
+	float NdotH = max(dot(normal, halfDir), FLT_EPSILON);
 	float NdotV = max(dot(normal, viewDir), FLT_EPSILON);
-	float VdotH = max(dot(viewDir, half), FLT_EPSILON);
+	float VdotH = max(dot(viewDir, halfDir), FLT_EPSILON);
 
 	// Temporary diffuse
 	vec3 diff = ambient + NdotL0 * light.diffuse;
@@ -271,7 +275,7 @@ void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout ve
 	// Back lighting not really useful for the current light setup of multiple directional lights
 	//if (bBacklight)
 	//{
-	//	float NdotNegL = max(dot(normal, -light.direction), FLT_EPSILON);
+	//	float NdotNegL = max(dot(normal, -lightDir), FLT_EPSILON);
 	//	vec3 backlight = albedo * NdotNegL * clamp(prop.backlightPower, 0.0, 1.0);
 	//	emissive += backlight * light.diffuse;
 	//}
@@ -280,12 +284,12 @@ void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout ve
 	//if (bRimlight)
 	//{
 	//	vec3 rim = vec3(pow((1.0 - NdotV), prop.rimlightPower));
-	//	rim *= smoothstep(-0.2, 1.0, dot(-light.direction, viewDir));
+	//	rim *= smoothstep(-0.2, 1.0, dot(-lightDir, viewDir));
 	//	emissive += rim * light.diffuse * specMask;
 	//}
 	
 	// Diffuse
-	diff = vec3(OrenNayarFull(light.direction, viewDir, normal, roughness, NdotL0));
+	diff = vec3(OrenNayarFull(lightDir, viewDir, normal, roughness, NdotL0));
 	outDiffuse += diff * light.diffuse;
 	
 	// Soft Lighting
@@ -385,10 +389,10 @@ void main(void)
 					}
 				}
 				
-				directionalLight(lightFrontal, outDiffuse, outSpecular);
-				directionalLight(lightDirectional0, outDiffuse, outSpecular);
-				directionalLight(lightDirectional1, outDiffuse, outSpecular);
-				directionalLight(lightDirectional2, outDiffuse, outSpecular);
+				directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
+				directionalLight(directional0, lightDirectional0, outDiffuse, outSpecular);
+				directionalLight(directional1, lightDirectional1, outDiffuse, outSpecular);
+				directionalLight(directional2, lightDirectional2, outDiffuse, outSpecular);
 				
 				// Emissive
 				if (bEmissive)
@@ -416,11 +420,11 @@ void main(void)
 					segmentColor.rb != normalize(segmentColor.rb) &&
 					segmentColor.gb != normalize(segmentColor.gb))
 				{
-					color *= weightColor;
+					color.rgb *= weightColor;
 				}
 				else
 				{
-					color *= segmentColor;
+					color.rgb *= segmentColor;
 				}
 			}
 			else
@@ -432,7 +436,7 @@ void main(void)
 				
 				if (bShowWeight)
 				{
-					color *= weightColor;
+					color.rgb *= weightColor;
 				}
 			}
 		}

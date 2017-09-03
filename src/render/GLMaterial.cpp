@@ -126,8 +126,9 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 				if (texCache[id] != 0) {
 					shader.BindCubemap(id, texCache[id], "texCubemap");
 					if (largestAF) glTexParameterf(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
-					shader.SetCubemapEnabled(true);
 				}
+				else
+					shader.SetCubemapEnabled(false);
 			}
 			break;
 

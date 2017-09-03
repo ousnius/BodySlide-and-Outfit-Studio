@@ -37,10 +37,10 @@ uniform DirectionalLight directional0;
 uniform DirectionalLight directional1;
 uniform DirectionalLight directional2;
 
-out DirectionalLight lightFrontal;
-out DirectionalLight lightDirectional0;
-out DirectionalLight lightDirectional1;
-out DirectionalLight lightDirectional2;
+out vec3 lightFrontal;
+out vec3 lightDirectional0;
+out vec3 lightDirectional1;
+out vec3 lightDirectional2;
 
 out vec3 viewDir;
 out vec3 t;
@@ -48,14 +48,13 @@ out vec3 b;
 out vec3 n;
 
 out float maskFactor;
-out vec4 weightColor;
-out vec4 segmentColor;
+out vec3 weightColor;
+out vec3 segmentColor;
 
-out vec3 vPos;
-smooth out vec4 vColor;
-smooth out vec2 vUV;
+out vec4 vColor;
+out vec2 vUV;
 
-vec4 colorRamp(in float value)
+vec3 colorRamp(in float value)
 {
 	float r;
 	float g;
@@ -90,24 +89,20 @@ vec4 colorRamp(in float value)
 		b = 0.0;
 	}
 
-	return vec4(r, g, b, 1.0);
+	return vec3(r, g, b);
 }
 
 void main(void)
 {
 	// Initialization
 	maskFactor = 1.0;
-	weightColor = vec4(1.0, 1.0, 1.0, 1.0);
-	segmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+	weightColor = vec3(1.0, 1.0, 1.0);
+	segmentColor = vec3(1.0, 1.0, 1.0);
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vUV = vertexUV;
-	lightFrontal = frontal;
-	lightDirectional0 = directional0;
-	lightDirectional1 = directional1;
-	lightDirectional2 = directional2;
 	
 	// Eye-coordinate position of vertex
-	vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
+	vec3 vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
 	gl_Position = matProjection * vec4(vPos, 1.0);
 	
 	t = vertexTangent;
@@ -124,15 +119,15 @@ void main(void)
                     n_tangent.z, n_bitangent.z, n_normal.z);
 			   
 	viewDir = normalize(tbn * -vPos);
-	lightFrontal.direction = normalize(tbn * lightFrontal.direction);
+	lightFrontal = normalize(tbn * frontal.direction);
 	
 	mat3 tbnDir = mat3(t.x, b.x, n.x,
                        t.y, b.y, n.y,
                        t.z, b.z, n.z);
 					
-	lightDirectional0.direction = normalize(tbnDir * lightDirectional0.direction);
-	lightDirectional1.direction = normalize(tbnDir * lightDirectional1.direction);
-	lightDirectional2.direction = normalize(tbnDir * lightDirectional2.direction);
+	lightDirectional0 = normalize(tbnDir * directional0.direction);
+	lightDirectional1 = normalize(tbnDir * directional1.direction);
+	lightDirectional2 = normalize(tbnDir * directional2.direction);
 
 	if (!bPoints)
 	{

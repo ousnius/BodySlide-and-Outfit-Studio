@@ -62,10 +62,15 @@ struct DirectionalLight
 	vec3 direction;
 };
 
-in DirectionalLight lightFrontal;
-in DirectionalLight lightDirectional0;
-in DirectionalLight lightDirectional1;
-in DirectionalLight lightDirectional2;
+uniform DirectionalLight frontal;
+uniform DirectionalLight directional0;
+uniform DirectionalLight directional1;
+uniform DirectionalLight directional2;
+
+in vec3 lightFrontal;
+in vec3 lightDirectional0;
+in vec3 lightDirectional1;
+in vec3 lightDirectional2;
 
 in vec3 viewDir;
 in vec3 t;
@@ -76,9 +81,8 @@ in float maskFactor;
 in vec4 weightColor;
 in vec4 segmentColor;
 
-in vec3 vPos;
-smooth in vec4 vColor;
-smooth in vec2 vUV;
+in vec4 vColor;
+in vec2 vUV;
 
 out vec4 fragColor;
 
@@ -107,11 +111,11 @@ vec3 tonemap(in vec3 x)
 	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
-void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout vec3 outSpec)
+void directionalLight(in DirectionalLight light, in vec3 lightDir, inout vec3 outDiffuse, inout vec3 outSpec)
 {
-	vec3 half = normalize(light.direction + viewDir);
-	float NdotL = max(dot(normal, light.direction), 0.0);
-	float NdotH = max(dot(normal, half), 0.0);
+	vec3 halfDir = normalize(lightDir + viewDir);
+	float NdotL = max(dot(normal, lightDir), 0.0);
+	float NdotH = max(dot(normal, halfDir), 0.0);
 	float NdotV = max(dot(normal, viewDir), 0.0);
 	
 	outDiffuse += ambient + NdotL * light.diffuse;
@@ -120,7 +124,7 @@ void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout ve
 	// Back lighting not really useful for the current light setup of multiple directional lights
 	//if (bBacklight && bShowTexture)
 	//{
-	//	float NdotNegL = max(dot(normal, -light.direction), 0.0);
+	//	float NdotNegL = max(dot(normal, -lightDir), 0.0);
 	//	vec3 backlight = backlightMap.rgb * NdotNegL * light.diffuse;
 	//	emissive += backlight;
 	//}
@@ -135,14 +139,14 @@ void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout ve
 	//if (bRimlight)
 	//{
 	//	vec3 rim = lightMask * pow(vec3(1.0 - NdotV), vec3(prop.rimlightPower));
-	//	rim *= smoothstep(-0.2, 1.0, dot(-light.direction, viewDir));
+	//	rim *= smoothstep(-0.2, 1.0, dot(-lightDir, viewDir));
 	//	emissive += rim * light.diffuse;
 	//}
 	
 	// Soft Lighting
 	if (bSoftlight)
 	{
-		float wrap = (dot(normal, light.direction) + prop.softlighting) / (1.0 + prop.softlighting);
+		float wrap = (dot(normal, lightDir) + prop.softlighting) / (1.0 + prop.softlighting);
 		vec3 soft = max(wrap, 0.0) * lightMask * smoothstep(1.0, 0.0, NdotL);
 		soft *= sqrt(clamp(prop.softlighting, 0.0, 1.0));
 		emissive += soft * light.diffuse;
@@ -243,10 +247,10 @@ void main(void)
 					}
 				}
 				
-				directionalLight(lightFrontal, outDiffuse, outSpecular);
-				directionalLight(lightDirectional0, outDiffuse, outSpecular);
-				directionalLight(lightDirectional1, outDiffuse, outSpecular);
-				directionalLight(lightDirectional2, outDiffuse, outSpecular);
+				directionalLight(frontal, lightFrontal, outDiffuse, outSpecular);
+				directionalLight(directional0, lightDirectional0, outDiffuse, outSpecular);
+				directionalLight(directional1, lightDirectional1, outDiffuse, outSpecular);
+				directionalLight(directional2, lightDirectional2, outDiffuse, outSpecular);
 				
 				if (bCubemap && bShowTexture)
 				{
