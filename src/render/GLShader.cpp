@@ -331,6 +331,12 @@ void GLShader::SetBacklightEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
+void GLShader::SetGlowmapEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bGlowmap");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
 void GLShader::BindTexture(const GLint& index, const GLuint& texture, const std::string& samplerName) {
 	GLint texLoc = glGetUniformLocation(progID, samplerName.c_str());
 	if (texLoc >= 0) {

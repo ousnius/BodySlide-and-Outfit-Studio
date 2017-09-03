@@ -194,11 +194,13 @@ void mesh::QueueUpdate(const UpdateType& type) {
 }
 
 void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
-	emissive = matFile.emitEnabled;
 	doublesided = matFile.twoSided;
 	modelSpace = matFile.modelSpaceNormals;
+	emissive = matFile.emitEnabled;
 	backlight = matFile.backLighting;
+	glowmap = matFile.glowMap;
 	greyscaleColor = matFile.grayscaleToPaletteColor;
+	cubemap = matFile.environmentMapping;
 
 	prop.alpha = matFile.alpha;
 	prop.uvOffset = matFile.uvOffset;

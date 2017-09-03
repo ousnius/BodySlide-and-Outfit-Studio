@@ -13,6 +13,7 @@ uniform samplerCube texCubemap;
 uniform sampler2D texEnvMask;
 uniform sampler2D texSpecular;
 uniform sampler2D texBacklight;
+uniform sampler2D texGlowmap;
 
 uniform bool bLightEnabled;
 uniform bool bShowTexture;
@@ -29,6 +30,7 @@ uniform bool bEnvMask;
 uniform bool bSpecular;
 uniform bool bEmissive;
 uniform bool bBacklight;
+uniform bool bGlowmap;
 
 uniform mat4 matModelView;
 
@@ -243,11 +245,17 @@ void main(void)
 					albedo += cubeMap.rgb;
 				}
 				
+				// Emissive
 				if (bEmissive)
 				{
 					emissive += prop.emissiveColor * prop.emissiveMultiple;
 					
-					// Glowmap here
+					// Glowmap
+					if (bGlowmap)
+					{
+						vec4 glowMap = texture(texGlowmap, uv);
+						emissive *= glowMap.rgb;
+					}
 				}
 				
 				color.rgb = albedo * (outDiffuse + emissive) + outSpecular;

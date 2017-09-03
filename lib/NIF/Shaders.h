@@ -21,26 +21,28 @@ enum BSShaderType : uint {
 };
 
 enum BSLightingShaderPropertyShaderType : uint {
-	Default,
-	EnvironmentMap,
-	GlowShader,
-	Heightmap,
-	FaceTint,
-	SkinTint,
-	HairTint,
-	ParallaxOccMaterial,
-	WorldMultitexture,
-	WorldMap1,
-	Unknown10,
-	MultiLayerParallax,
-	Unknown12,
-	WorldMap2,
-	SparkleSnow,
-	WorldMap3,
-	EyeEnvmap,
-	Unknown17,
-	WorldMap4,
-	WorldLODMultitexture
+	BSLSP_DEFAULT,
+	BSLSP_ENVMAP,
+	BSLSP_GLOWMAP,
+	BSLSP_PARALLAX,
+	BSLSP_FACE,
+	BSLSP_SKINTINT,
+	BSLSP_HAIRTINT,
+	BSLSP_PARALLAXOCC,
+	BSLSP_MULTITEXTURELANDSCAPE,
+	BSLSP_LODLANDSCAPE,
+	BSLSP_SNOW,
+	BSLSP_MULTILAYERPARALLAX,
+	BSLSP_TREEANIM,
+	BSLSP_LODOBJECTS,
+	BSLSP_MULTIINDEXSNOW,
+	BSLSP_LODOBJECTSHD,
+	BSLSP_EYE,
+	BSLSP_CLOUD,
+	BSLSP_LODLANDSCAPENOISE,
+	BSLSP_MULTITEXTURELANDSCAPELODBLEND,
+	BSLSP_DISMEMBERMENT,
+	BSLSP_LAST = BSLSP_DISMEMBERMENT
 };
 
 class NiProperty : public NiObjectNET {
@@ -292,6 +294,9 @@ public:
 	virtual bool IsEmissive() { return false; }
 	virtual bool HasSpecular() { return true; }
 	virtual bool HasBacklight() { return false; }
+	virtual bool HasGlowmap() { return false; }
+	virtual bool HasGreyscaleColor() { return false; }
+	virtual bool HasEnvironmentMapping() { return false; }
 	virtual uint GetShaderType() { return 0; }
 	virtual void SetShaderType(const uint) {}
 	virtual Vector2 GetUVOffset() { return Vector2(); }
@@ -310,6 +315,9 @@ public:
 	virtual float GetEmissiveMultiple() { return 0.0f; }
 	virtual void SetEmissiveMultiple(const float) {}
 	virtual float GetAlpha() { return 1.0f; }
+	virtual float GetBacklightPower() { return 0.0f; }
+	virtual float GetGrayscaleToPaletteScale() { return 1.0; }
+	virtual float GetFresnelPower() { return 5.0f; }
 	virtual std::string GetWetMaterialName() { return std::string(); }
 	virtual void SetWetMaterialName(const std::string&) {}
 };
@@ -329,7 +337,17 @@ public:
 
 	uint GetShaderType();
 	void SetShaderType(const uint type);
+	bool IsSkinTint();
+	bool IsSkinned();
+	void SetSkinned(const bool enable);
+	bool IsDoubleSided();
+	bool IsModelSpace();
+	bool IsEmissive();
 	bool HasSpecular();
+	bool HasBacklight();
+	bool HasGlowmap();
+	bool HasGreyscaleColor();
+	bool HasEnvironmentMapping();
 	float GetEnvironmentMapScale();
 	Vector2 GetUVOffset();
 	Vector2 GetUVScale();
@@ -462,12 +480,8 @@ public:
 	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
 
 	bool IsSkinTint();
-	bool IsSkinned();
-	void SetSkinned(const bool enable);
-	bool IsDoubleSided();
-	bool IsModelSpace();
-	bool IsEmissive();
-	bool HasBacklight();
+	bool HasGlowmap();
+	bool HasEnvironmentMapping();
 	uint GetShaderType();
 	void SetShaderType(const uint type);
 	Vector3 GetSpecularColor();
@@ -483,6 +497,9 @@ public:
 	float GetEmissiveMultiple();
 	void SetEmissiveMultiple(const float emissive);
 	float GetAlpha();
+	float GetBacklightPower();
+	float GetGrayscaleToPaletteScale();
+	float GetFresnelPower();
 	std::string GetWetMaterialName();
 	void SetWetMaterialName(const std::string& matName);
 };
@@ -512,13 +529,6 @@ public:
 	void Put(NiStream& stream);
 	BSEffectShaderProperty* Clone() { return new BSEffectShaderProperty(*this); }
 
-	bool IsSkinTint();
-	bool IsSkinned();
-	void SetSkinned(const bool enable);
-	bool IsDoubleSided();
-	bool IsModelSpace();
-	bool IsEmissive();
-	bool HasBacklight();
 	float GetEnvironmentMapScale();
 	Color4 GetEmissiveColor();
 	void SetEmissiveColor(const Color4& color);
@@ -537,14 +547,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSWaterShaderProperty* Clone() { return new BSWaterShaderProperty(*this); }
-
-	bool IsSkinTint();
-	bool IsSkinned();
-	void SetSkinned(const bool enable);
-	bool IsDoubleSided();
-	bool IsModelSpace();
-	bool IsEmissive();
-	bool HasBacklight();
 };
 
 class BSSkyShaderProperty : public BSShaderProperty {
@@ -559,14 +561,6 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	BSSkyShaderProperty* Clone() { return new BSSkyShaderProperty(*this); }
-
-	bool IsSkinTint();
-	bool IsSkinned();
-	void SetSkinned(const bool enable);
-	bool IsDoubleSided();
-	bool IsModelSpace();
-	bool IsEmissive();
-	bool HasBacklight();
 };
 
 class BSShaderLightingProperty : public BSShaderProperty {

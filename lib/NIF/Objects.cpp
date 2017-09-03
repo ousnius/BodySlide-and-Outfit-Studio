@@ -10,7 +10,7 @@ void NiObjectNET::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
 	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12)
-		stream >> skyrimShaderType;
+		stream >> bslspShaderType;
 
 	name.Get(stream);
 
@@ -22,7 +22,7 @@ void NiObjectNET::Put(NiStream& stream) {
 	NiObject::Put(stream);
 
 	if (bBSLightingShaderProperty && stream.GetVersion().User() >= 12)
-		stream << skyrimShaderType;
+		stream << bslspShaderType;
 
 	name.Put(stream);
 

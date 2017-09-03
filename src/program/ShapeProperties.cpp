@@ -140,7 +140,7 @@ void ShapeProperties::GetShaderType() {
 	if (shader) {
 		if (shader->HasType<BSLightingShaderProperty>()) {
 			type = shader->GetShaderType();
-			if (type > BSLightingShaderPropertyShaderType::WorldLODMultitexture)
+			if (type > BSLSP_LAST)
 				type = 0;
 
 			shaderType->Append("Default");

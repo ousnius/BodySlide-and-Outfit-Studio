@@ -90,6 +90,7 @@ public:
 	void SetEnvMaskEnabled(const bool enable);
 	void SetSpecularEnabled(const bool enable);
 	void SetBacklightEnabled(const bool enable);
+	void SetGlowmapEnabled(const bool enable);
 	void BindTexture(const GLint& index, const GLuint& texture, const std::string& samplerName);
 	void BindCubemap(const GLint& index, const GLuint& texture, const std::string& samplerName);
 

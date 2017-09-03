@@ -86,13 +86,15 @@ public:
 	std::unordered_map<int, std::vector<int>> weldVerts;		// Verts that are duplicated for UVs but are in the same position.
 
 	RenderMode rendermode = RenderMode::Normal;
+	bool doublesided = false;
 	bool modelSpace = false;
-	bool specular = true;
 	bool emissive = false;
+	bool specular = true;
 	bool backlight = false;
 	bool backlightMap = false;
+	bool glowmap = false;
 	bool greyscaleColor = false;
-	bool doublesided = false;
+	bool cubemap = false;
 	bool textured = false;
 
 	std::shared_ptr<AABBTree> bvh = nullptr;

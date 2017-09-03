@@ -13,6 +13,7 @@ uniform samplerCube texCubemap;
 uniform sampler2D texEnvMask;
 uniform sampler2D texSpecular;
 uniform sampler2D texGreyscale;
+uniform sampler2D texGlowmap;
 
 uniform bool bLightEnabled;
 uniform bool bShowTexture;
@@ -28,6 +29,7 @@ uniform bool bCubemap;
 uniform bool bEnvMask;
 uniform bool bSpecular;
 uniform bool bEmissive;
+uniform bool bGlowmap;
 uniform bool bGreyscaleColor;
 
 uniform mat4 matModelView;
@@ -367,11 +369,17 @@ void main(void)
 				directionalLight(lightDirectional1, outDiffuse, outSpecular);
 				directionalLight(lightDirectional2, outDiffuse, outSpecular);
 				
+				// Emissive
 				if (bEmissive)
 				{
 					emissive += prop.emissiveColor * prop.emissiveMultiple;
 					
-					// Glowmap here
+					// Glowmap
+					if (bGlowmap)
+					{
+						vec4 glowMap = texture(texGlowmap, uv);
+						emissive *= glowMap.rgb;
+					}
 				}
 				
 				color.rgb = outDiffuse * albedo;

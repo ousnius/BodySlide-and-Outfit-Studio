@@ -150,11 +150,11 @@ public:
 		gls.GetSize(w, h);	
 		std::vector<GLuint> texIds;
 		std::vector<std::string> normTextures;
-		normTextures.push_back("");
-		//normTextures.push_back("d:\\proj\\TangentNormalsTest.png");
-		//normTextures.push_back("d:\\proj\\FemaleBodyt_n.dds");
-		normTextures.push_back("d:\\proj\\bodyPaintDummy-N_u0_v0.png");
-		//normTextures.push_back("d:\\proj\\masktest.png");
+		normTextures.resize(20);
+		//"d:\\proj\\TangentNormalsTest.png"
+		//"d:\\proj\\FemaleBodyt_n.dds"
+		//"d:\\proj\\bodyPaintDummy-N_u0_v0.png"
+		//normTextures[20] = "d:\\proj\\masktest.png";
 		GLMaterial* normMat = gls.AddMaterial(normTextures, "res\\shaders\\normalshade.vert", "res\\shaders\\normalshade.frag");
 
 		std::vector<std::string> ppTex;

@@ -1286,9 +1286,9 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 						bslsp->shaderFlags2 &= ~(1 << 5);
 
 					if (options.removeParallax) {
-						if (bslsp->GetShaderType() == BSLightingShaderPropertyShaderType::Heightmap) {
+						if (bslsp->GetShaderType() == BSLSP_PARALLAX) {
 							// Change type from parallax to default
-							bslsp->SetShaderType(BSLightingShaderPropertyShaderType::Default);
+							bslsp->SetShaderType(BSLSP_DEFAULT);
 
 							// Remove parallax flag
 							bslsp->shaderFlags1 &= ~(1 << 11);

@@ -312,9 +312,8 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 		if (texFiles[i].empty())
 			continue;
 
-		GLuint textureID = 0;
-
-		textureID = LoadTexture(texFiles[i], i == 4);
+		bool isCubeMap = (i == 4);
+		GLuint textureID = LoadTexture(texFiles[i], isCubeMap);
 		if (!textureID)
 			continue;
 

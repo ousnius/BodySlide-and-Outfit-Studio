@@ -17,7 +17,7 @@ private:
 	BlockRefArray<NiExtraData> extraDataRefs;
 
 public:
-	uint skyrimShaderType = 0;				// BSLightingShaderProperty && User Version >= 12
+	uint bslspShaderType = 0;				// BSLightingShaderProperty && User Version >= 12
 	bool bBSLightingShaderProperty = false;
 
 	void Get(NiStream& stream);

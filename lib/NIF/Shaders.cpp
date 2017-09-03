@@ -309,8 +309,51 @@ void BSShaderProperty::SetShaderType(uint type) {
 	shaderType = (BSShaderType)type;
 }
 
+bool BSShaderProperty::IsSkinTint() {
+	return (shaderFlags1 & (1 << 21)) != 0;
+}
+
+bool BSShaderProperty::IsSkinned() {
+	return (shaderFlags1 & (1 << 1)) != 0;
+}
+
+void BSShaderProperty::SetSkinned(const bool enable) {
+	if (enable)
+		shaderFlags1 |= 1 << 1;
+	else
+		shaderFlags1 &= ~(1 << 1);
+}
+
+bool BSShaderProperty::IsDoubleSided() {
+	return (shaderFlags2 & (1 << 4)) != 0;
+}
+
+bool BSShaderProperty::IsModelSpace() {
+	return (shaderFlags1 & (1 << 12)) != 0;
+}
+
+bool BSShaderProperty::IsEmissive() {
+	return (shaderFlags1 & (1 << 22)) != 0;
+}
+
 bool BSShaderProperty::HasSpecular() {
 	return (shaderFlags1 & (1 << 0)) != 0;
+}
+
+bool BSShaderProperty::HasBacklight() {
+	return (shaderFlags2 & (1 << 27)) != 0;
+}
+
+bool BSShaderProperty::HasGlowmap() {
+	return (shaderFlags2 & (1 << 6)) != 0;
+}
+
+bool BSShaderProperty::HasGreyscaleColor() {
+	return (shaderFlags1 & (1 << 3)) != 0;
+}
+
+bool BSShaderProperty::HasEnvironmentMapping() {
+	return (shaderFlags1 & (1 << 6)) != 0;
 }
 
 float BSShaderProperty::GetEnvironmentMapScale() {
@@ -457,7 +500,7 @@ void BSLightingShaderProperty::Get(NiStream& stream) {
 		stream >> wetnessMetalness;
 	}
 
-	switch (skyrimShaderType) {
+	switch (bslspShaderType) {
 	case 1:
 		stream >> environmentMapScale;
 		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
@@ -530,7 +573,7 @@ void BSLightingShaderProperty::Put(NiStream& stream) {
 		stream << wetnessMetalness;
 	}
 
-	switch (skyrimShaderType) {
+	switch (bslspShaderType) {
 	case 1:
 		stream << environmentMapScale;
 		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
@@ -579,42 +622,23 @@ void BSLightingShaderProperty::GetChildRefs(std::set<Ref*>& refs) {
 }
 
 bool BSLightingShaderProperty::IsSkinTint() {
-	return skyrimShaderType == 5;
+	return bslspShaderType == BSLSP_SKINTINT && BSShaderProperty::IsSkinTint();
 }
 
-bool BSLightingShaderProperty::IsSkinned() {
-	return (shaderFlags1 & (1 << 1)) != 0;
+bool BSLightingShaderProperty::HasGlowmap() {
+	return bslspShaderType == BSLSP_GLOWMAP && BSShaderProperty::HasGlowmap();
 }
 
-void BSLightingShaderProperty::SetSkinned(const bool enable) {
-	if (enable)
-		shaderFlags1 |= 1 << 1;
-	else
-		shaderFlags1 &= ~(1 << 1);
-}
-
-bool BSLightingShaderProperty::IsDoubleSided() {
-	return (shaderFlags2 & (1 << 4)) == 16;
-}
-
-bool BSLightingShaderProperty::IsModelSpace() {
-	return (shaderFlags1 & (1 << 12)) != 0;
-}
-
-bool BSLightingShaderProperty::IsEmissive() {
-	return (shaderFlags1 & (1 << 22)) != 0;
-}
-
-bool BSLightingShaderProperty::HasBacklight() {
-	return (shaderFlags2 & (1 << 27)) != 0;
+bool BSLightingShaderProperty::HasEnvironmentMapping() {
+	return bslspShaderType == BSLSP_ENVMAP && BSShaderProperty::HasEnvironmentMapping();
 }
 
 uint BSLightingShaderProperty::GetShaderType() {
-	return skyrimShaderType;
+	return bslspShaderType;
 }
 
 void BSLightingShaderProperty::SetShaderType(const uint type) {
-	skyrimShaderType = type;
+	bslspShaderType = type;
 }
 
 Vector3 BSLightingShaderProperty::GetSpecularColor() {
@@ -675,6 +699,18 @@ float BSLightingShaderProperty::GetAlpha() {
 	return alpha;
 }
 
+float BSLightingShaderProperty::GetBacklightPower() {
+	return backlightPower;
+}
+
+float BSLightingShaderProperty::GetGrayscaleToPaletteScale() {
+	return grayscaleToPaletteScale;
+}
+
+float BSLightingShaderProperty::GetFresnelPower() {
+	return fresnelPower;
+}
+
 std::string BSLightingShaderProperty::GetWetMaterialName() {
 	return wetMaterialName.GetString();
 }
@@ -730,37 +766,6 @@ void BSEffectShaderProperty::Put(NiStream& stream) {
 	}
 }
 
-bool BSEffectShaderProperty::IsSkinTint() {
-	return (shaderFlags1 & (1 << 21)) != 0;
-}
-
-bool BSEffectShaderProperty::IsSkinned() {
-	return (shaderFlags1 & (1 << 1)) != 0;
-}
-
-void BSEffectShaderProperty::SetSkinned(const bool enable) {
-	if (enable)
-		shaderFlags1 |= 1 << 1;
-	else
-		shaderFlags1 &= ~(1 << 1);
-}
-
-bool BSEffectShaderProperty::IsDoubleSided() {
-	return (shaderFlags2 & (1 << 4)) == 16;
-}
-
-bool BSEffectShaderProperty::IsModelSpace() {
-	return (shaderFlags1 & (1 << 12)) != 0;
-}
-
-bool BSEffectShaderProperty::IsEmissive() {
-	return (shaderFlags1 & (1 << 22)) != 0;
-}
-
-bool BSEffectShaderProperty::HasBacklight() {
-	return (shaderFlags2 & (1 << 27)) != 0;
-}
-
 float BSEffectShaderProperty::GetEnvironmentMapScale() {
 	return envMapScale;
 }
@@ -794,37 +799,6 @@ void BSWaterShaderProperty::Put(NiStream& stream) {
 	stream << waterFlags;
 }
 
-bool BSWaterShaderProperty::IsSkinTint() {
-	return (shaderFlags1 & (1 << 21)) != 0;
-}
-
-bool BSWaterShaderProperty::IsSkinned() {
-	return (shaderFlags1 & (1 << 1)) != 0;
-}
-
-void BSWaterShaderProperty::SetSkinned(const bool enable) {
-	if (enable)
-		shaderFlags1 |= 1 << 1;
-	else
-		shaderFlags1 &= ~(1 << 1);
-}
-
-bool BSWaterShaderProperty::IsDoubleSided() {
-	return (shaderFlags2 & (1 << 4)) == 16;
-}
-
-bool BSWaterShaderProperty::IsModelSpace() {
-	return (shaderFlags1 & (1 << 12)) != 0;
-}
-
-bool BSWaterShaderProperty::IsEmissive() {
-	return (shaderFlags1 & (1 << 22)) != 0;
-}
-
-bool BSWaterShaderProperty::HasBacklight() {
-	return (shaderFlags2 & (1 << 27)) != 0;
-}
-
 
 void BSSkyShaderProperty::Get(NiStream& stream) {
 	BSShaderProperty::Get(stream);
@@ -838,37 +812,6 @@ void BSSkyShaderProperty::Put(NiStream& stream) {
 
 	baseTexture.Put(stream, 4, false);
 	stream << skyFlags;
-}
-
-bool BSSkyShaderProperty::IsSkinTint() {
-	return (shaderFlags1 & (1 << 21)) != 0;
-}
-
-bool BSSkyShaderProperty::IsSkinned() {
-	return (shaderFlags1 & (1 << 1)) != 0;
-}
-
-void BSSkyShaderProperty::SetSkinned(const bool enable) {
-	if (enable)
-		shaderFlags1 |= 1 << 1;
-	else
-		shaderFlags1 &= ~(1 << 1);
-}
-
-bool BSSkyShaderProperty::IsDoubleSided() {
-	return (shaderFlags2 & (1 << 4)) == 16;
-}
-
-bool BSSkyShaderProperty::IsModelSpace() {
-	return (shaderFlags1 & (1 << 12)) != 0;
-}
-
-bool BSSkyShaderProperty::IsEmissive() {
-	return (shaderFlags1 & (1 << 22)) != 0;
-}
-
-bool BSSkyShaderProperty::HasBacklight() {
-	return (shaderFlags2 & (1 << 27)) != 0;
 }
 
 

@@ -665,7 +665,7 @@ void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, u
 	// 
 	GLShader shader = renderShader->GetShader();
 	shader.Begin();
-		renderShader->BindTextures(0, false);
+		renderShader->BindTextures(0, false, false, false);
 		// bind the dummy array and send three fake positions to the shader.
 		glBindVertexArray(m_vertexArrayObject);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -796,13 +796,14 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetSpecularEnabled(m->specular);
 	shader.SetEmissive(m->emissive);
 	shader.SetBacklightEnabled(m->backlight);
+	shader.SetGlowmapEnabled(m->glowmap);
 	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
 	shader.SetLightingEnabled(bLighting);
 	shader.SetWireframeEnabled(false);
 	shader.SetPointsEnabled(false);
 	shader.SetNormalMapEnabled(false);
 	shader.SetAlphaMaskEnabled(false);
-	shader.SetCubemapEnabled(false);
+	shader.SetCubemapEnabled(m->cubemap);
 	shader.SetEnvMaskEnabled(false);
 
 	glBindVertexArray(m->vao);
@@ -862,7 +863,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			glEnableVertexAttribArray(5);
 			glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
 
-			m->material->BindTextures(largestAF, m->backlightMap);
+			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap);
 		}
 
 		// Offset triangles so that points can be visible
@@ -966,12 +967,14 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 	if (shape) {
 		NiShader* shader = nif->GetShader(shape);
 		if (shader) {
-			m->modelSpace = shader->IsModelSpace();
-			m->specular = shader->HasSpecular();
-			m->emissive = shader->IsEmissive();
-			m->backlight = shader->HasBacklight();
-			//m->greyscaleColor = shader->HasGreyscaleColor();
 			m->doublesided = shader->IsDoubleSided();
+			m->modelSpace = shader->IsModelSpace();
+			m->emissive = shader->IsEmissive();
+			m->specular = shader->HasSpecular();
+			m->backlight = shader->HasBacklight();
+			m->glowmap = shader->HasGlowmap();
+			m->greyscaleColor = shader->HasGreyscaleColor();
+			m->cubemap = shader->HasEnvironmentMapping();
 
 			// Only for dedicated backlight maps
 			if (nif->GetHeader().GetVersion().Stream() < 130)
@@ -983,8 +986,9 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 			m->prop.specularStrength = shader->GetSpecularStrength();
 			m->prop.shininess = shader->GetGlossiness();
 			m->prop.envReflection = shader->GetEnvironmentMapScale();
-			//m->prop.backlightPower = shader->GetBacklightPower();
-			//m->prop.fresnelPower = shader->GetFresnelPower();
+			m->prop.backlightPower = shader->GetBacklightPower();
+			m->prop.paletteScale = shader->GetGrayscaleToPaletteScale();
+			m->prop.fresnelPower = shader->GetFresnelPower();
 
 			Color4 emissiveColor = shader->GetEmissiveColor();
 			m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
