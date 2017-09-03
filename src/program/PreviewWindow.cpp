@@ -247,9 +247,9 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 			if (mat.signature == MaterialFile::BGSM) {
 				texFiles[0] = mat.diffuseTexture.c_str();
 				texFiles[1] = mat.normalTexture.c_str();
+				texFiles[2] = mat.glowTexture.c_str();
 				texFiles[3] = mat.greyscaleTexture.c_str();
 				texFiles[4] = mat.envmapTexture.c_str();
-				texFiles[5] = mat.glowTexture.c_str();
 				texFiles[7] = mat.smoothSpecTexture.c_str();
 			}
 			else if (mat.signature == MaterialFile::BGEM) {
