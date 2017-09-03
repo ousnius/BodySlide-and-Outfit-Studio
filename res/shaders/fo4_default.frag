@@ -212,7 +212,7 @@ vec3 tonemap(in vec3 x)
 	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
-void directionalLight(in DirectionalLight light, in bool useForBacklight, inout vec3 outDiffuse, inout vec3 outSpec)
+void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout vec3 outSpec)
 {
 	vec3 half = normalize(light.direction + viewDir);
 	float NdotL = dot(normal, light.direction);
@@ -261,13 +261,13 @@ void directionalLight(in DirectionalLight light, in bool useForBacklight, inout 
 		outSpec += cube.rgb * diff;
 	}
 	
-	// Only one source for backlight
-	if (useForBacklight && prop.backlightPower > 0.0)
-	{
-		float NdotNegL = max(dot(normal, -light.direction), FLT_EPSILON);
-		vec3 backlight = albedo * NdotNegL * clamp(prop.backlightPower, 0.0, 1.0);
-		emissive += backlight * light.diffuse;
-	}
+	// Back lighting not really useful for the current light setup of multiple directional lights
+	//if (prop.backlightPower > 0.0)
+	//{
+	//	float NdotNegL = max(dot(normal, -light.direction), FLT_EPSILON);
+	//	vec3 backlight = albedo * NdotNegL * clamp(prop.backlightPower, 0.0, 1.0);
+	//	emissive += backlight * light.diffuse;
+	//}
 	
 	// Diffuse
 	diff = vec3(OrenNayarFull(light.direction, viewDir, normal, roughness, NdotL0));
@@ -362,10 +362,10 @@ void main(void)
 					}
 				}
 				
-				directionalLight(lightFrontal, false, outDiffuse, outSpecular);
-				directionalLight(lightDirectional0, true, outDiffuse, outSpecular);
-				directionalLight(lightDirectional1, false, outDiffuse, outSpecular);
-				directionalLight(lightDirectional2, false, outDiffuse, outSpecular);
+				directionalLight(lightFrontal, outDiffuse, outSpecular);
+				directionalLight(lightDirectional0, outDiffuse, outSpecular);
+				directionalLight(lightDirectional1, outDiffuse, outSpecular);
+				directionalLight(lightDirectional2, outDiffuse, outSpecular);
 				
 				if (bEmissive)
 				{

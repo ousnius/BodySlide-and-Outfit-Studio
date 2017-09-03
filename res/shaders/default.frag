@@ -103,7 +103,7 @@ vec3 tonemap(in vec3 x)
 	return ((x * (A * x + C * B) + D * E) / (x * (A * x + B) + D * F)) - E / F;
 }
 
-void directionalLight(in DirectionalLight light, in bool useForBacklight, inout vec3 outDiffuse, inout vec3 outSpec)
+void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout vec3 outSpec)
 {
 	vec3 half = normalize(light.direction + viewDir);
 	float NdotL = max(dot(normal, light.direction), 0.0);
@@ -113,12 +113,13 @@ void directionalLight(in DirectionalLight light, in bool useForBacklight, inout 
 	outDiffuse += ambient + NdotL * light.diffuse;
 	outSpec += clamp(prop.specularColor * prop.specularStrength * specFactor * pow(NdotH, prop.shininess), 0.0, 1.0) * light.diffuse;
 	
-	if (useForBacklight && bBacklight && bShowTexture)
-	{
-		float NdotNegL = max(dot(normal, -light.direction), 0.0);
-		vec3 backlight = backlightMap.rgb * NdotNegL * light.diffuse;
-		emissive += backlight;
-	}
+	// Back lighting not really useful for the current light setup of multiple directional lights
+	//if (bBacklight && bShowTexture)
+	//{
+	//	float NdotNegL = max(dot(normal, -light.direction), 0.0);
+	//	vec3 backlight = backlightMap.rgb * NdotNegL * light.diffuse;
+	//	emissive += backlight;
+	//}
 }
 
 void main(void)
@@ -215,10 +216,10 @@ void main(void)
 					}
 				}
 				
-				directionalLight(lightFrontal, false, outDiffuse, outSpecular);
-				directionalLight(lightDirectional0, true, outDiffuse, outSpecular);
-				directionalLight(lightDirectional1, false, outDiffuse, outSpecular);
-				directionalLight(lightDirectional2, false, outDiffuse, outSpecular);
+				directionalLight(lightFrontal, outDiffuse, outSpecular);
+				directionalLight(lightDirectional0, outDiffuse, outSpecular);
+				directionalLight(lightDirectional1, outDiffuse, outSpecular);
+				directionalLight(lightDirectional2, outDiffuse, outSpecular);
 				
 				if (bCubemap && bShowTexture)
 				{
@@ -245,6 +246,8 @@ void main(void)
 				if (bEmissive)
 				{
 					emissive += prop.emissiveColor * prop.emissiveMultiple;
+					
+					// Glowmap here
 				}
 				
 				color.rgb = albedo * (outDiffuse + emissive) + outSpecular;
