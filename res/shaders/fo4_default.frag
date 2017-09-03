@@ -29,6 +29,9 @@ uniform bool bCubemap;
 uniform bool bEnvMask;
 uniform bool bSpecular;
 uniform bool bEmissive;
+uniform bool bBacklight;
+uniform bool bRimlight;
+uniform bool bSoftlight;
 uniform bool bGlowmap;
 uniform bool bGreyscaleColor;
 
@@ -46,6 +49,8 @@ struct Properties
 	float emissiveMultiple;
 	float alpha;
 	float backlightPower;
+	float rimlightPower;
+	float subsurfaceRolloff;
 	float fresnelPower;
 	float paletteScale;
 };
@@ -264,16 +269,32 @@ void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout ve
 	}
 	
 	// Back lighting not really useful for the current light setup of multiple directional lights
-	//if (prop.backlightPower > 0.0)
+	//if (bBacklight)
 	//{
 	//	float NdotNegL = max(dot(normal, -light.direction), FLT_EPSILON);
 	//	vec3 backlight = albedo * NdotNegL * clamp(prop.backlightPower, 0.0, 1.0);
 	//	emissive += backlight * light.diffuse;
 	//}
 	
+	// Rim lighting not really useful for the current light setup of multiple directional lights
+	//if (bRimlight)
+	//{
+	//	vec3 rim = vec3(pow((1.0 - NdotV), prop.rimlightPower));
+	//	rim *= smoothstep(-0.2, 1.0, dot(-light.direction, viewDir));
+	//	emissive += rim * light.diffuse * specMask;
+	//}
+	
 	// Diffuse
 	diff = vec3(OrenNayarFull(light.direction, viewDir, normal, roughness, NdotL0));
 	outDiffuse += diff * light.diffuse;
+	
+	// Soft Lighting
+	if (bSoftlight)
+	{
+		float wrap = (NdotL + prop.subsurfaceRolloff) / (1.0 + prop.subsurfaceRolloff);
+		vec3 soft = albedo * max(0.0, wrap) * smoothstep(1.0, 0.0, sqrt(diff));
+		outDiffuse += soft;
+	}
 }
 
 vec4 colorLookup(in float x, in float y)

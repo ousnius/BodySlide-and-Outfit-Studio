@@ -57,7 +57,7 @@ std::string GLMaterial::GetTexName(uint index) {
 	return "";
 }
 
-void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklightMap) {
+void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const bool hasGlowmap, const bool hasBacklightMap, const bool hasLightmask) {
 	if (resLoaderRef && !resLoaderRef->CacheStamp(cacheTime)) {
 		// outdated cache, rebuild it.  
 		for (int i = 0; i < texCache.size(); i++) {
@@ -94,12 +94,21 @@ void GLMaterial::BindTextures(GLfloat largestAF, const bool hasEnvMapping, const
 
 		case 2:
 			if (hasGlowmap) {
+				shader.SetRimlightEnabled(false);
+				shader.SetSoftlightEnabled(false);
+
 				if (texCache[id] != 0) {
 					shader.BindTexture(id, texCache[id], "texGlowmap");
 					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
 				}
 				else
 					shader.SetGlowmapEnabled(false);
+			}
+			else if (hasLightmask) {
+				if (texCache[id] != 0) {
+					shader.BindTexture(id, texCache[id], "texLightmask");
+					if (largestAF) glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, largestAF);
+				}
 			}
 			break;
 

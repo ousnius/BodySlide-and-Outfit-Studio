@@ -198,6 +198,8 @@ void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	modelSpace = matFile.modelSpaceNormals;
 	emissive = matFile.emitEnabled;
 	backlight = matFile.backLighting;
+	rimlight = matFile.rimLighting;
+	softlight = matFile.subsurfaceLighting;
 	glowmap = matFile.glowMap;
 	greyscaleColor = matFile.grayscaleToPaletteColor;
 	cubemap = matFile.environmentMapping;
@@ -212,6 +214,8 @@ void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	prop.emissiveMultiple = matFile.emittanceMult;
 	prop.envReflection = matFile.environmentMappingMaskScale;
 	prop.backlightPower = matFile.backLightPower;
+	prop.rimlightPower = matFile.rimPower;
+	prop.subsurfaceRolloff = matFile.subsurfaceLightingRolloff;
 	prop.fresnelPower = matFile.fresnelPower;
 	prop.paletteScale = matFile.grayscaleToPaletteScale;
 }

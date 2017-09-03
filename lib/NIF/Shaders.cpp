@@ -341,7 +341,18 @@ bool BSShaderProperty::HasSpecular() {
 }
 
 bool BSShaderProperty::HasBacklight() {
+	// Skyrim
 	return (shaderFlags2 & (1 << 27)) != 0;
+}
+
+bool BSShaderProperty::HasRimlight() {
+	// Skyrim
+	return (shaderFlags2 & (1 << 26)) != 0;
+}
+
+bool BSShaderProperty::HasSoftlight() {
+	// Skyrim
+	return (shaderFlags2 & (1 << 25)) != 0;
 }
 
 bool BSShaderProperty::HasGlowmap() {
@@ -482,8 +493,8 @@ void BSLightingShaderProperty::Get(NiStream& stream) {
 	stream >> specularStrength;
 
 	if (stream.GetVersion().User() <= 12 && stream.GetVersion().Stream() < 130) {
-		stream >> lightingEffect1;
-		stream >> lightingEffect2;
+		stream >> softlighting;
+		stream >> rimlightPower;
 	}
 
 	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130) {
@@ -555,8 +566,8 @@ void BSLightingShaderProperty::Put(NiStream& stream) {
 	stream << specularStrength;
 
 	if (stream.GetVersion().User() <= 12 && stream.GetVersion().Stream() < 130) {
-		stream << lightingEffect1;
-		stream << lightingEffect2;
+		stream << softlighting;
+		stream << rimlightPower;
 	}
 
 	if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130) {
@@ -701,6 +712,18 @@ float BSLightingShaderProperty::GetAlpha() {
 
 float BSLightingShaderProperty::GetBacklightPower() {
 	return backlightPower;
+}
+
+float BSLightingShaderProperty::GetRimlightPower() {
+	return rimlightPower;
+}
+
+float BSLightingShaderProperty::GetSoftlight() {
+	return softlighting;
+}
+
+float BSLightingShaderProperty::GetSubsurfaceRolloff() {
+	return subsurfaceRolloff;
 }
 
 float BSLightingShaderProperty::GetGrayscaleToPaletteScale() {

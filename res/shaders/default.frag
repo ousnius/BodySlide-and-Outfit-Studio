@@ -13,6 +13,7 @@ uniform samplerCube texCubemap;
 uniform sampler2D texEnvMask;
 uniform sampler2D texSpecular;
 uniform sampler2D texBacklight;
+uniform sampler2D texLightmask;
 uniform sampler2D texGlowmap;
 
 uniform bool bLightEnabled;
@@ -30,6 +31,8 @@ uniform bool bEnvMask;
 uniform bool bSpecular;
 uniform bool bEmissive;
 uniform bool bBacklight;
+uniform bool bRimlight;
+uniform bool bSoftlight;
 uniform bool bGlowmap;
 
 uniform mat4 matModelView;
@@ -45,9 +48,8 @@ struct Properties
 	vec3 emissiveColor;
 	float emissiveMultiple;
 	float alpha;
-	float backlightPower;
-	float fresnelPower;
-	float paletteScale;
+	float rimlightPower;
+	float softlighting;
 };
 uniform Properties prop;
 uniform float alphaThreshold;
@@ -122,6 +124,29 @@ void directionalLight(in DirectionalLight light, inout vec3 outDiffuse, inout ve
 	//	vec3 backlight = backlightMap.rgb * NdotNegL * light.diffuse;
 	//	emissive += backlight;
 	//}
+	
+	vec3 lightMask = normalize(vec3(0.0, 0.0, 0.5));
+	if (bRimlight || bSoftlight)
+	{
+		lightMask = texture(texLightmask, uv).rgb;
+	}
+	
+	// Rim lighting not really useful for the current light setup of multiple directional lights
+	//if (bRimlight)
+	//{
+	//	vec3 rim = lightMask * pow(vec3(1.0 - NdotV), vec3(prop.rimlightPower));
+	//	rim *= smoothstep(-0.2, 1.0, dot(-light.direction, viewDir));
+	//	emissive += rim * light.diffuse;
+	//}
+	
+	// Soft Lighting
+	if (bSoftlight)
+	{
+		float wrap = (dot(normal, light.direction) + prop.softlighting) / (1.0 + prop.softlighting);
+		vec3 soft = max(wrap, 0.0) * lightMask * smoothstep(1.0, 0.0, NdotL);
+		soft *= sqrt(clamp(prop.softlighting, 0.0, 1.0));
+		emissive += soft * light.diffuse;
+	}
 }
 
 void main(void)

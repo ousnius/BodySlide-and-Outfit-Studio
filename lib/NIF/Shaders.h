@@ -294,6 +294,8 @@ public:
 	virtual bool IsEmissive() { return false; }
 	virtual bool HasSpecular() { return true; }
 	virtual bool HasBacklight() { return false; }
+	virtual bool HasRimlight() { return false; }
+	virtual bool HasSoftlight() { return false; }
 	virtual bool HasGlowmap() { return false; }
 	virtual bool HasGreyscaleColor() { return false; }
 	virtual bool HasEnvironmentMapping() { return false; }
@@ -316,6 +318,9 @@ public:
 	virtual void SetEmissiveMultiple(const float) {}
 	virtual float GetAlpha() { return 1.0f; }
 	virtual float GetBacklightPower() { return 0.0f; }
+	virtual float GetRimlightPower() { return 2.0f; }
+	virtual float GetSoftlight() { return 0.3f; }
+	virtual float GetSubsurfaceRolloff() { return 0.3f; }
 	virtual float GetGrayscaleToPaletteScale() { return 1.0; }
 	virtual float GetFresnelPower() { return 5.0f; }
 	virtual std::string GetWetMaterialName() { return std::string(); }
@@ -345,6 +350,8 @@ public:
 	bool IsEmissive();
 	bool HasSpecular();
 	bool HasBacklight();
+	bool HasRimlight();
+	bool HasSoftlight();
 	bool HasGlowmap();
 	bool HasGreyscaleColor();
 	bool HasEnvironmentMapping();
@@ -437,10 +444,10 @@ public:
 	float glossiness = 1.0f;
 	Vector3 specularColor = Vector3(1.0f, 1.0f, 1.0f);
 	float specularStrength = 1.0f;
-	float lightingEffect1 = 0.3f;			// User Version <= 12, User Version 2 < 130
-	float lightingEffect2 = 2.0f;			// User Version <= 12, User Version 2 < 130
+	float softlighting = 0.3f;				// User Version <= 12, User Version 2 < 130
+	float rimlightPower = 2.0f;				// User Version <= 12, User Version 2 < 130
 
-	float subsurfaceRolloff = 0.0f;			// User Version == 12, User Version 2 >= 130
+	float subsurfaceRolloff = 0.3f;			// User Version == 12, User Version 2 >= 130
 	float unkFloat1 = 0.0f;					// User Version == 12, User Version 2 >= 130
 	float backlightPower = 0.0f;			// User Version == 12, User Version 2 >= 130
 	float grayscaleToPaletteScale = 1.0f;	// User Version == 12, User Version 2 >= 130
@@ -498,6 +505,9 @@ public:
 	void SetEmissiveMultiple(const float emissive);
 	float GetAlpha();
 	float GetBacklightPower();
+	float GetRimlightPower();
+	float GetSoftlight();
+	float GetSubsurfaceRolloff();
 	float GetGrayscaleToPaletteScale();
 	float GetFresnelPower();
 	std::string GetWetMaterialName();

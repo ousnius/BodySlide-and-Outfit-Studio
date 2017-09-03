@@ -231,6 +231,18 @@ void GLShader::SetProperties(const mesh::ShaderProperties& prop) {
 	if (loc >= 0)
 		glUniform1f(loc, prop.backlightPower);
 
+	loc = glGetUniformLocation(progID, "prop.rimlightPower");
+	if (loc >= 0)
+		glUniform1f(loc, prop.rimlightPower);
+
+	loc = glGetUniformLocation(progID, "prop.softlighting");
+	if (loc >= 0)
+		glUniform1f(loc, prop.softlighting);
+
+	loc = glGetUniformLocation(progID, "prop.subsurfaceRolloff");
+	if (loc >= 0)
+		glUniform1f(loc, prop.subsurfaceRolloff);
+
 	loc = glGetUniformLocation(progID, "prop.fresnelPower");
 	if (loc >= 0)
 		glUniform1f(loc, prop.fresnelPower);
@@ -327,6 +339,18 @@ void GLShader::SetSpecularEnabled(const bool enable) {
 
 void GLShader::SetBacklightEnabled(const bool enable) {
 	GLint loc = glGetUniformLocation(progID, "bBacklight");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetRimlightEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bRimlight");
+	if (loc >= 0)
+		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
+}
+
+void GLShader::SetSoftlightEnabled(const bool enable) {
+	GLint loc = glGetUniformLocation(progID, "bSoftlight");
 	if (loc >= 0)
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }

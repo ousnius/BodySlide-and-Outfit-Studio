@@ -665,7 +665,7 @@ void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, u
 	// 
 	GLShader shader = renderShader->GetShader();
 	shader.Begin();
-		renderShader->BindTextures(0, false, false, false);
+		renderShader->BindTextures(0, false, false, false, false);
 		// bind the dummy array and send three fake positions to the shader.
 		glBindVertexArray(m_vertexArrayObject);
 		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -796,6 +796,8 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetSpecularEnabled(m->specular);
 	shader.SetEmissive(m->emissive);
 	shader.SetBacklightEnabled(m->backlight);
+	shader.SetRimlightEnabled(m->rimlight);
+	shader.SetSoftlightEnabled(m->softlight);
 	shader.SetGlowmapEnabled(m->glowmap);
 	shader.SetGreyscaleColorEnabled(m->greyscaleColor);
 	shader.SetLightingEnabled(bLighting);
@@ -863,7 +865,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			glEnableVertexAttribArray(5);
 			glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
 
-			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap);
+			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
 		}
 
 		// Offset triangles so that points can be visible
@@ -971,14 +973,23 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 			m->modelSpace = shader->IsModelSpace();
 			m->emissive = shader->IsEmissive();
 			m->specular = shader->HasSpecular();
-			m->backlight = shader->HasBacklight();
 			m->glowmap = shader->HasGlowmap();
 			m->greyscaleColor = shader->HasGreyscaleColor();
 			m->cubemap = shader->HasEnvironmentMapping();
 
-			// Only for dedicated backlight maps
-			if (nif->GetHeader().GetVersion().Stream() < 130)
-				m->backlightMap = m->backlight;
+			if (nif->GetHeader().GetVersion().Stream() < 130) {
+				m->backlight = shader->HasBacklight();
+				m->backlightMap = m->backlight;			// Dedicated map pre-130
+				m->rimlight = shader->HasRimlight();
+				m->softlight = shader->HasSoftlight();
+				m->prop.rimlightPower = shader->GetRimlightPower();
+				m->prop.softlighting = shader->GetSoftlight();
+			}
+			else {
+				m->backlight = (shader->GetBacklightPower() > 0.0);
+				m->softlight = (shader->GetSubsurfaceRolloff() > 0.0);
+				m->prop.subsurfaceRolloff = shader->GetSubsurfaceRolloff();
+			}
 
 			m->prop.uvOffset = shader->GetUVOffset();
 			m->prop.uvScale = shader->GetUVScale();

@@ -52,6 +52,9 @@ public:
 		float emissiveMultiple = 1.0f;
 		float alpha = 1.0f;
 		float backlightPower = 0.0f;
+		float rimlightPower = 2.0f;
+		float softlighting = 0.3f;
+		float subsurfaceRolloff = 0.3f;
 		float fresnelPower = 5.0f;
 		float paletteScale = 0.0f;
 	};
@@ -92,6 +95,8 @@ public:
 	bool specular = true;
 	bool backlight = false;
 	bool backlightMap = false;
+	bool rimlight = false;
+	bool softlight = false;
 	bool glowmap = false;
 	bool greyscaleColor = false;
 	bool cubemap = false;
