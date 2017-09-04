@@ -496,7 +496,7 @@ private:
 	void OnCaptureLost(wxMouseCaptureLostEvent& event);
 
 	GLSurface gls;
-	wxGLContext* context;
+	std::unique_ptr<wxGLContext> context;
 
 	bool rbuttonDown;
 	bool lbuttonDown;

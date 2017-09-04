@@ -5921,7 +5921,7 @@ wxEND_EVENT_TABLE()
 wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes& attribs)
 	: wxGLCanvas(parent, attribs, wxID_ANY, wxDefaultPosition, size, wxFULL_REPAINT_ON_RESIZE) {
 
-	context = new wxGLContext(this, nullptr, &GLSurface::GetGLContextAttribs());
+	context = std::make_unique<wxGLContext>(this, nullptr, &GLSurface::GetGLContextAttribs());
 	rbuttonDown = false;
 	lbuttonDown = false;
 	mbuttonDown = false;
@@ -5954,7 +5954,8 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 }
 
 wxGLPanel::~wxGLPanel() {
-	delete context;
+	Cleanup();
+	gls.RenderOneFrame();
 }
 
 void wxGLPanel::OnShown() {
@@ -5963,7 +5964,7 @@ void wxGLPanel::OnShown() {
 		wxMessageBox(_("Outfit Studio: OpenGL context is not OK."), _("OpenGL Error"), wxICON_ERROR, os);
 	}
 
-	gls.Initialize(this, context);
+	gls.Initialize(this, context.get());
 	auto size = GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight());
 	gls.SetMaskVisible();

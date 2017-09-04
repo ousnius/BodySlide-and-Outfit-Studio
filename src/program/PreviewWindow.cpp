@@ -39,7 +39,7 @@ PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideAp
 	uiPanel->SetBackgroundColour(wxColour(210, 210, 210));
 
 	canvas = new PreviewCanvas(this, GLSurface::GetGLAttribs());
-	context = new wxGLContext(canvas, nullptr, &GLSurface::GetGLContextAttribs());
+	context = std::make_unique<wxGLContext>(canvas, nullptr, &GLSurface::GetGLContextAttribs());
 
 	sizerPanel->Add(weightSlider, 1, wxTOP | wxLEFT | wxRIGHT, 10);
 	sizerPanel->Add(optButton, 0, wxTOP | wxLEFT | wxRIGHT, 10);
@@ -56,7 +56,6 @@ void PreviewWindow::OnShown() {
 	if (!context->IsOK()) {
 		Destroy();
 		canvas = nullptr;
-		delete context;
 		//delete offscreen;
 		app->PreviewClosed();
 		wxLogError("Preview failed: OpenGL context is not OK.");
@@ -65,7 +64,7 @@ void PreviewWindow::OnShown() {
 	}
 
 	wxLogMessage("Initializing preview window...");
-	gls.Initialize(canvas, context);
+	gls.Initialize(canvas, context.get());
 	auto size = canvas->GetSize();
 	gls.SetStartingView(Vector3(0.0f, -5.0f, -15.0f), Vector3(15.0f, 0.0f, 0.0f), size.GetWidth(), size.GetHeight(), 65.0);
 
@@ -356,11 +355,19 @@ void PreviewWindow::ShowNormalGenWindow(wxCommandEvent & WXUNUSED(event)) {
 	normalsGenDlg->Show();
 }
 
+void PreviewWindow::Cleanup() {
+	// Set current context for resource deletion
+	if (canvas && context)
+		canvas->SetCurrent(*context);
+
+	gls.Cleanup();
+	shapeMaterials.clear();
+	gls.RenderOneFrame();
+}
+
 void PreviewWindow::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	Cleanup();
 	Destroy();
-	canvas = nullptr;
-	delete context;
 	//delete offscreen;
 	app->PreviewClosed();
 	wxLogMessage("Preview closed.");

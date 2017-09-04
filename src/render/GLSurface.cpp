@@ -14,10 +14,6 @@ See the included LICENSE file
 #include <limits>
 
 
-GLSurface::~GLSurface() {
-	Cleanup();
-}
-
 const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static bool attribsInitialized { false };
 	static wxGLAttributes attribs;
@@ -155,6 +151,10 @@ int GLSurface::InitGLSettings() {
 }
 
 void GLSurface::Cleanup() {
+	// Set current context for resource deletion
+	if (canvas && context)
+		canvas->SetCurrent(*context);
+
 	for (auto &m : meshes)
 		delete m;
 	

@@ -18,7 +18,7 @@ class PreviewCanvas;
 class PreviewWindow : public wxFrame {
 	BodySlideApp* app = nullptr;
 	PreviewCanvas* canvas = nullptr; 
-	wxGLContext* context = nullptr; 
+	std::unique_ptr<wxGLContext> context; 
 	wxButton* optButton = nullptr;
 
 	NormalsGenDialog* normalsGenDlg = nullptr;
@@ -47,11 +47,7 @@ public:
 
 	void ShowNormalGenWindow(wxCommandEvent& event);
 
-	void Cleanup() {
-		gls.Cleanup();
-		shapeMaterials.clear();
-		gls.RenderOneFrame();
-	}
+	void Cleanup();
 
 	int GetWeight() {
 		return weight;
