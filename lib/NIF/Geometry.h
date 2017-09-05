@@ -212,7 +212,7 @@ private:
 	int groupID = 0;
 	byte compressFlags = 0;
 	bool hasVertices = true;
-	uint materialCRC = 0;					// Version >= 20.2.0.7 && User Version == 12
+	uint materialCRC = 0;
 	bool hasNormals = false;
 	bool hasVertexColors = false;
 	BlockRef<AdditionalGeomData> additionalDataRef;
@@ -228,7 +228,7 @@ public:
 
 	byte keepFlags = 0;
 	ushort numUVSets = 0;
-	std::vector<Vector2> uvSets;
+	std::vector<std::vector<Vector2>> uvSets;
 
 	ushort consistencyFlags = 0;
 
@@ -527,14 +527,18 @@ class NiGeometry : public NiShape {
 private:
 	BlockRef<NiGeometryData> dataRef;
 	BlockRef<NiSkinInstance> skinInstanceRef;
-	BlockRef<NiProperty> shaderPropertyRef;				// Version >= 20.2.0.7 && User Version == 12
-	BlockRef<NiProperty> alphaPropertyRef;				// Version >= 20.2.0.7 && User Version == 12
+	BlockRef<NiProperty> shaderPropertyRef;
+	BlockRef<NiProperty> alphaPropertyRef;
 
 	uint numMaterials = 0;
 	std::vector<StringRef> materialNameRefs;
 	std::vector<uint> materials;
 	int activeMaterial = 0;
-	byte dirty = 0;
+	byte defaultMatNeedsUpdateFlag = 0;
+
+	bool shader = false;
+	StringRef shaderName;
+	uint implementation = 0;
 
 public:
 	void Get(NiStream& stream);

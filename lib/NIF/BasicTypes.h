@@ -175,19 +175,46 @@ public:
 	}
 };
 
-class StringRef {
+class NiString {
 private:
-	// Temporary index storage for load/save
-	int index = 0xFFFFFFFF;
 	std::string str;
 
 public:
+	NiString() {};
+
 	std::string GetString() {
 		return str;
 	}
 
 	void SetString(const std::string& s) {
-		str = s;
+		this->str = s;
+	}
+
+	size_t GetLength() {
+		return str.length();
+	}
+
+	void Clear() {
+		str.clear();
+	}
+
+	void Get(NiStream& stream, const int szSize);
+	void Put(NiStream& stream, const int szSize, const bool wantNullOutput = true);
+};
+
+class StringRef {
+private:
+	// Temporary index storage for load/save
+	int index = 0xFFFFFFFF;
+	NiString str;
+
+public:
+	std::string GetString() {
+		return str.GetString();
+	}
+
+	void SetString(const std::string& s) {
+		str.SetString(s);
 	}
 
 	int GetIndex() {
@@ -200,15 +227,21 @@ public:
 
 	void Clear() {
 		index = 0xFFFFFFFF;
-		str.clear();
+		str.Clear();
 	}
 
 	void Get(NiStream& stream) {
-		stream >> index;
+		if (stream.GetVersion().File() < V20_1_0_1)
+			str.Get(stream, 4);
+		else
+			stream >> index;
 	}
 
 	void Put(NiStream& stream) {
-		stream << index;
+		if (stream.GetVersion().File() < V20_1_0_1)
+			str.Put(stream, 4, false);
+		else
+			stream << index;
 	}
 };
 
@@ -391,33 +424,6 @@ public:
 		for (auto &r : refs)
 			r.Put(stream);
 	}
-};
-
-class NiString {
-private:
-	std::string str;
-
-public:
-	NiString() {};
-
-	std::string GetString() {
-		return str;
-	}
-
-	void SetString(const std::string& s) {
-		this->str = s;
-	}
-
-	size_t GetLength() {
-		return str.length();
-	}
-
-	void Clear() {
-		str.clear();
-	}
-
-	void Get(NiStream& stream, const int szSize);
-	void Put(NiStream& stream, const int szSize, const bool wantNullOutput = true);
 };
 
 class NiObject {

@@ -72,7 +72,7 @@ void NiAVObject::Get(NiStream& stream) {
 	NiObjectNET::Get(stream);
 
 	flags = 0;
-	if (stream.GetVersion().Stream() <= 26)
+	if (stream.GetVersion().Stream() < 34)
 		stream.read((char*)&flags, 2);
 	else
 		stream >> flags;
@@ -84,16 +84,17 @@ void NiAVObject::Get(NiStream& stream) {
 
 	stream >> scale;
 
-	if (stream.GetVersion().User() <= 11)
+	if (stream.GetVersion().Stream() <= 34)
 		propertyRefs.Get(stream);
 	
-	collisionRef.Get(stream);
+	if (stream.GetVersion().File() >= V10_0_1_0)
+		collisionRef.Get(stream);
 }
 
 void NiAVObject::Put(NiStream& stream) {
 	NiObjectNET::Put(stream);
 
-	if (stream.GetVersion().Stream() <= 26)
+	if (stream.GetVersion().Stream() < 34)
 		stream.write((char*)&flags, 2);
 	else
 		stream << flags;
@@ -105,10 +106,11 @@ void NiAVObject::Put(NiStream& stream) {
 
 	stream << scale;
 
-	if (stream.GetVersion().User() <= 11)
+	if (stream.GetVersion().Stream() <= 34)
 		propertyRefs.Put(stream);
 
-	collisionRef.Put(stream);
+	if (stream.GetVersion().File() >= V10_0_1_0)
+		collisionRef.Put(stream);
 }
 
 void NiAVObject::GetChildRefs(std::set<Ref*>& refs) {
@@ -379,8 +381,11 @@ void NiSourceTexture::Get(NiStream& stream) {
 	stream >> mipMapFormat;
 	stream >> alphaFormat;
 	stream >> isStatic;
-	stream >> directRender;
-	stream >> persistentRenderData;
+
+	if (stream.GetVersion().File() >= NiVersion::ToFile(10, 1, 0, 103))
+		stream >> directRender;
+	if (stream.GetVersion().File() >= NiVersion::ToFile(20, 2, 0, 4))
+		stream >> persistentRenderData;
 }
 
 void NiSourceTexture::Put(NiStream& stream) {
@@ -393,8 +398,11 @@ void NiSourceTexture::Put(NiStream& stream) {
 	stream << mipMapFormat;
 	stream << alphaFormat;
 	stream << isStatic;
-	stream << directRender;
-	stream << persistentRenderData;
+
+	if (stream.GetVersion().File() >= NiVersion::ToFile(10, 1, 0, 103))
+		stream << directRender;
+	if (stream.GetVersion().File() >= NiVersion::ToFile(20, 2, 0, 4))
+		stream << persistentRenderData;
 }
 
 void NiSourceTexture::GetStringRefs(std::set<StringRef*>& refs) {

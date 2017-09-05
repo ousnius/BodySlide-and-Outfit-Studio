@@ -182,9 +182,9 @@ private:
 	bool hasNormalTex = false;
 	TexDesc normalTex;
 
-	bool hasUnkTex = false;
-	TexDesc unkTex;
-	float unkFloat1 = 0.0f;
+	bool hasParallaxTex = false;
+	TexDesc parallaxTex;
+	float parallaxFloat = 0.0f;
 
 	bool hasDecalTex0 = false;
 	TexDesc decalTex0;

@@ -1235,10 +1235,12 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 			bool hasTangents = geomData->HasTangents();
 			std::vector<Vector3>* vertices = &geomData->vertices;
 			std::vector<Vector3>* normals = &geomData->normals;
-			std::vector<Vector2>* uvs = &geomData->uvSets;
 			const std::vector<Color4>& colors = geomData->vertexColors;
-			std::vector<Triangle> triangles;
+			std::vector<Vector2>* uvs = nullptr;
+			if (!geomData->uvSets.empty())
+				uvs = &geomData->uvSets[0];
 
+			std::vector<Triangle> triangles;
 			if (geomData->HasType<NiTriShapeData>()) {
 				auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 				if (shapeData)
@@ -2352,8 +2354,8 @@ const std::vector<Vector2>* NifFile::GetUvsForShape(const std::string& shapeName
 
 	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
-		if (geomData)
-			return &geomData->uvSets;
+		if (geomData && !geomData->uvSets.empty())
+			return &geomData->uvSets[0];
 	}
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
@@ -2465,7 +2467,10 @@ void NifFile::SetUvsForShape(const std::string& shapeName, const std::vector<Vec
 			if (uvs.size() != geomData->vertices.size())
 				return;
 
-			geomData->uvSets.assign(uvs.begin(), uvs.end());
+			if (geomData->uvSets.empty())
+				geomData->uvSets.resize(1);
+
+			geomData->uvSets[0].assign(uvs.begin(), uvs.end());
 		}
 	}
 	else if (shape->HasType<BSTriShape>()) {
@@ -2487,14 +2492,14 @@ void NifFile::InvertUVsForShape(const std::string& shapeName, bool invertX, bool
 
 	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
-		if (geomData) {
+		if (geomData && !geomData->uvSets.empty()) {
 			if (invertX)
-				for (int i = 0; i < geomData->uvSets.size(); ++i)
-					geomData->uvSets[i].u = 1.0f - geomData->uvSets[i].u;
+				for (int i = 0; i < geomData->uvSets[0].size(); ++i)
+					geomData->uvSets[0][i].u = 1.0f - geomData->uvSets[0][i].u;
 
 			if (invertY)
-				for (int i = 0; i < geomData->uvSets.size(); ++i)
-					geomData->uvSets[i].v = 1.0f - geomData->uvSets[i].v;
+				for (int i = 0; i < geomData->uvSets[0].size(); ++i)
+					geomData->uvSets[0][i].v = 1.0f - geomData->uvSets[0][i].v;
 		}
 	}
 	else if (shape->HasType<BSTriShape>()) {

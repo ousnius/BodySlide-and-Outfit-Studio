@@ -91,10 +91,10 @@ void NiGeometryData::Get(NiStream& stream) {
 
 	ushort nbtMethod = numUVSets & 0xF000;
 	byte numTextureSets = numUVSets & 0x3F;
-	if (stream.GetVersion().Stream() >= 83)
+	if (stream.GetVersion().Stream() >= 34)
 		numTextureSets = numUVSets & 0x1;
 
-	if (stream.GetVersion().User() == 12)
+	if (stream.GetVersion().Stream() > 34)
 		stream >> materialCRC;
 
 	stream >> hasNormals;
@@ -126,9 +126,12 @@ void NiGeometryData::Get(NiStream& stream) {
 	}
 
 	if (numTextureSets > 0 && !isPSys) {
-		uvSets.resize(numVertices);
-		for (int i = 0; i < numVertices; i++)
-			stream >> uvSets[i];
+		uvSets.resize(numTextureSets);
+		for (int i = 0; i < numTextureSets; i++) {
+			uvSets[i].resize(numVertices);
+			for (int j = 0; j < numVertices; j++)
+				stream >> uvSets[i][j];
+		}
 	}
 
 	stream >> consistencyFlags;
@@ -153,7 +156,7 @@ void NiGeometryData::Put(NiStream& stream) {
 
 	ushort nbtMethod = numUVSets & 0xF000;
 	byte numTextureSets = numUVSets & 0x3F;
-	if (stream.GetVersion().Stream() >= 83)
+	if (stream.GetVersion().Stream() >= 34)
 		numTextureSets = numUVSets & 0x1;
 
 	if (stream.GetVersion().User() == 12)
@@ -182,8 +185,9 @@ void NiGeometryData::Put(NiStream& stream) {
 	}
 
 	if (numTextureSets > 0 && !isPSys) {
-		for (int i = 0; i < numVertices; i++)
-			stream << uvSets[i];
+		for (int i = 0; i < numTextureSets; i++)
+			for (int j = 0; j < numVertices; j++)
+				stream << uvSets[i][j];
 	}
 
 	stream << consistencyFlags;
@@ -239,7 +243,8 @@ void NiGeometryData::SetVertexColors(const bool enable) {
 void NiGeometryData::SetUVs(const bool enable) {
 	if (enable) {
 		numUVSets |= 1 << 0;
-		uvSets.resize(numVertices);
+		uvSets.resize(1);
+		uvSets[0].resize(numVertices);
 	}
 	else {
 		numUVSets &= ~(1 << 0);
@@ -282,9 +287,10 @@ void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>*,
 
 	size_t uvCount = texcoords->size();
 	if (uvCount == numVertices) {
-		uvSets.resize(uvCount);
-		for (size_t uv = 0; uv < uvSets.size(); uv++)
-			uvSets[uv] = (*texcoords)[uv];
+		uvSets.resize(1);
+		uvSets[0].resize(uvCount);
+		for (size_t uv = 0; uv < uvSets[0].size(); uv++)
+			uvSets[0][uv] = (*texcoords)[uv];
 
 		if (uvCount > 0)
 			numUVSets = 4097;
@@ -318,8 +324,11 @@ void NiGeometryData::notifyVerticesDelete(const std::vector<ushort>& vertIndices
 				bitangents.erase(bitangents.begin() + i);
 			if (hasCol)
 				vertexColors.erase(vertexColors.begin() + i);
-			if (hasUV)
-				uvSets.erase(uvSets.begin() + i);
+
+			if (hasUV) {
+				for (int j = 0; j < uvSets.size(); j++)
+					uvSets[j].erase(uvSets[j].begin() + i);
+			}
 		}
 	}
 }
@@ -1577,19 +1586,31 @@ void NiGeometry::Get(NiStream& stream) {
 	dataRef.Get(stream);
 	skinInstanceRef.Get(stream);
 
-	stream >> numMaterials;
-	materialNameRefs.resize(numMaterials);
-	for (int i = 0; i < numMaterials; i++)
-		materialNameRefs[i].Get(stream);
+	if (stream.GetVersion().File() >= V20_2_0_5) {
+		stream >> numMaterials;
+		materialNameRefs.resize(numMaterials);
+		materials.resize(numMaterials);
 
-	materials.resize(numMaterials);
-	for (int i = 0; i < numMaterials; i++)
-		stream >> materials[i];
+		for (int i = 0; i < numMaterials; i++) {
+			materialNameRefs[i].Get(stream);
+			stream >> materials[i];
+		}
 
-	stream >> activeMaterial;
-	stream >> dirty;
+		stream >> activeMaterial;
+	}
+	else {
+		stream >> shader;
+		
+		if (shader) {
+			shaderName.Get(stream);
+			stream >> implementation;
+		}
+	}
 
-	if (stream.GetVersion().User() > 11) {
+	if (stream.GetVersion().File() >= V20_2_0_7)
+		stream >> defaultMatNeedsUpdateFlag;
+
+	if (stream.GetVersion().Stream() > 34) {
 		shaderPropertyRef.Get(stream);
 		alphaPropertyRef.Get(stream);
 	}
@@ -1601,17 +1622,27 @@ void NiGeometry::Put(NiStream& stream) {
 	dataRef.Put(stream);
 	skinInstanceRef.Put(stream);
 
-	stream << numMaterials;
-	for (int i = 0; i < numMaterials; i++)
-		materialNameRefs[i].Put(stream);
+	if (stream.GetVersion().File() >= V20_2_0_5) {
+		stream << numMaterials;
+		for (int i = 0; i < numMaterials; i++) {
+			materialNameRefs[i].Put(stream);
+			stream << materials[i];
+		}
+		stream << activeMaterial;
+	}
+	else {
+		stream << shader;
 
-	for (int i = 0; i < numMaterials; i++)
-		stream << materials[i];
+		if (shader) {
+			shaderName.Put(stream);
+			stream << implementation;
+		}
+	}
 
-	stream << activeMaterial;
-	stream << dirty;
+	if (stream.GetVersion().File() >= V20_2_0_7)
+		stream << defaultMatNeedsUpdateFlag;
 
-	if (stream.GetVersion().User() > 11) {
+	if (stream.GetVersion().Stream() > 34) {
 		shaderPropertyRef.Put(stream);
 		alphaPropertyRef.Put(stream);
 	}
@@ -1847,9 +1878,9 @@ void NiTriShapeData::CalcTangentSpace() {
 		Vector3 v2 = vertices[i2];
 		Vector3 v3 = vertices[i3];
 
-		Vector2 w1 = uvSets[i1];
-		Vector2 w2 = uvSets[i2];
-		Vector2 w3 = uvSets[i3];
+		Vector2 w1 = uvSets[0][i1];
+		Vector2 w2 = uvSets[0][i2];
+		Vector2 w3 = uvSets[0][i3];
 
 		float x1 = v2.x - v1.x;
 		float x2 = v3.x - v1.x;
@@ -2059,9 +2090,9 @@ void NiTriStripsData::CalcTangentSpace() {
 		Vector3 v2 = vertices[i2];
 		Vector3 v3 = vertices[i3];
 
-		Vector2 w1 = uvSets[i1];
-		Vector2 w2 = uvSets[i2];
-		Vector2 w3 = uvSets[i3];
+		Vector2 w1 = uvSets[0][i1];
+		Vector2 w2 = uvSets[0][i2];
+		Vector2 w3 = uvSets[0][i3];
 
 		float x1 = v2.x - v1.x;
 		float x2 = v3.x - v1.x;

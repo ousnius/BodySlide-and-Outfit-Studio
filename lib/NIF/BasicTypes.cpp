@@ -399,6 +399,9 @@ void NiHeader::UpdateMaxStringLength() {
 }
 
 void NiHeader::FillStringRefs() {
+	if (version.File() < V20_1_0_1)
+		return;
+
 	for (auto &b : (*blocks)) {
 		std::set<StringRef*> stringRefs;
 		b->GetStringRefs(stringRefs);
@@ -413,6 +416,9 @@ void NiHeader::FillStringRefs() {
 void NiHeader::UpdateHeaderStrings(const bool hasUnknown) {
 	if (!hasUnknown)
 		ClearStrings();
+
+	if (version.File() < V20_1_0_1)
+		return;
 
 	for (auto &b : (*blocks)) {
 		std::set<StringRef*> stringRefs;

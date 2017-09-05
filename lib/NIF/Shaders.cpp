@@ -38,47 +38,65 @@ void NiTexturingProperty::Get(NiStream& stream) {
 	stream >> flags;
 	stream >> textureCount;
 
-	stream >> hasBaseTex;
-	if (hasBaseTex)
-		baseTex.Get(stream);
-
-	stream >> hasDarkTex;
-	if (hasDarkTex)
-		darkTex.Get(stream);
-
-	stream >> hasDetailTex;
-	if (hasDetailTex)
-		detailTex.Get(stream);
-
-	stream >> hasGlossTex;
-	if (hasGlossTex)
-		glossTex.Get(stream);
-
-	stream >> hasGlowTex;
-	if (hasGlowTex)
-		glowTex.Get(stream);
-
-	stream >> hasBumpTex;
-	if (hasBumpTex) {
-		bumpTex.Get(stream);
-		stream >> lumaScale;
-		stream >> lumaOffset;
-		stream >> bumpMatrix;
+	if (textureCount > 0) {
+		stream >> hasBaseTex;
+		if (hasBaseTex)
+			baseTex.Get(stream);
 	}
 
-	stream >> hasNormalTex;
-	if (hasNormalTex)
-		normalTex.Get(stream);
-
-	stream >> hasUnkTex;
-	if (hasUnkTex) {
-		unkTex.Get(stream);
-		stream >> unkFloat1;
+	if (textureCount > 1) {
+		stream >> hasDarkTex;
+		if (hasDarkTex)
+			darkTex.Get(stream);
 	}
 
-	stream >> hasDecalTex0;
-	if (hasDecalTex0)
-		decalTex0.Get(stream);
+	if (textureCount > 2) {
+		stream >> hasDetailTex;
+		if (hasDetailTex)
+			detailTex.Get(stream);
+	}
+
+	if (textureCount > 3) {
+		stream >> hasGlossTex;
+		if (hasGlossTex)
+			glossTex.Get(stream);
+	}
+
+	if (textureCount > 4) {
+		stream >> hasGlowTex;
+		if (hasGlowTex)
+			glowTex.Get(stream);
+	}
+
+	if (textureCount > 5) {
+		stream >> hasBumpTex;
+		if (hasBumpTex) {
+			bumpTex.Get(stream);
+			stream >> lumaScale;
+			stream >> lumaOffset;
+			stream >> bumpMatrix;
+		}
+	}
+
+	if (textureCount > 6) {
+		stream >> hasNormalTex;
+		if (hasNormalTex)
+			normalTex.Get(stream);
+	}
+
+	if (textureCount > 7) {
+		stream >> hasParallaxTex;
+		if (hasParallaxTex) {
+			parallaxTex.Get(stream);
+			stream >> parallaxFloat;
+		}
+	}
+
+	if (textureCount > 8) {
+		stream >> hasDecalTex0;
+		if (hasDecalTex0)
+			decalTex0.Get(stream);
+	}
 
 	if (textureCount > 9) {
 		stream >> hasDecalTex1;
@@ -110,47 +128,65 @@ void NiTexturingProperty::Put(NiStream& stream) {
 	stream << flags;
 	stream << textureCount;
 
-	stream << hasBaseTex;
-	if (hasBaseTex)
-		baseTex.Put(stream);
-
-	stream << hasDarkTex;
-	if (hasDarkTex)
-		darkTex.Put(stream);
-
-	stream << hasDetailTex;
-	if (hasDetailTex)
-		detailTex.Put(stream);
-
-	stream << hasGlossTex;
-	if (hasGlossTex)
-		glossTex.Put(stream);
-
-	stream << hasGlowTex;
-	if (hasGlowTex)
-		glowTex.Put(stream);
-
-	stream << hasBumpTex;
-	if (hasBumpTex) {
-		bumpTex.Put(stream);
-		stream << lumaScale;
-		stream << lumaOffset;
-		stream << bumpMatrix;
+	if (textureCount > 0) {
+		stream << hasBaseTex;
+		if (hasBaseTex)
+			baseTex.Put(stream);
 	}
 
-	stream << hasNormalTex;
-	if (hasNormalTex)
-		normalTex.Put(stream);
-
-	stream << hasUnkTex;
-	if (hasUnkTex) {
-		unkTex.Put(stream);
-		stream << unkFloat1;
+	if (textureCount > 1) {
+		stream << hasDarkTex;
+		if (hasDarkTex)
+			darkTex.Put(stream);
 	}
 
-	stream << hasDecalTex0;
-	if (hasDecalTex0)
-		decalTex0.Put(stream);
+	if (textureCount > 2) {
+		stream << hasDetailTex;
+		if (hasDetailTex)
+			detailTex.Put(stream);
+	}
+
+	if (textureCount > 3) {
+		stream << hasGlossTex;
+		if (hasGlossTex)
+			glossTex.Put(stream);
+	}
+
+	if (textureCount > 4) {
+		stream << hasGlowTex;
+		if (hasGlowTex)
+			glowTex.Put(stream);
+	}
+
+	if (textureCount > 5) {
+		stream << hasBumpTex;
+		if (hasBumpTex) {
+			bumpTex.Put(stream);
+			stream << lumaScale;
+			stream << lumaOffset;
+			stream << bumpMatrix;
+		}
+	}
+
+	if (textureCount > 6) {
+		stream << hasNormalTex;
+		if (hasNormalTex)
+			normalTex.Put(stream);
+	}
+
+	if (textureCount > 7) {
+		stream << hasParallaxTex;
+		if (hasParallaxTex) {
+			parallaxTex.Put(stream);
+			stream << parallaxFloat;
+		}
+	}
+
+	if (textureCount > 8) {
+		stream << hasDecalTex0;
+		if (hasDecalTex0)
+			decalTex0.Put(stream);
+	}
 
 	if (textureCount > 9) {
 		stream << hasDecalTex1;
@@ -185,7 +221,7 @@ void NiTexturingProperty::GetChildRefs(std::set<Ref*>& refs) {
 	glowTex.GetChildRefs(refs);
 	bumpTex.GetChildRefs(refs);
 	normalTex.GetChildRefs(refs);
-	unkTex.GetChildRefs(refs);
+	parallaxTex.GetChildRefs(refs);
 	decalTex0.GetChildRefs(refs);
 	decalTex1.GetChildRefs(refs);
 	decalTex2.GetChildRefs(refs);
@@ -981,9 +1017,7 @@ void NiAlphaProperty::Put(NiStream& stream) {
 void NiMaterialProperty::Get(NiStream& stream) {
 	NiProperty::Get(stream);
 
-	NiVersion& version = stream.GetVersion();
-
-	if (!(version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)) {
+	if (stream.GetVersion().Stream() < 26) {
 		stream >> colorAmbient;
 		stream >> colorDiffuse;
 	}
@@ -993,15 +1027,14 @@ void NiMaterialProperty::Get(NiStream& stream) {
 	stream >> glossiness;
 	stream >> alpha;
 
-	if (version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)
+	if (stream.GetVersion().Stream() > 21)
 		stream >> emitMulti;
 }
 
 void NiMaterialProperty::Put(NiStream& stream) {
 	NiProperty::Put(stream);
 
-	NiVersion& version = stream.GetVersion();
-	if (!(version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)) {
+	if (stream.GetVersion().Stream() < 26) {
 		stream << colorAmbient;
 		stream << colorDiffuse;
 	}
@@ -1011,7 +1044,7 @@ void NiMaterialProperty::Put(NiStream& stream) {
 	stream << glossiness;
 	stream << alpha;
 
-	if (version.File() == V20_2_0_7 && version.User() >= 11 && version.Stream() > 21)
+	if (stream.GetVersion().Stream() > 21)
 		stream << emitMulti;
 }
 
