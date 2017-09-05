@@ -134,6 +134,7 @@ void main(void)
 	else
 	{
 		viewDir = normalize(-vPos);
+		lightFrontal = normalize(mat3(matModelView) * frontal.direction);
 		lightDirectional0 = normalize(mat3(matModelView) * directional0.direction);
 		lightDirectional1 = normalize(mat3(matModelView) * directional1.direction);
 		lightDirectional2 = normalize(mat3(matModelView) * directional2.direction);
