@@ -1601,10 +1601,16 @@ bool NifFile::RenameDuplicateShapes() {
 			return ptrdiff_t(0);
 
 		std::vector<std::string> names;
+		std::set<int> uniqueRefs;
 		for (auto &child : parent->GetChildren()) {
-			auto obj = hdr.GetBlock<NiAVObject>(child.GetIndex());
-			if (obj)
-				names.push_back(obj->GetName());
+			int childIndex = child.GetIndex();
+			auto obj = hdr.GetBlock<NiAVObject>(childIndex);
+			if (obj) {
+				if (uniqueRefs.find(childIndex) == uniqueRefs.end()) {
+					names.push_back(obj->GetName());
+					uniqueRefs.insert(childIndex);
+				}
+			}
 		}
 
 		return std::count(names.begin(), names.end(), name);
