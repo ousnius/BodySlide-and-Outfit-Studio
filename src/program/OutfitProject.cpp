@@ -1758,7 +1758,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 		NiShape* shape = workNif.FindShapeByName(shapeName);
 		if (shape) {
 			NiShader* shader = workNif.GetShader(shape);
-			if (shader && shader->IsSkinTint()) {
+			if (shader && shader->IsSkinTinted()) {
 				newBaseShape = shapeName;
 				break;
 			}
@@ -1771,7 +1771,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 			NiShape* shape = workNif.FindShapeByName(shapeTarget->second);
 			if (shape) {
 				NiShader* shader = workNif.GetShader(shape);
-				if (shader && shader->IsSkinTint()) {
+				if (shader && shader->IsSkinTinted()) {
 					newBaseShape = shapeTarget->second;
 					break;
 				}
@@ -1911,9 +1911,11 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& sha
 	for (auto &m : shapeMeshes) {
 		NiShape* shape = nif->FindShapeByName(m->shapeName);
 		if (shape) {
-			NiShader* shader = nif->GetShader(shape);
-			if (shader && shader->IsSkinTint() && (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE))
-				continue;
+			if (nif->GetHeader().GetVersion().IsSK() || nif->GetHeader().GetVersion().IsSSE()) {
+				NiShader* shader = nif->GetShader(shape);
+				if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
+					continue;
+			}
 
 			liveNorms.clear();
 			for (int i = 0; i < m->nVerts; i++)
@@ -2051,9 +2053,11 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 			clone.SetVertsForShape(m->shapeName, liveVerts);
 
 			if (writeNormals) {
-				NiShader* shader = clone.GetShader(shape);
-				if (shader && shader->IsSkinTint() && (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE))
-					continue;
+				if (clone.GetHeader().GetVersion().IsSK() || clone.GetHeader().GetVersion().IsSSE()) {
+					NiShader* shader = clone.GetShader(shape);
+					if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
+						continue;
+				}
 
 				clone.SetNormalsForShape(m->shapeName, liveNorms);
 				clone.CalcTangentsForShape(m->shapeName);

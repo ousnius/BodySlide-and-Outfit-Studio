@@ -983,8 +983,8 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 		shape->SetShaderPropertyRef(shaderId);
 
 	// Kill normals and tangents
-	if (destShader->IsSkinTint() && hdr.GetVersion().User() >= 12) {
-		if (shape->HasType<NiTriBasedGeom>()) {
+	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
+		if (destShader->IsSkinTinted() || destShader->IsFaceTinted()) {
 			shape->SetNormals(false);
 			shape->SetTangents(false);
 		}
@@ -2548,9 +2548,9 @@ void NifFile::CalcNormalsForShape(const std::string& shapeName, const bool smoot
 	if (!shape)
 		return;
 
-	if (hdr.GetVersion().User() == 12 && hdr.GetVersion().Stream() <= 100) {
+	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
 		NiShader* shader = GetShader(shape);
-		if (shader && shader->IsSkinTint())
+		if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
 			return;
 	}
 

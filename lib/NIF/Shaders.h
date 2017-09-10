@@ -286,7 +286,8 @@ public:
 
 class NiShader : public NiProperty {
 public:
-	virtual bool IsSkinTint() { return false; }
+	virtual bool IsSkinTinted() { return false; }
+	virtual bool IsFaceTinted() { return false; }
 	virtual bool IsSkinned() { return false; }
 	virtual void SetSkinned(const bool) {}
 	virtual bool IsDoubleSided() { return false; }
@@ -342,7 +343,8 @@ public:
 
 	uint GetShaderType();
 	void SetShaderType(const uint type);
-	bool IsSkinTint();
+	bool IsSkinTinted();
+	bool IsFaceTinted();
 	bool IsSkinned();
 	void SetSkinned(const bool enable);
 	bool IsDoubleSided();
@@ -486,7 +488,8 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSLightingShaderProperty* Clone() { return new BSLightingShaderProperty(*this); }
 
-	bool IsSkinTint();
+	bool IsSkinTinted();
+	bool IsFaceTinted();
 	bool HasGlowmap();
 	bool HasEnvironmentMapping();
 	uint GetShaderType();
@@ -634,7 +637,6 @@ public:
 	void Put(NiStream& stream);
 	BSShaderNoLightingProperty* Clone() { return new BSShaderNoLightingProperty(*this); }
 
-	bool IsSkinTint();
 	bool IsSkinned();
 	void SetSkinned(const bool enable);
 };
@@ -658,7 +660,6 @@ public:
 	void GetChildRefs(std::set<Ref*>& refs);
 	BSShaderPPLightingProperty* Clone() { return new BSShaderPPLightingProperty(*this); }
 
-	bool IsSkinTint();
 	bool IsSkinned();
 	void SetSkinned(const bool enable);
 	int GetTextureSetRef();

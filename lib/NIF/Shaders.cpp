@@ -345,8 +345,12 @@ void BSShaderProperty::SetShaderType(uint type) {
 	shaderType = (BSShaderType)type;
 }
 
-bool BSShaderProperty::IsSkinTint() {
-	return (shaderFlags1 & (1 << 21)) != 0;
+bool BSShaderProperty::IsSkinTinted() {
+	return shaderType == SHADER_SKIN;
+}
+
+bool BSShaderProperty::IsFaceTinted() {
+	return shaderType == SHADER_SKIN;
 }
 
 bool BSShaderProperty::IsSkinned() {
@@ -668,8 +672,12 @@ void BSLightingShaderProperty::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&textureSetRef);
 }
 
-bool BSLightingShaderProperty::IsSkinTint() {
-	return bslspShaderType == BSLSP_SKINTINT && BSShaderProperty::IsSkinTint();
+bool BSLightingShaderProperty::IsSkinTinted() {
+	return bslspShaderType == BSLSP_SKINTINT;
+}
+
+bool BSLightingShaderProperty::IsFaceTinted() {
+	return bslspShaderType == BSLSP_FACE;
 }
 
 bool BSLightingShaderProperty::HasGlowmap() {
@@ -933,10 +941,6 @@ void BSShaderPPLightingProperty::GetChildRefs(std::set<Ref*>& refs) {
 	refs.insert(&textureSetRef);
 }
 
-bool BSShaderPPLightingProperty::IsSkinTint() {
-	return shaderType == 0x0000000e;
-}
-
 bool BSShaderPPLightingProperty::IsSkinned() {
 	return (shaderFlags1 & (1 << 1)) != 0;
 }
@@ -981,10 +985,6 @@ void BSShaderNoLightingProperty::Put(NiStream& stream) {
 		stream << falloffStartOpacity;
 		stream << falloffStopOpacity;
 	}
-}
-
-bool BSShaderNoLightingProperty::IsSkinTint() {
-	return shaderType == 0x0000000e;
 }
 
 bool BSShaderNoLightingProperty::IsSkinned() {
