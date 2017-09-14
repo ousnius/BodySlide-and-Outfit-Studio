@@ -6,10 +6,6 @@ See the included LICENSE file
 
 #pragma once
 
-#pragma warning (push, 0)
-#include "../gli/glm/gtc/matrix_transform.hpp"
-#pragma warning (pop)
-
 #include "../NIF/utils/Object3d.h"
 #include "../components/Mesh.h"
 #include "GLExtensions.h"
@@ -68,7 +64,7 @@ public:
 	void SetPointsEnabled(const bool enable);
 	void SetLightingEnabled(const bool enable);
 	void SetMatrixProjection(const glm::mat4x4& mat);
-	void SetMatrixModelView(const glm::mat4x4& mat);
+	void SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4& matModel);
 	void SetAlphaProperties(const ushort flags, const float threshold);
 	void SetAlphaThreshold(const float threshold);
 

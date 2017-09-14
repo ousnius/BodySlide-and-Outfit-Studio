@@ -78,8 +78,8 @@ in vec3 b;
 in vec3 n;
 
 in float maskFactor;
-in vec4 weightColor;
-in vec4 segmentColor;
+in vec3 weightColor;
+in vec3 segmentColor;
 
 in vec4 vColor;
 in vec2 vUV;
@@ -297,11 +297,11 @@ void main(void)
 					segmentColor.rb != normalize(segmentColor.rb) &&
 					segmentColor.gb != normalize(segmentColor.gb))
 				{
-					color *= weightColor;
+					color.rgb *= weightColor;
 				}
 				else
 				{
-					color *= segmentColor;
+					color.rgb *= segmentColor;
 				}
 			}
 			else
@@ -313,7 +313,7 @@ void main(void)
 				
 				if (bShowWeight)
 				{
-					color *= weightColor;
+					color.rgb *= weightColor;
 				}
 			}
 		}

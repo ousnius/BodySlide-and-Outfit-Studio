@@ -11,6 +11,11 @@ See the included LICENSE file
 #include "../render/GLExtensions.h"
 #include "../files/MaterialFile.h"
 
+#pragma warning (push, 0)
+#include "../gli/glm/gtc/matrix_transform.hpp"
+#include "../gli/glm/gtx/euler_angles.hpp"
+#pragma warning (pop)
+
 #include <unordered_map>
 #include <unordered_set>
 #include <set>
@@ -58,6 +63,8 @@ public:
 		float fresnelPower = 5.0f;
 		float paletteScale = 0.0f;
 	};
+
+	glm::mat4x4 matModel;
 
 	int nVerts = 0;
 	std::unique_ptr<Vector3[]> verts;

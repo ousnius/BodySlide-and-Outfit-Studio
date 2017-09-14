@@ -15,8 +15,8 @@ class GLSurface {
 	wxGLCanvas* canvas = nullptr;
 	wxGLContext* context = nullptr;
 
-	glm::mat4x4 projection;
-	glm::mat4x4 modelView;
+	glm::mat4x4 matProjection;
+	glm::mat4x4 matView;
 	bool perspective = true;
 	float mFov = 90.0f;
 	Vector3 camPos;
@@ -162,7 +162,8 @@ public:
 		for (auto &m : activeMeshes) {
 			for (int i = 0; i < m->nVerts; i++) {
 				if (!useMask || m->vcolors[i].x == 0.0f) {
-					total = total + m->verts[i];
+					glm::vec3 mv(m->matModel * glm::vec4(m->verts[i].x, m->verts[i].y, m->verts[i].z, 1.0));
+					total = total + Vector3(mv.x, mv.y, mv.z);
 					count++;
 				}
 			}
@@ -232,7 +233,7 @@ public:
 	void UpdateLights(const int ambient, const int frontal, const int directional0, const int directional1, const int directional2,
 		const Vector3& directional0Dir, const Vector3& directional1Dir, const Vector3& directional2Dir);
 
-	void GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos);
+	void GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
 	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr);
@@ -241,9 +242,9 @@ public:
 	// Ray/mesh collision detection. From a screen point, calculates a ray and finds the nearest collision point and surface normal on
 	// the active mesh. Optionally, the ray and ray origin can be provided, which skips the internal call to GetPickRay.
 	// Screen x/y are ignored if the ray is provided.
-	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr, Vector3* inRayDir = nullptr, Vector3* inRayOrigin = nullptr);
+	bool CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, bool mirrored = false, mesh** hitMesh = nullptr, bool allMeshes = true, int* outFacet = nullptr);
 	bool CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist);
-	bool CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr, Vector3* inRayDir = 0, Vector3* inRayOrigin = 0);
+	bool CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh = nullptr, int* outFacet = nullptr);
 
 	int AddVisCircle(const Vector3& center, const Vector3& normal, float radius, const std::string& name = "RingMesh");
 	mesh* AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name);

@@ -12,7 +12,7 @@ void main(void)
 	if (bPoints)
 	{
 		// Calculate normal from coord
-		vec2 norm = gl_PointCoord* 2.0 - vec2(1.0); 
+		vec2 norm = gl_PointCoord * 2.0 - vec2(1.0); 
 		float mag = dot(norm, norm);
 		if (mag > 1.0) 
 			discard; // Kill pixels outside point

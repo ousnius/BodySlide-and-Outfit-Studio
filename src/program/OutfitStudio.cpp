@@ -6174,13 +6174,11 @@ void wxGLPanel::OnKeys(wxKeyEvent& event) {
 bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	Vector3 o;
 	Vector3 n;
-	Vector3 v;
-	Vector3 vo;
 	Vector3 d;
 	Vector3 s;
 
 	TweakPickInfo tpi;
-	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, bGlobalBrushCollision, &tpi.facet);
+	bool hit = gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
 	if (!hit)
 		return false;
 
@@ -6188,18 +6186,17 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 		return false;
 
 	if (bXMirror) {
-		gls.GetPickRay(screenPos.x, screenPos.y, d, s);
-		d.x *= -1;
-		s.x *= -1;
-		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, bGlobalBrushCollision, &tpi.facetM, &d, &s))
+		if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
 			tpi.facetM = -1;
 	}
 
 	n.Normalize();
 
-	wxRect r = GetClientRect();
-	gls.GetPickRay(screenPos.x, screenPos.y, v, vo);
-	v = v * -1;
+	Vector3 v;
+	Vector3 vo;
+	gls.GetPickRay(screenPos.x, screenPos.y, nullptr, v, vo);
+
+	v = v * -1.0f;
 	tpi.view = v;
 
 	savedBrush = activeBrush;
@@ -6259,27 +6256,22 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 	activeBrush->setRadius(brushSize);
 	activeBrush->setLiveNormals(bAutoNormals);
 	activeStroke->beginStroke(tpi);
-	activeStroke->updateStroke(tpi);
+
+	if (activeBrush->Type() != TBT_MOVE)
+		activeStroke->updateStroke(tpi);
+
 	return true;
 }
 
 void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 	Vector3 o;
 	Vector3 n;
-	Vector3 v;
-	Vector3 vo;
-
 	Vector3 d;	// Mirror pick ray direction.
 	Vector3 s;	// Mirror pick ray origin.
 
 	TweakPickInfo tpi;
 
 	if (activeStroke) {
-		wxRect r = GetClientRect();
-		int cx = r.GetWidth() / 2;
-		int cy = r.GetHeight() / 2;
-		gls.GetPickRay(cx, cy, v, vo);
-
 		bool hit = gls.UpdateCursor(screenPos.x, screenPos.y, bGlobalBrushCollision);
 		gls.RenderOneFrame();
 
@@ -6293,18 +6285,19 @@ void wxGLPanel::UpdateBrushStroke(const wxPoint& screenPos) {
 			if (!hit)
 				return;
 
-			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, nullptr, bGlobalBrushCollision, &tpi.facet);
+			gls.CollideMeshes(screenPos.x, screenPos.y, tpi.origin, tpi.normal, false, nullptr, bGlobalBrushCollision, &tpi.facet);
 			if (bXMirror) {
-				gls.GetPickRay(screenPos.x, screenPos.y, d, s);
-				d.x *= -1;
-				s.x *= -1;
-				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, nullptr, bGlobalBrushCollision, &tpi.facetM, &d, &s))
+				if (!gls.CollideMeshes(screenPos.x, screenPos.y, o, n, true, nullptr, bGlobalBrushCollision, &tpi.facetM))
 					tpi.facetM = -1;
 			}
 			tpi.normal.Normalize();
 		}
 
-		v = v * -1;
+		Vector3 v;
+		Vector3 vo;
+		gls.GetPickRay(screenPos.x, screenPos.y, nullptr, v, vo);
+
+		v = v * -1.0f;
 		tpi.view = v;
 		activeStroke->updateStroke(tpi);
 
@@ -6442,7 +6435,6 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), &translateBrush);
 
 	activeStroke->beginStroke(tpi);
-	activeStroke->updateStroke(tpi);
 
 	XMoveMesh->bVisible = false;
 	YMoveMesh->bVisible = false;
@@ -6580,8 +6572,13 @@ bool wxGLPanel::RedoStroke() {
 void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
 	std::string mode = Config.GetString("Editing/CenterMode");
 	if (mode == "Object") {
-		if (!gls.GetActiveMeshes().empty())
-			xformCenter = gls.GetActiveMeshes().back()->CreateBVH()->Center();
+		if (!gls.GetActiveMeshes().empty()) {
+			mesh* m = gls.GetActiveMeshes().back();
+			xformCenter = m->CreateBVH()->Center();
+
+			glm::vec3 cm(m->matModel * glm::vec4(xformCenter.x, xformCenter.y, xformCenter.z, 1.0));
+			xformCenter = Vector3(cm.x, cm.y, cm.z);
+		}
 	}
 	else if (mode == "Selected")
 		xformCenter = gls.GetActiveCenter();

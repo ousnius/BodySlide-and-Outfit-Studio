@@ -153,8 +153,8 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	int brushType = refBrush->Type();
 
 	TweakPickInfo mirrorPick = pickInfo;
-	mirrorPick.origin.x *= -1;
-	mirrorPick.normal.x *= -1;
+	mirrorPick.origin.x *= -1.0f;
+	mirrorPick.normal.x *= -1.0f;
 	mirrorPick.facet = pickInfo.facetM;
 
 	if (!newStroke) {
@@ -175,9 +175,17 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 	// Move/transform handles most operations differently than other brushes.
 	// Mirroring is done internally, most of the pick info values are ignored.
 	if (brushType == TBT_MOVE || brushType == TBT_XFORM) {
+		Vector3 originSave = pickInfo.origin;
+		Vector3 centerSave = pickInfo.center;
 		for (auto &m : refMeshes) {
 			std::vector<int> facets;
 			int nPts1 = 0;
+
+			// Get rid of model space from collision again
+			if (brushType == TBT_MOVE) {
+				glm::vec4 morigin = glm::inverse(m->matModel) * glm::vec4(originSave.x, originSave.y, originSave.z, 1.0f);
+				pickInfo.origin = Vector3(morigin.x, morigin.y, morigin.z);
+			}
 
 			if (!refBrush->queryPoints(m, pickInfo, nullptr, nPts1, facets, affectedNodes[m]))
 				continue;
@@ -195,6 +203,8 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 				normalUpdates.push_back(std::move(pending));
 			}
 		}
+		pickInfo.origin = originSave;
+		pickInfo.center = centerSave;
 	}
 	else {
 		for (auto &m : refMeshes) {
@@ -1065,26 +1075,30 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3*
 	dv.y *= pick.view.y;
 	dv.z *= pick.view.z;
 
-	Matrix4 xform;
+	glm::vec4 mcenter = glm::inverse(m->matModel) * glm::vec4(pick.center.x, pick.center.y, pick.center.z, 1.0f);
+	Vector3 center = Vector3(mcenter.x, mcenter.y, mcenter.z);
 
+	Matrix4 xform;
 	if (xformType == 0) {
 		xform.Translate(dv * strength);
 	}
 	else if (xformType == 1) {
-		xform.PushTranslate(pick.center);
-		Vector3 a = pick.origin - pick.center;
-		Vector3 b = pickInfo.origin - pick.center;
+		xform.PushTranslate(center);
+
+		Vector3 a = pick.origin - center;
+		Vector3 b = pickInfo.origin - center;
 		Vector3 dir = a.cross(b);
 		float sign = dir.dot(pick.normal);
-		float angle = a.angle(pickInfo.origin - pick.center);
+		float angle = a.angle(pickInfo.origin - center);
 		if (sign < 0)
 			angle = -angle;
 
 		xform.PushRotate(angle, pick.normal);
-		xform.PushTranslate(pick.center * -1.0f);
+		xform.PushTranslate(center * -1.0f);
 	}
 	else if (xformType == 2) {
-		xform.PushTranslate(pick.center);
+		xform.PushTranslate(center);
+
 		Vector3 dist(1.0f, 1.0f, 1.0f);
 		if (fabs(dv.x) > EPSILON)
 			dist.x = fabs(1.0f + dv.x / 10.0f);
@@ -1094,12 +1108,15 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3*
 			dist.z = fabs(1.0f + dv.z / 10.0f);
 
 		xform.PushScale(dist.x, dist.y, dist.z);
-		xform.PushTranslate(pick.center * -1.0f);
+		xform.PushTranslate(center * -1.0f);
 	}
 	else if (xformType == 3) {
-		xform.PushTranslate(pick.center);
-		Vector3 a = pick.origin - pick.center;
-		Vector3 b = pickInfo.origin - pick.center;
+		xform.PushTranslate(center);
+
+		glm::vec4 morigin1 = glm::inverse(m->matModel) * glm::vec4(pick.origin.x, pick.origin.y, pick.origin.z, 1.0f);
+		glm::vec4 morigin2 = glm::inverse(m->matModel) * glm::vec4(pickInfo.origin.x, pickInfo.origin.y, pickInfo.origin.z, 1.0f);
+		Vector3 a = Vector3(morigin1.x, morigin1.y, morigin1.z) - center;
+		Vector3 b = Vector3(morigin2.x, morigin2.y, morigin2.z) - center;
 		Vector3 dist = a + b;
 
 		float scale = (dist.x + dist.y) / 2.0f;
@@ -1107,7 +1124,7 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3*
 		if (scale > EPSILON)
 			xform.PushScale(scale, scale, scale);
 
-		xform.PushTranslate(pick.center * -1.0f);
+		xform.PushTranslate(center * -1.0f);
 	}
 
 	Vector3 vs;

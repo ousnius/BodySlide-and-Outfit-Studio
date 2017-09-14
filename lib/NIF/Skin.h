@@ -63,6 +63,35 @@ struct SkinTransform {
 		m[11] = translation.z;
 		return m;
 	}
+
+	bool ToEulerDegrees(float &Y, float& P, float& R) {
+		float rx, ry, rz;
+		bool canRot = false;
+
+		if (rotation[0].z < 1.0f) {
+			if (rotation[0].z > -1.0f) {
+				rx = atan2(-rotation[1].z, rotation[2].z);
+				ry = asin(rotation[0].z);
+				rz = atan2(-rotation[0].y, rotation[0].x);
+				canRot = true;
+			}
+			else {
+				rx = -atan2(-rotation[1].x, rotation[1].y);
+				ry = -PI / 2.0f;
+				rz = 0.0f;
+			}
+		}
+		else {
+			rx = atan2(rotation[1].x, rotation[1].y);
+			ry = PI / 2.0f;
+			rz = 0.0f;
+		}
+
+		Y = rx * 180.0f / PI;
+		P = ry * 180.0f / PI;
+		R = rz * 180.0f / PI;
+		return canRot;
+	}
 };
 
 struct SkinWeight {

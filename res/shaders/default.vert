@@ -8,6 +8,8 @@
  */
 
 uniform mat4 matProjection;
+uniform mat4 matView;
+uniform mat4 matModel;
 uniform mat4 matModelView;
 uniform vec3 color;
 
@@ -49,13 +51,13 @@ out vec3 b;
 out vec3 n;
 
 out float maskFactor;
-out vec4 weightColor;
-out vec4 segmentColor;
+out vec3 weightColor;
+out vec3 segmentColor;
 
 out vec4 vColor;
 out vec2 vUV;
 
-vec4 colorRamp(in float value)
+vec3 colorRamp(in float value)
 {
 	float r;
 	float g;
@@ -90,15 +92,15 @@ vec4 colorRamp(in float value)
 		b = 0.0;
 	}
 
-	return vec4(r, g, b, 1.0);
+	return vec3(r, g, b);
 }
 
 void main(void)
 {
 	// Initialization
 	maskFactor = 1.0;
-	weightColor = vec4(1.0, 1.0, 1.0, 1.0);
-	segmentColor = vec4(1.0, 1.0, 1.0, 1.0);
+	weightColor = vec3(1.0, 1.0, 1.0);
+	segmentColor = vec3(1.0, 1.0, 1.0);
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vUV = vertexUV;
 	
@@ -112,32 +114,37 @@ void main(void)
 	
 	if (!bModelSpace)
 	{
-		mat3 normalMatrix = transpose(inverse(mat3(matModelView)));
-		vec3 n_normal = normalize(normalMatrix * n);
-		vec3 n_tangent = normalize(normalMatrix * t);
-		vec3 n_bitangent = normalize(normalMatrix * b);
+		mat3 mv_normalMatrix = transpose(inverse(mat3(matModelView)));
+		vec3 mv_normal = normalize(mv_normalMatrix * n);
+		vec3 mv_tangent = normalize(mv_normalMatrix * t);
+		vec3 mv_bitangent = normalize(mv_normalMatrix * b);
 		
-		mat3 tbn = mat3(n_bitangent.x, n_tangent.x, n_normal.x,
-                        n_bitangent.y, n_tangent.y, n_normal.y,
-                        n_bitangent.z, n_tangent.z, n_normal.z);
-						
-		mat3 tbnDir = mat3(b.x, t.x, n.x,
-                           b.y, t.y, n.y,
-                           b.z, t.z, n.z);
+		mat3 mv_tbn = mat3(mv_bitangent.x, mv_tangent.x, mv_normal.x,
+                           mv_bitangent.y, mv_tangent.y, mv_normal.y,
+                           mv_bitangent.z, mv_tangent.z, mv_normal.z);
 						   
-		viewDir = normalize(tbn * -vPos);
-		lightFrontal = normalize(tbn * frontal.direction);
-		lightDirectional0 = normalize(tbnDir * directional0.direction);
-		lightDirectional1 = normalize(tbnDir * directional1.direction);
-		lightDirectional2 = normalize(tbnDir * directional2.direction);
+		mat3 m_normalMatrix = transpose(inverse(mat3(matModel)));
+		vec3 m_normal = normalize(m_normalMatrix * n);
+		vec3 m_tangent = normalize(m_normalMatrix * t);
+		vec3 m_bitangent = normalize(m_normalMatrix * b);
+		
+		mat3 m_tbn = mat3(m_bitangent.x, m_tangent.x, m_normal.x,
+                          m_bitangent.y, m_tangent.y, m_normal.y,
+                          m_bitangent.z, m_tangent.z, m_normal.z);
+						  
+		viewDir = normalize(mv_tbn * -vPos);
+		lightFrontal = normalize(mv_tbn * frontal.direction);
+		lightDirectional0 = normalize(m_tbn * directional0.direction);
+		lightDirectional1 = normalize(m_tbn * directional1.direction);
+		lightDirectional2 = normalize(m_tbn * directional2.direction);
 	}
 	else
 	{
 		viewDir = normalize(-vPos);
-		lightFrontal = normalize(mat3(matModelView) * frontal.direction);
-		lightDirectional0 = normalize(mat3(matModelView) * directional0.direction);
-		lightDirectional1 = normalize(mat3(matModelView) * directional1.direction);
-		lightDirectional2 = normalize(mat3(matModelView) * directional2.direction);
+		lightFrontal = normalize(frontal.direction);
+		lightDirectional0 = normalize(mat3(matView) * directional0.direction);
+		lightDirectional1 = normalize(mat3(matView) * directional1.direction);
+		lightDirectional2 = normalize(mat3(matView) * directional2.direction);
 	}
 
 	if (!bPoints)

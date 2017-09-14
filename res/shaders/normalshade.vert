@@ -1,6 +1,6 @@
 #version 330
 uniform mat4 matProjection;
-uniform mat4 matModelView;
+uniform mat4 matView;
 uniform vec3 color;
 
 uniform bool bLightEnabled;
@@ -25,8 +25,8 @@ out vec2 uv;
 void main(void)
 {
 	N = vertexNormal;
-	vPos =  vec3(matModelView * vec4(vertexPosition, 1.0));
-	v = vec3(matModelView * vec4(vertexUV, 0.0, 1.0));
+	vPos =  vec3(matView * vec4(vertexPosition, 1.0));
+	v = vec3(matView * vec4(vertexUV, 0.0, 1.0));
 	
 	uv = vertexUV;
 	gl_Position = matProjection * vec4(v, 1.0);

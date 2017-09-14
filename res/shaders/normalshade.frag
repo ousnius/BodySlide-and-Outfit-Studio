@@ -1,7 +1,7 @@
 #version 330
 uniform sampler2D texNormal;
 uniform sampler2D texAlphaMask;
-uniform mat4 matModelView;
+uniform mat4 matView;
 uniform bool bModelSpace;
 uniform bool bAlphaMask;
 
@@ -104,7 +104,7 @@ void main(void)
 	
 	normalMap = texture(texNormal,uv);
 	
-	mat3 normalMatrix = transpose(inverse(mat3(matModelView)));
+	mat3 normalMatrix = transpose(inverse(mat3(matView)));
 	if(bModelSpace) {
 		norm = normalize(normalMap.rgb * 2.0 - 1.0);
 		norm.r = -norm.r;

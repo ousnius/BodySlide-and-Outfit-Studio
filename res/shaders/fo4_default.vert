@@ -8,6 +8,8 @@
  */
 
 uniform mat4 matProjection;
+uniform mat4 matView;
+uniform mat4 matModel;
 uniform mat4 matModelView;
 uniform vec3 color;
 
@@ -108,26 +110,30 @@ void main(void)
 	t = vertexTangent;
 	b = vertexBitangent;
 	n = vertexNormal;
-
-	mat3 normalMatrix = transpose(inverse(mat3(matModelView)));
-	vec3 n_normal = normalize(normalMatrix * n);
-	vec3 n_tangent = normalize(normalMatrix * t);
-	vec3 n_bitangent = normalize(normalMatrix * b);
 	
-	mat3 tbn = mat3(n_tangent.x, n_bitangent.x, n_normal.x,
-                    n_tangent.y, n_bitangent.y, n_normal.y,
-                    n_tangent.z, n_bitangent.z, n_normal.z);
-			   
-	viewDir = normalize(tbn * -vPos);
-	lightFrontal = normalize(tbn * frontal.direction);
+	mat3 mv_normalMatrix = transpose(inverse(mat3(matModelView)));
+	vec3 mv_normal = normalize(mv_normalMatrix * n);
+	vec3 mv_tangent = normalize(mv_normalMatrix * t);
+	vec3 mv_bitangent = normalize(mv_normalMatrix * b);
 	
-	mat3 tbnDir = mat3(t.x, b.x, n.x,
-                       t.y, b.y, n.y,
-                       t.z, b.z, n.z);
-					
-	lightDirectional0 = normalize(tbnDir * directional0.direction);
-	lightDirectional1 = normalize(tbnDir * directional1.direction);
-	lightDirectional2 = normalize(tbnDir * directional2.direction);
+	mat3 mv_tbn = mat3(mv_tangent.x, mv_bitangent.x, mv_normal.x,
+                       mv_tangent.y, mv_bitangent.y, mv_normal.y,
+                       mv_tangent.z, mv_bitangent.z, mv_normal.z);
+					   
+	mat3 m_normalMatrix = transpose(inverse(mat3(matModel)));
+	vec3 m_normal = normalize(m_normalMatrix * n);
+	vec3 m_tangent = normalize(m_normalMatrix * t);
+	vec3 m_bitangent = normalize(m_normalMatrix * b);
+	
+	mat3 m_tbn = mat3(m_tangent.x, m_bitangent.x, m_normal.x,
+                      m_tangent.y, m_bitangent.y, m_normal.y,
+                      m_tangent.z, m_bitangent.z, m_normal.z);
+					  
+	viewDir = normalize(mv_tbn * -vPos);
+	lightFrontal = normalize(mv_tbn * frontal.direction);
+	lightDirectional0 = normalize(m_tbn * directional0.direction);
+	lightDirectional1 = normalize(m_tbn * directional1.direction);
+	lightDirectional2 = normalize(m_tbn * directional2.direction);
 
 	if (!bPoints)
 	{

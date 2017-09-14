@@ -219,7 +219,7 @@ void GLSurface::DollyCamera(int dAmt) {
 void GLSurface::UnprojectCamera(Vector3& result) {
 	glm::vec4 vp(0.0f, 0.0f, (float)vpW, (float)vpH);
 	glm::vec3 win(vp[2] / 2.0f, vp[3] / 2.0f, 0.0f);
-	glm::vec3 res = glm::unProject(win, modelView, projection, vp);
+	glm::vec3 res = glm::unProject(win, matView, matProjection, vp);
 
 	result.x = res.x;
 	result.y = res.y;
@@ -274,14 +274,21 @@ void GLSurface::UpdateLights(const int ambient, const int frontal, const int dir
 	directionalLight2.direction.Normalize();
 }
 
-void GLSurface::GetPickRay(int ScreenX, int ScreenY, Vector3& dirVect, Vector3& outNearPos) {
+void GLSurface::GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos) {
 	glm::vec4 vp(0.0f, 0.0f, (float)vpW, (float)vpH);
-
 	glm::vec3 winS(ScreenX, vp[3] - ScreenY, 0.0f);
-	glm::vec3 resS = glm::unProject(winS, modelView, projection, vp);
-
 	glm::vec3 winD(ScreenX, vp[3] - ScreenY, 1.0f);
-	glm::vec3 resD = glm::unProject(winD, modelView, projection, vp);
+
+	glm::vec3 resS;
+	glm::vec3 resD;
+	if (m) {
+		resS = glm::unProject(winS, matView * m->matModel, matProjection, vp);
+		resD = glm::unProject(winD, matView * m->matModel, matProjection, vp);
+	}
+	else {
+		resS = glm::unProject(winS, matView, matProjection, vp);
+		resD = glm::unProject(winD, matView, matProjection, vp);
+	}
 
 	dirVect.x = resD.x - resS.x;
 	dirVect.y = resD.y - resS.y;
@@ -300,13 +307,14 @@ int GLSurface::PickMesh(int ScreenX, int ScreenY) {
 	float curd = FLT_MAX;
 	int result = -1;
 
-	GetPickRay(ScreenX, ScreenY, d, o);
 	std::vector<IntersectResult> results;
 
 	for (int i = 0; i < meshes.size(); i++) {
 		results.clear();
 		if (!meshes[i]->bVisible || !meshes[i]->bvh)
 			continue;
+
+		GetPickRay(ScreenX, ScreenY, meshes[i], d, o);
 
 		if (meshes[i]->bvh->IntersectRay(o, d, &results)) {
 			if (results[0].HitDistance < curd) {
@@ -319,20 +327,9 @@ int GLSurface::PickMesh(int ScreenX, int ScreenY) {
 	return result;
 }
 
-bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh, bool allMeshes, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
+bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, bool mirrored, mesh** hitMesh, bool allMeshes, int* outFacet) {
 	if (activeMeshes.empty())
 		return false;
-
-	Vector3 o;
-	Vector3 d;
-
-	if (!inRayDir) {
-		GetPickRay(ScreenX, ScreenY, d, o);
-	}
-	else {
-		d = (*inRayDir);
-		o = (*inRayOrigin);
-	}
 
 	bool collided = false;
 	std::unordered_map<mesh*, float> allHitDistances;
@@ -342,6 +339,15 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 
 		if (!allMeshes && m != selectedMesh)
 			continue;
+
+		Vector3 d;
+		Vector3 o;
+
+		GetPickRay(ScreenX, ScreenY, m, d, o);
+		if (mirrored) {
+			d.x *= -1.0f;
+			o.x *= -1.0f;
+		}
 
 		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
@@ -391,24 +397,17 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 	return collided;
 }
 
-bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh, int* outFacet, Vector3* inRayDir, Vector3* inRayOrigin) {
-	Vector3 o;
-	Vector3 d;
-
-	if (!inRayDir) {
-		GetPickRay(ScreenX, ScreenY, d, o);
-	}
-	else {
-		d = (*inRayDir);
-		o = (*inRayOrigin);
-	}
-
+bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vector3& outNormal, mesh** hitMesh, int* outFacet) {
 	bool collided = false;
 	std::unordered_map<mesh*, float> allHitDistances;
 	for (auto &ov : overlays) {
 		std::vector<IntersectResult> results;
 		if (!ov->bvh)
 			continue;
+
+		Vector3 o;
+		Vector3 d;
+		GetPickRay(ScreenX, ScreenY, ov, d, o);
 
 		if (ov->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
@@ -452,7 +451,7 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const Vector3& inPlaneNormal, float inPlaneDist) {
 	Vector3 o;
 	Vector3 d;
-	GetPickRay(ScreenX, ScreenY, d, o);
+	GetPickRay(ScreenX, ScreenY, nullptr, d, o);
 
 	float den = inPlaneNormal.dot(d);
 	if (fabs(den) < .00001)
@@ -469,11 +468,6 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 	if (activeMeshes.empty())
 		return ret;
 
-	Vector3 o;
-	Vector3 d;
-	Vector3 v;
-	Vector3 vo;
-
 	if (outHoverTri)
 		(*outHoverTri) = -1;
 	if (outHoverWeight)
@@ -481,12 +475,14 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 	if (outHoverMask)
 		(*outHoverMask) = 0.0f;
 
-	GetPickRay(ScreenX, ScreenY, d, o);
-
 	std::unordered_map<mesh*, Vector3> allHitDistances;
 	for (auto &m : activeMeshes) {
 		if (!allMeshes && m != selectedMesh)
 			continue;
+
+		Vector3 o;
+		Vector3 d;
+		GetPickRay(ScreenX, ScreenY, m, d, o);
 
 		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
@@ -503,8 +499,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 
 				Vector3 origin = results[min_i].HitCoord;
 
-				Triangle t;
-				t = m->tris[results[min_i].HitFacet];
+				Triangle t = m->tris[results[min_i].HitFacet];
 
 				Vector3 hilitepoint = m->verts[t.p1];
 				float closestdist = fabs(m->verts[t.p1].DistanceTo(origin));
@@ -541,12 +536,16 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 					if (hitMeshName)
 						(*hitMeshName) = m->shapeName;
 
+					glm::vec3 orig(m->matModel * glm::vec4(origin.x, origin.y, origin.z, 1.0f));
+					origin = Vector3(orig.x, orig.y, orig.z);
+
 					Vector3 norm;
 					m->tris[results[min_i].HitFacet].trinormal(m->verts.get(), &norm);
-					int ringID = AddVisCircle(results[min_i].HitCoord, norm, cursorSize, "cursormesh");
+					int ringID = AddVisCircle(origin, norm, cursorSize, "cursormesh");
 					overlays[ringID]->scale = 2.0f;
 
-					AddVisPoint(hilitepoint, "pointhilite");
+					glm::vec3 hl(m->matModel * glm::vec4(hilitepoint.x, hilitepoint.y, hilitepoint.z, 1.0f));
+					AddVisPoint(Vector3(hl.x, hl.y, hl.z), "pointhilite");
 					AddVisPoint(origin, "cursorcenter")->color = Vector3(1.0f, 0.0f, 0.0f);
 				}
 
@@ -563,17 +562,14 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 	if (activeMeshes.empty())
 		return false;
 
-	Vector3 o;
-	Vector3 d;
-	Vector3 v;
-	Vector3 vo;
-
 	if (outIndex)
 		(*outIndex) = -1;
 
-	GetPickRay(ScreenX, ScreenY, d, o);
-
 	for (auto &m : activeMeshes) {
+		Vector3 o;
+		Vector3 d;
+		GetPickRay(ScreenX, ScreenY, m, d, o);
+
 		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
@@ -585,26 +581,21 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 
 				Vector3 origin = results[min_i].HitCoord;
 
-				Triangle t;
-				t = m->tris[results[min_i].HitFacet];
+				Triangle t = m->tris[results[min_i].HitFacet];
 
-				Vector3 hilitepoint = m->verts[t.p1];
 				float closestdist = fabs(m->verts[t.p1].DistanceTo(origin));
 				float nextdist = fabs(m->verts[t.p2].DistanceTo(origin));
 				int pointid = t.p1;
 
 				if (nextdist < closestdist) {
 					closestdist = nextdist;
-					hilitepoint = m->verts[t.p2];
 					pointid = t.p2;
 				}
 
 				nextdist = fabs(m->verts[t.p3].DistanceTo(origin));
 
-				if (nextdist < closestdist) {
-					hilitepoint = m->verts[t.p3];
+				if (nextdist < closestdist)
 					pointid = t.p3;
-				}
 
 				if (*outIndex)
 					(*outIndex) = pointid;
@@ -638,14 +629,14 @@ void GLSurface::GetSize(uint & w, uint & h)
 void GLSurface::UpdateProjection() {
 	float aspect = (float)vpW / (float)vpH;
 	if (perspective)
-		projection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 1000.0f);
+		matProjection = glm::perspective(glm::radians(mFov), aspect, 0.1f, 1000.0f);
 	else
-		projection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 1000.0f);
+		matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 1000.0f);
 
-	modelView = glm::translate(glm::mat4x4(), glm::vec3(camPos.x, camPos.y, camPos.z));
-	modelView = glm::rotate(modelView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
-	modelView = glm::rotate(modelView, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
-	modelView = glm::translate(modelView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
+	matView = glm::translate(glm::mat4x4(), glm::vec3(camPos.x, camPos.y, camPos.z));
+	matView = glm::rotate(matView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
+	matView = glm::rotate(matView, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
+	matView = glm::translate(matView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
 }
 
 void GLSurface::RenderFullScreenQuad(GLMaterial* renderShader, unsigned int w, unsigned int h) {	
@@ -688,11 +679,11 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 	//glClearColor(colorBackground.x, colorBackground.y, colorBackground.z, 0.0f);
 	//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// Set up orthographic projection and identity model view 
+	// Set up orthographic projection and identity view 
 
-	projection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -100.0f, 100.0f);
-	//projection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 100.0f);
-	modelView = glm::mat4x4();
+	matProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -100.0f, 100.0f);
+	//matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 100.0f);
+	matView = glm::mat4x4();
 
 	mesh* m = nullptr;
 	bool oldDS;
@@ -789,8 +780,8 @@ void GLSurface::RenderMesh(mesh* m) {
 	if (!shader.Begin())
 		return;
 
-	shader.SetMatrixProjection(projection);
-	shader.SetMatrixModelView(modelView);
+	shader.SetMatrixProjection(matProjection);
+	shader.SetMatrixModelView(matView, m->matModel);
 	shader.SetColor(m->color);
 	shader.SetModelSpace(m->modelSpace);
 	shader.SetSpecularEnabled(m->specular);
@@ -967,6 +958,38 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 
 	NiShape* shape = nif->FindShapeByName(shapeName);
 	if (shape) {
+		float y, p, r;
+		glm::mat4x4 matParents;
+		glm::mat4x4 matShape;
+		glm::mat4x4 matSkin;
+
+		if (!shape->IsSkinned()) {
+			NiNode* parent = nif->GetParentNode(shape);
+			while (parent) {
+				parent->rotToEulerDegrees(y, p, r);
+				matParents = glm::translate(matParents, glm::vec3(parent->translation.x / -10.0f, parent->translation.z / 10.0f, parent->translation.y / 10.0f));
+				matParents *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+				matParents = glm::scale(matParents, glm::vec3(parent->scale, parent->scale, parent->scale));
+				parent = nif->GetParentNode(parent);
+			}
+
+			matShape = glm::translate(matShape, glm::vec3(shape->translation.x / -10.0f, shape->translation.z / 10.0f, shape->translation.y / 10.0f));
+			shape->rotToEulerDegrees(y, p, r);
+			matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+			matShape = glm::scale(matShape, glm::vec3(shape->scale, shape->scale, shape->scale));
+		}
+		else {
+			SkinTransform xFormSkin;
+			if (nif->GetShapeBoneTransform(shapeName, 0xFFFFFFFF, xFormSkin)) {
+				xFormSkin.ToEulerDegrees(y, p, r);
+				matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x / -10.0f, xFormSkin.translation.z / 10.0f, xFormSkin.translation.y / 10.0f));
+				matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+				matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
+			}
+		}
+
+		m->matModel = matParents * matShape * glm::inverse(matSkin);
+
 		NiShader* shader = nif->GetShader(shape);
 		if (shader) {
 			m->doublesided = shader->IsDoubleSided();

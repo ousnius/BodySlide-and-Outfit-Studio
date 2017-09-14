@@ -114,10 +114,20 @@ void GLShader::SetMatrixProjection(const glm::mat4x4& mat) {
 		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&mat);
 }
 
-void GLShader::SetMatrixModelView(const glm::mat4x4& mat) {
-	GLint loc = glGetUniformLocation(progID, "matModelView");
+void GLShader::SetMatrixModelView(const glm::mat4x4& matView, const glm::mat4x4& matModel) {
+	GLint loc = glGetUniformLocation(progID, "matView");
 	if (loc >= 0)
-		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&mat);
+		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&matView);
+
+	loc = glGetUniformLocation(progID, "matModel");
+	if (loc >= 0)
+		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&matModel);
+
+	loc = glGetUniformLocation(progID, "matModelView");
+	if (loc >= 0) {
+		glm::mat4x4 matModelView = matView * matModel;
+		glUniformMatrix4fv(loc, 1, GL_FALSE, (GLfloat*)&matModelView);
+	}
 }
 
 void GLShader::SetAlphaProperties(const ushort flags, const float threshold) {

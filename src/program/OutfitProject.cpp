@@ -1609,7 +1609,6 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	}
 
 	activeSet.LoadSetDiffData(baseDiffData);
-	AutoOffset(workNif);
 	return 0;
 }
 
@@ -1718,7 +1717,6 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	if (!dataFolder.empty())
 		activeSet.SetDataFolder(dataFolder);
 
-	AutoOffset(workNif);
 	return 0;
 }
 
@@ -1804,30 +1802,6 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 	owner->UpdateProgress(100, _("Finished"));
 	owner->EndProgress();
 	return 0;
-}
-
-void OutfitProject::AutoOffset(NifFile& nif) {
-	for (auto &s : nif.GetShapeNames()) {
-		SkinTransform xFormSkin;
-		if (!nif.GetShapeBoneTransform(s, 0xFFFFFFFF, xFormSkin))
-			continue;
-
-		Matrix4 matSkinInv = xFormSkin.ToMatrix().Inverse();
-
-		std::vector<Vector3> verts;
-		nif.GetVertsForShape(s, verts);
-
-		for (auto &v : verts)
-			v = matSkinInv * v;
-
-		SkinTransform xForm;
-		nif.SetShapeBoneTransform(s, 0xFFFFFFFF, xForm);
-		nif.ClearShapeTransform(s);
-
-		nif.SetVertsForShape(s, verts);
-	}
-
-	nif.ClearRootTransform();
 }
 
 void OutfitProject::InitConform() {
@@ -2008,8 +1982,6 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 			}
 		}
 	}
-
-	AutoOffset(nif);
 
 	// Add cloth data block of NIF to the list
 	std::vector<BSClothExtraData*> clothDataBlocks = nif.GetChildren<BSClothExtraData>(nullptr, true);
