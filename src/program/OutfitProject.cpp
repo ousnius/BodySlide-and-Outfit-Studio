@@ -439,7 +439,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
-		nifDismemberInst->SetSkeletonRootRef(0);
+		nifDismemberInst->SetSkeletonRootRef(blank.GetBlockID(blank.GetRootNode()));
 
 		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
 
@@ -483,7 +483,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 
 		BSSkinInstance* nifBSSkinInstance = new BSSkinInstance();
 		int skinID = blank.GetHeader().AddBlock(nifBSSkinInstance);
-		nifBSSkinInstance->SetTargetRef(workNif.GetRootNodeID());
+		nifBSSkinInstance->SetTargetRef(workNif.GetBlockID(workNif.GetRootNode()));
 
 		BSSkinBoneData* nifBoneData = new BSSkinBoneData();
 		int boneID = blank.GetHeader().AddBlock(nifBoneData);
@@ -517,7 +517,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
-		nifDismemberInst->SetSkeletonRootRef(0);
+		nifDismemberInst->SetSkeletonRootRef(blank.GetBlockID(blank.GetRootNode()));
 		triShape->SetSkinInstanceRef(dismemberID);
 		triShape->SetSkinned(true);
 
@@ -2070,7 +2070,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 				auto clothBlock = clothData[selString]->Clone();
 				int id = nif.GetHeader().AddBlock(clothBlock);
 				if (id != 0xFFFFFFFF) {
-					NiNode* root = nif.GetHeader().GetBlock<NiNode>(0);
+					auto root = nif.GetRootNode();
 					if (root)
 						root->GetExtraData().AddBlockRef(id);
 				}

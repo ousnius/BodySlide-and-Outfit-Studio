@@ -534,7 +534,7 @@ void NifFile::PrettySortBlocks() {
 	if (hasUnknown)
 		return;
 
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (!root)
 		return;
 
@@ -569,7 +569,7 @@ bool NifFile::DeleteUnreferencedBlocks() {
 }
 
 int NifFile::AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale) {
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (!root)
 		return 0xFFFFFFFF;
 
@@ -1133,7 +1133,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 		destBoneCont->GetBones().Clear();
 
 	// Bones
-	auto rootNode = dynamic_cast<NiNode*>(blocks[0].get());
+	auto rootNode = GetRootNode();
 	if (rootNode) {
 		for (auto &boneName : srcBoneList) {
 			int boneID = GetBlockID(FindNodeByName(boneName));
@@ -1619,7 +1619,7 @@ bool NifFile::RenameDuplicateShapes() {
 	bool renamed = false;
 	auto nodes = GetChildren<NiNode>();
 
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	nodes.push_back(root);
 
 	for (auto &node : nodes) {
@@ -1654,11 +1654,8 @@ bool NifFile::RenameDuplicateShapes() {
 	return renamed;
 }
 
-int NifFile::GetRootNodeID() {
-	if (blocks.empty())
-		return 0xFFFFFFFF;
-
-	return 0;
+NiNode* NifFile::GetRootNode() {
+	return GetHeader().GetBlock<NiNode>(0);
 }
 
 bool NifFile::GetNodeTransform(const std::string& nodeName, std::vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
@@ -1679,7 +1676,7 @@ bool NifFile::GetNodeTransform(const std::string& nodeName, std::vector<Vector3>
 
 bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly) {
 	if (rootChildrenOnly) {
-		auto root = dynamic_cast<NiNode*>(blocks[0].get());
+		auto root = GetRootNode();
 		if (root) {
 			for (auto& child : root->GetChildren()) {
 				auto node = hdr.GetBlock<NiNode>(child.GetIndex());
@@ -2596,7 +2593,7 @@ void NifFile::ClearShapeTransform(const std::string& shapeName) {
 
 void NifFile::GetShapeTransform(const std::string& shapeName, Matrix4& outTransform) {
 	SkinTransform xFormRoot;
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (root) {
 		xFormRoot.translation = root->translation;
 		xFormRoot.scale = root->scale;
@@ -2621,7 +2618,7 @@ void NifFile::GetShapeTransform(const std::string& shapeName, Matrix4& outTransf
 }
 
 void NifFile::ClearRootTransform() {
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (root) {
 		root->translation.Zero();
 		root->scale = 1.0f;
@@ -2632,7 +2629,7 @@ void NifFile::ClearRootTransform() {
 }
 
 void NifFile::GetRootTranslation(Vector3& outVec) {
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (root)
 		outVec = root->translation;
 	else
@@ -2640,13 +2637,13 @@ void NifFile::GetRootTranslation(Vector3& outVec) {
 }
 
 void NifFile::SetRootTranslation(const Vector3& newTrans) {
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (root)
 		root->translation = newTrans;
 }
 
 void NifFile::GetRootScale(float& outScale) {
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (root)
 		outScale = root->scale;
 	else
@@ -2654,7 +2651,7 @@ void NifFile::GetRootScale(float& outScale) {
 }
 
 void NifFile::SetRootScale(const float newScale) {
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (root)
 		root->scale = newScale;
 }
@@ -2664,7 +2661,7 @@ void NifFile::GetShapeTranslation(const std::string& shapeName, Vector3& outVec)
 	if (avo)
 		outVec = avo->translation;
 
-	auto root = dynamic_cast<NiNode*>(blocks[0].get());
+	auto root = GetRootNode();
 	if (root)
 		outVec += root->translation;
 
@@ -3591,10 +3588,10 @@ void NifFile::CreateSkinning(NiShape* shape) {
 
 			auto nifDismemberInst = new BSDismemberSkinInstance();
 			int dismemberID = hdr.AddBlock(nifDismemberInst);
-
+			
 			nifDismemberInst->SetDataRef(skinDataID);
 			nifDismemberInst->SetSkinPartitionRef(partID);
-			nifDismemberInst->SetSkeletonRootRef(0);
+			nifDismemberInst->SetSkeletonRootRef(GetBlockID(GetRootNode()));
 			shape->SetSkinInstanceRef(dismemberID);
 			shape->SetSkinned(true);
 		}
@@ -3612,7 +3609,7 @@ void NifFile::CreateSkinning(NiShape* shape) {
 
 			nifDismemberInst->SetDataRef(skinDataID);
 			nifDismemberInst->SetSkinPartitionRef(partID);
-			nifDismemberInst->SetSkeletonRootRef(0);
+			nifDismemberInst->SetSkeletonRootRef(GetBlockID(GetRootNode()));
 			shape->SetSkinInstanceRef(skinID);
 			shape->SetSkinned(true);
 		}
@@ -3632,7 +3629,7 @@ void NifFile::CreateSkinning(NiShape* shape) {
 
 				nifDismemberInst->SetDataRef(skinDataID);
 				nifDismemberInst->SetSkinPartitionRef(partID);
-				nifDismemberInst->SetSkeletonRootRef(0);
+				nifDismemberInst->SetSkeletonRootRef(GetBlockID(GetRootNode()));
 			}
 			else {
 				auto newSkinInst = new BSSkinInstance();
@@ -3641,7 +3638,7 @@ void NifFile::CreateSkinning(NiShape* shape) {
 				auto newBoneData = new BSSkinBoneData();
 				int boneDataRef = hdr.AddBlock(newBoneData);
 
-				newSkinInst->SetTargetRef(GetRootNodeID());
+				newSkinInst->SetTargetRef(GetBlockID(GetRootNode()));
 				newSkinInst->SetDataRef(boneDataRef);
 			}
 

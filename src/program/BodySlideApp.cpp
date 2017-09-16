@@ -2087,7 +2087,7 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 	NiAVObject* target = nullptr;
 
 	if (toRoot)
-		target = nif.GetHeader().GetBlock<NiNode>(nif.GetRootNodeID());
+		target = nif.GetRootNode();
 	else
 		target = nif.FindShapeByName(shapeName);
 

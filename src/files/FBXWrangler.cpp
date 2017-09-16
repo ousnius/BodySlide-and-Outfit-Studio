@@ -103,7 +103,7 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 
 	// Likely a NIF with non-hierarchical nodes
 	if (!com)
-		com = nif->GetHeader().GetBlock<NiNode>(nif->GetRootNodeID());
+		com = nif->GetRootNode();
 	if (!com)
 		return;
 

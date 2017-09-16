@@ -180,7 +180,7 @@ public:
 	template <class T>
 	std::vector<T*> GetChildren(NiNode* parent = nullptr, bool searchExtraData = false);
 
-	int GetRootNodeID();
+	NiNode* GetRootNode();
 	bool GetNodeTransform(const std::string& nodeName, std::vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
 	bool SetNodeTransform(const std::string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly = false);
 
@@ -273,7 +273,7 @@ std::vector<T*> NifFile::GetChildren(NiNode* parent, bool searchExtraData) {
 	T* n;
 
 	if (parent == nullptr) {
-		parent = dynamic_cast<NiNode*>(blocks[0].get());
+		parent = GetRootNode();
 		if (parent == nullptr)
 			return result;
 	}
