@@ -9,91 +9,6 @@ See the included LICENSE file
 #include "BasicTypes.h"
 #include "VertexData.h"
 
-struct SkinTransform {
-	Vector3 rotation[3];
-	Vector3 translation;
-	float scale;
-
-	SkinTransform() {
-		translation = Vector3();
-		scale = 1.0f;
-		rotation[0] = Vector3(1.0f, 0.0f, 0.0f);
-		rotation[1] = Vector3(0.0f, 1.0f, 0.0f);
-		rotation[2] = Vector3(0.0f, 0.0f, 1.0f);
-	}
-
-	bool IsIdentity() {
-		return (translation.IsZero() && scale == 1.0f &&
-			rotation[0] == Vector3(1.0f, 0.0f, 0.0f) &&
-			rotation[1] == Vector3(0.0f, 1.0f, 0.0f) &&
-			rotation[2] == Vector3(0.0f, 0.0f, 1.0f));
-	}
-
-	Matrix4 ToMatrix() {
-		Matrix4 m;
-		m[0] = rotation[0].x * scale;
-		m[1] = rotation[0].y;
-		m[2] = rotation[0].z;
-		m[3] = translation.x;
-		m[4] = rotation[1].x;
-		m[5] = rotation[1].y * scale;
-		m[6] = rotation[1].z;
-		m[7] = translation.y;
-		m[8] = rotation[2].x;
-		m[9] = rotation[2].y;
-		m[10] = rotation[2].z * scale;
-		m[11] = translation.z;
-		return m;
-	}
-
-	Matrix4 ToMatrixSkin() {
-		Matrix4 m;
-		// Set the rotation
-		Vector3 r1 = rotation[0];
-		Vector3 r2 = rotation[1];
-		Vector3 r3 = rotation[2];
-		m.SetRow(0, r1);
-		m.SetRow(1, r2);
-		m.SetRow(2, r3);
-		// Set the scale
-		m.Scale(scale, scale, scale);
-		// Set the translation
-		m[3] = translation.x;
-		m[7] = translation.y;
-		m[11] = translation.z;
-		return m;
-	}
-
-	bool ToEulerDegrees(float &Y, float& P, float& R) {
-		float rx, ry, rz;
-		bool canRot = false;
-
-		if (rotation[0].z < 1.0f) {
-			if (rotation[0].z > -1.0f) {
-				rx = atan2(-rotation[1].z, rotation[2].z);
-				ry = asin(rotation[0].z);
-				rz = atan2(-rotation[0].y, rotation[0].x);
-				canRot = true;
-			}
-			else {
-				rx = -atan2(-rotation[1].x, rotation[1].y);
-				ry = -PI / 2.0f;
-				rz = 0.0f;
-			}
-		}
-		else {
-			rx = atan2(rotation[1].x, rotation[1].y);
-			ry = PI / 2.0f;
-			rz = 0.0f;
-		}
-
-		Y = rx * 180.0f / PI;
-		P = ry * 180.0f / PI;
-		R = rz * 180.0f / PI;
-		return canRot;
-	}
-};
-
 struct SkinWeight {
 	ushort index;
 	float weight;
@@ -121,13 +36,13 @@ struct BoneIndices {
 class NiSkinData : public NiObject {
 public:
 	struct BoneData {
-		SkinTransform boneTransform;
+		MatTransform boneTransform;
 		BoundingSphere bounds;
 		ushort numVertices = 0;
 		std::vector<SkinWeight> vertexWeights;
 	};
 
-	SkinTransform skinTransform;
+	MatTransform skinTransform;
 	uint numBones = 0;
 	byte hasVertWeights = 1;
 	std::vector<BoneData> bones;
@@ -266,14 +181,9 @@ class BSSkinBoneData : public NiObject {
 public:
 	uint nBones = 0;
 
-	class BoneData {
-	public:
+	struct BoneData {
 		BoundingSphere bounds;
-		SkinTransform boneTransform;
-
-		BoneData() {
-			boneTransform.scale = 1.0f;
-		}
+		MatTransform boneTransform;
 	};
 
 	std::vector<BoneData> boneXforms;

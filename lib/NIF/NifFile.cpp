@@ -568,18 +568,14 @@ bool NifFile::DeleteUnreferencedBlocks() {
 	return hadDeletions;
 }
 
-int NifFile::AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale) {
+int NifFile::AddNode(const std::string& nodeName, const MatTransform& xform) {
 	auto root = GetRootNode();
 	if (!root)
 		return 0xFFFFFFFF;
 
 	auto newNode = new NiNode();
-	newNode->rotation[0] = rot[0];
-	newNode->rotation[1] = rot[1];
-	newNode->rotation[2] = rot[2];
-	newNode->translation = trans;
-	newNode->scale = scale;
 	newNode->SetName(nodeName);
+	newNode->transform = xform;
 
 	int newNodeId = hdr.AddBlock(newNode);
 	if (newNodeId != 0xFFFFFFFF)
@@ -1338,11 +1334,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 			bsOptShape->GetProperties() = shape->GetProperties();
 			bsOptShape->GetExtraData() = shape->GetExtraData();
 
-			bsOptShape->rotation[0] = shape->rotation[0];
-			bsOptShape->rotation[1] = shape->rotation[1];
-			bsOptShape->rotation[2] = shape->rotation[2];
-			bsOptShape->scale = shape->scale;
-			bsOptShape->translation = shape->translation;
+			bsOptShape->transform = shape->transform;
 
 			bsOptShape->Create(vertices, &triangles, uvs, normals);
 			bsOptShape->flags = shape->flags;
@@ -1658,23 +1650,18 @@ NiNode* NifFile::GetRootNode() {
 	return GetHeader().GetBlock<NiNode>(0);
 }
 
-bool NifFile::GetNodeTransform(const std::string& nodeName, std::vector<Vector3>& outRot, Vector3& outTrans, float& outScale) {
+bool NifFile::GetNodeTransform(const std::string& nodeName, MatTransform& outTransform) {
 	for (auto& block : blocks) {
 		auto node = dynamic_cast<NiNode*>(block.get());
 		if (node && !node->GetName().compare(nodeName)) {
-			outRot.clear();
-			outRot.push_back(node->rotation[0]);
-			outRot.push_back(node->rotation[1]);
-			outRot.push_back(node->rotation[2]);
-			outTrans = node->translation;
-			outScale = node->scale;
+			outTransform = node->transform;
 			return true;
 		}
 	}
 	return false;
 }
 
-bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly) {
+bool NifFile::SetNodeTransform(const std::string& nodeName, MatTransform& inTransform, const bool rootChildrenOnly) {
 	if (rootChildrenOnly) {
 		auto root = GetRootNode();
 		if (root) {
@@ -1682,11 +1669,7 @@ bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXfo
 				auto node = hdr.GetBlock<NiNode>(child.GetIndex());
 				if (node) {
 					if (!node->GetName().compare(nodeName)) {
-						node->rotation[0] = inXform.rotation[0];
-						node->rotation[1] = inXform.rotation[1];
-						node->rotation[2] = inXform.rotation[2];
-						node->translation = inXform.translation;
-						node->scale = inXform.scale;
+						node->transform = inTransform;
 						return true;
 					}
 				}
@@ -1697,11 +1680,7 @@ bool NifFile::SetNodeTransform(const std::string& nodeName, SkinTransform& inXfo
 		for (auto& block : blocks) {
 			auto node = dynamic_cast<NiNode*>(block.get());
 			if (node && !node->GetName().compare(nodeName)) {
-				node->rotation[0] = inXform.rotation[0];
-				node->rotation[1] = inXform.rotation[1];
-				node->rotation[2] = inXform.rotation[2];
-				node->translation = inXform.translation;
-				node->scale = inXform.scale;
+				node->transform = inTransform;
 				return true;
 			}
 		}
@@ -1847,7 +1826,7 @@ int NifFile::GetShapeBoneWeights(const std::string& shapeName, const int boneInd
 	return outWeights.size();
 }
 
-bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const std::string& boneName, SkinTransform& outXform) {
+bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const std::string& boneName, MatTransform& outTransform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1856,10 +1835,10 @@ bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const std::str
 	if (boneName.empty())
 		boneIndex = 0xFFFFFFFF;
 
-	return GetShapeBoneTransform(shapeName, boneIndex, outXform);
+	return GetShapeBoneTransform(shapeName, boneIndex, outTransform);
 }
 
-bool NifFile::SetShapeBoneTransform(const std::string& shapeName, const int boneIndex, SkinTransform& inXform) {
+bool NifFile::SetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& inTransform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1870,7 +1849,7 @@ bool NifFile::SetShapeBoneTransform(const std::string& shapeName, const int bone
 		if (!bsSkin)
 			return false;
 
-		bsSkin->boneXforms[boneIndex].boneTransform = inXform;
+		bsSkin->boneXforms[boneIndex].boneTransform = inTransform;
 		return true;
 	}
 
@@ -1884,7 +1863,7 @@ bool NifFile::SetShapeBoneTransform(const std::string& shapeName, const int bone
 
 	if (boneIndex == 0xFFFFFFFF) {
 		// Set the overall skin transform
-		skinData->skinTransform = inXform;
+		skinData->skinTransform = inTransform;
 		return true;
 	}
 
@@ -1892,7 +1871,7 @@ bool NifFile::SetShapeBoneTransform(const std::string& shapeName, const int bone
 		return false;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
-	bone->boneTransform = inXform;
+	bone->boneTransform = inTransform;
 	return true;
 }
 
@@ -1927,7 +1906,7 @@ bool NifFile::SetShapeBoneBounds(const std::string& shapeName, const int boneInd
 	return true;
 }
 
-bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int boneIndex, SkinTransform& outXform) {
+bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& outTransform) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
@@ -1941,7 +1920,7 @@ bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int bone
 				return false;
 			}
 
-			outXform = boneData->boneXforms[boneIndex].boneTransform;
+			outTransform = boneData->boneXforms[boneIndex].boneTransform;
 			return true;
 		}
 	}
@@ -1956,7 +1935,7 @@ bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int bone
 
 	if (boneIndex == 0xFFFFFFFF) {
 		// Want the overall skin transform
-		outXform = skinData->skinTransform;
+		outTransform = skinData->skinTransform;
 		return true;
 	}
 
@@ -1964,7 +1943,7 @@ bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int bone
 		return 0;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
-	outXform = bone->boneTransform;
+	outTransform = bone->boneTransform;
 	return true;
 }
 
@@ -2054,8 +2033,8 @@ void NifFile::SetShapeVertWeights(const std::string& shapeName, const int vertIn
 		return;
 
 	auto& vertex = bsTriShape->vertData[vertIndex];
-	memset(vertex.weights, 0, sizeof(float) * 4);
-	memset(vertex.weightBones, 0, sizeof(byte) * 4);
+	std::memset(vertex.weights, 0, sizeof(float) * 4);
+	std::memset(vertex.weightBones, 0, sizeof(byte) * 4);
 
 	// Sum weights to normalize values
 	float sum = 0.0f;
@@ -2580,140 +2559,12 @@ void NifFile::CalcTangentsForShape(const std::string& shapeName) {
 	}
 }
 
-void NifFile::ClearShapeTransform(const std::string& shapeName) {
-	NiAVObject* avo = FindAVObjectByName(shapeName);
-	if (avo) {
-		avo->translation.Zero();
-		avo->scale = 1.0f;
-		avo->rotation[0] = Vector3(1.0f, 0.0f, 0.0f);
-		avo->rotation[1] = Vector3(0.0f, 1.0f, 0.0f);
-		avo->rotation[2] = Vector3(0.0f, 0.0f, 1.0f);
-	}
-}
-
-void NifFile::GetShapeTransform(const std::string& shapeName, Matrix4& outTransform) {
-	SkinTransform xFormRoot;
-	auto root = GetRootNode();
-	if (root) {
-		xFormRoot.translation = root->translation;
-		xFormRoot.scale = root->scale;
-		xFormRoot.rotation[0] = root->rotation[0];
-		xFormRoot.rotation[1] = root->rotation[1];
-		xFormRoot.rotation[2] = root->rotation[2];
-	}
-
-	SkinTransform xFormShape;
-	NiAVObject* avo = FindAVObjectByName(shapeName);
-	if (avo) {
-		xFormShape.translation = avo->translation;
-		xFormShape.scale = avo->scale;
-		xFormShape.rotation[0] = avo->rotation[0];
-		xFormShape.rotation[1] = avo->rotation[1];
-		xFormShape.rotation[2] = avo->rotation[2];
-	}
-
-	Matrix4 matRoot = xFormRoot.ToMatrix();
-	Matrix4 matShape = xFormShape.ToMatrix();
-	outTransform = matRoot * matShape;
-}
-
-void NifFile::ClearRootTransform() {
-	auto root = GetRootNode();
-	if (root) {
-		root->translation.Zero();
-		root->scale = 1.0f;
-		root->rotation[0] = Vector3(1.0f, 0.0f, 0.0f);
-		root->rotation[1] = Vector3(0.0f, 1.0f, 0.0f);
-		root->rotation[2] = Vector3(0.0f, 0.0f, 1.0f);
-	}
-}
-
 void NifFile::GetRootTranslation(Vector3& outVec) {
 	auto root = GetRootNode();
 	if (root)
-		outVec = root->translation;
+		outVec = root->transform.translation;
 	else
 		outVec.Zero();
-}
-
-void NifFile::SetRootTranslation(const Vector3& newTrans) {
-	auto root = GetRootNode();
-	if (root)
-		root->translation = newTrans;
-}
-
-void NifFile::GetRootScale(float& outScale) {
-	auto root = GetRootNode();
-	if (root)
-		outScale = root->scale;
-	else
-		outScale = 1.0f;
-}
-
-void NifFile::SetRootScale(const float newScale) {
-	auto root = GetRootNode();
-	if (root)
-		root->scale = newScale;
-}
-
-void NifFile::GetShapeTranslation(const std::string& shapeName, Vector3& outVec) {
-	NiAVObject* avo = FindAVObjectByName(shapeName);
-	if (avo)
-		outVec = avo->translation;
-
-	auto root = GetRootNode();
-	if (root)
-		outVec += root->translation;
-
-	//if (outVec.DistanceTo(Vector3(0.0f, 0.0f, 0.0f)) < EPSILON)
-	//	outVec.Zero();
-}
-
-void NifFile::SetShapeTranslation(const std::string& shapeName, const Vector3& newTrans) {
-	NiAVObject* avo = FindAVObjectByName(shapeName);
-	if (avo)
-		avo->translation = newTrans;
-}
-
-void NifFile::GetShapeScale(const std::string& shapeName, float& outScale) {
-	NiAVObject* avo = FindAVObjectByName(shapeName);
-	if (avo)
-		outScale = avo->scale;
-}
-
-void NifFile::SetShapeScale(const std::string& shapeName, const float newScale) {
-	NiAVObject* avo = FindAVObjectByName(shapeName);
-	if (avo)
-		avo->scale = newScale;
-}
-
-void NifFile::ApplyShapeTranslation(const std::string& shapeName, const Vector3& offset) {
-	NiShape* shape = FindShapeByName(shapeName);
-	if (!shape)
-		return;
-
-	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geom = dynamic_cast<NiGeometry*>(shape);
-		if (!geom)
-			return;
-
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
-		if (geomData) {
-			for (int i = 0; i < geomData->vertices.size(); i++)
-				geomData->vertices[i] += geom->translation + offset;
-
-			geom->translation = Vector3(0.0f, 0.0f, 0.0f);
-		}
-	}
-	else if (shape->HasType<BSTriShape>()) {
-		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-		if (bsTriShape) {
-			for (int i = 0; i < bsTriShape->numVertices; i++)
-				bsTriShape->vertData[i].vert += bsTriShape->translation + offset;
-
-			bsTriShape->translation = Vector3(0.0f, 0.0f, 0.0f);
-		}
-	}
 }
 
 void NifFile::MoveVertex(const std::string& shapeName, const Vector3& pos, const int id) {
@@ -2815,21 +2666,21 @@ void NifFile::ScaleShape(const std::string& shapeName, const Vector3& scale, std
 
 		std::unordered_map<ushort, Vector3> diff;
 		for (int i = 0; i < bsTriShape->numVertices; i++) {
-Vector3 target = bsTriShape->vertData[i].vert - root;
-target.x *= scale.x;
-target.y *= scale.y;
-target.z *= scale.z;
-diff[i] = bsTriShape->vertData[i].vert - target;
+			Vector3 target = bsTriShape->vertData[i].vert - root;
+			target.x *= scale.x;
+			target.y *= scale.y;
+			target.z *= scale.z;
+			diff[i] = bsTriShape->vertData[i].vert - target;
 
-if (mask) {
-	float maskFactor = 1.0f;
-	if (mask->find(i) != mask->end()) {
-		maskFactor = 1.0f - (*mask)[i];
-		diff[i] *= maskFactor;
-		target = bsTriShape->vertData[i].vert - root + diff[i];
-	}
-}
-bsTriShape->vertData[i].vert = target;
+			if (mask) {
+				float maskFactor = 1.0f;
+				if (mask->find(i) != mask->end()) {
+					maskFactor = 1.0f - (*mask)[i];
+					diff[i] *= maskFactor;
+					target = bsTriShape->vertData[i].vert - root + diff[i];
+				}
+			}
+			bsTriShape->vertData[i].vert = target;
 		}
 	}
 }

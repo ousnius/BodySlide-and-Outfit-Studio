@@ -60,7 +60,7 @@ public:
 class AnimWeight {
 public:
 	std::unordered_map<ushort, float> weights;
-	SkinTransform xform;
+	MatTransform xform;
 	BoundingSphere bounds;
 
 	AnimWeight() {}
@@ -142,9 +142,9 @@ public:
 	bool LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNif = true);
 	int GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName);
 	void GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& outVertWeights);
-	void GetBoneXForm(const std::string& boneName, SkinTransform& stransform);
+	void GetBoneXForm(const std::string& boneName, MatTransform& stransform);
 	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights);
-	void SetShapeBoneXForm(const std::string& shape, const std::string& boneName, SkinTransform& stransform);
+	void SetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	bool CalcShapeSkinBounds(const std::string& shape, const int& boneIndex);
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");
 
@@ -180,8 +180,8 @@ public:
 
 	AnimBone* GetBonePtr(const std::string& boneName = "");
 	bool GetBone(const std::string& boneName, AnimBone& outBone);
-	bool GetBoneTransform(const std::string& boneName, SkinTransform& xform);
-	bool GetSkinTransform(const std::string& boneName, const SkinTransform& skinning, SkinTransform& xform);
+	bool GetBoneTransform(const std::string& boneName, MatTransform& xform);
+	bool GetSkinTransform(const std::string& boneName, const MatTransform& skinning, MatTransform& xform);
 
 	int GetActiveBoneNames(std::vector<std::string>& outBoneNames);
 };

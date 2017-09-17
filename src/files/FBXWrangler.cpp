@@ -142,10 +142,10 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			FbxNode* rootNode = FbxNode::Create(scene, root->GetName().c_str());
 			rootNode->SetNodeAttribute(rootBone);
 
-			rootNode->LclTranslation.Set(FbxDouble3(root->translation.x, root->translation.y, root->translation.z));
+			rootNode->LclTranslation.Set(FbxDouble3(root->transform.translation.x, root->transform.translation.y, root->transform.translation.z));
 
 			float rx, ry, rz;
-			root->rotToEulerDegrees(rx, ry, rz);
+			root->transform.ToEulerDegrees(rx, ry, rz);
 			rootNode->LclRotation.Set(FbxDouble3(rx, ry, rz));
 			//rootNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
 
@@ -162,10 +162,10 @@ void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
 			FbxNode* comNode = FbxNode::Create(scene, com->GetName().c_str());
 			comNode->SetNodeAttribute(comBone);
 
-			comNode->LclTranslation.Set(FbxDouble3(com->translation.y, com->translation.z, com->translation.x));
+			comNode->LclTranslation.Set(FbxDouble3(com->transform.translation.y, com->transform.translation.z, com->transform.translation.x));
 
 			float rx, ry, rz;
-			com->rotToEulerDegrees(rx, ry, rz);
+			com->transform.ToEulerDegrees(rx, ry, rz);
 			comNode->LclRotation.Set(FbxDouble3(rx, ry, rz));
 			//comNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
 
@@ -193,11 +193,11 @@ FbxNode* FBXWrangler::AddLimb(NifFile* nif, NiNode* nifBone) {
 		node = FbxNode::Create(scene, nifBone->GetName().c_str());
 		node->SetNodeAttribute(bone);
 
-		Vector3 translation = nifBone->translation;
+		Vector3 translation = nifBone->transform.translation;
 		node->LclTranslation.Set(FbxDouble3(translation.x, translation.y, translation.z));
 
 		float rx, ry, rz;
-		nifBone->rotToEulerDegrees(rx, ry, rz);
+		nifBone->transform.ToEulerDegrees(rx, ry, rz);
 		node->LclRotation.Set(FbxDouble3(rx, ry, rz));
 		//myNode->SetRotationOrder(FbxNode::eSourcePivot, eEulerZYX);
 	}

@@ -1254,12 +1254,12 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 			if (workAnim.AddShapeBone(destShape, boneName)) {
 				if (owner->targetGame == FO4) {
 					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
-					SkinTransform xForm;
+					MatTransform xForm;
 					workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
 					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 				}
 				else {
-					SkinTransform xForm;
+					MatTransform xForm;
 					workAnim.GetBoneXForm(boneName, xForm);
 					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 				}
@@ -1322,12 +1322,12 @@ void OutfitProject::TransferSelectedWeights(const std::string& destShape, std::u
 		if (workAnim.AddShapeBone(destShape, boneName)) {
 			if (owner->targetGame == FO4) {
 				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
-				SkinTransform xForm;
+				MatTransform xForm;
 				workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
 				workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 			}
 			else {
-				SkinTransform xForm;
+				MatTransform xForm;
 				workAnim.GetBoneXForm(boneName, xForm);
 				workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
 			}
@@ -1409,16 +1409,13 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 
 		for (auto &b : workAnim.shapeBones[s]) {
 			if (b == bone) {
-				std::vector<Vector3> boneRot;
-				Vector3 boneTranslation;
-				float boneScale;
-
-				workNif.GetNodeTransform(b, boneRot, boneTranslation, boneScale);
+				MatTransform xform;
+				workNif.GetNodeTransform(b, xform);
 				if (workWeights[s].empty())
 					workAnim.GetWeights(s, b, workWeights[s]);
 
 				for (auto &w : workWeights[s]) {
-					Vector3 dir = (*verts)[w.first] - boneTranslation;
+					Vector3 dir = (*verts)[w.first] - xform.translation;
 					dir.Normalize();
 					Vector3 offset = dir * w.second * sliderPos / 5.0f;
 					(*verts)[w.first] += offset;
@@ -1462,7 +1459,7 @@ void OutfitProject::ClearBoneScale(bool clear) {
 }
 
 void OutfitProject::AddBoneRef(const std::string& boneName) {
-	SkinTransform xForm;
+	MatTransform xForm;
 	if (!AnimSkeleton::getInstance().GetSkinTransform(boneName, xForm, xForm))
 		return;
 
@@ -1474,7 +1471,7 @@ void OutfitProject::AddBoneRef(const std::string& boneName) {
 void OutfitProject::AddCustomBoneRef(const std::string& boneName, const Vector3& translation) {
 	AnimBone& customBone = AnimSkeleton::getInstance().AddBone(boneName, true);
 
-	SkinTransform xForm;
+	MatTransform xForm;
 	xForm.translation = translation;
 
 	customBone.trans = xForm.translation;

@@ -45,9 +45,7 @@ protected:
 
 public:
 	uint flags = 524302;
-	Vector3 translation;
-	Vector3 rotation[3] = { Vector3(1.0f, 0.0f, 0.0f), Vector3(0.0f, 1.0f, 0.0f), Vector3(0.0f, 0.0f, 1.0f) };
-	float scale = 1.0f;
+	MatTransform transform;
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
@@ -57,35 +55,6 @@ public:
 
 	int GetCollisionRef() { return collisionRef.GetIndex(); }
 	void SetCollisionRef(const int colRef) { collisionRef.SetIndex(colRef); }
-
-	bool rotToEulerDegrees(float &Y, float& P, float& R) {
-		float rx, ry, rz;
-		bool canRot = false;
-
-		if (rotation[0].z < 1.0) {
-			if (rotation[0].z > -1.0) {
-				rx = atan2(-rotation[1].z, rotation[2].z);
-				ry = asin(rotation[0].z);
-				rz = atan2(-rotation[0].y, rotation[0].x);
-				canRot = true;
-			}
-			else {
-				rx = -atan2(-rotation[1].x, rotation[1].y);
-				ry = -PI / 2;
-				rz = 0.0f;
-			}
-		}
-		else {
-			rx = atan2(rotation[1].x, rotation[1].y);
-			ry = PI / 2;
-			rz = 0.0f;
-		}
-
-		Y = rx * 180 / PI;
-		P = ry * 180 / PI;
-		R = rz * 180 / PI;
-		return canRot;
-	}
 };
 
 struct AVObject {

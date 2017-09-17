@@ -966,20 +966,20 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 		if (!shape->IsSkinned()) {
 			NiNode* parent = nif->GetParentNode(shape);
 			while (parent) {
-				parent->rotToEulerDegrees(y, p, r);
-				matParents = glm::translate(matParents, glm::vec3(parent->translation.x / -10.0f, parent->translation.z / 10.0f, parent->translation.y / 10.0f));
+				parent->transform.ToEulerDegrees(y, p, r);
+				matParents = glm::translate(matParents, glm::vec3(parent->transform.translation.x / -10.0f, parent->transform.translation.z / 10.0f, parent->transform.translation.y / 10.0f));
 				matParents *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-				matParents = glm::scale(matParents, glm::vec3(parent->scale, parent->scale, parent->scale));
+				matParents = glm::scale(matParents, glm::vec3(parent->transform.scale, parent->transform.scale, parent->transform.scale));
 				parent = nif->GetParentNode(parent);
 			}
 
-			matShape = glm::translate(matShape, glm::vec3(shape->translation.x / -10.0f, shape->translation.z / 10.0f, shape->translation.y / 10.0f));
-			shape->rotToEulerDegrees(y, p, r);
+			matShape = glm::translate(matShape, glm::vec3(shape->transform.translation.x / -10.0f, shape->transform.translation.z / 10.0f, shape->transform.translation.y / 10.0f));
+			shape->transform.ToEulerDegrees(y, p, r);
 			matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-			matShape = glm::scale(matShape, glm::vec3(shape->scale, shape->scale, shape->scale));
+			matShape = glm::scale(matShape, glm::vec3(shape->transform.scale, shape->transform.scale, shape->transform.scale));
 		}
 		else {
-			SkinTransform xFormSkin;
+			MatTransform xFormSkin;
 			if (nif->GetShapeBoneTransform(shapeName, 0xFFFFFFFF, xFormSkin)) {
 				xFormSkin.ToEulerDegrees(y, p, r);
 				matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x / -10.0f, xFormSkin.translation.z / 10.0f, xFormSkin.translation.y / 10.0f));

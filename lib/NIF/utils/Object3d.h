@@ -384,19 +384,25 @@ struct ByteColor4 {
 };
 
 class Matrix3 {
-	float m[9];
+	Vector3 rows[3] = {
+		Vector3(1.0f, 0.0f, 0.0f),
+		Vector3(0.0f, 1.0f, 0.0f),
+		Vector3(0.0f, 0.0f, 1.0f)
+	};
 
 public:
-	Matrix3() {
-		Identity();
+	Vector3& operator[] (int index) {
+		return rows[index];
 	}
 
-	float& operator[] (int index) {
-		return m[index];
+	const Vector3& operator[] (int index) const {
+		return rows[index];
 	}
 
 	bool operator==(const Matrix3& other) {
-		return (std::equal(m, m + sizeof m / sizeof *m, other.m));
+		return rows[0] == other[0]
+			&& rows[1] == other[1]
+			&& rows[2] == other[2];
 	}
 
 	bool IsIdentity() {
@@ -404,36 +410,90 @@ public:
 	}
 
 	Matrix3& Identity() {
-		//1.0f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, 0.0f, 1.0f
-		memset(m, 0, sizeof(float) * 9);
-		m[0] = m[4] = m[8] = 1.0f;
+		//1.0f, 0.0f, 0.0f
+		//0.0f, 1.0f, 0.0f
+		//0.0f, 0.0f, 1.0f
+
+		rows[0].Zero();
+		rows[1].Zero();
+		rows[2].Zero();
+		rows[0].x = 1.0f;
+		rows[1].y = 1.0f;
+		rows[2].z = 1.0f;
 		return *this;
 	}
 
 	Matrix3 operator+(const Matrix3& other) const {
-		Matrix3 t(*this);
-		t += other;
-		return t;
+		Matrix3 res(*this);
+		res += other;
+		return res;
 	}
 
 	Matrix3& operator+=(const Matrix3& other) {
-		for (int i = 0; i < 9; i++)
-			m[i] += other.m[i];
-
+		rows[0] += other[0];
+		rows[1] += other[1];
+		rows[2] += other[2];
 		return (*this);
 	}
 
 	Matrix3 operator-(const Matrix3& other) const {
-		Matrix3 t(*this);
-		t -= other;
-		return t;
+		Matrix3 res(*this);
+		res -= other;
+		return res;
 	}
 
 	Matrix3& operator-=(const Matrix3& other) {
-		for (int i = 0; i < 9; i++)
-			m[i] -= other.m[i];
-
+		rows[0] -= other[0];
+		rows[1] -= other[1];
+		rows[2] -= other[2];
 		return(*this);
+	}
+
+	Matrix3& operator*=(const Matrix3& other) {
+		Matrix3 res;
+		res[0].x = rows[0].x * other[0].x + rows[1].x * other[0].y + rows[2].x * other[0].z;
+		res[0].y = rows[0].y * other[0].x + rows[1].y * other[0].y + rows[2].y * other[0].z;
+		res[0].z = rows[0].z * other[0].x + rows[1].z * other[0].y + rows[2].z * other[0].z;
+		res[1].x = rows[0].x * other[1].x + rows[1].x * other[1].y + rows[2].x * other[1].z;
+		res[1].y = rows[0].y * other[1].x + rows[1].y * other[1].y + rows[2].y * other[1].z;
+		res[1].z = rows[0].z * other[1].x + rows[1].z * other[1].y + rows[2].z * other[1].z;
+		res[2].x = rows[0].x * other[2].x + rows[1].x * other[2].y + rows[2].x * other[2].z;
+		res[2].y = rows[0].y * other[2].x + rows[1].y * other[2].y + rows[2].y * other[2].z;
+		res[2].z = rows[0].z * other[2].x + rows[1].z * other[2].y + rows[2].z * other[2].z;
+
+		*this = res;
+		return (*this);
+	}
+
+	Matrix3 operator*(const Matrix3& other) {
+		Matrix3 res;
+		res *= other;
+		return res;
+	}
+
+	// Set rotation matrix from yaw, pitch and roll
+	static Matrix3 MakeRotation(const float yaw, const float pitch, const float roll) {
+		float ch = std::cosf(yaw);
+		float sh = std::sinf(yaw);
+		float cp = std::cosf(pitch);
+		float sp = std::sinf(pitch);
+		float cb = std::cosf(roll);
+		float sb = std::sinf(roll);
+
+		Matrix3 rot;
+		rot[0].x = ch * cb + sh * sp * sb;
+		rot[0].y = sb * cp;
+		rot[0].z = -sh * cb + ch * sp * sb;
+
+		rot[1].x = -ch * sb + sh * sp * cb;
+		rot[1].y = cb * cp;
+		rot[1].z = sb * sh + ch * sp * cb;
+
+		rot[2].x = sh * cp;
+		rot[2].y = -sp;
+		rot[2].z = ch * cp;
+
+		return rot;
 	}
 };
 
@@ -483,7 +543,7 @@ public:
 	}
 
 	Matrix4& Identity() {
-		memset(m, 0, sizeof(float) * 16);
+		std::memset(m, 0, sizeof(float) * 16);
 		m[0] = m[5] = m[10] = m[15] = 1.0f;
 		return *this;
 	}
@@ -778,6 +838,66 @@ struct QuatTransform {
 	Vector3 translation;
 	Quaternion rotation;
 	float scale = 1.0f;
+};
+
+struct MatTransform {
+	Vector3 translation;
+	Matrix3 rotation;
+	float scale = 1.0f;
+
+	void Clear() {
+		translation.Zero();
+		rotation.Identity();
+		scale = 1.0f;
+	}
+
+	// Rotation in euler degrees (Yaw, Pitch, Roll)
+	bool ToEulerDegrees(float &y, float& p, float& r) {
+		float rx, ry, rz;
+		bool canRot = false;
+
+		if (rotation[0].z < 1.0f) {
+			if (rotation[0].z > -1.0f) {
+				rx = atan2(-rotation[1].z, rotation[2].z);
+				ry = asin(rotation[0].z);
+				rz = atan2(-rotation[0].y, rotation[0].x);
+				canRot = true;
+			}
+			else {
+				rx = -atan2(-rotation[1].x, rotation[1].y);
+				ry = -PI / 2.0f;
+				rz = 0.0f;
+			}
+		}
+		else {
+			rx = atan2(rotation[1].x, rotation[1].y);
+			ry = PI / 2.0f;
+			rz = 0.0f;
+		}
+
+		y = rx * 180.0f / PI;
+		p = ry * 180.0f / PI;
+		r = rz * 180.0f / PI;
+		return canRot;
+	}
+
+	// Full matrix of translation, rotation and scale
+	Matrix4 ToMatrix() {
+		Matrix4 mat;
+		mat[0] = rotation[0].x * scale;
+		mat[1] = rotation[0].y;
+		mat[2] = rotation[0].z;
+		mat[3] = translation.x;
+		mat[4] = rotation[1].x;
+		mat[5] = rotation[1].y * scale;
+		mat[6] = rotation[1].z;
+		mat[7] = translation.y;
+		mat[8] = rotation[2].x;
+		mat[9] = rotation[2].y;
+		mat[10] = rotation[2].z * scale;
+		mat[11] = translation.z;
+		return mat;
+	}
 };
 
 

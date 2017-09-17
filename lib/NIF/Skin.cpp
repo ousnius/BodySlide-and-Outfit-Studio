@@ -10,14 +10,18 @@ See the included LICENSE file
 void NiSkinData::Get(NiStream& stream) {
 	NiObject::Get(stream);
 
-	stream >> skinTransform;
+	stream >> skinTransform.rotation;
+	stream >> skinTransform.translation;
+	stream >> skinTransform.scale;
 	stream >> numBones;
 	stream >> hasVertWeights;
 
 	bones.resize(numBones);
 	for (int i = 0; i < numBones; i++) {
 		BoneData boneData;
-		stream >> boneData.boneTransform;
+		stream >> boneData.boneTransform.rotation;
+		stream >> boneData.boneTransform.translation;
+		stream >> boneData.boneTransform.scale;
 		stream >> boneData.bounds;
 		stream >> boneData.numVertices;
 
@@ -39,12 +43,16 @@ void NiSkinData::Get(NiStream& stream) {
 void NiSkinData::Put(NiStream& stream) {
 	NiObject::Put(stream);
 
-	stream << skinTransform;
+	stream << skinTransform.rotation;
+	stream << skinTransform.translation;
+	stream << skinTransform.scale;
 	stream << numBones;
 	stream << hasVertWeights;
 
 	for (int i = 0; i < numBones; i++) {
-		stream << bones[i].boneTransform;
+		stream << bones[i].boneTransform.rotation;
+		stream << bones[i].boneTransform.translation;
+		stream << bones[i].boneTransform.scale;
 		stream << bones[i].bounds;
 
 		ushort numVerts = 0;
@@ -612,16 +620,24 @@ void BSSkinBoneData::Get(NiStream& stream) {
 
 	stream >> nBones;
 	boneXforms.resize(nBones);
-	for (int i = 0; i < nBones; i++)
-		stream >> boneXforms[i];
+	for (int i = 0; i < nBones; i++) {
+		stream >> boneXforms[i].bounds;
+		stream >> boneXforms[i].boneTransform.rotation;
+		stream >> boneXforms[i].boneTransform.translation;
+		stream >> boneXforms[i].boneTransform.scale;
+	}
 }
 
 void BSSkinBoneData::Put(NiStream& stream) {
 	NiObject::Put(stream);
 
 	stream << nBones;
-	for (int i = 0; i < nBones; i++)
-		stream << boneXforms[i];
+	for (int i = 0; i < nBones; i++) {
+		stream << boneXforms[i].bounds;
+		stream << boneXforms[i].boneTransform.rotation;
+		stream << boneXforms[i].boneTransform.translation;
+		stream << boneXforms[i].boneTransform.scale;
+	}
 }
 
 

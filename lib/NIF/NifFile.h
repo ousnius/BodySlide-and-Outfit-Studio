@@ -137,7 +137,7 @@ public:
 	// Link NiGeometryData to NiGeometry
 	void LinkGeomData();
 
-	int AddNode(const std::string& nodeName, std::vector<Vector3>& rot, Vector3& trans, float scale);
+	int AddNode(const std::string& nodeName, const MatTransform& xform);
 	void DeleteNode(const std::string& nodeName);
 	std::string GetNodeName(const int blockID);
 	void SetNodeName(const int blockID, const std::string& newName);
@@ -181,8 +181,8 @@ public:
 	std::vector<T*> GetChildren(NiNode* parent = nullptr, bool searchExtraData = false);
 
 	NiNode* GetRootNode();
-	bool GetNodeTransform(const std::string& nodeName, std::vector<Vector3>& outRot, Vector3& outTrans, float& outScale);
-	bool SetNodeTransform(const std::string& nodeName, SkinTransform& inXform, const bool rootChildrenOnly = false);
+	bool GetNodeTransform(const std::string& nodeName, MatTransform& outTransform);
+	bool SetNodeTransform(const std::string& nodeName, MatTransform& inTransform, const bool rootChildrenOnly = false);
 
 	int GetShapeBoneList(const std::string& shapeName, std::vector<std::string>& outList);
 	int GetShapeBoneIDList(const std::string& shapeName, std::vector<int>& outList);
@@ -190,12 +190,12 @@ public:
 	int GetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& outWeights);
 
 	// Empty std::string for the bone name returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const std::string& shapeName, const std::string& boneName, SkinTransform& outXform);
+	bool GetShapeBoneTransform(const std::string& shapeName, const std::string& boneName, MatTransform& outTransform);
 	// 0xFFFFFFFF for the bone index sets the overall skin transform for the shape.
-	bool SetShapeBoneTransform(const std::string& shapeName, const int boneIndex, SkinTransform& inXform);
+	bool SetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& inTransform);
 	bool SetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& inBounds);
 	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const std::string& shapeName, const int boneIndex, SkinTransform& outXform);
+	bool GetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& outTransform);
 	bool GetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& outBounds);
 	void UpdateShapeBoneID(const std::string& shapeName, const int oldID, const int newID);
 	void SetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& inWeights);
@@ -223,20 +223,7 @@ public:
 	void CalcNormalsForShape(const std::string& shapeName, const bool smooth = true, const float smoothThresh = 60.0f);
 	void CalcTangentsForShape(const std::string& shapeName);
 
-	void ClearShapeTransform(const std::string& shapeName);
-	void GetShapeTransform(const std::string& shapeName, Matrix4& outTransform);
-
-	void ClearRootTransform();
 	void GetRootTranslation(Vector3& outVec);
-	void SetRootTranslation(const Vector3& newTrans);
-	void GetRootScale(float& outScale);
-	void SetRootScale(const float newScale);
-
-	void GetShapeTranslation(const std::string& shapeName, Vector3& outVec);
-	void SetShapeTranslation(const std::string& shapeName, const Vector3& newTrans);
-	void GetShapeScale(const std::string& shapeName, float& outScale);
-	void SetShapeScale(const std::string& shapeName, const float newScale);
-	void ApplyShapeTranslation(const std::string& shapeName, const Vector3& offset);
 
 	void MoveVertex(const std::string& shapeName, const Vector3& pos, const int id);
 	void OffsetShape(const std::string& shapeName, const Vector3& offset, std::unordered_map<ushort, float>* mask = nullptr);

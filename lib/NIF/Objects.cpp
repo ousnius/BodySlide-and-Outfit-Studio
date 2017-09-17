@@ -77,12 +77,9 @@ void NiAVObject::Get(NiStream& stream) {
 	else
 		stream >> flags;
 
-	stream >> translation;
-
-	for (int i = 0; i < 3; i++)
-		stream >> rotation[i];
-
-	stream >> scale;
+	stream >> transform.translation;
+	stream >> transform.rotation;
+	stream >> transform.scale;
 
 	if (stream.GetVersion().Stream() <= 34)
 		propertyRefs.Get(stream);
@@ -99,12 +96,9 @@ void NiAVObject::Put(NiStream& stream) {
 	else
 		stream << flags;
 
-	stream << translation;
-
-	for (int i = 0; i < 3; i++)
-		stream << rotation[i];
-
-	stream << scale;
+	stream << transform.translation;
+	stream << transform.rotation;
+	stream << transform.scale;
 
 	if (stream.GetVersion().Stream() <= 34)
 		propertyRefs.Put(stream);

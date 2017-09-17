@@ -679,7 +679,7 @@ void TB_Smooth::hclapFilter(mesh* refmesh, int* points, int nPoints, std::unorde
 	if (refmesh != lastMesh)
 		lastMesh = refmesh;
 	else
-		memset(b.data(), 0, b.size() * sizeof(Vector3));
+		std::memset(b.data(), 0, b.size() * sizeof(Vector3));
 
 	Vector3 d;
 	Vector3 q;
@@ -868,8 +868,8 @@ bool TB_Move::queryPoints(mesh* m, TweakPickInfo&, int* resultPoints, int& outRe
 		return false;
 
 	if (resultPoints) {
-		memcpy(resultPoints, meshCache->cachedPoints, meshCache->nCachedPoints * sizeof(int));
-		memcpy(resultPoints + meshCache->nCachedPoints, meshCache->cachedPointsM, meshCache->nCachedPointsM * sizeof(int));
+		std::memcpy(resultPoints, meshCache->cachedPoints, meshCache->nCachedPoints * sizeof(int));
+		std::memcpy(resultPoints + meshCache->nCachedPoints, meshCache->cachedPointsM, meshCache->nCachedPointsM * sizeof(int));
 	}
 
 	outResultCount = meshCache->nCachedPoints + meshCache->nCachedPointsM;
@@ -1322,7 +1322,7 @@ void TB_SmoothWeight::hclapFilter(mesh* refmesh, int* points, int nPoints, std::
 	if (refmesh != lastMesh)
 		lastMesh = refmesh;
 	else
-		memset(b.data(), 0, b.size() * sizeof(Vector3));
+		std::memset(b.data(), 0, b.size() * sizeof(Vector3));
 
 	Vector3 d;
 	Vector3 q;

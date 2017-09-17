@@ -464,12 +464,10 @@ void BSTriShape::Get(NiStream& stream) {
 	NiObjectNET::Get(stream);
 
 	stream >> flags;
-	stream >> translation;
+	stream >> transform.translation;
+	stream >> transform.rotation;
+	stream >> transform.scale;
 
-	for (int i = 0; i < 3; i++)
-		stream >> rotation[i];
-
-	stream >> scale;
 	collisionRef.Get(stream);
 
 	stream >> bounds;
@@ -604,12 +602,10 @@ void BSTriShape::Put(NiStream& stream) {
 	NiObjectNET::Put(stream);
 
 	stream << flags;
-	stream << translation;
+	stream << transform.translation;
+	stream << transform.rotation;
+	stream << transform.scale;
 
-	for (int i = 0; i < 3; i++)
-		stream << rotation[i];
-
-	stream << scale;
 	collisionRef.Put(stream);
 
 	stream << bounds;
@@ -1242,9 +1238,9 @@ void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris
 		vertex.bitangentY = 0;
 		vertex.bitangentZ = 0;
 		vertex.normal[0] = vertex.normal[1] = vertex.normal[2] = 0;
-		memset(vertex.colorData, 255, 4);
-		memset(vertex.weights, 0, sizeof(float) * 4);
-		memset(vertex.weightBones, 0, 4);
+		std::memset(vertex.colorData, 255, 4);
+		std::memset(vertex.weights, 0, sizeof(float) * 4);
+		std::memset(vertex.weightBones, 0, 4);
 		vertex.eyeData = 0.0f;
 	}
 
