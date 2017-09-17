@@ -1003,7 +1003,7 @@ void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
 	}
 }
 
-int NifFile::CopyNamedNode(std::string& nodeName, NifFile& srcNif) {
+int NifFile::CopyNamedNode(const std::string& nodeName, NifFile& srcNif) {
 	NiNode* srcNode = srcNif.FindNodeByName(nodeName);
 	if (!srcNode)
 		return 0xFFFFFFFF;
@@ -1014,8 +1014,11 @@ int NifFile::CopyNamedNode(std::string& nodeName, NifFile& srcNif) {
 	return hdr.AddBlock(destNode);
 }
 
-void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const std::string& srcShape) {
-	NiShape* srcGeom = srcNif.FindShapeByName(srcShape);
+void NifFile::CopyGeometry(const std::string& shapeDest, const std::string& srcShape, NifFile* srcNif) {
+	if (!srcNif)
+		srcNif = this;
+
+	NiShape* srcGeom = srcNif->FindShapeByName(srcShape);
 	if (!srcGeom)
 		return;
 
@@ -1027,7 +1030,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 
 	// Extra Data
 	for (int i = 0; i < srcGeom->GetExtraData().GetSize(); i++) {
-		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcGeom->GetExtraData().GetBlockRef(i));
+		auto srcExtraData = srcNif->hdr.GetBlock<NiExtraData>(srcGeom->GetExtraData().GetBlockRef(i));
 		if (srcExtraData) {
 			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
 			destExtraData->SetName(srcExtraData->GetName());
@@ -1045,7 +1048,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	}
 
 	// Collision Object
-	auto srcCollisionObj = srcNif.hdr.GetBlock<NiCollisionObject>(srcGeom->GetCollisionRef());
+	auto srcCollisionObj = srcNif->hdr.GetBlock<NiCollisionObject>(srcGeom->GetCollisionRef());
 	if (srcCollisionObj) {
 		auto destCollisionObj = srcCollisionObj->Clone();
 
@@ -1054,7 +1057,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	}
 
 	// Geometry Data
-	auto srcGeomData = srcNif.hdr.GetBlock<NiTriBasedGeomData>(srcGeom->GetDataRef());
+	auto srcGeomData = srcNif->hdr.GetBlock<NiTriBasedGeomData>(srcGeom->GetDataRef());
 	if (srcGeomData) {
 		NiTriBasedGeomData* destGeomData = static_cast<NiTriBasedGeomData*>(srcGeomData->Clone());
 
@@ -1067,10 +1070,10 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	NiBoneContainer* destBoneCont = nullptr;
 	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
 		if (destGeom->HasType<NiTriBasedGeom>() || (destGeom->HasType<BSTriShape>() && hdr.GetVersion().Stream() == 100)) {
-			auto srcSkinInst = srcNif.hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
+			auto srcSkinInst = srcNif->hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcSkinInst) {
-				auto srcSkinData = srcNif.hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
-				auto srcSkinPart = srcNif.hdr.GetBlock<NiSkinPartition>(srcSkinInst->GetSkinPartitionRef());
+				auto srcSkinData = srcNif->hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
+				auto srcSkinPart = srcNif->hdr.GetBlock<NiSkinPartition>(srcSkinInst->GetSkinPartitionRef());
 
 				NiSkinInstance* destSkinInst = srcSkinInst->Clone();
 
@@ -1090,14 +1093,14 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 			}
 		}
 		else if (destGeom->HasType<BSTriShape>()) {
-			auto srcBSSkinInst = srcNif.hdr.GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
+			auto srcBSSkinInst = srcNif->hdr.GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
 			if (srcBSSkinInst) {
 				auto destBSSkinInst = srcBSSkinInst->Clone();
 
 				int destSkinInstId = hdr.AddBlock(destBSSkinInst);
 				destGeom->SetSkinInstanceRef(destSkinInstId);
 
-				auto srcBoneData = srcNif.hdr.GetBlock<BSSkinBoneData>(srcBSSkinInst->GetDataRef());
+				auto srcBoneData = srcNif->hdr.GetBlock<BSSkinBoneData>(srcBSSkinInst->GetDataRef());
 				if (srcBoneData) {
 					auto destBoneData = srcBoneData->Clone();
 
@@ -1111,11 +1114,11 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	}
 
 	// Shader
-	CopyShader(shapeDest, srcNif);
+	CopyShader(shapeDest, *srcNif);
 
 	// Properties
 	for (int i = 0; i < srcGeom->GetProperties().GetSize(); i++) {
-		auto srcProp = srcNif.hdr.GetBlock<NiProperty>(srcGeom->GetProperties().GetBlockRef(i));
+		auto srcProp = srcNif->hdr.GetBlock<NiProperty>(srcGeom->GetProperties().GetBlockRef(i));
 		if (srcProp) {
 			auto destProp = srcProp->Clone();
 			int propId = hdr.AddBlock(destProp);
@@ -1124,7 +1127,7 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 	}
 
 	std::vector<std::string> srcBoneList;
-	srcNif.GetShapeBoneList(srcShape, srcBoneList);
+	srcNif->GetShapeBoneList(srcShape, srcBoneList);
 	if (destBoneCont)
 		destBoneCont->GetBones().Clear();
 
@@ -1134,16 +1137,23 @@ void NifFile::CopyGeometry(const std::string& shapeDest, NifFile& srcNif, const 
 		for (auto &boneName : srcBoneList) {
 			int boneID = GetBlockID(FindNodeByName(boneName));
 			if (boneID == 0xFFFFFFFF) {
-				boneID = CopyNamedNode(boneName, srcNif);
+				boneID = CopyNamedNode(boneName, *srcNif);
 				rootNode->GetChildren().AddBlockRef(boneID);
 			}
 
 			if (destBoneCont)
 				destBoneCont->GetBones().AddBlockRef(boneID);
 		}
-
-		rootNode->GetChildren().AddBlockRef(destId);
 	}
+
+	if (srcNif == this) {
+		// Assign copied geometry to the same parent
+		auto parentNode = GetParentNode(srcGeom);
+		if (parentNode)
+			parentNode->GetChildren().AddBlockRef(destId);
+	}
+	else if (rootNode)
+		rootNode->GetChildren().AddBlockRef(destId);
 }
 
 int NifFile::Save(const std::string& filename, bool optimize, bool sortBlocks) {
