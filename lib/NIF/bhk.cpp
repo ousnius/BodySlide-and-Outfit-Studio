@@ -904,7 +904,7 @@ void ConstraintData::Get(NiStream& stream) {
 void ConstraintData::Put(NiStream& stream) {
 	stream << type;
 
-	entityRefs.Put(stream);
+	entityRefs.Put(stream, 2);
 	stream << priority;
 
 	switch (type) {

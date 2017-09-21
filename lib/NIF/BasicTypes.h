@@ -293,6 +293,7 @@ public:
 
 	virtual void Get(NiStream& stream) = 0;
 	virtual void Put(NiStream& stream) = 0;
+	virtual void Put(NiStream& stream, const int forcedSize) = 0;
 	virtual void AddBlockRef(const int id) = 0;
 	virtual int GetBlockRef(const int id) = 0;
 	virtual void SetBlockRef(const int id, const int index) = 0;
@@ -359,6 +360,17 @@ public:
 			r.Put(stream);
 	}
 
+	virtual void Put(NiStream& stream, const int forcedSize) override {
+		CleanInvalidRefs();
+		arraySize = forcedSize;
+		refs.resize(forcedSize);
+
+		stream << arraySize;
+
+		for (auto &r : refs)
+			r.Put(stream);
+	}
+
 	virtual void AddBlockRef(const int index) override {
 		refs.push_back(BlockRef<T>(index));
 		arraySize++;
@@ -419,6 +431,17 @@ public:
 
 	virtual void Put(NiStream& stream) override {
 		CleanInvalidRefs();
+		stream.write((char*)&arraySize, 2);
+
+		for (auto &r : refs)
+			r.Put(stream);
+	}
+	
+	virtual void Put(NiStream& stream, const int forcedSize) override {
+		CleanInvalidRefs();
+		arraySize = forcedSize;
+		refs.resize(forcedSize);
+
 		stream.write((char*)&arraySize, 2);
 
 		for (auto &r : refs)
