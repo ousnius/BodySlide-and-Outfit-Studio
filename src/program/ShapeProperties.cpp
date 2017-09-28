@@ -656,11 +656,13 @@ void ShapeProperties::ApplyChanges() {
 				bsSITS->SetDefaultSegments();
 				bsSITS->SetName(bsTriShape->GetName());
 				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
+				shape = bsSITS;
 			}
 			else {
 				auto bsTS = new BSTriShape(*bsTriShape);
 				bsTS->SetName(bsTriShape->GetName());
 				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
+				shape = bsTS;
 			}
 		}
 	}
