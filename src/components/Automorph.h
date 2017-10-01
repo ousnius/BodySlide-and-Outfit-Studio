@@ -14,7 +14,6 @@ See the included LICENSE file
 class Automorph {
 	std::unique_ptr<kd_tree> refTree;
 	std::map<std::string, mesh*> sourceShapes;
-	std::map<std::string, mesh*> foreignShapes;	// Meshes linked by LinkSourceShapeMesh loaded and managed outside the.
 	// Class - to prevent AutoMorph from deleting it. Golly, smart pointers would be nice.
 	std::map<int, std::vector<kd_query_result>> prox_cache;
 	DiffDataSets __srcDiffData;				// Unternally loaded and stored diff data.diffs loaded from existing reference .bsd files.
@@ -46,7 +45,7 @@ public:
 		bEnableMask = enable;
 	}
 
-	void SetRef(NifFile& Ref, const std::string& refShape);
+	void SetRef(NifFile& Ref, NiShape* refShape);
 
 	void LinkRefDiffData(DiffDataSets* diffData);
 	void UnlinkRefDiffData();
@@ -56,11 +55,10 @@ public:
 	void ApplyResultToUVs(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector2>* inOutResult, float strength = 1.0f);
 
 	void SourceShapesFromNif(NifFile& baseNif);
-	void LinkSourceShapeMesh(mesh* m, const std::string& shapeName);
 	void UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName);
 	void CopyMeshMask(mesh*m, const std::string& shapeName);
 
-	void MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shapeName);
+	void MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape);
 	void DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices);
 
 	void ClearProximityCache();

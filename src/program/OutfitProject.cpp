@@ -1802,9 +1802,12 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 }
 
 void OutfitProject::InitConform() {
-	morpher.SetRef(workNif, baseShape);
-	morpher.LinkRefDiffData(&baseDiffData);
-	morpher.SourceShapesFromNif(workNif);
+	NiShape* shape = workNif.FindShapeByName(baseShape);
+	if (shape) {
+		morpher.SetRef(workNif, shape);
+		morpher.LinkRefDiffData(&baseDiffData);
+		morpher.SourceShapesFromNif(workNif);
+	}
 }
 
 void OutfitProject::ConformShape(const std::string& shapeName) {

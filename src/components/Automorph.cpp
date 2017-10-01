@@ -14,14 +14,10 @@ Automorph::~Automorph() {
 }
 
 void Automorph::ClearSourceShapes() {
-	for (auto &shapes : sourceShapes) {
-		if (foreignShapes.find(shapes.first) != foreignShapes.end())
-			continue;
-
+	for (auto &shapes : sourceShapes)
 		delete shapes.second;
-	}
+
 	sourceShapes.clear();
-	foreignShapes.clear();
 }
 
 void Automorph::RenameResultDiffData(const std::string& shape, const std::string& oldName, const std::string& newName) {
@@ -36,10 +32,6 @@ void Automorph::RenameShape(const std::string& shapeName, const std::string& new
 	if (sourceShapes.find(shapeName) != sourceShapes.end()) {
 		sourceShapes[newShapeName] = sourceShapes[shapeName];
 		sourceShapes.erase(shapeName);
-	}
-	if (foreignShapes.find(shapeName) != foreignShapes.end()) {
-		foreignShapes[newShapeName] = foreignShapes[shapeName];
-		foreignShapes.erase(shapeName);
 	}
 
 	resultDiffData.DeepRename(shapeName, newShapeName);
@@ -75,7 +67,7 @@ void Automorph::RenameShape(const std::string& shapeName, const std::string& new
 	}
 }
 
-void Automorph::SetRef(NifFile& ref, const std::string& refShape) {
+void Automorph::SetRef(NifFile& ref, NiShape* refShape) {
 	morphRef = std::make_unique<mesh>();
 	MeshFromNifShape(morphRef.get(), ref, refShape);
 
@@ -109,11 +101,11 @@ void Automorph::ApplyResultToUVs(const std::string& sliderName, const std::strin
 void Automorph::SourceShapesFromNif(NifFile &baseNif) {
 	ClearSourceShapes();
 
-	std::vector<std::string> shapes = baseNif.GetShapeNames();
-	for (int i = 0; i < shapes.size(); i++) {
+	auto shapes = baseNif.GetShapes();
+	for (auto &s : shapes) {
 		mesh* m = new mesh();
-		MeshFromNifShape(m, baseNif, shapes[i]);
-		sourceShapes[shapes[i]] = m;
+		MeshFromNifShape(m, baseNif, s);
+		sourceShapes[s->GetName()] = m;
 	}
 }
 
@@ -148,18 +140,45 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 		dm->vcolors[i] = m->vcolors[i];
 }
 
-void Automorph::LinkSourceShapeMesh(mesh* m, const std::string& shapeName) {
-	sourceShapes[shapeName] = m;
-	foreignShapes[shapeName] = m;
-}
-
-void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shapeName) {
+void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 	std::vector<Vector3> nifVerts;
 	std::vector<Triangle> nifTris;
-	ref.GetVertsForShape(shapeName, nifVerts);
-	ref.GetTrisForShape(shapeName, &nifTris);
+	ref.GetVertsForShape(shape->GetName(), nifVerts);
+	ref.GetTrisForShape(shape->GetName(), &nifTris);
 
-	m->shapeName = shapeName;
+	m->shapeName = shape->GetName();
+
+	float y, p, r;
+	glm::mat4x4 matParents;
+	glm::mat4x4 matShape;
+	glm::mat4x4 matSkin;
+
+	if (!shape->IsSkinned()) {
+		NiNode* parent = ref.GetParentNode(shape);
+		while (parent) {
+			parent->transform.ToEulerDegrees(y, p, r);
+			matParents = glm::translate(matParents, glm::vec3(parent->transform.translation.x, parent->transform.translation.y, parent->transform.translation.z));
+			matParents *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+			matParents = glm::scale(matParents, glm::vec3(parent->transform.scale, parent->transform.scale, parent->transform.scale));
+			parent = ref.GetParentNode(parent);
+		}
+
+		matShape = glm::translate(matShape, glm::vec3(shape->transform.translation.x, shape->transform.translation.y, shape->transform.translation.z));
+		shape->transform.ToEulerDegrees(y, p, r);
+		matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+		matShape = glm::scale(matShape, glm::vec3(shape->transform.scale, shape->transform.scale, shape->transform.scale));
+	}
+	else {
+		MatTransform xFormSkin;
+		if (ref.GetShapeBoneTransform(shape->GetName(), 0xFFFFFFFF, xFormSkin)) {
+			xFormSkin.ToEulerDegrees(y, p, r);
+			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x, xFormSkin.translation.y, xFormSkin.translation.z));
+			matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+			matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
+		}
+	}
+
+	m->matModel = matParents * matShape * glm::inverse(matSkin);
 
 	//float c = 0.4f + (meshes.size()*0.3f);
 	//m->color = Vector3(c,c,c);
@@ -171,8 +190,10 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, const std::string& shape
 	m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 	// Load verts. No transformation is done (in contrast to the very similar code in GLSurface).
-	for (int i = 0; i < m->nVerts; i++)
-		m->verts[i] = (nifVerts)[i];
+	for (int i = 0; i < m->nVerts; i++) {
+		glm::vec4 vtmp = m->matModel * glm::vec4((nifVerts)[i].x, (nifVerts)[i].y, (nifVerts)[i].z, 1.0f);
+		m->verts[i] = Vector3(vtmp.x, vtmp.y, vtmp.z);
+	}
 
 	// Load triangles
 	for (int j = 0; j < m->nTris; j++)
@@ -193,14 +214,7 @@ void Automorph::BuildProximityCache(const std::string& shapeName, const float& p
 	int minCount = 60000;
 
 	for (int i = 0; i < m->nVerts; i++) {
-		int resultCount;
-		if (foreignShapes.find(shapeName) != foreignShapes.end()) {
-			Vector3 vtmp(m->verts[i].x * -10.0f, m->verts[i].z * 10.0f, m->verts[i].y * 10.0f);
-			resultCount = refTree->kd_nn(&vtmp, proximityRadius);
-		}
-		else
-			resultCount = refTree->kd_nn(&m->verts[i], proximityRadius);
-
+		int resultCount = refTree->kd_nn(&m->verts[i], proximityRadius);
 		if (resultCount < minCount)
 			minCount = resultCount;
 		if (resultCount > maxCount)
@@ -226,7 +240,7 @@ void Automorph::GetRawResultDiff(const std::string& shapeName, const std::string
 		outDiff[i.first] = i.second;
 }
 
-int  Automorph::GetResultDiffSize(const std::string& shapeName, const std::string& sliderName) {
+int Automorph::GetResultDiffSize(const std::string& shapeName, const std::string& sliderName) {
 	std::string setname = ResultDataName(shapeName, sliderName);
 	if (!resultDiffData.TargetMatch(setname, shapeName))
 		return 0;
