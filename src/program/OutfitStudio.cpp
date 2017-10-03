@@ -4824,6 +4824,10 @@ void OutfitStudio::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 	else
 		project->SetBaseShape("");
 
+	NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+	if (shape)
+		project->SetTextures(shape);
+
 	RefreshGUIFromProj();
 }
 

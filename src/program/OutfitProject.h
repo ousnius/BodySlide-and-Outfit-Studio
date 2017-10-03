@@ -29,7 +29,7 @@ class OutfitProject {
 	void CheckNIFTarget(NifFile& nif);
 
 public:
-	std::string outfitName;
+	std::string outfitName = "New Outfit";
 	DiffDataSets baseDiffData;
 	SliderSet activeSet;
 	Automorph morpher;

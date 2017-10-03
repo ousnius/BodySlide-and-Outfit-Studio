@@ -321,11 +321,18 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	}
 
 	// No diffuse found
-	if (texRefs.empty() || texRefs[0] == 0) {
+	if (texRefs.empty())
+		texRefs.resize(1, 0);
+
+	if (texRefs[0] == 0) {
 		// Load default image
 		std::string defaultTex = "res\\images\\noimg.png";
 		texRefs[0] = LoadTexture(defaultTex, false);
-		RenameTexture(defaultTex, texFiles[0]);
+
+		if (!texFiles.empty())
+			RenameTexture(defaultTex, texFiles[0]);
+		else
+			texFiles.resize(1, defaultTex);
 	}
 
 	auto& entry = materials[key];
