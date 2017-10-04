@@ -383,8 +383,18 @@ bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* result
 
 	bool* pointVisit = (bool*)calloc(refmesh->nVerts, sizeof(bool));
 
-	if (bConnected)
-		refmesh->ConnectedPointsInSphere(pickInfo.origin, radius * radius, pickInfo.facet, nullptr, pointVisit, resultPoints, outResultCount, resultFacets);
+	if (bConnected && !IResults.empty()) {
+		int pickFacet = IResults[0].HitFacet;
+		float minDist = IResults[0].HitDistance;
+		for (auto &r : IResults) {
+			if (r.HitDistance < minDist) {
+				minDist = r.HitDistance;
+				pickFacet = r.HitFacet;
+			}
+		}
+
+		refmesh->ConnectedPointsInSphere(pickInfo.origin, radius * radius, pickFacet, nullptr, pointVisit, resultPoints, outResultCount, resultFacets);
+	}
 	else
 		outResultCount = 0;
 
@@ -842,6 +852,12 @@ bool TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 		meshCache->nCachedPointsM = 0;
 		meshCache->cachedPoints = (int*)malloc(m->nVerts * sizeof(int));
 
+		if (bMirror) {
+			meshCache->cachedPointsM = (int*)malloc(m->nVerts * sizeof(int));
+			meshCache->cachedFacetsM.clear();
+			meshCache->cachedNodesM.clear();
+		}
+
 		if (!TweakBrush::queryPoints(m, pick, meshCache->cachedPoints, meshCache->nCachedPoints, meshCache->cachedFacets, meshCache->cachedNodes))
 			continue;
 
@@ -849,9 +865,6 @@ bool TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 			meshCache->cachedPositions[meshCache->cachedPoints[i]] = m->verts[meshCache->cachedPoints[i]];
 
 		if (bMirror) {
-			meshCache->cachedPointsM = (int*)malloc(m->nVerts * sizeof(int));
-			meshCache->cachedFacetsM.clear();
-			meshCache->cachedNodesM.clear();
 			TweakBrush::queryPoints(m, mpick, meshCache->cachedPointsM, meshCache->nCachedPointsM, meshCache->cachedFacetsM, meshCache->cachedNodesM);
 
 			for (int i = 0; i < meshCache->nCachedPointsM; i++)

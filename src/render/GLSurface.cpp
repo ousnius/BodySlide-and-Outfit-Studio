@@ -361,9 +361,12 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++)
-					if (results[i].HitDistance < minDist)
+				for (int i = 1; i < results.size(); i++) {
+					if (results[i].HitDistance < minDist) {
+						minDist = results[i].HitDistance;
 						min_i = i;
+					}
+				}
 
 				Vector3 origin = results[min_i].HitCoord;
 
@@ -415,9 +418,12 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++)
-					if (results[i].HitDistance < minDist)
+				for (int i = 1; i < results.size(); i++) {
+					if (results[i].HitDistance < minDist) {
+						minDist = results[i].HitDistance;
 						min_i = i;
+					}
+				}
 
 				Vector3 origin = results[min_i].HitCoord;
 
@@ -493,9 +499,12 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++)
-					if (results[i].HitDistance < minDist)
+				for (int i = 1; i < results.size(); i++) {
+					if (results[i].HitDistance < minDist) {
+						minDist = results[i].HitDistance;
 						min_i = i;
+					}
+				}
 
 				Vector3 origin = results[min_i].HitCoord;
 
@@ -575,9 +584,12 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 			if (results.size() > 0) {
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
-				for (int i = 1; i < results.size(); i++)
-					if (results[i].HitDistance < minDist)
+				for (int i = 1; i < results.size(); i++) {
+					if (results[i].HitDistance < minDist) {
+						minDist = results[i].HitDistance;
 						min_i = i;
+					}
+				}
 
 				Vector3 origin = results[min_i].HitCoord;
 

@@ -7,6 +7,7 @@ See the included LICENSE file
 #pragma once
 
 #include <vector>
+#include <algorithm>
 
 #pragma warning (disable : 4018 4244 4267 4389)
 
@@ -990,7 +991,7 @@ struct Triangle {
 	// Triangle/Sphere collision psuedocode by Christer Ericson: http://realtimecollisiondetection.net/blog/?p=103
 	//   separating axis test on seven features --  3 points, 3 edges, and the tri plane.  For a sphere, this
 	//   involves finding the minimum distance to each feature from the sphere origin and comparing it to the sphere radius.
-	bool IntersectSphere(Vector3 *vertref, Vector3 &origin, float radius) {
+	bool IntersectSphere(Vector3 *vertref, Vector3 &origin, float radius, float* outDistance = nullptr) {
 		//A = A - P
 		//B = B - P
 		//C = C - P
@@ -1083,6 +1084,9 @@ struct Triangle {
 		//separated = sep1 | sep2 | sep3 | sep4 | sep5 | sep6 | sep7
 		if (sep5 | sep6 | sep7)
 			return false;
+
+		if (outDistance)
+			(*outDistance) = std::min({ vertref[p1].DistanceTo(origin), vertref[p2].DistanceTo(origin), vertref[p3].DistanceTo(origin) });
 
 		return true;
 	}
