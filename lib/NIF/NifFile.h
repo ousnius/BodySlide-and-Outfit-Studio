@@ -146,8 +146,10 @@ public:
 
 	// Explicitly sets the order of shapes to a new one.
 	void SetShapeOrder(const std::vector<std::string>& order);
-
-	// Sorts children block references under the root node so shapes appear first in the list, emulating the order created by nifskope.
+	void SetSortIndex(const int id, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
+	void SortAVObject(NiAVObject* avobj, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
+	void SortShape(NiShape* shape, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
+	void SortGraph(NiNode* root, std::vector<std::pair<int, int>>& newIndices, int& newIndex);
 	void PrettySortBlocks();
 	bool DeleteUnreferencedBlocks();
 

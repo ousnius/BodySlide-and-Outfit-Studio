@@ -248,14 +248,43 @@ int NiHeader::ReplaceBlock(int oldBlockId, NiObject* newBlock) {
 	return oldBlockId;
 }
 
+void NiHeader::SetBlockOrder(std::vector<std::pair<int, int>>& newIndices) {
+	std::sort(newIndices.begin(), newIndices.end(), [](auto& l, auto& r) {
+		return l.first < r.first && r.first >= 0;
+	});
+
+	newIndices.erase(std::remove_if(newIndices.begin(), newIndices.end(), [](auto& p) {
+		return p.first == 0xFFFFFFFF;
+	}), newIndices.end());
+
+	for (int i = 0; i < newIndices.size() - 1; i++) {
+		bool swapped = false;
+		for (int j = 0; j < newIndices.size() - i - 1; j++) {
+			if (newIndices[j].second > newIndices[j + 1].second) {
+				auto id = newIndices[j].second;
+				newIndices[j].second = newIndices[j + 1].second;
+				newIndices[j + 1].second = id;
+
+				SwapBlocks(newIndices[j].first, newIndices[j + 1].first);
+				swapped = true;
+			}
+		}
+
+		if (!swapped)
+			break;
+	}
+}
+
 void NiHeader::SwapBlocks(const int blockIndexLo, const int blockIndexHi) {
-	if (blockIndexLo == 0xFFFFFFFF || blockIndexHi == 0xFFFFFFFF)
+	if (blockIndexLo == 0xFFFFFFFF || blockIndexHi == 0xFFFFFFFF ||
+		blockIndexLo >= numBlocks || blockIndexHi >= numBlocks ||
+		blockIndexLo == blockIndexHi)
 		return;
 
 	// First swap data
-	iter_swap(blockTypeIndices.begin() + blockIndexLo, blockTypeIndices.begin() + blockIndexHi);
-	iter_swap(blockSizes.begin() + blockIndexLo, blockSizes.begin() + blockIndexHi);
-	iter_swap(blocks->begin() + blockIndexLo, blocks->begin() + blockIndexHi);
+	std::iter_swap(blockTypeIndices.begin() + blockIndexLo, blockTypeIndices.begin() + blockIndexHi);
+	std::iter_swap(blockSizes.begin() + blockIndexLo, blockSizes.begin() + blockIndexHi);
+	std::iter_swap(blocks->begin() + blockIndexLo, blocks->begin() + blockIndexHi);
 
 	// Next tell all the blocks that the swap happened
 	for (auto &b : (*blocks))

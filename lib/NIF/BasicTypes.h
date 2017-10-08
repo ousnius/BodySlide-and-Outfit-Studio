@@ -565,6 +565,7 @@ public:
 	void DeleteBlockByType(const std::string& blockTypeStr);
 	int AddBlock(NiObject* newBlock);
 	int ReplaceBlock(int oldBlockId, NiObject* newBlock);
+	void SetBlockOrder(std::vector<std::pair<int, int>>& newIndices);
 
 	// Swaps two blocks, updating references in other blocks that may refer to their old indices
 	void SwapBlocks(const int blockIndexLo, const int blockIndexHi);
