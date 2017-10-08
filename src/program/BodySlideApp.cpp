@@ -1759,7 +1759,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		critical.lock();
 #endif
 
-		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, outfitList.size());
+		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, (int)outfitList.size());
 		progWnd->Update((int)(count * progstep) - 1, progMsg);
 		count++;
 
