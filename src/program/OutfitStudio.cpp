@@ -2266,8 +2266,20 @@ void OutfitStudio::OnShapeContext(wxTreeEvent& event) {
 
 void OutfitStudio::OnShapeDrag(wxTreeEvent& event) {
 	if (activeItem) {
-		outfitShapes->SetCursor(wxCURSOR_HAND);
-		event.Allow();
+		wxPoint p;
+		wxGetMousePosition(&p.x, &p.y);
+		p = outfitShapes->ScreenToClient(p);
+
+		int outflags;
+		outfitShapes->HitTest(p, outflags);
+
+		int mask = wxTREE_HITTEST_ONITEMINDENT | wxTREE_HITTEST_ONITEMSTATEICON;
+		if ((outflags & mask) == 0) {
+			outfitShapes->SetCursor(wxCURSOR_HAND);
+			event.Allow();
+		}
+		else
+			event.Veto();
 	}
 }
 
@@ -2275,7 +2287,7 @@ void OutfitStudio::OnShapeDrop(wxTreeEvent& event) {
 	outfitShapes->SetCursor(wxNullCursor);
 	wxTreeItemId dropItem = event.GetItem();
 
-	if (!dropItem.IsOk())
+	if (!dropItem.IsOk() || !activeItem)
 		return;
 
 	// Make first child
