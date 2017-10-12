@@ -2280,21 +2280,21 @@ void OutfitProject::CheckNIFTarget(NifFile& nif) {
 	switch (owner->targetGame) {
 	case FO3:
 	case FONV:
-		match = (nif.GetHeader().GetVersion().Stream() == 34);
+		match = nif.GetHeader().GetVersion().IsFO3();
 		break;
 	case SKYRIM:
-		match = (nif.GetHeader().GetVersion().Stream() == 83);
+		match = nif.GetHeader().GetVersion().IsSK();
 		break;
 	case FO4:
-		match = (nif.GetHeader().GetVersion().Stream() == 130);
+		match = nif.GetHeader().GetVersion().IsFO4();
 		break;
 	case SKYRIMSE:
-		match = (nif.GetHeader().GetVersion().Stream() == 100);
+		match = nif.GetHeader().GetVersion().IsSSE();
 		break;
 	}
 
 	if (!match) {
-		if (owner->targetGame == SKYRIMSE && nif.GetHeader().GetVersion().Stream() == 83) {
+		if (owner->targetGame == SKYRIMSE && nif.GetHeader().GetVersion().IsSK()) {
 			if (!Config.Exists("OptimizeForSSE")) {
 				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
 				if (res == wxYES)

@@ -22,6 +22,7 @@ See the included LICENSE file
 struct OptOptionsSSE {
 	bool headParts = false;
 	bool removeParallax = true;
+	bool calcBounds = true;
 };
 
 struct OptResultSSE {

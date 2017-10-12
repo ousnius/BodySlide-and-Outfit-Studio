@@ -1498,8 +1498,8 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				bsSITS->segments = bsSegmentShape->segments;
 			}
 
-			// Don't use new bounds for static meshes
-			if (!shape->IsSkinned())
+			// Restore old bounds for static meshes or when calc bounds is off
+			if (!shape->IsSkinned() || !options.calcBounds)
 				bsOptShape->SetBounds(geomData->GetBounds());
 
 			// Vertex Colors
