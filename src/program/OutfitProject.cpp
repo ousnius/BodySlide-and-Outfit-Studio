@@ -832,8 +832,11 @@ void OutfitProject::SetSliderFromBSD(const std::string& sliderName, const std::s
 bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, const std::string& shapeName, const std::string& fileName) {
 	std::string target = ShapeToTarget(shapeName);
 
+	ObjOptionsImport options;
+	options.noFaces = true;
+
 	ObjFile obj;
-	obj.LoadForNif(fileName);
+	obj.LoadForNif(fileName, options);
 
 	// File needs at least one group
 	std::vector<std::string> groupNames = obj.GetGroupList();

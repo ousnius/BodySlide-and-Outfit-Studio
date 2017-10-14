@@ -30,17 +30,17 @@ int ObjFile::AddGroup(const std::string& name, const std::vector<Vector3>& verts
 	return 0;
 }
 
-int ObjFile::LoadForNif(const std::string& fileName) {
+int ObjFile::LoadForNif(const std::string& fileName, const ObjOptionsImport& options) {
 	std::fstream base(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
 	if (base.fail())
 		return 1;
 
-	LoadForNif(base);
+	LoadForNif(base, options);
 	base.close();
 	return 0;
 }
 
-int ObjFile::LoadForNif(std::fstream& base) {
+int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 	ObjData* di = new ObjData();
 
 	Vector3 v;
@@ -72,6 +72,30 @@ int ObjFile::LoadForNif(std::fstream& base) {
 			base >> dump;
 		else
 			gotface = false;
+
+		if (options.noFaces) {
+			if (dump.compare("v") == 0) {
+				base >> v.x >> v.y >> v.z;
+				di->verts.push_back(v);
+			}
+			else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
+				base >> curgrp;
+
+				if (!di->name.empty()) {
+					data[di->name] = di;
+					di = new ObjData;
+				}
+
+				di->name = curgrp;
+			}
+			else if (dump.compare("vt") == 0) {
+				base >> uv.u >> uv.v;
+				uv.v = 1.0f - uv.v;
+				di->uvs.push_back(uv);
+			}
+
+			continue;
+		}
 
 		if (dump.compare("v") == 0) {
 			base >> v.x >> v.y >> v.z;

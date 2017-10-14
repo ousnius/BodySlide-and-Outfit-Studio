@@ -12,6 +12,10 @@ See the included LICENSE file
 #include <fstream>
 #include <string>
 
+struct ObjOptionsImport {
+	bool noFaces = false;
+};
+
 struct VertUV {
 	int v;
 	int uv;
@@ -41,8 +45,8 @@ public:
 	void SetScale(const Vector3& inScale) { scale = inScale; }
 	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
 
-	int LoadForNif(const std::string& fileName);
-	int LoadForNif(std::fstream& base);
+	int LoadForNif(const std::string& fileName, const ObjOptionsImport& options = ObjOptionsImport());
+	int LoadForNif(std::fstream& base, const ObjOptionsImport& options = ObjOptionsImport());
 
 	int Save(const std::string& fileName);
 
