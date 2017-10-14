@@ -1860,6 +1860,8 @@ void OutfitProject::DeleteShape(const std::string& shapeName) {
 	workAnim.ClearShape(shapeName);
 	workNif.DeleteShape(shapeName);
 	owner->glView->DeleteMesh(shapeName);
+	shapeTextures.erase(shapeName);
+	shapeMaterialFiles.erase(shapeName);
 
 	if (IsBaseShape(shapeName)) {
 		morpher.UnlinkRefDiffData();
@@ -1871,6 +1873,20 @@ void OutfitProject::RenameShape(const std::string& shapeName, const std::string&
 	workNif.RenameShape(shapeName, newShapeName);
 	workAnim.RenameShape(shapeName, newShapeName);
 	activeSet.RenameShape(shapeName, newShapeName);
+	
+	auto tex = shapeTextures.find(shapeName);
+	if (tex != shapeTextures.end()) {
+		auto value = tex->second;
+		shapeTextures.erase(tex);
+		shapeTextures[newShapeName] = value;
+	}
+
+	auto mat = shapeMaterialFiles.find(shapeName);
+	if (mat != shapeMaterialFiles.end()) {
+		auto value = mat->second;
+		shapeMaterialFiles.erase(mat);
+		shapeMaterialFiles[newShapeName] = value;
+	}
 
 	if (IsBaseShape(shapeName)) {
 		activeSet.SetReferencedData(newShapeName, true);
