@@ -1992,6 +1992,11 @@ void NiTriStripsData::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 			}
 		}
 	}
+
+	numTriangles = 0;
+	for (auto len : stripLengths)
+		if (len - 2 > 0)
+			numTriangles += len - 2;
 }
 
 void NiTriStripsData::StripsToTris(std::vector<Triangle>* outTris) {

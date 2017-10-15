@@ -26,7 +26,7 @@ class OutfitProject {
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, BSClothExtraData*> clothData;
 
-	void CheckNIFTarget(NifFile& nif);
+	void ValidateNIF(NifFile& nif);
 
 public:
 	std::string outfitName = "New Outfit";

@@ -1798,6 +1798,31 @@ bool NifFile::RenameDuplicateShapes() {
 	return renamed;
 }
 
+void NifFile::TriangulateShape(NiShape* shape) {
+	if (shape->HasType<NiTriStrips>()) {
+		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
+		if (stripsData) {
+			std::vector<Triangle> tris;
+			stripsData->StripsToTris(&tris);
+
+			if (!tris.empty()) {
+				auto triShape = new NiTriShape();
+				*static_cast<NiTriBasedGeom*>(triShape) = *static_cast<NiTriBasedGeom*>(shape);
+				hdr.ReplaceBlock(GetBlockID(shape), triShape);
+
+				auto triShapeData = new NiTriShapeData();
+				*static_cast<NiTriBasedGeomData*>(triShapeData) = *static_cast<NiTriBasedGeomData*>(stripsData);
+				triShapeData->hasTriangles = true;
+				triShapeData->numTriangles = tris.size();
+				triShapeData->numTrianglePoints = triShapeData->numTriangles * 3;
+				triShapeData->triangles = tris;
+				hdr.ReplaceBlock(GetBlockID(stripsData), triShapeData);
+				triShape->SetGeomData(triShapeData);
+			}
+		}
+	}
+}
+
 NiNode* NifFile::GetRootNode() {
 	return GetHeader().GetBlock<NiNode>(0);
 }
@@ -3055,7 +3080,9 @@ bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vecto
 
 		auto skinPartition = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 		if (skinPartition) {
+			TriangulatePartitions(shape);
 			skinPartition->notifyVerticesDelete(indices);
+
 			std::vector<int> emptyIndices;
 			if (skinPartition->RemoveEmptyPartitions(emptyIndices)) {
 				if (skinInst->HasType<BSDismemberSkinInstance>()) {
@@ -3543,6 +3570,7 @@ bool NifFile::TriangulatePartitions(NiShape* shape) {
 				}
 			}
 
+			partition.hasFaces = true;
 			partition.numTriangles = stripTris.size();
 			partition.triangles = move(stripTris);
 			partition.numStrips = 0;

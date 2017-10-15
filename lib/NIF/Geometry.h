@@ -589,12 +589,12 @@ struct MatchGroup {
 
 class NiTriShapeData : public NiTriBasedGeomData {
 private:
-	bool hasTriangles = false;
-	uint numTrianglePoints = 0;
 	ushort numMatchGroups = 0;
 	std::vector<MatchGroup> matchGroups;
 
 public:
+	uint numTrianglePoints = 0;
+	bool hasTriangles = false;
 	std::vector<Triangle> triangles;
 
 	static constexpr const char* BlockName = "NiTriShapeData";

@@ -478,7 +478,7 @@ void NiSkinPartition::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 
 			p.trueTriangles = p.triangles;
 		}
-		else {
+		else if (p.numStrips == 0 && p.hasFaces) {
 			for (int i = p.numTriangles - 1; i >= 0; i--) {
 				if (p.triangles[i].p1 > mapHighestRemoved) {
 					p.triangles[i].p1 -= mapRemCount;

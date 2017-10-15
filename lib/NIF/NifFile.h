@@ -178,6 +178,7 @@ public:
 	std::vector<NiShape*> GetShapes();
 	void RenameShape(const std::string& oldName, const std::string& newName);
 	bool RenameDuplicateShapes();
+	void TriangulateShape(NiShape* shape);
 
 	/// GetChildren of a node ... templatized to allow any particular type to be queried.   useful for walking a node tree
 	template <class T>

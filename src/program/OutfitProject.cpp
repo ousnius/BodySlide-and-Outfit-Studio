@@ -1579,7 +1579,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		return 2;
 	}
 
-	CheckNIFTarget(refNif);
+	ValidateNIF(refNif);
 
 	baseShape = shapeName;
 
@@ -1652,7 +1652,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		return 2;
 	}
 
-	CheckNIFTarget(refNif);
+	ValidateNIF(refNif);
 
 	std::vector<std::string> shapes = refNif.GetShapeNames();
 	if (shapes.empty()) {
@@ -1969,7 +1969,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		return 1;
 	}
 
-	CheckNIFTarget(nif);
+	ValidateNIF(nif);
 
 	nif.SetNodeName(0, "Scene Root");
 	nif.RenameDuplicateShapes();
@@ -2293,7 +2293,7 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<std:
 }
 
 
-void OutfitProject::CheckNIFTarget(NifFile& nif) {
+void OutfitProject::ValidateNIF(NifFile& nif) {
 	bool match = false;
 
 	switch (owner->targetGame) {
@@ -2331,4 +2331,7 @@ void OutfitProject::CheckNIFTarget(NifFile& nif) {
 				nif.GetFileName()), _("Version"), wxICON_WARNING, owner);
 		}
 	}
+
+	for (auto &s : nif.GetShapes())
+		nif.TriangulateShape(s);
 }
