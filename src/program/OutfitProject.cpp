@@ -1222,6 +1222,10 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 	morpher.LinkRefDiffData(&dds);
 	morpher.BuildProximityCache(destShape, proximityRadius);
 
+	NiShape* shape = workNif.FindShapeByName(destShape);
+	if (shape)
+		workNif.CreateSkinning(shape);
+
 	int step = 40 / boneList->size();
 	int prog = 40;
 	owner->UpdateProgress(prog);
