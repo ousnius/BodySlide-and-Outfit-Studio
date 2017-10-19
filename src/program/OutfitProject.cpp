@@ -1012,7 +1012,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 	if (textureFiles.empty()) {
 		std::string texturesDir = appConfig["GameDataPath"];
 		bool hasMat = false;
-		wxString matFile;
+		std::string matFile;
 
 		const byte MAX_TEXTURE_PATHS = 10;
 		std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
@@ -1022,27 +1022,29 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 			// Find material file
 			if (workNif.GetHeader().GetVersion().User() == 12 && workNif.GetHeader().GetVersion().Stream() >= 130) {
 				matFile = shader->GetName();
-				if (!matFile.IsEmpty())
+				if (!matFile.empty())
 					hasMat = true;
 			}
 		}
 
 		MaterialFile mat(MaterialFile::BGSM);
 		if (hasMat) {
-			matFile = matFile.Lower();
-			matFile.Replace("\\", "/");
+			matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
+			matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "");			// Remove everything before the first occurence of "/materials/"
+			matFile = std::regex_replace(matFile, std::regex("^/+"), "");														// Remove all slashes from the front
+			matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");	// If the path doesn't start with "materials/", add it to the front
 
 			// Attempt to read loose material file
-			mat = MaterialFile(texturesDir + matFile.ToStdString());
+			mat = MaterialFile(texturesDir + matFile);
 
 			if (mat.Failed()) {
 				// Search for material file in archives
 				wxMemoryBuffer data;
 				for (FSArchiveFile *archive : FSManager::archiveList()) {
 					if (archive) {
-						if (archive->hasFile(matFile.ToStdString())) {
+						if (archive->hasFile(matFile)) {
 							wxMemoryBuffer outData;
-							archive->fileContents(matFile.ToStdString(), outData);
+							archive->fileContents(matFile, outData);
 
 							if (!outData.IsEmpty()) {
 								data = std::move(outData);
@@ -1091,10 +1093,10 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 
 		for (int i = 0; i < MAX_TEXTURE_PATHS; i++) {
 			if (!texFiles[i].empty()) {
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("/+|\\\\+"), "\\");													// Replace multiple slashes or forward slashes with one backslash
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(.*?)\\\\textures\\\\", std::regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^\\\\+"), "");														// Remove all backslashes from the front
-				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(?!^textures\\\\)", std::regex_constants::icase), "textures\\");		// If the path doesn't start with "textures\", add it to the front
+				texFiles[i] = std::regex_replace(texFiles[i], std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
+				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(.*?)/textures/", std::regex_constants::icase), "");				// Remove everything before the first occurence of "/textures/"
+				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^/+"), "");														// Remove all slashes from the front
+				texFiles[i] = std::regex_replace(texFiles[i], std::regex("^(?!^textures/)", std::regex_constants::icase), "textures/");		// If the path doesn't start with "textures/", add it to the front
 
 				texFiles[i] = texturesDir + texFiles[i];
 			}
