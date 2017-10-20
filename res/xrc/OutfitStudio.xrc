@@ -1003,12 +1003,6 @@
 				<checked>1</checked>
 			</object>
 			<object class="separator" />
-			<object class="wxMenuItem" name="btnAutoNormals">
-				<label>Auto Normals</label>
-				<help>Recalculate normals as you edit</help>
-				<checkable>1</checkable>
-				<checked>1</checked>
-			</object>
 			<object class="wxMenuItem" name="btnRecalcNormals">
 				<label>Recalculate Normals\tR</label>
 				<help>Recalculate normals on active mesh</help>

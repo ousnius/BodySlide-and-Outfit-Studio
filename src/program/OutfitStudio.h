@@ -244,13 +244,6 @@ public:
 		m->SmoothNormals();
 	}
 
-	void ToggleAutoNormals() {
-		if (bAutoNormals)
-			bAutoNormals = false;
-		else
-			bAutoNormals = true;
-	}
-
 	float GetBrushSize() {
 		return brushSize / 3.0f;
 	}
@@ -525,7 +518,6 @@ private:
 	bool isPainting;
 	bool isTransforming;
 	bool isSelecting;
-	bool bAutoNormals;
 	bool bXMirror;
 	bool bConnectedEdit;
 	bool bGlobalBrushCollision;
@@ -633,7 +625,7 @@ public:
 
 	void UpdateShapeSource(const std::string& shapeName);
 
-	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false, bool setWeights = true);
+	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
 
 	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
@@ -1015,11 +1007,6 @@ private:
 
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
 		glView->RecalcNormals(activeItem->shapeName);
-		glView->Render();
-	}
-
-	void OnAutoNormals(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleAutoNormals();
 		glView->Render();
 	}
 

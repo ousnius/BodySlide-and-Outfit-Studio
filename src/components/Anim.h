@@ -141,6 +141,7 @@ public:
 	bool LoadFromNif(NifFile* nif);
 	bool LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNif = true);
 	int GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName);
+	std::unordered_map<ushort, float>* GetWeightsPtr(const std::string& shape, const std::string& boneName);
 	void GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& outVertWeights);
 	void GetBoneXForm(const std::string& boneName, MatTransform& stransform);
 	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights);

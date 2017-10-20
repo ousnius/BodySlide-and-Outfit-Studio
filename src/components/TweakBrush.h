@@ -162,9 +162,6 @@ public:
 	virtual void setSpacing(float newSpacing) {
 		spacing = newSpacing;
 	}
-	virtual void setLiveNormals(bool newLiveNormals = true) {
-		bLiveNormals = newLiveNormals;
-	}
 
 	virtual int CachedPointIndex(mesh*, int) {
 		return 0;

@@ -251,7 +251,6 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const std::string& shapeName) {
 		std::string shapeSkin = shape + "_sk";
 		FbxSkin* skin = FbxSkin::Create(scene, shapeSkin.c_str());
 
-		std::unordered_map<ushort, float> outWeights;
 		for (auto &bone : anim->shapeBones[shape]) {
 			FbxNode* jointNode = skelNode->FindChild(bone.c_str());
 			if (jointNode) {
@@ -260,9 +259,11 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const std::string& shapeName) {
 				aCluster->SetLink(jointNode);
 				aCluster->SetLinkMode(FbxCluster::eTotalOne);
 
-				anim->GetWeights(shape, bone, outWeights);
-				for (auto &vw : outWeights)
-					aCluster->AddControlPointIndex(vw.first, vw.second);
+				auto weights = anim->GetWeightsPtr(shape, bone);
+				if (weights) {
+					for (auto &vw : *weights)
+						aCluster->AddControlPointIndex(vw.first, vw.second);
+				}
 
 				skin->AddCluster(aCluster);
 			}

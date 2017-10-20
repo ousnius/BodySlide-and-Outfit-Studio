@@ -37,7 +37,7 @@ public:
 
 	std::map<std::string, std::vector<Vector3>> boneScaleOffsets;
 	std::map<std::string, std::vector<Vector3>> boneScaleVerts;
-	std::map<std::string, std::unordered_map<ushort, float>> workWeights;
+	std::map<std::string, std::unordered_map<ushort, float>*> workWeights;
 
 	std::unordered_map<std::string, std::vector<std::string>> shapeTextures;
 	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;

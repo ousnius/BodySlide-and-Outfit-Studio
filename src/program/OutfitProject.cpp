@@ -1204,15 +1204,16 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 	}
 
 	DiffDataSets dds;
-	std::unordered_map<ushort, float> weights;
 	for (auto &bone : *boneList) {
-		weights.clear();
 		dds.AddEmptySet(bone + "_WT_", "Weight");
-		workAnim.GetWeights(baseShape, bone, weights);
-		for (auto &w : weights) {
-			Vector3 tmp;
-			tmp.y = w.second;
-			dds.UpdateDiff(bone + "_WT_", "Weight", w.first, tmp);
+
+		auto weights = workAnim.GetWeightsPtr(baseShape, bone);
+		if (weights) {
+			for (auto &w : *weights) {
+				Vector3 tmp;
+				tmp.y = w.second;
+				dds.UpdateDiff(bone + "_WT_", "Weight", w.first, tmp);
+			}
 		}
 	}
 
@@ -1231,6 +1232,12 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 	owner->UpdateProgress(prog);
 
 	for (auto &boneName : *boneList) {
+		auto weights = workAnim.GetWeightsPtr(destShape, boneName);
+		if (!weights)
+			continue;
+
+		weights->clear();
+
 		std::string wtSet = boneName + "_WT_";
 		morpher.GenerateResultDiff(destShape, wtSet, wtSet, maxResults);
 
@@ -1238,25 +1245,21 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 		morpher.GetRawResultDiff(destShape, wtSet, diffResult);
 
 		std::unordered_map<ushort, float> oldWeights;
-		if (mask) {
-			weights.clear();
-			oldWeights.clear();
-
+		if (mask)
 			workAnim.GetWeights(destShape, boneName, oldWeights);
-		}
 
 		for (auto &dr : diffResult) {
 			if (mask)
-				weights[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
+				(*weights)[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
 			else
-				weights[dr.first] = dr.second.y;
+				(*weights)[dr.first] = dr.second.y;
 		}
 
 		// Restore old weights from mask
 		if (mask) {
 			for (auto &w : oldWeights)
 				if ((*mask)[w.first] > 0.0f)
-					weights[w.first] = w.second;
+					(*weights)[w.first] = w.second;
 		}
 
 		if (diffResult.size() > 0) {
@@ -1275,7 +1278,6 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 			}
 		}
 
-		workAnim.SetWeights(destShape, boneName, weights);
 		owner->UpdateProgress(prog += step, _("Copying bone weights..."));
 	}
 
@@ -1309,11 +1311,9 @@ void OutfitProject::TransferSelectedWeights(const std::string& destShape, std::u
 	int prog = 40;
 	owner->UpdateProgress(prog, _("Transferring bone weights..."));
 
-	std::unordered_map<ushort, float> weights;
-	std::unordered_map<ushort, float> oldWeights;
 	for (auto &boneName : *boneList) {
-		weights.clear();
-		oldWeights.clear();
+		std::unordered_map<ushort, float> weights;
+		std::unordered_map<ushort, float> oldWeights;
 		workAnim.GetWeights(baseShape, boneName, weights);
 		workAnim.GetWeights(destShape, boneName, oldWeights);
 
@@ -1362,15 +1362,15 @@ bool OutfitProject::HasUnweighted() {
 		for (int i = 0; i < verts.size(); i++)
 			influences.emplace(i, 0);
 
-		std::unordered_map<ushort, float> boneWeights;
 		if (workAnim.shapeBones.find(s) != workAnim.shapeBones.end()) {
 			for (auto &b : workAnim.shapeBones[s]) {
-				boneWeights.clear();
-				workAnim.GetWeights(s, b, boneWeights);
-				for (int i = 0; i < verts.size(); i++) {
-					auto id = boneWeights.find(i);
-					if (id != boneWeights.end())
-						influences.at(i)++;
+				auto weights = workAnim.GetWeightsPtr(s, b);
+				if (weights) {
+					for (int i = 0; i < verts.size(); i++) {
+						auto id = weights->find(i);
+						if (id != weights->end())
+							influences.at(i)++;
+					}
 				}
 			}
 		}
@@ -1381,6 +1381,7 @@ bool OutfitProject::HasUnweighted() {
 			if (i.second == 0) {
 				if (!unweighted)
 					m->ColorChannelFill(0, 0.0f);
+
 				m->vcolors[i.first].x = 1.0f;
 				unweighted = true;
 			}
@@ -1391,6 +1392,7 @@ bool OutfitProject::HasUnweighted() {
 		if (unweighted)
 			return true;
 	}
+
 	return false;
 }
 
@@ -1420,15 +1422,16 @@ void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool 
 			if (b == bone) {
 				MatTransform xform;
 				workNif.GetNodeTransform(b, xform);
-				if (workWeights[s].empty())
-					workAnim.GetWeights(s, b, workWeights[s]);
 
-				for (auto &w : workWeights[s]) {
-					Vector3 dir = (*verts)[w.first] - xform.translation;
-					dir.Normalize();
-					Vector3 offset = dir * w.second * sliderPos / 5.0f;
-					(*verts)[w.first] += offset;
-					it->second[w.first] += offset;
+				auto weights = workAnim.GetWeightsPtr(s, b);
+				if (weights) {
+					for (auto &w : *weights) {
+						Vector3 dir = (*verts)[w.first] - xform.translation;
+						dir.Normalize();
+						Vector3 offset = dir * w.second * sliderPos / 5.0f;
+						(*verts)[w.first] += offset;
+						it->second[w.first] += offset;
+					}
 				}
 				break;
 			}

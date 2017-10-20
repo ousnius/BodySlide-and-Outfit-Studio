@@ -9,13 +9,12 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.3\n"
+"X-Generator: Poedit 2.0.4\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Poedit-Basepath: ../..\n"
 "X-Poedit-SearchPath-0: .\n"
 
-# XRC STRINGS START HERE
 msgid "Outfit/Body"
 msgstr "装备/身体"
 
@@ -481,12 +480,6 @@ msgid ""
 "Allows for the brushes to collide with all currently selected meshes at the "
 "same time"
 msgstr "允许笔刷同时处理所有已选的模型"
-
-msgid "Auto Normals"
-msgstr "自动法线"
-
-msgid "Recalculate normals as you edit"
-msgstr "当你编辑时重新计算法线"
 
 msgid "Recalculate Normals\tR"
 msgstr "重新计算法线\tR"
@@ -1438,7 +1431,6 @@ msgstr "反转U轴"
 msgid "Invert V"
 msgstr "反转V轴"
 
-# XRC STRINGS END HERE
 msgid "Toggle Zaps:"
 msgstr "切换修正:"
 
@@ -1448,7 +1440,6 @@ msgstr "搜索半径"
 msgid "Max Vertex Targets"
 msgstr "最大顶点目标"
 
-# XRC STRINGS END HERE
 msgid ""
 "Each vertex of the reference will copy its weights to the nearest collection "
 "of vertices within the given radius. Bear in mind that some geometry will "
@@ -2515,42 +2506,3 @@ msgstr "生成器"
 
 msgid "Generate and save the normal map file."
 msgstr "生成并保存法线贴图文件。"
-
-#~ msgid "Redo\tCtrl+Shift+Z"
-#~ msgstr "恢复\tCtrl+Shift+Z"
-
-#~ msgid "Use System Language"
-#~ msgstr "使用系统语言"
-
-#~ msgid "Import NIF"
-#~ msgstr "导入NIF文件"
-
-#~ msgid "Export NIF"
-#~ msgstr "导出NIF文件"
-
-#~ msgid "Exports the current slider's data as an OBJ file."
-#~ msgstr "导出当前滑块数据为OBJ文件。"
-
-#~ msgid "Export .fbx file for new shape"
-#~ msgstr "为新模型导出.fbx文件"
-
-#~ msgid "The selected shape is the reference shape already."
-#~ msgstr "选中的模型已是参照模型。"
-
-#~ msgid "You can't delete the reference shape!"
-#~ msgstr "你无法删除参照模型！"
-
-#~ msgid "Brightness 1"
-#~ msgstr "亮度 1"
-
-#~ msgid "Brightness 2"
-#~ msgstr "亮度 2"
-
-#~ msgid "Brightness 3"
-#~ msgstr "亮度 3"
-
-#~ msgid "Invert Slider"
-#~ msgstr "反转滑块"
-
-#~ msgid "Apply Overall Skin Transform"
-#~ msgstr "应用整体皮肤改变"

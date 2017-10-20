@@ -229,7 +229,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 					addPoint(m, pts2[m][i], outPositions[m][i]);
 			}
 
-			if (refBrush->LiveNormals() && brushType != TBT_WEIGHT && brushType != TBT_MASK) {
+			if (refBrush->LiveNormals()) {
 				auto pending1 = std::async(std::launch::async, mesh::SmoothNormalsStaticArray, m, pts1[m], nPts1);
 				normalUpdates.push_back(std::move(pending1));
 
@@ -241,7 +241,7 @@ void TweakStroke::updateStroke(TweakPickInfo& pickInfo) {
 
 	lastPoint = pickInfo.origin;
 
-	if (refBrush->LiveBVH() && brushType != TBT_WEIGHT && brushType != TBT_MASK) {
+	if (refBrush->LiveBVH()) {
 		for (auto &m : refMeshes)
 			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
@@ -262,12 +262,12 @@ void TweakStroke::endStroke() {
 		for (auto &m : refMeshes)
 			m->CreateBVH();
 
-	if (refBrush->Type() != TBT_WEIGHT)
+	if (!refBrush->LiveBVH() && refBrush->Type() != TBT_WEIGHT)
 		for (auto &m : refMeshes)
 			for (auto &bvhNode : affectedNodes[m])
 				bvhNode->UpdateAABB();
 
-	if (!refBrush->LiveNormals() || refBrush->Type() == TBT_WEIGHT) {
+	if (!refBrush->LiveNormals()) {
 		for (auto &m : refMeshes) {
 			auto pending = std::async(std::launch::async, mesh::SmoothNormalsStatic, m);
 			normalUpdates.push_back(std::move(pending));
@@ -476,6 +476,8 @@ TB_Mask::TB_Mask() :TweakBrush() {
 	brushType = TBT_MASK;
 	strength = 0.1f;
 	focus = 4.75f;
+	bLiveBVH = false;
+	bLiveNormals = false;
 	brushName = "Mask Brush";
 }
 
@@ -548,6 +550,8 @@ TB_Unmask::TB_Unmask() :TweakBrush() {
 	brushType = TBT_MASK;
 	strength = -0.1f;
 	focus = 4.75f;
+	bLiveBVH = false;
+	bLiveNormals = false;
 	brushName = "Unmask Brush";
 }
 
@@ -1163,6 +1167,8 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3*
 TB_Weight::TB_Weight() :TweakBrush() {
 	brushType = TBT_WEIGHT;
 	strength = 0.0015f;
+	bLiveBVH = false;
+	bLiveNormals = false;
 	bFixedWeight = false;
 	brushName = "Weight Paint";
 }
@@ -1223,6 +1229,8 @@ void TB_Weight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 TB_Unweight::TB_Unweight() :TweakBrush() {
 	brushType = TBT_WEIGHT;
 	strength = -0.0015f;
+	bLiveBVH = false;
+	bLiveNormals = false;
 	brushName = "Weight Erase";
 }
 
@@ -1286,6 +1294,8 @@ TB_SmoothWeight::TB_SmoothWeight() :TweakBrush() {
 	method = 1;
 	hcAlpha = 0.2f;
 	hcBeta = 0.5f;
+	bLiveBVH = false;
+	bLiveNormals = false;
 	bMirror = false;
 	lastMesh = nullptr;
 	brushName = "Weight Smooth";
