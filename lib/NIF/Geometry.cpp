@@ -208,6 +208,10 @@ void NiGeometryData::SetAdditionalDataRef(int dataRef) {
 	additionalDataRef.SetIndex(dataRef);
 }
 
+ushort NiGeometryData::GetNumVertices() {
+	return numVertices;
+}
+
 void NiGeometryData::SetVertices(const bool enable) {
 	hasVertices = enable;
 	if (enable) {
@@ -264,6 +268,10 @@ void NiGeometryData::SetTangents(const bool enable) {
 		bitangents.clear();
 	}
 }
+
+uint NiGeometryData::GetNumTriangles() { return 0; }
+bool NiGeometryData::GetTriangles(std::vector<Triangle>&) { return false; }
+void NiGeometryData::SetTriangles(const std::vector<Triangle>&) { };
 
 void NiGeometryData::UpdateBounds() {
 	bounds = BoundingSphere(vertices);
@@ -342,6 +350,9 @@ void NiGeometryData::CalcTangentSpace() {
 }
 
 
+NiGeometryData* NiShape::GetGeomData() { return nullptr; };
+void NiShape::SetGeomData(NiGeometryData*) { };
+
 int NiShape::GetSkinInstanceRef() { return 0xFFFFFFFF; }
 void NiShape::SetSkinInstanceRef(int) { }
 
@@ -354,12 +365,22 @@ void NiShape::SetAlphaPropertyRef(int) { }
 int NiShape::GetDataRef() { return 0xFFFFFFFF; }
 void NiShape::SetDataRef(int) { }
 
+ushort NiShape::GetNumVertices() {
+	auto geomData = GetGeomData();
+	if (geomData)
+		return geomData->GetNumVertices();
+
+	return 0;
+}
+
 void NiShape::SetVertices(const bool enable) {
+	auto geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertices(enable);
 };
 
 bool NiShape::HasVertices() {
+	auto geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasVertices();
 
@@ -367,11 +388,13 @@ bool NiShape::HasVertices() {
 };
 
 void NiShape::SetUVs(const bool enable) {
+	auto geomData = GetGeomData();
 	if (geomData)
 		geomData->SetUVs(enable);
 };
 
 bool NiShape::HasUVs() {
+	auto geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasUVs();
 
@@ -379,11 +402,13 @@ bool NiShape::HasUVs() {
 };
 
 void NiShape::SetNormals(const bool enable) {
+	auto geomData = GetGeomData();
 	if (geomData)
 		geomData->SetNormals(enable);
 };
 
 bool NiShape::HasNormals() {
+	auto geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasNormals();
 
@@ -391,11 +416,13 @@ bool NiShape::HasNormals() {
 };
 
 void NiShape::SetTangents(const bool enable) {
+	auto geomData = GetGeomData();
 	if (geomData)
 		geomData->SetTangents(enable);
 };
 
 bool NiShape::HasTangents() {
+	auto geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasTangents();
 
@@ -403,11 +430,13 @@ bool NiShape::HasTangents() {
 };
 
 void NiShape::SetVertexColors(const bool enable) {
+	auto geomData = GetGeomData();
 	if (geomData)
 		geomData->SetVertexColors(enable);
 };
 
 bool NiShape::HasVertexColors() {
+	auto geomData = GetGeomData();
 	if (geomData)
 		return geomData->HasVertexColors();
 
@@ -417,12 +446,36 @@ bool NiShape::HasVertexColors() {
 void NiShape::SetSkinned(const bool) { };
 bool NiShape::IsSkinned() { return false; };
 
+uint NiShape::GetNumTriangles() {
+	auto geomData = GetGeomData();
+	if (geomData)
+		return geomData->GetNumTriangles();
+
+	return 0;
+}
+
+bool NiShape::GetTriangles(std::vector<Triangle>& tris) {
+	auto geomData = GetGeomData();
+	if (geomData)
+		return geomData->GetTriangles(tris);
+
+	return false;
+};
+
+void NiShape::SetTriangles(const std::vector<Triangle>& tris) {
+	auto geomData = GetGeomData();
+	if (geomData)
+		geomData->SetTriangles(tris);
+};
+
 void NiShape::SetBounds(const BoundingSphere& bounds) {
+	auto geomData = GetGeomData();
 	if (geomData)
 		geomData->SetBounds(bounds);
 }
 
 BoundingSphere NiShape::GetBounds() {
+	auto geomData = GetGeomData();
 	if (geomData)
 		return geomData->GetBounds();
 
@@ -430,6 +483,7 @@ BoundingSphere NiShape::GetBounds() {
 }
 
 void NiShape::UpdateBounds() {
+	auto geomData = GetGeomData();
 	if (geomData)
 		geomData->UpdateBounds();
 }
@@ -910,6 +964,10 @@ const std::vector<Vector2>* BSTriShape::GetUVData() {
 	return &rawUvs;
 }
 
+ushort BSTriShape::GetNumVertices() {
+	return numVertices;
+}
+
 void BSTriShape::SetVertices(const bool enable) {
 	if (enable) {
 		vertexDesc.SetFlag(VF_VERTEX);
@@ -987,9 +1045,28 @@ void BSTriShape::SetFullPrecision(const bool enable) {
 		vertexDesc.RemoveFlag(VF_FULLPREC);
 }
 
+uint BSTriShape::GetNumTriangles() {
+	return numTriangles;
+}
+
+bool BSTriShape::GetTriangles(std::vector<Triangle>& tris) {
+	tris = triangles;
+	return true;
+}
+
+void BSTriShape::SetTriangles(const std::vector<Triangle>& tris) {
+	triangles = tris;
+	numTriangles = triangles.size();
+}
+
 void BSTriShape::UpdateBounds() {
 	GetRawVerts();
 	bounds = BoundingSphere(rawVertices);
+}
+
+void BSTriShape::SetVertexData(const std::vector<BSVertexData>& bsVertData) {
+	vertData = bsVertData;
+	numVertices = vertData.size();
 }
 
 void BSTriShape::SetNormals(const std::vector<Vector3>& inNorms) {
@@ -1814,6 +1891,22 @@ void NiTriShapeData::notifyVerticesDelete(const std::vector<ushort>& vertIndices
 	}
 }
 
+uint NiTriShapeData::GetNumTriangles() {
+	return numTriangles;
+}
+
+bool NiTriShapeData::GetTriangles(std::vector<Triangle>& tris) {
+	tris = triangles;
+	return hasTriangles;
+}
+
+void NiTriShapeData::SetTriangles(const std::vector<Triangle>& tris) {
+	hasTriangles = true;
+	triangles = tris;
+	numTriangles = triangles.size();
+	numTrianglePoints = numTriangles * 3;
+}
+
 void NiTriShapeData::RecalcNormals(const bool smooth, const float smoothThresh) {
 	if (!HasNormals())
 		return;
@@ -1940,6 +2033,17 @@ void NiTriShapeData::CalcTangentSpace() {
 }
 
 
+NiGeometryData* NiTriShape::GetGeomData() {
+	return shapeData;
+};
+
+void NiTriShape::SetGeomData(NiGeometryData* geomDataPtr) {
+	auto geomData = dynamic_cast<NiTriShapeData*>(geomDataPtr);
+	if (geomData)
+		shapeData = geomData;
+}
+
+
 void NiTriStripsData::Get(NiStream& stream) {
 	NiTriBasedGeomData::Get(stream);
 
@@ -2003,6 +2107,21 @@ void NiTriStripsData::notifyVerticesDelete(const std::vector<ushort>& vertIndice
 	for (auto len : stripLengths)
 		if (len - 2 > 0)
 			numTriangles += len - 2;
+}
+
+uint NiTriStripsData::GetNumTriangles() {
+	std::vector<Triangle> tris;
+	StripsToTris(&tris);
+	return tris.size();
+}
+
+bool NiTriStripsData::GetTriangles(std::vector<Triangle>& tris) {
+	StripsToTris(&tris);
+	return hasPoints;
+}
+
+void NiTriStripsData::SetTriangles(const std::vector<Triangle>&) {
+	// Not implemented, stripify here
 }
 
 void NiTriStripsData::StripsToTris(std::vector<Triangle>* outTris) {
@@ -2160,6 +2279,17 @@ void NiTriStripsData::CalcTangentSpace() {
 }
 
 
+NiGeometryData* NiTriStrips::GetGeomData() {
+	return stripsData;
+};
+
+void NiTriStrips::SetGeomData(NiGeometryData* geomDataPtr) {
+	auto geomData = dynamic_cast<NiTriStripsData*>(geomDataPtr);
+	if (geomData)
+		stripsData = geomData;
+}
+
+
 void NiLinesData::Get(NiStream& stream) {
 	NiGeometryData::Get(stream);
 
@@ -2192,6 +2322,17 @@ void NiLinesData::notifyVerticesDelete(const std::vector<ushort>& vertIndices) {
 			lineFlags.erase(lineFlags.begin() + i);
 		}
 	}
+}
+
+
+NiGeometryData* NiLines::GetGeomData() {
+	return linesData;
+}
+
+void NiLines::SetGeomData(NiGeometryData* geomDataPtr) {
+	auto geomData = dynamic_cast<NiLinesData*>(geomDataPtr);
+	if (geomData)
+		linesData = geomData;
 }
 
 
@@ -2246,6 +2387,17 @@ void NiScreenElementsData::notifyVerticesDelete(const std::vector<ushort>& vertI
 }
 
 
+NiGeometryData* NiScreenElements::GetGeomData() {
+	return elemData;
+}
+
+void NiScreenElements::SetGeomData(NiGeometryData* geomDataPtr) {
+	auto geomData = dynamic_cast<NiScreenElementsData*>(geomDataPtr);
+	if (geomData)
+		elemData = geomData;
+}
+
+
 void BSLODTriShape::Get(NiStream& stream) {
 	NiTriBasedGeom::Get(stream);
 
@@ -2260,6 +2412,16 @@ void BSLODTriShape::Put(NiStream& stream) {
 	stream << level0;
 	stream << level1;
 	stream << level2;
+}
+
+NiGeometryData* BSLODTriShape::GetGeomData() {
+	return shapeData;
+}
+
+void BSLODTriShape::SetGeomData(NiGeometryData* geomDataPtr) {
+	auto geomData = dynamic_cast<NiTriShapeData*>(geomDataPtr);
+	if (geomData)
+		shapeData = geomData;
 }
 
 

@@ -632,10 +632,14 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 	TriFile tri;
 	std::string triFilePath = triPath + ".tri";
 
-	for (auto shape = sliderSet.TargetShapesBegin(); shape != sliderSet.TargetShapesEnd(); ++shape) {
+	for (auto targetShape = sliderSet.TargetShapesBegin(); targetShape != sliderSet.TargetShapesEnd(); ++targetShape) {
+		NiShape* shape = nif.FindShapeByName(targetShape->second);
+		if (!shape)
+			continue;
+
 		for (int s = 0; s < sliderSet.size(); s++) {
-			std::string dn = sliderSet[s].TargetDataName(shape->first);
-			std::string target = shape->first;
+			std::string dn = sliderSet[s].TargetDataName(targetShape->first);
+			std::string target = targetShape->first;
 			if (dn.empty())
 				continue;
 
@@ -643,10 +647,10 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 				MorphDataPtr morph = std::make_shared<MorphData>();
 				morph->name = sliderSet[s].name;
 
-				const std::vector<ushort>& shapeZapIndices = zapIndices[shape->second];
+				const std::vector<ushort>& shapeZapIndices = zapIndices[targetShape->second];
 
 				std::vector<Vector3> verts;
-				int shapeVertCount = nif.GetVertCountForShape(shape->second);
+				int shapeVertCount = shape->GetNumVertices();
 				shapeVertCount += shapeZapIndices.size();
 				if (shapeVertCount > 0)
 					verts.resize(shapeVertCount);
@@ -669,7 +673,7 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 				}
 
 				if (morph->offsets.size() > 0)
-					tri.AddMorph(shape->second, morph);
+					tri.AddMorph(targetShape->second, morph);
 			}
 		}
 	}
@@ -1543,13 +1547,15 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 
 		if (targetGame < FO4) {
-			std::string triShapeLink;
-			for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-				triShapeLink = it->second;
-				if (tri && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-					AddTriData(nifBig, triShapeLink, triPathTrimmed);
+			for (auto targetShape = activeSet.TargetShapesBegin(); targetShape != activeSet.TargetShapesEnd(); ++targetShape) {
+				NiShape* shape = nifBig.FindShapeByName(targetShape->second);
+				if (!shape)
+					continue;
+
+				if (tri && shape->GetNumVertices() > 0) {
+					AddTriData(nifBig, targetShape->second, triPathTrimmed);
 					if (activeSet.GenWeights())
-						AddTriData(nifSmall, triShapeLink, triPathTrimmed);
+						AddTriData(nifSmall, targetShape->second, triPathTrimmed);
 
 					tri = false;
 				}
@@ -1970,12 +1976,15 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			}
 
 			if (targetGame < FO4) {
-				for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-					std::string triShapeLink = it->second;
-					if (triEnd && nifBig.GetVertCountForShape(triShapeLink) > 0) {
-						AddTriData(nifBig, triShapeLink, triPathTrimmed);
+				for (auto targetShape = currentSet.TargetShapesBegin(); targetShape != currentSet.TargetShapesEnd(); ++targetShape) {
+					NiShape* shape = nifBig.FindShapeByName(targetShape->second);
+					if (!shape)
+						continue;
+
+					if (triEnd && shape->GetNumVertices() > 0) {
+						AddTriData(nifBig, targetShape->second, triPathTrimmed);
 						if (currentSet.GenWeights())
-							AddTriData(nifSmall, triShapeLink, triPathTrimmed);
+							AddTriData(nifSmall, targetShape->second, triPathTrimmed);
 
 						triEnd = false;
 					}

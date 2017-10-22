@@ -223,7 +223,8 @@ void FBXWrangler::AddNif(NifFile* nif, const std::string& shapeName) {
 	for (auto &s : nif->GetShapeNames()) {
 		if (s == shapeName || shapeName.empty()) {
 			std::vector<Triangle> tris;
-			if (nif->GetTrisForShape(s, &tris)) {
+			NiShape* shape = nif->FindShapeByName(s);
+			if (shape && shape->GetTriangles(tris)) {
 				const std::vector<Vector3>* verts = nif->GetRawVertsForShape(s);
 				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
 				const std::vector<Vector2>* uvs = nif->GetUvsForShape(s);

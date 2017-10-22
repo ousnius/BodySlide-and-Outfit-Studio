@@ -142,9 +142,10 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 
 void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 	std::vector<Vector3> nifVerts;
-	std::vector<Triangle> nifTris;
 	ref.GetVertsForShape(shape->GetName(), nifVerts);
-	ref.GetTrisForShape(shape->GetName(), &nifTris);
+
+	std::vector<Triangle> nifTris;
+	shape->GetTriangles(nifTris);
 
 	m->shapeName = shape->GetName();
 

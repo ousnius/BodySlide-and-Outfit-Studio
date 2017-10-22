@@ -212,6 +212,6 @@ public:
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName, const std::string& mergeShape = "");
 	int ExportOBJ(const std::string& fileName, const std::vector<std::string>& shapes, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());
 
-	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", const std::string& mergeShape = "");
+	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", const std::string& mergeShapeName = "");
 	int ExportFBX(const std::string& fileName, const std::vector<std::string>& shapes);
 };

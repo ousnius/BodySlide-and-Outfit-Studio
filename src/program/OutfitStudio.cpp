@@ -2373,10 +2373,12 @@ void OutfitStudio::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId newItem;
 	if (!activeSegment.IsOk() || segmentTree->GetChildrenCount(segmentRoot) <= 0) {
 		std::vector<Triangle> shapeTris;
-		project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &shapeTris);
+		NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+		if (shape)
+			shape->GetTriangles(shapeTris);
 
 		std::set<uint> tris;
-		for (int id = 0; id < tris.size(); id++)
+		for (uint id = 0; id < shapeTris.size(); id++)
 			tris.insert(id);
 
 		newItem = segmentTree->AppendItem(segmentRoot, "Segment", -1, -1, new SegmentItemData(tris));
@@ -2663,7 +2665,9 @@ void OutfitStudio::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
 
 	// Get all triangles of the active shape
 	std::vector<Triangle> tris;
-	project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
+	NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+	if (shape)
+		shape->GetTriangles(tris);
 
 	wxTreeItemId parent;
 	SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
@@ -2936,14 +2940,14 @@ void OutfitStudio::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudio::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId newItem;
 	if (!activePartition.IsOk() || partitionTree->GetChildrenCount(partitionRoot) <= 0) {
-		int vertCount = project->GetWorkNif()->GetVertCountForShape(activeItem->shapeName);
-		if (vertCount > 0) {
-			std::vector<ushort> verts(vertCount);
+		NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+		if (shape && shape->GetNumVertices() > 0) {
+			std::vector<ushort> verts(shape->GetNumVertices());
 			for (int id = 0; id < verts.size(); id++)
 				verts[id] = id;
 
 			std::vector<Triangle> tris;
-			project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
+			shape->GetTriangles(tris);
 
 			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1, new PartitionItemData(verts, tris, targetGame == SKYRIM || targetGame == SKYRIMSE ? 32 : 0));
 		}
@@ -3095,13 +3099,13 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 			}
 		}
 		else {
-			auto shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+			NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
 			if (!shape)
 				return;
 
 			// Get all triangles of the active shape
 			std::vector<Triangle> tris;
-			project->GetWorkNif()->GetTrisForShape(activeItem->shapeName, &tris);
+			shape->GetTriangles(tris);
 
 			bool isBSTri = shape->HasType<BSTriShape>();
 

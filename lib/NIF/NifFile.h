@@ -214,13 +214,11 @@ public:
 	void SetDefaultPartition(const std::string& shapeName);
 
 	const std::vector<Vector3>* GetRawVertsForShape(const std::string& shapeName);
-	bool GetTrisForShape(const std::string& shapeName, std::vector<Triangle>* outTris);
 	bool ReorderTriangles(const std::string& shapeName, const std::vector<uint>& triangleIndices);
 	const std::vector<Vector3>* GetNormalsForShape(const std::string& shapeName, bool transform = true);
 	const std::vector<Vector2>* GetUvsForShape(const std::string& shapeName);
 	bool GetUvsForShape(const std::string& shapeName, std::vector<Vector2>& outUvs);
 	bool GetVertsForShape(const std::string& shapeName, std::vector<Vector3>& outVerts);
-	int GetVertCountForShape(const std::string& shapeName);
 	void SetVertsForShape(const std::string& shapeName, const std::vector<Vector3>& verts);
 	void SetUvsForShape(const std::string& shapeName, const std::vector<Vector2>& uvs);
 	void InvertUVsForShape(const std::string& shapeName, bool invertX, bool invertY);

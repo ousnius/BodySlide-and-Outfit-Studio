@@ -958,109 +958,111 @@ void GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
 }
 
 void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color, bool smoothNormalSeams) {
+	NiShape* shape = nif->FindShapeByName(shapeName);
+	if (!shape)
+		return;
+
 	std::vector<Vector3> nifVerts;
-	std::vector<Triangle> nifTris;
 	nif->GetVertsForShape(shapeName, nifVerts);
-	nif->GetTrisForShape(shapeName, &nifTris);
+
+	std::vector<Triangle> nifTris;
+	shape->GetTriangles(nifTris);
 
 	const std::vector<Vector3>* nifNorms = nif->GetNormalsForShape(shapeName, false);
 	const std::vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
 
 	mesh* m = new mesh();
 
-	NiShape* shape = nif->FindShapeByName(shapeName);
-	if (shape) {
-		float y, p, r;
-		glm::mat4x4 matParents;
-		glm::mat4x4 matShape;
-		glm::mat4x4 matSkin;
+	float y, p, r;
+	glm::mat4x4 matParents;
+	glm::mat4x4 matShape;
+	glm::mat4x4 matSkin;
 
-		if (!shape->IsSkinned()) {
-			NiNode* parent = nif->GetParentNode(shape);
-			while (parent) {
-				parent->transform.ToEulerDegrees(y, p, r);
-				matParents = glm::translate(matParents, glm::vec3(parent->transform.translation.x / -10.0f, parent->transform.translation.z / 10.0f, parent->transform.translation.y / 10.0f));
-				matParents *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-				matParents = glm::scale(matParents, glm::vec3(parent->transform.scale, parent->transform.scale, parent->transform.scale));
-				parent = nif->GetParentNode(parent);
-			}
+	if (!shape->IsSkinned()) {
+		NiNode* parent = nif->GetParentNode(shape);
+		while (parent) {
+			parent->transform.ToEulerDegrees(y, p, r);
+			matParents = glm::translate(matParents, glm::vec3(parent->transform.translation.x / -10.0f, parent->transform.translation.z / 10.0f, parent->transform.translation.y / 10.0f));
+			matParents *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+			matParents = glm::scale(matParents, glm::vec3(parent->transform.scale, parent->transform.scale, parent->transform.scale));
+			parent = nif->GetParentNode(parent);
+		}
 
-			matShape = glm::translate(matShape, glm::vec3(shape->transform.translation.x / -10.0f, shape->transform.translation.z / 10.0f, shape->transform.translation.y / 10.0f));
-			shape->transform.ToEulerDegrees(y, p, r);
-			matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-			matShape = glm::scale(matShape, glm::vec3(shape->transform.scale, shape->transform.scale, shape->transform.scale));
+		matShape = glm::translate(matShape, glm::vec3(shape->transform.translation.x / -10.0f, shape->transform.translation.z / 10.0f, shape->transform.translation.y / 10.0f));
+		shape->transform.ToEulerDegrees(y, p, r);
+		matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+		matShape = glm::scale(matShape, glm::vec3(shape->transform.scale, shape->transform.scale, shape->transform.scale));
+	}
+	else {
+		MatTransform xFormSkin;
+		if (nif->GetShapeBoneTransform(shapeName, 0xFFFFFFFF, xFormSkin)) {
+			xFormSkin.ToEulerDegrees(y, p, r);
+			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x / -10.0f, xFormSkin.translation.z / 10.0f, xFormSkin.translation.y / 10.0f));
+			matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+			matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
+		}
+	}
+
+	m->matModel = matParents * matShape * glm::inverse(matSkin);
+
+	NiShader* shader = nif->GetShader(shape);
+	if (shader) {
+		m->doublesided = shader->IsDoubleSided();
+		m->modelSpace = shader->IsModelSpace();
+		m->emissive = shader->IsEmissive();
+		m->specular = shader->HasSpecular();
+		m->glowmap = shader->HasGlowmap();
+		m->greyscaleColor = shader->HasGreyscaleColor();
+		m->cubemap = shader->HasEnvironmentMapping();
+
+		if (nif->GetHeader().GetVersion().Stream() < 130) {
+			m->backlight = shader->HasBacklight();
+			m->backlightMap = m->backlight;			// Dedicated map pre-130
+			m->rimlight = shader->HasRimlight();
+			m->softlight = shader->HasSoftlight();
+			m->prop.rimlightPower = shader->GetRimlightPower();
+			m->prop.softlighting = shader->GetSoftlight();
 		}
 		else {
-			MatTransform xFormSkin;
-			if (nif->GetShapeBoneTransform(shapeName, 0xFFFFFFFF, xFormSkin)) {
-				xFormSkin.ToEulerDegrees(y, p, r);
-				matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x / -10.0f, xFormSkin.translation.z / 10.0f, xFormSkin.translation.y / 10.0f));
-				matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-				matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
-			}
+			m->backlight = (shader->GetBacklightPower() > 0.0);
+			m->softlight = (shader->GetSubsurfaceRolloff() > 0.0);
+			m->prop.subsurfaceRolloff = shader->GetSubsurfaceRolloff();
 		}
 
-		m->matModel = matParents * matShape * glm::inverse(matSkin);
+		m->prop.uvOffset = shader->GetUVOffset();
+		m->prop.uvScale = shader->GetUVScale();
+		m->prop.specularColor = shader->GetSpecularColor();
+		m->prop.specularStrength = shader->GetSpecularStrength();
+		m->prop.shininess = shader->GetGlossiness();
+		m->prop.envReflection = shader->GetEnvironmentMapScale();
+		m->prop.backlightPower = shader->GetBacklightPower();
+		m->prop.paletteScale = shader->GetGrayscaleToPaletteScale();
+		m->prop.fresnelPower = shader->GetFresnelPower();
 
-		NiShader* shader = nif->GetShader(shape);
-		if (shader) {
-			m->doublesided = shader->IsDoubleSided();
-			m->modelSpace = shader->IsModelSpace();
-			m->emissive = shader->IsEmissive();
-			m->specular = shader->HasSpecular();
-			m->glowmap = shader->HasGlowmap();
-			m->greyscaleColor = shader->HasGreyscaleColor();
-			m->cubemap = shader->HasEnvironmentMapping();
+		Color4 emissiveColor = shader->GetEmissiveColor();
+		m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
+		m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
 
-			if (nif->GetHeader().GetVersion().Stream() < 130) {
-				m->backlight = shader->HasBacklight();
-				m->backlightMap = m->backlight;			// Dedicated map pre-130
-				m->rimlight = shader->HasRimlight();
-				m->softlight = shader->HasSoftlight();
-				m->prop.rimlightPower = shader->GetRimlightPower();
-				m->prop.softlighting = shader->GetSoftlight();
-			}
-			else {
-				m->backlight = (shader->GetBacklightPower() > 0.0);
-				m->softlight = (shader->GetSubsurfaceRolloff() > 0.0);
-				m->prop.subsurfaceRolloff = shader->GetSubsurfaceRolloff();
-			}
+		m->prop.alpha = shader->GetAlpha();
 
-			m->prop.uvOffset = shader->GetUVOffset();
-			m->prop.uvScale = shader->GetUVScale();
-			m->prop.specularColor = shader->GetSpecularColor();
-			m->prop.specularStrength = shader->GetSpecularStrength();
-			m->prop.shininess = shader->GetGlossiness();
-			m->prop.envReflection = shader->GetEnvironmentMapScale();
-			m->prop.backlightPower = shader->GetBacklightPower();
-			m->prop.paletteScale = shader->GetGrayscaleToPaletteScale();
-			m->prop.fresnelPower = shader->GetFresnelPower();
+		NiMaterialProperty* material = nif->GetMaterialProperty(shape);
+		if (material) {
+			m->emissive = material->IsEmissive();
 
-			Color4 emissiveColor = shader->GetEmissiveColor();
+			m->prop.specularColor = material->GetSpecularColor();
+			m->prop.shininess = material->GetGlossiness();
+
+			emissiveColor = material->GetEmissiveColor();
 			m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
-			m->prop.emissiveMultiple = shader->GetEmissiveMultiple();
+			m->prop.emissiveMultiple = material->GetEmissiveMultiple();
 
-			m->prop.alpha = shader->GetAlpha();
+			m->prop.alpha = material->GetAlpha();
+		}
 
-			NiMaterialProperty* material = nif->GetMaterialProperty(shape);
-			if (material) {
-				m->emissive = material->IsEmissive();
-
-				m->prop.specularColor = material->GetSpecularColor();
-				m->prop.shininess = material->GetGlossiness();
-
-				emissiveColor = material->GetEmissiveColor();
-				m->prop.emissiveColor = Vector3(emissiveColor.r, emissiveColor.g, emissiveColor.b);
-				m->prop.emissiveMultiple = material->GetEmissiveMultiple();
-
-				m->prop.alpha = material->GetAlpha();
-			}
-
-			NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
-			if (alphaProp) {
-				m->alphaFlags = alphaProp->flags;
-				m->alphaThreshold = alphaProp->threshold;
-			}
+		NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
+		if (alphaProp) {
+			m->alphaFlags = alphaProp->flags;
+			m->alphaThreshold = alphaProp->threshold;
 		}
 	}
 

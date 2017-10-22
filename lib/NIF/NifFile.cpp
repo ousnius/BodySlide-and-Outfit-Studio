@@ -399,8 +399,8 @@ void NifFile::CopyFrom(const NifFile& other) {
 	for (int i = 0; i < nBlocks; i++)
 		blocks[i] = std::move(std::unique_ptr<NiObject>(other.blocks[i]->Clone()));
 
-	LinkGeomData();
 	hdr.SetBlockReference(&blocks);
+	LinkGeomData();
 }
 
 void NifFile::LinkGeomData() {
@@ -416,26 +416,14 @@ void NifFile::LinkGeomData() {
 
 void NifFile::RemoveInvalidTris() {
 	for (auto& shape : GetShapes()) {
-		if (shape->HasType<NiTriShape>()) {
-			auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
-			if (shapeData) {
-				shapeData->triangles.erase(std::remove_if(shapeData->triangles.begin(), shapeData->triangles.end(), [&shapeData](auto& t) {
-					return t.p1 >= shapeData->numVertices || t.p2 >= shapeData->numVertices || t.p3 >= shapeData->numVertices;
-				}), shapeData->triangles.end());
+		std::vector<Triangle> tris;
+		if (shape->GetTriangles(tris)) {
+			ushort numVerts = shape->GetNumVertices();
+			tris.erase(std::remove_if(tris.begin(), tris.end(), [&](auto& t) {
+				return t.p1 >= numVerts || t.p2 >= numVerts || t.p3 >= numVerts;
+			}), tris.end());
 
-				shapeData->numTriangles = shapeData->triangles.size();
-				shapeData->numTrianglePoints = shapeData->numTriangles * 3;
-			}
-		}
-		else if (shape->HasType<BSTriShape>()) {
-			auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-			if (bsTriShape) {
-				bsTriShape->triangles.erase(std::remove_if(bsTriShape->triangles.begin(), bsTriShape->triangles.end(), [&bsTriShape](auto& t) {
-					return t.p1 >= bsTriShape->numVertices || t.p2 >= bsTriShape->numVertices || t.p3 >= bsTriShape->numVertices;
-				}), bsTriShape->triangles.end());
-
-				bsTriShape->numTriangles = bsTriShape->triangles.size();
-			}
+			shape->SetTriangles(tris);
 		}
 	}
 }
@@ -1415,18 +1403,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				uvs = &geomData->uvSets[0];
 
 			std::vector<Triangle> triangles;
-			if (geomData->HasType<NiTriShapeData>()) {
-				auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
-				if (shapeData)
-					triangles = shapeData->triangles;
-			}
-			else if (geomData->HasType<NiTriStripsData>()) {
-				auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
-				if (stripsData) {
-					triangles.reserve(stripsData->numTriangles);
-					stripsData->StripsToTris(&triangles);
-				}
-			}
+			geomData->GetTriangles(triangles);
 
 			// Only remove vertex colors if all are 0xFFFFFFFF
 			Color4 ffffffff(1.0f, 1.0f, 1.0f, 1.0f);
@@ -1529,10 +1506,10 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 				bsOptShape->SetBounds(geomData->GetBounds());
 
 			// Vertex Colors
-			if (bsOptShape->numVertices > 0) {
+			if (bsOptShape->GetNumVertices() > 0) {
 				if (!removeVertexColors && colors.size() > 0) {
 					bsOptShape->SetVertexColors(true);
-					for (int i = 0; i < bsOptShape->numVertices; i++) {
+					for (int i = 0; i < bsOptShape->GetNumVertices(); i++) {
 						auto& vertex = bsOptShape->vertData[i];
 
 						float f = std::max(0.0f, std::min(1.0f, colors[i].r));
@@ -1554,14 +1531,14 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					auto stringData = hdr.GetBlock<NiStringExtraData>(extraData.GetIndex());
 					if (stringData) {
 						if (stringData->GetStringData().find("NiOptimizeKeep") != std::string::npos) {
-							bsOptShape->particleDataSize = bsOptShape->numVertices * 6 + bsOptShape->numTriangles * 3;
+							bsOptShape->particleDataSize = bsOptShape->GetNumVertices() * 6 + triangles.size() * 3;
 							bsOptShape->particleVerts = *vertices;
 
 							bsOptShape->particleNorms.resize(vertices->size(), Vector3(1.0f, 0.0f, 0.0f));
 							if (normals && normals->size() == vertices->size())
 								bsOptShape->particleNorms = *normals;
 
-							bsOptShape->particleTris = bsOptShape->triangles;
+							bsOptShape->particleTris = triangles;
 						}
 					}
 				}
@@ -1682,24 +1659,18 @@ void NifFile::PrepareData() {
 			if (!skinPart)
 				continue;
 
-			bsTriShape->vertData = skinPart->vertData;
-			if (skinPart->vertexSize != 0)
-				bsTriShape->numVertices = skinPart->dataSize / skinPart->vertexSize;
-			else
-				bsTriShape->numVertices = 0;
+			bsTriShape->SetVertexData(skinPart->vertData);
 
-			bsTriShape->numTriangles = 0;
-			bsTriShape->triangles.clear();
-
+			std::vector<Triangle> tris;
 			for (auto &part : skinPart->partitions)
 				for (auto &tri : part.trueTriangles)
-					bsTriShape->triangles.push_back(tri);
+					tris.push_back(tri);
 
-			bsTriShape->numTriangles = bsTriShape->triangles.size();
+			bsTriShape->SetTriangles(tris);
 
 			auto dynamicShape = dynamic_cast<BSDynamicTriShape*>(bsTriShape);
 			if (dynamicShape) {
-				for (int i = 0; i < dynamicShape->numVertices; i++) {
+				for (int i = 0; i < dynamicShape->GetNumVertices(); i++) {
 					dynamicShape->vertData[i].vert.x = dynamicShape->dynamicData[i].x;
 					dynamicShape->vertData[i].vert.y = dynamicShape->dynamicData[i].y;
 					dynamicShape->vertData[i].vert.z = dynamicShape->dynamicData[i].z;
@@ -1727,7 +1698,7 @@ void NifFile::FinalizeData() {
 				if (skinInst) {
 					auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
 					if (skinPart) {
-						skinPart->numVertices = bsTriShape->numVertices;
+						skinPart->numVertices = bsTriShape->GetNumVertices();
 						skinPart->dataSize = bsTriShape->dataSize;
 						skinPart->vertexSize = bsTriShape->vertexSize;
 						skinPart->vertData = bsTriShape->vertData;
@@ -1840,10 +1811,7 @@ void NifFile::TriangulateShape(NiShape* shape) {
 
 				auto triShapeData = new NiTriShapeData();
 				*static_cast<NiTriBasedGeomData*>(triShapeData) = *static_cast<NiTriBasedGeomData*>(stripsData);
-				triShapeData->hasTriangles = true;
-				triShapeData->numTriangles = tris.size();
-				triShapeData->numTrianglePoints = triShapeData->numTriangles * 3;
-				triShapeData->triangles = tris;
+				triShapeData->SetTriangles(tris);
 				hdr.ReplaceBlock(GetBlockID(stripsData), triShapeData);
 				triShape->SetGeomData(triShapeData);
 			}
@@ -2000,8 +1968,8 @@ int NifFile::GetShapeBoneWeights(const std::string& shapeName, const int boneInd
 
 	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {
-		outWeights.reserve(bsTriShape->numVertices);
-		for (int vid = 0; vid < bsTriShape->numVertices; vid++) {
+		outWeights.reserve(bsTriShape->GetNumVertices());
+		for (int vid = 0; vid < bsTriShape->GetNumVertices(); vid++) {
 			auto& vertex = bsTriShape->vertData[vid];
 			for (int i = 0; i < 4; i++) {
 				if (vertex.weightBones[i] == boneIndex && vertex.weights[i] != 0.0f)
@@ -2349,15 +2317,16 @@ void NifFile::SetDefaultPartition(const std::string& shapeName) {
 	if (!shape)
 		return;
 
-	std::vector<Vector3> verts;
 	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+
+	std::vector<Vector3> verts;
 	if (shape->HasType<NiTriShape>()) {
 		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
 		if (!shapeData)
 			return;
 
 		verts = shapeData->vertices;
-		tris = shapeData->triangles;
 	}
 	else if (shape->HasType<NiTriStrips>()) {
 		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
@@ -2365,7 +2334,6 @@ void NifFile::SetDefaultPartition(const std::string& shapeName) {
 			return;
 
 		verts = stripsData->vertices;
-		stripsData->StripsToTris(&tris);
 	}
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
@@ -2375,8 +2343,6 @@ void NifFile::SetDefaultPartition(const std::string& shapeName) {
 		auto rawVerts = bsTriShape->GetRawVerts();
 		if (rawVerts)
 			verts = (*rawVerts);
-
-		tris = bsTriShape->triangles;
 	}
 
 	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
@@ -2437,82 +2403,32 @@ const std::vector<Vector3>* NifFile::GetRawVertsForShape(const std::string& shap
 	return nullptr;
 }
 
-bool NifFile::GetTrisForShape(const std::string& shapeName, std::vector<Triangle>* outTris) {
-	NiShape* shape = FindShapeByName(shapeName);
-	if (!shape)
-		return false;
-
-	if (shape->HasType<NiTriShape>()) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
-		if (shapeData) {
-			*outTris = shapeData->triangles;
-			return true;
-		}
-	}
-	else if (shape->HasType<NiTriStrips>()) {
-		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
-		if (stripsData) {
-			stripsData->StripsToTris(outTris);
-			return true;
-		}
-	}
-	else if (shape->HasType<BSTriShape>()) {
-		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-		if (bsTriShape) {
-			*outTris = bsTriShape->triangles;
-			return true;
-		}
-	}
-
-	return false;
-}
-
 bool NifFile::ReorderTriangles(const std::string& shapeName, const std::vector<uint>& triangleIndices) {
 	NiShape* shape = FindShapeByName(shapeName);
 	if (!shape)
 		return false;
 
-	std::vector<Triangle> triangles;
-
-	if (shape->HasType<NiTriShape>()) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
-		if (!shapeData)
-			return false;
-
-		if (triangleIndices.size() != shapeData->numTriangles)
-			return false;
-
-		for (auto &id : triangleIndices)
-			if (shapeData->triangles.size() >= id)
-				triangles.push_back(shapeData->triangles[id]);
-
-		if (triangles.size() != shapeData->numTriangles)
-			return false;
-
-		shapeData->triangles = triangles;
-	}
-	else if (shape->HasType<NiTriStrips>()) {
+	if (shape->HasType<NiTriStrips>())
 		return false;
-	}
-	else if (shape->HasType<BSTriShape>()) {
-		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-		if (!bsTriShape)
-			return false;
 
-		if (triangleIndices.size() != bsTriShape->numTriangles)
+	std::vector<Triangle> trisOrdered;
+	std::vector<Triangle> tris;
+	if (shape->GetTriangles(tris)) {
+		if (triangleIndices.size() != tris.size())
 			return false;
 
 		for (auto &id : triangleIndices)
-			if (bsTriShape->triangles.size() >= id)
-				triangles.push_back(bsTriShape->triangles[id]);
+			if (tris.size() >= id)
+				trisOrdered.push_back(tris[id]);
 
-		if (triangles.size() != bsTriShape->numTriangles)
+		if (trisOrdered.size() != tris.size())
 			return false;
 
-		bsTriShape->triangles = triangles;
+		shape->SetTriangles(trisOrdered);
+		return true;
 	}
 
-	return true;
+	return false;
 }
 
 const std::vector<Vector3>* NifFile::GetNormalsForShape(const std::string& shapeName, bool transform) {
@@ -2573,20 +2489,16 @@ bool NifFile::GetVertsForShape(const std::string& shapeName, std::vector<Vector3
 	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
 		if (geomData) {
-			outVerts.resize(geomData->numVertices);
-
-			for (int i = 0; i < geomData->numVertices; i++)
-				outVerts[i] = geomData->vertices[i];
-
+			outVerts = geomData->vertices;
 			return true;
 		}
 	}
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			outVerts.resize(bsTriShape->numVertices);
+			outVerts.resize(bsTriShape->GetNumVertices());
 
-			for (int i = 0; i < bsTriShape->numVertices; i++)
+			for (int i = 0; i < bsTriShape->GetNumVertices(); i++)
 				outVerts[i] = bsTriShape->vertData[i].vert;
 
 			return true;
@@ -2595,25 +2507,6 @@ bool NifFile::GetVertsForShape(const std::string& shapeName, std::vector<Vector3
 
 	outVerts.clear();
 	return false;
-}
-
-int NifFile::GetVertCountForShape(const std::string& shapeName) {
-	NiShape* shape = FindShapeByName(shapeName);
-	if (!shape)
-		return 0xFFFFFFFF;
-
-	if (shape->HasType<NiTriBasedGeom>()) {
-		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
-		if (geomData)
-			return geomData->numVertices;
-	}
-	else if (shape->HasType<BSTriShape>()) {
-		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-		if (bsTriShape)
-			return bsTriShape->numVertices;
-	}
-
-	return 0xFFFFFFFF;
 }
 
 void NifFile::SetVertsForShape(const std::string& shapeName, const std::vector<Vector3>& verts) {
@@ -2634,10 +2527,10 @@ void NifFile::SetVertsForShape(const std::string& shapeName, const std::vector<V
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			if (verts.size() != bsTriShape->numVertices)
+			if (verts.size() != bsTriShape->GetNumVertices())
 				return;
 
-			for (int i = 0; i < bsTriShape->numVertices; i++)
+			for (int i = 0; i < bsTriShape->GetNumVertices(); i++)
 				bsTriShape->vertData[i].vert = verts[i];
 		}
 	}
@@ -2666,7 +2559,7 @@ void NifFile::SetUvsForShape(const std::string& shapeName, const std::vector<Vec
 			if (uvs.size() != bsTriShape->vertData.size())
 				return;
 
-			for (int i = 0; i < bsTriShape->numVertices; i++)
+			for (int i = 0; i < bsTriShape->GetNumVertices(); i++)
 				bsTriShape->vertData[i].uv = uvs[i];
 		}
 	}
@@ -2779,12 +2672,12 @@ void NifFile::MoveVertex(const std::string& shapeName, const Vector3& pos, const
 
 	if (shape->HasType<NiTriBasedGeom>()) {
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
-		if (geomData && geomData->numVertices > id)
+		if (geomData && geomData->GetNumVertices() > id)
 			geomData->vertices[id] = pos;
 	}
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
-		if (bsTriShape && bsTriShape->numVertices > id)
+		if (bsTriShape && bsTriShape->GetNumVertices() > id)
 			bsTriShape->vertData[id].vert = pos;
 	}
 }
@@ -2815,7 +2708,7 @@ void NifFile::OffsetShape(const std::string& shapeName, const Vector3& offset, s
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-			for (int i = 0; i < bsTriShape->numVertices; i++) {
+			for (int i = 0; i < bsTriShape->GetNumVertices(); i++) {
 				if (mask) {
 					float maskFactor = 1.0f;
 					Vector3 diff = offset;
@@ -2870,7 +2763,7 @@ void NifFile::ScaleShape(const std::string& shapeName, const Vector3& scale, std
 			return;
 
 		std::unordered_map<ushort, Vector3> diff;
-		for (int i = 0; i < bsTriShape->numVertices; i++) {
+		for (int i = 0; i < bsTriShape->GetNumVertices(); i++) {
 			Vector3 target = bsTriShape->vertData[i].vert - root;
 			target.x *= scale.x;
 			target.y *= scale.y;
@@ -2930,7 +2823,7 @@ void NifFile::RotateShape(const std::string& shapeName, const Vector3& angle, st
 			return;
 
 		std::unordered_map<ushort, Vector3> diff;
-		for (int i = 0; i < bsTriShape->numVertices; i++) {
+		for (int i = 0; i < bsTriShape->GetNumVertices(); i++) {
 			Vector3 target = bsTriShape->vertData[i].vert - root;
 			Matrix4 mat;
 			mat.Rotate(angle.x * DEG2RAD, Vector3(1.0f, 0.0f, 0.0f));
@@ -3083,7 +2976,7 @@ bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vecto
 	auto geomData = hdr.GetBlock<NiTriBasedGeomData>(shape->GetDataRef());
 	if (geomData) {
 		geomData->notifyVerticesDelete(indices);
-		if (geomData->numVertices == 0 || geomData->numTriangles == 0) {
+		if (geomData->GetNumVertices() == 0 || geomData->GetNumTriangles() == 0) {
 			// Deleted all verts or tris, remove shape and children
 			DeleteShape(shapeName);
 			return true;
@@ -3093,7 +2986,7 @@ bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vecto
 	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {
 		bsTriShape->notifyVerticesDelete(indices);
-		if (bsTriShape->numVertices == 0 || bsTriShape->numTriangles == 0) {
+		if (bsTriShape->GetNumVertices() == 0 || bsTriShape->GetNumTriangles() == 0) {
 			// Deleted all verts or tris, remove shape and children
 			DeleteShape(shapeName);
 			return true;
@@ -3203,45 +3096,17 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 	else
 		return;
 
+	std::vector<Triangle> tris;
+	if (!shape->GetTriangles(tris))
+		return;
+
+	ushort numVerts = shape->GetNumVertices();
 	TriangulatePartitions(shape);
 
-	BSTriShape* bsTriShape = nullptr;
 	auto bsdSkinInst = dynamic_cast<BSDismemberSkinInstance*>(skinInst);
-
-	std::vector<Triangle> tris;
-	ushort numTriangles;
-	ushort numVerts;
-
-	if (shape->HasType<NiTriShape>()) {
-		auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
-		if (!shapeData)
-			return;
-
-		tris = shapeData->triangles;
-		numTriangles = shapeData->numTriangles;
-		numVerts = shapeData->numVertices;
-	}
-	else if (shape->HasType<NiTriStrips>()) {
-		auto stripsData = hdr.GetBlock<NiTriStripsData>(shape->GetDataRef());
-		if (!stripsData)
-			return;
-
-		stripsData->StripsToTris(&tris);
-		numTriangles = stripsData->numTriangles;
-		numVerts = stripsData->numVertices;
-	}
-	else if (shape->HasType<BSTriShape>()) {
-		bsTriShape = dynamic_cast<BSTriShape*>(shape);
-		if (!bsTriShape)
-			return;
-
-		tris = bsTriShape->triangles;
-		numTriangles = bsTriShape->numTriangles;
-		numVerts = bsTriShape->numVertices;
+	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	if (bsTriShape)
 		bsTriShape->CalcDataSizes(hdr.GetVersion());
-	}
-	else
-		return;
 
 	// Align triangles for comparisons
 	for (auto &t : tris)
@@ -3290,12 +3155,12 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 	};
 
 	std::unordered_map<int, int> triParts;
-	triParts.reserve(numTriangles);
-	for (int i = 0; i < numTriangles; i++)
+	triParts.reserve(tris.size());
+	for (int i = 0; i < tris.size(); i++)
 		triParts.emplace(i, -1);
 
 	std::vector<bool> usedTris;
-	usedTris.resize(numTriangles);
+	usedTris.resize(tris.size());
 
 	std::vector<bool> usedVerts;
 	usedVerts.resize(numVerts);
@@ -3543,7 +3408,7 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 	skinPart->partitions = std::move(partitions);
 
 	if (bsTriShape) {
-		skinPart->numVertices = bsTriShape->numVertices;
+		skinPart->numVertices = bsTriShape->GetNumVertices();
 		skinPart->dataSize = bsTriShape->dataSize;
 		skinPart->vertexSize = bsTriShape->vertexSize;
 		skinPart->vertData = bsTriShape->vertData;

@@ -208,7 +208,7 @@ class NiGeometryData : public NiObject {
 protected:
 	bool isPSys = false;
 
-private:
+	ushort numVertices = 0;
 	int groupID = 0;
 	byte compressFlags = 0;
 	bool hasVertices = true;
@@ -219,7 +219,6 @@ private:
 	BoundingSphere bounds;
 
 public:
-	ushort numVertices = 0;
 	std::vector<Vector3> vertices;
 	std::vector<Vector3> normals;
 	std::vector<Vector3> tangents;
@@ -241,6 +240,7 @@ public:
 	int GetAdditionalDataRef();
 	void SetAdditionalDataRef(int dataRef);
 
+	ushort GetNumVertices();
 	void SetVertices(const bool enable);
 	bool HasVertices() { return hasVertices; }
 
@@ -256,6 +256,10 @@ public:
 	void SetTangents(const bool enable);
 	bool HasTangents() { return (numUVSets & (1 << 12)) != 0; }
 
+	virtual uint GetNumTriangles();
+	virtual bool GetTriangles(std::vector<Triangle>& tris);
+	virtual void SetTriangles(const std::vector<Triangle>& tris);
+
 	void SetBounds(const BoundingSphere& newBounds) { this->bounds = newBounds; }
 	BoundingSphere GetBounds() { return bounds; }
 	void UpdateBounds();
@@ -266,10 +270,10 @@ public:
 };
 
 class NiShape : public NiAVObject {
-protected:
-	NiGeometryData* geomData = nullptr;
-
 public:
+	virtual NiGeometryData* GetGeomData();
+	virtual void SetGeomData(NiGeometryData* geomDataPtr);
+
 	virtual int GetDataRef();
 	virtual void SetDataRef(int dataRef);
 
@@ -282,6 +286,7 @@ public:
 	virtual int GetAlphaPropertyRef();
 	virtual void SetAlphaPropertyRef(int alphaPropertyRef);
 
+	virtual ushort GetNumVertices();
 	virtual void SetVertices(const bool enable);
 	virtual bool HasVertices();
 
@@ -300,28 +305,34 @@ public:
 	virtual void SetSkinned(const bool enable);
 	virtual bool IsSkinned();
 
+	virtual uint GetNumTriangles();
+	virtual bool GetTriangles(std::vector<Triangle>& tris);
+	virtual void SetTriangles(const std::vector<Triangle>& tris);
+
 	virtual void SetBounds(const BoundingSphere& bounds);
 	virtual BoundingSphere GetBounds();
 	virtual void UpdateBounds();
 
-	void SetGeomData(NiGeometryData* geomDataPtr) { geomData = geomDataPtr; }
 	int GetBoneID(NiHeader& hdr, const std::string& boneName);
 };
 
 
 class BSTriShape : public NiShape {
-private:
+protected:
 	BlockRef<NiObject> skinInstanceRef;
 	BlockRef<NiProperty> shaderPropertyRef;
 	BlockRef<NiProperty> alphaPropertyRef;
 
 	BoundingSphere bounds;
 
+	uint numTriangles = 0;
+	std::vector<Triangle> triangles;
+
+	ushort numVertices = 0;
+
 public:
 	VertexDesc vertexDesc;
 
-	uint numTriangles = 0;
-	ushort numVertices = 0;
 	uint dataSize = 0;
 	uint vertexSize = 0;		// Not in file
 
@@ -339,7 +350,6 @@ public:
 	std::vector<uint> deletedTris;			// temporary storage for BSSubIndexTriShape
 
 	std::vector<BSVertexData> vertData;
-	std::vector<Triangle> triangles;
 
 	BSTriShape();
 
@@ -367,6 +377,7 @@ public:
 	const std::vector<Vector3>* GetBitangentData(bool xform = true);
 	const std::vector<Vector2>* GetUVData();
 
+	ushort GetNumVertices();
 	void SetVertices(const bool enable);
 	bool HasVertices() { return vertexDesc.HasFlag(VF_VERTEX); }
 
@@ -395,9 +406,15 @@ public:
 	bool IsFullPrecision() { return vertexDesc.HasFlag(VF_FULLPREC); }
 	bool CanChangePrecision() { return (HasVertices()); }
 
+	uint GetNumTriangles();
+	bool GetTriangles(std::vector<Triangle>&);
+	void SetTriangles(const std::vector<Triangle>&);
+
 	void SetBounds(const BoundingSphere& newBounds) { bounds = newBounds; }
 	BoundingSphere GetBounds() { return bounds; }
 	void UpdateBounds();
+
+	void SetVertexData(const std::vector<BSVertexData>& bsVertData);
 
 	void SetNormals(const std::vector<Vector3>& inNorms);
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
@@ -524,7 +541,7 @@ public:
 class NiSkinInstance;
 
 class NiGeometry : public NiShape {
-private:
+protected:
 	BlockRef<NiGeometryData> dataRef;
 	BlockRef<NiSkinInstance> skinInstanceRef;
 	BlockRef<NiProperty> shaderPropertyRef;
@@ -565,21 +582,14 @@ class NiTriBasedGeom : public NiGeometry {
 };
 
 class NiTriBasedGeomData : public NiGeometryData {
-public:
+protected:
 	ushort numTriangles = 0;
 
+public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
-};
-
-class NiTriShape : public NiTriBasedGeom {
-public:
-	static constexpr const char* BlockName = "NiTriShape";
-	virtual const char* GetBlockName() { return BlockName; }
-
-	NiTriShape* Clone() { return new NiTriShape(*this); }
 };
 
 struct MatchGroup {
@@ -588,15 +598,15 @@ struct MatchGroup {
 };
 
 class NiTriShapeData : public NiTriBasedGeomData {
-private:
-	ushort numMatchGroups = 0;
-	std::vector<MatchGroup> matchGroups;
-
-public:
+protected:
 	uint numTrianglePoints = 0;
 	bool hasTriangles = false;
 	std::vector<Triangle> triangles;
 
+	ushort numMatchGroups = 0;
+	std::vector<MatchGroup> matchGroups;
+
+public:
 	static constexpr const char* BlockName = "NiTriShapeData";
 	virtual const char* GetBlockName() { return BlockName; }
 
@@ -604,21 +614,32 @@ public:
 	void Put(NiStream& stream);
 	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
+
+	uint GetNumTriangles();
+	bool GetTriangles(std::vector<Triangle>& tris);
+	void SetTriangles(const std::vector<Triangle>& tris);
+
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
 	NiTriShapeData* Clone() { return new NiTriShapeData(*this); }
 };
 
-class NiTriStrips : public NiTriBasedGeom {
+class NiTriShape : public NiTriBasedGeom {
+protected:
+	NiTriShapeData* shapeData = nullptr;
+
 public:
-	static constexpr const char* BlockName = "NiTriStrips";
+	static constexpr const char* BlockName = "NiTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	NiTriStrips* Clone() { return new NiTriStrips(*this); }
+	NiGeometryData* GetGeomData();
+	void SetGeomData(NiGeometryData* geomDataPtr);
+
+	NiTriShape* Clone() { return new NiTriShape(*this); }
 };
 
 class NiTriStripsData : public NiTriBasedGeomData {
-private:
+protected:
 	ushort numStrips = 0;
 	std::vector<ushort> stripLengths;
 	bool hasPoints = false;
@@ -631,22 +652,33 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
+
+	uint GetNumTriangles();
+	bool GetTriangles(std::vector<Triangle>& tris);
+	void SetTriangles(const std::vector<Triangle>& tris);
 	void StripsToTris(std::vector<Triangle>* outTris);
+
 	void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	void CalcTangentSpace();
 	NiTriStripsData* Clone() { return new NiTriStripsData(*this); }
 };
 
-class NiLines : public NiTriBasedGeom {
+class NiTriStrips : public NiTriBasedGeom {
+protected:
+	NiTriStripsData* stripsData = nullptr;
+
 public:
-	static constexpr const char* BlockName = "NiLines";
+	static constexpr const char* BlockName = "NiTriStrips";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	NiLines* Clone() { return new NiLines(*this); }
+	NiGeometryData* GetGeomData();
+	void SetGeomData(NiGeometryData* geomDataPtr);
+
+	NiTriStrips* Clone() { return new NiTriStrips(*this); }
 };
 
 class NiLinesData : public NiGeometryData {
-private:
+protected:
 	std::deque<bool> lineFlags;
 
 public:
@@ -660,12 +692,18 @@ public:
 	NiLinesData* Clone() { return new NiLinesData(*this); }
 };
 
-class NiScreenElements : public NiTriShape {
+class NiLines : public NiTriBasedGeom {
+protected:
+	NiLinesData* linesData = nullptr;
+
 public:
-	static constexpr const char* BlockName = "NiScreenElements";
+	static constexpr const char* BlockName = "NiLines";
 	virtual const char* GetBlockName() { return BlockName; }
 
-	NiScreenElements* Clone() { return new NiScreenElements(*this); }
+	NiGeometryData* GetGeomData();
+	void SetGeomData(NiGeometryData* geomDataPtr);
+
+	NiLines* Clone() { return new NiLines(*this); }
 };
 
 struct PolygonInfo {
@@ -676,7 +714,7 @@ struct PolygonInfo {
 };
 
 class NiScreenElementsData : public NiTriShapeData {
-private:
+protected:
 	ushort maxPolygons = 0;
 	std::vector<PolygonInfo> polygons;
 	std::vector<ushort> polygonIndices;
@@ -699,8 +737,24 @@ public:
 	NiScreenElementsData* Clone() { return new NiScreenElementsData(*this); }
 };
 
+class NiScreenElements : public NiTriShape {
+protected:
+	NiScreenElementsData* elemData = nullptr;
+
+public:
+	static constexpr const char* BlockName = "NiScreenElements";
+	virtual const char* GetBlockName() { return BlockName; }
+
+	NiGeometryData* GetGeomData();
+	void SetGeomData(NiGeometryData* geomDataPtr);
+
+	NiScreenElements* Clone() { return new NiScreenElements(*this); }
+};
+
 class BSLODTriShape : public NiTriBasedGeom {
-private:
+protected:
+	NiTriShapeData* shapeData = nullptr;
+
 	uint level0 = 0;
 	uint level1 = 0;
 	uint level2 = 0;
@@ -708,6 +762,9 @@ private:
 public:
 	static constexpr const char* BlockName = "BSLODTriShape";
 	virtual const char* GetBlockName() { return BlockName; }
+
+	NiGeometryData* GetGeomData();
+	void SetGeomData(NiGeometryData* geomDataPtr);
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);

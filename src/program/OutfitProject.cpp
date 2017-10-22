@@ -791,10 +791,15 @@ int OutfitProject::SaveSliderBSD(const std::string& sliderName, const std::strin
 }
 
 int OutfitProject::SaveSliderOBJ(const std::string& sliderName, const std::string& shapeName, const std::string& fileName) {
-	std::string target = ShapeToTarget(shapeName);
+	NiShape* shape = workNif.FindShapeByName(shapeName);
+	if (!shape)
+		return 1;
+
 	std::vector<Triangle> tris;
+	shape->GetTriangles(tris);
+
+	std::string target = ShapeToTarget(shapeName);
 	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
-	workNif.GetTrisForShape(shapeName, &tris);
 	const std::vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
 
 	std::vector<Vector3> outVerts = *verts;
@@ -810,7 +815,7 @@ int OutfitProject::SaveSliderOBJ(const std::string& sliderName, const std::strin
 	obj.SetScale(Vector3(0.1f, 0.1f, 0.1f));
 	obj.AddGroup(shapeName, outVerts, tris, *uvs);
 	if (obj.Save(fileName))
-		return 1;
+		return 2;
 
 	return 0;
 }
@@ -924,10 +929,13 @@ void OutfitProject::SetSliderFromDiff(const std::string& sliderName, const std::
 }
 
 int OutfitProject::GetVertexCount(const std::string& shapeName) {
-	if (workNif.IsValid())
-		return workNif.GetVertCountForShape(shapeName);
+	if (workNif.IsValid()) {
+		NiShape* shape = workNif.FindShapeByName(shapeName);
+		if (shape)
+			return shape->GetNumVertices();
+	}
 
-	return -1;
+	return 0;
 }
 
 void OutfitProject::GetLiveVerts(const std::string& shapeName, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs) {
@@ -1686,8 +1694,8 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		}
 	}
 
-	int newVertCount = refNif.GetVertCountForShape(shape);
-	if (newVertCount == -1) {
+	NiShape* refShape = refNif.FindShapeByName(shape);
+	if (!refShape) {
 		ClearReference();
 		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refNif.GetFileName());
 		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refNif.GetFileName()), _("Reference Error"), wxICON_ERROR, owner);
@@ -2194,9 +2202,13 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<std:
 	obj.SetOffset(offset);
 
 	for (auto &s : shapes) {
-		std::vector<Triangle> tris;
-		if (!workNif.GetTrisForShape(s, &tris))
+		NiShape* shape = workNif.FindShapeByName(s);
+		if (!shape)
 			return 1;
+
+		std::vector<Triangle> tris;
+		if (!shape->GetTriangles(tris))
+			return 2;
 
 		const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(s);
 		const std::vector<Vector2>* uvs = workNif.GetUvsForShape(s);
@@ -2210,7 +2222,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<std:
 	return 0;
 }
 
-int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, const std::string& mergeShape) {
+int OutfitProject::ImportFBX(const std::string& fileName, const std::string& shapeName, const std::string& mergeShapeName) {
 	FBXWrangler fbxw;
 	std::string nonRefBones;
 
@@ -2233,23 +2245,23 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		FBXShape* shape = fbxw.GetShape(s);
 		std::string useShapeName = s;
 
-		if (!mergeShape.empty()) {
-			int vertCount = workNif.GetVertCountForShape(mergeShape);
-			if (vertCount == shape->verts.size()) {
+		if (!mergeShapeName.empty()) {
+			NiShape* mergeShape = workNif.FindShapeByName(mergeShapeName);
+			if (mergeShape && mergeShape->GetNumVertices() == shape->verts.size()) {
 				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {
 					ret = wxMessageBox(_("Update Vertex Positions?"), _("Vertex Position Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
-						workNif.SetVertsForShape(mergeShape, shape->verts);
+						workNif.SetVertsForShape(mergeShapeName, shape->verts);
 
 					ret = wxMessageBox(_("Update Texture Coordinates?"), _("UV Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
-						workNif.SetUvsForShape(mergeShape, shape->uvs);
+						workNif.SetUvsForShape(mergeShapeName, shape->uvs);
 
 					ret = wxMessageBox(_("Update Animation Weighting?"), _("Animation Weight Update"), wxYES_NO | wxICON_QUESTION, owner);
 					if (ret == wxYES)
 						for (auto &bn : shape->boneNames)
-							workAnim.SetWeights(mergeShape, bn, shape->boneSkin[bn].GetWeights());
+							workAnim.SetWeights(mergeShapeName, bn, shape->boneSkin[bn].GetWeights());
 
 					return 101;
 				}
