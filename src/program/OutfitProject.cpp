@@ -2034,7 +2034,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	return 0;
 }
 
-int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool writeNormals, bool withRef) {
+int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef) {
 	NifFile clone(workNif);
 
 	ChooseClothData(clone);
@@ -2054,16 +2054,14 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 
 			clone.SetVertsForShape(m->shapeName, liveVerts);
 
-			if (writeNormals) {
-				if (clone.GetHeader().GetVersion().IsSK() || clone.GetHeader().GetVersion().IsSSE()) {
-					NiShader* shader = clone.GetShader(shape);
-					if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
-						continue;
-				}
-
-				clone.SetNormalsForShape(m->shapeName, liveNorms);
-				clone.CalcTangentsForShape(m->shapeName);
+			if (clone.GetHeader().GetVersion().IsSK() || clone.GetHeader().GetVersion().IsSSE()) {
+				NiShader* shader = clone.GetShader(shape);
+				if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
+					continue;
 			}
+
+			clone.SetNormalsForShape(m->shapeName, liveNorms);
+			clone.CalcTangentsForShape(m->shapeName);
 		}
 	}
 

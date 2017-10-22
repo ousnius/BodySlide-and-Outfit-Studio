@@ -1431,10 +1431,7 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 			if (!project->IsBaseShape(s))
 				shapeMeshes.push_back(glView->GetMesh(s));
 
-		bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
-
-		if (updateNormals)
-			project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
+		project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
 		std::string error = project->Save(project->mFileName, project->mOutfitName, project->mDataDir, project->mBaseFile,
 			project->mGamePath, project->mGameFile, project->mGenWeights, project->mCopyRef);
@@ -1601,10 +1598,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		if (!project->IsBaseShape(s))
 			shapeMeshes.push_back(glView->GetMesh(s));
 
-	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
-
-	if (updateNormals)
-		project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
+	project->UpdateNifNormals(project->GetWorkNif(), shapeMeshes);
 
 	std::string error = project->Save(strFileName, strOutfitName, strDataDir, strBaseFile,
 		strGamePath, strGameFile, genWeights, copyRef);
@@ -1702,8 +1696,7 @@ void OutfitStudio::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 		if (!project->IsBaseShape(s))
 			shapeMeshes.push_back(glView->GetMesh(s));
 
-	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
-	int error = project->ExportNIF(fileName, shapeMeshes, updateNormals);
+	int error = project->ExportNIF(fileName, shapeMeshes);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
@@ -1737,8 +1730,7 @@ void OutfitStudio::OnExportNIFWithRef(wxCommandEvent& event) {
 	for (auto &s : project->GetWorkNif()->GetShapeNames())
 		shapeMeshes.push_back(glView->GetMesh(s));
 
-	bool updateNormals = GetMenuBar()->IsChecked(XRCID("btnAutoNormals"));
-	int error = project->ExportNIF(fileName, shapeMeshes, updateNormals, true);
+	int error = project->ExportNIF(fileName, shapeMeshes, true);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s' with reference!"), fileName), _("Export Error"), wxICON_ERROR);
