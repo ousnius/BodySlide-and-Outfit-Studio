@@ -680,7 +680,7 @@ void OutfitStudio::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo) {
 
 			for (auto &m : refMeshes) {
 				if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
-					auto weights = project->workWeights[m->shapeName];
+					auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, activeBone);
 					if (!weights)
 						continue;
 
@@ -2219,7 +2219,6 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 		for (auto &s : selectedItems) {
 			if (!project->IsBaseShape(s->shapeName)) {
 				auto weights = project->GetWorkAnim()->GetWeightsPtr(s->shapeName, activeBone);
-				project->workWeights[s->shapeName] = weights;
 
 				mesh* m = glView->GetMesh(s->shapeName);
 				if (m) {
@@ -2234,7 +2233,6 @@ void OutfitStudio::OnBoneSelect(wxTreeEvent& event) {
 
 		// Always show weights of reference shape
 		auto weights = project->GetWorkAnim()->GetWeightsPtr(project->GetBaseShape(), activeBone);
-		project->workWeights[project->GetBaseShape()] = weights;
 
 		mesh* m = glView->GetMesh(project->GetBaseShape());
 		if (m) {
@@ -3664,7 +3662,6 @@ void OutfitStudio::OnTabButtonClick(wxCommandEvent& event) {
 		cbFixedWeight->Show(false);
 
 		project->ClearBoneScale();
-		project->workWeights.clear();
 
 		glView->SetXMirror(previousMirror);
 		glView->SetTransformMode(false);

@@ -1232,35 +1232,19 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 	owner->UpdateProgress(prog);
 
 	for (auto &boneName : *boneList) {
-		auto weights = workAnim.GetWeightsPtr(destShape, boneName);
-		if (!weights)
-			continue;
+		std::unordered_map<ushort, float> oldWeights;
+		if (mask)
+			workAnim.GetWeights(destShape, boneName, oldWeights);
 
-		weights->clear();
+		auto weights = workAnim.GetWeightsPtr(destShape, boneName);
+		if (weights)
+			weights->clear();
 
 		std::string wtSet = boneName + "_WT_";
 		morpher.GenerateResultDiff(destShape, wtSet, wtSet, maxResults);
 
 		std::unordered_map<ushort, Vector3> diffResult;
 		morpher.GetRawResultDiff(destShape, wtSet, diffResult);
-
-		std::unordered_map<ushort, float> oldWeights;
-		if (mask)
-			workAnim.GetWeights(destShape, boneName, oldWeights);
-
-		for (auto &dr : diffResult) {
-			if (mask)
-				(*weights)[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
-			else
-				(*weights)[dr.first] = dr.second.y;
-		}
-
-		// Restore old weights from mask
-		if (mask) {
-			for (auto &w : oldWeights)
-				if ((*mask)[w.first] > 0.0f)
-					(*weights)[w.first] = w.second;
-		}
 
 		if (diffResult.size() > 0) {
 			if (workAnim.AddShapeBone(destShape, boneName)) {
@@ -1274,6 +1258,24 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 					MatTransform xForm;
 					workAnim.GetBoneXForm(boneName, xForm);
 					workAnim.SetShapeBoneXForm(destShape, boneName, xForm);
+				}
+
+				weights = workAnim.GetWeightsPtr(destShape, boneName);
+			}
+
+			if (weights) {
+				for (auto &dr : diffResult) {
+					if (mask)
+						(*weights)[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
+					else
+						(*weights)[dr.first] = dr.second.y;
+				}
+
+				// Restore old weights from mask
+				if (mask) {
+					for (auto &w : oldWeights)
+						if ((*mask)[w.first] > 0.0f)
+							(*weights)[w.first] = w.second;
 				}
 			}
 		}
