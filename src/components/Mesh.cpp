@@ -33,10 +33,17 @@ void mesh::BuildTriAdjacency() {
 		return;
 
 	vertTris = std::make_unique<std::vector<int>[]>(nVerts);
+	auto vt = vertTris.get();
 	for (int t = 0; t < nTris; t++) {
-		vertTris.get()[tris[t].p1].push_back(t);
-		vertTris.get()[tris[t].p2].push_back(t);
-		vertTris.get()[tris[t].p3].push_back(t);
+		ushort i1 = tris[t].p1;
+		ushort i2 = tris[t].p2;
+		ushort i3 = tris[t].p3;
+		if (i1 >= nVerts || i2 >= nVerts || i3 >= nVerts)
+			continue;
+
+		vt[i1].push_back(t);
+		vt[i2].push_back(t);
+		vt[i3].push_back(t);
 	}
 }
 
@@ -67,9 +74,15 @@ void mesh::BuildEdgeList() {
 		MakeEdges();
 
 	vertEdges = std::make_unique<std::vector<int>[]>(nVerts);
+	auto ve = vertEdges.get();
 	for (int e = 0; e < nEdges; e++) {
-		vertEdges.get()[edges[e].p1].push_back(e);
-		vertEdges.get()[edges[e].p2].push_back(e);
+		ushort i1 = edges[e].p1;
+		ushort i2 = edges[e].p2;
+		if (i1 >= nVerts || i2 >= nVerts)
+			continue;
+
+		ve[edges[e].p1].push_back(e);
+		ve[edges[e].p2].push_back(e);
 	}
 }
 

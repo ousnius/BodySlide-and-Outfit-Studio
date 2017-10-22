@@ -1076,6 +1076,9 @@ void BSTriShape::CalcTangentSpace() {
 		int i2 = triangles[i].p2;
 		int i3 = triangles[i].p3;
 
+		if (i1 >= numVertices || i2 >= numVertices || i3 >= numVertices)
+			continue;
+
 		Vector3 v1 = vertData[i1].vert;
 		Vector3 v2 = vertData[i2].vert;
 		Vector3 v3 = vertData[i3].vert;
@@ -1870,6 +1873,9 @@ void NiTriShapeData::CalcTangentSpace() {
 		int i2 = triangles[i].p2;
 		int i3 = triangles[i].p3;
 
+		if (i1 >= numVertices || i2 >= numVertices || i3 >= numVertices)
+			continue;
+
 		Vector3 v1 = vertices[i1];
 		Vector3 v2 = vertices[i2];
 		Vector3 v3 = vertices[i3];
@@ -2086,6 +2092,9 @@ void NiTriStripsData::CalcTangentSpace() {
 		int i1 = tris[i].p1;
 		int i2 = tris[i].p2;
 		int i3 = tris[i].p3;
+
+		if (i1 >= numVertices || i2 >= numVertices || i3 >= numVertices)
+			continue;
 
 		Vector3 v1 = vertices[i1];
 		Vector3 v2 = vertices[i2];

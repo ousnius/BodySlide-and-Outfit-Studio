@@ -414,6 +414,32 @@ void NifFile::LinkGeomData() {
 	}
 }
 
+void NifFile::RemoveInvalidTris() {
+	for (auto& shape : GetShapes()) {
+		if (shape->HasType<NiTriShape>()) {
+			auto shapeData = hdr.GetBlock<NiTriShapeData>(shape->GetDataRef());
+			if (shapeData) {
+				shapeData->triangles.erase(std::remove_if(shapeData->triangles.begin(), shapeData->triangles.end(), [&shapeData](auto& t) {
+					return t.p1 >= shapeData->numVertices || t.p2 >= shapeData->numVertices || t.p3 >= shapeData->numVertices;
+				}), shapeData->triangles.end());
+
+				shapeData->numTriangles = shapeData->triangles.size();
+				shapeData->numTrianglePoints = shapeData->numTriangles * 3;
+			}
+		}
+		else if (shape->HasType<BSTriShape>()) {
+			auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+			if (bsTriShape) {
+				bsTriShape->triangles.erase(std::remove_if(bsTriShape->triangles.begin(), bsTriShape->triangles.end(), [&bsTriShape](auto& t) {
+					return t.p1 >= bsTriShape->numVertices || t.p2 >= bsTriShape->numVertices || t.p3 >= bsTriShape->numVertices;
+				}), bsTriShape->triangles.end());
+
+				bsTriShape->numTriangles = bsTriShape->triangles.size();
+			}
+		}
+	}
+}
+
 void NifFile::Clear() {
 	isValid = false;
 	hasUnknown = false;
@@ -1681,6 +1707,8 @@ void NifFile::PrepareData() {
 			}
 		}
 	}
+
+	RemoveInvalidTris();
 }
 
 void NifFile::FinalizeData() {

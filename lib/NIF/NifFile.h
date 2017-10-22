@@ -137,6 +137,7 @@ public:
 
 	// Link NiGeometryData to NiGeometry
 	void LinkGeomData();
+	void RemoveInvalidTris();
 
 	int AddNode(const std::string& nodeName, const MatTransform& xform);
 	void DeleteNode(const std::string& nodeName);
