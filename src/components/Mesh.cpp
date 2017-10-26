@@ -233,6 +233,14 @@ void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	prop.paletteScale = matFile.grayscaleToPaletteScale;
 }
 
+bool mesh::HasAlphaBlend() {
+	bool alphaBlend = alphaFlags & 1;
+	if (prop.alpha < 1.0f)
+		alphaBlend = true;
+
+	return alphaBlend;
+}
+
 void mesh::ScaleVertices(const Vector3& center, const float& factor) {
 	for (int i = 0; i < nVerts; i++)
 		verts[i] = center + (verts[i] - center) * factor;

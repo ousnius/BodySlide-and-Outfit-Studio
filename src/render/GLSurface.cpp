@@ -733,38 +733,23 @@ void GLSurface::RenderOneFrame() {
 
 	UpdateProjection();
 
-	mesh* m = nullptr;
-
 	// Render regular meshes
-	for (int i = 0; i < meshes.size(); i++) {
-		m = meshes[i];
-		if (!m->bVisible || m->nTris == 0)
-			continue;
-
-		bool alphaBlend = m->alphaFlags & 1;
-		if (!alphaBlend)
+	for (auto &m : meshes) {
+		if (!m->HasAlphaBlend() && m->bVisible && m->nTris != 0)
 			RenderMesh(m);
 	}
 
 	// Render meshes with alpha blending only
-	for (int i = 0; i < meshes.size(); i++) {
-		m = meshes[i];
-		if (!m->bVisible || m->nTris == 0)
-			continue;
-
-		bool alphaBlend = m->alphaFlags & 1;
-		if (alphaBlend)
+	for (auto &m : meshes) {
+		if (m->HasAlphaBlend() && m->bVisible && m->nTris != 0)
 			RenderMesh(m);
 	}
 
 	// Render overlays on top
 	glClear(GL_DEPTH_BUFFER_BIT);
-	for (int i = 0; i < overlays.size(); i++) {
-		m = overlays[i];
-		if (!m->bVisible)
-			continue;
-
-		RenderMesh(m);
+	for (auto &o : overlays) {
+		if (o->bVisible)
+			RenderMesh(o);
 	}
 
 	canvas->SwapBuffers();
@@ -862,7 +847,7 @@ void GLSurface::RenderMesh(mesh* m) {
 		}
 
 		if (bTextured && m->textured && m->texcoord) {
-			shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f);
+			shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f, m->prop.alpha);
 
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
 			glEnableVertexAttribArray(5);

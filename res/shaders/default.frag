@@ -338,8 +338,9 @@ void main(void)
 	}
 	
 	fragColor = color;
-	fragColor.a *= prop.alpha;
 	
 	if (fragColor.a < alphaThreshold)
 		discard;
+		
+	fragColor.a *= prop.alpha;
 }

@@ -136,6 +136,7 @@ public:
 	void UpdateBuffers();
 	void QueueUpdate(const UpdateType& type);
 	void UpdateFromMaterialFile(const MaterialFile& matFile);
+	bool HasAlphaBlend();
 
 	void ScaleVertices(const Vector3& center, const float& factor);
 
