@@ -715,9 +715,16 @@ std::string OutfitStudio::GetActiveBone() {
 }
 
 void OutfitStudio::EnterSliderEdit(const std::string& sliderName) {
-	bEditSlider = true;
+	if (sliderName.empty())
+		return;
+
+	SliderDisplay* d = sliderDisplays[sliderName];
+	if (!d)
+		return;
+
 	activeSlider = sliderName;
-	SliderDisplay* d = sliderDisplays[activeSlider];
+	bEditSlider = true;
+
 	d->slider->SetValue(100);
 	SetSliderValue(activeSlider, 100);
 
@@ -741,14 +748,17 @@ void OutfitStudio::EnterSliderEdit(const std::string& sliderName) {
 
 void OutfitStudio::ExitSliderEdit() {
 	SliderDisplay* d = sliderDisplays[activeSlider];
-	d->sliderNameCheck->Enable(true);
-	d->slider->SetValue(0);
-	SetSliderValue(activeSlider, 0);
-	ShowSliderEffect(activeSlider, true);
-	d->slider->SetFocus();
-	d->btnMinus->Hide();
-	d->btnPlus->Hide();
-	d->sliderPane->Layout();
+	if (d) {
+		d->sliderNameCheck->Enable(true);
+		d->slider->SetValue(0);
+		SetSliderValue(activeSlider, 0);
+		ShowSliderEffect(activeSlider, true);
+		d->slider->SetFocus();
+		d->btnMinus->Hide();
+		d->btnPlus->Hide();
+		d->sliderPane->Layout();
+	}
+
 	activeSlider.clear();
 	bEditSlider = false;
 	glView->GetStrokeManager()->PushBVH();
