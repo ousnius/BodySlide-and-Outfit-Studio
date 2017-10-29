@@ -414,6 +414,17 @@ int SliderSetFile::UpdateSet(SliderSet &inSliderSet) {
 	return 0;
 }
 
+int SliderSetFile::DeleteSet(const std::string& setName) {
+	if (!HasSet(setName))
+		return 1;
+
+	XMLElement* setPtr = setsInFile[setName];
+	setsInFile.erase(setName);
+	doc.DeleteNode(setPtr);
+
+	return 0;
+}
+
 int SliderSetFile::Save() {
 	return doc.SaveFile(fileName.c_str()) == XML_SUCCESS;
 }

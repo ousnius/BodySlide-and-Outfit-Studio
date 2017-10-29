@@ -53,6 +53,9 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_CHOICE(XRCID("outfitChoice"), BodySlideFrame::OnChooseOutfit)
 	EVT_CHOICE(XRCID("presetChoice"), BodySlideFrame::OnChoosePreset)
 
+	EVT_BUTTON(XRCID("btnDeleteProject"), BodySlideFrame::OnDeleteProject)
+	EVT_BUTTON(XRCID("btnDeletePreset"), BodySlideFrame::OnDeletePreset)
+
 	EVT_BUTTON(XRCID("btnPreview"), BodySlideFrame::OnPreview)
 	EVT_BUTTON(XRCID("btnHighToLow"), BodySlideFrame::OnHighToLow)
 	EVT_BUTTON(XRCID("btnLowToHigh"), BodySlideFrame::OnLowToHigh)
@@ -341,8 +344,7 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 
 void BodySlideApp::RefreshOutfitList() {
 	LoadSliderSets();
-	std::string activeOutfit = Config["SelectedOutfit"];
-	PopulateOutfitList(activeOutfit);
+	PopulateOutfitList("");
 }
 
 int BodySlideApp::LoadSliderSets() {
@@ -365,14 +367,17 @@ int BodySlideApp::LoadSliderSets() {
 		std::string outFilePath;
 		std::vector<std::string> outfitNames;
 		sliderDoc.GetSetNamesUnsorted(outfitNames, false);
-		for (int i = 0; i < outfitNames.size(); i++) {
-			outfitNameSource[outfitNames[i]] = file.ToStdString();
-			outfitNameOrder.push_back(outfitNames[i]);
+		for (auto &o : outfitNames) {
+			if (outfitNameSource.find(o) != outfitNameSource.end())
+				continue;
 
-			sliderDoc.GetSetOutputFilePath(outfitNames[i], outFilePath);
+			outfitNameSource[o] = file.ToStdString();
+			outfitNameOrder.push_back(o);
+
+			sliderDoc.GetSetOutputFilePath(o, outFilePath);
 			if (!outFilePath.empty()) {
 				std::transform(outFilePath.begin(), outFilePath.end(), outFilePath.begin(), ::tolower);
-				outFileCount[outFilePath].push_back(outfitNames[i]);
+				outFileCount[outFilePath].push_back(o);
 			}
 		}
 	}
@@ -449,6 +454,76 @@ void BodySlideApp::ActivatePreset(const std::string &presetName, const bool upda
 
 	if (preview && updatePreview)
 		zapChanged ? RebuildPreviewMeshes() : UpdatePreview();
+}
+
+void BodySlideApp::DeleteOutfit(const std::string& outfitName) {
+	auto outfit = outfitNameSource.find(outfitName);
+	if (outfit == outfitNameSource.end())
+		return;
+
+	int select = wxNOT_FOUND;
+	auto outfitChoice = (wxChoice*)sliderView->FindWindowByName("outfitChoice", sliderView);
+	if (outfitChoice)
+		select = outfitChoice->GetSelection();
+
+	wxLogMessage("Loading project file '%s'...", outfit->second);
+
+	SliderSetFile sliderDoc;
+	sliderDoc.Open(outfit->second);
+	if (!sliderDoc.fail()) {
+		wxLogMessage("Deleting project '%s'...", outfitName);
+
+		if (!sliderDoc.DeleteSet(outfit->first)) {
+			if (sliderDoc.Save()) {
+				RefreshOutfitList();
+
+				if (outfitChoice) {
+					int count = outfitChoice->GetCount();
+					if (count > select)
+						outfitChoice->Select(select);
+					else if (count > select - 1)
+						outfitChoice->Select(select - 1);
+
+					ActivateOutfit(outfitChoice->GetStringSelection().ToStdString());
+				}
+			}
+			else
+				wxLogMessage("Failed to delete the slider set!");
+		}
+		else
+			wxLogMessage("Failed to delete the slider set!");
+	}
+	else
+		wxLogMessage("Failed to load the project file!");
+}
+
+void BodySlideApp::DeletePreset(const std::string& presetName) {
+	std::string outputFile = sliderManager.GetPresetFileNames(presetName);
+	if (outputFile.empty())
+		return;
+
+	int select = wxNOT_FOUND;
+	auto presetChoice = (wxChoice*)sliderView->FindWindowByName("presetChoice", sliderView);
+	if (presetChoice)
+		select = presetChoice->GetSelection();
+
+	wxLogMessage("Deleting preset '%s'...", presetName);
+	if (!sliderManager.DeletePreset(outputFile, presetName)) {
+		LoadPresets("");
+		PopulatePresetList(presetName);
+
+		if (presetChoice) {
+			int count = presetChoice->GetCount();
+			if (count > select)
+				presetChoice->Select(select);
+			else if (count > select - 1)
+				presetChoice->Select(select - 1);
+
+			ActivatePreset(presetChoice->GetStringSelection().ToStdString());
+		}
+	}
+	else
+		wxLogMessage("Failed to delete preset!");
 }
 
 void BodySlideApp::RefreshSliders() {
@@ -2212,10 +2287,6 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	val = Config["LastOutfitFilter"];
 	outfitsearch->ChangeValue(val);
 
-	wxButton* btnAbout = (wxButton*)FindWindowByName("btnAbout");
-	if (btnAbout)
-		btnAbout->SetBitmap(wxArtProvider::GetBitmap(wxART_INFORMATION, wxART_OTHER, wxSize(15, 15)));
-
 	if (app->targetGame != SKYRIM && app->targetGame != FO4)
 		XRCCTRL(*this, "cbMorphs", wxCheckBox)->Show(false);
 }
@@ -2416,8 +2487,7 @@ void BodySlideFrame::PopulateOutfitList(const wxArrayString& items, const wxStri
 	outfitChoice->Clear();
 	outfitChoice->Append(items);
 	if (!outfitChoice->SetStringSelection(selectItem)) {
-
-		int i;
+		int i = wxNOT_FOUND;
 		if (selectItem.empty())
 			i = outfitChoice->Append("");
 		else if (selectItem.First('['))
@@ -2780,6 +2850,24 @@ void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
 void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
 	std::string sstr = event.GetString().ToStdString();
 	app->ActivatePreset(sstr);
+}
+
+void BodySlideFrame::OnDeleteProject(wxCommandEvent& WXUNUSED(event)) {
+	int res = wxMessageBox(_("Do you really wish to delete the selected project?"), _("Delete Project"), wxYES_NO | wxICON_WARNING, this);
+	if (res != wxYES)
+		return;
+
+	std::string outfitName = Config["SelectedOutfit"];
+	app->DeleteOutfit(outfitName);
+}
+
+void BodySlideFrame::OnDeletePreset(wxCommandEvent& WXUNUSED(event)) {
+	int res = wxMessageBox(_("Do you really wish to delete the selected preset?"), _("Delete Preset"), wxYES_NO | wxICON_WARNING, this);
+	if (res != wxYES)
+		return;
+
+	std::string presetName = Config["SelectedPreset"];
+	app->DeletePreset(presetName);
 }
 
 void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {

@@ -63,6 +63,10 @@ public:
 		return presetCollection.SavePreset(filePath, presetName, sliderSetName, assignGroups);
 	}
 
+	int DeletePreset(const std::string& filePath, const std::string& presetName) {
+		return presetCollection.DeletePreset(filePath, presetName);
+	}
+
 	void SetSliderPreset(const std::string& presetName, const std::string& slider, float big = -1, float little = -1) {
 		presetCollection.SetSliderPreset(presetName, slider, big, little);
 	}

@@ -14,7 +14,7 @@
 				<border>5</border>
 				<object class="wxFlexGridSizer">
 					<rows>2</rows>
-					<cols>4</cols>
+					<cols>5</cols>
 					<vgap>0</vgap>
 					<hgap>0</hgap>
 					<growablecols>1</growablecols>
@@ -49,19 +49,29 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
+						<flag>wxTOP|wxBOTTOM</flag>
+						<border>5</border>
+						<object class="wxButton" name="btnDeleteProject">
+							<size>24,24</size>
+							<bitmap stock_id="wxART_DELETE"/>
+							<tooltip>Deletes a project from its project file</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
 						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
 						<object class="unknown" name="searchHolder" />
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxALL|wxEXPAND</flag>
+						<flag>wxRIGHT|wxTOP|wxBOTTOM|wxEXPAND</flag>
 						<border>5</border>
 						<object class="unknown" name="outfitsearchHolder" />
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxALIGN_CENTER</flag>
+						<flag>wxLEFT|wxRIGHT|wxALIGN_CENTER</flag>
 						<border>5</border>
 						<object class="wxStaticText" name="lblPresets">
 							<fg>#c8c8c8</fg>
@@ -71,7 +81,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+						<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
@@ -89,13 +99,23 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
+						<flag></flag>
+						<border>5</border>
+						<object class="wxButton" name="btnDeletePreset">
+							<size>24,24</size>
+							<bitmap stock_id="wxART_DELETE"/>
+							<tooltip>Deletes a preset from its preset file</tooltip>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
 						<flag>wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxBoxSizer">
 							<orient>wxHORIZONTAL</orient>
 							<object class="sizeritem">
 								<option>1</option>
-								<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+								<flag>wxLEFT|wxEXPAND</flag>
 								<border>5</border>
 								<object class="wxButton" name="btnSavePreset">
 									<fg>wxSYS_COLOUR_BTNTEXT</fg>
@@ -105,7 +125,7 @@
 							</object>
 							<object class="sizeritem">
 								<option>1</option>
-								<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+								<flag>wxLEFT|wxRIGHT|wxEXPAND</flag>
 								<border>5</border>
 								<object class="wxButton" name="btnSavePresetAs">
 									<fg>wxSYS_COLOUR_BTNTEXT</fg>
@@ -117,7 +137,7 @@
 					</object>
 					<object class="sizeritem">
 						<option>0</option>
-						<flag>wxLEFT|wxRIGHT|wxBOTTOM|wxEXPAND</flag>
+						<flag>wxRIGHT|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxButton" name="btnGroupManager">
 							<fg>wxSYS_COLOUR_BTNTEXT</fg>
@@ -345,7 +365,8 @@
 										<flag>wxALIGN_CENTER|wxALL</flag>
 										<border>5</border>
 										<object class="wxButton" name="btnAbout">
-											<size>26,-1</size>
+											<size>24,24</size>
+											<bitmap stock_id="wxART_INFORMATION"/>
 											<tooltip>About</tooltip>
 										</object>
 									</object>

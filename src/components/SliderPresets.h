@@ -35,4 +35,5 @@ public:
 
 	bool LoadPresets(const std::string& basePath, const std::string& sliderSet, std::vector<std::string>& groupFilter, bool allPresets = false);
 	int SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups);
+	int DeletePreset(const std::string& filePath, const std::string& presetName);
 };

@@ -171,6 +171,9 @@ public:
 	void ActivateOutfit(const std::string& outfitName);
 	void ActivatePreset(const std::string& presetName, const bool updatePreview = true);
 
+	void DeleteOutfit(const std::string& outfitName);
+	void DeletePreset(const std::string& presetName);
+
 	void LaunchOutfitStudio();
 
 	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& zapidx, std::vector<Vector2>* uvs = nullptr);
@@ -317,6 +320,9 @@ private:
 
 	void OnChooseOutfit(wxCommandEvent& event);
 	void OnChoosePreset(wxCommandEvent& event);
+
+	void OnDeleteProject(wxCommandEvent& event);
+	void OnDeletePreset(wxCommandEvent& event);
 
 	void OnSavePreset(wxCommandEvent& event);
 	void OnSavePresetAs(wxCommandEvent& event);

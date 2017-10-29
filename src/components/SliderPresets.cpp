@@ -166,6 +166,11 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 			}
 
 			presetName = element->Attribute("name");
+			if (presetFileNames.find(presetName) != presetFileNames.end()) {
+				element = element->NextSiblingElement("Preset");
+				continue;
+			}
+
 			presetFileNames[presetName] = file;
 			presetGroups[presetName] = groups;
 
@@ -249,6 +254,34 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 	}
 	if (outDoc.SaveFile(filePath.c_str()) != XML_SUCCESS)
 		return outDoc.ErrorID();
+
+	return 0;
+}
+
+int PresetCollection::DeletePreset(const std::string& filePath, const std::string& presetName) {
+	XMLDocument doc;
+	if (doc.LoadFile(filePath.c_str()) != XML_SUCCESS)
+		return -1;
+
+	XMLNode* slidersNode = doc.FirstChildElement("SliderPresets");
+	if (slidersNode) {
+		XMLElement* presetElem = slidersNode->FirstChildElement("Preset");
+		while (presetElem) {
+			if (_stricmp(presetElem->Attribute("name"), presetName.c_str()) == 0) {
+				slidersNode->DeleteChild(presetElem);
+				break;
+			}
+			else
+				presetElem = presetElem->NextSiblingElement("Preset");
+		}
+	}
+
+	if (doc.SaveFile(filePath.c_str()) != XML_SUCCESS)
+		return doc.ErrorID();
+
+	namedSliderPresets.erase(presetName);
+	presetFileNames.erase(presetName);
+	presetGroups.erase(presetName);
 
 	return 0;
 }

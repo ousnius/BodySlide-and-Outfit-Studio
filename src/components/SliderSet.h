@@ -287,6 +287,9 @@ public:
 	// If the set does not already exist in the file (based on name) the set is added.
 	int UpdateSet(SliderSet& inSliderSet);
 
+	// Deletes a single slider set from the XML document based on the name.
+	int DeleteSet(const std::string& setName);
+
 	// Writes the xml file using the internal fileName (use Rename() to change the name).
 	int Save();
 };

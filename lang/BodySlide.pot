@@ -144,6 +144,24 @@ msgstr ""
 msgid "Select groups to assign to the new preset:"
 msgstr ""
 
+msgid "Deletes a project from its project file"
+msgstr ""
+
+msgid "Delete Project"
+msgstr ""
+
+msgid "Do you really wish to delete the selected project?"
+msgstr ""
+
+msgid "Deletes a preset from its preset file"
+msgstr ""
+
+msgid "Delete Preset"
+msgstr ""
+
+msgid "Do you really wish to delete the selected preset?"
+msgstr ""
+
 msgid "&Save"
 msgstr ""
 

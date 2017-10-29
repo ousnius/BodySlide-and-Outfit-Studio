@@ -160,6 +160,25 @@ msgstr "Bitte geben Sie einen Namen für das neue Preset ein:"
 msgid "Select groups to assign to the new preset:"
 msgstr "Wählen Sie die erwünschten Gruppen aus:"
 
+msgid "Deletes a project from its project file"
+msgstr "Löscht ein Projekt aus der Projektdatei"
+
+msgid "Delete Project"
+msgstr "Projekt löschen"
+
+msgid "Do you really wish to delete the selected project?"
+msgstr ""
+"Sind Sie sich sicher, dass Sie das ausgewählte Projekt löschen möchten?"
+
+msgid "Deletes a preset from its preset file"
+msgstr "Löscht ein Preset aus der Presetdatei"
+
+msgid "Delete Preset"
+msgstr "Preset löschen"
+
+msgid "Do you really wish to delete the selected preset?"
+msgstr "Sind Sie sich sicher, dass Sie das ausgwählte Preset löschen möchten?"
+
 msgid "&Save"
 msgstr "&Speichern"
 
