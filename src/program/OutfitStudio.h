@@ -810,6 +810,7 @@ private:
 	void RenameProject(const std::string& projectName);
 
 	void WorkingGUIFromProj();
+	void UpdateMeshesFromSet();
 
 	bool ShowWeightCopy(WeightCopyOptions& options);
 	void ReselectBone();
@@ -1010,10 +1011,7 @@ private:
 		glView->Render();
 	}
 
-	void OnSmoothNormalSeams(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleNormalSeamSmoothMode();
-		glView->Render();
-	}
+	void OnSmoothNormalSeams(wxCommandEvent& event);
 
 	void OnGhostMesh(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleGhostMode();

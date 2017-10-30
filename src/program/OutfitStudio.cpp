@@ -1366,10 +1366,12 @@ void OutfitStudio::WorkingGUIFromProj() {
 		glView->DeleteMesh(shape);
 
 		glView->AddMeshFromNif(project->GetWorkNif(), shape, true);
-
+		
 		MaterialFile matFile;
 		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
 		glView->SetMeshTextures(shape, project->GetShapeTextures(shape), hasMatFile, matFile);
+
+		UpdateMeshesFromSet();
 
 		subItem = outfitShapes->AppendItem(outfitRoot, shape);
 		outfitShapes->SetItemState(subItem, 0);
@@ -1383,6 +1385,18 @@ void OutfitStudio::WorkingGUIFromProj() {
 	}
 
 	outfitShapes->ExpandAll();
+}
+
+void OutfitStudio::UpdateMeshesFromSet() {
+	for (auto it = project->activeSet.ShapesBegin(); it != project->activeSet.ShapesEnd(); ++it) {
+		mesh* m = glView->GetMesh(it->first);
+		if (m) {
+			m->smoothSeamNormals = it->second.smoothSeamNormals;
+
+			if (!m->smoothSeamNormals)
+				m->SmoothNormals();
+		}
+	}
 }
 
 void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
@@ -5462,6 +5476,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		NiShape* shape = project->GetWorkNif()->FindShapeByName(newName);
 		if (shape) {
 			glView->AddMeshFromNif(project->GetWorkNif(), newName, false);
+			UpdateMeshesFromSet();
 			project->SetTextures(shape);
 
 			MaterialFile matFile;
@@ -5926,6 +5941,15 @@ void OutfitStudio::OnBrushSettingsSlider(wxScrollEvent& WXUNUSED(event)) {
 	}
 }
 
+void OutfitStudio::OnSmoothNormalSeams(wxCommandEvent& WXUNUSED(event)) {
+	glView->ToggleNormalSeamSmoothMode();
+
+	for (auto &s : selectedItems)
+		project->activeSet.ToggleSmoothSeamNormals(s->shapeName);
+
+	glView->Render();
+}
+
 // ---------------------------------------------------------------------------
 // wxGLPanel
 // ---------------------------------------------------------------------------
@@ -6037,25 +6061,24 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName, bool 
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 
 	for (int i = 0; i < shapeList.size(); i++) {
+		mesh* m = nullptr;
 		if (!shapeName.empty() && (shapeList[i] == shapeName))
-			gls.AddMeshFromNif(nif, shapeList[i]);
+			m = gls.AddMeshFromNif(nif, shapeList[i]);
 		else if (!shapeName.empty())
 			continue;
 		else
-			gls.AddMeshFromNif(nif, shapeList[i]);
+			m = gls.AddMeshFromNif(nif, shapeList[i]);
 
-		mesh* m = gls.GetMesh(shapeList[i]);
 		if (m) {
 			m->BuildTriAdjacency();
 			m->BuildEdgeList();
 			m->ColorFill(Vector3());
-		}
 
-		if (buildNormals)
-			RecalcNormals(shapeList[i]);
+			if (buildNormals)
+				m->SmoothNormals();
 
-		if (m)
 			m->CreateBuffers();
+		}
 	}
 }
 

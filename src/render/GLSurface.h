@@ -252,10 +252,10 @@ public:
 	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
 	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
 
-	void AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr, bool smoothNormalSeams = true);
+	mesh* AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr);
 	void Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
 	void Update(int shapeIndex, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
-	void ReloadMeshFromNif(NifFile* nif, std::string shapeName);
+	mesh* ReloadMeshFromNif(NifFile* nif, std::string shapeName);
 	void RecalculateMeshBVH(const std::string& shapeName);
 	void RecalculateMeshBVH(int shapeIndex);
 

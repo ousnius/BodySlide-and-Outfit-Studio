@@ -12,8 +12,13 @@ See the included LICENSE file
 
 using namespace tinyxml2;
 
-class SliderSet
-{
+struct SliderSetShape {
+	std::string targetShape;								// Target names mapped to nif file shape names.
+	std::string dataFolder;
+	bool smoothSeamNormals = true;
+};
+
+class SliderSet {
 	std::string name;
 	std::string baseDataPath;								// Base data path - from application configuration.
 	std::string datafolder;									// Default data folder specified for a slider set (overridden by target data folders, usually).
@@ -21,8 +26,8 @@ class SliderSet
 	std::string outputpath;
 	std::string outputfile;
 	bool genWeights = false;								// Generate both low and high weight meshes on output.
-	std::map<std::string, std::string> targetshapenames;	// Target names mapped to nif file shape names.
-	std::map<std::string, std::string> targetdatafolders;
+
+	std::map<std::string, SliderSetShape> shapeAttributes;
 
 	std::vector<SliderData> sliders;
 	std::vector<NormalGenLayer> defNormalGen;
@@ -53,16 +58,10 @@ public:
 		genWeights = inGenWeights;
 	}
 
-	int GetTargetShapeCount() {
-		return targetshapenames.size();
-	}
-
 	void Clear() {
-		targetshapenames.clear();
-		targetdatafolders.clear();
+		shapeAttributes.clear();
 		sliders.clear();
 	}
-
 
 	void SetBaseDataPath(const std::string& inPath) {
 		baseDataPath = inPath;
@@ -99,14 +98,35 @@ public:
 	std::string GetDefaultDataFolder() {
 		return datafolder;
 	}
+
 	bool GenWeights();
+
+	bool GetSmoothSeamNormals(const std::string& shapeName) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			return shape->second.smoothSeamNormals;
+
+		return true;
+	}
+
+	void SetSmoothSeamNormals(const std::string& shapeName, const bool smooth) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			shape->second.smoothSeamNormals = smooth;
+	}
+
+	void ToggleSmoothSeamNormals(const std::string& shapeName) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			shape->second.smoothSeamNormals = !shape->second.smoothSeamNormals;
+	}
 
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.
 	// Use TargetToShape to get the NIF file shape name.
 	void GetReferencedTargets(std::vector<std::string> &outTargets) {
-		for (auto &tdf : targetdatafolders)
-			if (tdf.second != datafolder)
-				outTargets.push_back(tdf.first);
+		for (auto &s : shapeAttributes)
+			if (s.second.dataFolder != datafolder)
+				outTargets.push_back(s.second.targetShape);
 	}
 
 	void SetReferencedData(const std::string& shapeName, const bool local = false) {
@@ -137,15 +157,20 @@ public:
 	}
 
 	std::string TargetToShape(const std::string& targetName) {
-		if (targetshapenames.find(targetName) != targetshapenames.end())
-			return targetshapenames[targetName];
+		for (auto &s : shapeAttributes)
+			if (s.second.targetShape == targetName)
+				return s.first;
 
 		return "";
 	}
 
 	void ClearTargets(const std::string& oldTarget) {
-		targetshapenames.erase(oldTarget);
-		targetdatafolders.erase(oldTarget);
+		for (auto &s : shapeAttributes) {
+			if (s.second.targetShape == oldTarget) {
+				s.second.targetShape.clear();
+				s.second.dataFolder.clear();
+			}
+		}
 	}
 
 	void Retarget(const std::string& oldTarget, const std::string& newTarget) {
@@ -156,60 +181,60 @@ public:
 	}
 
 	void AddShapeTarget(const std::string& shapeName, const std::string& targetName) {
-		targetshapenames[targetName] = shapeName;
+		auto& shape = shapeAttributes[shapeName];
+		shape.targetShape = targetName;
 	}
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName) {
-		std::string target = ShapeToTarget(shapeName);
-		if (!target.empty()) {
-			if (targetshapenames.find(target) != targetshapenames.end()) {
-				targetshapenames[newShapeName] = newShapeName;
-				targetshapenames.erase(target);
-			}
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end()) {
+			for (auto& slider : sliders)
+				slider.RenameTarget(shape->second.targetShape, newShapeName);
 
-			if (targetdatafolders.find(target) != targetdatafolders.end()) {
-				targetdatafolders[newShapeName] = targetdatafolders[target];
-				targetdatafolders.erase(target);
-			}
+			shapeAttributes[newShapeName] = shape->second;
+			shapeAttributes.erase(shapeName);
 		}
-
-		for (auto& slider : sliders)
-			slider.RenameTarget(target, newShapeName);
 	}
 
 	void AddTargetDataFolder(const std::string& targetName, const std::string& dataFolder) {
-		targetdatafolders[targetName] = dataFolder;
+		for (auto &s : shapeAttributes)
+			if (s.second.targetShape == targetName)
+				s.second.dataFolder = dataFolder;
 	}
 
-	std::map<std::string, std::string>::iterator TargetShapesBegin() {
-		return targetshapenames.begin();
+	std::map<std::string, SliderSetShape>::const_iterator ShapesBegin() {
+		return shapeAttributes.cbegin();
 	}
-	std::map<std::string, std::string>::iterator TargetShapesEnd() {
-		return targetshapenames.end();
+	std::map<std::string, SliderSetShape>::const_iterator ShapesEnd() {
+		return shapeAttributes.cend();
 	}
 
 	std::string ShapeToDataName(int index, const std::string& shapeName) {
-		for (auto &tsn : targetshapenames)
-			if (tsn.second == shapeName)
-				return sliders[index].TargetDataName(tsn.first);
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end() && sliders.size() > index)
+			return sliders[index].TargetDataName(shape->second.targetShape);
 
 		return "";
 	}
 
 	std::string ShapeToTarget(const std::string& shapeName) {
-		for (auto &tsn : targetshapenames)
-			if (tsn.second == shapeName)
-				return tsn.first;
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			return shape->second.targetShape;
 
 		return "";
 	}
 
 	std::string ShapeToDataFolder(const std::string& shapeName) {
-		std::string t = ShapeToTarget(shapeName);
-		if (targetdatafolders.find(t) != targetdatafolders.end())
-			return targetdatafolders[t];
-		else
-			return datafolder;
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end()) {
+			if (!shape->second.dataFolder.empty())
+				return shape->second.dataFolder;
+			else
+				return datafolder;
+		}
+
+		return "";
 	}
 
 	size_t size() {

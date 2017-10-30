@@ -707,14 +707,14 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 	TriFile tri;
 	std::string triFilePath = triPath + ".tri";
 
-	for (auto targetShape = sliderSet.TargetShapesBegin(); targetShape != sliderSet.TargetShapesEnd(); ++targetShape) {
-		NiShape* shape = nif.FindShapeByName(targetShape->second);
+	for (auto targetShape = sliderSet.ShapesBegin(); targetShape != sliderSet.ShapesEnd(); ++targetShape) {
+		NiShape* shape = nif.FindShapeByName(targetShape->first);
 		if (!shape)
 			continue;
 
 		for (int s = 0; s < sliderSet.size(); s++) {
-			std::string dn = sliderSet[s].TargetDataName(targetShape->first);
-			std::string target = targetShape->first;
+			std::string dn = sliderSet[s].TargetDataName(targetShape->second.targetShape);
+			std::string target = targetShape->second.targetShape;
 			if (dn.empty())
 				continue;
 
@@ -722,7 +722,7 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 				MorphDataPtr morph = std::make_shared<MorphData>();
 				morph->name = sliderSet[s].name;
 
-				const std::vector<ushort>& shapeZapIndices = zapIndices[targetShape->second];
+				const std::vector<ushort>& shapeZapIndices = zapIndices[targetShape->first];
 
 				std::vector<Vector3> verts;
 				int shapeVertCount = shape->GetNumVertices();
@@ -748,7 +748,7 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 				}
 
 				if (morph->offsets.size() > 0)
-					tri.AddMorph(targetShape->second, morph);
+					tri.AddMorph(targetShape->first, morph);
 			}
 		}
 	}
@@ -845,21 +845,21 @@ void BodySlideApp::InitPreview() {
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
 	std::vector<ushort> zapIdx;
-	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->second, verts))
+		if (!previewBaseNif->GetVertsForShape(it->first, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(it->second, uvs);
+		previewBaseNif->GetUvsForShape(it->first, uvs);
 
-		ApplySliders(it->first, sliderManager.slidersBig, verts, zapIdx, &uvs);
+		ApplySliders(it->second.targetShape, sliderManager.slidersBig, verts, zapIdx, &uvs);
 
 		// Zap deleted verts before preview
 		if (freshLoad && zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(it->second, verts);
-			PreviewMod.SetUvsForShape(it->second, uvs);
-			PreviewMod.DeleteVertsForShape(it->second, zapIdx);
+			PreviewMod.SetVertsForShape(it->first, verts);
+			PreviewMod.SetUvsForShape(it->first, uvs);
+			PreviewMod.DeleteVertsForShape(it->first, zapIdx);
 		}
 		else if (zapIdx.size() > 0) {
 			// Preview Window has been opened for this shape before, zap the diff verts before applying them to the shape
@@ -869,19 +869,21 @@ void BodySlideApp::InitPreview() {
 				verts.erase(verts.begin() + zapIdx[z]);
 				uvs.erase(uvs.begin() + zapIdx[z]);
 			}
-			PreviewMod.SetVertsForShape(it->second, verts);
-			PreviewMod.SetUvsForShape(it->second, uvs);
+			PreviewMod.SetVertsForShape(it->first, verts);
+			PreviewMod.SetUvsForShape(it->first, uvs);
 		}
 		else {
 			// No zapping needed - just show all the verts.
-			PreviewMod.SetVertsForShape(it->second, verts);
-			PreviewMod.SetUvsForShape(it->second, uvs);
+			PreviewMod.SetVertsForShape(it->first, verts);
+			PreviewMod.SetUvsForShape(it->first, uvs);
 		}
 	}
 
 	std::string baseGamePath = Config["GameDataPath"];
 	preview->AddMeshFromNif(&PreviewMod);
 	preview->SetBaseDataPath(baseGamePath);
+
+	UpdateMeshesFromSet();
 
 	for (auto &s : PreviewMod.GetShapeNames())
 		preview->AddNifShapeTextures(&PreviewMod, s);
@@ -902,20 +904,20 @@ void BodySlideApp::UpdatePreview() {
 	std::vector<Vector3> verts, vertsLow, vertsHigh;
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
 	std::vector<ushort> zapIdx;
-	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->second, verts))
+		if (!previewBaseNif->GetVertsForShape(it->first, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(it->second, uvs);
+		previewBaseNif->GetUvsForShape(it->first, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
 		uvsHigh = uvs;
 		uvsLow = uvs;
 
-		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
+		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		if (activeSet.GenWeights())
-			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
+			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 
 		// Calculate result of weight
 		for (int i = 0; i < verts.size(); i++) {
@@ -933,7 +935,7 @@ void BodySlideApp::UpdatePreview() {
 				uvs.erase(uvs.begin() + zapIdx[z]);
 			}
 		}
-		preview->UpdateMeshes(it->second, &verts, &uvs);
+		preview->UpdateMeshes(it->first, &verts, &uvs);
 	}
 
 	preview->SetNormalsGenerationLayers(activeSet.GetNormalsGenLayers());
@@ -962,20 +964,20 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	std::vector<Vector2> uvs, uvsLow, uvsHigh;
 	std::vector<ushort> zapIdx;
 	Vector3 v;
-	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->second, verts))
+		if (!previewBaseNif->GetVertsForShape(it->first, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(it->second, uvs);
+		previewBaseNif->GetUvsForShape(it->first, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
 		uvsHigh = uvs;
 		uvsLow = uvs;
 
-		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
+		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		if (activeSet.GenWeights())
-			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
+			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 		
 		// Calculate result of weight
 		for (int i = 0; i < verts.size(); i++) {
@@ -986,18 +988,31 @@ void BodySlideApp::RebuildPreviewMeshes() {
 		// Zap deleted verts before preview
 		if (zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(it->second, verts);
-			PreviewMod.SetUvsForShape(it->second, uvs);
-			PreviewMod.DeleteVertsForShape(it->second, zapIdx);
+			PreviewMod.SetVertsForShape(it->first, verts);
+			PreviewMod.SetUvsForShape(it->first, uvs);
+			PreviewMod.DeleteVertsForShape(it->first, zapIdx);
 		}
 		else {
 			// No zapping needed - just show all the verts.
-			PreviewMod.SetVertsForShape(it->second, verts);
-			PreviewMod.SetUvsForShape(it->second, uvs);
+			PreviewMod.SetVertsForShape(it->first, verts);
+			PreviewMod.SetUvsForShape(it->first, uvs);
 		}
 	}
 
 	preview->RefreshMeshFromNif(&PreviewMod);
+	UpdateMeshesFromSet();
+}
+
+void BodySlideApp::UpdateMeshesFromSet() {
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+		mesh* m = preview->GetMesh(it->first);
+		if (m) {
+			m->smoothSeamNormals = it->second.smoothSeamNormals;
+
+			if (!m->smoothSeamNormals)
+				m->SmoothNormals();
+		}
+	}
 }
 
 bool BodySlideApp::SetDefaultConfig() {
@@ -1573,39 +1588,39 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	std::vector<ushort> zapIdx;
 	std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
 
-	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-		if (!nifBig.GetVertsForShape(it->second, vertsHigh))
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+		if (!nifBig.GetVertsForShape(it->first, vertsHigh))
 			continue;
 
-		nifBig.GetUvsForShape(it->second, uvsHigh);
+		nifBig.GetUvsForShape(it->first, uvsHigh);
 
 		if (activeSet.GenWeights()) {
-			if (!nifSmall.GetVertsForShape(it->second, vertsLow))
+			if (!nifSmall.GetVertsForShape(it->first, vertsLow))
 				continue;
 
-			nifSmall.GetUvsForShape(it->second, uvsLow);
+			nifSmall.GetUvsForShape(it->first, uvsLow);
 		}
 
-		zapIdxAll.emplace(it->second, std::vector<ushort>());
+		zapIdxAll.emplace(it->first, std::vector<ushort>());
 
-		ApplySliders(it->first, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
-		nifBig.SetVertsForShape(it->second, vertsHigh);
-		nifBig.SetUvsForShape(it->second, uvsHigh);
-		nifBig.CalcNormalsForShape(it->second);
-		nifBig.CalcTangentsForShape(it->second);
-		nifBig.DeleteVertsForShape(it->second, zapIdx);
+		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
+		nifBig.SetVertsForShape(it->first, vertsHigh);
+		nifBig.SetUvsForShape(it->first, uvsHigh);
+		nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+		nifBig.CalcTangentsForShape(it->first);
+		nifBig.DeleteVertsForShape(it->first, zapIdx);
 
 		if (activeSet.GenWeights()) {
 			zapIdx.clear();
-			ApplySliders(it->first, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
-			nifSmall.SetVertsForShape(it->second, vertsLow);
-			nifSmall.SetUvsForShape(it->second, uvsLow);
-			nifSmall.CalcNormalsForShape(it->second);
-			nifSmall.CalcTangentsForShape(it->second);
-			nifSmall.DeleteVertsForShape(it->second, zapIdx);
+			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
+			nifSmall.SetVertsForShape(it->first, vertsLow);
+			nifSmall.SetUvsForShape(it->first, uvsLow);
+			nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+			nifSmall.CalcTangentsForShape(it->first);
+			nifSmall.DeleteVertsForShape(it->first, zapIdx);
 		}
 
-		zapIdxAll[it->second] = zapIdx;
+		zapIdxAll[it->first] = zapIdx;
 		zapIdx.clear();
 	}
 
@@ -1622,15 +1637,15 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 
 		if (targetGame < FO4) {
-			for (auto targetShape = activeSet.TargetShapesBegin(); targetShape != activeSet.TargetShapesEnd(); ++targetShape) {
-				NiShape* shape = nifBig.FindShapeByName(targetShape->second);
+			for (auto targetShape = activeSet.ShapesBegin(); targetShape != activeSet.ShapesEnd(); ++targetShape) {
+				NiShape* shape = nifBig.FindShapeByName(targetShape->first);
 				if (!shape)
 					continue;
 
 				if (tri && shape->GetNumVertices() > 0) {
-					AddTriData(nifBig, targetShape->second, triPathTrimmed);
+					AddTriData(nifBig, targetShape->first, triPathTrimmed);
 					if (activeSet.GenWeights())
-						AddTriData(nifSmall, targetShape->second, triPathTrimmed);
+						AddTriData(nifSmall, targetShape->first, triPathTrimmed);
 
 					tri = false;
 				}
@@ -1643,10 +1658,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		}
 
 		// Set all shapes to dynamic/mutable
-		for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it) {
-			nifBig.SetShapeDynamic(it->second);
+		for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
+			nifBig.SetShapeDynamic(it->first);
 			if (activeSet.GenWeights())
-				nifSmall.SetShapeDynamic(it->second);
+				nifSmall.SetShapeDynamic(it->first);
 		}
 	}
 	else {
@@ -1919,27 +1934,27 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		std::vector<ushort> zapIdx;
 		std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
 
-		for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-			if (!nifBig.GetVertsForShape(it->second, vertsHigh))
+		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
+			if (!nifBig.GetVertsForShape(it->first, vertsHigh))
 				continue;
 
-			nifBig.GetUvsForShape(it->second, uvsHigh);
+			nifBig.GetUvsForShape(it->first, uvsHigh);
 
 			if (currentSet.GenWeights()) {
-				if (!nifSmall.GetVertsForShape(it->second, vertsLow))
+				if (!nifSmall.GetVertsForShape(it->first, vertsLow))
 					continue;
 
-				nifSmall.GetUvsForShape(it->second, uvsLow);
+				nifSmall.GetUvsForShape(it->first, uvsLow);
 			}
 
 			float vbig = 0.0f;
 			float vsmall = 0.0f;
 			std::vector<int> clamps;
-			zapIdxAll.emplace(it->second, std::vector<ushort>());
+			zapIdxAll.emplace(it->first, std::vector<ushort>());
 
 			for (int s = 0; s < currentSet.size(); s++) {
-				std::string dn = currentSet[s].TargetDataName(it->first);
-				std::string target = it->first;
+				std::string dn = currentSet[s].TargetDataName(it->second.targetShape);
+				std::string target = it->second.targetShape;
 				if (dn.empty())
 					continue;
 
@@ -1975,7 +1990,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				if (currentSet[s].bZap && !currentSet[s].bUV) {
 					if (vbig > 0.0f) {
 						currentDiffs.GetDiffIndices(dn, target, zapIdx);
-						zapIdxAll[it->second] = zapIdx;
+						zapIdxAll[it->first] = zapIdx;
 					}
 					continue;
 				}
@@ -1995,8 +2010,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 
 			if (!clamps.empty()) {
 				for (auto &c : clamps) {
-					std::string dn = currentSet[c].TargetDataName(it->first);
-					std::string target = it->first;
+					std::string dn = currentSet[c].TargetDataName(it->second.targetShape);
+					std::string target = it->second.targetShape;
 					if (currentSet[c].defBigValue > 0)
 						currentDiffs.ApplyClamp(dn, target, &vertsHigh);
 
@@ -2006,18 +2021,18 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				}
 			}
 
-			nifBig.SetVertsForShape(it->second, vertsHigh);
-			nifBig.SetUvsForShape(it->second, uvsHigh);
-			nifBig.CalcNormalsForShape(it->second);
-			nifBig.CalcTangentsForShape(it->second);
-			nifBig.DeleteVertsForShape(it->second, zapIdx);
+			nifBig.SetVertsForShape(it->first, vertsHigh);
+			nifBig.SetUvsForShape(it->first, uvsHigh);
+			nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+			nifBig.CalcTangentsForShape(it->first);
+			nifBig.DeleteVertsForShape(it->first, zapIdx);
 
 			if (currentSet.GenWeights()) {
-				nifSmall.SetVertsForShape(it->second, vertsLow);
-				nifSmall.SetUvsForShape(it->second, uvsLow);
-				nifSmall.CalcNormalsForShape(it->second);
-				nifSmall.CalcTangentsForShape(it->second);
-				nifSmall.DeleteVertsForShape(it->second, zapIdx);
+				nifSmall.SetVertsForShape(it->first, vertsLow);
+				nifSmall.SetUvsForShape(it->first, uvsLow);
+				nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+				nifSmall.CalcTangentsForShape(it->first);
+				nifSmall.DeleteVertsForShape(it->first, zapIdx);
 			}
 
 			zapIdx.clear();
@@ -2051,15 +2066,15 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			}
 
 			if (targetGame < FO4) {
-				for (auto targetShape = currentSet.TargetShapesBegin(); targetShape != currentSet.TargetShapesEnd(); ++targetShape) {
-					NiShape* shape = nifBig.FindShapeByName(targetShape->second);
+				for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
+					NiShape* shape = nifBig.FindShapeByName(targetShape->first);
 					if (!shape)
 						continue;
 
 					if (triEnd && shape->GetNumVertices() > 0) {
-						AddTriData(nifBig, targetShape->second, triPathTrimmed);
+						AddTriData(nifBig, targetShape->first, triPathTrimmed);
 						if (currentSet.GenWeights())
-							AddTriData(nifSmall, targetShape->second, triPathTrimmed);
+							AddTriData(nifSmall, targetShape->first, triPathTrimmed);
 
 						triEnd = false;
 					}
@@ -2072,10 +2087,10 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			}
 
 			// Set all shapes to dynamic/mutable
-			for (auto it = currentSet.TargetShapesBegin(); it != currentSet.TargetShapesEnd(); ++it) {
-				nifBig.SetShapeDynamic(it->second);
+			for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
+				nifBig.SetShapeDynamic(it->first);
 				if (currentSet.GenWeights())
-					nifSmall.SetShapeDynamic(it->second);
+					nifSmall.SetShapeDynamic(it->first);
 			}
 		}
 		else {

@@ -88,6 +88,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		// Add all the reference shapes to the target list.
 		outSet.AddShapeTarget(baseShape, ShapeToTarget(baseShape));
 		outSet.AddTargetDataFolder(ShapeToTarget(baseShape), activeSet.ShapeToDataFolder(baseShape));
+		outSet.SetSmoothSeamNormals(baseShape, activeSet.GetSmoothSeamNormals(baseShape));
 		owner->UpdateProgress(prog += step, _("Adding reference shapes..."));
 	}
 
@@ -103,6 +104,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		if (shapeDataFolder != activeSet.GetDefaultDataFolder())
 			outSet.AddTargetDataFolder(ShapeToTarget(s), activeSet.ShapeToDataFolder(s));
 
+		outSet.SetSmoothSeamNormals(s, activeSet.GetSmoothSeamNormals(s));
 		owner->UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
 	
@@ -975,9 +977,9 @@ void OutfitProject::GetLiveVerts(const std::string& shapeName, std::vector<Vecto
 }
 
 const std::string& OutfitProject::ShapeToTarget(const std::string& shapeName) {
-	for (auto it = activeSet.TargetShapesBegin(); it != activeSet.TargetShapesEnd(); ++it)
-		if (it->second == shapeName)
-			return it->first;
+	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it)
+		if (it->first == shapeName)
+			return it->second.targetShape;
 
 	return shapeName;
 }
@@ -1784,12 +1786,12 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 
 	// No external target found, first skin shaded shape becomes reference
 	if (refTargets.empty()) {
-		for (auto shapeTarget = activeSet.TargetShapesBegin(); shapeTarget != activeSet.TargetShapesEnd(); ++shapeTarget) {
-			NiShape* shape = workNif.FindShapeByName(shapeTarget->second);
+		for (auto shapeTarget = activeSet.ShapesBegin(); shapeTarget != activeSet.ShapesEnd(); ++shapeTarget) {
+			NiShape* shape = workNif.FindShapeByName(shapeTarget->first);
 			if (shape) {
 				NiShader* shader = workNif.GetShader(shape);
 				if (shader && shader->IsSkinTinted()) {
-					newBaseShape = shapeTarget->second;
+					newBaseShape = shapeTarget->first;
 					break;
 				}
 			}

@@ -69,11 +69,12 @@ public:
 
 	void SetNormalsGenerationLayers(std::vector<NormalGenLayer>& normalLayers);
 
+	mesh* GetMesh(const std::string& shapeName);
 	void AddMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void RefreshMeshFromNif(NifFile* nif, char* shapeName = nullptr);
 	void AddNifShapeTextures(NifFile* fromNif, const std::string& shapeName);
 
-	void UpdateMeshes(std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
+	void UpdateMeshes(const std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
 		std::set<int> changed;
 		gls.Update(gls.GetMeshID(shapeName), verts, uvs, &changed);
 
@@ -105,21 +106,6 @@ public:
 
 	void Resized(uint w, uint h) {
 		gls.SetSize(w, h);
-	}
-
-	void ToggleSmoothSeams() {
-		for (auto &s : shapeMaterials) {
-			mesh* m = gls.GetMesh(s.first);
-			if (m) {
-				if (m->smoothSeamNormals)
-					m->smoothSeamNormals = false;
-				else
-					m->smoothSeamNormals = true;
-
-				m->SmoothNormals();
-			}
-		}
-		gls.RenderOneFrame();
 	}
 
 	void ToggleTextures() {

@@ -937,15 +937,15 @@ void GLSurface::UpdateShaders(mesh* m) {
 	}
 }
 
-void GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
+mesh* GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
 	DeleteMesh(shapeName);
-	AddMeshFromNif(nif, shapeName);
+	return AddMeshFromNif(nif, shapeName);
 }
 
-void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color, bool smoothNormalSeams) {
+mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color) {
 	NiShape* shape = nif->FindShapeByName(shapeName);
 	if (!shape)
-		return;
+		return nullptr;
 
 	std::vector<Vector3> nifVerts;
 	nif->GetVertsForShape(shapeName, nifVerts);
@@ -1067,7 +1067,6 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 		m->tris = std::make_unique<Triangle[]>(m->nTris);
 
 	m->shapeName = shapeName;
-	m->smoothSeamNormals = smoothNormalSeams;
 
 	// Load verts. NIF verts are scaled up by approx. 10 and rotated on the x axis (Z up, Y forward).  
 	// Scale down by 10 and rotate on x axis by flipping y and z components. To face the camera, this also mirrors
@@ -1095,7 +1094,7 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 		m->FacetNormals();
 
 		// Smooth normals
-		if (smoothNormalSeams) {
+		if (m->smoothSeamNormals) {
 			kd_matcher matcher(m->verts.get(), m->nVerts);
 			for (int i = 0; i < matcher.matches.size(); i++) {
 				std::pair<Vector3*, int>& a = matcher.matches[i].first;
@@ -1163,6 +1162,8 @@ void GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vecto
 		if (shape && shape->IsSkinned())
 			camOffset.y = 12.0f;
 	}
+
+	return m;
 }
 
 mesh* GLSurface::AddVisPoint(const Vector3& p, const std::string& name, const Vector3* color) {

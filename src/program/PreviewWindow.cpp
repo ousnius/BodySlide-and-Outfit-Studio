@@ -116,14 +116,15 @@ void PreviewWindow::SetNormalsGenerationLayers(std::vector<NormalGenLayer>& norm
 	Layout();
 }
 
-void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
-	mesh* m = nullptr;
-	std::vector<std::string> shapeList = nif->GetShapeNames();
+mesh* PreviewWindow::GetMesh(const std::string& shapeName) {
+	return gls.GetMesh(shapeName);
+}
 
+void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
+	std::vector<std::string> shapeList = nif->GetShapeNames();
 	for (int i = 0; i < shapeList.size(); i++) {
 		if (shapeName && (shapeList[i] == shapeName)) {
-			gls.AddMeshFromNif(nif, shapeList[i]);
-			m = gls.GetMesh(shapeName);
+			mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
 			if (m) {
 				m->BuildTriAdjacency();
 				m->SmoothNormals();
@@ -134,8 +135,7 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			continue;
 		}
 		else {
-			gls.AddMeshFromNif(nif, shapeList[i]);
-			m = gls.GetMesh(shapeList[i]);
+			mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
 			if (m) {
 				m->BuildTriAdjacency();
 				m->SmoothNormals();
@@ -146,42 +146,41 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 }
 
 void PreviewWindow::RefreshMeshFromNif(NifFile* nif, char* shapeName) {
-	mesh* m = nullptr;
 	std::vector<std::string> shapeList = nif->GetShapeNames();
-
 	if (shapeName == nullptr)
 		gls.DeleteAllMeshes();
 
 	for (int i = 0; i < shapeList.size(); i++) {
 		if (shapeName && (shapeList[i] == shapeName)) {
-			gls.ReloadMeshFromNif(nif, shapeList[i]);
-			m = gls.GetMesh(shapeName);
-			m->BuildTriAdjacency();
-			m->SmoothNormals();
-			m->CreateBuffers();
+			mesh* m = gls.ReloadMeshFromNif(nif, shapeList[i]);
+			if (m) {
+				m->BuildTriAdjacency();
+				m->SmoothNormals();
+				m->CreateBuffers();
 
-			auto iter = shapeMaterials.find(shapeName);
-			if (iter != shapeMaterials.end())
-				m->material = iter->second;
-			else
-				AddNifShapeTextures(nif, std::string(shapeName));
-
+				auto iter = shapeMaterials.find(shapeName);
+				if (iter != shapeMaterials.end())
+					m->material = iter->second;
+				else
+					AddNifShapeTextures(nif, std::string(shapeName));
+			}
 		}
 		else if (shapeName) {
 			continue;
 		}
 		else {
-			gls.ReloadMeshFromNif(nif, shapeList[i]);
-			m = gls.GetMesh(shapeList[i]);
-			m->BuildTriAdjacency();
-			m->SmoothNormals();
-			m->CreateBuffers();
+			mesh* m = gls.ReloadMeshFromNif(nif, shapeList[i]);
+			if (m) {
+				m->BuildTriAdjacency();
+				m->SmoothNormals();
+				m->CreateBuffers();
 
-			auto iter = shapeMaterials.find(shapeList[i]);
-			if (iter != shapeMaterials.end())
-				m->material = iter->second;
-			else
-				AddNifShapeTextures(nif, shapeList[i]);
+				auto iter = shapeMaterials.find(shapeList[i]);
+				if (iter != shapeMaterials.end())
+					m->material = iter->second;
+				else
+					AddNifShapeTextures(nif, shapeList[i]);
+			}
 		}
 	}
 
@@ -404,9 +403,6 @@ void PreviewCanvas::OnPaint(wxPaintEvent& WXUNUSED(event)) {
 void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
 	int key = event.GetKeyCode();
 	switch (key) {
-	case 'N':
-		previewWindow->ToggleSmoothSeams();
-		break;
 	case 'T':
 		previewWindow->ToggleTextures();
 		break;
@@ -417,7 +413,7 @@ void PreviewCanvas::OnKeyUp(wxKeyEvent& event) {
 		previewWindow->ToggleLighting();
 		break;
 	case 'G':
-		previewWindow->RenderNormalMap();
+		//previewWindow->RenderNormalMap();
 		break;
 	}
 }

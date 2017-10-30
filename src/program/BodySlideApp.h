@@ -206,6 +206,7 @@ public:
 
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
+	void UpdateMeshesFromSet();
 
 	int BuildBodies(bool localPath = false, bool clean = false, bool tri = false);
 	int BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool remove = false, bool tri = false, const std::string& custPath = "");

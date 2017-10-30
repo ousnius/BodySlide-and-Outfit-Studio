@@ -84,12 +84,19 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	XMLElement* shapeName = element->FirstChildElement(shapeStr.c_str());
 	while (shapeName) {
 		shapeName->SetName("Shape");
-		if (shapeName->Attribute("DataFolder"))
-			targetdatafolders[shapeName->Attribute("target")] = shapeName->Attribute("DataFolder");
-		else
-			targetdatafolders[shapeName->Attribute("target")] = datafolder;
 
-		targetshapenames[shapeName->Attribute("target")] = shapeName->GetText();
+		auto& shape = shapeAttributes[shapeName->GetText()];
+		if (shapeName->Attribute("DataFolder"))
+			shape.dataFolder = shapeName->Attribute("DataFolder");
+		else
+			shape.dataFolder = datafolder;
+
+		if (shapeName->Attribute("target"))
+			shape.targetShape = shapeName->Attribute("target");
+
+		if (shapeName->Attribute("SmoothSeamNormals"))
+			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals");
+
 		shapeName = shapeName->NextSiblingElement(shapeStr.c_str());
 	}
 
@@ -118,16 +125,15 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	// A slider set/project can optionally specify a default normals generation configuration.  If present,
 	// it activates the normals generation functionality in the preview window. Note customized normals generation settings 
 	// are saved in separate xml files -- the project-homed ones are default settings only.
-	XMLElement* NormalsGeneration = element->FirstChildElement("NormalsGeneration");
-	if (NormalsGeneration != nullptr) {
-		// only load default settings if none are currently specified. 
-		if (defNormalGen.size() == 0) {
-			NormalGenLayer::LoadFromXML(NormalsGeneration, defNormalGen);
-		}
+	XMLElement* normalsGeneration = element->FirstChildElement("NormalsGeneration");
+	if (normalsGeneration) {
+		// Only load default settings if none are currently specified
+		if (defNormalGen.size() == 0)
+			NormalGenLayer::LoadFromXML(normalsGeneration, defNormalGen);
 	}
-	else {
+	else
 		defNormalGen.clear();
-	}
+
 	return 0;
 }
 
@@ -136,11 +142,12 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
 
 	for (auto &slider : sliders) {
 		for (auto &ddf : slider.dataFiles) {
+			std::string shapeName = TargetToShape(ddf.targetName);
 			std::string fullFilePath = baseDataPath + "\\";
 			if (ddf.bLocal)
 				fullFilePath += datafolder + "\\";
 			else
-				fullFilePath += targetdatafolders[ddf.targetName] + "\\";
+				fullFilePath += ShapeToDataFolder(shapeName) + "\\";
 
 			fullFilePath += ddf.fileName;
 
@@ -196,14 +203,20 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	XMLElement* sliderElement;
 	XMLElement* dataFileElement;
 
-	for (auto &tsn : targetshapenames) {
+	for (auto &s : shapeAttributes) {
 		newElement = sliderSetElement->GetDocument()->NewElement("Shape");
 		baseShapeElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
-		baseShapeElement->SetAttribute("target", tsn.first.c_str());
-		if (targetdatafolders.find(tsn.first) != targetdatafolders.end())
-			baseShapeElement->SetAttribute("DataFolder", targetdatafolders[tsn.first].c_str());
 
-		newText = sliderSetElement->GetDocument()->NewText(tsn.second.c_str());
+		if (!s.second.targetShape.empty())
+			baseShapeElement->SetAttribute("target", s.second.targetShape.c_str());
+
+		if (!s.second.dataFolder.empty())
+			baseShapeElement->SetAttribute("DataFolder", s.second.dataFolder.c_str());
+
+		if (!s.second.smoothSeamNormals)
+			baseShapeElement->SetAttribute("SmoothSeamNormals", s.second.smoothSeamNormals);
+
+		newText = sliderSetElement->GetDocument()->NewText(s.first.c_str());
 		baseShapeElement->InsertEndChild(newText);
 	}
 
