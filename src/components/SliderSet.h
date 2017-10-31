@@ -191,6 +191,7 @@ public:
 			for (auto& slider : sliders)
 				slider.RenameTarget(shape->second.targetShape, newShapeName);
 
+			shape->second.targetShape = newShapeName;
 			shapeAttributes[newShapeName] = shape->second;
 			shapeAttributes.erase(shapeName);
 		}

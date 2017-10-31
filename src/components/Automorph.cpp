@@ -28,13 +28,13 @@ void Automorph::RenameResultDiffData(const std::string& shape, const std::string
 	targetSliderDataNames.erase(setName);
 }
 
-void Automorph::RenameShape(const std::string& shapeName, const std::string& newShapeName) {
-	if (sourceShapes.find(shapeName) != sourceShapes.end()) {
-		sourceShapes[newShapeName] = sourceShapes[shapeName];
-		sourceShapes.erase(shapeName);
+void Automorph::RenameShape(const std::string& oldShapeName, const std::string& oldTarget, const std::string& newShapeName) {
+	if (sourceShapes.find(oldShapeName) != sourceShapes.end()) {
+		sourceShapes[newShapeName] = sourceShapes[oldShapeName];
+		sourceShapes.erase(oldShapeName);
 	}
 
-	resultDiffData.DeepRename(shapeName, newShapeName);
+	resultDiffData.DeepRename(oldTarget, newShapeName);
 
 	std::vector<std::string> newVals;
 	std::vector<std::string> oldKeys;
@@ -43,15 +43,15 @@ void Automorph::RenameShape(const std::string& shapeName, const std::string& new
 		std::string newDN = tsdn.second;
 		std::string newKey = tsdn.first;
 		bool found = false;
-		size_t p = newDN.find(shapeName);
+		size_t p = newDN.find(oldShapeName);
 		if (p == 0) {
-			newDN = newDN.substr(shapeName.length());
+			newDN = newDN.substr(oldShapeName.length());
 			newDN = newShapeName + newDN;
 			found = true;
 		}
-		p = newKey.find(shapeName);
+		p = newKey.find(oldShapeName);
 		if (p == 0) {
-			newKey = newKey.substr(shapeName.length());
+			newKey = newKey.substr(oldShapeName.length());
 			newKey = newShapeName + newKey;
 			found = true;
 		}

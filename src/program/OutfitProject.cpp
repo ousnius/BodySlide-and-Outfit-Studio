@@ -1891,6 +1891,7 @@ void OutfitProject::DeleteShape(const std::string& shapeName) {
 }
 
 void OutfitProject::RenameShape(const std::string& shapeName, const std::string& newShapeName) {
+	std::string oldTarget = ShapeToTarget(shapeName);
 	workNif.RenameShape(shapeName, newShapeName);
 	workAnim.RenameShape(shapeName, newShapeName);
 	activeSet.RenameShape(shapeName, newShapeName);
@@ -1911,11 +1912,11 @@ void OutfitProject::RenameShape(const std::string& shapeName, const std::string&
 
 	if (IsBaseShape(shapeName)) {
 		activeSet.SetReferencedData(newShapeName, true);
-		baseDiffData.DeepRename(shapeName, newShapeName);
+		baseDiffData.DeepRename(oldTarget, newShapeName);
 		baseShape = newShapeName;
 	}
 	else
-		morpher.RenameShape(shapeName, newShapeName);
+		morpher.RenameShape(shapeName, oldTarget, newShapeName);
 
 	wxLogMessage("Renamed shape '%s' to '%s'.", shapeName, newShapeName);
 }
