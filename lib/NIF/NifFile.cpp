@@ -916,384 +916,96 @@ void NifFile::TrimTexturePaths() {
 	}
 }
 
-void NifFile::CopyController(NiHeader& srcHeader, NiShader* destShader, NiShader* srcShader) {
-	if (!destShader)
-		return;
-
-	if (!srcShader) {
-		destShader->SetControllerRef(0xFFFFFFFF);
-		return;
-	}
-
-	int shaderId = GetBlockID(destShader);
-	int nextControllerRef = srcShader->GetControllerRef();
-
-	auto srcController = srcHeader.GetBlock<NiTimeController>(nextControllerRef);
-	if (srcController) {
-		// Copy first controller
-		NiTimeController* destController = static_cast<NiTimeController*>(srcController->Clone());
-		int controllerId = hdr.AddBlock(destController);
-
-		destController->SetTargetRef(shaderId);
-		destShader->SetControllerRef(controllerId);
-
-		CopyInterpolators(srcHeader, destController, srcController);
-		nextControllerRef = srcController->GetNextControllerRef();
-
-		// Recursive copy for next controller references
-		while (nextControllerRef != 0xFFFFFFFF) {
-			srcController = srcHeader.GetBlock<NiTimeController>(nextControllerRef);
-			if (srcController) {
-				NiTimeController* destControllerRec = static_cast<NiTimeController*>(srcController->Clone());
-				controllerId = hdr.AddBlock(destControllerRec);
-
-				destControllerRec->SetTargetRef(shaderId);
-
-				// Assign new controller to previous controller
-				destController->SetNextControllerRef(controllerId);
-				destController = destControllerRec;
-
-				CopyInterpolators(srcHeader, destControllerRec, srcController);
-				nextControllerRef = srcController->GetNextControllerRef();
-			}
-			else
-				nextControllerRef = 0xFFFFFFFF;
-		}
-	}
-}
-
-void NifFile::CopyInterpolators(NiHeader& srcHeader, NiTimeController* destController, NiTimeController* srcController) {
-	if (!destController || !srcController)
-		return;
-
-	// Copy interpolators linked in different types of controllers
-	if (srcController->HasType<BSFrustumFOVController>()) {
-		auto srcCtrlrType = static_cast<BSFrustumFOVController*>(srcController);
-		auto destCtrlrType = static_cast<BSFrustumFOVController*>(destController);
-		destCtrlrType->SetInterpolatorRef(CopyInterpolator(srcHeader, srcCtrlrType->GetInterpolatorRef()));
-	}
-	else if (srcController->HasType<BSProceduralLightningController>()) {
-		auto srcCtrlrType = static_cast<BSProceduralLightningController*>(srcController);
-		auto destCtrlrType = static_cast<BSProceduralLightningController*>(destController);
-		destCtrlrType->SetGenerationInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetGenerationInterpRef()));
-		destCtrlrType->SetMutationInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetMutationInterpRef()));
-		destCtrlrType->SetSubdivisionInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetSubdivisionInterpRef()));
-		destCtrlrType->SetNumBranchesInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetNumBranchesInterpRef()));
-		destCtrlrType->SetNumBranchesVarInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetNumBranchesVarInterpRef()));
-		destCtrlrType->SetLengthInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetLengthInterpRef()));
-		destCtrlrType->SetLengthVarInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetLengthVarInterpRef()));
-		destCtrlrType->SetWidthInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetWidthInterpRef()));
-		destCtrlrType->SetArcOffsetInterpRef(CopyInterpolator(srcHeader, srcCtrlrType->GetArcOffsetInterpRef()));
-	}
-	
-	auto niSingleInterp = dynamic_cast<NiSingleInterpController*>(srcController);
-	if (niSingleInterp)
-		niSingleInterp->SetInterpolatorRef(CopyInterpolator(srcHeader, niSingleInterp->GetInterpolatorRef()));
-}
-
-int NifFile::CopyInterpolator(NiHeader& srcHeader, int srcInterpId) {
-	auto srcInterp = srcHeader.GetBlock<NiInterpolator>(srcInterpId);
-	if (srcInterp) {
-		auto destInterp = static_cast<NiInterpolator*>(srcInterp->Clone());
-
-		// Copy data of interpolators as well
-		if (destInterp->HasType<NiBoolInterpolator>()) {
-			auto srcInterpType = static_cast<NiBoolInterpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiBoolData>(srcInterpType->GetDataRef());
-			if (srcData) {
-				auto destData = static_cast<NiBoolData*>(srcData->Clone());
-				auto destInterpType = static_cast<NiBoolInterpolator*>(destInterp);
-				destInterpType->SetDataRef(hdr.AddBlock(destData));
-			}
-		}
-		else if (destInterp->HasType<NiFloatInterpolator>()) {
-			auto srcInterpType = static_cast<NiFloatInterpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiFloatData>(srcInterpType->GetDataRef());
-			if (srcData) {
-				auto destData = static_cast<NiFloatData*>(srcData->Clone());
-				auto destInterpType = static_cast<NiFloatInterpolator*>(destInterp);
-				destInterpType->SetDataRef(hdr.AddBlock(destData));
-			}
-		}
-		else if (destInterp->HasType<NiTransformInterpolator>()) {
-			auto srcInterpType = static_cast<NiTransformInterpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiTransformData>(srcInterpType->GetDataRef());
-			if (srcData) {
-				auto destData = static_cast<NiTransformData*>(srcData->Clone());
-				auto destInterpType = static_cast<NiTransformInterpolator*>(destInterp);
-				destInterpType->SetDataRef(hdr.AddBlock(destData));
-			}
-		}
-		else if (destInterp->HasType<NiPoint3Interpolator>()) {
-			auto srcInterpType = static_cast<NiPoint3Interpolator*>(srcInterp);
-			auto srcData = srcHeader.GetBlock<NiPosData>(srcInterpType->GetDataRef());
-			if (srcData) {
-				auto destData = static_cast<NiPosData*>(srcData->Clone());
-				auto destInterpType = static_cast<NiPoint3Interpolator*>(destInterp);
-				destInterpType->SetDataRef(hdr.AddBlock(destData));
-			}
-		}
-
-		return hdr.AddBlock(destInterp);
-	}
-
-	return 0xFFFFFFFF;
-}
-
-void NifFile::CopyShader(const std::string& shapeDest, NifFile& srcNif) {
-	NiShape* shape = FindShapeByName(shapeDest);
-	if (!shape)
-		return;
-
-	int srcShaderRef = 0xFFFFFFFF;
-	int propRef1 = 0xFFFFFFFF;
-	int propRef2 = 0xFFFFFFFF;
-
-	auto srcShader = srcNif.hdr.GetBlock<NiShader>(shape->GetShaderPropertyRef());
-	if (!srcShader) {
-		// No shader found, look in other properties
-		for (int i = 0; i < shape->GetProperties().GetSize(); i++) {
-			srcShader = srcNif.hdr.GetBlock<NiShader>(shape->GetProperties().GetBlockRef(i));
-			if (srcShader) {
-				srcShaderRef = shape->GetProperties().GetBlockRef(i);
-				propRef1 = i;
-				break;
-			}
-		}
-
-		// Still no shader found, return
-		if (!srcShader)
-			return;
-	}
-	else
-		srcShaderRef = shape->GetShaderPropertyRef();
-
-	auto srcAlphaProp = srcNif.hdr.GetBlock<NiAlphaProperty>(shape->GetAlphaPropertyRef());
-	if (!srcAlphaProp) {
-		// No alpha found, look in other properties
-		for (int i = 0; i < shape->GetProperties().GetSize(); i++) {
-			srcAlphaProp = srcNif.hdr.GetBlock<NiAlphaProperty>(shape->GetProperties().GetBlockRef(i));
-			if (srcAlphaProp) {
-				propRef2 = i;
-				break;
-			}
-		}
-	}
-
-	// Clone shader from source
-	NiShader* destShader = static_cast<NiShader*>(srcShader->Clone());
-	if (hdr.GetVersion().User() == 12 && hdr.GetVersion().Stream() >= 120)
-		destShader->SetName(srcShader->GetName());
-	else
-		destShader->ClearName();
-
-	// Add shader block to nif
-	int shaderId = hdr.AddBlock(destShader);
-
-	// Extra Data
-	for (int i = 0; i < srcShader->GetExtraData().GetSize(); i++) {
-		auto srcExtraData = srcNif.hdr.GetBlock<NiExtraData>(srcShader->GetExtraData().GetBlockRef(i));
-		if (srcExtraData) {
-			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
-			destExtraData->SetName(srcExtraData->GetName());
-
-			int extraDataId = hdr.AddBlock(destExtraData);
-			destShader->GetExtraData().SetBlockRef(i, extraDataId);
-
-			if (destExtraData->HasType<NiStringExtraData>()) {
-				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
-				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
-				if (strSrcExtraData && strDestExtraData)
-					strDestExtraData->SetStringData(strSrcExtraData->GetStringData());
-			}
-		}
-	}
-
-	// Controller
-	CopyController(srcNif.hdr, destShader, srcShader);
-
-	auto srcTexSet = srcNif.hdr.GetBlock<BSShaderTextureSet>(srcShader->GetTextureSetRef());
-	if (srcTexSet) {
-		// Create texture set block and copy
-		auto destTexSet = srcTexSet->Clone();
-
-		// Add texture block to nif
-		int texSetId = hdr.AddBlock(destTexSet);
-
-		// Assign texture set block id to shader
-		destShader->SetTextureSetRef(texSetId);
-	}
-
-	// Wet Material
-	std::string srcWetMaterialName = srcShader->GetWetMaterialName();
-	if (!srcWetMaterialName.empty())
-		destShader->SetWetMaterialName(srcWetMaterialName);
-
-	if (srcShader->HasType<BSShaderPPLightingProperty>())
-		shape->GetProperties().SetBlockRef(propRef1, shaderId);
-	else
-		shape->SetShaderPropertyRef(shaderId);
-
-	// Kill normals and tangents
-	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
-		if (destShader->IsSkinTinted() || destShader->IsFaceTinted()) {
-			shape->SetNormals(false);
-			shape->SetTangents(false);
-		}
-	}
-
-	// Create alpha property and copy
-	if (srcAlphaProp) {
-		auto destAlphaProp = srcAlphaProp->Clone();
-
-		if (hdr.GetVersion().User() == 12 && hdr.GetVersion().Stream() >= 120)
-			destAlphaProp->SetName(srcAlphaProp->GetName());
-		else
-			destAlphaProp->ClearName();
-
-		int alphaPropId = hdr.AddBlock(destAlphaProp);
-		if (srcShader->HasType<BSShaderPPLightingProperty>())
-			shape->GetProperties().SetBlockRef(propRef2, alphaPropId);
-		else
-			shape->SetAlphaPropertyRef(alphaPropId);
-	}
-}
-
-int NifFile::CopyNamedNode(const std::string& nodeName, NifFile& srcNif) {
-	NiNode* srcNode = srcNif.FindNodeByName(nodeName);
-	if (!srcNode)
-		return 0xFFFFFFFF;
-
-	auto destNode = srcNode->Clone();
-	destNode->SetName(nodeName);
-
-	return hdr.AddBlock(destNode);
-}
-
-void NifFile::CopyGeometry(const std::string& shapeDest, const std::string& srcShape, NifFile* srcNif) {
+void NifFile::CloneChildren(NiObject* block, NifFile* srcNif) {
 	if (!srcNif)
 		srcNif = this;
 
-	NiShape* srcGeom = srcNif->FindShapeByName(srcShape);
-	if (!srcGeom)
-		return;
+	// Assign new refs and strings, rebind ptrs where possible
+	std::function<void(NiObject*, int, int)> cloneBlock = [&](NiObject* b, int parentOldId, int parentNewId) -> void {
+		std::set<Ref*> refs;
+		b->GetChildRefs(refs);
 
-	// Shape
-	NiShape* destGeom = static_cast<NiShape*>(srcGeom->Clone());
-	destGeom->SetName(shapeDest);
+		for (auto &r : refs) {
+			int srcId = r->GetIndex();
+			auto srcChild = srcNif->hdr.GetBlock<NiObject>(srcId);
+			if (srcChild) {
+				auto destChild = srcChild->Clone();
+				int destId = hdr.AddBlock(destChild);
+				r->SetIndex(destId);
 
-	int destId = hdr.AddBlock(destGeom);
+				std::set<StringRef*> strRefs;
+				destChild->GetStringRefs(strRefs);
 
-	// Extra Data
-	for (int i = 0; i < srcGeom->GetExtraData().GetSize(); i++) {
-		auto srcExtraData = srcNif->hdr.GetBlock<NiExtraData>(srcGeom->GetExtraData().GetBlockRef(i));
-		if (srcExtraData) {
-			auto destExtraData = static_cast<NiExtraData*>(srcExtraData->Clone());
-			destExtraData->SetName(srcExtraData->GetName());
+				for (auto &str : strRefs) {
+					int strId = hdr.AddOrFindStringId(str->GetString());
+					str->SetIndex(strId);
+				}
 
-			int extraDataId = hdr.AddBlock(destExtraData);
-			destGeom->GetExtraData().SetBlockRef(i, extraDataId);
+				if (parentOldId != 0xFFFFFFFF) {
+					std::set<Ref*> ptrs;
+					destChild->GetPtrs(ptrs);
 
-			if (destExtraData->HasType<NiStringExtraData>()) {
-				auto strSrcExtraData = dynamic_cast<NiStringExtraData*>(srcExtraData);
-				auto strDestExtraData = dynamic_cast<NiStringExtraData*>(destExtraData);
-				if (strSrcExtraData && strDestExtraData)
-					strDestExtraData->SetStringData(strSrcExtraData->GetStringData());
+					for (auto &p : ptrs)
+						if (p->GetIndex() == parentOldId)
+							p->SetIndex(parentNewId);
+
+					cloneBlock(destChild, parentOldId, parentNewId);
+				}
+				else
+					cloneBlock(destChild, srcId, destId);
 			}
 		}
-	}
+	};
 
-	// Collision Object
-	auto srcCollisionObj = srcNif->hdr.GetBlock<NiCollisionObject>(srcGeom->GetCollisionRef());
-	if (srcCollisionObj) {
-		auto destCollisionObj = srcCollisionObj->Clone();
+	cloneBlock(block, 0xFFFFFFFF, 0xFFFFFFFF);
+}
 
-		int collisionId = hdr.AddBlock(destCollisionObj);
-		destGeom->SetCollisionRef(collisionId);
-	}
+NiShape* NifFile::CloneShape(const std::string& srcShapeName, const std::string& destShapeName, NifFile* srcNif) {
+	if (!srcNif)
+		srcNif = this;
+
+	NiShape* srcShape = srcNif->FindShapeByName(srcShapeName);
+	if (!srcShape)
+		return nullptr;
+
+	// Geometry
+	NiShape* destShape = static_cast<NiShape*>(srcShape->Clone());
+	destShape->SetName(destShapeName);
+
+	int destId = hdr.AddBlock(destShape);
+
+	// Children
+	CloneChildren(destShape, srcNif);
 
 	// Geometry Data
-	auto srcGeomData = srcNif->hdr.GetBlock<NiTriBasedGeomData>(srcGeom->GetDataRef());
-	if (srcGeomData) {
-		NiTriBasedGeomData* destGeomData = static_cast<NiTriBasedGeomData*>(srcGeomData->Clone());
-
-		int destDataId = hdr.AddBlock(destGeomData);
-		destGeom->SetDataRef(destDataId);
-		destGeom->SetGeomData(destGeomData);
-	}
-
-	// Skinning
-	NiBoneContainer* destBoneCont = nullptr;
-	if (srcGeom->GetSkinInstanceRef() != 0xFFFFFFFF) {
-		if (destGeom->HasType<NiTriBasedGeom>() || (destGeom->HasType<BSTriShape>() && hdr.GetVersion().Stream() == 100)) {
-			auto srcSkinInst = srcNif->hdr.GetBlock<NiSkinInstance>(srcGeom->GetSkinInstanceRef());
-			if (srcSkinInst) {
-				auto srcSkinData = srcNif->hdr.GetBlock<NiSkinData>(srcSkinInst->GetDataRef());
-				auto srcSkinPart = srcNif->hdr.GetBlock<NiSkinPartition>(srcSkinInst->GetSkinPartitionRef());
-
-				NiSkinInstance* destSkinInst = srcSkinInst->Clone();
-
-				// Treat skinning and partition info as blobs of anonymous data.
-				auto destSkinData = srcSkinData->Clone();
-				auto destSkinPart = srcSkinPart->Clone();
-
-				int destSkinId = hdr.AddBlock(destSkinInst);
-				int destSkinDataId = hdr.AddBlock(destSkinData);
-				int destSkinPartId = hdr.AddBlock(destSkinPart);
-
-				destGeom->SetSkinInstanceRef(destSkinId);
-				destSkinInst->SetDataRef(destSkinDataId);
-				destSkinInst->SetSkinPartitionRef(destSkinPartId);
-
-				destBoneCont = static_cast<NiBoneContainer*>(destSkinInst);
-			}
-		}
-		else if (destGeom->HasType<BSTriShape>()) {
-			auto srcBSSkinInst = srcNif->hdr.GetBlock<BSSkinInstance>(srcGeom->GetSkinInstanceRef());
-			if (srcBSSkinInst) {
-				auto destBSSkinInst = srcBSSkinInst->Clone();
-
-				int destSkinInstId = hdr.AddBlock(destBSSkinInst);
-				destGeom->SetSkinInstanceRef(destSkinInstId);
-
-				auto srcBoneData = srcNif->hdr.GetBlock<BSSkinBoneData>(srcBSSkinInst->GetDataRef());
-				if (srcBoneData) {
-					auto destBoneData = srcBoneData->Clone();
-
-					int destBoneDataId = hdr.AddBlock(destBoneData);
-					destBSSkinInst->SetDataRef(destBoneDataId);
-
-					destBoneCont = static_cast<NiBoneContainer*>(destBSSkinInst);
-				}
-			}
-		}
-	}
+	auto destGeomData = hdr.GetBlock<NiTriBasedGeomData>(destShape->GetDataRef());
+	if (destGeomData)
+		destShape->SetGeomData(destGeomData);
 
 	// Shader
-	CopyShader(shapeDest, *srcNif);
-
-	// Properties
-	for (int i = 0; i < srcGeom->GetProperties().GetSize(); i++) {
-		auto srcProp = srcNif->hdr.GetBlock<NiProperty>(srcGeom->GetProperties().GetBlockRef(i));
-		if (srcProp) {
-			auto destProp = srcProp->Clone();
-			int propId = hdr.AddBlock(destProp);
-			destGeom->GetProperties().SetBlockRef(i, propId);
+	auto destShader = GetShader(destShape);
+	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
+		// Kill normals and tangents
+		if (destShader->IsSkinTinted() || destShader->IsFaceTinted()) {
+			destShape->SetNormals(false);
+			destShape->SetTangents(false);
 		}
 	}
 
+	// Bones
 	std::vector<std::string> srcBoneList;
-	srcNif->GetShapeBoneList(srcShape, srcBoneList);
+	srcNif->GetShapeBoneList(srcShapeName, srcBoneList);
+
+	auto destBoneCont = hdr.GetBlock<NiBoneContainer>(destShape->GetSkinInstanceRef());
 	if (destBoneCont)
 		destBoneCont->GetBones().Clear();
 
-	// Bones
 	auto rootNode = GetRootNode();
 	if (rootNode) {
 		for (auto &boneName : srcBoneList) {
 			int boneID = GetBlockID(FindNodeByName(boneName));
 			if (boneID == 0xFFFFFFFF) {
-				boneID = CopyNamedNode(boneName, *srcNif);
+				boneID = CloneNamedNode(boneName, srcNif);
 				rootNode->GetChildren().AddBlockRef(boneID);
 			}
 
@@ -1304,12 +1016,28 @@ void NifFile::CopyGeometry(const std::string& shapeDest, const std::string& srcS
 
 	if (srcNif == this) {
 		// Assign copied geometry to the same parent
-		auto parentNode = GetParentNode(srcGeom);
+		auto parentNode = GetParentNode(srcShape);
 		if (parentNode)
 			parentNode->GetChildren().AddBlockRef(destId);
 	}
 	else if (rootNode)
 		rootNode->GetChildren().AddBlockRef(destId);
+
+	return destShape;
+}
+
+int NifFile::CloneNamedNode(const std::string& nodeName, NifFile* srcNif) {
+	if (!srcNif)
+		srcNif = this;
+
+	NiNode* srcNode = srcNif->FindNodeByName(nodeName);
+	if (!srcNode)
+		return 0xFFFFFFFF;
+
+	auto destNode = srcNode->Clone();
+	destNode->SetName(nodeName);
+
+	return hdr.AddBlock(destNode);
 }
 
 int NifFile::Save(const std::string& filename, bool optimize, bool sortBlocks) {

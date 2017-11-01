@@ -168,12 +168,9 @@ public:
 	void SetTextureSlot(NiShader* shader, std::string& inTexFile, int texIndex = 0);
 	void TrimTexturePaths();
 
-	int CopyNamedNode(const std::string& nodeName, NifFile& srcNif);
-	void CopyShader(const std::string& shapeDest, NifFile& srcNif);
-	void CopyController(NiHeader& srcHeader, NiShader* destShader, NiShader* srcShader);
-	void CopyInterpolators(NiHeader& srcHeader, NiTimeController* destController, NiTimeController* srcController);
-	int CopyInterpolator(NiHeader& srcHeader, int srcInterpId);
-	void CopyGeometry(const std::string& shapeDest, const std::string& srcShape, NifFile* srcNif = nullptr);
+	void CloneChildren(NiObject* block, NifFile* srcNif = nullptr);
+	NiShape* CloneShape(const std::string& srcShapeName, const std::string& destShapeName, NifFile* srcNif = nullptr);
+	int CloneNamedNode(const std::string& nodeName, NifFile* srcNif = nullptr);
 
 	std::vector<std::string> GetShapeNames();
 	std::vector<NiShape*> GetShapes();

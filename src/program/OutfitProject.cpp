@@ -537,7 +537,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		shapeResult = triShape;
 	}
 
-	workNif.CopyGeometry(shapeName, shapeName, &blank);
+	workNif.CloneShape(shapeName, shapeName, &blank);
 	SetTextures(shapeResult);
 
 	return 0;
@@ -1615,7 +1615,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 
 	if (workNif.IsValid()) {
 		// Copy only reference shape
-		workNif.CopyGeometry(baseShape, baseShape, &refNif);
+		workNif.CloneShape(baseShape, baseShape, &refNif);
 		workAnim.LoadFromNif(&workNif, baseShape);
 	}
 	else {
@@ -1713,7 +1713,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 	if (workNif.IsValid()) {
 		// Copy only reference shape
-		workNif.CopyGeometry(shape, shape, &refNif);
+		workNif.CloneShape(shape, shape, &refNif);
 		workAnim.LoadFromNif(&workNif, shape);
 	}
 	else {
@@ -1873,7 +1873,7 @@ void OutfitProject::DeleteVerts(const std::string& shapeName, const std::unorder
 }
 
 void OutfitProject::DuplicateShape(const std::string& sourceShape, const std::string& destShape) {
-	workNif.CopyGeometry(destShape, sourceShape);
+	workNif.CloneShape(sourceShape, destShape);
 	workAnim.LoadFromNif(&workNif, destShape);
 }
 
@@ -2033,7 +2033,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 
 	if (workNif.IsValid()) {
 		for (auto &s : nif.GetShapeNames()) {
-			workNif.CopyGeometry(s, s, &nif);
+			workNif.CloneShape(s, s, &nif);
 			workAnim.LoadFromNif(&workNif, s);
 		}
 	}
