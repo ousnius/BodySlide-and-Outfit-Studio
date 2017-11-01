@@ -235,7 +235,7 @@ public:
 				return datafolder;
 		}
 
-		return "";
+		return datafolder;
 	}
 
 	size_t size() {
