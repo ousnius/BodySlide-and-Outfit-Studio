@@ -3203,7 +3203,7 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 					// Move triangles that match to the end
 					auto removeTriEnd = childPartition->tris.end();
 					if (!isBSTri) {
-						removeTriEnd = partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
+						removeTriEnd = std::partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
 							Triangle t(childPartition->verts[tri.p1], childPartition->verts[tri.p2], childPartition->verts[tri.p3]);
 
 							if (find_if(realTris.begin(), realTris.end(), [&t](const Triangle& tri) { return tri.CompareIndices(t); }) != realTris.end())
@@ -3213,7 +3213,7 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 						});
 					}
 					else {
-						removeTriEnd = partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
+						removeTriEnd = std::partition(childPartition->tris.begin(), childPartition->tris.end(), [&childPartition, &realTris](const Triangle& tri) {
 							if (find_if(realTris.begin(), realTris.end(), [&tri](const Triangle& t) { return t.CompareIndices(tri); }) != realTris.end())
 								return true;
 
