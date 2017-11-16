@@ -91,6 +91,9 @@ extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_YUY2 =
 extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_A8R8G8B8 =
     { sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 };
 
+extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_B8G8R8A8 =
+	{ sizeof(DDS_PIXELFORMAT), DDS_RGBA, 0, 32, 0x0000ff00, 0x00ff0000, 0xff000000, 0x000000ff };
+
 extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_X8R8G8B8 =
     { sizeof(DDS_PIXELFORMAT), DDS_RGB,  0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
 
@@ -114,6 +117,9 @@ extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_A4R4G4B4 =
 
 extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_R8G8B8 =
     { sizeof(DDS_PIXELFORMAT), DDS_RGB, 0, 24, 0x00ff0000, 0x0000ff00, 0x000000ff, 0x00000000 };
+
+extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_R8 =
+	{ sizeof(DDS_PIXELFORMAT), DDS_RGB, 0,  8, 0xff, 0x00, 0x00, 0x00 };
 
 extern __declspec(selectany) const DDS_PIXELFORMAT DDSPF_L8 =
     { sizeof(DDS_PIXELFORMAT), DDS_LUMINANCE, 0,  8, 0xff, 0x00, 0x00, 0x00 };

@@ -478,16 +478,25 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 
 				switch (file->tex.header.format) {
 				case DXGI_FORMAT_BC1_UNORM:
+				case DXGI_FORMAT_BC1_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DXT1;
 					ddsHeader.dwPitchOrLinearSize /= 2;	// 4bpp
 					break;
 
 				case DXGI_FORMAT_BC2_UNORM:
+				case DXGI_FORMAT_BC2_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DXT3;
 					break;
 
 				case DXGI_FORMAT_BC3_UNORM:
+				case DXGI_FORMAT_BC3_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DXT5;
+					break;
+
+				case DXGI_FORMAT_BC4_UNORM:
+					ddsHeader.ddspf = DDSPF_DX10;
+					ddsHeader.dwPitchOrLinearSize /= 2;	// 4bpp
+					ddsHeader10.dxgiFormat = DXGI_FORMAT_BC4_UNORM;
 					break;
 
 				case DXGI_FORMAT_BC5_UNORM:
@@ -496,17 +505,18 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					break;
 
 				case DXGI_FORMAT_BC7_UNORM:
+				case DXGI_FORMAT_BC7_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DX10;
 					ddsHeader10.dxgiFormat = DXGI_FORMAT_BC7_UNORM;
 					break;
 
 				case DXGI_FORMAT_B8G8R8A8_UNORM:
-					ddsHeader.ddspf = DDSPF_A8R8G8B8;
+					ddsHeader.ddspf = DDSPF_B8G8R8A8;
 					ddsHeader.dwPitchOrLinearSize *= 4;	// 32bpp
 					break;
 
 				case DXGI_FORMAT_R8_UNORM:
-					ddsHeader.ddspf = DDSPF_L8;
+					ddsHeader.ddspf = DDSPF_R8;
 					break;
 
 				default:
@@ -543,9 +553,13 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 						content.AppendData(firstChunk.GetData(), firstChunk.GetDataLen());
 				}
 				else if (file->packedLength > 0) {
-					// BA2
+					// BA2 compressed
 					firstChunk = gUncompress(firstChunk);
 					content.AppendData(firstChunk, firstChunk.GetDataLen());
+				}
+				else {
+					// BA2 uncompressed
+					content.AppendData(firstChunk.GetData(), firstChunk.GetDataLen());
 				}
 
 				if (file->tex.chunks.size() > 0) {
