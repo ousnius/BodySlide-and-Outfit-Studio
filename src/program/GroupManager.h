@@ -35,6 +35,8 @@ private:
 	std::vector<std::string> allOutfits;
 
 	void RefreshUI(const bool = false);
+	void SaveGroup();
+
 	void OnLoadGroup(wxFileDirPickerEvent&);
 	void OnSaveGroup(wxCommandEvent&);
 	void OnSaveGroupAs(wxCommandEvent&);
@@ -43,6 +45,8 @@ private:
 	void OnRemoveGroup(wxCommandEvent&);
 	void OnRemoveMember(wxCommandEvent&);
 	void OnAddMember(wxCommandEvent&);
+	void OnCloseButton(wxCommandEvent&);
+	void OnClose(wxCloseEvent&);
 
 	wxDECLARE_EVENT_TABLE();
 };

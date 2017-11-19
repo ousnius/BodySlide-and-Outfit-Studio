@@ -201,6 +201,12 @@ msgstr ""
 msgid "<< Add"
 msgstr ""
 
+msgid "Save Changes"
+msgstr ""
+
+msgid "Do you really want to close the group manager? All unsaved changes will be lost."
+msgstr ""
+
 msgid "Batch Build"
 msgstr ""
 

@@ -15,6 +15,8 @@ wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_BUTTON(XRCID("btSaveAs"), GroupManager::OnSaveGroupAs)
 	EVT_BUTTON(XRCID("btRemoveMember"), GroupManager::OnRemoveMember)
 	EVT_BUTTON(XRCID("btAddMember"), GroupManager::OnAddMember)
+	EVT_BUTTON(wxID_OK, GroupManager::OnCloseButton)
+	EVT_CLOSE(GroupManager::OnClose)
 wxEND_EVENT_TABLE()
 
 GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits) {
@@ -82,6 +84,21 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 	btAddMember->Enable(groupSelected);
 }
 
+void GroupManager::SaveGroup() {
+	SliderSetGroupFile groupFile;
+	groupFile.New(fileName.ToStdString());
+	for (auto &grp : groupMembers) {
+		SliderSetGroup group;
+		group.SetName(grp.first);
+		group.AddMembers(grp.second);
+		groupFile.UpdateGroup(group);
+	}
+	groupFile.Save();
+
+	dirty = false;
+	btSave->Enable(dirty & !fileName.empty());
+}
+
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	// Load group file
 	SliderSetGroupFile groupFile(event.GetPath().ToStdString());
@@ -110,18 +127,7 @@ void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 }
 
 void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
-	SliderSetGroupFile groupFile;
-	groupFile.New(fileName.ToStdString());
-	for (auto &grp : groupMembers) {
-		SliderSetGroup group;
-		group.SetName(grp.first);
-		group.AddMembers(grp.second);
-		groupFile.UpdateGroup(group);
-	}
-	groupFile.Save();
-
-	dirty = false;
-	btSave->Enable(dirty & !fileName.empty());
+	SaveGroup();
 }
 
 void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
@@ -129,20 +135,8 @@ void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
 	if (file.ShowModal() != wxID_OK)
 		return;
 
-	SliderSetGroupFile groupFile;
-	groupFile.New(file.GetPath().ToStdString());
-	for (auto &grp : groupMembers) {
-		SliderSetGroup group;
-		group.SetName(grp.first);
-		group.AddMembers(grp.second);
-		groupFile.UpdateGroup(group);
-	}
-
-	groupFile.Save();
 	fileName = file.GetPath();
-
-	dirty = false;
-	btSave->Enable(dirty & !fileName.empty());
+	SaveGroup();
 }
 
 void GroupManager::OnSelectGroup(wxCommandEvent& WXUNUSED(event)) {
@@ -218,4 +212,22 @@ void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 	dirty = true;
 	selections.Clear();
 	RefreshUI();
+}
+
+void GroupManager::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {
+	Close();
+}
+
+void GroupManager::OnClose(wxCloseEvent& event) {
+	if (dirty) {
+		int ret = wxMessageBox(_("Do you really want to close the group manager? All unsaved changes will be lost."), _("Save Changes"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
+		if (ret == wxCANCEL) {
+			event.Veto();
+			return;
+		}
+		else if (ret == wxYES)
+			SaveGroup();
+	}
+
+	EndModal(wxID_OK);
 }

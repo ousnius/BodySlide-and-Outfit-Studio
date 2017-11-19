@@ -220,6 +220,16 @@ msgstr "Outfits"
 msgid "<< Add"
 msgstr "<< Hinzufügen"
 
+msgid "Save Changes"
+msgstr "Änderungen speichern"
+
+msgid ""
+"Do you really want to close the group manager? All unsaved changes will be "
+"lost."
+msgstr ""
+"Wollen Sie den Gruppenmanager wirklich schließen? Alle nicht gespeicherten "
+"Änderungen gehen verloren."
+
 msgid "Batch Build"
 msgstr "Batch-Erstellung"
 
