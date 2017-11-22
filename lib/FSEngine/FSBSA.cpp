@@ -511,7 +511,7 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					break;
 
 				case DXGI_FORMAT_B8G8R8A8_UNORM:
-					ddsHeader.ddspf = DDSPF_B8G8R8A8;
+					ddsHeader.ddspf = DDSPF_A8R8G8B8;
 					ddsHeader.dwPitchOrLinearSize *= 4;	// 32bpp
 					break;
 
