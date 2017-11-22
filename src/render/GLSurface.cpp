@@ -1152,7 +1152,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 
 	if (!color) {
 		for (int i = 0; i < meshes.size(); i++) {
-			float c = 0.4f + ((0.6f / (meshes.size())) * i);
+			float c = 0.35f + (0.25f / meshes.size() * i);
 			meshes[i]->color = Vector3(c, c, c);
 		}
 	}
