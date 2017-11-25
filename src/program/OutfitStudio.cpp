@@ -943,6 +943,9 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(99, _("Applying slider effects..."));
 	ApplySliders();
 
+	if (!outfitName.empty())
+		SetTitle("Outfit Studio - " + outfitName);
+
 	wxLogMessage("Project created.");
 	UpdateProgress(100, _("Finished"));
 
@@ -1045,6 +1048,8 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Applying slider effects...");
 	UpdateProgress(99, _("Applying slider effects..."));
 	ApplySliders();
+
+	SetTitle("Outfit Studio - " + project->OutfitName());
 
 	wxLogMessage("Project loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -1171,13 +1176,14 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		}
 	}
 
+	bool keepShapes = XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked();
 	UpdateProgress(1, _("Loading outfit..."));
 
 	int ret = 0;
 	if (XRCCTRL(dlg, "npWorkFile", wxRadioButton)->GetValue() == true) {
 		wxString fileName = XRCCTRL(dlg, "npWorkFilename", wxFilePickerCtrl)->GetPath();
 		if (fileName.Lower().EndsWith(".nif")) {
-			if (!XRCCTRL(dlg, "npWorkAdd", wxCheckBox)->IsChecked())
+			if (!keepShapes)
 				ret = project->ImportNIF(fileName.ToStdString(), true, outfitName);
 			else
 				ret = project->ImportNIF(fileName.ToStdString(), false);
@@ -1206,6 +1212,8 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Creating outfit...");
 	UpdateProgress(50, _("Creating outfit..."));
 	RefreshGUIFromProj();
+
+	SetTitle("Outfit Studio - " + project->OutfitName());
 
 	wxLogMessage("Outfit loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -1287,12 +1295,16 @@ void OutfitStudio::ClearProject() {
 
 	glView->DestroyOverlays();
 	activePartition.Unset();
+
+	SetTitle("Outfit Studio");
 }
 
 void OutfitStudio::RenameProject(const std::string& projectName) {
 	project->outfitName = projectName;
 	if (outfitRoot.IsOk())
 		outfitShapes->SetItemText(outfitRoot, projectName);
+
+	SetTitle("Outfit Studio - " + projectName);
 }
 
 void OutfitStudio::RefreshGUIFromProj() {
