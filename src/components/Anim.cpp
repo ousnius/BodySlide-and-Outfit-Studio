@@ -201,6 +201,15 @@ void AnimInfo::GetWeights(const std::string& shape, const std::string& boneName,
 		outVertWeights = *weights;
 }
 
+bool AnimInfo::GetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform) {
+	int b = GetShapeBoneIndex(shape, boneName);
+	if (b < 0)
+		return false;
+
+	stransform = shapeSkinning[shape].boneWeights[b].xform;
+	return true;
+}
+
 void AnimInfo::SetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform) {
 	int b = GetShapeBoneIndex(shape, boneName);
 	if (b < 0)

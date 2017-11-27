@@ -145,6 +145,7 @@ public:
 	void GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& outVertWeights);
 	void GetBoneXForm(const std::string& boneName, MatTransform& stransform);
 	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights);
+	bool GetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	void SetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	bool CalcShapeSkinBounds(const std::string& shape, const int& boneIndex);
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");

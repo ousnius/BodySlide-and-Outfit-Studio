@@ -2292,6 +2292,13 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 			workAnim.shapeBones[useShapeName].push_back(bn);
 			workAnim.shapeSkinning[useShapeName].boneNames[bn] = slot;
 			workAnim.SetWeights(useShapeName, bn, shape->boneSkin[bn].GetWeights());
+
+			if (!baseShape.empty()) {
+				MatTransform xform;
+				if (workAnim.GetShapeBoneXForm(baseShape, bn, xform))
+					workAnim.SetShapeBoneXForm(useShapeName, bn, xform);
+			}
+
 			boneIndices.push_back(slot++);
 		}
 
