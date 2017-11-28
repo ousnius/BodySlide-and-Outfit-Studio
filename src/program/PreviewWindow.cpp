@@ -210,7 +210,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 
 	MaterialFile mat(MaterialFile::BGSM);
 	if (hasMat) {
-		matFile = std::regex_replace(matFile, std::regex("\\+"), "/");														// Replace all backward slashes with one forward slash
+		matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash
 		matFile = std::regex_replace(matFile, std::regex("^(.*?)/materials/", std::regex_constants::icase), "");			// Remove everything before the first occurence of "/materials/"
 		matFile = std::regex_replace(matFile, std::regex("^/+"), "");														// Remove all slashes from the front
 		matFile = std::regex_replace(matFile, std::regex("^(?!^materials/)", std::regex_constants::icase), "materials/");	// If the path doesn't start with "materials/", add it to the front
