@@ -89,8 +89,8 @@ public:
 	void SetRimlightEnabled(const bool enable);
 	void SetSoftlightEnabled(const bool enable);
 	void SetGlowmapEnabled(const bool enable);
-	void BindTexture(const GLint& index, const GLuint& texture, const std::string& samplerName);
-	void BindCubemap(const GLint& index, const GLuint& texture, const std::string& samplerName);
+	void BindTexture(const GLint& index, const GLuint& texture, const char* samplerName);
+	void BindCubemap(const GLint& index, const GLuint& texture, const char* samplerName);
 
 	bool GetError(std::string* errorStr = nullptr);
 

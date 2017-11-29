@@ -171,30 +171,37 @@ void GLShader::SetAlphaThreshold(const float threshold) {
 }
 
 void GLShader::SetFrontalLight(const DirectionalLight& light) {
-	std::string lightDiffuse = "frontal.diffuse";
-	std::string lightDirection = "frontal.direction";
-
-	GLint loc = glGetUniformLocation(progID, lightDiffuse.c_str());
+	GLint loc = glGetUniformLocation(progID, "frontal.diffuse");
 	if (loc >= 0)
 		glUniform3f(loc, light.diffuse.x, light.diffuse.y, light.diffuse.z);
 
-	loc = glGetUniformLocation(progID, lightDirection.c_str());
+	loc = glGetUniformLocation(progID, "frontal.direction");
 	if (loc >= 0)
 		glUniform3f(loc, 0.0f, 0.0f, 1.0f);
 }
 
 void GLShader::SetDirectionalLight(const DirectionalLight& light, const int index) {
-	std::string lightName = "directional" + std::to_string(index);
-	std::string lightDiffuse = lightName + ".diffuse";
-	std::string lightDirection = lightName + ".direction";
+	GLint locDiffuse = -1;
+	GLint locDirection = -1;
 
-	GLint loc = glGetUniformLocation(progID, lightDiffuse.c_str());
-	if (loc >= 0)
-		glUniform3f(loc, light.diffuse.x, light.diffuse.y, light.diffuse.z);
+	if (index == 0) {
+		locDiffuse = glGetUniformLocation(progID, "directional0.diffuse");
+		locDirection = glGetUniformLocation(progID, "directional0.direction");
+	}
+	else if (index == 1) {
+		locDiffuse = glGetUniformLocation(progID, "directional1.diffuse");
+		locDirection = glGetUniformLocation(progID, "directional1.direction");
+	}
+	else if (index == 2) {
+		locDiffuse = glGetUniformLocation(progID, "directional2.diffuse");
+		locDirection = glGetUniformLocation(progID, "directional2.direction");
+	}
 
-	loc = glGetUniformLocation(progID, lightDirection.c_str());
-	if (loc >= 0)
-		glUniform3f(loc, light.direction.x, light.direction.y, light.direction.z);
+	if (locDiffuse >= 0)
+		glUniform3f(locDiffuse, light.diffuse.x, light.diffuse.y, light.diffuse.z);
+
+	if (locDirection >= 0)
+		glUniform3f(locDirection, light.direction.x, light.direction.y, light.direction.z);
 }
 
 void GLShader::SetAmbientLight(const float light) {
@@ -374,8 +381,8 @@ void GLShader::SetGlowmapEnabled(const bool enable) {
 		glUniform1i(loc, enable ? GL_TRUE : GL_FALSE);
 }
 
-void GLShader::BindTexture(const GLint& index, const GLuint& texture, const std::string& samplerName) {
-	GLint texLoc = glGetUniformLocation(progID, samplerName.c_str());
+void GLShader::BindTexture(const GLint& index, const GLuint& texture, const char* samplerName) {
+	GLint texLoc = glGetUniformLocation(progID, samplerName);
 	if (texLoc >= 0) {
 		glUniform1i(texLoc, index);
 		glActiveTexture(GL_TEXTURE0 + index);
@@ -384,8 +391,8 @@ void GLShader::BindTexture(const GLint& index, const GLuint& texture, const std:
 	}
 }
 
-void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const std::string& samplerName) {
-	GLint texLoc = glGetUniformLocation(progID, samplerName.c_str());
+void GLShader::BindCubemap(const GLint& index, const GLuint& texture, const char* samplerName) {
+	GLint texLoc = glGetUniformLocation(progID, samplerName);
 	if (texLoc >= 0) {
 		glUniform1i(texLoc, index);
 		glActiveTexture(GL_TEXTURE0 + index);

@@ -33,7 +33,7 @@ class GLMaterial;
 
 class mesh {
 private:
-	std::vector<bool> queueUpdate;
+	bool queueUpdate[7] = { false };
 
 public:
 	enum UpdateType {
@@ -82,7 +82,7 @@ public:
 
 	bool genBuffers = false;
 	GLuint vao = 0;
-	std::vector<GLuint> vbo;
+	std::vector<GLuint> vbo = std::vector<GLuint>(6, 0);
 	GLuint ibo = 0;
 
 	ShaderProperties prop;

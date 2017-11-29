@@ -7,8 +7,6 @@ See the included LICENSE file
 #include "Mesh.h"
 
 mesh::mesh() {
-	vbo.resize(6, 0);
-	queueUpdate.resize(vbo.size() + 1, false);
 }
 
 mesh::~mesh() {
