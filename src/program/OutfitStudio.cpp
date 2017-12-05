@@ -2527,7 +2527,17 @@ void OutfitStudio::OnSegmentTypeChanged(wxCommandEvent& event) {
 		SubSegmentItemData* subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(activeSegment));
 		if (subSegmentData) {
 			unsigned long type = 0xFFFFFFFF;
-			segmentType->GetStringSelection().Prepend("0x").ToULong(&type, 16);
+
+			wxStringTokenizer typeToken(segmentType->GetStringSelection(), "0x", wxStringTokenizerMode::wxTOKEN_RET_DELIMS);
+			while (typeToken.HasMoreTokens())
+			{
+				wxString token = typeToken.GetNextToken();
+				if (token.StartsWith("0x")) {
+					token.ToULong(&type, 16);
+					break;
+				}
+			}
+
 			subSegmentData->type = type;
 		}
 	}
@@ -2767,8 +2777,23 @@ void OutfitStudio::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
 			}
 		}
 		else {
+			if (subSegmentData->type != 0xFFFFFFFF) {
+				bool typeFound = false;
+				auto typeHash = wxString::Format("0x%x", subSegmentData->type);
+				for (int i = 0; i < segmentType->GetCount(); i++) {
+					auto typeString = segmentType->GetString(i);
+					if (typeString.Contains(typeHash)) {
+						segmentType->SetSelection(i);
+						typeFound = true;
+						break;
+					}
+				}
+
+				if (!typeFound)
+					segmentType->SetSelection(segmentType->Append(typeHash));
+			}
+
 			segmentType->Enable();
-			segmentType->SetStringSelection(wxString::Format("%x", subSegmentData->type));
 		}
 	}
 	else {
@@ -2912,29 +2937,46 @@ void OutfitStudio::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
 }
 
 void OutfitStudio::UpdateSegmentNames() {
+	auto segmentType = (wxChoice*)FindWindowByName("segmentType");
+
 	int segmentIndex = 0;
-	int arrayIndex = 0;
 	wxTreeItemIdValue cookie;
 	wxTreeItemId child = segmentTree->GetFirstChild(segmentRoot, cookie);
 
 	while (child.IsOk()) {
-		segmentTree->SetItemText(child, wxString::Format("Segment #%d, Array #%d", segmentIndex, arrayIndex));
+		segmentTree->SetItemText(child, wxString::Format("Segment #%d", segmentIndex));
 
 		int subSegmentIndex = 0;
 		wxTreeItemIdValue subCookie;
 		wxTreeItemId subChild = segmentTree->GetFirstChild(child, subCookie);
 
 		while (subChild.IsOk()) {
-			segmentTree->SetItemText(subChild, wxString::Format("Sub Segment #%d, Array #%d", subSegmentIndex, arrayIndex));
+			std::string subSegmentName = "Default";
+			auto subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
+			if (subSegmentData && subSegmentData->type != 0xFFFFFFFF) {
+				bool typeFound = false;
+				auto typeHash = wxString::Format("0x%x", subSegmentData->type);
+				for (int i = 0; i < segmentType->GetCount(); i++) {
+					auto typeString = segmentType->GetString(i);
+					if (typeString.Contains(typeHash)) {
+						subSegmentName = typeString;
+						typeFound = true;
+						break;
+					}
+				}
+
+				if (!typeFound)
+					subSegmentName = typeHash;
+			}
+
+			segmentTree->SetItemText(subChild, wxString::Format("#%d: %s", subSegmentIndex, subSegmentName));
 
 			subChild = segmentTree->GetNextChild(child, subCookie);
 			subSegmentIndex++;
-			arrayIndex++;
 		}
 
 		child = segmentTree->GetNextChild(segmentRoot, cookie);
 		segmentIndex++;
-		arrayIndex++;
 	}
 }
 

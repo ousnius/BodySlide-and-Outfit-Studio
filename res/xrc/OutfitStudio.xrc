@@ -491,59 +491,89 @@
 															<object class="wxChoice" name="segmentType">
 																<selection>0</selection>
 																<content>
-																	<item>None</item>
-																	<item>86b72980</item><item>0155094f</item><item>3d6644aa</item><item>fc03dc25</item><item>6fc3fbb2</item>
-																	<item>b2e2764f</item><item>212251d8</item><item>bf3a3cc5</item><item>865d8d9e</item><item>4630dac2</item>
-																	<item>22324321</item><item>a3e42571</item><item>c7e6bc92</item><item>b1ec5379</item><item>9af9d18c</item>
-																	<item>a325b267</item><item>d5eeca9a</item><item>4e560702</item><item>51dd8370</item><item>8e0daa93</item>
-																	<item>2a549ee1</item><item>f775131c</item><item>93778aff</item><item>0861e2c0</item><item>f4e10d0d</item>
-																	<item>3186bfc1</item><item>80277369</item><item>26963e94</item><item>b70ce507</item><item>e425ea8a</item>
-																	<item>68dccce4</item><item>6bd95520</item><item>35423313</item><item>b4097cc3</item><item>9bf71ff4</item>
-																	<item>3e7a4ccc</item><item>918c6c2c</item><item>8c5ae189</item><item>ea921af0</item><item>6b81e676</item>
-																	<item>be66cacc</item><item>85342e3c</item><item>5ae407df</item><item>134fa320</item><item>1a8596c1</item>
-																	<item>c2bb4be3</item><item>40f66ca4</item><item>4f79db9d</item><item>90a9f27e</item><item>f2ba1077</item>
-																	<item>17932e95</item><item>c95153ed</item><item>071dfd97</item><item>25604c1c</item><item>b7bc0932</item>
-																	<item>13e9bc22</item><item>bd2750cf</item><item>1d3db12a</item><item>142e5c12</item><item>15fc7bad</item>
-																	<item>8a99ba3f</item><item>7491a630</item><item>c0135fe3</item><item>08eb5fa0</item><item>61da7cb9</item>
-																	<item>77fe1ec8</item><item>8d270da8</item><item>cbfe75f1</item><item>fc5546b8</item><item>1ecf3dd1</item>
-																	<item>52f7244b</item><item>4c3c720a</item><item>a411c600</item><item>b42c3610</item><item>aa2b4e13</item>
-																	<item>a2b4f38e</item><item>bb147aa4</item><item>7f638e97</item><item>dd80210a</item><item>ded0fadf</item>
-																	<item>df16e347</item><item>e46d8bd7</item><item>e7b74b84</item><item>ecf2364a</item><item>f1d59d5e</item>
-																	<item>2032f6d8</item><item>39baf6ce</item><item>74d06b8d</item><item>064f59cd</item><item>07b93fa1</item>
-																	<item>8ae0ed98</item><item>af6a52d7</item><item>495895cb</item><item>6b1a224b</item><item>f62a541a</item>
-																	<item>5530c47b</item><item>3c9df64f</item><item>a5f4be71</item><item>55acd556</item><item>22c58ab6</item>
-																	<item>857d7cfe</item><item>245c9518</item><item>772f5a34</item><item>ae502f3d</item><item>b74b1e7c</item>
-																	<item>292f8bdf</item><item>09e8d975</item><item>8e977d97</item><item>bca11f15</item><item>c175abfa</item>
-																	<item>c1886aab</item><item>c1d6eb50</item><item>c1f62792</item><item>f0da47f2</item><item>f80a88bb</item>
-																	<item>5fb27ef3</item><item>666e1d18</item><item>3218f03c</item><item>10f3e834</item><item>3034ba9e</item>
-																	<item>978c4cd6</item><item>1b19e95d</item><item>99eb64eb</item><item>bec92e74</item><item>4bddcc24</item>
-																	<item>6d9097a1</item><item>6c1ed9cb</item><item>5735c64e</item><item>02433b3b</item><item>ac900af3</item>
-																	<item>ce3c97f4</item><item>8beb7000</item><item>e2da5319</item><item>5e28bb49</item><item>28b54e65</item>
-																	<item>47338a08</item><item>7eefe9e3</item><item>b240be42</item><item>0e97871c</item><item>11692d8e</item>
-																	<item>95f7bba8</item><item>67f4d8a2</item><item>be56637b</item><item>a7860026</item><item>55c2ba20</item>
-																	<item>b2b4ecd2</item><item>5b1dd1c7</item><item>5f96443c</item><item>518397a9</item><item>2e05b4bd</item>
-																	<item>4cbf0f46</item><item>39575edb</item><item>009cb4d3</item><item>adb5dd3f</item><item>24a15449</item>
-																	<item>5b033df6</item><item>5b738b6a</item><item>e118f4a3</item><item>f20b4850</item><item>29926ea9</item>
-																	<item>09a0a3c4</item><item>28bd96a5</item><item>0c1cdf56</item><item>62cea10b</item><item>0e8ba79d</item>
-																	<item>c0f43cc3</item><item>84a3a289</item><item>a48d36f9</item><item>d6708a27</item><item>99338c09</item>
-																	<item>685ff442</item><item>d8c49748</item><item>d8d8671c</item><item>f028841e</item><item>67803c56</item>
-																	<item>814577dc</item><item>9277e1c0</item><item>3b9291c7</item><item>3a1490a2</item><item>cc3995c1</item>
-																	<item>3df159fe</item><item>03479316</item><item>6fe29bb0</item><item>9b00d39b</item><item>f642474a</item>
-																	<item>f79f7dcb</item><item>ffc77cdb</item><item>75cfea1a</item><item>090cc97f</item><item>422e0d89</item>
-																	<item>c07e9a58</item><item>5e955e3f</item><item>b26b033d</item><item>387eeb0b</item><item>6d131a3a</item>
-																	<item>041becc8</item><item>fefd8918</item><item>f5178871</item><item>fe31ace4</item><item>e7e6b859</item>
-																	<item>e85a252d</item><item>d925c92c</item><item>db6caa85</item><item>de3adbb2</item><item>e7aec2e8</item>
-																	<item>c721eaf3</item><item>cccbeb9a</item><item>862736d9</item><item>88607c34</item><item>084ff02b</item>
-																	<item>b1bc1fdf</item><item>091183d9</item><item>907ab53d</item><item>8e86c8b5</item><item>2ac34f2f</item>
-																	<item>958d00ef</item><item>174598a1</item><item>4afa46a2</item><item>992f4619</item><item>1f58c4d4</item>
-																	<item>83f2888d</item><item>6baff657</item><item>f41adc05</item><item>eeab8e0e</item><item>da4301f0</item>
-																	<item>d9250480</item><item>cb72512a</item><item>bfcd3e42</item><item>a864b0ee</item><item>9a3ba210</item>
-																	<item>6e284ec0</item><item>59507094</item><item>58e3e9f7</item><item>5637aaf5</item><item>4d4d8e0c</item>
-																	<item>20c9e4aa</item><item>7569e46d</item><item>4162440d</item><item>5ae400a0</item><item>25a5eb4d</item>
-																	<item>776a681c</item><item>7c0678fb</item><item>ae60e123</item><item>ceb9b335</item><item>0bd7c947</item>
-																	<item>0c43dffa</item><item>0e0561a3</item><item>4846fc04</item><item>2e5b6fc8</item><item>35293d1f</item>
-																	<item>7fa71b97</item><item>a35c134b</item><item>bdcad715</item><item>4b49dfc1</item><item>c8c69cb3</item>
-																	<item>1bb4c74d</item><item>17b1dafe</item><item>bde2abc0</item><item>9a333507</item>
+																	<item>Default</item>
+																	<item>1 | Head/Hair | 0x86b72980</item>
+																	<item>1 | Neck | 0x0155094f</item>
+																	<item>Human 2 | R-Up Arm | 0xb2e2764f</item>
+																	<item>Human 2 | R-Lo Arm | 0x6fc3fbb2</item>
+																	<item>Human 4 | L-Up Arm | 0xfc03dc25</item>
+																	<item>Human 4 | L-Lo Arm | 0x212251d8</item>
+																	<item>Human 5 | R-Up Thi | 0xbf3a3cc5</item>
+																	<item>Human 5 | R-Kne-Clf | 0x22324321</item>
+																	<item>Human 5 | R-Lo Ft.-Ank | 0xc7e6bc92</item>
+																	<item>Human 6 | L-Up Leg | 0x865d8d9e</item>
+																	<item>Human 6 | L-Kne-Clf | 0x4630dac2</item>
+																	<item>Human 6 | L-Lo Ft.-Ank | 0xa3e42571</item>
+																	<item>Feral Ghoul 2 | R-Up Arm | 0x2a549ee1</item>
+																	<item>Feral Ghoul 2 | R-Lo Arm | 0xf775131c</item>
+																	<item>Feral Ghoul 2 | R-Hand | 0x85342e3c</item>
+																	<item>Feral Ghoul 4 | L-Up Arm | 0x4e560702</item>
+																	<item>Feral Ghoul 4 | L-Lo Arm | 0x93778aff</item>
+																	<item>Feral Ghoul 4 | L-Hand | 0x5ae407df</item>
+																	<item>Death Claw 1 | Neck | 0xc0f43cc3</item>
+																	<item>Death Claw 2 | R-Up-Arm | 0xf2ba1077</item>
+																	<item>Death Claw 2 | R-Elbow-4Arm | 0xf4e10d0d</item>
+																	<item>Death Claw 2 | R-Hand | 0xe2da5319</item>
+																	<item>Death Claw 4 | L-Up-Arm | 0x17932e95</item>
+																	<item>Death Claw 4 | L-Elbow-4Arm | 0x0861e2c0</item>
+																	<item>Death Claw 4 | L-Hand | 0x8beb7000</item>
+																	<item>Death Claw, Feral Ghoul 5 | R-Up Thi | 0x9af9d18c</item>
+																	<item>Death Claw, Feral Ghoul 5 | R-Lo Leg | 0x8e0daa93</item>
+																	<item>Death Claw, Feral Ghoul 5 | R-Lo Ft | 0x6bd95520</item>
+																	<item>Death Claw, Feral Ghoul 6 | L-Lo Thi | 0xa325b267</item>
+																	<item>Death Claw, Feral Ghoul 6 | L-Lo Leg | 0x51dd8370</item>
+																	<item>Death Claw, Feral Ghoul 6 | L-Lo Ft | 0xb4097cc3</item>
+																	<item>Super Mutant Hound 3 | Fr-Lf Up Leg | 0x99338c09</item>
+																	<item>Super Mutant Hound 3 | Fr-Lf Lo Leg | 0x7491a630</item>
+																	<item>Super Mutant Hound 3 | Fr-Lf Foot | 0x8a99ba3f</item>
+																	<item>Super Mutant Hound 4 | Bk-Lf Thigh | 0xa7860026</item>
+																	<item>Super Mutant Hound 4 | Bk-Lf Knee | 0xaf6a52d7</item>
+																	<item>Super Mutant Hound 4 | Bk-Lf Ankle | 0xb42c3610</item>
+																	<item>Super Mutant Hound 4 | Bk-Lf Foot | 0x6e284ec0</item>
+																	<item>Super Mutant Hound 5 | Bk-Ri Thigh | 0x0e97871c</item>
+																	<item>Super Mutant Hound 5 | Bk-Ri Knee | 0x02433b3b</item>
+																	<item>Super Mutant Hound 5 | Bk-Ri Ankle | 0x1d3db12a</item>
+																	<item>Super Mutant Hound 5 | Bk-Ri Foot | 0x20c9e4aa</item>
+																	<item>Super Mutant Hound 6 | Fr-Ri Up Leg | 0x5f96443c</item>
+																	<item>Super Mutant Hound 6 | Fr-Ri Lo Leg | 0xdd80210a</item>
+																	<item>Super Mutant Hound 6 | Fr-Ri Foot | 0x4c3c720a</item>
+																	<item>Mirelurk 2 | Fr-Ri-Up Arm | 0xa5f4be71</item>
+																	<item>Mirelurk 2 | Fr-Ri-Lo Arm | 0x99eb64eb</item>
+																	<item>Mirelurk 2 | R Claw | 0x3c9df64f</item>
+																	<item>Mirelurk 4 | L Shoulder | 0x40f66ca4</item>
+																	<item>Mirelurk 4 | L-Up Arm | 0xc1f62792</item>
+																	<item>Mirelurk 4 | L Elbow | 0xf0da47f2</item>
+																	<item>Mirelurk 4 | L Claw | 0x55acd556</item>
+																	<item>Mirelurk 5 | Fr-Ri Hip | 0x064f59cd</item>
+																	<item>Mirelurk 5 | Fr-Ri Thigh | 0x5b033df6</item>
+																	<item>Mirelurk 5 | Fr-Ri Calf | 0x15fc7bad</item>
+																	<item>Mirelurk 5 | Fr-Ri Foot | 0xf028841e</item>
+																	<item>Mirelurk 6 | Fr-Lf Hip-Thigh | 0xf62a541a</item>
+																	<item>Mirelurk 6 | Fr-Lf Kne-Clf | 0x5b1dd1c7</item>
+																	<item>Mirelurk 6 | Fr-Lf Foot | 0xbec92e74</item>
+																	<item>Mirelurk 8 | Bk-Ri Hip-Thigh | 0xfc5546b8</item>
+																	<item>Mirelurk 8 | Bk-Ri Kne-Clf | 0x24a15449</item>
+																	<item>Mirelurk 8 | Bk-Ri Foot | 0xc175abfa</item>
+																	<item>Mirelurk 9 | Bk-Lf Hip-Thigh | 0xb2b4ecd2</item>
+																	<item>Mirelurk 9 | Bk-Lf Kne-Clf | 0xc1886aab</item>
+																	<item>Mirelurk 9 | Bk-Lf Foot | 0x245c9518</item>
+																	<item>Dog 3 | Fr-Lf Knee | 0x5530c47b</item>
+																	<item>Dog 3 | Fr-Lf Calf | 0xcc3995c1</item>
+																	<item>Dog 3 | Fr-Lf Heel+Arch | 0xbd2750cf</item>
+																	<item>Dog 3 | Fr-Lf Paw | 0x77fe1ec8</item>
+																	<item>Dog 4 | Bk-Lf Knee | 0x52f7244b</item>
+																	<item>Dog 4 | Bk-Lf Calf | 0xcbfe75f1</item>
+																	<item>Dog 4 | Bk-Lf Heel+Arch | 0xfe31ace4</item>
+																	<item>Dog 4 | Bk-Lf Paw | 0x08eb5fa0</item>
+																	<item>Dog 5 | Bk-Ri Knee | 0x8d270da8</item>
+																	<item>Dog 5 | Bk-Ri Calf+Heel | 0x142e5c12</item>
+																	<item>Dog 5 | Bk-Ri Arch | 0x9a333507</item>
+																	<item>Dog 5 | Bk-Ri Paw | 0x61da7cb9</item>
+																	<item>Dog 6 | Fr-Ri Knee | 0x8ae0ed98</item>
+																	<item>Dog 6 | Fr-Ri Calf | 0x13e9bc22</item>
+																	<item>Dog 6 | Fr-Ri Heel+Arch | 0xd925c92c</item>
+																	<item>Dog 6 | Fr-Ri Paw | 0x1ecf3dd1</item>
+																	<item>Robot 3 | Torso | 0x3d6644aa</item>
 																</content>
 																<hidden>1</hidden>
 																<enabled>0</enabled>
