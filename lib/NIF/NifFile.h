@@ -120,7 +120,9 @@ public:
 	void CopyFrom(const NifFile& other);
 
 	int Load(const std::string& filename);
+	int Load(std::fstream& file, const std::string& filename);
 	int Save(const std::string& filename, bool optimize = true, bool sortBlocks = true);
+	int Save(std::fstream& file, bool optimize = true, bool sortBlocks = true);
 
 	void Optimize();
 	OptResultSSE OptimizeForSSE(const OptOptionsSSE& options = OptOptionsSSE());

@@ -17,7 +17,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "BodySlideApp.h"
-#include "..\Files\wxDDSImage.h"
+#include "../files/wxDDSImage.h"
+#include "../utils/PlatformUtil.h"
 
 #include <regex>
 
@@ -254,9 +255,8 @@ void BodySlideApp::GetArchiveFiles(std::vector<std::string>& outList) {
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& f : files) {
 		f = f.AfterLast('\\').MakeLower();
-		if (fsearch.find(f) == fsearch.end()) {
-			outList.push_back(dataDir.ToStdString() + f.ToStdString());
-		}
+		if (fsearch.find(f) == fsearch.end())
+			outList.push_back((dataDir + f).ToUTF8().data());
 	}
 }
 
@@ -359,8 +359,10 @@ int BodySlideApp::LoadSliderSets() {
 	wxDir::GetAllFiles("SliderSets", &files, "*.xml");
 
 	for (auto &file : files) {
+		std::string fileName = file.ToUTF8();
+
 		SliderSetFile sliderDoc;
-		sliderDoc.Open(file.ToStdString());
+		sliderDoc.Open(fileName);
 		if (sliderDoc.fail())
 			continue;
 
@@ -371,7 +373,7 @@ int BodySlideApp::LoadSliderSets() {
 			if (outfitNameSource.find(o) != outfitNameSource.end())
 				continue;
 
-			outfitNameSource[o] = file.ToStdString();
+			outfitNameSource[o] = fileName;
 			outfitNameOrder.push_back(o);
 
 			sliderDoc.GetSetOutputFilePath(o, outFilePath);
@@ -484,7 +486,7 @@ void BodySlideApp::DeleteOutfit(const std::string& outfitName) {
 					else if (count > select - 1)
 						outfitChoice->Select(select - 1);
 
-					ActivateOutfit(outfitChoice->GetStringSelection().ToStdString());
+					ActivateOutfit(outfitChoice->GetStringSelection().ToUTF8().data());
 				}
 			}
 			else
@@ -519,7 +521,7 @@ void BodySlideApp::DeletePreset(const std::string& presetName) {
 			else if (count > select - 1)
 				presetChoice->Select(select - 1);
 
-			ActivatePreset(presetChoice->GetStringSelection().ToStdString());
+			ActivatePreset(presetChoice->GetStringSelection().ToUTF8().data());
 		}
 	}
 	else
@@ -546,9 +548,9 @@ void BodySlideApp::PopulatePresetList(const std::string& select) {
 	sliderManager.GetPresetNames(presets);
 	items.reserve(presets.size());
 	for (int i = 0; i < presets.size(); i++)
-		items.Add(presets[i].c_str());
+		items.Add(wxString::FromUTF8(presets[i]));
 
-	sliderView->PopulatePresetList(items, select);
+	sliderView->PopulatePresetList(items, wxString::FromUTF8(select));
 }
 
 void BodySlideApp::PopulateOutfitList(const std::string& select) {
@@ -565,9 +567,9 @@ void BodySlideApp::PopulateOutfitList(const std::string& select) {
 	ApplyOutfitFilter();
 
 	for (auto &fo : filteredOutfits)
-		items.Add(fo);
+		items.Add(wxString::FromUTF8(fo));
 
-	sliderView->PopulateOutfitList(items, wxString(myselect.c_str()));
+	sliderView->PopulateOutfitList(items, wxString::FromUTF8(myselect));
 }
 
 void BodySlideApp::DisplayActiveSet() {
@@ -817,21 +819,26 @@ void BodySlideApp::InitPreview() {
 	std::string inputSetName = activeSet.GetName();
 	bool freshLoad = false;
 
+	if (previewBaseNif && (previewBaseName != inputFileName || previewSetName != inputSetName || sliderManager.NeedReload())) {
+		delete previewBaseNif;
+		previewBaseNif = nullptr;
+	}
+
 	if (!previewBaseNif) {
 		previewBaseNif = new NifFile();
-		previewBaseNif->Load(inputFileName);
-		if (PreviewMod.Load(inputFileName))
-			return;
+		PreviewMod.Clear();
 
-		freshLoad = true;
-		sliderManager.FlagReload(false);
-	}
-	else if (previewBaseName != inputFileName || previewSetName != inputSetName || sliderManager.NeedReload()) {
-		delete previewBaseNif;
-		previewBaseNif = new NifFile();
-		previewBaseNif->Load(inputFileName);
-		if (PreviewMod.Load(inputFileName) != 0)
+#ifdef _WINDOWS
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
+		if (previewBaseNif->Load(file, inputFileName))
 			return;
+#else
+		if (previewBaseNif->Load(inputFileName))
+			return;
+#endif
+
+		PreviewMod.CopyFrom(*previewBaseNif);
 
 		freshLoad = true;
 		sliderManager.FlagReload(false);
@@ -1571,15 +1578,17 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		return 0;
 	}
 
-	int error = nifBig.Load(inputFileName);
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
+
+	int error = nifBig.Load(file, inputFileName);
 	if (error) {
 		wxLogError("Failed to load '%s' (%d)!", inputFileName, error);
 		return 1;
 	}
 
 	if (activeSet.GenWeights())
-		if (nifSmall.Load(inputFileName))
-			return 1;
+		nifSmall.CopyFrom(nifBig);
 
 	std::vector<Vector3> vertsLow;
 	std::vector<Vector3> vertsHigh;
@@ -1678,9 +1687,13 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	if (activeSet.GenWeights()) {
 		outFileNameSmall += "_0.nif";
 		outFileNameBig += "_1.nif";
-		custName = outFileNameSmall;
+		custName = wxString::FromUTF8(outFileNameSmall);
 		savedLow = custName;
-		while (nifSmall.Save(custName.ToStdString(), false)) {
+
+		std::fstream fileSmall;
+		PlatformUtil::OpenFileStream(fileSmall, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
+
+		while (nifSmall.Save(fileSmall, false)) {
 			wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
 			wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
@@ -1702,14 +1715,18 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	}
 	else {
 		outFileNameBig += ".nif";
-		custName = outFileNameBig;
+		custName = wxString::FromUTF8(outFileNameBig);
 	}
 
 	if (!useCustName)
-		outFileNameBig = custName;
+		outFileNameBig = custName.ToUTF8();
 
 	savedHigh = custName;
-	while (nifBig.Save(custName.ToStdString(), false)) {
+
+	std::fstream fileBig;
+	PlatformUtil::OpenFileStream(fileBig, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
+
+	while (nifBig.Save(fileBig, false)) {
 		wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
 		wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
@@ -1913,16 +1930,18 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		}
 
 		/* Load input NIFs */
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, currentSet.GetInputFileName(), std::ios::in | std::ios::binary);
+
 		NifFile nifBig;
 		NifFile nifSmall;
-		if (nifBig.Load(currentSet.GetInputFileName())) {
+		if (nifBig.Load(file, currentSet.GetInputFileName())) {
 			failedOutfitsCon[outfit] = _("Unable to load input nif: ") + currentSet.GetInputFileName();
 			return;
 		}
 
 		if (currentSet.GenWeights())
-			if (nifSmall.Load(currentSet.GetInputFileName()))
-				return;
+			nifSmall.CopyFrom(nifBig);
 
 		currentSet.LoadSetDiffData(currentDiffs);
 
@@ -2104,12 +2123,18 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			outFileNameSmall += "_0.nif";
 			outFileNameBig += "_1.nif";
 
-			if (nifBig.Save(outFileNameBig, false)) {
+			std::fstream fileBig;
+			PlatformUtil::OpenFileStream(fileBig, outFileNameBig, std::ios::out | std::ios::binary);
+
+			if (nifBig.Save(fileBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
 
-			if (nifSmall.Save(outFileNameSmall, false)) {
+			std::fstream fileSmall;
+			PlatformUtil::OpenFileStream(fileSmall, outFileNameSmall, std::ios::out | std::ios::binary);
+
+			if (nifSmall.Save(fileSmall, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				return;
 			}
@@ -2117,7 +2142,10 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		else {
 			outFileNameBig += ".nif";
 
-			if (nifBig.Save(outFileNameBig, false)) {
+			std::fstream fileBig;
+			PlatformUtil::OpenFileStream(fileBig, outFileNameBig, std::ios::out | std::ios::binary);
+
+			if (nifBig.Save(fileBig, false)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
@@ -2199,26 +2227,26 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
-	std::string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToUTF8();
 	return sliderManager.GetSlider(sstr, isLo);
 }
 
 bool BodySlideApp::IsUVSlider(const wxString& sliderName) {
-	std::string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToUTF8();
 	return activeSet[sstr].bUV;
 }
 
 std::vector<std::string> BodySlideApp::GetSliderZapToggles(const wxString& sliderName) {
-	return sliderManager.GetSliderZapToggles(sliderName.ToStdString());
+	return sliderManager.GetSliderZapToggles(sliderName.ToUTF8().data());
 }
 
 void BodySlideApp::SetSliderValue(const wxString& sliderName, bool isLo, float val) {
-	std::string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToUTF8();
 	sliderManager.SetSlider(sstr, isLo, val);
 }
 
 void BodySlideApp::SetSliderChanged(const wxString& sliderName, bool isLo) {
-	std::string sstr = sliderName.ToStdString();
+	std::string sstr = sliderName.ToUTF8();
 	sliderManager.SetChanged(sstr, isLo);
 }
 
@@ -2527,7 +2555,7 @@ void BodySlideFrame::PopulatePresetList(const wxArrayString& items, const wxStri
 void BodySlideFrame::SetSliderPosition(const wxString &name, float newValue, short HiLo) {
 	int intval = (int)(newValue * 100.0f);
 
-	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToStdString());
+	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
 	if (!sd)
 		return;
 
@@ -2609,7 +2637,7 @@ void BodySlideFrame::OnSliderChange(wxScrollEvent& event) {
 		if (!fullname.EndsWith("|HI", &name))
 			return;
 	}
-	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToStdString());
+	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
 	if (!sd)
 		return;
 
@@ -2636,7 +2664,7 @@ void BodySlideFrame::OnSliderReadoutChange(wxCommandEvent& event) {
 		if (!fullname.EndsWith("|RHI", &name))
 			return;
 	}
-	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToStdString());
+	BodySlideFrame::SliderDisplay* sd = GetSliderDisplay(name.ToUTF8().data());
 	if (!sd)
 		return;
 
@@ -2679,9 +2707,9 @@ void BodySlideFrame::OnCategoryCheckChanged(wxCommandEvent& event) {
 		return;
 
 	if (event.IsChecked())
-		app->cCollection.SetCategoryHidden(cb->GetName().ToStdString(), false);
+		app->cCollection.SetCategoryHidden(cb->GetName().ToUTF8().data(), false);
 	else
-		app->cCollection.SetCategoryHidden(cb->GetName().ToStdString(), true);
+		app->cCollection.SetCategoryHidden(cb->GetName().ToUTF8().data(), true);
 
 	Freeze();
 
@@ -2710,16 +2738,16 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 		}
 	}
 
-	std::string sliderName = sn.ToStdString();
-	wxLogMessage("Zap '%s' %s.", sliderName, event.IsChecked() ? "checked" : "unchecked");
+	std::string sliderName = sn.ToUTF8();
+	wxLogMessage("Zap '%s' %s.", sn, event.IsChecked() ? "checked" : "unchecked");
 
 	if (event.IsChecked()) {
 		if (sliderDisplays[sliderName]->oneSize) {
-			app->SetSliderValue(sliderName, false, 1.0f);
+			app->SetSliderValue(sn, false, 1.0f);
 		}
 		else {
-			app->SetSliderValue(sliderName, true, 1.0f);
-			app->SetSliderValue(sliderName, false, 1.0f);
+			app->SetSliderValue(sn, true, 1.0f);
+			app->SetSliderValue(sn, false, 1.0f);
 			if (isLo)
 				sliderDisplays[sliderName]->zapCheckHi->SetValue(true);
 			else
@@ -2728,11 +2756,11 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	}
 	else {
 		if (sliderDisplays[sliderName]->oneSize) {
-			app->SetSliderValue(sliderName, false, 0.0f);
+			app->SetSliderValue(sn, false, 0.0f);
 		}
 		else {
-			app->SetSliderValue(sliderName, true, 0.0f);
-			app->SetSliderValue(sliderName, false, 0.0f);
+			app->SetSliderValue(sn, true, 0.0f);
+			app->SetSliderValue(sn, false, 0.0f);
 			if (isLo)
 				sliderDisplays[sliderName]->zapCheckHi->SetValue(false);
 			else
@@ -2740,11 +2768,11 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 		}
 	}
 
-	app->SetSliderChanged(sliderName, isLo);
+	app->SetSliderChanged(sn, isLo);
 
-	std::vector<std::string> zapToggles = app->GetSliderZapToggles(sliderName);
+	std::vector<std::string> zapToggles = app->GetSliderZapToggles(sn);
 	for (auto &toggle : zapToggles) {
-		wxLogMessage("Zap '%s' toggled.", sliderName);
+		wxLogMessage("Zap '%s' toggled.", sn);
 
 		app->SetSliderValue(toggle, true, 1.0f - app->GetSliderValue(toggle, true));
 		app->SetSliderValue(toggle, false, 1.0f - app->GetSliderValue(toggle, false));
@@ -2761,7 +2789,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 	}
 
 	wxBeginBusyCursor();
-	if (app->IsUVSlider(sliderName))
+	if (app->IsUVSlider(sn))
 		app->UpdatePreview();
 	else
 		app->RebuildPreviewMeshes();
@@ -2792,7 +2820,7 @@ void BodySlideFrame::OnChooseGroups(wxCommandEvent& WXUNUSED(event)) {
 		wxString token = tokenizer.GetNextToken();
 		token.Trim();
 		token.Trim(false);
-		curGroupNames.insert(token.ToStdString());
+		curGroupNames.insert(token.ToUTF8().data());
 	}
 
 	wxArrayString grpChoices;
@@ -2858,12 +2886,12 @@ void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
-	std::string sstr = event.GetString().ToStdString();
+	std::string sstr = event.GetString().ToUTF8();
 	app->ActivateOutfit(sstr);
 }
 
 void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
-	std::string sstr = event.GetString().ToStdString();
+	std::string sstr = event.GetString().ToUTF8();
 	app->ActivatePreset(sstr);
 }
 

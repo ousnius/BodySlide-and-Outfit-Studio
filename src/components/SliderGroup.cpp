@@ -5,6 +5,7 @@ See the included LICENSE file
 */
 
 #include "SliderGroup.h"
+#include "../utils/PlatformUtil.h"
 
 int SliderSetGroupCollection::LoadGroups(const std::string& basePath) {
 	groups.clear();
@@ -13,7 +14,7 @@ int SliderSetGroupCollection::LoadGroups(const std::string& basePath) {
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
 	for (auto &file : files) {
-		SliderSetGroupFile groupFile(file.ToStdString());
+		SliderSetGroupFile groupFile(file.ToUTF8().data());
 		std::vector<std::string> groupNames;
 		groupFile.GetGroupNames(groupNames);
 		for (auto &group : groupNames) {
@@ -129,30 +130,44 @@ SliderSetGroupFile::SliderSetGroupFile(const std::string& srcFileName) {
 
 // Loads the XML document and identifies included group names. On a failure, sets the internal error value.
 void SliderSetGroupFile::Open(const std::string& srcFileName) {
-	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
-		fileName = srcFileName;
-		doc.SetUserData(&fileName);
-		root = doc.FirstChildElement("SliderGroups");
-		if (!root) {
-			error = 2;
-			return;
-		}
+	fileName = srcFileName;
 
-		XMLElement* element = root->FirstChildElement("Group");
-		while (element) {
-			groupsInFile[element->Attribute("name")] = element;
-			element = element->NextSiblingElement("Group");
-		}
-		if (groupsInFile.empty()) {
-			error = 3;
-			return;
-		}
+	FILE* fp = nullptr;
 
-	}
-	else {
-		error = 1;
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+	if (error)
+		return;
+#else
+	fp = fopen(srcFileName.c_str(), "rb");
+	if (!fp)
+		return;
+#endif
+
+	error = doc.LoadFile(fp);
+	fclose(fp);
+
+	if (error)
+		return;
+
+	doc.SetUserData(&fileName);
+	root = doc.FirstChildElement("SliderGroups");
+	if (!root) {
+		error = 2;
 		return;
 	}
+
+	XMLElement* element = root->FirstChildElement("Group");
+	while (element) {
+		groupsInFile[element->Attribute("name")] = element;
+		element = element->NextSiblingElement("Group");
+	}
+	if (groupsInFile.empty()) {
+		error = 3;
+		return;
+	}
+
 	error = 0;
 }
 
@@ -263,9 +278,30 @@ int SliderSetGroupFile::UpdateGroup(SliderSetGroup& inGroup) {
 }
 
 // Writes the XML file using the internal fileName (use Rename() to change the name).
-int SliderSetGroupFile::Save() {
-	if (doc.SaveFile(fileName.c_str()) != XML_SUCCESS)
-		return 1;
+bool SliderSetGroupFile::Save() {
+	FILE* fp = nullptr;
 
-	return 0;
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
+	if (error)
+		return false;
+#else
+	fp = fopen(fileName.c_str(), "w");
+	if (!fp)
+		return false;
+#endif
+
+	doc.SetBOM(true);
+
+	const tinyxml2::XMLNode* firstChild = doc.FirstChild();
+	if (!firstChild || !firstChild->ToDeclaration())
+		doc.InsertFirstChild(doc.NewDeclaration());
+
+	error = doc.SaveFile(fp);
+	fclose(fp);
+	if (error)
+		return false;
+
+	return true;
 }

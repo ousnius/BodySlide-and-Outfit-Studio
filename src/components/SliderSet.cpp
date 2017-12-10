@@ -5,6 +5,8 @@ See the included LICENSE file
 */
 
 #include "SliderSet.h"
+#include "../utils/PlatformUtil.h"
+
 
 SliderSet::SliderSet() {
 }
@@ -293,7 +295,23 @@ SliderSetFile::SliderSetFile(const std::string& srcFileName) :error(0) {
 
 void SliderSetFile::Open(const std::string& srcFileName) {
 	fileName = srcFileName;
-	error = doc.LoadFile(srcFileName.c_str());
+
+	FILE* fp = nullptr;
+
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+	if (error)
+		return;
+#else
+	fp = fopen(srcFileName.c_str(), "rb");
+	if (!fp)
+		return;
+#endif
+
+	error = doc.LoadFile(fp);
+	fclose(fp);
+
 	if (error)
 		return;
 
@@ -438,6 +456,30 @@ int SliderSetFile::DeleteSet(const std::string& setName) {
 	return 0;
 }
 
-int SliderSetFile::Save() {
-	return doc.SaveFile(fileName.c_str()) == XML_SUCCESS;
+bool SliderSetFile::Save() {
+	FILE* fp = nullptr;
+
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
+	if (error)
+		return false;
+#else
+	fp = fopen(fileName.c_str(), "w");
+	if (!fp)
+		return false;
+#endif
+
+	doc.SetBOM(true);
+
+	const tinyxml2::XMLNode* firstChild = doc.FirstChild();
+	if (!firstChild || !firstChild->ToDeclaration())
+		doc.InsertFirstChild(doc.NewDeclaration());
+
+	error = doc.SaveFile(fp);
+	fclose(fp);
+	if (error)
+		return false;
+
+	return true;
 }

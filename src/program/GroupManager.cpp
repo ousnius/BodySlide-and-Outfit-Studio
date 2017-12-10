@@ -59,23 +59,23 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 		// Add groups to list
 		listGroups->Clear();
 		for (auto &group : groupMembers)
-			listGroups->Append(group.first);
+			listGroups->Append(wxString::FromUTF8(group.first));
 	}
 	else {
 		// Get group selection if existing
-		selectedGroup = listGroups->GetStringSelection().ToStdString();
+		selectedGroup = listGroups->GetStringSelection().ToUTF8();
 	}
 
 	// Add members of selected group to list
 	bool groupSelected = !selectedGroup.empty();
 	if (groupSelected)
 		for (auto &member : groupMembers[selectedGroup])
-			listMembers->Append(member);
+			listMembers->Append(wxString::FromUTF8(member));
 
 	// Add outfits that are no members to list
 	for (auto &outfit : allOutfits)
 		if (listMembers->FindString(outfit) == wxNOT_FOUND)
-			listOutfits->Append(outfit);
+			listOutfits->Append(wxString::FromUTF8(outfit));
 
 	listMembers->Enable(groupSelected);
 	listOutfits->Enable(groupSelected);
@@ -86,7 +86,7 @@ void GroupManager::RefreshUI(const bool clearGroups) {
 
 void GroupManager::SaveGroup() {
 	SliderSetGroupFile groupFile;
-	groupFile.New(fileName.ToStdString());
+	groupFile.New(fileName.ToUTF8().data());
 	for (auto &grp : groupMembers) {
 		SliderSetGroup group;
 		group.SetName(grp.first);
@@ -101,7 +101,7 @@ void GroupManager::SaveGroup() {
 
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	// Load group file
-	SliderSetGroupFile groupFile(event.GetPath().ToStdString());
+	SliderSetGroupFile groupFile(event.GetPath().ToUTF8().data());
 	if (groupFile.fail())
 		return;
 
@@ -151,12 +151,12 @@ void GroupManager::OnAddGroup(wxCommandEvent& WXUNUSED(event)) {
 	groupName->Clear();
 
 	// Already exists
-	auto it = groupMembers.find(name.ToStdString());
+	auto it = groupMembers.find(name.ToUTF8().data());
 	if (it != groupMembers.end())
 		return;
 
 	// Create empty group entry
-	groupMembers[name.ToStdString()] = std::vector<std::string>();
+	groupMembers[name.ToUTF8().data()] = std::vector<std::string>();
 	listGroups->Append(name);
 
 	dirty = true;
@@ -170,7 +170,7 @@ void GroupManager::OnRemoveGroup(wxCommandEvent& WXUNUSED(event)) {
 
 	// Remove empty group entry
 	wxString group = listGroups->GetString(id);
-	groupMembers.erase(group.ToStdString());
+	groupMembers.erase(group.ToUTF8().data());
 
 	dirty = true;
 	RefreshUI(true);
@@ -181,10 +181,10 @@ void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
 	listMembers->GetSelections(selections);
 
 	// Find and remove member from selected group
-	std::string selectedGroup = listGroups->GetStringSelection().ToStdString();
+	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
 	if (!selectedGroup.empty()) {
 		for (auto &sel : selections) {
-			std::string member = listMembers->GetString(sel);
+			std::string member = listMembers->GetString(sel).ToUTF8();
 			auto it = find(groupMembers[selectedGroup].begin(), groupMembers[selectedGroup].end(), member);
 			if (it != groupMembers[selectedGroup].end())
 				groupMembers[selectedGroup].erase(it);
@@ -201,10 +201,10 @@ void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
 	listOutfits->GetSelections(selections);
 
 	// Add member to selected group
-	std::string selectedGroup = listGroups->GetStringSelection().ToStdString();
+	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
 	if (!selectedGroup.empty()) {
 		for (auto &sel : selections) {
-			std::string member = listOutfits->GetString(sel);
+			std::string member = listOutfits->GetString(sel).ToUTF8();
 			groupMembers[selectedGroup].push_back(member);
 		}
 	}

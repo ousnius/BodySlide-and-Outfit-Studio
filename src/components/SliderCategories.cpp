@@ -5,6 +5,7 @@ See the included LICENSE file
 */
 
 #include "SliderCategories.h"
+#include "../utils/PlatformUtil.h"
 
 int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
 	categories.clear();
@@ -13,7 +14,7 @@ int SliderCategoryCollection::LoadCategories(const std::string& basePath) {
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
 	for (auto &file : files) {
-		SliderCategoryFile catFile(file.ToStdString());
+		SliderCategoryFile catFile(file.ToUTF8().data());
 		std::vector<std::string> cats;
 		catFile.GetCategoryNames(cats);
 		for (auto &cat : cats) {
@@ -181,30 +182,44 @@ SliderCategoryFile::SliderCategoryFile(const std::string& srcFileName) {
 }
 
 void SliderCategoryFile::Open(const std::string& srcFileName) {
-	if (doc.LoadFile(srcFileName.c_str()) == XML_SUCCESS) {
-		fileName = srcFileName;
-		doc.SetUserData(&fileName);
-		root = doc.FirstChildElement("SliderCategories");
-		if (!root) {
-			error = 2;
-			return;
-		}
+	fileName = srcFileName;
 
-		XMLElement* element = root->FirstChildElement("Category");
-		while (element) {
-			categoriesInFile[element->Attribute("name")] = element;
-			element = element->NextSiblingElement("Category");
-		}
-		if (categoriesInFile.empty()) {
-			error = 3;
-			return;
-		}
+	FILE* fp = nullptr;
 
-	}
-	else {
-		error = 1;
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(srcFileName);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+	if (error)
+		return;
+#else
+	fp = fopen(srcFileName.c_str(), "rb");
+	if (!fp)
+		return;
+#endif
+
+	error = doc.LoadFile(fp);
+	fclose(fp);
+
+	if (error)
+		return;
+
+	doc.SetUserData(&fileName);
+	root = doc.FirstChildElement("SliderCategories");
+	if (!root) {
+		error = 2;
 		return;
 	}
+
+	XMLElement* element = root->FirstChildElement("Category");
+	while (element) {
+		categoriesInFile[element->Attribute("name")] = element;
+		element = element->NextSiblingElement("Category");
+	}
+	if (categoriesInFile.empty()) {
+		error = 3;
+		return;
+	}
+
 	error = 0;
 }
 
@@ -299,9 +314,30 @@ int SliderCategoryFile::UpdateCategory(SliderCategory& inCategory) {
 	return 0;
 }
 
-int SliderCategoryFile::Save(){
-	if (doc.SaveFile(fileName.c_str()) != XML_SUCCESS)
-		return 1;
+bool SliderCategoryFile::Save() {
+	FILE* fp = nullptr;
 
-	return 0;
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(fileName);
+	error = _wfopen_s(&fp, winFileName.c_str(), L"w");
+	if (error)
+		return false;
+#else
+	fp = fopen(fileName.c_str(), "w");
+	if (!fp)
+		return false;
+#endif
+
+	doc.SetBOM(true);
+
+	const tinyxml2::XMLNode* firstChild = doc.FirstChild();
+	if (!firstChild || !firstChild->ToDeclaration())
+		doc.InsertFirstChild(doc.NewDeclaration());
+
+	error = doc.SaveFile(fp);
+	fclose(fp);
+	if (error)
+		return false;
+
+	return true;
 }

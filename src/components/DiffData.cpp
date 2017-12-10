@@ -5,6 +5,7 @@ See the included LICENSE file
 */
 
 #include "DiffData.h"
+#include "../utils/PlatformUtil.h"
 
 #include <algorithm>
 #include <fstream>
@@ -19,7 +20,9 @@ OSDataFile::~OSDataFile() {
 }
 
 bool OSDataFile::Read(const std::string& fileName) {
-	std::ifstream file(fileName, std::ios_base::binary);
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+
 	if (!file)
 		return false;
 
@@ -58,7 +61,9 @@ bool OSDataFile::Read(const std::string& fileName) {
 }
 
 bool OSDataFile::Write(const std::string& fileName) {
-	std::ofstream file(fileName, std::ios_base::binary);
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
+
 	if (!file)
 		return false;
 
@@ -117,7 +122,9 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, st
 }
 
 int DiffDataSets::LoadSet(const std::string& name, const std::string& target, const std::string& fromFile) {
-	std::ifstream inFile(fromFile, std::ios_base::binary);
+	std::fstream inFile;
+	PlatformUtil::OpenFileStream(inFile, fromFile, std::ios::in | std::ios::binary);
+
 	if (!inFile)
 		return 1;
 
@@ -168,7 +175,9 @@ int DiffDataSets::SaveSet(const std::string& name, const std::string& target, co
 	if (!TargetMatch(name, target))
 		return 2;
 
-	std::ofstream outFile(toFile, std::ios_base::binary);
+	std::fstream outFile;
+	PlatformUtil::OpenFileStream(outFile, toFile, std::ios::out | std::ios::binary);
+
 	if (!outFile)
 		return 1;
 

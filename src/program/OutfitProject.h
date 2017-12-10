@@ -63,7 +63,7 @@ public:
 		bool genWeights,
 		bool copyRef);
 
-	bool SaveSliderData(const wxString& fileName, bool copyRef = true);
+	bool SaveSliderData(const std::string& fileName, bool copyRef = true);
 
 	NifFile* GetWorkNif() { return &workNif; }
 	AnimInfo* GetWorkAnim() { return &workAnim; }

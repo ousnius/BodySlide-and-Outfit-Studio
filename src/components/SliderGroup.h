@@ -111,5 +111,5 @@ public:
 	int UpdateGroup(SliderSetGroup& inGroup);
 
 	// Writes the xml file using the internal fileName (use Rename() to change the name).
-	int Save();
+	bool Save();
 };

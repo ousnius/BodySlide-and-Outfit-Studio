@@ -9,6 +9,7 @@ See the included LICENSE file
 #include "../files/TriFile.h"
 #include "../files/FBXWrangler.h"
 #include "../program/FBXImportDialog.h"
+#include "../utils/PlatformUtil.h"
 
 #include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
@@ -45,9 +46,9 @@ std::string OutfitProject::Save(const wxString& strFileName,
 
 	owner->UpdateProgress(1, _("Checking destination..."));
 	std::string errmsg = "";
-	std::string outfit = strOutfitName;
-	std::string baseFile = strBaseFile;
-	std::string gameFile = strGameFile;
+	std::string outfit = strOutfitName.ToUTF8();
+	std::string baseFile = strBaseFile.ToUTF8();
+	std::string gameFile = strGameFile.ToUTF8();
 
 	ReplaceForbidden(outfit);
 	ReplaceForbidden(baseFile);
@@ -55,9 +56,9 @@ std::string OutfitProject::Save(const wxString& strFileName,
 
 	SliderSet outSet;
 	outSet.SetName(outfit);
-	outSet.SetDataFolder(strDataDir.ToStdString());
+	outSet.SetDataFolder(strDataDir.ToUTF8().data());
 	outSet.SetInputFile(baseFile);
-	outSet.SetOutputPath(strGamePath.ToStdString());
+	outSet.SetOutputPath(strGamePath.ToUTF8().data());
 	outSet.SetOutputFile(gameFile);
 	outSet.SetGenWeights(genWeights);
 
@@ -66,11 +67,11 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		ssFileName = ssFileName.Prepend("SliderSets\\");
 
 	mFileName = ssFileName;
-	mOutfitName = outfit;
+	mOutfitName = wxString::FromUTF8(outfit);
 	mDataDir = strDataDir;
-	mBaseFile = baseFile;
+	mBaseFile = wxString::FromUTF8(baseFile);
 	mGamePath = strGamePath;
-	mGameFile = gameFile;
+	mGameFile = wxString::FromUTF8(gameFile);
 	mCopyRef = copyRef;
 	mGenWeights = genWeights;
 
@@ -164,17 +165,18 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		}
 	}
 
-	std::string saveDataPath = "ShapeData\\" + strDataDir;
+	std::string saveDataPath = wxString::Format("ShapeData\\%s", mDataDir).ToUTF8();
 	SaveSliderData(saveDataPath + "\\" + osdFileName, copyRef);
 	
 	prog = 60;
 	owner->UpdateProgress(prog, _("Creating slider set file..."));
 
-	SliderSetFile ssf(ssFileName.ToStdString());
+	std::string ssUFileName = ssFileName.ToUTF8();
+	SliderSetFile ssf(ssUFileName);
 	if (ssf.fail()) {
-		ssf.New(ssFileName.ToStdString());
+		ssf.New(ssUFileName);
 		if (ssf.fail()) {
-			errmsg = _("Failed to open or create slider set file: ") + ssFileName.ToStdString();
+			errmsg = _("Failed to open or create slider set file: ") + ssUFileName;
 			return errmsg;
 		}
 	}
@@ -192,7 +194,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 	owner->UpdateProgress(61, _("Saving slider set file..."));
 	ssf.UpdateSet(outSet);
 	if (!ssf.Save()) {
-		errmsg = _("Failed to write to slider set file: ") + ssFileName.ToStdString();
+		errmsg = _("Failed to write to slider set file: ") + ssUFileName;
 		return errmsg;
 	}
 
@@ -218,7 +220,10 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		clone.SetShapeOrder(owner->GetShapeList());
 		clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
 
-		if (clone.Save(saveFileName)) {
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, saveFileName, std::ios::out | std::ios::binary);
+
+		if (clone.Save(file)) {
 			errmsg = _("Failed to write base .nif file: ") + saveFileName;
 			return errmsg;
 		}
@@ -229,7 +234,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 	return errmsg;
 }
 
-bool OutfitProject::SaveSliderData(const wxString& fileName, bool copyRef) {
+bool OutfitProject::SaveSliderData(const std::string& fileName, bool copyRef) {
 	std::vector<std::string> shapes = workNif.GetShapeNames();
 
 	if (activeSet.size() > 0) {
@@ -248,7 +253,7 @@ bool OutfitProject::SaveSliderData(const wxString& fileName, bool copyRef) {
 					if (activeSet[i].IsLocalData(targSlider)) {
 						std::unordered_map<ushort, Vector3>* diff = baseDiffData.GetDiffSet(targSlider);
 						osdDiffs.LoadSet(targSlider, targ, *diff);
-						osdNames[fileName.ToStdString()][targSlider] = targ;
+						osdNames[fileName][targSlider] = targ;
 					}
 				}
 			}
@@ -268,7 +273,7 @@ bool OutfitProject::SaveSliderData(const wxString& fileName, bool copyRef) {
 						std::unordered_map<ushort, Vector3> diff;
 						morpher.GetRawResultDiff(s, activeSet[i].name, diff);
 						osdDiffs.LoadSet(targSlider, targ, diff);
-						osdNames[fileName.ToStdString()][targSlider] = targ;
+						osdNames[fileName][targSlider] = targ;
 					}
 				}
 			}
@@ -600,7 +605,7 @@ void OutfitProject::SetSliderZapToggles(int index, const wxArrayString& toggles)
 
 	std::vector<std::string> zapToggles;
 	for (auto &s : toggles)
-		zapToggles.push_back(s.ToStdString());
+		zapToggles.push_back(s.ToUTF8().data());
 
 	activeSet[index].zapToggles = zapToggles;
 }
@@ -1583,8 +1588,11 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	else
 		ClearReference();
 
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+
 	NifFile refNif;
-	int error = refNif.Load(fileName);
+	int error = refNif.Load(file, fileName);
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
@@ -1654,8 +1662,11 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
 	std::string inMeshFile = activeSet.GetInputFileName();
 
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, inMeshFile, std::ios::in | std::ios::binary);
+
 	NifFile refNif;
-	int error = refNif.Load(inMeshFile);
+	int error = refNif.Load(file, inMeshFile);
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
@@ -1806,17 +1817,17 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 	morpher.LoadResultDiffs(activeSet);
 
 	wxString rest;
-	mFileName = fileName;
+	mFileName = wxString::FromUTF8(fileName);
 	if (mFileName.EndsWith(".xml", &rest))
 		mFileName = rest.Append(".osp");
 
-	mOutfitName = sliderSetName;
-	mDataDir = activeSet.GetDefaultDataFolder();
-	mBaseFile = activeSet.GetInputFileName();
+	mOutfitName = wxString::FromUTF8(sliderSetName);
+	mDataDir = wxString::FromUTF8(activeSet.GetDefaultDataFolder());
+	mBaseFile = wxString::FromUTF8(activeSet.GetInputFileName());
 	mBaseFile = mBaseFile.AfterLast('\\');
 
-	mGamePath = activeSet.GetOutputPath();
-	mGameFile = activeSet.GetOutputFile();
+	mGamePath = wxString::FromUTF8(activeSet.GetOutputPath());
+	mGameFile = wxString::FromUTF8(activeSet.GetOutputFile());
 	mCopyRef = true;
 	mGenWeights = activeSet.GenWeights();
 
@@ -1974,8 +1985,11 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		}
 	}
 
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+
 	NifFile nif;
-	int error = nif.Load(fileName);
+	int error = nif.Load(file, fileName);
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
@@ -2088,7 +2102,11 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 
 	clone.SetShapeOrder(owner->GetShapeList());
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
-	return clone.Save(fileName);
+
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
+
+	return clone.Save(file);
 }
 
 
@@ -2104,7 +2122,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 
 		wxArrayInt sel = clothDataChoice.GetSelections();
 		for (int i = 0; i < sel.Count(); i++) {
-			std::string selString = clothFileNames[sel[i]].ToStdString();
+			std::string selString = clothFileNames[sel[i]].ToUTF8();
 			if (!selString.empty()) {
 				auto clothBlock = clothData[selString]->Clone();
 				int id = nif.GetHeader().AddBlock(clothBlock);
@@ -2136,7 +2154,11 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 		clone.UpdateSkinPartitions(s);
 
 	clone.GetHeader().SetExportInfo("Exported using Outfit Studio.");
-	return clone.Save(fileName);
+
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
+
+	return clone.Save(file);
 }
 
 int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& shapeName, const std::string& mergeShape) {

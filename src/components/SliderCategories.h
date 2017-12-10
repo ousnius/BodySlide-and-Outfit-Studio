@@ -119,5 +119,5 @@ public:
 	int UpdateCategory(SliderCategory& inCategory);
 
 	// Writes the XML file using the internal fileName (use Rename() to change the name).
-	int Save();
+	bool Save();
 };

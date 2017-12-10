@@ -5,9 +5,11 @@ See the included LICENSE file
 */
 
 #include "TriFile.h"
+#include "../utils/PlatformUtil.h"
 
 bool TriFile::Read(const std::string& fileName) {
-	std::ifstream triFile(fileName.c_str(), std::ios_base::binary);
+	std::fstream triFile;
+	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::in | std::ios::binary);
 
 	if (triFile.is_open()) {
 		bool packed = false;
@@ -101,7 +103,8 @@ bool TriFile::Read(const std::string& fileName) {
 }
 
 bool TriFile::Write(const std::string& fileName) {
-	std::ofstream triFile(fileName.c_str(), std::ios_base::binary);
+	std::fstream triFile;
+	PlatformUtil::OpenFileStream(triFile, fileName, std::ios::out | std::ios::binary);
 
 	if (triFile.is_open()) {
 		uint hdr = 'TRIP';

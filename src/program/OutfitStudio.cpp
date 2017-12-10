@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "OutfitStudio.h"
 #include "BodySlideApp.h"
 #include "ShapeProperties.h"
+#include "../utils/PlatformUtil.h"
 
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
@@ -844,7 +845,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	GetMenuBar()->Enable(XRCID("fileSave"), false);
 
-	std::string outfitName = XRCCTRL(wiz, "npOutfitName", wxTextCtrl)->GetValue();
+	std::string outfitName = XRCCTRL(wiz, "npOutfitName", wxTextCtrl)->GetValue().ToUTF8();
 
 	wxLogMessage("Creating project '%s'...", outfitName);
 	StartProgress(wxString::Format(_("Creating project '%s'..."), outfitName));
@@ -871,7 +872,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		wxString refTemplate = XRCCTRL(wiz, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		std::string tmplName = refTemplate.ToStdString();
+		std::string tmplName = refTemplate.ToUTF8();
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
 		if (tmpl != refTemplates.end())
 			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape);
@@ -887,12 +888,12 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToStdString(),
-				sliderSetName.ToStdString(), false, refShape.ToStdString());
+			error = project->LoadReference(fileName.ToUTF8().data(),
+				sliderSetName.ToUTF8().data(), false, refShape.ToUTF8().data());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
-			error = project->LoadReferenceNif(fileName.ToStdString(), refShape.ToStdString());
+			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data());
 		}
 	}
 
@@ -909,11 +910,11 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		wxString fileName = XRCCTRL(wiz, "npWorkFilename", wxFilePickerCtrl)->GetPath();
 		wxLogMessage("Loading outfit '%s' from '%s'...", outfitName, fileName);
 		if (fileName.Lower().EndsWith(".nif"))
-			error = project->ImportNIF(fileName.ToStdString(), true, outfitName);
+			error = project->ImportNIF(fileName.ToUTF8().data(), true, outfitName);
 		else if (fileName.Lower().EndsWith(".obj"))
-			error = project->ImportOBJ(fileName.ToStdString(), outfitName);
+			error = project->ImportOBJ(fileName.ToUTF8().data(), outfitName);
 		else if (fileName.Lower().EndsWith(".fbx"))
-			error = project->ImportFBX(fileName.ToStdString(), outfitName);
+			error = project->ImportFBX(fileName.ToUTF8().data(), outfitName);
 	}
 
 	if (error) {
@@ -926,7 +927,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(80, _("Creating outfit..."));
 
 	if (XRCCTRL(wiz, "npTexAuto", wxRadioButton)->GetValue() == false)
-		project->SetTextures({ XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString() });
+		project->SetTextures({ XRCCTRL(wiz, "npTexFilename", wxFilePickerCtrl)->GetPath().ToUTF8().data() });
 	else
 		project->SetTextures();
 
@@ -944,7 +945,7 @@ void OutfitStudio::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 	ApplySliders();
 
 	if (!outfitName.empty())
-		SetTitle("Outfit Studio - " + outfitName);
+		SetTitle("Outfit Studio - " + wxString::FromUTF8(outfitName));
 
 	wxLogMessage("Project created.");
 	UpdateProgress(100, _("Finished"));
@@ -957,7 +958,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	if (loadProjectDialog.ShowModal() == wxID_CANCEL)
 		return;
 
-	std::string file = loadProjectDialog.GetPath();
+	std::string file = loadProjectDialog.GetPath().ToUTF8();
 	std::vector<std::string> setnames;
 	SliderSetFile InFile(file);
 	if (InFile.fail()) {
@@ -969,16 +970,16 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	InFile.GetSetNames(setnames);
 	wxArrayString choices;
 	for (auto &s : setnames)
-		choices.Add(s);
+		choices.Add(wxString::FromUTF8(s));
 
 	std::string outfit;
 	if (choices.GetCount() > 1) {
-		outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this);
+		outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8();
 		if (outfit.empty())
 			return;
 	}
 	else if (choices.GetCount() == 1)
-		outfit = choices.front();
+		outfit = choices.front().ToUTF8();
 	else
 		return;
 
@@ -1049,7 +1050,7 @@ void OutfitStudio::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(99, _("Applying slider effects..."));
 	ApplySliders();
 
-	SetTitle("Outfit Studio - " + project->OutfitName());
+	SetTitle("Outfit Studio - " + wxString::FromUTF8(project->OutfitName()));
 
 	wxLogMessage("Project loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -1092,7 +1093,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		wxString refTemplate = XRCCTRL(dlg, "npTemplateChoice", wxChoice)->GetStringSelection();
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
-		std::string tmplName = refTemplate.ToStdString();
+		std::string tmplName = refTemplate.ToUTF8();
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
 		if (tmpl != refTemplates.end())
 			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape, mergeSliders);
@@ -1108,12 +1109,12 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 			wxLogMessage("Loading reference '%s' from set '%s' of file '%s'...",
 				refShape, sliderSetName, fileName);
 
-			error = project->LoadReference(fileName.ToStdString(),
-				sliderSetName.ToStdString(), mergeSliders, refShape.ToStdString());
+			error = project->LoadReference(fileName.ToUTF8().data(),
+				sliderSetName.ToUTF8().data(), mergeSliders, refShape.ToUTF8().data());
 		}
 		else if (fileName.EndsWith(".nif")) {
 			wxLogMessage("Loading reference '%s' from '%s'...", refShape, fileName);
-			error = project->LoadReferenceNif(fileName.ToStdString(), refShape.ToStdString(), mergeSliders);
+			error = project->LoadReferenceNif(fileName.ToUTF8().data(), refShape.ToUTF8().data(), mergeSliders);
 		}
 	}
 	else
@@ -1184,14 +1185,14 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 		wxString fileName = XRCCTRL(dlg, "npWorkFilename", wxFilePickerCtrl)->GetPath();
 		if (fileName.Lower().EndsWith(".nif")) {
 			if (!keepShapes)
-				ret = project->ImportNIF(fileName.ToStdString(), true, outfitName);
+				ret = project->ImportNIF(fileName.ToUTF8().data(), true, outfitName);
 			else
-				ret = project->ImportNIF(fileName.ToStdString(), false);
+				ret = project->ImportNIF(fileName.ToUTF8().data(), false);
 		}
 		else if (fileName.Lower().EndsWith(".obj"))
-			ret = project->ImportOBJ(fileName.ToStdString(), outfitName);
+			ret = project->ImportOBJ(fileName.ToUTF8().data(), outfitName);
 		else if (fileName.Lower().EndsWith(".fbx"))
-			ret = project->ImportFBX(fileName.ToStdString(), outfitName);
+			ret = project->ImportFBX(fileName.ToUTF8().data(), outfitName);
 	}
 	else
 		project->ClearOutfit();
@@ -1205,7 +1206,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	if (XRCCTRL(dlg, "npTexAuto", wxRadioButton)->GetValue() == true)
 		project->SetTextures();
 	else {
-		auto texVec = { XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToStdString() };
+		std::vector<std::string> texVec = { XRCCTRL(dlg, "npTexFilename", wxFilePickerCtrl)->GetPath().ToUTF8().data() };
 		project->SetTextures(texVec);
 	}
 
@@ -1213,7 +1214,7 @@ void OutfitStudio::OnLoadOutfit(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(50, _("Creating outfit..."));
 	RefreshGUIFromProj();
 
-	SetTitle("Outfit Studio - " + project->OutfitName());
+	SetTitle("Outfit Studio - " + wxString::FromUTF8(project->OutfitName()));
 
 	wxLogMessage("Outfit loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -1302,9 +1303,9 @@ void OutfitStudio::ClearProject() {
 void OutfitStudio::RenameProject(const std::string& projectName) {
 	project->outfitName = projectName;
 	if (outfitRoot.IsOk())
-		outfitShapes->SetItemText(outfitRoot, projectName);
+		outfitShapes->SetItemText(outfitRoot, wxString::FromUTF8(projectName));
 
-	SetTitle("Outfit Studio - " + projectName);
+	SetTitle("Outfit Studio - " + wxString::FromUTF8(projectName));
 }
 
 void OutfitStudio::RefreshGUIFromProj() {
@@ -1371,7 +1372,7 @@ void OutfitStudio::WorkingGUIFromProj() {
 		if (shapes.size() == 1 && project->IsBaseShape(shapes.front()))
 			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
 		else
-			outfitRoot = outfitShapes->AppendItem(shapesRoot, project->OutfitName());
+			outfitRoot = outfitShapes->AppendItem(shapesRoot, wxString::FromUTF8(project->OutfitName()));
 	}
 
 	for (auto &shape : shapes) {
@@ -1413,13 +1414,14 @@ void OutfitStudio::UpdateMeshesFromSet() {
 
 void OutfitStudio::OnSSSNameCopy(wxCommandEvent& event) {
 	wxWindow* win = ((wxButton*)event.GetEventObject())->GetParent();
-	std::string copyStr = XRCCTRL(*win, "sssName", wxTextCtrl)->GetValue();
+	std::string copyStr = XRCCTRL(*win, "sssName", wxTextCtrl)->GetValue().ToUTF8();
 
 	project->ReplaceForbidden(copyStr);
 
-	std::string defSliderSetFile = copyStr + ".osp";
-	std::string defShapeDataDir = copyStr;
-	std::string defOutputFile = copyStr + ".nif";
+	wxString defStr = wxString::FromUTF8(copyStr);
+	wxString defSliderSetFile = defStr + ".osp";
+	wxString defShapeDataDir = defStr;
+	wxString defOutputFile = defStr + ".nif";
 
 	wxFilePickerCtrl* fp = (wxFilePickerCtrl*)win->FindWindowByName("sssSliderSetFile");
 	fp->SetPath(defSliderSetFile);
@@ -1458,8 +1460,8 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 				return;
 		}
 
-		wxLogMessage("Saving project '%s'...", project->OutfitName());
-		StartProgress(wxString::Format(_("Saving project '%s'..."), project->OutfitName()));
+		wxLogMessage("Saving project '%s'...", wxString::FromUTF8(project->OutfitName()));
+		StartProgress(wxString::Format(_("Saving project '%s'..."), wxString::FromUTF8(project->OutfitName())));
 		project->ClearBoneScale();
 
 		std::vector<mesh*> shapeMeshes;
@@ -1502,15 +1504,17 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		XRCCTRL(dlg, "sssGenWeightsTrue", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsTrue, this);
 		XRCCTRL(dlg, "sssGenWeightsFalse", wxRadioButton)->Bind(wxEVT_RADIOBUTTON, &OutfitStudio::OnSSSGenWeightsFalse, this);
 
-		std::string sssName;
+		std::string outName;
 		if (!project->mOutfitName.empty())
-			sssName = project->mOutfitName;
+			outName = project->mOutfitName.ToUTF8();
 		else if (!project->OutfitName().empty())
-			sssName = project->OutfitName();
+			outName = project->OutfitName();
 		else
-			sssName = "New Outfit";
+			outName = "New Outfit";
 
-		project->ReplaceForbidden(sssName);
+		project->ReplaceForbidden(outName);
+
+		wxString sssName = wxString::FromUTF8(outName);
 
 		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
 		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory("SliderSets");
@@ -1641,7 +1645,7 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	if (error.empty()) {
 		GetMenuBar()->Enable(XRCID("fileSave"), true);
-		RenameProject(strOutfitName.ToStdString());
+		RenameProject(strOutfitName.ToUTF8().data());
 
 		static_cast<BodySlideApp*>(wxApp::GetInstance())->RefreshOutfitList();
 	}
@@ -1699,7 +1703,7 @@ void OutfitStudio::OnImportNIF(wxCommandEvent& WXUNUSED(event)) {
 	UpdateProgress(1, _("Importing NIF file..."));
 
 	for (auto &fileName : fileNames)
-		project->ImportNIF(fileName.ToStdString(), false);
+		project->ImportNIF(fileName.ToUTF8().data(), false);
 
 	UpdateProgress(60, _("Refreshing GUI..."));
 	project->SetTextures();
@@ -1720,8 +1724,8 @@ void OutfitStudio::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 			return;
 	}
 
-	std::string fileName = wxFileSelector(_("Export outfit NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fileName.empty())
+	wxString fileName = wxFileSelector(_("Export outfit NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.IsEmpty())
 		return;
 
 	wxLogMessage("Exporting project to NIF file '%s'...", fileName);
@@ -1732,7 +1736,7 @@ void OutfitStudio::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 		if (!project->IsBaseShape(s))
 			shapeMeshes.push_back(glView->GetMesh(s));
 
-	int error = project->ExportNIF(fileName, shapeMeshes);
+	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
@@ -1755,8 +1759,8 @@ void OutfitStudio::OnExportNIFWithRef(wxCommandEvent& event) {
 			return;
 	}
 
-	std::string fileName = wxFileSelector(_("Export project NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fileName.empty())
+	wxString fileName = wxFileSelector(_("Export project NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.IsEmpty())
 		return;
 
 	wxLogMessage("Exporting project with reference to NIF file '%s'...", fileName);
@@ -1766,7 +1770,7 @@ void OutfitStudio::OnExportNIFWithRef(wxCommandEvent& event) {
 	for (auto &s : project->GetWorkNif()->GetShapeNames())
 		shapeMeshes.push_back(glView->GetMesh(s));
 
-	int error = project->ExportNIF(fileName, shapeMeshes, true);
+	int error = project->ExportNIF(fileName.ToUTF8().data(), shapeMeshes, true);
 	if (error) {
 		wxLogError("Failed to save NIF file '%s' with reference!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to save NIF file '%s' with reference!"), fileName), _("Export Error"), wxICON_ERROR);
@@ -1786,8 +1790,8 @@ void OutfitStudio::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 			return;
 	}
 
-	std::string fileName = wxFileSelector(_("Export selected shapes to NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fileName.empty())
+	wxString fileName = wxFileSelector(_("Export selected shapes to NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.IsEmpty())
 		return;
 
 	std::vector<std::string> shapes;
@@ -1797,7 +1801,7 @@ void OutfitStudio::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
 	project->ClearBoneScale();
 
-	if (project->ExportShapeNIF(fileName, shapes)) {
+	if (project->ExportShapeNIF(fileName.ToUTF8().data(), shapes)) {
 		wxLogError("Failed to export selected shapes to NIF file '%s'!", fileName);
 		wxMessageBox(_("Failed to export selected shapes to NIF file!"), _("Error"), wxICON_ERROR);
 	}
@@ -1816,9 +1820,9 @@ void OutfitStudio::OnImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 
 		int ret;
 		if (activeItem)
-			ret = project->ImportOBJ(fileName.ToStdString(), project->OutfitName(), activeItem->shapeName);
+			ret = project->ImportOBJ(fileName.ToUTF8().data(), project->OutfitName(), activeItem->shapeName);
 		else
-			ret = project->ImportOBJ(fileName.ToStdString(), project->OutfitName());
+			ret = project->ImportOBJ(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
 			wxLogMessage("Updated shape '%s' from OBJ file '%s'.", activeItem->shapeName, fileName);
@@ -1833,14 +1837,14 @@ void OutfitStudio::OnExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid())
 		return;
 
-	std::string fileName = wxFileSelector(_("Export project as an .obj file"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fileName.empty())
+	wxString fileName = wxFileSelector(_("Export project as an .obj file"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.IsEmpty())
 		return;
 
 	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
 	project->ClearBoneScale();
 
-	if (project->ExportOBJ(fileName, project->GetWorkNif()->GetShapeNames(), Vector3(0.1f, 0.1f, 0.1f))) {
+	if (project->ExportOBJ(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapeNames(), Vector3(0.1f, 0.1f, 0.1f))) {
 		wxLogError("Failed to export OBJ file '%s'!", fileName);
 		wxMessageBox(_("Failed to export OBJ file!"), _("Export Error"), wxICON_ERROR);
 	}
@@ -1853,8 +1857,8 @@ void OutfitStudio::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (selectedItems.size() > 1) {
-		std::string fileName = wxFileSelector(_("Export selected shapes as an .obj file"), wxEmptyString, wxEmptyString, ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fileName.empty())
+		wxString fileName = wxFileSelector(_("Export selected shapes as an .obj file"), wxEmptyString, wxEmptyString, ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.IsEmpty())
 			return;
 
 		wxLogMessage("Exporting selected shapes as OBJ file to '%s'.", fileName);
@@ -1865,21 +1869,21 @@ void OutfitStudio::OnExportShapeOBJ(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems)
 			shapes.push_back(i->shapeName);
 
-		if (project->ExportOBJ(fileName, shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+		if (project->ExportOBJ(fileName.ToUTF8().data(), shapes, Vector3(0.1f, 0.1f, 0.1f))) {
 			wxLogError("Failed to export OBJ file '%s'!", fileName);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}
 	}
 	else {
-		std::string fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->shapeName + ".obj"), ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fileName.empty())
+		wxString fileName = wxFileSelector(_("Export shape as an .obj file"), wxEmptyString, wxString(activeItem->shapeName + ".obj"), ".obj", "OBJ Files (*.obj)|*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.IsEmpty())
 			return;
 
 		wxLogMessage("Exporting shape '%s' as OBJ file to '%s'.", activeItem->shapeName, fileName);
 		project->ClearBoneScale();
 
 		std::vector<std::string> shapes = { activeItem->shapeName };
-		if (project->ExportOBJ(fileName, shapes, Vector3(0.1f, 0.1f, 0.1f))) {
+		if (project->ExportOBJ(fileName.ToUTF8().data(), shapes, Vector3(0.1f, 0.1f, 0.1f))) {
 			wxLogError("Failed to export OBJ file '%s'!", fileName);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}
@@ -1899,9 +1903,9 @@ void OutfitStudio::OnImportFBX(wxCommandEvent& WXUNUSED(event)) {
 
 		int ret;
 		if (activeItem)
-			ret = project->ImportFBX(fileName.ToStdString(), project->OutfitName(), activeItem->shapeName);
+			ret = project->ImportFBX(fileName.ToUTF8().data(), project->OutfitName(), activeItem->shapeName);
 		else
-			ret = project->ImportFBX(fileName.ToStdString(), project->OutfitName());
+			ret = project->ImportFBX(fileName.ToUTF8().data(), project->OutfitName());
 
 		if (ret == 101)
 			wxLogMessage("Updated shape '%s' from FBX file '%s'.", activeItem->shapeName, fileName);
@@ -1923,14 +1927,14 @@ void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 			return;
 	}
 
-	std::string fileName = wxFileSelector(_("Export project as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fileName.empty())
+	wxString fileName = wxFileSelector(_("Export project as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fileName.IsEmpty())
 		return;
 
 	wxLogMessage("Exporting project to OBJ file '%s'...", fileName);
 	project->ClearBoneScale();
 
-	if (!project->ExportFBX(fileName, project->GetWorkNif()->GetShapeNames())) {
+	if (!project->ExportFBX(fileName.ToUTF8().data(), project->GetWorkNif()->GetShapeNames())) {
 		wxLogError("Failed to export FBX file '%s'!", fileName);
 		wxMessageBox(_("Failed to export FBX file!"), _("Export Error"), wxICON_ERROR);
 	}
@@ -1943,8 +1947,8 @@ void OutfitStudio::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (selectedItems.size() > 1) {
-		std::string fileName = wxFileSelector(_("Export selected shapes as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fileName.empty())
+		wxString fileName = wxFileSelector(_("Export selected shapes as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.IsEmpty())
 			return;
 
 		wxLogMessage("Exporting selected shapes as FBX file to '%s'.", fileName);
@@ -1955,21 +1959,21 @@ void OutfitStudio::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 		for (auto &i : selectedItems)
 			shapes.push_back(i->shapeName);
 
-		if (!project->ExportFBX(fileName, shapes)) {
+		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes)) {
 			wxLogError("Failed to export FBX file '%s'!", fileName);
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
 	}
 	else {
-		std::string fileName = wxFileSelector(_("Export shape as an .fbx file"), wxEmptyString, wxString(activeItem->shapeName + ".fbx"), ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fileName.empty())
+		wxString fileName = wxFileSelector(_("Export shape as an .fbx file"), wxEmptyString, wxString(activeItem->shapeName + ".fbx"), ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.IsEmpty())
 			return;
 
 		wxLogMessage("Exporting shape '%s' as FBX file to '%s'.", activeItem->shapeName, fileName);
 		project->ClearBoneScale();
 
 		std::vector<std::string> shapes = { activeItem->shapeName };
-		if (!project->ExportFBX(fileName, shapes)) {
+		if (!project->ExportFBX(fileName.ToUTF8().data(), shapes)) {
 			wxLogError("Failed to export FBX file '%s'!", fileName);
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
@@ -1977,18 +1981,18 @@ void OutfitStudio::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudio::OnImportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
-	std::string fileName = wxFileSelector(_("Import physics data to project"), wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_FILE_MUST_EXIST, this);
-	if (fileName.empty())
+	wxString fileName = wxFileSelector(_("Import physics data to project"), wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_FILE_MUST_EXIST, this);
+	if (fileName.IsEmpty())
 		return;
 
 	auto physicsBlock = new BSClothExtraData();
-	if (!physicsBlock->FromHKX(fileName)) {
+	if (!physicsBlock->FromHKX(fileName.ToUTF8().data())) {
 		wxLogError("Failed to import physics data file '%s'!", fileName);
 		wxMessageBox(wxString::Format(_("Failed to import physics data file '%s'!"), fileName), _("Import Error"), wxICON_ERROR);
 	}
 
 	auto& physicsData = project->GetClothData();
-	physicsData[fileName] = physicsBlock;
+	physicsData[fileName.ToUTF8().data()] = physicsBlock;
 }
 
 void OutfitStudio::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
@@ -2007,14 +2011,14 @@ void OutfitStudio::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 		return;
 
 	int sel = physicsDataChoice.GetSelection();
-	std::string selString = fileNames[sel].ToStdString();
+	std::string selString = fileNames[sel].ToUTF8();
 
 	if (!selString.empty()) {
-		std::string fileName = wxFileSelector(_("Export physics data"), wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fileName.empty())
+		wxString fileName = wxFileSelector(_("Export physics data"), wxEmptyString, wxEmptyString, ".hkx", "*.hkx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fileName.IsEmpty())
 			return;
 
-		if (!physicsData[selString]->ToHKX(fileName)) {
+		if (!physicsData[selString]->ToHKX(fileName.ToUTF8().data())) {
 			wxLogError("Failed to save physics data file '%s'!", fileName);
 			wxMessageBox(wxString::Format(_("Failed to save physics data file '%s'!"), fileName), _("Export Error"), wxICON_ERROR);
 		}
@@ -3598,7 +3602,7 @@ void OutfitStudio::OnClickSliderButton(wxCommandEvent& event) {
 		return;
 
 	wxString buttonName = btn->GetName();
-	std::string clickedName = buttonName.BeforeLast('|').ToStdString();
+	std::string clickedName = buttonName.BeforeLast('|').ToUTF8();
 	if (clickedName.empty()) {
 		event.Skip();
 		return;
@@ -3636,7 +3640,7 @@ void OutfitStudio::OnReadoutChange(wxCommandEvent& event){
 	if (!sn.EndsWith("|readout", &sn))
 		return;
 
-	std::string sliderName = sn.ToStdString();
+	std::string sliderName = sn.ToUTF8();
 
 	double v;
 	wxString val = w->GetValue();
@@ -4201,12 +4205,12 @@ void OutfitStudio::OnSliderImportBSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string fn = wxFileSelector(_("Import .bsd slider data"), wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
+	wxString fn = wxFileSelector(_("Import .bsd slider data"), wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
 		return;
 
 	wxLogMessage("Importing slider to '%s' for shape '%s' from BSD file '%s'...", activeSlider, activeItem->shapeName, fn);
-	project->SetSliderFromBSD(activeSlider, activeItem->shapeName, fn);
+	project->SetSliderFromBSD(activeSlider, activeItem->shapeName, fn.ToUTF8().data());
 	ApplySliders();
 }
 
@@ -4220,12 +4224,12 @@ void OutfitStudio::OnSliderImportOBJ(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string fn = wxFileSelector(_("Import .obj file for slider calculation"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
+	wxString fn = wxFileSelector(_("Import .obj file for slider calculation"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
 		return;
 
 	wxLogMessage("Importing slider to '%s' for shape '%s' from OBJ file '%s'...", activeSlider, activeItem->shapeName, fn);
-	if (!project->SetSliderFromOBJ(activeSlider, activeItem->shapeName, fn)) {
+	if (!project->SetSliderFromOBJ(activeSlider, activeItem->shapeName, fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
@@ -4240,8 +4244,8 @@ void OutfitStudio::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string fn = wxFileSelector(_("Import .osd file"), wxEmptyString, wxEmptyString, ".osd", "*.osd", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
+	wxString fn = wxFileSelector(_("Import .osd file"), wxEmptyString, wxEmptyString, ".osd", "*.osd", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
 		return;
 
 	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("OSD Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
@@ -4251,7 +4255,7 @@ void OutfitStudio::OnSliderImportOSD(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Importing morphs from OSD file '%s'...", fn);
 
 	OSDataFile osd;
-	if (!osd.Read(fn)) {
+	if (!osd.Read(fn.ToUTF8().data())) {
 		wxLogError("Failed to import OSD file '%s'!", fn);
 		wxMessageBox(_("Failed to import OSD file!"), _("Error"), wxICON_ERROR);
 		return;
@@ -4326,8 +4330,8 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string fn = wxFileSelector(_("Import .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
+	wxString fn = wxFileSelector(_("Import .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
 		return;
 
 	int result = wxMessageBox(_("This will delete all loaded sliders. Are you sure?"), _("TRI Import"), wxYES_NO | wxCANCEL | wxICON_WARNING, this);
@@ -4337,7 +4341,7 @@ void OutfitStudio::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 	wxLogMessage("Importing morphs from TRI file '%s'...", fn);
 
 	TriFile tri;
-	if (!tri.Read(fn)) {
+	if (!tri.Read(fn.ToUTF8().data())) {
 		wxLogError("Failed to load TRI file '%s'!", fn);
 		wxMessageBox(_("Failed to load TRI file!"), _("Error"), wxICON_ERROR);
 		return;
@@ -4412,12 +4416,12 @@ void OutfitStudio::OnSliderImportFBX(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string fn = wxFileSelector(_("Import .fbx file for slider calculation"), wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
-	if (fn.empty())
+	wxString fn = wxFileSelector(_("Import .fbx file for slider calculation"), wxEmptyString, wxEmptyString, ".fbx", "*.fbx", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
 		return;
 
 	wxLogMessage("Importing slider to '%s' for shape '%s' from FBX file '%s'...", activeSlider, activeItem->shapeName, fn);
-	if (!project->SetSliderFromFBX(activeSlider, activeItem->shapeName, fn)) {
+	if (!project->SetSliderFromFBX(activeSlider, activeItem->shapeName, fn.ToUTF8().data())) {
 		wxLogError("Vertex count of .obj file mesh does not match currently selected shape!");
 		wxMessageBox(_("Vertex count of .obj file mesh does not match currently selected shape!"), _("Error"), wxICON_ERROR);
 		return;
@@ -4437,23 +4441,23 @@ void OutfitStudio::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (selectedItems.size() > 1) {
-		std::string dir = wxDirSelector(_("Export .bsd slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
-		if (dir.empty())
+		wxString dir = wxDirSelector(_("Export .bsd slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		if (dir.IsEmpty())
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = dir + "\\" + i->shapeName + "_" + activeSlider + ".bsd";
+			std::string targetFile = std::string(dir.ToUTF8()) + "\\" + i->shapeName + "_" + activeSlider + ".bsd";
 			wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->shapeName, targetFile);
 			project->SaveSliderBSD(activeSlider, i->shapeName, targetFile);
 		}
 	}
 	else {
-		std::string fn = wxFileSelector(_("Export .bsd slider data"), wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fn.empty())
+		wxString fn = wxFileSelector(_("Export .bsd slider data"), wxEmptyString, wxEmptyString, ".bsd", "*.bsd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fn.IsEmpty())
 			return;
 
 		wxLogMessage("Exporting BSD slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->shapeName, fn);
-		project->SaveSliderBSD(activeSlider, activeItem->shapeName, fn);
+		project->SaveSliderBSD(activeSlider, activeItem->shapeName, fn.ToUTF8().data());
 	}
 
 	ApplySliders();
@@ -4470,23 +4474,23 @@ void OutfitStudio::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (selectedItems.size() > 1) {
-		std::string dir = wxDirSelector(_("Export .obj slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
-		if (dir.empty())
+		wxString dir = wxDirSelector(_("Export .obj slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		if (dir.IsEmpty())
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = dir + "\\" + i->shapeName + "_" + activeSlider + ".obj";
+			std::string targetFile = std::string(dir.ToUTF8()) + "\\" + i->shapeName + "_" + activeSlider + ".obj";
 			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->shapeName, targetFile);
 			project->SaveSliderOBJ(activeSlider, i->shapeName, targetFile);
 		}
 	}
 	else {
-		std::string fn = wxFileSelector(_("Export .obj slider data"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-		if (fn.empty())
+		wxString fn = wxFileSelector(_("Export .obj slider data"), wxEmptyString, wxEmptyString, ".obj", "*.obj", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+		if (fn.IsEmpty())
 			return;
 
 		wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, activeItem->shapeName, fn);
-		if (project->SaveSliderOBJ(activeSlider, activeItem->shapeName, fn)) {
+		if (project->SaveSliderOBJ(activeSlider, activeItem->shapeName, fn.ToUTF8().data())) {
 			wxLogError("Failed to export OBJ file '%s'!", fn);
 			wxMessageBox(_("Failed to export OBJ file!"), _("Error"), wxICON_ERROR);
 		}
@@ -4501,12 +4505,12 @@ void OutfitStudio::OnSliderExportOSD(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string fn = wxFileSelector(_("Export .osd file"), wxEmptyString, wxEmptyString, ".osd", "*.osd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fn.empty())
+	wxString fn = wxFileSelector(_("Export .osd file"), wxEmptyString, wxEmptyString, ".osd", "*.osd", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fn.IsEmpty())
 		return;
 
 	wxLogMessage("Exporting OSD file to '%s'...", fn);
-	if (!project->SaveSliderData(fn)) {
+	if (!project->SaveSliderData(fn.ToUTF8().data())) {
 		wxLogError("Failed to export OSD file to '%s'!", fn);
 		wxMessageBox(_("Failed to export OSD file!"), _("Error"), wxICON_ERROR);
 		return;
@@ -4519,12 +4523,12 @@ void OutfitStudio::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string fn = wxFileSelector(_("Export .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
-	if (fn.empty())
+	wxString fn = wxFileSelector(_("Export .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fn.IsEmpty())
 		return;
 
 	wxLogMessage("Exporting TRI morphs to '%s'...", fn);
-	if (!project->WriteMorphTRI(fn)) {
+	if (!project->WriteMorphTRI(fn.ToUTF8().data())) {
 		wxLogError("Failed to export TRI file to '%s'!", fn);
 		wxMessageBox(_("Failed to export TRI file!"), _("Error"), wxICON_ERROR);
 		return;
@@ -4778,7 +4782,7 @@ void OutfitStudio::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			XRCCTRL(dlg, "edValHi", wxTextCtrl)->GetValue().ToLong(&hiVal);
 			project->SetSliderDefault(curSlider, hiVal, true);
 
-			std::string sliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl)->GetValue().ToStdString();
+			std::string sliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl)->GetValue().ToUTF8();
 			if (activeSlider != sliderName) {
 				project->SetSliderName(curSlider, sliderName);
 				SliderDisplay* d = sliderDisplays[activeSlider];
@@ -5926,8 +5930,11 @@ void OutfitStudio::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {
 		}
 	}
 	else if (fn.rfind(".nif") != std::string::npos) {
+		std::fstream file;
+		PlatformUtil::OpenFileStream(file, fn, std::ios::in | std::ios::binary);
+
 		NifFile checkFile;
-		if (checkFile.Load(fn))
+		if (checkFile.Load(file, fn))
 			return;
 
 		for (auto &rsn : checkFile.GetShapeNames())
@@ -7114,7 +7121,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			if (inputFile.Lower().EndsWith(".nif")) {
 				owner->StartProgress(_("Adding NIF file..."));
 				owner->UpdateProgress(1, _("Adding NIF file..."));
-				owner->project->ImportNIF(inputFile.ToStdString(), false);
+				owner->project->ImportNIF(inputFile.ToUTF8().data(), false);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
@@ -7126,7 +7133,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			else if (inputFile.Lower().EndsWith(".obj")) {
 				owner->StartProgress("Adding OBJ file...");
 				owner->UpdateProgress(1, _("Adding OBJ file..."));
-				owner->project->ImportOBJ(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
+				owner->project->ImportOBJ(inputFile.ToUTF8().data(), dataName.ToUTF8().data(), mergeShapeName);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
@@ -7138,7 +7145,7 @@ bool DnDFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames) {
 			else if (inputFile.Lower().EndsWith(".fbx")) {
 				owner->StartProgress(_("Adding FBX file..."));
 				owner->UpdateProgress(1, _("Adding FBX file..."));
-				owner->project->ImportFBX(inputFile.ToStdString(), dataName.ToStdString(), mergeShapeName);
+				owner->project->ImportFBX(inputFile.ToUTF8().data(), dataName.ToUTF8().data(), mergeShapeName);
 				owner->project->SetTextures();
 
 				owner->UpdateProgress(60, _("Refreshing GUI..."));
@@ -7175,7 +7182,7 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 				}
 
 				if (lastResult == wxDragCopy) {
-					targetSlider = owner->NewSlider(dataName.ToStdString(), isMultiple);
+					targetSlider = owner->NewSlider(dataName.ToUTF8().data(), isMultiple);
 				}
 
 				if (targetSlider.empty())
@@ -7185,11 +7192,11 @@ bool DnDSliderFile::OnDropFiles(wxCoord, wxCoord, const wxArrayString& fileNames
 				owner->UpdateProgress(1, _("Loading slider file..."));
 
 				if (isBSD)
-					owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+					owner->project->SetSliderFromBSD(targetSlider, owner->activeItem->shapeName, inputFile.ToUTF8().data());
 				else if (isOBJ)
-					owner->project->SetSliderFromOBJ(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+					owner->project->SetSliderFromOBJ(targetSlider, owner->activeItem->shapeName, inputFile.ToUTF8().data());
 				else if (isFBX)
-					owner->project->SetSliderFromFBX(targetSlider, owner->activeItem->shapeName, inputFile.ToStdString());
+					owner->project->SetSliderFromFBX(targetSlider, owner->activeItem->shapeName, inputFile.ToUTF8().data());
 				else
 					return false;
 

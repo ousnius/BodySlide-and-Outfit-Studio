@@ -437,9 +437,13 @@ void NifFile::Clear() {
 }
 
 int NifFile::Load(const std::string& filename) {
+	std::fstream file(filename.c_str(), std::ios::in | std::ios::binary);
+	return Load(file, filename);
+}
+
+int NifFile::Load(std::fstream& file, const std::string& filename) {
 	Clear();
 
-	std::fstream file(filename.c_str(), std::ios::in | std::ios::binary);
 	if (file.is_open()) {
 		NiStream stream(&file, &hdr.GetVersion());
 		if (filename.rfind('\\') != std::string::npos)
@@ -481,7 +485,6 @@ int NifFile::Load(const std::string& filename) {
 		}
 
 		hdr.SetBlockReference(&blocks);
-		file.close();
 	}
 	else {
 		Clear();
@@ -1042,6 +1045,10 @@ int NifFile::CloneNamedNode(const std::string& nodeName, NifFile* srcNif) {
 
 int NifFile::Save(const std::string& filename, bool optimize, bool sortBlocks) {
 	std::fstream file(filename.c_str(), std::ios::out | std::ios::binary);
+	return Save(file, optimize, sortBlocks);
+}
+
+int NifFile::Save(std::fstream& file, bool optimize, bool sortBlocks) {
 	if (file.is_open()) {
 		NiStream stream(&file, &hdr.GetVersion());
 		FinalizeData();
@@ -1078,8 +1085,6 @@ int NifFile::Save(const std::string& filename, bool optimize, bool sortBlocks) {
 
 			hdr.ResetBlockSizeStreamPos();
 		}
-
-		file.close();
 	}
 	else
 		return 1;

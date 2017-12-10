@@ -317,5 +317,5 @@ public:
 	int DeleteSet(const std::string& setName);
 
 	// Writes the xml file using the internal fileName (use Rename() to change the name).
-	int Save();
+	bool Save();
 };

@@ -69,7 +69,7 @@ void PresetSaveDialog::FilterGroups(const std::string& filter) {
 }
 
 void PresetSaveDialog::FilterChanged(wxCommandEvent& event) {
-	std::string filter = event.GetString();
+	std::string filter = event.GetString().ToUTF8();
 	FilterGroups(filter);
 }
 
@@ -78,22 +78,22 @@ void PresetSaveDialog::CheckGroup(wxCommandEvent& event) {
 	wxCheckListBox* chk = (wxCheckListBox*)event.GetEventObject();
 	int item = event.GetInt();
 	if (chk->IsChecked(item)) {
-		name = event.GetString();
+		name = event.GetString().ToUTF8();
 		selectedGroups.insert(name);
 	}
 	else {
-		name = event.GetString();
+		name = event.GetString().ToUTF8();
 		selectedGroups.erase(name);
 	}
 }
 
 void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
-	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue();
+	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue().ToUTF8();
 	std::string presetFile = outPresetName + ".xml";
 
-	wxFileDialog savePresetDialog(this, "Choose a preset file", "SliderPresets", presetFile, "Preset Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog savePresetDialog(this, "Choose a preset file", "SliderPresets", wxString::FromUTF8(presetFile), "Preset Files (*.xml)|*.xml", wxFD_SAVE);
 	if (savePresetDialog.ShowModal() == wxID_OK) {
-		outFileName = savePresetDialog.GetPath();
+		outFileName = savePresetDialog.GetPath().ToUTF8();
 		outGroups.assign(selectedGroups.begin(), selectedGroups.end());
 		wxDialog::Close();
 	}

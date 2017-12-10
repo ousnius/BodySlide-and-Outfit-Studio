@@ -6,6 +6,7 @@ See the included LICENSE file
 
 #include "../TinyXML-2/tinyxml2.h"
 #include "SliderPresets.h"
+#include "../utils/PlatformUtil.h"
 
 #include <wx/dir.h>
 
@@ -132,7 +133,23 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 	wxDir::GetAllFiles(basePath, &files, "*.xml");
 
 	for (auto &file : files) {
-		if (doc.LoadFile(file) != XML_SUCCESS)
+		FILE* fp = nullptr;
+
+#ifdef _WINDOWS
+		std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(file.ToUTF8().data());
+		int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+		if (ret)
+			continue;
+#else
+		fp = fopen(file.ToUTF8().data(), "rb");
+		if (!fp)
+			continue;
+#endif
+
+		ret = doc.LoadFile(fp);
+		fclose(fp);
+
+		if (ret)
 			continue;
 
 		root = doc.FirstChildElement("SliderPresets");
@@ -171,7 +188,7 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 				continue;
 			}
 
-			presetFileNames[presetName] = file;
+			presetFileNames[presetName] = file.ToUTF8();
 			presetGroups[presetName] = groups;
 
 			setSlider = element->FirstChildElement("SetSlider");
@@ -203,9 +220,33 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 
 	XMLElement* newElement = nullptr;
 	XMLDocument outDoc;
-	XMLNode* slidersNode;
-	XMLElement* presetElem;
-	if (outDoc.LoadFile(filePath.c_str()) == XML_SUCCESS) {
+	XMLNode* slidersNode = nullptr;
+	XMLElement* presetElem = nullptr;
+
+	bool loaded = false;
+	FILE* fp = nullptr;
+
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
+	int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+	if (ret == 0)
+		loaded = true;
+#else
+	fp = fopen(filePath.c_str(), "rb");
+	if (fp)
+		loaded = true;
+#endif
+
+	if (loaded) {
+		ret = outDoc.LoadFile(fp);
+		fclose(fp);
+		fp = nullptr;
+
+		if (ret != 0)
+			loaded = false;
+	}
+
+	if (loaded) {
 		// File exists - merge data.
 		slidersNode = outDoc.FirstChildElement("SliderPresets");
 		presetElem = slidersNode->FirstChildElement("Preset");
@@ -252,15 +293,52 @@ int PresetCollection::SavePreset(const std::string& filePath, const std::string&
 			sliderElem->SetAttribute("value", (int)(p.second.small * 100.0f));
 		}
 	}
-	if (outDoc.SaveFile(filePath.c_str()) != XML_SUCCESS)
-		return outDoc.ErrorID();
+
+#ifdef _WINDOWS
+	winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
+	ret = _wfopen_s(&fp, winFileName.c_str(), L"w");
+	if (ret)
+		return 1;
+#else
+	fp = fopen(filePath.c_str(), "w");
+	if (!fp)
+		return 1;
+#endif
+
+	outDoc.SetBOM(true);
+
+	const tinyxml2::XMLNode* firstChild = outDoc.FirstChild();
+	if (!firstChild || !firstChild->ToDeclaration())
+		outDoc.InsertFirstChild(outDoc.NewDeclaration());
+
+	int retSaveDoc = outDoc.SaveFile(fp);
+	fclose(fp);
+	if (retSaveDoc)
+		return retSaveDoc;
 
 	return 0;
 }
 
 int PresetCollection::DeletePreset(const std::string& filePath, const std::string& presetName) {
+	FILE* fp = nullptr;
+
+#ifdef _WINDOWS
+	std::wstring winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
+	int ret = _wfopen_s(&fp, winFileName.c_str(), L"rb");
+	if (ret)
+		return -1;
+#else
+	fp = fopen(filePath.c_str(), "rb");
+	if (!fp)
+		return -1;
+#endif
+
 	XMLDocument doc;
-	if (doc.LoadFile(filePath.c_str()) != XML_SUCCESS)
+	ret = doc.LoadFile(fp);
+	fclose(fp);
+	fp = nullptr;
+
+	if (ret)
 		return -1;
 
 	XMLNode* slidersNode = doc.FirstChildElement("SliderPresets");
@@ -276,8 +354,27 @@ int PresetCollection::DeletePreset(const std::string& filePath, const std::strin
 		}
 	}
 
-	if (doc.SaveFile(filePath.c_str()) != XML_SUCCESS)
-		return doc.ErrorID();
+#ifdef _WINDOWS
+	winFileName = PlatformUtil::MultiByteToWideUTF8(filePath);
+	ret = _wfopen_s(&fp, winFileName.c_str(), L"w");
+	if (ret)
+		return -1;
+#else
+	fp = fopen(filePath.c_str(), "w");
+	if (!fp)
+		return -1;
+#endif
+
+	doc.SetBOM(true);
+
+	const tinyxml2::XMLNode* firstChild = doc.FirstChild();
+	if (!firstChild || !firstChild->ToDeclaration())
+		doc.InsertFirstChild(doc.NewDeclaration());
+
+	int retSaveDoc = doc.SaveFile(fp);
+	fclose(fp);
+	if (retSaveDoc)
+		return retSaveDoc;
 
 	namedSliderPresets.erase(presetName);
 	presetFileNames.erase(presetName);

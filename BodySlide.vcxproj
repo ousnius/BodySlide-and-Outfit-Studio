@@ -638,6 +638,7 @@
     <ClInclude Include="src\utils\AABBTree.h" />
     <ClInclude Include="src\utils\ConfigurationManager.h" />
     <ClInclude Include="src\utils\Log.h" />
+    <ClInclude Include="src\utils\PlatformUtil.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\FSEngine\FSBSA.cpp" />
@@ -701,6 +702,7 @@
     <ClCompile Include="src\utils\AABBTree.cpp" />
     <ClCompile Include="src\utils\ConfigurationManager.cpp" />
     <ClCompile Include="src\utils\Log.cpp" />
+    <ClCompile Include="src\utils\PlatformUtil.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Xml Include="Config.xml" />
