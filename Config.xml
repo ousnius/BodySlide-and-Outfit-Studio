@@ -1,5 +1,5 @@
 <BodySlideConfig>
-    <!-- 0 = FO3, 1 = FONV, 2 = SKYRIM, 3 = FO4, 4 = SKYRIMSE -->
+    <!-- 0 = FO3, 1 = FONV, 2 = SKYRIM, 3 = FO4, 4 = SKYRIMSE, 5 = FO4VR -->
     <TargetGame>-1</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <BSATextureScan>true</BSATextureScan>
@@ -10,12 +10,14 @@
         <Skyrim>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices.bsa; Skyrim - VoicesExtra.bsa</Skyrim>
         <Fallout4>Fallout4 - Animations.ba2; Fallout4 - Interface.ba2; Fallout4 - Meshes.ba2; Fallout4 - MeshesExtra.ba2; Fallout4 - Misc.ba2; Fallout4 - Nvflex.ba2; Fallout4 - Shaders.ba2; Fallout4 - Sounds.ba2; Fallout4 - Startup.ba2; Fallout4 - Voices_en.ba2; DLCCoast - Voices_en.ba2; DLCNukaWorld - Voices_en.ba2; DLCRobot - Voices_en.ba2; DLCworkshop03 - Voices_en.ba2; Fallout4 - Voices_de.ba2; DLCCoast - Voices_de.ba2; DLCNukaWorld - Voices_de.ba2; DLCRobot - Voices_de.ba2; DLCworkshop03 - Voices_de.ba2; DLCUltraHighResolution - Textures01.ba2; DLCUltraHighResolution - Textures02.ba2; DLCUltraHighResolution - Textures03.ba2; DLCUltraHighResolution - Textures04.ba2; DLCUltraHighResolution - Textures05.ba2; DLCUltraHighResolution - Textures06.ba2; DLCUltraHighResolution - Textures07.ba2; DLCUltraHighResolution - Textures08.ba2; DLCUltraHighResolution - Textures09.ba2; DLCUltraHighResolution - Textures10.ba2; DLCUltraHighResolution - Textures11.ba2; DLCUltraHighResolution - Textures12.ba2; DLCUltraHighResolution - Textures13.ba2; DLCUltraHighResolution - Textures14.ba2; DLCUltraHighResolution - Textures15.ba2</Fallout4>
         <SkyrimSpecialEdition>Skyrim - Animations.bsa; Skyrim - Interface.bsa; Skyrim - Meshes0.bsa; Skyrim - Meshes1.bsa; Skyrim - Misc.bsa; Skyrim - Shaders.bsa; Skyrim - Sounds.bsa; Skyrim - Voices_en0.bsa; Skyrim - Voices_de0.bsa</SkyrimSpecialEdition></GameDataFiles>
+        <Fallout4VR>Fallout4 - Animations.ba2; Fallout4 - Interface.ba2; Fallout4 - Meshes.ba2; Fallout4 - MeshesExtra.ba2; Fallout4 - Misc.ba2; Fallout4 - Misc - Beta.ba2; Fallout4 - Misc - Debug.ba2; Fallout4 - Shaders.ba2; Fallout4 - Sounds.ba2; Fallout4 - Startup.ba2; Fallout4 - Voices.ba2; Fallout4 - Voices_en.ba2; Fallout4 - Voices_de.ba2; Fallout4_VR - Shaders.ba2</Fallout4VR>
     <GameDataPaths>
         <Fallout3></Fallout3>
         <FalloutNewVegas></FalloutNewVegas>
         <Skyrim></Skyrim>
         <Fallout4></Fallout4>
         <SkyrimSpecialEdition></SkyrimSpecialEdition></GameDataPaths>
+        <Fallout4VR></Fallout4VR>
     <GameDataPath></GameDataPath>
     <GameRegKey></GameRegKey>
     <GameRegVal></GameRegVal>

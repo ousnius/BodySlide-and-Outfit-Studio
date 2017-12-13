@@ -31,7 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ConfigurationManager Config;
 
-const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition" };
+const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR" };
 const wxLanguage SupportedLangs[] = {
 	wxLANGUAGE_ENGLISH, wxLANGUAGE_AFRIKAANS, wxLANGUAGE_ARABIC, wxLANGUAGE_CATALAN, wxLANGUAGE_CZECH, wxLANGUAGE_DANISH, wxLANGUAGE_GERMAN,
 	wxLANGUAGE_GREEK, wxLANGUAGE_SPANISH, wxLANGUAGE_BASQUE, wxLANGUAGE_FINNISH, wxLANGUAGE_FRENCH, wxLANGUAGE_HINDI,
@@ -130,6 +130,7 @@ bool BodySlideApp::OnInit() {
 		case SKYRIM: gameName.Append("Skyrim"); break;
 		case FO4: gameName.Append("Fallout 4"); break;
 		case SKYRIMSE: gameName.Append("Skyrim Special Edition"); break;
+		case FO4VR: gameName.Append("Fallout 4 VR"); break;
 		default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
@@ -1087,6 +1088,8 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("GameRegVal/Fallout4", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/SkyrimSpecialEdition", "Software\\Bethesda Softworks\\Skyrim Special Edition");
 	Config.SetDefaultValue("GameRegVal/SkyrimSpecialEdition", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/Fallout4VR", "Software\\Bethesda Softworks\\Fallout 4 VR");
+	Config.SetDefaultValue("GameRegVal/Fallout4VR", "Installed Path");
 
 	// Target game not set, show setup dialog
 	if (currentTarget == -1)
@@ -1151,6 +1154,9 @@ bool BodySlideApp::ShowSetup() {
 		wxButton* btSkyrimSE = XRCCTRL(*setup, "btSkyrimSE", wxButton);
 		btSkyrimSE->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(4); });
 
+		wxButton* btFallout4VR = XRCCTRL(*setup, "btFallout4VR", wxButton);
+		btFallout4VR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(5); });
+
 		wxDirPickerCtrl* dirFallout3 = XRCCTRL(*setup, "dirFallout3", wxDirPickerCtrl);
 		dirFallout3->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout3, &btFallout3](wxFileDirPickerEvent&) { btFallout3->Enable(dirFallout3->GetDirName().DirExists()); });
 
@@ -1165,6 +1171,9 @@ bool BodySlideApp::ShowSetup() {
 
 		wxDirPickerCtrl* dirSkyrimSE = XRCCTRL(*setup, "dirSkyrimSE", wxDirPickerCtrl);
 		dirSkyrimSE->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimSE, &btSkyrimSE](wxFileDirPickerEvent&) { btSkyrimSE->Enable(dirSkyrimSE->GetDirName().DirExists()); });
+
+		wxDirPickerCtrl* dirFallout4VR = XRCCTRL(*setup, "dirFallout4VR", wxDirPickerCtrl);
+		dirFallout4VR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout4VR, &btFallout4VR](wxFileDirPickerEvent&) { btFallout4VR->Enable(dirFallout4VR->GetDirName().DirExists()); });
 
 		wxFileName dir = GetGameDataPath(FO3);
 		if (dir.DirExists()) {
@@ -1194,6 +1203,12 @@ bool BodySlideApp::ShowSetup() {
 		if (dir.DirExists()) {
 			dirSkyrimSE->SetDirName(dir);
 			btSkyrimSE->Enable();
+		}
+
+		dir = GetGameDataPath(FO4VR);
+		if (dir.DirExists()) {
+			dirFallout4VR->SetDirName(dir);
+			btFallout4VR->Enable();
 		}
 
 		if (setup->ShowModal() != wxID_CANCEL) {
@@ -1226,6 +1241,11 @@ bool BodySlideApp::ShowSetup() {
 				dataDir = dirSkyrimSE->GetDirName();
 				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_sse.nif");
 				Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
+				break;
+			case FO4VR:
+				dataDir = dirFallout4VR->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
+				Config.SetValue("Anim/SkeletonRootName", "Root");
 				break;
 			}
 
@@ -3137,6 +3157,7 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 			break;
 		case FO4:
+		case FO4VR:
 		default:
 			fpSkeletonFile->SetPath("res\\skeleton_fo4.nif");
 			choiceSkeletonRoot->SetStringSelection("Root");

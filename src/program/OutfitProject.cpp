@@ -409,7 +409,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 
 	if (owner->targetGame <= SKYRIM)
 		blankSkel = "res\\SkeletonBlank_sk.nif";
-	else if (owner->targetGame == FO4)
+	else if (owner->targetGame == FO4 || owner->targetGame == FO4VR)
 		blankSkel = "res\\SkeletonBlank_fo4.nif";
 	else if (owner->targetGame == SKYRIMSE)
 		blankSkel = "res\\SkeletonBlank_sse.nif";
@@ -481,7 +481,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		blank.SetDefaultPartition(shapeName);
 		shapeResult = nifTriShape;
 	}
-	else if (owner->targetGame == FO4) {
+	else if (owner->targetGame == FO4 || owner->targetGame == FO4VR) {
 		BSTriShape* triShapeBase;
 		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape();
@@ -1263,7 +1263,7 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 
 		if (diffResult.size() > 0) {
 			if (workAnim.AddShapeBone(destShape, boneName)) {
-				if (owner->targetGame == FO4) {
+				if (owner->targetGame == FO4 || owner->targetGame == FO4VR) {
 					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 					MatTransform xForm;
 					workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
@@ -1346,7 +1346,7 @@ void OutfitProject::TransferSelectedWeights(const std::string& destShape, std::u
 		}
 
 		if (workAnim.AddShapeBone(destShape, boneName)) {
-			if (owner->targetGame == FO4) {
+			if (owner->targetGame == FO4 || owner->targetGame == FO4VR) {
 				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 				MatTransform xForm;
 				workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
@@ -2358,6 +2358,7 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		match = nif.GetHeader().GetVersion().IsSK();
 		break;
 	case FO4:
+	case FO4VR:
 		match = nif.GetHeader().GetVersion().IsFO4();
 		break;
 	case SKYRIMSE:

@@ -260,7 +260,7 @@ OutfitStudio::OutfitStudio(const wxPoint& pos, const wxSize& size, Configuration
 	wxStateButton* meshTab = (wxStateButton*)FindWindowByName("meshTabButton");
 	meshTab->SetCheck();
 
-	if (targetGame != FO4) {
+	if (targetGame != FO4 && targetGame != FO4VR) {
 		wxStateButton* segmentTab = (wxStateButton*)FindWindowByName("segmentTabButton");
 		segmentTab->Show(false);
 	}
@@ -6152,7 +6152,7 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 	std::string fShader = "res\\shaders\\default.frag";
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == FO4) {
+	if (targetGame == FO4 || targetGame == FO4VR) {
 		vShader = "res\\shaders\\fo4_default.vert";
 		fShader = "res\\shaders\\fo4_default.frag";
 	}

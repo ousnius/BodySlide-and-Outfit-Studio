@@ -54,7 +54,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
 
-	if (os->targetGame == FO4) {
+	if (os->targetGame == FO4 || os->targetGame == FO4VR) {
 		lbShaderName->SetLabel(_("Material"));
 		btnMaterialChooser->Show();
 		pgShader->Layout();
@@ -89,7 +89,7 @@ void ShapeProperties::GetShader() {
 	else {
 		shaderName->SetValue(shader->GetName());
 
-		if (os->targetGame == FO4)
+		if (os->targetGame == FO4 || os->targetGame == FO4VR)
 			currentMaterialPath = shader->GetName();
 
 		Color4 color;
@@ -239,6 +239,7 @@ void ShapeProperties::AddShader() {
 	case SKYRIM:
 	case FO4:
 	case SKYRIMSE:
+	case FO4VR:
 	default:
 		newShader = new BSLightingShaderProperty(nif->GetHeader().GetVersion());
 		shape->SetShaderPropertyRef(nif->GetHeader().AddBlock(newShader));
@@ -405,7 +406,7 @@ void ShapeProperties::GetGeometry() {
 			fullPrecision->Enable(bsTriShape->CanChangePrecision());
 		}
 
-		subIndex->Enable(os->targetGame == FO4);
+		subIndex->Enable(os->targetGame == FO4 || os->targetGame == FO4VR);
 	}
 }
 
@@ -634,7 +635,7 @@ void ShapeProperties::ApplyChanges() {
 			}
 		}
 
-		if (os->targetGame == FO4 && currentMaterialPath != name) {
+		if ((os->targetGame == FO4 || os->targetGame == FO4VR) && currentMaterialPath != name) {
 			os->project->SetTextures(shape);
 			os->RefreshGUIFromProj();
 		}
@@ -649,7 +650,7 @@ void ShapeProperties::ApplyChanges() {
 		if (nif->GetHeader().GetVersion().Stream() != 100)
 			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 
-		if (os->targetGame == FO4 && currentSubIndex != subIndex->IsChecked()) {
+		if ((os->targetGame == FO4 || os->targetGame == FO4VR) && currentSubIndex != subIndex->IsChecked()) {
 			if (subIndex->IsChecked()) {
 				auto bsSITS = new BSSubIndexTriShape();
 				*static_cast<BSTriShape*>(bsSITS) = *bsTriShape;

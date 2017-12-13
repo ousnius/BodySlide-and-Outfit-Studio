@@ -172,6 +172,35 @@
 							<default>0</default>
 						</object>
 					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALIGN_RIGHT|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lbFallout4VR">
+							<label>Fallout 4 VR</label>
+							<wrap>-1</wrap>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxDirPickerCtrl" name="dirFallout4VR">
+							<value>Game not found! Select the data folder manually...</value>
+							<message>Select a folder</message>
+							<style>wxDIRP_DEFAULT_STYLE|wxDIRP_SMALL</style>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxButton" name="btFallout4VR">
+							<enabled>0</enabled>
+							<label>Choose Game</label>
+							<default>0</default>
+						</object>
+					</object>
 				</object>
 			</object>
 			<object class="sizeritem">
