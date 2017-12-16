@@ -208,6 +208,7 @@ void mesh::UpdateFromMaterialFile(const MaterialFile& matFile) {
 	doublesided = matFile.twoSided;
 	modelSpace = matFile.modelSpaceNormals;
 	emissive = matFile.emitEnabled;
+	specular = matFile.specularEnabled;
 	backlight = matFile.backLighting;
 	rimlight = matFile.rimLighting;
 	softlight = matFile.subsurfaceLighting;
