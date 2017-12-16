@@ -970,11 +970,11 @@
 			<object class="wxMenu" name="menuExport">
 				<label>Export</label>
 				<object class="wxMenuItem" name="exportNIF">
-					<label>To NIF...</label>
+					<label>To NIF...\tCtrl+E</label>
 					<help>Save the current project as a NIF file (without reference)</help>
 				</object>
 				<object class="wxMenuItem" name="exportNIFWithRef">
-					<label>To NIF With Reference...</label>
+					<label>To NIF With Reference...\tCtrl+Alt+E</label>
 					<help>Save the current project as a NIF file (including reference)</help>
 				</object>
 				<object class="wxMenuItem" name="exportOBJ">
