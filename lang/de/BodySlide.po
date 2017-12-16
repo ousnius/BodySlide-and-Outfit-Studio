@@ -2237,6 +2237,9 @@ msgstr ""
 msgid "There is no shape selected!"
 msgstr "Es ist kein Modell ausgewählt!"
 
+msgid "There is no reference shape!"
+msgstr "Es ist kein Referenz-Modell vorhanden!"
+
 msgid "There is no slider in edit mode to import data to!"
 msgstr ""
 "Es ist kein Slider im Bearbeitungsmodus, für den man Daten importieren "

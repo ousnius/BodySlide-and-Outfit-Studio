@@ -5739,8 +5739,10 @@ void OutfitStudio::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (project->GetBaseShape().empty())
+	if (project->GetBaseShape().empty()) {
+		wxMessageBox(_("There is no reference shape!"), _("Error"));
 		return;
+	}
 
 	WeightCopyOptions options;
 	if (ShowWeightCopy(options)) {
@@ -5772,8 +5774,10 @@ void OutfitStudio::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (project->GetBaseShape().empty())
+	if (project->GetBaseShape().empty()) {
+		wxMessageBox(_("There is no reference shape!"), _("Error"));
 		return;
+	}
 
 	std::vector<std::string> selectedBones;
 	wxArrayTreeItemIds selItems;
@@ -5818,8 +5822,10 @@ void OutfitStudio::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (project->GetBaseShape().empty())
+	if (project->GetBaseShape().empty()) {
+		wxMessageBox(_("There is no reference shape!"), _("Error"));
 		return;
+	}
 
 	if (project->IsBaseShape(activeItem->shapeName)) {
 		wxMessageBox(_("Sorry, you can't copy weights from the reference shape to itself."), _("Error"));
