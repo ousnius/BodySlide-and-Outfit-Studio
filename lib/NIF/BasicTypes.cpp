@@ -307,16 +307,16 @@ bool NiHeader::IsBlockReferenced(const int blockId) {
 	return false;
 }
 
-void NiHeader::DeleteUnreferencedBlocks(bool* hadDeletions) {
-	for (int i = 1; i < numBlocks; i++) {
-		if (!IsBlockReferenced(i)) {
+void NiHeader::DeleteUnreferencedBlocks(const int rootId, bool* hadDeletions) {
+	for (int i = 0; i < numBlocks; i++) {
+		if (i != rootId && !IsBlockReferenced(i)) {
 			DeleteBlock(i);
 
 			// Deleting a block can cause others to become unreferenced
 			if (hadDeletions)
 				(*hadDeletions) = true;
 
-			return DeleteUnreferencedBlocks();
+			return DeleteUnreferencedBlocks(rootId > i ? rootId - 1 : rootId);
 		}
 	}
 }

@@ -570,7 +570,7 @@ public:
 	// Swaps two blocks, updating references in other blocks that may refer to their old indices
 	void SwapBlocks(const int blockIndexLo, const int blockIndexHi);
 	bool IsBlockReferenced(const int blockId);
-	void DeleteUnreferencedBlocks(bool* hadDeletions = nullptr);
+	void DeleteUnreferencedBlocks(const int rootId, bool* hadDeletions = nullptr);
 
 	ushort AddOrFindBlockTypeId(const std::string& blockTypeName);
 	std::string GetBlockTypeStringById(const int blockId);

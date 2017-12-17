@@ -723,7 +723,7 @@ bool NifFile::DeleteUnreferencedBlocks() {
 		return false;
 
 	bool hadDeletions = false;
-	hdr.DeleteUnreferencedBlocks(&hadDeletions);
+	hdr.DeleteUnreferencedBlocks(GetBlockID(GetRootNode()), &hadDeletions);
 	return hadDeletions;
 }
 
@@ -1368,7 +1368,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 		}
 	}
 
-	hdr.DeleteUnreferencedBlocks();
+	DeleteUnreferencedBlocks();
 	return result;
 }
 
@@ -1553,7 +1553,19 @@ void NifFile::TriangulateShape(NiShape* shape) {
 }
 
 NiNode* NifFile::GetRootNode() {
-	return GetHeader().GetBlock<NiNode>(0);
+	// Check if block at index 0 is a node
+	auto root = hdr.GetBlock<NiNode>(0);
+	if (!root) {
+		// Not a node, look for first node block
+		for (auto &block : blocks) {
+			auto node = dynamic_cast<NiNode*>(block.get());
+			if (node) {
+				root = node;
+				break;
+			}
+		}
+	}
+	return root;
 }
 
 bool NifFile::GetNodeTransform(const std::string& nodeName, MatTransform& outTransform) {
