@@ -163,7 +163,7 @@ public:
 	void CopyBoneWeights(const std::string& destShape, const float& proximityRadius, const int& maxResults, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(const std::string& destShape, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
-	bool HasUnweighted();
+	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
 
 	void ApplyBoneScale(const std::string& bone, int sliderPos, bool clear = false);
 	void ClearBoneScale(bool clear = true);

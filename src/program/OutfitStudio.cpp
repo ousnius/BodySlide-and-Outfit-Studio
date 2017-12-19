@@ -21,6 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ShapeProperties.h"
 #include "../utils/PlatformUtil.h"
 
+#include <sstream>
+
 // ----------------------------------------------------------------------------
 // event tables and other macros for wxWidgets
 // ----------------------------------------------------------------------------
@@ -1453,12 +1455,8 @@ void OutfitStudio::OnSaveSliderSet(wxCommandEvent& event) {
 			return;
 		}
 
-		if (project->HasUnweighted()) {
-			wxLogWarning("Unweighted vertices found.");
-			int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
-			if (error != wxYES)
-				return;
-		}
+		if (HasUnweightedCheck())
+			return;
 
 		wxLogMessage("Saving project '%s'...", wxString::FromUTF8(project->OutfitName()));
 		StartProgress(wxString::Format(_("Saving project '%s'..."), wxString::FromUTF8(project->OutfitName())));
@@ -1492,12 +1490,8 @@ void OutfitStudio::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (project->HasUnweighted()) {
-		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
-		if (error != wxYES)
-			return;
-	}
+	if (HasUnweightedCheck())
+		return;
 
 	if (wxXmlResource::Get()->LoadObject((wxObject*)&dlg, this, "dlgSaveProject", "wxDialog")) {
 		XRCCTRL(dlg, "sssNameCopy", wxButton)->Bind(wxEVT_BUTTON, &OutfitStudio::OnSSSNameCopy, this);
@@ -1717,12 +1711,8 @@ void OutfitStudio::OnExportNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid())
 		return;
 
-	if (project->HasUnweighted()) {
-		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
-		if (error != wxYES)
-			return;
-	}
+	if (HasUnweightedCheck())
+		return;
 
 	wxString fileName = wxFileSelector(_("Export outfit NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.IsEmpty())
@@ -1752,12 +1742,8 @@ void OutfitStudio::OnExportNIFWithRef(wxCommandEvent& event) {
 		return;
 	}
 
-	if (project->HasUnweighted()) {
-		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
-		if (error != wxYES)
-			return;
-	}
+	if (HasUnweightedCheck())
+		return;
 
 	wxString fileName = wxFileSelector(_("Export project NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.IsEmpty())
@@ -1783,12 +1769,8 @@ void OutfitStudio::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	if (project->HasUnweighted()) {
-		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
-		if (error != wxYES)
-			return;
-	}
+	if (HasUnweightedCheck())
+		return;
 
 	wxString fileName = wxFileSelector(_("Export selected shapes to NIF"), wxEmptyString, wxEmptyString, ".nif", "*.nif", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.IsEmpty())
@@ -1920,12 +1902,8 @@ void OutfitStudio::OnExportFBX(wxCommandEvent& WXUNUSED(event)) {
 	if (!project->GetWorkNif()->IsValid())
 		return;
 
-	if (project->HasUnweighted()) {
-		wxLogWarning("Unweighted vertices found.");
-		int error = wxMessageBox(_("At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
-		if (error != wxYES)
-			return;
-	}
+	if (HasUnweightedCheck())
+		return;
 
 	wxString fileName = wxFileSelector(_("Export project as an .fbx file"), wxEmptyString, wxEmptyString, ".fbx", "FBX Files (*.fbx)|*.fbx", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
 	if (fileName.IsEmpty())
@@ -5681,6 +5659,20 @@ void OutfitStudio::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)) {
 	ReselectBone();
 }
 
+bool OutfitStudio::HasUnweightedCheck() {
+	std::vector<std::string> unweighted;
+	if (project->HasUnweighted(&unweighted)) {
+		std::string shapesJoin = JoinStrings(unweighted, "; ");
+		wxLogWarning(wxString::Format("Unweighted vertices found on shapes: %s", shapesJoin));
+
+		int error = wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes have unweighted vertices, which can cause issues. The affected vertices have been put under a mask. Do you want to save anyway?"), shapesJoin), _("Unweighted Vertices"), wxYES_NO | wxICON_WARNING, this);
+		if (error != wxYES)
+			return true;
+	}
+
+	return false;
+}
+
 bool OutfitStudio::ShowWeightCopy(WeightCopyOptions& options) {
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyWeights")) {
@@ -7255,4 +7247,18 @@ void OutfitStudio::OnLoadOutfitFP_File(wxFileDirPickerEvent& event) {
 void OutfitStudio::OnLoadOutfitFP_Texture(wxFileDirPickerEvent& event) {
 	wxWindow* win = ((wxDialog*)event.GetEventObject())->GetParent();
 	XRCCTRL((*win), "npTexFile", wxRadioButton)->SetValue(true);
+}
+
+std::string JoinStrings(const std::vector<std::string>& elements, const char* const separator) {
+	switch (elements.size()) {
+	case 0:
+		return "";
+	case 1:
+		return elements[0];
+	default:
+		std::ostringstream os;
+		std::copy(elements.begin(), elements.end() - 1, std::ostream_iterator<std::string>(os, separator));
+		os << *elements.rbegin();
+		return os.str();
+	}
 }

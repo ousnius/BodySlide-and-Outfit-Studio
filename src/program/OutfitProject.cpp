@@ -1366,7 +1366,9 @@ void OutfitProject::TransferSelectedWeights(const std::string& destShape, std::u
 	owner->UpdateProgress(100, _("Finished"));
 }
 
-bool OutfitProject::HasUnweighted() {
+bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
+	bool hasUnweighted = false;
+
 	for (auto &s : workNif.GetShapeNames()) {
 		NiShape* shape = workNif.FindShapeByName(s);
 		if (!shape || !shape->IsSkinned())
@@ -1392,25 +1394,29 @@ bool OutfitProject::HasUnweighted() {
 			}
 		}
 
+		bool shapeUnweighted = false;
 		mesh* m = owner->glView->GetMesh(s);
-		bool unweighted = false;
 		for (auto &i : influences) {
 			if (i.second == 0) {
-				if (!unweighted)
+				if (!shapeUnweighted)
 					m->ColorChannelFill(0, 0.0f);
 
 				m->vcolors[i.first].x = 1.0f;
-				unweighted = true;
+				shapeUnweighted = true;
 			}
 		}
 
-		m->QueueUpdate(mesh::UpdateType::VertexColors);
+		if (shapeUnweighted) {
+			hasUnweighted = true;
 
-		if (unweighted)
-			return true;
+			if (shapeNames)
+				shapeNames->push_back(s);
+		}
+
+		m->QueueUpdate(mesh::UpdateType::VertexColors);
 	}
 
-	return false;
+	return hasUnweighted;
 }
 
 void OutfitProject::ApplyBoneScale(const std::string& bone, int sliderPos, bool clear) {

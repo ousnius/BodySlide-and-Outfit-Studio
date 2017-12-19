@@ -812,6 +812,7 @@ private:
 	void WorkingGUIFromProj();
 	void UpdateMeshesFromSet();
 
+	bool HasUnweightedCheck();
 	bool ShowWeightCopy(WeightCopyOptions& options);
 	void ReselectBone();
 
@@ -1128,3 +1129,5 @@ private:
 	wxDragResult lastResult = wxDragNone;
 	std::string targetSlider;
 };
+
+std::string JoinStrings(const std::vector<std::string>& elements, const char* const separator);

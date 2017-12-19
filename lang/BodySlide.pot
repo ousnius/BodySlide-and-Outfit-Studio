@@ -1820,7 +1820,7 @@ msgstr ""
 msgid "There are no valid shapes loaded!"
 msgstr ""
 
-msgid "At least one vertex does not have any weighting assigned to it. This will cause issues and you should fix it using the weight brush. The affected vertices have been put under a mask. Do you want to save anyway?"
+msgid "The following shapes have unweighted vertices, which can cause issues. The affected vertices have been put under a mask. Do you want to save anyway?"
 msgstr ""
 
 msgid "Unweighted Vertices"
