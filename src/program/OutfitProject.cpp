@@ -1945,7 +1945,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& sha
 		if (shape) {
 			if (nif->GetHeader().GetVersion().IsSK() || nif->GetHeader().GetVersion().IsSSE()) {
 				NiShader* shader = nif->GetShader(shape);
-				if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
+				if (shader && shader->IsModelSpace())
 					continue;
 			}
 
@@ -2087,7 +2087,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 
 			if (clone.GetHeader().GetVersion().IsSK() || clone.GetHeader().GetVersion().IsSSE()) {
 				NiShader* shader = clone.GetShader(shape);
-				if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
+				if (shader && shader->IsModelSpace())
 					continue;
 			}
 

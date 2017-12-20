@@ -989,7 +989,7 @@ NiShape* NifFile::CloneShape(const std::string& srcShapeName, const std::string&
 	auto destShader = GetShader(destShape);
 	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
 		// Kill normals and tangents
-		if (destShader->IsSkinTinted() || destShader->IsFaceTinted()) {
+		if (destShader->IsModelSpace()) {
 			destShape->SetNormals(false);
 			destShape->SetTangents(false);
 		}
@@ -2369,7 +2369,7 @@ void NifFile::CalcNormalsForShape(const std::string& shapeName, const bool smoot
 
 	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
 		NiShader* shader = GetShader(shape);
-		if (shader && (shader->IsSkinTinted() || shader->IsFaceTinted()))
+		if (shader && shader->IsModelSpace())
 			return;
 	}
 
