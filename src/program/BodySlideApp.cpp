@@ -1774,7 +1774,6 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map<std::string, std::string>& failedOutfits, bool clean, bool tri, const std::string& custPath) {
 	std::string datapath = custPath;
-	wxProgressDialog* progWnd;
 
 	wxLogMessage("Started batch build with options: Custom Path = %s, Cleaning = %s, TRI = %s",
 		custPath.empty() ? "False" : custPath, clean ? "True" : "False", tri ? "True" : "False");
@@ -1872,8 +1871,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		}
 	}
 
-	progWnd = new wxProgressDialog(_("Processing Outfits"), _("Starting..."), 1000, nullptr, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_SMOOTH | wxPD_ELAPSED_TIME);
-	progWnd->SetSize(400, 150);
+	wxProgressDialog progWnd(_("Processing Outfits"), _("Starting..."), 1000, sliderView, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
+	progWnd.SetSize(400, 150);
 	float progstep = 1000.0f / outfitList.size();
 	int count = 1;
 
@@ -1893,7 +1892,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 #endif
 
 		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, (int)outfitList.size());
-		progWnd->Update((int)(count * progstep) - 1, progMsg);
+		progWnd.Update((int)(count * progstep) - 1, progMsg);
+		progWnd.Fit();
 		count++;
 
 #ifdef _PPL_H
@@ -2179,8 +2179,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 #undef return
 #endif
 
-	progWnd->Update(1000);
-	delete progWnd;
+	progWnd.Update(1000);
 
 	failedOutfits.insert(failedOutfitsCon.begin(), failedOutfitsCon.end());
 
