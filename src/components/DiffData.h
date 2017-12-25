@@ -15,7 +15,7 @@ class OSDataFile {
 	uint header;
 	uint version;
 	uint dataCount;
-	std::map<std::string, std::unordered_map<ushort, Vector3>> dataDiffs;
+	std::unordered_map<std::string, std::unordered_map<ushort, Vector3>> dataDiffs;
 
 public:
 	OSDataFile();
@@ -24,18 +24,19 @@ public:
 	bool Read(const std::string& fileName);
 	bool Write(const std::string& fileName);
 
-	std::map<std::string, std::unordered_map<ushort, Vector3>> GetDataDiffs();
+	std::unordered_map<std::string, std::unordered_map<ushort, Vector3>> GetDataDiffs();
 	std::unordered_map<ushort, Vector3>* GetDataDiff(const std::string& dataName);
 	void SetDataDiff(const std::string& dataName, std::unordered_map<ushort, Vector3>& inDataDiff);
 };
 
 class DiffDataSets {
-	std::map<std::string, std::unordered_map<ushort, Vector3>> namedSet;
+	std::unordered_map<std::string, std::unordered_map<ushort, Vector3>> namedSet;
 	std::map<std::string, std::string> dataTargets;
 
 public:
 	inline bool TargetMatch(const std::string& set, const std::string& target);
-	int LoadSet(const std::string& name, const std::string& target, std::unordered_map<ushort, Vector3>& inDiffData);
+	int MoveToSet(const std::string& name, const std::string& target, std::unordered_map<ushort, Vector3>& inDiffData);
+	int LoadSet(const std::string& name, const std::string& target, const std::unordered_map<ushort, Vector3>& inDiffData);
 	int LoadSet(const std::string& name, const std::string& target, const std::string& fromFile);
 	int SaveSet(const std::string& name, const std::string& target, const std::string& toFile);
 	bool LoadData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
@@ -69,9 +70,9 @@ public:
 			if (f == 1.0f)
 				continue;
 			else if (f == 0.0f)
-				namedSet[set][ns.first] *= 0.0f;
+				ns.second *= 0.0f;
 			else
-				namedSet[set][ns.first] *= f;
+				ns.second *= f;
 		}
 	}
 

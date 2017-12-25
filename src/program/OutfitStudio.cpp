@@ -431,8 +431,8 @@ void OutfitStudio::CreateSetSliders() {
 	if (!sliderScroll->GetDropTarget())
 		sliderScroll->SetDropTarget(new DnDSliderFile(this));
 
-	sliderScroll->Thaw();
 	sliderScroll->FitInside();
+	sliderScroll->Thaw();
 
 	EndProgress();
 }
