@@ -74,21 +74,34 @@ static bool BSAReadSizedString(wxFile &bsa, std::string &s) {
 	return false;
 }
 
-wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, int skip = 0) {
+wxMemoryBuffer gUncompress(const wxMemoryBuffer &data, wxUint32 unpackedSize = 0, int skip = 0) {
 	if (data.GetDataLen() <= 4) {
 		// Input data is truncated
 		return wxMemoryBuffer();
 	}
 
-	wxMemoryOutputStream output;
-
 	wxMemoryInputStream input((char*)data.GetData() + skip, data.GetDataLen() - skip);
 	wxZlibInputStream zlibStream(input);
-	zlibStream.Read(output);
 
-	wxMemoryBuffer result(output.GetLength());
-	output.CopyTo(result.GetData(), output.GetLength());
-	result.SetDataLen(output.GetLength());
+	wxMemoryBuffer result;
+	if (!zlibStream.CanRead())
+		return result;
+
+	if (unpackedSize > 0) {
+		// Allocate if unpacked size is known
+		result.SetBufSize(unpackedSize);
+		result.SetDataLen(unpackedSize);
+		zlibStream.Read(result.GetData(), unpackedSize);
+	}
+	else {
+		wxMemoryOutputStream output;
+		zlibStream.Read(output);
+
+		result.SetBufSize(output.GetLength());
+		result.SetDataLen(output.GetLength());
+		output.CopyTo(result.GetData(), result.GetDataLen());
+	}
+
 	return result;
 }
 
@@ -534,63 +547,63 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 					content.AppendData(&ddsHeader10, sizeof(ddsHeader10));
 			}
 
-			wxMemoryBuffer firstChunk(filesz);
-			firstChunk.SetDataLen(filesz);
-			if (fileok != wxInvalidOffset && bsa.Read(firstChunk.GetData(), filesz) == filesz) {
+			wxMemoryBuffer chunk(filesz);
+			chunk.SetDataLen(filesz);
+			if (fileok != wxInvalidOffset && bsa.Read(chunk.GetData(), filesz) == filesz) {
 				if (file->sizeFlags > 0) {
 					// BSA
 					if (file->compressed() ^ compressToggle) {
 						if (headerVersion == SSE_BSAHEADER_VERSION) {
-							firstChunk = lz4fUncompress(firstChunk);
-							content.AppendData(firstChunk, firstChunk.GetDataLen());
+							chunk = lz4fUncompress(chunk);
+							content.AppendData(chunk, chunk.GetDataLen());
 						}
 						else {
-							firstChunk = gUncompress(firstChunk, 4);
-							content.AppendData(firstChunk, firstChunk.GetDataLen());
+							chunk = gUncompress(chunk, 0, 4);
+							content.AppendData(chunk, chunk.GetDataLen());
 						}
 					}
 					else
-						content.AppendData(firstChunk.GetData(), firstChunk.GetDataLen());
+						content.AppendData(chunk.GetData(), chunk.GetDataLen());
 				}
-				else if (file->packedLength > 0) {
-					// BA2 compressed
-					firstChunk = gUncompress(firstChunk);
-					content.AppendData(firstChunk, firstChunk.GetDataLen());
+				else if (file->packedLength > 0 && file->tex.chunks.empty()) {
+					// GNRL BA2 compressed
+					chunk = gUncompress(chunk, file->unpackedLength);
+					content.AppendData(chunk, chunk.GetDataLen());
 				}
-				else {
-					// BA2 uncompressed
-					content.AppendData(firstChunk.GetData(), firstChunk.GetDataLen());
+				else if (file->tex.chunks.empty()) {
+					// GNRL BA2 uncompressed
+					content.AppendData(chunk.GetData(), chunk.GetDataLen());
 				}
 
-				if (file->tex.chunks.size() > 0) {
-					// Start at 2nd chunk for BA2
-					for (size_t i = 1; i < file->tex.chunks.size(); i++) {
-						const F4TexChunk& chunk = file->tex.chunks[i];
-						if (bsa.Seek(chunk.offset)) {
-							wxMemoryBuffer chunkData;
+				if (!file->tex.chunks.empty()) {
+					// Read chunks for DX10 BA2
+					for (size_t i = 0; i < file->tex.chunks.size(); i++) {
+						const F4TexChunk& chunkInfo = file->tex.chunks[i];
+						if (bsa.Seek(chunkInfo.offset)) {
+							wxMemoryBuffer currentChunk;
 
-							if (chunk.packedSize > 0) {
-								chunkData.SetBufSize(chunk.packedSize);
-								chunkData.SetDataLen(chunk.packedSize);
-								if (bsa.Read(chunkData.GetData(), chunk.packedSize) == (ssize_t)chunk.packedSize)
-									chunkData = gUncompress(chunkData);
+							if (chunkInfo.packedSize > 0) {
+								currentChunk.SetBufSize(chunkInfo.packedSize);
+								currentChunk.SetDataLen(chunkInfo.packedSize);
+								if (bsa.Read(currentChunk.GetData(), chunkInfo.packedSize) == (ssize_t)chunkInfo.packedSize)
+									currentChunk = gUncompress(currentChunk, chunkInfo.unpackedSize);
 
-								if (chunkData.GetDataLen() != chunk.unpackedSize) {
-									// Size does not match at chunk.offset
+								if (currentChunk.GetDataLen() != chunkInfo.unpackedSize) {
+									// Size does not match at chunkInfo.offset
 									return false;
 								}
 
 							}
 							else {
-								chunkData.SetBufSize(chunk.unpackedSize);
-								chunkData.SetDataLen(chunk.unpackedSize);
-								if (!(bsa.Read(chunkData.GetData(), chunk.unpackedSize) == (ssize_t)chunk.unpackedSize)) {
-									// Size does not match at chunk.offset
+								currentChunk.SetBufSize(chunkInfo.unpackedSize);
+								currentChunk.SetDataLen(chunkInfo.unpackedSize);
+								if (!(bsa.Read(currentChunk.GetData(), chunkInfo.unpackedSize) == (ssize_t)chunkInfo.unpackedSize)) {
+									// Size does not match at chunkInfo.offset
 									return false;
 								}
 							}
 
-							content.AppendData(chunkData.GetData(), chunkData.GetDataLen());
+							content.AppendData(currentChunk.GetData(), currentChunk.GetDataLen());
 						}
 						else {
 							// Seek error
