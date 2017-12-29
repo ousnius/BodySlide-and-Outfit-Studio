@@ -638,33 +638,63 @@ void NifFile::SortGraph(NiNode* root, std::vector<std::pair<int, int>>& newIndic
 			children.AddBlockRef(i);
 
 	if (children.GetSize() > 0) {
-		auto bookmark = children.end() - 1;
-		auto peek = children.end() - 1;
+		if (hdr.GetVersion().IsFO3()) {
+			auto bookmark = children.begin();
+			auto peek = children.begin();
 
-		// Put shapes at end of children
-		for (int i = children.GetSize() - 1; i >= 0; i--) {
-			auto block = hdr.GetBlock<NiObject>(children.GetBlockRef(i));
-			if (block && block->HasType<NiShape>()) {
-				std::iter_swap(bookmark, peek);
-				if (i != 0)
-					--bookmark;
+			// For FO3, put shapes at start of children
+			for (int i = 0; i < children.GetSize(); i++) {
+				auto shape = hdr.GetBlock<NiShape>(children.GetBlockRef(i));
+				if (shape) {
+					std::iter_swap(bookmark, peek);
+					if (i != 0)
+						++bookmark;
+				}
+				++peek;
 			}
+		}
+		else {
+			auto bookmark = children.end() - 1;
+			auto peek = children.end() - 1;
 
-			if (i != 0)
-				--peek;
+			// Put shapes at end of children
+			for (int i = children.GetSize() - 1; i >= 0; i--) {
+				auto shape = hdr.GetBlock<NiShape>(children.GetBlockRef(i));
+				if (shape) {
+					std::iter_swap(bookmark, peek);
+					if (i != 0)
+						--bookmark;
+				}
+
+				if (i != 0)
+					--peek;
+			}
 		}
 
-		bookmark = children.begin();
-		peek = children.begin();
+		auto bookmark = children.begin();
+		auto peek = children.begin();
 
-		// Put nodes at start of children
-		for (int i = 0; i < children.GetSize(); i++) {
-			auto block = hdr.GetBlock<NiObject>(children.GetBlockRef(i));
-			if (block && block->HasType<NiNode>()) {
-				std::iter_swap(bookmark, peek);
-				++bookmark;
+		if (hdr.GetVersion().IsFO3()) {
+			// For FO3, put nodes at start of children if they have children
+			for (int i = 0; i < children.GetSize(); i++) {
+				auto node = hdr.GetBlock<NiNode>(children.GetBlockRef(i));
+				if (node && node->GetChildren().GetSize() > 0) {
+					std::iter_swap(bookmark, peek);
+					++bookmark;
+				}
+				++peek;
 			}
-			++peek;
+		}
+		else {
+			// Put nodes at start of children
+			for (int i = 0; i < children.GetSize(); i++) {
+				auto node = hdr.GetBlock<NiNode>(children.GetBlockRef(i));
+				if (node) {
+					std::iter_swap(bookmark, peek);
+					++bookmark;
+				}
+				++peek;
+			}
 		}
 
 		// Update children
