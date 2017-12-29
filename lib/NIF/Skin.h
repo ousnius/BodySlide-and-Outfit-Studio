@@ -145,10 +145,17 @@ public:
 	void SetSkeletonRootRef(const int skelRootRef) { targetRef.SetIndex(skelRootRef); }
 };
 
+
+enum PartitionFlags : ushort {
+	PF_NONE = 0,
+	PF_EDITOR_VISIBLE = 1 << 0,
+	PF_START_NET_BONESET = 1 << 8
+};
+
 class BSDismemberSkinInstance : public NiSkinInstance {
 public:
 	struct PartitionInfo {
-		ushort flags;
+		PartitionFlags flags = PF_NONE;
 		ushort partID;
 	};
 

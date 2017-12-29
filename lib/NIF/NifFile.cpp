@@ -2123,7 +2123,7 @@ void NifFile::SetDefaultPartition(const std::string& shapeName) {
 	auto bsdSkinInst = hdr.GetBlock<BSDismemberSkinInstance>(shape->GetSkinInstanceRef());
 	if (bsdSkinInst) {
 		BSDismemberSkinInstance::PartitionInfo partInfo;
-		partInfo.flags = 1;
+		partInfo.flags = PF_EDITOR_VISIBLE;
 		partInfo.partID = hdr.GetVersion().User() >= 12 ? 32 : 0;
 
 		bsdSkinInst->ClearPartitions();
@@ -3008,7 +3008,7 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 					auto partInfo = bsdSkinInst->GetPartitions();
 
 					BSDismemberSkinInstance::PartitionInfo info;
-					info.flags = 1;
+					info.flags = PF_EDITOR_VISIBLE;
 					info.partID = partInfo[partID].partID;
 					partInfo.insert(partInfo.begin() + partID, info);
 
@@ -3262,15 +3262,25 @@ void NifFile::UpdatePartitionFlags(NiShape* shape) {
 
 	auto partInfo = bsdSkinInst->GetPartitions();
 	for (int i = 0; i < partInfo.size(); i++) {
+		PartitionFlags flags = PF_NONE;
+
+		if (hdr.GetVersion().IsFO3()) {
+			// Don't make FO3/NV meat caps visible
+			if (partInfo[i].partID < 100 || partInfo[i].partID >= 1000)
+				flags = PartitionFlags(flags | PF_EDITOR_VISIBLE);
+		}
+		else
+			flags = PartitionFlags(flags | PF_EDITOR_VISIBLE);
+
 		if (i != 0) {
 			// Start a new set if the previous bones are different
 			if (skinPart->partitions[i].bones != skinPart->partitions[i - 1].bones)
-				partInfo[i].flags = 257;
-			else
-				partInfo[i].flags = 1;
+				flags = PartitionFlags(flags | PF_START_NET_BONESET);
 		}
 		else
-			partInfo[i].flags = 257;
+			flags = PartitionFlags(flags | PF_START_NET_BONESET);
+
+		partInfo[i].flags = flags;
 	}
 
 	bsdSkinInst->SetPartitions(partInfo);

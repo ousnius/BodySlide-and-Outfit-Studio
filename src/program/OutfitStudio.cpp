@@ -3082,7 +3082,7 @@ void OutfitStudio::OnPartitionApply(wxCommandEvent& event) {
 		PartitionItemData* partitionData = dynamic_cast<PartitionItemData*>(partitionTree->GetItemData(child));
 		if (partitionData) {
 			BSDismemberSkinInstance::PartitionInfo pInfo;
-			pInfo.flags = 1;
+			pInfo.flags = PF_EDITOR_VISIBLE;
 			pInfo.partID = partitionData->type;
 			partitionInfo.push_back(pInfo);
 
