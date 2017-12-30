@@ -5522,6 +5522,9 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			subitem = outfitShapes->AppendItem(outfitRoot, newName);
 			outfitShapes->SetItemState(subitem, 0);
 			outfitShapes->SetItemData(subitem, new ShapeItemData(newName));
+
+			outfitShapes->UnselectAll();
+			outfitShapes->SelectItem(subitem);
 		}
 	}
 }
