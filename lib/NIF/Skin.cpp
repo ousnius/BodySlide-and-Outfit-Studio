@@ -16,6 +16,9 @@ void NiSkinData::Get(NiStream& stream) {
 	stream >> numBones;
 	stream >> hasVertWeights;
 
+	if (hasVertWeights > 1)
+		hasVertWeights = 1;
+
 	bones.resize(numBones);
 	for (int i = 0; i < numBones; i++) {
 		BoneData boneData;
