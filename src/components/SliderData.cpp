@@ -102,7 +102,9 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 		else
 			tmpDataFile.dataName = name;
 
-		tmpDataFile.fileName = datafile->GetText();
+		const char* dataFileText = datafile->GetText();
+		if (dataFileText)
+			tmpDataFile.fileName = dataFileText;
 
 		dataFiles.push_back(tmpDataFile);
 
