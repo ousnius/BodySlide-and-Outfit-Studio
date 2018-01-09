@@ -568,6 +568,7 @@
     <ClInclude Include="lib\NIF\BasicTypes.h" />
     <ClInclude Include="lib\NIF\bhk.h" />
     <ClInclude Include="lib\NIF\ExtraData.h" />
+    <ClInclude Include="lib\NIF\Factory.h" />
     <ClInclude Include="lib\NIF\Geometry.h" />
     <ClInclude Include="lib\NIF\Keys.h" />
     <ClInclude Include="lib\NIF\NifFile.h" />
@@ -652,6 +653,7 @@
     <ClCompile Include="lib\NIF\BasicTypes.cpp" />
     <ClCompile Include="lib\NIF\bhk.cpp" />
     <ClCompile Include="lib\NIF\ExtraData.cpp" />
+    <ClCompile Include="lib\NIF\Factory.cpp" />
     <ClCompile Include="lib\NIF\Geometry.cpp" />
     <ClCompile Include="lib\NIF\NifFile.cpp" />
     <ClCompile Include="lib\NIF\Nodes.cpp" />

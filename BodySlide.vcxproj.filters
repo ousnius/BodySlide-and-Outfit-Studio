@@ -1384,6 +1384,9 @@
     <ClInclude Include="src\utils\PlatformUtil.h">
       <Filter>Utilities</Filter>
     </ClInclude>
+    <ClInclude Include="lib\NIF\Factory.h">
+      <Filter>Libraries\NIF</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1571,6 +1574,9 @@
     </ClCompile>
     <ClCompile Include="src\utils\PlatformUtil.cpp">
       <Filter>Utilities</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\NIF\Factory.cpp">
+      <Filter>Libraries\NIF</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
