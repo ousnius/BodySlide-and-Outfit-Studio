@@ -2510,17 +2510,13 @@ void OutfitStudio::OnSegmentTypeChanged(wxCommandEvent& event) {
 		if (subSegmentData) {
 			unsigned long type = 0xFFFFFFFF;
 
-			wxStringTokenizer typeToken(segmentType->GetStringSelection(), "0x", wxStringTokenizerMode::wxTOKEN_RET_DELIMS);
-			while (typeToken.HasMoreTokens())
-			{
-				wxString token = typeToken.GetNextToken();
-				if (token.StartsWith("0x")) {
-					token.ToULong(&type, 16);
-					break;
-				}
-			}
+			wxString hashSel = segmentType->GetStringSelection();
+			int hashPos = hashSel.First("0x");
+			if (hashPos != wxNOT_FOUND)
+				hashSel.Mid(hashPos).ToULong(&type, 16);
 
 			subSegmentData->type = type;
+			UpdateSegmentNames();
 		}
 	}
 }
@@ -2761,7 +2757,7 @@ void OutfitStudio::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
 		else {
 			if (subSegmentData->type != 0xFFFFFFFF) {
 				bool typeFound = false;
-				auto typeHash = wxString::Format("0x%x", subSegmentData->type);
+				auto typeHash = wxString::Format("0x%08x", subSegmentData->type);
 				for (int i = 0; i < segmentType->GetCount(); i++) {
 					auto typeString = segmentType->GetString(i);
 					if (typeString.Contains(typeHash)) {
@@ -2937,7 +2933,7 @@ void OutfitStudio::UpdateSegmentNames() {
 			auto subSegmentData = dynamic_cast<SubSegmentItemData*>(segmentTree->GetItemData(subChild));
 			if (subSegmentData && subSegmentData->type != 0xFFFFFFFF) {
 				bool typeFound = false;
-				auto typeHash = wxString::Format("0x%x", subSegmentData->type);
+				auto typeHash = wxString::Format("0x%08x", subSegmentData->type);
 				for (int i = 0; i < segmentType->GetCount(); i++) {
 					auto typeString = segmentType->GetString(i);
 					if (typeString.Contains(typeHash)) {
