@@ -40,6 +40,7 @@
 								<flag>wxALIGN_CENTER</flag>
 								<border>5</border>
 								<object class="wxChoice" name="outfitChoice">
+									<style>wxCB_SORT</style>
 									<tooltip>Select an outfit to modify</tooltip>
 									<selection>0</selection>
 									<content />
@@ -90,6 +91,7 @@
 								<flag>wxALIGN_CENTER</flag>
 								<border>5</border>
 								<object class="wxChoice" name="presetChoice">
+									<style>wxCB_SORT</style>
 									<tooltip>Choose from a list of slider settings presets</tooltip>
 									<selection>0</selection>
 									<content />

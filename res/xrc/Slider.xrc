@@ -21,6 +21,7 @@
 				<flag>wxALL|wxEXPAND</flag>
 				<border>5</border>
 				<object class="wxChoice" name="choicePreset">
+					<style>wxCB_SORT</style>
 					<selection>0</selection>
 					<content />
 				</object>
