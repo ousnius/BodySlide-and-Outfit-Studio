@@ -128,7 +128,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNi
 		refNif = nif;
 
 	if (!nif->GetShapeBoneList(shape, boneNames)) {
-		wxLogWarning("No skinning found in shape '%s' of '%s'.", shape, nif->GetFileName());
+		wxLogWarning("No skinning found in shape '%s'.", shape);
 		return false;
 	}
 

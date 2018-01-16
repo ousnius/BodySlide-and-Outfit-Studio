@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.4\n"
+"X-Generator: Poedit 2.0.5\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Poedit-Basepath: ../..\n"
@@ -158,6 +158,24 @@ msgstr "请为新预设输入一个名字："
 msgid "Select groups to assign to the new preset:"
 msgstr "为新预设分配组："
 
+msgid "Deletes a project from its project file"
+msgstr ""
+
+msgid "Delete Project"
+msgstr ""
+
+msgid "Do you really wish to delete the selected project?"
+msgstr ""
+
+msgid "Deletes a preset from its preset file"
+msgstr ""
+
+msgid "Delete Preset"
+msgstr ""
+
+msgid "Do you really wish to delete the selected preset?"
+msgstr ""
+
 msgid "&Save"
 msgstr "&保存"
 
@@ -197,6 +215,14 @@ msgstr "装备"
 
 msgid "<< Add"
 msgstr "<< 增加"
+
+msgid "Save Changes"
+msgstr ""
+
+msgid ""
+"Do you really want to close the group manager? All unsaved changes will be "
+"lost."
+msgstr ""
 
 msgid "Batch Build"
 msgstr "批量建立"
@@ -1975,12 +2001,9 @@ msgid "There are no valid shapes loaded!"
 msgstr "无有效模型被载入！"
 
 msgid ""
-"At least one vertex does not have any weighting assigned to it. This will "
-"cause issues and you should fix it using the weight brush. The affected "
-"vertices have been put under a mask. Do you want to save anyway?"
+"The following shapes have unweighted vertices, which can cause issues. The "
+"affected vertices have been put under a mask. Do you want to save anyway?"
 msgstr ""
-"至少有一个顶点没有分配任何权重。这会造成问题，你需要使用权重笔刷来修复。受影"
-"响的顶点已被放入一个遮罩中。你依然想保存吗？"
 
 msgid "Unweighted Vertices"
 msgstr "移除顶点权重"
@@ -2083,6 +2106,9 @@ msgstr "滑块没有改变，所以预设没有被保存！"
 
 msgid "There is no shape selected!"
 msgstr "没有模型被选中！"
+
+msgid "There is no reference shape!"
+msgstr ""
 
 msgid "There is no slider in edit mode to import data to!"
 msgstr "编辑模式中没有滑块可导入数据！"
@@ -2328,11 +2354,11 @@ msgid "Version"
 msgstr "版本"
 
 msgid ""
-"Version of NIF file '%s' doesn't match current target game. To use the "
-"meshes for the target game, export to OBJ/FBX and reload them again."
+"Version of NIF file doesn't match current target game. To use the meshes for "
+"the target game, export to OBJ/FBX and reload them again."
 msgstr ""
-"NIF文件'%s'的版本不匹配当前目标游戏。若要使用这个模型到目标游戏，导出到OBJ/"
-"FBX并再次重新加载它们。"
+"NIF文件的版本不匹配当前目标游戏。若要使用这个模型到目标游戏，导出到OBJ/FBX并"
+"再次重新加载它们。"
 
 msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
 msgstr "你想在本阶段将NIF文件对特别版进行优化吗？"

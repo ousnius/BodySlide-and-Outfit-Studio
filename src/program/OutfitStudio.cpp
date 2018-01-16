@@ -5931,7 +5931,7 @@ void OutfitStudio::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {
 		PlatformUtil::OpenFileStream(file, fn, std::ios::in | std::ios::binary);
 
 		NifFile checkFile;
-		if (checkFile.Load(file, fn))
+		if (checkFile.Load(file))
 			return;
 
 		for (auto &rsn : checkFile.GetShapeNames())

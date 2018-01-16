@@ -832,7 +832,7 @@ void BodySlideApp::InitPreview() {
 #ifdef _WINDOWS
 		std::fstream file;
 		PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
-		if (previewBaseNif->Load(file, inputFileName))
+		if (previewBaseNif->Load(file))
 			return;
 #else
 		if (previewBaseNif->Load(inputFileName))
@@ -1601,7 +1601,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	std::fstream file;
 	PlatformUtil::OpenFileStream(file, inputFileName, std::ios::in | std::ios::binary);
 
-	int error = nifBig.Load(file, inputFileName);
+	int error = nifBig.Load(file);
 	if (error) {
 		wxLogError("Failed to load '%s' (%d)!", inputFileName, error);
 		return 1;
@@ -1955,7 +1955,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 
 		NifFile nifBig;
 		NifFile nifSmall;
-		if (nifBig.Load(file, currentSet.GetInputFileName())) {
+		if (nifBig.Load(file)) {
 			failedOutfitsCon[outfit] = _("Unable to load input nif: ") + currentSet.GetInputFileName();
 			return;
 		}

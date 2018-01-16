@@ -34,25 +34,35 @@ struct BoneWeightsSort {
 	}
 };
 
+enum NifLoadOptions {
+	NIF_LOAD_TERRAIN = 1 << 0
+};
 
 class NifFile {
 private:
-	std::string fileName;
+	NiHeader hdr;
 	std::vector<std::unique_ptr<NiObject>> blocks;
 	bool isValid = false;
 	bool hasUnknown = false;
-
-	NiHeader hdr;
+	bool isTerrain = false;
 
 public:
 	NifFile() {}
 
-	NifFile(const std::string& filename) {
-		Load(filename);
+	NifFile(const std::string& fileName) {
+		Load(fileName);
 	}
 
-	NifFile(std::fstream& file, const std::string& filename) {
-		Load(file, filename);
+	NifFile(const std::string& fileName, const NifLoadOptions& options) {
+		Load(fileName, options);
+	}
+
+	NifFile(std::fstream& file) {
+		Load(file);
+	}
+
+	NifFile(std::fstream& file, const NifLoadOptions& options) {
+		Load(file, options);
 	}
 
 	NifFile(const NifFile& other) {
@@ -67,7 +77,9 @@ public:
 	void CopyFrom(const NifFile& other);
 
 	int Load(const std::string& filename);
-	int Load(std::fstream& file, const std::string& filename);
+	int Load(const std::string& filename, const NifLoadOptions& options);
+	int Load(std::fstream& file);
+	int Load(std::fstream& file, const NifLoadOptions& options);
 	int Save(const std::string& filename, bool optimize = true, bool sortBlocks = true);
 	int Save(std::fstream& file, bool optimize = true, bool sortBlocks = true);
 
@@ -77,10 +89,9 @@ public:
 	void PrepareData();
 	void FinalizeData();
 
-	std::string GetFileName() { return fileName; }
-
 	bool IsValid() { return isValid; }
 	bool HasUnknown() { return hasUnknown; }
+	bool IsTerrain() { return isTerrain; }
 
 	void Clear();
 

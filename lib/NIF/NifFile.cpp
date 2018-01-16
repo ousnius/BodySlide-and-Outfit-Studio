@@ -88,7 +88,7 @@ void NifFile::CopyFrom(const NifFile& other) {
 
 	isValid = other.isValid;
 	hasUnknown = other.hasUnknown;
-	fileName = other.fileName;
+	isTerrain = other.isTerrain;
 
 	hdr = NiHeader(other.hdr);
 
@@ -130,27 +130,34 @@ void NifFile::RemoveInvalidTris() {
 void NifFile::Clear() {
 	isValid = false;
 	hasUnknown = false;
+	isTerrain = false;
 
 	blocks.clear();
 	hdr.Clear();
 }
 
 int NifFile::Load(const std::string& filename) {
-	std::fstream file(filename.c_str(), std::ios::in | std::ios::binary);
-	return Load(file, filename);
+	return Load(filename, NifLoadOptions());
 }
 
-int NifFile::Load(std::fstream& file, const std::string& filename) {
+int NifFile::Load(const std::string& filename, const NifLoadOptions& options) {
+	std::fstream file(filename.c_str(), std::ios::in | std::ios::binary);
+	return Load(file, options);
+}
+
+int NifFile::Load(std::fstream& file) {
+	return Load(file, NifLoadOptions());
+}
+
+int NifFile::Load(std::fstream& file, const NifLoadOptions& options) {
 	Clear();
+
+	isTerrain = (options & NIF_LOAD_TERRAIN) != 0;
 
 	if (file.is_open()) {
 		NiStream stream(&file, &hdr.GetVersion());
-		if (filename.rfind('\\') != std::string::npos)
-			fileName = filename.substr(filename.rfind('\\'));
-		else
-			fileName = filename;
-
 		hdr.Get(stream);
+
 		if (!hdr.IsValid()) {
 			Clear();
 			return 1;
@@ -601,20 +608,18 @@ void NifFile::SetTextureSlot(NiShader* shader, std::string& outTexFile, int texI
 }
 
 void NifFile::TrimTexturePaths() {
-	auto trimPath = [](std::string& tex, bool addData) -> std::string& {
+	auto fTrimPath = [&isTerrain = isTerrain](std::string& tex) -> std::string& {
 		if (!tex.empty()) {
 			tex = std::regex_replace(tex, std::regex("/+|\\\\+"), "\\");													// Replace multiple slashes or forward slashes with one backslash
 			tex = std::regex_replace(tex, std::regex("^(.*?)\\\\textures\\\\", std::regex_constants::icase), "");			// Remove everything before the first occurence of "\textures\"
 			tex = std::regex_replace(tex, std::regex("^\\\\+"), "");														// Remove all backslashes from the front
 			tex = std::regex_replace(tex, std::regex("^(?!^textures\\\\)", std::regex_constants::icase), "textures\\");		// If the path doesn't start with "textures\", add it to the front
 
-			if (addData)
+			if (isTerrain)
 				tex = std::regex_replace(tex, std::regex("^(?!^Data\\\\)", std::regex_constants::icase), "Data\\");			// If the path doesn't start with "Data\", add it to the front
 		}
 		return tex;
 	};
-
-	bool addData = (fileName.rfind(".bto") != std::string::npos) || (fileName.rfind(".btr") != std::string::npos);
 
 	for (auto &shape : GetShapes()) {
 		NiShader* shader = GetShader(shape);
@@ -623,25 +628,25 @@ void NifFile::TrimTexturePaths() {
 			if (textureSet) {
 				for (int i = 0; i < textureSet->numTextures; i++) {
 					std::string tex = textureSet->textures[i].GetString();
-					textureSet->textures[i].SetString(trimPath(tex, addData));
+					textureSet->textures[i].SetString(fTrimPath(tex));
 				}
 
 				auto effectShader = dynamic_cast<BSEffectShaderProperty*>(shader);
 				if (effectShader) {
 					std::string tex = effectShader->sourceTexture.GetString();
-					effectShader->sourceTexture.SetString(trimPath(tex, addData));
+					effectShader->sourceTexture.SetString(fTrimPath(tex));
 
 					tex = effectShader->normalTexture.GetString();
-					effectShader->normalTexture.SetString(trimPath(tex, addData));
+					effectShader->normalTexture.SetString(fTrimPath(tex));
 
 					tex = effectShader->greyscaleTexture.GetString();
-					effectShader->greyscaleTexture.SetString(trimPath(tex, addData));
+					effectShader->greyscaleTexture.SetString(fTrimPath(tex));
 
 					tex = effectShader->envMapTexture.GetString();
-					effectShader->envMapTexture.SetString(trimPath(tex, addData));
+					effectShader->envMapTexture.SetString(fTrimPath(tex));
 
 					tex = effectShader->envMaskTexture.GetString();
-					effectShader->envMaskTexture.SetString(trimPath(tex, addData));
+					effectShader->envMaskTexture.SetString(fTrimPath(tex));
 				}
 			}
 		}
@@ -835,10 +840,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 		return result;
 	}
 
-	bool isBTO = fileName.rfind(".bto") != std::string::npos;
-	bool isBTR = fileName.rfind(".btr") != std::string::npos;
-
-	if (!isBTO && !isBTR)
+	if (!isTerrain)
 		result.dupesRenamed = RenameDuplicateShapes();
 
 	NiVersion& version = hdr.GetVersion();
@@ -1080,16 +1082,6 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if (headPartEyes)
 						bsOptShape->SetEyeData(true);
 				}
-			}
-
-			// Add large ref data to shapes tagged as "HD"
-			if (isBTO && shapeName.rfind("HD") != std::string::npos) {
-				auto largeRef = new BSDistantObjectLargeRefExtraData();
-				largeRef->SetName("DOLRED");
-
-				int largeRefId = hdr.AddBlock(largeRef);
-				bsOptShape->GetExtraData().AddBlockRef(largeRefId);
-				bsOptShape->SetName(shapeName + "-LargeRef");
 			}
 
 			hdr.ReplaceBlock(GetBlockID(shape), bsOptShape);

@@ -1598,11 +1598,11 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
 
 	NifFile refNif;
-	int error = refNif.Load(file, fileName);
+	int error = refNif.Load(file);
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				refNif.GetFileName(), refNif.GetHeader().GetVersion().GetVersionInfo());
+				fileName, refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
@@ -1666,17 +1666,17 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	sset.GetSet(setName, activeSet);
 
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
-	std::string inMeshFile = activeSet.GetInputFileName();
+	std::string refFile = activeSet.GetInputFileName();
 
 	std::fstream file;
-	PlatformUtil::OpenFileStream(file, inMeshFile, std::ios::in | std::ios::binary);
+	PlatformUtil::OpenFileStream(file, refFile, std::ios::in | std::ios::binary);
 
 	NifFile refNif;
-	int error = refNif.Load(file, inMeshFile);
+	int error = refNif.Load(file);
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				refNif.GetFileName(), refNif.GetHeader().GetVersion().GetVersionInfo());
+				refFile, refNif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("Reference Error"), wxICON_ERROR, owner);
@@ -1685,8 +1685,8 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		}
 
 		ClearReference();
-		wxLogError("Could not load reference NIF file '%s'!", inMeshFile);
-		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), inMeshFile), _("Reference Error"), wxICON_ERROR, owner);
+		wxLogError("Could not load reference NIF file '%s'!", refFile);
+		wxMessageBox(wxString::Format(_("Could not load reference NIF file '%s'!"), refFile), _("Reference Error"), wxICON_ERROR, owner);
 		return 2;
 	}
 
@@ -1695,8 +1695,8 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	std::vector<std::string> shapes = refNif.GetShapeNames();
 	if (shapes.empty()) {
 		ClearReference();
-		wxLogError("Reference NIF file '%s' does not contain any shapes.", refNif.GetFileName());
-		wxMessageBox(wxString::Format(_("Reference NIF file '%s' does not contain any shapes."), refNif.GetFileName()), _("Reference Error"), wxICON_ERROR, owner);
+		wxLogError("Reference NIF file '%s' does not contain any shapes.", refFile);
+		wxMessageBox(wxString::Format(_("Reference NIF file '%s' does not contain any shapes."), refFile), _("Reference Error"), wxICON_ERROR, owner);
 		return 3;
 	}
 
@@ -1716,15 +1716,15 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	NiShape* refShape = refNif.FindShapeByName(shape);
 	if (!refShape) {
 		ClearReference();
-		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refNif.GetFileName());
-		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refNif.GetFileName()), _("Reference Error"), wxICON_ERROR, owner);
+		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refFile);
+		wxMessageBox(wxString::Format(_("Shape '%s' not found in reference NIF file '%s'!"), shape, refFile), _("Reference Error"), wxICON_ERROR, owner);
 		return 4;
 	}
 
 	// Add cloth data block of NIF to the list
 	std::vector<BSClothExtraData*> clothDataBlocks = refNif.GetChildren<BSClothExtraData>(nullptr, true);
 	for (auto &cloth : clothDataBlocks)
-		clothData[inMeshFile] = cloth->Clone();
+		clothData[refFile] = cloth->Clone();
 
 	refNif.GetHeader().DeleteBlockByType("BSClothExtraData");
 
@@ -1995,11 +1995,11 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
 
 	NifFile nif;
-	int error = nif.Load(file, fileName);
+	int error = nif.Load(file);
 	if (error) {
 		if (error == 2) {
 			wxString errorText = wxString::Format(_("NIF version not supported!\n\nFile: %s\n%s"),
-				nif.GetFileName(), nif.GetHeader().GetVersion().GetVersionInfo());
+				fileName, nif.GetHeader().GetVersion().GetVersionInfo());
 
 			wxLogError(errorText);
 			wxMessageBox(errorText, _("NIF Error"), wxICON_ERROR, owner);
@@ -2386,9 +2386,8 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 				nif.OptimizeForSSE();
 		}
 		else {
-			wxLogWarning("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.", nif.GetFileName());
-			wxMessageBox(wxString::Format(_("Version of NIF file '%s' doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again."),
-				nif.GetFileName()), _("Version"), wxICON_WARNING, owner);
+			wxLogWarning("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.");
+			wxMessageBox(wxString::Format(_("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.")), _("Version"), wxICON_WARNING, owner);
 		}
 	}
 
