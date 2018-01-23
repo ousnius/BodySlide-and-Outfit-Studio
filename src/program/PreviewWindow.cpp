@@ -195,7 +195,7 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	std::vector<std::string> texFiles(MAX_TEXTURE_PATHS);
 
 	NiShader* shader = nullptr;
-	NiShape* shape = fromNif->FindShapeByName(shapeName);
+	auto shape = fromNif->FindBlockByName<NiShape>(shapeName);
 	if (shape) {
 		shader = fromNif->GetShader(shape);
 		if (shader) {

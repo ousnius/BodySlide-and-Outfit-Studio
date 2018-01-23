@@ -272,7 +272,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 				continue;
 			}
 
-			int id = nif->GetBlockID(nif->FindNodeByName(bone));
+			int id = nif->GetBlockID(nif->FindBlockByName<NiNode>(bone));
 			if (id == 0xFFFFFFFF) {
 				MatTransform xform;
 				xform.translation = boneRef.trans;
@@ -299,7 +299,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 		if (shapeBoneList.first == shapeException)
 			continue;
 
-		auto shape = nif->FindShapeByName(shapeBoneList.first);
+		auto shape = nif->FindBlockByName<NiShape>(shapeBoneList.first);
 		if (!shape)
 			continue;
 
@@ -422,7 +422,7 @@ int AnimSkeleton::LoadFromNif(const std::string& fileName) {
 	}
 
 	rootBone = Config["Anim/SkeletonRootName"];
-	int nodeID = refSkeletonNif.GetBlockID(refSkeletonNif.FindNodeByName(rootBone));
+	int nodeID = refSkeletonNif.GetBlockID(refSkeletonNif.FindBlockByName<NiNode>(rootBone));
 	if (nodeID == 0xFFFFFFFF) {
 		wxLogError("Root '%s' not found in skeleton '%s'!", rootBone, fileName);
 		wxMessageBox(wxString::Format(_("Root '%s' not found in skeleton '%s'!"), rootBone, fileName));

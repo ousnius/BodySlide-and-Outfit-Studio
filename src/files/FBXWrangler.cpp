@@ -94,12 +94,12 @@ void FBXWrangler::AddGeometry(const std::string& shapeName, const std::vector<Ve
 }
 
 void FBXWrangler::AddSkeleton(NifFile* nif, bool onlyNonSkeleton) {
-	auto root = nif->FindNodeByName(Config["Anim/SkeletonRootName"]);
-	auto com = nif->FindNodeByName("COM");
+	auto root = nif->FindBlockByName<NiNode>(Config["Anim/SkeletonRootName"]);
+	auto com = nif->FindBlockByName<NiNode>("COM");
 	if (!com)
-		com = nif->FindNodeByName("NPC COM [COM ]");
+		com = nif->FindBlockByName<NiNode>("NPC COM [COM ]");
 	if (!com)
-		com = nif->FindNodeByName("Bip01 NonAccum");
+		com = nif->FindBlockByName<NiNode>("Bip01 NonAccum");
 
 	// Likely a NIF with non-hierarchical nodes
 	if (!com)
@@ -223,7 +223,7 @@ void FBXWrangler::AddNif(NifFile* nif, const std::string& shapeName) {
 	for (auto &s : nif->GetShapeNames()) {
 		if (s == shapeName || shapeName.empty()) {
 			std::vector<Triangle> tris;
-			NiShape* shape = nif->FindShapeByName(s);
+			auto shape = nif->FindBlockByName<NiShape>(s);
 			if (shape && shape->GetTriangles(tris)) {
 				const std::vector<Vector3>* verts = nif->GetRawVertsForShape(s);
 				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s, false);

@@ -194,7 +194,7 @@ public:
 			for (auto &s : workNif.GetShapeNames())
 				workAnim.RemoveShapeBone(s, boneName);
 
-			int blockID = workNif.GetBlockID(workNif.FindNodeByName(boneName));
+			int blockID = workNif.GetBlockID(workNif.FindBlockByName<NiNode>(boneName));
 			if (blockID >= 0)
 				workNif.GetHeader().DeleteBlock(blockID);
 		}

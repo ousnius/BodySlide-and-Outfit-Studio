@@ -943,7 +943,7 @@ mesh* GLSurface::ReloadMeshFromNif(NifFile* nif, std::string shapeName) {
 }
 
 mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color) {
-	NiShape* shape = nif->FindShapeByName(shapeName);
+	auto shape = nif->FindBlockByName<NiShape>(shapeName);
 	if (!shape)
 		return nullptr;
 

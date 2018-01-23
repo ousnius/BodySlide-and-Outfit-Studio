@@ -1128,7 +1128,7 @@ void OutfitStudio::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	NiShape* shape = project->GetWorkNif()->FindShapeByName(project->GetBaseShape());
+	auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(project->GetBaseShape());
 	if (shape)
 		project->SetTextures(shape);
 
@@ -2391,7 +2391,7 @@ void OutfitStudio::OnAddSegment(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId newItem;
 	if (!activeSegment.IsOk() || segmentTree->GetChildrenCount(segmentRoot) <= 0) {
 		std::vector<Triangle> shapeTris;
-		NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(activeItem->shapeName);
 		if (shape)
 			shape->GetTriangles(shapeTris);
 
@@ -2689,7 +2689,7 @@ void OutfitStudio::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
 
 	// Get all triangles of the active shape
 	std::vector<Triangle> tris;
-	NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+	auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(activeItem->shapeName);
 	if (shape)
 		shape->GetTriangles(tris);
 
@@ -2996,7 +2996,7 @@ void OutfitStudio::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudio::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 	wxTreeItemId newItem;
 	if (!activePartition.IsOk() || partitionTree->GetChildrenCount(partitionRoot) <= 0) {
-		NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(activeItem->shapeName);
 		if (shape && shape->GetNumVertices() > 0) {
 			std::vector<ushort> verts(shape->GetNumVertices());
 			for (int id = 0; id < verts.size(); id++)
@@ -3155,7 +3155,7 @@ void OutfitStudio::ShowPartition(const wxTreeItemId& item, bool updateFromMask) 
 			}
 		}
 		else {
-			NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+			auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(activeItem->shapeName);
 			if (!shape)
 				return;
 
@@ -4895,7 +4895,7 @@ void OutfitStudio::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
 	else
 		project->SetBaseShape("");
 
-	NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+	auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(activeItem->shapeName);
 	if (shape)
 		project->SetTextures(shape);
 
@@ -5505,7 +5505,7 @@ void OutfitStudio::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		project->ClearBoneScale();
 		project->DuplicateShape(activeItem->shapeName, newName);
 
-		NiShape* shape = project->GetWorkNif()->FindShapeByName(newName);
+		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(newName);
 		if (shape) {
 			glView->AddMeshFromNif(project->GetWorkNif(), newName, false);
 			UpdateMeshesFromSet();
@@ -5889,7 +5889,7 @@ void OutfitStudio::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	NiShape* shape = project->GetWorkNif()->FindShapeByName(activeItem->shapeName);
+	auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(activeItem->shapeName);
 	if (shape) {
 		ShapeProperties prop(this, project->GetWorkNif(), shape);
 		prop.ShowModal();

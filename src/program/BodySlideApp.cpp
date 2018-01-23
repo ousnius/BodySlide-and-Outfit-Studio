@@ -711,7 +711,7 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 	std::string triFilePath = triPath + ".tri";
 
 	for (auto targetShape = sliderSet.ShapesBegin(); targetShape != sliderSet.ShapesEnd(); ++targetShape) {
-		NiShape* shape = nif.FindShapeByName(targetShape->first);
+		auto shape = nif.FindBlockByName<NiShape>(targetShape->first);
 		if (!shape)
 			continue;
 
@@ -1667,7 +1667,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 		if (targetGame < FO4) {
 			for (auto targetShape = activeSet.ShapesBegin(); targetShape != activeSet.ShapesEnd(); ++targetShape) {
-				NiShape* shape = nifBig.FindShapeByName(targetShape->first);
+				auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
 				if (!shape)
 					continue;
 
@@ -1704,6 +1704,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	wxString custName;
 	bool useCustName = false;
 
+	NifSaveOptions nifOptions;
+	nifOptions.optimize = false;
+
 	if (activeSet.GenWeights()) {
 		outFileNameSmall += "_0.nif";
 		outFileNameBig += "_1.nif";
@@ -1713,7 +1716,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		std::fstream fileSmall;
 		PlatformUtil::OpenFileStream(fileSmall, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 
-		while (nifSmall.Save(fileSmall, false)) {
+		while (nifSmall.Save(fileSmall, nifOptions)) {
 			wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
 			wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
@@ -1725,6 +1728,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 			useCustName = true;
 			savedLow = custName;
+
+			PlatformUtil::OpenFileStream(fileSmall, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 		}
 
 		wxString custEnd;
@@ -1746,7 +1751,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	std::fstream fileBig;
 	PlatformUtil::OpenFileStream(fileBig, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 
-	while (nifBig.Save(fileBig, false)) {
+	while (nifBig.Save(fileBig, nifOptions)) {
 		wxLogError("Failed to build set to '%s'! Asking for new location.", custName);
 		wxMessageBox(wxString().Format(_("Failed to build set to the following location\n\n%s"), custName), _("Unable to process"), wxOK | wxICON_ERROR);
 
@@ -1758,6 +1763,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 
 		useCustName = true;
 		savedHigh = custName;
+
+		PlatformUtil::OpenFileStream(fileBig, custName.ToUTF8().data(), std::ios::out | std::ios::binary);
 	}
 
 	wxString msg = _("Successfully processed the following files:\n");
@@ -2106,7 +2113,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 
 			if (targetGame < FO4) {
 				for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
-					NiShape* shape = nifBig.FindShapeByName(targetShape->first);
+					auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
 					if (!shape)
 						continue;
 
@@ -2138,6 +2145,9 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				wxRemoveFile(triPath);
 		}
 
+		NifSaveOptions nifOptions;
+		nifOptions.optimize = false;
+
 		/* Set filenames for the outfit */
 		if (currentSet.GenWeights()) {
 			outFileNameSmall += "_0.nif";
@@ -2146,7 +2156,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			std::fstream fileBig;
 			PlatformUtil::OpenFileStream(fileBig, outFileNameBig, std::ios::out | std::ios::binary);
 
-			if (nifBig.Save(fileBig, false)) {
+			if (nifBig.Save(fileBig, nifOptions)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
@@ -2154,7 +2164,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			std::fstream fileSmall;
 			PlatformUtil::OpenFileStream(fileSmall, outFileNameSmall, std::ios::out | std::ios::binary);
 
-			if (nifSmall.Save(fileSmall, false)) {
+			if (nifSmall.Save(fileSmall, nifOptions)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameSmall;
 				return;
 			}
@@ -2165,7 +2175,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			std::fstream fileBig;
 			PlatformUtil::OpenFileStream(fileBig, outFileNameBig, std::ios::out | std::ios::binary);
 
-			if (nifBig.Save(fileBig, false)) {
+			if (nifBig.Save(fileBig, nifOptions)) {
 				failedOutfitsCon[outfit] = _("Unable to save nif file: ") + outFileNameBig;
 				return;
 			}
@@ -2235,7 +2245,7 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 	if (toRoot)
 		target = nif.GetRootNode();
 	else
-		target = nif.FindShapeByName(shapeName);
+		target = nif.FindBlockByName<NiShape>(shapeName);
 
 	if (target) {
 		auto triExtraData = new NiStringExtraData();

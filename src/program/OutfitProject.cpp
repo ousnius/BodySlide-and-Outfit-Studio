@@ -414,8 +414,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 	else if (owner->targetGame == SKYRIMSE)
 		blankSkel = "res\\SkeletonBlank_sse.nif";
 
-	NifFile blank;
-	blank.Load(blankSkel);
+	NifFile blank(blankSkel);
 	if (!blank.IsValid()) {
 		wxLogError("Could not load 'SkeletonBlank.nif' for importing data file.");
 		wxMessageBox(_("Could not load 'SkeletonBlank.nif' for importing data file."), _("Import Data Error"), wxICON_ERROR, owner);
@@ -798,7 +797,7 @@ int OutfitProject::SaveSliderBSD(const std::string& sliderName, const std::strin
 }
 
 int OutfitProject::SaveSliderOBJ(const std::string& sliderName, const std::string& shapeName, const std::string& fileName) {
-	NiShape* shape = workNif.FindShapeByName(shapeName);
+	auto shape = workNif.FindBlockByName<NiShape>(shapeName);
 	if (!shape)
 		return 1;
 
@@ -937,7 +936,7 @@ void OutfitProject::SetSliderFromDiff(const std::string& sliderName, const std::
 
 int OutfitProject::GetVertexCount(const std::string& shapeName) {
 	if (workNif.IsValid()) {
-		NiShape* shape = workNif.FindShapeByName(shapeName);
+		auto shape = workNif.FindBlockByName<NiShape>(shapeName);
 		if (shape)
 			return shape->GetNumVertices();
 	}
@@ -1238,7 +1237,7 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 	morpher.LinkRefDiffData(&dds);
 	morpher.BuildProximityCache(destShape, proximityRadius);
 
-	NiShape* shape = workNif.FindShapeByName(destShape);
+	auto shape = workNif.FindBlockByName<NiShape>(destShape);
 	if (shape)
 		workNif.CreateSkinning(shape);
 
@@ -1370,7 +1369,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 	bool hasUnweighted = false;
 
 	for (auto &s : workNif.GetShapeNames()) {
-		NiShape* shape = workNif.FindShapeByName(s);
+		auto shape = workNif.FindBlockByName<NiShape>(s);
 		if (!shape || !shape->IsSkinned())
 			continue;
 
@@ -1713,7 +1712,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		}
 	}
 
-	NiShape* refShape = refNif.FindShapeByName(shape);
+	auto refShape = refNif.FindBlockByName<NiShape>(shape);
 	if (!refShape) {
 		ClearReference();
 		wxLogError("Shape '%s' not found in reference NIF file '%s'!", shape, refFile);
@@ -1791,7 +1790,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 	activeSet.GetReferencedTargets(refTargets);
 	for (auto &target : refTargets) {
 		std::string shapeName = activeSet.TargetToShape(target);
-		NiShape* shape = workNif.FindShapeByName(shapeName);
+		auto shape = workNif.FindBlockByName<NiShape>(shapeName);
 		if (shape) {
 			NiShader* shader = workNif.GetShader(shape);
 			if (shader && shader->IsSkinTinted()) {
@@ -1804,7 +1803,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 	// No external target found, first skin shaded shape becomes reference
 	if (refTargets.empty()) {
 		for (auto shapeTarget = activeSet.ShapesBegin(); shapeTarget != activeSet.ShapesEnd(); ++shapeTarget) {
-			NiShape* shape = workNif.FindShapeByName(shapeTarget->first);
+			auto shape = workNif.FindBlockByName<NiShape>(shapeTarget->first);
 			if (shape) {
 				NiShader* shader = workNif.GetShader(shape);
 				if (shader && shader->IsSkinTinted()) {
@@ -1843,7 +1842,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 }
 
 void OutfitProject::InitConform() {
-	NiShape* shape = workNif.FindShapeByName(baseShape);
+	auto shape = workNif.FindBlockByName<NiShape>(baseShape);
 	if (shape) {
 		morpher.SetRef(workNif, shape);
 		morpher.LinkRefDiffData(&baseDiffData);
@@ -1941,7 +1940,7 @@ void OutfitProject::RenameShape(const std::string& shapeName, const std::string&
 void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& shapeMeshes) {
 	std::vector<Vector3> liveNorms;
 	for (auto &m : shapeMeshes) {
-		NiShape* shape = nif->FindShapeByName(m->shapeName);
+		auto shape = nif->FindBlockByName<NiShape>(m->shapeName);
 		if (shape) {
 			if (nif->GetHeader().GetVersion().IsSK() || nif->GetHeader().GetVersion().IsSSE()) {
 				NiShader* shader = nif->GetShader(shape);
@@ -2073,7 +2072,7 @@ int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh
 	std::vector<Vector3> liveVerts;
 	std::vector<Vector3> liveNorms;
 	for (auto &m : modMeshes) {
-		NiShape* shape = clone.FindShapeByName(m->shapeName);
+		auto shape = clone.FindBlockByName<NiShape>(m->shapeName);
 		if (shape) {
 			liveVerts.clear();
 			liveNorms.clear();
@@ -2233,7 +2232,7 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<std:
 	obj.SetOffset(offset);
 
 	for (auto &s : shapes) {
-		NiShape* shape = workNif.FindShapeByName(s);
+		auto shape = workNif.FindBlockByName<NiShape>(s);
 		if (!shape)
 			return 1;
 
@@ -2277,7 +2276,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 		std::string useShapeName = s;
 
 		if (!mergeShapeName.empty()) {
-			NiShape* mergeShape = workNif.FindShapeByName(mergeShapeName);
+			auto mergeShape = workNif.FindBlockByName<NiShape>(mergeShapeName);
 			if (mergeShape && mergeShape->GetNumVertices() == shape->verts.size()) {
 				int ret = wxMessageBox(_("The vertex count of the selected .fbx file matches the currently selected outfit shape.  Do you wish to update the current shape?  (click No to create a new shape)"), _("Merge or New"), wxYES_NO | wxICON_QUESTION, owner);
 				if (ret == wxYES) {

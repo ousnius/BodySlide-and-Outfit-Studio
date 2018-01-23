@@ -34,8 +34,13 @@ struct BoneWeightsSort {
 	}
 };
 
-enum NifLoadOptions {
-	NIF_LOAD_TERRAIN = 1 << 0
+struct NifLoadOptions {
+	bool isTerrain = false;
+};
+
+struct NifSaveOptions {
+	bool optimize = true;
+	bool sortBlocks = true;
 };
 
 class NifFile {
@@ -49,19 +54,11 @@ private:
 public:
 	NifFile() {}
 
-	NifFile(const std::string& fileName) {
-		Load(fileName);
-	}
-
-	NifFile(const std::string& fileName, const NifLoadOptions& options) {
+	NifFile(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions()) {
 		Load(fileName, options);
 	}
 
-	NifFile(std::fstream& file) {
-		Load(file);
-	}
-
-	NifFile(std::fstream& file, const NifLoadOptions& options) {
+	NifFile(std::fstream& file, const NifLoadOptions& options = NifLoadOptions()) {
 		Load(file, options);
 	}
 
@@ -76,12 +73,10 @@ public:
 	NiHeader& GetHeader() { return hdr; }
 	void CopyFrom(const NifFile& other);
 
-	int Load(const std::string& filename);
-	int Load(const std::string& filename, const NifLoadOptions& options);
-	int Load(std::fstream& file);
-	int Load(std::fstream& file, const NifLoadOptions& options);
-	int Save(const std::string& filename, bool optimize = true, bool sortBlocks = true);
-	int Save(std::fstream& file, bool optimize = true, bool sortBlocks = true);
+	int Load(const std::string& fileName, const NifLoadOptions& options = NifLoadOptions());
+	int Load(std::fstream& file, const NifLoadOptions& options = NifLoadOptions());
+	int Save(const std::string& fileName, const NifSaveOptions& options = NifSaveOptions());
+	int Save(std::fstream& file, const NifSaveOptions& options = NifSaveOptions());
 
 	void Optimize();
 	OptResultSSE OptimizeForSSE(const OptOptionsSSE& options = OptOptionsSSE());
@@ -115,9 +110,8 @@ public:
 	void PrettySortBlocks();
 	bool DeleteUnreferencedBlocks();
 
-	NiShape* FindShapeByName(const std::string& name, int dupIndex = 0);
-	NiAVObject* FindAVObjectByName(const std::string& name, int dupIndex = 0);
-	NiNode* FindNodeByName(const std::string& name);
+	template<class T = NiObject>
+	T* FindBlockByName(const std::string& name);
 	int GetBlockID(NiObject* block);
 	NiNode* GetParentNode(NiObject* block);
 
