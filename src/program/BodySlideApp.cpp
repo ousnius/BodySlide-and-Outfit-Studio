@@ -191,7 +191,9 @@ bool BodySlideApp::OnExceptionInMainLoop() {
 	if (sliderView)
 		sliderView->delayLoad.Stop();
 
+	wxLog::FlushActive();
 	logger.SetFormatter(false);
+
 	wxLogError("Unexpected exception has occurred: %s, the program will terminate.", error);
 	wxMessageBox(wxString::Format(_("Unexpected exception has occurred: %s, the program will terminate."), error), _("Unexpected exception"), wxICON_ERROR);
 	return false;
@@ -212,7 +214,9 @@ void BodySlideApp::OnUnhandledException() {
 	if (sliderView)
 		sliderView->delayLoad.Stop();
 
+	wxLog::FlushActive();
 	logger.SetFormatter(false);
+
 	wxLogError("Unhandled exception has occurred: %s, the program will terminate.", error);
 	wxMessageBox(wxString::Format(_("Unhandled exception has occurred: %s, the program will terminate."), error), _("Unhandled exception"), wxICON_ERROR);
 }
@@ -221,7 +225,9 @@ void BodySlideApp::OnFatalException() {
 	if (sliderView)
 		sliderView->delayLoad.Stop();
 
+	wxLog::FlushActive();
 	logger.SetFormatter(false);
+
 	wxLogError("Fatal exception has occurred, the program will terminate.");
 	wxMessageBox(_("Fatal exception has occurred, the program will terminate."), _("Fatal exception"), wxICON_ERROR);
 }
@@ -1881,11 +1887,10 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 	wxProgressDialog progWnd(_("Processing Outfits"), _("Starting..."), 1000, sliderView, wxPD_AUTO_HIDE | wxPD_APP_MODAL | wxPD_ELAPSED_TIME);
 	progWnd.SetSize(400, 150);
 	float progstep = 1000.0f / outfitList.size();
-	int count = 1;
+	std::atomic<int> count = 0;
 
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
 #ifdef _PPL_H
-	concurrency::critical_section critical;
 	concurrency::concurrent_unordered_map<std::string, std::string> failedOutfitsCon;
 	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const std::string& outfit)
 #else
@@ -1894,21 +1899,11 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 	for (auto &outfit : outfitList)
 #endif
 	{
-#ifdef _PPL_H
-		critical.lock();
-#endif
-
-		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, count, (int)outfitList.size());
+		wxString progMsg = wxString::Format(_("Processing '%s' (%d of %d)..."), outfit, ++count, (int)outfitList.size());
 		progWnd.Update((int)(count * progstep) - 1, progMsg);
 		progWnd.Fit();
-		count++;
-
-#ifdef _PPL_H
-		critical.unlock();
-#endif
 
 		wxLogMessage(progMsg);
-		wxLog::FlushActive();
 
 		/* Load set */
 		if (outfitNameSource.find(outfit) == outfitNameSource.end()) {
@@ -2106,10 +2101,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");									// Replace multiple slashes or forward slashes with one backslash
 			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
 
-			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll)) {
+			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
-				wxLog::FlushActive();
-			}
 
 			if (targetGame < FO4) {
 				for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
@@ -2180,8 +2173,6 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				return;
 			}
 		}
-
-		return;
 #ifdef _PPL_H
 	});
 #else
