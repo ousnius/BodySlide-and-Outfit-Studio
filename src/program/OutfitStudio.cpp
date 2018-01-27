@@ -1669,11 +1669,9 @@ void OutfitStudio::OnSetBaseShape(wxCommandEvent& WXUNUSED(event)) {
 	project->ClearBoneScale();
 
 	for (auto &s : project->GetWorkNif()->GetShapeNames())
-		if (!project->IsBaseShape(s))
-			UpdateShapeSource(s);
+		UpdateShapeSource(s);
 
 	ZeroSliders();
-	project->ClearWorkSliders();
 	if (!activeSlider.empty()) {
 		bEditSlider = false;
 		SliderDisplay* d = sliderDisplays[activeSlider];
