@@ -14,26 +14,21 @@ See the included LICENSE file
 template<class T>
 T* NifFile::FindBlockByName(const std::string& name) {
 	for (auto& block : blocks) {
-		auto geom = dynamic_cast<T*>(block.get());
-		if (geom && !name.compare(geom->GetName()))
-			return geom;
+		auto namedBlock = dynamic_cast<T*>(block.get());
+		if (namedBlock && !name.compare(namedBlock->GetName()))
+			return namedBlock;
 	}
 
 	return nullptr;
 }
 
 int NifFile::GetBlockID(NiObject* block) {
-	if (block != nullptr) {
-		auto it = std::find_if(blocks.begin(), blocks.end(), [&block] (const auto& ptr) {
-			if (ptr.get() == block)
-				return true;
-			else
-				return false;
-		});
+	auto it = std::find_if(blocks.begin(), blocks.end(), [&block](const auto& ptr) {
+		return ptr.get() == block;
+	});
 
-		if (it != blocks.end())
-			return std::distance(blocks.begin(), it);
-	}
+	if (it != blocks.end())
+		return std::distance(blocks.begin(), it);
 
 	return 0xFFFFFFFF;
 }

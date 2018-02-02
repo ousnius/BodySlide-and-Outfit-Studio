@@ -426,7 +426,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 
 	NiShape* shapeResult = nullptr;
 	if (owner->targetGame <= SKYRIM) {
-		NiTriShapeData* nifShapeData = new NiTriShapeData();
+		auto nifShapeData = new NiTriShapeData();
 		nifShapeData->Create(&v, &t, &uv);
 		if (norms) {
 			nifShapeData->normals = (*norms);
@@ -435,19 +435,19 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 
 		int shapeID = blank.GetHeader().AddBlock(nifShapeData);
 
-		NiSkinData* nifSkinData = new NiSkinData();
+		auto nifSkinData = new NiSkinData();
 		int skinID = blank.GetHeader().AddBlock(nifSkinData);
 
-		NiSkinPartition* nifSkinPartition = new NiSkinPartition();
+		auto nifSkinPartition = new NiSkinPartition();
 		int partID = blank.GetHeader().AddBlock(nifSkinPartition);
 
-		BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance();
+		auto nifDismemberInst = new BSDismemberSkinInstance();
 		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
 		nifDismemberInst->SetSkeletonRootRef(blank.GetBlockID(blank.GetRootNode()));
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
+		auto nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
 
 		int shaderID;
 		BSLightingShaderProperty* nifShader = nullptr;
@@ -466,7 +466,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 			nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
 		}
 
-		NiTriShape* nifTriShape = new NiTriShape();
+		auto nifTriShape = new NiTriShape();
 		blank.GetHeader().AddBlock(nifTriShape);
 		if (owner->targetGame < SKYRIM)
 			nifTriShape->GetProperties().AddBlockRef(shaderID);
@@ -477,29 +477,30 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		nifTriShape->SetDataRef(shapeID);
 		nifTriShape->SetSkinInstanceRef(dismemberID);
 
+		nifTriShape->SetGeomData(nifShapeData);
 		blank.SetDefaultPartition(shapeName);
 		shapeResult = nifTriShape;
 	}
 	else if (owner->targetGame == FO4 || owner->targetGame == FO4VR) {
 		BSTriShape* triShapeBase;
 		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
-		BSSubIndexTriShape* nifBSTriShape = new BSSubIndexTriShape();
+		auto nifBSTriShape = new BSSubIndexTriShape();
 		nifBSTriShape->Create(&v, &t, &uv, norms);
 		blank.GetHeader().AddBlock(nifBSTriShape);
 
-		BSSkinInstance* nifBSSkinInstance = new BSSkinInstance();
+		auto nifBSSkinInstance = new BSSkinInstance();
 		int skinID = blank.GetHeader().AddBlock(nifBSSkinInstance);
 		nifBSSkinInstance->SetTargetRef(workNif.GetBlockID(workNif.GetRootNode()));
 
-		BSSkinBoneData* nifBoneData = new BSSkinBoneData();
+		auto nifBoneData = new BSSkinBoneData();
 		int boneID = blank.GetHeader().AddBlock(nifBoneData);
 		nifBSSkinInstance->SetDataRef(boneID);
 		nifBSTriShape->SetSkinInstanceRef(skinID);
 		triShapeBase = nifBSTriShape;
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
+		auto nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
 
-		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
+		auto nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
 		int shaderID = blank.GetHeader().AddBlock(nifShader);
 		nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
 		nifShader->SetWetMaterialName(wetShaderName);
@@ -509,17 +510,17 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		shapeResult = triShapeBase;
 	}
 	else {
-		BSTriShape* triShape = new BSTriShape();
+		auto triShape = new BSTriShape();
 		triShape->Create(&v, &t, &uv, norms);
 		blank.GetHeader().AddBlock(triShape);
 
-		NiSkinData* nifSkinData = new NiSkinData();
+		auto nifSkinData = new NiSkinData();
 		int skinID = blank.GetHeader().AddBlock(nifSkinData);
 
-		NiSkinPartition* nifSkinPartition = new NiSkinPartition();
+		auto nifSkinPartition = new NiSkinPartition();
 		int partID = blank.GetHeader().AddBlock(nifSkinPartition);
 
-		BSDismemberSkinInstance* nifDismemberInst = new BSDismemberSkinInstance();
+		auto nifDismemberInst = new BSDismemberSkinInstance();
 		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
@@ -527,9 +528,9 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		triShape->SetSkinInstanceRef(dismemberID);
 		triShape->SetSkinned(true);
 
-		BSShaderTextureSet* nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
+		auto nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
 
-		BSLightingShaderProperty* nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
+		auto nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
 		int shaderID = blank.GetHeader().AddBlock(nifShader);
 		nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
 
