@@ -25,6 +25,7 @@ public:
 	void ClearSlider(const std::string& presetName, const std::string& sliderName, const bool big = true);
 
 	void GetPresetNames(std::vector<std::string>& outNames);
+	void AddEmptyPreset(const std::string& set);
 	void SetSliderPreset(const std::string& set, const std::string& slider, float big = -10000.0f, float small = -10000.0f);
 	bool GetSliderExists(const std::string& set, const std::string& slider);
 	bool GetBigPreset(const std::string& set, const std::string& slider, float& big);

@@ -32,6 +32,10 @@ void PresetCollection::GetPresetNames(std::vector<std::string>& outNames) {
 		outNames.push_back(it.first);
 }
 
+void PresetCollection::AddEmptyPreset(const std::string& set) {
+	namedSliderPresets.try_emplace(set);
+}
+
 void PresetCollection::SetSliderPreset(const std::string& set, const std::string& slider, float big, float small) {
 	std::map<std::string, SliderPreset> newPreset;
 	SliderPreset sp;
@@ -191,6 +195,8 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 			presetFileNames[presetName] = file.ToUTF8();
 			presetGroups[presetName] = groups;
 
+			AddEmptyPreset(presetName);
+
 			setSlider = element->FirstChildElement("SetSlider");
 			while (setSlider) {
 				sliderName = setSlider->Attribute("name");
@@ -215,9 +221,6 @@ bool PresetCollection::LoadPresets(const std::string& basePath, const std::strin
 }
 
 int PresetCollection::SavePreset(const std::string& filePath, const std::string& presetName, const std::string& sliderSetName, std::vector<std::string>& assignGroups) {
-	if (namedSliderPresets.find(presetName) == namedSliderPresets.end())
-		return -1;
-
 	XMLElement* newElement = nullptr;
 	XMLDocument outDoc;
 	XMLNode* slidersNode = nullptr;
