@@ -2903,6 +2903,9 @@ void BodySlideFrame::OnRefreshGroups(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 	app->RefreshOutfitList();
+
+	std::string outfitName = Config["SelectedOutfit"];
+	app->ActivateOutfit(outfitName);
 }
 
 void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
