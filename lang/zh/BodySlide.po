@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.5\n"
+"X-Generator: Poedit 2.0.6\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Poedit-Basepath: ../..\n"
@@ -1728,9 +1728,6 @@ msgstr "选择一个目录保存文件"
 
 msgid "All sets processed successfully!"
 msgstr "所有设置处理成功！"
-
-msgid "You can't change the settings while Outfit Studio is opened up."
-msgstr "当装备工作室开启的时候你无法改变设置。"
 
 msgid "OpenGL Error"
 msgstr "OpenGL错误"

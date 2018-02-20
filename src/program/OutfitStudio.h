@@ -23,7 +23,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../render/GLSurface.h"
 #include "../components/TweakBrush.h"
 #include "../components/Automorph.h"
+#include "../utils/Log.h"
 #include "../utils/ConfigurationManager.h"
+
+#include "../FSEngine/FSManager.h"
+#include "../FSEngine/FSEngine.h"
 
 #include <wx/xrc/xmlres.h>
 #include <wx/treectrl.h>
@@ -34,6 +38,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dataview.h>
 #include <wx/splitter.h>
 #include <wx/collpane.h>
+#include <wx/tokenzr.h>
+#include <wx/cmdline.h>
+#include <wx/msw/registry.h>
 
 enum TargetGame {
 	FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR
@@ -96,7 +103,7 @@ struct ReferenceTemplate {
 };
 
 
-class OutfitStudio;
+class OutfitStudioFrame;
 
 class wxGLPanel : public wxGLCanvas {
 public:
@@ -504,7 +511,7 @@ private:
 
 	std::set<int> BVHUpdateQueue;
 
-	OutfitStudio* os;
+	OutfitStudioFrame* os = nullptr;
 
 	float brushSize;
 
@@ -555,14 +562,50 @@ private:
 	wxDECLARE_EVENT_TABLE();
 };
 
-class OutfitProject;
 
-class OutfitStudio : public wxFrame {
+static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
+	{ wxCMD_LINE_NONE }
+};
+
+class OutfitStudio : public wxApp {
 public:
-	OutfitStudio(const wxPoint& pos, const wxSize& size, ConfigurationManager& inConfig);
-	~OutfitStudio();
+	virtual ~OutfitStudio();
+
+	virtual bool OnInit();
+	virtual void OnInitCmdLine(wxCmdLineParser& parser);
+	virtual bool OnCmdLineParsed(wxCmdLineParser& parser);
+
+	virtual bool OnExceptionInMainLoop();
+	virtual void OnUnhandledException();
+	virtual void OnFatalException();
+
+	wxString GetGameDataPath(TargetGame targ);
+	void InitLanguage();
+
+	bool SetDefaultConfig();
+	bool ShowSetup();
+
+	void InitArchives();
+	void GetArchiveFiles(std::vector<std::string>& outList);
 
 	TargetGame targetGame;
+
+private:
+	OutfitStudioFrame* frame = nullptr;
+
+	Log logger;
+	wxLocale* locale = nullptr;
+	int language = 0;
+};
+
+
+class OutfitProject;
+
+class OutfitStudioFrame : public wxFrame {
+public:
+	OutfitStudioFrame(const wxPoint& pos, const wxSize& size);
+	~OutfitStudioFrame() {}
+
 	wxGLPanel* glView = nullptr;
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
@@ -583,8 +626,6 @@ public:
 	wxTreeItemId segmentRoot;
 	wxTreeItemId partitionRoot;
 	wxImageList* visStateImages;
-
-	ConfigurationManager& appConfig;
 
 	class SliderDisplay {
 	public:
@@ -816,11 +857,17 @@ private:
 	bool ShowWeightCopy(WeightCopyOptions& options);
 	void ReselectBone();
 
+	void OnExit(wxCommandEvent& event);
+	void OnClose(wxCloseEvent& event);
+
+	void OnChooseTargetGame(wxCommandEvent& event);
+	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
+	void OnSettings(wxCommandEvent& event);
+
 	void OnSashPosChanged(wxSplitterEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
 
-	void OnExit(wxCommandEvent& event);
 	void OnNewProject(wxCommandEvent& event);
 	void OnLoadProject(wxCommandEvent &event);
 	void OnLoadReference(wxCommandEvent &event);
@@ -935,7 +982,7 @@ private:
 	void OnInvertUV(wxCommandEvent& event);
 
 	void OnEnterClose(wxKeyEvent& event);
-	
+
 	void OnMoveShape(wxCommandEvent& event);
 	void OnMoveShapeOldOffset(wxCommandEvent& event);
 	void OnMoveShapeSlider(wxCommandEvent& event);
@@ -1109,23 +1156,23 @@ private:
 
 class DnDFile : public wxFileDropTarget {
 public:
-	DnDFile(OutfitStudio *pOwner = nullptr) { owner = pOwner; }
+	DnDFile(OutfitStudioFrame *pOwner = nullptr) { owner = pOwner; }
 
 	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
 
 private:
-	OutfitStudio *owner = nullptr;
+	OutfitStudioFrame *owner = nullptr;
 };
 
 class DnDSliderFile : public wxFileDropTarget {
 public:
-	DnDSliderFile(OutfitStudio *pOwner = nullptr) { owner = pOwner; }
+	DnDSliderFile(OutfitStudioFrame *pOwner = nullptr) { owner = pOwner; }
 
 	virtual bool OnDropFiles(wxCoord x, wxCoord y, const wxArrayString& fileNames);
 	virtual wxDragResult OnDragOver(wxCoord x, wxCoord y, wxDragResult defResult);
 
 private:
-	OutfitStudio *owner = nullptr;
+	OutfitStudioFrame *owner = nullptr;
 	wxDragResult lastResult = wxDragNone;
 	std::string targetSlider;
 };

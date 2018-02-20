@@ -66,8 +66,7 @@ public:
 	}
 };
 
-class ConfigurationManager
-{
+class ConfigurationManager {
 	std::vector<ConfigurationItem*> ciList;
 	std::string file;
 	ConfigurationItem* FindCI(const std::string& inName);
@@ -77,9 +76,8 @@ public:
 	~ConfigurationManager();
 
 	void Clear();
-	int LoadConfig(const std::string& pathToFile = "Config.xml", const std::string& rootElement = "BodySlideConfig");
-
-	int SaveConfig(const std::string& pathToFile, const std::string& rootElementName = "BodySlideConfig");
+	int LoadConfig(const std::string& pathToFile = "Config.xml", const std::string& rootElement = "Config");
+	int SaveConfig(const std::string& pathToFile = "Config.xml", const std::string& rootElement = "Config");
 
 	int EnumerateCIs(std::vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
 
@@ -106,8 +104,7 @@ public:
 	int GetValueArray(const std::string& containerName, const std::string& arrayName, std::vector<std::string>& outValues);
 	int GetValueAttributeArray(const std::string& containerName, const std::string& arrayName, const std::string& attributeName, std::vector<std::string>& outValues);
 
-	std::string operator [] (const char* inName)
-	{
+	std::string operator [] (const char* inName) {
 		return GetString(std::string(inName));
 	}
 
@@ -124,5 +121,3 @@ public:
 		*/
 	void ReplaceVars(std::string& inoutStr);
 };
-
-extern ConfigurationManager Config;

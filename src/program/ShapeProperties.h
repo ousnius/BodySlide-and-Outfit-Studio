@@ -41,7 +41,7 @@ private:
 	wxPanel* pgExtraData = nullptr;
 	wxFlexGridSizer* extraDataGrid = nullptr;
 
-	OutfitStudio* os = nullptr;
+	OutfitStudioFrame* os = nullptr;
 	NifFile* nif = nullptr;
 	NiShape* shape = nullptr;
 

@@ -17,17 +17,16 @@ See the included LICENSE file
 #include <sstream>
 #include <regex>
 
-OutfitProject::OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner) : appConfig(inConfig) {
-	morpherInitialized = false;
+extern ConfigurationManager Config;
+
+OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;
 	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
 	LoadSkeletonReference(defSkelFile);
 
-	mCopyRef = true;
-	if (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE)
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == SKYRIM || targetGame == SKYRIMSE)
 		mGenWeights = true;
-	else
-		mGenWeights = false;
 }
 
 OutfitProject::~OutfitProject() {
@@ -407,11 +406,12 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 	std::string blankSkel;
 	std::string defaultName = "New Outfit";
 
-	if (owner->targetGame <= SKYRIM)
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame <= SKYRIM)
 		blankSkel = "res\\SkeletonBlank_sk.nif";
-	else if (owner->targetGame == FO4 || owner->targetGame == FO4VR)
+	else if (targetGame == FO4 || targetGame == FO4VR)
 		blankSkel = "res\\SkeletonBlank_fo4.nif";
-	else if (owner->targetGame == SKYRIMSE)
+	else if (targetGame == SKYRIMSE)
 		blankSkel = "res\\SkeletonBlank_sse.nif";
 
 	NifFile blank(blankSkel);
@@ -425,7 +425,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		ImportNIF(blankSkel, true, defaultName);
 
 	NiShape* shapeResult = nullptr;
-	if (owner->targetGame <= SKYRIM) {
+	if (targetGame <= SKYRIM) {
 		auto nifShapeData = new NiTriShapeData();
 		nifShapeData->Create(&v, &t, &uv);
 		if (norms) {
@@ -452,7 +452,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		int shaderID;
 		BSLightingShaderProperty* nifShader = nullptr;
 		BSShaderPPLightingProperty* nifShaderPP = nullptr;
-		switch (owner->targetGame) {
+		switch (targetGame) {
 		case FO3:
 		case FONV:
 			nifShaderPP = new BSShaderPPLightingProperty();
@@ -468,7 +468,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 
 		auto nifTriShape = new NiTriShape();
 		blank.GetHeader().AddBlock(nifTriShape);
-		if (owner->targetGame < SKYRIM)
+		if (targetGame < SKYRIM)
 			nifTriShape->GetProperties().AddBlockRef(shaderID);
 		else
 			nifTriShape->SetShaderPropertyRef(shaderID);
@@ -481,7 +481,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		blank.SetDefaultPartition(shapeName);
 		shapeResult = nifTriShape;
 	}
-	else if (owner->targetGame == FO4 || owner->targetGame == FO4VR) {
+	else if (targetGame == FO4 || targetGame == FO4VR) {
 		BSTriShape* triShapeBase;
 		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		auto nifBSTriShape = new BSSubIndexTriShape();
@@ -1025,7 +1025,7 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 		return;
 
 	if (textureFiles.empty()) {
-		std::string texturesDir = appConfig["GameDataPath"];
+		std::string texturesDir = Config["GameDataPath"];
 		bool hasMat = false;
 		std::string matFile;
 
@@ -1202,6 +1202,7 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 	std::vector<std::string> lboneList;
 	std::vector<std::string>* boneList;
 
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	owner->UpdateProgress(1, _("Gathering bones..."));
 
 	if (!inBoneList) {
@@ -1263,7 +1264,7 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 
 		if (diffResult.size() > 0) {
 			if (workAnim.AddShapeBone(destShape, boneName)) {
-				if (owner->targetGame == FO4 || owner->targetGame == FO4VR) {
+				if (targetGame == FO4 || targetGame == FO4VR) {
 					// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 					MatTransform xForm;
 					workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
@@ -1306,6 +1307,7 @@ void OutfitProject::TransferSelectedWeights(const std::string& destShape, std::u
 	if (baseShape.empty())
 		return;
 
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	owner->UpdateProgress(10, _("Gathering bones..."));
 
 	std::vector<std::string>* boneList;
@@ -1346,7 +1348,7 @@ void OutfitProject::TransferSelectedWeights(const std::string& destShape, std::u
 		}
 
 		if (workAnim.AddShapeBone(destShape, boneName)) {
-			if (owner->targetGame == FO4 || owner->targetGame == FO4VR) {
+			if (targetGame == FO4 || targetGame == FO4VR) {
 				// Fallout 4 bone transforms are stored in a bonedata structure per shape versus the node transform in the skeleton data.
 				MatTransform xForm;
 				workNif.GetShapeBoneTransform(baseShape, boneName, xForm);
@@ -1968,6 +1970,8 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		return 0;
 	}
 
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+
 	if (!inOutfitName.empty())
 		outfitName = inOutfitName;
 	else if (outfitName.empty())
@@ -1984,7 +1988,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		else
 			mGamePath.Clear();
 
-		if (owner->targetGame == SKYRIM || owner->targetGame == SKYRIMSE) {
+		if (targetGame == SKYRIM || targetGame == SKYRIMSE) {
 			wxString fileRest;
 			if (mGameFile.EndsWith("_0", &fileRest) || mGameFile.EndsWith("_1", &fileRest))
 				mGameFile = fileRest;
@@ -2353,9 +2357,10 @@ int OutfitProject::ExportFBX(const std::string& fileName, const std::vector<std:
 
 
 void OutfitProject::ValidateNIF(NifFile& nif) {
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	bool match = false;
 
-	switch (owner->targetGame) {
+	switch (targetGame) {
 	case FO3:
 	case FONV:
 		match = nif.GetHeader().GetVersion().IsFO3();
@@ -2373,7 +2378,7 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 	}
 
 	if (!match) {
-		if (owner->targetGame == SKYRIMSE && nif.GetHeader().GetVersion().IsSK()) {
+		if (targetGame == SKYRIMSE && nif.GetHeader().GetVersion().IsSK()) {
 			if (!Config.Exists("OptimizeForSSE")) {
 				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
 				if (res == wxYES)

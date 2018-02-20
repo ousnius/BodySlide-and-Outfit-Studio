@@ -13,11 +13,10 @@ See the included LICENSE file
 
 #include <wx/arrstr.h>
 
-class OutfitStudio;
+class OutfitStudioFrame;
 
 class OutfitProject {
-	ConfigurationManager& appConfig;
-	OutfitStudio* owner;
+	OutfitStudioFrame* owner = nullptr;
 
 	NifFile workNif;
 	AnimInfo workAnim;
@@ -33,7 +32,7 @@ public:
 	DiffDataSets baseDiffData;
 	SliderSet activeSet;
 	Automorph morpher;
-	bool morpherInitialized;
+	bool morpherInitialized = false;
 
 	std::map<std::string, std::vector<Vector3>> boneScaleOffsets;
 	std::map<std::string, std::vector<Vector3>> boneScaleVerts;
@@ -42,16 +41,17 @@ public:
 	std::unordered_map<std::string, MaterialFile> shapeMaterialFiles;
 
 	// inOwner is meant to provide access to OutfitStudio for the purposes of reporting process status only.
-	OutfitProject(ConfigurationManager& inConfig, OutfitStudio* inOwner = nullptr);
+	OutfitProject(OutfitStudioFrame* inOwner = nullptr);
 	~OutfitProject();
+
 	wxString mFileName;
 	wxString mOutfitName;
 	wxString mDataDir;
 	wxString mBaseFile;
 	wxString mGamePath;
 	wxString mGameFile;
-	bool mCopyRef;
-	bool mGenWeights;
+	bool mCopyRef = true;
+	bool mGenWeights = false;
 
 	// Returns a string error message or empty string on success.
 	std::string Save(const wxString& strFileName,

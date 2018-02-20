@@ -21,6 +21,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/PlatformUtil.h"
 
 #include <regex>
+#include <atomic>
 
 #ifdef WIN64
 	#include <ppl.h>
@@ -30,6 +31,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #endif
 
 ConfigurationManager Config;
+ConfigurationManager BodySlideConfig;
 
 const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR" };
 const wxLanguage SupportedLangs[] = {
@@ -97,8 +99,9 @@ bool BodySlideApp::OnInit() {
 		return false;
 
 	Config.LoadConfig();
+	BodySlideConfig.LoadConfig("BodySlide.xml", "BodySlideConfig");
 
-	logger.Initialize(Config.GetIntValue("LogLevel", -1));
+	logger.Initialize(Config.GetIntValue("LogLevel", -1), "Log_BS.txt");
 	wxLogMessage("Initializing BodySlide...");
 
 #ifdef NDEBUG
@@ -113,7 +116,6 @@ bool BodySlideApp::OnInit() {
 	preview = nullptr;
 	sliderView = nullptr;
 	previewBaseNif = nullptr;
-	outfitStudio = nullptr;
 
 	Bind(wxEVT_CHAR_HOOK, &BodySlideApp::CharHook, this);
 
@@ -135,11 +137,11 @@ bool BodySlideApp::OnInit() {
 	}
 	wxLogMessage(gameName);
 
-	int x = Config.GetIntValue("BodySlideFrame.x");
-	int y = Config.GetIntValue("BodySlideFrame.y");
-	int w = Config.GetIntValue("BodySlideFrame.width");	
-	int h = Config.GetIntValue("BodySlideFrame.height");
-	std::string maximized = Config["BodySlideFrame.maximized"];
+	int x = BodySlideConfig.GetIntValue("BodySlideFrame.x");
+	int y = BodySlideConfig.GetIntValue("BodySlideFrame.y");
+	int w = BodySlideConfig.GetIntValue("BodySlideFrame.width");
+	int h = BodySlideConfig.GetIntValue("BodySlideFrame.height");
+	std::string maximized = BodySlideConfig["BodySlideFrame.maximized"];
 
 	wxLogMessage("Loading BodySlide frame at X:%d Y:%d with W:%d H:%d...", x, y, w, h);
 	sliderView = new BodySlideFrame(this, wxSize(w, h));
@@ -168,7 +170,6 @@ void BodySlideApp::OnInitCmdLine(wxCmdLineParser& parser) {
 }
 
 bool BodySlideApp::OnCmdLineParsed(wxCmdLineParser& parser) {
-	cmdOutfitStudio = parser.Found("os");
 	parser.Found("gbuild", &cmdGroupBuild);
 	parser.Found("t", &cmdTargetDir);
 	parser.Found("p", &cmdPreset);
@@ -276,10 +277,10 @@ void BodySlideApp::LoadData() {
 	LoadAllGroups();
 	LoadSliderSets();
 
-	std::string activeOutfit = Config["SelectedOutfit"];
+	std::string activeOutfit = BodySlideConfig["SelectedOutfit"];
 	if (activeOutfit.empty() && !outfitNameOrder.empty()) {
 		activeOutfit = outfitNameOrder.front();
-		Config.SetValue("SelectedOutfit", activeOutfit);
+		BodySlideConfig.SetValue("SelectedOutfit", activeOutfit);
 	}
 
 	sliderView->Freeze();
@@ -303,7 +304,7 @@ void BodySlideApp::LoadData() {
 		SetPresetGroups(activeOutfit);
 		LoadPresets(activeOutfit);
 
-		std::string activePreset = Config["SelectedPreset"];
+		std::string activePreset = BodySlideConfig["SelectedPreset"];
 		PopulatePresetList(activePreset);
 		ActivatePreset(activePreset);
 
@@ -317,9 +318,6 @@ void BodySlideApp::LoadData() {
 
 	if (!cmdGroupBuild.IsEmpty())
 		GroupBuild(cmdGroupBuild.ToStdString());
-
-	if (cmdOutfitStudio)
-		LaunchOutfitStudio();
 }
 
 int BodySlideApp::CreateSetSliders(const std::string& outfit) {
@@ -405,7 +403,7 @@ int BodySlideApp::LoadSliderSets() {
 void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 	wxLogMessage("Activating set '%s'...", outfitName);
 
-	Config.SetValue("SelectedOutfit", outfitName);
+	BodySlideConfig.SetValue("SelectedOutfit", outfitName);
 	sliderView->Freeze();
 
 	sliderView->ClearPresetList();
@@ -413,7 +411,7 @@ void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 	
 	CleanupPreview();
 
-	std::string activePreset = Config["SelectedPreset"];
+	std::string activePreset = BodySlideConfig["SelectedPreset"];
 
 	sliderManager.ClearPresets();
 	SetPresetGroups(outfitName);
@@ -438,7 +436,7 @@ void BodySlideApp::ActivateOutfit(const std::string& outfitName) {
 void BodySlideApp::ActivatePreset(const std::string &presetName, const bool updatePreview) {
 	wxLogMessage("Applying preset '%s' to sliders.", presetName);
 
-	Config.SetValue("SelectedPreset", presetName);
+	BodySlideConfig.SetValue("SelectedPreset", presetName);
 	sliderManager.InitializeSliders(presetName);
 
 	bool zapChanged = false;
@@ -561,7 +559,7 @@ void BodySlideApp::PopulatePresetList(const std::string& select) {
 }
 
 void BodySlideApp::PopulateOutfitList(const std::string& select) {
-	std::string myselect = Config["SelectedOutfit"];
+	std::string myselect = BodySlideConfig["SelectedOutfit"];
 	if (!select.empty())
 		myselect = select;
 
@@ -653,30 +651,15 @@ void BodySlideApp::DisplayActiveSet() {
 }
 
 void BodySlideApp::LaunchOutfitStudio() {
-	if (outfitStudio) {
-		if (outfitStudio->IsIconized()) {
-			if (outfitStudio->IsMaximized()) {
-				outfitStudio->Restore();
-				outfitStudio->Maximize();
-			}
-			else
-				outfitStudio->Restore();
-		}
-		else
-			outfitStudio->SetFocus();
-	}
-	else {
-		int x = Config.GetIntValue("OutfitStudioFrame.x");
-		int y = Config.GetIntValue("OutfitStudioFrame.y");
-		int w = Config.GetIntValue("OutfitStudioFrame.width");
-		int h = Config.GetIntValue("OutfitStudioFrame.height");
-		std::string maximized = Config["OutfitStudioFrame.maximized"];
+#ifdef WIN64
+	const wxString osExec = "\"OutfitStudio x64.exe\"";
+#else
+	const wxString osExec = "\"OutfitStudio.exe\"";
+#endif
 
-		outfitStudio = new OutfitStudio(wxPoint(x, y), wxSize(w, h), Config);
-		if (maximized == "true")
-			outfitStudio->Maximize();
-
-		outfitStudio->Show();
+	if (!wxExecute(osExec, wxEXEC_ASYNC)) {
+		wxLogError("Failed to execute '%s' process.", osExec);
+		wxMessageBox(_("Failed to launch Outfit Studio executable!"), _("Error"), wxICON_ERROR);
 	}
 }
 
@@ -806,11 +789,11 @@ void BodySlideApp::ShowPreview() {
 	if (preview)
 		return;
 
-	int x = Config.GetIntValue("PreviewFrame.x");
-	int y = Config.GetIntValue("PreviewFrame.y");
-	int w = Config.GetIntValue("PreviewFrame.width");
-	int h = Config.GetIntValue("PreviewFrame.height");
-	std::string maximized = Config["PreviewFrame.maximized"];
+	int x = BodySlideConfig.GetIntValue("PreviewFrame.x");
+	int y = BodySlideConfig.GetIntValue("PreviewFrame.y");
+	int w = BodySlideConfig.GetIntValue("PreviewFrame.width");
+	int h = BodySlideConfig.GetIntValue("PreviewFrame.height");
+	std::string maximized = BodySlideConfig["PreviewFrame.maximized"];
 
 	preview = new PreviewWindow(wxPoint(x, y), wxSize(w, h), this);
 	if (maximized == "true")
@@ -1047,8 +1030,8 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("BSATextureScan", "true");
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("UseSystemLanguage", "false");
-	Config.SetDefaultValue("SelectedOutfit", "");
-	Config.SetDefaultValue("SelectedPreset", "");
+	BodySlideConfig.SetDefaultValue("SelectedOutfit", "");
+	BodySlideConfig.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultValue("Input/LeftMousePan", "false");
@@ -1067,22 +1050,16 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultValue("Lights/Directional2.x", 30);
 	Config.SetDefaultValue("Lights/Directional2.y", 20);
 	Config.SetDefaultValue("Lights/Directional2.z", -100);
-	Config.SetDefaultValue("BodySlideFrame.width", 800);
-	Config.SetDefaultValue("BodySlideFrame.height", 600);
-	Config.SetDefaultValue("BodySlideFrame.x", 100);
-	Config.SetDefaultValue("BodySlideFrame.y", 100);
-	Config.SetDefaultValue("OutfitStudioFrame.width", 990);
-	Config.SetDefaultValue("OutfitStudioFrame.height", 757);
-	Config.SetDefaultValue("OutfitStudioFrame.x", 100);
-	Config.SetDefaultValue("OutfitStudioFrame.y", 100);
-	Config.SetDefaultValue("OutfitStudioFrame.sashpos", 850);
-	Config.SetDefaultValue("OutfitStudioFrame.sashrightpos", 200);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.width", 800);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.height", 600);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.x", 100);
+	BodySlideConfig.SetDefaultValue("BodySlideFrame.y", 100);
 
 	wxSize previewSize(720 + xborder * 2, 720 + yborder * 2);
-	Config.SetDefaultValue("PreviewFrame.width", previewSize.GetWidth());
-	Config.SetDefaultValue("PreviewFrame.height", previewSize.GetHeight());
-	Config.SetDefaultValue("PreviewFrame.x", 100);
-	Config.SetDefaultValue("PreviewFrame.y", 100);
+	BodySlideConfig.SetDefaultValue("PreviewFrame.width", previewSize.GetWidth());
+	BodySlideConfig.SetDefaultValue("PreviewFrame.height", previewSize.GetHeight());
+	BodySlideConfig.SetDefaultValue("PreviewFrame.x", 100);
+	BodySlideConfig.SetDefaultValue("PreviewFrame.y", 100);
 
 	Config.SetDefaultValue("GameRegKey/Fallout3", "Software\\Bethesda Softworks\\Fallout3");
 	Config.SetDefaultValue("GameRegVal/Fallout3", "Installed Path");
@@ -1136,7 +1113,7 @@ bool BodySlideApp::ShowSetup() {
 	wxXmlResource* xrc = wxXmlResource::Get();
 	bool loaded = xrc->Load("res\\xrc\\Setup.xrc");
 	if (!loaded) {
-		wxMessageBox("Failed to load Setup.xrc file!", "Error", wxICON_ERROR);
+		wxMessageBox("Failed to load Setup.xrc file!", _("Error"), wxICON_ERROR);
 		return false;
 	}
 
@@ -1258,6 +1235,7 @@ bool BodySlideApp::ShowSetup() {
 			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToStdString());
 			Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToStdString());
 
+			Config.SaveConfig();
 			delete setup;
 		}
 		else {
@@ -1391,7 +1369,7 @@ int BodySlideApp::SaveGroupList(const std::string& fileName, const std::string& 
 			outfile.New(fileName);
 
 		if (outfile.GetError() != 0) {
-			wxMessageBox(_("Failed to create group file."), "Error", wxICON_ERROR);
+			wxMessageBox(_("Failed to create group file."), _("Error"), wxICON_ERROR);
 			return 5;
 		}
 	}
@@ -1490,8 +1468,8 @@ void BodySlideApp::ApplyOutfitFilter() {
 		}
 	}
 
-	Config.SetValue("LastGroupFilter", std::string(grpSrch));
-	Config.SetValue("LastOutfitFilter", std::string(outfitSrch));
+	BodySlideConfig.SetValue("LastGroupFilter", std::string(grpSrch));
+	BodySlideConfig.SetValue("LastOutfitFilter", std::string(outfitSrch));
 }
 
 int BodySlideApp::GetOutfits(std::vector<std::string>& outList) {
@@ -1507,7 +1485,7 @@ int BodySlideApp::GetFilteredOutfits(std::vector<std::string>& outList) {
 void BodySlideApp::LoadPresets(const std::string& sliderSet) {
 	std::string outfit = sliderSet;
 	if (sliderSet.empty())
-		outfit = Config["SelectedOutfit"];
+		outfit = BodySlideConfig["SelectedOutfit"];
 
 	wxLogMessage("Loading assigned presets...");
 
@@ -1799,7 +1777,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		}
 	}
 
-	std::string activePreset = Config["SelectedPreset"];
+	std::string activePreset = BodySlideConfig["SelectedPreset"];
 
 	if (datapath.empty()) {
 		if (Config["GameDataPath"].empty()) {
@@ -2201,15 +2179,15 @@ void BodySlideApp::GroupBuild(const std::string& group) {
 
 	std::string preset;
 	if (!cmdPreset.IsEmpty()) {
-		preset = Config["SelectedPreset"];
-		Config.SetValue("SelectedPreset", cmdPreset.ToStdString());
+		preset = BodySlideConfig["SelectedPreset"];
+		BodySlideConfig.SetValue("SelectedPreset", cmdPreset.ToStdString());
 	}
 
 	std::map<std::string, std::string> failedOutfits;
 	int ret = BuildListBodies(outfits, failedOutfits, false, cmdTri, cmdTargetDir.ToStdString());
 
 	if (!cmdPreset.IsEmpty())
-		Config.SetValue("SelectedPreset", preset);
+		BodySlideConfig.SetValue("SelectedPreset", preset);
 
 	wxLog::FlushActive();
 
@@ -2271,7 +2249,7 @@ void BodySlideApp::SetSliderChanged(const wxString& sliderName, bool isLo) {
 }
 
 int BodySlideApp::UpdateSliderPositions(const std::string& presetName) {
-	std::string outfitName = Config["SelectedOutfit"];
+	std::string outfitName = BodySlideConfig["SelectedOutfit"];
 	std::vector<std::string> groups;
 
 	std::string outputFile = sliderManager.GetPresetFileNames(presetName);
@@ -2284,7 +2262,7 @@ int BodySlideApp::UpdateSliderPositions(const std::string& presetName) {
 }
 
 int BodySlideApp::SaveSliderPositions(const std::string& outputFile, const std::string& presetName, std::vector<std::string>& groups) {
-	std::string outfitName = Config["SelectedOutfit"];
+	std::string outfitName = BodySlideConfig["SelectedOutfit"];
 	return sliderManager.SavePreset(outputFile, presetName, outfitName, groups);
 }
 
@@ -2314,7 +2292,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	delayLoad.Start(100, true);
 
 	SetDoubleBuffered(true);
-	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon("res\\images\\BodySlide.png", wxBITMAP_TYPE_PNG));
 	SetSize(size);
 
 	batchBuildList = nullptr;
@@ -2345,9 +2323,9 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		scrollWindow->Bind(wxEVT_ENTER_WINDOW, &BodySlideFrame::OnEnterSliderWindow, this);
 	}
 
-	wxString val = Config["LastGroupFilter"];
+	wxString val = BodySlideConfig["LastGroupFilter"];
 	search->ChangeValue(val);
-	val = Config["LastOutfitFilter"];
+	val = BodySlideConfig["LastOutfitFilter"];
 	outfitsearch->ChangeValue(val);
 
 	if (app->targetGame != SKYRIM && app->targetGame != FO4)
@@ -2603,9 +2581,8 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	app->ClosePreview();
-	app->CloseOutfitStudio(true);
 
-	int ret = Config.SaveConfig("Config.xml");
+	int ret = BodySlideConfig.SaveConfig("BodySlide.xml", "BodySlideConfig");
 	if (ret)
 		wxLogWarning("Failed to save configuration (%d)!", ret);
 
@@ -2904,7 +2881,7 @@ void BodySlideFrame::OnRefreshGroups(wxCommandEvent& WXUNUSED(event)) {
 void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 	app->RefreshOutfitList();
 
-	std::string outfitName = Config["SelectedOutfit"];
+	std::string outfitName = BodySlideConfig["SelectedOutfit"];
 	app->ActivateOutfit(outfitName);
 }
 
@@ -2923,7 +2900,7 @@ void BodySlideFrame::OnDeleteProject(wxCommandEvent& WXUNUSED(event)) {
 	if (res != wxYES)
 		return;
 
-	std::string outfitName = Config["SelectedOutfit"];
+	std::string outfitName = BodySlideConfig["SelectedOutfit"];
 	app->DeleteOutfit(outfitName);
 }
 
@@ -2932,7 +2909,7 @@ void BodySlideFrame::OnDeletePreset(wxCommandEvent& WXUNUSED(event)) {
 	if (res != wxYES)
 		return;
 
-	std::string presetName = Config["SelectedPreset"];
+	std::string presetName = BodySlideConfig["SelectedPreset"];
 	app->DeletePreset(presetName);
 }
 
@@ -2940,7 +2917,7 @@ void BodySlideFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	std::string presetName = Config["SelectedPreset"];
+	std::string presetName = BodySlideConfig["SelectedPreset"];
 	if (presetName.empty())
 		return;
 
@@ -2979,7 +2956,7 @@ void BodySlideFrame::OnSavePresetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	app->LoadPresets("");
 	app->PopulatePresetList(presetName);
-	Config.SetValue("SelectedPreset", presetName);
+	BodySlideConfig.SetValue("SelectedPreset", presetName);
 }
 
 void BodySlideFrame::OnGroupManager(wxCommandEvent& WXUNUSED(event)) {
@@ -3203,11 +3180,6 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 }
 
 void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
-	if (app->IsOutfitStudioOpened()) {
-		wxMessageBox(_("You can't change the settings while Outfit Studio is opened up."), _("Warning"), wxICON_WARNING, this);
-		return;
-	}
-
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
 		settings->SetSize(wxSize(525, -1));
@@ -3294,6 +3266,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());
 
+			Config.SaveConfig();
 			app->InitArchives();
 		}
 
@@ -3316,8 +3289,8 @@ void BodySlideFrame::OnAbout(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnMoveWindow(wxMoveEvent& event) {
 	wxPoint p = GetPosition();
-	Config.SetValue("BodySlideFrame.x", p.x);
-	Config.SetValue("BodySlideFrame.y", p.y);
+	BodySlideConfig.SetValue("BodySlideFrame.x", p.x);
+	BodySlideConfig.SetValue("BodySlideFrame.y", p.y);
 	event.Skip();
 }
 
@@ -3325,10 +3298,10 @@ void BodySlideFrame::OnSetSize(wxSizeEvent& event) {
 	bool maximized = IsMaximized();
 	if (!maximized) {
 		wxSize p = event.GetSize();
-		Config.SetValue("BodySlideFrame.width", p.x);
-		Config.SetValue("BodySlideFrame.height", p.y);
+		BodySlideConfig.SetValue("BodySlideFrame.width", p.x);
+		BodySlideConfig.SetValue("BodySlideFrame.height", p.y);
 	}
 
-	Config.SetValue("BodySlideFrame.maximized", maximized ? "true" : "false");
+	BodySlideConfig.SetValue("BodySlideFrame.maximized", maximized ? "true" : "false");
 	event.Skip();
 }

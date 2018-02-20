@@ -13,6 +13,8 @@ See the included LICENSE file
 #include <wx/filename.h>
 #include <wx/log.h>
 
+extern ConfigurationManager Config;
+
 ResourceLoader::ResourceLoader() {
 }
 

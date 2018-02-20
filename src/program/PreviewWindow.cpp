@@ -10,6 +10,9 @@ See the included LICENSE file
 #include <sstream>
 #include <regex>
 
+extern ConfigurationManager Config;
+extern ConfigurationManager BodySlideConfig;
+
 wxBEGIN_EVENT_TABLE(PreviewWindow, wxFrame)
 	EVT_CLOSE(PreviewWindow::OnClose)
 	EVT_COMMAND_SCROLL(wxID_ANY, PreviewWindow::OnWeightSlider)
@@ -330,8 +333,8 @@ void PreviewWindow::OnWeightSlider(wxScrollEvent& event) {
 
 void PreviewWindow::OnMoveWindow(wxMoveEvent& event) {
 	wxPoint p = GetPosition();
-	Config.SetValue("PreviewFrame.x", p.x);
-	Config.SetValue("PreviewFrame.y", p.y);
+	BodySlideConfig.SetValue("PreviewFrame.x", p.x);
+	BodySlideConfig.SetValue("PreviewFrame.y", p.y);
 	event.Skip();
 }
 
@@ -339,11 +342,11 @@ void PreviewWindow::OnSetSize(wxSizeEvent& event) {
 	bool maximized = IsMaximized();
 	if (!maximized) {
 		wxSize p = event.GetSize();
-		Config.SetValue("PreviewFrame.width", p.x);
-		Config.SetValue("PreviewFrame.height", p.y);
+		BodySlideConfig.SetValue("PreviewFrame.width", p.x);
+		BodySlideConfig.SetValue("PreviewFrame.height", p.y);
 	}
 
-	Config.SetValue("PreviewFrame.maximized", maximized ? "true" : "false");
+	BodySlideConfig.SetValue("PreviewFrame.maximized", maximized ? "true" : "false");
 	event.Skip();
 }
 

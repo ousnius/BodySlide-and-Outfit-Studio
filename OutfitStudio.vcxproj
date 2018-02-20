@@ -1,0 +1,689 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{C2F0A3CF-6D9F-4935-8BDF-77EEF7F1C771}</ProjectGuid>
+    <RootNamespace>Outfit Studio</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CLRSupport>false</CLRSupport>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CLRSupport>false</CLRSupport>
+    <UseOfMfc>false</UseOfMfc>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>11.0.61030.0</_ProjectFileVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <TargetName>$(ProjectName) Debug</TargetName>
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <TargetName>$(ProjectName) $(Platform) Debug</TargetName>
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <TargetName>$(ProjectName) $(Platform)</TargetName>
+    <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <WarningLevel>Level4</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x86\debug;..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>false</MinimalRebuild>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <WarningLevel>Level4</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x64\debug;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>libcmt.lib</IgnoreSpecificDefaultLibraries>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>
+      </FunctionLevelLinking>
+      <WarningLevel>Level4</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x86\release;..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <PreventDllBinding>
+      </PreventDllBinding>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <FunctionLevelLinking>
+      </FunctionLevelLinking>
+      <WarningLevel>Level4</WarningLevel>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <DebugInformationFormat>None</DebugInformationFormat>
+      <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
+    </ClCompile>
+    <Link>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x64\release;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>
+      </IgnoreSpecificDefaultLibraries>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <SubSystem>Windows</SubSystem>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <PreventDllBinding>
+      </PreventDllBinding>
+      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <Image Include="OutfitStudio.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="OutfitStudio.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="lang\BodySlide.pot" />
+    <None Include="lib\gli\core\clear.inl" />
+    <None Include="lib\gli\core\comparison.inl" />
+    <None Include="lib\gli\core\convert.inl" />
+    <None Include="lib\gli\core\copy.inl" />
+    <None Include="lib\gli\core\duplicate.inl" />
+    <None Include="lib\gli\core\dx.inl" />
+    <None Include="lib\gli\core\filter.inl" />
+    <None Include="lib\gli\core\flip.inl" />
+    <None Include="lib\gli\core\format.inl" />
+    <None Include="lib\gli\core\generate_mipmaps.inl" />
+    <None Include="lib\gli\core\gl.inl" />
+    <None Include="lib\gli\core\image.inl" />
+    <None Include="lib\gli\core\levels.inl" />
+    <None Include="lib\gli\core\load.inl" />
+    <None Include="lib\gli\core\load_dds.inl" />
+    <None Include="lib\gli\core\load_kmg.inl" />
+    <None Include="lib\gli\core\load_ktx.inl" />
+    <None Include="lib\gli\core\make_texture.inl" />
+    <None Include="lib\gli\core\reduce.inl" />
+    <None Include="lib\gli\core\sampler.inl" />
+    <None Include="lib\gli\core\sampler1d.inl" />
+    <None Include="lib\gli\core\sampler1d_array.inl" />
+    <None Include="lib\gli\core\sampler2d.inl" />
+    <None Include="lib\gli\core\sampler2d_array.inl" />
+    <None Include="lib\gli\core\sampler3d.inl" />
+    <None Include="lib\gli\core\sampler_cube.inl" />
+    <None Include="lib\gli\core\sampler_cube_array.inl" />
+    <None Include="lib\gli\core\save.inl" />
+    <None Include="lib\gli\core\save_dds.inl" />
+    <None Include="lib\gli\core\save_kmg.inl" />
+    <None Include="lib\gli\core\save_ktx.inl" />
+    <None Include="lib\gli\core\storage.inl" />
+    <None Include="lib\gli\core\storage_linear.inl" />
+    <None Include="lib\gli\core\texture.inl" />
+    <None Include="lib\gli\core\texture1d.inl" />
+    <None Include="lib\gli\core\texture1d_array.inl" />
+    <None Include="lib\gli\core\texture2d.inl" />
+    <None Include="lib\gli\core\texture2d_array.inl" />
+    <None Include="lib\gli\core\texture3d.inl" />
+    <None Include="lib\gli\core\texture_cube.inl" />
+    <None Include="lib\gli\core\texture_cube_array.inl" />
+    <None Include="lib\gli\core\transform.inl" />
+    <None Include="lib\gli\core\view.inl" />
+    <None Include="lib\gli\glm\detail\func_common.inl" />
+    <None Include="lib\gli\glm\detail\func_exponential.inl" />
+    <None Include="lib\gli\glm\detail\func_geometric.inl" />
+    <None Include="lib\gli\glm\detail\func_integer.inl" />
+    <None Include="lib\gli\glm\detail\func_matrix.inl" />
+    <None Include="lib\gli\glm\detail\func_packing.inl" />
+    <None Include="lib\gli\glm\detail\func_trigonometric.inl" />
+    <None Include="lib\gli\glm\detail\func_vector_relational.inl" />
+    <None Include="lib\gli\glm\detail\type_gentype.inl" />
+    <None Include="lib\gli\glm\detail\type_half.inl" />
+    <None Include="lib\gli\glm\detail\type_mat.inl" />
+    <None Include="lib\gli\glm\detail\type_mat2x2.inl" />
+    <None Include="lib\gli\glm\detail\type_mat2x3.inl" />
+    <None Include="lib\gli\glm\detail\type_mat2x4.inl" />
+    <None Include="lib\gli\glm\detail\type_mat3x2.inl" />
+    <None Include="lib\gli\glm\detail\type_mat3x3.inl" />
+    <None Include="lib\gli\glm\detail\type_mat3x4.inl" />
+    <None Include="lib\gli\glm\detail\type_mat4x2.inl" />
+    <None Include="lib\gli\glm\detail\type_mat4x3.inl" />
+    <None Include="lib\gli\glm\detail\type_mat4x4.inl" />
+    <None Include="lib\gli\glm\detail\type_vec.inl" />
+    <None Include="lib\gli\glm\detail\type_vec1.inl" />
+    <None Include="lib\gli\glm\detail\type_vec2.inl" />
+    <None Include="lib\gli\glm\detail\type_vec3.inl" />
+    <None Include="lib\gli\glm\detail\type_vec4.inl" />
+    <None Include="lib\gli\glm\gtc\bitfield.inl" />
+    <None Include="lib\gli\glm\gtc\color_space.inl" />
+    <None Include="lib\gli\glm\gtc\constants.inl" />
+    <None Include="lib\gli\glm\gtc\epsilon.inl" />
+    <None Include="lib\gli\glm\gtc\integer.inl" />
+    <None Include="lib\gli\glm\gtc\matrix_access.inl" />
+    <None Include="lib\gli\glm\gtc\matrix_inverse.inl" />
+    <None Include="lib\gli\glm\gtc\matrix_transform.inl" />
+    <None Include="lib\gli\glm\gtc\noise.inl" />
+    <None Include="lib\gli\glm\gtc\packing.inl" />
+    <None Include="lib\gli\glm\gtc\quaternion.inl" />
+    <None Include="lib\gli\glm\gtc\random.inl" />
+    <None Include="lib\gli\glm\gtc\reciprocal.inl" />
+    <None Include="lib\gli\glm\gtc\round.inl" />
+    <None Include="lib\gli\glm\gtc\type_precision.inl" />
+    <None Include="lib\gli\glm\gtc\type_ptr.inl" />
+    <None Include="lib\gli\glm\gtc\ulp.inl" />
+    <None Include="lib\gli\glm\gtc\vec1.inl" />
+    <None Include="lib\gli\glm\gtx\associated_min_max.inl" />
+    <None Include="lib\gli\glm\gtx\bit.inl" />
+    <None Include="lib\gli\glm\gtx\closest_point.inl" />
+    <None Include="lib\gli\glm\gtx\color_space.inl" />
+    <None Include="lib\gli\glm\gtx\color_space_YCoCg.inl" />
+    <None Include="lib\gli\glm\gtx\common.inl" />
+    <None Include="lib\gli\glm\gtx\compatibility.inl" />
+    <None Include="lib\gli\glm\gtx\component_wise.inl" />
+    <None Include="lib\gli\glm\gtx\dual_quaternion.inl" />
+    <None Include="lib\gli\glm\gtx\euler_angles.inl" />
+    <None Include="lib\gli\glm\gtx\extend.inl" />
+    <None Include="lib\gli\glm\gtx\extended_min_max.inl" />
+    <None Include="lib\gli\glm\gtx\fast_exponential.inl" />
+    <None Include="lib\gli\glm\gtx\fast_square_root.inl" />
+    <None Include="lib\gli\glm\gtx\fast_trigonometry.inl" />
+    <None Include="lib\gli\glm\gtx\float_notmalize.inl" />
+    <None Include="lib\gli\glm\gtx\gradient_paint.inl" />
+    <None Include="lib\gli\glm\gtx\handed_coordinate_space.inl" />
+    <None Include="lib\gli\glm\gtx\hash.inl" />
+    <None Include="lib\gli\glm\gtx\integer.inl" />
+    <None Include="lib\gli\glm\gtx\intersect.inl" />
+    <None Include="lib\gli\glm\gtx\io.inl" />
+    <None Include="lib\gli\glm\gtx\log_base.inl" />
+    <None Include="lib\gli\glm\gtx\matrix_cross_product.inl" />
+    <None Include="lib\gli\glm\gtx\matrix_decompose.inl" />
+    <None Include="lib\gli\glm\gtx\matrix_interpolation.inl" />
+    <None Include="lib\gli\glm\gtx\matrix_major_storage.inl" />
+    <None Include="lib\gli\glm\gtx\matrix_operation.inl" />
+    <None Include="lib\gli\glm\gtx\matrix_query.inl" />
+    <None Include="lib\gli\glm\gtx\matrix_transform_2d.inl" />
+    <None Include="lib\gli\glm\gtx\mixed_product.inl" />
+    <None Include="lib\gli\glm\gtx\norm.inl" />
+    <None Include="lib\gli\glm\gtx\normal.inl" />
+    <None Include="lib\gli\glm\gtx\normalize_dot.inl" />
+    <None Include="lib\gli\glm\gtx\number_precision.inl" />
+    <None Include="lib\gli\glm\gtx\optimum_pow.inl" />
+    <None Include="lib\gli\glm\gtx\orthonormalize.inl" />
+    <None Include="lib\gli\glm\gtx\perpendicular.inl" />
+    <None Include="lib\gli\glm\gtx\polar_coordinates.inl" />
+    <None Include="lib\gli\glm\gtx\projection.inl" />
+    <None Include="lib\gli\glm\gtx\quaternion.inl" />
+    <None Include="lib\gli\glm\gtx\raw_data.inl" />
+    <None Include="lib\gli\glm\gtx\rotate_normalized_axis.inl" />
+    <None Include="lib\gli\glm\gtx\rotate_vector.inl" />
+    <None Include="lib\gli\glm\gtx\scalar_relational.inl" />
+    <None Include="lib\gli\glm\gtx\simd_mat4.inl" />
+    <None Include="lib\gli\glm\gtx\simd_quat.inl" />
+    <None Include="lib\gli\glm\gtx\simd_vec4.inl" />
+    <None Include="lib\gli\glm\gtx\spline.inl" />
+    <None Include="lib\gli\glm\gtx\std_based_type.inl" />
+    <None Include="lib\gli\glm\gtx\string_cast.inl" />
+    <None Include="lib\gli\glm\gtx\transform.inl" />
+    <None Include="lib\gli\glm\gtx\transform2.inl" />
+    <None Include="lib\gli\glm\gtx\type_aligned.inl" />
+    <None Include="lib\gli\glm\gtx\vector_angle.inl" />
+    <None Include="lib\gli\glm\gtx\vector_query.inl" />
+    <None Include="lib\gli\glm\gtx\wrap.inl" />
+    <None Include="res\xrc\About.xrc" />
+    <None Include="res\xrc\Actions.xrc" />
+    <None Include="res\xrc\OutfitStudio.xrc" />
+    <None Include="res\xrc\Project.xrc" />
+    <None Include="res\xrc\SavePreset.xrc" />
+    <None Include="res\xrc\Settings.xrc" />
+    <None Include="res\xrc\Setup.xrc" />
+    <None Include="res\xrc\ShapeProperties.xrc" />
+    <None Include="res\xrc\Skeleton.xrc" />
+    <None Include="res\xrc\Slider.xrc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="lib\DDS.h" />
+    <ClInclude Include="lib\FSEngine\FSBSA.h" />
+    <ClInclude Include="lib\FSEngine\FSEngine.h" />
+    <ClInclude Include="lib\FSEngine\FSManager.h" />
+    <ClInclude Include="lib\gli\clear.hpp" />
+    <ClInclude Include="lib\gli\comparison.hpp" />
+    <ClInclude Include="lib\gli\convert.hpp" />
+    <ClInclude Include="lib\gli\copy.hpp" />
+    <ClInclude Include="lib\gli\core\clear.hpp" />
+    <ClInclude Include="lib\gli\core\convert_func.hpp" />
+    <ClInclude Include="lib\gli\core\coord.hpp" />
+    <ClInclude Include="lib\gli\core\filter_compute.hpp" />
+    <ClInclude Include="lib\gli\core\flip.hpp" />
+    <ClInclude Include="lib\gli\core\mipmaps_compute.hpp" />
+    <ClInclude Include="lib\gli\core\storage.hpp" />
+    <ClInclude Include="lib\gli\core\storage_linear.hpp" />
+    <ClInclude Include="lib\gli\core\workaround.hpp" />
+    <ClInclude Include="lib\gli\duplicate.hpp" />
+    <ClInclude Include="lib\gli\dx.hpp" />
+    <ClInclude Include="lib\gli\format.hpp" />
+    <ClInclude Include="lib\gli\generate_mipmaps.hpp" />
+    <ClInclude Include="lib\gli\gl.hpp" />
+    <ClInclude Include="lib\gli\gli.hpp" />
+    <ClInclude Include="lib\gli\glm\common.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_common.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_exponential.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_geometric.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_integer.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_matrix.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_packing.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_trigonometric.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\func_vector_relational.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\precision.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\setup.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_float.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_gentype.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_half.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_int.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat2x2.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat2x3.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat2x4.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat3x2.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat3x3.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat3x4.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat4x2.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat4x3.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_mat4x4.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_vec.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_vec1.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_vec2.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_vec3.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\type_vec4.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\_features.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\_fixes.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\_noise.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\_swizzle.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\_swizzle_func.hpp" />
+    <ClInclude Include="lib\gli\glm\detail\_vectorize.hpp" />
+    <ClInclude Include="lib\gli\glm\exponential.hpp" />
+    <ClInclude Include="lib\gli\glm\ext.hpp" />
+    <ClInclude Include="lib\gli\glm\fwd.hpp" />
+    <ClInclude Include="lib\gli\glm\geometric.hpp" />
+    <ClInclude Include="lib\gli\glm\glm.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\bitfield.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\color_space.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\constants.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\epsilon.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\integer.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\matrix_access.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\matrix_integer.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\matrix_inverse.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\matrix_transform.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\noise.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\packing.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\quaternion.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\random.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\reciprocal.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\round.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\type_precision.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\type_ptr.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\ulp.hpp" />
+    <ClInclude Include="lib\gli\glm\gtc\vec1.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\associated_min_max.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\bit.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\closest_point.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\color_space.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\color_space_YCoCg.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\common.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\compatibility.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\component_wise.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\dual_quaternion.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\euler_angles.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\extend.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\extended_min_max.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\fast_exponential.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\fast_square_root.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\fast_trigonometry.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\gradient_paint.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\handed_coordinate_space.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\hash.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\integer.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\intersect.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\io.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\log_base.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\matrix_cross_product.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\matrix_decompose.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\matrix_interpolation.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\matrix_major_storage.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\matrix_operation.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\matrix_query.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\matrix_transform_2d.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\mixed_product.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\norm.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\normal.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\normalize_dot.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\number_precision.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\optimum_pow.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\orthonormalize.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\perpendicular.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\polar_coordinates.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\projection.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\quaternion.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\range.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\raw_data.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\rotate_normalized_axis.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\rotate_vector.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\scalar_multiplication.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\scalar_relational.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\simd_mat4.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\simd_quat.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\simd_vec4.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\spline.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\std_based_type.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\string_cast.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\transform.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\transform2.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\type_aligned.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\vector_angle.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\vector_query.hpp" />
+    <ClInclude Include="lib\gli\glm\gtx\wrap.hpp" />
+    <ClInclude Include="lib\gli\glm\integer.hpp" />
+    <ClInclude Include="lib\gli\glm\mat2x2.hpp" />
+    <ClInclude Include="lib\gli\glm\mat2x3.hpp" />
+    <ClInclude Include="lib\gli\glm\mat2x4.hpp" />
+    <ClInclude Include="lib\gli\glm\mat3x2.hpp" />
+    <ClInclude Include="lib\gli\glm\mat3x3.hpp" />
+    <ClInclude Include="lib\gli\glm\mat3x4.hpp" />
+    <ClInclude Include="lib\gli\glm\mat4x2.hpp" />
+    <ClInclude Include="lib\gli\glm\mat4x3.hpp" />
+    <ClInclude Include="lib\gli\glm\mat4x4.hpp" />
+    <ClInclude Include="lib\gli\glm\matrix.hpp" />
+    <ClInclude Include="lib\gli\glm\packing.hpp" />
+    <ClInclude Include="lib\gli\glm\trigonometric.hpp" />
+    <ClInclude Include="lib\gli\glm\vec2.hpp" />
+    <ClInclude Include="lib\gli\glm\vec3.hpp" />
+    <ClInclude Include="lib\gli\glm\vec4.hpp" />
+    <ClInclude Include="lib\gli\glm\vector_relational.hpp" />
+    <ClInclude Include="lib\gli\image.hpp" />
+    <ClInclude Include="lib\gli\levels.hpp" />
+    <ClInclude Include="lib\gli\load.hpp" />
+    <ClInclude Include="lib\gli\load_dds.hpp" />
+    <ClInclude Include="lib\gli\load_kmg.hpp" />
+    <ClInclude Include="lib\gli\load_ktx.hpp" />
+    <ClInclude Include="lib\gli\make_texture.hpp" />
+    <ClInclude Include="lib\gli\reduce.hpp" />
+    <ClInclude Include="lib\gli\sampler.hpp" />
+    <ClInclude Include="lib\gli\sampler1d.hpp" />
+    <ClInclude Include="lib\gli\sampler1d_array.hpp" />
+    <ClInclude Include="lib\gli\sampler2d.hpp" />
+    <ClInclude Include="lib\gli\sampler2d_array.hpp" />
+    <ClInclude Include="lib\gli\sampler3d.hpp" />
+    <ClInclude Include="lib\gli\sampler_cube.hpp" />
+    <ClInclude Include="lib\gli\sampler_cube_array.hpp" />
+    <ClInclude Include="lib\gli\save.hpp" />
+    <ClInclude Include="lib\gli\save_dds.hpp" />
+    <ClInclude Include="lib\gli\save_kmg.hpp" />
+    <ClInclude Include="lib\gli\save_ktx.hpp" />
+    <ClInclude Include="lib\gli\target.hpp" />
+    <ClInclude Include="lib\gli\texture.hpp" />
+    <ClInclude Include="lib\gli\texture1d.hpp" />
+    <ClInclude Include="lib\gli\texture1d_array.hpp" />
+    <ClInclude Include="lib\gli\texture2d.hpp" />
+    <ClInclude Include="lib\gli\texture2d_array.hpp" />
+    <ClInclude Include="lib\gli\texture3d.hpp" />
+    <ClInclude Include="lib\gli\texture_cube.hpp" />
+    <ClInclude Include="lib\gli\texture_cube_array.hpp" />
+    <ClInclude Include="lib\gli\transform.hpp" />
+    <ClInclude Include="lib\gli\type.hpp" />
+    <ClInclude Include="lib\gli\view.hpp" />
+    <ClInclude Include="lib\LZ4F\lz4frame.h" />
+    <ClInclude Include="lib\LZ4F\xxhash.h" />
+    <ClInclude Include="lib\NIF\Animation.h" />
+    <ClInclude Include="lib\NIF\BasicTypes.h" />
+    <ClInclude Include="lib\NIF\bhk.h" />
+    <ClInclude Include="lib\NIF\ExtraData.h" />
+    <ClInclude Include="lib\NIF\Factory.h" />
+    <ClInclude Include="lib\NIF\Geometry.h" />
+    <ClInclude Include="lib\NIF\Keys.h" />
+    <ClInclude Include="lib\NIF\NifFile.h" />
+    <ClInclude Include="lib\NIF\Nodes.h" />
+    <ClInclude Include="lib\NIF\Objects.h" />
+    <ClInclude Include="lib\NIF\Particles.h" />
+    <ClInclude Include="lib\NIF\Shaders.h" />
+    <ClInclude Include="lib\NIF\Skin.h" />
+    <ClInclude Include="lib\NIF\utils\half.hpp" />
+    <ClInclude Include="lib\NIF\utils\KDMatcher.h" />
+    <ClInclude Include="lib\NIF\utils\Miniball.hpp" />
+    <ClInclude Include="lib\NIF\utils\Object3d.h" />
+    <ClInclude Include="lib\NIF\VertexData.h" />
+    <ClInclude Include="lib\SOIL2\etc1_utils.h" />
+    <ClInclude Include="lib\SOIL2\image_DXT.h" />
+    <ClInclude Include="lib\SOIL2\image_helper.h" />
+    <ClInclude Include="lib\SOIL2\jo_jpeg.h" />
+    <ClInclude Include="lib\SOIL2\pkm_helper.h" />
+    <ClInclude Include="lib\SOIL2\pvr_helper.h" />
+    <ClInclude Include="lib\SOIL2\SOIL2.h" />
+    <ClInclude Include="lib\SOIL2\stbi_DDS.h" />
+    <ClInclude Include="lib\SOIL2\stbi_DDS_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_ext.h" />
+    <ClInclude Include="lib\SOIL2\stbi_ext_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pkm.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pkm_c.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pvr.h" />
+    <ClInclude Include="lib\SOIL2\stbi_pvr_c.h" />
+    <ClInclude Include="lib\SOIL2\stb_image.h" />
+    <ClInclude Include="lib\SOIL2\stb_image_write.h" />
+    <ClInclude Include="lib\TinyXML-2\tinyxml2.h" />
+    <ClInclude Include="resource.h" />
+    <ClInclude Include="src\components\Anim.h" />
+    <ClInclude Include="src\components\Automorph.h" />
+    <ClInclude Include="src\components\DiffData.h" />
+    <ClInclude Include="src\components\Mesh.h" />
+    <ClInclude Include="src\components\NormalGenLayers.h" />
+    <ClInclude Include="src\components\SliderCategories.h" />
+    <ClInclude Include="src\components\SliderData.h" />
+    <ClInclude Include="src\components\SliderGroup.h" />
+    <ClInclude Include="src\components\SliderManager.h" />
+    <ClInclude Include="src\components\SliderPresets.h" />
+    <ClInclude Include="src\components\SliderSet.h" />
+    <ClInclude Include="src\components\TweakBrush.h" />
+    <ClInclude Include="src\files\FBXWrangler.h" />
+    <ClInclude Include="src\files\MaterialFile.h" />
+    <ClInclude Include="src\files\ObjFile.h" />
+    <ClInclude Include="src\files\ResourceLoader.h" />
+    <ClInclude Include="src\files\TriFile.h" />
+    <ClInclude Include="src\program\FBXImportDialog.h" />
+    <ClInclude Include="src\program\FBXImportOptions.h" />
+    <ClInclude Include="src\program\OutfitProject.h" />
+    <ClInclude Include="src\program\OutfitStudio.h" />
+    <ClInclude Include="src\program\PresetSaveDialog.h" />
+    <ClInclude Include="src\program\ShapeProperties.h" />
+    <ClInclude Include="src\render\GLExtensions.h" />
+    <ClInclude Include="src\render\GLMaterial.h" />
+    <ClInclude Include="src\render\GLOffscreenBuffer.h" />
+    <ClInclude Include="src\render\GLShader.h" />
+    <ClInclude Include="src\render\GLSurface.h" />
+    <ClInclude Include="src\ui\wxStateButton.h" />
+    <ClInclude Include="src\utils\AABBTree.h" />
+    <ClInclude Include="src\utils\ConfigurationManager.h" />
+    <ClInclude Include="src\utils\Log.h" />
+    <ClInclude Include="src\utils\PlatformUtil.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="lib\FSEngine\FSBSA.cpp" />
+    <ClCompile Include="lib\FSEngine\FSEngine.cpp" />
+    <ClCompile Include="lib\FSEngine\FSManager.cpp" />
+    <ClCompile Include="lib\gli\glm\detail\dummy.cpp" />
+    <ClCompile Include="lib\gli\glm\detail\glm.cpp" />
+    <ClCompile Include="lib\LZ4F\lz4frame.c" />
+    <ClCompile Include="lib\LZ4F\xxhash.c" />
+    <ClCompile Include="lib\NIF\Animation.cpp" />
+    <ClCompile Include="lib\NIF\BasicTypes.cpp" />
+    <ClCompile Include="lib\NIF\bhk.cpp" />
+    <ClCompile Include="lib\NIF\ExtraData.cpp" />
+    <ClCompile Include="lib\NIF\Factory.cpp" />
+    <ClCompile Include="lib\NIF\Geometry.cpp" />
+    <ClCompile Include="lib\NIF\NifFile.cpp" />
+    <ClCompile Include="lib\NIF\Nodes.cpp" />
+    <ClCompile Include="lib\NIF\Objects.cpp" />
+    <ClCompile Include="lib\NIF\Particles.cpp" />
+    <ClCompile Include="lib\NIF\Shaders.cpp" />
+    <ClCompile Include="lib\NIF\Skin.cpp" />
+    <ClCompile Include="lib\NIF\utils\Object3d.cpp" />
+    <ClCompile Include="lib\SOIL2\etc1_utils.c" />
+    <ClCompile Include="lib\SOIL2\image_DXT.c" />
+    <ClCompile Include="lib\SOIL2\image_helper.c" />
+    <ClCompile Include="lib\SOIL2\SOIL2.c" />
+    <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp" />
+    <ClCompile Include="src\components\Anim.cpp" />
+    <ClCompile Include="src\components\Automorph.cpp" />
+    <ClCompile Include="src\components\DiffData.cpp" />
+    <ClCompile Include="src\components\Mesh.cpp" />
+    <ClCompile Include="src\components\NormalGenLayers.cpp" />
+    <ClCompile Include="src\components\SliderCategories.cpp" />
+    <ClCompile Include="src\components\SliderData.cpp" />
+    <ClCompile Include="src\components\SliderGroup.cpp" />
+    <ClCompile Include="src\components\SliderManager.cpp" />
+    <ClCompile Include="src\components\SliderPresets.cpp" />
+    <ClCompile Include="src\components\SliderSet.cpp" />
+    <ClCompile Include="src\components\TweakBrush.cpp" />
+    <ClCompile Include="src\files\FBXWrangler.cpp" />
+    <ClCompile Include="src\files\MaterialFile.cpp" />
+    <ClCompile Include="src\files\ObjFile.cpp" />
+    <ClCompile Include="src\files\ResourceLoader.cpp" />
+    <ClCompile Include="src\files\TriFile.cpp" />
+    <ClCompile Include="src\program\FBXImportDialog.cpp" />
+    <ClCompile Include="src\program\OutfitProject.cpp" />
+    <ClCompile Include="src\program\OutfitStudio.cpp" />
+    <ClCompile Include="src\program\PresetSaveDialog.cpp" />
+    <ClCompile Include="src\program\ShapeProperties.cpp" />
+    <ClCompile Include="src\render\GLExtensions.cpp" />
+    <ClCompile Include="src\render\GLMaterial.cpp" />
+    <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />
+    <ClCompile Include="src\render\GLShader.cpp" />
+    <ClCompile Include="src\render\GLSurface.cpp" />
+    <ClCompile Include="src\ui\wxStateButton.cpp" />
+    <ClCompile Include="src\utils\AABBTree.cpp" />
+    <ClCompile Include="src\utils\ConfigurationManager.cpp" />
+    <ClCompile Include="src\utils\Log.cpp" />
+    <ClCompile Include="src\utils\PlatformUtil.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="Config.xml" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

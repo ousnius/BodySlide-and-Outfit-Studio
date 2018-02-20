@@ -19,7 +19,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #pragma once
 
 #include "PreviewWindow.h"
-#include "OutfitStudio.h"
 #include "PresetSaveDialog.h"
 #include "GroupManager.h"
 #include "../components/SliderData.h"
@@ -28,6 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../components/SliderCategories.h"
 #include "../files/TriFile.h"
 #include "../utils/Log.h"
+#include "../utils/ConfigurationManager.h"
 
 #include "../FSEngine/FSManager.h"
 #include "../FSEngine/FSEngine.h"
@@ -48,16 +48,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/clrpicker.h>
 
 
+enum TargetGame {
+	FO3, FONV, SKYRIM, FO4, SKYRIMSE, FO4VR
+};
+
 class BodySlideFrame;
 
 class BodySlideApp : public wxApp {
 	/* UI Managers */
 	BodySlideFrame* sliderView = nullptr;
 	PreviewWindow* preview = nullptr;
-	OutfitStudio* outfitStudio = nullptr;
 
 	/* Command-Line Arguments */
-	bool cmdOutfitStudio = false;
 	wxString cmdGroupBuild;
 	wxString cmdTargetDir;
 	wxString cmdPreset;
@@ -65,7 +67,7 @@ class BodySlideApp : public wxApp {
 
 	/* Localization */
 	wxLocale* locale = nullptr;
-	int language;
+	int language = 0;
 
 	/* Data Managers */
 	SliderManager sliderManager;
@@ -193,17 +195,6 @@ public:
 		preview = nullptr;
 	}
 
-	void CloseOutfitStudio(bool force = false) {
-		if (force && outfitStudio)
-			outfitStudio->Close();
-
-		outfitStudio = nullptr;
-	}
-
-	bool IsOutfitStudioOpened() {
-		return outfitStudio != nullptr;
-	}
-
 	void UpdatePreview();
 	void RebuildPreviewMeshes();
 	void UpdateMeshesFromSet();
@@ -225,7 +216,6 @@ public:
 };
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
-	{ wxCMD_LINE_SWITCH, "os", "outfitstudio", "launches straight into outfit studio" },
 	{ wxCMD_LINE_OPTION, "gbuild", "groupbuild", "builds the specified group on launch", wxCMD_LINE_VAL_STRING },
 	{ wxCMD_LINE_OPTION, "t", "targetdir", "build target directory, defaults to game data path", wxCMD_LINE_VAL_STRING },
 	{ wxCMD_LINE_OPTION, "p", "preset", "preset used for the build, defaults to last used preset", wxCMD_LINE_VAL_STRING },

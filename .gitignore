@@ -16,3 +16,5 @@
 *.dds
 *.iobj
 *.ipdb
+*.db-wal
+*.db-shm

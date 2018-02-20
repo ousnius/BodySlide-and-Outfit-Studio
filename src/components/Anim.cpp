@@ -8,6 +8,8 @@ See the included LICENSE file
 #include <wx/log.h>
 #include <wx/msgdlg.h>
 
+extern ConfigurationManager Config;
+
 bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneName) {
 	for (auto &bone : shapeBones[shape])
 		if (!bone.compare(boneName))

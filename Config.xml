@@ -1,4 +1,4 @@
-<BodySlideConfig>
+<Config>
     <!-- 0 = FO3, 1 = FONV, 2 = SKYRIM, 3 = FO4, 4 = SKYRIMSE, 5 = FO4VR -->
     <TargetGame>-1</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
@@ -23,8 +23,6 @@
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>
     <Language>57</Language>
-    <SelectedOutfit></SelectedOutfit>
-    <SelectedPreset></SelectedPreset>
     <!-- Default groups are the groups virtually assigned to outfits that are not currently members of any groups.
 	This information is used by BodySlide for choosing what presets to display for outfits.
 	If the attribute "includeInBuild" is true, batch building the specified groups will also build unassigned outfits. -->
@@ -54,6 +52,4 @@
     <Anim>
         <DefaultSkeletonReference></DefaultSkeletonReference>
         <SkeletonRootName></SkeletonRootName></Anim>
-    <LastGroupFilter></LastGroupFilter>
-    <LastOutfitFilter></LastOutfitFilter>
-</BodySlideConfig>
+</Config>

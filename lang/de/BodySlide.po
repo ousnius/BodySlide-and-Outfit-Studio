@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.5\n"
+"X-Generator: Poedit 2.0.6\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -117,6 +117,9 @@ msgid ""
 msgstr ""
 "Öffnet Outfit Studio, ein mit vielen Funktionen ausgestattetes Werkzeug zum "
 "Erstellen und Konvertieren von Outfits."
+
+msgid "Failed to launch Outfit Studio executable!"
+msgstr "Fehler beim Starten von Outfit Studio!"
 
 msgid "Filter Options"
 msgstr "Filter Optionen"
@@ -1835,11 +1838,6 @@ msgstr "Wählen Sie einen Ordner, der die gespeicherten Dateien beinhalten soll"
 
 msgid "All sets processed successfully!"
 msgstr "Alle Sets erfolgreich vearbeitet!"
-
-msgid "You can't change the settings while Outfit Studio is opened up."
-msgstr ""
-"Sie können die Einstellungen nicht verändern, während Outfit Studio geöffnet "
-"ist."
 
 msgid "OpenGL Error"
 msgstr "OpenGL Fehler"

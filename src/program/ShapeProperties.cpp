@@ -6,6 +6,8 @@ See the included LICENSE file
 
 #include "ShapeProperties.h"
 
+extern ConfigurationManager Config;
+
 wxBEGIN_EVENT_TABLE(ShapeProperties, wxDialog)
 	EVT_BUTTON(XRCID("btnMaterialChooser"), ShapeProperties::OnChooseMaterial)
 	EVT_BUTTON(XRCID("btnAddShader"), ShapeProperties::OnAddShader)
@@ -19,13 +21,22 @@ wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* refShape) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	xrc->Load("res\\xrc\\ShapeProperties.xrc");
-	xrc->LoadDialog(this, parent, "dlgShapeProp");
+	bool loaded = xrc->Load("res\\xrc\\ShapeProperties.xrc");
+	if (!loaded) {
+		wxMessageBox("Failed to load ShapeProperties.xrc file!", "Error", wxICON_ERROR);
+		return;
+	}
+
+	loaded = xrc->LoadDialog(this, parent, "dlgShapeProp");
+	if (!loaded) {
+		wxMessageBox("Failed to load ShapeProperties dialog!", "Error", wxICON_ERROR);
+		return;
+	}
 
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
-	os = (OutfitStudio*)parent;
+	os = (OutfitStudioFrame*)parent;
 	nif = refNif;
 	shape = refShape;
 
@@ -54,7 +65,8 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
 
-	if (os->targetGame == FO4 || os->targetGame == FO4VR) {
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+	if (targetGame == FO4 || targetGame == FO4VR) {
 		lbShaderName->SetLabel(_("Material"));
 		btnMaterialChooser->Show();
 		pgShader->Layout();
@@ -89,7 +101,8 @@ void ShapeProperties::GetShader() {
 	else {
 		shaderName->SetValue(shader->GetName());
 
-		if (os->targetGame == FO4 || os->targetGame == FO4VR)
+		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+		if (targetGame == FO4 || targetGame == FO4VR)
 			currentMaterialPath = shader->GetName();
 
 		Color4 color;
@@ -223,10 +236,11 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::AddShader() {
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	NiShader* newShader = nullptr;
 	NiMaterialProperty* newMaterial = nullptr;
 
-	switch (os->targetGame) {
+	switch (targetGame) {
 	case FO3:
 	case FONV:
 		newShader = new BSShaderPPLightingProperty();
@@ -406,7 +420,8 @@ void ShapeProperties::GetGeometry() {
 			fullPrecision->Enable(bsTriShape->CanChangePrecision());
 		}
 
-		subIndex->Enable(os->targetGame == FO4 || os->targetGame == FO4VR);
+		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+		subIndex->Enable(targetGame == FO4 || targetGame == FO4VR);
 	}
 }
 
@@ -580,6 +595,8 @@ void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void ShapeProperties::ApplyChanges() {
+	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+
 	NiShader* shader = nif->GetShader(shape);
 	if (shader) {
 		std::string name = shaderName->GetValue();
@@ -635,7 +652,7 @@ void ShapeProperties::ApplyChanges() {
 			}
 		}
 
-		if ((os->targetGame == FO4 || os->targetGame == FO4VR) && currentMaterialPath != name) {
+		if ((targetGame == FO4 || targetGame == FO4VR) && currentMaterialPath != name) {
 			os->project->SetTextures(shape);
 			os->RefreshGUIFromProj();
 		}
@@ -650,7 +667,7 @@ void ShapeProperties::ApplyChanges() {
 		if (nif->GetHeader().GetVersion().Stream() != 100)
 			bsTriShape->SetFullPrecision(fullPrecision->IsChecked());
 
-		if ((os->targetGame == FO4 || os->targetGame == FO4VR) && currentSubIndex != subIndex->IsChecked()) {
+		if ((targetGame == FO4 || targetGame == FO4VR) && currentSubIndex != subIndex->IsChecked()) {
 			if (subIndex->IsChecked()) {
 				auto bsSITS = new BSSubIndexTriShape();
 				*static_cast<BSTriShape*>(bsSITS) = *bsTriShape;

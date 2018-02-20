@@ -6,6 +6,8 @@ See the included LICENSE file
 
 #include "FBXWrangler.h"
 
+extern ConfigurationManager Config;
+
 FBXWrangler::FBXWrangler() {
 	sdkManager = FbxManager::Create();
 
@@ -14,7 +16,6 @@ FBXWrangler::FBXWrangler() {
 
 	NewScene();
 }
-
 
 FBXWrangler::~FBXWrangler() {
 	if (scene)

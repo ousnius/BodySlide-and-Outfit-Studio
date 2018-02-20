@@ -71,7 +71,7 @@
     <_ProjectFileVersion>11.0.61030.0</_ProjectFileVersion>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IntDir>$(SolutionDir)build\tmp\$(Configuration)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <TargetName>$(ProjectName) Debug</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
@@ -80,23 +80,23 @@
     <TargetName>$(ProjectName) $(Platform) Debug</TargetName>
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)build\tmp\$(Configuration)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)build\tmp\$(Configuration)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
     <LinkIncremental>false</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>$(ProjectName) $(Platform)</TargetName>
     <OutDir>$(SolutionDir)build\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(SolutionDir)build\tmp\$(Configuration)\$(Platform)\</IntDir>
+    <IntDir>$(SolutionDir)build\tmp_$(ProjectName)\$(Configuration)\$(Platform)\</IntDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -106,8 +106,8 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x86\debug;..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -118,7 +118,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -128,8 +128,8 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x64\debug;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
@@ -141,7 +141,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -152,8 +152,8 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x86\release;..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\wxWidgets\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -170,7 +170,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;..\FBX SDK\include;lib\gli</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\wxWidgets\include\msvc;..\wxWidgets\include;lib\gli</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN64;NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;WIN32_LEAN_AND_MEAN;NOMINMAX;LZ4_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>
@@ -181,8 +181,8 @@
       <AdditionalOptions>/bigobj %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;libfbxsdk-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\FBX SDK\lib\vs2015\x64\release;..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>glu32.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\wxWidgets\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
       <IgnoreSpecificDefaultLibraries>
       </IgnoreSpecificDefaultLibraries>
@@ -346,29 +346,14 @@
     <None Include="lib\gli\glm\gtx\vector_angle.inl" />
     <None Include="lib\gli\glm\gtx\vector_query.inl" />
     <None Include="lib\gli\glm\gtx\wrap.inl" />
-    <None Include="res\shaders\default.frag" />
-    <None Include="res\shaders\default.vert" />
-    <None Include="res\shaders\fo4_default.frag" />
-    <None Include="res\shaders\fo4_default.vert" />
-    <None Include="res\shaders\fullscreentri.frag" />
-    <None Include="res\shaders\fullscreentri.vert" />
-    <None Include="res\shaders\normalshade.frag" />
-    <None Include="res\shaders\normalshade.vert" />
-    <None Include="res\shaders\primitive.frag" />
-    <None Include="res\shaders\primitive.vert" />
     <None Include="res\xrc\About.xrc" />
-    <None Include="res\xrc\Actions.xrc" />
     <None Include="res\xrc\BatchBuild.xrc" />
     <None Include="res\xrc\BodySlide.xrc" />
     <None Include="res\xrc\GroupManager.xrc" />
     <None Include="res\xrc\NormalsGenDlg.xrc" />
-    <None Include="res\xrc\OutfitStudio.xrc" />
-    <None Include="res\xrc\Project.xrc" />
     <None Include="res\xrc\SavePreset.xrc" />
     <None Include="res\xrc\Settings.xrc" />
     <None Include="res\xrc\Setup.xrc" />
-    <None Include="res\xrc\ShapeProperties.xrc" />
-    <None Include="res\xrc\Skeleton.xrc" />
     <None Include="res\xrc\Slider.xrc" />
   </ItemGroup>
   <ItemGroup>
@@ -612,23 +597,16 @@
     <ClInclude Include="src\components\SliderManager.h" />
     <ClInclude Include="src\components\SliderPresets.h" />
     <ClInclude Include="src\components\SliderSet.h" />
-    <ClInclude Include="src\components\TweakBrush.h" />
-    <ClInclude Include="src\files\FBXWrangler.h" />
     <ClInclude Include="src\files\MaterialFile.h" />
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\TriFile.h" />
     <ClInclude Include="src\files\wxDDSImage.h" />
     <ClInclude Include="src\program\BodySlideApp.h" />
-    <ClInclude Include="src\program\FBXImportDialog.h" />
-    <ClInclude Include="src\program\FBXImportOptions.h" />
     <ClInclude Include="src\program\GroupManager.h" />
     <ClInclude Include="src\program\NormalsGenDialog.h" />
-    <ClInclude Include="src\program\OutfitProject.h" />
-    <ClInclude Include="src\program\OutfitStudio.h" />
     <ClInclude Include="src\program\PresetSaveDialog.h" />
     <ClInclude Include="src\program\PreviewWindow.h" />
-    <ClInclude Include="src\program\ShapeProperties.h" />
     <ClInclude Include="src\render\GLExtensions.h" />
     <ClInclude Include="src\render\GLMaterial.h" />
     <ClInclude Include="src\render\GLOffscreenBuffer.h" />
@@ -678,22 +656,16 @@
     <ClCompile Include="src\components\SliderManager.cpp" />
     <ClCompile Include="src\components\SliderPresets.cpp" />
     <ClCompile Include="src\components\SliderSet.cpp" />
-    <ClCompile Include="src\components\TweakBrush.cpp" />
-    <ClCompile Include="src\files\FBXWrangler.cpp" />
     <ClCompile Include="src\files\MaterialFile.cpp" />
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
     <ClCompile Include="src\files\wxDDSImage.cpp" />
     <ClCompile Include="src\program\BodySlideApp.cpp" />
-    <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />
     <ClCompile Include="src\program\NormalsGenDialog.cpp" />
-    <ClCompile Include="src\program\OutfitProject.cpp" />
-    <ClCompile Include="src\program\OutfitStudio.cpp" />
     <ClCompile Include="src\program\PresetSaveDialog.cpp" />
     <ClCompile Include="src\program\PreviewWindow.cpp" />
-    <ClCompile Include="src\program\ShapeProperties.cpp" />
     <ClCompile Include="src\render\GLExtensions.cpp" />
     <ClCompile Include="src\render\GLMaterial.cpp" />
     <ClCompile Include="src\render\GLOffscreenBuffer.cpp" />

@@ -8,6 +8,8 @@ See the included LICENSE file
 #include "../utils/ConfigurationManager.h"
 #include <sstream>
 
+extern ConfigurationManager Config;
+
 void NormalGenLayer::LoadFromXML(tinyxml2::XMLElement * normalGenSource, std::vector<NormalGenLayer>& outLayers) {
 	tinyxml2::XMLElement* layer = normalGenSource->FirstChildElement("NormalsLayer");
 	if (layer)

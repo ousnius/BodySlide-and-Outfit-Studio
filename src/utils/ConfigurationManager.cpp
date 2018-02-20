@@ -507,8 +507,8 @@ void ConfigurationManager::ReplaceVars(std::string & inoutStr)
 	}
 }
 
-int ConfigurationManager::SaveConfig(const std::string& pathToFile, const std::string& rootElementName) {
-	if (rootElementName.empty())
+int ConfigurationManager::SaveConfig(const std::string& pathToFile, const std::string& rootElement) {
+	if (rootElement.empty())
 		return 1;
 
 	XMLDocument doc;
@@ -517,7 +517,7 @@ int ConfigurationManager::SaveConfig(const std::string& pathToFile, const std::s
 
 	doc.Clear();
 
-	XMLElement* newElement = doc.NewElement(rootElementName.c_str());
+	XMLElement* newElement = doc.NewElement(rootElement.c_str());
 	XMLElement* root = doc.InsertEndChild(newElement)->ToElement();
 
 	for (auto &ci : ciList) {
