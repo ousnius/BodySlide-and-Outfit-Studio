@@ -20,7 +20,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 
 	if (!attribsInitialized) {
 		// 16x AA
-		attribs.PlatformDefaults().RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(16).EndList();
+		attribs.PlatformDefaults().DoubleBuffer().Level(0).SampleBuffers(1).Samplers(16).EndList();
 
 		bool displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		if (!displaySupported) {
@@ -28,7 +28,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 			attribs.Reset();
 
 			// 8x AA
-			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(8).EndList();
+			attribs.PlatformDefaults().DoubleBuffer().Level(0).SampleBuffers(1).Samplers(8).EndList();
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
@@ -37,7 +37,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 			attribs.Reset();
 
 			// 4x AA
-			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(1).Samplers(4).EndList();
+			attribs.PlatformDefaults().DoubleBuffer().Level(0).SampleBuffers(1).Samplers(4).EndList();
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
@@ -46,7 +46,7 @@ const wxGLAttributes& GLSurface::GetGLAttribs() {
 			attribs.Reset();
 
 			// No AA
-			attribs.RGBA().DoubleBuffer().MinRGBA(8, 8, 8, 8).Depth(24).Level(0).SampleBuffers(0).EndList();
+			attribs.PlatformDefaults().DoubleBuffer().Level(0).SampleBuffers(0).EndList();
 			displaySupported = wxGLCanvas::IsDisplaySupported(attribs);
 		}
 
