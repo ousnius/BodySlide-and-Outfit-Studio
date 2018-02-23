@@ -1416,12 +1416,9 @@ int NifFile::GetShapeBoneWeights(const std::string& shapeName, const int boneInd
 		return 0;
 
 	NiSkinData::BoneData* bone = &skinData->bones[boneIndex];
-	for (auto &sw : bone->vertexWeights) {
+	for (auto &sw : bone->vertexWeights)
 		if (sw.weight >= EPSILON)
 			outWeights.emplace(sw.index, sw.weight);
-		else
-			outWeights.emplace(sw.index, 0.0f);
-	}
 
 	return outWeights.size();
 }
