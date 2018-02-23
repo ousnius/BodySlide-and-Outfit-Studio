@@ -2670,56 +2670,32 @@ void OutfitStudioFrame::OnFixedWeight(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::OnShapeVisToggle(wxTreeEvent& event) {
-	static int groupstate = 0;
-	bool notSelf = false;
-	bool bVis;
-	bool bGhost;
+	for (auto &i : selectedItems) {
+		bool bVis = true;
+		bool bGhost = false;
 
-	int state = outfitShapes->GetItemState(event.GetItem());
-	std::string s = outfitShapes->GetItemText(event.GetItem()).ToStdString();
+		int state = outfitShapes->GetItemState(i->GetId());
+		std::string s = outfitShapes->GetItemText(i->GetId()).ToUTF8();
 
-	if (wxGetKeyState(WXK_ALT)) {
-		notSelf = true;
-		state = groupstate;
-	}
-
-	if (wxGetKeyState(WXK_CONTROL)) {
-		if (state == 2)
-			state = 0;
-		if (state == 1)
-			state = 2;
-	}
-
-	if (state == 0) {
-		bVis = false;
-		bGhost = false;
-		state = 1;
-	}
-	else if (state == 1) {
-		bVis = true;
-		bGhost = true;
-		state = 2;
-	}
-	else {
-		bVis = true;
-		bGhost = false;
-		state = 0;
-	}
-	if (notSelf) {
-		for (auto &shape : project->GetWorkNif()->GetShapeNames()) {
-			if (shape == s)
-				continue;
-
-			glView->SetShapeGhostMode(shape, bGhost);
-			glView->ShowShape(shape, bVis);
+		if (state == 0) {
+			bVis = false;
+			bGhost = false;
+			state = 1;
 		}
-		groupstate = state;
-	}
-	else {
-		outfitShapes->SetItemState(event.GetItem(), state);
+		else if (state == 1) {
+			bVis = true;
+			bGhost = true;
+			state = 2;
+		}
+		else {
+			bVis = true;
+			bGhost = false;
+			state = 0;
+		}
+
+		outfitShapes->SetItemState(i->GetId(), state);
 		glView->SetShapeGhostMode(s, bGhost);
 		glView->ShowShape(s, bVis);
-		groupstate = 0;
 	}
 
 	event.Skip();
