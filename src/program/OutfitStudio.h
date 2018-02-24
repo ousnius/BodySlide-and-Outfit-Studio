@@ -40,6 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/collpane.h>
 #include <wx/tokenzr.h>
 #include <wx/cmdline.h>
+#include <wx/stdpaths.h>
 #include <wx/msw/registry.h>
 
 enum TargetGame {
@@ -564,6 +565,7 @@ private:
 
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
+	{ wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE },
 	{ wxCMD_LINE_NONE }
 };
 
@@ -596,6 +598,8 @@ private:
 	Log logger;
 	wxLocale* locale = nullptr;
 	int language = 0;
+
+	wxArrayString cmdFiles;
 };
 
 
@@ -649,7 +653,10 @@ public:
 
 	std::map<std::string, SliderDisplay*> sliderDisplays;
 
+	bool LoadProject(const std::string& fileName);
 	void CreateSetSliders();
+
+	bool LoadNIF(const std::string& fileName);
 
 	std::string NewSlider(const std::string& suggestedName = "", bool skipPrompt = false);
 
@@ -677,6 +684,7 @@ public:
 
 	void AnimationGUIFromProj();
 	void RefreshGUIFromProj();
+	void MeshesFromProj();
 
 	std::vector<ShapeItemData*>& GetSelectedItems();
 	std::string GetActiveBone();

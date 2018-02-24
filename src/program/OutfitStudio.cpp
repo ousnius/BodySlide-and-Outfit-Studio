@@ -236,6 +236,12 @@ bool OutfitStudio::OnInit() {
 	if (!wxApp::OnInit())
 		return false;
 
+	if (!cmdFiles.IsEmpty()) {
+		wxFileName exeFile(wxStandardPaths::Get().GetExecutablePath());
+		wxString exePath(exeFile.GetPath());
+		wxSetWorkingDirectory(exePath);
+	}
+
 	Config.LoadConfig();
 	OutfitStudioConfig.LoadConfig("OutfitStudio.xml", "OutfitStudioConfig");
 
@@ -290,15 +296,31 @@ bool OutfitStudio::OnInit() {
 			wxMessageBox(_("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct."), _("Warning"), wxICON_WARNING);
 	}
 
+	if (!cmdFiles.IsEmpty()) {
+		wxFileName loadFile(cmdFiles.Item(0));
+		if (loadFile.FileExists()) {
+			std::string fileName = loadFile.GetFullPath().ToUTF8();
+			wxString fileExt = loadFile.GetExt().MakeLower();
+			if (fileExt == "osp")
+				frame->LoadProject(fileName);
+			else if (fileExt == "nif")
+				frame->LoadNIF(fileName);
+		}
+	}
+
 	wxLogMessage("Outfit Studio initialized.");
 	return true;
 }
 
 void OutfitStudio::OnInitCmdLine(wxCmdLineParser& parser) {
 	parser.SetDesc(g_cmdLineDesc);
+	parser.SetSwitchChars("-");
 }
 
-bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& WXUNUSED(parser)) {
+bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
+	for (int i = 0; i < parser.GetParamCount(); i++)
+		cmdFiles.Add(parser.GetParam(i));
+
 	return true;
 }
 
@@ -1011,6 +1033,107 @@ void OutfitStudioFrame::OnSetSize(wxSizeEvent& event) {
 	event.Skip();
 }
 
+bool OutfitStudioFrame::LoadProject(const std::string& fileName) {
+	std::vector<std::string> setnames;
+	SliderSetFile InFile(fileName);
+	if (InFile.fail()) {
+		wxLogError("Failed to open '%s' as a slider set file!", fileName);
+		wxMessageBox(wxString::Format(_("Failed to open '%s' as a slider set file!"), fileName), _("Slider Set Error"), wxICON_ERROR);
+		return false;
+	}
+
+	InFile.GetSetNames(setnames);
+	wxArrayString choices;
+	for (auto &s : setnames)
+		choices.Add(wxString::FromUTF8(s));
+
+	std::string outfit;
+	if (choices.GetCount() > 1) {
+		outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8();
+		if (outfit.empty())
+			return false;
+	}
+	else if (choices.GetCount() == 1)
+		outfit = choices.front().ToUTF8();
+	else
+		return false;
+
+	wxLogMessage("Loading project '%s' from file '%s'...", outfit, fileName);
+	StartProgress(_("Loading project..."));
+
+	ClearProject();
+	project->ClearReference();
+	project->ClearOutfit();
+
+	glView->Cleanup();
+	glView->SetStrokeManager(nullptr);
+	glView->GetStrokeManager()->Clear();
+
+	activeSlider.clear();
+	bEditSlider = false;
+	MenuExitSliderEdit();
+
+	delete project;
+	project = new OutfitProject(this);
+
+	wxLogMessage("Loading outfit data...");
+	UpdateProgress(10, _("Loading outfit data..."));
+	StartSubProgress(10, 40);
+
+	std::vector<std::string> origShapeOrder;
+	int error = project->OutfitFromSliderSet(fileName, outfit, &origShapeOrder);
+	if (error) {
+		EndProgress();
+		wxLogError("Failed to create project (%d)!", error);
+		wxMessageBox(wxString::Format(_("Failed to create project '%s' from file '%s' (%d)!"), outfit, fileName, error), _("Slider Set Error"), wxICON_ERROR);
+		RefreshGUIFromProj();
+		return false;
+	}
+
+	std::string shape = project->GetBaseShape();
+	wxLogMessage("Loading reference shape '%s'...", shape);
+	UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shape));
+
+	if (!shape.empty()) {
+		error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, true);
+		if (error) {
+			EndProgress();
+			RefreshGUIFromProj();
+			return false;
+		}
+	}
+
+	project->GetWorkNif()->SetShapeOrder(origShapeOrder);
+
+	wxLogMessage("Loading textures...");
+	UpdateProgress(60, _("Loading textures..."));
+
+	project->SetTextures();
+
+	wxLogMessage("Creating outfit...");
+	UpdateProgress(80, _("Creating outfit..."));
+	RefreshGUIFromProj();
+
+	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
+	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
+	StartSubProgress(90, 99);
+	CreateSetSliders();
+
+	ShowSliderEffect(0);
+
+	wxLogMessage("Applying slider effects...");
+	UpdateProgress(99, _("Applying slider effects..."));
+	ApplySliders();
+
+	SetTitle("Outfit Studio - " + wxString::FromUTF8(project->OutfitName()));
+
+	wxLogMessage("Project loaded.");
+	UpdateProgress(100, _("Finished"));
+	GetMenuBar()->Enable(XRCID("fileSave"), true);
+	EndProgress();
+	return true;
+}
+
 void OutfitStudioFrame::CreateSetSliders() {
 	sliderScroll = (wxScrolledWindow*)FindWindowByName("sliderScroll");
 	if (!sliderScroll)
@@ -1048,6 +1171,22 @@ void OutfitStudioFrame::CreateSetSliders() {
 	sliderScroll->Thaw();
 
 	EndProgress();
+}
+
+bool OutfitStudioFrame::LoadNIF(const std::string& fileName) {
+	StartProgress(_("Importing NIF file..."));
+	UpdateProgress(1, _("Importing NIF file..."));
+
+	if (project->ImportNIF(fileName))
+		return false;
+
+	UpdateProgress(60, _("Refreshing GUI..."));
+	project->SetTextures();
+	RefreshGUIFromProj();
+
+	UpdateProgress(100, _("Finished."));
+	EndProgress();
+	return true;
 }
 
 void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz) {
@@ -1569,104 +1708,8 @@ void OutfitStudioFrame::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 	if (loadProjectDialog.ShowModal() == wxID_CANCEL)
 		return;
 
-	std::string file = loadProjectDialog.GetPath().ToUTF8();
-	std::vector<std::string> setnames;
-	SliderSetFile InFile(file);
-	if (InFile.fail()) {
-		wxLogError("Failed to open '%s' as a slider set file!", file);
-		wxMessageBox(wxString::Format(_("Failed to open '%s' as a slider set file!"), file), _("Slider Set Error"), wxICON_ERROR);
-		return;
-	}
-
-	InFile.GetSetNames(setnames);
-	wxArrayString choices;
-	for (auto &s : setnames)
-		choices.Add(wxString::FromUTF8(s));
-
-	std::string outfit;
-	if (choices.GetCount() > 1) {
-		outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8();
-		if (outfit.empty())
-			return;
-	}
-	else if (choices.GetCount() == 1)
-		outfit = choices.front().ToUTF8();
-	else
-		return;
-
-	wxLogMessage("Loading project '%s' from file '%s'...", outfit, file);
-	StartProgress(_("Loading project..."));
-
-	ClearProject();
-	project->ClearReference();
-	project->ClearOutfit();
-
-	glView->Cleanup();
-	glView->SetStrokeManager(nullptr);
-	glView->GetStrokeManager()->Clear();
-
-	activeSlider.clear();
-	bEditSlider = false;
-	MenuExitSliderEdit();
-
-	delete project;
-	project = new OutfitProject(this);
-
-	wxLogMessage("Loading outfit data...");
-	UpdateProgress(10, _("Loading outfit data..."));
-	StartSubProgress(10, 40);
-
-	std::vector<std::string> origShapeOrder;
-	int error = project->OutfitFromSliderSet(file, outfit, &origShapeOrder);
-	if (error) {
-		EndProgress();
-		wxLogError("Failed to create project (%d)!", error);
-		wxMessageBox(wxString::Format(_("Failed to create project '%s' from file '%s' (%d)!"), outfit, file, error), _("Slider Set Error"), wxICON_ERROR);
-		RefreshGUIFromProj();
-		return;
-	}
-
-	std::string shape = project->GetBaseShape();
-	wxLogMessage("Loading reference shape '%s'...", shape);
-	UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shape));
-
-	if (!shape.empty()) {
-		error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, true);
-		if (error) {
-			EndProgress();
-			RefreshGUIFromProj();
-			return;
-		}
-	}
-
-	project->GetWorkNif()->SetShapeOrder(origShapeOrder);
-
-	wxLogMessage("Loading textures...");
-	UpdateProgress(60, _("Loading textures..."));
-
-	project->SetTextures();
-
-	wxLogMessage("Creating outfit...");
-	UpdateProgress(80, _("Creating outfit..."));
-	RefreshGUIFromProj();
-
-	wxLogMessage("Creating %d slider(s)...", project->SliderCount());
-	UpdateProgress(90, wxString::Format(_("Creating %d slider(s)..."), project->SliderCount()));
-	StartSubProgress(90, 99);
-	CreateSetSliders();
-
-	ShowSliderEffect(0);
-
-	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99, _("Applying slider effects..."));
-	ApplySliders();
-
-	SetTitle("Outfit Studio - " + wxString::FromUTF8(project->OutfitName()));
-
-	wxLogMessage("Project loaded.");
-	UpdateProgress(100, _("Finished"));
-	GetMenuBar()->Enable(XRCID("fileSave"), true);
-	EndProgress();
+	std::string fileName = loadProjectDialog.GetPath().ToUTF8();
+	LoadProject(fileName);
 }
 
 void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
@@ -1987,16 +2030,6 @@ void OutfitStudioFrame::WorkingGUIFromProj() {
 	}
 
 	for (auto &shape : shapes) {
-		glView->DeleteMesh(shape);
-
-		glView->AddMeshFromNif(project->GetWorkNif(), shape, true);
-		
-		MaterialFile matFile;
-		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-		glView->SetMeshTextures(shape, project->GetShapeTextures(shape), hasMatFile, matFile);
-
-		UpdateMeshesFromSet();
-
 		subItem = outfitShapes->AppendItem(outfitRoot, shape);
 		outfitShapes->SetItemState(subItem, 0);
 		outfitShapes->SetItemData(subItem, new ShapeItemData(shape));
@@ -2005,10 +2038,29 @@ void OutfitStudioFrame::WorkingGUIFromProj() {
 			outfitShapes->SetItemBold(subItem);
 			outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
 		}
-		glView->Render();
 	}
 
 	outfitShapes->ExpandAll();
+	MeshesFromProj();
+}
+
+void OutfitStudioFrame::MeshesFromProj() {
+	if (!extInitialized)
+		return;
+
+	std::vector<std::string> shapes = project->GetWorkNif()->GetShapeNames();
+	for (auto &shape : shapes) {
+		glView->DeleteMesh(shape);
+
+		glView->AddMeshFromNif(project->GetWorkNif(), shape, true);
+
+		MaterialFile matFile;
+		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
+		glView->SetMeshTextures(shape, project->GetShapeTextures(shape), hasMatFile, matFile);
+
+		UpdateMeshesFromSet();
+		glView->Render();
+	}
 }
 
 void OutfitStudioFrame::UpdateMeshesFromSet() {
@@ -6699,6 +6751,8 @@ void wxGLPanel::OnShown() {
 		int colorBackgroundB = Config.GetIntValue("Rendering/ColorBackground.b");
 		gls.SetBackgroundColor(Vector3(colorBackgroundR / 255.0f, colorBackgroundG / 255.0f, colorBackgroundB / 255.0f));
 	}
+
+	os->MeshesFromProj();
 }
 
 void wxGLPanel::SetNotifyWindow(wxWindow* win) {
@@ -6725,7 +6779,8 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName, bool 
 			if (buildNormals)
 				m->SmoothNormals();
 
-			m->CreateBuffers();
+			if (extInitialized)
+				m->CreateBuffers();
 		}
 	}
 }
