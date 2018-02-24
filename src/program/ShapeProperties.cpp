@@ -480,6 +480,7 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 	wxArrayString types;
 	types.Add("NiStringExtraData");
 	types.Add("NiIntegerExtraData");
+	types.Add("NiFloatExtraData");
 	wxChoice* extraDataType = new wxChoice(pgExtraData, 2000 + id, wxDefaultPosition, wxDefaultSize, types);
 	extraDataType->SetSelection(0);
 	extraDataType->Bind(wxEVT_CHOICE, &ShapeProperties::OnChangeExtraDataType, this);
@@ -499,6 +500,12 @@ void ShapeProperties::AddExtraData(NiExtraData* extraData, bool uiOnly) {
 			extraDataType->SetSelection(1);
 			extraDataName->SetValue(intExtraData->GetName());
 			extraDataValue->SetValue(wxString::Format("%d", intExtraData->GetIntegerData()));
+		}
+		else if (extraData->HasType<NiFloatExtraData>()) {
+			auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
+			extraDataType->SetSelection(2);
+			extraDataName->SetValue(floatExtraData->GetName());
+			extraDataValue->SetValue(wxString::Format("%f", floatExtraData->GetFloatData()));
 		}
 		else {
 			extraDataBtn->Destroy();
@@ -552,6 +559,13 @@ void ShapeProperties::ChangeExtraDataType(int id) {
 		intExtraData->SetName(extraDataName->GetValue().ToStdString());
 		intExtraData->SetIntegerData(0);
 		extraDataResult = intExtraData;
+		break;
+	}
+	case 2: {
+		auto floatExtraData = new NiFloatExtraData();
+		floatExtraData->SetName(extraDataName->GetValue().ToStdString());
+		floatExtraData->SetFloatData(0.0f);
+		extraDataResult = floatExtraData;
 		break;
 	}
 	}
@@ -713,6 +727,12 @@ void ShapeProperties::ApplyChanges() {
 				unsigned long val = 0;
 				if (extraDataValue->GetValue().ToULong(&val))
 					intExtraData->SetIntegerData(val);
+			}
+			else if (extraData->HasType<NiFloatExtraData>()) {
+				auto floatExtraData = static_cast<NiFloatExtraData*>(extraData);
+				double val = 0.0;
+				if (extraDataValue->GetValue().ToDouble(&val))
+					floatExtraData->SetFloatData((float)val);
 			}
 		}
 	}
