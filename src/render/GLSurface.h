@@ -268,7 +268,7 @@ public:
 
 	RenderMode SetMeshRenderMode(const std::string& name, RenderMode mode);
 
-	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile);
+	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
 	GLMaterial* GetPrimitiveMaterial();
 	ResourceLoader* GetResourceLoader() {
 		return &resLoader;

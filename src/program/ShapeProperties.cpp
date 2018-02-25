@@ -101,10 +101,6 @@ void ShapeProperties::GetShader() {
 	else {
 		shaderName->SetValue(shader->GetName());
 
-		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-		if (targetGame == FO4 || targetGame == FO4VR)
-			currentMaterialPath = shader->GetName();
-
 		Color4 color;
 		Vector3 colorVec;
 		if (shader->HasType<BSEffectShaderProperty>()) {
@@ -357,7 +353,7 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			nif->TrimTexturePaths();
 
 			os->project->SetTextures(shape, texFiles);
-			os->glView->SetMeshTextures(shape->GetName(), texFiles);
+			os->glView->SetMeshTextures(shape->GetName(), texFiles, false, MaterialFile(), true);
 			os->glView->Render();
 		}
 	}
@@ -602,9 +598,14 @@ void ShapeProperties::RemoveExtraData(int id) {
 	pgExtraData->Layout();
 }
 
+void ShapeProperties::RefreshMesh() {
+	os->project->SetTextures(shape);
+	os->MeshFromProj(shape->GetName(), true);
+}
 
 void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {
 	ApplyChanges();
+	RefreshMesh();
 	EndModal(wxID_OK);
 }
 
@@ -664,11 +665,6 @@ void ShapeProperties::ApplyChanges() {
 				material->SetEmissiveColor(emisColor);
 				material->SetEmissiveMultiple(emisMultiple);
 			}
-		}
-
-		if ((targetGame == FO4 || targetGame == FO4VR) && currentMaterialPath != name) {
-			os->project->SetTextures(shape);
-			os->RefreshGUIFromProj();
 		}
 	}
 

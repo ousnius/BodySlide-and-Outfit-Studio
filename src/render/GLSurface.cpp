@@ -1631,8 +1631,8 @@ RenderMode GLSurface::SetMeshRenderMode(const std::string& name, RenderMode mode
 	return r;
 }
 
-GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile) {
-	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile);
+GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
+	GLMaterial* mat = resLoader.AddMaterial(textureFiles, vShaderFile, fShaderFile, reloadTextures);
 	if (mat) {
 		std::string shaderError;
 		if (mat->GetShader().GetError(&shaderError)) {

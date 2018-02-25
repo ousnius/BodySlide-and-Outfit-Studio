@@ -23,15 +23,13 @@ public:
 	ResourceLoader();
 	~ResourceLoader();
 
-	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles,
-		const std::string& vShaderFile,
-		const std::string& fShaderFile);
+	GLMaterial* AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures = false);
 
 
 	//Central Point for loading texture files.  Calls appropriate resource loading subroutine, and 
 	// tracks the resulting GL texture identifier so subsequent access to the same texture does not result
 	// in a new load. 
-	GLuint LoadTexture(const std::string& fileName, bool isCubeMap = false);
+	GLuint LoadTexture(const std::string& fileName, bool isCubeMap = false, bool reloadTextures = false);
 
 	// The following functions manage non-file-sourced texture ids.  This facilitates named textures generated
 	//  within the program either for temporary use (generate/delete) or persistent use
@@ -70,9 +68,9 @@ public:
 
 private:
 	static bool extChecked;
-	GLuint GLI_create_texture(gli::texture& texture);
-	GLuint GLI_load_texture(const std::string& fileName);
-	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size);
+	GLuint GLI_create_texture(gli::texture& texture, GLuint textureID = 0);
+	GLuint GLI_load_texture(const std::string& fileName, GLuint textureID = 0);
+	GLuint GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID = 0);
 
 	// If N3983 gets accepted into a future C++ standard then
 	// we wouldn't have to explicitly define our own hash here.

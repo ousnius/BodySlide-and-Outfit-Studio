@@ -1963,8 +1963,32 @@ void OutfitStudioFrame::RenameProject(const std::string& projectName) {
 }
 
 void OutfitStudioFrame::RefreshGUIFromProj() {
-	WorkingGUIFromProj();
-	AnimationGUIFromProj();
+	if (outfitRoot.IsOk()) {
+		outfitShapes->DeleteChildren(outfitRoot);
+		outfitShapes->Delete(outfitRoot);
+		outfitRoot.Unset();
+	}
+
+	std::vector<std::string> shapes = project->GetWorkNif()->GetShapeNames();
+
+	if (shapes.size() > 0) {
+		if (shapes.size() == 1 && project->IsBaseShape(shapes.front()))
+			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
+		else
+			outfitRoot = outfitShapes->AppendItem(shapesRoot, wxString::FromUTF8(project->OutfitName()));
+	}
+
+	wxTreeItemId subItem;
+	for (auto &shape : shapes) {
+		subItem = outfitShapes->AppendItem(outfitRoot, shape);
+		outfitShapes->SetItemState(subItem, 0);
+		outfitShapes->SetItemData(subItem, new ShapeItemData(shape));
+
+		if (project->IsBaseShape(shape)) {
+			outfitShapes->SetItemBold(subItem);
+			outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
+		}
+	}
 
 	wxTreeItemId itemToSelect;
 	wxTreeItemIdValue cookie;
@@ -1983,19 +2007,10 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 	if (activeItem)
 		selectedItems.push_back(activeItem);
 
-	std::vector<std::string> shapeNames;
-	for (auto &s : selectedItems)
-		shapeNames.push_back(s->shapeName);
+	outfitShapes->ExpandAll();
+	MeshesFromProj();
 
-	glView->SetActiveShapes(shapeNames);
-
-	if (activeItem)
-		glView->SetSelectedShape(activeItem->shapeName);
-	else
-		glView->SetSelectedShape("");
-
-	if (glView->GetVertexEdit())
-		glView->ShowVertexEdit();
+	AnimationGUIFromProj();
 }
 
 void OutfitStudioFrame::AnimationGUIFromProj() {
@@ -2009,69 +2024,47 @@ void OutfitStudioFrame::AnimationGUIFromProj() {
 		outfitBones->AppendItem(bonesRoot, bone);
 }
 
-void OutfitStudioFrame::WorkingGUIFromProj() {
-	if (outfitRoot.IsOk()) {
-		outfitShapes->DeleteChildren(outfitRoot);
-		outfitShapes->Delete(outfitRoot);
-		outfitRoot.Unset();
-	}
-
+void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
 	std::vector<std::string> shapes = project->GetWorkNif()->GetShapeNames();
-
-	wxTreeItemId subItem;
-	activeItem = nullptr;
-	selectedItems.clear();
-
-	if (shapes.size() > 0) {
-		if (shapes.size() == 1 && project->IsBaseShape(shapes.front()))
-			outfitRoot = outfitShapes->AppendItem(shapesRoot, "Reference Only");
-		else
-			outfitRoot = outfitShapes->AppendItem(shapesRoot, wxString::FromUTF8(project->OutfitName()));
-	}
-
-	for (auto &shape : shapes) {
-		subItem = outfitShapes->AppendItem(outfitRoot, shape);
-		outfitShapes->SetItemState(subItem, 0);
-		outfitShapes->SetItemData(subItem, new ShapeItemData(shape));
-
-		if (project->IsBaseShape(shape)) {
-			outfitShapes->SetItemBold(subItem);
-			outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
-		}
-	}
-
-	outfitShapes->ExpandAll();
-	MeshesFromProj();
+	for (auto &shape : shapes)
+		MeshFromProj(shape, reloadTextures);
 }
 
-void OutfitStudioFrame::MeshesFromProj() {
-	if (!extInitialized)
-		return;
-
-	std::vector<std::string> shapes = project->GetWorkNif()->GetShapeNames();
-	for (auto &shape : shapes) {
-		glView->DeleteMesh(shape);
-
-		glView->AddMeshFromNif(project->GetWorkNif(), shape, true);
+void OutfitStudioFrame::MeshFromProj(const std::string& shapeName, const bool reloadTextures) {
+	if (extInitialized) {
+		glView->DeleteMesh(shapeName);
+		glView->AddMeshFromNif(project->GetWorkNif(), shapeName, true);
 
 		MaterialFile matFile;
-		bool hasMatFile = project->GetShapeMaterialFile(shape, matFile);
-		glView->SetMeshTextures(shape, project->GetShapeTextures(shape), hasMatFile, matFile);
+		bool hasMatFile = project->GetShapeMaterialFile(shapeName, matFile);
+		glView->SetMeshTextures(shapeName, project->GetShapeTextures(shapeName), hasMatFile, matFile, reloadTextures);
 
-		UpdateMeshesFromSet();
+		UpdateMeshFromSet(shapeName);
 		glView->Render();
 	}
+
+	std::vector<std::string> selShapes;
+	for (auto &i : selectedItems)
+		selShapes.push_back(i->shapeName);
+
+	glView->SetActiveShapes(selShapes);
+
+	if (activeItem)
+		glView->SetSelectedShape(activeItem->shapeName);
+	else
+		glView->SetSelectedShape("");
+
+	if (glView->GetVertexEdit())
+		glView->ShowVertexEdit();
 }
 
-void OutfitStudioFrame::UpdateMeshesFromSet() {
-	for (auto it = project->activeSet.ShapesBegin(); it != project->activeSet.ShapesEnd(); ++it) {
-		mesh* m = glView->GetMesh(it->first);
-		if (m) {
-			m->smoothSeamNormals = it->second.smoothSeamNormals;
+void OutfitStudioFrame::UpdateMeshFromSet(const std::string& shapeName) {
+	mesh* m = glView->GetMesh(shapeName);
+	if (m) {
+		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
 
-			if (!m->smoothSeamNormals)
-				m->SmoothNormals();
-		}
+		if (!m->smoothSeamNormals)
+			m->SmoothNormals();
 	}
 }
 
@@ -6148,7 +6141,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(newName);
 		if (shape) {
 			glView->AddMeshFromNif(project->GetWorkNif(), newName, false);
-			UpdateMeshesFromSet();
+			UpdateMeshFromSet(newName);
 			project->SetTextures(shape);
 
 			MaterialFile matFile;
@@ -6790,7 +6783,7 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName, bool 
 	}
 }
 
-void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile, const MaterialFile& matFile) {
+void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile, const MaterialFile& matFile, const bool reloadTextures) {
 	mesh* m = gls.GetMesh(shapeName);
 	if (!m)
 		return;
@@ -6804,7 +6797,7 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 		fShader = "res\\shaders\\fo4_default.frag";
 	}
 
-	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader);
+	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures);
 	if (mat) {
 		m->material = mat;
 		

@@ -119,7 +119,7 @@ public:
 		gls.RenameMesh(shapeName, newShapeName);
 	}
 
-	void SetMeshTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile());
+	void SetMeshTextures(const std::string& shapeName, const std::vector<std::string>& textureFiles, const bool hasMatFile = false, const MaterialFile& matFile = MaterialFile(), const bool reloadTextures = false);
 
 	mesh* GetMesh(const std::string& shapeName) {
 		return gls.GetMesh(shapeName);
@@ -684,7 +684,8 @@ public:
 
 	void AnimationGUIFromProj();
 	void RefreshGUIFromProj();
-	void MeshesFromProj();
+	void MeshesFromProj(const bool reloadTextures = false);
+	void MeshFromProj(const std::string& shapeName, const bool reloadTextures = false);
 
 	std::vector<ShapeItemData*>& GetSelectedItems();
 	std::string GetActiveBone();
@@ -858,8 +859,7 @@ private:
 	void ClearProject();
 	void RenameProject(const std::string& projectName);
 
-	void WorkingGUIFromProj();
-	void UpdateMeshesFromSet();
+	void UpdateMeshFromSet(const std::string& shapeName);
 
 	bool HasUnweightedCheck();
 	bool ShowWeightCopy(WeightCopyOptions& options);

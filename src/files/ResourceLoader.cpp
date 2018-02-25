@@ -24,27 +24,35 @@ ResourceLoader::~ResourceLoader() {
 
 bool ResourceLoader::extChecked = false;
 
-GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap) {
+GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap, bool reloadTextures) {
 	auto ti = textures.find(inFileName);
-	if (ti != textures.end())
-		return ti->second;
+	if (!reloadTextures) {
+		// Return existing texture index
+		if (ti != textures.end())
+			return ti->second;
+	}
 
 	wxFileName fileName(inFileName);
 	wxString fileExt = fileName.GetExt().Lower();
 	std::string fileExtStr = std::string(fileExt.c_str());
 
-	// All textures (GLI)
 	GLuint textureID = 0;
+
+	// Get existing index to overwrite texture data for, otherwise generate new index later
+	if (reloadTextures && ti != textures.end())
+		textureID = ti->second;
+
+	// All textures (GLI)
 	if (fileExtStr == "dds" || fileExtStr == "ktx")
-		textureID = GLI_load_texture(inFileName);
+		textureID = GLI_load_texture(inFileName, textureID);
 
 	// Cubemap fallback (SOIL)
 	if (!textureID && isCubeMap)
-		textureID = SOIL_load_OGL_single_cubemap(inFileName.c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS);
+		textureID = SOIL_load_OGL_single_cubemap(inFileName.c_str(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, textureID, SOIL_FLAG_GL_MIPMAPS);
 
 	// Texture and image fallback (SOIL)
 	if (!textureID)
-		textureID = SOIL_load_OGL_texture(inFileName.c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+		textureID = SOIL_load_OGL_texture(inFileName.c_str(), SOIL_LOAD_AUTO, textureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 
 	if (!textureID && Config.MatchValue("BSATextureScan", "true")) {
 		if (Config["GameDataPath"].empty()) {
@@ -75,15 +83,15 @@ GLuint ResourceLoader::LoadTexture(const std::string& inFileName, bool isCubeMap
 
 			// All textures (GLI)
 			if (fileExtStr == "dds" || fileExtStr == "ktx")
-				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen());
+				textureID = GLI_load_texture_from_memory((char*)texBuffer, data.GetDataLen(), textureID);
 
 			// Cubemap fallback (SOIL)
 			if (!textureID && isCubeMap)
-				textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetDataLen(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_GL_MIPMAPS);
+				textureID = SOIL_load_OGL_single_cubemap_from_memory(texBuffer, data.GetDataLen(), SOIL_DDS_CUBEMAP_FACE_ORDER, SOIL_LOAD_AUTO, textureID, SOIL_FLAG_GL_MIPMAPS);
 
 			// Texture and image fallback (SOIL)
 			if (!textureID)
-				textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetDataLen(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
+				textureID = SOIL_load_OGL_texture_from_memory(texBuffer, data.GetDataLen(), SOIL_LOAD_AUTO, textureID, SOIL_FLAG_TEXTURE_REPEATS | SOIL_FLAG_MIPMAPS | SOIL_FLAG_GL_MIPMAPS);
 		}
 		else {
 			wxLogWarning("Texture file '%s' not found.", inFileName);
@@ -153,21 +161,22 @@ bool ResourceLoader::RenameTexture(const std::string& texNameSrc, const std::str
 }
 
 // File extension can be KTX or DDS
-GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
+GLuint ResourceLoader::GLI_create_texture(gli::texture& texture, GLuint textureID) {
 	if (!extGLISupported) {
 		if (!extChecked) {
 			wxLogWarning("OpenGL features required for GLI_create_texture to work aren't there!");
 			extChecked = true;
 		}
-		return 0;
+		return textureID;
 	}
 
 	gli::gl glProfile(gli::gl::PROFILE_GL33);
 	gli::gl::format const format = glProfile.translate(texture.format(), texture.swizzles());
 	GLenum target = glProfile.translate(texture.target());
 
-	GLuint textureID = 0;
-	glGenTextures(1, &textureID);
+	if (textureID == 0)
+		glGenTextures(1, &textureID);
+
 	glBindTexture(target, textureID);
 	glTexParameteri(target, GL_TEXTURE_BASE_LEVEL, 0);
 	glTexParameteri(target, GL_TEXTURE_MAX_LEVEL, static_cast<GLint>(texture.levels() - 1));
@@ -283,31 +292,33 @@ GLuint ResourceLoader::GLI_create_texture(gli::texture& texture) {
 	return textureID;
 }
 
-GLuint ResourceLoader::GLI_load_texture(const std::string& fileName) {
+GLuint ResourceLoader::GLI_load_texture(const std::string& fileName, GLuint textureID) {
 	gli::texture texture = gli::load(fileName);
 	if (texture.empty())
-		return 0;
+		return textureID;
 
-	return GLI_create_texture(texture);
+	return GLI_create_texture(texture, textureID);
 }
 
-GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t size) {
+GLuint ResourceLoader::GLI_load_texture_from_memory(const char* buffer, size_t size, GLuint textureID) {
 	gli::texture texture = gli::load(buffer, size);
 	if (texture.empty())
-		return 0;
+		return textureID;
 
-	return GLI_create_texture(texture);
+	return GLI_create_texture(texture, textureID);
 }
 
-GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile) {
+GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureFiles, const std::string& vShaderFile, const std::string& fShaderFile, const bool reloadTextures) {
 	auto texFiles = textureFiles;
 	for (auto &f : texFiles)
 		std::transform(f.begin(), f.end(), f.begin(), ::tolower);
 
 	MaterialKey key(texFiles, vShaderFile, fShaderFile);
-	auto it = materials.find(key);
-	if (it != materials.end())
-		return it->second.get();
+	if (!reloadTextures) {
+		auto it = materials.find(key);
+		if (it != materials.end())
+			return it->second.get();
+	}
 
 	std::vector<GLuint> texRefs(texFiles.size(), 0);
 	for (int i = 0; i < texFiles.size(); i++) {
@@ -315,7 +326,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 			continue;
 
 		bool isCubeMap = (i == 4);
-		GLuint textureID = LoadTexture(texFiles[i], isCubeMap);
+		GLuint textureID = LoadTexture(texFiles[i], isCubeMap, reloadTextures);
 		if (!textureID)
 			continue;
 
@@ -338,7 +349,9 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	}
 
 	auto& entry = materials[key];
-	entry.reset(new GLMaterial(this, texFiles, vShaderFile, fShaderFile));
+	if (!reloadTextures)
+		entry.reset(new GLMaterial(this, texFiles, vShaderFile, fShaderFile));
+
 	return entry.get();
 }
 

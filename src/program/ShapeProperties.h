@@ -45,7 +45,6 @@ private:
 	NifFile* nif = nullptr;
 	NiShape* shape = nullptr;
 
-	std::string currentMaterialPath;
 	bool currentSubIndex = false;
 
 	void GetShader();
@@ -65,6 +64,7 @@ private:
 	void RemoveExtraData(int index);
 
 	void AssignDefaultTexture();
+	void RefreshMesh();
 	void ApplyChanges();
 
 	void OnChooseMaterial(wxCommandEvent& event);
