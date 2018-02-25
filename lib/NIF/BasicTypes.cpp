@@ -257,6 +257,9 @@ void NiHeader::SetBlockOrder(std::vector<std::pair<int, int>>& newIndices) {
 		return p.first == 0xFFFFFFFF;
 	}), newIndices.end());
 
+	if (newIndices.empty())
+		return;
+
 	for (int i = 0; i < newIndices.size() - 1; i++) {
 		bool swapped = false;
 		for (int j = 0; j < newIndices.size() - i - 1; j++) {
@@ -308,6 +311,9 @@ bool NiHeader::IsBlockReferenced(const int blockId) {
 }
 
 void NiHeader::DeleteUnreferencedBlocks(const int rootId, bool* hadDeletions) {
+	if (rootId == 0xFFFFFFFF)
+		return;
+
 	for (int i = 0; i < numBlocks; i++) {
 		if (i != rootId && !IsBlockReferenced(i)) {
 			DeleteBlock(i);

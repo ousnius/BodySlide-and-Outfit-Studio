@@ -810,10 +810,6 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	version.SetStream(100);
 
 	for (auto &shape : GetShapes()) {
-		NiNode* parentNode = GetParentNode(shape);
-		if (!parentNode)
-			continue;
-
 		std::string shapeName = shape->GetName();
 
 		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
@@ -1051,6 +1047,11 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	}
 
 	DeleteUnreferencedBlocks();
+
+	// For files without a root node, remove the leftover data blocks anyway
+	hdr.DeleteBlockByType("NiTriStripsData");
+	hdr.DeleteBlockByType("NiTriShapeData");
+
 	return result;
 }
 
@@ -1178,7 +1179,8 @@ bool NifFile::RenameDuplicateShapes() {
 	auto nodes = GetChildren<NiNode>();
 
 	auto root = GetRootNode();
-	nodes.push_back(root);
+	if (root)
+		nodes.push_back(root);
 
 	for (auto &node : nodes) {
 		int dupCount = 0;
