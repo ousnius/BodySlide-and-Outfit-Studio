@@ -2715,32 +2715,38 @@ void OutfitStudioFrame::OnFixedWeight(wxCommandEvent& event) {
 }
 
 void OutfitStudioFrame::OnShapeVisToggle(wxTreeEvent& event) {
-	for (auto &i : selectedItems) {
-		bool bVis = true;
-		bool bGhost = false;
+	bool bVis = true;
+	bool bGhost = false;
 
-		int state = outfitShapes->GetItemState(i->GetId());
-		std::string s = outfitShapes->GetItemText(i->GetId()).ToUTF8();
+	int state = outfitShapes->GetItemState(event.GetItem());
+	if (state == 0) {
+		bVis = false;
+		bGhost = false;
+		state = 1;
+	}
+	else if (state == 1) {
+		bVis = true;
+		bGhost = true;
+		state = 2;
+	}
+	else {
+		bVis = true;
+		bGhost = false;
+		state = 0;
+	}
 
-		if (state == 0) {
-			bVis = false;
-			bGhost = false;
-			state = 1;
-		}
-		else if (state == 1) {
-			bVis = true;
-			bGhost = true;
-			state = 2;
-		}
-		else {
-			bVis = true;
-			bGhost = false;
-			state = 0;
-		}
+	std::string shapeName = outfitShapes->GetItemText(event.GetItem()).ToUTF8();
+	glView->SetShapeGhostMode(shapeName, bGhost);
+	glView->ShowShape(shapeName, bVis);
+	outfitShapes->SetItemState(event.GetItem(), state);
 
-		outfitShapes->SetItemState(i->GetId(), state);
-		glView->SetShapeGhostMode(s, bGhost);
-		glView->ShowShape(s, bVis);
+	if (selectedItems.size() > 1) {
+		for (auto &i : selectedItems) {
+			shapeName = outfitShapes->GetItemText(i->GetId()).ToUTF8();
+			glView->SetShapeGhostMode(shapeName, bGhost);
+			glView->ShowShape(shapeName, bVis);
+			outfitShapes->SetItemState(i->GetId(), state);
+		}
 	}
 
 	event.Skip();
