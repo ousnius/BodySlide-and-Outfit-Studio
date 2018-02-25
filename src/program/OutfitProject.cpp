@@ -1865,7 +1865,7 @@ void OutfitProject::ConformShape(const std::string& shapeName) {
 			morpher.GenerateResultDiff(shapeName, activeSet[i].name, activeSet[i].TargetDataName(refTarget));
 }
 
-void OutfitProject::DeleteVerts(const std::string& shapeName, const std::unordered_map<ushort, float>& mask) {
+bool OutfitProject::DeleteVerts(const std::string& shapeName, const std::unordered_map<ushort, float>& mask) {
 	std::vector<ushort> indices;
 	indices.reserve(mask.size());
 
@@ -1889,6 +1889,8 @@ void OutfitProject::DeleteVerts(const std::string& shapeName, const std::unorder
 	}
 	else
 		DeleteShape(shapeName);
+
+	return shapeDeleted;
 }
 
 void OutfitProject::DuplicateShape(const std::string& sourceShape, const std::string& destShape) {

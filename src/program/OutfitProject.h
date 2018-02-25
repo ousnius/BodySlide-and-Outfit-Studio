@@ -185,7 +185,7 @@ public:
 
 	int OutfitFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 
-	void DeleteVerts(const std::string& shapeName, const std::unordered_map<ushort, float>& mask);
+	bool DeleteVerts(const std::string& shapeName, const std::unordered_map<ushort, float>& mask);
 	void DuplicateShape(const std::string& sourceShape, const std::string& destShape);
 	void DeleteShape(const std::string& shapeName);
 

@@ -5493,7 +5493,7 @@ void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
 	for (auto &i : selectedItems)
 		project->GetWorkNif()->InvertUVsForShape(i->shapeName, invertX, invertY);
 
-	RefreshGUIFromProj();
+	MeshesFromProj();
 }
 
 void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
@@ -6053,13 +6053,18 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	if (wxMessageBox(_("Are you sure you wish to delete the unmasked vertices of the selected shapes?  This action cannot be undone."), _("Confirm Delete"), wxYES_NO) == wxNO)
 		return;
 
+	bool shapeDeleted = false;
 	for (auto &i : selectedItems) {
 		std::unordered_map<ushort, float> mask;
 		glView->GetShapeUnmasked(mask, i->shapeName);
-		project->DeleteVerts(i->shapeName, mask);
+		if (project->DeleteVerts(i->shapeName, mask))
+			shapeDeleted = true;
 	}
 
-	RefreshGUIFromProj();
+	if (shapeDeleted)
+		RefreshGUIFromProj();
+	else
+		MeshesFromProj();
 
 	for (auto &s : sliderDisplays) {
 		glView->SetStrokeManager(&s.second->sliderStrokes);
