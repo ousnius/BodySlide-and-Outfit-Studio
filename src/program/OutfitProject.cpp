@@ -1042,6 +1042,8 @@ void OutfitProject::SetTextures(NiShape* shape, const std::vector<std::string>& 
 			}
 		}
 
+		shapeMaterialFiles.erase(shapeName);
+
 		MaterialFile mat(MaterialFile::BGSM);
 		if (hasMat) {
 			matFile = std::regex_replace(matFile, std::regex("\\\\+"), "/");													// Replace all backward slashes with one forward slash

@@ -347,7 +347,9 @@ void ShapeProperties::OnSetTextures(wxCommandEvent& WXUNUSED(event)) {
 			for (int i = 0; i < 10; i++) {
 				std::string texPath = stTexGrid->GetCellValue(i, 0);
 				nif->SetTextureSlot(shader, texPath, i);
-				texFiles[i] = dataPath + texPath;
+
+				if (!texPath.empty())
+					texFiles[i] = dataPath + texPath;
 			}
 
 			nif->TrimTexturePaths();

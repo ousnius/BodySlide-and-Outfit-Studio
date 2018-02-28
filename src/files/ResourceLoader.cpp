@@ -349,7 +349,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 	}
 
 	auto& entry = materials[key];
-	if (!reloadTextures)
+	if (!entry || !reloadTextures)
 		entry.reset(new GLMaterial(this, texFiles, vShaderFile, fShaderFile));
 
 	return entry.get();
