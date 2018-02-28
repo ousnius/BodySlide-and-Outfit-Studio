@@ -573,6 +573,16 @@
 																	<item>Dog 6 | Fr-Ri Calf | 0x13e9bc22</item>
 																	<item>Dog 6 | Fr-Ri Heel+Arch | 0xd925c92c</item>
 																	<item>Dog 6 | Fr-Ri Paw | 0x1ecf3dd1</item>
+																	<item>Behemoth 2 | R-Arm+Elbow | 0x8c5ae189</item>
+																	<item>Behemoth 2 | R-4 Arm | 0x071dfd97</item>
+																	<item>Behemoth 2 | R-Hand | 0xded0fadf</item>
+																	<item>Behemoth 4 | L-Arm+Elbow | 0xc2bb4be3</item>
+																	<item>Behemoth 4 | L-4 Arm | 0x3e7a4ccc</item>
+																	<item>Behemoth 4 | L-Hand | 0xe7b74b84</item>
+																	<item>Behemoth 5 | R-Calf | 0xa411c600</item>
+																	<item>Behemoth 5 | R-Foot | 0xac900af3</item>
+																	<item>Behemoth 6 | L-Calf | 0xc0135fe3</item>
+																	<item>Behemoth 6 | R-Foot | 0x95f7bba8</item>
 																	<item>Robot 3 | Torso | 0x3d6644aa</item>
 																</content>
 																<hidden>1</hidden>
