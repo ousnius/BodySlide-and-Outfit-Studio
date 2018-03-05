@@ -1738,11 +1738,7 @@ void NifFile::SetShapePartitions(const std::string& shapeName, const std::vector
 	}
 }
 
-void NifFile::SetDefaultPartition(const std::string& shapeName) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
-	if (!shape)
-		return;
-
+void NifFile::SetDefaultPartition(NiShape* shape) {
 	std::vector<Triangle> tris;
 	shape->GetTriangles(tris);
 
@@ -2954,6 +2950,8 @@ void NifFile::CreateSkinning(NiShape* shape) {
 			nifDismemberInst->SetSkeletonRootRef(GetBlockID(GetRootNode()));
 			shape->SetSkinInstanceRef(dismemberID);
 			shape->SetSkinned(true);
+
+			SetDefaultPartition(shape);
 		}
 	}
 	else if (shape->HasType<NiTriStrips>()) {
@@ -2972,6 +2970,8 @@ void NifFile::CreateSkinning(NiShape* shape) {
 			nifDismemberInst->SetSkeletonRootRef(GetBlockID(GetRootNode()));
 			shape->SetSkinInstanceRef(skinID);
 			shape->SetSkinned(true);
+
+			SetDefaultPartition(shape);
 		}
 	}
 	else if (shape->HasType<BSTriShape>()) {
@@ -2990,6 +2990,9 @@ void NifFile::CreateSkinning(NiShape* shape) {
 				nifDismemberInst->SetDataRef(skinDataID);
 				nifDismemberInst->SetSkinPartitionRef(partID);
 				nifDismemberInst->SetSkeletonRootRef(GetBlockID(GetRootNode()));
+
+				SetDefaultPartition(shape);
+				UpdateSkinPartitions(shape);
 			}
 			else {
 				auto newSkinInst = new BSSkinInstance();

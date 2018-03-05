@@ -478,7 +478,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		nifTriShape->SetSkinInstanceRef(dismemberID);
 
 		nifTriShape->SetGeomData(nifShapeData);
-		blank.SetDefaultPartition(shapeName);
+		blank.SetDefaultPartition(nifTriShape);
 		shapeResult = nifTriShape;
 	}
 	else if (targetGame == FO4 || targetGame == FO4VR) {
@@ -537,7 +537,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		triShape->SetName(shapeName);
 		triShape->SetShaderPropertyRef(shaderID);
 
-		blank.SetDefaultPartition(shapeName);
+		blank.SetDefaultPartition(triShape);
 		blank.UpdateSkinPartitions(shapeName);
 		shapeResult = triShape;
 	}

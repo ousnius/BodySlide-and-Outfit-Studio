@@ -162,7 +162,7 @@ public:
 
 	bool GetShapePartitions(const std::string& shapeName, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris);
 	void SetShapePartitions(const std::string& shapeName, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris);
-	void SetDefaultPartition(const std::string& shapeName);
+	void SetDefaultPartition(NiShape* shape);
 
 	const std::vector<Vector3>* GetRawVertsForShape(const std::string& shapeName);
 	bool ReorderTriangles(const std::string& shapeName, const std::vector<uint>& triangleIndices);
