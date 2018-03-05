@@ -442,7 +442,15 @@ void NiHeader::FillStringRefs() {
 		b->GetStringRefs(stringRefs);
 
 		for (auto &r : stringRefs) {
-			std::string str = GetStringById(r->GetIndex());
+			int stringId = r->GetIndex();
+
+			// Check if string index is overflowing
+			if (stringId >= numStrings) {
+				stringId -= numStrings;
+				r->SetIndex(stringId);
+			}
+
+			std::string str = GetStringById(stringId);
 			r->SetString(str);
 		}
 	}
