@@ -24,6 +24,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../files/TriFile.h"
 #include "../utils/PlatformUtil.h"
 
+#include <wx/debugrpt.h>
 #include <sstream>
 
 // ----------------------------------------------------------------------------
@@ -369,6 +370,10 @@ void OutfitStudio::OnFatalException() {
 
 	wxLogError("Fatal exception has occurred, the program will terminate.");
 	wxMessageBox(_("Fatal exception has occurred, the program will terminate."), _("Fatal exception"), wxICON_ERROR);
+
+	wxDebugReport report;
+	report.AddExceptionContext();
+	report.Process();
 }
 
 bool OutfitStudio::SetDefaultConfig() {
