@@ -2320,24 +2320,19 @@ msgstr "TRI-Morphs exportieren"
 msgid "Failed to export TRI file!"
 msgstr "Konnte TRI-Datei nicht exportieren!"
 
-msgid "There is no slider in edit mode to clear data from!"
-msgstr ""
-"Es befindet sich kein Slider im Bearbeitungsmodus, von dem man Daten löschen "
-"könnte!"
+msgid "Are you sure you wish to clear the unmasked slider data "
+msgstr "Sind Sie sich sicher, dass Sie die unmaskierten Sliderdaten "
 
-msgid "Are you sure you wish to clear the unmasked slider data \""
-msgstr "Sind Sie sich sicher, dass Sie die unmaskierten Sliderdaten \""
-
-msgid "\" for the selected shapes? This cannot be undone."
+msgid "for the selected shapes? This cannot be undone."
 msgstr ""
-"\" für die ausgewählten Modelle löschen willst? Dies kann nicht rückgängig "
+"für die ausgewählten Modelle löschen willst? Dies kann nicht rückgängig "
 "gemacht werden."
 
 msgid "Confirm data erase"
 msgstr "Datenlöschung bestätigen"
 
-msgid "\" for the shape \""
-msgstr "\" für das Modell \""
+msgid "for the shape \""
+msgstr "für das Modell \""
 
 msgid "Enter a name for the new zap:"
 msgstr "Gib einen Namen für den neuen Zap ein:"
@@ -2354,12 +2349,8 @@ msgstr ""
 "Es befindet sich kein Slider im Bearbeitungsmodus, aus dem man eine Maske "
 "erstellen könnte!"
 
-msgid "There is no slider in edit mode to delete!"
-msgstr ""
-"Es befindet sich kein Slider im Bearbeitungsmodus, den man löschen könnte!"
-
-msgid "Are you sure you wish to delete the slider \""
-msgstr "Sind Sie sich sicher, dass Sie den Slider \""
+msgid "Are you sure you wish to delete the selected slider(s)?"
+msgstr "Sind Sie sich sicher, dass Sie die ausgewählten Slider löschen wollen?"
 
 msgid "\"? This cannot be undone."
 msgstr "\" löschen willst? Dies kann nicht rückgängig gemacht werden."

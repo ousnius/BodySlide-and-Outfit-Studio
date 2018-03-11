@@ -2000,19 +2000,16 @@ msgstr ""
 msgid "Failed to export TRI file!"
 msgstr ""
 
-msgid "There is no slider in edit mode to clear data from!"
+msgid "Are you sure you wish to clear the unmasked slider data "
 msgstr ""
 
-msgid "Are you sure you wish to clear the unmasked slider data \""
-msgstr ""
-
-msgid "\" for the selected shapes? This cannot be undone."
+msgid "for the selected shapes? This cannot be undone."
 msgstr ""
 
 msgid "Confirm data erase"
 msgstr ""
 
-msgid "\" for the shape \""
+msgid "for the shape \""
 msgstr ""
 
 msgid "Enter a name for the new zap:"
@@ -2027,10 +2024,7 @@ msgstr ""
 msgid "There is no slider in edit mode to create a mask from!"
 msgstr ""
 
-msgid "There is no slider in edit mode to delete!"
-msgstr ""
-
-msgid "Are you sure you wish to delete the slider \""
+msgid "Are you sure you wish to delete the selected slider(s)?"
 msgstr ""
 
 msgid "\"? This cannot be undone."

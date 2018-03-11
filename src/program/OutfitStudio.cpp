@@ -1535,8 +1535,6 @@ void OutfitStudioFrame::MenuEnterSliderEdit() {
 	menu->Enable(XRCID("menuExportSlider"), true);
 	menu->Enable(XRCID("sliderNegate"), true);
 	menu->Enable(XRCID("sliderMask"), true);
-	menu->Enable(XRCID("sliderClear"), true);
-	menu->Enable(XRCID("sliderDelete"), true);
 	menu->Enable(XRCID("sliderProperties"), true);
 }
 
@@ -1546,8 +1544,6 @@ void OutfitStudioFrame::MenuExitSliderEdit() {
 	menu->Enable(XRCID("menuExportSlider"), false);
 	menu->Enable(XRCID("sliderNegate"), false);
 	menu->Enable(XRCID("sliderMask"), false);
-	menu->Enable(XRCID("sliderClear"), false);
-	menu->Enable(XRCID("sliderDelete"), false);
 	menu->Enable(XRCID("sliderProperties"), false);
 }
 
@@ -5153,38 +5149,41 @@ void OutfitStudioFrame::OnClearSlider(wxCommandEvent& WXUNUSED(event)) {
 		wxMessageBox(_("There is no shape selected!"), _("Error"));
 		return;
 	}
-	if (!bEditSlider) {
-		wxMessageBox(_("There is no slider in edit mode to clear data from!"), _("Error"));
-		return;
-	}
 
 	int result;
 	if (selectedItems.size() > 1) {
-		std::string prompt = _("Are you sure you wish to clear the unmasked slider data \"");
-		prompt += activeSlider + _("\" for the selected shapes? This cannot be undone.");
+		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the selected shapes? This cannot be undone.");
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
 	else {
-		std::string prompt = _("Are you sure you wish to clear the unmasked slider data \"");
-		prompt += activeSlider + _("\" for the shape \"") + activeItem->shapeName + _("\"? This cannot be undone.");
+		std::string prompt = _("Are you sure you wish to clear the unmasked slider data ") + _("for the shape \"") + activeItem->shapeName + _("\"? This cannot be undone.");
 		result = wxMessageBox(prompt, _("Confirm data erase"), wxYES_NO | wxICON_WARNING, this);
 	}
+
 	if (result != wxYES)
 		return;
 
-	if (selectedItems.size() > 1)
-		wxLogMessage("Clearing slider data of '%s' for the selected shapes.", activeSlider);
-	else
-		wxLogMessage("Clearing slider data of '%s' for the shape '%s'.", activeSlider, activeItem->shapeName);
+	auto clearSlider = [&](const std::string& sliderName) {
+		std::unordered_map<ushort, float> mask;
+		for (auto &i : selectedItems) {
+			mask.clear();
+			glView->GetShapeMask(mask, i->shapeName);
+			if (mask.size() > 0)
+				project->ClearUnmaskedDiff(i->shapeName, sliderName, &mask);
+			else
+				project->ClearSlider(i->shapeName, sliderName);
+		}
+	};
 
-	std::unordered_map<ushort, float> mask;
-	for (auto &i : selectedItems) {
-		mask.clear();
-		glView->GetShapeMask(mask, i->shapeName);
-		if (mask.size() > 0)
-			project->ClearUnmaskedDiff(i->shapeName, activeSlider, &mask);
-		else
-			project->ClearSlider(i->shapeName, activeSlider);
+	if (!bEditSlider) {
+		wxLogMessage("Clearing slider data of the checked sliders for the selected shapes.");
+		for (auto &sd : sliderDisplays)
+			if (sd.second->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED)
+				clearSlider(sd.first);
+	}
+	else {
+		wxLogMessage("Clearing slider data of '%s' for the selected shapes.", activeSlider);
+		clearSlider(activeSlider);
 	}
 
 	ApplySliders();
@@ -5277,42 +5276,52 @@ void OutfitStudioFrame::OnMaskAffected(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnDeleteSlider(wxCommandEvent& WXUNUSED(event)) {
-	if (!bEditSlider) {
-		wxMessageBox(_("There is no slider in edit mode to delete!"), _("Error"));
-		return;
-	}
-
-	std::string prompt = _("Are you sure you wish to delete the slider \"");
-	prompt += activeSlider + _("\"? This cannot be undone.");
+	std::string prompt = _("Are you sure you wish to delete the selected slider(s)?");
 	int result = wxMessageBox(prompt, _("Confirm slider delete"), wxYES_NO | wxICON_WARNING, this);
 	if (result != wxYES)
 		return;
 
-	wxLogMessage("Deleting slider '%s'.", activeSlider);
+	auto deleteSlider = [&](const std::string& sliderName) {
+		wxLogMessage("Deleting slider '%s'.", sliderName);
 
-	SliderDisplay* sd = sliderDisplays[activeSlider];
-	sd->slider->SetValue(0);
-	SetSliderValue(activeSlider, 0);
-	ShowSliderEffect(activeSlider, true);
-	//sd->sliderStrokes.InvalidateHistoricalBVH();
-	sd->sliderStrokes.Clear();
-	sd->slider->SetFocus();
-	glView->SetStrokeManager(nullptr);
-	MenuExitSliderEdit();
+		SliderDisplay* sd = sliderDisplays[sliderName];
+		sd->slider->SetValue(0);
+		SetSliderValue(sliderName, 0);
+		ShowSliderEffect(sliderName, true);
+		sd->sliderStrokes.Clear();
+		sd->slider->SetFocus();
 
-	sd->btnSliderEdit->Destroy();
-	sd->slider->Destroy();
-	sd->sliderName->Destroy();
-	sd->sliderNameCheck->Destroy();
-	sd->sliderReadout->Destroy();
-	sd->sliderPane->Destroy();
+		sd->btnSliderEdit->Destroy();
+		sd->slider->Destroy();
+		sd->sliderName->Destroy();
+		sd->sliderNameCheck->Destroy();
+		sd->sliderReadout->Destroy();
+		sd->sliderPane->Destroy();
 
-	sliderScroll->FitInside();
-	delete sd;
-	sliderDisplays.erase(activeSlider);
-	project->DeleteSlider(activeSlider);
-	activeSlider.clear();
-	bEditSlider = false;
+		sliderScroll->FitInside();
+		delete sd;
+		project->DeleteSlider(sliderName);
+	};
+
+	if (!bEditSlider) {
+		for (auto it = sliderDisplays.begin(); it != sliderDisplays.end();) {
+			if (it->second->sliderNameCheck->Get3StateValue() == wxCheckBoxState::wxCHK_CHECKED) {
+				deleteSlider(it->first);
+				it = sliderDisplays.erase(it);
+			}
+			else
+				++it;
+		}
+	}
+	else {
+		deleteSlider(activeSlider);
+		sliderDisplays.erase(activeSlider);
+
+		MenuExitSliderEdit();
+		glView->SetStrokeManager(nullptr);
+		activeSlider.clear();
+		bEditSlider = false;
+	}
 
 	ApplySliders();
 }

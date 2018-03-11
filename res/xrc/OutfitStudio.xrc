@@ -1286,12 +1286,10 @@
 			<object class="wxMenuItem" name="sliderClear">
 				<label>Clear Slider Data</label>
 				<help>Erases the slider data without removing the slider itself. (Cannot be undone)</help>
-				<enabled>0</enabled>
 			</object>
 			<object class="wxMenuItem" name="sliderDelete">
 				<label>Delete Slider</label>
 				<help>Delete the active slider from the project. (Cannot be undone)</help>
-				<enabled>0</enabled>
 			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="sliderProperties">
