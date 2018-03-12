@@ -1545,8 +1545,8 @@ msgstr "U invertieren"
 msgid "Invert V"
 msgstr "V invertieren"
 
-msgid "Toggle Zaps:"
-msgstr "Zaps umschalten:"
+msgid "Toggle:"
+msgstr "Umschalten:"
 
 msgid "Search Radius"
 msgstr "Suchradius"

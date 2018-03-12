@@ -5371,7 +5371,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			zapToggleList->Enable();
 
 			for (int i = 0; i < project->SliderCount(); i++)
-				if (i != curSlider && project->SliderZap(i))
+				if (i != curSlider && (project->SliderZap(i) || project->SliderHidden(i)))
 					zapToggleList->Append(project->GetSliderName(i));
 
 			for (auto &s : project->SliderZapToggles(curSlider)) {

@@ -1347,7 +1347,7 @@ msgstr ""
 msgid "Invert V"
 msgstr ""
 
-msgid "Toggle Zaps:"
+msgid "Toggle:"
 msgstr ""
 
 msgid "Search Radius"
