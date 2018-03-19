@@ -682,11 +682,13 @@ NiShape* NifFile::CloneShape(const std::string& srcShapeName, const std::string&
 
 	// Shader
 	auto destShader = GetShader(destShape);
-	if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
-		// Kill normals and tangents
-		if (destShader->IsModelSpace()) {
-			destShape->SetNormals(false);
-			destShape->SetTangents(false);
+	if (destShader) {
+		if (hdr.GetVersion().IsSK() || hdr.GetVersion().IsSSE()) {
+			// Kill normals and tangents
+			if (destShader->IsModelSpace()) {
+				destShape->SetNormals(false);
+				destShape->SetTangents(false);
+			}
 		}
 	}
 
