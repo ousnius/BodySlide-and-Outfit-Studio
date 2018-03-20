@@ -66,6 +66,9 @@ class GLSurface {
 
 	void DeleteMesh(int meshID) {
 		if (meshID < meshes.size()) {
+			activeMeshes.erase(std::remove(activeMeshes.begin(), activeMeshes.end(), meshes[meshID]), activeMeshes.end());
+			activeMeshesID.erase(std::remove(activeMeshesID.begin(), activeMeshesID.end(), meshID), activeMeshesID.end());
+
 			delete meshes[meshID];
 			meshes.erase(meshes.begin() + meshID);
 
