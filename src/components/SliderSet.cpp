@@ -144,6 +144,9 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
 
 	for (auto &slider : sliders) {
 		for (auto &ddf : slider.dataFiles) {
+			if (ddf.fileName.size() <= 4)
+				continue;
+
 			std::string shapeName = TargetToShape(ddf.targetName);
 			std::string fullFilePath = baseDataPath + "\\";
 			if (ddf.bLocal)
