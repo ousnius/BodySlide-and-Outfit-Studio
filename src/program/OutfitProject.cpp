@@ -1750,7 +1750,11 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 	baseShape = shape;
 
-	activeSet.LoadSetDiffData(baseDiffData);
+	if (mergeSliders)
+		activeSet.LoadSetDiffData(baseDiffData, baseShape);
+	else
+		activeSet.LoadSetDiffData(baseDiffData);
+
 	activeSet.SetReferencedData(baseShape);
 	for (auto &dn : dataNames)
 		activeSet.SetReferencedDataByName(baseShape, dn, true);

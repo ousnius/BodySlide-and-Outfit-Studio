@@ -156,7 +156,7 @@ bool DiffDataSets::LoadData(const std::map<std::string, std::map<std::string, st
 	for (auto &osd : osdNames) {
 		OSDataFile osdFile;
 		if (!osdFile.Read(osd.first))
-			return false;
+			continue;
 
 		for (auto &dataNames : osd.second) {
 			auto diff = osdFile.GetDataDiff(dataNames.first);

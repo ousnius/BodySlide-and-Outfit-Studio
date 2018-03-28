@@ -139,7 +139,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	return 0;
 }
 
-void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
+void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& forShape) {
 	std::map<std::string, std::map<std::string, std::string>> osdNames;
 
 	for (auto &slider : sliders) {
@@ -148,6 +148,9 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage) {
 				continue;
 
 			std::string shapeName = TargetToShape(ddf.targetName);
+			if (!forShape.empty() && shapeName != forShape)
+				continue;
+
 			std::string fullFilePath = baseDataPath + "\\";
 			if (ddf.bLocal)
 				fullFilePath += datafolder + "\\";
