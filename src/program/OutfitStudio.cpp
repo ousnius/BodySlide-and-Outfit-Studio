@@ -49,7 +49,6 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_COMMAND_SCROLL(XRCID("brushFocus"), OutfitStudioFrame::OnBrushSettingsSlider)
 	EVT_COMMAND_SCROLL(XRCID("brushSpace"), OutfitStudioFrame::OnBrushSettingsSlider)
 	
-	EVT_TEXT_ENTER(wxID_ANY, OutfitStudioFrame::OnReadoutChange)
 	EVT_COMMAND_SCROLL(wxID_ANY, OutfitStudioFrame::OnSlider)
 	EVT_BUTTON(wxID_ANY, OutfitStudioFrame::OnClickSliderButton)
 	EVT_CHECKBOX(XRCID("selectSliders"), OutfitStudioFrame::OnSelectSliders)
@@ -1236,13 +1235,14 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrol
 
 	d->paneSz->Add(d->slider, 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
 
-	d->sliderReadout = new wxTextCtrl(d->sliderPane, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxWANTS_CHARS | wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, name + "|readout");
+	d->sliderReadout = new wxTextCtrl(d->sliderPane, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, name + "|readout");
 	d->sliderReadout->SetMaxLength(0);
 	d->sliderReadout->SetForegroundColour(wxColour(255, 255, 255));
 	d->sliderReadout->SetBackgroundColour(wxColour(48, 48, 48));
 	d->sliderReadout->SetMinSize(wxSize(40, 20));
 	d->sliderReadout->SetMaxSize(wxSize(40, 20));
-	d->sliderReadout->Connect(wxEVT_KILL_FOCUS, wxCommandEventHandler(OutfitStudioFrame::OnReadoutChange), 0, this);
+	d->sliderReadout->Bind(wxEVT_TEXT, &OutfitStudioFrame::OnReadoutChange, this);
+	//d->sliderReadout->Bind(wxEVT_KILL_FOCUS, &OutfitStudioFrame::OnReadoutChange, this);
 
 	d->paneSz->Add(d->sliderReadout, 0, wxALIGN_CENTER_VERTICAL | wxALL, 2);
 
@@ -4239,7 +4239,7 @@ void OutfitStudioFrame::OnClickSliderButton(wxCommandEvent& event) {
 		ExitSliderEdit();
 }
 
-void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event){
+void OutfitStudioFrame::OnReadoutChange(wxCommandEvent& event) {
 	wxTextCtrl* w = (wxTextCtrl*)event.GetEventObject();
 	event.Skip();
 	if (!w)
