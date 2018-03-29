@@ -5559,7 +5559,8 @@ void OutfitStudioFrame::OnEnterClose(wxKeyEvent& event) {
 		parent->Close();
 		parent->SetReturnCode(wxID_OK);
 	}
-	event.Skip();
+	else
+		event.Skip();
 }
 
 void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
