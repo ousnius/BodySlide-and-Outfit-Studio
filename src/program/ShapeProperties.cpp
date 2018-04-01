@@ -603,6 +603,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 void ShapeProperties::RefreshMesh() {
 	os->project->SetTextures(shape);
 	os->MeshFromProj(shape->GetName(), true);
+	os->UpdateActiveShapeUI();
 }
 
 void ShapeProperties::OnApply(wxCommandEvent& WXUNUSED(event)) {

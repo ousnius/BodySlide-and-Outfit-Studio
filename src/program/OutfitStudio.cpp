@@ -6411,6 +6411,8 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
+
+	UpdateActiveShapeUI();
 }
 
 void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
@@ -6459,6 +6461,8 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
+
+	UpdateActiveShapeUI();
 }
 
 void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)) {

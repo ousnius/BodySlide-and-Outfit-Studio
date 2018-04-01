@@ -2993,6 +2993,9 @@ void NifFile::CreateSkinning(NiShape* shape) {
 				nifDismemberInst->SetSkinPartitionRef(partID);
 				nifDismemberInst->SetSkeletonRootRef(GetBlockID(GetRootNode()));
 
+				shape->SetSkinInstanceRef(skinInstID);
+				shape->SetSkinned(true);
+
 				SetDefaultPartition(shape);
 				UpdateSkinPartitions(shape);
 			}
@@ -3005,10 +3008,10 @@ void NifFile::CreateSkinning(NiShape* shape) {
 
 				newSkinInst->SetTargetRef(GetBlockID(GetRootNode()));
 				newSkinInst->SetDataRef(boneDataRef);
-			}
 
-			shape->SetSkinInstanceRef(skinInstID);
-			shape->SetSkinned(true);
+				shape->SetSkinInstanceRef(skinInstID);
+				shape->SetSkinned(true);
+			}
 		}
 	}
 
