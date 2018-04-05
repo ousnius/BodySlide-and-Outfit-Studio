@@ -93,12 +93,17 @@ public:
 		}
 	}
 
-	void RemoveBone(const int& boneOrder) {
+	void RemoveBone(const std::string& boneName) {
+		auto bone = boneNames.find(boneName);
+		if (bone == boneNames.end())
+			return;
+
+		int boneID = bone->second;
 		std::unordered_map<int, AnimWeight> bwTemp;
 		for (auto &bw : boneWeights) {
-			if (bw.first > boneOrder)
+			if (bw.first > boneID)
 				bwTemp[bw.first - 1] = std::move(bw.second);
-			else if (bw.first < boneOrder)
+			else if (bw.first < boneID)
 				bwTemp[bw.first] = std::move(bw.second);
 		}
 
@@ -106,6 +111,11 @@ public:
 
 		for (auto &bw : bwTemp)
 			boneWeights[bw.first] = std::move(bw.second);
+
+		boneNames.erase(boneName);
+		for (auto &bn : boneNames)
+			if (bn.second > boneID)
+				bn.second--;
 	}
 };
 
@@ -148,6 +158,7 @@ public:
 	bool GetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	void SetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	bool CalcShapeSkinBounds(const std::string& shape, const int& boneIndex);
+	void CleanupBones();
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName);

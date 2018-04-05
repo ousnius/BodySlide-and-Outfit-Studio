@@ -6532,7 +6532,8 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 				auto weights = project->GetWorkAnim()->GetWeightsPtr(i->shapeName, b);
 				if (weights) {
 					for (auto &bw : *weights)
-						m->vcolors[bw.first].x = 1.0f;
+						if (bw.second > 0.0f)
+							m->vcolors[bw.first].x = 1.0f;
 				}
 			}
 		}

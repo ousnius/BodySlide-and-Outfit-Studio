@@ -20,17 +20,17 @@ struct SkinWeight {
 };
 
 struct VertexWeight {
-	float w1;
-	float w2;
-	float w3;
-	float w4;
+	float w1 = 0.0f;
+	float w2 = 0.0f;
+	float w3 = 0.0f;
+	float w4 = 0.0f;
 };
 
 struct BoneIndices {
-	byte i1;
-	byte i2;
-	byte i3;
-	byte i4;
+	byte i1 = 0;
+	byte i2 = 0;
+	byte i3 = 0;
+	byte i4 = 0;
 };
 
 class NiSkinData : public NiObject {

@@ -202,8 +202,9 @@ std::string OutfitProject::Save(const wxString& strFileName,
 	std::string saveFileName = saveDataPath + "\\" + baseFile;
 
 	if (workNif.IsValid()) {
-		NifFile clone(workNif);
+		workAnim.CleanupBones();
 
+		NifFile clone(workNif);
 		ChooseClothData(clone);
 
 		if (!copyRef && !baseShape.empty()) {
@@ -1283,8 +1284,13 @@ void OutfitProject::CopyBoneWeights(const std::string& destShape, const float& p
 
 			if (weights) {
 				for (auto &dr : diffResult) {
-					if (mask)
-						(*weights)[dr.first] = dr.second.y * (1.0f - (*mask)[dr.first]);
+					if (mask) {
+						auto& vmask = (*mask)[dr.first];
+						if (1.0f - vmask > 0.0f)
+							(*weights)[dr.first] = dr.second.y * (1.0f - vmask);
+						else
+							(*weights).erase(dr.first);
+					}
 					else
 						(*weights)[dr.first] = dr.second.y;
 				}
@@ -1391,7 +1397,7 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 				if (weights) {
 					for (int i = 0; i < verts.size(); i++) {
 						auto id = weights->find(i);
-						if (id != weights->end())
+						if (id != weights->end() && id->second > 0.0f)
 							influences.at(i)++;
 					}
 				}
@@ -2078,8 +2084,9 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 }
 
 int OutfitProject::ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef) {
-	NifFile clone(workNif);
+	workAnim.CleanupBones();
 
+	NifFile clone(workNif);
 	ChooseClothData(clone);
 
 	std::vector<Vector3> liveVerts;

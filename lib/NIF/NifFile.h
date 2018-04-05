@@ -156,6 +156,7 @@ public:
 	void UpdateShapeBoneID(const std::string& shapeName, const int oldID, const int newID);
 	void SetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& inWeights);
 	void SetShapeVertWeights(const std::string& shapeName, const int vertIndex, std::vector<byte>& boneids, std::vector<float>& weights);
+	void ClearShapeVertWeights(const std::string& shapeName);
 
 	bool GetShapeSegments(const std::string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 	void SetShapeSegments(const std::string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);

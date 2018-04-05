@@ -22,21 +22,12 @@ bool AnimInfo::AddShapeBone(const std::string& shape, const std::string& boneNam
 }
 
 bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& boneName) {
-	int bidx = 0;
-	bool found = false;
-	for (auto &bone : shapeBones[shape]) {
-		if (bone.compare(boneName) == 0) {
-			found = true;
-			break;
-		}
-		bidx++;
-	}
-
-	if (!found)
+	auto& bones = shapeBones[shape];
+	if (std::find(bones.begin(), bones.end(), boneName) == bones.end())
 		return false;
 
-	shapeBones[shape].erase(shapeBones[shape].begin() + bidx);
-	shapeSkinning[shape].RemoveBone(bidx);
+	bones.erase(std::remove(bones.begin(), bones.end(), boneName), bones.end());
+	shapeSkinning[shape].RemoveBone(boneName);
 
 	AnimSkeleton::getInstance().ReleaseBone(boneName);
 	if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0)
@@ -178,15 +169,12 @@ void AnimInfo::GetBoneXForm(const std::string& boneName, MatTransform& stransfor
 }
 
 int AnimInfo::GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName) {
-	int b = 0xFFFFFFFF;
-	for (int i = 0; i < shapeBones[shapeName].size(); i++) {
-		if (shapeBones[shapeName][i] == boneName) {
-			b = i;
-			break;
-		}
-	}
+	auto& skin = shapeSkinning[shapeName];
+	auto bone = skin.boneNames.find(boneName);
+	if (bone != skin.boneNames.end())
+		return bone->second;
 
-	return b;
+	return -1;
 }
 
 std::unordered_map<ushort, float>* AnimInfo::GetWeightsPtr(const std::string& shape, const std::string& boneName) {
@@ -258,6 +246,28 @@ void AnimInfo::SetWeights(const std::string& shape, const std::string& boneName,
 		return;
 
 	shapeSkinning[shape].boneWeights[bid].weights = inVertWeights;
+}
+
+void AnimInfo::CleanupBones() {
+	for (auto &skin : shapeSkinning) {
+		std::vector<std::string> bonesToDelete;
+
+		for (auto &bone : skin.second.boneNames) {
+			bool hasInfluence = false;
+			for (auto &bw : skin.second.boneWeights[bone.second].weights) {
+				if (bw.second > 0.0f) {
+					hasInfluence = true;
+					break;
+				}
+			}
+
+			if (!hasInfluence)
+				bonesToDelete.push_back(bone.first);
+		}
+
+		for (auto &bone : bonesToDelete)
+			RemoveShapeBone(skin.first, bone);
+	}
 }
 
 void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
@@ -352,9 +362,12 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 				nif->SetShapeBoneBounds(shapeBoneList.first, bid, bw.bounds);
 		}
 
-		if (isBSShape)
+		if (isBSShape) {
+			nif->ClearShapeVertWeights(shapeBoneList.first);
+
 			for (auto &vid : vertWeights)
 				nif->SetShapeVertWeights(shapeBoneList.first, vid.first, vid.second.boneIds, vid.second.weights);
+		}
 	}
 
 	if (incomplete)

@@ -1650,6 +1650,21 @@ void NifFile::SetShapeVertWeights(const std::string& shapeName, const int vertIn
 	}
 }
 
+void NifFile::ClearShapeVertWeights(const std::string& shapeName) {
+	auto shape = FindBlockByName<NiShape>(shapeName);
+	if (!shape)
+		return;
+
+	auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+	if (!bsTriShape)
+		return;
+
+	for (auto &vertex : bsTriShape->vertData) {
+		std::memset(vertex.weights, 0, sizeof(float) * 4);
+		std::memset(vertex.weightBones, 0, sizeof(byte) * 4);
+	}
+}
+
 bool NifFile::GetShapeSegments(const std::string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
 	auto siTriShape = FindBlockByName<BSSubIndexTriShape>(shapeName);
 	if (!siTriShape)
@@ -2800,10 +2815,7 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 
 		for (auto &v : part.vertexMap) {
 			BoneIndices b;
-			b.i1 = b.i2 = b.i3 = b.i4 = 0;
-
 			VertexWeight vw;
-			vw.w1 = vw.w2 = vw.w3 = vw.w4 = 0.0f;
 
 			byte* pb = &b.i1;
 			float* pw = &vw.w1;
@@ -2818,8 +2830,9 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 				tot += pw[bi];
 			}
 
-			for (int bi = 0; bi < 4; bi++)
-				pw[bi] /= tot;
+			if (tot != 0.0f)
+				for (int bi = 0; bi < 4; bi++)
+					pw[bi] /= tot;
 
 			part.boneIndices.push_back(b);
 			part.vertexWeights.push_back(vw);
