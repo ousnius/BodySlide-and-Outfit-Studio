@@ -6075,10 +6075,14 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 			shapeDeleted = true;
 	}
 
-	if (shapeDeleted)
-		RefreshGUIFromProj();
-	else
+	project->GetWorkAnim()->CleanupBones();
+
+	if (!shapeDeleted) {
 		MeshesFromProj();
+		AnimationGUIFromProj();
+	}
+	else
+		RefreshGUIFromProj();
 
 	for (auto &s : sliderDisplays) {
 		glView->SetStrokeManager(&s.second->sliderStrokes);
@@ -6412,6 +6416,9 @@ void OutfitStudioFrame::OnCopyBoneWeight(wxCommandEvent& WXUNUSED(event)) {
 		EndProgress();
 	}
 
+	project->GetWorkAnim()->CleanupBones();
+	AnimationGUIFromProj();
+
 	UpdateActiveShapeUI();
 }
 
@@ -6461,6 +6468,9 @@ void OutfitStudioFrame::OnCopySelectedWeight(wxCommandEvent& WXUNUSED(event)) {
 		UpdateProgress(100, _("Finished"));
 		EndProgress();
 	}
+
+	project->GetWorkAnim()->CleanupBones();
+	AnimationGUIFromProj();
 
 	UpdateActiveShapeUI();
 }
