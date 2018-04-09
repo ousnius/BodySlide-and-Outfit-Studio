@@ -25,7 +25,7 @@ PreviewWindow::~PreviewWindow() {
 
 PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideApp* app)
 	: wxFrame(nullptr, wxID_ANY, _("Preview"), pos, size), app(app), refNormalGenLayers(emptyLayers) {
-	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon("res\\images\\BodySlide.png", wxBITMAP_TYPE_PNG));
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
