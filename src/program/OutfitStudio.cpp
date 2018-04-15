@@ -215,7 +215,7 @@ wxIMPLEMENT_APP(OutfitStudio);
 ConfigurationManager Config;
 ConfigurationManager OutfitStudioConfig;
 
-const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR" };
+const wxString TargetGames[] = { "Fallout3", "FalloutNewVegas", "Skyrim", "Fallout4", "SkyrimSpecialEdition", "Fallout4VR", "SkyrimVR" };
 const wxLanguage SupportedLangs[] = {
 	wxLANGUAGE_ENGLISH, wxLANGUAGE_AFRIKAANS, wxLANGUAGE_ARABIC, wxLANGUAGE_CATALAN, wxLANGUAGE_CZECH, wxLANGUAGE_DANISH, wxLANGUAGE_GERMAN,
 	wxLANGUAGE_GREEK, wxLANGUAGE_SPANISH, wxLANGUAGE_BASQUE, wxLANGUAGE_FINNISH, wxLANGUAGE_FRENCH, wxLANGUAGE_HINDI,
@@ -270,6 +270,7 @@ bool OutfitStudio::OnInit() {
 	case FO4: gameName.Append("Fallout 4"); break;
 	case SKYRIMSE: gameName.Append("Skyrim Special Edition"); break;
 	case FO4VR: gameName.Append("Fallout 4 VR"); break;
+	case SKYRIMVR: gameName.Append("Skyrim VR"); break;
 	default: gameName.Append("Invalid");
 	}
 	wxLogMessage(gameName);
@@ -420,6 +421,8 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("GameRegVal/SkyrimSpecialEdition", "Installed Path");
 	Config.SetDefaultValue("GameRegKey/Fallout4VR", "Software\\Bethesda Softworks\\Fallout 4 VR");
 	Config.SetDefaultValue("GameRegVal/Fallout4VR", "Installed Path");
+	Config.SetDefaultValue("GameRegKey/SkyrimVR", "Software\\Bethesda Softworks\\Skyrim VR");
+	Config.SetDefaultValue("GameRegVal/SkyrimVR", "Installed Path");
 
 	// Target game not set, show setup dialog
 	if (currentTarget == -1)
@@ -487,6 +490,9 @@ bool OutfitStudio::ShowSetup() {
 		wxButton* btFallout4VR = XRCCTRL(*setup, "btFallout4VR", wxButton);
 		btFallout4VR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(5); });
 
+		wxButton* btSkyrimVR = XRCCTRL(*setup, "btSkyrimVR", wxButton);
+		btSkyrimVR->Bind(wxEVT_BUTTON, [&setup](wxCommandEvent&) { setup->EndModal(6); });
+
 		wxDirPickerCtrl* dirFallout3 = XRCCTRL(*setup, "dirFallout3", wxDirPickerCtrl);
 		dirFallout3->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout3, &btFallout3](wxFileDirPickerEvent&) { btFallout3->Enable(dirFallout3->GetDirName().DirExists()); });
 
@@ -504,6 +510,9 @@ bool OutfitStudio::ShowSetup() {
 
 		wxDirPickerCtrl* dirFallout4VR = XRCCTRL(*setup, "dirFallout4VR", wxDirPickerCtrl);
 		dirFallout4VR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirFallout4VR, &btFallout4VR](wxFileDirPickerEvent&) { btFallout4VR->Enable(dirFallout4VR->GetDirName().DirExists()); });
+
+		wxDirPickerCtrl* dirSkyrimVR = XRCCTRL(*setup, "dirSkyrimVR", wxDirPickerCtrl);
+		dirSkyrimVR->Bind(wxEVT_DIRPICKER_CHANGED, [&dirSkyrimVR, &btSkyrimVR](wxFileDirPickerEvent&) { btSkyrimVR->Enable(dirSkyrimVR->GetDirName().DirExists()); });
 
 		wxFileName dir = GetGameDataPath(FO3);
 		if (dir.DirExists()) {
@@ -541,6 +550,12 @@ bool OutfitStudio::ShowSetup() {
 			btFallout4VR->Enable();
 		}
 
+		dir = GetGameDataPath(SKYRIMVR);
+		if (dir.DirExists()) {
+			dirSkyrimVR->SetDirName(dir);
+			btSkyrimVR->Enable();
+		}
+
 		if (setup->ShowModal() != wxID_CANCEL) {
 			int targ = setup->GetReturnCode();
 			Config.SetValue("TargetGame", targ);
@@ -576,6 +591,11 @@ bool OutfitStudio::ShowSetup() {
 				dataDir = dirFallout4VR->GetDirName();
 				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
 				Config.SetValue("Anim/SkeletonRootName", "Root");
+				break;
+			case SKYRIMVR:
+				dataDir = dirSkyrimVR->GetDirName();
+				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_sse.nif");
+				Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
 				break;
 			}
 
@@ -866,6 +886,7 @@ void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
 		choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 		break;
 	case SKYRIMSE:
+	case SKYRIMVR:
 		fpSkeletonFile->SetPath("res\\skeleton_female_sse.nif");
 		choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 		break;
@@ -1942,7 +1963,7 @@ void OutfitStudioFrame::ClearProject() {
 	project->mGamePath.clear();
 	project->mGameFile.clear();
 
-	if (wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE)
+	if (wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE || wxGetApp().targetGame == SKYRIMVR)
 		project->mGenWeights = true;
 	else
 		project->mGenWeights = false;
@@ -3627,6 +3648,8 @@ void OutfitStudioFrame::OnPartitionTreeContext(wxCommandEvent& WXUNUSED(event)) 
 }
 
 void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
+	bool isSkyrim = wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE || wxGetApp().targetGame == SKYRIMVR;
+	
 	wxTreeItemId newItem;
 	if (!activePartition.IsOk() || partitionTree->GetChildrenCount(partitionRoot) <= 0) {
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(activeItem->shapeName);
@@ -3639,12 +3662,12 @@ void OutfitStudioFrame::OnAddPartition(wxCommandEvent& WXUNUSED(event)) {
 			shape->GetTriangles(tris);
 
 			newItem = partitionTree->AppendItem(partitionRoot, "Partition", -1, -1,
-				new PartitionItemData(verts, tris, wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE ? 32 : 0));
+				new PartitionItemData(verts, tris, isSkyrim ? 32 : 0));
 		}
 	}
 	else
 		newItem = partitionTree->InsertItem(partitionRoot, activePartition, "Partition", -1, -1,
-			new PartitionItemData(std::vector<ushort>(), std::vector<Triangle>(), wxGetApp().targetGame == SKYRIM || wxGetApp().targetGame == SKYRIMSE ? 32 : 0));
+			new PartitionItemData(std::vector<ushort>(), std::vector<Triangle>(), isSkyrim ? 32 : 0));
 
 	if (newItem.IsOk()) {
 		partitionTree->UnselectAll();

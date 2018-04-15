@@ -25,7 +25,7 @@ OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	LoadSkeletonReference(defSkelFile);
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame == SKYRIM || targetGame == SKYRIMSE)
+	if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
 		mGenWeights = true;
 }
 
@@ -413,7 +413,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		blankSkel = "res\\SkeletonBlank_sk.nif";
 	else if (targetGame == FO4 || targetGame == FO4VR)
 		blankSkel = "res\\SkeletonBlank_fo4.nif";
-	else if (targetGame == SKYRIMSE)
+	else if (targetGame == SKYRIMSE || targetGame == SKYRIMVR)
 		blankSkel = "res\\SkeletonBlank_sse.nif";
 
 	NifFile blank(blankSkel);
@@ -2003,7 +2003,7 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 		else
 			mGamePath.Clear();
 
-		if (targetGame == SKYRIM || targetGame == SKYRIMSE) {
+		if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR) {
 			wxString fileRest;
 			if (mGameFile.EndsWith("_0", &fileRest) || mGameFile.EndsWith("_1", &fileRest))
 				mGameFile = fileRest;
@@ -2390,12 +2390,13 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 		match = nif.GetHeader().GetVersion().IsFO4();
 		break;
 	case SKYRIMSE:
+	case SKYRIMVR:
 		match = nif.GetHeader().GetVersion().IsSSE();
 		break;
 	}
 
 	if (!match) {
-		if (targetGame == SKYRIMSE && nif.GetHeader().GetVersion().IsSK()) {
+		if ((targetGame == SKYRIMSE || targetGame == SKYRIMVR) && nif.GetHeader().GetVersion().IsSK()) {
 			if (!Config.Exists("OptimizeForSSE")) {
 				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
 				if (res == wxYES)
