@@ -1215,7 +1215,9 @@ bool OutfitStudioFrame::LoadNIF(const std::string& fileName) {
 }
 
 void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz) {
-	SliderDisplay* d = new SliderDisplay();
+	wxString sn = wxString::FromUTF8(name);
+
+	auto d = new SliderDisplay();
 	d->sliderPane = new wxPanel(wnd, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSIMPLE_BORDER | wxTAB_TRAVERSAL);
 	d->sliderPane->SetBackgroundColour(wxNullColour);
 	d->sliderPane->SetMinSize(wxSize(-1, 25));
@@ -1223,40 +1225,40 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrol
 
 	d->paneSz = new wxBoxSizer(wxHORIZONTAL);
 
-	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap("res\\images\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, name + "|btn");
+	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap("res\\images\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, sn + "|btn");
 	d->btnSliderEdit->SetBitmapDisabled(wxBitmap("res\\images\\EditSmall_d.png", wxBITMAP_TYPE_ANY));
 	d->btnSliderEdit->SetToolTip(_("Turn on edit mode for this slider."));
 	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
-	d->btnMinus = new wxButton(d->sliderPane, wxID_ANY, "-", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnMinus");
+	d->btnMinus = new wxButton(d->sliderPane, wxID_ANY, "-", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, sn + "|btnMinus");
 	d->btnMinus->SetToolTip(_("Weaken slider data by 1%."));
 	d->btnMinus->SetForegroundColour(wxTransparentColour);
 	d->btnMinus->Hide();
 	d->paneSz->Add(d->btnMinus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
-	d->btnPlus = new wxButton(d->sliderPane, wxID_ANY, "+", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, name + "|btnPlus");
+	d->btnPlus = new wxButton(d->sliderPane, wxID_ANY, "+", wxDefaultPosition, wxSize(18, 18), 0, wxDefaultValidator, sn + "|btnPlus");
 	d->btnPlus->SetToolTip(_("Strengthen slider data by 1%."));
 	d->btnPlus->SetForegroundColour(wxTransparentColour);
 	d->btnPlus->Hide();
 	d->paneSz->Add(d->btnPlus, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	d->sliderNameCheckID = 1000 + id;
-	d->sliderNameCheck = new wxCheckBox(d->sliderPane, d->sliderNameCheckID, "", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, name + "|check");
+	d->sliderNameCheck = new wxCheckBox(d->sliderPane, d->sliderNameCheckID, "", wxDefaultPosition, wxDefaultSize, 0, wxDefaultValidator, sn + "|check");
 	d->sliderNameCheck->SetForegroundColour(wxColour(255, 255, 255));
 	d->paneSz->Add(d->sliderNameCheck, 0, wxALIGN_CENTER_VERTICAL | wxALL, 5);
 
-	d->sliderName = new wxStaticText(d->sliderPane, wxID_ANY, name.c_str(), wxDefaultPosition, wxDefaultSize, 0, name + "|lbl");
+	d->sliderName = new wxStaticText(d->sliderPane, wxID_ANY, sn, wxDefaultPosition, wxDefaultSize, 0, sn + "|lbl");
 	d->sliderName->SetForegroundColour(wxColour(255, 255, 255));
 	d->paneSz->Add(d->sliderName, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
 	d->sliderID = 2000 + id;
-	d->slider = new wxSlider(d->sliderPane, d->sliderID, 0, 0, 100, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, name + "|slider");
+	d->slider = new wxSlider(d->sliderPane, d->sliderID, 0, 0, 100, wxDefaultPosition, wxSize(-1, -1), wxSL_HORIZONTAL, wxDefaultValidator, sn + "|slider");
 	d->slider->SetMinSize(wxSize(-1, 20));
 	d->slider->SetMaxSize(wxSize(-1, 20));
 
 	d->paneSz->Add(d->slider, 1, wxLEFT | wxRIGHT | wxEXPAND, 5);
 
-	d->sliderReadout = new wxTextCtrl(d->sliderPane, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, name + "|readout");
+	d->sliderReadout = new wxTextCtrl(d->sliderPane, wxID_ANY, "0%", wxDefaultPosition, wxSize(40, -1), wxTE_RIGHT | wxTE_PROCESS_ENTER | wxSIMPLE_BORDER, wxDefaultValidator, sn + "|readout");
 	d->sliderReadout->SetMaxLength(0);
 	d->sliderReadout->SetForegroundColour(wxColour(255, 255, 255));
 	d->sliderReadout->SetBackgroundColour(wxColour(48, 48, 48));
@@ -1289,9 +1291,10 @@ std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool 
 
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
+
 	std::string finalName;
 	if (!skipPrompt) {
-		finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this);
+		finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this).ToUTF8();
 		if (finalName.empty())
 			return finalName;
 	}
@@ -2002,7 +2005,7 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 
 	wxTreeItemId subItem;
 	for (auto &shape : shapes) {
-		subItem = outfitShapes->AppendItem(outfitRoot, shape);
+		subItem = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape));
 		outfitShapes->SetItemState(subItem, 0);
 		outfitShapes->SetItemData(subItem, new ShapeItemData(shape));
 
@@ -2654,7 +2657,7 @@ void OutfitStudioFrame::OnExportPhysicsData(wxCommandEvent& WXUNUSED(event)) {
 
 	wxArrayString fileNames;
 	for (auto &data : physicsData)
-		fileNames.Add(data.first);
+		fileNames.Add(wxString::FromUTF8(data.first));
 
 	wxSingleChoiceDialog physicsDataChoice(this, _("Please choose the physics data source you want to export."), _("Choose physics data"), fileNames);
 	if (physicsDataChoice.ShowModal() == wxID_CANCEL)
@@ -2688,7 +2691,7 @@ void OutfitStudioFrame::OnMakeConvRef(wxCommandEvent& WXUNUSED(event)) {
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 
-	std::string finalName = wxGetTextFromUser(_("Create a conversion slider for the current slider settings with the following name: "), _("Create New Conversion Slider"), thename, this);
+	std::string finalName = wxGetTextFromUser(_("Create a conversion slider for the current slider settings with the following name: "), _("Create New Conversion Slider"), thename, this).ToUTF8();
 	if (finalName.empty())
 		return;
 
@@ -4670,7 +4673,7 @@ void OutfitStudioFrame::OnSlider(wxScrollEvent& event) {
 	if (!s)
 		return;
 
-	std::string sliderName = s->GetName();
+	wxString sliderName = s->GetName();
 	if (sliderName == "brushSize" || sliderName == "brushStrength" || sliderName == "brushFocus" || sliderName == "brushSpacing")
 		return;
 
@@ -4687,11 +4690,11 @@ void OutfitStudioFrame::OnSlider(wxScrollEvent& event) {
 		return;
 	}
 
-	sliderName = s->GetName().BeforeLast('|');
-	if (sliderName.empty())
+	std::string sn = sliderName.BeforeLast('|').ToUTF8();
+	if (sn.empty())
 		return;
 
-	SetSliderValue(sliderName, event.GetPosition());
+	SetSliderValue(sn, event.GetPosition());
 
 	if (!bEditSlider && event.GetEventType() == wxEVT_SCROLL_CHANGED)
 		ApplySliders(true);
@@ -5230,7 +5233,7 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 
-	std::string finalName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), thename, this);
+	std::string finalName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), thename, this).ToUTF8();
 	if (finalName.empty())
 		return;
 
@@ -5257,7 +5260,7 @@ void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 	while (sliderDisplays.find(thename) != sliderDisplays.end())
 		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
 
-	std::string finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this);
+	std::string finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this).ToUTF8();
 	if (finalName.empty())
 		return;
 
@@ -5360,7 +5363,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 		int curSlider = project->SliderIndexFromName(activeSlider);
 		long loVal = (int)(project->SliderDefault(curSlider, false));
 		long hiVal = (int)(project->SliderDefault(curSlider, true));
-		XRCCTRL(dlg, "edSliderName", wxTextCtrl)->SetLabel(activeSlider);
+		XRCCTRL(dlg, "edSliderName", wxTextCtrl)->SetLabel(wxString::FromUTF8(activeSlider));
 		XRCCTRL(dlg, "edValLo", wxTextCtrl)->SetValue(wxString::Format("%d", loVal));
 		XRCCTRL(dlg, "edValHi", wxTextCtrl)->SetValue(wxString::Format("%d", hiVal));
 
@@ -5395,7 +5398,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 
 			for (int i = 0; i < project->SliderCount(); i++)
 				if (i != curSlider && (project->SliderZap(i) || project->SliderHidden(i)))
-					zapToggleList->Append(project->GetSliderName(i));
+					zapToggleList->Append(wxString::FromUTF8(project->GetSliderName(i)));
 
 			for (auto &s : project->SliderZapToggles(curSlider)) {
 				int stringId = zapToggleList->FindString(s, true);
@@ -5433,12 +5436,14 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 				SliderDisplay* d = sliderDisplays[activeSlider];
 				sliderDisplays[sliderName] = d;
 				sliderDisplays.erase(activeSlider);
-				d->slider->SetName(sliderName + "|slider");
-				d->sliderName->SetName(sliderName + "|lbl");
-				d->btnSliderEdit->SetName(sliderName + "|btn");
-				d->sliderNameCheck->SetName(sliderName + "|check");
-				d->sliderReadout->SetName(sliderName + "|readout");
-				d->sliderName->SetLabel(sliderName);
+
+				wxString sn = wxString::FromUTF8(sliderName);
+				d->slider->SetName(sn + "|slider");
+				d->sliderName->SetName(sn + "|lbl");
+				d->btnSliderEdit->SetName(sn + "|btn");
+				d->sliderNameCheck->SetName(sn + "|check");
+				d->sliderReadout->SetName(sn + "|readout");
+				d->sliderName->SetLabel(sn);
 				activeSlider = sliderName;
 			}
 		}
@@ -5540,7 +5545,7 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string newShapeName;
 	do {
-		wxString result = wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape"));
+		std::string result = wxGetTextFromUser(_("Please enter a new unique name for the shape."), _("Rename Shape")).ToUTF8();
 		if (result.empty())
 			return;
 
@@ -5552,7 +5557,7 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 	glView->RenameShape(activeItem->shapeName, newShapeName);
 
 	activeItem->shapeName = newShapeName;
-	outfitShapes->SetItemText(activeItem->GetId(), newShapeName);
+	outfitShapes->SetItemText(activeItem->GetId(), wxString::FromUTF8(newShapeName));
 }
 
 void OutfitStudioFrame::OnSetReference(wxCommandEvent& WXUNUSED(event)) {
@@ -6136,7 +6141,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string newShapeName;
 	do {
-		wxString result = wxGetTextFromUser(_("Please enter a unique name for the new separated shape."), _("Separate Vertices..."));
+		std::string result = wxGetTextFromUser(_("Please enter a unique name for the new separated shape."), _("Separate Vertices...")).ToUTF8();
 		if (result.empty())
 			return;
 
@@ -6175,7 +6180,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 		}
 
 		do {
-			wxString result = wxGetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape"));
+			std::string result = wxGetTextFromUser(_("Please enter a unique name for the duplicated shape."), _("Duplicate Shape")).ToUTF8();
 			if (result.empty())
 				return;
 
@@ -6196,7 +6201,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			bool hasMatFile = project->GetShapeMaterialFile(newName, matFile);
 			glView->SetMeshTextures(newName, project->GetShapeTextures(newName), hasMatFile, matFile);
 
-			subitem = outfitShapes->AppendItem(outfitRoot, newName);
+			subitem = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(newName));
 			outfitShapes->SetItemState(subitem, 0);
 			outfitShapes->SetItemData(subitem, new ShapeItemData(newName));
 

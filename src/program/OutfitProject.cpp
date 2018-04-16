@@ -578,7 +578,7 @@ wxArrayString OutfitProject::SliderZapToggles(int index) {
 	wxArrayString toggles;
 	if (ValidSlider(index))
 		for (auto &toggle : activeSet[index].zapToggles)
-			toggles.Add(toggle);
+			toggles.Add(wxString::FromUTF8(toggle));
 
 	return toggles;
 }
@@ -2141,7 +2141,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 	if (!clothData.empty()) {
 		wxArrayString clothFileNames;
 		for (auto &cloth : clothData)
-			clothFileNames.Add(cloth.first);
+			clothFileNames.Add(wxString::FromUTF8(cloth.first));
 
 		wxMultiChoiceDialog clothDataChoice(owner, _("There was cloth physics data loaded at some point (BSClothExtraData). Please choose all the origins to use in the output."), _("Choose cloth data"), clothFileNames);
 		if (clothDataChoice.ShowModal() == wxID_CANCEL)
@@ -2237,7 +2237,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 					return 101;
 				}
 			}
-			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner);
+			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner).ToUTF8();
 			if (useShapeName.empty())
 				return 100;
 		}
@@ -2319,7 +2319,7 @@ int OutfitProject::ImportFBX(const std::string& fileName, const std::string& sha
 				}
 			}
 
-			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner);
+			useShapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), useShapeName, owner).ToUTF8();
 			if (useShapeName.empty())
 				return 100;
 		}
