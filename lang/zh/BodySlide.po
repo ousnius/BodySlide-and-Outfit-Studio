@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.6\n"
+"X-Generator: Poedit 2.0.7\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 "X-Poedit-Basepath: ../..\n"
@@ -115,6 +115,9 @@ msgstr "设置"
 msgid ""
 "Open Outfit Studio, a full-featured tool for creating and converting outfits."
 msgstr "打开装备工作室，一个功能齐全的装备创建和转换工具。"
+
+msgid "Failed to launch Outfit Studio executable!"
+msgstr ""
 
 msgid "Filter Options"
 msgstr "过滤器选项"
@@ -1457,8 +1460,8 @@ msgstr "反转U轴"
 msgid "Invert V"
 msgstr "反转V轴"
 
-msgid "Toggle Zaps:"
-msgstr "切换修正:"
+msgid "Toggle:"
+msgstr ""
 
 msgid "Search Radius"
 msgstr "搜索半径"
@@ -1802,9 +1805,6 @@ msgstr "请为新模型指定一个名字"
 
 msgid "New Shape Name"
 msgstr "新模型名称"
-
-msgid "Could not load 'SkeletonBlank.nif' for importing data file."
-msgstr "无法加载'SkeletonBlank.nif'来导入数据文件。"
 
 msgid "Import Data Error"
 msgstr "导入数据错误"
@@ -2185,20 +2185,17 @@ msgstr "导出.tri变形"
 msgid "Failed to export TRI file!"
 msgstr "未能导出TRI文件！"
 
-msgid "There is no slider in edit mode to clear data from!"
-msgstr "编辑模式中没有滑块可清除数据！"
+msgid "Are you sure you wish to clear the unmasked slider data "
+msgstr ""
 
-msgid "Are you sure you wish to clear the unmasked slider data \""
-msgstr "你是否真的想要清除未遮蔽的滑块数据\""
-
-msgid "\" for the selected shapes? This cannot be undone."
-msgstr "\"从已选模型？这无法撤销。"
+msgid "for the selected shapes? This cannot be undone."
+msgstr ""
 
 msgid "Confirm data erase"
 msgstr "确认数据清除"
 
-msgid "\" for the shape \""
-msgstr "\"从模型\""
+msgid "for the shape \""
+msgstr ""
 
 msgid "Enter a name for the new zap:"
 msgstr "为新修正输入一个名称："
@@ -2212,11 +2209,8 @@ msgstr "编辑模式中没有滑块可取消！"
 msgid "There is no slider in edit mode to create a mask from!"
 msgstr "编辑模式中没有滑块可创建遮罩！"
 
-msgid "There is no slider in edit mode to delete!"
-msgstr "编辑模式中没有滑块可删除！"
-
-msgid "Are you sure you wish to delete the slider \""
-msgstr "你确定要删除这个滑块\""
+msgid "Are you sure you wish to delete the selected slider(s)?"
+msgstr ""
 
 msgid "\"? This cannot be undone."
 msgstr "\"吗？这无法撤销。"

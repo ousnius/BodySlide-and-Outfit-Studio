@@ -88,6 +88,7 @@ public:
 	bool HasUnknown() { return hasUnknown; }
 	bool IsTerrain() { return isTerrain; }
 
+	void Create(const NiVersion& version);
 	void Clear();
 
 	// Link NiGeometryData to NiGeometry

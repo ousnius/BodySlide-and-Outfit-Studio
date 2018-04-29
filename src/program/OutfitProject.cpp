@@ -405,26 +405,44 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 }
 
 int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vector<Vector3>& v, std::vector<Triangle>& t, std::vector<Vector2>& uv, std::vector<Vector3>* norms) {
-	std::string blankSkel;
-	std::string defaultName = "New Outfit";
-
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
-	if (targetGame <= SKYRIM)
-		blankSkel = "res\\SkeletonBlank_sk.nif";
-	else if (targetGame == FO4 || targetGame == FO4VR)
-		blankSkel = "res\\SkeletonBlank_fo4.nif";
-	else if (targetGame == SKYRIMSE || targetGame == SKYRIMVR)
-		blankSkel = "res\\SkeletonBlank_sse.nif";
 
-	NifFile blank(blankSkel);
-	if (!blank.IsValid()) {
-		wxLogError("Could not load 'SkeletonBlank.nif' for importing data file.");
-		wxMessageBox(_("Could not load 'SkeletonBlank.nif' for importing data file."), _("Import Data Error"), wxICON_ERROR, owner);
-		return 2;
+	if (!workNif.IsValid()) {
+		NiVersion version;
+
+		switch (targetGame) {
+		case FO3:
+		case FONV:
+			version.SetFile(V20_2_0_7);
+			version.SetUser(11);
+			version.SetStream(34);
+			break;
+		case SKYRIM:
+			version.SetFile(V20_2_0_7);
+			version.SetUser(12);
+			version.SetStream(83);
+			break;
+		case FO4:
+		case FO4VR:
+			version.SetFile(V20_2_0_7);
+			version.SetUser(12);
+			version.SetStream(130);
+			break;
+		case SKYRIMSE:
+		case SKYRIMVR:
+			version.SetFile(V20_2_0_7);
+			version.SetUser(12);
+			version.SetStream(100);
+			break;
+		}
+
+		workNif.Create(version);
 	}
 
-	if (!workNif.IsValid())
-		ImportNIF(blankSkel, true, defaultName);
+	NiHeader& hdr = workNif.GetHeader();
+	auto rootNode = workNif.GetRootNode();
+	if (!rootNode)
+		return 1;
 
 	NiShape* shapeResult = nullptr;
 	if (targetGame <= SKYRIM) {
@@ -435,21 +453,21 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 			nifShapeData->SetNormals(true);
 		}
 
-		int shapeID = blank.GetHeader().AddBlock(nifShapeData);
+		int dataID = hdr.AddBlock(nifShapeData);
 
 		auto nifSkinData = new NiSkinData();
-		int skinID = blank.GetHeader().AddBlock(nifSkinData);
+		int skinID = hdr.AddBlock(nifSkinData);
 
 		auto nifSkinPartition = new NiSkinPartition();
-		int partID = blank.GetHeader().AddBlock(nifSkinPartition);
+		int partID = hdr.AddBlock(nifSkinPartition);
 
 		auto nifDismemberInst = new BSDismemberSkinInstance();
-		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
+		int dismemberID = hdr.AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
-		nifDismemberInst->SetSkeletonRootRef(blank.GetBlockID(blank.GetRootNode()));
+		nifDismemberInst->SetSkeletonRootRef(workNif.GetBlockID(workNif.GetRootNode()));
 
-		auto nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
+		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
 
 		int shaderID;
 		BSLightingShaderProperty* nifShader = nullptr;
@@ -458,29 +476,31 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		case FO3:
 		case FONV:
 			nifShaderPP = new BSShaderPPLightingProperty();
-			shaderID = blank.GetHeader().AddBlock(nifShaderPP);
-			nifShaderPP->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
+			shaderID = hdr.AddBlock(nifShaderPP);
+			nifShaderPP->SetTextureSetRef(hdr.AddBlock(nifTexset));
 			break;
 		case SKYRIM:
 		default:
-			nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
-			shaderID = blank.GetHeader().AddBlock(nifShader);
-			nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
+			nifShader = new BSLightingShaderProperty(hdr.GetVersion());
+			shaderID = hdr.AddBlock(nifShader);
+			nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
 		}
 
 		auto nifTriShape = new NiTriShape();
-		blank.GetHeader().AddBlock(nifTriShape);
+		int shapeID = hdr.AddBlock(nifTriShape);
 		if (targetGame < SKYRIM)
 			nifTriShape->GetProperties().AddBlockRef(shaderID);
 		else
 			nifTriShape->SetShaderPropertyRef(shaderID);
 
 		nifTriShape->SetName(shapeName);
-		nifTriShape->SetDataRef(shapeID);
+		nifTriShape->SetDataRef(dataID);
 		nifTriShape->SetSkinInstanceRef(dismemberID);
 
 		nifTriShape->SetGeomData(nifShapeData);
-		blank.SetDefaultPartition(nifTriShape);
+		workNif.SetDefaultPartition(nifTriShape);
+
+		rootNode->GetChildren().AddBlockRef(shapeID);
 		shapeResult = nifTriShape;
 	}
 	else if (targetGame == FO4 || targetGame == FO4VR) {
@@ -488,65 +508,67 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 		std::string wetShaderName = "template/OutfitTemplate_Wet.bgsm";
 		auto nifBSTriShape = new BSSubIndexTriShape();
 		nifBSTriShape->Create(&v, &t, &uv, norms);
-		blank.GetHeader().AddBlock(nifBSTriShape);
+		int shapeID = hdr.AddBlock(nifBSTriShape);
 
 		auto nifBSSkinInstance = new BSSkinInstance();
-		int skinID = blank.GetHeader().AddBlock(nifBSSkinInstance);
+		int skinID = hdr.AddBlock(nifBSSkinInstance);
 		nifBSSkinInstance->SetTargetRef(workNif.GetBlockID(workNif.GetRootNode()));
 
 		auto nifBoneData = new BSSkinBoneData();
-		int boneID = blank.GetHeader().AddBlock(nifBoneData);
+		int boneID = hdr.AddBlock(nifBoneData);
 		nifBSSkinInstance->SetDataRef(boneID);
 		nifBSTriShape->SetSkinInstanceRef(skinID);
 		triShapeBase = nifBSTriShape;
 
-		auto nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
+		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
 
-		auto nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
-		int shaderID = blank.GetHeader().AddBlock(nifShader);
-		nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
+		auto nifShader = new BSLightingShaderProperty(hdr.GetVersion());
+		int shaderID = hdr.AddBlock(nifShader);
+		nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
 		nifShader->SetWetMaterialName(wetShaderName);
 
 		triShapeBase->SetName(shapeName);
 		triShapeBase->SetShaderPropertyRef(shaderID);
+
+		rootNode->GetChildren().AddBlockRef(shapeID);
 		shapeResult = triShapeBase;
 	}
 	else {
 		auto triShape = new BSTriShape();
 		triShape->Create(&v, &t, &uv, norms);
-		blank.GetHeader().AddBlock(triShape);
+		int shapeID = hdr.AddBlock(triShape);
 
 		auto nifSkinData = new NiSkinData();
-		int skinID = blank.GetHeader().AddBlock(nifSkinData);
+		int skinID = hdr.AddBlock(nifSkinData);
 
 		auto nifSkinPartition = new NiSkinPartition();
-		int partID = blank.GetHeader().AddBlock(nifSkinPartition);
+		int partID = hdr.AddBlock(nifSkinPartition);
 
 		auto nifDismemberInst = new BSDismemberSkinInstance();
-		int dismemberID = blank.GetHeader().AddBlock(nifDismemberInst);
+		int dismemberID = hdr.AddBlock(nifDismemberInst);
 		nifDismemberInst->SetDataRef(skinID);
 		nifDismemberInst->SetSkinPartitionRef(partID);
-		nifDismemberInst->SetSkeletonRootRef(blank.GetBlockID(blank.GetRootNode()));
+		nifDismemberInst->SetSkeletonRootRef(workNif.GetBlockID(workNif.GetRootNode()));
 		triShape->SetSkinInstanceRef(dismemberID);
 		triShape->SetSkinned(true);
 
-		auto nifTexset = new BSShaderTextureSet(blank.GetHeader().GetVersion());
+		auto nifTexset = new BSShaderTextureSet(hdr.GetVersion());
 
-		auto nifShader = new BSLightingShaderProperty(blank.GetHeader().GetVersion());
-		int shaderID = blank.GetHeader().AddBlock(nifShader);
-		nifShader->SetTextureSetRef(blank.GetHeader().AddBlock(nifTexset));
+		auto nifShader = new BSLightingShaderProperty(hdr.GetVersion());
+		int shaderID = hdr.AddBlock(nifShader);
+		nifShader->SetTextureSetRef(hdr.AddBlock(nifTexset));
 
 		triShape->SetName(shapeName);
 		triShape->SetShaderPropertyRef(shaderID);
 
-		blank.SetDefaultPartition(triShape);
-		blank.UpdateSkinPartitions(shapeName);
+		workNif.SetDefaultPartition(triShape);
+		workNif.UpdateSkinPartitions(shapeName);
+
+		rootNode->GetChildren().AddBlockRef(shapeID);
 		shapeResult = triShape;
 	}
 
-	workNif.CloneShape(shapeName, shapeName, &blank);
 	SetTextures(shapeResult);
-
 	return 0;
 }
 

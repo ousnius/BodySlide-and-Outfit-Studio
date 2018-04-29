@@ -539,6 +539,10 @@ public:
 		return version;
 	};
 
+	void SetVersion(const NiVersion& ver) {
+		version = ver;
+	}
+
 	std::string GetCreatorInfo();
 	void SetCreatorInfo(const std::string& creatorInfo);
 

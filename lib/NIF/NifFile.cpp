@@ -96,6 +96,18 @@ void NifFile::RemoveInvalidTris() {
 	}
 }
 
+void NifFile::Create(const NiVersion& version) {
+	Clear();
+	hdr.SetVersion(version);
+	hdr.SetBlockReference(&blocks);
+
+	auto rootNode = new NiNode();
+	rootNode->SetName("Scene Root");
+	hdr.AddBlock(rootNode);
+
+	isValid = true;
+}
+
 void NifFile::Clear() {
 	isValid = false;
 	hasUnknown = false;
