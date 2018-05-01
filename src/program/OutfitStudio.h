@@ -328,14 +328,24 @@ public:
 		gls.SetSegmentColors(bVisible);
 	}
 
-	void ClearMask() {
+	void ClearMasks() {
+		for (auto &m : gls.GetMeshes())
+			m->ColorChannelFill(0, 0.0f);
+	}
+
+	void ClearActiveMask() {
 		for (auto &m : gls.GetActiveMeshes())
 			m->ColorChannelFill(0, 0.0f);
 	}
+
+	void ClearColors() {
+		for (auto &m : gls.GetMeshes())
+			m->ColorFill(Vector3());
+	}
 	
-	void ClearColorChannels() {
+	void ClearActiveColors() {
 		for (auto &m : gls.GetActiveMeshes())
-			m->ColorFill(Vector3(0.0f, 0.0f, 0.0f));
+			m->ColorFill(Vector3());
 	}
 
 	void GetActiveMask(std::unordered_map<ushort, float>& mask) {
@@ -1139,7 +1149,7 @@ private:
 		if (!activeItem)
 			return;
 
-		glView->ClearMask();
+		glView->ClearActiveMask();
 
 		if (glView->GetTransformMode())
 			glView->ShowTransformTool();

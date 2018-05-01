@@ -4311,7 +4311,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		segmentReset->Show(false);
 
 		if (glView->GetSegmentMode())
-			glView->ClearColorChannels();
+			glView->ClearActiveColors();
 
 		glView->SetSegmentMode(false);
 		glView->SetSegmentsVisible(false);
@@ -4344,7 +4344,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		partitionReset->Show(false);
 
 		if (glView->GetSegmentMode())
-			glView->ClearColorChannels();
+			glView->ClearActiveColors();
 
 		glView->SetSegmentMode(false);
 		glView->SetSegmentsVisible(false);
@@ -4472,6 +4472,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
+
+		ReselectBone();
 	}
 	else if (id == XRCID("segmentTabButton")) {
 		outfitShapes->Hide();
@@ -4512,6 +4514,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetSegmentsVisible();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
+		glView->ClearColors();
 
 		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
@@ -4578,6 +4581,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		glView->SetSegmentsVisible();
 		glView->SetMaskVisible(false);
 		glView->SetGlobalBrushCollision(false);
+		glView->ClearColors();
 
 		GetMenuBar()->Check(XRCID("btnMaskBrush"), true);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
@@ -6119,7 +6123,7 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
-	glView->ClearMask();
+	glView->ClearActiveMask();
 	ApplySliders();
 }
 
@@ -6166,7 +6170,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	glView->SetStrokeManager(nullptr);
 	glView->GetStrokeManager()->Clear();
-	glView->ClearMask();
+	glView->ClearActiveMask();
 	ApplySliders();
 }
 
