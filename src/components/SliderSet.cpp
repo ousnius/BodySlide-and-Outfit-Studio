@@ -20,6 +20,14 @@ SliderSet::SliderSet(XMLElement* element) {
 
 
 void SliderSet::DeleteSlider(const std::string& setName) {
+	// Delete toggles from other sliders
+	for (auto &slider : sliders) {
+		slider.zapToggles.erase(
+			std::remove(slider.zapToggles.begin(), slider.zapToggles.end(), setName),
+			slider.zapToggles.end());
+	}
+
+	// Find and delete slider
 	for (int i = 0; i < sliders.size(); i++) {
 		if (sliders[i].name == setName) {
 			sliders.erase(sliders.begin() + i);
