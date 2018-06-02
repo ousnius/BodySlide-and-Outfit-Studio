@@ -841,16 +841,13 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 			geomData->GetTriangles(triangles);
 
 			// Only remove vertex colors if all are 0xFFFFFFFF
-			Color4 ffffffff(1.0f, 1.0f, 1.0f, 1.0f);
+			Color4 white(1.0f, 1.0f, 1.0f, 1.0f);
 			for (auto &c : colors) {
-				if (ffffffff != c) {
+				if (white != c) {
 					removeVertexColors = false;
 					break;
 				}
 			}
-
-			if (!colors.empty() && removeVertexColors)
-				result.shapesVColorsRemoved.push_back(shapeName);
 
 			bool headPartEyes = false;
 			NiShader* shader = GetShader(shape);
@@ -868,6 +865,10 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 
 						normals = nullptr;
 					}
+
+					// Check tree anim flag
+					if ((bslsp->shaderFlags2 & (1 << 29)) != 0)
+						removeVertexColors = false;
 
 					// Disable flag if vertex colors were removed
 					if (removeVertexColors)
@@ -897,11 +898,18 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if ((bsesp->shaderFlags1 & (1 << 17)) != 0)
 						headPartEyes = true;
 
+					// Check tree anim flag
+					if ((bsesp->shaderFlags2 & (1 << 29)) != 0)
+						removeVertexColors = false;
+
 					// Disable flag if vertex colors were removed
 					if (removeVertexColors)
 						bsesp->shaderFlags2 &= ~(1 << 5);
 				}
 			}
+
+			if (!colors.empty() && removeVertexColors)
+				result.shapesVColorsRemoved.push_back(shapeName);
 
 			BSTriShape* bsOptShape = nullptr;
 			auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
