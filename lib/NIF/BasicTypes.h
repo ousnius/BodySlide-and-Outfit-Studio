@@ -566,7 +566,7 @@ public:
 	}
 
 	void DeleteBlock(int blockId);
-	void DeleteBlockByType(const std::string& blockTypeStr);
+	void DeleteBlockByType(const std::string& blockTypeStr, const bool orphanedOnly = false);
 	int AddBlock(NiObject* newBlock);
 	int ReplaceBlock(int oldBlockId, NiObject* newBlock);
 	void SetBlockOrder(std::vector<std::pair<int, int>>& newIndices);

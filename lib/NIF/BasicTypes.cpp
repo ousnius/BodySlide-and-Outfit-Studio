@@ -195,7 +195,7 @@ void NiHeader::DeleteBlock(int blockId) {
 		BlockDeleted(b.get(), blockId);
 }
 
-void NiHeader::DeleteBlockByType(const std::string& blockTypeStr) {
+void NiHeader::DeleteBlockByType(const std::string& blockTypeStr, const bool orphanedOnly) {
 	ushort blockTypeId;
 	for (blockTypeId = 0; blockTypeId < numBlockTypes; blockTypeId++)
 		if (blockTypes[blockTypeId].GetString() == blockTypeStr)
@@ -210,7 +210,8 @@ void NiHeader::DeleteBlockByType(const std::string& blockTypeStr) {
 			indices.push_back(i);
 
 	for (int j = indices.size() - 1; j >= 0; j--)
-		DeleteBlock(indices[j]);
+		if (!orphanedOnly || !IsBlockReferenced(indices[j]))
+			DeleteBlock(indices[j]);
 }
 
 int NiHeader::AddBlock(NiObject* newBlock) {

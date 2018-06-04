@@ -1071,8 +1071,8 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 	DeleteUnreferencedBlocks();
 
 	// For files without a root node, remove the leftover data blocks anyway
-	hdr.DeleteBlockByType("NiTriStripsData");
-	hdr.DeleteBlockByType("NiTriShapeData");
+	hdr.DeleteBlockByType("NiTriStripsData", true);
+	hdr.DeleteBlockByType("NiTriShapeData", true);
 
 	return result;
 }
