@@ -586,7 +586,7 @@ public:
 
 	int GetStringCount();
 	int FindStringId(const std::string& str);
-	int AddOrFindStringId(const std::string& str);
+	int AddOrFindStringId(const std::string& str, const bool addEmpty = false);
 	std::string GetStringById(const int id);
 	void SetStringById(const int id, const std::string& str);
 

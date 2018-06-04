@@ -390,10 +390,13 @@ int NiHeader::FindStringId(const std::string& str) {
 	return 0xFFFFFFFF;
 }
 
-int NiHeader::AddOrFindStringId(const std::string& str) {
+int NiHeader::AddOrFindStringId(const std::string& str, const bool addEmpty) {
 	for (int i = 0; i < strings.size(); i++)
 		if (strings[i].GetString().compare(str) == 0)
 			return i;
+
+	if (!addEmpty && str.empty())
+		return 0xFFFFFFFF;
 
 	int r = strings.size();
 
@@ -442,7 +445,7 @@ void NiHeader::FillStringRefs() {
 			int stringId = r->GetIndex();
 
 			// Check if string index is overflowing
-			if (stringId >= numStrings) {
+			if (stringId != 0xFFFFFFFF && stringId >= numStrings) {
 				stringId -= numStrings;
 				r->SetIndex(stringId);
 			}
@@ -465,7 +468,8 @@ void NiHeader::UpdateHeaderStrings(const bool hasUnknown) {
 		b->GetStringRefs(stringRefs);
 
 		for (auto &r : stringRefs) {
-			int stringId = AddOrFindStringId(r->GetString());
+			bool addEmpty = (r->GetIndex() != 0xFFFFFFFF);
+			int stringId = AddOrFindStringId(r->GetString(), addEmpty);
 			r->SetIndex(stringId);
 		}
 	}
