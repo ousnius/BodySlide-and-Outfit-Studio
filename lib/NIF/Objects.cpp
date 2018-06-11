@@ -72,7 +72,7 @@ void NiAVObject::Get(NiStream& stream) {
 	NiObjectNET::Get(stream);
 
 	flags = 0;
-	if (stream.GetVersion().Stream() < 34)
+	if (stream.GetVersion().Stream() <= 26)
 		stream.read((char*)&flags, 2);
 	else
 		stream >> flags;
@@ -91,7 +91,7 @@ void NiAVObject::Get(NiStream& stream) {
 void NiAVObject::Put(NiStream& stream) {
 	NiObjectNET::Put(stream);
 
-	if (stream.GetVersion().Stream() < 34)
+	if (stream.GetVersion().Stream() <= 26)
 		stream.write((char*)&flags, 2);
 	else
 		stream << flags;
