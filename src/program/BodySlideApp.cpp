@@ -73,6 +73,7 @@ wxBEGIN_EVENT_TABLE(BodySlideFrame, wxFrame)
 	EVT_BUTTON(XRCID("btnGroupManager"), BodySlideFrame::OnGroupManager)
 	EVT_BUTTON(XRCID("btnChooseGroups"), BodySlideFrame::OnChooseGroups)
 	EVT_BUTTON(XRCID("btnRefreshOutfits"), BodySlideFrame::OnRefreshOutfits)
+	EVT_BUTTON(XRCID("btnEditProject"), BodySlideFrame::OnEditProject)
 		
 	EVT_MENU(XRCID("menuChooseGroups"), BodySlideFrame::OnChooseGroups)	
 	EVT_MENU(XRCID("menuRefreshGroups"), BodySlideFrame::OnRefreshGroups)
@@ -656,15 +657,31 @@ void BodySlideApp::DisplayActiveSet() {
 	}
 }
 
-void BodySlideApp::LaunchOutfitStudio() {
+void BodySlideApp::EditProject(const std::string& projectName) {
+	auto project = outfitNameSource.find(projectName);
+	if (project == outfitNameSource.end())
+		return;
+
+	int select = wxNOT_FOUND;
+	auto outfitChoice = (wxChoice*)sliderView->FindWindowByName("outfitChoice", sliderView);
+	if (outfitChoice)
+		select = outfitChoice->GetSelection();
+
+	wxLogMessage("Launching Outfit Studio with project file '%s' and project '%s'...", project->second, project->first);
+	LaunchOutfitStudio(wxString::Format("-proj \"%s\" \"%s\"", wxString::FromUTF8(project->first), wxString::FromUTF8(project->second)));
+}
+
+void BodySlideApp::LaunchOutfitStudio(const wxString& args) {
 #ifdef WIN64
-	const wxString osExec = "\"OutfitStudio x64.exe\"";
+	const wxString osExec = "OutfitStudio x64.exe";
 #else
-	const wxString osExec = "\"OutfitStudio.exe\"";
+	const wxString osExec = "OutfitStudio.exe";
 #endif
 
-	if (!wxExecute(osExec, wxEXEC_ASYNC)) {
-		wxLogError("Failed to execute '%s' process.", osExec);
+	wxString osExecCmd = wxString::Format("\"%s\" %s", osExec, args);
+
+	if (!wxExecute(osExecCmd, wxEXEC_ASYNC)) {
+		wxLogError("Failed to execute '%s' process.", osExecCmd);
 		wxMessageBox(_("Failed to launch Outfit Studio executable!"), _("Error"), wxICON_ERROR);
 	}
 }
@@ -3339,4 +3356,9 @@ void BodySlideFrame::OnSetSize(wxSizeEvent& event) {
 
 	BodySlideConfig.SetValue("BodySlideFrame.maximized", maximized ? "true" : "false");
 	event.Skip();
+}
+
+void BodySlideFrame::OnEditProject(wxCommandEvent& WXUNUSED(event)) {
+	std::string projectName = BodySlideConfig["SelectedOutfit"];
+	app->EditProject(projectName);
 }

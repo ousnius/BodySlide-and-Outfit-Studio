@@ -302,8 +302,10 @@ bool OutfitStudio::OnInit() {
 		if (loadFile.FileExists()) {
 			std::string fileName = loadFile.GetFullPath().ToUTF8();
 			wxString fileExt = loadFile.GetExt().MakeLower();
-			if (fileExt == "osp")
-				frame->LoadProject(fileName);
+			if (fileExt == "osp") {
+				std::string projectName = cmdProject.ToUTF8();
+				frame->LoadProject(fileName, projectName);
+			}
 			else if (fileExt == "nif")
 				frame->LoadNIF(fileName);
 		}
@@ -319,6 +321,8 @@ void OutfitStudio::OnInitCmdLine(wxCmdLineParser& parser) {
 }
 
 bool OutfitStudio::OnCmdLineParsed(wxCmdLineParser& parser) {
+	parser.Found("proj", &cmdProject);
+
 	for (int i = 0; i < parser.GetParamCount(); i++)
 		cmdFiles.Add(parser.GetParam(i));
 
@@ -1058,7 +1062,7 @@ void OutfitStudioFrame::OnSetSize(wxSizeEvent& event) {
 	event.Skip();
 }
 
-bool OutfitStudioFrame::LoadProject(const std::string& fileName) {
+bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::string& projectName) {
 	std::vector<std::string> setnames;
 	SliderSetFile InFile(fileName);
 	if (InFile.fail()) {
@@ -1067,21 +1071,30 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName) {
 		return false;
 	}
 
-	InFile.GetSetNames(setnames);
-	wxArrayString choices;
-	for (auto &s : setnames)
-		choices.Add(wxString::FromUTF8(s));
-
 	std::string outfit;
-	if (choices.GetCount() > 1) {
-		outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8();
-		if (outfit.empty())
+	InFile.GetSetNames(setnames);
+
+	if (!projectName.empty()) {
+		auto it = std::find(setnames.begin(), setnames.end(), projectName);
+		if (it != setnames.end())
+			outfit = projectName;
+	}
+
+	if (outfit.empty()) {
+		wxArrayString choices;
+		for (auto &s : setnames)
+			choices.Add(wxString::FromUTF8(s));
+
+		if (choices.GetCount() > 1) {
+			outfit = wxGetSingleChoice(_("Please choose an outfit to load"), _("Load a slider set"), choices, 0, this).ToUTF8();
+			if (outfit.empty())
+				return false;
+		}
+		else if (choices.GetCount() == 1)
+			outfit = choices.front().ToUTF8();
+		else
 			return false;
 	}
-	else if (choices.GetCount() == 1)
-		outfit = choices.front().ToUTF8();
-	else
-		return false;
 
 	wxLogMessage("Loading project '%s' from file '%s'...", outfit, fileName);
 	StartProgress(_("Loading project..."));

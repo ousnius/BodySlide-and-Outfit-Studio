@@ -176,7 +176,8 @@ public:
 	void DeleteOutfit(const std::string& outfitName);
 	void DeletePreset(const std::string& presetName);
 
-	void LaunchOutfitStudio();
+	void EditProject(const std::string& projectName);
+	void LaunchOutfitStudio(const wxString& args = "");
 
 	void ApplySliders(const std::string& targetShape, std::vector<Slider>& sliderSet, std::vector<Vector3>& verts, std::vector<ushort>& zapidx, std::vector<Vector2>* uvs = nullptr);
 	bool WriteMorphTRI(const std::string& triPath, SliderSet& sliderSet, NifFile& nif, std::unordered_map<std::string, std::vector<ushort>>& zapIndices);
@@ -333,6 +334,8 @@ private:
 	void OnAbout(wxCommandEvent& event);
 	void OnMoveWindow(wxMoveEvent& event);
 	void OnSetSize(wxSizeEvent& event);
+
+	void OnEditProject(wxCommandEvent& event);
 
 	bool OutfitIsEmpty() {
 		wxChoice* outfitChoice = (wxChoice*)FindWindowByName("outfitChoice");

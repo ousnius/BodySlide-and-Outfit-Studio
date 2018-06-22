@@ -43,6 +43,9 @@ msgstr ""
 msgid "Group Manager"
 msgstr ""
 
+msgid "Opens the current project in Outfit Studio"
+msgstr ""
+
 msgid "Single Weight"
 msgstr ""
 

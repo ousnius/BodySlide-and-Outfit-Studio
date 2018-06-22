@@ -575,6 +575,7 @@ private:
 
 
 static const wxCmdLineEntryDesc g_cmdLineDesc[] = {
+	{ wxCMD_LINE_OPTION, "proj", "project", "Project Name", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL },
 	{ wxCMD_LINE_PARAM, nullptr, nullptr, "Files", wxCMD_LINE_VAL_STRING, wxCMD_LINE_PARAM_OPTIONAL | wxCMD_LINE_PARAM_MULTIPLE },
 	{ wxCMD_LINE_NONE }
 };
@@ -610,6 +611,7 @@ private:
 	int language = 0;
 
 	wxArrayString cmdFiles;
+	wxString cmdProject;
 };
 
 
@@ -663,7 +665,7 @@ public:
 
 	std::map<std::string, SliderDisplay*> sliderDisplays;
 
-	bool LoadProject(const std::string& fileName);
+	bool LoadProject(const std::string& fileName, const std::string& projectName = "");
 	void CreateSetSliders();
 
 	bool LoadNIF(const std::string& fileName);
