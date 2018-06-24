@@ -107,6 +107,9 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 		if (shapeName->Attribute("SmoothSeamNormals"))
 			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals");
 
+		if (shapeName->Attribute("LockNormals"))
+			shape.lockNormals = shapeName->BoolAttribute("LockNormals");
+
 		shapeName = shapeName->NextSiblingElement(shapeStr.c_str());
 	}
 
@@ -231,6 +234,9 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 
 		if (!s.second.smoothSeamNormals)
 			baseShapeElement->SetAttribute("SmoothSeamNormals", s.second.smoothSeamNormals);
+
+		if (s.second.lockNormals)
+			baseShapeElement->SetAttribute("LockNormals", s.second.lockNormals);
 
 		newText = sliderSetElement->GetDocument()->NewText(s.first.c_str());
 		baseShapeElement->InsertEndChild(newText);

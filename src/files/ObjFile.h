@@ -16,10 +16,10 @@ struct ObjOptionsImport {
 	bool noFaces = false;
 };
 
-struct VertUV {
+struct IndexMap {
 	int v;
-	int uv;
-	VertUV(int inV, int inUV) :v(inV), uv(inUV) {}
+	int i;
+	IndexMap(int inV, int inIndex) :v(inV), i(inIndex) {}
 };
 
 struct ObjData {
@@ -27,6 +27,7 @@ struct ObjData {
 	std::vector<Vector3> verts;
 	std::vector<Triangle> tris;
 	std::vector<Vector2> uvs;
+	std::vector<Vector3> norms;
 };
 
 class ObjFile {
@@ -50,6 +51,6 @@ public:
 
 	int Save(const std::string& fileName);
 
-	bool CopyDataForGroup(const std::string& name, std::vector<Vector3>* v, std::vector<Triangle>* t, std::vector<Vector2>* uv);
+	bool CopyDataForGroup(const std::string& name, std::vector<Vector3>* v, std::vector<Triangle>* t, std::vector<Vector2>* uv, std::vector<Vector3>* norms);
 	std::vector<std::string> GetGroupList();
 };

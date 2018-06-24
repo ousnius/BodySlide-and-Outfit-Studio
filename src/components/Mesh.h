@@ -114,6 +114,7 @@ public:
 	bool bVisible = true;
 	bool bShowPoints = false;
 	bool smoothSeamNormals = true;
+	bool lockNormals = false;
 
 	ushort alphaFlags = 0;
 	byte alphaThreshold = 0;

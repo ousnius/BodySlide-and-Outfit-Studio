@@ -46,6 +46,8 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 	Vector3 v;
 	Vector2 uv;
 	Vector2 uv2;
+	Vector3 vn;
+	Vector3 vn2;
 	Triangle t;
 
 	std::string dump;
@@ -56,14 +58,17 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 	std::string facept4;
 	int f[4];
 	int ft[4];
+	int fn[4];
 	int nPoints = 0;
 	int v_idx[4];
 
 	std::vector<Vector3> verts;
 	std::vector<Vector2> uvs;
+	std::vector<Vector3> norms;
 	size_t pos;
-	std::map<int, std::vector<VertUV>> vertMap;
-	std::map<int, std::vector<VertUV>>::iterator savedVert;
+
+	std::map<int, std::vector<IndexMap>> vertUVMap;
+	std::map<int, std::vector<IndexMap>> vertNormMap;
 
 	bool gotface = false;
 
@@ -78,7 +83,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				base >> v.x >> v.y >> v.z;
 				di->verts.push_back(v);
 			}
-			else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
+			else if (dump.compare("o") == 0) {
 				base >> curgrp;
 
 				if (!di->name.empty()) {
@@ -87,6 +92,12 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				}
 
 				di->name = curgrp;
+			}
+			else if (dump.compare("g") == 0) {
+				base >> curgrp;
+
+				if (di->name.empty())
+					di->name = curgrp;
 			}
 			else if (dump.compare("vt") == 0) {
 				base >> uv.u >> uv.v;
@@ -101,7 +112,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			base >> v.x >> v.y >> v.z;
 			verts.push_back(v);
 		}
-		else if (dump.compare("g") == 0 || dump.compare("o") == 0) {
+		else if (dump.compare("o") == 0) {
 			base >> curgrp;
 
 			if (!di->name.empty()) {
@@ -111,22 +122,41 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 
 			di->name = curgrp;
 		}
+		else if (dump.compare("g") == 0) {
+			base >> curgrp;
+
+			if (di->name.empty())
+				di->name = curgrp;
+		}
 		else if (dump.compare("vt") == 0) {
 			base >> uv.u >> uv.v;
 			uv.v = 1.0f - uv.v;
 			uvs.push_back(uv);
 		}
+		else if (dump.compare("vn") == 0) {
+			base >> vn.x >> vn.y >> vn.z;
+			norms.push_back(vn);
+		}
 		else if (dump.compare("f") == 0) {
 			base >> facept1 >> facept2 >> facept3;
-			pos = facept1.find('/');
+
 			f[0] = atoi(facept1.c_str()) - 1;
+			pos = facept1.find('/');
 			ft[0] = atoi(facept1.substr(pos + 1).c_str()) - 1;
-			pos = facept2.find('/');
+			pos = facept1.find('/', pos + 1);
+			fn[0] = atoi(facept1.substr(pos + 1).c_str()) - 1;
+
 			f[1] = atoi(facept2.c_str()) - 1;
+			pos = facept2.find('/');
 			ft[1] = atoi(facept2.substr(pos + 1).c_str()) - 1;
-			pos = facept3.find('/');
+			pos = facept2.find('/', pos + 1);
+			fn[1] = atoi(facept2.substr(pos + 1).c_str()) - 1;
+
 			f[2] = atoi(facept3.c_str()) - 1;
+			pos = facept3.find('/');
 			ft[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
+			pos = facept3.find('/', pos + 1);
+			fn[2] = atoi(facept3.substr(pos + 1).c_str()) - 1;
 
 			if (f[0] == -1 || f[1] == -1 || f[2] == -1)
 				continue;
@@ -143,6 +173,8 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				if (f[3] != -1) {
 					pos = facept4.find('/');
 					ft[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
+					pos = facept4.find('/', pos + 1);
+					fn[3] = atoi(facept4.substr(pos + 1).c_str()) - 1;
 					nPoints = 4;
 					gotface = false;
 				}
@@ -150,30 +182,63 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 
 			bool skipFace = false;
 			for (int i = 0; i < nPoints; i++) {
+				int reuseIndex = -1;
 				v_idx[i] = di->verts.size();
-				if ((savedVert = vertMap.find(f[i])) != vertMap.end()) {
-					for (int j = 0; j < savedVert->second.size(); j++) {
-						if (savedVert->second[j].uv == ft[i])
-							v_idx[i] = savedVert->second[j].v;
+
+				auto savedVertUV = vertUVMap.find(f[i]);
+				if (savedVertUV != vertUVMap.end()) {
+					int uvIndex = -1;
+					for (int j = 0; j < savedVertUV->second.size(); j++) {
+						if (savedVertUV->second[j].i == ft[i]) {
+							uvIndex = savedVertUV->second[j].v;
+							break;
+						}
 						else if (uvs.size() > 0) {
 							uv = uvs[ft[i]];
-							uv2 = uvs[savedVert->second[j].uv];
+							uv2 = uvs[savedVertUV->second[j].i];
 
-							if (fabs(uv.u - uv2.u) > uvDupThreshold || fabs(uv.v - uv2.v) > uvDupThreshold)
-								continue;
+							if (fabs(uv.u - uv2.u) <= uvDupThreshold && fabs(uv.v - uv2.v) <= uvDupThreshold) {
+								uvIndex = savedVertUV->second[j].v;
+								break;
+							}
+						}
+					}
 
-							v_idx[i] = savedVert->second[j].v;
+					reuseIndex = uvIndex;
+				}
+
+				if (reuseIndex != -1) {
+					auto savedVertNorm = vertNormMap.find(f[i]);
+					if (savedVertNorm != vertNormMap.end()) {
+						for (int j = 0; j < savedVertNorm->second.size(); j++) {
+							if (norms.size() > 0) {
+								vn = norms[fn[i]];
+								vn2 = norms[savedVertNorm->second[j].i];
+
+								if (!(vn - vn2).IsZero(true)) {
+									reuseIndex = -1;
+									break;
+								}
+							}
 						}
 					}
 				}
+
+				if (reuseIndex != -1)
+					v_idx[i] = reuseIndex;
 
 				if (v_idx[i] == di->verts.size()) {
 					if (verts.size() > f[i]) {
 						di->verts.push_back(verts[f[i]]);
 
 						if (uvs.size() > ft[i]) {
-							vertMap[f[i]].push_back(VertUV(v_idx[i], ft[i]));
+							vertUVMap[f[i]].push_back(IndexMap(v_idx[i], ft[i]));
 							di->uvs.push_back(uvs[ft[i]]);
+						}
+
+						if (norms.size() > fn[i]) {
+							vertNormMap[f[i]].push_back(IndexMap(v_idx[i], fn[i]));
+							di->norms.push_back(norms[fn[i]]);
 						}
 					}
 					else {
@@ -218,8 +283,7 @@ int ObjFile::Save(const std::string &fileName) {
 	size_t pointOffset = 0;
 
 	for (auto& d : data) {
-		file << "g " << d.first << std::endl;
-		file << "usemtl NoMaterial" << std::endl << std::endl;
+		file << "o " << d.first << std::endl;
 
 		for (int i = 0; i < d.second->verts.size(); i++) {
 			file << "v " << (d.second->verts[i].x + offset.x) * scale.x
@@ -233,21 +297,11 @@ int ObjFile::Save(const std::string &fileName) {
 			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << std::endl;
 		file << std::endl;
 
-		if (d.second->uvs.empty()) {
-			for (int i = 0; i < d.second->tris.size(); i++) {
-				file << "f " << d.second->tris[i].p1 + pointOffset + 1 << " "
-					<< d.second->tris[i].p2 + pointOffset + 1 << " "
-					<< d.second->tris[i].p3 + pointOffset + 1
-					<< std::endl;
-			}
-		}
-		else {
-			for (int i = 0; i < d.second->tris.size(); i++) {
-				file << "f " << d.second->tris[i].p1 + pointOffset + 1 << "/" << d.second->tris[i].p1 + pointOffset + 1 << " "
-					<< d.second->tris[i].p2 + pointOffset + 1 << "/" << d.second->tris[i].p2 + pointOffset + 1 << " "
-					<< d.second->tris[i].p3 + pointOffset + 1 << "/" << d.second->tris[i].p3 + pointOffset + 1
-					<< std::endl;
-			}
+		for (int i = 0; i < d.second->tris.size(); i++) {
+			file << "f " << d.second->tris[i].p1 + pointOffset + 1 << " "
+				<< d.second->tris[i].p2 + pointOffset + 1 << " "
+				<< d.second->tris[i].p3 + pointOffset + 1
+				<< std::endl;
 		}
 		file << std::endl;
 
@@ -258,7 +312,7 @@ int ObjFile::Save(const std::string &fileName) {
 	return 0;
 }
 
-bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v, std::vector<Triangle> *t, std::vector<Vector2> *uv) {
+bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v, std::vector<Triangle> *t, std::vector<Vector2> *uv, std::vector<Vector3>* norms) {
 	if (data.find(name) == data.end())
 		return false;
 
@@ -285,6 +339,13 @@ bool ObjFile::CopyDataForGroup(const std::string &name, std::vector<Vector3> *v,
 		uv->resize(od->uvs.size());
 		for (int i = 0; i < od->uvs.size(); i++)
 			(*uv)[i] = od->uvs[i];
+	}
+
+	if (norms) {
+		norms->clear();
+		norms->resize(od->norms.size());
+		for (int i = 0; i < od->norms.size(); i++)
+			(*norms)[i] = od->norms[i];
 	}
 
 	return true;

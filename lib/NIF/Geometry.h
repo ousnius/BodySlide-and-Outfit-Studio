@@ -264,7 +264,7 @@ public:
 	BoundingSphere GetBounds() { return bounds; }
 	void UpdateBounds();
 
-	virtual void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
+	virtual void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* norms);
 	virtual void RecalcNormals(const bool smooth = true, const float smoothThres = 60.0f);
 	virtual void CalcTangentSpace();
 };
@@ -589,7 +589,7 @@ public:
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
 
-	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
+	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* norms);
 };
 
 struct MatchGroup {
@@ -612,7 +612,7 @@ public:
 
 	void Get(NiStream& stream);
 	void Put(NiStream& stream);
-	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs);
+	void Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris, std::vector<Vector2>* uvs, std::vector<Vector3>* norms);
 	void notifyVerticesDelete(const std::vector<ushort>& vertIndices);
 
 	uint GetNumTriangles();

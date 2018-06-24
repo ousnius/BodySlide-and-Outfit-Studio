@@ -1028,9 +1028,9 @@ void BodySlideApp::UpdateMeshesFromSet() {
 		mesh* m = preview->GetMesh(it->first);
 		if (m) {
 			m->smoothSeamNormals = it->second.smoothSeamNormals;
+			m->lockNormals = it->second.lockNormals;
 
-			if (!m->smoothSeamNormals)
-				m->SmoothNormals();
+			m->SmoothNormals();
 		}
 	}
 }
@@ -1661,7 +1661,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
 		nifBig.SetVertsForShape(it->first, vertsHigh);
 		nifBig.SetUvsForShape(it->first, uvsHigh);
-		nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
+		if (!it->second.lockNormals)
+			nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
 		nifBig.CalcTangentsForShape(it->first);
 		nifBig.DeleteVertsForShape(it->first, zapIdx);
 
@@ -1670,7 +1673,10 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
 			nifSmall.SetVertsForShape(it->first, vertsLow);
 			nifSmall.SetUvsForShape(it->first, uvsLow);
-			nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
+			if (!it->second.lockNormals)
+				nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
 			nifSmall.CalcTangentsForShape(it->first);
 			nifSmall.DeleteVertsForShape(it->first, zapIdx);
 		}
@@ -2084,14 +2090,20 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 
 			nifBig.SetVertsForShape(it->first, vertsHigh);
 			nifBig.SetUvsForShape(it->first, uvsHigh);
-			nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
+			if (!it->second.lockNormals)
+				nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
 			nifBig.CalcTangentsForShape(it->first);
 			nifBig.DeleteVertsForShape(it->first, zapIdx);
 
 			if (currentSet.GenWeights()) {
 				nifSmall.SetVertsForShape(it->first, vertsLow);
 				nifSmall.SetUvsForShape(it->first, uvsLow);
-				nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
+				if (!it->second.lockNormals)
+					nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+
 				nifSmall.CalcTangentsForShape(it->first);
 				nifSmall.DeleteVertsForShape(it->first, zapIdx);
 			}

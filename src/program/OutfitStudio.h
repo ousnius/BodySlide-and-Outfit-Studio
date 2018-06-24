@@ -113,7 +113,7 @@ public:
 
 	void SetNotifyWindow(wxWindow* win);
 
-	void AddMeshFromNif(NifFile* nif, const std::string& shapeName, bool buildNormals);
+	void AddMeshFromNif(NifFile* nif, const std::string& shapeName);
 
 	void RenameShape(const std::string& shapeName, const std::string& newShapeName) {
 		gls.RenameMesh(shapeName, newShapeName);
@@ -241,6 +241,15 @@ public:
 				m->smoothSeamNormals = true;
 
 			m->SmoothNormals();
+		}
+	}
+
+	void ToggleLockNormalsMode() {
+		for (auto &m : gls.GetActiveMeshes()) {
+			if (m->lockNormals == true)
+				m->lockNormals = false;
+			else
+				m->lockNormals = true;
 		}
 	}
 
@@ -1080,6 +1089,7 @@ private:
 	}
 
 	void OnSmoothNormalSeams(wxCommandEvent& event);
+	void OnLockNormals(wxCommandEvent& event);
 
 	void OnGhostMesh(wxCommandEvent& WXUNUSED(event)) {
 		glView->ToggleGhostMode();

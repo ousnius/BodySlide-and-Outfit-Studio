@@ -16,6 +16,7 @@ struct SliderSetShape {
 	std::string targetShape;								// Target names mapped to nif file shape names.
 	std::string dataFolder;
 	bool smoothSeamNormals = true;
+	bool lockNormals = false;
 };
 
 class SliderSet {
@@ -119,6 +120,26 @@ public:
 		auto shape = shapeAttributes.find(shapeName);
 		if (shape != shapeAttributes.end())
 			shape->second.smoothSeamNormals = !shape->second.smoothSeamNormals;
+	}
+
+	bool GetLockNormals(const std::string& shapeName) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			return shape->second.lockNormals;
+
+		return false;
+	}
+
+	void SetLockNormals(const std::string& shapeName, const bool lock) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			shape->second.lockNormals = lock;
+	}
+
+	void ToggleLockNormals(const std::string& shapeName) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape != shapeAttributes.end())
+			shape->second.lockNormals = !shape->second.lockNormals;
 	}
 
 	// Gets the target names in the targetdatafolders map - these are the shapes with non-local or referenced data.

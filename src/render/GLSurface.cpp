@@ -1528,6 +1528,10 @@ void GLSurface::Update(int shapeIndex, std::vector<Vector3>* vertices, std::vect
 	if (m->nVerts != vertices->size())
 		return;
 
+	int uvSize = 0;
+	if (uvs)
+		uvSize = uvs->size();
+
 	Vector3 old;
 	for (int i = 0; i < m->nVerts; i++) {
 		if (changed)
@@ -1537,7 +1541,7 @@ void GLSurface::Update(int shapeIndex, std::vector<Vector3>* vertices, std::vect
 		m->verts[i].z = (*vertices)[i].y / 10.0f;
 		m->verts[i].y = (*vertices)[i].z / 10.0f;
 
-		if (uvs)
+		if (uvSize > i)
 			m->texcoord[i] = (*uvs)[i];
 
 		if (changed && old != m->verts[i])

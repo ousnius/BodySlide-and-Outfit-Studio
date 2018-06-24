@@ -89,6 +89,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		outSet.AddShapeTarget(baseShape, ShapeToTarget(baseShape));
 		outSet.AddTargetDataFolder(ShapeToTarget(baseShape), activeSet.ShapeToDataFolder(baseShape));
 		outSet.SetSmoothSeamNormals(baseShape, activeSet.GetSmoothSeamNormals(baseShape));
+		outSet.SetLockNormals(baseShape, activeSet.GetLockNormals(baseShape));
 		owner->UpdateProgress(prog += step, _("Adding reference shapes..."));
 	}
 
@@ -105,6 +106,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 			outSet.AddTargetDataFolder(ShapeToTarget(s), activeSet.ShapeToDataFolder(s));
 
 		outSet.SetSmoothSeamNormals(s, activeSet.GetSmoothSeamNormals(s));
+		outSet.SetLockNormals(s, activeSet.GetLockNormals(s));
 		owner->UpdateProgress(prog += step, _("Adding outfit shapes..."));
 	}
 	
@@ -447,11 +449,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 	NiShape* shapeResult = nullptr;
 	if (targetGame <= SKYRIM) {
 		auto nifShapeData = new NiTriShapeData();
-		nifShapeData->Create(&v, &t, &uv);
-		if (norms) {
-			nifShapeData->normals = (*norms);
-			nifShapeData->SetNormals(true);
-		}
+		nifShapeData->Create(&v, &t, &uv, norms);
 
 		int dataID = hdr.AddBlock(nifShapeData);
 
@@ -886,7 +884,7 @@ bool OutfitProject::SetSliderFromOBJ(const std::string& sliderName, const std::s
 
 	std::vector<Vector3> objVerts;
 	std::vector<Vector2> objUVs;
-	if (!obj.CopyDataForGroup(sourceShape, &objVerts, nullptr, &objUVs))
+	if (!obj.CopyDataForGroup(sourceShape, &objVerts, nullptr, &objUVs, nullptr))
 		return false;
 
 	std::unordered_map<ushort, Vector3> diff;
@@ -2230,7 +2228,8 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 		std::vector<Vector3> v;
 		std::vector<Triangle> t;
 		std::vector<Vector2> uv;
-		if (!obj.CopyDataForGroup(group, &v, &t, &uv)) {
+		std::vector<Vector3> n;
+		if (!obj.CopyDataForGroup(group, &v, &t, &uv, &n)) {
 			wxLogError("Could not copy data from OBJ file '%s'!", fileName);
 			wxMessageBox(wxString::Format(_("Could not copy data from OBJ file '%s'!"), fileName), _("OBJ Error"), wxICON_ERROR, owner);
 			return 3;
@@ -2264,7 +2263,7 @@ int OutfitProject::ImportOBJ(const std::string& fileName, const std::string& sha
 				return 100;
 		}
 
-		CreateNifShapeFromData(useShapeName, v, t, uv);
+		CreateNifShapeFromData(useShapeName, v, t, uv, &n);
 	}
 
 	return 0;

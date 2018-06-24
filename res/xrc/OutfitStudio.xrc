@@ -1162,6 +1162,12 @@
 				<checked>1</checked>
 				<checkable>1</checkable>
 			</object>
+			<object class="wxMenuItem" name="btnLockNormals">
+				<label>Lock Normals</label>
+				<help>Locks the mesh normals. Enable if you want to keep custom normals intact.</help>
+				<checked>0</checked>
+				<checkable>1</checkable>
+			</object>
 			<object class="separator" />
 			<object class="wxMenuItem" name="copyBoneWeight">
 				<label>Copy Bone Weights</label>

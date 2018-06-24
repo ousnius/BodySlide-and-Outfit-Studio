@@ -127,6 +127,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 
 	EVT_MENU(XRCID("btnRecalcNormals"), OutfitStudioFrame::OnRecalcNormals)
 	EVT_MENU(XRCID("btnSmoothSeams"), OutfitStudioFrame::OnSmoothNormalSeams)
+	EVT_MENU(XRCID("btnLockNormals"), OutfitStudioFrame::OnLockNormals)
 
 	EVT_MENU(XRCID("btnGhostMode"), OutfitStudioFrame::OnGhostMesh)
 	EVT_MENU(XRCID("btnShowWireframe"), OutfitStudioFrame::OnShowWireframe)
@@ -1404,6 +1405,11 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 			else
 				GetMenuBar()->Check(XRCID("btnSmoothSeams"), false);
 
+			if (m->lockNormals)
+				GetMenuBar()->Check(XRCID("btnLockNormals"), true);
+			else
+				GetMenuBar()->Check(XRCID("btnLockNormals"), false);
+
 			if (glView->GetTransformMode())
 				glView->ShowTransformTool();
 			if (glView->GetVertexEdit())
@@ -2071,7 +2077,7 @@ void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
 void OutfitStudioFrame::MeshFromProj(const std::string& shapeName, const bool reloadTextures) {
 	if (extInitialized) {
 		glView->DeleteMesh(shapeName);
-		glView->AddMeshFromNif(project->GetWorkNif(), shapeName, true);
+		glView->AddMeshFromNif(project->GetWorkNif(), shapeName);
 
 		MaterialFile matFile;
 		bool hasMatFile = project->GetShapeMaterialFile(shapeName, matFile);
@@ -2100,9 +2106,9 @@ void OutfitStudioFrame::UpdateMeshFromSet(const std::string& shapeName) {
 	mesh* m = glView->GetMesh(shapeName);
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
-
-		if (!m->smoothSeamNormals)
-			m->SmoothNormals();
+		m->lockNormals = project->activeSet.GetLockNormals(shapeName);
+		
+		m->SmoothNormals();
 	}
 }
 
@@ -6210,7 +6216,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 
 		auto shape = project->GetWorkNif()->FindBlockByName<NiShape>(newName);
 		if (shape) {
-			glView->AddMeshFromNif(project->GetWorkNif(), newName, false);
+			glView->AddMeshFromNif(project->GetWorkNif(), newName);
 			UpdateMeshFromSet(newName);
 			project->SetTextures(shape);
 
@@ -6732,6 +6738,13 @@ void OutfitStudioFrame::OnSmoothNormalSeams(wxCommandEvent& WXUNUSED(event)) {
 	glView->Render();
 }
 
+void OutfitStudioFrame::OnLockNormals(wxCommandEvent& WXUNUSED(event)) {
+	glView->ToggleLockNormalsMode();
+
+	for (auto &s : selectedItems)
+		project->activeSet.ToggleLockNormals(s->shapeName);
+}
+
 
 wxBEGIN_EVENT_TABLE(wxGLPanel, wxGLCanvas)
 	EVT_PAINT(wxGLPanel::OnPaint)
@@ -6838,7 +6851,7 @@ void wxGLPanel::SetNotifyWindow(wxWindow* win) {
 	os = dynamic_cast<OutfitStudioFrame*>(win);
 }
 
-void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName, bool buildNormals) {
+void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName) {
 	std::vector<std::string> shapeList = nif->GetShapeNames();
 
 	for (int i = 0; i < shapeList.size(); i++) {
@@ -6854,9 +6867,6 @@ void wxGLPanel::AddMeshFromNif(NifFile* nif, const std::string& shapeName, bool 
 			m->BuildTriAdjacency();
 			m->BuildEdgeList();
 			m->ColorFill(Vector3());
-
-			if (buildNormals)
-				m->SmoothNormals();
 
 			if (extInitialized)
 				m->CreateBuffers();

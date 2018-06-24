@@ -690,6 +690,15 @@ msgstr ""
 "Glättet Kanten von Rändern (normalerweise bei Texturgrenzen). Deaktivieren "
 "bei seltsamen Normals."
 
+msgid "Lock Normals"
+msgstr "Normals sperren"
+
+msgid ""
+"Locks the mesh normals. Enable if you want to keep custom normals intact."
+msgstr ""
+"Sperrt die Normals des Modells. Aktivieren, wenn manuell angepasste Normals "
+"intakt bleiben sollen."
+
 msgid "Copy Bone Weights"
 msgstr "Bone Weighting kopieren"
 

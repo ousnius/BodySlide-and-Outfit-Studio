@@ -618,6 +618,12 @@ msgstr ""
 msgid "Smooths edges of seams (usually found at texture borders), disable if this causes odd normals on the shape."
 msgstr ""
 
+msgid "Lock Normals"
+msgstr ""
+
+msgid "Locks the mesh normals. Enable if you want to keep custom normals intact."
+msgstr ""
+
 msgid "Copy Bone Weights"
 msgstr ""
 

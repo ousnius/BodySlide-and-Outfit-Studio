@@ -277,7 +277,7 @@ void NiGeometryData::UpdateBounds() {
 	bounds = BoundingSphere(vertices);
 }
 
-void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>*, std::vector<Vector2>* texcoords) {
+void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>*, std::vector<Vector2>* texcoords, std::vector<Vector3>* norms) {
 	size_t vertCount = verts->size();
 	ushort maxIndex = std::numeric_limits<ushort>().max();
 
@@ -302,6 +302,16 @@ void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>*,
 
 		if (uvCount > 0)
 			numUVSets = 4097;
+	}
+
+	if (norms && norms->size() == numVertices) {
+		SetNormals(true);
+		normals = (*norms);
+		CalcTangentSpace();
+	}
+	else {
+		SetNormals(false);
+		SetTangents(false);
 	}
 }
 
@@ -1789,8 +1799,8 @@ void NiTriBasedGeomData::Put(NiStream& stream) {
 	stream << numTriangles;
 }
 
-void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords) {
-	NiGeometryData::Create(verts, inTris, texcoords);
+void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords, std::vector<Vector3>* norms) {
+	NiGeometryData::Create(verts, inTris, texcoords, norms);
 
 	ushort maxIndex = std::numeric_limits<ushort>().max();
 	size_t triCount = inTris->size();
@@ -1849,8 +1859,8 @@ void NiTriShapeData::Put(NiStream& stream) {
 	}
 }
 
-void NiTriShapeData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords) {
-	NiTriBasedGeomData::Create(verts, inTris, texcoords);
+void NiTriShapeData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords, std::vector<Vector3>* norms) {
+	NiTriBasedGeomData::Create(verts, inTris, texcoords, norms);
 
 	numTrianglePoints = numTriangles * 3;
 	hasTriangles = true;

@@ -130,7 +130,6 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
 			if (m) {
 				m->BuildTriAdjacency();
-				m->SmoothNormals();
 				m->CreateBuffers();
 			}
 		}
@@ -141,7 +140,6 @@ void PreviewWindow::AddMeshFromNif(NifFile *nif, char *shapeName) {
 			mesh* m = gls.AddMeshFromNif(nif, shapeList[i]);
 			if (m) {
 				m->BuildTriAdjacency();
-				m->SmoothNormals();
 				m->CreateBuffers();
 			}
 		}

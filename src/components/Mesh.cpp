@@ -383,6 +383,9 @@ void mesh::SetSmoothThreshold(float degrees) {
 }
 
 void mesh::SmoothNormals(const std::set<int>& vertices) {
+	if (lockNormals)
+		return;
+
 	// Zero old normals
 	for (int i = 0; i < nVerts; i++) {
 		if (!vertices.empty() && vertices.find(i) == vertices.end())
@@ -454,6 +457,9 @@ void mesh::SmoothNormals(const std::set<int>& vertices) {
 }
 
 void mesh::FacetNormals() {
+	if (lockNormals)
+		return;
+
 	// Zero old normals
 	for (int i = 0; i < nVerts; i++) {
 		Vector3& pn = norms[i];
