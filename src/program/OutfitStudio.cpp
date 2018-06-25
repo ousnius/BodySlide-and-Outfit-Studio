@@ -1160,10 +1160,6 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 
 	ShowSliderEffect(0);
 
-	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99, _("Applying slider effects..."));
-	ApplySliders();
-
 	SetTitle("Outfit Studio - " + wxString::FromUTF8(project->OutfitName()));
 
 	wxLogMessage("Project loaded.");
@@ -1734,10 +1730,6 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 	ShowSliderEffect(0);
 
-	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99, _("Applying slider effects..."));
-	ApplySliders();
-
 	if (!outfitName.empty())
 		SetTitle("Outfit Studio - " + wxString::FromUTF8(outfitName));
 
@@ -1838,9 +1830,6 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 	CreateSetSliders();
 
 	ShowSliderEffect(0);
-	wxLogMessage("Applying slider effects...");
-	UpdateProgress(99, _("Applying slider effects..."));
-	ApplySliders();
 
 	wxLogMessage("Reference loaded.");
 	UpdateProgress(100, _("Finished"));
@@ -2107,8 +2096,6 @@ void OutfitStudioFrame::UpdateMeshFromSet(const std::string& shapeName) {
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
 		m->lockNormals = project->activeSet.GetLockNormals(shapeName);
-		
-		m->SmoothNormals();
 	}
 }
 

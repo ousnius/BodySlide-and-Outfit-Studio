@@ -2075,9 +2075,6 @@ msgstr "Erstelle Outfit..."
 msgid "Creating %d slider(s)..."
 msgstr "Erstelle %d Slider..."
 
-msgid "Applying slider effects..."
-msgstr "Wende Slider-Auswirkungen an..."
-
 msgid "Select a slider set to load"
 msgstr "Wählen Sie ein Slider Set zum Laden"
 

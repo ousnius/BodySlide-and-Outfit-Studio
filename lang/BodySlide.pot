@@ -1781,9 +1781,6 @@ msgstr ""
 msgid "Creating %d slider(s)..."
 msgstr ""
 
-msgid "Applying slider effects..."
-msgstr ""
-
 msgid "Select a slider set to load"
 msgstr ""
 
