@@ -83,7 +83,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				base >> v.x >> v.y >> v.z;
 				di->verts.push_back(v);
 			}
-			else if (dump.compare("o") == 0) {
+			else if (dump.compare("o") == 0 || dump.compare("g") == 0) {
 				base >> curgrp;
 
 				if (!di->name.empty()) {
@@ -92,12 +92,6 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				}
 
 				di->name = curgrp;
-			}
-			else if (dump.compare("g") == 0) {
-				base >> curgrp;
-
-				if (di->name.empty())
-					di->name = curgrp;
 			}
 			else if (dump.compare("vt") == 0) {
 				base >> uv.u >> uv.v;
@@ -112,7 +106,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			base >> v.x >> v.y >> v.z;
 			verts.push_back(v);
 		}
-		else if (dump.compare("o") == 0) {
+		else if (dump.compare("o") == 0 || dump.compare("g") == 0) {
 			base >> curgrp;
 
 			if (!di->name.empty()) {
@@ -121,12 +115,6 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			}
 
 			di->name = curgrp;
-		}
-		else if (dump.compare("g") == 0) {
-			base >> curgrp;
-
-			if (di->name.empty())
-				di->name = curgrp;
 		}
 		else if (dump.compare("vt") == 0) {
 			base >> uv.u >> uv.v;
