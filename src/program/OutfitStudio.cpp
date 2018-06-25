@@ -1411,6 +1411,10 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 			if (glView->GetVertexEdit())
 				glView->ShowVertexEdit();
 		}
+		else {
+			GetMenuBar()->Check(XRCID("btnSmoothSeams"), true);
+			GetMenuBar()->Check(XRCID("btnLockNormals"), false);
+		}
 
 		CreateSegmentTree(activeItem->shapeName);
 		CreatePartitionTree(activeItem->shapeName);
