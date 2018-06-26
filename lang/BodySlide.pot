@@ -1179,6 +1179,9 @@ msgstr ""
 msgid "High"
 msgstr ""
 
+msgid "Zapped"
+msgstr ""
+
 msgid "Options"
 msgstr ""
 

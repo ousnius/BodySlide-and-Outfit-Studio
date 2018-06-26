@@ -1353,6 +1353,9 @@ msgstr "Niedrig"
 msgid "High"
 msgstr "Hoch"
 
+msgid "Zapped"
+msgstr "Zapped"
+
 msgid "Options"
 msgstr "Optionen"
 

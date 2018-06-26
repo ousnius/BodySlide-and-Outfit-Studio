@@ -5374,28 +5374,25 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 
 	wxDialog dlg;
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgSliderProp")) {
-		int curSlider = project->SliderIndexFromName(activeSlider);
-		long loVal = (int)(project->SliderDefault(curSlider, false));
-		long hiVal = (int)(project->SliderDefault(curSlider, true));
-		XRCCTRL(dlg, "edSliderName", wxTextCtrl)->SetLabel(wxString::FromUTF8(activeSlider));
-		XRCCTRL(dlg, "edValLo", wxTextCtrl)->SetValue(wxString::Format("%d", loVal));
-		XRCCTRL(dlg, "edValHi", wxTextCtrl)->SetValue(wxString::Format("%d", hiVal));
-
-		if (!project->mGenWeights) {
-			XRCCTRL(dlg, "lbValLo", wxStaticText)->Hide();
-			XRCCTRL(dlg, "edValLo", wxTextCtrl)->Hide();
-			XRCCTRL(dlg, "lbValHi", wxStaticText)->SetLabel("Default");
-		}
-
+		wxTextCtrl* edSliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl);
+		wxStaticText* lbValLo = XRCCTRL(dlg, "lbValLo", wxStaticText);
+		wxStaticText* lbValHi = XRCCTRL(dlg, "lbValHi", wxStaticText);
+		wxTextCtrl* edValLo = XRCCTRL(dlg, "edValLo", wxTextCtrl);
+		wxTextCtrl* edValHi = XRCCTRL(dlg, "edValHi", wxTextCtrl);
+		wxCheckBox* cbValZapped = XRCCTRL(dlg, "cbValZapped", wxCheckBox);
 		wxCheckBox* chkHidden = XRCCTRL(dlg, "chkHidden", wxCheckBox);
 		wxCheckBox* chkInvert = XRCCTRL(dlg, "chkInvert", wxCheckBox);
 		wxCheckBox* chkZap = XRCCTRL(dlg, "chkZap", wxCheckBox);
 		wxCheckBox* chkUV = XRCCTRL(dlg, "chkUV", wxCheckBox);
-
 		wxCheckListBox* zapToggleList = XRCCTRL(dlg, "zapToggleList", wxCheckListBox);
-		chkZap->Bind(wxEVT_CHECKBOX, [&zapToggleList](wxCommandEvent& event) {
-			zapToggleList->Enable(event.IsChecked());
-		});
+
+		int curSlider = project->SliderIndexFromName(activeSlider);
+		long loVal = (int)(project->SliderDefault(curSlider, false));
+		long hiVal = (int)(project->SliderDefault(curSlider, true));
+
+		edSliderName->SetLabel(wxString::FromUTF8(activeSlider));
+		edValLo->SetValue(wxString::Format("%d", loVal));
+		edValHi->SetValue(wxString::Format("%d", hiVal));
 
 		if (project->SliderHidden(curSlider))
 			chkHidden->SetValue(true);
@@ -5407,6 +5404,12 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			chkUV->SetValue(true);
 
 		if (project->SliderZap(curSlider)) {
+			lbValLo->Hide();
+			lbValHi->Hide();
+			edValLo->Hide();
+			edValHi->Hide();
+			cbValZapped->Show();
+
 			chkZap->SetValue(true);
 			zapToggleList->Enable();
 
@@ -5420,12 +5423,46 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 					zapToggleList->Check(stringId);
 			}
 		}
+		else {
+			cbValZapped->Hide();
+
+			if (!project->mGenWeights) {
+				lbValLo->Hide();
+				edValLo->Hide();
+				lbValHi->SetLabel("Default");
+			}
+		}
+
+		if (hiVal > 0 || loVal > 0)
+			cbValZapped->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+		else
+			cbValZapped->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
+
+		chkZap->Bind(wxEVT_CHECKBOX, [&](wxCommandEvent& event) {
+			bool checked = event.IsChecked();
+
+			lbValLo->Show(!checked);
+			lbValHi->Show(!checked);
+			edValLo->Show(!checked);
+			edValHi->Show(!checked);
+			cbValZapped->Show(checked);
+			zapToggleList->Enable(checked);
+
+			dlg.Layout();
+		});
 
 		XRCCTRL(dlg, "wxID_CANCEL", wxButton)->SetFocus();
 
 		if (dlg.ShowModal() == wxID_OK) {
 			if (chkZap->IsChecked()) {
-				project->SetSliderZap(curSlider, chkZap->GetValue());
+				if (cbValZapped->IsChecked()) {
+					loVal = 100;
+					hiVal = 100;
+				}
+				else {
+					loVal = 0;
+					hiVal = 0;
+				}
 
 				wxArrayString zapToggles;
 				wxArrayInt toggled;
@@ -5435,16 +5472,19 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 
 				project->SetSliderZapToggles(curSlider, zapToggles);
 			}
+			else {
+				edValLo->GetValue().ToLong(&loVal);
+				edValHi->GetValue().ToLong(&hiVal);
+			}
 
+			project->SetSliderZap(curSlider, chkZap->GetValue());
 			project->SetSliderInvert(curSlider, chkInvert->GetValue());
 			project->SetSliderHidden(curSlider, chkHidden->GetValue());
 			project->SetSliderUV(curSlider, chkUV->GetValue());
-			XRCCTRL(dlg, "edValLo", wxTextCtrl)->GetValue().ToLong(&loVal);
 			project->SetSliderDefault(curSlider, loVal, false);
-			XRCCTRL(dlg, "edValHi", wxTextCtrl)->GetValue().ToLong(&hiVal);
 			project->SetSliderDefault(curSlider, hiVal, true);
 
-			std::string sliderName = XRCCTRL(dlg, "edSliderName", wxTextCtrl)->GetValue().ToUTF8();
+			std::string sliderName = edSliderName->GetValue().ToUTF8();
 			if (activeSlider != sliderName) {
 				project->SetSliderName(curSlider, sliderName);
 				SliderDisplay* d = sliderDisplays[activeSlider];

@@ -11,16 +11,6 @@ See the included LICENSE file
 
 SliderData::SliderData(const std::string& inName) {
 	name = inName;
-	bClamp = false;
-	bHidden = false;
-	bZap = false;
-	bInvert = false;
-	bShow = false;
-	bUV = false;
-
-	curValue = 0;
-	defBigValue = 100;
-	defSmallValue = 0;
 }
 
 SliderData::~SliderData() {

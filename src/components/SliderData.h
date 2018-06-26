@@ -24,18 +24,17 @@ struct DiffInfo {
 class SliderData {
 public:
 	std::string name;
-	bool bHidden;
-	bool bInvert;
-	bool bZap;
-	bool bClamp;
-	bool bUV;			// UV Sliders!? Wat!
-	float defSmallValue;
-	float defBigValue;
+	bool bHidden = false;
+	bool bInvert = false;
+	bool bZap = false;
+	bool bClamp = false;
+	bool bUV = false;
+	float defSmallValue = 0.0f;
+	float defBigValue = 0.0f;
 	std::vector<std::string> zapToggles;
 
-	// Outfit Studio values
-	float curValue;		// Current slider value.
-	bool bShow;			// On to enable this slider when deforming verts.
+	float curValue = 0.0f;
+	bool bShow = false;
 
 	std::vector<DiffInfo> dataFiles;
 
