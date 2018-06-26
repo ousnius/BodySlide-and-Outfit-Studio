@@ -9,6 +9,8 @@ See the included LICENSE file
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
 	EVT_LISTBOX(XRCID("listGroups"), GroupManager::OnSelectGroup)
+	EVT_LISTBOX_DCLICK(XRCID("listMembers"), GroupManager::OnDblClickMember)
+	EVT_LISTBOX_DCLICK(XRCID("listOutfits"), GroupManager::OnDblClickOutfit)
 	EVT_BUTTON(XRCID("btAddGroup"), GroupManager::OnAddGroup)
 	EVT_BUTTON(XRCID("btRemoveGroup"), GroupManager::OnRemoveGroup)
 	EVT_BUTTON(XRCID("btSave"), GroupManager::OnSaveGroup)
@@ -99,6 +101,44 @@ void GroupManager::SaveGroup() {
 	btSave->Enable(dirty & !fileName.empty());
 }
 
+void GroupManager::DoRemoveMembers() {
+	wxArrayInt selections;
+	listMembers->GetSelections(selections);
+
+	// Find and remove member from selected group
+	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
+	if (!selectedGroup.empty()) {
+		for (auto &sel : selections) {
+			std::string member = listMembers->GetString(sel).ToUTF8();
+			auto it = find(groupMembers[selectedGroup].begin(), groupMembers[selectedGroup].end(), member);
+			if (it != groupMembers[selectedGroup].end())
+				groupMembers[selectedGroup].erase(it);
+		}
+	}
+
+	dirty = true;
+	selections.Clear();
+	RefreshUI();
+}
+
+void GroupManager::DoAddMembers() {
+	wxArrayInt selections;
+	listOutfits->GetSelections(selections);
+
+	// Add member to selected group
+	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
+	if (!selectedGroup.empty()) {
+		for (auto &sel : selections) {
+			std::string member = listOutfits->GetString(sel).ToUTF8();
+			groupMembers[selectedGroup].push_back(member);
+		}
+	}
+
+	dirty = true;
+	selections.Clear();
+	RefreshUI();
+}
+
 void GroupManager::OnLoadGroup(wxFileDirPickerEvent& event) {
 	// Load group file
 	SliderSetGroupFile groupFile(event.GetPath().ToUTF8().data());
@@ -143,6 +183,14 @@ void GroupManager::OnSelectGroup(wxCommandEvent& WXUNUSED(event)) {
 	RefreshUI();
 }
 
+void GroupManager::OnDblClickMember(wxCommandEvent& WXUNUSED(event)) {
+	DoRemoveMembers();
+}
+
+void GroupManager::OnDblClickOutfit(wxCommandEvent& WXUNUSED(event)) {
+	DoAddMembers();
+}
+
 void GroupManager::OnAddGroup(wxCommandEvent& WXUNUSED(event)) {
 	wxString name = groupName->GetValue().Trim();
 	if (name.empty())
@@ -177,41 +225,11 @@ void GroupManager::OnRemoveGroup(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GroupManager::OnRemoveMember(wxCommandEvent& WXUNUSED(event)) {
-	wxArrayInt selections;
-	listMembers->GetSelections(selections);
-
-	// Find and remove member from selected group
-	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
-	if (!selectedGroup.empty()) {
-		for (auto &sel : selections) {
-			std::string member = listMembers->GetString(sel).ToUTF8();
-			auto it = find(groupMembers[selectedGroup].begin(), groupMembers[selectedGroup].end(), member);
-			if (it != groupMembers[selectedGroup].end())
-				groupMembers[selectedGroup].erase(it);
-		}
-	}
-
-	dirty = true;
-	selections.Clear();
-	RefreshUI();
+	DoRemoveMembers();
 }
 
 void GroupManager::OnAddMember(wxCommandEvent& WXUNUSED(event)) {
-	wxArrayInt selections;
-	listOutfits->GetSelections(selections);
-
-	// Add member to selected group
-	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
-	if (!selectedGroup.empty()) {
-		for (auto &sel : selections) {
-			std::string member = listOutfits->GetString(sel).ToUTF8();
-			groupMembers[selectedGroup].push_back(member);
-		}
-	}
-
-	dirty = true;
-	selections.Clear();
-	RefreshUI();
+	DoAddMembers();
 }
 
 void GroupManager::OnCloseButton(wxCommandEvent& WXUNUSED(event)) {

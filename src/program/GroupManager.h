@@ -37,10 +37,15 @@ private:
 	void RefreshUI(const bool = false);
 	void SaveGroup();
 
+	void DoRemoveMembers();
+	void DoAddMembers();
+
 	void OnLoadGroup(wxFileDirPickerEvent&);
 	void OnSaveGroup(wxCommandEvent&);
 	void OnSaveGroupAs(wxCommandEvent&);
 	void OnSelectGroup(wxCommandEvent&);
+	void OnDblClickMember(wxCommandEvent&);
+	void OnDblClickOutfit(wxCommandEvent&);
 	void OnAddGroup(wxCommandEvent&);
 	void OnRemoveGroup(wxCommandEvent&);
 	void OnRemoveMember(wxCommandEvent&);
