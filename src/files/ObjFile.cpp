@@ -41,7 +41,7 @@ int ObjFile::LoadForNif(const std::string& fileName, const ObjOptionsImport& opt
 }
 
 int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
-	ObjData* di = new ObjData();
+	ObjData* current = new ObjData();
 
 	Vector3 v;
 	Vector2 uv;
@@ -81,22 +81,22 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 		if (options.noFaces) {
 			if (dump.compare("v") == 0) {
 				base >> v.x >> v.y >> v.z;
-				di->verts.push_back(v);
+				current->verts.push_back(v);
 			}
 			else if (dump.compare("o") == 0 || dump.compare("g") == 0) {
 				base >> curgrp;
 
-				if (!di->name.empty()) {
-					data[di->name] = di;
-					di = new ObjData;
+				if (!current->name.empty()) {
+					data[current->name] = current;
+					current = new ObjData();
 				}
 
-				di->name = curgrp;
+				current->name = curgrp;
 			}
 			else if (dump.compare("vt") == 0) {
 				base >> uv.u >> uv.v;
 				uv.v = 1.0f - uv.v;
-				di->uvs.push_back(uv);
+				current->uvs.push_back(uv);
 			}
 
 			continue;
@@ -109,12 +109,30 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 		else if (dump.compare("o") == 0 || dump.compare("g") == 0) {
 			base >> curgrp;
 
-			if (!di->name.empty()) {
-				data[di->name] = di;
-				di = new ObjData;
+			if (!current->name.empty()) {
+				if (!current->tris.empty()) {
+					// Keep current group if it's not empty
+					data[current->name] = current;
+				}
+				else {
+					// Don't keep empty group
+					data.erase(current->name);
+					current->name = "";
+				}
 			}
 
-			di->name = curgrp;
+			auto grp = data.find(curgrp);
+			if (grp != data.end()) {
+				// Re-use group with matching name
+				current = grp->second;
+			}
+			else {
+				// Add new group
+				if (!current->name.empty())
+					current = new ObjData();
+
+				current->name = curgrp;
+			}
 		}
 		else if (dump.compare("vt") == 0) {
 			base >> uv.u >> uv.v;
@@ -171,7 +189,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			bool skipFace = false;
 			for (int i = 0; i < nPoints; i++) {
 				int reuseIndex = -1;
-				v_idx[i] = di->verts.size();
+				v_idx[i] = current->verts.size();
 
 				auto savedVertUV = vertUVMap.find(f[i]);
 				if (savedVertUV != vertUVMap.end()) {
@@ -215,18 +233,18 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				if (reuseIndex != -1)
 					v_idx[i] = reuseIndex;
 
-				if (v_idx[i] == di->verts.size()) {
+				if (v_idx[i] == current->verts.size()) {
 					if (verts.size() > f[i]) {
-						di->verts.push_back(verts[f[i]]);
+						current->verts.push_back(verts[f[i]]);
 
 						if (uvs.size() > ft[i]) {
 							vertUVMap[f[i]].push_back(IndexMap(v_idx[i], ft[i]));
-							di->uvs.push_back(uvs[ft[i]]);
+							current->uvs.push_back(uvs[ft[i]]);
 						}
 
 						if (norms.size() > fn[i]) {
 							vertNormMap[f[i]].push_back(IndexMap(v_idx[i], fn[i]));
-							di->norms.push_back(norms[fn[i]]);
+							current->norms.push_back(norms[fn[i]]);
 						}
 					}
 					else {
@@ -242,20 +260,27 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 			t.p1 = v_idx[0];
 			t.p2 = v_idx[1];
 			t.p3 = v_idx[2];
-			di->tris.push_back(t);
+			current->tris.push_back(t);
 			if (nPoints == 4) {
 				t.p1 = v_idx[0];
 				t.p2 = v_idx[2];
 				t.p3 = v_idx[3];
-				di->tris.push_back(t);
+				current->tris.push_back(t);
 			}
 		}
 	}
 
-	if (di->name.empty())
-		di->name = "object";
+	if (current->name.empty())
+		current->name = "object";
 
-	data[di->name] = di;
+	if (!current->verts.empty()) {
+		data[current->name] = current;
+	}
+	else {
+		data.erase(current->name);
+		delete current;
+	}
+
 	return 0;
 }
 
