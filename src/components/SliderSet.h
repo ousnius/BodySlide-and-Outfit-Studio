@@ -111,11 +111,15 @@ public:
 	}
 
 	void SetSmoothSeamNormals(const std::string& shapeName, const bool smooth) {
+		AddMissingTarget(shapeName);
+
 		auto& shape = shapeAttributes[shapeName];
 		shape.smoothSeamNormals = smooth;
 	}
 
 	void ToggleSmoothSeamNormals(const std::string& shapeName) {
+		AddMissingTarget(shapeName);
+
 		auto& shape = shapeAttributes[shapeName];
 		shape.smoothSeamNormals = !shape.smoothSeamNormals;
 	}
@@ -129,11 +133,15 @@ public:
 	}
 
 	void SetLockNormals(const std::string& shapeName, const bool lock) {
+		AddMissingTarget(shapeName);
+
 		auto& shape = shapeAttributes[shapeName];
 		shape.lockNormals = lock;
 	}
 
 	void ToggleLockNormals(const std::string& shapeName) {
+		AddMissingTarget(shapeName);
+
 		auto& shape = shapeAttributes[shapeName];
 		shape.lockNormals = !shape.lockNormals;
 	}
@@ -195,6 +203,14 @@ public:
 			for (auto &df : s.dataFiles)
 				if (df.targetName == oldTarget)
 					df.targetName = newTarget;
+	}
+
+	void AddMissingTarget(const std::string& shapeName) {
+		auto shape = shapeAttributes.find(shapeName);
+		if (shape == shapeAttributes.end()) {
+			auto& newShape = shapeAttributes[shapeName];
+			newShape.targetShape = shapeName;
+		}
 	}
 
 	void AddShapeTarget(const std::string& shapeName, const std::string& targetName) {
