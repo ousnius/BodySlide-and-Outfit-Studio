@@ -282,9 +282,9 @@ void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>*,
 	ushort maxIndex = std::numeric_limits<ushort>().max();
 
 	if (vertCount > maxIndex)
-		numVertices = maxIndex;
-	else
 		numVertices = 0;
+	else
+		numVertices = ushort(vertCount);
 
 	vertices.resize(numVertices);
 	for (int v = 0; v < numVertices; v++)
@@ -1301,16 +1301,16 @@ void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris
 	ushort maxVertIndex = std::numeric_limits<ushort>().max();
 	size_t vertCount = verts->size();
 	if (vertCount > maxVertIndex)
-		numVertices = maxVertIndex;
-	else
 		numVertices = 0;
+	else
+		numVertices = ushort(vertCount);
 
 	uint maxTriIndex = std::numeric_limits<uint>().max();
 	size_t triCount = tris->size();
 	if (triCount > maxTriIndex)
-		numTriangles = maxTriIndex;
-	else
 		numTriangles = 0;
+	else
+		numTriangles = uint(triCount);
 
 	vertData.resize(numVertices);
 
@@ -1652,7 +1652,7 @@ void BSDynamicTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle
 	uint maxIndex = std::numeric_limits<uint>().max();
 	size_t vertCount = verts->size();
 	if (vertCount > maxIndex)
-		dynamicDataSize = maxIndex;
+		dynamicDataSize = 0;
 	else
 		dynamicDataSize = uint(vertCount);
 
@@ -1805,9 +1805,9 @@ void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangl
 	ushort maxIndex = std::numeric_limits<ushort>().max();
 	size_t triCount = inTris->size();
 	if (triCount > maxIndex)
-		numTriangles = maxIndex;
-	else
 		numTriangles = 0;
+	else
+		numTriangles = ushort(triCount);
 }
 
 
