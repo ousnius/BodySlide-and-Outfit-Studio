@@ -16,7 +16,7 @@ ObjFile::~ObjFile() {
 		delete d.second;
 }
 
-int ObjFile::AddGroup(const std::string& name, const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector2>& uvs) {
+int ObjFile::AddGroup(const std::string& name, const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector2>& uvs, const std::vector<Vector3>& norms) {
 	if (name.empty() || verts.empty())
 		return 1;
 
@@ -25,6 +25,7 @@ int ObjFile::AddGroup(const std::string& name, const std::vector<Vector3>& verts
 	newData->verts = verts;
 	newData->tris = tris;
 	newData->uvs = uvs;
+	newData->norms = norms;
 
 	data[name] = newData;
 	return 0;
@@ -293,10 +294,15 @@ int ObjFile::Save(const std::string &fileName) {
 	file << "# Outfit Studio - OBJ Export" << std::endl;
 	file << "# https://github.com/ousnius/BodySlide-and-Outfit-Studio" << std::endl << std::endl;
 
-	size_t pointOffset = 0;
+	size_t groupCount = 1;
+	size_t pointOffset = 1;
 
 	for (auto& d : data) {
-		file << "o " << d.first << std::endl;
+		file << "# object " << d.first << std::endl;
+		file << "# " << d.second->verts.size() << " vertices" << std::endl;
+		file << "# " << d.second->uvs.size() << " texture coordinates" << std::endl;
+		file << "# " << d.second->norms.size() << " normals" << std::endl;
+		file << "# " << d.second->tris.size() << " triangles" << std::endl;
 
 		for (int i = 0; i < d.second->verts.size(); i++) {
 			file << "v " << (d.second->verts[i].x + offset.x) * scale.x
@@ -306,19 +312,67 @@ int ObjFile::Save(const std::string &fileName) {
 		}
 		file << std::endl;
 
-		for (int i = 0; i < d.second->uvs.size(); i++)
-			file << "vt " << d.second->uvs[i].u << " " << (1.0f - d.second->uvs[i].v) << std::endl;
-		file << std::endl;
-
-		for (int i = 0; i < d.second->tris.size(); i++) {
-			file << "f " << d.second->tris[i].p1 + pointOffset + 1 << " "
-				<< d.second->tris[i].p2 + pointOffset + 1 << " "
-				<< d.second->tris[i].p3 + pointOffset + 1
+		for (int i = 0; i < d.second->uvs.size(); i++) {
+			file << "vt " << d.second->uvs[i].u << " "
+				<< (1.0f - d.second->uvs[i].v)
 				<< std::endl;
 		}
 		file << std::endl;
 
+		for (int i = 0; i < d.second->norms.size(); i++) {
+			file << "vn " << d.second->norms[i].x << " "
+				<< d.second->norms[i].y << " "
+				<< d.second->norms[i].z
+				<< std::endl;
+		}
+		file << std::endl;
+
+		file << "g " << d.first << std::endl;
+		file << "usemtl NoMaterial_" << groupCount << std::endl << std::endl;
+
+		for (int i = 0; i < d.second->tris.size(); i++) {
+			file << "f " << d.second->tris[i].p1 + pointOffset;
+
+			if (!d.second->uvs.empty())
+				file << "/" << d.second->tris[i].p1 + pointOffset;
+
+			if (!d.second->norms.empty()) {
+				if (d.second->uvs.empty())
+					file << "/";
+
+				file << "/" << d.second->tris[i].p1 + pointOffset;
+			}
+
+			file << " " << d.second->tris[i].p2 + pointOffset;
+
+			if (!d.second->uvs.empty())
+				file << "/" << d.second->tris[i].p2 + pointOffset;
+
+			if (!d.second->norms.empty()) {
+				if (d.second->uvs.empty())
+					file << "/";
+
+				file << "/" << d.second->tris[i].p2 + pointOffset;
+			}
+
+			file << " " << d.second->tris[i].p3 + pointOffset;
+
+			if (!d.second->uvs.empty())
+				file << "/" << d.second->tris[i].p3 + pointOffset;
+
+			if (!d.second->norms.empty()) {
+				if (d.second->uvs.empty())
+					file << "/";
+
+				file << "/" << d.second->tris[i].p3 + pointOffset;
+			}
+
+			file << std::endl;
+		}
+		file << std::endl;
+
 		pointOffset += d.second->verts.size();
+		groupCount++;
 	}
 
 	file.close();

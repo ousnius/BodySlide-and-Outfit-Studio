@@ -41,7 +41,7 @@ public:
 	ObjFile();
 	~ObjFile();
 
-	int AddGroup(const std::string& name, const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector2>& uvs);
+	int AddGroup(const std::string& name, const std::vector<Vector3>& verts, const std::vector<Triangle>& tris, const std::vector<Vector2>& uvs, const std::vector<Vector3>& norms);
 
 	void SetScale(const Vector3& inScale) { scale = inScale; }
 	void SetOffset(const Vector3& inOffset) { offset = inOffset; }
