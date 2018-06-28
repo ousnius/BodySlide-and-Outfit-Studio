@@ -8,7 +8,7 @@ See the included LICENSE file
 
 ObjFile::ObjFile() {
 	scale = Vector3(1.0f, 1.0f, 1.0f);
-	uvDupThreshold = 0.005f;
+	uvDupThreshold = 0.0001f;
 }
 
 ObjFile::~ObjFile() {
