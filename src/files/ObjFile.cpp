@@ -7,8 +7,6 @@ See the included LICENSE file
 #include "ObjFile.h"
 
 ObjFile::ObjFile() {
-	scale = Vector3(1.0f, 1.0f, 1.0f);
-	uvDupThreshold = 0.0001f;
 }
 
 ObjFile::~ObjFile() {
@@ -46,9 +44,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 
 	Vector3 v;
 	Vector2 uv;
-	Vector2 uv2;
 	Vector3 vn;
-	Vector3 vn2;
 	Triangle t;
 
 	std::string dump;
@@ -68,8 +64,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 	std::vector<Vector3> norms;
 	size_t pos;
 
-	std::map<int, std::vector<IndexMap>> vertUVMap;
-	std::map<int, std::vector<IndexMap>> vertNormMap;
+	std::map<std::string, std::vector<ObjPoint>> grpPoints;
 
 	bool gotface = false;
 
@@ -187,66 +182,29 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				}
 			}
 
+			auto& curPoints = grpPoints[curgrp];
+
 			bool skipFace = false;
 			for (int i = 0; i < nPoints; i++) {
-				int reuseIndex = -1;
 				v_idx[i] = current->verts.size();
 
-				auto savedVertUV = vertUVMap.find(f[i]);
-				if (savedVertUV != vertUVMap.end()) {
-					int uvIndex = -1;
-					for (int j = 0; j < savedVertUV->second.size(); j++) {
-						if (savedVertUV->second[j].i == ft[i]) {
-							uvIndex = savedVertUV->second[j].v;
-							break;
-						}
-						else if (uvs.size() > 0) {
-							uv = uvs[ft[i]];
-							uv2 = uvs[savedVertUV->second[j].i];
+				ObjPoint pt(f[i], ft[i], fn[i]);
 
-							if (fabs(uv.u - uv2.u) <= uvDupThreshold && fabs(uv.v - uv2.v) <= uvDupThreshold) {
-								uvIndex = savedVertUV->second[j].v;
-								break;
-							}
-						}
-					}
-
-					reuseIndex = uvIndex;
-				}
-
-				if (reuseIndex != -1) {
-					auto savedVertNorm = vertNormMap.find(f[i]);
-					if (savedVertNorm != vertNormMap.end()) {
-						for (int j = 0; j < savedVertNorm->second.size(); j++) {
-							if (norms.size() > 0) {
-								vn = norms[fn[i]];
-								vn2 = norms[savedVertNorm->second[j].i];
-
-								if (!(vn - vn2).IsZero(true)) {
-									reuseIndex = -1;
-									break;
-								}
-							}
-						}
-					}
-				}
-
-				if (reuseIndex != -1)
-					v_idx[i] = reuseIndex;
+				auto ptIt = std::find(curPoints.begin(), curPoints.end(), pt);
+				if (ptIt != curPoints.end())
+					v_idx[i] = ptIt - curPoints.begin();
+				else
+					curPoints.push_back(pt);
 
 				if (v_idx[i] == current->verts.size()) {
 					if (verts.size() > f[i]) {
 						current->verts.push_back(verts[f[i]]);
 
-						if (uvs.size() > ft[i]) {
-							vertUVMap[f[i]].push_back(IndexMap(v_idx[i], ft[i]));
+						if (uvs.size() > ft[i])
 							current->uvs.push_back(uvs[ft[i]]);
-						}
 
-						if (norms.size() > fn[i]) {
-							vertNormMap[f[i]].push_back(IndexMap(v_idx[i], fn[i]));
+						if (norms.size() > fn[i])
 							current->norms.push_back(norms[fn[i]]);
-						}
 					}
 					else {
 						skipFace = true;

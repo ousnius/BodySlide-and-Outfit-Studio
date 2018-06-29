@@ -16,10 +16,20 @@ struct ObjOptionsImport {
 	bool noFaces = false;
 };
 
-struct IndexMap {
-	int v;
-	int i;
-	IndexMap(int inV, int inIndex) :v(inV), i(inIndex) {}
+struct ObjPoint {
+	int v = 0;
+	int vt = 0;
+	int vn = 0;
+
+	ObjPoint(const int inV, const int inVT, const int inVN) {
+		v = inV;
+		vt = inVT;
+		vn = inVN;
+	}
+
+	bool operator==(const ObjPoint& other) const {
+		return v == other.v && vt == other.vt && vn == other.vn;
+	}
 };
 
 struct ObjData {
@@ -34,8 +44,7 @@ class ObjFile {
 	std::map<std::string, ObjData*> data;
 
 public:
-	float uvDupThreshold;
-	Vector3 scale;
+	Vector3 scale = Vector3(1.0f, 1.0f, 1.0f);
 	Vector3 offset;
 
 	ObjFile();
