@@ -378,7 +378,7 @@ void TweakBrush::applyFalloff(Vector3 &deltaVec, float dist) {
 bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes) {
 	std::vector<IntersectResult> IResults;
 
-	if (!refmesh->bvh->IntersectSphere(pickInfo.origin, radius, &IResults))
+	if (!refmesh->bvh || !refmesh->bvh->IntersectSphere(pickInfo.origin, radius, &IResults))
 		return false;
 
 	bool* pointVisit = (bool*)calloc(refmesh->nVerts, sizeof(bool));

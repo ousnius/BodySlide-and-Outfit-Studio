@@ -1307,7 +1307,7 @@ void BSTriShape::Create(std::vector<Vector3>* verts, std::vector<Triangle>* tris
 
 	uint maxTriIndex = std::numeric_limits<uint>().max();
 	size_t triCount = tris->size();
-	if (triCount > maxTriIndex)
+	if (triCount > maxTriIndex || numVertices == 0)
 		numTriangles = 0;
 	else
 		numTriangles = uint(triCount);
@@ -1804,7 +1804,7 @@ void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangl
 
 	ushort maxIndex = std::numeric_limits<ushort>().max();
 	size_t triCount = inTris->size();
-	if (triCount > maxIndex)
+	if (triCount > maxIndex || numVertices == 0)
 		numTriangles = 0;
 	else
 		numTriangles = ushort(triCount);

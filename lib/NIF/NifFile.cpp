@@ -2703,6 +2703,11 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 				break;
 			}
 
+			if (tri.p1 >= numVerts || tri.p2 >= numVerts || tri.p3 >= numVerts) {
+				it++;
+				continue;
+			}
+
 			partBones[partID].insert(triBones.begin(), triBones.end());
 			triParts[triIndex] = partID;
 			usedTris[triIndex] = true;

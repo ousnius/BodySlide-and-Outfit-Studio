@@ -22,7 +22,11 @@ mesh::~mesh() {
 }
 
 std::shared_ptr<AABBTree> mesh::CreateBVH() {
-	bvh = std::make_shared<AABBTree>(verts.get(), tris.get(), nTris, 100, 2);
+	if (verts && tris && nTris > 0)
+		bvh = std::make_shared<AABBTree>(verts.get(), tris.get(), nTris, 100, 2);
+	else
+		bvh.reset();
+
 	return bvh;
 }
 
@@ -468,10 +472,14 @@ void mesh::FacetNormals() {
 
 	Vector3 tn;
 	for (int t = 0; t < nTris; t++) {
-		tris[t].trinormal(verts.get(), &tn);
-		Vector3& pn1 = norms[tris[t].p1];
-		Vector3& pn2 = norms[tris[t].p2];
-		Vector3& pn3 = norms[tris[t].p3];
+		auto& tri = tris[t];
+		if (tri.p1 >= nVerts || tri.p2 >= nVerts || tri.p3 >= nVerts)
+			continue;
+
+		tri.trinormal(verts.get(), &tn);
+		Vector3& pn1 = norms[tri.p1];
+		Vector3& pn2 = norms[tri.p2];
+		Vector3& pn3 = norms[tri.p3];
 		pn1 += tn;
 		pn2 += tn;
 		pn3 += tn;

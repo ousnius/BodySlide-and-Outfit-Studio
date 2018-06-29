@@ -491,7 +491,7 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 		GetPickRay(ScreenX, ScreenY, m, d, o);
 
 		std::vector<IntersectResult> results;
-		if (m->bvh->IntersectRay(o, d, &results)) {
+		if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
 			ret = true;
 			if (results.size() > 0) {
 				if (!m->bVisible)
@@ -580,7 +580,7 @@ bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
 		GetPickRay(ScreenX, ScreenY, m, d, o);
 
 		std::vector<IntersectResult> results;
-		if (m->bvh->IntersectRay(o, d, &results)) {
+		if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
