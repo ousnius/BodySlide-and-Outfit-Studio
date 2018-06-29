@@ -829,6 +829,9 @@ int OutfitProject::SaveSliderOBJ(const std::string& sliderName, const std::strin
 
 	std::string target = ShapeToTarget(shapeName);
 	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shapeName);
+	if (!verts)
+		return 2;
+
 	const std::vector<Vector2>* uvs = workNif.GetUvsForShape(shapeName);
 	const std::vector<Vector3> norms;
 
@@ -843,9 +846,9 @@ int OutfitProject::SaveSliderOBJ(const std::string& sliderName, const std::strin
 
 	ObjFile obj;
 	obj.SetScale(Vector3(0.1f, 0.1f, 0.1f));
-	obj.AddGroup(shapeName, outVerts, tris, *uvs, norms);
+	obj.AddGroup(shapeName, outVerts, tris, uvs ? *uvs : std::vector<Vector2>(), norms);
 	if (obj.Save(fileName))
-		return 2;
+		return 3;
 
 	return 0;
 }
@@ -2285,14 +2288,17 @@ int OutfitProject::ExportOBJ(const std::string& fileName, const std::vector<std:
 			return 2;
 
 		const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(s);
+		if (!verts)
+			return 3;
+
 		const std::vector<Vector2>* uvs = workNif.GetUvsForShape(s);
 		const std::vector<Vector3>* norms = workNif.GetNormalsForShape(s, false);
 
-		obj.AddGroup(s, *verts, tris, *uvs, *norms);
+		obj.AddGroup(s, *verts, tris, uvs ? *uvs : std::vector<Vector2>(), norms ? *norms : std::vector<Vector3>());
 	}
 
 	if (obj.Save(fileName))
-		return 2;
+		return 4;
 
 	return 0;
 }
