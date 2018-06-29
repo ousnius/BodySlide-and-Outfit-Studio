@@ -210,8 +210,8 @@ private:
 	BlockRef<NiAVObject> targetRef;
 	BlockRef<BSSkinBoneData> dataRef;
 
-	uint numUnk = 0;
-	std::vector<Vector3> unk;
+	uint numScales = 0;
+	std::vector<Vector3> scales;
 
 public:
 	static constexpr const char* BlockName = "BSSkin::Instance";

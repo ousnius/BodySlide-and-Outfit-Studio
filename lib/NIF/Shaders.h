@@ -462,9 +462,9 @@ public:
 	float wetnessMetalness = 0.0f;			// User Version == 12, User Version 2 >= 130
 
 	ushort unkEnvmap = 0;											// Shader Type == 1, User Version == 12, User Version 2 >= 130
-	Vector3 skinTintColor;											// Shader Type == 5
-	uint unkSkinTint = 0;											// Shader Type == 5, User Version == 12, User Version 2 >= 130
-	Vector3 hairTintColor;											// Shader Type == 6
+	Vector3 skinTintColor = Vector3(1.0f, 1.0f, 1.0f);				// Shader Type == 5
+	float skinTintAlpha = 0.0f;										// Shader Type == 5, User Version == 12, User Version 2 >= 130
+	Vector3 hairTintColor = Vector3(1.0f, 1.0f, 1.0f);				// Shader Type == 6
 	float maxPasses = 1.0f;											// Shader Type == 7
 	float scale = 1.0f;												// Shader Type == 7
 	float parallaxInnerLayerThickness = 0.0f;						// Shader Type == 11

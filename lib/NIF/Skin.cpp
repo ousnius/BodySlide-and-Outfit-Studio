@@ -651,10 +651,10 @@ void BSSkinInstance::Get(NiStream& stream) {
 	dataRef.Get(stream);
 	boneRefs.Get(stream);
 
-	stream >> numUnk;
-	unk.resize(numUnk);
-	for (int i = 0; i < numUnk; i++)
-		stream >> unk[i];
+	stream >> numScales;
+	scales.resize(numScales);
+	for (int i = 0; i < numScales; i++)
+		stream >> scales[i];
 }
 
 void BSSkinInstance::Put(NiStream& stream) {
@@ -664,9 +664,9 @@ void BSSkinInstance::Put(NiStream& stream) {
 	dataRef.Put(stream);
 	boneRefs.Put(stream);
 
-	stream << numUnk;
-	for (int i = 0; i < numUnk; i++)
-		stream << unk[i];
+	stream << numScales;
+	for (int i = 0; i < numScales; i++)
+		stream << scales[i];
 }
 
 void BSSkinInstance::GetChildRefs(std::set<Ref*>& refs) {

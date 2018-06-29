@@ -559,7 +559,7 @@ void BSLightingShaderProperty::Get(NiStream& stream) {
 		break;
 	case 5:
 		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
-			stream >> unkSkinTint;
+			stream >> skinTintAlpha;
 
 		stream >> skinTintColor;
 		break;
@@ -632,7 +632,7 @@ void BSLightingShaderProperty::Put(NiStream& stream) {
 		break;
 	case 5:
 		if (stream.GetVersion().User() == 12 && stream.GetVersion().Stream() >= 130)
-			stream << unkSkinTint;
+			stream << skinTintAlpha;
 
 		stream << skinTintColor;
 		break;
