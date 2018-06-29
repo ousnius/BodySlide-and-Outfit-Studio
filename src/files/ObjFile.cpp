@@ -288,6 +288,8 @@ int ObjFile::Save(const std::string &fileName) {
 		file << "g " << d.first << std::endl;
 		file << "usemtl NoMaterial_" << groupCount << std::endl << std::endl;
 
+		file << "s 1" << std::endl;
+
 		for (int i = 0; i < d.second->tris.size(); i++) {
 			file << "f " << d.second->tris[i].p1 + pointOffset;
 
