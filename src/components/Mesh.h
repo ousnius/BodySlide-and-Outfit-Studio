@@ -175,8 +175,7 @@ public:
 	// Also requires trivisit and pointvisit to be allocated by the caller.
 	bool ConnectedPointsInSphere2(Vector3 center, float sqradius, int startTri, bool* trivisit, bool* pointvisit, int outPoints[], int& nOutPoints, std::vector<int>& outFacets);
 
-	// Convenience function to gather connected points, taking into account "welded" vertices.
-	// Optionally sorts the results by distance. Does not clear the output set.
+	// Convenience function to gather connected points, taking into account "welded" vertices. Does not clear the output set.
 	void GetAdjacentPoints(int querypoint, std::set<int>& outPoints);
 
 	// More optimized adjacency fetch, using edge adjacency and storing the output in a static array.

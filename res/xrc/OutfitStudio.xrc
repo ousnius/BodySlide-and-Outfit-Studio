@@ -1374,6 +1374,15 @@
 				<help>Decrease brush strength</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="btnMaskLess">
+				<label>Mask Less\tA</label>
+				<help>Mask Less</help>
+			</object>
+			<object class="wxMenuItem" name="btnMaskMore">
+				<label>Mask More\tD</label>
+				<help>Mask More</help>
+			</object>
+			<object class="separator" />
 			<object class="wxMenuItem" name="btnInvertMask">
 				<label>Invert Mask\tCtrl+I</label>
 				<help>Invert Mask</help>

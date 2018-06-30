@@ -1027,6 +1027,18 @@ msgstr "Pinselstärke verringern\tCtrl+-"
 msgid "Decrease brush strength"
 msgstr "Verringert die Stärke des Pinsels"
 
+msgid "Mask Less\tA"
+msgstr "Weniger maskieren\tA"
+
+msgid "Mask Less"
+msgstr "Weniger maskieren"
+
+msgid "Mask More\tD"
+msgstr "Mehr maskieren\tD"
+
+msgid "Mask More"
+msgstr "Mehr maskieren"
+
 msgid "Invert Mask\tCtrl+I"
 msgstr "Maske umkehren\tCtrl+I"
 

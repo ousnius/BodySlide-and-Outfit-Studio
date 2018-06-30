@@ -253,43 +253,46 @@ void mesh::ScaleVertices(const Vector3& center, const float& factor) {
 }
 
 void mesh::GetAdjacentPoints(int querypoint, std::set<int>& outPoints) {
-	int tp1;
-	int tp2;
-	int tp3;
-	int wq;
+	int tp1 = 0;
+	int tp2 = 0;
+	int tp3 = 0;
+	int wq = 0;
+
 	if (!vertTris)
 		return;
 
 	auto vtris = vertTris.get();
-	for (uint t = 0; t < vtris[querypoint].size(); t++) {
+	auto addWeldVerts = [&](int qp) {
+		if (weldVerts.find(qp) != weldVerts.end()) {
+			for (size_t v = 0; v < weldVerts[qp].size(); v++) {
+				wq = weldVerts[qp][v];
+				outPoints.insert(wq);
+			}
+		}
+	};
+
+	addWeldVerts(querypoint);
+
+	for (size_t t = 0; t < vtris[querypoint].size(); t++) {
 		tp1 = tris[vtris[querypoint][t]].p1;
 		tp2 = tris[vtris[querypoint][t]].p2;
 		tp3 = tris[vtris[querypoint][t]].p3;
-		if (tp1 != querypoint)
-			outPoints.insert(tp1);
-		if (tp2 != querypoint)
-			outPoints.insert(tp2);
-		if (tp3 != querypoint)
-			outPoints.insert(tp3);		
-	}
 
-	if (weldVerts.find(querypoint) != weldVerts.end()) {
-		for (uint v = 0; v < weldVerts[querypoint].size(); v++) {
-			wq = weldVerts[querypoint][v];
-			for (uint t = 0; t < vtris[wq].size(); t++) {
-				tp1 = tris[vtris[wq][t]].p1;
-				tp2 = tris[vtris[wq][t]].p2;
-				tp3 = tris[vtris[wq][t]].p3;
-				if (tp1 != wq)
-					outPoints.insert(tp1);
-				if (tp2 != wq)
-					outPoints.insert(tp2);
-				if (tp3 != wq)
-					outPoints.insert(tp3);		
-			}
+		if (tp1 != querypoint) {
+			outPoints.insert(tp1);
+			addWeldVerts(tp1);
+		}
+
+		if (tp2 != querypoint) {
+			outPoints.insert(tp2);
+			addWeldVerts(tp2);
+		}
+
+		if (tp3 != querypoint) {
+			outPoints.insert(tp3);
+			addWeldVerts(tp3);
 		}
 	}
-	/* TODO: sort by distance */
 }
 
 int mesh::GetAdjacentPoints(int querypoint, int outPoints[], int maxPoints) {

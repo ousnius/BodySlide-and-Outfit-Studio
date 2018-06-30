@@ -121,6 +121,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnDecreaseSize"), OutfitStudioFrame::OnDecBrush)
 	EVT_MENU(XRCID("btnIncreaseStr"), OutfitStudioFrame::OnIncStr)
 	EVT_MENU(XRCID("btnDecreaseStr"), OutfitStudioFrame::OnDecStr)
+	EVT_MENU(XRCID("btnMaskLess"), OutfitStudioFrame::OnMaskLess)
+	EVT_MENU(XRCID("btnMaskMore"), OutfitStudioFrame::OnMaskMore)
 	EVT_MENU(XRCID("btnClearMask"), OutfitStudioFrame::OnClearMask)
 	EVT_MENU(XRCID("btnInvertMask"), OutfitStudioFrame::OnInvertMask)
 	EVT_MENU(XRCID("btnShowMask"), OutfitStudioFrame::OnShowMask)
@@ -6645,6 +6647,30 @@ void OutfitStudioFrame::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {
 		ShapeProperties prop(this, project->GetWorkNif(), shape);
 		prop.ShowModal();
 	}
+}
+
+void OutfitStudioFrame::OnMaskLess(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem)
+		return;
+
+	glView->MaskLess();
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
+	else
+		glView->Render();
+}
+
+void OutfitStudioFrame::OnMaskMore(wxCommandEvent& WXUNUSED(event)) {
+	if (!activeItem)
+		return;
+
+	glView->MaskMore();
+
+	if (glView->GetTransformMode())
+		glView->ShowTransformTool();
+	else
+		glView->Render();
 }
 
 void OutfitStudioFrame::OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event) {

@@ -892,6 +892,18 @@ msgstr ""
 msgid "Decrease brush strength"
 msgstr ""
 
+msgid "Mask Less\tA"
+msgstr ""
+
+msgid "Mask Less"
+msgstr ""
+
+msgid "Mask More\tD"
+msgstr ""
+
+msgid "Mask More"
+msgstr ""
+
 msgid "Invert Mask\tCtrl+I"
 msgstr ""
 

@@ -401,6 +401,44 @@ public:
 				mask[i] = m->vcolors[i].x;
 	}
 
+	void MaskLess() {
+		for (auto &m : gls.GetActiveMeshes()) {
+			std::set<int> unmaskPoints;
+			for (int i = 0; i < m->nVerts; i++) {
+				if (m->vcolors[i].x > 0.0f) {
+					std::set<int> adjacentPoints;
+					m->GetAdjacentPoints(i, adjacentPoints);
+
+					for (auto& adj : adjacentPoints) {
+						if (m->vcolors[adj].x == 0.0f) {
+							unmaskPoints.insert(i);
+							break;
+						}
+					}
+				}
+			}
+
+			for (auto& up : unmaskPoints)
+				m->vcolors[up].x = 0.0f;
+
+			m->QueueUpdate(mesh::UpdateType::VertexColors);
+		}
+	}
+
+	void MaskMore() {
+		for (auto &m : gls.GetActiveMeshes()) {
+			std::set<int> adjacentPoints;
+			for (int i = 0; i < m->nVerts; i++)
+				if (m->vcolors[i].x > 0.0f)
+					m->GetAdjacentPoints(i, adjacentPoints);
+
+			for (auto& adj : adjacentPoints)
+				m->vcolors[adj].x = 1.0f;
+
+			m->QueueUpdate(mesh::UpdateType::VertexColors);
+		}
+	}
+
 	void InvertMaskTris(std::unordered_map<ushort, float>& mask, const std::string& shapeName) {
 		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
@@ -1043,6 +1081,9 @@ private:
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
+
+	void OnMaskLess(wxCommandEvent& event);
+	void OnMaskMore(wxCommandEvent& event);
 
 	void OnNPWizChangeSliderSetFile(wxFileDirPickerEvent& event);
 	void OnNPWizChangeSetNameChoice(wxCommandEvent& event);
