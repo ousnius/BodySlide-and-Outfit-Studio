@@ -6168,6 +6168,8 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 	else
 		RefreshGUIFromProj();
 
+	UpdateActiveShapeUI();
+
 	for (auto &s : sliderDisplays) {
 		glView->SetStrokeManager(&s.second->sliderStrokes);
 		glView->GetStrokeManager()->Clear();
@@ -6214,6 +6216,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	project->SetTextures();
 	RefreshGUIFromProj();
+	UpdateActiveShapeUI();
 
 	for (auto &s : sliderDisplays) {
 		glView->SetStrokeManager(&s.second->sliderStrokes);
