@@ -352,12 +352,10 @@ bool GLSurface::CollideMeshes(int ScreenX, int ScreenY, Vector3& outOrigin, Vect
 		std::vector<IntersectResult> results;
 		if (m->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
-				collided = true;
-
-				if (!m->bVisible) {
-					collided = false;
+				if (!m->bVisible)
 					continue;
-				}
+
+				collided = true;
 
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
@@ -470,9 +468,9 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 }
 
 bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
-	bool ret = false;
+	bool collided = false;
 	if (activeMeshes.empty())
-		return ret;
+		return collided;
 
 	if (outHoverTri)
 		(*outHoverTri) = -1;
@@ -492,10 +490,11 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 
 		std::vector<IntersectResult> results;
 		if (m->bvh && m->bvh->IntersectRay(o, d, &results)) {
-			ret = true;
 			if (results.size() > 0) {
 				if (!m->bVisible)
 					continue;
+
+				collided = true;
 
 				int min_i = 0;
 				float minDist = results[0].HitDistance;
@@ -563,8 +562,8 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 		}
 	}
 
-	ShowCursor(ret);
-	return ret;
+	ShowCursor(collided);
+	return collided;
 }
 
 bool GLSurface::GetCursorVertex(int ScreenX, int ScreenY, int* outIndex) {
