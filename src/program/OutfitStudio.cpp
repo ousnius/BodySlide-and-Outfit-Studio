@@ -1599,6 +1599,12 @@ bool OutfitStudioFrame::NotifyStrokeStarting() {
 	if (bEditSlider || project->AllSlidersZero())
 		return true;
 
+	auto activeBrush = glView->GetActiveBrush();
+	if (activeBrush) {
+		if (activeBrush->Type() == TBT_MASK || activeBrush->Type() == TBT_WEIGHT)
+			return true;
+	}
+
 	int	response = wxMessageBox(_("You can only edit the base shape when all sliders are zero. Do you wish to set all sliders to zero now?  Note, use the pencil button next to a slider to enable editing of that slider's morph."),
 		wxMessageBoxCaptionStr, wxYES_NO, this);
 
