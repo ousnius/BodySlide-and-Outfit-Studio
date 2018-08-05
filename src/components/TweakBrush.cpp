@@ -474,8 +474,6 @@ void TweakBrush::brushAction(mesh *refmesh, TweakPickInfo& pickInfo, int* points
 
 TB_Mask::TB_Mask() :TweakBrush() {
 	brushType = TBT_MASK;
-	strength = 0.1f;
-	focus = 4.75f;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Mask Brush";
@@ -496,14 +494,11 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 		movedpoints[points[i]] = vc;
 
 		ve = vc;
-		if (strength < 0.1f)
-			ve.x += strength;
-		else
-			ve.x += 1.0f;
+		ve.x += 1.0f;
 		ve -= vc;
 
-		if (focus < 5.0f)
-			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (pickInfo.origin.DistanceTo(vs) > radius)
+			ve.Zero();
 
 		vf = vc + ve;
 		if (vf.x > 1.0f)
@@ -527,14 +522,11 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 		movedpoints[i] = vc;
 
 		ve = vc;
-		if (strength < 0.1f)
-			ve.x += strength;
-		else
-			ve.x += 1.0f;
+		ve.x += 1.0f;
 		ve -= vc;
 
-		if (focus < 5.0f)
-			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (pickInfo.origin.DistanceTo(vs) > radius)
+			ve.Zero();
 
 		vf = vc + ve;
 		if (vf.x > 1.0f)
@@ -548,8 +540,6 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 
 TB_Unmask::TB_Unmask() :TweakBrush() {
 	brushType = TBT_MASK;
-	strength = -0.1f;
-	focus = 4.75f;
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unmask Brush";
@@ -570,14 +560,11 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		movedpoints[points[i]] = vc;
 
 		ve = vc;
-		if (strength > -0.1f)
-			ve.x += strength;
-		else
-			ve.x -= 1.0f;
+		ve.x -= 1.0f;
 		ve -= vc;
 
-		if (focus < 5.0f)
-			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (pickInfo.origin.DistanceTo(vs) > radius)
+			ve.Zero();
 
 		vf = vc + ve;
 		if (vf.x < 0.0f)
@@ -601,14 +588,11 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		movedpoints[i] = vc;
 
 		ve = vc;
-		if (strength > -0.1f)
-			ve.x += strength;
-		else
-			ve.x -= 1.0f;
+		ve.x -= 1.0f;
 		ve -= vc;
 
-		if (focus < 5.0f)
-			applyFalloff(ve, pickInfo.origin.DistanceTo(vs));
+		if (pickInfo.origin.DistanceTo(vs) > radius)
+			ve.Zero();
 
 		vf = vc + ve;
 		if (vf.x < 0.0f)
