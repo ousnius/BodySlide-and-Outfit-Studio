@@ -1697,7 +1697,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			wxMessageBox(wxString().Format(_("Failed to write TRI file to the following location\n\n%s"), triPath), _("Unable to process"), wxOK | wxICON_ERROR);
 		}
 
-		if (targetGame < FO4) {
+		if (targetGame != FO4) {
 			for (auto targetShape = activeSet.ShapesBegin(); targetShape != activeSet.ShapesEnd(); ++targetShape) {
 				auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
 				if (!shape)
@@ -2136,7 +2136,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
 
-			if (targetGame < FO4) {
+			if (targetGame != FO4) {
 				for (auto targetShape = currentSet.ShapesBegin(); targetShape != currentSet.ShapesEnd(); ++targetShape) {
 					auto shape = nifBig.FindBlockByName<NiShape>(targetShape->first);
 					if (!shape)
@@ -2383,7 +2383,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	val = BodySlideConfig["LastOutfitFilter"];
 	outfitsearch->ChangeValue(val);
 
-	if (app->targetGame != SKYRIM && app->targetGame != FO4)
+	if (app->targetGame != SKYRIM && app->targetGame != FO4 && app->targetGame != SKYRIMSE)
 		XRCCTRL(*this, "cbMorphs", wxCheckBox)->Show(false);
 }
 
