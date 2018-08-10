@@ -727,39 +727,63 @@ bool BodySlideApp::WriteMorphTRI(const std::string& triPath, SliderSet& sliderSe
 		if (!shape)
 			continue;
 
+		const std::vector<ushort>& shapeZapIndices = zapIndices[targetShape->first];
+
+		int shapeVertCount = shape->GetNumVertices();
+		shapeVertCount += shapeZapIndices.size();
+
+		if (shapeVertCount <= 0)
+			continue;
+
+		if (shapeZapIndices.size() > 0 && shapeZapIndices.back() >= shapeVertCount)
+			continue;
+
 		for (int s = 0; s < sliderSet.size(); s++) {
 			std::string dn = sliderSet[s].TargetDataName(targetShape->second.targetShape);
 			std::string target = targetShape->second.targetShape;
 			if (dn.empty())
 				continue;
 
-			if (!sliderSet[s].bUV && !sliderSet[s].bClamp && !sliderSet[s].bZap) {
+			if (!sliderSet[s].bClamp && !sliderSet[s].bZap) {
 				MorphDataPtr morph = std::make_shared<MorphData>();
 				morph->name = sliderSet[s].name;
 
-				const std::vector<ushort>& shapeZapIndices = zapIndices[targetShape->first];
+				if (sliderSet[s].bUV) {
+					morph->type = MORPHTYPE_UV;
 
-				std::vector<Vector3> verts;
-				int shapeVertCount = shape->GetNumVertices();
-				shapeVertCount += shapeZapIndices.size();
-				if (shapeVertCount > 0)
+					std::vector<Vector2> uvs;
+					uvs.resize(shapeVertCount);
+
+					currentDiffs.ApplyUVDiff(dn, target, 1.0f, &uvs);
+
+					for (int i = shapeZapIndices.size() - 1; i >= 0; i--)
+						uvs.erase(uvs.begin() + shapeZapIndices[i]);
+
+					int i = 0;
+					for (auto &uv : uvs) {
+						Vector3 v(uv.u, uv.v, 0.0f);
+						if (!v.IsZero(true))
+							morph->offsets.emplace(i, v);
+						i++;
+					}
+				}
+				else {
+					morph->type = MORPHTYPE_POSITION;
+
+					std::vector<Vector3> verts;
 					verts.resize(shapeVertCount);
-				else
-					continue;
 
-				currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
+					currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
 
-				if (shapeZapIndices.size() > 0 && shapeZapIndices.back() >= verts.size())
-					continue;
+					for (int i = shapeZapIndices.size() - 1; i >= 0; i--)
+						verts.erase(verts.begin() + shapeZapIndices[i]);
 
-				for (int i = shapeZapIndices.size() - 1; i >= 0; i--)
-					verts.erase(verts.begin() + shapeZapIndices[i]);
-				
-				int i = 0;
-				for (auto &v : verts) {
-					if (!v.IsZero(true))
-						morph->offsets.emplace(i, v);
-					i++;
+					int i = 0;
+					for (auto &v : verts) {
+						if (!v.IsZero(true))
+							morph->offsets.emplace(i, v);
+						i++;
+					}
 				}
 
 				if (morph->offsets.size() > 0)

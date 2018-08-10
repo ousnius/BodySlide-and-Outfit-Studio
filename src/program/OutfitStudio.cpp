@@ -5052,6 +5052,11 @@ void OutfitStudioFrame::OnSliderImportTRI(wxCommandEvent& WXUNUSED(event)) {
 
 			std::unordered_map<ushort, Vector3> diff(morphData->offsets.begin(), morphData->offsets.end());
 			project->SetSliderFromDiff(morphData->name, morph.first, diff);
+
+			if (morphData->type == MORPHTYPE_UV) {
+				int sliderIndex = project->SliderIndexFromName(morphData->name);
+				project->SetSliderUV(sliderIndex, true);
+			}
 		}
 	}
 

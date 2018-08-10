@@ -759,39 +759,67 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 	std::string triFilePath = triPath;
 
 	for (auto &shape : workNif.GetShapeNames()) {
+		int shapeVertCount = GetVertexCount(shape);
+		if (shapeVertCount <= 0)
+			continue;
+
 		bool bIsOutfit = true;
 		if (IsBaseShape(shape))
 			bIsOutfit = false;
 
 		for (int s = 0; s < activeSet.size(); s++) {
-			if (!activeSet[s].bUV && !activeSet[s].bClamp && !activeSet[s].bZap) {
+			if (!activeSet[s].bClamp && !activeSet[s].bZap) {
 				MorphDataPtr morph = std::make_shared<MorphData>();
 				morph->name = activeSet[s].name;
 
-				std::vector<Vector3> verts;
-				int shapeVertCount = GetVertexCount(shape);
+				if (activeSet[s].bUV) {
+					morph->type = MORPHTYPE_UV;
 
-				if (shapeVertCount > 0)
-					verts.resize(shapeVertCount);
-				else
-					continue;
-				
-				std::string target = ShapeToTarget(shape);
-				if (!bIsOutfit) {
-					std::string dn = activeSet[s].TargetDataName(target);
-					if (dn.empty())
-						continue;
+					std::vector<Vector2> uvs;
+					uvs.resize(shapeVertCount);
 
-					currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
+					std::string target = ShapeToTarget(shape);
+					if (!bIsOutfit) {
+						std::string dn = activeSet[s].TargetDataName(target);
+						if (dn.empty())
+							continue;
+
+						currentDiffs.ApplyUVDiff(dn, target, 1.0f, &uvs);
+					}
+					else
+						morpher.ApplyResultToUVs(morph->name, target, &uvs);
+
+					int i = 0;
+					for (auto &uv : uvs) {
+						Vector3 v(uv.u, uv.v, 0.0f);
+						if (!v.IsZero(true))
+							morph->offsets.emplace(i, v);
+						i++;
+					}
 				}
-				else
-					morpher.ApplyResultToVerts(morph->name, target, &verts);
+				else {
+					morph->type = MORPHTYPE_POSITION;
 
-				int i = 0;
-				for (auto &v : verts) {
-					if (!v.IsZero(true))
-						morph->offsets.emplace(i, v);
-					i++;
+					std::vector<Vector3> verts;
+					verts.resize(shapeVertCount);
+
+					std::string target = ShapeToTarget(shape);
+					if (!bIsOutfit) {
+						std::string dn = activeSet[s].TargetDataName(target);
+						if (dn.empty())
+							continue;
+
+						currentDiffs.ApplyDiff(dn, target, 1.0f, &verts);
+					}
+					else
+						morpher.ApplyResultToVerts(morph->name, target, &verts);
+
+					int i = 0;
+					for (auto &v : verts) {
+						if (!v.IsZero(true))
+							morph->offsets.emplace(i, v);
+						i++;
+					}
 				}
 
 				if (morph->offsets.size() > 0)

@@ -13,8 +13,14 @@ See the included LICENSE file
 #include <memory>
 #include <algorithm>
 
+enum MorphType : byte {
+	MORPHTYPE_POSITION,
+	MORPHTYPE_UV
+};
+
 struct MorphData {
 	std::string name;
+	MorphType type = MORPHTYPE_POSITION;
 	std::map<int, Vector3> offsets;
 };
 
@@ -34,4 +40,7 @@ public:
 
 	MorphDataPtr GetMorph(const std::string& shapeName, const std::string& morphName);
 	std::map<std::string, std::vector<MorphDataPtr>> GetMorphs();
+
+	ushort GetShapeCount(MorphType morphType);
+	ushort GetMorphCount(const std::string& shapeName, MorphType morphType);
 };
