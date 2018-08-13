@@ -5511,7 +5511,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 				d->sliderNameCheck->SetName(sn + "|check");
 				d->sliderReadout->SetName(sn + "|readout");
 				d->sliderName->SetLabel(sn);
-				activeSlider = sliderName;
+				activeSlider = std::move(sliderName);
 			}
 		}
 	}
@@ -5543,7 +5543,7 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& event) {
 		pos++;
 	}
 
-	selectedItems = selectedItemsSave;
+	selectedItems = std::move(selectedItemsSave);
 
 	if (statusBar)
 		statusBar->SetStatusText(_("All shapes conformed."));
@@ -5616,7 +5616,7 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 		if (result.empty())
 			return;
 
-		newShapeName = result;
+		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
 	wxLogMessage("Renaming shape '%s' to '%s'.", activeItem->shapeName, newShapeName);
@@ -6214,7 +6214,7 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 		if (result.empty())
 			return;
 
-		newShapeName = result;
+		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
 	project->DuplicateShape(activeItem->shapeName, newShapeName);
@@ -6254,7 +6254,7 @@ void OutfitStudioFrame::OnDupeShape(wxCommandEvent& WXUNUSED(event)) {
 			if (result.empty())
 				return;
 
-			newName = result;
+			newName = std::move(result);
 		} while (project->IsValidShape(newName));
 
 		wxLogMessage("Duplicating shape '%s' as '%s'.", activeItem->shapeName, newName);

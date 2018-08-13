@@ -55,7 +55,7 @@ void PresetSaveDialog::FilterGroups(const std::string& filter) {
 					filteredGroups.push_back(group);
 			}
 		}
-		catch (std::regex_error) {
+		catch (std::regex_error&) {
 			for (auto &group : allGroupNames)
 				filteredGroups.push_back(group);
 		}

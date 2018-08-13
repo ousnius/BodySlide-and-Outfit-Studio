@@ -21,7 +21,8 @@ wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_CLOSE(GroupManager::OnClose)
 wxEND_EVENT_TABLE()
 
-GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits) {
+GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
+	: allOutfits(std::move(outfits)) {
 	wxXmlResource *xrc = wxXmlResource::Get();
 	xrc->Load("res\\xrc\\GroupManager.xrc");
 	xrc->LoadDialog(this, parent, "dlgGroupManager");
@@ -42,7 +43,6 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits) {
 	listMembers = XRCCTRL(*this, "listMembers", wxListBox);
 	listOutfits = XRCCTRL(*this, "listOutfits", wxListBox);
 
-	allOutfits = outfits;
 	RefreshUI();
 }
 

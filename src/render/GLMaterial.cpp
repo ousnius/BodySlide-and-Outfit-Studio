@@ -25,9 +25,9 @@ GLMaterial::GLMaterial(ResourceLoader* resLoader, std::string texName, const std
 	shader = GLShader(vertShaderProg, fragShaderProg);
 }
 
-GLMaterial::GLMaterial(ResourceLoader* resLoader, std::vector<std::string> inTexNames, const std::string& vertShaderProg, const std::string& fragShaderProg) {
+GLMaterial::GLMaterial(ResourceLoader* resLoader, std::vector<std::string> inTexNames, const std::string& vertShaderProg, const std::string& fragShaderProg)
+	: texNames(inTexNames) {
 	resLoaderRef = resLoader;
-	texNames = inTexNames;
 	resLoader->CacheStamp(cacheTime);
 	texCache.resize(inTexNames.size(), 0);
 	for (int i = 0; i < inTexNames.size(); i++)
