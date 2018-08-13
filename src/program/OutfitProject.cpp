@@ -1685,7 +1685,7 @@ int OutfitProject::LoadReferenceNif(const std::string& fileName, const std::stri
 		if (IsBaseShape(s)) {
 			std::string newName = s + "_ref";
 			refNif.RenameShape(s, newName);
-			baseShape = newName;
+			baseShape = std::move(newName);
 			break;
 		}
 	}
@@ -1771,7 +1771,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 		if (s == shape) {
 			std::string newName = s + "_ref";
 			refNif.RenameShape(s, newName);
-			shape = newName;
+			shape = std::move(newName);
 			break;
 		}
 	}
@@ -1807,7 +1807,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 				DeleteShape(s);
 	}
 
-	baseShape = shape;
+	baseShape = std::move(shape);
 
 	if (mergeSliders)
 		activeSet.LoadSetDiffData(baseDiffData, baseShape);
@@ -1862,7 +1862,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 		if (shape) {
 			NiShader* shader = workNif.GetShader(shape);
 			if (shader && shader->IsSkinTinted()) {
-				newBaseShape = shapeName;
+				newBaseShape = std::move(shapeName);
 				break;
 			}
 		}
@@ -1884,7 +1884,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 
 	// Prevent duplication if valid reference was found
 	DeleteShape(newBaseShape);
-	baseShape = newBaseShape;
+	baseShape = std::move(newBaseShape);
 
 	owner->UpdateProgress(90, _("Updating slider data..."));
 	morpher.LoadResultDiffs(activeSet);

@@ -382,6 +382,8 @@ bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* result
 		return false;
 
 	bool* pointVisit = (bool*)calloc(refmesh->nVerts, sizeof(bool));
+	if (!pointVisit)
+		return false;
 
 	if (bConnected && !IResults.empty()) {
 		int pickFacet = IResults[0].HitFacet;
@@ -840,10 +842,16 @@ bool TB_Move::strokeInit(const std::vector<mesh*>& refMeshes, TweakPickInfo& pic
 		meshCache->nCachedPointsM = 0;
 		meshCache->cachedPoints = (int*)malloc(m->nVerts * sizeof(int));
 
+		if (!meshCache->cachedPoints)
+			continue;
+
 		if (bMirror) {
 			meshCache->cachedPointsM = (int*)malloc(m->nVerts * sizeof(int));
 			meshCache->cachedFacetsM.clear();
 			meshCache->cachedNodesM.clear();
+
+			if (!meshCache->cachedPointsM)
+				continue;
 		}
 
 		if (!TweakBrush::queryPoints(m, pick, meshCache->cachedPoints, meshCache->nCachedPoints, meshCache->cachedFacets, meshCache->cachedNodes))

@@ -38,7 +38,7 @@ public:
 
 	std::vector<DiffInfo> dataFiles;
 
-	SliderData(const std::string& inName = "");
+	SliderData(std::string inName = "");
 	~SliderData();
 
 	// Gets the slider's data record name for the specified target.

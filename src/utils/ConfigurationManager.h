@@ -28,13 +28,13 @@ public:
 		isDefault = false;
 		SettingFromXML(srcElement);
 	}
-	ConfigurationItem(const std::string& text, ConfigurationItem* inParent = nullptr, int inLevel = 0) {
+	ConfigurationItem(std::string text, ConfigurationItem* inParent = nullptr, int inLevel = 0)
+		: value(std::move(text)) {
 		parent = inParent;
 		level = inLevel;
 		isProp = false;
 		isComment = true;
 		isDefault = false;
-		value = text;
 	}
 	~ConfigurationItem();
 

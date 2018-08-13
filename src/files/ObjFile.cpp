@@ -113,7 +113,7 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 				else {
 					// Don't keep empty group
 					data.erase(current->name);
-					current->name = "";
+					current->name.clear();
 				}
 			}
 

@@ -9,8 +9,8 @@ See the included LICENSE file
 #include <wx/dir.h>
 #include <wx/tokenzr.h>
 
-SliderData::SliderData(const std::string& inName) {
-	name = inName;
+SliderData::SliderData(std::string inName)
+	: name(std::move(inName)) {
 }
 
 SliderData::~SliderData() {

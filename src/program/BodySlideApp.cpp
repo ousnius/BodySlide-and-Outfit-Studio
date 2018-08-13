@@ -881,8 +881,8 @@ void BodySlideApp::InitPreview() {
 		sliderManager.FlagReload(false);
 	}
 
-	previewBaseName = inputFileName;
-	previewSetName = inputSetName;
+	previewBaseName = std::move(inputFileName);
+	previewSetName = std::move(inputSetName);
 	
 	preview->ShowWeight(activeSet.GenWeights());
 
@@ -2044,8 +2044,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			zapIdxAll.emplace(it->first, std::vector<ushort>());
 
 			for (int s = 0; s < currentSet.size(); s++) {
-				std::string dn = currentSet[s].TargetDataName(it->second.targetShape);
 				std::string target = it->second.targetShape;
+				std::string dn = currentSet[s].TargetDataName(target);
 				if (dn.empty())
 					continue;
 
@@ -2357,7 +2357,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		return;
 	}
 
-	xrc->LoadFrame(this, GetParent(), "bodySlideFrame");
+	loaded = xrc->LoadFrame(this, GetParent(), "bodySlideFrame");
 	if (!loaded) {
 		wxMessageBox(_("Failed to load BodySlide frame!"), _("Error"), wxICON_ERROR);
 		Close(true);
