@@ -786,7 +786,7 @@ int NifFile::Save(std::fstream& file, const NifSaveOptions& options) {
 
 		// Get previous stream pos of block size array and overwrite
 		std::streampos blockSizePos = hdr.GetBlockSizeStreamPos();
-		if (blockSizePos.seekpos() != std::fpos_t()) {
+		if (blockSizePos != std::streampos()) {
 			file.seekg(blockSizePos);
 
 			for (int i = 0; i < hdr.GetNumBlocks(); i++)
