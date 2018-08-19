@@ -1293,36 +1293,36 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrol
 }
 
 std::string OutfitStudioFrame::NewSlider(const std::string& suggestedName, bool skipPrompt) {
-	std::string namebase = "NewSlider";
+	std::string baseName = "New Slider";
 	if (!suggestedName.empty())
-		namebase = suggestedName;
+		baseName = suggestedName;
 
-	char thename[256];
-	_snprintf_s(thename, 256, 256, "%s", namebase.c_str());
 	int count = 1;
+	std::string fillName = baseName;
 
-	while (sliderDisplays.find(thename) != sliderDisplays.end())
-		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
+	while (project->ValidSlider(fillName))
+		fillName = wxString::Format("%s %d", baseName, ++count).ToUTF8();
 
-	std::string finalName;
+	std::string sliderName;
 	if (!skipPrompt) {
-		finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this).ToUTF8();
-		if (finalName.empty())
-			return finalName;
+		do {
+			sliderName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
+			if (sliderName.empty())
+				return sliderName;
+		} while (project->ValidSlider(sliderName));
 	}
-	else {
-		finalName = thename;
-	}
+	else
+		sliderName = fillName;
 
-	wxLogMessage("Creating new slider '%s'.", finalName);
+	wxLogMessage("Creating new slider '%s'.", sliderName);
 
-	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
-	project->AddEmptySlider(finalName);
-	ShowSliderEffect(finalName);
+	project->AddEmptySlider(sliderName);
+	ShowSliderEffect(sliderName);
 	sliderScroll->FitInside();
 
-	return finalName;
+	return sliderName;
 }
 
 void OutfitStudioFrame::SetSliderValue(int index, int val) {
@@ -5252,49 +5252,49 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 		return;
 	}
 
-	std::string namebase = "NewZap";
-	char thename[256];
-	_snprintf_s(thename, 256, 256, "%s", namebase.c_str());
+	std::string baseName = "New Zap";
+
 	int count = 1;
+	std::string fillName = baseName;
 
-	while (sliderDisplays.find(thename) != sliderDisplays.end())
-		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
+	while (project->ValidSlider(fillName))
+		fillName = wxString::Format("%s %d", baseName, ++count).ToUTF8();
 
-	std::string finalName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), thename, this).ToUTF8();
-	if (finalName.empty())
+	std::string sliderName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), fillName, this).ToUTF8();
+	if (sliderName.empty())
 		return;
 
-	wxLogMessage("Creating new zap '%s'.", finalName);
-	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+	wxLogMessage("Creating new zap '%s'.", sliderName);
+	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
 	std::unordered_map<ushort, float> unmasked;
 	for (auto &i : selectedItems) {
 		unmasked.clear();
 		glView->GetShapeUnmasked(unmasked, i->shapeName);
-		project->AddZapSlider(finalName, unmasked, i->shapeName);
+		project->AddZapSlider(sliderName, unmasked, i->shapeName);
 	}
 
-	ShowSliderEffect(finalName);
+	ShowSliderEffect(sliderName);
 	sliderScroll->FitInside();
 }
 
 void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
-	std::string namebase = "NewSlider";
-	char thename[256];
-	_snprintf_s(thename, 256, 256, "%s", namebase.c_str());
+	std::string baseName = "New Slider";
+
 	int count = 1;
+	std::string fillName = baseName;
 
-	while (sliderDisplays.find(thename) != sliderDisplays.end())
-		_snprintf_s(thename, 256, 256, "%s%d", namebase.c_str(), count++);
+	while (project->ValidSlider(fillName))
+		fillName = wxString::Format("%s %d", baseName, ++count).ToUTF8();
 
-	std::string finalName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), thename, this).ToUTF8();
-	if (finalName.empty())
+	std::string sliderName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
+	if (sliderName.empty())
 		return;
 
-	wxLogMessage("Creating new combined slider '%s'.", finalName);
-	createSliderGUI(finalName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+	wxLogMessage("Creating new combined slider '%s'.", sliderName);
+	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 
-	project->AddCombinedSlider(finalName);
+	project->AddCombinedSlider(sliderName);
 	sliderScroll->FitInside();
 }
 
@@ -5498,7 +5498,7 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 			project->SetSliderDefault(curSlider, hiVal, true);
 
 			std::string sliderName = edSliderName->GetValue().ToUTF8();
-			if (activeSlider != sliderName) {
+			if (activeSlider != sliderName && !project->ValidSlider(sliderName)) {
 				project->SetSliderName(curSlider, sliderName);
 				SliderDisplay* d = sliderDisplays[activeSlider];
 				sliderDisplays[sliderName] = d;
