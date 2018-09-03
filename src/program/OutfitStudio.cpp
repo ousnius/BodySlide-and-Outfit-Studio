@@ -102,6 +102,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	
 	EVT_MENU(XRCID("btnSelect"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnTransform"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnPivot"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnVertexEdit"), OutfitStudioFrame::OnSelectTool)
 
 	EVT_MENU(XRCID("btnMaskBrush"), OutfitStudioFrame::OnSelectTool)
@@ -394,7 +395,6 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("LogLevel", "3");
 	Config.SetDefaultValue("UseSystemLanguage", "false");
 	Config.SetDefaultValue("Input/LeftMousePan", "false");
-	Config.SetDefaultValue("Editing/CenterMode", "Selected");
 	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);
@@ -4112,6 +4112,14 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		return;
 	}
 
+	if (id == XRCID("btnPivot")) {
+		bool checked = event.IsChecked();
+		menuBar->Check(XRCID("btnPivot"), checked);
+		toolBar->ToggleTool(XRCID("btnPivot"), checked);
+		glView->SetPivotMode(checked);
+		return;
+	}
+
 	if (id == XRCID("btnVertexEdit")) {
 		bool checked = event.IsChecked();
 		menuBar->Check(XRCID("btnVertexEdit"), checked);
@@ -4403,6 +4411,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
 		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnTransform"), true);
+		GetMenuBar()->Enable(XRCID("btnPivot"), true);
 		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
 		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
@@ -4414,6 +4423,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), true);
+		GetToolBar()->EnableTool(XRCID("btnPivot"), true);
 		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), true);
 		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), true);
@@ -4475,6 +4485,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
 		GetMenuBar()->Enable(XRCID("btnWeightBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnTransform"), false);
+		GetMenuBar()->Enable(XRCID("btnPivot"), false);
 		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
 		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
@@ -4485,6 +4496,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
+		GetToolBar()->EnableTool(XRCID("btnPivot"), false);
 		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), false);
 		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
@@ -4540,6 +4552,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Check(XRCID("btnShowMask"), false);
 		GetMenuBar()->Enable(XRCID("btnSelect"), false);
 		GetMenuBar()->Enable(XRCID("btnTransform"), false);
+		GetMenuBar()->Enable(XRCID("btnPivot"), false);
 		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
 		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
@@ -4555,6 +4568,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), false);
 		GetToolBar()->EnableTool(XRCID("btnSelect"), false);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
+		GetToolBar()->EnableTool(XRCID("btnPivot"), false);
 		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), false);
 		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
@@ -4607,6 +4621,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Check(XRCID("btnShowMask"), false);
 		GetMenuBar()->Enable(XRCID("btnSelect"), false);
 		GetMenuBar()->Enable(XRCID("btnTransform"), false);
+		GetMenuBar()->Enable(XRCID("btnPivot"), false);
 		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
 		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
@@ -4622,6 +4637,7 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetToolBar()->ToggleTool(XRCID("btnBrushCollision"), false);
 		GetToolBar()->EnableTool(XRCID("btnSelect"), false);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
+		GetToolBar()->EnableTool(XRCID("btnPivot"), false);
 		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), false);
 		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
@@ -6858,6 +6874,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	bWeightPaint = false;
 	isPainting = false;
 	isTransforming = false;
+	isMovingPivot = false;
 	isSelecting = false;
 	bXMirror = true;
 	bConnectedEdit = false;
@@ -7151,7 +7168,11 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			activeBrush = &UnMaskBrush;
 		}
 	}
-	else if (activeBrush != &weightBrush && wxGetKeyState(WXK_SHIFT)) {
+	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
+		smoothMaskBrush.setStrength(maskBrush.getStrength() * 15.0f);
+		activeBrush = &smoothMaskBrush;
+	}
+	else if (activeBrush != &weightBrush && activeBrush != &maskBrush && wxGetKeyState(WXK_SHIFT)) {
 		activeBrush = &smoothBrush;
 	}
 
@@ -7344,6 +7365,8 @@ bool wxGLPanel::StartTransform(const wxPoint& screenPos) {
 			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
 		}
 	}
+	else
+		return false;
 
 	activeStroke = strokeManager->CreateStroke(gls.GetActiveMeshes(), &translateBrush);
 
@@ -7373,7 +7396,7 @@ void wxGLPanel::UpdateTransform(const wxPoint& screenPos) {
 
 	activeStroke->updateStroke(tpi);
 
-	ShowTransformTool(true, true);
+	ShowTransformTool();
 }
 
 void wxGLPanel::EndTransform() {
@@ -7389,6 +7412,82 @@ void wxGLPanel::EndTransform() {
 	}
 
 	ShowTransformTool();
+}
+
+bool wxGLPanel::StartPivotPosition(const wxPoint& screenPos) {
+	TweakPickInfo tpi;
+	mesh* hitMesh;
+	bool hit = gls.CollideOverlay(screenPos.x, screenPos.y, tpi.origin, tpi.normal, &hitMesh, &tpi.facet);
+	if (!hit)
+		return false;
+
+	tpi.center = pivotPosition;
+
+	std::string mname = hitMesh->shapeName;
+	if (mname.find("PivotMesh") != std::string::npos) {
+		translateBrush.SetXFormType(0);
+		switch (mname[0]) {
+		case 'X':
+			tpi.view = Vector3(1.0f, 0.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
+			break;
+		case 'Y':
+			tpi.view = Vector3(0.0f, 1.0f, 0.0f);
+			tpi.normal = Vector3(0.0f, 0.0f, 1.0f);
+			break;
+		case 'Z':
+			tpi.view = Vector3(0.0f, 0.0f, 1.0f);
+			tpi.normal = Vector3(1.0f, 0.0f, 0.0f);
+			break;
+		}
+	}
+	else
+		return false;
+
+	std::vector<mesh*> strokeMeshes{ hitMesh };
+	activeStroke = strokeManager->CreateStroke(strokeMeshes, &translateBrush);
+	activeStroke->beginStroke(tpi);
+
+	XPivotMesh->bVisible = false;
+	YPivotMesh->bVisible = false;
+	ZPivotMesh->bVisible = false;
+	PivotCenterMesh->bVisible = false;
+	hitMesh->bVisible = true;
+	return true;
+}
+
+void wxGLPanel::UpdatePivotPosition(const wxPoint& screenPos) {
+	TweakPickInfo tpi;
+	Vector3 pn;
+	float pd;
+
+	translateBrush.GetWorkingPlane(pn, pd);
+	gls.CollidePlane(screenPos.x, screenPos.y, tpi.origin, pn, -pd);
+
+	activeStroke->updateStroke(tpi);
+}
+
+void wxGLPanel::EndPivotPosition() {
+	activeStroke->endStroke();
+
+	std::vector<mesh*> refMeshes = activeStroke->GetRefMeshes();
+	if (refMeshes.size() > 0) {
+		mesh* pivotHitMesh = refMeshes[0];
+		auto pivotStartState = activeStroke->pointStartState.find(pivotHitMesh);
+		auto pivotEndState = activeStroke->pointEndState.find(pivotHitMesh);
+
+		if (pivotStartState != activeStroke->pointStartState.end() && pivotEndState != activeStroke->pointEndState.end()) {
+			if (pivotStartState->second.size() > 0 && pivotEndState->second.size() > 0) {
+				Vector3& pivotStartStatePos = pivotStartState->second[0];
+				Vector3& pivotEndStatePos = pivotEndState->second[0];
+				Vector3 pivotDiff = pivotEndStatePos - pivotStartStatePos;
+				pivotPosition += pivotDiff;
+			}
+		}
+	}
+
+	activeStroke = nullptr;
+	ShowPivot();
 }
 
 bool wxGLPanel::SelectVertex(const wxPoint& screenPos) {
@@ -7482,41 +7581,13 @@ bool wxGLPanel::RedoStroke() {
 	return ret;
 }
 
-void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
-	std::string mode = Config.GetString("Editing/CenterMode");
-	if (mode == "Object") {
-		if (!gls.GetActiveMeshes().empty()) {
-			mesh* m = gls.GetActiveMeshes().back();
-			xformCenter = m->CreateBVH()->Center();
-
-			glm::vec3 cm(m->matModel * glm::vec4(xformCenter.x, xformCenter.y, xformCenter.z, 1.0));
-			xformCenter = Vector3(cm.x, cm.y, cm.z);
-		}
-	}
-	else if (mode == "Selected")
-		xformCenter = gls.GetActiveCenter();
+void wxGLPanel::ShowTransformTool(bool show) {
+	if (pivotMode)
+		xformCenter = pivotPosition;
 	else
-		xformCenter.Zero();
+		xformCenter = gls.GetActiveCenter();
 
 	if (show) {
-		bool XMoveVis = true, YMoveVis = true, ZMoveVis = true;
-		bool XRotateVis = true, YRotateVis = true, ZRotateVis = true;
-		bool XScaleVis = true, YScaleVis = true, ZScaleVis = true;
-		bool ScaleUniformVis = true;
-
-		if (keepVisibility && XMoveMesh) {
-			XMoveVis = XMoveMesh->bVisible;
-			YMoveVis = YMoveMesh->bVisible;
-			ZMoveVis = ZMoveMesh->bVisible;
-			XRotateVis = XRotateMesh->bVisible;
-			YRotateVis = YRotateMesh->bVisible;
-			ZRotateVis = ZRotateMesh->bVisible;
-			XScaleVis = XScaleMesh->bVisible;
-			YScaleVis = YScaleMesh->bVisible;
-			ZScaleVis = ZScaleMesh->bVisible;
-			ScaleUniformVis = ScaleUniformMesh->bVisible;
-		}
-
 		XMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(1.0f, 0.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(1.0f, 0.0f, 0.0f), "XMoveMesh");
 		YMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 1.0f, 0.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 1.0f, 0.0f), "YMoveMesh");
 		ZMoveMesh = gls.AddVis3dArrow(xformCenter, Vector3(0.0f, 0.0f, 1.0f), 0.04f, 0.15f, 1.75f, Vector3(0.0f, 0.0f, 1.0f), "ZMoveMesh");
@@ -7532,17 +7603,22 @@ void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
 
 		lastCenterDistance = 0.0f;
 
-		if (keepVisibility) {
-			XMoveMesh->bVisible = XMoveVis;
-			YMoveMesh->bVisible = YMoveVis;
-			ZMoveMesh->bVisible = ZMoveVis;
-			XRotateMesh->bVisible = XRotateVis;
-			YRotateMesh->bVisible = YRotateVis;
-			ZRotateMesh->bVisible = ZRotateVis;
-			XScaleMesh->bVisible = XScaleVis;
-			YScaleMesh->bVisible = YScaleVis;
-			ZScaleMesh->bVisible = ZScaleVis;
-			ScaleUniformMesh->bVisible = ScaleUniformVis;
+		XMoveMesh->bVisible = true;
+		YMoveMesh->bVisible = true;
+		ZMoveMesh->bVisible = true;
+		XRotateMesh->bVisible = true;
+		YRotateMesh->bVisible = true;
+		ZRotateMesh->bVisible = true;
+		XScaleMesh->bVisible = true;
+		YScaleMesh->bVisible = true;
+		ZScaleMesh->bVisible = true;
+		ScaleUniformMesh->bVisible = true;
+
+		if (XPivotMesh) {
+			XPivotMesh->bVisible = false;
+			YPivotMesh->bVisible = false;
+			ZPivotMesh->bVisible = false;
+			PivotCenterMesh->bVisible = false;
 		}
 	}
 	else {
@@ -7557,6 +7633,13 @@ void wxGLPanel::ShowTransformTool(bool show, bool keepVisibility) {
 			YScaleMesh->bVisible = false;
 			ZScaleMesh->bVisible = false;
 			ScaleUniformMesh->bVisible = false;
+		}
+
+		if (XPivotMesh && pivotMode) {
+			XPivotMesh->bVisible = true;
+			YPivotMesh->bVisible = true;
+			ZPivotMesh->bVisible = true;
+			PivotCenterMesh->bVisible = true;
 		}
 	}
 
@@ -7604,6 +7687,59 @@ void wxGLPanel::UpdateTransformTool() {
 	YScaleMesh->ScaleVertices(xformCenter, lastCenterDistance);
 	ZScaleMesh->ScaleVertices(xformCenter, lastCenterDistance);
 	ScaleUniformMesh->ScaleVertices(xformCenter, lastCenterDistance);
+}
+
+void wxGLPanel::ShowPivot(bool show) {
+	if (show) {
+		XPivotMesh = gls.AddVis3dArrow(pivotPosition, Vector3(1.0f, 0.0f, 0.0f), 0.03f, 0.1f, 1.0f, Vector3(1.0f, 0.0f, 0.0f), "XPivotMesh");
+		YPivotMesh = gls.AddVis3dArrow(pivotPosition, Vector3(0.0f, 1.0f, 0.0f), 0.03f, 0.1f, 1.0f, Vector3(0.0f, 1.0f, 0.0f), "YPivotMesh");
+		ZPivotMesh = gls.AddVis3dArrow(pivotPosition, Vector3(0.0f, 0.0f, 1.0f), 0.03f, 0.1f, 1.0f, Vector3(0.0f, 0.0f, 1.0f), "ZPivotMesh");
+		PivotCenterMesh = gls.AddVis3dCube(pivotPosition, Vector3(1.0f, 0.0f, 0.0f), 0.075f, Vector3(0.0f, 0.0f, 0.0f), "PivotCenterMesh");
+
+		XPivotMesh->bVisible = true;
+		YPivotMesh->bVisible = true;
+		ZPivotMesh->bVisible = true;
+		PivotCenterMesh->bVisible = true;
+
+		lastCenterPivotDistance = 0.0f;
+	}
+	else {
+		if (XPivotMesh) {
+			XPivotMesh->bVisible = false;
+			YPivotMesh->bVisible = false;
+			ZPivotMesh->bVisible = false;
+			PivotCenterMesh->bVisible = false;
+		}
+	}
+
+	UpdatePivot();
+	gls.RenderOneFrame();
+}
+
+void wxGLPanel::UpdatePivot() {
+	if (!pivotMode)
+		return;
+
+	if (!XPivotMesh)
+		return;
+
+	Vector3 unprojected;
+	gls.UnprojectCamera(unprojected);
+
+	if (lastCenterPivotDistance != 0.0f) {
+		float factor = 1.0f / lastCenterPivotDistance;
+		XPivotMesh->ScaleVertices(pivotPosition, factor);
+		YPivotMesh->ScaleVertices(pivotPosition, factor);
+		ZPivotMesh->ScaleVertices(pivotPosition, factor);
+		PivotCenterMesh->ScaleVertices(pivotPosition, factor);
+	}
+
+	lastCenterPivotDistance = unprojected.DistanceTo(pivotPosition) / 15.0f;
+
+	XPivotMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
+	YPivotMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
+	ZPivotMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
+	PivotCenterMesh->ScaleVertices(pivotPosition, lastCenterPivotDistance);
 }
 
 void wxGLPanel::ShowVertexEdit(bool show) {
@@ -7673,6 +7809,7 @@ void wxGLPanel::OnMouseWheel(wxMouseEvent& event) {
 		int delt = event.GetWheelRotation();
 		gls.DollyCamera(delt);
 		UpdateTransformTool();
+		UpdatePivot();
 	}
 
 	gls.RenderOneFrame();
@@ -7698,6 +7835,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.PanCamera(x - lastX, y - lastY);
 
 		UpdateTransformTool();
+		UpdatePivot();
 		gls.RenderOneFrame();
 	}
 
@@ -7712,6 +7850,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		}
 
 		UpdateTransformTool();
+		UpdatePivot();
 		gls.RenderOneFrame();
 	}
 
@@ -7719,6 +7858,9 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		isLDragging = true;
 		if (isTransforming) {
 			UpdateTransform(event.GetPosition());
+		}
+		else if (isMovingPivot) {
+			UpdatePivotPosition(event.GetPosition());
 		}
 		else if (isPainting) {
 			UpdateBrushStroke(event.GetPosition());
@@ -7730,6 +7872,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			if (Config.MatchValue("Input/LeftMousePan", "true")) {
 				gls.PanCamera(x - lastX, y - lastY);
 				UpdateTransformTool();
+				UpdatePivot();
 			}
 		}
 
@@ -7746,7 +7889,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 			gls.ShowCursor(false);
 		}
 
-		if (transformMode && !isTransforming) {
+		if ((transformMode || pivotMode) && !isTransforming && !isMovingPivot) {
 			if (XMoveMesh) {
 				XMoveMesh->color = Vector3(1.0f, 0.0f, 0.0f);
 				YMoveMesh->color = Vector3(0.0f, 1.0f, 0.0f);
@@ -7758,14 +7901,21 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 				YScaleMesh->color = Vector3(0.0f, 1.0f, 0.0f);
 				ZScaleMesh->color = Vector3(0.0f, 0.0f, 1.0f);
 				ScaleUniformMesh->color = Vector3(0.0f, 0.0f, 0.0f);
+			}
 
-				Vector3 outOrigin, outNormal;
-				mesh* hitMesh = nullptr;
-				if (gls.CollideOverlay(x, y, outOrigin, outNormal, &hitMesh)) {
-					if (hitMesh) {
-						hitMesh->color = Vector3(1.0f, 1.0f, 0.0f);
-						gls.ShowCursor(false);
-					}
+			if (XPivotMesh) {
+				XPivotMesh->color = Vector3(1.0f, 0.0f, 0.0f);
+				YPivotMesh->color = Vector3(0.0f, 1.0f, 0.0f);
+				ZPivotMesh->color = Vector3(0.0f, 0.0f, 1.0f);
+				PivotCenterMesh->color = Vector3(0.0f, 0.0f, 0.0f);
+			}
+
+			Vector3 outOrigin, outNormal;
+			mesh* hitMesh = nullptr;
+			if (gls.CollideOverlay(x, y, outOrigin, outNormal, &hitMesh)) {
+				if (hitMesh && hitMesh != PivotCenterMesh) {
+					hitMesh->color = Vector3(1.0f, 1.0f, 0.0f);
+					gls.ShowCursor(false);
 				}
 			}
 		}
@@ -7800,25 +7950,32 @@ void wxGLPanel::OnLeftDown(wxMouseEvent& event) {
 		CaptureMouse();
 
 	lbuttonDown = true;
-	bool meshHit = false;
 
 	if (transformMode) {
-		meshHit = StartTransform(event.GetPosition());
-		if (meshHit)
+		bool meshHit = StartTransform(event.GetPosition());
+		if (meshHit) {
 			isTransforming = true;
+			return;
+		}
 	}
 
-	if (!meshHit) {
-		if (editMode) {
-			meshHit = StartBrushStroke(event.GetPosition());
-			if (meshHit)
-				isPainting = true;
+	if (pivotMode) {
+		bool meshHit = StartPivotPosition(event.GetPosition());
+		if (meshHit) {
+			isMovingPivot = true;
+			return;
 		}
-		else if (vertexEdit) {
-			meshHit = SelectVertex(event.GetPosition());
-			if (meshHit)
-				isSelecting = true;
-		}
+	}
+
+	if (editMode) {
+		bool meshHit = StartBrushStroke(event.GetPosition());
+		if (meshHit)
+			isPainting = true;
+	}
+	else if (vertexEdit) {
+		bool meshHit = SelectVertex(event.GetPosition());
+		if (meshHit)
+			isSelecting = true;
 	}
 }
 
@@ -7861,6 +8018,11 @@ void wxGLPanel::OnLeftUp(wxMouseEvent& event) {
 		isTransforming = false;
 	}
 
+	if (isMovingPivot) {
+		EndPivotPosition();
+		isMovingPivot = false;
+	}
+
 	if (isSelecting)
 		isSelecting = false;
 
@@ -7879,6 +8041,11 @@ void wxGLPanel::OnCaptureLost(wxMouseCaptureLostEvent& WXUNUSED(event)) {
 	if (isTransforming) {
 		EndTransform();
 		isTransforming = false;
+	}
+
+	if (isMovingPivot) {
+		EndPivotPosition();
+		isMovingPivot = false;
 	}
 
 	if (isSelecting)

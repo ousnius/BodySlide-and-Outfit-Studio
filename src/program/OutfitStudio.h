@@ -155,13 +155,20 @@ public:
 	void UpdateTransform(const wxPoint& screenPos);
 	void EndTransform();
 
+	bool StartPivotPosition(const wxPoint& screenPos);
+	void UpdatePivotPosition(const wxPoint& screenPos);
+	void EndPivotPosition();
+
 	bool SelectVertex(const wxPoint& screenPos);
 
 	bool UndoStroke();
 	bool RedoStroke();
 
-	void ShowTransformTool(bool show = true, bool keepVisibility = false);
+	void ShowTransformTool(bool show = true);
 	void UpdateTransformTool();
+
+	void ShowPivot(bool show = true);
+	void UpdatePivot();
 
 	void ShowVertexEdit(bool show = true);
 	
@@ -186,6 +193,17 @@ public:
 	void SetTransformMode(bool on = true) {
 		transformMode = on;
 		ShowTransformTool(on);
+	}
+
+	bool GetPivotMode() {
+		return pivotMode;
+	}
+	void SetPivotMode(bool on = true) {
+		pivotMode = on;
+		ShowPivot(on);
+
+		if (transformMode)
+			ShowTransformTool();
 	}
 
 	bool GetSegmentMode() {
@@ -498,6 +516,12 @@ public:
 		YScaleMesh = nullptr;
 		ZScaleMesh = nullptr;
 		ScaleUniformMesh = nullptr;
+
+		XPivotMesh = nullptr;
+		YPivotMesh = nullptr;
+		ZPivotMesh = nullptr;
+		PivotCenterMesh = nullptr;
+
 		gls.Cleanup();
 	}
 
@@ -575,6 +599,7 @@ private:
 
 	bool editMode;
 	bool transformMode;
+	bool pivotMode;
 	bool vertexEdit;
 	bool segmentMode;
 
@@ -582,6 +607,7 @@ private:
 	bool bWeightPaint;
 	bool isPainting;
 	bool isTransforming;
+	bool isMovingPivot;
 	bool isSelecting;
 	bool bXMirror;
 	bool bConnectedEdit;
@@ -595,6 +621,7 @@ private:
 	TB_Smooth smoothBrush;
 	TB_Mask maskBrush;
 	TB_Unmask UnMaskBrush;
+	TB_SmoothMask smoothMaskBrush;
 	TB_Weight weightBrush;
 	TB_Unweight unweightBrush;
 	TB_SmoothWeight smoothWeightBrush;
@@ -616,6 +643,13 @@ private:
 	mesh* ScaleUniformMesh = nullptr;
 	Vector3 xformCenter;		// Transform center for transform brushes (rotate, specifically cares about this)
 	float lastCenterDistance;
+
+	mesh* XPivotMesh = nullptr;
+	mesh* YPivotMesh = nullptr;
+	mesh* ZPivotMesh = nullptr;
+	mesh* PivotCenterMesh = nullptr;
+	Vector3 pivotPosition;
+	float lastCenterPivotDistance;
 
 	wxDECLARE_EVENT_TABLE();
 };

@@ -1351,6 +1351,11 @@
 					<help>Shows a transform tool to manipulate shapes and vertices with.</help>
 					<checkable>1</checkable>
 				</object>
+				<object class="wxMenuItem" name="btnPivot">
+					<label>Pivot\tP</label>
+					<help>Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.</help>
+					<checkable>1</checkable>
+				</object>
 				<object class="wxMenuItem" name="btnVertexEdit">
 					<label>Vertex Edit\tQ</label>
 					<help>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</help>
@@ -1474,6 +1479,13 @@
 			<tooltip>Shows a transform tool to manipulate shapes and vertices with.</tooltip>
 			<bitmap>res\images\TransformTool.png</bitmap>
 			<bitmap2>res\images\TransformTool_d.png</bitmap2>
+			<toggle>1</toggle>
+		</object>
+		<object class="tool" name="btnPivot">
+			<label>Pivot</label>
+			<tooltip>Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.</tooltip>
+			<bitmap>res\images\Pivot.png</bitmap>
+			<bitmap2>res\images\Pivot_d.png</bitmap2>
 			<toggle>1</toggle>
 		</object>
 		<object class="tool" name="btnVertexEdit">

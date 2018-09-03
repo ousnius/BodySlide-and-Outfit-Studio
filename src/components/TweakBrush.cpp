@@ -479,6 +479,7 @@ TB_Mask::TB_Mask() :TweakBrush() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Mask Brush";
+	strength = 0.1f;
 }
 
 TB_Mask::~TB_Mask() {
@@ -496,11 +497,17 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 		movedpoints[points[i]] = vc;
 
 		ve = vc;
-		ve.x += 1.0f;
+		if (strength < 0.1f)
+			ve.x += strength;
+		else
+			ve.x += 1.0f;
 		ve -= vc;
 
-		if (pickInfo.origin.DistanceTo(vs) > radius)
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
 			ve.Zero();
+		else if (strength < 0.1f && focus < 5.0f)
+			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
 		if (vf.x > 1.0f)
@@ -524,11 +531,17 @@ void TB_Mask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, i
 		movedpoints[i] = vc;
 
 		ve = vc;
-		ve.x += 1.0f;
+		if (strength < 0.1f)
+			ve.x += strength;
+		else
+			ve.x += 1.0f;
 		ve -= vc;
 
-		if (pickInfo.origin.DistanceTo(vs) > radius)
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
 			ve.Zero();
+		else if (strength < 0.1f && focus < 5.0f)
+			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
 		if (vf.x > 1.0f)
@@ -545,6 +558,7 @@ TB_Unmask::TB_Unmask() :TweakBrush() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unmask Brush";
+	strength = -0.1f;
 }
 
 TB_Unmask::~TB_Unmask() {
@@ -562,11 +576,17 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		movedpoints[points[i]] = vc;
 
 		ve = vc;
-		ve.x -= 1.0f;
+		if (strength > -0.1f)
+			ve.x += strength;
+		else
+			ve.x -= 1.0f;
 		ve -= vc;
 
-		if (pickInfo.origin.DistanceTo(vs) > radius)
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
 			ve.Zero();
+		else if (strength > -0.1f && focus < 5.0f)
+			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
 		if (vf.x < 0.0f)
@@ -590,11 +610,17 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 		movedpoints[i] = vc;
 
 		ve = vc;
-		ve.x -= 1.0f;
+		if (strength > -0.1f)
+			ve.x += strength;
+		else
+			ve.x -= 1.0f;
 		ve -= vc;
 
-		if (pickInfo.origin.DistanceTo(vs) > radius)
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
 			ve.Zero();
+		else if (strength > -0.1f && focus < 5.0f)
+			applyFalloff(ve, originToV);
 
 		vf = vc + ve;
 		if (vf.x < 0.0f)
@@ -604,6 +630,208 @@ void TB_Unmask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points,
 	}
 
 	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+}
+
+TB_SmoothMask::TB_SmoothMask() :TweakBrush() {
+	brushType = TBT_MASK;
+	strength = 0.015f;
+	iterations = 1;
+	method = 1;
+	hcAlpha = 0.2f;
+	hcBeta = 0.5f;
+	bLiveBVH = false;
+	bLiveNormals = false;
+	bMirror = false;
+	lastMesh = nullptr;
+	brushName = "Mask Smooth";
+}
+
+TB_SmoothMask::~TB_SmoothMask() {
+}
+
+void TB_SmoothMask::lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
+	std::unordered_map<int, Vector3>::iterator mi;
+	Vector3 d;
+	int adjPoints[1000];
+	int c = 0;
+	int a;
+
+	for (int i = 0; i < nPoints; i++) {
+		c = refmesh->GetAdjacentPoints(points[i], adjPoints, 1000);
+		if (c == 0) continue;
+		d.x = d.y = d.z = 0;
+		// average adjacent points positions.  Since we're storing the changed vertices separately,
+		// there's additional complexity involved with making sure we're grabbing a changed vertex 
+		// instead of the original. This primarily comes into play when more than one iteration is used.
+		for (int n = 0; n < c; n++) {
+			a = adjPoints[n];
+			mi = wv.find(a);
+			if (mi != wv.end()) {
+				d += mi->second;
+			}
+			else {
+				d += refmesh->vcolors[a];
+			}
+		}
+		wv[points[i]] = d / (float)c;
+
+		if (refmesh->weldVerts.find(points[i]) != refmesh->weldVerts.end()) {
+			for (unsigned int v = 0; v < refmesh->weldVerts[points[i]].size(); v++) {
+				wv[refmesh->weldVerts[points[i]][v]] = wv[points[i]];
+			}
+		}
+	}
+}
+
+void TB_SmoothMask::hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv) {
+	std::unordered_map<int, Vector3>::iterator mi;
+
+	b.resize(refmesh->nVerts);
+	if (refmesh != lastMesh)
+		lastMesh = refmesh;
+	else
+		std::memset(b.data(), 0, b.size() * sizeof(Vector3));
+
+	Vector3 d;
+	Vector3 q;
+	int adjPoints[1000];
+	int a;
+	int c;
+	int i;
+	// First step is to calculate the laplacian
+	for (int p = 0; p < nPoints; p++) {
+		i = points[p];
+		c = refmesh->GetAdjacentPoints(i, adjPoints, 1000);
+		if (c == 0) continue;
+		d.x = d.y = d.z = 0;
+		// average adjacent points positions.  Since we're storing the changed vertices separately,
+		// there's additional complexity involved with making sure we're grabbing a changed vertex 
+		// instead of the original. This primarily comes into play when more than one iteration is used.
+		for (int n = 0; n < c; n++) {
+			a = adjPoints[n];
+			mi = wv.find(a);
+			if (mi != wv.end()) {
+				d += mi->second;
+			}
+			else {
+				d += refmesh->vcolors[a];
+			}
+		}
+		// Save the current point's working position (or original if the working value hasn't been calculated
+		// yet.)  This is used as part of the blend between original and changed position
+		mi = wv.find(i);
+		if (mi != wv.end())
+			q = wv[i];
+		else
+			q = refmesh->vcolors[i];
+
+		wv[i] = d / (float)c;
+		// Calculate the difference between the new position and a blend of the original and previous positions
+		b[i] = wv[i] - ((refmesh->vcolors[i] * hcAlpha) + (q * (1.0f - hcAlpha)));
+
+		if (refmesh->weldVerts.find(i) != refmesh->weldVerts.end()) {
+			for (unsigned int v = 0; v < refmesh->weldVerts[i].size(); v++) {
+				wv[refmesh->weldVerts[i][v]] = wv[i];
+			}
+		}
+	}
+
+	for (int p = 0; p < nPoints; p++) {
+		int j = points[p];
+		c = refmesh->GetAdjacentPoints(j, adjPoints, 1000);
+		if (c == 0) continue;
+		d.x = d.y = d.z = 0;
+		for (int n = 0; n < c; n++)
+			d += b[adjPoints[n]];
+
+		// blend the new position and the average of the distance moved
+		float avgB = (1 - hcBeta) / (float)c;
+		wv[j] -= ((b[j] * hcBeta) + (d * avgB));
+
+		if (refmesh->weldVerts.find(j) != refmesh->weldVerts.end()) {
+			for (unsigned int v = 0; v < refmesh->weldVerts[j].size(); v++) {
+				wv[refmesh->weldVerts[j][v]] = wv[j];
+			}
+		}
+	}
+}
+
+void TB_SmoothMask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+	std::unordered_map<int, Vector3> wv;
+	Vector3 vs;
+	Vector3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		movedpoints[points[i]] = refmesh->vcolors[points[i]];
+		wv[points[i]] = movedpoints[points[i]];
+	}
+
+	for (int iter = 0; iter < iterations; iter++) {
+		if (method == 0)		// laplacian smooth
+			lapFilter(refmesh, points, nPoints, wv);
+		else					// HC-laplacian smooth
+			hclapFilter(refmesh, points, nPoints, wv);
+	}
+
+	Vector3 delta;
+	if (strength != 1.0f) {
+		for (int p = 0; p < nPoints; p++) {
+			int i = points[p];
+			vs = refmesh->verts[i];
+			vc = refmesh->vcolors[i];
+			delta.x = wv[i].x - vc.x;
+			delta.x *= strength;
+
+			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+
+			vc.x += delta.x;
+
+			if (vc.x < EPSILON) vc.x = 0.0f;
+			if (vc.x > 1.0f) vc.x = 1.0f;
+			refmesh->vcolors[i].x = vc.x;
+		}
+
+		refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	}
+}
+
+void TB_SmoothMask::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
+	std::unordered_map<int, Vector3> wv;
+	Vector3 vs;
+	Vector3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		movedpoints[i] = refmesh->vcolors[points[i]];
+		wv[points[i]] = movedpoints[i];
+	}
+
+	for (int iter = 0; iter < iterations; iter++) {
+		if (method == 0)		// laplacian smooth
+			lapFilter(refmesh, points, nPoints, wv);
+		else					// HC-laplacian smooth
+			hclapFilter(refmesh, points, nPoints, wv);
+	}
+
+	Vector3 delta;
+	if (strength != 1.0f) {
+		for (int p = 0; p < nPoints; p++) {
+			int i = points[p];
+			vs = refmesh->verts[i];
+			vc = refmesh->vcolors[i];
+			delta.x = wv[i].x - vc.x;
+			delta.x *= strength;
+
+			applyFalloff(delta, pickInfo.origin.DistanceTo(vs));
+
+			vc.x += delta.x;
+
+			if (vc.x < EPSILON) vc.x = 0.0f;
+			if (vc.x > 1.0f) vc.x = 1.0f;
+			refmesh->vcolors[i].x = vc.x;
+		}
+
+		refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+	}
 }
 	
 TB_Deflate::TB_Deflate() :TweakBrush() {
@@ -915,7 +1143,9 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, std::unor
 			ve -= vs;
 			applyFalloff(ve, mpick.origin.DistanceTo(vs));
 
-			ve = ve * (1.0f - m->vcolors[i].x);
+			if (m->vcolors)
+				ve = ve * (1.0f - m->vcolors[i].x);
+
 			vf = vs + ve;
 
 			m->verts[i] = (vf);
@@ -930,7 +1160,9 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, std::unor
 		ve -= vs;
 		applyFalloff(ve, pick.origin.DistanceTo(vs));
 
-		ve = ve * (1.0f - m->vcolors[i].x);
+		if (m->vcolors)
+			ve = ve * (1.0f - m->vcolors[i].x);
+
 		vf = vs + ve;
 
 		m->verts[i] = (vf);
@@ -970,7 +1202,9 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3* 
 			ve -= vs;
 			applyFalloff(ve, mpick.origin.DistanceTo(vs));
 
-			ve = ve * (1.0f - m->vcolors[i].x);
+			if (m->vcolors)
+				ve = ve * (1.0f - m->vcolors[i].x);
+
 			vf = vs + ve;
 
 			m->verts[i] = (vf);
@@ -985,7 +1219,9 @@ void TB_Move::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3* 
 		ve -= vs;
 		applyFalloff(ve, pick.origin.DistanceTo(vs));
 
-		ve = ve * (1.0f - m->vcolors[i].x);
+		if (m->vcolors)
+			ve = ve * (1.0f - m->vcolors[i].x);
+
 		vf = vs + ve;
 
 		m->verts[i] = (vf);
@@ -1067,7 +1303,9 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, std::uno
 		ve = xform * vs;
 		ve -= vs;
 
-		ve = ve * (1.0f - m->vcolors[p].x);
+		if (m->vcolors)
+			ve = ve * (1.0f - m->vcolors[p].x);
+
 		vf = vs + ve;
 
 		m->verts[p] = (vf);
@@ -1147,7 +1385,9 @@ void TB_XForm::brushAction(mesh* m, TweakPickInfo& pickInfo, int*, int, Vector3*
 		ve = xform * vs;
 		ve -= vs;
 
-		ve = ve * (1.0f - m->vcolors[p].x);
+		if (m->vcolors)
+			ve = ve * (1.0f - m->vcolors[p].x);
+
 		vf = vs + ve;
 
 		m->verts[p] = (vf);

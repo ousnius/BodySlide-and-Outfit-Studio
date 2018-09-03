@@ -412,6 +412,9 @@ bool GLSurface::CollideOverlay(int ScreenX, int ScreenY, Vector3& outOrigin, Vec
 
 		if (ov->bvh->IntersectRay(o, d, &results)) {
 			if (results.size() > 0) {
+				if (!ov->bVisible)
+					continue;
+
 				collided = true;
 
 				int min_i = 0;
@@ -1249,27 +1252,33 @@ int GLSurface::AddVisCircle(const Vector3& center, const Vector3& normal, float 
 }
 
 mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, float holeRadius, float ringRadius, const Vector3& color, const std::string& name) {
-	int myMesh = GetOverlayID(name);
-	if (myMesh >= 0)
-		delete overlays[myMesh];
-	else
-		myMesh = -1;
-
-	mesh* m = new mesh();
 	const int nRingSegments = 36;
 	const int nRingSteps = 4;
 
-	m->nVerts = nRingSegments * nRingSteps;
-	m->nTris = m->nVerts * 2;
-	m->nEdges = 0;
+	mesh* m = nullptr;
 
-	m->verts = std::make_unique<Vector3[]>(m->nVerts);
-	m->tris = std::make_unique<Triangle[]>(m->nTris);
+	int meshID = GetOverlayID(name);
+	if (GetOverlayID(name) >= 0)
+		m = overlays[meshID];
 
-	m->shapeName = name;
+	if (!m) {
+		m = new mesh();
+
+		m->nVerts = nRingSegments * nRingSteps;
+		m->nTris = m->nVerts * 2;
+		m->nEdges = 0;
+		m->verts = std::make_unique<Vector3[]>(m->nVerts);
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
+
+		m->shapeName = name;
+		m->rendermode = RenderMode::UnlitSolid;
+		m->material = GetPrimitiveMaterial();
+
+		namedOverlays[m->shapeName] = overlays.size();
+		overlays.push_back(m);
+	}
+
 	m->color = color;
-	m->rendermode = RenderMode::UnlitSolid;
-	m->material = GetPrimitiveMaterial();
 
 	Matrix4 xf1;
 	xf1.Align(Vector3(0.0f, 0.0f, 1.0f), Vector3(1.0f, 0.0f, 0.0f));
@@ -1335,41 +1344,37 @@ mesh* GLSurface::AddVis3dRing(const Vector3& center, const Vector3& normal, floa
 	}
 
 	m->CreateBuffers();
-
-	if (myMesh >= 0) {
-		overlays[myMesh] = m;
-	}
-	else {
-		namedOverlays[m->shapeName] = overlays.size();
-		overlays.push_back(m);
-		myMesh = overlays.size() - 1;
-	}
-
 	return m;
 }
 
 
 mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const std::string& name) {
+	const int nRingVerts = 36;
 	Matrix4 rotMat;
 
-	int myMesh = GetOverlayID(name);
-	if (myMesh >= 0)
-		delete overlays[myMesh];
-	else
-		myMesh = -1;
+	mesh* m = nullptr;
 
-	mesh* m = new mesh();
+	int meshID = GetOverlayID(name);
+	if (GetOverlayID(name) >= 0)
+		m = overlays[meshID];
 
-	int nRingVerts = 36;
-	m->nVerts = nRingVerts * 3 + 1; // base ring, inner point ring, outer point ring, and the tip
-	m->nTris = nRingVerts * 5;
+	if (!m) {
+		m = new mesh();
+		m->nVerts = nRingVerts * 3 + 1; // base ring, inner point ring, outer point ring, and the tip
+		m->nTris = nRingVerts * 5;
+		m->verts = std::make_unique<Vector3[]>(m->nVerts);
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
+
+		m->shapeName = name;
+		m->rendermode = RenderMode::UnlitSolid;
+		m->material = GetPrimitiveMaterial();
+
+		namedOverlays[m->shapeName] = overlays.size();
+		overlays.push_back(m);
+	}
+
 	m->nEdges = 0;
-
-	m->verts = std::make_unique<Vector3[]>(m->nVerts);
 	m->color = color;
-	m->shapeName = name;
-	m->rendermode = RenderMode::UnlitSolid;
-	m->material = GetPrimitiveMaterial();
 
 	rotMat.Align(Vector3(0.0f, 0.0f, 1.0f), direction);
 	rotMat.Translate(origin);
@@ -1402,7 +1407,6 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 
 	int p1, p2, p3, p4, p5, p6, p7;
 	p7 = m->nVerts - 1;
-	m->tris = std::make_unique<Triangle[]>(m->nTris);
 	int t = 0;
 	for (int j = 0; j < nRingVerts; j++) {
 		p1 = j;
@@ -1437,39 +1441,36 @@ mesh* GLSurface::AddVis3dArrow(const Vector3& origin, const Vector3& direction, 
 	}
 
 	m->CreateBuffers();
-
-	if (myMesh >= 0) {
-		overlays[myMesh] = m;
-	}
-	else {
-		namedOverlays[m->shapeName] = overlays.size();
-		overlays.push_back(m);
-		myMesh = overlays.size() - 1;
-	}
 	return m;
 }
 
 mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name) {
+	const int nCubeVerts = 8;
+	const int nCubeTris = 12;
+	mesh* m = nullptr;
+
 	int meshID = GetOverlayID(name);
-	if (meshID >= 0)
-		delete overlays[meshID];
-	else
-		meshID = -1;
+	if (GetOverlayID(name) >= 0)
+		m = overlays[meshID];
 
-	mesh* m = new mesh();
+	if (!m) {
+		m = new mesh();
 
-	int nCubeVerts = 8;
-	int nCubeTris = 12;
-	m->nVerts = nCubeVerts;
-	m->nTris = nCubeTris;
-	m->nEdges = 0;
+		m->nVerts = nCubeVerts;
+		m->nTris = nCubeTris;
+		m->nEdges = 0;
+		m->verts = std::make_unique<Vector3[]>(m->nVerts);
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
 
-	m->verts = std::make_unique<Vector3[]>(m->nVerts);
-	m->tris = std::make_unique<Triangle[]>(m->nTris);
+		m->shapeName = name;
+		m->rendermode = RenderMode::UnlitSolid;
+		m->material = GetPrimitiveMaterial();
+
+		namedOverlays[m->shapeName] = overlays.size();
+		overlays.push_back(m);
+	}
+
 	m->color = color;
-	m->shapeName = name;
-	m->rendermode = RenderMode::UnlitSolid;
-	m->material = GetPrimitiveMaterial();
 
 	Matrix4 mat;
 	mat.Align(Vector3(0.0f, 0.0f, 1.0f), normal);
@@ -1499,15 +1500,6 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 	m->tris[11] = Triangle(6, 7, 3);
 
 	m->CreateBuffers();
-
-	if (meshID >= 0) {
-		overlays[meshID] = m;
-	}
-	else {
-		namedOverlays[m->shapeName] = overlays.size();
-		overlays.push_back(m);
-		meshID = overlays.size() - 1;
-	}
 	return m;
 }
 

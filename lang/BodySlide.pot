@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.7\n"
+"X-Generator: Poedit 2.1.1\n"
 "Language: en\n"
 "X-Poedit-KeywordsList: _\n"
 
@@ -859,6 +859,12 @@ msgstr ""
 msgid "Shows a transform tool to manipulate shapes and vertices with."
 msgstr ""
 
+msgid "Pivot\tF"
+msgstr ""
+
+msgid "Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale."
+msgstr ""
+
 msgid "Vertex Edit\tQ"
 msgstr ""
 
@@ -961,6 +967,9 @@ msgid ""
 msgstr ""
 
 msgid "Transform"
+msgstr ""
+
+msgid "Pivot"
 msgstr ""
 
 msgid "Vertex Edit"

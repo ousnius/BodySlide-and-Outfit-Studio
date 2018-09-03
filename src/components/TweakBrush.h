@@ -245,6 +245,31 @@ public:
 	}
 };
 
+class TB_SmoothMask : public TweakBrush {
+public:
+	std::string refBone;
+	int iterations;
+	byte method;				// 0 for laplacian, 1 for HC-Smooth.
+	float hcAlpha;				// Blending constants.
+	float hcBeta;
+
+	std::vector<Vector3> b;		// Scratch space used in the hc-lap smooth filter.
+	mesh* lastMesh;				// Last mesh smoothed, used to sync the hc-lap smooth scratch space.
+
+	void lapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
+	void hclapFilter(mesh* refmesh, int* points, int nPoints, std::unordered_map<int, Vector3>& wv);
+
+	TB_SmoothMask();
+	virtual ~TB_SmoothMask();
+
+	virtual bool strokeInit(const std::vector<mesh*>&, TweakPickInfo&) {
+		return true;
+	}
+
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
+};
+
 class TB_Deflate : public TweakBrush {
 public:
 	TB_Deflate();

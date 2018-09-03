@@ -390,7 +390,7 @@ void mesh::SetSmoothThreshold(float degrees) {
 }
 
 void mesh::SmoothNormals(const std::set<int>& vertices) {
-	if (lockNormals)
+	if (lockNormals || !norms)
 		return;
 
 	// Zero old normals

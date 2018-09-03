@@ -37,9 +37,6 @@
         <SliderMaximum>100</SliderMaximum>
         <!-- Set the left mouse button to pan the view when dragged on the canvas in Outfit Studio -->
         <LeftMousePan>false</LeftMousePan></Input>
-    <Editing>
-        <!-- Center for move/rotate operations. Object = bounding box center, Origin = (0,0,0), Selected = unmasked vertex centroid -->
-        <CenterMode>Selected</CenterMode></Editing>
     <!--Light Settings-->
     <Lights>
         <Ambient>20</Ambient>
