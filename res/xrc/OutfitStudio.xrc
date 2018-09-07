@@ -1123,6 +1123,21 @@
 					<help>Inverts the Y-axis of the texture coordinates.</help>
 				</object>
 			</object>
+			<object class="wxMenu" name="menuMirror">
+				<label>Mirror</label>
+				<object class="wxMenuItem" name="mirrorX">
+					<label>X</label>
+					<help>Mirror the selected shapes on the X-axis.</help>
+				</object>
+				<object class="wxMenuItem" name="mirrorY">
+					<label>Y</label>
+					<help>Mirror the selected shapes on the Y-axis.</help>
+				</object>
+				<object class="wxMenuItem" name="mirrorZ">
+					<label>Z</label>
+					<help>Mirror the selected shapes on the Z-axis.</help>
+				</object>
+			</object>
 			<object class="wxMenuItem" name="deleteVerts">
 				<label>Delete Vertices...</label>
 				<help>Deletes all unmasked vertices of the currently selected shapes.</help>
@@ -1585,6 +1600,21 @@
 			<object class="wxMenuItem" name="uvInvertY">
 				<label>Invert Y</label>
 				<help>Inverts the Y-axis of the texture coordinates.</help>
+			</object>
+		</object>
+		<object class="wxMenu" name="menuMirror">
+			<label>Mirror</label>
+			<object class="wxMenuItem" name="mirrorX">
+				<label>X</label>
+				<help>Mirror the selected shapes on the X-axis.</help>
+			</object>
+			<object class="wxMenuItem" name="mirrorY">
+				<label>Y</label>
+				<help>Mirror the selected shapes on the Y-axis.</help>
+			</object>
+			<object class="wxMenuItem" name="mirrorZ">
+				<label>Z</label>
+				<help>Mirror the selected shapes on the Z-axis.</help>
 			</object>
 		</object>
 		<object class="wxMenuItem" name="deleteVerts">

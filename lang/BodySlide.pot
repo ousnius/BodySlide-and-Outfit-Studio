@@ -576,6 +576,18 @@ msgstr ""
 msgid "Inverts the Y-axis of the texture coordinates."
 msgstr ""
 
+msgid "Mirror"
+msgstr ""
+
+msgid "Mirror the selected shapes on the X-axis."
+msgstr ""
+
+msgid "Mirror the selected shapes on the Y-axis."
+msgstr ""
+
+msgid "Mirror the selected shapes on the Z-axis."
+msgstr ""
+
 msgid "Duplicate..."
 msgstr ""
 

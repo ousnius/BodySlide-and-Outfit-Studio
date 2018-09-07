@@ -2055,6 +2055,55 @@ void NifFile::InvertUVsForShape(const std::string& shapeName, bool invertX, bool
 	}
 }
 
+void NifFile::MirrorShape(const std::string& shapeName, bool mirrorX, bool mirrorY, bool mirrorZ) {
+	auto shape = FindBlockByName<NiShape>(shapeName);
+	if (!shape)
+		return;
+
+	bool flipTris = false;
+	Matrix4 mirrorMat;
+
+	if (mirrorX) {
+		mirrorMat.Scale(-1.0f, 1.0f, 1.0f);
+		flipTris = !flipTris;
+	}
+
+	if (mirrorY) {
+		mirrorMat.Scale(1.0f, -1.0f, 1.0f);
+		flipTris = !flipTris;
+	}
+
+	if (mirrorZ) {
+		mirrorMat.Scale(1.0f, 1.0f, -1.0f);
+		flipTris = !flipTris;
+	}
+
+	if (shape->HasType<NiTriBasedGeom>()) {
+		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		if (geomData && !geomData->vertices.empty()) {
+				for (int i = 0; i < geomData->vertices.size(); ++i)
+					geomData->vertices[i] = mirrorMat * geomData->vertices[i];
+		}
+	}
+	else if (shape->HasType<BSTriShape>()) {
+		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+		if (bsTriShape) {
+				for (int i = 0; i < bsTriShape->vertData.size(); ++i)
+					bsTriShape->vertData[i].vert = mirrorMat * bsTriShape->vertData[i].vert;
+		}
+	}
+
+	if (flipTris) {
+		std::vector<Triangle> tris;
+		shape->GetTriangles(tris);
+
+		for (int i = 0; i < tris.size(); i++)
+			std::swap(tris[i].p1, tris[i].p3);
+
+		shape->SetTriangles(tris);
+	}
+}
+
 void NifFile::SetNormalsForShape(const std::string& shapeName, const std::vector<Vector3>& norms) {
 	auto shape = FindBlockByName<NiShape>(shapeName);
 	if (!shape)

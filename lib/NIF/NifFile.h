@@ -175,6 +175,7 @@ public:
 	void SetVertsForShape(const std::string& shapeName, const std::vector<Vector3>& verts);
 	void SetUvsForShape(const std::string& shapeName, const std::vector<Vector2>& uvs);
 	void InvertUVsForShape(const std::string& shapeName, bool invertX, bool invertY);
+	void MirrorShape(const std::string& shapeName, bool mirrorX, bool mirrorY, bool mirrorZ);
 	void SetNormalsForShape(const std::string& shapeName, const std::vector<Vector3>& norms);
 	void CalcNormalsForShape(const std::string& shapeName, const bool smooth = true, const float smoothThresh = 60.0f);
 	void CalcTangentsForShape(const std::string& shapeName);

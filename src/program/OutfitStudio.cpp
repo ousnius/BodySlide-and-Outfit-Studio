@@ -139,6 +139,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudioFrame::OnInvertUV)
 	EVT_MENU(XRCID("uvInvertY"), OutfitStudioFrame::OnInvertUV)
+	EVT_MENU(XRCID("mirrorX"), OutfitStudioFrame::OnMirror)
+	EVT_MENU(XRCID("mirrorY"), OutfitStudioFrame::OnMirror)
+	EVT_MENU(XRCID("mirrorZ"), OutfitStudioFrame::OnMirror)
 
 	EVT_MENU(XRCID("moveShape"), OutfitStudioFrame::OnMoveShape)
 	EVT_MENU(XRCID("scaleShape"), OutfitStudioFrame::OnScaleShape)
@@ -5616,6 +5619,22 @@ void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
 
 	for (auto &i : selectedItems)
 		project->GetWorkNif()->InvertUVsForShape(i->shapeName, invertX, invertY);
+
+	MeshesFromProj();
+}
+
+void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	bool mirrorX = (event.GetId() == XRCID("mirrorX"));
+	bool mirrorY = (event.GetId() == XRCID("mirrorY"));
+	bool mirrorZ = (event.GetId() == XRCID("mirrorZ"));
+
+	for (auto &i : selectedItems)
+		project->GetWorkNif()->MirrorShape(i->shapeName, mirrorX, mirrorY, mirrorZ);
 
 	MeshesFromProj();
 }

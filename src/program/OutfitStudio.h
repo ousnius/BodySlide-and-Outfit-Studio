@@ -1081,6 +1081,7 @@ private:
 	void OnSliderProperties(wxCommandEvent& event);
 
 	void OnInvertUV(wxCommandEvent& event);
+	void OnMirror(wxCommandEvent& event);
 
 	void OnEnterClose(wxKeyEvent& event);
 
