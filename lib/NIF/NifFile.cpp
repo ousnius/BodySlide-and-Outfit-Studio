@@ -1216,16 +1216,18 @@ bool NifFile::RenameDuplicateShapes() {
 					continue;
 				}
 
-				bool duped = countDupes(node, shape->GetName()) > 1;
+				std::string shapeName = shape->GetName();
+
+				bool duped = countDupes(node, shapeName) > 1;
 				if (duped) {
 					std::string dup = "_" + std::to_string(dupCount);
 
-					while (countDupes(node, shape->GetName() + dup) > 1) {
+					while (countDupes(node, shapeName + dup) > 1) {
 						dupCount++;
 						dup = "_" + std::to_string(dupCount);
 					}
 
-					shape->SetName(shape->GetName() + dup);
+					shape->SetName(shapeName + dup);
 					dupCount++;
 					renamed = true;
 				}

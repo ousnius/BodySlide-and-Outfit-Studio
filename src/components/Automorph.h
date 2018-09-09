@@ -81,7 +81,8 @@ public:
 	void ZeroVertDiff(const std::string& shapeName, const std::string& sliderName, std::vector<ushort>* vertSet, std::unordered_map<ushort, float>* mask);
 	void ScaleResultDiff(const std::string& shapeName, const std::string& sliderName, float scaleValue);
 
-	void LoadResultDiffs(SliderSet &fromSet);
+	void LoadResultDiffs(SliderSet& fromSet);
+	void MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape);
 
 	void ClearResultSet(const std::string& sliderName);
 

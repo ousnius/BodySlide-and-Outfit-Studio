@@ -1825,7 +1825,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 	return 0;
 }
 
-int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::string& sliderSetName, std::vector<std::string>* origShapeOrder) {
+int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::string& sliderSetName, std::vector<std::string>* origShapeOrder) {
 	owner->StartProgress(_("Loading slider set..."));
 	SliderSetFile InSS(fileName);
 	if (InSS.fail()) {
@@ -1840,6 +1840,7 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 	}
 
 	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
+
 	std::string inputNif = activeSet.GetInputFileName();
 
 	owner->UpdateProgress(30, _("Loading outfit shapes..."));
@@ -1903,6 +1904,82 @@ int OutfitProject::OutfitFromSliderSet(const std::string& fileName, const std::s
 	mGameFile = wxString::FromUTF8(activeSet.GetOutputFile());
 	mCopyRef = true;
 	mGenWeights = activeSet.GenWeights();
+
+	owner->UpdateProgress(100, _("Finished"));
+	owner->EndProgress();
+	return 0;
+}
+
+int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::string& sliderSetName) {
+	owner->StartProgress(_("Adding slider set..."));
+	SliderSetFile InSS(fileName);
+	if (InSS.fail()) {
+		owner->EndProgress();
+		return 1;
+	}
+
+	SliderSet addSet;
+	owner->UpdateProgress(20, _("Retrieving sliders..."));
+	if (InSS.GetSet(sliderSetName, addSet)) {
+		owner->EndProgress();
+		return 2;
+	}
+
+	addSet.SetBaseDataPath(Config["ShapeDataPath"]);
+	std::string inputNif = addSet.GetInputFileName();
+
+	std::map<std::string, std::string> renamedShapes;
+	owner->UpdateProgress(30, _("Adding outfit shapes..."));
+	if (ImportNIF(inputNif, false, "", &renamedShapes)) {
+		owner->EndProgress();
+		return 3;
+	}
+
+	if (baseShape.empty()) {
+		std::string newBaseShape;
+
+		// First external target with skin shader becomes reference
+		std::vector<std::string> refTargets;
+		addSet.GetReferencedTargets(refTargets);
+		for (auto &target : refTargets) {
+			std::string shapeName = addSet.TargetToShape(target);
+			auto shape = workNif.FindBlockByName<NiShape>(shapeName);
+			if (shape) {
+				NiShader* shader = workNif.GetShader(shape);
+				if (shader && shader->IsSkinTinted()) {
+					newBaseShape = std::move(shapeName);
+					break;
+				}
+			}
+		}
+
+		// No external target found, first skin shaded shape becomes reference
+		if (refTargets.empty()) {
+			for (auto shapeTarget = addSet.ShapesBegin(); shapeTarget != addSet.ShapesEnd(); ++shapeTarget) {
+				auto shape = workNif.FindBlockByName<NiShape>(shapeTarget->first);
+				if (shape) {
+					NiShader* shader = workNif.GetShader(shape);
+					if (shader && shader->IsSkinTinted()) {
+						newBaseShape = shapeTarget->first;
+						break;
+					}
+				}
+			}
+		}
+
+		baseShape = std::move(newBaseShape);
+	}
+
+	std::vector<std::string> renamedShapesOrig;
+	renamedShapesOrig.reserve(renamedShapes.size());
+	for (auto &rs : renamedShapes)
+		renamedShapesOrig.push_back(rs.first);
+
+	std::string shapesJoin = JoinStrings(renamedShapesOrig, "; ");
+	wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."), shapesJoin), _("Renamed Shapes"), wxOK | wxICON_WARNING, owner);
+
+	owner->UpdateProgress(70, _("Updating slider data..."));
+	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape);
 
 	owner->UpdateProgress(100, _("Finished"));
 	owner->EndProgress();
@@ -2028,7 +2105,7 @@ void OutfitProject::UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& sha
 	}
 }
 
-int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std::string& inOutfitName) {
+int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std::string& inOutfitName, std::map<std::string, std::string>* renamedShapes) {
 	if (clear)
 		ClearOutfit();
 
@@ -2087,8 +2164,12 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	nif.SetNodeName(0, "Scene Root");
 	nif.RenameDuplicateShapes();
 
-	if (!baseShape.empty())
+	if (!baseShape.empty()) {
+		if (renamedShapes)
+			(*renamedShapes)[baseShape] = baseShape + "_outfit";
+
 		nif.RenameShape(baseShape, baseShape + "_outfit");
+	}
 
 	std::vector<std::string> shapes = workNif.GetShapeNames();
 	std::vector<std::string> nifShapes = nif.GetShapeNames();
@@ -2108,8 +2189,12 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 					newName = s + wxString::Format("_%d", uniqueCount).ToStdString();
 			}
 			else {
-				if (uniqueCount > 1)
+				if (uniqueCount > 1) {
+					if (renamedShapes)
+						(*renamedShapes)[s] = newName;
+
 					nif.RenameShape(s, newName);
+				}
 				break;
 			}
 		}

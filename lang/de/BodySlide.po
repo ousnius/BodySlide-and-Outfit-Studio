@@ -407,6 +407,12 @@ msgstr "Projekt laden..\tCtrl+O"
 msgid "Load a project."
 msgstr "Läd ein existierendes Projekt."
 
+msgid "Add Project..\tCtrl+Shift+O"
+msgstr "Projekt hinzufügen..\tCtrl+Shift+O"
+
+msgid "Add a project without replacing the current one."
+msgstr "Fügt ein Projekt hinzu, ohne das aktuelle zu ersetzen."
+
 msgid "Load Reference..."
 msgstr "Referenz laden..."
 
@@ -1127,7 +1133,7 @@ msgid "Transform"
 msgstr "Transformieren"
 
 msgid "Pivot"
-msgstr ""
+msgstr "Pivot"
 
 msgid "Vertex Edit"
 msgstr "Vertex Bearbeitung"
@@ -2024,6 +2030,9 @@ msgstr "Konnte NIF-Datei '%s' nicht laden!"
 msgid "Loading slider set..."
 msgstr "Lade Slider Set..."
 
+msgid "Adding slider set..."
+msgstr "Füge Slider Set hinzu..."
+
 msgid "Retrieving sliders..."
 msgstr "Rufe Slider ab..."
 
@@ -2118,6 +2127,9 @@ msgstr "Erstelle %d Slider..."
 msgid "Select a slider set to load"
 msgstr "Wählen Sie ein Slider Set zum Laden"
 
+msgid "Select a slider set to add"
+msgstr "Wählen Sie ein Slider Set zum Hinzufügen"
+
 msgid "Failed to open '%s' as a slider set file!"
 msgstr "Konnte '%s' nicht als Slider Set Datei öffnen!"
 
@@ -2171,6 +2183,16 @@ msgstr ""
 
 msgid "Unweighted Vertices"
 msgstr "Vertices ohne Weighting"
+
+msgid ""
+"The following shapes were renamed and won't have slider data attached. "
+"Rename the duplicates yourself beforehand."
+msgstr ""
+"Die folgenden Modelle wurden umbenannt und werden keine Sliderdaten haben. "
+"Die Duplikate müssen vorher umbenannt werden."
+
+msgid "Renamed Shapes"
+msgstr "Umbenannte Modelle"
 
 msgid "Saving project '%s'..."
 msgstr "Speichere Projekt '%s'..."

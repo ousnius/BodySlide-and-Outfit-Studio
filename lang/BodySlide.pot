@@ -363,6 +363,12 @@ msgstr ""
 msgid "Load a project."
 msgstr ""
 
+msgid "Add Project..\tCtrl+Shift+O"
+msgstr ""
+
+msgid "Add a project without replacing the current one."
+msgstr ""
+
 msgid "Load Reference..."
 msgstr ""
 
@@ -1742,6 +1748,9 @@ msgstr ""
 msgid "Loading slider set..."
 msgstr ""
 
+msgid "Adding slider set..."
+msgstr ""
+
 msgid "Retrieving sliders..."
 msgstr ""
 
@@ -1820,6 +1829,9 @@ msgstr ""
 msgid "Select a slider set to load"
 msgstr ""
 
+msgid "Select a slider set to add"
+msgstr ""
+
 msgid "Failed to open '%s' as a slider set file!"
 msgstr ""
 
@@ -1863,6 +1875,12 @@ msgid "The following shapes have unweighted vertices, which can cause issues. Th
 msgstr ""
 
 msgid "Unweighted Vertices"
+msgstr ""
+
+msgid "The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."
+msgstr ""
+
+msgid "Renamed Shapes"
 msgstr ""
 
 msgid "Saving project '%s'..."

@@ -75,6 +75,8 @@ public:
 	int LoadSliderSet(XMLElement* sliderSetSource);
 	void LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& forShape = "");
 
+	void Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape);
+
 	// Add an empty set.
 	int CreateSlider(const std::string& setName);
 

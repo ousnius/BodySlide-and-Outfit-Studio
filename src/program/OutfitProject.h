@@ -183,7 +183,8 @@ public:
 	int LoadReferenceNif(const std::string& fileName, const std::string& shapeName, bool mergeSliders = false);
 	int LoadReference(const std::string& fileName, const std::string& setName, bool mergeSliders = false, const std::string& shapeName = "");
 
-	int OutfitFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
+	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
+	int AddFromSliderSet(const std::string& fileName, const std::string& setName);
 
 	bool DeleteVerts(const std::string& shapeName, const std::unordered_map<ushort, float>& mask);
 	void DuplicateShape(const std::string& sourceShape, const std::string& destShape);
@@ -205,7 +206,7 @@ public:
 
 	void ChooseClothData(NifFile& nif);
 
-	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "");
+	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef = false);
 	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 

@@ -746,7 +746,7 @@ public:
 
 	std::map<std::string, SliderDisplay*> sliderDisplays;
 
-	bool LoadProject(const std::string& fileName, const std::string& projectName = "");
+	bool LoadProject(const std::string& fileName, const std::string& projectName = "", bool clearProject = true);
 	void CreateSetSliders();
 
 	bool LoadNIF(const std::string& fileName);
@@ -971,6 +971,7 @@ private:
 
 	void OnNewProject(wxCommandEvent& event);
 	void OnLoadProject(wxCommandEvent &event);
+	void OnAddProject(wxCommandEvent &event);
 	void OnLoadReference(wxCommandEvent &event);
 	void OnLoadOutfit(wxCommandEvent& event);
 	void OnUnloadProject(wxCommandEvent &event);

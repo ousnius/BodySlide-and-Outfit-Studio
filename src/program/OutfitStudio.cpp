@@ -37,6 +37,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("fileSettings"), OutfitStudioFrame::OnSettings)
 	EVT_MENU(XRCID("btnNewProject"), OutfitStudioFrame::OnNewProject)
 	EVT_MENU(XRCID("btnLoadProject"), OutfitStudioFrame::OnLoadProject)
+	EVT_MENU(XRCID("btnAddProject"), OutfitStudioFrame::OnAddProject)
 	EVT_MENU(XRCID("fileLoadRef"), OutfitStudioFrame::OnLoadReference)
 	EVT_MENU(XRCID("fileLoadOutfit"), OutfitStudioFrame::OnLoadOutfit)
 	EVT_MENU(XRCID("fileSave"), OutfitStudioFrame::OnSaveSliderSet)
@@ -1068,7 +1069,7 @@ void OutfitStudioFrame::OnSetSize(wxSizeEvent& event) {
 	event.Skip();
 }
 
-bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::string& projectName) {
+bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::string& projectName, bool clearProject) {
 	std::vector<std::string> setnames;
 	SliderSetFile InFile(fileName);
 	if (InFile.fail()) {
@@ -1105,27 +1106,35 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 	wxLogMessage("Loading project '%s' from file '%s'...", outfit, fileName);
 	StartProgress(_("Loading project..."));
 
-	ClearProject();
-	project->ClearReference();
-	project->ClearOutfit();
+	if (clearProject) {
+		ClearProject();
+		project->ClearReference();
+		project->ClearOutfit();
 
-	glView->Cleanup();
-	glView->SetStrokeManager(nullptr);
-	glView->GetStrokeManager()->Clear();
+		glView->Cleanup();
+		glView->SetStrokeManager(nullptr);
+		glView->GetStrokeManager()->Clear();
 
-	activeSlider.clear();
-	bEditSlider = false;
-	MenuExitSliderEdit();
+		activeSlider.clear();
+		bEditSlider = false;
+		MenuExitSliderEdit();
 
-	delete project;
-	project = new OutfitProject(this);
+		delete project;
+		project = new OutfitProject(this);
+	}
 
 	wxLogMessage("Loading outfit data...");
 	UpdateProgress(10, _("Loading outfit data..."));
 	StartSubProgress(10, 40);
 
+	int error = 0;
 	std::vector<std::string> origShapeOrder;
-	int error = project->OutfitFromSliderSet(fileName, outfit, &origShapeOrder);
+
+	if (clearProject)
+		error = project->LoadFromSliderSet(fileName, outfit, &origShapeOrder);
+	else
+		error = project->AddFromSliderSet(fileName, outfit);
+
 	if (error) {
 		EndProgress();
 		wxLogError("Failed to create project (%d)!", error);
@@ -1134,20 +1143,22 @@ bool OutfitStudioFrame::LoadProject(const std::string& fileName, const std::stri
 		return false;
 	}
 
-	std::string shape = project->GetBaseShape();
-	wxLogMessage("Loading reference shape '%s'...", shape);
-	UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shape));
+	if (clearProject) {
+		std::string shape = project->GetBaseShape();
+		wxLogMessage("Loading reference shape '%s'...", shape);
+		UpdateProgress(50, wxString::Format(_("Loading reference shape '%s'..."), shape));
 
-	if (!shape.empty()) {
-		error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, true);
-		if (error) {
-			EndProgress();
-			RefreshGUIFromProj();
-			return false;
+		if (!shape.empty()) {
+			error = project->LoadReferenceNif(project->activeSet.GetInputFileName(), shape, true);
+			if (error) {
+				EndProgress();
+				RefreshGUIFromProj();
+				return false;
+			}
 		}
-	}
 
-	project->GetWorkNif()->SetShapeOrder(origShapeOrder);
+		project->GetWorkNif()->SetShapeOrder(origShapeOrder);
+	}
 
 	wxLogMessage("Loading textures...");
 	UpdateProgress(60, _("Loading textures..."));
@@ -1761,6 +1772,15 @@ void OutfitStudioFrame::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 
 	std::string fileName = loadProjectDialog.GetPath().ToUTF8();
 	LoadProject(fileName);
+}
+
+void OutfitStudioFrame::OnAddProject(wxCommandEvent& WXUNUSED(event)) {
+	wxFileDialog addProjectDialog(this, _("Select a slider set to add"), "SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
+	if (addProjectDialog.ShowModal() == wxID_CANCEL)
+		return;
+
+	std::string fileName = addProjectDialog.GetPath().ToUTF8();
+	LoadProject(fileName, "", false);
 }
 
 void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {

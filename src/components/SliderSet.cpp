@@ -194,6 +194,92 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 	inDataStorage.LoadData(osdNames);
 }
 
+void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffDataSets& baseDiffData, const std::string& baseShape) {
+	std::map<std::string, std::map<std::string, std::string>> osdNames;
+	std::map<std::string, std::map<std::string, std::string>> osdNamesBase;
+
+	auto addSlider = [&](DiffInfo& ddf) {
+		if (ddf.fileName.size() <= 4)
+			return;
+
+		std::string shapeName = mergeSet.TargetToShape(ddf.targetName);
+		std::string fullFilePath = mergeSet.baseDataPath + "\\";
+		if (ddf.bLocal)
+			fullFilePath += mergeSet.datafolder + "\\";
+		else
+			fullFilePath += mergeSet.ShapeToDataFolder(shapeName) + "\\";
+
+		fullFilePath += ddf.fileName;
+
+		// BSD format
+		if (ddf.fileName.compare(ddf.fileName.size() - 4, ddf.fileName.size(), ".bsd") == 0) {
+			if (shapeName != baseShape)
+				inDataStorage.LoadSet(ddf.dataName, ddf.targetName, fullFilePath);
+			else
+				baseDiffData.LoadSet(ddf.dataName, ddf.targetName, fullFilePath);
+		}
+		// OSD format
+		else {
+			// Split file name to get file and data name in it
+			int split = fullFilePath.find_last_of('\\');
+			if (split < 0)
+				return;
+
+			std::string dataName = fullFilePath.substr(split + 1);
+			std::string fileName = fullFilePath.substr(0, split);
+
+			// Cache data locations
+			if (shapeName != baseShape)
+				osdNames[fileName][dataName] = ddf.targetName;
+			else
+				osdNamesBase[fileName][dataName] = ddf.targetName;
+		}
+
+		// Make new data local
+		ddf.bLocal = true;
+	};
+
+	for (auto &s : mergeSet.sliders) {
+		auto sliderIt = std::find_if(sliders.begin(), sliders.end(), [&s](const SliderData& rs) {
+			return rs.name == s.name;
+		});
+
+		if (sliderIt != sliders.end()) {
+			// Copy missing data of existing slider
+			for (auto &sd : s.dataFiles) {
+				auto sliderDataIt = std::find_if(sliderIt->dataFiles.begin(), sliderIt->dataFiles.end(), [&](const DiffInfo& rd) {
+					std::string shapeName = TargetToShape(rd.targetName);
+					std::string shapeNameMerge = mergeSet.TargetToShape(sd.targetName);
+					return rd.targetName == sd.targetName && rd.dataName == sd.dataName && shapeName == shapeNameMerge;
+				});
+
+				if (sliderDataIt == sliderIt->dataFiles.end()) {
+					int df = sliderIt->AddDataFile(sd.targetName, sd.dataName, sd.fileName, sd.bLocal);
+					addSlider(sliderIt->dataFiles[df]);
+				}
+			}
+		}
+		else {
+			// Copy new slider to the set
+			sliders.push_back(s);
+			for (auto &ddf : sliders.back().dataFiles)
+				addSlider(ddf);
+		}
+	}
+
+	for (auto &s : mergeSet.shapeAttributes) {
+		// Copy new shapes to the set
+		if (shapeAttributes.find(s.first) == shapeAttributes.end()) {
+			s.second.dataFolder.clear();
+			shapeAttributes[s.first] = s.second;
+		}
+	}
+
+	// Load from cached data locations at once
+	inDataStorage.LoadData(osdNames);
+	baseDiffData.LoadData(osdNamesBase);
+}
+
 void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	sliderSetElement->DeleteChildren();
 	sliderSetElement->SetAttribute("name", name.c_str());

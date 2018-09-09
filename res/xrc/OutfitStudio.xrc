@@ -931,6 +931,10 @@
 				<label>Load Project..\tCtrl+O</label>
 				<help>Load a project.</help>
 			</object>
+			<object class="wxMenuItem" name="btnAddProject">
+				<label>Add Project..\tCtrl+Shift+O</label>
+				<help>Add a project without replacing the current one.</help>
+			</object>
 			<object class="wxMenuItem" name="fileUnload">
 				<label>Unload Project...\tCtrl+W</label>
 				<help>Unloads the project and creates an empty new one.</help>

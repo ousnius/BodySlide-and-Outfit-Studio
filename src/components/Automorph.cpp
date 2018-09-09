@@ -254,9 +254,17 @@ void Automorph::ScaleResultDiff(const std::string& shapeName, const std::string&
 	resultDiffData.ScaleDiff(setName, shapeName, scaleValue);
 }
 
-void Automorph::LoadResultDiffs(SliderSet &fromSet) {
+void Automorph::LoadResultDiffs(SliderSet& fromSet) {
 	fromSet.LoadSetDiffData(resultDiffData);
 	targetSliderDataNames.clear();
+	for (int i = 0; i < fromSet.size(); i++)
+		for (auto &df : fromSet[i].dataFiles)
+			if (df.dataName != (df.targetName + fromSet[i].name))
+				SetResultDataName(df.targetName, fromSet[i].name, df.dataName);
+}
+
+void Automorph::MergeResultDiffs(SliderSet& fromSet, SliderSet& mergeSet, DiffDataSets& baseDiffData, const std::string& baseShape) {
+	fromSet.Merge(mergeSet, resultDiffData, baseDiffData, baseShape);
 	for (int i = 0; i < fromSet.size(); i++)
 		for (auto &df : fromSet[i].dataFiles)
 			if (df.dataName != (df.targetName + fromSet[i].name))
