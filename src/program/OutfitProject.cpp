@@ -1970,13 +1970,15 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 		baseShape = std::move(newBaseShape);
 	}
 
-	std::vector<std::string> renamedShapesOrig;
-	renamedShapesOrig.reserve(renamedShapes.size());
-	for (auto &rs : renamedShapes)
-		renamedShapesOrig.push_back(rs.first);
+	if (!renamedShapes.empty()) {
+		std::vector<std::string> renamedShapesOrig;
+		renamedShapesOrig.reserve(renamedShapes.size());
+		for (auto &rs : renamedShapes)
+			renamedShapesOrig.push_back(rs.first);
 
-	std::string shapesJoin = JoinStrings(renamedShapesOrig, "; ");
-	wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."), shapesJoin), _("Renamed Shapes"), wxOK | wxICON_WARNING, owner);
+		std::string shapesJoin = JoinStrings(renamedShapesOrig, "; ");
+		wxMessageBox(wxString::Format("%s\n \n%s", _("The following shapes were renamed and won't have slider data attached. Rename the duplicates yourself beforehand."), shapesJoin), _("Renamed Shapes"), wxOK | wxICON_WARNING, owner);
+	}
 
 	owner->UpdateProgress(70, _("Updating slider data..."));
 	morpher.MergeResultDiffs(activeSet, addSet, baseDiffData, baseShape);
@@ -2165,10 +2167,10 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 	nif.RenameDuplicateShapes();
 
 	if (!baseShape.empty()) {
-		if (renamedShapes)
-			(*renamedShapes)[baseShape] = baseShape + "_outfit";
-
-		nif.RenameShape(baseShape, baseShape + "_outfit");
+		if (nif.RenameShape(baseShape, baseShape + "_outfit")) {
+			if (renamedShapes)
+				(*renamedShapes)[baseShape] = baseShape + "_outfit";
+		}
 	}
 
 	std::vector<std::string> shapes = workNif.GetShapeNames();
@@ -2190,10 +2192,10 @@ int OutfitProject::ImportNIF(const std::string& fileName, bool clear, const std:
 			}
 			else {
 				if (uniqueCount > 1) {
-					if (renamedShapes)
-						(*renamedShapes)[s] = newName;
-
-					nif.RenameShape(s, newName);
+					if (nif.RenameShape(s, newName)) {
+						if (renamedShapes)
+							(*renamedShapes)[s] = newName;
+					}
 				}
 				break;
 			}

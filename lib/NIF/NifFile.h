@@ -129,7 +129,7 @@ public:
 
 	std::vector<std::string> GetShapeNames();
 	std::vector<NiShape*> GetShapes();
-	void RenameShape(const std::string& oldName, const std::string& newName);
+	bool RenameShape(const std::string& oldName, const std::string& newName);
 	bool RenameDuplicateShapes();
 	void TriangulateShape(NiShape* shape);
 

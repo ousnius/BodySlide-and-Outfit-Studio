@@ -1170,10 +1170,14 @@ std::vector<NiShape*> NifFile::GetShapes() {
 	return outList;
 }
 
-void NifFile::RenameShape(const std::string& oldName, const std::string& newName) {
+bool NifFile::RenameShape(const std::string& oldName, const std::string& newName) {
 	auto geom = FindBlockByName<NiShape>(oldName);
-	if (geom)
+	if (geom) {
 		geom->SetName(newName);
+		return true;
+	}
+
+	return false;
 }
 
 bool NifFile::RenameDuplicateShapes() {
