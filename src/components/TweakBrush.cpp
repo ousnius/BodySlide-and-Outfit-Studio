@@ -1898,7 +1898,7 @@ TB_Alpha::TB_Alpha() :TweakBrush() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Alpha Brush";
-	strength = 0.0015f;
+	strength = 0.003f;
 }
 
 TB_Alpha::~TB_Alpha() {
@@ -1979,7 +1979,7 @@ TB_Unalpha::TB_Unalpha() :TweakBrush() {
 	bLiveBVH = false;
 	bLiveNormals = false;
 	brushName = "Unalpha Brush";
-	strength = -0.0015f;
+	strength = -0.003f;
 }
 
 TB_Unalpha::~TB_Unalpha() {

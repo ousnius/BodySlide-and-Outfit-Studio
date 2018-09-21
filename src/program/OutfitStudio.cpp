@@ -743,7 +743,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	xrc->Load("res\\xrc\\Skeleton.xrc");
 	xrc->Load("res\\xrc\\Settings.xrc");
 
-	int statusWidths[] = { -1, 275, 100 };
+	int statusWidths[] = { -1, 400, 100 };
 	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
 	statusBar->SetFieldsCount(3);
 	statusBar->SetStatusWidths(3, statusWidths);
@@ -8132,8 +8132,6 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	bool cursorExists = false;
 	int x;
 	int y;
-	int t = 0;
-	Vector3 hoverColor;
 	event.GetPosition(&x, &y);
 
 	if (mbuttonDown) {
@@ -8190,8 +8188,12 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 	if (!rbuttonDown && !lbuttonDown) {
 		std::string hitMeshName;
+		int hoverPoint = 0;
+		Vector3 hoverColor;
+		float hoverAlpha = 1.0f;
+
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitMeshName, &t, &hoverColor);
+			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitMeshName, &hoverPoint, &hoverColor, &hoverAlpha);
 		}
 		else {
 			cursorExists = false;
@@ -8234,16 +8236,16 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 		if (os->statusBar) {
 			if (cursorExists) {
 				if (bMaskPaint)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, hoverColor.x), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", hoverPoint, hoverColor.x), 1);
 				else if (bWeightPaint)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, hoverColor.y), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", hoverPoint, hoverColor.y), 1);
 				else if (bColorPaint)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g", t, hoverColor.x, hoverColor.y, hoverColor.z), 1);
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g, Alpha: %g", hoverPoint, hoverColor.x, hoverColor.y, hoverColor.z, hoverAlpha), 1);
 				else {
 					std::vector<Vector3> verts;
 					os->project->GetLiveVerts(hitMeshName, verts);
-					if (verts.size() > t)
-						os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", t, verts[t].x, verts[t].y, verts[t].z), 1);
+					if (verts.size() > hoverPoint)
+						os->statusBar->SetStatusText(wxString::Format("Vertex: %d, X: %.5f Y: %.5f Z: %.5f", hoverPoint, verts[hoverPoint].x, verts[hoverPoint].y, verts[hoverPoint].z), 1);
 				}
 			}
 			else {

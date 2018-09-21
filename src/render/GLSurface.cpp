@@ -470,13 +470,13 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverTri, Vector3* outHoverColor) {
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverPoint, Vector3* outHoverColor, float* outHoverAlpha) {
 	bool collided = false;
 	if (activeMeshes.empty())
 		return collided;
 
-	if (outHoverTri)
-		(*outHoverTri) = -1;
+	if (outHoverPoint)
+		(*outHoverPoint) = -1;
 	if (outHoverColor)
 		(*outHoverColor) = Vector3(1.0f, 1.0f, 1.0f);
 
@@ -535,15 +535,19 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 				}
 
 				if (closest) {
-					if (outHoverTri)
-						(*outHoverTri) = pointid;
+					const int dec = 5;
+
+					if (outHoverPoint)
+						(*outHoverPoint) = pointid;
 
 					if (outHoverColor) {
-						const int dec = 5;
 						(*outHoverColor).x = std::floor(m->vcolors[pointid].x * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
 						(*outHoverColor).y = std::floor(m->vcolors[pointid].y * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
 						(*outHoverColor).z = std::floor(m->vcolors[pointid].z * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
 					}
+
+					if (outHoverAlpha)
+						(*outHoverAlpha) = std::floor(m->valpha[pointid] * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
 
 					if (hitMeshName)
 						(*hitMeshName) = m->shapeName;
