@@ -1925,7 +1925,7 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, 
 		Vector3 vev(ve, ve, ve);
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
-			ve = 0.0f;
+			vev.Zero();
 		else if (strength < 0.1f && focus < 5.0f)
 			applyFalloff(vev, originToV);
 
@@ -1960,7 +1960,7 @@ void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, 
 		Vector3 vev(ve, ve, ve);
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
-			ve = 0.0f;
+			vev.Zero();
 		else if (strength < 0.1f && focus < 5.0f)
 			applyFalloff(vev, originToV);
 
@@ -2006,7 +2006,7 @@ void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points
 		Vector3 vev(ve, ve, ve);
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
-			ve = 0.0f;
+			vev.Zero();
 		else if (strength > -0.1f && focus < 5.0f)
 			applyFalloff(vev, originToV);
 
@@ -2041,7 +2041,7 @@ void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points
 		Vector3 vev(ve, ve, ve);
 		float originToV = pickInfo.origin.DistanceTo(vs);
 		if (originToV > radius)
-			ve = 0.0f;
+			vev.Zero();
 		else if (strength > -0.1f && focus < 5.0f)
 			applyFalloff(vev, originToV);
 
