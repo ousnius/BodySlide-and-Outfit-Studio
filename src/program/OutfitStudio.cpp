@@ -1535,7 +1535,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo
 			for (auto &m : refMeshes) {
 				if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
 					auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
-					if (!colorPtr)
+					if (!colorPtr || colorPtr->empty())
 						continue;
 
 					std::vector<Color4> vcolors = (*colorPtr);
@@ -1563,7 +1563,7 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo
 			for (auto &m : refMeshes) {
 				if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
 					auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
-					if (!colorPtr)
+					if (!colorPtr || colorPtr->empty())
 						continue;
 
 					std::vector<Color4> vcolors = (*colorPtr);
