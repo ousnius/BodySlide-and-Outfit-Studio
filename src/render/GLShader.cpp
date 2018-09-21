@@ -302,6 +302,16 @@ void GLShader::ShowWeight(bool bShow) {
 	}
 }
 
+void GLShader::ShowColors(bool bShow) {
+	GLint loc = glGetUniformLocation(progID, "bShowColors");
+
+	if (loc >= 0) {
+		glUseProgram(progID);
+		glUniform1i(loc, bShow ? GL_TRUE : GL_FALSE);
+		glUseProgram(0);
+	}
+}
+
 void GLShader::ShowSegments(bool bShow) {
 	GLint loc = glGetUniformLocation(progID, "bShowSegments");
 

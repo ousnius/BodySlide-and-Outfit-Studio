@@ -42,6 +42,7 @@ public:
 		Tangents,
 		Bitangents,
 		VertexColors,
+		VertexAlpha,
 		TextureCoordinates,
 		Indices
 	};
@@ -72,6 +73,7 @@ public:
 	std::unique_ptr<Vector3[]> tangents;
 	std::unique_ptr<Vector3[]> bitangents;
 	std::unique_ptr<Vector3[]> vcolors;
+	std::unique_ptr<float[]> valpha;
 	std::unique_ptr<Vector2[]> texcoord;
 
 	std::unique_ptr<Triangle[]> tris;
@@ -82,7 +84,7 @@ public:
 
 	bool genBuffers = false;
 	GLuint vao = 0;
-	std::vector<GLuint> vbo = std::vector<GLuint>(6, 0);
+	std::vector<GLuint> vbo = std::vector<GLuint>(7, 0);
 	GLuint ibo = 0;
 
 	ShaderProperties prop;
@@ -100,6 +102,8 @@ public:
 	bool modelSpace = false;
 	bool emissive = false;
 	bool specular = true;
+	bool vertexColors = false;
+	bool vertexAlpha = false;
 	bool backlight = false;
 	bool backlightMap = false;
 	bool rimlight = false;
@@ -186,6 +190,7 @@ public:
 
 	// Creates the vertex color array (if necessary) and sets all the colors to the provided value.
 	void ColorFill(const Vector3& color);
+	void AlphaFill(const float alpha);
 
 	void ColorChannelFill(int channel, float value);
 };

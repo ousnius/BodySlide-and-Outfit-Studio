@@ -69,6 +69,8 @@ enum TweakBrushType {
 	TBT_MOVE,
 	TBT_MASK,
 	TBT_WEIGHT,
+	TBT_COLOR,
+	TBT_ALPHA,
 	TBT_XFORM
 };
 
@@ -421,6 +423,66 @@ public:
 
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
 	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
+};
+
+class TB_Color : public TweakBrush {
+public:
+	Vector3 color;
+
+	TB_Color();
+	virtual ~TB_Color();
+
+	virtual bool strokeInit(const std::vector<mesh*>&, TweakPickInfo&) {
+		return true;
+	}
+
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
+};
+
+class TB_Uncolor : public TweakBrush {
+public:
+	TB_Uncolor();
+	virtual ~TB_Uncolor();
+
+	virtual bool strokeInit(const std::vector<mesh*>&, TweakPickInfo&) {
+		return true;
+	}
+
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
+};
+
+class TB_Alpha : public TweakBrush {
+public:
+	TB_Alpha();
+	virtual ~TB_Alpha();
+
+	virtual bool strokeInit(const std::vector<mesh*>&, TweakPickInfo&) {
+		return true;
+	}
+
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
+};
+
+class TB_Unalpha : public TweakBrush {
+public:
+	TB_Unalpha();
+	virtual ~TB_Unalpha();
+
+	virtual bool strokeInit(const std::vector<mesh*>&, TweakPickInfo&) {
+		return true;
+	}
+
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints);
+	virtual void brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints);
+	virtual bool checkSpacing(Vector3&, Vector3&) {
+		return true;
+	}
 };
 
 class TweakStroke {

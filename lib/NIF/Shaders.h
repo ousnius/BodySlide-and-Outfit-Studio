@@ -294,6 +294,10 @@ public:
 	virtual bool IsModelSpace() { return false; }
 	virtual bool IsEmissive() { return false; }
 	virtual bool HasSpecular() { return true; }
+	virtual bool HasVertexColors() { return false; }
+	virtual void SetVertexColors(const bool) {}
+	virtual bool HasVertexAlpha() { return false; }
+	virtual void SetVertexAlpha(const bool) {}
 	virtual bool HasBacklight() { return false; }
 	virtual bool HasRimlight() { return false; }
 	virtual bool HasSoftlight() { return false; }
@@ -351,6 +355,10 @@ public:
 	bool IsModelSpace();
 	bool IsEmissive();
 	bool HasSpecular();
+	bool HasVertexColors();
+	void SetVertexColors(const bool enable);
+	bool HasVertexAlpha();
+	void SetVertexAlpha(const bool enable);
 	bool HasBacklight();
 	bool HasRimlight();
 	bool HasSoftlight();

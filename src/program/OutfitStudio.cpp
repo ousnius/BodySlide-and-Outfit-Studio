@@ -112,6 +112,8 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnMoveBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnSmoothBrush"), OutfitStudioFrame::OnSelectTool)
 	EVT_MENU(XRCID("btnWeightBrush"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnColorBrush"), OutfitStudioFrame::OnSelectTool)
+	EVT_MENU(XRCID("btnAlphaBrush"), OutfitStudioFrame::OnSelectTool)
 
 	EVT_MENU(XRCID("btnViewFront"), OutfitStudioFrame::OnSetView)
 	EVT_MENU(XRCID("btnViewBack"), OutfitStudioFrame::OnSetView)
@@ -202,7 +204,11 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_BUTTON(XRCID("boneTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("segmentTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("partitionTabButton"), OutfitStudioFrame::OnTabButtonClick)
+	EVT_BUTTON(XRCID("colorsTabButton"), OutfitStudioFrame::OnTabButtonClick)
 	EVT_BUTTON(XRCID("lightsTabButton"), OutfitStudioFrame::OnTabButtonClick)
+
+	EVT_COLOURPICKER_CHANGED(XRCID("cpBrushColor"), OutfitStudioFrame::OnBrushColorChanged)
+	EVT_BUTTON(XRCID("btnSwapBrush"), OutfitStudioFrame::OnSwapBrush)
 
 	EVT_SLIDER(XRCID("lightAmbientSlider"), OutfitStudioFrame::OnUpdateLights)
 	EVT_SLIDER(XRCID("lightFrontalSlider"), OutfitStudioFrame::OnUpdateLights)
@@ -781,6 +787,8 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 
 	outfitBones = (wxTreeCtrl*)FindWindowByName("outfitBones");
 	bonesRoot = outfitBones->AddRoot("Bones");
+
+	colorSettings = (wxPanel*)FindWindowByName("colorSettings");
 
 	segmentTree = (wxTreeCtrl*)FindWindowByName("segmentTree");
 	segmentRoot = segmentTree->AddRoot("Segments");
@@ -1494,9 +1502,10 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo
 		}
 	}
 	else {
-		if (refStroke->BrushType() == TBT_WEIGHT) {
-			std::vector<mesh*> refMeshes = refStroke->GetRefMeshes();
+		std::vector<mesh*> refMeshes = refStroke->GetRefMeshes();
+		int brushType = refStroke->BrushType();
 
+		if (brushType == TBT_WEIGHT) {
 			for (auto &m : refMeshes) {
 				if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
 					auto weights = project->GetWorkAnim()->GetWeightsPtr(m->shapeName, activeBone);
@@ -1519,6 +1528,56 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo
 								(*weights)[p.first] = p.second.y;
 						}
 					}
+				}
+			}
+		}
+		else if (brushType == TBT_COLOR) {
+			for (auto &m : refMeshes) {
+				if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
+					auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
+					if (!colorPtr)
+						continue;
+
+					std::vector<Color4> vcolors = (*colorPtr);
+
+					if (bIsUndo) {
+						for (auto &p : refStroke->pointStartState[m]) {
+							vcolors[p.first].r = p.second.x;
+							vcolors[p.first].g = p.second.y;
+							vcolors[p.first].b = p.second.z;
+						}
+					}
+					else {
+						for (auto &p : refStroke->pointEndState[m]) {
+							vcolors[p.first].r = p.second.x;
+							vcolors[p.first].g = p.second.y;
+							vcolors[p.first].b = p.second.z;
+						}
+					}
+
+					project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
+				}
+			}
+		}
+		else if (brushType == TBT_ALPHA) {
+			for (auto &m : refMeshes) {
+				if (refStroke->pointStartState.find(m) != refStroke->pointStartState.end()) {
+					auto colorPtr = project->GetWorkNif()->GetColorsForShape(m->shapeName);
+					if (!colorPtr)
+						continue;
+
+					std::vector<Color4> vcolors = (*colorPtr);
+
+					if (bIsUndo) {
+						for (auto &p : refStroke->pointStartState[m])
+							vcolors[p.first].a = p.second.x;
+					}
+					else {
+						for (auto &p : refStroke->pointEndState[m])
+							vcolors[p.first].a = p.second.x;
+					}
+
+					project->GetWorkNif()->SetColorsForShape(m->shapeName, vcolors);
 				}
 			}
 		}
@@ -1615,7 +1674,8 @@ bool OutfitStudioFrame::NotifyStrokeStarting() {
 
 	auto activeBrush = glView->GetActiveBrush();
 	if (activeBrush) {
-		if (activeBrush->Type() == TBT_MASK || activeBrush->Type() == TBT_WEIGHT)
+		int brushType = activeBrush->Type();
+		if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR || brushType == TBT_ALPHA)
 			return true;
 	}
 
@@ -2131,6 +2191,29 @@ void OutfitStudioFrame::UpdateMeshFromSet(const std::string& shapeName) {
 	if (m) {
 		m->smoothSeamNormals = project->activeSet.GetSmoothSeamNormals(shapeName);
 		m->lockNormals = project->activeSet.GetLockNormals(shapeName);
+	}
+}
+
+void OutfitStudioFrame::FillVertexColors() {
+	std::vector<std::string> shapeNames = project->GetWorkNif()->GetShapeNames();
+
+	for (auto &s : shapeNames) {
+		mesh* m = glView->GetMesh(s);
+		if (!m)
+			continue;
+
+		m->ColorFill(Vector3(1.0f, 1.0f, 1.0f));
+		m->AlphaFill(1.0f);
+
+		const std::vector<Color4>* vcolors = project->GetWorkNif()->GetColorsForShape(s);
+		if (vcolors) {
+			for (int v = 0; v < vcolors->size(); v++) {
+				m->vcolors[v].x = vcolors->at(v).r;
+				m->vcolors[v].y = vcolors->at(v).g;
+				m->vcolors[v].z = vcolors->at(v).b;
+				m->valpha[v] = vcolors->at(v).a;
+			}
+		}
 	}
 }
 
@@ -4112,9 +4195,12 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		return;
 	}
 
-	if (glView->GetActiveBrush() && glView->GetActiveBrush()->Type() == TBT_WEIGHT) {
-		glView->SetXMirror(previousMirror);
-		menuBar->Check(XRCID("btnXMirror"), previousMirror);
+	if (glView->GetActiveBrush()) {
+		int brushType = glView->GetActiveBrush()->Type();
+		if (brushType == TBT_WEIGHT || brushType == TBT_COLOR || brushType == TBT_ALPHA) {
+			glView->SetXMirror(previousMirror);
+			menuBar->Check(XRCID("btnXMirror"), previousMirror);
+		}
 	}
 
 	if (id == XRCID("btnSelect")) {
@@ -4183,6 +4269,28 @@ void OutfitStudioFrame::OnSelectTool(wxCommandEvent& event) {
 		previousMirror = glView->GetXMirror();
 		glView->SetXMirror(false);
 		menuBar->Check(XRCID("btnXMirror"), false);
+	}
+	else if (id == XRCID("btnColorBrush")) {
+		glView->SetActiveBrush(11);
+		menuBar->Check(XRCID("btnColorBrush"), true);
+		toolBar->ToggleTool(XRCID("btnColorBrush"), true);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		menuBar->Check(XRCID("btnXMirror"), false);
+
+		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
+		btnSwapBrush->SetLabel(_("Edit Alpha"));
+	}
+	else if (id == XRCID("btnAlphaBrush")) {
+		glView->SetActiveBrush(12);
+		menuBar->Check(XRCID("btnAlphaBrush"), true);
+		toolBar->ToggleTool(XRCID("btnAlphaBrush"), true);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		menuBar->Check(XRCID("btnXMirror"), false);
+
+		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
+		btnSwapBrush->SetLabel(_("Edit Color"));
 	}
 	else {
 		glView->SetEditMode(false);
@@ -4437,6 +4545,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Enable(XRCID("btnPivot"), true);
 		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
 		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
 		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
@@ -4445,6 +4555,45 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnColorBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnAlphaBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnTransform"), true);
+		GetToolBar()->EnableTool(XRCID("btnPivot"), true);
+		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), true);
+		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), true);
+	}
+
+	if (id != XRCID("colorsTabButton")) {
+		glView->SetXMirror(previousMirror);
+		glView->SetTransformMode(false);
+		glView->SetActiveBrush(1);
+		glView->SetEditMode();
+		glView->SetColorsVisible(false);
+
+		if (colorSettings->IsShown())
+			glView->ClearColors();
+
+		GetMenuBar()->Check(XRCID("btnXMirror"), previousMirror);
+		GetMenuBar()->Check(XRCID("btnInflateBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnTransform"), true);
+		GetMenuBar()->Enable(XRCID("btnPivot"), true);
+		GetMenuBar()->Enable(XRCID("btnVertexEdit"), true);
+		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnInflateBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnMoveBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), true);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), true);
+
+		GetToolBar()->ToggleTool(XRCID("btnInflateBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnColorBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnAlphaBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), true);
 		GetToolBar()->EnableTool(XRCID("btnPivot"), true);
 		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), true);
@@ -4456,34 +4605,40 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 	if (id == XRCID("meshTabButton")) {
 		outfitBones->Hide();
+		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		outfitShapes->Show();
 
 		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
 		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
 		segmentTabButton->SetCheck(false);
 		partitionTabButton->SetCheck(false);
 		lightsTabButton->SetCheck(false);
 	}
 	else if (id == XRCID("boneTabButton")) {
 		outfitShapes->Hide();
+		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		outfitBones->Show();
 
 		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
+		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
 		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
 		segmentTabButton->SetCheck(false);
 		partitionTabButton->SetCheck(false);
 		lightsTabButton->SetCheck(false);
@@ -4507,6 +4662,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 		GetMenuBar()->Check(XRCID("btnWeightBrush"), true);
 		GetMenuBar()->Check(XRCID("btnXMirror"), false);
 		GetMenuBar()->Enable(XRCID("btnWeightBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnColorBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), false);
 		GetMenuBar()->Enable(XRCID("btnTransform"), false);
 		GetMenuBar()->Enable(XRCID("btnPivot"), false);
 		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
@@ -4518,6 +4675,8 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		GetToolBar()->ToggleTool(XRCID("btnWeightBrush"), true);
 		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnColorBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnAlphaBrush"), false);
 		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
 		GetToolBar()->EnableTool(XRCID("btnPivot"), false);
 		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), false);
@@ -4528,20 +4687,81 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 
 		ReselectBone();
 	}
+	else if (id == XRCID("colorsTabButton")) {
+		outfitShapes->Hide();
+		outfitBones->Hide();
+		segmentTree->Hide();
+		partitionTree->Hide();
+		lightSettings->Hide();
+		colorSettings->Show();
+
+		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
+		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
+		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
+		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
+
+		meshTabButton->SetCheck(false);
+		boneTabButton->SetCheck(false);
+		segmentTabButton->SetCheck(false);
+		partitionTabButton->SetCheck(false);
+		lightsTabButton->SetCheck(false);
+
+		glView->SetTransformMode(false);
+		glView->SetActiveBrush(11);
+		previousMirror = glView->GetXMirror();
+		glView->SetXMirror(false);
+		glView->SetEditMode();
+		glView->SetColorsVisible();
+
+		wxButton* btnSwapBrush = (wxButton*)FindWindowById(XRCID("btnSwapBrush"), colorSettings);
+		btnSwapBrush->SetLabel(_("Edit Alpha"));
+
+		FillVertexColors();
+
+		GetMenuBar()->Check(XRCID("btnColorBrush"), true);
+		GetMenuBar()->Check(XRCID("btnXMirror"), false);
+		GetMenuBar()->Enable(XRCID("btnColorBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnAlphaBrush"), true);
+		GetMenuBar()->Enable(XRCID("btnWeightBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnTransform"), false);
+		GetMenuBar()->Enable(XRCID("btnPivot"), false);
+		GetMenuBar()->Enable(XRCID("btnVertexEdit"), false);
+		GetMenuBar()->Enable(XRCID("btnInflateBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnDeflateBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnMoveBrush"), false);
+		GetMenuBar()->Enable(XRCID("btnSmoothBrush"), false);
+		GetMenuBar()->Enable(XRCID("deleteVerts"), false);
+
+		GetToolBar()->ToggleTool(XRCID("btnColorBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnColorBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnAlphaBrush"), true);
+		GetToolBar()->EnableTool(XRCID("btnWeightBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnTransform"), false);
+		GetToolBar()->EnableTool(XRCID("btnPivot"), false);
+		GetToolBar()->EnableTool(XRCID("btnVertexEdit"), false);
+		GetToolBar()->EnableTool(XRCID("btnInflateBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnDeflateBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnMoveBrush"), false);
+		GetToolBar()->EnableTool(XRCID("btnSmoothBrush"), false);
+	}
 	else if (id == XRCID("segmentTabButton")) {
 		outfitShapes->Hide();
 		outfitBones->Hide();
+		colorSettings->Hide();
 		partitionTree->Hide();
 		lightSettings->Hide();
 		segmentTree->Show();
 
 		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
 		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
 		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
 		partitionTabButton->SetCheck(false);
 		lightsTabButton->SetCheck(false);
 
@@ -4604,17 +4824,20 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	else if (id == XRCID("partitionTabButton")) {
 		outfitShapes->Hide();
 		outfitBones->Hide();
+		colorSettings->Hide();
 		segmentTree->Hide();
 		lightSettings->Hide();
 		partitionTree->Show();
 
 		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
 		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
 		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 		wxStateButton* lightsTabButton = (wxStateButton*)FindWindowByName("lightsTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
 		segmentTabButton->SetCheck(false);
 		lightsTabButton->SetCheck(false);
 
@@ -4673,17 +4896,20 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	else if (id == XRCID("lightsTabButton")) {
 		outfitShapes->Hide();
 		outfitBones->Hide();
+		colorSettings->Hide();
 		segmentTree->Hide();
 		partitionTree->Hide();
 		lightSettings->Show();
 
 		wxStateButton* meshTabButton = (wxStateButton*)FindWindowByName("meshTabButton");
 		wxStateButton* boneTabButton = (wxStateButton*)FindWindowByName("boneTabButton");
+		wxStateButton* colorsTabButton = (wxStateButton*)FindWindowByName("colorsTabButton");
 		wxStateButton* segmentTabButton = (wxStateButton*)FindWindowByName("segmentTabButton");
 		wxStateButton* partitionTabButton = (wxStateButton*)FindWindowByName("partitionTabButton");
 
 		meshTabButton->SetCheck(false);
 		boneTabButton->SetCheck(false);
+		colorsTabButton->SetCheck(false);
 		segmentTabButton->SetCheck(false);
 		partitionTabButton->SetCheck(false);
 	}
@@ -4698,6 +4924,30 @@ void OutfitStudioFrame::OnTabButtonClick(wxCommandEvent& event) {
 	bottomSplitPanel->Layout();
 
 	Refresh();
+}
+
+void OutfitStudioFrame::OnBrushColorChanged(wxColourPickerEvent& event) {
+	wxColour color = event.GetColour();
+	Vector3 brushColor;
+	brushColor.x = color.Red() / 255.0f;
+	brushColor.y = color.Green() / 255.0f;
+	brushColor.z = color.Blue() / 255.0f;
+	glView->SetColorBrush(brushColor);
+}
+
+void OutfitStudioFrame::OnSwapBrush(wxCommandEvent& WXUNUSED(event)) {
+	if (glView->GetActiveBrush()) {
+		if (glView->GetActiveBrush()->Type() == TBT_COLOR) {
+			wxCommandEvent evt;
+			evt.SetId(XRCID("btnAlphaBrush"));
+			OnSelectTool(evt);
+		}
+		else if (glView->GetActiveBrush()->Type() == TBT_ALPHA) {
+			wxCommandEvent evt;
+			evt.SetId(XRCID("btnColorBrush"));
+			OnSelectTool(evt);
+		}
+	}
 }
 
 void OutfitStudioFrame::HighlightSlider(const std::string& name) {
@@ -6911,6 +7161,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	segmentMode = false;
 	bMaskPaint = false;
 	bWeightPaint = false;
+	bColorPaint = false;
 	isPainting = false;
 	isTransforming = false;
 	isMovingPivot = false;
@@ -7061,6 +7312,7 @@ void wxGLPanel::SetSelectedShape(const std::string& shapeName) {
 void wxGLPanel::SetActiveBrush(int brushID) {
 	bMaskPaint = false;
 	bWeightPaint = false;
+	bColorPaint = false;
 
 	switch (brushID) {
 	case -1:
@@ -7085,6 +7337,14 @@ void wxGLPanel::SetActiveBrush(int brushID) {
 	case 10:
 		activeBrush = &weightBrush;
 		bWeightPaint = true;
+		break;
+	case 11:
+		activeBrush = &colorBrush;
+		bColorPaint = true;
+		break;
+	case 12:
+		activeBrush = &alphaBrush;
+		bColorPaint = true;
 		break;
 	}
 }
@@ -7206,6 +7466,14 @@ bool wxGLPanel::StartBrushStroke(const wxPoint& screenPos) {
 			UnMaskBrush.setStrength(-maskBrush.getStrength());
 			activeBrush = &UnMaskBrush;
 		}
+		else if (activeBrush == &colorBrush) {
+			uncolorBrush.setStrength(-colorBrush.getStrength());
+			activeBrush = &uncolorBrush;
+		}
+		else if (activeBrush == &alphaBrush) {
+			unalphaBrush.setStrength(-alphaBrush.getStrength());
+			activeBrush = &unalphaBrush;
+		}
 	}
 	else if (activeBrush == &maskBrush && wxGetKeyState(WXK_SHIFT)) {
 		smoothMaskBrush.setStrength(maskBrush.getStrength() * 15.0f);
@@ -7299,10 +7567,11 @@ void wxGLPanel::EndBrushStroke() {
 	if (activeStroke) {
 		activeStroke->endStroke();
 
-		if (activeStroke->BrushType() != TBT_MASK) {
+		int brushType = activeStroke->BrushType();
+		if (brushType != TBT_MASK) {
 			os->ActiveShapesUpdated(strokeManager->GetCurStateStroke());
 
-			if (activeStroke->BrushType() == TBT_WEIGHT) {
+			if (brushType == TBT_WEIGHT) {
 				std::string selectedBone = os->GetActiveBone();
 				if (!selectedBone.empty()) {
 					int boneScalePos = os->boneScale->GetValue();
@@ -7310,7 +7579,7 @@ void wxGLPanel::EndBrushStroke() {
 				}
 			}
 
-			if (!os->bEditSlider && activeStroke->BrushType() != TBT_WEIGHT) {
+			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
 				for (auto &s : os->project->GetWorkNif()->GetShapeNames()) {
 					os->UpdateShapeSource(s);
 					os->project->RefreshMorphShape(s);
@@ -7557,17 +7826,18 @@ bool wxGLPanel::UndoStroke() {
 	bool ret = strokeManager->backStroke(gls.GetActiveMeshes());
 
 	if (ret && curStroke) {
-		if (curStroke->BrushType() != TBT_MASK) {
+		int brushType = curStroke->BrushType();
+		if (brushType != TBT_MASK) {
 			os->ActiveShapesUpdated(curStroke, true);
 
-			if (!os->bEditSlider && curStroke->BrushType() != TBT_WEIGHT) {
+			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
 				std::vector<mesh*> refMeshes = curStroke->GetRefMeshes();
 				for (auto &m : refMeshes)
 					os->project->UpdateShapeFromMesh(m->shapeName, m);
 			}
 		}
 
-		if (curStroke->BrushType() == TBT_WEIGHT) {
+		if (brushType == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
@@ -7591,17 +7861,18 @@ bool wxGLPanel::RedoStroke() {
 	TweakStroke* curStroke = strokeManager->GetCurStateStroke();
 
 	if (ret && curStroke) {
-		if (curStroke->BrushType() != TBT_MASK) {
+		int brushType = curStroke->BrushType();
+		if (brushType != TBT_MASK) {
 			os->ActiveShapesUpdated(curStroke);
 
-			if (!os->bEditSlider && curStroke->BrushType() != TBT_WEIGHT) {
+			if (!os->bEditSlider && brushType != TBT_WEIGHT && brushType != TBT_COLOR && brushType != TBT_ALPHA) {
 				std::vector<mesh*> refMeshes = curStroke->GetRefMeshes();
 				for (auto &m : refMeshes)
 					os->project->UpdateShapeFromMesh(m->shapeName, m);
 			}
 		}
 
-		if (curStroke->BrushType() == TBT_WEIGHT) {
+		if (brushType == TBT_WEIGHT) {
 			wxArrayTreeItemIds selItems;
 			os->outfitBones->GetSelections(selItems);
 			if (selItems.size() > 0) {
@@ -7862,8 +8133,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	int x;
 	int y;
 	int t = 0;
-	float w = 0.0f;
-	float m = 0.0f;
+	Vector3 hoverColor;
 	event.GetPosition(&x, &y);
 
 	if (mbuttonDown) {
@@ -7921,7 +8191,7 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 	if (!rbuttonDown && !lbuttonDown) {
 		std::string hitMeshName;
 		if (editMode) {
-			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitMeshName, &t, &w, &m);
+			cursorExists = gls.UpdateCursor(x, y, bGlobalBrushCollision, &hitMeshName, &t, &hoverColor);
 		}
 		else {
 			cursorExists = false;
@@ -7963,10 +8233,12 @@ void wxGLPanel::OnMouseMove(wxMouseEvent& event) {
 
 		if (os->statusBar) {
 			if (cursorExists) {
-				if (bWeightPaint)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, w), 1);
-				else if (bMaskPaint)
-					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, m), 1);
+				if (bMaskPaint)
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Mask: %g", t, hoverColor.x), 1);
+				else if (bWeightPaint)
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Weight: %g", t, hoverColor.y), 1);
+				else if (bColorPaint)
+					os->statusBar->SetStatusText(wxString::Format("Vertex: %d, Color: %g, %g, %g", t, hoverColor.x, hoverColor.y, hoverColor.z), 1);
 				else {
 					std::vector<Vector3> verts;
 					os->project->GetLiveVerts(hitMeshName, verts);

@@ -197,7 +197,7 @@
 										<option>0</option>
 										<flag>wxEXPAND</flag>
 										<border>0</border>
-										<object class="wxBoxSizer">
+										<object class="wxWrapSizer">
 											<orient>wxHORIZONTAL</orient>
 											<object class="sizeritem">
 												<option>0</option>
@@ -205,7 +205,7 @@
 												<border>0</border>
 												<object class="wxButton" name="meshTabButton" subclass="wxStateButton">
 													<size>-1,20</size>
-													<style>wxNO_BORDER</style>
+													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
 													<label>Meshes</label>
 													<bg>#646464</bg>
 													<default>0</default>
@@ -217,7 +217,7 @@
 												<border>0</border>
 												<object class="wxButton" name="boneTabButton" subclass="wxStateButton">
 													<size>-1,20</size>
-													<style>wxNO_BORDER</style>
+													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
 													<label>Bones</label>
 													<bg>#646464</bg>
 													<default>0</default>
@@ -229,7 +229,7 @@
 												<border>0</border>
 												<object class="wxButton" name="segmentTabButton" subclass="wxStateButton">
 													<size>-1,20</size>
-													<style>wxNO_BORDER</style>
+													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
 													<label>Segments</label>
 													<bg>#646464</bg>
 													<default>0</default>
@@ -241,8 +241,20 @@
 												<border>0</border>
 												<object class="wxButton" name="partitionTabButton" subclass="wxStateButton">
 													<size>-1,20</size>
-													<style>wxNO_BORDER</style>
+													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
 													<label>Partitions</label>
+													<bg>#646464</bg>
+													<default>0</default>
+												</object>
+											</object>
+											<object class="sizeritem">
+												<option>0</option>
+												<flag>wxALL</flag>
+												<border>0</border>
+												<object class="wxButton" name="colorsTabButton" subclass="wxStateButton">
+													<size>-1,20</size>
+													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
+													<label>Colors</label>
 													<bg>#646464</bg>
 													<default>0</default>
 												</object>
@@ -253,7 +265,7 @@
 												<border>0</border>
 												<object class="wxButton" name="lightsTabButton" subclass="wxStateButton">
 													<size>-1,20</size>
-													<style>wxNO_BORDER</style>
+													<style>wxNO_BORDER|wxBU_EXACTFIT</style>
 													<label>Lights</label>
 													<bg>#646464</bg>
 													<default>0</default>
@@ -280,6 +292,57 @@
 											<bg>#404040</bg>
 											<fg>#ffffff</fg>
 											<hidden>1</hidden>
+										</object>
+									</object>
+									<object class="sizeritem">
+										<option>1</option>
+										<flag>wxBOTTOM|wxLEFT|wxRIGHT|wxEXPAND</flag>
+										<border>3</border>
+										<object class="wxScrolledWindow" name="colorSettings">
+											<style>wxVSCROLL</style>
+											<scrollrate>5,5</scrollrate>
+											<bg>#404040</bg>
+											<fg>#ffffff</fg>
+											<hidden>1</hidden>
+											<object class="wxBoxSizer">
+												<orient>wxVERTICAL</orient>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxEXPAND|wxTOP</flag>
+													<border>5</border>
+													<object class="wxBoxSizer">
+														<orient>wxHORIZONTAL</orient>
+														<object class="sizeritem">
+															<option>1</option>
+															<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+															<border>5</border>
+															<object class="wxStaticText" name="lbBrushColor">
+																<size>100,-1</size>
+																<label>Brush Color</label>
+																<wrap>-1</wrap>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>2</option>
+															<flag>wxALIGN_CENTER_VERTICAL|wxLEFT|wxRIGHT</flag>
+															<border>5</border>
+															<object class="wxColourPickerCtrl" name="cpBrushColor">
+																<tooltip>Color of the brush.</tooltip>
+																<value>rgb(0,0,0)</value>
+															</object>
+														</object>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxEXPAND|wxTOP</flag>
+													<border>5</border>
+													<object class="wxButton" name="btnSwapBrush">
+														<size>-1,25</size>
+														<label>Edit Alpha</label>
+													</object>
+												</object>
+											</object>
 										</object>
 									</object>
 									<object class="sizeritem">
@@ -1364,6 +1427,18 @@
 					<radio>1</radio>
 					<enabled>0</enabled>
 				</object>
+				<object class="wxMenuItem" name="btnColorBrush">
+					<label>Color Paint\t7</label>
+					<help>Apply vertex colors.\nHold down the ALT key to remove colors.</help>
+					<radio>1</radio>
+					<enabled>0</enabled>
+				</object>
+				<object class="wxMenuItem" name="btnAlphaBrush">
+					<label>Alpha Paint\t8</label>
+					<help>Apply vertex alpha.\nHold down the ALT key to remove alpha.</help>
+					<radio>1</radio>
+					<enabled>0</enabled>
+				</object>
 				<object class="separator" />
 				<object class="wxMenuItem" name="btnTransform">
 					<label>Transform\tF</label>
@@ -1489,6 +1564,22 @@
 			<tooltip>Apply animation weight values for currently selected bone.\nHold down the ALT key to weaken the weighting.</tooltip>
 			<bitmap>res\images\WeightBrush.png</bitmap>
 			<bitmap2>res\images\WeightBrush_d.png</bitmap2>
+			<radio>1</radio>
+			<disabled>1</disabled>
+		</object>
+		<object class="tool" name="btnColorBrush">
+			<label>Color Paint</label>
+			<tooltip>Apply vertex colors.\nHold down the ALT key to remove colors.</tooltip>
+			<bitmap>res\images\ColorBrush.png</bitmap>
+			<bitmap2>res\images\ColorBrush_d.png</bitmap2>
+			<radio>1</radio>
+			<disabled>1</disabled>
+		</object>
+		<object class="tool" name="btnAlphaBrush">
+			<label>Alpha Paint</label>
+			<tooltip>Apply vertex alpha.\nHold down the ALT key to remove alpha.</tooltip>
+			<bitmap>res\images\AlphaBrush.png</bitmap>
+			<bitmap2>res\images\AlphaBrush_d.png</bitmap2>
 			<radio>1</radio>
 			<disabled>1</disabled>
 		</object>

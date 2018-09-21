@@ -50,11 +50,13 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	specularPower = XRCCTRL(*this, "specularPower", wxTextCtrl);
 	emissiveColor = XRCCTRL(*this, "emissiveColor", wxColourPickerCtrl);
 	emissiveMultiple = XRCCTRL(*this, "emissiveMultiple", wxTextCtrl);
+	vertexColors = XRCCTRL(*this, "vertexColors", wxCheckBox);
 	btnAddShader = XRCCTRL(*this, "btnAddShader", wxButton);
 	btnRemoveShader = XRCCTRL(*this, "btnRemoveShader", wxButton);
 	btnSetTextures = XRCCTRL(*this, "btnSetTextures", wxButton);
 
 	alphaThreshold = XRCCTRL(*this, "alphaThreshold", wxTextCtrl);
+	vertexAlpha = XRCCTRL(*this, "vertexAlpha", wxCheckBox);
 	btnAddTransparency = XRCCTRL(*this, "btnAddTransparency", wxButton);
 	btnRemoveTransparency = XRCCTRL(*this, "btnRemoveTransparency", wxButton);
 
@@ -97,9 +99,16 @@ void ShapeProperties::GetShader() {
 		specularPower->Disable();
 		emissiveColor->Disable();
 		emissiveMultiple->Disable();
+		vertexColors->Disable();
+		vertexAlpha->Disable();
 	}
 	else {
+		currentVertexColors = shader->HasVertexColors();
+		currentVertexAlpha = shader->HasVertexAlpha();
+
 		shaderName->SetValue(shader->GetName());
+		vertexColors->SetValue(currentVertexColors);
+		vertexAlpha->SetValue(currentVertexAlpha);
 
 		Color4 color;
 		Vector3 colorVec;
@@ -229,6 +238,12 @@ void ShapeProperties::OnAddShader(wxCommandEvent& WXUNUSED(event)) {
 	specularPower->Enable();
 	emissiveColor->Enable();
 	emissiveMultiple->Enable();
+	vertexColors->Enable();
+
+	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
+	if (alphaProp) {
+		vertexAlpha->Enable();
+	}
 }
 
 void ShapeProperties::AddShader() {
@@ -374,9 +389,15 @@ void ShapeProperties::GetTransparency() {
 		alphaThreshold->Enable();
 		btnAddTransparency->Disable();
 		btnRemoveTransparency->Enable();
+
+		NiShader* shader = nif->GetShader(shape);
+		if (shader) {
+			vertexAlpha->Enable();
+		}
 	}
 	else {
 		alphaThreshold->Disable();
+		vertexAlpha->Disable();
 		btnAddTransparency->Enable();
 		btnRemoveTransparency->Disable();
 	}
@@ -632,6 +653,10 @@ void ShapeProperties::ApplyChanges() {
 		float emisMultiple = atof(emissiveMultiple->GetValue().c_str());
 
 		shader->SetName(name);
+		shader->SetVertexColors(vertexColors->IsChecked());
+		
+		if (vertexColors->IsChecked() && currentVertexColors != vertexColors->IsChecked())
+			shape->SetVertexColors(true);
 
 		if (shader->HasType<BSEffectShaderProperty>()) {
 			shader->SetEmissiveColor(emisColor);
@@ -673,8 +698,18 @@ void ShapeProperties::ApplyChanges() {
 	}
 
 	NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);
-	if (alphaProp)
+	if (alphaProp) {
 		alphaProp->threshold = atoi(alphaThreshold->GetValue().c_str());
+
+		if (shader) {
+			shader->SetVertexAlpha(vertexAlpha->IsChecked());
+
+			if (vertexAlpha->IsChecked() && currentVertexAlpha != vertexAlpha->IsChecked()) {
+				shader->SetVertexColors(true);
+				shape->SetVertexColors(true);
+			}
+		}
+	}
 
 	BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {

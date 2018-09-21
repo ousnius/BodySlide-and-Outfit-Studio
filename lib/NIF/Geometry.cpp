@@ -239,7 +239,7 @@ void NiGeometryData::SetNormals(const bool enable) {
 void NiGeometryData::SetVertexColors(const bool enable) {
 	hasVertexColors = enable;
 	if (enable)
-		vertexColors.resize(numVertices);
+		vertexColors.resize(numVertices, Color4(1.0f, 1.0f, 1.0f, 1.0f));
 	else
 		vertexColors.clear();
 }
@@ -974,6 +974,21 @@ const std::vector<Vector2>* BSTriShape::GetUVData() {
 	return &rawUvs;
 }
 
+const std::vector<Color4>* BSTriShape::GetColorData() {
+	if (!HasVertexColors())
+		return nullptr;
+
+	rawColors.resize(numVertices);
+	for (int i = 0; i < numVertices; i++) {
+		rawColors[i].r = vertData[i].colorData[0] / 255.0f;
+		rawColors[i].g = vertData[i].colorData[1] / 255.0f;
+		rawColors[i].b = vertData[i].colorData[2] / 255.0f;
+		rawColors[i].a = vertData[i].colorData[3] / 255.0f;
+	}
+
+	return &rawColors;
+}
+
 ushort BSTriShape::GetNumVertices() {
 	return numVertices;
 }
@@ -1025,8 +1040,18 @@ void BSTriShape::SetTangents(const bool enable) {
 }
 
 void BSTriShape::SetVertexColors(const bool enable) {
-	if (enable)
+	if (enable) {
+		if (!vertexDesc.HasFlag(VF_COLORS)) {
+			for (auto &v : vertData) {
+				v.colorData[0] = 255;
+				v.colorData[1] = 255;
+				v.colorData[2] = 255;
+				v.colorData[3] = 255;
+			}
+		}
+
 		vertexDesc.SetFlag(VF_COLORS);
+	}
 	else
 		vertexDesc.RemoveFlag(VF_COLORS);
 }

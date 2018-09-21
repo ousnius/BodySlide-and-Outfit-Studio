@@ -2368,3 +2368,42 @@ msgstr ""
 
 msgid "Generate and save the normal map file."
 msgstr ""
+
+msgid "Colors"
+msgstr ""
+
+msgid "Brush Color"
+msgstr ""
+
+msgid "Color of the brush."
+msgstr ""
+
+msgid "Edit Color"
+msgstr ""
+
+msgid "Edit Alpha"
+msgstr ""
+
+msgid "Color Paint"
+msgstr ""
+
+msgid "Color Paint\t7"
+msgstr ""
+
+msgid "Apply vertex colors.\nHold down the ALT key to remove colors."
+msgstr ""
+
+msgid "Alpha Paint"
+msgstr ""
+
+msgid "Alpha Paint\t8"
+msgstr ""
+
+msgid "Apply vertex alpha.\nHold down the ALT key to remove alpha."
+msgstr ""
+
+msgid "Vertex Colors"
+msgstr ""
+
+msgid "Vertex Alpha"
+msgstr ""

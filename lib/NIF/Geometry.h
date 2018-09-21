@@ -346,6 +346,7 @@ public:
 	std::vector<Vector3> rawTangents;		// filled by CalcTangentSpace function and returned.
 	std::vector<Vector3> rawBitangents;		// filled in CalcTangentSpace
 	std::vector<Vector2> rawUvs;			// filled by GetUVData function and returned.
+	std::vector<Color4> rawColors;			// filled by GetColorData function and returned.
 
 	std::vector<uint> deletedTris;			// temporary storage for BSSubIndexTriShape
 
@@ -376,6 +377,7 @@ public:
 	const std::vector<Vector3>* GetTangentData(bool xform = true);
 	const std::vector<Vector3>* GetBitangentData(bool xform = true);
 	const std::vector<Vector2>* GetUVData();
+	const std::vector<Color4>* GetColorData();
 
 	ushort GetNumVertices();
 	void SetVertices(const bool enable);

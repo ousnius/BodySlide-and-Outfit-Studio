@@ -859,7 +859,7 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 						headPartEyes = true;
 
 					// No normals and tangents with model space maps
-					if ((bslsp->shaderFlags1 & (1 << 12)) != 0) {
+					if (bslsp->IsModelSpace()) {
 						if (!normals->empty())
 							result.shapesNormalsRemoved.push_back(shapeName);
 
@@ -870,9 +870,11 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if ((bslsp->shaderFlags2 & (1 << 29)) != 0)
 						removeVertexColors = false;
 
-					// Disable flag if vertex colors were removed
-					if (removeVertexColors)
-						bslsp->shaderFlags2 &= ~(1 << 5);
+					// Disable flags if vertex colors were removed
+					if (removeVertexColors) {
+						bslsp->SetVertexColors(false);
+						bslsp->SetVertexAlpha(false);
+					}
 
 					if (options.removeParallax) {
 						if (bslsp->GetShaderType() == BSLSP_PARALLAX) {
@@ -902,9 +904,11 @@ OptResultSSE NifFile::OptimizeForSSE(const OptOptionsSSE& options) {
 					if ((bsesp->shaderFlags2 & (1 << 29)) != 0)
 						removeVertexColors = false;
 
-					// Disable flag if vertex colors were removed
-					if (removeVertexColors)
-						bsesp->shaderFlags2 &= ~(1 << 5);
+					// Disable flags if vertex colors were removed
+					if (removeVertexColors) {
+						bsesp->SetVertexColors(false);
+						bsesp->SetVertexAlpha(false);
+					}
 				}
 			}
 
@@ -1934,6 +1938,25 @@ const std::vector<Vector2>* NifFile::GetUvsForShape(const std::string& shapeName
 	return nullptr;
 }
 
+const std::vector<Color4>* NifFile::GetColorsForShape(const std::string& shapeName) {
+	auto shape = FindBlockByName<NiShape>(shapeName);
+	if (!shape)
+		return nullptr;
+
+	if (shape->HasType<NiTriBasedGeom>()) {
+		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		if (geomData)
+			return &geomData->vertexColors;
+	}
+	else if (shape->HasType<BSTriShape>()) {
+		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+		if (bsTriShape)
+			return bsTriShape->GetColorData();
+	}
+
+	return nullptr;
+}
+
 bool NifFile::GetUvsForShape(const std::string& shapeName, std::vector<Vector2>& outUvs) {
 	const std::vector<Vector2>* uvData = GetUvsForShape(shapeName);
 	if (uvData) {
@@ -2026,6 +2049,48 @@ void NifFile::SetUvsForShape(const std::string& shapeName, const std::vector<Vec
 
 			for (int i = 0; i < bsTriShape->GetNumVertices(); i++)
 				bsTriShape->vertData[i].uv = uvs[i];
+		}
+	}
+}
+
+void NifFile::SetColorsForShape(const std::string& shapeName, const std::vector<Color4>& colors) {
+	auto shape = FindBlockByName<NiShape>(shapeName);
+	if (!shape)
+		return;
+
+	if (shape->HasType<NiTriBasedGeom>()) {
+		auto geomData = hdr.GetBlock<NiGeometryData>(shape->GetDataRef());
+		if (geomData) {
+			if (colors.size() != geomData->vertices.size())
+				return;
+
+			geomData->SetVertexColors(true);
+			geomData->vertexColors.assign(colors.begin(), colors.end());
+		}
+	}
+	else if (shape->HasType<BSTriShape>()) {
+		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
+		if (bsTriShape) {
+			if (colors.size() != bsTriShape->vertData.size())
+				return;
+
+			bsTriShape->SetVertexColors(true);
+
+			for (int i = 0; i < bsTriShape->GetNumVertices(); i++) {
+				auto& vertex = bsTriShape->vertData[i];
+
+				float f = std::max(0.0f, std::min(1.0f, colors[i].r));
+				vertex.colorData[0] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+
+				f = std::max(0.0f, std::min(1.0f, colors[i].g));
+				vertex.colorData[1] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+
+				f = std::max(0.0f, std::min(1.0f, colors[i].b));
+				vertex.colorData[2] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+
+				f = std::max(0.0f, std::min(1.0f, colors[i].a));
+				vertex.colorData[3] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+			}
 		}
 	}
 }

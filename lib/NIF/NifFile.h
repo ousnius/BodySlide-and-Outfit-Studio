@@ -170,10 +170,12 @@ public:
 	bool ReorderTriangles(const std::string& shapeName, const std::vector<uint>& triangleIndices);
 	const std::vector<Vector3>* GetNormalsForShape(const std::string& shapeName, bool transform = true);
 	const std::vector<Vector2>* GetUvsForShape(const std::string& shapeName);
+	const std::vector<Color4>* GetColorsForShape(const std::string& shapeName);
 	bool GetUvsForShape(const std::string& shapeName, std::vector<Vector2>& outUvs);
 	bool GetVertsForShape(const std::string& shapeName, std::vector<Vector3>& outVerts);
 	void SetVertsForShape(const std::string& shapeName, const std::vector<Vector3>& verts);
 	void SetUvsForShape(const std::string& shapeName, const std::vector<Vector2>& uvs);
+	void SetColorsForShape(const std::string& shapeName, const std::vector<Color4>& colors);
 	void InvertUVsForShape(const std::string& shapeName, bool invertX, bool invertY);
 	void MirrorShape(const std::string& shapeName, bool mirrorX, bool mirrorY, bool mirrorZ);
 	void SetNormalsForShape(const std::string& shapeName, const std::vector<Vector3>& norms);

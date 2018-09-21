@@ -79,14 +79,18 @@ bool TweakUndo::forwardStroke(const std::vector<mesh*>& validMeshes) {
 }
 
 void TweakStroke::RestoreStartState(mesh* m) {
+	int brushType = refBrush->Type();
+
 	for (auto &stateIt : pointStartState[m]) {
-		if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
+		if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR)
 			m->vcolors[stateIt.first] = stateIt.second;
+		else if (brushType == TBT_ALPHA)
+			m->valpha[stateIt.first] = stateIt.second.x;
 		else
 			m->verts[stateIt.first] = stateIt.second;
 	}
 
-	if (refBrush->Type() != TBT_MASK && refBrush->Type() != TBT_WEIGHT) {
+	if (brushType != TBT_MASK && brushType != TBT_WEIGHT && brushType != TBT_COLOR) {
 		m->SmoothNormals();
 
 		if (startBVH[m] == endBVH[m]) {
@@ -97,22 +101,28 @@ void TweakStroke::RestoreStartState(mesh* m) {
 			m->bvh = startBVH[m];
 	}
 
-	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
+	if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR)
 		m->QueueUpdate(mesh::UpdateType::VertexColors);
+	else if (brushType == TBT_ALPHA)
+		m->QueueUpdate(mesh::UpdateType::VertexAlpha);
 	else
 		m->QueueUpdate(mesh::UpdateType::Position);
 
 }
 
 void TweakStroke::RestoreEndState(mesh* m) {
+	int brushType = refBrush->Type();
+
 	for (auto &stateIt : pointEndState[m]) {
-		if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
+		if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR)
 			m->vcolors[stateIt.first] = stateIt.second;
+		else if (brushType == TBT_ALPHA)
+			m->valpha[stateIt.first] = stateIt.second.x;
 		else
 			m->verts[stateIt.first] = stateIt.second;
 	}
 
-	if (refBrush->Type() != TBT_MASK && refBrush->Type() != TBT_WEIGHT) {
+	if (brushType != TBT_MASK && brushType != TBT_WEIGHT && brushType != TBT_COLOR) {
 		m->SmoothNormals();
 
 		if (startBVH[m] == endBVH[m]) {
@@ -123,8 +133,10 @@ void TweakStroke::RestoreEndState(mesh* m) {
 			m->bvh = endBVH[m];
 	}
 
-	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
+	if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR)
 		m->QueueUpdate(mesh::UpdateType::VertexColors);
+	else if (brushType == TBT_ALPHA)
+		m->QueueUpdate(mesh::UpdateType::VertexAlpha);
 	else
 		m->QueueUpdate(mesh::UpdateType::Position);
 }
@@ -301,12 +313,16 @@ void TweakStroke::endStroke() {
 }
 
 void TweakStroke::addPoint(mesh* m, int point, Vector3& newPos) {
+	int brushType = refBrush->Type();
+
 	auto& startState = pointStartState[m];
 	if (startState.find(point) == startState.end())
 		startState[point] = newPos;
 
-	if (refBrush->Type() == TBT_MASK || refBrush->Type() == TBT_WEIGHT)
+	if (brushType == TBT_MASK || brushType == TBT_WEIGHT || brushType == TBT_COLOR)
 		pointEndState[m][point] = m->vcolors[point];
+	else if (brushType == TBT_ALPHA)
+		pointEndState[m][point].x = m->valpha[point];
 	else
 		pointEndState[m][point] = m->verts[point];
 }
@@ -331,48 +347,44 @@ bool TweakBrush::checkSpacing(Vector3& start, Vector3& end) {
 		return false;
 }
 
-// Standard falloff function, used by most brushes 
-//   y = (  (cos((pi/2)*x) * sqrt(cos((pi/2)*x))) ^ focus) - inset
-//  cancel that -- going for a simpler function (1-x^2)*(1-x^4)
-// with focus :  (1-(((f-1)-f*x)^2))*(1-(((f-1)-f*x)^4))  f is greater than 1.
-//				
-// values between 0 and 1 give a spherical curve, values over 1 give a peaked curve
+// Standard falloff function
+// y = ((cos((pi/2)*x) * sqrt(cos((pi/2)*x))) ^ focus) - inset
+// Cancel that -- going for a simpler function (1-x^2)*(1-x^4)
+// With focus: (1-(((f-1)-f*x)^2))*(1-(((f-1)-f*x)^4))  f is greater than 1.
+// Values between 0 and 1 give a spherical curve, values over 1 give a peaked curve
 void TweakBrush::applyFalloff(Vector3 &deltaVec, float dist) {
-	// beyond the radius, always 0 stength.
+	// Beyond the radius, no strength
 	if (dist > radius) {
-		deltaVec.x = deltaVec.y = deltaVec.z = 0.0f;
+		deltaVec.Zero();
 		return;
 	}
 
-	// at 0, always full strength
+	// No distance, keep strength
 	if (dist == 0.0f)
 		return;
 
-	float p = 1.0f;
-
 	float x = dist / radius;
-	if (x <= (focus - 1.0f) / (focus)) {
-		p = 1.0f;
-	}
-	else {
-		float fx;
+	if (x > (focus - 1.0f) / focus) {
 		float p1 = 0.0f;
 		float p2 = 0.0f;
+
 		if (focus >= 1.0f) {
-			fx = (focus - 1.0f) - (focus*x);
-			p1 = (1.0f - fx*fx);
-			p2 = (1.0f - pow(fx, 4));
+			float fx = (focus - 1.0f) - focus * x;
+			p1 = 1.0f - fx * fx;
+			p2 = 1.0f - std::pow(fx, 4);
 		}
 		else if (focus > 0.0f) {
-			fx = x / focus;
-			p1 = (1.0f - x*x);
-			p2 = (1.0f - pow(fx, 4));
+			float fx = x / focus;
+			p1 = 1.0f - x * x;
+			p2 = 1.0f - std::pow(fx, 4);
 		}
 
-		p = p1*p2;
-		if (p < 0.0f) p = 0.0f;
+		float p = p1 * p2;
+		if (p < 0.0f)
+			p = 0.0f;
+
+		deltaVec *= p;
 	}
-	deltaVec *= p;
 }
 
 bool TweakBrush::queryPoints(mesh *refmesh, TweakPickInfo& pickInfo, int* resultPoints, int& outResultCount, std::vector<int>& resultFacets, std::unordered_set<AABBTree::AABBTreeNode*> &affectedNodes) {
@@ -1721,4 +1733,324 @@ void TB_SmoothWeight::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* p
 
 		refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
 	}
+}
+
+TB_Color::TB_Color() :TweakBrush() {
+	brushType = TBT_COLOR;
+	strength = 0.003f;
+	bLiveBVH = false;
+	bLiveNormals = false;
+	brushName = "Color Paint";
+}
+
+TB_Color::~TB_Color() {
+}
+
+void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+	Vector3 vs;
+	Vector3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->vcolors[points[i]];
+		movedpoints[points[i]] = vc;
+
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV <= radius) {
+			Vector3 falloff(strength * 10.0f, strength * 10.0f, strength * 10.0f);
+			applyFalloff(falloff, originToV);
+
+			vc.x = color.x * falloff.x + vc.x * (1.0f - falloff.x);
+			vc.y = color.y * falloff.y + vc.y * (1.0f - falloff.y);
+			vc.z = color.z * falloff.z + vc.z * (1.0f - falloff.z);
+		}
+
+		if (vc.x > 1.0f) vc.x = 1.0f;
+		else if (vc.x < 0.0f) vc.x = 0.0f;
+
+		if (vc.y > 1.0f) vc.y = 1.0f;
+		else if (vc.y < 0.0f) vc.y = 0.0f;
+
+		if (vc.z > 1.0f) vc.z = 1.0f;
+		else if (vc.z < 0.0f) vc.z = 0.0f;
+
+		refmesh->vcolors[points[i]] = vc;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+}
+
+void TB_Color::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
+	Vector3 vs;
+	Vector3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->vcolors[points[i]];
+		movedpoints[i] = vc;
+
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV <= radius) {
+			Vector3 falloff(strength * 10.0f, strength * 10.0f, strength * 10.0f);
+			applyFalloff(falloff, originToV);
+
+			vc.x = color.x * falloff.x + vc.x * (1.0f - falloff.x);
+			vc.y = color.y * falloff.y + vc.y * (1.0f - falloff.y);
+			vc.z = color.z * falloff.z + vc.z * (1.0f - falloff.z);
+		}
+
+		if (vc.x > 1.0f) vc.x = 1.0f;
+		else if (vc.x < 0.0f) vc.x = 0.0f;
+
+		if (vc.y > 1.0f) vc.y = 1.0f;
+		else if (vc.y < 0.0f) vc.y = 0.0f;
+
+		if (vc.z > 1.0f) vc.z = 1.0f;
+		else if (vc.z < 0.0f) vc.z = 0.0f;
+
+		refmesh->vcolors[points[i]] = vc;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+}
+
+TB_Uncolor::TB_Uncolor() :TweakBrush() {
+	brushType = TBT_COLOR;
+	strength = -0.003f;
+	bLiveBVH = false;
+	bLiveNormals = false;
+	brushName = "Color Erase";
+}
+
+TB_Uncolor::~TB_Uncolor() {
+}
+
+void TB_Uncolor::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+	Vector3 vs;
+	Vector3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->vcolors[points[i]];
+		movedpoints[i] = vc;
+
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV <= radius) {
+			Vector3 falloff(-strength * 10.0f, -strength * 10.0f, -strength * 10.0f);
+			applyFalloff(falloff, originToV);
+
+			vc.x = falloff.x + vc.x * (1.0f - falloff.x);
+			vc.y = falloff.y + vc.y * (1.0f - falloff.y);
+			vc.z = falloff.z + vc.z * (1.0f - falloff.z);
+		}
+
+		if (vc.x > 1.0f) vc.x = 1.0f;
+		else if (vc.x < 0.0f) vc.x = 0.0f;
+
+		if (vc.y > 1.0f) vc.y = 1.0f;
+		else if (vc.y < 0.0f) vc.y = 0.0f;
+
+		if (vc.z > 1.0f) vc.z = 1.0f;
+		else if (vc.z < 0.0f) vc.z = 0.0f;
+
+		refmesh->vcolors[points[i]] = vc;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+}
+
+void TB_Uncolor::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
+	Vector3 vs;
+	Vector3 vc;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->vcolors[points[i]];
+		movedpoints[i] = vc;
+
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV <= radius) {
+			Vector3 falloff(-strength * 10.0f, -strength * 10.0f, -strength * 10.0f);
+			applyFalloff(falloff, originToV);
+
+			vc.x = falloff.x + vc.x * (1.0f - falloff.x);
+			vc.y = falloff.y + vc.y * (1.0f - falloff.y);
+			vc.z = falloff.z + vc.z * (1.0f - falloff.z);
+		}
+
+		if (vc.x > 1.0f) vc.x = 1.0f;
+		else if (vc.x < 0.0f) vc.x = 0.0f;
+
+		if (vc.y > 1.0f) vc.y = 1.0f;
+		else if (vc.y < 0.0f) vc.y = 0.0f;
+
+		if (vc.z > 1.0f) vc.z = 1.0f;
+		else if (vc.z < 0.0f) vc.z = 0.0f;
+
+		refmesh->vcolors[points[i]] = vc;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexColors);
+}
+
+TB_Alpha::TB_Alpha() :TweakBrush() {
+	brushType = TBT_ALPHA;
+	bLiveBVH = false;
+	bLiveNormals = false;
+	brushName = "Alpha Brush";
+	strength = 0.0015f;
+}
+
+TB_Alpha::~TB_Alpha() {
+}
+
+void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+	Vector3 vs;
+	float vc;
+	float ve;
+	float vf;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->valpha[points[i]];
+		movedpoints[points[i]].x = vc;
+
+		ve = vc;
+		if (strength < 0.1f)
+			ve -= strength;
+		else
+			ve -= 1.0f;
+		ve -= vc;
+
+		Vector3 vev(ve, ve, ve);
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
+			ve = 0.0f;
+		else if (strength < 0.1f && focus < 5.0f)
+			applyFalloff(vev, originToV);
+
+		vf = vc + vev.x;
+		if (vf < 0.0f)
+			vf = 0.0f;
+
+		refmesh->valpha[points[i]] = vf;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexAlpha);
+}
+
+void TB_Alpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
+	Vector3 vs;
+	float vc;
+	float ve;
+	float vf;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->valpha[points[i]];
+		movedpoints[i].x = vc;
+
+		ve = vc;
+		if (strength < 0.1f)
+			ve -= strength;
+		else
+			ve -= 1.0f;
+		ve -= vc;
+
+		Vector3 vev(ve, ve, ve);
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
+			ve = 0.0f;
+		else if (strength < 0.1f && focus < 5.0f)
+			applyFalloff(vev, originToV);
+
+		vf = vc + vev.x;
+		if (vf < 0.0f)
+			vf = 0.0f;
+
+		refmesh->valpha[points[i]] = vf;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexAlpha);
+}
+
+TB_Unalpha::TB_Unalpha() :TweakBrush() {
+	brushType = TBT_ALPHA;
+	bLiveBVH = false;
+	bLiveNormals = false;
+	brushName = "Unalpha Brush";
+	strength = -0.0015f;
+}
+
+TB_Unalpha::~TB_Unalpha() {
+}
+
+void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, std::unordered_map<int, Vector3>& movedpoints) {
+	Vector3 vs;
+	float vc;
+	float ve;
+	float vf;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->valpha[points[i]];
+		movedpoints[points[i]].x = vc;
+
+		ve = vc;
+		if (strength > -0.1f)
+			ve -= strength;
+		else
+			ve += 1.0f;
+		ve -= vc;
+
+		Vector3 vev(ve, ve, ve);
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
+			ve = 0.0f;
+		else if (strength > -0.1f && focus < 5.0f)
+			applyFalloff(vev, originToV);
+
+		vf = vc + vev.x;
+		if (vf > 1.0f)
+			vf = 1.0f;
+
+		refmesh->valpha[points[i]] = vf;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexAlpha);
+}
+
+void TB_Unalpha::brushAction(mesh* refmesh, TweakPickInfo& pickInfo, int* points, int nPoints, Vector3* movedpoints) {
+	Vector3 vs;
+	float vc;
+	float ve;
+	float vf;
+
+	for (int i = 0; i < nPoints; i++) {
+		vs = refmesh->verts[points[i]];
+		vc = refmesh->valpha[points[i]];
+		movedpoints[i].x = vc;
+
+		ve = vc;
+		if (strength > -0.1f)
+			ve -= strength;
+		else
+			ve += 1.0f;
+		ve -= vc;
+
+		Vector3 vev(ve, ve, ve);
+		float originToV = pickInfo.origin.DistanceTo(vs);
+		if (originToV > radius)
+			ve = 0.0f;
+		else if (strength > -0.1f && focus < 5.0f)
+			applyFalloff(vev, originToV);
+
+		vf = vc + vev.x;
+		if (vf > 1.0f)
+			vf = 1.0f;
+
+		refmesh->valpha[points[i]] = vf;
+	}
+
+	refmesh->QueueUpdate(mesh::UpdateType::VertexAlpha);
 }

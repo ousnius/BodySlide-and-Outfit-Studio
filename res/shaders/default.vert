@@ -16,6 +16,7 @@ uniform vec3 color;
 uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
+uniform bool bShowColors;
 uniform bool bShowSegments;
 
 uniform bool bWireframe;
@@ -27,7 +28,8 @@ layout(location = 1) in vec3 vertexNormal;
 layout(location = 2) in vec3 vertexTangent;
 layout(location = 3) in vec3 vertexBitangent;
 layout(location = 4) in vec3 vertexColors;
-layout(location = 5) in vec2 vertexUV;
+layout(location = 5) in float vertexAlpha;
+layout(location = 6) in vec2 vertexUV;
 
 struct DirectionalLight
 {
@@ -104,6 +106,12 @@ void main(void)
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vUV = vertexUV;
 	
+	if (bShowColors)
+	{
+		vColor.rgb = vertexColors;
+		vColor.a = vertexAlpha;
+	}
+	
 	// Eye-coordinate position of vertex
 	vec3 vPos = vec3(matModelView * vec4(vertexPosition, 1.0));
 	gl_Position = matProjection * vec4(vPos, 1.0);
@@ -151,7 +159,7 @@ void main(void)
 	{
 		if (!bShowTexture || bWireframe)
 		{
-			vColor = clamp(vec4(color, 1.0), 0.0, 1.0);
+			vColor *= clamp(vec4(color, 1.0), 0.0, 1.0);
 		}
 	}
 	else

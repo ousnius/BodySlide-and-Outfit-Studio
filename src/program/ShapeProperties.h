@@ -25,11 +25,13 @@ private:
 	wxTextCtrl* specularPower = nullptr;
 	wxColourPickerCtrl* emissiveColor = nullptr;
 	wxTextCtrl* emissiveMultiple = nullptr;
+	wxCheckBox* vertexColors = nullptr;
 	wxButton* btnAddShader = nullptr;
 	wxButton* btnRemoveShader = nullptr;
 	wxButton* btnSetTextures = nullptr;
 
 	wxTextCtrl* alphaThreshold = nullptr;
+	wxCheckBox* vertexAlpha = nullptr;
 	wxButton* btnAddTransparency = nullptr;
 	wxButton* btnRemoveTransparency = nullptr;
 
@@ -46,6 +48,8 @@ private:
 	NiShape* shape = nullptr;
 
 	bool currentSubIndex = false;
+	bool currentVertexColors = false;
+	bool currentVertexAlpha = false;
 
 	void GetShader();
 	void GetShaderType();

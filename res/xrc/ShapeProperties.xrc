@@ -208,6 +208,23 @@
 														<maxlength>25</maxlength>
 													</object>
 												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+													<border>5</border>
+													<object class="wxStaticText" name="lbVertexColors">
+														<label>Vertex Colors</label>
+														<wrap>-1</wrap>
+													</object>
+												</object>
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxALL|wxEXPAND</flag>
+													<border>5</border>
+													<object class="wxCheckBox" name="vertexColors">
+														<checked>0</checked>
+													</object>
+												</object>
 											</object>
 										</object>
 									</object>
@@ -293,11 +310,44 @@
 														</object>
 													</object>
 												</object>
-												<object class="spacer">
+												<object class="sizeritem">
+													<option>0</option>
+													<flag>wxEXPAND | wxALL</flag>
+													<border>5</border>
+													<object class="wxStaticLine" name="lineTransparency">
+														<style>wxLI_VERTICAL</style>
+													</object>
+												</object>
+												<object class="sizeritem">
 													<option>1</option>
 													<flag>wxEXPAND</flag>
 													<border>5</border>
-													<size>0,5</size>
+													<object class="wxFlexGridSizer">
+														<rows>0</rows>
+														<cols>2</cols>
+														<vgap>0</vgap>
+														<hgap>0</hgap>
+														<growablecols>1</growablecols>
+														<growablerows></growablerows>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+															<border>5</border>
+															<object class="wxStaticText" name="lbVertexAlpha">
+																<label>Vertex Alpha</label>
+																<wrap>-1</wrap>
+															</object>
+														</object>
+														<object class="sizeritem">
+															<option>0</option>
+															<flag>wxALL|wxEXPAND</flag>
+															<border>5</border>
+															<object class="wxCheckBox" name="vertexAlpha">
+																<checked>0</checked>
+																<enabled>0</enabled>
+															</object>
+														</object>
+													</object>
 												</object>
 											</object>
 										</object>

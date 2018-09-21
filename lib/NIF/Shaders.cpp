@@ -380,6 +380,28 @@ bool BSShaderProperty::HasSpecular() {
 	return (shaderFlags1 & (1 << 0)) != 0;
 }
 
+bool BSShaderProperty::HasVertexColors() {
+	return (shaderFlags2 & (1 << 5)) != 0;
+}
+
+void BSShaderProperty::SetVertexColors(const bool enable) {
+	if (enable)
+		shaderFlags2 |= 1 << 5;
+	else
+		shaderFlags2 &= ~(1 << 5);
+}
+
+bool BSShaderProperty::HasVertexAlpha() {
+	return (shaderFlags1 & (1 << 3)) != 0;
+}
+
+void BSShaderProperty::SetVertexAlpha(const bool enable) {
+	if (enable)
+		shaderFlags1 |= 1 << 3;
+	else
+		shaderFlags1 &= ~(1 << 3);
+}
+
 bool BSShaderProperty::HasBacklight() {
 	// Skyrim
 	return (shaderFlags2 & (1 << 27)) != 0;

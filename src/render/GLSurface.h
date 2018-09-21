@@ -32,6 +32,7 @@ class GLSurface {
 	bool bTextured = true;
 	bool bMaskVisible = false;
 	bool bWeightColors = false;
+	bool bVertexColors = false;
 	bool bSegmentColors = false;
 
 	float defLineWidth = 1.0f;
@@ -238,7 +239,7 @@ public:
 
 	void GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, Vector3& outNearPos);
 	int PickMesh(int ScreenX, int ScreenY);
-	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverTri = nullptr, float* outHoverWeight = nullptr, float* outHoverMask = nullptr);
+	bool UpdateCursor(int ScreenX, int ScreenY, bool allMeshes = true, std::string* hitMeshName = nullptr, int* outHoverTri = nullptr, Vector3* outHoverColor = nullptr);
 	bool GetCursorVertex(int ScreenX, int ScreenY, int* outIndex = nullptr);
 	void ShowCursor(bool show = true);
 
@@ -319,6 +320,14 @@ public:
 
 	void SetWeightColors(bool bVisible = true) {
 		bWeightColors = bVisible;
+
+		for (auto &m : meshes)
+			UpdateShaders(m);
+	}
+
+	void SetVertexColors(bool bVisible = true) {
+		bVertexColors = bVisible;
+		bMaskVisible = !bVisible;
 
 		for (auto &m : meshes)
 			UpdateShaders(m);

@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/dataview.h>
 #include <wx/splitter.h>
 #include <wx/collpane.h>
+#include <wx/clrpicker.h>
 #include <wx/tokenzr.h>
 #include <wx/cmdline.h>
 #include <wx/stdpaths.h>
@@ -145,6 +146,10 @@ public:
 	void SetActiveBrush(int brushID);
 	TweakBrush* GetActiveBrush() {
 		return activeBrush;
+	}
+
+	void SetColorBrush(const Vector3& color) {
+		colorBrush.color = color;
 	}
 
 	bool StartBrushStroke(const wxPoint& screenPos);
@@ -349,6 +354,10 @@ public:
 
 	void SetWeightVisible(bool bVisible = true) {
 		gls.SetWeightColors(bVisible);
+	}
+
+	void SetColorsVisible(bool bVisible = true) {
+		gls.SetVertexColors(bVisible);
 	}
 
 	void SetSegmentsVisible(bool bVisible = true) {
@@ -605,6 +614,7 @@ private:
 
 	bool bMaskPaint;
 	bool bWeightPaint;
+	bool bColorPaint;
 	bool isPainting;
 	bool isTransforming;
 	bool isMovingPivot;
@@ -625,6 +635,10 @@ private:
 	TB_Weight weightBrush;
 	TB_Unweight unweightBrush;
 	TB_SmoothWeight smoothWeightBrush;
+	TB_Color colorBrush;
+	TB_Uncolor uncolorBrush;
+	TB_Alpha alphaBrush;
+	TB_Unalpha unalphaBrush;
 	TB_XForm translateBrush;
 
 	TweakStroke* activeStroke;
@@ -711,6 +725,7 @@ public:
 
 	wxTreeCtrl* outfitShapes;
 	wxTreeCtrl* outfitBones;
+	wxPanel* colorSettings;
 	wxTreeCtrl* segmentTree;
 	wxTreeCtrl* partitionTree;
 	wxPanel* lightSettings;
@@ -953,6 +968,7 @@ private:
 	void RenameProject(const std::string& projectName);
 
 	void UpdateMeshFromSet(const std::string& shapeName);
+	void FillVertexColors();
 
 	bool HasUnweightedCheck();
 	bool ShowWeightCopy(WeightCopyOptions& options);
@@ -1012,6 +1028,8 @@ private:
 	void OnCheckBox(wxCommandEvent& event);
 
 	void OnTabButtonClick(wxCommandEvent& event);
+	void OnBrushColorChanged(wxColourPickerEvent& event);
+	void OnSwapBrush(wxCommandEvent& event);
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
 

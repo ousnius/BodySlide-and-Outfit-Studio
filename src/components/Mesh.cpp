@@ -121,8 +121,13 @@ void mesh::CreateBuffers() {
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector3), vcolors.get(), GL_DYNAMIC_DRAW);
 	}
 
-	if (texcoord) {
+	if (valpha) {
 		glBindBuffer(GL_ARRAY_BUFFER, vbo[5]);
+		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(float), valpha.get(), GL_DYNAMIC_DRAW);
+	}
+
+	if (texcoord) {
+		glBindBuffer(GL_ARRAY_BUFFER, vbo[6]);
 		glBufferData(GL_ARRAY_BUFFER, nVerts * sizeof(Vector2), texcoord.get(), GL_DYNAMIC_DRAW);
 	}
 
@@ -176,6 +181,12 @@ void mesh::UpdateBuffers() {
 			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::VertexColors]);
 			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(Vector3), vcolors.get());
 			queueUpdate[UpdateType::VertexColors] = false;
+		}
+
+		if (valpha && queueUpdate[UpdateType::VertexAlpha]) {
+			glBindBuffer(GL_ARRAY_BUFFER, vbo[UpdateType::VertexAlpha]);
+			glBufferSubData(GL_ARRAY_BUFFER, 0, nVerts * sizeof(float), valpha.get());
+			queueUpdate[UpdateType::VertexAlpha] = false;
 		}
 
 		if (texcoord && queueUpdate[UpdateType::TextureCoordinates]) {
@@ -502,6 +513,13 @@ void mesh::ColorFill(const Vector3& vcolor) {
 		vcolors[i] = vcolor;
 
 	queueUpdate[UpdateType::VertexColors] = true;
+}
+
+void mesh::AlphaFill(const float alpha) {
+	for (int i = 0; i < nVerts; i++)
+		valpha[i] = alpha;
+
+	queueUpdate[UpdateType::VertexAlpha] = true;
 }
 
 void mesh::ColorChannelFill(int channel, float value) {

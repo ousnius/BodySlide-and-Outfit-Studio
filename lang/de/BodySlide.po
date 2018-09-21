@@ -2763,3 +2763,46 @@ msgstr "Generieren"
 
 msgid "Generate and save the normal map file."
 msgstr "Normal Map-Datei generieren und abspeichern."
+
+msgid "Colors"
+msgstr "Farben"
+
+msgid "Brush Color"
+msgstr "Pinselfarbe"
+
+msgid "Color of the brush."
+msgstr "Farbe des Pinsels."
+
+msgid "Edit Color"
+msgstr "Farbe bearbeiten"
+
+msgid "Edit Alpha"
+msgstr "Alpha bearbeiten"
+
+msgid "Color Paint"
+msgstr "Farbe"
+
+msgid "Color Paint\t7"
+msgstr "Farbe\t7"
+
+msgid ""
+"Apply vertex colors.\n"
+"Hold down the ALT key to remove colors."
+msgstr "Vertexfarben anwenden. ALT gedrückt halten zum Entfernen."
+
+msgid "Alpha Paint"
+msgstr "Alpha"
+
+msgid "Alpha Paint\t8"
+msgstr "Alpha\t8"
+
+msgid ""
+"Apply vertex alpha.\n"
+"Hold down the ALT key to remove alpha."
+msgstr "Vertex Alpha anwenden. ALT gedrückt halten zum Entfernen."
+
+msgid "Vertex Colors"
+msgstr "Vertex Farben"
+
+msgid "Vertex Alpha"
+msgstr "Vertex Alpha"

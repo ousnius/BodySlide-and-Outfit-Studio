@@ -470,17 +470,15 @@ bool GLSurface::CollidePlane(int ScreenX, int ScreenY, Vector3& outOrigin, const
 	return true;
 }
 
-bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverTri, float* outHoverWeight, float* outHoverMask) {
+bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::string* hitMeshName, int* outHoverTri, Vector3* outHoverColor) {
 	bool collided = false;
 	if (activeMeshes.empty())
 		return collided;
 
 	if (outHoverTri)
 		(*outHoverTri) = -1;
-	if (outHoverWeight)
-		(*outHoverWeight) = 0.0f;
-	if (outHoverMask)
-		(*outHoverMask) = 0.0f;
+	if (outHoverColor)
+		(*outHoverColor) = Vector3(1.0f, 1.0f, 1.0f);
 
 	std::unordered_map<mesh*, Vector3> allHitDistances;
 	for (auto &m : activeMeshes) {
@@ -537,13 +535,16 @@ bool GLSurface::UpdateCursor(int ScreenX, int ScreenY, bool allMeshes, std::stri
 				}
 
 				if (closest) {
-					int dec = 5;
 					if (outHoverTri)
 						(*outHoverTri) = pointid;
-					if (outHoverWeight)
-						(*outHoverWeight) = floor(m->vcolors[pointid].y * pow(10, dec) + 0.5f) / pow(10, dec);
-					if (outHoverMask)
-						(*outHoverMask) = floor(m->vcolors[pointid].x * pow(10, dec) + 0.5f) / pow(10, dec);
+
+					if (outHoverColor) {
+						const int dec = 5;
+						(*outHoverColor).x = std::floor(m->vcolors[pointid].x * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+						(*outHoverColor).y = std::floor(m->vcolors[pointid].y * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+						(*outHoverColor).z = std::floor(m->vcolors[pointid].z * std::pow(10, dec) + 0.5f) / std::pow(10, dec);
+					}
+
 					if (hitMeshName)
 						(*hitMeshName) = m->shapeName;
 
@@ -847,13 +848,27 @@ void GLSurface::RenderMesh(mesh* m) {
 			glEnableVertexAttribArray(4);
 			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Colors
 		}
+		else {
+			shader.ShowMask(false);
+			shader.ShowWeight(false);
+			shader.ShowColors(false);
+			shader.ShowSegments(false);
+		}
+
+		if (m->valpha) {
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
+			glEnableVertexAttribArray(5);
+			glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Alpha
+		}
+		else
+			shader.ShowColors(false);
 
 		if (bTextured && m->textured && m->texcoord) {
 			shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f, m->prop.alpha);
 
-			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
-			glEnableVertexAttribArray(5);
-			glVertexAttribPointer(5, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
+			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[6]);
+			glEnableVertexAttribArray(6);
+			glVertexAttribPointer(6, 2, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Texture Coordinates
 
 			m->material->BindTextures(largestAF, m->cubemap, m->glowmap, m->backlightMap, m->rimlight || m->softlight);
 		}
@@ -877,7 +892,7 @@ void GLSurface::RenderMesh(mesh* m) {
 		}
 
 		if (bTextured && m->textured && m->texcoord)
-			glDisableVertexAttribArray(5);
+			glDisableVertexAttribArray(6);
 
 		// Render points
 		if (m->bShowPoints && m->vcolors) {
@@ -888,6 +903,7 @@ void GLSurface::RenderMesh(mesh* m) {
 			glDrawArrays(GL_POINTS, 0, m->nVerts);
 		}
 
+		glDisableVertexAttribArray(5);
 		glDisableVertexAttribArray(4);
 		glDisableVertexAttribArray(3);
 		glDisableVertexAttribArray(2);
@@ -934,7 +950,9 @@ void GLSurface::UpdateShaders(mesh* m) {
 		GLShader& shader = m->material->GetShader();
 		shader.ShowTexture(bTextured);
 		shader.ShowLighting(bLighting);
+		shader.ShowMask(bMaskVisible);
 		shader.ShowWeight(bWeightColors);
+		shader.ShowColors(bVertexColors && (m->vertexColors || (m->vertexColors && m->vertexAlpha)));
 		shader.ShowSegments(bSegmentColors);
 	}
 }
@@ -998,6 +1016,8 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->modelSpace = shader->IsModelSpace();
 		m->emissive = shader->IsEmissive();
 		m->specular = shader->HasSpecular();
+		m->vertexColors = shader->HasVertexColors();
+		m->vertexAlpha = shader->HasVertexAlpha();
 		m->glowmap = shader->HasGlowmap();
 		m->greyscaleColor = shader->HasGreyscaleColor();
 		m->cubemap = shader->HasEnvironmentMapping();
@@ -1062,6 +1082,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		m->tangents = std::make_unique<Vector3[]>(m->nVerts);
 		m->bitangents = std::make_unique<Vector3[]>(m->nVerts);
 		m->vcolors = std::make_unique<Vector3[]>(m->nVerts);
+		m->valpha = std::make_unique<float[]>(m->nVerts);
 		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
 	}
 
