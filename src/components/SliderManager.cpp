@@ -201,16 +201,30 @@ void SliderManager::SetSlider(const std::string& slider, bool isSmall, float val
 void SliderManager::SetChanged(const std::string& slider, bool isSmall) {
 	if (!isSmall) {
 		for (int i = 0; i < slidersBig.size(); i++) {
-			if (slidersBig[i].name == slider) {
-				slidersBig[i].changed = true;
+			auto& sl = slidersBig[i];
+			if (sl.name == slider) {
+				sl.changed = true;
+
+				if (sl.zap && slidersSmall.size() > i) {
+					auto& sls = slidersSmall[i];
+					sls.changed = true;
+				}
+
 				return;
 			}
 		}
 	}
 	else {
 		for (int i = 0; i < slidersSmall.size(); i++) {
-			if (slidersSmall[i].name == slider) {
-				slidersSmall[i].changed = true;
+			auto& sl = slidersSmall[i];
+			if (sl.name == slider) {
+				sl.changed = true;
+
+				if (sl.zap && slidersBig.size() > i) {
+					auto& slb = slidersBig[i];
+					slb.changed = true;
+				}
+
 				return;
 			}
 		}
