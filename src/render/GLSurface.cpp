@@ -852,20 +852,12 @@ void GLSurface::RenderMesh(mesh* m) {
 			glEnableVertexAttribArray(4);
 			glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Colors
 		}
-		else {
-			shader.ShowMask(false);
-			shader.ShowWeight(false);
-			shader.ShowColors(false);
-			shader.ShowSegments(false);
-		}
 
 		if (m->valpha) {
 			glBindBuffer(GL_ARRAY_BUFFER, m->vbo[5]);
 			glEnableVertexAttribArray(5);
 			glVertexAttribPointer(5, 1, GL_FLOAT, GL_FALSE, 0, (GLvoid*)0);		// Alpha
 		}
-		else
-			shader.ShowColors(false);
 
 		if (bTextured && m->textured && m->texcoord) {
 			shader.SetAlphaProperties(m->alphaFlags, m->alphaThreshold / 255.0f, m->prop.alpha);
@@ -954,10 +946,11 @@ void GLSurface::UpdateShaders(mesh* m) {
 		GLShader& shader = m->material->GetShader();
 		shader.ShowTexture(bTextured);
 		shader.ShowLighting(bLighting);
-		shader.ShowMask(bMaskVisible);
-		shader.ShowWeight(bWeightColors);
-		shader.ShowColors(bVertexColors && (m->vertexColors || (m->vertexColors && m->vertexAlpha)));
-		shader.ShowSegments(bSegmentColors);
+		shader.ShowMask(bMaskVisible && m->vcolors);
+		shader.ShowWeight(bWeightColors && m->vcolors);
+		shader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
+		shader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
+		shader.ShowSegments(bSegmentColors && m->vcolors);
 	}
 }
 

@@ -16,7 +16,8 @@ uniform vec3 color;
 uniform bool bShowTexture;
 uniform bool bShowMask;
 uniform bool bShowWeight;
-uniform bool bShowColors;
+uniform bool bShowVertexColor;
+uniform bool bShowVertexAlpha;
 uniform bool bShowSegments;
 
 uniform bool bWireframe;
@@ -105,9 +106,13 @@ void main(void)
 	vColor = vec4(1.0, 1.0, 1.0, 1.0);
 	vUV = vertexUV;
 	
-	if (bShowColors)
+	if (bShowVertexColor)
 	{
 		vColor.rgb = vertexColors;
+	}
+	
+	if (bShowVertexAlpha)
+	{
 		vColor.a = vertexAlpha;
 	}
 	

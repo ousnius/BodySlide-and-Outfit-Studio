@@ -76,7 +76,8 @@ public:
 	void ShowLighting(bool bShow = true);
 	void ShowMask(bool bShow = true);
 	void ShowWeight(bool bShow = true);
-	void ShowColors(bool bShow = true);
+	void ShowVertexColors(bool bShow = true);
+	void ShowVertexAlpha(bool bShow = true);
 	void ShowSegments(bool bShow = true);
 	void ShowTexture(bool bShow = true);
 
