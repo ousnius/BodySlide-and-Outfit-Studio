@@ -26,6 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 #ifdef WIN64
 	#include <ppl.h>
+	#include <ppltasks.h>
 	#include <concurrent_unordered_map.h>
 #else
 	#undef _PPL_H
@@ -1940,7 +1941,9 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 
 	// Multi-threading for 64-bit only due to memory limits of 32-bit builds
 #ifdef _PPL_H
+	// Parallel loop is run inside a task
 	concurrency::concurrent_unordered_map<std::string, std::string> failedOutfitsCon;
+	auto buildTask = concurrency::create_task([&] {
 	concurrency::parallel_for_each(outfitList.begin(), outfitList.end(), [&](const std::string& outfit)
 #else
 	#define return continue
@@ -2230,6 +2233,13 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		}
 #ifdef _PPL_H
 	});
+	});
+
+	// Yield outside of task
+	while (!buildTask.is_done()) {
+		Yield();
+		wxMilliSleep(100);
+	}
 #else
 	}
 #undef return
