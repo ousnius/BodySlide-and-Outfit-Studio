@@ -1398,11 +1398,14 @@ void OutfitStudioFrame::ShowSliderEffect(int sliderID, bool show) {
 void OutfitStudioFrame::ShowSliderEffect(const std::string& sliderName, bool show) {
 	if (project->ValidSlider(sliderName)) {
 		project->SliderShow(sliderName) = show;
+
 		SliderDisplay* d = sliderDisplays[sliderName];
-		if (show)
-			d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
-		else
-			d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
+		if (d) {
+			if (show)
+				d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_CHECKED);
+			else
+				d->sliderNameCheck->Set3StateValue(wxCheckBoxState::wxCHK_UNCHECKED);
+		}
 	}
 }
 
@@ -5549,9 +5552,12 @@ void OutfitStudioFrame::OnNewZapSlider(wxCommandEvent& WXUNUSED(event)) {
 	while (project->ValidSlider(fillName))
 		fillName = wxString::Format("%s %d", baseName, ++count).ToUTF8();
 
-	std::string sliderName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), fillName, this).ToUTF8();
-	if (sliderName.empty())
-		return;
+	std::string sliderName;
+	do {
+		sliderName = wxGetTextFromUser(_("Enter a name for the new zap:"), _("Create New Zap"), fillName, this).ToUTF8();
+		if (sliderName.empty())
+			return;
+	} while (project->ValidSlider(sliderName));
 
 	wxLogMessage("Creating new zap '%s'.", sliderName);
 	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
@@ -5576,9 +5582,12 @@ void OutfitStudioFrame::OnNewCombinedSlider(wxCommandEvent& WXUNUSED(event)) {
 	while (project->ValidSlider(fillName))
 		fillName = wxString::Format("%s %d", baseName, ++count).ToUTF8();
 
-	std::string sliderName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
-	if (sliderName.empty())
-		return;
+	std::string sliderName;
+	do {
+		sliderName = wxGetTextFromUser(_("Enter a name for the new slider:"), _("Create New Slider"), fillName, this).ToUTF8();
+		if (sliderName.empty())
+			return;
+	} while (project->ValidSlider(sliderName));
 
 	wxLogMessage("Creating new combined slider '%s'.", sliderName);
 	createSliderGUI(sliderName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
