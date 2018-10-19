@@ -95,6 +95,8 @@ class BodySlideApp : public wxApp {
 
 	int CreateSetSliders(const std::string& outfit);
 
+	std::string GetOutputDataPath() const;
+
 public:
 	virtual ~BodySlideApp();
 	virtual bool OnInit();
