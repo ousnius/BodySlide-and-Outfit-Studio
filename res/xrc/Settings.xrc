@@ -82,28 +82,36 @@
 						<option>0</option>
 						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
 						<border>5</border>
-						<object class="wxBoxSizer">
-							<orient>wxHORIZONTAL</orient>
-							<object class="sizeritem">
-								<option>0</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-								<object class="wxStaticText" name="lbOutputPath">
-									<size>100,-1</size>
-									<label>Output Path</label>
-									<wrap>-1</wrap>
+						<object class="wxCollapsiblePane" name="advancedPane">
+							<style>wxCP_DEFAULT_STYLE|wxCP_NO_TLW_RESIZE</style>
+							<collapsed>1</collapsed>
+							<label>Advanced</label>
+							<bg>wxSYS_COLOUR_MENU</bg>
+							<object class="panewindow">
+							<object class="wxBoxSizer">
+								<orient>wxHORIZONTAL</orient>
+								<object class="sizeritem">
+									<option>0</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxStaticText" name="lbOutputPath">
+										<size>100,-1</size>
+										<label>Output Path</label>
+										<wrap>-1</wrap>
+									</object>
+								</object>
+								<object class="sizeritem">
+									<option>3</option>
+									<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+									<border>5</border>
+									<object class="wxDirPickerCtrl" name="dpOutputPath">
+										<value></value>
+										<message>Select the output path...</message>
+										<style>wxDIRP_DEFAULT_STYLE</style>
+										<tooltip>Data path to build files to. If empty, Game Data Path will be used instead.</tooltip>
+									</object>
 								</object>
 							</object>
-							<object class="sizeritem">
-								<option>3</option>
-								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
-								<border>5</border>
-								<object class="wxDirPickerCtrl" name="dpOutputPath">
-									<value></value>
-									<message>Select the output path...</message>
-									<style>wxDIRP_DEFAULT_STYLE</style>
-									<tooltip>Data path to build files to. If empty, Game Data Path will be used instead.</tooltip>
-								</object>
 							</object>
 						</object>
 					</object>

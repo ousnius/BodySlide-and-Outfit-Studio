@@ -46,6 +46,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include <wx/progdlg.h>
 #include <wx/intl.h>
 #include <wx/clrpicker.h>
+#include <wx/collpane.h>
 
 
 enum TargetGame {

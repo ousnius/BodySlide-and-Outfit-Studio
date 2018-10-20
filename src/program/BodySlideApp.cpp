@@ -3286,7 +3286,13 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 	wxDialog* settings = wxXmlResource::Get()->LoadDialog(this, "dlgSettings");
 	if (settings) {
 		settings->SetSize(wxSize(525, -1));
+		settings->SetMinSize(wxSize(525, -1));
 		settings->CenterOnParent();
+
+		wxCollapsiblePane* advancedPane = XRCCTRL(*settings, "advancedPane", wxCollapsiblePane);
+		advancedPane->Bind(wxEVT_COLLAPSIBLEPANE_CHANGED, [&settings](wxCommandEvent&) {
+			settings->Fit();
+		});
 
 		wxChoice* choiceTargetGame = XRCCTRL(*settings, "choiceTargetGame", wxChoice);
 		choiceTargetGame->Select(Config.GetIntValue("TargetGame"));

@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.1.1\n"
+"X-Generator: Poedit 2.2\n"
 "X-Poedit-KeywordsList: _\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
@@ -271,16 +271,29 @@ msgstr "Skyrim"
 msgid "Fallout 4"
 msgstr "Fallout 4"
 
+msgid "Advanced"
+msgstr "Erweitert"
+
 msgid "Game Data Path"
 msgstr "Data Ordner"
 
 msgid "Select the data path of the game..."
 msgstr "Wählen Sie den Data Ordner des Spiels aus..."
 
-msgid "Data path to load textures from and build files to."
+msgid "Data path to load textures from."
+msgstr "Verzeichnis, aus dem Texturen geladen werden sollen."
+
+msgid "Output Path"
+msgstr "Ausgabe Ordner"
+
+msgid "Select the output path..."
+msgstr "Wählen Sie den Ausgabe Ordner aus..."
+
+msgid ""
+"Data path to build files to. If empty, Game Data Path will be used instead."
 msgstr ""
-"Verzeichnis, aus dem Texturen geladen werden und in dem Dateien erstellt "
-"werden sollen."
+"Verzeichnis, in dem Ausgabe Dateien erstellt werden sollen. Falls leer, wird "
+"stattdessen der Data Ordner verwendet."
 
 msgid "General"
 msgstr "Allgemein"
