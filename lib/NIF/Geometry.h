@@ -372,12 +372,12 @@ public:
 	int GetAlphaPropertyRef();
 	void SetAlphaPropertyRef(int alphaPropRef);
 
-	const std::vector<Vector3>* GetRawVerts();
-	const std::vector<Vector3>* GetNormalData(bool xform = true);
-	const std::vector<Vector3>* GetTangentData(bool xform = true);
-	const std::vector<Vector3>* GetBitangentData(bool xform = true);
-	const std::vector<Vector2>* GetUVData();
-	const std::vector<Color4>* GetColorData();
+	std::vector<Vector3>* GetRawVerts();
+	std::vector<Vector3>* GetNormalData(bool xform = true);
+	std::vector<Vector3>* GetTangentData(bool xform = true);
+	std::vector<Vector3>* GetBitangentData(bool xform = true);
+	std::vector<Vector2>* GetUVData();
+	std::vector<Color4>* GetColorData();
 
 	ushort GetNumVertices();
 	void SetVertices(const bool enable);

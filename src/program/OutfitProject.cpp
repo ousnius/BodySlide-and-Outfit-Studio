@@ -2549,8 +2549,13 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 					Config.SetDefaultValue("OptimizeForSSE", "false");
 			}
 
-			if (Config["OptimizeForSSE"] == "true")
-				nif.OptimizeForSSE();
+			if (Config["OptimizeForSSE"] == "true") {
+				OptOptions options;
+				options.targetVersion.SetFile(V20_2_0_7);
+				options.targetVersion.SetUser(12);
+				options.targetVersion.SetStream(100);
+				nif.OptimizeFor(options);
+			}
 		}
 		else {
 			wxLogWarning("Version of NIF file doesn't match current target game. To use the meshes for the target game, export to OBJ/FBX and reload them again.");

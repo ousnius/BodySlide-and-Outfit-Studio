@@ -873,7 +873,7 @@ void BSTriShape::SetAlphaPropertyRef(int alphaPropRef) {
 	alphaPropertyRef.SetIndex(alphaPropRef);
 }
 
-const std::vector<Vector3>* BSTriShape::GetRawVerts() {
+std::vector<Vector3>* BSTriShape::GetRawVerts() {
 	rawVertices.resize(numVertices);
 	for (int i = 0; i < numVertices; i++)
 		rawVertices[i] = vertData[i].vert;
@@ -881,7 +881,7 @@ const std::vector<Vector3>* BSTriShape::GetRawVerts() {
 	return &rawVertices;
 }
 
-const std::vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
+std::vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
 	if (!HasNormals())
 		return nullptr;
 
@@ -910,7 +910,7 @@ const std::vector<Vector3>* BSTriShape::GetNormalData(bool xform) {
 	return &rawNormals;
 }
 
-const std::vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
+std::vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
 	if (!HasTangents())
 		return nullptr;
 
@@ -938,7 +938,7 @@ const std::vector<Vector3>* BSTriShape::GetTangentData(bool xform) {
 	return &rawTangents;
 }
 
-const std::vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
+std::vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
 	if (!HasTangents())
 		return nullptr;
 
@@ -963,7 +963,7 @@ const std::vector<Vector3>* BSTriShape::GetBitangentData(bool xform) {
 	return &rawBitangents;
 }
 
-const std::vector<Vector2>* BSTriShape::GetUVData() {
+std::vector<Vector2>* BSTriShape::GetUVData() {
 	if (!HasUVs())
 		return nullptr;
 
@@ -974,7 +974,7 @@ const std::vector<Vector2>* BSTriShape::GetUVData() {
 	return &rawUvs;
 }
 
-const std::vector<Color4>* BSTriShape::GetColorData() {
+std::vector<Color4>* BSTriShape::GetColorData() {
 	if (!HasVertexColors())
 		return nullptr;
 

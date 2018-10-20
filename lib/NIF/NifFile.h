@@ -8,13 +8,14 @@ See the included LICENSE file
 
 #include "Factory.h"
 
-struct OptOptionsSSE {
+struct OptOptions {
+	NiVersion targetVersion;
 	bool headParts = false;
 	bool removeParallax = true;
 	bool calcBounds = true;
 };
 
-struct OptResultSSE {
+struct OptResult {
 	bool versionMismatch = false;
 	bool dupesRenamed = false;
 	std::vector<std::string> shapesVColorsRemoved;
@@ -79,7 +80,7 @@ public:
 	int Save(std::fstream& file, const NifSaveOptions& options = NifSaveOptions());
 
 	void Optimize();
-	OptResultSSE OptimizeForSSE(const OptOptionsSSE& options = OptOptionsSSE());
+	OptResult OptimizeFor(OptOptions& options);
 
 	void PrepareData();
 	void FinalizeData();
