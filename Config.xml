@@ -3,7 +3,7 @@
     <TargetGame>-1</TargetGame>
     <WarnMissingGamePath>true</WarnMissingGamePath>
     <BSATextureScan>true</BSATextureScan>
-	<!-- Archives black list -->
+    <!-- Archives black list -->
     <GameDataFiles>
         <Fallout3>Anchorage - Sounds.bsa; BrokenSteel - Sounds.bsa; Fallout - MenuVoices.bsa; Fallout - Meshes.bsa; Fallout - Misc.bsa; Fallout - Sounds.bsa; Fallout - Voices.bsa; PointLookout - Sounds.bsa; ThePitt - Sounds.bsa; Zeta - Sounds.bsa</Fallout3>
         <FalloutNewVegas>DeadMoney - Sounds.bsa; Fallout - Meshes.bsa; Fallout - Misc.bsa; Fallout - Sound.bsa; Fallout - Voices1.bsa; GunRunnersArsenal - Sounds.bsa; HonestHearts - Sounds.bsa; LonesomeRoad - Sounds.bsa; OldWorldBlues - Sounds.bsa</FalloutNewVegas>
@@ -21,6 +21,7 @@
         <Fallout4VR></Fallout4VR>
         <SkyrimVR></SkyrimVR></GameDataPaths>
     <GameDataPath></GameDataPath>
+    <OutputDataPath></OutputDataPath>
     <GameRegKey></GameRegKey>
     <GameRegVal></GameRegVal>
     <LogLevel>3</LogLevel>

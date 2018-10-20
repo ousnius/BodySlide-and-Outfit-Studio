@@ -158,9 +158,9 @@ bool BodySlideApp::OnInit() {
 
 	InitArchives();
 
-	if (!Config["GameDataPath"].empty()) {
-		bool dirWritable = wxFileName::IsDirWritable(Config["GameDataPath"]);
-		bool dirReadable = wxFileName::IsDirReadable(Config["GameDataPath"]);
+	if (!GetOutputDataPath().empty()) {
+		bool dirWritable = wxFileName::IsDirWritable(GetOutputDataPath());
+		bool dirReadable = wxFileName::IsDirReadable(GetOutputDataPath());
 		if (!dirWritable || !dirReadable)
 			wxMessageBox(_("No read/write permission for game data path!\n\nPlease launch the program with admin elevation and make sure the game data path in the settings is correct."), _("Warning"), wxICON_WARNING);
 	}
@@ -353,6 +353,12 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 		return 2;
 
 	return 0;
+}
+
+std::string BodySlideApp::GetOutputDataPath() const
+{
+	std::string res = Config["OutputDataPath"];
+	return res.empty() ? Config["GameDataPath"] : res;
 }
 
 void BodySlideApp::RefreshOutfitList() {
@@ -1581,7 +1587,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 		outFileNameSmall = outFileNameBig = activeSet.GetOutputFile();
 	}
 	else {
-		if (Config["GameDataPath"].empty()) {
+		if (GetOutputDataPath().empty()) {
 			if (Config["WarnMissingGamePath"] == "true") {
 				int ret = wxMessageBox(_("WARNING: Game data path not configured. Would you like to show BodySlide where it is?"), _("Game not found"), wxYES_NO | wxCANCEL | wxICON_EXCLAMATION);
 				if (ret != wxYES) {
@@ -1601,9 +1607,9 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			Config.SetValue("GameDataPath", response.ToStdString());
 		}
 
-		outFileNameSmall = Config["GameDataPath"] + activeSet.GetOutputFilePath();
+		outFileNameSmall = GetOutputDataPath() + activeSet.GetOutputFilePath();
 		outFileNameBig = outFileNameSmall;
-		wxString path = Config["GameDataPath"] + activeSet.GetOutputPath();
+		wxString path = GetOutputDataPath() + activeSet.GetOutputPath();
 		wxFileName::Mkdir(path, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 
@@ -1852,7 +1858,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 	std::string activePreset = BodySlideConfig["SelectedPreset"];
 
 	if (datapath.empty()) {
-		if (Config["GameDataPath"].empty()) {
+		if (GetOutputDataPath().empty()) {
 			if (clean) {
 				wxLogError("Aborted batch clean with unconfigured data path. Files can't be removed that way.");
 				wxMessageBox(_("WARNING: Game data path not configured. Files can't be removed that way."), _("Game not found"), wxOK | wxICON_ERROR);
@@ -1869,7 +1875,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			wxString cwd = wxGetCwd();
 			Config.SetValue("GameDataPath", cwd.ToStdString() + "\\");
 		}
-		datapath = Config["GameDataPath"];
+		datapath = GetOutputDataPath();
 	}
 
 	if (Config.MatchValue("WarnBatchBuildOverride", "true")) {
@@ -3289,6 +3295,10 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxString gameDataPath = Config["GameDataPath"];
 		dpGameDataPath->SetPath(gameDataPath);
 
+		wxDirPickerCtrl* dpOutputPath = XRCCTRL(*settings, "dpOutputPath", wxDirPickerCtrl);
+		wxString outputPath = Config["OutputDataPath"];
+		dpOutputPath->SetPath(outputPath);
+
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
 		cbBBOverrideWarn->SetValue(Config["WarnBatchBuildOverride"] != "false");
 
@@ -3333,6 +3343,10 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
 				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToStdString());
 			}
+
+			// set OutputDataPath even if it is empty
+			wxFileName outputDataDir = dpOutputPath->GetDirName();
+			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToStdString());
 
 			wxArrayInt items;
 			wxString selectedfiles;

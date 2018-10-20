@@ -73,7 +73,36 @@
 									<value>,90,90,-1,70,0</value>
 									<message>Select the data path of the game...</message>
 									<style>wxDIRP_DEFAULT_STYLE</style>
-									<tooltip>Data path to load textures from and build files to.</tooltip>
+									<tooltip>Data path to load textures from.</tooltip>
+								</object>
+							</object>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxEXPAND|wxLEFT|wxRIGHT</flag>
+						<border>5</border>
+						<object class="wxBoxSizer">
+							<orient>wxHORIZONTAL</orient>
+							<object class="sizeritem">
+								<option>0</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxStaticText" name="lbOutputPath">
+									<size>100,-1</size>
+									<label>Output Path</label>
+									<wrap>-1</wrap>
+								</object>
+							</object>
+							<object class="sizeritem">
+								<option>3</option>
+								<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+								<border>5</border>
+								<object class="wxDirPickerCtrl" name="dpOutputPath">
+									<value></value>
+									<message>Select the output path...</message>
+									<style>wxDIRP_DEFAULT_STYLE</style>
+									<tooltip>Data path to build files to. If empty, Game Data Path will be used instead.</tooltip>
 								</object>
 							</object>
 						</object>

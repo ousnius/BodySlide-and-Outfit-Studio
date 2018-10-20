@@ -965,6 +965,10 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 		wxString gameDataPath = Config["GameDataPath"];
 		dpGameDataPath->SetPath(gameDataPath);
 
+		wxDirPickerCtrl* dpOutputPath = XRCCTRL(*settings, "dpOutputPath", wxDirPickerCtrl);
+		wxString outputPath = Config["OutputDataPath"];
+		dpOutputPath->SetPath(outputPath);
+
 		wxCheckBox* cbBBOverrideWarn = XRCCTRL(*settings, "cbBBOverrideWarn", wxCheckBox);
 		cbBBOverrideWarn->SetValue(Config["WarnBatchBuildOverride"] != "false");
 
@@ -1009,6 +1013,10 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 				Config.SetValue("GameDataPath", gameDataDir.GetFullPath().ToStdString());
 				Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), gameDataDir.GetFullPath().ToStdString());
 			}
+
+			// set OutputDataPath even if it is empty
+			wxFileName outputDataDir = dpOutputPath->GetDirName();
+			Config.SetValue("OutputDataPath", outputDataDir.GetFullPath().ToStdString());
 
 			wxArrayInt items;
 			wxString selectedfiles;
