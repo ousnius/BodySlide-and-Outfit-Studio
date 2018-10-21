@@ -473,6 +473,10 @@ bool OutfitStudio::SetDefaultConfig() {
 	else
 		wxLogMessage("Game data path in config: %s", Config["GameDataPath"]);
 
+	if (!Config["OutputDataPath"].empty()) {
+		wxLogMessage("Output data path in config: %s", Config["OutputDataPath"]);
+	}
+
 	return true;
 }
 
