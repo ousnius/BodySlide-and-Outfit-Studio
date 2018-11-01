@@ -490,45 +490,71 @@ bool BSA::fileContents(const std::string &fn, wxMemoryBuffer &content) {
 				bool ok = true;
 
 				switch (file->tex.header.format) {
+				case DXGI_FORMAT_BC1_TYPELESS:
 				case DXGI_FORMAT_BC1_UNORM:
 				case DXGI_FORMAT_BC1_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DXT1;
 					ddsHeader.dwPitchOrLinearSize /= 2;	// 4bpp
 					break;
 
+				case DXGI_FORMAT_BC2_TYPELESS:
 				case DXGI_FORMAT_BC2_UNORM:
 				case DXGI_FORMAT_BC2_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DXT3;
 					break;
 
+				case DXGI_FORMAT_BC3_TYPELESS:
 				case DXGI_FORMAT_BC3_UNORM:
 				case DXGI_FORMAT_BC3_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DXT5;
 					break;
 
+				case DXGI_FORMAT_BC4_TYPELESS:
 				case DXGI_FORMAT_BC4_UNORM:
+				case DXGI_FORMAT_BC4_SNORM:
 					ddsHeader.ddspf = DDSPF_DX10;
 					ddsHeader.dwPitchOrLinearSize /= 2;	// 4bpp
-					ddsHeader10.dxgiFormat = DXGI_FORMAT_BC4_UNORM;
+					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
 					break;
 
+				case DXGI_FORMAT_BC5_TYPELESS:
 				case DXGI_FORMAT_BC5_UNORM:
+				case DXGI_FORMAT_BC5_SNORM:
 					ddsHeader.ddspf = DDSPF_DX10;
-					ddsHeader10.dxgiFormat = DXGI_FORMAT_BC5_UNORM;
+					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
 					break;
 
+				case DXGI_FORMAT_BC6H_TYPELESS:
+				case DXGI_FORMAT_BC6H_UF16:
+				case DXGI_FORMAT_BC6H_SF16:
+					ddsHeader.ddspf = DDSPF_DX10;
+					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
+					break;
+
+				case DXGI_FORMAT_BC7_TYPELESS:
 				case DXGI_FORMAT_BC7_UNORM:
 				case DXGI_FORMAT_BC7_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_DX10;
-					ddsHeader10.dxgiFormat = DXGI_FORMAT_BC7_UNORM;
+					ddsHeader10.dxgiFormat = (DXGI_FORMAT)file->tex.header.format;
 					break;
 
+				case DXGI_FORMAT_B8G8R8A8_TYPELESS:
 				case DXGI_FORMAT_B8G8R8A8_UNORM:
+				case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
 					ddsHeader.ddspf = DDSPF_A8R8G8B8;
 					ddsHeader.dwPitchOrLinearSize *= 4;	// 32bpp
 					break;
 
+				case DXGI_FORMAT_R8G8B8A8_TYPELESS:
+				case DXGI_FORMAT_R8G8B8A8_UNORM:
+				case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+					ddsHeader.ddspf = DDSPF_A8R8G8B8;
+					ddsHeader.dwPitchOrLinearSize *= 4;	// 32bpp
+					break;
+
+				case DXGI_FORMAT_R8_TYPELESS:
 				case DXGI_FORMAT_R8_UNORM:
+				case DXGI_FORMAT_R8_SNORM:
 					ddsHeader.ddspf = DDSPF_R8;
 					break;
 
