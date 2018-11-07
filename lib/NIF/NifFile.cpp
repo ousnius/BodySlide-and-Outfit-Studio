@@ -2944,10 +2944,13 @@ void NifFile::UpdateSkinPartitions(NiShape* shape) {
 	std::vector<bool> usedVerts;
 	usedVerts.resize(numVerts);
 
-	// 18 for pre-SK
-	int maxBonesPerPartition = hdr.GetVersion().User() >= 12 ? std::numeric_limits<int>::max() : 18;
-	std::unordered_map<int, std::set<int>> partBones;
+	int maxBonesPerPartition = std::numeric_limits<int>::max();
+	if (hdr.GetVersion().IsFO3())
+		maxBonesPerPartition = 18;
+	else if (hdr.GetVersion().IsSSE())
+		maxBonesPerPartition = 80;
 
+	std::unordered_map<int, std::set<int>> partBones;
 	std::vector<NiSkinPartition::PartitionBlock> partitions;
 	for (int partID = 0; partID < skinPart->partitions.size(); partID++) {
 		fill(usedVerts.begin(), usedVerts.end(), false);
