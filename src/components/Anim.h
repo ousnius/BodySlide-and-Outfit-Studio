@@ -191,7 +191,8 @@ public:
 	bool ReleaseBone(const std::string& boneName);
 	int GetBoneRefCount(const std::string& boneName);
 
-	AnimBone* GetBonePtr(const std::string& boneName = "");
+	AnimBone* GetBonePtr(const std::string& boneName);
+	AnimBone* GetRootBonePtr();
 	bool GetBone(const std::string& boneName, AnimBone& outBone);
 	bool GetBoneTransform(const std::string& boneName, MatTransform& xform);
 	bool GetSkinTransform(const std::string& boneName, const MatTransform& skinning, MatTransform& xform);

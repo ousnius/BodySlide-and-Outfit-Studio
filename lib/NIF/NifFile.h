@@ -140,6 +140,7 @@ public:
 
 	NiNode* GetRootNode();
 	bool GetNodeTransform(const std::string& nodeName, MatTransform& outTransform);
+	bool GetAbsoluteNodeTransform(const std::string& nodeName, MatTransform& outTransform);
 	bool SetNodeTransform(const std::string& nodeName, MatTransform& inTransform, const bool rootChildrenOnly = false);
 
 	int GetShapeBoneList(const std::string& shapeName, std::vector<std::string>& outList);

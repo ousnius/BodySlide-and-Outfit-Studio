@@ -132,7 +132,7 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNi
 				nonRefBones += bn + "\n";
 
 			MatTransform xform;
-			nif->GetNodeTransform(bn, xform);
+			nif->GetAbsoluteNodeTransform(bn, xform);
 
 			cstm.rot.SetRow(0, xform.rotation[0]);
 			cstm.rot.SetRow(1, xform.rotation[1]);
@@ -305,7 +305,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 	}
 
 	bool incomplete = false;
-	bool isFO4 = (nif->GetHeader().GetVersion().User() >= 12 && nif->GetHeader().GetVersion().Stream() == 130);
+	bool isFO4 = nif->GetHeader().GetVersion().IsFO4();
 
 	for (auto &shapeBoneList : shapeBones) {
 		if (shapeBoneList.first == shapeException)
@@ -506,9 +506,6 @@ int AnimSkeleton::GetBoneRefCount(const std::string& boneName) {
 }
 
 AnimBone* AnimSkeleton::GetBonePtr(const std::string& boneName) {
-	if (boneName.empty())
-		return &allBones[rootBone];
-
 	if (allBones.find(boneName) != allBones.end())
 		return &allBones[boneName];
 
@@ -516,6 +513,10 @@ AnimBone* AnimSkeleton::GetBonePtr(const std::string& boneName) {
 		return &customBones[boneName];
 
 	return nullptr;
+}
+
+AnimBone* AnimSkeleton::GetRootBonePtr() {
+	return &allBones[rootBone];
 }
 
 bool AnimSkeleton::GetBone(const std::string& boneName, AnimBone& outBone) {
@@ -531,32 +532,32 @@ bool AnimSkeleton::GetBone(const std::string& boneName, AnimBone& outBone) {
 }
 
 bool AnimSkeleton::GetBoneTransform(const std::string &boneName, MatTransform& xform) {
-	if (allBones.find(boneName) == allBones.end())
+	auto bone = GetBonePtr(boneName);
+	if (!bone)
 		return false;
 
-	AnimBone* cB = &allBones[boneName];
-	Matrix4 rot = cB->rot;
+	Matrix4 rot = bone->rot;
 	rot.GetRow(0, xform.rotation[0]);
 	rot.GetRow(1, xform.rotation[1]);
 	rot.GetRow(2, xform.rotation[2]);
-	xform.scale = 1.0f; //cB->scale					// Scale should be ignored?
-	xform.translation = cB->trans;
-	//xform.translation = cB->trans * -1.0f;
+	xform.scale = 1.0f; //bone->scale					// Scale should be ignored?
+	xform.translation = bone->trans;
+	//xform.translation = bone->trans * -1.0f;
 	//xform.translation = rot * xform.translation;
 	return true;
 }
 
 bool AnimSkeleton::GetSkinTransform(const std::string &boneName, const MatTransform& skinning, MatTransform& xform) {
-	if (allBones.find(boneName) == allBones.end())
+	auto bone = GetBonePtr(boneName);
+	if (!bone)
 		return false;
 
-	AnimBone* cB = &allBones[boneName];
-	Matrix4 rot = cB->rot.Inverse();
+	Matrix4 rot = bone->rot.Inverse();
 	rot.GetRow(0, xform.rotation[0]);
 	rot.GetRow(1, xform.rotation[1]);
 	rot.GetRow(2, xform.rotation[2]);
-	xform.scale = 1.0f;	//cB->scale					// Scale should be ignored?
-	xform.translation = rot * (cB->trans * -1.0f + skinning.translation * -1.0f);
+	xform.scale = 1.0f;	//bone->scale					// Scale should be ignored?
+	xform.translation = rot * (bone->trans * -1.0f + skinning.translation * -1.0f);
 	return true;
 }
 

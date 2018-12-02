@@ -678,11 +678,22 @@ NiShape* NifFile::CloneShape(const std::string& srcShapeName, const std::string&
 	if (!srcShape)
 		return nullptr;
 
+	auto rootNode = GetRootNode();
+	auto srcRootNode = srcNif->GetRootNode();
+
 	// Geometry
 	auto destShape = static_cast<NiShape*>(srcShape->Clone());
 	destShape->SetName(destShapeName);
 
 	int destId = hdr.AddBlock(destShape);
+	if (srcNif == this) {
+		// Assign copied geometry to the same parent
+		auto parentNode = GetParentNode(srcShape);
+		if (parentNode)
+			parentNode->GetChildren().AddBlockRef(destId);
+	}
+	else if (rootNode)
+		rootNode->GetChildren().AddBlockRef(destId);
 
 	// Children
 	CloneChildren(destShape, srcNif);
@@ -712,28 +723,70 @@ NiShape* NifFile::CloneShape(const std::string& srcShapeName, const std::string&
 	if (destBoneCont)
 		destBoneCont->GetBones().Clear();
 
-	auto rootNode = GetRootNode();
-	if (rootNode) {
-		for (auto &boneName : srcBoneList) {
-			int boneID = GetBlockID(FindBlockByName<NiNode>(boneName));
-			if (boneID == 0xFFFFFFFF) {
-				boneID = CloneNamedNode(boneName, srcNif);
-				rootNode->GetChildren().AddBlockRef(boneID);
+	if (rootNode && srcRootNode) {
+		std::function<void(NiNode*)> cloneNodes = [&](NiNode* srcNode) -> void {
+			std::string boneName = srcNode->GetName();
+
+			// Insert as root child by default
+			NiNode* nodeParent = rootNode;
+
+			// Look for existing node to use as parent instead
+			auto srcNodeParent = srcNif->GetParentNode(srcNode);
+			if (srcNodeParent) {
+				auto parent = FindBlockByName<NiNode>(srcNodeParent->GetName());
+				if (parent)
+					nodeParent = parent;
 			}
 
-			if (destBoneCont)
-				destBoneCont->GetBones().AddBlockRef(boneID);
+			auto node = FindBlockByName<NiNode>(boneName);
+			int boneID = GetBlockID(node);
+			if (!node) {
+				// Clone missing node into the right parent
+				boneID = CloneNamedNode(boneName, srcNif);
+				nodeParent->GetChildren().AddBlockRef(boneID);
+			}
+			else {
+				// Move existing node to non-root parent
+				auto oldParent = GetParentNode(node);
+				if (oldParent && oldParent != nodeParent && nodeParent != rootNode) {
+					MatTransform xform;
+					srcNif->GetNodeTransform(boneName, xform);
+
+					std::set<Ref*> childRefs;
+					oldParent->GetChildRefs(childRefs);
+					for (auto &ref : childRefs)
+						if (ref->GetIndex() == boneID)
+							ref->Clear();
+
+					nodeParent->GetChildren().AddBlockRef(boneID);
+					SetNodeTransform(boneName, xform);
+				}
+			}
+
+			// Recurse children
+			for (auto &child : srcNode->GetChildren()) {
+				auto childNode = srcNif->hdr.GetBlock<NiNode>(child.GetIndex());
+				if (childNode)
+					cloneNodes(childNode);
+			}
+		};
+
+		for (auto &child : srcRootNode->GetChildren()) {
+			auto srcChildNode = srcNif->hdr.GetBlock<NiNode>(child.GetIndex());
+			if (srcChildNode)
+				cloneNodes(srcChildNode);
 		}
 	}
 
-	if (srcNif == this) {
-		// Assign copied geometry to the same parent
-		auto parentNode = GetParentNode(srcShape);
-		if (parentNode)
-			parentNode->GetChildren().AddBlockRef(destId);
+	// Add bones to container if used in skin
+	if (destBoneCont) {
+		for (auto &boneName : srcBoneList) {
+			auto node = FindBlockByName<NiNode>(boneName);
+			int boneID = GetBlockID(node);
+			if (node)
+				destBoneCont->GetBones().AddBlockRef(boneID);
+		}
 	}
-	else if (rootNode)
-		rootNode->GetChildren().AddBlockRef(destId);
 
 	return destShape;
 }
@@ -748,6 +801,10 @@ int NifFile::CloneNamedNode(const std::string& nodeName, NifFile* srcNif) {
 
 	auto destNode = srcNode->Clone();
 	destNode->SetName(nodeName);
+	destNode->SetCollisionRef(0xFFFFFFFF);
+	destNode->SetControllerRef(0xFFFFFFFF);
+	destNode->GetChildren().Clear();
+	destNode->GetEffects().Clear();
 
 	return hdr.AddBlock(destNode);
 }
@@ -1492,6 +1549,38 @@ bool NifFile::GetNodeTransform(const std::string& nodeName, MatTransform& outTra
 			return true;
 		}
 	}
+	return false;
+}
+
+bool NifFile::GetAbsoluteNodeTransform(const std::string& nodeName, MatTransform& outTransform) {
+	std::function<void(NiNode*, MatTransform&)> addParents = [&](NiNode* node, MatTransform& xform) -> void {
+		auto parent = GetParentNode(node);
+		if (parent) {
+			Matrix4 rot;
+			rot.SetRow(0, parent->transform.rotation[0]);
+			rot.SetRow(1, parent->transform.rotation[1]);
+			rot.SetRow(2, parent->transform.rotation[2]);
+
+			Matrix4 newRot = rot * xform.ToMatrix();
+			newRot.GetRow(0, xform.rotation[0]);
+			newRot.GetRow(1, xform.rotation[1]);
+			newRot.GetRow(2, xform.rotation[2]);
+
+			xform.translation = parent->transform.translation + (rot * xform.translation);
+			addParents(parent, xform);
+		}
+	};
+
+	for (auto& block : blocks) {
+		auto node = dynamic_cast<NiNode*>(block.get());
+		if (node && node->GetName().compare(nodeName) == 0) {
+			MatTransform xform = node->transform;
+			addParents(node, xform);
+			outTransform = xform;
+			return true;
+		}
+	}
+
 	return false;
 }
 

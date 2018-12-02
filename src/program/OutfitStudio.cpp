@@ -6665,7 +6665,7 @@ void OutfitStudioFrame::OnAddBone(wxCommandEvent& WXUNUSED(event)) {
 		}
 	};
 
-	AnimBone* rb = AnimSkeleton::getInstance().GetBonePtr();
+	AnimBone* rb = AnimSkeleton::getInstance().GetRootBonePtr();
 	wxTreeItemId rt = boneTree->AddRoot(rb->boneName);
 	fAddBoneChildren(rt, rb);
 
