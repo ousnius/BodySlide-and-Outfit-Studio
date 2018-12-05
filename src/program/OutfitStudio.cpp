@@ -3470,7 +3470,7 @@ void OutfitStudioFrame::CreateSegmentTree(const std::string& shapeName) {
 }
 
 void OutfitStudioFrame::ShowSegment(const wxTreeItemId& item, bool updateFromMask) {
-	if (!glView->GetSegmentMode())
+	if (!activeItem || !glView->GetSegmentMode())
 		return;
 
 	std::unordered_map<ushort, float> mask;
