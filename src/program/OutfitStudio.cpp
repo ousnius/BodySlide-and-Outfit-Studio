@@ -5914,10 +5914,10 @@ void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
 	bool invertX = (event.GetId() == XRCID("uvInvertX"));
 	bool invertY = (event.GetId() == XRCID("uvInvertY"));
 
-	for (auto &i : selectedItems)
+	for (auto &i : selectedItems) {
 		project->GetWorkNif()->InvertUVsForShape(i->shapeName, invertX, invertY);
-
-	MeshesFromProj();
+		MeshFromProj(i->shapeName);
+	}
 }
 
 void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
@@ -5930,10 +5930,10 @@ void OutfitStudioFrame::OnMirror(wxCommandEvent& event) {
 	bool mirrorY = (event.GetId() == XRCID("mirrorY"));
 	bool mirrorZ = (event.GetId() == XRCID("mirrorZ"));
 
-	for (auto &i : selectedItems)
+	for (auto &i : selectedItems) {
 		project->GetWorkNif()->MirrorShape(i->shapeName, mirrorX, mirrorY, mirrorZ);
-
-	MeshesFromProj();
+		MeshFromProj(i->shapeName);
+	}
 }
 
 void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
