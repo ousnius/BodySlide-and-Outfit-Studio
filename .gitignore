@@ -18,3 +18,4 @@
 *.ipdb
 *.db-wal
 *.db-shm
+*.ilk
