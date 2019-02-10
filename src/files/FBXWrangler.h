@@ -78,9 +78,9 @@ public:
 	FbxNode* AddLimb(NifFile* nif, NiNode* nifBone);
 	void AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone);
 
-	void AddNif(NifFile* meshNif, const std::string& shapeName = "");
-	void AddSkinning(AnimInfo* anim, const std::string& shapeName = "");
-	void AddGeometry(const std::string& shapeName, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs);
+	void AddNif(NifFile* meshNif, NiShape* shape = nullptr);
+	void AddSkinning(AnimInfo* anim, NiShape* shape = nullptr);
+	void AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs);
 
 	bool ExportScene(const std::string& fileName);
 	bool ImportScene(const std::string& fileName, const FBXImportOptions& options = FBXImportOptions());

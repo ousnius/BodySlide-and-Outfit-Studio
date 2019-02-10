@@ -114,8 +114,10 @@ void Automorph::UpdateMeshFromNif(NifFile &baseNif, const std::string& shapeName
 		return;
 
 	mesh* m = sourceShapes[shapeName];
+	auto shape = baseNif.FindBlockByName<NiShape>(shapeName);
+
 	std::vector<Vector3> upVerts;
-	baseNif.GetVertsForShape(shapeName, upVerts);
+	baseNif.GetVertsForShape(shape, upVerts);
 
 	int numUpVerts = upVerts.size();
 	if (m->nVerts != numUpVerts)
@@ -142,7 +144,7 @@ void Automorph::CopyMeshMask(mesh* m, const std::string& shapeName) {
 
 void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 	std::vector<Vector3> nifVerts;
-	ref.GetVertsForShape(shape->GetName(), nifVerts);
+	ref.GetVertsForShape(shape, nifVerts);
 
 	std::vector<Triangle> nifTris;
 	shape->GetTriangles(nifTris);
@@ -171,7 +173,7 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 	}
 	else {
 		MatTransform xFormSkin;
-		if (ref.GetShapeBoneTransform(shape->GetName(), 0xFFFFFFFF, xFormSkin)) {
+		if (ref.GetShapeBoneTransform(shape, 0xFFFFFFFF, xFormSkin)) {
 			xFormSkin.ToEulerDegrees(y, p, r);
 			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x, xFormSkin.translation.y, xFormSkin.translation.z));
 			matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);

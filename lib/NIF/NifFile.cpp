@@ -670,11 +670,10 @@ void NifFile::CloneChildren(NiObject* block, NifFile* srcNif) {
 	cloneBlock(block, 0xFFFFFFFF, 0xFFFFFFFF);
 }
 
-NiShape* NifFile::CloneShape(const std::string& srcShapeName, const std::string& destShapeName, NifFile* srcNif) {
+NiShape* NifFile::CloneShape(NiShape* srcShape, const std::string& destShapeName, NifFile* srcNif) {
 	if (!srcNif)
 		srcNif = this;
 
-	auto srcShape = srcNif->FindBlockByName<NiShape>(srcShapeName);
 	if (!srcShape)
 		return nullptr;
 
@@ -717,7 +716,7 @@ NiShape* NifFile::CloneShape(const std::string& srcShapeName, const std::string&
 
 	// Bones
 	std::vector<std::string> srcBoneList;
-	srcNif->GetShapeBoneList(srcShapeName, srcBoneList);
+	srcNif->GetShapeBoneList(srcShape, srcBoneList);
 
 	auto destBoneCont = hdr.GetBlock<NiBoneContainer>(destShape->GetSkinInstanceRef());
 	if (destBoneCont)
@@ -1431,10 +1430,9 @@ std::vector<NiShape*> NifFile::GetShapes() {
 	return outList;
 }
 
-bool NifFile::RenameShape(const std::string& oldName, const std::string& newName) {
-	auto geom = FindBlockByName<NiShape>(oldName);
-	if (geom) {
-		geom->SetName(newName);
+bool NifFile::RenameShape(NiShape* shape, const std::string& newName) {
+	if (shape) {
+		shape->SetName(newName);
 		return true;
 	}
 
@@ -1612,10 +1610,9 @@ bool NifFile::SetNodeTransform(const std::string& nodeName, MatTransform& inTran
 	return false;
 }
 
-int NifFile::GetShapeBoneList(const std::string& shapeName, std::vector<std::string>& outList) {
+int NifFile::GetShapeBoneList(NiShape* shape, std::vector<std::string>& outList) {
 	outList.clear();
 
-	auto shape = FindBlockByName<NiShape>(shapeName);
 	if (!shape)
 		return 0;
 
@@ -1633,10 +1630,9 @@ int NifFile::GetShapeBoneList(const std::string& shapeName, std::vector<std::str
 	return outList.size();
 }
 
-int NifFile::GetShapeBoneIDList(const std::string& shapeName, std::vector<int>& outList) {
+int NifFile::GetShapeBoneIDList(NiShape* shape, std::vector<int>& outList) {
 	outList.clear();
 
-	auto shape = FindBlockByName<NiShape>(shapeName);
 	if (!shape)
 		return 0;
 
@@ -1651,8 +1647,7 @@ int NifFile::GetShapeBoneIDList(const std::string& shapeName, std::vector<int>& 
 	return outList.size();
 }
 
-void NifFile::SetShapeBoneIDList(const std::string& shapeName, std::vector<int>& inList) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::SetShapeBoneIDList(NiShape* shape, std::vector<int>& inList) {
 	if (!shape)
 		return;
 
@@ -1709,10 +1704,9 @@ void NifFile::SetShapeBoneIDList(const std::string& shapeName, std::vector<int>&
 	}
 }
 
-int NifFile::GetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& outWeights) {
+int NifFile::GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unordered_map<ushort, float>& outWeights) {
 	outWeights.clear();
 
-	auto shape = FindBlockByName<NiShape>(shapeName);
 	if (!shape)
 		return 0;
 
@@ -1746,8 +1740,7 @@ int NifFile::GetShapeBoneWeights(const std::string& shapeName, const int boneInd
 	return outWeights.size();
 }
 
-bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const std::string& boneName, MatTransform& outTransform) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+bool NifFile::GetShapeBoneTransform(NiShape* shape, const std::string& boneName, MatTransform& outTransform) {
 	if (!shape)
 		return false;
 
@@ -1755,11 +1748,10 @@ bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const std::str
 	if (boneName.empty())
 		boneIndex = 0xFFFFFFFF;
 
-	return GetShapeBoneTransform(shapeName, boneIndex, outTransform);
+	return GetShapeBoneTransform(shape, boneIndex, outTransform);
 }
 
-bool NifFile::SetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& inTransform) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+bool NifFile::SetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& inTransform) {
 	if (!shape)
 		return false;
 
@@ -1826,8 +1818,7 @@ bool NifFile::SetShapeBoneBounds(const std::string& shapeName, const int boneInd
 	return true;
 }
 
-bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& outTransform) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+bool NifFile::GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& outTransform) {
 	if (!shape)
 		return false;
 
@@ -1867,8 +1858,7 @@ bool NifFile::GetShapeBoneTransform(const std::string& shapeName, const int bone
 	return true;
 }
 
-bool NifFile::GetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& outBounds) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+bool NifFile::GetShapeBoneBounds(NiShape* shape, const int boneIndex, BoundingSphere& outBounds) {
 	if (!shape)
 		return false;
 
@@ -1984,25 +1974,24 @@ void NifFile::ClearShapeVertWeights(const std::string& shapeName) {
 	}
 }
 
-bool NifFile::GetShapeSegments(const std::string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
-	auto siTriShape = FindBlockByName<BSSubIndexTriShape>(shapeName);
-	if (!siTriShape)
+bool NifFile::GetShapeSegments(NiShape* shape, BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+	auto bssits = dynamic_cast<BSSubIndexTriShape*>(shape);
+	if (!bssits)
 		return false;
 
-	segmentation = siTriShape->GetSegmentation();
+	segmentation = bssits->GetSegmentation();
 	return true;
 }
 
-void NifFile::SetShapeSegments(const std::string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
-	auto siTriShape = FindBlockByName<BSSubIndexTriShape>(shapeName);
-	if (!siTriShape)
+void NifFile::SetShapeSegments(NiShape* shape, const BSSubIndexTriShape::BSSITSSegmentation& segmentation) {
+	auto bssits = dynamic_cast<BSSubIndexTriShape*>(shape);
+	if (!bssits)
 		return;
 
-	siTriShape->SetSegmentation(segmentation);
+	bssits->SetSegmentation(segmentation);
 }
 
-bool NifFile::GetShapePartitions(const std::string& shapeName, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+bool NifFile::GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris) {
 	if (!shape)
 		return false;
 
@@ -2028,8 +2017,7 @@ bool NifFile::GetShapePartitions(const std::string& shapeName, std::vector<BSDis
 	return true;
 }
 
-void NifFile::SetShapePartitions(const std::string& shapeName, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris) {
 	if (!shape)
 		return;
 
@@ -2142,8 +2130,7 @@ void NifFile::SetDefaultPartition(NiShape* shape) {
 	}
 }
 
-const std::vector<Vector3>* NifFile::GetRawVertsForShape(const std::string& shapeName) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+const std::vector<Vector3>* NifFile::GetRawVertsForShape(NiShape* shape) {
 	if (!shape)
 		return nullptr;
 
@@ -2161,8 +2148,7 @@ const std::vector<Vector3>* NifFile::GetRawVertsForShape(const std::string& shap
 	return nullptr;
 }
 
-bool NifFile::ReorderTriangles(const std::string& shapeName, const std::vector<uint>& triangleIndices) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+bool NifFile::ReorderTriangles(NiShape* shape, const std::vector<uint>& triangleIndices) {
 	if (!shape)
 		return false;
 
@@ -2189,8 +2175,7 @@ bool NifFile::ReorderTriangles(const std::string& shapeName, const std::vector<u
 	return false;
 }
 
-const std::vector<Vector3>* NifFile::GetNormalsForShape(const std::string& shapeName, bool transform) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+const std::vector<Vector3>* NifFile::GetNormalsForShape(NiShape* shape, bool transform) {
 	if (!shape)
 		return nullptr;
 
@@ -2208,8 +2193,7 @@ const std::vector<Vector3>* NifFile::GetNormalsForShape(const std::string& shape
 	return nullptr;
 }
 
-const std::vector<Vector2>* NifFile::GetUvsForShape(const std::string& shapeName) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+const std::vector<Vector2>* NifFile::GetUvsForShape(NiShape* shape) {
 	if (!shape)
 		return nullptr;
 
@@ -2246,8 +2230,8 @@ const std::vector<Color4>* NifFile::GetColorsForShape(const std::string& shapeNa
 	return nullptr;
 }
 
-bool NifFile::GetUvsForShape(const std::string& shapeName, std::vector<Vector2>& outUvs) {
-	const std::vector<Vector2>* uvData = GetUvsForShape(shapeName);
+bool NifFile::GetUvsForShape(NiShape* shape, std::vector<Vector2>& outUvs) {
+	const std::vector<Vector2>* uvData = GetUvsForShape(shape);
 	if (uvData) {
 		outUvs.assign(uvData->begin(), uvData->end());
 		return true;
@@ -2256,8 +2240,7 @@ bool NifFile::GetUvsForShape(const std::string& shapeName, std::vector<Vector2>&
 	return false;
 }
 
-bool NifFile::GetVertsForShape(const std::string& shapeName, std::vector<Vector3>& outVerts) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+bool NifFile::GetVertsForShape(NiShape* shape, std::vector<Vector3>& outVerts) {
 	if (!shape) {
 		outVerts.clear();
 		return false;
@@ -2286,8 +2269,7 @@ bool NifFile::GetVertsForShape(const std::string& shapeName, std::vector<Vector3
 	return false;
 }
 
-void NifFile::SetVertsForShape(const std::string& shapeName, const std::vector<Vector3>& verts) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::SetVertsForShape(NiShape* shape, const std::vector<Vector3>& verts) {
 	if (!shape)
 		return;
 
@@ -2313,8 +2295,7 @@ void NifFile::SetVertsForShape(const std::string& shapeName, const std::vector<V
 	}
 }
 
-void NifFile::SetUvsForShape(const std::string& shapeName, const std::vector<Vector2>& uvs) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::SetUvsForShape(NiShape* shape, const std::vector<Vector2>& uvs) {
 	if (!shape)
 		return;
 
@@ -2384,8 +2365,7 @@ void NifFile::SetColorsForShape(const std::string& shapeName, const std::vector<
 	}
 }
 
-void NifFile::InvertUVsForShape(const std::string& shapeName, bool invertX, bool invertY) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::InvertUVsForShape(NiShape* shape, bool invertX, bool invertY) {
 	if (!shape)
 		return;
 
@@ -2415,8 +2395,7 @@ void NifFile::InvertUVsForShape(const std::string& shapeName, bool invertX, bool
 	}
 }
 
-void NifFile::MirrorShape(const std::string& shapeName, bool mirrorX, bool mirrorY, bool mirrorZ) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::MirrorShape(NiShape* shape, bool mirrorX, bool mirrorY, bool mirrorZ) {
 	if (!shape)
 		return;
 
@@ -2464,8 +2443,7 @@ void NifFile::MirrorShape(const std::string& shapeName, bool mirrorX, bool mirro
 	}
 }
 
-void NifFile::SetNormalsForShape(const std::string& shapeName, const std::vector<Vector3>& norms) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::SetNormalsForShape(NiShape* shape, const std::vector<Vector3>& norms) {
 	if (!shape)
 		return;
 
@@ -2485,8 +2463,7 @@ void NifFile::SetNormalsForShape(const std::string& shapeName, const std::vector
 	}
 }
 
-void NifFile::CalcNormalsForShape(const std::string& shapeName, const bool smooth, const float smoothThresh) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::CalcNormalsForShape(NiShape* shape, const bool smooth, const float smoothThresh) {
 	if (!shape)
 		return;
 
@@ -2508,8 +2485,7 @@ void NifFile::CalcNormalsForShape(const std::string& shapeName, const bool smoot
 	}
 }
 
-void NifFile::CalcTangentsForShape(const std::string& shapeName) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::CalcTangentsForShape(NiShape* shape) {
 	if (!shape)
 		return;
 
@@ -2533,8 +2509,7 @@ void NifFile::GetRootTranslation(Vector3& outVec) {
 		outVec.Zero();
 }
 
-void NifFile::MoveVertex(const std::string& shapeName, const Vector3& pos, const int id) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::MoveVertex(NiShape* shape, const Vector3& pos, const int id) {
 	if (!shape)
 		return;
 
@@ -2550,8 +2525,7 @@ void NifFile::MoveVertex(const std::string& shapeName, const Vector3& pos, const
 	}
 }
 
-void NifFile::OffsetShape(const std::string& shapeName, const Vector3& offset, std::unordered_map<ushort, float>* mask) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::OffsetShape(NiShape* shape, const Vector3& offset, std::unordered_map<ushort, float>* mask) {
 	if (!shape)
 		return;
 
@@ -2593,8 +2567,7 @@ void NifFile::OffsetShape(const std::string& shapeName, const Vector3& offset, s
 	}
 }
 
-void NifFile::ScaleShape(const std::string& shapeName, const Vector3& scale, std::unordered_map<ushort, float>* mask) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<ushort, float>* mask) {
 	if (!shape)
 		return;
 
@@ -2651,8 +2624,7 @@ void NifFile::ScaleShape(const std::string& shapeName, const Vector3& scale, std
 	}
 }
 
-void NifFile::RotateShape(const std::string& shapeName, const Vector3& angle, std::unordered_map<ushort, float>* mask) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<ushort, float>* mask) {
 	if (!shape)
 		return;
 
@@ -2762,8 +2734,7 @@ void NifFile::RemoveAlphaProperty(NiShape* shape) {
 	}
 }
 
-void NifFile::DeleteShape(const std::string& shapeName) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
+void NifFile::DeleteShape(NiShape* shape) {
 	if (!shape)
 		return;
 
@@ -2831,11 +2802,10 @@ void NifFile::DeleteSkinning(NiShape* shape) {
 		shader->SetSkinned(false);
 }
 
-bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vector<ushort>& indices) {
+bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& indices) {
 	if (indices.empty())
 		return false;
 
-	auto shape = FindBlockByName<NiShape>(shapeName);
 	if (!shape)
 		return false;
 
@@ -2846,7 +2816,7 @@ bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vecto
 		geomData->notifyVerticesDelete(indices);
 		if (geomData->GetNumVertices() == 0 || geomData->GetNumTriangles() == 0) {
 			// Deleted all verts or tris, remove shape and children
-			DeleteShape(shapeName);
+			DeleteShape(shape);
 			return true;
 		}
 	}
@@ -2856,7 +2826,7 @@ bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vecto
 		bsTriShape->notifyVerticesDelete(indices);
 		if (bsTriShape->GetNumVertices() == 0 || bsTriShape->GetNumTriangles() == 0) {
 			// Deleted all verts or tris, remove shape and children
-			DeleteShape(shapeName);
+			DeleteShape(shape);
 			return true;
 		}
 	}
@@ -2888,9 +2858,10 @@ bool NifFile::DeleteVertsForShape(const std::string& shapeName, const std::vecto
 	return false;
 }
 
-int NifFile::CalcShapeDiff(const std::string& shapeName, const std::vector<Vector3>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale) {
+int NifFile::CalcShapeDiff(NiShape* shape, const std::vector<Vector3>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale) {
 	outDiffData.clear();
-	const std::vector<Vector3>* myData = GetRawVertsForShape(shapeName);
+
+	const std::vector<Vector3>* myData = GetRawVertsForShape(shape);
 	if (!myData)
 		return 1;
 
@@ -2918,9 +2889,10 @@ int NifFile::CalcShapeDiff(const std::string& shapeName, const std::vector<Vecto
 	return 0;
 }
 
-int NifFile::CalcUVDiff(const std::string& shapeName, const std::vector<Vector2>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale) {
+int NifFile::CalcUVDiff(NiShape* shape, const std::vector<Vector2>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale) {
 	outDiffData.clear();
-	const std::vector<Vector2>* myData = GetUvsForShape(shapeName);
+
+	const std::vector<Vector2>* myData = GetUvsForShape(shape);
 	if (!myData)
 		return 1;
 
@@ -2942,12 +2914,6 @@ int NifFile::CalcUVDiff(const std::string& shapeName, const std::vector<Vector2>
 	}
 
 	return 0;
-}
-
-void NifFile::UpdateSkinPartitions(const std::string& shapeName) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
-	if (shape)
-		UpdateSkinPartitions(shape);
 }
 
 void NifFile::UpdateSkinPartitions(NiShape* shape) {

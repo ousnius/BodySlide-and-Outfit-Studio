@@ -50,10 +50,15 @@ enum TargetGame {
 
 
 class ShapeItemData : public wxTreeItemData  {
+	NiShape* shape = nullptr;
+
 public:
-	std::string shapeName;
-	ShapeItemData(const std::string& inShapeName = "") {
-		shapeName = inShapeName;
+	ShapeItemData(NiShape* inShape) {
+		shape = inShape;
+	}
+
+	NiShape* GetShape() {
+		return shape;
 	}
 };
 
@@ -276,8 +281,8 @@ public:
 		}
 	}
 
-	void RecalcNormals(const std::string& shape) {
-		mesh* m = gls.GetMesh(shape);
+	void RecalcNormals(const std::string& shapeName) {
+		mesh* m = gls.GetMesh(shapeName);
 		if (!m)
 			return;
 
@@ -779,7 +784,7 @@ public:
 	void SelectShape(const std::string& shapeName);
 	std::vector<std::string> GetShapeList();
 
-	void UpdateShapeSource(const std::string& shapeName);
+	void UpdateShapeSource(NiShape* shape);
 
 	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
@@ -790,10 +795,12 @@ public:
 	void ShowPartition(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdatePartitionNames();
 
+	void LockShapeSelect();
+	void UnlockShapeSelect();
 	void AnimationGUIFromProj();
 	void RefreshGUIFromProj();
 	void MeshesFromProj(const bool reloadTextures = false);
-	void MeshFromProj(const std::string& shapeName, const bool reloadTextures = false);
+	void MeshFromProj(NiShape* shape, const bool reloadTextures = false);
 
 	std::vector<ShapeItemData*>& GetSelectedItems();
 	std::string GetActiveBone();
@@ -949,8 +956,9 @@ private:
 	Vector3 previewMove;
 	Vector3 previewScale;
 	Vector3 previewRotation;
-	std::unordered_map<std::string, std::unordered_map<ushort, Vector3>> previewDiff;
+	std::unordered_map<NiShape*, std::unordered_map<ushort, Vector3>> previewDiff;
 
+	bool selectionLocked = false;
 	std::vector<ShapeItemData*> selectedItems;
 	std::string activeBone;
 	wxTreeItemId activeSegment;
@@ -967,7 +975,7 @@ private:
 	void ClearProject();
 	void RenameProject(const std::string& projectName);
 
-	void UpdateMeshFromSet(const std::string& shapeName);
+	void UpdateMeshFromSet(NiShape* shape);
 	void FillVertexColors();
 
 	bool HasUnweightedCheck();
@@ -1065,8 +1073,8 @@ private:
 	void OnPartitionApply(wxCommandEvent& event);
 	void OnPartitionReset(wxCommandEvent& event);
 
-	void CreateSegmentTree(const std::string& shapeName = "");
-	void CreatePartitionTree(const std::string& shapeName = "");
+	void CreateSegmentTree(NiShape* shape = nullptr);
+	void CreatePartitionTree(NiShape* shape = nullptr);
 
 	void OnSelectTool(wxCommandEvent& event);
 
@@ -1178,11 +1186,7 @@ private:
 		glView->RedoStroke();
 	}
 
-	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event)) {
-		glView->RecalcNormals(activeItem->shapeName);
-		glView->Render();
-	}
-
+	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));
 	void OnSmoothNormalSeams(wxCommandEvent& event);
 	void OnLockNormals(wxCommandEvent& event);
 

@@ -106,22 +106,26 @@ void AnimInfo::DeleteVertsForShape(const std::string& shape, const std::vector<u
 bool AnimInfo::LoadFromNif(NifFile* nif) {
 	Clear();
 
-	for (auto &s : nif->GetShapeNames())
+	for (auto &s : nif->GetShapes())
 		LoadFromNif(nif, s);
 
 	refNif = nif;
 	return true;
 }
 
-bool AnimInfo::LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNif) {
+bool AnimInfo::LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif) {
 	std::vector<std::string> boneNames;
 	std::string nonRefBones;
 
 	if (newRefNif)
 		refNif = nif;
 
+	if (!shape)
+		return false;
+
+	std::string shapeName = shape->GetName();
 	if (!nif->GetShapeBoneList(shape, boneNames)) {
-		wxLogWarning("No skinning found in shape '%s'.", shape);
+		wxLogWarning("No skinning found in shape '%s'.", shapeName);
 		return false;
 	}
 
@@ -146,13 +150,13 @@ bool AnimInfo::LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNi
 			AnimSkeleton::getInstance().RefBone(bn);
 		}
 
-		shapeBones[shape].push_back(bn);
+		shapeBones[shapeName].push_back(bn);
 	}
 
-	shapeSkinning[shape] = AnimSkin(nif, shape);
+	shapeSkinning[shapeName] = AnimSkin(nif, shape);
 
 	if (!nonRefBones.empty())
-		wxLogMessage("Bones in shape '%s' not found in reference skeleton and added as custom bones:\n%s", shape, nonRefBones);
+		wxLogMessage("Bones in shape '%s' not found in reference skeleton and added as custom bones:\n%s", shapeName, nonRefBones);
 
 	return true;
 }
@@ -208,12 +212,14 @@ void AnimInfo::SetShapeBoneXForm(const std::string& shape, const std::string& bo
 	shapeSkinning[shape].boneWeights[b].xform = stransform;
 }
 
-bool AnimInfo::CalcShapeSkinBounds(const std::string& shape, const int& boneIndex) {
+bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex) {
 	if (!refNif || !refNif->IsValid())	// Check for existence of reference nif
 		return false;
 
-	if (shapeSkinning.find(shape) == shapeSkinning.end())	// Check for shape in skinning data
+	if (shapeSkinning.find(shapeName) == shapeSkinning.end())	// Check for shape in skinning data
 		return false;
+
+	auto shape = refNif->FindBlockByName<NiShape>(shapeName);
 
 	std::vector<Vector3> verts;
 	refNif->GetVertsForShape(shape, verts);
@@ -221,7 +227,7 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shape, const int& boneInde
 		return false;
 
 	std::vector<Vector3> boundVerts;
-	for (auto &w : shapeSkinning[shape].boneWeights[boneIndex].weights) {
+	for (auto &w : shapeSkinning[shapeName].boneWeights[boneIndex].weights) {
 		if (w.first > verts.size())		// Incoming weights have a larger set of possible verts.
 			return false;
 
@@ -232,11 +238,11 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shape, const int& boneInde
 	Vector3 trans;
 	BoundingSphere bounds(boundVerts);
 
-	mat = shapeSkinning[shape].boneWeights[boneIndex].xform.ToMatrix();
+	mat = shapeSkinning[shapeName].boneWeights[boneIndex].xform.ToMatrix();
 
 	bounds.center = mat * bounds.center;
 	bounds.center = bounds.center + trans;
-	shapeSkinning[shape].boneWeights[boneIndex].bounds = bounds;
+	shapeSkinning[shapeName].boneWeights[boneIndex].bounds = bounds;
 	return true;
 }
 
@@ -301,7 +307,8 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 		if (bones.first == shapeException)
 			continue;
 
-		nif->SetShapeBoneIDList(bones.first, bids);
+		auto shape = nif->FindBlockByName<NiShape>(bones.first);
+		nif->SetShapeBoneIDList(shape, bids);
 	}
 
 	bool incomplete = false;
@@ -334,22 +341,22 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 			if (isFO4) {
 				if (!bptr) {
 					incomplete = true;
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
+					nif->SetShapeBoneTransform(shape, bid, bw.xform);
 				}
 				else {
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
+					nif->SetShapeBoneTransform(shape, bid, bw.xform);
 				}
 			}
 			else {
 				if (!bptr) {
 					incomplete = true;
-					nif->SetShapeBoneTransform(shapeBoneList.first, bid, bw.xform);
+					nif->SetShapeBoneTransform(shape, bid, bw.xform);
 				}
 				else {
 					MatTransform xFormSkin;
-					if (nif->GetShapeBoneTransform(shapeBoneList.first, 0xFFFFFFFF, xFormSkin)) {
+					if (nif->GetShapeBoneTransform(shape, 0xFFFFFFFF, xFormSkin)) {
 						if (AnimSkeleton::getInstance().GetSkinTransform(boneName, xFormSkin, xForm)) {
-							nif->SetShapeBoneTransform(shapeBoneList.first, bid, xForm);
+							nif->SetShapeBoneTransform(shape, bid, xForm);
 							bw.xform = xForm;
 						}
 					}

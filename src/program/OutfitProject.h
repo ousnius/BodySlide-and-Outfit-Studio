@@ -20,7 +20,7 @@ class OutfitProject {
 
 	NifFile workNif;
 	AnimInfo workAnim;
-	std::string baseShape;
+	NiShape* baseShape = nullptr;
 
 	// All cloth data blocks that have been loaded during work
 	std::unordered_map<std::string, BSClothExtraData*> clothData;
@@ -69,11 +69,11 @@ public:
 	AnimInfo* GetWorkAnim() { return &workAnim; }
 	std::unordered_map<std::string, BSClothExtraData*>& GetClothData() { return clothData; }
 
-	std::string GetBaseShape() { return baseShape; }
-	void SetBaseShape(const std::string& shapeName) { baseShape = shapeName; }
+	NiShape* GetBaseShape() { return baseShape; }
+	void SetBaseShape(NiShape* shape) { baseShape = shape; }
 
-	bool IsBaseShape(const std::string& shapeName) {
-		return shapeName == baseShape;
+	bool IsBaseShape(NiShape* shape) {
+		return (shape && shape == baseShape);
 	}
 
 	std::string SliderSetName();
@@ -89,7 +89,7 @@ public:
 	std::string GetSliderName(int index);
 	void GetSliderList(std::vector<std::string>& sliderNames);
 	void AddEmptySlider(const std::string& newName);
-	void AddZapSlider(const std::string& newName, std::unordered_map<ushort, float>& verts, const std::string& shapeName);
+	void AddZapSlider(const std::string& newName, std::unordered_map<ushort, float>& verts, NiShape* shape);
 	void AddCombinedSlider(const std::string& newName);
 
 	int CreateNifShapeFromData(const std::string& shapeName, std::vector<Vector3>& v, std::vector<Triangle>& t, std::vector<Vector2>& uv, std::vector<Vector3>* norms = nullptr);
@@ -112,15 +112,15 @@ public:
 	void SetSliderDefault(int index, int val, bool isHi);
 	void SetSliderName(int index, const std::string& newName);
 
-	void NegateSlider(const std::string& sliderName, const std::string& shapeName);
-	void MaskAffected(const std::string& sliderName, const std::string& shapeName);
+	void NegateSlider(const std::string& sliderName, NiShape* shape);
+	void MaskAffected(const std::string& sliderName, NiShape* shape);
 
-	void SetSliderFromBSD(const std::string& sliderName, const std::string& shapeName, const std::string& fileName);
-	bool SetSliderFromOBJ(const std::string& sliderName, const std::string& shapeName, const std::string& fileName);
-	bool SetSliderFromFBX(const std::string& sliderName, const std::string& shapeName, const std::string& fileName);
-	void SetSliderFromDiff(const std::string& sliderName, const std::string& shapeName, std::unordered_map<ushort, Vector3>& diff);
-	int SaveSliderBSD(const std::string& sliderName, const std::string& shapeName, const std::string& fileName);
-	int SaveSliderOBJ(const std::string& sliderName, const std::string& shapeName, const std::string& fileName);
+	void SetSliderFromBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName);
+	bool SetSliderFromOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName);
+	bool SetSliderFromFBX(const std::string& sliderName, NiShape* shape, const std::string& fileName);
+	void SetSliderFromDiff(const std::string& sliderName, NiShape* shape, std::unordered_map<ushort, Vector3>& diff);
+	int SaveSliderBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName);
+	int SaveSliderOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	bool WriteMorphTRI(const std::string& triPath);
 
 	float& SliderValue(int index);
@@ -128,15 +128,15 @@ public:
 	float SliderDefault(int index, bool hi);
 
 	void InitConform();
-	void ConformShape(const std::string& shapeName);
+	void ConformShape(NiShape* shape);
 
 	const std::string& ShapeToTarget(const std::string& shapeName);
-	int GetVertexCount(const std::string& shapeName);
-	void GetLiveVerts(const std::string& shapeName, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs = nullptr);
+	int GetVertexCount(NiShape* shape);
+	void GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs = nullptr);
 	void GetActiveBones(std::vector<std::string>& outBoneNames);
 
-	std::vector<std::string> GetShapeTextures(const std::string& shapeName);
-	bool GetShapeMaterialFile(const std::string& shapeName, MaterialFile& outMatFile);
+	std::vector<std::string> GetShapeTextures(NiShape* shape);
+	bool GetShapeMaterialFile(NiShape* shape, MaterialFile& outMatFile);
 
 	void SetTextures();
 	void SetTextures(const std::vector<std::string>& textureFiles);
@@ -147,22 +147,22 @@ public:
 	bool& SliderShow(int index);
 	bool& SliderShow(const std::string& sliderName);
 
-	void RefreshMorphShape(const std::string& shapeName);
-	void UpdateShapeFromMesh(const std::string& shapeName, const mesh* m);
-	void UpdateMorphResult(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, Vector3>& vertUpdates);
-	void ScaleMorphResult(const std::string& shapeName, const std::string& sliderName, float scaleValue);
-	void MoveVertex(const std::string& shapeName, const Vector3& pos, const int& id);
-	void OffsetShape(const std::string& shapeName, const Vector3& xlate, std::unordered_map<ushort, float>* mask = nullptr);
-	void ScaleShape(const std::string& shapeName, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
-	void RotateShape(const std::string& shapeName, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
+	void RefreshMorphShape(NiShape* shape);
+	void UpdateShapeFromMesh(NiShape* shape, const mesh* m);
+	void UpdateMorphResult(NiShape* shape, const std::string& sliderName, std::unordered_map<ushort, Vector3>& vertUpdates);
+	void ScaleMorphResult(NiShape* shape, const std::string& sliderName, float scaleValue);
+	void MoveVertex(NiShape* shape, const Vector3& pos, const int& id);
+	void OffsetShape(NiShape* shape, const Vector3& xlate, std::unordered_map<ushort, float>* mask = nullptr);
+	void ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
+	void RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
 
 	// Uses the AutoMorph class to generate proximity values for bone weights.
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(const std::string& destShape, const float& proximityRadius, const int& maxResults, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
+	void CopyBoneWeights(NiShape* shape, const float& proximityRadius, const int& maxResults, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
-	void TransferSelectedWeights(const std::string& destShape, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
+	void TransferSelectedWeights(NiShape* shape, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
 
 	void ApplyBoneScale(const std::string& bone, int sliderPos, bool clear = false);
@@ -174,8 +174,8 @@ public:
 	void ClearWorkSliders();
 	void ClearReference();
 	void ClearOutfit();
-	void ClearSlider(const std::string& shapeName, const std::string& sliderName);
-	void ClearUnmaskedDiff(const std::string& shapeName, const std::string& sliderName, std::unordered_map<ushort, float>* mask);
+	void ClearSlider(NiShape* shape, const std::string& sliderName);
+	void ClearUnmaskedDiff(NiShape* shape, const std::string& sliderName, std::unordered_map<ushort, float>* mask);
 	void DeleteSlider(const std::string& sliderName);
 
 	int LoadSkeletonReference(const std::string& skeletonFileName);
@@ -186,9 +186,9 @@ public:
 	int LoadFromSliderSet(const std::string& fileName, const std::string& setName, std::vector<std::string>* origShapeOrder = nullptr);
 	int AddFromSliderSet(const std::string& fileName, const std::string& setName);
 
-	bool DeleteVerts(const std::string& shapeName, const std::unordered_map<ushort, float>& mask);
-	void DuplicateShape(const std::string& sourceShape, const std::string& destShape);
-	void DeleteShape(const std::string& shapeName);
+	bool DeleteVerts(NiShape* shape, const std::unordered_map<ushort, float>& mask);
+	NiShape* DuplicateShape(NiShape* sourceShape, const std::string& destShapeName);
+	void DeleteShape(NiShape* shape);
 
 	void DeleteBone(const std::string& boneName) {
 		if (workNif.IsValid()) {
@@ -201,18 +201,18 @@ public:
 		}
 	}
 
-	void RenameShape(const std::string& shapeName, const std::string& newShapeName);
+	void RenameShape(NiShape* shape, const std::string& newShapeName);
 	void UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& shapemeshes);
 
 	void ChooseClothData(NifFile& nif);
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef = false);
-	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
+	int ExportShapeNIF(const std::string& fileName, const std::vector<NiShape*>& exportShapes);
 
-	int ImportOBJ(const std::string& fileName, const std::string& shapeName, const std::string& mergeShape = "");
-	int ExportOBJ(const std::string& fileName, const std::vector<std::string>& shapes, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());
+	int ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape = nullptr);
+	int ExportOBJ(const std::string& fileName, const std::vector<NiShape*>& shapes, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());
 
-	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", const std::string& mergeShapeName = "");
-	int ExportFBX(const std::string& fileName, const std::vector<std::string>& shapes);
+	int ImportFBX(const std::string& fileName, const std::string& shapeName = "", NiShape* mergeShape = nullptr);
+	int ExportFBX(const std::string& fileName, const std::vector<NiShape*>& shapes);
 };

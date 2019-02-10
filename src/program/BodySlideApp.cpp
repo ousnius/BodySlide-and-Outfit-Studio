@@ -898,19 +898,22 @@ void BodySlideApp::InitPreview() {
 	std::vector<ushort> zapIdx;
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->first, verts))
+
+		auto shape = previewBaseNif->FindBlockByName<NiShape>(it->first);
+		if (!previewBaseNif->GetVertsForShape(shape, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(it->first, uvs);
+		previewBaseNif->GetUvsForShape(shape, uvs);
 
 		ApplySliders(it->second.targetShape, sliderManager.slidersBig, verts, zapIdx, &uvs);
 
 		// Zap deleted verts before preview
+		shape = PreviewMod.FindBlockByName<NiShape>(it->first);
 		if (freshLoad && zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(it->first, verts);
-			PreviewMod.SetUvsForShape(it->first, uvs);
-			PreviewMod.DeleteVertsForShape(it->first, zapIdx);
+			PreviewMod.SetVertsForShape(shape, verts);
+			PreviewMod.SetUvsForShape(shape, uvs);
+			PreviewMod.DeleteVertsForShape(shape, zapIdx);
 		}
 		else if (zapIdx.size() > 0) {
 			// Preview Window has been opened for this shape before, zap the diff verts before applying them to the shape
@@ -920,13 +923,13 @@ void BodySlideApp::InitPreview() {
 				verts.erase(verts.begin() + zapIdx[z]);
 				uvs.erase(uvs.begin() + zapIdx[z]);
 			}
-			PreviewMod.SetVertsForShape(it->first, verts);
-			PreviewMod.SetUvsForShape(it->first, uvs);
+			PreviewMod.SetVertsForShape(shape, verts);
+			PreviewMod.SetUvsForShape(shape, uvs);
 		}
 		else {
 			// No zapping needed - just show all the verts.
-			PreviewMod.SetVertsForShape(it->first, verts);
-			PreviewMod.SetUvsForShape(it->first, uvs);
+			PreviewMod.SetVertsForShape(shape, verts);
+			PreviewMod.SetUvsForShape(shape, uvs);
 		}
 	}
 
@@ -957,10 +960,12 @@ void BodySlideApp::UpdatePreview() {
 	std::vector<ushort> zapIdx;
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->first, verts))
+
+		auto shape = previewBaseNif->FindBlockByName<NiShape>(it->first);
+		if (!previewBaseNif->GetVertsForShape(shape, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(it->first, uvs);
+		previewBaseNif->GetUvsForShape(shape, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
 		uvsHigh = uvs;
@@ -1017,10 +1022,12 @@ void BodySlideApp::RebuildPreviewMeshes() {
 	Vector3 v;
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
 		zapIdx.clear();
-		if (!previewBaseNif->GetVertsForShape(it->first, verts))
+
+		auto shape = previewBaseNif->FindBlockByName<NiShape>(it->first);
+		if (!previewBaseNif->GetVertsForShape(shape, verts))
 			continue;
 
-		previewBaseNif->GetUvsForShape(it->first, uvs);
+		previewBaseNif->GetUvsForShape(shape, uvs);
 		vertsHigh = verts;
 		vertsLow = verts;
 		uvsHigh = uvs;
@@ -1037,16 +1044,17 @@ void BodySlideApp::RebuildPreviewMeshes() {
 		}
 
 		// Zap deleted verts before preview
+		shape = PreviewMod.FindBlockByName<NiShape>(it->first);
 		if (zapIdx.size() > 0) {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
-			PreviewMod.SetVertsForShape(it->first, verts);
-			PreviewMod.SetUvsForShape(it->first, uvs);
-			PreviewMod.DeleteVertsForShape(it->first, zapIdx);
+			PreviewMod.SetVertsForShape(shape, verts);
+			PreviewMod.SetUvsForShape(shape, uvs);
+			PreviewMod.DeleteVertsForShape(shape, zapIdx);
 		}
 		else {
 			// No zapping needed - just show all the verts.
-			PreviewMod.SetVertsForShape(it->first, verts);
-			PreviewMod.SetUvsForShape(it->first, uvs);
+			PreviewMod.SetVertsForShape(shape, verts);
+			PreviewMod.SetUvsForShape(shape, uvs);
 		}
 	}
 
@@ -1678,41 +1686,45 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
 
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it) {
-		if (!nifBig.GetVertsForShape(it->first, vertsHigh))
+		auto shape = nifBig.FindBlockByName<NiShape>(it->first);
+		if (!nifBig.GetVertsForShape(shape, vertsHigh))
 			continue;
 
-		nifBig.GetUvsForShape(it->first, uvsHigh);
+		nifBig.GetUvsForShape(shape, uvsHigh);
 
 		if (activeSet.GenWeights()) {
-			if (!nifSmall.GetVertsForShape(it->first, vertsLow))
+			auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+			if (!nifSmall.GetVertsForShape(shapeSmall, vertsLow))
 				continue;
 
-			nifSmall.GetUvsForShape(it->first, uvsLow);
+			nifSmall.GetUvsForShape(shapeSmall, uvsLow);
 		}
 
 		zapIdxAll.emplace(it->first, std::vector<ushort>());
 
 		ApplySliders(it->second.targetShape, sliderManager.slidersBig, vertsHigh, zapIdx, &uvsHigh);
-		nifBig.SetVertsForShape(it->first, vertsHigh);
-		nifBig.SetUvsForShape(it->first, uvsHigh);
+		nifBig.SetVertsForShape(shape, vertsHigh);
+		nifBig.SetUvsForShape(shape, uvsHigh);
 
 		if (!it->second.lockNormals)
-			nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+			nifBig.CalcNormalsForShape(shape, it->second.smoothSeamNormals);
 
-		nifBig.CalcTangentsForShape(it->first);
-		nifBig.DeleteVertsForShape(it->first, zapIdx);
+		nifBig.CalcTangentsForShape(shape);
+		nifBig.DeleteVertsForShape(shape, zapIdx);
 
 		if (activeSet.GenWeights()) {
 			zapIdx.clear();
 			ApplySliders(it->second.targetShape, sliderManager.slidersSmall, vertsLow, zapIdx, &uvsLow);
-			nifSmall.SetVertsForShape(it->first, vertsLow);
-			nifSmall.SetUvsForShape(it->first, uvsLow);
+
+			auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+			nifSmall.SetVertsForShape(shapeSmall, vertsLow);
+			nifSmall.SetUvsForShape(shapeSmall, uvsLow);
 
 			if (!it->second.lockNormals)
-				nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+				nifSmall.CalcNormalsForShape(shapeSmall, it->second.smoothSeamNormals);
 
-			nifSmall.CalcTangentsForShape(it->first);
-			nifSmall.DeleteVertsForShape(it->first, zapIdx);
+			nifSmall.CalcTangentsForShape(shapeSmall);
+			nifSmall.DeleteVertsForShape(shapeSmall, zapIdx);
 		}
 
 		zapIdxAll[it->first] = zapIdx;
@@ -2038,16 +2050,18 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		std::unordered_map<std::string, std::vector<ushort>> zapIdxAll;
 
 		for (auto it = currentSet.ShapesBegin(); it != currentSet.ShapesEnd(); ++it) {
-			if (!nifBig.GetVertsForShape(it->first, vertsHigh))
+			auto shape = nifBig.FindBlockByName<NiShape>(it->first);
+			if (!nifBig.GetVertsForShape(shape, vertsHigh))
 				continue;
 
-			nifBig.GetUvsForShape(it->first, uvsHigh);
+			nifBig.GetUvsForShape(shape, uvsHigh);
 
 			if (currentSet.GenWeights()) {
-				if (!nifSmall.GetVertsForShape(it->first, vertsLow))
+				auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+				if (!nifSmall.GetVertsForShape(shapeSmall, vertsLow))
 					continue;
 
-				nifSmall.GetUvsForShape(it->first, uvsLow);
+				nifSmall.GetUvsForShape(shapeSmall, uvsLow);
 			}
 
 			float vbig = 0.0f;
@@ -2124,24 +2138,25 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				}
 			}
 
-			nifBig.SetVertsForShape(it->first, vertsHigh);
-			nifBig.SetUvsForShape(it->first, uvsHigh);
+			nifBig.SetVertsForShape(shape, vertsHigh);
+			nifBig.SetUvsForShape(shape, uvsHigh);
 
 			if (!it->second.lockNormals)
-				nifBig.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+				nifBig.CalcNormalsForShape(shape, it->second.smoothSeamNormals);
 
-			nifBig.CalcTangentsForShape(it->first);
-			nifBig.DeleteVertsForShape(it->first, zapIdx);
+			nifBig.CalcTangentsForShape(shape);
+			nifBig.DeleteVertsForShape(shape, zapIdx);
 
 			if (currentSet.GenWeights()) {
-				nifSmall.SetVertsForShape(it->first, vertsLow);
-				nifSmall.SetUvsForShape(it->first, uvsLow);
+				auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
+				nifSmall.SetVertsForShape(shapeSmall, vertsLow);
+				nifSmall.SetUvsForShape(shapeSmall, uvsLow);
 
 				if (!it->second.lockNormals)
-					nifSmall.CalcNormalsForShape(it->first, it->second.smoothSeamNormals);
+					nifSmall.CalcNormalsForShape(shapeSmall, it->second.smoothSeamNormals);
 
-				nifSmall.CalcTangentsForShape(it->first);
-				nifSmall.DeleteVertsForShape(it->first, zapIdx);
+				nifSmall.CalcTangentsForShape(shapeSmall);
+				nifSmall.DeleteVertsForShape(shapeSmall, zapIdx);
 			}
 
 			zapIdx.clear();

@@ -125,12 +125,12 @@ public:
 	void TrimTexturePaths();
 
 	void CloneChildren(NiObject* block, NifFile* srcNif = nullptr);
-	NiShape* CloneShape(const std::string& srcShapeName, const std::string& destShapeName, NifFile* srcNif = nullptr);
+	NiShape* CloneShape(NiShape* srcShape, const std::string& destShapeName, NifFile* srcNif = nullptr);
 	int CloneNamedNode(const std::string& nodeName, NifFile* srcNif = nullptr);
 
 	std::vector<std::string> GetShapeNames();
 	std::vector<NiShape*> GetShapes();
-	bool RenameShape(const std::string& oldName, const std::string& newName);
+	bool RenameShape(NiShape* shape, const std::string& newName);
 	bool RenameDuplicateShapes();
 	void TriangulateShape(NiShape* shape);
 
@@ -143,72 +143,71 @@ public:
 	bool GetAbsoluteNodeTransform(const std::string& nodeName, MatTransform& outTransform);
 	bool SetNodeTransform(const std::string& nodeName, MatTransform& inTransform, const bool rootChildrenOnly = false);
 
-	int GetShapeBoneList(const std::string& shapeName, std::vector<std::string>& outList);
-	int GetShapeBoneIDList(const std::string& shapeName, std::vector<int>& outList);
-	void SetShapeBoneIDList(const std::string& shapeName, std::vector<int>& inList);
-	int GetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& outWeights);
+	int GetShapeBoneList(NiShape* shape, std::vector<std::string>& outList);
+	int GetShapeBoneIDList(NiShape* shape, std::vector<int>& outList);
+	void SetShapeBoneIDList(NiShape* shape, std::vector<int>& inList);
+	int GetShapeBoneWeights(NiShape* shape, const int boneIndex, std::unordered_map<ushort, float>& outWeights);
 
 	// Empty std::string for the bone name returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const std::string& shapeName, const std::string& boneName, MatTransform& outTransform);
+	bool GetShapeBoneTransform(NiShape* shape, const std::string& boneName, MatTransform& outTransform);
 	// 0xFFFFFFFF for the bone index sets the overall skin transform for the shape.
-	bool SetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& inTransform);
+	bool SetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& inTransform);
 	bool SetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& inBounds);
 	// 0xFFFFFFFF on the bone index returns the overall skin transform for the shape.
-	bool GetShapeBoneTransform(const std::string& shapeName, const int boneIndex, MatTransform& outTransform);
-	bool GetShapeBoneBounds(const std::string& shapeName, const int boneIndex, BoundingSphere& outBounds);
+	bool GetShapeBoneTransform(NiShape* shape, const int boneIndex, MatTransform& outTransform);
+	bool GetShapeBoneBounds(NiShape* shape, const int boneIndex, BoundingSphere& outBounds);
 	void UpdateShapeBoneID(const std::string& shapeName, const int oldID, const int newID);
 	void SetShapeBoneWeights(const std::string& shapeName, const int boneIndex, std::unordered_map<ushort, float>& inWeights);
 	void SetShapeVertWeights(const std::string& shapeName, const int vertIndex, std::vector<byte>& boneids, std::vector<float>& weights);
 	void ClearShapeVertWeights(const std::string& shapeName);
 
-	bool GetShapeSegments(const std::string& shapeName, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
-	void SetShapeSegments(const std::string& shapeName, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);
+	bool GetShapeSegments(NiShape* shape, BSSubIndexTriShape::BSSITSSegmentation& segmentation);
+	void SetShapeSegments(NiShape* shape, const BSSubIndexTriShape::BSSITSSegmentation& segmentation);
 
-	bool GetShapePartitions(const std::string& shapeName, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris);
-	void SetShapePartitions(const std::string& shapeName, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris);
+	bool GetShapePartitions(NiShape* shape, std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, std::vector<std::vector<ushort>>& verts, std::vector<std::vector<Triangle>>& tris);
+	void SetShapePartitions(NiShape* shape, const std::vector<BSDismemberSkinInstance::PartitionInfo>& partitionInfo, const std::vector<std::vector<ushort>>& verts, const std::vector<std::vector<Triangle>>& tris);
 	void SetDefaultPartition(NiShape* shape);
 
-	const std::vector<Vector3>* GetRawVertsForShape(const std::string& shapeName);
-	bool ReorderTriangles(const std::string& shapeName, const std::vector<uint>& triangleIndices);
-	const std::vector<Vector3>* GetNormalsForShape(const std::string& shapeName, bool transform = true);
-	const std::vector<Vector2>* GetUvsForShape(const std::string& shapeName);
+	const std::vector<Vector3>* GetRawVertsForShape(NiShape* shape);
+	bool ReorderTriangles(NiShape* shape, const std::vector<uint>& triangleIndices);
+	const std::vector<Vector3>* GetNormalsForShape(NiShape* shape, bool transform = true);
+	const std::vector<Vector2>* GetUvsForShape(NiShape* shape);
 	const std::vector<Color4>* GetColorsForShape(const std::string& shapeName);
-	bool GetUvsForShape(const std::string& shapeName, std::vector<Vector2>& outUvs);
-	bool GetVertsForShape(const std::string& shapeName, std::vector<Vector3>& outVerts);
-	void SetVertsForShape(const std::string& shapeName, const std::vector<Vector3>& verts);
-	void SetUvsForShape(const std::string& shapeName, const std::vector<Vector2>& uvs);
+	bool GetUvsForShape(NiShape* shape, std::vector<Vector2>& outUvs);
+	bool GetVertsForShape(NiShape* shape, std::vector<Vector3>& outVerts);
+	void SetVertsForShape(NiShape* shape, const std::vector<Vector3>& verts);
+	void SetUvsForShape(NiShape* shape, const std::vector<Vector2>& uvs);
 	void SetColorsForShape(const std::string& shapeName, const std::vector<Color4>& colors);
-	void InvertUVsForShape(const std::string& shapeName, bool invertX, bool invertY);
-	void MirrorShape(const std::string& shapeName, bool mirrorX, bool mirrorY, bool mirrorZ);
-	void SetNormalsForShape(const std::string& shapeName, const std::vector<Vector3>& norms);
-	void CalcNormalsForShape(const std::string& shapeName, const bool smooth = true, const float smoothThresh = 60.0f);
-	void CalcTangentsForShape(const std::string& shapeName);
+	void InvertUVsForShape(NiShape* shape, bool invertX, bool invertY);
+	void MirrorShape(NiShape* shape, bool mirrorX, bool mirrorY, bool mirrorZ);
+	void SetNormalsForShape(NiShape* shape, const std::vector<Vector3>& norms);
+	void CalcNormalsForShape(NiShape* shape, const bool smooth = true, const float smoothThresh = 60.0f);
+	void CalcTangentsForShape(NiShape* shape);
 
 	void GetRootTranslation(Vector3& outVec);
 
-	void MoveVertex(const std::string& shapeName, const Vector3& pos, const int id);
-	void OffsetShape(const std::string& shapeName, const Vector3& offset, std::unordered_map<ushort, float>* mask = nullptr);
-	void ScaleShape(const std::string& shapeName, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
-	void RotateShape(const std::string& shapeName, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
+	void MoveVertex(NiShape* shape, const Vector3& pos, const int id);
+	void OffsetShape(NiShape* shape, const Vector3& offset, std::unordered_map<ushort, float>* mask = nullptr);
+	void ScaleShape(NiShape* shape, const Vector3& scale, std::unordered_map<ushort, float>* mask = nullptr);
+	void RotateShape(NiShape* shape, const Vector3& angle, std::unordered_map<ushort, float>* mask = nullptr);
 
 	NiAlphaProperty* GetAlphaProperty(NiShape* shape);
 	int AssignAlphaProperty(NiShape* shape, NiAlphaProperty* alphaProp); // ushort flags = 4844, ushort threshold = 128
 	void RemoveAlphaProperty(NiShape* shape);
 
-	void DeleteShape(const std::string& shapeName);
+	void DeleteShape(NiShape* shape);
 	void DeleteShader(NiShape* shape);
 	void DeleteSkinning(NiShape* shape);
-	bool DeleteVertsForShape(const std::string& shapeName, const std::vector<ushort>& indices);
+	bool DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& indices);
 
-	int CalcShapeDiff(const std::string& shapeName, const std::vector<Vector3>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
-	int CalcUVDiff(const std::string& shapeName, const std::vector<Vector2>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
+	int CalcShapeDiff(NiShape* shape, const std::vector<Vector3>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
+	int CalcUVDiff(NiShape* shape, const std::vector<Vector2>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
 
 	void CreateSkinning(NiShape* shape);
 	void UpdateBoundingSphere(const std::string& shapeName);
 	void SetShapeDynamic(const std::string& shapeName);
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
-	void UpdateSkinPartitions(const std::string& shapeName);
 	void UpdateSkinPartitions(NiShape* shape);
 	bool TriangulatePartitions(NiShape* shape);
 	// Update bone set flags

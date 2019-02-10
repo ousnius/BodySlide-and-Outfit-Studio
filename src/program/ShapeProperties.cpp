@@ -624,7 +624,7 @@ void ShapeProperties::RemoveExtraData(int id) {
 
 void ShapeProperties::RefreshMesh() {
 	os->project->SetTextures(shape);
-	os->MeshFromProj(shape->GetName(), true);
+	os->MeshFromProj(shape, true);
 	os->UpdateActiveShapeUI();
 }
 

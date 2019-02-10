@@ -965,13 +965,13 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		return nullptr;
 
 	std::vector<Vector3> nifVerts;
-	nif->GetVertsForShape(shapeName, nifVerts);
+	nif->GetVertsForShape(shape, nifVerts);
 
 	std::vector<Triangle> nifTris;
 	shape->GetTriangles(nifTris);
 
-	const std::vector<Vector3>* nifNorms = nif->GetNormalsForShape(shapeName, false);
-	const std::vector<Vector2>* nifUvs = nif->GetUvsForShape(shapeName);
+	const std::vector<Vector3>* nifNorms = nif->GetNormalsForShape(shape, false);
+	const std::vector<Vector2>* nifUvs = nif->GetUvsForShape(shape);
 
 	mesh* m = new mesh();
 
@@ -997,7 +997,7 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	}
 	else {
 		MatTransform xFormSkin;
-		if (nif->GetShapeBoneTransform(shapeName, 0xFFFFFFFF, xFormSkin)) {
+		if (nif->GetShapeBoneTransform(shape, 0xFFFFFFFF, xFormSkin)) {
 			xFormSkin.ToEulerDegrees(y, p, r);
 			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x / -10.0f, xFormSkin.translation.z / 10.0f, xFormSkin.translation.y / 10.0f));
 			matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);

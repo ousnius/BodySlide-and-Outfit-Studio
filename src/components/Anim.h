@@ -64,7 +64,7 @@ public:
 	BoundingSphere bounds;
 
 	AnimWeight() {}
-	AnimWeight(NifFile* loadFromFile, const std::string& shape, const int& index) {
+	AnimWeight(NifFile* loadFromFile, NiShape* shape, const int& index) {
 		loadFromFile->GetShapeBoneWeights(shape, index, weights);
 		loadFromFile->GetShapeBoneTransform(shape, index, xform);
 		loadFromFile->GetShapeBoneBounds(shape, index, bounds);
@@ -78,7 +78,7 @@ public:
 	std::unordered_map<std::string, int> boneNames;
 
 	AnimSkin() { }
-	AnimSkin(NifFile* loadFromFile, const std::string& shape) {
+	AnimSkin(NifFile* loadFromFile, NiShape* shape) {
 		std::vector<int> idList;
 		loadFromFile->GetShapeBoneIDList(shape, idList);
 
@@ -149,7 +149,7 @@ public:
 	// Loads the skinning information contained in the nif for all shapes.
 	// Returns false if there is no skinning information.
 	bool LoadFromNif(NifFile* nif);
-	bool LoadFromNif(NifFile* nif, const std::string& shape, bool newRefNif = true);
+	bool LoadFromNif(NifFile* nif, NiShape* shape, bool newRefNif = true);
 	int GetShapeBoneIndex(const std::string& shapeName, const std::string& boneName);
 	std::unordered_map<ushort, float>* GetWeightsPtr(const std::string& shape, const std::string& boneName);
 	void GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& outVertWeights);
@@ -157,7 +157,7 @@ public:
 	void SetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& inVertWeights);
 	bool GetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
 	void SetShapeBoneXForm(const std::string& shape, const std::string& boneName, MatTransform& stransform);
-	bool CalcShapeSkinBounds(const std::string& shape, const int& boneIndex);
+	bool CalcShapeSkinBounds(const std::string& shapeName, const int& boneIndex);
 	void CleanupBones();
 	void WriteToNif(NifFile* nif, const std::string& shapeException = "");
 

@@ -40,11 +40,11 @@ void FBXWrangler::CloseScene() {
 	comName.clear();
 }
 
-void FBXWrangler::AddGeometry(const std::string& shapeName, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs) {
+void FBXWrangler::AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs) {
 	if (!verts || verts->empty())
 		return;
 
-	FbxMesh* m = FbxMesh::Create(sdkManager, shapeName.c_str());
+	FbxMesh* m = FbxMesh::Create(sdkManager, shape->GetName().c_str());
 	
 	FbxGeometryElementNormal* normElement = nullptr;
 	if (norms && !norms->empty()) {
@@ -55,7 +55,7 @@ void FBXWrangler::AddGeometry(const std::string& shapeName, const std::vector<Ve
 	
 	FbxGeometryElementUV* uvElement = nullptr;
 	if (uvs && !uvs->empty()) {
-		std::string uvName = shapeName + "UV";
+		std::string uvName = shape->GetName() + "UV";
 		uvElement = m->CreateElementUV(uvName.c_str());
 		uvElement->SetMappingMode(FbxGeometryElement::eByControlPoint);
 		uvElement->SetReferenceMode(FbxGeometryElement::eDirect);
@@ -82,7 +82,7 @@ void FBXWrangler::AddGeometry(const std::string& shapeName, const std::vector<Ve
 		}
 	}
 
-	FbxNode* mNode = FbxNode::Create(sdkManager, shapeName.c_str());
+	FbxNode* mNode = FbxNode::Create(sdkManager, shape->GetName().c_str());
 	mNode->SetNodeAttribute(m);
 
 	// Intended for Maya
@@ -218,14 +218,13 @@ void FBXWrangler::AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone) 
 		node->AddChild(AddLimb(nif, b));
 }
 
-void FBXWrangler::AddNif(NifFile* nif, const std::string& shapeName) {
+void FBXWrangler::AddNif(NifFile* nif, NiShape* shape) {
 	AddSkeleton(nif, true);
 
-	for (auto &s : nif->GetShapeNames()) {
-		if (s == shapeName || shapeName.empty()) {
+	for (auto &s : nif->GetShapes()) {
+		if (!shape || s == shape) {
 			std::vector<Triangle> tris;
-			auto shape = nif->FindBlockByName<NiShape>(s);
-			if (shape && shape->GetTriangles(tris)) {
+			if (s && s->GetTriangles(tris)) {
 				const std::vector<Vector3>* verts = nif->GetRawVertsForShape(s);
 				const std::vector<Vector3>* norms = nif->GetNormalsForShape(s, false);
 				const std::vector<Vector2>* uvs = nif->GetUvsForShape(s);
@@ -235,25 +234,26 @@ void FBXWrangler::AddNif(NifFile* nif, const std::string& shapeName) {
 	}
 }
 
-void FBXWrangler::AddSkinning(AnimInfo* anim, const std::string& shapeName) {
+void FBXWrangler::AddSkinning(AnimInfo* anim, NiShape* shape) {
 	FbxNode* rootNode = scene->GetRootNode();
 	FbxNode* skelNode = rootNode->FindChild("NifSkeleton");
-	if (!skelNode)
+
+	if (!skelNode || !shape)
 		return;
 
 	for (auto &animSkin : anim->shapeSkinning) {
-		if (animSkin.first != shapeName && !shapeName.empty())
+		if (animSkin.first != shape->GetName() && !shape->GetName().empty())
 			continue;
 
-		std::string shape = animSkin.first;
-		FbxNode* shapeNode = rootNode->FindChild(shape.c_str());
+		std::string shapeName = animSkin.first;
+		FbxNode* shapeNode = rootNode->FindChild(shapeName.c_str());
 		if (!shapeNode)
 			continue;
 
-		std::string shapeSkin = shape + "_sk";
+		std::string shapeSkin = shapeName + "_sk";
 		FbxSkin* skin = FbxSkin::Create(scene, shapeSkin.c_str());
 
-		for (auto &bone : anim->shapeBones[shape]) {
+		for (auto &bone : anim->shapeBones[shapeName]) {
 			FbxNode* jointNode = skelNode->FindChild(bone.c_str());
 			if (jointNode) {
 				std::string boneSkin = bone + "_sk";
@@ -261,7 +261,7 @@ void FBXWrangler::AddSkinning(AnimInfo* anim, const std::string& shapeName) {
 				aCluster->SetLink(jointNode);
 				aCluster->SetLinkMode(FbxCluster::eTotalOne);
 
-				auto weights = anim->GetWeightsPtr(shape, bone);
+				auto weights = anim->GetWeightsPtr(shapeName, bone);
 				if (weights) {
 					for (auto &vw : *weights)
 						aCluster->AddControlPointIndex(vw.first, vw.second);
