@@ -6006,9 +6006,10 @@ void OutfitStudioFrame::OnRenameShape(wxCommandEvent& WXUNUSED(event)) {
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
 
-	wxLogMessage("Renaming shape '%s' to '%s'.", activeItem->GetShape()->GetName(), newShapeName);
+	std::string shapeName = activeItem->GetShape()->GetName();
+	wxLogMessage("Renaming shape '%s' to '%s'.", shapeName, newShapeName);
 	project->RenameShape(activeItem->GetShape(), newShapeName);
-	glView->RenameShape(activeItem->GetShape()->GetName(), newShapeName);
+	glView->RenameShape(shapeName, newShapeName);
 
 	outfitShapes->SetItemText(activeItem->GetId(), wxString::FromUTF8(newShapeName));
 }

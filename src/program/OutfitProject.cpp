@@ -1481,24 +1481,26 @@ bool OutfitProject::HasUnweighted(std::vector<std::string>* shapeNames) {
 
 		bool shapeUnweighted = false;
 		mesh* m = owner->glView->GetMesh(shapeName);
-		for (auto &i : influences) {
-			if (i.second == 0) {
-				if (!shapeUnweighted)
-					m->ColorChannelFill(0, 0.0f);
+		if (m) {
+			for (auto &i : influences) {
+				if (i.second == 0) {
+					if (!shapeUnweighted)
+						m->ColorChannelFill(0, 0.0f);
 
-				m->vcolors[i.first].x = 1.0f;
-				shapeUnweighted = true;
+					m->vcolors[i.first].x = 1.0f;
+					shapeUnweighted = true;
+				}
 			}
+
+			if (shapeUnweighted) {
+				hasUnweighted = true;
+
+				if (shapeNames)
+					shapeNames->push_back(shapeName);
+			}
+
+			m->QueueUpdate(mesh::UpdateType::VertexColors);
 		}
-
-		if (shapeUnweighted) {
-			hasUnweighted = true;
-
-			if (shapeNames)
-				shapeNames->push_back(shapeName);
-		}
-
-		m->QueueUpdate(mesh::UpdateType::VertexColors);
 	}
 
 	return hasUnweighted;

@@ -19,3 +19,4 @@
 *.db-wal
 *.db-shm
 *.ilk
+*.vs
