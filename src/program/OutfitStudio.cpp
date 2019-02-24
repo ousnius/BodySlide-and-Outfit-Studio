@@ -6087,6 +6087,10 @@ void OutfitStudioFrame::OnMoveShape(wxCommandEvent& WXUNUSED(event)) {
 				int vertexCount = project->GetVertexCount(i->GetShape());
 				for (int j = 0; j < vertexCount; j++) {
 					d = (offs - previewMove) * (1.0f - mask[j]);
+
+					if (d.IsZero(true))
+						continue;
+
 					diff[j] = d;
 					diffX = diff[j].x / -10.0f;
 					diffY = diff[j].y / 10.0f;
@@ -6181,6 +6185,10 @@ void OutfitStudioFrame::PreviewMove(const Vector3& changed) {
 			int vertexCount = project->GetVertexCount(i->GetShape());
 			for (int j = 0; j < vertexCount; j++) {
 				d = (changed - previewMove) * (1.0f - mask[j]);
+
+				if (d.IsZero(true))
+					continue;
+
 				diff[j] = d;
 				diffX = diff[j].x / -10.0f;
 				diffY = diff[j].y / 10.0f;
@@ -6264,6 +6272,10 @@ void OutfitStudioFrame::OnScaleShape(wxCommandEvent& WXUNUSED(event)) {
 					d.y = verts[j].y * scale.y - verts[j].y;
 					d.z = verts[j].z * scale.z - verts[j].z;
 					d *= 1.0f - mask[j];
+
+					if (d.IsZero(true))
+						continue;
+
 					diff[j] = d;
 					diffX = diff[j].x / -10.0f;
 					diffY = diff[j].y / 10.0f;
@@ -6397,6 +6409,10 @@ void OutfitStudioFrame::PreviewScale(const Vector3& scale) {
 				d.y = verts[j].y * scale.y - verts[j].y;
 				d.z = verts[j].z * scale.z - verts[j].z;
 				d *= 1.0f - mask[j];
+
+				if (d.IsZero(true))
+					continue;
+
 				diff[j] = d;
 				diffX = diff[j].x / -10.0f;
 				diffY = diff[j].y / 10.0f;
