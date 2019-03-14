@@ -208,7 +208,7 @@ public:
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef = false);
-	int ExportShapeNIF(const std::string& fileName, const std::vector<NiShape*>& exportShapes);
+	int ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes);
 
 	int ImportOBJ(const std::string& fileName, const std::string& shapeName, NiShape* mergeShape = nullptr);
 	int ExportOBJ(const std::string& fileName, const std::vector<NiShape*>& shapes, const Vector3& scale = Vector3(1.0f, 1.0f, 1.0f), const Vector3& offset = Vector3());

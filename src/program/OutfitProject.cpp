@@ -2330,7 +2330,7 @@ void OutfitProject::ChooseClothData(NifFile& nif) {
 	}
 }
 
-int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector<NiShape*>& exportShapes) {
+int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector<std::string>& exportShapes) {
 	if (exportShapes.empty())
 		return 1;
 
@@ -2341,7 +2341,7 @@ int OutfitProject::ExportShapeNIF(const std::string& fileName, const std::vector
 	ChooseClothData(clone);
 
 	for (auto &s : clone.GetShapes())
-		if (find(exportShapes.begin(), exportShapes.end(), s) == exportShapes.end())
+		if (find(exportShapes.begin(), exportShapes.end(), s->GetName()) == exportShapes.end())
 			clone.DeleteShape(s);
 
 	for (auto &s : clone.GetShapes())

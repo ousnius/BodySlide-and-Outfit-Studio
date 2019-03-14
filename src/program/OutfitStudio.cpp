@@ -2641,9 +2641,9 @@ void OutfitStudioFrame::OnExportShapeNIF(wxCommandEvent& WXUNUSED(event)) {
 	if (fileName.IsEmpty())
 		return;
 
-	std::vector<NiShape*> shapes;
+	std::vector<std::string> shapes;
 	for (auto &i : selectedItems)
-		shapes.push_back(i->GetShape());
+		shapes.push_back(i->GetShape()->GetName());
 
 	wxLogMessage("Exporting selected shapes to NIF file '%s'.", fileName);
 	project->ClearBoneScale();
