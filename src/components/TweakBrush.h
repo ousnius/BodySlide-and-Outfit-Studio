@@ -535,8 +535,11 @@ public:
 		bvhValid = false;
 	}
 	void PushBVH(const std::vector<mesh*>& meshes) {
-		for (auto &m : meshes)
-			endBVH[m] = m->bvh;
+		for (auto &m : meshes) {
+			if (m) {
+				endBVH[m] = m->bvh;
+			}
+		}
 	}
 	void RestoreStartState(mesh* m);
 	void RestoreEndState(mesh* m);
