@@ -1,19 +1,18 @@
 msgid ""
 msgstr ""
-"Project-Id-Version: BodySlide\n"
+"Project-Id-Version: BodySlide_zh\n"
 "POT-Creation-Date: \n"
-"PO-Revision-Date: \n"
-"Last-Translator: S喵 <silent.haven@gmail.com>\n"
-"Language-Team: \n"
-"Language: zh_CN\n"
+"PO-Revision-Date: 2019-05-08 18:25+0200\n"
+"Last-Translator: \n"
+"Language-Team: 小莫\n"
+"Language: zh\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.0.7\n"
-"X-Poedit-KeywordsList: _\n"
+"X-Generator: Poedit 2.2.1\n"
+"X-Poedit-Basepath: .\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Poedit-Basepath: ../..\n"
-"X-Poedit-SearchPath-0: .\n"
+"X-Poedit-SearchPath-0: BodySlide.po\n"
 
 msgid "Outfit/Body"
 msgstr "装备/身体"
@@ -46,17 +45,20 @@ msgstr "打开组管理器，你可以在那里编辑现有的或创建新组"
 msgid "Group Manager"
 msgstr "组管理器"
 
+msgid "Opens the current project in Outfit Studio"
+msgstr "打开模型编辑器中的当前项目"
+
 msgid "Single Weight"
 msgstr "单重量"
 
 msgid "Low Weight"
-msgstr "最小重量"
+msgstr "最小值"
 
 msgid "High Weight"
-msgstr "最大重量"
+msgstr "最大值"
 
 msgid "Copy the low weight slider values to the high weight section."
-msgstr "复制最小重量滑块值到最大重量部分。"
+msgstr "复制最小值的滑块值到最大值的滑块值。"
 
 msgid ""
 "Build multiple outfits using the currently active slider values.\n"
@@ -65,7 +67,6 @@ msgid ""
 "Hold ALT = Delete from output directory"
 msgstr ""
 "使用当前预设批量建立装备。\n"
-"\n"
 "按住CTRL = 在自定义目录中建立\n"
 "按住ALT = 从目录中清理所有文件"
 
@@ -93,9 +94,8 @@ msgid ""
 "Hold ALT = Delete from output directory"
 msgstr ""
 "创建当前选中的装备/身体。\n"
-"\n"
 "按住CTRL = 在自定义目录中建立\n"
-"按住ALT = 从目录中清理所有文件"
+"按住ALT = 从目录中清理所有文件\""
 
 msgid "Build"
 msgstr "建立"
@@ -114,10 +114,10 @@ msgstr "设置"
 
 msgid ""
 "Open Outfit Studio, a full-featured tool for creating and converting outfits."
-msgstr "打开装备工作室，一个功能齐全的装备创建和转换工具。"
+msgstr "打开模型编辑器，一个功能齐全的装备创建和转换工具。"
 
 msgid "Failed to launch Outfit Studio executable!"
-msgstr ""
+msgstr "无法启动模型编辑器的可执行文件"
 
 msgid "Filter Options"
 msgstr "过滤器选项"
@@ -162,22 +162,22 @@ msgid "Select groups to assign to the new preset:"
 msgstr "为新预设分配组："
 
 msgid "Deletes a project from its project file"
-msgstr ""
+msgstr "从项目文件中删除项目"
 
 msgid "Delete Project"
-msgstr ""
+msgstr "删除项目"
 
 msgid "Do you really wish to delete the selected project?"
-msgstr ""
+msgstr "你真的要删除所选的项目吗？"
 
 msgid "Deletes a preset from its preset file"
-msgstr ""
+msgstr "从预设文件中删除预设"
 
 msgid "Delete Preset"
-msgstr ""
+msgstr "删除预设"
 
 msgid "Do you really wish to delete the selected preset?"
-msgstr ""
+msgstr "你真的要删除所选的预设吗"
 
 msgid "&Save"
 msgstr "&保存"
@@ -220,12 +220,12 @@ msgid "<< Add"
 msgstr "<< 增加"
 
 msgid "Save Changes"
-msgstr ""
+msgstr "保存更改"
 
 msgid ""
 "Do you really want to close the group manager? All unsaved changes will be "
 "lost."
-msgstr ""
+msgstr "你确定关闭管理器身形管理器吗?所有未保存的内容都会丢失"
 
 msgid "Batch Build"
 msgstr "批量建立"
@@ -248,16 +248,19 @@ msgid "Choose the target game you want to use the program for here."
 msgstr "选择你想使用这个程序的目标游戏。"
 
 msgid "Fallout 3"
-msgstr "Fallout 3"
+msgstr "辐射3"
 
 msgid "Fallout New Vegas"
-msgstr "Fallout New Vegas"
+msgstr "辐射新维加斯"
 
 msgid "Skyrim"
-msgstr "Skyrim"
+msgstr "天际"
 
 msgid "Fallout 4"
-msgstr "Fallout 4"
+msgstr "辐射4"
+
+msgid "Advanced"
+msgstr "高级"
 
 msgid "Game Data Path"
 msgstr "游戏数据路径"
@@ -265,8 +268,18 @@ msgstr "游戏数据路径"
 msgid "Select the data path of the game..."
 msgstr "选择这个游戏的数据路径..."
 
-msgid "Data path to load textures from and build files to."
+msgid "Data path to load textures from."
 msgstr "数据路径用来载入材质和建立文件。"
+
+msgid "Output Path"
+msgstr "输出路径"
+
+msgid "Select the output path..."
+msgstr "选择输出路径......"
+
+msgid ""
+"Data path to build files to. If empty, Game Data Path will be used instead."
+msgstr "构建文件时的数据路径。 如果不填，则默认使用游戏数据路径。"
 
 msgid "General"
 msgstr "常规"
@@ -289,7 +302,7 @@ msgstr "BSA材质"
 msgid ""
 "Enables/disables panning the camera with the left mouse button in Outfit "
 "Studio."
-msgstr "开启/关闭在装备工作室中用鼠标左键平移相机。"
+msgstr "开启/关闭模型编辑器中用鼠标左键平移相机。"
 
 msgid "Left Mouse Pan"
 msgstr "鼠标左键平移"
@@ -307,7 +320,7 @@ msgid "Select a reference skeleton .nif file..."
 msgstr "选择一个参照骨骼.nif文件..."
 
 msgid "The reference skeleton file for Outfit Studio."
-msgstr "装备工作室的参照骨骼文件。"
+msgstr "模型编辑器的参照骨骼文件。"
 
 msgid "Root Node"
 msgstr "根结点"
@@ -320,7 +333,7 @@ msgid "Close"
 msgstr "关闭"
 
 msgid "Brush Settings"
-msgstr "笔刷设置"
+msgstr "笔刷权重"
 
 msgid "Size"
 msgstr "尺寸"
@@ -362,7 +375,7 @@ msgid "Directional 3"
 msgstr "方向3"
 
 msgid "De-/Select Sliders"
-msgstr "选则/取消滑块"
+msgstr "权限/取消滑块"
 
 msgid "Fixed Weight Brush"
 msgstr "固定权重笔刷"
@@ -380,24 +393,30 @@ msgid "Create a new outfit project."
 msgstr "创建一个新的装备项目。"
 
 msgid "Load Project..\tCtrl+O"
-msgstr "打开项目..\tCtrl+O"
+msgstr "打开项目..\\tCtrl+O"
 
 msgid "Load a project."
 msgstr "打开一个项目。"
 
-msgid "Load Reference..."
+msgid "Add Project..\tCtrl+Shift+O"
 msgstr "载入参照..."
 
-msgid ""
-"Load a new reference slider set, replacing any current reference objects."
+msgid "Add a project without replacing the current one."
 msgstr "载入一个新的参照滑块集，取代任何现有的参照物体。"
 
-msgid "Load Outfit..."
+msgid "Load Reference..."
 msgstr "载入装备..."
 
 msgid ""
-"Load a NIF file as the working outfit, replacing any current outfit objects."
+"Load a new reference slider set, replacing any current reference objects."
 msgstr "载入一个NIF文件来修改，取代任何当前的装备物体。"
+
+msgid "Load Outfit..."
+msgstr "加载预设"
+
+msgid ""
+"Load a NIF file as the working outfit, replacing any current outfit objects."
+msgstr "加载NIF文件作为本次的预设，替换当前的项目对象。"
 
 msgid ""
 "Disable for a different way of loading NIF files to see if that puts it into "
@@ -405,13 +424,13 @@ msgid ""
 msgstr "禁用选项会采用不同的方式载入NIF文件，来使它放入正确（更好）的场景。"
 
 msgid "Save Project\tCtrl+S"
-msgstr "保存项目\tCtrl+S"
+msgstr "保存\tCtrl+S"
 
 msgid "Save the project."
-msgstr "保存这个项目。"
+msgstr "保存"
 
 msgid "Save Project As...\tCtrl+Shift+S"
-msgstr "项目另存为...\tCtrl+Shift+S"
+msgstr "另存为\tCtrl+Shift+S"
 
 msgid "Save the project under a new name."
 msgstr "以新的名称保存这个项目。"
@@ -465,13 +484,13 @@ msgid ""
 "reference that will morph from the current shape back to the base shape."
 msgstr ""
 "在参照模型的基础上使用当前滑块设置，创建一个可以从当前模型变回基础模型的新参"
-"照。"
+"照"
 
 msgid "Exit\tAlt+F4"
 msgstr "退出\tAlt+F4"
 
 msgid "Exit Outfit Studio."
-msgstr "退出装备工作室。"
+msgstr "退出模型编辑器。"
 
 msgid "Edit"
 msgstr "编辑"
@@ -612,8 +631,20 @@ msgstr "反转Y轴"
 msgid "Inverts the Y-axis of the texture coordinates."
 msgstr "反转材质坐标的Y轴。"
 
+msgid "Mirror"
+msgstr "镜像"
+
+msgid "Mirror the selected shapes on the X-axis."
+msgstr "在X轴上镜像选定的形状。"
+
+msgid "Mirror the selected shapes on the Y-axis."
+msgstr "在Y轴上镜像选定的形状。"
+
+msgid "Mirror the selected shapes on the Z-axis."
+msgstr "在Z轴上镜像选定的形状。"
+
 msgid "Duplicate..."
-msgstr "复制..."
+msgstr "复制"
 
 msgid "Duplicate the current shape."
 msgstr "复制当前模型。"
@@ -657,6 +688,13 @@ msgid ""
 "Smooths edges of seams (usually found at texture borders), disable if this "
 "causes odd normals on the shape."
 msgstr "平滑接缝处的边缘（常见与材质边界），如果法线显示异常的话禁用此选项。"
+
+msgid "Lock Normals"
+msgstr "锁定法线"
+
+msgid ""
+"Locks the mesh normals. Enable if you want to keep custom normals intact."
+msgstr "锁定网格法线。使法线无法被编辑，如需再次编辑可以取消"
 
 msgid "Copy Bone Weights"
 msgstr "复制骨骼权重"
@@ -864,7 +902,7 @@ msgid "Select\t0"
 msgstr "选择\t0"
 
 msgid "Navigate and select meshes (or vertices in vertex mode)."
-msgstr "浏览并选择网格（或在顶点模式下的顶点 ）。"
+msgstr "浏览并选择网格（或在顶点模式下的顶点"
 
 msgid "Mask\t1"
 msgstr "蒙板\t1"
@@ -916,6 +954,14 @@ msgstr "变形\tF"
 msgid "Shows a transform tool to manipulate shapes and vertices with."
 msgstr "显示变形工具来操作模型和顶点。"
 
+msgid "Pivot\tF"
+msgstr "变形\tF"
+
+msgid ""
+"Shows a pivot that can be moved and makes it the center of mesh operations "
+"like rotation and scale."
+msgstr "显示可以移动的轴，并使其成为网格操作的中心，如旋转和缩放。"
+
 msgid "Vertex Edit\tQ"
 msgstr "顶点编辑\tQ"
 
@@ -951,6 +997,18 @@ msgstr "减小笔刷强度\tCtrl+-"
 
 msgid "Decrease brush strength"
 msgstr "减小笔刷强度"
+
+msgid "Mask Less\tA"
+msgstr "减少遮罩\tA"
+
+msgid "Mask Less"
+msgstr "减少遮罩"
+
+msgid "Mask More\tD"
+msgstr "增加遮罩\tD"
+
+msgid "Mask More"
+msgstr "增加遮罩"
 
 msgid "Invert Mask\tCtrl+I"
 msgstr "反转蒙板\tCtrl+I"
@@ -1014,6 +1072,9 @@ msgstr ""
 
 msgid "Transform"
 msgstr "变形"
+
+msgid "Pivot"
+msgstr "枢纽"
 
 msgid "Vertex Edit"
 msgstr "顶点编辑"
@@ -1175,7 +1236,7 @@ msgstr "显示材质："
 msgid ""
 "Applies the current diffuse texture path to the Outfit Studio display "
 "texture path."
-msgstr "应用当前漫反射贴图路径到装备工作室材质路径。"
+msgstr "应用当前漫反射贴图路径到模型编辑器材质路径。"
 
 msgid "Apply Diffuse"
 msgstr "应用漫反射："
@@ -1259,6 +1320,9 @@ msgstr "最小"
 
 msgid "High"
 msgstr "最大"
+
+msgid "Zapped"
+msgstr "旋转一圈"
 
 msgid "Options"
 msgstr "选项"
@@ -1417,7 +1481,6 @@ msgstr "几何结构"
 msgid "Full Precision"
 msgstr "全精度"
 
-#, fuzzy
 msgid "Sub Index"
 msgstr "子索引"
 
@@ -1461,7 +1524,7 @@ msgid "Invert V"
 msgstr "反转V轴"
 
 msgid "Toggle:"
-msgstr ""
+msgstr "切换："
 
 msgid "Search Radius"
 msgstr "搜索半径"
@@ -1863,6 +1926,9 @@ msgstr "无法加载NIF文件'%s'！"
 msgid "Loading slider set..."
 msgstr "载入滑块设置..."
 
+msgid "Adding slider set..."
+msgstr "添加滑块设置......"
+
 msgid "Retrieving sliders..."
 msgstr "检索滑块..."
 
@@ -1898,7 +1964,7 @@ msgid "Failed to load outfitStudio.xrc file!"
 msgstr "加载outfitStudio.xrc文件失败"
 
 msgid "Failed to load Outfit Studio frame!"
-msgstr "加载装备工作室框架失败！"
+msgstr "加载模型编辑器框架失败！"
 
 msgid "Ready!"
 msgstr "准备！"
@@ -1950,11 +2016,11 @@ msgstr "创建装备..."
 msgid "Creating %d slider(s)..."
 msgstr "创建%d滑块..."
 
-msgid "Applying slider effects..."
-msgstr "应用滑块效果..."
-
 msgid "Select a slider set to load"
 msgstr "选择加载一个滑块设置"
+
+msgid "Select a slider set to add"
+msgstr "选择添加一个滑块"
 
 msgid "Failed to open '%s' as a slider set file!"
 msgstr "打开'%s'作为滑块设置文件失败！"
@@ -2000,10 +2066,18 @@ msgstr "无有效模型被载入！"
 msgid ""
 "The following shapes have unweighted vertices, which can cause issues. The "
 "affected vertices have been put under a mask. Do you want to save anyway?"
-msgstr ""
+msgstr "以下定点没有权重，这可能会导致一些问题，你确定要保存吗"
 
 msgid "Unweighted Vertices"
 msgstr "移除顶点权重"
+
+msgid ""
+"The following shapes were renamed and won't have slider data attached. "
+"Rename the duplicates yourself beforehand."
+msgstr "以下形状已重命名，并且不会附加滑块数据。 事先重命名重复项。"
+
+msgid "Renamed Shapes"
+msgstr "重命名形状"
 
 msgid "Saving project '%s'..."
 msgstr "保存项目'%s'..."
@@ -2105,7 +2179,7 @@ msgid "There is no shape selected!"
 msgstr "没有模型被选中！"
 
 msgid "There is no reference shape!"
-msgstr ""
+msgstr "没有参考形状！"
 
 msgid "There is no slider in edit mode to import data to!"
 msgstr "编辑模式中没有滑块可导入数据！"
@@ -2186,16 +2260,16 @@ msgid "Failed to export TRI file!"
 msgstr "未能导出TRI文件！"
 
 msgid "Are you sure you wish to clear the unmasked slider data "
-msgstr ""
+msgstr "你确定要重置已经修改的滑块数据吗"
 
 msgid "for the selected shapes? This cannot be undone."
-msgstr ""
+msgstr "对于选定的形状?这不能被撤消"
 
 msgid "Confirm data erase"
 msgstr "确认数据清除"
 
 msgid "for the shape \""
-msgstr ""
+msgstr "当前形状"
 
 msgid "Enter a name for the new zap:"
 msgstr "为新修正输入一个名称："
@@ -2210,7 +2284,7 @@ msgid "There is no slider in edit mode to create a mask from!"
 msgstr "编辑模式中没有滑块可创建遮罩！"
 
 msgid "Are you sure you wish to delete the selected slider(s)?"
-msgstr ""
+msgstr "你确定要删除所选的滑块吗(s)"
 
 msgid "\"? This cannot be undone."
 msgstr "\"吗？这无法撤销。"
@@ -2324,7 +2398,7 @@ msgid "The vertex count of the reference and chosen shape is not the same!"
 msgstr "参照的顶点数和选择的模型不同！"
 
 msgid "Outfit Studio: OpenGL context is not OK."
-msgstr "装备工作室：OpenGL环境不正常。"
+msgstr "模型编辑器：OpenGL环境不正常。"
 
 msgid "Adding NIF file..."
 msgstr "添加NIF文件..."
@@ -2339,7 +2413,7 @@ msgid "Loading slider file..."
 msgstr "载入滑块文件..."
 
 msgid "Preview failed: OpenGL context is not OK."
-msgstr "装备工作室：OpenGL环境不正常。"
+msgstr "模型编辑器：OpenGL环境不正常。"
 
 msgid "Version"
 msgstr "版本"
@@ -2523,3 +2597,65 @@ msgstr "生成器"
 
 msgid "Generate and save the normal map file."
 msgstr "生成并保存法线贴图文件。"
+
+msgid "Colors"
+msgstr "颜色"
+
+msgid "Brush Color"
+msgstr "粉刷颜色"
+
+msgid "Color of the brush."
+msgstr "画笔颜色"
+
+msgid "Edit Color"
+msgstr "编辑颜色"
+
+msgid "Edit Alpha"
+msgstr "编辑透明度"
+
+msgid "Color Paint"
+msgstr "彩色涂料"
+
+msgid "Color Paint\t7"
+msgstr "彩色涂料\t7"
+
+msgid ""
+"Apply vertex colors.\n"
+"Hold down the ALT key to remove colors."
+msgstr ""
+"应用顶点颜色\n"
+"按住ALT键可以删除颜色"
+
+msgid "Alpha Paint"
+msgstr "绘制透明度"
+
+msgid "Alpha Paint\t8"
+msgstr "绘制透明度\\8"
+
+msgid ""
+"Apply vertex alpha.\n"
+"Hold down the ALT key to remove alpha."
+msgstr ""
+"应用顶点透明度\n"
+"按住ALT键删除透明度。"
+
+msgid "Vertex Colors"
+msgstr "顶点颜色"
+
+msgid "Vertex Alpha"
+msgstr "顶点透明度"
+
+msgid "Outfit Studio"
+msgstr "模型编辑器"
+
+msgid "Browse"
+msgstr "浏览"
+
+msgid "Skyrim Special Edition"
+msgstr "上古卷轴重置版"
+
+msgid "Fallout 4 VR"
+msgstr "辐射4 VR版"
+
+msgid "Skyrim VR"
+msgstr "上古卷轴 VR版"
