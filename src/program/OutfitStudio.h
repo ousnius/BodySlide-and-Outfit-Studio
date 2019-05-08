@@ -60,6 +60,10 @@ public:
 	NiShape* GetShape() {
 		return shape;
 	}
+
+	void SetShape(NiShape* newShape) {
+		shape = newShape;
+	}
 };
 
 class SegmentItemData : public wxTreeItemData  {
@@ -802,6 +806,7 @@ public:
 	void MeshesFromProj(const bool reloadTextures = false);
 	void MeshFromProj(NiShape* shape, const bool reloadTextures = false);
 
+	void UpdateShapeReference(NiShape* shape, NiShape* newShape);
 	std::vector<ShapeItemData*>& GetSelectedItems();
 	std::string GetActiveBone();
 

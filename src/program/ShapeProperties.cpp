@@ -722,12 +722,16 @@ void ShapeProperties::ApplyChanges() {
 				*static_cast<BSTriShape*>(bsSITS) = *bsTriShape;
 				bsSITS->SetDefaultSegments();
 				bsSITS->SetName(bsTriShape->GetName());
+
+				os->UpdateShapeReference(bsTriShape, bsSITS);
 				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsSITS);
 				shape = bsSITS;
 			}
 			else {
 				auto bsTS = new BSTriShape(*bsTriShape);
 				bsTS->SetName(bsTriShape->GetName());
+
+				os->UpdateShapeReference(bsTriShape, bsTS);
 				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
 				shape = bsTS;
 			}

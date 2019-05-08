@@ -1635,6 +1635,14 @@ void OutfitStudioFrame::ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo
 	}
 }
 
+void OutfitStudioFrame::UpdateShapeReference(NiShape* shape, NiShape* newShape) {
+	for (auto &i : selectedItems) {
+		if (i->GetShape() == shape) {
+			i->SetShape(newShape);
+		}
+	}
+}
+
 std::vector<ShapeItemData*>& OutfitStudioFrame::GetSelectedItems() {
 	return selectedItems;
 }
