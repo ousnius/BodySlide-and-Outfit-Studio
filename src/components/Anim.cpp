@@ -189,6 +189,14 @@ std::unordered_map<ushort, float>* AnimInfo::GetWeightsPtr(const std::string& sh
 	return &shapeSkinning[shape].boneWeights[b].weights;
 }
 
+bool AnimInfo::HasWeights(const std::string& shape, const std::string& boneName) {
+	auto weights = GetWeightsPtr(shape, boneName);
+	if (weights && weights->size() > 0)
+		return true;
+	
+	return false;
+}
+
 void AnimInfo::GetWeights(const std::string& shape, const std::string& boneName, std::unordered_map<ushort, float>& outVertWeights) {
 	auto weights = GetWeightsPtr(shape, boneName);
 	if (weights)

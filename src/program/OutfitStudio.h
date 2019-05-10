@@ -792,6 +792,7 @@ public:
 
 	void ActiveShapesUpdated(TweakStroke* refStroke, bool bIsUndo = false);
 	void UpdateActiveShapeUI();
+	void HighlightBoneNamesWithWeights();
 
 	void ShowSegment(const wxTreeItemId& item = nullptr, bool updateFromMask = false);
 	void UpdateSegmentNames();

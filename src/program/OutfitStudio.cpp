@@ -1492,6 +1492,25 @@ void OutfitStudioFrame::UpdateActiveShapeUI() {
 		CreatePartitionTree(activeItem->GetShape());
 		ReselectBone();
 	}
+
+	HighlightBoneNamesWithWeights();
+}
+
+void OutfitStudioFrame::HighlightBoneNamesWithWeights() {
+	wxTreeItemIdValue cookie;
+	wxTreeItemId item = outfitBones->GetFirstChild(bonesRoot, cookie);
+	while (item.IsOk()) {
+		outfitBones->SetItemTextColour(item, wxColour(255, 255, 255));
+
+		auto boneName = outfitBones->GetItemText(item).ToStdString();
+		for (auto &i : selectedItems) {
+			if (project->GetWorkAnim()->HasWeights(i->GetShape()->GetName(), boneName)) {
+				outfitBones->SetItemTextColour(item, wxColour(0, 255, 0));
+			}
+		}
+
+		item = outfitBones->GetNextChild(bonesRoot, cookie);
+	}
 }
 
 void OutfitStudioFrame::SelectShape(const std::string& shapeName) {
@@ -6823,6 +6842,7 @@ void OutfitStudioFrame::OnDeleteBoneFromSelected(wxCommandEvent& WXUNUSED(event)
 	}
 
 	ReselectBone();
+	HighlightBoneNamesWithWeights();
 }
 
 bool OutfitStudioFrame::HasUnweightedCheck() {
@@ -7027,7 +7047,9 @@ void OutfitStudioFrame::OnTransferSelectedWeight(wxCommandEvent& WXUNUSED(event)
 	std::unordered_map<ushort, float> mask;
 	glView->GetActiveMask(mask);
 	project->TransferSelectedWeights(activeItem->GetShape(), &mask, &selectedBones);
+
 	ReselectBone();
+	HighlightBoneNamesWithWeights();
 
 	UpdateProgress(100, _("Finished"));
 	EndProgress();
@@ -7689,6 +7711,7 @@ void wxGLPanel::EndBrushStroke() {
 				if (!selectedBone.empty()) {
 					int boneScalePos = os->boneScale->GetValue();
 					os->project->ApplyBoneScale(selectedBone, boneScalePos, true);
+					os->HighlightBoneNamesWithWeights();
 				}
 			}
 
