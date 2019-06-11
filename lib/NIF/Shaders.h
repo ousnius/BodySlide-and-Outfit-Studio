@@ -727,6 +727,28 @@ public:
 	float GetAlpha();
 };
 
+enum StencilMasks {
+	ENABLE_MASK = 0x0001,
+	FAIL_MASK = 0x000E,
+	FAIL_POS = 1,
+	ZFAIL_MASK = 0x0070,
+	ZFAIL_POS = 4,
+	ZPASS_MASK = 0x0380,
+	ZPASS_POS = 7,
+	DRAW_MASK = 0x0C00,
+	DRAW_POS = 10,
+	TEST_MASK = 0x7000,
+	TEST_POS = 12
+};
+
+enum DrawMode {
+	DRAW_CCW_OR_BOTH,
+	DRAW_CCW,
+	DRAW_CW,
+	DRAW_BOTH,
+	DRAW_MAX
+};
+
 class NiStencilProperty : public NiProperty {
 public:
 	ushort flags = 19840;

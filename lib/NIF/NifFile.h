@@ -119,6 +119,7 @@ public:
 
 	NiShader* GetShader(NiShape* shape);
 	NiMaterialProperty* GetMaterialProperty(NiShape* shape);
+	NiStencilProperty* GetStencilProperty(NiShape* shape);
 
 	int GetTextureSlot(NiShader* shader, std::string& outTexFile, int texIndex = 0);
 	void SetTextureSlot(NiShader* shader, std::string& inTexFile, int texIndex = 0);

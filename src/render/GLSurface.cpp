@@ -772,6 +772,8 @@ void GLSurface::RenderMesh(mesh* m) {
 	else
 		glDisable(GL_CULL_FACE);
 
+	glCullFace(m->cullMode);
+
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -1061,6 +1063,27 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 			m->prop.emissiveMultiple = material->GetEmissiveMultiple();
 
 			m->prop.alpha = material->GetAlpha();
+		}
+
+		NiStencilProperty* stencil = nif->GetStencilProperty(shape);
+		if (stencil) {
+			int drawMode = (stencil->flags & DRAW_MASK) >> DRAW_POS;
+
+			switch (drawMode) {
+			case DRAW_CW:
+				m->doublesided = false;
+				m->cullMode = GL_FRONT;
+				break;
+			case DRAW_BOTH:
+				m->doublesided = true;
+				m->cullMode = GL_BACK;
+				break;
+			case DRAW_CCW:
+			default:
+				m->doublesided = false;
+				m->cullMode = GL_BACK;
+				break;
+			}
 		}
 
 		NiAlphaProperty* alphaProp = nif->GetAlphaProperty(shape);

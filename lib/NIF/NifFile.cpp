@@ -507,6 +507,16 @@ NiMaterialProperty* NifFile::GetMaterialProperty(NiShape* shape) {
 	return nullptr;
 }
 
+NiStencilProperty* NifFile::GetStencilProperty(NiShape* shape) {
+	for (auto& prop : shape->GetProperties()) {
+		auto stencil = hdr.GetBlock<NiStencilProperty>(prop.GetIndex());
+		if (stencil)
+			return stencil;
+	}
+
+	return nullptr;
+}
+
 int NifFile::GetTextureSlot(NiShader* shader, std::string& outTexFile, int texIndex) {
 	outTexFile.clear();
 

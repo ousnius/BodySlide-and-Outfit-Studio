@@ -99,6 +99,7 @@ public:
 
 	RenderMode rendermode = RenderMode::Normal;
 	bool doublesided = false;
+	GLenum cullMode = GL_BACK;
 	bool modelSpace = false;
 	bool emissive = false;
 	bool specular = true;
