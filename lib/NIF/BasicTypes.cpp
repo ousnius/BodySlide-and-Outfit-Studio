@@ -50,7 +50,8 @@ void NiVersion::SetFile(NiFileVersion fileVer) {
 
 
 void NiString::Get(NiStream& stream, const int szSize) {
-	char buf[1025];
+	const int bufSize = 2048 + 1;
+	char buf[bufSize];
 
 	if (szSize == 1) {
 		byte smSize;
@@ -61,15 +62,21 @@ void NiString::Get(NiStream& stream, const int szSize) {
 	else if (szSize == 2) {
 		ushort medSize;
 		stream >> medSize;
-		if (medSize < 1025)
+		if (medSize < bufSize)
 			stream.read(buf, medSize);
+		else
+			medSize = bufSize;
+
 		buf[medSize] = 0;
 	}
 	else if (szSize == 4) {
 		uint bigSize;
 		stream >> bigSize;
-		if (bigSize < 1025)
+		if (bigSize < bufSize)
 			stream.read(buf, bigSize);
+		else
+			bigSize = bufSize;
+
 		buf[bigSize] = 0;
 	}
 	else
