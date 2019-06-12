@@ -877,8 +877,10 @@ void NiParticleSystem::Get(NiStream& stream) {
 		stream >> nearBegin;
 		stream >> nearEnd;
 
-		if (stream.GetVersion().Stream() >= 100)
+		if (stream.GetVersion().Stream() >= 100) {
 			psysDataRef.Get(stream);
+			dataRef.SetIndex(psysDataRef.GetIndex());
+		}
 	}
 
 	stream >> isWorldSpace;
