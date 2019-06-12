@@ -65,7 +65,7 @@ void NiString::Get(NiStream& stream, const int szSize) {
 		if (medSize < bufSize)
 			stream.read(buf, medSize);
 		else
-			medSize = bufSize;
+			medSize = bufSize - 1;
 
 		buf[medSize] = 0;
 	}
@@ -75,7 +75,7 @@ void NiString::Get(NiStream& stream, const int szSize) {
 		if (bigSize < bufSize)
 			stream.read(buf, bigSize);
 		else
-			bigSize = bufSize;
+			bigSize = bufSize - 1;
 
 		buf[bigSize] = 0;
 	}
