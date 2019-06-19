@@ -292,8 +292,11 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 				continue;
 
 			if (bones.first == shapeException) {
-				if (boneRef.refCount <= 1)
-					nif->DeleteNode(bone);
+				if (boneRef.refCount <= 1) {
+					auto nodeParent = nif->GetParentNode(nif->FindBlockByName<NiNode>(bone));
+					if (nodeParent == nif->GetRootNode())
+						nif->DeleteNode(bone);
+				}
 				continue;
 			}
 
