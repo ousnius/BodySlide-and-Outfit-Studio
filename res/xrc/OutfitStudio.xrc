@@ -1139,10 +1139,9 @@
 					<checked>1</checked>
 				</object>
 			</object>
-			<object class="wxMenuItem" name="btnGhostMode">
-				<label>Toggle Ghost Mode\tG</label>
-				<help>Show the active mesh in translucent mode.</help>
-				<checkable>1</checkable>
+			<object class="wxMenuItem" name="btnToggleVisibility">
+				<label>Toggle Visibility\tG</label>
+				<help>Switch between the different visibility modes for the selected shapes.</help>
 			</object>
 			<object class="wxMenuItem" name="btnShowWireframe">
 				<label>Show Wireframe\tW</label>

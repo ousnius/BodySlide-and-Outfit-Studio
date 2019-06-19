@@ -134,7 +134,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnSmoothSeams"), OutfitStudioFrame::OnSmoothNormalSeams)
 	EVT_MENU(XRCID("btnLockNormals"), OutfitStudioFrame::OnLockNormals)
 
-	EVT_MENU(XRCID("btnGhostMode"), OutfitStudioFrame::OnGhostMesh)
+	EVT_MENU(XRCID("btnToggleVisibility"), OutfitStudioFrame::OnToggleVisibility)
 	EVT_MENU(XRCID("btnShowWireframe"), OutfitStudioFrame::OnShowWireframe)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudioFrame::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudioFrame::OnEnableTextures)
@@ -2955,41 +2955,55 @@ void OutfitStudioFrame::OnFixedWeight(wxCommandEvent& event) {
 		weightBrush->bFixedWeight = checked;
 }
 
-void OutfitStudioFrame::OnShapeVisToggle(wxTreeEvent& event) {
-	bool bVis = true;
-	bool bGhost = false;
+void OutfitStudioFrame::ToggleVisibility(wxTreeItemId firstItem) {
+	bool vis = true;
+	bool ghost = false;
+	int state = 0;
 
-	int state = outfitShapes->GetItemState(event.GetItem());
-	if (state == 0) {
-		bVis = false;
-		bGhost = false;
-		state = 1;
-	}
-	else if (state == 1) {
-		bVis = true;
-		bGhost = true;
-		state = 2;
-	}
-	else {
-		bVis = true;
-		bGhost = false;
-		state = 0;
-	}
-
-	std::string shapeName = outfitShapes->GetItemText(event.GetItem()).ToUTF8();
-	glView->SetShapeGhostMode(shapeName, bGhost);
-	glView->ShowShape(shapeName, bVis);
-	outfitShapes->SetItemState(event.GetItem(), state);
-
-	if (selectedItems.size() > 1) {
-		for (auto &i : selectedItems) {
-			shapeName = outfitShapes->GetItemText(i->GetId()).ToUTF8();
-			glView->SetShapeGhostMode(shapeName, bGhost);
-			glView->ShowShape(shapeName, bVis);
-			outfitShapes->SetItemState(i->GetId(), state);
+	if (!firstItem.IsOk()) {
+		if (!selectedItems.empty()) {
+			firstItem = selectedItems.front()->GetId();
 		}
 	}
 
+	if (firstItem.IsOk()) {
+		state = outfitShapes->GetItemState(firstItem);
+		if (state == 0) {
+			vis = false;
+			ghost = false;
+			state = 1;
+		}
+		else if (state == 1) {
+			vis = true;
+			ghost = true;
+			state = 2;
+		}
+		else {
+			vis = true;
+			ghost = false;
+			state = 0;
+		}
+
+		std::string shapeName = outfitShapes->GetItemText(firstItem).ToUTF8();
+		glView->SetShapeGhostMode(shapeName, ghost);
+		glView->ShowShape(shapeName, vis);
+		outfitShapes->SetItemState(firstItem, state);
+	}
+
+	if (selectedItems.size() > 1) {
+		for (auto &i : selectedItems) {
+			if (i->GetId().GetID() != firstItem.GetID()) {
+				std::string shapeName = outfitShapes->GetItemText(i->GetId()).ToUTF8();
+				glView->SetShapeGhostMode(shapeName, ghost);
+				glView->ShowShape(shapeName, vis);
+				outfitShapes->SetItemState(i->GetId(), state);
+			}
+		}
+	}
+}
+
+void OutfitStudioFrame::OnShapeVisToggle(wxTreeEvent& event) {
+	ToggleVisibility(event.GetItem());
 	event.Skip();
 }
 

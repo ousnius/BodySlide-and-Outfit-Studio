@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.3\n"
 "Language: en\n"
 "X-Poedit-KeywordsList: _\n"
 
@@ -516,10 +516,10 @@ msgstr ""
 msgid "Perspective\tShift+5"
 msgstr ""
 
-msgid "Toggle Ghost Mode\tG"
+msgid "Toggle Visibility\tG"
 msgstr ""
 
-msgid "Show the active mesh in translucent mode."
+msgid "Switch between the different visibility modes for the selected shapes."
 msgstr ""
 
 msgid "Show Wireframe\tW"

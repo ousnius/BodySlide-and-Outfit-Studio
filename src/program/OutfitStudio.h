@@ -255,14 +255,6 @@ public:
 		else
 			m->rendermode = RenderMode::Normal;
 	}
-	void ToggleGhostMode() {
-		for (auto &m : gls.GetActiveMeshes()) {
-			if (m->rendermode == RenderMode::Normal)
-				m->rendermode = RenderMode::LitWire;
-			else if (m->rendermode == RenderMode::LitWire)
-				m->rendermode = RenderMode::Normal;
-		}
-	}
 
 	void ToggleNormalSeamSmoothMode() {
 		for (auto &m : gls.GetActiveMeshes()) {
@@ -1046,6 +1038,7 @@ private:
 	void OnFixedWeight(wxCommandEvent& event);
 	void OnSelectSliders(wxCommandEvent& event);
 
+	void ToggleVisibility(wxTreeItemId firstItem = wxTreeItemId());
 	void OnShapeVisToggle(wxTreeEvent& event);
 	void OnShapeSelect(wxTreeEvent& event);
 	void OnShapeActivated(wxTreeEvent& event);
@@ -1195,9 +1188,8 @@ private:
 	void OnSmoothNormalSeams(wxCommandEvent& event);
 	void OnLockNormals(wxCommandEvent& event);
 
-	void OnGhostMesh(wxCommandEvent& WXUNUSED(event)) {
-		glView->ToggleGhostMode();
-		glView->Render();
+	void OnToggleVisibility(wxCommandEvent& WXUNUSED(event)) {
+		ToggleVisibility();
 	}
 
 	void OnShowWireframe(wxCommandEvent& WXUNUSED(event)) {
