@@ -362,6 +362,20 @@ float ConfigurationManager::GetFloatValue(const std::string& inName, float def) 
 	return res;
 }
 
+bool ConfigurationManager::GetBoolValue(const std::string& inName, bool def) {
+	bool res = def;
+
+	ConfigurationItem* itemFound = FindCI(inName);
+	if (itemFound) {
+		if (_strnicmp(itemFound->value.c_str(), "true", 4) == 0)
+			res = true;
+		else if (_strnicmp(itemFound->value.c_str(), "false", 5) == 0)
+			res = false;
+	}
+
+	return res;
+}
+
 std::string ConfigurationManager::GetString(const std::string& inName) {
 	ConfigurationItem* itemFound = FindCI(inName);
 	if (itemFound)
@@ -378,6 +392,20 @@ void ConfigurationManager::SetDefaultValue(const std::string& inName, const std:
 }
 
 void ConfigurationManager::SetDefaultValue(const std::string& inName, int newValue) {
+	if (FindCI(inName))
+		return;
+
+	SetValue(inName, newValue, true);
+}
+
+void ConfigurationManager::SetDefaultValue(const std::string& inName, float newValue) {
+	if (FindCI(inName))
+		return;
+
+	SetValue(inName, newValue, true);
+}
+
+void ConfigurationManager::SetDefaultValue(const std::string& inName, bool newValue) {
 	if (FindCI(inName))
 		return;
 
@@ -430,6 +458,12 @@ void ConfigurationManager::SetValue(const std::string& inName, float newValue, b
 	char intStr[24];
 	_snprintf_s(intStr, 24, 24, "%0.5f", newValue);
 	SetValue(inName, std::string(intStr), flagDefault);
+}
+
+void ConfigurationManager::SetValue(const std::string& inName, bool newValue, bool flagDefault) {
+	const std::string strTrue = "true";
+	const std::string strFalse = "false";
+	SetValue(inName, newValue ? strTrue : strFalse, flagDefault);
 }
 
 bool ConfigurationManager::MatchValue(const std::string& inName, const std::string& val, bool useCase) {

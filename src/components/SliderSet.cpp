@@ -82,12 +82,7 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 	tmpElement = element->FirstChildElement("OutputFile");
 	if (tmpElement) {
 		outputfile = tmpElement->GetText();
-		if (tmpElement->Attribute("GenWeights")) {
-			std::string gw = tmpElement->Attribute("GenWeights");
-			if (_strnicmp(gw.c_str(), "false", 5) == 0) {
-				genWeights = false;
-			}
-		}
+		genWeights = tmpElement->BoolAttribute("GenWeights", true);
 	}
 
 	XMLElement* shapeName = element->FirstChildElement(shapeStr.c_str());
@@ -103,11 +98,8 @@ int SliderSet::LoadSliderSet(XMLElement* element) {
 		if (shapeName->Attribute("target"))
 			shape.targetShape = shapeName->Attribute("target");
 
-		if (shapeName->Attribute("SmoothSeamNormals"))
-			shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals");
-
-		if (shapeName->Attribute("LockNormals"))
-			shape.lockNormals = shapeName->BoolAttribute("LockNormals");
+		shape.smoothSeamNormals = shapeName->BoolAttribute("SmoothSeamNormals", true);
+		shape.lockNormals = shapeName->BoolAttribute("LockNormals", false);
 
 		shapeName = shapeName->NextSiblingElement(shapeStr.c_str());
 	}
@@ -298,7 +290,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 	newElement = sliderSetElement->GetDocument()->NewElement("OutputFile");
 	XMLElement* outputFileElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 
-	outputFileElement->SetAttribute("GenWeights", genWeights ? "true" : "false");
+	outputFileElement->SetAttribute("GenWeights", genWeights);
 
 	newText = sliderSetElement->GetDocument()->NewText(outputfile.c_str());
 	outputFileElement->InsertEndChild(newText);
@@ -334,7 +326,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		newElement = sliderSetElement->GetDocument()->NewElement("Slider");
 		sliderElement = sliderSetElement->InsertEndChild(newElement)->ToElement();
 		sliderElement->SetAttribute("name", slider.name.c_str());
-		sliderElement->SetAttribute("invert", slider.bInvert ? "true" : "false");
+		sliderElement->SetAttribute("invert", slider.bInvert);
 
 		if (genWeights) {
 			sliderElement->SetAttribute("small", (int)slider.defSmallValue);
@@ -344,12 +336,12 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			sliderElement->SetAttribute("default", (int)slider.defBigValue);
 
 		if (slider.bHidden)
-			sliderElement->SetAttribute("hidden", "true");
+			sliderElement->SetAttribute("hidden", true);
 		if (slider.bClamp)
-			sliderElement->SetAttribute("clamp", "true");
+			sliderElement->SetAttribute("clamp", true);
 
 		if (slider.bZap) {
-			sliderElement->SetAttribute("zap", "true");
+			sliderElement->SetAttribute("zap", true);
 
 			std::string zapToggles;
 			for (auto &toggle : slider.zapToggles) {
@@ -362,7 +354,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 		}
 
 		if (slider.bUV)
-			sliderElement->SetAttribute("uv", "true");
+			sliderElement->SetAttribute("uv", true);
 
 		for (auto &df : slider.dataFiles) {
 			newElement = sliderSetElement->GetDocument()->NewElement("Data");
@@ -370,7 +362,7 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 			dataFileElement->SetAttribute("name", df.dataName.c_str());
 			dataFileElement->SetAttribute("target", df.targetName.c_str());
 			if (df.bLocal)
-				dataFileElement->SetAttribute("local", "true");
+				dataFileElement->SetAttribute("local", true);
 
 			newText = sliderSetElement->GetDocument()->NewText(df.fileName.c_str());
 			dataFileElement->InsertEndChild(newText);

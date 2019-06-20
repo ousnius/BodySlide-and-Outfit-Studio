@@ -1058,9 +1058,9 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			selectedfiles = selectedfiles.BeforeLast(';');
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToStdString());
 
-			Config.SetValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked() ? "true" : "false");
-			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked() ? "true" : "false");
-			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked() ? "true" : "false");
+			Config.SetValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
+			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked());
+			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
@@ -1112,7 +1112,7 @@ void OutfitStudioFrame::OnSetSize(wxSizeEvent& event) {
 		OutfitStudioConfig.SetValue("OutfitStudioFrame.height", p.y);
 	}
 
-	OutfitStudioConfig.SetValue("OutfitStudioFrame.maximized", maximized ? "true" : "false");
+	OutfitStudioConfig.SetValue("OutfitStudioFrame.maximized", maximized);
 	event.Skip();
 }
 

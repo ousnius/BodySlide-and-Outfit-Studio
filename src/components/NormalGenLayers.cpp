@@ -150,13 +150,13 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 		}
 		else {
 			elem = container->GetDocument()->NewElement("TangentSpace");
-			elem->SetText((l.isTangentSpace) ? "true" : "false");
+			elem->SetText(l.isTangentSpace);
 
 			layerelem->InsertEndChild(elem);
 
 			if (l.useMeshNormalsSource) {				// not outputting some default values 
 				elem = container->GetDocument()->NewElement("UseMeshNormalSource");
-				elem->SetText("true");
+				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
 
@@ -180,28 +180,28 @@ void NormalGenLayer::SaveToXML(tinyxml2::XMLElement * container, const std::vect
 			layerelem->InsertEndChild(elem);
 
 			elem = container->GetDocument()->NewElement("ScaleToFit");
-			elem->SetText((l.scaleToResolution) ? "true" : "false");
+			elem->SetText(l.scaleToResolution);
 
 			layerelem->InsertEndChild(elem);
 
 			if (l.swapRG) {				// not outputting some default values 
 				elem = container->GetDocument()->NewElement("SwapRG");
-				elem->SetText("true");
+				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
 			if (l.invertRed) {				// not outputting some default values 
 				elem = container->GetDocument()->NewElement("InvertRed");
-				elem->SetText("true");
+				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
 			if (l.invertGreen) {				// not outputting some default values 
 				elem = container->GetDocument()->NewElement("InvertGreen");
-				elem->SetText("true");
+				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
 			if (l.invertBlue) {				// not outputting some default values 
 				elem = container->GetDocument()->NewElement("InvertBlue");
-				elem->SetText("true");
+				elem->SetText(true);
 				layerelem->InsertEndChild(elem);
 			}
 		}

@@ -88,13 +88,17 @@ public:
 
 	int GetIntValue(const std::string& inName, int def = 0);
 	float GetFloatValue(const std::string& inName, float def = 0.0f);
+	bool GetBoolValue(const std::string& inName, bool def = false);
 
 	void SetValue(const std::string& inName, const std::string& newValue, bool flagDefault = false);
 	void SetValue(const std::string& inName, int newValue, bool flagDefault = false);
 	void SetValue(const std::string& inName, float newValue, bool flagDefault = false);
+	void SetValue(const std::string& inName, bool newValue, bool flagDefault = false);
 
 	void SetDefaultValue(const std::string& inName, const std::string& newValue);
 	void SetDefaultValue(const std::string& inName, int newValue);
+	void SetDefaultValue(const std::string& inName, float newValue);
+	void SetDefaultValue(const std::string& inName, bool newValue);
 
 	bool MatchValue(const std::string& inName, const std::string& val, bool useCase = false);
 
