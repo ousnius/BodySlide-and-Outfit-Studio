@@ -279,7 +279,7 @@ namespace detail
 		};
 
 		GLM_STATIC_ASSERT(sizeof(Table) / sizeof(Table[0]) == FORMAT_COUNT, "GLI error: format descriptor list doesn't match number of supported formats");
-		GLI_ASSERT(Format != static_cast<format>(FORMAT_INVALID));
+		GLI_ASSERT(Format != FORMAT_UNDEFINED);
 
 		return Table[Format - FORMAT_FIRST];
 	};
@@ -370,7 +370,23 @@ namespace detail
 	inline bool is_packed(format Format)
 	{
 		uint16_t flags = detail::get_format_info(Format).Flags;
-		
+
 		return (flags & detail::CAP_PACKED8_BIT) != 0 || (flags & detail::CAP_PACKED16_BIT) != 0 || (flags & detail::CAP_PACKED32_BIT) != 0;
 	}
+
+	inline bool is_depth(format Format)
+	{
+		return (detail::get_format_info(Format).Flags & detail::CAP_DEPTH_BIT) ? true : false;
+	}
+
+	inline bool is_stencil(format Format)
+	{
+		return (detail::get_format_info(Format).Flags & detail::CAP_STENCIL_BIT) ? true : false;
+	}
+
+	inline bool is_depth_stencil(format Format)
+	{
+		return is_depth(Format) && is_stencil(Format);
+	}
+
 }//namespace gli

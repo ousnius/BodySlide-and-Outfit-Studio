@@ -122,21 +122,21 @@ namespace detail
 	inline texture duplicate
 	(
 		texture1d_array const & Texture,
-		texture1d_array::size_type BaseLayer, texture1d_array::size_type MaxMayer,
+		texture1d_array::size_type BaseLayer, texture1d_array::size_type MaxLayer,
 		texture1d_array::size_type BaseLevel, texture1d_array::size_type MaxLevel
 	)
 	{
 		GLI_ASSERT(BaseLevel <= MaxLevel);
 		GLI_ASSERT(BaseLevel < Texture.levels());
 		GLI_ASSERT(MaxLevel < Texture.levels());
-		GLI_ASSERT(BaseLayer <= MaxMayer);
+		GLI_ASSERT(BaseLayer <= MaxLayer);
 		GLI_ASSERT(BaseLayer < Texture.layers());
-		GLI_ASSERT(MaxMayer < Texture.layers());
+		GLI_ASSERT(MaxLayer < Texture.layers());
 
 		texture1d_array Duplicate(
 			Texture.format(),
 			Texture[BaseLayer].extent(BaseLevel),
-			MaxMayer - BaseLayer + 1,
+			MaxLayer - BaseLayer + 1,
 			MaxLevel - BaseLevel + 1);
 
 		for(texture1d_array::size_type Layer = 0; Layer < Duplicate.layers(); ++Layer)
@@ -168,21 +168,21 @@ namespace detail
 	inline texture duplicate
 	(
 		texture2d_array const & Texture,
-		texture2d_array::size_type BaseLayer, texture2d_array::size_type MaxMayer,
+		texture2d_array::size_type BaseLayer, texture2d_array::size_type MaxLayer,
 		texture2d_array::size_type BaseLevel, texture2d_array::size_type MaxLevel
 	)
 	{
 		GLI_ASSERT(BaseLevel <= MaxLevel);
 		GLI_ASSERT(BaseLevel < Texture.levels());
 		GLI_ASSERT(MaxLevel < Texture.levels());
-		GLI_ASSERT(BaseLayer <= MaxMayer);
+		GLI_ASSERT(BaseLayer <= MaxLayer);
 		GLI_ASSERT(BaseLayer < Texture.layers());
-		GLI_ASSERT(MaxMayer < Texture.layers());
+		GLI_ASSERT(MaxLayer < Texture.layers());
 
 		texture2d_array Duplicate(
 			Texture.format(),
 			Texture.extent(BaseLevel),
-			MaxMayer - BaseLayer + 1,
+			MaxLayer - BaseLayer + 1,
 			MaxLevel - BaseLevel + 1);
 
 		for(texture2d_array::size_type Layer = 0; Layer < Duplicate.layers(); ++Layer)

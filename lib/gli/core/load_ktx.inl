@@ -64,8 +64,8 @@ namespace detail
 			static_cast<gli::gl::internal_format>(Header.GLInternalFormat),
 			static_cast<gli::gl::external_format>(Header.GLFormat),
 			static_cast<gli::gl::type_format>(Header.GLType));
-		GLI_ASSERT(Format != static_cast<format>(gli::FORMAT_INVALID));
-		
+		GLI_ASSERT(Format != gli::FORMAT_UNDEFINED);
+
 		texture::size_type const BlockSize = block_size(Format);
 
 		texture Texture(

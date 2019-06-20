@@ -14,11 +14,11 @@
 
 // GLM
 #include <glm/gtc/round.hpp>
+#include <glm/gtc/bitfield.hpp>
 #include <glm/gtx/component_wise.hpp>
-#include <glm/gtx/integer.hpp>
-#include <glm/gtx/bit.hpp>
-#include <glm/gtx/raw_data.hpp>
-#include <glm/gtx/wrap.hpp>
+//#include <glm/gtx/integer.hpp>
+//#include <glm/gtx/bit.hpp>
+//#include <glm/gtx/wrap.hpp>
 
 static_assert(GLM_VERSION >= 97, "GLI requires at least GLM 0.9.7");
 
@@ -30,7 +30,7 @@ namespace gli
 		typedef extent3d extent_type;
 		typedef size_t size_type;
 		typedef gli::format format_type;
-		typedef glm::byte data_type;
+		typedef gli::byte data_type;
 
 	public:
 		storage_linear();

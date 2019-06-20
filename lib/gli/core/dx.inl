@@ -55,7 +55,7 @@ namespace gli
 			{DDPF_FOURCC, D3DFMT_DX10, DXGI_FORMAT_R8G8B8A8_SINT, glm::u32vec4(0)},														//FORMAT_RGBA8_SINT,
 			{DDPF_FOURCC, D3DFMT_DX10, DXGI_FORMAT_R8G8B8A8_UNORM_SRGB, glm::u32vec4(0)},												//FORMAT_RGBA8_SRGB,
 
-			{DDPF_FOURCC, D3DFMT_A8R8G8B8, DXGI_FORMAT_B8G8R8A8_UNORM, glm::u32vec4(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)},	//FORMAT_BGRA8_UNORM,
+			{DDPF_RGBA, D3DFMT_A8R8G8B8, DXGI_FORMAT_B8G8R8A8_UNORM, glm::u32vec4(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000)},	//FORMAT_BGRA8_UNORM,
 			{DDPF_FOURCC, D3DFMT_GLI1, DXGI_FORMAT_B8G8R8A8_SNORM_GLI, glm::u32vec4(0)},												//FORMAT_BGRA8_SNORM,
 			{DDPF_FOURCC, D3DFMT_GLI1, DXGI_FORMAT_B8G8R8A8_USCALED_GLI, glm::u32vec4(0)},												//FORMAT_BGRA8_USCALED,
 			{DDPF_FOURCC, D3DFMT_GLI1, DXGI_FORMAT_B8G8R8A8_SSCALED_GLI, glm::u32vec4(0)},												//FORMAT_BGRA8_SSCALED,
@@ -260,7 +260,7 @@ namespace gli
 
 	inline gli::format dx::find(dx::d3dfmt FourCC) const
 	{
-		gli::format FormatResult = static_cast<gli::format>(FORMAT_INVALID);
+		gli::format FormatResult = gli::FORMAT_UNDEFINED;
 		for(int FormatIndex = FORMAT_FIRST; FormatIndex <= FORMAT_LAST; ++FormatIndex)
 		{
 			if(this->Translation[FormatIndex - FORMAT_FIRST].D3DFormat != FourCC)
@@ -275,13 +275,13 @@ namespace gli
 	inline gli::format dx::find(dx::d3dfmt FourCC, dx::dxgiFormat Format) const
 	{
 		GLI_ASSERT(FourCC == D3DFMT_DX10 || FourCC == D3DFMT_GLI1);
-		
-		gli::format FormatResult = static_cast<gli::format>(FORMAT_INVALID);
+
+		gli::format FormatResult = gli::FORMAT_UNDEFINED;
 		for(int FormatIndex = FORMAT_FIRST; FormatIndex <= FORMAT_LAST; ++FormatIndex)
 		{
 			gli::format CurrentFormat = static_cast<gli::format>(FormatIndex);
 			detail::formatInfo const & FormatInfo = detail::get_format_info(CurrentFormat);
-			
+
 			dx::format const & DXFormat = this->Translation[FormatIndex - FORMAT_FIRST];
 
 			if(FourCC == D3DFMT_GLI1 && (FormatInfo.Flags & detail::CAP_DDS_GLI_EXT_BIT) && DXFormat.DXGIFormat.GLI == Format.GLI)
@@ -289,7 +289,7 @@ namespace gli
 				FormatResult = static_cast<gli::format>(FormatIndex);
 				break;
 			}
-			
+
 			if(FourCC == D3DFMT_DX10 && !(FormatInfo.Flags & detail::CAP_DDS_GLI_EXT_BIT) && DXFormat.DXGIFormat.DDS == Format.DDS)
 			{
 				FormatResult = static_cast<gli::format>(FormatIndex);

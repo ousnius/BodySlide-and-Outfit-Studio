@@ -274,7 +274,6 @@ namespace gli
 
 	enum
 	{
-		FORMAT_INVALID = -1,
 		FORMAT_COUNT = FORMAT_LAST - FORMAT_FIRST + 1,
 		SWIZZLE_COUNT = SWIZZLE_LAST - SWIZZLE_FIRST + 1
 	};
@@ -285,7 +284,7 @@ namespace gli
 		return Format >= FORMAT_FIRST && Format <= FORMAT_LAST;
 	}
 
-	typedef glm::tvec4<swizzle> swizzles;
+	typedef glm::vec<4, swizzle> swizzles;
 
 	/// Evaluate whether a format is compressed
 	bool is_compressed(format Format);
@@ -305,35 +304,44 @@ namespace gli
 	/// Return the number of components of a format
 	size_t component_count(format Format);
 
-    /// Evaluate whether a format is unsigned
-    bool is_unsigned(format Format);
+	/// Evaluate whether a format is unsigned
+	bool is_unsigned(format Format);
 
-    /// Evaluate whether a format is signed
-    bool is_signed(format Format);
+	/// Evaluate whether a format is signed
+	bool is_signed(format Format);
 
-    /// Evaluate whether the format is an integer format
-    bool is_integer(format Format);
+	/// Evaluate whether the format is an integer format
+	bool is_integer(format Format);
 
-    /// Evaluate whether the format is a signed integer format
-    bool is_signed_integer(format Format);
+	/// Evaluate whether the format is a signed integer format
+	bool is_signed_integer(format Format);
 
-    /// Evaluate whether the format is an unsigned integer format
-    bool is_unsigned_integer(format Format);
+	/// Evaluate whether the format is an unsigned integer format
+	bool is_unsigned_integer(format Format);
 
-    /// Evaluate whether the format is an float format
-    bool is_float(format Format);
+	/// Evaluate whether the format is an float format
+	bool is_float(format Format);
 
-    /// Evaluate whether the format is normalized
-    bool is_normalized(format Format);
+	/// Evaluate whether the format is normalized
+	bool is_normalized(format Format);
 
-    /// Evaluate whether the format is an unsigned normalized format
-    bool is_unorm(format Format);
+	/// Evaluate whether the format is an unsigned normalized format
+	bool is_unorm(format Format);
 
-    /// Evaluate whether the format is a signed normalized format
-    bool is_snorm(format Format);
+	/// Evaluate whether the format is a signed normalized format
+	bool is_snorm(format Format);
 
-    /// Evaluate whether the format is packed
-    bool is_packed(format Format);
+	/// Evaluate whether the format is packed
+	bool is_packed(format Format);
+
+	/// Evaluate whether the format is a depth format
+	bool is_depth(format Format);
+
+	/// Evaluate whether the format has a stencil component
+	bool is_stencil(format Format);
+
+	/// Evaluate whether the format has depth and stencil components
+	bool is_depth_stencil(format Format);
 
 }//namespace gli
 

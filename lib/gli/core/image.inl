@@ -1,7 +1,7 @@
 namespace gli{
 namespace detail
 {
-	inline size_t texel_linear_aAdressing
+	inline size_t texel_linear_addressing
 	(
 		extent1d const& Extent,
 		extent1d const& TexelCoord
@@ -12,7 +12,7 @@ namespace detail
 		return static_cast<size_t>(TexelCoord.x);
 	}
 
-	inline size_t texel_linear_adressing
+	inline size_t texel_linear_addressing
 	(
 		extent2d const& Extent,
 		extent2d const& TexelCoord
@@ -24,7 +24,7 @@ namespace detail
 		return static_cast<size_t>(TexelCoord.x + Extent.x * TexelCoord.y);
 	}
 
-	inline size_t texel_linear_adressing
+	inline size_t texel_linear_addressing
 	(
 		extent3d const& Extent,
 		extent3d const& TexelCoord
@@ -37,7 +37,7 @@ namespace detail
 		return static_cast<size_t>(TexelCoord.x + Extent.x * (TexelCoord.y + Extent.y * TexelCoord.z));
 	}
 
-	inline size_t texel_morton_adressing
+	inline size_t texel_morton_addressing
 	(
 		extent1d const& Extent,
 		extent1d const& TexelCoord
@@ -48,7 +48,7 @@ namespace detail
 		return TexelCoord.x;
 	}
 
-	inline size_t texel_morton_adressing
+	inline size_t texel_morton_addressing
 	(
 		extent2d const& Extent,
 		extent2d const& TexelCoord
@@ -62,7 +62,7 @@ namespace detail
 		return static_cast<size_t>(glm::bitfieldInterleave(Input.x, Input.y));
 	}
 
-	inline size_t texel_morton_adressing
+	inline size_t texel_morton_addressing
 	(
 		extent3d const& Extent,
 		extent3d const& TexelCoord
@@ -79,7 +79,7 @@ namespace detail
 }//namespace detail
 
 	inline image::image()
-		: Format(static_cast<gli::format>(FORMAT_INVALID))
+		: Format(gli::FORMAT_UNDEFINED)
 		, BaseLevel(0)
 		, Data(nullptr)
 		, Size(0)
@@ -174,7 +174,7 @@ namespace detail
 	inline void const* image::data() const
 	{
 		GLI_ASSERT(!this->empty());
-		
+
 		return this->Data;
 	}
 
@@ -200,7 +200,7 @@ namespace detail
 	{
 		GLI_ASSERT(!this->empty());
 
-		memset(this->data<glm::byte>(), 0, this->size<glm::byte>());
+		memset(this->data<gli::byte>(), 0, this->size<gli::byte>());
 	}
 
 	template <typename genType>
@@ -235,7 +235,7 @@ namespace detail
 		GLI_ASSERT(this->Storage->block_size() == sizeof(genType));
 		GLI_ASSERT(glm::all(glm::lessThan(TexelCoord, this->extent())));
 
-		return *(this->data<genType>() + detail::texel_linear_adressing(this->extent(), TexelCoord));
+		return *(this->data<genType>() + detail::texel_linear_addressing(this->extent(), TexelCoord));
 	}
 
 	template <typename genType>
@@ -246,6 +246,6 @@ namespace detail
 		GLI_ASSERT(this->Storage->block_size() == sizeof(genType));
 		GLI_ASSERT(glm::all(glm::lessThan(TexelCoord, this->extent())));
 
-		*(this->data<genType>() + detail::texel_linear_adressing(this->extent(), TexelCoord)) = Data;
+		*(this->data<genType>() + detail::texel_linear_addressing(this->extent(), TexelCoord)) = Data;
 	}
 }//namespace gli

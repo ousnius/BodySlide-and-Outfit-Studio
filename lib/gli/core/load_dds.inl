@@ -77,7 +77,7 @@ namespace detail
 		D3D10_RESOURCE_DIMENSION_BUFFER      = 1,
 		D3D10_RESOURCE_DIMENSION_TEXTURE1D   = 2,
 		D3D10_RESOURCE_DIMENSION_TEXTURE2D   = 3,
-		D3D10_RESOURCE_DIMENSION_TEXTURE3D   = 4 
+		D3D10_RESOURCE_DIMENSION_TEXTURE3D   = 4
 	};
 
 	enum d3d10_resource_misc_flag
@@ -119,7 +119,7 @@ namespace detail
 
 	inline target get_target(dds_header const& Header, dds_header10 const& Header10)
 	{
-		if(Header.CubemapFlags & detail::DDSCAPS2_CUBEMAP)
+		if((Header.CubemapFlags & detail::DDSCAPS2_CUBEMAP) || (Header10.MiscFlag & detail::D3D10_RESOURCE_MISC_TEXTURECUBE))
 		{
 			if(Header10.ArraySize > 1)
 				return TARGET_CUBE_ARRAY;
@@ -182,8 +182,8 @@ namespace detail
 
 		dx DX;
 
-		gli::format Format(static_cast<gli::format>(gli::FORMAT_INVALID));
-		if((Header.Format.flags & (dx::DDPF_RGB | dx::DDPF_ALPHAPIXELS | dx::DDPF_ALPHA | dx::DDPF_YUV | dx::DDPF_LUMINANCE)) && Format == static_cast<format>(gli::FORMAT_INVALID) && Header.Format.bpp != 0)
+		gli::format Format(gli::FORMAT_UNDEFINED);
+		if((Header.Format.flags & (dx::DDPF_RGB | dx::DDPF_ALPHAPIXELS | dx::DDPF_ALPHA | dx::DDPF_YUV | dx::DDPF_LUMINANCE)) && Format == gli::FORMAT_UNDEFINED && Header.Format.bpp != 0)
 		{
 			switch(Header.Format.bpp)
 			{
@@ -266,7 +266,7 @@ namespace detail
 				}
 			}
 		}
-		else if((Header.Format.flags & dx::DDPF_FOURCC) && (Header.Format.fourCC != dx::D3DFMT_DX10) && (Header.Format.fourCC != dx::D3DFMT_GLI1) && (Format == static_cast<format>(gli::FORMAT_INVALID)))
+		else if((Header.Format.flags & dx::DDPF_FOURCC) && (Header.Format.fourCC != dx::D3DFMT_DX10) && (Header.Format.fourCC != dx::D3DFMT_GLI1) && (Format == gli::FORMAT_UNDEFINED))
 		{
 			dx::d3dfmt const FourCC = detail::remap_four_cc(Header.Format.fourCC);
 			Format = DX.find(FourCC);
@@ -274,12 +274,14 @@ namespace detail
 		else if(Header.Format.fourCC == dx::D3DFMT_DX10 || Header.Format.fourCC == dx::D3DFMT_GLI1)
 			Format = DX.find(Header.Format.fourCC, Header10.Format);
 
-		GLI_ASSERT(Format != static_cast<format>(gli::FORMAT_INVALID));
+		GLI_ASSERT(Format != gli::FORMAT_UNDEFINED);
 
 		size_t const MipMapCount = (Header.Flags & detail::DDSD_MIPMAPCOUNT) ? Header.MipMapLevels : 1;
 		size_t FaceCount = 1;
 		if(Header.CubemapFlags & detail::DDSCAPS2_CUBEMAP)
 			FaceCount = int(glm::bitCount(Header.CubemapFlags & detail::DDSCAPS2_CUBEMAP_ALLFACES));
+		else if(Header10.MiscFlag & detail::D3D10_RESOURCE_MISC_TEXTURECUBE)
+			FaceCount = 6;
 
 		size_t DepthCount = 1;
 		if(Header.CubemapFlags & detail::DDSCAPS2_VOLUME)

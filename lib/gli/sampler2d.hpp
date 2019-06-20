@@ -13,7 +13,7 @@ namespace gli
 	/// 2d texture sampler
 	/// @tparam T Sampler can fetch, write and interpret any texture format but will expose and process the data through type T conversions.
 	/// @tparam P Precision in term of ULPs
-	template <typename T, precision P = defaultp>
+	template <typename T, qualifier P = defaultp>
 	class sampler2d : public sampler
 	{
 	private:
@@ -24,8 +24,8 @@ namespace gli
 		typedef typename texture_type::size_type size_type;
 		typedef typename texture_type::extent_type extent_type;
 		typedef interpolate_type level_type;
-		typedef tvec2<interpolate_type, P> normalized_type;
-		typedef tvec4<T, P> texel_type;
+		typedef vec<2, interpolate_type, P> normalized_type;
+		typedef vec<4, T, P> texel_type;
 
 		sampler2d(texture_type const& Texture, wrap Wrap, filter Mip = FILTER_NEAREST, filter Min = FILTER_NEAREST, texel_type const& BorderColor = texel_type(0, 0, 0, 1));
 
@@ -41,8 +41,11 @@ namespace gli
 		/// Clear the sampler texture with a uniform texel
 		void clear(texel_type const& Texel);
 
-		/// Sample the sampler texture at a specific level
+		/// Sample a texture at a specific level
 		texel_type texture_lod(normalized_type const& SampleCoord, level_type Level) const;
+
+		/// Sample a texture using specified gradiants
+		texel_type texture_grad(normalized_type const& SampleCoord, normalized_type const& dPdx, normalized_type const& dPdy) const;
 
 		/// Generate all the mipmaps of the sampler texture from the texture base level
 		void generate_mipmaps(filter Minification);

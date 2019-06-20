@@ -5,10 +5,10 @@
 namespace gli{
 namespace detail
 {
-	template <typename textureType, typename T, precision P>
+	template <typename textureType, typename T, qualifier P>
 	struct clear
 	{
-		static void call(textureType & Texture, typename convert<textureType, T, P>::writeFunc Write, tvec4<T, P> const & Color)
+		static void call(textureType & Texture, typename convert<textureType, T, P>::writeFunc Write, vec<4, T, P> const& Color)
 		{
 			GLI_ASSERT(Write);
 

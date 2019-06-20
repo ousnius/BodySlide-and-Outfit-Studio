@@ -351,7 +351,7 @@ namespace detail
 
 			return static_cast<gli::format>(FormatIndex);
 		}
-		return static_cast<gli::format>(FORMAT_INVALID);
+		return gli::FORMAT_UNDEFINED;
 	}
 
 	inline gl::swizzles gl::compute_swizzle(format_desc const& FormatDesc, gli::swizzles const& Swizzles) const

@@ -5,7 +5,7 @@ namespace gli
 	inline texture::texture()
 		: Storage(nullptr)
 		, Target(static_cast<gli::target>(TARGET_INVALID))
-		, Format(static_cast<gli::format>(FORMAT_INVALID))
+		, Format(gli::FORMAT_UNDEFINED)
 		, BaseLayer(0), MaxLayer(0)
 		, BaseFace(0), MaxFace(0)
 		, BaseLevel(0), MaxLevel(0)
@@ -342,7 +342,7 @@ namespace gli
 		GLI_ASSERT(FaceDst < this->faces());
 		GLI_ASSERT(LevelSrc < TextureSrc.levels());
 		GLI_ASSERT(LevelDst < this->levels());
-		
+
 		memcpy(
 			this->data(LayerDst, FaceDst, LevelDst),
 			TextureSrc.data(LayerSrc, FaceSrc, LevelSrc),
@@ -361,7 +361,7 @@ namespace gli
 		this->Storage->copy(
 			*TextureSrc.Storage,
 			LayerSrc, FaceSrc, LevelSrc, OffsetSrc / BlockExtent,
-			LayerSrc, FaceSrc, LevelSrc, OffsetSrc / BlockExtent,
+			LayerDst, FaceDst, LevelDst, OffsetDst / BlockExtent,
 			Extent / BlockExtent);
 	}
 
