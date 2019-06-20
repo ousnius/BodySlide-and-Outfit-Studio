@@ -14,8 +14,8 @@ class GLSurface {
 	wxGLCanvas* canvas = nullptr;
 	wxGLContext* context = nullptr;
 
-	glm::mat4x4 matProjection;
-	glm::mat4x4 matView;
+	glm::mat4x4 matProjection = glm::identity<glm::mat4x4>();;
+	glm::mat4x4 matView = glm::identity<glm::mat4x4>();;
 	bool perspective = true;
 	float mFov = 90.0f;
 	Vector3 camPos;

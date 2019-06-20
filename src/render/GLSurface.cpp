@@ -12,7 +12,6 @@ See the included LICENSE file
 #include <set>
 #include <limits>
 
-
 const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static bool attribsInitialized { false };
 	static wxGLAttributes attribs;
@@ -278,8 +277,8 @@ void GLSurface::GetPickRay(int ScreenX, int ScreenY, mesh* m, Vector3& dirVect, 
 	glm::vec3 winS(ScreenX, vp[3] - ScreenY, 0.0f);
 	glm::vec3 winD(ScreenX, vp[3] - ScreenY, 1.0f);
 
-	glm::vec3 resS;
-	glm::vec3 resD;
+	auto resS = glm::vec3();
+	auto resD = glm::vec3();
 	if (m) {
 		resS = glm::unProject(winS, matView * m->matModel, matProjection, vp);
 		resD = glm::unProject(winD, matView * m->matModel, matProjection, vp);
@@ -651,7 +650,8 @@ void GLSurface::UpdateProjection() {
 	else
 		matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 1000.0f);
 
-	matView = glm::translate(glm::mat4x4(), glm::vec3(camPos.x, camPos.y, camPos.z));
+	auto mat = glm::identity<glm::mat4x4>();
+	matView = glm::translate(mat, glm::vec3(camPos.x, camPos.y, camPos.z));
 	matView = glm::rotate(matView, glm::radians(camRot.x), glm::vec3(1.0f, 0.0f, 0.0f));
 	matView = glm::rotate(matView, glm::radians(camRot.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	matView = glm::translate(matView, glm::vec3(camOffset.x, camOffset.y, camOffset.z));
@@ -701,7 +701,7 @@ void GLSurface::RenderToTexture(GLMaterial* renderShader) {
 
 	matProjection = glm::ortho(0.0f, 1.0f, 0.0f, 1.0f, -100.0f, 100.0f);
 	//matProjection = glm::ortho((camPos.z + camOffset.z) / 2.0f * aspect, (-camPos.z + camOffset.z) / 2.0f * aspect, (camPos.z + camOffset.z) / 2.0f, (-camPos.z + camOffset.z) / 2.0f, 0.1f, 100.0f);
-	matView = glm::mat4x4();
+	matView = glm::identity<glm::mat4x4>();
 
 	mesh* m = nullptr;
 	bool oldDS;
@@ -977,9 +977,9 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 	mesh* m = new mesh();
 
 	float y, p, r;
-	glm::mat4x4 matParents;
-	glm::mat4x4 matShape;
-	glm::mat4x4 matSkin;
+	auto matParents = glm::identity<glm::mat4x4>();
+	auto matShape = glm::identity<glm::mat4x4>();
+	auto matSkin = glm::identity<glm::mat4x4>();
 
 	if (!shape->IsSkinned()) {
 		NiNode* parent = nif->GetParentNode(shape);

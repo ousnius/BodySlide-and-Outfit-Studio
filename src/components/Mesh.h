@@ -64,7 +64,7 @@ public:
 		float paletteScale = 0.0f;
 	};
 
-	glm::mat4x4 matModel;
+	glm::mat4x4 matModel = glm::identity<glm::mat4x4>();
 
 	int nVerts = 0;
 	std::unique_ptr<Vector3[]> verts;
