@@ -754,9 +754,6 @@
     <ClInclude Include="src\render\GLExtensions.h">
       <Filter>Rendering</Filter>
     </ClInclude>
-    <ClInclude Include="lib\LZ4F\lz4frame.h">
-      <Filter>Libraries\LZ4F</Filter>
-    </ClInclude>
     <ClInclude Include="lib\LZ4F\xxhash.h">
       <Filter>Libraries\LZ4F</Filter>
     </ClInclude>
@@ -1768,6 +1765,18 @@
     <ClInclude Include="lib\gli\glm\gtx\color_space_YCoCg.hpp">
       <Filter>Libraries\gli\glm\gtx</Filter>
     </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4.h">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4frame_static.h">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4hc.h">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClInclude>
+    <ClInclude Include="lib\LZ4F\lz4frame.h">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1940,6 +1949,12 @@
     </ClCompile>
     <ClCompile Include="lib\gli\glm\detail\glm.cpp">
       <Filter>Libraries\gli\glm\detail</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\lz4hc.c">
+      <Filter>Libraries\LZ4F</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\LZ4F\lz4.c">
+      <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

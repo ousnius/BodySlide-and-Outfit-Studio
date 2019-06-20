@@ -696,7 +696,10 @@
     <ClInclude Include="lib\gli\transform.hpp" />
     <ClInclude Include="lib\gli\type.hpp" />
     <ClInclude Include="lib\gli\view.hpp" />
+    <ClInclude Include="lib\LZ4F\lz4.h" />
     <ClInclude Include="lib\LZ4F\lz4frame.h" />
+    <ClInclude Include="lib\LZ4F\lz4frame_static.h" />
+    <ClInclude Include="lib\LZ4F\lz4hc.h" />
     <ClInclude Include="lib\LZ4F\xxhash.h" />
     <ClInclude Include="lib\NIF\Animation.h" />
     <ClInclude Include="lib\NIF\BasicTypes.h" />
@@ -775,7 +778,9 @@
     <ClCompile Include="lib\FSEngine\FSManager.cpp" />
     <ClCompile Include="lib\gli\core\dummy.cpp" />
     <ClCompile Include="lib\gli\glm\detail\glm.cpp" />
+    <ClCompile Include="lib\LZ4F\lz4.c" />
     <ClCompile Include="lib\LZ4F\lz4frame.c" />
+    <ClCompile Include="lib\LZ4F\lz4hc.c" />
     <ClCompile Include="lib\LZ4F\xxhash.c" />
     <ClCompile Include="lib\NIF\Animation.cpp" />
     <ClCompile Include="lib\NIF\BasicTypes.cpp" />
