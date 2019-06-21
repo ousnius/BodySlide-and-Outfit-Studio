@@ -405,7 +405,7 @@ void ConfigurationManager::SetDefaultValue(const std::string& inName, float newV
 	SetValue(inName, newValue, true);
 }
 
-void ConfigurationManager::SetDefaultValue(const std::string& inName, bool newValue) {
+void ConfigurationManager::SetDefaultBoolValue(const std::string& inName, bool newValue) {
 	if (FindCI(inName))
 		return;
 

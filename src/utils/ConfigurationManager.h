@@ -98,7 +98,7 @@ public:
 	void SetDefaultValue(const std::string& inName, const std::string& newValue);
 	void SetDefaultValue(const std::string& inName, int newValue);
 	void SetDefaultValue(const std::string& inName, float newValue);
-	void SetDefaultValue(const std::string& inName, bool newValue);
+	void SetDefaultBoolValue(const std::string& inName, bool newValue);
 
 	bool MatchValue(const std::string& inName, const std::string& val, bool useCase = false);
 

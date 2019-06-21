@@ -1086,16 +1086,16 @@ bool BodySlideApp::SetDefaultConfig() {
 	currentTarget = Config.GetIntValue("TargetGame");
 
 	Config.SetDefaultValue("ShapeDataPath", wxGetCwd().ToStdString() + "\\ShapeData");
-	Config.SetDefaultValue("WarnMissingGamePath", "true");
-	Config.SetDefaultValue("WarnBatchBuildOverride", "true");
-	Config.SetDefaultValue("BSATextureScan", "true");
+	Config.SetDefaultBoolValue("WarnMissingGamePath", true);
+	Config.SetDefaultBoolValue("WarnBatchBuildOverride", true);
+	Config.SetDefaultBoolValue("BSATextureScan", true);
 	Config.SetDefaultValue("LogLevel", "3");
-	Config.SetDefaultValue("UseSystemLanguage", "false");
+	Config.SetDefaultBoolValue("UseSystemLanguage", false);
 	BodySlideConfig.SetDefaultValue("SelectedOutfit", "");
 	BodySlideConfig.SetDefaultValue("SelectedPreset", "");
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
-	Config.SetDefaultValue("Input/LeftMousePan", "false");
+	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
 	Config.SetDefaultValue("Lights/Ambient", 20);
 	Config.SetDefaultValue("Lights/Frontal", 20);
 	Config.SetDefaultValue("Lights/Directional0", 60);

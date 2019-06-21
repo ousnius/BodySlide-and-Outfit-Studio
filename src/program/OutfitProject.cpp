@@ -2634,9 +2634,9 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 			if (!Config.Exists("OptimizeForSSE")) {
 				int res = wxMessageBox(_("Would you like Skyrim NIFs to be optimized for SSE during this session?"), _("Target Game"), wxYES_NO | wxICON_INFORMATION, owner);
 				if (res == wxYES)
-					Config.SetDefaultValue("OptimizeForSSE", "true");
+					Config.SetDefaultBoolValue("OptimizeForSSE", true);
 				else
-					Config.SetDefaultValue("OptimizeForSSE", "false");
+					Config.SetDefaultBoolValue("OptimizeForSSE", false);
 			}
 
 			if (Config["OptimizeForSSE"] == "true") {
