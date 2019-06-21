@@ -1066,6 +1066,10 @@
 					<label>To FBX...</label>
 					<help>Export the current project as an FBX file.</help>
 				</object>
+				<object class="wxMenuItem" name="exportTRIHead">
+					<label>To TRI (Head)...</label>
+					<help>Export head morphs to a TRI file.</help>
+				</object>
 				<object class="wxMenu" name="menuExportData">
 					<label>Export Data</label>
 					<object class="wxMenuItem" name="exportPhysicsData">

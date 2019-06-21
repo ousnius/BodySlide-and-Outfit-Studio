@@ -1018,6 +1018,7 @@ private:
 
 	void OnImportTRIHead(wxCommandEvent& event);
 	void OnExportTRIHead(wxCommandEvent& event);
+	void OnExportShapeTRIHead(wxCommandEvent& event);
 
 	void OnImportPhysicsData(wxCommandEvent &event);
 	void OnExportPhysicsData(wxCommandEvent &event);
