@@ -7483,6 +7483,7 @@ wxGLPanel::wxGLPanel(wxWindow* parent, const wxSize& size, const wxGLAttributes&
 	activeBrush = nullptr;
 	editMode = false;
 	transformMode = false;
+	pivotMode = false;
 	vertexEdit = false;
 	segmentMode = false;
 	bMaskPaint = false;
