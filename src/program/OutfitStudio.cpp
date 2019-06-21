@@ -2183,10 +2183,31 @@ void OutfitStudioFrame::UnlockShapeSelect() {
 }
 
 void OutfitStudioFrame::RefreshGUIFromProj() {
-	outfitShapes->UnselectAll();
 	LockShapeSelect();
 
+	selectedItems.clear();
+	std::vector<ShapeItemState> prevStates;
+
 	if (outfitRoot.IsOk()) {
+		wxTreeItemIdValue cookie;
+		wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
+		while (child.IsOk()) {
+			auto itemData = (ShapeItemData*)outfitShapes->GetItemData(child);
+			if (itemData) {
+				ShapeItemState prevState;
+				prevState.shape = itemData->GetShape();
+				prevState.state = outfitShapes->GetItemState(child);
+
+				if (outfitShapes->IsSelected(child))
+					prevState.selected = true;
+
+				prevStates.push_back(prevState);
+			}
+
+			child = outfitShapes->GetNextChild(outfitRoot, cookie);
+		}
+
+		outfitShapes->UnselectAll();
 		outfitShapes->DeleteChildren(outfitRoot);
 		outfitShapes->Delete(outfitRoot);
 		outfitRoot.Unset();
@@ -2201,39 +2222,74 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 	}
 
 	wxTreeItemId subItem;
+	wxTreeItemId prevSelItem;
 	for (auto &shape : shapes) {
+		auto itemData = new ShapeItemData(shape);
 		subItem = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape->GetName()));
 		outfitShapes->SetItemState(subItem, 0);
-		outfitShapes->SetItemData(subItem, new ShapeItemData(shape));
+		outfitShapes->SetItemData(subItem, itemData);
 
 		if (project->IsBaseShape(shape)) {
 			outfitShapes->SetItemBold(subItem);
 			outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
 		}
-	}
 
-	wxTreeItemId itemToSelect;
-	wxTreeItemIdValue cookie;
-	if (outfitRoot.IsOk())
-		itemToSelect = outfitShapes->GetFirstChild(outfitRoot, cookie);
+		auto it = std::find_if(prevStates.begin(), prevStates.end(), [&shape](const ShapeItemState& state) {
+			return state.shape == shape;
+		});
+
+		if (it != prevStates.end()) {
+			outfitShapes->SetItemState(subItem, it->state);
+
+			if (it->selected) {
+				outfitShapes->SelectItem(subItem);
+				selectedItems.push_back(itemData);
+
+				if (!prevSelItem.IsOk())
+					prevSelItem = subItem;
+			}
+		}
+	}
 
 	UnlockShapeSelect();
 
-	if (itemToSelect.IsOk()) {
-		activeItem = (ShapeItemData*)outfitShapes->GetItemData(itemToSelect);
-		outfitShapes->SelectItem(itemToSelect);
-	}
+	if (prevSelItem.IsOk())
+		activeItem = (ShapeItemData*)outfitShapes->GetItemData(prevSelItem);
 	else
 		activeItem = nullptr;
-
-	selectedItems.clear();
-	if (activeItem)
-		selectedItems.push_back(activeItem);
 
 	outfitShapes->ExpandAll();
 	MeshesFromProj();
 
 	AnimationGUIFromProj();
+
+	wxTreeItemIdValue cookie;
+	wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
+	while (child.IsOk()) {
+		bool vis = true;
+		bool ghost = false;
+
+		int state = outfitShapes->GetItemState(child);
+		switch (state) {
+		case 1:
+			vis = false;
+			ghost = false;
+			break;
+		case 2:
+			vis = true;
+			ghost = true;
+			break;
+		default:
+			vis = true;
+			ghost = false;
+			break;
+		}
+
+		std::string shapeName = outfitShapes->GetItemText(child).ToUTF8();
+		glView->SetShapeGhostMode(shapeName, ghost);
+		glView->ShowShape(shapeName, vis);
+		child = outfitShapes->GetNextChild(outfitRoot, cookie);
+	}
 }
 
 void OutfitStudioFrame::AnimationGUIFromProj() {
@@ -3088,20 +3144,22 @@ void OutfitStudioFrame::ToggleVisibility(wxTreeItemId firstItem) {
 
 	if (firstItem.IsOk()) {
 		state = outfitShapes->GetItemState(firstItem);
-		if (state == 0) {
+		switch (state) {
+		case 0:
 			vis = false;
 			ghost = false;
 			state = 1;
-		}
-		else if (state == 1) {
+			break;
+		case 1:
 			vis = true;
 			ghost = true;
 			state = 2;
-		}
-		else {
+			break;
+		default:
 			vis = true;
 			ghost = false;
 			state = 0;
+			break;
 		}
 
 		std::string shapeName = outfitShapes->GetItemText(firstItem).ToUTF8();
@@ -3130,6 +3188,11 @@ void OutfitStudioFrame::OnShapeVisToggle(wxTreeEvent& event) {
 void OutfitStudioFrame::OnShapeSelect(wxTreeEvent& event) {
 	wxTreeItemId item = event.GetItem();
 	if (!item.IsOk()) {
+		event.Veto();
+		return;
+	}
+
+	if (selectionLocked) {
 		event.Veto();
 		return;
 	}
@@ -3270,11 +3333,6 @@ void OutfitStudioFrame::OnBoneSelect(wxTreeEvent& event) {
 }
 
 void OutfitStudioFrame::OnCheckTreeSel(wxTreeEvent& event) {
-	if (selectionLocked) {
-		event.Veto();
-		return;
-	}
-
 	int outflags;
 	wxPoint p;
 	wxGetMousePosition(&p.x, &p.y);
@@ -7565,8 +7623,9 @@ void wxGLPanel::RecalculateMeshBVH(const std::string& shapeName) {
 
 void wxGLPanel::ShowShape(const std::string& shapeName, bool show) {
 	int id = gls.GetMeshID(shapeName);
-	gls.SetMeshVisibility(id, show);
-	gls.RenderOneFrame();
+	bool changed = gls.SetMeshVisibility(id, show);
+	if (changed)
+		gls.RenderOneFrame();
 }
 
 void wxGLPanel::SetActiveShapes(const std::vector<std::string>& shapeNames) {

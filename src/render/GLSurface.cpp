@@ -1600,21 +1600,31 @@ void GLSurface::RecalculateMeshBVH(int shapeIndex) {
 	m->CreateBVH();
 }
 
-void GLSurface::SetMeshVisibility(const std::string& name, bool visible) {
+bool GLSurface::SetMeshVisibility(const std::string& name, bool visible) {
+	bool changed = false;
 	int shapeIndex = GetMeshID(name);
 	if (shapeIndex < 0)
-		return;
+		return changed;
 
 	mesh* m = meshes[shapeIndex];
+	if (m->bVisible != visible)
+		changed = true;
+
 	m->bVisible = visible;
+	return changed;
 }
 
-void GLSurface::SetMeshVisibility(int shapeIndex, bool visible) {
+bool GLSurface::SetMeshVisibility(int shapeIndex, bool visible) {
+	bool changed = false;
 	if (shapeIndex >= meshes.size())
-		return;
+		return changed;
 
 	mesh* m = meshes[shapeIndex];
+	if (m->bVisible != visible)
+		changed = true;
+
 	m->bVisible = visible;
+	return changed;
 }
 
 void GLSurface::SetOverlayVisibility(const std::string& name, bool visible) {

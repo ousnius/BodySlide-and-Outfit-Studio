@@ -262,8 +262,8 @@ public:
 	void RecalculateMeshBVH(const std::string& shapeName);
 	void RecalculateMeshBVH(int shapeIndex);
 
-	void SetMeshVisibility(const std::string& name, bool visible = true);
-	void SetMeshVisibility(int shapeIndex, bool visible = true);
+	bool SetMeshVisibility(const std::string& name, bool visible = true);
+	bool SetMeshVisibility(int shapeIndex, bool visible = true);
 	void SetOverlayVisibility(const std::string& name, bool visible = true);
 	void SetActiveMeshesID(const std::vector<int>& shapeIndices);
 	void SetActiveMeshesID(const std::vector<std::string>& shapeNames);

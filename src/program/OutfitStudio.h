@@ -65,6 +65,12 @@ public:
 	}
 };
 
+struct ShapeItemState {
+	NiShape* shape = nullptr;
+	int state = 0;
+	bool selected = false;
+};
+
 class SegmentItemData : public wxTreeItemData  {
 public:
 	std::set<uint> tris;
