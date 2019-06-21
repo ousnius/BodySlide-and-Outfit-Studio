@@ -2221,17 +2221,18 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 			outfitRoot = outfitShapes->AppendItem(shapesRoot, wxString::FromUTF8(project->OutfitName()));
 	}
 
-	wxTreeItemId subItem;
-	wxTreeItemId prevSelItem;
+	wxTreeItemId item;
+	wxTreeItemId firstItem;
+	wxTreeItemId prevFirstSelItem;
 	for (auto &shape : shapes) {
 		auto itemData = new ShapeItemData(shape);
-		subItem = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape->GetName()));
-		outfitShapes->SetItemState(subItem, 0);
-		outfitShapes->SetItemData(subItem, itemData);
+		item = outfitShapes->AppendItem(outfitRoot, wxString::FromUTF8(shape->GetName()));
+		outfitShapes->SetItemState(item, 0);
+		outfitShapes->SetItemData(item, itemData);
 
 		if (project->IsBaseShape(shape)) {
-			outfitShapes->SetItemBold(subItem);
-			outfitShapes->SetItemTextColour(subItem, wxColour(0, 255, 0));
+			outfitShapes->SetItemBold(item);
+			outfitShapes->SetItemTextColour(item, wxColour(0, 255, 0));
 		}
 
 		auto it = std::find_if(prevStates.begin(), prevStates.end(), [&shape](const ShapeItemState& state) {
@@ -2239,22 +2240,27 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 		});
 
 		if (it != prevStates.end()) {
-			outfitShapes->SetItemState(subItem, it->state);
+			outfitShapes->SetItemState(item, it->state);
 
 			if (it->selected) {
-				outfitShapes->SelectItem(subItem);
+				outfitShapes->SelectItem(item);
 				selectedItems.push_back(itemData);
 
-				if (!prevSelItem.IsOk())
-					prevSelItem = subItem;
+				if (!prevFirstSelItem.IsOk())
+					prevFirstSelItem = item;
 			}
 		}
+
+		if (!firstItem.IsOk())
+			firstItem = item;
 	}
 
 	UnlockShapeSelect();
 
-	if (prevSelItem.IsOk())
-		activeItem = (ShapeItemData*)outfitShapes->GetItemData(prevSelItem);
+	if (prevFirstSelItem.IsOk())
+		activeItem = (ShapeItemData*)outfitShapes->GetItemData(prevFirstSelItem);
+	else if (firstItem.IsOk())
+		outfitShapes->SelectItem(firstItem);
 	else
 		activeItem = nullptr;
 
