@@ -151,9 +151,9 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 	m->shapeName = shape->GetName();
 
 	float y, p, r;
-	glm::mat4x4 matParents;
-	glm::mat4x4 matShape;
-	glm::mat4x4 matSkin;
+	auto matParents = glm::identity<glm::mat4x4>();
+	auto matShape = glm::identity<glm::mat4x4>();
+	auto matSkin = glm::identity<glm::mat4x4>();
 
 	if (!shape->IsSkinned()) {
 		NiNode* parent = ref.GetParentNode(shape);
