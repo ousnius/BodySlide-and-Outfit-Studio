@@ -460,7 +460,7 @@ void ConfigurationManager::SetValue(const std::string& inName, float newValue, b
 	SetValue(inName, std::string(intStr), flagDefault);
 }
 
-void ConfigurationManager::SetValue(const std::string& inName, bool newValue, bool flagDefault) {
+void ConfigurationManager::SetBoolValue(const std::string& inName, bool newValue, bool flagDefault) {
 	const std::string strTrue = "true";
 	const std::string strFalse = "false";
 	SetValue(inName, newValue ? strTrue : strFalse, flagDefault);

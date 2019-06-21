@@ -3381,9 +3381,9 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			selectedfiles = selectedfiles.BeforeLast(';');
 			Config.SetValue("GameDataFiles/" + TargetGames[targ].ToStdString(), selectedfiles.ToStdString());
 
-			Config.SetValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
-			Config.SetValue("BSATextureScan", cbBSATextures->IsChecked());
-			Config.SetValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
+			Config.SetBoolValue("WarnBatchBuildOverride", cbBBOverrideWarn->IsChecked());
+			Config.SetBoolValue("BSATextureScan", cbBSATextures->IsChecked());
+			Config.SetBoolValue("Input/LeftMousePan", cbLeftMousePan->IsChecked());
 			
 			int oldLang = Config.GetIntValue("Language");
 			int newLang = SupportedLangs[choiceLanguage->GetSelection()];
@@ -3437,7 +3437,7 @@ void BodySlideFrame::OnSetSize(wxSizeEvent& event) {
 		BodySlideConfig.SetValue("BodySlideFrame.height", p.y);
 	}
 
-	BodySlideConfig.SetValue("BodySlideFrame.maximized", maximized);
+	BodySlideConfig.SetBoolValue("BodySlideFrame.maximized", maximized);
 	event.Skip();
 }
 

@@ -93,7 +93,7 @@ public:
 	void SetValue(const std::string& inName, const std::string& newValue, bool flagDefault = false);
 	void SetValue(const std::string& inName, int newValue, bool flagDefault = false);
 	void SetValue(const std::string& inName, float newValue, bool flagDefault = false);
-	void SetValue(const std::string& inName, bool newValue, bool flagDefault = false);
+	void SetBoolValue(const std::string& inName, bool newValue, bool flagDefault = false);
 
 	void SetDefaultValue(const std::string& inName, const std::string& newValue);
 	void SetDefaultValue(const std::string& inName, int newValue);

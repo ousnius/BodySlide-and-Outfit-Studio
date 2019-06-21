@@ -343,7 +343,7 @@ void PreviewWindow::OnSetSize(wxSizeEvent& event) {
 		BodySlideConfig.SetValue("PreviewFrame.height", p.y);
 	}
 
-	BodySlideConfig.SetValue("PreviewFrame.maximized", maximized);
+	BodySlideConfig.SetBoolValue("PreviewFrame.maximized", maximized);
 	event.Skip();
 }
 
