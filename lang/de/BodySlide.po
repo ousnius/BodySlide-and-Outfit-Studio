@@ -624,6 +624,12 @@ msgstr "Aus FBX..."
 msgid "Import an FBX file as a new shape in the outfit."
 msgstr "Importiert eine FBX-Datei als neues Modell."
 
+msgid "From TRI (Head)..."
+msgstr "Aus TRI (Kopf)..."
+
+msgid "Import shape and morphs from a head TRI file."
+msgstr "Importiert Modell und Morphs aus einer (Kopf) TRI-Datei."
+
 msgid "To NIF..."
 msgstr "Als NIF..."
 
@@ -647,6 +653,12 @@ msgstr "Als FBX..."
 
 msgid "Export only the selected shapes to an FBX file."
 msgstr "Exportiert nur die ausgewählten Modelle als FBX-Datei."
+
+msgid "To TRI (Head)..."
+msgstr "Als TRI (Kopf)..."
+
+msgid "Export head morphs to a TRI file."
+msgstr "Exportiert Kopf-Morphs als TRI-Datei."
 
 msgid "UV"
 msgstr "UV"

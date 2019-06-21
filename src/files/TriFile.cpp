@@ -330,3 +330,237 @@ ushort TriFile::GetMorphCount(const std::string& shapeName, MorphType morphType)
 
 	return morphCount;
 }
+
+bool TriHeadFile::Read(const std::string& fileName) {
+	std::fstream triHeadFile;
+	PlatformUtil::OpenFileStream(triHeadFile, fileName, std::ios::in | std::ios::binary);
+
+	if (triHeadFile.is_open()) {
+		identifier.resize(2, ' ');
+		triHeadFile.read((char*)&identifier.front(), 2);
+
+		const std::string ident = "FR";
+		if (identifier != ident)
+			return false;
+
+		fileType.resize(3, ' ');
+		triHeadFile.read((char*)&fileType.front(), 3);
+
+		const std::string type = "TRI";
+		if (fileType != type)
+			return false;
+
+		version.resize(3, ' ');
+		triHeadFile.read((char*)&version.front(), 3);
+
+		triHeadFile.read((char*)&numVertices, 4);
+		triHeadFile.read((char*)&numTriangles, 4);
+		triHeadFile.read((char*)&numQuads, 4);
+		triHeadFile.read((char*)&unknown2, 4);
+		triHeadFile.read((char*)&unknown3, 4);
+		triHeadFile.read((char*)&numUV, 4);
+		triHeadFile.read((char*)&flags, 4);
+		triHeadFile.read((char*)&numMorphs, 4);
+		triHeadFile.read((char*)&numModifiers, 4);
+		triHeadFile.read((char*)&modVertices, 4);
+		triHeadFile.read((char*)&unknown7, 4);
+		triHeadFile.read((char*)&unknown8, 4);
+		triHeadFile.read((char*)&unknown9, 4);
+		triHeadFile.read((char*)&unknown10, 4);
+
+		vertices.resize(numVertices);
+		for (int i = 0; i < numVertices; i++)
+			triHeadFile.read((char*)&vertices[i], 12);
+
+		triangles.resize(numTriangles);
+		for (int i = 0; i < numTriangles; i++) {
+			uint x = 0;
+			triHeadFile.read((char*)&x, 4);
+			uint y = 0;
+			triHeadFile.read((char*)&y, 4);
+			uint z = 0;
+			triHeadFile.read((char*)&z, 4);
+
+			triangles[i] = Triangle(x, y, z);
+		}
+
+		uv.resize(numUV);
+		for (int i = 0; i < numUV; i++)
+			triHeadFile.read((char*)&uv[i], 8);
+
+		tex.resize(numTriangles);
+		for (int i = 0; i < numTriangles; i++) {
+			uint x = 0;
+			triHeadFile.read((char*)&x, 4);
+			uint y = 0;
+			triHeadFile.read((char*)&y, 4);
+			uint z = 0;
+			triHeadFile.read((char*)&z, 4);
+
+			tex[i] = Triangle(x, y, z);
+		}
+
+		morphs.resize(numMorphs);
+		for (int i = 0; i < numMorphs; i++) {
+			uint morphNameLength = 0;
+			triHeadFile.read((char*)&morphNameLength, 4);
+			morphs[i].morphName.resize(morphNameLength, ' ');
+
+			triHeadFile.read((char*)&morphs[i].morphName.front(), morphNameLength);
+			triHeadFile.read((char*)&morphs[i].multiplier, 4);
+
+			morphs[i].vertices.resize(numVertices);
+			for (int j = 0; j < numVertices; j++) {
+				short x = 0;
+				triHeadFile.read((char*)&x, 2);
+				short y = 0;
+				triHeadFile.read((char*)&y, 2);
+				short z = 0;
+				triHeadFile.read((char*)&z, 2);
+
+				morphs[i].vertices[j] = Vector3(x * morphs[i].multiplier, y * morphs[i].multiplier, z * morphs[i].multiplier);
+			}
+		}
+	}
+	else
+		return false;
+
+	return true;
+}
+
+bool TriHeadFile::Write(const std::string& fileName) {
+	std::fstream triHeadFile;
+	PlatformUtil::OpenFileStream(triHeadFile, fileName, std::ios::out | std::ios::binary);
+
+	if (triHeadFile.is_open()) {
+		triHeadFile.write(identifier.c_str(), 2);
+		triHeadFile.write(fileType.c_str(), 3);
+		triHeadFile.write(version.c_str(), 3);
+
+		triHeadFile.write((char*)&numVertices, 4);
+		triHeadFile.write((char*)&numTriangles, 4);
+		triHeadFile.write((char*)&numQuads, 4);
+		triHeadFile.write((char*)&unknown2, 4);
+		triHeadFile.write((char*)&unknown3, 4);
+		triHeadFile.write((char*)&numUV, 4);
+		triHeadFile.write((char*)&flags, 4);
+		triHeadFile.write((char*)&numMorphs, 4);
+		triHeadFile.write((char*)&numModifiers, 4);
+		triHeadFile.write((char*)&modVertices, 4);
+		triHeadFile.write((char*)&unknown7, 4);
+		triHeadFile.write((char*)&unknown8, 4);
+		triHeadFile.write((char*)&unknown9, 4);
+		triHeadFile.write((char*)&unknown10, 4);
+
+		for (int i = 0; i < numVertices; i++)
+			triHeadFile.write((char*)&vertices[i], 12);
+
+		for (int i = 0; i < numTriangles; i++) {
+			uint x = triangles[i].p1;
+			triHeadFile.write((char*)&x, 4);
+			uint y = triangles[i].p2;
+			triHeadFile.write((char*)&y, 4);
+			uint z = triangles[i].p3;
+			triHeadFile.write((char*)&z, 4);
+		}
+
+		for (int i = 0; i < numUV; i++)
+			triHeadFile.write((char*)&uv[i], 8);
+
+		for (int i = 0; i < numTriangles; i++) {
+			uint x = tex[i].p1;
+			triHeadFile.write((char*)&x, 4);
+			uint y = tex[i].p2;
+			triHeadFile.write((char*)&y, 4);
+			uint z = tex[i].p3;
+			triHeadFile.write((char*)&z, 4);
+		}
+
+		for (int i = 0; i < numMorphs; i++) {
+			auto& morph = morphs[i];
+			uint morphNameLength = morph.morphName.length();
+			triHeadFile.write((char*)&morphNameLength, 4);
+			triHeadFile.write(morph.morphName.c_str(), morphNameLength);
+
+			morph.multiplier = 0.0f;
+			for (auto& v : morph.vertices) {
+				if (std::abs(v.x) > morph.multiplier)
+					morph.multiplier = std::abs(v.x);
+				if (std::abs(v.y) > morph.multiplier)
+					morph.multiplier = std::abs(v.y);
+				if (std::abs(v.z) > morph.multiplier)
+					morph.multiplier = std::abs(v.z);
+			}
+
+			morph.multiplier /= 0x7FFF;
+			triHeadFile.write((char*)&morph.multiplier, 4);
+
+			for (auto& v : morph.vertices) {
+				short x = v.x / morph.multiplier;
+				short y = v.y / morph.multiplier;
+				short z = v.z / morph.multiplier;
+				triHeadFile.write((char*)&x, 2);
+				triHeadFile.write((char*)&y, 2);
+				triHeadFile.write((char*)&z, 2);
+			}
+		}
+	}
+	else
+		return false;
+
+	return true;
+}
+
+std::vector<Vector3> TriHeadFile::GetVertices() {
+	return vertices;
+}
+
+std::vector<Triangle> TriHeadFile::GetTriangles() {
+	return triangles;
+}
+
+std::vector<Vector2> TriHeadFile::GetUV() {
+	return uv;
+}
+
+void TriHeadFile::SetVertices(const std::vector<Vector3> verts) {
+	vertices = verts;
+	numVertices = vertices.size();
+}
+
+void TriHeadFile::SetTriangles(const std::vector<Triangle> tris) {
+	triangles = tris;
+	tex = triangles;
+	numTriangles = triangles.size();
+}
+
+void TriHeadFile::SetUV(const std::vector<Vector2> uvs) {
+	uv = uvs;
+	numUV = uv.size();
+}
+
+void TriHeadFile::AddMorph(const TriHeadMorph& morph) {
+	morphs.push_back(morph);
+	numMorphs++;
+}
+
+void TriHeadFile::DeleteMorph(const std::string& morphName) {
+	morphs.erase(std::remove_if(morphs.begin(), morphs.end(),
+		[&morphName](const TriHeadMorph& morph) { return morph.morphName == morphName; }), morphs.end());
+
+	numMorphs = morphs.size();
+}
+
+TriHeadMorph* TriHeadFile::GetMorph(const std::string& morphName) {
+	for (auto &m : morphs) {
+		if (m.morphName == morphName) {
+			return &m;
+		}
+	}
+
+	return nullptr;
+}
+
+std::vector<TriHeadMorph> TriHeadFile::GetMorphs() {
+	return morphs;
+}

@@ -1016,6 +1016,9 @@ private:
 	void OnExportFBX(wxCommandEvent& event);
 	void OnExportShapeFBX(wxCommandEvent& event);
 
+	void OnImportTRIHead(wxCommandEvent& event);
+	void OnExportTRIHead(wxCommandEvent& event);
+
 	void OnImportPhysicsData(wxCommandEvent &event);
 	void OnExportPhysicsData(wxCommandEvent &event);
 

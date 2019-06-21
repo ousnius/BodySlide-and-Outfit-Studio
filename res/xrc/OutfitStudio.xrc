@@ -1036,6 +1036,10 @@
 					<label>From FBX...</label>
 					<help>Import an FBX file as a new shape in the outfit.</help>
 				</object>
+				<object class="wxMenuItem" name="importTRIHead">
+					<label>From TRI (Head)...</label>
+					<help>Import shape and morphs from a head TRI file.</help>
+				</object>
 				<object class="wxMenu" name="menuImportData">
 					<label>Import Data</label>
 					<object class="wxMenuItem" name="importPhysicsData">
@@ -1176,6 +1180,10 @@
 				<object class="wxMenuItem" name="exportShapeFBX">
 					<label>To FBX...</label>
 					<help>Export only the selected shapes to an FBX file.</help>
+				</object>
+				<object class="wxMenuItem" name="exportShapeTRIHead">
+					<label>To TRI (Head)...</label>
+					<help>Export head morphs to a TRI file.</help>
 				</object>
 			</object>
 			<object class="wxMenu" name="menuUV">
@@ -1683,6 +1691,10 @@
 			<object class="wxMenuItem" name="exportShapeFBX">
 				<label>To FBX...</label>
 				<help>Export only the selected shapes to an FBX file.</help>
+			</object>
+			<object class="wxMenuItem" name="exportShapeTRIHead">
+				<label>To TRI (Head)...</label>
+				<help>Export head morphs to a TRI file.</help>
 			</object>
 		</object>
 		<object class="wxMenu" name="menuUV">

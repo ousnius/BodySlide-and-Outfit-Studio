@@ -417,7 +417,7 @@ void OutfitProject::AddCombinedSlider(const std::string& newName) {
 	}
 }
 
-int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vector<Vector3>& v, std::vector<Triangle>& t, std::vector<Vector2>& uv, std::vector<Vector3>* norms) {
+NiShape* OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vector<Vector3>& v, std::vector<Triangle>& t, std::vector<Vector2>& uv, std::vector<Vector3>* norms) {
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 
 	if (!workNif.IsValid()) {
@@ -455,7 +455,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 	NiHeader& hdr = workNif.GetHeader();
 	auto rootNode = workNif.GetRootNode();
 	if (!rootNode)
-		return 1;
+		return nullptr;
 
 	NiShape* shapeResult = nullptr;
 	if (targetGame <= SKYRIM) {
@@ -578,7 +578,7 @@ int OutfitProject::CreateNifShapeFromData(const std::string& shapeName, std::vec
 	}
 
 	SetTextures(shapeResult);
-	return 0;
+	return shapeResult;
 }
 
 std::string OutfitProject::SliderShapeDataName(int index, const std::string& shapeName) {
@@ -838,6 +838,70 @@ bool OutfitProject::WriteMorphTRI(const std::string& triPath) {
 				if (morph->offsets.size() > 0)
 					tri.AddMorph(shapeName, morph);
 			}
+		}
+	}
+
+	if (!tri.Write(triFilePath))
+		return false;
+
+	return true;
+}
+
+bool OutfitProject::WriteHeadTRI(NiShape* shape, const std::string& triPath) {
+	if (!shape)
+		return false;
+
+	DiffDataSets currentDiffs;
+	activeSet.LoadSetDiffData(currentDiffs);
+
+	TriHeadFile tri;
+	std::string triFilePath = triPath;
+
+	int shapeVertCount = GetVertexCount(shape);
+	if (shapeVertCount <= 0)
+		return false;
+
+	std::string shapeName = shape->GetName();
+	bool bIsOutfit = true;
+	if (IsBaseShape(shape))
+		bIsOutfit = false;
+
+	std::vector<Triangle> tris;
+	if (!shape->GetTriangles(tris))
+		return false;
+
+	const std::vector<Vector3>* verts = workNif.GetRawVertsForShape(shape);
+	if (!verts)
+		return false;
+
+	tri.SetVertices(*verts);
+	tri.SetTriangles(tris);
+
+	const std::vector<Vector2>* uvs = workNif.GetUvsForShape(shape);
+	if (uvs)
+		tri.SetUV(*uvs);
+
+	for (int s = 0; s < activeSet.size(); s++) {
+		if (!activeSet[s].bClamp && !activeSet[s].bZap && !activeSet[s].bUV) {
+			TriHeadMorph morph;
+			morph.morphName = activeSet[s].name;
+
+			std::vector<Vector3> morphVerts;
+			morphVerts.resize(shapeVertCount);
+
+			std::string target = ShapeToTarget(shapeName);
+			if (!bIsOutfit) {
+				std::string dn = activeSet[s].TargetDataName(target);
+				if (dn.empty())
+					continue;
+
+				currentDiffs.ApplyDiff(dn, target, 1.0f, &morphVerts);
+			}
+			else
+				morpher.ApplyResultToVerts(morph.morphName, target, &morphVerts);
+
+			morph.vertices = morphVerts;
+			tri.AddMorph(morph);
 		}
 	}
 

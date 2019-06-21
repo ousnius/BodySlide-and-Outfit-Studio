@@ -91,7 +91,7 @@ public:
 	void AddZapSlider(const std::string& newName, std::unordered_map<ushort, float>& verts, NiShape* shape);
 	void AddCombinedSlider(const std::string& newName);
 
-	int CreateNifShapeFromData(const std::string& shapeName, std::vector<Vector3>& v, std::vector<Triangle>& t, std::vector<Vector2>& uv, std::vector<Vector3>* norms = nullptr);
+	NiShape* CreateNifShapeFromData(const std::string& shapeName, std::vector<Vector3>& v, std::vector<Triangle>& t, std::vector<Vector2>& uv, std::vector<Vector3>* norms = nullptr);
 
 	// Slider data can have a separate name from the shape target.
 	std::string SliderShapeDataName(int index, const std::string& shapeName);
@@ -121,6 +121,7 @@ public:
 	int SaveSliderBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	int SaveSliderOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	bool WriteMorphTRI(const std::string& triPath);
+	bool WriteHeadTRI(NiShape* shape, const std::string& triPath);
 
 	float& SliderValue(int index);
 	float& SliderValue(const std::string& name);

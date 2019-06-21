@@ -71,6 +71,9 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("exportFBX"), OutfitStudioFrame::OnExportFBX)
 	EVT_MENU(XRCID("exportShapeFBX"), OutfitStudioFrame::OnExportShapeFBX)
 
+	EVT_MENU(XRCID("importTRIHead"), OutfitStudioFrame::OnImportTRIHead)
+	EVT_MENU(XRCID("exportShapeTRIHead"), OutfitStudioFrame::OnExportTRIHead)
+
 	EVT_MENU(XRCID("importPhysicsData"), OutfitStudioFrame::OnImportPhysicsData)
 	EVT_MENU(XRCID("exportPhysicsData"), OutfitStudioFrame::OnExportPhysicsData)
 	
@@ -2846,6 +2849,83 @@ void OutfitStudioFrame::OnExportShapeFBX(wxCommandEvent& WXUNUSED(event)) {
 			wxLogError("Failed to export FBX file '%s'!", fileName);
 			wxMessageBox(_("Failed to export FBX file!"), _("Error"), wxICON_ERROR);
 		}
+	}
+}
+
+void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
+	wxString fn = wxFileSelector(_("Import .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_FILE_MUST_EXIST, this);
+	if (fn.IsEmpty())
+		return;
+
+	wxLogMessage("Importing morphs from TRI (head) file '%s'...", fn);
+
+	TriHeadFile tri;
+	if (!tri.Read(fn.ToUTF8().data())) {
+		wxLogError("Failed to load TRI file '%s'!", fn);
+		wxMessageBox(_("Failed to load TRI file!"), _("Error"), wxICON_ERROR);
+		return;
+	}
+
+	sliderScroll->Freeze();
+	glView->SetStrokeManager(nullptr);
+	MenuExitSliderEdit();
+	sliderScroll->FitInside();
+	activeSlider.clear();
+
+	std::string shapeName = wxGetTextFromUser(_("Please specify a name for the new shape"), _("New Shape Name"), wxEmptyString, this).ToUTF8();
+	if (shapeName.empty())
+		return;
+
+	auto shape = project->CreateNifShapeFromData(shapeName, tri.GetVertices(), tri.GetTriangles(), tri.GetUV());
+	if (!shape)
+		return;
+
+	RefreshGUIFromProj();
+
+	auto morphs = tri.GetMorphs();
+	for (auto &morph : morphs) {
+		morph.morphName = morph.morphName.c_str();
+		if (!project->ValidSlider(morph.morphName)) {
+			createSliderGUI(morph.morphName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
+			project->AddEmptySlider(morph.morphName);
+			ShowSliderEffect(morph.morphName);
+		}
+
+		std::unordered_map<ushort, Vector3> diff;
+		diff.reserve(morph.vertices.size());
+
+		for (int i = 0; i < morph.vertices.size(); i++)
+			diff[i] = morph.vertices[i];
+
+		project->SetSliderFromDiff(morph.morphName, shape, diff);
+	}
+
+	sliderScroll->FitInside();
+	sliderScroll->Thaw();
+
+	ApplySliders();
+}
+
+void OutfitStudioFrame::OnExportTRIHead(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return;
+	}
+
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	wxString fn = wxFileSelector(_("Export .tri morphs"), wxEmptyString, wxEmptyString, ".tri", "*.tri", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, this);
+	if (fn.IsEmpty())
+		return;
+
+	wxLogMessage("Exporting TRI (head) morphs to '%s'...", fn);
+	if (!project->WriteHeadTRI(activeItem->GetShape(), fn.ToUTF8().data())) {
+		wxLogError("Failed to export TRI file to '%s'!", fn);
+		wxMessageBox(_("Failed to export TRI file!"), _("Error"), wxICON_ERROR);
+		return;
 	}
 }
 
