@@ -1,0 +1,2835 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: 2019-06-21 22:07+0200\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.3\n"
+"X-Poedit-Basepath: .\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Outfit/Body"
+msgstr "Kıyafet/Beden"
+
+msgid "Select an outfit to modify"
+msgstr "Ayarlanacak bir kıyafeti seç"
+
+msgid "Preset"
+msgstr "Hazır Ayar"
+
+msgid "Choose from a list of slider settings presets"
+msgstr "Listeden önceden hazırlanmış bir dosyayı seç"
+
+msgid "Saves the new slider values to the currently selected preset"
+msgstr "Yeni dosya değerlerini seçili olan hazır ayar dosyasına kaydeder"
+
+msgid "Save"
+msgstr "Kaydet"
+
+msgid "Save the current slider settings as a new preset"
+msgstr "Mevcut ayarlarını yeni bir hazır ayar olarak kaydet"
+
+msgid "Save As..."
+msgstr "Farklı Kaydet..."
+
+msgid ""
+"Opens the group manager where you can edit existing or create new groups"
+msgstr ""
+"Mevcut hazır ayarlarını veya yeni gruplar oluşturabileceğin grup "
+"yöneticisini açar"
+
+msgid "Group Manager"
+msgstr "Gurup Yöneticisi"
+
+msgid "Opens the current project in Outfit Studio"
+msgstr "Mevcut projeyi Outfit Studio programında açar"
+
+msgid "Single Weight"
+msgstr "Tekil Ağırlık"
+
+msgid "Low Weight"
+msgstr "Düşük Ağırlık"
+
+msgid "High Weight"
+msgstr "Yüksek Ağırlık"
+
+msgid "Copy the low weight slider values to the high weight section."
+msgstr "Düşük ağırlık değerlerini yüksek ağırlık bölümüne kopyalar."
+
+msgid ""
+"Build multiple outfits using the currently active slider values.\n"
+"\n"
+"Hold CTRL = Build to custom directory\n"
+"Hold ALT = Delete from output directory"
+msgstr ""
+"Mevcut değerleri kullanarak birden fazla kıyafeti oluştur.\n"
+"\n"
+"CTRL Basılı Tut = Özel dizin olarak kaydeder\n"
+"ALT Basılı Tut = Kıyafet dizinini siler"
+
+msgid "Batch Build..."
+msgstr "Toplu Yapılandırma..."
+
+msgid "Build Morphs"
+msgstr "Beden Oluştur"
+
+msgid ""
+"Builds a morphs (.tri) file alongside the meshes for accessing the sliders "
+"in-game. Requires other mods to make use of the morph data."
+msgstr ""
+"Oyundaki beden yapılarına erişmek için oyun-içi dosyalarının yanında bir "
+"morphs yani (.tri) dosyası oluşturur. Morph verisini kullanmak için başka "
+"modlarda gereklidir."
+
+msgid "Show a preview window for this outfit."
+msgstr "Bu kıyafet için bir önizleme penceresi açılır."
+
+msgid "Preview"
+msgstr "Ön İzleme"
+
+msgid ""
+"Creates the currently selected outfit/body.\n"
+"\n"
+"Hold CTRL = Build to working directory\n"
+"Hold ALT = Delete from output directory"
+msgstr ""
+"Şuanda seçili olan kıyafet/beden.\n"
+"\n"
+"CTRL Basılı Tut = Özel dizin olarak kaydeder\n"
+"ALT Basılı Tut = Bedeni ve Kıyafeti siler"
+
+msgid "Build"
+msgstr "Oluştur"
+
+msgid "Copy the high weight slider values to the low weight section."
+msgstr "Yüksek ağırlık değerlerini düşük ağırlık bölümüne kopyalar."
+
+msgid "About"
+msgstr "Hakkında"
+
+msgid "Open settings dialog."
+msgstr "Ayarlar menüsünü aç."
+
+msgid "Settings"
+msgstr "Ayarlar"
+
+msgid ""
+"Open Outfit Studio, a full-featured tool for creating and converting outfits."
+msgstr ""
+"Başlatılan Outfit Studio (Kıyafet Stüdyosu), kıyafetler oluşturmak ve "
+"dönüştürmek için tam özellikli bir araçtır."
+
+msgid "Failed to launch Outfit Studio executable!"
+msgstr "Outfit Studio yürütülebilir sürümü başlatılamadı!"
+
+msgid "Filter Options"
+msgstr "Filtre Ayarları"
+
+msgid "Choose groups..."
+msgstr "Gurup seç..."
+
+msgid "Choose groups to display in the Outfit menu"
+msgstr "Kıyafet menüsünde görüntülenecek gurupları seçebilirsin"
+
+msgid "Refresh Groups"
+msgstr "Grupları Yenile"
+
+msgid "Refresh group information"
+msgstr "Gurup bilgilerini yenile"
+
+msgid "Save Outfit list as group..."
+msgstr "Kıyafet Listesini gurup olarak kaydet..."
+
+msgid "Save the current filtered outfit list as a group"
+msgstr "Filtrelenen mevcut kıyafet listesini bir grup olarak kaydet"
+
+msgid "Refresh Outfits"
+msgstr "Kıyafetleri Yenile"
+
+msgid "Reloads outfit list"
+msgstr "Yeniden yüklenen kıyafet listesi"
+
+msgid "Select None"
+msgstr "Hiçbiri Seçilmedi"
+
+msgid "Select All"
+msgstr "Tümünü Seç"
+
+msgid "Enter preset name..."
+msgstr "Hazır Ayarlardan seç..."
+
+msgid "Please enter a name for the new preset:"
+msgstr "Lütfen yeni hazır ayar için bir isim yaz:"
+
+msgid "Select groups to assign to the new preset:"
+msgstr "Yeni hazır ayarı atayacağın grupları seç:"
+
+msgid "Deletes a project from its project file"
+msgstr "Proje dosyasından bir projeyi siler"
+
+msgid "Delete Project"
+msgstr "Projeyi Sil"
+
+msgid "Do you really wish to delete the selected project?"
+msgstr "Seçilen projeyi silmeyi gerçekten istiyor musun?"
+
+msgid "Deletes a preset from its preset file"
+msgstr "Hazır ayarlı bir dosyadan bir hazır ayarı siler"
+
+msgid "Delete Preset"
+msgstr "Hazır Ayarı Sil"
+
+msgid "Do you really wish to delete the selected preset?"
+msgstr "Bu hazır ayarı silmeyi gerçekten istiyor musun?"
+
+msgid "&Save"
+msgstr "&Kaydet"
+
+msgid "&OK"
+msgstr "&TAMAM"
+
+msgid "&Cancel"
+msgstr "&İptal"
+
+msgid ""
+"Choose a group and add or remove members by selecting them in the lists."
+msgstr ""
+"Bir gruptan tercihini yap ve listelerinden seçerek üyelerini ekle veya "
+"kaldır."
+
+msgid "Select a group XML file"
+msgstr "XML dosya gurubundan seçimini yap"
+
+msgid "Save As"
+msgstr "Farklı Kaydet"
+
+msgid "Groups"
+msgstr "Guruplar"
+
+msgid "Add Group"
+msgstr "Gurup Yükle"
+
+msgid "Remove Group"
+msgstr "Gurup Sil"
+
+msgid "Members"
+msgstr "Üyeler"
+
+msgid "Remove >>"
+msgstr "Sil >>"
+
+msgid "Outfits"
+msgstr "Kıyafetler"
+
+msgid "<< Add"
+msgstr "<< Yükle"
+
+msgid "Save Changes"
+msgstr "Değişiklikleri Kaydet"
+
+msgid ""
+"Do you really want to close the group manager? All unsaved changes will be "
+"lost."
+msgstr ""
+"Grup yöneticisini gerçekten kapatmak istiyor musun? Kaydedilmemiş tüm "
+"değişiklikler kaybolacak."
+
+msgid "Batch Build"
+msgstr "Toplu Beden"
+
+msgid ""
+"Select the slider sets for the batch build process. Use the group and outfit "
+"filters to show the outfits you want!"
+msgstr ""
+"Toplu oluşturma işlemi için kaydırıcı kümelerini seç. İstediğin kıyafetleri "
+"göstermek için grup ve kıyafet filtrelerini kullanabilirsin!"
+
+msgid "&Build"
+msgstr "&Beden"
+
+msgid "Game"
+msgstr "Oyun"
+
+msgid "Target Game"
+msgstr "Hedef Oyun"
+
+msgid "Choose the target game you want to use the program for here."
+msgstr "Programı kullanmak istediğin hedef oyununu seç."
+
+msgid "Fallout 3"
+msgstr ""
+
+msgid "Fallout New Vegas"
+msgstr ""
+
+msgid "Skyrim"
+msgstr ""
+
+msgid "Fallout 4"
+msgstr ""
+
+msgid "Advanced"
+msgstr ""
+
+msgid "Game Data Path"
+msgstr "Oyun Veri Yolu"
+
+msgid "Select the data path of the game..."
+msgstr "Oyunun yüklü olduğu klasör konumunu seç..."
+
+#, fuzzy
+#| msgid "Data path to load textures from and build files to."
+msgid "Data path to load textures from."
+msgstr "Doku dosyalarından yüklemek ve oluşturmak için veri yolu."
+
+#, fuzzy
+#| msgid "Output Data Path"
+msgid "Output Path"
+msgstr "Çıkış Veri Yolu"
+
+#, fuzzy
+#| msgid "Select the data path of the game..."
+msgid "Select the output path..."
+msgstr "Oyunun yüklü olduğu klasör konumunu seç..."
+
+msgid ""
+"Data path to build files to. If empty, Game Data Path will be used instead."
+msgstr ""
+
+msgid "General"
+msgstr "Genel"
+
+msgid ""
+"Enables/disables the dialog for choosing which set to build during a batch "
+"build if overrides happen."
+msgstr ""
+"Geçersiz kılma gerçekleştiğinde hangi setin oluşturulacağını seçmek için "
+"iletişim kutusunu etkinleştirir/devre dışı bırakır."
+
+msgid "Override Warning"
+msgstr "Uyarıları Geçersiz Kıl"
+
+msgid ""
+"Enables/disables scanning BSAs in the game data folder for textures to load."
+msgstr ""
+"Yüklenecek dokular için oyun veri klasöründeki BSA dosyalarını taramayı "
+"etkinleştirir/devre dışı bırakır."
+
+msgid "BSA Textures"
+msgstr "BSA Doku Dosyaları"
+
+msgid ""
+"Enables/disables panning the camera with the left mouse button in Outfit "
+"Studio."
+msgstr ""
+"Outfit Studio'da kamerayı farenin sol tuşuyla çevirmeyi etkinleştirir/devre "
+"dışı bırakır."
+
+msgid "Left Mouse Pan"
+msgstr "Sol Fare Tuşu"
+
+msgid "Data Files"
+msgstr "Veri Dosyaları"
+
+msgid "Reference Skeleton"
+msgstr "Referans İskelet"
+
+msgid "File"
+msgstr "Dosya"
+
+msgid "Select a reference skeleton .nif file..."
+msgstr "Referans iskeleti için .nif dosyasını seç..."
+
+msgid "The reference skeleton file for Outfit Studio."
+msgstr "Outfit Studio için referans iskelet dosyası."
+
+msgid "Root Node"
+msgstr "Temel Kodlama"
+
+msgid ""
+"The root node name of the reference skeleton. Can differ from game to game."
+msgstr ""
+"Referans iskeletin temel kod adı. Oyundan oyuna farklılık gösterebilir."
+
+msgid "Close"
+msgstr "Kapat"
+
+msgid "Brush Settings"
+msgstr "Fırçalama Ayarları"
+
+msgid "Size"
+msgstr "Boyut"
+
+msgid "Strength"
+msgstr "Kuvvet"
+
+msgid "Focus"
+msgstr "Odak"
+
+msgid "Spacing"
+msgstr "Aralık"
+
+msgid "Meshes"
+msgstr "Kafesler"
+
+msgid "Bones"
+msgstr "İskeletler"
+
+msgid "Lights"
+msgstr "Işıklar"
+
+msgid "Reset"
+msgstr "Sıfırla"
+
+msgid "Ambient"
+msgstr "Çevre"
+
+msgid "Frontal"
+msgstr "Önden"
+
+msgid "Directional 1"
+msgstr "Yön 1"
+
+msgid "Directional 2"
+msgstr "Yön 2"
+
+msgid "Directional 3"
+msgstr "Yön 3"
+
+msgid "De-/Select Sliders"
+msgstr "De-/Kaydırıcıları Seç"
+
+msgid "Fixed Weight Brush"
+msgstr "Ağırlık Fırçalaması Düzeltme"
+
+msgid "Preview Scaling"
+msgstr "Ölçek Ön İzlemesi"
+
+msgid "Menu"
+msgstr "Menü"
+
+msgid "New Project...\tCtrl+N"
+msgstr "Yeni Proje...\tCtrl+N"
+
+msgid "Create a new outfit project."
+msgstr "Yeni bir kıyafet projesi oluştur."
+
+msgid "Load Project..\tCtrl+O"
+msgstr "Hazır Proje Yükle..\tCtrl+O"
+
+msgid "Load a project."
+msgstr "Önceki Projeyi yükle."
+
+msgid "Add Project..\tCtrl+Shift+O"
+msgstr "Proje Ekle..\tCtrl+Shift+O"
+
+msgid "Add a project without replacing the current one."
+msgstr "Geçerli olanı değiştirmeden yeni bir proje ekle."
+
+msgid "Load Reference..."
+msgstr "Örnekten Yükle..."
+
+msgid ""
+"Load a new reference slider set, replacing any current reference objects."
+msgstr ""
+"Mevcut referans nesnelerini değiştirerek yeni bir örnekleme kaydırıcı setini "
+"yükle."
+
+msgid "Load Outfit..."
+msgstr "Kıyafeti Yükle..."
+
+msgid ""
+"Load a NIF file as the working outfit, replacing any current outfit objects."
+msgstr ""
+"Herhangi bir mevcut kıyafet nesnesini değiştirerek, çalışma kıyafeti "
+"şeklinde NIF dosyası olarak yükle."
+
+msgid ""
+"Disable for a different way of loading NIF files to see if that puts it into "
+"the right (or a better) spot."
+msgstr ""
+"NIF dosyalarını farklı bir şekilde yüklemek için devre dışı bırak, bunun "
+"doğru (veya daha iyi) bir noktaya yerleştirip yerleştirilmediğini görmek "
+"için."
+
+msgid "Save Project\tCtrl+S"
+msgstr "Projeyi Kaydet\tCtrl+S"
+
+msgid "Save the project."
+msgstr "Çalışmanı Kaydet."
+
+msgid "Save Project As...\tCtrl+Shift+S"
+msgstr "Projeyi Farklı Kaydet...\tCtrl+Shift+S"
+
+msgid "Save the project under a new name."
+msgstr "Projeyi yeni bir isim vererek kaydet."
+
+msgid "Import"
+msgstr "Yerleştir"
+
+msgid "From NIF..."
+msgstr "NIF olarak..."
+
+msgid "Choose a NIF file to import into the project."
+msgstr "Projeye yerleştirmek için bir NIF dosyasını seç."
+
+msgid "Import Data"
+msgstr "Data Yerleştir"
+
+msgid "Import BSClothExtraData From HKX"
+msgstr "BSClothExtraData Dosyasına HKX dosyasından yerleştir"
+
+msgid ""
+"Choose an HKX file to import as a BSClothExtraData block into the project."
+msgstr ""
+"Projeye BSClothExtraData bloğu olarak almak için bir HKX dosyasını seç."
+
+msgid "Export"
+msgstr "Çıkart"
+
+msgid "Save the current project as a NIF file (without reference)"
+msgstr "Mevcut projeyi bir NIF dosyası olarak kaydet (referans olmadan)"
+
+msgid "To NIF With Reference..."
+msgstr "Referans ile NIF'e aktar..."
+
+msgid "Save the current project as a NIF file (including reference)"
+msgstr "Mevcut projeyi bir NIF dosyası olarak kaydet (referans dahil olarak)"
+
+msgid "Export Data"
+msgstr "Verileri Dışa Aktar"
+
+msgid "Export BSClothExtraData As HKX"
+msgstr "BSClothExtraData dosyasını HKX olarak çıkart"
+
+msgid ""
+"Save one of the currently loaded BSClothExtraData blocks to an HKX file."
+msgstr ""
+"Şu anda yüklü olan BSClothExtraData bloklarından birini HKX dosyasına kaydet."
+
+msgid "Make Conversion Reference"
+msgstr "Dönüşüm Referansı Oluştur"
+
+msgid ""
+"Using the current slider settings for the reference shape, create a new "
+"reference that will morph from the current shape back to the base shape."
+msgstr ""
+"Referans şekli için mevcut kaydırıcı ayarlarını kullanarak, mevcut şekilden "
+"taban şekline dönüşecek yeni bir referans oluştur."
+
+msgid "Exit\tAlt+F4"
+msgstr "Çıkış\tAlt+F4"
+
+msgid "Exit Outfit Studio."
+msgstr "Çık Outfit Studio."
+
+msgid "Edit"
+msgstr "Düzenle"
+
+msgid "Undo\tCtrl+Z"
+msgstr "Geri Al\tCtrl+Z"
+
+msgid "Undo the previous action."
+msgstr "Önceki eylemi geri al."
+
+msgid "Redo\tCtrl+Y"
+msgstr "Yinele\tCtrl+Y"
+
+msgid "Redo the next undone action."
+msgstr "Son yaptığın işlemi tekrarla."
+
+msgid "X Mirror\tX"
+msgstr "X Yansıt\tX"
+
+msgid "Mirror edits across the X axis."
+msgstr "X ekseni boyunca yansıtma düzenlemeleri."
+
+msgid "Edit Connected Only\tC"
+msgstr "Sadece Bağlantıyı Düzenle\tC"
+
+msgid ""
+"Edit only vertices that are connected to the ones under the brush within the "
+"brush radius"
+msgstr ""
+"Fırça yarıçapı içindeki boyamanın altındakilere bağlı olan yalnızca köşe "
+"noktalarını düzenle"
+
+msgid "Global Brush Collision\tB"
+msgstr "Küresel Fırça Dolumu\tB"
+
+msgid ""
+"Allows for the brushes to collide with all currently selected meshes at the "
+"same time"
+msgstr "Fırçaların seçili olan tüm kafeslerde aynı anda çarpmasını sağlar"
+
+msgid "Recalculate Normals\tR"
+msgstr "Yeniden Hesaplama Normali\tR"
+
+msgid "Recalculate normals on active mesh"
+msgstr "Aktif kafeste normalleri yeniden hesapla"
+
+msgid "View"
+msgstr "Görünüm"
+
+msgid "Front\tShift+1"
+msgstr "Önden\tShift+1"
+
+msgid "Back\tShift+2"
+msgstr "Arkadan\tShift+2"
+
+msgid "Left\tShift+3"
+msgstr "Soldan\tShift+3"
+
+msgid "Right\tShift+4"
+msgstr "Sağdan\tShift+4"
+
+msgid "Perspective\tShift+5"
+msgstr "Derin Bakış\tShift+5"
+
+msgid "Toggle Visibility\tG"
+msgstr ""
+
+msgid "Switch between the different visibility modes for the selected shapes."
+msgstr ""
+
+msgid "Show Wireframe\tW"
+msgstr "Tel Çerçeveyi Göster\tW"
+
+msgid "Show wireframe on all models."
+msgstr "Tüm modelleri tel bir kafes içerisinde gösterir."
+
+msgid "Enable Lighting\tL"
+msgstr "Aydınlatma Açık\tL"
+
+msgid "Turn on or off lighting."
+msgstr "Aydınlatmayı açar ve kapatır."
+
+msgid "Enable Textures\tT"
+msgstr "Dokuları Etkinleştir\tT"
+
+msgid "Display texture maps on models."
+msgstr "Tüm modellerin doku haritalarını gösterir."
+
+msgid "Shape"
+msgstr "Model"
+
+msgid "From OBJ..."
+msgstr "OBJ olarak..."
+
+msgid "Import an OBJ file as a new shape in the outfit."
+msgstr "Bir OBJ dosyasını kıyafette yeni bir kalıp olarak içe aktar."
+
+msgid "From FBX..."
+msgstr "FBX olarak..."
+
+msgid "Import an FBX file as a new shape in the outfit."
+msgstr "Bir FBX dosyasını kıyafette yeni bir kalıp olarak içe aktar."
+
+#, fuzzy
+#| msgid "From NIF..."
+msgid "From TRI (Head)..."
+msgstr "NIF olarak..."
+
+#, fuzzy
+#| msgid "Exports TRI morphs to a TRI file."
+msgid "Import shape and morphs from a head TRI file."
+msgstr "TRI morphs dosyası verilerini TRI dosyası olarak çıkarır."
+
+msgid "To NIF..."
+msgstr "NIF olarak..."
+
+msgid "Export only the selected shapes to a NIF file."
+msgstr "Bir NIF dosyasını kıyafette yeni bir kalıp olarak içe aktar."
+
+msgid "Export selected shapes to NIF"
+msgstr "Seçilen modeli bir NIF kalıbı olarak dışa aktar"
+
+msgid "Failed to export selected shapes to NIF file!"
+msgstr "Seçilen model bir NIF kalıbı olarak dışa aktarılamadı!"
+
+msgid "To OBJ..."
+msgstr "OBJ olarak..."
+
+msgid "Export the current project as an OBJ file."
+msgstr "Seçilen modeli bir OBJ kalıbı olarak dışa aktar."
+
+msgid "To FBX..."
+msgstr "FBX olarak..."
+
+msgid "Export only the selected shapes to an FBX file."
+msgstr "Seçilen modeli bir FBX kalıbı olarak dışa aktar."
+
+msgid "To TRI (Head)..."
+msgstr ""
+
+#, fuzzy
+#| msgid "Exports TRI morphs to a TRI file."
+msgid "Export head morphs to a TRI file."
+msgstr "TRI morphs dosyası verilerini TRI dosyası olarak çıkarır."
+
+msgid "UV"
+msgstr "UV"
+
+msgid "Invert X"
+msgstr "X Yöne Çevir"
+
+msgid "Inverts the X-axis of the texture coordinates."
+msgstr "Textures doku dosyalarını X-ekseni tarafına doğru çevir."
+
+msgid "Invert Y"
+msgstr "Y Yöne Çevir"
+
+msgid "Inverts the Y-axis of the texture coordinates."
+msgstr "Textures doku dosyalarını Y-ekseni tarafına doğru çevir."
+
+msgid "Mirror"
+msgstr "Yansıt"
+
+msgid "Mirror the selected shapes on the X-axis."
+msgstr "Seçilen modelleri X-eksenine doğru yansıt."
+
+msgid "Mirror the selected shapes on the Y-axis."
+msgstr "Seçilen modelleri Y-eksenine doğru yansıt."
+
+msgid "Mirror the selected shapes on the Z-axis."
+msgstr "Seçilen modelleri Z-eksenine doğru yansıt."
+
+msgid "Duplicate..."
+msgstr "Tekrarla..."
+
+msgid "Duplicate the current shape."
+msgstr "Geçerli modeli tekrarla."
+
+msgid "Rename...\tF2"
+msgstr "Ad Değiştir...\tF2"
+
+msgid "Change the name of the current shape."
+msgstr "Geçerli modelin adını değiştir."
+
+msgid "Set Reference"
+msgstr "Örnek Kurulumu"
+
+msgid "Turn the shape into the reference shape of the project."
+msgstr "Dönüştürülen projeyi örnek model olarak kaydet."
+
+msgid "Move..."
+msgstr "Hareket..."
+
+msgid ""
+"Apply an offset adjustment to the mesh vertices. This permanently moves "
+"vertices."
+msgstr ""
+"Kafes köşelerine bir dengeleme ayarı uygula. Bu kalıcı olarak köşe "
+"noktalarını düzenleyecek."
+
+msgid "Scale..."
+msgstr "Derece..."
+
+msgid "Apply a scale adjustment to the shape. This permanently moves vertices."
+msgstr ""
+"Modele bir ölçek derecesi ayarını uygula. Bu kalıcı olarak köşe noktalarını "
+"düzenleyecek."
+
+msgid "Rotate..."
+msgstr "Dönüş..."
+
+msgid "Apply a rotation to the mesh vertices. This permanently moves vertices."
+msgstr ""
+"Modele bir dönüş derecesi ayarını uygula. Bu kalıcı olarak köşe noktalarını "
+"düzenleyecek."
+
+msgid "Smooth Seam Normals"
+msgstr "Pürüzsüz Dikiş Standartı"
+
+msgid ""
+"Smooths edges of seams (usually found at texture borders), disable if this "
+"causes odd normals on the shape."
+msgstr ""
+"Dikişlerin kenarlarını pürüzsüzleştirir (genellikle doku sınırlarında "
+"bulunur), bu durum model üzerindeki tuhaf şekillere neden oluyorsa devre "
+"dışı bırakabilirsin."
+
+msgid "Lock Normals"
+msgstr "Standart Kilidi"
+
+msgid ""
+"Locks the mesh normals. Enable if you want to keep custom normals intact."
+msgstr ""
+"Kafes kenarlarını kilitler. Özel yapılandırmayı bozmak istemiyorsan bunu "
+"etkinleştir."
+
+msgid "Copy Bone Weights"
+msgstr "Beden Ağırlıklarını Kopyala"
+
+msgid "Copies all bone weights from the reference shape to the current shape."
+msgstr ""
+"Tüm beden ağırlıklarını referans aldığı modelden mevcut modele kopyalar."
+
+msgid "Copy Selected Weights"
+msgstr "Seçilen Ağırlıkları Kopyala"
+
+msgid ""
+"Copies selected bone weights from the reference shape to the current shape."
+msgstr ""
+"Tercihe göre seçilen beden ağırlıklarını referans aldığı modelden mevcut "
+"modele kopyalar."
+
+msgid "Transfer Selected Weights"
+msgstr "Seçilen Ağırlıkları Aktar"
+
+msgid ""
+"Transfers selected weights from the reference shape to the current shape. "
+"Requires same vertex count and order."
+msgstr ""
+"Referans modelinden seçilen şekil ağırlıklarını aktarır. Aynı vertex açıları "
+"sayısını ve kodlamasını gerektirir."
+
+msgid "Mask Weighted Vertices"
+msgstr "Kafes Ağırlıklarını Maskele"
+
+msgid ""
+"Masks vertices with bone weights, so you can manually assign weights to "
+"unweighted vertices."
+msgstr ""
+"Kemik ağırlıklarına sahip köşeleri maskeleyerek ağırlık atamasını sıfırlar, "
+"böylece istediğin değerleri ağırlıksız köşelere elle atayabilirsin."
+
+msgid "Delete\tDel"
+msgstr "Sil\tDel"
+
+msgid "Removes the currently selected shape from the outfit."
+msgstr "Mevcut kıyafetlerden seçili kalıbı kaldırır."
+
+msgid "Properties..."
+msgstr "Özellikler..."
+
+msgid ""
+"Opens the properties dialog for shader, texture and more settings of the "
+"selected shape."
+msgstr ""
+"Gölgelendirici, doku ve seçilen kalıbın daha fazla ayarları için özellikler "
+"iletişim kutusunu açar."
+
+msgid "Slider"
+msgstr "Kaydırıcı"
+
+msgid "Conform Selected\tCtrl+C"
+msgstr "Seçimi Uydur\tCtrl+C"
+
+msgid "Conform selected outfit shape to all checked sliders."
+msgstr ""
+"Seçilen kaydırıcılara tercih edilen kıyafet kalıbını uygun hale getirir."
+
+msgid "Conform All\tCtrl+Shift+C"
+msgstr "Tümünü Uydur\tCtrl+Shift+C"
+
+msgid "Conform all outfit shapes to all checked sliders."
+msgstr "Tüm kaydırıcılara seçilen kıyafet kalıbını uygun hale getirir."
+
+msgid "Set Base Shape"
+msgstr "Temel Kalıbı Ayarla"
+
+msgid "Set the current outfit shape as the base shape and clear slider data."
+msgstr ""
+"Mevcut kıyafet kalıbını ana şablon olarak ayarla ve kaydırıcı verilerini "
+"temizle."
+
+msgid "Load Preset..."
+msgstr "Hazır Ayarı Yükle..."
+
+msgid ""
+"Load and preview a slider preset. Inverted sliders will have inverted values."
+msgstr ""
+"Hazır kaydırıcı ayarını yükle ve ön izlemeye al. Ters kaydırıcılar, ters "
+"değerlere sahip olacaktır."
+
+msgid "Save Preset..."
+msgstr "Hazır Ayarı Kaydet..."
+
+msgid ""
+"Save a slider preset with the current values. Inverted sliders will have "
+"inverted values."
+msgstr ""
+"Hazır kaydırıcı ayarını mevcut değerleri ile kaydet. Ters kaydırıcılar, ters "
+"değerlere sahip olacaktır."
+
+msgid "New Slider"
+msgstr "Yeni Kaydırıcı Gurup"
+
+msgid "Create a new shape transformation slider."
+msgstr "Yeni bir kalıp dönüştürme kaydırıcısı oluştur."
+
+msgid "Coalesce sliders"
+msgstr "Birleşik Kaydırıcılar"
+
+msgid ""
+"Create a new shape transformation slider based on the current slider values"
+msgstr "Mevcut kaydırıcı değerlerini uygulayarak yeni bir kalıp oluştur"
+
+msgid "New Zap Slider"
+msgstr "Yeni Zap Kaydırıcısı"
+
+msgid "Create a new Zap slider based on unmasked vertices"
+msgstr "Değer atanmayan köşelere yeni bir Zap kaydırıcısı oluştur"
+
+msgid "Import OSD..."
+msgstr "OSD olarak Yerleştir..."
+
+msgid "Imports OSD file and creates sliders for shapes with a matching name."
+msgstr ""
+"OSD dosyasını içe aktarır ve eşleşen ada sahip kalıplar için bir kaydırıcı "
+"oluşturur."
+
+msgid "Export OSD..."
+msgstr "OSD olarak Çıkar..."
+
+msgid "Exports all currently loaded slider data to an OSD file."
+msgstr "Yüklü olan tüm kaydırıcı verilerini bir OSD dosyası olarak aktarır."
+
+msgid "Import TRI Morphs..."
+msgstr "TRI Morphs Dosyası olarak yerleştir..."
+
+msgid ""
+"Imports TRI morphs from a TRI file and creates sliders for shapes with a "
+"matching name."
+msgstr ""
+"Bir TRI morphs dosyasından verileri TRI dosyası olarak içe aktarır ve "
+"eşleşen ada sahip kalıplar için kaydırıcı oluşturur."
+
+msgid "Export TRI Morphs..."
+msgstr "TRI Morphs Dosyası olarak Çıkar..."
+
+msgid "Exports TRI morphs to a TRI file."
+msgstr "TRI morphs dosyası verilerini TRI dosyası olarak çıkarır."
+
+msgid "Import Slider Data"
+msgstr "Kaydırıcı Verisini Al"
+
+msgid "Import BSD..."
+msgstr "BSD olarak Yerleştir..."
+
+msgid ""
+"Import a BodySlide BSD file and overwrites the current shape's slider data."
+msgstr ""
+"BodySlide BSD dosyasını içe aktarır ve geçerli kalıbın kaydırıcı verilerini "
+"üzerine yazar."
+
+msgid "Import OBJ..."
+msgstr "OBJ olarak Yerleştir..."
+
+msgid ""
+"Import an OBJ file matching the current shape's vertex count, and calculate "
+"slider data from the difference."
+msgstr ""
+"Geçerli kalıbın tepe noktalarıyla eşleşen bir OBJ dosyasını içe aktarır ve "
+"kaydırıcı verileri farkını hesaplar."
+
+msgid "Import FBX..."
+msgstr "FBX olarak Yerleştir..."
+
+msgid ""
+"Import an FBX file matching the current shape's vertex count, and calculate "
+"slider data from the difference."
+msgstr ""
+"Geçerli kalıbın tepe noktalarıyla eşleşen bir FBX dosyasını içe aktarır ve "
+"kaydırıcı verileri farkını hesaplar."
+
+msgid "Export Slider Data"
+msgstr "Kaydırıcı Verisini Çıkart"
+
+msgid "Export BSD..."
+msgstr "BSD olarak Çıkart..."
+
+msgid "Exports the current slider's data as a BodySlide BSD file."
+msgstr ""
+"Geçerli kaydırıcının verilerini BodySlide BSD dosyası olarak kaydederek dışa "
+"aktarır."
+
+msgid "Export OBJ..."
+msgstr "OBJ olarak Çıkart..."
+
+msgid "Export only the selected shapes to an OBJ file."
+msgstr ""
+"Geçerli kaydırıcının verilerini BodySlide OBJ dosyası olarak kaydederek dışa "
+"aktarır."
+
+msgid "Negate Slider"
+msgstr "Kaydırıcıyı İptal Et"
+
+msgid "Negates the current slider, reversing it's effect"
+msgstr "Geçerli kaydırıcıyı iptal eder, etkilerini geri alır"
+
+msgid "Mask Affected Vertices"
+msgstr "Uç Etki Maskesi"
+
+msgid "Masks the vertices the slider is affecting for all selected shapes."
+msgstr ""
+"Kaydırma çubuğu ile seçilen tüm kalıpların etkilendiği tepe noktalarını "
+"maskeler."
+
+msgid "Clear Slider Data"
+msgstr "Kaydırıcı Verilerini Temizle"
+
+msgid ""
+"Erases the slider data without removing the slider itself. (Cannot be undone)"
+msgstr ""
+"Kaydırıcının kendiliğinden kaldırmadığı kaydırıcı verilerini siler. (Geri "
+"alınamaz)"
+
+msgid "Delete Slider"
+msgstr "Kaydırıcıyı Sil"
+
+msgid "Delete the active slider from the project. (Cannot be undone)"
+msgstr "Etkin kaydırıcıyı projeden siler. (Geri alınamaz)"
+
+msgid "Properties...\tTab"
+msgstr "Özellikler...\tTab"
+
+msgid "Display and edit the active slider's properties."
+msgstr "Aktif kaydırıcının özelliklerini görüntüler ve düzenler."
+
+msgid "Tool"
+msgstr "Araçlar"
+
+msgid "Current Tool"
+msgstr "Mevcut Araçlar"
+
+msgid "Select\t0"
+msgstr "Seç\t0"
+
+msgid "Navigate and select meshes (or vertices in vertex mode)."
+msgstr "Kafesler arasında gezin ve seç (veya uç tepe noktalarında)."
+
+msgid "Mask\t1"
+msgstr "Maske\t1"
+
+msgid ""
+"Mask vertices to prevent them from being transformed.\n"
+"Hold down the ALT key to remove masking."
+msgstr ""
+"Değiştirilmelerini önlemek için Uç tepe noktası maskeleri.\n"
+"Maskelemeyi kaldırmak için ALT tuşuna basılı tut."
+
+msgid "Inflate\t2"
+msgstr "Büyült\t2"
+
+msgid "Increase mesh volume in an area."
+msgstr "Bir alandaki kafes yoğunluğunu artırır."
+
+msgid "Deflate\t3"
+msgstr "Küçült\t3"
+
+msgid "Decrease mesh volume in an area."
+msgstr "Bir alandaki kafes yoğunluğunu azaltır."
+
+msgid "Move\t4"
+msgstr "Hareket\t4"
+
+msgid "Move vertices over a plane parallel to the view."
+msgstr "Tepe noktalarını, görünüme paralel bir düzlemin üzerine getirir."
+
+msgid "Smooth\t5"
+msgstr "Düzgünleştir\t5"
+
+msgid "Smooth an area of a mesh."
+msgstr "Kafes alanını düzgünleştirir."
+
+msgid "Weight Paint\t6"
+msgstr "Ağırlık Boyası\t6"
+
+msgid ""
+"Apply animation weight values for the currently selected bone.\n"
+"Hold down the ALT key to weaken the weighting."
+msgstr ""
+"Seçili olan kemik için animasyon ağırlık değerlerini uygular.\n"
+"Ağırlığı düşürmek için ALT tuşuna basılı tut."
+
+msgid "Transform\tF"
+msgstr "Dönüştür\tF"
+
+msgid "Shows a transform tool to manipulate shapes and vertices with."
+msgstr ""
+"Kalıpları ve uç tepe noktalarını işlemek için bir dönüştürme aracı gösterir."
+
+msgid "Pivot\tF"
+msgstr "Eksen\tF"
+
+msgid ""
+"Shows a pivot that can be moved and makes it the center of mesh operations "
+"like rotation and scale."
+msgstr ""
+"Hareket ettirilebilen bir dönüşü gösterir ve döndürme ve ölçekleme gibi "
+"işlemlerin merkezi eksenini sağlar."
+
+msgid "Vertex Edit\tQ"
+msgstr "Tepe Noktasını Düzenle\tQ"
+
+msgid ""
+"Lets you select vertices to add to or remove from the mask.\n"
+"Click on a vertex to select/unmask it.\n"
+"Hold down CTRL to unselect/mask it."
+msgstr ""
+"Maskeye eklemek veya çıkarmak için tepe noktalarını seçmeni sağlar.\n"
+"Tepe noktalarını kaldırmak/maskelemek için basılı tut.\n"
+"Seçimi kaldırmak/maskelemek için CTRL tuşuna bas."
+
+msgid "Increase Brush Size\tShift++"
+msgstr "Fırça Çapını Büyült\tShift++"
+
+msgid "Increase brush diameter"
+msgstr "Fırça çapını büyült"
+
+msgid "Decrease Brush Size\tShift+-"
+msgstr "Fırça Çapını Küçült\tShift+-"
+
+msgid "Decrease brush diameter"
+msgstr "Fırça çapını küçült"
+
+msgid "Increase Brush Strength\tCtrl++"
+msgstr "Fırça Kuvvetini Arttır\tCtrl++"
+
+msgid "Increase brush strength"
+msgstr "Fırça kuvvetini arttır"
+
+msgid "Decrease Brush Strength\tCtrl+-"
+msgstr "Fırça Kuvvetini Azalt\tCtrl+-"
+
+msgid "Decrease brush strength"
+msgstr "Fırça kuvvetini azalt"
+
+msgid "Mask Less\tA"
+msgstr "Maskeyi Küçült\tA"
+
+msgid "Mask Less"
+msgstr "Maskeyi Küçült"
+
+msgid "Mask More\tD"
+msgstr "Maske Daha Fazlası\tD"
+
+msgid "Mask More"
+msgstr "Maske Daha Fazlası"
+
+msgid "Invert Mask\tCtrl+I"
+msgstr "Maskeyi Ters Çevir\tCtrl+I"
+
+msgid "Invert Mask"
+msgstr "Maskeyi Ters Çevir"
+
+msgid "Clear Mask\tCtrl+A"
+msgstr "Maskeyi Temizle\tCtrl+A"
+
+msgid "Clear Mask"
+msgstr "Maskeyi Temizle"
+
+msgid "Show Mask\tM"
+msgstr "Maskeyi Göster\tM"
+
+msgid "Shade meshes to indicate areas that are currently masked."
+msgstr "Şu anda gölgelenmiş kafeslerin maskelenmiş alanları gösterir."
+
+msgid "New Project"
+msgstr "Yeni Proje"
+
+msgid ""
+"Create a new project by selecting a reference body slider set, and outfit "
+"model files."
+msgstr ""
+"Örnek bir vücut kaydırıcısı setini ve kıyafet modeli dosyasını seçerek yeni "
+"bir proje oluştur."
+
+msgid "Load Project"
+msgstr "Projeyi Yükle"
+
+msgid "Load a previously created slider set for editing."
+msgstr "Düzenlemek için önceden oluşturulmuş bir kaydırıcı yükle."
+
+msgid "Select"
+msgstr "Seç"
+
+msgid "Mask"
+msgstr "Maske"
+
+msgid "Inflate"
+msgstr "Kalınlaştır"
+
+msgid "Deflate"
+msgstr "İncelt"
+
+msgid "Move"
+msgstr "Hareket"
+
+msgid "Smooth"
+msgstr "Düzgünleştir"
+
+msgid "Weight Paint"
+msgstr "Ağırlık Boyaması"
+
+msgid ""
+"Apply animation weight values for currently selected bone.\n"
+"Hold down the ALT key to weaken the weighting."
+msgstr ""
+"Seçili olan kemik için animasyon ağırlık değerleri uygula.\n"
+"Ağırlığı azaltmak için ALT tuşuna basılı tut."
+
+msgid "Transform"
+msgstr "Dönüştür"
+
+msgid "Pivot"
+msgstr "Eksen"
+
+msgid "Vertex Edit"
+msgstr "Tepe Noktalarını Düzenle"
+
+msgid "X Mirror"
+msgstr "Yansıtma X"
+
+msgid ""
+"Edit only vertices that are connected to the ones under the brush within the "
+"brush radius."
+msgstr ""
+"Sadece fırça yarıçapı içinde kalan ve fırçanın altındakilere bağlı olan tepe "
+"noktalarını düzenleyin."
+
+msgid "Global Brush Collision\tC"
+msgstr "Küresel Fırça Vuruşu\tC"
+
+msgid ""
+"Allows for the brushes to collide with all currently selected meshes at the "
+"same time."
+msgstr "Fırçaların, seçili olan tüm kafeslere aynı anda çarpışmasını sağlar."
+
+msgid "View Front"
+msgstr "Ön Görünüm"
+
+msgid "Change camera view to the front."
+msgstr "Kamera görünümünü önden görecek şekilde değiştirir."
+
+msgid "View Back"
+msgstr "Arka Görünüm"
+
+msgid "Change camera view to the back."
+msgstr "Kamera görünümünü arkadan görecek şekilde değiştirir."
+
+msgid "View Left"
+msgstr "Soldan Görünüm"
+
+msgid "Change camera view to the left."
+msgstr "Kamera görünümünü soldan görecek şekilde değiştirir."
+
+msgid "View Right"
+msgstr "Sağdan Görünüm"
+
+msgid "Change camera view to the right."
+msgstr "Kamera görünümünü sağdan görecek şekilde değiştirir."
+
+msgid "Perspective View"
+msgstr "Derin Görünüm"
+
+msgid "Toggle perspective view."
+msgstr "Kamera görünümünü derinlemesine görecek şekilde değiştirir."
+
+msgid "Field of View"
+msgstr "Görüş Alanı"
+
+msgid "Field of View: 65"
+msgstr "Görüş Alanı: 65"
+
+msgid "Move Shape"
+msgstr "Kalıbı Taşı"
+
+msgid "CBBE to Vanilla (old)"
+msgstr "CBBE'den Vanilla'ya (eski)"
+
+msgid "Scale Shape"
+msgstr "Kalıp Ölçeği"
+
+msgid ""
+"Scaling will adjust the size of a mesh. This permanently affects vertices."
+msgstr ""
+"Ölçekleme bir kafesin boyutunu ayarlayacaktır. Bu, sürekli olarak köşe "
+"noktalarını etkiler."
+
+msgid "Scale"
+msgstr "Ölçek"
+
+msgid "Rotate Shape"
+msgstr "Kalıbı Döndür"
+
+msgid "Apply a vertex position"
+msgstr "Bir tepe noktası ayarla"
+
+msgid "This permanently moves a single vertex straight to the given location."
+msgstr "Bu, kalıcı olarak tek bir tepe noktasını belirli bir yere taşır."
+
+msgid ""
+"Welcome to the New Project wizard!\n"
+"\n"
+"First, please choose a reference. Typically, this is a body (such as CBBE) "
+"or a conversion set (such as Vanilla To CBBE) and comes with its sliders."
+msgstr ""
+"Yeni Proje Sihirbazına hoş geldin!\n"
+"\n"
+"Öncelikle, bir örnekten seçimini yapmalısın. Tipik olarak, bu bir beden "
+"olabilir (CBBE gibi) veya bir dönüştürme seti olabilir  (Vanilla'dan "
+"CBBE'ye) gibi, ve onlar kalıpları ile birlikte açılır.."
+
+msgid "Reference"
+msgstr "Örnekler"
+
+msgid "From Template"
+msgstr "Şablondan"
+
+msgid "From File"
+msgstr "Dosyadan"
+
+msgid "Select a project or NIF file"
+msgstr "Bir NIF dosyası projesi seç"
+
+msgid "Slider Set:"
+msgstr "Kaydırıcı Seti:"
+
+msgid "Shape:"
+msgstr "Kalıp:"
+
+msgid "Clear Reference"
+msgstr "Örneği Temizle"
+
+msgid "Next, select an outfit/mesh to work on and enter a display name for it."
+msgstr ""
+"Sonrasında, çalışmak için bir kıyafeti/kafesi seç ve bunun için yeni bir "
+"isim gir."
+
+msgid "Display Name"
+msgstr "İsmi Görüntüle"
+
+msgid "New Outfit"
+msgstr "Yeni Kıyafet"
+
+msgid "Outfit/Mesh"
+msgstr "Kıyafet/Kafes"
+
+msgid "Select a file to load as an outfit/mesh"
+msgstr "Bir kıyafeti/kafesi yüklemek için bir dosyadan seç"
+
+msgid "Clear Outfit"
+msgstr "Kıyafeti Temizle"
+
+msgid "Textures"
+msgstr "Dokular"
+
+msgid "Automatically search for textures"
+msgstr "Otomatik olarak Doku ara"
+
+msgid "Select a texture file"
+msgstr "Doku dosyasını seç"
+
+msgid "Select a slider preset"
+msgstr "Bir kaydırıcı hazır ayar seç"
+
+msgid "Choose a preset:"
+msgstr "Hazır ayarı seç:"
+
+msgid "Low weight"
+msgstr "Düşük ağırlık"
+
+msgid "High weight"
+msgstr "Yüksek ağırlık"
+
+msgid "Set Shape Textures"
+msgstr "Kalıp Dokusunu Ayarla"
+
+msgid "Display Texture:"
+msgstr "Doku Görüntüsü:"
+
+msgid ""
+"Applies the current diffuse texture path to the Outfit Studio display "
+"texture path."
+msgstr ""
+"Geçerli doku yolu dağılım paketini  Outfit Studio ekran doku yoluna uygular."
+
+msgid "Apply Diffuse"
+msgstr "Dağılımı Uygula"
+
+msgid "Load Reference"
+msgstr "Örnek Yükle"
+
+msgid ""
+"Please choose a reference. Typically, this is a body (such as CBBE) or a "
+"conversion set (such as Vanilla To CBBE) and comes with its sliders."
+msgstr ""
+"Lütfen öncelikle, bir örnekten seçimini yap. Genellikle, bu bir beden "
+"olabilir (CBBE gibi) veya bir dönüştürme seti olabilir  (Vanilla'dan "
+"CBBE'ye) gibi, ve onlar kalıpları ile birlikte açılırlar."
+
+msgid "Merge new sliders with existing sliders"
+msgstr "Mevcut kaydırıcılarla yeni kalıpları birleştir"
+
+msgid "Load Outfit"
+msgstr "Kıyafet Yükle"
+
+msgid ""
+"Please select an outfit/mesh to work on and enter a display name for it."
+msgstr ""
+"Lütfen üzerinde çalışmak için bir kıyafet/kafes örgüsünü seç ve yeni bir "
+"isim ataması yap."
+
+msgid "Keep other shapes"
+msgstr "Diğer Kalıpları Koru"
+
+msgid "Add"
+msgstr "Yükle"
+
+msgid "Delete"
+msgstr "Sil"
+
+msgid "From Project"
+msgstr "Proje Hakkında"
+
+msgid "Delete bone(s) from all shapes of the project."
+msgstr "Kemik (iskelet yapısını) ve projenin tüm kalıplarını Sil."
+
+msgid "From Selected Shapes"
+msgstr "Seçilen Kalıplar Hakkında"
+
+msgid "Delete bone(s) from only the selected shapes."
+msgstr "Kemik (iskelet yapısını) ve projede uyguladığın bu kalıbı Sil."
+
+msgid "From Skeleton..."
+msgstr "İskelet Hakkında..."
+
+msgid "Choose a bone from the reference skeleton to add to the project."
+msgstr "Projeye eklemek için örnek iskeletten bir kemik yapısını seç."
+
+msgid "Custom Bone..."
+msgstr "Kemik Yapısı Seçimi..."
+
+msgid "Add a custom bone to the project."
+msgstr "Projene bir kemik yapısı ekle."
+
+msgid "Select a bone to add"
+msgstr "Eklenecek kemik yapısını seç"
+
+msgid "Bones in the current reference skeleton:"
+msgstr "Örnek iskeletteki kemik yapısı:"
+
+msgid "Add Custom Bone"
+msgstr "Özel Kemik Yapısı Ekle"
+
+msgid "Name"
+msgstr "İsim"
+
+msgid "Slider Properties"
+msgstr "Kaydırıcı Özellikleri"
+
+msgid "Slider Name"
+msgstr "Kaydırıcı Adı"
+
+msgid "Default Values"
+msgstr "Varsayılan Değerler"
+
+msgid "Low"
+msgstr "Düşük"
+
+msgid "High"
+msgstr "Yüksek"
+
+msgid "Zapped"
+msgstr "Komuta Et"
+
+msgid "Options"
+msgstr "Ayarlar"
+
+msgid "Invert"
+msgstr "Ters Çevir"
+
+msgid "Hidden"
+msgstr "Gizli"
+
+msgid "Zap"
+msgstr "Zap"
+
+msgid "Save Project As..."
+msgstr "Projeyi Farklı Kaydet..."
+
+msgid "The name of the outfit and slider set, as it will appear in BodySlide."
+msgstr "BodySlide menülerinde görünecek şekilde kıyafet ve beden adını gir."
+
+msgid "Copies the current display name to the project text fields below."
+msgstr "Geçerli olan adı aşağıdaki proje metin alanlarına kopyalar."
+
+msgid "To Project"
+msgstr "Proje İçin"
+
+msgid "Output File Name"
+msgstr "Dosya Çıkış Adı"
+
+msgid ""
+"The name of the outfit file that will end up in the game data path when "
+"BodySlide builds it. Should not include _1 or _0 in the name, e.g: "
+"lovelydress"
+msgstr ""
+"BodySlide onu oluşturduğunda oyun veri yolunda kopyalanacak olan kıyafet "
+"dosyasının adı. Adında _1 veya _0 bulunmamalıdır, örn. sevgigeceliği"
+
+msgid "_0/_1.nif"
+msgstr ""
+
+msgid "Output Data Path"
+msgstr "Çıkış Veri Yolu"
+
+msgid ""
+"The location in the game's data path where BodySlide-built outfit files will "
+"be placed, e.g: meshes\\clothes\\lovelydress"
+msgstr ""
+"BodySlide tarafından oluşturulan kıyafet dosyalarının yerleştirileceği "
+"oyunun veri klasörü konumu, örn .: meshes\\clothes\\sevgigeceliği"
+
+msgid ""
+"If this is enabled, BodySlide creates a low and high weight model when it "
+"generates the final outfit."
+msgstr ""
+"Bu etkinleştirilirse, BodySlide son kıyafeti oluşturduğunda düşük ve yüksek "
+"ağırlıkta oluşuna göre bir örnek modeli oluşturur."
+
+msgid "Low/High Weight Output"
+msgstr "Düşük/Yüksek Ağırlık Çıkışı"
+
+msgid ""
+"If this is enabled, only one output file will be created (useful for single-"
+"weighted things like hair)."
+msgstr ""
+"Bu etkinleştirilirse, yalnızca bir çıktı dosyası oluşturulur (saç ve kaş "
+"gibi tekil ağırlıklı şeyler için yararlıdır)."
+
+msgid "Single Weight Output"
+msgstr "Tekil Ağırlık Çıkışı"
+
+msgid "Project"
+msgstr "Proje"
+
+msgid "Slider Set File"
+msgstr "Kaydırıcı Ayar Dosyası"
+
+msgid "The .osp slider set project file"
+msgstr ".osp slider (kaydırıcı) ayarlanmış proje dosyası"
+
+msgid "Select slider set .osp file name"
+msgstr "Kaydırıcı .osp dosyası adını Seç"
+
+msgid "Shape Data Folder"
+msgstr "Kalıp Veri Klasörü"
+
+msgid ""
+"The folder where all the slider data will go, as well as the base outfit NIF "
+"file."
+msgstr ""
+"Tüm kaydırıcı verilerinin yanı sıra temel donanım olan NIF dosyasının da yer "
+"alacağı klasör."
+
+msgid "Select slider data folder"
+msgstr "Kaydırıcı veri klasörünü seç"
+
+msgid "Shape Data File"
+msgstr "Kalıp Veri Dosyası"
+
+msgid "The name of the output's base NIF file."
+msgstr "Oluşturulan temel NIF dosyasının adı."
+
+msgid "Select output NIF file name"
+msgstr "Oluşturulan NIF dosyası adını Seç"
+
+msgid ""
+"Outfits require the reference body to be a part of the output file. Disable "
+"this if you've already copied the reference over or you don't want it "
+"included."
+msgstr ""
+"Kıyafetler örnek gövdenin çıktı dosyasının bir parçası olmasını gerektirir. "
+"Örneği daha önce kopyaladıysan veya verilerini içermesini istemiyorsan bunu "
+"devre dışı bırak."
+
+msgid "Copy reference shape into output"
+msgstr "Örnek kalıbı çıktıya kopyala"
+
+msgid "Shape Properties"
+msgstr "Kalıp Özellikleri"
+
+msgid "Material"
+msgstr "Materyal"
+
+msgid "Choose material file"
+msgstr "Materyal dosyasını seç"
+
+msgid "Shader"
+msgstr "Ön Bellek"
+
+msgid "Type"
+msgstr "Tip"
+
+msgid "Specular Color"
+msgstr "Yansıtıcı Renk"
+
+msgid "Specular Strength"
+msgstr "Yansıtıcı Kuvvet"
+
+msgid "Specular Power"
+msgstr "Yansıtıcı Güç"
+
+msgid "Emissive Color"
+msgstr "Yayıcı Renk"
+
+msgid "Emissive Multiple"
+msgstr "Yayıcı Katman"
+
+msgid "Remove"
+msgstr "Kaldır"
+
+msgid "Textures..."
+msgstr "Dokular..."
+
+msgid "Transparency"
+msgstr "Şeffaflık"
+
+msgid "Threshold"
+msgstr "Eşik Değeri"
+
+msgid "Geometry"
+msgstr "Geometri"
+
+msgid "Full Precision"
+msgstr "Tam Hassasiyet"
+
+msgid "Sub Index"
+msgstr "Alt Endeks"
+
+msgid "Extra Data"
+msgstr "Ekstra Veri"
+
+msgid "Value"
+msgstr "Değer"
+
+msgid "Segments"
+msgstr "Parçalar"
+
+msgid "Apply"
+msgstr "Uygula"
+
+msgid "SSF File"
+msgstr "SSF Dosyası"
+
+msgid "Partitions"
+msgstr "Bölümler"
+
+msgid "Add Partition..."
+msgstr "Bölüm Ekle..."
+
+msgid "Adds a new partition to the shape."
+msgstr "Kalıba yeni bir bölüm ekler."
+
+msgid "Delete Partition..."
+msgstr "Bölümü Sil..."
+
+msgid "Deletes the partition from the shape."
+msgstr "Kalıba eklenen yeni bölümü siler."
+
+msgid "FBX Import Options..."
+msgstr "FBX Çıkartma Seçenekleri..."
+
+msgid "Invert U"
+msgstr "Ters U"
+
+msgid "Invert V"
+msgstr "Ters V"
+
+msgid "Toggle:"
+msgstr "Geçiş Yap:"
+
+msgid "Search Radius"
+msgstr "Yarıçap Taraması"
+
+msgid "Max Vertex Targets"
+msgstr "Max Köşe Hedeflemesi"
+
+msgid ""
+"Each vertex of the reference will copy its weights to the nearest collection "
+"of vertices within the given radius. Bear in mind that some geometry will "
+"always require manual tweaking to become weighted and work well. Often, the "
+"default values are sufficient."
+msgstr ""
+"Örneğin her köşesi, ağırlıkları verilen yarıçaptaki en yakın tepe noktası "
+"koleksiyonuna kopyalanır. Bazı geometrilerin, baskın hale gelmesi ve daha "
+"iyi çalışması için her zaman el ile  ayarlamayı gerektireceğini unutma. Çoğu "
+"zaman, varsayılan değerler yeterlidir."
+
+msgid ""
+"Bone information incomplete. Exported data will not contain correct bone "
+"entries! Be sure to load a reference NIF prior to export."
+msgstr ""
+"Kemik yapısı bilgisi eksik. Dışa aktarılan veriler doğru kemik girişlerini "
+"içermeyecektir! Kaydetmeden önce örnek bir NIF dosyasını yüklediğinden emin "
+"olmalısın."
+
+msgid "Export Warning"
+msgstr "Dışa Aktarma Tehlikesi"
+
+msgid "Failed to load skeleton '%s'!"
+msgstr "İskelet yüklemesi başarısız '%s'!"
+
+msgid "Root '%s' not found in skeleton '%s'!"
+msgstr "Temel '%s' iskelet bulunamadı '%s'!"
+
+msgid ""
+"No read/write permission for game data path!\n"
+"\n"
+"Please launch the program with admin elevation and make sure the game data "
+"path in the settings is correct."
+msgstr ""
+"Oyun veri yolu için okuma/yazma izni yok!\n"
+"\n"
+"Lütfen programı yönetici modunda yeniden başlatın ve ayarlardaki oyun veri "
+"yolunun doğru olduğundan emin olun.."
+
+msgid "Warning"
+msgstr "Uyarı"
+
+msgid "Unexpected exception has occurred: %s, the program will terminate."
+msgstr "Beklenmeyen bir hata oluştu: %s, program kapatılacak."
+
+msgid "Unexpected exception"
+msgstr "Beklenmeyen Hata"
+
+msgid "Unhandled exception has occurred: %s, the program will terminate."
+msgstr "İşlenmeyen özel durum oluştu: %s, program kapatılacak."
+
+msgid "Unhandled exception"
+msgstr "İşlenme Hatası"
+
+msgid "Fatal exception has occurred, the program will terminate."
+msgstr "Tehlikeli bir hata oluştu, program kapatılacak."
+
+msgid "Fatal exception"
+msgstr "Tehlikeli Hata"
+
+msgid ""
+"Failed to find game install path registry value or GameDataPath in the "
+"config."
+msgstr ""
+"Yapılandırmada oyun yükleme yolu kayıt defteri değeri veya GameDataPath "
+"bulunamadı."
+
+msgid ""
+"Failed to find game install path registry key or GameDataPath in the config."
+msgstr ""
+"Yapılandırmada oyun yükleme yolu kayıt defteri anahtarı veya GameDataPath "
+"bulunamadı."
+
+msgid "System language '%d' is wrong."
+msgstr "Sistem dili '%d' yanlış."
+
+msgid ""
+"The system language '%d' is not supported by your system. Try installing "
+"support for this language."
+msgstr ""
+"Sistem dili '%d' sisteminiz tarafından desteklenmiyor. Bu dil için destek "
+"alarak yüklemeyi deneyin."
+
+msgid "Failed to create group file."
+msgstr "Grup dosyası oluşturulamadı."
+
+msgid ""
+"That group already exists in the specified file, do you wish to overwrite "
+"the group?"
+msgstr ""
+"Bu grup adında bir dosya zaten mevcut, grubun üzerine yazmak ister misin?"
+
+msgid "Group already exists"
+msgstr "Grup zaten mevcut"
+
+msgid ""
+"WARNING: Game data path not configured. Would you like to show BodySlide "
+"where it is?"
+msgstr ""
+"UYARI: Oyun veri yolu yapılandırılmamış. BodySlide yükleme klasörünü elle "
+"belirlemek ister misin?"
+
+msgid "Game not found"
+msgstr "Oyun bulunamadı"
+
+msgid "Please choose a directory to set as your Data path"
+msgstr "Lütfen Veri yolu olarak ayarlamak için bir klasör dizini seç"
+
+msgid ""
+"WARNING: This will delete the output files from the output folder, "
+"potentially causing crashes.\n"
+"\n"
+"Do you want to continue?"
+msgstr ""
+"UYARI: Bu, çıkış dosyalarını kopyalanan klasöründen siler, potansiyel olarak "
+"çökmelere neden olabilir.\n"
+"\n"
+"Devam etmek istediğine emin misin?"
+
+msgid "Clean Build"
+msgstr "Kurulumu Temizle"
+
+msgid "Removed the following files:\n"
+msgstr "Dosyalar siliniyor:\n"
+
+msgid " (no action)\n"
+msgstr " (eylem yok)\n"
+
+msgid "Process Successful"
+msgstr "İşlem Başarıyla Sonuçlandı"
+
+msgid ""
+"Failed to write TRI file to the following location\n"
+"\n"
+"%s"
+msgstr ""
+"TRI dosyası belirtilen konuma yazılamadı\n"
+"\n"
+"%s"
+
+msgid "Unable to process"
+msgstr "İşlenemiyor"
+
+msgid ""
+"Failed to build set to the following location\n"
+"\n"
+"%s"
+msgstr ""
+"Bu ayar seti belirtilen konuma yazdırılamadı\n"
+"\n"
+"%s"
+
+msgid "Choose alternate file name"
+msgstr "Alternatif dosya adını seç"
+
+msgid "Successfully processed the following files:\n"
+msgstr "Dosyalar başarıyla işlendi:\n"
+
+msgid ""
+"WARNING: This will delete the output files from the output folders, "
+"potentially causing crashes.\n"
+"\n"
+"Do you want to continue?"
+msgstr ""
+"UYARI: Bu, işleme dosyalarını çıkış klasörlerinden siler, potansiyele dayalı "
+"çökmelere neden olabilir.\n"
+"\n"
+"Devam etmek istediğine emin misin?"
+
+msgid "Clean Batch Build"
+msgstr "Toplu Yapı Temizliği"
+
+msgid ""
+"WARNING: Game data path not configured. Files can't be removed that way."
+msgstr ""
+"UYARI: Oyun veri yolu yapılandırılmamış. Dosyalar bu şekilde silinemez."
+
+msgid ""
+"WARNING: Game data path not configured. Continue saving files to the working "
+"directory?"
+msgstr ""
+"UYARI: Oyun veri yolu yapılandırılmamış. Dosyaları çalışma dizinine kaydetme "
+"işlemine devam edilsin mi?"
+
+msgid ""
+"The following sets will override the same files.\n"
+"Please decide which one to use and select it in the list below."
+msgstr ""
+"Aşağıdaki bazı ayarlar aynı dosyaları geçersiz kılabilir.\n"
+"Lütfen hangisini kullanacağına karar ver ve listeden seçimini yap."
+
+msgid "Choose output set"
+msgstr "Çıkış setini seç"
+
+msgid "Processing Outfits"
+msgstr "Kıyafet işlenmesi"
+
+msgid "Starting..."
+msgstr "Başlatılıyor..."
+
+msgid "Processing '%s' (%d of %d)..."
+msgstr "İşleniyor '%s' (%d of %d)..."
+
+msgid "No recorded outfit name source"
+msgstr "Kayıtlı bir kıyafet adı kaynağı yok"
+
+msgid "Unable to get slider set from file: "
+msgstr "Kaydırıcı dosyadan alınamadı: "
+
+msgid "Unable to open slider set file: "
+msgstr "Kaydırıcı ayar dosyası açılamıyor: "
+
+msgid "Unable to load input nif: "
+msgstr "Nif giriş kodlaması yüklenemedi: "
+
+msgid "Unable to create destination directory: "
+msgstr "Hedef dizin oluşturulamadı: "
+
+msgid "Unable to save nif file: "
+msgstr "Nif dosyası kaydedilemiyor: "
+
+msgid "All group build sets processed successfully!"
+msgstr "Tüm grup oluşturma setleri başarıyla ayarlandı!"
+
+msgid "Complete"
+msgstr "Tamamlandı"
+
+msgid "The following sets failed"
+msgstr "Takipçi ayarları başarısız"
+
+msgid "Failed"
+msgstr "Başarısız"
+
+msgid "Failed to load BodyslideFrame.xrc file!"
+msgstr "BodyslideFrame.xrc dosyası yüklenemedi!"
+
+msgid "Error"
+msgstr "Hata"
+
+msgid "Failed to load BodySlide frame!"
+msgstr "BodySlide ana çerçevesi yüklenemedi!"
+
+msgid "Group Filter"
+msgstr "Gurup Filtresi"
+
+msgid "Filter by group"
+msgstr "Gruplara göre filtrele"
+
+msgid "Outfit Filter"
+msgstr "Kıyafet Filtresi"
+
+msgid "Filter by outfit"
+msgstr "Kıyafetlere göre filtrele"
+
+msgid "Choose groups to filter outfit list"
+msgstr "Kıyafet listesini filtrelemek için grupları seç"
+
+msgid "Choose Groups"
+msgstr "Gurupları Seç"
+
+msgid "Choose or create group file"
+msgstr "Grup dosyası seç veya oluştur"
+
+msgid "What would you like the new group to be called?"
+msgstr "Yeni grubun da aranmasını istiyor musun?"
+
+msgid "New Group Name"
+msgstr "Yeni Gurup İsmi"
+
+msgid "Failed to save preset (%d)!"
+msgstr "Hazır ayar kaydedilemedi (%d)!"
+
+msgid "Failed to save preset as '%s' (%d)!"
+msgstr "Hazır ayar olarak kaydedilemedi (%d)!"
+
+msgid "Choose a folder to contain the saved files"
+msgstr "Kaydedilen dosyaların için bir klasör seç"
+
+msgid "All sets processed successfully!"
+msgstr "Tüm guruplar başarıyla ayarlandı!"
+
+msgid "OpenGL Error"
+msgstr "OpenGL Hatası"
+
+msgid "Checking destination..."
+msgstr "Hedef kontrol ediliyor..."
+
+msgid "Adding reference shapes..."
+msgstr "Örnek kalıplar ekleniyor..."
+
+msgid "Adding outfit shapes..."
+msgstr "Kıyafet kalıpları ekleniyor..."
+
+msgid "Calculating slider data..."
+msgstr "Kaydırıcı verileri hesaplanıyor..."
+
+msgid "Creating slider set file..."
+msgstr "Kaydırıcı gurup dosyası oluşturuluyor..."
+
+msgid "Failed to open or create slider set file: "
+msgstr "Kaydırıcı grubu dosyası açılamadı veya oluşturulamadı: "
+
+msgid "Saving slider set file..."
+msgstr "Kaydırıcı gurup dosyası kaydediliyor..."
+
+msgid "Failed to write to slider set file: "
+msgstr "Kaydırıcı grubu dosyasına yazdırılamadı: "
+
+msgid "Saving NIF file..."
+msgstr "NIF dosyası olarak Kaydediliyor.."
+
+msgid "Failed to write base .nif file: "
+msgstr "Temel .nif dosyası yazdırması Başarısız: "
+
+msgid "Finished"
+msgstr "Tamamlandı"
+
+msgid "Could not load OBJ file '%s'!"
+msgstr "OBJ dosyası yüklenemedi '%s'!"
+
+msgid "OBJ Error"
+msgstr "OBJ Hatası"
+
+msgid "Could not copy data from OBJ file '%s'!"
+msgstr "OBJ dosyasındaki veri kopyalanamadı '%s'!"
+
+msgid ""
+"The vertex count of the selected .obj file matches the currently selected "
+"outfit shape.  Do you wish to update the current shape?  (click No to create "
+"a new shape)"
+msgstr ""
+"Seçilen .obj dosyasının tepe noktası sayısı geçerli olarak seçilen kıyafet "
+"kalıbıyla eşleşiyor. Mevcut kalıbı güncellemek ister misin? (yeni bir Kalıp "
+"oluşturmak için Hayır'a tıkla)"
+
+msgid "Merge or New"
+msgstr "Birleştir yada Yeniden"
+
+msgid "Update Vertex Positions?"
+msgstr "Köşe Konumlarının Güncellemesi?"
+
+msgid "Vertex Position Update"
+msgstr "Köşe Konumlarını Güncelleme"
+
+msgid "Update Texture Coordinates?"
+msgstr "Texture Konumlarını Güncellemesi?"
+
+msgid "UV Update"
+msgstr "UV Güncelleme"
+
+msgid "Please specify a name for the new shape"
+msgstr "Lütfen yeni kalıp için yeni bir isim belirle"
+
+msgid "New Shape Name"
+msgstr "Yeni Kalıp Adı"
+
+msgid "Import Data Error"
+msgstr "Veri Yerleştirme Hatası"
+
+msgid "Gathering bones..."
+msgstr "Kemikler biriktiriliyor..."
+
+msgid "Initializing proximity data..."
+msgstr "Uyumluluk veri tabanı başlatılıyor..."
+
+msgid "Copying bone weights..."
+msgstr "Kemik ağırlıkları kopyalanıyor..."
+
+msgid "Transferring bone weights..."
+msgstr "Kemik ağırlıkları aktarılıyor..."
+
+msgid "Template source entries are invalid."
+msgstr "Şablon kaynak girişleri geçersiz."
+
+msgid "Reference Error"
+msgstr "Örnekleme Hatası"
+
+msgid ""
+"NIF version not supported!\n"
+"\n"
+"File: %s\n"
+"%s\n"
+"User Version: %i\n"
+"User Version 2: %i"
+msgstr ""
+"NIF sürümü desteklenmiyor!\n"
+"\n"
+"Dosya: %s\n"
+"%s\n"
+"Kullanıcı Versiyonu: %i\n"
+"Kullanıcı Versiyonu 2: %i"
+
+msgid "Could not load reference NIF file '%s'!"
+msgstr "Örnek NIF dosyası yüklenemedi '%s'!"
+
+msgid "Could not load slider set file '%s'!"
+msgstr "Kaydırıcı grup dosyası yüklenemedi '%s'!"
+
+msgid "Reference NIF file '%s' does not contain any shapes."
+msgstr "Örnek NIF dosyası '%s' herhangi bir kalıbı içermiyor."
+
+msgid "Shape '%s' not found in reference NIF file '%s'!"
+msgstr "Kalıp '%s' örnek olan NIF dosyasında bulunamadı '%s'!"
+
+msgid "NIF Error"
+msgstr "NIF Hatası"
+
+msgid "Could not load NIF file '%s'!"
+msgstr "NIF dosyası yüklenemedi '%s'!"
+
+msgid "Loading slider set..."
+msgstr "Kaydırıcı grup yükleniyor..."
+
+msgid "Adding slider set..."
+msgstr "Kaydırıcı seti eklendi..."
+
+msgid "Retrieving sliders..."
+msgstr "Kaydırıcılar alınıyor..."
+
+msgid "Loading outfit shapes..."
+msgstr "Kıyafet kalıpları yükleniyor..."
+
+msgid "Updating slider data..."
+msgstr "Kaydırıcı verileri güncelleniyor..."
+
+msgid ""
+"There was cloth physics data loaded at some point (BSClothExtraData). Please "
+"choose all the origins to use in the output."
+msgstr ""
+"Bir noktada (BSClothExtraData) için yüklenen kumaş fizik verileri olmalıydı. "
+"Lütfen çıktıda kullanılacak tüm kaynakları seçtiğinden emin ol."
+
+msgid "Choose cloth data"
+msgstr "Kumaş verilerini seç"
+
+msgid ""
+"The vertex count of the selected .fbx file matches the currently selected "
+"outfit shape.  Do you wish to update the current shape?  (click No to create "
+"a new shape)"
+msgstr ""
+"Seçili .fbx dosyasının tepe noktası sayısı geçerli olarak seçilen kıyafet "
+"kalıbıyla eşleşiyor. Mevcut şekli güncellemek ister misin? (yeni bir Kalıp "
+"oluşturmak istiyorsan Hayır'a tıkla)"
+
+msgid "Update Animation Weighting?"
+msgstr "Animasyon Ağırlığını Güncelle?"
+
+msgid "Animation Weight Update"
+msgstr "Animasyon Ağırlık Güncellemesi"
+
+msgid "Failed to load outfitStudio.xrc file!"
+msgstr "outfitStudio.xrc Dosyası yüklenemedi!"
+
+msgid "Failed to load Outfit Studio frame!"
+msgstr "Outfit Studio ana çerçevesi yüklenemedi!"
+
+msgid "Ready!"
+msgstr "Hazır!"
+
+msgid "Creating sliders..."
+msgstr "Kaydırıcılar oluşturuluyor..."
+
+msgid "Clearing old sliders..."
+msgstr "Eski kaydırıcılar temizleniyor..."
+
+msgid "Loading slider: "
+msgstr "Yüklenen kaydırıcı: "
+
+msgid "Turn on edit mode for this slider."
+msgstr "Bu kaydırıcı için düzenleme modunu aç."
+
+msgid "Weaken slider data by 1%."
+msgstr "Kaydırıcı verilerini 1% azalt."
+
+msgid "Strengthen slider data by 1%."
+msgstr "Kaydırıcı verilerini 1% yükselt."
+
+msgid "Enter a name for the new slider:"
+msgstr "Kaydırıcı için yeni bir isim girin:"
+
+msgid "Create New Slider"
+msgstr "Yeni Kaydırıcı Oluştur"
+
+msgid ""
+"You can only edit the base shape when all sliders are zero. Do you wish to "
+"set all sliders to zero now?  Note, use the pencil button next to a slider "
+"to enable editing of that slider's morph."
+msgstr ""
+"Yalnızca tüm kaydırıcılar sıfır olduğunda temel şekli düzenleyebilirsin. "
+"Şimdi tüm kaydırıcıları sıfırlamak istiyor musun? Not: Bu kaydırıcının morph "
+"düzenlenmesini sağlamak için kaydırıcının yanındaki kalem düğmesini "
+"kullanmalısın."
+
+msgid "Creating project '%s'..."
+msgstr "Proje oluşturuluyor '%s'..."
+
+msgid "Loading reference..."
+msgstr "Örnek yükleniyor..."
+
+msgid "Loading outfit..."
+msgstr "Kıyafet yükleniyor..."
+
+msgid "Creating outfit..."
+msgstr "Kıyafet oluşturma..."
+
+msgid "Creating %d slider(s)..."
+msgstr "Kaydırıcı(lar) %d oluşturuluyor..."
+
+msgid "Select a slider set to load"
+msgstr "Yüklemek için bir kaydırıcı seç"
+
+msgid "Select a slider set to add"
+msgstr "Eklenecek kaydırıcıyı seç"
+
+msgid "Failed to open '%s' as a slider set file!"
+msgstr "Bu dosya '%s' bir kaydırıcı seti olarak açılamadı!"
+
+msgid "Slider Set Error"
+msgstr "Kaydırıcı Seti Hatası"
+
+msgid "Please choose an outfit to load"
+msgstr "Lütfen yüklemek için bir kıyafet seç"
+
+msgid "Load a slider set"
+msgstr "Bir kaydırıcı seti yükle"
+
+msgid "Loading project..."
+msgstr "Proje yükleniyor..."
+
+msgid "Loading outfit data..."
+msgstr "Kıyafet verileri yükleniyor..."
+
+msgid "Failed to create project '%s' from file '%s' (%d)!"
+msgstr " %s' dosyasından '%s' (%d) Proje oluşturulamadı!"
+
+msgid "Loading reference shape '%s'..."
+msgstr "Örnek kalıp yükleniyor '%s'..."
+
+msgid "Loading textures..."
+msgstr "Textures Data Yükleniyor..."
+
+msgid ""
+"You're currently editing slider data, please exit the slider's edit mode "
+"(pencil button) and try again."
+msgstr ""
+"Şu anda kaydırıcı verilerini düzenliyorsun, lütfen kaydırıcının düzenleme "
+"modundan çık (kalem butonuyla) ve tekrar dene."
+
+msgid "Loading reference set..."
+msgstr "Örnek set yükleniyor..."
+
+msgid "Creating reference..."
+msgstr "Örnek oluşturuluyor..."
+
+msgid "There are no valid shapes loaded!"
+msgstr "Yüklenen kalıplar uyumlu değil!"
+
+msgid ""
+"The following shapes have unweighted vertices, which can cause issues. The "
+"affected vertices have been put under a mask. Do you want to save anyway?"
+msgstr ""
+"Aşağıdaki kalıplar sorunlara neden olabilecek, ağırlıksız köşelere sahip. "
+"Etkilenen köşeler bir maskenin altına yerleştirildi. Yine de kaydetmek ister "
+"misin?"
+
+msgid "Unweighted Vertices"
+msgstr "Ağırlıksız Tepe Noktaları"
+
+msgid ""
+"The following shapes were renamed and won't have slider data attached. "
+"Rename the duplicates yourself beforehand."
+msgstr ""
+"Aşağıdaki kalıplar yeniden adlandırıldı ama kaydırıcı verileri eklenmedi. "
+"Kopyasını almadan önce yeniden adlandırmalısın."
+
+msgid "Renamed Shapes"
+msgstr "Yeniden Adlandırılan Kalıplar"
+
+msgid "Saving project '%s'..."
+msgstr "Proje kaydediliyor '%s'..."
+
+msgid "Invalid or no slider set file specified! Please try again."
+msgstr ""
+"Geçersiz set veya hiç kaydırıcı ayar dosyası belirtilmemiş! Lütfen tekrar "
+"dene."
+
+msgid "No outfit name specified! Please try again."
+msgstr "Belirtilen bir kıyafet ismi yok! Lütfen tekrar dene."
+
+msgid "No data folder specified! Please try again."
+msgstr "Belirtilen bir data veri klasörü yok! Lütfen tekrar dene."
+
+msgid ""
+"An invalid or no base outfit .nif file name specified! Please try again."
+msgstr ""
+"Geçersiz veya temelsiz bir kıyafet .nif dosya adı belirtildi! Lütfen tekrar "
+"dene."
+
+msgid "No game file path specified! Please try again."
+msgstr "Oyun dosyası yolu belirtilmemiş! Lütfen tekrar dene."
+
+msgid "No game file name specified! Please try again."
+msgstr "Oyun dosya adı belirtilmemiş! Lütfen tekrar dene."
+
+msgid "Import NIF file"
+msgstr "NIF dosyası Yerleştir"
+
+msgid "Importing NIF file..."
+msgstr "NIF dosyası yerleştiriliyor..."
+
+msgid "Refreshing GUI..."
+msgstr "GUI canlandırılıyor..."
+
+msgid "Finished."
+msgstr "Tamamlandı."
+
+msgid "Export outfit NIF"
+msgstr "Kıyafet çıktısı NIF olarak"
+
+msgid "Failed to save NIF file '%s'!"
+msgstr "NIF dosyası olarak kaydedilemedi '%s'!"
+
+msgid "Export Error"
+msgstr "Dışa Aktarma Hatası"
+
+msgid "Export project NIF"
+msgstr "Proje NIF dosyasını dışa aktar"
+
+msgid "Failed to save NIF file '%s' with reference!"
+msgstr "NIF dosyası '%s' örnek dosya olarak kaydedilemedi!"
+
+msgid "Import physics data to project"
+msgstr "Projeye fizik data dosyasını yerleştir"
+
+msgid "Failed to import physics data file '%s'!"
+msgstr "Fizik dosyası yüklemesi başarısız '%s'!"
+
+msgid "Import Error"
+msgstr "Yerleştirme Hatası"
+
+msgid "There is no physics data loaded!"
+msgstr "Yüklenen dosyada herhangi bir fizik bilgisi yok!"
+
+msgid "Info"
+msgstr "Bilgi"
+
+msgid "Please choose the physics data source you want to export."
+msgstr "Lütfen yerleştirmek istediğin fizik veri kaynağını seç."
+
+msgid "Choose physics data"
+msgstr "Fizik verilerini seç"
+
+msgid "Export physics data"
+msgstr "Fizik verilerini yerleştir"
+
+msgid "Failed to save physics data file '%s'!"
+msgstr "Fizik veri dosyaları yerleştirmesi başarısız '%s'!"
+
+msgid "This function requires at least one slider position to be non-zero."
+msgstr ""
+"Bu işlev değeri sıfır olmayan bir en az bir tane kaydırma konumu gerektirir."
+
+msgid ""
+"Create a conversion slider for the current slider settings with the "
+"following name: "
+msgstr ""
+"Geçerli kaydırıcı ayarları için aşağıda aynı adla bir dönüşüm kaydırıcısını "
+"oluştur: "
+
+msgid "Create New Conversion Slider"
+msgstr "Yeni Dönüşüm Kaydırıcısı Oluştur"
+
+msgid "Field of View: %d"
+msgstr "Görüş Alanı: %d"
+
+msgid "There are no sliders loaded!"
+msgstr "Yüklenen bir kaydırıcı yok!"
+
+msgid "No changes were made to the sliders, so no preset was saved!"
+msgstr ""
+"Kaydırıcılara herhangi bir değişiklik yapılmadı, bu nedenle hiçbir hazır "
+"ayar kaydedilmedi!"
+
+msgid "There is no shape selected!"
+msgstr "Seçili bir kalıp yok!"
+
+msgid "There is no reference shape!"
+msgstr "Seçili bir örnek kalıbı yok!"
+
+msgid "There is no slider in edit mode to import data to!"
+msgstr "Verileri içe aktarmak için düzenleme modunda hiç kaydırıcı yok!"
+
+msgid "Import .bsd slider data"
+msgstr ".bsd kaydırıcı dosyası yerleştir"
+
+msgid "Import .obj file for slider calculation"
+msgstr ".obj kaydırıcı hesaplama dosyası yerleştir"
+
+msgid "Vertex count of .obj file mesh does not match currently selected shape!"
+msgstr ".obj dosya kafesinin köşe sayısı şu an seçili olan kalıpla eşleşmiyor!"
+
+msgid "Import .tri morphs"
+msgstr ".tri morphs dosyası yerleştir"
+
+msgid "This will delete all loaded sliders. Are you sure?"
+msgstr "Bu işlem, tüm yüklü kaydırıcıları siler. Emin misin?"
+
+msgid "TRI Import"
+msgstr "TRI yerleştir"
+
+msgid "Failed to load TRI file!"
+msgstr "TRI dosyası yerleştirilemedi!"
+
+msgid ""
+"Added morphs for the following shapes:\n"
+"\n"
+"%s"
+msgstr ""
+"Aşağıdaki kalıplara morphs dosyası eklendi:\n"
+"\n"
+"%s"
+
+msgid "Import .fbx file for slider calculation"
+msgstr ".fbx kaydırıcı hesaplama dosyası yerleştir"
+
+msgid "There is no slider in edit mode to export data from!"
+msgstr "Verileri dışa aktarmak için düzenleme modunda hiç kaydırıcı yok!"
+
+msgid "Export .bsd slider data to directory"
+msgstr ".bsd kaydırıcı verilerini dışa aktar"
+
+msgid "Export .bsd slider data"
+msgstr ".bsd kaydırıcı verilerini Çıkart"
+
+msgid "Export .obj slider data to directory"
+msgstr ".obj kaydırıcı verilerini dışa aktar"
+
+msgid "Export .obj slider data"
+msgstr ".obj kaydırıcı verilerini Çıkart"
+
+msgid "Failed to export OBJ file!"
+msgstr "OBJ dosyası çıkartımı başarısız!"
+
+msgid "Failed to export FBX file!"
+msgstr "FBX dosyası çıkartımı başarısız!"
+
+msgid "OSD Import"
+msgstr "OSD Yerleştir"
+
+msgid "Import .osd file"
+msgstr ".osd Dosyasını Yerleştir"
+
+msgid "Failed to import OSD file!"
+msgstr "OSD Dosyası yerleştirmesi başarısız!"
+
+msgid "Export .osd file"
+msgstr ".osd Olarak Çıkart"
+
+msgid "Failed to export OSD file!"
+msgstr "OSD dosyası dışa çıkartma başarısız!"
+
+msgid "Export .tri morphs"
+msgstr ".tri morphs Olarak Çıkart"
+
+msgid "Failed to export TRI file!"
+msgstr "TRI dosyası olarak dışa çıkartma başarısız!"
+
+msgid "Are you sure you wish to clear the unmasked slider data "
+msgstr "Maskelememiş kaydırıcı verilerini silmek istediğinden emin misin "
+
+msgid "for the selected shapes? This cannot be undone."
+msgstr "bu seçilen kalıplar için? İşlem geri alınamaz."
+
+msgid "Confirm data erase"
+msgstr "Veri silme işlemini onayla"
+
+msgid "for the shape \""
+msgstr "kalıplar için \""
+
+msgid "Enter a name for the new zap:"
+msgstr "Yeni zap için bir isim gir:"
+
+msgid "Create New Zap"
+msgstr "Yeni Zap Olustur"
+
+msgid "There is no slider in edit mode to negate!"
+msgstr "Düzenleme modunda düzenleme yapmak için bir kaydırıcı yok!"
+
+msgid "There is no slider in edit mode to create a mask from!"
+msgstr "Maske oluşturmak için düzenleme modunda bir kaydırıcı yok!"
+
+msgid "Are you sure you wish to delete the selected slider(s)?"
+msgstr "Seçilen kaydırıcı(ları) silmek istediğinden emin misin?"
+
+msgid "\"? This cannot be undone."
+msgstr "\"? Bu işlem geri alınamaz."
+
+msgid "Confirm slider delete"
+msgstr "Kaydırıcıyı silmeyi onayla"
+
+msgid "There is no slider in edit mode to show properties for!"
+msgstr "Özellikleri göstermek için düzenleme modunda kaydırıcı yok!"
+
+msgid "Conforming all shapes..."
+msgstr "Tüm kalıplar uyumlu hale getiriliyor..."
+
+msgid "Conforming: "
+msgstr "Uyum sağlanıyor: "
+
+msgid "All shapes conformed."
+msgstr "Tüm kalıplar uyumlu."
+
+msgid "Conforming..."
+msgstr "Uyum sağlanıyor..."
+
+msgid "Initializing data..."
+msgstr "Veri akışı başlatılıyor..."
+
+msgid "Shape(s) conformed."
+msgstr "Kalıp(lar) Uyumlu."
+
+msgid "Import .obj file for new shape"
+msgstr "Yeni kalıp içerisine .obj dosyasını yerleştir"
+
+msgid "Export selected shapes as an .obj file"
+msgstr "Seçilen kalıpları bir .obj dosyası olarak dışa aktar"
+
+msgid "Export shape as an .obj file"
+msgstr "Kalıbı bir .obj dosyası olarak dışa aktar"
+
+msgid "Export project as an .obj file"
+msgstr "Projeyi bir .obj dosyası olarak dışa aktar"
+
+msgid "Export project as an .fbx file"
+msgstr "Projeyi bir .fbx dosyası olarak dışa aktar"
+
+msgid "Export shape as an .fbx file"
+msgstr "Kalıbı bir .fbx dosyası olarak dışa aktar"
+
+msgid "Export selected shapes as an .fbx file"
+msgstr "Seçilen kalıpları .fbx dosyası olarak dışa aktar"
+
+msgid "Import .fbx file for new shape"
+msgstr "Yeni kalıp içerisine .fbx dosyasını yerleştir"
+
+msgid "Please enter a new unique name for the shape."
+msgstr "Lütfen kalıp için yeni bir isim girin."
+
+msgid "Rename Shape"
+msgstr "Kalıbı Yeniden Adlandır"
+
+msgid ""
+"Rotating slider data is currently not possible using the Rotate Shape dialog."
+msgstr ""
+"Döndürme kaydırıcısı verilerinin şu anda Kalıp Döndür iletişim kutusu "
+"verileri kullanılarak uygulanması mümkün değil."
+
+msgid "Rotate"
+msgstr "Döndür"
+
+msgid ""
+"You can only copy shapes into an outfit, and there is no outfit in the "
+"current project. Load one first!"
+msgstr ""
+"Kalıpları yalnızca bir kıyafete kopyalayabilirsin ve mevcut projende "
+"kıyafetin yok. Önce bir tane yüklemelisin!"
+
+msgid "Please enter a unique name for the duplicated shape."
+msgstr "Lütfen çoğaltılmış kalıp için yeni bir isim gir."
+
+msgid "Duplicate Shape"
+msgstr "Kalıbı Çoğalt"
+
+msgid ""
+"Are you sure you wish to delete the unmasked vertices of the selected "
+"shapes?  This action cannot be undone."
+msgstr ""
+"Seçilen kalıpların maskelenmemiş köşelerini silmek istediğinden emin misin? "
+"Bu işlem geri alınamaz."
+
+msgid ""
+"Are you sure you wish to delete the selected shapes?  This action cannot be "
+"undone."
+msgstr ""
+"Seçilen kalıpları silmek istediğinden emin misin? Bu işlem geri alınamaz."
+
+msgid "Confirm Delete"
+msgstr "Silmeyi Onayla"
+
+msgid "No bone name was entered!"
+msgstr "Kemik adı girilmedi!"
+
+msgid "Bone '%s' already exists in the project!"
+msgstr "Bu kemik '%s' projende zaten mevcut!"
+
+msgid ""
+"Sorry, you can't copy weights from the reference shape to itself. Skipping "
+"this shape."
+msgstr ""
+"Üzgünüm, referans şekillerindeki ağırlıkları istediğin gibi kopyalayamazsın. "
+"Bu kalıbı atlamalısın."
+
+msgid "Can't copy weights"
+msgstr "Ağırlıklar kopyalanamaz"
+
+msgid "Copying selected bone weights..."
+msgstr "Seçilen kemik ağırlıklarını kopyalar..."
+
+msgid "Sorry, you can't copy weights from the reference shape to itself."
+msgstr ""
+"Üzgünüm, referans şekillerindeki ağırlıkları istediğin gibi kopyalayamazsın."
+
+msgid "The vertex count of the reference and chosen shape is not the same!"
+msgstr "Örneğin ve seçilen modelin köşe sayısı aynı değildir!"
+
+msgid "Outfit Studio: OpenGL context is not OK."
+msgstr "Outfit Studio: OpenGL içeriği mevcut değil."
+
+msgid "Adding NIF file..."
+msgstr "NIF dosyası ekleniyor..."
+
+msgid "Adding OBJ file..."
+msgstr "OBJ dosyası ekleniyor..."
+
+msgid "Adding FBX file..."
+msgstr "FBX dosyası ekleniyor..."
+
+msgid "Loading slider file..."
+msgstr "Kaydırıcı dosyası yükleniyor..."
+
+msgid "Preview failed: OpenGL context is not OK."
+msgstr "Ön izleme başarısız: OpenGL içeriği Mevcut değil."
+
+msgid "Version"
+msgstr "Versiyon"
+
+msgid ""
+"Version of NIF file doesn't match current target game. To use the meshes for "
+"the target game, export to OBJ/FBX and reload them again."
+msgstr ""
+"NIF dosyasının sürümü mevcut hedef oyunla eşleşmiyor. Hedef oyunda kafesleri "
+"kullanabilmek için OBJ/FBX olarak aktarın veya tekrar yükleyin."
+
+msgid "Would you like Skyrim NIFs to be optimized for SSE during this session?"
+msgstr ""
+"Bu oturumda Skyrim NIF'lerinin SSE için optimize edilmesini ister misin?"
+
+msgid "Language"
+msgstr "Dil"
+
+msgid "Use the selected language for the program."
+msgstr "Program için seçilen dil ayarını kullan."
+
+msgid "Rendering"
+msgstr "Kaplamalar"
+
+msgid "Background Color"
+msgstr "Arkaplan Rengi"
+
+msgid "Background color of the renderer."
+msgstr "Arkaplan rengini düzenler."
+
+msgid "Unload Project"
+msgstr "Projeyi Kaldır"
+
+msgid "Unload Project...\tCtrl+W"
+msgstr "Projeyi Kaldır...\tCtrl+W"
+
+msgid "Unloads the project and creates an empty new one."
+msgstr "Projeyi kaldırır ve yeni bir boş proje oluşturur."
+
+msgid ""
+"Do you really want to unload the project? All unsaved changes will be lost."
+msgstr ""
+"Projeyi gerçekten kaldırmayı istiyor musun? Kaydedilmemiş tüm değişiklikler "
+"silinecek."
+
+msgid "Delete Vertices..."
+msgstr "Köşeleri Sil..."
+
+msgid "Deletes all unmasked vertices of the currently selected shapes."
+msgstr "Seçili modellerin tüm maskelenmemiş köşelerini siler."
+
+msgid "Separate Vertices..."
+msgstr "Ayrışmış Köşeler..."
+
+msgid "Please enter a unique name for the new separated shape."
+msgstr "Lütfen yeni ayrıştırılmış modelin için yeni bir isim gir."
+
+msgid "Separate the current shape into two by using the mask."
+msgstr "Maskeyi kullanarak mevcut modeli ikiye ayır."
+
+msgid "Show the Normal Map Generator dialog."
+msgstr "Normal Harita Üreticisi konuşmasını göster."
+
+msgid "Normal Map Generator"
+msgstr "Normal Harita Üreticisi"
+
+msgid "Layers"
+msgstr "Katmanlar"
+
+msgid "Load or save preset layer settings."
+msgstr "Önceden hazır olarak ayarlanmış katman değerlerini yükle veya kaydet."
+
+msgid "Choose a normals generator preset file..."
+msgstr "Genel standart ayarlamalarını hazır ayar olarak seç.."
+
+msgid "Save normals generator preset to..."
+msgstr "Genel standart ayarlamalarını hazır ayar olarak kaydet..."
+
+msgid "Background"
+msgstr "Arkaplan"
+
+msgid "Background File"
+msgstr "Arkaplan Dosyası"
+
+msgid "File source for this layer."
+msgstr "Bu katmanın dosya kaynağı."
+
+msgid ""
+"File containing normals data to combine. Note this file should fit the mesh "
+"UVs."
+msgstr ""
+"Birleştirilecek normal veri dosyalarını içeren kalıp. Bu dosyaların örgü "
+"UV'lerine uyması gerektiğini unutmamalısın."
+
+msgid "Color"
+msgstr "Renkler"
+
+msgid "Solid background color (if file is not set)."
+msgstr "Koyu arka plan rengi (eğer dosya ayarlanmamışsa)."
+
+msgid "Resolution"
+msgstr "Çözünürlük"
+
+msgid ""
+"Output texture dimensions. By default all images will be scaled to fit this "
+"size."
+msgstr ""
+"Doku boyutları çıktısıdır. Varsayılan olarak, tüm resimler bu boyuta uyacak "
+"şekilde ölçeklendirilecektir."
+
+msgid "Is Tangent Space?"
+msgstr "Teğet Uzay mı olsun?"
+
+msgid ""
+"True if the normals data in the layer file is in tangent space, false if "
+"they are in model space (msn)."
+msgstr ""
+"Eğer katman dosyasındaki normal değerler verisi teğet uzayda yer almıyorsa, "
+"model uzayda (msn) yanlış görüntülenir."
+
+msgid "A greyscale image used to mask updates to destination image."
+msgstr ""
+"Hedef resme güncellemeleri maskelemek için kullanılan gri tonlamalı bir "
+"resim."
+
+msgid "X Offset"
+msgstr "X Dengesi"
+
+msgid "Y Offset"
+msgstr "Y Dengesi"
+
+msgid "Offset to apply to image position."
+msgstr "Görüntü pozisyonuna uygulamak için dengeleme."
+
+msgid "If true, scale image to match background resolution."
+msgstr ""
+"Eğer bunu kabul ediyorsan, resmi arka plan çözünürlüğüne uyacak şekilde "
+"yeniden ölçeklendirmelisin."
+
+msgid "Add Layer"
+msgstr "Katman Ekle"
+
+msgid "Add a new layer after the current one in the layer list."
+msgstr "Katman listesindeki mevcut satırdan sonra yeni bir katmanı ekler."
+
+msgid "Move Up"
+msgstr "Yukarı Taşı"
+
+msgid "Move selected layer up one position."
+msgstr "Seçilen katmanı bir konum yukarı taşır."
+
+msgid "Delete Layer"
+msgstr "Katmanı Sil"
+
+msgid "Delete the selected layer."
+msgstr "Seçilen katmanı sil."
+
+msgid "Backup destination file"
+msgstr "Hedef dosyayı Yedekle"
+
+msgid ""
+"Save a copy of an existing normal map if one already exists. File is saved "
+"in the original directory."
+msgstr ""
+"Kopyala ve kaydet, normal bir haritanın bir kopyasını kaydedin. Dosya "
+"orijinal dizinde kaydedilir."
+
+msgid "Compress output"
+msgstr "Çıktı sıkıştırması"
+
+msgid ""
+"Compress output file using BC7 compression. This can make saving the file "
+"take a VERY long time!"
+msgstr ""
+"BC7 sıkıştırma biçemini kullanarak çıktı dosyasını sıkıştırır. Bu, dosyanın "
+"çok uzun süre korunmasını sağlayabilir!"
+
+msgid "Save to background layer file"
+msgstr "Arka plan katman dosyasına kaydet"
+
+msgid ""
+"Use the file name specified in the background layer to save the normal map."
+msgstr ""
+"Normal haritayı kaydetmek için arka plan katmanında belirtilen dosya adını "
+"kullanın."
+
+msgid "Location to save normal map to."
+msgstr "Normal haritayı kaydetme konumu."
+
+msgid "Choose an output file..."
+msgstr "Bir çıktı dosyasını seç..."
+
+msgid "Display current settings on mesh in preview window."
+msgstr "Ön izleme penceresindeki geçerli ayarlarını kafes olarak görüntüle."
+
+msgid "Generate"
+msgstr "Oluştur"
+
+msgid "Generate and save the normal map file."
+msgstr "Normal harita dosyasını oluştur ve kaydet."
+
+msgid "Colors"
+msgstr "Renkler"
+
+msgid "Brush Color"
+msgstr "Fırça Rengi"
+
+msgid "Color of the brush."
+msgstr "Fırçanın rengi."
+
+msgid "Edit Color"
+msgstr "Renk Düzenleme"
+
+msgid "Edit Alpha"
+msgstr "Alfa Düzenleme"
+
+msgid "Color Paint"
+msgstr "Boyama Rengi"
+
+msgid "Color Paint\t7"
+msgstr "Boya Rengi\t7"
+
+msgid ""
+"Apply vertex colors.\n"
+"Hold down the ALT key to remove colors."
+msgstr ""
+"Uç Renkleri kabul et.\n"
+"Rengi kaldırmak için ALT tuşuna basılı tut."
+
+msgid "Alpha Paint"
+msgstr "Alfa Boyama"
+
+msgid "Alpha Paint\t8"
+msgstr "Alfa Rengi\t8"
+
+msgid ""
+"Apply vertex alpha.\n"
+"Hold down the ALT key to remove alpha."
+msgstr ""
+"Uç Alfayı kabul et.\n"
+"Alfayı kaldırmak için ALT tuşunu basılı tut."
+
+msgid "Vertex Colors"
+msgstr "Uç Renkler"
+
+msgid "Vertex Alpha"
+msgstr "Uç Alfa"
