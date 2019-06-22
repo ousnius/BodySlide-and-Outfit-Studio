@@ -2297,6 +2297,8 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 		glView->ShowShape(shapeName, vis);
 		child = outfitShapes->GetNextChild(outfitRoot, cookie);
 	}
+
+	glView->Render();
 }
 
 void OutfitStudioFrame::AnimationGUIFromProj() {
@@ -3185,6 +3187,8 @@ void OutfitStudioFrame::ToggleVisibility(wxTreeItemId firstItem) {
 			}
 		}
 	}
+
+	glView->Render();
 }
 
 void OutfitStudioFrame::OnShapeVisToggle(wxTreeEvent& event) {

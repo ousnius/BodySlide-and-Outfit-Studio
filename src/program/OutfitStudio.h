@@ -255,7 +255,9 @@ public:
 
 	void SetShapeGhostMode(const std::string& shapeName, bool on = true) {
 		mesh* m = gls.GetMesh(shapeName);
-		if (!m) return;
+		if (!m)
+			return;
+
 		if (on)
 			m->rendermode = RenderMode::LitWire;
 		else
