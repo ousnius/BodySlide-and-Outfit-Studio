@@ -409,7 +409,7 @@ void ConfigurationManager::SetDefaultBoolValue(const std::string& inName, bool n
 	if (FindCI(inName))
 		return;
 
-	SetValue(inName, newValue, true);
+	SetBoolValue(inName, newValue, true);
 }
 
 void ConfigurationManager::SetValue(const std::string& inName, const std::string& newValue, bool flagDefault) {
