@@ -91,6 +91,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("sliderExportOBJ"), OutfitStudioFrame::OnSliderExportOBJ)
 	EVT_MENU(XRCID("sliderExportOSD"), OutfitStudioFrame::OnSliderExportOSD)
 	EVT_MENU(XRCID("sliderExportTRI"), OutfitStudioFrame::OnSliderExportTRI)
+	EVT_MENU(XRCID("sliderExportToOBJs"), OutfitStudioFrame::OnSliderExportToOBJs)
 	EVT_MENU(XRCID("sliderNew"), OutfitStudioFrame::OnNewSlider)
 	EVT_MENU(XRCID("sliderNewZap"), OutfitStudioFrame::OnNewZapSlider)
 	EVT_MENU(XRCID("sliderNewCombined"), OutfitStudioFrame::OnNewCombinedSlider)
@@ -5691,7 +5692,7 @@ void OutfitStudioFrame::OnSliderExportBSD(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (selectedItems.size() > 1) {
-		wxString dir = wxDirSelector(_("Export .bsd slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		wxString dir = wxDirSelector(_("Export .bsd slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
 		if (dir.IsEmpty())
 			return;
 
@@ -5724,12 +5725,12 @@ void OutfitStudioFrame::OnSliderExportOBJ(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	if (selectedItems.size() > 1) {
-		wxString dir = wxDirSelector(_("Export .obj slider data to directory"), wxEmptyString, wxDD_DIR_MUST_EXIST, wxDefaultPosition, this);
+		wxString dir = wxDirSelector(_("Export .obj slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
 		if (dir.IsEmpty())
 			return;
 
 		for (auto &i : selectedItems) {
-			std::string targetFile = std::string(dir.ToUTF8()) + "\\" + i->GetShape()->GetName() + "_" + activeSlider + ".obj";
+			std::string targetFile = std::string(dir.ToUTF8()) + "/" + i->GetShape()->GetName() + "_" + activeSlider + ".obj";
 			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", activeSlider, i->GetShape()->GetName(), targetFile);
 			project->SaveSliderOBJ(activeSlider, i->GetShape(), targetFile);
 		}
@@ -5782,6 +5783,30 @@ void OutfitStudioFrame::OnSliderExportTRI(wxCommandEvent& WXUNUSED(event)) {
 		wxLogError("Failed to export TRI file to '%s'!", fn);
 		wxMessageBox(_("Failed to export TRI file!"), _("Error"), wxICON_ERROR);
 		return;
+	}
+}
+
+void OutfitStudioFrame::OnSliderExportToOBJs(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetWorkNif()->IsValid()) {
+		wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
+		return;
+	}
+
+	wxString dir = wxDirSelector(_("Export .obj slider data to directory"), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, this);
+	if (dir.IsEmpty())
+		return;
+
+	std::vector<std::string> sliderList;
+	project->GetSliderList(sliderList);
+
+	wxLogMessage("Exporting sliders to OBJ files in '%s'...", dir);
+	for (auto &shape : project->GetWorkNif()->GetShapes()) {
+		for (auto &slider : sliderList) {
+			std::string targetFile = std::string(dir.ToUTF8()) + "/" + shape->GetName() + "_" + slider + ".obj";
+			wxLogMessage("Exporting OBJ slider data of '%s' for shape '%s' to '%s'...", slider, shape->GetName(), targetFile);
+			if (project->SaveSliderOBJ(slider, shape, targetFile, true))
+				wxLogError("Failed to export OBJ file '%s'!", targetFile);
+		}
 	}
 }
 

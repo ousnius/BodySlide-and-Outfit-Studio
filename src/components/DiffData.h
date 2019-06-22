@@ -47,9 +47,9 @@ public:
 	void SumDiff(const std::string& name, const std::string& target, ushort index, Vector3& newdiff);
 	void ScaleDiff(const std::string& name, const std::string& target, float scalevalue);
 	void OffsetDiff(const std::string& name, const std::string& target, Vector3 &offset);
-	void ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector3>* inOutResult);
-	void ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector2>* inOutResult);
-	void ApplyClamp(const std::string& set, const std::string& target, std::vector<Vector3>* inOutResult);
+	bool ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector3>* inOutResult);
+	bool ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector2>* inOutResult);
+	bool ApplyClamp(const std::string& set, const std::string& target, std::vector<Vector3>* inOutResult);
 	std::unordered_map<ushort, Vector3>* GetDiffSet(const std::string& targetDataName);
 	void GetDiffIndices(const std::string& set, const std::string& target, std::vector<ushort>& outIndices, float threshold = 0.0f);
 

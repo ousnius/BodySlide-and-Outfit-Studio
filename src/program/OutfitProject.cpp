@@ -924,7 +924,7 @@ int OutfitProject::SaveSliderBSD(const std::string& sliderName, NiShape* shape, 
 	return 0;
 }
 
-int OutfitProject::SaveSliderOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName) {
+int OutfitProject::SaveSliderOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName, const bool onlyDiff) {
 	if (!shape)
 		return 1;
 
@@ -943,10 +943,15 @@ int OutfitProject::SaveSliderOBJ(const std::string& sliderName, NiShape* shape, 
 
 	if (IsBaseShape(shape)) {
 		std::string sliderData = activeSet[sliderName].TargetDataName(target);
-		baseDiffData.ApplyDiff(sliderData, target, 1.0f, &outVerts);
+		bool foundDiff = baseDiffData.ApplyDiff(sliderData, target, 1.0f, &outVerts);
+		if (onlyDiff && !foundDiff)
+			return 0;
 	}
-	else
-		morpher.ApplyResultToVerts(sliderName, target, &outVerts);
+	else {
+		bool foundDiff = morpher.ApplyResultToVerts(sliderName, target, &outVerts);
+		if (onlyDiff && !foundDiff)
+			return 0;
+	}
 
 	ObjFile obj;
 	obj.SetScale(Vector3(0.1f, 0.1f, 0.1f));

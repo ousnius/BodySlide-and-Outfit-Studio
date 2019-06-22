@@ -119,7 +119,7 @@ public:
 	bool SetSliderFromFBX(const std::string& sliderName, NiShape* shape, const std::string& fileName);
 	void SetSliderFromDiff(const std::string& sliderName, NiShape* shape, std::unordered_map<ushort, Vector3>& diff);
 	int SaveSliderBSD(const std::string& sliderName, NiShape* shape, const std::string& fileName);
-	int SaveSliderOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName);
+	int SaveSliderOBJ(const std::string& sliderName, NiShape* shape, const std::string& fileName, const bool onlyDiff = false);
 	bool WriteMorphTRI(const std::string& triPath);
 	bool WriteHeadTRI(NiShape* shape, const std::string& triPath);
 

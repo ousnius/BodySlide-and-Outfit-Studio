@@ -1105,6 +1105,7 @@ private:
 	void OnSliderExportOBJ(wxCommandEvent& event);
 	void OnSliderExportOSD(wxCommandEvent& event);
 	void OnSliderExportTRI(wxCommandEvent& event);
+	void OnSliderExportToOBJs(wxCommandEvent& event);
 
 	void OnNewSlider(wxCommandEvent& event);
 	void OnNewZapSlider(wxCommandEvent& event);

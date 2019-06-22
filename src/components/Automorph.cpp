@@ -81,20 +81,20 @@ void Automorph::UnlinkRefDiffData() {
 	srcDiffData = &__srcDiffData;
 }
 
-void Automorph::ApplyDiffToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength) {
-	srcDiffData->ApplyDiff(sliderName, shapeTargetName, strength, inOutResult);
+bool Automorph::ApplyDiffToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength) {
+	return srcDiffData->ApplyDiff(sliderName, shapeTargetName, strength, inOutResult);
 }
 
-void Automorph::ApplyResultToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength) {
+bool Automorph::ApplyResultToVerts(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector3>* inOutResult, float strength) {
 	std::string setname = ResultDataName(shapeTargetName, sliderName);
 
-	resultDiffData.ApplyDiff(setname, shapeTargetName, strength, inOutResult);
+	return resultDiffData.ApplyDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
-void Automorph::ApplyResultToUVs(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector2>* inOutResult, float strength) {
+bool Automorph::ApplyResultToUVs(const std::string& sliderName, const std::string& shapeTargetName, std::vector<Vector2>* inOutResult, float strength) {
 	std::string setname = ResultDataName(shapeTargetName, sliderName);
 
-	resultDiffData.ApplyUVDiff(setname, shapeTargetName, strength, inOutResult);
+	return resultDiffData.ApplyUVDiff(setname, shapeTargetName, strength, inOutResult);
 }
 
 void Automorph::SourceShapesFromNif(NifFile &baseNif) {

@@ -286,12 +286,12 @@ void DiffDataSets::OffsetDiff(const std::string& name, const std::string& target
 		resultIt->second += offset;
 }
 
-void DiffDataSets::ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector2>* inOutResult) {
+bool DiffDataSets::ApplyUVDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector2>* inOutResult) {
 	if (percent == 0.0f)
-		return;
+		return false;
 
 	if (!TargetMatch(set, target))
-		return;
+		return false;
 
 	int maxidx = (*inOutResult).size();
 	std::unordered_map<ushort, Vector3>* data = &namedSet[set];
@@ -303,14 +303,16 @@ void DiffDataSets::ApplyUVDiff(const std::string& set, const std::string& target
 		(*inOutResult)[resultIt->first].u += resultIt->second.x * percent;
 		(*inOutResult)[resultIt->first].v += resultIt->second.y * percent;
 	}
+
+	return true;
 }
 
-void DiffDataSets::ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector3>* inOutResult) {
+bool DiffDataSets::ApplyDiff(const std::string& set, const std::string& target, float percent, std::vector<Vector3>* inOutResult) {
 	if (percent == 0.0f)
-		return;
+		return false;
 
 	if (!TargetMatch(set, target))
-		return;
+		return false;
 
 	int maxidx = (*inOutResult).size();
 	std::unordered_map<ushort, Vector3>* data = &namedSet[set];
@@ -323,11 +325,13 @@ void DiffDataSets::ApplyDiff(const std::string& set, const std::string& target, 
 		(*inOutResult)[resultIt->first].y += resultIt->second.y * percent;
 		(*inOutResult)[resultIt->first].z += resultIt->second.z * percent;
 	}
+
+	return true;
 }
 
-void DiffDataSets::ApplyClamp(const std::string& set, const std::string& target, std::vector<Vector3>* inOutResult) {
+bool DiffDataSets::ApplyClamp(const std::string& set, const std::string& target, std::vector<Vector3>* inOutResult) {
 	if (!TargetMatch(set, target))
-		return;
+		return false;
 
 	int maxidx = (*inOutResult).size();
 	std::unordered_map<ushort, Vector3>* data = &namedSet[set];
@@ -340,6 +344,8 @@ void DiffDataSets::ApplyClamp(const std::string& set, const std::string& target,
 		(*inOutResult)[resultIt->first].y = resultIt->second.y;
 		(*inOutResult)[resultIt->first].z = resultIt->second.z;
 	}
+
+	return true;
 }
 
 std::unordered_map<ushort, Vector3>* DiffDataSets::GetDiffSet(const std::string& targetDataName) {

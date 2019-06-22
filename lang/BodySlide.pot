@@ -777,6 +777,12 @@ msgstr ""
 msgid "Exports TRI morphs to a TRI file."
 msgstr ""
 
+msgid "Export to OBJs..."
+msgstr ""
+
+msgid "Export all sliders to an OBJ file per slider."
+msgstr ""
+
 msgid "Import Slider Data"
 msgstr ""
 
