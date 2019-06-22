@@ -63,12 +63,13 @@ class TriHeadFile {
 	uint flags = 1;
 	uint numMorphs = 0;
 	uint numModifiers = 0;
-	uint modVertices = 0;
+	uint numModVertices = 0;
 	uint unknown7 = 0;
 	uint unknown8 = 0;
 	uint unknown9 = 0;
 	uint unknown10 = 0;
 	std::vector<Vector3> vertices;
+	std::vector<Vector3> modVertices;
 	std::vector<Triangle> triangles;
 	std::vector<Vector2> uv;
 	std::vector<Triangle> tex;

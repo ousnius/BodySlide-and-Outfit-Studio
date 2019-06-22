@@ -27,7 +27,8 @@ bool TriFile::Read(const std::string& fileName) {
 			std::string shapeName;
 			triFile.read((char*)&shapeLength, 1);
 			shapeName.resize(shapeLength, ' ');
-			triFile.read((char*)&shapeName.front(), shapeLength);
+			if (shapeLength > 0)
+				triFile.read((char*)&shapeName.front(), shapeLength);
 
 			ushort morphCount = 0;
 			triFile.read((char*)&morphCount, 2);
@@ -37,7 +38,8 @@ bool TriFile::Read(const std::string& fileName) {
 				std::string morphName;
 				triFile.read((char*)&morphLength, 1);
 				morphName.resize(morphLength, ' ');
-				triFile.read((char*)&morphName.front(), morphLength);
+				if (morphLength > 0)
+					triFile.read((char*)&morphName.front(), morphLength);
 
 				std::map<int, Vector3> morphOffsets;
 				float mult = 0.0f;
@@ -80,7 +82,8 @@ bool TriFile::Read(const std::string& fileName) {
 				std::string shapeName;
 				triFile.read((char*)&shapeLength, 1);
 				shapeName.resize(shapeLength, ' ');
-				triFile.read((char*)&shapeName.front(), shapeLength);
+				if (shapeLength > 0)
+					triFile.read((char*)&shapeName.front(), shapeLength);
 
 				ushort morphCount = 0;
 				triFile.read((char*)&morphCount, 2);
@@ -90,7 +93,8 @@ bool TriFile::Read(const std::string& fileName) {
 					std::string morphName;
 					triFile.read((char*)&morphLength, 1);
 					morphName.resize(morphLength, ' ');
-					triFile.read((char*)&morphName.front(), morphLength);
+					if (morphLength > 0)
+						triFile.read((char*)&morphName.front(), morphLength);
 
 					std::map<int, Vector3> morphOffsets;
 					float mult = 0.0f;
@@ -147,7 +151,9 @@ bool TriFile::Write(const std::string& fileName) {
 					byte shapeLength = shape.first.length();
 					std::string shapeName = shape.first;
 					triFile.write((char*)&shapeLength, 1);
-					triFile.write(shapeName.c_str(), shapeLength);
+					if (shapeLength > 0)
+						triFile.write(shapeName.c_str(), shapeLength);
+
 					triFile.write((char*)&morphCount, 2);
 
 					for (auto& morph : shape.second) {
@@ -157,7 +163,8 @@ bool TriFile::Write(const std::string& fileName) {
 						byte morphLength = morph->name.length();
 						std::string morphName = morph->name;
 						triFile.write((char*)&morphLength, 1);
-						triFile.write(morphName.c_str(), morphLength);
+						if (morphLength > 0)
+							triFile.write(morphName.c_str(), morphLength);
 
 						float mult = 0.0f;
 						for (auto& v : morph->offsets) {
@@ -201,7 +208,9 @@ bool TriFile::Write(const std::string& fileName) {
 					byte shapeLength = shape.first.length();
 					std::string shapeName = shape.first;
 					triFile.write((char*)&shapeLength, 1);
-					triFile.write(shapeName.c_str(), shapeLength);
+					if (shapeLength > 0)
+						triFile.write(shapeName.c_str(), shapeLength);
+
 					triFile.write((char*)&morphCount, 2);
 
 					for (auto& morph : shape.second) {
@@ -211,7 +220,8 @@ bool TriFile::Write(const std::string& fileName) {
 						byte morphLength = morph->name.length();
 						std::string morphName = morph->name;
 						triFile.write((char*)&morphLength, 1);
-						triFile.write(morphName.c_str(), morphLength);
+						if (morphLength > 0)
+							triFile.write(morphName.c_str(), morphLength);
 
 						float mult = 0.0f;
 						for (auto& v : morph->offsets) {
@@ -362,7 +372,7 @@ bool TriHeadFile::Read(const std::string& fileName) {
 		triHeadFile.read((char*)&flags, 4);
 		triHeadFile.read((char*)&numMorphs, 4);
 		triHeadFile.read((char*)&numModifiers, 4);
-		triHeadFile.read((char*)&modVertices, 4);
+		triHeadFile.read((char*)&numModVertices, 4);
 		triHeadFile.read((char*)&unknown7, 4);
 		triHeadFile.read((char*)&unknown8, 4);
 		triHeadFile.read((char*)&unknown9, 4);
@@ -371,6 +381,10 @@ bool TriHeadFile::Read(const std::string& fileName) {
 		vertices.resize(numVertices);
 		for (int i = 0; i < numVertices; i++)
 			triHeadFile.read((char*)&vertices[i], 12);
+
+		modVertices.resize(numModVertices);
+		for (int i = 0; i < numModVertices; i++)
+			triHeadFile.read((char*)&modVertices[i], 12);
 
 		triangles.resize(numTriangles);
 		for (int i = 0; i < numTriangles; i++) {
@@ -406,7 +420,9 @@ bool TriHeadFile::Read(const std::string& fileName) {
 			triHeadFile.read((char*)&morphNameLength, 4);
 			morphs[i].morphName.resize(morphNameLength, ' ');
 
-			triHeadFile.read((char*)&morphs[i].morphName.front(), morphNameLength);
+			if (morphNameLength > 0)
+				triHeadFile.read((char*)&morphs[i].morphName.front(), morphNameLength);
+
 			triHeadFile.read((char*)&morphs[i].multiplier, 4);
 
 			morphs[i].vertices.resize(numVertices);
@@ -419,6 +435,26 @@ bool TriHeadFile::Read(const std::string& fileName) {
 				triHeadFile.read((char*)&z, 2);
 
 				morphs[i].vertices[j] = Vector3(x * morphs[i].multiplier, y * morphs[i].multiplier, z * morphs[i].multiplier);
+			}
+		}
+
+		// Read but don't store
+		for (int i = 0; i < numModifiers; i++) {
+			uint morphNameLength = 0;
+			triHeadFile.read((char*)&morphNameLength, 4);
+
+			std::string morphName;
+			morphName.resize(morphNameLength, ' ');
+
+			if (morphNameLength > 0)
+				triHeadFile.read((char*)&morphName.front(), morphNameLength);
+
+			uint blockLength = 0;
+			triHeadFile.read((char*)&blockLength, 4);
+
+			for (int j = 0; j < blockLength; j++) {
+				uint index = 0;
+				triHeadFile.read((char*)&index, 4);
 			}
 		}
 	}
@@ -437,6 +473,10 @@ bool TriHeadFile::Write(const std::string& fileName) {
 		triHeadFile.write(fileType.c_str(), 3);
 		triHeadFile.write(version.c_str(), 3);
 
+		// Not supported yet
+		numModVertices = 0;
+		numModifiers = 0;
+
 		triHeadFile.write((char*)&numVertices, 4);
 		triHeadFile.write((char*)&numTriangles, 4);
 		triHeadFile.write((char*)&numQuads, 4);
@@ -446,7 +486,7 @@ bool TriHeadFile::Write(const std::string& fileName) {
 		triHeadFile.write((char*)&flags, 4);
 		triHeadFile.write((char*)&numMorphs, 4);
 		triHeadFile.write((char*)&numModifiers, 4);
-		triHeadFile.write((char*)&modVertices, 4);
+		triHeadFile.write((char*)&numModVertices, 4);
 		triHeadFile.write((char*)&unknown7, 4);
 		triHeadFile.write((char*)&unknown8, 4);
 		triHeadFile.write((char*)&unknown9, 4);
@@ -480,7 +520,8 @@ bool TriHeadFile::Write(const std::string& fileName) {
 			auto& morph = morphs[i];
 			uint morphNameLength = morph.morphName.length();
 			triHeadFile.write((char*)&morphNameLength, 4);
-			triHeadFile.write(morph.morphName.c_str(), morphNameLength);
+			if (morphNameLength > 0)
+				triHeadFile.write(morph.morphName.c_str(), morphNameLength);
 
 			morph.multiplier = 0.0f;
 			for (auto& v : morph.vertices) {
