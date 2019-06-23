@@ -2270,32 +2270,34 @@ void OutfitStudioFrame::RefreshGUIFromProj() {
 
 	AnimationGUIFromProj();
 
-	wxTreeItemIdValue cookie;
-	wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
-	while (child.IsOk()) {
-		bool vis = true;
-		bool ghost = false;
+	if (outfitRoot.IsOk()) {
+		wxTreeItemIdValue cookie;
+		wxTreeItemId child = outfitShapes->GetFirstChild(outfitRoot, cookie);
+		while (child.IsOk()) {
+			bool vis = true;
+			bool ghost = false;
 
-		int state = outfitShapes->GetItemState(child);
-		switch (state) {
-		case 1:
-			vis = false;
-			ghost = false;
-			break;
-		case 2:
-			vis = true;
-			ghost = true;
-			break;
-		default:
-			vis = true;
-			ghost = false;
-			break;
+			int state = outfitShapes->GetItemState(child);
+			switch (state) {
+			case 1:
+				vis = false;
+				ghost = false;
+				break;
+			case 2:
+				vis = true;
+				ghost = true;
+				break;
+			default:
+				vis = true;
+				ghost = false;
+				break;
+			}
+
+			std::string shapeName = outfitShapes->GetItemText(child).ToUTF8();
+			glView->SetShapeGhostMode(shapeName, ghost);
+			glView->ShowShape(shapeName, vis);
+			child = outfitShapes->GetNextChild(outfitRoot, cookie);
 		}
-
-		std::string shapeName = outfitShapes->GetItemText(child).ToUTF8();
-		glView->SetShapeGhostMode(shapeName, ghost);
-		glView->ShowShape(shapeName, vis);
-		child = outfitShapes->GetNextChild(outfitRoot, cookie);
 	}
 
 	glView->Render();
@@ -2963,7 +2965,6 @@ void OutfitStudioFrame::OnImportTRIHead(wxCommandEvent& WXUNUSED(event)) {
 
 		auto morphs = tri.GetMorphs();
 		for (auto &morph : morphs) {
-			morph.morphName = morph.morphName.c_str();
 			if (!project->ValidSlider(morph.morphName)) {
 				createSliderGUI(morph.morphName, project->SliderCount(), sliderScroll, sliderScroll->GetSizer());
 				project->AddEmptySlider(morph.morphName);

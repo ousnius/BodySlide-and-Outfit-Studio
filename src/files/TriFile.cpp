@@ -416,16 +416,20 @@ bool TriHeadFile::Read(const std::string& fileName) {
 
 		morphs.resize(numMorphs);
 		for (int i = 0; i < numMorphs; i++) {
+			auto& morph = morphs[i];
+
 			uint morphNameLength = 0;
 			triHeadFile.read((char*)&morphNameLength, 4);
-			morphs[i].morphName.resize(morphNameLength, ' ');
+			morph.morphName.resize(morphNameLength, ' ');
 
-			if (morphNameLength > 0)
-				triHeadFile.read((char*)&morphs[i].morphName.front(), morphNameLength);
+			if (morphNameLength > 0) {
+				triHeadFile.read((char*)&morph.morphName.front(), morphNameLength);
+				morph.morphName = morph.morphName.c_str();
+			}
 
-			triHeadFile.read((char*)&morphs[i].multiplier, 4);
+			triHeadFile.read((char*)&morph.multiplier, 4);
 
-			morphs[i].vertices.resize(numVertices);
+			morph.vertices.resize(numVertices);
 			for (int j = 0; j < numVertices; j++) {
 				short x = 0;
 				triHeadFile.read((char*)&x, 2);
@@ -434,7 +438,7 @@ bool TriHeadFile::Read(const std::string& fileName) {
 				short z = 0;
 				triHeadFile.read((char*)&z, 2);
 
-				morphs[i].vertices[j] = Vector3(x * morphs[i].multiplier, y * morphs[i].multiplier, z * morphs[i].multiplier);
+				morph.vertices[j] = Vector3(x * morph.multiplier, y * morph.multiplier, z * morph.multiplier);
 			}
 		}
 
@@ -518,10 +522,13 @@ bool TriHeadFile::Write(const std::string& fileName) {
 
 		for (int i = 0; i < numMorphs; i++) {
 			auto& morph = morphs[i];
-			uint morphNameLength = morph.morphName.length();
+
+			uint morphNameLength = morph.morphName.length() + 1;
 			triHeadFile.write((char*)&morphNameLength, 4);
-			if (morphNameLength > 0)
-				triHeadFile.write(morph.morphName.c_str(), morphNameLength);
+			if (!morph.morphName.empty()) {
+				triHeadFile.write(morph.morphName.c_str(), morph.morphName.length());
+				triHeadFile.put('\0');
+			}
 
 			morph.multiplier = 0.0f;
 			for (auto& v : morph.vertices) {
