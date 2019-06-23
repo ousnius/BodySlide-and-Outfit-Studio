@@ -210,7 +210,7 @@ void Automorph::ClearProximityCache() {
 	prox_cache.clear();
 }
 
-void Automorph::BuildProximityCache(const std::string& shapeName, const float& proximityRadius) {
+void Automorph::BuildProximityCache(const std::string& shapeName, const float proximityRadius) {
 	mesh* m = sourceShapes[shapeName];
 	int maxCount = 0;
 	int minCount = 60000;
@@ -338,7 +338,7 @@ std::string Automorph::ResultDataName(const std::string& shapeName, const std::s
 	return f->second;
 }
 
-void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int& maxResults) {
+void Automorph::GenerateResultDiff(const std::string& shapeName, const std::string &sliderName, const std::string& refDataName, const int maxResults) {
 	std::unordered_map<ushort, Vector3>* diffData = srcDiffData->GetDiffSet(refDataName);
 	if (!diffData)
 		return;

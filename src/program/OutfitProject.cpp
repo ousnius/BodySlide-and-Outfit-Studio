@@ -1338,7 +1338,7 @@ void OutfitProject::RotateShape(NiShape* shape, const Vector3& angle, std::unord
 	workNif.RotateShape(shape, angle, mask);
 }
 
-void OutfitProject::CopyBoneWeights(NiShape* shape, const float& proximityRadius, const int& maxResults, std::unordered_map<ushort, float>* mask, std::vector<std::string>* inBoneList) {
+void OutfitProject::CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>* mask, std::vector<std::string>* inBoneList) {
 	if (!shape || !baseShape)
 		return;
 
@@ -2081,16 +2081,16 @@ void OutfitProject::InitConform() {
 	}
 }
 
-void OutfitProject::ConformShape(NiShape* shape) {
+void OutfitProject::ConformShape(NiShape* shape, const float proximityRadius, const int maxResults) {
 	if (!workNif.IsValid() || !baseShape)
 		return;
 
-	morpher.BuildProximityCache(shape->GetName());
+	morpher.BuildProximityCache(shape->GetName(), proximityRadius);
 
 	std::string refTarget = ShapeToTarget(baseShape->GetName());
 	for (int i = 0; i < activeSet.size(); i++)
 		if (SliderShow(i) && !SliderZap(i) && !SliderUV(i))
-			morpher.GenerateResultDiff(shape->GetName(), activeSet[i].name, activeSet[i].TargetDataName(refTarget));
+			morpher.GenerateResultDiff(shape->GetName(), activeSet[i].name, activeSet[i].TargetDataName(refTarget), maxResults);
 }
 
 bool OutfitProject::DeleteVerts(NiShape* shape, const std::unordered_map<ushort, float>& mask) {

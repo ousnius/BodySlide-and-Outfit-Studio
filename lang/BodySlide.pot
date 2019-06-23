@@ -1440,7 +1440,19 @@ msgstr ""
 msgid "Each vertex of the reference will copy its weights to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become weighted and work well. Often, the default values are sufficient."
 msgstr ""
 
+msgid "Each vertex of the reference will copy its slider data to the nearest collection of vertices within the given radius. Bear in mind that some geometry will always require manual tweaking to become conformed and work well. Often, the default values are sufficient."
+msgstr ""
+
 msgid "Bone information incomplete. Exported data will not contain correct bone entries! Be sure to load a reference NIF prior to export."
+msgstr ""
+
+msgid "No Target Limit"
+msgstr ""
+
+msgid "Default"
+msgstr ""
+
+msgid "Even Movement"
 msgstr ""
 
 msgid "Export Warning"

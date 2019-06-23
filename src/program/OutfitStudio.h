@@ -107,8 +107,13 @@ public:
 };
 
 struct WeightCopyOptions {
-	float proximityRadius;
-	int maxResults;
+	float proximityRadius = 0.0f;
+	int maxResults = 0;
+};
+
+struct ConformOptions {
+	float proximityRadius = 0.0f;
+	int maxResults = 0;
 };
 
 struct ReferenceTemplate {
@@ -1096,6 +1101,8 @@ private:
 
 	void OnLoadPreset(wxCommandEvent& event);
 	void OnSavePreset(wxCommandEvent& event);
+	bool ShowConform(ConformOptions& options);
+	void ConformSliders(NiShape* shape, const ConformOptions options = ConformOptions());
 	void OnSliderConform(wxCommandEvent& event);
 	void OnSliderConformAll(wxCommandEvent& event);
 	void OnSliderImportBSD(wxCommandEvent& event);

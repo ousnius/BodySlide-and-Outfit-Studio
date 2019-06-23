@@ -61,11 +61,11 @@ public:
 	void DeleteVerts(const std::string& shapeName, const std::vector<ushort>& indices);
 
 	void ClearProximityCache();
-	void BuildProximityCache(const std::string& shapeName, const float& proximityRadius = 10.0f);
+	void BuildProximityCache(const std::string& shapeName, const float proximityRadius = 10.0f);
 
 	// shapeName = name of the mesh to morph (eg "IronArmor") also known as target name.
 	// sliderName = name of the morph to apply (eg "BreastsSH").
-	void GenerateResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& refDataName, const int& maxResults = 10);
+	void GenerateResultDiff(const std::string& shapeName, const std::string& sliderName, const std::string& refDataName, const int maxResults = 10);
 
 	void SetResultDataName(const std::string& shapeName, const std::string& sliderName, const std::string& dataName);
 	std::string ResultDataName(const std::string& shapeName, const std::string& sliderName);

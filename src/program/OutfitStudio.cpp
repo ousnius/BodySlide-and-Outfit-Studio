@@ -6141,77 +6141,143 @@ void OutfitStudioFrame::OnSliderProperties(wxCommandEvent& WXUNUSED(event)) {
 	}
 }
 
-void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& event) {
-	std::vector<std::string> shapes = project->GetWorkNif()->GetShapeNames();
-
-	if (shapes.size() - 1 == 0 || !project->GetBaseShape())
+void OutfitStudioFrame::ConformSliders(NiShape* shape, const ConformOptions options) {
+	if (project->IsBaseShape(shape))
 		return;
 
-	wxLogMessage("Conforming all shapes...");
-	StartProgress(_("Conforming all shapes..."));
-	int inc = 100 / shapes.size() - 1;
-	int pos = 0;
+	std::string shapeName = shape->GetName();
+	wxLogMessage("Conforming '%s'...", shapeName);
+	UpdateProgress(50, _("Conforming: ") + shapeName);
 
-	wxTreeItemId curItem;
-	wxTreeItemIdValue cookie;
-	auto selectedItemsSave = selectedItems;
+	project->morpher.CopyMeshMask(glView->GetMesh(shapeName), shapeName);
+	project->ConformShape(shape, options.proximityRadius, options.maxResults);
 
-	curItem = outfitShapes->GetFirstChild(outfitRoot, cookie);
-	while (curItem.IsOk()) {
-		selectedItems.clear();
-		selectedItems.push_back((ShapeItemData*)outfitShapes->GetItemData(curItem));
-		UpdateProgress(pos * inc, _("Conforming: ") + selectedItems.front()->GetShape()->GetName());
-		StartSubProgress(pos * inc, pos * inc + inc);
-		OnSliderConform(event);
-		curItem = outfitShapes->GetNextChild(outfitRoot, cookie);
-		pos++;
-	}
-
-	selectedItems = std::move(selectedItemsSave);
-
-	if (statusBar)
-		statusBar->SetStatusText(_("All shapes conformed."));
-
-	wxLogMessage("All shapes conformed.");
-	UpdateProgress(100, _("Finished"));
-	EndProgress();
+	UpdateProgress(99);
 }
 
 void OutfitStudioFrame::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
-	StartProgress(_("Conforming..."));
-	if (!project->GetBaseShape()) {
-		EndProgress();
+	if (!project->GetBaseShape())
 		return;
-	}
 
-	wxLogMessage("Conforming...");
-	ZeroSliders();
+	ConformOptions options;
+	if (ShowConform(options)) {
+		wxLogMessage("Conforming...");
+		ZeroSliders();
 
-	for (auto &i : selectedItems) {
-		if (project->IsBaseShape(i->GetShape()))
-			continue;
-
-		std::string shapeName = i->GetShape()->GetName();
-		wxLogMessage("Conforming '%s'...", shapeName);
-		UpdateProgress(1, _("Initializing data..."));
+		StartProgress(_("Initializing data..."));
 		project->InitConform();
 
-		UpdateProgress(50, _("Conforming: ") + shapeName);
+		for (auto &i : selectedItems)
+			ConformSliders(i->GetShape(), options);
 
-		project->morpher.CopyMeshMask(glView->GetMesh(shapeName), shapeName);
-		project->ConformShape(i->GetShape());
+		project->morpher.ClearProximityCache();
 
-		UpdateProgress(99);
+		if (statusBar)
+			statusBar->SetStatusText(_("Shape(s) conformed."));
+
+		wxLogMessage("%d shape(s) conformed.", selectedItems.size());
+		UpdateProgress(100, _("Finished"));
+		EndProgress();
+	}
+}
+
+void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
+	if (!project->GetBaseShape())
+		return;
+
+	ConformOptions options;
+	if (ShowConform(options)) {
+		wxLogMessage("Conforming all shapes...");
+		ZeroSliders();
+
+		auto shapes = project->GetWorkNif()->GetShapes();
+
+		StartProgress(_("Conforming all shapes..."));
+		project->InitConform();
+
+		int inc = 100 / shapes.size() - 1;
+		int pos = 0;
+
+		for (auto &shape : shapes) {
+			UpdateProgress(pos * inc, _("Conforming: ") + shape->GetName());
+			StartSubProgress(pos * inc, pos * inc + inc);
+			ConformSliders(shape, options);
+			pos++;
+			EndProgress();
+		}
+
+		if (statusBar)
+			statusBar->SetStatusText(_("All shapes conformed."));
+
+		wxLogMessage("All shapes conformed.");
+		UpdateProgress(100, _("Finished"));
+		EndProgress();
+	}
+}
+
+bool OutfitStudioFrame::ShowConform(ConformOptions& options) {
+	wxDialog dlg;
+	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgConforming")) {
+		XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
+			float changed = XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->GetValue() / 1000.0f;
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", changed));
+		});
+
+		XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->Bind(wxEVT_TEXT, [&dlg](wxCommandEvent&) {
+			float changed = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(changed * 1000);
+		});
+
+		XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
+			int changed = XRCCTRL(dlg, "maxResultsSlider", wxSlider)->GetValue();
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue(wxString::Format("%d", changed));
+		});
+
+		auto noTargetLimitAction = [&]() {
+			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Enable(!noTargetLimit);
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable(!noTargetLimit);
+
+			if (noTargetLimit) {
+				XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("5.00000");
+				XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(5000);
+			}
+		};
+
+		XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
+			noTargetLimitAction();
+		});
+
+		XRCCTRL(dlg, "presetDefault", wxButton)->Bind(wxEVT_BUTTON, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
+			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(false);
+			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue("10.00000");
+			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(10000);
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue("10");
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->SetValue(10);
+			noTargetLimitAction();
+		});
+
+		XRCCTRL(dlg, "presetEvenMovement", wxButton)->Bind(wxEVT_BUTTON, [&dlg, &noTargetLimitAction](wxCommandEvent&) {
+			XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->SetValue(true);
+			noTargetLimitAction();
+		});
+
+		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
+
+		if (dlg.ShowModal() == wxID_OK) {
+			options.proximityRadius = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
+
+			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
+			if (!noTargetLimit)
+				options.maxResults = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
+			else
+				options.maxResults = std::numeric_limits<int>::max();
+
+			return true;
+		}
 	}
 
-	project->morpher.ClearProximityCache();
-
-	if (statusBar)
-		statusBar->SetStatusText(_("Shape(s) conformed."));
-
-	wxLogMessage("%d shape(s) conformed.", selectedItems.size());
-	UpdateProgress(100, _("Finished"));
-	EndProgress();
+	return false;
 }
 
 void OutfitStudioFrame::OnInvertUV(wxCommandEvent& event) {
@@ -7091,37 +7157,41 @@ bool OutfitStudioFrame::ShowWeightCopy(WeightCopyOptions& options) {
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgCopyWeights")) {
 		XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
 			float changed = XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->GetValue() / 1000.0f;
-			changed = std::min(changed, 15.0f);
-			changed = std::max(changed, 0.0f);
 			XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->ChangeValue(wxString::Format("%0.5f", changed));
 		});
 
 		XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->Bind(wxEVT_TEXT, [&dlg](wxCommandEvent&) {
 			float changed = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
-			changed = std::min(changed, 15.0f);
-			changed = std::max(changed, 0.0f);
 			XRCCTRL(dlg, "proximityRadiusSlider", wxSlider)->SetValue(changed * 1000);
 		});
 
 		XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Bind(wxEVT_SLIDER, [&dlg](wxCommandEvent&) {
 			int changed = XRCCTRL(dlg, "maxResultsSlider", wxSlider)->GetValue();
-			changed = std::min(changed, 12);
-			changed = std::max(changed, 0);
 			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->ChangeValue(wxString::Format("%d", changed));
 		});
 
 		XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Bind(wxEVT_TEXT, [&dlg](wxCommandEvent&) {
 			int changed = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
-			changed = std::min(changed, 12);
-			changed = std::max(changed, 0);
 			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->SetValue(changed);
+		});
+
+		XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->Bind(wxEVT_CHECKBOX, [&dlg](wxCommandEvent&) {
+			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
+			XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->Enable(!noTargetLimit);
+			XRCCTRL(dlg, "maxResultsSlider", wxSlider)->Enable(!noTargetLimit);
 		});
 
 		dlg.Bind(wxEVT_CHAR_HOOK, &OutfitStudioFrame::OnEnterClose, this);
 
 		if (dlg.ShowModal() == wxID_OK) {
 			options.proximityRadius = atof(XRCCTRL(dlg, "proximityRadiusText", wxTextCtrl)->GetValue().c_str());
-			options.maxResults = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
+
+			bool noTargetLimit = XRCCTRL(dlg, "noTargetLimit", wxCheckBox)->IsChecked();
+			if (!noTargetLimit)
+				options.maxResults = atol(XRCCTRL(dlg, "maxResultsText", wxTextCtrl)->GetValue().c_str());
+			else
+				options.maxResults = std::numeric_limits<int>::max();
+
 			return true;
 		}
 	}

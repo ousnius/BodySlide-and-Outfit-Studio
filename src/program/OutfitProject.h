@@ -128,7 +128,7 @@ public:
 	float SliderDefault(int index, bool hi);
 
 	void InitConform();
-	void ConformShape(NiShape* shape);
+	void ConformShape(NiShape* shape, const float proximityRadius = 10.0f, const int maxResults = 10);
 
 	const std::string& ShapeToTarget(const std::string& shapeName);
 	int GetVertexCount(NiShape* shape);
@@ -160,7 +160,7 @@ public:
 	// This is done by creating several virtual sliders that contain weight offsets for each vertex per bone.
 	// These data sets are then temporarily linked to the AutoMorph class and result 'diffs' are generated.
 	// The resulting data is then written back to the outfit shape as the green color channel.
-	void CopyBoneWeights(NiShape* shape, const float& proximityRadius, const int& maxResults, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
+	void CopyBoneWeights(NiShape* shape, const float proximityRadius, const int maxResults, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	// Transfers the weights of the selected bones from reference to chosen shape 1:1. Requires same vertex count and order.
 	void TransferSelectedWeights(NiShape* shape, std::unordered_map<ushort, float>* mask = nullptr, std::vector<std::string>* inBoneList = nullptr);
 	bool HasUnweighted(std::vector<std::string>* shapeNames = nullptr);
