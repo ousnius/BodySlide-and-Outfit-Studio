@@ -292,15 +292,17 @@ void NiGeometryData::Create(std::vector<Vector3>* verts, std::vector<Triangle>*,
 	bounds = BoundingSphere(*verts);
 	numUVSets = 0;
 
-	size_t uvCount = texcoords->size();
-	if (uvCount == numVertices) {
-		uvSets.resize(1);
-		uvSets[0].resize(uvCount);
-		for (size_t uv = 0; uv < uvSets[0].size(); uv++)
-			uvSets[0][uv] = (*texcoords)[uv];
+	if (texcoords) {
+		size_t uvCount = texcoords->size();
+		if (uvCount == numVertices) {
+			uvSets.resize(1);
+			uvSets[0].resize(uvCount);
+			for (size_t uv = 0; uv < uvSets[0].size(); uv++)
+				uvSets[0][uv] = (*texcoords)[uv];
 
-		if (uvCount > 0)
-			numUVSets = 4097;
+			if (uvCount > 0)
+				numUVSets = 4097;
+		}
 	}
 
 	if (norms && norms->size() == numVertices) {
@@ -1826,12 +1828,14 @@ void NiTriBasedGeomData::Put(NiStream& stream) {
 void NiTriBasedGeomData::Create(std::vector<Vector3>* verts, std::vector<Triangle>* inTris, std::vector<Vector2>* texcoords, std::vector<Vector3>* norms) {
 	NiGeometryData::Create(verts, inTris, texcoords, norms);
 
-	ushort maxIndex = std::numeric_limits<ushort>().max();
-	size_t triCount = inTris->size();
-	if (triCount > maxIndex || numVertices == 0)
-		numTriangles = 0;
-	else
-		numTriangles = ushort(triCount);
+	if (inTris) {
+		ushort maxIndex = std::numeric_limits<ushort>().max();
+		size_t triCount = inTris->size();
+		if (triCount <= maxIndex && numVertices != 0)
+			numTriangles = ushort(triCount);
+		else
+			numTriangles = 0;
+	}
 }
 
 
