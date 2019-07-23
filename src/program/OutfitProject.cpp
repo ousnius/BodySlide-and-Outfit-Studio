@@ -2142,6 +2142,7 @@ void OutfitProject::DeleteShape(NiShape* shape) {
 		baseShape = nullptr;
 	}
 
+	owner->ClearSelected(shape);
 	workNif.DeleteShape(shape);
 }
 

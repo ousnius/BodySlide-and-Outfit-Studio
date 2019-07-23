@@ -813,6 +813,7 @@ public:
 
 	void UpdateShapeReference(NiShape* shape, NiShape* newShape);
 	std::vector<ShapeItemData*>& GetSelectedItems();
+	void ClearSelected(NiShape* shape);
 	std::string GetActiveBone();
 
 	bool NotifyStrokeStarting();

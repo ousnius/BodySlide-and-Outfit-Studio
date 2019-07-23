@@ -1670,6 +1670,17 @@ std::vector<ShapeItemData*>& OutfitStudioFrame::GetSelectedItems() {
 	return selectedItems;
 }
 
+void OutfitStudioFrame::ClearSelected(NiShape* shape) {
+	selectedItems.erase(
+		std::remove_if(
+			selectedItems.begin(),
+			selectedItems.end(),
+			[&](ShapeItemData* i) { return i->GetShape() == shape; }
+		),
+		selectedItems.end()
+	);
+}
+
 std::string OutfitStudioFrame::GetActiveBone() {
 	return activeBone;
 }
