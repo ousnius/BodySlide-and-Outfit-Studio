@@ -70,7 +70,7 @@
 								<border>5</border>
 								<object class="wxButton" name="btnEditProject">
 									<size>24,24</size>
-									<bitmap>res\images\LoadProj_sm.png</bitmap>
+									<bitmap>$(AppDir)\res\images\LoadProj_sm.png</bitmap>
 									<tooltip>Opens the current project in Outfit Studio</tooltip>
 								</object>
 							</object>

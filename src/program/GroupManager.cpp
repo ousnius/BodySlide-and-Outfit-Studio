@@ -4,6 +4,9 @@ See the included LICENSE file
 */
 
 #include "GroupManager.h"
+#include "../utils/ConfigurationManager.h"
+
+extern ConfigurationManager Config;
 
 wxBEGIN_EVENT_TABLE(GroupManager, wxDialog)
 	EVT_FILEPICKER_CHANGED(XRCID("fpGroupXML"), GroupManager::OnLoadGroup)
@@ -23,14 +26,14 @@ wxEND_EVENT_TABLE()
 GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	: allOutfits(std::move(outfits)) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	xrc->Load("res\\xrc\\GroupManager.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\GroupManager.xrc");
 	xrc->LoadDialog(this, parent, "dlgGroupManager");
 
 	SetSize(800, 500);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
-	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory("SliderGroups");
+	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "\\SliderGroups");
 	listGroups = XRCCTRL(*this, "listGroups", wxListBox);
 	groupName = XRCCTRL(*this, "groupName", wxTextCtrl);
 	btAddGroup = XRCCTRL(*this, "btAddGroup", wxButton);
@@ -46,7 +49,7 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 }
 
 GroupManager::~GroupManager() {
-	wxXmlResource::Get()->Unload("res\\xrc\\GroupManager.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\GroupManager.xrc");
 }
 
 void GroupManager::RefreshUI(const bool clearGroups) {
@@ -170,7 +173,7 @@ void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog file(this, "Saving group XML file...", "SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(Config["AppDir"]) + "\\SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (file.ShowModal() != wxID_OK)
 		return;
 

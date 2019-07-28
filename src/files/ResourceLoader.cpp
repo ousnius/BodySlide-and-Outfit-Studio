@@ -338,7 +338,7 @@ GLMaterial* ResourceLoader::AddMaterial(const std::vector<std::string>& textureF
 
 	if (texRefs[0] == 0) {
 		// Load default image
-		std::string defaultTex = "res\\images\\noimg.png";
+		std::string defaultTex = Config["AppDir"] + "\\res\\images\\noimg.png";
 		texRefs[0] = LoadTexture(defaultTex, false);
 
 		if (!texFiles.empty())

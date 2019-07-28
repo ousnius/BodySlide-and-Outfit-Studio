@@ -4,8 +4,11 @@ See the included LICENSE file
 */
 
 #include "PresetSaveDialog.h"
+#include "../utils/ConfigurationManager.h"
 
 #include <regex>
+
+extern ConfigurationManager Config;
 
 wxBEGIN_EVENT_TABLE(PresetSaveDialog, wxDialog) 
 	EVT_TEXT_ENTER(XRCID("spFilter"), PresetSaveDialog::FilterChanged)
@@ -16,7 +19,7 @@ wxEND_EVENT_TABLE()
 
 PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 	wxXmlResource* xrc = wxXmlResource::Get();
-	xrc->Load("res\\xrc\\SavePreset.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\SavePreset.xrc");
 	xrc->LoadDialog(this, parent, "dlgSavePreset");
 
 	SetDoubleBuffered(true);
@@ -35,7 +38,7 @@ PresetSaveDialog::PresetSaveDialog(wxWindow* parent) {
 }
 	
 PresetSaveDialog::~PresetSaveDialog() {
-	wxXmlResource::Get()->Unload("res\\xrc\\SavePreset.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\SavePreset.xrc");
 }
 
 void PresetSaveDialog::FilterGroups(const std::string& filter) {
@@ -90,7 +93,7 @@ void PresetSaveDialog::OnSave(wxCommandEvent& WXUNUSED(event)) {
 	outPresetName = XRCCTRL((*this), "spPresetName", wxTextCtrl)->GetValue().ToUTF8();
 	std::string presetFile = outPresetName + ".xml";
 
-	wxFileDialog savePresetDialog(this, "Choose a preset file", "SliderPresets", wxString::FromUTF8(presetFile), "Preset Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog savePresetDialog(this, "Choose a preset file", wxString::FromUTF8(Config["AppDir"]) + "\\SliderPresets", wxString::FromUTF8(presetFile), "Preset Files (*.xml)|*.xml", wxFD_SAVE);
 	if (savePresetDialog.ShowModal() == wxID_OK) {
 		outFileName = savePresetDialog.GetPath().ToUTF8();
 		outGroups.assign(selectedGroups.begin(), selectedGroups.end());

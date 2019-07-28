@@ -254,27 +254,33 @@ bool OutfitStudio::OnInit() {
 	if (!wxApp::OnInit())
 		return false;
 
-	if (!cmdFiles.IsEmpty()) {
-		wxFileName exeFile(wxStandardPaths::Get().GetExecutablePath());
-		wxString exePath(exeFile.GetPath());
-		wxSetWorkingDirectory(exePath);
-	}
+#ifdef _DEBUG
+	std::string dataDir = wxGetCwd().ToUTF8();
+#else
+	std::string dataDir = wxStandardPaths::Get().GetDataDir().ToUTF8();
+#endif
 
-	Config.LoadConfig();
-	OutfitStudioConfig.LoadConfig("OutfitStudio.xml", "OutfitStudioConfig");
+	Config.LoadConfig(dataDir + "\\Config.xml");
+	OutfitStudioConfig.LoadConfig(dataDir + "\\OutfitStudio.xml", "OutfitStudioConfig");
 
-	logger.Initialize(Config.GetIntValue("LogLevel", -1), "Log_OS.txt");
+	Config.SetDefaultValue("AppDir", dataDir);
+
+	logger.Initialize(Config.GetIntValue("LogLevel", -1), dataDir + "\\Log_OS.txt");
 	wxLogMessage("Initializing Outfit Studio...");
 
 #ifdef NDEBUG
 	wxHandleFatalExceptions();
 #endif
 
+	wxSetEnv("AppDir", wxString::FromUTF8(dataDir));
+
 	wxXmlResource* xrc = wxXmlResource::Get();
+	xrc->SetFlags(wxXRC_USE_LOCALE | wxXRC_USE_ENVVARS);
 	xrc->InitAllHandlers();
 	wxInitAllImageHandlers();
 
 	wxLogMessage("Working directory: %s", wxGetCwd());
+	wxLogMessage("Executable directory: %s", wxString::FromUTF8(dataDir));
 	if (!SetDefaultConfig())
 		return false;
 
@@ -403,7 +409,6 @@ bool OutfitStudio::SetDefaultConfig() {
 	Config.SetDefaultValue("TargetGame", currentTarget);
 	currentTarget = Config.GetIntValue("TargetGame");
 
-	Config.SetDefaultValue("ShapeDataPath", wxGetCwd().ToStdString() + "\\ShapeData");
 	Config.SetDefaultBoolValue("WarnMissingGamePath", true);
 	Config.SetDefaultBoolValue("BSATextureScan", true);
 	Config.SetDefaultValue("LogLevel", "3");
@@ -486,7 +491,7 @@ bool OutfitStudio::SetDefaultConfig() {
 
 bool OutfitStudio::ShowSetup() {
 	wxXmlResource* xrc = wxXmlResource::Get();
-	bool loaded = xrc->Load("res\\xrc\\Setup.xrc");
+	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Setup.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load Setup.xrc file!", "Error", wxICON_ERROR);
 		return false;
@@ -627,7 +632,7 @@ bool OutfitStudio::ShowSetup() {
 			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToStdString());
 			Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToStdString());
 
-			Config.SaveConfig();
+			Config.SaveConfig(Config["AppDir"] + "\\Config.xml");
 			delete setup;
 		}
 		else {
@@ -669,7 +674,7 @@ void OutfitStudio::InitLanguage() {
 	// Load language if possible, fall back to English otherwise
 	if (wxLocale::IsAvailable(lang)) {
 		locale = new wxLocale(lang);
-		locale->AddCatalogLookupPathPrefix("lang");
+		locale->AddCatalogLookupPathPrefix(wxString::FromUTF8(Config["AppDir"]) + "\\lang");
 		locale->AddCatalog("BodySlide");
 
 		if (!locale->IsOk()) {
@@ -731,7 +736,7 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	wxLogMessage("Loading Outfit Studio frame at X:%d Y:%d with W:%d H:%d...", pos.x, pos.y, size.GetWidth(), size.GetHeight());
 
 	wxXmlResource *xrc = wxXmlResource::Get();
-	if (!xrc->Load("res\\xrc\\OutfitStudio.xrc")) {
+	if (!xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\OutfitStudio.xrc")) {
 		wxMessageBox(_("Failed to load OutfitStudio.xrc file!"), _("Error"), wxICON_ERROR);
 		Close(true);
 		return;
@@ -743,13 +748,13 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 		return;
 	}
 
-	SetIcon(wxIcon("res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\OutfitStudio.png", wxBITMAP_TYPE_PNG));
 
-	xrc->Load("res\\xrc\\Project.xrc");
-	xrc->Load("res\\xrc\\Actions.xrc");
-	xrc->Load("res\\xrc\\Slider.xrc");
-	xrc->Load("res\\xrc\\Skeleton.xrc");
-	xrc->Load("res\\xrc\\Settings.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Project.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Actions.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Slider.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Skeleton.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Settings.xrc");
 
 	int statusWidths[] = { -1, 400, 100 };
 	statusBar = (wxStatusBar*)FindWindowByName("statusBar");
@@ -785,9 +790,9 @@ OutfitStudioFrame::OutfitStudioFrame(const wxPoint& pos, const wxSize& size) {
 	outfitShapes = (wxTreeCtrl*)FindWindowByName("outfitShapes");
 	if (outfitShapes) {
 		visStateImages = new wxImageList(16, 16, false, 2);
-		wxBitmap visImg("res\\images\\icoVisible.png", wxBITMAP_TYPE_PNG);
-		wxBitmap invImg("res\\images\\icoInvisible.png", wxBITMAP_TYPE_PNG);
-		wxBitmap wfImg("res\\images\\icoWireframe.png", wxBITMAP_TYPE_PNG);
+		wxBitmap visImg(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\icoVisible.png", wxBITMAP_TYPE_PNG);
+		wxBitmap invImg(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\icoInvisible.png", wxBITMAP_TYPE_PNG);
+		wxBitmap wfImg(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\icoWireframe.png", wxBITMAP_TYPE_PNG);
 
 		if (visImg.IsOk())
 			visStateImages->Add(visImg);
@@ -909,7 +914,7 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	if (glView)
 		delete glView;
 
-	int ret = OutfitStudioConfig.SaveConfig("OutfitStudio.xml", "OutfitStudioConfig");
+	int ret = OutfitStudioConfig.SaveConfig(Config["AppDir"] + "\\OutfitStudio.xml", "OutfitStudioConfig");
 	if (ret)
 		wxLogWarning("Failed to save configuration (%d)!", ret);
 
@@ -1083,7 +1088,7 @@ void OutfitStudioFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());
 
-			Config.SaveConfig();
+			Config.SaveConfig(Config["AppDir"] + "\\Config.xml");
 			wxGetApp().InitArchives();
 		}
 
@@ -1308,8 +1313,8 @@ void OutfitStudioFrame::createSliderGUI(const std::string& name, int id, wxScrol
 
 	d->paneSz = new wxBoxSizer(wxHORIZONTAL);
 
-	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap("res\\images\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, sn + "|btn");
-	d->btnSliderEdit->SetBitmapDisabled(wxBitmap("res\\images\\EditSmall_d.png", wxBITMAP_TYPE_ANY));
+	d->btnSliderEdit = new wxBitmapButton(d->sliderPane, wxID_ANY, wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\EditSmall.png", wxBITMAP_TYPE_ANY), wxDefaultPosition, wxSize(22, 22), wxBU_AUTODRAW, wxDefaultValidator, sn + "|btn");
+	d->btnSliderEdit->SetBitmapDisabled(wxBitmap(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\EditSmall_d.png", wxBITMAP_TYPE_ANY));
 	d->btnSliderEdit->SetToolTip(_("Turn on edit mode for this slider."));
 	d->paneSz->Add(d->btnSliderEdit, 0, wxALIGN_CENTER_VERTICAL | wxALL);
 
@@ -1843,8 +1848,12 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 		std::string tmplName = refTemplate.ToUTF8();
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
-		if (tmpl != refTemplates.end())
-			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape);
+		if (tmpl != refTemplates.end()) {
+			if (wxFileName(wxString::FromUTF8(tmpl->sourceFile)).IsRelative())
+				error = project->LoadReferenceTemplate(Config["AppDir"] + "\\" + tmpl->sourceFile, tmpl->set, tmpl->shape);
+			else
+				error = project->LoadReferenceTemplate(tmpl->sourceFile, tmpl->set, tmpl->shape);
+		}
 		else
 			error = 1;
 	}
@@ -1919,7 +1928,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog loadProjectDialog(this, _("Select a slider set to load"), "SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
+	wxFileDialog loadProjectDialog(this, _("Select a slider set to load"), wxString::FromUTF8(Config["AppDir"]) + "\\SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
 	if (loadProjectDialog.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -1928,7 +1937,7 @@ void OutfitStudioFrame::OnLoadProject(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void OutfitStudioFrame::OnAddProject(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog addProjectDialog(this, _("Select a slider set to add"), "SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
+	wxFileDialog addProjectDialog(this, _("Select a slider set to add"), wxString::FromUTF8(Config["AppDir"]) + "\\SliderSets", wxEmptyString, "Slider Set Files (*.osp;*.xml)|*.osp;*.xml", wxFD_FILE_MUST_EXIST);
 	if (addProjectDialog.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -1976,8 +1985,12 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 		std::string tmplName = refTemplate.ToUTF8();
 		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
-		if (tmpl != refTemplates.end())
-			error = project->LoadReferenceTemplate((*tmpl).sourceFile, (*tmpl).set, (*tmpl).shape, mergeSliders);
+		if (tmpl != refTemplates.end()) {
+			if (wxFileName(wxString::FromUTF8(tmpl->sourceFile)).IsRelative())
+				error = project->LoadReferenceTemplate(Config["AppDir"] + "\\" + tmpl->sourceFile, tmpl->set, tmpl->shape, mergeSliders);
+			else
+				error = project->LoadReferenceTemplate(tmpl->sourceFile, tmpl->set, tmpl->shape, mergeSliders);
+		}
 		else
 			error = 1;
 	}
@@ -2128,7 +2141,7 @@ void OutfitStudioFrame::OnUnloadProject(wxCommandEvent& WXUNUSED(event)) {
 void OutfitStudioFrame::UpdateReferenceTemplates() {
 	refTemplates.clear();
 
-	std::string fileName = "RefTemplates.xml";
+	std::string fileName = Config["AppDir"] + "\\RefTemplates.xml";
 	if (!wxFileName::IsFileReadable(fileName))
 		return;
 
@@ -2487,7 +2500,7 @@ void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 		wxString sssName = wxString::FromUTF8(outName);
 
 		XRCCTRL(dlg, "sssName", wxTextCtrl)->SetValue(sssName);
-		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory("SliderSets");
+		XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "\\SliderSets");
 
 		if (!project->mFileName.empty())
 			XRCCTRL(dlg, "sssSliderSetFile", wxFilePickerCtrl)->SetPath(project->mFileName);
@@ -2570,8 +2583,7 @@ void OutfitStudioFrame::OnSaveSliderSetAs(wxCommandEvent& WXUNUSED(event)) {
 
 	wxFileName relativeFolder(strDataDir);
 	if (!relativeFolder.IsRelative()) {
-		wxString curDir(wxGetCwd());
-		wxString dataFolder(wxString::Format("%s/%s", curDir, "ShapeData"));
+		wxString dataFolder(wxString::Format("%s/%s", wxString::FromUTF8(Config["AppDir"]), "ShapeData"));
 		relativeFolder.MakeRelativeTo(dataFolder);
 		strDataDir = relativeFolder.GetFullPath();
 	}
@@ -5338,7 +5350,7 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 	std::string choice;
 	bool hi = true;
 
-	presets.LoadPresets("SliderPresets", choice, names, true);
+	presets.LoadPresets(Config["AppDir"] + "\\SliderPresets", choice, names, true);
 	presets.GetPresetNames(names);
 
 	if (wxXmlResource::Get()->LoadDialog(&dlg, this, "dlgChoosePreset")) {
@@ -5405,7 +5417,7 @@ void OutfitStudioFrame::OnSavePreset(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	SliderSetGroupCollection groupCollection;
-	groupCollection.LoadGroups("SliderGroups");
+	groupCollection.LoadGroups(Config["AppDir"] + "\\SliderGroups");
 
 	std::set<std::string> allGroups;
 	groupCollection.GetAllGroups(allGroups);
@@ -7701,13 +7713,13 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 	if (!m)
 		return;
 	
-	std::string vShader = "res\\shaders\\default.vert";
-	std::string fShader = "res\\shaders\\default.frag";
+	std::string vShader = Config["AppDir"] + "\\res\\shaders\\default.vert";
+	std::string fShader = Config["AppDir"] + "\\res\\shaders\\default.frag";
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == FO4 || targetGame == FO4VR) {
-		vShader = "res\\shaders\\fo4_default.vert";
-		fShader = "res\\shaders\\fo4_default.frag";
+		vShader = Config["AppDir"] + "\\res\\shaders\\fo4_default.vert";
+		fShader = Config["AppDir"] + "\\res\\shaders\\fo4_default.frag";
 	}
 
 	GLMaterial* mat = gls.AddMaterial(textureFiles, vShader, fShader, reloadTextures);

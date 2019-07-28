@@ -4,7 +4,11 @@ See the included LICENSE file
 */
 
 #include "wxNormalsGenDlg.h"
+#include "../utils/ConfigurationManager.h"
+
 #include <wx/xrc/xmlres.h>
+
+extern ConfigurationManager Config;
 
 wxBEGIN_EVENT_TABLE(wxNormalsGenDlg, wxDialog)
 	EVT_RIGHT_DOWN(wxNormalsGenDlg::ShowPresetContextMenu)
@@ -18,10 +22,9 @@ wxBEGIN_EVENT_TABLE(wxNormalsGenDlg, wxDialog)
 	EVT_BUTTON(XRCID("btnGenerate"), wxNormalsGenDlg::doGenerateNormalMap)
 wxEND_EVENT_TABLE()
 
-wxNormalsGenDlg::wxNormalsGenDlg(wxWindow* parent)
-{
+wxNormalsGenDlg::wxNormalsGenDlg(wxWindow* parent) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	xrc->Load("res\\xrc\\NormalsGenDlg.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\NormalsGenDlg.xrc");
 	xrc->LoadDialog(this, parent, "wxNormalsGenDlg");
 
 	bpPreset = XRCCTRL(*this, "bpPreset", wxBitmapButton);
@@ -49,8 +52,7 @@ wxNormalsGenDlg::wxNormalsGenDlg(wxWindow* parent)
 	CenterOnParent();
 }
 
-wxNormalsGenDlg::~wxNormalsGenDlg()
-{
+wxNormalsGenDlg::~wxNormalsGenDlg() {
 	delete presetContext;
-	wxXmlResource::Get()->Unload("res\\xrc\\NormalsGenDlg.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\NormalsGenDlg.xrc");
 }

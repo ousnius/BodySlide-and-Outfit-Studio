@@ -20,7 +20,7 @@ wxEND_EVENT_TABLE()
 
 ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* refShape) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	bool loaded = xrc->Load("res\\xrc\\ShapeProperties.xrc");
+	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\ShapeProperties.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load ShapeProperties.xrc file!", "Error", wxICON_ERROR);
 		return;
@@ -80,7 +80,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 }
 
 ShapeProperties::~ShapeProperties() {
-	wxXmlResource::Get()->Unload("res\\xrc\\ShapeProperties.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\ShapeProperties.xrc");
 }
 
 void ShapeProperties::GetShader() {

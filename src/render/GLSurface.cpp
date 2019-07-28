@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "GLSurface.h"
+#include "../utils/ConfigurationManager.h"
 
 #include <wx/msgdlg.h>
 #include <wx/log.h>
@@ -11,6 +12,8 @@ See the included LICENSE file
 #include <algorithm>
 #include <set>
 #include <limits>
+
+extern ConfigurationManager Config;
 
 const wxGLAttributes& GLSurface::GetGLAttribs() {
 	static bool attribsInitialized { false };
@@ -1691,7 +1694,7 @@ GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles,
 
 GLMaterial* GLSurface::GetPrimitiveMaterial() {
 	if (!primitiveMat) {
-		primitiveMat = new GLMaterial("res\\shaders\\primitive.vert", "res\\shaders\\primitive.frag");
+		primitiveMat = new GLMaterial(Config["AppDir"] + "\\res\\shaders\\primitive.vert", Config["AppDir"] + "\\res\\shaders\\primitive.frag");
 
 		std::string shaderError;
 		if (primitiveMat->GetShader().GetError(&shaderError)) {

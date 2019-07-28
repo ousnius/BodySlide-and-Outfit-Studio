@@ -20,8 +20,12 @@ extern ConfigurationManager Config;
 
 OutfitProject::OutfitProject(OutfitStudioFrame* inOwner) {
 	owner = inOwner;
+
 	std::string defSkelFile = Config["Anim/DefaultSkeletonReference"];
-	LoadSkeletonReference(defSkelFile);
+	if (wxFileName(wxString::FromUTF8(defSkelFile)).IsRelative())
+		LoadSkeletonReference(Config["AppDir"] + "\\" + defSkelFile);
+	else
+		LoadSkeletonReference(defSkelFile);
 
 	auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
@@ -75,8 +79,7 @@ std::string OutfitProject::Save(const wxString& strFileName,
 
 	auto shapes = workNif.GetShapes();
 
-	wxString curDir(wxGetCwd());
-	wxString folder(wxString::Format("%s/%s/%s", curDir, "ShapeData", strDataDir));
+	wxString folder(wxString::Format("%s/%s/%s", wxString::FromUTF8(Config["AppDir"]), "ShapeData", strDataDir));
 	wxFileName::Mkdir(folder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 
 	int prog = 5;
@@ -169,11 +172,14 @@ std::string OutfitProject::Save(const wxString& strFileName,
 		}
 	}
 
-	std::string saveDataPath = wxString::Format("ShapeData\\%s", mDataDir).ToUTF8();
+	std::string saveDataPath = Config["AppDir"] + "\\ShapeData\\" + mDataDir.ToUTF8().data();
 	SaveSliderData(saveDataPath + "\\" + osdFileName, copyRef);
 	
 	prog = 60;
 	owner->UpdateProgress(prog, _("Creating slider set file..."));
+
+	if (wxFileName(ssFileName).IsRelative())
+		ssFileName = ssFileName.Prepend(wxString::FromUTF8(Config["AppDir"] + "\\"));
 
 	std::string ssUFileName = ssFileName.ToUTF8();
 	SliderSetFile ssf(ssUFileName);
@@ -187,11 +193,11 @@ std::string OutfitProject::Save(const wxString& strFileName,
 
 	auto it = strFileName.rfind('\\');
 	if (it != std::string::npos) {
-		wxString ssNewFolder(wxString::Format("%s/%s", curDir, strFileName.substr(0, it)));
+		wxString ssNewFolder(wxString::Format("%s/%s", wxString::FromUTF8(Config["AppDir"]), strFileName.substr(0, it)));
 		wxFileName::Mkdir(ssNewFolder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 	else {
-		wxString ssNewFolder(wxString::Format("%s/%s", curDir, "SliderSets"));
+		wxString ssNewFolder(wxString::Format("%s/%s", wxString::FromUTF8(Config["AppDir"]), "SliderSets"));
 		wxFileName::Mkdir(ssNewFolder, wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
 	}
 
@@ -1817,7 +1823,7 @@ int OutfitProject::LoadReference(const std::string& fileName, const std::string&
 
 	sset.GetSet(setName, activeSet);
 
-	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
+	activeSet.SetBaseDataPath(Config["AppDir"] + "\\ShapeData");
 	std::string refFile = activeSet.GetInputFileName();
 
 	std::fstream file;
@@ -1925,7 +1931,7 @@ int OutfitProject::LoadFromSliderSet(const std::string& fileName, const std::str
 		return 3;
 	}
 
-	activeSet.SetBaseDataPath(Config["ShapeDataPath"]);
+	activeSet.SetBaseDataPath(Config["AppDir"] + "\\ShapeData");
 
 	std::string inputNif = activeSet.GetInputFileName();
 
@@ -2010,7 +2016,7 @@ int OutfitProject::AddFromSliderSet(const std::string& fileName, const std::stri
 		return 2;
 	}
 
-	addSet.SetBaseDataPath(Config["ShapeDataPath"]);
+	addSet.SetBaseDataPath(Config["AppDir"] + "\\ShapeData");
 	std::string inputNif = addSet.GetInputFileName();
 
 	std::map<std::string, std::string> renamedShapes;

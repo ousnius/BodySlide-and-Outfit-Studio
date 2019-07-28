@@ -1163,7 +1163,7 @@
 				<checkable>1</checkable>
 			</object>
 			<object class="wxMenuItem" name="btnEnableTextures">
-				<label>Enable Textures\tT</label>
+				<label>Enable Textu$(AppDir)\res\tT</label>
 				<help>Display texture maps on models.</help>
 				<checked>1</checked>
 				<checkable>1</checkable>
@@ -1522,79 +1522,79 @@
 		<object class="tool" name="btnNewProject">
 			<label>New Project</label>
 			<tooltip>Create a new project by selecting a reference body slider set, and outfit model files.</tooltip>
-			<bitmap>res\images\NewProj.png</bitmap>
+			<bitmap>$(AppDir)\res\images\NewProj.png</bitmap>
 		</object>
 		<object class="separator" />
 		<object class="tool" name="btnLoadProject">
 			<label>Load Project</label>
 			<tooltip>Load a previously created slider set for editing.</tooltip>
-			<bitmap>res\images\LoadProj.png</bitmap>
+			<bitmap>$(AppDir)\res\images\LoadProj.png</bitmap>
 		</object>
 		<object class="separator" />
 		<object class="tool" name="btnSelect">
 			<label>Select</label>
 			<tooltip>Navigate and select meshes (or vertices in vertex mode).</tooltip>
-			<bitmap>res\images\SelectBrush.png</bitmap>
-			<bitmap2>res\images\SelectBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\SelectBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\SelectBrush_d.png</bitmap2>
 			<radio>1</radio>
 			<checked>1</checked>
 		</object>
 		<object class="tool" name="btnMaskBrush">
 			<label>Mask</label>
 			<tooltip>Mask vertices to prevent them from being transformed.\nHold down the ALT key to remove masking.</tooltip>
-			<bitmap>res\images\MaskBrush.png</bitmap>
-			<bitmap2>res\images\MaskBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\MaskBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\MaskBrush_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnInflateBrush">
 			<label>Inflate</label>
 			<tooltip>Increase mesh volume in an area.</tooltip>
-			<bitmap>res\images\InflateBrush.png</bitmap>
-			<bitmap2>res\images\InflateBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\InflateBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\InflateBrush_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnDeflateBrush">
 			<label>Deflate</label>
 			<tooltip>Decrease mesh volume in an area.</tooltip>
-			<bitmap>res\images\DeflateBrush.png</bitmap>
-			<bitmap2>res\images\DeflateBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\DeflateBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\DeflateBrush_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnMoveBrush">
 			<label>Move</label>
 			<tooltip>Move vertices over a plane parallel to the view.</tooltip>
-			<bitmap>res\images\MoveBrush.png</bitmap>
-			<bitmap2>res\images\MoveBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\MoveBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\MoveBrush_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnSmoothBrush">
 			<label>Smooth</label>
 			<tooltip>Smooth an area of a mesh.</tooltip>
-			<bitmap>res\images\SmoothBrush.png</bitmap>
-			<bitmap2>res\images\SmoothBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\SmoothBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\SmoothBrush_d.png</bitmap2>
 			<radio>1</radio>
 		</object>
 		<object class="tool" name="btnWeightBrush">
 			<label>Weight Paint</label>
 			<tooltip>Apply animation weight values for currently selected bone.\nHold down the ALT key to weaken the weighting.</tooltip>
-			<bitmap>res\images\WeightBrush.png</bitmap>
-			<bitmap2>res\images\WeightBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\WeightBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\WeightBrush_d.png</bitmap2>
 			<radio>1</radio>
 			<disabled>1</disabled>
 		</object>
 		<object class="tool" name="btnColorBrush">
 			<label>Color Paint</label>
 			<tooltip>Apply vertex colors.\nHold down the ALT key to remove colors.</tooltip>
-			<bitmap>res\images\ColorBrush.png</bitmap>
-			<bitmap2>res\images\ColorBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\ColorBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\ColorBrush_d.png</bitmap2>
 			<radio>1</radio>
 			<disabled>1</disabled>
 		</object>
 		<object class="tool" name="btnAlphaBrush">
 			<label>Alpha Paint</label>
 			<tooltip>Apply vertex alpha.\nHold down the ALT key to remove alpha.</tooltip>
-			<bitmap>res\images\AlphaBrush.png</bitmap>
-			<bitmap2>res\images\AlphaBrush_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\AlphaBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\AlphaBrush_d.png</bitmap2>
 			<radio>1</radio>
 			<disabled>1</disabled>
 		</object>
@@ -1602,43 +1602,43 @@
 		<object class="tool" name="btnTransform">
 			<label>Transform</label>
 			<tooltip>Shows a transform tool to manipulate shapes and vertices with.</tooltip>
-			<bitmap>res\images\TransformTool.png</bitmap>
-			<bitmap2>res\images\TransformTool_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\TransformTool.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\TransformTool_d.png</bitmap2>
 			<toggle>1</toggle>
 		</object>
 		<object class="tool" name="btnPivot">
 			<label>Pivot</label>
 			<tooltip>Shows a pivot that can be moved and makes it the center of mesh operations like rotation and scale.</tooltip>
-			<bitmap>res\images\Pivot.png</bitmap>
-			<bitmap2>res\images\Pivot_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\Pivot.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\Pivot_d.png</bitmap2>
 			<toggle>1</toggle>
 		</object>
 		<object class="tool" name="btnVertexEdit">
 			<label>Vertex Edit</label>
 			<tooltip>Lets you select vertices to add to or remove from the mask.\nClick on a vertex to select/unmask it.\nHold down CTRL to unselect/mask it.</tooltip>
-			<bitmap>res\images\VertexEdit.png</bitmap>
-			<bitmap2>res\images\VertexEdit_d.png</bitmap2>
+			<bitmap>$(AppDir)\res\images\VertexEdit.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\VertexEdit_d.png</bitmap2>
 			<toggle>1</toggle>
 		</object>
 		<object class="separator" />
 		<object class="tool" name="btnXMirror">
 			<label>X Mirror</label>
 			<tooltip>Mirror edits across the X axis.</tooltip>
-			<bitmap>res\images\XMirror.png</bitmap>
+			<bitmap>$(AppDir)\res\images\XMirror.png</bitmap>
 			<toggle>1</toggle>
 			<checked>1</checked>
 		</object>
 		<object class="tool" name="btnConnected">
 			<label>Edit Connected Only\tC</label>
 			<tooltip>Edit only vertices that are connected to the ones under the brush within the brush radius.</tooltip>
-			<bitmap>res\images\EditConnected.png</bitmap>
+			<bitmap>$(AppDir)\res\images\EditConnected.png</bitmap>
 			<toggle>1</toggle>
 			<checked>0</checked>
 		</object>
 		<object class="tool" name="btnBrushCollision">
 			<label>Global Brush Collision\tC</label>
 			<tooltip>Allows for the brushes to collide with all currently selected meshes at the same time.</tooltip>
-			<bitmap>res\images\BrushCollision.png</bitmap>
+			<bitmap>$(AppDir)\res\images\BrushCollision.png</bitmap>
 			<toggle>1</toggle>
 			<checked>1</checked>
 		</object>
@@ -1646,27 +1646,27 @@
 		<object class="tool" name="btnViewFront">
 			<label>View Front</label>
 			<tooltip>Change camera view to the front.</tooltip>
-			<bitmap>res\images\ViewFront.png</bitmap>
+			<bitmap>$(AppDir)\res\images\ViewFront.png</bitmap>
 		</object>
 		<object class="tool" name="btnViewBack">
 			<label>View Back</label>
 			<tooltip>Change camera view to the back.</tooltip>
-			<bitmap>res\images\ViewBack.png</bitmap>
+			<bitmap>$(AppDir)\res\images\ViewBack.png</bitmap>
 		</object>
 		<object class="tool" name="btnViewLeft">
 			<label>View Left</label>
 			<tooltip>Change camera view to the left.</tooltip>
-			<bitmap>res\images\ViewLeft.png</bitmap>
+			<bitmap>$(AppDir)\res\images\ViewLeft.png</bitmap>
 		</object>
 		<object class="tool" name="btnViewRight">
 			<label>View Right</label>
 			<tooltip>Change camera view to the right.</tooltip>
-			<bitmap>res\images\ViewRight.png</bitmap>
+			<bitmap>$(AppDir)\res\images\ViewRight.png</bitmap>
 		</object>
 		<object class="tool" name="btnViewPerspective">
 			<label>Perspective View</label>
 			<tooltip>Toggle perspective view.</tooltip>
-			<bitmap>res\images\ViewPerspective.png</bitmap>
+			<bitmap>$(AppDir)\res\images\ViewPerspective.png</bitmap>
 			<toggle>1</toggle>
 			<checked>1</checked>
 		</object>

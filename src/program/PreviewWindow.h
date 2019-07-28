@@ -9,9 +9,12 @@ See the included LICENSE file
 #include "../render/GLSurface.h"
 #include "../render/GLOffscreenBuffer.h"
 #include "NormalsGenDialog.h"
+#include "../utils/ConfigurationManager.h"
 
 class BodySlideApp;
 class PreviewCanvas;
+
+extern ConfigurationManager Config;
 
 
 class PreviewWindow : public wxFrame {
@@ -136,11 +139,11 @@ public:
 		//"d:\\proj\\FemaleBodyt_n.dds"
 		//"d:\\proj\\bodyPaintDummy-N_u0_v0.png"
 		//normTextures[20] = "d:\\proj\\masktest.png";
-		GLMaterial* normMat = gls.AddMaterial(normTextures, "res\\shaders\\normalshade.vert", "res\\shaders\\normalshade.frag");
+		GLMaterial* normMat = gls.AddMaterial(normTextures, Config["AppDir"] + "\\res\\shaders\\normalshade.vert", Config["AppDir"] + "\\res\\shaders\\normalshade.frag");
 
 		std::vector<std::string> ppTex;
 		ppTex.push_back("pproc");
-		GLMaterial* ppMat = gls.AddMaterial(ppTex, "res\\shaders\\fullscreentri.vert", "res\\shaders\\fullscreentri.frag");
+		GLMaterial* ppMat = gls.AddMaterial(ppTex, Config["AppDir"] + "\\res\\shaders\\fullscreentri.vert", Config["AppDir"] + "\\res\\shaders\\fullscreentri.frag");
 
 		
 		//texIds.push_back(normMat->GetTexID(0));

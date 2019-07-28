@@ -75,8 +75,8 @@ public:
 	~ConfigurationManager();
 
 	void Clear();
-	int LoadConfig(const std::string& pathToFile = "Config.xml", const std::string& rootElement = "Config");
-	int SaveConfig(const std::string& pathToFile = "Config.xml", const std::string& rootElement = "Config");
+	int LoadConfig(const std::string& pathToFile, const std::string& rootElement = "Config");
+	int SaveConfig(const std::string& pathToFile, const std::string& rootElement = "Config");
 
 	int EnumerateCIs(std::vector<ConfigurationItem*>& outList, bool withProperties = true, bool traverse = true);
 
