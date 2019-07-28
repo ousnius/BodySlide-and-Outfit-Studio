@@ -1163,7 +1163,7 @@
 				<checkable>1</checkable>
 			</object>
 			<object class="wxMenuItem" name="btnEnableTextures">
-				<label>Enable Textu$(AppDir)\res\tT</label>
+				<label>Enable Textures\tT</label>
 				<help>Display texture maps on models.</help>
 				<checked>1</checked>
 				<checkable>1</checkable>
