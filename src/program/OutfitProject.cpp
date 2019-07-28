@@ -2109,8 +2109,8 @@ bool OutfitProject::DeleteVerts(NiShape* shape, const std::unordered_map<ushort,
 	std::sort(indices.begin(), indices.end());
 	indices.erase(std::unique(indices.begin(), indices.end()), indices.end());
 
-	bool shapeDeleted = workNif.DeleteVertsForShape(shape, indices);
-	if (!shapeDeleted) {
+	bool deleteShape = workNif.DeleteVertsForShape(shape, indices);
+	if (!deleteShape) {
 		workAnim.DeleteVertsForShape(shape->GetName(), indices);
 
 		std::string target = ShapeToTarget(shape->GetName());
@@ -2124,7 +2124,7 @@ bool OutfitProject::DeleteVerts(NiShape* shape, const std::unordered_map<ushort,
 	else
 		DeleteShape(shape);
 
-	return shapeDeleted;
+	return deleteShape;
 }
 
 NiShape* OutfitProject::DuplicateShape(NiShape* sourceShape, const std::string& destShapeName) {

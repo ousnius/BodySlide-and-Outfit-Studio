@@ -923,7 +923,8 @@ void BodySlideApp::InitPreview() {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
 			PreviewMod.SetVertsForShape(shape, verts);
 			PreviewMod.SetUvsForShape(shape, uvs);
-			PreviewMod.DeleteVertsForShape(shape, zapIdx);
+			if (PreviewMod.DeleteVertsForShape(shape, zapIdx))
+				PreviewMod.DeleteShape(shape);
 		}
 		else if (zapIdx.size() > 0) {
 			// Preview Window has been opened for this shape before, zap the diff verts before applying them to the shape
@@ -1059,7 +1060,8 @@ void BodySlideApp::RebuildPreviewMeshes() {
 			// Freshly loaded, need to actually delete verts and tris in the modified .nif
 			PreviewMod.SetVertsForShape(shape, verts);
 			PreviewMod.SetUvsForShape(shape, uvs);
-			PreviewMod.DeleteVertsForShape(shape, zapIdx);
+			if (PreviewMod.DeleteVertsForShape(shape, zapIdx))
+				PreviewMod.DeleteShape(shape);
 		}
 		else {
 			// No zapping needed - just show all the verts.
@@ -1718,7 +1720,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 			nifBig.CalcNormalsForShape(shape, it->second.smoothSeamNormals);
 
 		nifBig.CalcTangentsForShape(shape);
-		nifBig.DeleteVertsForShape(shape, zapIdx);
+		if (nifBig.DeleteVertsForShape(shape, zapIdx))
+			nifBig.DeleteShape(shape);
 
 		if (activeSet.GenWeights()) {
 			zapIdx.clear();
@@ -1732,7 +1735,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 				nifSmall.CalcNormalsForShape(shapeSmall, it->second.smoothSeamNormals);
 
 			nifSmall.CalcTangentsForShape(shapeSmall);
-			nifSmall.DeleteVertsForShape(shapeSmall, zapIdx);
+			if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
+				nifSmall.DeleteShape(shapeSmall);
 		}
 
 		zapIdxAll[it->first] = zapIdx;
@@ -2153,7 +2157,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				nifBig.CalcNormalsForShape(shape, it->second.smoothSeamNormals);
 
 			nifBig.CalcTangentsForShape(shape);
-			nifBig.DeleteVertsForShape(shape, zapIdx);
+			if (nifBig.DeleteVertsForShape(shape, zapIdx))
+				nifBig.DeleteShape(shape);
 
 			if (currentSet.GenWeights()) {
 				auto shapeSmall = nifSmall.FindBlockByName<NiShape>(it->first);
@@ -2164,7 +2169,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 					nifSmall.CalcNormalsForShape(shapeSmall, it->second.smoothSeamNormals);
 
 				nifSmall.CalcTangentsForShape(shapeSmall);
-				nifSmall.DeleteVertsForShape(shapeSmall, zapIdx);
+				if (nifSmall.DeleteVertsForShape(shapeSmall, zapIdx))
+					nifSmall.DeleteShape(shapeSmall);
 			}
 
 			zapIdx.clear();

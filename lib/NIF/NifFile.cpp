@@ -2824,8 +2824,7 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 	if (geomData) {
 		geomData->notifyVerticesDelete(indices);
 		if (geomData->GetNumVertices() == 0 || geomData->GetNumTriangles() == 0) {
-			// Deleted all verts or tris, remove shape and children
-			DeleteShape(shape);
+			// Deleted all verts or tris
 			return true;
 		}
 	}
@@ -2834,8 +2833,7 @@ bool NifFile::DeleteVertsForShape(NiShape* shape, const std::vector<ushort>& ind
 	if (bsTriShape) {
 		bsTriShape->notifyVerticesDelete(indices);
 		if (bsTriShape->GetNumVertices() == 0 || bsTriShape->GetNumTriangles() == 0) {
-			// Deleted all verts or tris, remove shape and children
-			DeleteShape(shape);
+			// Deleted all verts or tris
 			return true;
 		}
 	}
