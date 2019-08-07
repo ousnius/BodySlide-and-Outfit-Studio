@@ -975,180 +975,183 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				if (!colors.empty() && removeVertexColors)
 					result.shapesVColorsRemoved.push_back(shapeName);
 
-				                BSTriShape *bsOptShape = nullptr;
-				//Only converting niTriShape to bsTriShape if required
-				bool hasSkinPartitionWithStrips = false;
+				BSTriShape* bsOptShape = nullptr;
 
-				const auto &skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-				if (skinInst)
-				{
-				    const auto &skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-				    if (skinPart)
-				    {
-					for (const auto &partition : skinPart->partitions)
-					    if (partition.numStrips > 0)
-						hasSkinPartitionWithStrips = true;
-				    }
-				}
-
-				const bool needsOpt = options.bsTriShape || shape->HasType<NiTriStrips>() || hasSkinPartitionWithStrips
-						      || options.headParts;
-               			if (needsOpt)
-				{
-					auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
-					if (bsSegmentShape) {
-						bsOptShape = new BSSubIndexTriShape();
-					}
-					else {
-						if (options.headParts)
-							bsOptShape = new BSDynamicTriShape();
-						else
-							bsOptShape = new BSTriShape();
-					}
-
-					bsOptShape->SetName(shape->GetName());
-					bsOptShape->SetControllerRef(shape->GetControllerRef());
-					bsOptShape->SetSkinInstanceRef(shape->GetSkinInstanceRef());
-					bsOptShape->SetShaderPropertyRef(shape->GetShaderPropertyRef());
-					bsOptShape->SetAlphaPropertyRef(shape->GetAlphaPropertyRef());
-					bsOptShape->SetCollisionRef(shape->GetCollisionRef());
-					bsOptShape->GetProperties() = shape->GetProperties();
-					bsOptShape->GetExtraData() = shape->GetExtraData();
-
-					bsOptShape->transform = shape->transform;
-
-					bsOptShape->Create(vertices, &triangles, uvs, normals);
-					bsOptShape->flags = shape->flags;
-
-					// Move segments to new shape
-					if (bsSegmentShape) {
-						auto bsSITS = dynamic_cast<BSSubIndexTriShape*>(bsOptShape);
-						bsSITS->numSegments = bsSegmentShape->numSegments;
-						bsSITS->segments = bsSegmentShape->segments;
-					}
-
-					// Restore old bounds for static meshes or when calc bounds is off
-					if (!shape->IsSkinned() || !options.calcBounds)
-						bsOptShape->SetBounds(geomData->GetBounds());
-
-					// Vertex Colors
-					if (bsOptShape->GetNumVertices() > 0) {
-						if (!removeVertexColors && colors.size() > 0) {
-							bsOptShape->SetVertexColors(true);
-							for (int i = 0; i < bsOptShape->GetNumVertices(); i++) {
-								auto& vertex = bsOptShape->vertData[i];
-
-								float f = std::max(0.0f, std::min(1.0f, colors[i].r));
-								vertex.colorData[0] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
-
-								f = std::max(0.0f, std::min(1.0f, colors[i].g));
-								vertex.colorData[1] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
-
-								f = std::max(0.0f, std::min(1.0f, colors[i].b));
-								vertex.colorData[2] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
-
-								f = std::max(0.0f, std::min(1.0f, colors[i].a));
-								vertex.colorData[3] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
-							}
-						}
-
-						// Find NiOptimizeKeep string
-						for (auto& extraData : bsOptShape->GetExtraData()) {
-							auto stringData = hdr.GetBlock<NiStringExtraData>(extraData.GetIndex());
-							if (stringData) {
-								if (stringData->GetStringData().find("NiOptimizeKeep") != std::string::npos) {
-									bsOptShape->particleDataSize = bsOptShape->GetNumVertices() * 6 + triangles.size() * 3;
-									bsOptShape->particleVerts = *vertices;
-
-									bsOptShape->particleNorms.resize(vertices->size(), Vector3(1.0f, 0.0f, 0.0f));
-									if (normals && normals->size() == vertices->size())
-										bsOptShape->particleNorms = *normals;
-
-									bsOptShape->particleTris = triangles;
+				// Check if shape has strips in the geometry or skin partition
+				bool hasStrips = shape->HasType<NiTriStrips>();
+				if (!hasStrips) {
+					auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+					if (skinInst) {
+						auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+						if (skinPart) {
+							for (auto &partition : skinPart->partitions) {
+								if (partition.numStrips > 0) {
+									hasStrips = true;
+									break;
 								}
 							}
 						}
+					}
+				}
 
-						// Skinning and partitions
-						if (shape->IsSkinned()) {
-							bsOptShape->SetSkinned(true);
+				// Check to optimize all shapes or only mandatory ones
+				const bool needsOpt = !options.mandatoryOnly || (options.headParts || hasStrips);
+				if (!needsOpt)
+					continue;
 
-							auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
-							if (skinInst) {
-								auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
-								if (skinPart) {
-									bool triangulated = TriangulatePartitions(shape);
-									if (triangulated)
-										result.shapesPartTriangulated.push_back(shapeName);
+				auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
+				if (bsSegmentShape) {
+					bsOptShape = new BSSubIndexTriShape();
+				}
+				else {
+					if (options.headParts)
+						bsOptShape = new BSDynamicTriShape();
+					else
+						bsOptShape = new BSTriShape();
+				}
 
-									for (int partID = 0; partID < skinPart->numPartitions; partID++) {
-										NiSkinPartition::PartitionBlock& part = skinPart->partitions[partID];
+				bsOptShape->SetName(shape->GetName());
+				bsOptShape->SetControllerRef(shape->GetControllerRef());
+				bsOptShape->SetSkinInstanceRef(shape->GetSkinInstanceRef());
+				bsOptShape->SetShaderPropertyRef(shape->GetShaderPropertyRef());
+				bsOptShape->SetAlphaPropertyRef(shape->GetAlphaPropertyRef());
+				bsOptShape->SetCollisionRef(shape->GetCollisionRef());
+				bsOptShape->GetProperties() = shape->GetProperties();
+				bsOptShape->GetExtraData() = shape->GetExtraData();
 
-										for (int i = 0; i < part.numVertices; i++) {
-											const ushort v = part.vertexMap[i];
+				bsOptShape->transform = shape->transform;
 
-											if (bsOptShape->vertData.size() > v) {
-												auto& vertex = bsOptShape->vertData[v];
+				bsOptShape->Create(vertices, &triangles, uvs, normals);
+				bsOptShape->flags = shape->flags;
 
-												if (part.hasVertexWeights) {
-													auto& weights = part.vertexWeights[i];
-													vertex.weights[0] = weights.w1;
-													vertex.weights[1] = weights.w2;
-													vertex.weights[2] = weights.w3;
-													vertex.weights[3] = weights.w4;
-												}
+				// Move segments to new shape
+				if (bsSegmentShape) {
+					auto bsSITS = dynamic_cast<BSSubIndexTriShape*>(bsOptShape);
+					bsSITS->numSegments = bsSegmentShape->numSegments;
+					bsSITS->segments = bsSegmentShape->segments;
+				}
 
-												if (part.hasBoneIndices) {
-													auto& boneIndices = part.boneIndices[i];
-													vertex.weightBones[0] = part.bones[boneIndices.i1];
-													vertex.weightBones[1] = part.bones[boneIndices.i2];
-													vertex.weightBones[2] = part.bones[boneIndices.i3];
-													vertex.weightBones[3] = part.bones[boneIndices.i4];
-												}
+				// Restore old bounds for static meshes or when calc bounds is off
+				if (!shape->IsSkinned() || !options.calcBounds)
+					bsOptShape->SetBounds(geomData->GetBounds());
+
+				// Vertex Colors
+				if (bsOptShape->GetNumVertices() > 0) {
+					if (!removeVertexColors && colors.size() > 0) {
+						bsOptShape->SetVertexColors(true);
+						for (int i = 0; i < bsOptShape->GetNumVertices(); i++) {
+							auto& vertex = bsOptShape->vertData[i];
+
+							float f = std::max(0.0f, std::min(1.0f, colors[i].r));
+							vertex.colorData[0] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+
+							f = std::max(0.0f, std::min(1.0f, colors[i].g));
+							vertex.colorData[1] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+
+							f = std::max(0.0f, std::min(1.0f, colors[i].b));
+							vertex.colorData[2] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+
+							f = std::max(0.0f, std::min(1.0f, colors[i].a));
+							vertex.colorData[3] = (byte)std::floor(f == 1.0f ? 255 : f * 256.0);
+						}
+					}
+
+					// Find NiOptimizeKeep string
+					for (auto& extraData : bsOptShape->GetExtraData()) {
+						auto stringData = hdr.GetBlock<NiStringExtraData>(extraData.GetIndex());
+						if (stringData) {
+							if (stringData->GetStringData().find("NiOptimizeKeep") != std::string::npos) {
+								bsOptShape->particleDataSize = bsOptShape->GetNumVertices() * 6 + triangles.size() * 3;
+								bsOptShape->particleVerts = *vertices;
+
+								bsOptShape->particleNorms.resize(vertices->size(), Vector3(1.0f, 0.0f, 0.0f));
+								if (normals && normals->size() == vertices->size())
+									bsOptShape->particleNorms = *normals;
+
+								bsOptShape->particleTris = triangles;
+							}
+						}
+					}
+
+					// Skinning and partitions
+					if (shape->IsSkinned()) {
+						bsOptShape->SetSkinned(true);
+
+						auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+						if (skinInst) {
+							auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+							if (skinPart) {
+								bool triangulated = TriangulatePartitions(shape);
+								if (triangulated)
+									result.shapesPartTriangulated.push_back(shapeName);
+
+								for (int partID = 0; partID < skinPart->numPartitions; partID++) {
+									NiSkinPartition::PartitionBlock& part = skinPart->partitions[partID];
+
+									for (int i = 0; i < part.numVertices; i++) {
+										const ushort v = part.vertexMap[i];
+
+										if (bsOptShape->vertData.size() > v) {
+											auto& vertex = bsOptShape->vertData[v];
+
+											if (part.hasVertexWeights) {
+												auto& weights = part.vertexWeights[i];
+												vertex.weights[0] = weights.w1;
+												vertex.weights[1] = weights.w2;
+												vertex.weights[2] = weights.w3;
+												vertex.weights[3] = weights.w4;
+											}
+
+											if (part.hasBoneIndices) {
+												auto& boneIndices = part.boneIndices[i];
+												vertex.weightBones[0] = part.bones[boneIndices.i1];
+												vertex.weightBones[1] = part.bones[boneIndices.i2];
+												vertex.weightBones[2] = part.bones[boneIndices.i3];
+												vertex.weightBones[3] = part.bones[boneIndices.i4];
 											}
 										}
-
-										std::vector<Triangle> realTris(part.numTriangles);
-										for (int i = 0; i < part.numTriangles; i++) {
-											auto& partTri = part.triangles[i];
-
-											// Find the actual tri index from the partition tri index
-											Triangle tri;
-											tri.p1 = part.vertexMap[partTri.p1];
-											tri.p2 = part.vertexMap[partTri.p2];
-											tri.p3 = part.vertexMap[partTri.p3];
-
-											tri.rot();
-											realTris[i] = tri;
-										}
-
-										part.triangles = realTris;
-										part.trueTriangles = realTris;
 									}
+
+									std::vector<Triangle> realTris(part.numTriangles);
+									for (int i = 0; i < part.numTriangles; i++) {
+										auto& partTri = part.triangles[i];
+
+										// Find the actual tri index from the partition tri index
+										Triangle tri;
+										tri.p1 = part.vertexMap[partTri.p1];
+										tri.p2 = part.vertexMap[partTri.p2];
+										tri.p3 = part.vertexMap[partTri.p3];
+
+										tri.rot();
+										realTris[i] = tri;
+									}
+
+									part.triangles = realTris;
+									part.trueTriangles = realTris;
 								}
 							}
 						}
-						else
-							bsOptShape->SetSkinned(false);
 					}
 					else
-						bsOptShape->SetVertices(false);
-
-					// Check if tangents were added
-					if (!hasTangents && bsOptShape->HasTangents())
-						result.shapesTangentsAdded.push_back(shapeName);
-
-					// Enable eye data flag
-					if (!bsSegmentShape) {
-						if (options.headParts) {
-							if (headPartEyes)
-								bsOptShape->SetEyeData(true);
-						}
-					}
-
-					hdr.ReplaceBlock(GetBlockID(shape), bsOptShape);
-					UpdateSkinPartitions(bsOptShape);
+						bsOptShape->SetSkinned(false);
 				}
+				else
+					bsOptShape->SetVertices(false);
+
+				// Check if tangents were added
+				if (!hasTangents && bsOptShape->HasTangents())
+					result.shapesTangentsAdded.push_back(shapeName);
+
+				// Enable eye data flag
+				if (!bsSegmentShape) {
+					if (options.headParts) {
+						if (headPartEyes)
+							bsOptShape->SetEyeData(true);
+					}
+				}
+
+				hdr.ReplaceBlock(GetBlockID(shape), bsOptShape);
+				UpdateSkinPartitions(bsOptShape);
 			}
 		}
 
