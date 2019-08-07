@@ -975,11 +975,24 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 				if (!colors.empty() && removeVertexColors)
 					result.shapesVColorsRemoved.push_back(shapeName);
 
-				BSTriShape* bsOptShape = nullptr;
+				                BSTriShape *bsOptShape = nullptr;
 				//Only converting niTriShape to bsTriShape if required
-                		const bool needsOpt = options.bsTriShape || options.headParts || shape->HasType<bhkMultiSphereShape>()
-                                      || shape->HasType<NiTriStrips>() || shape->HasType<NiTriStripsData>()
-                                      || shape->HasType<NiSkinPartition>();
+				bool hasSkinPartitionWithStrips = false;
+
+				const auto &skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+				if (skinInst)
+				{
+				    const auto &skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+				    if (skinPart)
+				    {
+					for (const auto &partition : skinPart->partitions)
+					    if (partition.numStrips > 0)
+						hasSkinPartitionWithStrips = true;
+				    }
+				}
+
+				const bool needsOpt = options.bsTriShape || shape->HasType<NiTriStrips>() || hasSkinPartitionWithStrips
+						      || options.headParts;
                			if (needsOpt)
 				{
 					auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
