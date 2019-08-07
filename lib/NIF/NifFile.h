@@ -12,6 +12,7 @@ struct OptOptions {
 	bool headParts = false;
 	bool removeParallax = true;
 	bool calcBounds = true;
+	bool mandatoryOnly = false;
 };
 
 struct OptResult {

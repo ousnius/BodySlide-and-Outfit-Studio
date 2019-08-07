@@ -976,6 +976,29 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 					result.shapesVColorsRemoved.push_back(shapeName);
 
 				BSTriShape* bsOptShape = nullptr;
+
+				// Check if shape has strips in the geometry or skin partition
+				bool hasStrips = shape->HasType<NiTriStrips>();
+				if (!hasStrips) {
+					auto skinInst = hdr.GetBlock<NiSkinInstance>(shape->GetSkinInstanceRef());
+					if (skinInst) {
+						auto skinPart = hdr.GetBlock<NiSkinPartition>(skinInst->GetSkinPartitionRef());
+						if (skinPart) {
+							for (auto &partition : skinPart->partitions) {
+								if (partition.numStrips > 0) {
+									hasStrips = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+
+				// Check to optimize all shapes or only mandatory ones
+				const bool needsOpt = !options.mandatoryOnly || (options.headParts || hasStrips);
+				if (!needsOpt)
+					continue;
+
 				auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
 				if (bsSegmentShape) {
 					bsOptShape = new BSSubIndexTriShape();
