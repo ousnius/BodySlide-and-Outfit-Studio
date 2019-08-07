@@ -977,7 +977,8 @@ OptResult NifFile::OptimizeFor(OptOptions& options) {
 
 				BSTriShape* bsOptShape = nullptr;
 				//Only converting niTriShape to bsTriShape if required
-                if(options.bsTriShape || shape->HasType<NiTriStrips>() || shape->HasType<bhkMultiSphereShape>())
+                if(options.bsTriShape || shape->HasType<NiTriStrips>() || shape->HasType<bhkMultiSphereShape>()
+		  || options.headParts)
 				{
 					auto bsSegmentShape = dynamic_cast<BSSegmentedTriShape*>(shape);
 					if (bsSegmentShape) {
