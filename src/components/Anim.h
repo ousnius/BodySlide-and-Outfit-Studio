@@ -133,9 +133,9 @@ class AnimInfo {
 public:
 	std::map<std::string, std::vector<std::string>> shapeBones;
 	std::unordered_map<std::string, AnimSkin> shapeSkinning;		// Shape to skin association.
-	NifFile* refNif;
+	NifFile* refNif = nullptr;
 
-	AnimInfo() { refNif = nullptr; }
+	AnimInfo() {}
 
 	// Returns true if a new bone is added, false if the bone already exists.
 	bool AddShapeBone(const std::string& shape, const std::string& boneName);
@@ -165,14 +165,13 @@ public:
 };
 
 class AnimSkeleton {
-	AnimBone invBone;
 	std::map<std::string, AnimBone> allBones;
 	std::map<std::string, AnimBone> customBones;
 	std::string rootBone;
-	int unknownCount;
-	bool allowCustom;
+	int unknownCount = 0;
+	bool allowCustomTransforms = true;
 
-	AnimSkeleton() { unknownCount = 0; isValid = false; allowCustom = true; }
+	AnimSkeleton() {}
 
 public:
 	static AnimSkeleton& getInstance() {
@@ -181,7 +180,7 @@ public:
 	}
 
 	NifFile refSkeletonNif;
-	bool isValid;
+	bool isValid = false;
 
 	int LoadFromNif(const std::string& fileName);
 	AnimBone& AddBone(const std::string& boneName, bool bCustom = false);
@@ -191,11 +190,12 @@ public:
 	bool ReleaseBone(const std::string& boneName);
 	int GetBoneRefCount(const std::string& boneName);
 
-	AnimBone* GetBonePtr(const std::string& boneName);
+	AnimBone* GetBonePtr(const std::string& boneName, const bool allowCustom = true);
 	AnimBone* GetRootBonePtr();
 	bool GetBone(const std::string& boneName, AnimBone& outBone);
 	bool GetBoneTransform(const std::string& boneName, MatTransform& xform);
 	bool GetSkinTransform(const std::string& boneName, const MatTransform& skinning, MatTransform& xform);
 
 	int GetActiveBoneNames(std::vector<std::string>& outBoneNames);
+	void DisableCustomTransforms();
 };
