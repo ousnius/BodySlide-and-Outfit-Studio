@@ -5,7 +5,7 @@ See the included LICENSE file
 
 #include "TweakBrush.h"
 
-TweakUndo::TweakUndo() : curState(-1) {
+TweakUndo::TweakUndo() {
 }
 
 TweakUndo::~TweakUndo() {
@@ -13,9 +13,9 @@ TweakUndo::~TweakUndo() {
 }
 
 void TweakUndo::Clear()	{
-	for (unsigned int i = 0; i < strokes.size(); i++) {
+	for (unsigned int i = 0; i < strokes.size(); i++)
 		delete strokes[i];
-	}
+
 	strokes.clear();
 	curState = -1;
 }
@@ -33,21 +33,19 @@ TweakStroke* TweakUndo::CreateStroke(const std::vector<mesh*>& refMeshes, TweakB
 
 void TweakUndo::addStroke(TweakStroke* stroke) {
 	int maxState = strokes.size() - 1;
-	if (curState != maxState) {
+	if (curState < maxState) {
 		for (auto strokeIt = strokes.begin() + (curState + 1); strokeIt != strokes.end(); ++strokeIt)
 			delete (*strokeIt);
 
 		strokes.erase(strokes.begin() + (curState + 1), strokes.end());
-		curState++;
 	}
 	else if (strokes.size() == TB_MAX_UNDO) {
 		delete strokes[0];
 		strokes.erase(strokes.begin());
 	}
-	else
-		curState++;
 
 	strokes.push_back(stroke);
+	curState = strokes.size() - 1;
 }
 
 bool TweakUndo::backStroke(const std::vector<mesh*>& validMeshes) {
