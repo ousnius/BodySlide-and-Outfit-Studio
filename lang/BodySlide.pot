@@ -2453,3 +2453,54 @@ msgstr ""
 
 msgid "Vertex Alpha"
 msgstr ""
+
+msgid "Pack Projects..."
+msgstr ""
+
+msgid "Pack one or more projects into a folder or archive for sharing."
+msgstr ""
+
+msgid "Merged file name:"
+msgstr ""
+
+msgid "File name to use for the merged project file."
+msgstr ""
+
+msgid "Pack Folder..."
+msgstr ""
+
+msgid "Pack Archive..."
+msgstr ""
+
+msgid "Packing projects to folder..."
+msgstr ""
+
+msgid "Packing projects to archive..."
+msgstr ""
+
+msgid "Failed to open input file '%s'!"
+msgstr ""
+
+msgid "Failed to copy input file '%s'!"
+msgstr ""
+
+msgid "Failed to open data file '%s'!"
+msgstr ""
+
+msgid "Failed to copy data file '%s'!"
+msgstr ""
+
+msgid "Failed to save merged project file '%s'!"
+msgstr ""
+
+msgid "Failed to open project file '%s'!"
+msgstr ""
+
+msgid "Failed to copy merged project file '%s'!"
+msgstr ""
+
+msgid "Failed to put new entry into archive!"
+msgstr ""
+
+msgid "Failed to copy file contents to archive!"
+msgstr ""

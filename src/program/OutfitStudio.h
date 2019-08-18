@@ -996,6 +996,8 @@ private:
 	void OnExit(wxCommandEvent& event);
 	void OnClose(wxCloseEvent& event);
 
+	bool CopyStreamData(wxInputStream& inputStream, wxOutputStream& outputStream, wxFileOffset size);
+	void OnPackProjects(wxCommandEvent &event);
 	void OnChooseTargetGame(wxCommandEvent& event);
 	void SettingsFillDataFiles(wxCheckListBox* dataFileList, wxString& dataDir, int targetGame);
 	void OnSettings(wxCommandEvent& event);

@@ -1083,6 +1083,10 @@
 				<help>Using the current slider settings for the reference shape, create a new reference that will morph from the current shape back to the base shape.</help>
 			</object>
 			<object class="separator" />
+			<object class="wxMenuItem" name="packProjects">
+				<label>Pack Projects...</label>
+				<help>Pack one or more projects into a folder or archive for sharing.</help>
+			</object>
 			<object class="wxMenuItem" name="fileSettings">
 				<label>Settings</label>
 				<help>Open settings dialog.</help>

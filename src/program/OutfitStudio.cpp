@@ -24,6 +24,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../utils/PlatformUtil.h"
 
 #include <wx/debugrpt.h>
+#include <wx/wfstream.h>
+#include <wx/zipstrm.h>
 #include <sstream>
 
 // ----------------------------------------------------------------------------
@@ -33,6 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_CLOSE(OutfitStudioFrame::OnClose)
 	EVT_MENU(XRCID("fileExit"), OutfitStudioFrame::OnExit)
+	EVT_MENU(XRCID("packProjects"), OutfitStudioFrame::OnPackProjects)
 	EVT_MENU(XRCID("fileSettings"), OutfitStudioFrame::OnSettings)
 	EVT_MENU(XRCID("btnNewProject"), OutfitStudioFrame::OnNewProject)
 	EVT_MENU(XRCID("btnLoadProject"), OutfitStudioFrame::OnLoadProject)
@@ -920,6 +923,381 @@ void OutfitStudioFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 
 	wxLogMessage("Outfit Studio frame closed.");
 	Destroy();
+}
+
+bool OutfitStudioFrame::CopyStreamData(wxInputStream& inputStream, wxOutputStream& outputStream, wxFileOffset size) {
+	wxChar buf[128 * 1024];
+	int readSize = 128 * 1024;
+	wxFileOffset copiedData = 0;
+
+	for (;;) {
+		if (size != -1 && copiedData + readSize > size)
+			readSize = size - copiedData;
+
+		inputStream.Read(buf, readSize);
+
+		size_t actuallyRead = inputStream.LastRead();
+		outputStream.Write(buf, actuallyRead);
+		if (outputStream.LastWrite() != actuallyRead) {
+			wxLogError("Failed to output data when copying stream.");
+			return false;
+		}
+
+		if (size == -1) {
+			if (inputStream.Eof())
+				break;
+		}
+		else {
+			copiedData += actuallyRead;
+			if (copiedData >= size)
+				break;
+		}
+	}
+
+	return true;
+}
+
+void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
+	wxDialog* packProjects = wxXmlResource::Get()->LoadDialog(this, "dlgPackProjects");
+	if (packProjects) {
+		packProjects->SetSize(wxSize(550, 300));
+		packProjects->SetMinSize(wxSize(400, 200));
+		packProjects->CenterOnParent();
+
+		auto projectList = XRCCTRL(*packProjects, "projectList", wxCheckListBox);
+		projectList->Bind(wxEVT_RIGHT_UP, [&](wxMouseEvent& WXUNUSED(event)) {
+			wxMenu* menu = wxXmlResource::Get()->LoadMenu("projectListContext");
+			if (menu) {
+				menu->Bind(wxEVT_MENU, [&](wxCommandEvent& event) {
+					if (event.GetId() == XRCID("projectListNone")) {
+						for (int i = 0; i < projectList->GetCount(); i++)
+							projectList->Check(i, false);
+					}
+					else {
+						for (int i = 0; i < projectList->GetCount(); i++)
+							projectList->Check(i);
+					}
+				});
+
+				PopupMenu(menu);
+				delete menu;
+			}
+		});
+
+		std::map<std::string, SliderSet> projectSources;
+
+		wxArrayString files;
+		wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "\\SliderSets", &files, "*.osp");
+		wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "\\SliderSets", &files, "*.xml");
+
+		for (auto &file : files) {
+			std::string fileName = file.ToUTF8();
+
+			SliderSetFile sliderDoc;
+			sliderDoc.Open(fileName);
+			if (sliderDoc.fail())
+				continue;
+
+			std::vector<std::string> setNames;
+			sliderDoc.GetSetNamesUnsorted(setNames, false);
+
+			for (auto &setName : setNames) {
+				if (projectSources.find(setName) != projectSources.end())
+					continue;
+
+				SliderSet set;
+				if (sliderDoc.GetSet(setName, set) == 0) {
+					projectSources[setName] = set;
+					projectList->Append(wxString::FromUTF8(setName));
+				}
+			}
+		}
+
+		std::string sep = wxString(wxFileName::GetPathSeparator()).ToUTF8();
+		wxString baseDir = "Tools" + sep + "BodySlide";
+
+		TargetGame targetGame = wxGetApp().targetGame;
+		if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
+			baseDir = "CalienteTools" + sep + "BodySlide";
+
+		auto mergedFileName = XRCCTRL(*packProjects, "mergedFileName", wxTextCtrl);
+		auto packFolder = XRCCTRL(*packProjects, "packFolder", wxButton);
+		auto packArchive = XRCCTRL(*packProjects, "packArchive", wxButton);
+
+		mergedFileName->Bind(wxEVT_TEXT, [&](wxCommandEvent& WXUNUSED(event)) {
+			packFolder->Enable(!mergedFileName->GetValue().IsEmpty());
+			packArchive->Enable(!mergedFileName->GetValue().IsEmpty());
+		});
+
+		packFolder->Bind(wxEVT_BUTTON, [&](wxCommandEvent& WXUNUSED(event)) {
+			wxString dir = wxDirSelector(_("Packing projects to folder..."), wxEmptyString, wxDD_DEFAULT_STYLE, wxDefaultPosition, packProjects);
+			if (dir.IsEmpty())
+				return;
+
+			wxLogMessage("Packing project to folder...");
+			StartProgress(_("Packing projects to folder..."));
+
+			std::string mergedFile = wxString(mergedFileName->GetValue() + ".osp").ToUTF8();
+			std::string mergedFilePath = wxFileName::CreateTempFileName("os").ToUTF8();
+			project->ReplaceForbidden(mergedFile);
+
+			SliderSetFile projectFile;
+			projectFile.New(mergedFilePath);
+
+			wxArrayInt checkedItems;
+			projectList->GetCheckedItems(checkedItems);
+
+			for (auto &item : checkedItems) {
+				std::string setName = projectList->GetString(item).ToUTF8();
+				if (projectSources.find(setName) == projectSources.end())
+					continue;
+
+				SliderSet set = projectSources[setName];
+				projectFile.UpdateSet(set);
+
+				// Add input file to archive
+				wxString inputFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + set.GetInputFileName());
+				wxFileInputStream inputFileStream(inputFilePath);
+				if (!inputFileStream.IsOk()) {
+					wxLogError("Failed to open input file '%s'!", inputFilePath);
+					wxMessageBox(wxString::Format(_("Failed to open input file '%s'!"), inputFilePath), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				// Copy input file to destination folder
+				wxString inputFileDest = wxString::FromUTF8(dir + sep + baseDir + sep + "ShapeData" + sep + set.GetInputFileName());
+				wxFileName::Mkdir(inputFileDest.BeforeLast(wxFileName::GetPathSeparator()), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+				if (!wxCopyFile(inputFilePath, inputFileDest)) {
+					wxLogError("Failed to copy input file '%s'!", inputFilePath);
+					wxMessageBox(wxString::Format(_("Failed to copy input file '%s'!"), inputFilePath), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				std::set<std::string> dataFiles;
+
+				for (int i = 0; i < set.size(); i++) {
+					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
+						std::string target = set.ShapeToTarget(it->first);
+						std::string targetDataName = set[i].TargetDataName(target);
+						if (set[i].IsLocalData(targetDataName)) {
+							std::string dataFileName = set[i].DataFileName(targetDataName);
+							if (dataFileName.compare(dataFileName.size() - 4, dataFileName.size(), ".bsd") != 0) {
+								// Split target file name to get OSD file name
+								int split = dataFileName.find_last_of('\\');
+								if (split < 0)
+									continue;
+
+								dataFiles.insert(set.GetDefaultDataFolder() + sep + dataFileName.substr(0, split));
+							}
+							else
+							{
+								dataFiles.insert(set.GetDefaultDataFolder() + sep + dataFileName);
+							}
+						}
+					}
+				}
+
+				// Add data files to archive
+				for (auto &df : dataFiles) {
+					wxString dataFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + df);
+					wxFileInputStream dataFileStream(dataFilePath);
+					if (!dataFileStream.IsOk()) {
+						wxLogError("Failed to open input file '%s'!", dataFilePath);
+						wxMessageBox(wxString::Format(_("Failed to open input file '%s'!"), dataFilePath), _("Error"), wxICON_ERROR);
+						EndProgress();
+						return;
+					}
+
+					// Copy data file to destination folder
+					wxString dataFileDest = wxString::FromUTF8(dir + sep + baseDir + sep + "ShapeData" + sep + df);
+					wxFileName::Mkdir(dataFileDest.BeforeLast(wxFileName::GetPathSeparator()), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+					if (!wxCopyFile(dataFilePath, dataFileDest)) {
+						wxLogError("Failed to copy data file '%s'!", dataFilePath);
+						wxMessageBox(wxString::Format(_("Failed to copy data file '%s'!"), dataFilePath), _("Error"), wxICON_ERROR);
+						EndProgress();
+						return;
+					}
+				}
+			}
+
+			// Save new merged project file
+			if (!projectFile.Save()) {
+				wxLogError("Failed to save merged project file '%s'!", mergedFileName);
+				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFileName), _("Error"), wxICON_ERROR);
+				EndProgress();
+				return;
+			}
+
+			// Add merged project file to archive
+			wxFileInputStream projectFileStream(mergedFilePath);
+			if (!projectFileStream.IsOk()) {
+				wxLogError("Failed to open project file '%s'!", mergedFilePath);
+				wxMessageBox(wxString::Format(_("Failed to open project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
+				EndProgress();
+				return;
+			}
+
+			// Copy merged project file to destination folder
+			wxString projectFileDest = wxString::FromUTF8(dir + sep + baseDir + sep + "SliderSets" + sep + mergedFile);
+			wxFileName::Mkdir(projectFileDest.BeforeLast(wxFileName::GetPathSeparator()), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+			if (!wxCopyFile(mergedFilePath, projectFileDest)) {
+				wxLogError("Failed to copy merged project file '%s'!", mergedFilePath);
+				wxMessageBox(wxString::Format(_("Failed to copy merged project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
+				EndProgress();
+				return;
+			}
+
+			EndProgress();
+		});
+
+		packArchive->Bind(wxEVT_BUTTON, [&](wxCommandEvent& WXUNUSED(event)) {
+			wxString fileName = wxFileSelector(_("Packing projects to archive..."), wxEmptyString, wxEmptyString, ".zip", "*.zip", wxFD_SAVE | wxFD_OVERWRITE_PROMPT, packProjects);
+			if (fileName.IsEmpty())
+				return;
+
+			wxLogMessage("Packing project to archive...");
+			StartProgress(_("Packing projects to archive..."));
+
+			std::string mergedFile = wxString(mergedFileName->GetValue() + ".osp").ToUTF8();
+			std::string mergedFilePath = wxFileName::CreateTempFileName("os").ToUTF8();
+			project->ReplaceForbidden(mergedFile);
+
+			SliderSetFile projectFile;
+			projectFile.New(mergedFilePath);
+
+			wxFFileOutputStream out(fileName);
+			wxZipOutputStream zip(out);
+
+			wxArrayInt checkedItems;
+			projectList->GetCheckedItems(checkedItems);
+
+			for (auto &item : checkedItems) {
+				std::string setName = projectList->GetString(item).ToUTF8();
+				if (projectSources.find(setName) == projectSources.end())
+					continue;
+
+				SliderSet set = projectSources[setName];
+				projectFile.UpdateSet(set);
+
+				// Add input file to archive
+				wxString inputFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + set.GetInputFileName());
+				wxFileInputStream inputFileStream(inputFilePath);
+				if (!inputFileStream.IsOk()) {
+					wxLogError("Failed to open input file '%s'!", inputFilePath);
+					wxMessageBox(wxString::Format(_("Failed to open input file '%s'!"), inputFilePath), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				wxString inputFileEntry = wxString::FromUTF8(baseDir + sep + "ShapeData" + sep + set.GetInputFileName());
+				if (!zip.PutNextEntry(inputFileEntry, wxDateTime::Now(), inputFileStream.GetLength())) {
+					wxLogError("Failed to put new entry into archive!");
+					wxMessageBox(_("Failed to put new entry into archive!"), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				if (!CopyStreamData(inputFileStream, zip, inputFileStream.GetLength())) {
+					wxLogError("Failed to copy file contents to archive!");
+					wxMessageBox(_("Failed to copy file contents to archive!"), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				std::set<std::string> dataFiles;
+
+				for (int i = 0; i < set.size(); i++) {
+					for (auto it = set.ShapesBegin(); it != set.ShapesEnd(); ++it) {
+						std::string target = set.ShapeToTarget(it->first);
+						std::string targetDataName = set[i].TargetDataName(target);
+						if (set[i].IsLocalData(targetDataName)) {
+							std::string dataFileName = set[i].DataFileName(targetDataName);
+							if (dataFileName.compare(dataFileName.size() - 4, dataFileName.size(), ".bsd") != 0) {
+								// Split target file name to get OSD file name
+								int split = dataFileName.find_last_of('\\');
+								if (split < 0)
+									continue;
+
+								dataFiles.insert(set.GetDefaultDataFolder() + sep + dataFileName.substr(0, split));
+							}
+							else
+							{
+								dataFiles.insert(set.GetDefaultDataFolder() + sep + dataFileName);
+							}
+						}
+					}
+				}
+
+				// Add data files to archive
+				for (auto &df : dataFiles) {
+					wxString dataFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + df);
+					wxFileInputStream dataFileStream(dataFilePath);
+					if (!dataFileStream.IsOk()) {
+						wxLogError("Failed to open data file '%s'!", dataFilePath);
+						wxMessageBox(wxString::Format(_("Failed to open data file '%s'!"), dataFilePath), _("Error"), wxICON_ERROR);
+						EndProgress();
+						return;
+					}
+
+					wxString dataFileEntry = wxString::FromUTF8(baseDir + sep + "ShapeData" + sep + df);
+					if (!zip.PutNextEntry(dataFileEntry, wxDateTime::Now(), dataFileStream.GetLength())) {
+						wxLogError("Failed to put new entry into archive!");
+						wxMessageBox(_("Failed to put new entry into archive!"), _("Error"), wxICON_ERROR);
+						EndProgress();
+						return;
+					}
+
+					if (!CopyStreamData(dataFileStream, zip, dataFileStream.GetLength())) {
+						wxLogError("Failed to copy file contents to archive!");
+						wxMessageBox(_("Failed to copy file contents to archive!"), _("Error"), wxICON_ERROR);
+						EndProgress();
+						return;
+					}
+				}
+			}
+
+			// Save new merged project file
+			if (!projectFile.Save()) {
+				wxLogError("Failed to save merged project file '%s'!", mergedFileName);
+				wxMessageBox(wxString::Format(_("Failed to save merged project file '%s'!"), mergedFileName), _("Error"), wxICON_ERROR);
+				EndProgress();
+				return;
+			}
+
+			// Add merged project file to archive
+			wxFileInputStream projectFileStream(mergedFilePath);
+			if (!projectFileStream.IsOk()) {
+				wxLogError("Failed to open project file '%s'!", mergedFilePath);
+				wxMessageBox(wxString::Format(_("Failed to open project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
+				EndProgress();
+				return;
+			}
+
+			wxString projectFileEntry = wxString::FromUTF8(baseDir + sep + "SliderSets" + sep + mergedFile);
+			if (!zip.PutNextEntry(projectFileEntry, wxDateTime::Now(), projectFileStream.GetLength())) {
+				wxLogError("Failed to put new entry into archive!");
+				wxMessageBox(_("Failed to put new entry into archive!"), _("Error"), wxICON_ERROR);
+				EndProgress();
+				return;
+			}
+
+			if (!CopyStreamData(projectFileStream, zip, projectFileStream.GetLength())) {
+				wxLogError("Failed to copy file contents to archive!");
+				wxMessageBox(_("Failed to copy file contents to archive!"), _("Error"), wxICON_ERROR);
+				EndProgress();
+				return;
+			}
+
+			EndProgress();
+		});
+
+		packProjects->ShowModal();
+	}
 }
 
 void OutfitStudioFrame::OnChooseTargetGame(wxCommandEvent& event) {
@@ -2440,7 +2818,7 @@ void OutfitStudioFrame::OnSaveSliderSet(wxCommandEvent& event) {
 	}
 	else {
 		if (!project->GetWorkNif()->IsValid()) {
-			wxMessageBox(_("There are no valid shapes loaded!"), "Error");
+			wxMessageBox(_("There are no valid shapes loaded!"), _("Error"));
 			return;
 		}
 

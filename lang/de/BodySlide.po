@@ -2860,3 +2860,54 @@ msgstr "Vertex Farben"
 
 msgid "Vertex Alpha"
 msgstr "Vertex Alpha"
+
+msgid "Pack Projects..."
+msgstr "Projekte packen..."
+
+msgid "Pack one or more projects into a folder or archive for sharing."
+msgstr "Projekte in einen Ordner oder ein Archiv packen."
+
+msgid "Merged file name:"
+msgstr "Zusammengefügte Datei:"
+
+msgid "File name to use for the merged project file."
+msgstr "Dateiname für die zusammengefügte Projektdatei."
+
+msgid "Pack Folder..."
+msgstr "Ordner packen..."
+
+msgid "Pack Archive..."
+msgstr "Archiv packen..."
+
+msgid "Packing projects to folder..."
+msgstr "Projekte in einen Ordner packen..."
+
+msgid "Packing projects to archive..."
+msgstr "Projekte in ein Archiv packen..."
+
+msgid "Failed to open input file '%s'!"
+msgstr "Konnte Eingabedatei '%s' nicht öffnen!"
+
+msgid "Failed to copy input file '%s'!"
+msgstr "Konnte Eingabedatei '%s' nicht kopieren!"
+
+msgid "Failed to open data file '%s'!"
+msgstr "Konnte Datendatei '%s' nicht öffnen!"
+
+msgid "Failed to copy data file '%s'!"
+msgstr "Konnte Datendatei '%s' nicht kopieren!"
+
+msgid "Failed to save merged project file '%s'!"
+msgstr "Konnte zusammengefügte Projektdatei '%s' nicht speichern!"
+
+msgid "Failed to open project file '%s'!"
+msgstr "Konnte Projektdatei '%s' nicht öffnen!"
+
+msgid "Failed to copy merged project file '%s'!"
+msgstr "Konnte zusammengefügte Projektdatei '%s' nicht kopieren!"
+
+msgid "Failed to put new entry into archive!"
+msgstr "Konnte keinen neuen Eintrag im Archiv erstellen!"
+
+msgid "Failed to copy file contents to archive!"
+msgstr "Konnte Dateiinhalt nicht in Archiv kopieren!"
