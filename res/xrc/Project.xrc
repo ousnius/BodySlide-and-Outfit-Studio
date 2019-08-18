@@ -919,8 +919,39 @@
 				<option>0</option>
 				<flag>wxEXPAND</flag>
 				<border>5</border>
-				<object class="wxBoxSizer">
-					<orient>wxHORIZONTAL</orient>
+				<object class="wxFlexGridSizer">
+					<rows>0</rows>
+					<cols>3</cols>
+					<vgap>0</vgap>
+					<hgap>0</hgap>
+					<growablecols>1</growablecols>
+					<growablerows></growablerows>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxStaticText" name="lbGroupFile">
+							<label>Group file (optional):</label>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<object class="wxFilePickerCtrl" name="groupFile">
+							<value></value>
+							<tooltip>Group file to pack (optional).</tooltip>
+							<message>Select a group XML file</message>
+							<wildcard>*.xml</wildcard>
+							<style>wxFLP_DEFAULT_STYLE</style>
+						</object>
+					</object>
+					<object class="spacer">
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
+						<border>5</border>
+						<size>0,0</size>
+					</object>
 					<object class="sizeritem">
 						<option>0</option>
 						<flag>wxALIGN_CENTER_VERTICAL|wxALL</flag>
@@ -930,8 +961,8 @@
 						</object>
 					</object>
 					<object class="sizeritem">
-						<option>1</option>
-						<flag>wxALL</flag>
+						<option>0</option>
+						<flag>wxALL|wxEXPAND</flag>
 						<border>5</border>
 						<object class="wxTextCtrl" name="mergedFileName">
 							<tooltip>File name to use for the merged project file.</tooltip>	
@@ -971,6 +1002,14 @@
 						<object class="wxButton" name="packArchive">
 							<label>Pack Archive...</label>
 							<enabled>0</enabled>
+						</object>
+					</object>
+					<object class="sizeritem">
+						<option>0</option>
+						<flag>wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="groupManager">
+							<label>Group Manager</label>
 						</object>
 					</object>
 					<object class="sizeritem">

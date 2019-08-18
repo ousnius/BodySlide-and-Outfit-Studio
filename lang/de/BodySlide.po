@@ -2911,3 +2911,15 @@ msgstr "Konnte keinen neuen Eintrag im Archiv erstellen!"
 
 msgid "Failed to copy file contents to archive!"
 msgstr "Konnte Dateiinhalt nicht in Archiv kopieren!"
+
+msgid "Group file (optional):"
+msgstr "Gruppendatei (optional):"
+
+msgid "Group file to pack (optional)."
+msgstr "Gruppendatei zum Packen (optional)."
+
+msgid "Failed to open group file '%s'!"
+msgstr "Konnte Gruppendatei '%s' nicht öffnen!"
+
+msgid "Failed to copy group file '%s'!"
+msgstr "Konnte Gruppendatei '%s' nicht kopieren!"

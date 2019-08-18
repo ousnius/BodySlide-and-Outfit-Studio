@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "OutfitStudio.h"
 #include "ShapeProperties.h"
 #include "PresetSaveDialog.h"
+#include "GroupManager.h"
 #include "../components/SliderPresets.h"
 #include "../components/SliderGroup.h"
 #include "../files/TriFile.h"
@@ -1020,6 +1021,22 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 		if (targetGame == SKYRIM || targetGame == SKYRIMSE || targetGame == SKYRIMVR)
 			baseDir = "CalienteTools" + sep + "BodySlide";
 
+		auto groupManager = XRCCTRL(*packProjects, "groupManager", wxButton);
+		groupManager->Bind(wxEVT_BUTTON, [&](wxCommandEvent& WXUNUSED(event)) {
+			std::vector<std::string> gmOutfits;
+			gmOutfits.reserve(projectSources.size());
+
+			std::transform(std::begin(projectSources), std::end(projectSources), std::back_inserter(gmOutfits), [](auto const& pair) {
+				return pair.first;
+			});
+
+			GroupManager gm(packProjects, gmOutfits);
+			gm.ShowModal();
+		});
+
+		auto groupFile = XRCCTRL(*packProjects, "groupFile", wxFilePickerCtrl);
+		groupFile->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "\\SliderGroups");
+
 		auto mergedFileName = XRCCTRL(*packProjects, "mergedFileName", wxTextCtrl);
 		auto packFolder = XRCCTRL(*packProjects, "packFolder", wxButton);
 		auto packArchive = XRCCTRL(*packProjects, "packArchive", wxButton);
@@ -1055,7 +1072,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				SliderSet set = projectSources[setName];
 				projectFile.UpdateSet(set);
 
-				// Add input file to archive
+				// Add input file to folder
 				wxString inputFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + set.GetInputFileName());
 				wxFileInputStream inputFileStream(inputFilePath);
 				if (!inputFileStream.IsOk()) {
@@ -1100,7 +1117,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 					}
 				}
 
-				// Add data files to archive
+				// Add data files to folder
 				for (auto &df : dataFiles) {
 					wxString dataFilePath = wxString::FromUTF8(Config["AppDir"] + sep + "ShapeData" + sep + df);
 					wxFileInputStream dataFileStream(dataFilePath);
@@ -1132,7 +1149,7 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				return;
 			}
 
-			// Add merged project file to archive
+			// Add merged project file to folder
 			wxFileInputStream projectFileStream(mergedFilePath);
 			if (!projectFileStream.IsOk()) {
 				wxLogError("Failed to open project file '%s'!", mergedFilePath);
@@ -1150,6 +1167,30 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				wxMessageBox(wxString::Format(_("Failed to copy merged project file '%s'!"), mergedFilePath), _("Error"), wxICON_ERROR);
 				EndProgress();
 				return;
+			}
+
+			wxString groupFilePath = groupFile->GetPath();
+			if (!groupFilePath.IsEmpty()) {
+				// Add group file to folder
+				wxFileInputStream groupFileStream(groupFilePath);
+				if (!groupFileStream.IsOk()) {
+					wxLogError("Failed to open group file '%s'!", groupFilePath);
+					wxMessageBox(wxString::Format(_("Failed to open group file '%s'!"), groupFilePath), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				// Copy group file to destination folder
+				std::string groupFileName = groupFilePath.AfterLast(wxFileName::GetPathSeparator()).ToUTF8();
+				wxString groupFileDest = wxString::FromUTF8(dir + sep + baseDir + sep + "SliderGroups" + sep + groupFileName);
+				wxFileName::Mkdir(groupFileDest.BeforeLast(wxFileName::GetPathSeparator()), wxS_DIR_DEFAULT, wxPATH_MKDIR_FULL);
+
+				if (!wxCopyFile(groupFilePath, groupFileDest)) {
+					wxLogError("Failed to copy group file '%s'!", groupFilePath);
+					wxMessageBox(wxString::Format(_("Failed to copy group file '%s'!"), groupFilePath), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
 			}
 
 			EndProgress();
@@ -1291,6 +1332,34 @@ void OutfitStudioFrame::OnPackProjects(wxCommandEvent& WXUNUSED(event)) {
 				wxMessageBox(_("Failed to copy file contents to archive!"), _("Error"), wxICON_ERROR);
 				EndProgress();
 				return;
+			}
+
+			wxString groupFilePath = groupFile->GetPath();
+			if (!groupFilePath.IsEmpty()) {
+				// Add group file to archive
+				wxFileInputStream groupFileStream(groupFilePath);
+				if (!groupFileStream.IsOk()) {
+					wxLogError("Failed to open group file '%s'!", groupFilePath);
+					wxMessageBox(wxString::Format(_("Failed to open group file '%s'!"), groupFilePath), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				std::string groupFileName = groupFilePath.AfterLast(wxFileName::GetPathSeparator()).ToUTF8();
+				wxString groupFileEntry = wxString::FromUTF8(baseDir + sep + "SliderGroups" + sep + groupFileName);
+				if (!zip.PutNextEntry(groupFileEntry, wxDateTime::Now(), groupFileStream.GetLength())) {
+					wxLogError("Failed to put new entry into archive!");
+					wxMessageBox(_("Failed to put new entry into archive!"), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
+
+				if (!CopyStreamData(groupFileStream, zip, groupFileStream.GetLength())) {
+					wxLogError("Failed to copy file contents to archive!");
+					wxMessageBox(_("Failed to copy file contents to archive!"), _("Error"), wxICON_ERROR);
+					EndProgress();
+					return;
+				}
 			}
 
 			EndProgress();

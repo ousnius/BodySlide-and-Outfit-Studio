@@ -2504,3 +2504,15 @@ msgstr ""
 
 msgid "Failed to copy file contents to archive!"
 msgstr ""
+
+msgid "Group file (optional):"
+msgstr ""
+
+msgid "Group file to pack (optional)."
+msgstr ""
+
+msgid "Failed to open group file '%s'!"
+msgstr ""
+
+msgid "Failed to copy group file '%s'!"
+msgstr ""
