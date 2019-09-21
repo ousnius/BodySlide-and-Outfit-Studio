@@ -5809,7 +5809,7 @@ void OutfitStudioFrame::OnLoadPreset(wxCommandEvent& WXUNUSED(event)) {
 		presetChoice->SetSelection(0);
 
 		dlg.SetSize(wxSize(325, 175));
-		dlg.SetSizeHints(wxSize(325, 175), wxSize(-1, 175));
+		dlg.SetSizeHints(wxSize(325, 175), wxSize(-1, -1));
 		dlg.CenterOnParent();
 
 		if (dlg.ShowModal() != wxID_OK)

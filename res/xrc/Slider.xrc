@@ -53,8 +53,8 @@
 				</object>
 			</object>
 			<object class="sizeritem">
-				<option>1</option>
-				<flag>wxALL|wxEXPAND</flag>
+				<option>0</option>
+				<flag>wxBOTTOM|wxEXPAND|wxTOP</flag>
 				<border>5</border>
 				<object class="wxStdDialogButtonSizer">
 					<object class="button">
