@@ -2454,13 +2454,33 @@ void NifFile::MirrorShape(NiShape* shape, bool mirrorX, bool mirrorY, bool mirro
 		if (geomData && !geomData->vertices.empty()) {
 				for (int i = 0; i < geomData->vertices.size(); ++i)
 					geomData->vertices[i] = mirrorMat * geomData->vertices[i];
+
+				for (int i = 0; i < geomData->normals.size(); ++i)
+					geomData->normals[i] = mirrorMat * geomData->normals[i];
+
+				for (int i = 0; i < geomData->tangents.size(); ++i)
+					geomData->tangents[i] = mirrorMat * geomData->tangents[i];
+
+				for (int i = 0; i < geomData->bitangents.size(); ++i)
+					geomData->bitangents[i] = mirrorMat * geomData->bitangents[i];
 		}
 	}
 	else if (shape->HasType<BSTriShape>()) {
 		auto bsTriShape = dynamic_cast<BSTriShape*>(shape);
 		if (bsTriShape) {
-				for (int i = 0; i < bsTriShape->vertData.size(); ++i)
-					bsTriShape->vertData[i].vert = mirrorMat * bsTriShape->vertData[i].vert;
+			for (int i = 0; i < bsTriShape->vertData.size(); ++i) 
+				bsTriShape->vertData[i].vert = mirrorMat * bsTriShape->vertData[i].vert;
+
+			auto normals = bsTriShape->GetNormalData(false);
+			if (normals) {
+				for (int i = 0; i < normals->size(); ++i)
+					(*normals)[i] = mirrorMat * (*normals)[i];
+
+				bsTriShape->SetNormals((*normals));
+
+				if (bsTriShape->HasTangents())
+					bsTriShape->CalcTangentSpace();
+			}
 		}
 	}
 
