@@ -78,7 +78,11 @@ public:
 
 	void UpdateMeshes(const std::string& shapeName, std::vector<Vector3>* verts, std::vector<Vector2>* uvs = nullptr) {
 		std::set<int> changed;
-		gls.Update(gls.GetMeshID(shapeName), verts, uvs, &changed);
+		int id = gls.GetMeshID(shapeName);
+		if (id < 0)
+			return;
+
+		gls.Update(id, verts, uvs, &changed);
 
 		mesh* m = gls.GetMesh(shapeName);
 		if (m)

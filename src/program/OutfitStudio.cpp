@@ -8182,6 +8182,9 @@ void wxGLPanel::SetMeshTextures(const std::string& shapeName, const std::vector<
 
 void wxGLPanel::UpdateMeshVertices(const std::string& shapeName, std::vector<Vector3>* verts, bool updateBVH, bool recalcNormals, bool render, std::vector<Vector2>* uvs) {
 	int id = gls.GetMeshID(shapeName);
+	if (id < 0)
+		return;
+
 	gls.Update(id, verts, uvs);
 
 	if (updateBVH)
@@ -8195,11 +8198,18 @@ void wxGLPanel::UpdateMeshVertices(const std::string& shapeName, std::vector<Vec
 }
 
 void wxGLPanel::RecalculateMeshBVH(const std::string& shapeName) {
-	gls.RecalculateMeshBVH(gls.GetMeshID(shapeName));
+	int id = gls.GetMeshID(shapeName);
+	if (id < 0)
+		return;
+
+	gls.RecalculateMeshBVH(id);
 }
 
 void wxGLPanel::ShowShape(const std::string& shapeName, bool show) {
 	int id = gls.GetMeshID(shapeName);
+	if (id < 0)
+		return;
+
 	bool changed = gls.SetMeshVisibility(id, show);
 	if (changed)
 		gls.RenderOneFrame();
