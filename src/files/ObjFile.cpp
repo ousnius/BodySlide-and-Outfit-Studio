@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "ObjFile.h"
+#include "../utils/PlatformUtil.h"
 
 ObjFile::ObjFile() {
 }
@@ -29,17 +30,17 @@ int ObjFile::AddGroup(const std::string& name, const std::vector<Vector3>& verts
 }
 
 int ObjFile::LoadForNif(const std::string& fileName, const ObjOptionsImport& options) {
-	std::fstream base(fileName.c_str(), std::ios_base::in | std::ios_base::binary);
-	if (base.fail())
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::in | std::ios::binary);
+	if (file.fail())
 		return 1;
 
-	LoadForNif(base, options);
-	base.close();
+	LoadForNif(file, options);
 	return 0;
 }
 
 int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
-	ObjData* current = new ObjData();
+	auto current = new ObjData();
 
 	Vector3 v;
 	Vector2 uv;
@@ -244,7 +245,8 @@ int ObjFile::LoadForNif(std::fstream& base, const ObjOptionsImport& options) {
 
 
 int ObjFile::Save(const std::string &fileName) {
-	std::ofstream file(fileName.c_str(), std::ios_base::binary);
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios::out | std::ios::binary);
 	if (file.fail())
 		return 1;
 
