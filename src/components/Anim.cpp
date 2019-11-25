@@ -251,13 +251,11 @@ bool AnimInfo::CalcShapeSkinBounds(const std::string& shapeName, const int& bone
 	}
 
 	Matrix4 mat;
-	Vector3 trans;
 	BoundingSphere bounds(boundVerts);
 
 	mat = shapeSkinning[shapeName].boneWeights[boneIndex].xform.ToMatrix();
 
 	bounds.center = mat * bounds.center;
-	bounds.center = bounds.center + trans;
 	shapeSkinning[shapeName].boneWeights[boneIndex].bounds = bounds;
 	return true;
 }
