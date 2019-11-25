@@ -1105,6 +1105,7 @@ bool BodySlideApp::SetDefaultConfig() {
 	Config.SetDefaultBoolValue("UseSystemLanguage", false);
 	BodySlideConfig.SetDefaultValue("SelectedOutfit", "");
 	BodySlideConfig.SetDefaultValue("SelectedPreset", "");
+	BodySlideConfig.SetDefaultBoolValue("BuildMorphs", false);
 	Config.SetDefaultValue("Input/SliderMinimum", 0);
 	Config.SetDefaultValue("Input/SliderMaximum", 100);
 	Config.SetDefaultBoolValue("Input/LeftMousePan", false);
@@ -2455,8 +2456,14 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	val = BodySlideConfig["LastOutfitFilter"];
 	outfitsearch->ChangeValue(val);
 
-	if (app->targetGame != SKYRIM && app->targetGame != FO4 && app->targetGame != SKYRIMSE)
-		XRCCTRL(*this, "cbMorphs", wxCheckBox)->Show(false);
+	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
+	if (cbMorphs) {
+		bool buildMorphsDef = BodySlideConfig.GetBoolValue("BuildMorphs");
+		cbMorphs->SetValue(buildMorphsDef);
+
+		if (app->targetGame != SKYRIM && app->targetGame != FO4 && app->targetGame != SKYRIMSE)
+			cbMorphs->Show(false);
+	}
 }
 
 void BodySlideFrame::OnLinkClicked(wxHtmlLinkEvent& link) {
@@ -2711,6 +2718,10 @@ void BodySlideFrame::OnExit(wxCommandEvent& WXUNUSED(event)) {
 
 void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	app->ClosePreview();
+
+	auto cbMorphs = XRCCTRL(*this, "cbMorphs", wxCheckBox);
+	if (cbMorphs)
+		BodySlideConfig.SetBoolValue("BuildMorphs", cbMorphs->GetValue());
 
 	int ret = BodySlideConfig.SaveConfig(Config["AppDir"] + "\\BodySlide.xml", "BodySlideConfig");
 	if (ret)
