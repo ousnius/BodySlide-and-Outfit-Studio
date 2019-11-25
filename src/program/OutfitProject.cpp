@@ -2667,4 +2667,32 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 
 	for (auto &s : nif.GetShapes())
 		nif.TriangulateShape(s);
+
+	CleanupTransforms(nif);
+}
+
+void OutfitProject::CleanupTransforms(NifFile& nif) {
+	for (auto &s : nif.GetShapes()) {
+		if (s->IsSkinned()) {
+			/*
+			 * Root node, shape and overall skin transform aren't rendered for skinned meshes.
+			 * They only affect different things, e.g. bounds.
+			 *
+			 * By clearing these and recalculating bounds on export we make sure that
+			 * nothing but the individual bone transforms affect visuals.
+			 */
+
+			// Clear root node transform
+			auto rootNode = nif.GetRootNode();
+			if (rootNode)
+				rootNode->transform.Clear();
+
+			// Clear shape transform
+			s->transform.Clear();
+
+			// Clear overall skin transform
+			MatTransform xForm;
+			nif.SetShapeBoneTransform(s, 0xFFFFFFFF, xForm);
+		}
+	}
 }

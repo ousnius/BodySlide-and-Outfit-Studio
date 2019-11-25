@@ -25,6 +25,7 @@ class OutfitProject {
 	std::unordered_map<std::string, BSClothExtraData*> clothData;
 
 	void ValidateNIF(NifFile& nif);
+	void CleanupTransforms(NifFile& nif);
 
 public:
 	std::string outfitName = "New Outfit";
