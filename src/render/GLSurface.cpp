@@ -999,15 +999,6 @@ mesh* GLSurface::AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vect
 		matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
 		matShape = glm::scale(matShape, glm::vec3(shape->transform.scale, shape->transform.scale, shape->transform.scale));
 	}
-	else {
-		MatTransform xFormSkin;
-		if (nif->GetShapeBoneTransform(shape, 0xFFFFFFFF, xFormSkin)) {
-			xFormSkin.ToEulerDegrees(y, p, r);
-			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x / -10.0f, xFormSkin.translation.z / 10.0f, xFormSkin.translation.y / 10.0f));
-			matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
-			matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
-		}
-	}
 
 	m->matModel = matParents * matShape * glm::inverse(matSkin);
 
