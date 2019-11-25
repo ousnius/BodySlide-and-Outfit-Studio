@@ -867,8 +867,8 @@ int NifFile::Save(std::fstream& file, const NifSaveOptions& options) {
 }
 
 void NifFile::Optimize() {
-	for (auto &s : GetShapeNames())
-		UpdateBoundingSphere(s);
+	for (auto &s : GetShapes())
+		s->UpdateBounds();
 
 	DeleteUnreferencedBlocks();
 }
@@ -3484,14 +3484,6 @@ void NifFile::CreateSkinning(NiShape* shape) {
 	NiShader* shader = GetShader(shape);
 	if (shader)
 		shader->SetSkinned(true);
-}
-
-void NifFile::UpdateBoundingSphere(const std::string& shapeName) {
-	auto shape = FindBlockByName<NiShape>(shapeName);
-	if (!shape)
-		return;
-
-	shape->UpdateBounds();
 }
 
 void NifFile::SetShapeDynamic(const std::string& shapeName) {

@@ -205,7 +205,6 @@ public:
 	int CalcUVDiff(NiShape* shape, const std::vector<Vector2>* targetData, std::unordered_map<ushort, Vector3>& outDiffData, float scale = 1.0f);
 
 	void CreateSkinning(NiShape* shape);
-	void UpdateBoundingSphere(const std::string& shapeName);
 	void SetShapeDynamic(const std::string& shapeName);
 
 	// Maintains the number of and makeup of skin partitions, but updates the weighting values
