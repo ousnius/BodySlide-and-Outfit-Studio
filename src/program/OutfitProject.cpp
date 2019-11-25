@@ -2672,6 +2672,9 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 }
 
 void OutfitProject::CleanupTransforms(NifFile& nif) {
+	bool clearRoot = false;
+	bool unskinnedFound = false;
+
 	for (auto &s : nif.GetShapes()) {
 		if (s->IsSkinned()) {
 			/*
@@ -2682,17 +2685,26 @@ void OutfitProject::CleanupTransforms(NifFile& nif) {
 			 * nothing but the individual bone transforms affect visuals.
 			 */
 
-			// Clear root node transform
-			auto rootNode = nif.GetRootNode();
-			if (rootNode)
-				rootNode->transform.Clear();
+			if (!unskinnedFound)
+				clearRoot = true;
 
-			// Clear shape transform
+			 // Clear shape transform
 			s->transform.Clear();
 
 			// Clear overall skin transform
 			MatTransform xForm;
 			nif.SetShapeBoneTransform(s, 0xFFFFFFFF, xForm);
 		}
+		else {
+			clearRoot = false;
+			unskinnedFound = true;
+		}
+	}
+
+	if (clearRoot) {
+		// Clear root node transform
+		auto rootNode = nif.GetRootNode();
+		if (rootNode)
+			rootNode->transform.Clear();
 	}
 }
