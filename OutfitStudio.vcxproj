@@ -743,6 +743,7 @@
     <ClInclude Include="src\components\DiffData.h" />
     <ClInclude Include="src\components\Mesh.h" />
     <ClInclude Include="src\components\NormalGenLayers.h" />
+    <ClInclude Include="src\components\RefTemplates.h" />
     <ClInclude Include="src\components\SliderCategories.h" />
     <ClInclude Include="src\components\SliderData.h" />
     <ClInclude Include="src\components\SliderGroup.h" />
@@ -807,6 +808,7 @@
     <ClCompile Include="src\components\DiffData.cpp" />
     <ClCompile Include="src\components\Mesh.cpp" />
     <ClCompile Include="src\components\NormalGenLayers.cpp" />
+    <ClCompile Include="src\components\RefTemplates.cpp" />
     <ClCompile Include="src\components\SliderCategories.cpp" />
     <ClCompile Include="src\components\SliderData.cpp" />
     <ClCompile Include="src\components\SliderGroup.cpp" />

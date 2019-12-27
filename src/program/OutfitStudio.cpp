@@ -2254,7 +2254,7 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 
 		wxChoice* tmplChoice = XRCCTRL(wiz, "npTemplateChoice", wxChoice);
 		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.name);
+			tmplChoice->Append(tmpl.GetName());
 
 		tmplChoice->Select(0);
 
@@ -2296,12 +2296,12 @@ void OutfitStudioFrame::OnNewProject(wxCommandEvent& WXUNUSED(event)) {
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
 		std::string tmplName = refTemplate.ToUTF8();
-		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
+		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
-			if (wxFileName(wxString::FromUTF8(tmpl->sourceFile)).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + "\\" + tmpl->sourceFile, tmpl->set, tmpl->shape);
+			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
+				error = project->LoadReferenceTemplate(Config["AppDir"] + "\\" + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape());
 			else
-				error = project->LoadReferenceTemplate(tmpl->sourceFile, tmpl->set, tmpl->shape);
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape());
 		}
 		else
 			error = 1;
@@ -2410,7 +2410,7 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 
 		wxChoice* tmplChoice = XRCCTRL(dlg, "npTemplateChoice", wxChoice);
 		for (auto &tmpl : refTemplates)
-			tmplChoice->Append(tmpl.name);
+			tmplChoice->Append(tmpl.GetName());
 
 		tmplChoice->Select(0);
 		result = dlg.ShowModal();
@@ -2433,12 +2433,12 @@ void OutfitStudioFrame::OnLoadReference(wxCommandEvent& WXUNUSED(event)) {
 		wxLogMessage("Loading reference template '%s'...", refTemplate);
 
 		std::string tmplName = refTemplate.ToUTF8();
-		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const ReferenceTemplate& rt) { return rt.name == tmplName; });
+		auto tmpl = find_if(refTemplates.begin(), refTemplates.end(), [&tmplName](const RefTemplate& rt) { return rt.GetName() == tmplName; });
 		if (tmpl != refTemplates.end()) {
-			if (wxFileName(wxString::FromUTF8(tmpl->sourceFile)).IsRelative())
-				error = project->LoadReferenceTemplate(Config["AppDir"] + "\\" + tmpl->sourceFile, tmpl->set, tmpl->shape, mergeSliders);
+			if (wxFileName(wxString::FromUTF8(tmpl->GetSource())).IsRelative())
+				error = project->LoadReferenceTemplate(Config["AppDir"] + "\\" + tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), mergeSliders);
 			else
-				error = project->LoadReferenceTemplate(tmpl->sourceFile, tmpl->set, tmpl->shape, mergeSliders);
+				error = project->LoadReferenceTemplate(tmpl->GetSource(), tmpl->GetSetName(), tmpl->GetShape(), mergeSliders);
 		}
 		else
 			error = 1;
@@ -2591,27 +2591,14 @@ void OutfitStudioFrame::UpdateReferenceTemplates() {
 	refTemplates.clear();
 
 	std::string fileName = Config["AppDir"] + "\\RefTemplates.xml";
-	if (!wxFileName::IsFileReadable(fileName))
-		return;
-
-	XMLDocument doc;
-	XMLElement* root;
-	if (doc.LoadFile(fileName.c_str()) == XML_SUCCESS) {
-		root = doc.FirstChildElement("RefTemplates");
-		if (!root)
-			return;
-
-		XMLElement* element = root->FirstChildElement("Template");
-		while (element) {
-			ReferenceTemplate refTemplate;
-			refTemplate.name = element->GetText();
-			refTemplate.sourceFile = element->Attribute("sourcefile");
-			refTemplate.set = element->Attribute("set");
-			refTemplate.shape = element->Attribute("shape");
-			refTemplates.push_back(refTemplate);
-			element = element->NextSiblingElement("Template");
-		}
+	if (wxFileName::IsFileReadable(fileName)) {
+		RefTemplateFile refTemplateFile(fileName);
+		refTemplateFile.GetAll(refTemplates);
 	}
+
+	RefTemplateCollection refTemplateCol;
+	refTemplateCol.Load(Config["AppDir"] + "\\RefTemplates");
+	refTemplateCol.GetAll(refTemplates);
 }
 
 void OutfitStudioFrame::ClearProject() {

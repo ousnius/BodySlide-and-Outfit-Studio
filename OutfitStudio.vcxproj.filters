@@ -1783,6 +1783,9 @@
     <ClInclude Include="src\program\EditUV.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\components\RefTemplates.h">
+      <Filter>Components</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1967,6 +1970,9 @@
     </ClCompile>
     <ClCompile Include="src\program\EditUV.cpp">
       <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\components\RefTemplates.cpp">
+      <Filter>Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

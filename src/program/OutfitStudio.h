@@ -22,6 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "../render/GLSurface.h"
 #include "../components/TweakBrush.h"
 #include "../components/Automorph.h"
+#include "../components/RefTemplates.h"
 #include "../utils/Log.h"
 #include "../utils/ConfigurationManager.h"
 
@@ -114,13 +115,6 @@ struct WeightCopyOptions {
 struct ConformOptions {
 	float proximityRadius = 0.0f;
 	int maxResults = 0;
-};
-
-struct ReferenceTemplate {
-	std::string name;
-	std::string sourceFile;
-	std::string set;
-	std::string shape;
 };
 
 
@@ -977,7 +971,7 @@ private:
 	wxTreeItemId activeSegment;
 	wxTreeItemId activePartition;
 
-	std::vector<ReferenceTemplate> refTemplates;
+	std::vector<RefTemplate> refTemplates;
 
 	void createSliderGUI(const std::string& name, int id, wxScrolledWindow* wnd, wxSizer* rootSz);
 	void HighlightSlider(const std::string& name);
