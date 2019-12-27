@@ -37,6 +37,7 @@ private:
 	wxCheckBox* fullPrecision = nullptr;
 	wxCheckBox* subIndex = nullptr;
 	wxCheckBox* skinned = nullptr;
+	wxCheckBox* dynamic = nullptr;
 
 	std::vector<int> extraDataIndices;
 	wxPanel* pgExtraData = nullptr;
@@ -47,6 +48,7 @@ private:
 	NiShape* shape = nullptr;
 
 	bool currentSubIndex = false;
+	bool currentDynamic = false;
 	bool currentVertexColors = false;
 	bool currentVertexAlpha = false;
 

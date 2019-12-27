@@ -62,6 +62,7 @@ ShapeProperties::ShapeProperties(wxWindow* parent, NifFile* refNif, NiShape* ref
 	fullPrecision = XRCCTRL(*this, "fullPrecision", wxCheckBox);
 	subIndex = XRCCTRL(*this, "subIndex", wxCheckBox);
 	skinned = XRCCTRL(*this, "skinned", wxCheckBox);
+	dynamic = XRCCTRL(*this, "dynamic", wxCheckBox);
 
 	pgExtraData = XRCCTRL(*this, "pgExtraData", wxPanel);
 	extraDataGrid = (wxFlexGridSizer*)XRCCTRL(*this, "btnAddExtraData", wxButton)->GetContainingSizer();
@@ -428,6 +429,9 @@ void ShapeProperties::GetGeometry() {
 	currentSubIndex = shape->HasType<BSSubIndexTriShape>();
 	subIndex->SetValue(currentSubIndex);
 
+	currentDynamic = shape->HasType<BSDynamicTriShape>();
+	dynamic->SetValue(currentDynamic);
+
 	BSTriShape* bsTriShape = dynamic_cast<BSTriShape*>(shape);
 	if (bsTriShape) {
 		if (nif->GetHeader().GetVersion().Stream() == 100) {
@@ -440,7 +444,9 @@ void ShapeProperties::GetGeometry() {
 		}
 
 		auto targetGame = (TargetGame)Config.GetIntValue("TargetGame");
+		
 		subIndex->Enable(targetGame == FO4 || targetGame == FO4VR);
+		dynamic->Enable(targetGame == SKYRIMSE);
 	}
 }
 
@@ -729,6 +735,33 @@ void ShapeProperties::ApplyChanges() {
 			else {
 				auto bsTS = new BSTriShape(*bsTriShape);
 				bsTS->SetName(bsTriShape->GetName());
+
+				os->UpdateShapeReference(bsTriShape, bsTS);
+				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);
+				shape = bsTS;
+			}
+		}
+
+		if (targetGame == SKYRIMSE && currentDynamic != dynamic->IsChecked()) {
+			if (dynamic->IsChecked()) {
+				auto bsDTS = new BSDynamicTriShape();
+				*static_cast<BSTriShape*>(bsDTS) = *bsTriShape;
+				bsDTS->CalcDynamicData();
+				bsDTS->SetName(bsTriShape->GetName());
+
+				bsDTS->vertexDesc.RemoveFlag(VF_VERTEX);
+				bsDTS->vertexDesc.SetFlag(VF_FULLPREC);
+
+				os->UpdateShapeReference(bsTriShape, bsDTS);
+				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsDTS);
+				shape = bsDTS;
+			}
+			else {
+				auto bsTS = new BSTriShape(*bsTriShape);
+				bsTS->SetName(bsTriShape->GetName());
+
+				bsTS->vertexDesc.SetFlag(VF_VERTEX);
+				bsTS->vertexDesc.RemoveFlag(VF_FULLPREC);
 
 				os->UpdateShapeReference(bsTriShape, bsTS);
 				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);

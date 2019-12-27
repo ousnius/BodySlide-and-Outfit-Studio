@@ -1600,6 +1600,9 @@ msgstr "Volle Präzision"
 msgid "Sub Index"
 msgstr "Sub Index"
 
+msgid "Dynamic"
+msgstr "Dynamic"
+
 msgid "Extra Data"
 msgstr "Extra Daten"
 
