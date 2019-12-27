@@ -78,6 +78,17 @@ class GLSurface {
 		}
 	}
 
+	void DeleteOverlay(int meshID) {
+		if (meshID < overlays.size()) {
+			delete overlays[meshID];
+			overlays.erase(overlays.begin() + meshID);
+
+			// Renumber overlays after the deleted one
+			for (int i = meshID; i < overlays.size(); i++)
+				namedOverlays[overlays[i]->shapeName] = i;
+		}
+	}
+
 public:
 	// Get the attributes to use for creating a wxGLCanvas
 	static const wxGLAttributes& GetGLAttribs();
@@ -179,6 +190,28 @@ public:
 		return total;
 	}
 
+	void AddMesh(mesh* m) {
+		int id = GetMeshID(m->shapeName);
+		if (id >= 0)
+			DeleteMesh(id);
+
+		if (!m->shapeName.empty())
+			namedMeshes[m->shapeName] = meshes.size();
+
+		meshes.push_back(m);
+	}
+
+	void AddOverlay(mesh* m) {
+		int id = GetOverlayID(m->shapeName);
+		if (id >= 0)
+			DeleteOverlay(id);
+
+		if (!m->shapeName.empty())
+			namedOverlays[m->shapeName] = overlays.size();
+
+		overlays.push_back(m);
+	}
+
 	mesh* GetMesh(const std::string& shapeName) {
 		int id = GetMeshID(shapeName);
 		if (id >= 0)
@@ -228,6 +261,7 @@ public:
 	void PitchCamera(int dScreenY);
 	void PanCamera(int dScreenX, int dScreenY);
 	void DollyCamera(int dAmount);
+	void ClampCameraPosition(char axis, float lower, float upper);
 	void UnprojectCamera(Vector3& result);
 
 	void SetView(const char type);
@@ -254,6 +288,7 @@ public:
 	mesh* AddVis3dArrow(const Vector3& origin, const Vector3& direction, float stemRadius, float pointRadius, float length, const Vector3& color, const std::string& name);
 	mesh* AddVis3dCube(const Vector3& center, const Vector3& normal, float radius, const Vector3& color, const std::string& name);
 	mesh* AddVisPoint(const Vector3& p, const std::string& name = "PointMesh", const Vector3* color = nullptr);
+	mesh* AddVisPlane(const Vector3& center, const Vector2& size, float uvScale = 1.0f, float uvOffset = 0.0f, const std::string& name = "PlaneMesh", const Vector3* color = nullptr);
 
 	mesh* AddMeshFromNif(NifFile* nif, const std::string& shapeName, Vector3* color = nullptr);
 	void Update(const std::string& shapeName, std::vector<Vector3>* vertices, std::vector<Vector2>* uvs = nullptr, std::set<int>* changed = nullptr);
@@ -291,6 +326,9 @@ public:
 
 		for (auto &m : meshes)
 			UpdateShaders(m);
+
+		for (auto &o : overlays)
+			UpdateShaders(o);
 	}
 
 	void ToggleWireframe() {
@@ -308,6 +346,9 @@ public:
 
 		for (auto &m : meshes)
 			UpdateShaders(m);
+
+		for (auto &o : overlays)
+			UpdateShaders(o);
 	}
 
 	void SetMaskVisible(bool bVisible = true) {
@@ -315,6 +356,9 @@ public:
 
 		for (auto &m : meshes)
 			UpdateShaders(m);
+
+		for (auto &o : overlays)
+			UpdateShaders(o);
 	}
 
 	void SetWeightColors(bool bVisible = true) {
@@ -322,6 +366,9 @@ public:
 
 		for (auto &m : meshes)
 			UpdateShaders(m);
+
+		for (auto &o : overlays)
+			UpdateShaders(o);
 	}
 
 	void SetVertexColors(bool bVisible = true) {
@@ -330,6 +377,9 @@ public:
 
 		for (auto &m : meshes)
 			UpdateShaders(m);
+
+		for (auto &o : overlays)
+			UpdateShaders(o);
 	}
 
 	void SetSegmentColors(bool bVisible = true) {
@@ -337,5 +387,8 @@ public:
 
 		for (auto &m : meshes)
 			UpdateShaders(m);
+
+		for (auto &o : overlays)
+			UpdateShaders(o);
 	}
 };

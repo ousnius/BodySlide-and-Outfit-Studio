@@ -189,7 +189,7 @@ void GLSurface::SetStartingView(const Vector3& pos, const Vector3& rot, const ui
 	mFov = fov;
 	SetSize(vpWidth, vpHeight);
 }
-	
+
 void GLSurface::TurnTableCamera(int dScreenX) {
 	float pct = (float)dScreenX / (float)vpW;
 	camRot.y += (pct * 500.0f);
@@ -215,6 +215,20 @@ void GLSurface::PanCamera(int dScreenX, int dScreenY) {
 
 void GLSurface::DollyCamera(int dAmt) {
 	camPos.z += (float)dAmt / 200.0f;
+}
+
+void GLSurface::ClampCameraPosition(char axis, float lower, float upper) {
+	switch (axis) {
+	case 'X':
+		camPos.x = std::max(lower, std::min(camPos.x, upper));
+		break;
+	case 'Y':
+		camPos.y = std::max(lower, std::min(camPos.y, upper));
+		break;
+	case 'Z':
+		camPos.z = std::max(lower, std::min(camPos.z, upper));
+		break;
+	}
 }
 
 void GLSurface::UnprojectCamera(Vector3& result) {
@@ -640,8 +654,7 @@ void GLSurface::SetSize(uint w, uint h) {
 	vpH = h;
 }
 
-void GLSurface::GetSize(uint & w, uint & h)
-{
+void GLSurface::GetSize(uint & w, uint & h) {
 	w = vpW;
 	h = vpH;
 }
@@ -806,6 +819,7 @@ void GLSurface::RenderMesh(mesh* m) {
 	shader.SetAlphaMaskEnabled(false);
 	shader.SetCubemapEnabled(m->cubemap);
 	shader.SetEnvMaskEnabled(false);
+	shader.SetProperties(m->prop);
 
 	glBindVertexArray(m->vao);
 
@@ -815,7 +829,6 @@ void GLSurface::RenderMesh(mesh* m) {
 		shader.SetDirectionalLight(directionalLight1, 1);
 		shader.SetDirectionalLight(directionalLight2, 2);
 		shader.SetAmbientLight(ambientLight);
-		shader.SetProperties(m->prop);
 
 		if (m->rendermode == RenderMode::LitWire) {
 			glDisable(GL_CULL_FACE);
@@ -955,6 +968,7 @@ void GLSurface::UpdateShaders(mesh* m) {
 		shader.ShowVertexColors(bVertexColors && m->vcolors && m->vertexColors);
 		shader.ShowVertexAlpha(bVertexColors && m->valpha && m->vertexColors && m->vertexAlpha);
 		shader.ShowSegments(bSegmentColors && m->vcolors);
+		shader.SetProperties(m->prop);
 	}
 }
 
@@ -1532,6 +1546,55 @@ mesh* GLSurface::AddVis3dCube(const Vector3& center, const Vector3& normal, floa
 	m->tris[9] = Triangle(1, 0, 4);
 	m->tris[10] = Triangle(3, 2, 6);
 	m->tris[11] = Triangle(6, 7, 3);
+
+	m->CreateBuffers();
+	return m;
+}
+
+mesh* GLSurface::AddVisPlane(const Vector3& center, const Vector2& size, float uvScale, float uvOffset, const std::string& name, const Vector3* color) {
+	mesh* m = nullptr;
+
+	int meshID = GetOverlayID(name);
+	if (GetOverlayID(name) >= 0)
+		m = overlays[meshID];
+
+	if (!m) {
+		m = new mesh();
+
+		m->nVerts = 4;
+		m->nTris = 2;
+		m->verts = std::make_unique<Vector3[]>(m->nVerts);
+		m->texcoord = std::make_unique<Vector2[]>(m->nVerts);
+		m->tris = std::make_unique<Triangle[]>(m->nTris);
+
+		m->shapeName = name;
+		m->rendermode = RenderMode::UnlitSolid;
+		m->material = GetPrimitiveMaterial();
+
+		namedOverlays[m->shapeName] = overlays.size();
+		overlays.push_back(m);
+	}
+
+	if (color)
+		m->color = *color;
+
+	Matrix4 mat;
+	mat.Translate(center);
+
+	m->verts[0] = mat * Vector3(-size.u / 2.0f, -size.v / 2.0f, 0.0f);
+	m->verts[1] = mat * Vector3(-size.u / 2.0f, size.v / 2.0f, 0.0f);
+	m->verts[2] = mat * Vector3(size.u / 2.0f, size.v / 2.0f, 0.0f);
+	m->verts[3] = mat * Vector3(size.u / 2.0f, -size.v / 2.0f, 0.0f);
+
+	m->texcoord[0] = Vector2(uvOffset, uvScale + uvOffset);
+	m->texcoord[1] = Vector2(uvOffset, uvOffset);
+	m->texcoord[2] = Vector2(uvScale + uvOffset, uvOffset);
+	m->texcoord[3] = Vector2(uvScale + uvOffset, uvScale + uvOffset);
+
+	m->textured = true;
+
+	m->tris[0] = Triangle(0, 1, 2);
+	m->tris[1] = Triangle(2, 3, 0);
 
 	m->CreateBuffers();
 	return m;

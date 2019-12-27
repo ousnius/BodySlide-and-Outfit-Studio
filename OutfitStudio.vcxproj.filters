@@ -1780,6 +1780,9 @@
     <ClInclude Include="src\program\GroupManager.h">
       <Filter>Program</Filter>
     </ClInclude>
+    <ClInclude Include="src\program\EditUV.h">
+      <Filter>Program</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="lib\TinyXML-2\tinyxml2.cpp">
@@ -1960,6 +1963,9 @@
       <Filter>Libraries\LZ4F</Filter>
     </ClCompile>
     <ClCompile Include="src\program\GroupManager.cpp">
+      <Filter>Program</Filter>
+    </ClCompile>
+    <ClCompile Include="src\program\EditUV.cpp">
       <Filter>Program</Filter>
     </ClCompile>
   </ItemGroup>

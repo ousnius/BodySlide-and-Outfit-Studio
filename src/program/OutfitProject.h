@@ -134,6 +134,8 @@ public:
 	const std::string& ShapeToTarget(const std::string& shapeName);
 	int GetVertexCount(NiShape* shape);
 	void GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts, std::vector<Vector2>* outUVs = nullptr);
+	void GetSliderDiff(NiShape* shape, const std::string& sliderName, std::vector<Vector3>& outVerts);
+	void GetSliderDiffUV(NiShape* shape, const std::string& sliderName, std::vector<Vector2>& outUVs);
 	void GetActiveBones(std::vector<std::string>& outBoneNames);
 
 	std::vector<std::string> GetShapeTextures(NiShape* shape);

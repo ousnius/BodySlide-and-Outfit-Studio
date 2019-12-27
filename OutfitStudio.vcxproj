@@ -755,6 +755,7 @@
     <ClInclude Include="src\files\ObjFile.h" />
     <ClInclude Include="src\files\ResourceLoader.h" />
     <ClInclude Include="src\files\TriFile.h" />
+    <ClInclude Include="src\program\EditUV.h" />
     <ClInclude Include="src\program\FBXImportDialog.h" />
     <ClInclude Include="src\program\FBXImportOptions.h" />
     <ClInclude Include="src\program\GroupManager.h" />
@@ -818,6 +819,7 @@
     <ClCompile Include="src\files\ObjFile.cpp" />
     <ClCompile Include="src\files\ResourceLoader.cpp" />
     <ClCompile Include="src\files\TriFile.cpp" />
+    <ClCompile Include="src\program\EditUV.cpp" />
     <ClCompile Include="src\program\FBXImportDialog.cpp" />
     <ClCompile Include="src\program\GroupManager.cpp" />
     <ClCompile Include="src\program\OutfitProject.cpp" />

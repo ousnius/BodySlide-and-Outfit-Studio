@@ -9,7 +9,7 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.2.4\n"
 "Language: en\n"
 "X-Poedit-KeywordsList: _\n"
 
@@ -139,6 +139,9 @@ msgid "Select None"
 msgstr ""
 
 msgid "Select All"
+msgstr ""
+
+msgid "Select All\tCtrl+A"
 msgstr ""
 
 msgid "Enter preset name..."
@@ -2515,4 +2518,16 @@ msgid "Failed to open group file '%s'!"
 msgstr ""
 
 msgid "Failed to copy group file '%s'!"
+msgstr ""
+
+msgid "Edit..."
+msgstr ""
+
+msgid "Edit UV"
+msgstr ""
+
+msgid "Edit the texture coordinates."
+msgstr ""
+
+msgid "Box Selection"
 msgstr ""

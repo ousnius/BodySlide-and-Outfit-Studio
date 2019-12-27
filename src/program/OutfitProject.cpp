@@ -1121,6 +1121,46 @@ void OutfitProject::GetLiveVerts(NiShape* shape, std::vector<Vector3>& outVerts,
 	}
 }
 
+void OutfitProject::GetSliderDiff(NiShape* shape, const std::string& sliderName, std::vector<Vector3>& outVerts) {
+	int sliderIndex = SliderIndexFromName(sliderName);
+	if (sliderIndex < 0)
+		return;
+
+	std::string target = ShapeToTarget(shape->GetName());
+	if (IsBaseShape(shape)) {
+		std::string targetData = activeSet.ShapeToDataName(sliderIndex, shape->GetName());
+		if (targetData.empty())
+			return;
+
+		if (!activeSet[sliderIndex].bUV)
+			baseDiffData.ApplyDiff(targetData, target, 1.0f, &outVerts);
+	}
+	else {
+		if (!activeSet[sliderIndex].bUV)
+			morpher.ApplyResultToVerts(activeSet[sliderIndex].name, target, &outVerts);
+	}
+}
+
+void OutfitProject::GetSliderDiffUV(NiShape* shape, const std::string& sliderName, std::vector<Vector2>& outUVs) {
+	int sliderIndex = SliderIndexFromName(sliderName);
+	if (sliderIndex < 0)
+		return;
+
+	std::string target = ShapeToTarget(shape->GetName());
+	if (IsBaseShape(shape)) {
+		std::string targetData = activeSet.ShapeToDataName(sliderIndex, shape->GetName());
+		if (targetData.empty())
+			return;
+
+		if (activeSet[sliderIndex].bUV)
+			baseDiffData.ApplyUVDiff(targetData, target, 1.0f, &outUVs);
+	}
+	else {
+		if (activeSet[sliderIndex].bUV)
+			morpher.ApplyResultToUVs(activeSet[sliderIndex].name, target, &outUVs);
+	}
+}
+
 const std::string& OutfitProject::ShapeToTarget(const std::string& shapeName) {
 	for (auto it = activeSet.ShapesBegin(); it != activeSet.ShapesEnd(); ++it)
 		if (it->first == shapeName)

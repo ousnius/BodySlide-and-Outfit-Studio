@@ -19,6 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "ShapeProperties.h"
 #include "PresetSaveDialog.h"
 #include "GroupManager.h"
+#include "EditUV.h"
 #include "../components/SliderPresets.h"
 #include "../components/SliderGroup.h"
 #include "../files/TriFile.h"
@@ -148,6 +149,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("btnEnableLighting"), OutfitStudioFrame::OnEnableLighting)
 	EVT_MENU(XRCID("btnEnableTextures"), OutfitStudioFrame::OnEnableTextures)
 
+	EVT_MENU(XRCID("uvEdit"), OutfitStudioFrame::OnEditUV)
 	EVT_MENU(XRCID("uvInvertX"), OutfitStudioFrame::OnInvertUV)
 	EVT_MENU(XRCID("uvInvertY"), OutfitStudioFrame::OnInvertUV)
 	EVT_MENU(XRCID("mirrorX"), OutfitStudioFrame::OnMirror)
@@ -2613,6 +2615,9 @@ void OutfitStudioFrame::UpdateReferenceTemplates() {
 }
 
 void OutfitStudioFrame::ClearProject() {
+	if (editUV)
+		editUV->Close();
+
 	for (auto &s : project->GetWorkNif()->GetShapeNames())
 		glView->DeleteMesh(s);
 
@@ -2791,6 +2796,9 @@ void OutfitStudioFrame::MeshesFromProj(const bool reloadTextures) {
 }
 
 void OutfitStudioFrame::MeshFromProj(NiShape* shape, const bool reloadTextures) {
+	if (editUV)
+		editUV->Close();
+
 	if (extInitialized) {
 		glView->DeleteMesh(shape->GetName());
 		glView->AddMeshFromNif(project->GetWorkNif(), shape->GetName());
@@ -7357,6 +7365,9 @@ void OutfitStudioFrame::OnDeleteVerts(wxCommandEvent& WXUNUSED(event)) {
 
 	bool shapeDeleted = false;
 	for (auto &i : selectedItems) {
+		if (editUV && editUV->GetShape() == i->GetShape())
+			editUV->Close();
+
 		std::unordered_map<ushort, float> mask;
 		glView->GetShapeUnmasked(mask, i->GetShape()->GetName());
 		if (project->DeleteVerts(i->GetShape(), mask))
@@ -7409,6 +7420,9 @@ void OutfitStudioFrame::OnSeparateVerts(wxCommandEvent& WXUNUSED(event)) {
 
 		newShapeName = std::move(result);
 	} while (project->IsValidShape(newShapeName));
+
+	if (editUV && editUV->GetShape() == activeItem->GetShape())
+		editUV->Close();
 
 	auto newShape = project->DuplicateShape(activeItem->GetShape(), newShapeName);
 
@@ -7493,6 +7507,9 @@ void OutfitStudioFrame::OnDeleteShape(wxCommandEvent& WXUNUSED(event)) {
 		selected.push_back(*i);
 
 	for (auto &i : selected) {
+		if (editUV && editUV->GetShape() == i.GetShape())
+			editUV->Close();
+
 		std::string shapeName = i.GetShape()->GetName();
 		wxLogMessage("Deleting shape '%s'.", shapeName);
 		project->DeleteShape(i.GetShape());
@@ -8021,6 +8038,29 @@ void OutfitStudioFrame::OnLockNormals(wxCommandEvent& WXUNUSED(event)) {
 
 	for (auto &s : selectedItems)
 		project->activeSet.ToggleLockNormals(s->GetShape()->GetName());
+}
+
+void OutfitStudioFrame::OnEditUV(wxCommandEvent& WXUNUSED(event)) {
+	if (editUV)
+		return;
+
+	if (!activeItem) {
+		wxMessageBox(_("There is no shape selected!"), _("Error"));
+		return;
+	}
+
+	auto shape = activeItem->GetShape();
+	if (shape) {
+		editUV = new EditUV(this, project->GetWorkNif(), shape, glView->GetMesh(shape->GetName()), activeSlider);
+
+		editUV->Bind(wxEVT_CLOSE_WINDOW, [&](wxCloseEvent& event) {
+			editUV = nullptr;
+			event.Skip();
+		});
+
+		editUV->CenterOnParent();
+		editUV->Show();
+	}
 }
 
 

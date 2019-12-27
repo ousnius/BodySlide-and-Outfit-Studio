@@ -167,6 +167,28 @@ struct Vector3 {
 		tmp += other;
 		return tmp;
 	}
+	Vector3& operator *= (const Vector3& other) {
+		x *= other.x;
+		y *= other.y;
+		z *= other.z;
+		return (*this);
+	}
+	Vector3 operator * (const Vector3& other) const {
+		Vector3 tmp = (*this);
+		tmp *= other;
+		return tmp;
+	}
+	Vector3& operator /= (const Vector3& other) {
+		x /= other.x;
+		y /= other.y;
+		z /= other.z;
+		return (*this);
+	}
+	Vector3 operator / (const Vector3& other) const {
+		Vector3 tmp = (*this);
+		tmp /= other;
+		return tmp;
+	}
 	Vector3& operator *= (float val) {
 		x *= val;
 		y *= val;
@@ -1189,5 +1211,156 @@ struct Face {
 			p4 = points[3];
 			uv4 = tc[3];
 		}
+	}
+};
+
+struct Rect {
+	float x1 = 0.0f;
+	float y1 = 0.0f;
+	float x2 = 0.0f;
+	float y2 = 0.0f;
+
+	Rect() {}
+
+	Rect(float X1, float Y1, float X2, float Y2) {
+		x1 = X1;
+		y1 = Y1;
+		x2 = X2;
+		y2 = Y2;
+	}
+
+	float GetLeft() {
+		return x1;
+	}
+	float GetTop() {
+		return y1;
+	}
+	float GetRight() {
+		return x2;
+	}
+	float GetBottom() {
+		return y2;
+	}
+
+	Vector2 GetTopLeft() {
+		return Vector2(x1, y1);
+	}
+	Vector2 GetBottomRight() {
+		return Vector2(x2, y2);
+	}
+	Vector2 GetTopRight() {
+		return Vector2(x2, y1);
+	}
+	Vector2 GetBottomLeft() {
+		return Vector2(x1, y2);
+	}
+
+	Vector2 GetCenter() {
+		return Vector2((x1 + x2) / 2, (y1 + y2) / 2);
+	}
+
+	float GetWidth() {
+		return  x2 - x1 + 1;
+	}
+	float GetHeight() {
+		return  y2 - y1 + 1;
+	}
+	Vector2 GetSize() {
+		return Vector2(GetWidth(), GetHeight());
+	}
+
+	void SetLeft(float pos) {
+		x1 = pos;
+	}
+	void SetTop(float pos) {
+		y1 = pos;
+	}
+	void SetRight(float pos) {
+		x2 = pos;
+	}
+	void SetBottom(float pos) {
+		y2 = pos;
+	}
+
+	void SetTopLeft(const Vector2 &p) {
+		x1 = p.u;
+		y1 = p.v;
+	}
+	void SetBottomRight(const Vector2 &p) {
+		x2 = p.u;
+		y2 = p.v;
+	}
+	void SetTopRight(const Vector2 &p) {
+		x2 = p.u;
+		y1 = p.v;
+	}
+	void SetBottomLeft(const Vector2 &p) {
+		x1 = p.u;
+		y2 = p.v;
+	}
+
+	void SetWidth(float w) {
+		x2 = x1 + w - 1.0f;
+	}
+	void SetHeight(float h) {
+		y2 = y1 + h - 1.0f;
+	}
+
+	Rect Normalized() {
+		Rect r;
+
+		if (x2 < x1) {
+			r.x1 = x2;
+			r.x2 = x1;
+		}
+		else {
+			r.x1 = x1;
+			r.x2 = x2;
+		}
+
+		if (y2 < y1) {
+			r.y1 = y2;
+			r.y2 = y1;
+		}
+		else {
+			r.y1 = y1;
+			r.y2 = y2;
+		}
+
+		return r;
+	}
+
+	bool Contains(const Vector2& p) {
+		float l = 0.0f;
+		float r = 0.0f;
+
+		if (x2 < x1 - 1.0f) {
+			l = x2;
+			r = x1;
+		}
+		else {
+			l = x1;
+			r = x2;
+		}
+
+		if (p.u < l || p.u > r)
+			return false;
+
+		float t = 0.0f;
+		float b = 0.0f;
+
+		if (y2 < y1 - 1.0f) {
+			t = y2;
+			b = y1;
+		}
+		else {
+			t = y1;
+			b = y2;
+		}
+
+		if (p.v < t || p.v > b)
+			return false;
+
+		return true;
 	}
 };

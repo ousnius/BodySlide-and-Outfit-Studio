@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<resource xmlns="http://www.wxwidgets.org/wxxrc" version="2.5.3.0">
+	<object class="wxFrame" name="dlgEditUV">
+		<style>wxFRAME_FLOAT_ON_PARENT|wxCAPTION|wxRESIZE_BORDER|wxMAXIMIZE_BOX|wxCLOSE_BOX</style>
+		<title>Edit UV</title>
+		<bg>#707070</bg>
+		<centered>1</centered>
+		<object class="wxBoxSizer">
+			<orient>wxVERTICAL</orient>
+			<minsize>600,600</minsize>
+			<object class="sizeritem">
+				<option>1</option>
+				<flag>wxALL|wxEXPAND</flag>
+				<border>0</border>
+				<object class="unknown" name="uvGLView" />
+			</object>
+			<object class="spacer">
+				<option>0</option>
+				<flag>wxEXPAND</flag>
+				<border>5</border>
+				<size>0,5</size>
+			</object>
+			<object class="sizeritem">
+				<option>0</option>
+				<flag>wxEXPAND|wxALL</flag>
+				<border>5</border>
+				<object class="wxStdDialogButtonSizer">
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_OK">
+							<label>&amp;OK</label>
+						</object>
+					</object>
+					<object class="button">
+						<flag>wxALIGN_CENTER_HORIZONTAL|wxALL</flag>
+						<border>5</border>
+						<object class="wxButton" name="wxID_CANCEL">
+							<label>&amp;Cancel</label>
+						</object>
+					</object>
+				</object>
+			</object>
+		</object>
+	</object>
+	<object class="wxToolBar" name="uvToolBar">
+		<style>wxTB_HORIZONTAL|wxTB_FLAT</style>
+		<bg>#707070</bg>
+		<fg>#ffffff</fg>
+		<separation>5</separation>
+		<object class="tool" name="btnBoxSelection">
+			<label>Box Selection</label>
+			<bitmap>$(AppDir)\res\images\MaskBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\MaskBrush_d.png</bitmap2>
+			<radio>1</radio>
+			<checked>1</checked>
+		</object>
+		<object class="tool" name="btnMove">
+			<label>Move</label>
+			<bitmap>$(AppDir)\res\images\MoveBrush.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\MoveBrush_d.png</bitmap2>
+			<radio>1</radio>
+		</object>
+		<object class="tool" name="btnScale">
+			<label>Scale</label>
+			<bitmap>$(AppDir)\res\images\TransformTool.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\TransformTool_d.png</bitmap2>
+			<radio>1</radio>
+		</object>
+		<object class="tool" name="btnRotate">
+			<label>Rotate</label>
+			<bitmap>$(AppDir)\res\images\RotateTool.png</bitmap>
+			<bitmap2>$(AppDir)\res\images\RotateTool_d.png</bitmap2>
+			<radio>1</radio>
+		</object>
+	</object>
+	<object class="wxMenuBar" name="uvMenuBar">
+		<label>Menu</label>
+		<object class="wxMenu" name="menuEdit">
+			<label>Edit</label>
+			<object class="wxMenuItem" name="editUndo">
+				<label>Undo\tCtrl+Z</label>
+				<help>Undo the previous action.</help>
+			</object>
+			<object class="wxMenuItem" name="editRedo">
+				<label>Redo\tCtrl+Y</label>
+				<help>Redo the next undone action.</help>
+			</object>
+			<object class="wxMenuItem" name="editSelectAll">
+				<label>Select All\tCtrl+A</label>
+				<help>Select All</help>
+			</object>
+		</object>
+	</object>
+</resource>

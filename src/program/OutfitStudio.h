@@ -125,6 +125,7 @@ struct ReferenceTemplate {
 
 
 class OutfitStudioFrame;
+class EditUV;
 
 class wxGLPanel : public wxGLCanvas {
 public:
@@ -731,6 +732,7 @@ public:
 	~OutfitStudioFrame() {}
 
 	wxGLPanel* glView = nullptr;
+	EditUV* editUV = nullptr;
 	OutfitProject* project = nullptr;
 	ShapeItemData* activeItem = nullptr;
 	std::string activeSlider;
@@ -1210,6 +1212,8 @@ private:
 	void OnRecalcNormals(wxCommandEvent& WXUNUSED(event));
 	void OnSmoothNormalSeams(wxCommandEvent& event);
 	void OnLockNormals(wxCommandEvent& event);
+
+	void OnEditUV(wxCommandEvent& event);
 
 	void OnToggleVisibility(wxCommandEvent& WXUNUSED(event)) {
 		ToggleVisibility();
