@@ -6636,6 +6636,7 @@ void OutfitStudioFrame::OnSliderConform(wxCommandEvent& WXUNUSED(event)) {
 			ConformSliders(i->GetShape(), options);
 
 		project->morpher.ClearProximityCache();
+		project->morpher.UnlinkRefDiffData();
 
 		if (statusBar)
 			statusBar->SetStatusText(_("Shape(s) conformed."));
@@ -6670,6 +6671,9 @@ void OutfitStudioFrame::OnSliderConformAll(wxCommandEvent& WXUNUSED(event)) {
 			pos++;
 			EndProgress();
 		}
+
+		project->morpher.ClearProximityCache();
+		project->morpher.UnlinkRefDiffData();
 
 		if (statusBar)
 			statusBar->SetStatusText(_("All shapes conformed."));
