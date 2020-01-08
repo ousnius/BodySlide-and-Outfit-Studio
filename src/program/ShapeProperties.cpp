@@ -746,11 +746,13 @@ void ShapeProperties::ApplyChanges() {
 			if (dynamic->IsChecked()) {
 				auto bsDTS = new BSDynamicTriShape();
 				*static_cast<BSTriShape*>(bsDTS) = *bsTriShape;
-				bsDTS->CalcDynamicData();
 				bsDTS->SetName(bsTriShape->GetName());
 
 				bsDTS->vertexDesc.RemoveFlag(VF_VERTEX);
 				bsDTS->vertexDesc.SetFlag(VF_FULLPREC);
+
+				bsDTS->CalcDynamicData();
+				bsDTS->CalcDataSizes(nif->GetHeader().GetVersion());
 
 				os->UpdateShapeReference(bsTriShape, bsDTS);
 				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsDTS);
@@ -762,6 +764,8 @@ void ShapeProperties::ApplyChanges() {
 
 				bsTS->vertexDesc.SetFlag(VF_VERTEX);
 				bsTS->vertexDesc.RemoveFlag(VF_FULLPREC);
+
+				bsTS->CalcDataSizes(nif->GetHeader().GetVersion());
 
 				os->UpdateShapeReference(bsTriShape, bsTS);
 				nif->GetHeader().ReplaceBlock(nif->GetBlockID(bsTriShape), bsTS);

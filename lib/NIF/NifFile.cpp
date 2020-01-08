@@ -1404,6 +1404,7 @@ void NifFile::PrepareData() {
 					dynamicShape->vertData[i].vert.x = dynamicShape->dynamicData[i].x;
 					dynamicShape->vertData[i].vert.y = dynamicShape->dynamicData[i].y;
 					dynamicShape->vertData[i].vert.z = dynamicShape->dynamicData[i].z;
+					dynamicShape->vertData[i].bitangentX = dynamicShape->dynamicData[i].w;
 				}
 			}
 		}
