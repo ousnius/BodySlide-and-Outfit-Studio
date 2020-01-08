@@ -455,6 +455,23 @@ void NifFile::DeleteNode(const std::string& nodeName) {
 	hdr.DeleteBlock(GetBlockID(FindBlockByName<NiNode>(nodeName)));
 }
 
+bool NifFile::CanDeleteNode(const std::string& nodeName) {
+	auto node = FindBlockByName<NiNode>(nodeName);
+	if (!node)
+		return false;
+
+	// Only delete if the node has no children
+	if (node->GetChildren().GetSize() > 0)
+		return false;
+
+	// Only delete if the node's parent is the root node
+	auto nodeParent = GetParentNode(node);
+	if (nodeParent != GetRootNode())
+		return false;
+
+	return true;
+}
+
 std::string NifFile::GetNodeName(const int blockID) {
 	std::string name;
 

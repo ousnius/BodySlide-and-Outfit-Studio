@@ -98,6 +98,7 @@ public:
 
 	int AddNode(const std::string& nodeName, const MatTransform& xform);
 	void DeleteNode(const std::string& nodeName);
+	bool CanDeleteNode(const std::string& nodeName);
 	std::string GetNodeName(const int blockID);
 	void SetNodeName(const int blockID, const std::string& newName);
 

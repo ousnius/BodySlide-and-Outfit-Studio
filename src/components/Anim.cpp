@@ -30,8 +30,7 @@ bool AnimInfo::RemoveShapeBone(const std::string& shape, const std::string& bone
 
 	AnimSkeleton::getInstance().ReleaseBone(boneName);
 	if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
-		auto nodeParent = refNif->GetParentNode(refNif->FindBlockByName<NiNode>(boneName));
-		if (nodeParent == refNif->GetRootNode())
+		if (refNif->CanDeleteNode(boneName))
 			refNif->DeleteNode(boneName);
 	}
 
@@ -44,8 +43,7 @@ void AnimInfo::Clear() {
 			for (auto &boneName : shapeBoneList.second) {
 				AnimSkeleton::getInstance().ReleaseBone(boneName);
 				if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
-					auto nodeParent = refNif->GetParentNode(refNif->FindBlockByName<NiNode>(boneName));
-					if (nodeParent == refNif->GetRootNode())
+					if (refNif->CanDeleteNode(boneName))
 						refNif->DeleteNode(boneName);
 				}
 			}
@@ -66,8 +64,7 @@ void AnimInfo::ClearShape(const std::string& shape) {
 	for (auto &boneName : shapeBones[shape]) {
 		AnimSkeleton::getInstance().ReleaseBone(boneName);
 		if (AnimSkeleton::getInstance().GetBoneRefCount(boneName) <= 0) {
-			auto nodeParent = refNif->GetParentNode(refNif->FindBlockByName<NiNode>(boneName));
-			if (nodeParent == refNif->GetRootNode())
+			if (refNif->CanDeleteNode(boneName))
 				refNif->DeleteNode(boneName);
 		}
 	}
@@ -300,8 +297,7 @@ void AnimInfo::WriteToNif(NifFile* nif, const std::string& shapeException) {
 
 			if (bones.first == shapeException) {
 				if (boneRef.refCount <= 1) {
-					auto nodeParent = nif->GetParentNode(nif->FindBlockByName<NiNode>(bone));
-					if (nodeParent == nif->GetRootNode())
+					if (nif->CanDeleteNode(bone))
 						nif->DeleteNode(bone);
 				}
 				continue;
