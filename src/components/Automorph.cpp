@@ -35,35 +35,23 @@ void Automorph::RenameShape(const std::string& oldShapeName, const std::string& 
 
 	resultDiffData.DeepRename(oldTarget, newShapeName);
 
-	std::vector<std::string> newVals;
 	std::vector<std::string> oldKeys;
-	std::vector<std::string> newKeys;
 	for (auto &tsdn : targetSliderDataNames) {
-		std::string newDN = tsdn.second;
-		std::string newKey = tsdn.first;
 		bool found = false;
-		size_t p = newDN.find(oldShapeName);
-		if (p == 0) {
-			newDN = newDN.substr(oldShapeName.length());
-			newDN = newShapeName + newDN;
+		size_t p = tsdn.second.find(oldShapeName);
+		if (p == 0)
 			found = true;
-		}
-		p = newKey.find(oldShapeName);
-		if (p == 0) {
-			newKey = newKey.substr(oldShapeName.length());
-			newKey = newShapeName + newKey;
+
+		p = tsdn.first.find(oldShapeName);
+		if (p == 0)
 			found = true;
-		}
-		if (found) {
+
+		if (found)
 			oldKeys.push_back(tsdn.first);
-			newKeys.push_back(newKey);
-			newVals.push_back(newDN);
-		}
 	}
-	for (int i = 0; i < oldKeys.size(); i++) {
+
+	for (int i = 0; i < oldKeys.size(); i++)
 		targetSliderDataNames.erase(oldKeys[i]);
-		targetSliderDataNames[newKeys[i]] = newVals[i];
-	}
 }
 
 void Automorph::CopyShape(const std::string& srcShapeName, const std::string& srcTarget, const std::string& destShapeName) {
