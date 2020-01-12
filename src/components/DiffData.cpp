@@ -145,7 +145,7 @@ int DiffDataSets::LoadSet(const std::string& name, const std::string& target, co
 
 	inFile.close();
 
-	namedSet[name] = move(data);
+	namedSet[name] = std::move(data);
 	dataTargets[name] = target;
 
 	return 0;
@@ -235,9 +235,33 @@ void DiffDataSets::DeepRename(const std::string& oldName, const std::string& new
 			dataTargets.erase(ot);
 		}
 		if (namedSet.find(ot) != namedSet.end()) {
-			namedSet[nt] = move(namedSet[ot]);
+			namedSet[nt] = std::move(namedSet[ot]);
 			namedSet.erase(ot);
 		}
+	}
+}
+
+void DiffDataSets::DeepCopy(const std::string& srcName, const std::string& destName) {
+	std::vector<std::string> oldTargets;
+	std::vector<std::string> newTargets;
+	std::string newDT = "";
+
+	for (auto& dt : dataTargets) {
+		if (dt.second == srcName && dt.first.length() >= srcName.length()) {
+			oldTargets.push_back(dt.first);
+			newDT = dt.first.substr(srcName.length());
+			newDT = destName + newDT;
+			newTargets.push_back(newDT);
+		}
+	}
+
+	for (int i = 0; i < oldTargets.size(); i++) {
+		std::string ot = oldTargets[i];
+		std::string nt = newTargets[i];
+		dataTargets[nt] = destName;
+
+		if (namedSet.find(ot) != namedSet.end())
+			namedSet[nt] = namedSet[ot];
 	}
 }
 

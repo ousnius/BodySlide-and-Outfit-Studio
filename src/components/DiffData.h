@@ -42,6 +42,7 @@ public:
 	bool SaveData(const std::map<std::string, std::map<std::string, std::string>>& osdNames);
 	void RenameSet(const std::string& oldName, const std::string& newName);
 	void DeepRename(const std::string& oldName, const std::string& newName);
+	void DeepCopy(const std::string& srcName, const std::string& destName);
 	void AddEmptySet(const std::string& name, const std::string& target);
 	void UpdateDiff(const std::string& name, const std::string& target, ushort index, Vector3& newdiff);
 	void SumDiff(const std::string& name, const std::string& target, ushort index, Vector3& newdiff);

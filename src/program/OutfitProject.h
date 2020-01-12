@@ -69,7 +69,7 @@ public:
 	std::unordered_map<std::string, BSClothExtraData*>& GetClothData() { return clothData; }
 
 	NiShape* GetBaseShape() { return baseShape; }
-	void SetBaseShape(NiShape* shape) { baseShape = shape; }
+	void SetBaseShape(NiShape* shape);
 
 	bool IsBaseShape(NiShape* shape) {
 		return (shape && shape == baseShape);

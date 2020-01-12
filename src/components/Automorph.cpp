@@ -66,6 +66,43 @@ void Automorph::RenameShape(const std::string& oldShapeName, const std::string& 
 	}
 }
 
+void Automorph::CopyShape(const std::string& srcShapeName, const std::string& srcTarget, const std::string& destShapeName) {
+	resultDiffData.DeepCopy(srcTarget, destShapeName);
+
+	std::vector<std::string> newVals;
+	std::vector<std::string> oldKeys;
+	std::vector<std::string> newKeys;
+
+	for (auto &tsdn : targetSliderDataNames) {
+		std::string newDN = tsdn.second;
+		std::string newKey = tsdn.first;
+
+		bool found = false;
+		size_t p = newDN.find(srcShapeName);
+		if (p == 0) {
+			newDN = newDN.substr(srcShapeName.length());
+			newDN = destShapeName + newDN;
+			found = true;
+		}
+
+		p = newKey.find(srcShapeName);
+		if (p == 0) {
+			newKey = newKey.substr(srcShapeName.length());
+			newKey = destShapeName + newKey;
+			found = true;
+		}
+
+		if (found) {
+			oldKeys.push_back(tsdn.first);
+			newKeys.push_back(newKey);
+			newVals.push_back(newDN);
+		}
+	}
+
+	for (int i = 0; i < oldKeys.size(); i++)
+		targetSliderDataNames[newKeys[i]] = newVals[i];
+}
+
 void Automorph::SetRef(NifFile& ref, NiShape* refShape) {
 	morphRef = std::make_unique<mesh>();
 	MeshFromNifShape(morphRef.get(), ref, refShape);
