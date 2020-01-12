@@ -1130,6 +1130,10 @@
 				<label>Recalculate Normals\tR</label>
 				<help>Recalculate normals on active mesh</help>
 			</object>
+			<object class="wxMenuItem" name="resetTransforms">
+				<label>Reset Transforms</label>
+				<help>Resets the shape and skin transforms.</help>
+			</object>
 			<object class="separator" />
 			<object class="wxMenu" name="viewSelect">
 				<label>View</label>

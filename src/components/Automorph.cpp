@@ -170,6 +170,17 @@ void Automorph::MeshFromNifShape(mesh* m, NifFile& ref, NiShape* shape) {
 		matShape *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
 		matShape = glm::scale(matShape, glm::vec3(shape->transform.scale, shape->transform.scale, shape->transform.scale));
 	}
+	else {
+		// Not rendered by the game for skinned meshes
+		// Keep to counter-offset bone transforms
+		MatTransform xFormSkin;
+		if (ref.GetShapeBoneTransform(shape, 0xFFFFFFFF, xFormSkin)) {
+			xFormSkin.ToEulerDegrees(y, p, r);
+			matSkin = glm::translate(matSkin, glm::vec3(xFormSkin.translation.x, xFormSkin.translation.y, xFormSkin.translation.z));
+			matSkin *= glm::yawPitchRoll(r * DEG2RAD, p * DEG2RAD, y * DEG2RAD);
+			matSkin = glm::scale(matSkin, glm::vec3(xFormSkin.scale, xFormSkin.scale, xFormSkin.scale));
+		}
+	}
 
 	m->matModel = matParents * matShape * glm::inverse(matSkin);
 

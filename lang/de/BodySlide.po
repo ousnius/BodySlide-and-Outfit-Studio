@@ -568,6 +568,12 @@ msgstr "Normals neu berechnen\tR"
 msgid "Recalculate normals on active mesh"
 msgstr "Berechnet die Normals des aktiven Meshes neu"
 
+msgid "Reset Transforms"
+msgstr "Transforms zurücksetzen"
+
+msgid "Resets the shape and skin transforms."
+msgstr "Setzt Modell- und Skinning-Transforms zurück."
+
 msgid "View"
 msgstr "Ansicht"
 

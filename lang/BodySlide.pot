@@ -501,6 +501,12 @@ msgstr ""
 msgid "Recalculate normals on active mesh"
 msgstr ""
 
+msgid "Reset Transforms"
+msgstr ""
+
+msgid "Resets the shape and skin transforms."
+msgstr ""
+
 msgid "View"
 msgstr ""
 

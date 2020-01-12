@@ -2707,15 +2707,13 @@ void OutfitProject::ValidateNIF(NifFile& nif) {
 
 	for (auto &s : nif.GetShapes())
 		nif.TriangulateShape(s);
-
-	CleanupTransforms(nif);
 }
 
-void OutfitProject::CleanupTransforms(NifFile& nif) {
+void OutfitProject::ResetTransforms() {
 	bool clearRoot = false;
 	bool unskinnedFound = false;
 
-	for (auto &s : nif.GetShapes()) {
+	for (auto &s : workNif.GetShapes()) {
 		if (s->IsSkinned()) {
 			/*
 			 * Root node, shape and overall skin transform aren't rendered for skinned meshes.
@@ -2733,7 +2731,9 @@ void OutfitProject::CleanupTransforms(NifFile& nif) {
 
 			// Clear overall skin transform
 			MatTransform xForm;
-			nif.SetShapeBoneTransform(s, 0xFFFFFFFF, xForm);
+			workNif.SetShapeBoneTransform(s, 0xFFFFFFFF, xForm);
+
+			//workAnim.GetBoneXForm("", );
 		}
 		else {
 			clearRoot = false;
@@ -2743,7 +2743,7 @@ void OutfitProject::CleanupTransforms(NifFile& nif) {
 
 	if (clearRoot) {
 		// Clear root node transform
-		auto rootNode = nif.GetRootNode();
+		auto rootNode = workNif.GetRootNode();
 		if (rootNode)
 			rootNode->transform.Clear();
 	}

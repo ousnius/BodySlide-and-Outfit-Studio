@@ -173,6 +173,7 @@ wxBEGIN_EVENT_TABLE(OutfitStudioFrame, wxFrame)
 	EVT_MENU(XRCID("copySelectedWeight"), OutfitStudioFrame::OnCopySelectedWeight)
 	EVT_MENU(XRCID("transferSelectedWeight"), OutfitStudioFrame::OnTransferSelectedWeight)
 	EVT_MENU(XRCID("maskWeightedVerts"), OutfitStudioFrame::OnMaskWeighted)
+	EVT_MENU(XRCID("resetTransforms"), OutfitStudioFrame::OnResetTransforms)
 	EVT_MENU(XRCID("shapeProperties"), OutfitStudioFrame::OnShapeProperties)
 
 	EVT_MENU(XRCID("editUndo"), OutfitStudioFrame::OnUndo)
@@ -7858,6 +7859,11 @@ void OutfitStudioFrame::OnMaskWeighted(wxCommandEvent& WXUNUSED(event)) {
 	}
 
 	glView->Refresh();
+}
+
+void OutfitStudioFrame::OnResetTransforms(wxCommandEvent& WXUNUSED(event)) {
+	project->ResetTransforms();
+	RefreshGUIFromProj();
 }
 
 void OutfitStudioFrame::OnShapeProperties(wxCommandEvent& WXUNUSED(event)) {

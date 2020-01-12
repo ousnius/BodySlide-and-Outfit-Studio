@@ -1159,6 +1159,7 @@ private:
 	void OnCopySelectedWeight(wxCommandEvent& event);
 	void OnTransferSelectedWeight(wxCommandEvent& event);
 	void OnMaskWeighted(wxCommandEvent& event);
+	void OnResetTransforms(wxCommandEvent& event);
 	void OnShapeProperties(wxCommandEvent& event);
 
 	void OnMaskLess(wxCommandEvent& event);

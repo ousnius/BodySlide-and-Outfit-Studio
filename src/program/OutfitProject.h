@@ -25,7 +25,6 @@ class OutfitProject {
 	std::unordered_map<std::string, BSClothExtraData*> clothData;
 
 	void ValidateNIF(NifFile& nif);
-	void CleanupTransforms(NifFile& nif);
 
 public:
 	std::string outfitName = "New Outfit";
@@ -208,6 +207,7 @@ public:
 	void UpdateNifNormals(NifFile* nif, const std::vector<mesh*>& shapemeshes);
 
 	void ChooseClothData(NifFile& nif);
+	void ResetTransforms();
 
 	int ImportNIF(const std::string& fileName, bool clear = true, const std::string& inOutfitName = "", std::map<std::string, std::string>* renamedShapes = nullptr);
 	int ExportNIF(const std::string& fileName, const std::vector<mesh*>& modMeshes, bool withRef = false);
