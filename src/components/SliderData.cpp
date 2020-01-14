@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "SliderData.h"
+#include "../utils/StringStuff.h"
 
 #include <wx/dir.h>
 #include <wx/tokenzr.h>
@@ -28,12 +29,12 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 
 	name = element->Attribute("name");
 	if (element->Attribute("invert"))
-		bInvert = (_strnicmp(element->Attribute("invert"), "true", 4) == 0);
+		bInvert = StringsEqualNInsens(element->Attribute("invert"), "true", 4);
 	else
 		bInvert = false;
 
 	if (element->Attribute("uv"))
-		bUV = (_strnicmp(element->Attribute("uv"), "true", 4) == 0);
+		bUV = StringsEqualNInsens(element->Attribute("uv"), "true", 4);
 	else
 		bUV = false;
 
@@ -50,22 +51,22 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 	}
 
 	if (element->Attribute("hidden"))
-		bHidden = (_strnicmp(element->Attribute("hidden"), "true", 4) == 0);
+		bHidden = StringsEqualNInsens(element->Attribute("hidden"), "true", 4);
 	else
 		bHidden = false;
 
 	if (element->Attribute("zap"))
-		bZap = (_strnicmp(element->Attribute("zap"), "true", 4) == 0);
+		bZap = StringsEqualNInsens(element->Attribute("zap"), "true", 4);
 	else
 		bZap = false;
 
 	if (element->Attribute("uv"))
-		bUV = (_strnicmp(element->Attribute("uv"), "true", 4) == 0);
+		bUV = StringsEqualNInsens(element->Attribute("uv"), "true", 4);
 	else
 		bUV = false;
 
 	if (element->Attribute("clamp"))
-		bClamp = (_strnicmp(element->Attribute("clamp"), "true", 4) == 0);
+		bClamp = StringsEqualNInsens(element->Attribute("clamp"), "true", 4);
 	else
 		bClamp = false;
 
@@ -82,7 +83,7 @@ int SliderData::LoadSliderData(XMLElement* element, bool genWeights) {
 		tmpDataFile.targetName = datafile->Attribute("target");
 
 		if (datafile->Attribute("local"))
-			tmpDataFile.bLocal = (_strnicmp(datafile->Attribute("local"), "true", 4) == 0);
+			tmpDataFile.bLocal = StringsEqualNInsens(datafile->Attribute("local"), "true", 4);
 		else
 			tmpDataFile.bLocal = false;
 

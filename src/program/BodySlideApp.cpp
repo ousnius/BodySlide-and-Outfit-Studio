@@ -18,6 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #include "BodySlideApp.h"
 #include "../files/wxDDSImage.h"
 #include "../utils/PlatformUtil.h"
+#include "../utils/StringStuff.h"
 
 #include <wx/debugrpt.h>
 #include <regex>
@@ -101,17 +102,17 @@ bool BodySlideApp::OnInit() {
 		return false;
 
 #ifdef _DEBUG
-	std::string dataDir = wxGetCwd().ToUTF8();
+	std::string dataDir{wxGetCwd().ToUTF8()};
 #else
-	std::string dataDir = wxStandardPaths::Get().GetDataDir().ToUTF8();
+	std::string dataDir{wxStandardPaths::Get().GetDataDir().ToUTF8()};
 #endif
 
-	Config.LoadConfig(dataDir + "\\Config.xml");
-	BodySlideConfig.LoadConfig(dataDir + "\\BodySlide.xml", "BodySlideConfig");
+	Config.LoadConfig(dataDir + "/Config.xml");
+	BodySlideConfig.LoadConfig(dataDir + "/BodySlide.xml", "BodySlideConfig");
 
 	Config.SetDefaultValue("AppDir", dataDir);
 
-	logger.Initialize(Config.GetIntValue("LogLevel", -1), dataDir + "\\Log_BS.txt");
+	logger.Initialize(Config.GetIntValue("LogLevel", -1), dataDir + "/Log_BS.txt");
 	wxLogMessage("Initializing BodySlide...");
 
 #ifdef NDEBUG
@@ -281,8 +282,8 @@ void BodySlideApp::GetArchiveFiles(std::vector<std::string>& outList) {
 	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& f : files) {
-		f = f.AfterLast('\\').MakeLower();
-		if (fsearch.find(f) == fsearch.end())
+		f = f.AfterLast('/').AfterLast('\\');
+		if (fsearch.find(f.Lower()) == fsearch.end())
 			outList.push_back((dataDir + f).ToUTF8().data());
 	}
 }
@@ -351,7 +352,7 @@ int BodySlideApp::CreateSetSliders(const std::string& outfit) {
 		activeSet.Clear();
 		sliderManager.ClearSliders();
 		if (!sliderDoc.GetSet(outfit, activeSet)) {
-			activeSet.SetBaseDataPath(Config["AppDir"] + "\\ShapeData");
+			activeSet.SetBaseDataPath(Config["AppDir"] + "/ShapeData");
 			activeSet.LoadSetDiffData(dataSets);
 
 			sliderManager.AddSlidersInSet(activeSet);
@@ -384,11 +385,11 @@ int BodySlideApp::LoadSliderSets() {
 	outFileCount.clear();
 
 	wxArrayString files;
-	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "\\SliderSets", &files, "*.osp");
-	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "\\SliderSets", &files, "*.xml");
+	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", &files, "*.osp");
+	wxDir::GetAllFiles(wxString::FromUTF8(Config["AppDir"]) + "/SliderSets", &files, "*.xml");
 
 	for (auto &file : files) {
-		std::string fileName = file.ToUTF8();
+		std::string fileName{file.ToUTF8()};
 
 		SliderSetFile sliderDoc;
 		sliderDoc.Open(fileName);
@@ -1160,11 +1161,12 @@ bool BodySlideApp::SetDefaultConfig() {
 	wxString gameValueKey = Config["GameRegVal/" + TargetGames[targetGame]];
 
 	if (Config["GameDataPath"].empty()) {
+#ifdef _WINDOWS
 		wxRegKey key(wxRegKey::HKLM, gameKey, wxRegKey::WOW64ViewMode_32);
 		if (key.Exists()) {
 			wxString installPath;
 			if (key.HasValues() && key.QueryValue(gameValueKey, installPath)) {
-				installPath.Append("Data\\");
+				installPath.Append("Data/");
 				Config.SetDefaultValue("GameDataPath", installPath.ToStdString());
 				wxLogMessage("Registry game data path: %s", installPath);
 			}
@@ -1173,7 +1175,9 @@ bool BodySlideApp::SetDefaultConfig() {
 				wxMessageBox(_("Failed to find game install path registry value or GameDataPath in the config."), _("Warning"), wxICON_WARNING);
 			}
 		}
-		else if (Config["WarnMissingGamePath"] == "true") {
+		else
+#endif
+		if (Config["WarnMissingGamePath"] == "true") {
 			wxLogWarning("Failed to find game install path registry key or GameDataPath in the config.");
 			wxMessageBox(_("Failed to find game install path registry key or GameDataPath in the config."), _("Warning"), wxICON_WARNING);
 		}
@@ -1190,7 +1194,7 @@ bool BodySlideApp::SetDefaultConfig() {
 
 bool BodySlideApp::ShowSetup() {
 	wxXmlResource* xrc = wxXmlResource::Get();
-	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Setup.xrc");
+	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Setup.xrc");
 	if (!loaded) {
 		wxMessageBox("Failed to load Setup.xrc file!", _("Error"), wxICON_ERROR);
 		return false;
@@ -1293,37 +1297,37 @@ bool BodySlideApp::ShowSetup() {
 			switch (targ) {
 			case FO3:
 				dataDir = dirFallout3->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo3nv.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo3nv.nif");
 				Config.SetValue("Anim/SkeletonRootName", "Bip01");
 				break;
 			case FONV:
 				dataDir = dirFalloutNV->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo3nv.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo3nv.nif");
 				Config.SetValue("Anim/SkeletonRootName", "Bip01");
 				break;
 			case SKYRIM:
 				dataDir = dirSkyrim->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_sk.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sk.nif");
 				Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
 				break;
 			case FO4:
 				dataDir = dirFallout4->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo4.nif");
 				Config.SetValue("Anim/SkeletonRootName", "Root");
 				break;
 			case SKYRIMSE:
 				dataDir = dirSkyrimSE->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_sse.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sse.nif");
 				Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
 				break;
 			case FO4VR:
 				dataDir = dirFallout4VR->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_fo4.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_fo4.nif");
 				Config.SetValue("Anim/SkeletonRootName", "Root");
 				break;
 			case SKYRIMVR:
 				dataDir = dirSkyrimVR->GetDirName();
-				Config.SetValue("Anim/DefaultSkeletonReference", "res\\skeleton_female_sse.nif");
+				Config.SetValue("Anim/DefaultSkeletonReference", "res/skeleton_female_sse.nif");
 				Config.SetValue("Anim/SkeletonRootName", "NPC Root [Root]");
 				break;
 			}
@@ -1331,7 +1335,7 @@ bool BodySlideApp::ShowSetup() {
 			Config.SetValue("GameDataPath", dataDir.GetFullPath().ToStdString());
 			Config.SetValue("GameDataPaths/" + TargetGames[targ].ToStdString(), dataDir.GetFullPath().ToStdString());
 
-			Config.SaveConfig(Config["AppDir"] + "\\Config.xml");
+			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			delete setup;
 		}
 		else {
@@ -1353,14 +1357,16 @@ wxString BodySlideApp::GetGameDataPath(TargetGame targ) {
 	if (!Config[cust].IsEmpty()) {
 		dataPath = Config[cust];
 	}
+#ifdef _WINDOWS
 	else {
 		wxRegKey key(wxRegKey::HKLM, Config[gkey], wxRegKey::WOW64ViewMode_32);
 		if (key.Exists()) {
 			if (key.HasValues() && key.QueryValue(Config[gval], dataPath)) {
-				dataPath.Append("Data\\");
+				dataPath.Append("Data/");
 			}
 		}
 	}
+#endif
 	return dataPath;
 }
 
@@ -1373,7 +1379,7 @@ void BodySlideApp::InitLanguage() {
 	// Load language if possible, fall back to English otherwise
 	if (wxLocale::IsAvailable(lang)) {
 		locale = new wxLocale(lang);
-		locale->AddCatalogLookupPathPrefix(wxString::FromUTF8(Config["AppDir"]) + "\\lang");
+		locale->AddCatalogLookupPathPrefix(wxString::FromUTF8(Config["AppDir"]) + "/lang");
 		locale->AddCatalog("BodySlide");
 
 		if (!locale->IsOk()) {
@@ -1398,7 +1404,7 @@ void BodySlideApp::InitLanguage() {
 
 void BodySlideApp::LoadAllCategories() {
 	wxLogMessage("Loading all slider categories...");
-	cCollection.LoadCategories(Config["AppDir"] + "\\SliderCategories");
+	cCollection.LoadCategories(Config["AppDir"] + "/SliderCategories");
 }
 
 void BodySlideApp::SetPresetGroups(const std::string& setName) {
@@ -1428,7 +1434,7 @@ void BodySlideApp::SetPresetGroups(const std::string& setName) {
 
 void BodySlideApp::LoadAllGroups() {
 	wxLogMessage("Loading all slider groups...");
-	gCollection.LoadGroups(Config["AppDir"] + "\\SliderGroups");
+	gCollection.LoadGroups(Config["AppDir"] + "/SliderGroups");
 
 	ungroupedOutfits.clear();
 	for (auto &o : outfitNameSource) {
@@ -1473,7 +1479,7 @@ int BodySlideApp::SaveGroupList(const std::string& fileName, const std::string& 
 	outfile.GetGroupNames(existing);
 	bool found = false;
 	for (auto &e : existing) {
-		if (_stricmp(e.c_str(), groupName.c_str()) == 0) {
+		if (StringsEqualInsens(e.c_str(), groupName.c_str())) {
 			found = true;
 			break;
 		}
@@ -1505,7 +1511,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 
 
 	wxString grpSrch = sliderView->search->GetValue();
-	wxString outfitSrch = sliderView->outfitsearch->GetValue();
+	std::string outfitSrch{sliderView->outfitsearch->GetValue()};
 
 	if (lastGrps != grpSrch) {
 		grouplist.clear();
@@ -1565,7 +1571,7 @@ void BodySlideApp::ApplyOutfitFilter() {
 	}
 
 	BodySlideConfig.SetValue("LastGroupFilter", std::string(grpSrch));
-	BodySlideConfig.SetValue("LastOutfitFilter", std::string(outfitSrch));
+	BodySlideConfig.SetValue("LastOutfitFilter", outfitSrch);
 }
 
 int BodySlideApp::GetOutfits(std::vector<std::string>& outList) {
@@ -1593,7 +1599,7 @@ void BodySlideApp::LoadPresets(const std::string& sliderSet) {
 				groups_and_aliases.push_back(ag.first);
 	}
 
-	sliderManager.LoadPresets(Config["AppDir"] + "\\SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
+	sliderManager.LoadPresets(Config["AppDir"] + "/SliderPresets", outfit, groups_and_aliases, groups_and_aliases.empty());
 }
 
 int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
@@ -1626,7 +1632,7 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 				return 4;
 			}
 
-			response.Append('\\');
+			response.Append('/');
 			Config.SetValue("GameDataPath", response.ToStdString());
 		}
 
@@ -1748,8 +1754,8 @@ int BodySlideApp::BuildBodies(bool localPath, bool clean, bool tri) {
 	if (tri) {
 		std::string triPath = activeSet.GetOutputFilePath() + ".tri";
 		std::string triPathTrimmed = triPath;
-		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");									// Replace multiple slashes or forward slashes with one backslash
-		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
+		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "/");									// Replace multiple backslashes or forward slashes with one forward slash
+		triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes/", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
 
 		if (!WriteMorphTRI(outFileNameBig, activeSet, nifBig, zapIdxAll)) {
 			wxLogError("Failed to write TRI file to '%s'!", triPath);
@@ -1901,7 +1907,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 				}
 			}
 
-			Config.SetValue("GameDataPath", Config["AppDir"] + "\\");
+			Config.SetValue("GameDataPath", Config["AppDir"] + "/");
 		}
 
 		datapath = GetOutputDataPath();
@@ -2014,7 +2020,7 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 			return;
 		}
 
-		currentSet.SetBaseDataPath(Config["AppDir"] + "\\ShapeData");
+		currentSet.SetBaseDataPath(Config["AppDir"] + "/ShapeData");
 
 		// ALT key
 		if (clean && custPath.empty()) {
@@ -2196,8 +2202,8 @@ int BodySlideApp::BuildListBodies(std::vector<std::string>& outfitList, std::map
 		if (triEnd) {
 			std::string triPath = currentSet.GetOutputFilePath() + ".tri";
 			std::string triPathTrimmed = triPath;
-			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "\\");									// Replace multiple slashes or forward slashes with one backslash
-			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes\\\\", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex("/+|\\\\+"), "/");									// Replace multiple backslashes or forward slashes with one forward slash
+			triPathTrimmed = std::regex_replace(triPathTrimmed, std::regex(".*meshes/", std::regex_constants::icase), "");	// Remove everything before and including the meshes path
 
 			if (!WriteMorphTRI(outFileNameBig, currentSet, nifBig, zapIdxAll))
 				wxLogError("Failed to create TRI file to '%s'!", triPath);
@@ -2353,12 +2359,12 @@ void BodySlideApp::AddTriData(NifFile& nif, const std::string& shapeName, const 
 }
 
 float BodySlideApp::GetSliderValue(const wxString& sliderName, bool isLo) {
-	std::string sstr = sliderName.ToUTF8();
+	std::string sstr{sliderName.ToUTF8()};
 	return sliderManager.GetSlider(sstr, isLo);
 }
 
 bool BodySlideApp::IsUVSlider(const wxString& sliderName) {
-	std::string sstr = sliderName.ToUTF8();
+	std::string sstr{sliderName.ToUTF8()};
 	return activeSet[sstr].bUV;
 }
 
@@ -2367,12 +2373,12 @@ std::vector<std::string> BodySlideApp::GetSliderZapToggles(const wxString& slide
 }
 
 void BodySlideApp::SetSliderValue(const wxString& sliderName, bool isLo, float val) {
-	std::string sstr = sliderName.ToUTF8();
+	std::string sstr{sliderName.ToUTF8()};
 	sliderManager.SetSlider(sstr, isLo, val);
 }
 
 void BodySlideApp::SetSliderChanged(const wxString& sliderName, bool isLo) {
-	std::string sstr = sliderName.ToUTF8();
+	std::string sstr{sliderName.ToUTF8()};
 	sliderManager.SetChanged(sstr, isLo);
 }
 
@@ -2399,7 +2405,7 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 	rowCount = 0;
 
 	wxXmlResource* xrc = wxXmlResource::Get();
-	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\BodySlide.xrc");
+	bool loaded = xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/BodySlide.xrc");
 	if (!loaded) {
 		wxMessageBox(_("Failed to load BodySlide.xrc file!"), _("Error"), wxICON_ERROR);
 		Close(true);
@@ -2413,14 +2419,14 @@ BodySlideFrame::BodySlideFrame(BodySlideApp* a, const wxSize &size) : delayLoad(
 		return;
 	}
 
-	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\BatchBuild.xrc");
-	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\Settings.xrc");
-	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\About.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/BatchBuild.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/Settings.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/About.xrc");
 
 	delayLoad.Start(100, true);
 
 	SetDoubleBuffered(true);
-	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\BodySlide.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "/res/images/BodySlide.png", wxBITMAP_TYPE_PNG));
 	SetSize(size);
 
 	batchBuildList = nullptr;
@@ -2723,7 +2729,7 @@ void BodySlideFrame::OnClose(wxCloseEvent& WXUNUSED(event)) {
 	if (cbMorphs)
 		BodySlideConfig.SetBoolValue("BuildMorphs", cbMorphs->GetValue());
 
-	int ret = BodySlideConfig.SaveConfig(Config["AppDir"] + "\\BodySlide.xml", "BodySlideConfig");
+	int ret = BodySlideConfig.SaveConfig(Config["AppDir"] + "/BodySlide.xml", "BodySlideConfig");
 	if (ret)
 		wxLogWarning("Failed to save configuration (%d)!", ret);
 
@@ -2876,7 +2882,7 @@ void BodySlideFrame::OnZapCheckChanged(wxCommandEvent& event) {
 		}
 	}
 
-	std::string sliderName = sn.ToUTF8();
+	std::string sliderName{sn.ToUTF8()};
 	wxLogMessage("Zap '%s' %s.", sn, event.IsChecked() ? "checked" : "unchecked");
 
 	SliderDisplay* slider = GetSliderDisplay(sliderName);
@@ -2995,7 +3001,7 @@ void BodySlideFrame::OnSaveGroups(wxCommandEvent& WXUNUSED(event)) {
 	if (OutfitIsEmpty())
 		return;
 
-	wxFileDialog saveGroupDialog(this, _("Choose or create group file"), wxString::FromUTF8(Config["AppDir"]) + "\\SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
+	wxFileDialog saveGroupDialog(this, _("Choose or create group file"), wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups", wxEmptyString, "Group Files (*.xml)|*.xml", wxFD_SAVE);
 	if (saveGroupDialog.ShowModal() == wxID_CANCEL)
 		return;
 
@@ -3031,12 +3037,12 @@ void BodySlideFrame::OnRefreshOutfits(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void BodySlideFrame::OnChooseOutfit(wxCommandEvent& event) {
-	std::string sstr = event.GetString().ToUTF8();
+	std::string sstr{event.GetString().ToUTF8()};
 	app->ActivateOutfit(sstr);
 }
 
 void BodySlideFrame::OnChoosePreset(wxCommandEvent& event) {
-	std::string sstr = event.GetString().ToUTF8();
+	std::string sstr{event.GetString().ToUTF8()};
 	app->ActivatePreset(sstr);
 }
 
@@ -3211,7 +3217,7 @@ void BodySlideFrame::OnBatchBuild(wxCommandEvent& WXUNUSED(event)) {
 		if (path.empty())
 			return;
 
-		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, path + "\\");
+		ret = app->BuildListBodies(toBuild, failedOutfits, false, tri, path + "/");
 	}
 	else if (clean)
 		ret = app->BuildListBodies(toBuild, failedOutfits, true, tri);
@@ -3271,22 +3277,22 @@ void BodySlideFrame::OnChooseTargetGame(wxCommandEvent& event) {
 	switch (targ) {
 		case FO3:
 		case FONV:
-			fpSkeletonFile->SetPath("res\\skeleton_fo3nv.nif");
+			fpSkeletonFile->SetPath("res/skeleton_fo3nv.nif");
 			choiceSkeletonRoot->SetStringSelection("Bip01");
 			break;
 		case SKYRIM:
-			fpSkeletonFile->SetPath("res\\skeleton_female_sk.nif");
+			fpSkeletonFile->SetPath("res/skeleton_female_sk.nif");
 			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 			break;
 		case SKYRIMSE:
 		case SKYRIMVR:
-			fpSkeletonFile->SetPath("res\\skeleton_female_sse.nif");
+			fpSkeletonFile->SetPath("res/skeleton_female_sse.nif");
 			choiceSkeletonRoot->SetStringSelection("NPC Root [Root]");
 			break;
 		case FO4:
 		case FO4VR:
 		default:
-			fpSkeletonFile->SetPath("res\\skeleton_fo4.nif");
+			fpSkeletonFile->SetPath("res/skeleton_fo4.nif");
 			choiceSkeletonRoot->SetStringSelection("Root");
 			break;
 	}
@@ -3318,7 +3324,7 @@ void BodySlideFrame::SettingsFillDataFiles(wxCheckListBox* dataFileList, wxStrin
 	wxDir::GetAllFiles(dataDir, &files, "*.ba2", wxDIR_FILES);
 	wxDir::GetAllFiles(dataDir, &files, "*.bsa", wxDIR_FILES);
 	for (auto& file : files) {
-		file = file.AfterLast('\\');
+		file = file.AfterLast('/').AfterLast('\\');
 		dataFileList->Insert(file, dataFileList->GetCount());
 
 		if (fsearch.find(file.Lower()) == fsearch.end())
@@ -3427,7 +3433,7 @@ void BodySlideFrame::OnSettings(wxCommandEvent& WXUNUSED(event)) {
 			Config.SetValue("Anim/DefaultSkeletonReference", skeletonFile.GetFullPath().ToStdString());
 			Config.SetValue("Anim/SkeletonRootName", choiceSkeletonRoot->GetStringSelection().ToStdString());
 
-			Config.SaveConfig(Config["AppDir"] + "\\Config.xml");
+			Config.SaveConfig(Config["AppDir"] + "/Config.xml");
 			app->InitArchives();
 		}
 

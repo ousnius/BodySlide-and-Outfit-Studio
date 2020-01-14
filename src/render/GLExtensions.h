@@ -5,10 +5,8 @@ See the included LICENSE file
 
 #pragma once
 
-#if defined(_WIN32) || defined(__linux__)
-	#if defined (_WIN32)
-		#include <Windows.h>
-	#endif
+#if defined(_WIN32)
+	#include <Windows.h>
 	#include <GL/gl.h>
 	#include <GL/glu.h>
 	#include <GL/glext.h>
@@ -16,6 +14,8 @@ See the included LICENSE file
 	#include <OpenGL/gl.h>
 	#include <OpenGL/glu.h>
 	#include <OpenGL/glext.h>
+#elif defined(__linux__)
+	#include <GL/glew.h>
 #else
 	#error Platform OpenGL headers not defined yet!
 #endif
@@ -24,6 +24,7 @@ extern bool extInitialized;
 extern bool extSupported;
 extern bool extGLISupported;
 
+#ifndef __linux__
 // OpenGL 4.2
 extern PFNGLTEXSTORAGE1DPROC glTexStorage1D;
 extern PFNGLTEXSTORAGE2DPROC glTexStorage2D;
@@ -35,13 +36,13 @@ extern PFNGLGENVERTEXARRAYSPROC glGenVertexArrays;
 extern PFNGLBINDVERTEXARRAYPROC glBindVertexArray;
 extern PFNGLDELETEVERTEXARRAYSPROC glDeleteVertexArrays;
 
-extern PFNGLGENFRAMEBUFFERSPROC glGenFrameBuffers;
-extern PFNGLDELETEFRAMEBUFFERSPROC glDeleteFrameBuffers;
+extern PFNGLGENFRAMEBUFFERSPROC glGenFramebuffers;
+extern PFNGLDELETEFRAMEBUFFERSPROC glDeleteFramebuffers;
 extern PFNGLBINDFRAMEBUFFERPROC glBindFramebuffer;
 extern PFNGLFRAMEBUFFERTEXTURE2DPROC glFramebufferTexture2D;
 extern PFNGLGENRENDERBUFFERSPROC glGenRenderbuffers;
 extern PFNGLBINDRENDERBUFFERPROC glBindRenderbuffer;
-extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferstorage;
+extern PFNGLRENDERBUFFERSTORAGEPROC glRenderbufferStorage;
 extern PFNGLFRAMEBUFFERRENDERBUFFERPROC glFramebufferRenderbuffer;
 extern PFNGLDELETERENDERBUFFERSPROC glDeleteRenderbuffers;
 
@@ -86,6 +87,7 @@ extern PFNGLCOMPRESSEDTEXSUBIMAGE3DPROC glCompressedTexSubImage3D;
 
 // OpenGL 1.2
 extern PFNGLTEXSUBIMAGE3DPROC glTexSubImage3D;
+#endif
 
 extern void InitExtensions();
 extern bool IsExtensionSupported(const char* ext);

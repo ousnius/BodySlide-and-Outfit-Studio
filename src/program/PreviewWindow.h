@@ -143,11 +143,11 @@ public:
 		//"d:\\proj\\FemaleBodyt_n.dds"
 		//"d:\\proj\\bodyPaintDummy-N_u0_v0.png"
 		//normTextures[20] = "d:\\proj\\masktest.png";
-		GLMaterial* normMat = gls.AddMaterial(normTextures, Config["AppDir"] + "\\res\\shaders\\normalshade.vert", Config["AppDir"] + "\\res\\shaders\\normalshade.frag");
+		GLMaterial* normMat = gls.AddMaterial(normTextures, Config["AppDir"] + "/res/shaders/normalshade.vert", Config["AppDir"] + "/res/shaders/normalshade.frag");
 
 		std::vector<std::string> ppTex;
 		ppTex.push_back("pproc");
-		GLMaterial* ppMat = gls.AddMaterial(ppTex, Config["AppDir"] + "\\res\\shaders\\fullscreentri.vert", Config["AppDir"] + "\\res\\shaders\\fullscreentri.frag");
+		GLMaterial* ppMat = gls.AddMaterial(ppTex, Config["AppDir"] + "/res/shaders/fullscreentri.vert", Config["AppDir"] + "/res/shaders/fullscreentri.frag");
 
 		
 		//texIds.push_back(normMat->GetTexID(0));

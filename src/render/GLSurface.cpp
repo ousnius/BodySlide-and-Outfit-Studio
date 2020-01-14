@@ -1759,7 +1759,7 @@ GLMaterial* GLSurface::AddMaterial(const std::vector<std::string>& textureFiles,
 
 GLMaterial* GLSurface::GetPrimitiveMaterial() {
 	if (!primitiveMat) {
-		primitiveMat = new GLMaterial(Config["AppDir"] + "\\res\\shaders\\primitive.vert", Config["AppDir"] + "\\res\\shaders\\primitive.frag");
+		primitiveMat = new GLMaterial(Config["AppDir"] + "/res/shaders/primitive.vert", Config["AppDir"] + "/res/shaders/primitive.frag");
 
 		std::string shaderError;
 		if (primitiveMat->GetShader().GetError(&shaderError)) {

@@ -9,8 +9,7 @@ See the included LICENSE file
 #include "../components/Anim.h"
 #include "../program/FBXImportOptions.h"
 #include "../NIF/NifFile.h"
-
-#include <fbxsdk.h>
+#include <memory>
 
 
 class FBXShape {
@@ -49,11 +48,10 @@ public:
 
 class FBXWrangler {
 private:
-	FbxManager* sdkManager = nullptr;
-	FbxScene* scene = nullptr;
+	struct Priv;
+	std::unique_ptr<Priv> priv;
 
 	std::string comName;
-	std::map<std::string, FBXShape> shapes;
 
 public:
 	FBXWrangler();
@@ -62,27 +60,13 @@ public:
 	void NewScene();
 	void CloseScene();
 
-	void GetShapeNames(std::vector<std::string>& outNames) {
-		for (auto &s : shapes)
-			outNames.push_back(s.first);
-	}
-
-	FBXShape* GetShape(const std::string& shapeName) {
-		return &(shapes[shapeName]);
-	}
+	void GetShapeNames(std::vector<std::string>& outNames);
+	FBXShape* GetShape(const std::string& shapeName);
 
 	void AddSkeleton(NifFile* nif, bool onlyNonSkeleton = false);
-
-	// Recursively add bones to the skeleton in a depth-first manner
-	FbxNode* AddLimb(NifFile* nif, NiNode* nifBone);
-	void AddLimbChildren(FbxNode* node, NifFile* nif, NiNode* nifBone);
-
 	void AddNif(NifFile* meshNif, NiShape* shape = nullptr);
 	void AddSkinning(AnimInfo* anim, NiShape* shape = nullptr);
-	void AddGeometry(NiShape* shape, const std::vector<Vector3>* verts, const std::vector<Vector3>* norms, const std::vector<Triangle>* tris, const std::vector<Vector2>* uvs);
 
 	bool ExportScene(const std::string& fileName);
 	bool ImportScene(const std::string& fileName, const FBXImportOptions& options = FBXImportOptions());
-
-	bool LoadMeshes(const FBXImportOptions& options);
 };

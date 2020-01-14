@@ -59,6 +59,8 @@ public:
 				case TBC_KEY:
 					stream >> key.tbc;
 					break;
+				default:
+					break;
 				}
 
 				keys[i] = std::move(key);
@@ -83,6 +85,8 @@ public:
 					break;
 				case TBC_KEY:
 					stream << keys[i].tbc;
+					break;
+				default:
 					break;
 				}
 			}

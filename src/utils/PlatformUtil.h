@@ -21,7 +21,7 @@ namespace PlatformUtil {
 	std::wstring MultiByteToWideUTF8(const std::string& str);
 #endif
 
-	void OpenFileStream(std::fstream& file, const std::string& fileName, unsigned int mode);
+	void OpenFileStream(std::fstream& file, const std::string& fileName, std::ios_base::openmode mode);
 
 	// Provide std::wstring function for Windows
 #ifdef _WINDOWS

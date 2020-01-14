@@ -15,9 +15,13 @@ class LogFormatter : public wxLogFormatter {
 	virtual wxString Format(wxLogLevel level, const wxString& msg, const wxLogRecordInfo& info) const {
 		wxDateTime logTime(info.timestamp);
 		wxString fileName = info.filename;
-		fileName = fileName.AfterLast('\\');
+		fileName = fileName.AfterLast('/').AfterLast('\\');
+		int ihour = logTime.GetHour();
+		int iminute = logTime.GetMinute();
+		int isecond = logTime.GetSecond();
+		int ilevel = level;
 		return wxString::Format("[%02d:%02d:%02d][%d]\t%s(%d): %s",
-			logTime.GetHour(), logTime.GetMinute(), logTime.GetSecond(), level, fileName, info.line, msg);
+			ihour, iminute, isecond, ilevel, fileName, info.line, msg);
 	}
 };
 
@@ -26,8 +30,12 @@ class LogFormatter : public wxLogFormatter {
 class LogFormatterNoFile : public wxLogFormatter {
 	virtual wxString Format(wxLogLevel level, const wxString& msg, const wxLogRecordInfo& info) const {
 		wxDateTime logTime(info.timestamp);
+		int ihour = logTime.GetHour();
+		int iminute = logTime.GetMinute();
+		int isecond = logTime.GetSecond();
+		int ilevel = level;
 		return wxString::Format("[%02d:%02d:%02d][%d]\t%s",
-			logTime.GetHour(), logTime.GetMinute(), logTime.GetSecond(), level, msg);
+			ihour, iminute, isecond, ilevel, msg);
 	}
 };
 

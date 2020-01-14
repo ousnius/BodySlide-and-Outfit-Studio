@@ -4,6 +4,7 @@ See the included LICENSE file
 */
 
 #include "GLShader.h"
+#include "../utils/PlatformUtil.h"
 #include <fstream>
 #include <sstream>
 
@@ -42,7 +43,8 @@ bool GLShader::CheckExtensions() {
 }
 
 bool GLShader::LoadShaderFile(const std::string& fileName, std::string& text) {
-	std::ifstream file(fileName, std::ios_base::in | std::ios_base::binary);
+	std::fstream file;
+	PlatformUtil::OpenFileStream(file, fileName, std::ios_base::in | std::ios_base::binary);
 	if (!file)
 		return false;
 

@@ -131,7 +131,7 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event))
 	int n = 1;
 	for (auto it = pgLayers->GetIterator(wxPG_ITERATE_CATEGORIES); !it.AtEnd(); ++it) {
 		wxPGProperty* p = it.GetProperty();
-		p->SetClientData((void*)n++);
+		p->SetClientData(reinterpret_cast<void*>(n++));
 		if (p == s) {
 			me = p;
 		}
@@ -144,9 +144,9 @@ void NormalsGenDialog::doMoveUpLayer(wxCommandEvent& WXUNUSED(event))
 	if (!me || !prev)
 		return;
 
-	int t = (int)me->GetClientData();
+	int t = reinterpret_cast<unsigned long>(me->GetClientData());
 	me->SetClientData(prev->GetClientData());
-	prev->SetClientData((void*)t);
+	prev->SetClientData(reinterpret_cast<void*>(t));
 
 	pgLayers->Sort();
 	pgLayers->Refresh();
@@ -224,7 +224,7 @@ void NormalsGenDialog::doLoadPreset(wxCommandEvent& WXUNUSED(event))
 	wxFileName fn(fl.GetPath());
 
 	tinyxml2::XMLDocument doc;
-	doc.LoadFile(fn.GetFullPath());
+	doc.LoadFile(fn.GetFullPath().ToUTF8());
 
 	tinyxml2::XMLElement* root = doc.FirstChildElement("NormalsGeneration");
 	if (root)
@@ -243,13 +243,13 @@ void NormalsGenDialog::doSavePreset(wxCommandEvent& WXUNUSED(event))
 	tinyxml2::XMLElement* root = doc.NewElement("NormalsGeneration");
 
 	wxFileName fn(fs.GetPath());
-	root->SetAttribute("name", fn.GetName());
+	root->SetAttribute("name", fn.GetName().ToUTF8());
 
 	doc.InsertFirstChild(root);
 
 	NormalGenLayer::SaveToXML(root, refNormalGenLayers);
 
-	doc.SaveFile(fn.GetFullPath());
+	doc.SaveFile(fn.GetFullPath().ToUTF8());
 }
 
 wxString NormalsGenDialog::nextLayerName()

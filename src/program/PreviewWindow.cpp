@@ -24,7 +24,7 @@ PreviewWindow::~PreviewWindow() {
 
 PreviewWindow::PreviewWindow(const wxPoint& pos, const wxSize& size, BodySlideApp* app)
 	: wxFrame(nullptr, wxID_ANY, _("Preview"), pos, size), app(app), refNormalGenLayers(emptyLayers) {
-	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "\\res\\images\\BodySlide.png", wxBITMAP_TYPE_PNG));
+	SetIcon(wxIcon(wxString::FromUTF8(Config["AppDir"]) + "/res/images/BodySlide.png", wxBITMAP_TYPE_PNG));
 
 	wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 	wxBoxSizer* sizerPanel = new wxBoxSizer(wxHORIZONTAL);
@@ -290,13 +290,13 @@ void PreviewWindow::AddNifShapeTextures(NifFile* fromNif, const std::string& sha
 	//texFiles[1] = "d:\\proj\\FemaleBody_2_msn.dds";
 	//texFiles[1] = "d:\\proj\\TangentNormalsTest.png";
 
-	std::string vShader = Config["AppDir"] + "\\res\\shaders\\default.vert";
-	std::string fShader = Config["AppDir"] + "\\res\\shaders\\default.frag";
+	std::string vShader = Config["AppDir"] + "/res/shaders/default.vert";
+	std::string fShader = Config["AppDir"] + "/res/shaders/default.frag";
 
 	TargetGame targetGame = (TargetGame)Config.GetIntValue("TargetGame");
 	if (targetGame == FO4 || targetGame == FO4VR) {
-		vShader = Config["AppDir"] + "\\res\\shaders\\fo4_default.vert";
-		fShader = Config["AppDir"] + "\\res\\shaders\\fo4_default.frag";
+		vShader = Config["AppDir"] + "/res/shaders/fo4_default.vert";
+		fShader = Config["AppDir"] + "/res/shaders/fo4_default.frag";
 	}
 
 	SetShapeTextures(shapeName, texFiles, vShader, fShader, hasMat, mat);

@@ -153,11 +153,11 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 			if (!forShape.empty() && shapeName != forShape)
 				continue;
 
-			std::string fullFilePath = baseDataPath + "\\";
+			std::string fullFilePath = baseDataPath + "/";
 			if (ddf.bLocal)
-				fullFilePath += datafolder + "\\";
+				fullFilePath += datafolder + "/";
 			else
-				fullFilePath += ShapeToDataFolder(shapeName) + "\\";
+				fullFilePath += ShapeToDataFolder(shapeName) + "/";
 
 			fullFilePath += ddf.fileName;
 
@@ -169,6 +169,8 @@ void SliderSet::LoadSetDiffData(DiffDataSets& inDataStorage, const std::string& 
 			else {
 				// Split file name to get file and data name in it
 				int split = fullFilePath.find_last_of('\\');
+				if (split < 0)
+					split = fullFilePath.find_last_of('/');
 				if (split < 0)
 					continue;
 
@@ -194,11 +196,11 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 			return;
 
 		std::string shapeName = mergeSet.TargetToShape(ddf.targetName);
-		std::string fullFilePath = mergeSet.baseDataPath + "\\";
+		std::string fullFilePath = mergeSet.baseDataPath + "/";
 		if (ddf.bLocal)
-			fullFilePath += mergeSet.datafolder + "\\";
+			fullFilePath += mergeSet.datafolder + "/";
 		else
-			fullFilePath += mergeSet.ShapeToDataFolder(shapeName) + "\\";
+			fullFilePath += mergeSet.ShapeToDataFolder(shapeName) + "/";
 
 		fullFilePath += ddf.fileName;
 
@@ -212,7 +214,7 @@ void SliderSet::Merge(SliderSet& mergeSet, DiffDataSets& inDataStorage, DiffData
 		// OSD format
 		else {
 			// Split file name to get file and data name in it
-			int split = fullFilePath.find_last_of('\\');
+			int split = fullFilePath.find_last_of('/');
 			if (split < 0)
 				return;
 
@@ -372,14 +374,14 @@ void SliderSet::WriteSliderSet(XMLElement* sliderSetElement) {
 
 std::string SliderSet::GetInputFileName() {
 	std::string o;
-	o = baseDataPath + "\\";
-	o += datafolder + "\\";
+	o = baseDataPath + "/";
+	o += datafolder + "/";
 	o += inputfile;
 	return o;
 }
 
 std::string SliderSet::GetOutputFilePath() {
-	return outputpath + "\\" + outputfile;
+	return outputpath + "/" + outputfile;
 }
 
 bool SliderSet::GenWeights() {
@@ -520,7 +522,7 @@ void SliderSetFile::GetSetOutputFilePath(const std::string& setName, std::string
 
 	tmpElement = setPtr->FirstChildElement("OutputFile");
 	if (tmpElement) {
-		outFilePath += "\\";
+		outFilePath += "/";
 		outFilePath += tmpElement->GetText();
 	}
 }

@@ -137,6 +137,7 @@ public:
 			return;
 		}
 
+#ifdef _WINDOWS
 		std::string stupidkeys = "0123456789-";
 		bool stupidHack = false;
 		if (event.GetKeyCode() < 256 && stupidkeys.find(event.GetKeyCode()) != std::string::npos)
@@ -147,7 +148,9 @@ public:
 			HWND hwndEdit = e->GetHandle();
 			::SendMessage(hwndEdit, WM_CHAR, event.GetKeyCode(), event.GetRawKeyFlags());
 		}
-		else {
+		else
+#endif
+		{
 			event.Skip();
 		}
 	}

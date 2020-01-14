@@ -26,14 +26,14 @@ wxEND_EVENT_TABLE()
 GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 	: allOutfits(std::move(outfits)) {
 	wxXmlResource *xrc = wxXmlResource::Get();
-	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\GroupManager.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/GroupManager.xrc");
 	xrc->LoadDialog(this, parent, "dlgGroupManager");
 
 	SetSize(800, 500);
 	SetDoubleBuffered(true);
 	CenterOnParent();
 
-	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "\\SliderGroups");
+	XRCCTRL(*this, "fpGroupXML", wxFilePickerCtrl)->SetInitialDirectory(wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups");
 	listGroups = XRCCTRL(*this, "listGroups", wxListBox);
 	groupName = XRCCTRL(*this, "groupName", wxTextCtrl);
 	btAddGroup = XRCCTRL(*this, "btAddGroup", wxButton);
@@ -49,7 +49,7 @@ GroupManager::GroupManager(wxWindow* parent, std::vector<std::string> outfits)
 }
 
 GroupManager::~GroupManager() {
-	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\GroupManager.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/GroupManager.xrc");
 }
 
 void GroupManager::RefreshUI(const bool clearGroups) {
@@ -108,10 +108,10 @@ void GroupManager::DoRemoveMembers() {
 	listMembers->GetSelections(selections);
 
 	// Find and remove member from selected group
-	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
+	std::string selectedGroup{listGroups->GetStringSelection().ToUTF8()};
 	if (!selectedGroup.empty()) {
 		for (auto &sel : selections) {
-			std::string member = listMembers->GetString(sel).ToUTF8();
+			std::string member{listMembers->GetString(sel).ToUTF8()};
 			auto it = find(groupMembers[selectedGroup].begin(), groupMembers[selectedGroup].end(), member);
 			if (it != groupMembers[selectedGroup].end())
 				groupMembers[selectedGroup].erase(it);
@@ -128,10 +128,10 @@ void GroupManager::DoAddMembers() {
 	listOutfits->GetSelections(selections);
 
 	// Add member to selected group
-	std::string selectedGroup = listGroups->GetStringSelection().ToUTF8();
+	std::string selectedGroup{listGroups->GetStringSelection().ToUTF8()};
 	if (!selectedGroup.empty()) {
 		for (auto &sel : selections) {
-			std::string member = listOutfits->GetString(sel).ToUTF8();
+			std::string member{listOutfits->GetString(sel).ToUTF8()};
 			groupMembers[selectedGroup].push_back(member);
 		}
 	}
@@ -173,7 +173,7 @@ void GroupManager::OnSaveGroup(wxCommandEvent& WXUNUSED(event)) {
 }
 
 void GroupManager::OnSaveGroupAs(wxCommandEvent& WXUNUSED(event)) {
-	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(Config["AppDir"]) + "\\SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+	wxFileDialog file(this, "Saving group XML file...", wxString::FromUTF8(Config["AppDir"]) + "/SliderGroups", fileName, "Group Files (*.xml)|*.xml", wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 	if (file.ShowModal() != wxID_OK)
 		return;
 

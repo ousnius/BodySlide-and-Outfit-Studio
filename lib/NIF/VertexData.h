@@ -81,7 +81,7 @@ public:
 	// Set offset to a specific vertex attribute in the description
 	void SetAttributeOffset(VertexAttribute attr, uint offset) {
 		if (attr != VA_POSITION) {
-			desc = ((uint64_t)offset << (4 * (byte)attr + 2)) | desc & ~(15 << (4 * (byte)attr + 4));
+			desc = ((uint64_t)offset << (4 * (byte)attr + 2)) | (desc & ~(15 << (4 * (byte)attr + 4)));
 		}
 	}
 

@@ -11,7 +11,7 @@ See the included LICENSE file
 
 #pragma warning (push, 0)
 #include "gli.hpp"
-#include "../SOIL2/SOIL2.h""
+#include "../SOIL2/SOIL2.h"
 #pragma warning (pop)
 
 typedef unsigned int GLuint;

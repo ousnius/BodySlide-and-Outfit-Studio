@@ -14,7 +14,7 @@ wxEND_EVENT_TABLE()
 
 FBXImportDialog::FBXImportDialog(wxWindow* parent) {
 	wxXmlResource* xrc = wxXmlResource::Get();
-	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\FBXImport.xrc");
+	xrc->Load(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/FBXImport.xrc");
 	xrc->LoadDialog(this, parent, "dlgFBXImport");
 
 	SetDoubleBuffered(true);
@@ -27,7 +27,7 @@ FBXImportDialog::FBXImportDialog(wxWindow* parent) {
 }
 
 FBXImportDialog::~FBXImportDialog() {
-	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "\\res\\xrc\\FBXImport.xrc");
+	wxXmlResource::Get()->Unload(wxString::FromUTF8(Config["AppDir"]) + "/res/xrc/FBXImport.xrc");
 }
 
 void FBXImportDialog::OnImport(wxCommandEvent& WXUNUSED(event)) {

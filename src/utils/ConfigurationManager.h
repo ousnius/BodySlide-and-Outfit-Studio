@@ -6,6 +6,7 @@ See the included LICENSE file
 #pragma once
 
 #include "../TinyXML-2/tinyxml2.h"
+#include "../utils/StringStuff.h"
 
 #include <vector>
 #include <unordered_map>
@@ -61,7 +62,7 @@ public:
 	ConfigurationItem* FindProperty(const std::string& inName);
 
 	bool Match(const std::string& otherName) {
-		return (!_stricmp(otherName.c_str(), name.c_str()));
+		return StringsEqualInsens(name.c_str(), otherName.c_str());
 	}
 };
 

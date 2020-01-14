@@ -168,12 +168,12 @@ bool TriFile::Write(const std::string& fileName) {
 
 						float mult = 0.0f;
 						for (auto& v : morph->offsets) {
-							if (abs(v.second.x) > mult)
-								mult = abs(v.second.x);
-							if (abs(v.second.y) > mult)
-								mult = abs(v.second.y);
-							if (abs(v.second.z) > mult)
-								mult = abs(v.second.z);
+							if (std::abs(v.second.x) > mult)
+								mult = std::abs(v.second.x);
+							if (std::abs(v.second.y) > mult)
+								mult = std::abs(v.second.y);
+							if (std::abs(v.second.z) > mult)
+								mult = std::abs(v.second.z);
 						}
 
 						mult /= 0x7FFF;
@@ -225,10 +225,10 @@ bool TriFile::Write(const std::string& fileName) {
 
 						float mult = 0.0f;
 						for (auto& v : morph->offsets) {
-							if (abs(v.second.x) > mult)
-								mult = abs(v.second.x);
-							if (abs(v.second.y) > mult)
-								mult = abs(v.second.y);
+							if (std::abs(v.second.x) > mult)
+								mult = std::abs(v.second.x);
+							if (std::abs(v.second.y) > mult)
+								mult = std::abs(v.second.y);
 						}
 
 						mult /= 0x7FFF;

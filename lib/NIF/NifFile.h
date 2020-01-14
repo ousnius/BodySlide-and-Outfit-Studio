@@ -69,6 +69,7 @@ public:
 
 	NifFile& operator=(const NifFile& other) {
 		CopyFrom(other);
+		return *this;
 	}
 
 	NiHeader& GetHeader() { return hdr; }
